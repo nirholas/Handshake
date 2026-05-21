@@ -11,6 +11,10 @@
 			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
 			"maxDuration": 300
 		},
+		"api/tts/speak.js": {
+			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
+			"maxDuration": 60
+		},
 		"api/**/*.js": {
 			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
 			"maxDuration": 30
@@ -254,16 +258,20 @@
 			"dest": "/demos/lipsync-tts.html"
 		},
 		{
-			"src": "/pretext-demo/?",
-			"dest": "/pretext-demo.html"
-		},
-		{
 			"src": "/launch-week/?",
 			"dest": "/three-ws-launch-week.html"
 		},
 		{
 			"src": "/launchpad/?",
 			"dest": "/launchpad.html"
+		},
+		{
+			"src": "/embed",
+			"dest": "/embed.html"
+		},
+		{
+			"src": "/embed/",
+			"dest": "/embed.html"
 		},
 		{
 			"src": "/playground",

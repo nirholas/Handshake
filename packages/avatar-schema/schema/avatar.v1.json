@@ -4,7 +4,15 @@
   "title": "three.ws on-chain avatar manifest",
   "description": "Canonical, hash-anchored description of an on-chain avatar. A signed instance of this document is what three.ws agents resolve when they fetch an avatar by id from any chain.",
   "type": "object",
-  "required": ["schemaVersion", "id", "name", "mesh", "skeleton", "owner", "createdAt"],
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "mesh",
+    "skeleton",
+    "owner",
+    "createdAt"
+  ],
   "additionalProperties": false,
   "properties": {
     "schemaVersion": {
@@ -16,8 +24,12 @@
       "description": "Canonical avatar identifier. Either a CAIP-10 account id (e.g. eip155:1:0xabc...) or a name from a supported name service (.eth, .ws, .sol).",
       "type": "string",
       "anyOf": [
-        { "pattern": "^[a-z0-9-]{3,8}:[a-zA-Z0-9_-]{1,32}:[a-zA-Z0-9]{1,64}$" },
-        { "pattern": "^[a-z0-9][a-z0-9-]{0,62}\\.(eth|ws|sol)$" }
+        {
+          "pattern": "^[a-z0-9-]{3,8}:[a-zA-Z0-9_-]{1,32}:[a-zA-Z0-9]{1,64}$"
+        },
+        {
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}\\.(eth|ws|sol)$"
+        }
       ]
     },
     "name": {
@@ -29,7 +41,11 @@
     "mesh": {
       "description": "Pointer to the 3D mesh that renders this avatar.",
       "type": "object",
-      "required": ["uri", "sha256", "format"],
+      "required": [
+        "uri",
+        "sha256",
+        "format"
+      ],
       "additionalProperties": false,
       "properties": {
         "uri": {
@@ -45,7 +61,11 @@
         "format": {
           "description": "Mesh container format.",
           "type": "string",
-          "enum": ["glb", "gltf", "vrm"]
+          "enum": [
+            "glb",
+            "gltf",
+            "vrm"
+          ]
         },
         "kBytes": {
           "description": "Mesh size in kilobytes (informational).",
@@ -57,16 +77,31 @@
     "skeleton": {
       "description": "Skeleton layout the mesh conforms to. Determines which animation libraries can drive it without runtime retargeting.",
       "type": "string",
-      "enum": ["avaturn", "mixamo", "rpm", "vrm-humanoid", "custom"]
+      "enum": [
+        "avaturn",
+        "mixamo",
+        "rpm",
+        "vrm-humanoid",
+        "custom"
+      ]
     },
     "animations": {
       "description": "Optional pointer to an animation manifest (list of clips by name → uri/sha256). If omitted, the avatar relies on whatever default clips the host viewer ships.",
       "type": "object",
-      "required": ["uri", "sha256"],
+      "required": [
+        "uri",
+        "sha256"
+      ],
       "additionalProperties": false,
       "properties": {
-        "uri": { "type": "string", "format": "uri-reference" },
-        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        "uri": {
+          "type": "string",
+          "format": "uri-reference"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
       }
     },
     "accessories": {
@@ -75,15 +110,35 @@
       "maxItems": 16,
       "items": {
         "type": "object",
-        "required": ["slot", "uri", "sha256"],
+        "required": [
+          "slot",
+          "uri",
+          "sha256"
+        ],
         "additionalProperties": false,
         "properties": {
           "slot": {
             "type": "string",
-            "enum": ["head", "eyes", "ears", "neck", "torso", "back", "hands", "waist", "feet"]
+            "enum": [
+              "head",
+              "eyes",
+              "ears",
+              "neck",
+              "torso",
+              "back",
+              "hands",
+              "waist",
+              "feet"
+            ]
           },
-          "uri": { "type": "string", "format": "uri-reference" },
-          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          "uri": {
+            "type": "string",
+            "format": "uri-reference"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
         }
       }
     },
@@ -91,14 +146,27 @@
       "description": "Free-form key/value traits (NFT-style). String/number/boolean values only; no nested objects.",
       "type": "object",
       "additionalProperties": {
-        "type": ["string", "number", "boolean"]
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
       },
       "maxProperties": 32
     },
     "owner": {
       "description": "Current on-chain owner. Wallet address scoped by chain id.",
       "type": "object",
-      "required": ["chain", "address"],
+      "required": [
+        "chain",
+        "address"
+      ],
       "additionalProperties": false,
       "properties": {
         "chain": {
@@ -117,11 +185,21 @@
     "creator": {
       "description": "Original creator. Omit if same as owner.",
       "type": "object",
-      "required": ["chain", "address"],
+      "required": [
+        "chain",
+        "address"
+      ],
       "additionalProperties": false,
       "properties": {
-        "chain": { "type": "string", "pattern": "^[a-z0-9-]{3,8}:[a-zA-Z0-9_-]{1,32}$" },
-        "address": { "type": "string", "minLength": 1, "maxLength": 128 }
+        "chain": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]{3,8}:[a-zA-Z0-9_-]{1,32}$"
+        },
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
       }
     },
     "createdAt": {
@@ -132,12 +210,20 @@
     "signature": {
       "description": "Optional signature over the canonical JSON serialization of this manifest, with the signature field itself removed. Algorithm-specific.",
       "type": "object",
-      "required": ["algorithm", "value", "signer"],
+      "required": [
+        "algorithm",
+        "value",
+        "signer"
+      ],
       "additionalProperties": false,
       "properties": {
         "algorithm": {
           "type": "string",
-          "enum": ["eip-712", "ed25519", "secp256k1"]
+          "enum": [
+            "eip-712",
+            "ed25519",
+            "secp256k1"
+          ]
         },
         "value": {
           "description": "Signature bytes, hex-encoded with leading 0x.",

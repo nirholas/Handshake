@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { readFileSync, cpSync, createReadStream, existsSync, statSync, rmSync } from 'fs';
+import { extname } from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // The build emits two targets controlled by the TARGET env var:
@@ -143,6 +144,8 @@ const appConfig = {
 				profile: resolve(__dirname, 'pages/profile.html'),
 				'avatar-page': resolve(__dirname, 'pages/avatar-page.html'),
 				'widget-studio': resolve(__dirname, 'pages/widget-studio.html'),
+				creating: resolve(__dirname, 'pages/creating.html'),
+				pricing: resolve(__dirname, 'pages/pricing.html'),
 				walk: resolve(__dirname, 'pages/walk.html'),
 				pose: resolve(__dirname, 'pages/pose.html'),
 				club: resolve(__dirname, 'pages/club.html'),
@@ -179,6 +182,7 @@ const appConfig = {
 				'demos-button-jump': resolve(__dirname, 'public/demos/button-jump.html'),
 				'demos-button': resolve(__dirname, 'public/demos/button.html'),
 				'demos-3d-home': resolve(__dirname, 'public/demos/3d-home.html'),
+				'demos-halfbody-xr': resolve(__dirname, 'public/demos/halfbody-xr.html'),
 			},
 		},
 	},
@@ -256,9 +260,7 @@ const appConfig = {
 					'/lipsync/': resolve(root, 'public/demos/lipsync-tts.html'),
 					'/lipsync/mic': resolve(root, 'public/demos/lipsync-mic.html'),
 					'/lipsync/mic/': resolve(root, 'public/demos/lipsync-mic.html'),
-					'/pretext-demo': resolve(root, 'pages/pretext-demo.html'),
-					'/pretext-demo/': resolve(root, 'pages/pretext-demo.html'),
-					'/launch-week': resolve(root, 'pages/three-ws-launch-week.html'),
+'/launch-week': resolve(root, 'pages/three-ws-launch-week.html'),
 					'/launch-week/': resolve(root, 'pages/three-ws-launch-week.html'),
 					'/launchpad': resolve(root, 'pages/launchpad.html'),
 					'/launchpad/': resolve(root, 'pages/launchpad.html'),
@@ -579,6 +581,15 @@ const appConfig = {
 			},
 		},
 		{
+			name: 'copy-rider',
+			closeBundle() {
+				const src = resolve(__dirname, 'rider');
+				if (existsSync(src)) {
+					cpSync(src, resolve(__dirname, 'dist/rider'), { recursive: true });
+				}
+			},
+		},
+		{
 			// Mirror the rebranded Character Studio build (the @m3-org fork in
 			// character-studio/, served as "Avatar Studio" under three.ws) into
 			// dist/avatar-studio/. The avatar-sdk Creator iframe loads this URL.
@@ -592,6 +603,42 @@ const appConfig = {
 					return;
 				}
 				cpSync(src, resolve(__dirname, 'dist/avatar-studio'), { recursive: true });
+			},
+		},
+		{
+			// Serve /avatar-sdk/** in dev from the avatar-sdk/ directory at the repo
+			// root (Vite's publicDir only covers public/). In production, copy
+			// avatar-sdk/dist and avatar-sdk/src into dist/avatar-sdk/ so the same
+			// URL paths resolve after deploy.
+			name: 'avatar-sdk-static',
+			configureServer(server) {
+				const MIME = {
+					'.js': 'application/javascript',
+					'.mjs': 'application/javascript',
+					'.css': 'text/css',
+					'.json': 'application/json',
+					'.ts': 'application/typescript',
+					'.html': 'text/html',
+				};
+				server.middlewares.use((req, res, next) => {
+					if (!req.url?.startsWith('/avatar-sdk/')) return next();
+					const rel = req.url.replace(/\?.*$/, '').slice('/avatar-sdk/'.length);
+					const file = resolve(__dirname, 'avatar-sdk', rel);
+					if (!existsSync(file) || statSync(file).isDirectory()) return next();
+					const mime = MIME[extname(file)] ?? 'application/octet-stream';
+					res.setHeader('Content-Type', mime);
+					createReadStream(file).pipe(res);
+				});
+			},
+			closeBundle() {
+				const sdkRoot = resolve(__dirname, 'avatar-sdk');
+				const outRoot = resolve(__dirname, 'dist/avatar-sdk');
+				for (const sub of ['dist', 'src']) {
+					const src = resolve(sdkRoot, sub);
+					if (existsSync(src)) {
+						cpSync(src, resolve(outRoot, sub), { recursive: true });
+					}
+				}
 			},
 		},
 		{
@@ -679,6 +726,7 @@ const appConfig = {
 				maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
 				globPatterns: ['**/*.{js,css,html,ico,woff2}'],
 				globIgnores: [
+					'pages/**',
 					'**/animations/**',
 					'**/avatars/**',
 					'**/screenshots/**',

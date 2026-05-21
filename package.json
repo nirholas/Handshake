@@ -28,7 +28,8 @@
 		"character-studio",
 		"mcp-bridge",
 		"mcp-server",
-		"multiplayer"
+		"multiplayer",
+		"packages/avatar-schema"
 	],
 	"main": "src/app.js",
 	"browserslist": [
@@ -70,7 +71,7 @@
 		"build:rider:full": "cd rider && npm ci --prefer-offline --no-audit --no-fund --ignore-engines && npm run build && cd .. && npm run build:rider",
 		"build:avatar-studio": "npm run build --prefix character-studio",
 		"build:fast": "npm run build",
-		"build:vercel": "npm run build --prefix agent-payments-sdk && npm run build:avatar-studio && NODE_OPTIONS=--max-old-space-size=4096 npm run build && npm run build:lib && npm run build:rider && npm run build:chat && npm run publish:lib",
+		"build:vercel": "npm run build --prefix agent-payments-sdk && npm run build:avatar-studio && NODE_OPTIONS=--max-old-space-size=4096 npm run build && npm run build:lib && node avatar-sdk/build.mjs && npm run build:rider && npm run build:chat && npm run publish:lib",
 		"build:all": "npm run build:chat && (npm run build & npm run build:lib & npm run build:rider & wait)",
 		"release:lib": "npm run build:lib && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",

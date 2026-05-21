@@ -451,6 +451,12 @@ export const env = {
 		return opt('NEYNAR_API_KEY');
 	},
 
+	// OpenAI API key — used by TTS proxy (/api/tts/speak) and chat endpoints.
+	// Never sent to the browser.
+	get OPENAI_API_KEY() {
+		return opt('OPENAI_API_KEY');
+	},
+
 	// ElevenLabs API key — used by TTS proxy and voice cloning endpoints.
 	// Never sent to the browser.
 	get ELEVENLABS_API_KEY() {

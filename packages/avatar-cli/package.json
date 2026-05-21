@@ -1,0 +1,44 @@
+{
+  "name": "@three-ws/avatar-cli",
+  "version": "0.1.0",
+  "description": "Terminal-native tooling for on-chain avatars: scaffold, validate, hash, and preview avatar manifests from your shell or CI.",
+  "keywords": [
+    "three.ws",
+    "avatar",
+    "cli",
+    "on-chain",
+    "web3",
+    "ens",
+    "caip",
+    "scaffold",
+    "manifest",
+    "readyplayerme-alternative"
+  ],
+  "author": "three.ws <support@three.ws> (https://three.ws)",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nirholas/three.ws.git",
+    "directory": "packages/avatar-cli"
+  },
+  "type": "module",
+  "bin": {
+    "three-ws-avatar": "./src/cli.js"
+  },
+  "main": "./src/cli.js",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@three-ws/avatar-schema": "0.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

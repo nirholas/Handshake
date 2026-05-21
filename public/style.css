@@ -70,14 +70,18 @@
 	--accent-soft: rgba(139, 92, 246, 0.18);
 }
 
-html,
+html {
+	margin: 0;
+	padding: 0;
+	min-height: 100%;
+}
+
 body {
 	margin: 0;
 	padding: 0;
 	font-family: 'Inter', system-ui, -apple-system, sans-serif;
 	background: #000;
-	height: 100%;
-	overflow: hidden;
+	min-height: 100%;
 	color: #e0e0e0;
 	font-size: var(--text-base);
 	line-height: var(--leading-normal);
@@ -3132,6 +3136,22 @@ body.deploy-page {
 	margin: -2px 0 var(--space-sm);
 	font-size: var(--text-xs);
 	color: rgba(255, 255, 255, 0.35);
+}
+
+.erc8004-image-row {
+	display: flex;
+	gap: var(--space-xs);
+	align-items: center;
+}
+
+.erc8004-image-row .erc8004-input {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.erc8004-capture-btn {
+	flex-shrink: 0;
+	white-space: nowrap;
 }
 
 .erc8004-muted {

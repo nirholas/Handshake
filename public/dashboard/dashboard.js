@@ -4219,8 +4219,14 @@ function openAvatarEmbedModal(avatar) {
 	overlay.className = 'modal-overlay';
 	overlay.innerHTML = `
 		<div class="modal" role="dialog" aria-label="Embed avatar">
-			<h2>Embed "${esc(avatar.name || 'avatar')}"</h2>
-			<p class="sub">Drop this iframe into any site to render the avatar inline.</p>
+			<div class="modal-header">
+				<div>
+					<h2>Embed "${esc(avatar.name || 'avatar')}"</h2>
+					<p class="sub" style="margin:0 0 18px">Drop this iframe into any site to render the avatar inline.</p>
+				</div>
+				<button class="modal-close-x" id="a-em-close-x" aria-label="Close">&times;</button>
+			</div>
+			<div class="section-label">Size</div>
 			<div class="size-presets" role="tablist">
 				${SIZES.map((s, i) => `<button type="button" data-i="${i}" class="${i === active ? 'active' : ''}" role="tab" aria-selected="${i === active}">${esc(s.label)}${s.width ? ` (${s.width}×${s.height})` : ''}</button>`).join('')}
 			</div>
@@ -4228,6 +4234,7 @@ function openAvatarEmbedModal(avatar) {
 				<label class="muted" style="font-size:12px">W <input id="a-em-w" type="number" min="120" max="2000" value="${dim.width}"></label>
 				<label class="muted" style="font-size:12px">H <input id="a-em-h" type="number" min="120" max="2000" value="${dim.height}"></label>
 			</div>
+			<div class="section-label">Background</div>
 			<div class="size-presets" style="margin-bottom:14px" role="tablist" aria-label="Background">
 				<button type="button" data-bg="transparent" class="active">Transparent</button>
 				<button type="button" data-bg="dark">Dark</button>
@@ -4237,9 +4244,9 @@ function openAvatarEmbedModal(avatar) {
 				<label class="row" style="gap:6px"><input type="checkbox" id="a-em-name" checked> Name plate</label>
 				<label class="row" style="gap:6px"><input type="checkbox" id="a-em-link" checked> "Open ↗" link</label>
 			</div>
-			<div style="background:#0f0f17; border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:12px">
+			<div class="preview-wrap">
 				<div class="muted" style="font-size:11px; margin-bottom:8px">Live preview (scaled to fit)</div>
-				<div id="a-em-preview" style="display:grid; place-items:center; min-height:200px; max-height:340px; overflow:hidden"></div>
+				<div id="a-em-preview" class="preview-frame-wrap"></div>
 			</div>
 			<div>
 				<div class="row" style="justify-content:space-between; margin-bottom:4px"><strong style="font-size:12px">Iframe</strong><button class="btn sec" id="a-em-copy" type="button">Copy</button></div>
@@ -4265,12 +4272,15 @@ function openAvatarEmbedModal(avatar) {
 	const refresh = () => {
 		const url = buildEmbedUrl();
 		snipEl.textContent = `<iframe src="${url}" width="${dim.width}" height="${dim.height}" style="border:0;border-radius:12px;max-width:100%" allow="xr-spatial-tracking" title="${safeName}" loading="lazy"></iframe>`;
-		const maxW = 320,
-			maxH = 320;
+		const maxW = 480;
+		const maxH = 300;
 		const scale = Math.min(maxW / dim.width, maxH / dim.height, 1);
-		previewEl.innerHTML = `<iframe src="${attr(url)}" style="width:${dim.width}px; height:${dim.height}px; border:0; transform:scale(${scale}); transform-origin:center" title="Preview" allow="xr-spatial-tracking"></iframe>`;
-		previewEl.style.width = `${dim.width * scale}px`;
-		previewEl.style.height = `${dim.height * scale}px`;
+		const pw = Math.round(dim.width * scale);
+		const ph = Math.round(dim.height * scale);
+		previewEl.classList.toggle('preview-checkered', opts.bg === 'transparent');
+		previewEl.style.width = `${pw}px`;
+		previewEl.style.height = `${ph}px`;
+		previewEl.innerHTML = `<iframe src="${attr(url)}" style="width:${dim.width}px; height:${dim.height}px; border:0; transform:scale(${scale}); transform-origin:top left; display:block" title="Preview" allow="xr-spatial-tracking"></iframe>`;
 	};
 	const setPreset = (i) => {
 		active = i;
@@ -4331,6 +4341,7 @@ function openAvatarEmbedModal(avatar) {
 		if (e.target === overlay) close();
 	});
 	overlay.querySelector('#a-em-close').addEventListener('click', close);
+	overlay.querySelector('#a-em-close-x').addEventListener('click', close);
 	overlay
 		.querySelector('#a-em-copy')
 		.addEventListener('click', (e) => copyToClipboard(snipEl.textContent, e.currentTarget));

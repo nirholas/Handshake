@@ -5,8 +5,8 @@
 // /api/bazaar/search on the origin that hosts the script (same as x402.js),
 // so the merging across facilitators + CORS handling happens server-side.
 //
-//   <script type="module" src="https://3d.irish/x402.js"></script>
-//   <script type="module" src="https://3d.irish/x402-discover.js"></script>
+//   <script type="module" src="https://three.ws/x402.js"></script>
+//   <script type="module" src="https://three.ws/x402-discover.js"></script>
 //   <script>
 //     const { items } = await X402.discover.list({ type: 'http', maxPrice: 100000 });
 //     await X402.pay({ endpoint: items[0].resource });

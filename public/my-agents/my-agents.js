@@ -1,34 +1,31 @@
 /**
- * /my-agents — personal on-chain (ERC-8004) agent page.
- * Lists ERC-8004 agents discovered across the signed-in user's linked wallets
- * and lets them be imported into the three.ws library. Agents the user
- * created natively on three.ws live in /dashboard/agents.
+ * /my-agents — all agents for the signed-in user.
+ * Shows native three.ws agents (with default.glb fallback) plus any
+ * ERC-8004 on-chain agents discovered across linked wallets that have
+ * not yet been imported. Ensures every user has at least one agent.
  */
 
-async function fetchDiscoveredAgents() {
-	const res = await fetch('/api/erc8004/hydrate', { method: 'GET', credentials: 'include' });
-	if (!res.ok) {
-		const error = await res.json().catch(() => ({}));
-		throw new Error(error.error_description || `HTTP ${res.status}`);
-	}
+const DEFAULT_GLB = '/avatars/default.glb';
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+
+async function ensureDefaultAgent() {
+	// /me auto-creates an agent for the user if none exist
+	await fetch('/api/agents/me', { credentials: 'include' }).catch(() => null);
+}
+
+async function fetchNativeAgents() {
+	const res = await fetch('/api/agents', { credentials: 'include' });
+	if (!res.ok) throw new Error(`HTTP ${res.status}`);
 	const data = await res.json();
 	return data.agents || [];
 }
 
-async function fetchImportedAgentKeys() {
-	const res = await fetch('/api/agents', { method: 'GET', credentials: 'include' });
-	if (!res.ok) {
-		const error = await res.json().catch(() => ({}));
-		throw new Error(error.error_description || `HTTP ${res.status}`);
-	}
-	const data = await res.json();
-	const imported = new Map();
-	for (const a of data.agents || []) {
-		if (a.chain_id != null && a.erc8004_agent_id != null) {
-			imported.set(`${a.chain_id}:${a.erc8004_agent_id}`, a.id);
-		}
-	}
-	return imported;
+async function fetchOnchainAgents() {
+	const res = await fetch('/api/erc8004/hydrate', { method: 'GET', credentials: 'include' });
+	if (!res.ok) return []; // no wallets linked or error — not fatal
+	const data = await res.json().catch(() => ({}));
+	return data.agents || [];
 }
 
 async function importAgent({ chainId, agentId }) {
@@ -46,48 +43,8 @@ async function importAgent({ chainId, agentId }) {
 	return data.agent;
 }
 
-/** @type {Record<number, string>} Minimal chain name map to avoid importing chain-meta.js deps. */
-const CHAIN_NAMES = {
-	1: 'Ethereum',
-	10: 'Optimism',
-	56: 'BNB Chain',
-	97: 'BSC Testnet',
-	100: 'Gnosis',
-	137: 'Polygon',
-	250: 'Fantom',
-	324: 'zkSync Era',
-	1284: 'Moonbeam',
-	5000: 'Mantle',
-	8453: 'Base',
-	42161: 'Arbitrum',
-	42220: 'Celo',
-	43113: 'Avalanche Fuji',
-	43114: 'Avalanche',
-	59144: 'Linea',
-	80002: 'Polygon Amoy',
-	84532: 'Base Sepolia',
-	421614: 'Arb Sepolia',
-	534352: 'Scroll',
-	11155111: 'Sepolia',
-	11155420: 'OP Sepolia',
-};
+// ── Session ───────────────────────────────────────────────────────────────────
 
-/** @param {number} id */
-function chainName(id) {
-	return CHAIN_NAMES[id] || `Chain ${id}`;
-}
-
-/** @param {string} text @returns {string} */
-function escapeHtml(text) {
-	if (text == null) return '';
-	const d = document.createElement('div');
-	d.textContent = String(text);
-	return d.innerHTML;
-}
-
-// ── Session ──────────────────────────────────────────────────────────────────
-
-/** @returns {Promise<object|null>} */
 async function getSession() {
 	try {
 		const res = await fetch('/api/auth/me', { credentials: 'include' });
@@ -99,12 +56,34 @@ async function getSession() {
 	}
 }
 
+// ── Chain name map ────────────────────────────────────────────────────────────
+
+const CHAIN_NAMES = {
+	1: 'Ethereum', 10: 'Optimism', 56: 'BNB Chain', 97: 'BSC Testnet',
+	100: 'Gnosis', 137: 'Polygon', 250: 'Fantom', 324: 'zkSync Era',
+	1284: 'Moonbeam', 5000: 'Mantle', 8453: 'Base', 42161: 'Arbitrum',
+	42220: 'Celo', 43113: 'Avalanche Fuji', 43114: 'Avalanche',
+	59144: 'Linea', 80002: 'Polygon Amoy', 84532: 'Base Sepolia',
+	421614: 'Arb Sepolia', 534352: 'Scroll', 11155111: 'Sepolia',
+	11155420: 'OP Sepolia',
+};
+
+function chainName(id) {
+	return CHAIN_NAMES[id] || `Chain ${id}`;
+}
+
+function escapeHtml(text) {
+	if (text == null) return '';
+	const d = document.createElement('div');
+	d.textContent = String(text);
+	return d.innerHTML;
+}
+
 // ── Rendering helpers ─────────────────────────────────────────────────────────
 
 const grid = /** @type {HTMLElement} */ (document.getElementById('my-agents-grid'));
 const errorBanner = /** @type {HTMLElement} */ (document.getElementById('my-agents-error'));
 
-/** Show N skeleton cards in the grid. */
 function showSkeletons(n = 6) {
 	grid.innerHTML = Array.from(
 		{ length: n },
@@ -120,13 +99,6 @@ function showSkeletons(n = 6) {
 	).join('');
 }
 
-/**
- * @param {string} icon
- * @param {string} title
- * @param {string} msg
- * @param {{ label: string, href: string }|null} [cta]
- * @param {{ label: string, href: string }|null} [secondary]
- */
 function showState(icon, title, msg, cta = null, secondary = null) {
 	grid.innerHTML = `
 		<div class="my-agents-state" style="grid-column: 1 / -1" role="status">
@@ -138,10 +110,6 @@ function showState(icon, title, msg, cta = null, secondary = null) {
 		</div>`;
 }
 
-/**
- * @param {string} msg
- * @param {boolean | (() => void)} retry  true → default loadAgents; function → custom; false → no button
- */
 function showErrorBanner(msg, retry = true) {
 	const showRetry = retry !== false;
 	errorBanner.innerHTML = `
@@ -159,14 +127,56 @@ function showErrorBanner(msg, retry = true) {
 }
 
 /**
- * Render one ERC-8004 on-chain agent card.
- * @param {{ chainId: number, agentId: string, name: string, description: string, image: string|null, glbUrl: string|null, alreadyImported?: boolean, importedId?: string|null }} agent
- * @returns {HTMLElement}
+ * Build a card for a native three.ws agent.
+ * @param {{ id: string, name: string, description: string|null, avatar_model_url: string|null, avatar_thumbnail_url: string|null, chain_id: number|null, is_registered: boolean }} agent
  */
-function buildCard(agent) {
+function buildNativeCard(agent) {
 	const card = document.createElement('article');
 	card.className = 'my-agents-card';
 	card.setAttribute('aria-label', `Agent: ${agent.name}`);
+
+	const modelUrl = agent.avatar_model_url || DEFAULT_GLB;
+	const thumbHtml = `<model-viewer
+		src="${escapeHtml(modelUrl)}"
+		alt="${escapeHtml(agent.name)} 3D avatar"
+		camera-controls
+		auto-rotate
+		shadow-intensity="1"
+		exposure="1"
+		tone-mapping="aces"
+		loading="lazy"
+		reveal="auto"
+	></model-viewer>`;
+
+	const chainPill = agent.chain_id && agent.is_registered
+		? `<span class="my-agents-card__chain-pill" title="Chain ID ${escapeHtml(String(agent.chain_id))}">${escapeHtml(chainName(agent.chain_id))}</span>`
+		: `<span class="my-agents-card__source-pill">three.ws</span>`;
+
+	card.innerHTML = `
+		<div class="my-agents-card__thumb">${thumbHtml}</div>
+		<div class="my-agents-card__body">
+			<h2 class="my-agents-card__name" title="${escapeHtml(agent.name)}">${escapeHtml(agent.name)}</h2>
+			<div class="my-agents-card__row">${chainPill}</div>
+			${agent.description ? `<p class="my-agents-card__desc">${escapeHtml(agent.description)}</p>` : ''}
+		</div>
+		<div class="my-agents-card__footer">
+			<div class="my-agents-card__action-wrap">
+				<a class="my-agents-btn" href="/agent/${escapeHtml(agent.id)}">Open agent →</a>
+				<a class="my-agents-card__edit-link" href="/agent-edit?id=${escapeHtml(agent.id)}">Edit</a>
+			</div>
+		</div>`;
+
+	return card;
+}
+
+/**
+ * Build a card for an unimported ERC-8004 on-chain agent.
+ * @param {{ chainId: number, agentId: string, name: string, description: string|null, image: string|null, glbUrl: string|null }} agent
+ */
+function buildOnchainCard(agent) {
+	const card = document.createElement('article');
+	card.className = 'my-agents-card';
+	card.setAttribute('aria-label', `On-chain agent: ${agent.name}`);
 
 	const thumbHtml = agent.glbUrl
 		? `<model-viewer
@@ -189,7 +199,7 @@ function buildCard(agent) {
 		<div class="my-agents-card__body">
 			<h2 class="my-agents-card__name" title="${escapeHtml(agent.name)}">${escapeHtml(agent.name)}</h2>
 			<div class="my-agents-card__row">
-				${agent.chainId ? `<span class="my-agents-card__chain-pill" title="Chain ID ${escapeHtml(String(agent.chainId))}">${escapeHtml(chainName(agent.chainId))}</span>` : ''}
+				<span class="my-agents-card__chain-pill" title="Chain ID ${escapeHtml(String(agent.chainId))}">${escapeHtml(chainName(agent.chainId))}</span>
 			</div>
 			${agent.description ? `<p class="my-agents-card__desc">${escapeHtml(agent.description)}</p>` : ''}
 		</div>
@@ -198,51 +208,37 @@ function buildCard(agent) {
 		</div>`;
 
 	const wrap = /** @type {HTMLElement} */ (card.querySelector('.my-agents-card__action-wrap'));
-	_renderCardAction(wrap, agent, agent.importedId || null);
+	_renderImportAction(wrap, agent);
 	return card;
 }
 
-/**
- * @param {HTMLElement} wrap
- * @param {{ chainId: number, agentId: string, name: string, alreadyImported?: boolean }} agent
- * @param {string|null} [importedId]
- */
-function _renderCardAction(wrap, agent, importedId = null) {
-	if (agent.alreadyImported || importedId) {
-		const id = importedId || '';
+function _renderImportAction(wrap, agent, importedId = null) {
+	if (importedId) {
 		wrap.innerHTML = `
 			<button class="my-agents-btn my-agents-btn--done" disabled aria-label="Agent already in library">Already in library</button>
-			${id ? `<a class="my-agents-card__agent-link" href="/agent/${escapeHtml(id)}">Open agent →</a>` : ''}`;
+			<a class="my-agents-card__agent-link" href="/agent/${escapeHtml(importedId)}">Open agent →</a>`;
 		return;
 	}
 
 	const btn = document.createElement('button');
 	btn.className = 'my-agents-btn';
-	btn.textContent = 'Import';
+	btn.textContent = 'Import to library';
 	btn.setAttribute('aria-label', `Import ${agent.name}`);
 	btn.addEventListener('click', () => _handleImport(btn, wrap, agent));
 	wrap.appendChild(btn);
 }
 
-/**
- * @param {HTMLButtonElement} btn
- * @param {HTMLElement} wrap
- * @param {{ chainId: number, agentId: string, name: string }} agent
- */
 async function _handleImport(btn, wrap, agent) {
 	btn.disabled = true;
 	btn.textContent = 'Importing…';
-
-	// Clear any previous inline error
-	const prev = wrap.querySelector('.my-agents-card__inline-err');
-	if (prev) prev.remove();
+	wrap.querySelector('.my-agents-card__inline-err')?.remove();
 
 	try {
 		const result = await importAgent({ chainId: agent.chainId, agentId: agent.agentId });
-		_renderCardAction(wrap, { ...agent, alreadyImported: true }, result.id);
+		_renderImportAction(wrap, agent, result.id);
 	} catch (err) {
 		btn.disabled = false;
-		btn.textContent = 'Import';
+		btn.textContent = 'Import to library';
 		const errEl = document.createElement('span');
 		errEl.className = 'my-agents-card__inline-err';
 		errEl.textContent = err.message || 'Import failed';
@@ -257,38 +253,46 @@ async function loadAgents() {
 	showSkeletons();
 
 	try {
-		// Imported keys is a lookup, not a hard dependency — if it fails we still
-		// render the on-chain list (Import will just retry against the API).
-		const [onChainAgents, importedKeys] = await Promise.all([
-			fetchDiscoveredAgents(),
-			fetchImportedAgentKeys().catch((e) => {
-				console.error('Error fetching imported agents:', e);
-				return new Map();
-			}),
+		// Ensure user has at least one agent (auto-creates if none)
+		await ensureDefaultAgent();
+
+		const [nativeAgents, onchainAgents] = await Promise.all([
+			fetchNativeAgents(),
+			fetchOnchainAgents(),
 		]);
 
 		grid.innerHTML = '';
 
-		if (onChainAgents.length === 0) {
-			showState(
-				'🔭',
-				'No on-chain agents found',
-				'None of your linked wallets own an ERC-8004 agent yet. Mint one, or browse community agents.',
-				{ label: 'Mint an on-chain agent', href: '/deploy' },
-				{ label: 'Or browse community agents →', href: '/discover' },
-			);
-			return;
+		// Build a set of (chainId:agentId) keys already imported into native agents
+		const importedKeys = new Set();
+		for (const a of nativeAgents) {
+			if (a.chain_id != null && a.erc8004_agent_id != null) {
+				importedKeys.add(`${a.chain_id}:${a.erc8004_agent_id}`);
+			}
 		}
 
-		for (const agent of onChainAgents) {
-			const key = `${agent.chainId}:${agent.agentId}`;
-			const importedId = importedKeys.get(key) || null;
-			grid.appendChild(
-				buildCard({
-					...agent,
-					alreadyImported: !!importedId,
-					importedId,
-				}),
+		// Unimported onchain agents
+		const unimportedOnchain = onchainAgents.filter(
+			(a) => !importedKeys.has(`${a.chainId}:${a.agentId}`),
+		);
+
+		// Render native agents first
+		for (const agent of nativeAgents) {
+			grid.appendChild(buildNativeCard(agent));
+		}
+
+		// Render unimported onchain agents after
+		for (const agent of unimportedOnchain) {
+			grid.appendChild(buildOnchainCard(agent));
+		}
+
+		if (nativeAgents.length === 0 && unimportedOnchain.length === 0) {
+			showState(
+				'🤖',
+				'No agents yet',
+				'Create your first agent to get started.',
+				{ label: 'Create an agent', href: '/create' },
+				{ label: 'Or browse community agents →', href: '/discover' },
 			);
 		}
 	} catch (err) {
@@ -297,7 +301,7 @@ async function loadAgents() {
 		if (msg.includes('429') || /too many/i.test(msg)) {
 			showErrorBanner('Too many requests. Try again in a minute.', true);
 		} else {
-			showErrorBanner(msg || 'Failed to load on-chain agents.', true);
+			showErrorBanner(msg || 'Failed to load agents.', true);
 		}
 	}
 }
@@ -311,35 +315,8 @@ async function loadAgents() {
 		showState(
 			'🔐',
 			'Sign in to see your agents',
-			'Link a wallet and sign in to see your on-chain agents.',
+			'Sign in to manage your agents and avatars.',
 			{ label: 'Sign in', href: '/login.html' },
-			{ label: 'Or browse community agents →', href: '/discover' },
-		);
-		return;
-	}
-
-	// Check if user has linked wallets before hitting hydrate. If the wallets API
-	// itself fails, surface a retry instead of silently falling through to hydrate
-	// (which would render a misleading "Failed to load agents" for a no-wallet user).
-	let wallets = null;
-	try {
-		const walletsRes = await fetch('/api/auth/wallets', { credentials: 'include' });
-		if (walletsRes.ok) {
-			({ wallets } = await walletsRes.json());
-		} else {
-			throw new Error(`wallets ${walletsRes.status}`);
-		}
-	} catch {
-		showErrorBanner('Could not check linked wallets. Tap retry.', () => location.reload());
-		return;
-	}
-
-	if (!wallets || wallets.length === 0) {
-		showState(
-			'👛',
-			'No wallets linked',
-			'Link a wallet to see your on-chain (ERC-8004) agents.',
-			{ label: 'Link a wallet', href: '/dashboard/wallets' },
 			{ label: 'Or browse community agents →', href: '/discover' },
 		);
 		return;

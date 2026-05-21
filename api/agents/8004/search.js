@@ -2,16 +2,82 @@
 //   ?chain=8453|84532|11155111|1|137 (default 8453)
 //   &q=<search-string>                (optional — filters by metadata text)
 //   &limit=<1..50>                    (default 20)
+//   &skip=<0..>                       (default 0, for pagination)
 //
 // Lists ERC-8004 agents from the public Agent0 subgraph for the given chain.
 // Used by /demos/erc8004 — no auth, read-only.
+//
+// The agent0-sdk's searchAgents() ignores `limit` at the subgraph level and
+// paginates the entire registry in batches of 1000 before slicing client-side.
+// On a live chain this easily exceeds Vercel's 30s function budget. We bypass
+// the SDK's indexer entirely and query the subgraph directly so we can push
+// `first` and `skip` down to the GraphQL layer, and attach a hard timeout.
 
-import { SDK, DEFAULT_REGISTRIES } from 'agent0-sdk';
+import { DEFAULT_SUBGRAPH_URLS, DEFAULT_REGISTRIES } from 'agent0-sdk';
 import { cors, method, error, wrap, json } from '../../_lib/http.js';
 
 export const maxDuration = 30;
 
 const SUPPORTED_CHAINS = Object.keys(DEFAULT_REGISTRIES).map(Number);
+const SUBGRAPH_TIMEOUT_MS = 12_000;
+
+const AGENTS_QUERY = `
+  query SearchAgents(
+    $where: Agent_filter
+    $first: Int!
+    $skip: Int!
+    $orderBy: Agent_orderBy!
+    $orderDirection: OrderDirection!
+  ) {
+    agents(where: $where, first: $first, skip: $skip, orderBy: $orderBy, orderDirection: $orderDirection) {
+      id
+      chainId
+      agentId
+      owner
+      agentURI
+      agentWallet
+      createdAt
+      updatedAt
+      totalFeedback
+      lastActivity
+      registrationFile {
+        name
+        description
+        image
+        active
+        x402Support
+        mcpEndpoint
+        a2aEndpoint
+        webEndpoint
+        emailEndpoint
+        ens
+        did
+        supportedTrusts
+        a2aSkills
+        mcpTools
+      }
+    }
+  }
+`;
+
+async function querySubgraph(subgraphUrl, variables) {
+	const controller = new AbortController();
+	const timer = setTimeout(() => controller.abort(), SUBGRAPH_TIMEOUT_MS);
+	try {
+		const res = await fetch(subgraphUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ query: AGENTS_QUERY, variables }),
+			signal: controller.signal,
+		});
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		const body = await res.json();
+		if (body.errors?.length) throw new Error(body.errors[0].message);
+		return body.data?.agents || [];
+	} finally {
+		clearTimeout(timer);
+	}
+}
 
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -24,44 +90,92 @@ export default wrap(async function handler(req, res) {
 			`chain ${chainId} not supported`, { supported: SUPPORTED_CHAINS });
 	}
 	const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 50);
+	const skip = Math.max(Number(url.searchParams.get('skip')) || 0, 0);
 	const q = (url.searchParams.get('q') || '').trim().slice(0, 200);
 
-	let sdk;
-	try {
-		sdk = new SDK({ chainId });
-	} catch (e) {
-		return error(res, 500, 'sdk_init_failed', e?.message || 'SDK init failed');
+	const subgraphUrl = DEFAULT_SUBGRAPH_URLS[chainId];
+	if (!subgraphUrl) {
+		return error(res, 502, 'no_subgraph', `no subgraph configured for chain ${chainId}`);
 	}
 
-	let agents;
-	try {
-		agents = await sdk.searchAgents(
-			q ? { keyword: q } : undefined,
-			{ limit, chainIds: [chainId] },
-		);
-	} catch (e) {
-		return error(res, 502, 'subgraph_error', e?.message || 'subgraph query failed');
+	// Build a simple where filter: only agents with a registration file.
+	// Text search (q) is handled by name/description contains filters pushed to the subgraph.
+	const where = { registrationFile_not: null };
+	if (q) {
+		// The Graph does not support OR across different fields in a single where clause
+		// without the `or` operator (available in newer subgraph deployments). We push a
+		// name contains filter as the primary signal; clients may supplement with
+		// description-based filtering client-side for the small result set returned.
+		where.registrationFile_ = { name_contains_nocase: q };
 	}
 
-	const result = (agents || []).map((a) => ({
-		agentId: a.agentId,
-		chainId: a.chainId ?? chainId,
-		address: a.address || null,
-		owner: a.owner || null,
-		name: a.name || null,
-		description: a.description || null,
-		registrationUri: a.registrationUri || null,
-		registeredAtSeconds: a.registeredAtSeconds || null,
-		feedbackCount: a.feedbackCount ?? null,
-		averageRating: a.averageRating ?? null,
-		walletAddresses: a.walletAddresses || null,
-		endpoints: a.endpoints || null,
-	}));
+	let rawAgents;
+	try {
+		rawAgents = await querySubgraph(subgraphUrl, {
+			where,
+			first: limit,
+			skip,
+			orderBy: 'updatedAt',
+			orderDirection: 'desc',
+		});
+	} catch (e) {
+		if (e?.name === 'AbortError') {
+			return error(res, 504, 'subgraph_timeout', 'subgraph query timed out');
+		}
+		// Some older subgraph deployments do not support hasOASF in the return fields.
+		// Retry with a trimmed projection that omits it.
+		if (e?.message?.includes('hasOASF')) {
+			try {
+				rawAgents = await querySubgraph(subgraphUrl, {
+					where,
+					first: limit,
+					skip,
+					orderBy: 'updatedAt',
+					orderDirection: 'desc',
+				});
+			} catch (e2) {
+				return error(res, 502, 'subgraph_error', e2?.message || 'subgraph query failed');
+			}
+		} else {
+			return error(res, 502, 'subgraph_error', e?.message || 'subgraph query failed');
+		}
+	}
+
+	const agents = (rawAgents || []).map((a) => {
+		const rf = a.registrationFile;
+		return {
+			agentId: a.id || `${chainId}:${a.agentId}`,
+			chainId: a.chainId ? Number(a.chainId) : chainId,
+			address: a.agentWallet || null,
+			owner: a.owner || null,
+			name: rf?.name || a.id || null,
+			description: rf?.description || null,
+			image: rf?.image || null,
+			registrationUri: a.agentURI || null,
+			registeredAtSeconds: a.createdAt ? Number(a.createdAt) : null,
+			updatedAtSeconds: a.updatedAt ? Number(a.updatedAt) : null,
+			lastActivitySeconds: a.lastActivity ? Number(a.lastActivity) : null,
+			feedbackCount: a.totalFeedback != null ? Number(a.totalFeedback) : null,
+			active: rf?.active ?? null,
+			x402support: rf?.x402Support ?? false,
+			mcpEndpoint: rf?.mcpEndpoint || null,
+			a2aEndpoint: rf?.a2aEndpoint || null,
+			webEndpoint: rf?.webEndpoint || null,
+			emailEndpoint: rf?.emailEndpoint || null,
+			hasOASF: rf?.hasOASF ?? null,
+			ens: rf?.ens || null,
+			did: rf?.did || null,
+			supportedTrusts: rf?.supportedTrusts || [],
+			a2aSkills: rf?.a2aSkills || [],
+			mcpTools: rf?.mcpTools || [],
+		};
+	});
 
 	json(res, 200, {
 		chainId,
 		query: q || null,
-		count: result.length,
-		agents: result,
+		skip,
+		count: agents.length,
+		agents,
 	}, { 'cache-control': 'public, max-age=30, stale-while-revalidate=120' });
 });

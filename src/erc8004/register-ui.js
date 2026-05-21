@@ -316,6 +316,8 @@ export class RegisterUI {
 		this.container = containerEl;
 		this.onRegistered = onRegistered || (() => {});
 		this.mode = opts.mode === 'page' ? 'page' : 'modal';
+		this._viewer = opts.viewer || null;
+		this._avatarId = opts.avatarId || null;
 
 		// Wallet state
 		this.wallet = null; // { address, chainId }
@@ -1148,7 +1150,10 @@ export class RegisterUI {
 			<p class="erc8004-hint">Clear description (max 1000 chars)</p>
 
 			<label class="erc8004-label">Image URL
-				<input class="erc8004-input" name="imageUrl" placeholder="https://example.com/avatar.png or ipfs://…" value="${esc(this.form.imageUrl)}" />
+				<div class="erc8004-image-row">
+					<input class="erc8004-input" name="imageUrl" placeholder="https://example.com/avatar.png or ipfs://…" value="${esc(this.form.imageUrl)}" />
+					${this._viewer ? `<button type="button" class="erc8004-btn erc8004-btn--ghost erc8004-capture-btn" data-role="capture3d" title="Snapshot the current 3D viewer and use it as the agent image">📸 Use 3D view</button>` : ''}
+				</div>
 			</label>
 			<p class="erc8004-hint">Avatar or logo for your agent NFT</p>
 
@@ -1169,6 +1174,9 @@ export class RegisterUI {
 			this.form.imageUrl = e.target.value;
 			this._refreshPreview();
 		});
+		body.querySelector('[data-role="capture3d"]')?.addEventListener('click', () => {
+			this._captureFromViewer(body);
+		});
 		body.querySelector('[data-role="next"]').addEventListener('click', () => {
 			if (!this.form.name.trim() || !this.form.description.trim()) {
 				this._toast('Name and description are required.', true);
@@ -1177,6 +1185,67 @@ export class RegisterUI {
 			this.wizardStep = 2;
 			this._renderActiveTab();
 		});
+	}
+
+	async _captureFromViewer(stepBody) {
+		const viewer = this._viewer;
+		if (!viewer) return;
+		const renderer = viewer.renderer;
+		const scene = viewer.scene;
+		const camera = viewer.activeCamera || viewer.camera;
+		const srcCanvas = renderer?.domElement;
+		if (!renderer || !scene || !camera || !srcCanvas) {
+			this._toast('3D preview not ready — wait for the avatar to load.', true);
+			return;
+		}
+		const btn = stepBody?.querySelector('[data-role="capture3d"]');
+		if (btn) { btn.disabled = true; btn.textContent = '📸 Capturing…'; }
+		try {
+			renderer.render(scene, camera);
+			const w = srcCanvas.width, h = srcCanvas.height;
+			const size = Math.min(w, h);
+			const sx = (w - size) >> 1, sy = (h - size) >> 1;
+			const out = document.createElement('canvas');
+			out.width = out.height = Math.min(1024, size);
+			const ctx = out.getContext('2d');
+			ctx.drawImage(srcCanvas, sx, sy, size, size, 0, 0, out.width, out.height);
+			const blob = await new Promise((r) => out.toBlob(r, 'image/png'));
+			if (!blob) throw new Error('canvas toBlob failed');
+
+			if (this._avatarId) {
+				const b64 = await new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = () => resolve(reader.result);
+					reader.onerror = reject;
+					reader.readAsDataURL(blob);
+				});
+				const resp = await fetch('/api/avatars/thumbnail', {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ avatar_id: this._avatarId, png_base64: b64 }),
+				});
+				if (!resp.ok) throw new Error(`thumbnail upload failed: HTTP ${resp.status}`);
+				const { data } = await resp.json();
+				this.form.imageUrl = data.thumbnail_url;
+			} else {
+				this.form.imageUrl = await new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = () => resolve(reader.result);
+					reader.onerror = reject;
+					reader.readAsDataURL(blob);
+				});
+			}
+
+			const input = stepBody?.querySelector('[name="imageUrl"]');
+			if (input) input.value = this.form.imageUrl;
+			this._refreshPreview();
+			this._toast('3D view captured.');
+		} catch (err) {
+			this._toast('Could not capture 3D view: ' + err.message, true);
+		} finally {
+			if (btn) { btn.disabled = false; btn.textContent = '📸 Use 3D view'; }
+		}
 	}
 
 	_renderStepServices(body) {

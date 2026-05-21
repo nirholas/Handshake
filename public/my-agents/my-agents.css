@@ -392,3 +392,33 @@ a:hover {
 	display: block;
 	text-align: center;
 }
+
+/* ── three.ws source pill ────────────────────────────────────────────── */
+.my-agents-card__source-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	padding: 2px 8px;
+	border-radius: 99px;
+	background: #1a1a2e;
+	color: #7a6fff;
+	border: 1px solid #2a2a4a;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+/* ── Edit link below open button ─────────────────────────────────────── */
+.my-agents-card__edit-link {
+	display: block;
+	text-align: center;
+	font-size: 12px;
+	color: #666;
+	margin-top: 4px;
+	text-decoration: none;
+	transition: color 0.15s;
+}
+.my-agents-card__edit-link:hover {
+	color: #aaa;
+	text-decoration: none;
+}

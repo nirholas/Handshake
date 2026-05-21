@@ -1727,7 +1727,7 @@ class App {
 				(result) => {
 					console.info('[ERC-8004] Agent registered:', result);
 				},
-				{ mode: 'page', initial },
+				{ mode: 'page', initial, viewer: this.viewer, avatarId: initial.avatarId },
 			);
 		} catch (err) {
 			console.error('[3d-agent] deploy page load failed', err);
@@ -1777,6 +1777,7 @@ class App {
 			description: qpDesc || resolved.description || '',
 			imageUrl: qpImage || resolved.imageUrl || '',
 			network: qpNetwork || '',
+			avatarId: avatarId || null,
 		};
 	}
 
