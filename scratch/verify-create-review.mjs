@@ -45,19 +45,21 @@ const step = (m) => console.log(`\n── ${m}`);
 		await navPromise;
 		console.log('   ✓ landed on /create-review');
 
-		step('3. review page renders the blob');
+		step('3. review page renders the blob in a Three.js viewer');
 		await page.waitForSelector('#content:not([hidden])', { timeout: 5000 });
+		// TalkScene mount is async; #viewer-loading is hidden once renderPreview()
+		// finishes. After that, a <canvas> child of #mv-container is the proof.
+		await page.waitForSelector('#viewer-loading[hidden]', { timeout: 20000 });
 		await page.waitForFunction(
-			() => {
-				const mv = document.getElementById('mv');
-				return mv && mv.src && mv.style.visibility !== 'hidden';
-			},
+			() => !!document.querySelector('#mv-container canvas'),
 			null,
-			{ timeout: 15000 },
+			{ timeout: 5000 },
 		);
-		const src = await page.$eval('#mv', (el) => el.src);
-		if (!src?.startsWith('blob:')) throw new Error(`expected blob: src, got ${src}`);
-		console.log(`   ✓ #mv.src = ${src.slice(0, 50)}…`);
+		const canvasSize = await page.$eval('#mv-container canvas', (c) => ({
+			w: c.clientWidth,
+			h: c.clientHeight,
+		}));
+		console.log(`   ✓ Three.js canvas mounted (${canvasSize.w}x${canvasSize.h})`);
 		console.log(`   tag-size = ${await page.$eval('#tag-size', (el) => el.textContent)}`);
 
 		step('4. guest CTA flips to "Sign in to save"');

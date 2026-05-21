@@ -42,6 +42,24 @@ export class TalkScene {
 		this._mouthTarget = null;
 		this._cameraPreset = 'full';
 		this._emotes = null;
+		// External per-frame subscribers (idle animation, custom drivers).
+		// Receive dt in seconds. Use addOnTick() to register, call the returned
+		// dispose function to unsubscribe.
+		this._onTickFns = new Set();
+	}
+
+	/**
+	 * Register a callback invoked every frame inside this scene's render loop
+	 * with the elapsed dt in seconds. Returns a function that removes the
+	 * subscription. Callbacks fire after controls/mixer/emotes update and
+	 * before the render call, so writes to bones/morphs take effect this frame.
+	 * @param {(dt: number) => void} fn
+	 * @returns {() => void}
+	 */
+	addOnTick(fn) {
+		if (typeof fn !== 'function') return () => {};
+		this._onTickFns.add(fn);
+		return () => this._onTickFns.delete(fn);
 	}
 
 	async mount({ container, glbUrl, cameraPreset = 'full' }) {
@@ -282,6 +300,7 @@ export class TalkScene {
 			this.controls?.update();
 			this.mixer?.update(dt);
 			this._emotes?.update(dt);
+			for (const fn of this._onTickFns) fn(dt);
 			this.renderer?.render(this.scene, this.camera);
 			this._rafId = requestAnimationFrame(tick);
 		};

@@ -1115,3 +1115,153 @@
 		animation: none;
 	}
 }
+
+/* ── Mobile improvements ──────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+	/* Announcement bar */
+	.h-saas-bar-inner {
+		font-size: 0.78rem;
+		gap: 0.45rem;
+		text-align: center;
+	}
+
+	/* Hero section */
+	.h-saas-hero {
+		padding: clamp(3rem, 7vh, 5rem) 0 clamp(1.5rem, 4vh, 3rem);
+	}
+
+	.h-saas-hero-copy {
+		text-align: center;
+	}
+
+	.h-saas-h1 {
+		font-size: clamp(2.2rem, 7.5vw, 3.2rem);
+	}
+
+	.h-saas-sub {
+		font-size: 1rem;
+		margin-left: auto;
+		margin-right: auto;
+		max-width: 42ch;
+	}
+
+	.h-saas-cta {
+		justify-content: center;
+	}
+
+	.h-saas-btn {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.h-saas-proof {
+		justify-content: center;
+		flex-wrap: wrap;
+		text-align: center;
+	}
+
+	/* Hide the heavy model-viewer product card — saves bandwidth + a WebGL context on mobile */
+	.h-saas-pcard {
+		display: none;
+	}
+
+	/* Logos marquee */
+	.h-saas-logos {
+		padding: 1.8rem 0 2rem;
+	}
+
+	.h-saas-logos-title {
+		font-size: 0.7rem;
+		margin-bottom: 1rem;
+	}
+
+	/* Section heading */
+	.h-saas-section {
+		padding: clamp(2.2rem, 6vh, 4rem) 0;
+	}
+
+	.h-saas-section-title {
+		font-size: clamp(1.5rem, 6vw, 2.2rem);
+	}
+
+	.h-saas-section-sub {
+		font-size: 0.95rem;
+	}
+
+	/* Tabs — wrap tightly on small screens */
+	.h-saas-tabs {
+		flex-wrap: wrap;
+		border-radius: 12px;
+		gap: 0.2rem;
+	}
+
+	.h-saas-tab {
+		padding: 0.5rem 0.9rem;
+		font-size: 0.84rem;
+	}
+
+	/* Use-case cards: show only first two on very small screens to avoid scroll fatigue */
+	.h-saas-cases {
+		grid-template-columns: 1fr;
+		gap: 0.9rem;
+	}
+
+	/* Code card */
+	.h-saas-codecard pre {
+		font-size: 0.78rem;
+		padding: 1rem;
+	}
+
+	/* Integration grid */
+	.h-saas-int-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.h-saas-int {
+		min-height: 88px;
+		padding: 1rem 0.6rem;
+	}
+
+	/* Pricing */
+	.h-saas-price-card {
+		padding: 1.4rem 1.2rem;
+	}
+
+	/* CTA band */
+	.h-saas-cta-h {
+		font-size: clamp(1.8rem, 7vw, 2.6rem);
+	}
+
+	.h-saas-cta-p {
+		font-size: 1rem;
+	}
+
+	.h-saas-cta-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.h-saas-cta-row .h-saas-btn {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+/* Phones narrower than 400px — tighten further */
+@media (max-width: 400px) {
+	.h-saas-bar-inner {
+		flex-direction: column;
+		align-items: center;
+		gap: 0.3rem;
+	}
+
+	.h-saas-h1 {
+		font-size: clamp(2rem, 8.5vw, 2.6rem);
+	}
+
+	.h-saas-btn {
+		padding: 0.8rem 1.2rem;
+		font-size: 0.92rem;
+	}
+}

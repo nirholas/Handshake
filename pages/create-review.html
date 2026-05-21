@@ -91,11 +91,18 @@
 				position: relative;
 				overflow: hidden;
 			}
-			.viewer model-viewer {
+			.viewer .mv-container {
+				position: absolute;
+				inset: 0;
 				width: 100%;
 				height: 100%;
 				background: transparent;
-				--poster-color: transparent;
+				display: block;
+			}
+			.viewer .mv-container canvas {
+				display: block;
+				width: 100% !important;
+				height: 100% !important;
 			}
 			.viewer-loading {
 				position: absolute;
@@ -254,10 +261,6 @@
 		<link rel="stylesheet" href="/footer.css" />
 		<link rel="stylesheet" href="/mobile.css" />
 
-		<script
-			type="module"
-			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
-		></script>
 		<script>
 			// Optimistic auth check so the page can decide whether to show
 			// "Save to my account" vs. "Sign in to save". Authoritative answer
@@ -309,21 +312,13 @@
 						<div class="spinner-sm" aria-hidden="true"></div>
 						<span>Loading 3D preview…</span>
 					</div>
-					<model-viewer
-						id="mv"
-						camera-controls
-						touch-action="pan-y"
-						auto-rotate
-						auto-rotate-delay="0"
-						rotation-per-second="18deg"
-						interaction-prompt="none"
-						shadow-intensity="0.6"
-						shadow-softness="0.8"
-						exposure="1"
-						environment-image="neutral"
-						camera-orbit="0deg 80deg auto"
-						style="visibility: hidden"
-					></model-viewer>
+					<!--
+						Three.js viewer (TalkScene) mounted by create-review.js. We use
+						our own renderer instead of <model-viewer> so the IdleAnimation
+						layer can drive ARKit blink + spine-bone breathing — model-viewer
+						4.x does not expose morphTargetInfluences as a stable API.
+					-->
+					<div id="mv-container" class="mv-container" aria-label="Avatar preview"></div>
 				</div>
 
 				<div class="panel">

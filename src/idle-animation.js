@@ -42,7 +42,9 @@ export class IdleAnimation {
 	 * @param {object} opts
 	 * @param {() => import('three').Object3D | null} opts.getRoot
 	 *   Getter for the live avatar root — called each frame, handles late-loaded content.
-	 * @param {import('./agent-protocol.js').AgentProtocol} opts.protocol
+	 * @param {import('./agent-protocol.js').AgentProtocol} [opts.protocol]
+	 *   Optional — when present, idle pauses blink during SPEAK and saccade during LOOK_AT.
+	 *   Static previews (avatar customizer, /create-review) can omit this safely.
 	 * @param {string} [opts.seed]   Stable per-avatar seed (agent id); prevents multi-avatar sync.
 	 * @param {() => Record<string,number>} [opts.getMorphCurrent]
 	 *   Returns the empathy layer's live morph weight map (avatar._morphCurrent).
@@ -50,7 +52,9 @@ export class IdleAnimation {
 	 */
 	constructor(opts) {
 		this._getRoot = opts.getRoot;
-		this._protocol = opts.protocol;
+		// Static previews don't have an AgentProtocol — synthesize a no-op stub
+		// so SPEAK / LOOK_AT subscriptions are inert rather than a hard error.
+		this._protocol = opts.protocol || { on() {}, off() {} };
 		this._getMorphCurrent = opts.getMorphCurrent ?? null;
 
 		this._channels = {

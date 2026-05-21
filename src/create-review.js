@@ -15,12 +15,17 @@
 import { saveRemoteGlbToAccount } from './account.js';
 import { attachAvatarToAgent } from './attach-avatar-to-agent.js';
 import { load as loadGuest, clear as clearGuest } from './guest-avatar.js';
+import { TalkScene } from './voice/talk-scene.js';
+import { IdleAnimation } from './idle-animation.js';
 
 const RESUME_KEY = '3dagent:guest-avatar-resume';
 const $ = (sel) => document.querySelector(sel);
 
 let staged = /** @type {Awaited<ReturnType<typeof loadGuest>>} */ (null);
 let objectUrl = /** @type {string | null} */ (null);
+let viewerScene = /** @type {TalkScene | null} */ (null);
+let viewerIdle = /** @type {IdleAnimation | null} */ (null);
+let viewerIdleDispose = /** @type {(() => void) | null} */ (null);
 
 async function boot() {
 	staged = await loadGuest();
@@ -33,7 +38,11 @@ async function boot() {
 	$('#content').hidden = false;
 	$('#empty-card').hidden = true;
 
-	renderPreview(staged);
+	// Kick off the 3D mount but don't block UI wiring on it — the loading
+	// overlay stays up until renderPreview() resolves and hides it.
+	renderPreview(staged).catch((err) => {
+		console.error('[create-review] renderPreview failed', err);
+	});
 	wireControls();
 
 	// Auth state is resolved async via /api/auth/me from the page's inline
@@ -46,33 +55,35 @@ async function boot() {
 	}
 }
 
-function renderPreview(record) {
-	const mv = $('#mv');
-	objectUrl = URL.createObjectURL(record.blob);
-	mv.src = objectUrl;
-
+async function renderPreview(record) {
 	$('#avatar-name').textContent = record.name;
 	$('#f-name').value = record.name;
 	$('#tag-source').textContent = record.meta?.source || record.meta?.provider || 'glb';
 	$('#tag-size').textContent =
 		record.size > 0 ? `${Math.round(record.size / 1024)} KB` : '— KB';
 
-	mv.addEventListener(
-		'load',
-		() => {
-			$('#viewer-loading').hidden = true;
-			mv.style.visibility = '';
-		},
-		{ once: true },
-	);
-	mv.addEventListener(
-		'error',
-		() => {
-			$('#viewer-loading').innerHTML =
-				'<span style="color:#ffb3b3">Couldn\'t render this model.</span>';
-		},
-		{ once: true },
-	);
+	objectUrl = URL.createObjectURL(record.blob);
+	const container = $('#mv-container');
+
+	viewerScene = new TalkScene();
+	try {
+		await viewerScene.mount({ container, glbUrl: objectUrl, cameraPreset: 'full' });
+	} catch (err) {
+		console.error('[create-review] failed to mount viewer', err);
+		$('#viewer-loading').innerHTML =
+			'<span style="color:#ffb3b3">Couldn\'t render this model.</span>';
+		return;
+	}
+
+	$('#viewer-loading').hidden = true;
+
+	// Procedural idle layer — breathing (spine), micro-saccades, blink, weight shift.
+	// No AgentProtocol on this static preview; IdleAnimation's no-op stub covers it.
+	viewerIdle = new IdleAnimation({
+		getRoot: () => viewerScene?.root || null,
+		seed: record.id || 'create-review',
+	});
+	viewerIdleDispose = viewerScene.addOnTick((dt) => viewerIdle.update(dt));
 }
 
 function wireControls() {
@@ -178,6 +189,14 @@ async function onStartOver() {
 }
 
 function releaseObjectUrl() {
+	if (viewerIdleDispose) {
+		viewerIdleDispose();
+		viewerIdleDispose = null;
+	}
+	viewerIdle?.dispose();
+	viewerIdle = null;
+	viewerScene?.unmount?.();
+	viewerScene = null;
 	if (objectUrl) {
 		URL.revokeObjectURL(objectUrl);
 		objectUrl = null;

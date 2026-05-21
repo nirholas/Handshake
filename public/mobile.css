@@ -63,3 +63,140 @@
 		padding-top: env(safe-area-inset-top);
 	}
 }
+
+/* ── Home-page specific mobile polish ──────────────────────────────────
+ * Fixes that span across home.css / home-saas.css but are best kept here
+ * so the load order guarantees they win on equal-specificity conflicts.
+ */
+
+@media (max-width: 768px) {
+	/* Chapter rail navigation dots — only useful on wide viewports where the
+	   user can see the section number without losing their place. On mobile
+	   they float over content and are too small to tap reliably. */
+	.h-chapter-rail {
+		display: none !important;
+	}
+
+	/* Hero: on phones the sticky/margin-bottom trick (used for the parallax
+	   text pin) causes a big blank gap.  The media query in home.css already
+	   resets it to relative but misses some padding edge-cases. */
+	.h-hero-text {
+		padding-top: 1.5rem;
+		padding-bottom: 2rem;
+	}
+
+	/* Title size: clamp already handles it but add a hard cap so it never
+	   wraps oddly on 320-360px screens. */
+	.h-title {
+		font-size: clamp(2.6rem, 11vw, 4rem);
+		letter-spacing: -0.03em;
+	}
+
+	.h-act-title {
+		font-size: clamp(2rem, 8.5vw, 3.2rem);
+	}
+
+	/* Subtitle / lede: tighten line-height slightly on narrow screens */
+	.h-subtitle {
+		font-size: 1rem;
+		line-height: 1.5;
+	}
+
+	.h-act-lede {
+		font-size: 1rem;
+		line-height: 1.5;
+	}
+
+	/* CTA row: stack on very small phones */
+	.h-cta-row {
+		gap: 0.65rem;
+	}
+
+	.h-btn-primary,
+	.h-btn-ghost {
+		min-height: 48px;
+		padding: 0.9rem 1.4rem;
+		font-size: 0.92rem;
+	}
+
+	/* Standards list: allow 2-per-line on tiny screens */
+	.h-standards {
+		gap: 0.5rem 0.9rem;
+		font-size: 0.62rem;
+	}
+
+	/* Pillars: already single-column via home.css, add breathing room */
+	.h-pillars {
+		padding: 3rem 1.25rem;
+	}
+
+	.h-pillar p {
+		font-size: 0.9rem;
+	}
+
+	/* Bento section */
+	.h-bento-section {
+		padding: 3rem 1rem;
+	}
+
+	.h-bento-body {
+		padding: 1rem 1.2rem;
+	}
+
+	/* Dev section code block: allow horizontal scroll without breaking layout */
+	.h-dev-pre {
+		font-size: 0.74rem;
+	}
+
+	/* Final CTA section */
+	.h-cta-section {
+		padding: 3.5rem 1.25rem;
+	}
+
+	.h-cta-section h2 {
+		font-size: clamp(2rem, 9vw, 3.2rem);
+	}
+
+	.h-cta-section p {
+		font-size: 1rem;
+	}
+
+	.h-cta-row-center {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.h-cta-row-center .h-btn-primary,
+	.h-cta-row-center .h-btn-ghost {
+		text-align: center;
+		justify-content: center;
+	}
+
+	/* Footer */
+	.h-footer-horizon {
+		padding: 2.5rem 1.25rem 1.25rem !important;
+	}
+
+	.h-footer-watermark {
+		font-size: clamp(5rem, 18vw, 10rem);
+	}
+}
+
+/* Very small phones (≤ 380px) — tighten further */
+@media (max-width: 380px) {
+	.h-title {
+		font-size: clamp(2.2rem, 12vw, 3rem);
+	}
+
+	.h-cta-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.h-btn-primary,
+	.h-btn-ghost {
+		width: 100%;
+		text-align: center;
+		justify-content: center;
+	}
+}

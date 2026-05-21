@@ -21,6 +21,7 @@
 import { TalkScene } from './voice/talk-scene.js';
 import { AccessoryManager } from './agent-accessories.js';
 import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
+import { IdleAnimation } from './idle-animation.js';
 
 // ── Routing ────────────────────────────────────────────────────────────
 
@@ -45,6 +46,8 @@ let presets = []; // from /accessories/presets.json
 let presetsById = new Map();
 let scene = null;
 let accessoryManager = null;
+let idle = null;
+let idleDispose = null;
 
 // Appearance state — `current` reflects what the server has, `working` is what
 // the UI has committed (locally) and will save. We're dirty when they differ.
@@ -156,6 +159,16 @@ async function bootScene() {
 			invalidate: () => {},
 		});
 		await accessoryManager.hydrateFromAppearance(currentAppearance);
+
+		// Ambient idle layer — breathing, micro-saccades, blink, weight shift.
+		// Static preview here (no AgentProtocol); IdleAnimation's no-op stub
+		// covers the SPEAK / LOOK_AT subscriptions. Seeded by avatar id so two
+		// previews on the same page don't sync up.
+		idle = new IdleAnimation({
+			getRoot: () => scene.root,
+			seed: avatar.id || 'avatar-edit',
+		});
+		idleDispose = scene.addOnTick((dt) => idle.update(dt));
 	} catch (err) {
 		const loadingEl = $('ae-loading');
 		if (loadingEl) loadingEl.textContent = `Could not load GLB: ${err.message}`;
