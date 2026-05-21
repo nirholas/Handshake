@@ -29,7 +29,8 @@
 		"mcp-bridge",
 		"mcp-server",
 		"multiplayer",
-		"packages/avatar-schema"
+		"packages/avatar-schema",
+		"packages/avatar-cli"
 	],
 	"main": "src/app.js",
 	"browserslist": [
