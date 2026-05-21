@@ -38,14 +38,21 @@ If you cannot verify a step, say so explicitly. Do not claim done.
 
 This workspace mirrors to two GitHub repos. Every push must go to both, or one deploy target falls behind.
 
-- `origin`   → `https://github.com/nirholas/3D-Agent`
-- `threews`  → `https://github.com/nirholas/three.ws`
+- `threeD`  → `https://github.com/nirholas/3D-Agent` (push-only mirror)
+- `threews` → `https://github.com/nirholas/three.ws` (canonical source of truth)
 
 When the user asks you to push (or to commit + push):
-1. `git push origin <branch>`
-2. `git push threews <branch>`
+1. `git push threeD main`
+2. `git push threews main`
 
 Run both in the same step. If one fails, surface the error — do not silently leave the repos out of sync. Never push without explicit user approval, and never force-push to either remote without an explicit request.
+
+## Git: NEVER pull or fetch from 3D-Agent
+
+**`threeD` (nirholas/3D-Agent) is a PUSH-ONLY mirror. NEVER run `git pull`, `git fetch`, or `git merge` from it.**
+
+- `threews` (nirholas/three.ws) is the canonical source of truth. All pulls and fetches must come from `threews` only.
+- Pulling from `threeD` merges foreign history into this repo and has caused destructive README overwrites. Do not do it under any circumstances, even to resolve conflicts or sync state.
 
 ## Stack notes
 
