@@ -21,8 +21,7 @@ WHERE deleted_at IS NULL
   AND visibility = 'public'
   AND (
        name ILIKE 'CZ'
-    OR name ILIKE 'LittlestTokyo'
-    OR name ILIKE 'Soldier%'
+OR name ILIKE 'Soldier%'
     OR name ILIKE 'Robot%Expressive'
     OR name ILIKE 'Floating%Character'
     OR name ILIKE 'Stork'

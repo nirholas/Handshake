@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Exhibit component should change background color 1`] = `
+<div>
+  <div
+    class="base-canvas "
+    style="position: relative; width: 100%; height: 100%; overflow: hidden; pointer-events: auto; background: transparent;"
+  >
+    <div
+      style="width: 100%; height: 100%;"
+    >
+      <canvas
+        style="display: block;"
+      />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Exhibit component should mount without errors 1`] = `
+<div>
+  <div
+    class="base-canvas "
+    style="position: relative; width: 100%; height: 100%; overflow: hidden; pointer-events: auto; background: transparent;"
+  >
+    <div
+      style="width: 100%; height: 100%;"
+    >
+      <canvas
+        style="display: block;"
+      />
+    </div>
+  </div>
+</div>
+`;

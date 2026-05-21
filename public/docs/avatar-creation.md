@@ -10,7 +10,7 @@ Your agent's 3D avatar is what makes it feel real. It is the face people see, th
 |------|------|----------------|----------|
 | Photo → Avaturn AI | 3–5 min | None | A realistic avatar that looks like you |
 | Character Studio | 10–20 min | None | A stylized avatar with full creative control |
-| Upload your own GLB | 1 min | 3D modeling | An existing model from Blender, Mixamo, RPM, etc. |
+| Upload your own GLB | 1 min | 3D modeling | An existing model from Blender, Mixamo, or any 3D tool |
 
 Pick one and follow its section below. All three paths produce a GLB file that gets saved to your account.
 
@@ -95,7 +95,7 @@ The Character Studio URL defaults to `http://localhost:5173` for local developme
 
 ## Path 3: Upload your own GLB
 
-If you already have a 3D model — from Blender, Maya, Mixamo, Ready Player Me, or anywhere else — you can upload it directly.
+If you already have a 3D model — from Blender, Maya, Mixamo, or anywhere else — you can upload it directly.
 
 ### Steps
 
@@ -113,7 +113,7 @@ The three.ws viewer accepts any valid glTF 2.0 binary (`.glb`) file. If your mod
 | FBX | Blender: File → Import → FBX, then File → Export → glTF 2.0 (.glb) |
 | OBJ | Blender: File → Import → Wavefront, rig if needed, export as glTF |
 | VRM | VRM files are glTF 2.0 under the hood — rename `.vrm` to `.glb` and it loads |
-| Ready Player Me | RPM avatars export as GLB and are compatible out of the box |
+| Other avatar platforms | Most humanoid avatar tools export GLB and are compatible out of the box |
 | FBX via script | `/scripts/convert-fbx-to-glb.py` is available for batch conversion |
 
 ---

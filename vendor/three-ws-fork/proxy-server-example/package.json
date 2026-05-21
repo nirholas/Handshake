@@ -1,0 +1,24 @@
+{
+  "name": "@three-ws/proxy-server-example",
+  "version": "1.0.0",
+  "description": "Sample server proxy that hides partner API keys (three.ws fork).",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "three.ws contributors",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "http-proxy-middleware": "^3.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "vendor/three-ws-fork/proxy-server-example"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  }
+}

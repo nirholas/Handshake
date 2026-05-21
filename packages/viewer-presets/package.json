@@ -1,0 +1,59 @@
+{
+	"name": "@three-ws/viewer-presets",
+	"version": "0.1.0",
+	"description": "Tuned visual presets for three.ws avatar viewers — light rigs, floor reflection, and bloom configs derived from Ready Player Me's visage (MIT).",
+	"keywords": [
+		"three.ws",
+		"three.js",
+		"avatar",
+		"viewer",
+		"lighting",
+		"postprocessing",
+		"bloom",
+		"floor-reflection",
+		"readyplayerme-alternative",
+		"visage-derived"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nirholas/three.ws.git",
+		"directory": "packages/viewer-presets"
+	},
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.d.ts",
+			"import": "./src/index.js",
+			"default": "./src/index.js"
+		},
+		"./lights": "./src/lights.js",
+		"./floor": "./src/floor.js",
+		"./bloom": "./src/bloom.js"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE",
+		"NOTICE"
+	],
+	"scripts": {
+		"test": "node --test test/*.test.js"
+	},
+	"peerDependencies": {
+		"three": ">=0.150.0"
+	},
+	"peerDependenciesMeta": {
+		"three": {
+			"optional": true
+		}
+	},
+	"engines": {
+		"node": ">=18"
+	}
+}

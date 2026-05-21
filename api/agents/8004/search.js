@@ -122,23 +122,7 @@ export default wrap(async function handler(req, res) {
 		if (e?.name === 'AbortError') {
 			return error(res, 504, 'subgraph_timeout', 'subgraph query timed out');
 		}
-		// Some older subgraph deployments do not support hasOASF in the return fields.
-		// Retry with a trimmed projection that omits it.
-		if (e?.message?.includes('hasOASF')) {
-			try {
-				rawAgents = await querySubgraph(subgraphUrl, {
-					where,
-					first: limit,
-					skip,
-					orderBy: 'updatedAt',
-					orderDirection: 'desc',
-				});
-			} catch (e2) {
-				return error(res, 502, 'subgraph_error', e2?.message || 'subgraph query failed');
-			}
-		} else {
-			return error(res, 502, 'subgraph_error', e?.message || 'subgraph query failed');
-		}
+		return error(res, 502, 'subgraph_error', e?.message || 'subgraph query failed');
 	}
 
 	const agents = (rawAgents || []).map((a) => {
@@ -162,7 +146,6 @@ export default wrap(async function handler(req, res) {
 			a2aEndpoint: rf?.a2aEndpoint || null,
 			webEndpoint: rf?.webEndpoint || null,
 			emailEndpoint: rf?.emailEndpoint || null,
-			hasOASF: rf?.hasOASF ?? null,
 			ens: rf?.ens || null,
 			did: rf?.did || null,
 			supportedTrusts: rf?.supportedTrusts || [],

@@ -2,12 +2,12 @@
 	{
 		"pattern": "source: 'avaturn'",
 		"file": "*",
-		"reason": "Internal postMessage source value — required to match Avaturn iframe protocol, never shown to end users."
+		"reason": "Internal postMessage source value — required to match photo-pipeline iframe protocol, never shown to end users."
 	},
 	{
 		"pattern": "source: 'characterstudio'",
 		"file": "*",
-		"reason": "Internal postMessage source value — required to match Character Studio iframe protocol, never shown to end users."
+		"reason": "Internal postMessage source value — required to match avatar builder iframe protocol, never shown to end users."
 	},
 	{
 		"pattern": "source !== 'avaturn'",
@@ -33,5 +33,75 @@
 		"pattern": "/avaturn-session",
 		"file": "*",
 		"reason": "Internal API route path — server-side only."
+	},
+	{
+		"pattern": "AVATURN_API_KEY",
+		"file": "*",
+		"reason": "Environment variable identifier — technical name, not user-facing copy."
+	},
+	{
+		"pattern": "AVATURN_API_URL",
+		"file": "*",
+		"reason": "Environment variable identifier — technical name, not user-facing copy."
+	},
+	{
+		"pattern": "VITE_AVATURN_EDITOR_URL",
+		"file": "*",
+		"reason": "Environment variable identifier — technical name, not user-facing copy."
+	},
+	{
+		"pattern": "VITE_AVATURN_DEVELOPER_ID",
+		"file": "*",
+		"reason": "Environment variable identifier — technical name, not user-facing copy."
+	},
+	{
+		"pattern": "VITE_CHARACTER_STUDIO_URL",
+		"file": "*",
+		"reason": "Environment variable identifier — technical name, not user-facing copy."
+	},
+	{
+		"pattern": "m3-org/CharacterStudio",
+		"file": "*",
+		"reason": "Upstream open-source project attribution — GitHub repo reference required for MIT attribution."
+	},
+	{
+		"pattern": "M3-org/CharacterStudio",
+		"file": "*",
+		"reason": "Upstream open-source project attribution — GitHub repo reference required for MIT attribution."
+	},
+	{
+		"pattern": "avaturn-client.js",
+		"file": "*",
+		"reason": "Internal source file name reference — technical identifier."
+	},
+	{
+		"pattern": "avaturn-session",
+		"file": "*",
+		"reason": "Internal API route segment — server-side only."
+	},
+	{
+		"pattern": "api.avaturn.me",
+		"file": "*",
+		"reason": "Runtime API endpoint URL — required for photo pipeline integration, not user-facing brand copy."
+	},
+	{
+		"pattern": "editor.avaturn.me",
+		"file": "*",
+		"reason": "Runtime editor endpoint URL — required for photo pipeline integration, not user-facing brand copy."
+	},
+	{
+		"pattern": "developer.avaturn.me",
+		"file": "*",
+		"reason": "Developer portal URL — required for SDK key signup instructions."
+	},
+	{
+		"pattern": "@avaturn/sdk",
+		"file": "*",
+		"reason": "npm package identifier — cannot be renamed, fixed by the upstream package."
+	},
+	{
+		"pattern": "avaturn.me/developer",
+		"file": "*",
+		"reason": "Developer portal URL reference in configuration docs."
 	}
 ]

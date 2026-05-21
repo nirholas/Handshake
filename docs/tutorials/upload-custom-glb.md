@@ -18,7 +18,7 @@ This tutorial covers the whole pipeline. Where compatible GLBs come from, what m
 
 A GLB is just a binary glTF — a 3D scene packaged in a single file. The runtime accepts any valid glTF 2.0 GLB, but to function as a *conversational agent body* it needs three things on top of the basic geometry:
 
-1. **A skeleton (armature) the runtime can read.** The bones should follow a humanoid pattern — head, neck, spine, two arms, two legs. Mixamo, Ready Player Me, and Avaturn all output skeletons that the runtime understands directly.
+1. **A skeleton (armature) the runtime can read.** The bones should follow a humanoid pattern — head, neck, spine, two arms, two legs. Mixamo and most humanoid avatar pipelines output skeletons that the runtime understands directly.
 2. **An idle animation clip.** Without an idle, the avatar stands in T-pose between turns, which looks like a broken model. Any clip whose name contains "idle" (case-insensitive) works.
 3. **At least one talk-style clip.** Used while the agent is speaking. Names containing "talk", "yes", or "wave" all match the runtime's hint search.
 
@@ -52,19 +52,19 @@ Workflow:
 
 Mixamo characters work *out of the box* with the runtime. This is the recommended path if you don't already have a model.
 
-### Ready Player Me
+### three.ws Studio
 
-[Ready Player Me](https://readyplayer.me) lets you create a stylised, selfie-based avatar in two minutes. The download is a single GLB with a clean skeleton.
+[three.ws Studio](https://studio.three.ws) lets you create a stylised avatar in minutes with full body customisation. The download is a single GLB with a clean skeleton and Mixamo-compatible rig.
 
 Workflow:
 
-1. Create an avatar at readyplayer.me.
-2. From the developer dashboard, download the GLB.
+1. Open [three.ws Studio](https://studio.three.ws).
+2. Customise your avatar and click **Export**.
 3. The GLB has the body and skin but no animations baked in — you'll need to add at least an idle clip. See Step 5 for adding clips with `gltf-transform`.
 
-### Avaturn
+### Photo-to-avatar
 
-[Avaturn](https://avaturn.me) is similar to Ready Player Me but tends to produce more realistic faces from photos. The export is also a clean GLB; animations are pulled from a Mixamo-compatible rig, so the same workflow applies.
+The three.ws photo pipeline generates a realistic humanoid avatar from three face photos. The export is a clean GLB; animations are pulled from a Mixamo-compatible rig, so the same workflow applies.
 
 ### Blender (custom, full control)
 
@@ -364,7 +364,7 @@ Each one should trigger the corresponding clip. If a clip you expect doesn't fir
 
 The full custom-GLB pipeline:
 
-- Compatible avatars come from Mixamo, Ready Player Me, Avaturn, or Blender — all four produce something the runtime understands
+- Compatible avatars come from Mixamo, three.ws Studio, the photo pipeline, or Blender — all produce something the runtime understands
 - The runtime needs a humanoid skeleton, an idle clip, and a talk clip; it likes a wave and a celebrate too
 - The validator at [three.ws/validation](https://three.ws/validation) catches every common failure before upload
 - Mixamo's `mixamo.com` clip names need renaming so the hint search finds them

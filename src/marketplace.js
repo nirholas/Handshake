@@ -1706,6 +1706,371 @@ async function downloadReceipt(purchaseId) {
 	}
 }
 
+// ── Earn tab ─────────────────────────────────────────────────────────────
+
+const earnState = { loaded: false, loading: false, pending_usd: 0, settled_usd: 0, entries: [], wallet: null };
+
+async function loadEarnTab(force = false) {
+	if (earnState.loading) return;
+	if (earnState.loaded && !force) return renderEarnTab();
+	earnState.loading = true;
+	const entriesEl = $('earn-entries');
+	if (entriesEl) entriesEl.innerHTML = '<div class="market-empty">Loading…</div>';
+
+	try {
+		const [earningsRes, walletsRes] = await Promise.all([
+			fetch(`${API}/users/earnings`, { credentials: 'include' }),
+			fetch(`${API}/billing/payout-wallets`, { credentials: 'include' }),
+		]);
+
+		if (earningsRes.ok) {
+			const j = await earningsRes.json();
+			earnState.pending_usd = j.pending_usd || 0;
+			earnState.settled_usd = j.settled_usd || 0;
+			earnState.entries = j.entries || [];
+		}
+
+		if (walletsRes.ok) {
+			const wj = await walletsRes.json();
+			const wallets = wj.wallets || [];
+			earnState.wallet = wallets.find((w) => w.is_default) || wallets[0] || null;
+		}
+
+		earnState.loaded = true;
+	} catch (err) {
+		console.error('[marketplace] earn tab', err);
+	} finally {
+		earnState.loading = false;
+		renderEarnTab();
+	}
+}
+
+function renderEarnTab() {
+	const pendingEl = $('earn-pending');
+	const settledEl = $('earn-settled');
+	const walletEl = $('earn-wallet-display');
+	const entriesEl = $('earn-entries');
+
+	if (pendingEl) pendingEl.textContent = `$${earnState.pending_usd.toFixed(2)}`;
+	if (settledEl) settledEl.textContent = `$${earnState.settled_usd.toFixed(2)}`;
+	if (walletEl) {
+		if (earnState.wallet) {
+			const addr = earnState.wallet.address;
+			walletEl.textContent = addr.length > 16 ? `${addr.slice(0, 8)}…${addr.slice(-6)}` : addr;
+			walletEl.title = addr;
+		} else {
+			walletEl.textContent = 'Not set';
+		}
+	}
+	const editBtn = $('earn-wallet-edit');
+	if (editBtn) editBtn.textContent = earnState.wallet ? 'Edit' : 'Set wallet';
+
+	if (!entriesEl) return;
+	if (!earnState.entries.length) {
+		entriesEl.innerHTML = '<div class="market-empty">No revenue yet. Publish agents or skills with prices to start earning.</div>';
+		return;
+	}
+	entriesEl.innerHTML = earnState.entries.map((e) => {
+		const date = e.created_at ? formatDate(e.created_at) : '';
+		const statusBadge = e.status === 'settled'
+			? `<span class="stat-pill" style="color:#86efac">settled</span>`
+			: `<span class="stat-pill" style="color:#fde047">pending</span>`;
+		return `<div class="earn-entry">
+			<div class="earn-entry-info">
+				<span class="earn-entry-skill">${escapeHtml(e.skill_name || e.skill || '—')}</span>
+				<span class="earn-entry-agent" style="color:#71717a;font-size:0.8rem">${escapeHtml(e.agent_name || '')}</span>
+			</div>
+			<div class="earn-entry-right">
+				<span class="earn-entry-amount">$${Number(e.price_usd || 0).toFixed(3)}</span>
+				${statusBadge}
+				<span style="color:#71717a;font-size:0.78rem">${escapeHtml(date)}</span>
+			</div>
+		</div>`;
+	}).join('');
+}
+
+function openPublishSkillModal() {
+	const overlay = $('skill-publish-overlay');
+	if (!overlay) return;
+	$('sp-name').value = '';
+	$('sp-description').value = '';
+	$('sp-category').value = 'general';
+	$('sp-price').value = '0';
+	$('sp-tags').value = '';
+	$('sp-schema').value = '';
+	const errEl = $('skill-publish-error');
+	if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
+	overlay.hidden = false;
+	$('sp-name').focus();
+}
+
+function closePublishSkillModal() {
+	const overlay = $('skill-publish-overlay');
+	if (overlay) overlay.hidden = true;
+}
+
+function openWalletSetupModal() {
+	const overlay = $('wallet-setup-overlay');
+	if (!overlay) return;
+	$('ws-address').value = earnState.wallet?.address || '';
+	$('ws-chain').value = earnState.wallet?.chain || 'solana';
+	const errEl = $('wallet-setup-error');
+	if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
+	overlay.hidden = false;
+	$('ws-address').focus();
+}
+
+function closeWalletSetupModal() {
+	const overlay = $('wallet-setup-overlay');
+	if (overlay) overlay.hidden = true;
+}
+
+function bindEarnTab() {
+	// Publish skill from earn header
+	$('earn-publish-skill-btn')?.addEventListener('click', openPublishSkillModal);
+
+	// Wallet edit
+	$('earn-wallet-edit')?.addEventListener('click', openWalletSetupModal);
+
+	// Close wallet modal
+	$('wallet-setup-close')?.addEventListener('click', closeWalletSetupModal);
+	$('wallet-setup-overlay')?.addEventListener('click', (e) => {
+		if (e.target === $('wallet-setup-overlay')) closeWalletSetupModal();
+	});
+
+	// Save wallet
+	$('ws-save')?.addEventListener('click', async () => {
+		const address = ($('ws-address')?.value || '').trim();
+		const chain = $('ws-chain')?.value || 'solana';
+		const errEl = $('wallet-setup-error');
+		if (!address) {
+			if (errEl) { errEl.textContent = 'Address is required.'; errEl.hidden = false; }
+			return;
+		}
+		const btn = $('ws-save');
+		if (btn) btn.disabled = true;
+		try {
+			const r = await fetch(`${API}/billing/payout-wallets`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ address, chain, is_default: true }),
+			});
+			const j = await r.json();
+			if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+			earnState.wallet = j.wallet;
+			earnState.loaded = false;
+			closeWalletSetupModal();
+			loadEarnTab(true);
+		} catch (err) {
+			if (errEl) { errEl.textContent = err.message; errEl.hidden = false; }
+		} finally {
+			if (btn) btn.disabled = false;
+		}
+	});
+
+	// Close publish skill modal
+	$('skill-publish-close')?.addEventListener('click', closePublishSkillModal);
+	$('skill-publish-overlay')?.addEventListener('click', (e) => {
+		if (e.target === $('skill-publish-overlay')) closePublishSkillModal();
+	});
+
+	// Publish skill submit
+	$('sp-publish')?.addEventListener('click', async () => {
+		const name = ($('sp-name')?.value || '').trim();
+		const description = ($('sp-description')?.value || '').trim();
+		const category = $('sp-category')?.value || 'general';
+		const price_per_call_usd = parseFloat($('sp-price')?.value || '0') || 0;
+		const tags = ($('sp-tags')?.value || '').split(',').map((t) => t.trim()).filter(Boolean);
+		const schemaRaw = ($('sp-schema')?.value || '').trim();
+		const errEl = $('skill-publish-error');
+
+		if (!name) {
+			if (errEl) { errEl.textContent = 'Name is required.'; errEl.hidden = false; }
+			return;
+		}
+		if (!description) {
+			if (errEl) { errEl.textContent = 'Description is required.'; errEl.hidden = false; }
+			return;
+		}
+
+		let schema_json = null;
+		if (schemaRaw) {
+			try {
+				schema_json = JSON.parse(schemaRaw);
+			} catch {
+				if (errEl) { errEl.textContent = 'Tool definitions must be valid JSON.'; errEl.hidden = false; }
+				return;
+			}
+		}
+
+		if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
+		const btn = $('sp-publish');
+		if (btn) { btn.disabled = true; btn.textContent = 'Publishing…'; }
+
+		try {
+			const r = await fetch(`${API}/skills`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ name, description, category, tags, schema_json, is_public: true, price_per_call_usd }),
+			});
+			const j = await r.json();
+			if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+			closePublishSkillModal();
+			// Reload skills tab cache
+			skillsState.skills = [];
+			skillsState.loaded = false;
+			earnState.loaded = false;
+		} catch (err) {
+			if (errEl) { errEl.textContent = err.message; errEl.hidden = false; }
+		} finally {
+			if (btn) { btn.disabled = false; btn.textContent = 'Publish Skill'; }
+		}
+	});
+
+	// skills-empty-publish — should open skill modal, not agent modal
+	document.addEventListener('click', (e) => {
+		if (e.target?.id === 'skills-empty-publish') {
+			e.stopPropagation();
+			openPublishSkillModal();
+		}
+	});
+}
+
+// ── Agent Pricing Modal ───────────────────────────────────────────────────
+
+const agentPricingState = { agentId: null, agentName: '', rows: [] };
+
+function openAgentPricingModal(agentId, agentName) {
+	const overlay = $('agent-pricing-overlay');
+	if (!overlay) return;
+	agentPricingState.agentId = agentId;
+	agentPricingState.agentName = agentName;
+	agentPricingState.rows = [];
+	$('agent-pricing-title').textContent = `Set Skill Prices`;
+	$('agent-pricing-hint').textContent = `Prices for "${agentName}". Leave a price blank or 0 to keep it free.`;
+	$('ap-new-skill').value = '';
+	const errEl = $('agent-pricing-error');
+	if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
+	overlay.hidden = false;
+	renderAgentPricingRows();
+
+	// Load existing prices
+	fetch(`${API}/marketplace/agents/${encodeURIComponent(agentId)}`, { credentials: 'include' })
+		.then((r) => r.json())
+		.then((j) => {
+			const prices = j.data?.agent?.skill_prices || {};
+			agentPricingState.rows = Object.entries(prices).map(([skill, p]) => ({
+				skill,
+				amount_usd: (Number(p.amount || 0) / 1e6).toFixed(2),
+			}));
+			renderAgentPricingRows();
+		})
+		.catch(() => {});
+}
+
+function closeAgentPricingModal() {
+	const overlay = $('agent-pricing-overlay');
+	if (overlay) overlay.hidden = true;
+	agentPricingState.agentId = null;
+}
+
+function renderAgentPricingRows() {
+	const container = $('agent-pricing-rows');
+	if (!container) return;
+	if (!agentPricingState.rows.length) {
+		container.innerHTML = '<div style="color:#71717a;font-size:0.85rem;margin-bottom:0.5rem">No skills yet — add one below.</div>';
+		return;
+	}
+	container.innerHTML = agentPricingState.rows.map((row, i) => `
+		<div class="agent-pricing-row" data-row="${i}">
+			<span class="ap-skill-name">${escapeHtml(row.skill)}</span>
+			<input class="ap-price-input" type="number" min="0" max="100" step="0.01"
+				value="${escapeHtml(String(row.amount_usd))}" placeholder="0.00"
+				data-row="${i}" />
+			<span class="ap-unit">USDC</span>
+			<button class="ap-remove" data-row="${i}" title="Remove">×</button>
+		</div>
+	`).join('');
+
+	container.querySelectorAll('.ap-price-input').forEach((inp) => {
+		inp.addEventListener('input', () => {
+			const i = Number(inp.dataset.row);
+			if (agentPricingState.rows[i]) agentPricingState.rows[i].amount_usd = inp.value;
+		});
+	});
+	container.querySelectorAll('.ap-remove').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const i = Number(btn.dataset.row);
+			agentPricingState.rows.splice(i, 1);
+			renderAgentPricingRows();
+		});
+	});
+}
+
+function bindAgentPricingModal() {
+	$('agent-pricing-close')?.addEventListener('click', closeAgentPricingModal);
+	$('agent-pricing-overlay')?.addEventListener('click', (e) => {
+		if (e.target === $('agent-pricing-overlay')) closeAgentPricingModal();
+	});
+
+	$('ap-add-skill')?.addEventListener('click', () => {
+		const inp = $('ap-new-skill');
+		const skill = (inp?.value || '').trim().toLowerCase().replace(/\s+/g, '-');
+		if (!skill) return;
+		if (agentPricingState.rows.some((r) => r.skill === skill)) {
+			inp.value = '';
+			return;
+		}
+		agentPricingState.rows.push({ skill, amount_usd: '0.00' });
+		inp.value = '';
+		renderAgentPricingRows();
+	});
+
+	$('ap-new-skill')?.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') { e.preventDefault(); $('ap-add-skill')?.click(); }
+	});
+
+	$('ap-save')?.addEventListener('click', async () => {
+		const { agentId, rows } = agentPricingState;
+		if (!agentId) return;
+		const errEl = $('agent-pricing-error');
+		if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
+		const btn = $('ap-save');
+		if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+		try {
+			await Promise.all(rows.map(async (row) => {
+				const amount = Math.round(parseFloat(row.amount_usd || '0') * 1e6);
+				const r = await fetch(`${API}/marketplace/set-skill-price`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({
+						agent_id: agentId,
+						skill: row.skill,
+						amount,
+						currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+						chain: 'solana',
+					}),
+				});
+				if (!r.ok) {
+					const j = await r.json().catch(() => ({}));
+					throw new Error(j.error_description || `Failed for skill "${row.skill}"`);
+				}
+			}));
+			closeAgentPricingModal();
+			mineState.loaded = false;
+			loadMine(true);
+		} catch (err) {
+			if (errEl) { errEl.textContent = err.message; errEl.hidden = false; }
+		} finally {
+			if (btn) { btn.disabled = false; btn.textContent = 'Save Prices'; }
+		}
+	});
+}
+
 // ── My Agents tab ────────────────────────────────────────────────────────
 
 const mineState = { loaded: false, loading: false, items: [] };
@@ -2772,11 +3137,59 @@ function closeSubmitModal() {
 	$('market-submit-overlay').hidden = true;
 }
 
+// sf-price-rows state for the submit modal
+const sfPriceRows = [];
+
+function renderSfPriceRows() {
+	const container = $('sf-price-rows');
+	if (!container) return;
+	if (!sfPriceRows.length) { container.innerHTML = ''; return; }
+	container.innerHTML = sfPriceRows.map((row, i) => `
+		<div class="agent-pricing-row" data-row="${i}">
+			<span class="ap-skill-name">${escapeHtml(row.skill)}</span>
+			<input class="ap-price-input" type="number" min="0" max="100" step="0.01"
+				value="${escapeHtml(String(row.amount_usd))}" placeholder="0.00" data-row="${i}" />
+			<span class="ap-unit">USDC</span>
+			<button class="ap-remove" data-row="${i}" title="Remove">×</button>
+		</div>
+	`).join('');
+	container.querySelectorAll('.ap-price-input').forEach((inp) => {
+		inp.addEventListener('input', () => {
+			const i = Number(inp.dataset.row);
+			if (sfPriceRows[i]) sfPriceRows[i].amount_usd = inp.value;
+		});
+	});
+	container.querySelectorAll('.ap-remove').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			sfPriceRows.splice(Number(btn.dataset.row), 1);
+			renderSfPriceRows();
+		});
+	});
+}
+
 function bindSubmit() {
-	document.querySelectorAll('.market-submit-btn').forEach(b => b.addEventListener('click', openSubmitModal));
+	// Exclude earn-publish-skill-btn from triggering the agent submit modal
+	document.querySelectorAll('.market-submit-btn').forEach((b) => {
+		if (b.id === 'earn-publish-skill-btn') return;
+		b.addEventListener('click', openSubmitModal);
+	});
 	$('market-submit-close').addEventListener('click', closeSubmitModal);
 	$('market-submit-overlay').addEventListener('click', (e) => {
 		if (e.target === $('market-submit-overlay')) closeSubmitModal();
+	});
+
+	// Add skill price row in submit modal
+	$('sf-add-skill')?.addEventListener('click', () => {
+		const inp = $('sf-new-skill');
+		const skill = (inp?.value || '').trim().toLowerCase().replace(/\s+/g, '-');
+		if (!skill) return;
+		if (sfPriceRows.some((r) => r.skill === skill)) { inp.value = ''; return; }
+		sfPriceRows.push({ skill, amount_usd: '0.00' });
+		inp.value = '';
+		renderSfPriceRows();
+	});
+	$('sf-new-skill')?.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') { e.preventDefault(); $('sf-add-skill')?.click(); }
 	});
 
 	const form = $('market-submit-form');
@@ -2805,8 +3218,42 @@ function bindSubmit() {
 			const j = await r.json();
 			if (!r.ok) throw new Error(j.error_description || 'Submission failed');
 
+			const agentId = j?.data?.agent?.id;
+
+			// Save payout wallet if provided
+			const payoutAddr = ($('sf-payout-wallet')?.value || '').trim();
+			if (payoutAddr && agentId) {
+				fetch(`${API}/billing/payout-wallets`, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ address: payoutAddr, chain: 'solana', agent_id: agentId, is_default: true }),
+				}).catch(() => {});
+			}
+
+			// Save skill prices if any were set
+			if (agentId && sfPriceRows.length) {
+				Promise.all(sfPriceRows.map((row) => {
+					const amount = Math.round(parseFloat(row.amount_usd || '0') * 1e6);
+					if (!amount) return Promise.resolve();
+					return fetch(`${API}/marketplace/set-skill-price`, {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						credentials: 'include',
+						body: JSON.stringify({
+							agent_id: agentId,
+							skill: row.skill,
+							amount,
+							currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+							chain: 'solana',
+						}),
+					});
+				})).catch(() => {});
+			}
+
+			sfPriceRows.length = 0;
 			closeSubmitModal();
-			loadList(true); // Refresh the list
+			loadList(true);
 		} catch (err) {
 			errorEl.textContent = err.message;
 			errorEl.hidden = false;

@@ -38,7 +38,7 @@ async function runForWindow(window) {
 				left join club_tips t
 					on t.dancer = d.dancer and t.created_at >= now() - interval '1 hour'
 				group by d.dancer, d.display_name
-				order by total_atomics::numeric desc, d.dancer asc
+				order by coalesce(sum(t.amount_atomics), 0) desc, d.dancer asc
 			`;
 		case 'day':
 			return sql`
@@ -52,7 +52,7 @@ async function runForWindow(window) {
 				left join club_tips t
 					on t.dancer = d.dancer and t.created_at >= now() - interval '24 hours'
 				group by d.dancer, d.display_name
-				order by total_atomics::numeric desc, d.dancer asc
+				order by coalesce(sum(t.amount_atomics), 0) desc, d.dancer asc
 			`;
 		case 'week':
 			return sql`
@@ -66,7 +66,7 @@ async function runForWindow(window) {
 				left join club_tips t
 					on t.dancer = d.dancer and t.created_at >= now() - interval '7 days'
 				group by d.dancer, d.display_name
-				order by total_atomics::numeric desc, d.dancer asc
+				order by coalesce(sum(t.amount_atomics), 0) desc, d.dancer asc
 			`;
 		case 'all':
 			return sql`
@@ -79,7 +79,7 @@ async function runForWindow(window) {
 				from club_dancer_wallets d
 				left join club_tips t on t.dancer = d.dancer
 				group by d.dancer, d.display_name
-				order by total_atomics::numeric desc, d.dancer asc
+				order by coalesce(sum(t.amount_atomics), 0) desc, d.dancer asc
 			`;
 		default:
 			return null;

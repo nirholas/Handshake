@@ -72,7 +72,7 @@ Rails:
 **Build:** `npx vite build` → ✓ no new warnings.
 
 **Caveats:**
-- The framing math assumes the avatar root sits with feet on the floor (Y starts near 0). For models authored at hip-height origins, full preset can clip the legs. Acceptable for now since every avatar produced via Avaturn / Mixamo / RPM-style pipelines uses a foot-origin convention.
+- The framing math assumes the avatar root sits with feet on the floor (Y starts near 0). For models authored at hip-height origins, full preset can clip the legs. Acceptable for now since every avatar produced via Avaturn / Mixamo / standard humanoid pipelines uses a foot-origin convention.
 - `setCameraPreset` snaps the camera — no animated tween yet. The existing OrbitControls damping smooths user-driven motion but not programmatic jumps. A `lerpTo()` would polish this; deferred.
 
 ## Item 4 — Avatar snapshot capture + thumbnail upload ✅

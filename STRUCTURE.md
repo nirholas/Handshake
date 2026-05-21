@@ -1,39 +1,30 @@
 # Repository Structure
 
-Ready Player Me ships their platform across 30 public GitHub repos —
-[visage](https://github.com/readyplayerme/visage),
-[animation-library](https://github.com/readyplayerme/animation-library),
-[rpm-react-avatar-creator](https://github.com/readyplayerme/rpm-react-avatar-creator),
-[Example-iframe](https://github.com/readyplayerme/Example-iframe),
-[content-validation-schemas](https://github.com/readyplayerme/content-validation-schemas),
-several Unity/Unreal SDKs, and so on.
-
-three.ws ships the same surfaces from a **single npm-workspaces monorepo**.
-This file maps each RPM-equivalent surface to where it lives in this
-repository, so external developers can find what they need without reading 50
-top-level directories.
+three.ws ships all platform surfaces from a **single npm-workspaces monorepo**.
+This file maps each product surface to where it lives in this repository, so
+external developers can find what they need without reading 50 top-level
+directories.
 
 When an internal surface gains an external consumer that needs an independent
 release cadence, we promote it to its own published package (and optionally its
 own repo via `git subtree split`). See [Promotion path](#promotion-path) at the
 bottom.
 
-## RPM → three.ws surface map
+## three.ws surface map
 
-| Ready Player Me repo | three.ws equivalent | Status | Notes |
+| Surface | Location | Status | Notes |
 |---|---|---|---|
-| [visage](https://github.com/readyplayerme/visage) (web renderer) | [avatar-sdk/](avatar-sdk) `→ /viewer` | Published as `@three-ws/avatar` | Drop-in viewer with `<three-ws-avatar>` web component |
-| [rpm-react-avatar-creator](https://github.com/readyplayerme/rpm-react-avatar-creator) | [avatar-sdk/](avatar-sdk) `→ /react` `/creator` | Published as `@three-ws/avatar` | Same package, React subpath |
-| Avatar Creator (full app) | [character-studio/](character-studio) | Fork of [m3-org/CharacterStudio](https://github.com/M3-org/CharacterStudio), MIT, see [character-studio/LICENSE](character-studio/LICENSE) | Web-first character creator |
-| [Example-iframe](https://github.com/readyplayerme/Example-iframe) | [examples/](examples) | In-repo | `embed-test.html`, `web-component.html`, `two-agents.html`, `minimal.html` |
-| [animation-library](https://github.com/readyplayerme/animation-library) | [public/animations/](public/animations) + [scripts/build-animations.mjs](scripts/build-animations.mjs) | In-repo | Mixamo source FBX + GLB retargeting pipeline. **Not** derived from RPM's animation-library, whose license forbids redistribution outside RPM avatars |
-| [content-validation-schemas](https://github.com/readyplayerme/content-validation-schemas) | [packages/avatar-schema/](packages/avatar-schema) | Published as `@three-ws/avatar-schema` | JSON Schema for on-chain avatar manifests — three.ws's differentiator |
-| [Lyra-Sample](https://github.com/readyplayerme/Lyra-Sample), [VR-Demo](https://github.com/readyplayerme/VR-Demo) | [multiplayer/](multiplayer), [examples/coach-leo/](examples/coach-leo) | In-repo | Integration demos |
-| [rpm-unity-sdk-core](https://github.com/readyplayerme/rpm-unity-sdk-core), [rpm-unreal-sdk](https://github.com/readyplayerme/rpm-unreal-sdk) | — | Out of scope | three.ws is browser-native; no Unity/Unreal SDKs planned |
+| Web renderer / viewer | [avatar-sdk/](avatar-sdk) `→ /viewer` | Published as `@three-ws/avatar` | `<agent-3d>` web component |
+| React avatar creator | [avatar-sdk/](avatar-sdk) `→ /react` `/creator` | Published as `@three-ws/avatar` | Same package, React subpath |
+| Avatar builder (full app) | [character-studio/](character-studio) | Fork of [m3-org/CharacterStudio](https://github.com/M3-org/CharacterStudio), MIT, see [character-studio/LICENSE](character-studio/LICENSE) | Web-first character creator |
+| Embed examples | [examples/](examples) | In-repo | `embed-test.html`, `web-component.html`, `two-agents.html`, `minimal.html` |
+| Animation pipeline | [public/animations/](public/animations) + [scripts/build-animations.mjs](scripts/build-animations.mjs) | In-repo | Mixamo source FBX + GLB retargeting pipeline |
+| Avatar schema | [packages/avatar-schema/](packages/avatar-schema) | Published as `@three-ws/avatar-schema` | JSON Schema for on-chain avatar manifests |
+| Integration demos | [multiplayer/](multiplayer), [examples/coach-leo/](examples/coach-leo) | In-repo | Multiplayer and VR demos |
 | Avatar service backend | [api/](api) + [workers/](workers) | In-repo | Vercel functions + Cloudflare workers |
-| _(no RPM equivalent — our moat)_ | [contracts/](contracts) | In-repo | Foundry-based on-chain agent identity, ERC-8004 |
-| _(no RPM equivalent — our moat)_ | [sdk/](sdk), [solana-agent-sdk/](solana-agent-sdk), [agent-payments-sdk/](agent-payments-sdk), [agent-protocol-sdk/](agent-protocol-sdk) | Published | Cross-chain agent SDKs |
-| _(no RPM equivalent — our moat)_ | [mcp-server/](mcp-server), [mcp-bridge/](mcp-bridge) | Published as `@three-ws/mcp-server` | Model Context Protocol surface |
+| On-chain identity | [contracts/](contracts) | In-repo | Foundry-based on-chain agent identity, ERC-8004 |
+| Cross-chain SDKs | [sdk/](sdk), [solana-agent-sdk/](solana-agent-sdk), [agent-payments-sdk/](agent-payments-sdk), [agent-protocol-sdk/](agent-protocol-sdk) | Published | Cross-chain agent SDKs |
+| MCP integration | [mcp-server/](mcp-server), [mcp-bridge/](mcp-bridge) | Published as `@three-ws/mcp-server` | Model Context Protocol surface |
 
 ## npm workspaces
 

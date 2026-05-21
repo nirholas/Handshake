@@ -192,16 +192,16 @@ Both should be the same value. Get from [dashboard.privy.io](https://dashboard.p
 ### Avatar Pipeline
 
 #### `VITE_CHARACTER_STUDIO_URL`
-**Optional.** Origin where the Character Studio in-browser avatar builder is hosted. Defaults to `http://localhost:5173` in dev and `https://studio.three.ws` in production.
+**Optional.** Origin where the three.ws avatar builder is hosted. Defaults to `http://localhost:5173` in dev and `https://studio.three.ws` in production.
 
 ```
 VITE_CHARACTER_STUDIO_URL=https://studio.three.ws
 ```
 
-Character Studio is an open-source 3D avatar editor (full body customisation — hair, clothing, accessories, skin tone, proportions). It runs as a separate Vite/React app under `character-studio/` in this monorepo and posts the exported GLB back to the parent via `postMessage`. Ready Player Me previously fulfilled this role; after its 2026 acquisition, Character Studio is the recommended replacement and is fully drop-in compatible — same humanoid skeleton naming, ARKit `viseme_*` blendshapes, and Mixamo animation support.
+The three.ws avatar builder is an open-source 3D avatar editor (full body customisation — hair, clothing, accessories, skin tone, proportions). It runs as a separate Vite/React app under `character-studio/` in this monorepo and posts the exported GLB back to the parent via `postMessage`. It is fully compatible with the three.ws avatar runtime — same humanoid skeleton naming, ARKit `viseme_*` blendshapes, and Mixamo animation support.
 
 #### `AVATURN_API_KEY`
-**Optional.** API key for the Avaturn photo-to-avatar pipeline. Used server-side by `/api/onboarding/avaturn-session` to exchange selfie photos for a session URL.
+**Optional.** API key for the photo-to-avatar pipeline. Used server-side by `/api/onboarding/avaturn-session` to exchange selfie photos for a session URL.
 
 ```
 AVATURN_API_KEY=xxxxx
@@ -210,21 +210,21 @@ AVATURN_API_KEY=xxxxx
 Sign up at [avaturn.me/developer](https://avaturn.me/developer).
 
 #### `AVATURN_API_URL`
-**Optional.** Override for self-hosted or staging Avaturn deployments. Defaults to `https://api.avaturn.me`.
+**Optional.** Override for self-hosted or staging photo pipeline deployments. Defaults to `https://api.avaturn.me`.
 
 ```
 AVATURN_API_URL=https://api.avaturn.me
 ```
 
 #### `VITE_AVATURN_EDITOR_URL`
-**Optional.** URL for the hosted Avaturn editor (no photos required, opened by the "Use default avatar" card at `/create`).
+**Optional.** URL for the hosted avatar editor (no photos required, opened by the "Use default avatar" card at `/create`).
 
 ```
 VITE_AVATURN_EDITOR_URL=https://editor.avaturn.me/
 ```
 
 #### `VITE_AVATURN_DEVELOPER_ID`
-**Optional.** Developer ID appended as a query parameter to the Avaturn editor URL.
+**Optional.** Developer ID appended as a query parameter to the avatar editor URL.
 
 ```
 VITE_AVATURN_DEVELOPER_ID=xxxxx

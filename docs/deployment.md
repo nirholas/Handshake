@@ -104,15 +104,14 @@ Without Redis, rate limits run in-memory per serverless instance. This is fine f
 ### Avatar creation
 
 ```env
-# Character Studio — origin where the in-browser avatar builder iframe is hosted.
+# Avatar builder — origin where the in-browser avatar builder iframe is hosted.
 # Defaults to http://localhost:5173 in dev. Production deployments should host the
 # character-studio/ workspace (it is a separate Vite/React app) and point this env
-# var at its origin. Character Studio replaces the Ready Player Me iframe that was
-# previously used here — same export contract, same humanoid rig, but open-source
+# var at its origin. Same export contract, same humanoid rig, open-source
 # and self-hostable.
 VITE_CHARACTER_STUDIO_URL=https://studio.three.ws
 
-# Avaturn — photo-to-avatar pipeline
+# Photo-to-avatar pipeline
 # Get key at https://avaturn.me/developer
 AVATURN_API_KEY=
 AVATURN_API_URL=https://api.avaturn.me
@@ -537,7 +536,7 @@ After deploying, run through these checks to verify the instance is healthy:
 |---|---|
 | Viewer | Load the app and drag-drop a GLB file |
 | Wallet sign-in | Connect MetaMask — SIWE challenge + verify |
-| Avatar creation | Navigate to `/create` — Character Studio (or Avaturn) iframe loads |
+| Avatar creation | Navigate to `/create` — avatar builder iframe loads |
 | Agent page | Visit `/agent/:id` — 3D viewer with chat overlay |
 | Embed | Check `/agent/:id/embed` loads without auth, can be iframed |
 | Dashboard | Navigate to `/dashboard` — shows your agents |

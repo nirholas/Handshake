@@ -4,7 +4,7 @@
 
 Persona Hub is three.ws's cross-app sign-in: a user creates and stores their three.ws avatar once, then any tenant site embedding the `<three-ws-signin>` widget can request a short-lived JWT that bears the user's avatar URL. three.ws itself **issues** the token — from a popup served on `three.ws`, against the user's session cookie — and tenants **verify** it server-side, either offline against the published JWKS (when the deployment is running in ES256 mode) or by calling the public `/api/auth/persona/verify` endpoint. ES256 is the preferred algorithm because the public key is published at [/.well-known/jwks.json](https://three.ws/.well-known/jwks.json) and tenants can verify without a network round-trip.
 
-The architectural analogue is Ready Player Me's Hub before its acquisition — one avatar, many sites — redesigned around three.ws's own auth stack.
+The pattern is one avatar, many sites — redesigned around three.ws's own auth stack.
 
 ---
 

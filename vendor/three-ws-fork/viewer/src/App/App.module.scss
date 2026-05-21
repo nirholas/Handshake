@@ -1,0 +1,28 @@
+html,
+body,
+#root,
+.app {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.app {
+  position: relative;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.container {
+  display: flex;
+  height: 100%;
+}
+
+.card {
+  width: 100%;
+}
+
+.stats {
+    left: 80px !important;
+}

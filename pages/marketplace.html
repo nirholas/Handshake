@@ -1370,6 +1370,7 @@
 				<a href="/dashboard" data-nav="model"><span class="ico">◉</span> <span>Model</span></a>
 				<a href="/marketplace?tab=mine" data-nav="mine"><span class="ico">◱</span> <span>My Agents</span></a>
 				<a href="/marketplace?tab=purchases" data-nav="purchases"><span class="ico">✓</span> <span>My Purchases</span></a>
+				<a href="/marketplace?tab=earn" data-nav="earn"><span class="ico">$</span> <span>Earn</span></a>
 			</nav>
 			<button class="market-submit-btn market-sidebar-submit" id="market-submit-btn">+ Submit Agent</button>
 		</aside>
@@ -1600,6 +1601,38 @@
 				</div>
 			</section>
 
+			<!-- Earn tab -->
+			<section class="market-earn" id="market-earn" hidden>
+				<header class="market-topbar">
+					<div class="market-mine-head">
+						<h2 class="market-section-heading">Earn</h2>
+						<span class="market-mine-sub" id="earn-subtitle">Revenue from your published agents and skills</span>
+					</div>
+					<button class="market-submit-btn" id="earn-publish-skill-btn">+ Publish Skill</button>
+				</header>
+				<div class="earn-body">
+					<div class="earn-summary" id="earn-summary">
+						<div class="earn-stat-card">
+							<div class="earn-stat-label">Pending</div>
+							<div class="earn-stat-value" id="earn-pending">—</div>
+						</div>
+						<div class="earn-stat-card">
+							<div class="earn-stat-label">Settled</div>
+							<div class="earn-stat-value" id="earn-settled">—</div>
+						</div>
+						<div class="earn-stat-card earn-stat-wallet">
+							<div class="earn-stat-label">Payout Wallet</div>
+							<div class="earn-stat-value earn-wallet-addr" id="earn-wallet-display">Not set</div>
+							<button class="earn-wallet-btn" id="earn-wallet-edit">Edit</button>
+						</div>
+					</div>
+					<div class="earn-section-title">Recent Revenue</div>
+					<div class="earn-entries" id="earn-entries">
+						<div class="market-empty">Loading…</div>
+					</div>
+				</div>
+			</section>
+
 			<!-- Skills tab -->
 			<section class="market-skills-section" id="market-skills-section" hidden>
 				<header class="market-topbar">
@@ -1820,6 +1853,22 @@
 					<input id="sf-greeting" type="text" maxlength="1000" placeholder="Hello! I'm here to help you with…" />
 				</div>
 
+				<details class="market-field-group">
+					<summary class="market-field-group-title">Monetize <span class="field-hint">(optional)</span></summary>
+					<div class="market-field" style="margin-top:0.75rem">
+						<label for="sf-payout-wallet">Payout wallet address <span class="field-hint">(Solana)</span></label>
+						<input id="sf-payout-wallet" type="text" maxlength="100" placeholder="Your Solana address for receiving payments" autocomplete="off" />
+					</div>
+					<div class="sf-skill-prices" id="sf-skill-prices">
+						<div class="sf-skill-prices-label">Skill prices <span class="field-hint">(USDC per call)</span></div>
+						<div id="sf-price-rows"></div>
+						<div class="agent-pricing-add-row">
+							<input id="sf-new-skill" type="text" maxlength="100" placeholder="skill-name" autocomplete="off" />
+							<button type="button" id="sf-add-skill" class="market-btn-sec">+ Add Skill</button>
+						</div>
+					</div>
+				</details>
+
 				<div id="market-submit-error" class="market-form-error" hidden></div>
 
 				<div class="market-submit-actions">
@@ -1829,6 +1878,104 @@
 			</form>
 		</div>
 	</div>
+
+		<!-- Publish Skill Modal -->
+		<div class="market-modal-overlay" id="skill-publish-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="skill-publish-title">
+			<div class="market-modal">
+				<div class="market-modal-head">
+					<h2 id="skill-publish-title">Publish a Skill</h2>
+					<button class="market-modal-close" id="skill-publish-close" aria-label="Close">×</button>
+				</div>
+				<form id="skill-publish-form" novalidate>
+					<div class="market-field">
+						<label for="sp-name">Name <span class="req">*</span></label>
+						<input id="sp-name" type="text" maxlength="100" placeholder="web-search" autocomplete="off" />
+						<span class="field-hint">Lowercase slug, e.g. <code>web-search</code></span>
+					</div>
+					<div class="market-field">
+						<label for="sp-description">Description <span class="req">*</span></label>
+						<input id="sp-description" type="text" maxlength="500" placeholder="Search the web for current information" />
+					</div>
+					<div class="market-field-row">
+						<div class="market-field">
+							<label for="sp-category">Category</label>
+							<select id="sp-category">
+								<option value="general">General</option>
+								<option value="search">Search</option>
+								<option value="data">Data</option>
+								<option value="communication">Communication</option>
+								<option value="productivity">Productivity</option>
+								<option value="development">Development</option>
+								<option value="finance">Finance</option>
+								<option value="creative">Creative</option>
+							</select>
+						</div>
+						<div class="market-field">
+							<label for="sp-price">Price per call (USD) <span class="field-hint">0 = free</span></label>
+							<input id="sp-price" type="number" min="0" max="10" step="0.001" placeholder="0.001" value="0" />
+						</div>
+					</div>
+					<div class="market-field">
+						<label for="sp-tags">Tags <span class="field-hint">(comma-separated)</span></label>
+						<input id="sp-tags" type="text" maxlength="200" placeholder="search, web, realtime" />
+					</div>
+					<div class="market-field">
+						<label for="sp-schema">Tool definitions <span class="field-hint">(JSON array — optional)</span></label>
+						<textarea id="sp-schema" rows="6" placeholder='[{"name":"search","description":"Search the web","input_schema":{"type":"object","properties":{"query":{"type":"string","description":"Search query"}},"required":["query"]}}]'></textarea>
+					</div>
+					<div id="skill-publish-error" class="market-form-error" hidden></div>
+					<div class="market-submit-actions">
+						<button type="button" id="sp-publish" class="market-btn-pri">Publish Skill</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- Payout Wallet Modal -->
+		<div class="market-modal-overlay" id="wallet-setup-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="wallet-setup-title">
+			<div class="market-modal" style="max-width:420px">
+				<div class="market-modal-head">
+					<h2 id="wallet-setup-title">Payout Wallet</h2>
+					<button class="market-modal-close" id="wallet-setup-close" aria-label="Close">×</button>
+				</div>
+				<p style="color:#a1a1aa;font-size:0.875rem;margin:0 0 1.25rem">Payments from buyers go directly to this wallet. You can use a Solana or Base (EVM) address.</p>
+				<div class="market-field">
+					<label for="ws-chain">Chain</label>
+					<select id="ws-chain">
+						<option value="solana">Solana</option>
+						<option value="base">Base (EVM)</option>
+					</select>
+				</div>
+				<div class="market-field">
+					<label for="ws-address">Wallet address <span class="req">*</span></label>
+					<input id="ws-address" type="text" maxlength="100" placeholder="Solana or EVM address" autocomplete="off" />
+				</div>
+				<div id="wallet-setup-error" class="market-form-error" hidden></div>
+				<div class="market-submit-actions">
+					<button type="button" id="ws-save" class="market-btn-pri">Save Wallet</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Agent Pricing Modal -->
+		<div class="market-modal-overlay" id="agent-pricing-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="agent-pricing-title">
+			<div class="market-modal" style="max-width:480px">
+				<div class="market-modal-head">
+					<h2 id="agent-pricing-title">Set Skill Prices</h2>
+					<button class="market-modal-close" id="agent-pricing-close" aria-label="Close">×</button>
+				</div>
+				<p style="color:#a1a1aa;font-size:0.875rem;margin:0 0 1rem" id="agent-pricing-hint">Set a USDC price for each skill. Leave blank or 0 to keep it free.</p>
+				<div id="agent-pricing-rows" class="agent-pricing-rows"></div>
+				<div class="agent-pricing-add-row">
+					<input id="ap-new-skill" type="text" maxlength="100" placeholder="skill-name" autocomplete="off" />
+					<button type="button" id="ap-add-skill" class="market-btn-sec">+ Add Skill</button>
+				</div>
+				<div id="agent-pricing-error" class="market-form-error" hidden></div>
+				<div class="market-submit-actions">
+					<button type="button" id="ap-save" class="market-btn-pri">Save Prices</button>
+				</div>
+			</div>
+		</div>
 
 	    <script src="/src/marketplace.js" type="module"></script>
 

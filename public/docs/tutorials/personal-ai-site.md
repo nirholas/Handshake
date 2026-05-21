@@ -72,7 +72,7 @@ Your avatar is the visual anchor of the whole experience. You have two paths:
 - Wear what you would want to be "remembered" in — this avatar represents you
 - Export as a Mixamo-rigged GLB so it picks up the built-in animation clips automatically
 
-**Character avatar** — If privacy is a concern, or you prefer a stylised look, use any Mixamo-compatible GLB. The system works with any humanoid rig. Ready Player Me, Mixamo, and VRoid Hub all export compatible files.
+**Character avatar** — If privacy is a concern, or you prefer a stylised look, use any Mixamo-compatible GLB. The system works with any humanoid rig. Mixamo, VRoid Hub, and three.ws Studio all export compatible files.
 
 Host your GLB somewhere publicly accessible — your own server, a GitHub Pages repo, or a CDN. The URL you end up with is your `body` attribute.
 

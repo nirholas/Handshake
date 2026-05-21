@@ -1,0 +1,88 @@
+{
+  "name": "@three-ws/gltfjsx",
+  "version": "6.1.3",
+  "description": "GLTF to JSX converter",
+  "scripts": {
+    "test": "node src/test",
+    "build": "rollup -c --bundleConfigAsCjs"
+  },
+  "keywords": [
+    "gltf",
+    "jsx",
+    "react",
+    "fiber",
+    "three",
+    "threejs",
+    "webp"
+  ],
+  "author": "Paul Henschel",
+  "maintainers": [
+    "Max Rusan"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "vendor/three-ws-fork/gltfjsx"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "homepage": "https://github.com/nirholas/three.ws/tree/main/vendor/three-ws-fork/gltfjsx",
+  "bin": {
+    "gltfjsx": "./cli.js"
+  },
+  "main": "./lib/exports.js",
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^3.0.0-alpha.4",
+    "@gltf-transform/extensions": "^3.0.0-alpha.4",
+    "@gltf-transform/functions": "^3.0.0-alpha.4",
+    "@node-loader/babel": "^2.0.1",
+    "draco3dgltf": "^1.5.5",
+    "is-var-name": "^2.0.0",
+    "jsdom": "^20.0.3",
+    "jsdom-global": "^3.0.2",
+    "meow": "^11.0.0",
+    "meshoptimizer": "^0.18.1",
+    "prettier": "^2.3.2",
+    "sharp": "^0.31.3",
+    "three": "0.122.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.1",
+    "chalk": "^4.1.1",
+    "fast-glob": "^3.2.7",
+    "fs-extra": "^9.0.1",
+    "husky": "^4.3.0",
+    "lint-staged": "^10.4.0",
+    "rollup": "^3.12.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npx lint-staged"
+    }
+  },
+  "prettier": {
+    "semi": false,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "jsxBracketSameLine": true,
+    "tabWidth": 2,
+    "printWidth": 120
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write"
+    ]
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/react-three-fiber"
+  },
+  "volta": {
+    "node": "16.19.0"
+  }
+}

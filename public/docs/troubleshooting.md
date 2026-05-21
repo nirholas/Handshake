@@ -148,7 +148,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 **Fix steps:**
 
 1. Check the Console. The avatar module logs a warning if expected morph targets aren't found on load.
-2. Verify your GLB has morph targets named exactly as expected (case-sensitive). The emotion system maps to: `mouthSmile`, `mouthFrown`, `mouthOpen`, `cheekPuff`, `browInnerUp`, `browOuterUp`, `noseSneer`, `eyeSquint`, `eyesClosed`. These are the standard Ready Player Me / VRM names.
+2. Verify your GLB has morph targets named exactly as expected (case-sensitive). The emotion system maps to: `mouthSmile`, `mouthFrown`, `mouthOpen`, `cheekPuff`, `browInnerUp`, `browOuterUp`, `noseSneer`, `eyeSquint`, `eyesClosed`. These are the standard VRM / humanoid avatar names.
 3. For head tilt and lean, the skeleton needs a `Head` or `Neck` bone. Open the model in Blender and check the armature.
 4. Confirm the avatar module is initialized: open DevTools Console and run `window.VIEWER?.agent_avatar`. If `undefined`, the avatar layer didn't boot — check for earlier errors in the console.
 

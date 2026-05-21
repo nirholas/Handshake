@@ -1,0 +1,37 @@
+.settings {
+  z-index: 2;
+  position: fixed;
+  top: 72px;
+  right: 24px;
+  width: 100%;
+  max-width: 320px;
+  background-color: rgba(243, 243, 243, 0.9);
+  border: 1px solid #b9b9b9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.wrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  font-family: Arial, sans-serif;
+  color: black;
+  display: block;
+  padding: 8px;
+  margin: 0;
+  border-bottom: 1px solid #b9b9b9;
+}
+
+.content {
+  position: relative;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
