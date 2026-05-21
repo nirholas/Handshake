@@ -1226,107 +1226,361 @@ async function startAgentFromAvatar() {
 }
 
 // ── Skills marketplace tab ───────────────────────────────────────────────
+//
+// Backed by /api/skills (marketplace_skills table). Server-side search +
+// category + sort with cursor pagination, plus client-side free/paid filter,
+// install/uninstall, and 1–5 star ratings.
 
 const skillsState = {
 	loaded: false,
 	loading: false,
+	loadingMore: false,
 	skills: [],
+	cursor: null,
 	q: '',
 	filter: 'all',
+	sort: 'popular',
+	category: null,
+	categories: [],
+	detailId: null,
 };
 
-async function loadSkillsTab(force = false) {
-	if (skillsState.loading) return;
-	if (skillsState.loaded && !force) {
+async function loadSkillCategories() {
+	try {
+		const r = await fetch(`${API}/skills/categories`);
+		if (!r.ok) return;
+		const j = await r.json();
+		skillsState.categories = Array.isArray(j?.categories) ? j.categories : [];
+		renderSkillCategoryChips();
+	} catch (err) {
+		console.error('[marketplace] skills categories', err);
+	}
+}
+
+function renderSkillCategoryChips() {
+	const wrap = $('skills-cat-chips');
+	if (!wrap) return;
+	const all = `<button class="market-chip ${skillsState.category == null ? 'active' : ''}" data-skill-cat="">All</button>`;
+	const chips = skillsState.categories.map((c) => {
+		const active = skillsState.category === c.slug ? 'active' : '';
+		return `<button class="market-chip ${active}" data-skill-cat="${escapeHtml(c.slug)}">${escapeHtml(c.label)}<span class="chip-count">${c.count}</span></button>`;
+	}).join('');
+	wrap.innerHTML = all + chips;
+	wrap.querySelectorAll('[data-skill-cat]').forEach((b) => {
+		b.addEventListener('click', () => {
+			const slug = b.dataset.skillCat || null;
+			if (slug === skillsState.category) return;
+			skillsState.category = slug;
+			renderSkillCategoryChips();
+			loadSkillsTab(true);
+		});
+	});
+}
+
+async function loadSkillsTab(force = false, append = false) {
+	if (skillsState.loading || skillsState.loadingMore) return;
+	if (skillsState.loaded && !force && !append) {
 		renderSkillsGrid();
 		return;
 	}
-	skillsState.loading = true;
+	if (append) skillsState.loadingMore = true;
+	else skillsState.loading = true;
+
 	const grid = $('skills-grid');
-	if (grid) grid.innerHTML = renderSkeletons(8);
+	if (grid && !append) grid.innerHTML = renderSkeletons(8);
 
 	try {
-		const url = new URL(`${API}/marketplace/agents`, location.origin);
-		url.searchParams.set('limit', '48');
-		const r = await fetch(url);
-		const j = await r.json();
-		const items = Array.isArray(j) ? j : (j?.data?.items ?? []);
+		const url = new URL(`${API}/skills`, location.origin);
+		url.searchParams.set('limit', '24');
+		if (skillsState.q) url.searchParams.set('q', skillsState.q);
+		if (skillsState.category) url.searchParams.set('category', skillsState.category);
+		if (skillsState.sort) url.searchParams.set('sort', skillsState.sort);
+		if (append && skillsState.cursor) url.searchParams.set('cursor', skillsState.cursor);
 
-		const flat = [];
-		for (const a of items) {
-			const skills = Array.isArray(a.skills) ? a.skills : [];
-			for (const s of skills) {
-				const name = typeof s === 'string' ? s : s?.name;
-				if (!name) continue;
-				flat.push({
-					name: String(name),
-					agentId: a.id,
-					agentName: a.name || 'Untitled',
-					agentAuthor: a.author_name || 'Anonymous',
-					agentAvatar: a.thumbnail_url || null,
-					paid: !!a.has_paid_skills,
-					category: a.category,
-				});
-			}
-		}
-		flat.sort((a, b) => Number(b.paid) - Number(a.paid) || a.name.localeCompare(b.name));
-		skillsState.skills = flat;
+		const r = await fetch(url, { credentials: 'include' });
+		if (!r.ok) throw new Error(`HTTP ${r.status}`);
+		const j = await r.json();
+		const incoming = Array.isArray(j?.skills) ? j.skills : [];
+
+		if (append) skillsState.skills = skillsState.skills.concat(incoming);
+		else skillsState.skills = incoming;
+		skillsState.cursor = j?.next_cursor || null;
 		skillsState.loaded = true;
 	} catch (err) {
 		console.error('[marketplace] skills load', err);
+		if (grid && !append) {
+			grid.innerHTML = `<div class="market-empty">Failed to load skills. <button id="skills-retry" class="market-empty-cta-btn">Retry</button></div>`;
+			$('skills-retry')?.addEventListener('click', () => loadSkillsTab(true));
+		}
 	} finally {
 		skillsState.loading = false;
+		skillsState.loadingMore = false;
 	}
 	renderSkillsGrid();
+}
+
+function isPaidSkill(s) {
+	return Number(s?.price_per_call_usd) > 0;
+}
+
+function skillToolCount(s) {
+	return Array.isArray(s?.schema_json) ? s.schema_json.length : 0;
 }
 
 function renderSkillsGrid() {
 	const grid = $('skills-grid');
 	if (!grid) return;
-	const q = skillsState.q.toLowerCase();
 	const filtered = skillsState.skills.filter((s) => {
-		if (skillsState.filter === 'paid' && !s.paid) return false;
-		if (skillsState.filter === 'free' && s.paid) return false;
-		if (q && !(s.name.toLowerCase().includes(q) || s.agentName.toLowerCase().includes(q))) return false;
+		if (skillsState.filter === 'paid' && !isPaidSkill(s)) return false;
+		if (skillsState.filter === 'free' && isPaidSkill(s)) return false;
 		return true;
 	});
+
 	const sub = $('skills-subtitle');
-	if (sub) sub.textContent = `${filtered.length} ${filtered.length === 1 ? 'skill' : 'skills'} across the marketplace`;
+	if (sub) {
+		const cat = skillsState.category
+			? (skillsState.categories.find((c) => c.slug === skillsState.category)?.label || skillsState.category)
+			: null;
+		const noun = filtered.length === 1 ? 'skill' : 'skills';
+		sub.textContent = cat
+			? `${filtered.length} ${noun} in ${cat}${skillsState.cursor ? '+' : ''}`
+			: `Browse ${filtered.length}${skillsState.cursor ? '+' : ''} ${noun} from the community`;
+	}
+
+	const loadMoreRow = $('skills-loadmore-row');
+	if (loadMoreRow) loadMoreRow.hidden = !skillsState.cursor;
 
 	if (!filtered.length) {
 		const msg = !skillsState.skills.length
 			? `<div class="market-empty-cta">
-					<h3>No skills published yet</h3>
-					<p>Skills appear here once agents are published with capabilities. Be the first to publish.</p>
-					<button id="skills-empty-publish">Submit an Agent</button>
+					<h3>No skills found</h3>
+					<p>Try a different category, clear your search, or publish your own skill.</p>
+					<div class="market-empty-cta-actions">
+						<button class="market-empty-cta-btn" id="skills-empty-clear">Clear filters</button>
+						<button class="market-empty-cta-btn primary" id="skills-empty-publish">Publish a Skill</button>
+					</div>
 				</div>`
-			: '<div class="market-empty">No skills match your filter.</div>';
+			: '<div class="market-empty">No skills match your free/paid filter.</div>';
 		grid.innerHTML = msg;
-		const btn = $('skills-empty-publish');
-		if (btn) btn.addEventListener('click', openSubmitModal);
+		$('skills-empty-clear')?.addEventListener('click', () => {
+			skillsState.q = '';
+			skillsState.category = null;
+			skillsState.filter = 'all';
+			const input = $('skills-search'); if (input) input.value = '';
+			document.querySelectorAll('[data-skill-filter]').forEach((c) => {
+				c.classList.toggle('active', c.dataset.skillFilter === 'all');
+			});
+			renderSkillCategoryChips();
+			loadSkillsTab(true);
+		});
+		$('skills-empty-publish')?.addEventListener('click', openSubmitModal);
 		return;
 	}
+
 	grid.innerHTML = filtered.map(renderSkillCard).join('');
-	grid.querySelectorAll('[data-agent-id]').forEach((card) => {
+	grid.querySelectorAll('[data-skill-id]').forEach((card) => {
 		card.addEventListener('click', () => {
-			const id = card.dataset.agentId;
-			if (id) navTo(`/marketplace/agents/${id}`);
+			const id = card.dataset.skillId;
+			if (id) openSkillModal(id);
 		});
 	});
 }
 
 function renderSkillCard(s) {
-	const av = s.agentAvatar
-		? `<span class="av" style="background:url('${escapeHtml(s.agentAvatar)}') center/cover"></span>`
-		: `<span class="av">${escapeHtml(initial(s.agentName))}</span>`;
-	return `<div class="market-skill-card" data-agent-id="${escapeHtml(s.agentId)}">
+	const paid = isPaidSkill(s);
+	const installed = !!s.installed;
+	const rating = Number(s.avg_rating) || 0;
+	const installs = Number(s.install_count) || 0;
+	const tools = skillToolCount(s);
+	const category = s.category || 'general';
+	const ratingDisplay = s.rating_count > 0
+		? `<span class="rating" title="${rating.toFixed(1)} from ${s.rating_count} ${s.rating_count === 1 ? 'rating' : 'ratings'}">★ ${rating.toFixed(1)}</span>`
+		: '';
+	const installsDisplay = installs > 0
+		? `<span class="installs" title="${installs.toLocaleString()} installs">${fmtNumber(installs)} installs</span>`
+		: '';
+	const toolsDisplay = tools > 0
+		? `<span class="installs">${tools} tool${tools === 1 ? '' : 's'}</span>`
+		: '';
+	const installedTag = installed
+		? `<span class="skill-installed-tag" title="Installed">✓ Installed</span>`
+		: '';
+	const desc = escapeHtml(s.description || s.content_preview || '');
+	return `<div class="market-skill-card ${installed ? 'installed' : ''}" data-skill-id="${escapeHtml(s.id)}">
 		<div class="skill-head">
 			<div class="skill-name">${escapeHtml(s.name)}</div>
-			<div class="skill-price ${s.paid ? 'paid' : 'free'}">${s.paid ? 'Paid' : 'Free'}</div>
+			<div class="skill-price ${paid ? 'paid' : 'free'}">${paid ? `$${Number(s.price_per_call_usd).toFixed(3)}/call` : 'Free'}</div>
 		</div>
-		<div class="skill-agent">${av}<span>${escapeHtml(s.agentName)}</span></div>
-		<div class="skill-cta ${s.paid ? 'purchase' : ''}">${s.paid ? 'View &amp; purchase →' : 'Open agent →'}</div>
+		<div class="skill-desc">${desc || '<em style="color:#52525b">No description.</em>'}</div>
+		<div class="skill-meta">
+			<span class="cat-pill">${escapeHtml(category)}</span>
+			${installsDisplay}
+			${toolsDisplay}
+			${ratingDisplay}
+		</div>
+		<div class="skill-meta" style="justify-content:space-between">
+			${installedTag || '<span></span>'}
+			<span class="open-cta" style="color:#fafafa;opacity:0.6;font-weight:500">Details →</span>
+		</div>
 	</div>`;
+}
+
+// ── Skill detail modal ──────────────────────────────────────────────────
+
+async function openSkillModal(id) {
+	const overlay = $('skill-modal-overlay');
+	if (!overlay) return;
+	skillsState.detailId = id;
+	overlay.hidden = false;
+	$('skill-modal-title').textContent = 'Loading…';
+	$('skill-modal-desc').textContent = '';
+	$('skill-modal-meta').innerHTML = '';
+	$('skill-modal-tools').hidden = true;
+	$('skill-modal-content').hidden = true;
+	$('skill-modal-rating').hidden = true;
+	$('skill-modal-install').disabled = true;
+
+	try {
+		const r = await fetch(`${API}/skills/${encodeURIComponent(id)}`, { credentials: 'include' });
+		if (!r.ok) throw new Error(`HTTP ${r.status}`);
+		const j = await r.json();
+		renderSkillModal(j.skill);
+	} catch (err) {
+		console.error('[marketplace] skill detail', err);
+		$('skill-modal-title').textContent = 'Failed to load skill';
+		$('skill-modal-desc').textContent = err.message;
+	}
+}
+
+function closeSkillModal() {
+	const overlay = $('skill-modal-overlay');
+	if (overlay) overlay.hidden = true;
+	skillsState.detailId = null;
+}
+
+function renderSkillModal(skill) {
+	if (!skill) return;
+	skillsState.detailId = skill.id;
+	const paid = isPaidSkill(skill);
+	$('skill-modal-title').textContent = skill.name;
+	$('skill-modal-desc').textContent = skill.description || '';
+	$('skill-modal-eyebrow').textContent = paid ? 'Paid skill' : 'Free skill';
+
+	const meta = $('skill-modal-meta');
+	const installs = Number(skill.install_count) || 0;
+	const rating = Number(skill.avg_rating) || 0;
+	const tools = Array.isArray(skill.schema_json) ? skill.schema_json.length : 0;
+	const author = skill.author?.display_name || 'System';
+	meta.innerHTML = `
+		<span class="stat-pill" style="text-transform:capitalize">${escapeHtml(skill.category || 'general')}</span>
+		<span class="stat-pill">By ${escapeHtml(author)}</span>
+		${installs > 0 ? `<span class="stat-pill">${fmtNumber(installs)} installs</span>` : ''}
+		${skill.rating_count > 0 ? `<span class="stat-pill">★ ${rating.toFixed(1)} · ${skill.rating_count}</span>` : ''}
+		${tools > 0 ? `<span class="stat-pill">${tools} tool${tools === 1 ? '' : 's'}</span>` : ''}
+		${paid ? `<span class="stat-pill" style="color:#fde047;border-color:rgba(253,224,71,0.3)">$${Number(skill.price_per_call_usd).toFixed(3)}/call</span>` : `<span class="stat-pill" style="color:#34d399;border-color:rgba(52,211,153,0.3)">Free</span>`}
+	`;
+
+	const toolsEl = $('skill-modal-tools');
+	if (Array.isArray(skill.schema_json) && skill.schema_json.length) {
+		toolsEl.hidden = false;
+		toolsEl.innerHTML = `<h4>Tools provided</h4><ul>${skill.schema_json.map((g) => {
+			const name = escapeHtml(g?.function?.name || g?.clientDefinition?.name || '?');
+			const desc = escapeHtml(g?.function?.description || g?.clientDefinition?.description || '');
+			return `<li>${name}${desc ? `<small>${desc}</small>` : ''}</li>`;
+		}).join('')}</ul>`;
+	} else {
+		toolsEl.hidden = true;
+	}
+
+	const contentEl = $('skill-modal-content');
+	if (skill.content) {
+		contentEl.hidden = false;
+		contentEl.textContent = skill.content.length > 4000 ? skill.content.slice(0, 4000) + '\n\n…' : skill.content;
+	} else {
+		contentEl.hidden = true;
+	}
+
+	const ratingEl = $('skill-modal-rating');
+	if (ratingEl) {
+		ratingEl.hidden = false;
+		const userRating = Math.round(rating);
+		const stars = [1, 2, 3, 4, 5].map((n) => {
+			const active = n <= userRating ? 'active' : '';
+			return `<button class="${active}" data-rating="${n}" aria-label="Rate ${n} star${n === 1 ? '' : 's'}">★</button>`;
+		}).join('');
+		ratingEl.innerHTML = `${stars}<span class="rating-count">${skill.rating_count || 0} rating${skill.rating_count === 1 ? '' : 's'}</span>`;
+		ratingEl.querySelectorAll('[data-rating]').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				const n = Number(btn.dataset.rating);
+				await rateSkill(skill.id, n);
+			});
+		});
+	}
+
+	const installBtn = $('skill-modal-install');
+	installBtn.disabled = false;
+	installBtn.textContent = skill.installed ? '✓ Installed (click to remove)' : 'Install';
+	installBtn.dataset.skillId = skill.id;
+	installBtn.dataset.installed = skill.installed ? '1' : '0';
+
+	const authorBtn = $('skill-modal-author');
+	if (skill.author?.id) {
+		authorBtn.hidden = false;
+		authorBtn.textContent = `View ${author}'s skills →`;
+		authorBtn.onclick = () => {
+			closeSkillModal();
+			openCreatorModal(skill.author.id);
+		};
+	} else {
+		authorBtn.hidden = true;
+	}
+}
+
+async function toggleSkillInstall() {
+	const btn = $('skill-modal-install');
+	if (!btn || btn.disabled) return;
+	const id = btn.dataset.skillId;
+	if (!id) return;
+	const wasInstalled = btn.dataset.installed === '1';
+	btn.disabled = true;
+	btn.textContent = wasInstalled ? 'Removing…' : 'Installing…';
+	try {
+		const r = await fetch(`${API}/skills/${encodeURIComponent(id)}/install`, {
+			method: wasInstalled ? 'DELETE' : 'POST',
+			credentials: 'include',
+		});
+		if (r.status === 401) {
+			location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+			return;
+		}
+		if (!r.ok) throw new Error(`HTTP ${r.status}`);
+		await openSkillModal(id);
+		skillsState.loaded = false;
+		loadSkillsTab(true);
+	} catch (err) {
+		console.error('[marketplace] skill install', err);
+		btn.disabled = false;
+		btn.textContent = wasInstalled ? '✓ Installed (click to remove)' : 'Install';
+	}
+}
+
+async function rateSkill(id, rating) {
+	try {
+		const r = await fetch(`${API}/skills/${encodeURIComponent(id)}/rate`, {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ rating }),
+		});
+		if (r.status === 401) {
+			location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+			return;
+		}
+		if (!r.ok) throw new Error(`HTTP ${r.status}`);
+		await openSkillModal(id);
+	} catch (err) {
+		console.error('[marketplace] skill rate', err);
+	}
 }
 
 
@@ -1724,6 +1978,8 @@ function renderCard(a) {
 	const buyers = a.buyers_total ?? 0;
 	const buyers24h = a.buyers_24h ?? 0;
 	const paid = a.has_paid_skills || Object.keys(a.skill_prices || {}).length > 0;
+	const ratingAvg = Number(a.rating_avg || 0);
+	const ratingCount = Number(a.rating_count || 0);
 	const avatarBlock = a.thumbnail_url
 		? `<div class="avatar avatar-img" style="background-image:url('${escapeHtml(a.thumbnail_url)}')"></div>`
 		: `<div class="avatar">${escapeHtml(initial(a.name))}</div>`;
@@ -1750,7 +2006,8 @@ function renderCard(a) {
 			<span class="stat-pill">⊙ ${fmtNumber(views)}</span>
 			<span class="stat-pill">⑂ ${fmtNumber(forks)}</span>
 			${skillsCount ? `<span class="stat-pill">▤ ${skillsCount}</span>` : ''}
-			${buyers > 0 ? `<span class="stat-pill" title="${buyers} confirmed purchase${buyers === 1 ? '' : 's'}${buyers24h ? `, ${buyers24h} in last 24h` : ''}">★ ${fmtNumber(buyers)}${buyers24h > 0 ? ` <em>(+${buyers24h}/24h)</em>` : ''}</span>` : ''}
+			${ratingCount > 0 ? `<span class="rating" title="${ratingAvg.toFixed(2)} avg from ${ratingCount} review${ratingCount === 1 ? '' : 's'}">★ ${ratingAvg.toFixed(1)} <span class="count">(${fmtNumber(ratingCount)})</span></span>` : ''}
+			${buyers > 0 ? `<span class="stat-pill" title="${buyers} confirmed purchase${buyers === 1 ? '' : 's'}${buyers24h ? `, ${buyers24h} in last 24h` : ''}">$ ${fmtNumber(buyers)}${buyers24h > 0 ? ` <em>(+${buyers24h}/24h)</em>` : ''}</span>` : ''}
 			${paid ? `<span class="stat-pill paid-badge">$ Paid</span>` : ''}
 		</div>
 		<div class="footer">
@@ -1837,6 +2094,7 @@ async function loadDetail(id) {
 		}
 		detailState = { agent, bookmarked: !!agent.bookmarked };
 		renderDetail(agent, !!agent.bookmarked);
+		loadReviews(id);
 
 		// Versions + similar (best-effort).
 		Promise.all([
@@ -3464,3 +3722,4 @@ function initPlugins() {
 }
 
 init();
+

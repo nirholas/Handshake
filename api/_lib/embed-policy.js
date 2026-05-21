@@ -46,11 +46,14 @@ export function defaultEmbedPolicy() {
 		origins: { mode: 'allowlist', hosts: [] },
 		surfaces: { script: true, iframe: true, widget: true, mcp: false },
 		brain: {
+			// Default to free OpenRouter Llama 3.3 70B: tool-call capable, no
+			// per-token cost to the host, daily rate cap shared across the org
+			// key. Owners can switch to a paid Claude model from the dashboard.
 			mode: 'we-pay',
 			proxy_url: null,
 			monthly_quota: 1000,
 			rate_limit_per_min: 10,
-			model: 'claude-opus-4-6',
+			model: 'meta-llama/llama-3.3-70b-instruct:free',
 		},
 		storage: { primary: 'r2', pinned_ipfs: false, onchain_attested: false },
 	};

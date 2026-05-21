@@ -1,11 +1,11 @@
 /**
- * /create/review — preview the in-progress avatar before it touches the server.
+ * /create-review — preview the in-progress avatar before it touches the server.
  *
  * Flow:
  *   1. Read the staged blob from IndexedDB via guest-avatar.js.
  *   2. Render it in the page's <model-viewer> from an object URL.
  *   3. "Save to my account":
- *        - If unauthed: redirect to /login?next=/create/review with a sentinel
+ *        - If unauthed: redirect to /login?next=/create-review with a sentinel
  *          flag so we auto-resume the save when the user returns.
  *        - If authed: presign + upload + attach to default agent, then go to /app.
  *   4. "Start over": clear the staged record and bounce back to /create.
@@ -116,7 +116,7 @@ async function onSave({ auto = false } = {}) {
 	if (window.__authed === false) {
 		// Stash a sentinel so the post-login round-trip auto-resumes the save.
 		sessionStorage.setItem(RESUME_KEY, '1');
-		const next = encodeURIComponent('/create/review');
+		const next = encodeURIComponent('/create-review');
 		window.location.href = `/login?next=${next}`;
 		return;
 	}
@@ -147,7 +147,7 @@ async function onSave({ auto = false } = {}) {
 		if (err.code === 'not_signed_in') {
 			// Session expired between the cached auth hint and the actual save.
 			sessionStorage.setItem(RESUME_KEY, '1');
-			const next = encodeURIComponent('/create/review');
+			const next = encodeURIComponent('/create-review');
 			window.location.href = `/login?next=${next}`;
 			return;
 		}

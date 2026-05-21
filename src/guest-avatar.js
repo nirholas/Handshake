@@ -3,9 +3,9 @@
  * finish the create flow without signing in first. The flow is:
  *
  *   1. /create produces a GLB Blob from the default editor / Studio / file upload.
- *   2. We stage(blob, meta) into IndexedDB before navigating to /create/review.
- *   3. /create/review reads it back, renders it, and on "Save" either uploads
- *      immediately (signed-in user) or sends the user through /login?next=/create/review
+ *   2. We stage(blob, meta) into IndexedDB before navigating to /create-review.
+ *   3. /create-review reads it back, renders it, and on "Save" either uploads
+ *      immediately (signed-in user) or sends the user through /login?next=/create-review
  *      and the page picks up where it left off after auth.
  *
  * Blobs go in IndexedDB (multi-MB GLBs would blow the localStorage quota).

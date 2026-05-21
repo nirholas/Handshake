@@ -408,3 +408,209 @@ describe('/api/llm/anthropic — upstream behaviour', () => {
 		expect(usageEvents[0].meta.output_tokens).toBe(22);
 	});
 });
+
+// ── free-provider routing (Groq / OpenRouter) ──────────────────────────
+//
+// The browser sends Anthropic-shape bodies for every model; the proxy
+// inspects `model`, picks the upstream URL + key, and translates request
+// + response shapes both ways. These tests pin that translation contract.
+
+describe('/api/llm/anthropic — free-provider routing', () => {
+	const SYSTEM = 'you are a helpful agent';
+
+	beforeEach(() => {
+		process.env.OPENROUTER_API_KEY = 'sk-or-test';
+		process.env.GROQ_API_KEY = 'gsk-test';
+		// OpenAI-shape response by default; individual tests can override.
+		fetchState.response = () =>
+			upstreamOk({
+				id: 'gen-1',
+				choices: [
+					{
+						message: { role: 'assistant', content: 'hi from free model' },
+						finish_reason: 'stop',
+					},
+				],
+				usage: { prompt_tokens: 7, completion_tokens: 9 },
+			});
+	});
+
+	it('routes meta-llama/*:free models to OpenRouter with bearer auth', async () => {
+		await invoke({
+			body: {
+				...VALID_BODY,
+				system: SYSTEM,
+				model: 'meta-llama/llama-3.3-70b-instruct:free',
+			},
+		});
+		const call = fetchState.calls[0];
+		expect(call.url).toBe('https://openrouter.ai/api/v1/chat/completions');
+		expect(call.init.headers.authorization).toBe('Bearer sk-or-test');
+		expect(call.init.headers['HTTP-Referer']).toBe('https://three.ws');
+	});
+
+	it('routes Groq model ids to api.groq.com', async () => {
+		await invoke({
+			body: { ...VALID_BODY, model: 'llama-3.3-70b-versatile' },
+		});
+		const call = fetchState.calls[0];
+		expect(call.url).toBe('https://api.groq.com/openai/v1/chat/completions');
+		expect(call.init.headers.authorization).toBe('Bearer gsk-test');
+	});
+
+	it('returns 503 when the upstream API key is not configured', async () => {
+		delete process.env.OPENROUTER_API_KEY;
+		const { status, body } = await invoke({
+			body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+		});
+		expect(status).toBe(503);
+		expect(body.error).toBe('provider_unavailable');
+	});
+
+	it('translates Anthropic body shape → OpenAI body shape', async () => {
+		await invoke({
+			body: {
+				system: SYSTEM,
+				model: 'meta-llama/llama-3.3-70b-instruct:free',
+				max_tokens: 256,
+				temperature: 0.4,
+				messages: [
+					{ role: 'user', content: 'how are you?' },
+					{
+						role: 'assistant',
+						content: [
+							{ type: 'text', text: 'let me check' },
+							{
+								type: 'tool_use',
+								id: 'toolu_01',
+								name: 'getTime',
+								input: { tz: 'UTC' },
+							},
+						],
+					},
+					{
+						role: 'user',
+						content: [
+							{ type: 'tool_result', tool_use_id: 'toolu_01', content: '12:00' },
+						],
+					},
+				],
+				tools: [
+					{
+						name: 'getTime',
+						description: 'returns the current time',
+						input_schema: {
+							type: 'object',
+							properties: { tz: { type: 'string' } },
+							required: ['tz'],
+						},
+					},
+				],
+			},
+		});
+		const sent = JSON.parse(fetchState.calls[0].init.body);
+		expect(sent.model).toBe('meta-llama/llama-3.3-70b-instruct:free');
+		expect(sent.max_tokens).toBe(256);
+		expect(sent.temperature).toBe(0.4);
+		// System collapses into the first message.
+		expect(sent.messages[0]).toEqual({ role: 'system', content: SYSTEM });
+		expect(sent.messages[1]).toEqual({ role: 'user', content: 'how are you?' });
+		// Assistant turn with a tool_use → OpenAI tool_calls array.
+		expect(sent.messages[2]).toMatchObject({
+			role: 'assistant',
+			content: 'let me check',
+			tool_calls: [
+				{
+					id: 'toolu_01',
+					type: 'function',
+					function: { name: 'getTime', arguments: JSON.stringify({ tz: 'UTC' }) },
+				},
+			],
+		});
+		// tool_result block → role:"tool" message.
+		expect(sent.messages[3]).toEqual({
+			role: 'tool',
+			tool_call_id: 'toolu_01',
+			content: '12:00',
+		});
+		// Tool schema converted to OpenAI function-tool shape.
+		expect(sent.tools[0]).toEqual({
+			type: 'function',
+			function: {
+				name: 'getTime',
+				description: 'returns the current time',
+				parameters: {
+					type: 'object',
+					properties: { tz: { type: 'string' } },
+					required: ['tz'],
+				},
+			},
+		});
+		expect(sent.tool_choice).toBe('auto');
+	});
+
+	it('translates OpenAI-shape upstream response → Anthropic-shape body', async () => {
+		const { status, body } = await invoke({
+			body: { ...VALID_BODY, model: 'llama-3.3-70b-versatile' },
+		});
+		expect(status).toBe(200);
+		expect(body).toMatchObject({
+			type: 'message',
+			role: 'assistant',
+			model: 'llama-3.3-70b-versatile',
+			content: [{ type: 'text', text: 'hi from free model' }],
+			stop_reason: 'end_turn',
+			usage: { input_tokens: 7, output_tokens: 9 },
+		});
+	});
+
+	it('translates upstream tool_calls into Anthropic tool_use blocks', async () => {
+		fetchState.response = () =>
+			upstreamOk({
+				id: 'gen-2',
+				choices: [
+					{
+						message: {
+							role: 'assistant',
+							content: '',
+							tool_calls: [
+								{
+									id: 'call_1',
+									type: 'function',
+									function: { name: 'getTime', arguments: '{"tz":"UTC"}' },
+								},
+							],
+						},
+						finish_reason: 'tool_calls',
+					},
+				],
+				usage: { prompt_tokens: 4, completion_tokens: 5 },
+			});
+		const { body } = await invoke({
+			body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+		});
+		expect(body.content).toEqual([
+			{ type: 'tool_use', id: 'call_1', name: 'getTime', input: { tz: 'UTC' } },
+		]);
+		expect(body.stop_reason).toBe('tool_use');
+	});
+
+	it('debits OpenAI-shape token usage (prompt + completion) onto the agent', async () => {
+		await invoke({
+			body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+		});
+		const monthKey = new Date().toISOString().slice(0, 7);
+		expect(redisStore.get(`llm:tokens:agent-1:${monthKey}`)).toBe(16);
+	});
+
+	it('records usage with the upstream provider tag', async () => {
+		await invoke({
+			body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+		});
+		expect(usageEvents[0]).toMatchObject({
+			kind: 'llm',
+			tool: 'openrouter.chat',
+			agentId: 'agent-1',
+		});
+	});
+});

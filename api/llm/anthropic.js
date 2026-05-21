@@ -1,5 +1,14 @@
-// We-pay LLM proxy: forwards Anthropic messages requests on behalf of an agent
-// after enforcing embed-policy (brain.mode, origins, surfaces) and quota/rate limits.
+// We-pay LLM proxy. The browser always sends an Anthropic-shape body
+// ({ system, messages, tools, model, ... }) regardless of the upstream
+// model — this file inspects `model` and either forwards to Anthropic
+// unchanged, or translates request/response to/from the OpenAI shape
+// used by Groq and OpenRouter. Embed-policy origin / quota / rate-limit
+// checks run identically for every route.
+//
+// Why "everything as Anthropic-shape": the browser-side AnthropicProvider
+// (src/runtime/providers.js) parses Anthropic SSE events directly. Hiding
+// the upstream difference here means free-tier Groq/OpenRouter models work
+// in every avatar embed without changing a line of client code.
 
 import { z } from 'zod';
 import { Redis } from '@upstash/redis';
@@ -25,22 +34,40 @@ function getRedis() {
 	return _redis;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Model → upstream routing ─────────────────────────────────────────────────
+//
+// Adding a model: append it here. `kind` decides how the request body and
+// response stream are shaped. Groq/OpenRouter both speak OpenAI's wire
+// format so they share the 'openai' branch; only the upstream URL and the
+// env var differ.
 
-const MODEL_ALLOWLIST = new Set([
-	'claude-opus-4-6',
-	'claude-opus-4-7',
-	'claude-sonnet-4-6',
-	'claude-haiku-4-5-20251001',
-]);
+const MODELS = {
+	// Anthropic (paid — host's key)
+	'claude-opus-4-7':            { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
+	'claude-opus-4-6':            { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
+	'claude-sonnet-4-6':          { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
+	'claude-haiku-4-5-20251001':  { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
 
-// First-party hostnames always pass origin checks (same as element.js).
+	// OpenRouter free tier (no per-token cost; daily rate cap shared across host).
+	// All three are tool-call capable in OpenRouter's catalog.
+	'meta-llama/llama-3.3-70b-instruct:free':       { kind: 'openai', provider: 'openrouter', envKey: 'OPENROUTER_API_KEY' },
+	'openai/gpt-oss-120b:free':                     { kind: 'openai', provider: 'openrouter', envKey: 'OPENROUTER_API_KEY' },
+	'nousresearch/hermes-3-llama-3.1-405b:free':    { kind: 'openai', provider: 'openrouter', envKey: 'OPENROUTER_API_KEY' },
+
+	// Groq free tier (sub-second latency; per-IP+per-key minute caps).
+	'llama-3.3-70b-versatile':    { kind: 'openai', provider: 'groq', envKey: 'GROQ_API_KEY' },
+	'llama-3.1-8b-instant':       { kind: 'openai', provider: 'groq', envKey: 'GROQ_API_KEY' },
+};
+
+const UPSTREAM_URL = {
+	anthropic:  'https://api.anthropic.com/v1/messages',
+	openrouter: 'https://openrouter.ai/api/v1/chat/completions',
+	groq:       'https://api.groq.com/openai/v1/chat/completions',
+};
+
 const FIRST_PARTY = ['three.ws', 'localhost'];
 
-// Default per-agent monthly token budget when policy.brain.cost_limit_cents is unset.
 const DEFAULT_MONTHLY_TOKEN_BUDGET = 1_000_000;
-// Rough cents-per-token conversion when a cost budget is provided. Conservative
-// blended estimate across input+output for the allowlisted models.
 const CENTS_PER_1K_TOKENS = 1.5;
 
 function tokenBudgetFromPolicy(policy) {
@@ -57,7 +84,7 @@ function monthKey() {
 }
 
 function originAllowed(originHeader, policy) {
-	if (!originHeader) return true; // server-to-server / curl — allow
+	if (!originHeader) return true;
 	let host;
 	try {
 		host = new URL(originHeader).hostname.toLowerCase();
@@ -75,8 +102,6 @@ function originAllowed(originHeader, policy) {
 	return mode === 'allowlist' ? matches : !matches;
 }
 
-// Build the strict CORS allowlist: first-party origins + any origin the agent's
-// embed policy declares. Returns an array of exact-match origin strings.
 function buildCorsAllowlist(policy) {
 	const out = new Set();
 	if (env.APP_ORIGIN) out.add(env.APP_ORIGIN);
@@ -85,12 +110,10 @@ function buildCorsAllowlist(policy) {
 	} catch {
 		// ISSUER derives from APP_ORIGIN; ignore if unset.
 	}
-	// Localhost for dev parity with the same-origin check above.
 	const hosts = policy?.origins?.hosts ?? [];
 	for (const h of hosts) {
 		const lower = String(h).toLowerCase();
 		if (lower.startsWith('*.')) {
-			// Wildcard — convert to a regex matching https://<sub>.<base>.
 			const base = lower.slice(2).replace(/[.+?^${}()|[\]\\]/g, '\\$&');
 			out.add(new RegExp(`^https?://([a-z0-9-]+\\.)+${base}$`));
 		} else {
@@ -98,7 +121,6 @@ function buildCorsAllowlist(policy) {
 			out.add(`http://${lower}`);
 		}
 	}
-	// Allow localhost only outside production, matching isAllowedOrigin's default.
 	if (process.env.NODE_ENV !== 'production') {
 		out.add(/^https?:\/\/localhost(:\d+)?$/);
 	}
@@ -107,15 +129,13 @@ function buildCorsAllowlist(policy) {
 
 async function incrementMonthlyQuota(agentId) {
 	const r = getRedis();
-	if (!r) return 0; // no Redis → quota not enforced
+	if (!r) return 0;
 	const key = `llm:quota:${agentId}:${monthKey()}`;
 	const count = await r.incr(key);
-	if (count === 1) await r.expire(key, 40 * 24 * 3600); // expire after 40 days
+	if (count === 1) await r.expire(key, 40 * 24 * 3600);
 	return count;
 }
 
-// Peek at the current month's token total without incrementing. Returns 0 when
-// Redis is unavailable (quota not enforced).
 async function getMonthlyTokens(agentId) {
 	const r = getRedis();
 	if (!r) return 0;
@@ -135,10 +155,7 @@ async function addMonthlyTokens(agentId, delta) {
 
 // ── Request schema ────────────────────────────────────────────────────────────
 
-const messageContentSchema = z.union([
-	z.string(),
-	z.array(z.any()), // Anthropic content blocks; pass through
-]);
+const messageContentSchema = z.union([z.string(), z.array(z.any())]);
 
 const bodySchema = z.object({
 	system: z.string().max(64_000).optional(),
@@ -162,14 +179,9 @@ const bodySchema = z.object({
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export default wrap(async (req, res) => {
-	// Resolve the agent up front so CORS can use the agent's embed policy.
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agent');
 
-	// Load policy first (when possible) so CORS allowlist can include the
-	// agent-declared origins. If no agent is supplied or not found, fall back
-	// to first-party only — the preflight will then be rejected for unknown
-	// third-party origins, which is the desired hardening.
 	let policy = null;
 	if (agentId) policy = await readEmbedPolicy(agentId);
 
@@ -193,29 +205,20 @@ export default wrap(async (req, res) => {
 		return error(res, 403, 'embed_denied_surface', 'script surface disabled for this agent');
 	}
 
-	// 2. Origin / Referer check
 	const originHeader = req.headers.origin || req.headers.referer || '';
 	if (!originAllowed(originHeader, policy)) {
-		return error(
-			res,
-			403,
-			'embed_denied_origin',
-			"origin not permitted by this agent's embed policy",
-		);
+		return error(res, 403, 'embed_denied_origin', "origin not permitted by this agent's embed policy");
 	}
 
-	// 3. Per-IP rate limit
 	const ipRl = await limits.embedLlmIp(clientIp(req));
 	if (!ipRl.success) return error(res, 429, 'rate_limited', 'too many requests from this IP');
 
-	// 4. Per-agent rate limit (dynamic, from policy)
 	const perMin = policy.brain?.rate_limit_per_min;
 	if (perMin && perMin > 0) {
 		const agentRl = await limits.embedLlmAgent(agentId, perMin);
 		if (!agentRl.success) return error(res, 429, 'rate_limited', 'agent rate limit exceeded');
 	}
 
-	// 5a. Monthly call-count quota (existing)
 	const quota = policy.brain?.monthly_quota;
 	if (typeof quota === 'number' && quota !== null) {
 		const used = await incrementMonthlyQuota(agentId);
@@ -224,84 +227,113 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	// 5b. Monthly token budget (input+output). Check before forwarding; debit
-	// the actual usage after the upstream response so we never under-count but
-	// may serve one request that tips over — acceptable for a soft budget.
 	const tokenBudget = tokenBudgetFromPolicy(policy);
 	const tokensUsedSoFar = await getMonthlyTokens(agentId);
 	if (tokensUsedSoFar >= tokenBudget) {
 		return error(res, 429, 'quota_exceeded', `monthly token budget of ${tokenBudget} reached`);
 	}
 
-	// 6. Validate + normalize request body
 	const rawBody = await readJson(req);
 	const body = parse(bodySchema, rawBody);
-	const model = body.model || policy.brain?.model || 'claude-opus-4-6';
-	if (!MODEL_ALLOWLIST.has(model)) {
+	const model = body.model || policy.brain?.model || 'meta-llama/llama-3.3-70b-instruct:free';
+	const route = MODELS[model];
+	if (!route) {
 		return error(res, 400, 'validation_error', `model "${model}" not in allowlist`);
 	}
 
-	const isStreaming = body.stream === true;
+	const apiKey = process.env[route.envKey];
+	if (!apiKey) {
+		return error(res, 503, 'provider_unavailable', `${route.envKey} not configured on host`);
+	}
 
-	// 7. Forward to Anthropic
+	const isStreaming = body.stream === true;
 	const t0 = Date.now();
-	const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+
+	const upstreamUrl = route.kind === 'anthropic' ? UPSTREAM_URL.anthropic : UPSTREAM_URL[route.provider];
+	const upstreamHeaders =
+		route.kind === 'anthropic'
+			? {
+					'content-type': 'application/json',
+					'anthropic-version': '2023-06-01',
+					'x-api-key': apiKey,
+			  }
+			: {
+					'content-type': 'application/json',
+					authorization: `Bearer ${apiKey}`,
+					...(route.provider === 'openrouter'
+						? { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws agent' }
+						: {}),
+			  };
+	const upstreamBody =
+		route.kind === 'anthropic'
+			? JSON.stringify({ ...body, model })
+			: JSON.stringify(anthropicBodyToOpenAI({ ...body, model }));
+
+	const upstream = await fetch(upstreamUrl, {
 		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'anthropic-version': '2023-06-01',
-			'x-api-key': env.ANTHROPIC_API_KEY,
-		},
-		body: JSON.stringify({ ...body, model }),
+		headers: upstreamHeaders,
+		body: upstreamBody,
 	});
 
-	// 8a. Sanitize upstream errors before branching — do not forward Anthropic's error JSON.
 	if (upstream.status >= 400) {
 		const errText = await upstream.text();
-		log.error('upstream_error', { agentId, model, status: upstream.status, body: errText.slice(0, 2000) });
+		log.error('upstream_error', {
+			agentId,
+			model,
+			kind: route.kind,
+			provider: route.provider || 'anthropic',
+			status: upstream.status,
+			body: errText.slice(0, 2000),
+		});
 		return json(res, 502, { error: 'upstream_error', status: upstream.status });
 	}
 
-	// 8b. Streaming path — pipe SSE chunks directly; extract token counts in-flight.
+	// ── Streaming path ────────────────────────────────────────────────────────
 	if (isStreaming) {
-		res.statusCode = upstream.status;
+		res.statusCode = 200;
 		res.setHeader('content-type', 'text/event-stream');
 		res.setHeader('cache-control', 'no-cache');
 		res.setHeader('x-accel-buffering', 'no');
 
-		const reader = upstream.body.getReader();
-		const decoder = new TextDecoder();
 		let inputTokens = 0;
 		let outputTokens = 0;
-		let sseBuffer = '';
 
-		try {
-			while (true) {
-				const { done, value } = await reader.read();
-				if (done) break;
-				res.write(value);
-
-				// Parse SSE lines for usage events without buffering the whole body.
-				sseBuffer += decoder.decode(value, { stream: true });
-				const lines = sseBuffer.split('\n');
-				sseBuffer = lines.pop(); // keep the incomplete trailing line
-				for (const line of lines) {
-					if (!line.startsWith('data: ')) continue;
-					try {
-						const ev = JSON.parse(line.slice(6));
-						if (ev.type === 'message_start') inputTokens = ev.message?.usage?.input_tokens ?? 0;
-						if (ev.type === 'message_delta') outputTokens = ev.usage?.output_tokens ?? 0;
-					} catch {
-						// not every data line is JSON (e.g. [DONE]) — skip
+		if (route.kind === 'anthropic') {
+			// Pass upstream Anthropic SSE through verbatim; sniff usage events
+			// for token accounting.
+			const reader = upstream.body.getReader();
+			const decoder = new TextDecoder();
+			let sseBuffer = '';
+			try {
+				while (true) {
+					const { done, value } = await reader.read();
+					if (done) break;
+					res.write(value);
+					sseBuffer += decoder.decode(value, { stream: true });
+					const lines = sseBuffer.split('\n');
+					sseBuffer = lines.pop();
+					for (const line of lines) {
+						if (!line.startsWith('data: ')) continue;
+						try {
+							const ev = JSON.parse(line.slice(6));
+							if (ev.type === 'message_start') inputTokens = ev.message?.usage?.input_tokens ?? 0;
+							if (ev.type === 'message_delta') outputTokens = ev.usage?.output_tokens ?? 0;
+						} catch {
+							// not every data line is JSON (e.g. [DONE]) — skip
+						}
 					}
 				}
+			} finally {
+				res.end();
 			}
-		} finally {
-			res.end();
+		} else {
+			// OpenAI-shape upstream → translate to Anthropic SSE shape on the fly.
+			const usage = await pipeOpenAIAsAnthropic(upstream, res, { model });
+			inputTokens = usage.inputTokens;
+			outputTokens = usage.outputTokens;
 		}
 
 		const latencyMs = Date.now() - t0;
-
 		if (inputTokens || outputTokens) {
 			try {
 				await addMonthlyTokens(agentId, inputTokens + outputTokens);
@@ -309,21 +341,19 @@ export default wrap(async (req, res) => {
 				log.warn('token_counter_write_failed', { agentId, msg: err?.message });
 			}
 		}
-
 		recordEvent({
 			kind: 'llm',
-			tool: 'anthropic.messages',
+			tool: route.kind === 'anthropic' ? 'anthropic.messages' : `${route.provider}.chat`,
 			agentId,
 			bytes: 0,
 			latencyMs,
 			status: 'ok',
 			meta: { model, input_tokens: inputTokens, output_tokens: outputTokens, upstream_status: upstream.status },
 		});
-
 		return;
 	}
 
-	// 8c. Non-streaming path — buffer and parse as before.
+	// ── Non-streaming path ────────────────────────────────────────────────────
 	const upstreamText = await upstream.text();
 	const latencyMs = Date.now() - t0;
 
@@ -331,10 +361,24 @@ export default wrap(async (req, res) => {
 	try {
 		upstreamJson = JSON.parse(upstreamText);
 	} catch {
-		// Non-JSON body — treated as an opaque upstream failure below.
+		// Non-JSON body — leave as opaque pass-through.
 	}
-	const inputTokens = upstreamJson?.usage?.input_tokens ?? 0;
-	const outputTokens = upstreamJson?.usage?.output_tokens ?? 0;
+
+	let inputTokens = 0;
+	let outputTokens = 0;
+	let outBody = upstreamText;
+	let outContentType = upstream.headers.get('content-type') || 'application/json';
+
+	if (route.kind === 'anthropic') {
+		inputTokens = upstreamJson?.usage?.input_tokens ?? 0;
+		outputTokens = upstreamJson?.usage?.output_tokens ?? 0;
+	} else if (upstreamJson) {
+		inputTokens = upstreamJson?.usage?.prompt_tokens ?? 0;
+		outputTokens = upstreamJson?.usage?.completion_tokens ?? 0;
+		const translated = openAIResponseToAnthropic(upstreamJson, { model });
+		outBody = JSON.stringify(translated);
+		outContentType = 'application/json';
+	}
 
 	if (inputTokens || outputTokens) {
 		try {
@@ -344,24 +388,308 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	// 9. Record usage (fire-and-forget)
 	recordEvent({
 		kind: 'llm',
-		tool: 'anthropic.messages',
+		tool: route.kind === 'anthropic' ? 'anthropic.messages' : `${route.provider}.chat`,
 		agentId,
 		bytes: upstreamText.length,
 		latencyMs,
 		status: 'ok',
-		meta: {
-			model,
-			input_tokens: inputTokens,
-			output_tokens: outputTokens,
-			upstream_status: upstream.status,
-		},
+		meta: { model, input_tokens: inputTokens, output_tokens: outputTokens, upstream_status: upstream.status },
 	});
 
-	// 10. Proxy Anthropic's successful response faithfully (unchanged shape).
-	res.statusCode = upstream.status;
-	res.setHeader('content-type', upstream.headers.get('content-type') || 'application/json');
-	return res.end(upstreamText);
+	res.statusCode = 200;
+	res.setHeader('content-type', outContentType);
+	return res.end(outBody);
 });
+
+// ── Shape translation: Anthropic ⇄ OpenAI ────────────────────────────────────
+
+function anthropicBodyToOpenAI(body) {
+	const messages = [];
+	if (body.system) messages.push({ role: 'system', content: body.system });
+
+	for (const m of body.messages) {
+		if (typeof m.content === 'string') {
+			messages.push({ role: m.role, content: m.content });
+			continue;
+		}
+		if (!Array.isArray(m.content)) continue;
+
+		if (m.role === 'user') {
+			const textParts = [];
+			for (const block of m.content) {
+				if (block?.type === 'text' && typeof block.text === 'string') {
+					textParts.push(block.text);
+				} else if (block?.type === 'tool_result') {
+					messages.push({
+						role: 'tool',
+						tool_call_id: block.tool_use_id,
+						content:
+							typeof block.content === 'string'
+								? block.content
+								: JSON.stringify(block.content ?? ''),
+					});
+				}
+			}
+			if (textParts.length) messages.push({ role: 'user', content: textParts.join('\n') });
+		} else if (m.role === 'assistant') {
+			const textParts = [];
+			const toolCalls = [];
+			for (const block of m.content) {
+				if (block?.type === 'text' && typeof block.text === 'string') {
+					textParts.push(block.text);
+				} else if (block?.type === 'tool_use') {
+					toolCalls.push({
+						id: block.id,
+						type: 'function',
+						function: {
+							name: block.name,
+							arguments: JSON.stringify(block.input ?? {}),
+						},
+					});
+				}
+			}
+			const msg = { role: 'assistant', content: textParts.join('\n') || null };
+			if (toolCalls.length) msg.tool_calls = toolCalls;
+			messages.push(msg);
+		}
+	}
+
+	const out = {
+		model: body.model,
+		max_tokens: body.max_tokens ?? 4096,
+		messages,
+		stream: !!body.stream,
+	};
+	if (typeof body.temperature === 'number') out.temperature = body.temperature;
+
+	if (Array.isArray(body.tools) && body.tools.length) {
+		out.tools = body.tools.map((t) => ({
+			type: 'function',
+			function: {
+				name: t.name,
+				description: t.description,
+				parameters: t.input_schema,
+			},
+		}));
+		out.tool_choice = 'auto';
+	}
+	return out;
+}
+
+function openAIResponseToAnthropic(resp, { model }) {
+	const choice = resp?.choices?.[0];
+	const msg = choice?.message || {};
+	const content = [];
+	if (typeof msg.content === 'string' && msg.content.length) {
+		content.push({ type: 'text', text: msg.content });
+	}
+	for (const tc of msg.tool_calls || []) {
+		let input = {};
+		try {
+			input = tc.function?.arguments ? JSON.parse(tc.function.arguments) : {};
+		} catch {
+			input = {};
+		}
+		content.push({ type: 'tool_use', id: tc.id, name: tc.function?.name, input });
+	}
+	return {
+		id: resp.id || `msg_${Date.now()}`,
+		type: 'message',
+		role: 'assistant',
+		model,
+		content,
+		stop_reason: choice?.finish_reason === 'tool_calls' ? 'tool_use' : 'end_turn',
+		stop_sequence: null,
+		usage: {
+			input_tokens: resp?.usage?.prompt_tokens ?? 0,
+			output_tokens: resp?.usage?.completion_tokens ?? 0,
+		},
+	};
+}
+
+// Stream an OpenAI-shape SSE upstream into the client as Anthropic-shape SSE.
+// Returns { inputTokens, outputTokens } extracted from the final usage event.
+async function pipeOpenAIAsAnthropic(upstream, res, { model }) {
+	const reader = upstream.body.getReader();
+	const decoder = new TextDecoder();
+	let buf = '';
+
+	let inputTokens = 0;
+	let outputTokens = 0;
+
+	const messageId = `msg_${Date.now()}`;
+	let messageStartSent = false;
+	let textBlockOpen = false;
+	let textIndex = 0;
+	// Map OpenAI tool-call index → { anthropicIndex, started, finished, name, id, argsBuf }
+	const toolBlocks = new Map();
+	let nextBlockIndex = 1; // index 0 reserved for the text block
+	let stopReason = 'end_turn';
+
+	function write(obj, eventName) {
+		const evt = eventName ? `event: ${eventName}\n` : '';
+		res.write(`${evt}data: ${JSON.stringify(obj)}\n\n`);
+	}
+
+	function ensureMessageStart() {
+		if (messageStartSent) return;
+		messageStartSent = true;
+		write(
+			{
+				type: 'message_start',
+				message: {
+					id: messageId,
+					type: 'message',
+					role: 'assistant',
+					content: [],
+					model,
+					stop_reason: null,
+					stop_sequence: null,
+					usage: { input_tokens: 0, output_tokens: 0 },
+				},
+			},
+			'message_start',
+		);
+	}
+
+	function ensureTextBlockStart() {
+		ensureMessageStart();
+		if (textBlockOpen) return;
+		textBlockOpen = true;
+		textIndex = 0;
+		write(
+			{
+				type: 'content_block_start',
+				index: textIndex,
+				content_block: { type: 'text', text: '' },
+			},
+			'content_block_start',
+		);
+	}
+
+	function closeTextBlockIfOpen() {
+		if (!textBlockOpen) return;
+		write({ type: 'content_block_stop', index: textIndex }, 'content_block_stop');
+		textBlockOpen = false;
+	}
+
+	function startToolBlock(slot, openAIToolCall) {
+		ensureMessageStart();
+		closeTextBlockIfOpen();
+		slot.anthropicIndex = nextBlockIndex++;
+		slot.started = true;
+		slot.id = openAIToolCall.id || `tool_${slot.anthropicIndex}`;
+		slot.name = openAIToolCall.function?.name || slot.name || '';
+		write(
+			{
+				type: 'content_block_start',
+				index: slot.anthropicIndex,
+				content_block: { type: 'tool_use', id: slot.id, name: slot.name, input: {} },
+			},
+			'content_block_start',
+		);
+	}
+
+	function finishToolBlocks() {
+		for (const slot of toolBlocks.values()) {
+			if (slot.started && !slot.finished) {
+				write({ type: 'content_block_stop', index: slot.anthropicIndex }, 'content_block_stop');
+				slot.finished = true;
+			}
+		}
+	}
+
+	try {
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			buf += decoder.decode(value, { stream: true });
+			const lines = buf.split('\n');
+			buf = lines.pop();
+			for (const rawLine of lines) {
+				const line = rawLine.trim();
+				if (!line.startsWith('data:')) continue;
+				const payload = line.slice(5).trim();
+				if (!payload || payload === '[DONE]') continue;
+				let ev;
+				try {
+					ev = JSON.parse(payload);
+				} catch {
+					continue;
+				}
+
+				if (ev.usage) {
+					inputTokens = ev.usage.prompt_tokens ?? inputTokens;
+					outputTokens = ev.usage.completion_tokens ?? outputTokens;
+				}
+
+				const choice = ev.choices?.[0];
+				const delta = choice?.delta;
+
+				if (delta?.content) {
+					ensureTextBlockStart();
+					write(
+						{
+							type: 'content_block_delta',
+							index: textIndex,
+							delta: { type: 'text_delta', text: delta.content },
+						},
+						'content_block_delta',
+					);
+				}
+
+				if (Array.isArray(delta?.tool_calls)) {
+					for (const tc of delta.tool_calls) {
+						const idx = tc.index ?? 0;
+						let slot = toolBlocks.get(idx);
+						if (!slot) {
+							slot = { started: false, finished: false, name: '', id: null, argsBuf: '' };
+							toolBlocks.set(idx, slot);
+						}
+						if (!slot.started && (tc.id || tc.function?.name)) {
+							startToolBlock(slot, tc);
+						} else if (tc.function?.name && !slot.started) {
+							slot.name += tc.function.name;
+						}
+						if (tc.function?.arguments) {
+							slot.argsBuf += tc.function.arguments;
+							if (slot.started) {
+								write(
+									{
+										type: 'content_block_delta',
+										index: slot.anthropicIndex,
+										delta: { type: 'input_json_delta', partial_json: tc.function.arguments },
+									},
+									'content_block_delta',
+								);
+							}
+						}
+					}
+				}
+
+				if (choice?.finish_reason) {
+					stopReason = choice.finish_reason === 'tool_calls' ? 'tool_use' : 'end_turn';
+				}
+			}
+		}
+	} finally {
+		closeTextBlockIfOpen();
+		finishToolBlocks();
+		if (messageStartSent) {
+			write(
+				{
+					type: 'message_delta',
+					delta: { stop_reason: stopReason, stop_sequence: null },
+					usage: { output_tokens: outputTokens },
+				},
+				'message_delta',
+			);
+			write({ type: 'message_stop' }, 'message_stop');
+		}
+		res.end();
+	}
+
+	return { inputTokens, outputTokens };
+}

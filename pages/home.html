@@ -82,6 +82,478 @@
 		<script src="/nav.js"></script>
 
 		<main id="main-content" class="home-parallax">
+			<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+			<!-- ║  SaaS prologue — sits above the cinematic parallax hero.      ║ -->
+			<!-- ║  Self-contained inside .h-saas; styles in /home-saas.css.     ║ -->
+			<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+			<div class="h-saas">
+				<!-- 1. Announcement bar -->
+				<div class="h-saas-bar" data-saas-bar role="region" aria-label="Announcement">
+					<div class="h-saas-bar-inner">
+						<span class="h-saas-bar-pill"><span class="pulse"></span>Live</span>
+						<span>v1.5.1 on Solana mainnet — open-source under Apache 2.0.</span>
+						<a
+							href="https://github.com/nirholas/three.ws"
+							target="_blank"
+							rel="noopener"
+							>Star on GitHub →</a
+						>
+						<button
+							type="button"
+							class="h-saas-bar-close"
+							data-saas-bar-close
+							aria-label="Dismiss announcement"
+						>
+							✕
+						</button>
+					</div>
+				</div>
+
+				<!-- 2. SaaS hero -->
+				<section class="h-saas-hero" aria-label="Product overview">
+					<div class="h-saas-inner h-saas-hero-inner">
+						<div class="h-saas-hero-copy">
+							<span class="h-saas-eyebrow h-saas-reveal">
+								<span class="dot"></span>
+								The 3D identity layer for AI agents
+							</span>
+							<h2 class="h-saas-h1 h-saas-reveal">
+								Every AI agent deserves a <em>3D body</em> and a verifiable
+								onchain home.
+							</h2>
+							<p class="h-saas-sub h-saas-reveal">
+								three.ws is the open infrastructure for spawning 3D AI agents on
+								Solana. Drop a GLB, connect any LLM via MCP or A2A, mint a
+								portable identity, and embed it anywhere with one tag — no SDK
+								required on the consumer side.
+							</p>
+							<div class="h-saas-cta h-saas-reveal">
+								<a href="/create" class="h-saas-btn h-saas-btn--primary">
+									<span>Start free</span>
+									<span class="arrow">→</span>
+								</a>
+								<a href="#pick-animate" class="h-saas-btn h-saas-btn--ghost">
+									Watch it live
+								</a>
+							</div>
+							<div class="h-saas-proof h-saas-reveal">
+								<div class="h-saas-avatars" aria-hidden="true">
+									<span class="av"></span>
+									<span class="av"></span>
+									<span class="av"></span>
+									<span class="av"></span>
+									<span class="av">+</span>
+								</div>
+								<span class="h-saas-stars" aria-hidden="true">★★★★★</span>
+								<span>Built for creators, devs, DAOs and brands shipping agentic UX.</span>
+							</div>
+						</div>
+
+						<aside class="h-saas-pcard h-saas-reveal" aria-label="Live agent preview">
+							<div class="h-saas-pcard-bar" aria-hidden="true">
+								<span class="d"></span>
+								<span class="d"></span>
+								<span class="d"></span>
+								<span class="url">three.ws/agent/preview</span>
+							</div>
+							<div class="h-saas-pcard-stage">
+								<model-viewer
+									src="/animations/robotexpressive.glb"
+									auto-rotate
+									auto-rotate-delay="0"
+									rotation-per-second="22deg"
+									interaction-prompt="none"
+									camera-controls="false"
+									disable-zoom
+									shadow-intensity="0.4"
+									exposure="0.8"
+									environment-image="neutral"
+									camera-orbit="0deg 80deg 5m"
+									field-of-view="32deg"
+									loading="lazy"
+								></model-viewer>
+								<div class="h-saas-pcard-hud" aria-hidden="true">
+									<span class="h-saas-pcard-chip">
+										<span class="pulse"></span>
+										A2A · MCP · ready
+									</span>
+									<span class="h-saas-pcard-chip tx">
+										<code>3DAg…uPL</code>
+									</span>
+								</div>
+							</div>
+						</aside>
+					</div>
+				</section>
+
+				<!-- 3. Compatible-with marquee -->
+				<section class="h-saas-logos" aria-label="Compatible with">
+					<p class="h-saas-logos-title">Compatible with the stack you already use</p>
+					<div class="h-saas-marquee">
+						<div class="h-saas-marquee-track">
+							<span class="h-saas-mark"><span class="glyph">◎</span>Solana</span>
+							<span class="h-saas-mark"><span class="glyph">M</span>Metaplex Core</span>
+							<span class="h-saas-mark"><span class="glyph">⌘</span>MCP</span>
+							<span class="h-saas-mark"><span class="glyph">A</span>A2A</span>
+							<span class="h-saas-mark"><span class="glyph">8</span>ERC-8004</span>
+							<span class="h-saas-mark"><span class="glyph">G</span>glTF 2.0</span>
+							<span class="h-saas-mark"><span class="glyph">▲</span>Vercel</span>
+							<span class="h-saas-mark"><span class="glyph">◬</span>Three.js</span>
+							<span class="h-saas-mark"><span class="glyph">$</span>x402</span>
+							<span class="h-saas-mark"><span class="glyph">H</span>Helius</span>
+							<span class="h-saas-mark"><span class="glyph">N</span>Neon</span>
+							<span class="h-saas-mark"><span class="glyph">P</span>Phantom</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">◎</span>Solana</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">M</span>Metaplex Core</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">⌘</span>MCP</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">A</span>A2A</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">8</span>ERC-8004</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">G</span>glTF 2.0</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">▲</span>Vercel</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">◬</span>Three.js</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">$</span>x402</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">H</span>Helius</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">N</span>Neon</span>
+							<span class="h-saas-mark" aria-hidden="true"><span class="glyph">P</span>Phantom</span>
+						</div>
+					</div>
+				</section>
+
+				<!-- 4. Live metrics (real /api/home-stats; hides if unavailable) -->
+				<section
+					class="h-saas-metrics"
+					data-saas-metrics
+					hidden
+					aria-label="Live platform metrics"
+				>
+					<div class="h-saas-inner">
+						<div class="h-saas-metrics-head h-saas-reveal">
+							<span class="h-saas-eyebrow"
+								><span class="dot"></span>Live numbers</span
+							>
+							<h2 class="h-saas-section-title">Real agents. Real chains. Real time.</h2>
+							<p class="h-saas-section-sub">
+								Pulled directly from the index — refreshed every minute.
+							</p>
+						</div>
+						<div class="h-saas-metrics-grid h-saas-reveal">
+							<div class="h-saas-metric">
+								<span class="h-saas-metric-num" data-saas-metric="agents">0</span>
+								<span class="h-saas-metric-label">Agents created</span>
+							</div>
+							<div class="h-saas-metric">
+								<span class="h-saas-metric-num" data-saas-metric="onchain_agents"
+									>0</span
+								>
+								<span class="h-saas-metric-label">Onchain identities</span>
+							</div>
+							<div class="h-saas-metric">
+								<span class="h-saas-metric-num" data-saas-metric="widgets">0</span>
+								<span class="h-saas-metric-label">Widgets deployed</span>
+							</div>
+							<div class="h-saas-metric">
+								<span class="h-saas-metric-num" data-saas-metric="chains">0</span>
+								<span class="h-saas-metric-label">Chains indexed</span>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- 5. Audience tabs -->
+				<section class="h-saas-section" aria-label="Built for">
+					<div class="h-saas-inner">
+						<div class="h-saas-section-head h-saas-reveal">
+							<span class="h-saas-eyebrow"
+								><span class="dot"></span>Built for builders</span
+							>
+							<h2 class="h-saas-section-title">
+								One platform.<br />
+								Four kinds of teams.
+							</h2>
+							<p class="h-saas-section-sub">
+								Whatever you ship, three.ws is the layer that gives your agent a face,
+								a wallet, and a home onchain.
+							</p>
+						</div>
+						<div class="h-saas-tabwrap h-saas-reveal">
+							<div class="h-saas-tabs" role="tablist" data-saas-tabs>
+								<button
+									class="h-saas-tab"
+									role="tab"
+									aria-selected="true"
+									data-saas-panel="<strong>Creators</strong> — turn your character into an animated 3D agent that chats on Twitter, replies to fans, and lives on its own page. Free to start, mint when you're ready."
+								>
+									Creators
+								</button>
+								<button
+									class="h-saas-tab"
+									role="tab"
+									aria-selected="false"
+									data-saas-panel="<strong>Developers</strong> — drop the <code>&lt;agent-3d&gt;</code> web component into any page; wire MCP tools and A2A endpoints; ship in minutes with no SDK on the consumer side."
+								>
+									Developers
+								</button>
+								<button
+									class="h-saas-tab"
+									role="tab"
+									aria-selected="false"
+									data-saas-panel="<strong>DAOs & protocols</strong> — give your governance agent or treasury bot a verifiable Metaplex Core identity, attestations, and a discoverable A2A endpoint."
+								>
+									DAOs
+								</button>
+								<button
+									class="h-saas-tab"
+									role="tab"
+									aria-selected="false"
+									data-saas-panel="<strong>Brands & enterprises</strong> — deploy customer-facing 3D agents with full white-label branding, embeddable widgets, and an audit trail of every interaction."
+								>
+									Brands
+								</button>
+							</div>
+							<p class="h-saas-tabpanel" data-saas-tabpanel></p>
+						</div>
+					</div>
+				</section>
+
+				<!-- 6. Use cases (real avatars) -->
+				<section class="h-saas-section" aria-label="What you can build">
+					<div class="h-saas-inner">
+						<div class="h-saas-section-head h-saas-reveal">
+							<span class="h-saas-eyebrow"
+								><span class="dot"></span>What you can build</span
+							>
+							<h2 class="h-saas-section-title">From character to chain in 60 seconds.</h2>
+							<p class="h-saas-section-sub">
+								Three real agents shipped on three.ws — hover any card to interact.
+							</p>
+						</div>
+						<div class="h-saas-cases">
+							<article class="h-saas-case h-saas-reveal">
+								<div class="h-saas-case-stage">
+									<model-viewer
+										src="/animations/robotexpressive.glb"
+										auto-rotate
+										auto-rotate-delay="0"
+										rotation-per-second="24deg"
+										interaction-prompt="none"
+										camera-controls="false"
+										disable-zoom
+										shadow-intensity="0"
+										exposure="0.85"
+										environment-image="neutral"
+										camera-orbit="15deg 80deg 4m"
+										field-of-view="38deg"
+										loading="lazy"
+									></model-viewer>
+								</div>
+								<div class="h-saas-case-body">
+									<span class="h-saas-case-kicker">Character agent</span>
+									<h3 class="h-saas-case-title">Robot — animated, embeddable.</h3>
+									<p class="h-saas-case-desc">
+										Drop a GLB, pick from 12+ animations, drop one tag on any
+										page. Used by creators on Twitter and personal sites.
+									</p>
+									<a class="h-saas-case-link" href="/app">Open the viewer →</a>
+								</div>
+							</article>
+							<article class="h-saas-case h-saas-reveal">
+								<div class="h-saas-case-stage">
+									<model-viewer
+										src="/animations/soldier.glb"
+										auto-rotate
+										auto-rotate-delay="0"
+										rotation-per-second="24deg"
+										interaction-prompt="none"
+										camera-controls="false"
+										disable-zoom
+										shadow-intensity="0"
+										exposure="0.85"
+										environment-image="neutral"
+										camera-orbit="15deg 80deg 4m"
+										field-of-view="38deg"
+										loading="lazy"
+									></model-viewer>
+								</div>
+								<div class="h-saas-case-body">
+									<span class="h-saas-case-kicker">Studio</span>
+									<h3 class="h-saas-case-title">Soldier — full animation library.</h3>
+									<p class="h-saas-case-desc">
+										Idle, walk, run, jump, dance, wave, punch. Bring your own
+										Mixamo or load any glTF rig directly in the studio.
+									</p>
+									<a class="h-saas-case-link" href="/studio">Open Widget Studio →</a>
+								</div>
+							</article>
+							<article class="h-saas-case h-saas-reveal">
+								<div class="h-saas-case-stage">
+									<model-viewer
+										src="/avatars/cz.glb"
+										auto-rotate
+										auto-rotate-delay="0"
+										rotation-per-second="24deg"
+										interaction-prompt="none"
+										camera-controls="false"
+										disable-zoom
+										shadow-intensity="0"
+										exposure="0.85"
+										environment-image="neutral"
+										camera-orbit="15deg 80deg 4m"
+										field-of-view="38deg"
+										loading="lazy"
+									></model-viewer>
+								</div>
+								<div class="h-saas-case-body">
+									<span class="h-saas-case-kicker">Live onchain</span>
+									<h3 class="h-saas-case-title">CZ — full talking agent.</h3>
+									<p class="h-saas-case-desc">
+										A real agent shipped on three.ws: 3D avatar, voice chat,
+										animations, x402-paid skills, and a Solana wallet.
+									</p>
+									<a class="h-saas-case-link" href="/cz">Visit /cz →</a>
+								</div>
+							</article>
+						</div>
+					</div>
+				</section>
+
+				<!-- 7. Copyable snippet -->
+				<section class="h-saas-section" aria-label="Drop one tag">
+					<div class="h-saas-inner">
+						<div class="h-saas-section-head h-saas-reveal">
+							<span class="h-saas-eyebrow"
+								><span class="dot"></span>Ship in two lines</span
+							>
+							<h2 class="h-saas-section-title">
+								Drop one script. Drop one tag. Done.
+							</h2>
+							<p class="h-saas-section-sub">
+								The <code>&lt;agent-3d&gt;</code> web component lazy-loads, renders
+								anywhere — Notion, Ghost, WordPress, Framer, your custom Next.js
+								app — and connects to your stack via MCP or A2A.
+							</p>
+						</div>
+						<div class="h-saas-codecard h-saas-reveal">
+							<div class="h-saas-codecard-bar" aria-hidden="true">
+								<span class="d"></span>
+								<span class="d"></span>
+								<span class="d"></span>
+								<span class="filename">index.html</span>
+								<button
+									type="button"
+									class="h-saas-copy"
+									data-saas-copy="#h-saas-snippet"
+									aria-label="Copy code"
+								>
+									Copy
+								</button>
+							</div>
+							<pre id="h-saas-snippet"><code><span class="c">&lt;!-- 1. Load the component (lazy, ~14kb gzipped) --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"module"</span>
+  <span class="attr">src</span>=<span class="val">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+
+<span class="c">&lt;!-- 2. Drop the tag — that's it --&gt;</span>
+<span class="tag">&lt;agent-3d</span>
+  <span class="attr">agent-id</span>=<span class="val">"3DAg…uPL"</span>
+  <span class="attr">kiosk</span>
+<span class="tag">&gt;&lt;/agent-3d&gt;</span></code></pre>
+						</div>
+					</div>
+				</section>
+
+				<!-- 8. Integration grid -->
+				<section class="h-saas-section" aria-label="Integrations">
+					<div class="h-saas-inner">
+						<div class="h-saas-section-head h-saas-reveal">
+							<span class="h-saas-eyebrow"
+								><span class="dot"></span>Open by design</span
+							>
+							<h2 class="h-saas-section-title">
+								Plays nicely with everything in your stack.
+							</h2>
+							<p class="h-saas-section-sub">
+								No vendor lock-in. Standards-first. Bring your own LLM, wallet, RPC,
+								and host — three.ws stays out of the way.
+							</p>
+						</div>
+						<div class="h-saas-int-grid h-saas-reveal">
+							<div class="h-saas-int"><span class="glyph">◎</span><span class="h-saas-int-name">Solana</span></div>
+							<div class="h-saas-int"><span class="glyph">M</span><span class="h-saas-int-name">Metaplex Core</span></div>
+							<div class="h-saas-int"><span class="glyph">⌘</span><span class="h-saas-int-name">MCP</span></div>
+							<div class="h-saas-int"><span class="glyph">A</span><span class="h-saas-int-name">A2A</span></div>
+							<div class="h-saas-int"><span class="glyph">8</span><span class="h-saas-int-name">ERC-8004</span></div>
+							<div class="h-saas-int"><span class="glyph">G</span><span class="h-saas-int-name">glTF 2.0</span></div>
+							<div class="h-saas-int"><span class="glyph">◬</span><span class="h-saas-int-name">Three.js</span></div>
+							<div class="h-saas-int"><span class="glyph">▲</span><span class="h-saas-int-name">Vercel</span></div>
+							<div class="h-saas-int"><span class="glyph">$</span><span class="h-saas-int-name">x402</span></div>
+							<div class="h-saas-int"><span class="glyph">H</span><span class="h-saas-int-name">Helius</span></div>
+							<div class="h-saas-int"><span class="glyph">N</span><span class="h-saas-int-name">Neon</span></div>
+							<div class="h-saas-int"><span class="glyph">P</span><span class="h-saas-int-name">Phantom</span></div>
+						</div>
+					</div>
+				</section>
+
+				<!-- 9. Pricing teaser -->
+				<section class="h-saas-section" aria-label="Pricing">
+					<div class="h-saas-inner h-saas-price">
+						<div class="h-saas-price-copy h-saas-reveal">
+							<span class="h-saas-eyebrow"
+								><span class="dot"></span>Free to start</span
+							>
+							<h2>No subscription.<br />Just per-mint costs.</h2>
+							<p>
+								Use the viewer, embed widgets, build agents, and explore the studio
+								for free. Pay only the Solana network fee — about a cent — when you
+								mint an onchain identity. Optional paid plans unlock higher quotas,
+								team seats and audit logs.
+							</p>
+							<ul class="h-saas-price-bullets">
+								<li>Unlimited drafts and animations in the studio.</li>
+								<li>Embed widgets on any site with one tag.</li>
+								<li>Native MCP + A2A endpoints out of the box.</li>
+								<li>Your keys, your asset — owned on Solana.</li>
+							</ul>
+							<a href="/pricing" class="h-saas-btn h-saas-btn--ghost">
+								Compare plans
+								<span class="arrow">→</span>
+							</a>
+						</div>
+						<div class="h-saas-price-card h-saas-reveal">
+							<span class="h-saas-price-tier">Free forever</span>
+							<div class="h-saas-price-amount">$0<small>/month</small></div>
+							<p class="h-saas-price-note">+ ~$0.01 one-time mint fee on Solana</p>
+							<a href="/create" class="h-saas-btn h-saas-btn--primary">
+								<span>Create your agent</span>
+								<span class="arrow">→</span>
+							</a>
+							<div class="h-saas-price-foot">
+								<span>No credit card.</span>
+								<a href="/docs">Read the docs</a>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- 10. Closing CTA band -->
+				<section class="h-saas-cta-band" aria-label="Get started">
+					<span class="h-saas-eyebrow h-saas-reveal"
+						><span class="dot"></span>Ship today</span
+					>
+					<h2 class="h-saas-cta-h h-saas-reveal">
+						Give your AI a <em>body</em>.<br />In 60 seconds.
+					</h2>
+					<p class="h-saas-cta-p h-saas-reveal">
+						No install. No SDK on the consumer side. Free to start. Owned on Solana.
+					</p>
+					<div class="h-saas-cta-row h-saas-reveal">
+						<a href="/create" class="h-saas-btn h-saas-btn--primary">
+							<span>Start free</span>
+							<span class="arrow">→</span>
+						</a>
+						<a href="/docs" class="h-saas-btn h-saas-btn--ghost">Read the docs</a>
+					</div>
+				</section>
+			</div>
+
 			<!-- ── Hero (parallax act) ── -->
 			<section class="h-hero-act">
 				<!-- Depth 8: fluid particles + nebula -->

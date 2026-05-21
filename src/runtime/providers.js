@@ -1,9 +1,15 @@
 // LLM provider abstraction. Calls go through a proxy URL by default —
-// never ship API keys in the browser.
+// never ship API keys in the browser. The server-side proxy at
+// /api/llm/anthropic accepts an Anthropic-shape body and routes to
+// Anthropic, Groq, or OpenRouter based on the model id — so this client
+// keeps emitting Anthropic-shape requests for every supported model
+// (paid Claude *and* free Llama/Hermes/GPT-OSS).
 
 export class AnthropicProvider {
 	constructor({
-		model = 'claude-opus-4-6',
+		// Free OpenRouter Llama 3.3 70B — no per-token cost to the host.
+		// Owners can override with a paid Claude model via embed-policy.
+		model = 'meta-llama/llama-3.3-70b-instruct:free',
 		proxyURL,
 		apiKey,
 		agentId,
@@ -18,7 +24,9 @@ export class AnthropicProvider {
 		this.maxTokens = maxTokens;
 		this.thinking = thinking;
 
-		// Priority: explicit proxyURL > direct key > we-pay fallback
+		// Priority: explicit proxyURL > direct key > we-pay fallback.
+		// Direct-key mode is only safe for Claude models (apiKey is then an
+		// Anthropic key); free Groq/OR models always go through the proxy.
 		if (proxyURL) {
 			this.proxyURL = proxyURL;
 		} else if (!apiKey && agentId && apiOrigin) {

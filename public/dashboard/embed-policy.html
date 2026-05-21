@@ -358,7 +358,31 @@
 					</div>
 
 					<label for="brain-model">Model</label>
-					<input type="text" id="brain-model" placeholder="claude-opus-4-6" />
+					<select id="brain-model">
+						<optgroup label="Free — host-paid (recommended)">
+							<option value="meta-llama/llama-3.3-70b-instruct:free">
+								OpenRouter · Llama 3.3 70B (free) — default
+							</option>
+							<option value="openai/gpt-oss-120b:free">
+								OpenRouter · GPT-OSS 120B (free)
+							</option>
+							<option value="nousresearch/hermes-3-llama-3.1-405b:free">
+								OpenRouter · Hermes 3 405B (free)
+							</option>
+							<option value="llama-3.3-70b-versatile">
+								Groq · Llama 3.3 70B (free, sub-second)
+							</option>
+							<option value="llama-3.1-8b-instant">
+								Groq · Llama 3.1 8B (free, fastest)
+							</option>
+						</optgroup>
+						<optgroup label="Paid Claude — uses host's Anthropic key">
+							<option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+							<option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+							<option value="claude-opus-4-6">Claude Opus 4.6</option>
+							<option value="claude-opus-4-7">Claude Opus 4.7</option>
+						</optgroup>
+					</select>
 				</fieldset>
 			</div>
 
@@ -490,7 +514,8 @@
 					document.getElementById('brain-proxy-url').value = '';
 					document.getElementById('brain-quota').value = '1000';
 					document.getElementById('brain-rate').value = '10';
-					document.getElementById('brain-model').value = 'claude-opus-4-6';
+					document.getElementById('brain-model').value =
+						'meta-llama/llama-3.3-70b-instruct:free';
 					document.getElementById('storage-primary').value = 'r2';
 					document.getElementById('storage-ipfs').checked = false;
 					document.getElementById('storage-attested').checked = false;
@@ -516,7 +541,8 @@
 					brain.monthly_quota != null ? String(brain.monthly_quota) : '';
 				document.getElementById('brain-rate').value =
 					brain.rate_limit_per_min != null ? String(brain.rate_limit_per_min) : '';
-				document.getElementById('brain-model').value = brain.model || 'claude-opus-4-6';
+				document.getElementById('brain-model').value =
+					brain.model || 'meta-llama/llama-3.3-70b-instruct:free';
 
 				const storage = policy.storage || {};
 				document.getElementById('storage-primary').value = storage.primary || 'r2';
@@ -569,7 +595,7 @@
 						rate_limit_per_min: numOrNull('brain-rate'),
 						model:
 							document.getElementById('brain-model').value.trim() ||
-							'claude-opus-4-6',
+							'meta-llama/llama-3.3-70b-instruct:free',
 					},
 					storage: {
 						primary: document.getElementById('storage-primary').value,

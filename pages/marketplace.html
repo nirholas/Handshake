@@ -16,6 +16,7 @@
 		<link rel="stylesheet" href="/marketplace.css" />
 		<link rel="stylesheet" href="/marketplace-skills.css" />
 		<link rel="stylesheet" href="/marketplace-v2.css" />
+		<link rel="stylesheet" href="/marketplace-improvements.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<style>
 			/* Author display rules on modal overlays override the UA stylesheet's
@@ -1494,6 +1495,30 @@
 								<h3>What can you do with this Agent?</h3>
 								<p id="d-overview">—</p>
 							</div>
+
+							<!-- Ratings & reviews -->
+							<section class="d-rating-widget" id="d-rating-widget" aria-label="Ratings and reviews">
+								<div class="d-rating-summary" id="d-rating-summary">
+									<span class="avg" id="d-rating-avg">—</span>
+									<span class="stars" id="d-rating-stars">☆☆☆☆☆</span>
+									<span class="count" id="d-rating-count">No reviews yet</span>
+								</div>
+								<div class="d-rating-input" id="d-rating-input" hidden>
+									<span style="font-size:12px;color:var(--mk-text-2)">Your rating:</span>
+									<span class="stars" id="d-rating-pick" role="radiogroup" aria-label="Pick a rating">
+										<button type="button" class="star-pick" data-rating="1" aria-label="1 star">☆</button>
+										<button type="button" class="star-pick" data-rating="2" aria-label="2 stars">☆</button>
+										<button type="button" class="star-pick" data-rating="3" aria-label="3 stars">☆</button>
+										<button type="button" class="star-pick" data-rating="4" aria-label="4 stars">☆</button>
+										<button type="button" class="star-pick" data-rating="5" aria-label="5 stars">☆</button>
+									</span>
+									<textarea id="d-review-body" placeholder="Write a short review (optional)" maxlength="2000"></textarea>
+									<button type="button" class="submit-review" id="d-review-submit" disabled>Submit review</button>
+								</div>
+								<div class="d-rating-msg" id="d-rating-msg" role="status" aria-live="polite"></div>
+								<div class="d-reviews-list" id="d-reviews-list"></div>
+							</section>
+
 							<div class="market-preview-card" id="d-preview-card">
 								<div class="market-preview-head">
 									<h2 class="market-section-title" style="margin:0">Try it now</h2>

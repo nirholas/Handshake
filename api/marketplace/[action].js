@@ -99,6 +99,13 @@ export default wrap(async (req, res) => {
 		if (sub === 'publish') return handlePublish(req, res, id);
 		if (sub === 'view') return handleView(req, res, id);
 		if (sub === 'preview') return handlePreview(req, res, id);
+		if (sub === 'reviews') {
+			const mod = await import('./reviews.js');
+			req.url = req.url.includes('?')
+				? `${req.url}&agent_id=${id}`
+				: `${req.url}?agent_id=${id}`;
+			return mod.default(req, res);
+		}
 		return error(res, 404, 'not_found', 'unknown marketplace action');
 	}
 
@@ -300,7 +307,9 @@ async function handleList(req, res, url) {
 		        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed') AS buyers_total,
 		       (SELECT count(*)::int FROM skill_purchases sp
 		        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed'
-		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h
+		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h,
+		       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = ai.id), 0) AS rating_avg,
+		       COALESCE((SELECT count(*)::int FROM agent_reviews r WHERE r.agent_id = ai.id), 0) AS rating_count
 		FROM agent_identities ai
 		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
 		LEFT JOIN users u ON u.id = ai.user_id
@@ -352,7 +361,9 @@ async function handleDetail(req, res, id) {
 		        WHERE sp.agent_id = a.id AND sp.status = 'confirmed') AS buyers_total,
 		       (SELECT count(*)::int FROM skill_purchases sp
 		        WHERE sp.agent_id = a.id AND sp.status = 'confirmed'
-		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h
+		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h,
+		       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_avg,
+		       COALESCE((SELECT count(*)::int FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_count
 		FROM agent_identities a
 		LEFT JOIN users u ON u.id = a.user_id
 		LEFT JOIN avatars av ON av.id = a.avatar_id AND av.deleted_at IS NULL
@@ -902,6 +913,8 @@ function toCard(row) {
 		published_at: row.published_at,
 		created_at: row.created_at,
 		has_paid_skills: row.has_paid_skills || false,
+		rating_avg: Number(row.rating_avg || 0),
+		rating_count: row.rating_count || 0,
 	};
 }
 

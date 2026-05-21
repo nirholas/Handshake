@@ -1487,6 +1487,46 @@
 			console.warn('[x402-pay] bootstrap failed:', err);
 		}
 
+		// When the user installs a Local skill from the Skills modal, auto-enable
+		// the new tools in the current conversation so the LLM can call them on
+		// the next turn — same UX as the x402-pay bootstrap above, but
+		// triggered on-demand instead of once at startup. We only enable for
+		// the active convo; other convos pick up the new tools through the
+		// usual Tools dropdown.
+		window.addEventListener('local-skill-installed', (e) => {
+			try {
+				const skill = e.detail?.skill;
+				if (!skill || !convo) return;
+				if (skill.kind === 'tool' && Array.isArray(skill.schema_json)) {
+					const names = skill.schema_json
+						.map((t) => t.function?.name || t.clientDefinition?.name)
+						.filter(Boolean);
+					if (names.length === 0) return;
+					convo.tools = Array.from(new Set([...(convo.tools || []), ...names]));
+					saveConversation(convo);
+				}
+			} catch (err) {
+				console.warn('[local-skill] enable failed:', err);
+			}
+		});
+		window.addEventListener('local-skill-uninstalled', (e) => {
+			try {
+				const skill = e.detail?.skill;
+				if (!skill || !convo) return;
+				if (skill.kind === 'tool' && Array.isArray(skill.schema_json)) {
+					const names = new Set(
+						skill.schema_json
+							.map((t) => t.function?.name || t.clientDefinition?.name)
+							.filter(Boolean),
+					);
+					convo.tools = (convo.tools || []).filter((n) => !names.has(n));
+					saveConversation(convo);
+				}
+			} catch (err) {
+				console.warn('[local-skill] disable failed:', err);
+			}
+		});
+
 		initializePWAStyles();
 
 		// Only probe the local tool server if the user has opted in or clearly

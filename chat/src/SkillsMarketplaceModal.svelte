@@ -31,13 +31,88 @@
 
 	async function loadLocalSkills() {
 		try {
-			const res = await fetch('/api/skills-manifest');
+			// /api/chat-skills returns the rich feed: AgentSkills as tool packs
+			// (kind=tool, schema_json wired to /api/mcp) plus every SKILL.md on
+			// disk as a knowledge skill (kind=knowledge, content=full SKILL.md).
+			// Falls back to the slimmer /api/skills-manifest if the rich
+			// endpoint isn't deployed yet, so prod stays resilient.
+			let res = await fetch('/api/chat-skills');
+			if (!res.ok) res = await fetch('/api/skills-manifest');
 			if (res.ok) {
 				const manifest = await res.json();
 				localSkills = manifest.skills || [];
 			}
 		} catch (e) {
 			// ignore, can't load local skills
+		}
+	}
+
+	function isLocalInstalled(skill) {
+		if (skill.kind === 'knowledge') {
+			return $knowledgeSkills.some((k) => k.id === skill.id);
+		}
+		return $toolSchema.some((g) => g.id === skill.id || g.name === skill.name);
+	}
+
+	function localKindLabel(skill) {
+		if (skill.kind === 'knowledge') return 'Knowledge';
+		if (skill.unavailable) return 'Server-only';
+		return 'Tool';
+	}
+
+	/**
+	 * Install a Local skill into the chat. No HTTP round-trip — local skills
+	 * are not stored in the marketplace DB; they live on disk (SKILL.md packs)
+	 * or in-code (AgentSkills). Install just mutates the two client stores:
+	 *   - knowledgeSkills: full SKILL.md body injected into the system prompt
+	 *   - toolSchema:      schema_json with a clientDefinition that POSTs to
+	 *                      /api/mcp under the hood
+	 * Removal is symmetric.
+	 */
+	function toggleLocalInstall(skill) {
+		const installed = isLocalInstalled(skill);
+		if (skill.kind === 'knowledge') {
+			if (installed) {
+				$knowledgeSkills = $knowledgeSkills.filter((k) => k.id !== skill.id);
+				notify(`Removed “${skill.name}”`, 'success');
+			} else {
+				$knowledgeSkills = [
+					...$knowledgeSkills.filter((k) => k.id !== skill.id),
+					{
+						id: skill.id,
+						name: skill.name,
+						slug: skill.slug,
+						content: skill.content || skill.body || '',
+					},
+				];
+				notify(`Installed “${skill.name}”`, 'success');
+			}
+			return;
+		}
+		// kind === 'tool'
+		if (skill.unavailable) {
+			notify(`${skill.name} is server-only and not callable from the chat`, 'info');
+			return;
+		}
+		if (installed) {
+			$toolSchema = $toolSchema.filter((g) => g.id !== skill.id && g.name !== skill.name);
+			try {
+				window.dispatchEvent(
+					new CustomEvent('local-skill-uninstalled', { detail: { skill } }),
+				);
+			} catch {}
+			notify(`Removed “${skill.name}”`, 'success');
+		} else {
+			$toolSchema = [
+				...$toolSchema,
+				{ id: skill.id, name: skill.name, schema: skill.schema_json || [] },
+			];
+			try {
+				window.dispatchEvent(
+					new CustomEvent('local-skill-installed', { detail: { skill } }),
+				);
+			} catch {}
+			notify(`Installed “${skill.name}”`, 'success');
 		}
 	}
 
@@ -666,14 +741,93 @@
 				{#if loading && skills.length === 0}
 					<p class="mt-8 text-center text-[13px] text-slate-400">Loading skills...</p>
 				{:else if showLocalSkills}
-					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-						{#each localSkills as skill (skill.name)}
-							<div class="rounded-lg border border-slate-200 px-3 py-3">
-								<h3 class="font-semibold text-slate-800 text-[13px]">{skill.name}</h3>
-								<p class="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-slate-500">{skill.description}</p>
+					{@const filteredLocal = (localSkills || []).filter((s) => {
+						if (!debouncedSearch) return true;
+						const q = debouncedSearch.toLowerCase();
+						return (
+							(s.name || '').toLowerCase().includes(q) ||
+							(s.description || '').toLowerCase().includes(q) ||
+							(s.source || '').toLowerCase().includes(q)
+						);
+					})}
+					{@const groupedLocal = filteredLocal.reduce((acc, s) => {
+						const k = s.source || 'other';
+						(acc[k] ||= []).push(s);
+						return acc;
+					}, {})}
+					{#if filteredLocal.length === 0}
+						<p class="mt-8 text-center text-[13px] text-slate-400">
+							{localSkills.length === 0 ? 'Loading local skills…' : 'No local skills match your search'}
+						</p>
+					{:else}
+						{#each Object.entries(groupedLocal) as [source, group] (source)}
+							<div class="mb-5">
+								<div class="mb-2 flex items-baseline justify-between">
+									<h4 class="text-[12px] font-semibold uppercase tracking-wide text-slate-500">
+										{source}
+									</h4>
+									<span class="text-[11px] text-slate-400">{group.length} skill{group.length === 1 ? '' : 's'}</span>
+								</div>
+								<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+									{#each group as skill (skill.id || skill.name)}
+										{@const installed = isLocalInstalled(skill)}
+										<div
+											class="rounded-lg border px-3 py-3 transition-colors {installed
+												? 'border-indigo-300 bg-indigo-50/30'
+												: 'border-slate-200 hover:border-slate-300'} {skill.unavailable
+													? 'opacity-60'
+													: ''}"
+										>
+											<div class="flex items-start justify-between gap-x-3">
+												<div class="min-w-0 flex-1">
+													<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+														<span class="text-[13px] font-medium text-slate-800">{skill.name}</span>
+														<span
+															class="rounded-full px-2 py-0.5 text-[10px] font-medium {skill.kind === 'knowledge'
+																? 'bg-amber-50 text-amber-700'
+																: skill.unavailable
+																	? 'bg-slate-100 text-slate-500'
+																	: 'bg-sky-50 text-sky-700'}"
+														>
+															{localKindLabel(skill)}
+														</span>
+														{#if skill.category}
+															<span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500"
+																>{skill.category}</span
+															>
+														{/if}
+													</div>
+													<p class="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
+														{skill.description || ''}
+													</p>
+													{#if skill.path}
+														<p class="mt-1 text-[10px] text-slate-400">{skill.path}</p>
+													{/if}
+												</div>
+												{#if skill.unavailable}
+													<span class="shrink-0 text-[11px] text-slate-400">Not callable</span>
+												{:else if installed}
+													<button
+														class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+														on:click={() => toggleLocalInstall(skill)}
+													>
+														Remove
+													</button>
+												{:else}
+													<button
+														class="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-100"
+														on:click={() => toggleLocalInstall(skill)}
+													>
+														Install
+													</button>
+												{/if}
+											</div>
+										</div>
+									{/each}
+								</div>
 							</div>
 						{/each}
-					</div>
+					{/if}
 				{:else if skills.length === 0}
 					<p class="mt-8 text-center text-[13px] text-slate-400">No skills found</p>
 				{:else}

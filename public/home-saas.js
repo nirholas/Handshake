@@ -153,7 +153,7 @@
 				t.tabIndex = on ? 0 : -1;
 			});
 			const active = tabs[idx];
-			panel.innerHTML = active.dataset.saasCopy || '';
+			panel.innerHTML = active.dataset.saasPanel || '';
 		};
 
 		tabs.forEach((tab, i) => {

@@ -17,6 +17,7 @@ import {
 	clusterApiUrl,
 } from '@solana/web3.js';
 const solanaWeb3 = { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL, clusterApiUrl };
+import { openSwapModal } from './swap-jupiter.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -530,8 +531,7 @@ function bindWalletActions() {
 	});
 
 	swapBtn.addEventListener('click', () => {
-			alert("Swap functionality coming soon!");
-
+		openSwapModal({ wallet, getProvider });
 	});
 }
 

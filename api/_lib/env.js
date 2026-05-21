@@ -75,8 +75,10 @@ export const env = {
 		return trimSlash(opt('AVATURN_API_URL', 'https://api.avaturn.me'));
 	},
 
-	// Anthropic API key — used by the we-pay LLM proxy (/api/llm/anthropic).
-	// Must be set in production; optional in local dev if the proxy is unused.
+	// Anthropic API key — required by persona / memory-seeding endpoints
+	// and used by the we-pay LLM proxy (/api/llm/anthropic) when an agent
+	// selects a Claude model. Free OpenRouter/Groq models routed through
+	// the same proxy use OPENROUTER_API_KEY / GROQ_API_KEY instead.
 	get ANTHROPIC_API_KEY() {
 		return req('ANTHROPIC_API_KEY');
 	},

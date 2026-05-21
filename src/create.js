@@ -23,7 +23,7 @@ document.addEventListener('three-ws:arkit-report', (event) => {
 // The selfie pipeline (/create/selfie) hits a server-side reconstruction job
 // that requires auth + counts against plan quota — we keep that gate. The
 // default editor, Studio iframe and direct GLB upload all stay anonymous;
-// we stash the resulting blob in IndexedDB and let /create/review handle the
+// we stash the resulting blob in IndexedDB and let /create-review handle the
 // "sign in to save" step after the user has seen their avatar.
 function requireAuthForSelfie() {
 	if (window.__authed === false) {
@@ -126,7 +126,7 @@ async function isAtAvatarLimit() {
 	return false;
 }
 
-// Stash the freshly generated GLB locally and send the user to /create/review,
+// Stash the freshly generated GLB locally and send the user to /create-review,
 // where they preview the avatar before deciding whether to sign in and save.
 // Anonymous users get to see what they built before the auth wall; signed-in
 // users still go through the same review step so the flow is consistent.
@@ -141,7 +141,7 @@ async function stageAndReview(blob, meta = {}) {
 		return;
 	}
 	updateSaveOverlay('Opening preview…');
-	window.location.href = '/create/review';
+	window.location.href = '/create-review';
 }
 
 function showSaveOverlay(label, sublabel) {

@@ -558,26 +558,31 @@ Usage events (token counts, latency, triggered actions) are recorded after each 
 
 ---
 
-### Anthropic LLM proxy
+### We-pay LLM proxy
 
 ```
 POST /api/llm/anthropic?agent=<agent_id>
 ```
 
-"We-pay" proxy to the Anthropic Messages API. Enforces the agent's embed policy (allowed origins, allowed surfaces, brain mode) and deducts from the agent's monthly token budget.
+"We-pay" proxy. Enforces the agent's embed policy (allowed origins, allowed surfaces, brain mode) and deducts from the agent's monthly token budget. The request body is always Anthropic-shape; the server inspects `model` and routes to Anthropic, Groq, or OpenRouter, translating wire formats both ways so the response stream is also Anthropic-shape.
 
 Requires that the calling origin is listed in the agent's declared `origins`. Wildcard patterns are supported.
 
 **Supported models**
 
-| Model ID | Notes |
-|----------|-------|
-| `claude-opus-4-6` | |
-| `claude-opus-4-7` | |
-| `claude-sonnet-4-6` | |
-| `claude-haiku-4-5` | |
+| Model ID | Upstream | Cost |
+|----------|----------|------|
+| `meta-llama/llama-3.3-70b-instruct:free` | OpenRouter | free (default) |
+| `openai/gpt-oss-120b:free` | OpenRouter | free |
+| `nousresearch/hermes-3-llama-3.1-405b:free` | OpenRouter | free |
+| `llama-3.3-70b-versatile` | Groq | free, sub-second |
+| `llama-3.1-8b-instant` | Groq | free, fastest |
+| `claude-haiku-4-5-20251001` | Anthropic | paid |
+| `claude-sonnet-4-6` | Anthropic | paid |
+| `claude-opus-4-6` | Anthropic | paid |
+| `claude-opus-4-7` | Anthropic | paid |
 
-Request and response format match the [Anthropic Messages API](https://docs.anthropic.com/en/api/messages) exactly. Upstream errors are sanitized before being returned to the client.
+Request and response format match the [Anthropic Messages API](https://docs.anthropic.com/en/api/messages) exactly. Free-model routes are translated server-side. Upstream errors are sanitized before being returned to the client.
 
 **Rate limits:** Per-IP and per-agent limits apply in addition to the standard platform limits.
 

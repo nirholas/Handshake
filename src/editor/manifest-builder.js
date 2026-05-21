@@ -8,10 +8,21 @@ import { PersonaInterview } from './persona-interview.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+// Free models routed via the we-pay proxy (/api/llm/anthropic). Listed
+// first so they're the default. The proxy translates request/response
+// shapes server-side, so the browser provider stays Anthropic-shape.
+const FREE_MODELS = [
+	{ id: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (OpenRouter · free)' },
+	{ id: 'openai/gpt-oss-120b:free', label: 'GPT-OSS 120B (OpenRouter · free)' },
+	{ id: 'nousresearch/hermes-3-llama-3.1-405b:free', label: 'Hermes 3 405B (OpenRouter · free)' },
+	{ id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B (Groq · free, sub-second)' },
+	{ id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B (Groq · free, fastest)' },
+];
 const ANTHROPIC_MODELS = [
-	{ id: 'claude-opus-4-7', label: 'Claude Opus 4.7' },
-	{ id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
 	{ id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5' },
+	{ id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+	{ id: 'claude-opus-4-6', label: 'Claude Opus 4.6' },
+	{ id: 'claude-opus-4-7', label: 'Claude Opus 4.7' },
 ];
 const OPENAI_MODELS = [
 	{ id: 'gpt-4o-2024-11-20', label: 'GPT-4o (Nov 2024)' },
@@ -104,7 +115,7 @@ function defaultState() {
 		rig: 'mixamo',
 		boundingBoxHeight: 1.78,
 		brainProvider: 'anthropic',
-		brainModel: 'claude-opus-4-6',
+		brainModel: 'meta-llama/llama-3.3-70b-instruct:free',
 		temperature: 0.7,
 		maxTokens: 4096,
 		thinking: 'auto',
@@ -508,6 +519,10 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	function brainHtml() {
 		const modelOpts = (models) =>
 			models.map((m) => `<option value="${m.id}">${m.label}</option>`).join('');
+		const groupedModelOpts = `
+			<optgroup label="Free — host-paid (recommended)">${modelOpts(FREE_MODELS)}</optgroup>
+			<optgroup label="Paid Claude (host's Anthropic key)">${modelOpts(ANTHROPIC_MODELS)}</optgroup>
+		`;
 		return `<details>
 			<summary>Brain</summary>
 			<div class="section-body">
@@ -520,7 +535,7 @@ export function mountManifestBuilder(rootEl, options = {}) {
 				<div class="field" id="brain-model-wrap">
 					<label>Model</label>
 					<select id="f-brain-model">
-						${modelOpts(ANTHROPIC_MODELS)}
+						${groupedModelOpts}
 					</select>
 				</div>
 				<div class="field">
@@ -957,9 +972,20 @@ export function mountManifestBuilder(rootEl, options = {}) {
 			return;
 		}
 		if (wrap) wrap.style.display = '';
-		const models = provider === 'openai' ? OPENAI_MODELS : ANTHROPIC_MODELS;
-		sel.innerHTML = models.map((m) => `<option value="${m.id}">${m.label}</option>`).join('');
-		// Keep current value if it's in the new list
+		const optHtml = (m) => `<option value="${m.id}">${m.label}</option>`;
+		// 'anthropic' is the proxy-routed provider — surface free models alongside
+		// Claude so users default to free unless they explicitly pick paid.
+		let models;
+		if (provider === 'openai') {
+			models = OPENAI_MODELS;
+			sel.innerHTML = models.map(optHtml).join('');
+		} else {
+			models = [...FREE_MODELS, ...ANTHROPIC_MODELS];
+			sel.innerHTML = `
+				<optgroup label="Free — host-paid (recommended)">${FREE_MODELS.map(optHtml).join('')}</optgroup>
+				<optgroup label="Paid Claude (host's Anthropic key)">${ANTHROPIC_MODELS.map(optHtml).join('')}</optgroup>
+			`;
+		}
 		if (models.find((m) => m.id === state.brainModel)) {
 			sel.value = state.brainModel;
 		} else {

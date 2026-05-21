@@ -5,7 +5,7 @@ import { apiFetch } from './account.js';
  * endpoint doesn't accept `avatar_id`, so we get-or-create via /me and then
  * PUT to attach. Returns the updated agent record.
  *
- * Shared by /create and /create/review — kept in its own module so neither
+ * Shared by /create and /create-review — kept in its own module so neither
  * page's top-level boot() runs when the other imports it.
  *
  * @param {string} avatarId

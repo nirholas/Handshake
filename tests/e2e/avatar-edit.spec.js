@@ -78,6 +78,16 @@ test('wardrobe editor: hover, commit, chip, search', async ({ page }) => {
 	// Click to commit. Chip appears in the chip bar.
 	await firstOutfit.click();
 	await expect(firstOutfit).toHaveClass(/selected/);
+
+	// Diagnostic: peek at chip bar innerHTML after the click settles.
+	await page.waitForTimeout(300);
+	const debug = await page.evaluate(() => ({
+		chipsHtml: document.getElementById('ae-chips')?.innerHTML,
+		chipCount: document.querySelectorAll('#ae-chips .ae-chip').length,
+		firstOutfitClass: document.querySelector('[data-id="outfit-casual"]')?.className,
+	}));
+	console.log('debug after outfit click:', JSON.stringify(debug));
+
 	await expect(chipBar.locator('.ae-chip')).toHaveCount(1);
 	await expect(chipBar.locator('.ae-chip')).toContainText('Casual');
 
