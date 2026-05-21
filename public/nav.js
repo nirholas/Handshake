@@ -74,9 +74,15 @@ function initBurger(root) {
 	const navRoot = root.querySelector('#home-nav-root');
 	if (!burger || !navRoot) return;
 
+	const backdrop = document.createElement('div');
+	backdrop.className = 'nav-backdrop';
+	document.body.appendChild(backdrop);
+
 	function close() {
 		burger.setAttribute('aria-expanded', 'false');
 		navRoot.classList.remove('is-open');
+		backdrop.classList.remove('is-active');
+		document.body.classList.remove('nav-open');
 	}
 
 	burger.addEventListener('click', (e) => {
@@ -84,11 +90,11 @@ function initBurger(root) {
 		const open = burger.getAttribute('aria-expanded') === 'true';
 		burger.setAttribute('aria-expanded', open ? 'false' : 'true');
 		navRoot.classList.toggle('is-open', !open);
+		backdrop.classList.toggle('is-active', !open);
+		document.body.classList.toggle('nav-open', !open);
 	});
 
-	document.addEventListener('click', (e) => {
-		if (!e.target.closest('.home-nav')) close();
-	});
+	backdrop.addEventListener('click', close);
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape') close();
 	});

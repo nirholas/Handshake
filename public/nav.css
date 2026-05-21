@@ -298,6 +298,34 @@
 	list-style: none;
 }
 
+/* ── Mobile nav backdrop overlay ────────────────────────────────────── */
+
+/* Injected into <body> by nav.js when the burger opens on mobile.
+   Covers the page content behind the panel, gives proper visual hierarchy,
+   and acts as a tap-to-close target. */
+.nav-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(2, 2, 6, 0.72);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	z-index: 997;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.22s ease;
+}
+
+.nav-backdrop.is-active {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* Scroll lock applied to <body> when mobile nav is open */
+body.nav-open {
+	overflow: hidden;
+	touch-action: none;
+}
+
 /* ── Hamburger button (desktop: hidden) ─────────────────────────────── */
 
 .home-nav .nav-burger {
@@ -546,10 +574,13 @@
 	/* Hidden by default; toggled via .is-open */
 	.home-nav .nav-root {
 		display: none !important;
-		position: absolute;
-		top: calc(100% + 12px);
-		right: 0;
-		width: min(320px, 92vw);
+		position: fixed;
+		top: calc(var(--header-h, 3.5rem) + env(safe-area-inset-top, 0px) + 8px);
+		right: 12px;
+		width: min(300px, calc(100vw - 24px));
+		max-height: calc(100dvh - var(--header-h, 3.5rem) - env(safe-area-inset-top, 0px) - 24px);
+		overflow-y: auto;
+		overscroll-behavior: contain;
 		flex-direction: column !important;
 		align-items: stretch !important;
 		gap: 2px !important;
@@ -565,7 +596,7 @@
 			0 1px 0 rgba(255, 255, 255, 0.05) inset,
 			0 24px 48px -12px rgba(0, 0, 0, 0.7),
 			0 8px 16px -8px rgba(99, 102, 241, 0.2);
-		z-index: 999;
+		z-index: 1001;
 	}
 
 	.home-nav .nav-root.is-open {
@@ -587,10 +618,11 @@
 		display: flex;
 		align-items: center;
 		width: 100%;
-		padding: 10px 12px;
+		min-height: 44px;
+		padding: 11px 14px;
 		border-radius: 9px;
 		font-size: 0.95rem;
-		color: rgba(255, 255, 255, 0.78);
+		color: rgba(255, 255, 255, 0.82);
 		transition: background 0.15s ease, color 0.15s ease;
 		box-sizing: border-box;
 	}
@@ -645,14 +677,33 @@
 	.home-nav .nav-cta {
 		display: block;
 		text-align: center;
-		margin-top: 6px;
-		padding: 11px 16px;
+		margin-top: 8px;
+		padding: 13px 16px;
 		border-radius: 12px;
+		font-size: 0.96rem;
 	}
 
 	.home-nav .nav-user {
 		max-width: 100%;
 		width: 100%;
+		min-height: 44px;
 		box-sizing: border-box;
+	}
+
+	/* Sub-menu items also need 44px tap targets */
+	.home-nav .nav-menu a {
+		min-height: 44px;
+		padding: 10px 14px;
+		border-radius: 8px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	/* Divider between main items and CTA */
+	.home-nav .nav-root > li:last-child {
+		padding-top: 4px;
+		margin-top: 4px;
+		border-top: 1px solid rgba(255, 255, 255, 0.06);
 	}
 }
