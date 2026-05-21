@@ -1,0 +1,642 @@
+{
+  "$comment": "Source of truth for the three.ws @ X content schedule. Two posts per day, AM (~09:00 PT) and PM (~17:00 PT). Keep x-schedule.md in sync with this file. See README.md for voice rules and override flow.",
+  "version": 1,
+  "timezone": "America/Los_Angeles",
+  "default_slots": {
+    "AM": "09:00",
+    "PM": "17:00"
+  },
+  "calendar": [
+    {
+      "id": "2026-05-21-am-bazaar-live",
+      "date": "2026-05-21",
+      "slot": "AM",
+      "kind": "news",
+      "topic": "Bazaar marketplace live",
+      "link": "https://three.ws/x402",
+      "status": "planned",
+      "post": "The three.ws bazaar is live.\n\nAny dev or agent can list a paid endpoint and earn USDC per call — settled instantly over x402.\n\nNo API keys. No subscriptions. Stablecoin in, data out.\n\nBrowse + monetize → three.ws/x402"
+    },
+    {
+      "id": "2026-05-21-pm-x402-endpoints",
+      "date": "2026-05-21",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "x402 paid endpoints",
+      "link": "https://three.ws/x402-pay",
+      "status": "planned",
+      "post": "x402 on three.ws — paid endpoints, native.\n\nAgents pay other agents in USDC. Base mainnet via Coinbase CDP. Direct-scheme on BSC and Solana. Permit2 gas-sponsoring on every CDP endpoint.\n\nBuyer signs. Relayer pays gas. Caller gets data.\n\nthree.ws/x402-pay"
+    },
+    {
+      "id": "2026-05-22-am-agent-3d-element",
+      "date": "2026-05-22",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "<agent-3d> web component",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "One tag. Any page. A 3D AI agent.\n\n<script src=\"https://three.ws/agent-3d/1.5.1/agent-3d.js\"></script>\n<agent-3d body=\"/avatar.glb\" brain=\"claude-sonnet-4-6\"></agent-3d>\n\nNo framework. No build. Drop it in Webflow, Notion, Substack, or vanilla HTML.\n\nthree.ws"
+    },
+    {
+      "id": "2026-05-22-pm-erc8004",
+      "date": "2026-05-22",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "ERC-8004 onchain identity",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Your agent gets a real identity.\n\nERC-8004 on any EVM chain — agentId, owner wallet, delegated signer, IPFS-pinned manifest, signed action log.\n\nEvery speak, remember, and skill call is cryptographically signed. Reputation that can't be forged.\n\nthree.ws"
+    },
+    {
+      "id": "2026-05-23-am-metaplex-core",
+      "date": "2026-05-23",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Metaplex Core on Solana",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Solana support, no custom program.\n\nthree.ws agents mint as Metaplex Core assets. Asset pubkey = agentId. Reputation and validation attestations anchored via SPL Memo. Program-free, indexable, composable.\n\nthree.ws"
+    },
+    {
+      "id": "2026-05-23-pm-talk-mode-lipsync",
+      "date": "2026-05-23",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Talk mode + ARKit-52 lip-sync",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Talk mode with ARKit-52 lip-sync.\n\nTTS audio is analyzed in real time and drives 52 standard blendshapes on the avatar. Mouth, jaw, tongue — all synced to the actual phonemes.\n\nBrowser TTS for prototyping. ElevenLabs for production.\n\nthree.ws"
+    },
+    {
+      "id": "2026-05-24-am-empathy-layer",
+      "date": "2026-05-24",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Empathy Layer",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Avatars that feel, not just react.\n\nThe Empathy Layer is a weighted emotion blend — celebration, concern, curiosity, empathy, patience — each decaying at a different half-life and driving morph targets every frame.\n\nNot a state machine. A continuous expression engine.\n\nthree.ws"
+    },
+    {
+      "id": "2026-05-24-pm-skills",
+      "date": "2026-05-24",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Skills system",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Skills, not hardcoded tools.\n\nA three.ws skill is a self-contained bundle — description, tool defs, async handlers — loaded from IPFS, Arweave, or HTTP. Skills extend any agent's tool surface without code changes.\n\nBuild once. Compose anywhere.\n\nthree.ws"
+    },
+    {
+      "id": "2026-05-25-am-widget-studio",
+      "date": "2026-05-25",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Widget Studio",
+      "link": "https://three.ws/studio",
+      "status": "planned",
+      "post": "Widget Studio.\n\nPick an avatar, a widget type, a pose, a background. Get a copy-paste embed snippet that works in any HTML page, CMS, or rich-text editor.\n\nFive widget types: turntable, gallery, talking, passport, hotspot tour.\n\nthree.ws/studio"
+    },
+    {
+      "id": "2026-05-25-pm-embed-editor",
+      "date": "2026-05-25",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Embed Editor",
+      "link": "https://three.ws/embed-editor",
+      "status": "planned",
+      "post": "WYSIWYG Embed Editor.\n\nDrag the camera. Pick the animation. Frame the shot. Set the background. Copy the snippet. Paste it on your site.\n\nNo iframes to wrestle with. No CSS to tune. What you see is the embed.\n\nthree.ws/embed-editor"
+    },
+    {
+      "id": "2026-05-26-am-widget-types",
+      "date": "2026-05-26",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Five widget variants",
+      "link": "https://three.ws/widgets",
+      "status": "planned",
+      "post": "Five widget variants, one component.\n\n1. Turntable — auto-rotating showcase\n2. Animation gallery — clip selector\n3. Talking agent — full conversation\n4. Passport card — onchain identity\n5. Hotspot tour — guided walkthrough\n\nOG metadata + oEmbed built in.\n\nthree.ws/widgets"
+    },
+    {
+      "id": "2026-05-26-pm-launchpad",
+      "date": "2026-05-26",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Launchpad",
+      "link": "https://three.ws/launchpad",
+      "status": "planned",
+      "post": "Launchpad — hosted public launch pages.\n\nToken drops, agent reveals, campaigns. Auto-generated at three.ws/p/[slug] with OG previews, embed code, and onchain links wired in.\n\nBuild in /launchpad. Share anywhere.\n\nthree.ws/launchpad"
+    },
+    {
+      "id": "2026-05-27-am-the-club",
+      "date": "2026-05-27",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "The Club (multiplayer venue)",
+      "link": "https://three.ws/club",
+      "status": "planned",
+      "post": "The Club — multiplayer venue in your browser.\n\nRigged dancers, audio tracks, tips, leaderboard, payout cron. Perf-aware renderer that auto-downgrades on slow frames so the room stays smooth on any device.\n\nthree.ws/club"
+    },
+    {
+      "id": "2026-05-27-pm-walk",
+      "date": "2026-05-27",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Walk (Colyseus multiplayer)",
+      "link": "https://three.ws/walk",
+      "status": "planned",
+      "post": "Walk — authoritative multiplayer 3D.\n\nColyseus server in /multiplayer, deployable on Fly.io. Authoritative state, low-latency sync, glTF avatars walking around together in a shared scene.\n\nthree.ws/walk"
+    },
+    {
+      "id": "2026-05-28-am-pose-studio",
+      "date": "2026-05-28",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Pose Studio",
+      "link": "https://three.ws/pose-studio",
+      "status": "planned",
+      "post": "Pose Studio.\n\nAuthor and export reusable avatar poses. Bake them into agent manifests, share them as skills, drop them into widgets. Reusable kinematic expression for every agent on the platform.\n\nthree.ws/pose-studio"
+    },
+    {
+      "id": "2026-05-28-pm-oauth21",
+      "date": "2026-05-28",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "OAuth 2.1 server",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Full OAuth 2.1 on three.ws.\n\nRFC 6749 + PKCE. Dynamic client registration (RFC 7591). Revocation (RFC 7009). Introspection (RFC 7662). Discovery (RFC 8414).\n\nDeveloper API keys with scopes and expiry. Production-grade auth in front of every endpoint.\n\nthree.ws"
+    },
+    {
+      "id": "2026-05-29-am-mcp-server",
+      "date": "2026-05-29",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "MCP server over HTTP",
+      "link": "https://registry.modelcontextprotocol.io/?q=three.ws",
+      "status": "planned",
+      "post": "MCP server over HTTP.\n\nthree.ws speaks Model Context Protocol — JSON-RPC 2.0 over HTTP. External AI systems can call agent tools, read manifests, and drive avatars programmatically.\n\nListed on the MCP Registry.\n\nregistry.modelcontextprotocol.io/?q=three.ws"
+    },
+    {
+      "id": "2026-05-29-pm-a2a",
+      "date": "2026-05-29",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "A2A — agent-to-agent",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "A2A — agent-to-agent.\n\nClient + server, MCP bridge, DID resolution, spending ledger, receipts storage. Agents transact autonomously via delegated signer wallets and EIP-7710 permissions.\n\nAgents that pay other agents. Without us in the middle.\n\nthree.ws"
+    },
+    {
+      "id": "2026-05-30-am-eip7710",
+      "date": "2026-05-30",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "EIP-7710 delegated permissions",
+      "link": "https://github.com/nirholas/three.ws/blob/main/specs/PERMISSIONS_SPEC.md",
+      "status": "planned",
+      "post": "EIP-7710 delegated permissions on three.ws.\n\nAgents authorize other agents to act on their behalf — scoped, time-bound, revocable. Skill royalties, sub-agents, payment delegations. Composable capability tokens.\n\nSpec: specs/PERMISSIONS_SPEC.md\n\nthree.ws"
+    },
+    {
+      "id": "2026-05-30-pm-reputation",
+      "date": "2026-05-30",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Reputation Registry",
+      "link": "https://three.ws/reputation",
+      "status": "planned",
+      "post": "ReputationRegistry — onchain reputation, not vibes.\n\nEvery speak, skill-done, and validate event is signed and logged. Reputation aggregates from the signed action history. Stake on agents you trust. Earn from their work.\n\nthree.ws/reputation"
+    },
+    {
+      "id": "2026-05-31-am-validation-registry",
+      "date": "2026-05-31",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Validation Registry",
+      "link": "https://github.com/nirholas/three.ws/blob/main/specs/VALIDATORS.md",
+      "status": "planned",
+      "post": "ValidationRegistry — third-party attestations.\n\nValidators sign claims about agents — capability, ownership, authenticity. Attestations are verifiable onchain. Reputation isn't self-declared.\n\nSpec: specs/VALIDATORS.md\n\nthree.ws"
+    },
+    {
+      "id": "2026-05-31-pm-siwx",
+      "date": "2026-05-31",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "SIWX — Sign-In with X-chain",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "SIWX — Sign-In with any chain.\n\nEVM, Solana, BSC. Standard sign-in messages, server-side verification, session tokens. Auth-gated paid endpoints. One sign-in flow, many chains.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-01-am-permit2",
+      "date": "2026-06-01",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Permit2 gas-sponsoring",
+      "link": "https://three.ws/x402",
+      "status": "planned",
+      "post": "Permit2 on every CDP-settled x402 endpoint.\n\nBuyer signs an EIP-712 permit. Relayer pays the gas. Endpoint runs.\n\nGasless paid APIs for the caller. Same atomic settlement for the seller.\n\nthree.ws/x402"
+    },
+    {
+      "id": "2026-06-01-pm-sku-checkout",
+      "date": "2026-06-01",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "x402 SKU catalog + checkout",
+      "link": "https://three.ws/dashboard/x402",
+      "status": "planned",
+      "post": "x402 SKU catalog + Stripe-style checkout.\n\nList endpoints as SKUs with prices, descriptions, sample payloads. Customers run a familiar checkout. Sellers see receipts, payouts, and admin tooling.\n\nthree.ws/dashboard/x402"
+    },
+    {
+      "id": "2026-06-02-am-mcp-bridge",
+      "date": "2026-06-02",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "MCP↔x402 bridge",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "MCP bridge — every paid tool, every protocol.\n\nAn A2A bridge exposes x402 endpoints as MCP tools. MCP clients call paid APIs without knowing about x402. x402 clients discover MCP services via the bazaar.\n\nOne mesh.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-02-pm-subscriptions",
+      "date": "2026-06-02",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "x402 subscriptions + idempotency",
+      "link": "https://three.ws/x402",
+      "status": "planned",
+      "post": "x402 subscriptions on three.ws.\n\nRecurring USDC payments, settled by cron. Idempotency tokens for safe retries. Offer receipts that prove what was bought. Paid asset downloads for files behind a paywall.\n\nthree.ws/x402"
+    },
+    {
+      "id": "2026-06-03-am-news-cms",
+      "date": "2026-06-03",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "News CMS + syndication",
+      "link": "https://three.ws/news",
+      "status": "planned",
+      "post": "News CMS + syndication.\n\nWrite once in /admin/news. Auto-syndicate to WebSub, Dev.to, Medium, HackerNoon, CMC. Cross-post like a newsroom, not a side project.\n\nthree.ws/news"
+    },
+    {
+      "id": "2026-06-03-pm-solana-mobile",
+      "date": "2026-06-03",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Solana Mobile (Seeker) MWA",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "three.ws on Solana Mobile (Seeker).\n\nMWA wallet wired into the web app. Release pipeline for the Solana Mobile dApp Store. Onchain agents on a phone designed for crypto.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-04-am-vanity-grinder",
+      "date": "2026-06-04",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "WASM vanity wallet grinder",
+      "link": "https://three.ws/vanity-wallet",
+      "status": "planned",
+      "post": "WASM vanity wallet grinder.\n\nPick a prefix or suffix. Grind in the browser, in WebAssembly, with all your cores. Vanity addresses without trusting a remote service.\n\nthree.ws/vanity-wallet"
+    },
+    {
+      "id": "2026-06-04-pm-pumpfun",
+      "date": "2026-06-04",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Pump.fun integration",
+      "link": "https://three.ws/pumpfun",
+      "status": "planned",
+      "post": "Pump.fun, native.\n\nLaunch tokens, search trends, view live feeds, place trades — from a 3D agent on three.ws. Skills bundle the whole flow. Pump.fun without leaving your avatar.\n\nthree.ws/pumpfun"
+    },
+    {
+      "id": "2026-06-05-am-pump-visualizer",
+      "date": "2026-06-05",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Pump visualizer",
+      "link": "https://three.ws/pump-visualizer",
+      "status": "planned",
+      "post": "Pump visualizer — pump.fun in 3D.\n\nLive token launches and trades, rendered in a real-time WebGL scene. Watch the market form. See the launches the moment they happen.\n\nthree.ws/pump-visualizer"
+    },
+    {
+      "id": "2026-06-05-pm-dca",
+      "date": "2026-06-05",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "DCA strategy execution",
+      "link": "https://three.ws/strategy-lab",
+      "status": "planned",
+      "post": "DCA on three.ws.\n\nDefine a strategy. Onchain crons execute it. USDC → token, scheduled, durable. Strategy Lab to author and backtest. Fail-closed crons so missed runs don't double-spend.\n\nthree.ws/strategy-lab"
+    },
+    {
+      "id": "2026-06-06-am-subscription-crons",
+      "date": "2026-06-06",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Onchain subscription crons",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Onchain subscription crons.\n\nRecurring payments to creators, scheduled and executed onchain. Subscribers stay subscribed without us. Creators get paid without us.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-06-pm-chat-spa",
+      "date": "2026-06-06",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Chat SPA",
+      "link": "https://three.ws/chat",
+      "status": "planned",
+      "post": "three.ws/chat — full Svelte chat SPA.\n\nModel selector. Tools. Artifacts. Wallet. Per-team landing pages. Per-feature deep links. A complete AI workspace, embeddable and brandable.\n\nthree.ws/chat"
+    },
+    {
+      "id": "2026-06-07-am-claude-artifact",
+      "date": "2026-06-07",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Claude Artifact viewer",
+      "link": "https://three.ws/artifact",
+      "status": "planned",
+      "post": "Claude Artifact viewer on three.ws.\n\nDrop an artifact ID. Get a sandboxed, embeddable artifact view with the right boundaries. Snippet loading and sandbox boundaries documented in specs/CLAUDE_ARTIFACT.md.\n\nthree.ws/artifact"
+    },
+    {
+      "id": "2026-06-07-pm-avaturn",
+      "date": "2026-06-07",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Avaturn integration",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Avaturn integration on three.ws.\n\nPhoto → avatar in seconds. Bring your face into a 3D agent without 3D software. Output writes straight into your three.ws account.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-08-am-character-studio",
+      "date": "2026-06-08",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Character Studio",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Character Studio.\n\nIn-browser 3D character builder. Body, face, outfit, accessories. Export a GLB. Mint as an agent. No DCC, no plugins.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-08-pm-privy",
+      "date": "2026-06-08",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Privy embedded wallet",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Privy embedded wallet on three.ws.\n\nEmail sign-in creates a real wallet under the hood. Send, receive, sign, pay — without seed phrases. Users get an onchain identity without ever seeing crypto UX.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-09-am-replicate",
+      "date": "2026-06-09",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Replicate avatar regeneration",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Replicate-backed avatar regeneration.\n\nDon't like the avatar? Regenerate. New face, new outfit, new style, same agent. Compute provided by Replicate, results streamed into your agent's manifest.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-09-pm-voice-cloning",
+      "date": "2026-06-09",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Voice cloning (ElevenLabs)",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Voice cloning on three.ws.\n\n3–10 seconds of speech → an ElevenLabs custom voice bound to your agent. Talk mode picks it up automatically. Your agent sounds like you.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-10-am-persona-hub",
+      "date": "2026-06-10",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Persona Hub",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Persona Hub on three.ws.\n\nVoice clone + persona extraction + memory seeding from connected accounts (X, GitHub, Farcaster). Your agent learns to talk like you from material you already wrote.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-10-pm-selfie-pipeline",
+      "date": "2026-06-10",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Selfie reconstruction pipeline",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Selfie → avatar engine.\n\n3 selfies (left, center, right). Quality gates for lighting, framing, blur. Multi-view face reconstruction over a base body mesh. Rigged, animatable, mint-ready.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-11-am-livepeer",
+      "date": "2026-06-11",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Livepeer inference",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Livepeer inference on three.ws.\n\nThe Phase 4 open compute layer — decentralized GPUs serving agent inference. Onchain settlement per token. The agent runtime, off any single provider.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-11-pm-ens-claim",
+      "date": "2026-06-11",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "ENS-based agent claim",
+      "link": "https://github.com/nirholas/three.ws/blob/main/specs/ENS_AGENT_CLAIM.md",
+      "status": "planned",
+      "post": "ENS-based agent claim.\n\nvitalik.eth → claim your agent. Verifiable owner↔agent binding through ENS. No new identity primitive. Use the one you already own.\n\nSpec: specs/ENS_AGENT_CLAIM.md\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-12-am-stage-spec",
+      "date": "2026-06-12",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Stage spec",
+      "link": "https://github.com/nirholas/three.ws/blob/main/specs/STAGE_SPEC.md",
+      "status": "planned",
+      "post": "Stage spec — every scene, declarative.\n\nCamera presets. Lighting rigs. Environment maps. Hotspots. Defined in JSON, rendered the same on every embed. No more \"looks great on my screen.\"\n\nSpec: specs/STAGE_SPEC.md\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-12-pm-validators",
+      "date": "2026-06-12",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Validator attestations",
+      "link": "https://github.com/nirholas/three.ws/blob/main/specs/VALIDATORS.md",
+      "status": "planned",
+      "post": "Validator attestations on three.ws.\n\nValidators sign verifiable claims about agents and skills. Anyone can verify the chain of trust without us. Specs and rules in VALIDATORS.md.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-13-am-marketplace",
+      "date": "2026-06-13",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Agent marketplace",
+      "link": "https://three.ws/marketplace",
+      "status": "planned",
+      "post": "three.ws/marketplace.\n\nA browsable directory of agents. Each one with a passport card, an onchain ID, a price (if listed), and an embed code one click away.\n\nthree.ws/marketplace"
+    },
+    {
+      "id": "2026-06-13-pm-discover",
+      "date": "2026-06-13",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Discover",
+      "link": "https://three.ws/discover",
+      "status": "planned",
+      "post": "three.ws/discover.\n\nThe public agent directory. Sorted, filtered, searchable. Find an agent. Talk to it. Embed it. Pay it. Build on it.\n\nthree.ws/discover"
+    },
+    {
+      "id": "2026-06-14-am-gltf-validator",
+      "date": "2026-06-14",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "glTF validator (browser)",
+      "link": "https://three.ws/validation",
+      "status": "planned",
+      "post": "Khronos-spec glTF validation, in the browser.\n\nDrop a GLB. Get line-level errors on geometry, materials, animations, extensions. No upload. No round-trip. The Khronos validator, running locally on your file.\n\nthree.ws/validation"
+    },
+    {
+      "id": "2026-06-14-pm-webgl-viewer",
+      "date": "2026-06-14",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "WebGL viewer",
+      "link": "https://three.ws/app",
+      "status": "planned",
+      "post": "The three.ws WebGL viewer.\n\nDrag a GLB onto the page. Renders instantly with PBR, HDR environments, Draco, KTX2, Meshopt. Skinned meshes, morph targets, embedded cameras. WebGL 2.0, three.js r176.\n\nthree.ws/app"
+    },
+    {
+      "id": "2026-06-15-am-avatar-sdk",
+      "date": "2026-06-15",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Avatar SDK",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Avatar SDK on three.ws.\n\nProgrammatic avatar creation — load, customize, animate, export. The same primitives that power the platform, on npm. Build avatar pipelines on top of ours.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-15-pm-agent-kit",
+      "date": "2026-06-15",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "@nirholas/agent-kit",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "@nirholas/agent-kit.\n\nThe agent runtime, distilled. Brain, tools, memory, skills, voice — all in a node-friendly SDK. Build agents that run anywhere, not just on three.ws.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-16-am-evm-payments-sdk",
+      "date": "2026-06-16",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "EVM agent payments SDK",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "agent-payments-sdk.\n\nx402 paid endpoints for any EVM chain. Base, BSC, and friends. CDP facilitator. Permit2 gas-sponsoring. Idempotency. Receipts. Settlement.\n\nThe same SDK we use in production.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-16-pm-solana-agent-sdk",
+      "date": "2026-06-16",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Solana Agent SDK",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "solana-agent-sdk on three.ws.\n\nMetaplex Core mints. SIWS sign-in. SPL Memo–anchored attestations. Onchain agents on Solana, the same primitives we use on EVM.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-17-am-pumpfun-worker",
+      "date": "2026-06-17",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "pump-fun MCP Cloudflare Worker",
+      "link": "https://github.com/nirholas/three.ws/tree/main/workers/pump-fun-mcp",
+      "status": "planned",
+      "post": "pump-fun MCP Cloudflare Worker.\n\nA read-only mirror of the pump.fun MCP feed, deployable at the edge. Low-latency token data for any client, anywhere. Open-source in workers/pump-fun-mcp.\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-17-pm-api-keys",
+      "date": "2026-06-17",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Developer API keys",
+      "link": "https://three.ws/dashboard",
+      "status": "planned",
+      "post": "Developer API keys on three.ws.\n\nScoped. Expirable. OAuth-issuable. Build apps and agents against three.ws without hand-rolling auth.\n\nthree.ws/dashboard"
+    },
+    {
+      "id": "2026-06-18-am-openapi",
+      "date": "2026-06-18",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "OpenAPI 3.1 spec",
+      "link": "https://three.ws/openapi.json",
+      "status": "planned",
+      "post": "three.ws/openapi.json.\n\nThe whole API surface, in OpenAPI 3.1. Generate clients in any language. Audit endpoints. Wire in your own gateway. The platform, documented machine-first.\n\nthree.ws/openapi.json"
+    },
+    {
+      "id": "2026-06-18-pm-security",
+      "date": "2026-06-18",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Security hardening",
+      "link": "https://github.com/nirholas/three.ws/blob/main/specs/SECURITY.md",
+      "status": "planned",
+      "post": "Hardened API surface.\n\nSSRF guard. CSRF gates. Header-origin pinning. Fail-closed crons. Every endpoint defaults to deny. Production hardening, not a checkbox.\n\nSpec: specs/SECURITY.md\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-19-am-memory",
+      "date": "2026-06-19",
+      "slot": "AM",
+      "kind": "feature",
+      "topic": "Memory system",
+      "link": "https://github.com/nirholas/three.ws/blob/main/specs/MEMORY_SPEC.md",
+      "status": "planned",
+      "post": "Agent memory on three.ws.\n\nTyped memory entries (user, feedback, project, reference) with salience scoring. Recalled into the system prompt at conversation time. Per-agent, signed, portable.\n\nSpec: specs/MEMORY_SPEC.md\n\nthree.ws"
+    },
+    {
+      "id": "2026-06-19-pm-signed-action-log",
+      "date": "2026-06-19",
+      "slot": "PM",
+      "kind": "feature",
+      "topic": "Signed action log",
+      "link": "https://three.ws",
+      "status": "planned",
+      "post": "Every action on three.ws is signed.\n\nEvery speak, remember, skill-done, and validate event is logged with a cryptographic signature. The action history of your agent is auditable forever.\n\nthree.ws"
+    }
+  ],
+  "big_news_queue": [
+    {
+      "id": "news-alibaba-cloud-marketplace",
+      "topic": "three.ws live on Alibaba Cloud Marketplace",
+      "link": "https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html",
+      "status": "ready",
+      "post": "three.ws is live on Alibaba Cloud Marketplace.\n\nEnterprises can now procure three.ws through their existing Alibaba account — consolidated billing, compliance, and support.\n\nProduct → marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html"
+    },
+    {
+      "id": "news-bnb-dappbay",
+      "topic": "three.ws listed on BNB Chain Dappbay",
+      "link": "https://dappbay.bnbchain.org/detail/three",
+      "status": "ready",
+      "post": "three.ws is on BNB Chain Dappbay.\n\nListed under AI Agent Launchpad · AI Data · AI Infra. The BNB community can vet, rank, and discover it.\n\n→ dappbay.bnbchain.org/detail/three"
+    },
+    {
+      "id": "news-mcp-registry",
+      "topic": "three.ws in the MCP Registry",
+      "link": "https://registry.modelcontextprotocol.io/?q=three.ws",
+      "status": "ready",
+      "post": "three.ws is in the MCP Registry.\n\nAny MCP-compatible AI client — Claude Desktop, Cursor, Claude Code — can discover and connect to three.ws as a tool source.\n\n→ registry.modelcontextprotocol.io/?q=three.ws"
+    },
+    {
+      "id": "news-x402scan",
+      "topic": "three.ws indexed on x402scan",
+      "link": "https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07",
+      "status": "ready",
+      "post": "three.ws is on x402scan.\n\nLive receipts of every paid endpoint settlement. Inspect the bazaar's economy in real time.\n\n→ x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07"
+    }
+  ],
+  "backlog": []
+}
