@@ -4,18 +4,6 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 
 **Give your AI a body.** three.ws is an open-source, browser-native 3D AI agent platform. Drop a GLB file, add an LLM brain, register on-chain, and embed anywhere — no plugins, no server uploads, no installs required.
 
-![three.ws skills demo](https://github.com/nirholas/3D-Agent/raw/refs/heads/main/.github/assets/skills.gif)
-
-[![Live site](https://img.shields.io/badge/live-three.ws-2ea44f?logo=vercel&logoColor=white)](https://three.ws)
-[![Version](https://img.shields.io/badge/version-1.5.1-2ea44f)](package.json)
-[![License](https://img.shields.io/badge/license-Apache--2.0-2ea44f)](LICENSE)
-[![Node](https://img.shields.io/badge/node-24.x-2ea44f?logo=node.js&logoColor=white)](package.json)
-[![Three.js](https://img.shields.io/badge/three.js-r176-2ea44f?logo=three.js&logoColor=white)](https://threejs.org)
-[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.nirholas%2Fthree.ws-2ea44f)](https://registry.modelcontextprotocol.io/?q=three.ws)
-[![Code of Conduct](https://img.shields.io/badge/code%20of%20conduct-Contributor%20Covenant-2ea44f)](CODE_OF_CONDUCT.md)
-
-**Quick links:** [Live site](https://three.ws) · [Quickstart](#getting-started) · [Examples](#examples) · [API reference](#api-reference) · [Tutorials](#tutorials) · [Roadmap](#roadmap) · [Design specs](#design-docs--specs)
-
 ---
 
 ## Table of Contents
