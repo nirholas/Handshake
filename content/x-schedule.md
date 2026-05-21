@@ -12,23 +12,36 @@
 
 ### Thu 2026-05-21 — Bazaar Week
 
-**AM · news · Bazaar marketplace live** — [three.ws/x402](https://three.ws/x402)
-> The three.ws bazaar is live.
+**AM · news · Bazaar + x402 live on Base via Coinbase CDP** — [three.ws/x402](https://three.ws/x402)
+> Coinbase CDP + x402 are live on three.ws.
 >
-> Any dev or agent can list a paid endpoint and earn USDC per call — settled instantly over x402.
->
-> No API keys. No subscriptions. Stablecoin in, data out.
->
-> Browse + monetize → three.ws/x402
-
-**PM · feature · x402 paid endpoints** — [three.ws/x402-pay](https://three.ws/x402-pay)
-> x402 on three.ws — paid endpoints, native.
->
-> Agents pay other agents in USDC. Base mainnet via Coinbase CDP. Direct-scheme on BSC and Solana. Permit2 gas-sponsoring on every CDP endpoint.
+> Agents pay agents in USDC on Base mainnet with Permit2 gas-sponsoring on every CDP endpoint. Direct-scheme on BSC and Solana.
 >
 > Buyer signs. Relayer pays gas. Caller gets data.
 >
-> three.ws/x402-pay
+> Browse + monetize → three.ws/x402
+
+**PM · news · Coinbase Agentic.Market launch (thread)** — [agentic.market](https://agentic.market)
+
+_Main:_
+> Coinbase quietly built the App Store for AI agents.
+>
+> Agentic.Market — 480k agents, 100k services, $50M volume, 165M transactions.
+>
+> OpenAI, AWS, Bloomberg already partners.
+>
+> agentic.market
+
+_Reply:_
+> Why it matters:
+>
+> Agents need data, tools, execution and payments — without humans managing keys and approvals.
+>
+> Agentic.Market lets them discover, pay in stablecoins, and call services autonomously via x402.
+>
+> three.ws is x402-native — every endpoint plugs in.
+>
+> three.ws/x402
 
 ### Fri 2026-05-22
 

@@ -3,6 +3,22 @@
 
 const API = ''; // same origin
 
+// Single-use CSRF token: fetched lazily, burned by the server on consumption.
+// Re-issued on the next mutating call. Matches the dashboard's pattern so any
+// page using apiFetch gets CSRF-gated endpoints (PUT/PATCH/DELETE on agents,
+// keys, withdrawals, marketplace, etc.) for free.
+let _csrfToken = null;
+async function getCsrfToken() {
+	if (_csrfToken) return _csrfToken;
+	const r = await fetch('/api/csrf-token', { credentials: 'include' });
+	if (!r.ok) return null;
+	const j = await r.json().catch(() => null);
+	_csrfToken = j?.data?.token || null;
+	return _csrfToken;
+}
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
 // Wrapped fetch that handles expired sessions centrally. A 401 response is
 // treated as a session-expiry signal and redirects to /login?next=<current>
 // with the URL hash preserved (SPAs lose it on a naked location.href hop).
@@ -10,9 +26,22 @@ const API = ''; // same origin
 // "not signed in" answer the caller wants to inspect itself (e.g. /api/auth/me).
 export async function apiFetch(path, options = {}) {
 	const { allowAnonymous = false, ...init } = options;
+	const method = (init.method || 'GET').toUpperCase();
+
+	// Mutating same-origin requests need a CSRF token. Skip for bearer-auth
+	// callers — the server exempts Authorization: Bearer requests.
+	const headers = new Headers(init.headers || {});
+	const hasBearer = (headers.get('authorization') || '').startsWith('Bearer ');
+	if (!SAFE_METHODS.has(method) && !hasBearer) {
+		const token = await getCsrfToken();
+		if (token) headers.set('x-csrf-token', token);
+		_csrfToken = null;
+	}
+
 	const res = await fetch(path, {
 		credentials: 'include',
 		...init,
+		headers,
 	});
 	if (res.status === 401 && !allowAnonymous) {
 		redirectToLogin();

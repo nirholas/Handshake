@@ -8,24 +8,26 @@
   },
   "calendar": [
     {
-      "id": "2026-05-21-am-bazaar-live",
+      "id": "2026-05-21-am-bazaar-x402-cdp",
       "date": "2026-05-21",
       "slot": "AM",
       "kind": "news",
-      "topic": "Bazaar marketplace live",
+      "topic": "Bazaar + x402 live on Base via Coinbase CDP",
       "link": "https://three.ws/x402",
       "status": "planned",
-      "post": "The three.ws bazaar is live.\n\nAny dev or agent can list a paid endpoint and earn USDC per call — settled instantly over x402.\n\nNo API keys. No subscriptions. Stablecoin in, data out.\n\nBrowse + monetize → three.ws/x402"
+      "post": "Coinbase CDP + x402 are live on three.ws.\n\nAgents pay agents in USDC on Base mainnet with Permit2 gas-sponsoring on every CDP endpoint. Direct-scheme on BSC and Solana.\n\nBuyer signs. Relayer pays gas. Caller gets data.\n\nBrowse + monetize → three.ws/x402"
     },
     {
-      "id": "2026-05-21-pm-x402-endpoints",
+      "id": "2026-05-21-pm-agentic-market",
       "date": "2026-05-21",
       "slot": "PM",
-      "kind": "feature",
-      "topic": "x402 paid endpoints",
-      "link": "https://three.ws/x402-pay",
+      "kind": "news",
+      "topic": "Coinbase Agentic.Market launch",
+      "link": "https://agentic.market",
       "status": "planned",
-      "post": "x402 on three.ws — paid endpoints, native.\n\nAgents pay other agents in USDC. Base mainnet via Coinbase CDP. Direct-scheme on BSC and Solana. Permit2 gas-sponsoring on every CDP endpoint.\n\nBuyer signs. Relayer pays gas. Caller gets data.\n\nthree.ws/x402-pay"
+      "format": "thread",
+      "post": "Coinbase quietly built the App Store for AI agents.\n\nAgentic.Market — 480k agents, 100k services, $50M volume, 165M transactions.\n\nOpenAI, AWS, Bloomberg already partners.\n\nagentic.market",
+      "reply": "Why it matters:\n\nAgents need data, tools, execution and payments — without humans managing keys and approvals.\n\nAgentic.Market lets them discover, pay in stablecoins, and call services autonomously via x402.\n\nthree.ws is x402-native — every endpoint plugs in.\n\nthree.ws/x402"
     },
     {
       "id": "2026-05-22-am-agent-3d-element",
