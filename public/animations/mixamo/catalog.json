@@ -1,6 +1,6 @@
 {
   "character_id": "403e7206-d314-416a-9ef2-c618e26a8b6e",
-  "generated_at": "2026-05-22T10:14:33.025Z",
+  "generated_at": "2026-05-22T10:22:34.321Z",
   "animations": {
     "c9c72233-b96c-11e4-a802-0aaa78deedf9": {
       "id": "c9c72233-b96c-11e4-a802-0aaa78deedf9",
@@ -3487,6 +3487,111 @@
       "status": "permanent_fail",
       "http": 400,
       "failed_at": "2026-05-22T10:14:33.025Z"
+    },
+    "c9cee294-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cee294-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Turning 90 Degrees Left With Axe",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:15:33.170Z"
+    },
+    "b099a412-5194-4a60-850f-2306308fba1e": {
+      "id": "b099a412-5194-4a60-850f-2306308fba1e",
+      "name": "Small Hit Reaction From The Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:17:33.347Z"
+    },
+    "c9ccdb25-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccdb25-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking Forward In A Sad Disposition",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:17:33.366Z"
+    },
+    "c9cd4a64-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd4a64-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Doing The Hokey Pokey",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:18:33.484Z"
+    },
+    "c9cee94e-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cee94e-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Equipping Axe Over The Shoulder",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:20:33.652Z"
+    },
+    "c9ccd767-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccd767-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Laying On Back Looking Around",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:20:33.670Z"
+    },
+    "c9cd8d90-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd8d90-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Carrying A Box",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:21:03.782Z"
+    },
+    "c9cd191c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd191c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Ninja Walk Backward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:21:03.784Z"
+    },
+    "c9ccf5d3-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccf5d3-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Happy Run Backward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:21:33.938Z"
+    },
+    "c9cce068-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cce068-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Running Backward Right Arc In A Sad Disposition",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:21:33.942Z"
+    },
+    "c9cd534a-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd534a-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rifle Running Backward To Standing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:22:04.056Z"
+    },
+    "c9cd46a9-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd46a9-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Doing The Chicken Dance",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:22:04.059Z"
+    },
+    "c9cd5b7f-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd5b7f-b96c-11e4-a802-0aaa78deedf9",
+      "name": "45 Degree Right Turn",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:22:04.062Z"
+    },
+    "c9cd5052-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd5052-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rifle Idle Looking Around",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:22:34.314Z"
+    },
+    "c9cd2845-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd2845-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Mma Spinning Back Kick",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:22:34.321Z"
     }
   }
 }
