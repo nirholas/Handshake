@@ -64,7 +64,22 @@ async function handleNonce(req, res) {
 	const issuedAt = new Date().toISOString();
 	const expiresAt = new Date(Date.now() + NONCE_TTL_SEC * 1000).toISOString();
 
-	return json(res, 200, { nonce, issuedAt, expiresAt, csrf, ttl: NONCE_TTL_SEC });
+	// Tell the client the canonical domain/uri to sign against. Lets dev
+	// frontends (Codespaces tunnels, preview deploys, etc.) proxy /api/* to
+	// this upstream and still produce SIWE messages that pass the domain
+	// check in handleVerify.
+	const appOrigin = env.APP_ORIGIN;
+	const domain = new URL(appOrigin).host;
+
+	return json(res, 200, {
+		nonce,
+		issuedAt,
+		expiresAt,
+		csrf,
+		ttl: NONCE_TTL_SEC,
+		domain,
+		uri: appOrigin,
+	});
 }
 
 // ── Verify ─────────────────────────────────────────────────────────────────

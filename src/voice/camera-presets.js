@@ -64,9 +64,11 @@ export function computeFraming({ box, preset = 'full', aspectRatio = 1 } = {}) {
 	// 0.5 = mid-torso, 0.65 = chest, 0.85 = head, 1.0 = top of head.
 	const targetY = box.min.y + height * cfg.targetFrac;
 
-	// Distance back from the subject — scales with avatar height + tightens
-	// for wider aspect ratios so the subject doesn't shrink.
-	const distance = Math.max(cfg.minDistance, height * cfg.distanceMul * aspectRatio);
+	// Distance back from the subject — scales with avatar height, then backs
+	// off further on narrow viewports so a T-pose silhouette still fits
+	// horizontally. Wider-than-tall viewports never need that extra nudge.
+	const aspectBackoff = Math.max(1, 1 / aspectRatio);
+	const distance = Math.max(cfg.minDistance, height * cfg.distanceMul * aspectBackoff);
 
 	// Camera height: slightly above target so the look-vector slopes very
 	// gently downward. Avoids the up-the-nose angle when the avatar is short.

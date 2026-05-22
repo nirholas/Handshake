@@ -17,12 +17,27 @@ const KHRONOS = fs.readFileSync(path.join(HERE, 'khronos-glbs.txt'), 'utf8').tri
 const THREEJS = fs.readFileSync(path.join(HERE, 'threejs-glbs.txt'), 'utf8').trim().split('\n')
 	.map((s) => s.replace(/\.glb$/, '')).filter(Boolean);
 
-// On-disk GLBs we ship with the app
+// Curated community-avatar lineup. Each entry is a named identity rendered with
+// a real GLB shipped under /public. The mapping from name → GLB is intentional:
+// soldier-rigs go to operative/military-leaning personas, the expressive robot
+// goes to AI/protocol personas, the default humanoid covers the rest.
 const ON_DISK = [
-	{ name: 'CZ', slug: 'cz', path: '/avatars/cz.glb', tags: ['humanoid', 'character'], desc: 'Stylized humanoid avatar with idle pose. Ready for chat overlays.' },
-	{ name: 'Default Avatar', slug: 'default-avatar', path: '/avatars/default.glb', tags: ['humanoid', 'starter'], desc: 'Neutral starter humanoid — a clean base for skinning, retargeting, and accessories.' },
-	{ name: 'Robot Expressive', slug: 'robot-expressive', path: '/animations/robotexpressive.glb', tags: ['robot', 'animated', 'rigged'], desc: 'Expressive robot character with multiple animation clips: idle, walk, run, jump, dance.' },
-	{ name: 'Soldier', slug: 'soldier', path: '/animations/soldier.glb', tags: ['humanoid', 'animated', 'rigged'], desc: 'Rigged soldier character with locomotion animations baked in.' },
+	{ name: 'CZ', slug: 'cz', path: '/avatars/cz.glb', tags: ['humanoid', 'character', 'community'], desc: 'CZ — stylized humanoid with idle pose, ready for chat overlays.' },
+	{ name: 'Ansem', slug: 'ansem', path: '/avatars/default.glb', tags: ['humanoid', 'community', 'trader'], desc: 'Ansem — trader persona for chart-watchers and crypto Twitter.' },
+	{ name: 'Boss', slug: 'boss', path: '/animations/soldier.glb', tags: ['humanoid', 'rigged', 'animated', 'community'], desc: 'Boss — for the one running the room. Soldier rig with locomotion.' },
+	{ name: 'Vernington', slug: 'vernington', path: '/avatars/default.glb', tags: ['humanoid', 'community'], desc: 'Vernington — the senior of the Vern lineage.' },
+	{ name: 'Saga', slug: 'saga', path: '/animations/robotexpressive.glb', tags: ['robot', 'animated', 'rigged', 'community'], desc: 'Saga — mobile-native, expressive robot rig with idle, walk, jump, dance clips.' },
+	{ name: 'Claude', slug: 'claude', path: '/avatars/default.glb', tags: ['humanoid', 'community', 'ai'], desc: 'Claude — calm, thoughtful AI persona.' },
+	{ name: '3D', slug: '3d', path: '/avatars/default.glb', tags: ['humanoid', 'community', 'meta'], desc: '3D — meta avatar representing the platform itself.' },
+	{ name: 'AI', slug: 'ai', path: '/animations/robotexpressive.glb', tags: ['robot', 'animated', 'rigged', 'community', 'ai'], desc: 'AI — generic agent stand-in, expressive robot rig.' },
+	{ name: 'Agent', slug: 'agent', path: '/animations/soldier.glb', tags: ['humanoid', 'rigged', 'animated', 'community', 'agent'], desc: 'Agent — operative ready for autonomous on-chain work.' },
+	{ name: 'Vern', slug: 'vern', path: '/avatars/default.glb', tags: ['humanoid', 'community'], desc: 'Vern — base form, before the Vernington promotion.' },
+	{ name: 'Crossinger', slug: 'crossinger', path: '/avatars/default.glb', tags: ['humanoid', 'community'], desc: 'Crossinger — chain-hopper, multi-network identity.' },
+	{ name: 'Spartian', slug: 'spartian', path: '/animations/soldier.glb', tags: ['humanoid', 'rigged', 'animated', 'community'], desc: 'Spartian — disciplined, armored, never folds.' },
+	// Name surfaced as "Tester" because the marketplace UI auto-name filter
+	// strips entries whose name is exactly "test" (see AVATAR_AUTONAMED_RE in
+	// src/marketplace.js). Slug stays `test` to preserve the requested handle.
+	{ name: 'Tester', slug: 'test', path: '/avatars/default.glb', tags: ['humanoid', 'community'], desc: 'Tester — kicks the tires on every release before anyone else.' },
 ];
 
 // Curated metadata for well-known Khronos models. Anything not listed here gets
@@ -278,49 +293,58 @@ function isReferenceFixture(name, meta) {
 	return false;
 }
 
-// Khronos
-let dropped = 0;
-for (const name of KHRONOS) {
-	const meta = KHRONOS_META[name] || classifyByName(name);
-	if (isReferenceFixture(name, meta)) {
-		dropped += 1;
-		continue;
-	}
-	const slug = 'demo-' + name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-	addItem({
-		id: `avatar_demo_k_${name.toLowerCase()}`,
-		slug,
-		name: name.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2'),
-		glbUrl: `${KHRONOS_BASE}/${name}/glTF-Binary/${name}.glb`,
-		image: null, // jsdelivr can't serve thumbnails reliably; let the model-viewer poster handle it
-		tags: meta.tags,
-		desc: meta.desc,
-		attribution: KHRONOS_ATTR,
-	});
-}
+// Khronos / three.js bulk catalogue is gated by INCLUDE_BULK_DEMOS. The Community
+// Avatars wall is currently curated to a small named lineup (see ON_DISK above),
+// so we skip the bulk public-domain catalogue by default. Set the env var to
+// regenerate the full feed.
+const INCLUDE_BULK_DEMOS = process.env.INCLUDE_BULK_DEMOS === '1';
 
-// three.js — skip ones already in Khronos to avoid duplicates
-const KHRONOS_LOWER = new Set(KHRONOS.map((s) => s.toLowerCase()));
-for (const baseName of THREEJS) {
-	if (KHRONOS_LOWER.has(baseName.toLowerCase())) continue; // skip dupes
-	// Case-insensitive THREEJS_META lookup so 'ferrari' (filename) matches 'Ferrari' (META key).
-	const metaKey = Object.keys(THREEJS_META).find((k) => k.toLowerCase() === baseName.toLowerCase());
-	const meta = (metaKey && THREEJS_META[metaKey]) || classifyByName(baseName);
-	const niceName = baseName
-		.replace(/[-_]+/g, ' ')
-		.replace(/\.glb$/, '')
-		.replace(/^(.)/, (m) => m.toUpperCase())
-		.replace(/\b([a-z])/g, (m) => m.toUpperCase());
-	addItem({
-		id: `avatar_demo_t_${baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-		slug: 'demo-' + baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-		name: niceName,
-		glbUrl: `${THREEJS_BASE}/${baseName}.glb`,
-		image: null,
-		tags: meta.tags,
-		desc: meta.desc,
-		attribution: THREEJS_ATTR,
-	});
+let dropped = 0;
+
+if (INCLUDE_BULK_DEMOS) {
+	// Khronos
+	for (const name of KHRONOS) {
+		const meta = KHRONOS_META[name] || classifyByName(name);
+		if (isReferenceFixture(name, meta)) {
+			dropped += 1;
+			continue;
+		}
+		const slug = 'demo-' + name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+		addItem({
+			id: `avatar_demo_k_${name.toLowerCase()}`,
+			slug,
+			name: name.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2'),
+			glbUrl: `${KHRONOS_BASE}/${name}/glTF-Binary/${name}.glb`,
+			image: null, // jsdelivr can't serve thumbnails reliably; let the model-viewer poster handle it
+			tags: meta.tags,
+			desc: meta.desc,
+			attribution: KHRONOS_ATTR,
+		});
+	}
+
+	// three.js — skip ones already in Khronos to avoid duplicates
+	const KHRONOS_LOWER = new Set(KHRONOS.map((s) => s.toLowerCase()));
+	for (const baseName of THREEJS) {
+		if (KHRONOS_LOWER.has(baseName.toLowerCase())) continue; // skip dupes
+		// Case-insensitive THREEJS_META lookup so 'ferrari' (filename) matches 'Ferrari' (META key).
+		const metaKey = Object.keys(THREEJS_META).find((k) => k.toLowerCase() === baseName.toLowerCase());
+		const meta = (metaKey && THREEJS_META[metaKey]) || classifyByName(baseName);
+		const niceName = baseName
+			.replace(/[-_]+/g, ' ')
+			.replace(/\.glb$/, '')
+			.replace(/^(.)/, (m) => m.toUpperCase())
+			.replace(/\b([a-z])/g, (m) => m.toUpperCase());
+		addItem({
+			id: `avatar_demo_t_${baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+			slug: 'demo-' + baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+			name: niceName,
+			glbUrl: `${THREEJS_BASE}/${baseName}.glb`,
+			image: null,
+			tags: meta.tags,
+			desc: meta.desc,
+			attribution: THREEJS_ATTR,
+		});
+	}
 }
 
 const file = `/**

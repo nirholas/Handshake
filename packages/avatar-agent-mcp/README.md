@@ -7,7 +7,7 @@
 [![node](https://img.shields.io/badge/node-%E2%89%A520-9945FF?style=flat-square)](https://nodejs.org)
 [![mcp](https://img.shields.io/badge/Model%20Context%20Protocol-✓-9945FF?style=flat-square)](https://modelcontextprotocol.io)
 
-Registry name: **`io.github.nirholas/3D-AI-Agent-Avatar`** · npm: **`@three-ws/avatar-agent`**
+Registry name: **`ws.three/3D-AI-Agent-Avatar`** · npm: **`@three-ws/avatar-agent`**
 
 A single MCP server that's two things at once:
 

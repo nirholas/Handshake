@@ -22,6 +22,8 @@ avatar
 three-ws
 xspace-agent
 agent-voice-chat
+agent-protocol-sdk
+vendor
 
 dist-lib
 dist-artifact

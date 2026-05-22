@@ -1,7 +1,7 @@
 {
 	"name": "@three-ws/avatar-agent",
-	"version": "1.0.0",
-	"mcpName": "io.github.nirholas/3D-AI-Agent-Avatar",
+	"version": "1.0.1",
+	"mcpName": "ws.three/3D-AI-Agent-Avatar",
 	"description": "3D AI Agent Avatar — MCP server that spawns a textured GLB avatar, inspects/validates/optimizes any 3D model, gives the agent a Solana wallet + a voice, and ships full pump.fun powers (atomic Jito-bundled launches + creator-fee collection). Powered by three.ws.",
 	"type": "module",
 	"author": "nirholas <hello@three.ws>",

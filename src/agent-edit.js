@@ -116,7 +116,7 @@ function render() {
   $('panel-persona').hidden = false;
   $('panel-persona').classList.add('active');
   $('agent-title').textContent = `Edit Agent: ${agentData.name || 'Untitled'}`;
-  $('back-link').href = `/agents/${agentId}`;
+  $('back-link').href = `/agents/${agentData.id}`;
 
   // Persona
   $('f-name').value = agentData.name || '';

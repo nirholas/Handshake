@@ -230,10 +230,13 @@ export class ConnectWalletController extends EventTarget {
 
 			const nonceRes = await fetch(this.#opts.nonceUrl, { credentials: 'include' });
 			if (!nonceRes.ok) throw new Error('Failed to get nonce');
-			const { nonce, csrf } = await nonceRes.json();
+			const { nonce, csrf, domain: serverDomain, uri: serverUri } = await nonceRes.json();
 
-			const domain = location.host;
-			const uri = location.origin;
+			// Prefer server-issued domain/uri so dev frontends proxying /api/*
+			// to a different origin still produce messages that match the
+			// upstream's domain check.
+			const domain = serverDomain || location.host;
+			const uri = serverUri || location.origin;
 			const issuedAt = new Date().toISOString();
 			const expirationTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 

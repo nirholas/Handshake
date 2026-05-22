@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"noEmit": true,
+		"moduleResolution": "bundler",
+		"target": "ESNext",
+		"module": "ESNext",
+		"skipLibCheck": true,
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"allowJs": true,
+		"checkJs": false,
+		"types": []
+	},
+	"files": ["src/vite-env.d.ts"],
+	"include": []
+}

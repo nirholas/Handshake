@@ -89,6 +89,37 @@
 				box-shadow: 0 5px 0 0 rgba(255,255,255,0.04);
 			}
 
+			/* Animation control chips — trigger one-shot clips on the avatar */
+			.anim-controls {
+				display: flex; flex-wrap: wrap; gap: 8px;
+				margin-top: 30px;
+			}
+			.anim-label {
+				width: 100%; margin: 0 0 4px;
+				font: 600 10px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.18em; text-transform: uppercase;
+				color: #555870;
+			}
+			.chip {
+				display: inline-flex; align-items: center; gap: 6px;
+				padding: 9px 14px; border-radius: 999px;
+				background: rgba(255,255,255,0.04);
+				border: 1px solid rgba(255,255,255,0.1);
+				color: #ccd; font: 600 12px/1 'Inter', sans-serif;
+				cursor: pointer; user-select: none;
+				letter-spacing: 0.02em;
+				transition: background 120ms ease, border-color 120ms ease,
+				            color 120ms ease, transform 120ms ease;
+			}
+			.chip:hover { background: rgba(214,255,61,0.08); border-color: rgba(214,255,61,0.35); color: #fff; }
+			.chip:active { transform: translateY(1px); }
+			.chip[aria-pressed="true"] {
+				background: rgba(214,255,61,0.16);
+				border-color: rgba(214,255,61,0.55);
+				color: #d6ff3d;
+			}
+			.chip[disabled] { opacity: 0.4; cursor: wait; }
+
 			/* Nav */
 			.nav {
 				position: fixed; top: 0; left: 0; right: 0; z-index: 20;
@@ -133,6 +164,13 @@
 					<span style="opacity:.4">↓</span>
 				</a>
 			</div>
+			<div class="anim-controls" id="anim-controls" role="group" aria-label="Avatar animations">
+				<div class="anim-label">Make her…</div>
+				<button class="chip" data-clip="wave"      type="button" disabled>👋 Wave</button>
+				<button class="chip" data-clip="rumba"     type="button" disabled>💃 Dance</button>
+				<button class="chip" data-clip="celebrate" type="button" disabled>🎉 Celebrate</button>
+				<button class="chip" data-clip="taunt"     type="button" disabled>😝 Taunt</button>
+			</div>
 		</div>
 
 		<!-- Transparent overlay canvas — avatar renders above all HTML -->
@@ -143,9 +181,26 @@
 			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 			import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm';
 
-			const canvas  = document.getElementById('avatar-canvas');
-			const ctaBtn  = document.getElementById('cta-btn');
-			const sitLine = document.getElementById('sit-line');
+			const canvas    = document.getElementById('avatar-canvas');
+			const ctaBtn    = document.getElementById('cta-btn');
+			const sitLine   = document.getElementById('sit-line');
+			const animPanel = document.getElementById('anim-controls');
+			const chips     = [...animPanel.querySelectorAll('.chip')];
+
+			// ── Tracked timers ────────────────────────────────────────────────
+			// Every setTimeout used by the sit→stand→jump cycle is registered
+			// here so a performAction() click can cancel all pending steps
+			// without leaking phase transitions onto the perform animation.
+			const pendingTimers = new Set();
+			function later(fn, ms) {
+				const id = setTimeout(() => { pendingTimers.delete(id); fn(); }, ms);
+				pendingTimers.add(id);
+				return id;
+			}
+			function clearTimers() {
+				for (const id of pendingTimers) clearTimeout(id);
+				pendingTimers.clear();
+			}
 
 			// ── Renderer: alpha:true → transparent background ─────────────────
 			const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -241,14 +296,34 @@
 			// ── Avatar ────────────────────────────────────────────────────────
 			let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
 			let sitAction = null, standupAction = null, fallAction = null;
-			let phase = 'loading';                   // loading → sitting → standingUp → jumping → resting
+			// On-demand clips played by the animation chips. Each is a one-shot
+			// (clampWhenFinished:true) action whose 'finished' event hands control
+			// back to the sit cycle. Looping clips (e.g. rumba) use a tracked
+			// timer to stop after PERFORM_LOOP_MS.
+			const performActions = {};               // { wave, rumba, celebrate, taunt }
+			let currentPerform = null;
+			const PERFORM_LOOP_MS = 6200;            // dwell on looping clips
+			const PERFORM_CLIPS = [
+				{ name: 'wave',      file: '/animations/clips/wave.json',      loop: false },
+				{ name: 'rumba',     file: '/animations/clips/rumba.json',     loop: true  },
+				{ name: 'celebrate', file: '/animations/clips/celebrate.json', loop: false },
+				{ name: 'taunt',     file: '/animations/clips/taunt.json',     loop: false },
+			];
+			let phase = 'loading';                   // loading → sitting → standingUp → jumping → resting → performing
 			let startW = { x: 0, y: 0 };             // sit/stand anchor (above the text)
 			let seqT = 0, landed = false, jumpTarget = { x: 0, y: 0 };
 
 			const STAND_S     = 2.566;  // standup clip duration
 			const JUMP_S      = 2.933;  // jumpdown3 clip duration
 			const SIT_DWELL_S = 2.4;    // how long he sits before standing
-			const LAND_P      = 0.84;   // jump fraction where feet make contact
+			// Earliest-possible fraction at which the impact effects MAY fire.
+			// The actual trigger is gated on screen-space proximity below — this
+			// just prevents the squish from going off during the arc's apex.
+			const LAND_P      = 0.92;
+			// Feet must be within this many SCREEN px of the button top before the
+			// squish/splash fire. The parabolic arc only returns to 0 at p≈1.0, so
+			// gating on real px (not the fraction p) keeps the impact synced.
+			const LAND_PX     = 10;
 			const PEAK_U      = 0.55;   // arc peak in world units
 			const JUMP_YAW    = 0.22;   // ~12° peak yaw mid-flight (face-forward at both ends)
 			// cz.glb origin is at the feet (verified in /demos/button-jump.html), so
@@ -304,17 +379,74 @@
 				});
 			}
 
+			// Splash on impact: a fan of lime droplets squirts from the button's
+			// top edge with real ballistic motion (initial velocity + gravity),
+			// so the landing reads as wet/squishy rather than a purely synthetic
+			// bounce. DOM nodes so the splash composites with the button itself.
+			const SPLASH_GRAVITY = 1600;   // px/s²
+			const SPLASH_COUNT   = 20;
+			function fireSplash() {
+				const rect = ctaBtn.getBoundingClientRect();
+				const ox = rect.left + rect.width / 2;
+				const oy = rect.top + 2;
+				const drops = [];
+				for (let i = 0; i < SPLASH_COUNT; i++) {
+					const size = 5 + Math.random() * 7;
+					const el = document.createElement('div');
+					el.style.cssText =
+						`position:fixed;` +
+						`left:${ox - size / 2}px;top:${oy - size / 2}px;` +
+						`width:${size}px;height:${size}px;border-radius:50%;` +
+						`background:radial-gradient(circle at 35% 30%,#f6ffc4,#d6ff3d 55%,#92b500);` +
+						`box-shadow:0 0 6px rgba(214,255,61,0.65);` +
+						`pointer-events:none;z-index:30;will-change:transform,opacity;`;
+					document.body.appendChild(el);
+					// Fan upward: ~-150° to -30°, biased toward overhead spray
+					const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.15;
+					const speed = 230 + Math.random() * 360;
+					drops.push({
+						el, x: 0, y: 0,
+						vx: Math.cos(angle) * speed,
+						vy: Math.sin(angle) * speed,
+						life: 0,
+						max: 0.85 + Math.random() * 0.5,
+					});
+				}
+				let last = performance.now();
+				(function step(now) {
+					const dt = Math.min((now - last) / 1000, 0.04);
+					last = now;
+					let alive = false;
+					for (const d of drops) {
+						if (!d.el) continue;
+						d.life += dt;
+						d.vy   += SPLASH_GRAVITY * dt;
+						d.x    += d.vx * dt;
+						d.y    += d.vy * dt;
+						const t = d.life / d.max;
+						if (t >= 1) { d.el.remove(); d.el = null; continue; }
+						d.el.style.opacity   = String(1 - t * t);
+						d.el.style.transform = `translate(${d.x.toFixed(1)}px, ${d.y.toFixed(1)}px)`;
+						alive = true;
+					}
+					if (alive) requestAnimationFrame(step);
+				})(last);
+			}
+
 			function startSit() {
 				if (!sitAction) return;
 				phase = 'sitting';
 				placeAtStart();
 				fallAction?.stop();
 				standupAction?.stop();
+				// Stop any in-flight perform clip so it doesn't blend into sitidle
+				for (const a of Object.values(performActions)) a.stop();
+				currentPerform = null;
 				// Face the camera the entire cycle — no turning around
 				gsap.killTweensOf(avatar.rotation);
 				avatar.rotation.set(0, 0, 0);
 				sitAction.reset().play();
-				setTimeout(startStandup, SIT_DWELL_S * 1000);
+				later(startStandup, SIT_DWELL_S * 1000);
 			}
 
 			// Crossfade duration tuned for organic blending between morph targets
@@ -328,7 +460,7 @@
 				standupAction.reset();
 				standupAction.crossFadeFrom(sitAction, FADE_S, false).play();
 				// Trigger jump just before standup ends, leaving room for the next fade
-				setTimeout(triggerJump, (STAND_S - FADE_S) * 1000);
+				later(triggerJump, (STAND_S - FADE_S) * 1000);
 			}
 
 			function triggerJump() {
@@ -361,21 +493,23 @@
 				const dir = Math.sign(jumpTarget.x - startW.x);
 				avatar.rotation.y = JUMP_YAW * dir * Math.sin(Math.PI * p);
 
-				// Only squish when the avatar is actually CLOSE to the button (in screen px).
-				// Belt-and-braces: if the trajectory math is ever wrong, the squish stays silent
-				// instead of "telekinetically" firing from across the screen.
+				// Squish + splash fire only on real screen-space contact. The arc
+				// only returns to 0 at p≈1.0, so we gate on actual feet-to-button
+				// distance (LAND_PX) rather than the time fraction — otherwise the
+				// bounce telegraphs ~35px before the visual landing.
 				if (!landed && p >= LAND_P) {
 					const dxPx = Math.abs(avatar.position.x - jumpTarget.x) * PX_PER_UNIT;
 					const dyPx = Math.abs(avatar.position.y - jumpTarget.y) * PX_PER_UNIT;
-					if (dxPx < 80 && dyPx < 80) {
+					if (dxPx < LAND_PX && dyPx < LAND_PX) {
 						landed = true;
 						fireSquish();
+						fireSplash();
 					}
 				}
 
 				if (p >= 1) {
 					phase = 'resting';
-					setTimeout(() => {
+					later(() => {
 						const fromX = avatar.position.x;
 						const fromY = avatar.position.y;
 						const back  = getSitWorld();
@@ -403,8 +537,88 @@
 				if (phase === 'sitting' || phase === 'standingUp') triggerJump();
 			});
 
+			// ── On-demand performance: chip click → one-shot clip, then resume cycle
+			let returnSlide = null;       // rAF id for the post-perform slide back to sit
+			function cancelReturnSlide() {
+				if (returnSlide) { cancelAnimationFrame(returnSlide); returnSlide = null; }
+			}
+			function activeAction() {
+				if (sitAction?.isRunning())     return sitAction;
+				if (standupAction?.isRunning()) return standupAction;
+				if (fallAction?.isRunning())    return fallAction;
+				return currentPerform;
+			}
+			function setChipPressed(name) {
+				for (const c of chips) c.setAttribute('aria-pressed', String(c.dataset.clip === name));
+			}
+			function performAction(name) {
+				const act = performActions[name];
+				if (!avatar || !act) return;
+				if (phase === 'performing' && currentPerform === act) return;
+
+				// Hand-off: stop the sit/jump cycle and any in-flight position lerp.
+				// cancelReturnSlide() is critical — without it, a previous perform's
+				// slide-back rAF would still complete and call startSit(), nuking
+				// the perform we just started.
+				clearTimers();
+				cancelReturnSlide();
+				if (recalSlide) { cancelAnimationFrame(recalSlide); recalSlide = null; }
+				phase = 'performing';
+
+				// Stand at the CTA button — keeps the avatar centered in the
+				// reader's eye-line where the page already focuses attention.
+				const stage = getButtonWorld();
+				avatar.position.set(stage.x, stage.y, 0);
+				gsap.killTweensOf(avatar.rotation);
+				avatar.rotation.set(0, 0, 0);
+
+				const prev = activeAction();
+				act.reset();
+				if (prev && prev !== act) act.crossFadeFrom(prev, FADE_S, false);
+				act.play();
+				currentPerform = act;
+				setChipPressed(name);
+
+				// Loops have no 'finished' event — schedule the resume manually.
+				const def = PERFORM_CLIPS.find(c => c.name === name);
+				if (def?.loop) later(() => resumeCycleAfterPerform(act), PERFORM_LOOP_MS);
+			}
+			function resumeCycleAfterPerform(act) {
+				if (phase !== 'performing' || currentPerform !== act) return;
+				setChipPressed(null);
+				// Slide the avatar from the CTA back to the sit anchor before
+				// startSit teleports + plays sitidle, so the return reads as
+				// "walked back to perch" rather than a hard cut.
+				phase = 'resting';
+				cancelReturnSlide();
+				const fromX = avatar.position.x, fromY = avatar.position.y;
+				const back  = getSitWorld();
+				startW = back;
+				avatar.rotation.y = 0;
+				const t0 = performance.now();
+				(function slide(now) {
+					// If a new perform took over mid-slide, abandon: phase has
+					// already advanced and the new perform is owning the avatar.
+					if (phase !== 'resting') { returnSlide = null; return; }
+					const sp = Math.min((now - t0) / 700, 1);
+					avatar.position.x = fromX + (back.x - fromX) * smoothstep(sp);
+					avatar.position.y = fromY + (back.y - fromY) * smoothstep(sp);
+					if (sp < 1) returnSlide = requestAnimationFrame(slide);
+					else {
+						returnSlide = null;
+						avatar.position.set(back.x, back.y, 0);
+						startSit();   // resets perform clip + plays sitidle
+					}
+				})(performance.now());
+			}
+			for (const chip of chips) {
+				chip.addEventListener('click', () => performAction(chip.dataset.clip));
+			}
+
 			// ── Load avatar + animations ──────────────────────────────────────
-			new GLTFLoader().load('/avatars/cz.glb', gltf => {
+			// Realistic Avaturn-rigged humanoid; clips in /public/animations/clips
+			// are retargeted to this rig (see public/animations/registry.json).
+			new GLTFLoader().load('/avatars/default.glb', gltf => {
 				avatar = gltf.scene;
 				avatar.traverse(n => {
 					if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name))
@@ -416,12 +630,19 @@
 				scene.add(avatar);
 
 				mixer = new THREE.AnimationMixer(avatar);
+				mixer.addEventListener('finished', e => {
+					if (phase === 'performing' && e.action === currentPerform) {
+						resumeCycleAfterPerform(e.action);
+					}
+				});
 
+				const fetchClip = (file) => fetch(file).then(r => r.json());
 				Promise.all([
-					fetch('/animations/clips/sitidle.json').then(r => r.json()),
-					fetch('/animations/clips/standup.json').then(r => r.json()),
-					fetch('/animations/clips/jumpdown3.json').then(r => r.json()),
-				]).then(([sitJson, standJson, jumpJson]) => {
+					fetchClip('/animations/clips/sitidle.json'),
+					fetchClip('/animations/clips/standup.json'),
+					fetchClip('/animations/clips/jumpdown3.json'),
+					...PERFORM_CLIPS.map(c => fetchClip(c.file)),
+				]).then(([sitJson, standJson, jumpJson, ...performJsons]) => {
 					sitAction = mixer.clipAction(THREE.AnimationClip.parse(sitJson));
 					sitAction.setLoop(THREE.LoopRepeat, Infinity);
 
@@ -432,6 +653,20 @@
 					fallAction = mixer.clipAction(THREE.AnimationClip.parse(jumpJson));
 					fallAction.setLoop(THREE.LoopOnce, 1);
 					fallAction.clampWhenFinished = true;
+
+					PERFORM_CLIPS.forEach((def, i) => {
+						const a = mixer.clipAction(THREE.AnimationClip.parse(performJsons[i]));
+						if (def.loop) {
+							a.setLoop(THREE.LoopRepeat, Infinity);
+						} else {
+							a.setLoop(THREE.LoopOnce, 1);
+							a.clampWhenFinished = true;
+						}
+						performActions[def.name] = a;
+					});
+
+					// Chips were disabled until clips landed — enable now.
+					for (const c of chips) c.disabled = false;
 
 					if (rootBone) baseRootPos = rootBone.position.clone();
 

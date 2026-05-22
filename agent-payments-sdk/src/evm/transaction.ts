@@ -38,7 +38,7 @@ export async function buildEvmPaymentTransaction(
 ): Promise<EvmPaymentTransaction> {
   assertQuoteValid(params.quote);
 
-  const chain = getChain(params.quote.fromChainId);
+  getChain(params.quote.fromChainId);
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (apiKey) headers["x-api-key"] = apiKey;
 

@@ -100,7 +100,7 @@ describe('computeFraming — aspect ratio scaling', () => {
 	it('narrower viewport pulls the camera further back', () => {
 		const wide = computeFraming({ box: HUMANOID, preset: 'half', aspectRatio: 1.8 });
 		const narrow = computeFraming({ box: HUMANOID, preset: 'half', aspectRatio: 0.6 });
-		expect(narrow.position.z).toBeLessThan(wide.position.z);
+		expect(narrow.position.z).toBeGreaterThan(wide.position.z);
 	});
 
 	it('respects the minDistance floor on a small avatar', () => {

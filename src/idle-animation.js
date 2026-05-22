@@ -68,6 +68,11 @@ export class IdleAnimation {
 		const seed = opts.seed ?? 'default';
 		this._rand = mulberry32(hashStr(seed));
 
+		// When no AgentProtocol is supplied, nothing else is writing to the head
+		// each frame, so saccade must write absolutely (rest + offset) rather
+		// than additively — otherwise the offset accumulates and the head spins.
+		this._hasProtocol = !!opts.protocol;
+
 		// Per-avatar phase offsets — desync multiple instances on the same page.
 		this._breathPhase = this._rand() * TWO_PI;
 		this._weightPhase = this._rand() * TWO_PI;
@@ -80,6 +85,8 @@ export class IdleAnimation {
 		this._hipBone = null;
 		this._spineRestX = 0;
 		this._hipRestY = 0;
+		this._headRestX = 0;
+		this._headRestY = 0;
 
 		/**
 		 * Pre-built morph index cache per mesh — eliminates dict lookup in hot path.
@@ -223,6 +230,10 @@ export class IdleAnimation {
 		// Prefer head over neck — neck is visited first in DFS but adding rotation
 		// at neck level cascades into head, fighting the empathy layer's head-only control.
 		this._headBone = headCandidate || neckCandidate;
+		if (this._headBone) {
+			this._headRestX = this._headBone.rotation.x;
+			this._headRestY = this._headBone.rotation.y;
+		}
 
 		if (
 			!this._headBone &&
@@ -299,9 +310,18 @@ export class IdleAnimation {
 		this._saccPitch = this._springBuf[0];
 		this._saccPitchVel = this._springBuf[1];
 
-		// Additive — applied after the empathy layer sets head rotation this frame.
-		this._headBone.rotation.y += this._saccYaw;
-		this._headBone.rotation.x += this._saccPitch;
+		if (this._hasProtocol) {
+			// Empathy layer rewrites head rotation to (rest + yaw) each frame
+			// just before idle runs, so layering saccade on top is correct.
+			this._headBone.rotation.y += this._saccYaw;
+			this._headBone.rotation.x += this._saccPitch;
+		} else {
+			// Static preview — no empathy layer is resetting the head, so
+			// write absolutely off the captured rest pose. Otherwise saccade
+			// accumulates every frame and the head spirals out of frame.
+			this._headBone.rotation.y = this._headRestY + this._saccYaw;
+			this._headBone.rotation.x = this._headRestX + this._saccPitch;
+		}
 	}
 
 	// ── Channel 3: Blink ─────────────────────────────────────────────────────────
