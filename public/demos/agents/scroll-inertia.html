@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Scroll inertia — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			body { overflow-y: scroll; }
+			.long {
+				max-width: 560px; margin: 0 auto;
+				padding: 110px 32px 110px;
+			}
+			.long h2 { font: 700 28px/1.2 'Space Grotesk','Inter',sans-serif; margin: 80px 0 18px; }
+			.long p  { color: #555870; margin: 0 0 24px; font-size: 15px; line-height: 1.7; }
+			.spacer { height: 80vh; }
+		</style>
+	</head>
+	<body>
+		<main class="long">
+			<div class="hero-eyebrow">Scroll inertia</div>
+			<h1 class="hero-title">Scroll <em>fast</em>.</h1>
+			<p>She gets thrown when the page accelerates, catches the edge of a heading, and recovers when you settle.</p>
+
+			<div class="spacer"></div>
+
+			<h2>A long section</h2>
+			<p>Just keep scrolling. The faster you fling the page, the more she struggles to hold on.</p>
+			<p>When you stop, she eases back to her seat.</p>
+
+			<div class="spacer"></div>
+
+			<h2>Another section</h2>
+			<p>Try a sharp flick and then a slow drift.</p>
+
+			<div class="spacer"></div>
+
+			<h2>End of page</h2>
+			<p>You're done. Scroll up and feel her pull the other way.</p>
+		</main>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">scroll fast — fling her</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				clamp, mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Scroll inertia');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				idle:    '/animations/clips/idle.json',
+				falling: '/animations/clips/falling.json',
+				dodge:   '/animations/clips/dodge.json',
+			});
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			A.falling.setLoop(THREE.LoopRepeat, Infinity);
+			A.dodge.setLoop(THREE.LoopOnce, 1); A.dodge.clampWhenFinished = true;
+			A.idle.play();
+			let current = A.idle;
+
+			// Anchor to the right side, vertically center.
+			function homeWorld() {
+				return stage.domToWorld(window.innerWidth * 0.78, window.innerHeight * 0.5);
+			}
+			let home = homeWorld();
+			avatar.position.set(home.x, home.y, 0);
+
+			let displaceY = 0, velY = 0;
+			let lastScroll = window.scrollY, lastT = performance.now();
+
+			window.addEventListener('scroll', () => {
+				const now = performance.now();
+				const dt  = Math.max(0.001, (now - lastT) / 1000);
+				const dy  = window.scrollY - lastScroll;
+				lastScroll = window.scrollY;
+				lastT = now;
+				// Add scroll velocity to displacement (in world units).
+				// Positive scroll-down → world Y pushed downward (she lags up).
+				velY += (dy / dt) / 800;
+			});
+
+			function switchTo(next, fade = 0.2) {
+				if (next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next;
+			}
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, (dt) => {
+				// Spring back to home with damped oscillation.
+				const springK = 18;
+				const damping = 6;
+				const accel = -displaceY * springK - velY * damping;
+				velY += accel * dt;
+				displaceY += velY * dt;
+
+				home = homeWorld();
+				avatar.position.x = home.x;
+				avatar.position.y = home.y + displaceY;
+				avatar.rotation.z = clamp(velY * -0.05, -0.4, 0.4);
+
+				const speed = Math.abs(velY);
+				if (speed > 1.6 && current !== A.falling) switchTo(A.falling, 0.15);
+				else if (speed < 0.4 && current === A.falling) switchTo(A.idle, 0.4);
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

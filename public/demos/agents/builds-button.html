@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Builds the button — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			#cta-btn {
+				opacity: 0;
+				transform: translateY(20px);
+				transition: opacity 0.5s, transform 0.5s cubic-bezier(0.16,1,0.3,1);
+			}
+			#cta-btn.built {
+				opacity: 1;
+				transform: translateY(0);
+			}
+			.block {
+				position: fixed; pointer-events: none; z-index: 28;
+				border-radius: 6px;
+				background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
+				box-shadow: 0 4px 0 0 #7a9600;
+				will-change: transform;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="stage">
+			<div class="hero-eyebrow">Builds the button</div>
+			<h1 class="hero-title">She <em>assembles</em> the CTA.</h1>
+			<p class="hero-sub">
+				Walks in from the left carrying blocks. Places them where the
+				button belongs. Stacks them. They snap together into the CTA.
+			</p>
+			<div class="cta-row">
+				<a href="#" class="btn btn-primary" id="cta-btn"><span>Build your agent — free</span><span>→</span></a>
+				<button class="btn btn-ghost" id="restart"><span>Rebuild</span></button>
+			</div>
+		</div>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">click "rebuild"</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				smoothstep, fireSplash, fireShockwave, mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Builds the button');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const ctaBtn = document.getElementById('cta-btn');
+			const restart= document.getElementById('restart');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				walk:  '/animations/clips/walk.json',
+				idle:  '/animations/clips/idle.json',
+				cheer: '/animations/clips/celebrate.json',
+			});
+			A.walk.setLoop(THREE.LoopRepeat, Infinity);
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			A.cheer.setLoop(THREE.LoopOnce, 1); A.cheer.clampWhenFinished = true;
+			A.idle.play();
+			let current = A.idle;
+
+			function switchTo(next, fade = 0.25) {
+				if (next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next;
+			}
+
+			function btnRect() { return ctaBtn.getBoundingClientRect(); }
+
+			// Sequence: she walks from offscreen-left to the CTA spot, places
+			// one of three blocks each trip. After the third, the real CTA fades in.
+			const BLOCK_SIZES = [
+				{ w: 0.36, h: 0.32 }, // left third
+				{ w: 0.36, h: 0.32 }, // middle third
+				{ w: 0.36, h: 0.32 }, // right third
+			];
+			let stage_i = 0;
+			let phase = 'idle', t0 = 0;
+			let fromW = null, toW = null, dur = 1.4;
+			let activeBlock = null;
+
+			function start() {
+				stage_i = 0;
+				ctaBtn.classList.remove('built');
+				ctaBtn.style.opacity = '0';
+				// Clear any leftover DOM blocks
+				document.querySelectorAll('.block').forEach(b => b.remove());
+				nextTrip();
+			}
+			restart.addEventListener('click', start);
+			start();
+
+			function nextTrip() {
+				if (stage_i >= BLOCK_SIZES.length) {
+					// Done — fade in real button + celebrate.
+					ctaBtn.classList.add('built');
+					switchTo(A.cheer, 0.2);
+					const r = btnRect();
+					fireSplash(r.left + r.width / 2, r.top, { count: 28 });
+					fireShockwave(r.left + r.width / 2, r.top, { size: 30, max: 200 });
+					phase = 'done';
+					return;
+				}
+				// Spawn DOM block at offscreen-left, the carrier walks it in.
+				const r = btnRect();
+				const slotX = r.left + r.width * (stage_i + 0.5) / BLOCK_SIZES.length;
+				const slotY = r.top + r.height / 2;
+				const blockW = r.width / BLOCK_SIZES.length;
+				const blockH = r.height;
+				const b = document.createElement('div');
+				b.className = 'block';
+				b.style.width  = `${blockW}px`;
+				b.style.height = `${blockH}px`;
+				b.style.left   = `-${blockW + 20}px`;
+				b.style.top    = `${slotY - blockH / 2}px`;
+				document.body.appendChild(b);
+				activeBlock = { el: b, slotX, slotY, blockW, blockH };
+
+				// Carrier path: from far left → just under the slot.
+				const start = stage.domToWorld(-80, slotY + 100);
+				const end   = stage.domToWorld(slotX, slotY + 100);
+				avatar.position.set(start.x, start.y, 0);
+				fromW = start; toW = end; t0 = performance.now();
+				phase = 'walkin'; dur = 1.6;
+				switchTo(A.walk, 0.2);
+			}
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, () => {
+				if (phase === 'walkin') {
+					const p = Math.min((performance.now() - t0) / 1000 / dur, 1);
+					const e = smoothstep(p);
+					avatar.position.x = fromW.x + (toW.x - fromW.x) * e;
+					avatar.position.y = fromW.y + (toW.y - fromW.y) * e;
+					avatar.rotation.y = -Math.PI * 0.5; // facing right
+					// Block follows alongside the carrier, slightly behind+up.
+					if (activeBlock) {
+						const proj = new THREE.Vector3(avatar.position.x - 0.4, avatar.position.y + 0.7, 0).project(stage.camera);
+						const sx = (proj.x + 1) * 0.5 * window.innerWidth;
+						const sy = (1 - (proj.y + 1) * 0.5) * window.innerHeight;
+						activeBlock.el.style.left = `${sx - activeBlock.blockW / 2}px`;
+						activeBlock.el.style.top  = `${sy - activeBlock.blockH / 2}px`;
+					}
+					if (p >= 1) {
+						phase = 'place'; t0 = performance.now();
+						switchTo(A.idle, 0.2);
+					}
+				} else if (phase === 'place') {
+					const p = Math.min((performance.now() - t0) / 500, 1);
+					if (activeBlock) {
+						const startX = parseFloat(activeBlock.el.style.left);
+						const startY = parseFloat(activeBlock.el.style.top);
+						const endX = activeBlock.slotX - activeBlock.blockW / 2;
+						const endY = activeBlock.slotY - activeBlock.blockH / 2;
+						activeBlock.el.style.left = `${startX + (endX - startX) * p}px`;
+						activeBlock.el.style.top  = `${startY + (endY - startY) * p}px`;
+					}
+					if (p >= 1) {
+						stage_i++;
+						phase = 'dwell'; t0 = performance.now();
+					}
+				} else if (phase === 'dwell') {
+					if (performance.now() - t0 > 350) nextTrip();
+				}
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

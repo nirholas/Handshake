@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Fall from above — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+	</head>
+	<body>
+		<div class="stage">
+			<div class="hero-eyebrow">Fall from off-canvas</div>
+			<h1 class="hero-title">She drops in <em>uninvited</em>.</h1>
+			<p class="hero-sub">
+				Page loads, gravity engages, she falls past the nav and crashes
+				onto the CTA — splash, squish, then composes herself.
+			</p>
+			<div class="cta-row">
+				<a href="#" class="btn btn-primary" id="cta-btn"><span>Catch me</span><span>↓</span></a>
+				<button class="btn btn-ghost" id="redrop"><span>Drop again</span></button>
+			</div>
+		</div>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">click "drop again" to re-enter</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				PX_PER_UNIT, fireSplash, fireShockwave, fireSquish,
+				mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Fall from off-canvas');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const ctaBtn = document.getElementById('cta-btn');
+			const redrop = document.getElementById('redrop');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				falling: '/animations/clips/falling.json',
+				land:    '/animations/clips/falltolanding.json',
+				idle:    '/animations/clips/idle.json',
+			});
+			A.falling.setLoop(THREE.LoopRepeat, Infinity);
+			A.land.setLoop(THREE.LoopOnce, 1); A.land.clampWhenFinished = true;
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			let current = null;
+
+			function switchTo(next, fade = 0.25) {
+				if (next === current) return;
+				next.reset();
+				if (current) next.crossFadeFrom(current, fade, false);
+				next.play();
+				current = next;
+			}
+
+			let physVy = 0, physVx = 0;
+			let phase = 'idle';
+			const GRAVITY = 18;
+
+			function targetWorld() {
+				const r = ctaBtn.getBoundingClientRect();
+				return stage.domToWorld(r.left + r.width / 2, r.top);
+			}
+
+			function startFall() {
+				const t = targetWorld();
+				// Spawn above the viewport, slightly off-center.
+				const top = stage.domToWorld(0, -120);
+				avatar.position.set(t.x, top.y, 0);
+				avatar.rotation.set(0, 0, 0);
+				physVy = -2.5; // initial downward push
+				physVx = 0;
+				phase = 'falling';
+				switchTo(A.falling, 0.05);
+			}
+
+			startFall();
+			redrop.addEventListener('click', startFall);
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, (dt) => {
+				if (phase !== 'falling') return;
+				physVy -= GRAVITY * dt;
+				avatar.position.y += physVy * dt;
+				avatar.rotation.z += dt * 1.2; // slow tumble
+				const t = targetWorld();
+				if (avatar.position.y <= t.y) {
+					avatar.position.y = t.y;
+					avatar.position.x = t.x;
+					avatar.rotation.set(0, 0, 0);
+					phase = 'landed';
+					switchTo(A.land, 0.05);
+					const r = ctaBtn.getBoundingClientRect();
+					const ix = r.left + r.width / 2;
+					const iy = r.top;
+					fireSplash(ix, iy, { count: 26 });
+					fireShockwave(ix, iy, { size: 30, max: 220 });
+					fireSquish(ctaBtn, { scaleY: 0.6 });
+					setTimeout(() => switchTo(A.idle, 0.5), 1200);
+				}
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

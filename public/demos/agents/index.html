@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws — Agent interaction lab</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			body { display: block; }
+			.lab {
+				max-width: 1100px; margin: 0 auto;
+				padding: 90px 32px 80px;
+			}
+			.lab-eyebrow {
+				color: #d6ff3d; font: 600 12px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.18em; text-transform: uppercase; margin: 0 0 14px;
+			}
+			.lab-title {
+				font-family: 'Space Grotesk','Inter',sans-serif;
+				font-size: clamp(38px, 4.5vw, 56px); font-weight: 800;
+				letter-spacing: -0.03em; line-height: 1.04; margin: 0 0 18px;
+			}
+			.lab-sub {
+				color: #6c7088; max-width: 60ch; margin: 0 0 56px;
+				font-size: 16px; line-height: 1.7;
+			}
+			.group {
+				display: grid; grid-template-columns: 220px 1fr; gap: 32px;
+				padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.05);
+			}
+			.group:last-child { border-bottom: 1px solid rgba(255,255,255,0.05); }
+			.group-name {
+				font: 600 12px/1.3 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.16em; text-transform: uppercase; color: #d6ff3d;
+			}
+			.group-name span { display: block; color: #555870; margin-top: 6px; font-weight: 500; letter-spacing: 0; text-transform: none; font-size: 13px; line-height: 1.6; }
+			.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+			.card {
+				display: block; padding: 18px 18px 16px;
+				border-radius: 14px;
+				background: #0c0e16;
+				border: 1.5px solid rgba(255,255,255,0.06);
+				text-decoration: none; color: inherit;
+				transition: transform 0.15s, border-color 0.15s, background 0.15s;
+			}
+			.card:hover {
+				transform: translateY(-2px);
+				border-color: rgba(214,255,61,0.4);
+				background: #11141e;
+			}
+			.card h3 { margin: 0 0 6px; font-size: 15px; font-weight: 700; letter-spacing: -0.005em; color: #fff; }
+			.card p { margin: 0; color: #6c7088; font-size: 12.5px; line-height: 1.55; }
+			.card .ico { font-size: 22px; margin-bottom: 8px; }
+			@media (max-width: 720px) {
+				.group { grid-template-columns: 1fr; gap: 12px; }
+			}
+		</style>
+	</head>
+	<body>
+		<div class="agents-nav">
+			<a href="/demos/" class="agents-back">← lab</a>
+			<span class="agents-title">Agent interactions</span>
+		</div>
+
+		<main class="lab">
+			<p class="lab-eyebrow">three.ws · lab</p>
+			<h1 class="lab-title">Agent interactions</h1>
+			<p class="lab-sub">
+				Fourteen prototypes exploring how a 3D agent can physically inhabit
+				the page. Gravity is real, page elements are the playground, the
+				agent reacts to your intent. Click into any one to play.
+			</p>
+
+			<section class="group">
+				<div class="group-name">Cursor-driven<span>The agent responds directly to where you point and click.</span></div>
+				<div class="cards">
+					<a class="card" href="/demos/agents/cursor-follower.html">
+						<div class="ico">🖱️</div>
+						<h3>Cursor follower</h3>
+						<p>Hops between elements you hover. Sits and yawns when idle.</p>
+					</a>
+					<a class="card" href="/demos/agents/high-five.html">
+						<div class="ico">✋</div>
+						<h3>High-five reach</h3>
+						<p>Extends a hand as the cursor enters her space. Click to slap.</p>
+					</a>
+					<a class="card" href="/demos/agents/pickup-drop.html">
+						<div class="ico">🤏</div>
+						<h3>Pickup &amp; drop</h3>
+						<p>Click-drag her around. She lands with a splash and squish.</p>
+					</a>
+				</div>
+			</section>
+
+			<section class="group">
+				<div class="group-name">Gravity / impact<span>Extends the jump-down with new entrances and bounces.</span></div>
+				<div class="cards">
+					<a class="card" href="/demos/agents/fall-from-top.html">
+						<div class="ico">⬇️</div>
+						<h3>Fall from off-canvas</h3>
+						<p>Drops from above the nav, ragdoll-lands near the CTA.</p>
+					</a>
+					<a class="card" href="/demos/agents/trampoline.html">
+						<div class="ico">🛏️</div>
+						<h3>Trampoline mode</h3>
+						<p>CTA bounces her four times, each peak higher than the last.</p>
+					</a>
+					<a class="card" href="/demos/agents/wrecking-ball.html">
+						<div class="ico">🪨</div>
+						<h3>Wrecking-ball entrance</h3>
+						<p>Swings in on a rope from the right margin and knocks the CTA.</p>
+					</a>
+				</div>
+			</section>
+
+			<section class="group">
+				<div class="group-name">Page-as-playground<span>The text and layout are her climbing frame.</span></div>
+				<div class="cards">
+					<a class="card" href="/demos/agents/climb-title.html">
+						<div class="ico">🧗</div>
+						<h3>Climbs the title</h3>
+						<p>Scales the letterforms of the hero like a rope-climber.</p>
+					</a>
+					<a class="card" href="/demos/agents/skateboard.html">
+						<div class="ico">🛹</div>
+						<h3>Skateboards the descender</h3>
+						<p>Uses the <em>y</em> of "body" as a ramp toward the CTA.</p>
+					</a>
+					<a class="card" href="/demos/agents/sit-in-body.html">
+						<div class="ico">🪟</div>
+						<h3>Sits inside "body"</h3>
+						<p>Curls up in the counter of the lowercase o, peers out.</p>
+					</a>
+				</div>
+			</section>
+
+			<section class="group">
+				<div class="group-name">Scroll-driven<span>She responds to the page moving underneath her.</span></div>
+				<div class="cards">
+					<a class="card" href="/demos/agents/scroll-inertia.html">
+						<div class="ico">🌀</div>
+						<h3>Scroll inertia</h3>
+						<p>Fast scroll throws her; she catches the edge and recovers.</p>
+					</a>
+					<a class="card" href="/demos/agents/walks-gutter.html">
+						<div class="ico">🚶‍♀️</div>
+						<h3>Walks the gutter</h3>
+						<p>Strolls alongside the column at the same speed as scroll.</p>
+					</a>
+				</div>
+			</section>
+
+			<section class="group">
+				<div class="group-name">Multi-agent &amp; UI gags<span>Two agents in the page, or one breaking the fourth wall.</span></div>
+				<div class="cards">
+					<a class="card" href="/demos/agents/holds-cta.html">
+						<div class="ico">🏋️‍♀️</div>
+						<h3>Holds the CTA up</h3>
+						<p>Second agent crouches under the button, strains on hover.</p>
+					</a>
+					<a class="card" href="/demos/agents/falls-asleep.html">
+						<div class="ico">💤</div>
+						<h3>Falls asleep on text</h3>
+						<p>Lays across "Give your AI", snores; cursor wakes her.</p>
+					</a>
+					<a class="card" href="/demos/agents/builds-button.html">
+						<div class="ico">🧱</div>
+						<h3>Builds the button</h3>
+						<p>Assembles the CTA from blocks she carries in.</p>
+					</a>
+				</div>
+			</section>
+		</main>
+	</body>
+</html>

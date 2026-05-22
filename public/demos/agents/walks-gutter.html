@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Walks the gutter — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			body { overflow-y: scroll; }
+			.col { max-width: 540px; margin: 0 auto 0 60px; padding: 110px 32px 200px; }
+			.col h2 { font: 700 24px/1.25 'Space Grotesk','Inter',sans-serif; margin: 60px 0 14px; }
+			.col p  { color: #555870; margin: 0 0 18px; font-size: 15px; line-height: 1.75; }
+		</style>
+	</head>
+	<body>
+		<main class="col">
+			<div class="hero-eyebrow">Walks the gutter</div>
+			<h1 class="hero-title">She walks <em>with</em> you.</h1>
+			<p>Scroll the page. She paces in the right-hand gutter at the same speed, slowing when you slow.</p>
+			<p>Stop scrolling and she stops with you. Reverse direction and she turns around.</p>
+			<h2>Heading two</h2>
+			<p>Long-form copy. She keeps pace, her gait sped up or slowed to match.</p>
+			<p>The longer the page, the longer the walk.</p>
+			<h2>Heading three</h2>
+			<p>Halfway down.</p>
+			<p>Each section keeps her busy.</p>
+			<h2>Heading four</h2>
+			<p>Almost there.</p>
+			<p>Final stretch — she'll idle at the end.</p>
+			<h2>Heading five</h2>
+			<p>End of page.</p>
+		</main>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">scroll slowly</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				clamp, mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Walks the gutter');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				walk: '/animations/clips/walk.json',
+				idle: '/animations/clips/idle.json',
+			});
+			A.walk.setLoop(THREE.LoopRepeat, Infinity);
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			A.idle.play();
+			let current = A.idle;
+
+			// Anchor to right gutter, vertically centered in viewport.
+			function homeWorld(yOffsetPx = 0) {
+				return stage.domToWorld(window.innerWidth - 140, window.innerHeight * 0.55 + yOffsetPx);
+			}
+			let h = homeWorld(0);
+			avatar.position.set(h.x, h.y, 0);
+
+			let lastScroll = window.scrollY, lastT = performance.now();
+			let scrollSpeed = 0;          // px/s, smoothed
+			let walkOffset = 0;           // accumulated lateral wander
+			let dirX = 1;                 // facing direction (1 right, -1 left)
+
+			window.addEventListener('scroll', () => {
+				const now = performance.now();
+				const dt  = Math.max(0.001, (now - lastT) / 1000);
+				const v   = (window.scrollY - lastScroll) / dt;
+				lastScroll = window.scrollY;
+				lastT = now;
+				scrollSpeed = scrollSpeed * 0.7 + v * 0.3;
+			});
+
+			function switchTo(next, fade = 0.25) {
+				if (next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next;
+			}
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, (dt) => {
+				// Decay scroll speed toward 0 if no recent events.
+				scrollSpeed *= Math.pow(0.001, dt * 0.5);
+
+				const moving = Math.abs(scrollSpeed) > 25;
+				if (moving && current !== A.walk) switchTo(A.walk, 0.2);
+				if (!moving && current === A.walk) switchTo(A.idle, 0.3);
+
+				// Pace forward/back as a small horizontal sway in the gutter.
+				const pace = clamp(scrollSpeed / 600, -1.5, 1.5);
+				walkOffset += pace * dt * 60;
+				walkOffset = clamp(walkOffset, -50, 50);
+				dirX = pace >= 0 ? 1 : -1;
+
+				h = homeWorld(0);
+				avatar.position.x = stage.domToWorld(window.innerWidth - 140 + walkOffset, 0).x;
+				avatar.position.y = h.y;
+				avatar.rotation.y = dirX < 0 ? Math.PI * 0.18 : -Math.PI * 0.18;
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Skateboard — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			.hero-title em { position: relative; }
+			.descender { display: inline-block; position: relative; }
+			.descender::after {
+				content: '';
+				position: absolute;
+				left: 0; right: 0; bottom: 0;
+				height: 2px;
+				background: linear-gradient(90deg, transparent, rgba(214,255,61,0.4));
+			}
+		</style>
+	</head>
+	<body>
+		<div class="stage">
+			<div class="hero-eyebrow">Skateboards the descender</div>
+			<h1 class="hero-title">Give your AI a <em><span class="descender" id="ramp">body</span></em>.</h1>
+			<p class="hero-sub">
+				She rides the descender of "<em>y</em>" like a quarter-pipe and
+				launches into the CTA.
+			</p>
+			<div class="cta-row">
+				<a href="#" class="btn btn-primary" id="cta-btn"><span>Catch the landing</span><span>→</span></a>
+				<button class="btn btn-ghost" id="restart"><span>Drop in again</span></button>
+			</div>
+		</div>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">click "drop in again"</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				smoothstep, fireSplash, fireSquish, fireShockwave,
+				mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Skateboards the descender');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const ctaBtn = document.getElementById('cta-btn');
+			const restart= document.getElementById('restart');
+			const ramp   = document.getElementById('ramp');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				idle:  '/animations/clips/idle.json',
+				jump:  '/animations/clips/jump.json',
+				cheer: '/animations/clips/celebrate.json',
+			});
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			A.jump.setLoop(THREE.LoopOnce, 1); A.jump.clampWhenFinished = true;
+			A.cheer.setLoop(THREE.LoopOnce, 1); A.cheer.clampWhenFinished = true;
+			A.idle.play();
+			let current = A.idle;
+
+			// Skateboard plane under her feet.
+			const boardGeo = new THREE.BoxGeometry(0.7, 0.07, 0.28);
+			const boardMat = new THREE.MeshStandardMaterial({ color: 0xd6ff3d, roughness: 0.5 });
+			const board = new THREE.Mesh(boardGeo, boardMat);
+			board.visible = false;
+			stage.scene.add(board);
+
+			function switchTo(next, fade = 0.25) {
+				if (next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next;
+			}
+
+			function rampPath() {
+				// Three checkpoints: top of descender → bottom of descender → CTA top.
+				const r1 = ramp.getBoundingClientRect();
+				const r2 = ctaBtn.getBoundingClientRect();
+				return {
+					top:    stage.domToWorld(r1.left + 8, r1.top + 4),
+					bottom: stage.domToWorld(r1.left + 14, r1.bottom - 6),
+					launch: stage.domToWorld(r1.right - 4, r1.bottom - 26),
+					land:   stage.domToWorld(r2.left + r2.width / 2, r2.top),
+				};
+			}
+
+			let phase = 'idle', t0 = 0, fromW = null, toW = null;
+			let leg = 0;
+
+			function startRun() {
+				const p = rampPath();
+				avatar.position.set(p.top.x, p.top.y, 0);
+				board.position.set(p.top.x, p.top.y - 0.02, 0.05);
+				board.visible = true;
+				switchTo(A.idle, 0.2);
+				leg = 0;
+				goTo(p.top, p.bottom, 0.6);
+			}
+
+			function goTo(from, to, dur) {
+				fromW = from; toW = to;
+				phase = 'travel'; t0 = performance.now();
+				this_dur = dur;
+			}
+			let this_dur = 0.5;
+
+			restart.addEventListener('click', startRun);
+			startRun();
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, () => {
+				if (phase !== 'travel') return;
+				const p = Math.min((performance.now() - t0) / 1000 / this_dur, 1);
+				const e = smoothstep(p);
+				// curve down the ramp: pull X further along by easing in
+				const x = fromW.x + (toW.x - fromW.x) * e;
+				let y;
+				if (leg === 0) {
+					// Sliding down — accelerate.
+					y = fromW.y + (toW.y - fromW.y) * (e * e);
+				} else if (leg === 1) {
+					// Launch arc — peak rises then falls.
+					const arc = 0.5 * 4 * p * (1 - p);
+					y = fromW.y + (toW.y - fromW.y) * e + arc;
+				} else {
+					y = fromW.y + (toW.y - fromW.y) * e;
+				}
+				avatar.position.x = x;
+				avatar.position.y = y;
+				if (leg < 2) board.position.set(x, y - 0.02, 0.05);
+				else board.visible = false;
+				avatar.rotation.z = leg === 1 ? Math.sin(Math.PI * p) * 0.25 : 0;
+
+				if (p >= 1) {
+					const path = rampPath();
+					if (leg === 0) {
+						leg = 1; goTo(path.bottom, path.launch, 0.18);
+					} else if (leg === 1) {
+						leg = 2;
+						switchTo(A.jump, 0.1);
+						goTo(path.launch, path.land, 0.7);
+					} else {
+						const r = ctaBtn.getBoundingClientRect();
+						fireSplash(r.left + r.width / 2, r.top, { count: 26 });
+						fireShockwave(r.left + r.width / 2, r.top, { size: 32, max: 200 });
+						fireSquish(ctaBtn);
+						switchTo(A.cheer, 0.2);
+						phase = 'done';
+					}
+				}
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

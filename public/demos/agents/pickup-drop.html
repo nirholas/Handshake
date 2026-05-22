@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Pickup &amp; drop — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			#avatar-canvas { pointer-events: auto; cursor: grab; }
+			#avatar-canvas.dragging { cursor: grabbing; }
+		</style>
+	</head>
+	<body>
+		<div class="stage">
+			<div class="hero-eyebrow">Pickup &amp; drop</div>
+			<h1 class="hero-title">Pick her <em>up</em>.</h1>
+			<p class="hero-sub">
+				Click and drag her anywhere on the page. Release her and gravity
+				takes over — she falls, splashes on landing, then stands up.
+			</p>
+		</div>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">click + drag her body</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				PX_PER_UNIT, fireSplash, fireShockwave,
+				mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Pickup & drop');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				idle:    '/animations/clips/idle.json',
+				falling: '/animations/clips/falling.json',
+				land:    '/animations/clips/falltolanding.json',
+			});
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			A.falling.setLoop(THREE.LoopRepeat, Infinity);
+			A.land.setLoop(THREE.LoopOnce, 1); A.land.clampWhenFinished = true;
+			A.idle.play();
+			let current = A.idle;
+
+			function place(sx, sy) {
+				const w = stage.domToWorld(sx, sy);
+				avatar.position.set(w.x, w.y, 0);
+			}
+			place(window.innerWidth * 0.65, window.innerHeight * 0.55);
+
+			function switchTo(next, fade = 0.25) {
+				if (next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next;
+			}
+
+			// Drag state
+			let dragging = false;
+			let velX = 0, velY = 0;       // px/s, computed from drag deltas
+			let lastDragX = 0, lastDragY = 0, lastDragT = 0;
+
+			canvas.addEventListener('pointerdown', (e) => {
+				dragging = true;
+				canvas.classList.add('dragging');
+				canvas.setPointerCapture(e.pointerId);
+				lastDragX = e.clientX; lastDragY = e.clientY; lastDragT = performance.now();
+				velX = 0; velY = 0;
+				place(e.clientX, e.clientY);
+				switchTo(A.falling, 0.2);
+			});
+			canvas.addEventListener('pointermove', (e) => {
+				if (!dragging) return;
+				const now = performance.now();
+				const dt = Math.max(0.001, (now - lastDragT) / 1000);
+				velX = (e.clientX - lastDragX) / dt;
+				velY = (e.clientY - lastDragY) / dt;
+				lastDragX = e.clientX; lastDragY = e.clientY; lastDragT = now;
+				place(e.clientX, e.clientY);
+			});
+			canvas.addEventListener('pointerup', () => {
+				if (!dragging) return;
+				dragging = false;
+				canvas.classList.remove('dragging');
+				// Convert toss velocity from px/s to world units/s.
+				physVx =  velX / PX_PER_UNIT;
+				physVy = -velY / PX_PER_UNIT; // screen y → world y inverted
+				falling = true;
+			});
+
+			// Gravity physics (only when not being dragged).
+			let falling = false, physVx = 0, physVy = 0;
+			const GRAVITY = 9; // world units/s² (looks chunky like the page)
+
+			// Ground line = bottom 18% of viewport, in world coords.
+			function groundY() {
+				return stage.domToWorld(0, window.innerHeight * 0.82).y;
+			}
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, (dt) => {
+				if (falling) {
+					physVy -= GRAVITY * dt;
+					avatar.position.x += physVx * dt;
+					avatar.position.y += physVy * dt;
+					avatar.rotation.z += physVx * dt * 0.6;
+					const gy = groundY();
+					if (avatar.position.y <= gy) {
+						// Impact
+						avatar.position.y = gy;
+						falling = false;
+						avatar.rotation.z = 0;
+						const proj = new THREE.Vector3(avatar.position.x, avatar.position.y, 0).project(stage.camera);
+						const ix = (proj.x + 1) * 0.5 * window.innerWidth;
+						const iy = (1 - (proj.y + 1) * 0.5) * window.innerHeight;
+						fireSplash(ix, iy, { count: 22 });
+						fireShockwave(ix, iy, { size: 30, max: 180 });
+						switchTo(A.land, 0.1);
+						setTimeout(() => switchTo(A.idle, 0.5), 900);
+					}
+				}
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

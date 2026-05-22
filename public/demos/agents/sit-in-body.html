@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Sits inside "body" — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			.body-word { display: inline-block; position: relative; }
+			.body-letter { display: inline-block; position: relative; }
+		</style>
+	</head>
+	<body>
+		<div class="stage">
+			<div class="hero-eyebrow">Sits inside "body"</div>
+			<h1 class="hero-title">Give your AI a <em><span class="body-word"><span class="body-letter">b</span><span class="body-letter" id="o-letter">o</span><span class="body-letter">d</span><span class="body-letter">y</span></span></em>.</h1>
+			<p class="hero-sub">
+				She makes herself at home in the round counter of the lowercase
+				<em>o</em>, peeking out and ducking back in every few seconds.
+			</p>
+		</div>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">watch the o</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				smoothstep, mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Sits inside "body"');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			// Shrink so she fits inside the letter.
+			avatar.scale.setScalar(0.35);
+
+			const A = await loadClips(mixer, {
+				sit:  '/animations/clips/sitidle.json',
+				wave: '/animations/clips/wave.json',
+			});
+			A.sit.setLoop(THREE.LoopRepeat, Infinity);
+			A.wave.setLoop(THREE.LoopOnce, 1); A.wave.clampWhenFinished = true;
+			A.sit.play();
+			let current = A.sit;
+
+			const oLetter = document.getElementById('o-letter');
+			function oCenter() {
+				const r = oLetter.getBoundingClientRect();
+				return stage.domToWorld(r.left + r.width / 2, r.top + r.height * 0.65);
+			}
+			let home = oCenter();
+			avatar.position.set(home.x, home.y, 0);
+			window.addEventListener('resize', () => { home = oCenter(); avatar.position.set(home.x, home.y, 0); });
+
+			function switchTo(next, fade = 0.3) {
+				if (next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next;
+			}
+
+			// Periodically peek up out of the o.
+			let peekT0 = performance.now() + 1800;
+			let peekUntil = 0;
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, () => {
+				home = oCenter();
+				const now = performance.now();
+				if (now > peekT0 && now > peekUntil) {
+					peekUntil = now + 2000;
+					peekT0    = now + 4500 + Math.random() * 3000;
+					switchTo(A.wave, 0.2);
+					setTimeout(() => switchTo(A.sit, 0.4), 1700);
+				}
+				// Smooth follow of layout shifts.
+				const lerp = 0.12;
+				const targetY = home.y + (now < peekUntil ? 0.18 : 0);
+				avatar.position.x += (home.x - avatar.position.x) * lerp;
+				avatar.position.y += (targetY  - avatar.position.y) * lerp;
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

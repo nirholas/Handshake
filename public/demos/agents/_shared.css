@@ -1,0 +1,92 @@
+/* Shared chrome + base layout for /demos/agents/* prototypes */
+:root { color-scheme: dark; }
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+	height: 100%; margin: 0;
+	background: #04050d; color: #eee;
+	font: 15px/1.55 'Inter', -apple-system, system-ui, sans-serif;
+}
+
+#avatar-canvas {
+	position: fixed; top: 0; left: 0;
+	width: 100vw; height: 100vh;
+	pointer-events: none; z-index: 999;
+}
+
+.agents-nav {
+	position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+	display: flex; align-items: center; gap: 20px;
+	padding: 14px 28px;
+	background: rgba(4,5,13,0.55);
+	backdrop-filter: blur(14px);
+	border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.agents-back {
+	color: #d6ff3d; text-decoration: none;
+	font: 600 13px/1 'Space Grotesk','Inter',sans-serif;
+	letter-spacing: 0.02em;
+}
+.agents-back:hover { color: #fff; }
+.agents-title {
+	color: #888c9d;
+	font: 600 12px/1 'Space Grotesk','Inter',sans-serif;
+	letter-spacing: 0.18em; text-transform: uppercase;
+}
+
+.stage {
+	position: relative; z-index: 10;
+	min-height: 100vh;
+	display: flex; flex-direction: column;
+	justify-content: center;
+	padding: 100px 56px 60px;
+	max-width: 560px;
+}
+.hero-eyebrow {
+	display: inline-flex; align-items: center; gap: 9px;
+	font: 600 11px/1 'Space Grotesk','Inter',sans-serif;
+	letter-spacing: 0.17em; text-transform: uppercase;
+	color: #d6ff3d; margin-bottom: 24px;
+}
+.hero-eyebrow::before {
+	content: ''; width: 7px; height: 7px; border-radius: 50%;
+	background: #d6ff3d; box-shadow: 0 0 8px rgba(214,255,61,0.7);
+}
+.hero-title {
+	font-family: 'Space Grotesk','Inter',sans-serif;
+	font-size: clamp(38px, 4.5vw, 64px);
+	font-weight: 800; letter-spacing: -0.03em;
+	line-height: 1.04; margin: 0 0 18px; color: #fff;
+}
+.hero-title em { color: #d6ff3d; font-style: normal; }
+.hero-sub {
+	color: #555870; font-size: 15px; line-height: 1.7;
+	max-width: 40ch; margin: 0 0 36px;
+}
+.cta-row { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+
+.btn {
+	display: inline-flex; align-items: center; gap: 10px;
+	padding: 16px 32px; border: none; border-radius: 14px;
+	font: 700 15px/1 'Inter', inherit; cursor: pointer; text-decoration: none;
+	user-select: none;
+	transform-origin: bottom center;
+	will-change: transform;
+}
+.btn-primary {
+	background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
+	color: #0a0b0f;
+	box-shadow: 0 8px 0 0 #7a9600, 0 10px 28px rgba(214,255,61,0.28);
+}
+.btn-primary:hover { filter: brightness(1.07); }
+.btn-ghost {
+	background: rgba(255,255,255,0.05); color: #bbb;
+	border: 1.5px solid rgba(255,255,255,0.1);
+	box-shadow: 0 5px 0 0 rgba(255,255,255,0.04);
+}
+
+.hint {
+	position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+	color: #555870; font-size: 12px; letter-spacing: 0.06em;
+	text-transform: uppercase; pointer-events: none;
+	z-index: 15;
+}

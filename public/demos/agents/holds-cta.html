@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Holds the CTA — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			#cta-btn { will-change: transform; transition: transform 0.18s cubic-bezier(0.16,1,0.3,1); }
+		</style>
+	</head>
+	<body>
+		<div class="stage">
+			<div class="hero-eyebrow">Holds the CTA up</div>
+			<h1 class="hero-title">She's <em>working</em> for you.</h1>
+			<p class="hero-sub">
+				A second agent crouches under the button, holding it up. Hover the
+				CTA and she struggles; click and she drops it.
+			</p>
+			<div class="cta-row">
+				<a href="#" class="btn btn-primary" id="cta-btn"><span>Build your agent — free</span><span>→</span></a>
+			</div>
+		</div>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">hover the CTA</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				fireSplash, fireShockwave, mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Holds the CTA up');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const ctaBtn = document.getElementById('cta-btn');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				pray:     '/animations/clips/pray.json',
+				idle:     '/animations/clips/idle.json',
+				defeated: '/animations/clips/defeated.json',
+			});
+			A.pray.setLoop(THREE.LoopRepeat, Infinity);
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			A.defeated.setLoop(THREE.LoopOnce, 1); A.defeated.clampWhenFinished = true;
+			A.pray.play();
+			let current = A.pray;
+
+			function under() {
+				const r = ctaBtn.getBoundingClientRect();
+				return stage.domToWorld(r.left + r.width / 2, r.bottom + 100);
+			}
+			let home = under();
+			avatar.position.set(home.x, home.y, 0);
+			window.addEventListener('resize', () => { home = under(); });
+
+			function switchTo(next, fade = 0.25) {
+				if (next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next;
+			}
+
+			let strain = 0;          // 0..1 — how hard she's straining
+			let dropped = false;
+
+			ctaBtn.addEventListener('mouseenter', () => { strain = 1; });
+			ctaBtn.addEventListener('mouseleave', () => { strain = 0; });
+			ctaBtn.addEventListener('click', (e) => {
+				e.preventDefault();
+				if (dropped) return;
+				dropped = true;
+				// Button thuds down 50px, she collapses.
+				ctaBtn.style.transform = 'translateY(40px) rotate(-3deg)';
+				ctaBtn.style.boxShadow = '0 2px 0 0 #7a9600, 0 4px 14px rgba(214,255,61,0.18)';
+				switchTo(A.defeated, 0.15);
+				const r = ctaBtn.getBoundingClientRect();
+				fireSplash(r.left + r.width / 2, r.bottom, { count: 22, color: 'gold' });
+				fireShockwave(r.left + r.width / 2, r.bottom, { size: 28, max: 180, color: '#ffd23d' });
+				setTimeout(() => {
+					ctaBtn.style.transform = '';
+					ctaBtn.style.boxShadow = '';
+					dropped = false;
+					switchTo(A.pray, 0.4);
+				}, 2400);
+			});
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, (dt) => {
+				home = under();
+				avatar.position.x = home.x;
+				avatar.position.y = home.y;
+				// Wobble harder when strained.
+				const t = performance.now() / 1000;
+				const wob = Math.sin(t * (5 + strain * 8)) * (0.012 + strain * 0.05);
+				avatar.position.y += wob;
+				avatar.rotation.z = Math.sin(t * (6 + strain * 6)) * (strain * 0.08);
+				// Mirror small strain wobble onto the button.
+				if (!dropped) {
+					const bx = Math.sin(t * 14) * strain * 1.5;
+					const by = Math.sin(t * 11) * strain * 2;
+					ctaBtn.style.transform = `translate(${bx.toFixed(1)}px, ${by.toFixed(1)}px)`;
+				}
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

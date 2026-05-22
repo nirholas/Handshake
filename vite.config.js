@@ -3,6 +3,7 @@ import { resolve } from 'path';
 import { readFileSync, cpSync, createReadStream, existsSync, statSync, rmSync } from 'fs';
 import { extname } from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // The build emits two targets controlled by the TARGET env var:
 //
@@ -183,10 +184,36 @@ const appConfig = {
 				'demos-button': resolve(__dirname, 'public/demos/button.html'),
 				'demos-3d-home': resolve(__dirname, 'public/demos/3d-home.html'),
 				'demos-halfbody-xr': resolve(__dirname, 'public/demos/halfbody-xr.html'),
+				// /demos/agents/* — agent interaction lab.
+				'agents-index':            resolve(__dirname, 'public/demos/agents/index.html'),
+				'agents-cursor-follower':  resolve(__dirname, 'public/demos/agents/cursor-follower.html'),
+				'agents-high-five':        resolve(__dirname, 'public/demos/agents/high-five.html'),
+				'agents-pickup-drop':      resolve(__dirname, 'public/demos/agents/pickup-drop.html'),
+				'agents-fall-from-top':    resolve(__dirname, 'public/demos/agents/fall-from-top.html'),
+				'agents-trampoline':       resolve(__dirname, 'public/demos/agents/trampoline.html'),
+				'agents-wrecking-ball':    resolve(__dirname, 'public/demos/agents/wrecking-ball.html'),
+				'agents-climb-title':      resolve(__dirname, 'public/demos/agents/climb-title.html'),
+				'agents-skateboard':       resolve(__dirname, 'public/demos/agents/skateboard.html'),
+				'agents-sit-in-body':      resolve(__dirname, 'public/demos/agents/sit-in-body.html'),
+				'agents-scroll-inertia':   resolve(__dirname, 'public/demos/agents/scroll-inertia.html'),
+				'agents-walks-gutter':     resolve(__dirname, 'public/demos/agents/walks-gutter.html'),
+				'agents-holds-cta':        resolve(__dirname, 'public/demos/agents/holds-cta.html'),
+				'agents-falls-asleep':     resolve(__dirname, 'public/demos/agents/falls-asleep.html'),
+				'agents-builds-button':    resolve(__dirname, 'public/demos/agents/builds-button.html'),
 			},
 		},
 	},
 	plugins: [
+		// Polyfill the Node `buffer` and `process` globals so @solana/web3.js
+		// (and any other dep that does `import { Buffer } from 'buffer'`) works
+		// in the browser without the "Module 'buffer' has been externalized"
+		// console warning. Scoped to these two — we don't blanket-polyfill all
+		// Node builtins because most pages don't need them.
+		nodePolyfills({
+			include: ['buffer', 'process'],
+			globals: { Buffer: true, process: true, global: true },
+			protocolImports: true,
+		}),
 		{
 			name: 'vercel-rewrites',
 			configureServer(server) {
@@ -276,6 +303,8 @@ const appConfig = {
 					'/blog/': resolve(root, 'blog/index.html'),
 					'/demos': resolve(root, 'public/demos/index.html'),
 					'/demos/': resolve(root, 'public/demos/index.html'),
+					'/demos/agents': resolve(root, 'public/demos/agents/index.html'),
+					'/demos/agents/': resolve(root, 'public/demos/agents/index.html'),
 					'/demo/avatar-os': resolve(root, 'public/demo/avatar-os/index.html'),
 					'/demo/avatar-os/': resolve(root, 'public/demo/avatar-os/index.html'),
 					'/demo/coin': resolve(root, 'public/demo/coin/index.html'),
@@ -357,6 +386,13 @@ const appConfig = {
 					else if (!filePath && /^\/demos\/[a-z0-9-]+(\.html)?\/?$/.test(path)) {
 						const slug = path.replace(/^\/demos\//, '').replace(/\.html$/, '').replace(/\/$/, '');
 						filePath = resolve(root, `public/demos/${slug}.html`);
+					}
+					// /demos/agents/<slug>(.html)? → public/demos/agents/<slug>.html.
+					// Goes through transformIndexHtml so the inline `'three'` imports
+					// inside each demo's <script type="module"> get bundled.
+					else if (!filePath && /^\/demos\/agents\/[a-z0-9-]+(\.html)?\/?$/.test(path)) {
+						const slug = path.replace(/^\/demos\/agents\//, '').replace(/\.html$/, '').replace(/\/$/, '');
+						filePath = resolve(root, `public/demos/agents/${slug}.html`);
 					}
 					// /demo/coin/<base58 mint> → demo/coin index hydrates from the
 					// mint address in the URL path. Mirrors vercel.json.

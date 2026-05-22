@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>High-five — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+	</head>
+	<body>
+		<div class="stage">
+			<div class="hero-eyebrow">High-five reach</div>
+			<h1 class="hero-title">Bring your <em>hand</em> close.</h1>
+			<p class="hero-sub">
+				She tracks the cursor's distance and leans toward it as you near
+				her. Click within reach to high-five — the button claps back.
+			</p>
+			<div class="cta-row">
+				<a href="#" class="btn btn-primary" id="cta-btn"><span>Slap me</span><span>✋</span></a>
+			</div>
+		</div>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">move closer to the agent</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				PX_PER_UNIT, clamp, fireShockwave, fireSquish, fireSplash,
+				mountChrome,
+			} from './_lib.js';
+
+			mountChrome('High-five reach');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const ctaBtn = document.getElementById('cta-btn');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				idle:   '/animations/clips/idle.json',
+				wave:   '/animations/clips/wave.json',
+				cheer:  '/animations/clips/celebrate.json',
+			});
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			A.wave.setLoop(THREE.LoopOnce, 1); A.wave.clampWhenFinished = true;
+			A.cheer.setLoop(THREE.LoopOnce, 1); A.cheer.clampWhenFinished = true;
+			A.idle.play();
+			let current = A.idle;
+
+			// Anchor avatar above and right of the button — within reach.
+			function anchor() {
+				const r = ctaBtn.getBoundingClientRect();
+				return stage.domToWorld(r.right + 140, r.top - 40);
+			}
+			let home = anchor();
+			avatar.position.set(home.x, home.y, 0);
+			window.addEventListener('resize', () => { home = anchor(); });
+
+			let mouseScreen = { x: -9999, y: -9999 };
+			window.addEventListener('mousemove', (e) => {
+				mouseScreen.x = e.clientX; mouseScreen.y = e.clientY;
+			});
+
+			function switchTo(next, fade = 0.25) {
+				if (next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next;
+			}
+
+			ctaBtn.addEventListener('click', (e) => {
+				const r = ctaBtn.getBoundingClientRect();
+				fireShockwave(r.left + r.width / 2, r.top + r.height / 2, { size: 30, max: 200 });
+				fireSplash(r.left + r.width / 2, r.top, { count: 24 });
+				fireSquish(ctaBtn);
+				switchTo(A.cheer);
+				setTimeout(() => switchTo(A.idle, 0.4), 1800);
+			});
+
+			const REACH_PX = 360;
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, (dt) => {
+				// Distance from cursor to avatar in screen px.
+				const proj = new THREE.Vector3(avatar.position.x, avatar.position.y, 0).project(stage.camera);
+				const ax = (proj.x + 1) * 0.5 * window.innerWidth;
+				const ay = (1 - (proj.y + 1) * 0.5) * window.innerHeight;
+				const d  = Math.hypot(mouseScreen.x - ax, mouseScreen.y - ay);
+				const prox = 1 - clamp(d / REACH_PX, 0, 1);
+
+				// Lean toward cursor — small XY world offset from home position.
+				const dirX = (mouseScreen.x - ax) / Math.max(1, d);
+				const dirY = (mouseScreen.y - ay) / Math.max(1, d);
+				const leanX = dirX * prox * 0.35;
+				const leanY = -dirY * prox * 0.25;
+				avatar.position.x += (home.x + leanX - avatar.position.x) * Math.min(1, dt * 8);
+				avatar.position.y += (home.y + leanY - avatar.position.y) * Math.min(1, dt * 8);
+				avatar.rotation.z = -prox * dirX * 0.15;
+
+				// Within slap range → wave, otherwise idle.
+				if (prox > 0.55 && current !== A.wave && current !== A.cheer) switchTo(A.wave, 0.2);
+				else if (prox < 0.35 && current === A.wave) switchTo(A.idle, 0.3);
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

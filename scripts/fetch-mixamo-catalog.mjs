@@ -14,9 +14,10 @@
 
 import { mkdirSync, writeFileSync, existsSync, readFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
+import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 
 // ── Config ────────────────────────────────────────────────────────────────
-const Y_BOT_ID = '403e7206-d314-416a-9ef2-c618e26a8b6e';
+const Y_BOT_ID = '4f5d21e1-4ccc-41f1-b35b-fb2547bd8493';
 const API = 'https://www.mixamo.com/api/v1';
 const PAGE_LIMIT = 96;
 const POLL_INTERVAL_MS = 2000;
@@ -53,9 +54,53 @@ function loadToken() {
 
 const TOKEN = loadToken();
 if (!TOKEN) {
-	console.error('❌ MIXAMO_TOKEN not set. Add it to .env.local or pass as env var.');
-	console.error('   Get it from DevTools on mixamo.com → Application → localStorage → access_token');
+	console.error('❌ MIXAMO_TOKEN not set. Run: node scripts/get-mixamo-token.mjs');
 	process.exit(1);
+}
+
+// ── R2 config ─────────────────────────────────────────────────────────────
+function loadEnvVar(key) {
+	if (process.env[key]) return process.env[key].trim();
+	const envPath = join(process.cwd(), '.env.local');
+	if (existsSync(envPath)) {
+		const line = readFileSync(envPath, 'utf8').split('\n').find((l) => l.startsWith(`${key}=`));
+		if (line) return line.slice(key.length + 1).trim().replace(/^["']|["']$/g, '');
+	}
+	return null;
+}
+
+const R2_ACCOUNT_ID = loadEnvVar('R2_ACCOUNT_ID');
+const R2_ACCESS_KEY_ID = loadEnvVar('R2_ACCESS_KEY_ID');
+const R2_SECRET_ACCESS_KEY = loadEnvVar('R2_SECRET_ACCESS_KEY');
+const R2_BUCKET = loadEnvVar('R2_BUCKET') || 'test';
+const USE_R2 = !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY);
+
+const r2 = USE_R2
+	? new S3Client({
+			region: 'auto',
+			endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+			credentials: { accessKeyId: R2_ACCESS_KEY_ID.trim(), secretAccessKey: R2_SECRET_ACCESS_KEY.trim() },
+	  })
+	: null;
+
+async function existsInR2(key) {
+	try {
+		await r2.send(new HeadObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+async function uploadToR2(key, buf) {
+	await r2.send(
+		new PutObjectCommand({
+			Bucket: R2_BUCKET,
+			Key: key,
+			Body: buf,
+			ContentType: 'application/octet-stream',
+		}),
+	);
 }
 
 const headers = {
@@ -154,9 +199,11 @@ async function downloadOne(product) {
 	const slug = slugify(product.description || product.name || product.id);
 	const fbxPath = join(OUT_DIR, `${slug}.fbx`);
 	const existing = catalog.animations[product.id];
+	const r2Key = `mixamo/${slug}.fbx`;
 
-	if (existing?.file && existsSync(join(OUT_DIR, existing.file))) {
-		return { skipped: true, slug, reason: 'already-downloaded' };
+	if (existing?.status === 'completed') {
+		const alreadyExists = USE_R2 ? await existsInR2(r2Key) : existsSync(join(OUT_DIR, `${slug}.fbx`));
+		if (alreadyExists) return { skipped: true, slug, reason: 'already-downloaded' };
 	}
 	if (existing?.status === 'permanent_fail') {
 		return { skipped: true, slug, reason: 'permanent-fail' };
@@ -204,15 +251,21 @@ async function downloadOne(product) {
 	const fileRes = await rlFetch(downloadUrl);
 	if (!fileRes.ok) throw new Error(`download ${fileRes.status}`);
 	const buf = Buffer.from(await fileRes.arrayBuffer());
-	writeFileSync(fbxPath, buf);
+
+	if (USE_R2) {
+		await uploadToR2(r2Key, buf);
+	} else {
+		writeFileSync(fbxPath, buf);
+	}
 
 	catalog.animations[product.id] = {
 		id: product.id,
 		name: product.description || product.name,
-		file: `${slug}.fbx`,
+		file: USE_R2 ? r2Key : `${slug}.fbx`,
 		bytes: buf.length,
 		downloaded_at: new Date().toISOString(),
 		status: 'completed',
+		storage: USE_R2 ? 'r2' : 'local',
 	};
 	saveCatalog();
 
@@ -260,8 +313,8 @@ async function runPool(products) {
 // ── Main ──────────────────────────────────────────────────────────────────
 (async () => {
 	console.log(`🎬 Mixamo catalog fetcher`);
-	console.log(`   Character: ${CHARACTER_ID}`);
-	console.log(`   Output:    ${OUT_DIR}`);
+	console.log(`   Character:   ${CHARACTER_ID}`);
+	console.log(`   Storage:     ${USE_R2 ? `R2 → ${R2_BUCKET}/mixamo/` : OUT_DIR}`);
 	console.log(`   Concurrency: ${CONCURRENCY}\n`);
 
 	const products = await listAllAnimations();

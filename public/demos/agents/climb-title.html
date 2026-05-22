@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Climb the title — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			.hero-title { display: flex; flex-wrap: wrap; gap: 0.18em; }
+			.hero-title .word { display: inline-block; }
+			.grip { display: inline-block; }
+		</style>
+	</head>
+	<body>
+		<div class="stage">
+			<div class="hero-eyebrow">Climb the title</div>
+			<h1 class="hero-title">
+				<span class="word"><span class="grip">G</span><span class="grip">i</span><span class="grip">v</span><span class="grip">e</span></span>
+				<span class="word"><span class="grip">y</span><span class="grip">o</span><span class="grip">u</span><span class="grip">r</span></span>
+				<span class="word"><em><span class="grip">A</span><span class="grip">I</span></em></span>
+			</h1>
+			<p class="hero-sub">
+				She climbs letter to letter like a rope-climber. Each letter top is
+				a grip point — she perches, jumps, perches again.
+			</p>
+		</div>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">she climbs the headline</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				smoothstep, mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Climb the title');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				idle: '/animations/clips/idle.json',
+				jump: '/animations/clips/jump.json',
+				wave: '/animations/clips/wave.json',
+			});
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			A.jump.setLoop(THREE.LoopOnce, 1); A.jump.clampWhenFinished = true;
+			A.wave.setLoop(THREE.LoopOnce, 1); A.wave.clampWhenFinished = true;
+			A.idle.play();
+			let current = A.idle;
+
+			const grips = [...document.querySelectorAll('.grip')];
+			// Hop order: walk through letters left to right.
+			let ix = 0;
+			function gripWorld(i) {
+				const r = grips[i].getBoundingClientRect();
+				return stage.domToWorld(r.left + r.width / 2, r.top - 6);
+			}
+			let start = gripWorld(0);
+			avatar.position.set(start.x, start.y, 0);
+
+			let traveling = false, fromW = null, toW = null, t0 = 0, dur = 0.55;
+
+			function switchTo(next, fade = 0.25) {
+				if (next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next;
+			}
+
+			function hopTo(i) {
+				fromW = { x: avatar.position.x, y: avatar.position.y };
+				toW   = gripWorld(i);
+				dur   = 0.5;
+				t0    = performance.now();
+				traveling = true;
+				switchTo(A.jump, 0.15);
+			}
+
+			let nextHopAt = performance.now() + 900;
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, () => {
+				const now = performance.now();
+				if (!traveling && now > nextHopAt) {
+					ix = (ix + 1) % grips.length;
+					hopTo(ix);
+				}
+				if (traveling) {
+					const p = Math.min((now - t0) / 1000 / dur, 1);
+					const e = smoothstep(p);
+					const arc = 0.7 * 4 * p * (1 - p);
+					avatar.position.x = fromW.x + (toW.x - fromW.x) * e;
+					avatar.position.y = fromW.y + (toW.y - fromW.y) * e + arc;
+					avatar.rotation.y = Math.sign(toW.x - fromW.x) * Math.sin(Math.PI * p) * 0.18;
+					if (p >= 1) {
+						avatar.rotation.y = 0;
+						traveling = false;
+						const dwell = ix === grips.length - 1 ? 1800 : 600;
+						nextHopAt = now + dwell;
+						switchTo(ix === grips.length - 1 ? A.wave : A.idle, 0.2);
+					}
+				}
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

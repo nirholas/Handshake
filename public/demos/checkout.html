@@ -240,6 +240,11 @@
 					y: (1 - _v3.y) * 0.5 * window.innerHeight,
 				};
 			}
+			// ── Avatar runtime ────────────────────────────────────────────────
+			// Declared above resize() so the parkAtButton() guard doesn't TDZ on init.
+			let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
+			let phase = 'loading';
+
 			function resize() {
 				renderer.setSize(window.innerWidth, window.innerHeight, false);
 				updateFrustum();
@@ -254,8 +259,6 @@
 			const rim  = new THREE.DirectionalLight(0x4060ff, 0.6); rim.position.set(-4, 3, -2); scene.add(rim);
 			const fill = new THREE.DirectionalLight(0xffeedd, 0.4); fill.position.set(0, 2, 7);  scene.add(fill);
 
-			// ── Avatar runtime ────────────────────────────────────────────────
-			let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
 			const actions = {};
 			let currentAction = null;
 			const FADE_S = 0.3;
@@ -276,7 +279,6 @@
 			// grabbing  — quick reaction animation, item lifts off the product card
 			// running   — arcing toward the cart icon
 			// celebrating — landed at cart, plays celebrate, returns to idle
-			let phase = 'loading';
 			let itemCount = 0;
 			const BUTTON_FEET_OFFSET_PX = 12;   // how far below the button's top edge the feet sit
 			const CART_LAND_OFFSET_PX  = 130;   // sit/stand offset for the avatar at cart height

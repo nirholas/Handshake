@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Cursor follower — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+	</head>
+	<body>
+		<div class="stage">
+			<div class="hero-eyebrow">Cursor follower</div>
+			<h1 class="hero-title">Hover <em>anywhere</em>.</h1>
+			<p class="hero-sub">
+				She picks the closest text or button to your cursor and hops to it.
+				Sit still and she yawns; move again and she's back.
+			</p>
+			<div class="cta-row">
+				<a href="#" class="btn btn-primary"><span>Primary</span><span>→</span></a>
+				<a href="#" class="btn btn-ghost"><span>Secondary</span></a>
+			</div>
+			<p style="margin-top:36px;color:#888c9d;font-size:13px;letter-spacing:0.04em;">
+				Hover any underlined word →
+				<a href="#" data-target style="color:#d6ff3d;border-bottom:1px dotted;text-decoration:none;">docs</a> ·
+				<a href="#" data-target style="color:#d6ff3d;border-bottom:1px dotted;text-decoration:none;">pricing</a> ·
+				<a href="#" data-target style="color:#d6ff3d;border-bottom:1px dotted;text-decoration:none;">examples</a>
+			</p>
+		</div>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">move the cursor — she hops</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				PX_PER_UNIT, smoothstep, mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Cursor follower');
+
+			const canvas = document.getElementById('avatar-canvas');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				idle: '/animations/clips/idle.json',
+				jump: '/animations/clips/jumpdown.json',
+				wave: '/animations/clips/wave.json',
+				sit:  '/animations/clips/sitidle.json',
+			});
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			A.sit.setLoop(THREE.LoopRepeat,  Infinity);
+			A.jump.setLoop(THREE.LoopOnce, 1); A.jump.clampWhenFinished = true;
+			A.wave.setLoop(THREE.LoopOnce, 1); A.wave.clampWhenFinished = true;
+
+			// Candidate targets: every button + link + 'data-target' span.
+			const TARGETS = [...document.querySelectorAll('a.btn, a[data-target]')];
+
+			let current = A.idle, pose = 'idle';
+			A.idle.play();
+
+			let dest = null, dwellUntil = 0, lastMoveAt = performance.now();
+			let posWorld = stage.domToWorld(window.innerWidth * 0.7, window.innerHeight * 0.5);
+			avatar.position.set(posWorld.x, posWorld.y, 0);
+
+			function switchTo(name, fade = 0.25) {
+				const next = A[name];
+				if (!next || next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next; pose = name;
+			}
+
+			function nearestTarget(mx, my) {
+				let best = null, bestD = Infinity;
+				for (const el of TARGETS) {
+					const r = el.getBoundingClientRect();
+					const cx = r.left + r.width / 2;
+					const cy = r.top  + r.height / 2;
+					const d = Math.hypot(mx - cx, my - cy);
+					if (d < bestD) { bestD = d; best = el; }
+				}
+				return best;
+			}
+
+			window.addEventListener('mousemove', (e) => {
+				lastMoveAt = performance.now();
+				const t = nearestTarget(e.clientX, e.clientY);
+				if (!t) return;
+				const r = t.getBoundingClientRect();
+				dest = stage.domToWorld(r.left + r.width / 2, r.top - 8);
+			});
+
+			// Sequence: when avatar reaches dest, play a one-shot reaction.
+			let traveling = false, fromW = null, toW = null, tStart = 0, dur = 0;
+
+			function startTravel(target) {
+				fromW   = { x: avatar.position.x, y: avatar.position.y };
+				toW     = target;
+				const distPx = Math.hypot(fromW.x - toW.x, fromW.y - toW.y) * PX_PER_UNIT;
+				dur     = Math.max(0.45, Math.min(1.2, distPx / 700));
+				tStart  = performance.now();
+				traveling = true;
+				switchTo('jump');
+			}
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, (dt) => {
+				const now = performance.now();
+				const idleMs = now - lastMoveAt;
+
+				// Idle-out: 3.5s no movement → sit; movement resumes → stand back to idle.
+				if (idleMs > 3500 && pose !== 'sit' && !traveling) switchTo('sit', 0.4);
+				if (idleMs < 200  && pose === 'sit')                switchTo('idle', 0.25);
+
+				// Begin travel if dest moved and avatar is close to rest.
+				if (dest && !traveling) {
+					const dx = (dest.x - avatar.position.x) * PX_PER_UNIT;
+					const dy = (dest.y - avatar.position.y) * PX_PER_UNIT;
+					if (Math.hypot(dx, dy) > 30) startTravel(dest);
+				}
+
+				if (traveling) {
+					const p = Math.min((now - tStart) / 1000 / dur, 1);
+					const e = smoothstep(p);
+					const arc = 0.45 * 4 * p * (1 - p);
+					avatar.position.x = fromW.x + (toW.x - fromW.x) * e;
+					avatar.position.y = fromW.y + (toW.y - fromW.y) * e + arc;
+					avatar.rotation.y = Math.sin(Math.PI * p) * 0.15 * Math.sign(toW.x - fromW.x);
+					if (p >= 1) {
+						avatar.rotation.y = 0;
+						traveling = false;
+						dwellUntil = now + 250;
+						switchTo('idle', 0.2);
+					}
+				} else if (pose === 'idle' && now > dwellUntil && Math.random() < 0.005) {
+					switchTo('wave', 0.25);
+					setTimeout(() => { if (pose === 'wave') switchTo('idle', 0.3); }, 1800);
+				}
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

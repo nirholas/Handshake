@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Falls asleep — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			.zzz {
+				position: fixed; pointer-events: none; z-index: 25;
+				font: 700 24px/1 'Space Grotesk','Inter',sans-serif;
+				color: #d6ff3d; text-shadow: 0 0 12px rgba(214,255,61,0.6);
+				will-change: transform, opacity;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="stage">
+			<div class="hero-eyebrow">Falls asleep on the text</div>
+			<h1 class="hero-title"><span id="sleep-line">Give your AI</span> a <em>body.</em></h1>
+			<p class="hero-sub">
+				She'll sit on the headline. Don't move the cursor for 6 seconds and
+				she nods off — Zzz drift up. Move closer and she startles awake.
+			</p>
+		</div>
+		<canvas id="avatar-canvas"></canvas>
+		<div class="hint">stay still for 6 seconds</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import {
+				createStage, loadAvatar, loadClips, startLoop,
+				clamp, mountChrome,
+			} from './_lib.js';
+
+			mountChrome('Falls asleep on the text');
+
+			const canvas    = document.getElementById('avatar-canvas');
+			const sleepLine = document.getElementById('sleep-line');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, {
+				sit:     '/animations/clips/sitidle.json',
+				down:    '/animations/clips/downdog.json',
+				reaction:'/animations/clips/reaction.json',
+			});
+			A.sit.setLoop(THREE.LoopRepeat, Infinity);
+			A.down.setLoop(THREE.LoopRepeat, Infinity);
+			A.reaction.setLoop(THREE.LoopOnce, 1); A.reaction.clampWhenFinished = true;
+			A.sit.play();
+			let current = A.sit;
+
+			function sitOn() {
+				const r = sleepLine.getBoundingClientRect();
+				return stage.domToWorld(r.right - r.height * 0.4, r.top + 120);
+			}
+			let home = sitOn();
+			avatar.position.set(home.x, home.y, 0);
+			window.addEventListener('resize', () => { home = sitOn(); });
+
+			function switchTo(next, fade = 0.4) {
+				if (next === current) return;
+				next.reset();
+				next.crossFadeFrom(current, fade, false).play();
+				current = next;
+			}
+
+			let lastMoveAt = performance.now();
+			let mouseScreen = { x: -9999, y: -9999 };
+			let asleep = false;
+			let zzzT0 = 0;
+			window.addEventListener('mousemove', (e) => {
+				lastMoveAt = performance.now();
+				mouseScreen.x = e.clientX; mouseScreen.y = e.clientY;
+				if (asleep) {
+					const proj = new THREE.Vector3(avatar.position.x, avatar.position.y, 0).project(stage.camera);
+					const ax = (proj.x + 1) * 0.5 * window.innerWidth;
+					const ay = (1 - (proj.y + 1) * 0.5) * window.innerHeight;
+					if (Math.hypot(e.clientX - ax, e.clientY - ay) < 240) {
+						asleep = false;
+						switchTo(A.reaction, 0.1);
+						setTimeout(() => switchTo(A.sit, 0.5), 900);
+					}
+				}
+			});
+
+			function spawnZzz() {
+				const proj = new THREE.Vector3(avatar.position.x, avatar.position.y + 1.0, 0).project(stage.camera);
+				const sx = (proj.x + 1) * 0.5 * window.innerWidth;
+				const sy = (1 - (proj.y + 1) * 0.5) * window.innerHeight;
+				const z = document.createElement('div');
+				z.className = 'zzz';
+				z.textContent = 'z';
+				z.style.left = `${sx}px`;
+				z.style.top  = `${sy}px`;
+				z.style.fontSize = `${16 + Math.random() * 14}px`;
+				document.body.appendChild(z);
+				z.animate(
+					[
+						{ transform: 'translate(0, 0) rotate(-8deg)', opacity: 0 },
+						{ transform: `translate(${20 + Math.random() * 20}px, -100px) rotate(8deg)`, opacity: 1, offset: 0.3 },
+						{ transform: `translate(${40 + Math.random() * 30}px, -180px) rotate(-8deg)`, opacity: 0 },
+					],
+					{ duration: 2400, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' },
+				).onfinish = () => z.remove();
+			}
+
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, () => {
+				const now = performance.now();
+				home = sitOn();
+				avatar.position.x = home.x;
+				avatar.position.y = home.y;
+				const idleMs = now - lastMoveAt;
+				if (!asleep && idleMs > 6000) {
+					asleep = true;
+					switchTo(A.down, 0.7);
+					zzzT0 = now;
+				}
+				if (asleep && now - zzzT0 > 900) {
+					spawnZzz();
+					zzzT0 = now;
+				}
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>
