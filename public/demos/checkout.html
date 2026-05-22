@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws — checkout demo</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root { color-scheme: dark; }
+			*, *::before, *::after { box-sizing: border-box; }
+			html, body { height: 100%; margin: 0; background: #04050d; color: #eee; font: 15px/1.5 'Inter', -apple-system, system-ui, sans-serif; overflow-x: hidden; }
+
+			#avatar-canvas {
+				position: fixed; inset: 0;
+				width: 100vw; height: 100vh;
+				pointer-events: none; z-index: 999;
+			}
+
+			.nav {
+				position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+				display: flex; align-items: center; gap: 16px; padding: 14px 28px;
+				background: rgba(4,5,13,0.55); backdrop-filter: blur(14px);
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+			}
+			.nav .brand { font: 700 15px/1 'Space Grotesk','Inter',sans-serif; color:#fff; text-decoration:none; display:flex; align-items:center; gap:7px; }
+			.brand-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#d6ff3d,#aacc00); box-shadow:0 0 10px rgba(214,255,61,0.6); }
+			.nav .spacer { flex: 1; }
+			.nav .link { color:#555870; text-decoration:none; font-size:13px; }
+			.nav .link:hover { color:#d6ff3d; }
+
+			/* Cart icon — the agent's "destination" */
+			.cart {
+				position: relative;
+				width: 42px; height: 42px;
+				display: inline-flex; align-items: center; justify-content: center;
+				border-radius: 50%;
+				background: rgba(255,255,255,0.05);
+				border: 1.5px solid rgba(255,255,255,0.08);
+				color: #fff;
+				transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+				will-change: transform;
+			}
+			.cart svg { width: 22px; height: 22px; }
+			.cart .badge {
+				position: absolute;
+				top: -4px; right: -4px;
+				min-width: 18px; height: 18px;
+				padding: 0 5px;
+				border-radius: 999px;
+				background: #d6ff3d;
+				color: #0a0b0f;
+				font: 700 11px/18px 'Inter', sans-serif; text-align: center;
+				box-shadow: 0 0 0 2px #04050d;
+				transform: scale(0);
+				transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+			}
+			.cart.has-items .badge { transform: scale(1); }
+			.cart.thump { animation: cartthump 0.55s cubic-bezier(0.34, 1.56, 0.64, 1); }
+			@keyframes cartthump {
+				0%   { transform: scale(1); }
+				35%  { transform: scale(1.32); border-color: rgba(214,255,61,0.8); background: rgba(214,255,61,0.18); }
+				100% { transform: scale(1); }
+			}
+
+			.page {
+				min-height: 100vh;
+				display: flex; align-items: center; justify-content: center;
+				padding: 100px 24px 60px;
+			}
+
+			.product {
+				display: grid;
+				grid-template-columns: 360px 1fr;
+				gap: 44px; align-items: center;
+				width: 100%; max-width: 920px;
+			}
+			@media (max-width: 720px) {
+				.product { grid-template-columns: 1fr; gap: 24px; }
+			}
+
+			.product-image {
+				position: relative;
+				aspect-ratio: 1 / 1;
+				border-radius: 22px;
+				background:
+					radial-gradient(circle at 30% 25%, rgba(214,255,61,0.35), transparent 55%),
+					radial-gradient(circle at 70% 80%, rgba(74,140,255,0.35), transparent 60%),
+					#0e1020;
+				border: 1px solid rgba(255,255,255,0.06);
+				overflow: hidden;
+			}
+			.product-image .orb {
+				position: absolute; inset: 18%;
+				border-radius: 50%;
+				background:
+					radial-gradient(circle at 35% 30%, #f9ffd9 0%, #d6ff3d 30%, #5d7a04 80%);
+				box-shadow:
+					inset 0 -30px 60px rgba(0,0,0,0.45),
+					0 30px 80px rgba(214,255,61,0.28);
+				animation: orbfloat 4.6s ease-in-out infinite;
+			}
+			@keyframes orbfloat {
+				0%, 100% { transform: translateY(0) rotate(0deg); }
+				50%      { transform: translateY(-12px) rotate(6deg); }
+			}
+
+			.eyebrow {
+				display: inline-flex; align-items: center; gap: 9px;
+				font-size: 11px; font-weight: 600;
+				letter-spacing: 0.17em; text-transform: uppercase;
+				color: #d6ff3d; margin-bottom: 14px;
+				font-family: 'Space Grotesk', 'Inter', sans-serif;
+			}
+			.eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #d6ff3d; box-shadow: 0 0 8px rgba(214,255,61,0.7); }
+
+			h1 {
+				font-family: 'Space Grotesk','Inter',sans-serif;
+				font-size: clamp(30px, 4vw, 46px); font-weight: 800; letter-spacing: -0.025em;
+				line-height: 1.05; margin: 0 0 12px; color: #fff;
+			}
+			.sub { color: #6b6e88; font-size: 15px; line-height: 1.65; margin: 0 0 22px; max-width: 36ch; }
+			.price { display: flex; align-items: baseline; gap: 10px; margin: 0 0 28px; }
+			.price .now { font: 800 32px/1 'Space Grotesk','Inter',sans-serif; color: #fff; }
+			.price .was { color: #6b6e88; text-decoration: line-through; font-size: 16px; }
+
+			.add-btn {
+				display: inline-flex; align-items: center; gap: 10px;
+				padding: 16px 30px; border: none; border-radius: 14px;
+				font: 700 15px/1 'Inter', inherit; cursor: pointer;
+				background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
+				color: #0a0b0f;
+				box-shadow: 0 8px 0 0 #7a9600, 0 10px 28px rgba(214,255,61,0.28);
+				transform-origin: bottom center;
+				will-change: transform;
+			}
+			.add-btn:hover { filter: brightness(1.07); }
+			.add-btn:disabled { opacity: 0.5; cursor: wait; }
+
+			.hint {
+				margin-top: 14px;
+				font-size: 12px; color: #4a4d63; letter-spacing: 0.06em;
+			}
+
+			/* The flying item — a clone of the product orb that arcs alongside the avatar */
+			.flying-item {
+				position: fixed;
+				width: 56px; height: 56px;
+				border-radius: 50%;
+				background: radial-gradient(circle at 35% 30%, #f9ffd9 0%, #d6ff3d 30%, #5d7a04 80%);
+				box-shadow: 0 0 24px rgba(214,255,61,0.5), inset 0 -8px 16px rgba(0,0,0,0.4);
+				z-index: 998;
+				pointer-events: none;
+				will-change: transform, opacity;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="nav">
+			<a href="/" class="brand">
+				<img src="/three.svg" width="20" height="20" alt="" />
+				<span class="brand-dot"></span>
+				three.ws
+			</a>
+			<a href="/demos/" class="link" style="margin-left:18px">← lab</a>
+			<div class="spacer"></div>
+			<div class="cart" id="cart" aria-label="Cart">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="9" cy="21" r="1"></circle>
+					<circle cx="20" cy="21" r="1"></circle>
+					<path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+				</svg>
+				<span class="badge" id="cart-badge">0</span>
+			</div>
+		</div>
+
+		<div class="page">
+			<div class="product">
+				<div class="product-image"><div class="orb"></div></div>
+				<div>
+					<div class="eyebrow"><span class="eyebrow-dot"></span><span>Limited drop · 2026 collection</span></div>
+					<h1>Lime Plasma Orb</h1>
+					<p class="sub">Hand-tuned reactive lighting baked into a portable companion sphere. One per agent.</p>
+					<div class="price">
+						<span class="now">$129</span>
+						<span class="was">$199</span>
+					</div>
+					<button class="add-btn" id="add-btn" type="button">
+						<span>Add to cart</span>
+						<span>→</span>
+					</button>
+					<div class="hint">Click <strong>Add to cart</strong> — she'll grab it and run it to the basket.</div>
+				</div>
+			</div>
+		</div>
+
+		<canvas id="avatar-canvas"></canvas>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm';
+
+			const canvas  = document.getElementById('avatar-canvas');
+			const addBtn  = document.getElementById('add-btn');
+			const cart    = document.getElementById('cart');
+			const badgeEl = document.getElementById('cart-badge');
+			const orbEl   = document.querySelector('.product-image .orb');
+
+			// ── Renderer / scene (same pattern as 3d-home/login) ──────────────
+			const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+			renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+			renderer.outputColorSpace = THREE.SRGBColorSpace;
+			renderer.toneMapping = THREE.ACESFilmicToneMapping;
+			renderer.toneMappingExposure = 1.1;
+
+			const scene = new THREE.Scene();
+			const PX_PER_UNIT = 120;
+			const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+			camera.position.z = 10;
+
+			function updateFrustum() {
+				const hw = window.innerWidth  / PX_PER_UNIT / 2;
+				const hh = window.innerHeight / PX_PER_UNIT / 2;
+				camera.left = -hw; camera.right = hw;
+				camera.top  =  hh; camera.bottom = -hh;
+				camera.updateProjectionMatrix();
+			}
+
+			const _v3 = new THREE.Vector3();
+			function domToWorld(sx, sy) {
+				_v3.set((sx / window.innerWidth) * 2 - 1, -(sy / window.innerHeight) * 2 + 1, 0);
+				_v3.unproject(camera);
+				return { x: _v3.x, y: _v3.y };
+			}
+			function worldToScreen(x, y) {
+				_v3.set(x, y, 0).project(camera);
+				return {
+					x: (_v3.x + 1) * 0.5 * window.innerWidth,
+					y: (1 - _v3.y) * 0.5 * window.innerHeight,
+				};
+			}
+			function resize() {
+				renderer.setSize(window.innerWidth, window.innerHeight, false);
+				updateFrustum();
+				if (avatar && phase === 'idle') parkAtButton();
+			}
+			window.addEventListener('resize', resize);
+			resize();
+
+			// Lights
+			scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+			const key  = new THREE.DirectionalLight(0xfff4dc, 2.0); key.position.set(3, 6, 5);  scene.add(key);
+			const rim  = new THREE.DirectionalLight(0x4060ff, 0.6); rim.position.set(-4, 3, -2); scene.add(rim);
+			const fill = new THREE.DirectionalLight(0xffeedd, 0.4); fill.position.set(0, 2, 7);  scene.add(fill);
+
+			// ── Avatar runtime ────────────────────────────────────────────────
+			let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
+			const actions = {};
+			let currentAction = null;
+			const FADE_S = 0.3;
+
+			function setAnimation(name, { loop = true, hold = false } = {}) {
+				const next = actions[name];
+				if (!next || next === currentAction) return;
+				next.reset();
+				next.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+				next.clampWhenFinished = hold;
+				if (currentAction) next.crossFadeFrom(currentAction, FADE_S, false).play();
+				else next.fadeIn(FADE_S).play();
+				currentAction = next;
+			}
+
+			// ── Phase state ───────────────────────────────────────────────────
+			// idle      — standing at the add-to-cart button
+			// grabbing  — quick reaction animation, item lifts off the product card
+			// running   — arcing toward the cart icon
+			// celebrating — landed at cart, plays celebrate, returns to idle
+			let phase = 'loading';
+			let itemCount = 0;
+			const BUTTON_FEET_OFFSET_PX = 12;   // how far below the button's top edge the feet sit
+			const CART_LAND_OFFSET_PX  = 130;   // sit/stand offset for the avatar at cart height
+
+			function getButtonStandWorld() {
+				const r = addBtn.getBoundingClientRect();
+				// Stand to the right of the button, feet on its bottom edge
+				return domToWorld(r.right + 60, r.bottom + BUTTON_FEET_OFFSET_PX);
+			}
+			function getCartWorld() {
+				const r = cart.getBoundingClientRect();
+				return domToWorld(r.left + r.width / 2, r.top + CART_LAND_OFFSET_PX);
+			}
+
+			function parkAtButton() {
+				if (!avatar) return;
+				const p = getButtonStandWorld();
+				avatar.position.set(p.x, p.y, 0);
+				avatar.rotation.set(0, -0.25, 0); // slight turn toward the button
+			}
+
+			function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+			// ── The "grab" — reaction animation + orb lifts off the product image
+			function fireGrab() {
+				phase = 'grabbing';
+				setAnimation('reaction', { loop: false, hold: true });
+				// Tilt the orb on the product card briefly as if "tugged" toward the agent
+				gsap.killTweensOf(orbEl);
+				gsap.to(orbEl, {
+					x: -20, y: -8, rotation: -12,
+					duration: 0.32, ease: 'power3.out',
+					onComplete: () => {
+						gsap.to(orbEl, { x: 0, y: 0, rotation: 0, duration: 0.6, ease: 'elastic.out(1.2, 0.5)' });
+					}
+				});
+			}
+
+			// Spawn a flying clone of the orb that arcs alongside the avatar
+			function spawnFlyingItem() {
+				const start = orbEl.getBoundingClientRect();
+				const flier = document.createElement('div');
+				flier.className = 'flying-item';
+				const size = 56;
+				flier.style.left = `${start.left + start.width / 2 - size / 2}px`;
+				flier.style.top  = `${start.top  + start.height / 2 - size / 2}px`;
+				document.body.appendChild(flier);
+				return flier;
+			}
+
+			// ── Arc to the cart ───────────────────────────────────────────────
+			let arcT = 0, arcStart = null, arcEnd = null, arcMidLift = 0, flier = null;
+			const ARC_S = 1.05;
+
+			function startRunToCart() {
+				phase = 'running';
+				arcT = 0;
+				arcStart = { x: avatar.position.x, y: avatar.position.y };
+				arcEnd   = getCartWorld();
+				// Lift the apex relative to total arc length so big screens still get a real arc
+				arcMidLift = Math.max(1.1, Math.abs(arcEnd.x - arcStart.x) * 0.18);
+				flier = spawnFlyingItem();
+				setAnimation('jump', { loop: false, hold: true });
+				// Face the cart
+				const dir = Math.sign(arcEnd.x - arcStart.x);
+				gsap.to(avatar.rotation, { y: dir * 0.35, duration: 0.25, overwrite: true });
+			}
+
+			function landAtCart() {
+				phase = 'celebrating';
+				avatar.position.set(arcEnd.x, arcEnd.y, 0);
+				cart.classList.add('thump');
+				setTimeout(() => cart.classList.remove('thump'), 600);
+				itemCount += 1;
+				badgeEl.textContent = String(itemCount);
+				cart.classList.add('has-items');
+				// Pop the flier into the cart and remove it
+				if (flier) {
+					gsap.to(flier, { scale: 0.2, opacity: 0, duration: 0.28, ease: 'power2.in', onComplete: () => flier?.remove() });
+					flier = null;
+				}
+				setAnimation('celebrate', { loop: false, hold: false });
+				// After the celebrate clip, return to the button
+				setTimeout(returnToButton, 1600);
+			}
+
+			function returnToButton() {
+				phase = 'returning';
+				setAnimation('walk', { loop: true });
+				const back = getButtonStandWorld();
+				const dir = Math.sign(back.x - avatar.position.x);
+				gsap.to(avatar.rotation, { y: dir * 0.5, duration: 0.25, overwrite: true });
+				const t0 = performance.now();
+				const fromX = avatar.position.x, fromY = avatar.position.y;
+				const ms = 900;
+				(function step(now) {
+					const sp = Math.min((now - t0) / ms, 1);
+					const e = smoothstep(sp);
+					avatar.position.x = fromX + (back.x - fromX) * e;
+					avatar.position.y = fromY + (back.y - fromY) * e;
+					if (sp < 1) requestAnimationFrame(step);
+					else {
+						avatar.position.set(back.x, back.y, 0);
+						setAnimation('idle', { loop: true });
+						gsap.to(avatar.rotation, { y: -0.25, duration: 0.25, overwrite: true });
+						phase = 'idle';
+						addBtn.disabled = false;
+					}
+				})(performance.now());
+			}
+
+			// ── Button click — runs the full sequence ─────────────────────────
+			addBtn.addEventListener('click', () => {
+				if (phase !== 'idle') return;
+				addBtn.disabled = true;
+				// Squish the button on click — same pattern as 3d-home's button impact
+				gsap.killTweensOf(addBtn);
+				gsap.to(addBtn, {
+					scaleY: 0.85, scaleX: 1.04, duration: 0.09, ease: 'power3.out',
+					onComplete: () => gsap.to(addBtn, { scaleY: 1, scaleX: 1, duration: 0.5, ease: 'elastic.out(1.2, 0.4)' })
+				});
+				fireGrab();
+				// reaction clip is short — start the run shortly after
+				setTimeout(() => {
+					if (phase === 'grabbing') startRunToCart();
+				}, 500);
+			});
+
+			// ── Camera parallax (very subtle, same as 404) ────────────────────
+			let mouseNx = 0, mouseNy = 0;
+			window.addEventListener('mousemove', e => {
+				mouseNx = (e.clientX / window.innerWidth)  * 2 - 1;
+				mouseNy = (e.clientY / window.innerHeight) * 2 - 1;
+			});
+
+			// ── Loader ────────────────────────────────────────────────────────
+			const CLIPS = ['idle', 'walk', 'reaction', 'jump', 'celebrate'];
+
+			new GLTFLoader().load('/avatars/cz.glb', gltf => {
+				avatar = gltf.scene;
+				avatar.traverse(n => {
+					if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name)) rootBone = n;
+				});
+				avatar.rotation.y = 0;
+				scene.add(avatar);
+
+				mixer = new THREE.AnimationMixer(avatar);
+
+				Promise.all(CLIPS.map(name =>
+					fetch(`/animations/clips/${name}.json`).then(r => r.json())
+				)).then(jsons => {
+					CLIPS.forEach((name, i) => {
+						actions[name] = mixer.clipAction(THREE.AnimationClip.parse(jsons[i]));
+					});
+
+					if (rootBone) baseRootPos = rootBone.position.clone();
+					const _r = renderer.render.bind(renderer);
+					renderer.render = (sc, cam) => {
+						try { if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos); } catch (_) {}
+						_r(sc, cam);
+					};
+
+					parkAtButton();
+					setAnimation('idle', { loop: true });
+					phase = 'idle';
+				});
+			});
+
+			// ── Render loop ───────────────────────────────────────────────────
+			const clock = new THREE.Clock();
+			(function tick() {
+				requestAnimationFrame(tick);
+				try {
+					const dt = Math.min(clock.getDelta(), 0.05);
+					mixer?.update(dt);
+
+					if (phase === 'running' && avatar && arcStart && arcEnd) {
+						arcT += dt;
+						const p = Math.min(arcT / ARC_S, 1);
+						const e = smoothstep(p);
+						const x = arcStart.x + (arcEnd.x - arcStart.x) * e;
+						// Parabolic arc — peaks at p=0.5
+						const arc = arcMidLift * 4 * p * (1 - p);
+						const y = arcStart.y + (arcEnd.y - arcStart.y) * e + arc;
+						avatar.position.set(x, y, 0);
+
+						// Sync the flying item to a screen position 60px above the avatar's head
+						if (flier) {
+							const head = worldToScreen(x, y + 1.4);
+							flier.style.transform = `translate(${(head.x - parseFloat(flier.style.left)).toFixed(1)}px, ${(head.y - parseFloat(flier.style.top)).toFixed(1)}px) rotate(${(p * 540).toFixed(0)}deg)`;
+						}
+
+						if (p >= 1) landAtCart();
+					}
+
+					// Camera parallax
+					const targetCamX = mouseNx * 0.1;
+					const targetCamY = -mouseNy * 0.07;
+					camera.position.x += (targetCamX - camera.position.x) * 0.04;
+					camera.position.y += (targetCamY - camera.position.y) * 0.04;
+
+					renderer.render(scene, camera);
+				} catch (_) {}
+			})();
+		</script>
+	</body>
+</html>

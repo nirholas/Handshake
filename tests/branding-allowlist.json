@@ -103,5 +103,243 @@
 		"pattern": "avaturn.me/developer",
 		"file": "*",
 		"reason": "Developer portal URL reference in configuration docs."
+	},
+
+	{
+		"pattern": "Avaturn",
+		"file": "docs/avatar-creation.md",
+		"reason": "Integration documentation describing the photo-to-avatar pipeline — vendor name required to identify the integration the doc explains."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "public/docs/avatar-creation.md",
+		"reason": "Public mirror of the integration documentation — same scope as docs/avatar-creation.md."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/character-studio.md",
+		"reason": "Comparison section in the avatar builder doc explicitly contrasts the two upstream tools."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "public/docs/character-studio.md",
+		"reason": "Public mirror of the avatar builder comparison doc."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/animations.md",
+		"reason": "Animation retargeting docs reference the upstream rig the pipeline was authored against."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/club/PLAN.md",
+		"reason": "Internal planning doc — references the upstream skeleton the animation system standardised on."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/internal/PROGRESS.md",
+		"reason": "Internal progress notes mentioning the upstream pipeline as historical context."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/internal/api-inventory.md",
+		"reason": "Internal API inventory — describes which routes delegate to the upstream photo pipeline."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "public/docs/configuration.md",
+		"reason": "Configuration reference describing optional env vars that point at the upstream photo-pipeline editor."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "public/docs/deployment.md",
+		"reason": "Deployment guide describes the optional photo-pipeline integration block."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "public/docs/tutorials/getting-started.md",
+		"reason": "Tutorial link to the photo-pipeline integration page — the vendor name identifies the route."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "src/avaturn-client.js",
+		"reason": "JSDoc on the dedicated photo-pipeline client module — the brand identifies the upstream protocol being wrapped."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "src/guest-avatar.js",
+		"reason": "JSDoc enumerates the allowed values of an internal source field; 'avaturn' is one of those literal protocol values."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "avatar-sdk/README.md",
+		"reason": "SDK README — describes which upstream pipelines the bundled creator wraps."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "avatar-sdk/types/creator.d.ts",
+		"reason": "Public type — the session URL field name maps to the upstream photo-pipeline protocol."
+	},
+	{
+		"pattern": "avaturnSessionUrl",
+		"file": "avatar-sdk/types/creator.d.ts",
+		"reason": "Public type field name — fixed by the upstream protocol the SDK wraps."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "avatar-sdk/types/creator.d.ts",
+		"reason": "Public type JSDoc describes the in-browser builder origin field."
+	},
+	{
+		"pattern": "'avaturn'",
+		"file": "src/guest-avatar.js",
+		"reason": "JSDoc enumerates the allowed literal values of an internal `source` field; 'avaturn' is one of those protocol values."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "README.md",
+		"reason": "Top-level README enumerates the bundled vendor integrations."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "publish/README.md",
+		"reason": "Published SDK README mirrors the top-level integration list."
+	},
+	{
+		"pattern": "avaturn",
+		"file": "README.md",
+		"reason": "Env-var default value (`AVATAR_REGEN_PROVIDER=none | avaturn`) documented in the README."
+	},
+	{
+		"pattern": "avaturn",
+		"file": "publish/README.md",
+		"reason": "Same env-var default value mirrored in the published README."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "public/demo/avatar-os/index.html",
+		"reason": "Internal research demo (`/demo/avatar-os/`) that explicitly documents what the upstream pipeline is being replaced by."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "public/demo/avatar-os/selfie.html",
+		"reason": "Internal research demo describing the selfie-pipeline migration."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "public/demo/avatar-os/studio.html",
+		"reason": "Internal research demo describing the in-browser-builder migration."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "public/demos/3d-home.html",
+		"reason": "JS comment in the 3D homepage describing the rigged demo avatar."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "public/demos/selfie-fit.html",
+		"reason": "JS comments describing the selfie-fit demo's postMessage protocol with the upstream editor."
+	},
+
+	{
+		"pattern": "Character Studio",
+		"file": "docs/character-studio.md",
+		"reason": "Dedicated documentation for the bundled in-browser avatar builder — the proper name is the page title."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "public/docs/character-studio.md",
+		"reason": "Public mirror of the bundled avatar builder documentation."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "docs/avatar-creation.md",
+		"reason": "Cross-reference to the builder doc."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "public/docs/avatar-creation.md",
+		"reason": "Public mirror cross-references the builder doc."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "docs/contributing.md",
+		"reason": "Contribution guide references the bundled avatar builder."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "public/docs/contributing.md",
+		"reason": "Public mirror of the contribution guide."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "public/docs/configuration.md",
+		"reason": "Configuration reference describes the builder's optional integration env."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "public/docs/deployment.md",
+		"reason": "Deployment guide describes the builder's optional integration."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "docs/demo-routes.md",
+		"reason": "Demo routes table lists the rebranded Avatar Studio (formerly Character Studio fork)."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "avatar-sdk/README.md",
+		"reason": "SDK README — describes which builder is bundled."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "README.md",
+		"reason": "Top-level README enumerates the bundled integrations."
+	},
+	{
+		"pattern": "Character Studio",
+		"file": "publish/README.md",
+		"reason": "Published SDK README mirrors the top-level integration list."
+	},
+	{
+		"pattern": "CharacterStudio",
+		"file": "public/demo/avatar-os/index.html",
+		"reason": "Internal research demo embedding the open-source @m3-org/characterstudio package — package identifier is technical."
+	},
+	{
+		"pattern": "CharacterStudio",
+		"file": "public/demo/avatar-os/studio.html",
+		"reason": "Internal research demo embedding the open-source @m3-org/characterstudio package."
+	},
+	{
+		"pattern": "CharacterStudio",
+		"file": "public/demo/avatar-os/live.html",
+		"reason": "Internal research demo describing the default VRM source — references the upstream project name."
+	},
+	{
+		"pattern": "characterstudio",
+		"file": "*",
+		"reason": "Lowercase identifier appears in npm package names (@m3-org/characterstudio), iframe postMessage source values, and config env vars — all internal protocol surfaces."
+	},
+
+	{
+		"pattern": "Ready Player Me",
+		"file": "avatar-sdk/README.md",
+		"reason": "SDK README explains the project is a drop-in replacement for the now-acquired upstream SDK — historical comparison is the reader's reason for reading."
+	},
+	{
+		"pattern": "Ready Player Me",
+		"file": "public/docs/deployment.md",
+		"reason": "Deployment doc explains which upstream iframe the bundled builder replaces."
+	},
+	{
+		"pattern": "Ready Player Me",
+		"file": "public/demos/index.html",
+		"reason": "Demo description references the WebXR seated variant the upstream SDK historically shipped."
+	},
+	{
+		"pattern": "RPM",
+		"file": "avatar-sdk/README.md",
+		"reason": "SDK README — same context as the Ready Player Me reference above; abbreviation appears alongside the full name."
 	}
 ]

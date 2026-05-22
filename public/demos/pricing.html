@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws — pricing demo</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root { color-scheme: dark; }
+			*, *::before, *::after { box-sizing: border-box; }
+			html, body { height: 100%; margin: 0; background: #04050d; color: #eee; font: 15px/1.5 'Inter', -apple-system, system-ui, sans-serif; }
+
+			#avatar-canvas {
+				position: fixed; inset: 0;
+				width: 100vw; height: 100vh;
+				pointer-events: none; z-index: 999;
+			}
+
+			.nav {
+				position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+				display: flex; align-items: center; gap: 16px; padding: 14px 28px;
+				background: rgba(4,5,13,0.55); backdrop-filter: blur(14px);
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+			}
+			.nav .brand { font: 700 15px/1 'Space Grotesk','Inter',sans-serif; color:#fff; text-decoration:none; display:flex; align-items:center; gap:7px; }
+			.brand-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#d6ff3d,#aacc00); box-shadow:0 0 10px rgba(214,255,61,0.6); }
+			.nav a.link { color:#555870; text-decoration:none; font-size:13px; margin-left:auto; }
+			.nav a.link:hover { color:#d6ff3d; }
+
+			.page {
+				min-height: 100vh;
+				padding: 130px 24px 80px;
+				max-width: 1100px;
+				margin: 0 auto;
+			}
+			.eyebrow {
+				display: inline-flex; align-items: center; gap: 9px;
+				font-size: 11px; font-weight: 600;
+				letter-spacing: 0.17em; text-transform: uppercase;
+				color: #d6ff3d; margin-bottom: 14px;
+				font-family: 'Space Grotesk', 'Inter', sans-serif;
+			}
+			.eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #d6ff3d; box-shadow: 0 0 8px rgba(214,255,61,0.7); }
+			h1 {
+				font-family: 'Space Grotesk','Inter',sans-serif;
+				font-size: clamp(34px, 4.4vw, 54px); font-weight: 800; letter-spacing: -0.025em;
+				line-height: 1.05; margin: 0 0 14px; color: #fff; max-width: 18ch;
+			}
+			h1 em { color: #d6ff3d; font-style: normal; }
+			.lead { color: #6b6e88; font-size: 16px; max-width: 56ch; margin: 0 0 48px; line-height: 1.6; }
+
+			.tiers {
+				display: grid;
+				grid-template-columns: 1fr 1fr 1fr;
+				gap: 18px;
+				align-items: end;
+			}
+			@media (max-width: 820px) {
+				.tiers { grid-template-columns: 1fr; }
+			}
+
+			.tier {
+				position: relative;
+				border-radius: 18px;
+				background: rgba(15,17,32,0.78);
+				border: 1.5px solid rgba(255,255,255,0.06);
+				padding: 28px 26px 24px;
+				transition: transform 200ms cubic-bezier(0.3, 0.8, 0.4, 1.05),
+				            border-color 200ms ease,
+				            box-shadow 200ms ease,
+				            background 200ms ease;
+				will-change: transform;
+			}
+			.tier .pad-top {
+				/* Reserved headroom so the avatar standing on top doesn't crowd the title */
+				height: 70px;
+			}
+			.tier h2 {
+				font-family: 'Space Grotesk','Inter',sans-serif;
+				font-size: 18px; font-weight: 700; margin: 0 0 4px; color: #fff; letter-spacing: -0.005em;
+			}
+			.tier .blurb { color: #6b6e88; font-size: 13px; margin: 0 0 18px; line-height: 1.5; min-height: 34px; }
+			.tier .num { display: flex; align-items: baseline; gap: 6px; margin: 0 0 16px; }
+			.tier .num .price { font: 800 36px/1 'Space Grotesk','Inter',sans-serif; color: #fff; }
+			.tier .num .per { color: #6b6e88; font-size: 13px; }
+			.tier ul { list-style: none; padding: 0; margin: 0 0 22px; }
+			.tier li {
+				color: #b6b8c8; font-size: 13.5px; padding: 7px 0;
+				display: flex; align-items: flex-start; gap: 8px;
+				border-top: 1px solid rgba(255,255,255,0.04);
+			}
+			.tier li:first-child { border-top: 0; }
+			.tier li::before {
+				content: '';
+				flex: 0 0 6px; height: 6px; border-radius: 50%;
+				background: #d6ff3d; margin-top: 8px; box-shadow: 0 0 6px rgba(214,255,61,0.55);
+			}
+			.tier .cta {
+				display: inline-flex; align-items: center; justify-content: center;
+				gap: 8px; width: 100%;
+				padding: 13px 18px; border: none; border-radius: 11px;
+				font: 700 14px/1 'Inter', inherit; cursor: pointer; text-decoration: none;
+				background: rgba(255,255,255,0.06);
+				color: #fff;
+				border: 1.5px solid rgba(255,255,255,0.08);
+				transition: background 140ms, border-color 140ms, transform 140ms;
+			}
+			.tier .cta:hover { background: rgba(214,255,61,0.1); border-color: rgba(214,255,61,0.45); }
+
+			/* Hover / "she's on this one" state */
+			.tier:hover,
+			.tier.is-active {
+				border-color: rgba(214,255,61,0.55);
+				background: rgba(20,28,16,0.85);
+				box-shadow:
+					0 0 0 1px rgba(214,255,61,0.22),
+					0 28px 60px rgba(214,255,61,0.16);
+			}
+			.tier:hover { transform: translateY(-4px); }
+			.tier.is-active .cta {
+				background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
+				color: #0a0b0f; border-color: transparent;
+				box-shadow: 0 4px 0 0 #7a9600;
+			}
+
+			/* "Most popular" ribbon on Pro */
+			.tier.pro {
+				/* Visually elevated even when no hover */
+				background: rgba(18,24,12,0.85);
+				border-color: rgba(214,255,61,0.4);
+			}
+			.tier.pro::before {
+				content: 'Most popular';
+				position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+				background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
+				color: #0a0b0f;
+				font: 700 10.5px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.12em; text-transform: uppercase;
+				padding: 6px 12px; border-radius: 999px;
+				box-shadow: 0 6px 16px rgba(214,255,61,0.3);
+			}
+
+			.hint {
+				margin-top: 28px;
+				color: #4a4d63; font-size: 12px; letter-spacing: 0.07em; text-transform: uppercase;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="nav">
+			<a href="/" class="brand">
+				<img src="/three.svg" width="20" height="20" alt="" />
+				<span class="brand-dot"></span>
+				three.ws
+			</a>
+			<a href="/demos/" class="link">← lab</a>
+		</div>
+
+		<div class="page">
+			<div class="eyebrow"><span class="eyebrow-dot"></span><span>Pick your tier</span></div>
+			<h1>Hover a plan — <em>she'll show you which one to pick.</em></h1>
+			<p class="lead">She lives on the page. Move your cursor across the tiers and she'll climb onto whichever one you're looking at, then point at the button.</p>
+
+			<div class="tiers" id="tiers">
+				<div class="tier" id="tier-basic" data-tier="basic">
+					<div class="pad-top"></div>
+					<h2>Basic</h2>
+					<p class="blurb">For solo builders shipping their first agent.</p>
+					<div class="num"><span class="price">$0</span><span class="per">/forever</span></div>
+					<ul>
+						<li>1 agent</li>
+						<li>Default rig + animations</li>
+						<li>Public deploy at three.ws/&lt;name&gt;</li>
+					</ul>
+					<a href="#" class="cta" data-tier-cta="basic">Start free</a>
+				</div>
+
+				<div class="tier pro" id="tier-pro" data-tier="pro">
+					<div class="pad-top"></div>
+					<h2>Pro</h2>
+					<p class="blurb">For studios and teams shipping multiple agents.</p>
+					<div class="num"><span class="price">$29</span><span class="per">/mo</span></div>
+					<ul>
+						<li>Unlimited agents</li>
+						<li>Custom avatars + lipsync</li>
+						<li>Animation studio + memory seeds</li>
+						<li>Custom subdomain</li>
+					</ul>
+					<a href="#" class="cta" data-tier-cta="pro">Choose Pro</a>
+				</div>
+
+				<div class="tier" id="tier-enterprise" data-tier="enterprise">
+					<div class="pad-top"></div>
+					<h2>Enterprise</h2>
+					<p class="blurb">For platforms embedding agents at scale.</p>
+					<div class="num"><span class="price">Talk</span><span class="per">to us</span></div>
+					<ul>
+						<li>Self-hosted runtime</li>
+						<li>On-chain identity (ERC-8004)</li>
+						<li>Custom rigs &amp; licensing</li>
+						<li>SLA + dedicated infra</li>
+					</ul>
+					<a href="#" class="cta" data-tier-cta="enterprise">Contact sales</a>
+				</div>
+			</div>
+
+			<p class="hint">Move your mouse over a tier — she jumps over and points at the CTA.</p>
+		</div>
+
+		<canvas id="avatar-canvas"></canvas>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm';
+
+			const canvas = document.getElementById('avatar-canvas');
+			const tiers  = [...document.querySelectorAll('.tier')];
+
+			// ── Renderer / scene ──────────────────────────────────────────────
+			const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+			renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+			renderer.outputColorSpace = THREE.SRGBColorSpace;
+			renderer.toneMapping = THREE.ACESFilmicToneMapping;
+			renderer.toneMappingExposure = 1.1;
+
+			const scene = new THREE.Scene();
+			const PX_PER_UNIT = 120;
+			const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+			camera.position.z = 10;
+
+			function updateFrustum() {
+				const hw = window.innerWidth  / PX_PER_UNIT / 2;
+				const hh = window.innerHeight / PX_PER_UNIT / 2;
+				camera.left = -hw; camera.right = hw;
+				camera.top  =  hh; camera.bottom = -hh;
+				camera.updateProjectionMatrix();
+			}
+			const _v3 = new THREE.Vector3();
+			function domToWorld(sx, sy) {
+				_v3.set((sx / window.innerWidth) * 2 - 1, -(sy / window.innerHeight) * 2 + 1, 0);
+				_v3.unproject(camera);
+				return { x: _v3.x, y: _v3.y };
+			}
+			function resize() {
+				renderer.setSize(window.innerWidth, window.innerHeight, false);
+				updateFrustum();
+				// Re-snap to the currently-targeted tier so layout shifts don't leave her floating
+				if (avatar && activeTier && phase !== 'jumping') {
+					const t = standOnTopOf(activeTier);
+					gsap.killTweensOf(avatar.position);
+					gsap.to(avatar.position, { x: t.x, y: t.y, duration: 0.35, overwrite: true });
+				}
+			}
+			window.addEventListener('resize', resize);
+			resize();
+
+			// Lights
+			scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+			const key  = new THREE.DirectionalLight(0xfff4dc, 2.0); key.position.set(3, 6, 5);  scene.add(key);
+			const rim  = new THREE.DirectionalLight(0x4060ff, 0.6); rim.position.set(-4, 3, -2); scene.add(rim);
+			const fill = new THREE.DirectionalLight(0xffeedd, 0.4); fill.position.set(0, 2, 7);  scene.add(fill);
+
+			// ── Avatar runtime ────────────────────────────────────────────────
+			let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
+			const actions = {};
+			let currentAction = null;
+			const FADE_S = 0.3;
+
+			function setAnimation(name, { loop = true, hold = false } = {}) {
+				const next = actions[name];
+				if (!next || next === currentAction) return;
+				next.reset();
+				next.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+				next.clampWhenFinished = hold;
+				if (currentAction) next.crossFadeFrom(currentAction, FADE_S, false).play();
+				else next.fadeIn(FADE_S).play();
+				currentAction = next;
+			}
+
+			// ── Tier targeting ────────────────────────────────────────────────
+			// The avatar stands ON THE TOP EDGE of a card, slightly inset from center so
+			// the .pad-top reserved area accepts her without colliding with the title.
+			const FEET_TOP_OFFSET_PX = 0; // cz.glb origin = feet, so 0 puts feet right on the top edge
+
+			function standOnTopOf(tierEl) {
+				const r = tierEl.getBoundingClientRect();
+				return domToWorld(r.left + r.width / 2, r.top + FEET_TOP_OFFSET_PX);
+			}
+
+			let phase = 'loading';                  // loading | idle | jumping
+			let activeTier = null;                  // tier she's currently associated with
+			let jumpT = 0, jumpStart = null, jumpEnd = null, jumpLift = 0;
+			const JUMP_S = 0.85;
+
+			function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+			function jumpToTier(tierEl) {
+				if (!avatar || tierEl === activeTier) return;
+				// Visual: mark the new tier active, clear the old one
+				if (activeTier) activeTier.classList.remove('is-active');
+				activeTier = tierEl;
+				activeTier.classList.add('is-active');
+
+				phase = 'jumping';
+				jumpT = 0;
+				jumpStart = { x: avatar.position.x, y: avatar.position.y };
+				jumpEnd   = standOnTopOf(tierEl);
+				// Lift the arc proportionally to horizontal distance + a baseline
+				const dx = Math.abs(jumpEnd.x - jumpStart.x);
+				jumpLift = Math.max(1.2, dx * 0.32);
+				setAnimation('jump', { loop: false, hold: true });
+				// Face direction of travel
+				const dir = Math.sign(jumpEnd.x - jumpStart.x) || 0;
+				gsap.to(avatar.rotation, { y: dir * 0.25, duration: 0.2, overwrite: true });
+			}
+
+			function landOnTier() {
+				phase = 'idle';
+				avatar.position.set(jumpEnd.x, jumpEnd.y, 0);
+				// Card "thump" on landing — sells weight
+				const t = activeTier;
+				gsap.killTweensOf(t);
+				gsap.fromTo(t, { y: 0 }, {
+					y: 3, duration: 0.08, ease: 'power3.out',
+					onComplete: () => gsap.to(t, { y: 0, duration: 0.5, ease: 'elastic.out(1.2, 0.4)' })
+				});
+				// Face camera so the "point" reads clearly
+				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
+				setAnimation('reaction', { loop: false, hold: true });
+				// Settle back into idle after the point
+				setTimeout(() => {
+					if (phase === 'idle' && activeTier === t) setAnimation('idle', { loop: true });
+				}, 1500);
+			}
+
+			// ── Hover dispatch with debounce ─────────────────────────────────
+			// Without debouncing, sweeping the cursor across three tiers triggers
+			// three jumps stacking on each other. We wait ~120ms of stable hover
+			// before committing — feels intentional, not jittery.
+			let hoverTimer = null;
+			function scheduleJump(tierEl) {
+				clearTimeout(hoverTimer);
+				if (tierEl === activeTier) return;
+				hoverTimer = setTimeout(() => {
+					if (phase === 'jumping') {
+						// Queue: re-check at the end of the current jump
+						setTimeout(() => scheduleJump(tierEl), 200);
+					} else {
+						jumpToTier(tierEl);
+					}
+				}, 120);
+			}
+
+			tiers.forEach(t => {
+				t.addEventListener('mouseenter', () => scheduleJump(t));
+			});
+
+			// CTA clicks — give a celebrate animation, prevent navigation in the demo
+			document.querySelectorAll('[data-tier-cta]').forEach(cta => {
+				cta.addEventListener('click', e => {
+					e.preventDefault();
+					if (!avatar) return;
+					setAnimation('celebrate', { loop: false, hold: false });
+					setTimeout(() => {
+						if (phase === 'idle') setAnimation('idle', { loop: true });
+					}, 1800);
+				});
+			});
+
+			// ── Camera parallax ───────────────────────────────────────────────
+			let mouseNx = 0, mouseNy = 0;
+			window.addEventListener('mousemove', e => {
+				mouseNx = (e.clientX / window.innerWidth)  * 2 - 1;
+				mouseNy = (e.clientY / window.innerHeight) * 2 - 1;
+			});
+
+			// ── ResizeObserver on each tier so reflow re-snaps the avatar ────
+			const ro = new ResizeObserver(() => {
+				if (avatar && activeTier && phase !== 'jumping') {
+					const t = standOnTopOf(activeTier);
+					gsap.killTweensOf(avatar.position);
+					gsap.to(avatar.position, { x: t.x, y: t.y, duration: 0.35, overwrite: true });
+				}
+			});
+			tiers.forEach(t => ro.observe(t));
+
+			// ── Loader ────────────────────────────────────────────────────────
+			const CLIPS = ['idle', 'walk', 'jump', 'reaction', 'celebrate'];
+
+			new GLTFLoader().load('/avatars/cz.glb', gltf => {
+				avatar = gltf.scene;
+				avatar.traverse(n => {
+					if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name)) rootBone = n;
+				});
+				avatar.rotation.y = 0;
+				scene.add(avatar);
+
+				mixer = new THREE.AnimationMixer(avatar);
+
+				Promise.all(CLIPS.map(name =>
+					fetch(`/animations/clips/${name}.json`).then(r => r.json())
+				)).then(jsons => {
+					CLIPS.forEach((name, i) => {
+						actions[name] = mixer.clipAction(THREE.AnimationClip.parse(jsons[i]));
+					});
+
+					if (rootBone) baseRootPos = rootBone.position.clone();
+					const _r = renderer.render.bind(renderer);
+					renderer.render = (sc, cam) => {
+						try { if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos); } catch (_) {}
+						_r(sc, cam);
+					};
+
+					// Start on the Pro tier (the recommended one) so first impression
+					// matches the "most popular" badge.
+					const pro = document.getElementById('tier-pro');
+					activeTier = pro;
+					pro.classList.add('is-active');
+					const start = standOnTopOf(pro);
+					avatar.position.set(start.x, start.y, 0);
+					setAnimation('idle', { loop: true });
+					phase = 'idle';
+				});
+			});
+
+			// ── Render loop ───────────────────────────────────────────────────
+			const clock = new THREE.Clock();
+			(function tick() {
+				requestAnimationFrame(tick);
+				try {
+					const dt = Math.min(clock.getDelta(), 0.05);
+					mixer?.update(dt);
+
+					if (phase === 'jumping' && avatar && jumpStart && jumpEnd) {
+						jumpT += dt;
+						const p = Math.min(jumpT / JUMP_S, 1);
+						const e = smoothstep(p);
+						const x = jumpStart.x + (jumpEnd.x - jumpStart.x) * e;
+						const arc = jumpLift * 4 * p * (1 - p);
+						const y = jumpStart.y + (jumpEnd.y - jumpStart.y) * e + arc;
+						avatar.position.set(x, y, 0);
+						// Subtle in-flight yaw — peaks mid-arc
+						const dir = Math.sign(jumpEnd.x - jumpStart.x) || 0;
+						avatar.rotation.y = dir * 0.22 * Math.sin(Math.PI * p);
+						if (p >= 1) landOnTier();
+					}
+
+					// Camera parallax
+					const targetCamX = mouseNx * 0.1;
+					const targetCamY = -mouseNy * 0.07;
+					camera.position.x += (targetCamX - camera.position.x) * 0.04;
+					camera.position.y += (targetCamY - camera.position.y) * 0.04;
+
+					renderer.render(scene, camera);
+				} catch (_) {}
+			})();
+		</script>
+	</body>
+</html>

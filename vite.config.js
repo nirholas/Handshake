@@ -287,6 +287,7 @@ const appConfig = {
 					'/features': resolve(root, 'pages/features.html'),
 					'/features/': resolve(root, 'pages/features.html'),
 					'/agent': resolve(root, 'pages/agent-home.html'),
+					'/agent/new': resolve(root, 'pages/agent-edit.html'),
 					'/docs': resolve(root, 'docs/index.html'),
 					'/docs/': resolve(root, 'docs/index.html'),
 					'/bazaar': resolve(root, 'public/bazaar.html'),

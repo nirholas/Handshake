@@ -3,7 +3,21 @@ import { saveRemoteGlbToAccount } from './account.js';
 
 const API_BASE = '/api';
 const params = new URLSearchParams(location.search);
-const agentId = params.get('id');
+
+// Resolve agent id from the canonical clean URL /agent/<uuid>(/edit)?, falling
+// back to the legacy /agent-edit.html?id=<uuid> querystring form. Kept as a
+// `let` so it can be reassigned after the create-from-avatar flow mints a real
+// agent — every fetch below uses this value, so the URL must stay the source
+// of truth across both create and edit flows.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function resolveAgentIdFromUrl() {
+  const seg = location.pathname.split('/').filter(Boolean);
+  // /agent/<id>(/edit)?  →  seg = ['agent', '<id>', 'edit'?]
+  if (seg[0] === 'agent' && seg[1] && UUID_RE.test(seg[1])) return seg[1];
+  const qid = params.get('id');
+  return qid && UUID_RE.test(qid) ? qid : null;
+}
+let agentId = resolveAgentIdFromUrl();
 
 // Avatar handoff from marketplace modal ("Start an agent with this avatar")
 const initAvatarId  = params.get('avatar_id')  || null;
@@ -79,6 +93,7 @@ async function createAgentFromAvatar() {
     }
 
     history.replaceState({}, '', `/agent/${agent.id}/edit`);
+    agentId = agent.id;
     agentData = agent;
     if (initAvatarName) {
       agentData.name = name;
