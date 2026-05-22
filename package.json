@@ -47,7 +47,7 @@
 		]
 	},
 	"scripts": {
-		"postinstall": "npm run build --prefix agent-payments-sdk && node scripts/fix-pump-sdk-esm.mjs && node scripts/copy-three-decoders.mjs",
+		"postinstall": "npm run build --prefix agent-payments-sdk && node scripts/fix-pump-sdk-esm.mjs && node scripts/fix-x402-extensions-esm.mjs && node scripts/copy-three-decoders.mjs",
 		"dev": "vite --port 3000",
 		"dev:multi": "npm run dev --prefix multiplayer",
 		"dev:walk-all": "node scripts/dev-walk-all.mjs",

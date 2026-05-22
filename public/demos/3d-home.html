@@ -314,7 +314,7 @@
 			let seqT = 0, landed = false, jumpTarget = { x: 0, y: 0 };
 
 			const STAND_S     = 2.566;  // standup clip duration
-			const JUMP_S      = 2.933;  // jumpdown3 clip duration
+			const JUMP_S      = 2.667;  // jumpdown clip duration
 			const SIT_DWELL_S = 2.4;    // how long he sits before standing
 			// Earliest-possible fraction at which the impact effects MAY fire.
 			// The actual trigger is gated on screen-space proximity below — this
@@ -326,10 +326,13 @@
 			const LAND_PX     = 10;
 			const PEAK_U      = 0.55;   // arc peak in world units
 			const JUMP_YAW    = 0.22;   // ~12° peak yaw mid-flight (face-forward at both ends)
-			// cz.glb origin is at the feet (verified in /demos/button-jump.html), so
-			// these stay 0 by default. Bump them if the visible feet/butt sit off.
+			// cz.glb origin is at the feet (verified in /demos/button-jump.html).
+			// FEET_OFFSET stays 0 so the visible feet land on the button top.
+			// SIT_OFFSET pushes the origin DOWN by the seated feet→butt distance,
+			// so the butt — not the feet — rests on the text line. Tuned to the
+			// sitidle pose where legs dangle below the hips.
 			const FEET_OFFSET_PX = 0;
-			const SIT_OFFSET_PX  = 0;
+			const SIT_OFFSET_PX  = 140;
 
 			function smoothstep(t) { return t * t * (3 - 2 * t); }
 
@@ -640,7 +643,7 @@
 				Promise.all([
 					fetchClip('/animations/clips/sitidle.json'),
 					fetchClip('/animations/clips/standup.json'),
-					fetchClip('/animations/clips/jumpdown3.json'),
+					fetchClip('/animations/clips/jumpdown.json'),
 					...PERFORM_CLIPS.map(c => fetchClip(c.file)),
 				]).then(([sitJson, standJson, jumpJson, ...performJsons]) => {
 					sitAction = mixer.clipAction(THREE.AnimationClip.parse(sitJson));
@@ -670,11 +673,19 @@
 
 					if (rootBone) baseRootPos = rootBone.position.clone();
 
-					// Lock root bone every frame so animation root motion never drifts the avatar
+					// Root-bone lock — only active during 'jumping'. The jump clip
+					// has translational root motion that would compete with our
+					// JS-driven parabolic arc, so we clamp Hips to its rest pose
+					// for those frames. Other phases (sitting, standingUp, perform)
+					// must let the clip's Hips.position drive seated/standing height
+					// — clamping there forces default.glb's standing rest pose into
+					// every clip and the avatar floats above the sit anchor.
 					const _r = renderer.render.bind(renderer);
 					renderer.render = (sc, cam) => {
 						try {
-							if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos);
+							if (phase === 'jumping' && rootBone && baseRootPos) {
+								rootBone.position.copy(baseRootPos);
+							}
 						} catch (_) {}
 						_r(sc, cam);
 					};

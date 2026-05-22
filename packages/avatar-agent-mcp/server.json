@@ -1,17 +1,17 @@
 {
 	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-	"name": "ws.three/3D-AI-Agent-Avatar",
+	"name": "io.github.three-ws/3D-AI-Agent-Avatar",
 	"description": "3D AI Agent Avatar — render, inspect, validate, and optimize any GLB; spawn a textured 3D avatar with a Solana wallet, a voice (OpenAI TTS), live pose + camera rendering, and full pump.fun powers (atomic Jito-bundled launches + creator-fee collection). Built by three.ws.",
 	"repository": {
 		"url": "https://github.com/nirholas/three.ws",
 		"source": "github"
 	},
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/avatar-agent",
-			"version": "1.0.1",
+			"version": "1.0.2",
 			"transport": {
 				"type": "stdio"
 			},

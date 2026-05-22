@@ -17,7 +17,9 @@ const page = await browser.newPage();
 const consoleErrors = [];
 const failedRequests = [];
 page.on('console', msg => {
-	if (msg.type() === 'error') consoleErrors.push(msg.text());
+	const t = msg.type();
+	if (t === 'error') consoleErrors.push(msg.text());
+	if (process.env.LOG_ALL) console.log(`[browser ${t}] ${msg.text()}`);
 });
 page.on('pageerror', err => consoleErrors.push(`pageerror: ${err.message}`));
 page.on('requestfailed', req => {
