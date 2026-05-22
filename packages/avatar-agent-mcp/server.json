@@ -1,0 +1,75 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/3D-AI-Agent-Avatar",
+	"description": "3D AI Agent Avatar — spawn a textured GLB avatar, inspect/validate/optimize any 3D model, give the agent a Solana wallet + a voice, and ship full pump.fun powers (atomic Jito-bundled launches + creator-fee collection).",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github"
+	},
+	"version": "1.0.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/avatar-agent",
+			"version": "1.0.0",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "SOLANA_RPC_URL",
+					"description": "Solana mainnet RPC endpoint. Defaults to https://api.mainnet-beta.solana.com — bring your own (Helius / QuickNode / Triton) for production traffic.",
+					"format": "string",
+					"isRequired": false,
+					"default": "https://api.mainnet-beta.solana.com"
+				},
+				{
+					"name": "ETH_RPC_URL",
+					"description": "Ethereum mainnet RPC for ENS resolution. Optional — falls back to ethers' default public providers.",
+					"format": "string",
+					"isRequired": false
+				},
+				{
+					"name": "HELIUS_API_KEY",
+					"description": "Optional Helius API key — enables exact supply + DAS data in pump_snapshot.",
+					"format": "string",
+					"isRequired": false,
+					"isSecret": true
+				},
+				{
+					"name": "OPENAI_API_KEY",
+					"description": "Required for the speak tool (OpenAI TTS).",
+					"format": "string",
+					"isRequired": false,
+					"isSecret": true
+				},
+				{
+					"name": "REPLICATE_API_TOKEN",
+					"description": "Required for the generate_avatar tool (Replicate text/image-to-3D).",
+					"format": "string",
+					"isRequired": false,
+					"isSecret": true
+				},
+				{
+					"name": "REPLICATE_TEXT_TO_AVATAR_MODEL",
+					"description": "Replicate version hash pinned for text-to-3D — recommended: latest tencent/hunyuan-3d-3.1.",
+					"format": "string",
+					"isRequired": false
+				},
+				{
+					"name": "SOLANA_SECRET_KEY",
+					"description": "Optional default base58 Solana secret for wallet_send / pump_buy. Per-call secret args override this. Treat like cash.",
+					"format": "string",
+					"isRequired": false,
+					"isSecret": true
+				},
+				{
+					"name": "THREE_MINT",
+					"description": "Optional pump.fun mint address for $three so tools accept target=\"three\" as shorthand.",
+					"format": "string",
+					"isRequired": false
+				}
+			]
+		}
+	]
+}

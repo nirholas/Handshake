@@ -1,0 +1,74 @@
+{
+	"name": "@three-ws/avatar-agent",
+	"version": "1.0.0",
+	"mcpName": "io.github.nirholas/3D-AI-Agent-Avatar",
+	"description": "3D AI Agent Avatar — MCP server that spawns a textured GLB avatar, inspects/validates/optimizes any 3D model, gives the agent a Solana wallet + a voice, and ships full pump.fun powers (atomic Jito-bundled launches + creator-fee collection). Powered by three.ws.",
+	"type": "module",
+	"author": "nirholas <hello@three.ws>",
+	"license": "MIT",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nirholas/three.ws.git",
+		"directory": "packages/avatar-agent-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"three.ws",
+		"avatar",
+		"3d",
+		"glb",
+		"solana",
+		"pump.fun",
+		"jito",
+		"atomic-bundle",
+		"wallet",
+		"tts",
+		"ai-agent",
+		"agent-payments",
+		"$three"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE",
+		"server.json"
+	],
+	"bin": {
+		"three-avatar-agent": "./src/index.js",
+		"three-avatar-agent-mcp": "./src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@gltf-transform/core": "^4.3.0",
+		"@gltf-transform/extensions": "^4.3.0",
+		"@gltf-transform/functions": "^4.3.0",
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"@nirholas/pump-sdk": "^1.30.0",
+		"@solana/spl-token": "^0.4.14",
+		"@solana/web3.js": "^1.98.4",
+		"bs58": "^6.0.0",
+		"draco3dgltf": "^1.5.7",
+		"ethers": "^6.16.0",
+		"form-data": "^4.0.5",
+		"gltf-validator": "^2.0.0-dev.3.10",
+		"zod": "^3.23.8"
+	}
+}

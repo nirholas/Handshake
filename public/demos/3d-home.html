@@ -53,6 +53,12 @@
 				line-height: 1.04; margin: 0 0 20px; color: #fff;
 			}
 			.hero-title em { color: #d6ff3d; font-style: normal; }
+			/* Proximity shadow — JS updates --agent-shadow as the avatar nears #sit-line.
+			   Sharper + darker as he sits down on the text. */
+			#sit-line {
+				text-shadow: var(--agent-shadow, none);
+				transition: text-shadow 90ms linear;
+			}
 
 			.hero-sub {
 				color: #555870; font-size: 15.5px; line-height: 1.7;
@@ -183,8 +189,42 @@
 				renderer.setSize(window.innerWidth, window.innerHeight, false);
 				updateFrustum();
 			}
-			window.addEventListener('resize', () => { resize(); placeAtStart(); });
+			window.addEventListener('resize', () => { resize(); recalibrateSitAnchor(); });
 			resize();
+
+			// ── Smooth lerp to a new world position (used for ResizeObserver) ─
+			// We only retarget while the avatar is "at rest" on the sit-line — during
+			// jump/standup the trajectory math owns position and we mustn't fight it.
+			let recalSlide = null;
+			function lerpAvatarTo(target, ms = 280) {
+				if (!avatar) return;
+				if (recalSlide) cancelAnimationFrame(recalSlide);
+				const fromX = avatar.position.x, fromY = avatar.position.y;
+				const t0 = performance.now();
+				(function step(now) {
+					const sp = Math.min((now - t0) / ms, 1);
+					const e  = smoothstep(sp);
+					avatar.position.x = fromX + (target.x - fromX) * e;
+					avatar.position.y = fromY + (target.y - fromY) * e;
+					if (sp < 1) recalSlide = requestAnimationFrame(step);
+					else recalSlide = null;
+				})(performance.now());
+			}
+
+			function recalibrateSitAnchor() {
+				if (!avatar) return;
+				const next = getSitWorld();
+				startW = next; // keep the resting anchor authoritative
+				if (phase === 'sitting' || phase === 'standingUp' || phase === 'loading') {
+					lerpAvatarTo(next, 280);
+				}
+			}
+
+			// ResizeObserver: the window resize event fires once, but text reflow
+			// (font load, line-wrap on viewport shrink) changes the rect bounds without
+			// a window resize. Observe the target element directly so we always re-anchor.
+			const sitLineRO = new ResizeObserver(() => recalibrateSitAnchor());
+			sitLineRO.observe(sitLine);
 
 			// ── Lights ────────────────────────────────────────────────────────
 			scene.add(new THREE.AmbientLight(0xffffff, 0.6));
@@ -277,13 +317,18 @@
 				setTimeout(startStandup, SIT_DWELL_S * 1000);
 			}
 
+			// Crossfade duration tuned for organic blending between morph targets
+			// and skeletal animations. ~0.3s reads as "intentional" rather than a snap.
+			const FADE_S = 0.3;
+
 			function startStandup() {
 				if (!standupAction || phase !== 'sitting') return;
 				phase = 'standingUp';
 				// Crossfade sit → standup, no rotation change
 				standupAction.reset();
-				standupAction.crossFadeFrom(sitAction, 0.2, false).play();
-				setTimeout(triggerJump, (STAND_S - 0.15) * 1000);
+				standupAction.crossFadeFrom(sitAction, FADE_S, false).play();
+				// Trigger jump just before standup ends, leaving room for the next fade
+				setTimeout(triggerJump, (STAND_S - FADE_S) * 1000);
 			}
 
 			function triggerJump() {
@@ -295,7 +340,7 @@
 
 				phase = 'jumping'; seqT = 0; landed = false;
 				fallAction.reset();
-				fallAction.crossFadeFrom(standupAction, 0.15, false).play();
+				fallAction.crossFadeFrom(standupAction, FADE_S, false).play();
 			}
 
 			function updateSeq(dt) {
@@ -404,6 +449,40 @@
 				});
 			});
 
+			// ── Proximity shadow: ground the avatar by sharpening the text shadow
+			// on #sit-line as he descends onto it. We project the avatar's world
+			// position to screen px, compare against the rect's top edge, then map
+			// vertical distance → shadow blur/darkness. As he sits (distance≈0),
+			// the shadow is sharp + dark; as he leaves (distance≫), shadow fades.
+			const _proj = new THREE.Vector3();
+			function avatarScreenY() {
+				_proj.set(avatar.position.x, avatar.position.y, avatar.position.z);
+				_proj.project(camera);
+				return (1 - _proj.y) * 0.5 * window.innerHeight;
+			}
+			function updateProximityShadow() {
+				if (!avatar) return;
+				const rect = sitLine.getBoundingClientRect();
+				const ay = avatarScreenY();
+				// Distance from avatar origin (feet) to text top edge, in px.
+				// Negative = he's below the text line, clamp to 0 so shadow stays max.
+				const dy = Math.max(0, rect.top - ay);
+				// Map 0..220px → proximity 1..0 (closer = stronger shadow)
+				const prox = 1 - Math.min(dy / 220, 1);
+				if (prox <= 0.01) {
+					sitLine.style.setProperty('--agent-shadow', 'none');
+					return;
+				}
+				// Sharper (smaller blur) + darker as he gets closer.
+				const blur    = (10 * (1 - prox) + 2).toFixed(2);   // 2px → 12px
+				const offsetY = (2 + 6 * prox).toFixed(2);          // 2px → 8px
+				const alpha   = (0.55 * prox).toFixed(3);           // 0 → 0.55
+				sitLine.style.setProperty(
+					'--agent-shadow',
+					`0 ${offsetY}px ${blur}px rgba(0,0,0,${alpha})`
+				);
+			}
+
 			// ── Render loop ───────────────────────────────────────────────────
 			const clock = new THREE.Clock();
 			(function tick() {
@@ -412,6 +491,7 @@
 					const dt = Math.min(clock.getDelta(), 0.05);
 					mixer?.update(dt);
 					updateSeq(dt);
+					updateProximityShadow();
 					renderer.render(scene, camera);
 				} catch (_) {}
 			})();

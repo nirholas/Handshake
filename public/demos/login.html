@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws — login demo</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root { color-scheme: dark; }
+			*, *::before, *::after { box-sizing: border-box; }
+			html, body { height: 100%; margin: 0; background: #04050d; color: #eee; font: 15px/1.5 'Inter', -apple-system, system-ui, sans-serif; }
+
+			#avatar-canvas {
+				position: fixed; inset: 0;
+				width: 100vw; height: 100vh;
+				pointer-events: none; z-index: 999;
+			}
+
+			.nav {
+				position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+				display: flex; align-items: center; gap: 16px; padding: 14px 28px;
+				background: rgba(4,5,13,0.55); backdrop-filter: blur(14px);
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+			}
+			.nav .brand { font: 700 15px/1 'Space Grotesk','Inter',sans-serif; color:#fff; text-decoration:none; display:flex; align-items:center; gap:7px; }
+			.brand-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#d6ff3d,#aacc00); box-shadow:0 0 10px rgba(214,255,61,0.6); }
+			.nav a.link { color:#555870; text-decoration:none; font-size:13px; margin-left:auto; }
+			.nav a.link:hover { color:#d6ff3d; }
+
+			.page {
+				min-height: 100vh;
+				display: flex; align-items: center; justify-content: center;
+				padding: 100px 24px 60px;
+			}
+			.card {
+				width: 100%; max-width: 420px;
+				background: rgba(12,14,28,0.72);
+				border: 1px solid rgba(255,255,255,0.06);
+				border-radius: 20px;
+				padding: 40px 36px 32px;
+				backdrop-filter: blur(18px);
+			}
+			.eyebrow {
+				display: inline-flex; align-items: center; gap: 9px;
+				font-size: 11px; font-weight: 600;
+				letter-spacing: 0.17em; text-transform: uppercase;
+				color: #d6ff3d; margin-bottom: 18px;
+				font-family: 'Space Grotesk', 'Inter', sans-serif;
+			}
+			.eyebrow-dot {
+				width: 7px; height: 7px; border-radius: 50%;
+				background: #d6ff3d; box-shadow: 0 0 8px rgba(214,255,61,0.7);
+			}
+			h1 {
+				font-family: 'Space Grotesk', 'Inter', sans-serif;
+				font-size: 28px; font-weight: 800; letter-spacing: -0.02em;
+				line-height: 1.15; margin: 0 0 8px; color: #fff;
+			}
+			.sub { color: #6b6e88; font-size: 14px; margin: 0 0 28px; }
+
+			label { display: block; font-size: 12px; font-weight: 600; color: #8b8fae; margin: 0 0 6px; letter-spacing: 0.04em; }
+			.field { margin-bottom: 18px; }
+			.input {
+				width: 100%;
+				padding: 13px 14px;
+				font: 500 15px/1.2 'Inter', inherit;
+				background: rgba(255,255,255,0.04);
+				border: 1.5px solid rgba(255,255,255,0.08);
+				border-radius: 10px;
+				color: #fff;
+				outline: none;
+				transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+			}
+			.input:focus {
+				border-color: #d6ff3d;
+				background: rgba(214,255,61,0.04);
+				box-shadow: 0 0 0 3px rgba(214,255,61,0.12);
+			}
+			.input.error {
+				border-color: #ff5a6a;
+				background: rgba(255,90,106,0.05);
+				box-shadow: 0 0 0 3px rgba(255,90,106,0.14);
+				animation: nudge 0.4s ease;
+			}
+			@keyframes nudge {
+				0%,100% { transform: translateX(0); }
+				25% { transform: translateX(-4px); }
+				75% { transform: translateX(4px); }
+			}
+
+			.btn {
+				display: inline-flex; align-items: center; justify-content: center;
+				gap: 10px; width: 100%;
+				padding: 14px 24px; border: none; border-radius: 12px;
+				font: 700 15px/1 'Inter', inherit; cursor: pointer;
+				background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
+				color: #0a0b0f;
+				box-shadow: 0 6px 0 0 #7a9600, 0 8px 24px rgba(214,255,61,0.25);
+				transform-origin: bottom center;
+				will-change: transform;
+				margin-top: 8px;
+			}
+			.btn:hover { filter: brightness(1.06); }
+
+			.foot { margin: 22px 0 0; text-align: center; color: #54576f; font-size: 12.5px; }
+			.foot a { color: #8a8eaa; }
+
+			/* Hidden mirror — used to measure caret X in a regular <input>.
+			   Must match the input's typography & padding exactly. visibility:hidden
+			   so it occupies no painted pixels but is still measurable. */
+			.caret-mirror {
+				position: absolute;
+				visibility: hidden;
+				white-space: pre;
+				font: 500 15px/1.2 'Inter', inherit;
+				padding: 0;
+				margin: 0;
+				border: 0;
+				pointer-events: none;
+				top: -9999px; left: -9999px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="nav">
+			<a href="/" class="brand">
+				<img src="/three.svg" width="20" height="20" alt="" />
+				<span class="brand-dot"></span>
+				three.ws
+			</a>
+			<a href="/demos/" class="link">← lab</a>
+		</div>
+
+		<div class="page">
+			<form class="card" id="login-form" novalidate>
+				<div class="eyebrow"><span class="eyebrow-dot"></span><span>Declarative agent interactions</span></div>
+				<h1>Sign in</h1>
+				<p class="sub">Your agent will read along — and look away when it shouldn't.</p>
+
+				<div class="field">
+					<label for="email">Email</label>
+					<input
+						class="input"
+						id="email"
+						name="email"
+						type="email"
+						autocomplete="email"
+						placeholder="you@three.ws"
+						data-agent-target="stand-on"
+						data-agent-action="track-typing"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="password">Password</label>
+					<input
+						class="input"
+						id="password"
+						name="password"
+						type="password"
+						autocomplete="current-password"
+						placeholder="••••••••"
+						data-agent-target="stand-on"
+						data-agent-action="privacy-mode"
+					/>
+				</div>
+
+				<button
+					class="btn"
+					id="submit-btn"
+					type="submit"
+					data-agent-action="validate-form"
+				>Sign in</button>
+
+				<p class="foot">No account? <a href="/create">Build an agent →</a></p>
+			</form>
+		</div>
+
+		<canvas id="avatar-canvas"></canvas>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm';
+
+			const canvas = document.getElementById('avatar-canvas');
+			const form   = document.getElementById('login-form');
+
+			// ── Renderer / scene (same orthographic pattern as 3d-home) ───────
+			const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+			renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+			renderer.outputColorSpace = THREE.SRGBColorSpace;
+			renderer.toneMapping = THREE.ACESFilmicToneMapping;
+			renderer.toneMappingExposure = 1.1;
+
+			const scene  = new THREE.Scene();
+			const PX_PER_UNIT = 120;
+			const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+			camera.position.z = 10;
+
+			function updateFrustum() {
+				const hw = window.innerWidth  / PX_PER_UNIT / 2;
+				const hh = window.innerHeight / PX_PER_UNIT / 2;
+				camera.left = -hw; camera.right = hw;
+				camera.top  =  hh; camera.bottom = -hh;
+				camera.updateProjectionMatrix();
+			}
+
+			const _v3 = new THREE.Vector3();
+			function domToWorld(screenX, screenY) {
+				_v3.set(
+					 (screenX / window.innerWidth)  * 2 - 1,
+					-(screenY / window.innerHeight) * 2 + 1,
+					0
+				);
+				_v3.unproject(camera);
+				return { x: _v3.x, y: _v3.y };
+			}
+			function resize() {
+				renderer.setSize(window.innerWidth, window.innerHeight, false);
+				updateFrustum();
+			}
+			window.addEventListener('resize', resize);
+			resize();
+
+			// Lights
+			scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+			const key = new THREE.DirectionalLight(0xfff4dc, 2.0); key.position.set(3, 6, 5); scene.add(key);
+			const rim = new THREE.DirectionalLight(0x4060ff, 0.6); rim.position.set(-4, 3, -2); scene.add(rim);
+			const fill = new THREE.DirectionalLight(0xffeedd, 0.4); fill.position.set(0, 2, 7); scene.add(fill);
+
+			// ── Avatar runtime ────────────────────────────────────────────────
+			let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
+			const clips = {};            // name → AnimationClip
+			const actions = {};          // name → AnimationAction
+			let currentAction = null;
+			const FADE_S = 0.3;          // crossfade duration — matches 3d-home
+
+			function setAnimation(name, { loop = true, hold = false } = {}) {
+				const next = actions[name];
+				if (!next || next === currentAction) return;
+				next.reset();
+				next.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+				next.clampWhenFinished = hold;
+				if (currentAction) {
+					next.crossFadeFrom(currentAction, FADE_S, false).play();
+				} else {
+					next.fadeIn(FADE_S).play();
+				}
+				currentAction = next;
+			}
+
+			// Smooth move avatar to a world position (lerp w/ smoothstep)
+			let slideRAF = null;
+			function moveAvatarTo(target, ms = 520) {
+				if (!avatar) return Promise.resolve();
+				if (slideRAF) cancelAnimationFrame(slideRAF);
+				const fromX = avatar.position.x, fromY = avatar.position.y;
+				const t0 = performance.now();
+				return new Promise(resolve => {
+					(function step(now) {
+						const sp = Math.min((now - t0) / ms, 1);
+						const e  = sp * sp * (3 - 2 * sp);
+						avatar.position.x = fromX + (target.x - fromX) * e;
+						avatar.position.y = fromY + (target.y - fromY) * e;
+						if (sp < 1) slideRAF = requestAnimationFrame(step);
+						else { slideRAF = null; resolve(); }
+					})(performance.now());
+				});
+			}
+
+			// Smooth lookAt yaw (small head/body turn toward a screen X)
+			function lookAtScreenX(targetScreenX) {
+				if (!avatar) return;
+				const projected = new THREE.Vector3(avatar.position.x, avatar.position.y, 0).project(camera);
+				const screenAvatarX = (projected.x + 1) * 0.5 * window.innerWidth;
+				const dxPx = targetScreenX - screenAvatarX;
+				// Map ±200px of caret travel → ±~25° yaw
+				const yaw = Math.max(-0.45, Math.min(0.45, dxPx / 450));
+				gsap.to(avatar.rotation, { y: yaw, duration: 0.18, overwrite: true });
+			}
+
+			// ── Caret tracking via hidden mirror div ──────────────────────────
+			// Given an <input>, place an off-screen <div> with identical typography
+			// + padding, copy the prefix substring, and measure its width to find
+			// the caret X within the input's content box.
+			const mirror = document.createElement('div');
+			mirror.className = 'caret-mirror';
+			document.body.appendChild(mirror);
+
+			function copyInputStyle(input) {
+				const cs = getComputedStyle(input);
+				mirror.style.font = cs.font;
+				mirror.style.letterSpacing = cs.letterSpacing;
+				mirror.style.textTransform = cs.textTransform;
+				mirror.style.padding = '0';
+			}
+
+			function caretScreenX(input) {
+				copyInputStyle(input);
+				const rect = input.getBoundingClientRect();
+				const cs = getComputedStyle(input);
+				const padL = parseFloat(cs.paddingLeft) || 0;
+				const padR = parseFloat(cs.paddingRight) || 0;
+				const innerW = rect.width - padL - padR;
+
+				// Use the real value for email; password inputs mask to a bullet so
+				// the mirrored width reflects the rendered glyph stream, not the secret.
+				const raw = input.value;
+				const display = input.type === 'password' ? '•'.repeat(raw.length) : raw;
+				const caretIdx = input.selectionStart ?? display.length;
+				mirror.textContent = display.slice(0, caretIdx) || ' ';
+				const textW = mirror.getBoundingClientRect().width;
+
+				// Clamp to content box; ignores horizontal scroll on overflow but
+				// good-enough for the input lengths typed in a login form.
+				const offset = Math.min(textW, innerW);
+				return rect.left + padL + offset;
+			}
+
+			// ── Declarative SDK: scan data-agent-* attributes and wire behaviors ─
+			// We look for `data-agent-action` on form fields and the submit button.
+			// Each action attaches the appropriate listeners + animation triggers.
+			const targets = form.querySelectorAll('[data-agent-action]');
+
+			let activeInput = null;        // input currently focused
+			let trackRAF = null;           // rAF id for caret tracking loop
+
+			function worldAboveInput(input) {
+				const rect = input.getBoundingClientRect();
+				// Stand on the top edge, ~one avatar-width inside from the left
+				return domToWorld(rect.left + Math.min(40, rect.height * 1.2), rect.top);
+			}
+
+			async function walkTo(input) {
+				setAnimation('walk', { loop: true });
+				await moveAvatarTo(worldAboveInput(input), 540);
+			}
+
+			function startTypingTracking(input) {
+				activeInput = input;
+				setAnimation('idle', { loop: true });
+				// Track caret on every animation frame while focused — covers keyboard
+				// typing AND mouse-click cursor moves without listening for each event.
+				cancelAnimationFrame(trackRAF);
+				let lastCaretX = -1;
+				(function loop() {
+					if (activeInput !== input) return;
+					const cx = caretScreenX(input);
+					if (cx !== lastCaretX) {
+						lastCaretX = cx;
+						lookAtScreenX(cx);
+					}
+					trackRAF = requestAnimationFrame(loop);
+				})();
+			}
+
+			function stopTypingTracking() {
+				cancelAnimationFrame(trackRAF);
+				trackRAF = null;
+				activeInput = null;
+				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
+			}
+
+			function enterPrivacyMode() {
+				// Cover-eyes / look-away pose — held as long as the password field
+				// owns focus. Loops in case the user pauses.
+				setAnimation('coverstand', { loop: true });
+			}
+
+			function exitPrivacyMode() {
+				setAnimation('idle', { loop: true });
+				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
+			}
+
+			function disapprove() {
+				// One-shot reaction, then fall back to idle.
+				setAnimation('reaction', { loop: false, hold: false });
+				// reaction.json is ~1.5s; schedule the fade back to idle just before it ends
+				setTimeout(() => {
+					if (currentAction === actions.reaction) setAnimation('idle', { loop: true });
+				}, 1300);
+			}
+
+			// Wire each declared target
+			targets.forEach(el => {
+				const action = el.dataset.agentAction;
+
+				if (action === 'track-typing') {
+					el.addEventListener('focus', async () => {
+						await walkTo(el);
+						startTypingTracking(el);
+					});
+					el.addEventListener('blur', stopTypingTracking);
+					// Recompute caret on input — selectionStart updates synchronously
+					el.addEventListener('input', () => {
+						if (activeInput === el) lookAtScreenX(caretScreenX(el));
+					});
+					el.addEventListener('keyup', () => {
+						if (activeInput === el) lookAtScreenX(caretScreenX(el));
+					});
+					el.addEventListener('click', () => {
+						if (activeInput === el) lookAtScreenX(caretScreenX(el));
+					});
+				}
+
+				if (action === 'privacy-mode') {
+					el.addEventListener('focus', async () => {
+						stopTypingTracking();
+						await walkTo(el);
+						enterPrivacyMode();
+					});
+					el.addEventListener('blur', exitPrivacyMode);
+				}
+
+				if (action === 'validate-form') {
+					// Attach to the form's submit so we intercept ENTER + click identically
+					form.addEventListener('submit', ev => {
+						const email = form.elements.email;
+						const password = form.elements.password;
+						const invalid = [];
+						email.classList.remove('error');
+						password.classList.remove('error');
+						if (!email.value.trim()) invalid.push(email);
+						if (!password.value) invalid.push(password);
+						if (invalid.length) {
+							ev.preventDefault();
+							invalid.forEach(i => i.classList.add('error'));
+							// Intentionally not focusing the first invalid input — focus would
+							// fire the input's focus handler (walkTo → setAnimation('walk')),
+							// which would immediately override the disapprove animation. The
+							// red border + shake keyframe already mark where to look.
+							disapprove();
+						} else {
+							// Real submit would POST here. For the demo, prevent navigation
+							// and play a celebratory animation so the page stays observable.
+							ev.preventDefault();
+							setAnimation('celebrate', { loop: false, hold: true });
+						}
+					});
+				}
+			});
+
+			// ── Load avatar + animations ──────────────────────────────────────
+			const CLIPS = ['idle', 'walk', 'coverstand', 'reaction', 'celebrate'];
+
+			new GLTFLoader().load('/avatars/cz.glb', gltf => {
+				avatar = gltf.scene;
+				avatar.traverse(n => {
+					if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name)) rootBone = n;
+				});
+				avatar.rotation.y = 0;
+				scene.add(avatar);
+
+				mixer = new THREE.AnimationMixer(avatar);
+
+				Promise.all(CLIPS.map(name =>
+					fetch(`/animations/clips/${name}.json`).then(r => r.json())
+				)).then(jsons => {
+					CLIPS.forEach((name, i) => {
+						clips[name] = THREE.AnimationClip.parse(jsons[i]);
+						actions[name] = mixer.clipAction(clips[name]);
+					});
+
+					if (rootBone) baseRootPos = rootBone.position.clone();
+					// Lock root motion so animation drift doesn't accumulate translation
+					const _r = renderer.render.bind(renderer);
+					renderer.render = (sc, cam) => {
+						try { if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos); } catch (_) {}
+						_r(sc, cam);
+					};
+
+					// Park avatar centered above the form card, looking forward.
+					const cardRect = form.getBoundingClientRect();
+					const restPos = domToWorld(cardRect.left + cardRect.width / 2, cardRect.top - 30);
+					avatar.position.set(restPos.x, restPos.y, 0);
+
+					setAnimation('idle', { loop: true });
+				});
+			});
+
+			// ── Render loop ───────────────────────────────────────────────────
+			const clock = new THREE.Clock();
+			(function tick() {
+				requestAnimationFrame(tick);
+				try {
+					const dt = Math.min(clock.getDelta(), 0.05);
+					mixer?.update(dt);
+					renderer.render(scene, camera);
+				} catch (_) {}
+			})();
+		</script>
+	</body>
+</html>
