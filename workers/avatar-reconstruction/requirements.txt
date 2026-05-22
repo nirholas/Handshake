@@ -1,0 +1,37 @@
+# Core ML — install torch with CUDA index before this file
+# torch==2.1.0+cu121 and torchvision==0.16.0+cu121 are installed in the Dockerfile
+# via the CUDA-specific PyPI index; they are NOT listed here to avoid pip resolving
+# the CPU wheel from pypi.org.
+
+diffusers==0.28.2
+transformers==4.40.0
+accelerate==0.29.3
+einops==0.7.0
+omegaconf==2.3.0
+safetensors==0.4.2
+huggingface_hub==0.23.4
+tokenizers
+
+# Image processing
+Pillow>=10.0.0
+rembg[gpu]==2.0.56
+scikit-image==0.22.0
+imageio==2.34.0
+
+# Mesh export
+trimesh==4.4.0
+xatlas
+
+# Server
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic>=2.0.0
+requests==2.32.3
+
+# GCP
+google-cloud-firestore==2.19.0
+google-cloud-storage==2.18.0
+
+# Misc
+tqdm
+numpy<2.0

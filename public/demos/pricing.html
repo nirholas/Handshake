@@ -62,10 +62,24 @@
 
 			.tier {
 				position: relative;
-				border-radius: 18px;
-				background: rgba(15,17,32,0.78);
-				border: 1.5px solid rgba(255,255,255,0.06);
+				border-radius: 16px;
+				background:
+					linear-gradient(180deg,
+						rgba(38,44,68,0.95) 0%,
+						rgba(24,28,46,0.92) 14px,
+						rgba(15,17,32,0.85) 28px,
+						rgba(15,17,32,0.85) 100%);
+				border: 2.5px solid rgba(255,255,255,0.09);
 				padding: 28px 26px 24px;
+				box-shadow:
+					/* top-face highlight — light hitting the slab top where she stands */
+					inset 0 3px 0 rgba(255,255,255,0.16),
+					inset 0 -2px 0 rgba(0,0,0,0.45),
+					/* stacked dark layers = side of the ledge dropping away */
+					0 5px 0 rgba(10,12,24,0.95),
+					0 10px 0 rgba(6,8,18,0.95),
+					0 15px 0 rgba(3,4,12,0.95),
+					0 26px 40px rgba(0,0,0,0.55);
 				transition: transform 200ms cubic-bezier(0.3, 0.8, 0.4, 1.05),
 				            border-color 200ms ease,
 				            box-shadow 200ms ease,
@@ -112,10 +126,19 @@
 			.tier:hover,
 			.tier.is-active {
 				border-color: rgba(214,255,61,0.55);
-				background: rgba(20,28,16,0.85);
+				background:
+					linear-gradient(180deg,
+						rgba(58,72,32,0.95) 0%,
+						rgba(38,48,22,0.92) 14px,
+						rgba(20,28,16,0.85) 28px,
+						rgba(20,28,16,0.85) 100%);
 				box-shadow:
-					0 0 0 1px rgba(214,255,61,0.22),
-					0 28px 60px rgba(214,255,61,0.16);
+					inset 0 3px 0 rgba(230,255,120,0.28),
+					inset 0 -2px 0 rgba(0,0,0,0.45),
+					0 5px 0 rgba(60,72,10,0.95),
+					0 10px 0 rgba(38,48,6,0.95),
+					0 15px 0 rgba(20,26,4,0.95),
+					0 28px 50px rgba(214,255,61,0.22);
 			}
 			.tier:hover { transform: translateY(-4px); }
 			.tier.is-active .cta {

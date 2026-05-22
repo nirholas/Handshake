@@ -5,29 +5,36 @@
  *   - WebSocket connection to the Gemini Multimodal Live endpoint
  *   - AudioWorklet microphone capture at 16 kHz PCM
  *   - Scheduled PCM audio playback (24 kHz) via AudioContext
- *   - AnalyserNode tap so callers can drive LipsyncDriver from the live output
- *   - Image frames for webcam context (sendImage)
+ *   - AnalyserNode tap on output (wire to LipsyncDriver)
+ *   - AnalyserNode tap on mic input (wire to level meter)
+ *   - Input + output audio transcription (show both sides of conversation)
+ *   - Image frames for webcam context
  *
  * Usage:
- *   const client = new GeminiLiveClient({ apiKey, systemInstruction });
- *   await client.connect();          // opens WS, waits for setupComplete
- *   const analyser = client.analyser; // wire to LipsyncDriver
- *   await client.startMic();          // begin capturing + sending audio
- *   client.on('text',  ({ text }) => ...);
- *   client.on('audio', () => ...);    // avatar started speaking
+ *   const client = new GeminiLiveClient({ apiKey, systemInstruction, voiceName });
+ *   await client.connect();
+ *   const analyser    = client.analyser;    // output — LipsyncDriver
+ *   const micAnalyser = client.micAnalyser; // input  — level meter (after startMic)
+ *   await client.startMic();
+ *   client.on('input_transcript',  (ev) => console.log(ev.detail));  // { text, finished }
+ *   client.on('output_transcript', (ev) => console.log(ev.detail));  // { text, finished }
+ *   client.on('audio',  () => ...);   // avatar started speaking
+ *   client.on('audio_end', () => ...);
  *   client.on('turn_complete', () => ...);
- *   client.sendImage(dataUrl);        // webcam frame (jpeg data URL)
+ *   client.sendImage(dataUrl);
+ *   client.sendText(text);
  *   client.stopMic();
  *   client.disconnect();
  *
- * Events dispatched on the EventTarget:
- *   'ready'          — WS open + setupComplete received
- *   'audio'          — avatar is outputting audio (detail: null; use analyser)
- *   'audio_end'      — audio playback queue drained
- *   'text'           — { text: string } model text / transcript chunk
- *   'turn_complete'  — model finished its turn
- *   'interrupted'    — model was interrupted by user speech
- *   'error'          — { message: string }
+ * Events (CustomEvent — access payload via ev.detail):
+ *   'ready'             — WS open + setupComplete received
+ *   'audio'             — avatar audio playback started
+ *   'audio_end'         — audio playback queue drained
+ *   'input_transcript'  — { text: string, finished: boolean } user speech transcript
+ *   'output_transcript' — { text: string, finished: boolean } model audio transcript
+ *   'turn_complete'     — model finished its turn
+ *   'interrupted'       — model interrupted by user speech
+ *   'error'             — { message: string }
  */
 
 const WS_BASE = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
@@ -35,9 +42,8 @@ const MODEL   = 'models/gemini-2.0-flash-live-001';
 
 const MIC_SAMPLE_RATE      = 16000;
 const PLAYBACK_SAMPLE_RATE = 24000;
-const CHUNK_INTERVAL_MS    = 100; // send mic PCM every N ms
+const CHUNK_INTERVAL_MS    = 100;
 
-// AudioWorklet source code — runs in its own thread, emits 16 kHz Int16 chunks.
 const WORKLET_SRC = /* js */`
 class PCMCaptureProcessor extends AudioWorkletProcessor {
 	constructor() {
@@ -64,29 +70,33 @@ registerProcessor('pcm-capture', PCMCaptureProcessor);
 `;
 
 function toBase64(buffer) {
+	// Use Blob + FileReader for large buffers to avoid call-stack limits
 	const bytes = new Uint8Array(buffer);
 	let s = '';
-	for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+	const CHUNK = 0x8000;
+	for (let i = 0; i < bytes.length; i += CHUNK) {
+		s += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+	}
 	return btoa(s);
 }
 
 function fromBase64(b64) {
-	const bin  = atob(b64);
-	const buf  = new Uint8Array(bin.length);
+	const bin = atob(b64);
+	const buf = new Uint8Array(bin.length);
 	for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
 	return buf.buffer;
 }
 
 // ── AudioStreamer ─────────────────────────────────────────────────────────────
-// Schedules incoming 24 kHz Int16 PCM chunks for glitch-free playback.
 
 class AudioStreamer {
 	constructor(ctx) {
-		this._ctx        = ctx;
-		this._nextTime   = 0;
-		this._playing    = false;
-		this._gainNode   = ctx.createGain();
-		this.analyser    = ctx.createAnalyser();
+		this._ctx           = ctx;
+		this._nextTime      = 0;
+		this._playing       = false;
+		this._activeSources = new Set();
+		this._gainNode      = ctx.createGain();
+		this.analyser       = ctx.createAnalyser();
 		this.analyser.fftSize = 256;
 		this._gainNode.connect(this.analyser);
 		this.analyser.connect(ctx.destination);
@@ -103,9 +113,10 @@ class AudioStreamer {
 		const src = this._ctx.createBufferSource();
 		src.buffer = audioBuf;
 		src.connect(this._gainNode);
+		this._activeSources.add(src);
 
 		const now = this._ctx.currentTime;
-		if (this._nextTime < now) this._nextTime = now + 0.05; // small buffer
+		if (this._nextTime < now) this._nextTime = now + 0.05;
 		src.start(this._nextTime);
 		this._nextTime += audioBuf.duration;
 
@@ -115,20 +126,25 @@ class AudioStreamer {
 		}
 
 		src.onended = () => {
-			if (this._nextTime <= this._ctx.currentTime + 0.05) {
+			this._activeSources.delete(src);
+			if (this._activeSources.size === 0 && this._nextTime <= this._ctx.currentTime + 0.05) {
 				this._playing = false;
 				this._onPlayEnd?.();
 			}
 		};
 	}
 
+	/** Immediately cancel all scheduled audio (on interrupt). */
 	stop() {
+		for (const src of this._activeSources) {
+			try { src.stop(); } catch {}
+		}
+		this._activeSources.clear();
 		this._nextTime = 0;
 		this._playing  = false;
 	}
 
 	get isPlaying() { return this._playing; }
-
 	onPlayStart(fn) { this._onPlayStart = fn; }
 	onPlayEnd(fn)   { this._onPlayEnd   = fn; }
 }
@@ -138,9 +154,9 @@ class AudioStreamer {
 export class GeminiLiveClient extends EventTarget {
 	/**
 	 * @param {object} opts
-	 * @param {string} opts.apiKey              — Gemini API key
-	 * @param {string} [opts.systemInstruction] — system prompt for the avatar
-	 * @param {string} [opts.voiceName]         — Gemini voice (default: 'Aoede')
+	 * @param {string}  opts.apiKey
+	 * @param {string}  [opts.systemInstruction]
+	 * @param {string}  [opts.voiceName]  — see VOICES export for valid names
 	 */
 	constructor({ apiKey, systemInstruction = '', voiceName = 'Aoede' } = {}) {
 		super();
@@ -149,45 +165,41 @@ export class GeminiLiveClient extends EventTarget {
 		this._systemInstruction = systemInstruction;
 		this._voiceName         = voiceName;
 
-		this._ws           = null;
-		this._audioCtx     = null;
-		this._streamer     = null;
-		this._micStream    = null;
-		this._workletNode  = null;
-		this._micSource    = null;
-		this._ready        = false;
-		this._workletUrl   = null;
+		this._ws            = null;
+		this._audioCtx      = null;
+		this._streamer      = null;
+		this._micStream     = null;
+		this._workletNode   = null;
+		this._micSource     = null;
+		this._captureCtx    = null;
+		this._micAnalyser   = null;
+		this._ready         = false;
+		this._workletUrl    = null;
+		this._intentionalClose = false;
 	}
 
-	/** The AnalyserNode fed by avatar audio output. Wire this to LipsyncDriver. */
-	get analyser() {
-		return this._streamer?.analyser ?? null;
-	}
+	/** AnalyserNode for avatar audio output — wire to LipsyncDriver. */
+	get analyser() { return this._streamer?.analyser ?? null; }
+
+	/** AnalyserNode for mic input — wire to level meter. Available after startMic(). */
+	get micAnalyser() { return this._micAnalyser ?? null; }
 
 	// ── Connection ──────────────────────────────────────────────────────────
 
-	/**
-	 * Open the WebSocket and wait for Gemini's setupComplete handshake.
-	 * @returns {Promise<void>}
-	 */
 	connect() {
 		return new Promise((resolve, reject) => {
-			if (this._ws) reject(new Error('already connected'));
+			if (this._ws) { reject(new Error('already connected')); return; }
 
 			const url = `${WS_BASE}?key=${encodeURIComponent(this._apiKey)}`;
 			const ws  = new WebSocket(url);
 			this._ws  = ws;
 
-			// Ensure AudioContext exists (must be created before/after user gesture;
-			// callers should invoke connect() from a click handler).
-			this._audioCtx  = new AudioContext({ sampleRate: PLAYBACK_SAMPLE_RATE });
-			this._streamer  = new AudioStreamer(this._audioCtx);
-
+			this._audioCtx = new AudioContext({ sampleRate: PLAYBACK_SAMPLE_RATE });
+			this._streamer = new AudioStreamer(this._audioCtx);
 			this._streamer.onPlayStart(() => this._emit('audio'));
 			this._streamer.onPlayEnd(()   => this._emit('audio_end'));
 
 			ws.addEventListener('open', () => {
-				// Send setup
 				ws.send(JSON.stringify({
 					setup: {
 						model: MODEL,
@@ -199,10 +211,10 @@ export class GeminiLiveClient extends EventTarget {
 								},
 							},
 						},
+						input_audio_transcription:  {},
+						output_audio_transcription: {},
 						...(this._systemInstruction ? {
-							system_instruction: {
-								parts: [{ text: this._systemInstruction }],
-							},
+							system_instruction: { parts: [{ text: this._systemInstruction }] },
 						} : {}),
 					},
 				}));
@@ -228,16 +240,27 @@ export class GeminiLiveClient extends EventTarget {
 					return;
 				}
 
+				// Audio + inline text parts
 				if (sc.modelTurn?.parts) {
 					for (const part of sc.modelTurn.parts) {
 						if (part.inlineData?.mimeType?.startsWith('audio/pcm')) {
-							const buf = fromBase64(part.inlineData.data);
-							this._streamer.queue(buf);
-						}
-						if (typeof part.text === 'string') {
-							this._emit('text', { text: part.text });
+							this._streamer.queue(fromBase64(part.inlineData.data));
 						}
 					}
+				}
+
+				// User speech transcript (incremental)
+				if (sc.inputTranscription) {
+					const text     = sc.inputTranscription.text ?? sc.inputTranscription.parts?.[0]?.text ?? '';
+					const finished = sc.inputTranscription.finished ?? false;
+					if (text) this._emit('input_transcript', { text, finished });
+				}
+
+				// Model audio transcript (incremental — more accurate than inline text parts)
+				if (sc.outputTranscription) {
+					const text     = sc.outputTranscription.text ?? sc.outputTranscription.parts?.[0]?.text ?? '';
+					const finished = sc.outputTranscription.finished ?? false;
+					if (text) this._emit('output_transcript', { text, finished });
 				}
 
 				if (sc.turnComplete) {
@@ -245,10 +268,10 @@ export class GeminiLiveClient extends EventTarget {
 				}
 			});
 
-			ws.addEventListener('error', (ev) => {
-				const msg = ev.message || 'WebSocket error';
-				this._emit('error', { message: msg });
-				reject(new Error(msg));
+			ws.addEventListener('error', () => {
+				const err = new Error('WebSocket error');
+				this._emit('error', { message: err.message });
+				reject(err);
 			});
 
 			ws.addEventListener('close', (ev) => {
@@ -263,11 +286,12 @@ export class GeminiLiveClient extends EventTarget {
 	disconnect() {
 		this._intentionalClose = true;
 		this.stopMic();
+		this._streamer?.stop();
 		this._ws?.close();
-		this._ws = null;
+		this._ws      = null;
+		this._streamer = null;
 		this._audioCtx?.close();
 		this._audioCtx = null;
-		this._streamer  = null;
 		if (this._workletUrl) {
 			URL.revokeObjectURL(this._workletUrl);
 			this._workletUrl = null;
@@ -276,57 +300,42 @@ export class GeminiLiveClient extends EventTarget {
 
 	// ── Microphone ──────────────────────────────────────────────────────────
 
-	/**
-	 * Start capturing the user's microphone and streaming PCM to Gemini.
-	 * Requires connect() to have resolved first.
-	 * @returns {Promise<void>}
-	 */
 	async startMic() {
 		if (this._micStream) return;
 
 		this._micStream = await navigator.mediaDevices.getUserMedia({
-			audio: {
-				channelCount:     1,
-				sampleRate:       MIC_SAMPLE_RATE,
-				echoCancellation: true,
-				noiseSuppression: true,
-			},
+			audio: { channelCount: 1, sampleRate: MIC_SAMPLE_RATE, echoCancellation: true, noiseSuppression: true },
 			video: false,
 		});
 
-		// The mic AudioContext must match the capture sample rate.
-		// We create a separate context for capture so playback stays at 24 kHz.
 		const captureCtx = new AudioContext({ sampleRate: MIC_SAMPLE_RATE });
 		this._captureCtx = captureCtx;
 
-		// Register the worklet processor once per context.
 		if (!this._workletUrl) {
-			const blob        = new Blob([WORKLET_SRC], { type: 'application/javascript' });
-			this._workletUrl  = URL.createObjectURL(blob);
+			const blob       = new Blob([WORKLET_SRC], { type: 'application/javascript' });
+			this._workletUrl = URL.createObjectURL(blob);
 		}
 		await captureCtx.audioWorklet.addModule(this._workletUrl);
 
 		this._micSource   = captureCtx.createMediaStreamSource(this._micStream);
 		this._workletNode = new AudioWorkletNode(captureCtx, 'pcm-capture');
 
+		// Level meter tap
+		this._micAnalyser         = captureCtx.createAnalyser();
+		this._micAnalyser.fftSize = 64;
+		this._micSource.connect(this._micAnalyser);
+		this._micSource.connect(this._workletNode);
+
 		this._workletNode.port.onmessage = (ev) => {
 			if (!this._ready || !this._ws || this._ws.readyState !== WebSocket.OPEN) return;
 			this._ws.send(JSON.stringify({
 				realtime_input: {
-					media_chunks: [{
-						data:      toBase64(ev.data),
-						mime_type: `audio/pcm;rate=${MIC_SAMPLE_RATE}`,
-					}],
+					media_chunks: [{ data: toBase64(ev.data), mime_type: `audio/pcm;rate=${MIC_SAMPLE_RATE}` }],
 				},
 			}));
 		};
-
-		this._micSource.connect(this._workletNode);
-		// Don't connect worklet output to destination — we only need the side-effect
-		// of the port messages.
 	}
 
-	/** Stop microphone capture (leaves WS open). */
 	stopMic() {
 		this._workletNode?.disconnect();
 		this._micSource?.disconnect();
@@ -336,51 +345,38 @@ export class GeminiLiveClient extends EventTarget {
 		this._micSource   = null;
 		this._micStream   = null;
 		this._captureCtx  = null;
+		this._micAnalyser = null;
 	}
 
 	// ── Inputs ──────────────────────────────────────────────────────────────
 
-	/**
-	 * Send a text message to Gemini.
-	 * @param {string} text
-	 */
 	sendText(text) {
 		if (!this._ready) return;
 		this._ws.send(JSON.stringify({
-			client_content: {
-				turns: [{ role: 'user', parts: [{ text }] }],
-				turn_complete: true,
-			},
+			client_content: { turns: [{ role: 'user', parts: [{ text }] }], turn_complete: true },
 		}));
 	}
 
-	/**
-	 * Send a JPEG image frame (e.g. from FaceMocap's webcam video).
-	 * @param {string} dataUrl — data:image/jpeg;base64,...
-	 */
 	sendImage(dataUrl) {
 		if (!this._ready) return;
 		const base64 = dataUrl.split(',')[1];
 		if (!base64) return;
 		this._ws.send(JSON.stringify({
-			realtime_input: {
-				media_chunks: [{
-					data:      base64,
-					mime_type: 'image/jpeg',
-				}],
-			},
+			realtime_input: { media_chunks: [{ data: base64, mime_type: 'image/jpeg' }] },
 		}));
 	}
 
 	// ── Internals ────────────────────────────────────────────────────────────
 
 	_emit(type, detail = null) {
-		this.dispatchEvent(Object.assign(new Event(type), detail ? { detail } : {}));
+		this.dispatchEvent(new CustomEvent(type, detail ? { detail } : {}));
 	}
 
-	/** Register an event listener with a shorter API. */
 	on(type, fn) {
 		this.addEventListener(type, fn);
 		return this;
 	}
 }
+
+/** All available Gemini prebuilt voice names. */
+export const VOICES = ['Aoede', 'Charon', 'Fenrir', 'Kore', 'Leda', 'Orus', 'Puck', 'Zephyr'];

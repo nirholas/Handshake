@@ -15,10 +15,11 @@
 				position: fixed; inset: 0; z-index: 50;
 				display: flex; flex-direction: column;
 				align-items: center; justify-content: center;
-				background: #04050d; gap: 20px;
+				background: #04050d; gap: 18px;
 				transition: opacity 0.5s;
 			}
 			#overlay.hidden { opacity: 0; pointer-events: none; }
+
 			#overlay h2 {
 				margin: 0;
 				font: 800 clamp(28px, 3.5vw, 48px)/1.08 'Space Grotesk','Inter',sans-serif;
@@ -29,10 +30,24 @@
 				margin: 0; color: #555870; font-size: 15px;
 				line-height: 1.7; max-width: 38ch; text-align: center;
 			}
+
+			/* Voice picker */
+			.voice-row {
+				display: flex; align-items: center; gap: 10px;
+				font-size: 13px; color: #6c7088;
+			}
+			.voice-row label { color: #888; font-weight: 500; }
+			#voice-select {
+				background: #0c0e16; border: 1px solid rgba(255,255,255,0.12);
+				color: #fff; padding: 6px 10px; border-radius: 8px;
+				font: 500 13px/1 'Inter', sans-serif; cursor: pointer;
+				outline: none;
+			}
+			#voice-select:focus { border-color: rgba(214,255,61,0.5); }
+
 			#start-btn {
-				margin-top: 8px;
-				padding: 16px 44px;
-				border: none; border-radius: 100px;
+				margin-top: 4px;
+				padding: 16px 44px; border: none; border-radius: 100px;
 				background: #d6ff3d; color: #04050d;
 				font: 700 15px/1 'Space Grotesk','Inter',sans-serif;
 				letter-spacing: 0.01em; cursor: pointer;
@@ -44,21 +59,45 @@
 
 			/* ── Stage copy ── */
 			.stage { pointer-events: none; transition: opacity 0.4s; }
-			.stage.hidden { opacity: 0; pointer-events: none; }
+			.stage.hidden { opacity: 0; }
 			.stage h1 em { color: #d6ff3d; font-style: normal; }
 
 			/* ── Controls bar ── */
 			#controls {
-				position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-				display: flex; align-items: center; gap: 12px;
+				position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+				display: flex; flex-direction: column; align-items: center; gap: 10px;
 				opacity: 0; transition: opacity 0.4s;
 				z-index: 30;
 			}
 			#controls.visible { opacity: 1; }
 
+			/* Text send row */
+			#text-row {
+				display: flex; gap: 6px; width: 340px; max-width: 90vw;
+			}
+			#text-input {
+				flex: 1; background: rgba(255,255,255,0.05);
+				border: 1px solid rgba(255,255,255,0.1);
+				border-radius: 10px; color: #fff; padding: 9px 13px;
+				font: 400 13px/1 'Inter', sans-serif;
+				outline: none;
+			}
+			#text-input::placeholder { color: #444860; }
+			#text-input:focus { border-color: rgba(214,255,61,0.4); }
+			#send-btn {
+				background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+				color: #ccc; border-radius: 10px; padding: 9px 14px;
+				font: 600 12px/1 'Inter', sans-serif; cursor: pointer;
+				white-space: nowrap;
+				transition: background 0.15s;
+			}
+			#send-btn:hover { background: rgba(255,255,255,0.1); }
+
+			/* Button row */
+			.btn-row { display: flex; align-items: center; gap: 10px; }
 			.ctrl-btn {
-				display: inline-flex; align-items: center; gap: 8px;
-				padding: 12px 22px; border: none; border-radius: 100px;
+				display: inline-flex; align-items: center; gap: 7px;
+				padding: 11px 20px; border: none; border-radius: 100px;
 				font: 600 13px/1 'Space Grotesk','Inter',sans-serif;
 				letter-spacing: 0.01em; cursor: pointer;
 				transition: opacity 0.15s, transform 0.1s, background 0.15s;
@@ -70,93 +109,100 @@
 				background: #d6ff3d; color: #04050d;
 				box-shadow: 0 4px 0 0 #7a9600, 0 6px 20px rgba(214,255,61,0.22);
 			}
-			#mic-btn.active {
+			#mic-btn.recording {
 				background: #ef4444; color: #fff;
 				box-shadow: 0 4px 0 0 #7f1d1d, 0 6px 20px rgba(239,68,68,0.28);
-				animation: pulse-ring 1.2s ease-in-out infinite;
-			}
-			@keyframes pulse-ring {
-				0%, 100% { box-shadow: 0 4px 0 0 #7f1d1d, 0 0 0 0 rgba(239,68,68,0.35); }
-				50%       { box-shadow: 0 4px 0 0 #7f1d1d, 0 0 0 10px rgba(239,68,68,0); }
 			}
 
 			#cam-btn {
 				background: rgba(255,255,255,0.06);
-				border: 1px solid rgba(255,255,255,0.12);
-				color: #ccc;
+				border: 1px solid rgba(255,255,255,0.12); color: #ccc;
 			}
 			#cam-btn.active { background: rgba(214,255,61,0.1); border-color: rgba(214,255,61,0.4); color: #d6ff3d; }
 
 			#end-btn {
-				background: rgba(239,68,68,0.12);
-				border: 1px solid rgba(239,68,68,0.3);
-				color: #f87171;
+				background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171;
 			}
 			#end-btn:hover { background: rgba(239,68,68,0.2); }
 
+			/* ── Mic level bar ── */
+			#mic-level {
+				width: 120px; height: 3px; border-radius: 2px;
+				background: rgba(255,255,255,0.06); overflow: hidden;
+			}
+			#mic-level-fill {
+				height: 100%; width: 0; border-radius: 2px;
+				background: #d6ff3d;
+				transition: width 0.05s linear;
+			}
+			#mic-level.muted #mic-level-fill { background: #555870; }
+
 			/* ── Status pill ── */
 			#status {
-				position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
-				background: rgba(12,14,22,0.85);
+				position: fixed; bottom: auto; top: 64px; left: 50%; transform: translateX(-50%);
+				background: rgba(12,14,22,0.9);
 				border: 1px solid rgba(255,255,255,0.08);
 				border-radius: 100px; padding: 6px 16px;
 				font: 600 11px/1.4 'Space Grotesk','Inter',sans-serif;
 				letter-spacing: 0.08em; text-transform: uppercase;
 				display: flex; align-items: center; gap: 7px;
-				opacity: 0; transition: opacity 0.4s, color 0.3s;
-				z-index: 30;
-				white-space: nowrap;
+				opacity: 0; transition: opacity 0.4s;
+				z-index: 30; white-space: nowrap;
+				backdrop-filter: blur(10px);
 			}
 			#status.visible { opacity: 1; }
 			#status-dot {
 				width: 7px; height: 7px; border-radius: 50%;
-				background: #555870; transition: background 0.3s;
-				flex-shrink: 0;
+				background: #555870; transition: background 0.3s; flex-shrink: 0;
 			}
-			#status[data-state="listening"]  #status-dot { background: #ef4444; }
-			#status[data-state="speaking"]   #status-dot { background: #34d399; animation: blink 0.8s ease-in-out infinite alternate; }
-			#status[data-state="thinking"]   #status-dot { background: #a78bfa; }
-			#status[data-state="idle"]       #status-dot { background: #d6ff3d; }
-			@keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
+			#status[data-state="idle"]      #status-dot { background: #d6ff3d; }
+			#status[data-state="listening"] #status-dot { background: #ef4444; animation: pulse 0.9s ease-in-out infinite alternate; }
+			#status[data-state="thinking"]  #status-dot { background: #a78bfa; animation: pulse 1.2s ease-in-out infinite alternate; }
+			#status[data-state="speaking"]  #status-dot { background: #34d399; animation: pulse 0.7s ease-in-out infinite alternate; }
+			@keyframes pulse { from { opacity: 1; } to { opacity: 0.25; } }
 
 			/* ── Transcript ── */
 			#transcript {
-				position: fixed; right: 24px; top: 70px; bottom: 130px;
-				width: clamp(200px, 22vw, 320px);
-				display: flex; flex-direction: column; gap: 8px;
-				overflow-y: auto; padding: 0 4px;
+				position: fixed; right: 20px; top: 64px; bottom: 140px;
+				width: clamp(180px, 20vw, 300px);
+				display: flex; flex-direction: column; gap: 7px;
+				overflow-y: auto; padding: 4px 2px;
 				opacity: 0; transition: opacity 0.4s;
 				z-index: 30;
+				scrollbar-width: thin;
+				scrollbar-color: rgba(255,255,255,0.08) transparent;
 			}
 			#transcript.visible { opacity: 1; }
 			.tx-msg {
 				font-size: 13px; line-height: 1.55;
-				padding: 8px 12px; border-radius: 10px;
-				word-wrap: break-word; white-space: pre-wrap;
-				max-width: 100%;
+				padding: 8px 11px; border-radius: 10px;
+				word-break: break-word; white-space: pre-wrap;
 			}
 			.tx-msg-user {
 				align-self: flex-end;
-				background: rgba(125,211,252,0.1);
-				border: 1px solid rgba(125,211,252,0.22);
-				color: #7dd3fc;
+				background: rgba(125,211,252,0.09);
+				border: 1px solid rgba(125,211,252,0.2); color: #7dd3fc;
 			}
 			.tx-msg-model {
 				align-self: flex-start;
 				background: rgba(255,255,255,0.04);
-				border: 1px solid rgba(255,255,255,0.08);
-				color: #ccc;
+				border: 1px solid rgba(255,255,255,0.07); color: #ccc;
 			}
+			.tx-msg-model.streaming { border-color: rgba(214,255,61,0.2); }
+			/* Typing cursor on streaming model messages */
+			.tx-msg-model.streaming::after {
+				content: '▌'; color: #d6ff3d; animation: blink-cursor 0.7s step-end infinite;
+			}
+			@keyframes blink-cursor { 50% { opacity: 0; } }
 
 			/* ── Webcam PIP ── */
 			#pip {
-				position: fixed; bottom: 130px; left: 24px;
-				width: 140px; aspect-ratio: 4/3;
-				border-radius: 12px; overflow: hidden;
-				border: 1.5px solid rgba(255,255,255,0.1);
+				position: fixed; bottom: 140px; left: 20px;
+				width: 130px; aspect-ratio: 4/3;
+				border-radius: 10px; overflow: hidden;
+				border: 1.5px solid rgba(255,255,255,0.09);
 				background: #0c0e16;
-				opacity: 0; transition: opacity 0.5s;
-				z-index: 20;
+				opacity: 0; transition: opacity 0.5s; z-index: 20;
 			}
 			#pip.visible { opacity: 1; }
 			#pip video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
@@ -166,7 +212,20 @@
 		<!-- Intro overlay -->
 		<div id="overlay">
 			<h2>Talk to your<br><em>3D avatar.</em></h2>
-			<p>Real-time voice powered by Gemini Live. Your webcam drives head pose and expressions — everything runs in your browser.</p>
+			<p>Real-time voice powered by Gemini Live. Webcam drives head pose and expressions — everything runs in your browser.</p>
+			<div class="voice-row">
+				<label for="voice-select">Voice</label>
+				<select id="voice-select">
+					<option value="Aoede">Aoede</option>
+					<option value="Charon">Charon</option>
+					<option value="Fenrir">Fenrir</option>
+					<option value="Kore">Kore</option>
+					<option value="Leda">Leda</option>
+					<option value="Orus">Orus</option>
+					<option value="Puck">Puck</option>
+					<option value="Zephyr">Zephyr</option>
+				</select>
+			</div>
 			<button id="start-btn">Start conversation</button>
 			<span id="overlay-status"></span>
 		</div>
@@ -175,37 +234,39 @@
 			<div class="hero-eyebrow">Gemini Live Avatar</div>
 			<h1 class="hero-title">Speak.<br><em>She listens.</em></h1>
 			<p class="hero-sub">
-				Low-latency voice responses from Gemini Live stream into the avatar's mouth in real time.
-				Webcam face-capture drives expressions and head pose simultaneously.
+				Low-latency voice via Gemini Live streams directly into the avatar's mouth.
+				Webcam face-capture drives expressions and head pose on top.
 			</p>
 		</div>
 
 		<canvas id="avatar-canvas"></canvas>
-
-		<!-- Webcam PIP (activated after cam is enabled) -->
 		<div id="pip"><video id="pip-video" autoplay playsinline muted></video></div>
 
-		<!-- Status pill -->
 		<div id="status" data-state="idle">
 			<span id="status-dot"></span>
 			<span id="status-label">Ready</span>
 		</div>
 
-		<!-- Transcript -->
 		<div id="transcript"></div>
 
-		<!-- Controls -->
 		<div id="controls">
-			<button id="mic-btn"  class="ctrl-btn">🎙 Mute</button>
-			<button id="cam-btn"  class="ctrl-btn">📷 Camera off</button>
-			<button id="end-btn"  class="ctrl-btn">✕ End</button>
+			<div id="text-row">
+				<input id="text-input" type="text" placeholder="Type a message…" autocomplete="off" />
+				<button id="send-btn">Send</button>
+			</div>
+			<div class="btn-row">
+				<button id="mic-btn" class="ctrl-btn">🎙 Mute</button>
+				<button id="cam-btn" class="ctrl-btn">📷 Camera off</button>
+				<button id="end-btn" class="ctrl-btn">✕ End</button>
+			</div>
+			<div id="mic-level"><div id="mic-level-fill"></div></div>
 		</div>
 
 		<script type="module">
 			import * as THREE from 'three';
 			import { createStage, loadAvatar, loadClips, startLoop, mountChrome } from './_lib.js';
 			import { FaceMocap }         from '/src/face-mocap.js';
-			import { GeminiLiveClient }  from '/src/runtime/gemini-live-client.js';
+			import { GeminiLiveClient, VOICES }  from '/src/runtime/gemini-live-client.js';
 			import { LipsyncDriver }     from '/src/voice/lipsync-driver.js';
 			import { AvatarMouthTarget } from '/src/voice/avatar-morph-target.js';
 
@@ -217,20 +278,51 @@
 			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
 			stage.scene.add(avatar);
 
-			const A = await loadClips(mixer, { idle: '/animations/clips/idle.json' });
+			const A = await loadClips(mixer, {
+				idle:     '/animations/clips/idle.json',
+				wave:     '/animations/clips/wave.json',
+				reaction: '/animations/clips/reaction.json',
+			});
 			A.idle.setLoop(THREE.LoopRepeat, Infinity);
 			A.idle.play();
+			A.wave.setLoop(THREE.LoopOnce, 1);
+			A.wave.clampWhenFinished = true;
+			A.reaction.setLoop(THREE.LoopOnce, 1);
+			A.reaction.clampWhenFinished = true;
 
 			avatar.position.set(0, -1.1, 0);
 
-			// ── Head bone for face-mocap ──────────────────────────────────
+			// Crossfade to a clip, fade back to idle when it finishes
+			let talkAction = null;
+			function playTalkGesture() {
+				if (talkAction) return;
+				talkAction = A.wave;
+				talkAction.reset().play();
+				A.idle.crossFadeTo(talkAction, 0.4, true);
+				// Return to idle when wave finishes
+				const onFinished = (ev) => {
+					if (ev.action !== talkAction) return;
+					mixer.removeEventListener('finished', onFinished);
+					talkAction?.crossFadeTo(A.idle, 0.5, true);
+					talkAction = null;
+				};
+				mixer.addEventListener('finished', onFinished);
+			}
+
+			function stopTalkGesture() {
+				if (!talkAction) return;
+				talkAction.crossFadeTo(A.idle, 0.4, true);
+				talkAction = null;
+			}
+
+			// ── Head bone ─────────────────────────────────────────────────
 			function findHeadBone(root) {
 				let head = null, neck = null;
-				root.traverse((node) => {
-					if (!node.isBone) return;
-					const canon = node.name.replace(/^mixamorig/i, '').replace(/^.*[:_]/, '').toLowerCase();
-					if (!head && canon === 'head') head = node;
-					else if (!neck && canon === 'neck') neck = node;
+				root.traverse((n) => {
+					if (!n.isBone) return;
+					const c = n.name.replace(/^mixamorig/i,'').replace(/^.*[:_]/,'').toLowerCase();
+					if (!head && c === 'head') head = n;
+					else if (!neck && c === 'neck') neck = n;
 				});
 				return head ?? neck ?? null;
 			}
@@ -240,18 +332,19 @@
 			const mouthTarget = new AvatarMouthTarget();
 			mouthTarget.attach(avatar);
 
-			// ── FaceMocap (loaded once; webcam opened per-session) ────────
-			const mocap = new FaceMocap();
-			let mocapActive     = false;
-			let mocapReady      = false; // true after first init() call succeeds
+			// ── FaceMocap ─────────────────────────────────────────────────
+			const mocap     = new FaceMocap();
+			let mocapActive = false;
+			let mocapReady  = false;
 			const tempCanvas    = document.createElement('canvas');
 			tempCanvas.width    = 320;
 			tempCanvas.height   = 240;
 
-			// ── DOM refs ──────────────────────────────────────────────────
+			// ── DOM ───────────────────────────────────────────────────────
 			const overlay       = document.getElementById('overlay');
 			const stageEl       = document.querySelector('.stage');
 			const startBtn      = document.getElementById('start-btn');
+			const voiceSelect   = document.getElementById('voice-select');
 			const overlayStatus = document.getElementById('overlay-status');
 			const pip           = document.getElementById('pip');
 			const pipVideo      = document.getElementById('pip-video');
@@ -262,14 +355,10 @@
 			const micBtn        = document.getElementById('mic-btn');
 			const camBtn        = document.getElementById('cam-btn');
 			const endBtn        = document.getElementById('end-btn');
-
-			// ── Session state (replaced each conversation) ────────────────
-			let activeClient  = null;
-			let activeDriver  = null;
-			let micMuted      = false;
-			let camOn         = false;
-			let imageInterval = null;
-			let modelTextBuf  = '';
+			const textInput     = document.getElementById('text-input');
+			const sendBtn       = document.getElementById('send-btn');
+			const micLevelEl    = document.getElementById('mic-level');
+			const micFillEl     = document.getElementById('mic-level-fill');
 
 			// ── Helpers ───────────────────────────────────────────────────
 			function setStatus(state, label) {
@@ -277,21 +366,66 @@
 				statusLabel.textContent = label;
 			}
 
-			function addMessage(role, text) {
-				const div = document.createElement('div');
-				div.className = `tx-msg tx-msg-${role}`;
-				div.textContent = text;
-				transcriptEl.appendChild(div);
+			// Streaming message: create a div, keep ref, update text in place
+			let streamingUserDiv  = null;
+			let streamingModelDiv = null;
+
+			function appendOrUpdate(role, text, finished) {
+				if (role === 'user') {
+					if (!streamingUserDiv) {
+						streamingUserDiv = document.createElement('div');
+						streamingUserDiv.className = 'tx-msg tx-msg-user';
+						transcriptEl.appendChild(streamingUserDiv);
+					}
+					streamingUserDiv.textContent = text;
+					if (finished) streamingUserDiv = null;
+				} else {
+					if (!streamingModelDiv) {
+						streamingModelDiv = document.createElement('div');
+						streamingModelDiv.className = 'tx-msg tx-msg-model streaming';
+						transcriptEl.appendChild(streamingModelDiv);
+					}
+					streamingModelDiv.textContent = text;
+					if (finished) {
+						streamingModelDiv.classList.remove('streaming');
+						streamingModelDiv = null;
+					}
+				}
 				transcriptEl.scrollTop = transcriptEl.scrollHeight;
 			}
 
+			// ── Mic level meter ───────────────────────────────────────────
+			const _levelBins = new Uint8Array(32);
+			let micAnalyserRef = null;
+			let levelRafId = 0;
+
+			function startLevelMeter(analyser) {
+				micAnalyserRef = analyser;
+				const tick = () => {
+					if (!micAnalyserRef) return;
+					micAnalyserRef.getByteFrequencyData(_levelBins);
+					let sum = 0;
+					for (let i = 0; i < _levelBins.length; i++) sum += _levelBins[i];
+					const level = Math.min(1, (sum / _levelBins.length) / 80);
+					micFillEl.style.width = `${level * 100}%`;
+					levelRafId = requestAnimationFrame(tick);
+				};
+				levelRafId = requestAnimationFrame(tick);
+			}
+
+			function stopLevelMeter() {
+				cancelAnimationFrame(levelRafId);
+				micAnalyserRef = null;
+				micFillEl.style.width = '0%';
+			}
+
 			// ── Camera ────────────────────────────────────────────────────
+			let camOn = false;
+			let imageInterval = null;
+
 			async function startCamera() {
 				try {
-					if (!mocapReady) {
-						await mocap.init();
-						mocapReady = true;
-					}
+					if (!mocapReady) { await mocap.init(); mocapReady = true; }
 					const videoEl = await mocap.startWebcam();
 					pipVideo.srcObject = videoEl.srcObject;
 					mocap.attach(avatar, headBone);
@@ -301,7 +435,6 @@
 					camOn = true;
 					camBtn.classList.add('active');
 					camBtn.textContent = '📷 Camera on';
-
 					imageInterval = setInterval(() => {
 						if (!camOn || !activeClient || videoEl.readyState < 2) return;
 						const ctx2d = tempCanvas.getContext('2d');
@@ -314,15 +447,18 @@
 			}
 
 			function stopCamera() {
-				clearInterval(imageInterval);
-				imageInterval = null;
-				mocap.stop();
-				mocapActive = false;
+				clearInterval(imageInterval); imageInterval = null;
+				mocap.stop(); mocapActive = false;
 				pip.classList.remove('visible');
 				camOn = false;
 				camBtn.classList.remove('active');
 				camBtn.textContent = '📷 Camera off';
 			}
+
+			// ── Session state ─────────────────────────────────────────────
+			let activeClient = null;
+			let activeDriver = null;
+			let micMuted     = false;
 
 			// ── Button handlers (wired once) ──────────────────────────────
 			micBtn.addEventListener('click', async () => {
@@ -330,28 +466,40 @@
 				micMuted = !micMuted;
 				if (micMuted) {
 					activeClient.stopMic();
-					micBtn.classList.remove('active');
+					stopLevelMeter();
+					micLevelEl.classList.add('muted');
+					micBtn.classList.remove('recording');
 					micBtn.textContent = '🎙 Unmute';
 					setStatus('idle', 'Muted');
 				} else {
 					await activeClient.startMic();
-					micBtn.classList.add('active');
+					if (activeClient.micAnalyser) startLevelMeter(activeClient.micAnalyser);
+					micLevelEl.classList.remove('muted');
+					micBtn.classList.add('recording');
 					micBtn.textContent = '🎙 Mute';
 					setStatus('idle', 'Listening');
 				}
 			});
 
-			camBtn.addEventListener('click', () => {
-				camOn ? stopCamera() : startCamera();
-			});
+			camBtn.addEventListener('click', () => { camOn ? stopCamera() : startCamera(); });
+
+			function doSendText() {
+				const text = textInput.value.trim();
+				if (!text || !activeClient) return;
+				appendOrUpdate('user', text, true);
+				activeClient.sendText(text);
+				textInput.value = '';
+			}
+			sendBtn.addEventListener('click', doSendText);
+			textInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSendText(); });
 
 			endBtn.addEventListener('click', () => {
 				if (!activeClient) return;
-				activeDriver?.stop();
-				activeDriver = null;
+				activeDriver?.stop(); activeDriver = null;
+				stopTalkGesture();
 				stopCamera();
-				activeClient.disconnect();
-				activeClient = null;
+				stopLevelMeter();
+				activeClient.disconnect(); activeClient = null;
 				micMuted = false;
 
 				controlsEl.classList.remove('visible');
@@ -362,14 +510,12 @@
 				overlayStatus.textContent = 'Conversation ended.';
 				startBtn.disabled = false;
 				startBtn.textContent = 'Start again';
-				micBtn.classList.remove('active');
+				micBtn.classList.remove('recording');
 				micBtn.textContent = '🎙 Mute';
 			});
 
 			window.addEventListener('keydown', (e) => {
-				if (e.key.toLowerCase() === 'm' && e.target === document.body && activeClient) {
-					micBtn.click();
-				}
+				if (e.key.toLowerCase() === 'm' && e.target === document.body && activeClient) micBtn.click();
 			});
 
 			// ── Start conversation ────────────────────────────────────────
@@ -380,7 +526,7 @@
 				let apiKey;
 				try {
 					const resp = await fetch('/api/gemini-key');
-					if (!resp.ok) throw new Error(`key endpoint: ${resp.status}`);
+					if (!resp.ok) throw new Error(`key endpoint ${resp.status}`);
 					({ key: apiKey } = await resp.json());
 				} catch (err) {
 					overlayStatus.textContent = `Error: ${err.message}`;
@@ -392,9 +538,10 @@
 
 				const client = new GeminiLiveClient({
 					apiKey,
+					voiceName: voiceSelect.value,
 					systemInstruction:
 						'You are a friendly, expressive 3D avatar assistant. ' +
-						'Keep responses concise — under 3 sentences unless the user asks for detail. ' +
+						'Keep responses concise — 1-2 sentences unless detail is requested. ' +
 						'You can see the user through their webcam when they enable it.',
 				});
 
@@ -409,48 +556,49 @@
 				overlayStatus.textContent = 'Starting microphone…';
 
 				// Reset per-session state
-				modelTextBuf = '';
-				micMuted     = false;
+				streamingUserDiv  = null;
+				streamingModelDiv = null;
 				mouthTarget.attach(avatar);
+				micMuted = false;
 
-				// LipsyncDriver tapped from Gemini's audio output analyser
 				const analyser = client.analyser;
-				const driver   = analyser
-					? new LipsyncDriver({ analyser, target: mouthTarget, gain: 2.0 })
-					: null;
+				const driver   = analyser ? new LipsyncDriver({ analyser, target: mouthTarget, gain: 2.0 }) : null;
 
 				// Gemini event wiring
 				client.on('audio', () => {
 					setStatus('speaking', 'Speaking');
 					driver?.start();
+					playTalkGesture();
 				});
 				client.on('audio_end', () => {
 					driver?.stop();
-					// Stay "thinking" until turn_complete confirms the turn is done
-					if (statusEl.dataset.state === 'speaking') {
-						setStatus('thinking', 'Thinking…');
-					}
+					stopTalkGesture();
+					if (statusEl.dataset.state === 'speaking') setStatus('thinking', 'Thinking…');
 				});
-				client.on('text', (ev) => {
-					modelTextBuf += ev.detail?.text ?? '';
+				client.on('input_transcript', (ev) => {
+					const { text, finished } = ev.detail;
+					appendOrUpdate('user', text, finished);
+				});
+				client.on('output_transcript', (ev) => {
+					const { text, finished } = ev.detail;
+					appendOrUpdate('model', text, finished);
 				});
 				client.on('turn_complete', () => {
-					if (modelTextBuf.trim()) {
-						addMessage('model', modelTextBuf.trim());
-						modelTextBuf = '';
-					}
+					// Finalize any open streaming bubbles
+					if (streamingModelDiv) { streamingModelDiv.classList.remove('streaming'); streamingModelDiv = null; }
 					driver?.stop();
+					stopTalkGesture();
 					setStatus('idle', 'Listening');
 				});
 				client.on('interrupted', () => {
+					if (streamingModelDiv) { streamingModelDiv.classList.remove('streaming'); streamingModelDiv = null; }
 					driver?.stop();
-					modelTextBuf = '';
+					stopTalkGesture();
 					setStatus('listening', 'You');
 				});
 				client.on('error', (ev) => {
-					const msg = ev.detail?.message ?? 'Unknown error';
-					console.error('[gemini-live]', msg);
-					setStatus('idle', 'Error — reconnect');
+					console.error('[gemini-live]', ev.detail?.message);
+					setStatus('idle', 'Error — check console');
 				});
 
 				try {
@@ -462,22 +610,21 @@
 					return;
 				}
 
-				// Store references so button handlers can reach them
 				activeClient = client;
 				activeDriver = driver;
 
+				if (client.micAnalyser) startLevelMeter(client.micAnalyser);
+
 				setStatus('idle', 'Listening');
-				micBtn.classList.add('active');
+				micBtn.classList.add('recording');
 				micBtn.textContent = '🎙 Mute';
 
-				// Hide stage copy so transcript has room; show controls
 				stageEl.classList.add('hidden');
 				overlay.classList.add('hidden');
+				transcriptEl.innerHTML = '';
 				controlsEl.classList.add('visible');
 				statusEl.classList.add('visible');
 				transcriptEl.classList.add('visible');
-				// Clear any transcript from a previous session
-				transcriptEl.innerHTML = '';
 			});
 
 			// ── Render loop ───────────────────────────────────────────────

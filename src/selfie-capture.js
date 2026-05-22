@@ -155,7 +155,6 @@ submitBtn.addEventListener('click', () => {
 			},
 		}),
 	);
-	// Temporary visual ack until task 3 wires the pipeline.
 	submitBtn.textContent = 'Sending…';
 	submitBtn.disabled = true;
 	submitBtn.classList.remove('ready');
@@ -208,7 +207,7 @@ function renderSlot(slot) {
 
 	// Clean up any existing preview / retake artefacts.
 	frame.querySelector('img.preview')?.remove();
-	frame.querySelector('.slot-retake')?.remove();
+	frame.querySelector('.retake-btn')?.remove();
 
 	if (!file) {
 		frame.classList.remove('filled');
@@ -226,7 +225,7 @@ function renderSlot(slot) {
 
 	const retake = document.createElement('button');
 	retake.type = 'button';
-	retake.className = 'slot-retake';
+	retake.className = 'retake-btn';
 	retake.setAttribute('aria-label', `Remove ${slot} photo`);
 	retake.innerHTML =
 		'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15A9 9 0 1 1 18.36 5.64L23 10"/></svg>';

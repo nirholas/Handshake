@@ -38,6 +38,12 @@ async function getRegenProvider() {
 		_regenProviderName = name;
 		return { name, instance: _regenProviderCache };
 	}
+	if (name === 'gcp') {
+		const mod = await import('../_providers/gcp.js');
+		_regenProviderCache = mod.createRegenProvider();
+		_regenProviderName = name;
+		return { name, instance: _regenProviderCache };
+	}
 	throw Object.assign(new Error(`unknown AVATAR_REGEN_PROVIDER: ${name}`), {
 		code: 'regen_provider_unknown',
 		status: 501,
