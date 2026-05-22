@@ -12,13 +12,13 @@
 			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
 			.stage { max-width: 1000px; margin: 0 auto; padding: 48px 24px 80px; }
 			.crumb a { color: #8a8d98; text-decoration: none; }
-			.crumb a:hover { color: #d6ff3d; }
+			.crumb a:hover { color: #3dc1ff; }
 			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
 			.sub { color: #8a8d98; max-width: 64ch; margin: 0 0 30px; }
 			pre {
 				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
 				padding: 14px 16px; font-family: ui-monospace, monospace; font-size: 12.5px;
-				color: #d6ff3d; overflow-x: auto;
+				color: #3dc1ff; overflow-x: auto;
 			}
 			.card {
 				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
@@ -32,7 +32,7 @@
 			.viewer-host three-ws-viewer,
 			.viewer-host agent-3d { width: 100%; height: 460px; display: block; }
 			button {
-				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				background: #3dc1ff; color: #0a0a0a; border: 0; border-radius: 9px;
 				padding: 10px 14px; font-weight: 600; cursor: pointer; font: inherit;
 			}
 			button.secondary { background: #1e1f2b; color: #eee; }
@@ -43,7 +43,7 @@
 				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
 				color: #8a8d98; max-height: 200px; overflow: auto; white-space: pre-wrap;
 			}
-			.log .ok { color: #d6ff3d; }
+			.log .ok { color: #3dc1ff; }
 			.log .err { color: #ff6b6b; }
 			.log .info { color: #66d9ef; }
 			input[type="text"] {
@@ -233,7 +233,7 @@ const { avatar, loading, error } = useAvatar(id);</pre>
 					return h('div', null, [
 						renderForm(draft, setDraft, setId, log),
 						avatar
-							? h('pre', { key: 'pre', style: { color: '#d6ff3d', maxHeight: '240px', overflow: 'auto' } },
+							? h('pre', { key: 'pre', style: { color: '#3dc1ff', maxHeight: '240px', overflow: 'auto' } },
 								JSON.stringify(avatar, null, 2))
 							: null,
 					]);

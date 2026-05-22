@@ -1,6 +1,6 @@
 {
   "character_id": "403e7206-d314-416a-9ef2-c618e26a8b6e",
-  "generated_at": "2026-05-22T10:22:34.321Z",
+  "generated_at": "2026-05-22T12:55:28.188Z",
   "animations": {
     "c9c72233-b96c-11e4-a802-0aaa78deedf9": {
       "id": "c9c72233-b96c-11e4-a802-0aaa78deedf9",
@@ -3592,6 +3592,1826 @@
       "status": "permanent_fail",
       "http": 400,
       "failed_at": "2026-05-22T10:22:34.321Z"
+    },
+    "c9ccfb22-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccfb22-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Run Forward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:23:34.464Z"
+    },
+    "c9cccf35-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cccf35-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Slipping Off An Edge Then Regaining Balance",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:23:34.468Z"
+    },
+    "c9ccdd62-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccdd62-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking Backward Right Arc In A Sad Disposition",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:25:34.630Z"
+    },
+    "c9cd60ba-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd60ba-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rifle Kneeling To Standing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:29:34.776Z"
+    },
+    "c9cc6546-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc6546-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sword And Shield Look Around Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:30:34.911Z"
+    },
+    "c9cca162-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cca162-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Receive A Kick To The Groin To Standing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:32:35.067Z"
+    },
+    "c9cb647f-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cb647f-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sitting Unethusiastic Clap",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:32:35.073Z"
+    },
+    "c9cc0fd8-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc0fd8-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Harvesting With A Sythe",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:33:05.185Z"
+    },
+    "c9cc6aba-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc6aba-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sword And Shield Falling Back Death",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:33:05.187Z"
+    },
+    "c9cc615b-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc615b-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sword And Shield Blocked Impact",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:33:35.310Z"
+    },
+    "c9cc20fd-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc20fd-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Breakdance Ground Footwork To Stand Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:33:35.356Z"
+    },
+    "c9cb76de-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cb76de-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Short Yell Sitting Forward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:34:36.440Z"
+    },
+    "c9cbee0c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cbee0c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Zombie Crawling Forward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:36:36.615Z"
+    },
+    "c9c6d6e6-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6d6e6-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Opening The Lid On A Chest Or Box",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:37:36.743Z"
+    },
+    "c9c76f5c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c76f5c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Person A - Winner",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:37:36.747Z"
+    },
+    "c9cc2a0c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc2a0c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Quarterback Scramble And Pass",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:38:36.888Z"
+    },
+    "c9c693bf-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c693bf-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Pointing Behind With Thumb",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:40:37.045Z"
+    },
+    "c9c6ae7b-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6ae7b-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Putting Rifle Away Behind The Shoulder",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:44:37.205Z"
+    },
+    "c9cc264d-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc264d-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Football Fieldgoal Hike",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:44:37.207Z"
+    },
+    "c9c6b74c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6b74c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Ready Alert Two Hand Pistol Grip",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:49:37.371Z"
+    },
+    "c9c6fcc0-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6fcc0-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Yelling In Anger",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:49:37.376Z"
+    },
+    "c9c699a5-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c699a5-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sit With Fidgeting Feet",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:50:07.503Z"
+    },
+    "c9c6a383-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6a383-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Throwing A Grenade While Kneeling Pulling Pin With Teeth",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:51:07.647Z"
+    },
+    "c9c684c5-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c684c5-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Zombie Thrust Kick With Rear Foot",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:51:07.649Z"
+    },
+    "c9c65e61-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c65e61-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Hip Hop 'Kick Step' Dancing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:51:37.794Z"
+    },
+    "c9c63186-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c63186-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Dying Rear Impact Falling On Two Knees",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:51:37.823Z"
+    },
+    "c9c61439-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c61439-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Hurried Walk",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:52:37.938Z"
+    },
+    "c9c641cc-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c641cc-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking With Arm Injury",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:52:37.943Z"
+    },
+    "c9cb23e7-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cb23e7-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Starting Back Squat Workout From Fitness Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:53:08.087Z"
+    },
+    "c9c63db2-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c63db2-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Roundhouse Kick With Front Foot Advancing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:54:08.250Z"
+    },
+    "c9c68200-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c68200-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Zombie Headbutt With Hand Grab",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:56:08.400Z"
+    },
+    "c9ca643c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca643c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Medium Putting Shot",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:56:08.412Z"
+    },
+    "c9ca7e66-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca7e66-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Kip Up To Standing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:57:08.547Z"
+    },
+    "c9cb1672-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cb1672-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Mid Body Jab",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T10:59:08.693Z"
+    },
+    "c9cacf79-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cacf79-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Start Jumping Jacks From Fitness Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:03:08.852Z"
+    },
+    "c9cb3946-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cb3946-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Boxing Taunt",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:03:08.866Z"
+    },
+    "c9c9fe56-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9fe56-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing Idle Holding Suitcase",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:05:09.013Z"
+    },
+    "c9cad888-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cad888-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Stop Jumping Jacks To Fitness Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:05:09.015Z"
+    },
+    "c9cb01c1-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cb01c1-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Receiving A Big Hit From A Left Punch",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:09:09.181Z"
+    },
+    "c9c94891-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c94891-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Taking A Step Forward With Aiming Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:09:09.183Z"
+    },
+    "c9ca94bd-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca94bd-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crouched For Cover Against Object",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:09:39.295Z"
+    },
+    "c9c9d793-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9d793-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Stop Pushing A Heavy Object",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:09:39.301Z"
+    },
+    "c9c9bd67-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9bd67-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Free Hanging Shimmy Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:10:09.428Z"
+    },
+    "c9c9abd3-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9abd3-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Free Hanging Shimmy Left",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:10:09.445Z"
+    },
+    "c9c99282-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c99282-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Showing Loser Gesture While Standing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:10:39.551Z"
+    },
+    "c9c997ce-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c997ce-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crouched For Cover Against Object",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:11:09.690Z"
+    },
+    "c9c88183-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c88183-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Laying Down On An Exam Table/Bed As In A Doctors Office",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:11:09.736Z"
+    },
+    "c9c939cf-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c939cf-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Jumping While Walking Backwards",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:12:09.822Z"
+    },
+    "c9c9794e-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9794e-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing Left Turn",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:12:09.850Z"
+    },
+    "c9c8847c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8847c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Running While Firing Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:12:40.067Z"
+    },
+    "c9c82503-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c82503-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Calling For Help In A Sneaky Position",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:12:40.076Z"
+    },
+    "c9c8c81f-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8c81f-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Pilot Flips Low Switches In A Helicopter",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:13:40.252Z"
+    },
+    "c9c8a10a-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8a10a-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crouched Idle To Strafe Walk Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:15:40.465Z"
+    },
+    "c9c892df-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c892df-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Run Backwards To Standing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:17:40.615Z"
+    },
+    "c9c85a17-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c85a17-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Stops Walking While Aiming Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:17:40.652Z"
+    },
+    "c9c7f9c5-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c7f9c5-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking While Drunk",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:18:10.748Z"
+    },
+    "c9c8cebb-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8cebb-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing Up From A Kneeling Position",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:18:10.751Z"
+    },
+    "c9c7f035-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c7f035-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Hell Slammer Victim",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:18:40.885Z"
+    },
+    "c9c78fe1-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c78fe1-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Banging Fist On Table",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:18:40.912Z"
+    },
+    "c9c70a8d-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c70a8d-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Samba Funky Pocoto Variation 1",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:19:10.999Z"
+    },
+    "c9c736ed-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c736ed-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking Backwards Sliding Feet",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:19:11.001Z"
+    },
+    "c9c6e758-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6e758-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Explosion From Behind",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:20:11.149Z"
+    },
+    "c9c7f41f-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c7f41f-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Inward Block",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:20:11.152Z"
+    },
+    "c9c713dd-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c713dd-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Zombie Overhead Two-Hand Attack",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:20:41.261Z"
+    },
+    "c9c73aa7-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c73aa7-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Tut Hip Hop Dance Variation One",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:21:41.399Z"
+    },
+    "c9cc2acd-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc2acd-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Receiver Catch On Boundary Line",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:21:41.405Z"
+    },
+    "c9cd7f15-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd7f15-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Soccer Jog Diagonal Backward Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:22:11.534Z"
+    },
+    "c9cd1e71-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd1e71-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Ninja Run Backward Arc Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:22:11.544Z"
+    },
+    "c9cdbf21-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cdbf21-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Run Arc Left With An Aimed Pistol",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:22:41.685Z"
+    },
+    "c9ccc765-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccc765-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Backwards Running",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:22:41.693Z"
+    },
+    "c9cc7140-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc7140-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Great Sword Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:23:41.864Z"
+    },
+    "c9ca93a4-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca93a4-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crouch Cover To Standing Ready",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:24:11.953Z"
+    },
+    "c9ca535b-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca535b-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Doing A Cartwheel",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:24:11.959Z"
+    },
+    "c9ca9021-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca9021-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Starts A Swing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:25:12.081Z"
+    },
+    "c9c9eb1a-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9eb1a-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Walk With Briefcase",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:25:12.098Z"
+    },
+    "c9cc3416-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc3416-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Breakdance Flair Start",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:25:42.345Z"
+    },
+    "c9ccb4c2-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccb4c2-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Mutant Roaring",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:25:42.348Z"
+    },
+    "c9ca0326-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca0326-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Answers A Phone While Walking",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:26:42.479Z"
+    },
+    "c9cc7b4d-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc7b4d-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Great Sword Strafe Right Run",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:26:42.486Z"
+    },
+    "9c41a5e0-4492-4dd9-ad73-9edf079bf509": {
+      "id": "9c41a5e0-4492-4dd9-ad73-9edf079bf509",
+      "name": "Right Hand On Hip, Left Arm Raised",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:27:12.722Z"
+    },
+    "a55d8f43-5c5c-4b3c-8ad7-4e4b93e2491c": {
+      "id": "a55d8f43-5c5c-4b3c-8ad7-4e4b93e2491c",
+      "name": "On Hands And Toes, Right Leg Forward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:27:12.727Z"
+    },
+    "25e57c87-c073-4422-b9f7-17ce43b63397": {
+      "id": "25e57c87-c073-4422-b9f7-17ce43b63397",
+      "name": "Male Twist Left Idle To Twist Right Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:28:12.868Z"
+    },
+    "c9cc69f1-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc69f1-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sword And Shield Powering Up",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:28:12.890Z"
+    },
+    "c9cec849-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cec849-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking Left With Bow",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:28:42.992Z"
+    },
+    "c9ce8316-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce8316-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Cross Jumps",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:28:43.016Z"
+    },
+    "c9ced411-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ced411-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Right To Left Attack With Axe",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:29:43.130Z"
+    },
+    "8bdab85d-3a33-474e-a205-7b55baff2977": {
+      "id": "8bdab85d-3a33-474e-a205-7b55baff2977",
+      "name": "Legs Crossed, Arms Crossed",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:29:43.134Z"
+    },
+    "c9ce7487-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce7487-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Laying Using An Inhaler",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:30:13.256Z"
+    },
+    "c9cea0d3-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cea0d3-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rifle Crouched Walk Backward Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:30:13.260Z"
+    },
+    "c9cee3f5-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cee3f5-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Turning 90 Degrees Right With Axe",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:30:13.310Z"
+    },
+    "c9cd9222-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd9222-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sporty Granny Strong Gesture",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:30:43.522Z"
+    },
+    "c9cd8e51-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd8e51-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking In A Left Arc Carrying A Box",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:31:43.664Z"
+    },
+    "c9cd69f9-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd69f9-b96c-11e4-a802-0aaa78deedf9",
+      "name": "180 Degree Left Turn",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:31:43.667Z"
+    },
+    "c9ccf1f8-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccf1f8-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Happy Run Forward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:32:13.979Z"
+    },
+    "c9c69efe-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c69efe-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rocking Back And Forth As If Dizzy",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:33:14.131Z"
+    },
+    "c9c6a884-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6a884-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing Praying While Swaying",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:33:14.137Z"
+    },
+    "c9c68dee-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c68dee-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Stop Start Walking",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:33:44.261Z"
+    },
+    "c9c6c2f6-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6c2f6-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Scary Clown Walk",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:33:44.309Z"
+    },
+    "c9c66382-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c66382-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Jazz Dancing 'Rockette Kick'",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:34:14.402Z"
+    },
+    "c9c65515-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c65515-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Batting Idle Variation",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:35:14.554Z"
+    },
+    "c9c63736-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c63736-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Kneeling Fantasy Gunplay With Hand Cannon",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:35:14.556Z"
+    },
+    "c9c62c97-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c62c97-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Dying With Front Hit To The Head And Fall On One Knee",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:37:14.755Z"
+    },
+    "c9c6d258-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6d258-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Referee 10 Count",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:41:14.918Z"
+    },
+    "c9c61b83-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c61b83-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Elbow Punch",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:41:14.920Z"
+    },
+    "c9c61d25-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c61d25-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Knife Stab With The Rear Hand And Fore Grip",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:41:45.043Z"
+    },
+    "c9c62af7-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c62af7-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crouch To Stand With Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:41:45.048Z"
+    },
+    "c9ce8e76-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce8e76-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rifle Run Forward Left",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:42:15.170Z"
+    },
+    "a819c6b5-4aaa-4a17-8c94-a5f70db6d68f": {
+      "id": "a819c6b5-4aaa-4a17-8c94-a5f70db6d68f",
+      "name": "Leaning Back, Arms Behind",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:43:15.305Z"
+    },
+    "c9cef323-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cef323-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Dancing The Maraschino Step",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:43:15.315Z"
+    },
+    "305747e7-bb9c-4d6c-b1d7-18a07c24c59a": {
+      "id": "305747e7-bb9c-4d6c-b1d7-18a07c24c59a",
+      "name": "Female Walk Start Turining 180 To The Left",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:44:15.466Z"
+    },
+    "c9cdc569-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cdc569-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Injured Walking",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:44:15.476Z"
+    },
+    "4bc6d762-60d4-438f-b7d1-ae46df74b075": {
+      "id": "4bc6d762-60d4-438f-b7d1-ae46df74b075",
+      "name": "Landing From Running  Jump Into Run Forward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:44:45.577Z"
+    },
+    "edc148eb-b0a1-4a9f-80a1-20a72b60456b": {
+      "id": "edc148eb-b0a1-4a9f-80a1-20a72b60456b",
+      "name": "Standing Idle Looking Around",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:45:45.749Z"
+    },
+    "fd21a485-73e8-41a1-9d76-9a42ff687c3e": {
+      "id": "fd21a485-73e8-41a1-9d76-9a42ff687c3e",
+      "name": "Female Idle To Walk Forward - Knees High",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:45:45.803Z"
+    },
+    "d6589536-da06-46f2-90b1-51157c550fc1": {
+      "id": "d6589536-da06-46f2-90b1-51157c550fc1",
+      "name": "On Right Leg",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:46:15.862Z"
+    },
+    "733bfe2e-9261-4c43-9265-d9af6f027c23": {
+      "id": "733bfe2e-9261-4c43-9265-d9af6f027c23",
+      "name": "Male Walk Forward 01",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:46:15.871Z"
+    },
+    "c9ceb3c9-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ceb3c9-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Examining Bow",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:47:16.005Z"
+    },
+    "e84e677b-c981-4333-8242-3ff820f8cf7f": {
+      "id": "e84e677b-c981-4333-8242-3ff820f8cf7f",
+      "name": "Arms Raised",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:47:16.009Z"
+    },
+    "c9cea8f6-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cea8f6-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rifle Death Crouched From Headshot Front",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:47:46.254Z"
+    },
+    "c9ced674-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ced674-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Kick With Right Foot Holding Axe",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:47:46.256Z"
+    },
+    "20c6a997-f8b9-4521-92fa-ee9d732bf765": {
+      "id": "20c6a997-f8b9-4521-92fa-ee9d732bf765",
+      "name": "Female Walk Forward To Twist Left Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:48:46.457Z"
+    },
+    "c9cee889-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cee889-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Equipping Axe Underarm",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:50:46.596Z"
+    },
+    "c9cd39f5-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd39f5-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Mma High Kick",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:51:46.704Z"
+    },
+    "1f153edf-914f-4562-9344-5765efc0062d": {
+      "id": "1f153edf-914f-4562-9344-5765efc0062d",
+      "name": "One Handed Casting Spell Upward Sweep",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:51:46.706Z"
+    },
+    "c9cd7919-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd7919-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing Arguing With Another Person",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:52:46.831Z"
+    },
+    "c9cd452d-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd452d-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Baseball Swinging Strike",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:52:46.845Z"
+    },
+    "c9cd5dbe-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd5dbe-b96c-11e4-a802-0aaa78deedf9",
+      "name": "180 Degree Right Turn",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:53:16.942Z"
+    },
+    "c9cdaf7b-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cdaf7b-b96c-11e4-a802-0aaa78deedf9",
+      "name": "One Handed Club Combo Attack",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:53:16.944Z"
+    },
+    "c9ce64fc-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce64fc-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Laying On A Bed Shaking Head",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:53:47.065Z"
+    },
+    "c9ce76c2-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce76c2-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Moving In A Wheelchair",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:53:47.092Z"
+    },
+    "c9ce5e71-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce5e71-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Running Backward While Drunk",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:54:17.200Z"
+    },
+    "c9cd9f7a-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd9f7a-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing Planting A Tree",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:54:17.242Z"
+    },
+    "c9ce99ef-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce99ef-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rifle Walk Backward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:54:17.338Z"
+    },
+    "c9ce4ff2-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce4ff2-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Injured Running Turning Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:54:47.355Z"
+    },
+    "c9ce7187-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce7187-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Laying Squirming And Moaning",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:54:47.385Z"
+    },
+    "c9ce68e0-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce68e0-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Stroke Victim Laying Shrugging",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:55:47.477Z"
+    },
+    "c9ce90bc-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce90bc-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rifle Sprint Forward Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:56:17.630Z"
+    },
+    "c9cd8228-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd8228-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Getting Hit On The Back Of Head With An Object When Running",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:57:17.775Z"
+    },
+    "c9ce5a78-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ce5a78-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Turning Left While Walking Left",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:59:17.924Z"
+    },
+    "c9cd4002-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd4002-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Baseball Base Hit - Double Plus",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:59:17.949Z"
+    },
+    "c9cd1860-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd1860-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Ninja Walk Forward Arc Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T11:59:48.164Z"
+    },
+    "c9cd57c4-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd57c4-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Pulling Out Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:00:48.381Z"
+    },
+    "c9cd7e53-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd7e53-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Soccer Jog Diagonal Forward Left",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:00:48.389Z"
+    },
+    "c9ca5964-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca5964-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Short Chip Shot",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:01:18.502Z"
+    },
+    "c9ca96ec-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca96ec-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crouched Cover Sneaking Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:01:18.581Z"
+    },
+    "c9cac28e-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cac28e-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Basic Push Up Transition To Fitness Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:01:48.660Z"
+    },
+    "c9ca9161-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca9161-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Runs Up A Wall Onto A Platform",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:01:48.664Z"
+    },
+    "c9cab4d0-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cab4d0-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Hand Stand Kick With Both Feet To Kip Up",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:02:18.797Z"
+    },
+    "c9ca726a-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca726a-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Post-Putting Emotional Victory Gesture",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:02:18.802Z"
+    },
+    "c9cadf65-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cadf65-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Illegal Cross Elbow",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:02:18.806Z"
+    },
+    "c9c9995b-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9995b-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Hanging On Wall To Jump Off",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:02:49.087Z"
+    },
+    "c9c99025-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c99025-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Being Terrified While Standing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:03:49.201Z"
+    },
+    "c9c97c58-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c97c58-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Running Strafe To The Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:03:49.204Z"
+    },
+    "c9c962ca-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c962ca-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crawling Backwards While In A Prone Position",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:04:19.351Z"
+    },
+    "c9ca50c4-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca50c4-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Having A Meeting W/ Another At A Desk",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:04:19.356Z"
+    },
+    "c9c9e5e8-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9e5e8-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Getting Snuck Up On And Strangled",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:04:49.488Z"
+    },
+    "c9c9e0ac-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9e0ac-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing Cover To Cover Transition",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:04:49.491Z"
+    },
+    "c9c9f288-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9f288-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Stopping To Drink From Drinking Fountain",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:05:19.628Z"
+    },
+    "c9c88838-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c88838-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Upright Strafe Run Left To Stop",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:05:19.631Z"
+    },
+    "c9c90bfa-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c90bfa-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing Pout Gesture",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:05:49.847Z"
+    },
+    "c9c8a337-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8a337-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walk While Reloading Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:06:19.912Z"
+    },
+    "c9c9245d-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9245d-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Repeatedly Firing While Running With Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:07:20.074Z"
+    },
+    "c9c94a11-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c94a11-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Turning Left While Prone",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:09:20.219Z"
+    },
+    "c9c8c51f-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8c51f-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Frantically Crawling Backwards On Stomach",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:09:20.223Z"
+    },
+    "c9c93242-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c93242-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Mutant 90 Degree Right Turn From Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:09:50.352Z"
+    },
+    "c9c9377f-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9377f-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Mutant Eagle Jump Game Blend",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:09:50.361Z"
+    },
+    "c9c91ad5-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c91ad5-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Step Back Cautiously Agreeing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:10:20.475Z"
+    },
+    "c9c8caf2-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8caf2-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Stumbling Over Crate",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:10:20.484Z"
+    },
+    "c9c84254-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c84254-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking While Carrying Someone",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:10:50.724Z"
+    },
+    "c9c88301-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c88301-b96c-11e4-a802-0aaa78deedf9",
+      "name": "General Conversation",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:10:50.726Z"
+    },
+    "c9c90823-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c90823-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Getting Up From Being Knocked Down On The Ground",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:11:50.869Z"
+    },
+    "c9c8222d-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8222d-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Silly Run",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:11:50.891Z"
+    },
+    "c9c8a862-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8a862-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking With A Swagger",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:13:51.009Z"
+    },
+    "c9c665b7-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c665b7-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Jazz Dancing 'Around The World'- Loop",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:13:51.012Z"
+    },
+    "c9c6490f-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6490f-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Hulking Giant Jump Down",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:14:21.129Z"
+    },
+    "c9c69770-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c69770-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Leaning Square With Shoulders Against A Wall",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:15:21.270Z"
+    },
+    "c9c6b8bb-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6b8bb-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rifle Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:15:21.272Z"
+    },
+    "c9c8bd07-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8bd07-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing To Start Walking With Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:17:21.414Z"
+    },
+    "9df20f5a-85c9-4945-8392-8c341d8810ad": {
+      "id": "9df20f5a-85c9-4945-8392-8c341d8810ad",
+      "name": "Walking Forward With Bow",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:17:21.416Z"
+    },
+    "7c31ef17-f3f0-4a07-80e3-899100ec22c9": {
+      "id": "7c31ef17-f3f0-4a07-80e3-899100ec22c9",
+      "name": "Bending Forward, Arms Crossed Over Knees",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:17:51.532Z"
+    },
+    "fab2ce21-1c4a-4e33-8929-28212f0dfc2c": {
+      "id": "fab2ce21-1c4a-4e33-8929-28212f0dfc2c",
+      "name": "Jumping And Landing In Place With Bow",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:17:51.536Z"
+    },
+    "304a666d-6d1c-4ddd-9944-8710879c309c": {
+      "id": "304a666d-6d1c-4ddd-9944-8710879c309c",
+      "name": "On Back, Legs Crossed, Hands Behind Head",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:18:21.672Z"
+    },
+    "5d0f41e7-12d2-4d5b-98fc-42efbdd05929": {
+      "id": "5d0f41e7-12d2-4d5b-98fc-42efbdd05929",
+      "name": "Left Leg On Object, Left Hand On Knee, Right Hand On Hip",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:18:51.808Z"
+    },
+    "670efeec-dabc-492d-a713-a8a28a959249": {
+      "id": "670efeec-dabc-492d-a713-a8a28a959249",
+      "name": "Looking Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:18:51.814Z"
+    },
+    "e033b8e4-7c18-4491-884d-e16d4331bcf4": {
+      "id": "e033b8e4-7c18-4491-884d-e16d4331bcf4",
+      "name": "Pushing Backwards",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:18:51.817Z"
+    },
+    "0aef00f5-ea18-4e7c-a12d-6c92a08a9033": {
+      "id": "0aef00f5-ea18-4e7c-a12d-6c92a08a9033",
+      "name": "Leaning Back, Left Hand On Hip",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:19:22.073Z"
+    },
+    "b45e7d54-42bc-43e2-8a2f-a5afe5e3d3ac": {
+      "id": "b45e7d54-42bc-43e2-8a2f-a5afe5e3d3ac",
+      "name": "Death Falling To The Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:19:22.078Z"
+    },
+    "c9cc4999-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc4999-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sword And Shield Right Strafe Walk",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:20:22.230Z"
+    },
+    "9649e88e-b287-4025-a7d3-e890c67bacee": {
+      "id": "9649e88e-b287-4025-a7d3-e890c67bacee",
+      "name": "Arms Holding Right Knee",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:22:22.421Z"
+    },
+    "c9cbfa52-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cbfa52-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Turn To Getting Knocked Unconscious",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:22:22.427Z"
+    },
+    "460d707b-f0f0-4cea-9db1-c2eda13d8c1f": {
+      "id": "460d707b-f0f0-4cea-9db1-c2eda13d8c1f",
+      "name": "Blocking With Both Arms Out",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:24:22.554Z"
+    },
+    "c9cc0b63-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc0b63-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crouch Looking Around Corner",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:24:22.558Z"
+    },
+    "c9cc82f0-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc82f0-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Great Sword Blocked Impact",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:24:52.705Z"
+    },
+    "c9cc6860-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc6860-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sword And Shield Spell Casting",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:24:52.742Z"
+    },
+    "c9cc5b9b-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc5b9b-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sword And Shield Left Crouch Idle- Loop",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:25:22.846Z"
+    },
+    "c9cc62ee-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc62ee-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sword And Shield Jump Attack",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:25:22.858Z"
+    },
+    "c9cc575e-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc575e-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sword And Shield Blocked Impact",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:25:52.965Z"
+    },
+    "c9ccc468-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccc468-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Backward Walk",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:25:52.971Z"
+    },
+    "c9ccc5dd-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccc5dd-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standard Running",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:26:23.116Z"
+    },
+    "c9ccc0b3-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ccc0b3-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Transition From Idle To Sheathing A Great Sword",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:27:23.278Z"
+    },
+    "c9cc95e9-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc95e9-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Great Sword Admiring Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:27:23.351Z"
+    },
+    "c9cc240a-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc240a-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Zombie Getting Hit And Falling Forward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:29:23.430Z"
+    },
+    "c9cd0819-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd0819-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Mma Takedown To Ground And Pound",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:29:23.432Z"
+    },
+    "c9cd2609-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cd2609-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Attacker Brutal Assassination With Pipe",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:29:53.550Z"
+    },
+    "c9cb288f-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cb288f-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sumo High Pull Workout",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:30:23.710Z"
+    },
+    "c9cb1308-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cb1308-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Mid Hook Punch To The Head",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:30:23.813Z"
+    },
+    "c9cafa24-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cafa24-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Receiving A Hit In The Ribs",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:30:54.010Z"
+    },
+    "c9cafdf9-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cafdf9-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Receiving A Hit To The Body By A Straight",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:30:54.013Z"
+    },
+    "c9c9b2b7-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9b2b7-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Climbing Down A Wall",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:31:24.104Z"
+    },
+    "c9c9bf01-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9bf01-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Running To Flip Off Wall",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:32:24.271Z"
+    },
+    "c9cb6c0f-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cb6c0f-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Less Enthusiastic Fist Pump",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:32:24.274Z"
+    },
+    "c9c9829c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9829c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking Strafe To The Left",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:34:24.416Z"
+    },
+    "c9cad103-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cad103-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Burpee Workout",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:34:24.437Z"
+    },
+    "c9c959ad-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c959ad-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Administering Cpr To A Victim On The Ground",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:34:54.557Z"
+    },
+    "c9cba02e-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cba02e-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Capoeira Cartwheel To Roll Escape",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:35:54.696Z"
+    },
+    "c9c95f5e-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c95f5e-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Dive Roll From Standing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:36:54.853Z"
+    },
+    "c9c99a2b-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c99a2b-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crouched Cover Sneaking Left",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:36:54.905Z"
+    },
+    "c9c9965a-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9965a-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Ready Pose To Adjusting Stance",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:37:55.006Z"
+    },
+    "c9ca5a94-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca5a94-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Medium Chip Shot",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:37:55.034Z"
+    },
+    "c9ca614b-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca614b-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Big Drive",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:38:25.127Z"
+    },
+    "c9c9fb33-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9fb33-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing Texting On Phone",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:38:25.184Z"
+    },
+    "c9c93840-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c93840-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Jumping While Strafing Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:38:55.277Z"
+    },
+    "c9c9456e-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9456e-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rapid Fire While In Crouch Posistion",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:38:55.279Z"
+    },
+    "c9c9b7c5-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9b7c5-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Right Hook Punch From Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:39:55.476Z"
+    },
+    "c9ca0631-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca0631-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Searching The Top Drawer Of A File Cabinet",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:41:55.577Z"
+    },
+    "c9c9d0d6-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9d0d6-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Mid-Air Falling Into A Roll Game Blend",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:41:55.587Z"
+    },
+    "c9c9c626-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9c626-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Standing Left Uppercut Punch",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:42:25.736Z"
+    },
+    "c9c9d617-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c9d617-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Pushing A Heavy Object",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:42:25.782Z"
+    },
+    "c9c8c75e-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8c75e-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crouched Against Wall To Crouch Walk",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:42:55.860Z"
+    },
+    "c9ca6b7d-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9ca6b7d-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Placing Tee Into The Ground",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:42:55.894Z"
+    },
+    "c9c8cbb3-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8cbb3-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Patting On The Back",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:43:25.979Z"
+    },
+    "c9c84593-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c84593-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Climbing Down To Standing",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:43:26.013Z"
+    },
+    "c9c87dd0-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c87dd0-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Rifle Run Dive Roll To Stopped",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:43:56.104Z"
+    },
+    "c9c8dc34-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8dc34-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Quickly Looking To The Right",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:43:56.150Z"
+    },
+    "c9c8a565-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8a565-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Knocked Down To Stomach",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:44:26.377Z"
+    },
+    "c9c85311-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c85311-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Carrying Someone To Turn Left",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:44:26.422Z"
+    },
+    "c9c85d41-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c85d41-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Helping Someone Into A Vehicle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:45:26.492Z"
+    },
+    "c9c8c6a4-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c8c6a4-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Sneaking Forward Quickly",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:45:56.651Z"
+    },
+    "c9c89a5c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c89a5c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Crouch To Running While Aiming Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:46:56.873Z"
+    },
+    "c9c83d6c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c83d6c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Laying On Back Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:46:56.876Z"
+    },
+    "c9c849de-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c849de-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Step Up To Jump Over Object",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:47:26.943Z"
+    },
+    "c9c7392c-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c7392c-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Snake Hip Hop Dance",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:47:26.946Z"
+    },
+    "c9c70517-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c70517-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Boxing Idle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:48:27.076Z"
+    },
+    "c9c835e6-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c835e6-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Throwing And Object",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:48:27.111Z"
+    },
+    "c9c70319-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c70319-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Boxing Back Hand Uppercut",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:48:57.224Z"
+    },
+    "c9cc27cd-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc27cd-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Running To Tackle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:48:57.284Z"
+    },
+    "c9cc2d10-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9cc2d10-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Soccer 360 Spin",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:49:57.362Z"
+    },
+    "c9c73337-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c73337-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Running Sideways Facing Forward",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:49:57.364Z"
+    },
+    "c9c6fe3b-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6fe3b-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Pick Up Object And Examine",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:51:57.524Z"
+    },
+    "c9c7090b-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c7090b-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Body Punch To The Knee",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:51:57.541Z"
+    },
+    "c9c69167-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c69167-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Female Peek Around Corner With Gun",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:52:27.624Z"
+    },
+    "c9c6eb62-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c6eb62-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Ballet Dance Variation One",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:52:27.681Z"
+    },
+    "c9c623a5-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c623a5-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Front Snap Kick With The Rear Foot Retreating",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:52:57.760Z"
+    },
+    "c9c619e3-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c619e3-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Boxing Dodge Retreat",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:52:57.773Z"
+    },
+    "c9c64507-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c64507-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Back Leg Sweep",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:53:57.906Z"
+    },
+    "c9c61f91-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c61f91-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Male Front Snap Kick With The Lead Foot",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:53:57.909Z"
+    },
+    "c9c83298-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c83298-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Strafe Right With Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:54:28.024Z"
+    },
+    "c9c7f89a-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c7f89a-b96c-11e4-a802-0aaa78deedf9",
+      "name": "A Cross Punch",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:54:28.041Z"
+    },
+    "c9c928d0-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c928d0-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Running Backwards Crouched While Aiming Rifle",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:55:28.158Z"
+    },
+    "c9c911f9-b96c-11e4-a802-0aaa78deedf9": {
+      "id": "c9c911f9-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Turning Head To The Side In A Cocky Manner",
+      "status": "permanent_fail",
+      "http": 400,
+      "failed_at": "2026-05-22T12:55:28.188Z"
     }
   }
 }

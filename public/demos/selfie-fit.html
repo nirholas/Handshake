@@ -12,7 +12,7 @@
 			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
 			.stage { max-width: 1100px; margin: 0 auto; padding: 48px 24px 80px; }
 			.crumb a { color: #8a8d98; text-decoration: none; }
-			.crumb a:hover { color: #d6ff3d; }
+			.crumb a:hover { color: #3dc1ff; }
 			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
 			h2 { font-size: 16px; font-weight: 600; margin: 0 0 12px; letter-spacing: -0.005em; }
 			.sub { color: #8a8d98; max-width: 64ch; margin: 0 0 30px; }
@@ -31,7 +31,7 @@
 				transition: border-color 0.15s, transform 0.15s;
 			}
 			.slot:hover { border-color: #2c2d3d; }
-			.slot.active { border-color: #d6ff3d; border-style: solid; }
+			.slot.active { border-color: #3dc1ff; border-style: solid; }
 			.slot.filled { border-style: solid; border-color: #2c2d3d; cursor: default; }
 			.slot .placeholder {
 				color: #6a6d7c; font-size: 12px; text-align: center; padding: 12px;
@@ -55,7 +55,7 @@
 				background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
 				color: #8a8d98; letter-spacing: 0.04em; text-transform: uppercase;
 			}
-			.chip.ok { color: #d6ff3d; border-color: rgba(214,255,61,0.35); background: rgba(214,255,61,0.12); }
+			.chip.ok { color: #3dc1ff; border-color: rgba(61, 193, 255,0.35); background: rgba(61, 193, 255,0.12); }
 			.chip.bad { color: #ff6b6b; border-color: rgba(255,107,107,0.35); background: rgba(255,107,107,0.12); }
 			.slot .footer {
 				position: absolute; bottom: 0; left: 0; right: 0;
@@ -67,7 +67,7 @@
 				padding: 6px 10px; font-size: 11px; font-weight: 600; border-radius: 6px;
 				cursor: pointer; letter-spacing: 0.04em; text-transform: uppercase;
 			}
-			.slot-btn.primary { background: #d6ff3d; color: #0a0a0a; }
+			.slot-btn.primary { background: #3dc1ff; color: #0a0a0a; }
 			.slot-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 			.slot .upload-input { display: none; }
 
@@ -82,12 +82,12 @@
 				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
 				padding: 8px 12px; font-size: 13px;
 			}
-			.radio input { accent-color: #d6ff3d; }
+			.radio input { accent-color: #3dc1ff; }
 			.radio:hover { border-color: #2c2d3d; }
-			.radio.selected { border-color: #d6ff3d; color: #d6ff3d; }
+			.radio.selected { border-color: #3dc1ff; color: #3dc1ff; }
 
 			button.submit {
-				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				background: #3dc1ff; color: #0a0a0a; border: 0; border-radius: 9px;
 				padding: 12px 16px; font-weight: 600; cursor: pointer; font: inherit;
 				font-size: 15px;
 			}
@@ -98,14 +98,14 @@
 				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
 				line-height: 1.6; color: #8a8d98; max-height: 320px; overflow: auto; white-space: pre-wrap;
 			}
-			.log .ok { color: #d6ff3d; }
+			.log .ok { color: #3dc1ff; }
 			.log .err { color: #ff6b6b; }
 			.log .info { color: #66d9ef; }
 			.log .warn { color: #ffb84d; }
 
 			.result-card {
-				background: linear-gradient(180deg, rgba(214,255,61,0.06), rgba(214,255,61,0.02));
-				border: 1.5px solid rgba(214,255,61,0.3); border-radius: 14px;
+				background: linear-gradient(180deg, rgba(61, 193, 255,0.06), rgba(61, 193, 255,0.02));
+				border: 1.5px solid rgba(61, 193, 255,0.3); border-radius: 14px;
 				padding: 20px; display: none;
 			}
 			.result-card.show { display: block; }
@@ -221,7 +221,7 @@
 					</div>
 					<button class="submit" id="submit-btn" disabled>Upload 0/3</button>
 					<div class="result-card" id="result-card">
-						<h2 style="margin:0 0 6px;color:#d6ff3d">three.ws Selfie session ready</h2>
+						<h2 style="margin:0 0 6px;color:#3dc1ff">three.ws Selfie session ready</h2>
 						<div style="color:#8a8d98;font-size:13px">Open the editor to refine and export your avatar.</div>
 						<div class="url" id="result-url"></div>
 						<button class="submit" id="open-session-btn">Open three.ws Selfie editor</button>
@@ -574,10 +574,10 @@
 					// Draw wireframe (tesselation gives a sense of all 468 landmarks)
 					const utils = new DrawingUtils(ctx);
 					utils.drawConnectors(lms, FaceLandmarker.FACE_LANDMARKS_TESSELATION, {
-						color: 'rgba(214,255,61,0.35)', lineWidth: 0.5,
+						color: 'rgba(61, 193, 255,0.35)', lineWidth: 0.5,
 					});
 					utils.drawConnectors(lms, FaceLandmarker.FACE_LANDMARKS_FACE_OVAL, {
-						color: '#d6ff3d', lineWidth: 1.5,
+						color: '#3dc1ff', lineWidth: 1.5,
 					});
 					utils.drawConnectors(lms, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE, {
 						color: '#66d9ef', lineWidth: 1.2,

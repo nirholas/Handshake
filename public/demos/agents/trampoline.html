@@ -81,7 +81,7 @@
 				fireSquish(ctaBtn, { scaleY: 0.55 - bounceIdx * 0.05 });
 				if (bounceIdx === PEAKS.length - 1) {
 					// Final big bounce: cheer, confetti everywhere.
-					for (let i = 0; i < 4; i++) setTimeout(() => fireSplash(ix, iy, { count: 24, color: ['lime','gold','red','water'][i] }), i * 80);
+					for (let i = 0; i < 4; i++) setTimeout(() => fireSplash(ix, iy, { count: 24, color: ['blue','gold','red','water'][i] }), i * 80);
 					A.cheer.reset();
 					A.cheer.crossFadeFrom(current, 0.3, false).play();
 					current = A.cheer;

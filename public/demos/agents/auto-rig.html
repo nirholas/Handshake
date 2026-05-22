@@ -29,14 +29,14 @@
 				font: 800 22px/1.1 'Space Grotesk','Inter',sans-serif;
 				letter-spacing: -0.02em; color: #fff;
 			}
-			.panel h2 em { color: #d6ff3d; font-style: normal; }
+			.panel h2 em { color: #3dc1ff; font-style: normal; }
 			.panel .sub {
 				color: #555870; font-size: 12.5px; line-height: 1.6;
 				margin: 0 0 22px;
 			}
 			.panel .credit { font-size: 11px; color: #4a4d60; margin: 6px 0 22px; }
 			.panel .credit a { color: #888c9d; text-decoration: none; border-bottom: 1px dotted #888c9d40; }
-			.panel .credit a:hover { color: #d6ff3d; border-bottom-color: #d6ff3d; }
+			.panel .credit a:hover { color: #3dc1ff; border-bottom-color: #3dc1ff; }
 
 			.drop {
 				border: 1.5px dashed rgba(255,255,255,0.12);
@@ -49,12 +49,12 @@
 				margin-bottom: 16px;
 			}
 			.drop:hover, .drop.active {
-				border-color: #d6ff3d; background: #11141e;
+				border-color: #3dc1ff; background: #11141e;
 			}
 			.drop .ico { font-size: 26px; margin-bottom: 8px; }
 			.drop h3 { margin: 0 0 4px; font: 700 14px/1.2 'Space Grotesk','Inter',sans-serif; color: #fff; }
 			.drop p { margin: 0; color: #555870; font-size: 12px; }
-			.drop strong { color: #d6ff3d; font-weight: 600; }
+			.drop strong { color: #3dc1ff; font-weight: 600; }
 
 			.field { margin: 14px 0; }
 			.field label {
@@ -63,9 +63,9 @@
 				letter-spacing: 0.08em; text-transform: uppercase; color: #888c9d;
 				margin-bottom: 6px;
 			}
-			.field label .val { color: #d6ff3d; letter-spacing: 0; text-transform: none; font-family: 'Inter', sans-serif; }
+			.field label .val { color: #3dc1ff; letter-spacing: 0; text-transform: none; font-family: 'Inter', sans-serif; }
 			.field input[type=range] {
-				width: 100%; accent-color: #d6ff3d;
+				width: 100%; accent-color: #3dc1ff;
 				background: transparent;
 			}
 			.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 14px 0 4px; }
@@ -75,18 +75,18 @@
 				cursor: pointer; user-select: none;
 				text-transform: none; letter-spacing: 0;
 			}
-			.checks input { accent-color: #d6ff3d; }
+			.checks input { accent-color: #3dc1ff; }
 
 			.run {
 				width: 100%; margin-top: 18px;
 				padding: 14px 18px; border: none; border-radius: 12px;
-				background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
+				background: linear-gradient(160deg, #5ad1ff, #2cb0ef);
 				color: #0a0b0f; font: 700 14px/1 'Inter', sans-serif;
 				cursor: pointer; transition: filter 0.15s, transform 0.1s;
-				box-shadow: 0 6px 0 0 #7a9600, 0 8px 20px rgba(214,255,61,0.25);
+				box-shadow: 0 6px 0 0 #005a8a, 0 8px 20px rgba(61, 193, 255,0.25);
 			}
 			.run:hover:not(:disabled) { filter: brightness(1.06); }
-			.run:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 4px 0 0 #7a9600, 0 6px 16px rgba(214,255,61,0.25); }
+			.run:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 4px 0 0 #005a8a, 0 6px 16px rgba(61, 193, 255,0.25); }
 			.run:disabled { opacity: 0.45; cursor: not-allowed; }
 
 			.status {
@@ -102,18 +102,18 @@
 				word-break: break-word;
 			}
 			.status.error { color: #ff7a7a; border-color: rgba(255,122,122,0.3); }
-			.status.success { color: #d6ff3d; border-color: rgba(214,255,61,0.3); }
+			.status.success { color: #3dc1ff; border-color: rgba(61, 193, 255,0.3); }
 
 			.download {
 				display: none;
 				margin-top: 12px; width: 100%;
 				padding: 12px 16px; border-radius: 10px;
 				background: transparent; color: #fff;
-				border: 1.5px solid rgba(214,255,61,0.5);
+				border: 1.5px solid rgba(61, 193, 255,0.5);
 				font: 700 13px/1 'Inter', sans-serif; text-decoration: none;
 				text-align: center; cursor: pointer;
 			}
-			.download:hover { background: rgba(214,255,61,0.08); border-color: #d6ff3d; }
+			.download:hover { background: rgba(61, 193, 255,0.08); border-color: #3dc1ff; }
 			.download.visible { display: block; }
 
 			/* ── Viewers ─────────────────────────────────────────────── */
@@ -136,7 +136,7 @@
 				width: 6px; height: 6px; border-radius: 50%;
 				background: #555870;
 			}
-			.viewer.has-content .tag .dot { background: #d6ff3d; box-shadow: 0 0 8px rgba(214,255,61,0.7); }
+			.viewer.has-content .tag .dot { background: #3dc1ff; box-shadow: 0 0 8px rgba(61, 193, 255,0.7); }
 			.viewer .empty {
 				position: absolute; inset: 0;
 				display: flex; align-items: center; justify-content: center;
@@ -154,8 +154,8 @@
 			.spinner.visible { display: flex; flex-direction: column; gap: 12px; }
 			.spinner .ring {
 				width: 36px; height: 36px;
-				border: 2.5px solid rgba(214,255,61,0.15);
-				border-top-color: #d6ff3d;
+				border: 2.5px solid rgba(61, 193, 255,0.15);
+				border-top-color: #3dc1ff;
 				border-radius: 50%;
 				animation: spin 0.9s linear infinite;
 			}
@@ -439,7 +439,7 @@
 						if (o.isSkinnedMesh) {
 							const helper = new THREE.SkeletonHelper(o);
 							helper.material.linewidth = 2;
-							helper.material.color = new THREE.Color(0xd6ff3d);
+							helper.material.color = new THREE.Color(0x3dc1ff);
 							gltf.scene.add(helper);
 						}
 					});

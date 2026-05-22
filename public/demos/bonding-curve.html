@@ -12,7 +12,7 @@
 			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
 			.stage { max-width: 1200px; margin: 0 auto; padding: 48px 24px 80px; }
 			.crumb a { color: #8a8d98; text-decoration: none; }
-			.crumb a:hover { color: #d6ff3d; }
+			.crumb a:hover { color: #3dc1ff; }
 			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
 			h2 { font-size: 17px; font-weight: 600; margin: 0 0 12px; letter-spacing: -0.01em; }
 			.sub { color: #8a8d98; max-width: 76ch; margin: 0 0 30px; }
@@ -37,7 +37,7 @@
 				background: #07080d; color: #eee; border: 1px solid #1e1f2b;
 				font: inherit; box-sizing: border-box;
 			}
-			input[type=range] { width: 100%; accent-color: #d6ff3d; }
+			input[type=range] { width: 100%; accent-color: #3dc1ff; }
 			.radios { display: flex; gap: 6px; flex-wrap: wrap; }
 			.radios label.opt {
 				flex: 1; min-width: 60px; text-align: center; padding: 8px 4px;
@@ -46,9 +46,9 @@
 				font-size: 13px;
 			}
 			.radios input { display: none; }
-			.radios input:checked + label.opt { background: #d6ff3d; color: #0a0a0a; border-color: #d6ff3d; font-weight: 600; }
+			.radios input:checked + label.opt { background: #3dc1ff; color: #0a0a0a; border-color: #3dc1ff; font-weight: 600; }
 			button {
-				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				background: #3dc1ff; color: #0a0a0a; border: 0; border-radius: 9px;
 				padding: 10px 14px; font-weight: 600; cursor: pointer;
 				font: inherit;
 			}
@@ -59,7 +59,7 @@
 			.stats div b { color: #eee; font-weight: 600; display: block; font-size: 14px; margin-top: 2px; }
 			.badge {
 				display: inline-block; padding: 3px 8px; border-radius: 999px;
-				background: rgba(214,255,61,0.18); color: #d6ff3d; font-size: 11px;
+				background: rgba(61, 193, 255,0.18); color: #3dc1ff; font-size: 11px;
 				font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
 			}
 			.badge.warn { background: rgba(255,193,7,0.16); color: #ffce4d; }
@@ -69,19 +69,19 @@
 				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
 				line-height: 1.6; color: #8a8d98; max-height: 320px; overflow: auto; white-space: pre-wrap;
 			}
-			.log .ok { color: #d6ff3d; }
+			.log .ok { color: #3dc1ff; }
 			.log .err { color: #ff6b6b; }
 			.log .info { color: #66d9ef; }
-			.log .grad { color: #d6ff3d; font-weight: 700; }
+			.log .grad { color: #3dc1ff; font-weight: 700; }
 			.trade-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
 			.trade-result { font-size: 12px; color: #8a8d98; font-family: ui-monospace, monospace; line-height: 1.55; }
 			.trade-result b { color: #eee; }
 			.divider { height: 1px; background: #1e1f2b; margin: 4px 0; }
 			.mini-chart { width: 100%; height: 160px; background: #07080d; border-radius: 9px; display: block; }
 			.compare-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 12px; }
-			.compare-card h3 { margin: 0; font-size: 14px; color: #d6ff3d; }
+			.compare-card h3 { margin: 0; font-size: 14px; color: #3dc1ff; }
 			.compare-card .meta { font-size: 12px; color: #8a8d98; font-family: ui-monospace, monospace; }
-			.kbd { font-family: ui-monospace, monospace; font-size: 12px; padding: 1px 5px; background: #07080d; border: 1px solid #1e1f2b; border-radius: 4px; color: #d6ff3d; }
+			.kbd { font-family: ui-monospace, monospace; font-size: 12px; padding: 1px 5px; background: #07080d; border: 1px solid #1e1f2b; border-radius: 4px; color: #3dc1ff; }
 		</style>
 	</head>
 	<body>
@@ -366,7 +366,7 @@
 				ctx.restore();
 
 				// curve
-				ctx.strokeStyle = '#d6ff3d';
+				ctx.strokeStyle = '#3dc1ff';
 				ctx.lineWidth = 2;
 				ctx.beginPath();
 				for (let i = 0; i < xs.length; i++) {
@@ -379,7 +379,7 @@
 				ctx.lineTo(X(xs[xs.length - 1]), Y(0));
 				ctx.lineTo(X(xs[0]), Y(0));
 				ctx.closePath();
-				ctx.fillStyle = 'rgba(214,255,61,0.06)';
+				ctx.fillStyle = 'rgba(61, 193, 255,0.06)';
 				ctx.fill();
 
 				// graduation marker: supply where reserve == gradReserve
@@ -604,7 +604,7 @@
 					meta.className = 'meta';
 					meta.innerHTML =
 						`deposit ${totalEth} ETH → supply <b style="color:#eee">${fmt(s, 0)}</b>\n` +
-						`spot ${fmt(initPrice, 9)} → <b style="color:#d6ff3d">${fmt(finalPrice, 9)}</b>\n` +
+						`spot ${fmt(initPrice, 9)} → <b style="color:#3dc1ff">${fmt(finalPrice, 9)}</b>\n` +
 						`<b style="color:#eee">${fmt(mult, 1)}×</b> price multiple`;
 					meta.style.whiteSpace = 'pre-line';
 					card.appendChild(meta);
@@ -624,7 +624,7 @@
 					if (yMax === 0) yMax = 1;
 					const X = (x) => pad + ((x - xMin) / (xMax - xMin)) * (W - pad * 2);
 					const Y = (y) => H - pad - (y / yMax) * (H - pad * 2);
-					cctx.strokeStyle = '#d6ff3d';
+					cctx.strokeStyle = '#3dc1ff';
 					cctx.lineWidth = 1.5;
 					cctx.beginPath();
 					for (let i = 0; i < ptsX.length; i++) {
@@ -635,7 +635,7 @@
 					cctx.lineTo(X(ptsX[ptsX.length - 1]), Y(0));
 					cctx.lineTo(X(ptsX[0]), Y(0));
 					cctx.closePath();
-					cctx.fillStyle = 'rgba(214,255,61,0.07)';
+					cctx.fillStyle = 'rgba(61, 193, 255,0.07)';
 					cctx.fill();
 				});
 			}

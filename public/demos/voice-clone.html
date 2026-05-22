@@ -12,7 +12,7 @@
 			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
 			.stage { max-width: 1000px; margin: 0 auto; padding: 48px 24px 80px; }
 			.crumb a { color: #8a8d98; text-decoration: none; }
-			.crumb a:hover { color: #d6ff3d; }
+			.crumb a:hover { color: #3dc1ff; }
 			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
 			.sub { color: #8a8d98; max-width: 64ch; margin: 0 0 30px; }
 			.row { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
@@ -33,7 +33,7 @@
 			.rec-dot.on { opacity: 1; animation: pulse 1s infinite; }
 			.rec-time {
 				position: absolute; top: 8px; right: 12px; font: 600 13px ui-monospace, monospace;
-				color: #d6ff3d;
+				color: #3dc1ff;
 			}
 			@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 			.panel {
@@ -48,7 +48,7 @@
 			}
 			textarea { min-height: 90px; resize: vertical; }
 			button {
-				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				background: #3dc1ff; color: #0a0a0a; border: 0; border-radius: 9px;
 				padding: 10px 14px; font-weight: 600; cursor: pointer; font: inherit;
 			}
 			button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -62,15 +62,15 @@
 				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
 				line-height: 1.6; color: #8a8d98; max-height: 280px; overflow: auto; white-space: pre-wrap;
 			}
-			.log .ok { color: #d6ff3d; }
+			.log .ok { color: #3dc1ff; }
 			.log .err { color: #ff6b6b; }
 			.log .info { color: #66d9ef; }
 			.hint { font-size: 12.5px; color: #8a8d98; line-height: 1.55; }
-			.hint code { color: #d6ff3d; }
+			.hint code { color: #3dc1ff; }
 			.voice-pill {
 				display: inline-flex; align-items: center; gap: 6px;
-				background: rgba(214,255,61,0.08); border: 1px solid rgba(214,255,61,0.35);
-				color: #d6ff3d; padding: 6px 10px; border-radius: 999px;
+				background: rgba(61, 193, 255,0.08); border: 1px solid rgba(61, 193, 255,0.35);
+				color: #3dc1ff; padding: 6px 10px; border-radius: 999px;
 				font: 600 12.5px ui-monospace, monospace; word-break: break-all;
 			}
 			section.synth { margin-top: 24px; opacity: 0.4; pointer-events: none; transition: opacity 0.2s; }
@@ -212,7 +212,7 @@
 				const w = wave.clientWidth, h = wave.clientHeight;
 				wctx.fillStyle = '#07080d';
 				wctx.fillRect(0, 0, w, h);
-				wctx.strokeStyle = '#d6ff3d';
+				wctx.strokeStyle = '#3dc1ff';
 				wctx.lineWidth = 1.6;
 				wctx.beginPath();
 				const slice = w / buf.length;

@@ -9,7 +9,7 @@
       "rig": "avaturn",
       "status": "active",
       "items": [
-        { "name": "idle",      "label": "Idle",       "icon": "🧍", "loop": true,  "clip": "public/animations/clips/idle.json",      "source_fbx": "public/animations/Old Man Idle.fbx",              "agent_slots": ["idle"] },
+        { "name": "idle",      "label": "Idle",       "icon": "🧍", "loop": true,  "clip": "public/animations/clips/idle.json",      "source_fbx": "public/animations/Idle.fbx",                      "agent_slots": ["idle"] },
         { "name": "dance",     "label": "Dance",      "icon": "💃", "loop": true,  "clip": "public/animations/clips/dance.json",     "source_fbx": "public/animations/Hip Hop Dancing.fbx",           "agent_slots": [] },
         { "name": "celebrate", "label": "Celebrate",  "icon": "🎉", "loop": false, "clip": "public/animations/clips/celebrate.json", "source_fbx": "public/animations/Joyful Jump.fbx",               "agent_slots": ["celebrate"] },
         { "name": "angry",     "label": "Angry",      "icon": "😡", "loop": false, "clip": "public/animations/clips/angry.json",     "source_fbx": "public/animations/Angry.fbx",                     "agent_slots": ["shake"] },

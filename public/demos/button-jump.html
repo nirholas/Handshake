@@ -117,7 +117,7 @@
 			rim.position.set(-6, 4, -6);
 			scene.add(rim);
 
-			const glow = new THREE.PointLight(0xd6ff3d, 0.8, 10);
+			const glow = new THREE.PointLight(0x3dc1ff, 0.8, 10);
 			glow.position.set(0, 1.5, 0);
 			scene.add(glow);
 
@@ -208,8 +208,8 @@
 				const c = document.createElement('canvas');
 				c.width = c.height = 512;
 				const ctx = c.getContext('2d');
-				const isMain = accent === 0xd6ff3d;
-				const fg = isMain ? '#d6ff3d' : (accent === 0x3060ff ? '#3060ff' : '#ff3060');
+				const isMain = accent === 0x3dc1ff;
+				const fg = isMain ? '#3dc1ff' : (accent === 0x3060ff ? '#3060ff' : '#ff3060');
 				const g = ctx.createRadialGradient(256,256,0,256,256,222);
 				g.addColorStop(0, isMain ? '#eeff66' : (accent === 0x3060ff ? '#4070ff' : '#ff4070'));
 				g.addColorStop(0.65, fg);
@@ -268,7 +268,7 @@
 			}
 
 			// ── Buttons ──────────────────────────────────────────────────────────
-			const gs = buildButton({ x:0,   z:0,   l1:'GET', l2:'STARTED', accent:0xd6ff3d });
+			const gs = buildButton({ x:0,   z:0,   l1:'GET', l2:'STARTED', accent:0x3dc1ff });
 			buildButton({ x:6.5, z:-5,  ry:-0.4, l1:'LEARN', l2:'MORE',    accent:0x3060ff, sc:0.78 });
 			buildButton({ x:-5.5,z:-4,  ry: 0.4, l1:'SIGN',  l2:'UP',      accent:0xff3060, sc:0.68 });
 
@@ -332,7 +332,7 @@
 				}
 				const geo = new THREE.BufferGeometry();
 				geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-				const mat = new THREE.PointsMaterial({ color: 0xd6ff3d, size: 0.08, transparent: true });
+				const mat = new THREE.PointsMaterial({ color: 0x3dc1ff, size: 0.08, transparent: true });
 				const pts = new THREE.Points(geo, mat);
 				scene.add(pts);
 				pool.push({ pts, geo, mat, vel, age: 0, life: 1.5 });

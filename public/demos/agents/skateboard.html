@@ -15,7 +15,7 @@
 				position: absolute;
 				left: 0; right: 0; bottom: 0;
 				height: 2px;
-				background: linear-gradient(90deg, transparent, rgba(214,255,61,0.4));
+				background: linear-gradient(90deg, transparent, rgba(61, 193, 255,0.4));
 			}
 		</style>
 	</head>
@@ -66,7 +66,7 @@
 
 			// Skateboard plane under her feet.
 			const boardGeo = new THREE.BoxGeometry(0.7, 0.07, 0.28);
-			const boardMat = new THREE.MeshStandardMaterial({ color: 0xd6ff3d, roughness: 0.5 });
+			const boardMat = new THREE.MeshStandardMaterial({ color: 0x3dc1ff, roughness: 0.5 });
 			const board = new THREE.Mesh(boardGeo, boardMat);
 			board.visible = false;
 			stage.scene.add(board);

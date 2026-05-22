@@ -24,9 +24,9 @@
 				border-bottom: 1px solid rgba(255,255,255,0.04);
 			}
 			.nav .brand { font: 700 15px/1 'Space Grotesk','Inter',sans-serif; color:#fff; text-decoration:none; display:flex; align-items:center; gap:7px; }
-			.brand-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#d6ff3d,#aacc00); box-shadow:0 0 10px rgba(214,255,61,0.6); }
+			.brand-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#3dc1ff,#aacc00); box-shadow:0 0 10px rgba(61, 193, 255,0.6); }
 			.nav a.link { color:#555870; text-decoration:none; font-size:13px; margin-left:auto; }
-			.nav a.link:hover { color:#d6ff3d; }
+			.nav a.link:hover { color:#3dc1ff; }
 
 			.page {
 				min-height: 100vh;
@@ -38,16 +38,16 @@
 				display: inline-flex; align-items: center; gap: 9px;
 				font-size: 11px; font-weight: 600;
 				letter-spacing: 0.17em; text-transform: uppercase;
-				color: #d6ff3d; margin-bottom: 14px;
+				color: #3dc1ff; margin-bottom: 14px;
 				font-family: 'Space Grotesk', 'Inter', sans-serif;
 			}
-			.eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #d6ff3d; box-shadow: 0 0 8px rgba(214,255,61,0.7); }
+			.eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #3dc1ff; box-shadow: 0 0 8px rgba(61, 193, 255,0.7); }
 			h1 {
 				font-family: 'Space Grotesk','Inter',sans-serif;
 				font-size: clamp(34px, 4.4vw, 54px); font-weight: 800; letter-spacing: -0.025em;
 				line-height: 1.05; margin: 0 0 14px; color: #fff; max-width: 18ch;
 			}
-			h1 em { color: #d6ff3d; font-style: normal; }
+			h1 em { color: #3dc1ff; font-style: normal; }
 			.lead { color: #6b6e88; font-size: 16px; max-width: 56ch; margin: 0 0 48px; line-height: 1.6; }
 
 			.tiers {
@@ -63,28 +63,60 @@
 			.tier {
 				position: relative;
 				border-radius: 16px;
+				/* Slab top face — bright specular at the very top, then quickly
+				   dropping into the body, gives the eye a sense of a thick slab
+				   being lit from above. The first ~3px is the lit lip the avatar
+				   stands on. */
 				background:
 					linear-gradient(180deg,
-						rgba(38,44,68,0.95) 0%,
-						rgba(24,28,46,0.92) 14px,
-						rgba(15,17,32,0.85) 28px,
-						rgba(15,17,32,0.85) 100%);
-				border: 2.5px solid rgba(255,255,255,0.09);
+						rgba(70,82,118,0.98) 0%,
+						rgba(48,56,84,0.96) 3px,
+						rgba(32,38,60,0.94) 10px,
+						rgba(20,24,42,0.90) 22px,
+						rgba(13,15,28,0.86) 38px,
+						rgba(13,15,28,0.86) 100%);
+				border: 1px solid rgba(255,255,255,0.06);
 				padding: 28px 26px 24px;
 				box-shadow:
-					/* top-face highlight — light hitting the slab top where she stands */
-					inset 0 3px 0 rgba(255,255,255,0.16),
-					inset 0 -2px 0 rgba(0,0,0,0.45),
-					/* stacked dark layers = side of the ledge dropping away */
-					0 5px 0 rgba(10,12,24,0.95),
-					0 10px 0 rgba(6,8,18,0.95),
-					0 15px 0 rgba(3,4,12,0.95),
-					0 26px 40px rgba(0,0,0,0.55);
+					/* Top lip bevel — bright hairline + a softer secondary glaze */
+					inset 0 1.5px 0 rgba(255,255,255,0.55),
+					inset 0 4px 6px -3px rgba(255,255,255,0.28),
+					/* Left + right side bevels carve the slab's vertical walls */
+					inset 2px 0 0 rgba(255,255,255,0.05),
+					inset -2px 0 0 rgba(0,0,0,0.35),
+					/* Bottom inner shadow — the underside of the slab */
+					inset 0 -3px 0 rgba(0,0,0,0.55),
+					/* Stacked side wall — every 4px is one "stone" layer.
+					   Six layers reads as a chunky slab, not a thin card. */
+					0  4px 0 rgba(14,16,28,0.95),
+					0  8px 0 rgba(11,13,24,0.95),
+					0 12px 0 rgba(8,10,20,0.96),
+					0 16px 0 rgba(6,8,16,0.96),
+					0 20px 0 rgba(4,5,12,0.97),
+					0 24px 0 rgba(2,3,8,0.98),
+					/* Soft ambient occlusion on the ground beneath the slab */
+					0 30px 24px -4px rgba(0,0,0,0.55),
+					0 44px 60px -8px rgba(0,0,0,0.7);
 				transition: transform 200ms cubic-bezier(0.3, 0.8, 0.4, 1.05),
 				            border-color 200ms ease,
 				            box-shadow 200ms ease,
 				            background 200ms ease;
 				will-change: transform;
+			}
+			/* Top-face shimmer — a soft glaze across the lip that catches the
+			   avatar's feet shadow nicely. Sits just inside the rounded corners
+			   so it follows the slab profile. */
+			.tier::after {
+				content: '';
+				position: absolute;
+				inset: 1px 1px auto 1px;
+				height: 14px;
+				border-radius: 15px 15px 0 0;
+				background: linear-gradient(180deg,
+					rgba(255,255,255,0.10) 0%,
+					rgba(255,255,255,0.02) 60%,
+					transparent 100%);
+				pointer-events: none;
 			}
 			.tier .pad-top {
 				/* Reserved headroom so the avatar standing on top doesn't crowd the title */
@@ -108,7 +140,7 @@
 			.tier li::before {
 				content: '';
 				flex: 0 0 6px; height: 6px; border-radius: 50%;
-				background: #d6ff3d; margin-top: 8px; box-shadow: 0 0 6px rgba(214,255,61,0.55);
+				background: #3dc1ff; margin-top: 8px; box-shadow: 0 0 6px rgba(61, 193, 255,0.55);
 			}
 			.tier .cta {
 				display: inline-flex; align-items: center; justify-content: center;
@@ -120,48 +152,58 @@
 				border: 1.5px solid rgba(255,255,255,0.08);
 				transition: background 140ms, border-color 140ms, transform 140ms;
 			}
-			.tier .cta:hover { background: rgba(214,255,61,0.1); border-color: rgba(214,255,61,0.45); }
+			.tier .cta:hover { background: rgba(61, 193, 255,0.1); border-color: rgba(61, 193, 255,0.45); }
 
-			/* Hover / "she's on this one" state */
+			/* Hover / "she's on this one" state — cyan-lit version of the slab.
+			   Same stacked depth so the volume doesn't pop/change on hover. */
 			.tier:hover,
 			.tier.is-active {
-				border-color: rgba(214,255,61,0.55);
+				border-color: rgba(61, 193, 255,0.55);
 				background:
 					linear-gradient(180deg,
-						rgba(58,72,32,0.95) 0%,
-						rgba(38,48,22,0.92) 14px,
-						rgba(20,28,16,0.85) 28px,
-						rgba(20,28,16,0.85) 100%);
+						rgba(70,138,180,0.98) 0%,
+						rgba(46,96,138,0.96) 3px,
+						rgba(28,62,98,0.94) 10px,
+						rgba(18,42,74,0.90) 22px,
+						rgba(12,28,52,0.86) 38px,
+						rgba(12,28,52,0.86) 100%);
 				box-shadow:
-					inset 0 3px 0 rgba(230,255,120,0.28),
-					inset 0 -2px 0 rgba(0,0,0,0.45),
-					0 5px 0 rgba(60,72,10,0.95),
-					0 10px 0 rgba(38,48,6,0.95),
-					0 15px 0 rgba(20,26,4,0.95),
-					0 28px 50px rgba(214,255,61,0.22);
+					inset 0 1.5px 0 rgba(180,235,255,0.7),
+					inset 0 4px 6px -3px rgba(140,210,255,0.45),
+					inset 2px 0 0 rgba(140,210,255,0.10),
+					inset -2px 0 0 rgba(0,0,0,0.40),
+					inset 0 -3px 0 rgba(0,0,0,0.55),
+					0  4px 0 rgba(14,38,64,0.95),
+					0  8px 0 rgba(10,30,54,0.95),
+					0 12px 0 rgba(8,24,46,0.96),
+					0 16px 0 rgba(6,18,38,0.96),
+					0 20px 0 rgba(4,12,28,0.97),
+					0 24px 0 rgba(2,8,22,0.98),
+					0 30px 24px -4px rgba(0,0,0,0.55),
+					0 44px 60px -8px rgba(61, 193, 255,0.28);
 			}
-			.tier:hover { transform: translateY(-4px); }
+			.tier:hover { transform: translateY(-6px); }
 			.tier.is-active .cta {
-				background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
+				background: linear-gradient(160deg, #5ad1ff, #2cb0ef);
 				color: #0a0b0f; border-color: transparent;
-				box-shadow: 0 4px 0 0 #7a9600;
+				box-shadow: 0 4px 0 0 #005a8a;
 			}
 
 			/* "Most popular" ribbon on Pro */
 			.tier.pro {
 				/* Visually elevated even when no hover */
 				background: rgba(18,24,12,0.85);
-				border-color: rgba(214,255,61,0.4);
+				border-color: rgba(61, 193, 255,0.4);
 			}
 			.tier.pro::before {
 				content: 'Most popular';
 				position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
-				background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
+				background: linear-gradient(160deg, #5ad1ff, #2cb0ef);
 				color: #0a0b0f;
 				font: 700 10.5px/1 'Space Grotesk','Inter',sans-serif;
 				letter-spacing: 0.12em; text-transform: uppercase;
 				padding: 6px 12px; border-radius: 999px;
-				box-shadow: 0 6px 16px rgba(214,255,61,0.3);
+				box-shadow: 0 6px 16px rgba(61, 193, 255,0.3);
 			}
 
 			.hint {

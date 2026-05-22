@@ -20,10 +20,10 @@
 			}
 			.fm-brand .dot {
 				width: 8px; height: 8px; border-radius: 50%;
-				background: #d6ff3d;
-				box-shadow: 0 0 12px rgba(214,255,61,0.7);
+				background: #3dc1ff;
+				box-shadow: 0 0 12px rgba(61, 193, 255,0.7);
 			}
-			.fm-brand em { color: #d6ff3d; font-style: normal; }
+			.fm-brand em { color: #3dc1ff; font-style: normal; }
 
 			/* ── Permission overlay ─────────────────────────────────────── */
 			#overlay {
@@ -36,7 +36,7 @@
 			}
 			#overlay.hidden { opacity: 0; pointer-events: none; }
 			#overlay .eyebrow {
-				color: #d6ff3d; font: 600 11px/1 'Space Grotesk','Inter',sans-serif;
+				color: #3dc1ff; font: 600 11px/1 'Space Grotesk','Inter',sans-serif;
 				letter-spacing: 0.18em; text-transform: uppercase;
 			}
 			#overlay h2 {
@@ -45,7 +45,7 @@
 				letter-spacing: -0.03em; color: #fff; text-align: center;
 				max-width: 18ch;
 			}
-			#overlay h2 em { color: #d6ff3d; font-style: normal; }
+			#overlay h2 em { color: #3dc1ff; font-style: normal; }
 			#overlay p {
 				margin: 0; color: #6c7088; font-size: 15px;
 				line-height: 1.7; max-width: 40ch; text-align: center;
@@ -54,12 +54,12 @@
 				margin-top: 10px;
 				padding: 16px 36px;
 				border: none; border-radius: 100px;
-				background: linear-gradient(160deg,#e2ff5a,#c8ef2c);
+				background: linear-gradient(160deg,#5ad1ff,#2cb0ef);
 				color: #0a0b0f;
 				font: 700 15px/1 'Space Grotesk','Inter',sans-serif;
 				letter-spacing: 0.01em;
 				cursor: pointer;
-				box-shadow: 0 8px 24px rgba(214,255,61,0.28);
+				box-shadow: 0 8px 24px rgba(61, 193, 255,0.28);
 				transition: transform 0.15s, filter 0.15s;
 			}
 			#enable-btn:hover { filter: brightness(1.07); transform: scale(1.03); }
@@ -71,12 +71,12 @@
 			}
 			#overlay .privacy::before {
 				content: ''; width: 5px; height: 5px; border-radius: 50%;
-				background: #d6ff3d; box-shadow: 0 0 8px rgba(214,255,61,0.6);
+				background: #3dc1ff; box-shadow: 0 0 8px rgba(61, 193, 255,0.6);
 			}
 
 			/* ── Hero copy (top-left of stage) ───────────────────────────── */
 			.stage { pointer-events: none; max-width: 480px; padding-top: 88px; }
-			.stage h1 em { color: #d6ff3d; font-style: normal; }
+			.stage h1 em { color: #3dc1ff; font-style: normal; }
 
 			/* ── Draggable camera card ──────────────────────────────────── */
 			#cam-card {
@@ -103,10 +103,10 @@
 			.cam-head:active { cursor: grabbing; }
 			.cam-head .ico {
 				width: 28px; height: 28px; border-radius: 50%;
-				background: rgba(214,255,61,0.12);
-				border: 1px solid rgba(214,255,61,0.35);
+				background: rgba(61, 193, 255,0.12);
+				border: 1px solid rgba(61, 193, 255,0.35);
 				display: grid; place-items: center;
-				color: #d6ff3d; font-size: 14px;
+				color: #3dc1ff; font-size: 14px;
 			}
 			.cam-head .title {
 				font: 700 13px/1.2 'Space Grotesk','Inter',sans-serif;
@@ -119,9 +119,9 @@
 			.cam-head .fps {
 				margin-left: auto;
 				font: 700 12px/1 'Space Grotesk',monospace;
-				color: #d6ff3d;
-				background: rgba(214,255,61,0.08);
-				border: 1px solid rgba(214,255,61,0.22);
+				color: #3dc1ff;
+				background: rgba(61, 193, 255,0.08);
+				border: 1px solid rgba(61, 193, 255,0.22);
 				padding: 4px 8px; border-radius: 100px;
 			}
 
@@ -158,7 +158,7 @@
 				outline: none; cursor: pointer;
 				max-width: 220px;
 			}
-			.cam-controls select:focus { border-color: rgba(214,255,61,0.4); }
+			.cam-controls select:focus { border-color: rgba(61, 193, 255,0.4); }
 
 			.cam-toggles {
 				display: flex; flex-wrap: wrap; gap: 4px;
@@ -174,11 +174,11 @@
 				cursor: pointer; transition: all 0.15s;
 			}
 			.cam-toggles button.on {
-				background: rgba(214,255,61,0.12);
-				border-color: rgba(214,255,61,0.4);
-				color: #d6ff3d;
+				background: rgba(61, 193, 255,0.12);
+				border-color: rgba(61, 193, 255,0.4);
+				color: #3dc1ff;
 			}
-			.cam-toggles button:hover { color: #d6ff3d; }
+			.cam-toggles button:hover { color: #3dc1ff; }
 
 			/* ── Live diagnostics panel ─────────────────────────────────── */
 			#diag {
@@ -201,7 +201,7 @@
 			}
 			.diag-title {
 				font: 600 11px/1 'Space Grotesk','Inter',sans-serif;
-				color: #d6ff3d; letter-spacing: 0.16em; text-transform: uppercase;
+				color: #3dc1ff; letter-spacing: 0.16em; text-transform: uppercase;
 			}
 			.diag-row {
 				display: flex; justify-content: space-between; align-items: center;
@@ -223,10 +223,10 @@
 			.bar-row .lbl { color: #888c9d; font-size: 10.5px; letter-spacing: 0.02em; }
 			.bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 100px; overflow: hidden; }
 			.bar > div {
-				height: 100%; background: linear-gradient(90deg,#d6ff3d,#9aff5a);
+				height: 100%; background: linear-gradient(90deg,#3dc1ff,#5ad1ff);
 				border-radius: 100px; transition: width 80ms linear;
 			}
-			.bar-row .num { color: #d6ff3d; font: 600 11px/1 'Space Grotesk',monospace; text-align: right; }
+			.bar-row .num { color: #3dc1ff; font: 600 11px/1 'Space Grotesk',monospace; text-align: right; }
 
 			/* ── Bottom control bar ─────────────────────────────────────── */
 			#controls {
@@ -256,14 +256,14 @@
 				white-space: nowrap;
 			}
 			#controls button:hover {
-				border-color: rgba(214,255,61,0.35);
+				border-color: rgba(61, 193, 255,0.35);
 				color: #fff;
 			}
 			#controls button.primary {
-				background: linear-gradient(160deg,#e2ff5a,#c8ef2c);
+				background: linear-gradient(160deg,#5ad1ff,#2cb0ef);
 				color: #0a0b0f;
 				border-color: transparent;
-				box-shadow: 0 4px 14px rgba(214,255,61,0.28);
+				box-shadow: 0 4px 14px rgba(61, 193, 255,0.28);
 			}
 			#controls button.primary:hover { filter: brightness(1.07); }
 			#controls button.recording {
@@ -299,7 +299,7 @@
 				z-index: 19;
 			}
 			.fm-foot a { color: #6c7088; text-decoration: none; border-bottom: 1px dotted rgba(255,255,255,0.15); }
-			.fm-foot a:hover { color: #d6ff3d; border-color: #d6ff3d; }
+			.fm-foot a:hover { color: #3dc1ff; border-color: #3dc1ff; }
 
 			/* Hide the agents-back nav element since we have our own brand */
 			.agents-nav { background: transparent; border-bottom: none; backdrop-filter: none; }
@@ -640,7 +640,7 @@
 					mocap.attach(avatar, headBone);
 					mocap.onFaceDetected((hasFace) => {
 						statusPill.textContent  = hasFace ? 'Tracking' : 'Searching';
-						statusPill.style.color  = hasFace ? '#d6ff3d' : '#ff5e7e';
+						statusPill.style.color  = hasFace ? '#3dc1ff' : '#ff5e7e';
 					});
 
 					mocap.start();

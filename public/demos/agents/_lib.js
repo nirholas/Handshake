@@ -103,14 +103,14 @@ export function startLoop(renderer, scene, camera, mixer, onTick, rootBone, base
 
 // Ballistic droplet burst — same physics as 3d-home.html's fireSplash.
 const PALETTES = {
-	lime:  ['#f6ffc4', '#d6ff3d', '#92b500'],
+	blue:  ['#c4ecff', '#3dc1ff', '#0070b0'],
 	water: ['#e0f7ff', '#7fc4ff', '#1a6ec8'],
 	red:   ['#ffd4d4', '#ff6b6b', '#9b1414'],
 	gold:  ['#fff4c4', '#ffd23d', '#c89200'],
 };
 export function fireSplash(sx, sy, opts = {}) {
 	const count = opts.count ?? 18;
-	const pal = PALETTES[opts.color ?? 'lime'] ?? PALETTES.lime;
+	const pal = PALETTES[opts.color ?? 'blue'] ?? PALETTES.blue;
 	const drops = [];
 	for (let i = 0; i < count; i++) {
 		const size = 5 + Math.random() * 7;
@@ -169,7 +169,7 @@ export function fireSquish(el, opts = {}) {
 
 // Expanding shockwave ring centered at (sx, sy) for impact feedback.
 export function fireShockwave(sx, sy, opts = {}) {
-	const color = opts.color ?? '#d6ff3d';
+	const color = opts.color ?? '#3dc1ff';
 	const size  = opts.size  ?? 14;
 	const max   = opts.max   ?? 120;
 	const ring = document.createElement('div');
