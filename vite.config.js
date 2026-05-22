@@ -454,7 +454,7 @@ const appConfig = {
 					// /dashboard/<page> → corresponding static HTML page
 					else if (!filePath && /^\/dashboard\/portfolio\/asset\/?$/.test(path))
 						filePath = resolve(root, 'public/dashboard/portfolio-asset.html');
-					else if (!filePath && /^\/dashboard\/(?:portfolio|wallets|sessions|actions|embed-policy|agent-pumpfun|usage|storage)\/?$/.test(path)) {
+					else if (!filePath && /^\/dashboard\/(?:portfolio|wallets|sessions|actions|embed-policy|agent-pumpfun|usage|storage|memory|strategy|voice|sns|delegation|tokens)\/?$/.test(path)) {
 						const slug = path.replace(/^\/dashboard\//, '').replace(/\/$/, '');
 						filePath = resolve(root, `public/dashboard/${slug}.html`);
 					}

@@ -1,8 +1,11 @@
 // Client-side wallet authentication for both EVM (SIWE) and Solana (SIWS).
 // Loaded as a module from login.html — imports from CDN so it works outside Vite.
 
-import { createConnectWalletButton } from '/wallet/connect-button.js';
-import { createSolanaWalletButton } from '/wallet/connect-button-solana.js';
+// Loaded at runtime from /public via plain `<script src>`. Imports use the
+// dynamic form with @vite-ignore so Vite (which forbids static imports of
+// files under /public) doesn't try to analyze these URLs at build time.
+const { createConnectWalletButton } = await import(/* @vite-ignore */ '/wallet/connect-button.js');
+const { createSolanaWalletButton }  = await import(/* @vite-ignore */ '/wallet/connect-button-solana.js');
 
 const params = new URLSearchParams(location.search);
 const next   = window.__loginNext || params.get('next') || sessionStorage.getItem('login_redirect') || '/dashboard';

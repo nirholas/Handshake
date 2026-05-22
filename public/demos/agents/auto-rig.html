@@ -445,7 +445,12 @@
 					});
 
 					viewerOut.setRoot(gltf.scene);
-					dlBtn.href = finalFile.url;
+
+					// Cross-origin URLs ignore the `download` attribute, so fetch the
+					// GLB ourselves and hand the user a same-origin blob URL.
+					const blob = await fetch(finalFile.url).then(r => r.blob());
+					const blobUrl = URL.createObjectURL(blob);
+					dlBtn.href = blobUrl;
 					dlBtn.download = (currentFile.name.replace(/\.[^.]+$/, '') || 'rigged') + '_rigged.glb';
 					dlBtn.classList.add('visible');
 					setStatus(finalStatus || 'Done. The skeleton is highlighted in lime.', 'success');

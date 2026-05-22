@@ -85,7 +85,7 @@
 		</div>
 
 		<script type="module">
-			import { createConnectWalletButton } from '/wallet/connect-button.js';
+			const { createConnectWalletButton } = await import(/* @vite-ignore */ '/wallet/connect-button.js');
 
 			const params = new URLSearchParams(location.search);
 			const next = params.get('next') || '/dashboard/';

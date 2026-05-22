@@ -20,6 +20,8 @@ character-studio/build
 character-studio/public/loot-assets
 .mcp.json
 .claude/worktrees/
+# Auto-created symlinks → .agents/skills/* by scripts/setup-claude-skills.mjs
+.claude/skills/
 
 # Local env files
 .env.xspace

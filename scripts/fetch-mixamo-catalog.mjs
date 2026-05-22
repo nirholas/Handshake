@@ -209,6 +209,22 @@ async function downloadOne(product) {
 		return { skipped: true, slug, reason: 'permanent-fail' };
 	}
 
+	// Fetch product details to get gms_hash (required by export endpoint)
+	const productDetails = await api(`/products/${product.id}?character_id=${CHARACTER_ID}`);
+	const gmsHash = productDetails?.details?.gms_hash;
+	if (!gmsHash) {
+		catalog.animations[product.id] = {
+			id: product.id,
+			name: product.description || product.name,
+			status: 'permanent_fail',
+			http: 0,
+			reason: 'no_gms_hash',
+			failed_at: new Date().toISOString(),
+		};
+		saveCatalog();
+		throw new Error('no gms_hash');
+	}
+
 	const exportRes = await rlFetch(`${API}/animations/export`, {
 		method: 'POST',
 		headers,
@@ -216,6 +232,8 @@ async function downloadOne(product) {
 			character_id: CHARACTER_ID,
 			product_id: product.id,
 			product_name: product.description,
+			type: 'Motion',
+			gms_hash: [gmsHash],
 			preferences: { format: 'fbx7', skin: 'false', fps: '30', reducekf: '0' },
 		}),
 	});
