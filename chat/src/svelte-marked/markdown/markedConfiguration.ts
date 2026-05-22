@@ -24,6 +24,7 @@ import {
 
 import { Lexer } from './marked.esm.js';
 import Slugger from 'github-slugger';
+import type { SvelteComponent } from 'svelte';
 
 export type MarkdownOptions = {
 	/**
@@ -47,7 +48,7 @@ export function parse(src: string) {
 
 export type RendererType = string;
 
-export type Renderers = Record<RendererType, ConstructorOfATypedSvelteComponent>;
+export type Renderers = Record<RendererType, typeof SvelteComponent>;
 
 export const defaultRenderers = (): Renderers => ({
 	heading: MarkdownHeading,

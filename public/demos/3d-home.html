@@ -131,6 +131,23 @@
 			.brand-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#d6ff3d,#aacc00); box-shadow:0 0 10px rgba(214,255,61,0.6); }
 			.nav a.link { color:#555870; text-decoration:none; font-size:13px; margin-left:auto; }
 			.nav a.link:hover { color:#d6ff3d; }
+
+			/* Pretext overlay — paragraph copy reflows around the avatar's
+			   screen silhouette every frame. Sits above the page but below
+			   the avatar canvas (z:999) so the avatar still composites over text. */
+			.hero-sub-pretext {
+				position: fixed; pointer-events: none;
+				color: #555870;
+				z-index: 11;
+				contain: layout style;
+			}
+			.hero-sub-pretext-line {
+				position: absolute; display: block;
+				white-space: nowrap;
+			}
+			/* Original .hero-sub stays in the DOM for screen readers, but is
+			   visually replaced by the overlay once pretext is active. */
+			body.pretext-active .hero-sub { visibility: hidden; }
 		</style>
 	</head>
 	<body>
@@ -180,10 +197,12 @@
 			import * as THREE from 'three';
 			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 			import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm';
+			import * as pretext from '@chenglou/pretext';
 
 			const canvas    = document.getElementById('avatar-canvas');
 			const ctaBtn    = document.getElementById('cta-btn');
 			const sitLine   = document.getElementById('sit-line');
+			const heroSub   = document.querySelector('.hero-sub');
 			const animPanel = document.getElementById('anim-controls');
 			const chips     = [...animPanel.querySelectorAll('.chip')];
 
@@ -280,6 +299,212 @@
 			// a window resize. Observe the target element directly so we always re-anchor.
 			const sitLineRO = new ResizeObserver(() => recalibrateSitAnchor());
 			sitLineRO.observe(sitLine);
+
+			// ── Pretext reflow: hero-sub parts around the avatar's silhouette ──
+			// The paragraph copy under the hero title is mirrored into an overlay
+			// whose lines are re-laid out by @chenglou/pretext every frame, using
+			// the avatar's projected screen position as a circular obstacle. The
+			// overlay extends beyond the natural .hero-sub width so the avatar —
+			// which lives to the right of the page column — actually intersects
+			// the text band. Original .hero-sub remains in the DOM for screen
+			// readers (visibility:hidden when overlay is active).
+			const REFLOW_MOBILE_MQ  = window.matchMedia('(max-width: 768px)');
+			const REFLOW_RM_MQ      = window.matchMedia('(prefers-reduced-motion: reduce)');
+			const REFLOW_BUDGET_MS  = 8;     // mean per-frame layout cost ceiling
+			const REFLOW_WINDOW     = 30;    // samples averaged for downgrade
+			const REFLOW_OVERHANG   = 200;   // px the overlay extends past .hero-sub right edge
+			const REFLOW_H_PAD      = 14;    // px gap kept between text and obstacle
+			const REFLOW_MAX_LINES  = 32;
+			// Minimum slot width. Below this, pretext.layoutNextLine would emit
+			// tiny fragments (e.g. "Bo", "rn in") that look broken. Skip the
+			// band instead so text resumes on the next clear line.
+			const REFLOW_MIN_SLOT_PX = 120;
+			// Vertical lift of the obstacle center above the avatar's GLB origin.
+			// cz.glb origin sits at the feet; her torso/head — the part the text
+			// should part around — is ~90px above the origin at this PX_PER_UNIT.
+			const REFLOW_OBSTACLE_LIFT_PX = 90;
+
+			const subOverlay = document.createElement('div');
+			subOverlay.className = 'hero-sub-pretext';
+			subOverlay.setAttribute('aria-hidden', 'true');
+			document.body.appendChild(subOverlay);
+
+			const reflow = {
+				ready: false,
+				disabled: REFLOW_MOBILE_MQ.matches || REFLOW_RM_MQ.matches,
+				downgraded: false,
+				prepared: null,
+				lineHeight: 0,
+				originLeft: 0,
+				originTop:  0,
+				width: 0,
+				maxHeight: 0,
+				costSamples: [],
+			};
+
+			function prepareReflow() {
+				if (!heroSub) return;
+				reflow.disabled = REFLOW_MOBILE_MQ.matches || REFLOW_RM_MQ.matches;
+				if (reflow.disabled) {
+					reflow.ready = false;
+					subOverlay.replaceChildren();
+					subOverlay.style.display = 'none';
+					document.body.classList.remove('pretext-active');
+					return;
+				}
+				subOverlay.style.display = '';
+
+				const subRect = heroSub.getBoundingClientRect();
+				const style   = getComputedStyle(heroSub);
+				const font    = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+				const fontSize = parseFloat(style.fontSize);
+				const lhRaw    = style.lineHeight;
+				const lineHeight = lhRaw === 'normal' ? fontSize * 1.5 : parseFloat(lhRaw);
+
+				// Width extends to the right past the natural paragraph so the
+				// avatar (which sits outside the .page column) is inside the
+				// reflow box. Capped by the viewport so we never spill offscreen.
+				const overlayRight = Math.min(
+					window.innerWidth - 24,
+					subRect.right + REFLOW_OVERHANG,
+				);
+				const overlayWidth = Math.max(subRect.width, overlayRight - subRect.left);
+
+				// Cap the visible band a little past the natural sub height so
+				// the avatar's obstacle can push one line of overflow into the
+				// margin below — anything past that gets cropped instead of
+				// bleeding into the CTA / chip row.
+				const maxHeight = subRect.height + lineHeight;
+
+				reflow.prepared   = pretext.prepareWithSegments(heroSub.textContent ?? '', font);
+				reflow.lineHeight = lineHeight;
+				reflow.originLeft = subRect.left;
+				reflow.originTop  = subRect.top;
+				reflow.width      = overlayWidth;
+				reflow.maxHeight  = maxHeight;
+
+				subOverlay.style.left       = `${subRect.left}px`;
+				subOverlay.style.top        = `${subRect.top}px`;
+				subOverlay.style.width      = `${overlayWidth}px`;
+				subOverlay.style.height     = `${maxHeight}px`;
+				subOverlay.style.overflow   = 'hidden';
+				subOverlay.style.font       = font;
+				subOverlay.style.lineHeight = `${lineHeight}px`;
+				subOverlay.style.color      = style.color;
+
+				reflow.ready = true;
+				document.body.classList.add('pretext-active');
+			}
+
+			(document.fonts?.ready ?? Promise.resolve()).then(prepareReflow);
+			window.addEventListener('resize', prepareReflow);
+			REFLOW_MOBILE_MQ.addEventListener?.('change', prepareReflow);
+			REFLOW_RM_MQ.addEventListener?.('change', prepareReflow);
+			const subRO = new ResizeObserver(prepareReflow);
+			if (heroSub) subRO.observe(heroSub);
+
+			// Project the avatar's world position to viewport pixels.
+			const _proj2 = new THREE.Vector3();
+			function avatarScreenXY() {
+				_proj2.set(avatar.position.x, avatar.position.y, avatar.position.z);
+				_proj2.project(camera);
+				return {
+					x: (_proj2.x + 1) * 0.5 * window.innerWidth,
+					y: (1 - _proj2.y) * 0.5 * window.innerHeight,
+				};
+			}
+
+			// Obstacle radius in screen px. Pose-dependent: seated is compact;
+			// standing/airborne extends taller; the post-landing crouch (resting)
+			// is the most compact of all — using the larger radius there would
+			// fragment the sub paragraph since the landing point overlaps it.
+			function obstacleRadiusPx() {
+				if (phase === 'resting')   return 70;
+				if (phase === 'sitting' || phase === 'loading') return 100;
+				return 130;
+			}
+
+			function layoutLinesAroundObstacle(cx, cy, r) {
+				const { prepared, lineHeight, width, maxHeight } = reflow;
+				const effR = r + REFLOW_H_PAD;
+				const lines = [];
+				let cursor = { segmentIndex: 0, graphemeIndex: 0 };
+				let lineTop = 0;
+				while (lines.length < REFLOW_MAX_LINES && lineTop < maxHeight) {
+					const bandMid = lineTop + lineHeight / 2;
+					const dy      = bandMid - cy;
+					let slot     = width;
+					let lineLeft = 0;
+					if (Math.abs(dy) < effR) {
+						const dx        = Math.sqrt(effR * effR - dy * dy);
+						const blockLeft  = cx - dx;
+						const blockRight = cx + dx;
+						// Only constrain when the obstacle actually intersects the slot.
+						if (blockRight > 0 && blockLeft < width) {
+							const leftRoom  = blockLeft;
+							const rightRoom = width - blockRight;
+							// Lay text on the wider side of the obstacle. pretext
+							// returns text as a flat string with a max width — we
+							// position it left or right of the obstacle ourselves.
+							if (leftRoom >= rightRoom && leftRoom >= REFLOW_MIN_SLOT_PX) {
+								slot     = leftRoom;
+								lineLeft = 0;
+							} else if (rightRoom >= REFLOW_MIN_SLOT_PX) {
+								slot     = rightRoom;
+								lineLeft = blockRight;
+							} else {
+								// Neither side has room for readable text — skip
+								// the band so the text never overlaps the avatar.
+								lineTop += lineHeight;
+								continue;
+							}
+						}
+					}
+					const line = pretext.layoutNextLine(prepared, cursor, slot);
+					if (line === null) break;
+					lines.push({ y: lineTop, left: lineLeft, text: line.text });
+					cursor = line.end;
+					lineTop += lineHeight;
+				}
+				return lines;
+			}
+
+			function paintReflowLines(lines) {
+				const frag = document.createDocumentFragment();
+				for (const { y, left, text } of lines) {
+					const span = document.createElement('span');
+					span.className = 'hero-sub-pretext-line';
+					span.style.top  = `${y}px`;
+					span.style.left = `${left}px`;
+					span.textContent = text;
+					frag.appendChild(span);
+				}
+				subOverlay.replaceChildren(frag);
+			}
+
+			function updatePretextReflow() {
+				if (!reflow.ready || reflow.downgraded || !avatar) return;
+				const t0 = performance.now();
+				const screen = avatarScreenXY();
+				const cx = screen.x - reflow.originLeft;
+				const cy = screen.y - reflow.originTop - REFLOW_OBSTACLE_LIFT_PX;
+				const r  = obstacleRadiusPx();
+				const lines = layoutLinesAroundObstacle(cx, cy, r);
+				paintReflowLines(lines);
+				const cost = performance.now() - t0;
+				reflow.costSamples.push(cost);
+				if (reflow.costSamples.length > REFLOW_WINDOW) reflow.costSamples.shift();
+				if (reflow.costSamples.length === REFLOW_WINDOW) {
+					let sum = 0;
+					for (const c of reflow.costSamples) sum += c;
+					if (sum / REFLOW_WINDOW > REFLOW_BUDGET_MS) {
+						reflow.downgraded = true;
+						document.body.classList.remove('pretext-active');
+						subOverlay.replaceChildren();
+						console.warn('[3d-home] pretext reflow downgraded — cost budget exceeded');
+					}
+				}
+			}
 
 			// ── Lights ────────────────────────────────────────────────────────
 			scene.add(new THREE.AmbientLight(0xffffff, 0.6));
@@ -738,6 +963,7 @@
 					mixer?.update(dt);
 					updateSeq(dt);
 					updateProximityShadow();
+					updatePretextReflow();
 					renderer.render(scene, camera);
 				} catch (_) {}
 			})();

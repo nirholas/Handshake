@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws · Face mocap</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			body { overflow: hidden; }
+
+			/* ── Brand chrome on top of agents-nav ───────────────────────── */
+			.fm-brand {
+				position: fixed; top: 14px; right: 28px; z-index: 25;
+				display: flex; align-items: center; gap: 9px;
+				font: 700 14px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: -0.01em; color: #fff;
+				pointer-events: none;
+			}
+			.fm-brand .dot {
+				width: 8px; height: 8px; border-radius: 50%;
+				background: #d6ff3d;
+				box-shadow: 0 0 12px rgba(214,255,61,0.7);
+			}
+			.fm-brand em { color: #d6ff3d; font-style: normal; }
+
+			/* ── Permission overlay ─────────────────────────────────────── */
+			#overlay {
+				position: fixed; inset: 0; z-index: 60;
+				display: flex; flex-direction: column;
+				align-items: center; justify-content: center;
+				background: radial-gradient(ellipse at center, #0c0e16 0%, #04050d 70%);
+				gap: 18px;
+				transition: opacity 0.45s;
+			}
+			#overlay.hidden { opacity: 0; pointer-events: none; }
+			#overlay .eyebrow {
+				color: #d6ff3d; font: 600 11px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.18em; text-transform: uppercase;
+			}
+			#overlay h2 {
+				margin: 0;
+				font: 800 clamp(32px, 4vw, 52px)/1.04 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: -0.03em; color: #fff; text-align: center;
+				max-width: 18ch;
+			}
+			#overlay h2 em { color: #d6ff3d; font-style: normal; }
+			#overlay p {
+				margin: 0; color: #6c7088; font-size: 15px;
+				line-height: 1.7; max-width: 40ch; text-align: center;
+			}
+			#enable-btn {
+				margin-top: 10px;
+				padding: 16px 36px;
+				border: none; border-radius: 100px;
+				background: linear-gradient(160deg,#e2ff5a,#c8ef2c);
+				color: #0a0b0f;
+				font: 700 15px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.01em;
+				cursor: pointer;
+				box-shadow: 0 8px 24px rgba(214,255,61,0.28);
+				transition: transform 0.15s, filter 0.15s;
+			}
+			#enable-btn:hover { filter: brightness(1.07); transform: scale(1.03); }
+			#enable-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+			#overlay-status { font-size: 13px; color: #555870; min-height: 18px; }
+			#overlay .privacy {
+				margin-top: 22px; display: flex; align-items: center; gap: 6px;
+				font-size: 11.5px; color: #4a4d60; letter-spacing: 0.04em;
+			}
+			#overlay .privacy::before {
+				content: ''; width: 5px; height: 5px; border-radius: 50%;
+				background: #d6ff3d; box-shadow: 0 0 8px rgba(214,255,61,0.6);
+			}
+
+			/* ── Hero copy (top-left of stage) ───────────────────────────── */
+			.stage { pointer-events: none; max-width: 480px; padding-top: 88px; }
+			.stage h1 em { color: #d6ff3d; font-style: normal; }
+
+			/* ── Draggable camera card ──────────────────────────────────── */
+			#cam-card {
+				position: fixed; top: 88px; right: 28px;
+				width: 360px;
+				background: rgba(8,9,16,0.92);
+				border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 16px;
+				box-shadow: 0 30px 60px rgba(0,0,0,0.55);
+				backdrop-filter: blur(20px);
+				z-index: 22;
+				opacity: 0; transform: translateY(-8px);
+				transition: opacity 0.5s, transform 0.5s;
+				user-select: none;
+			}
+			#cam-card.visible { opacity: 1; transform: none; }
+
+			.cam-head {
+				display: flex; align-items: center; gap: 10px;
+				padding: 12px 14px;
+				border-bottom: 1px solid rgba(255,255,255,0.05);
+				cursor: grab;
+			}
+			.cam-head:active { cursor: grabbing; }
+			.cam-head .ico {
+				width: 28px; height: 28px; border-radius: 50%;
+				background: rgba(214,255,61,0.12);
+				border: 1px solid rgba(214,255,61,0.35);
+				display: grid; place-items: center;
+				color: #d6ff3d; font-size: 14px;
+			}
+			.cam-head .title {
+				font: 700 13px/1.2 'Space Grotesk','Inter',sans-serif;
+				color: #fff; letter-spacing: -0.005em;
+			}
+			.cam-head .sub {
+				font-size: 11px; color: #555870;
+				letter-spacing: 0.05em; text-transform: uppercase;
+			}
+			.cam-head .fps {
+				margin-left: auto;
+				font: 700 12px/1 'Space Grotesk',monospace;
+				color: #d6ff3d;
+				background: rgba(214,255,61,0.08);
+				border: 1px solid rgba(214,255,61,0.22);
+				padding: 4px 8px; border-radius: 100px;
+			}
+
+			.cam-body {
+				position: relative;
+				background: #04050d;
+				aspect-ratio: 4/3;
+				overflow: hidden;
+			}
+			.cam-body video, .cam-body canvas {
+				position: absolute; inset: 0;
+				width: 100%; height: 100%;
+			}
+			.cam-body video { object-fit: cover; transform: scaleX(-1); }
+			.cam-body canvas { pointer-events: none; }
+			.cam-body .nofeed {
+				position: absolute; inset: 0;
+				display: grid; place-items: center;
+				color: #555870; font-size: 13px; letter-spacing: 0.05em;
+			}
+
+			.cam-controls {
+				display: flex; align-items: center; gap: 8px;
+				padding: 10px 12px;
+				border-top: 1px solid rgba(255,255,255,0.05);
+			}
+			.cam-controls select {
+				flex: 1;
+				background: rgba(255,255,255,0.04);
+				border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 8px;
+				padding: 7px 10px;
+				color: #ddd; font: 500 12px/1.3 'Inter',sans-serif;
+				outline: none; cursor: pointer;
+				max-width: 220px;
+			}
+			.cam-controls select:focus { border-color: rgba(214,255,61,0.4); }
+
+			.cam-toggles {
+				display: flex; flex-wrap: wrap; gap: 4px;
+				padding: 0 12px 10px;
+			}
+			.cam-toggles button {
+				background: rgba(255,255,255,0.04);
+				border: 1px solid rgba(255,255,255,0.07);
+				color: #888c9d;
+				font: 600 10.5px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.07em; text-transform: uppercase;
+				padding: 5px 9px; border-radius: 100px;
+				cursor: pointer; transition: all 0.15s;
+			}
+			.cam-toggles button.on {
+				background: rgba(214,255,61,0.12);
+				border-color: rgba(214,255,61,0.4);
+				color: #d6ff3d;
+			}
+			.cam-toggles button:hover { color: #d6ff3d; }
+
+			/* ── Live diagnostics panel ─────────────────────────────────── */
+			#diag {
+				position: fixed; top: 88px; left: 28px;
+				width: 280px; max-width: 32vw;
+				background: rgba(8,9,16,0.92);
+				border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 16px;
+				padding: 14px 16px 12px;
+				z-index: 21;
+				opacity: 0; transform: translateY(-8px);
+				transition: opacity 0.5s, transform 0.5s;
+				pointer-events: auto;
+				backdrop-filter: blur(20px);
+			}
+			#diag.visible { opacity: 1; transform: none; }
+			.diag-head {
+				display: flex; align-items: center; justify-content: space-between;
+				margin-bottom: 12px;
+			}
+			.diag-title {
+				font: 600 11px/1 'Space Grotesk','Inter',sans-serif;
+				color: #d6ff3d; letter-spacing: 0.16em; text-transform: uppercase;
+			}
+			.diag-row {
+				display: flex; justify-content: space-between; align-items: center;
+				font: 500 12px/1.4 'Inter',sans-serif;
+				color: #888c9d;
+				padding: 3px 0;
+			}
+			.diag-row span:last-child {
+				color: #fff; font-family: 'Space Grotesk',monospace;
+				font-variant-numeric: tabular-nums;
+			}
+			.diag-section { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.04); }
+			.bar-row {
+				display: grid; grid-template-columns: 86px 1fr 30px;
+				gap: 8px; align-items: center;
+				font: 500 11px/1.3 'Inter',sans-serif;
+				color: #aaa; margin-bottom: 4px;
+			}
+			.bar-row .lbl { color: #888c9d; font-size: 10.5px; letter-spacing: 0.02em; }
+			.bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 100px; overflow: hidden; }
+			.bar > div {
+				height: 100%; background: linear-gradient(90deg,#d6ff3d,#9aff5a);
+				border-radius: 100px; transition: width 80ms linear;
+			}
+			.bar-row .num { color: #d6ff3d; font: 600 11px/1 'Space Grotesk',monospace; text-align: right; }
+
+			/* ── Bottom control bar ─────────────────────────────────────── */
+			#controls {
+				position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+				display: flex; align-items: center; gap: 8px;
+				background: rgba(8,9,16,0.92);
+				border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 100px;
+				padding: 8px 10px;
+				z-index: 24;
+				opacity: 0; transform: translate(-50%, 8px);
+				transition: opacity 0.5s, transform 0.5s;
+				backdrop-filter: blur(20px);
+				box-shadow: 0 14px 36px rgba(0,0,0,0.45);
+			}
+			#controls.visible { opacity: 1; transform: translateX(-50%); }
+			#controls button, #controls select {
+				font: 600 12px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.04em;
+				border-radius: 100px;
+				cursor: pointer;
+				background: rgba(255,255,255,0.04);
+				border: 1px solid rgba(255,255,255,0.08);
+				color: #ddd;
+				padding: 9px 16px;
+				transition: all 0.15s;
+				white-space: nowrap;
+			}
+			#controls button:hover {
+				border-color: rgba(214,255,61,0.35);
+				color: #fff;
+			}
+			#controls button.primary {
+				background: linear-gradient(160deg,#e2ff5a,#c8ef2c);
+				color: #0a0b0f;
+				border-color: transparent;
+				box-shadow: 0 4px 14px rgba(214,255,61,0.28);
+			}
+			#controls button.primary:hover { filter: brightness(1.07); }
+			#controls button.recording {
+				background: linear-gradient(160deg,#ff7891,#ff4d6d);
+				color: #0a0b0f; border-color: transparent;
+				box-shadow: 0 4px 14px rgba(255,77,109,0.35);
+				animation: pulse 1.6s ease-in-out infinite;
+			}
+			@keyframes pulse {
+				0%,100% { box-shadow: 0 4px 14px rgba(255,77,109,0.35); }
+				50%     { box-shadow: 0 4px 22px rgba(255,77,109,0.6);  }
+			}
+			#controls .divider {
+				width: 1px; height: 22px;
+				background: rgba(255,255,255,0.08);
+				margin: 0 2px;
+			}
+			#controls select {
+				padding-right: 30px;
+				appearance: none;
+				background-image: url("data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23888c9d' stroke-width='1.5'/></svg>");
+				background-repeat: no-repeat;
+				background-position: right 12px center;
+				background-size: 10px;
+			}
+			#controls button:disabled { opacity: 0.4; cursor: default; }
+
+			/* ── Made-by-three.ws footer ────────────────────────────────── */
+			.fm-foot {
+				position: fixed; bottom: 24px; right: 28px;
+				font: 500 11px/1.5 'Inter',sans-serif;
+				color: #4a4d60; letter-spacing: 0.04em;
+				z-index: 19;
+			}
+			.fm-foot a { color: #6c7088; text-decoration: none; border-bottom: 1px dotted rgba(255,255,255,0.15); }
+			.fm-foot a:hover { color: #d6ff3d; border-color: #d6ff3d; }
+
+			/* Hide the agents-back nav element since we have our own brand */
+			.agents-nav { background: transparent; border-bottom: none; backdrop-filter: none; }
+
+			@media (max-width: 880px) {
+				#cam-card { top: 60px; right: 12px; width: min(280px, 70vw); }
+				#diag    { display: none; }
+				.stage   { padding: 60px 24px 24px; max-width: 70vw; }
+				#controls { flex-wrap: wrap; max-width: calc(100% - 24px); justify-content: center; }
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Permission overlay -->
+		<div id="overlay">
+			<span class="eyebrow">three.ws · face mocap</span>
+			<h2>Your face. <em>Her face.</em></h2>
+			<p>52 ARKit blendshapes streamed from your webcam to a Three.js avatar in real time. Everything runs in your browser — no frames leave the page.</p>
+			<button id="enable-btn">Enable camera</button>
+			<span id="overlay-status"></span>
+			<div class="privacy">100% on-device · zero network upload</div>
+		</div>
+
+		<!-- Brand badge -->
+		<div class="fm-brand"><span class="dot"></span>three<em>.ws</em>&nbsp;·&nbsp;face mocap</div>
+
+		<!-- Hero copy -->
+		<div class="stage">
+			<div class="hero-eyebrow">Open source · v1</div>
+			<h1 class="hero-title">Mocap, in&nbsp;the&nbsp;<em>browser</em>.</h1>
+			<p class="hero-sub">
+				MediaPipe Face Landmarker reads 478 landmarks and 52 ARKit blendshapes
+				every frame, one-euro filtered, calibrated to your neutral pose, and
+				written straight onto an Avaturn-style rig. Record a take, replay it
+				on any avatar.
+			</p>
+		</div>
+
+		<!-- 3D stage -->
+		<canvas id="avatar-canvas"></canvas>
+
+		<!-- Camera card (draggable, RiggingJs's signature) -->
+		<div id="cam-card">
+			<div class="cam-head" id="cam-drag">
+				<div class="ico">▶</div>
+				<div>
+					<div class="title">Camera</div>
+					<div class="sub">live feed</div>
+				</div>
+				<div class="fps" id="fps">0 fps</div>
+			</div>
+			<div class="cam-body">
+				<video id="cam-video" autoplay playsinline muted></video>
+				<canvas id="cam-overlay"></canvas>
+				<div class="nofeed" id="cam-nofeed">camera off</div>
+			</div>
+			<div class="cam-controls">
+				<select id="cam-device" title="Video input device"></select>
+			</div>
+			<div class="cam-toggles" id="cam-toggles">
+				<button data-mode="dots"     class="on">Landmarks</button>
+				<button data-mode="wire"     class="on">Mesh</button>
+				<button data-mode="contours" class="on">Contours</button>
+				<button data-mode="iris"     class="on">Iris</button>
+				<button data-mode="axis"     class="on">Pose</button>
+			</div>
+		</div>
+
+		<!-- Diagnostics -->
+		<div id="diag">
+			<div class="diag-head">
+				<div class="diag-title">Live signal</div>
+				<div id="status-pill" style="font:600 10px/1 'Space Grotesk',sans-serif;letter-spacing:0.12em;color:#555870;text-transform:uppercase;">No face</div>
+			</div>
+			<div class="diag-row"><span>Morph coverage</span><span id="diag-morphs">0 / 52</span></div>
+			<div class="diag-row"><span>Head yaw</span><span id="diag-yaw">0°</span></div>
+			<div class="diag-row"><span>Head pitch</span><span id="diag-pitch">0°</span></div>
+			<div class="diag-row"><span>Head roll</span><span id="diag-roll">0°</span></div>
+
+			<div class="diag-section">
+				<div class="diag-title" style="margin-bottom:8px;">Top blendshapes</div>
+				<div id="bars"></div>
+			</div>
+		</div>
+
+		<!-- Bottom control bar -->
+		<div id="controls">
+			<button id="calibrate"   title="Capture your current face as the neutral baseline">Calibrate</button>
+			<div class="divider"></div>
+			<button id="record"      title="Record a mocap take">● Record</button>
+			<button id="replay"      disabled>Replay</button>
+			<button id="download"    disabled>Download</button>
+			<div class="divider"></div>
+			<select  id="character"  title="Switch avatar">
+				<option value="/avatars/cz.glb">CZ</option>
+				<option value="/avatars/default.glb">Default</option>
+			</select>
+		</div>
+
+		<div class="fm-foot">
+			Built on <a href="https://github.com/three-ws/three.ws" target="_blank" rel="noopener">three.ws</a> · MediaPipe Face Landmarker
+		</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
+			import { SkeletonHelper } from 'three';
+			import { createStage, mountChrome } from './_lib.js';
+			import { FaceMocap }       from '/src/face-mocap.js';
+			import { FaceMocapOverlay } from '/src/face-mocap-overlay.js';
+
+			mountChrome('Face mocap');
+
+			// ── Three.js stage ────────────────────────────────────────────
+			const canvas = document.getElementById('avatar-canvas');
+			const stage  = createStage(canvas);
+
+			let avatar  = null;
+			let mixer   = null;
+			let rootBone = null;
+			let baseRootPos = null;
+			let headBone = null;
+			let idleAction = null;
+
+			async function loadAvatarFile(url) {
+				if (avatar) {
+					stage.scene.remove(avatar);
+					avatar.traverse((n) => {
+						if (n.geometry) n.geometry.dispose?.();
+						if (n.material) {
+							const mats = Array.isArray(n.material) ? n.material : [n.material];
+							for (const m of mats) m.dispose?.();
+						}
+					});
+				}
+
+				const gltf = await new Promise((res, rej) =>
+					new GLTFLoader().load(url, res, undefined, rej),
+				);
+				avatar = gltf.scene;
+
+				rootBone = null;
+				headBone = null;
+				avatar.traverse((n) => {
+					if (!n.isBone) return;
+					const canon = n.name.replace(/^mixamorig/i, '').replace(/^.*[:_]/, '').toLowerCase();
+					if (!rootBone && /^(hips|root)$/.test(canon)) rootBone = n;
+					if (!headBone) {
+						if (canon === 'head') headBone = n;
+					}
+				});
+				if (!headBone) {
+					avatar.traverse((n) => {
+						if (!n.isBone || headBone) return;
+						const canon = n.name.replace(/^mixamorig/i, '').replace(/^.*[:_]/, '').toLowerCase();
+						if (canon === 'neck') headBone = n;
+					});
+				}
+
+				baseRootPos = rootBone ? rootBone.position.clone() : null;
+				mixer = new THREE.AnimationMixer(avatar);
+
+				// Idle so the body has breath while no mocap data is flowing
+				const idleJson = await fetch('/animations/clips/idle.json').then(r => r.json());
+				idleAction = mixer.clipAction(THREE.AnimationClip.parse(idleJson));
+				idleAction.setLoop(THREE.LoopRepeat, Infinity).play();
+
+				avatar.position.set(0, -1.1, 0);
+				stage.scene.add(avatar);
+
+				return { avatar, mixer, rootBone, baseRootPos, headBone };
+			}
+
+			await loadAvatarFile('/avatars/cz.glb');
+
+			// ── Face mocap engine + overlay ───────────────────────────────
+			const mocap   = new FaceMocap();
+			const overlayCanvas = document.getElementById('cam-overlay');
+			const overlay = new FaceMocapOverlay(overlayCanvas);
+
+			// ── UI refs ───────────────────────────────────────────────────
+			const overlayEl    = document.getElementById('overlay');
+			const enableBtn    = document.getElementById('enable-btn');
+			const overlayStat  = document.getElementById('overlay-status');
+			const camCard      = document.getElementById('cam-card');
+			const camVideo     = document.getElementById('cam-video');
+			const camNoFeed    = document.getElementById('cam-nofeed');
+			const camDevice    = document.getElementById('cam-device');
+			const fpsEl        = document.getElementById('fps');
+			const statusPill   = document.getElementById('status-pill');
+			const diagEl       = document.getElementById('diag');
+			const controlsEl   = document.getElementById('controls');
+			const calibrateBtn = document.getElementById('calibrate');
+			const recordBtn    = document.getElementById('record');
+			const replayBtn    = document.getElementById('replay');
+			const downloadBtn  = document.getElementById('download');
+			const characterSel = document.getElementById('character');
+			const togglesEl    = document.getElementById('cam-toggles');
+			const barsEl       = document.getElementById('bars');
+			const diagMorphs   = document.getElementById('diag-morphs');
+			const diagYaw      = document.getElementById('diag-yaw');
+			const diagPitch    = document.getElementById('diag-pitch');
+			const diagRoll     = document.getElementById('diag-roll');
+
+			// ── Draggable camera card (signature RiggingJs interaction) ──
+			(function makeDraggable(card, handle) {
+				let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+				handle.addEventListener('mousedown', (e) => {
+					dragging = true;
+					const r = card.getBoundingClientRect();
+					ox = r.left; oy = r.top;
+					sx = e.clientX; sy = e.clientY;
+					card.style.right = 'auto'; card.style.bottom = 'auto';
+					card.style.left  = ox + 'px';
+					card.style.top   = oy + 'px';
+					e.preventDefault();
+				});
+				window.addEventListener('mousemove', (e) => {
+					if (!dragging) return;
+					card.style.left = (ox + e.clientX - sx) + 'px';
+					card.style.top  = (oy + e.clientY - sy) + 'px';
+				});
+				window.addEventListener('mouseup', () => { dragging = false; });
+			})(camCard, document.getElementById('cam-drag'));
+
+			// ── Overlay mode toggles ─────────────────────────────────────
+			togglesEl.addEventListener('click', (e) => {
+				const btn = e.target.closest('button[data-mode]');
+				if (!btn) return;
+				const mode = btn.dataset.mode;
+				overlay.modes[mode] = !overlay.modes[mode];
+				btn.classList.toggle('on', overlay.modes[mode]);
+			});
+
+			// ── Character switcher ───────────────────────────────────────
+			characterSel.addEventListener('change', async () => {
+				await loadAvatarFile(characterSel.value);
+				mocap.attach(avatar, headBone);
+			});
+
+			// ── Calibrate ────────────────────────────────────────────────
+			calibrateBtn.addEventListener('click', () => {
+				if (mocap.calibrate()) {
+					calibrateBtn.textContent = 'Calibrated ✓';
+					setTimeout(() => { calibrateBtn.textContent = 'Calibrate'; }, 1400);
+				}
+			});
+
+			// ── Record / Replay / Download ───────────────────────────────
+			let lastClip = null;
+			let playbackHandle = null;
+			recordBtn.addEventListener('click', () => {
+				if (mocap.recording) {
+					lastClip = mocap.stopRecording();
+					recordBtn.textContent = '● Record';
+					recordBtn.classList.remove('recording');
+					replayBtn.disabled   = lastClip.frames.length === 0;
+					downloadBtn.disabled = lastClip.frames.length === 0;
+				} else {
+					mocap.startRecording();
+					recordBtn.textContent = '■ Stop';
+					recordBtn.classList.add('recording');
+				}
+			});
+			replayBtn.addEventListener('click', () => {
+				if (playbackHandle) { playbackHandle.stop(); playbackHandle = null; replayBtn.textContent = 'Replay'; return; }
+				if (!lastClip) return;
+				replayBtn.textContent = '■ Stop replay';
+				playbackHandle = mocap.playback(lastClip, {
+					onEnd: () => { playbackHandle = null; replayBtn.textContent = 'Replay'; },
+				});
+			});
+			downloadBtn.addEventListener('click', () => {
+				if (!lastClip) return;
+				const blob = new Blob([JSON.stringify(lastClip, null, 2)], { type: 'application/json' });
+				const a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = `face-mocap-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`;
+				a.click();
+				setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+			});
+
+			// ── Device picker ────────────────────────────────────────────
+			async function populateDevices() {
+				try {
+					const devs = await navigator.mediaDevices.enumerateDevices();
+					camDevice.innerHTML = '';
+					for (const d of devs.filter(x => x.kind === 'videoinput')) {
+						const opt = document.createElement('option');
+						opt.value = d.deviceId;
+						opt.textContent = d.label || `Camera ${camDevice.options.length + 1}`;
+						camDevice.appendChild(opt);
+					}
+				} catch {}
+			}
+
+			// ── Top-blendshape bar chart ─────────────────────────────────
+			function renderBars(shapes) {
+				if (!shapes) return;
+				const top = Object.entries(shapes)
+					.filter(([k]) => k !== '_neutral')
+					.sort((a, b) => b[1] - a[1])
+					.slice(0, 6);
+				// Keep DOM stable: build rows once, then update widths
+				if (barsEl.children.length !== top.length) {
+					barsEl.innerHTML = '';
+					for (let i = 0; i < top.length; i++) {
+						const row = document.createElement('div');
+						row.className = 'bar-row';
+						row.innerHTML = '<span class="lbl"></span><div class="bar"><div></div></div><span class="num"></span>';
+						barsEl.appendChild(row);
+					}
+				}
+				for (let i = 0; i < top.length; i++) {
+					const [name, val] = top[i];
+					const row = barsEl.children[i];
+					row.children[0].textContent = name;
+					row.children[1].firstChild.style.width = `${Math.min(100, val * 100)}%`;
+					row.children[2].textContent = (val * 100).toFixed(0);
+				}
+			}
+
+			// ── Enable camera flow ───────────────────────────────────────
+			enableBtn.addEventListener('click', async () => {
+				enableBtn.disabled = true;
+				try {
+					overlayStat.textContent = 'Loading face landmarker…';
+					await mocap.init();
+
+					overlayStat.textContent = 'Requesting camera…';
+					const v = await mocap.startWebcam();
+
+					camVideo.srcObject = v.srcObject;
+					await new Promise(res => { camVideo.onloadedmetadata = res; });
+					overlay.matchVideo(camVideo);
+					camNoFeed.style.display = 'none';
+
+					mocap.attach(avatar, headBone);
+					mocap.onFaceDetected((hasFace) => {
+						statusPill.textContent  = hasFace ? 'Tracking' : 'Searching';
+						statusPill.style.color  = hasFace ? '#d6ff3d' : '#ff5e7e';
+					});
+
+					mocap.start();
+					await populateDevices();
+
+					camCard.classList.add('visible');
+					diagEl.classList.add('visible');
+					controlsEl.classList.add('visible');
+					overlayEl.classList.add('hidden');
+				} catch (err) {
+					overlayStat.textContent = err?.message ?? 'Could not access camera.';
+					enableBtn.disabled = false;
+				}
+			});
+
+			// ── Switching cameras after start ────────────────────────────
+			camDevice.addEventListener('change', async () => {
+				mocap.stop();
+				const stream = await navigator.mediaDevices.getUserMedia({
+					video: { deviceId: { exact: camDevice.value } },
+					audio: false,
+				});
+				// Splice new stream into the existing FaceMocap pipeline.
+				const v = document.createElement('video');
+				v.srcObject = stream; v.autoplay = true; v.playsInline = true; v.muted = true;
+				await new Promise(res => { v.onloadeddata = res; });
+				mocap._stream = stream; mocap._video = v;
+				camVideo.srcObject = stream;
+				overlay.matchVideo(camVideo);
+				mocap.start();
+			});
+
+			// ── Render loop ──────────────────────────────────────────────
+			// Custom loop instead of _lib.startLoop because:
+			//  1) startLoop closes over the initial mixer + rootBone, which go
+			//     stale on character switch.
+			//  2) we own the rootBone lock so it tracks the current avatar.
+			const RAD2DEG = 180 / Math.PI;
+			const clock = new THREE.Clock();
+			(function tick() {
+				requestAnimationFrame(tick);
+				const dt = Math.min(clock.getDelta(), 0.05);
+
+				if (rootBone && baseRootPos) {
+					// Lock root XYZ so Mixamo idle doesn't drift the avatar in worldspace
+					try { rootBone.position.copy(baseRootPos); } catch {}
+				}
+				mixer?.update(dt);
+				mocap.update();
+
+				const res = mocap.getLastResult();
+				overlay.draw(res);
+
+				fpsEl.textContent = `${mocap.getFps().toFixed(0)} fps`;
+				diagMorphs.textContent = `${mocap.getMorphCount()} / 52`;
+
+				if (headBone) {
+					const e = headBone.rotation;
+					diagYaw.textContent   = `${(e.y * RAD2DEG).toFixed(1)}°`;
+					diagPitch.textContent = `${(e.x * RAD2DEG).toFixed(1)}°`;
+					diagRoll.textContent  = `${(e.z * RAD2DEG).toFixed(1)}°`;
+				}
+
+				if (res?.faceBlendshapes?.length) {
+					const cats = res.faceBlendshapes[0].categories;
+					const shapes = {};
+					for (const c of cats) shapes[c.categoryName] = c.score;
+					renderBars(shapes);
+				}
+
+				stage.renderer.render(stage.scene, stage.camera);
+			})();
+		</script>
+	</body>
+</html>

@@ -7,7 +7,7 @@
 // Usage:
 //   <div id="header-user-slot"></div>
 //   <script type="module">
-//     import { mountHeaderUser } from '/header-user.js';
+//     import { mountHeaderUser } from '/src/header-user.js';
 //     mountHeaderUser({ slot: '#header-user-slot' }).then(({ user }) => { ... });
 //   </script>
 //

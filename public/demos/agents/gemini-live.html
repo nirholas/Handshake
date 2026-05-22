@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Gemini Live Avatar — three.ws</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			body { overflow: hidden; }
+
+			/* ── Intro overlay ── */
+			#overlay {
+				position: fixed; inset: 0; z-index: 50;
+				display: flex; flex-direction: column;
+				align-items: center; justify-content: center;
+				background: #04050d; gap: 20px;
+				transition: opacity 0.5s;
+			}
+			#overlay.hidden { opacity: 0; pointer-events: none; }
+			#overlay h2 {
+				margin: 0;
+				font: 800 clamp(28px, 3.5vw, 48px)/1.08 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: -0.03em; color: #fff; text-align: center;
+			}
+			#overlay h2 em { color: #d6ff3d; font-style: normal; }
+			#overlay p {
+				margin: 0; color: #555870; font-size: 15px;
+				line-height: 1.7; max-width: 38ch; text-align: center;
+			}
+			#start-btn {
+				margin-top: 8px;
+				padding: 16px 44px;
+				border: none; border-radius: 100px;
+				background: #d6ff3d; color: #04050d;
+				font: 700 15px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.01em; cursor: pointer;
+				transition: opacity 0.15s, transform 0.15s;
+			}
+			#start-btn:hover { opacity: 0.88; transform: scale(1.03); }
+			#start-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+			#overlay-status { font-size: 13px; color: #555870; min-height: 18px; }
+
+			/* ── Stage copy ── */
+			.stage { pointer-events: none; transition: opacity 0.4s; }
+			.stage.hidden { opacity: 0; pointer-events: none; }
+			.stage h1 em { color: #d6ff3d; font-style: normal; }
+
+			/* ── Controls bar ── */
+			#controls {
+				position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+				display: flex; align-items: center; gap: 12px;
+				opacity: 0; transition: opacity 0.4s;
+				z-index: 30;
+			}
+			#controls.visible { opacity: 1; }
+
+			.ctrl-btn {
+				display: inline-flex; align-items: center; gap: 8px;
+				padding: 12px 22px; border: none; border-radius: 100px;
+				font: 600 13px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.01em; cursor: pointer;
+				transition: opacity 0.15s, transform 0.1s, background 0.15s;
+			}
+			.ctrl-btn:hover { transform: translateY(-1px); }
+			.ctrl-btn:active { transform: scale(0.97); }
+
+			#mic-btn {
+				background: #d6ff3d; color: #04050d;
+				box-shadow: 0 4px 0 0 #7a9600, 0 6px 20px rgba(214,255,61,0.22);
+			}
+			#mic-btn.active {
+				background: #ef4444; color: #fff;
+				box-shadow: 0 4px 0 0 #7f1d1d, 0 6px 20px rgba(239,68,68,0.28);
+				animation: pulse-ring 1.2s ease-in-out infinite;
+			}
+			@keyframes pulse-ring {
+				0%, 100% { box-shadow: 0 4px 0 0 #7f1d1d, 0 0 0 0 rgba(239,68,68,0.35); }
+				50%       { box-shadow: 0 4px 0 0 #7f1d1d, 0 0 0 10px rgba(239,68,68,0); }
+			}
+
+			#cam-btn {
+				background: rgba(255,255,255,0.06);
+				border: 1px solid rgba(255,255,255,0.12);
+				color: #ccc;
+			}
+			#cam-btn.active { background: rgba(214,255,61,0.1); border-color: rgba(214,255,61,0.4); color: #d6ff3d; }
+
+			#end-btn {
+				background: rgba(239,68,68,0.12);
+				border: 1px solid rgba(239,68,68,0.3);
+				color: #f87171;
+			}
+			#end-btn:hover { background: rgba(239,68,68,0.2); }
+
+			/* ── Status pill ── */
+			#status {
+				position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
+				background: rgba(12,14,22,0.85);
+				border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 100px; padding: 6px 16px;
+				font: 600 11px/1.4 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.08em; text-transform: uppercase;
+				display: flex; align-items: center; gap: 7px;
+				opacity: 0; transition: opacity 0.4s, color 0.3s;
+				z-index: 30;
+				white-space: nowrap;
+			}
+			#status.visible { opacity: 1; }
+			#status-dot {
+				width: 7px; height: 7px; border-radius: 50%;
+				background: #555870; transition: background 0.3s;
+				flex-shrink: 0;
+			}
+			#status[data-state="listening"]  #status-dot { background: #ef4444; }
+			#status[data-state="speaking"]   #status-dot { background: #34d399; animation: blink 0.8s ease-in-out infinite alternate; }
+			#status[data-state="thinking"]   #status-dot { background: #a78bfa; }
+			#status[data-state="idle"]       #status-dot { background: #d6ff3d; }
+			@keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
+
+			/* ── Transcript ── */
+			#transcript {
+				position: fixed; right: 24px; top: 70px; bottom: 130px;
+				width: clamp(200px, 22vw, 320px);
+				display: flex; flex-direction: column; gap: 8px;
+				overflow-y: auto; padding: 0 4px;
+				opacity: 0; transition: opacity 0.4s;
+				z-index: 30;
+			}
+			#transcript.visible { opacity: 1; }
+			.tx-msg {
+				font-size: 13px; line-height: 1.55;
+				padding: 8px 12px; border-radius: 10px;
+				word-wrap: break-word; white-space: pre-wrap;
+				max-width: 100%;
+			}
+			.tx-msg-user {
+				align-self: flex-end;
+				background: rgba(125,211,252,0.1);
+				border: 1px solid rgba(125,211,252,0.22);
+				color: #7dd3fc;
+			}
+			.tx-msg-model {
+				align-self: flex-start;
+				background: rgba(255,255,255,0.04);
+				border: 1px solid rgba(255,255,255,0.08);
+				color: #ccc;
+			}
+
+			/* ── Webcam PIP ── */
+			#pip {
+				position: fixed; bottom: 130px; left: 24px;
+				width: 140px; aspect-ratio: 4/3;
+				border-radius: 12px; overflow: hidden;
+				border: 1.5px solid rgba(255,255,255,0.1);
+				background: #0c0e16;
+				opacity: 0; transition: opacity 0.5s;
+				z-index: 20;
+			}
+			#pip.visible { opacity: 1; }
+			#pip video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+		</style>
+	</head>
+	<body>
+		<!-- Intro overlay -->
+		<div id="overlay">
+			<h2>Talk to your<br><em>3D avatar.</em></h2>
+			<p>Real-time voice powered by Gemini Live. Your webcam drives head pose and expressions — everything runs in your browser.</p>
+			<button id="start-btn">Start conversation</button>
+			<span id="overlay-status"></span>
+		</div>
+
+		<div class="stage">
+			<div class="hero-eyebrow">Gemini Live Avatar</div>
+			<h1 class="hero-title">Speak.<br><em>She listens.</em></h1>
+			<p class="hero-sub">
+				Low-latency voice responses from Gemini Live stream into the avatar's mouth in real time.
+				Webcam face-capture drives expressions and head pose simultaneously.
+			</p>
+		</div>
+
+		<canvas id="avatar-canvas"></canvas>
+
+		<!-- Webcam PIP (activated after cam is enabled) -->
+		<div id="pip"><video id="pip-video" autoplay playsinline muted></video></div>
+
+		<!-- Status pill -->
+		<div id="status" data-state="idle">
+			<span id="status-dot"></span>
+			<span id="status-label">Ready</span>
+		</div>
+
+		<!-- Transcript -->
+		<div id="transcript"></div>
+
+		<!-- Controls -->
+		<div id="controls">
+			<button id="mic-btn"  class="ctrl-btn">🎙 Mute</button>
+			<button id="cam-btn"  class="ctrl-btn">📷 Camera off</button>
+			<button id="end-btn"  class="ctrl-btn">✕ End</button>
+		</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import { createStage, loadAvatar, loadClips, startLoop, mountChrome } from './_lib.js';
+			import { FaceMocap }         from '/src/face-mocap.js';
+			import { GeminiLiveClient }  from '/src/runtime/gemini-live-client.js';
+			import { LipsyncDriver }     from '/src/voice/lipsync-driver.js';
+			import { AvatarMouthTarget } from '/src/voice/avatar-morph-target.js';
+
+			mountChrome('Gemini Live Avatar');
+
+			// ── Three.js + avatar ────────────────────────────────────────────
+			const canvas = document.getElementById('avatar-canvas');
+			const stage  = createStage(canvas);
+			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
+			stage.scene.add(avatar);
+
+			const A = await loadClips(mixer, { idle: '/animations/clips/idle.json' });
+			A.idle.setLoop(THREE.LoopRepeat, Infinity);
+			A.idle.play();
+
+			avatar.position.set(0, -1.1, 0);
+
+			// ── Head bone for face-mocap ──────────────────────────────────
+			function findHeadBone(root) {
+				let head = null, neck = null;
+				root.traverse((node) => {
+					if (!node.isBone) return;
+					const canon = node.name.replace(/^mixamorig/i, '').replace(/^.*[:_]/, '').toLowerCase();
+					if (!head && canon === 'head') head = node;
+					else if (!neck && canon === 'neck') neck = node;
+				});
+				return head ?? neck ?? null;
+			}
+			const headBone = findHeadBone(avatar);
+
+			// ── Mouth target ──────────────────────────────────────────────
+			const mouthTarget = new AvatarMouthTarget();
+			mouthTarget.attach(avatar);
+
+			// ── FaceMocap (loaded once; webcam opened per-session) ────────
+			const mocap = new FaceMocap();
+			let mocapActive     = false;
+			let mocapReady      = false; // true after first init() call succeeds
+			const tempCanvas    = document.createElement('canvas');
+			tempCanvas.width    = 320;
+			tempCanvas.height   = 240;
+
+			// ── DOM refs ──────────────────────────────────────────────────
+			const overlay       = document.getElementById('overlay');
+			const stageEl       = document.querySelector('.stage');
+			const startBtn      = document.getElementById('start-btn');
+			const overlayStatus = document.getElementById('overlay-status');
+			const pip           = document.getElementById('pip');
+			const pipVideo      = document.getElementById('pip-video');
+			const statusEl      = document.getElementById('status');
+			const statusLabel   = document.getElementById('status-label');
+			const transcriptEl  = document.getElementById('transcript');
+			const controlsEl    = document.getElementById('controls');
+			const micBtn        = document.getElementById('mic-btn');
+			const camBtn        = document.getElementById('cam-btn');
+			const endBtn        = document.getElementById('end-btn');
+
+			// ── Session state (replaced each conversation) ────────────────
+			let activeClient  = null;
+			let activeDriver  = null;
+			let micMuted      = false;
+			let camOn         = false;
+			let imageInterval = null;
+			let modelTextBuf  = '';
+
+			// ── Helpers ───────────────────────────────────────────────────
+			function setStatus(state, label) {
+				statusEl.dataset.state = state;
+				statusLabel.textContent = label;
+			}
+
+			function addMessage(role, text) {
+				const div = document.createElement('div');
+				div.className = `tx-msg tx-msg-${role}`;
+				div.textContent = text;
+				transcriptEl.appendChild(div);
+				transcriptEl.scrollTop = transcriptEl.scrollHeight;
+			}
+
+			// ── Camera ────────────────────────────────────────────────────
+			async function startCamera() {
+				try {
+					if (!mocapReady) {
+						await mocap.init();
+						mocapReady = true;
+					}
+					const videoEl = await mocap.startWebcam();
+					pipVideo.srcObject = videoEl.srcObject;
+					mocap.attach(avatar, headBone);
+					mocap.start();
+					mocapActive = true;
+					pip.classList.add('visible');
+					camOn = true;
+					camBtn.classList.add('active');
+					camBtn.textContent = '📷 Camera on';
+
+					imageInterval = setInterval(() => {
+						if (!camOn || !activeClient || videoEl.readyState < 2) return;
+						const ctx2d = tempCanvas.getContext('2d');
+						ctx2d.drawImage(videoEl, 0, 0, tempCanvas.width, tempCanvas.height);
+						activeClient.sendImage(tempCanvas.toDataURL('image/jpeg', 0.5));
+					}, 4000);
+				} catch (err) {
+					console.warn('[gemini-live] camera:', err.message);
+				}
+			}
+
+			function stopCamera() {
+				clearInterval(imageInterval);
+				imageInterval = null;
+				mocap.stop();
+				mocapActive = false;
+				pip.classList.remove('visible');
+				camOn = false;
+				camBtn.classList.remove('active');
+				camBtn.textContent = '📷 Camera off';
+			}
+
+			// ── Button handlers (wired once) ──────────────────────────────
+			micBtn.addEventListener('click', async () => {
+				if (!activeClient) return;
+				micMuted = !micMuted;
+				if (micMuted) {
+					activeClient.stopMic();
+					micBtn.classList.remove('active');
+					micBtn.textContent = '🎙 Unmute';
+					setStatus('idle', 'Muted');
+				} else {
+					await activeClient.startMic();
+					micBtn.classList.add('active');
+					micBtn.textContent = '🎙 Mute';
+					setStatus('idle', 'Listening');
+				}
+			});
+
+			camBtn.addEventListener('click', () => {
+				camOn ? stopCamera() : startCamera();
+			});
+
+			endBtn.addEventListener('click', () => {
+				if (!activeClient) return;
+				activeDriver?.stop();
+				activeDriver = null;
+				stopCamera();
+				activeClient.disconnect();
+				activeClient = null;
+				micMuted = false;
+
+				controlsEl.classList.remove('visible');
+				statusEl.classList.remove('visible');
+				transcriptEl.classList.remove('visible');
+				stageEl.classList.remove('hidden');
+				overlay.classList.remove('hidden');
+				overlayStatus.textContent = 'Conversation ended.';
+				startBtn.disabled = false;
+				startBtn.textContent = 'Start again';
+				micBtn.classList.remove('active');
+				micBtn.textContent = '🎙 Mute';
+			});
+
+			window.addEventListener('keydown', (e) => {
+				if (e.key.toLowerCase() === 'm' && e.target === document.body && activeClient) {
+					micBtn.click();
+				}
+			});
+
+			// ── Start conversation ────────────────────────────────────────
+			startBtn.addEventListener('click', async () => {
+				startBtn.disabled = true;
+				overlayStatus.textContent = 'Fetching config…';
+
+				let apiKey;
+				try {
+					const resp = await fetch('/api/gemini-key');
+					if (!resp.ok) throw new Error(`key endpoint: ${resp.status}`);
+					({ key: apiKey } = await resp.json());
+				} catch (err) {
+					overlayStatus.textContent = `Error: ${err.message}`;
+					startBtn.disabled = false;
+					return;
+				}
+
+				overlayStatus.textContent = 'Connecting to Gemini…';
+
+				const client = new GeminiLiveClient({
+					apiKey,
+					systemInstruction:
+						'You are a friendly, expressive 3D avatar assistant. ' +
+						'Keep responses concise — under 3 sentences unless the user asks for detail. ' +
+						'You can see the user through their webcam when they enable it.',
+				});
+
+				try {
+					await client.connect();
+				} catch (err) {
+					overlayStatus.textContent = `Connection failed: ${err.message}`;
+					startBtn.disabled = false;
+					return;
+				}
+
+				overlayStatus.textContent = 'Starting microphone…';
+
+				// Reset per-session state
+				modelTextBuf = '';
+				micMuted     = false;
+				mouthTarget.attach(avatar);
+
+				// LipsyncDriver tapped from Gemini's audio output analyser
+				const analyser = client.analyser;
+				const driver   = analyser
+					? new LipsyncDriver({ analyser, target: mouthTarget, gain: 2.0 })
+					: null;
+
+				// Gemini event wiring
+				client.on('audio', () => {
+					setStatus('speaking', 'Speaking');
+					driver?.start();
+				});
+				client.on('audio_end', () => {
+					driver?.stop();
+					// Stay "thinking" until turn_complete confirms the turn is done
+					if (statusEl.dataset.state === 'speaking') {
+						setStatus('thinking', 'Thinking…');
+					}
+				});
+				client.on('text', (ev) => {
+					modelTextBuf += ev.detail?.text ?? '';
+				});
+				client.on('turn_complete', () => {
+					if (modelTextBuf.trim()) {
+						addMessage('model', modelTextBuf.trim());
+						modelTextBuf = '';
+					}
+					driver?.stop();
+					setStatus('idle', 'Listening');
+				});
+				client.on('interrupted', () => {
+					driver?.stop();
+					modelTextBuf = '';
+					setStatus('listening', 'You');
+				});
+				client.on('error', (ev) => {
+					const msg = ev.detail?.message ?? 'Unknown error';
+					console.error('[gemini-live]', msg);
+					setStatus('idle', 'Error — reconnect');
+				});
+
+				try {
+					await client.startMic();
+				} catch (err) {
+					overlayStatus.textContent = `Mic error: ${err.message}`;
+					client.disconnect();
+					startBtn.disabled = false;
+					return;
+				}
+
+				// Store references so button handlers can reach them
+				activeClient = client;
+				activeDriver = driver;
+
+				setStatus('idle', 'Listening');
+				micBtn.classList.add('active');
+				micBtn.textContent = '🎙 Mute';
+
+				// Hide stage copy so transcript has room; show controls
+				stageEl.classList.add('hidden');
+				overlay.classList.add('hidden');
+				controlsEl.classList.add('visible');
+				statusEl.classList.add('visible');
+				transcriptEl.classList.add('visible');
+				// Clear any transcript from a previous session
+				transcriptEl.innerHTML = '';
+			});
+
+			// ── Render loop ───────────────────────────────────────────────
+			startLoop(stage.renderer, stage.scene, stage.camera, mixer, () => {
+				if (mocapActive) mocap.update();
+			}, rootBone, baseRootPos);
+		</script>
+	</body>
+</html>

@@ -21,7 +21,7 @@
 import { BN } from "@coral-xyz/anchor";
 import { NATIVE_MINT, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 // ─── Shared test fixtures ────────────────────────────────────────────────────
 
@@ -378,7 +378,7 @@ describe("PumpTradeClient", () => {
         user: FAKE_USER,
         quoteAmount: new BN(1_000_000_000),
       });
-      const buyIx = result.instructions[result.instructions.length - 1];
+      const buyIx = result.instructions[result.instructions.length - 1]!;
       expect(buyIx.programId.equals(PUMP_PROGRAM_ID)).toBe(true);
     });
 
@@ -390,7 +390,7 @@ describe("PumpTradeClient", () => {
         user: FAKE_USER,
         quoteAmount: new BN(1_000_000_000),
       });
-      const buyIx = result.instructions[result.instructions.length - 1];
+      const buyIx = result.instructions[result.instructions.length - 1]!;
       expect(Array.from(buyIx.data.slice(0, 8))).toEqual(BUY_V2_DISC);
     });
 
@@ -498,7 +498,7 @@ describe("PumpTradeClient", () => {
         user: FAKE_USER,
         baseAmount: new BN(10_000_000_000),
       });
-      const sellIx = result.instructions[result.instructions.length - 1];
+      const sellIx = result.instructions[result.instructions.length - 1]!;
       expect(sellIx.programId.equals(PUMP_PROGRAM_ID)).toBe(true);
     });
 
@@ -510,7 +510,7 @@ describe("PumpTradeClient", () => {
         user: FAKE_USER,
         baseAmount: new BN(10_000_000_000),
       });
-      const sellIx = result.instructions[result.instructions.length - 1];
+      const sellIx = result.instructions[result.instructions.length - 1]!;
       expect(Array.from(sellIx.data.slice(0, 8))).toEqual(SELL_V2_DISC);
     });
 
@@ -581,7 +581,7 @@ describe("PumpTradeClient", () => {
         minBaseOut: new BN(1_000_000),
       });
       // last ix is the buyExactQuoteInV2 ix (after idempotent ATA creates)
-      const exactIx = result.instructions[result.instructions.length - 1];
+      const exactIx = result.instructions[result.instructions.length - 1]!;
       expect(Array.from(exactIx.data.slice(0, 8))).toEqual(BUY_EXACT_QUOTE_IN_V2_DISC);
     });
 

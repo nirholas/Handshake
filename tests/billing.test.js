@@ -19,7 +19,7 @@ describe('billing — vercel.json routing', () => {
 });
 
 describe('billing — dashboard tab', () => {
-	const dashjs = readFileSync(p('public/dashboard/dashboard.js'), 'utf8');
+	const dashjs = readFileSync(p('src/dashboard/dashboard.js'), 'utf8');
 
 	it('renderBilling is async and fetches billing data', () => {
 		expect(dashjs).toContain('async function renderBilling');

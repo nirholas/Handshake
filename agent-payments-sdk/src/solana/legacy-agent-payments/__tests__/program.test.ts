@@ -138,10 +138,10 @@ describe("legacy-agent-payments / decoders (offline encode then decode)", () => 
       sample.tokenizedAgentSequence.toString(),
     );
     expect(decoded.supportedCurrenciesMint).toHaveLength(10);
-    expect(decoded.supportedCurrenciesMint[0].toBase58()).toBe(
-      supported[0].toBase58(),
+    expect(decoded.supportedCurrenciesMint[0]!.toBase58()).toBe(
+      supported[0]!.toBase58(),
     );
-    expect(decoded.supportedCurrenciesMint[1].toBase58()).toBe(
+    expect(decoded.supportedCurrenciesMint[1]!.toBase58()).toBe(
       PublicKey.default.toBase58(),
     );
   });

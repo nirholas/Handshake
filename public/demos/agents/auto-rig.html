@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws · Auto-rig (SkinTokens)</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/demos/agents/_shared.css" />
+		<style>
+			body { overflow: hidden; background: #04050d; }
+
+			.lab {
+				position: fixed; inset: 56px 0 0 0;
+				display: grid; grid-template-columns: 360px 1fr 1fr; gap: 1px;
+				background: rgba(255,255,255,0.04);
+			}
+
+			/* ── Sidebar ─────────────────────────────────────────────── */
+			.panel {
+				background: #06070f;
+				padding: 24px 22px 22px;
+				overflow-y: auto;
+				font-size: 13px;
+				color: #b6bbcd;
+			}
+			.panel h2 {
+				margin: 0 0 4px;
+				font: 800 22px/1.1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: -0.02em; color: #fff;
+			}
+			.panel h2 em { color: #d6ff3d; font-style: normal; }
+			.panel .sub {
+				color: #555870; font-size: 12.5px; line-height: 1.6;
+				margin: 0 0 22px;
+			}
+			.panel .credit { font-size: 11px; color: #4a4d60; margin: 6px 0 22px; }
+			.panel .credit a { color: #888c9d; text-decoration: none; border-bottom: 1px dotted #888c9d40; }
+			.panel .credit a:hover { color: #d6ff3d; border-bottom-color: #d6ff3d; }
+
+			.drop {
+				border: 1.5px dashed rgba(255,255,255,0.12);
+				border-radius: 14px;
+				padding: 26px 16px;
+				text-align: center;
+				cursor: pointer;
+				transition: border-color 0.15s, background 0.15s;
+				background: #0b0d17;
+				margin-bottom: 16px;
+			}
+			.drop:hover, .drop.active {
+				border-color: #d6ff3d; background: #11141e;
+			}
+			.drop .ico { font-size: 26px; margin-bottom: 8px; }
+			.drop h3 { margin: 0 0 4px; font: 700 14px/1.2 'Space Grotesk','Inter',sans-serif; color: #fff; }
+			.drop p { margin: 0; color: #555870; font-size: 12px; }
+			.drop strong { color: #d6ff3d; font-weight: 600; }
+
+			.field { margin: 14px 0; }
+			.field label {
+				display: flex; justify-content: space-between; align-items: center;
+				font: 600 11px/1.2 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.08em; text-transform: uppercase; color: #888c9d;
+				margin-bottom: 6px;
+			}
+			.field label .val { color: #d6ff3d; letter-spacing: 0; text-transform: none; font-family: 'Inter', sans-serif; }
+			.field input[type=range] {
+				width: 100%; accent-color: #d6ff3d;
+				background: transparent;
+			}
+			.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 14px 0 4px; }
+			.checks label {
+				display: flex; align-items: center; gap: 8px;
+				font-size: 12px; color: #b6bbcd;
+				cursor: pointer; user-select: none;
+				text-transform: none; letter-spacing: 0;
+			}
+			.checks input { accent-color: #d6ff3d; }
+
+			.run {
+				width: 100%; margin-top: 18px;
+				padding: 14px 18px; border: none; border-radius: 12px;
+				background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
+				color: #0a0b0f; font: 700 14px/1 'Inter', sans-serif;
+				cursor: pointer; transition: filter 0.15s, transform 0.1s;
+				box-shadow: 0 6px 0 0 #7a9600, 0 8px 20px rgba(214,255,61,0.25);
+			}
+			.run:hover:not(:disabled) { filter: brightness(1.06); }
+			.run:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 4px 0 0 #7a9600, 0 6px 16px rgba(214,255,61,0.25); }
+			.run:disabled { opacity: 0.45; cursor: not-allowed; }
+
+			.status {
+				margin-top: 16px;
+				padding: 12px 14px;
+				background: #0b0d17;
+				border: 1px solid rgba(255,255,255,0.05);
+				border-radius: 10px;
+				font: 12px/1.55 'JetBrains Mono', ui-monospace, monospace;
+				color: #888c9d;
+				min-height: 60px;
+				white-space: pre-wrap;
+				word-break: break-word;
+			}
+			.status.error { color: #ff7a7a; border-color: rgba(255,122,122,0.3); }
+			.status.success { color: #d6ff3d; border-color: rgba(214,255,61,0.3); }
+
+			.download {
+				display: none;
+				margin-top: 12px; width: 100%;
+				padding: 12px 16px; border-radius: 10px;
+				background: transparent; color: #fff;
+				border: 1.5px solid rgba(214,255,61,0.5);
+				font: 700 13px/1 'Inter', sans-serif; text-decoration: none;
+				text-align: center; cursor: pointer;
+			}
+			.download:hover { background: rgba(214,255,61,0.08); border-color: #d6ff3d; }
+			.download.visible { display: block; }
+
+			/* ── Viewers ─────────────────────────────────────────────── */
+			.viewer {
+				position: relative; background: #04050d;
+				overflow: hidden;
+			}
+			.viewer canvas { display: block; width: 100%; height: 100%; }
+			.viewer .tag {
+				position: absolute; top: 14px; left: 14px;
+				display: inline-flex; align-items: center; gap: 8px;
+				padding: 6px 10px; border-radius: 8px;
+				background: rgba(8,9,16,0.85); backdrop-filter: blur(8px);
+				font: 600 11px/1 'Space Grotesk','Inter',sans-serif;
+				letter-spacing: 0.1em; text-transform: uppercase; color: #fff;
+				border: 1px solid rgba(255,255,255,0.06);
+				z-index: 4;
+			}
+			.viewer .tag .dot {
+				width: 6px; height: 6px; border-radius: 50%;
+				background: #555870;
+			}
+			.viewer.has-content .tag .dot { background: #d6ff3d; box-shadow: 0 0 8px rgba(214,255,61,0.7); }
+			.viewer .empty {
+				position: absolute; inset: 0;
+				display: flex; align-items: center; justify-content: center;
+				color: #2f3346; font-size: 13px;
+				pointer-events: none;
+			}
+			.viewer.has-content .empty { display: none; }
+
+			.spinner {
+				position: absolute; inset: 0;
+				display: none; align-items: center; justify-content: center;
+				background: rgba(4,5,13,0.7); backdrop-filter: blur(2px);
+				z-index: 3;
+			}
+			.spinner.visible { display: flex; flex-direction: column; gap: 12px; }
+			.spinner .ring {
+				width: 36px; height: 36px;
+				border: 2.5px solid rgba(214,255,61,0.15);
+				border-top-color: #d6ff3d;
+				border-radius: 50%;
+				animation: spin 0.9s linear infinite;
+			}
+			.spinner .msg {
+				font: 500 12px/1.4 'JetBrains Mono', ui-monospace, monospace;
+				color: #888c9d; max-width: 30ch; text-align: center;
+			}
+			@keyframes spin { to { transform: rotate(360deg); } }
+
+			@media (max-width: 1000px) {
+				.lab { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+				.panel { max-height: 50vh; }
+				.viewer { height: 40vh; }
+			}
+		</style>
+	</head>
+	<body>
+		<div class="agents-nav">
+			<a href="/demos/agents/" class="agents-back">← lab</a>
+			<span class="agents-title">Auto-rig · SkinTokens</span>
+		</div>
+
+		<div class="lab">
+			<aside class="panel">
+				<h2>Auto-<em>rig</em> any GLB.</h2>
+				<p class="sub">Upload a static 3D mesh, get back a fully rigged GLB with skeleton and skinning weights — ready to drop into the avatar pipeline.</p>
+				<p class="credit">Powered by <a href="https://huggingface.co/spaces/jasongzy/SkinTokens" target="_blank" rel="noopener">SkinTokens</a> (VAST-AI, 2026). Autoregressive rigging via FSQ-CVAE skin tokens + a Qwen3 transformer.</p>
+
+				<div class="drop" id="drop">
+					<div class="ico">📥</div>
+					<h3 id="drop-title">Drop a <strong>.glb</strong> here</h3>
+					<p id="drop-sub">or click to choose · .obj / .fbx also accepted</p>
+					<input type="file" id="file" accept=".glb,.obj,.fbx" hidden />
+				</div>
+
+				<div class="field">
+					<label>Temperature <span class="val" id="v-temp">1.0</span></label>
+					<input type="range" id="temperature" min="0.1" max="2.0" step="0.1" value="1.0" />
+				</div>
+				<div class="field">
+					<label>Top-K <span class="val" id="v-topk">5</span></label>
+					<input type="range" id="top_k" min="1" max="200" step="1" value="5" />
+				</div>
+				<div class="field">
+					<label>Top-P <span class="val" id="v-topp">0.95</span></label>
+					<input type="range" id="top_p" min="0.1" max="1.0" step="0.01" value="0.95" />
+				</div>
+				<div class="field">
+					<label>Beams <span class="val" id="v-beams">10</span></label>
+					<input type="range" id="num_beams" min="1" max="20" step="1" value="10" />
+				</div>
+				<div class="field">
+					<label>Repetition penalty <span class="val" id="v-rep">2.0</span></label>
+					<input type="range" id="repetition_penalty" min="0.5" max="3.0" step="0.1" value="2.0" />
+				</div>
+
+				<div class="checks">
+					<label><input type="checkbox" id="use_transfer" checked /> Keep texture/scale</label>
+					<label><input type="checkbox" id="use_postprocess" /> Voxel postprocess</label>
+					<label><input type="checkbox" id="use_skeleton" /> Skin only (existing skeleton)</label>
+				</div>
+
+				<button class="run" id="run" disabled>Rig it →</button>
+				<a class="download" id="download" download="rigged.glb">↓ Download rigged GLB</a>
+				<div class="status" id="status">Drop a mesh to start.</div>
+			</aside>
+
+			<section class="viewer" id="viewer-in">
+				<div class="tag"><span class="dot"></span> Input</div>
+				<canvas id="canvas-in"></canvas>
+				<div class="empty">no mesh yet</div>
+			</section>
+
+			<section class="viewer" id="viewer-out">
+				<div class="tag"><span class="dot"></span> Rigged output</div>
+				<canvas id="canvas-out"></canvas>
+				<div class="empty">awaiting model</div>
+				<div class="spinner" id="spinner">
+					<div class="ring"></div>
+					<div class="msg" id="spinner-msg">Queuing on Hugging Face GPU…</div>
+				</div>
+			</section>
+		</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			import { Client } from 'https://esm.sh/@gradio/client@1.7.1';
+
+			const SPACE = 'jasongzy/SkinTokens';
+			const DEFAULT_CKPT = 'articulation_xl_quantization_256_token_4';
+			const DEFAULT_HF   = 'VAST-AI/SkinTokens';
+
+			// ─── Two viewers ────────────────────────────────────────────
+			function makeViewer(canvas, sectionEl) {
+				const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+				renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+				renderer.outputColorSpace = THREE.SRGBColorSpace;
+				renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+				const scene = new THREE.Scene();
+				const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 100);
+				camera.position.set(2.6, 1.8, 3.2);
+
+				scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+				const key = new THREE.DirectionalLight(0xfff4dc, 1.7); key.position.set(3, 5, 4); scene.add(key);
+				const rim = new THREE.DirectionalLight(0x6080ff, 0.7); rim.position.set(-4, 2, -3); scene.add(rim);
+				const grid = new THREE.GridHelper(6, 12, 0x1a1d2c, 0x10121a);
+				grid.position.y = -0.5; scene.add(grid);
+
+				const controls = new OrbitControls(camera, canvas);
+				controls.enableDamping = true;
+				controls.target.set(0, 0.3, 0);
+
+				let root = null;
+				function setRoot(obj) {
+					if (root) { scene.remove(root); root.traverse(d => { d.geometry?.dispose?.(); d.material?.dispose?.(); }); }
+					root = obj;
+					if (!obj) { sectionEl.classList.remove('has-content'); return; }
+					scene.add(obj);
+					sectionEl.classList.add('has-content');
+
+					// Frame the model
+					const box = new THREE.Box3().setFromObject(obj);
+					const size = box.getSize(new THREE.Vector3());
+					const center = box.getCenter(new THREE.Vector3());
+					const maxDim = Math.max(size.x, size.y, size.z) || 1;
+					const scale = 1.6 / maxDim;
+					obj.scale.multiplyScalar(scale);
+					obj.position.sub(center.multiplyScalar(scale));
+					obj.position.y += size.y * scale * 0.5 - 0.5;
+
+					controls.target.set(0, 0.3, 0);
+					camera.position.set(2.4, 1.6, 2.8);
+					controls.update();
+				}
+
+				function resize() {
+					const r = canvas.getBoundingClientRect();
+					if (!r.width || !r.height) return;
+					renderer.setSize(r.width, r.height, false);
+					camera.aspect = r.width / r.height;
+					camera.updateProjectionMatrix();
+				}
+				new ResizeObserver(resize).observe(canvas);
+				resize();
+
+				renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+				return { scene, setRoot };
+			}
+
+			const viewerIn  = makeViewer(document.getElementById('canvas-in'),  document.getElementById('viewer-in'));
+			const viewerOut = makeViewer(document.getElementById('canvas-out'), document.getElementById('viewer-out'));
+
+			// ─── File handling ─────────────────────────────────────────
+			const dropEl    = document.getElementById('drop');
+			const fileEl    = document.getElementById('file');
+			const runBtn    = document.getElementById('run');
+			const statusEl  = document.getElementById('status');
+			const dlBtn     = document.getElementById('download');
+			const spinner   = document.getElementById('spinner');
+			const spinMsg   = document.getElementById('spinner-msg');
+			const dropTitle = document.getElementById('drop-title');
+			const dropSub   = document.getElementById('drop-sub');
+
+			let currentFile = null;
+
+			function setStatus(msg, kind = '') {
+				statusEl.textContent = msg;
+				statusEl.classList.remove('error', 'success');
+				if (kind) statusEl.classList.add(kind);
+			}
+
+			async function pickFile(file) {
+				currentFile = file;
+				dropTitle.innerHTML = `<strong>${file.name}</strong>`;
+				dropSub.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+				runBtn.disabled = false;
+				dlBtn.classList.remove('visible');
+
+				// Preview in the input viewer (only for .glb; others are previewed after upload)
+				if (file.name.toLowerCase().endsWith('.glb')) {
+					const url = URL.createObjectURL(file);
+					try {
+						const gltf = await new GLTFLoader().loadAsync(url);
+						viewerIn.setRoot(gltf.scene);
+						setStatus('Mesh loaded. Ready to rig.');
+					} catch (err) {
+						setStatus(`Preview failed: ${err.message}. Upload still works.`, 'error');
+					} finally {
+						URL.revokeObjectURL(url);
+					}
+				} else {
+					viewerIn.setRoot(null);
+					setStatus(`${file.name.split('.').pop().toUpperCase()} preview not supported in browser — will still be sent to SkinTokens.`);
+				}
+			}
+
+			dropEl.addEventListener('click', () => fileEl.click());
+			fileEl.addEventListener('change', e => { if (e.target.files[0]) pickFile(e.target.files[0]); });
+			dropEl.addEventListener('dragover',  e => { e.preventDefault(); dropEl.classList.add('active'); });
+			dropEl.addEventListener('dragleave', () => dropEl.classList.remove('active'));
+			dropEl.addEventListener('drop', e => {
+				e.preventDefault(); dropEl.classList.remove('active');
+				if (e.dataTransfer.files[0]) pickFile(e.dataTransfer.files[0]);
+			});
+
+			// ─── Slider readouts ───────────────────────────────────────
+			const bind = (id, valId, fmt = v => v) => {
+				const inp = document.getElementById(id);
+				const lbl = document.getElementById(valId);
+				const sync = () => { lbl.textContent = fmt(inp.value); };
+				inp.addEventListener('input', sync); sync();
+			};
+			bind('temperature',        'v-temp',  v => Number(v).toFixed(1));
+			bind('top_k',              'v-topk');
+			bind('top_p',              'v-topp',  v => Number(v).toFixed(2));
+			bind('num_beams',          'v-beams');
+			bind('repetition_penalty', 'v-rep',   v => Number(v).toFixed(1));
+
+			// ─── Submission ────────────────────────────────────────────
+			let client = null;
+			async function getClient() {
+				if (client) return client;
+				spinMsg.textContent = 'Connecting to SkinTokens Space…';
+				spinner.classList.add('visible');
+				client = await Client.connect(SPACE);
+				return client;
+			}
+
+			runBtn.addEventListener('click', async () => {
+				if (!currentFile) return;
+				runBtn.disabled = true;
+				dlBtn.classList.remove('visible');
+				viewerOut.setRoot(null);
+				spinner.classList.add('visible');
+				spinMsg.textContent = 'Connecting to SkinTokens Space…';
+				setStatus('Submitting to SkinTokens…');
+
+				const params = {
+					files: [currentFile],
+					top_k: Number(document.getElementById('top_k').value),
+					top_p: Number(document.getElementById('top_p').value),
+					temperature: Number(document.getElementById('temperature').value),
+					repetition_penalty: Number(document.getElementById('repetition_penalty').value),
+					num_beams: Number(document.getElementById('num_beams').value),
+					use_skeleton: document.getElementById('use_skeleton').checked,
+					use_transfer: document.getElementById('use_transfer').checked,
+					use_postprocess: document.getElementById('use_postprocess').checked,
+					model_ckpt: DEFAULT_CKPT,
+					hf_path: DEFAULT_HF,
+				};
+
+				try {
+					const c = await getClient();
+					spinMsg.textContent = 'Generating skeleton + skin weights on GPU…';
+					setStatus('In queue — SkinTokens is generating the rig. This typically takes 1–3 minutes per mesh.');
+
+					const job = c.submit('/run_gradio', params);
+					let finalStatus = '';
+					let finalFile = null;
+
+					for await (const ev of job) {
+						if (ev.type === 'status') {
+							if (ev.stage === 'pending') spinMsg.textContent = `Queued (position ${ev.queue ?? '…'})`;
+							else if (ev.stage === 'generating') spinMsg.textContent = 'Generating on GPU…';
+						} else if (ev.type === 'data' && Array.isArray(ev.data)) {
+							finalStatus = ev.data[0] || finalStatus;
+							finalFile   = ev.data[1] || finalFile;
+						}
+					}
+
+					if (!finalFile?.url) throw new Error(finalStatus || 'Space returned no file.');
+
+					spinMsg.textContent = 'Loading rigged GLB…';
+					const gltf = await new GLTFLoader().loadAsync(finalFile.url);
+
+					// Add a skeleton helper so the new bones are visible
+					gltf.scene.traverse(o => {
+						if (o.isSkinnedMesh) {
+							const helper = new THREE.SkeletonHelper(o);
+							helper.material.linewidth = 2;
+							helper.material.color = new THREE.Color(0xd6ff3d);
+							gltf.scene.add(helper);
+						}
+					});
+
+					viewerOut.setRoot(gltf.scene);
+					dlBtn.href = finalFile.url;
+					dlBtn.download = (currentFile.name.replace(/\.[^.]+$/, '') || 'rigged') + '_rigged.glb';
+					dlBtn.classList.add('visible');
+					setStatus(finalStatus || 'Done. The skeleton is highlighted in lime.', 'success');
+				} catch (err) {
+					setStatus(`Failed: ${err.message || err}`, 'error');
+				} finally {
+					spinner.classList.remove('visible');
+					runBtn.disabled = false;
+				}
+			});
+		</script>
+	</body>
+</html>

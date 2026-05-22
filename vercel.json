@@ -1,1753 +1,1766 @@
 {
-	"buildCommand": "npm run build:vercel",
-	"outputDirectory": "dist",
-	"public": true,
-	"installCommand": "npm ci --prefer-offline --no-audit --no-fund",
-	"env": {
-		"NODE_OPTIONS": "--no-deprecation"
-	},
-	"functions": {
-		"api/club/tips-stream.js": {
-			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
-			"maxDuration": 300
-		},
-		"api/tts/speak.js": {
-			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
-			"maxDuration": 60
-		},
-		"api/**/*.js": {
-			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
-			"maxDuration": 30
-		}
-	},
-	"routes": [
-		{
-			"src": "/rss/announcements\\.xml",
-			"dest": "/api/rss/announcements"
-		},
-		{
-			"src": "/rss\\.xml",
-			"dest": "/api/rss/announcements"
-		},
-		{
-			"src": "/openapi\\.json",
-			"dest": "/api/openapi-json"
-		},
-		{
-			"src": "/\\.well-known/chat-plugin\\.json",
-			"dest": "/api/wk?name=chat-plugin"
-		},
-		{
-			"src": "/\\.well-known/x402\\.json",
-			"dest": "/api/wk?name=x402-discovery"
-		},
-		{
-			"src": "/\\.well-known/x402",
-			"dest": "/api/wk?name=x402"
-		},
-		{
-			"src": "/\\.well-known/agent-attestation-schemas",
-			"dest": "/api/wk?name=agent-attestation-schemas"
-		},
-		{
-			"src": "/\\.well-known/jwks\\.json",
-			"dest": "/api/auth/persona/[action]?action=jwks"
-		},
-		{
-			"src": "/\\.well-known/did\\.json",
-			"dest": "/api/x402/did"
-		},
-		{
-			"src": "/\\.well-known/oauth-authorization-server",
-			"dest": "/api/wk?name=oauth-authorization-server"
-		},
-		{
-			"src": "/\\.well-known/oauth-protected-resource",
-			"dest": "/api/wk?name=oauth-protected-resource"
-		},
-		{
-			"src": "/api/mcp/\\.well-known/oauth-protected-resource",
-			"dest": "/api/wk?name=oauth-protected-resource"
-		},
-		{
-			"src": "/a/sol/([^/]+)/\\.well-known/agent-card\\.json",
-			"dest": "/api/agents/solana/[action]?action=card&asset=$1"
-		},
-		{
-			"src": "/api/agents/solana-metadata",
-			"dest": "/api/agents/solana/[action]?action=metadata"
-		},
-		{
-			"src": "/api/agents/solana-attestations",
-			"dest": "/api/agents/solana/[action]?action=attestations"
-		},
-		{
-			"src": "/api/agents/solana-attest-event",
-			"dest": "/api/agents/solana/[action]?action=attest-event"
-		},
-		{
-			"src": "/api/agents/solana-card",
-			"dest": "/api/agents/solana/[action]?action=card"
-		},
-		{
-			"src": "/api/agents/solana-price-history",
-			"dest": "/api/agents/solana/[action]?action=price-history"
-		},
-		{
-			"src": "/api/agents/solana-register-prep",
-			"dest": "/api/agents/solana/[action]?action=register-prep"
-		},
-		{
-			"src": "/api/agents/solana-register-confirm",
-			"dest": "/api/agents/solana/[action]?action=register-confirm"
-		},
-		{
-			"src": "/api/agents/solana-reputation",
-			"dest": "/api/agents/solana/[action]?action=reputation"
-		},
-		{
-			"src": "/api/agents/solana-reputation-history",
-			"dest": "/api/agents/solana/[action]?action=reputation-history"
-		},
-		{
-			"src": "/api/agents/([^/]+)/skills-pricing",
-			"dest": "/api/agents/[id]/skills-pricing?id=$1"
-		},
-		{
-			"src": "/api/agents/([^/]+)/skills/price",
-			"dest": "/api/agent-skill-price.js?agentId=$1"
-		},
-		{
-			"src": "/api/agents/([^/]+)/unlocked-skills",
-			"dest": "/api/agents/[id]/unlocked-skills?id=$1"
-		},
-		{
-			"src": "/api/billing/receipts",
-			"dest": "/api/billing/receipts"
-		},
-		{
-			"src": "/api/newsletter/subscribe",
-			"dest": "/api/newsletter-subscribe"
-		},
-		{
-			"src": "/oauth/authorize",
-			"dest": "/api/oauth/[action]?action=authorize"
-		},
-		{
-			"src": "/oauth/consent",
-			"dest": "/api/oauth/[action]?action=consent"
-		},
-		{
-			"src": "/api/payments/intent",
-			"dest": "/api/payments/intent"
-		},
-		{
-			"src": "/oauth/token",
-			"dest": "/api/oauth/[action]?action=token"
-		},
-		{
-			"src": "/oauth/register",
-			"dest": "/api/oauth/[action]?action=register"
-		},
-		{
-			"src": "/oauth/revoke",
-			"dest": "/api/oauth/[action]?action=revoke"
-		},
-		{
-			"src": "/oauth/introspect",
-			"dest": "/api/oauth/[action]?action=introspect"
-		},
-		{
-			"src": "/login",
-			"dest": "/login.html"
-		},
-		{
-			"src": "/register",
-			"dest": "/register.html"
-		},
-		{
-			"src": "/forgot-password",
-			"dest": "/forgot-password.html"
-		},
-		{
-			"src": "/reset-password",
-			"dest": "/reset-password.html"
-		},
-		{
-			"src": "/wallet-login.js",
-			"dest": "/wallet-login.js"
-		},
-		{
-			"src": "/wallet/(.*)",
-			"dest": "/wallet/$1"
-		},
-		{
-			"src": "/pumpfun",
-			"dest": "/pumpfun.html"
-		},
-		{
-			"src": "/pumpfun/",
-			"dest": "/pumpfun.html"
-		},
-		{
-			"src": "/vanity-wallet",
-			"dest": "/vanity-wallet.html"
-		},
-		{
-			"src": "/vanity-wallet/",
-			"dest": "/vanity-wallet.html"
-		},
-		{
-			"src": "/eth-vanity",
-			"dest": "/eth-vanity.html"
-		},
-		{
-			"src": "/eth-vanity/",
-			"dest": "/eth-vanity.html"
-		},
-		{
-			"src": "/strategy-lab",
-			"dest": "/strategy-lab.html"
-		},
-		{
-			"src": "/strategy-lab/",
-			"dest": "/strategy-lab.html"
-		},
-		{
-			"src": "/pump-visualizer/?",
-			"dest": "/pump-visualizer.html"
-		},
-		{
-			"src": "/pump-live/?",
-			"dest": "/pump-live.html"
-		},
-		{
-			"src": "/pump-dashboard/?",
-			"dest": "/pump-dashboard.html"
-		},
-		{
-			"src": "/avatar-artifact/?",
-			"dest": "/avatar-artifact.html"
-		},
-		{
-			"src": "/walk/?",
-			"dest": "/walk.html"
-		},
-		{
-			"src": "/pose/?",
-			"dest": "/pose.html"
-		},
-		{
-			"src": "/club/?",
-			"dest": "/club.html"
-		},
-		{
-			"src": "/walkaround/?",
-			"dest": "/demos/walkaround.html"
-		},
-		{
-			"src": "/brain/?",
-			"dest": "/demos/brain.html"
-		},
-		{
-			"src": "/lipsync/mic/?",
-			"dest": "/demos/lipsync-mic.html"
-		},
-		{
-			"src": "/lipsync/?",
-			"dest": "/demos/lipsync-tts.html"
-		},
-		{
-			"src": "/launch-week/?",
-			"dest": "/three-ws-launch-week.html"
-		},
-		{
-			"src": "/launchpad/?",
-			"dest": "/launchpad.html"
-		},
-		{
-			"src": "/embed",
-			"dest": "/embed.html"
-		},
-		{
-			"src": "/embed/",
-			"dest": "/embed.html"
-		},
-		{
-			"src": "/playground",
-			"dest": "/playground.html"
-		},
-		{
-			"src": "/playground/",
-			"dest": "/playground.html"
-		},
-		{
-			"src": "/p/([a-z0-9-]+)/?",
-			"dest": "/p/index.html"
-		},
-		{
-			"src": "/pricing/?",
-			"dest": "/pricing.html"
-		},
-		{
-			"src": "/deploy",
-			"dest": "/app.html"
-		},
-		{
-			"src": "/dashboard",
-			"dest": "/dashboard/index.html"
-		},
-		{
-			"src": "/dashboard/",
-			"dest": "/dashboard/index.html"
-		},
-		{
-			"src": "/dashboard/agent-pumpfun",
-			"dest": "/dashboard/agent-pumpfun.html"
-		},
-		{
-			"src": "/dashboard/wallets",
-			"dest": "/dashboard/wallets.html"
-		},
-		{
-			"src": "/dashboard/portfolio/asset",
-			"dest": "/dashboard/portfolio-asset.html"
-		},
-		{
-			"src": "/dashboard/portfolio",
-			"dest": "/dashboard/portfolio.html"
-		},
-		{
-			"src": "/dashboard/sessions",
-			"dest": "/dashboard/sessions.html"
-		},
-		{
-			"src": "/dashboard/actions",
-			"dest": "/dashboard/actions.html"
-		},
-		{
-			"src": "/dashboard/embed-policy",
-			"dest": "/dashboard/embed-policy.html"
-		},
-		{
-			"src": "/dashboard/memory",
-			"dest": "/dashboard/memory.html"
-		},
-		{
-			"src": "/dashboard/strategy",
-			"dest": "/dashboard/strategy.html"
-		},
-		{
-			"src": "/dashboard/voice",
-			"dest": "/dashboard/voice.html"
-		},
-		{
-			"src": "/dashboard/sns",
-			"dest": "/dashboard/sns.html"
-		},
-		{
-			"src": "/dashboard/delegation",
-			"dest": "/dashboard/delegation.html"
-		},
-		{
-			"src": "/dashboard/tokens",
-			"dest": "/dashboard/tokens.html"
-		},
-		{
-			"src": "/dashboard/x402",
-			"dest": "/dashboard/x402.html"
-		},
-		{
-			"src": "/dashboard/(agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|earnings|account)/?",
-			"dest": "/dashboard/index.html"
-		},
-		{
-			"src": "/dashboard/edit/[^/]+/?",
-			"dest": "/dashboard/index.html"
-		},
-		{
-			"src": "/dashboard/(.*)",
-			"dest": "/dashboard/$1"
-		},
-		{
-			"src": "/hydrate",
-			"dest": "/hydrate/index.html"
-		},
-		{
-			"src": "/hydrate/",
-			"dest": "/hydrate/index.html"
-		},
-		{
-			"src": "/studio",
-			"dest": "/studio/index.html"
-		},
-		{
-			"src": "/studio/",
-			"dest": "/studio/index.html"
-		},
-		{
-			"src": "/studio/(.*)",
-			"dest": "/studio/$1"
-		},
-		{
-			"src": "/avatar-studio",
-			"dest": "/avatar-studio/index.html"
-		},
-		{
-			"src": "/avatar-studio/",
-			"dest": "/avatar-studio/index.html"
-		},
-		{
-			"src": "/avatar-studio/(.*)",
-			"dest": "/avatar-studio/$1"
-		},
-		{
-			"src": "/demos",
-			"dest": "/demos/index.html"
-		},
-		{
-			"src": "/demos/",
-			"dest": "/demos/index.html"
-		},
-		{
-			"src": "/demos/(.*)\\.html",
-			"dest": "/demos/$1.html"
-		},
-		{
-			"src": "/demos/([^/.]+)",
-			"dest": "/demos/$1.html"
-		},
-		{
-			"src": "/demo/avatar-os",
-			"dest": "/demo/avatar-os/index.html"
-		},
-		{
-			"src": "/demo/avatar-os/",
-			"dest": "/demo/avatar-os/index.html"
-		},
-		{
-			"src": "/demo/avatar-os/(.*)",
-			"dest": "/demo/avatar-os/$1"
-		},
-		{
-			"src": "/api/dashboard/prefs",
-			"dest": "/api/dashboard/prefs"
-		},
-		{
-			"src": "/api/marketplace/categories",
-			"dest": "/api/marketplace/[action]?action=categories"
-		},
-		{
-			"src": "/api/marketplace/agents",
-			"dest": "/api/marketplace/[action]?action=agents"
-		},
-		{
-			"src": "/api/agents/([^/]+)/skills/set-price",
-			"dest": "/api/agent-skills?agentId=$1&action=set-price"
-		},
-		{
-			"src": "/api/marketplace/agents/([^/]+)",
-			"dest": "/api/marketplace/[action]?action=agents&id=$1"
-		},
-		{
-			"src": "/api/marketplace/agents/([^/]+)/([^/]+)",
-			"dest": "/api/marketplace/[action]?action=agents&id=$1&sub=$2"
-		},
-		{
-			"src": "/api/marketplace/start-trial",
-			"dest": "/api/marketplace/start-trial"
-		},
-		{
-			"src": "/api/marketplace/purchase/([^/]+)/confirm",
-			"dest": "/api/marketplace/purchase?reference=$1&op=confirm"
-		},
-		{
-			"src": "/api/marketplace/purchase/([^/]+)",
-			"dest": "/api/marketplace/purchase?reference=$1"
-		},
-		{
-			"src": "/marketplace",
-			"dest": "/marketplace.html"
-		},
-		{
-			"src": "/marketplace/",
-			"dest": "/marketplace.html"
-		},
-		{
-			"src": "/marketplace/agents/([^/]+)",
-			"dest": "/marketplace.html"
-		},
-		{
-			"src": "/marketplace/avatars/([^/]+)",
-			"dest": "/marketplace.html"
-		},
-		{
-			"src": "/api/agents/me",
-			"dest": "/api/agents"
-		},
-		{
-			"src": "/api/agents/suggest",
-			"dest": "/api/agents/suggest"
-		},
-		{
-			"src": "/api/agents/by-wallet",
-			"dest": "/api/agents/by-wallet"
-		},
-		{
-			"src": "/api/agents/by-address/([^/]+)",
-			"dest": "/api/agents/by-address/[addr]?addr=$1"
-		},
-		{
-			"src": "/api/agents/x402/invoke",
-			"dest": "/api/agents/x402/[action]?action=invoke"
-		},
-		{
-			"src": "/api/agents/x402/manifest",
-			"dest": "/api/agents/x402/[action]?action=manifest"
-		},
-		{
-			"src": "/api/agents/([^/]+)/wallet",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/solana",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/solana/([^/]+)",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/pumpfun/([^/]+)",
-			"dest": "/api/agents/pumpfun/[action]?id=$1&action=$2"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/agents",
-			"dest": "/api/avatars/[id]/agents?id=$1"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/coins",
-			"dest": "/api/avatars/[id]/coins?id=$1"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/storage-mode",
-			"dest": "/api/avatars/[id]/storage-mode?id=$1"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/pin-ipfs",
-			"dest": "/api/avatars/[id]/pin-ipfs?id=$1"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/thumbnail",
-			"dest": "/api/avatars/[id]/thumbnail?id=$1"
-		},
-		{
-			"src": "/dashboard/storage",
-			"dest": "/dashboard/storage.html"
-		},
-		{
-			"src": "/api/agents/([^/]+)/embed-policy",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/sign",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/animations",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/manifest",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/actions",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/usage",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/memories/([^/]+)",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/memories",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/memory/pin",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/memory/seed/x",
-			"dest": "/api/agents/[id]/memory-seed-x?id=$1"
-		},
-		{
-			"src": "/api/agents/([^/]+)/memory/seed/farcaster",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/memory/([^/]+)",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/payments",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/pricing",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/pricing/([^/]+)",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/reputation",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/livekit-token",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/embed",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/persona(/.*)?" ,
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/eth-vanity/([^/]+)",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/eth-vanity",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/sns/([^/]+)",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/sns",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/voice/([^/]+)",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/voice",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/pumpfun-feed",
-			"dest": "/api/agents/pumpfun?_handler=feed"
-		},
-		{
-			"src": "/api/agents/pumpfun-metadata",
-			"dest": "/api/agents/pumpfun?_handler=metadata"
-		},
-		{
-			"src": "/api/agents/pumpfun",
-			"dest": "/api/agents/pumpfun"
-		},
-		{
-			"src": "/api/agents/register-prep",
-			"dest": "/api/agents/register/[action]?action=prep"
-		},
-		{
-			"src": "/api/agents/register-confirm",
-			"dest": "/api/agents/register/[action]?action=confirm"
-		},
-		{
-			"src": "/api/agents/sas-credentials",
-			"dest": "/api/agents/sas/[action]?action=credentials"
-		},
-		{
-			"src": "/api/agents/sas-issue-credential",
-			"dest": "/api/agents/sas/[action]?action=issue-credential"
-		},
-		{
-			"src": "/api/agents/check-name",
-			"dest": "/api/agents/check-name"
-		},
-		{
-			"src": "/api/agents/a2a-paid",
-			"dest": "/api/agents/a2a-paid"
-		},
-		{
-			"src": "/api/auth/github/connect",
-			"dest": "/api/auth/github/[action]?action=connect"
-		},
-		{
-			"src": "/api/auth/github/callback",
-			"dest": "/api/auth/github/[action]?action=callback"
-		},
-		{
-			"src": "/api/auth/github/status",
-			"dest": "/api/auth/github/[action]?action=status"
-		},
-		{
-			"src": "/api/auth/x/connect",
-			"dest": "/api/auth/x/[action]?action=connect"
-		},
-		{
-			"src": "/api/auth/x/callback",
-			"dest": "/api/auth/x/[action]?action=callback"
-		},
-		{
-			"src": "/api/auth/wallets",
-			"dest": "/api/auth/wallets/[action]"
-		},
-		{
-			"src": "/api/auth/wallets/([^/]+)",
-			"dest": "/api/auth/wallets/[action]?action=$1"
-		},
-		{
-			"src": "/api/auth/sessions",
-			"dest": "/api/auth/sessions/[action]"
-		},
-		{
-			"src": "/api/auth/sessions/([^/]+)",
-			"dest": "/api/auth/sessions/[action]?action=$1"
-		},
-		{
-			"src": "/api/auth/wallet/link",
-			"dest": "/api/auth/wallet/[action]?action=link"
-		},
-		{
-			"src": "/api/auth/wallet/unlink",
-			"dest": "/api/auth/wallet/[action]?action=unlink"
-		},
-		{
-			"src": "/api/onboarding/avaturn-session",
-			"dest": "/api/onboarding/[action]?action=avaturn-session"
-		},
-		{
-			"src": "/api/onboarding/link-avatar",
-			"dest": "/api/onboarding/[action]?action=link-avatar"
-		},
-		{
-			"src": "/api/pump/build-metadata",
-			"dest": "/api/pump/[action]?action=build-metadata"
-		},
-		{
-			"src": "/api/pump/channel-feed",
-			"dest": "/api/pump/[action]?action=channel-feed"
-		},
-		{
-			"src": "/api/pump/deliver-telegram",
-			"dest": "/api/pump/[action]?action=deliver-telegram"
-		},
-		{
-			"src": "/api/pump/first-claims",
-			"dest": "/api/pump/[action]?action=first-claims"
-		},
-		{
-			"src": "/api/pump/vanity-keygen",
-			"dest": "/api/pump/[action]?action=vanity-keygen"
-		},
-		{
-			"src": "/api/pump/helius-webhook",
-			"dest": "/api/pump/helius-webhook"
-		},
-		{
-			"src": "/api/pump/balances",
-			"dest": "/api/pump/[action]?action=balances"
-		},
-		{
-			"src": "/api/pump/buy-prep",
-			"dest": "/api/pump/[action]?action=buy-prep"
-		},
-		{
-			"src": "/api/pump/buy-confirm",
-			"dest": "/api/pump/[action]?action=buy-confirm"
-		},
-		{
-			"src": "/api/pump/sell-prep",
-			"dest": "/api/pump/[action]?action=sell-prep"
-		},
-		{
-			"src": "/api/pump/sell-confirm",
-			"dest": "/api/pump/[action]?action=sell-confirm"
-		},
-		{
-			"src": "/api/pump/launch-prep",
-			"dest": "/api/pump/[action]?action=launch-prep"
-		},
-		{
-			"src": "/api/pump/launch-confirm",
-			"dest": "/api/pump/[action]?action=launch-confirm"
-		},
-		{
-			"src": "/api/pump/launch-agent",
-			"dest": "/api/pump/[action]?action=launch-agent"
-		},
-		{
-			"src": "/api/pump/agent-wallet",
-			"dest": "/api/pump/[action]?action=agent-wallet"
-		},
-		{
-			"src": "/api/pump/accept-payment-prep",
-			"dest": "/api/pump/[action]?action=accept-payment-prep"
-		},
-		{
-			"src": "/api/pump/accept-payment-confirm",
-			"dest": "/api/pump/[action]?action=accept-payment-confirm"
-		},
-		{
-			"src": "/api/pump/payments-list",
-			"dest": "/api/pump/[action]?action=payments-list"
-		},
-		{
-			"src": "/api/pump/portfolio",
-			"dest": "/api/pump/[action]?action=portfolio"
-		},
-		{
-			"src": "/api/pump/by-agent",
-			"dest": "/api/pump/[action]?action=by-agent"
-		},
-		{
-			"src": "/api/pump/quote",
-			"dest": "/api/pump/[action]?action=quote"
-		},
-		{
-			"src": "/api/pump/governance-prep",
-			"dest": "/api/pump/[action]?action=governance-prep"
-		},
-		{
-			"src": "/api/pump/withdraw-prep",
-			"dest": "/api/pump/[action]?action=withdraw-prep"
-		},
-		{
-			"src": "/api/pump/withdraw-confirm",
-			"dest": "/api/pump/[action]?action=withdraw-confirm"
-		},
-		{
-			"src": "/api/pump/strategy-backtest",
-			"dest": "/api/pump/[action]?action=strategy-backtest"
-		},
-		{
-			"src": "/api/pump/strategy-close-all",
-			"dest": "/api/pump/[action]?action=strategy-close-all"
-		},
-		{
-			"src": "/api/pump/strategy-run",
-			"dest": "/api/pump/[action]?action=strategy-run"
-		},
-		{
-			"src": "/api/pump/strategy-validate",
-			"dest": "/api/pump/[action]?action=strategy-validate"
-		},
-		{
-			"src": "/api/pump/live-stream",
-			"dest": "/api/pump/[action]?action=live-stream"
-		},
-		{
-			"src": "/api/pump/recent-graduations",
-			"dest": "/api/pump/[action]?action=recent-graduations"
-		},
-		{
-			"src": "/api/demo/coin/state",
-			"dest": "/api/demo/coin/[action]?action=state"
-		},
-		{
-			"src": "/api/demo/coin/holder",
-			"dest": "/api/demo/coin/[action]?action=holder"
-		},
-		{
-			"src": "/api/demo/coin/history",
-			"dest": "/api/demo/coin/[action]?action=history"
-		},
-		{
-			"src": "/api/demo/coin/events",
-			"dest": "/api/demo/coin/[action]?action=events"
-		},
-		{
-			"src": "/api/demo/coin/winners",
-			"dest": "/api/demo/coin/[action]?action=winners"
-		},
-		{
-			"src": "/api/demo/coin/holders",
-			"dest": "/api/demo/coin/[action]?action=holders"
-		},
-		{
-			"src": "/coin",
-			"status": 301,
-			"headers": {
-				"Location": "/demo/coin"
-			}
-		},
-		{
-			"src": "/coin/",
-			"status": 301,
-			"headers": {
-				"Location": "/demo/coin"
-			}
-		},
-		{
-			"src": "/demo/coin",
-			"dest": "/demo/coin/index.html"
-		},
-		{
-			"src": "/demo/coin/",
-			"dest": "/demo/coin/index.html"
-		},
-		{
-			"src": "/demo/coin/([1-9A-HJ-NP-Za-km-z]{32,44})/?",
-			"dest": "/demo/coin/index.html"
-		},
-		{
-			"src": "/api/avatars/presign",
-			"dest": "/api/avatars/[id]"
-		},
-      {
-        "src": "/api/avatars/view",
-        "dest": "/api/avatars/view"
-      },
-
-      {
-        "src": "/api/avatars/presign-thumbnail",
-        "dest": "/api/avatars/[id]"
-      },
-      {
-        "src": "/api/avatars/presign-usdz",
-        "dest": "/api/avatars/[id]"
-      },
-      {
-        "src": "/api/avatars/presign-halfbody",
-        "dest": "/api/avatars/[id]"
-      },
-      {
-        "src": "/api/avatars/auto-tag",
-        "dest": "/api/avatars/[id]"
-      },
-
-		{
-			"src": "/api/avatars/public",
-			"dest": "/api/avatars/[id]"
-		},
-		{
-			"src": "/api/avatars/regenerate-status",
-			"dest": "/api/avatars/[id]"
-		},
-		{
-			"src": "/api/avatars/regenerate",
-			"dest": "/api/avatars/[id]"
-		},
-		{
-			"src": "/api/avatars/reconstruct",
-			"dest": "/api/avatars/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/memory-seed",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents",
-			"dest": "/api/agents"
-		},
-		{
-			"src": "/api/agent-actions",
-			"dest": "/api/agent-actions"
-		},
-		{
-			"src": "/api/agent-memory/([^/]+)",
-			"dest": "/api/agent-memory"
-		},
-		{
-			"src": "/api/agent-memory",
-			"dest": "/api/agent-memory"
-		},
-		{
-			"src": "/api/agent/([^/]+)/og",
-			"dest": "/api/agent-og?id=$1"
-		},
-		{
-			"src": "/api/avatar/([^/]+)/og",
-			"dest": "/api/avatar-og?id=$1"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/og",
-			"dest": "/api/avatar-og?id=$1"
-		},
-		{
-			"src": "/api/a/(\\d+)/(\\d+)/og",
-			"dest": "/api/a-og?chain=$1&id=$2"
-		},
-		{
-			"src": "/api/oembed",
-			"dest": "/api/agent-oembed"
-		},
-		{
-			"src": "/u/([^/]+)",
-			"dest": "/profile.html"
-		},
-		{
-			"src": "/avatars/([^/]+\\.glb)",
-			"dest": "/avatars/$1"
-		},
-		{
-			"src": "/avatars/([^/]+)",
-			"dest": "/avatar-page.html"
-		},
-		{
-			"src": "/api/characters",
-			"dest": "/api/characters.js"
-		},
-		{
-			"src": "/characters",
-			"dest": "/characters.html"
-		},
-		{
-			"src": "/characters/",
-			"dest": "/characters.html"
-		},
-		{
-			"src": "/character/([^/]+)",
-			"dest": "/character.html"
-		},
-		{
-			"src": "/api/users/me/earnings",
-			"dest": "/api/users/earnings.js"
-		},
-		{
-			"src": "/api/users/([^/]+)",
-			"dest": "/api/users/[username]?username=$1"
-		},
-		{
-			"src": "/api/auth/profile",
-			"dest": "/api/auth/[action]?action=profile"
-		},
-		{
-			"src": "/a/(\\d+)/(\\d+)/edit",
-			"dest": "/a-edit.html"
-		},
-		{
-			"src": "/agent/new",
-			"dest": "/agent-edit.html"
-		},
-		{
-			"src": "/agent/([^/]+)/edit",
-			"dest": "/agent-edit.html"
-		},
-		{
-			"src": "/avatars/([^/]+)/edit",
-			"dest": "/avatar-edit.html?id=$1"
-		},
-		{
-			"src": "/agent/([^/]+)/embed",
-			"headers": {
-				"content-security-policy": "frame-ancestors *",
-				"x-content-type-options": "nosniff",
-				"referrer-policy": "strict-origin-when-cross-origin",
-				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
-				"cross-origin-resource-policy": "cross-origin"
-			},
-			"dest": "/agent-embed.html"
-		},
-		{
-			"src": "/agent/index.html",
-			"dest": "/agent/index.html"
-		},
-		{
-			"src": "/agent/([^/]+)",
-			"has": [
-				{
-					"type": "query",
-					"key": "_spa",
-					"value": "1"
-				}
-			],
-			"dest": "/agent-home.html"
-		},
-		{
-			"src": "/agent/([^/]+)",
-			"dest": "/api/agent-page?id=$1"
-		},
-		{
-			"src": "/agent",
-			"dest": "/agent-home.html"
-		},
-		{
-			"src": "/api/widgets/oembed",
-			"dest": "/api/widgets/oembed"
-		},
-		{
-			"src": "/api/widgets/page",
-			"dest": "/api/widgets/page"
-		},
-		{
-			"src": "/api/widgets/([A-Za-z0-9_-]+)/og",
-			"dest": "/api/widgets/og?id=$1"
-		},
-		{
-			"src": "/api/widgets/([A-Za-z0-9_-]+)/view",
-			"dest": "/api/widgets/view?id=$1"
-		},
-		{
-			"src": "/api/widgets/([A-Za-z0-9_-]+)/duplicate",
-			"dest": "/api/widgets/[id]/duplicate?id=$1"
-		},
-		{
-			"src": "/api/widgets/([A-Za-z0-9_-]+)/stats",
-			"dest": "/api/widgets/[id]/stats?id=$1"
-		},
-		{
-			"src": "/api/widgets/([A-Za-z0-9_-]+)/chat",
-			"dest": "/api/widgets/[id]/chat?id=$1"
-		},
-		{
-			"src": "/api/widgets",
-			"dest": "/api/widgets"
-		},
-		{
-			"src": "/api/widgets/([A-Za-z0-9_-]+)",
-			"dest": "/api/widgets/[id]?id=$1"
-		},
-		{
-			"src": "/w/([A-Za-z0-9_-]+)",
-			"dest": "/api/widgets/page?id=$1"
-		},
-		{
-			"src": "/widgets",
-			"dest": "/widgets-gallery/index.html"
-		},
-		{
-			"src": "/widgets/",
-			"dest": "/widgets-gallery/index.html"
-		},
-		{
-			"src": "/widgets/(.*)",
-			"dest": "/widgets-gallery/$1"
-		},
-		{
-			"src": "/gallery",
-			"dest": "/gallery/index.html"
-		},
-		{
-			"src": "/gallery/",
-			"dest": "/gallery/index.html"
-		},
-		{
-			"src": "/gallery/(.*)",
-			"dest": "/gallery/$1"
-		},
-		{
-			"src": "/docs",
-			"dest": "/docs/index.html"
-		},
-		{
-			"src": "/docs/",
-			"dest": "/docs/index.html"
-		},
-		{
-			"src": "/docs/widgets",
-			"dest": "/docs-widgets.html"
-		},
-		{
-			"src": "/docs/([^./]+)",
-			"dest": "/docs/index.html"
-		},
-		{
-			"src": "/docs/(.*)",
-			"dest": "/docs/$1"
-		},
-		{
-			"src": "/tutorials",
-			"dest": "/tutorials.html"
-		},
-		{
-			"src": "/tutorials/",
-			"dest": "/tutorials.html"
-		},
-		{
-			"src": "/tutorials/([a-z0-9-]+)",
-			"dest": "/tutorial.html"
-		},
-		{
-			"src": "/tutorials/([a-z0-9-]+)/",
-			"dest": "/tutorial.html"
-		},
-		{
-			"src": "/artifact",
-			"dest": "/artifact/index.html"
-		},
-		{
-			"src": "/artifact/",
-			"dest": "/artifact/index.html"
-		},
-		{
-			"src": "/artifact/(.*)",
-			"dest": "/artifact/$1"
-		},
-		{
-			"src": "/cz",
-			"dest": "/cz/index.html"
-		},
-		{
-			"src": "/cz/",
-			"dest": "/cz/index.html"
-		},
-		{
-			"src": "/cz/(.*)",
-			"dest": "/cz/$1"
-		},
-		{
-			"src": "/validation",
-			"dest": "/validation/index.html"
-		},
-		{
-			"src": "/validation/",
-			"dest": "/validation/index.html"
-		},
-		{
-			"src": "/validation/(.*)",
-			"dest": "/validation/$1"
-		},
-		{
-			"src": "/lobehub/iframe",
-			"dest": "/lobehub/iframe/index.html"
-		},
-		{
-			"src": "/lobehub/iframe/",
-			"dest": "/lobehub/iframe/index.html"
-		},
-		{
-			"src": "/lobehub/iframe/(.*)",
-			"dest": "/lobehub/iframe/$1"
-		},
-		{
-			"src": "/reputation",
-			"dest": "/reputation/index.html"
-		},
-		{
-			"src": "/reputation/",
-			"dest": "/reputation/index.html"
-		},
-		{
-			"src": "/reputation/(.*)",
-			"dest": "/reputation/$1"
-		},
-		{
-			"src": "/pay",
-			"dest": "/pay/index.html"
-		},
-		{
-			"src": "/pay/",
-			"dest": "/pay/index.html"
-		},
-		{
-			"src": "/pay/calls/[1-9A-HJ-NP-Za-km-z]+",
-			"dest": "/pay/calls/index.html"
-		},
-		{
-			"src": "/pay/c/[a-z0-9][a-z0-9-]+/?",
-			"dest": "/pay/c/index.html"
-		},
-		{
-			"src": "/pay/(.*)",
-			"dest": "/pay/$1"
-		},
-		{
-			"src": "/x402",
-			"dest": "/x402-stripe.html"
-		},
-		{
-			"src": "/x402/",
-			"dest": "/x402-stripe.html"
-		},
-		{
-			"src": "/bazaar",
-			"dest": "/bazaar.html"
-		},
-		{
-			"src": "/bazaar/",
-			"dest": "/bazaar.html"
-		},
-		{
-			"src": "/api/bazaar/list",
-			"dest": "/api/bazaar/list.js"
-		},
-		{
-			"src": "/api/bazaar/search",
-			"dest": "/api/bazaar/search.js"
-		},
-		{
-			"src": "/settings",
-			"dest": "/settings/index.html"
-		},
-		{
-			"src": "/settings/",
-			"dest": "/settings/index.html"
-		},
-		{
-			"src": "/settings/(.*)",
-			"dest": "/settings/$1"
-		},
-		{
-			"src": "/api/llm/anthropic",
-			"dest": "/api/llm/anthropic.js"
-		},
-		{
-			"src": "/dashboard/usage",
-			"dest": "/dashboard/usage.html"
-		},
-		{
-			"src": "/api/erc8004/register-confirm",
-			"dest": "/api/erc8004/register-confirm"
-		},
-		{
-			"src": "/api/erc8004/hydrate",
-			"dest": "/api/erc8004/[action]?action=hydrate"
-		},
-		{
-			"src": "/api/erc8004/import",
-			"dest": "/api/erc8004/[action]?action=import"
-		},
-		{
-			"src": "/api/erc8004/pin",
-			"dest": "/api/erc8004/[action]?action=pin"
-		},
-		{
-			"src": "/api/subscriptions/plans(/.*)?",
-			"dest": "/api/subscriptions/plans.js"
-		},
-		{
-			"src": "/api/subscriptions(/.*)?",
-			"dest": "/api/subscriptions/index.js"
-		},
-		{
-			"src": "/api/dca-strategies/([^/]+)",
-			"dest": "/api/dca-strategies?id=$1"
-		},
-		{
-			"src": "/api/dca-strategies",
-			"dest": "/api/dca-strategies"
-		},
-		{
-			"src": "/api/billing/summary",
-			"dest": "/api/billing/summary"
-		},
-		{
-			"src": "/api/billing/revenue",
-			"dest": "/api/billing/revenue"
-		},
-		{
-			"src": "/agents",
-			"dest": "/agents/index.html"
-		},
-		{
-			"src": "/agents/",
-			"dest": "/agents/index.html"
-		},
-		{
-			"src": "/agents/([^/]+)",
-			"dest": "/agent-detail.html"
-		},
-		{
-			"src": "/my-agents",
-			"dest": "/my-agents/index.html"
-		},
-		{
-			"src": "/my-agents/",
-			"dest": "/my-agents/index.html"
-		},
-		{
-			"src": "/my-agents/(.*)",
-			"dest": "/my-agents/$1"
-		},
-		{
-			"src": "/discover",
-			"dest": "/discover/index.html"
-		},
-		{
-			"src": "/discover/",
-			"dest": "/discover/index.html"
-		},
-		{
-			"src": "/discover/a/(\\d+)/(\\d+)",
-			"dest": "/api/discover-detail?kind=onchain&chain=$1&id=$2"
-		},
-		{
-			"src": "/discover/avatar/([^/]+)",
-			"dest": "/api/discover-detail?kind=avatar&id=$1"
-		},
-		{
-			"src": "/discover/(.*)",
-			"dest": "/discover/$1"
-		},
-		{
-			"src": "/api/plugins/([^/]+)/install",
-			"dest": "/api/plugins/[action]?id=$1&sub=install"
-		},
-		{
-			"src": "/api/plugins/(categories|list|import|publish)",
-			"dest": "/api/plugins/[action]?action=$1"
-		},
-		{
-			"src": "/api/plugins/([^/]+)",
-			"dest": "/api/plugins/[action]?id=$1"
-		},
-		{
-			"src": "/api/skills/categories",
-			"dest": "/api/skills/categories"
-		},
-		{
-			"src": "/api/skills/([^/]+)/install",
-			"dest": "/api/skills/[id]/install?id=$1"
-		},
-		{
-			"src": "/api/skills/([^/]+)/rate",
-			"dest": "/api/skills/[id]/rate?id=$1"
-		},
-		{
-			"src": "/api/skills/([^/]+)",
-			"dest": "/api/skills/[id]?id=$1"
-		},
-		{
-			"src": "/api/skills",
-			"dest": "/api/skills/index"
-		},
-		{
-			"src": "/tool_schema",
-			"dest": "/api/tool_schema"
-		},
-		{
-			"src": "/api/club/tips/stream",
-			"dest": "/api/club/tips-stream"
-		},
-		{
-			"src": "/api/(.*)",
-			"dest": "/api/$1"
-		},
-		{
-			"src": "/agent-3d/([0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?)/(.*)",
-			"headers": {
-				"cache-control": "public, max-age=31536000, immutable",
-				"access-control-allow-origin": "*",
-				"access-control-allow-methods": "GET, HEAD, OPTIONS",
-				"cross-origin-resource-policy": "cross-origin",
-				"timing-allow-origin": "*"
-			},
-			"dest": "/agent-3d/$1/$2"
-		},
-		{
-			"src": "/agent-3d/(latest|[0-9]+|[0-9]+\\.[0-9]+)/(.*)",
-			"headers": {
-				"cache-control": "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
-				"access-control-allow-origin": "*",
-				"access-control-allow-methods": "GET, HEAD, OPTIONS",
-				"cross-origin-resource-policy": "cross-origin",
-				"timing-allow-origin": "*"
-			},
-			"dest": "/agent-3d/$1/$2"
-		},
-		{
-			"src": "/api/agent-3d/versions",
-			"dest": "/api/agent-3d/versions"
-		},
-		{
-			"src": "/agent-3d/versions\\.json",
-			"headers": {
-				"cache-control": "public, max-age=60, s-maxage=60",
-				"access-control-allow-origin": "*"
-			},
-			"dest": "/agent-3d/versions.json"
-		},
-		{
-			"src": "/assets/(.*)",
-			"headers": {
-				"cache-control": "max-age=604800, public"
-			},
-			"dest": "/assets/$1"
-		},
-		{
-			"src": "/\\.well-known/(.*)",
-			"headers": {
-				"cache-control": "max-age=86400, public"
-			},
-			"dest": "/.well-known/$1"
-		},
-		{
-			"src": "/robots.txt",
-			"dest": "/robots.txt"
-		},
-		{
-			"src": "/sitemap.xml",
-			"dest": "/sitemap.xml"
-		},
-		{
-			"src": "/sitemap",
-			"dest": "/sitemap/index.html"
-		},
-		{
-			"src": "/sitemap/",
-			"dest": "/sitemap/index.html"
-		},
-		{
-			"src": "/blog",
-			"dest": "/blog/index.html"
-		},
-		{
-			"src": "/blog/",
-			"dest": "/blog/index.html"
-		},
-		{
-			"src": "/blog/([a-z0-9-]+)/?",
-			"dest": "/blog/$1.html"
-		},
-		{
-			"src": "/llms.txt",
-			"headers": { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
-			"dest": "/llms.txt"
-		},
-		{
-			"src": "/llms-full.txt",
-			"headers": { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
-			"dest": "/llms-full.txt"
-		},
-		{
-			"src": "/app",
-			"dest": "/app.html"
-		},
-		{
-			"src": "/app-demo",
-			"dest": "/app-demo.html"
-		},
-		{
-			"src": "/chat",
-			"dest": "/chat/index.html"
-		},
-		{
-			"src": "/chat/",
-			"dest": "/chat/index.html"
-		},
-		{
-			"src": "/chat/(.*)",
-			"dest": "/chat/$1"
-		},
-		{
-			"src": "/create/selfie",
-			"dest": "/create-selfie.html"
-		},
-		{
-			"src": "/create/selfie/",
-			"dest": "/create-selfie.html"
-		},
-		{
-			"src": "/create",
-			"dest": "/create.html"
-		},
-		{
-			"src": "/create/",
-			"dest": "/create.html"
-		},
-		{
-			"src": "/creating",
-			"dest": "/creating.html"
-		},
-		{
-			"src": "/creating/",
-			"dest": "/creating.html"
-		},
-		{
-			"src": "/features",
-			"dest": "/features.html"
-		},
-		{
-			"src": "/features/",
-			"dest": "/features.html"
-		},
-		{
-			"src": "/",
-			"dest": "/home.html"
-		},
-		{
-			"src": "/home-v2",
-			"dest": "/home-v2.html"
-		},
-		{
-			"src": "/home-v2/",
-			"dest": "/home-v2.html"
-		},
-		{
-			"src": "/home",
-			"status": 301,
-			"headers": {
-				"Location": "/"
-			}
-		},
-		{
-			"src": "/explore",
-			"status": 301,
-			"headers": {
-				"Location": "/discover"
-			}
-		},
-		{
-			"src": "/explore/",
-			"status": 301,
-			"headers": {
-				"Location": "/discover"
-			}
-		},
-		{
-			"src": "/dappbay",
-			"status": 302,
-			"headers": {
-				"Location": "https://dappbay.bnbchain.org/detail/three"
-			}
-		},
-		{
-			"src": "/dappbay/",
-			"status": 302,
-			"headers": {
-				"Location": "https://dappbay.bnbchain.org/detail/three"
-			}
-		},
-		{
-			"src": "/a/(\\d+)/(\\d+)/embed",
-			"headers": {
-				"content-security-policy": "frame-ancestors *",
-				"x-content-type-options": "nosniff",
-				"referrer-policy": "strict-origin-when-cross-origin",
-				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
-			},
-			"dest": "/a-embed.html"
-		},
-		{
-			"src": "/a/(\\d+)/(\\d+)",
-			"dest": "/api/a-page?chain=$1&id=$2"
-		},
-		{
-			"src": "/a/(.*)",
-			"dest": "/app.html"
-		},
-		{
-			"src": "/dist-lib/(.*)",
-			"headers": {
-				"cache-control": "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
-				"access-control-allow-origin": "*",
-				"cross-origin-resource-policy": "cross-origin"
-			},
-			"dest": "/dist-lib/$1"
-		},
-		{
-			"src": "/rider",
-			"dest": "/rider/index.html"
-		},
-		{
-			"src": "/rider/",
-			"dest": "/rider/index.html"
-		},
-		{
-			"src": "/rider/(.*)",
-			"dest": "/rider/$1"
-		},
-		{
-			"src": "/(.*)",
-			"dest": "/$1"
-		}
-	],
-	"crons": [
-		{
-			"path": "/api/cron/audit-log-cleanup",
-			"schedule": "0 4 * * *"
-		},
-		{
-			"path": "/api/cron/expire-pending-purchases",
-			"schedule": "*/5 * * * *"
-		},
-		{
-			"path": "/api/cron/cleanup-csrf-tokens",
-			"schedule": "17 * * * *"
-		},
-		{
-			"path": "/api/cron/process-withdrawals",
-			"schedule": "0 * * * *"
-		},
-		{
-			"path": "/api/cron/erc8004-crawl",
-			"schedule": "*/15 * * * *"
-		},
-		{
-			"path": "/api/cron/solana-attestations-crawl",
-			"schedule": "*/5 * * * *"
-		},
-		{
-			"path": "/api/cron/index-delegations",
-			"schedule": "*/5 * * * *"
-		},
-		{
-			"path": "/api/cron/run-dca",
-			"schedule": "0 * * * *"
-		},
-		{
-			"path": "/api/cron/run-subscriptions",
-			"schedule": "0 * * * *"
-		},
-		{
-			"path": "/api/cron/run-x-scheduled-posts",
-			"schedule": "* * * * *"
-		},
-		{
-			"path": "/api/cron/run-x-triggers",
-			"schedule": "*/5 * * * *"
-		},
-		{
-			"path": "/api/cron/fetch-x-metrics",
-			"schedule": "0 */6 * * *"
-		},
-		{
-			"path": "/api/cron/pumpfun-signals",
-			"schedule": "*/15 * * * *"
-		},
-		{
-			"path": "/api/cron/pump-agent-stats",
-			"schedule": "*/10 * * * *"
-		},
-		{
-			"path": "/api/cron/pumpfun-monitor",
-			"schedule": "*/3 * * * *"
-		},
-		{
-			"path": "/api/cron/solana-attest-event-cleanup",
-			"schedule": "*/10 * * * *"
-		},
-		{
-			"path": "/api/cron/settle-royalties",
-			"schedule": "0 3 * * *"
-		},
-		{
-			"path": "/api/cron/process-subscriptions",
-			"schedule": "0 */6 * * *"
-		},
-		{
-			"path": "/api/cron/run-coin-cycle",
-			"schedule": "*/5 * * * *"
-		},
-		{
-			"path": "/api/cron/run-coin-payouts",
-			"schedule": "1-59/5 * * * *"
-		},
-		{
-			"path": "/api/cron/club-payouts",
-			"schedule": "2-59/5 * * * *"
-		},
-		{
-			"path": "/api/cron/siwx-gc",
-			"schedule": "23 * * * *"
-		}
-	]
+    "buildCommand": "npm run build:vercel",
+    "outputDirectory": "dist",
+    "public": true,
+    "installCommand": "npm ci --prefer-offline --no-audit --no-fund",
+    "env": {
+        "NODE_OPTIONS": "--no-deprecation"
+    },
+    "functions": {
+        "api/club/tips-stream.js": {
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
+            "maxDuration": 300
+        },
+        "api/tts/speak.js": {
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
+            "maxDuration": 60
+        },
+        "api/**/*.js": {
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
+            "maxDuration": 30
+        }
+    },
+    "routes": [
+        {
+            "src": "/rss/announcements\\.xml",
+            "dest": "/api/rss/announcements"
+        },
+        {
+            "src": "/rss\\.xml",
+            "dest": "/api/rss/announcements"
+        },
+        {
+            "src": "/openapi\\.json",
+            "dest": "/api/openapi-json"
+        },
+        {
+            "src": "/\\.well-known/chat-plugin\\.json",
+            "dest": "/api/wk?name=chat-plugin"
+        },
+        {
+            "src": "/\\.well-known/x402\\.json",
+            "dest": "/api/wk?name=x402-discovery"
+        },
+        {
+            "src": "/\\.well-known/x402",
+            "dest": "/api/wk?name=x402"
+        },
+        {
+            "src": "/\\.well-known/agent-attestation-schemas",
+            "dest": "/api/wk?name=agent-attestation-schemas"
+        },
+        {
+            "src": "/\\.well-known/jwks\\.json",
+            "dest": "/api/auth/persona/[action]?action=jwks"
+        },
+        {
+            "src": "/\\.well-known/did\\.json",
+            "dest": "/api/x402/did"
+        },
+        {
+            "src": "/\\.well-known/oauth-authorization-server",
+            "dest": "/api/wk?name=oauth-authorization-server"
+        },
+        {
+            "src": "/\\.well-known/oauth-protected-resource",
+            "dest": "/api/wk?name=oauth-protected-resource"
+        },
+        {
+            "src": "/api/mcp/\\.well-known/oauth-protected-resource",
+            "dest": "/api/wk?name=oauth-protected-resource"
+        },
+        {
+            "src": "/a/sol/([^/]+)/\\.well-known/agent-card\\.json",
+            "dest": "/api/agents/solana/[action]?action=card&asset=$1"
+        },
+        {
+            "src": "/api/agents/solana-metadata",
+            "dest": "/api/agents/solana/[action]?action=metadata"
+        },
+        {
+            "src": "/api/agents/solana-attestations",
+            "dest": "/api/agents/solana/[action]?action=attestations"
+        },
+        {
+            "src": "/api/agents/solana-attest-event",
+            "dest": "/api/agents/solana/[action]?action=attest-event"
+        },
+        {
+            "src": "/api/agents/solana-card",
+            "dest": "/api/agents/solana/[action]?action=card"
+        },
+        {
+            "src": "/api/agents/solana-price-history",
+            "dest": "/api/agents/solana/[action]?action=price-history"
+        },
+        {
+            "src": "/api/agents/solana-register-prep",
+            "dest": "/api/agents/solana/[action]?action=register-prep"
+        },
+        {
+            "src": "/api/agents/solana-register-confirm",
+            "dest": "/api/agents/solana/[action]?action=register-confirm"
+        },
+        {
+            "src": "/api/agents/solana-reputation",
+            "dest": "/api/agents/solana/[action]?action=reputation"
+        },
+        {
+            "src": "/api/agents/solana-reputation-history",
+            "dest": "/api/agents/solana/[action]?action=reputation-history"
+        },
+        {
+            "src": "/api/agents/([^/]+)/skills-pricing",
+            "dest": "/api/agents/[id]/skills-pricing?id=$1"
+        },
+        {
+            "src": "/api/agents/([^/]+)/skills/price",
+            "dest": "/api/agent-skill-price.js?agentId=$1"
+        },
+        {
+            "src": "/api/agents/([^/]+)/unlocked-skills",
+            "dest": "/api/agents/[id]/unlocked-skills?id=$1"
+        },
+        {
+            "src": "/api/billing/receipts",
+            "dest": "/api/billing/receipts"
+        },
+        {
+            "src": "/api/newsletter/subscribe",
+            "dest": "/api/newsletter-subscribe"
+        },
+        {
+            "src": "/oauth/authorize",
+            "dest": "/api/oauth/[action]?action=authorize"
+        },
+        {
+            "src": "/oauth/consent",
+            "dest": "/api/oauth/[action]?action=consent"
+        },
+        {
+            "src": "/api/payments/intent",
+            "dest": "/api/payments/intent"
+        },
+        {
+            "src": "/oauth/token",
+            "dest": "/api/oauth/[action]?action=token"
+        },
+        {
+            "src": "/oauth/register",
+            "dest": "/api/oauth/[action]?action=register"
+        },
+        {
+            "src": "/oauth/revoke",
+            "dest": "/api/oauth/[action]?action=revoke"
+        },
+        {
+            "src": "/oauth/introspect",
+            "dest": "/api/oauth/[action]?action=introspect"
+        },
+        {
+            "src": "/login",
+            "dest": "/login.html"
+        },
+        {
+            "src": "/register",
+            "dest": "/register.html"
+        },
+        {
+            "src": "/forgot-password",
+            "dest": "/forgot-password.html"
+        },
+        {
+            "src": "/reset-password",
+            "dest": "/reset-password.html"
+        },
+        {
+            "src": "/wallet-login.js",
+            "dest": "/wallet-login.js"
+        },
+        {
+            "src": "/wallet/(.*)",
+            "dest": "/wallet/$1"
+        },
+        {
+            "src": "/pumpfun",
+            "dest": "/pumpfun.html"
+        },
+        {
+            "src": "/pumpfun/",
+            "dest": "/pumpfun.html"
+        },
+        {
+            "src": "/vanity-wallet",
+            "dest": "/vanity-wallet.html"
+        },
+        {
+            "src": "/vanity-wallet/",
+            "dest": "/vanity-wallet.html"
+        },
+        {
+            "src": "/eth-vanity",
+            "dest": "/eth-vanity.html"
+        },
+        {
+            "src": "/eth-vanity/",
+            "dest": "/eth-vanity.html"
+        },
+        {
+            "src": "/strategy-lab",
+            "dest": "/strategy-lab.html"
+        },
+        {
+            "src": "/strategy-lab/",
+            "dest": "/strategy-lab.html"
+        },
+        {
+            "src": "/pump-visualizer/?",
+            "dest": "/pump-visualizer.html"
+        },
+        {
+            "src": "/pump-live/?",
+            "dest": "/pump-live.html"
+        },
+        {
+            "src": "/pump-dashboard/?",
+            "dest": "/pump-dashboard.html"
+        },
+        {
+            "src": "/avatar-artifact/?",
+            "dest": "/avatar-artifact.html"
+        },
+        {
+            "src": "/walk/?",
+            "dest": "/walk.html"
+        },
+        {
+            "src": "/pose/?",
+            "dest": "/pose.html"
+        },
+        {
+            "src": "/club/?",
+            "dest": "/club.html"
+        },
+        {
+            "src": "/walkaround/?",
+            "dest": "/demos/walkaround.html"
+        },
+        {
+            "src": "/brain/?",
+            "dest": "/demos/brain.html"
+        },
+        {
+            "src": "/lipsync/mic/?",
+            "dest": "/demos/lipsync-mic.html"
+        },
+        {
+            "src": "/lipsync/?",
+            "dest": "/demos/lipsync-tts.html"
+        },
+        {
+            "src": "/launch-week/?",
+            "dest": "/three-ws-launch-week.html"
+        },
+        {
+            "src": "/launchpad/?",
+            "dest": "/launchpad.html"
+        },
+        {
+            "src": "/embed",
+            "dest": "/embed.html"
+        },
+        {
+            "src": "/embed/",
+            "dest": "/embed.html"
+        },
+        {
+            "src": "/playground",
+            "dest": "/playground.html"
+        },
+        {
+            "src": "/playground/",
+            "dest": "/playground.html"
+        },
+        {
+            "src": "/p/([a-z0-9-]+)/?",
+            "dest": "/p/index.html"
+        },
+        {
+            "src": "/pricing/?",
+            "dest": "/pricing.html"
+        },
+        {
+            "src": "/deploy",
+            "dest": "/app.html"
+        },
+        {
+            "src": "/dashboard",
+            "dest": "/dashboard/index.html"
+        },
+        {
+            "src": "/dashboard/",
+            "dest": "/dashboard/index.html"
+        },
+        {
+            "src": "/dashboard/agent-pumpfun",
+            "dest": "/dashboard/agent-pumpfun.html"
+        },
+        {
+            "src": "/dashboard/wallets",
+            "dest": "/dashboard/wallets.html"
+        },
+        {
+            "src": "/dashboard/portfolio/asset",
+            "dest": "/dashboard/portfolio-asset.html"
+        },
+        {
+            "src": "/dashboard/portfolio",
+            "dest": "/dashboard/portfolio.html"
+        },
+        {
+            "src": "/dashboard/sessions",
+            "dest": "/dashboard/sessions.html"
+        },
+        {
+            "src": "/dashboard/actions",
+            "dest": "/dashboard/actions.html"
+        },
+        {
+            "src": "/dashboard/embed-policy",
+            "dest": "/dashboard/embed-policy.html"
+        },
+        {
+            "src": "/dashboard/memory",
+            "dest": "/dashboard/memory.html"
+        },
+        {
+            "src": "/dashboard/strategy",
+            "dest": "/dashboard/strategy.html"
+        },
+        {
+            "src": "/dashboard/voice",
+            "dest": "/dashboard/voice.html"
+        },
+        {
+            "src": "/dashboard/sns",
+            "dest": "/dashboard/sns.html"
+        },
+        {
+            "src": "/dashboard/delegation",
+            "dest": "/dashboard/delegation.html"
+        },
+        {
+            "src": "/dashboard/tokens",
+            "dest": "/dashboard/tokens.html"
+        },
+        {
+            "src": "/dashboard/x402",
+            "dest": "/dashboard/x402.html"
+        },
+        {
+            "src": "/dashboard/(agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|earnings|account)/?",
+            "dest": "/dashboard/index.html"
+        },
+        {
+            "src": "/dashboard/edit/[^/]+/?",
+            "dest": "/dashboard/index.html"
+        },
+        {
+            "src": "/dashboard/(.*)",
+            "dest": "/dashboard/$1"
+        },
+        {
+            "src": "/hydrate",
+            "dest": "/hydrate/index.html"
+        },
+        {
+            "src": "/hydrate/",
+            "dest": "/hydrate/index.html"
+        },
+        {
+            "src": "/studio",
+            "dest": "/studio/index.html"
+        },
+        {
+            "src": "/studio/",
+            "dest": "/studio/index.html"
+        },
+        {
+            "src": "/studio/(.*)",
+            "dest": "/studio/$1"
+        },
+        {
+            "src": "/avatar-studio",
+            "dest": "/avatar-studio/index.html"
+        },
+        {
+            "src": "/avatar-studio/",
+            "dest": "/avatar-studio/index.html"
+        },
+        {
+            "src": "/avatar-studio/(.*)",
+            "dest": "/avatar-studio/$1"
+        },
+        {
+            "src": "/demos",
+            "dest": "/demos/index.html"
+        },
+        {
+            "src": "/demos/",
+            "dest": "/demos/index.html"
+        },
+        {
+            "src": "/demos/(.*)\\.html",
+            "dest": "/demos/$1.html"
+        },
+        {
+            "src": "/demos/([^/.]+)",
+            "dest": "/demos/$1.html"
+        },
+        {
+            "src": "/demo/avatar-os",
+            "dest": "/demo/avatar-os/index.html"
+        },
+        {
+            "src": "/demo/avatar-os/",
+            "dest": "/demo/avatar-os/index.html"
+        },
+        {
+            "src": "/demo/avatar-os/(.*)",
+            "dest": "/demo/avatar-os/$1"
+        },
+        {
+            "src": "/api/dashboard/prefs",
+            "dest": "/api/dashboard/prefs"
+        },
+        {
+            "src": "/api/marketplace/categories",
+            "dest": "/api/marketplace/[action]?action=categories"
+        },
+        {
+            "src": "/api/marketplace/agents",
+            "dest": "/api/marketplace/[action]?action=agents"
+        },
+        {
+            "src": "/api/agents/([^/]+)/skills/set-price",
+            "dest": "/api/agent-skills?agentId=$1&action=set-price"
+        },
+        {
+            "src": "/api/marketplace/agents/([^/]+)",
+            "dest": "/api/marketplace/[action]?action=agents&id=$1"
+        },
+        {
+            "src": "/api/marketplace/agents/([^/]+)/([^/]+)",
+            "dest": "/api/marketplace/[action]?action=agents&id=$1&sub=$2"
+        },
+        {
+            "src": "/api/marketplace/start-trial",
+            "dest": "/api/marketplace/start-trial"
+        },
+        {
+            "src": "/api/marketplace/purchase/([^/]+)/confirm",
+            "dest": "/api/marketplace/purchase?reference=$1&op=confirm"
+        },
+        {
+            "src": "/api/marketplace/purchase/([^/]+)",
+            "dest": "/api/marketplace/purchase?reference=$1"
+        },
+        {
+            "src": "/marketplace",
+            "dest": "/marketplace.html"
+        },
+        {
+            "src": "/marketplace/",
+            "dest": "/marketplace.html"
+        },
+        {
+            "src": "/marketplace/agents/([^/]+)",
+            "dest": "/marketplace.html"
+        },
+        {
+            "src": "/marketplace/avatars/([^/]+)",
+            "dest": "/marketplace.html"
+        },
+        {
+            "src": "/api/agents/me",
+            "dest": "/api/agents"
+        },
+        {
+            "src": "/api/agents/suggest",
+            "dest": "/api/agents/suggest"
+        },
+        {
+            "src": "/api/agents/by-wallet",
+            "dest": "/api/agents/by-wallet"
+        },
+        {
+            "src": "/api/agents/by-address/([^/]+)",
+            "dest": "/api/agents/by-address/[addr]?addr=$1"
+        },
+        {
+            "src": "/api/agents/x402/invoke",
+            "dest": "/api/agents/x402/[action]?action=invoke"
+        },
+        {
+            "src": "/api/agents/x402/manifest",
+            "dest": "/api/agents/x402/[action]?action=manifest"
+        },
+        {
+            "src": "/api/agents/([^/]+)/wallet",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/solana",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/solana/([^/]+)",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/pumpfun/([^/]+)",
+            "dest": "/api/agents/pumpfun/[action]?id=$1&action=$2"
+        },
+        {
+            "src": "/api/avatars/([^/]+)/agents",
+            "dest": "/api/avatars/[id]/agents?id=$1"
+        },
+        {
+            "src": "/api/avatars/([^/]+)/coins",
+            "dest": "/api/avatars/[id]/coins?id=$1"
+        },
+        {
+            "src": "/api/avatars/([^/]+)/storage-mode",
+            "dest": "/api/avatars/[id]/storage-mode?id=$1"
+        },
+        {
+            "src": "/api/avatars/([^/]+)/pin-ipfs",
+            "dest": "/api/avatars/[id]/pin-ipfs?id=$1"
+        },
+        {
+            "src": "/api/avatars/([^/]+)/thumbnail",
+            "dest": "/api/avatars/[id]/thumbnail?id=$1"
+        },
+        {
+            "src": "/dashboard/storage",
+            "dest": "/dashboard/storage.html"
+        },
+        {
+            "src": "/api/agents/([^/]+)/embed-policy",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/sign",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/animations",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/manifest",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/actions",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/usage",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/memories/([^/]+)",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/memories",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/memory/pin",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/memory/seed/x",
+            "dest": "/api/agents/[id]/memory-seed-x?id=$1"
+        },
+        {
+            "src": "/api/agents/([^/]+)/memory/seed/farcaster",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/memory/([^/]+)",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/payments",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/pricing",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/pricing/([^/]+)",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/reputation",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/livekit-token",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/embed",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/persona(/.*)?",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/eth-vanity/([^/]+)",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/eth-vanity",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/sns/([^/]+)",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/sns",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/voice/([^/]+)",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/voice",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/pumpfun-feed",
+            "dest": "/api/agents/pumpfun?_handler=feed"
+        },
+        {
+            "src": "/api/agents/pumpfun-metadata",
+            "dest": "/api/agents/pumpfun?_handler=metadata"
+        },
+        {
+            "src": "/api/agents/pumpfun",
+            "dest": "/api/agents/pumpfun"
+        },
+        {
+            "src": "/api/agents/register-prep",
+            "dest": "/api/agents/register/[action]?action=prep"
+        },
+        {
+            "src": "/api/agents/register-confirm",
+            "dest": "/api/agents/register/[action]?action=confirm"
+        },
+        {
+            "src": "/api/agents/sas-credentials",
+            "dest": "/api/agents/sas/[action]?action=credentials"
+        },
+        {
+            "src": "/api/agents/sas-issue-credential",
+            "dest": "/api/agents/sas/[action]?action=issue-credential"
+        },
+        {
+            "src": "/api/agents/check-name",
+            "dest": "/api/agents/check-name"
+        },
+        {
+            "src": "/api/agents/a2a-paid",
+            "dest": "/api/agents/a2a-paid"
+        },
+        {
+            "src": "/api/auth/github/connect",
+            "dest": "/api/auth/github/[action]?action=connect"
+        },
+        {
+            "src": "/api/auth/github/callback",
+            "dest": "/api/auth/github/[action]?action=callback"
+        },
+        {
+            "src": "/api/auth/github/status",
+            "dest": "/api/auth/github/[action]?action=status"
+        },
+        {
+            "src": "/api/auth/x/connect",
+            "dest": "/api/auth/x/[action]?action=connect"
+        },
+        {
+            "src": "/api/auth/x/callback",
+            "dest": "/api/auth/x/[action]?action=callback"
+        },
+        {
+            "src": "/api/auth/wallets",
+            "dest": "/api/auth/wallets/[action]"
+        },
+        {
+            "src": "/api/auth/wallets/([^/]+)",
+            "dest": "/api/auth/wallets/[action]?action=$1"
+        },
+        {
+            "src": "/api/auth/sessions",
+            "dest": "/api/auth/sessions/[action]"
+        },
+        {
+            "src": "/api/auth/sessions/([^/]+)",
+            "dest": "/api/auth/sessions/[action]?action=$1"
+        },
+        {
+            "src": "/api/auth/wallet/link",
+            "dest": "/api/auth/wallet/[action]?action=link"
+        },
+        {
+            "src": "/api/auth/wallet/unlink",
+            "dest": "/api/auth/wallet/[action]?action=unlink"
+        },
+        {
+            "src": "/api/onboarding/avaturn-session",
+            "dest": "/api/onboarding/[action]?action=avaturn-session"
+        },
+        {
+            "src": "/api/onboarding/link-avatar",
+            "dest": "/api/onboarding/[action]?action=link-avatar"
+        },
+        {
+            "src": "/api/pump/build-metadata",
+            "dest": "/api/pump/[action]?action=build-metadata"
+        },
+        {
+            "src": "/api/pump/channel-feed",
+            "dest": "/api/pump/[action]?action=channel-feed"
+        },
+        {
+            "src": "/api/pump/deliver-telegram",
+            "dest": "/api/pump/[action]?action=deliver-telegram"
+        },
+        {
+            "src": "/api/pump/first-claims",
+            "dest": "/api/pump/[action]?action=first-claims"
+        },
+        {
+            "src": "/api/pump/vanity-keygen",
+            "dest": "/api/pump/[action]?action=vanity-keygen"
+        },
+        {
+            "src": "/api/pump/helius-webhook",
+            "dest": "/api/pump/helius-webhook"
+        },
+        {
+            "src": "/api/pump/balances",
+            "dest": "/api/pump/[action]?action=balances"
+        },
+        {
+            "src": "/api/pump/buy-prep",
+            "dest": "/api/pump/[action]?action=buy-prep"
+        },
+        {
+            "src": "/api/pump/buy-confirm",
+            "dest": "/api/pump/[action]?action=buy-confirm"
+        },
+        {
+            "src": "/api/pump/sell-prep",
+            "dest": "/api/pump/[action]?action=sell-prep"
+        },
+        {
+            "src": "/api/pump/sell-confirm",
+            "dest": "/api/pump/[action]?action=sell-confirm"
+        },
+        {
+            "src": "/api/pump/launch-prep",
+            "dest": "/api/pump/[action]?action=launch-prep"
+        },
+        {
+            "src": "/api/pump/launch-confirm",
+            "dest": "/api/pump/[action]?action=launch-confirm"
+        },
+        {
+            "src": "/api/pump/launch-agent",
+            "dest": "/api/pump/[action]?action=launch-agent"
+        },
+        {
+            "src": "/api/pump/agent-wallet",
+            "dest": "/api/pump/[action]?action=agent-wallet"
+        },
+        {
+            "src": "/api/pump/accept-payment-prep",
+            "dest": "/api/pump/[action]?action=accept-payment-prep"
+        },
+        {
+            "src": "/api/pump/accept-payment-confirm",
+            "dest": "/api/pump/[action]?action=accept-payment-confirm"
+        },
+        {
+            "src": "/api/pump/payments-list",
+            "dest": "/api/pump/[action]?action=payments-list"
+        },
+        {
+            "src": "/api/pump/portfolio",
+            "dest": "/api/pump/[action]?action=portfolio"
+        },
+        {
+            "src": "/api/pump/by-agent",
+            "dest": "/api/pump/[action]?action=by-agent"
+        },
+        {
+            "src": "/api/pump/quote",
+            "dest": "/api/pump/[action]?action=quote"
+        },
+        {
+            "src": "/api/pump/governance-prep",
+            "dest": "/api/pump/[action]?action=governance-prep"
+        },
+        {
+            "src": "/api/pump/withdraw-prep",
+            "dest": "/api/pump/[action]?action=withdraw-prep"
+        },
+        {
+            "src": "/api/pump/withdraw-confirm",
+            "dest": "/api/pump/[action]?action=withdraw-confirm"
+        },
+        {
+            "src": "/api/pump/strategy-backtest",
+            "dest": "/api/pump/[action]?action=strategy-backtest"
+        },
+        {
+            "src": "/api/pump/strategy-close-all",
+            "dest": "/api/pump/[action]?action=strategy-close-all"
+        },
+        {
+            "src": "/api/pump/strategy-run",
+            "dest": "/api/pump/[action]?action=strategy-run"
+        },
+        {
+            "src": "/api/pump/strategy-validate",
+            "dest": "/api/pump/[action]?action=strategy-validate"
+        },
+        {
+            "src": "/api/pump/live-stream",
+            "dest": "/api/pump/[action]?action=live-stream"
+        },
+        {
+            "src": "/api/pump/recent-graduations",
+            "dest": "/api/pump/[action]?action=recent-graduations"
+        },
+        {
+            "src": "/api/demo/coin/state",
+            "dest": "/api/demo/coin/[action]?action=state"
+        },
+        {
+            "src": "/api/demo/coin/holder",
+            "dest": "/api/demo/coin/[action]?action=holder"
+        },
+        {
+            "src": "/api/demo/coin/history",
+            "dest": "/api/demo/coin/[action]?action=history"
+        },
+        {
+            "src": "/api/demo/coin/events",
+            "dest": "/api/demo/coin/[action]?action=events"
+        },
+        {
+            "src": "/api/demo/coin/winners",
+            "dest": "/api/demo/coin/[action]?action=winners"
+        },
+        {
+            "src": "/api/demo/coin/holders",
+            "dest": "/api/demo/coin/[action]?action=holders"
+        },
+        {
+            "src": "/coin",
+            "status": 301,
+            "headers": {
+                "Location": "/demo/coin"
+            }
+        },
+        {
+            "src": "/coin/",
+            "status": 301,
+            "headers": {
+                "Location": "/demo/coin"
+            }
+        },
+        {
+            "src": "/demo/coin",
+            "dest": "/demo/coin/index.html"
+        },
+        {
+            "src": "/demo/coin/",
+            "dest": "/demo/coin/index.html"
+        },
+        {
+            "src": "/demo/coin/([1-9A-HJ-NP-Za-km-z]{32,44})/?",
+            "dest": "/demo/coin/index.html"
+        },
+        {
+            "src": "/api/avatars/presign",
+            "dest": "/api/avatars/[id]"
+        },
+        {
+            "src": "/api/avatars/view",
+            "dest": "/api/avatars/view"
+        },
+        {
+            "src": "/api/avatars/presign-thumbnail",
+            "dest": "/api/avatars/[id]"
+        },
+        {
+            "src": "/api/avatars/presign-usdz",
+            "dest": "/api/avatars/[id]"
+        },
+        {
+            "src": "/api/avatars/presign-halfbody",
+            "dest": "/api/avatars/[id]"
+        },
+        {
+            "src": "/api/avatars/auto-tag",
+            "dest": "/api/avatars/[id]"
+        },
+        {
+            "src": "/api/avatars/public",
+            "dest": "/api/avatars/[id]"
+        },
+        {
+            "src": "/api/avatars/regenerate-status",
+            "dest": "/api/avatars/[id]"
+        },
+        {
+            "src": "/api/avatars/regenerate",
+            "dest": "/api/avatars/[id]"
+        },
+        {
+            "src": "/api/avatars/reconstruct",
+            "dest": "/api/avatars/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)/memory-seed",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents/([^/]+)",
+            "dest": "/api/agents/[id]"
+        },
+        {
+            "src": "/api/agents",
+            "dest": "/api/agents"
+        },
+        {
+            "src": "/api/agent-actions",
+            "dest": "/api/agent-actions"
+        },
+        {
+            "src": "/api/agent-memory/([^/]+)",
+            "dest": "/api/agent-memory"
+        },
+        {
+            "src": "/api/agent-memory",
+            "dest": "/api/agent-memory"
+        },
+        {
+            "src": "/api/agent/([^/]+)/og",
+            "dest": "/api/agent-og?id=$1"
+        },
+        {
+            "src": "/api/avatar/([^/]+)/og",
+            "dest": "/api/avatar-og?id=$1"
+        },
+        {
+            "src": "/api/avatars/([^/]+)/og",
+            "dest": "/api/avatar-og?id=$1"
+        },
+        {
+            "src": "/api/a/(\\d+)/(\\d+)/og",
+            "dest": "/api/a-og?chain=$1&id=$2"
+        },
+        {
+            "src": "/api/oembed",
+            "dest": "/api/agent-oembed"
+        },
+        {
+            "src": "/u/([^/]+)",
+            "dest": "/profile.html"
+        },
+        {
+            "src": "/avatars/([^/]+\\.glb)",
+            "dest": "/avatars/$1"
+        },
+        {
+            "src": "/avatars/([^/]+)",
+            "dest": "/avatar-page.html"
+        },
+        {
+            "src": "/api/characters",
+            "dest": "/api/characters.js"
+        },
+        {
+            "src": "/characters",
+            "dest": "/characters.html"
+        },
+        {
+            "src": "/characters/",
+            "dest": "/characters.html"
+        },
+        {
+            "src": "/character/([^/]+)",
+            "dest": "/character.html"
+        },
+        {
+            "src": "/api/users/me/earnings",
+            "dest": "/api/users/earnings.js"
+        },
+        {
+            "src": "/api/users/([^/]+)",
+            "dest": "/api/users/[username]?username=$1"
+        },
+        {
+            "src": "/api/auth/profile",
+            "dest": "/api/auth/[action]?action=profile"
+        },
+        {
+            "src": "/a/(\\d+)/(\\d+)/edit",
+            "dest": "/a-edit.html"
+        },
+        {
+            "src": "/agent/new",
+            "dest": "/agent-edit.html"
+        },
+        {
+            "src": "/agent/([^/]+)/edit",
+            "dest": "/agent-edit.html"
+        },
+        {
+            "src": "/avatars/([^/]+)/edit",
+            "dest": "/avatar-edit.html?id=$1"
+        },
+        {
+            "src": "/agent/([^/]+)/embed",
+            "headers": {
+                "content-security-policy": "frame-ancestors *",
+                "x-content-type-options": "nosniff",
+                "referrer-policy": "strict-origin-when-cross-origin",
+                "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
+                "cross-origin-resource-policy": "cross-origin"
+            },
+            "dest": "/agent-embed.html"
+        },
+        {
+            "src": "/agent/index.html",
+            "dest": "/agent/index.html"
+        },
+        {
+            "src": "/agent/([^/]+)",
+            "has": [
+                {
+                    "type": "query",
+                    "key": "_spa",
+                    "value": "1"
+                }
+            ],
+            "dest": "/agent-home.html"
+        },
+        {
+            "src": "/agent/([^/]+)",
+            "dest": "/api/agent-page?id=$1"
+        },
+        {
+            "src": "/agent",
+            "dest": "/agent-home.html"
+        },
+        {
+            "src": "/api/widgets/oembed",
+            "dest": "/api/widgets/oembed"
+        },
+        {
+            "src": "/api/widgets/page",
+            "dest": "/api/widgets/page"
+        },
+        {
+            "src": "/api/widgets/([A-Za-z0-9_-]+)/og",
+            "dest": "/api/widgets/og?id=$1"
+        },
+        {
+            "src": "/api/widgets/([A-Za-z0-9_-]+)/view",
+            "dest": "/api/widgets/view?id=$1"
+        },
+        {
+            "src": "/api/widgets/([A-Za-z0-9_-]+)/duplicate",
+            "dest": "/api/widgets/[id]/duplicate?id=$1"
+        },
+        {
+            "src": "/api/widgets/([A-Za-z0-9_-]+)/stats",
+            "dest": "/api/widgets/[id]/stats?id=$1"
+        },
+        {
+            "src": "/api/widgets/([A-Za-z0-9_-]+)/chat",
+            "dest": "/api/widgets/[id]/chat?id=$1"
+        },
+        {
+            "src": "/api/widgets",
+            "dest": "/api/widgets"
+        },
+        {
+            "src": "/api/widgets/([A-Za-z0-9_-]+)",
+            "dest": "/api/widgets/[id]?id=$1"
+        },
+        {
+            "src": "/w/([A-Za-z0-9_-]+)",
+            "dest": "/api/widgets/page?id=$1"
+        },
+        {
+            "src": "/widgets",
+            "dest": "/widgets-gallery/index.html"
+        },
+        {
+            "src": "/widgets/",
+            "dest": "/widgets-gallery/index.html"
+        },
+        {
+            "src": "/widgets/(.*)",
+            "dest": "/widgets-gallery/$1"
+        },
+        {
+            "src": "/gallery",
+            "dest": "/gallery/index.html"
+        },
+        {
+            "src": "/gallery/",
+            "dest": "/gallery/index.html"
+        },
+        {
+            "src": "/gallery/(.*)",
+            "dest": "/gallery/$1"
+        },
+        {
+            "src": "/docs",
+            "dest": "/docs/index.html"
+        },
+        {
+            "src": "/docs/",
+            "dest": "/docs/index.html"
+        },
+        {
+            "src": "/docs/widgets",
+            "dest": "/docs-widgets.html"
+        },
+        {
+            "src": "/docs/([^./]+)",
+            "dest": "/docs/index.html"
+        },
+        {
+            "src": "/docs/(.*)",
+            "dest": "/docs/$1"
+        },
+        {
+            "src": "/tutorials",
+            "dest": "/tutorials.html"
+        },
+        {
+            "src": "/tutorials/",
+            "dest": "/tutorials.html"
+        },
+        {
+            "src": "/tutorials/([a-z0-9-]+)",
+            "dest": "/tutorial.html"
+        },
+        {
+            "src": "/tutorials/([a-z0-9-]+)/",
+            "dest": "/tutorial.html"
+        },
+        {
+            "src": "/artifact",
+            "dest": "/artifact/index.html"
+        },
+        {
+            "src": "/artifact/",
+            "dest": "/artifact/index.html"
+        },
+        {
+            "src": "/artifact/(.*)",
+            "dest": "/artifact/$1"
+        },
+        {
+            "src": "/cz",
+            "dest": "/cz/index.html"
+        },
+        {
+            "src": "/cz/",
+            "dest": "/cz/index.html"
+        },
+        {
+            "src": "/cz/(.*)",
+            "dest": "/cz/$1"
+        },
+        {
+            "src": "/validation",
+            "dest": "/validation/index.html"
+        },
+        {
+            "src": "/validation/",
+            "dest": "/validation/index.html"
+        },
+        {
+            "src": "/validation/(.*)",
+            "dest": "/validation/$1"
+        },
+        {
+            "src": "/lobehub/iframe",
+            "dest": "/lobehub/iframe/index.html"
+        },
+        {
+            "src": "/lobehub/iframe/",
+            "dest": "/lobehub/iframe/index.html"
+        },
+        {
+            "src": "/lobehub/iframe/(.*)",
+            "dest": "/lobehub/iframe/$1"
+        },
+        {
+            "src": "/reputation",
+            "dest": "/reputation/index.html"
+        },
+        {
+            "src": "/reputation/",
+            "dest": "/reputation/index.html"
+        },
+        {
+            "src": "/reputation/(.*)",
+            "dest": "/reputation/$1"
+        },
+        {
+            "src": "/pay",
+            "dest": "/pay/index.html"
+        },
+        {
+            "src": "/pay/",
+            "dest": "/pay/index.html"
+        },
+        {
+            "src": "/pay/calls/[1-9A-HJ-NP-Za-km-z]+",
+            "dest": "/pay/calls/index.html"
+        },
+        {
+            "src": "/pay/c/[a-z0-9][a-z0-9-]+/?",
+            "dest": "/pay/c/index.html"
+        },
+        {
+            "src": "/pay/(.*)",
+            "dest": "/pay/$1"
+        },
+        {
+            "src": "/x402",
+            "dest": "/x402-stripe.html"
+        },
+        {
+            "src": "/x402/",
+            "dest": "/x402-stripe.html"
+        },
+        {
+            "src": "/bazaar",
+            "dest": "/bazaar.html"
+        },
+        {
+            "src": "/bazaar/",
+            "dest": "/bazaar.html"
+        },
+        {
+            "src": "/api/bazaar/list",
+            "dest": "/api/bazaar/list.js"
+        },
+        {
+            "src": "/api/bazaar/search",
+            "dest": "/api/bazaar/search.js"
+        },
+        {
+            "src": "/settings",
+            "dest": "/settings/index.html"
+        },
+        {
+            "src": "/settings/",
+            "dest": "/settings/index.html"
+        },
+        {
+            "src": "/settings/(.*)",
+            "dest": "/settings/$1"
+        },
+        {
+            "src": "/api/llm/anthropic",
+            "dest": "/api/llm/anthropic.js"
+        },
+        {
+            "src": "/dashboard/usage",
+            "dest": "/dashboard/usage.html"
+        },
+        {
+            "src": "/api/erc8004/register-confirm",
+            "dest": "/api/erc8004/register-confirm"
+        },
+        {
+            "src": "/api/erc8004/hydrate",
+            "dest": "/api/erc8004/[action]?action=hydrate"
+        },
+        {
+            "src": "/api/erc8004/import",
+            "dest": "/api/erc8004/[action]?action=import"
+        },
+        {
+            "src": "/api/erc8004/pin",
+            "dest": "/api/erc8004/[action]?action=pin"
+        },
+        {
+            "src": "/api/subscriptions/plans(/.*)?",
+            "dest": "/api/subscriptions/plans.js"
+        },
+        {
+            "src": "/api/subscriptions(/.*)?",
+            "dest": "/api/subscriptions/index.js"
+        },
+        {
+            "src": "/api/dca-strategies/([^/]+)",
+            "dest": "/api/dca-strategies?id=$1"
+        },
+        {
+            "src": "/api/dca-strategies",
+            "dest": "/api/dca-strategies"
+        },
+        {
+            "src": "/api/billing/summary",
+            "dest": "/api/billing/summary"
+        },
+        {
+            "src": "/api/billing/revenue",
+            "dest": "/api/billing/revenue"
+        },
+        {
+            "src": "/agents",
+            "dest": "/agents/index.html"
+        },
+        {
+            "src": "/agents/",
+            "dest": "/agents/index.html"
+        },
+        {
+            "src": "/agents/([^/]+)",
+            "dest": "/agent-detail.html"
+        },
+        {
+            "src": "/my-agents",
+            "dest": "/my-agents/index.html"
+        },
+        {
+            "src": "/my-agents/",
+            "dest": "/my-agents/index.html"
+        },
+        {
+            "src": "/my-agents/(.*)",
+            "dest": "/my-agents/$1"
+        },
+        {
+            "src": "/discover",
+            "dest": "/discover/index.html"
+        },
+        {
+            "src": "/discover/",
+            "dest": "/discover/index.html"
+        },
+        {
+            "src": "/discover/a/(\\d+)/(\\d+)",
+            "dest": "/api/discover-detail?kind=onchain&chain=$1&id=$2"
+        },
+        {
+            "src": "/discover/avatar/([^/]+)",
+            "dest": "/api/discover-detail?kind=avatar&id=$1"
+        },
+        {
+            "src": "/discover/(.*)",
+            "dest": "/discover/$1"
+        },
+        {
+            "src": "/api/plugins/([^/]+)/install",
+            "dest": "/api/plugins/[action]?id=$1&sub=install"
+        },
+        {
+            "src": "/api/plugins/(categories|list|import|publish)",
+            "dest": "/api/plugins/[action]?action=$1"
+        },
+        {
+            "src": "/api/plugins/([^/]+)",
+            "dest": "/api/plugins/[action]?id=$1"
+        },
+        {
+            "src": "/api/skills/categories",
+            "dest": "/api/skills/categories"
+        },
+        {
+            "src": "/api/skills/([^/]+)/install",
+            "dest": "/api/skills/[id]/install?id=$1"
+        },
+        {
+            "src": "/api/skills/([^/]+)/rate",
+            "dest": "/api/skills/[id]/rate?id=$1"
+        },
+        {
+            "src": "/api/skills/([^/]+)",
+            "dest": "/api/skills/[id]?id=$1"
+        },
+        {
+            "src": "/api/skills",
+            "dest": "/api/skills/index"
+        },
+        {
+            "src": "/tool_schema",
+            "dest": "/api/tool_schema"
+        },
+        {
+            "src": "/api/club/tips/stream",
+            "dest": "/api/club/tips-stream"
+        },
+        {
+            "src": "/api/(.*)",
+            "dest": "/api/$1"
+        },
+        {
+            "src": "/agent-3d/([0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?)/(.*)",
+            "headers": {
+                "cache-control": "public, max-age=31536000, immutable",
+                "access-control-allow-origin": "*",
+                "access-control-allow-methods": "GET, HEAD, OPTIONS",
+                "cross-origin-resource-policy": "cross-origin",
+                "timing-allow-origin": "*"
+            },
+            "dest": "/agent-3d/$1/$2"
+        },
+        {
+            "src": "/agent-3d/(latest|[0-9]+|[0-9]+\\.[0-9]+)/(.*)",
+            "headers": {
+                "cache-control": "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
+                "access-control-allow-origin": "*",
+                "access-control-allow-methods": "GET, HEAD, OPTIONS",
+                "cross-origin-resource-policy": "cross-origin",
+                "timing-allow-origin": "*"
+            },
+            "dest": "/agent-3d/$1/$2"
+        },
+        {
+            "src": "/api/agent-3d/versions",
+            "dest": "/api/agent-3d/versions"
+        },
+        {
+            "src": "/agent-3d/versions\\.json",
+            "headers": {
+                "cache-control": "public, max-age=60, s-maxage=60",
+                "access-control-allow-origin": "*"
+            },
+            "dest": "/agent-3d/versions.json"
+        },
+        {
+            "src": "/assets/(.*)",
+            "headers": {
+                "cache-control": "max-age=604800, public"
+            },
+            "dest": "/assets/$1"
+        },
+        {
+            "src": "/\\.well-known/solana/actions\\.json",
+            "headers": {
+                "cache-control": "public, max-age=300",
+                "content-type": "application/json",
+                "access-control-allow-origin": "*"
+            },
+            "dest": "/.well-known/solana/actions.json"
+        },
+        {
+            "src": "/\\.well-known/(.*)",
+            "headers": {
+                "cache-control": "max-age=86400, public"
+            },
+            "dest": "/.well-known/$1"
+        },
+        {
+            "src": "/robots.txt",
+            "dest": "/robots.txt"
+        },
+        {
+            "src": "/sitemap.xml",
+            "dest": "/sitemap.xml"
+        },
+        {
+            "src": "/sitemap",
+            "dest": "/sitemap/index.html"
+        },
+        {
+            "src": "/sitemap/",
+            "dest": "/sitemap/index.html"
+        },
+        {
+            "src": "/blog",
+            "dest": "/blog/index.html"
+        },
+        {
+            "src": "/blog/",
+            "dest": "/blog/index.html"
+        },
+        {
+            "src": "/blog/([a-z0-9-]+)/?",
+            "dest": "/blog/$1.html"
+        },
+        {
+            "src": "/llms.txt",
+            "headers": {
+                "content-type": "text/plain; charset=utf-8",
+                "cache-control": "public, max-age=3600"
+            },
+            "dest": "/llms.txt"
+        },
+        {
+            "src": "/llms-full.txt",
+            "headers": {
+                "content-type": "text/plain; charset=utf-8",
+                "cache-control": "public, max-age=3600"
+            },
+            "dest": "/llms-full.txt"
+        },
+        {
+            "src": "/app",
+            "dest": "/app.html"
+        },
+        {
+            "src": "/app-demo",
+            "dest": "/app-demo.html"
+        },
+        {
+            "src": "/chat",
+            "dest": "/chat/index.html"
+        },
+        {
+            "src": "/chat/",
+            "dest": "/chat/index.html"
+        },
+        {
+            "src": "/chat/(.*)",
+            "dest": "/chat/$1"
+        },
+        {
+            "src": "/create/selfie",
+            "dest": "/create-selfie.html"
+        },
+        {
+            "src": "/create/selfie/",
+            "dest": "/create-selfie.html"
+        },
+        {
+            "src": "/create",
+            "dest": "/create.html"
+        },
+        {
+            "src": "/create/",
+            "dest": "/create.html"
+        },
+        {
+            "src": "/creating",
+            "dest": "/creating.html"
+        },
+        {
+            "src": "/creating/",
+            "dest": "/creating.html"
+        },
+        {
+            "src": "/features",
+            "dest": "/features.html"
+        },
+        {
+            "src": "/features/",
+            "dest": "/features.html"
+        },
+        {
+            "src": "/",
+            "dest": "/home.html"
+        },
+        {
+            "src": "/home-v2",
+            "dest": "/home-v2.html"
+        },
+        {
+            "src": "/home-v2/",
+            "dest": "/home-v2.html"
+        },
+        {
+            "src": "/home",
+            "status": 301,
+            "headers": {
+                "Location": "/"
+            }
+        },
+        {
+            "src": "/explore",
+            "status": 301,
+            "headers": {
+                "Location": "/discover"
+            }
+        },
+        {
+            "src": "/explore/",
+            "status": 301,
+            "headers": {
+                "Location": "/discover"
+            }
+        },
+        {
+            "src": "/dappbay",
+            "status": 302,
+            "headers": {
+                "Location": "https://dappbay.bnbchain.org/detail/three"
+            }
+        },
+        {
+            "src": "/dappbay/",
+            "status": 302,
+            "headers": {
+                "Location": "https://dappbay.bnbchain.org/detail/three"
+            }
+        },
+        {
+            "src": "/a/(\\d+)/(\\d+)/embed",
+            "headers": {
+                "content-security-policy": "frame-ancestors *",
+                "x-content-type-options": "nosniff",
+                "referrer-policy": "strict-origin-when-cross-origin",
+                "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
+            },
+            "dest": "/a-embed.html"
+        },
+        {
+            "src": "/a/(\\d+)/(\\d+)",
+            "dest": "/api/a-page?chain=$1&id=$2"
+        },
+        {
+            "src": "/a/(.*)",
+            "dest": "/app.html"
+        },
+        {
+            "src": "/dist-lib/(.*)",
+            "headers": {
+                "cache-control": "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
+                "access-control-allow-origin": "*",
+                "cross-origin-resource-policy": "cross-origin"
+            },
+            "dest": "/dist-lib/$1"
+        },
+        {
+            "src": "/rider",
+            "dest": "/rider/index.html"
+        },
+        {
+            "src": "/rider/",
+            "dest": "/rider/index.html"
+        },
+        {
+            "src": "/rider/(.*)",
+            "dest": "/rider/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/$1"
+        }
+    ],
+    "crons": [
+        {
+            "path": "/api/cron/audit-log-cleanup",
+            "schedule": "0 4 * * *"
+        },
+        {
+            "path": "/api/cron/expire-pending-purchases",
+            "schedule": "*/5 * * * *"
+        },
+        {
+            "path": "/api/cron/cleanup-csrf-tokens",
+            "schedule": "17 * * * *"
+        },
+        {
+            "path": "/api/cron/process-withdrawals",
+            "schedule": "0 * * * *"
+        },
+        {
+            "path": "/api/cron/erc8004-crawl",
+            "schedule": "*/15 * * * *"
+        },
+        {
+            "path": "/api/cron/solana-attestations-crawl",
+            "schedule": "*/5 * * * *"
+        },
+        {
+            "path": "/api/cron/index-delegations",
+            "schedule": "*/5 * * * *"
+        },
+        {
+            "path": "/api/cron/run-dca",
+            "schedule": "0 * * * *"
+        },
+        {
+            "path": "/api/cron/run-subscriptions",
+            "schedule": "0 * * * *"
+        },
+        {
+            "path": "/api/cron/run-x-scheduled-posts",
+            "schedule": "* * * * *"
+        },
+        {
+            "path": "/api/cron/run-x-triggers",
+            "schedule": "*/5 * * * *"
+        },
+        {
+            "path": "/api/cron/fetch-x-metrics",
+            "schedule": "0 */6 * * *"
+        },
+        {
+            "path": "/api/cron/pumpfun-signals",
+            "schedule": "*/15 * * * *"
+        },
+        {
+            "path": "/api/cron/pump-agent-stats",
+            "schedule": "*/10 * * * *"
+        },
+        {
+            "path": "/api/cron/pumpfun-monitor",
+            "schedule": "*/3 * * * *"
+        },
+        {
+            "path": "/api/cron/solana-attest-event-cleanup",
+            "schedule": "*/10 * * * *"
+        },
+        {
+            "path": "/api/cron/settle-royalties",
+            "schedule": "0 3 * * *"
+        },
+        {
+            "path": "/api/cron/process-subscriptions",
+            "schedule": "0 */6 * * *"
+        },
+        {
+            "path": "/api/cron/run-coin-cycle",
+            "schedule": "*/5 * * * *"
+        },
+        {
+            "path": "/api/cron/run-coin-payouts",
+            "schedule": "1-59/5 * * * *"
+        },
+        {
+            "path": "/api/cron/club-payouts",
+            "schedule": "2-59/5 * * * *"
+        },
+        {
+            "path": "/api/cron/siwx-gc",
+            "schedule": "23 * * * *"
+        }
+    ]
 }

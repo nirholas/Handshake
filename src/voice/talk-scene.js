@@ -287,6 +287,9 @@ export class TalkScene {
 			this.renderer.setSize(width, height, false);
 			this.camera.aspect = width / height;
 			this.camera.updateProjectionMatrix();
+			// Distance/target depend on aspect (T-pose width vs viewport), so a
+			// resize from wide → narrow needs a reframe or the silhouette clips.
+			this._frameAvatar();
 		});
 		this._resizeObserver.observe(this.container);
 	}

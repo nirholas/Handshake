@@ -15,7 +15,6 @@ import {
   createPumpEventParser,
   subscribeToPumpEvents,
   eventDiscriminatorMap,
-  type PumpEventName,
   type ParsedPumpEvent,
   PUMP_BONDING_CURVE_PROGRAM_ID,
 } from "./pump-events.js";
@@ -36,31 +35,6 @@ function loadFixture(name: string): Fixture {
     `${name}.json`,
   );
   return JSON.parse(readFileSync(p, "utf8")) as Fixture;
-}
-
-/**
- * BN values come out of JSON as hex strings (BN.toJSON() returns hex).
- * Normalise both sides to string before comparing.
- */
-function normalise(v: unknown): unknown {
-  if (v === null || v === undefined) return v;
-  if (v instanceof PublicKey) return v.toBase58();
-  if (typeof v === "object" && !Array.isArray(v)) {
-    // BN: { words, negative, length, red } or just a hex string in fixture
-    if ("words" in (v as object)) {
-      // It's a BN — toJSON() gives hex; call toJSON via toString(16)
-      const bn = v as { toString: (r?: number) => string };
-      return bn.toString(16);
-    }
-    return Object.fromEntries(
-      Object.entries(v as Record<string, unknown>).map(([k, val]) => [
-        k,
-        normalise(val),
-      ]),
-    );
-  }
-  if (Array.isArray(v)) return (v as unknown[]).map(normalise);
-  return v;
 }
 
 // ─── Discriminator coverage ───────────────────────────────────────────────────
@@ -194,7 +168,7 @@ describe("subscribeToPumpEvents", () => {
     };
 
     const received: ParsedPumpEvent[] = [];
-    const sub = subscribeToPumpEvents(
+    subscribeToPumpEvents(
       mockConn,
       { programId: PUMP_BONDING_CURVE_PROGRAM_ID },
       (ev) => received.push(ev),
@@ -235,7 +209,7 @@ describe("subscribeToPumpEvents", () => {
     };
 
     const matchingEvents: ParsedPumpEvent[] = [];
-    const sub = subscribeToPumpEvents(
+    subscribeToPumpEvents(
       mockConn,
       { mint: targetMint },
       (ev) => matchingEvents.push(ev),
@@ -247,7 +221,7 @@ describe("subscribeToPumpEvents", () => {
     expect(matchingEvents.length).toBeGreaterThan(0);
 
     const filteredEvents: ParsedPumpEvent[] = [];
-    const sub2 = subscribeToPumpEvents(
+    subscribeToPumpEvents(
       mockConn,
       { mint: differentMint },
       (ev) => filteredEvents.push(ev),

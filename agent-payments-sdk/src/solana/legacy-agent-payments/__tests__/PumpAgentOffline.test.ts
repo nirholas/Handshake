@@ -73,11 +73,11 @@ function expectIdlAccountFlagsMatch(
   expect(keys).toHaveLength(idl.accounts.length);
   idl.accounts.forEach((a, i) => {
     expect(
-      keys[i].isWritable,
+      keys[i]!.isWritable,
       `${ixName} account[${i}] (${a.name}).isWritable`,
     ).toBe(!!a.writable);
     expect(
-      keys[i].isSigner,
+      keys[i]!.isSigner,
       `${ixName} account[${i}] (${a.name}).isSigner`,
     ).toBe(!!a.signer);
   });
@@ -103,9 +103,9 @@ describe("LegacyPumpAgentOffline / programId & discriminators & flags", () => {
     // Check bondingCurve & tokenAgentPayments derivations match IDL seeds.
     const [bondingCurve] = getBondingCurvePDA(MINT);
     const [tokenAgentPayments] = getTokenAgentPaymentsPDA(MINT);
-    expect(ix.keys[1].pubkey.equals(bondingCurve)).toBe(true);
-    expect(ix.keys[4].pubkey.equals(tokenAgentPayments)).toBe(true);
-    expect(ix.keys[3].pubkey.equals(MINT)).toBe(true);
+    expect(ix.keys[1]!.pubkey.equals(bondingCurve)).toBe(true);
+    expect(ix.keys[4]!.pubkey.equals(tokenAgentPayments)).toBe(true);
+    expect(ix.keys[3]!.pubkey.equals(MINT)).toBe(true);
   });
 
   it("withdraw -> agentWithdraw", async () => {
@@ -118,7 +118,7 @@ describe("LegacyPumpAgentOffline / programId & discriminators & flags", () => {
     expectDiscriminator(ix.data, "agentWithdraw");
     expectIdlAccountFlagsMatch("agentWithdraw", ix.keys);
     // tokenProgram default
-    const tokenProgramAcct = ix.keys[6];
+    const tokenProgramAcct = ix.keys[6]!;
     expect(tokenProgramAcct.pubkey.equals(TOKEN_PROGRAM_ID)).toBe(true);
   });
 
@@ -129,7 +129,7 @@ describe("LegacyPumpAgentOffline / programId & discriminators & flags", () => {
       receiverAta: RECEIVER_ATA,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
     });
-    const tokenProgramAcct = ix.keys[6];
+    const tokenProgramAcct = ix.keys[6]!;
     expect(tokenProgramAcct.pubkey.equals(TOKEN_2022_PROGRAM_ID)).toBe(true);
   });
 
@@ -157,11 +157,11 @@ describe("LegacyPumpAgentOffline / programId & discriminators & flags", () => {
       new BN(0),
       new BN(9999),
     );
-    expect(ix.keys[2].pubkey.equals(tokenAgentPayments)).toBe(true);
-    expect(ix.keys[4].pubkey.equals(paymentInCurrency)).toBe(true);
-    expect(ix.keys[5].pubkey.equals(globalConfig)).toBe(true);
-    expect(ix.keys[6].pubkey.equals(invoiceId)).toBe(true);
-    expect(ix.keys[7].pubkey.equals(CURRENCY_MINT)).toBe(true);
+    expect(ix.keys[2]!.pubkey.equals(tokenAgentPayments)).toBe(true);
+    expect(ix.keys[4]!.pubkey.equals(paymentInCurrency)).toBe(true);
+    expect(ix.keys[5]!.pubkey.equals(globalConfig)).toBe(true);
+    expect(ix.keys[6]!.pubkey.equals(invoiceId)).toBe(true);
+    expect(ix.keys[7]!.pubkey.equals(CURRENCY_MINT)).toBe(true);
   });
 
   it("acceptPaymentSimple BN coercion: number, bigint, BN produce identical data", async () => {
@@ -196,8 +196,8 @@ describe("LegacyPumpAgentOffline / programId & discriminators & flags", () => {
     // Also account ordering identical.
     expect(ixNumber.keys.length).toBe(ixBN.keys.length);
     for (let i = 0; i < ixNumber.keys.length; i++) {
-      expect(ixNumber.keys[i].pubkey.toBase58()).toBe(
-        ixBN.keys[i].pubkey.toBase58(),
+      expect(ixNumber.keys[i]!.pubkey.toBase58()).toBe(
+        ixBN.keys[i]!.pubkey.toBase58(),
       );
     }
   });
@@ -212,8 +212,8 @@ describe("LegacyPumpAgentOffline / programId & discriminators & flags", () => {
     expectIdlAccountFlagsMatch("agentDistributePayments", ix.keys);
     const [buybackAuthority] = getBuybackAuthorityPDA(MINT);
     const [withdrawAuthority] = getWithdrawAuthorityPDA(MINT);
-    expect(ix.keys[6].pubkey.equals(buybackAuthority)).toBe(true);
-    expect(ix.keys[7].pubkey.equals(withdrawAuthority)).toBe(true);
+    expect(ix.keys[6]!.pubkey.equals(buybackAuthority)).toBe(true);
+    expect(ix.keys[7]!.pubkey.equals(withdrawAuthority)).toBe(true);
   });
 
   it("buybackTrigger -> agentBuybackTrigger (with remaining accounts)", async () => {
@@ -238,12 +238,12 @@ describe("LegacyPumpAgentOffline / programId & discriminators & flags", () => {
     expect(ix.keys.length).toBe(idl.accounts.length + 1);
     // Check the fixed prefix matches IDL flags.
     idl.accounts.forEach((a, i) => {
-      expect(ix.keys[i].isWritable).toBe(!!a.writable);
-      expect(ix.keys[i].isSigner).toBe(!!a.signer);
+      expect(ix.keys[i]!.isWritable).toBe(!!a.writable);
+      expect(ix.keys[i]!.isSigner).toBe(!!a.signer);
     });
     // Remaining account at the end.
     expect(
-      ix.keys[ix.keys.length - 1].pubkey.equals(SystemProgram.programId),
+      ix.keys[ix.keys.length - 1]!.pubkey.equals(SystemProgram.programId),
     ).toBe(true);
   });
 
@@ -255,8 +255,8 @@ describe("LegacyPumpAgentOffline / programId & discriminators & flags", () => {
     expect(ix.programId.equals(LEGACY_AGENT_PAYMENTS_PROGRAM_ID)).toBe(true);
     expectDiscriminator(ix.data, "extendAccount");
     expectIdlAccountFlagsMatch("extendAccount", ix.keys);
-    expect(ix.keys[0].pubkey.equals(ACCOUNT_FOR_EXTEND)).toBe(true);
-    expect(ix.keys[1].pubkey.equals(USER)).toBe(true);
+    expect(ix.keys[0]!.pubkey.equals(ACCOUNT_FOR_EXTEND)).toBe(true);
+    expect(ix.keys[1]!.pubkey.equals(USER)).toBe(true);
   });
 
   it("updateAuthority -> agentUpdateAuthority", async () => {
@@ -281,8 +281,8 @@ describe("LegacyPumpAgentOffline / programId & discriminators & flags", () => {
     expect(ix.keys.length).toBe(idl.accounts.length + 1);
     // The fixed accounts portion still respects IDL flags.
     idl.accounts.forEach((a, i) => {
-      expect(ix.keys[i].isWritable).toBe(!!a.writable);
-      expect(ix.keys[i].isSigner).toBe(!!a.signer);
+      expect(ix.keys[i]!.isWritable).toBe(!!a.writable);
+      expect(ix.keys[i]!.isSigner).toBe(!!a.signer);
     });
   });
 

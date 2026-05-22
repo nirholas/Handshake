@@ -57,12 +57,14 @@ export default function (tokensExtractor: TokenExtractor): TokenizerExtension {
     start(src: string) {
       return src.match(/^:::[^:\n\s]/)?.index
     },
-    tokenizer(src: string): Tokens.Generic {
+    tokenizer(src: string): Tokens.Generic | undefined {
       const rule =
         /^:::(?<type>[a-z0-9-]+)(?<options>.*)?\n(?<content>(?:.|\n)*)\n:::(?:\n|$)/i
 
-      const match = rule.exec(findRawContainer(src))
-      if (!match || !match.groups) return null
+      const raw = findRawContainer(src)
+      if (!raw) return undefined
+      const match = rule.exec(raw)
+      if (!match || !match.groups || !match.groups.type) return undefined
 
       const type = match.groups.type.toLocaleLowerCase()
       const options = parseOptions(match.groups.options || '')
@@ -80,7 +82,7 @@ export default function (tokensExtractor: TokenExtractor): TokenizerExtension {
         this.lexer.blockTokens(content, result.tokens)
       }
 
-      return result
+      return result ?? undefined
     },
   }
 }
@@ -93,7 +95,7 @@ function findRawContainer(src: string): string | undefined {
 
   for (lineNumber = 1; lineNumber < lines.length; lineNumber++) {
     const line = lines[lineNumber]
-    if (line.startsWith(':::')) {
+    if (line && line.startsWith(':::')) {
       if (/:::[^:\n\s]/.test(line)) {
         open++
       } else if (/^:::(\n|$)/.test(line)) {
@@ -110,7 +112,7 @@ function findRawContainer(src: string): string | undefined {
 }
 
 function parseOptions(options: string): ContainerOptions {
-  const output = {}
+  const output: ContainerOptions = {}
   let remaining = options
 
   while (true) {
