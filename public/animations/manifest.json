@@ -28,6 +28,223 @@
 		"loop": false
 	},
 	{
+		"name": "av-idle-breath",
+		"url": "/animations/clips/av-idle-breath.json",
+		"label": "Idle Breath",
+		"icon": "🧘",
+		"loop": true
+	},
+	{
+		"name": "av-waiting",
+		"url": "/animations/clips/av-waiting.json",
+		"label": "Waiting",
+		"icon": "🕰️",
+		"loop": true
+	},
+	{
+		"name": "av-superhero-jump",
+		"url": "/animations/clips/av-superhero-jump.json",
+		"label": "Superhero Jump",
+		"icon": "🦸",
+		"loop": false
+	},
+	{
+		"name": "av-walk-crouching",
+		"url": "/animations/clips/av-walk-crouching.json",
+		"label": "Walk Crouching",
+		"icon": "🚶",
+		"loop": true
+	},
+	{
+		"name": "av-arm-flex",
+		"url": "/animations/clips/av-arm-flex.json",
+		"label": "Arm Flex",
+		"icon": "💪",
+		"loop": false
+	},
+	{
+		"name": "av-boxer-dance",
+		"url": "/animations/clips/av-boxer-dance.json",
+		"label": "Boxer Dance",
+		"icon": "🥊",
+		"loop": true
+	},
+	{
+		"name": "av-brag-claps",
+		"url": "/animations/clips/av-brag-claps.json",
+		"label": "Brag & Clap",
+		"icon": "👏",
+		"loop": false
+	},
+	{
+		"name": "av-flexing-arm",
+		"url": "/animations/clips/av-flexing-arm.json",
+		"label": "Flex Arm",
+		"icon": "💪",
+		"loop": false
+	},
+	{
+		"name": "av-vtubing",
+		"url": "/animations/clips/av-vtubing.json",
+		"label": "VTubing",
+		"icon": "📹",
+		"loop": true
+	},
+	{
+		"name": "av-stand-crouch-stand",
+		"url": "/animations/clips/av-stand-crouch-stand.json",
+		"label": "Stand-Crouch-Stand",
+		"icon": "🦵",
+		"loop": false
+	},
+	{
+		"name": "av-smoking",
+		"url": "/animations/clips/av-smoking.json",
+		"label": "Smoking",
+		"icon": "🚬",
+		"loop": true
+	},
+	{
+		"name": "av-gymnastics-aerial",
+		"url": "/animations/clips/av-gymnastics-aerial.json",
+		"label": "Gymnastics",
+		"icon": "🤸",
+		"loop": false
+	},
+	{
+		"name": "av-idle-anim",
+		"url": "/animations/clips/av-idle-anim.json",
+		"label": "Idle (Avaturn)",
+		"icon": "🧍",
+		"loop": true
+	},
+	{
+		"name": "av-back-flip",
+		"url": "/animations/clips/av-back-flip.json",
+		"label": "Back Flip",
+		"icon": "🤸",
+		"loop": false
+	},
+	{
+		"name": "av-idle-male",
+		"url": "/animations/clips/av-idle-male.json",
+		"label": "Male Idle",
+		"icon": "🚹",
+		"loop": true
+	},
+	{
+		"name": "av-idle-female",
+		"url": "/animations/clips/av-idle-female.json",
+		"label": "Female Idle",
+		"icon": "🚺",
+		"loop": true
+	},
+	{
+		"name": "av-chest-bump",
+		"url": "/animations/clips/av-chest-bump.json",
+		"label": "Chest Bump",
+		"icon": "🦍",
+		"loop": false
+	},
+	{
+		"name": "av-walk-feminine",
+		"url": "/animations/clips/av-walk-feminine.json",
+		"label": "Feminine Walk",
+		"icon": "🚶‍♀️",
+		"loop": true
+	},
+	{
+		"name": "av-push-block",
+		"url": "/animations/clips/av-push-block.json",
+		"label": "Push Block",
+		"icon": "📦",
+		"loop": false
+	},
+	{
+		"name": "av-dance-shuffle",
+		"url": "/animations/clips/av-dance-shuffle.json",
+		"label": "Shuffle Dance",
+		"icon": "💃",
+		"loop": true
+	},
+	{
+		"name": "av-headbang",
+		"url": "/animations/clips/av-headbang.json",
+		"label": "Head Banging",
+		"icon": "🤘",
+		"loop": true
+	},
+	{
+		"name": "av-call-me",
+		"url": "/animations/clips/av-call-me.json",
+		"label": "Call Me",
+		"icon": "📞",
+		"loop": false
+	},
+	{
+		"name": "av-chilling",
+		"url": "/animations/clips/av-chilling.json",
+		"label": "Chilling",
+		"icon": "😎",
+		"loop": true
+	},
+	{
+		"name": "av-pose1",
+		"url": "/animations/clips/av-pose1.json",
+		"label": "Pose",
+		"icon": "🎭",
+		"loop": true
+	},
+	{
+		"name": "av-muay-thai",
+		"url": "/animations/clips/av-muay-thai.json",
+		"label": "Muay Thai Combo",
+		"icon": "🥊",
+		"loop": false
+	},
+	{
+		"name": "av-banging-tunes",
+		"url": "/animations/clips/av-banging-tunes.json",
+		"label": "Banging Tunes",
+		"icon": "🎵",
+		"loop": true
+	},
+	{
+		"name": "av-celebrating",
+		"url": "/animations/clips/av-celebrating.json",
+		"label": "Celebrating",
+		"icon": "🎉",
+		"loop": false
+	},
+	{
+		"name": "av-spy",
+		"url": "/animations/clips/av-spy.json",
+		"label": "Spy",
+		"icon": "🕵️",
+		"loop": true
+	},
+	{
+		"name": "av-cheering",
+		"url": "/animations/clips/av-cheering.json",
+		"label": "Cheering",
+		"icon": "📣",
+		"loop": false
+	},
+	{
+		"name": "av-joy",
+		"url": "/animations/clips/av-joy.json",
+		"label": "Joy",
+		"icon": "😊",
+		"loop": false
+	},
+	{
+		"name": "av-conductor",
+		"url": "/animations/clips/av-conductor.json",
+		"label": "Conductor",
+		"icon": "🎼",
+		"loop": true
+	},
+	{
 		"name": "dance",
 		"url": "/animations/clips/dance.json",
 		"label": "Dance",
