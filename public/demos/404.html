@@ -126,341 +126,45 @@
 		<canvas id="avatar-canvas"></canvas>
 
 		<script type="module">
-			import * as THREE from 'three';
-			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-			import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm';
+			import { createAgentUI } from '@three-ws/agent-ui';
 
-			const canvas  = document.getElementById('avatar-canvas');
-			const bignum  = document.getElementById('bignum');
 			const zero    = document.getElementById('zero');
 			const homeBtn = document.getElementById('home-btn');
 			const labBtn  = document.getElementById('lab-btn');
 
-			// ── Renderer ───────────────────────────────────────────────────────
-			const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-			renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-			renderer.outputColorSpace = THREE.SRGBColorSpace;
-			renderer.toneMapping = THREE.ACESFilmicToneMapping;
-			renderer.toneMappingExposure = 1.1;
-
-			const scene = new THREE.Scene();
-
-			// Orthographic — 1 world unit = PX_PER_UNIT screen pixels
-			const PX_PER_UNIT = 120;
-			const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
-			camera.position.z = 10;
-
-			function updateFrustum() {
-				const hw = window.innerWidth  / PX_PER_UNIT / 2;
-				const hh = window.innerHeight / PX_PER_UNIT / 2;
-				camera.left = -hw; camera.right = hw;
-				camera.top  =  hh; camera.bottom = -hh;
-				camera.updateProjectionMatrix();
-			}
-
-			const _v3 = new THREE.Vector3();
-			function domToWorld(sx, sy) {
-				_v3.set((sx / window.innerWidth) * 2 - 1, -(sy / window.innerHeight) * 2 + 1, 0);
-				_v3.unproject(camera);
-				return { x: _v3.x, y: _v3.y };
-			}
-
-			// ── Avatar runtime ────────────────────────────────────────────────
-			// Declared above resize() so the recalibrate path doesn't TDZ on init.
-			let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
-
-			function resize() {
-				renderer.setSize(window.innerWidth, window.innerHeight, false);
-				updateFrustum();
-				recalibrateLandSpot();
-			}
-			window.addEventListener('resize', resize);
-			resize();
-
-			// Lights
-			scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-			const key  = new THREE.DirectionalLight(0xfff4dc, 2.0); key.position.set(3, 6, 5);  scene.add(key);
-			const rim  = new THREE.DirectionalLight(0x4060ff, 0.6); rim.position.set(-4, 3, -2); scene.add(rim);
-			const fill = new THREE.DirectionalLight(0xffeedd, 0.4); fill.position.set(0, 2, 7);  scene.add(fill);
-			const actions = {};
-			let currentAction = null;
-			const FADE_S = 0.3;
-
-			function setAnimation(name, { loop = true, hold = false } = {}) {
-				const next = actions[name];
-				if (!next || next === currentAction) return;
-				next.reset();
-				next.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
-				next.clampWhenFinished = hold;
-				if (currentAction) next.crossFadeFrom(currentAction, FADE_S, false).play();
-				else next.fadeIn(FADE_S).play();
-				currentAction = next;
-			}
-
-			// ── Phase state ───────────────────────────────────────────────────
-			// fallingIn   — drop from above the viewport onto the "0"
-			// confused    — idle/look-around on the digit
-			// runningOff  — walk-cycle slide toward whichever edge the user clicked
-			let phase = 'loading';
-			let landed = false;
-			let fallT = 0;
-			const FALL_S = 1.4;
-			let fallStartW = { x: 0, y: 0 };
-			let fallTargetW = { x: 0, y: 0 };
-			const SIT_OFFSET_PX = 140; // butt-sit offset for cz.glb (same as 3d-home)
-			const LANDING_OFFSET_PX = 90; // standing slightly above the "0" baseline
-
-			function getZeroLandWorld() {
-				const r = zero.getBoundingClientRect();
-				// Center horizontally on the "0", land just above its visual top
-				return domToWorld(r.left + r.width / 2, r.top + LANDING_OFFSET_PX);
-			}
-
-			function getFallStartWorld() {
-				const r = zero.getBoundingClientRect();
-				// Start 1.5× viewport heights above the target — guarantees the avatar
-				// is off-screen no matter the window size
-				return domToWorld(r.left + r.width / 2, -window.innerHeight * 0.6);
-			}
-
-			function recalibrateLandSpot() {
-				if (!avatar || phase !== 'confused') return;
-				const t = getZeroLandWorld();
-				gsap.to(avatar.position, { x: t.x, y: t.y, duration: 0.35, overwrite: true });
-			}
-
-			// Re-anchor when text reflows (font load, viewport changes)
-			const ro = new ResizeObserver(() => recalibrateLandSpot());
-			ro.observe(zero);
-
-			function smoothstep(t) { return t * t * (3 - 2 * t); }
-
-			// ── Falling sequence ─────────────────────────────────────────────
-			function startFall() {
-				phase = 'fallingIn';
-				fallStartW  = getFallStartWorld();
-				fallTargetW = getZeroLandWorld();
-				avatar.position.set(fallStartW.x, fallStartW.y, 0);
-				avatar.rotation.set(0, 0, 0);
-				fallT = 0; landed = false;
-				setAnimation('falling', { loop: true });
-			}
-
-			function fireLandingDust() {
-				// Splash of debris on impact — same ballistic feel as 3d-home but
-				// neutral grey so it reads as "kicked-up dust" instead of paint.
-				const r = zero.getBoundingClientRect();
-				const ox = r.left + r.width / 2;
-				const oy = r.top + r.height * 0.78;
-				const GRAVITY = 1400, COUNT = 16;
-				const drops = [];
-				for (let i = 0; i < COUNT; i++) {
-					const size = 4 + Math.random() * 6;
-					const el = document.createElement('div');
-					el.style.cssText =
-						`position:fixed;left:${ox - size/2}px;top:${oy - size/2}px;` +
-						`width:${size}px;height:${size}px;border-radius:50%;` +
-						`background:radial-gradient(circle at 35% 30%,#cfd2dd,#7a7d8e 60%,#3c3e4c);` +
-						`box-shadow:0 0 5px rgba(255,255,255,0.18);` +
-						`pointer-events:none;z-index:30;will-change:transform,opacity;`;
-					document.body.appendChild(el);
-					const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.3;
-					const speed = 180 + Math.random() * 280;
-					drops.push({
-						el, x: 0, y: 0,
-						vx: Math.cos(angle) * speed,
-						vy: Math.sin(angle) * speed,
-						life: 0,
-						max: 0.7 + Math.random() * 0.4,
-					});
-				}
-				let last = performance.now();
-				(function step(now) {
-					const dt = Math.min((now - last) / 1000, 0.04); last = now;
-					let alive = false;
-					for (const d of drops) {
-						if (!d.el) continue;
-						d.life += dt;
-						d.vy += GRAVITY * dt;
-						d.x += d.vx * dt; d.y += d.vy * dt;
-						const t = d.life / d.max;
-						if (t >= 1) { d.el.remove(); d.el = null; continue; }
-						d.el.style.opacity = String(1 - t * t);
-						d.el.style.transform = `translate(${d.x.toFixed(1)}px,${d.y.toFixed(1)}px)`;
-						alive = true;
-					}
-					if (alive) requestAnimationFrame(step);
-				})(last);
-			}
-
-			function fireImpactPulse() {
-				// Brief CSS scale-pulse on the "0" — sells the weight of the landing
-				gsap.killTweensOf(zero);
-				gsap.fromTo(zero,
-					{ y: 0 },
-					{ y: 4, duration: 0.08, ease: 'power3.out',
-					  onComplete: () => gsap.to(zero, { y: 0, duration: 0.5, ease: 'elastic.out(1.2, 0.4)' })
-					});
-			}
-
-			function startConfused() {
-				phase = 'confused';
-				landed = true;
-				const t = getZeroLandWorld();
-				avatar.position.set(t.x, t.y, 0);
-				setAnimation('idle', { loop: true });
-				// Gentle head-turn loop — feels like "looking around lost"
-				lookAroundLoop();
-			}
-
-			let lookRAF = null, lookT0 = 0;
-			function lookAroundLoop() {
-				cancelAnimationFrame(lookRAF);
-				lookT0 = performance.now();
-				(function tick(now) {
-					if (phase !== 'confused') return;
-					const t = (now - lookT0) / 1000;
-					// Slow sinusoidal yaw — ±20° over ~5s
-					avatar.rotation.y = Math.sin(t * 1.25) * 0.35;
-					lookRAF = requestAnimationFrame(tick);
-				})(performance.now());
-			}
-
-			function stopLooking() {
-				cancelAnimationFrame(lookRAF);
-				lookRAF = null;
-			}
-
-			function startRunOff(direction = 'right') {
-				if (phase === 'runningOff') return;
-				phase = 'runningOff';
-				stopLooking();
-				setAnimation('walk', { loop: true });
-				const dir = direction === 'left' ? -1 : 1;
-				gsap.to(avatar.rotation, { y: dir * Math.PI * 0.5, duration: 0.3, overwrite: true });
-				// Slide to off-screen world-X. PX_PER_UNIT keeps the math obvious.
-				const targetWorldX = (window.innerWidth / PX_PER_UNIT) * 0.7 * dir;
-				const cur = avatar.position;
-				const distancePx = Math.abs(targetWorldX - cur.x) * PX_PER_UNIT;
-				const ms = Math.max(900, distancePx * 2.2);
-				gsap.to(cur, { x: targetWorldX, duration: ms / 1000, ease: 'power1.in' });
-			}
-
-			// ── Intercept the "Take her home" click ──────────────────────────
-			// Don't navigate immediately — let the agent run off-screen first,
-			// THEN go to the destination. Feels intentional, not glitchy.
-			function interceptNav(btn, dir) {
-				btn.addEventListener('click', e => {
-					if (phase === 'runningOff') return; // already mid-exit; let it land
-					e.preventDefault();
-					const href = btn.getAttribute('href');
-					startRunOff(dir);
-					setTimeout(() => { window.location.href = href; }, 1100);
-				});
-			}
-			interceptNav(homeBtn, 'right');
-			interceptNav(labBtn,  'left');
-
-			// ── Proximity shadow on the "0" (matches 3d-home pattern) ────────
-			const _proj = new THREE.Vector3();
-			function avatarScreenY() {
-				_proj.set(avatar.position.x, avatar.position.y, 0).project(camera);
-				return (1 - _proj.y) * 0.5 * window.innerHeight;
-			}
-			function updateProximityShadow() {
-				if (!avatar) return;
-				const r = zero.getBoundingClientRect();
-				const ay = avatarScreenY();
-				const dy = Math.max(0, r.top - ay);
-				const prox = 1 - Math.min(dy / 280, 1);
-				if (prox <= 0.01) {
-					bignum.style.setProperty('--agent-shadow', 'none');
-					return;
-				}
-				const blur    = (12 * (1 - prox) + 3).toFixed(2);
-				const offsetY = (3 + 8 * prox).toFixed(2);
-				const alpha   = (0.6 * prox).toFixed(3);
-				bignum.style.setProperty('--agent-shadow', `0 ${offsetY}px ${blur}px rgba(0,0,0,${alpha})`);
-			}
-
-			// ── Subtle camera parallax — sells "3D" without breaking ortho math
-			// We pan the camera slightly with the mouse instead of changing FOV,
-			// which keeps domToWorld() correct since it always reads from `camera`.
-			let mouseNx = 0, mouseNy = 0;
-			window.addEventListener('mousemove', e => {
-				mouseNx = (e.clientX / window.innerWidth)  * 2 - 1;
-				mouseNy = (e.clientY / window.innerHeight) * 2 - 1;
+			const agent = await createAgentUI({
+				canvas: document.getElementById('avatar-canvas'),
+				clips: ['idle', 'walk', 'falling'],
 			});
 
-			// ── Loader ────────────────────────────────────────────────────────
-			const CLIPS = ['idle', 'walk', 'falling'];
+			// Proximity shadow tracks the avatar's screen Y vs. the "0" baseline.
+			// The CSS picks it up via `text-shadow: var(--agent-shadow, none)`.
+			agent.fx.proximityShadow(document.getElementById('bignum'));
 
-			new GLTFLoader().load('/avatars/cz.glb', gltf => {
-				avatar = gltf.scene;
-				avatar.traverse(n => {
-					if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name)) rootBone = n;
-				});
-				avatar.rotation.y = 0;
-				scene.add(avatar);
-
-				mixer = new THREE.AnimationMixer(avatar);
-
-				Promise.all(CLIPS.map(name =>
-					fetch(`/animations/clips/${name}.json`).then(r => r.json())
-				)).then(jsons => {
-					CLIPS.forEach((name, i) => {
-						actions[name] = mixer.clipAction(THREE.AnimationClip.parse(jsons[i]));
-					});
-
-					if (rootBone) baseRootPos = rootBone.position.clone();
-					// Lock root motion so the walk-cycle's translation doesn't fight our
-					// JS position lerp during runningOff.
-					const _r = renderer.render.bind(renderer);
-					renderer.render = (sc, cam) => {
-						try { if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos); } catch (_) {}
-						_r(sc, cam);
-					};
-
-					// Kick off the fall on next frame so layout is settled
-					requestAnimationFrame(startFall);
-				});
+			// Drop from above the viewport onto the "0", fire dust + pulse on land.
+			await agent.fallOnto(zero, {
+				duration: 1.4,
+				landingOffsetPx: 90,
+				tumble: 0.25,
+				onLand: () => {
+					agent.fx.dust(zero);
+					agent.fx.impactPulse(zero);
+				},
 			});
 
-			// ── Render loop ───────────────────────────────────────────────────
-			const clock = new THREE.Clock();
-			(function tick() {
-				requestAnimationFrame(tick);
-				try {
-					const dt = Math.min(clock.getDelta(), 0.05);
-					mixer?.update(dt);
-
-					if (phase === 'fallingIn' && avatar) {
-						fallT += dt;
-						const p = Math.min(fallT / FALL_S, 1);
-						// Ease-in (gravity-style) for vertical, linear-ish for horizontal
-						const ey = p * p;
-						avatar.position.x = fallStartW.x + (fallTargetW.x - fallStartW.x) * smoothstep(p);
-						avatar.position.y = fallStartW.y + (fallTargetW.y - fallStartW.y) * ey;
-						// Slight tumble during the fall, settles to 0 on landing
-						avatar.rotation.y = (1 - p) * 0.25 * Math.sin(p * 8);
-
-						if (p >= 1 && !landed) {
-							fireLandingDust();
-							fireImpactPulse();
-							startConfused();
-						}
-					}
-
-					// Camera parallax — clamped tiny so domToWorld stays within tolerance
-					const targetCamX = mouseNx * 0.12;
-					const targetCamY = -mouseNy * 0.08;
-					camera.position.x += (targetCamX - camera.position.x) * 0.04;
-					camera.position.y += (targetCamY - camera.position.y) * 0.04;
-
-					updateProximityShadow();
-					renderer.render(scene, camera);
-				} catch (_) {}
+			// Confused look-around loop: gentle yaw oscillation while idle on the digit.
+			agent.play('idle', { loop: true });
+			const t0 = performance.now();
+			(function lookAround() {
+				if (agent._runningOff) return;
+				const t = (performance.now() - t0) / 1000;
+				agent.avatar.rotation.y = Math.sin(t * 1.25) * 0.35;
+				requestAnimationFrame(lookAround);
 			})();
+
+			// Each link runs the avatar off-screen before navigating.
+			agent.interceptNavigation(homeBtn, { direction: 'right', delay: 1100 });
+			agent.interceptNavigation(labBtn,  { direction: 'left',  delay: 1100 });
 		</script>
 	</body>
 </html>

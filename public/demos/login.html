@@ -130,21 +130,6 @@
 
 			.foot { margin: 22px 0 0; text-align: center; color: #54576f; font-size: 12.5px; }
 			.foot a { color: #8a8eaa; }
-
-			/* Hidden mirror — used to measure caret X in a regular <input>.
-			   Must match the input's typography & padding exactly. visibility:hidden
-			   so it occupies no painted pixels but is still measurable. */
-			.caret-mirror {
-				position: absolute;
-				visibility: hidden;
-				white-space: pre;
-				font: 500 15px/1.2 'Inter', inherit;
-				padding: 0;
-				margin: 0;
-				border: 0;
-				pointer-events: none;
-				top: -9999px; left: -9999px;
-			}
 		</style>
 	</head>
 	<body>
@@ -195,7 +180,6 @@
 					class="btn"
 					id="submit-btn"
 					type="submit"
-					data-agent-action="validate-form"
 				>Sign in</button>
 
 				<p class="foot">No account? <a href="/create">Build an agent →</a></p>
@@ -205,331 +189,62 @@
 		<canvas id="avatar-canvas"></canvas>
 
 		<script type="module">
-			import * as THREE from 'three';
-			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-			import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm';
+			import { createAgentUI } from '@three-ws/agent-ui';
 
-			const canvas = document.getElementById('avatar-canvas');
-			const form   = document.getElementById('login-form');
+			const form = document.getElementById('login-form');
 
-			// ── Renderer / scene (same orthographic pattern as 3d-home) ───────
-			const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-			renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-			renderer.outputColorSpace = THREE.SRGBColorSpace;
-			renderer.toneMapping = THREE.ACESFilmicToneMapping;
-			renderer.toneMappingExposure = 1.1;
+			const agent = await createAgentUI({
+				canvas: document.getElementById('avatar-canvas'),
+				clips: ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'silly', 'defeated', 'angry', 'facepalm'],
+				subclips: {
+					// covereyes is 219 frames; only the first 48 settle the hands on
+					// the face — hold that pose while the password field is focused.
+					covereyes: { start: 0, end: 48, fps: 30 },
+				},
+			});
 
-			const scene  = new THREE.Scene();
-			const PX_PER_UNIT = 120;
-			const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
-			camera.position.z = 10;
+			// Park the avatar centered above the form card, feet on the ledge.
+			agent.standOn(form, { anchor: 'top-center' });
 
-			function updateFrustum() {
-				const hw = window.innerWidth  / PX_PER_UNIT / 2;
-				const hh = window.innerHeight / PX_PER_UNIT / 2;
-				camera.left = -hw; camera.right = hw;
-				camera.top  =  hh; camera.bottom = -hh;
-				camera.updateProjectionMatrix();
-			}
+			// Wire the declarative attributes on the form (track-typing, privacy-mode).
+			agent.scan(form);
 
-			const _v3 = new THREE.Vector3();
-			function domToWorld(screenX, screenY) {
-				_v3.set(
-					 (screenX / window.innerWidth)  * 2 - 1,
-					-(screenY / window.innerHeight) * 2 + 1,
-					0
-				);
-				_v3.unproject(camera);
-				return { x: _v3.x, y: _v3.y };
-			}
-			function resize() {
-				renderer.setSize(window.innerWidth, window.innerHeight, false);
-				updateFrustum();
-			}
-			window.addEventListener('resize', resize);
-			resize();
-
-			// Lights
-			scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-			const key = new THREE.DirectionalLight(0xfff4dc, 2.0); key.position.set(3, 6, 5); scene.add(key);
-			const rim = new THREE.DirectionalLight(0x4060ff, 0.6); rim.position.set(-4, 3, -2); scene.add(rim);
-			const fill = new THREE.DirectionalLight(0xffeedd, 0.4); fill.position.set(0, 2, 7); scene.add(fill);
-
-			// ── Avatar runtime ────────────────────────────────────────────────
-			let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
-			const clips = {};            // name → AnimationClip
-			const actions = {};          // name → AnimationAction
-			let currentAction = null;
-			const FADE_S = 0.3;          // crossfade duration — matches 3d-home
-
-			function setAnimation(name, { loop = true, hold = false } = {}) {
-				const next = actions[name];
-				if (!next || next === currentAction) return;
-				next.reset();
-				next.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
-				next.clampWhenFinished = hold;
-				if (currentAction) {
-					next.crossFadeFrom(currentAction, FADE_S, false).play();
-				} else {
-					next.fadeIn(FADE_S).play();
-				}
-				currentAction = next;
-			}
-
-			// Smooth move avatar to a world position (lerp w/ smoothstep)
-			let slideRAF = null;
-			function moveAvatarTo(target, ms = 520) {
-				if (!avatar) return Promise.resolve();
-				if (slideRAF) cancelAnimationFrame(slideRAF);
-				const fromX = avatar.position.x, fromY = avatar.position.y;
-				const t0 = performance.now();
-				return new Promise(resolve => {
-					(function step(now) {
-						const sp = Math.min((now - t0) / ms, 1);
-						const e  = sp * sp * (3 - 2 * sp);
-						avatar.position.x = fromX + (target.x - fromX) * e;
-						avatar.position.y = fromY + (target.y - fromY) * e;
-						if (sp < 1) slideRAF = requestAnimationFrame(step);
-						else { slideRAF = null; resolve(); }
-					})(performance.now());
-				});
-			}
-
-			// Smooth lookAt yaw (small head/body turn toward a screen X)
-			function lookAtScreenX(targetScreenX) {
-				if (!avatar) return;
-				const projected = new THREE.Vector3(avatar.position.x, avatar.position.y, 0).project(camera);
-				const screenAvatarX = (projected.x + 1) * 0.5 * window.innerWidth;
-				const dxPx = targetScreenX - screenAvatarX;
-				// Map ±200px of caret travel → ±~25° yaw
-				const yaw = Math.max(-0.45, Math.min(0.45, dxPx / 450));
-				gsap.to(avatar.rotation, { y: yaw, duration: 0.18, overwrite: true });
-			}
-
-			// ── Caret tracking via hidden mirror div ──────────────────────────
-			// Given an <input>, place an off-screen <div> with identical typography
-			// + padding, copy the prefix substring, and measure its width to find
-			// the caret X within the input's content box.
-			const mirror = document.createElement('div');
-			mirror.className = 'caret-mirror';
-			document.body.appendChild(mirror);
-
-			function copyInputStyle(input) {
-				const cs = getComputedStyle(input);
-				mirror.style.font = cs.font;
-				mirror.style.letterSpacing = cs.letterSpacing;
-				mirror.style.textTransform = cs.textTransform;
-				mirror.style.padding = '0';
-			}
-
-			function caretScreenX(input) {
-				copyInputStyle(input);
-				const rect = input.getBoundingClientRect();
-				const cs = getComputedStyle(input);
-				const padL = parseFloat(cs.paddingLeft) || 0;
-				const padR = parseFloat(cs.paddingRight) || 0;
-				const innerW = rect.width - padL - padR;
-
-				// Use the real value for email; password inputs mask to a bullet so
-				// the mirrored width reflects the rendered glyph stream, not the secret.
-				const raw = input.value;
-				const display = input.type === 'password' ? '•'.repeat(raw.length) : raw;
-				const caretIdx = input.selectionStart ?? display.length;
-				mirror.textContent = display.slice(0, caretIdx) || ' ';
-				const textW = mirror.getBoundingClientRect().width;
-
-				// Clamp to content box; ignores horizontal scroll on overflow but
-				// good-enough for the input lengths typed in a login form.
-				const offset = Math.min(textW, innerW);
-				return rect.left + padL + offset;
-			}
-
-			// ── Declarative SDK: scan data-agent-* attributes and wire behaviors ─
-			// We look for `data-agent-action` on form fields and the submit button.
-			// Each action attaches the appropriate listeners + animation triggers.
-			const targets = form.querySelectorAll('[data-agent-action]');
-
-			let activeInput = null;        // input currently focused
-			let trackRAF = null;           // rAF id for caret tracking loop
-
-			function worldAboveInput(input) {
-				const rect = input.getBoundingClientRect();
-				// Stand on the top edge, ~one avatar-width inside from the left
-				return domToWorld(rect.left + Math.min(40, rect.height * 1.2), rect.top);
-			}
-
-			async function walkTo(input) {
-				setAnimation('walk', { loop: true });
-				await moveAvatarTo(worldAboveInput(input), 540);
-			}
-
-			function startTypingTracking(input) {
-				activeInput = input;
-				setAnimation('lookdown', { loop: true });
-				// Track caret on every animation frame while focused — covers keyboard
-				// typing AND mouse-click cursor moves without listening for each event.
-				cancelAnimationFrame(trackRAF);
-				let lastCaretX = -1;
-				(function loop() {
-					if (activeInput !== input) return;
-					const cx = caretScreenX(input);
-					if (cx !== lastCaretX) {
-						lastCaretX = cx;
-						lookAtScreenX(cx);
-					}
-					trackRAF = requestAnimationFrame(loop);
-				})();
-			}
-
-			function stopTypingTracking() {
-				cancelAnimationFrame(trackRAF);
-				trackRAF = null;
-				activeInput = null;
-				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
-			}
-
-			function enterPrivacyMode() {
-				// Play subclipped covereyes (frames 0–48) once and hold the final
-				// hands-on-face pose while the password field stays focused.
-				setAnimation('covereyes', { loop: false, hold: true });
-				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
-			}
-
-			function exitPrivacyMode() {
-				setAnimation('idle', { loop: true });
-				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
-			}
-
-			const FAIL_CLIPS = ['reaction', 'defeated', 'angry', 'facepalm'];
-			let lastFailPick = null;
-
+			// Form-validation reactions live here because credential logic belongs to
+			// the page, not the SDK. The SDK just exposes pickFrom() and play().
+			const pickFail = agent.pickFrom(['reaction', 'defeated', 'angry', 'facepalm']);
 			function disapprove() {
-				let pick;
-				do {
-					pick = FAIL_CLIPS[Math.floor(Math.random() * FAIL_CLIPS.length)];
-				} while (pick === lastFailPick && FAIL_CLIPS.length > 1);
-				lastFailPick = pick;
-				setAnimation(pick, { loop: false, hold: false });
-				const dur = (clips[pick]?.duration || 1.4) * 1000;
+				const pick = pickFail();
+				agent.play(pick, { loop: false });
+				const dur = agent.clip(pick) * 1000;
 				setTimeout(() => {
-					if (currentAction === actions[pick]) setAnimation('idle', { loop: true });
+					if (agent.currentClip === pick) agent.play('idle', { loop: true });
 				}, dur - 150);
 			}
 
-			// Wire each declared target
-			targets.forEach(el => {
-				const action = el.dataset.agentAction;
+			form.addEventListener('submit', (ev) => {
+				ev.preventDefault();
+				const email = form.elements.email;
+				const password = form.elements.password;
+				email.classList.remove('error');
+				password.classList.remove('error');
 
-				if (action === 'track-typing') {
-					el.addEventListener('focus', async () => {
-						await walkTo(el);
-						startTypingTracking(el);
-					});
-					el.addEventListener('blur', stopTypingTracking);
-					// Recompute caret on input — selectionStart updates synchronously
-					el.addEventListener('input', () => {
-						if (activeInput === el) lookAtScreenX(caretScreenX(el));
-					});
-					el.addEventListener('keyup', () => {
-						if (activeInput === el) lookAtScreenX(caretScreenX(el));
-					});
-					el.addEventListener('click', () => {
-						if (activeInput === el) lookAtScreenX(caretScreenX(el));
-					});
+				const empty = [];
+				if (!email.value.trim()) empty.push(email);
+				if (!password.value) empty.push(password);
+				if (empty.length) {
+					empty.forEach((i) => i.classList.add('error'));
+					disapprove();
+					return;
 				}
 
-				if (action === 'privacy-mode') {
-					el.addEventListener('focus', async () => {
-						stopTypingTracking();
-						await walkTo(el);
-						enterPrivacyMode();
-					});
-					el.addEventListener('blur', exitPrivacyMode);
-				}
-
-				if (action === 'validate-form') {
-					// Demo credential: any email + password === "admin" succeeds.
-					form.addEventListener('submit', ev => {
-						ev.preventDefault();
-						const email = form.elements.email;
-						const password = form.elements.password;
-						email.classList.remove('error');
-						password.classList.remove('error');
-
-						const emptyFields = [];
-						if (!email.value.trim()) emptyFields.push(email);
-						if (!password.value) emptyFields.push(password);
-						if (emptyFields.length) {
-							emptyFields.forEach(i => i.classList.add('error'));
-							disapprove();
-							return;
-						}
-
-						if (password.value === 'admin') {
-							setAnimation('silly', { loop: true });
-							setTimeout(() => { window.location.href = '/marketplace'; }, 2000);
-						} else {
-							password.classList.add('error');
-							disapprove();
-						}
-					});
+				if (password.value === 'admin') {
+					agent.play('silly', { loop: true });
+					setTimeout(() => { window.location.href = '/marketplace'; }, 2000);
+				} else {
+					password.classList.add('error');
+					disapprove();
 				}
 			});
-
-			// ── Load avatar + animations ──────────────────────────────────────
-			const CLIPS = ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'silly', 'defeated', 'angry', 'facepalm'];
-
-			new GLTFLoader().load('/avatars/cz.glb', gltf => {
-				avatar = gltf.scene;
-				avatar.traverse(n => {
-					if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name)) rootBone = n;
-				});
-				avatar.rotation.y = 0;
-				scene.add(avatar);
-
-				mixer = new THREE.AnimationMixer(avatar);
-
-				Promise.all(CLIPS.map(name =>
-					fetch(`/animations/clips/${name}.json`).then(r => r.json())
-				)).then(jsons => {
-					CLIPS.forEach((name, i) => {
-						let clip = THREE.AnimationClip.parse(jsons[i]);
-						// covereyes runs 219 frames @30fps; only play frames 0–48
-						// (hands settle on face) then hold that pose.
-						if (name === 'covereyes') {
-							clip = THREE.AnimationUtils.subclip(clip, name, 0, 48, 30);
-						}
-						clips[name] = clip;
-						actions[name] = mixer.clipAction(clip);
-					});
-
-					if (rootBone) baseRootPos = rootBone.position.clone();
-					// Lock root motion so animation drift doesn't accumulate translation
-					const _r = renderer.render.bind(renderer);
-					renderer.render = (sc, cam) => {
-						try { if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos); } catch (_) {}
-						_r(sc, cam);
-					};
-
-					// Park avatar centered above the form card, feet on the ledge.
-					const cardRect = form.getBoundingClientRect();
-					const restPos = domToWorld(cardRect.left + cardRect.width / 2, cardRect.top);
-					avatar.position.set(restPos.x, restPos.y, 0);
-
-					setAnimation('idle', { loop: true });
-				});
-			});
-
-			// ── Render loop ───────────────────────────────────────────────────
-			const clock = new THREE.Clock();
-			(function tick() {
-				requestAnimationFrame(tick);
-				try {
-					const dt = Math.min(clock.getDelta(), 0.05);
-					mixer?.update(dt);
-					renderer.render(scene, camera);
-				} catch (_) {}
-			})();
 		</script>
 	</body>
 </html>
