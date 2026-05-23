@@ -253,9 +253,15 @@ async function handleMine(req, res) {
 	const rows = await sql`
 		SELECT ai.id, ai.name, ai.description, ai.category, ai.tags, ai.avatar_id, ai.user_id,
 		       ai.forks_count, ai.views_count, ai.published_at, ai.created_at, ai.skills,
-		       ai.is_published, av.thumbnail_key
+		       ai.is_published, av.thumbnail_key,
+		       ap.amount        AS asset_price_amount,
+		       ap.currency_mint AS asset_price_currency_mint,
+		       ap.chain         AS asset_price_chain,
+		       ap.mint_decimals AS asset_price_mint_decimals
 		FROM agent_identities ai
 		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+		LEFT JOIN asset_prices ap
+		       ON ap.item_type = 'agent' AND ap.item_id = ai.id AND ap.is_active = true
 		WHERE ai.user_id = ${auth.userId} AND ai.deleted_at IS NULL
 		ORDER BY ai.created_at DESC
 		LIMIT 100
@@ -309,10 +315,16 @@ async function handleList(req, res, url) {
 		        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed'
 		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h,
 		       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = ai.id), 0) AS rating_avg,
-		       COALESCE((SELECT count(*)::int FROM agent_reviews r WHERE r.agent_id = ai.id), 0) AS rating_count
+		       COALESCE((SELECT count(*)::int FROM agent_reviews r WHERE r.agent_id = ai.id), 0) AS rating_count,
+		       ap.amount        AS asset_price_amount,
+		       ap.currency_mint AS asset_price_currency_mint,
+		       ap.chain         AS asset_price_chain,
+		       ap.mint_decimals AS asset_price_mint_decimals
 		FROM agent_identities ai
 		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
 		LEFT JOIN users u ON u.id = ai.user_id
+		LEFT JOIN asset_prices ap
+		       ON ap.item_type = 'agent' AND ap.item_id = ai.id AND ap.is_active = true
 		WHERE ai.is_published = true
 		  AND ai.deleted_at IS NULL
 		  AND ai.name !~* ${AGENT_AUTONAMED_RE_SQL}
@@ -363,10 +375,16 @@ async function handleDetail(req, res, id) {
 		        WHERE sp.agent_id = a.id AND sp.status = 'confirmed'
 		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h,
 		       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_avg,
-		       COALESCE((SELECT count(*)::int FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_count
+		       COALESCE((SELECT count(*)::int FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_count,
+		       ap.amount        AS asset_price_amount,
+		       ap.currency_mint AS asset_price_currency_mint,
+		       ap.chain         AS asset_price_chain,
+		       ap.mint_decimals AS asset_price_mint_decimals
 		FROM agent_identities a
 		LEFT JOIN users u ON u.id = a.user_id
 		LEFT JOIN avatars av ON av.id = a.avatar_id AND av.deleted_at IS NULL
+		LEFT JOIN asset_prices ap
+		       ON ap.item_type = 'agent' AND ap.item_id = a.id AND ap.is_active = true
 		WHERE a.id = ${id} AND a.deleted_at IS NULL
 	`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
@@ -895,6 +913,14 @@ async function handleView(req, res, id) {
 
 function toCard(row) {
 	const avatarPublic = !row.avatar_visibility || row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted';
+	const price = row.asset_price_amount != null
+		? {
+			amount: String(row.asset_price_amount),
+			currency_mint: row.asset_price_currency_mint,
+			chain: row.asset_price_chain,
+			mint_decimals: row.asset_price_mint_decimals ?? 6,
+		}
+		: null;
 	return {
 		id: row.id,
 		name: row.name,
@@ -915,6 +941,7 @@ function toCard(row) {
 		has_paid_skills: row.has_paid_skills || false,
 		rating_avg: Number(row.rating_avg || 0),
 		rating_count: row.rating_count || 0,
+		price,
 	};
 }
 

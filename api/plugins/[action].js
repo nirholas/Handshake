@@ -53,6 +53,14 @@ async function resolveAuth(req) {
 // ── Row → API shape ───────────────────────────────────────────────────────────
 
 function toPlugin(row) {
+	const price = row.asset_price_amount != null
+		? {
+			amount: String(row.asset_price_amount),
+			currency_mint: row.asset_price_currency_mint,
+			chain: row.asset_price_chain,
+			mint_decimals: row.asset_price_mint_decimals ?? 6,
+		}
+		: null;
 	return {
 		id: row.id,
 		identifier: row.identifier,
@@ -68,6 +76,7 @@ function toPlugin(row) {
 			? { id: row.author_id, display_name: row.author_display_name }
 			: null,
 		created_at: row.created_at,
+		price,
 	};
 }
 
@@ -139,9 +148,15 @@ async function handleList(req, res, url) {
 	const fetchLimit = limit + 1;
 
 	const rows = await sql`
-		SELECT p.*, u.display_name AS author_display_name
+		SELECT p.*, u.display_name AS author_display_name,
+		       ap.amount        AS asset_price_amount,
+		       ap.currency_mint AS asset_price_currency_mint,
+		       ap.chain         AS asset_price_chain,
+		       ap.mint_decimals AS asset_price_mint_decimals
 		FROM plugins p
 		LEFT JOIN users u ON u.id = p.author_id
+		LEFT JOIN asset_prices ap
+		       ON ap.item_type = 'plugin' AND ap.item_id = p.id AND ap.is_active = true
 		WHERE p.is_public = true
 		  AND p.deleted_at IS NULL
 		  AND (${category}::text IS NULL OR p.category = ${category})
@@ -173,9 +188,15 @@ async function handleDetail(req, res, id) {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const [row] = await sql`
-		SELECT p.*, u.display_name AS author_display_name
+		SELECT p.*, u.display_name AS author_display_name,
+		       ap.amount        AS asset_price_amount,
+		       ap.currency_mint AS asset_price_currency_mint,
+		       ap.chain         AS asset_price_chain,
+		       ap.mint_decimals AS asset_price_mint_decimals
 		FROM plugins p
 		LEFT JOIN users u ON u.id = p.author_id
+		LEFT JOIN asset_prices ap
+		       ON ap.item_type = 'plugin' AND ap.item_id = p.id AND ap.is_active = true
 		WHERE p.id = ${id} AND p.deleted_at IS NULL
 	`;
 	if (!row) return error(res, 404, 'not_found', 'plugin not found');

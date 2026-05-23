@@ -112,6 +112,7 @@ const state = {
 	tag: null,      // ?tag=humanoid → filter all cards to entries containing this tag
 	sort: 'recommended',
 	filter: 'all', // all | agents | avatars | onchain
+	priceFilter: 'all', // all | free | paid
 	cursor: null,
 	items: [],
 	loading: false,
@@ -896,6 +897,18 @@ function bindFilterChips() {
 			renderGrid();
 		});
 	});
+
+	// Price-filter chips (Any / Free / Paid) act orthogonally to the kind
+	// filter — toggling them just re-filters the in-memory grid without
+	// triggering a refetch.
+	const priceChips = document.querySelectorAll('#market-price-filter-chips .market-chip');
+	priceChips.forEach((chip) => {
+		chip.addEventListener('click', () => {
+			priceChips.forEach((c) => c.classList.toggle('active', c === chip));
+			state.priceFilter = chip.dataset.priceFilter || 'all';
+			renderGrid();
+		});
+	});
 }
 
 function renderTagBanner() {
@@ -934,6 +947,17 @@ function renderGrid() {
 		agentItems = agentItems.filter((a) => matches(a.tags));
 		avatars = avatars.filter((a) => matches(a.tags));
 		onchain = onchain.filter((a) => matches(a.tags));
+	}
+
+	// Price filter (Free / Paid). Onchain agents aren't sold through this
+	// marketplace surface, so the filter only applies to agents + avatars.
+	if (state.priceFilter === 'free') {
+		agentItems = agentItems.filter((a) => !hasActivePrice(a.price));
+		avatars = avatars.filter((a) => !hasActivePrice(a.price));
+	} else if (state.priceFilter === 'paid') {
+		agentItems = agentItems.filter((a) => hasActivePrice(a.price));
+		avatars = avatars.filter((a) => hasActivePrice(a.price));
+		onchain = [];
 	}
 
 	renderTagBanner();
@@ -1172,6 +1196,9 @@ function openAvatarModal(avatar) {
 	overlay.hidden = false;
 	requestAnimationFrame(() => overlay.classList.add('show'));
 
+	// Render the sell-or-buy panel — empty for demo/onchain avatars.
+	renderAvatarSalePanel(avatar);
+
 	// Fire-and-forget view tracking — server rate-limits per IP/avatar so safe to call on every open.
 	if (avatar.avatarId && !String(avatar.avatarId).startsWith('avatar_demo_')) {
 		fetch(`${API}/avatars/view`, {
@@ -1180,6 +1207,343 @@ function openAvatarModal(avatar) {
 			body: JSON.stringify({ avatar_id: avatar.avatarId }),
 			keepalive: true,
 		}).catch(() => {});
+	}
+}
+
+// ── Sell-or-buy panel for the avatar detail modal ─────────────────────────
+//
+// Asks the server who owns the avatar + its active price, then renders one
+// of two inline panels:
+//   1. Owner → editor: set/clear a USDC price + payout wallet.
+//   2. Non-owner → "Pay X USDC" button (only when there's an active price).
+//
+// Demo / onchain avatars skip the panel since they're not stored as our rows.
+async function renderAvatarSalePanel(avatar) {
+	const sale = $('avatar-modal-sale');
+	if (!sale) return;
+	sale.hidden = true;
+	sale.innerHTML = '';
+
+	const id = avatar.avatarId || '';
+	if (!id || id.startsWith('avatar_demo_')) return;
+
+	// Fetch the canonical avatar row to determine ownership + payout state.
+	// `owner_id` is present in the response only when the caller IS the owner —
+	// see api/_lib/avatars.js#stripOwnerFor. We use that as our cheap auth check.
+	let detail;
+	try {
+		const r = await fetch(`${API}/avatars/${encodeURIComponent(id)}`, { credentials: 'include' });
+		if (!r.ok) return;
+		const j = await r.json();
+		detail = j?.avatar;
+	} catch (err) {
+		console.warn('[marketplace] sale-panel fetch failed', err);
+		return;
+	}
+	if (!detail) return;
+
+	const isOwner = !!detail.owner_id;
+	const price = detail.price || avatar.price || null;
+
+	if (isOwner) {
+		sale.hidden = false;
+		const decimals = Number(price?.mint_decimals ?? 6);
+		const currentUsd = price ? (Number(price.amount) / Math.pow(10, decimals)).toString() : '';
+		sale.innerHTML = `
+			<div class="sale-eyebrow">Sell this avatar</div>
+			${price
+				? `<div class="sale-price">${escapeHtml(formatAssetPrice(price) || 'Free')}</div>`
+				: `<div class="sale-price free">Free</div>`}
+			<div class="sale-row">
+				<label>
+					Price
+					<input type="number" id="avatar-sale-price" min="0" step="0.01" placeholder="0.00" value="${escapeHtml(currentUsd)}" />
+				</label>
+				<span class="sale-currency">USDC</span>
+			</div>
+			<label>
+				Solana payout wallet
+				<input type="text" id="avatar-sale-payout" placeholder="Your Solana address" />
+			</label>
+			<div class="sale-row" style="gap:8px">
+				<button class="sale-save" type="button" id="avatar-sale-save">${price ? 'Update price' : 'List for sale'}</button>
+				${price ? '<button class="sale-clear" type="button" id="avatar-sale-clear">Make free</button>' : ''}
+			</div>
+			<p class="sale-status" id="avatar-sale-status"></p>
+			<p class="sale-hint">Buyers pay USDC on Solana. We don't take a cut — funds land in your payout wallet (minus referral commission if applicable).</p>
+		`;
+
+		// Prefill payout wallet field from /api/billing/payout-wallets if the
+		// seller already saved one. Falls back to empty otherwise.
+		fetch(`${API}/billing/payout-wallets`, { credentials: 'include' })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((j) => {
+				const ws = j?.wallets || [];
+				const solana = ws.find((w) => w.chain === 'solana' && w.is_default) || ws.find((w) => w.chain === 'solana');
+				if (solana?.address) {
+					const inp = $('avatar-sale-payout');
+					if (inp && !inp.value) inp.value = solana.address;
+				}
+			})
+			.catch(() => {});
+
+		$('avatar-sale-save')?.addEventListener('click', () => saveAvatarPrice(id));
+		$('avatar-sale-clear')?.addEventListener('click', () => clearAvatarPrice(id));
+		return;
+	}
+
+	if (price) {
+		sale.hidden = false;
+		sale.innerHTML = `
+			<div class="sale-eyebrow">For sale</div>
+			<div class="sale-price">${escapeHtml(formatAssetPrice(price))}</div>
+			<button class="sale-buy" type="button" id="avatar-sale-buy">Buy now with USDC</button>
+			<p class="sale-status" id="avatar-sale-status"></p>
+			<p class="sale-hint">Pay directly to the creator on Solana. You'll need a connected wallet with USDC.</p>
+		`;
+		$('avatar-sale-buy')?.addEventListener('click', () => openAssetPurchaseFlow({
+			item_type: 'avatar',
+			item_id: id,
+			label: avatar.name || 'Avatar',
+			price,
+		}));
+	}
+}
+
+async function saveAvatarPrice(avatarId) {
+	const priceInput = $('avatar-sale-price');
+	const payoutInput = $('avatar-sale-payout');
+	const status = $('avatar-sale-status');
+	if (!priceInput || !payoutInput) return;
+	const usd = Number(priceInput.value || 0);
+	const payout = (payoutInput.value || '').trim();
+	if (!Number.isFinite(usd) || usd < 0) { setSaleStatus(status, 'Enter a valid price.', 'err'); return; }
+	if (usd > 0 && !payout) { setSaleStatus(status, 'A payout wallet is required to charge.', 'err'); return; }
+
+	setSaleStatus(status, 'Saving…');
+	try {
+		// 1. Save the payout wallet first (if provided) so the price is sellable
+		//    the moment it's set. Server is idempotent on (user, chain, address).
+		if (payout) {
+			const r = await fetch(`${API}/billing/payout-wallets`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ address: payout, chain: 'solana', is_default: true }),
+			});
+			if (!r.ok && r.status !== 409) {
+				const j = await r.json().catch(() => ({}));
+				throw new Error(j.error_description || j.error || 'Failed to save payout wallet');
+			}
+		}
+
+		// 2. Write the price. amount is in atomic USDC units (6 decimals).
+		const amount = Math.round(usd * 1_000_000);
+		const r = await apiPostWithCsrf('/api/marketplace/asset-price', {
+			item_type: 'avatar',
+			item_id: avatarId,
+			amount,
+			currency_mint: USDC_MAINNET_MINT,
+			chain: 'solana',
+			mint_decimals: 6,
+		});
+		const j = await r.json();
+		if (!r.ok) throw new Error(j.error_description || j.error || 'Failed to save price');
+
+		setSaleStatus(status, amount === 0 ? '✓ Avatar is now free.' : `✓ Listed for ${usd} USDC.`, 'ok');
+		// Refresh the in-memory item so the card reflects the new price next time.
+		if (activeAvatar?.avatarId === avatarId) activeAvatar.price = j.data.price;
+		updateAvatarCardPriceInGrid(avatarId, j.data.price);
+	} catch (err) {
+		setSaleStatus(status, err.message || 'Save failed', 'err');
+	}
+}
+
+async function clearAvatarPrice(avatarId) {
+	const status = $('avatar-sale-status');
+	setSaleStatus(status, 'Clearing…');
+	try {
+		const r = await apiPostWithCsrf('/api/marketplace/asset-price', {
+			item_type: 'avatar',
+			item_id: avatarId,
+			amount: 0,
+			currency_mint: USDC_MAINNET_MINT,
+			chain: 'solana',
+			mint_decimals: 6,
+		});
+		if (!r.ok) {
+			const j = await r.json().catch(() => ({}));
+			throw new Error(j.error_description || j.error || 'Failed to clear price');
+		}
+		setSaleStatus(status, '✓ Avatar is now free.', 'ok');
+		if (activeAvatar?.avatarId === avatarId) activeAvatar.price = null;
+		updateAvatarCardPriceInGrid(avatarId, null);
+		// Re-render the panel so the editor shows the new free state.
+		if (activeAvatar?.avatarId === avatarId) renderAvatarSalePanel(activeAvatar);
+	} catch (err) {
+		setSaleStatus(status, err.message || 'Failed', 'err');
+	}
+}
+
+function setSaleStatus(el, text, kind) {
+	if (!el) return;
+	el.textContent = text || '';
+	el.className = 'sale-status' + (kind ? ' ' + kind : '');
+}
+
+// Live-update the in-grid card pill so the seller sees the change without a reload.
+function updateAvatarCardPriceInGrid(avatarId, price) {
+	const card = document.querySelector(`.market-card-avatar[data-avatar-id="${avatarId}"]`);
+	if (!card) return;
+	const thumb = card.querySelector('.thumb');
+	if (!thumb) return;
+	const old = thumb.querySelector('.market-price-pill');
+	if (old) old.remove();
+	thumb.insertAdjacentHTML('afterbegin', priceBadgeHtml(price));
+}
+
+// ── Sell-or-buy panel for the agent detail view ──────────────────────────
+//
+// Renders inside the existing #agent-sale-panel container right under the
+// agent's name. Mirrors the avatar modal panel: owner sees price/payout
+// editor, non-owner with active price sees a Buy button. Free agents for
+// non-owners get nothing.
+function renderAgentSalePanel(agent) {
+	const panel = $('agent-sale-panel');
+	if (!panel || !agent) return;
+	panel.hidden = true;
+	panel.innerHTML = '';
+
+	const isOwner = !!(currentUserId && agent.author_id && currentUserId === agent.author_id);
+	const price = agent.price || null;
+
+	if (isOwner) {
+		panel.hidden = false;
+		const decimals = Number(price?.mint_decimals ?? 6);
+		const currentUsd = price ? (Number(price.amount) / Math.pow(10, decimals)).toString() : '';
+		panel.innerHTML = `
+			<div class="sale-eyebrow">Sell this agent</div>
+			${price
+				? `<div class="sale-price">${escapeHtml(formatAssetPrice(price) || 'Free')}</div>`
+				: `<div class="sale-price free">Free</div>`}
+			<div class="sale-row">
+				<label>
+					Price
+					<input type="number" id="agent-sale-price" min="0" step="0.01" placeholder="0.00" value="${escapeHtml(currentUsd)}" />
+				</label>
+				<span class="sale-currency">USDC</span>
+			</div>
+			<label>
+				Solana payout wallet
+				<input type="text" id="agent-sale-payout" placeholder="Your Solana address" />
+			</label>
+			<div class="sale-row" style="gap:8px">
+				<button class="sale-save" type="button" id="agent-sale-save">${price ? 'Update price' : 'List for sale'}</button>
+				${price ? '<button class="sale-clear" type="button" id="agent-sale-clear">Make free</button>' : ''}
+			</div>
+			<p class="sale-status" id="agent-sale-status"></p>
+			<p class="sale-hint">Per-skill prices are still available below — this sets a single one-time price to fork the whole agent.</p>
+		`;
+		fetch(`${API}/billing/payout-wallets`, { credentials: 'include' })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((j) => {
+				const ws = j?.wallets || [];
+				const solana = ws.find((w) => w.chain === 'solana' && w.is_default) || ws.find((w) => w.chain === 'solana');
+				if (solana?.address) {
+					const inp = $('agent-sale-payout');
+					if (inp && !inp.value) inp.value = solana.address;
+				}
+			})
+			.catch(() => {});
+
+		$('agent-sale-save')?.addEventListener('click', () => saveAgentPrice(agent.id));
+		$('agent-sale-clear')?.addEventListener('click', () => clearAgentPrice(agent.id));
+		return;
+	}
+
+	if (price) {
+		panel.hidden = false;
+		panel.innerHTML = `
+			<div class="sale-eyebrow">For sale</div>
+			<div class="sale-price">${escapeHtml(formatAssetPrice(price))}</div>
+			<button class="sale-buy" type="button" id="agent-sale-buy">Buy agent with USDC</button>
+			<p class="sale-status" id="agent-sale-status"></p>
+			<p class="sale-hint">One-time purchase grants ownership to fork the whole agent. Per-skill prices below are separate.</p>
+		`;
+		$('agent-sale-buy')?.addEventListener('click', () => openAssetPurchaseFlow({
+			item_type: 'agent',
+			item_id: agent.id,
+			label: agent.name || 'Agent',
+			price,
+		}));
+	}
+}
+
+async function saveAgentPrice(agentId) {
+	const priceInput = $('agent-sale-price');
+	const payoutInput = $('agent-sale-payout');
+	const status = $('agent-sale-status');
+	if (!priceInput || !payoutInput) return;
+	const usd = Number(priceInput.value || 0);
+	const payout = (payoutInput.value || '').trim();
+	if (!Number.isFinite(usd) || usd < 0) { setSaleStatus(status, 'Enter a valid price.', 'err'); return; }
+	if (usd > 0 && !payout) { setSaleStatus(status, 'A payout wallet is required to charge.', 'err'); return; }
+
+	setSaleStatus(status, 'Saving…');
+	try {
+		if (payout) {
+			const r = await fetch(`${API}/billing/payout-wallets`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ address: payout, chain: 'solana', is_default: true }),
+			});
+			if (!r.ok && r.status !== 409) {
+				const j = await r.json().catch(() => ({}));
+				throw new Error(j.error_description || j.error || 'Failed to save payout wallet');
+			}
+		}
+		const amount = Math.round(usd * 1_000_000);
+		const r = await apiPostWithCsrf('/api/marketplace/asset-price', {
+			item_type: 'agent',
+			item_id: agentId,
+			amount,
+			currency_mint: USDC_MAINNET_MINT,
+			chain: 'solana',
+			mint_decimals: 6,
+		});
+		const j = await r.json();
+		if (!r.ok) throw new Error(j.error_description || j.error || 'Failed to save price');
+
+		setSaleStatus(status, amount === 0 ? '✓ Agent is now free.' : `✓ Listed for ${usd} USDC.`, 'ok');
+		if (detailState?.agent?.id === agentId) detailState.agent.price = j.data.price;
+		if (detailState?.agent?.id === agentId) renderAgentSalePanel(detailState.agent);
+	} catch (err) {
+		setSaleStatus(status, err.message || 'Save failed', 'err');
+	}
+}
+
+async function clearAgentPrice(agentId) {
+	const status = $('agent-sale-status');
+	setSaleStatus(status, 'Clearing…');
+	try {
+		const r = await apiPostWithCsrf('/api/marketplace/asset-price', {
+			item_type: 'agent',
+			item_id: agentId,
+			amount: 0,
+			currency_mint: USDC_MAINNET_MINT,
+			chain: 'solana',
+			mint_decimals: 6,
+		});
+		if (!r.ok) {
+			const j = await r.json().catch(() => ({}));
+			throw new Error(j.error_description || j.error || 'Failed to clear price');
+		}
+		setSaleStatus(status, '✓ Agent is now free.', 'ok');
+		if (detailState?.agent?.id === agentId) detailState.agent.price = null;
+		if (detailState?.agent?.id === agentId) renderAgentSalePanel(detailState.agent);
+	} catch (err) {
+		setSaleStatus(status, err.message || 'Failed', 'err');
 	}
 }
 
@@ -2314,9 +2678,10 @@ function renderAvatarCard(a, spotlight = false) {
 	const spotlightBadge = isSpotlight ? '<span class="card-featured-badge" title="Featured">⭐</span>' : '';
 	const bmActive = getAvatarBookmarks().has(a.avatarId || '');
 	const views = Number(a.viewCount) > 0 ? `<span class="stat-pill views" title="${a.viewCount} views">⊙ ${fmtNumber(a.viewCount)}</span>` : '';
+	const priceBadge = priceBadgeHtml(a.price);
 	const cardClasses = ['market-card-avatar', isSpotlight && 'market-card-avatar--featured'].filter(Boolean).join(' ');
 	return `<div class="${cardClasses}" data-avatar-id="${escapeHtml(a.avatarId || '')}">
-		<div class="thumb">${spotlightBadge}${preview}</div>
+		<div class="thumb">${spotlightBadge}${priceBadge}${preview}</div>
 		<div class="body">
 			<div class="title-row">
 				<div class="title">${name}</div>
@@ -2343,6 +2708,7 @@ function renderCard(a) {
 	const buyers = a.buyers_total ?? 0;
 	const buyers24h = a.buyers_24h ?? 0;
 	const paid = a.has_paid_skills || Object.keys(a.skill_prices || {}).length > 0;
+	const priceBadge = priceBadgeHtml(a.price);
 	const ratingAvg = Number(a.rating_avg || 0);
 	const ratingCount = Number(a.rating_count || 0);
 	const avatarBlock = a.thumbnail_url
@@ -2358,6 +2724,7 @@ function renderCard(a) {
 	const starBtn = `<button type="button" class="card-star${bmOn ? ' on' : ''}" data-agent-bm="${escapeHtml(a.id)}" aria-label="Bookmark agent" aria-pressed="${bmOn}" title="${bmOn ? 'Remove bookmark' : 'Bookmark agent'}">${bmOn ? '★' : '☆'}</button>`;
 	return `<div class="market-card-agent" data-id="${a.id}">
 		${previewStrip}
+		${priceBadge}
 		${starBtn}
 		<div class="head">
 			${avatarBlock}
@@ -2769,6 +3136,8 @@ function renderDetail(a, bookmarked) {
 	$('d-category').textContent = CATEGORY_LABELS[a.category] || a.category || 'General';
 	$('d-views').textContent = `⊙ ${fmtNumber(views)}`;
 	$('d-overview').textContent = a.description || '';
+
+	renderAgentSalePanel(a);
 	$('d-profile').textContent = a.system_prompt || a.prompt || '(No profile yet.)';
 	startPreviewSession(a);
 	$('d-bookmark').classList.toggle('on', bookmarked);
@@ -3303,6 +3672,36 @@ function fmtNumber(n) {
 	return String(num);
 }
 
+// USDC mainnet mint. Anything else gets shown as a generic token symbol.
+const USDC_MAINNET_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+// Render a price object (from /api/explore or /api/marketplace/agents) as a
+// human-readable string. Pass `null` / undefined to get "Free".
+function formatAssetPrice(price) {
+	if (!price || price.amount == null) return null;
+	const decimals = Number(price.mint_decimals ?? 6);
+	const amount = Number(price.amount);
+	if (!Number.isFinite(amount) || amount <= 0) return null;
+	const value = amount / Math.pow(10, decimals);
+	const symbol = price.currency_mint === USDC_MAINNET_MINT ? 'USDC' : (price.currency_mint || '').slice(0, 4) + '…';
+	const formatted = value >= 100 ? value.toFixed(0) : value >= 1 ? value.toFixed(2) : value.toFixed(3);
+	return `${formatted.replace(/\.?0+$/, '')} ${symbol}`;
+}
+
+// Reusable badge HTML for a Free/Paid listing. Returns empty string when there
+// is nothing to show.
+function priceBadgeHtml(price) {
+	const label = formatAssetPrice(price);
+	if (label) {
+		return `<span class="market-price-pill paid" title="${escapeHtml(label)}">${escapeHtml(label)}</span>`;
+	}
+	return `<span class="market-price-pill free">Free</span>`;
+}
+
+function hasActivePrice(price) {
+	return !!(price && Number(price.amount) > 0);
+}
+
 // ── Purchase Flow ─────────────────────────────────────────────────────────
 //
 // One-shot Solana Pay purchase: server mints a unique reference Pubkey, the
@@ -3429,7 +3828,11 @@ function closePaymentModal() {
 	$('payment-modal-overlay').hidden = true;
 	const qr = $('payment-qr'); if (qr) qr.innerHTML = '';
 	const confirmBtn = $('payment-confirm-btn');
-	if (confirmBtn) delete confirmBtn.dataset.durationHours;
+	if (confirmBtn) {
+		delete confirmBtn.dataset.durationHours;
+		delete confirmBtn.dataset.mode;
+	}
+	pendingAssetPurchase = null;
 }
 
 function shortMintLabel(mint) {
@@ -3559,8 +3962,129 @@ async function createPendingPurchase(agentId, skill, durationHours = null) {
 	return j.data;
 }
 
+// ── Asset purchase (avatar / agent / plugin) ──────────────────────────────
+//
+// Shares the payment modal UI with the skill purchase flow but routes to the
+// generic /api/marketplace/buy-asset endpoint. The Confirm button reads
+// `dataset.mode` to decide which handler runs, so the same modal can be
+// re-used by both flows without duplicating wallet/UI plumbing.
+
+let pendingAssetPurchase = null; // { item_type, item_id, label, price }
+
+function openAssetPurchaseFlow(asset) {
+	const confirmBtn = $('payment-confirm-btn');
+	const skillName = $('payment-skill-name');
+	const agentName = $('payment-agent-name');
+	const priceDisplay = $('payment-price-display');
+	if (!confirmBtn || !skillName || !priceDisplay) {
+		alert('Payment UI not available on this page.');
+		return;
+	}
+
+	pendingAssetPurchase = asset;
+	confirmBtn.dataset.mode = 'asset';
+	confirmBtn.disabled = false;
+	delete confirmBtn.dataset.durationHours;
+
+	skillName.textContent = asset.label || 'Asset';
+	if (agentName) agentName.textContent = asset.item_type.charAt(0).toUpperCase() + asset.item_type.slice(1);
+
+	const decimals = Number(asset.price?.mint_decimals ?? 6);
+	const human = (Number(asset.price?.amount || 0) / Math.pow(10, decimals)).toFixed(decimals === 6 ? 2 : 4);
+	priceDisplay.textContent = `${human} ${shortMintLabel(asset.price?.currency_mint || '')}`;
+
+	const qr = $('payment-qr'); if (qr) qr.innerHTML = '';
+	setStatus('');
+	$('payment-modal-overlay').hidden = false;
+	updateWalletUI();
+}
+
+async function createPendingAssetPurchase(itemType, itemId) {
+	const r = await apiPostWithCsrf('/api/marketplace/buy-asset', { item_type: itemType, item_id: itemId });
+	const j = await r.json();
+	if (!r.ok) throw new Error(j.error_description || j.error || 'Failed to create purchase');
+	return j.data;
+}
+
+async function pollAssetConfirm(reference, windowMs = 60_000) {
+	const deadline = Date.now() + windowMs;
+	while (Date.now() < deadline) {
+		const r = await apiPostWithCsrf(`/api/marketplace/buy-asset/${reference}/confirm`, null);
+		const j = await r.json().catch(() => ({}));
+		if (r.ok && j.data?.status === 'confirmed') return true;
+		if (r.status === 410) throw new Error('Pending purchase expired. Please try again.');
+		if (r.status === 409) throw new Error(j.error_description || 'Transfer did not match expected amount.');
+		await new Promise((res) => setTimeout(res, 2500));
+	}
+	return false;
+}
+
+async function handleAssetPurchase() {
+	const confirmBtn = $('payment-confirm-btn');
+	const asset = pendingAssetPurchase;
+	if (!asset) { setStatus('No asset selected.', 'err'); return; }
+	if (!connectedWallet) { setStatus('Connect a wallet first.', 'err'); return; }
+
+	confirmBtn.disabled = true;
+	setStatus('Creating purchase…');
+
+	let purchase;
+	try {
+		purchase = await createPendingAssetPurchase(asset.item_type, asset.item_id);
+		if (purchase.already_owned) {
+			setStatus('Already purchased.', 'ok');
+			setTimeout(closePaymentModal, 1200);
+			return;
+		}
+	} catch (e) {
+		setStatus(e.message, 'err');
+		confirmBtn.disabled = false;
+		return;
+	}
+
+	try {
+		setStatus('Building transfer…');
+		const tx = await buildSplTransferWithReference({
+			payer: connectedWallet.publicKey,
+			recipient: purchase.recipient,
+			mint: purchase.currency_mint,
+			amount: BigInt(purchase.amount),
+			reference: purchase.reference,
+		});
+
+		setStatus('Approve in wallet…');
+		let txid;
+		if (typeof connectedWallet.provider.signAndSendTransaction === 'function') {
+			const result = await connectedWallet.provider.signAndSendTransaction(tx);
+			txid = result?.signature ?? result;
+		} else {
+			txid = await connectedWallet.provider.sendTransaction(tx, await getSolanaConnection());
+		}
+
+		setStatus('Waiting for on-chain confirmation…');
+		await (await getSolanaConnection()).confirmTransaction(txid, 'confirmed');
+
+		setStatus('Verifying with server…');
+		const ok = await pollAssetConfirm(purchase.reference, 60_000);
+		if (!ok) throw new Error('Server could not verify the transaction within 60 seconds.');
+
+		setStatus(`✓ ${asset.label} purchased.`, 'ok');
+		setTimeout(closePaymentModal, 1500);
+	} catch (e) {
+		console.error('[marketplace] asset purchase failed', e);
+		setStatus(e.message || 'Purchase failed', 'err');
+		confirmBtn.disabled = false;
+	}
+}
+
 async function handlePurchase() {
 	const confirmBtn = $('payment-confirm-btn');
+	// Asset purchases (avatar / agent / plugin) come through the same Confirm
+	// button as skill purchases — the mode marker on the button decides which
+	// backend flow to run.
+	if (confirmBtn?.dataset.mode === 'asset') {
+		return handleAssetPurchase();
+	}
 	if (!connectedWallet) { setStatus('Connect a wallet first.', 'err'); return; }
 	if (!detailState?.agent) return;
 
@@ -3856,8 +4380,25 @@ function init() {
 	loadTheme();
 	initPlugins();
 	fetchUserPurchases();
+	loadCurrentUser();
 	bindDetailExtras({ navTo, openAvatarModal });
 	render();
+}
+
+// Cached current user id. Used by the sell/buy panels to decide whether the
+// viewer is the owner of the asset (and therefore should see the editor) or
+// a potential buyer (and therefore should see the Buy button). Anonymous
+// visitors get `null` and only see the buyer side.
+let currentUserId = null;
+async function loadCurrentUser() {
+	try {
+		const r = await fetch('/api/auth/me', { credentials: 'include' });
+		if (!r.ok) return;
+		const j = await r.json();
+		currentUserId = j?.user?.id || j?.data?.id || j?.id || null;
+	} catch {
+		// non-fatal — page works fully for anonymous viewers
+	}
 }
 
 // ── Plugin Marketplace ────────────────────────────────────────────────────────
@@ -3998,8 +4539,23 @@ function renderPluginGrid() {
 	grid.querySelectorAll('[data-plugin-id]').forEach((btn) => {
 		btn.addEventListener('click', () => {
 			const id = btn.dataset.pluginId;
-			const manifest = pluginState.items.find((p) => p.identifier === id);
-			if (manifest) togglePluginInstall(manifest.manifest_json ?? manifest);
+			const pluginUuid = btn.dataset.pluginUuid || null;
+			const isPaid = btn.dataset.pluginPaid === '1';
+			const plugin = pluginState.items.find((p) => p.identifier === id);
+			if (!plugin) return;
+
+			// Paid plugins go through the asset purchase flow first; only
+			// installed (already-purchased) ones can be added to the agent.
+			if (isPaid && pluginUuid && !installed.has(id)) {
+				openAssetPurchaseFlow({
+					item_type: 'plugin',
+					item_id: pluginUuid,
+					label: plugin.name || id,
+					price: plugin.price,
+				});
+				return;
+			}
+			togglePluginInstall(plugin.manifest_json ?? plugin);
 		});
 	});
 	if (more) more.hidden = !pluginState.cursor;
@@ -4014,7 +4570,9 @@ function renderPluginCard(p, installed) {
 	const isInstalled = installed.has(p.identifier);
 	const cat = escapeHtml(p.category || manifest?.meta?.category || 'general');
 	const icon = (p.name || p.identifier || '?')[0].toUpperCase();
-	return `<div class="plugin-card">
+	const priceBadge = priceBadgeHtml(p.price);
+	return `<div class="plugin-card" style="position:relative">
+		${priceBadge}
 		<div class="head">
 			<div class="avatar">${icon}</div>
 			<div style="min-width:0;flex:1">
@@ -4029,8 +4587,10 @@ function renderPluginCard(p, installed) {
 		<div class="plugin-card-footer">
 			<span class="stat-pill">↓ ${p.install_count || 0}</span>
 			<button class="plugin-install-btn${isInstalled ? ' installed' : ''}"
-				data-plugin-id="${escapeHtml(p.identifier)}">
-				${isInstalled ? 'Installed ✓' : 'Add to Agent'}
+				data-plugin-id="${escapeHtml(p.identifier)}"
+				data-plugin-uuid="${escapeHtml(p.id || '')}"
+				data-plugin-paid="${hasActivePrice(p.price) ? '1' : '0'}">
+				${isInstalled ? 'Installed ✓' : hasActivePrice(p.price) ? `Buy ${escapeHtml(formatAssetPrice(p.price))}` : 'Add to Agent'}
 			</button>
 		</div>
 	</div>`;

@@ -131,6 +131,20 @@
 			.brand-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#3dc1ff,#aacc00); box-shadow:0 0 10px rgba(61, 193, 255,0.6); }
 			.nav a.link { color:#555870; text-decoration:none; font-size:13px; margin-left:auto; }
 			.nav a.link:hover { color:#3dc1ff; }
+
+			/* Mobile: tighter padding, top-aligned so chips stay onscreen, smaller buttons */
+			@media (max-width: 640px) {
+				.page {
+					padding: 84px 22px 40px;
+					justify-content: flex-start;
+					max-width: 100%;
+				}
+				.hero-sub { margin-bottom: 28px; }
+				.btn { padding: 14px 22px; font-size: 14px; }
+				.cta-row { gap: 10px; }
+				.anim-controls { margin-top: 22px; }
+				.chip { padding: 8px 12px; font-size: 11.5px; }
+			}
 		</style>
 	</head>
 	<body>
@@ -148,7 +162,7 @@
 				<span class="eyebrow-dot"></span>
 				<span>The 3D layer for onchain AI agents</span>
 			</div>
-			<h1 class="hero-title"><span id="sit-line">Give your AI</span><br />a <em>body.</em></h1>
+			<h1 class="hero-title"><span id="sit-line">Give</span> your AI<br />a <em>body.</em></h1>
 			<p class="hero-sub">
 				Born in 3D. Raised on-chain. Yours forever.
 				Your AI has been a chatbox long enough — give it a body,
@@ -159,9 +173,9 @@
 					<span>Build your agent — free</span>
 					<span>→</span>
 				</a>
-				<a href="#" class="btn btn-ghost">
+				<a href="/app" class="btn btn-ghost" target="_blank" rel="noopener">
 					<span>Watch it live</span>
-					<span style="opacity:.4">↓</span>
+					<span style="opacity:.4">↗</span>
 				</a>
 			</div>
 			<div class="anim-controls" id="anim-controls" role="group" aria-label="Avatar animations">
@@ -214,12 +228,18 @@
 
 			// ── OrthographicCamera: 1 world unit = PX_PER_UNIT pixels ────────
 			// This makes screen→world mapping trivially exact: no perspective math.
-			const PX_PER_UNIT = 120; // avatar (1.8u tall) = 216px on screen
+			// Avatar (1.8u tall) = 216px on desktop, scales down on narrow viewports
+			// so the figure doesn't dominate a phone screen.
+			let PX_PER_UNIT = 120;
+			function computePxPerUnit() {
+				return window.innerWidth < 640 ? 92 : 120;
+			}
 
 			const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
 			camera.position.z = 10;
 
 			function updateFrustum() {
+				PX_PER_UNIT = computePxPerUnit();
 				const hw = window.innerWidth  / PX_PER_UNIT / 2;
 				const hh = window.innerHeight / PX_PER_UNIT / 2;
 				camera.left   = -hw; camera.right  = hw;
@@ -314,7 +334,12 @@
 			let seqT = 0, landed = false, jumpTarget = { x: 0, y: 0 };
 
 			const STAND_S     = 2.566;  // standup clip duration
-			const JUMP_S      = 2.667;  // jumpdown clip duration
+			// Jumpdown clip runs at 1.7x via fallAction.timeScale so the drop
+			// feels decisive rather than floaty; JUMP_S mirrors the played-back
+			// duration (2.667 / 1.7) so the position math finishes with the clip.
+			const JUMP_CLIP_S = 2.667;
+			const JUMP_RATE   = 1.7;
+			const JUMP_S      = JUMP_CLIP_S / JUMP_RATE;
 			const SIT_DWELL_S = 2.4;    // how long he sits before standing
 			// Earliest-possible fraction at which the impact effects MAY fire.
 			// The actual trigger is gated on screen-space proximity below — this
@@ -323,26 +348,36 @@
 			// Feet must be within this many SCREEN px of the button top before the
 			// squish/splash fire. The parabolic arc only returns to 0 at p≈1.0, so
 			// gating on real px (not the fraction p) keeps the impact synced.
-			const LAND_PX     = 10;
-			const PEAK_U      = 0.55;   // arc peak in world units
-			const JUMP_YAW    = 0.22;   // ~12° peak yaw mid-flight (face-forward at both ends)
+			const LAND_PX     = 14;
+			// Straight drop: no arc, no yaw. Reads as a deliberate fall rather
+			// than a hesitating leap. She lands on whatever sits directly below
+			// her perch (the CTA button extends past "Give" to the right, so a
+			// vertical drop lands her on the button's left portion).
+			const PEAK_U     = 0;
+			const JUMP_YAW   = 0;
 			// cz.glb origin is at the feet (verified in /demos/button-jump.html).
 			// FEET_OFFSET stays 0 so the visible feet land on the button top.
 			// SIT_OFFSET pushes the origin DOWN by the seated feet→butt distance,
 			// so the butt — not the feet — rests on the text line. Tuned to the
-			// sitidle pose where legs dangle below the hips.
+			// sitidle pose where legs dangle below the hips; scales with the
+			// avatar's on-screen size so a mobile-sized figure perches correctly.
+			// Lowered from 120 so her butt clears the line-box top and visibly
+			// perches ON TOP of "Give" rather than sinking onto the baseline.
 			const FEET_OFFSET_PX = 0;
-			const SIT_OFFSET_PX  = 120;
+			const SIT_OFFSET_PX_BASE = 90;
+			function sitOffsetPx() {
+				return SIT_OFFSET_PX_BASE * (PX_PER_UNIT / 120);
+			}
 
 			function smoothstep(t) { return t * t * (3 - 2 * t); }
 
-			// Sit anchor: perched on the right edge of "Give your AI".
+			// Sit anchor: perched centered on top of "Give".
 			// SIT_OFFSET_PX shifts the GLB origin DOWN in screen px so the visible
 			// butt rests on the text rather than the origin landing on the text.
 			function getSitWorld() {
 				const rect = sitLine.getBoundingClientRect();
-				const sx = rect.right - rect.height * 0.4;
-				const sy = rect.top + SIT_OFFSET_PX;
+				const sx = rect.left + rect.width / 2;
+				const sy = rect.top + sitOffsetPx();
 				return domToWorld(sx, sy);
 			}
 			// Jump target: visible feet land on the top edge of the button.
@@ -406,10 +441,12 @@
 			// bounce. DOM nodes so the splash composites with the button itself.
 			const SPLASH_GRAVITY = 1800;   // px/s² — heavier so drops fall faster
 			const SPLASH_COUNT   = 36;     // more spray for the harder landing
-			function fireSplash() {
-				const rect = ctaBtn.getBoundingClientRect();
-				const ox = rect.left + rect.width / 2;
-				const oy = rect.top + 2;
+			function fireSplash(ox, oy) {
+				if (ox == null || oy == null) {
+					const rect = ctaBtn.getBoundingClientRect();
+					ox = rect.left + rect.width / 2;
+					oy = rect.top + 2;
+				}
 				const drops = [];
 				for (let i = 0; i < SPLASH_COUNT; i++) {
 					const size = 6 + Math.random() * 10;
@@ -487,9 +524,11 @@
 			function triggerJump() {
 				if (!avatar || !fallAction || phase === 'jumping') return;
 
-				// Re-read both endpoints fresh so the trajectory is always layout-correct
-				startW     = getSitWorld();      // where we ACTUALLY jump from (avatar's current rest)
-				jumpTarget = getButtonWorld();   // where the feet need to land
+				// Re-read endpoints fresh so the trajectory is always layout-correct.
+				// Straight drop: X stays at the sit anchor; only Y falls to the button.
+				startW     = getSitWorld();
+				const btn  = getButtonWorld();
+				jumpTarget = { x: startW.x, y: btn.y };
 
 				phase = 'jumping'; seqT = 0; landed = false;
 				fallAction.reset();
@@ -499,38 +538,39 @@
 			function updateSeq(dt) {
 				if (phase !== 'jumping' || !avatar) return;
 				seqT += dt;
-				const p    = Math.min(seqT / JUMP_S, 1);
-				const ease = smoothstep(p);
+				const p = Math.min(seqT / JUMP_S, 1);
 
-				// Animate BOTH axes between startW (sit anchor) and jumpTarget (button)
-				const x   = startW.x + (jumpTarget.x - startW.x) * ease;
-				const arc = PEAK_U * 4 * p * (1 - p);
-				const y   = startW.y + (jumpTarget.y - startW.y) * ease + arc;
-
+				// Straight drop: X is locked (jumpTarget.x === startW.x) and Y
+				// follows a gravity-like p² curve — barely moves at the top,
+				// accelerates into the landing. No upward arc and no yaw, so
+				// the motion reads as "fell off the perch" instead of "leapt".
+				const x = startW.x;
+				const y = startW.y + (jumpTarget.y - startW.y) * (p * p);
 				avatar.position.set(x, y, 0);
 
-				// Subtle in-flight yaw — peaks mid-arc, returns to 0 by landing.
-				// Sign follows horizontal travel direction so he looks where he's going.
-				const dir = Math.sign(jumpTarget.x - startW.x);
-				avatar.rotation.y = JUMP_YAW * dir * Math.sin(Math.PI * p);
-
-				// Squish + splash fire only on real screen-space contact. The arc
-				// only returns to 0 at p≈1.0, so we gate on actual feet-to-button
-				// distance (LAND_PX) rather than the time fraction — otherwise the
-				// bounce telegraphs ~35px before the visual landing.
+				// Squish + splash gate on real screen-space contact so the
+				// effects fire on the actual landing frame.
 				if (!landed && p >= LAND_P) {
-					const dxPx = Math.abs(avatar.position.x - jumpTarget.x) * PX_PER_UNIT;
 					const dyPx = Math.abs(avatar.position.y - jumpTarget.y) * PX_PER_UNIT;
-					if (dxPx < LAND_PX && dyPx < LAND_PX) {
+					if (dyPx < LAND_PX) {
 						landed = true;
 						fireSquish();
-						fireSplash();
+						const btnRect = ctaBtn.getBoundingClientRect();
+						const sitRect = sitLine.getBoundingClientRect();
+						const landX   = sitRect.left + sitRect.width / 2;
+						fireSplash(landX, btnRect.top + 2);
 					}
 				}
 
 				if (p >= 1) {
 					phase = 'resting';
 					later(() => {
+						// 60% of landings, surprise the user with a perform clip on
+						// the button instead of an immediate slide back — breaks the
+						// sit→jump→sit monotony and showcases the chip animations
+						// without requiring a click. The perform's own resume path
+						// handles the slide back to sit, so we just bail here.
+						if (maybeAutoPerform()) return;
 						const fromX = avatar.position.x;
 						const fromY = avatar.position.y;
 						const back  = getSitWorld();
@@ -636,6 +676,22 @@
 				chip.addEventListener('click', () => performAction(chip.dataset.clip));
 			}
 
+			// Auto-perform: occasionally play a one-shot clip after landing so the
+			// loop reads as "alive" instead of mechanical. Skips rumba (long, looping)
+			// and only fires once every couple of cycles so it stays surprising.
+			const AUTO_PERFORM_CLIPS = ['wave', 'celebrate', 'taunt'];
+			let landingsSinceAutoPerform = 0;
+			function maybeAutoPerform() {
+				landingsSinceAutoPerform++;
+				if (landingsSinceAutoPerform < 2) return false;
+				if (!performActions.wave) return false; // clips not loaded yet
+				if (Math.random() >= 0.6) return false;
+				landingsSinceAutoPerform = 0;
+				const pick = AUTO_PERFORM_CLIPS[Math.floor(Math.random() * AUTO_PERFORM_CLIPS.length)];
+				performAction(pick);
+				return true;
+			}
+
 			// ── Load avatar + animations ──────────────────────────────────────
 			// Realistic Avaturn-rigged humanoid; clips in /public/animations/clips
 			// are retargeted to this rig (see public/animations/registry.json).
@@ -674,6 +730,7 @@
 					fallAction = mixer.clipAction(THREE.AnimationClip.parse(jumpJson));
 					fallAction.setLoop(THREE.LoopOnce, 1);
 					fallAction.clampWhenFinished = true;
+					fallAction.timeScale = JUMP_RATE;
 
 					PERFORM_CLIPS.forEach((def, i) => {
 						const a = mixer.clipAction(THREE.AnimationClip.parse(performJsons[i]));

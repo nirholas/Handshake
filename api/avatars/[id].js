@@ -95,6 +95,20 @@ export default wrap(async (req, res) => {
 		const avatar = await getAvatar({ id, requesterId: auth?.userId });
 		if (!avatar) return error(res, 404, 'not_found', 'avatar not found');
 		const urlInfo = await resolveAvatarUrl(avatar);
+		const [priceRow] = await sql`
+			SELECT amount, currency_mint, chain, mint_decimals
+			FROM asset_prices
+			WHERE item_type = 'avatar' AND item_id = ${id} AND is_active = true
+			LIMIT 1
+		`;
+		const price = priceRow
+			? {
+				amount: String(priceRow.amount),
+				currency_mint: priceRow.currency_mint,
+				chain: priceRow.chain,
+				mint_decimals: priceRow.mint_decimals ?? 6,
+			}
+			: null;
 		recordEvent({
 			userId: auth?.userId,
 			clientId: auth?.clientId,
@@ -102,7 +116,7 @@ export default wrap(async (req, res) => {
 			avatarId: id,
 			kind: 'avatar_fetch',
 		});
-		return json(res, 200, { avatar: stripOwnerFor({ ...avatar, ...urlInfo }, auth?.userId) });
+		return json(res, 200, { avatar: stripOwnerFor({ ...avatar, ...urlInfo, price }, auth?.userId) });
 	}
 
 	if (!auth?.userId) return error(res, 401, 'unauthorized', 'authentication required');

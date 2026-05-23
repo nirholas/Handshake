@@ -86,9 +86,15 @@ export default wrap(async (req, res) => {
 		       coalesce(a.view_count, 0)     AS view_count,
 		       u.username AS owner_username,
 		       u.display_name AS owner_display_name,
-		       u.wallet_address AS owner_wallet
+		       u.wallet_address AS owner_wallet,
+		       ap.amount        AS price_amount,
+		       ap.currency_mint AS price_currency_mint,
+		       ap.chain         AS price_chain,
+		       ap.mint_decimals AS price_mint_decimals
 		FROM avatars a
 		LEFT JOIN users u ON u.id = a.owner_id AND u.deleted_at IS NULL
+		LEFT JOIN asset_prices ap
+		       ON ap.item_type = 'avatar' AND ap.item_id = a.id AND ap.is_active = true
 		WHERE a.deleted_at IS NULL
 		  AND a.visibility = 'public'
 		  AND (${q || null}::text IS NULL OR (
@@ -137,6 +143,14 @@ export default wrap(async (req, res) => {
 			: r.owner_wallet
 				? shortAddr(r.owner_wallet)
 				: null;
+		const price = r.price_amount != null
+			? {
+				amount: String(r.price_amount),
+				currency_mint: r.price_currency_mint,
+				chain: r.price_chain,
+				mint_decimals: r.price_mint_decimals ?? 6,
+			}
+			: null;
 		return {
 			kind: 'avatar',
 			sortDate: r.created_at,
@@ -153,6 +167,7 @@ export default wrap(async (req, res) => {
 			viewCount: Number(r.view_count) || 0,
 			createdAt: r.created_at,
 			viewerUrl: `/app#model=${encodeURIComponent(glb)}`,
+			price,
 			author: handle
 				? {
 					handle,

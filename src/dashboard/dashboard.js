@@ -56,6 +56,16 @@ export const api = {
 		if (params.granularity) q.set('granularity', params.granularity);
 		return j('GET', `/api/billing/revenue?${q.toString()}`);
 	},
+	listWithdrawals: ({ status, limit, offset } = {}) => {
+		const q = new URLSearchParams();
+		if (status) q.set('status', status);
+		if (limit) q.set('limit', String(limit));
+		if (offset) q.set('offset', String(offset));
+		const qs = q.toString();
+		return j('GET', `/api/billing/withdrawals${qs ? '?' + qs : ''}`);
+	},
+	requestWithdrawal: (body) => j('POST', '/api/billing/withdrawals', body),
+	listPayoutWallets: () => j('GET', '/api/billing/payout-wallets'),
 };
 
 // Single-use CSRF token: fetched lazily, invalidated on consumption. Re-issued
@@ -122,6 +132,7 @@ const KNOWN_TABS = [
 	'subscriptions',
 	'billing',
 	'revenue',
+	'withdrawals',
 	'earnings',
 	'account',
 ];
@@ -227,6 +238,7 @@ const tabs = {
 	subscriptions: renderSubscriptions,
 	billing: renderBilling,
 	revenue: renderRevenue,
+	withdrawals: renderWithdrawals,
 	earnings: renderEarnings,
 	account: renderAccount,
 };
@@ -3426,6 +3438,259 @@ async function renderRevenue(root) {
 	// Re-fetch on page focus (no WebSocket needed)
 	const onFocus = () => load();
 	window.addEventListener('focus', onFocus, { once: true });
+}
+
+// ── Withdrawals ─────────────────────────────────────────────────────────────
+// Owner-facing UI for pulling earned USDC out to a wallet they control.
+// Backend: GET/POST /api/billing/withdrawals (CSRF-gated POST).
+// Cron processor (api/cron/[name].js → handleProcessWithdrawals) moves rows
+// from pending → processing → completed/failed on-chain.
+
+const USDC_MINTS = {
+	solana: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+	base: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+};
+const MIN_WITHDRAWAL_LAMPORTS = 1_000_000; // 1 USDC
+
+const SOLANA_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const EVM_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
+
+function isValidAddrFor(chain, addr) {
+	if (chain === 'solana') return SOLANA_ADDR_RE.test(addr);
+	if (chain === 'base' || chain === 'evm') return EVM_ADDR_RE.test(addr);
+	return false;
+}
+
+function shortAddr(a) {
+	if (!a) return '—';
+	if (a.length <= 14) return a;
+	return a.slice(0, 6) + '…' + a.slice(-4);
+}
+
+function withdrawalStatusBadge(status) {
+	const colors = {
+		pending: '#f59e0b',
+		processing: '#5cc8ff',
+		completed: '#22c55e',
+		failed: '#ef4444',
+	};
+	const c = colors[status] || '#888';
+	return `<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${c}22;color:${c}">${esc(status)}</span>`;
+}
+
+function withdrawalTxLink(w) {
+	if (!w.tx_signature) return '<span class="muted">—</span>';
+	const sig = encodeURIComponent(w.tx_signature);
+	const url =
+		w.chain === 'solana'
+			? `https://solscan.io/tx/${sig}`
+			: w.chain === 'base'
+				? `https://basescan.org/tx/${sig}`
+				: `https://etherscan.io/tx/${sig}`;
+	return `<a href="${url}" target="_blank" rel="noopener">view ↗</a>`;
+}
+
+async function renderWithdrawals(root) {
+	root.innerHTML = `
+		<h1>Withdrawals</h1>
+		<p class="sub">Pull your earned USDC to a wallet you control.</p>
+		<div id="wd-body"><div class="muted">Loading…</div></div>
+	`;
+	const body = root.querySelector('#wd-body');
+
+	let revenue, withdrawalsResp, walletsResp;
+	try {
+		[revenue, withdrawalsResp, walletsResp] = await Promise.all([
+			api.getRevenue({ from: '1970-01-01T00:00:00Z', granularity: 'month' }),
+			api.listWithdrawals({ limit: 50 }),
+			api.listPayoutWallets(),
+		]);
+	} catch (e) {
+		body.innerHTML = `<div class="err">${esc(e.message || 'Failed to load withdrawal data')}</div>`;
+		return;
+	}
+
+	const withdrawals = withdrawalsResp.withdrawals || [];
+	const wallets = walletsResp.wallets || [];
+	const earned = Number(revenue.summary?.net_total || 0);
+	const inflight = withdrawals
+		.filter((w) => w.status === 'pending' || w.status === 'processing')
+		.reduce((s, w) => s + Number(w.amount), 0);
+	const available = Math.max(0, earned - inflight);
+	const canWithdraw = available >= MIN_WITHDRAWAL_LAMPORTS;
+
+	const solWallet = wallets.find((w) => w.chain === 'solana');
+	const baseWallet = wallets.find((w) => w.chain === 'base' || w.chain === 'evm');
+
+	body.innerHTML = `
+		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px">
+			<div class="card">
+				<div class="muted" style="font-size:12px;margin-bottom:4px">Net earned (all time)</div>
+				<div style="font-size:20px;font-weight:700">${esc(formatUSDC(earned))}</div>
+			</div>
+			<div class="card">
+				<div class="muted" style="font-size:12px;margin-bottom:4px">In flight</div>
+				<div style="font-size:20px;font-weight:700;color:#f59e0b">${esc(formatUSDC(inflight))}</div>
+			</div>
+			<div class="card">
+				<div class="muted" style="font-size:12px;margin-bottom:4px">Available</div>
+				<div style="font-size:20px;font-weight:700;color:#00e5a0">${esc(formatUSDC(available))}</div>
+			</div>
+		</div>
+
+		<div class="card" style="margin-bottom:20px;max-width:560px">
+			<h3 style="margin:0 0 12px">Request a withdrawal</h3>
+			${
+				canWithdraw
+					? ''
+					: `<div class="muted" style="margin-bottom:12px">Minimum withdrawal is 1 USDC. Available balance is too low.</div>`
+			}
+			<div style="display:flex;flex-direction:column;gap:12px">
+				<label style="display:flex;flex-direction:column;gap:4px">
+					<span class="muted" style="font-size:12px">Amount (USDC)</span>
+					<div class="row" style="gap:8px">
+						<input id="wd-amount" type="number" min="1" step="0.000001" placeholder="0.00" style="flex:1;font-size:14px" ${canWithdraw ? '' : 'disabled'}>
+						<button class="btn sec" id="wd-max" type="button" ${canWithdraw ? '' : 'disabled'}>Max</button>
+					</div>
+				</label>
+				<label style="display:flex;flex-direction:column;gap:4px">
+					<span class="muted" style="font-size:12px">Chain</span>
+					<select id="wd-chain" style="font-size:14px" ${canWithdraw ? '' : 'disabled'}>
+						<option value="solana">Solana (USDC)</option>
+						<option value="base">Base (USDC)</option>
+					</select>
+				</label>
+				<label style="display:flex;flex-direction:column;gap:4px">
+					<span class="muted" style="font-size:12px">Destination address</span>
+					<input id="wd-address" type="text" placeholder="destination address" style="font-size:14px;font-family:ui-monospace,monospace" ${canWithdraw ? '' : 'disabled'}>
+					<span id="wd-addr-hint" class="muted" style="font-size:12px"></span>
+				</label>
+				<div class="row" style="gap:8px">
+					<button class="btn" id="wd-submit" ${canWithdraw ? '' : 'disabled'}>Request withdrawal</button>
+					<span id="wd-msg" class="muted" style="font-size:13px"></span>
+				</div>
+			</div>
+		</div>
+
+		<div class="card">
+			<h3 style="margin:0 0 12px">History</h3>
+			${
+				withdrawals.length === 0
+					? '<div class="muted">No withdrawals yet.</div>'
+					: `<table style="width:100%;border-collapse:collapse;font-size:13px">
+				<thead>
+					<tr style="text-align:left;color:#888;border-bottom:1px solid var(--border)">
+						<th style="padding:8px 10px">Amount</th>
+						<th style="padding:8px 10px">Chain</th>
+						<th style="padding:8px 10px">Destination</th>
+						<th style="padding:8px 10px">Status</th>
+						<th style="padding:8px 10px">Tx</th>
+						<th style="padding:8px 10px">Requested</th>
+					</tr>
+				</thead>
+				<tbody>
+					${withdrawals
+						.map(
+							(w) => `<tr style="border-bottom:1px solid var(--border)">
+						<td style="padding:8px 10px;font-variant-numeric:tabular-nums">${esc(formatUSDC(Number(w.amount)))}</td>
+						<td style="padding:8px 10px">${esc(w.chain)}</td>
+						<td style="padding:8px 10px;font-family:ui-monospace,monospace;font-size:11px" title="${attr(w.to_address)}">${esc(shortAddr(w.to_address))}</td>
+						<td style="padding:8px 10px">${withdrawalStatusBadge(w.status)}</td>
+						<td style="padding:8px 10px">${withdrawalTxLink(w)}</td>
+						<td style="padding:8px 10px;color:#888">${new Date(w.created_at).toLocaleString()}</td>
+					</tr>`,
+						)
+						.join('')}
+				</tbody>
+			</table>`
+			}
+		</div>
+	`;
+
+	if (!canWithdraw) return;
+
+	const amountEl = body.querySelector('#wd-amount');
+	const chainEl = body.querySelector('#wd-chain');
+	const addrEl = body.querySelector('#wd-address');
+	const hintEl = body.querySelector('#wd-addr-hint');
+	const maxBtn = body.querySelector('#wd-max');
+	const submitBtn = body.querySelector('#wd-submit');
+	const msgEl = body.querySelector('#wd-msg');
+
+	function syncDefaultAddress() {
+		const chain = chainEl.value;
+		const fallback = chain === 'solana' ? solWallet : baseWallet;
+		if (fallback) {
+			addrEl.value = fallback.address;
+			hintEl.textContent = `Pre-filled from your ${chain === 'solana' ? 'Solana' : 'Base'} payout wallet.`;
+		} else {
+			addrEl.value = '';
+			hintEl.innerHTML =
+				'No default set. Configure one on the <a href="/dashboard/monetization">Monetization tab</a> to pre-fill.';
+		}
+	}
+	syncDefaultAddress();
+	chainEl.addEventListener('change', syncDefaultAddress);
+
+	maxBtn.addEventListener('click', () => {
+		amountEl.value = (available / 1_000_000).toString();
+	});
+
+	submitBtn.addEventListener('click', async () => {
+		msgEl.style.color = '';
+		const human = parseFloat(amountEl.value);
+		if (!Number.isFinite(human) || human <= 0) {
+			msgEl.style.color = '#ffb3b3';
+			msgEl.textContent = 'Enter a valid amount.';
+			return;
+		}
+		const amount = Math.round(human * 1_000_000);
+		if (amount < MIN_WITHDRAWAL_LAMPORTS) {
+			msgEl.style.color = '#ffb3b3';
+			msgEl.textContent = 'Minimum withdrawal is 1 USDC.';
+			return;
+		}
+		if (amount > available) {
+			msgEl.style.color = '#ffb3b3';
+			msgEl.textContent = `Exceeds available (${formatUSDC(available)}).`;
+			return;
+		}
+		const chain = chainEl.value;
+		const to_address = addrEl.value.trim();
+		if (!to_address) {
+			msgEl.style.color = '#ffb3b3';
+			msgEl.textContent = 'Destination address required.';
+			return;
+		}
+		if (!isValidAddrFor(chain, to_address)) {
+			msgEl.style.color = '#ffb3b3';
+			msgEl.textContent =
+				chain === 'solana'
+					? 'Invalid Solana address (expected base58, 32–44 chars).'
+					: 'Invalid Base address (expected 0x + 40 hex chars).';
+			return;
+		}
+
+		submitBtn.disabled = true;
+		msgEl.style.color = '#888';
+		msgEl.textContent = 'Submitting…';
+		try {
+			const resp = await api.requestWithdrawal({
+				amount,
+				chain,
+				currency_mint: USDC_MINTS[chain] || USDC_MINTS.solana,
+				to_address,
+			});
+			msgEl.style.color = '#00e5a0';
+			msgEl.textContent = 'Withdrawal requested.';
+			if (resp?.withdrawal) withdrawals.unshift(resp.withdrawal);
+			renderWithdrawals(root);
+		} catch (e) {
+			msgEl.style.color = '#ffb3b3';
+			msgEl.textContent = e?.data?.error_description || e.message || 'Request failed';
+			submitBtn.disabled = false;
+		}
+	});
 }
 
 // ── Widgets ─────────────────────────────────────────────────────────────────

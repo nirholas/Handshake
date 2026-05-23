@@ -386,7 +386,7 @@
             "dest": "/dashboard/x402.html"
         },
         {
-            "src": "/dashboard/(agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|earnings|account)/?",
+            "src": "/dashboard/(agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|withdrawals|earnings|account)/?",
             "dest": "/dashboard/index.html"
         },
         {
@@ -492,6 +492,14 @@
         {
             "src": "/api/marketplace/purchase/([^/]+)",
             "dest": "/api/marketplace/purchase?reference=$1"
+        },
+        {
+            "src": "/api/marketplace/buy-asset/([^/]+)/confirm",
+            "dest": "/api/marketplace/buy-asset?reference=$1&op=confirm"
+        },
+        {
+            "src": "/api/marketplace/buy-asset/([^/]+)",
+            "dest": "/api/marketplace/buy-asset?reference=$1"
         },
         {
             "src": "/marketplace",

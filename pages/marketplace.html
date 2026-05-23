@@ -646,6 +646,42 @@
 				color: #fafafa;
 			}
 
+			/* ── Asset price pill (Free / N USDC) ────────────────────────── */
+			.market-price-pill {
+				position: absolute;
+				top: 8px;
+				right: 8px;
+				z-index: 2;
+				display: inline-flex;
+				align-items: center;
+				padding: 3px 9px;
+				border-radius: 999px;
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.03em;
+				font-family: 'Space Grotesk', sans-serif;
+				backdrop-filter: blur(6px);
+				border: 1px solid transparent;
+				line-height: 1.4;
+				pointer-events: none;
+				white-space: nowrap;
+			}
+			.market-price-pill.free {
+				background: rgba(52, 211, 153, 0.16);
+				color: #34d399;
+				border-color: rgba(52, 211, 153, 0.28);
+			}
+			.market-price-pill.paid {
+				background: rgba(253, 224, 71, 0.18);
+				color: #fde047;
+				border-color: rgba(253, 224, 71, 0.32);
+			}
+			/* Agent cards aren't position:relative by default — make them so the
+			   pill anchors to the card edge instead of the page. */
+			.market-card-agent {
+				position: relative;
+			}
+
 			/* Featured-curated badge over the avatar thumbnail (gold star, top-left) */
 			.market-card-avatar.featured {
 				border-color: rgba(253, 224, 71, 0.25);
@@ -860,6 +896,119 @@
 				margin-top: auto;
 				padding-top: 16px;
 			}
+
+			/* Sell-or-buy panel inside the avatar / agent detail modal. Owners
+			   see a price + payout-wallet editor; non-owners see Pay-with-USDC. */
+			.avatar-modal-sale {
+				margin-top: 6px;
+				padding: 14px;
+				border-radius: 12px;
+				background: rgba(255, 255, 255, 0.03);
+				border: 1px solid #1f1f1f;
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+				font-size: 13px;
+			}
+			.avatar-modal-sale .sale-eyebrow {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 10px;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: #a1a1aa;
+				font-weight: 600;
+			}
+			.avatar-modal-sale .sale-price {
+				font-size: 22px;
+				font-weight: 700;
+				color: #fde047;
+				font-family: 'Space Grotesk', sans-serif;
+			}
+			.avatar-modal-sale .sale-price.free {
+				color: #34d399;
+			}
+			.avatar-modal-sale label {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				font-size: 11px;
+				color: #a1a1aa;
+			}
+			.avatar-modal-sale input[type="number"],
+			.avatar-modal-sale input[type="text"] {
+				background: #0a0a0a;
+				border: 1px solid #2a2a2a;
+				border-radius: 8px;
+				color: #fafafa;
+				padding: 8px 10px;
+				font-size: 13px;
+				font-family: inherit;
+				outline: none;
+				transition: border-color 0.15s;
+			}
+			.avatar-modal-sale input[type="number"]:focus,
+			.avatar-modal-sale input[type="text"]:focus {
+				border-color: #7dd3fc;
+			}
+			.avatar-modal-sale .sale-row {
+				display: flex;
+				gap: 8px;
+				align-items: flex-end;
+			}
+			.avatar-modal-sale .sale-row label { flex: 1; }
+			.avatar-modal-sale .sale-row .sale-currency {
+				background: #1a1a1a;
+				border: 1px solid #2a2a2a;
+				color: #d4d4d8;
+				padding: 8px 10px;
+				border-radius: 8px;
+				font-family: 'Space Grotesk', sans-serif;
+				font-weight: 600;
+				font-size: 12px;
+			}
+			.avatar-modal-sale button.sale-save,
+			.avatar-modal-sale button.sale-buy,
+			.avatar-modal-sale button.sale-clear {
+				border: 0;
+				padding: 10px 14px;
+				border-radius: 10px;
+				font-weight: 600;
+				font-size: 13px;
+				cursor: pointer;
+				font-family: inherit;
+				transition: transform 0.15s;
+			}
+			.avatar-modal-sale button.sale-save {
+				background: #fafafa;
+				color: #0a0a0a;
+			}
+			.avatar-modal-sale button.sale-buy {
+				background: linear-gradient(180deg, #fde047, #facc15);
+				color: #18181b;
+			}
+			.avatar-modal-sale button.sale-buy:hover,
+			.avatar-modal-sale button.sale-save:hover {
+				transform: translateY(-1px);
+			}
+			.avatar-modal-sale button.sale-clear {
+				background: transparent;
+				color: #a1a1aa;
+				border: 1px solid #2a2a2a;
+			}
+			.avatar-modal-sale .sale-status {
+				font-size: 11px;
+				color: #a1a1aa;
+				min-height: 14px;
+			}
+			.avatar-modal-sale .sale-status.ok { color: #34d399; }
+			.avatar-modal-sale .sale-status.err { color: #f43f5e; }
+			.avatar-modal-sale .sale-hint {
+				font-size: 11px;
+				color: #71717a;
+				line-height: 1.5;
+			}
+			.avatar-modal-sale .sale-hint a { color: #7dd3fc; text-decoration: none; }
+			.avatar-modal-sale .sale-hint a:hover { text-decoration: underline; }
 			.avatar-modal-actions button,
 			.avatar-modal-actions a {
 				width: 100%;
@@ -1432,6 +1581,11 @@
 						<button class="market-chip" data-filter="avatars" role="tab" aria-selected="false">Avatars</button>
 						<button class="market-chip" data-filter="onchain" role="tab" aria-selected="false" title="ERC-8004 agents indexed onchain across Base, Polygon, and Solana" aria-label="Onchain — ERC-8004 agents indexed across all supported chains">Onchain <span class="chip-count" id="chip-count-onchain"></span></button>
 					</div>
+					<div class="market-filter-chips" id="market-price-filter-chips" role="group" aria-label="Filter by price">
+						<button class="market-chip active" data-price-filter="all">Any</button>
+						<button class="market-chip" data-price-filter="free" title="Show only free listings">Free</button>
+						<button class="market-chip" data-price-filter="paid" title="Show only paid listings">Paid</button>
+					</div>
 					<label class="market-visually-hidden" for="market-sort">Sort marketplace results</label>
 					<select id="market-sort" class="market-sort" aria-label="Sort marketplace results">
 						<option value="recommended">Recommended</option>
@@ -1480,6 +1634,9 @@
 					</div>
 					<button class="market-bookmark" id="d-bookmark" aria-label="Bookmark">☆</button>
 				</div>
+
+				<!-- Sell / Buy panel for the agent itself (separate from per-skill prices). -->
+				<div class="avatar-modal-sale" id="agent-sale-panel" hidden></div>
 
 				<nav class="market-tabs" role="tablist">
 					<button data-tab="overview" class="active" role="tab">Overview</button>
@@ -1990,6 +2147,7 @@
 					<h2 class="avatar-modal-title" id="avatar-modal-title">—</h2>
 					<p class="avatar-modal-desc" id="avatar-modal-desc"></p>
 					<div class="avatar-modal-meta" id="avatar-modal-meta"></div>
+					<div class="avatar-modal-sale" id="avatar-modal-sale" hidden></div>
 					<div class="avatar-modal-actions">
 						<button class="btn-primary" id="avatar-modal-use">Start an agent with this avatar</button>
 						<a class="btn-secondary" id="avatar-modal-view" href="#" target="_blank" rel="noopener">Open in 3D viewer</a>

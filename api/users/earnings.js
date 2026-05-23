@@ -31,6 +31,36 @@ export default wrap(async (req, res) => {
 		LIMIT 100
 	`;
 
+	// Asset sales (avatars / agents / plugins). asset_purchases stores amount
+	// in atomic USDC units (6 decimals on Solana mainnet) — divide to get
+	// price_usd for consistent reporting alongside the royalty ledger.
+	let assetRows = [];
+	try {
+		assetRows = await sql`
+			SELECT
+				ap.id,
+				ap.item_type,
+				ap.item_id,
+				ap.amount,
+				ap.currency_mint,
+				ap.confirmed_at,
+				ap.created_at,
+				ap.status,
+				CASE ap.item_type
+					WHEN 'avatar' THEN (SELECT name FROM avatars WHERE id = ap.item_id)
+					WHEN 'agent'  THEN (SELECT name FROM agent_identities WHERE id = ap.item_id)
+					ELSE NULL
+				END AS item_name
+			FROM asset_purchases ap
+			WHERE ap.seller_user_id = ${userId}
+			  AND ap.status = 'confirmed'
+			ORDER BY ap.confirmed_at DESC NULLS LAST
+			LIMIT 100
+		`;
+	} catch {
+		// asset_purchases migration hasn't run yet — leave list empty.
+	}
+
 	const pending_usd = rows
 		.filter((r) => r.status === 'pending')
 		.reduce((s, r) => s + Number(r.price_usd), 0);
@@ -39,13 +69,35 @@ export default wrap(async (req, res) => {
 		.filter((r) => r.status === 'settled')
 		.reduce((s, r) => s + Number(r.price_usd), 0);
 
+	const asset_settled_usd = assetRows.reduce(
+		(s, r) => s + Number(r.amount) / 1_000_000,
+		0,
+	);
+
 	const entries = rows.map((r) => ({
 		skill_name: r.skill_name,
 		agent_name: r.agent_name,
 		price_usd: Number(r.price_usd),
 		status: r.status,
 		created_at: r.created_at,
+		kind: 'skill',
 	}));
+	for (const r of assetRows) {
+		entries.push({
+			skill_name: `${r.item_type[0].toUpperCase()}${r.item_type.slice(1)} sale`,
+			agent_name: r.item_name || '(deleted)',
+			price_usd: Number(r.amount) / 1_000_000,
+			status: 'settled',
+			created_at: r.confirmed_at || r.created_at,
+			kind: r.item_type,
+		});
+	}
+	// Newest first, regardless of source.
+	entries.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-	return json(res, 200, { pending_usd, settled_usd, entries });
+	return json(res, 200, {
+		pending_usd,
+		settled_usd: settled_usd + asset_settled_usd,
+		entries,
+	});
 });

@@ -451,7 +451,7 @@ const appConfig = {
 					// /dashboard/<tab> and /dashboard/edit/<id> → SPA index
 					else if (
 						!filePath &&
-						/^\/dashboard\/(?:agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|earnings|account)\/?$/.test(
+						/^\/dashboard\/(?:agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|withdrawals|earnings|account)\/?$/.test(
 							path,
 						)
 					)
