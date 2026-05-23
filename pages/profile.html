@@ -849,11 +849,14 @@
 				const desc = `${display} on three.ws — ${summaryParts.join(' · ') || 'on-chain agent identity'}.`;
 				document.title = title;
 				const profileUrl = `${location.origin}/u/${encodeURIComponent(user.username)}`;
+				const ogImage = `${location.origin}/api/u-og?username=${encodeURIComponent(user.username)}`;
 				document.querySelector('#og-title')?.setAttribute('content', title);
 				document.querySelector('#og-description')?.setAttribute('content', desc);
 				document.querySelector('#og-url')?.setAttribute('content', profileUrl);
+				document.querySelector('#og-image')?.setAttribute('content', ogImage);
 				document.querySelector('#tw-title')?.setAttribute('content', title);
 				document.querySelector('#tw-description')?.setAttribute('content', desc);
+				document.querySelector('#tw-image')?.setAttribute('content', ogImage);
 
 				// Hero 3D
 				const heroAvatar = avatars.find((a) => a.model_url) || null;
@@ -962,13 +965,14 @@
 								<h3 style="margin:0;font-weight:500;font-size:1.1rem">Pay @${esc(handle)}</h3>
 								<button id="up-pay-close" aria-label="Close" style="background:transparent;border:0;color:rgba(255,255,255,.5);font-size:1.4rem;cursor:pointer;line-height:1;padding:0">×</button>
 							</div>
-							<p style="color:rgba(255,255,255,.5);font-size:.85rem;margin:0 0 1.2rem">Resolves on-chain via <code style="background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px">${esc(name)}</code>. Returns an unsigned USDC transfer for your wallet to sign.</p>
+							<p style="color:rgba(255,255,255,.5);font-size:.85rem;margin:0 0 1.2rem">Sending USDC to <code style="background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px">${esc(name)}</code> on Solana. Resolved on-chain; signed in your wallet.</p>
 							<label style="display:block;font-size:.85rem;color:rgba(255,255,255,.5);margin-bottom:.4rem">Amount (USDC)</label>
 							<input id="up-pay-amount" type="number" min="0.000001" step="0.01" value="1" style="width:100%;background:#000;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.7rem .9rem;font-size:1rem;font-family:inherit;margin-bottom:1rem;box-sizing:border-box">
-							<label style="display:block;font-size:.85rem;color:rgba(255,255,255,.5);margin-bottom:.4rem">Your Solana wallet (payer)</label>
-							<input id="up-pay-payer" type="text" placeholder="base58 address" autocomplete="off" spellcheck="false" style="width:100%;background:#000;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.7rem .9rem;font-size:.95rem;font-family:ui-monospace,Menlo,monospace;margin-bottom:.5rem;box-sizing:border-box">
 							<div id="up-pay-status" style="min-height:1.2em;font-size:.85rem;color:rgba(255,255,255,.5);margin-bottom:.8rem"></div>
-							<button id="up-pay-go" style="width:100%;background:#fff;color:#000;border:0;border-radius:10px;padding:.85rem;font-size:1rem;font-weight:500;font-family:inherit;cursor:pointer">Prepare payment</button>
+							<button id="up-pay-go" style="width:100%;background:#fff;color:#000;border:0;border-radius:10px;padding:.85rem;font-size:1rem;font-weight:500;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem">
+								<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.93 7.5a1 1 0 0 0-.86-.5h-3.07a1 1 0 0 1-1-1V3a1 1 0 0 0-.5-.86 1 1 0 0 0-1 0L3.5 9.86A1 1 0 0 0 3 10.73v2.54a1 1 0 0 0 .5.86l12 7.73a1 1 0 0 0 .5.14 1 1 0 0 0 .5-.14 1 1 0 0 0 .5-.86V18a1 1 0 0 1 1-1h3.07a1 1 0 0 0 .86-.5 1 1 0 0 0 0-1z"/></svg>
+								Pay with Solana wallet
+							</button>
 							<div id="up-pay-result" style="display:none;margin-top:1rem;padding:1rem;border:1px solid rgba(105,225,111,.3);background:rgba(105,225,111,.05);border-radius:10px;font-size:.85rem"></div>
 						</div>
 					`;
@@ -983,52 +987,40 @@
 					const resultEl = modal.querySelector('#up-pay-result');
 					goBtn.addEventListener('click', async () => {
 						const amount = Number(modal.querySelector('#up-pay-amount').value);
-						const payer = modal.querySelector('#up-pay-payer').value.trim();
 						if (!Number.isFinite(amount) || amount <= 0) {
 							statusEl.textContent = 'Enter a positive USDC amount.';
 							statusEl.style.color = '#ff7a7a';
 							return;
 						}
-						if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(payer)) {
-							statusEl.textContent = 'Payer must be a base58 Solana address.';
-							statusEl.style.color = '#ff7a7a';
-							return;
-						}
-						statusEl.style.color = 'rgba(255,255,255,.5)';
-						statusEl.textContent = 'Preparing transaction…';
 						goBtn.disabled = true;
+						statusEl.style.color = 'rgba(255,255,255,.5)';
 						try {
-							const res = await fetch('/api/x402/pay-by-name', {
-								method: 'POST',
-								headers: { 'content-type': 'application/json' },
-								body: JSON.stringify({ mode: 'prep', name, amount_usdc: amount, payer_wallet: payer }),
+							const { payByName } = await import('/src/sns/pay-by-name.js');
+							const result = await payByName({
+								name,
+								amount,
+								onStatus: (s) => { statusEl.textContent = s; },
 							});
-							const data = await res.json();
-							if (!res.ok) {
-								statusEl.textContent = data?.error_description || 'Could not prepare payment.';
-								statusEl.style.color = '#ff7a7a';
-								goBtn.disabled = false;
-								return;
-							}
-							const d = data.data;
 							statusEl.textContent = '';
 							resultEl.style.display = 'block';
 							resultEl.innerHTML = `
-								<div style="font-weight:500;color:#69e16f;margin-bottom:.4em">Transaction ready.</div>
+								<div style="font-weight:500;color:#69e16f;margin-bottom:.4em">Payment sent.</div>
 								<div style="color:rgba(255,255,255,.7);line-height:1.5">
-									To: <code style="background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px">${esc(d.recipient.resolved)}</code><br>
-									Amount: <strong>${esc(String(d.amount_usdc))} USDC</strong><br>
-									Recipient wallet: <span style="font-family:ui-monospace,Menlo,monospace;font-size:.85em">${esc(d.recipient.address.slice(0,6))}…${esc(d.recipient.address.slice(-4))}</span>
+									<strong>${esc(String(result.amount_usdc))} USDC</strong> → <code style="background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px">${esc(result.recipient.resolved)}</code>
 								</div>
-								<details style="margin-top:.6em">
-									<summary style="cursor:pointer;color:rgba(255,255,255,.5)">Show base64 transaction</summary>
-									<textarea readonly style="width:100%;height:5em;margin-top:.4em;background:#000;color:#69e16f;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.4em;font-family:ui-monospace,Menlo,monospace;font-size:.7rem;box-sizing:border-box">${esc(d.tx_base64)}</textarea>
-								</details>
-								<div style="margin-top:.6em;color:rgba(255,255,255,.5)">Sign and broadcast this transaction with your Solana wallet (Phantom, Solflare, Backpack) to complete the payment.</div>
+								<a href="${esc(result.explorer)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:.5em;color:#69e16f;text-decoration:none;font-family:ui-monospace,Menlo,monospace;font-size:.75rem;word-break:break-all">
+									${esc(result.signature.slice(0, 16))}…${esc(result.signature.slice(-8))} ↗
+								</a>
 							`;
 						} catch (err) {
-							statusEl.textContent = err?.message || 'Network error.';
 							statusEl.style.color = '#ff7a7a';
+							if (err?.code === 'no_wallet') {
+								statusEl.innerHTML = 'Install <a href="https://phantom.app/" target="_blank" rel="noopener" style="color:#ab9ff2">Phantom</a> or another Solana wallet, then retry.';
+							} else if (err?.code === 'confirm_timeout' && err.signature) {
+								statusEl.innerHTML = `Submitted but not confirmed in window. <a href="https://solscan.io/tx/${encodeURIComponent(err.signature)}" target="_blank" rel="noopener" style="color:#69e16f">Check Solscan ↗</a>`;
+							} else {
+								statusEl.textContent = err?.message || 'Payment failed.';
+							}
 							goBtn.disabled = false;
 						}
 					});
@@ -1164,6 +1156,7 @@
 						? `<img src="${attr(img)}" alt="${attr(a.name)}">`
 						: `<span>◎</span>`;
 					const meta = [];
+					if (a.sns_domain) meta.push(`<a href="https://www.sns.id/domain?domain=${attr(a.sns_domain)}" target="_blank" rel="noopener">◎ ${esc(a.sns_domain)}</a>`);
 					if (a.erc8004_agent_id && a.chain_id) meta.push(`ERC-8004 #${esc(a.erc8004_agent_id)} · chain ${esc(String(a.chain_id))}`);
 					if (a.wallet_address) meta.push(`${esc(a.wallet_address.slice(0, 6))}…${esc(a.wallet_address.slice(-4))}`);
 					if (a.x_username) meta.push(`<a href="https://x.com/${attr(a.x_username)}" target="_blank" rel="noopener">@${esc(a.x_username)}</a>`);

@@ -1056,6 +1056,14 @@
             "dest": "/api/threews/subdomain.js"
         },
         {
+            "src": "/api/threews/me",
+            "dest": "/api/threews/me.js"
+        },
+        {
+            "src": "/api/u-og",
+            "dest": "/api/u-og.js"
+        },
+        {
             "src": "/api/x402/pay-by-name",
             "dest": "/api/x402/pay-by-name.js"
         },

@@ -13,6 +13,7 @@
 import { wrap, cors, error } from '../_lib/http.js';
 import {
 	NETWORK_BASE_MAINNET,
+	NETWORK_SOLANA_MAINNET,
 	send402,
 	verifyPayment,
 	settlePayment,
@@ -125,6 +126,18 @@ function buildRequirements(resourceUrl) {
 	const out = [eip3009];
 	const permit2 = permit2VariantOf(eip3009);
 	if (permit2) out.push(permit2);
+	if (env.X402_PAY_TO_SOLANA) {
+		out.push({
+			scheme: 'exact',
+			network: NETWORK_SOLANA_MAINNET,
+			amount: env.X402_MAX_AMOUNT_REQUIRED,
+			payTo: env.X402_PAY_TO_SOLANA,
+			asset: env.X402_ASSET_MINT_SOLANA,
+			maxTimeoutSeconds: 60,
+			resource: resourceUrl,
+			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
+		});
+	}
 	return out;
 }
 

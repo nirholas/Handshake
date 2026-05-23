@@ -357,6 +357,25 @@ export const env = {
 		return opt('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com');
 	},
 
+	// ── threews.sol subdomain minting ─────────────────────────────────────
+	// Parent .sol domain we mint subdomains under (e.g. `threews.sol`). The
+	// platform must own this domain on-chain via THREEWS_SOL_PARENT_SECRET_BASE58.
+	get THREEWS_SOL_PARENT_DOMAIN() {
+		return opt('THREEWS_SOL_PARENT_DOMAIN', 'threews.sol');
+	},
+	// Base58-encoded 64-byte ed25519 secret for the keypair that owns the
+	// parent .sol domain. Signs createSubdomain + URL-record + transfer
+	// for both /api/threews/subdomain (user claims) and /api/sns-subdomain
+	// (agent claims). Unset → subdomain minting returns 503.
+	get THREEWS_SOL_PARENT_SECRET_BASE58() {
+		return opt('THREEWS_SOL_PARENT_SECRET_BASE58');
+	},
+	// Public origin written into the SNS URL record so Brave-resolved
+	// subdomains land on the correct deployment. Defaults to https://three.ws.
+	get STOREFRONT_ORIGIN() {
+		return trimSlash(opt('STOREFRONT_ORIGIN', 'https://three.ws'));
+	},
+
 	// ── Lottery + Reflection coin (api/_lib/coin/*) ───────────────────────
 	// Treasury keypair (base64-encoded 64-byte secret). Fee payer for every
 	// lottery winner transfer + reflection batch transfer. Holds the SOL that

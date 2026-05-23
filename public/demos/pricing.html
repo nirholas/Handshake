@@ -282,7 +282,7 @@
 				</div>
 			</div>
 
-			<p class="hint">Move your mouse over a tier — she walks across and points at the CTA.</p>
+			<p class="hint">Hover a tier — she walks across (or leaps onto Pro). Click a button to see her react.</p>
 		</div>
 
 		<canvas id="avatar-canvas"></canvas>
@@ -372,9 +372,13 @@
 
 			// phase: loading | idle | walking | jumping (declared above)
 			// activeTier: tier she's currently associated with (declared above)
-			let walkT = 0, walkStart = null, walkEnd = null, walkDur = 0.85;
+			let walkT = 0, walkStart = null, walkEnd = null, walkDur = 0.85, walkPeakRise = 0;
 			let jumpT = 0, jumpStart = null, jumpEnd = null, jumpLift = 0;
 			let lastMoveKind = null; // 'walk' | 'jump' — read by landOnTier
+			// Optional callback fired once the avatar has fully settled into
+			// idle after a move. Used by CTA clicks to queue the reaction
+			// until she's actually on the right tier and standing still.
+			let onArrival = null;
 			// Post-jump root-Y ease: when the superhero clip lands, hips are
 			// well below baseRootPos.y. Snapping back to base in one frame
 			// pops; we ramp over ROOT_SETTLE_S inside the render hook so we
@@ -418,6 +422,18 @@
 				// strolls don't blur into a teleport.
 				const dx = Math.abs(walkEnd.x - walkStart.x);
 				walkDur = Math.max(0.4, dx / WALK_SPEED);
+				// If a taller tier sits in between (e.g. Pro between Basic and
+				// Enterprise), arc the walk path up to its top so she doesn't
+				// clip through the slab mid-stride.
+				const minX = Math.min(walkStart.x, walkEnd.x);
+				const maxX = Math.max(walkStart.x, walkEnd.x);
+				const baseY = Math.max(walkStart.y, walkEnd.y);
+				let peakY = baseY;
+				for (const tt of tiers) {
+					const tp = standOnTopOf(tt);
+					if (tp.x > minX && tp.x < maxX && tp.y > peakY) peakY = tp.y;
+				}
+				walkPeakRise = peakY - baseY;
 				setAnimation('walk', { loop: true });
 				// Turn to profile so the walk cycle reads sideways toward the destination
 				const dir = Math.sign(walkEnd.x - walkStart.x) || 0;
@@ -444,38 +460,22 @@
 				gsap.to(avatar.rotation, { y: dir * 0.25, duration: 0.2, overwrite: true });
 			}
 
-			// Per-tier personality. Two clips rotated across the tiers so she
-			// reads as having a "vibe" on each plan:
-			//   walk          — Mixamo "Walk" (cycles a few steps in place)
-			//   falltolanding — Mixamo "Fall To Landing" (forward roll out of a fall)
-			const TIER_PERSONALITY = {
-				basic:      { land: 'walk',          ctaClick: 'falltolanding', settleMs: 1500 },
-				pro:        { land: 'falltolanding', ctaClick: 'walk',          settleMs: 2000 },
-				enterprise: { land: 'walk',          ctaClick: 'falltolanding', settleMs: 1700 },
+			// Per-tier CTA reaction. Plays when the user clicks the tier's
+			// call-to-action button (after the avatar has walked/jumped onto
+			// that tier if she wasn't already there).
+			//   basic:      wave           — friendly send-off for the free plan
+			//   pro:        av-celebrating — "yes! great choice"
+			//   enterprise: av-brag-claps  — confident, deal-closed applause
+			const CTA_REACTION = {
+				basic:      'wave',
+				pro:        'av-celebrating',
+				enterprise: 'av-brag-claps',
 			};
-			function personalityFor(tierEl) {
-				return TIER_PERSONALITY[tierEl?.dataset.tier] ?? TIER_PERSONALITY.basic;
-			}
-
-			// Idle fidget — every 7–11s while she's standing still, pick a
-			// gesture from the dramatic-clip pool and play a fragment, then
-			// crossfade back to idle. Prevents the "frozen avatar" look
-			// between hovers without overpowering the idle.
-			const FIDGETS = ['walk', 'falltolanding'];
-			let fidgetTimer = null;
-			function scheduleFidget() {
-				clearTimeout(fidgetTimer);
-				const delay = 7000 + Math.random() * 4000;
-				fidgetTimer = setTimeout(() => {
-					if (phase !== 'idle' || !activeTier) { scheduleFidget(); return; }
-					const pick = FIDGETS[Math.floor(Math.random() * FIDGETS.length)];
-					if (!actions[pick]) { scheduleFidget(); return; }
-					setAnimation(pick, { loop: false, hold: false });
-					setTimeout(() => {
-						if (phase === 'idle') setAnimation('idle', { loop: true });
-						scheduleFidget();
-					}, 1500);
-				}, delay);
+			// Cap the reaction display so long loops (brag-claps is 10s) don't
+			// hold the avatar hostage. Short clips (wave is 1s) play in full.
+			const CTA_REACTION_MAX_MS = 3500;
+			function ctaReactionFor(tierEl) {
+				return CTA_REACTION[tierEl?.dataset.tier] ?? 'wave';
 			}
 
 			function landOnTier() {
@@ -491,29 +491,37 @@
 					y: 3, duration: 0.08, ease: 'power3.out',
 					onComplete: () => gsap.to(t, { y: 0, duration: 0.5, ease: 'elastic.out(1.2, 0.4)' })
 				});
-				// Face camera so the gesture reads cleanly
+				// Face camera so the next gesture reads cleanly
 				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
+
+				const settleIntoIdle = () => {
+					if (phase !== 'idle' || activeTier !== t) return;
+					setAnimation('idle', { loop: true });
+					// Fire any queued arrival callback (e.g. a CTA click that
+					// initiated this move) once the rotation tween has had
+					// time to face camera so the reaction doesn't start
+					// sideways.
+					if (onArrival) {
+						const cb = onArrival;
+						onArrival = null;
+						setTimeout(cb, 300);
+					}
+				};
+
 				if (lastMoveKind === 'jump') {
-					// The superhero-jump clip already ends in a landing crouch;
-					// layering another "land" reaction on top reads as a glitch
-					// (crouch → forward-roll). Hold the clip's final frame
-					// briefly, then crossfade to idle. The render hook eases
-					// root-Y back to base during this hold (see rootSettleT).
+					// The superhero-jump clip already ends in a landing crouch.
+					// Hold its final frame briefly, then crossfade to idle. The
+					// render hook eases root-Y back to base during this hold
+					// (see rootSettleT) so the hips don't pop upright.
 					if (rootBone && baseRootPos) {
 						rootSettleStart = rootBone.position.y;
 						rootSettleT = 0;
 					}
-					setTimeout(() => {
-						if (phase === 'idle' && activeTier === t) setAnimation('idle', { loop: true });
-					}, 600);
+					setTimeout(settleIntoIdle, 600);
 				} else {
-					const persona = personalityFor(t);
-					setAnimation(persona.land, { loop: false, hold: false });
-					setTimeout(() => {
-						if (phase === 'idle' && activeTier === t) setAnimation('idle', { loop: true });
-					}, persona.settleMs);
+					// Walking arrival — clean crossfade from walk cycle to idle.
+					settleIntoIdle();
 				}
-				scheduleFidget();
 			}
 
 			// ── Hover dispatch with debounce ─────────────────────────────────
@@ -571,19 +579,36 @@
 			tiersGrid.addEventListener('mouseleave', () => scheduleMove(null));
 
 			// CTA clicks — tier-specific reaction. Prevent navigation in the
-			// demo so the page doesn't refresh mid-gesture.
+			// demo so the page doesn't refresh mid-gesture. If she isn't
+			// standing on the clicked tier yet (or is mid-move), queue the
+			// reaction via onArrival so it fires the moment she settles.
 			document.querySelectorAll('[data-tier-cta]').forEach(cta => {
 				cta.addEventListener('click', e => {
 					e.preventDefault();
 					if (!avatar) return;
-					clearTimeout(fidgetTimer);
 					const tierEl = document.getElementById(`tier-${cta.dataset.tierCta}`);
-					const persona = personalityFor(tierEl);
-					setAnimation(persona.ctaClick, { loop: false, hold: false });
-					setTimeout(() => {
-						if (phase === 'idle') setAnimation('idle', { loop: true });
-						scheduleFidget();
-					}, 2200);
+					const reactionClip = ctaReactionFor(tierEl);
+					const fireReaction = () => {
+						// hold:true clamps the final pose when we cut a long
+						// clip short (so we don't snap back to the first frame
+						// before the crossfade to idle takes over).
+						setAnimation(reactionClip, { loop: false, hold: true });
+						const clipDur = actions[reactionClip]?.getClip().duration ?? 2.0;
+						const playMs = Math.min(clipDur * 1000, CTA_REACTION_MAX_MS);
+						setTimeout(() => {
+							if (phase === 'idle') setAnimation('idle', { loop: true });
+						}, playMs);
+					};
+
+					if (tierEl === activeTier && phase === 'idle') {
+						fireReaction();
+					} else {
+						onArrival = fireReaction;
+						if (tierEl !== activeTier) {
+							if (shouldJump(activeTier, tierEl)) jumpToTier(tierEl);
+							else walkToTier(tierEl);
+						}
+					}
 				});
 			});
 
@@ -605,10 +630,20 @@
 			tiers.forEach(t => ro.observe(t));
 
 			// ── Loader ────────────────────────────────────────────────────────
-			// Loaded up front so per-tier personality + idle fidgets can play
+			// Loaded up front so per-tier reactions can play
 			// instantly without a fetch hiccup mid-hover.
+			// Animation clips fetched up-front so per-tier reactions can play
+			// instantly without a network hiccup mid-interaction.
+			//   idle               — base standing pose
+			//   walk               — locomotion cycle (root X/Z pinned, parent
+			//                        transform drives travel)
+			//   av-superhero-jump  — leap + crouched landing for hops onto Pro
+			//   wave               — Basic CTA reaction
+			//   av-celebrating     — Pro CTA reaction
+			//   av-brag-claps      — Enterprise CTA reaction
 			const CLIPS = [
-				'idle', 'walk', 'av-superhero-jump', 'falltolanding',
+				'idle', 'walk', 'av-superhero-jump',
+				'wave', 'av-celebrating', 'av-brag-claps',
 			];
 
 			new GLTFLoader().load('/avatars/cz.glb', gltf => {
@@ -677,7 +712,8 @@
 						const p = Math.min(walkT / walkDur, 1);
 						const e = smoothstep(p);
 						const x = walkStart.x + (walkEnd.x - walkStart.x) * e;
-						const y = walkStart.y + (walkEnd.y - walkStart.y) * e;
+						const arc = walkPeakRise * 4 * p * (1 - p);
+						const y = walkStart.y + (walkEnd.y - walkStart.y) * e + arc;
 						avatar.position.set(x, y, 0);
 						if (p >= 1) landOnTier();
 					} else if (phase === 'jumping' && avatar && jumpStart && jumpEnd) {

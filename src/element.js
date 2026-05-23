@@ -10,7 +10,12 @@ import { SkillRegistry } from './skills/index.js';
 import { Memory } from './memory/index.js';
 import { loadManifest, fetchRelative } from './manifest.js';
 import { resolveURI } from './ipfs.js';
-import { resolveAgentById, resolveByAgentId, AgentResolveError } from './agent-resolver.js';
+import {
+	resolveAgentById,
+	resolveByAgentId,
+	resolveByAvatarId,
+	AgentResolveError,
+} from './agent-resolver.js';
 import { parseAgentRef, resolveOnchainAgent, toManifest } from './erc8004/resolver.js';
 import { attachTradeReactions } from './pump/trade-reactions.js';
 // BEGIN:EMBED_BRIDGES_IMPORT
@@ -518,6 +523,8 @@ class Agent3DElement extends HTMLElement {
 			'manifest',
 			'body',
 			'agent-id',
+			'avatar-id',
+			'api-base',
 			'mode',
 			'position',
 			'width',
@@ -591,7 +598,8 @@ class Agent3DElement extends HTMLElement {
 			this.hasAttribute('src') ||
 			this.hasAttribute('manifest') ||
 			this.hasAttribute('body') ||
-			this.hasAttribute('agent-id')
+			this.hasAttribute('agent-id') ||
+			this.hasAttribute('avatar-id')
 		);
 	}
 
@@ -607,7 +615,7 @@ class Agent3DElement extends HTMLElement {
 			!this._mounted &&
 			!this._booting &&
 			this.isConnected &&
-			['src', 'manifest', 'body', 'agent-id'].includes(name) &&
+			['src', 'manifest', 'body', 'agent-id', 'avatar-id'].includes(name) &&
 			newVal
 		) {
 			this._boot();
@@ -627,7 +635,7 @@ class Agent3DElement extends HTMLElement {
 		if (name === 'avatar-walk' && newVal === 'off') {
 			this._stopWalkAnimation();
 		}
-		if (['src', 'manifest', 'body', 'agent-id'].includes(name)) {
+		if (['src', 'manifest', 'body', 'agent-id', 'avatar-id'].includes(name)) {
 			// Source change — reboot
 			this._teardown();
 			this._boot();
@@ -1680,7 +1688,20 @@ class Agent3DElement extends HTMLElement {
 		const manifestAttr = this.getAttribute('manifest');
 		const body = this.getAttribute('body');
 		const agentIdAttr = this.getAttribute('agent-id');
+		const avatarIdAttr = this.getAttribute('avatar-id');
 		const chainIdAttr = this.getAttribute('chain-id');
+		const apiBase = this.getAttribute('api-base') || _scriptOrigin || window.location.origin;
+		if (avatarIdAttr && !src && !manifestAttr && !body && !agentIdAttr) {
+			try {
+				return await resolveByAvatarId(avatarIdAttr, { origin: apiBase });
+			} catch (err) {
+				console.warn(
+					'[agent-3d] avatar-id resolve failed, using default avatar:',
+					err,
+				);
+				return this._defaultFallbackManifest();
+			}
+		}
 		if (src) {
 			if (agentIdAttr) console.warn('[agent-3d] both src and agent-id provided; using src');
 			// Plain .glb / .gltf URLs are bare bodies, not manifests — treat

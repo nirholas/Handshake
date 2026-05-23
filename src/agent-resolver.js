@@ -171,3 +171,70 @@ export async function resolveAgentById(
 		_source: 'agent-id',
 	};
 }
+
+/**
+ * Resolve an avatar UUID to a bare-body manifest via GET /api/avatars/:id.
+ * Used by the `<agent-3d avatar-id="...">` attribute so embedders can hand off
+ * a stable avatar identifier instead of a raw GLB URL.
+ *
+ * Always uses credentials: 'omit' — the public-visibility branch of the API
+ * returns 200 without a session; private avatars 404 to anonymous callers, which
+ * is the correct boundary for cross-origin embeds.
+ *
+ * @param {string} avatarId
+ * @param {{ origin?: string, fetchFn?: typeof fetch, signal?: AbortSignal }} [opts]
+ */
+export async function resolveByAvatarId(
+	avatarId,
+	{
+		origin = typeof location !== 'undefined' ? location.origin : '',
+		fetchFn = fetch,
+		signal,
+	} = {},
+) {
+	if (!avatarId) throw new AgentResolveError('not_found', 'avatarId required');
+
+	const boundFetch = fetchFn.bind(typeof globalThis !== 'undefined' ? globalThis : undefined);
+	const endpoint = `${origin}/api/avatars/${encodeURIComponent(avatarId)}`;
+
+	let res;
+	try {
+		res = await boundFetch(endpoint, { credentials: 'omit', signal });
+	} catch (err) {
+		if (err?.name === 'AbortError') throw err;
+		throw new AgentResolveError(
+			'network',
+			`network error fetching ${endpoint}: ${err.message || err}`,
+		);
+	}
+
+	if (res.status === 404)
+		throw new AgentResolveError('not_found', `avatar ${avatarId} not found`, { status: 404 });
+	if (!res.ok)
+		throw new AgentResolveError('network', `request failed (${res.status})`, {
+			status: res.status,
+		});
+
+	let data;
+	try {
+		data = await res.json();
+	} catch (err) {
+		throw new AgentResolveError('network', `invalid JSON from ${endpoint}`);
+	}
+
+	const avatar = data?.avatar;
+	const modelUrl = avatar?.model_url || avatar?.url;
+	if (!modelUrl)
+		throw new AgentResolveError('no_url', `avatar ${avatarId} has no model url`);
+
+	return {
+		spec: 'agent-manifest/0.1',
+		_baseURI: '',
+		_source: 'avatar-id',
+		name: avatar.name || 'Avatar',
+		body: { uri: modelUrl, format: 'gltf-binary' },
+		brain: { provider: 'none' },
+		voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
+		skills: [],
+	};
+}

@@ -415,6 +415,21 @@ function handleX402Discovery(req, res) {
 			resource: resourceUrl,
 			extra: { name: 'USDC', version: '2', decimals: 6 },
 		});
+		if (env.X402_PAY_TO_SOLANA) {
+			out.push({
+				scheme: 'exact',
+				network: NETWORK_SOLANA_MAINNET,
+				network_label: 'solana-mainnet',
+				amount: env.X402_MAX_AMOUNT_REQUIRED,
+				price,
+				payTo: env.X402_PAY_TO_SOLANA,
+				asset: env.X402_ASSET_MINT_SOLANA,
+				asset_symbol: 'USDC',
+				maxTimeoutSeconds: 60,
+				resource: resourceUrl,
+				extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
+			});
+		}
 		return out;
 	}
 

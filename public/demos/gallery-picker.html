@@ -182,10 +182,10 @@
 
 			<div class="toolbar">
 				<div class="search-wrap">
-					<input type="text" id="search" placeholder="Search avatars…" autocomplete="off" />
+					<input type="text" id="search" placeholder="Search avatars…" autocomplete="off" aria-label="Search public avatars" />
 					<button type="button" class="search-clear" id="search-clear" hidden aria-label="Clear search">×</button>
 				</div>
-				<span class="status-line" id="status">Loading…</span>
+				<span class="status-line" id="status" aria-live="polite">Loading…</span>
 			</div>
 
 			<div class="tag-row" id="tags" aria-label="Tag filters"></div>
@@ -362,6 +362,7 @@
 					mv.setAttribute('exposure', '1.05');
 					mv.setAttribute('shadow-intensity', '0.9');
 					mv.setAttribute('environment-image', 'neutral');
+					if (a.thumbnail_url) mv.setAttribute('poster', a.thumbnail_url);
 					els.previewStage.appendChild(mv);
 				} else {
 					const div = document.createElement('div');
@@ -372,6 +373,7 @@
 
 				els.cta.disabled = false;
 				updatePayloadPreview();
+				syncUrl();
 			}
 
 			function buildPayload() {
@@ -385,7 +387,7 @@
 				}
 				return [
 					`<script type="module" src="https://three.ws/avatar-sdk/dist/index.mjs"><\/script>`,
-					`<agent-3d avatar-id="${a.id}"></agent-3d>`,
+					`<agent-3d avatar-id="${a.id}" style="width:100%;height:480px"></agent-3d>`,
 				].join('\n');
 			}
 
@@ -413,6 +415,7 @@
 				});
 			}
 
+			let copyResetTimer = null;
 			els.cta.addEventListener('click', async () => {
 				if (!state.selected) return;
 				const payload = buildPayload();
@@ -422,9 +425,11 @@
 					const prev = els.cta.textContent;
 					els.cta.classList.add('copied');
 					els.cta.textContent = 'Copied ✓';
-					setTimeout(() => {
+					if (copyResetTimer) clearTimeout(copyResetTimer);
+					copyResetTimer = setTimeout(() => {
 						els.cta.classList.remove('copied');
-						els.cta.textContent = prev;
+						updatePayloadPreview();
+						copyResetTimer = null;
 					}, 1400);
 				} catch (err) {
 					els.previewFoot.textContent = `Clipboard blocked: ${err.message}\n\n${payload}`;
@@ -465,6 +470,7 @@
 			}
 
 			function resetAndLoad() {
+				syncUrl();
 				state.cursor = null;
 				state.totalLoaded = 0;
 				state.total = null;
@@ -527,8 +533,77 @@
 				} finally {
 					state.loading = false;
 					updateStatus();
+					// If the URL named a specific avatar that just appeared in this
+					// page, auto-select it. Otherwise hydrate it via a direct fetch
+					// (the avatar may be outside the current filter/page window).
+					await hydrateDeepLink();
 				}
 			}
+
+			// ── URL state sync ───────────────────────────────────────────────
+			// `?q=` and `?tag=` round-trip filter state; `?id=` round-trips the
+			// selected avatar. History is updated with replaceState so the back
+			// button still leaves the page rather than walking selection history.
+			function readUrl() {
+				const u = new URL(location.href);
+				return {
+					q: u.searchParams.get('q') || '',
+					tag: u.searchParams.get('tag') || '',
+					id: u.searchParams.get('id') || '',
+				};
+			}
+
+			function syncUrl() {
+				const u = new URL(location.href);
+				const set = (k, v) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
+				set('q', state.query);
+				set('tag', state.tag);
+				set('id', state.selected?.id || '');
+				history.replaceState(null, '', u);
+			}
+
+			let deepLinkConsumed = false;
+			async function hydrateDeepLink() {
+				if (deepLinkConsumed) return;
+				const { id } = readUrl();
+				if (!id) {
+					deepLinkConsumed = true;
+					return;
+				}
+				const inPage = state.cardsById.get(id);
+				if (inPage) {
+					deepLinkConsumed = true;
+					selectAvatar(inPage);
+					return;
+				}
+				// Avatar not in the current page — fetch it directly so deep links
+				// to off-screen avatars still resolve on first load.
+				try {
+					const res = await fetch(`/api/avatars/${encodeURIComponent(id)}`);
+					if (!res.ok) {
+						deepLinkConsumed = true;
+						return;
+					}
+					const data = await res.json();
+					if (data?.avatar) {
+						deepLinkConsumed = true;
+						state.cardsById.set(data.avatar.id, data.avatar);
+						selectAvatar(data.avatar);
+					}
+				} catch {
+					deepLinkConsumed = true;
+				}
+			}
+
+			// Hydrate filter state from URL before the first fetch so the
+			// initial page already reflects any ?q= / ?tag= the user pasted.
+			const initial = readUrl();
+			if (initial.q) {
+				state.query = initial.q;
+				els.search.value = initial.q;
+				els.searchClear.hidden = false;
+			}
+			if (initial.tag) state.tag = initial.tag;
 
 			resetAndLoad();
 		</script>

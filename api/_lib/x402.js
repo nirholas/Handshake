@@ -48,21 +48,18 @@
 
 import { sql } from './db.js';
 import { json, error } from './http.js';
-import { resolveSnsName } from '../../src/solana/sns.js';
+import { resolveSolanaRecipient } from '../../src/solana/sns.js';
 
 export const X402_VERSION = 'x402/0.1';
 
-const SNS_NAME_RE = /^[a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63})*\.sol$/i;
-
-// Resolve the manifest's `recipient` to a concrete base58 wallet, and surface
-// the human-readable .sol name in `recipient_name` whenever one is available.
-//
-// Inputs in priority order:
-//   1. `payments.receiver` — already a base58 wallet (most agents today).
-//   2. `payments.receiver` set to a .sol or subdomain — resolve via SNS.
-//   3. `agent.meta.sns_domain` — preferred display name even when receiver
-//      is a base58 wallet, so x402 clients can show "paying nich.threews.sol"
-//      instead of a raw key.
+// Resolve the manifest's `recipient` to a base58 wallet and a human-readable
+// `recipient_name`. Two inputs feed this:
+//   - `payments.receiver` — base58 wallet OR a .sol/subdomain. When it's a
+//     name, resolveSolanaRecipient() does the SNS lookup and we use the name
+//     as the display value.
+//   - `agent.meta.sns_domain` — preferred display name even when receiver is
+//     a base58 wallet, so clients show "paying nich.threews.sol" rather than
+//     a raw key.
 async function resolveRecipient({ agent, payments }) {
 	const receiver = payments?.receiver;
 	const metaName = agent?.meta?.sns_domain || null;
@@ -70,11 +67,15 @@ async function resolveRecipient({ agent, payments }) {
 		? (metaName.endsWith('.sol') ? metaName : `${metaName}.sol`)
 		: null;
 
-	if (typeof receiver === 'string' && SNS_NAME_RE.test(receiver)) {
-		const resolved = await resolveSnsName(receiver);
-		return { recipient: resolved || null, recipient_name: receiver.toLowerCase() };
+	const { address, resolved_from } = await resolveSolanaRecipient(receiver || '');
+	if (resolved_from) {
+		return { recipient: address, recipient_name: resolved_from };
 	}
-	return { recipient: receiver || null, recipient_name: metaNameFull };
+	// Receiver wasn't recognized as a SNS name — pass through whatever the
+	// agent has stored. Most agents store a base58 wallet here; some legacy
+	// records may use a non-base58 placeholder. We don't gatekeep at this
+	// layer; the wallet adapter / payment program will validate at sign-time.
+	return { recipient: address ?? (receiver || null), recipient_name: metaNameFull };
 }
 
 /**

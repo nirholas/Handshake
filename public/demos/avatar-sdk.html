@@ -70,7 +70,23 @@
 			</section>
 
 			<section class="card">
-				<h2 style="margin-top:0;font-size:18px">2. Programmatic Creator</h2>
+				<h2 style="margin-top:0;font-size:18px">2. Hand off by avatar ID</h2>
+				<pre>&lt;script type="module" src="/avatar-sdk/dist/index.mjs"&gt;&lt;/script&gt;
+&lt;agent-3d avatar-id="AVATAR_UUID"&gt;&lt;/agent-3d&gt;</pre>
+				<p class="sub" style="margin:10px 0 0">
+					The SDK resolves <code>avatar-id</code> against
+					<code>GET /api/avatars/:id</code> on the same origin the SDK was
+					loaded from (override with <code>api-base="https://other.host"</code>).
+					This is the durable handoff the
+					<a href="/demos/gallery-picker.html" style="color:#3dc1ff">gallery picker</a>
+					emits, and it keeps working even if the underlying GLB URL changes.
+				</p>
+				<div class="viewer-host" id="byid-viewer-host"></div>
+				<div class="log" id="byid-log">picking a real public avatar from /api/avatars/public…</div>
+			</section>
+
+			<section class="card">
+				<h2 style="margin-top:0;font-size:18px">3. Programmatic Creator</h2>
 				<pre>import { AvatarCreator } from '/avatar-sdk/src/creator.js';
 
 const creator = new AvatarCreator({

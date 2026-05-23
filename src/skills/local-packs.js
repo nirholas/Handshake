@@ -18,7 +18,10 @@ let _cached = null;
 export function loadLocalSkillPacks() {
 	if (_cached) return _cached;
 	_cached = JSON.parse(
-		readFileSync(new URL('../../data/_generated/local-skill-packs.json', import.meta.url), 'utf8'),
+		readFileSync(
+			new URL('../../data/_generated/local-skill-packs.json', import.meta.url),
+			'utf8',
+		),
 	);
 	return _cached;
 }

@@ -45,7 +45,9 @@ export default wrap(async (req, res) => {
 		sql`
 			select id, name, description, avatar_url, profile_image_url, home_url,
 			       wallet_address, chain_id, erc8004_agent_id, x_username,
-			       farcaster_fname, created_at
+			       farcaster_fname, created_at,
+			       meta->>'solana_address' as solana_address,
+			       meta->>'sns_domain'     as sns_domain
 			from agent_identities
 			where user_id = ${user.id}
 			  and is_public = true
@@ -130,6 +132,10 @@ export default wrap(async (req, res) => {
 		erc8004_agent_id: a.erc8004_agent_id ? String(a.erc8004_agent_id) : null,
 		x_username: a.x_username,
 		farcaster_fname: a.farcaster_fname,
+		solana_address: a.solana_address,
+		sns_domain: a.sns_domain
+			? (a.sns_domain.endsWith('.sol') ? a.sns_domain : `${a.sns_domain}.sol`)
+			: null,
 		created_at: a.created_at,
 	}));
 

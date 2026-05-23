@@ -16,9 +16,7 @@ import { readFileSync } from 'fs';
 import { cors, json, method, wrap } from './_lib/http.js';
 import { loadLocalSkillPacks } from '../src/skills/local-packs.js';
 
-const { version } = JSON.parse(
-	readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
-);
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 const _skillMetadata = JSON.parse(
 	readFileSync(new URL('../data/_generated/skill-metadata.json', import.meta.url), 'utf8'),
@@ -41,18 +39,18 @@ function buildClientToolFor(skill) {
 		"  method: 'POST',",
 		"  headers: { 'content-type': 'application/json' },",
 		"  credentials: 'include',",
-		"  body: JSON.stringify({",
+		'  body: JSON.stringify({',
 		"    jsonrpc: '2.0', id: 1, method: 'tools/call',",
 		`    params: { name: ${JSON.stringify(mcpName)}, arguments: args || {} },`,
-		"  }),",
-		"});",
-		"const _t = await _r.text();",
-		"let _d = null; try { _d = _t ? JSON.parse(_t) : null; } catch {}",
+		'  }),',
+		'});',
+		'const _t = await _r.text();',
+		'let _d = null; try { _d = _t ? JSON.parse(_t) : null; } catch {}',
 		"if (!_r.ok) return JSON.stringify({ error: (_d && (_d.error?.message || _d.error)) || ('HTTP ' + _r.status) });",
-		"if (_d && _d.error) return JSON.stringify({ error: _d.error.message || _d.error });",
-		"const _c = _d && _d.result && _d.result.content;",
+		'if (_d && _d.error) return JSON.stringify({ error: _d.error.message || _d.error });',
+		'const _c = _d && _d.result && _d.result.content;',
 		"if (Array.isArray(_c)) return _c.map(x => x.text || JSON.stringify(x)).join('\\n');",
-		"return JSON.stringify(_c ?? _d ?? null, null, 2);",
+		'return JSON.stringify(_c ?? _d ?? null, null, 2);',
 	].join('\n');
 	return {
 		clientDefinition: {

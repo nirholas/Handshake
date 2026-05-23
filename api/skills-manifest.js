@@ -9,9 +9,7 @@ import { readFileSync } from 'fs';
 import { cors, json, method, wrap } from './_lib/http.js';
 import { buildSkillManifest } from '../src/skill-manifest.js';
 
-const { version } = JSON.parse(
-	readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
-);
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 const _skillMetadata = JSON.parse(
 	readFileSync(new URL('../data/_generated/skill-metadata.json', import.meta.url), 'utf8'),
