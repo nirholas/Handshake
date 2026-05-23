@@ -400,7 +400,7 @@
 				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
 			}
 
-			const FAIL_CLIPS = ['reaction', 'defeated', 'angry'];
+			const FAIL_CLIPS = ['reaction', 'defeated', 'angry', 'facepalm'];
 			let lastFailPick = null;
 
 			function disapprove() {
@@ -477,7 +477,7 @@
 			});
 
 			// ── Load avatar + animations ──────────────────────────────────────
-			const CLIPS = ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'silly', 'defeated', 'angry'];
+			const CLIPS = ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'silly', 'defeated', 'angry', 'facepalm'];
 
 			new GLTFLoader().load('/avatars/cz.glb', gltf => {
 				avatar = gltf.scene;

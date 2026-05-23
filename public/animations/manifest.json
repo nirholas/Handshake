@@ -21,6 +21,13 @@
 		"loop": true
 	},
 	{
+		"name": "facepalm",
+		"url": "/animations/clips/facepalm.json",
+		"label": "Facepalm",
+		"icon": "🤦",
+		"loop": false
+	},
+	{
 		"name": "dance",
 		"url": "/animations/clips/dance.json",
 		"label": "Dance",

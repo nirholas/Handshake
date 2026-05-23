@@ -2,6 +2,7 @@
 	{ "name": "idle", "source": "Idle.fbx", "label": "Idle", "icon": "🧍", "loop": true },
 	{ "name": "lookdown", "source": "Looking Down.fbx", "label": "Look Down", "icon": "👀", "loop": true },
 	{ "name": "covereyes", "source": "Defeat.fbx", "label": "Cover Eyes", "icon": "🙈", "loop": true },
+	{ "name": "facepalm", "source": "Facepalm.glb", "label": "Facepalm", "icon": "🤦", "loop": false },
 	{
 		"name": "dance",
 		"source": "Hip Hop Dancing.fbx",

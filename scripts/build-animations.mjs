@@ -110,7 +110,7 @@ function collectBoneNames(root) {
  * @param {Set<string>} avaturnBones
  * @returns {{ clip: import('three').AnimationClip, matched: number, total: number, dropped: string[] }}
  */
-function retargetClip(clip, avaturnBones) {
+function retargetClip(clip, avaturnBones, { scaleHips = true } = {}) {
 	const dropped = [];
 	const newTracks = [];
 	for (const track of clip.tracks) {
@@ -127,8 +127,9 @@ function retargetClip(clip, avaturnBones) {
 		// Mixamo bakes hip translation in cm even after FBXLoader rescaling.
 		// Without this, the avatar floats ~100m in the air for clips that have
 		// vertical motion (Joyful Jump, Falling, etc.) and slides off-screen
-		// for any clip with horizontal motion.
-		if (stripped === 'Hips' && property === 'position') {
+		// for any clip with horizontal motion. Avaturn GLBs already use meters,
+		// so the caller passes scaleHips:false for those.
+		if (scaleHips && stripped === 'Hips' && property === 'position') {
 			for (let i = 0; i < newTrack.values.length; i++) {
 				newTrack.values[i] *= HIPS_POSITION_SCALE;
 			}
@@ -206,14 +207,21 @@ async function main() {
 
 		try {
 			const bones = await getRig();
-			const fbx = await loadFBX(fbxPath);
-			const sourceClip = fbx.animations?.[0];
+			const isGlb = /\.glb$/i.test(fbxPath);
+			let sourceClip;
+			if (isGlb) {
+				const gltf = await loadGLB(fbxPath);
+				sourceClip = gltf.animations?.[0];
+			} else {
+				const fbx = await loadFBX(fbxPath);
+				sourceClip = fbx.animations?.[0];
+			}
 			if (!sourceClip) {
-				console.warn(`[animations] SKIP ${def.name}: no clip in FBX`);
+				console.warn(`[animations] SKIP ${def.name}: no clip in source ${def.source}`);
 				failCount++;
 				continue;
 			}
-			const { clip, matched, total, dropped } = retargetClip(sourceClip, bones);
+			const { clip, matched, total, dropped } = retargetClip(sourceClip, bones, { scaleHips: !isGlb });
 			const matchPct = (matched / total) * 100;
 			if (matchPct < 60) {
 				console.warn(
