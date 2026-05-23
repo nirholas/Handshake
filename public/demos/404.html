@@ -308,11 +308,7 @@
 				landed = true;
 				const t = getZeroLandWorld();
 				avatar.position.set(t.x, t.y, 0);
-				// Crossfade fall → falltolanding → idle for a clean settle
-				setAnimation('falltolanding', { loop: false, hold: true });
-				setTimeout(() => {
-					if (phase === 'confused') setAnimation('idle', { loop: true });
-				}, 900);
+				setAnimation('idle', { loop: true });
 				// Gentle head-turn loop — feels like "looking around lost"
 				lookAroundLoop();
 			}
@@ -397,7 +393,7 @@
 			});
 
 			// ── Loader ────────────────────────────────────────────────────────
-			const CLIPS = ['idle', 'walk', 'falling', 'falltolanding'];
+			const CLIPS = ['idle', 'walk', 'falling'];
 
 			new GLTFLoader().load('/avatars/cz.glb', gltf => {
 				avatar = gltf.scene;

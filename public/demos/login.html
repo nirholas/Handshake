@@ -34,12 +34,37 @@
 				padding: 100px 24px 60px;
 			}
 			.card {
+				position: relative;
 				width: 100%; max-width: 420px;
 				background: rgba(12,14,28,0.72);
 				border: 1px solid rgba(255,255,255,0.06);
 				border-radius: 20px;
 				padding: 40px 36px 32px;
 				backdrop-filter: blur(18px);
+				box-shadow:
+					inset 0 1.5px 0 rgba(255,255,255,0.18),
+					inset 0 -1px 0 rgba(0,0,0,0.35),
+					0 28px 60px -16px rgba(0,0,0,0.55),
+					0 6px 14px -4px rgba(0,0,0,0.35);
+			}
+			/* 3D ledge: a thin lip extending above the card top so the avatar
+			   has a visible surface to stand on. Top highlight + bottom shadow
+			   gives it bevel without needing perspective. */
+			.card::before {
+				content: '';
+				position: absolute;
+				left: 10px; right: 10px;
+				top: -5px;
+				height: 9px;
+				background: linear-gradient(180deg,
+					rgba(255,255,255,0.22) 0%,
+					rgba(255,255,255,0.05) 45%,
+					rgba(0,0,0,0.45) 100%);
+				border-radius: 6px 6px 4px 4px;
+				box-shadow:
+					0 1px 0 rgba(255,255,255,0.10),
+					0 4px 8px -2px rgba(0,0,0,0.5);
+				pointer-events: none;
 			}
 			.eyebrow {
 				display: inline-flex; align-items: center; gap: 9px;
@@ -364,8 +389,9 @@
 			}
 
 			function enterPrivacyMode() {
-				// Hands-over-face cover-eyes loop while password field is focused.
-				setAnimation('covereyes', { loop: true });
+				// Play subclipped covereyes (frames 0–48) once and hold the final
+				// hands-on-face pose while the password field stays focused.
+				setAnimation('covereyes', { loop: false, hold: true });
 				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
 			}
 
@@ -444,7 +470,7 @@
 			});
 
 			// ── Load avatar + animations ──────────────────────────────────────
-			const CLIPS = ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'celebrate'];
+			const CLIPS = ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'celebrate', 'sitidle'];
 
 			new GLTFLoader().load('/avatars/cz.glb', gltf => {
 				avatar = gltf.scene;
@@ -460,8 +486,14 @@
 					fetch(`/animations/clips/${name}.json`).then(r => r.json())
 				)).then(jsons => {
 					CLIPS.forEach((name, i) => {
-						clips[name] = THREE.AnimationClip.parse(jsons[i]);
-						actions[name] = mixer.clipAction(clips[name]);
+						let clip = THREE.AnimationClip.parse(jsons[i]);
+						// covereyes runs 219 frames @30fps; only play frames 0–48
+						// (hands settle on face) then hold that pose.
+						if (name === 'covereyes') {
+							clip = THREE.AnimationUtils.subclip(clip, name, 0, 48, 30);
+						}
+						clips[name] = clip;
+						actions[name] = mixer.clipAction(clip);
 					});
 
 					if (rootBone) baseRootPos = rootBone.position.clone();
@@ -472,12 +504,12 @@
 						_r(sc, cam);
 					};
 
-					// Park avatar centered above the form card, looking forward.
+					// Park avatar centered above the form card, sitting on the ledge.
 					const cardRect = form.getBoundingClientRect();
 					const restPos = domToWorld(cardRect.left + cardRect.width / 2, cardRect.top - 30);
 					avatar.position.set(restPos.x, restPos.y, 0);
 
-					setAnimation('idle', { loop: true });
+					setAnimation('sitidle', { loop: true });
 				});
 			});
 
