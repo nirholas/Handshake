@@ -470,7 +470,7 @@
 			});
 
 			// ── Load avatar + animations ──────────────────────────────────────
-			const CLIPS = ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'celebrate'];
+			const CLIPS = ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'celebrate', 'sitidle'];
 
 			new GLTFLoader().load('/avatars/cz.glb', gltf => {
 				avatar = gltf.scene;
@@ -497,19 +497,29 @@
 					});
 
 					if (rootBone) baseRootPos = rootBone.position.clone();
-					// Lock root motion so animation drift doesn't accumulate translation
+					// Lock root motion so animation drift doesn't accumulate translation,
+					// EXCEPT while sitidle is the current action — sitidle needs to lower
+					// the hips for the seated pose to read correctly.
 					const _r = renderer.render.bind(renderer);
 					renderer.render = (sc, cam) => {
-						try { if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos); } catch (_) {}
+						try {
+							if (rootBone && baseRootPos && currentAction !== actions.sitidle) {
+								rootBone.position.copy(baseRootPos);
+							}
+						} catch (_) {}
 						_r(sc, cam);
 					};
 
-					// Park avatar centered above the form card, feet on the ledge.
+					// Park avatar on the top-right corner of the form card.
+					// SIT_Y_PX / SIT_X_INSET_PX = pixels from the card edges where the
+					// avatar's origin should land so the butt rests on the ledge. Tune.
+					const SIT_Y_PX = 80;
+					const SIT_X_INSET_PX = 40;
 					const cardRect = form.getBoundingClientRect();
-					const restPos = domToWorld(cardRect.left + cardRect.width / 2, cardRect.top);
+					const restPos = domToWorld(cardRect.right - SIT_X_INSET_PX, cardRect.top + SIT_Y_PX);
 					avatar.position.set(restPos.x, restPos.y, 0);
 
-					setAnimation('idle', { loop: true });
+					setAnimation('sitidle', { loop: true });
 				});
 			});
 
