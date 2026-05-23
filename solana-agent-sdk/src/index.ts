@@ -50,3 +50,6 @@ export { memoInstruction, MEMO_PROGRAM_ID } from "./utils/memo.js";
 
 // Format utilities
 export { toUiAmount } from "./utils/format.js";
+
+// AgenC adapter — read + write the AgenC coordination protocol (agenc.tech).
+export * from "./actions/agenc/index.js";

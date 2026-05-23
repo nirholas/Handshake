@@ -7,6 +7,7 @@ import { cors, json, method, error, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { generateSolanaAgentWallet } from '../_lib/agent-wallet.js';
 import { solanaConnection, solanaPublicConnection } from '../_lib/agent-pumpfun.js';
+import { reverseLookupAddress } from '../../src/solana/sns.js';
 import { Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { webcrypto } from 'node:crypto';
 import { env } from '../_lib/env.js';
@@ -15,6 +16,19 @@ import { recordEvent } from '../_lib/usage.js';
 const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
 const AIRDROP_LAMPORTS = LAMPORTS_PER_SOL;
+
+// Bonfida reverse-lookup is rate-limited and pulls a few KB per call. Memoize
+// 10 minutes per-address so wallet card refreshes (every 30s) don't refetch.
+const SNS_CACHE_TTL_MS = 10 * 60_000;
+const _snsCache = new Map();
+async function _reverseSnsCached(address) {
+	const hit = _snsCache.get(address);
+	if (hit && Date.now() - hit.at < SNS_CACHE_TTL_MS) return hit.value;
+	let value = null;
+	try { value = await reverseLookupAddress(address); } catch { value = null; }
+	_snsCache.set(address, { at: Date.now(), value });
+	return value;
+}
 
 async function _deriveKey() {
 	const raw = new TextEncoder().encode(env.JWT_SECRET);
@@ -265,8 +279,26 @@ async function handleWallet(req, res, id) {
 		}
 	}
 
+	// SNS is mainnet-only. Skip the lookup on devnet — it always returns null
+	// and just burns a network round-trip. Prefer the user's manually-attached
+	// SNS id (meta.sns_domain) over the on-chain favorite so the wallet card
+	// matches whatever they picked on the SNS dashboard.
+	const attachedSns = meta.sns_domain ? `${meta.sns_domain}.sol` : null;
+	const favoriteSns = net === 'mainnet' && !attachedSns
+		? await _reverseSnsCached(meta.solana_address)
+		: null;
+
 	return json(res, req.method === 'POST' ? 201 : 200, {
-		data: { address: meta.solana_address, network, lamports, sol: lamports == null ? null : lamports / 1e9, vanity_prefix: meta.solana_vanity_prefix || null, source: meta.solana_wallet_source || (meta.encrypted_solana_secret ? 'generated' : null) },
+		data: {
+			address: meta.solana_address,
+			network,
+			lamports,
+			sol: lamports == null ? null : lamports / 1e9,
+			vanity_prefix: meta.solana_vanity_prefix || null,
+			source: meta.solana_wallet_source || (meta.encrypted_solana_secret ? 'generated' : null),
+			sns_domain: attachedSns || favoriteSns,
+			sns_source: attachedSns ? 'attached' : (favoriteSns ? 'favorite' : null),
+		},
 	});
 }
 

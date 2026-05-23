@@ -8,15 +8,15 @@
     },
     "functions": {
         "api/club/tips-stream.js": {
-            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 300
         },
         "api/tts/speak.js": {
-            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 60
         },
         "api/**/*.js": {
-            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**",
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 30
         }
     },
@@ -1018,6 +1018,22 @@
         {
             "src": "/api/users/me/earnings",
             "dest": "/api/users/earnings.js"
+        },
+        {
+            "src": "/api/users/by-subdomain",
+            "dest": "/api/users/by-subdomain.js"
+        },
+        {
+            "src": "/api/threews/subdomain",
+            "dest": "/api/threews/subdomain.js"
+        },
+        {
+            "src": "/api/x402/pay-by-name",
+            "dest": "/api/x402/pay-by-name.js"
+        },
+        {
+            "src": "/threews/claim",
+            "dest": "/threews-claim.html"
         },
         {
             "src": "/api/users/([^/]+)",

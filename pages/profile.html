@@ -900,6 +900,60 @@
 					</span>`
 					: '';
 
+				// SNS subdomain pill + pay-by-name button.
+				// Look up `<username>.threews.sol`; if claimed, badge it as a verified
+				// on-chain handle and surface the pay-by-name action.
+				const snsPillSlot = `<span id="up-sns-pill"></span><span id="up-pay-slot"></span>`;
+				(async () => {
+					try {
+						const r = await fetch(`/api/threews/subdomain?label=${encodeURIComponent(user.username)}`);
+						if (!r.ok) return;
+						const j = await r.json();
+						const d = j?.data;
+						if (!d?.claim || d.claim.username !== user.username) return;
+						const pill = document.getElementById('up-sns-pill');
+						if (pill) {
+							pill.outerHTML = `<a class="up-wallet-pill" style="text-decoration:none" href="https://www.sns.id/domain?domain=${attr(d.full)}" target="_blank" rel="noopener" title="${attr(d.full)}">
+								<svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0l2.39 4.84L16 5.92l-4 3.9L13 16l-5-2.63L3 16l1-6.18L0 5.92l5.61-1.08z"/></svg>
+								${esc(d.full)}
+							</a>`;
+						}
+						const paySlot = document.getElementById('up-pay-slot');
+						if (paySlot) {
+							paySlot.outerHTML = `<button class="up-wallet-pill" id="up-pay-btn" style="cursor:pointer;border:0;font-family:inherit" data-name="${attr(d.full)}">
+								Pay @${esc(user.username)} in USDC
+							</button>`;
+							document.getElementById('up-pay-btn')?.addEventListener('click', () => openPay(d.full));
+						}
+					} catch {}
+				})();
+
+				async function openPay(name) {
+					const amount = prompt(`How much USDC do you want to send to ${name}?`, '1');
+					if (!amount) return;
+					const num = Number(amount);
+					if (!Number.isFinite(num) || num <= 0) { alert('invalid amount'); return; }
+					const payerWallet = prompt('Your Solana wallet address (the one paying):', '');
+					if (!payerWallet) return;
+					try {
+						const res = await fetch('/api/x402/pay-by-name', {
+							method: 'POST',
+							headers: { 'content-type': 'application/json' },
+							body: JSON.stringify({ mode: 'prep', name, amount_usdc: num, payer_wallet: payerWallet.trim() }),
+						});
+						const data = await res.json();
+						if (!res.ok) {
+							alert(data?.error_description || 'Could not prepare payment.');
+							return;
+						}
+						const d = data.data;
+						alert(`Payment prepared.\n\nTo: ${d.recipient.resolved} (${d.recipient.address.slice(0,6)}…${d.recipient.address.slice(-4)})\nAmount: ${d.amount_usdc} USDC\n\nSign and broadcast the returned transaction with your Solana wallet (base64 tx is in the console).`);
+						console.log('[pay-by-name tx_base64]', d.tx_base64);
+					} catch (err) {
+						alert(err?.message || 'Network error.');
+					}
+				}
+
 				// Stats strip
 				const statDefs = [
 					['avatars', 'Avatars'],
@@ -945,7 +999,10 @@
 							<h1 class="up-display-name">${esc(display)}</h1>
 							<p class="up-handle">@${esc(user.username)}</p>
 							${metaBits.length ? `<div class="up-meta-line">${metaBits.join('')}</div>` : ''}
-							${walletPill}
+							<div class="up-pill-row" style="display:flex;flex-wrap:wrap;gap:.4rem;align-items:center">
+								${walletPill}
+								${snsPillSlot}
+							</div>
 						</div>
 					</div>
 					<div class="up-stats">${statsHtml}</div>

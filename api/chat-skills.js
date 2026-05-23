@@ -1,27 +1,28 @@
 // GET /api/chat-skills - rich local-skill feed for the chat Skills modal.
 //
 // Returns a normalized list that combines:
-//   1. In-code AgentSkills (66+) - MCP-exposed handlers, surfaced as
+//   1. Agent-runtime skills (66+) - MCP-exposed handlers, surfaced as
 //      installable tool packs whose clientDefinition.body POSTs to /api/mcp.
 //   2. SKILL.md packs on disk (.agents/skills, pump-fun-skills,
 //      public/skills, examples/skills) - surfaced as knowledge skills
 //      whose body is injected into the system prompt on install.
 //
-// Kept separate from /api/skills-manifest (which preserves the simpler
-// machine-readable shape consumed by external manifest readers).
+// Skill metadata is read from data/_generated/skill-metadata.json, produced
+// by scripts/build-skill-metadata.mjs at build time. Importing AgentSkills
+// directly here would pull Three.js, @solana, @metaplex-foundation, @coinbase,
+// etc. into the deployed function and exceed Vercel's 300mb function limit.
 
 import { readFileSync } from 'fs';
 import { cors, json, method, wrap } from './_lib/http.js';
-import { AgentSkills } from '../src/agent-skills.js';
 import { loadLocalSkillPacks } from '../src/skills/local-packs.js';
 
 const { version } = JSON.parse(
 	readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 );
 
-const _noop = () => {};
-const _stub = { emit: _noop, on: _noop, off: _noop, add: _noop, query: () => [] };
-const _skills = new AgentSkills(_stub, _stub);
+const _skillMetadata = JSON.parse(
+	readFileSync(new URL('../data/_generated/skill-metadata.json', import.meta.url), 'utf8'),
+);
 
 function mcpToolNameFor(skillName) {
 	return `skill_${skillName.replace(/[-.]/g, '_')}`;
@@ -72,7 +73,7 @@ function buildClientToolFor(skill) {
 
 function buildAgentRuntimeEntries() {
 	const out = [];
-	for (const skill of _skills.list()) {
+	for (const skill of _skillMetadata) {
 		if (!skill.description) continue;
 		const base = {
 			id: `local:agent-runtime:${skill.name}`,

@@ -1,17 +1,21 @@
-// GET /api/skills-manifest — machine-readable manifest of agent skills
+// GET /api/skills-manifest — machine-readable manifest of agent skills.
+//
+// Skill metadata is read from data/_generated/skill-metadata.json, produced
+// by scripts/build-skill-metadata.mjs at build time. Importing AgentSkills
+// directly here would pull Three.js, @solana, @metaplex-foundation, @coinbase,
+// etc. into the deployed function and exceed Vercel's 300mb function limit.
 
 import { readFileSync } from 'fs';
 import { cors, json, method, wrap } from './_lib/http.js';
 import { buildSkillManifest } from '../src/skill-manifest.js';
-import { AgentSkills } from '../src/agent-skills.js';
 
 const { version } = JSON.parse(
 	readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 );
 
-const _noop = () => {};
-const _stub = { emit: _noop, on: _noop, off: _noop, add: _noop, query: () => [] };
-const _skills = new AgentSkills(_stub, _stub);
+const _skillMetadata = JSON.parse(
+	readFileSync(new URL('../data/_generated/skill-metadata.json', import.meta.url), 'utf8'),
+);
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -23,7 +27,7 @@ export default wrap(async (req, res) => {
 		buildSkillManifest({
 			agentId: '3d-agent',
 			version,
-			skills: _skills.list(),
+			skills: _skillMetadata,
 		}),
 		{ 'cache-control': 'public, max-age=60' },
 	);

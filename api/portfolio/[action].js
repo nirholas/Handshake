@@ -17,7 +17,7 @@ import { logAudit } from '../_lib/audit.js';
 import { sql } from '../_lib/db.js';
 import { getBalances, walletUsdTotal, invalidateBalances } from '../_lib/balances.js';
 import { recoverAgentKey, recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
-import { reverseLookupAddress } from '../../src/solana/sns.js';
+import { reverseLookupAddress, resolveSolanaRecipient } from '../../src/solana/sns.js';
 import { env } from '../_lib/env.js';
 import { z } from 'zod';
 
@@ -284,12 +284,14 @@ async function sendEvm({ agent, asset, recipient, amount, memo }) {
 }
 
 async function sendSolana({ agent, asset, recipient, amount, userId }) {
-	if (!SOL_ADDR_RE.test(recipient)) {
-		const e = new Error('invalid Solana recipient');
+	const { address: resolvedRecipient, resolved_from } = await resolveSolanaRecipient(recipient);
+	if (!resolvedRecipient) {
+		const e = new Error('invalid Solana recipient — must be a base58 address or a registered .sol name');
 		e.code = 'validation_error';
 		e.status = 400;
 		throw e;
 	}
+	recipient = resolvedRecipient;
 	const encryptedSecret = agent.meta?.encrypted_solana_secret;
 	if (!encryptedSecret) {
 		const e = new Error('agent has no Solana key');
@@ -350,7 +352,7 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 	// 'confirmed' commitment takes 10-30s under load and the function would
 	// time out (Vercel default 10s). The signature is the receipt.
 	const sig = await conn.sendRawTransaction(tx.serialize(), { skipPreflight: false });
-	return { tx_hash: sig };
+	return { tx_hash: sig, recipient, resolved_from };
 }
 
 async function handleSend(req, res) {
@@ -391,7 +393,9 @@ async function handleSend(req, res) {
 			meta: {
 				chain: body.chain,
 				asset: body.asset,
-				recipient: body.recipient,
+				recipient: out.recipient || body.recipient,
+				recipient_typed: body.recipient,
+				resolved_from: out.resolved_from || null,
 				amount: body.amount,
 				tx_hash: out.tx_hash,
 			},

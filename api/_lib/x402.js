@@ -48,8 +48,34 @@
 
 import { sql } from './db.js';
 import { json, error } from './http.js';
+import { resolveSnsName } from '../../src/solana/sns.js';
 
 export const X402_VERSION = 'x402/0.1';
+
+const SNS_NAME_RE = /^[a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63})*\.sol$/i;
+
+// Resolve the manifest's `recipient` to a concrete base58 wallet, and surface
+// the human-readable .sol name in `recipient_name` whenever one is available.
+//
+// Inputs in priority order:
+//   1. `payments.receiver` — already a base58 wallet (most agents today).
+//   2. `payments.receiver` set to a .sol or subdomain — resolve via SNS.
+//   3. `agent.meta.sns_domain` — preferred display name even when receiver
+//      is a base58 wallet, so x402 clients can show "paying nich.threews.sol"
+//      instead of a raw key.
+async function resolveRecipient({ agent, payments }) {
+	const receiver = payments?.receiver;
+	const metaName = agent?.meta?.sns_domain || null;
+	const metaNameFull = metaName
+		? (metaName.endsWith('.sol') ? metaName : `${metaName}.sol`)
+		: null;
+
+	if (typeof receiver === 'string' && SNS_NAME_RE.test(receiver)) {
+		const resolved = await resolveSnsName(receiver);
+		return { recipient: resolved || null, recipient_name: receiver.toLowerCase() };
+	}
+	return { recipient: receiver || null, recipient_name: metaNameFull };
+}
 
 /**
  * Emit a 402 Payment Required response with a canonical manifest body.
@@ -62,11 +88,15 @@ export const X402_VERSION = 'x402/0.1';
  * @param {string} opts.currency    Mint pubkey (base58) for the currency token.
  * @param {number} [opts.validForSec=900]  Manifest validity in seconds (default 15m).
  */
-export function emit402(res, { agent, skill, amount, currency, validForSec = 900 }) {
+export async function emit402(res, { agent, skill, amount, currency, validForSec = 900 }) {
 	const payments = agent?.meta?.payments || agent?.payments;
 	if (!payments?.configured) {
 		// Misconfigured: we shouldn't gate a skill behind 402 if payments aren't on.
 		return error(res, 500, 'misconfigured', 'agent has no payments config');
+	}
+	const { recipient, recipient_name } = await resolveRecipient({ agent, payments });
+	if (!recipient) {
+		return error(res, 412, 'recipient_unresolved', 'agent payments.receiver could not be resolved to a wallet');
 	}
 	const validUntil = Math.floor(Date.now() / 1000) + validForSec;
 	const manifest = {
@@ -76,7 +106,8 @@ export function emit402(res, { agent, skill, amount, currency, validForSec = 900
 		skill,
 		amount: String(amount),
 		currency,
-		recipient: payments.receiver,
+		recipient,
+		recipient_name,
 		memo: String(Math.floor(Date.now() / 1000)),
 		valid_until: validUntil,
 		intent_url: '/api/agents/payments/pay-prep',
@@ -152,9 +183,10 @@ export async function consumeIntent(intentId) {
  * Helper: respond with the manifest only (no 402), for prefetch/discovery
  * via `GET /api/agents/:id/x402/:skill/manifest`.
  */
-export function manifestOnly(res, opts) {
+export async function manifestOnly(res, opts) {
 	const validUntil = Math.floor(Date.now() / 1000) + (opts.validForSec || 900);
 	const payments = opts.agent.meta?.payments || opts.agent.payments;
+	const { recipient, recipient_name } = await resolveRecipient({ agent: opts.agent, payments });
 	return json(res, 200, {
 		version: X402_VERSION,
 		kind: 'agent-skill',
@@ -162,7 +194,8 @@ export function manifestOnly(res, opts) {
 		skill: opts.skill,
 		amount: String(opts.amount),
 		currency: opts.currency,
-		recipient: payments?.receiver,
+		recipient,
+		recipient_name,
 		valid_until: validUntil,
 		intent_url: '/api/agents/payments/pay-prep',
 		verify_url: '/api/agents/payments/pay-confirm',

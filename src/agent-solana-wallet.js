@@ -133,6 +133,8 @@ const STYLE = `
 .agent-sol-wallet .sub { color: rgba(230,230,234,0.6); font-size: .78rem; margin: 0 0 .65rem; }
 .agent-sol-wallet .addr { font-family: ui-monospace, monospace; font-size: .8rem; background: rgba(255,255,255,0.05); color: #e6e6ea; padding: .4rem .55rem; border-radius: 5px; word-break: break-all; border: 1px solid rgba(255,255,255,0.06); }
 .agent-sol-wallet .addr .pfx { background: linear-gradient(90deg,#ffd54f,#ff8a65); color: #1a1a1a; padding: 0 2px; border-radius: 2px; font-weight: 600; }
+.agent-sol-wallet .sns { display: inline-flex; align-items: center; gap: .35rem; margin-top: .35rem; padding: .2rem .55rem; font-family: ui-monospace, monospace; font-size: .78rem; font-weight: 600; color: #1a1a1a; background: linear-gradient(90deg,#a5d6a7,#80cbc4); border-radius: 999px; }
+.agent-sol-wallet .sns::before { content: '◎'; font-weight: 700; }
 .agent-sol-wallet .row { display: flex; gap: .5rem; align-items: center; margin-top: .65rem; flex-wrap: wrap; }
 .agent-sol-wallet button { font: inherit; padding: .4rem .8rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #e6e6ea; cursor: pointer; }
 .agent-sol-wallet button:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
@@ -244,6 +246,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 		network: 'mainnet',
 		sol: null,
 		lamports: null,
+		snsDomain: null,
 		busy: false,
 		err: null,
 		activity: [],
@@ -266,6 +269,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 			state.source = r.data.source || null;
 			state.lamports = r.data.lamports;
 			state.sol = r.data.sol;
+			state.snsDomain = r.data.sns_domain || null;
 			_propagate(identity, r.data);
 		} else if (r.status === 'none') {
 			state.address = null;
@@ -287,6 +291,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 		if (r.status === 'ok') {
 			state.lamports = r.data.lamports;
 			state.sol = r.data.sol;
+			state.snsDomain = r.data.sns_domain || null;
 			render();
 		}
 	}
@@ -357,6 +362,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 			root.innerHTML = `
 				<h3>Solana wallet${state.source ? `<span class="src">· ${_esc(state.source)}</span>` : ''}</h3>
 				<div class="addr"><span class="pfx">${_esc(pfx)}</span>${_esc(rest)}</div>
+				${state.snsDomain ? `<div><span class="sns" title="Primary .sol domain for this wallet">${_esc(state.snsDomain)}</span></div>` : ''}
 				<div class="balance">
 					<span class="sol">${_esc(solDisplay)}</span>
 					<span class="net">

@@ -80,8 +80,9 @@
 							<input type="number" id="withdraw-amount" class="ad-input" placeholder="0.0">
 						</div>
 						<div class="ad-form-group">
-							<label for="recipient-address">Recipient Address</label>
-							<input type="text" id="recipient-address" class="ad-input" placeholder="Enter wallet address">
+							<label for="recipient-address">Recipient address or .sol name</label>
+							<input type="text" id="recipient-address" class="ad-input" placeholder="Wallet address or yourname.sol" autocomplete="off" spellcheck="false">
+							<div id="recipient-resolved" class="ad-resolved" hidden></div>
 						</div>
 					</div>
 					<div class="ad-modal-footer">

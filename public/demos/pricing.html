@@ -282,7 +282,7 @@
 				</div>
 			</div>
 
-			<p class="hint">Move your mouse over a tier — she jumps over and points at the CTA.</p>
+			<p class="hint">Move your mouse over a tier — she walks across and points at the CTA.</p>
 		</div>
 
 		<canvas id="avatar-canvas"></canvas>
@@ -330,7 +330,7 @@
 				renderer.setSize(window.innerWidth, window.innerHeight, false);
 				updateFrustum();
 				// Re-snap to the currently-targeted tier so layout shifts don't leave her floating
-				if (avatar && activeTier && phase !== 'jumping') {
+				if (avatar && activeTier && phase === 'idle') {
 					const t = standOnTopOf(activeTier);
 					gsap.killTweensOf(avatar.position);
 					gsap.to(avatar.position, { x: t.x, y: t.y, duration: 0.35, overwrite: true });
@@ -370,19 +370,53 @@
 				return domToWorld(r.left + r.width / 2, r.top + FEET_TOP_OFFSET_PX);
 			}
 
-			// phase: loading | idle | jumping (declared above)
+			// phase: loading | idle | walking | jumping (declared above)
 			// activeTier: tier she's currently associated with (declared above)
+			let walkT = 0, walkStart = null, walkEnd = null, walkDur = 0.85;
 			let jumpT = 0, jumpStart = null, jumpEnd = null, jumpLift = 0;
+			const WALK_SPEED = 5; // world units per second
 			const JUMP_S = 0.85;
 
 			function smoothstep(t) { return t * t * (3 - 2 * t); }
 
-			function jumpToTier(tierEl) {
-				if (!avatar || tierEl === activeTier) return;
-				// Visual: mark the new tier active, clear the old one
+			// Pro is the "most popular" pedestal — she leaps onto it from
+			// either neighbour for a dramatic entrance, and walks everywhere
+			// else (including stepping back down off Pro).
+			function shouldJump(fromEl, toEl) {
+				if (!fromEl || !toEl) return false;
+				const from = fromEl.dataset.tier;
+				const to   = toEl.dataset.tier;
+				return (from === 'basic'      && to === 'pro') ||
+				       (from === 'enterprise' && to === 'pro');
+			}
+
+			function beginMove(tierEl) {
 				if (activeTier) activeTier.classList.remove('is-active');
 				activeTier = tierEl;
 				activeTier.classList.add('is-active');
+			}
+
+			function walkToTier(tierEl) {
+				if (!avatar || tierEl === activeTier) return;
+				beginMove(tierEl);
+
+				phase = 'walking';
+				walkT = 0;
+				walkStart = { x: avatar.position.x, y: avatar.position.y };
+				walkEnd   = standOnTopOf(tierEl);
+				// Distance-based duration so short hops finish quickly and long
+				// strolls don't blur into a teleport.
+				const dx = Math.abs(walkEnd.x - walkStart.x);
+				walkDur = Math.max(0.4, dx / WALK_SPEED);
+				setAnimation('walk', { loop: true });
+				// Turn to profile so the walk cycle reads sideways toward the destination
+				const dir = Math.sign(walkEnd.x - walkStart.x) || 0;
+				gsap.to(avatar.rotation, { y: dir * (Math.PI / 2), duration: 0.25, overwrite: true });
+			}
+
+			function jumpToTier(tierEl) {
+				if (!avatar || tierEl === activeTier) return;
+				beginMove(tierEl);
 
 				phase = 'jumping';
 				jumpT = 0;
@@ -392,20 +426,19 @@
 				const dx = Math.abs(jumpEnd.x - jumpStart.x);
 				jumpLift = Math.max(1.2, dx * 0.32);
 				setAnimation('jump', { loop: false, hold: true });
-				// Face direction of travel
+				// Face direction of travel — slight yaw, not full profile
 				const dir = Math.sign(jumpEnd.x - jumpStart.x) || 0;
 				gsap.to(avatar.rotation, { y: dir * 0.25, duration: 0.2, overwrite: true });
 			}
 
-			// Per-tier personality. Three dramatic clips rotated across the
-			// tiers so she reads as having a "vibe" on each plan:
-			//   falling       — Mixamo "Falling" (long airborne fall, looks comedic)
-			//   dying         — Mixamo "Dying"   (collapse to ground)
+			// Per-tier personality. Two clips rotated across the tiers so she
+			// reads as having a "vibe" on each plan:
+			//   walk          — Mixamo "Walk" (cycles a few steps in place)
 			//   falltolanding — Mixamo "Fall To Landing" (forward roll out of a fall)
 			const TIER_PERSONALITY = {
-				basic:      { land: 'falling',       ctaClick: 'dying',         settleMs: 1500 },
-				pro:        { land: 'dying',         ctaClick: 'falltolanding', settleMs: 2000 },
-				enterprise: { land: 'falltolanding', ctaClick: 'falling',       settleMs: 1700 },
+				basic:      { land: 'walk',          ctaClick: 'falltolanding', settleMs: 1500 },
+				pro:        { land: 'falltolanding', ctaClick: 'walk',          settleMs: 2000 },
+				enterprise: { land: 'walk',          ctaClick: 'falltolanding', settleMs: 1700 },
 			};
 			function personalityFor(tierEl) {
 				return TIER_PERSONALITY[tierEl?.dataset.tier] ?? TIER_PERSONALITY.basic;
@@ -415,7 +448,7 @@
 			// gesture from the dramatic-clip pool and play a fragment, then
 			// crossfade back to idle. Prevents the "frozen avatar" look
 			// between hovers without overpowering the idle.
-			const FIDGETS = ['falling', 'dying', 'falltolanding'];
+			const FIDGETS = ['walk', 'falltolanding'];
 			let fidgetTimer = null;
 			function scheduleFidget() {
 				clearTimeout(fidgetTimer);
@@ -434,7 +467,10 @@
 
 			function landOnTier() {
 				phase = 'idle';
-				avatar.position.set(jumpEnd.x, jumpEnd.y, 0);
+				// Snap to the tier's true top-edge — guards against float drift
+				// at p>=1 and any layout shift during the move.
+				const snap = standOnTopOf(activeTier);
+				avatar.position.set(snap.x, snap.y, 0);
 				// Card "thump" on landing — sells weight
 				const t = activeTier;
 				gsap.killTweensOf(t);
@@ -460,11 +496,11 @@
 			// fire. We resolve which tier the cursor is over by walking the rects
 			// from a single mousemove on the grid container.
 			//
-			// Debounce: ~120ms of stable hover before committing to a jump, so
-			// sweeping across tiers doesn't stack three jumps on top of each other.
+			// Debounce: ~120ms of stable hover before committing to a move, so
+			// sweeping across tiers doesn't stack three trips on top of each other.
 			let hoverTimer = null;
 			let hoverPendingTier = null;
-			function scheduleJump(tierEl) {
+			function scheduleMove(tierEl) {
 				if (!tierEl) {
 					clearTimeout(hoverTimer);
 					hoverPendingTier = null;
@@ -481,10 +517,12 @@
 				hoverPendingTier = tierEl;
 				hoverTimer = setTimeout(() => {
 					hoverPendingTier = null;
-					if (phase === 'jumping') {
-						setTimeout(() => scheduleJump(tierEl), 200);
-					} else {
+					if (phase === 'walking' || phase === 'jumping') {
+						setTimeout(() => scheduleMove(tierEl), 200);
+					} else if (shouldJump(activeTier, tierEl)) {
 						jumpToTier(tierEl);
+					} else {
+						walkToTier(tierEl);
 					}
 				}, 120);
 			}
@@ -500,9 +538,9 @@
 
 			const tiersGrid = document.getElementById('tiers');
 			tiersGrid.addEventListener('mousemove', e => {
-				scheduleJump(tierAtPoint(e.clientX, e.clientY));
+				scheduleMove(tierAtPoint(e.clientX, e.clientY));
 			});
-			tiersGrid.addEventListener('mouseleave', () => scheduleJump(null));
+			tiersGrid.addEventListener('mouseleave', () => scheduleMove(null));
 
 			// CTA clicks — tier-specific reaction. Prevent navigation in the
 			// demo so the page doesn't refresh mid-gesture.
@@ -530,7 +568,7 @@
 
 			// ── ResizeObserver on each tier so reflow re-snaps the avatar ────
 			const ro = new ResizeObserver(() => {
-				if (avatar && activeTier && phase !== 'jumping') {
+				if (avatar && activeTier && phase === 'idle') {
 					const t = standOnTopOf(activeTier);
 					gsap.killTweensOf(avatar.position);
 					gsap.to(avatar.position, { x: t.x, y: t.y, duration: 0.35, overwrite: true });
@@ -542,8 +580,7 @@
 			// Loaded up front so per-tier personality + idle fidgets can play
 			// instantly without a fetch hiccup mid-hover.
 			const CLIPS = [
-				'idle', 'walk', 'jump',
-				'falling', 'dying', 'falltolanding',
+				'idle', 'walk', 'jump', 'falltolanding',
 			];
 
 			new GLTFLoader().load('/avatars/cz.glb', gltf => {
@@ -590,7 +627,15 @@
 					const dt = Math.min(clock.getDelta(), 0.05);
 					mixer?.update(dt);
 
-					if (phase === 'jumping' && avatar && jumpStart && jumpEnd) {
+					if (phase === 'walking' && avatar && walkStart && walkEnd) {
+						walkT += dt;
+						const p = Math.min(walkT / walkDur, 1);
+						const e = smoothstep(p);
+						const x = walkStart.x + (walkEnd.x - walkStart.x) * e;
+						const y = walkStart.y + (walkEnd.y - walkStart.y) * e;
+						avatar.position.set(x, y, 0);
+						if (p >= 1) landOnTier();
+					} else if (phase === 'jumping' && avatar && jumpStart && jumpEnd) {
 						jumpT += dt;
 						const p = Math.min(jumpT / JUMP_S, 1);
 						const e = smoothstep(p);

@@ -27,6 +27,9 @@ import { buildOptimizeGlbTool } from './tools/optimize-glb.js';
 import { buildSentimentPulseTool } from './tools/sentiment-pulse.js';
 import { buildEnsSnsResolveTool } from './tools/ens-sns-resolve.js';
 import { buildAgentDelegateActionTool } from './tools/agent-delegate-action.js';
+import { buildAgenCListTasksTool } from './tools/agenc-list-tasks.js';
+import { buildAgenCGetTaskTool } from './tools/agenc-get-task.js';
+import { buildAgenCGetAgentTool } from './tools/agenc-get-agent.js';
 
 async function main() {
 	// Force the shared x402 resource server to initialize before any tool is
@@ -51,8 +54,10 @@ async function main() {
 			'compression (optimize_glb), text-to-speech (tts_speak), ENS + SNS name resolution ' +
 			'(ens_sns_resolve), agent-to-agent delegation (agent_delegate_action), token sentiment pulse ' +
 			'(sentiment_pulse), pose generation (get_pose_seed), Solana token snapshots (pump_snapshot), ' +
-			'ERC-8004 agent reputation (agent_reputation), and Solana vanity address mining ' +
-			'(vanity_grinder, upto-priced).',
+			'ERC-8004 agent reputation (agent_reputation), Solana vanity address mining ' +
+			'(vanity_grinder, upto-priced), and AgenC coordination protocol reads — ' +
+			'task discovery, task status + lifecycle, and agent registry lookup ' +
+			'(agenc_list_tasks, agenc_get_task, agenc_get_agent).',
 	});
 
 	const tools = await Promise.all([
@@ -67,6 +72,9 @@ async function main() {
 		buildPumpSnapshotTool(),
 		buildAgentReputationTool(),
 		buildVanityGrinderTool(),
+		buildAgenCListTasksTool(),
+		buildAgenCGetTaskTool(),
+		buildAgenCGetAgentTool(),
 	]);
 
 	for (const t of tools) {

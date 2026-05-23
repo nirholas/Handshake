@@ -51,3 +51,32 @@ export async function reverseLookupAddress(addr) {
 		return null;
 	}
 }
+
+const SOL_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+// Bare label, dotted subdomain (`nich.threews`), or either with a `.sol` suffix.
+const SOL_NAME_RE = /^[a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63})*(?:\.sol)?$/i;
+
+/**
+ * Resolve a user-supplied Solana recipient string to a base58 address.
+ *
+ * Accepts:
+ *   - a raw base58 address (returned as-is)
+ *   - a .sol domain name with or without the suffix (resolved via SNS)
+ *
+ * @param {string} input
+ * @returns {Promise<{ address: string|null, resolved_from: string|null }>}
+ */
+export async function resolveSolanaRecipient(input) {
+	const trimmed = String(input || '').trim();
+	if (SOL_ADDRESS_RE.test(trimmed)) {
+		return { address: trimmed, resolved_from: null };
+	}
+	if (SOL_NAME_RE.test(trimmed)) {
+		const bare = trimmed.toLowerCase().replace(/\.sol$/, '');
+		const address = await resolveSnsName(bare);
+		if (address && SOL_ADDRESS_RE.test(address)) {
+			return { address, resolved_from: `${bare}.sol` };
+		}
+	}
+	return { address: null, resolved_from: null };
+}

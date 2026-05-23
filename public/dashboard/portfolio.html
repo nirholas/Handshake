@@ -837,6 +837,7 @@
 					const id = t.mint || t.contract;
 					if (id) assets.push({ value: id, label: t.symbol });
 				}
+				const placeholder = w.chain === 'solana' ? 'Solana address or yourname.sol' : '0x…';
 				openModal(`
 					<h3>Send from ${escapeHtml(w.agent_name)}</h3>
 					<p class="sub">${chainLabel(w.chain, w.chain_id)} · ${shortAddr(w.address)}</p>
@@ -844,8 +845,9 @@
 						<label><span>Asset</span>
 							<select name="asset">${assets.map((a) => `<option value="${escapeHtml(a.value)}">${escapeHtml(a.label)}</option>`).join('')}</select>
 						</label>
-						<label><span>Recipient address</span>
-							<input name="recipient" data-mono required placeholder="${w.chain === 'solana' ? 'Solana address (base58)' : '0x…'}" />
+						<label><span>Recipient${w.chain === 'solana' ? ' address or .sol name' : ' address'}</span>
+							<input name="recipient" data-mono required placeholder="${placeholder}" autocomplete="off" spellcheck="false" />
+							<small id="recipient-resolved" class="muted" style="display:none;margin-top:6px;font-family:ui-monospace,monospace;font-size:11.5px;word-break:break-all"></small>
 						</label>
 						<label><span>Amount</span>
 							<input name="amount" inputmode="decimal" required placeholder="0.0" pattern="[0-9]*\\.?[0-9]*" />
@@ -858,7 +860,62 @@
 					</form>
 				`, () => {
 					$('cancel').onclick = closeModal;
-					$('send-form').addEventListener('submit', (e) => onSendSubmit(e, w));
+					const form = $('send-form');
+					form.addEventListener('submit', (e) => onSendSubmit(e, w));
+					if (w.chain === 'solana') {
+						const input = form.querySelector('input[name="recipient"]');
+						const status = $('recipient-resolved');
+						attachSnsTypeahead(input, status);
+					}
+				});
+			}
+
+			// Solana recipient typeahead. Shows resolved address inline as the user
+			// types a .sol name. The backend also resolves server-side so this is
+			// only for UX; we don't block submit on it.
+			const SOL_NAME_RE = /^[a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63})*(?:\.sol)?$/i;
+			const SOL_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+			function attachSnsTypeahead(input, status) {
+				let seq = 0;
+				function setStatus(kind, text) {
+					status.style.display = text ? '' : 'none';
+					status.textContent = text || '';
+					status.style.color = kind === 'ok'
+						? '#7be07b'
+						: kind === 'warn'
+							? '#ff9a9a'
+							: 'var(--muted)';
+				}
+				async function lookup(name) {
+					const myId = ++seq;
+					try {
+						const r = await fetch(`/api/sns?name=${encodeURIComponent(name)}`);
+						if (myId !== seq) return;
+						if (r.status === 404) { setStatus('warn', `${name} does not resolve`); return; }
+						if (!r.ok) {
+							const j = await r.json().catch(() => ({}));
+							setStatus('warn', j.error_description || `lookup failed (${r.status})`);
+							return;
+						}
+						const { data } = await r.json();
+						if (myId !== seq) return;
+						setStatus('ok', `→ ${data.address}`);
+					} catch (err) {
+						if (myId === seq) setStatus('warn', err.message || 'lookup failed');
+					}
+				}
+				input.addEventListener('input', () => {
+					const raw = input.value.trim();
+					seq++;
+					if (!raw) { setStatus('', ''); return; }
+					if (SOL_ADDR_RE.test(raw)) { setStatus('', ''); return; }
+					if (/\.sol$/i.test(raw) || (SOL_NAME_RE.test(raw) && !SOL_ADDR_RE.test(raw))) {
+						setStatus('', 'Resolving .sol…');
+						const myId = seq;
+						setTimeout(() => { if (myId === seq) lookup(raw); }, 300);
+						return;
+					}
+					setStatus('warn', 'Not a valid Solana address or .sol name');
 				});
 			}
 

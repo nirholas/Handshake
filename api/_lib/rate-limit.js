@@ -84,6 +84,7 @@ export const limits = {
 	x402PayGlobal: () => getLimiter('x402:pay:global', { limit: 600, window: '1 h' }).limit('global'),
 	checkName: (ip) => getLimiter('check-name:ip', { limit: 60, window: '1 m' }).limit(ip),
 	ensResolve: (ip) => getLimiter('ens:resolve:ip', { limit: 60, window: '1 m' }).limit(ip),
+	snsResolve: (ip) => getLimiter('sns:resolve:ip', { limit: 60, window: '1 m' }).limit(ip),
 	// Generic public read endpoints (explore, showcase, public agent fetch). 60/min per IP.
 	publicIp: (ip) => getLimiter('public:ip', { limit: 60, window: '1 m' }).limit(ip),
 	// Skills marketplace browse — isolated bucket so traffic on other public endpoints

@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Claim your threews.sol subdomain</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Claim your own subdomain on threews.sol and get a Brave-resolvable personal showcase page." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			body {
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+				background: #000;
+				color: rgba(255, 255, 255, 0.92);
+				font-family: 'PPNeueMontreal', system-ui, sans-serif;
+			}
+			.tw-wrap {
+				max-width: 720px;
+				margin: 0 auto;
+				padding: 4rem 1.618rem 6rem;
+				width: 100%;
+			}
+			.tw-eyebrow {
+				font-size: 0.764rem;
+				letter-spacing: 0.1em;
+				color: rgba(255, 255, 255, 0.4);
+				text-transform: uppercase;
+				margin-bottom: 0.5rem;
+			}
+			h1 {
+				font-size: 2.2rem;
+				font-weight: 500;
+				margin: 0 0 0.4rem;
+				line-height: 1.1;
+			}
+			.tw-sub {
+				color: rgba(255, 255, 255, 0.6);
+				margin: 0 0 2.5rem;
+				font-size: 1rem;
+				line-height: 1.5;
+			}
+			.tw-card {
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 14px;
+				padding: 1.5rem;
+				background: rgba(255, 255, 255, 0.02);
+				margin-bottom: 1.5rem;
+			}
+			label {
+				display: block;
+				font-size: 0.85rem;
+				color: rgba(255, 255, 255, 0.5);
+				margin-bottom: 0.4rem;
+			}
+			.tw-input-row {
+				display: flex;
+				align-items: stretch;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				border-radius: 10px;
+				overflow: hidden;
+				background: #0a0a0a;
+			}
+			.tw-input-row input {
+				flex: 1;
+				border: 0;
+				background: transparent;
+				color: rgba(255, 255, 255, 0.95);
+				padding: 0.95rem 1rem;
+				font-size: 1.05rem;
+				font-family: inherit;
+				outline: none;
+			}
+			.tw-suffix {
+				display: flex;
+				align-items: center;
+				padding: 0 1rem;
+				color: rgba(255, 255, 255, 0.45);
+				background: rgba(255, 255, 255, 0.03);
+				border-left: 1px solid rgba(255, 255, 255, 0.06);
+				font-variant-numeric: tabular-nums;
+			}
+			.tw-status {
+				margin-top: 0.75rem;
+				font-size: 0.85rem;
+				min-height: 1.2em;
+			}
+			.tw-status.ok { color: #69e16f; }
+			.tw-status.bad { color: #ff7a7a; }
+			.tw-status.muted { color: rgba(255, 255, 255, 0.5); }
+			.tw-btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				background: #fff;
+				color: #000;
+				border: 0;
+				border-radius: 10px;
+				padding: 0.85rem 1.25rem;
+				font-size: 1rem;
+				font-weight: 500;
+				font-family: inherit;
+				cursor: pointer;
+				margin-top: 1rem;
+			}
+			.tw-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+			.tw-btn.ghost {
+				background: transparent;
+				color: rgba(255, 255, 255, 0.85);
+				border: 1px solid rgba(255, 255, 255, 0.14);
+			}
+			.tw-result {
+				border: 1px solid rgba(105, 225, 111, 0.3);
+				background: rgba(105, 225, 111, 0.05);
+				border-radius: 12px;
+				padding: 1.25rem;
+				margin-top: 1.5rem;
+				display: none;
+			}
+			.tw-result.on { display: block; }
+			.tw-result h3 { margin: 0 0 0.5rem; font-weight: 500; font-size: 1.05rem; }
+			.tw-result a {
+				color: #69e16f;
+				text-decoration: none;
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 0.9rem;
+				word-break: break-all;
+			}
+			.tw-help {
+				font-size: 0.85rem;
+				color: rgba(255, 255, 255, 0.5);
+				line-height: 1.6;
+			}
+			.tw-help code {
+				background: rgba(255, 255, 255, 0.06);
+				padding: 0.1em 0.4em;
+				border-radius: 4px;
+				font-size: 0.85em;
+			}
+			.tw-bullets {
+				margin: 0;
+				padding-left: 1.2em;
+			}
+			.tw-bullets li { margin-bottom: 0.4em; }
+		</style>
+	</head>
+	<body>
+		<main class="tw-wrap">
+			<div class="tw-eyebrow">threews.sol</div>
+			<h1>Claim your subdomain</h1>
+			<p class="tw-sub">
+				Get <code style="background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;">yourname.threews.sol</code>
+				as a Solana Name Service subdomain. Brave Browser resolves it directly to
+				your three.ws showcase. Your agents, avatars, and skills, all under one name.
+			</p>
+
+			<section class="tw-card">
+				<label for="tw-label">Subdomain label</label>
+				<div class="tw-input-row">
+					<input id="tw-label" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourhandle" maxlength="63" />
+					<div class="tw-suffix">.threews.sol</div>
+				</div>
+				<div class="tw-status muted" id="tw-status">Type a label to check availability.</div>
+				<button class="tw-btn" id="tw-mint" disabled>Mint subdomain</button>
+				<p class="tw-help" style="margin-top:1rem">
+					Minting is paid by three.ws. The on-chain subdomain is transferred to
+					your agent's Solana wallet (or a wallet you've linked). Your label must
+					match your account username.
+				</p>
+			</section>
+
+			<div class="tw-result" id="tw-result"></div>
+
+			<section class="tw-card">
+				<h3 style="margin:0 0 .5rem;font-weight:500">What this gives you</h3>
+				<ul class="tw-bullets tw-help">
+					<li><code>yourname.threews.sol</code> resolves to your showcase in Brave</li>
+					<li>A pay-by-name handle — anyone can <code>POST /api/x402/pay-by-name</code> with <code>yourname.threews.sol</code> to send you USDC</li>
+					<li>Ownership transfers to your wallet; we just set the URL record</li>
+					<li>Verified profile badge at <a href="/u/" style="color:#69e16f">/u/yourname</a></li>
+				</ul>
+			</section>
+		</main>
+
+		<script type="module">
+			const labelEl = document.getElementById('tw-label');
+			const statusEl = document.getElementById('tw-status');
+			const mintBtn = document.getElementById('tw-mint');
+			const resultEl = document.getElementById('tw-result');
+
+			let checkTimer = null;
+			let lastChecked = null;
+			let csrfToken = null;
+
+			labelEl.addEventListener('input', () => {
+				const raw = labelEl.value.trim().toLowerCase();
+				const cleaned = raw.replace(/[^a-z0-9-]/g, '');
+				if (cleaned !== raw) labelEl.value = cleaned;
+				mintBtn.disabled = true;
+				clearTimeout(checkTimer);
+				if (!cleaned) {
+					statusEl.textContent = 'Type a label to check availability.';
+					statusEl.className = 'tw-status muted';
+					return;
+				}
+				statusEl.textContent = 'Checking…';
+				statusEl.className = 'tw-status muted';
+				checkTimer = setTimeout(() => check(cleaned), 350);
+			});
+
+			async function check(label) {
+				try {
+					const res = await fetch(`/api/threews/subdomain?label=${encodeURIComponent(label)}`);
+					const data = await res.json();
+					if (!res.ok) {
+						statusEl.textContent = data?.error_description || 'Could not check this label.';
+						statusEl.className = 'tw-status bad';
+						return;
+					}
+					lastChecked = data?.data;
+					if (lastChecked.available) {
+						statusEl.textContent = `${lastChecked.full} is available.`;
+						statusEl.className = 'tw-status ok';
+						mintBtn.disabled = false;
+					} else {
+						const who = lastChecked.claim?.username
+							? `claimed by @${lastChecked.claim.username}`
+							: `owned by ${lastChecked.owner}`;
+						statusEl.textContent = `${lastChecked.full} — ${who}.`;
+						statusEl.className = 'tw-status bad';
+					}
+				} catch (err) {
+					statusEl.textContent = err?.message || 'Network error.';
+					statusEl.className = 'tw-status bad';
+				}
+			}
+
+			async function getCsrf() {
+				if (csrfToken) return csrfToken;
+				const res = await fetch('/api/csrf-token', { credentials: 'same-origin' });
+				if (!res.ok) throw new Error('not signed in');
+				const data = await res.json();
+				csrfToken = data?.data?.token;
+				return csrfToken;
+			}
+
+			mintBtn.addEventListener('click', async () => {
+				if (!lastChecked?.available) return;
+				mintBtn.disabled = true;
+				statusEl.textContent = 'Minting on-chain…';
+				statusEl.className = 'tw-status muted';
+				resultEl.classList.remove('on');
+				try {
+					const token = await getCsrf().catch(() => null);
+					const headers = { 'content-type': 'application/json' };
+					if (token) headers['x-csrf-token'] = token;
+					const res = await fetch('/api/threews/subdomain', {
+						method: 'POST',
+						headers,
+						credentials: 'same-origin',
+						body: JSON.stringify({ label: lastChecked.label }),
+					});
+					const data = await res.json();
+					if (!res.ok) {
+						statusEl.textContent = data?.error_description || 'Mint failed.';
+						statusEl.className = 'tw-status bad';
+						mintBtn.disabled = false;
+						return;
+					}
+					const d = data.data;
+					statusEl.textContent = `${d.full} minted.`;
+					statusEl.className = 'tw-status ok';
+					resultEl.innerHTML = `
+						<h3>${d.full} is yours.</h3>
+						<p class="tw-help" style="margin:.4em 0">
+							Brave users can type <strong>${d.full}</strong> in the URL bar and
+							land on your showcase. Anyone can pay you by sending to that name
+							via the pay-by-name API.
+						</p>
+						<p style="margin:.4em 0">
+							<a href="${d.showcase_url}">${d.showcase_url}</a><br>
+							<span class="tw-help">tx: <a href="https://solscan.io/tx/${encodeURIComponent(d.signature)}" target="_blank" rel="noopener">${d.signature}</a></span>
+						</p>
+					`;
+					resultEl.classList.add('on');
+				} catch (err) {
+					statusEl.textContent = err?.message || 'Mint failed.';
+					statusEl.className = 'tw-status bad';
+					mintBtn.disabled = false;
+				}
+			});
+		</script>
+	</body>
+</html>

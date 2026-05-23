@@ -143,6 +143,7 @@ const appConfig = {
 				'launch-week': resolve(__dirname, 'pages/three-ws-launch-week.html'),
 				community: resolve(__dirname, 'pages/community.html'),
 				profile: resolve(__dirname, 'pages/profile.html'),
+				'threews-claim': resolve(__dirname, 'pages/threews-claim.html'),
 				'avatar-page': resolve(__dirname, 'pages/avatar-page.html'),
 				'widget-studio': resolve(__dirname, 'pages/widget-studio.html'),
 				creating: resolve(__dirname, 'pages/creating.html'),

@@ -440,6 +440,109 @@ function renderEmbedPolicy(p) {
 	card.style.display = '';
 }
 
+const SOL_NAME_RE = /^[a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63})*(?:\.sol)?$/i;
+const SOL_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+// In-flight resolution token — used by both the typeahead and the confirm
+// handler so the latter doesn't fire while a lookup is still pending and so a
+// stale typeahead response can't overwrite a newer one.
+function makeSnsResolver(inputEl, statusEl) {
+	let seq = 0;
+	let lastInput = '';
+	let lastResolved = null; // { name: 'foo.sol', address: 'BASE58' } | { name: null, address: 'raw' } | null
+	let pending = null;
+
+	function setStatus(kind, text) {
+		statusEl.hidden = !text;
+		statusEl.textContent = text || '';
+		statusEl.className = `ad-resolved${kind ? ` ${kind}` : ''}`;
+	}
+
+	async function lookup(name) {
+		const myId = ++seq;
+		pending = (async () => {
+			try {
+				const r = await fetch(`/api/sns?name=${encodeURIComponent(name)}`, { credentials: 'include' });
+				if (myId !== seq) return null; // superseded
+				if (r.status === 404) {
+					setStatus('warn', `${name} does not resolve`);
+					lastResolved = null;
+					return null;
+				}
+				if (!r.ok) {
+					const j = await r.json().catch(() => ({}));
+					setStatus('warn', j?.error_description || `lookup failed (${r.status})`);
+					lastResolved = null;
+					return null;
+				}
+				const { data } = await r.json();
+				if (myId !== seq) return null;
+				setStatus('ok', `→ ${data.address}`);
+				lastResolved = { name: data.name, address: data.address };
+				return lastResolved;
+			} catch (err) {
+				if (myId === seq) setStatus('warn', err.message || 'lookup failed');
+				return null;
+			} finally {
+				if (myId === seq) pending = null;
+			}
+		})();
+		return pending;
+	}
+
+	function onInput() {
+		const raw = inputEl.value.trim();
+		if (raw === lastInput) return;
+		lastInput = raw;
+		seq++; // invalidate any in-flight lookup
+		pending = null;
+		lastResolved = null;
+
+		if (!raw) { setStatus('', ''); return; }
+		if (SOL_ADDR_RE.test(raw)) {
+			lastResolved = { name: null, address: raw };
+			setStatus('', '');
+			return;
+		}
+		if (/\.sol$/i.test(raw) || (SOL_NAME_RE.test(raw) && !SOL_ADDR_RE.test(raw))) {
+			setStatus('loading', 'Resolving .sol…');
+			// debounce briefly so we don't fire for every keystroke
+			const myId = seq;
+			setTimeout(() => {
+				if (myId !== seq) return;
+				lookup(raw);
+			}, 300);
+			return;
+		}
+		setStatus('warn', 'Not a valid Solana address or .sol name');
+	}
+
+	async function resolveForSubmit() {
+		// If a lookup is in flight, wait for it.
+		if (pending) await pending;
+		const raw = inputEl.value.trim();
+		if (!raw) return null;
+		if (lastResolved?.address) return lastResolved.address;
+		if (SOL_ADDR_RE.test(raw)) return raw;
+		if (/\.sol$/i.test(raw) || SOL_NAME_RE.test(raw)) {
+			const r = await lookup(raw);
+			return r?.address || null;
+		}
+		return null;
+	}
+
+	function reset() {
+		seq++;
+		pending = null;
+		lastInput = '';
+		lastResolved = null;
+		setStatus('', '');
+	}
+
+	inputEl.addEventListener('input', onInput);
+	return { resolveForSubmit, reset };
+}
+
 function bindWalletActions() {
 	const receiveBtn = document.getElementById('receive-btn');
 	const withdrawBtn = document.getElementById('withdraw-btn');
@@ -453,6 +556,8 @@ function bindWalletActions() {
 	const confirmWithdrawBtn = document.getElementById('confirm-withdraw-btn');
 	const withdrawAmountInput = document.getElementById('withdraw-amount');
 	const recipientAddressInput = document.getElementById('recipient-address');
+	const recipientResolvedEl = document.getElementById('recipient-resolved');
+	const snsResolver = makeSnsResolver(recipientAddressInput, recipientResolvedEl);
 
 	receiveBtn.addEventListener('click', () => {
 			const walletAddress = walletAddressSpan.dataset.full;
@@ -487,19 +592,26 @@ function bindWalletActions() {
 		}
 
 		const amount = parseFloat(withdrawAmountInput.value);
-		const recipientAddress = recipientAddressInput.value;
+		const typedRecipient = recipientAddressInput.value.trim();
 
 		if (isNaN(amount) || amount <= 0) {
 			alert('Please enter a valid amount.');
 			return;
 		}
 
-		if (!recipientAddress) {
+		if (!typedRecipient) {
 			alert('Please enter a recipient address.');
 			return;
 		}
 
+		confirmWithdrawBtn.disabled = true;
 		try {
+			const recipientAddress = await snsResolver.resolveForSubmit();
+			if (!recipientAddress) {
+				alert(`Could not resolve "${typedRecipient}" to a Solana address.`);
+				return;
+			}
+
 			const recipientPubKey = new solanaWeb3.PublicKey(recipientAddress);
 			const transaction = new solanaWeb3.Transaction().add(
 				solanaWeb3.SystemProgram.transfer({
@@ -518,15 +630,21 @@ function bindWalletActions() {
 			const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 			await connection.confirmTransaction(signature);
 
-			alert(`Withdrawal of ${amount} SOL to ${recipientAddress} successful!`);
+			const displayTarget = typedRecipient === recipientAddress
+				? recipientAddress
+				: `${typedRecipient} (${recipientAddress})`;
+			alert(`Withdrawal of ${amount} SOL to ${displayTarget} successful!`);
 
 			modal.classList.add('hidden');
 			withdrawAmountInput.value = '';
 			recipientAddressInput.value = '';
+			snsResolver.reset();
 
 		} catch (error) {
 			console.error('Withdrawal failed:', error);
 			alert(`Withdrawal failed: ${error.message}`);
+		} finally {
+			confirmWithdrawBtn.disabled = false;
 		}
 	});
 

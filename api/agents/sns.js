@@ -32,13 +32,19 @@ import { env } from '../_lib/env.js';
 import { loadAgentForSigning, solanaConnection } from '../_lib/agent-pumpfun.js';
 
 const SNS_API = 'https://sns-api.bonfida.com';
-const DOMAIN_RE = /^[a-z0-9-]{1,63}(\.sol)?$/i;
+// Accept a label or dotted subdomain, optionally suffixed `.sol`.
+const DOMAIN_RE = /^[a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63})*(?:\.sol)?$/i;
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 function normalizeDomain(input) {
 	if (typeof input !== 'string') return null;
 	const trimmed = input.trim().toLowerCase().replace(/\.sol$/, '');
-	if (!trimmed || !/^[a-z0-9-]{1,63}$/.test(trimmed)) return null;
+	if (!trimmed) return null;
+	// Each dotted segment is a valid SNS label.
+	const segments = trimmed.split('.');
+	for (const seg of segments) {
+		if (!/^[a-z0-9-]{1,63}$/.test(seg)) return null;
+	}
 	return trimmed;
 }
 
