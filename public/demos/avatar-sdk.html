@@ -106,6 +106,7 @@ creator.open();</pre>
 		<script type="module">
 			const $ = (id) => document.getElementById(id);
 			const componentLog = $('component-log');
+			const byIdLog = $('byid-log');
 			const creatorLog = $('creator-log');
 			const stamp = () => new Date().toTimeString().slice(0, 8);
 			const line = (el, msg, cls = '') => {
@@ -121,6 +122,7 @@ creator.open();</pre>
 					$('sdk-viewer-host').appendChild(el);
 					line(componentLog, `✓ &lt;agent-3d&gt; registered in ${Math.round(performance.now() - start)} ms`, 'ok');
 					line(componentLog, '✓ mounted with src=/avatars/default.glb', 'ok');
+					mountByIdDemo();
 				} else if (performance.now() - start < 8000) {
 					setTimeout(check, 100);
 				} else {
@@ -128,6 +130,27 @@ creator.open();</pre>
 				}
 			};
 			check();
+
+			// Section 2 — resolve a real public avatar by ID and mount it.
+			async function mountByIdDemo() {
+				try {
+					const res = await fetch('/api/avatars/public?limit=1');
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const data = await res.json();
+					const avatar = data?.avatars?.[0];
+					if (!avatar?.id) {
+						line(byIdLog, '✗ /api/avatars/public returned no avatars', 'err');
+						return;
+					}
+					line(byIdLog, `→ resolving avatar-id=${avatar.id}`, 'info');
+					const el = document.createElement('agent-3d');
+					el.setAttribute('avatar-id', avatar.id);
+					$('byid-viewer-host').appendChild(el);
+					line(byIdLog, `✓ &lt;agent-3d avatar-id="${avatar.id}"&gt; mounted (${avatar.name || 'unnamed'})`, 'ok');
+				} catch (err) {
+					line(byIdLog, '✗ avatar-id demo failed: ' + err.message, 'err');
+				}
+			}
 
 			// Programmatic Creator demo. Imports from the SDK source so we don't
 			// rebuild the whole bundle every time creator.js changes.

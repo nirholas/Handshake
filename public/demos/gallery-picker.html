@@ -558,7 +558,12 @@
 				const set = (k, v) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
 				set('q', state.query);
 				set('tag', state.tag);
-				set('id', state.selected?.id || '');
+				if (state.selected?.id) {
+					u.searchParams.set('id', state.selected.id);
+				}
+				// Leave any existing `?id=` alone when nothing is selected so the
+				// initial resetAndLoad() before hydrateDeepLink() does not clobber
+				// the deep-link the user navigated in with.
 				history.replaceState(null, '', u);
 			}
 
