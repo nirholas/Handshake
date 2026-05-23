@@ -7,6 +7,20 @@
 		"loop": true
 	},
 	{
+		"name": "lookdown",
+		"url": "/animations/clips/lookdown.json",
+		"label": "Look Down",
+		"icon": "👀",
+		"loop": true
+	},
+	{
+		"name": "covereyes",
+		"url": "/animations/clips/covereyes.json",
+		"label": "Cover Eyes",
+		"icon": "🙈",
+		"loop": true
+	},
+	{
 		"name": "dance",
 		"url": "/animations/clips/dance.json",
 		"label": "Dance",

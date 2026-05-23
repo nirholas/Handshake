@@ -340,7 +340,7 @@
 
 			function startTypingTracking(input) {
 				activeInput = input;
-				setAnimation('idle', { loop: true });
+				setAnimation('lookdown', { loop: true });
 				// Track caret on every animation frame while focused — covers keyboard
 				// typing AND mouse-click cursor moves without listening for each event.
 				cancelAnimationFrame(trackRAF);
@@ -364,9 +364,9 @@
 			}
 
 			function enterPrivacyMode() {
-				// Cover-eyes / look-away pose — held as long as the password field
-				// owns focus. Loops in case the user pauses.
-				setAnimation('coverstand', { loop: true });
+				// Hands-over-face cover-eyes loop while password field is focused.
+				setAnimation('covereyes', { loop: true });
+				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
 			}
 
 			function exitPrivacyMode() {
@@ -415,35 +415,36 @@
 				}
 
 				if (action === 'validate-form') {
-					// Attach to the form's submit so we intercept ENTER + click identically
+					// Demo credential: any email + password === "admin" succeeds.
 					form.addEventListener('submit', ev => {
+						ev.preventDefault();
 						const email = form.elements.email;
 						const password = form.elements.password;
-						const invalid = [];
 						email.classList.remove('error');
 						password.classList.remove('error');
-						if (!email.value.trim()) invalid.push(email);
-						if (!password.value) invalid.push(password);
-						if (invalid.length) {
-							ev.preventDefault();
-							invalid.forEach(i => i.classList.add('error'));
-							// Intentionally not focusing the first invalid input — focus would
-							// fire the input's focus handler (walkTo → setAnimation('walk')),
-							// which would immediately override the disapprove animation. The
-							// red border + shake keyframe already mark where to look.
+
+						const emptyFields = [];
+						if (!email.value.trim()) emptyFields.push(email);
+						if (!password.value) emptyFields.push(password);
+						if (emptyFields.length) {
+							emptyFields.forEach(i => i.classList.add('error'));
 							disapprove();
-						} else {
-							// Real submit would POST here. For the demo, prevent navigation
-							// and play a celebratory animation so the page stays observable.
-							ev.preventDefault();
+							return;
+						}
+
+						if (password.value === 'admin') {
 							setAnimation('celebrate', { loop: false, hold: true });
+							setTimeout(() => { window.location.href = '/app'; }, 1400);
+						} else {
+							password.classList.add('error');
+							disapprove();
 						}
 					});
 				}
 			});
 
 			// ── Load avatar + animations ──────────────────────────────────────
-			const CLIPS = ['idle', 'walk', 'coverstand', 'reaction', 'celebrate'];
+			const CLIPS = ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'celebrate'];
 
 			new GLTFLoader().load('/avatars/cz.glb', gltf => {
 				avatar = gltf.scene;

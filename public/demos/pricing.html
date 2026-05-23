@@ -55,6 +55,11 @@
 				grid-template-columns: 1fr 1fr 1fr;
 				gap: 18px;
 				align-items: end;
+				/* Perspective container — slabs tilt back so the top face is visible.
+				   Origin pulled up above the grid so we look DOWN at the ledges. */
+				perspective: 1600px;
+				perspective-origin: 50% -40%;
+				transform-style: preserve-3d;
 			}
 			@media (max-width: 820px) {
 				.tiers { grid-template-columns: 1fr; }
@@ -97,6 +102,10 @@
 					/* Soft ambient occlusion on the ground beneath the slab */
 					0 30px 24px -4px rgba(0,0,0,0.55),
 					0 44px 60px -8px rgba(0,0,0,0.7);
+				/* Tilt back ~10° around the bottom edge so we see the top face of
+				   the slab — that's where she stands. */
+				transform: rotateX(10deg);
+				transform-origin: 50% 100%;
 				transition: transform 200ms cubic-bezier(0.3, 0.8, 0.4, 1.05),
 				            border-color 200ms ease,
 				            box-shadow 200ms ease,
@@ -182,7 +191,7 @@
 					0 30px 24px -4px rgba(0,0,0,0.55),
 					0 44px 60px -8px rgba(61, 193, 255,0.28);
 			}
-			.tier:hover { transform: translateY(-6px); }
+			.tier:hover { transform: rotateX(10deg) translateY(-6px); }
 			.tier.is-active .cta {
 				background: linear-gradient(160deg, #5ad1ff, #2cb0ef);
 				color: #0a0b0f; border-color: transparent;
@@ -197,7 +206,10 @@
 			}
 			.tier.pro::before {
 				content: 'Most popular';
-				position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+				position: absolute; top: -11px; left: 50%;
+				/* Counter-rotate so the ribbon faces the camera instead of tilting with the slab */
+				transform: translateX(-50%) rotateX(-10deg);
+				transform-origin: 50% 100%;
 				background: linear-gradient(160deg, #5ad1ff, #2cb0ef);
 				color: #0a0b0f;
 				font: 700 10.5px/1 'Space Grotesk','Inter',sans-serif;
@@ -385,6 +397,41 @@
 				gsap.to(avatar.rotation, { y: dir * 0.25, duration: 0.2, overwrite: true });
 			}
 
+			// Per-tier personality. Three dramatic clips rotated across the
+			// tiers so she reads as having a "vibe" on each plan:
+			//   falling       — Mixamo "Falling" (long airborne fall, looks comedic)
+			//   dying         — Mixamo "Dying"   (collapse to ground)
+			//   falltolanding — Mixamo "Fall To Landing" (forward roll out of a fall)
+			const TIER_PERSONALITY = {
+				basic:      { land: 'falling',       ctaClick: 'dying',         settleMs: 1500 },
+				pro:        { land: 'dying',         ctaClick: 'falltolanding', settleMs: 2000 },
+				enterprise: { land: 'falltolanding', ctaClick: 'falling',       settleMs: 1700 },
+			};
+			function personalityFor(tierEl) {
+				return TIER_PERSONALITY[tierEl?.dataset.tier] ?? TIER_PERSONALITY.basic;
+			}
+
+			// Idle fidget — every 7–11s while she's standing still, pick a
+			// gesture from the dramatic-clip pool and play a fragment, then
+			// crossfade back to idle. Prevents the "frozen avatar" look
+			// between hovers without overpowering the idle.
+			const FIDGETS = ['falling', 'dying', 'falltolanding'];
+			let fidgetTimer = null;
+			function scheduleFidget() {
+				clearTimeout(fidgetTimer);
+				const delay = 7000 + Math.random() * 4000;
+				fidgetTimer = setTimeout(() => {
+					if (phase !== 'idle' || !activeTier) { scheduleFidget(); return; }
+					const pick = FIDGETS[Math.floor(Math.random() * FIDGETS.length)];
+					if (!actions[pick]) { scheduleFidget(); return; }
+					setAnimation(pick, { loop: false, hold: false });
+					setTimeout(() => {
+						if (phase === 'idle') setAnimation('idle', { loop: true });
+						scheduleFidget();
+					}, 1500);
+				}, delay);
+			}
+
 			function landOnTier() {
 				phase = 'idle';
 				avatar.position.set(jumpEnd.x, jumpEnd.y, 0);
@@ -395,26 +442,46 @@
 					y: 3, duration: 0.08, ease: 'power3.out',
 					onComplete: () => gsap.to(t, { y: 0, duration: 0.5, ease: 'elastic.out(1.2, 0.4)' })
 				});
-				// Face camera so the "point" reads clearly
+				// Face camera so the gesture reads cleanly
 				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
-				setAnimation('reaction', { loop: false, hold: true });
-				// Settle back into idle after the point
+				const persona = personalityFor(t);
+				setAnimation(persona.land, { loop: false, hold: false });
 				setTimeout(() => {
 					if (phase === 'idle' && activeTier === t) setAnimation('idle', { loop: true });
-				}, 1500);
+				}, persona.settleMs);
+				scheduleFidget();
 			}
 
 			// ── Hover dispatch with debounce ─────────────────────────────────
-			// Without debouncing, sweeping the cursor across three tiers triggers
-			// three jumps stacking on each other. We wait ~120ms of stable hover
-			// before committing — feels intentional, not jittery.
+			// Tier cards live in a perspective-transformed grid (`transform-style:
+			// preserve-3d` on .tiers + rotateX on .tier). Browsers stop hit-testing
+			// individual .tier children inside that 3D context — `elementFromPoint`
+			// returns the .tiers parent — so per-tier `mouseenter` listeners never
+			// fire. We resolve which tier the cursor is over by walking the rects
+			// from a single mousemove on the grid container.
+			//
+			// Debounce: ~120ms of stable hover before committing to a jump, so
+			// sweeping across tiers doesn't stack three jumps on top of each other.
 			let hoverTimer = null;
+			let hoverPendingTier = null;
 			function scheduleJump(tierEl) {
+				if (!tierEl) {
+					clearTimeout(hoverTimer);
+					hoverPendingTier = null;
+					return;
+				}
+				if (tierEl === activeTier) {
+					// Already on it — cancel any pending switch.
+					clearTimeout(hoverTimer);
+					hoverPendingTier = null;
+					return;
+				}
+				if (tierEl === hoverPendingTier) return; // already scheduled
 				clearTimeout(hoverTimer);
-				if (tierEl === activeTier) return;
+				hoverPendingTier = tierEl;
 				hoverTimer = setTimeout(() => {
+					hoverPendingTier = null;
 					if (phase === 'jumping') {
-						// Queue: re-check at the end of the current jump
 						setTimeout(() => scheduleJump(tierEl), 200);
 					} else {
 						jumpToTier(tierEl);
@@ -422,19 +489,35 @@
 				}, 120);
 			}
 
-			tiers.forEach(t => {
-				t.addEventListener('mouseenter', () => scheduleJump(t));
-			});
+			function tierAtPoint(clientX, clientY) {
+				for (const t of tiers) {
+					const r = t.getBoundingClientRect();
+					if (clientX >= r.left && clientX <= r.right &&
+					    clientY >= r.top  && clientY <= r.bottom) return t;
+				}
+				return null;
+			}
 
-			// CTA clicks — give a celebrate animation, prevent navigation in the demo
+			const tiersGrid = document.getElementById('tiers');
+			tiersGrid.addEventListener('mousemove', e => {
+				scheduleJump(tierAtPoint(e.clientX, e.clientY));
+			});
+			tiersGrid.addEventListener('mouseleave', () => scheduleJump(null));
+
+			// CTA clicks — tier-specific reaction. Prevent navigation in the
+			// demo so the page doesn't refresh mid-gesture.
 			document.querySelectorAll('[data-tier-cta]').forEach(cta => {
 				cta.addEventListener('click', e => {
 					e.preventDefault();
 					if (!avatar) return;
-					setAnimation('celebrate', { loop: false, hold: false });
+					clearTimeout(fidgetTimer);
+					const tierEl = document.getElementById(`tier-${cta.dataset.tierCta}`);
+					const persona = personalityFor(tierEl);
+					setAnimation(persona.ctaClick, { loop: false, hold: false });
 					setTimeout(() => {
 						if (phase === 'idle') setAnimation('idle', { loop: true });
-					}, 1800);
+						scheduleFidget();
+					}, 2200);
 				});
 			});
 
@@ -456,7 +539,12 @@
 			tiers.forEach(t => ro.observe(t));
 
 			// ── Loader ────────────────────────────────────────────────────────
-			const CLIPS = ['idle', 'walk', 'jump', 'reaction', 'celebrate'];
+			// Loaded up front so per-tier personality + idle fidgets can play
+			// instantly without a fetch hiccup mid-hover.
+			const CLIPS = [
+				'idle', 'walk', 'jump',
+				'falling', 'dying', 'falltolanding',
+			];
 
 			new GLTFLoader().load('/avatars/cz.glb', gltf => {
 				avatar = gltf.scene;
