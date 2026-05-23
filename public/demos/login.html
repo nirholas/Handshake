@@ -400,13 +400,20 @@
 				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
 			}
 
+			const FAIL_CLIPS = ['reaction', 'defeated', 'angry'];
+			let lastFailPick = null;
+
 			function disapprove() {
-				// One-shot reaction, then fall back to idle.
-				setAnimation('reaction', { loop: false, hold: false });
-				// reaction.json is ~1.5s; schedule the fade back to idle just before it ends
+				let pick;
+				do {
+					pick = FAIL_CLIPS[Math.floor(Math.random() * FAIL_CLIPS.length)];
+				} while (pick === lastFailPick && FAIL_CLIPS.length > 1);
+				lastFailPick = pick;
+				setAnimation(pick, { loop: false, hold: false });
+				const dur = (clips[pick]?.duration || 1.4) * 1000;
 				setTimeout(() => {
-					if (currentAction === actions.reaction) setAnimation('idle', { loop: true });
-				}, 1300);
+					if (currentAction === actions[pick]) setAnimation('idle', { loop: true });
+				}, dur - 150);
 			}
 
 			// Wire each declared target
@@ -459,8 +466,8 @@
 						}
 
 						if (password.value === 'admin') {
-							setAnimation('celebrate', { loop: false, hold: true });
-							setTimeout(() => { window.location.href = '/app'; }, 1400);
+							setAnimation('silly', { loop: true });
+							setTimeout(() => { window.location.href = '/marketplace'; }, 2000);
 						} else {
 							password.classList.add('error');
 							disapprove();
@@ -470,7 +477,7 @@
 			});
 
 			// ── Load avatar + animations ──────────────────────────────────────
-			const CLIPS = ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'celebrate'];
+			const CLIPS = ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'silly', 'defeated', 'angry'];
 
 			new GLTFLoader().load('/avatars/cz.glb', gltf => {
 				avatar = gltf.scene;
