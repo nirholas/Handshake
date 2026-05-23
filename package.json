@@ -24,6 +24,7 @@
 	],
 	"workspaces": [
 		"agent-payments-sdk",
+		"agent-ui-sdk",
 		"avatar-sdk",
 		"character-studio",
 		"mcp-bridge",

@@ -1,0 +1,59 @@
+{
+	"name": "@three-ws/agent-ui",
+	"version": "0.1.0",
+	"description": "Drop a 3D avatar into your UI and let it react to buttons, inputs, and navigation. The three.ws agent overlay SDK.",
+	"keywords": [
+		"3d",
+		"avatar",
+		"three.js",
+		"webgl",
+		"ui",
+		"overlay",
+		"agent",
+		"interactive",
+		"three-ws"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nirholas/three.ws.git",
+		"directory": "agent-ui-sdk"
+	},
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"types": "./types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./types/index.d.ts",
+			"import": "./src/index.js",
+			"default": "./src/index.js"
+		},
+		"./bundle": {
+			"types": "./types/index.d.ts",
+			"import": "./dist/index.mjs",
+			"default": "./dist/index.mjs"
+		},
+		"./src/*": "./src/*"
+	},
+	"files": [
+		"dist",
+		"src",
+		"types",
+		"README.md",
+		"LICENSE",
+		"CHANGELOG.md"
+	],
+	"scripts": {
+		"build": "node build.mjs",
+		"prepublishOnly": "npm run build"
+	},
+	"peerDependencies": {
+		"three": ">=0.150.0"
+	},
+	"engines": {
+		"node": ">=18"
+	}
+}
