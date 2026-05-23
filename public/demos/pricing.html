@@ -282,7 +282,7 @@
 				</div>
 			</div>
 
-			<p class="hint">Hover a tier — she walks across (or leaps onto Pro). Click a button to see her react.</p>
+			<p class="hint">Hover a tier — she walks across. Click a button to see her react.</p>
 		</div>
 
 		<canvas id="avatar-canvas"></canvas>
@@ -370,38 +370,16 @@
 				return domToWorld(r.left + r.width / 2, r.top + FEET_TOP_OFFSET_PX);
 			}
 
-			// phase: loading | idle | walking | jumping (declared above)
+			// phase: loading | idle | walking (declared above)
 			// activeTier: tier she's currently associated with (declared above)
 			let walkT = 0, walkStart = null, walkEnd = null, walkDur = 0.85, walkPeakRise = 0;
-			let jumpT = 0, jumpStart = null, jumpEnd = null, jumpLift = 0;
-			let lastMoveKind = null; // 'walk' | 'jump' — read by landOnTier
 			// Optional callback fired once the avatar has fully settled into
 			// idle after a move. Used by CTA clicks to queue the reaction
 			// until she's actually on the right tier and standing still.
 			let onArrival = null;
-			// Post-jump root-Y ease: when the superhero clip lands, hips are
-			// well below baseRootPos.y. Snapping back to base in one frame
-			// pops; we ramp over ROOT_SETTLE_S inside the render hook so we
-			// reliably beat mixer.update() to the final write.
-			let rootSettleT = -1, rootSettleStart = 0;
-			const ROOT_SETTLE_S = 0.5;
 			const WALK_SPEED = 5; // world units per second
-			// Matches the av-superhero-jump clip (2.0s) — finishing a touch
-			// early so the landing-clamp pose doesn't sit frozen too long.
-			const JUMP_S = 1.7;
 
 			function smoothstep(t) { return t * t * (3 - 2 * t); }
-
-			// Pro is the "most popular" pedestal — she leaps onto it from
-			// either neighbour for a dramatic entrance, and walks everywhere
-			// else (including stepping back down off Pro).
-			function shouldJump(fromEl, toEl) {
-				if (!fromEl || !toEl) return false;
-				const from = fromEl.dataset.tier;
-				const to   = toEl.dataset.tier;
-				return (from === 'basic'      && to === 'pro') ||
-				       (from === 'enterprise' && to === 'pro');
-			}
 
 			function beginMove(tierEl) {
 				if (activeTier) activeTier.classList.remove('is-active');
@@ -414,7 +392,6 @@
 				beginMove(tierEl);
 
 				phase = 'walking';
-				lastMoveKind = 'walk';
 				walkT = 0;
 				walkStart = { x: avatar.position.x, y: avatar.position.y };
 				walkEnd   = standOnTopOf(tierEl);
@@ -440,28 +417,8 @@
 				gsap.to(avatar.rotation, { y: dir * (Math.PI / 2), duration: 0.25, overwrite: true });
 			}
 
-			function jumpToTier(tierEl) {
-				if (!avatar || tierEl === activeTier) return;
-				beginMove(tierEl);
-
-				phase = 'jumping';
-				lastMoveKind = 'jump';
-				jumpT = 0;
-				jumpStart = { x: avatar.position.x, y: avatar.position.y };
-				jumpEnd   = standOnTopOf(tierEl);
-				// Bigger arc — the hip-Y of the clip is suppressed by the
-				// render hook so the parabola is the only visible airborne lift.
-				// 2.2 baseline reads clearly even for short adjacent hops.
-				const dx = Math.abs(jumpEnd.x - jumpStart.x);
-				jumpLift = Math.max(2.2, dx * 0.55);
-				setAnimation('av-superhero-jump', { loop: false, hold: true });
-				// Face direction of travel — slight yaw, not full profile
-				const dir = Math.sign(jumpEnd.x - jumpStart.x) || 0;
-				gsap.to(avatar.rotation, { y: dir * 0.25, duration: 0.2, overwrite: true });
-			}
-
 			// Per-tier CTA reaction. Plays when the user clicks the tier's
-			// call-to-action button (after the avatar has walked/jumped onto
+			// call-to-action button (after the avatar has walked onto
 			// that tier if she wasn't already there).
 			//   basic:      wave           — friendly send-off for the free plan
 			//   pro:        av-celebrating — "yes! great choice"
@@ -493,34 +450,14 @@
 				});
 				// Face camera so the next gesture reads cleanly
 				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
-
-				const settleIntoIdle = () => {
-					if (phase !== 'idle' || activeTier !== t) return;
-					setAnimation('idle', { loop: true });
-					// Fire any queued arrival callback (e.g. a CTA click that
-					// initiated this move) once the rotation tween has had
-					// time to face camera so the reaction doesn't start
-					// sideways.
-					if (onArrival) {
-						const cb = onArrival;
-						onArrival = null;
-						setTimeout(cb, 300);
-					}
-				};
-
-				if (lastMoveKind === 'jump') {
-					// The superhero-jump clip already ends in a landing crouch.
-					// Hold its final frame briefly, then crossfade to idle. The
-					// render hook eases root-Y back to base during this hold
-					// (see rootSettleT) so the hips don't pop upright.
-					if (rootBone && baseRootPos) {
-						rootSettleStart = rootBone.position.y;
-						rootSettleT = 0;
-					}
-					setTimeout(settleIntoIdle, 600);
-				} else {
-					// Walking arrival — clean crossfade from walk cycle to idle.
-					settleIntoIdle();
+				setAnimation('idle', { loop: true });
+				// Fire any queued arrival callback (e.g. a CTA click that
+				// initiated this move) once the rotation tween has had time
+				// to face camera so the reaction doesn't start sideways.
+				if (onArrival) {
+					const cb = onArrival;
+					onArrival = null;
+					setTimeout(cb, 300);
 				}
 			}
 
@@ -553,10 +490,8 @@
 				hoverPendingTier = tierEl;
 				hoverTimer = setTimeout(() => {
 					hoverPendingTier = null;
-					if (phase === 'walking' || phase === 'jumping') {
+					if (phase === 'walking') {
 						setTimeout(() => scheduleMove(tierEl), 200);
-					} else if (shouldJump(activeTier, tierEl)) {
-						jumpToTier(tierEl);
 					} else {
 						walkToTier(tierEl);
 					}
@@ -604,10 +539,7 @@
 						fireReaction();
 					} else {
 						onArrival = fireReaction;
-						if (tierEl !== activeTier) {
-							if (shouldJump(activeTier, tierEl)) jumpToTier(tierEl);
-							else walkToTier(tierEl);
-						}
+						if (tierEl !== activeTier) walkToTier(tierEl);
 					}
 				});
 			});
@@ -634,15 +566,14 @@
 			// instantly without a fetch hiccup mid-hover.
 			// Animation clips fetched up-front so per-tier reactions can play
 			// instantly without a network hiccup mid-interaction.
-			//   idle               — base standing pose
-			//   walk               — locomotion cycle (root X/Z pinned, parent
-			//                        transform drives travel)
-			//   av-superhero-jump  — leap + crouched landing for hops onto Pro
-			//   wave               — Basic CTA reaction
-			//   av-celebrating     — Pro CTA reaction
-			//   av-brag-claps      — Enterprise CTA reaction
+			//   idle           — base standing pose
+			//   walk           — locomotion cycle (root pinned, parent
+			//                    transform drives travel)
+			//   wave           — Basic CTA reaction
+			//   av-celebrating — Pro CTA reaction
+			//   av-brag-claps  — Enterprise CTA reaction
 			const CLIPS = [
-				'idle', 'walk', 'av-superhero-jump',
+				'idle', 'walk',
 				'wave', 'av-celebrating', 'av-brag-claps',
 			];
 
@@ -666,23 +597,10 @@
 					if (rootBone) baseRootPos = rootBone.position.clone();
 					const _r = renderer.render.bind(renderer);
 					renderer.render = (sc, cam) => {
-						try {
-							if (rootBone && baseRootPos) {
-								// X/Z always pinned — our parent transform owns horizontal placement.
-								rootBone.position.x = baseRootPos.x;
-								rootBone.position.z = baseRootPos.z;
-								if (phase === 'jumping') {
-									// Let the clip's hip Y through so the leap+crouch reads.
-								} else if (rootSettleT >= 0 && rootSettleT < ROOT_SETTLE_S) {
-									// Ease from the landed-crouch hip-Y back to base.
-									const p = rootSettleT / ROOT_SETTLE_S;
-									const eased = p * p * (3 - 2 * p);
-									rootBone.position.y = rootSettleStart + (baseRootPos.y - rootSettleStart) * eased;
-								} else {
-									rootBone.position.y = baseRootPos.y;
-								}
-							}
-						} catch (_) {}
+						// Pin the hips so the parent transform fully owns
+						// placement — otherwise the walk clip's natural forward
+						// drift carries her off the pedestal.
+						try { if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos); } catch (_) {}
 						_r(sc, cam);
 					};
 
@@ -705,7 +623,6 @@
 				try {
 					const dt = Math.min(clock.getDelta(), 0.05);
 					mixer?.update(dt);
-					if (rootSettleT >= 0) rootSettleT += dt;
 
 					if (phase === 'walking' && avatar && walkStart && walkEnd) {
 						walkT += dt;
@@ -715,18 +632,6 @@
 						const arc = walkPeakRise * 4 * p * (1 - p);
 						const y = walkStart.y + (walkEnd.y - walkStart.y) * e + arc;
 						avatar.position.set(x, y, 0);
-						if (p >= 1) landOnTier();
-					} else if (phase === 'jumping' && avatar && jumpStart && jumpEnd) {
-						jumpT += dt;
-						const p = Math.min(jumpT / JUMP_S, 1);
-						const e = smoothstep(p);
-						const x = jumpStart.x + (jumpEnd.x - jumpStart.x) * e;
-						const arc = jumpLift * 4 * p * (1 - p);
-						const y = jumpStart.y + (jumpEnd.y - jumpStart.y) * e + arc;
-						avatar.position.set(x, y, 0);
-						// Subtle in-flight yaw — peaks mid-arc
-						const dir = Math.sign(jumpEnd.x - jumpStart.x) || 0;
-						avatar.rotation.y = dir * 0.22 * Math.sin(Math.PI * p);
 						if (p >= 1) landOnTier();
 					}
 

@@ -941,9 +941,71 @@
 			// onto its skeleton via AnimationMixer), regardless of what's baked in.
 			(function () {
 				const canvas = document.getElementById('home-act2-canvas');
-				const opts = document.querySelectorAll('.h-av-opt');
 				const chipsWrap = document.querySelector('[data-role="anim-chips"]');
-				if (!canvas || !chipsWrap) return;
+				const picker = document.querySelector('.h-avatar-picker');
+				if (!canvas || !chipsWrap || !picker) return;
+
+				/* The viewer (heavy Three.js) loads lazily when Act 2 enters view.
+				   The picker (lightweight DOM + fetch) hydrates on page load so
+				   featured-agent names are correct *before* the user scrolls. */
+				let _resolveViewer;
+				const viewerReady = new Promise((r) => (_resolveViewer = r));
+
+				function bindOpt(btn) {
+					btn.addEventListener('click', async () => {
+						picker
+							.querySelectorAll('.h-av-opt')
+							.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+						btn.setAttribute('aria-pressed', 'true');
+						const viewer = await viewerReady;
+						try {
+							await viewer.loadModel(btn.dataset.src);
+						} catch (e) {
+							console.error(e);
+						}
+					});
+				}
+				picker.querySelectorAll('.h-av-opt').forEach(bindOpt);
+
+				/* Eagerly populate the picker from /api/explore so featured agents
+				   (Ansem, Boss Vernington, …) appear immediately. Static buttons
+				   stay if the fetch fails or returns nothing usable. */
+				(async function hydratePicker() {
+					try {
+						const r = await fetch(
+							'/api/explore?source=avatar&quality=high&limit=12',
+						);
+						if (!r.ok) return;
+						const j = await r.json();
+						const seen = new Set();
+						const named = (j?.items || [])
+							.filter((it) => {
+								if (it.kind !== 'avatar' || !it.glbUrl) return false;
+								const name = String(it.name || '').trim();
+								if (name.length < 2) return false;
+								if (/^avatar[\s_-]?\d/i.test(name)) return false;
+								if (seen.has(name.toLowerCase())) return false;
+								seen.add(name.toLowerCase());
+								return true;
+							})
+							.slice(0, 3);
+						if (named.length < 2) return;
+						picker.innerHTML = '';
+						named.forEach((a, i) => {
+							const btn = document.createElement('button');
+							btn.type = 'button';
+							btn.className = 'h-av-opt';
+							btn.dataset.src = a.glbUrl;
+							btn.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+							btn.textContent = a.name;
+							picker.appendChild(btn);
+							bindOpt(btn);
+						});
+					} catch (e) {
+						// Keep static picker; surface in dev so genuine bugs aren't swallowed.
+						console.warn('[home] picker hydration failed', e);
+					}
+				})();
 
 				/* Wait for the Act2Viewer ESM to load (it sets window.Act2Viewer) */
 				function whenReady(cb) {
@@ -987,64 +1049,15 @@
 
 					viewer.onClipsReady = rebuildChips;
 
-					/* default avatar — Robot (matches aria-pressed="true" in HTML) */
-					viewer.loadModel('/animations/robotexpressive.glb').catch(console.error);
+					/* Default load: whichever picker button is currently pressed
+					   (after hydration this is the first featured agent). */
+					const activeBtn = picker.querySelector('.h-av-opt[aria-pressed="true"]');
+					const defaultSrc =
+						activeBtn?.dataset.src || '/animations/robotexpressive.glb';
+					viewer.loadModel(defaultSrc).catch(console.error);
 
-					/* avatar picker — wire static buttons, then hydrate from
-					   /api/explore so the picker showcases real featured agents
-					   (Ansem, Boss Vernington, …) instead of generic demos. */
-					const picker = document.querySelector('.h-avatar-picker');
-					function bindOpt(btn) {
-						btn.addEventListener('click', async () => {
-							picker
-								.querySelectorAll('.h-av-opt')
-								.forEach((b) => b.setAttribute('aria-pressed', 'false'));
-							btn.setAttribute('aria-pressed', 'true');
-							try {
-								await viewer.loadModel(btn.dataset.src);
-							} catch (e) {
-								console.error(e);
-							}
-						});
-					}
-					opts.forEach(bindOpt);
-
-					(async function hydrateFeatured() {
-						try {
-							const r = await fetch(
-								'/api/explore?source=avatar&quality=high&limit=12',
-							);
-							if (!r.ok) return;
-							const j = await r.json();
-							const seen = new Set();
-							const named = (j?.items || [])
-								.filter((it) => {
-									if (it.kind !== 'avatar' || !it.glbUrl) return false;
-									const name = String(it.name || '').trim();
-									if (name.length < 2) return false;
-									if (/^avatar[\s_-]?\d/i.test(name)) return false;
-									if (seen.has(name.toLowerCase())) return false;
-									seen.add(name.toLowerCase());
-									return true;
-								})
-								.slice(0, 3);
-							if (named.length < 2 || !picker) return;
-							picker.innerHTML = '';
-							named.forEach((a, i) => {
-								const btn = document.createElement('button');
-								btn.type = 'button';
-								btn.className = 'h-av-opt';
-								btn.dataset.src = a.glbUrl;
-								btn.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
-								btn.textContent = a.name;
-								picker.appendChild(btn);
-								bindOpt(btn);
-							});
-							await viewer.loadModel(named[0].glbUrl);
-						} catch (e) {
-							/* keep static picker on network error */
-						}
-					})();
+					/* Resolve viewerReady so any queued picker clicks proceed. */
+					_resolveViewer(viewer);
 
 					/* click on canvas to toggle zoom (default → extra-wide) */
 					let wider = false;
