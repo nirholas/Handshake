@@ -1,16 +1,18 @@
 // GET /api/x402/model-check?url=<glb-or-gltf>
 //
-// Paid endpoint cataloged by the CDP x402 Bazaar (agentic.market). For $0.001
-// USDC on Base mainnet the server fetches the model bytes, runs the
-// glTF-Transform inspector, and returns structural stats + optimization hints.
-// Buyers pay programmatically with @x402/fetch — no API keys.
+// Paid endpoint cataloged by the CDP x402 Bazaar (agentic.market) and the
+// pay-skills registry. For $0.001 USDC the server fetches the model bytes, runs
+// the glTF-Transform inspector, and returns structural stats + optimization
+// hints. Buyers pay programmatically with @x402/fetch — no API keys.
 //
-// Wire stack: plain Node handler + our internal x402-spec.js (facilitator-
-// agnostic verify/settle). The same path /api/mcp uses. Stays alive even when
-// CDP creds are absent — the 402 challenge still emits a proper bazaar
-// discovery extension so the catalog can index this endpoint. Verify+settle
-// routes to whichever facilitator X402_FACILITATOR_URL_BASE points at (PayAI
-// by default; set to CDP's URL for first-class CDP-Bazaar settlement).
+// Networks: Base mainnet (EIP-3009 + Permit2 sibling) and Solana mainnet
+// (USDC). verifyPayment / settlePayment in x402-spec.js routes per-network:
+// Base via X402_FACILITATOR_URL_BASE (CDP when configured, else PayAI) and
+// Solana via X402_FACILITATOR_URL_SOLANA (PayAI). The Solana entry is omitted
+// when X402_PAY_TO_SOLANA is unset so the 402 challenge stays valid.
+//
+// Stays alive even when CDP creds are absent — the 402 challenge still emits
+// a proper bazaar discovery extension so the catalog can index this endpoint.
 
 import { wrap, cors, error } from '../_lib/http.js';
 import {

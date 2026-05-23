@@ -1,20 +1,21 @@
 // GET /api/x402/mint-to-mesh?mint=<solana-mint>
 //
-// Paid endpoint cataloged by the CDP x402 Bazaar (agentic.market). For $0.01
-// USDC on Base mainnet the server reads the token's on-chain Metaplex metadata,
-// resolves the off-chain JSON, fetches the image (when one is exposed), and
-// returns a themed binary glTF cube ready for any Three.js / Babylon.js /
-// model-viewer instance to render.
+// Paid endpoint cataloged by the CDP x402 Bazaar (agentic.market) and the
+// pay-skills registry. For $0.001 USDC the server reads the token's on-chain
+// Metaplex metadata, resolves the off-chain JSON, fetches the image (when one
+// is exposed), and returns a themed binary glTF cube ready for any Three.js /
+// Babylon.js / model-viewer instance to render.
 //
 // The cube is procedurally synthesized per request via @gltf-transform — no
 // templated asset, no headless WebGL, no S3. Output ships as base64 inside a
 // JSON envelope so x402 facilitators that struggle with binary bodies still
 // receive a clean response.
 //
-// Wire stack: plain Node handler + our internal x402-spec.js (same path
-// /api/mcp uses). 402 challenge stays alive even when CDP creds are absent so
-// the bazaar can index the endpoint. Verify+settle routes via
-// X402_FACILITATOR_URL_BASE (PayAI by default).
+// Networks: Base mainnet (EIP-3009 + Permit2 sibling) and Solana mainnet
+// (USDC). verifyPayment / settlePayment in x402-spec.js routes per-network:
+// Base via X402_FACILITATOR_URL_BASE and Solana via X402_FACILITATOR_URL_SOLANA
+// (PayAI by default for both). The Solana entry is omitted when
+// X402_PAY_TO_SOLANA is unset so the 402 challenge stays valid.
 
 import { wrap, cors, error } from '../_lib/http.js';
 import {

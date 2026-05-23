@@ -1,14 +1,16 @@
 // GET /api/insights/revenue-vision
 //
-// Paid endpoint cataloged by the CDP x402 Bazaar (agentic.market). For $0.001
-// USDC on Base mainnet the server hands the caller's mission_brief to Claude
-// and returns a structured { power_mode, insight, recommended_move, confidence }
-// object. Buyers pay programmatically with @x402/fetch — no API keys.
+// Paid endpoint cataloged by the CDP x402 Bazaar (agentic.market) and the
+// pay-skills registry. For $0.001 USDC the server hands the caller's
+// mission_brief to Claude and returns a structured
+// { power_mode, insight, recommended_move, confidence } object. Buyers pay
+// programmatically with @x402/fetch — no API keys.
 //
-// Wire stack: plain Node handler + our internal x402-spec.js (same path
-// /api/mcp uses). 402 challenge stays alive even when CDP creds are absent so
-// the bazaar can index the endpoint. Verify+settle routes via
-// X402_FACILITATOR_URL_BASE (PayAI by default).
+// Networks: Base mainnet (EIP-3009 + Permit2 sibling) and Solana mainnet
+// (USDC). verifyPayment / settlePayment in x402-spec.js routes per-network:
+// Base via X402_FACILITATOR_URL_BASE and Solana via X402_FACILITATOR_URL_SOLANA
+// (PayAI by default). The Solana entry is omitted when X402_PAY_TO_SOLANA is
+// unset so the 402 challenge stays valid.
 
 import { wrap, cors, error } from '../_lib/http.js';
 import {
