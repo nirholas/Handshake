@@ -247,10 +247,18 @@ If you want to support the project — compute credits, grants, partnerships, or
 - Native [x402](https://x402.org) paid endpoints on Base, BSC, and Solana — agents pay other agents in USDC for API calls, asset downloads, and skill royalties
 - Coinbase CDP facilitator on Base mainnet; direct-scheme payments on BSC
 - Permit2 gas-sponsoring siblings on every CDP-settled endpoint (buyer signs, relayer pays gas)
+- **Pay-by-name** — `/api/x402/pay-by-name` resolves `@username`, `*.sol` (incl. subdomains), or raw base58 to a recipient and builds an unsigned USDC transfer for the payer's wallet. Every 402 manifest emitted by a named agent advertises `recipient_name` next to the wallet, so payers verify a human-readable name before signing
 - SKU catalog + Stripe-style checkout at `/dashboard/x402`; receipts ledger with admin tooling
 - Subscriptions, idempotency tokens, offer receipts, paid asset download, and a bazaar listing/search API
 - SIWX (Sign-In with X-chain) server for auth-gated paid endpoints
 - Listed on [x402scan](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) and the [MCP Registry](https://registry.modelcontextprotocol.io/?q=three.ws)
+
+**SNS / `*.threews.sol` subdomains**
+
+- `/threews/claim` lets any signed-in user mint `[username].threews.sol` in a single atomic Solana transaction — `createSubdomain` → URL record → `transferSubdomain` to the user's wallet, with three.ws absorbing gas
+- Brave Browser resolves the subdomain directly to the user's `/u/[username]` showcase via the SNS URL record
+- Agents can bind a `.sol` name (theirs or a fresh registration) via `/api/agents/:id/sns`; once bound, every public surface — agent page, x402 manifest, MCP listing, marketplace card — displays the name in place of the raw wallet
+- See [docs/internal/SNS_PARTNERSHIP_PROPOSAL.md](docs/internal/SNS_PARTNERSHIP_PROPOSAL.md) for the partnership pitch to Bonfida
 
 **A2A — Agent-to-Agent Protocol**
 

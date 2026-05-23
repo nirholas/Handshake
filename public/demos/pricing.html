@@ -375,6 +375,12 @@
 			let walkT = 0, walkStart = null, walkEnd = null, walkDur = 0.85;
 			let jumpT = 0, jumpStart = null, jumpEnd = null, jumpLift = 0;
 			let lastMoveKind = null; // 'walk' | 'jump' — read by landOnTier
+			// Post-jump root-Y ease: when the superhero clip lands, hips are
+			// well below baseRootPos.y. Snapping back to base in one frame
+			// pops; we ramp over ROOT_SETTLE_S inside the render hook so we
+			// reliably beat mixer.update() to the final write.
+			let rootSettleT = -1, rootSettleStart = 0;
+			const ROOT_SETTLE_S = 0.5;
 			const WALK_SPEED = 5; // world units per second
 			// Matches the av-superhero-jump clip (2.0s) — finishing a touch
 			// early so the landing-clamp pose doesn't sit frozen too long.
@@ -491,7 +497,12 @@
 					// The superhero-jump clip already ends in a landing crouch;
 					// layering another "land" reaction on top reads as a glitch
 					// (crouch → forward-roll). Hold the clip's final frame
-					// briefly, then crossfade to idle.
+					// briefly, then crossfade to idle. The render hook eases
+					// root-Y back to base during this hold (see rootSettleT).
+					if (rootBone && baseRootPos) {
+						rootSettleStart = rootBone.position.y;
+						rootSettleT = 0;
+					}
 					setTimeout(() => {
 						if (phase === 'idle' && activeTier === t) setAnimation('idle', { loop: true });
 					}, 600);
@@ -622,13 +633,19 @@
 					renderer.render = (sc, cam) => {
 						try {
 							if (rootBone && baseRootPos) {
-								// Always pin X/Z so the avatar stays on the parent
-								// transform we control. Y is also pinned by default,
-								// but the jump phase needs the clip's hip descent to
-								// show through so the landing crouch reads with weight.
+								// X/Z always pinned — our parent transform owns horizontal placement.
 								rootBone.position.x = baseRootPos.x;
 								rootBone.position.z = baseRootPos.z;
-								if (phase !== 'jumping') rootBone.position.y = baseRootPos.y;
+								if (phase === 'jumping') {
+									// Let the clip's hip Y through so the leap+crouch reads.
+								} else if (rootSettleT >= 0 && rootSettleT < ROOT_SETTLE_S) {
+									// Ease from the landed-crouch hip-Y back to base.
+									const p = rootSettleT / ROOT_SETTLE_S;
+									const eased = p * p * (3 - 2 * p);
+									rootBone.position.y = rootSettleStart + (baseRootPos.y - rootSettleStart) * eased;
+								} else {
+									rootBone.position.y = baseRootPos.y;
+								}
 							}
 						} catch (_) {}
 						_r(sc, cam);
@@ -653,6 +670,7 @@
 				try {
 					const dt = Math.min(clock.getDelta(), 0.05);
 					mixer?.update(dt);
+					if (rootSettleT >= 0) rootSettleT += dt;
 
 					if (phase === 'walking' && avatar && walkStart && walkEnd) {
 						walkT += dt;

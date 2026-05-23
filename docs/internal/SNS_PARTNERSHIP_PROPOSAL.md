@@ -8,61 +8,68 @@
 
 ## Why now
 
-SNS owns Solana's identity layer — 350K+ .sol domains, the canonical mapping from human-readable name to wallet. three.ws is building the embodiment layer — 3D agents that live on Solana, transact via x402, and trade on Pump.fun. Every .sol domain deserves a face. Every three.ws agent needs a name. The fit is structural, not cosmetic.
+SNS owns Solana's identity layer — 350K+ .sol domains, the canonical wallet-to-name map. three.ws is the embodiment + commerce layer — 3D agents that live on Solana, transact via x402, trade on Pump.fun.
 
-We are not asking SNS to build anything new. We have already shipped the integration end-to-end on our side. This proposal is about making the integration official, joint-marketed, and (where it makes sense) revenue-shared.
+We are not asking you to build anything. The integration is shipped end-to-end on our side. This proposal is to make the partnership official, joint-marketed, and (where it makes sense) revenue-shared.
 
 ---
 
-## What is already live on three.ws
+## What is live on three.ws right now
 
 ### 1. x402 payment routing by .sol name
 
-Every x402 402-Payment-Required manifest emitted by a three.ws agent now carries the recipient's .sol domain alongside the wallet address. Payers — humans or agents — see and verify the human-readable name before signing.
+Every `402 Payment Required` manifest a three.ws agent emits now carries the recipient's .sol domain alongside the base58 wallet. Payers — humans or agents — see and verify the human-readable name before signing.
 
-- **Manifest field added:** `recipient_name`, populated from the agent's `meta.sns_domain` or by resolving a .sol-style `payments.receiver` via SNS.
-- **Fully backward-compatible:** clients that don't read `recipient_name` continue to pay against `recipient` (base58 wallet) as before.
-- **Code:** [api/_lib/x402.js](../../api/_lib/x402.js) — `resolveRecipient()` + `emit402()` + `manifestOnly()`.
+- New field: `recipient_name`, populated from `meta.sns_domain` or by resolving a .sol-style `payments.receiver` via SNS at manifest emission time.
+- Fully backward-compatible — clients that don't read the new field continue to pay the base58 `recipient`.
+- Code: [api/_lib/x402.js](../../api/_lib/x402.js).
 
 This is the first x402 implementation in the Solana ecosystem that pays *by name*.
 
-### 2. User-registered names assigned to agents
+### 2. Subdomain minting under `threews.sol`
 
-Users can register a .sol domain and assign it to one of their agents in a single flow. From that moment, every public surface the agent appears on — agent page, x402 manifest, MCP tool listing, marketplace card — displays the .sol name in place of the raw wallet.
+three.ws owns `threews.sol`. Two endpoints expose two flows; both atomically mint, set the SNS `URL` record (so the subdomain is Brave-resolvable), and transfer ownership — all bundled into one VersionedTransaction so the subdomain is never claimable by a third party in between.
 
-- **Attach existing .sol:** `POST /api/agents/:id/sns { domain }` — verifies on-chain ownership across the agent wallet and the user's linked wallets, then writes `meta.sns_domain`.
-- **Register fresh:** `POST /api/agents/:id/sns/register-prep` + `register-confirm` — builds an unsigned tx for the user's wallet, confirms the on-chain owner, attaches the alias.
-- **Agent-pays variant:** `POST /api/agents/:id/sns/register` — the agent's own wallet pays in USDC and the alias is attached automatically.
-- **Code:** [api/agents/sns.js](../../api/agents/sns.js).
+- **User flow:** [POST /api/threews/subdomain](../../api/threews/subdomain.js)
+  - Label must equal the caller's `users.username` (impersonation guard).
+  - URL record → `https://three.ws/u/<label>` (the user's storefront).
+  - Claim is recorded in [`user_subdomains`](../../migrations/20260523130000_create_user_subdomains.sql).
+- **Agent flow:** [POST /api/sns-subdomain](../../api/sns-subdomain.js)
+  - Label is arbitrary (defaults to slugified agent name), reuses the same denylist.
+  - URL record → `https://three.ws/a/<agent_id>` (the agent's page).
+  - Writes `meta.sns_domain` on `agent_identities` so x402 manifests can carry the new name immediately.
 
-### 3. Subdomains under `threews.sol`
+Shared on-chain primitive: [src/solana/sns-subdomain.js](../../src/solana/sns-subdomain.js) — `createSubdomain` + `createRecordV2Instruction(url)` + `transferSubdomain` in one tx, signed only by the platform keypair (`THREEWS_SOL_PARENT_SECRET_BASE58`). Platform absorbs SOL gas. Zero wallet-signing friction for the user.
 
-three.ws owns `threews.sol`. We have built a one-call endpoint that mints any-label subdomain — `nich.threews.sol`, `claude.threews.sol`, `vernington.threews.sol` — and transfers ownership to the user (or their agent) in a single transaction. The platform absorbs the SOL gas cost so there is zero wallet-signing friction.
+### 3. SNS-resolved storefronts in Brave
 
-- **Endpoint:** `POST /api/sns-subdomain { label, agent_id?, owner_address? }`.
-- **Availability check:** `GET /api/sns-subdomain?label=nich` — on-chain lookup, no upstream call to Bonfida.
-- **Atomic create + transfer:** parent owner keypair signs `createSubdomain` and immediately `transferSubdomain` to the requested final owner, bundled into one VersionedTransaction. The subdomain is never claimable by a third party in between.
-- **Code:** [api/sns-subdomain.js](../../api/sns-subdomain.js), [src/solana/sns-subdomain.js](../../src/solana/sns-subdomain.js).
+Because every subdomain has a `URL` record set at mint time, typing `nich.threews.sol` in Brave (or any SNS-aware client) resolves directly to the user's `/u/nich` showcase on three.ws — no plugin, no extension, no extra steps. The showcase ([pages/profile.html](../../pages/profile.html), backed by [/api/users/:username](../../api/users/[username].js)) renders the user's public agents, avatars, paid skills, widgets, and socials — already wired and live before this session.
 
-Every three.ws user is one POST away from owning a `*.threews.sol` subdomain. Every agent is one POST away from being named.
+For agent-attached subdomains (`claude.threews.sol`, `vernington.threews.sol`), the same Brave-resolution path lands users on the agent's page directly. Every agent is one POST away from owning its own .sol address.
+
+### 4. Register and assign existing .sol names to agents
+
+Users who already own a .sol domain can attach it to an agent — no minting required:
+- `POST /api/agents/:id/sns { domain }` — verifies on-chain ownership against the agent's wallet and the user's linked Solana wallets, then writes `meta.sns_domain`.
+- `register-prep` / `register-confirm` — user-pays variant; builds an unsigned tx the user signs.
+- `register` (agent-pays variant) — the agent's own USDC ATA pays for the domain registration and the alias attaches automatically.
+- Code: [api/agents/sns.js](../../api/agents/sns.js).
 
 ---
 
 ## What we ask from SNS
 
-1. **Co-marketing.** One email + one X post + one Discord announcement to the .sol holder base when we launch the `*.threews.sol` subdomain program. We commit to symmetric coverage on our channels.
-2. **Listing.** three.ws on the SNS partners page as the official embodiment partner.
-3. **API tier.** Partnership-grade rate limits on `sns-api.bonfida.com` for bulk resolution and reverse lookups — our `recipient_name` enrichment hits this on every x402 manifest emission, so we are the heavy reader you want to formalise.
-4. **Roadmap input.** A shared channel (Telegram / Slack) to coordinate on subdomain-related primitives — sub-of-sub naming, on-chain SOL records for embedded avatars, transfer hooks.
-
----
+1. **Co-marketing.** One email + one X post + one Discord drop to the .sol holder base when we launch the `*.threews.sol` program. Symmetric coverage on our channels.
+2. **Partner listing.** three.ws on the SNS partners page as the official embodiment partner.
+3. **API tier.** Partnership-grade rate limits on `sns-api.bonfida.com` — our `recipient_name` enrichment hits SNS on every x402 manifest emission for named agents, so we are the heavy reader you would want to formalise.
+4. **Shared channel.** A Telegram / Slack to coordinate on subdomain primitives — sub-of-sub naming, on-chain SOL records pointing at avatar bundles, transfer hooks, IPFS record support for self-hostable storefront snapshots.
 
 ## What SNS gets
 
-- A consumer-facing visual product attached to every .sol — increases domain perceived value and retention.
+- A consumer visual product attached to every .sol — domain perceived value goes up, retention goes up.
 - Distribution into the AI-agent narrative (currently the dominant Solana retail story via Pump.fun).
-- Revenue share on co-branded subdomains where we sell pricing tiers (vanity labels, single-letter subs).
-- Featured placement across three.ws agent pages, MCP tooling, the agent marketplace, and the public x402 payment manifests — every payment receipt for a named agent advertises SNS.
+- Revenue share on co-branded subdomain pricing tiers (vanity labels, single-letter subs).
+- Featured placement across three.ws agent pages, MCP tooling, the marketplace, and every paid x402 receipt — every payment for a named agent advertises SNS by name.
 
 ---
 
@@ -70,9 +77,10 @@ Every three.ws user is one POST away from owning a `*.threews.sol` subdomain. Ev
 
 A 30-minute call this week. We bring a working demo:
 
-1. A user registers `claude.threews.sol` from our UI — confirmed on-chain in under 5 seconds, zero gas paid by the user.
-2. We assign it to a freshly-spawned agent.
-3. We make an x402 payment to that agent. The 402 manifest shows `recipient_name: "claude.threews.sol"`. The payer sees and verifies the name before signing.
+1. New user signs up, claims `claude.threews.sol` via three.ws — on-chain in under 5 seconds, zero gas paid by the user.
+2. Type `claude.threews.sol` into Brave — lands on `https://three.ws/u/claude` showing the user's agents, avatars, paid skills.
+3. Spawn a fresh agent. Mint `vernington.threews.sol`, attach to the agent. Type `vernington.threews.sol` in Brave — lands on the agent's page directly.
+4. Make an x402 payment to the agent. The 402 manifest shows `recipient_name: "vernington.threews.sol"`. The payer verifies the name before signing.
 
 No slides. Working software.
 
@@ -82,11 +90,13 @@ No slides. Working software.
 
 - Forward resolution: `GET /api/sns?name=nich.threews.sol` → `{ address, network: "solana" }`.
 - Reverse resolution: `GET /api/sns?address=<base58>` → primary .sol domain.
-- Subdomain mint: `POST /api/sns-subdomain { label, agent_id?, owner_address? }`.
-- Subdomain availability: `GET /api/sns-subdomain?label=<label>`.
-- Agent attach: `POST /api/agents/:id/sns { domain }`.
-- Agent register (user-pays): `/api/agents/:id/sns/register-prep` + `/register-confirm`.
-- Agent register (agent-pays): `POST /api/agents/:id/sns/register { domain }`.
+- User subdomain (claim by username): `POST /api/threews/subdomain { label, owner_wallet? }`.
+- Agent subdomain (label-flexible, attaches to agent): `POST /api/sns-subdomain { agent_id, label?, owner_address? }`.
+- Subdomain availability: `GET /api/sns-subdomain?label=<label>` or `GET /api/threews/subdomain?label=<label>`.
+- Subdomain reverse-lookup (claim → user): `GET /api/users/by-subdomain?label=<label>`.
+- Agent attach existing .sol: `POST /api/agents/:id/sns { domain }`.
+- Agent register existing .sol (user-pays): `/api/agents/:id/sns/register-prep` + `/register-confirm`.
+- Agent register existing .sol (agent-pays): `POST /api/agents/:id/sns/register { domain }`.
 - x402 manifest schema, augmented:
 
   ```json
@@ -98,7 +108,7 @@ No slides. Working software.
     "amount": "1000000",
     "currency": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
     "recipient": "<base58 wallet>",
-    "recipient_name": "claude.threews.sol",
+    "recipient_name": "vernington.threews.sol",
     "memo": "…",
     "valid_until": 1716508800,
     "intent_url": "/api/agents/payments/pay-prep",
@@ -107,4 +117,6 @@ No slides. Working software.
   }
   ```
 
-- Parent owner keypair: held by three.ws under `THREEWS_SOL_PARENT_SECRET_BASE58`. Subdomains transfer ownership immediately after mint; the platform never retains custody.
+- Storefront route: `/u/<label>` → [pages/profile.html](../../pages/profile.html), backed by [`/api/users/<label>`](../../api/users/[username].js).
+- Parent owner keypair: held by three.ws under `THREEWS_SOL_PARENT_SECRET_BASE58`. Subdomains transfer ownership atomically with mint and URL record write; the platform never retains custody.
+- Tests: 44 SNS-related tests pass (`tests/api/sns.test.js`, `tests/api/threews-sns-helper.test.js`, `tests/solana-sns.test.js`).

@@ -76,6 +76,61 @@ describe('emit402', () => {
 		expect(res.statusCode).not.toBe(402);
 	});
 
+	it('surfaces meta.sns_domain as recipient_name when set', async () => {
+		const res = makeRes();
+		await emit402(res, {
+			agent: makeAgent({
+				sns_domain: 'vernington.threews.sol',
+				payments: {
+					configured: true,
+					provider: 'pumpfun',
+					mint: 'MintPubkey1111111111111111111111111111111',
+					receiver: 'OwnerWallet111111111111111111111111111111',
+					cluster: 'mainnet',
+				},
+			}),
+			skill: 's',
+			amount: '1',
+			currency: 'X',
+		});
+		const body = JSON.parse(res.body);
+		expect(body.recipient).toBe('OwnerWallet111111111111111111111111111111');
+		expect(body.recipient_name).toBe('vernington.threews.sol');
+	});
+
+	it('appends .sol when meta.sns_domain is stored without the suffix', async () => {
+		const res = makeRes();
+		await emit402(res, {
+			agent: makeAgent({
+				sns_domain: 'vernington.threews',
+				payments: {
+					configured: true,
+					provider: 'pumpfun',
+					mint: 'MintPubkey1111111111111111111111111111111',
+					receiver: 'OwnerWallet111111111111111111111111111111',
+					cluster: 'mainnet',
+				},
+			}),
+			skill: 's',
+			amount: '1',
+			currency: 'X',
+		});
+		const body = JSON.parse(res.body);
+		expect(body.recipient_name).toBe('vernington.threews.sol');
+	});
+
+	it('leaves recipient_name null when no SNS identity is attached', async () => {
+		const res = makeRes();
+		await emit402(res, {
+			agent: makeAgent(),
+			skill: 's',
+			amount: '1',
+			currency: 'X',
+		});
+		const body = JSON.parse(res.body);
+		expect(body.recipient_name).toBeNull();
+	});
+
 	it('honors validForSec', async () => {
 		const res = makeRes();
 		const before = Math.floor(Date.now() / 1000);

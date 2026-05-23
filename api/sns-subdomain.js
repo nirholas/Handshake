@@ -1,36 +1,43 @@
-// Mint subdomains under the platform-owned parent .sol (default: threews.sol).
+// Mint subdomains under the platform-owned parent .sol (default: threews.sol)
+// for AGENT identities. For user/username-claim subdomains, use the existing
+// POST /api/threews/subdomain endpoint.
 //
 // GET  /api/sns-subdomain?label=<label>          → availability check.
-// POST /api/sns-subdomain
-//   body { label, agent_id?, owner_address?, space? }
+// POST /api/sns-subdomain { agent_id, label?, owner_address?, space? }
 //
-// - label              : required, 1–63 chars of [a-z0-9-], no leading/trailing hyphen.
+// - agent_id           : required. The agent to attach the subdomain to.
+// - label              : optional, defaults to the agent's name slugified.
+//                        1–63 chars of [a-z0-9-], passes the shared denylist.
 // - owner_address      : optional. Solana base58 wallet to receive ownership.
-//                        Defaults to the agent's own solana_address when agent_id
-//                        is given, otherwise to the caller's primary linked
-//                        Solana wallet.
-// - agent_id           : optional. When set, the new subdomain is attached as
-//                        the agent's SNS identity (meta.sns_domain).
+//                        Defaults to the agent's own solana_address. When
+//                        provided, must be a wallet linked to the caller.
 // - space              : optional, 1000–10000. Bytes reserved on the subdomain
 //                        registry. Default 2000.
 //
 // The platform keypair (THREEWS_SOL_PARENT_SECRET_BASE58) signs both the
 // subdomain creation and the immediate transfer of ownership. The caller's
 // wallet does not need to sign.
+//
+// On success, the new subdomain's SNS URL record is set to
+// https://three.ws/a/<agent_id> so Brave users typing `<label>.threews.sol`
+// land on the agent page. The mapping is also written to the agent's
+// meta.sns_domain so x402 manifests can show recipient_name without an
+// additional SNS round-trip.
 
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { sql } from './_lib/db.js';
 import { cors, json, method, error, readJson, wrap } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import {
-	checkSubdomainAvailability,
-	createNamedSubdomain,
-	getParentDomain,
+	PARENT_LABEL,
+	fullDomain,
+	getSubdomainOwner,
+	hasOwnerKey,
 	normalizeLabel,
-} from '../src/solana/sns-subdomain.js';
-import { Connection } from '@solana/web3.js';
+	getStorefrontOrigin,
+} from './_lib/threews-sns.js';
+import { createNamedSubdomain } from '../src/solana/sns-subdomain.js';
 
-const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 async function resolveAuth(req) {
@@ -41,74 +48,134 @@ async function resolveAuth(req) {
 	return null;
 }
 
-async function resolveTargetOwner({ userId, agentId, ownerAddress }) {
-	if (ownerAddress) {
-		if (!ADDR_RE.test(ownerAddress)) {
-			return { error: { status: 400, code: 'validation_error', msg: 'owner_address must be a base58 Solana public key' } };
+function slugifyName(name) {
+	const s = String(name || '')
+		.toLowerCase()
+		.replace(/[^a-z0-9-]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 63);
+	return s || null;
+}
+
+async function handleCheck(req, res) {
+	const rl = await limits.snsResolve(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const url = new URL(req.url, 'http://x');
+	const label = normalizeLabel(url.searchParams.get('label'));
+	if (!label) {
+		return error(res, 400, 'validation_error', 'label must match [a-z0-9-]{1,63} and not be reserved');
+	}
+	const owner = await getSubdomainOwner(label);
+	return json(res, 200, {
+		data: {
+			label,
+			parent: `${PARENT_LABEL}.sol`,
+			full_name: fullDomain(label),
+			available: !owner,
+			owner,
+		},
+	});
+}
+
+async function handleMint(req, res, auth) {
+	if (!hasOwnerKey()) {
+		return error(res, 503, 'config_missing', 'subdomain minting unavailable — platform owner key not configured');
+	}
+
+	const body = await readJson(req).catch(() => ({}));
+	const agentId = typeof body?.agent_id === 'string' ? body.agent_id.trim() : null;
+	if (!agentId) {
+		return error(res, 400, 'validation_error', 'agent_id is required (for user/username-claim subdomains use POST /api/threews/subdomain)');
+	}
+
+	const [agent] = await sql`
+		SELECT id, name, meta FROM agent_identities
+		WHERE id = ${agentId} AND user_id = ${auth.userId} AND deleted_at IS NULL
+	`;
+	if (!agent) return error(res, 404, 'not_found', 'agent not found');
+
+	const agentSol = agent.meta?.solana_address;
+	if (!agentSol) {
+		return error(res, 412, 'agent_missing_wallet', 'agent has no solana wallet — provision one via POST /api/agents/:id/solana');
+	}
+
+	let labelInput = typeof body?.label === 'string' && body.label.trim()
+		? body.label
+		: slugifyName(agent.name);
+	const label = normalizeLabel(labelInput);
+	if (!label) {
+		return error(res, 400, 'validation_error', 'label must match [a-z0-9-]{1,63} and not be reserved');
+	}
+
+	let recipientWallet = typeof body?.owner_address === 'string' ? body.owner_address.trim() : '';
+	if (recipientWallet) {
+		if (!ADDR_RE.test(recipientWallet)) {
+			return error(res, 400, 'validation_error', 'owner_address must be a base58 Solana public key');
 		}
-		const [linked] = await sql`
+		const [walletRow] = await sql`
 			SELECT id FROM user_wallets
-			WHERE user_id = ${userId} AND address = ${ownerAddress} AND chain_type = 'solana'
+			WHERE user_id = ${auth.userId} AND address = ${recipientWallet} AND chain_type = 'solana'
 			LIMIT 1
 		`;
-		if (!linked) {
-			return { error: { status: 403, code: 'forbidden', msg: 'owner_address is not a Solana wallet linked to your account' } };
-		}
-		return { address: ownerAddress };
+		if (!walletRow) return error(res, 403, 'forbidden', 'owner_address must be linked to your account');
+	} else {
+		recipientWallet = agentSol;
 	}
 
-	if (agentId) {
-		const [agent] = await sql`
-			SELECT id, meta FROM agent_identities
-			WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL
-		`;
-		if (!agent) return { error: { status: 404, code: 'not_found', msg: 'agent not found' } };
-		const addr = agent.meta?.solana_address;
-		if (!addr) {
-			return { error: { status: 412, code: 'agent_missing_wallet', msg: 'agent has no solana wallet — provision one via POST /api/agents/:id/solana before minting a subdomain' } };
-		}
-		return { address: addr, agent };
+	const onChainOwner = await getSubdomainOwner(label);
+	if (onChainOwner) {
+		return error(res, 409, 'conflict', `${fullDomain(label)} is already registered on-chain to ${onChainOwner}`);
 	}
 
-	const [primary] = await sql`
-		SELECT address FROM user_wallets
-		WHERE user_id = ${userId} AND chain_type = 'solana'
-		ORDER BY (is_primary IS TRUE) DESC, created_at ASC
-		LIMIT 1
-	`;
-	if (!primary) {
-		return { error: { status: 412, code: 'no_solana_wallet', msg: 'link a Solana wallet first via POST /api/auth/wallet, or pass owner_address / agent_id' } };
+	const space = Number.isInteger(body?.space) && body.space >= 1000 && body.space <= 10000 ? body.space : 2000;
+	const urlOverride = `${getStorefrontOrigin()}/a/${encodeURIComponent(agentId)}`;
+
+	let minted;
+	try {
+		minted = await createNamedSubdomain({
+			label,
+			newOwner: recipientWallet,
+			space,
+			urlOverride,
+		});
+	} catch (err) {
+		console.error('[api/sns-subdomain] mint_failed', err);
+		const status = err?.status || 502;
+		const code = err?.code || 'upstream_error';
+		return error(res, status, code, err?.message || 'subdomain mint failed');
 	}
-	return { address: primary.address };
+
+	// Attach the new SNS identity to the agent. Stored as the full ".sol"
+	// name so downstream consumers (x402 manifest's `recipient_name`, agent
+	// page, marketplace card) can use it without re-resolving.
+	const nextMeta = {
+		...(agent.meta || {}),
+		sns_domain: minted.fullName,
+		sns_owner_wallet: recipientWallet,
+	};
+	await sql`UPDATE agent_identities SET meta = ${JSON.stringify(nextMeta)}::jsonb WHERE id = ${agentId}`;
+
+	return json(res, 201, {
+		data: {
+			ok: true,
+			agent_id: agentId,
+			full_name: minted.fullName,
+			parent: minted.parent,
+			owner: minted.owner,
+			signature: minted.signature,
+			explorer: `https://solscan.io/tx/${minted.signature}`,
+			url_record: minted.url_record,
+			agent_url: urlOverride,
+		},
+	});
 }
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
 
-	if (req.method === 'GET') {
-		const rl = await limits.snsResolve(clientIp(req));
-		if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
-
-		const url = new URL(req.url, 'http://x');
-		const label = normalizeLabel(url.searchParams.get('label'));
-		const parentDomain = getParentDomain().replace(/\.sol$/, '');
-		if (!label) {
-			return error(res, 400, 'validation_error', 'label must be 1–63 lowercase [a-z0-9-] chars with no leading/trailing hyphen');
-		}
-		const connection = new Connection(SOLANA_RPC, 'confirmed');
-		const availability = await checkSubdomainAvailability({ connection, parentDomain, label });
-		return json(res, 200, {
-			data: {
-				label,
-				parent: `${parentDomain}.sol`,
-				full_name: `${label}.${parentDomain}.sol`,
-				available: !availability.exists,
-				owner: availability.owner,
-			},
-		});
-	}
-
-	if (!method(req, res, ['POST'])) return;
+	if (req.method === 'GET') return handleCheck(req, res);
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in or provide a bearer token');
@@ -116,46 +183,5 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	const body = await readJson(req).catch(() => ({}));
-	const label = normalizeLabel(body?.label);
-	if (!label) {
-		return error(res, 400, 'validation_error', 'label must be 1–63 lowercase [a-z0-9-] chars with no leading/trailing hyphen');
-	}
-	const agentId = typeof body?.agent_id === 'string' ? body.agent_id.trim() : null;
-	const ownerAddress = typeof body?.owner_address === 'string' ? body.owner_address.trim() : null;
-	const space = Number.isInteger(body?.space) && body.space >= 1000 && body.space <= 10000 ? body.space : 2000;
-
-	const target = await resolveTargetOwner({ userId: auth.userId, agentId, ownerAddress });
-	if (target.error) return error(res, target.error.status, target.error.code, target.error.msg);
-
-	let minted;
-	try {
-		minted = await createNamedSubdomain({ label, newOwner: target.address, space });
-	} catch (err) {
-		const status = err?.status || 500;
-		const code = err?.code || 'mint_failed';
-		return error(res, status, code, err?.message || 'subdomain mint failed');
-	}
-
-	// Attach to the agent's identity when requested. We store the resolved
-	// full name (e.g. "nich.threews.sol") so x402 manifests can carry it
-	// directly via recipient_name without re-resolving.
-	if (agentId && target.agent) {
-		const nextMeta = { ...(target.agent.meta || {}), sns_domain: minted.fullName, sns_owner_wallet: target.address };
-		await sql`UPDATE agent_identities SET meta = ${JSON.stringify(nextMeta)}::jsonb WHERE id = ${agentId}`;
-	}
-
-	return json(res, 201, {
-		data: {
-			ok: true,
-			full_name: minted.fullName,
-			parent: minted.parent,
-			owner: minted.owner,
-			signature: minted.signature,
-			explorer: `https://solscan.io/tx/${minted.signature}`,
-			url_record: minted.url_record,
-			storefront_path: `/u/${label}`,
-			attached_to_agent: agentId && target.agent ? agentId : null,
-		},
-	});
+	return handleMint(req, res, auth);
 });

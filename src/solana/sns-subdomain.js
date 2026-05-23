@@ -107,7 +107,13 @@ export async function checkSubdomainAvailability({ connection, parentDomain, lab
  *
  * Returns { signature, fullName, owner }.
  */
-export async function createNamedSubdomain({ label, newOwner, space = 2000, rpcUrl = DEFAULT_RPC_URL }) {
+export async function createNamedSubdomain({
+	label,
+	newOwner,
+	space = 2000,
+	rpcUrl = DEFAULT_RPC_URL,
+	urlOverride,
+}) {
 	const cleanLabel = normalizeLabel(label);
 	if (!cleanLabel) {
 		const e = new Error('invalid subdomain label');
@@ -139,8 +145,10 @@ export async function createNamedSubdomain({ label, newOwner, space = 2000, rpcU
 
 	// Write the URL record while the platform still owns the subdomain.
 	// This makes `<label>.threews.sol` resolve in Brave (and any other SNS-
-	// aware client) to the user's storefront page on three.ws.
-	const url = storefrontUrlForLabel(cleanLabel);
+	// aware client) to the right page on three.ws — the user's `/u/<label>`
+	// storefront by default, or a caller-supplied override (e.g. an agent
+	// page when the subdomain is being attached to an agent).
+	const url = urlOverride || storefrontUrlForLabel(cleanLabel);
 	const urlRecordIx = sns.createRecordV2Instruction(
 		fullName,
 		sns.Record.Url,
