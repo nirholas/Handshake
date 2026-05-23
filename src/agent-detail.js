@@ -16,7 +16,14 @@ import {
 	LAMPORTS_PER_SOL,
 	clusterApiUrl,
 } from '@solana/web3.js';
-const solanaWeb3 = { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL, clusterApiUrl };
+const solanaWeb3 = {
+	Connection,
+	PublicKey,
+	Transaction,
+	SystemProgram,
+	LAMPORTS_PER_SOL,
+	clusterApiUrl,
+};
 import { openSwapModal } from './swap-jupiter.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -94,11 +101,15 @@ function renderService(svc) {
 			el('div', { class: 'ad-svc-link' }, [
 				el('span', { text: '🔗' }),
 				el('span', { text: svc.url }),
-				el('button', {
-					class: 'ad-copy',
-					'aria-label': 'Copy',
-					onclick: () => navigator.clipboard?.writeText(svc.url),
-				}, '⧉'),
+				el(
+					'button',
+					{
+						class: 'ad-copy',
+						'aria-label': 'Copy',
+						onclick: () => navigator.clipboard?.writeText(svc.url),
+					},
+					'⧉',
+				),
 			]),
 		);
 	}
@@ -124,7 +135,9 @@ function render(agent) {
 
 	$('ad-avatar').src = agent.avatar || avatarDataUri(agent.name);
 	$('ad-avatar').alt = agent.name;
-	$('ad-avatar').onerror = () => { $('ad-avatar').src = avatarDataUri(agent.name); };
+	$('ad-avatar').onerror = () => {
+		$('ad-avatar').src = avatarDataUri(agent.name);
+	};
 	$('ad-name').textContent = agent.name;
 
 	const status = $('ad-status');
@@ -160,8 +173,9 @@ function render(agent) {
 			el('span', { class: 'ad-mono', text: shortAddr(agent.token.mint) }),
 		]);
 		$('ad-token-body').appendChild(tokenRow);
-		const dashLink = agent.token.pumpfun_url
-			|| (agent.token.cluster === 'devnet'
+		const dashLink =
+			agent.token.pumpfun_url ||
+			(agent.token.cluster === 'devnet'
 				? `https://explorer.solana.com/address/${agent.token.mint}?cluster=devnet`
 				: `https://pump.fun/${agent.token.mint}`);
 		const viewBtn = el('a', {
@@ -221,7 +235,9 @@ function render(agent) {
 
 	const pay = $('ad-payment');
 	pay.innerHTML = '';
-	pay.appendChild(pill(agent.x402 ? 'x402 Supported' : 'x402 Not Supported', agent.x402 ? 'green' : ''));
+	pay.appendChild(
+		pill(agent.x402 ? 'x402 Supported' : 'x402 Not Supported', agent.x402 ? 'green' : ''),
+	);
 
 	$('ad-agent-id').textContent = shortAddr(agent.id);
 	const regs = $('ad-registries');
@@ -264,17 +280,35 @@ function render(agent) {
 	if (agent.tradeUrl && agent.tradeUrl !== '#') $('ad-trade').href = agent.tradeUrl;
 	else $('ad-trade').style.display = 'none';
 
-	const sns = agent.rawMetadata?.meta?.sns_domain;
-	if (sns) {
+	const attachedSns = agent.rawMetadata?.meta?.sns_domain;
+	const solAddress = agent.rawMetadata?.meta?.solana_address;
+	if (attachedSns) {
 		document.getElementById('ad-sns-row').style.display = '';
-		document.getElementById('ad-sns').textContent = `${sns}.sol`;
+		document.getElementById('ad-sns').textContent = `${attachedSns}.sol`;
+	} else if (solAddress) {
+		// Lazy reverse-lookup of the wallet's on-chain favorite. Fire-and-forget;
+		// 404s and timeouts just leave the row hidden — non-essential UX.
+		fetch(`/api/sns?address=${encodeURIComponent(solAddress)}`)
+			.then((r) => (r.ok ? r.json() : null))
+			.then((body) => {
+				const name = body?.data?.name;
+				if (!name) return;
+				const row = document.getElementById('ad-sns-row');
+				const span = document.getElementById('ad-sns');
+				if (!row || !span) return;
+				row.style.display = '';
+				span.textContent = name;
+				span.title = 'On-chain favorite domain';
+			})
+			.catch(() => {});
 	}
 
 	const voiceProvider = agent.rawMetadata?.voice_provider;
 	const voiceId = agent.rawMetadata?.voice_id;
 	if (voiceProvider && voiceProvider !== 'browser') {
 		document.getElementById('ad-voice-row').style.display = '';
-		document.getElementById('ad-voice').innerHTML = `<span class="ad-pill ad-pill-green">cloned · ${voiceProvider}</span>`;
+		document.getElementById('ad-voice').innerHTML =
+			`<span class="ad-pill ad-pill-green">cloned · ${voiceProvider}</span>`;
 	} else if (voiceProvider === 'browser') {
 		document.getElementById('ad-voice-row').style.display = '';
 		document.getElementById('ad-voice').textContent = 'browser TTS';
@@ -290,21 +324,38 @@ async function loadExtraSections(agentId, rec) {
 	const url = (p) => `/api/agents/${encodeURIComponent(agentId)}${p}`;
 
 	const safe = async (fn) => {
-		try { return await fn(); } catch (e) { return null; }
+		try {
+			return await fn();
+		} catch (e) {
+			return null;
+		}
 	};
 
 	const [actions, memory, strategy, reputation, embedPolicy] = await Promise.all([
 		safe(() => fetchJson(url('/actions?limit=8'))),
-		safe(() => fetch(`/api/agent-memory?agentId=${encodeURIComponent(agentId)}&limit=6`, { credentials: 'include' }).then((r) => r.ok ? r.json() : null)),
-		safe(() => fetch(`/api/agent-strategy?id=${encodeURIComponent(agentId)}`, { credentials: 'include' }).then((r) => r.ok ? r.json() : null)),
+		safe(() =>
+			fetch(`/api/agent-memory?agentId=${encodeURIComponent(agentId)}&limit=6`, {
+				credentials: 'include',
+			}).then((r) => (r.ok ? r.json() : null)),
+		),
+		safe(() =>
+			fetch(`/api/agent-strategy?id=${encodeURIComponent(agentId)}`, {
+				credentials: 'include',
+			}).then((r) => (r.ok ? r.json() : null)),
+		),
 		safe(() => fetchJson(url('/reputation'))),
-		safe(() => fetch(url('/embed-policy'), { credentials: 'include' }).then((r) => r.ok ? r.json() : null)),
+		safe(() =>
+			fetch(url('/embed-policy'), { credentials: 'include' }).then((r) =>
+				r.ok ? r.json() : null,
+			),
+		),
 	]);
 
 	if (actions?.actions?.length) renderActions(actions.actions, agentId);
 	if (memory?.entries?.length) renderMemory(memory.entries);
 	if (strategy?.data?.strategy != null) renderStrategy(strategy.data.strategy);
-	if (reputation && (reputation.count > 0 || reputation.average > 0)) renderReputation(reputation);
+	if (reputation && (reputation.count > 0 || reputation.average > 0))
+		renderReputation(reputation);
 	if (embedPolicy) renderEmbedPolicy(embedPolicy);
 }
 
@@ -323,7 +374,16 @@ function fmtRelTime(iso) {
 }
 
 function actionIcon(type) {
-	return ({ speak: '💬', remember: '📝', sign: '✍️', 'skill-done': '✓', validate: '✔', 'load-end': '📦' })[type] || '•';
+	return (
+		{
+			speak: '💬',
+			remember: '📝',
+			sign: '✍️',
+			'skill-done': '✓',
+			validate: '✔',
+			'load-end': '📦',
+		}[type] || '•'
+	);
 }
 
 function summarizeActionPayload(p) {
@@ -343,29 +403,53 @@ function renderActions(actions, agentId) {
 	list.innerHTML = '';
 	for (const a of actions) {
 		const verifyMark =
-			a.verified === true ? '<span class="ad-pill ad-pill-green" title="signature verified">✓</span>'
-			: a.verified === false ? '<span class="ad-pill" title="invalid signature">✗</span>'
-			: '';
-		const meta = el('span', { class: 'ad-muted', style: 'font-size:11px;display:flex;align-items:center;gap:6px' });
+			a.verified === true
+				? '<span class="ad-pill ad-pill-green" title="signature verified">✓</span>'
+				: a.verified === false
+					? '<span class="ad-pill" title="invalid signature">✗</span>'
+					: '';
+		const meta = el('span', {
+			class: 'ad-muted',
+			style: 'font-size:11px;display:flex;align-items:center;gap:6px',
+		});
 		if (verifyMark) {
 			const m = document.createElement('span');
 			m.innerHTML = verifyMark;
 			meta.appendChild(m);
 		}
 		meta.appendChild(el('span', { text: fmtRelTime(a.timestamp) }));
-		const row = el('div', { class: 'ad-row ad-row-split', style: 'padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)' }, [
-			el('span', { style: 'display:flex;align-items:center;gap:8px;min-width:0' }, [
-				el('span', { text: actionIcon(a.type) }),
-				el('span', { class: 'ad-mono', style: 'min-width:90px;flex-shrink:0', text: a.type }),
-				el('span', { class: 'ad-muted', style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: summarizeActionPayload(a.payload) }),
-			]),
-			meta,
-		]);
+		const row = el(
+			'div',
+			{
+				class: 'ad-row ad-row-split',
+				style: 'padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)',
+			},
+			[
+				el('span', { style: 'display:flex;align-items:center;gap:8px;min-width:0' }, [
+					el('span', { text: actionIcon(a.type) }),
+					el('span', {
+						class: 'ad-mono',
+						style: 'min-width:90px;flex-shrink:0',
+						text: a.type,
+					}),
+					el('span', {
+						class: 'ad-muted',
+						style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap',
+						text: summarizeActionPayload(a.payload),
+					}),
+				]),
+				meta,
+			],
+		);
 		list.appendChild(row);
 	}
 	list.appendChild(
 		el('div', { style: 'text-align:center;padding-top:10px' }, [
-			el('a', { class: 'ad-cta', href: `/dashboard/actions?agent=${encodeURIComponent(agentId)}`, text: 'See full action log →' }),
+			el('a', {
+				class: 'ad-cta',
+				href: `/dashboard/actions?agent=${encodeURIComponent(agentId)}`,
+				text: 'See full action log →',
+			}),
 		]),
 	);
 	card.style.display = '';
@@ -377,10 +461,21 @@ function renderMemory(entries) {
 	const list = document.getElementById('ad-memory-list');
 	list.innerHTML = '';
 	for (const m of entries) {
-		const row = el('div', { style: 'padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)' }, [
-			el('div', { class: 'ad-muted', style: 'font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px', text: m.type || 'memory' }),
-			el('div', { style: 'color:#ddd;font-size:13px;white-space:pre-wrap', text: String(m.content || '').slice(0, 240) }),
-		]);
+		const row = el(
+			'div',
+			{ style: 'padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)' },
+			[
+				el('div', {
+					class: 'ad-muted',
+					style: 'font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px',
+					text: m.type || 'memory',
+				}),
+				el('div', {
+					style: 'color:#ddd;font-size:13px;white-space:pre-wrap',
+					text: String(m.content || '').slice(0, 240),
+				}),
+			],
+		);
 		list.appendChild(row);
 	}
 	card.style.display = '';
@@ -395,7 +490,9 @@ function renderStrategy(strategy) {
 
 function renderReputation(r) {
 	const card = document.getElementById('ad-reputation-card');
-	document.getElementById('ad-rep-avg').textContent = r.average ? Number(r.average).toFixed(2) : '0.00';
+	document.getElementById('ad-rep-avg').textContent = r.average
+		? Number(r.average).toFixed(2)
+		: '0.00';
 	document.getElementById('ad-rep-count').textContent = String(r.count || 0);
 	if (r.total_stake_wei && r.total_stake_wei !== '0') {
 		document.getElementById('ad-rep-stake-row').style.display = '';
@@ -416,26 +513,40 @@ function renderEmbedPolicy(p) {
 	const allowedOrigins = Array.isArray(p.allowed_origins) ? p.allowed_origins : [];
 	const monthlyQuota = p?.brain?.monthly_quota;
 
-	host.appendChild(el('div', { class: 'ad-row ad-row-split' }, [
-		el('span', { class: 'ad-muted', text: 'Embeddable' }),
-		el('span', { text: allowEmbed }),
-	]));
+	host.appendChild(
+		el('div', { class: 'ad-row ad-row-split' }, [
+			el('span', { class: 'ad-muted', text: 'Embeddable' }),
+			el('span', { text: allowEmbed }),
+		]),
+	);
 	if (allowedOrigins.length) {
-		host.appendChild(el('div', { class: 'ad-row ad-row-split' }, [
-			el('span', { class: 'ad-muted', text: 'Allowed origins' }),
-			el('span', { class: 'ad-mono', style: 'font-size:11px;text-align:right', text: allowedOrigins.slice(0, 3).join(', ') + (allowedOrigins.length > 3 ? ` +${allowedOrigins.length - 3}` : '') }),
-		]));
+		host.appendChild(
+			el('div', { class: 'ad-row ad-row-split' }, [
+				el('span', { class: 'ad-muted', text: 'Allowed origins' }),
+				el('span', {
+					class: 'ad-mono',
+					style: 'font-size:11px;text-align:right',
+					text:
+						allowedOrigins.slice(0, 3).join(', ') +
+						(allowedOrigins.length > 3 ? ` +${allowedOrigins.length - 3}` : ''),
+				}),
+			]),
+		);
 	} else if (allowEmbed === 'Yes') {
-		host.appendChild(el('div', { class: 'ad-row ad-row-split' }, [
-			el('span', { class: 'ad-muted', text: 'Allowed origins' }),
-			el('span', { text: 'any' }),
-		]));
+		host.appendChild(
+			el('div', { class: 'ad-row ad-row-split' }, [
+				el('span', { class: 'ad-muted', text: 'Allowed origins' }),
+				el('span', { text: 'any' }),
+			]),
+		);
 	}
 	if (monthlyQuota != null) {
-		host.appendChild(el('div', { class: 'ad-row ad-row-split' }, [
-			el('span', { class: 'ad-muted', text: 'Monthly LLM quota' }),
-			el('span', { text: String(monthlyQuota) }),
-		]));
+		host.appendChild(
+			el('div', { class: 'ad-row ad-row-split' }, [
+				el('span', { class: 'ad-muted', text: 'Monthly LLM quota' }),
+				el('span', { text: String(monthlyQuota) }),
+			]),
+		);
 	}
 	card.style.display = '';
 }
@@ -462,7 +573,9 @@ function makeSnsResolver(inputEl, statusEl) {
 		const myId = ++seq;
 		pending = (async () => {
 			try {
-				const r = await fetch(`/api/sns?name=${encodeURIComponent(name)}`, { credentials: 'include' });
+				const r = await fetch(`/api/sns?name=${encodeURIComponent(name)}`, {
+					credentials: 'include',
+				});
 				if (myId !== seq) return null; // superseded
 				if (r.status === 404) {
 					setStatus('warn', `${name} does not resolve`);
@@ -498,7 +611,10 @@ function makeSnsResolver(inputEl, statusEl) {
 		pending = null;
 		lastResolved = null;
 
-		if (!raw) { setStatus('', ''); return; }
+		if (!raw) {
+			setStatus('', '');
+			return;
+		}
 		if (SOL_ADDR_RE.test(raw)) {
 			lastResolved = { name: null, address: raw };
 			setStatus('', '');
@@ -560,17 +676,17 @@ function bindWalletActions() {
 	const snsResolver = makeSnsResolver(recipientAddressInput, recipientResolvedEl);
 
 	receiveBtn.addEventListener('click', () => {
-			const walletAddress = walletAddressSpan.dataset.full;
-			if (walletAddress) {
-					qrCodeContainer.classList.toggle('hidden');
-					if (!qrCodeContainer.classList.contains('hidden')) {
-							new QRious({
-									element: qrCodeCanvas,
-									value: walletAddress,
-									size: 160,
-							});
-					}
+		const walletAddress = walletAddressSpan.dataset.full;
+		if (walletAddress) {
+			qrCodeContainer.classList.toggle('hidden');
+			if (!qrCodeContainer.classList.contains('hidden')) {
+				new QRious({
+					element: qrCodeCanvas,
+					value: walletAddress,
+					size: 160,
+				});
 			}
+		}
 	});
 
 	withdrawBtn.addEventListener('click', () => {
@@ -618,7 +734,7 @@ function bindWalletActions() {
 					fromPubkey: wallet,
 					toPubkey: recipientPubKey,
 					lamports: amount * solanaWeb3.LAMPORTS_PER_SOL,
-				})
+				}),
 			);
 
 			transaction.feePayer = wallet;
@@ -630,16 +746,16 @@ function bindWalletActions() {
 			const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 			await connection.confirmTransaction(signature);
 
-			const displayTarget = typedRecipient === recipientAddress
-				? recipientAddress
-				: `${typedRecipient} (${recipientAddress})`;
+			const displayTarget =
+				typedRecipient === recipientAddress
+					? recipientAddress
+					: `${typedRecipient} (${recipientAddress})`;
 			alert(`Withdrawal of ${amount} SOL to ${displayTarget} successful!`);
 
 			modal.classList.add('hidden');
 			withdrawAmountInput.value = '';
 			recipientAddressInput.value = '';
 			snsResolver.reset();
-
 		} catch (error) {
 			console.error('Withdrawal failed:', error);
 			alert(`Withdrawal failed: ${error.message}`);
@@ -711,7 +827,9 @@ function normalize(rec, avatar) {
 			type: 'a2a',
 			version: meta.a2a_version || '0.3.0',
 			url: `${location.origin}/agent/${rec.id}`,
-			skills: rec.skills.map((s) => (typeof s === 'string' ? s : s.name || s.id)).filter(Boolean),
+			skills: rec.skills
+				.map((s) => (typeof s === 'string' ? s : s.name || s.id))
+				.filter(Boolean),
 			domains: meta.domains || undefined,
 		});
 	}
@@ -731,7 +849,8 @@ function normalize(rec, avatar) {
 	if (rec.home_url) protocols.push('WEB');
 	if (rec.skills?.length) protocols.push(`A2A ${meta.a2a_version || '0.3.0'}`);
 	if (rec.token?.symbol) protocols.push(`TOKEN ${rec.token.symbol}`);
-	if (onchain?.chain_id || rec.chain_id) protocols.push(`CHAIN ${onchain?.chain_id ?? rec.chain_id}`);
+	if (onchain?.chain_id || rec.chain_id)
+		protocols.push(`CHAIN ${onchain?.chain_id ?? rec.chain_id}`);
 
 	const wallet = rec.wallet_address || onchain.wallet || meta.solana_wallet || '';
 
@@ -759,7 +878,7 @@ function normalize(rec, avatar) {
 		authority: onchain.authority || rec.erc8004_registry || '',
 		solBalance: meta.sol_balance ?? 0,
 		creatorRewards: meta.creator_rewards ?? 0,
-		x402: !!(rec.payments?.accepted_tokens?.length),
+		x402: !!rec.payments?.accepted_tokens?.length,
 		registries,
 		protocols,
 		explorerUrl,
@@ -782,7 +901,10 @@ async function loadAgent(id) {
 		const json = await fetchJson(`/api/agents/${encodeURIComponent(id)}`);
 		rec = json.agent;
 	} catch (e) {
-		return { error: e.status === 404 ? 'No agent with id' : `Fetch failed: ${e.message}`, agent: null };
+		return {
+			error: e.status === 404 ? 'No agent with id' : `Fetch failed: ${e.message}`,
+			agent: null,
+		};
 	}
 	if (!rec) return { error: 'No agent with id', agent: null };
 
@@ -816,7 +938,10 @@ let wallet = null;
 // Route through our same-origin proxy. Public devnet RPC is also rate-limited
 // from browsers; the proxy keeps both clusters consistent.
 const _rpcOrigin = window.location?.origin || 'https://three.ws';
-const connection = new solanaWeb3.Connection(`${_rpcOrigin}/api/solana-rpc?net=devnet`, 'confirmed');
+const connection = new solanaWeb3.Connection(
+	`${_rpcOrigin}/api/solana-rpc?net=devnet`,
+	'confirmed',
+);
 const connectWalletBtn = document.getElementById('connect-wallet-btn');
 
 connectWalletBtn.addEventListener('click', async () => {
@@ -833,8 +958,9 @@ connectWalletBtn.addEventListener('click', async () => {
 	}
 });
 
-
-const id = new URLSearchParams(location.search).get('id') || location.pathname.match(/\/agents\/([^/]+)/)?.[1];
+const id =
+	new URLSearchParams(location.search).get('id') ||
+	location.pathname.match(/\/agents\/([^/]+)/)?.[1];
 loadAgent(id)
 	.then(({ agent, error }) => {
 		if (!agent) return renderNotFound(id, error);

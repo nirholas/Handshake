@@ -11,9 +11,9 @@
 			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
 			<h1 class="dash-title">SNS Domains</h1>
 			<p class="dash-sub">
-				Attach a Solana Name Service <code class="dash-mono">.sol</code> domain as your agent's
-				readable id. Domains owned by either the agent's wallet or any wallet linked to your account
-				are eligible.
+				Attach a Solana Name Service <code class="dash-mono">.sol</code> domain as your
+				agent's readable id. Domains owned by either the agent's wallet or any wallet linked
+				to your account are eligible.
 			</p>
 
 			<div id="picker"></div>
@@ -35,7 +35,10 @@
 			function escapeHtml(s) {
 				return String(s == null ? '' : s).replace(
 					/[&<>"']/g,
-					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c],
+					(c) =>
+						({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[
+							c
+						],
 				);
 			}
 
@@ -101,36 +104,59 @@
 
 			function detectSolanaProvider() {
 				if (typeof window === 'undefined') return null;
-				return window.phantom?.solana || window.solana || window.backpack || window.solflare || null;
+				return (
+					window.phantom?.solana ||
+					window.solana ||
+					window.backpack ||
+					window.solflare ||
+					null
+				);
 			}
 
 			async function registerWithBrowserWallet(agentId, domain) {
 				const provider = detectSolanaProvider();
-				if (!provider) throw new Error('No Solana wallet detected. Install Phantom, Backpack, or Solflare.');
+				if (!provider)
+					throw new Error(
+						'No Solana wallet detected. Install Phantom, Backpack, or Solflare.',
+					);
 				if (!provider.isConnected) {
-					try { await provider.connect(); } catch (e) {
+					try {
+						await provider.connect();
+					} catch (e) {
 						throw new Error(e?.message || 'Wallet connection refused');
 					}
 				}
 				const walletAddress = provider.publicKey?.toBase58?.();
 				if (!walletAddress) throw new Error('Wallet did not return a public key');
 
-				const prepRes = await fetch(`/api/agents/${encodeURIComponent(agentId)}/sns/register-prep`, {
-					method: 'POST',
-					credentials: 'include',
-					headers: { 'content-type': 'application/json' },
-					body: JSON.stringify({ domain, wallet_address: walletAddress }),
-				});
+				const prepRes = await fetch(
+					`/api/agents/${encodeURIComponent(agentId)}/sns/register-prep`,
+					{
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ domain, wallet_address: walletAddress }),
+					},
+				);
 				const prepJson = await prepRes.json().catch(() => ({}));
 				if (!prepRes.ok) {
-					if (prepRes.status === 403 && /not linked/.test(prepJson.error_description || '')) {
-						throw new Error(`Link this Solana wallet first at /dashboard/wallets (${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}).`);
+					if (
+						prepRes.status === 403 &&
+						/not linked/.test(prepJson.error_description || '')
+					) {
+						throw new Error(
+							`Link this Solana wallet first at /dashboard/wallets (${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}).`,
+						);
 					}
-					throw new Error(prepJson.error_description || `register-prep failed (${prepRes.status})`);
+					throw new Error(
+						prepJson.error_description || `register-prep failed (${prepRes.status})`,
+					);
 				}
 
 				const { tx_base64 } = prepJson.data;
-				const { VersionedTransaction } = await import('https://esm.sh/@solana/web3.js@1.95.3');
+				const { VersionedTransaction } = await import(
+					'https://esm.sh/@solana/web3.js@1.95.3'
+				);
 				const txBytes = Uint8Array.from(atob(tx_base64), (c) => c.charCodeAt(0));
 				const tx = VersionedTransaction.deserialize(txBytes);
 
@@ -150,25 +176,35 @@
 					}),
 				});
 				const submitJson = await submitRes.json();
-				if (submitJson.error) throw new Error(submitJson.error.message || 'tx submit failed');
+				if (submitJson.error)
+					throw new Error(submitJson.error.message || 'tx submit failed');
 				const signature = submitJson.result;
 
 				// Poll for confirmation up to ~30s, then ask the API to mark it attached.
 				for (let i = 0; i < 15; i++) {
 					await new Promise((r) => setTimeout(r, 2000));
-					const confirmRes = await fetch(`/api/agents/${encodeURIComponent(agentId)}/sns/register-confirm`, {
-						method: 'POST',
-						credentials: 'include',
-						headers: { 'content-type': 'application/json' },
-						body: JSON.stringify({ signature, domain, wallet_address: walletAddress }),
-					});
+					const confirmRes = await fetch(
+						`/api/agents/${encodeURIComponent(agentId)}/sns/register-confirm`,
+						{
+							method: 'POST',
+							credentials: 'include',
+							headers: { 'content-type': 'application/json' },
+							body: JSON.stringify({
+								signature,
+								domain,
+								wallet_address: walletAddress,
+							}),
+						},
+					);
 					const confirmJson = await confirmRes.json().catch(() => ({}));
 					if (confirmRes.ok) return confirmJson.data;
 					if (confirmJson.error !== 'not_confirmed') {
 						throw new Error(confirmJson.error_description || 'register-confirm failed');
 					}
 				}
-				throw new Error('Registered on-chain but confirmation timed out — retry attaching from the owned-domains list in a moment.');
+				throw new Error(
+					'Registered on-chain but confirmation timed out — retry attaching from the owned-domains list in a moment.',
+				);
 			}
 
 			function render(agentId, data) {
@@ -195,17 +231,15 @@
 
 					<div class="dash-card">
 						<h2>Owned domains</h2>
-						${
-							!data.upstream_ok
-								? '<div class="dash-err">SNS API unreachable — retry in a moment.</div>'
-								: ''
-						}
+						${!data.upstream_ok ? '<div class="dash-err">SNS API unreachable — retry in a moment.</div>' : ''}
 						${
 							domains.length
 								? `<ul class="dash-list">
 									${domains
 										.map(
-											(d) => `<li class="dash-row" style="justify-content:space-between">
+											(
+												d,
+											) => `<li class="dash-row" style="justify-content:space-between">
 												<div>
 													<span class="dash-mono" style="font-size:14px">${escapeHtml(d)}.sol</span>
 													${favorite === d ? ' <span class="dash-pill">favorite</span>' : ''}
@@ -291,11 +325,17 @@
 					setRegisterStatus('');
 				});
 				input.addEventListener('keydown', (e) => {
-					if (e.key === 'Enter') { e.preventDefault(); checkBtn.click(); }
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						checkBtn.click();
+					}
 				});
 
 				checkBtn.addEventListener('click', async () => {
-					const raw = (input.value || '').trim().toLowerCase().replace(/\.sol$/, '');
+					const raw = (input.value || '')
+						.trim()
+						.toLowerCase()
+						.replace(/\.sol$/, '');
 					if (!/^[a-z0-9-]{1,63}$/.test(raw)) {
 						setRegisterStatus('Use a–z, 0–9, hyphen (max 63 chars).', 'err');
 						return;
@@ -305,11 +345,17 @@
 					try {
 						const info = await checkDomain(agentId, raw);
 						if (!info.available) {
-							setRegisterStatus(`${raw}.sol is already registered (owner ${info.owner}).`, 'err');
+							setRegisterStatus(
+								`${raw}.sol is already registered (owner ${info.owner}).`,
+								'err',
+							);
 							actionsEl.style.display = 'none';
 							return;
 						}
-						setRegisterStatus(`${raw}.sol is available — ${info.price_usdc} USDC.`, 'ok');
+						setRegisterStatus(
+							`${raw}.sol is available — ${info.price_usdc} USDC.`,
+							'ok',
+						);
 						actionsEl.innerHTML = `
 							<button class="dash-btn primary" id="register-agent-btn">
 								Buy with agent wallet (${info.price_usdc} USDC)
@@ -320,38 +366,53 @@
 						`;
 						actionsEl.style.display = '';
 
-						document.getElementById('register-agent-btn').addEventListener('click', async () => {
-							if (!confirm(`Register ${raw}.sol using the agent's wallet for ${info.price_usdc} USDC? The agent's USDC ATA must be funded.`)) return;
-							const btn = document.getElementById('register-agent-btn');
-							btn.disabled = true;
-							setRegisterStatus('Registering on-chain (this can take 10-30s)…');
-							try {
-								const out = await registerWithAgent(agentId, raw);
-								setRegisterStatus(`Registered ${out.sns_domain}.sol — signature ${out.signature.slice(0, 8)}…`, 'ok');
-								input.value = '';
-								actionsEl.style.display = 'none';
-								await refresh(agentId);
-							} catch (e) {
-								setRegisterStatus(e.message || 'Register failed', 'err');
-								btn.disabled = false;
-							}
-						});
+						document
+							.getElementById('register-agent-btn')
+							.addEventListener('click', async () => {
+								if (
+									!confirm(
+										`Register ${raw}.sol using the agent's wallet for ${info.price_usdc} USDC? The agent's USDC ATA must be funded.`,
+									)
+								)
+									return;
+								const btn = document.getElementById('register-agent-btn');
+								btn.disabled = true;
+								setRegisterStatus('Registering on-chain (this can take 10-30s)…');
+								try {
+									const out = await registerWithAgent(agentId, raw);
+									setRegisterStatus(
+										`Registered ${out.sns_domain}.sol — signature ${out.signature.slice(0, 8)}…`,
+										'ok',
+									);
+									input.value = '';
+									actionsEl.style.display = 'none';
+									await refresh(agentId);
+								} catch (e) {
+									setRegisterStatus(e.message || 'Register failed', 'err');
+									btn.disabled = false;
+								}
+							});
 
-						document.getElementById('register-browser-btn').addEventListener('click', async () => {
-							const btn = document.getElementById('register-browser-btn');
-							btn.disabled = true;
-							setRegisterStatus('Connecting wallet…');
-							try {
-								const out = await registerWithBrowserWallet(agentId, raw);
-								setRegisterStatus(`Registered ${out.sns_domain}.sol — signature ${out.signature.slice(0, 8)}…`, 'ok');
-								input.value = '';
-								actionsEl.style.display = 'none';
-								await refresh(agentId);
-							} catch (e) {
-								setRegisterStatus(e.message || 'Register failed', 'err');
-								btn.disabled = false;
-							}
-						});
+						document
+							.getElementById('register-browser-btn')
+							.addEventListener('click', async () => {
+								const btn = document.getElementById('register-browser-btn');
+								btn.disabled = true;
+								setRegisterStatus('Connecting wallet…');
+								try {
+									const out = await registerWithBrowserWallet(agentId, raw);
+									setRegisterStatus(
+										`Registered ${out.sns_domain}.sol — signature ${out.signature.slice(0, 8)}…`,
+										'ok',
+									);
+									input.value = '';
+									actionsEl.style.display = 'none';
+									await refresh(agentId);
+								} catch (e) {
+									setRegisterStatus(e.message || 'Register failed', 'err');
+									btn.disabled = false;
+								}
+							});
 					} catch (e) {
 						setRegisterStatus(e.message || 'Check failed', 'err');
 					} finally {

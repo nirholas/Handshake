@@ -37,7 +37,9 @@ const connMock = {
 };
 vi.mock('../../api/_lib/agent-pumpfun.js', () => ({
 	solanaConnection: () => connMock,
-	loadAgentForSigning: vi.fn(async () => ({ error: { status: 404, code: 'not_found', msg: 'agent not found' } })),
+	loadAgentForSigning: vi.fn(async () => ({
+		error: { status: 404, code: 'not_found', msg: 'agent not found' },
+	})),
 }));
 
 beforeAll(() => {
@@ -60,8 +62,10 @@ function makeReq(url, method = 'GET', body = null) {
 		const buf = Buffer.from(JSON.stringify(body));
 		let read = false;
 		req.on = (event, cb) => {
-			if (event === 'data' && !read) { cb(buf); read = true; }
-			else if (event === 'end') queueMicrotask(cb);
+			if (event === 'data' && !read) {
+				cb(buf);
+				read = true;
+			} else if (event === 'end') queueMicrotask(cb);
 			return req;
 		};
 		req.headers['content-length'] = String(buf.length);
@@ -72,16 +76,24 @@ function makeRes() {
 	return {
 		statusCode: 200,
 		_h: {},
-		setHeader(k, v) { this._h[k.toLowerCase()] = v; },
-		getHeader(k) { return this._h[k.toLowerCase()]; },
-		end(body) { this._body = body; },
+		setHeader(k, v) {
+			this._h[k.toLowerCase()] = v;
+		},
+		getHeader(k) {
+			return this._h[k.toLowerCase()];
+		},
+		end(body) {
+			this._body = body;
+		},
 	};
 }
 async function call(url, method, body) {
 	const res = makeRes();
 	await handler(makeReq(url, method, body), res);
 	let parsed = null;
-	try { parsed = JSON.parse(res._body); } catch {}
+	try {
+		parsed = JSON.parse(res._body);
+	} catch {}
 	return { res, body: parsed };
 }
 
@@ -114,13 +126,15 @@ describe('GET /api/x402/pay-by-name?name=… (resolve)', () => {
 
 	it('resolves a <label>.threews.sol and joins the DB claim', async () => {
 		snsResolveMock.mockResolvedValue({ toBase58: () => ADDR });
-		sqlMock.mockResolvedValueOnce([{
-			label: 'nich',
-			parent: 'threews',
-			user_id: '00000000-0000-0000-0000-000000000001',
-			username: 'nich',
-			display_name: 'Nicholas',
-		}]);
+		sqlMock.mockResolvedValueOnce([
+			{
+				label: 'nich',
+				parent: 'threews',
+				user_id: '00000000-0000-0000-0000-000000000001',
+				username: 'nich',
+				display_name: 'Nicholas',
+			},
+		]);
 		const { res, body } = await call('/api/x402/pay-by-name?name=nich.threews.sol');
 		expect(res.statusCode).toBe(200);
 		expect(body.data.address).toBe(ADDR);
@@ -141,7 +155,7 @@ describe('GET /api/x402/pay-by-name?name=… (resolve)', () => {
 		expect(body.error).toBe('not_found');
 	});
 
-	it('resolves @username to the user\'s default agent wallet', async () => {
+	it("resolves @username to the user's default agent wallet", async () => {
 		sqlMock
 			.mockResolvedValueOnce([{ id: 'u1', username: 'nich', display_name: 'Nicholas' }])
 			.mockResolvedValueOnce([{ sol: ADDR }]);
@@ -197,7 +211,9 @@ describe('GET /api/x402/pay-by-name?name=… (resolve)', () => {
 describe('POST /api/x402/pay-by-name (mode=prep)', () => {
 	it('rejects when payer_wallet is missing or malformed', async () => {
 		const { res, body } = await call('/api/x402/pay-by-name', 'POST', {
-			mode: 'prep', name: ADDR, amount_usdc: 1,
+			mode: 'prep',
+			name: ADDR,
+			amount_usdc: 1,
 		});
 		expect(res.statusCode).toBe(400);
 		expect(body.error_description).toMatch(/payer_wallet/);
@@ -205,7 +221,10 @@ describe('POST /api/x402/pay-by-name (mode=prep)', () => {
 
 	it('rejects amount_usdc <= 0', async () => {
 		const { res, body } = await call('/api/x402/pay-by-name', 'POST', {
-			mode: 'prep', name: ADDR, amount_usdc: 0, payer_wallet: PAYER,
+			mode: 'prep',
+			name: ADDR,
+			amount_usdc: 0,
+			payer_wallet: PAYER,
 		});
 		expect(res.statusCode).toBe(400);
 		expect(body.error_description).toMatch(/amount_usdc/);
@@ -213,7 +232,10 @@ describe('POST /api/x402/pay-by-name (mode=prep)', () => {
 
 	it('rejects amount_usdc above the per-call cap', async () => {
 		const { res, body } = await call('/api/x402/pay-by-name', 'POST', {
-			mode: 'prep', name: ADDR, amount_usdc: 50_000, payer_wallet: PAYER,
+			mode: 'prep',
+			name: ADDR,
+			amount_usdc: 50_000,
+			payer_wallet: PAYER,
 		});
 		expect(res.statusCode).toBe(400);
 		expect(body.error_description).toMatch(/amount_usdc/);
@@ -221,7 +243,10 @@ describe('POST /api/x402/pay-by-name (mode=prep)', () => {
 
 	it('rejects self-pay (payer == recipient)', async () => {
 		const { res, body } = await call('/api/x402/pay-by-name', 'POST', {
-			mode: 'prep', name: PAYER, amount_usdc: 1, payer_wallet: PAYER,
+			mode: 'prep',
+			name: PAYER,
+			amount_usdc: 1,
+			payer_wallet: PAYER,
 		});
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toBe('self_pay');
@@ -230,7 +255,10 @@ describe('POST /api/x402/pay-by-name (mode=prep)', () => {
 	it('returns 404 if the name does not resolve', async () => {
 		snsResolveMock.mockRejectedValue(new Error('DomainDoesNotExist'));
 		const { res, body } = await call('/api/x402/pay-by-name', 'POST', {
-			mode: 'prep', name: 'ghost.sol', amount_usdc: 1, payer_wallet: PAYER,
+			mode: 'prep',
+			name: 'ghost.sol',
+			amount_usdc: 1,
+			payer_wallet: PAYER,
 		});
 		expect(res.statusCode).toBe(404);
 		expect(body.error).toBe('not_found');
@@ -238,7 +266,10 @@ describe('POST /api/x402/pay-by-name (mode=prep)', () => {
 
 	it('builds a base64 VersionedTransaction when inputs are valid', async () => {
 		const { res, body } = await call('/api/x402/pay-by-name', 'POST', {
-			mode: 'prep', name: ADDR, amount_usdc: 1.5, payer_wallet: PAYER,
+			mode: 'prep',
+			name: ADDR,
+			amount_usdc: 1.5,
+			payer_wallet: PAYER,
 		});
 		expect(res.statusCode).toBe(200);
 		expect(body.data.recipient.address).toBe(ADDR);
@@ -252,7 +283,10 @@ describe('POST /api/x402/pay-by-name (mode=prep)', () => {
 describe('POST /api/x402/pay-by-name (mode=send)', () => {
 	it('requires authentication', async () => {
 		const { res, body } = await call('/api/x402/pay-by-name', 'POST', {
-			mode: 'send', name: ADDR, amount_usdc: 1, agent_id: 'a1',
+			mode: 'send',
+			name: ADDR,
+			amount_usdc: 1,
+			agent_id: 'a1',
 		});
 		expect(res.statusCode).toBe(401);
 		expect(body.error).toBe('unauthorized');
@@ -261,7 +295,9 @@ describe('POST /api/x402/pay-by-name (mode=send)', () => {
 	it('requires agent_id even when authenticated', async () => {
 		getSessionUserMock.mockResolvedValue({ id: 'u1' });
 		const { res, body } = await call('/api/x402/pay-by-name', 'POST', {
-			mode: 'send', name: ADDR, amount_usdc: 1,
+			mode: 'send',
+			name: ADDR,
+			amount_usdc: 1,
 		});
 		expect(res.statusCode).toBe(400);
 		expect(body.error_description).toMatch(/agent_id/);
