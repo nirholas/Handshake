@@ -145,30 +145,28 @@ async function handleMint(req, res, auth) {
 		recipientWallet = defaultAgent.sol;
 	}
 
-	const urlRecord = `${env.APP_ORIGIN}/u/${user.username}`;
-	let signature;
+	let minted;
 	try {
-		signature = await mintSubdomain({
-			label,
-			recipientWallet,
-			urlRecordValue: urlRecord,
-		});
+		minted = await mintSubdomain({ label, recipientWallet });
 	} catch (err) {
 		console.error('[threews/subdomain] mint_failed', err);
-		return error(res, 502, 'upstream_error', err?.message || 'subdomain mint failed');
+		const status = err?.status || 502;
+		const code = err?.code || 'upstream_error';
+		return error(res, status, code, err?.message || 'subdomain mint failed');
 	}
 
 	const [row] = await sql`
 		INSERT INTO user_subdomains (user_id, label, parent, owner_wallet, url_record, signature)
-		VALUES (${auth.userId}, ${label}, ${PARENT_LABEL}, ${recipientWallet}, ${urlRecord}, ${signature})
+		VALUES (${auth.userId}, ${label}, ${PARENT_LABEL}, ${recipientWallet}, ${minted.url_record}, ${minted.signature})
 		RETURNING id, label, parent, owner_wallet, url_record, signature, created_at
 	`;
 
 	return json(res, 201, {
 		data: {
 			...row,
-			full: fullDomain(label),
+			full: minted.fullName,
 			showcase_url: `${env.APP_ORIGIN}/u/${user.username}`,
+			explorer: `https://solscan.io/tx/${minted.signature}`,
 		},
 	});
 }

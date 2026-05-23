@@ -63,11 +63,23 @@ function resolveSigner(
   signer: AgenCClientOptions["signer"],
 ): Keypair | null {
   if (!signer) return null;
-  if (signer instanceof Keypair) return signer;
+  // Duck-type Keypair so calling code that resolved a different copy of
+  // @solana/web3.js (npm dedup misses are common in monorepos / file:
+  // installs) still works.
+  if (
+    typeof signer === "object" &&
+    !Array.isArray(signer) &&
+    !(signer instanceof Uint8Array) &&
+    "secretKey" in (signer as object) &&
+    "publicKey" in (signer as object)
+  ) {
+    const candidate = signer as { secretKey: Uint8Array };
+    return Keypair.fromSecretKey(Uint8Array.from(candidate.secretKey));
+  }
   if (typeof signer === "string") {
     return Keypair.fromSecretKey(bs58.decode(signer));
   }
-  return Keypair.fromSecretKey(Uint8Array.from(signer));
+  return Keypair.fromSecretKey(Uint8Array.from(signer as Uint8Array | number[]));
 }
 
 function buildWallet(signer: Keypair | null): Wallet {

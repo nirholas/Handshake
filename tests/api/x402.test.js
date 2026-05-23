@@ -40,9 +40,9 @@ function makeAgent(overrides = {}) {
 }
 
 describe('emit402', () => {
-	it('returns 402 with a canonical manifest', () => {
+	it('returns 402 with a canonical manifest', async () => {
 		const res = makeRes();
-		emit402(res, {
+		await emit402(res, {
 			agent: makeAgent(),
 			skill: 'summarize',
 			amount: '10000',
@@ -68,18 +68,18 @@ describe('emit402', () => {
 		expect(body.valid_until).toBeGreaterThan(Date.now() / 1000);
 	});
 
-	it('refuses to 402 when payments are not configured', () => {
+	it('refuses to 402 when payments are not configured', async () => {
 		const res = makeRes();
 		const agent = { id: 'x', name: 'x', meta: { payments: { configured: false } } };
 		// emit402 should fall through to error() — we just assert it didn't 402.
-		emit402(res, { agent, skill: 's', amount: '1', currency: 'X' });
+		await emit402(res, { agent, skill: 's', amount: '1', currency: 'X' });
 		expect(res.statusCode).not.toBe(402);
 	});
 
-	it('honors validForSec', () => {
+	it('honors validForSec', async () => {
 		const res = makeRes();
 		const before = Math.floor(Date.now() / 1000);
-		emit402(res, {
+		await emit402(res, {
 			agent: makeAgent(),
 			skill: 's',
 			amount: '1',
@@ -93,7 +93,7 @@ describe('emit402', () => {
 });
 
 describe('manifestOnly', () => {
-	it('returns the same manifest shape with status 200', () => {
+	it('returns the same manifest shape with status 200', async () => {
 		// We mock just enough of the http json() helper to get a captured body.
 		const captured = {};
 		const res = {
@@ -107,7 +107,7 @@ describe('manifestOnly', () => {
 				captured.status = this.statusCode;
 			},
 		};
-		manifestOnly(res, {
+		await manifestOnly(res, {
 			agent: makeAgent(),
 			skill: 'echo',
 			amount: '5000',

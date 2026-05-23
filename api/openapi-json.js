@@ -352,6 +352,154 @@ export default wrap(async (req, res) => {
 						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.05' } },
 					},
 				},
+				'/api/x402/model-check': {
+					get: {
+						operationId: 'x402_model_check',
+						summary: 'Paid: glTF/GLB structural stats + optimization recommendations',
+						description:
+							'Pay $0.001 USDC to fetch a glTF/GLB model from a URL and return structural stats (vertex/triangle counts, materials, textures, animations, extensions) plus a prioritized list of optimization recommendations.',
+						parameters: [
+							{
+								name: 'url',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', format: 'uri' },
+								description: 'Public HTTPS URL of a glTF/GLB model.',
+							},
+						],
+						responses: {
+							200: { description: 'Inspection + recommendation JSON' },
+							400: { description: 'Missing or invalid url' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+					},
+				},
+				'/api/x402/mint-to-mesh': {
+					get: {
+						operationId: 'x402_mint_to_mesh',
+						summary: 'Paid: Single Solana mint → themed binary glTF cube',
+						description:
+							'Pay $0.001 USDC to resolve a Solana fungible-token mint to a binary glTF (GLB) cube themed for that token. Color is hashed from the mint; the Metaplex JSON image, when present, is embedded as a baseColor texture.',
+						parameters: [
+							{
+								name: 'mint',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', minLength: 32, maxLength: 64 },
+								description: 'Base58 SPL mint address on Solana mainnet.',
+							},
+						],
+						responses: {
+							200: { description: 'Themed GLB JSON envelope' },
+							400: { description: 'Missing or invalid mint' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+					},
+				},
+				'/api/insights/revenue-vision': {
+					get: {
+						operationId: 'x402_revenue_vision',
+						summary: 'Paid: Claude-powered next-best-move for a mission brief',
+						description:
+							'Pay $0.001 USDC to receive a single prioritized next-best move, a data-grounded insight, and an honestly-calibrated confidence rating for the supplied mission brief.',
+						parameters: [
+							{ name: 'agent_codename', in: 'query', required: true, schema: { type: 'string' } },
+							{
+								name: 'power_request',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', enum: ['revenue-vision'] },
+							},
+							{
+								name: 'mission_brief',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', minLength: 4, maxLength: 4000 },
+							},
+						],
+						responses: {
+							200: { description: 'Next-best-move JSON' },
+							400: { description: 'Missing or invalid parameters' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+					},
+				},
+				'/api/x402/permit2-paid-demo': {
+					get: {
+						operationId: 'x402_permit2_paid_demo',
+						summary: 'Paid: Gasless Permit2 + EIP-2612 settlement demo',
+						description:
+							'Pay $0.001 USDC via the Permit2-only path so a wallet holding USDC but zero ETH can complete the flow. CDP\'s x402ExactPermit2Proxy submits the EIP-2612 permit + Permit2 transfer atomically; the response surfaces the on-chain tx hash and a Basescan link.',
+						responses: {
+							200: { description: 'Settlement summary with tx hash' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+					},
+				},
+				'/api/x402/dance-tip': {
+					get: {
+						operationId: 'x402_dance_tip',
+						summary: 'Paid: Tip a 3D dancer to perform on the pole stage',
+						description:
+							'Pay $0.001 USDC to tip a dancer to perform one routine on the three.ws Pole Club 3D stage. Returns a performance ticket the /club page consumes to spawn the dancer.',
+						parameters: [
+							{
+								name: 'dancer',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', enum: ['1', '2', '3', '4'] },
+								description: 'Stage slot 1-4.',
+							},
+							{
+								name: 'dance',
+								in: 'query',
+								required: true,
+								schema: {
+									type: 'string',
+									enum: ['rumba', 'silly', 'thriller', 'capoeira', 'hiphop'],
+								},
+								description: 'Performance style — a clip in /animations/manifest.json.',
+							},
+						],
+						responses: {
+							200: { description: 'Performance ticket JSON' },
+							400: { description: 'Missing or invalid parameters' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+					},
+				},
+				'/api/x402/asset-download': {
+					get: {
+						operationId: 'x402_asset_download',
+						summary: 'Paid: Unlock a 3D asset (GLB / avatar / accessory)',
+						description:
+							'Pay in USDC once to unlock a 3D asset hosted on R2. Wallets that already paid can re-download for free by signing in with SIWX (CAIP-122). Each asset has its own price and creator payout address; the response carries a short-lived presigned R2 URL.',
+						parameters: [
+							{
+								name: 'slug',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', minLength: 1, maxLength: 128 },
+								description: 'Unique asset slug from the paid_assets catalog.',
+							},
+						],
+						responses: {
+							200: { description: 'Presigned R2 download URL' },
+							400: { description: 'Missing or invalid slug' },
+							402: { description: 'Payment Required (x402)' },
+							404: { description: 'Asset not found' },
+						},
+						'x-payment-info': {
+							price: { mode: 'variable', currency: 'USD' },
+							note: 'Each asset declares its own USDC price; the live 402 challenge reflects the per-asset row.',
+						},
+					},
+				},
 			},
 		},
 		{ 'cache-control': 'public, max-age=300' },

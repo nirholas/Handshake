@@ -374,8 +374,11 @@
 			// activeTier: tier she's currently associated with (declared above)
 			let walkT = 0, walkStart = null, walkEnd = null, walkDur = 0.85;
 			let jumpT = 0, jumpStart = null, jumpEnd = null, jumpLift = 0;
+			let lastMoveKind = null; // 'walk' | 'jump' — read by landOnTier
 			const WALK_SPEED = 5; // world units per second
-			const JUMP_S = 0.85;
+			// Matches the av-superhero-jump clip (2.0s) — finishing a touch
+			// early so the landing-clamp pose doesn't sit frozen too long.
+			const JUMP_S = 1.7;
 
 			function smoothstep(t) { return t * t * (3 - 2 * t); }
 
@@ -401,6 +404,7 @@
 				beginMove(tierEl);
 
 				phase = 'walking';
+				lastMoveKind = 'walk';
 				walkT = 0;
 				walkStart = { x: avatar.position.x, y: avatar.position.y };
 				walkEnd   = standOnTopOf(tierEl);
@@ -419,13 +423,16 @@
 				beginMove(tierEl);
 
 				phase = 'jumping';
+				lastMoveKind = 'jump';
 				jumpT = 0;
 				jumpStart = { x: avatar.position.x, y: avatar.position.y };
 				jumpEnd   = standOnTopOf(tierEl);
-				// Lift the arc proportionally to horizontal distance + a baseline
+				// Bigger arc — the hip-Y of the clip is suppressed by the
+				// render hook so the parabola is the only visible airborne lift.
+				// 2.2 baseline reads clearly even for short adjacent hops.
 				const dx = Math.abs(jumpEnd.x - jumpStart.x);
-				jumpLift = Math.max(1.2, dx * 0.32);
-				setAnimation('jump', { loop: false, hold: true });
+				jumpLift = Math.max(2.2, dx * 0.55);
+				setAnimation('av-superhero-jump', { loop: false, hold: true });
 				// Face direction of travel — slight yaw, not full profile
 				const dir = Math.sign(jumpEnd.x - jumpStart.x) || 0;
 				gsap.to(avatar.rotation, { y: dir * 0.25, duration: 0.2, overwrite: true });
@@ -480,11 +487,21 @@
 				});
 				// Face camera so the gesture reads cleanly
 				gsap.to(avatar.rotation, { y: 0, duration: 0.25, overwrite: true });
-				const persona = personalityFor(t);
-				setAnimation(persona.land, { loop: false, hold: false });
-				setTimeout(() => {
-					if (phase === 'idle' && activeTier === t) setAnimation('idle', { loop: true });
-				}, persona.settleMs);
+				if (lastMoveKind === 'jump') {
+					// The superhero-jump clip already ends in a landing crouch;
+					// layering another "land" reaction on top reads as a glitch
+					// (crouch → forward-roll). Hold the clip's final frame
+					// briefly, then crossfade to idle.
+					setTimeout(() => {
+						if (phase === 'idle' && activeTier === t) setAnimation('idle', { loop: true });
+					}, 600);
+				} else {
+					const persona = personalityFor(t);
+					setAnimation(persona.land, { loop: false, hold: false });
+					setTimeout(() => {
+						if (phase === 'idle' && activeTier === t) setAnimation('idle', { loop: true });
+					}, persona.settleMs);
+				}
 				scheduleFidget();
 			}
 
@@ -580,7 +597,7 @@
 			// Loaded up front so per-tier personality + idle fidgets can play
 			// instantly without a fetch hiccup mid-hover.
 			const CLIPS = [
-				'idle', 'walk', 'jump', 'falltolanding',
+				'idle', 'walk', 'av-superhero-jump', 'falltolanding',
 			];
 
 			new GLTFLoader().load('/avatars/cz.glb', gltf => {
@@ -603,7 +620,17 @@
 					if (rootBone) baseRootPos = rootBone.position.clone();
 					const _r = renderer.render.bind(renderer);
 					renderer.render = (sc, cam) => {
-						try { if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos); } catch (_) {}
+						try {
+							if (rootBone && baseRootPos) {
+								// Always pin X/Z so the avatar stays on the parent
+								// transform we control. Y is also pinned by default,
+								// but the jump phase needs the clip's hip descent to
+								// show through so the landing crouch reads with weight.
+								rootBone.position.x = baseRootPos.x;
+								rootBone.position.z = baseRootPos.z;
+								if (phase !== 'jumping') rootBone.position.y = baseRootPos.y;
+							}
+						} catch (_) {}
 						_r(sc, cam);
 					};
 

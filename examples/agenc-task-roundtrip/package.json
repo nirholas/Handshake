@@ -1,0 +1,16 @@
+{
+	"name": "@three-ws/example-agenc-task-roundtrip",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "End-to-end AgenC task lifecycle on Solana devnet using the three.ws Solana agent SDK.",
+	"scripts": {
+		"start": "node run.mjs",
+		"reset": "rm -rf .cache && node run.mjs"
+	},
+	"dependencies": {
+		"@three-ws/solana-agent": "file:../../solana-agent-sdk",
+		"@solana/web3.js": "^1.98.0",
+		"@tetsuo-ai/sdk": "^1.4.0"
+	}
+}

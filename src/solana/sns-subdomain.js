@@ -1,15 +1,21 @@
 /**
- * Create a subdomain under a .sol parent owned by the platform.
+ * Create a subdomain under a .sol parent owned by the platform, write a
+ * Brave-resolvable URL record pointing at the user's storefront page, and
+ * transfer ownership to the user — all atomically in one VersionedTransaction.
  *
  * The platform holds the keypair for the parent domain (e.g. `threews.sol`).
- * `createSubdomain` itself opens the new registry with the parent owner set
- * as the owner of the subdomain; we then immediately transfer it to the
- * requested final owner — both instructions are bundled into one tx so the
- * subdomain is never claimable by a third party between create and transfer.
+ * Order matters:
+ *   1. createSubdomain — parent owner becomes owner of the new registry.
+ *   2. createRecordV2Instruction(URL → https://three.ws/u/<label>) — written
+ *      while the platform still owns the subdomain. Once Brave's SNS resolver
+ *      sees this record, typing `<label>.threews.sol` redirects to the
+ *      storefront.
+ *   3. transferSubdomain — hands the subdomain (and any records attached to
+ *      it; record accounts persist past ownership transfer) to the user.
  *
- * The parent owner is the only signer. We use it as fee payer as well — gas
- * is small (well under 0.01 SOL per subdomain) and absorbing it removes any
- * wallet-signing UX from the user.
+ * The parent owner is the only signer and fee payer — gas is well under 0.01
+ * SOL per subdomain and absorbing it removes wallet-signing friction from the
+ * user.
  */
 
 import { Connection, Keypair, PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
@@ -49,6 +55,17 @@ export function loadParentOwnerKeypair() {
 
 export function getParentDomain() {
 	return (process.env.THREEWS_SOL_PARENT_DOMAIN || 'threews.sol').toLowerCase();
+}
+
+// Public origin three.ws is reachable on. Used to build the URL record so a
+// Brave user typing `<label>.threews.sol` lands on the matching storefront.
+export function getStorefrontOrigin() {
+	const raw = process.env.STOREFRONT_ORIGIN || 'https://three.ws';
+	return raw.replace(/\/$/, '');
+}
+
+export function storefrontUrlForLabel(label) {
+	return `${getStorefrontOrigin()}/u/${encodeURIComponent(label)}`;
 }
 
 const LABEL_RE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
@@ -119,9 +136,22 @@ export async function createNamedSubdomain({ label, newOwner, space = 2000, rpcU
 
 	const sns = await import('@bonfida/spl-name-service');
 	const createIxs = await sns.createSubdomain(connection, fullName, parentKp.publicKey, space);
+
+	// Write the URL record while the platform still owns the subdomain.
+	// This makes `<label>.threews.sol` resolve in Brave (and any other SNS-
+	// aware client) to the user's storefront page on three.ws.
+	const url = storefrontUrlForLabel(cleanLabel);
+	const urlRecordIx = sns.createRecordV2Instruction(
+		fullName,
+		sns.Record.Url,
+		url,
+		parentKp.publicKey,
+		parentKp.publicKey,
+	);
+
 	const transferIxs = await sns.transferSubdomain(connection, fullName, newOwnerKey, true);
 
-	const ixs = [...createIxs, ...transferIxs];
+	const ixs = [...createIxs, urlRecordIx, ...transferIxs];
 	const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
 	const message = new TransactionMessage({
 		payerKey: parentKp.publicKey,
@@ -139,5 +169,6 @@ export async function createNamedSubdomain({ label, newOwner, space = 2000, rpcU
 		fullName: `${fullName}.sol`,
 		owner: newOwnerKey.toBase58(),
 		parent: `${parentDomain}.sol`,
+		url_record: url,
 	};
 }

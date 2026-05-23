@@ -153,6 +153,8 @@ export default wrap(async (req, res) => {
 			owner: minted.owner,
 			signature: minted.signature,
 			explorer: `https://solscan.io/tx/${minted.signature}`,
+			url_record: minted.url_record,
+			storefront_path: `/u/${label}`,
 			attached_to_agent: agentId && target.agent ? agentId : null,
 		},
 	});

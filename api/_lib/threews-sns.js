@@ -1,28 +1,36 @@
-// threews.sol subdomain helpers.
+// API-side facade over the canonical SNS-subdomain primitive in
+// src/solana/sns-subdomain.js.
 //
-// The platform owns `threews.sol` on Solana Name Service. This module wraps
-// the @bonfida/spl-name-service v3 SDK to mint `<label>.threews.sol`
-// subdomains, set a URL record on them (so Brave's built-in SNS resolution
-// routes the subdomain to the user's three.ws showcase page), and transfer
-// ownership to the user's wallet — all in a single transaction signed by
-// the platform parent-domain keypair.
+// The on-chain logic — keypair loading, availability check, atomic
+// create + URL-record + transfer — lives in src/solana/sns-subdomain.js
+// and is shared with the agent-level mint endpoint at /api/sns-subdomain.
 //
-// Env (required for any write op):
-//   THREEWS_SOL_OWNER_SECRET_BASE58  base58-encoded 64-byte ed25519 secret
-//     for the wallet that owns `threews.sol`.
-//   THREEWS_PARENT_DOMAIN (optional, default 'threews')
-//     the parent label whose subdomains we mint. Override only if the
-//     platform owns a different root.
+// This module adds API-layer concerns that belong outside the on-chain
+// primitive: a stricter reserved-label denylist, a fully-qualified
+// `<label>.<parent>.sol` formatter for HTTP responses, and a thin
+// `mintSubdomain()` wrapper that callers can use without re-spelling the
+// records argument.
 
-import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
-import bs58 from 'bs58';
-import { solanaConnection } from './agent-pumpfun.js';
+import {
+	checkSubdomainAvailability,
+	createNamedSubdomain,
+	getParentDomain,
+	getStorefrontOrigin,
+	loadParentOwnerKeypair,
+	normalizeLabel as normalizeLabelRaw,
+	storefrontUrlForLabel,
+} from '../../src/solana/sns-subdomain.js';
+import { Connection } from '@solana/web3.js';
 
-export const PARENT_LABEL = (process.env.THREEWS_PARENT_DOMAIN || 'threews').toLowerCase();
+const DEFAULT_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
-const SUBDOMAIN_RE = /^[a-z0-9-]{1,63}$/;
-// Reserve labels that look like internal app paths, common impersonations,
-// or short reserved words. Matches the spirit of agents/check-name's denylist.
+// The platform label is the bare parent domain (e.g. 'threews' for
+// 'threews.sol'). Derived from THREEWS_SOL_PARENT_DOMAIN via getParentDomain().
+export const PARENT_LABEL = getParentDomain().replace(/\.sol$/, '');
+
+// Labels we never let users claim. Either reserved app paths, impersonation
+// risks, or short reserved words. Mirrors api/agents/check-name's denylist
+// plus the additional surface a public-facing `<label>.threews.sol` exposes.
 const DENYLIST = new Set([
 	'admin', 'root', 'system', 'api', 'app', 'www', 'mail', 'help', 'support',
 	'about', 'login', 'signup', 'logout', 'signin', 'auth', 'oauth', 'pay',
@@ -32,34 +40,26 @@ const DENYLIST = new Set([
 
 export function normalizeLabel(input) {
 	if (typeof input !== 'string') return null;
-	const trimmed = input
+	// Users routinely paste the whole `<label>.threews.sol` or `<label>.sol`.
+	// Strip those suffixes before delegating to the canonical label normalizer
+	// (which insists on a single bare label).
+	const stripped = input
 		.trim()
 		.toLowerCase()
 		.replace(new RegExp(`\\.${PARENT_LABEL}(\\.sol)?$`), '')
 		.replace(/\.sol$/, '');
-	if (!SUBDOMAIN_RE.test(trimmed)) return null;
-	if (DENYLIST.has(trimmed)) return null;
-	return trimmed;
+	const cleaned = normalizeLabelRaw(stripped);
+	if (!cleaned) return null;
+	if (DENYLIST.has(cleaned)) return null;
+	return cleaned;
 }
 
 export function fullDomain(label) {
 	return `${label}.${PARENT_LABEL}.sol`;
 }
 
-/**
- * Decode the platform parent-domain keypair from env. Throws when missing —
- * callers must guard with `hasOwnerKey()` and return a friendly 503 otherwise.
- */
-export function loadParentOwnerKeypair() {
-	const raw = process.env.THREEWS_SOL_OWNER_SECRET_BASE58;
-	if (!raw) throw new Error('THREEWS_SOL_OWNER_SECRET_BASE58 not configured');
-	const secret = bs58.decode(raw.trim());
-	if (secret.length !== 64) throw new Error('THREEWS_SOL_OWNER_SECRET_BASE58 must decode to 64 bytes');
-	return Keypair.fromSecretKey(secret);
-}
-
 export function hasOwnerKey() {
-	return !!process.env.THREEWS_SOL_OWNER_SECRET_BASE58;
+	return !!process.env.THREEWS_SOL_PARENT_SECRET_BASE58;
 }
 
 /**
@@ -67,62 +67,23 @@ export function hasOwnerKey() {
  * subdomain has not been registered yet.
  */
 export async function getSubdomainOwner(label) {
-	const sns = await import('@bonfida/spl-name-service');
-	const conn = solanaConnection('mainnet');
-	try {
-		const { pubkey } = sns.getDomainKeySync(`${label}.${PARENT_LABEL}`);
-		const { registry } = await sns.NameRegistryState.retrieve(conn, pubkey);
-		return registry.owner.toBase58();
-	} catch {
-		return null;
-	}
+	const conn = new Connection(DEFAULT_RPC_URL, 'confirmed');
+	const { exists, owner } = await checkSubdomainAvailability({
+		connection: conn,
+		parentDomain: PARENT_LABEL,
+		label,
+	});
+	return exists ? owner : null;
 }
 
 /**
- * Mint `<label>.threews.sol` as a single transaction signed by the platform:
- *   1. create the subdomain (parent owner pays rent, becomes interim owner)
- *   2. set its URL record to `urlRecordValue` (parent owner signs)
- *   3. transfer ownership of the subdomain to `recipientWallet`
- *
- * Returns the tx signature on success.
+ * Mint `<label>.<parent>.sol`, write its URL record so Brave routes to the
+ * three.ws storefront, and transfer ownership to `recipientWallet`. Returns
+ * { signature, fullName, owner, parent, url_record }.
  */
-export async function mintSubdomain({ label, recipientWallet, urlRecordValue }) {
-	const sns = await import('@bonfida/spl-name-service');
-	const conn = solanaConnection('mainnet');
-	const parentKp = loadParentOwnerKeypair();
-	const recipient = new PublicKey(recipientWallet);
-
-	const createIxs = await sns.createSubdomain(
-		conn,
-		`${label}.${PARENT_LABEL}`,
-		parentKp.publicKey,
-		2000,
-		parentKp.publicKey,
-	);
-
-	const recordIx = sns.createRecordV2Instruction(
-		`${label}.${PARENT_LABEL}`,
-		sns.Record.Url,
-		urlRecordValue,
-		parentKp.publicKey,
-		parentKp.publicKey,
-	);
-
-	const transferIx = await sns.transferSubdomain(
-		conn,
-		`${label}.${PARENT_LABEL}`,
-		recipient,
-		true,
-		parentKp.publicKey,
-	);
-
-	const tx = new Transaction().add(...createIxs, recordIx, transferIx);
-	tx.feePayer = parentKp.publicKey;
-	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
-	tx.recentBlockhash = blockhash;
-	tx.sign(parentKp);
-
-	const sig = await conn.sendRawTransaction(tx.serialize(), { skipPreflight: false });
-	await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
-	return sig;
+export async function mintSubdomain({ label, recipientWallet }) {
+	return createNamedSubdomain({ label, newOwner: recipientWallet });
 }
+
+// Re-exports so callers don't need a second import from src/solana.
+export { loadParentOwnerKeypair, getStorefrontOrigin, storefrontUrlForLabel };
