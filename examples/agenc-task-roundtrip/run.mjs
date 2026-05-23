@@ -72,6 +72,16 @@ async function loadOrCreateKeypair(filePath, label) {
 	}
 }
 
+async function sleep(ms) {
+	return new Promise((r) => setTimeout(r, ms));
+}
+
+async function airdropOnce(connection, kp, lamports) {
+	const sig = await connection.requestAirdrop(kp.publicKey, lamports);
+	await connection.confirmTransaction(sig, "confirmed");
+	return sig;
+}
+
 async function ensureBalance(connection, kp, label) {
 	const bal = await connection.getBalance(kp.publicKey);
 	if (bal >= TOPUP_THRESHOLD) {
@@ -79,19 +89,30 @@ async function ensureBalance(connection, kp, label) {
 		return;
 	}
 	console.log(`  [${label}] balance ${(bal / LAMPORTS_PER_SOL).toFixed(4)} SOL — requesting airdrop…`);
-	const need = TARGET_BALANCE - bal;
-	const chunk = Math.min(AIRDROP_AMOUNT, need);
-	try {
-		const sig = await connection.requestAirdrop(kp.publicKey, chunk);
-		await connection.confirmTransaction(sig, "confirmed");
-		const newBal = await connection.getBalance(kp.publicKey);
-		console.log(`  [${label}] airdrop confirmed: ${explorerTx(sig)}`);
-		console.log(`  [${label}] new balance: ${(newBal / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
-	} catch (err) {
-		throw new Error(
-			`[${label}] devnet airdrop failed — the public faucet is rate-limited. Fund ${kp.publicKey.toBase58()} manually at https://faucet.solana.com or try again later. Underlying: ${err.message || err}`,
-		);
+
+	// Public devnet faucet is heavily rate-limited. Try a few smaller chunks
+	// with backoff before surfacing a manual-funding error. This is the same
+	// pattern used by @solana/web3.js's own example scripts.
+	const chunks = [AIRDROP_AMOUNT, AIRDROP_AMOUNT / 2, AIRDROP_AMOUNT / 4, AIRDROP_AMOUNT / 10];
+	let lastErr = null;
+	for (let attempt = 0; attempt < chunks.length; attempt++) {
+		const lamports = Math.max(chunks[attempt], LAMPORTS_PER_SOL / 100);
+		try {
+			const sig = await airdropOnce(connection, kp, lamports);
+			const newBal = await connection.getBalance(kp.publicKey);
+			console.log(`  [${label}] airdrop ${lamports / LAMPORTS_PER_SOL} SOL confirmed: ${explorerTx(sig)}`);
+			console.log(`  [${label}] new balance: ${(newBal / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+			if (newBal >= TOPUP_THRESHOLD) return;
+		} catch (err) {
+			lastErr = err;
+			const waitMs = 2000 * (attempt + 1);
+			console.log(`  [${label}] airdrop attempt ${attempt + 1} failed (${err.message || err}); retrying in ${waitMs}ms`);
+			await sleep(waitMs);
+		}
 	}
+	throw new Error(
+		`[${label}] devnet airdrop exhausted retries — the public faucet is rate-limited. Fund ${kp.publicKey.toBase58()} manually at https://faucet.solana.com (or set AGENC_DEVNET_RPC_URL to a private RPC) and re-run. Underlying: ${lastErr?.message || lastErr}`,
+	);
 }
 
 async function ensureAgentRegistered(client, kp, label, opts) {
@@ -126,9 +147,11 @@ async function main() {
 	const creator = await loadOrCreateKeypair(CREATOR_PATH, "creator");
 	const worker = await loadOrCreateKeypair(WORKER_PATH, "worker");
 
-	const readClient = createAgenCClient({ cluster: "devnet" });
-	const creatorClient = createAgenCClient({ cluster: "devnet", signer: creator });
-	const workerClient = createAgenCClient({ cluster: "devnet", signer: worker });
+	const rpcUrl = (process.env.AGENC_DEVNET_RPC_URL || "").trim() || undefined;
+	if (rpcUrl) console.log(`  using custom devnet RPC: ${rpcUrl}`);
+	const readClient = createAgenCClient({ cluster: "devnet", rpcUrl });
+	const creatorClient = createAgenCClient({ cluster: "devnet", rpcUrl, signer: creator });
+	const workerClient = createAgenCClient({ cluster: "devnet", rpcUrl, signer: worker });
 
 	step("1. ensure devnet SOL balance");
 	await ensureBalance(readClient.connection, creator, "creator");
@@ -178,12 +201,41 @@ async function main() {
 	console.log(`  workers: ${afterClaim?.currentWorkers}/${afterClaim?.maxWorkers}`);
 
 	step("5. worker executes + submits proof");
-	// In a real workflow this is where the three.ws agent runtime would
-	// actually perform the work (LLM call, render, voice, etc.). For this
-	// demo the "result" is a short greeting and the proof is sha256(result).
-	const result = `Hello from three.ws worker ${worker.publicKey.toBase58()} — completed ${new Date().toISOString()}`;
+	// Worker performs a real, verifiable unit of work: query the three.ws
+	// AgenC ↔ x402 bridge for the live bazaar service count, then return a
+	// signed receipt that binds the task description + worker pubkey + live
+	// bazaar fingerprint. The proof is sha256(result) — any verifier can
+	// re-query the bridge and recompute the same fingerprint at this height.
+	const bridgeUrl = process.env.AGENC_BRIDGE_URL || "https://three.ws/api/agenc/x402-services?maxItems=5";
+	let bridgeSummary;
+	try {
+		const r = await fetch(bridgeUrl);
+		if (!r.ok) throw new Error(`bridge ${r.status}`);
+		const payload = await r.json();
+		const fingerprint = createHash("sha256")
+			.update(
+				JSON.stringify(payload.tasks?.map((t) => t.taskIdSeed) ?? []),
+				"utf8",
+			)
+			.digest("hex");
+		bridgeSummary = {
+			count: payload.count ?? 0,
+			fingerprint,
+			facilitators: payload.sources?.map((s) => s.facilitator) ?? [],
+		};
+	} catch (err) {
+		throw new Error(`worker bridge call failed: ${err.message || err}`);
+	}
+	const result = JSON.stringify({
+		worker: worker.publicKey.toBase58(),
+		taskPda: created.taskPda.toBase58(),
+		completedAt: new Date().toISOString(),
+		bridge: bridgeSummary,
+		instruction: taskDescription,
+	});
 	const proofHash = createHash("sha256").update(result, "utf8").digest();
-	console.log(`  result  : ${result}`);
+	console.log(`  bridge   : ${bridgeUrl}`);
+	console.log(`  result   : ${result}`);
 	console.log(`  proofHash: 0x${proofHash.toString("hex")}`);
 
 	const completion = await completeAgenCTask(workerClient, {

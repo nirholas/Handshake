@@ -242,6 +242,34 @@
             "dest": "/club.html"
         },
         {
+            "src": "/agenc/embodied/?",
+            "dest": "/agenc/embodied.html"
+        },
+        {
+            "src": "/agenc/room/?",
+            "dest": "/agenc/room.html"
+        },
+        {
+            "src": "/api/agenc/list-tasks",
+            "dest": "/api/agenc/[action]?action=list-tasks"
+        },
+        {
+            "src": "/api/agenc/get-task",
+            "dest": "/api/agenc/[action]?action=get-task"
+        },
+        {
+            "src": "/api/agenc/get-agent",
+            "dest": "/api/agenc/[action]?action=get-agent"
+        },
+        {
+            "src": "/api/agenc/x402-services",
+            "dest": "/api/agenc/[action]?action=x402-services"
+        },
+        {
+            "src": "/api/agenc/link",
+            "dest": "/api/agenc/[action]?action=link"
+        },
+        {
             "src": "/walkaround/?",
             "dest": "/demos/walkaround.html"
         },

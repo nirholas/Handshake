@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>AgenC × three.ws — embodied agent demo</title>
+		<meta
+			name="description"
+			content="Live demo: a three.ws 3D avatar reacts to the on-chain state of an AgenC task on Solana. Coordination protocol meets embodiment."
+		/>
+		<meta name="theme-color" content="#07050b" />
+		<link rel="icon" href="/favicon.ico" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="AgenC × three.ws — embodied agent demo" />
+		<meta property="og:url" content="https://three.ws/agenc/embodied" />
+
+		<style>
+			:root {
+				--bg: #07050b;
+				--bg-elev: #0f0d18;
+				--fg: #ececec;
+				--muted: #8a8499;
+				--accent: #7af0c4;
+				--warn: #f0c47a;
+				--err: #f07a7a;
+				--card: #16121f;
+				--border: rgba(255, 255, 255, 0.08);
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--fg);
+				font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+				font-size: 14px;
+				line-height: 1.5;
+				min-height: 100vh;
+			}
+			a {
+				color: var(--accent);
+			}
+			.wrap {
+				max-width: 1100px;
+				margin: 0 auto;
+				padding: 32px 24px 80px;
+			}
+			h1 {
+				font-size: 22px;
+				font-weight: 600;
+				margin: 0 0 4px;
+			}
+			.sub {
+				color: var(--muted);
+				margin: 0 0 24px;
+			}
+			.grid {
+				display: grid;
+				grid-template-columns: 1fr 380px;
+				gap: 20px;
+				align-items: start;
+			}
+			@media (max-width: 820px) {
+				.grid {
+					grid-template-columns: 1fr;
+				}
+			}
+			.viewer {
+				background: var(--bg-elev);
+				border-radius: 12px;
+				border: 1px solid var(--border);
+				overflow: hidden;
+				aspect-ratio: 1 / 1;
+				position: relative;
+			}
+			three-ws-agent {
+				width: 100%;
+				height: 100%;
+				display: block;
+			}
+			.card {
+				background: var(--card);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 18px 20px;
+				margin-bottom: 16px;
+			}
+			.card h2 {
+				margin: 0 0 12px;
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: var(--muted);
+				font-weight: 500;
+			}
+			.row {
+				display: flex;
+				justify-content: space-between;
+				gap: 12px;
+				margin: 6px 0;
+				font-size: 13px;
+			}
+			.row .k {
+				color: var(--muted);
+			}
+			.row .v {
+				font-variant-numeric: tabular-nums;
+				word-break: break-all;
+				text-align: right;
+			}
+			.state-Open {
+				color: var(--accent);
+			}
+			.state-Claimed {
+				color: var(--warn);
+			}
+			.state-Completed {
+				color: #7af0c4;
+			}
+			.state-Cancelled,
+			.state-Expired,
+			.state-Disputed {
+				color: var(--err);
+			}
+			input[type='text'],
+			select {
+				background: var(--bg-elev);
+				border: 1px solid var(--border);
+				color: var(--fg);
+				border-radius: 8px;
+				padding: 8px 10px;
+				width: 100%;
+				font: inherit;
+			}
+			.field {
+				margin-bottom: 10px;
+			}
+			.field label {
+				display: block;
+				font-size: 11px;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				margin-bottom: 4px;
+			}
+			.btn {
+				background: var(--accent);
+				color: #061612;
+				border: 0;
+				border-radius: 8px;
+				padding: 9px 14px;
+				font: inherit;
+				font-weight: 600;
+				cursor: pointer;
+				width: 100%;
+			}
+			.btn:hover {
+				filter: brightness(1.05);
+			}
+			.timeline {
+				font-family: ui-monospace, Menlo, monospace;
+				font-size: 11px;
+				color: var(--muted);
+				max-height: 220px;
+				overflow-y: auto;
+			}
+			.timeline div {
+				padding: 4px 0;
+				border-bottom: 1px solid var(--border);
+			}
+			.snippet {
+				font-family: ui-monospace, Menlo, monospace;
+				font-size: 11.5px;
+				color: #d4d0e0;
+				background: #0a0810;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 12px;
+				overflow-x: auto;
+				white-space: pre;
+				margin: 0;
+			}
+			.muted {
+				color: var(--muted);
+			}
+			.tag {
+				display: inline-block;
+				font-size: 10.5px;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: var(--accent);
+				border: 1px solid var(--accent);
+				padding: 1px 6px;
+				border-radius: 999px;
+				vertical-align: middle;
+				margin-left: 8px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="wrap">
+			<h1>
+				AgenC × three.ws — embodied agent demo
+				<span class="tag">live · solana devnet</span>
+			</h1>
+			<p class="sub">
+				Paste an AgenC task PDA. The avatar below is bound to the task's on-chain
+				state via the <code>&lt;three-ws-agent&gt;</code> web component, which polls
+				<code>/api/agenc/get-task</code> and recolors the scene as the task moves
+				through <span class="state-Open">Open</span> →
+				<span class="state-Claimed">Claimed</span> →
+				<span class="state-Completed">Completed</span>. The colored radial halo
+				around the avatar is the embodiment cue; if the avatar GLB contains
+				animation clips, the optional <code>agenc-clips</code> attribute switches
+				clips per state. Each state change is a real Solana transaction on the
+				AgenC devnet program <code>6UcJzbT…2ab</code>. <a href="https://agenc.tech" target="_blank" rel="noopener">agenc.tech</a>
+			</p>
+
+			<div class="grid">
+				<div>
+					<div class="viewer">
+						<three-ws-agent
+							id="agent"
+							src="/avatars/default.glb"
+							agenc-cluster="devnet"
+							agenc-poll-ms="4000"
+							agenc-bridge="/api/agenc"
+							show-overlay
+						></three-ws-agent>
+					</div>
+				</div>
+
+				<div>
+					<div class="card">
+						<h2>Task</h2>
+						<div class="field">
+							<label>Task PDA</label>
+							<input
+								type="text"
+								id="taskPda"
+								placeholder="Base58 task account address"
+							/>
+						</div>
+						<div class="field">
+							<label>Cluster</label>
+							<select id="cluster">
+								<option value="devnet" selected>devnet</option>
+								<option value="mainnet">mainnet</option>
+							</select>
+						</div>
+						<button class="btn" id="watchBtn">Watch task</button>
+					</div>
+
+					<div class="card">
+						<h2>On-chain state</h2>
+						<div class="row"><span class="k">state</span><span class="v" id="vState">—</span></div>
+						<div class="row"><span class="k">workers</span><span class="v" id="vWorkers">—</span></div>
+						<div class="row"><span class="k">reward</span><span class="v" id="vReward">—</span></div>
+						<div class="row"><span class="k">creator</span><span class="v" id="vCreator">—</span></div>
+						<div class="row"><span class="k">deadline</span><span class="v" id="vDeadline">—</span></div>
+						<div class="row"><span class="k">explorer</span><span class="v" id="vExplorer">—</span></div>
+					</div>
+
+					<div class="card">
+						<h2>Lifecycle</h2>
+						<div class="timeline" id="timeline"><span class="muted">no events yet</span></div>
+					</div>
+
+					<div class="card">
+						<h2>Embed this</h2>
+						<pre class="snippet">&lt;script type="module" src="https://three.ws/agenc/embed.js"&gt;&lt;/script&gt;
+&lt;three-ws-agent
+  src="/avatars/default.glb"
+  agenc-task="&lt;TASK_PDA&gt;"
+  agenc-cluster="devnet"
+  agenc-clips='{"Claimed":"working","Completed":"cheer"}'
+  show-overlay&gt;
+&lt;/three-ws-agent&gt;</pre>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script type="module" src="/agenc/embed.js"></script>
+		<script type="module">
+			const $ = (id) => document.getElementById(id);
+			const params = new URLSearchParams(location.search);
+			const taskInput = $('taskPda');
+			const clusterSel = $('cluster');
+			const watchBtn = $('watchBtn');
+			const agent = $('agent');
+
+			if (params.get('task')) taskInput.value = params.get('task');
+			if (params.get('cluster')) clusterSel.value = params.get('cluster');
+
+			let lastTimelineLen = -1;
+
+			function fmtSol(lamports) {
+				if (!lamports) return '—';
+				const n = Number(lamports);
+				if (Number.isNaN(n)) return String(lamports);
+				return (n / 1_000_000_000).toFixed(4) + ' SOL';
+			}
+
+			function explorerUrl(pda, cluster) {
+				const c = cluster === 'mainnet' ? '' : `?cluster=${cluster}`;
+				return `https://explorer.solana.com/address/${pda}${c}`;
+			}
+
+			agent.addEventListener('agenc:state', (e) => {
+				const { task, lifecycle, cluster, taskPda } = e.detail;
+				$('vState').innerHTML = `<span class="state-${task.state}">${task.state}</span>`;
+				$('vWorkers').textContent = `${task.currentWorkers}/${task.maxWorkers}`;
+				$('vReward').textContent = task.rewardMint
+					? `${task.rewardAmount} (mint ${String(task.rewardMint).slice(0, 6)}…)`
+					: fmtSol(task.rewardAmount);
+				$('vCreator').innerHTML = `<a href="${explorerUrl(task.creator, cluster)}" target="_blank" rel="noopener">${String(task.creator).slice(0, 8)}…</a>`;
+				$('vDeadline').textContent = task.deadline ? new Date(task.deadline * 1000).toLocaleString() : '—';
+				$('vExplorer').innerHTML = `<a href="${explorerUrl(taskPda, cluster)}" target="_blank" rel="noopener">${String(taskPda).slice(0, 8)}…</a>`;
+
+				const events = lifecycle?.timeline ?? [];
+				if (events.length !== lastTimelineLen) {
+					const tl = $('timeline');
+					tl.innerHTML = '';
+					for (const ev of events) {
+						const row = document.createElement('div');
+						const ts = new Date(ev.timestamp * 1000).toISOString().replace('T', ' ').slice(0, 19);
+						const sig = ev.txSignature ? ` · <a href="https://explorer.solana.com/tx/${ev.txSignature}?cluster=${cluster}" target="_blank" rel="noopener">tx</a>` : '';
+						row.innerHTML = `<strong style="color:#ececec">${ev.eventName}</strong> · ${ts}${sig}`;
+						tl.appendChild(row);
+					}
+					if (!events.length) tl.innerHTML = '<span class="muted">no events yet</span>';
+					lastTimelineLen = events.length;
+				}
+			});
+
+			agent.addEventListener('agenc:error', (e) => {
+				$('vState').innerHTML = `<span class="state-Cancelled">error</span>`;
+				$('vWorkers').textContent = '—';
+				$('vReward').textContent = '—';
+				$('vCreator').textContent = '—';
+				$('vDeadline').textContent = e.detail?.message || '—';
+				$('vExplorer').textContent = '—';
+			});
+
+			function startWatching() {
+				const pda = taskInput.value.trim();
+				const cluster = clusterSel.value;
+				if (!pda) {
+					agent.removeAttribute('agenc-task');
+					return;
+				}
+				lastTimelineLen = -1;
+				agent.setAttribute('agenc-cluster', cluster);
+				agent.setAttribute('agenc-task', pda);
+				const url = new URL(location.href);
+				url.searchParams.set('task', pda);
+				url.searchParams.set('cluster', cluster);
+				history.replaceState(null, '', url.toString());
+			}
+
+			watchBtn.addEventListener('click', startWatching);
+			taskInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') startWatching();
+			});
+
+			if (taskInput.value) startWatching();
+		</script>
+	</body>
+</html>

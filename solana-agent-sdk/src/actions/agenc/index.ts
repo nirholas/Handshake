@@ -59,6 +59,17 @@ export {
   type AgenCCompleteTaskResult,
 } from "./tasks.js";
 
+export {
+  bridgeErc8004ToAgenCId,
+  bridgeMplCoreToAgenCId,
+  bridgeThreewsHandleToAgenCId,
+  getCanonicalThreewsAgenCId,
+  buildThreewsMetadataUri,
+  agenCAgentIdToHex,
+  type ThreewsAgentIdentityRef,
+  type CanonicalAgenCIdResult,
+} from "./identity-bridge.js";
+
 // Re-exports from the upstream SDK that round out the surface for advanced
 // callers. Anything you can't do via this adapter, you can still reach via
 // `@tetsuo-ai/sdk` directly.

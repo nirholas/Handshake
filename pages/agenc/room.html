@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>AgenC task room — three.ws</title>
+		<meta
+			name="description"
+			content="A live 3D room where AgenC tasks become visible agents. Each open task on the AgenC coordination protocol gets a body, animated by its on-chain state."
+		/>
+		<meta name="theme-color" content="#07050b" />
+		<link rel="icon" href="/favicon.ico" />
+
+		<style>
+			:root {
+				--bg: #07050b;
+				--bg-elev: #0f0d18;
+				--fg: #ececec;
+				--muted: #8a8499;
+				--accent: #7af0c4;
+				--warn: #f0c47a;
+				--err: #f07a7a;
+				--card: #16121f;
+				--border: rgba(255, 255, 255, 0.08);
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--fg);
+				font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+				font-size: 14px;
+				min-height: 100vh;
+			}
+			a {
+				color: var(--accent);
+			}
+			.bar {
+				display: flex;
+				gap: 12px;
+				align-items: center;
+				padding: 14px 20px;
+				border-bottom: 1px solid var(--border);
+				background: rgba(0, 0, 0, 0.4);
+				backdrop-filter: blur(6px);
+				flex-wrap: wrap;
+			}
+			.bar h1 {
+				margin: 0;
+				font-size: 16px;
+				font-weight: 600;
+			}
+			.bar .muted {
+				color: var(--muted);
+				font-size: 12px;
+			}
+			.bar input {
+				background: var(--bg-elev);
+				border: 1px solid var(--border);
+				color: var(--fg);
+				border-radius: 6px;
+				padding: 6px 10px;
+				min-width: 320px;
+				font: inherit;
+			}
+			.bar select {
+				background: var(--bg-elev);
+				border: 1px solid var(--border);
+				color: var(--fg);
+				border-radius: 6px;
+				padding: 6px 10px;
+				font: inherit;
+			}
+			.bar button {
+				background: var(--accent);
+				color: #061612;
+				border: 0;
+				border-radius: 6px;
+				padding: 6px 14px;
+				font: inherit;
+				font-weight: 600;
+				cursor: pointer;
+			}
+			.bar button:hover {
+				filter: brightness(1.05);
+			}
+			.room {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+				gap: 18px;
+				padding: 24px;
+			}
+			.task {
+				background: var(--card);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				overflow: hidden;
+				position: relative;
+				display: flex;
+				flex-direction: column;
+			}
+			.task .body {
+				aspect-ratio: 1 / 1;
+				background: linear-gradient(135deg, #1a1428, #07050b);
+				position: relative;
+				overflow: hidden;
+			}
+			.task three-ws-agent {
+				width: 100%;
+				height: 100%;
+				display: block;
+			}
+			.task .meta {
+				padding: 12px 14px;
+				font-size: 12px;
+				color: var(--muted);
+			}
+			.task .meta strong {
+				color: var(--fg);
+				font-weight: 500;
+			}
+			.task .state-tag {
+				position: absolute;
+				top: 12px;
+				right: 12px;
+				font-size: 10.5px;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				background: rgba(0, 0, 0, 0.6);
+				border: 1px solid var(--border);
+				padding: 3px 8px;
+				border-radius: 999px;
+				color: var(--fg);
+			}
+			.task[data-state='Open'] .state-tag {
+				color: var(--accent);
+				border-color: var(--accent);
+			}
+			.task[data-state='Claimed'] .state-tag {
+				color: var(--warn);
+				border-color: var(--warn);
+			}
+			.task[data-state='Completed'] .state-tag {
+				color: #7af0c4;
+				border-color: #7af0c4;
+			}
+			.task[data-state='Cancelled'] .state-tag,
+			.task[data-state='Expired'] .state-tag,
+			.task[data-state='Disputed'] .state-tag {
+				color: var(--err);
+				border-color: var(--err);
+			}
+			.empty {
+				padding: 60px 24px;
+				color: var(--muted);
+				text-align: center;
+			}
+			.empty code {
+				color: var(--fg);
+				background: var(--bg-elev);
+				padding: 1px 6px;
+				border-radius: 4px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="bar">
+			<h1>AgenC task room</h1>
+			<span class="muted">on-chain task feed · <a href="https://agenc.tech" target="_blank" rel="noopener">agenc.tech</a></span>
+			<span style="flex: 1"></span>
+			<input id="creator" type="text" placeholder="creator wallet (base58)" />
+			<select id="cluster">
+				<option value="devnet" selected>devnet</option>
+				<option value="mainnet">mainnet</option>
+			</select>
+			<button id="loadBtn">Load</button>
+		</div>
+
+		<div id="room" class="room">
+			<div class="empty">
+				Paste a creator wallet to render every task they've posted on AgenC as
+				an embodied avatar. Try a wallet from your <code>agenc-task-roundtrip</code> example.
+			</div>
+		</div>
+
+		<script type="module" src="/agenc/embed.js"></script>
+		<script type="module">
+			const POLL_MS = 8000;
+			const AVATARS = ['/avatars/default.glb', '/avatars/cz.glb'];
+			const $ = (id) => document.getElementById(id);
+			const room = $('room');
+			const creatorInput = $('creator');
+			const clusterSel = $('cluster');
+			const loadBtn = $('loadBtn');
+
+			const params = new URLSearchParams(location.search);
+			if (params.get('creator')) creatorInput.value = params.get('creator');
+			if (params.get('cluster')) clusterSel.value = params.get('cluster');
+
+			let pollTimer = null;
+			let currentRequest = 0;
+			const cards = new Map(); // taskId hex -> { el, state }
+
+			function avatarFor(taskId) {
+				let h = 0;
+				for (const c of taskId) h = (h * 31 + c.charCodeAt(0)) | 0;
+				return AVATARS[Math.abs(h) % AVATARS.length];
+			}
+
+			function fmtSol(lamports) {
+				const n = Number(lamports);
+				if (Number.isNaN(n)) return String(lamports);
+				return (n / 1_000_000_000).toFixed(4) + ' SOL';
+			}
+
+			function buildCard(task, cluster, taskPda) {
+				const el = document.createElement('div');
+				el.className = 'task';
+				el.dataset.state = task.state;
+				el.dataset.taskId = task.taskId;
+				const reward = task.rewardMint ? `${task.rewardAmount}` : fmtSol(task.rewardAmount);
+				const pda = taskPda || '';
+				el.innerHTML = `
+					<div class="body">
+						<three-ws-agent
+							src="${avatarFor(task.taskId)}"
+							${pda ? `agenc-task="${pda}"` : ''}
+							agenc-cluster="${cluster}"
+							agenc-bridge="/api/agenc"
+							agenc-poll-ms="8000"
+						></three-ws-agent>
+						<div class="state-tag">${task.state}</div>
+					</div>
+					<div class="meta">
+						<div><strong>${task.taskId.slice(0, 10)}…</strong></div>
+						<div>reward · ${reward}</div>
+						<div>workers · ${task.currentWorkers}/${task.maxWorkers}${task.private ? ' · private (zk)' : ''}</div>
+						<div>deadline · ${task.deadline ? new Date(task.deadline * 1000).toLocaleString() : '—'}</div>
+					</div>
+				`;
+				return el;
+			}
+
+			function updateCard(card, task) {
+				if (card.dataset.state !== task.state) {
+					card.dataset.state = task.state;
+					card.querySelector('.state-tag').textContent = task.state;
+				}
+				const meta = card.querySelector('.meta');
+				const reward = task.rewardMint ? `${task.rewardAmount}` : fmtSol(task.rewardAmount);
+				meta.children[1].textContent = `reward · ${reward}`;
+				meta.children[2].textContent = `workers · ${task.currentWorkers}/${task.maxWorkers}${task.private ? ' · private (zk)' : ''}`;
+			}
+
+			async function loadTasks(creator, cluster, requestId) {
+				try {
+					const r = await fetch(
+						`/api/agenc/list-tasks?creator=${encodeURIComponent(creator)}&cluster=${cluster}`,
+					);
+					if (requestId !== currentRequest) return;
+					if (!r.ok) {
+						const text = await r.text();
+						room.innerHTML = `<div class="empty">error: ${text.slice(0, 200)}</div>`;
+						return;
+					}
+					const payload = await r.json();
+					if (!payload.ok || !payload.tasks?.length) {
+						room.innerHTML = `<div class="empty">no tasks found for <code>${creator.slice(0, 12)}…</code> on ${cluster}.</div>`;
+						cards.clear();
+						return;
+					}
+
+					const seen = new Set();
+					for (const task of payload.tasks) {
+						seen.add(task.taskId);
+						const existing = cards.get(task.taskId);
+						if (existing) {
+							updateCard(existing.el, task);
+						} else {
+							const el = buildCard(task, cluster, task.taskPda);
+							room.appendChild(el);
+							cards.set(task.taskId, { el });
+						}
+					}
+					// Remove cards that are no longer in the response (rare — cancelled
+					// tasks usually stay in the list with state=Cancelled).
+					for (const [taskId, entry] of cards) {
+						if (!seen.has(taskId)) {
+							entry.el.remove();
+							cards.delete(taskId);
+						}
+					}
+					if (room.querySelector('.empty')) {
+						room.querySelector('.empty').remove();
+					}
+				} catch (err) {
+					if (requestId === currentRequest) {
+						room.innerHTML = `<div class="empty">network error: ${err.message}</div>`;
+					}
+				} finally {
+					if (requestId === currentRequest) {
+						pollTimer = setTimeout(() => loadTasks(creator, cluster, requestId), POLL_MS);
+					}
+				}
+			}
+
+			function start() {
+				const creator = creatorInput.value.trim();
+				const cluster = clusterSel.value;
+				clearTimeout(pollTimer);
+				cards.clear();
+				room.innerHTML = '';
+				currentRequest += 1;
+				if (!creator) {
+					room.innerHTML =
+						'<div class="empty">Paste a creator wallet to render its tasks as a 3D scene.</div>';
+					return;
+				}
+				const url = new URL(location.href);
+				url.searchParams.set('creator', creator);
+				url.searchParams.set('cluster', cluster);
+				history.replaceState(null, '', url.toString());
+				room.innerHTML = '<div class="empty">loading…</div>';
+				loadTasks(creator, cluster, currentRequest);
+			}
+
+			loadBtn.addEventListener('click', start);
+			creatorInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') start();
+			});
+			if (creatorInput.value) start();
+		</script>
+	</body>
+</html>
