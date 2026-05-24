@@ -806,12 +806,25 @@ async function handleStats(req, res) {
 	`;
 	if (!w) return error(res, 404, 'not_found', 'widget not found or not yours');
 
-	const [recentViews, topReferers, topCountries, lastViewed, chatCount] = await Promise.all([
+	const isTalkingAgent = w.type === 'talking-agent';
+	const [
+		recentViews,
+		topReferers,
+		topCountries,
+		lastViewed,
+		chatCount,
+		recentChats,
+		topQuestions,
+		knowledgeSummary,
+	] = await Promise.all([
 		recentViewsByDay(id),
 		topAggregates(id, 'referer_host'),
 		topAggregates(id, 'country'),
 		lastViewedAt(id),
 		chatCountFor(id, w.type),
+		isTalkingAgent ? recentChatsByDay(id) : Promise.resolve(null),
+		isTalkingAgent ? topQuestionsFor(id) : Promise.resolve(null),
+		isTalkingAgent ? knowledgeSummaryFor(id) : Promise.resolve(null),
 	]);
 
 	res.setHeader('cache-control', 'private, max-age=30');
@@ -823,6 +836,9 @@ async function handleStats(req, res) {
 			top_referers: topReferers,
 			top_countries: topCountries,
 			chat_count: chatCount,
+			recent_chats_7d: recentChats,
+			top_questions: topQuestions,
+			knowledge: knowledgeSummary,
 		},
 	});
 }
@@ -890,6 +906,86 @@ async function chatCountFor(id, type) {
 		const rows =
 			await sql`select count(*)::bigint as n from widget_chat_messages where widget_id = ${id}`;
 		return Number(rows[0]?.n || 0);
+	} catch (err) {
+		if (/relation .* does not exist/i.test(err?.message || '')) return null;
+		throw err;
+	}
+}
+
+// Plausible-style 8-day rolling sparkline of visitor messages, parallel to
+// recentViewsByDay. 0-fills missing days so the dashboard renders without
+// branching for gaps.
+async function recentChatsByDay(id) {
+	const days = [];
+	const today = startOfUtcDay(new Date());
+	for (let i = 7; i >= 0; i--) {
+		const d = new Date(today.getTime() - i * 86400_000);
+		days.push({ day: d.toISOString().slice(0, 10), count: 0 });
+	}
+	try {
+		const rows = await sql`
+			select date_trunc('day', created_at)::date::text as day, count(*)::bigint as count
+			from widget_chat_messages
+			where widget_id = ${id} and role = 'user' and created_at >= ${days[0].day}::date
+			group by 1 order by 1
+		`;
+		const idx = new Map(days.map((d, i) => [d.day, i]));
+		for (const r of rows) {
+			const i = idx.get(r.day);
+			if (i !== undefined) days[i].count = Number(r.count);
+		}
+	} catch (err) {
+		if (!/relation .* does not exist/i.test(err?.message || '')) throw err;
+	}
+	return days;
+}
+
+// Mintlify-style top-questions: cluster visitor messages by a normalized
+// prefix (case-folded, punctuation-stripped, first 64 chars) so visually
+// near-identical asks merge into one row. Cheap, no LLM, surfaces the
+// pattern the creator should turn into a doc or FAQ entry.
+async function topQuestionsFor(id) {
+	try {
+		const rows = await sql`
+			select lower(regexp_replace(substring(content, 1, 96), '[^a-zA-Z0-9 ]+', '', 'g')) as key,
+			       min(content) as sample,
+			       count(*)::bigint as n,
+			       max(created_at) as last_at
+			from widget_chat_messages
+			where widget_id = ${id} and role = 'user'
+			group by 1
+			order by n desc, last_at desc
+			limit 8
+		`;
+		return rows
+			.filter((r) => r.key && r.key.trim().length >= 3)
+			.map((r) => ({
+				question: r.sample,
+				count: Number(r.n),
+				last_at: r.last_at,
+			}));
+	} catch (err) {
+		if (/relation .* does not exist/i.test(err?.message || '')) return [];
+		throw err;
+	}
+}
+
+// Lightweight knowledge summary — pulled into stats so the dashboard's main
+// card can show "5 docs · 42 chunks" without a second round trip.
+async function knowledgeSummaryFor(id) {
+	try {
+		const [row] = await sql`
+			select count(*)::int as doc_count,
+			       coalesce(sum(chunk_count), 0)::int as chunk_count,
+			       coalesce(sum(token_count), 0)::int as token_count
+			from widget_knowledge_docs
+			where widget_id = ${id}
+		`;
+		return {
+			doc_count:   Number(row?.doc_count   || 0),
+			chunk_count: Number(row?.chunk_count || 0),
+			token_count: Number(row?.token_count || 0),
+		};
 	} catch (err) {
 		if (/relation .* does not exist/i.test(err?.message || '')) return null;
 		throw err;

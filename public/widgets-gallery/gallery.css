@@ -575,17 +575,7 @@ body.gallery-body {
 		color 0.15s;
 }
 
-/* "Copy iframe" is the primary action */
-.snippet-row button:first-child {
-	background: var(--blue);
-	border-color: var(--blue);
-	color: #fff;
-}
-
-.snippet-row button:first-child:hover {
-	background: #2563eb;
-	border-color: #2563eb;
-}
+/* The Copy split-button is no longer styled via :first-child — see .split-btn-main below. */
 
 /* "Open in Studio" sits quieter as a text link */
 .snippet-row a {
