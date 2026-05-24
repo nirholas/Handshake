@@ -98,6 +98,51 @@ export async function readEmbedPolicy(agentId) {
 	return normalizeLegacyPolicy(row.embed_policy);
 }
 
+// Read the embed policy for an agent_identity row identified by its avatar_id.
+// Used by the MCP middleware where only the avatar id is on the request.
+export async function readEmbedPolicyByAvatarId(avatarId) {
+	let row;
+	try {
+		[row] = await sql`
+			SELECT embed_policy FROM agent_identities
+			WHERE avatar_id = ${avatarId} AND deleted_at IS NULL
+			LIMIT 1
+		`;
+	} catch (err) {
+		if (
+			err.message &&
+			err.message.includes('column') &&
+			err.message.includes('does not exist')
+		) {
+			return null;
+		}
+		throw err;
+	}
+	if (!row) return null;
+	return normalizeLegacyPolicy(row.embed_policy);
+}
+
+// Check whether a request origin is permitted by the given policy.
+// Returns true when no Referer is present (bots, direct requests).
+export function originAllowed(refererHeader, policy, appOriginHost) {
+	if (!refererHeader) return true;
+	let host;
+	try {
+		host = new URL(refererHeader).hostname.toLowerCase();
+	} catch {
+		return true;
+	}
+	if (host === appOriginHost || host === 'localhost' || host.endsWith('.localhost')) return true;
+	const hosts = policy?.origins?.hosts ?? [];
+	const mode = policy?.origins?.mode ?? 'allowlist';
+	const matched = hosts.some((h) => {
+		const lower = h.toLowerCase();
+		if (lower.startsWith('*.')) return host.endsWith(lower.slice(1)) && host !== lower.slice(2);
+		return host === lower;
+	});
+	return mode === 'allowlist' ? matched : !matched;
+}
+
 export function validateEmbedPolicy(input) {
 	return policySchema.parse(normalizeLegacyPolicy(input));
 }

@@ -4,7 +4,7 @@
 import { chromium } from 'playwright';
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
-const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
+const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 let totalFail = 0;
 
 async function run(route, action) {

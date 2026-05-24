@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 
-const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
+const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
 let failed = false;
 

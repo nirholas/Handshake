@@ -14,40 +14,7 @@ import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
 import { cors, wrap } from '../_lib/http.js';
 import { isDemoWidgetId, getDemoWidget } from './_demo-fixtures.js';
-
-// ── inline embed-policy helpers (prompt 02 / api/_lib/embed-policy.js not yet shipped) ──
-
-function _defaultPolicy() {
-	return {
-		version: 1,
-		origins: { mode: 'allowlist', hosts: [] },
-		surfaces: { script: true, iframe: true, widget: true, mcp: true },
-	};
-}
-
-function _parsePolicy(p) {
-	if (!p) return null;
-	if (!('version' in p) && ('mode' in p || 'hosts' in p)) {
-		// Old flat shape — only origins were configured; all surfaces allowed.
-		return {
-			..._defaultPolicy(),
-			origins: { mode: p.mode || 'allowlist', hosts: p.hosts ?? [] },
-		};
-	}
-	return { ..._defaultPolicy(), ...p };
-}
-
-async function _readPolicyForAgent(agentId) {
-	try {
-		const [row] =
-			await sql`SELECT embed_policy FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL`;
-		if (!row) return null;
-		return _parsePolicy(row.embed_policy);
-	} catch (err) {
-		if (/column .* does not exist/i.test(String(err?.message))) return null;
-		throw err;
-	}
-}
+import { readEmbedPolicy, originAllowed } from '../_lib/embed-policy.js';
 
 function _originAllowed(refererHeader, policy, appOriginHost) {
 	if (!refererHeader) return true; // no referer → allow (bots, direct)

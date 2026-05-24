@@ -1,44 +1,48 @@
 /**
- * Null / dev pinner — no network calls, no credentials needed.
+ * MemoryPinner — content-addressed in-memory pinner.
  *
- * Hashes the blob with SHA-256 and returns a fake CID in the form
- * `bafkdev<hex>`. Content is kept in an in-memory Map for the session,
- * so nullDevFetch(cid) resolves the round-trip in tests and dev.
+ * No network calls, no credentials needed. Computes the real CIDv1 raw-codec
+ * + sha2-256 multihash for the bytes — so the CID it returns is verifiable
+ * IPFS content-addressing. The bytes themselves are kept in an in-memory Map
+ * for the session, retrievable via memoryFetch(cid).
  *
- * CIDs produced here are NOT valid IPFS CIDs and will NOT resolve on
- * public IPFS gateways. Use a real provider in production.
+ * The CID is real IPFS, but the storage is local-only — if you publish the
+ * CID and the consumer's gateway hasn't seen those bytes, they won't resolve.
+ * Use a real pinning provider (web3-storage, pinata, filebase) for any
+ * content that needs to be retrievable outside this process.
  */
+
+import { CID } from 'multiformats/cid';
+import * as raw from 'multiformats/codecs/raw';
+import { sha256 } from 'multiformats/hashes/sha2';
 
 /** @type {Map<string, Uint8Array>} */
 const _store = new Map();
-
-async function _sha256Hex(bytes) {
-	const hash = await crypto.subtle.digest('SHA-256', bytes);
-	return Array.from(new Uint8Array(hash))
-		.map((b) => b.toString(16).padStart(2, '0'))
-		.join('');
-}
 
 async function _toBytes(blob) {
 	return blob instanceof Uint8Array ? blob : new Uint8Array(await blob.arrayBuffer());
 }
 
-export class NullDevPinner {
+async function _realCid(bytes) {
+	const digest = await sha256.digest(bytes);
+	return CID.create(1, raw.code, digest).toString();
+}
+
+export class MemoryPinner {
 	/**
 	 * @param {Blob|Uint8Array} blob
 	 * @returns {Promise<{cid: string, size: number}>}
 	 */
 	async pinBlob(blob, _opts = {}) {
 		const bytes = await _toBytes(blob);
-		const hex = await _sha256Hex(bytes);
-		const cid = `bafkdev${hex.slice(0, 40)}`;
+		const cid = await _realCid(bytes);
 		_store.set(cid, bytes);
 		return { cid, size: bytes.length };
 	}
 
 	/**
-	 * Stores each file under its path and creates an index entry keyed by dirCid.
-	 * Resolve individual files with nullDevFetch(dirCid, 'path/to/file').
+	 * Pins each file under its CID and an index keyed by dirCid. Resolve
+	 * individual files with memoryFetch(dirCid, 'path/to/file').
 	 *
 	 * @param {Array<{path: string, data: Blob|Uint8Array}>} files
 	 * @returns {Promise<{cid: string, size: number}>}
@@ -49,17 +53,17 @@ export class NullDevPinner {
 
 		for (const { path, data } of files) {
 			const bytes = await _toBytes(data);
-			const hex = await _sha256Hex(bytes);
-			const fileCid = `bafkdev${hex.slice(0, 40)}`;
-			_store.set(fileCid, bytes);
-			index[path] = fileCid;
+			const cid = await _realCid(bytes);
+			_store.set(cid, bytes);
+			index[path] = cid;
 			totalSize += bytes.length;
 		}
 
 		const indexBytes = new TextEncoder().encode(JSON.stringify(index));
-		const hex = await _sha256Hex(indexBytes);
-		const dirCid = `bafkdevdir${hex.slice(0, 36)}`;
-		// Store index under a magic suffix so nullDevFetch can locate it
+		const dirCid = await _realCid(indexBytes);
+		// Store both the index JSON and a sentinel suffix so memoryFetch can
+		// distinguish "fetch the index" from "fetch a file inside the dir".
+		_store.set(dirCid, indexBytes);
 		_store.set(dirCid + '/\x00index', indexBytes);
 		return { cid: dirCid, size: totalSize };
 	}
@@ -75,13 +79,13 @@ export class NullDevPinner {
 }
 
 /**
- * Fetch content pinned by NullDevPinner.
+ * Fetch content pinned by MemoryPinner.
  *
  * @param {string} cid        A CID returned by pinBlob or pinDirectory
  * @param {string} [path]     File path within a pinned directory
  * @returns {Uint8Array|null}
  */
-export function nullDevFetch(cid, path) {
+export function memoryFetch(cid, path) {
 	if (!path) return _store.get(cid) ?? null;
 
 	const indexBytes = _store.get(cid + '/\x00index');
@@ -92,6 +96,13 @@ export function nullDevFetch(cid, path) {
 }
 
 /** Wipe the entire in-memory store (useful between tests). */
-export function nullDevClear() {
+export function memoryClear() {
 	_store.clear();
 }
+
+// Back-compat aliases — keep external import sites unbroken while callers
+// migrate. The shape and behaviour are unchanged; only the names improved
+// and the CIDs are now real IPFS content-addresses instead of fake.
+export { MemoryPinner as NullDevPinner };
+export { memoryFetch as nullDevFetch };
+export { memoryClear as nullDevClear };

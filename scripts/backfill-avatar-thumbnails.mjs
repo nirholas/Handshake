@@ -98,7 +98,7 @@ async function main() {
 	console.log(`[backfill] ${todo.length} avatar(s) need thumbnails`);
 	if (!todo.length) return;
 
-	const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
+	const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 	const ctx = await browser.newContext({
 		viewport: { width: VIEWPORT, height: VIEWPORT },
 		deviceScaleFactor: 1,

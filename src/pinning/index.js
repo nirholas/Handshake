@@ -10,18 +10,20 @@
 import { Web3StoragePinner } from './web3-storage.js';
 import { FilebasePinner } from './filebase.js';
 import { PinataPinner } from './pinata.js';
-import { NullDevPinner } from './null-dev.js';
+import { MemoryPinner, NullDevPinner } from './null-dev.js';
 
-const PROVIDERS = ['web3-storage', 'filebase', 'pinata', 'null-dev'];
+const PROVIDERS = ['web3-storage', 'filebase', 'pinata', 'memory'];
 
 /** @type {Pinner|null} */
 let _defaultPinner = null;
+let _autoFallbackWarned = false;
 
 /**
  * Build a Pinner from a config object.
  *
  * @param {object} config
- * @param {'web3-storage'|'filebase'|'pinata'|'null-dev'} [config.provider='web3-storage']
+ * @param {'web3-storage'|'filebase'|'pinata'|'memory'|'null-dev'} [config.provider='web3-storage']
+ *   'null-dev' is accepted as a back-compat alias for 'memory'.
  * @param {string} [config.token]         API key / JWT for web3-storage or pinata
  * @param {string} [config.accessKeyId]   Filebase S3 access key
  * @param {string} [config.secretAccessKey] Filebase S3 secret key
@@ -37,8 +39,9 @@ export function createPinner(config = {}) {
 			return new FilebasePinner(opts);
 		case 'pinata':
 			return new PinataPinner(opts);
+		case 'memory':
 		case 'null-dev':
-			return new NullDevPinner(opts);
+			return new MemoryPinner(opts);
 		default:
 			throw new Error(
 				`Unknown pinning provider "${provider}". Supported: ${PROVIDERS.join(', ')}`,
@@ -52,7 +55,9 @@ export function createPinner(config = {}) {
  * Initialisation order:
  *  1. Explicitly set via setPinner()
  *  2. window.__agent3dPinner (Pinner instance or config object)
- *  3. null-dev (safe fallback — fake CIDs, in-memory storage)
+ *  3. MemoryPinner — emits a one-time warning so it's never an accidental
+ *     production default. CIDs are real IPFS content-addresses, but the
+ *     bytes only live in this process and won't resolve from public gateways.
  *
  * @returns {Pinner}
  */
@@ -65,7 +70,15 @@ export function getPinner() {
 		return _defaultPinner;
 	}
 
-	_defaultPinner = new NullDevPinner();
+	if (!_autoFallbackWarned) {
+		_autoFallbackWarned = true;
+		console.warn(
+			'[pinning] No pinner configured — falling back to in-memory pinner. ' +
+				'CIDs are real but content is local-only. ' +
+				'Set window.__agent3dPinner or call setPinner() with a real provider for production.',
+		);
+	}
+	_defaultPinner = new MemoryPinner();
 	return _defaultPinner;
 }
 
@@ -77,4 +90,4 @@ export function setPinner(pinner) {
 	_defaultPinner = pinner;
 }
 
-export { Web3StoragePinner, FilebasePinner, PinataPinner, NullDevPinner };
+export { Web3StoragePinner, FilebasePinner, PinataPinner, MemoryPinner, NullDevPinner };

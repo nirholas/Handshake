@@ -26,7 +26,7 @@ function warn(msg) {
 	warnings.push(msg);
 }
 
-const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
+const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
 const page = await ctx.newPage();
 

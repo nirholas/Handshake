@@ -186,7 +186,7 @@ async function main() {
 	let browser;
 	let exitCode = 0;
 	try {
-		browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
+		browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 		console.log(`Checking ${ROUTES.length} routes…\n`);
 		const results = [];
 		for (const route of ROUTES) {

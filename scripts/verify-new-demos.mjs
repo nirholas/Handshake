@@ -6,7 +6,7 @@ import { chromium } from 'playwright';
 const BASE = process.env.BASE_URL || 'http://localhost:3002';
 const ROUTES = ['/demos/404.html', '/demos/checkout.html', '/demos/pricing.html'];
 
-const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
+const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 let totalFail = 0;
 
 for (const route of ROUTES) {

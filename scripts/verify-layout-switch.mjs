@@ -14,14 +14,7 @@ function fail(msg) {
 	process.exitCode = 1;
 }
 
-const LAUNCH_ARGS = [
-	'--no-sandbox',
-	'--disable-setuid-sandbox',
-	'--disable-dev-shm-usage',
-	'--disable-gpu',
-	'--use-angle=swiftshader-webgl',
-	'--ignore-gpu-blacklist',
-];
+const LAUNCH_ARGS = ['--no-sandbox', '--disable-dev-shm-usage'];
 
 const browser = await chromium.launch({ args: LAUNCH_ARGS });
 const ctx = await browser.newContext();

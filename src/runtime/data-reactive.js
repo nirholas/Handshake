@@ -154,15 +154,21 @@ function startPoll(url, intervalMs, parseFn, protocol, bindings, stats, signal) 
 	const defaultParse = (r) => r.json().then((d) => (Array.isArray(d) ? d : [d]));
 	const parse = parseFn ?? defaultParse;
 	let stopped = false;
+	const ac = new AbortController();
 
 	const tick = () => {
 		if (stopped) return;
-		fetch(url)
+		fetch(url, { signal: ac.signal })
 			.then((r) => parse(r))
 			.then((items) => {
+				// Re-check after the await — stop() may have fired while the
+				// fetch was in flight. Without this guard, in-flight responses
+				// keep bumping the counter after the caller called stop().
+				if (stopped) return;
 				for (const item of items) applyBindings(protocol, bindings, item, stats);
 			})
 			.catch((err) => {
+				if (stopped) return;
 				if (err?.name !== 'AbortError') {
 					console.error('[data-reactive] poll error:', err);
 					stats.errors++;
@@ -176,8 +182,10 @@ function startPoll(url, intervalMs, parseFn, protocol, bindings, stats, signal) 
 	const timer = setInterval(tick, intervalMs);
 
 	function stop() {
+		if (stopped) return;
 		stopped = true;
 		clearInterval(timer);
+		try { ac.abort(); } catch (_) {}
 	}
 
 	if (signal) signal.addEventListener('abort', stop, { once: true });

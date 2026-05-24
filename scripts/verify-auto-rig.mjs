@@ -9,7 +9,7 @@ import { chromium } from 'playwright';
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const URL  = `${BASE}/demos/agents/auto-rig.html`;
 
-const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
+const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 const page = await browser.newPage();
 
 const errors = [];
