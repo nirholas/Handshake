@@ -331,6 +331,14 @@ async function loadAvatars() {
 		renderAvatarList();
 		return;
 	}
+	// Show skeleton cards while fetching.
+	list.innerHTML = Array(4)
+		.fill(
+			'<button class="avatar-card avatar-card--skeleton" disabled aria-hidden="true">' +
+				'<div class="thumb"></div><span class="name"> </span>' +
+				'</button>',
+		)
+		.join('');
 	try {
 		const res = await fetch('/api/avatars?limit=100', { credentials: 'include' });
 		if (!res.ok) throw new Error(`avatars: ${res.status}`);
@@ -824,6 +832,8 @@ async function autoRegisterAndSelect(url, storageKey) {
 			];
 			renderAvatarList();
 		}
+		toastDismiss();
+		toast('Model added to your library', 'success');
 		selectAvatar(avatar.id);
 	} catch (err) {
 		console.warn('[studio] autoRegisterAndSelect failed', err);
@@ -966,20 +976,35 @@ function schedulePreview() {
 	previewTimer = setTimeout(() => updatePreview(false), 200);
 }
 
+const previewFrameEl = $('#preview-frame');
+
+// Remove shimmer once iframe content has painted.
+previewIfr.addEventListener('load', () => {
+	previewFrameEl?.classList.remove('is-loading');
+	if (previewSt.textContent === 'Loading preview…') {
+		if (state.avatarId) {
+			previewSt.className = 'preview-status-live';
+			previewSt.textContent = 'Live preview';
+		} else {
+			previewSt.className = 'muted';
+			previewSt.textContent = 'Preview only — pick an avatar from your library to save';
+		}
+	}
+});
+
 function updatePreview(forceReload) {
 	if (!state.avatarId && !state.preselectedModel) {
+		previewSt.className = 'muted';
 		previewSt.textContent = 'Pick an avatar to preview';
 		return;
 	}
 	const avatar = findAvatar(state.avatarId);
 	const modelUrl = avatar?.model_url || state.preselectedModel;
 	if (!modelUrl) {
+		previewSt.className = 'muted';
 		previewSt.textContent = 'Avatar has no public URL — make it public/unlisted to preview';
 		return;
 	}
-	previewSt.textContent = state.avatarId
-		? 'Live preview'
-		: 'Preview only — pick an avatar from your library to save';
 	if (!state.avatarId) captureBtn.disabled = false;
 
 	const camStr = Array.isArray(state.config.cameraPosition)
@@ -993,7 +1018,9 @@ function updatePreview(forceReload) {
 	const key = hashStr;
 	if (forceReload || key !== previewSrcKey) {
 		previewSrcKey = key;
+		previewSt.className = 'muted';
 		previewSt.textContent = 'Loading preview…';
+		previewFrameEl?.classList.add('is-loading');
 		// Cache-buster query forces a full reload. Without it, hash-only
 		// changes (e.g. switching avatars) trigger fragment navigation in
 		// the iframe — and the widget shell reads `model`/`type` from the
@@ -1002,6 +1029,11 @@ function updatePreview(forceReload) {
 		// without site nav/footer/auth chrome in the DOM, so the preview
 		// doesn't flash the marketing site before the model renders.
 		previewIfr.src = `/widget?_=${Date.now()}#${hashStr}`;
+	} else {
+		previewSt.className = state.avatarId ? 'preview-status-live' : 'muted';
+		previewSt.textContent = state.avatarId
+			? 'Live preview'
+			: 'Preview only — pick an avatar from your library to save';
 	}
 	postConfigToPreview();
 }

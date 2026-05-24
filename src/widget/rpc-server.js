@@ -16,7 +16,7 @@
 // The legacy `{ id, action, input }` bridge in app.js still works in parallel —
 // this module is additive, not a replacement.
 
-import { Vector3 } from 'three';
+import { Vector3, WebGLRenderTarget, NoToneMapping } from 'three';
 import { protocol, ACTION_TYPES } from '../agent-protocol.js';
 
 const PROTOCOL = 'jsonrpc';
@@ -229,15 +229,64 @@ function buildMethods(app) {
 		},
 
 		// ── Screenshot ────────────────────────────────────────────────────────
-		// Returns a data: URL of the current canvas at its native resolution.
-		// Use `mime` to pick the encoding (default image/png). Resizing isn't
-		// supported here yet — call this in a square iframe if you want a
-		// square image; the canvas matches the iframe's pixel size.
+		// Returns a data: URL of the rendered scene. With no `width`/`height`
+		// it captures at the live canvas resolution; pass either or both to
+		// render off-screen at an exact pixel size (useful for OG cards or
+		// fixed thumbnails decoupled from the iframe dimensions).
 		'screenshot.capture': (params) => {
 			const v = requireViewer();
-			v.renderer.render(v.scene, v.activeCamera || v.defaultCamera);
 			const mime = String(params.mime || 'image/png');
-			return { dataUrl: v.renderer.domElement.toDataURL(mime) };
+			const cam = v.activeCamera || v.defaultCamera;
+			const reqW = Number(params.width);
+			const reqH = Number(params.height);
+			const wantsResize =
+				(Number.isFinite(reqW) && reqW > 0) || (Number.isFinite(reqH) && reqH > 0);
+
+			if (!wantsResize) {
+				v.renderer.render(v.scene, cam);
+				return { dataUrl: v.renderer.domElement.toDataURL(mime) };
+			}
+
+			const w = Math.max(1, Math.round(Number.isFinite(reqW) && reqW > 0 ? reqW : reqH));
+			const h = Math.max(1, Math.round(Number.isFinite(reqH) && reqH > 0 ? reqH : reqW));
+			const target = new WebGLRenderTarget(w, h);
+			const prevTarget = v.renderer.getRenderTarget();
+			const prevAspect = cam.aspect;
+			const prevToneMapping = v.renderer.toneMapping;
+			try {
+				cam.aspect = w / h;
+				cam.updateProjectionMatrix();
+				v.renderer.toneMapping = prevToneMapping ?? NoToneMapping;
+				v.renderer.setRenderTarget(target);
+				v.renderer.render(v.scene, cam);
+
+				const pixels = new Uint8Array(w * h * 4);
+				v.renderer.readRenderTargetPixels(target, 0, 0, w, h, pixels);
+
+				// WebGL's origin is bottom-left; canvas 2D is top-left. Flip rows
+				// during the copy so the resulting image isn't upside-down.
+				const canvas = document.createElement('canvas');
+				canvas.width = w;
+				canvas.height = h;
+				const ctx2d = canvas.getContext('2d');
+				const imageData = ctx2d.createImageData(w, h);
+				const data = imageData.data;
+				const rowBytes = w * 4;
+				for (let y = 0; y < h; y++) {
+					const srcOffset = (h - 1 - y) * rowBytes;
+					const dstOffset = y * rowBytes;
+					data.set(pixels.subarray(srcOffset, srcOffset + rowBytes), dstOffset);
+				}
+				ctx2d.putImageData(imageData, 0, 0);
+				return { dataUrl: canvas.toDataURL(mime) };
+			} finally {
+				v.renderer.setRenderTarget(prevTarget);
+				v.renderer.toneMapping = prevToneMapping;
+				cam.aspect = prevAspect;
+				cam.updateProjectionMatrix();
+				target.dispose();
+				v.invalidate?.();
+			}
 		},
 
 		// ── Model swap ────────────────────────────────────────────────────────

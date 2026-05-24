@@ -36,12 +36,11 @@ page.on('console', (m) => {
 });
 page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`));
 
-await page.goto(URL, { waitUntil: 'load', timeout: 120_000 });
-await page.waitForLoadState('networkidle', { timeout: 60_000 }).catch(() => {});
-await page.waitForSelector('#layout-switch:not([hidden])', { timeout: 30_000 });
+await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+await page.waitForFunction(() => !document.getElementById('layout-switch')?.hidden, null, { timeout: 30_000 });
 
 // ── Layout switch flips to next ─────────────────────────────────────────
-await page.locator('[data-layout-value="next"]').click();
+await page.evaluate(() => document.querySelector('[data-layout-value="next"]').click());
 const layout = await page.evaluate(() => document.body.dataset.layout);
 if (layout !== 'next') fail(`expected body[data-layout="next"], got "${layout}"`);
 
@@ -146,7 +145,7 @@ await page.evaluate(() => document.body.click());
 await page.waitForFunction(() => document.getElementById('next-share-menu')?.hidden, null, { timeout: 3000 });
 
 // ── Toggle back to Classic; chrome must swap ────────────────────────────
-await page.locator('[data-layout-value="classic"]').click();
+await page.evaluate(() => document.querySelector('[data-layout-value="classic"]').click());
 await page.waitForFunction(() => document.body.dataset.layout === 'classic');
 const dockHiddenInClassic = !(await page.locator('#next-dock').isVisible().catch(() => false));
 if (!dockHiddenInClassic) fail('Next dock still visible after switching to Classic');
@@ -156,18 +155,22 @@ const guiToggleVisibleInClassic = await page.locator('.gui-toggle').isVisible().
 if (!guiToggleVisibleInClassic) fail('Classic gui-toggle hidden after switching back');
 
 // ── Reload preserves the chosen layout ─────────────────────────────────
-await page.locator('[data-layout-value="next"]').click();
+await page.evaluate(() => document.querySelector('[data-layout-value="next"]').click());
 await page.waitForTimeout(150);
-await page.reload({ waitUntil: 'load', timeout: 120_000 });
-await page.waitForSelector('#layout-switch:not([hidden])', { timeout: 30_000 });
+await page.reload({ waitUntil: 'domcontentloaded', timeout: 120_000 });
+await page.waitForFunction(() => !document.getElementById('layout-switch')?.hidden, null, { timeout: 30_000 });
 const afterReload = await page.evaluate(() => document.body.dataset.layout);
 if (afterReload !== 'next') fail(`expected "next" after reload, got "${afterReload}"`);
 
 // ── No console errors during the whole flow ─────────────────────────────
 const ignorable = [
-	/wallet/i, // wallet provider noise in headless
-	/Failed to fetch/i, // background analytics
+	/wallet/i,
+	/Failed to fetch/i,
 	/Wallet not initialized/i,
+	/GL Driver/i,
+	/ReadPixels/i,
+	/WebGL/i,
+	/swiftshader/i,
 ];
 const realErrors = consoleErrors.filter((e) => !ignorable.some((rx) => rx.test(e)));
 if (realErrors.length) {

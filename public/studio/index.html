@@ -13,7 +13,7 @@
 		<meta name="robots" content="noindex" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
-		<link rel="stylesheet" href="/studio/studio.css?v=2" />
+		<link rel="stylesheet" href="/studio/studio.css?v=3" />
 		<style>
 			/* Critical layout — guarantees the 3-column grid renders even if
 			   studio.css is held by a stale SW cache. */
@@ -95,7 +95,7 @@
 			<section class="studio-col-left" aria-label="Pick avatar and widget type">
 				<div class="panel">
 					<h2 data-tooltip="The 3D model your widget will display. We've pre-loaded a demo agent so you can try the studio right away — sign in to use your own.">
-						1. Pick avatar
+						<span class="step-num">1</span> Pick avatar
 					</h2>
 					<p class="note">To see your avatar here, make it public or unlisted in your <a href="/dashboard/avatars">avatar dashboard</a>. Or browse the <a href="/gallery" target="_blank" rel="noopener">community gallery</a>.</p>
 					<div class="avatar-list" id="avatar-list" aria-busy="true"></div>
@@ -116,7 +116,7 @@
 				</div>
 				<div class="panel">
 					<h2 data-tooltip="Each widget type is a different layout — Turntable for hero banners, Talking Agent for chat, Passport for on-chain identity, etc. Click to switch and watch the preview update.">
-						2. Pick widget type
+						<span class="step-num">2</span> Pick widget type
 					</h2>
 					<div class="type-grid" id="type-grid"></div>
 				</div>
@@ -156,7 +156,7 @@
 
 					<div id="panel-brand" role="tabpanel">
 					<h2 data-tooltip="Style the widget to match your site — colors, environment, captions, and behavior. Changes update the preview live.">
-						3. Brand
+						<span class="step-num">3</span> Brand
 					</h2>
 					<form
 						id="config-form"
@@ -359,6 +359,6 @@
 
 		<div class="toast" id="toast" hidden></div>
 
-		<script type="module" src="/studio/studio.js?v=2"></script>
+		<script type="module" src="/studio/studio.js?v=3"></script>
 	</body>
 </html>
