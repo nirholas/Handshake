@@ -4630,25 +4630,81 @@ async function loadKnowledgeSummary(drawer, w) {
 		const { docs = [] } = await api.listKnowledge(w.id);
 		if (!docs.length) {
 			el.innerHTML = `No knowledge attached. <a href="/studio?edit=${encodeURIComponent(w.id)}">Add some in Studio →</a>`;
-			return;
+		} else {
+			const totalChunks = docs.reduce((s, d) => s + (d.chunk_count || 0), 0);
+			el.innerHTML = `
+				${docs.length} doc${docs.length === 1 ? '' : 's'} · ${formatNum(totalChunks)} chunks
+				<a href="/studio?edit=${encodeURIComponent(w.id)}" style="margin-left:6px">Manage →</a>
+				<ul style="margin:6px 0 0; padding-left:18px; font-size:12px; color:#aaa">
+					${docs
+						.slice(0, 5)
+						.map(
+							(d) =>
+								`<li>${esc(d.title)} <span style="opacity:0.7">(${d.chunk_count || 0} chunks)</span></li>`,
+						)
+						.join('')}
+				</ul>
+			`;
 		}
-		const totalChunks = docs.reduce((s, d) => s + (d.chunk_count || 0), 0);
-		el.innerHTML = `
-			${docs.length} doc${docs.length === 1 ? '' : 's'} · ${formatNum(totalChunks)} chunks
-			<a href="/studio?edit=${encodeURIComponent(w.id)}" style="margin-left:6px">Manage →</a>
-			<ul style="margin:6px 0 0; padding-left:18px; font-size:12px; color:#aaa">
-				${docs
-					.slice(0, 5)
-					.map(
-						(d) =>
-							`<li>${esc(d.title)} <span style="opacity:0.7">(${d.chunk_count || 0} chunks)</span></li>`,
-					)
-					.join('')}
-			</ul>
-		`;
 	} catch (err) {
 		el.textContent = `Couldn't load knowledge: ${err.message}`;
 	}
+
+	wireKnowledgeTester(drawer, w);
+}
+
+function wireKnowledgeTester(drawer, w) {
+	const input = drawer.querySelector('#knowledge-test-q');
+	const btn = drawer.querySelector('#knowledge-test-go');
+	const out = drawer.querySelector('#knowledge-test-results');
+	if (!input || !btn || !out) return;
+
+	let busy = false;
+	const run = async () => {
+		const q = (input.value || '').trim();
+		if (!q || busy) return;
+		busy = true;
+		btn.disabled = true;
+		out.innerHTML = '<span class="muted">Embedding query and scoring chunks…</span>';
+		try {
+			const data = await api.testKnowledge(w.id, q);
+			if (!data.results?.length) {
+				out.innerHTML = `<span class="muted">No matching chunks (searched ${data.chunks_searched} chunk${data.chunks_searched === 1 ? '' : 's'}). Add more knowledge or refine the source.</span>`;
+				return;
+			}
+			out.innerHTML = `
+				<div class="muted" style="margin-bottom:6px">Top ${data.results.length} of ${data.chunks_searched} chunks:</div>
+				<div style="display:flex; flex-direction:column; gap:6px">
+					${data.results
+						.map(
+							(r) => `
+						<div style="padding:8px 10px; background:#0f0f17; border:1px solid var(--border); border-radius:6px">
+							<div style="display:flex; justify-content:space-between; gap:8px; align-items:baseline">
+								<strong style="font-size:12px; color:#ddd; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0">${esc(r.title || '(untitled)')}</strong>
+								<span class="muted" style="font-size:11px; white-space:nowrap">score ${r.score.toFixed(3)}</span>
+							</div>
+							<div style="font-size:12px; color:#bbb; margin-top:4px; white-space:pre-wrap; word-break:break-word">${esc(r.excerpt)}</div>
+							${r.source_url ? `<div class="muted" style="font-size:11px; margin-top:4px"><a href="${attr(r.source_url)}" target="_blank" rel="noopener">${esc(r.source_url)}</a></div>` : ''}
+						</div>
+					`,
+						)
+						.join('')}
+				</div>
+			`;
+		} catch (err) {
+			out.innerHTML = `<span class="err">Error: ${esc(err.message || 'failed')}</span>`;
+		} finally {
+			busy = false;
+			btn.disabled = false;
+		}
+	};
+	btn.addEventListener('click', run);
+	input.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			run();
+		}
+	});
 }
 
 function renderStatsPanel(w, stats) {

@@ -798,20 +798,615 @@ body.app-next-body.is-dragover::before {
 	to { transform: rotate(360deg); }
 }
 
+/* ── Camera presets ────────────────────────────────────────────────────── */
+
+.nxt-preset-cluster {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 3px;
+	background: rgba(14, 15, 22, 0.5);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: var(--nxt-radius-pill);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+}
+
+.nxt-preset {
+	background: transparent;
+	border: 0;
+	color: var(--nxt-ink-fade);
+	font: inherit;
+	font-size: 12px;
+	font-weight: 500;
+	padding: 5px 11px;
+	border-radius: var(--nxt-radius-pill);
+	cursor: pointer;
+	transition: color 0.15s, background 0.15s;
+}
+
+.nxt-preset:hover {
+	color: var(--nxt-ink);
+}
+
+.nxt-preset.is-active {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Icon buttons (fullscreen, share) ──────────────────────────────────── */
+
+.nxt-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	background: rgba(14, 15, 22, 0.5);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: 50%;
+	color: var(--nxt-ink-dim);
+	cursor: pointer;
+	transition: color 0.15s, background 0.15s, border-color 0.15s;
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+}
+
+.nxt-icon-btn:hover {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.06);
+	border-color: var(--nxt-stroke-strong);
+}
+
+/* ── Chat dock ─────────────────────────────────────────────────────────── */
+
+.nxt-chat-dock {
+	position: fixed;
+	left: 50%;
+	bottom: 76px;
+	transform: translateX(-50%);
+	width: min(640px, calc(100vw - 32px));
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 8px;
+	z-index: 21;
+	animation: nxt-rise-bar 0.5s 0.2s both;
+}
+
+.nxt-chat-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	justify-content: center;
+}
+
+.nxt-chat-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: rgba(14, 15, 22, 0.7);
+	border: 1px solid var(--nxt-stroke);
+	color: var(--nxt-ink-dim);
+	font: inherit;
+	font-size: 12.5px;
+	padding: 6px 12px;
+	border-radius: var(--nxt-radius-pill);
+	cursor: pointer;
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.nxt-chat-chip:hover {
+	color: var(--nxt-ink);
+	border-color: rgba(154, 124, 255, 0.35);
+	background: rgba(154, 124, 255, 0.10);
+	transform: translateY(-1px);
+}
+
+.nxt-chat-chip__icon {
+	font-size: 14px;
+	line-height: 1;
+}
+
+.nxt-chat-input-wrap {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 6px 6px 14px;
+	background: var(--nxt-glass-strong);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: 14px;
+	backdrop-filter: blur(20px) saturate(140%);
+	-webkit-backdrop-filter: blur(20px) saturate(140%);
+	box-shadow: 0 28px 64px rgba(0, 0, 0, 0.55);
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.nxt-chat-input-wrap:focus-within {
+	border-color: rgba(154, 124, 255, 0.5);
+	box-shadow: 0 0 0 3px rgba(154, 124, 255, 0.15), 0 28px 64px rgba(0, 0, 0, 0.55);
+}
+
+.nxt-chat-input-icon {
+	flex: none;
+	color: var(--nxt-ink-fade);
+}
+
+.nxt-chat-input {
+	flex: 1;
+	min-width: 0;
+	background: transparent;
+	border: 0;
+	color: var(--nxt-ink);
+	font: inherit;
+	font-size: 14px;
+	padding: 8px 4px;
+	outline: none;
+}
+
+.nxt-chat-input::placeholder {
+	color: var(--nxt-ink-fade);
+}
+
+.nxt-chat-mic,
+.nxt-chat-send {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: 0;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+
+.nxt-chat-mic {
+	background: rgba(255, 255, 255, 0.05);
+	color: var(--nxt-ink-dim);
+}
+
+.nxt-chat-mic:hover,
+.nxt-chat-mic.is-active {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.nxt-chat-mic.is-recording {
+	background: #ff5470;
+	color: white;
+	animation: nxt-mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes nxt-mic-pulse {
+	0%, 100% { box-shadow: 0 0 0 0 rgba(255, 84, 112, 0.6); }
+	50% { box-shadow: 0 0 0 8px rgba(255, 84, 112, 0); }
+}
+
+.nxt-chat-send {
+	background: linear-gradient(135deg, var(--nxt-accent) 0%, #7a5cff 100%);
+	color: white;
+	box-shadow: 0 4px 12px rgba(154, 124, 255, 0.4);
+}
+
+.nxt-chat-send:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 16px rgba(154, 124, 255, 0.5);
+}
+
+.nxt-chat-send:disabled,
+.nxt-chat-mic:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+	transform: none;
+}
+
+/* ── Secondary action bar — smaller, below the chat dock ───────────────── */
+
+.nxt-action-bar--secondary {
+	bottom: 18px;
+	padding: 4px;
+	box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+.nxt-action-bar--secondary .nxt-action {
+	padding: 7px 12px;
+	font-size: 12.5px;
+}
+
+/* ── Agent reply bubble (above the avatar) ─────────────────────────────── */
+
+.nxt-agent-bubble {
+	position: fixed;
+	left: 50%;
+	top: 18%;
+	transform: translateX(-50%);
+	max-width: min(540px, calc(100vw - 40px));
+	z-index: 19;
+	animation: nxt-bubble-in 0.32s ease-out both;
+}
+
+.nxt-agent-bubble[hidden] { display: none; }
+
+@keyframes nxt-bubble-in {
+	from { opacity: 0; transform: translate(-50%, -8px); }
+	to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.nxt-agent-bubble__inner {
+	display: inline-flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 12px 18px;
+	background: var(--nxt-glass-strong);
+	border: 1px solid rgba(154, 124, 255, 0.25);
+	border-radius: 18px;
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.nxt-agent-bubble__dot {
+	flex: none;
+	width: 8px;
+	height: 8px;
+	margin-top: 6px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, var(--nxt-accent), #6dc1ff);
+	box-shadow: 0 0 10px var(--nxt-accent);
+}
+
+.nxt-agent-bubble__text {
+	font-size: 14px;
+	line-height: 1.45;
+	color: var(--nxt-ink);
+}
+
+/* ── Share popover ────────────────────────────────────────────────────── */
+
+.nxt-share-popover {
+	position: fixed;
+	top: calc(var(--nxt-header-h) + 12px);
+	right: 18px;
+	width: min(380px, calc(100vw - 32px));
+	background: var(--nxt-glass-strong);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: 16px;
+	backdrop-filter: blur(20px) saturate(140%);
+	-webkit-backdrop-filter: blur(20px) saturate(140%);
+	box-shadow: 0 28px 60px rgba(0, 0, 0, 0.6);
+	z-index: 35;
+	overflow: hidden;
+	animation: nxt-share-in 0.18s ease-out both;
+}
+
+.nxt-share-popover[hidden] { display: none; }
+
+@keyframes nxt-share-in {
+	from { opacity: 0; transform: translateY(-6px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.nxt-share-popover__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 16px 6px;
+}
+
+.nxt-share-popover__head h2 {
+	margin: 0;
+	font-size: 13.5px;
+	font-weight: 600;
+	color: var(--nxt-ink);
+}
+
+.nxt-share-close {
+	background: transparent;
+	border: 0;
+	color: var(--nxt-ink-fade);
+	font-size: 20px;
+	line-height: 1;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	cursor: pointer;
+}
+
+.nxt-share-close:hover {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.06);
+}
+
+.nxt-share-popover__body {
+	padding: 6px 16px 14px;
+}
+
+.nxt-share-row {
+	display: block;
+	margin-bottom: 12px;
+}
+
+.nxt-share-label {
+	display: block;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--nxt-ink-fade);
+	margin-bottom: 6px;
+}
+
+.nxt-share-copy {
+	display: flex;
+	gap: 6px;
+}
+
+.nxt-share-copy--block {
+	flex-direction: column;
+}
+
+.nxt-share-copy input,
+.nxt-share-copy textarea {
+	flex: 1;
+	min-width: 0;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: 8px;
+	color: var(--nxt-ink);
+	font: 12px 'SF Mono', ui-monospace, monospace;
+	padding: 8px 10px;
+	outline: none;
+	resize: vertical;
+}
+
+.nxt-share-copy input:focus,
+.nxt-share-copy textarea:focus {
+	border-color: var(--nxt-accent);
+}
+
+.nxt-share-copy button {
+	flex: none;
+	background: linear-gradient(135deg, var(--nxt-accent) 0%, #7a5cff 100%);
+	color: white;
+	border: 0;
+	border-radius: 8px;
+	padding: 8px 14px;
+	font: inherit;
+	font-size: 12.5px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.nxt-share-copy--block button {
+	align-self: flex-end;
+	padding: 6px 14px;
+	margin-top: 6px;
+}
+
+.nxt-share-copy button:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 10px rgba(154, 124, 255, 0.4);
+}
+
+.nxt-share-copy button.is-copied {
+	background: linear-gradient(135deg, #4ade80, #22c55e);
+}
+
+.nxt-share-hint {
+	margin: 4px 0 0;
+	font-size: 11.5px;
+	color: var(--nxt-ink-fade);
+	line-height: 1.5;
+}
+
+/* ── Keyboard help ─────────────────────────────────────────────────────── */
+
+.nxt-help {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: min(420px, calc(100vw - 32px));
+	background: var(--nxt-glass-strong);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: 16px;
+	backdrop-filter: blur(22px) saturate(140%);
+	-webkit-backdrop-filter: blur(22px) saturate(140%);
+	box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+	z-index: 60;
+	padding: 18px 18px 14px;
+	animation: nxt-help-in 0.18s ease-out both;
+}
+
+.nxt-help[hidden] { display: none; }
+
+@keyframes nxt-help-in {
+	from { opacity: 0; transform: translate(-50%, -46%); }
+	to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.nxt-help__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+
+.nxt-help__head h2 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.nxt-help__close {
+	background: transparent;
+	border: 0;
+	color: var(--nxt-ink-fade);
+	font-size: 20px;
+	line-height: 1;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	cursor: pointer;
+}
+
+.nxt-help__close:hover {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.06);
+}
+
+.nxt-help__grid {
+	display: grid;
+	grid-template-columns: 100px 1fr;
+	gap: 8px 12px;
+	margin: 0;
+}
+
+.nxt-help__grid dt {
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	color: var(--nxt-ink-dim);
+}
+
+.nxt-help__grid dt kbd {
+	font: 11px 'SF Mono', ui-monospace, monospace;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: 5px;
+	padding: 2px 6px;
+	color: var(--nxt-ink);
+}
+
+.nxt-help__grid dd {
+	margin: 0;
+	font-size: 12.5px;
+	color: var(--nxt-ink);
+	align-self: center;
+}
+
+/* ── Toast ─────────────────────────────────────────────────────────────── */
+
+.nxt-toast {
+	position: fixed;
+	top: calc(var(--nxt-header-h) + 12px);
+	left: 50%;
+	transform: translateX(-50%);
+	max-width: calc(100vw - 32px);
+	padding: 9px 14px;
+	background: var(--nxt-glass-strong);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: var(--nxt-radius-pill);
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+	color: var(--nxt-ink);
+	font-size: 13px;
+	z-index: 70;
+	animation: nxt-toast-in 0.22s ease-out both;
+}
+
+.nxt-toast[hidden] { display: none; }
+
+.nxt-toast a {
+	color: var(--nxt-accent);
+	margin-left: 6px;
+	text-decoration: none;
+	font-weight: 500;
+}
+
+.nxt-toast a:hover { text-decoration: underline; }
+
+@keyframes nxt-toast-in {
+	from { opacity: 0; transform: translate(-50%, -6px); }
+	to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ── Auto-hide chrome ──────────────────────────────────────────────────── */
+
+body.app-next-body.nxt-chrome-hidden .nxt-header,
+body.app-next-body.nxt-chrome-hidden .nxt-action-bar,
+body.app-next-body.nxt-chrome-hidden .nxt-chat-dock,
+body.app-next-body.nxt-chrome-hidden .nxt-first-hint {
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(8px);
+}
+
+.nxt-header,
+.nxt-action-bar,
+.nxt-chat-dock,
+.nxt-first-hint {
+	transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* When the chat input is focused or NichAgent panel is open, force chrome to stay visible. */
+body.app-next-body.nxt-chat-active .nxt-header,
+body.app-next-body.nxt-chat-active .nxt-action-bar,
+body.app-next-body.nxt-chat-active .nxt-chat-dock {
+	opacity: 1;
+	pointer-events: auto;
+	transform: none;
+}
+
+/* The chat dock's chip row is translated with the dock; keep their transforms in sync */
+.nxt-chat-dock .nxt-chat-chips {
+	transition: opacity 0.25s ease;
+}
+
+body.app-next-body.nxt-chrome-hidden .nxt-chat-dock .nxt-chat-chips {
+	opacity: 0;
+}
+
+/* ── NichAgent panel positioning override ─────────────────────────────── */
+
+/* When we trigger the panel from our chat input, position it above the input
+   so the conversation reads top-down with the input at the bottom (chat-like). */
+body.app-next-body .nich-panel {
+	position: fixed;
+	left: 50%;
+	bottom: 168px;
+	right: auto;
+	top: auto;
+	transform: translateX(-50%);
+	width: min(640px, calc(100vw - 32px));
+	max-height: min(60vh, 540px);
+	z-index: 24;
+}
+
 /* ── Mobile ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+	.nxt-preset-cluster {
+		display: none; /* presets hidden on mobile to free up header space */
+	}
+}
 
 @media (max-width: 640px) {
 	.nxt-brand-tag { display: none; }
 	.nxt-more { padding: 7px 8px; }
 	.nxt-more-menu { right: 12px; }
 	.nxt-action kbd { display: none; }
-	.nxt-action { padding: 9px 11px; font-size: 12.5px; }
+	.nxt-action { padding: 7px 10px; font-size: 12px; }
 	.nxt-action span { display: none; }
 	.nxt-action--primary span { display: inline; }
-	.nxt-try-pill { bottom: 86px; max-width: calc(100vw - 24px); }
-	.nxt-try-pill__label { display: none; }
-	.nxt-anim-sheet { bottom: 80px; max-height: 50vh; }
+	.nxt-chat-dock { bottom: 64px; }
+	.nxt-action-bar--secondary { bottom: 12px; }
+	.nxt-chat-chips { max-width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+	.nxt-chat-chip { white-space: nowrap; flex: none; }
+	.nxt-anim-sheet { bottom: 130px; max-height: 50vh; }
 	.nxt-first-hint { font-size: 11.5px; padding: 6px 6px 6px 12px; max-width: calc(100vw - 24px); }
+	.nxt-icon-btn { width: 28px; height: 28px; }
+	.nxt-help__grid { grid-template-columns: 80px 1fr; font-size: 12px; }
+	body.app-next-body .nich-panel {
+		bottom: 142px;
+		max-height: 50vh;
+	}
 }
 
 /* Hide the production dat.gui by default — controls live inside the viewer

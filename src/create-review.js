@@ -166,32 +166,31 @@ function wireFeatureTiles() {
 }
 
 function handleFeatureClick(feature) {
+	const name = $('#f-name').value.trim() || staged?.name || '';
+	const ctx = { name };
 	switch (feature) {
 		case 'body':
 			toggleEmoteStrip({ scene: viewerScene, stripEl: $('#emote-strip') });
 			return;
 		case 'voice':
 			if (!objectUrl) return;
-			openVoicePreview({ glbUrl: objectUrl, name: $('#f-name').value });
+			openVoicePreview({ glbUrl: objectUrl, name });
 			return;
 		case 'identity':
-			openIdentityModal();
+			openIdentityModal(ctx);
 			return;
 		case 'paid':
-			openPaidSkillsModal();
+			openPaidSkillsModal(ctx);
 			return;
 		case 'embed':
-			openEmbedModal();
+			openEmbedModal(ctx);
 			return;
 		case 'reputation':
-			openReputationModal();
+			openReputationModal(ctx);
 			return;
 		case 'download':
 			if (!staged?.blob) return;
-			openDownloadModal({
-				blob: staged.blob,
-				name: $('#f-name').value.trim() || staged.name,
-			});
+			openDownloadModal({ blob: staged.blob, name });
 			return;
 	}
 }

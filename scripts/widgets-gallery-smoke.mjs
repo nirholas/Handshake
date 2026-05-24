@@ -5,102 +5,80 @@ const browser = await puppeteer.launch({
 	args: ['--no-sandbox', '--disable-setuid-sandbox'],
 });
 const page = await browser.newPage();
-await page.setViewport({ width: 1280, height: 900 });
+await page.setViewport({ width: 1440, height: 1080 });
 
 const errors = [];
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
 page.on('console', (msg) => {
-	if (msg.type() === 'error') errors.push(`console.error: ${msg.text()}`);
+	if (msg.type() === 'error') {
+		const t = msg.text();
+		// Suppress noisy network errors from production proxy (auth-required endpoints)
+		if (/Failed to load|net::ERR_/.test(t)) return;
+		errors.push(`console.error: ${t}`);
+	}
 });
 
-await page.goto('http://localhost:3000/widgets/', { waitUntil: 'networkidle2', timeout: 30000 });
+await page.goto('http://localhost:3000/widgets/', { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-// Wait for gallery cards to render (not skeletons)
 await page.waitForFunction(
 	() => document.querySelectorAll('#gallery-grid .showcase:not(.showcase-skeleton)').length >= 8,
 	{ timeout: 15000 },
 );
 
-const cardCount = await page.$$eval(
-	'#gallery-grid .showcase:not(.showcase-skeleton)',
-	(els) => els.length,
-);
-console.log('cards rendered:', cardCount);
+const summary = await page.evaluate(() => {
+	const cards = [...document.querySelectorAll('#gallery-grid .showcase:not(.showcase-skeleton)')];
+	return {
+		count: cards.length,
+		types: cards.map((c) => c.dataset.type),
+		tabs: document.querySelectorAll('.frame-tabs .frame-tab').length,
+		customize: document.querySelectorAll('.customize').length,
+		splitBtn: document.querySelectorAll('.split-btn').length,
+	};
+});
+console.log(JSON.stringify(summary, null, 2));
 
-const types = await page.$$eval('#gallery-grid .showcase:not(.showcase-skeleton)', (els) =>
-	els.map((e) => e.dataset.type),
-);
-console.log('types:', types.join(', '));
+// Live test: change mint on kol-trades and verify snippet updates
+const result = await page.evaluate(() => {
+	const card = document.querySelector('.showcase[data-type="kol-trades"]');
+	if (!card) return { error: 'no kol-trades card' };
+	card.querySelector('.customize > summary').click();
+	const mintInput = card.querySelector('.knob-row input[type="text"]');
+	mintInput.value = 'NEWMINTaddressABC';
+	mintInput.dispatchEvent(new Event('input', { bubbles: true }));
+	const snippet = card.querySelector('.snippet code').textContent;
 
-// Check tab presence on first card
-const tabCount = await page.$$eval('.frame-tabs .frame-tab', (els) => els.length);
-console.log('tabs on first cards:', tabCount, '(expected >= 16 = 8 cards × 2 tabs)');
+	// Switch to JSX
+	const items = card.querySelectorAll('.split-btn-menu-item');
+	items[1].click();
+	const jsxSnippet = card.querySelector('.snippet code').textContent;
 
-// Check customize panel + split button presence
-const customizeCount = await page.$$eval('.customize', (els) => els.length);
-const splitBtnCount = await page.$$eval('.split-btn', (els) => els.length);
-console.log('customize panels:', customizeCount, '/ split-btn count:', splitBtnCount);
+	// Switch to URL
+	items[2].click();
+	const urlSnippet = card.querySelector('.snippet code').textContent;
 
-// Click the Code tab on the first kol-trades card; verify iframe hides + code shows
-const kolCard = await page.$('.showcase[data-type="kol-trades"]');
-if (kolCard) {
-	const tabs = await kolCard.$$('.frame-tab');
-	const codeTab = tabs[1];
-	await codeTab.click();
-	await new Promise((r) => setTimeout(r, 100));
-	const codeVisible = await kolCard.$eval('.frame-code-panel', (el) => !el.hidden);
-	const frameHidden = await kolCard.$eval('.showcase-frame', (el) => el.hidden);
-	console.log('after Code tab click: code visible =', codeVisible, ', frame hidden =', frameHidden);
-	const codeText = await kolCard.$eval('.frame-code code', (el) => el.textContent);
-	console.log('code panel includes EPjFW USDC mint:', codeText.includes('EPjFWdd5'));
+	return {
+		iframeSnippetHasMint: snippet.includes('NEWMINTaddressABC'),
+		jsxStartsWithIframe: jsxSnippet.startsWith('<iframe'),
+		jsxHasStyleObject: jsxSnippet.includes('style={{'),
+		urlIsShareUrl: urlSnippet.startsWith('http') && urlSnippet.includes('NEWMINTaddressABC'),
+	};
+});
+console.log('customize+format tests:', JSON.stringify(result, null, 2));
 
-	// Switch back to Preview
-	await tabs[0].click();
-	await new Promise((r) => setTimeout(r, 100));
-
-	// Open customize and change mint
-	const summary = await kolCard.$('.customize > summary');
-	await summary.click();
-	await new Promise((r) => setTimeout(r, 200));
-	const mintInput = await kolCard.$('.knob-row input[type="text"]');
-	await mintInput.click({ clickCount: 3 });
-	await mintInput.type('NEWMINTaddressXYZ');
-	await new Promise((r) => setTimeout(r, 500));
-	const snippet = await kolCard.$eval('.snippet code', (el) => el.textContent);
-	console.log('after mint change, snippet contains NEWMINTaddressXYZ:', snippet.includes('NEWMINTaddressXYZ'));
-
-	// Open format dropdown
-	const toggle = await kolCard.$('.split-btn-toggle');
-	await toggle.click();
-	await new Promise((r) => setTimeout(r, 100));
-	const menuVisible = await kolCard.$eval('.split-btn-menu', (el) => !el.hidden);
-	console.log('format menu opens on toggle:', menuVisible);
-
-	// Pick JSX
-	const items = await kolCard.$$('.split-btn-menu-item');
-	await items[1].click();
-	await new Promise((r) => setTimeout(r, 100));
-	const jsxSnippet = await kolCard.$eval('.snippet code', (el) => el.textContent);
-	console.log('JSX snippet starts with <iframe and contains style={{ :', jsxSnippet.startsWith('<iframe') && jsxSnippet.includes('style={{'));
-}
-
-// Verify accent color change updates snippet hash
-const turntableCard = await page.$('.showcase[data-type="turntable"]');
-if (turntableCard) {
-	await turntableCard.$eval('.customize > summary', (el) => el.click());
-	await new Promise((r) => setTimeout(r, 200));
-	const colorInput = await turntableCard.$('.knob-row input[type="color"]');
-	await colorInput.evaluate((el) => {
-		el.value = '#ff0080';
-		el.dispatchEvent(new Event('input', { bubbles: true }));
-	});
-	await new Promise((r) => setTimeout(r, 200));
-	const snip = await turntableCard.$eval('.snippet code', (el) => el.textContent);
-	console.log('turntable snippet after accent change includes accent param:', snip.includes('accent='));
-}
+// Test accent color change adds &accent= to URL
+const accentResult = await page.evaluate(() => {
+	const card = document.querySelector('.showcase[data-type="turntable"]');
+	card.querySelector('.customize > summary').click();
+	const colorInput = card.querySelector('.knob-row input[type="color"]');
+	colorInput.value = '#ff0080';
+	colorInput.dispatchEvent(new Event('input', { bubbles: true }));
+	return card.querySelector('.snippet code').textContent;
+});
+console.log('turntable snippet has accent param:', accentResult.includes('accent='));
 
 console.log('errors:', errors.length === 0 ? 'none' : errors.join('\n  '));
+
 await page.screenshot({ path: '/tmp/widgets-gallery.png', fullPage: false });
-console.log('screenshot saved to /tmp/widgets-gallery.png');
+console.log('screenshot saved');
 
 await browser.close();

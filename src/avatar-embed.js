@@ -351,6 +351,201 @@ async function main() {
 		headBone.rotation.x = headRest.x + p;
 	};
 
+	// ── Emote hotkey panel ─────────────────────────────────────────────────
+	// Numeric 1-9 + 0 trigger named emotes (Veadotube quick-action pattern).
+	// Each hotkey blends a set of canonical ARKit-52 morphs, holds for the
+	// configured duration, then releases. Hosts can override the map via the
+	// v1.avatar.hotkeys message.
+	const hotkeys = JSON.parse(JSON.stringify(DEFAULT_HOTKEYS));
+	const activeReleases = new Map(); // key → timeout id, so re-triggering a key resets the hold
+
+	function triggerHotkey(key, options = {}) {
+		const entry = hotkeys[String(key)];
+		if (!entry) return false;
+		// Apply morphs.
+		for (const [name, weight] of Object.entries(entry.morphs || {})) {
+			setMorph(name, Number(weight) || 0);
+		}
+		// Reset any other key's pending release (Stream Deck users mash keys).
+		for (const t of activeReleases.values()) clearTimeout(t);
+		activeReleases.clear();
+
+		// Schedule release at end of hold, unless hold is 0 (latching mode).
+		const hold = Number.isFinite(options.hold) ? options.hold : entry.hold;
+		const slot = document.querySelector(`#emote-panel .slot[data-key="${CSS.escape(String(key))}"]`);
+		if (slot) {
+			document.querySelectorAll('#emote-panel .slot.active').forEach((el) => el.classList.remove('active'));
+			slot.classList.add('active');
+		}
+		if (hold && hold > 0) {
+			const id = setTimeout(() => {
+				for (const name of Object.keys(entry.morphs || {})) setMorph(name, 0);
+				if (slot) slot.classList.remove('active');
+				activeReleases.delete(key);
+			}, hold);
+			activeReleases.set(key, id);
+		}
+		postToParent({ type: 'v1.avatar.hotkey:fired', key: String(key), label: entry.label });
+		broadcast({ type: 'v1.avatar.hotkey:fired', key: String(key), label: entry.label });
+		return true;
+	}
+
+	function renderEmotePanel() {
+		const panel = document.getElementById('emote-panel');
+		if (!panel) return;
+		panel.innerHTML = '';
+		const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+		for (const k of keys) {
+			const entry = hotkeys[k];
+			if (!entry) continue;
+			const slot = document.createElement('div');
+			slot.className = 'slot';
+			slot.dataset.key = k;
+			slot.tabIndex = 0;
+			slot.setAttribute('role', 'button');
+			slot.setAttribute('aria-label', entry.label || `Emote ${k}`);
+			slot.innerHTML = `<span class="k">${k}</span><span class="l">${escapeHtmlSafe(entry.label || '')}</span>`;
+			slot.addEventListener('click', () => triggerHotkey(k));
+			slot.addEventListener('keydown', (ev) => {
+				if (ev.key === 'Enter' || ev.key === ' ') {
+					ev.preventDefault();
+					triggerHotkey(k);
+				}
+			});
+			panel.appendChild(slot);
+		}
+	}
+
+	renderEmotePanel();
+
+	// Hotkey listener — captures 1-9 + 0 globally, plus space to toggle the
+	// panel (VSeeFace ※ pattern), plus h to toggle chrome.
+	window.addEventListener('keydown', (ev) => {
+		// Skip if focus is in a form control — the host page may have its own
+		// inputs (this matters for the in-page control panel below).
+		if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+		if (ev.key >= '0' && ev.key <= '9') {
+			if (triggerHotkey(ev.key)) ev.preventDefault();
+			return;
+		}
+		if (ev.key === ' ' || ev.code === 'Space') {
+			document.body.classList.toggle('panel-open');
+			ev.preventDefault();
+			return;
+		}
+		if (ev.key === 'h' || ev.key === 'H') {
+			document.body.classList.toggle('overlay-mode');
+			return;
+		}
+		if (ev.key === 's' || ev.key === 'S') {
+			document.body.classList.toggle('show-state');
+			return;
+		}
+	});
+
+	// In non-overlay mode the panel is visible by default. In overlay mode
+	// the user opts in via space, matching the OBS Browser Source workflow.
+	if (!overlayMode) document.body.classList.add('panel-open');
+
+	// ── Veadotube-style state machine ──────────────────────────────────────
+	// State = {expression, talking}. Expression is one of the hotkey labels
+	// (neutral by default). Talking flips automatically when mic RMS exceeds
+	// the configured threshold (PNGTuber Plus dual-threshold pattern).
+	const state = {
+		expression: 'neutral',
+		talking: false,
+		micFloor: 0.04,
+		micCeiling: 0.18,
+	};
+	const statePill = document.getElementById('state-pill');
+	const renderState = () => {
+		if (statePill) statePill.textContent = `${state.expression}${state.talking ? ' · talking' : ''}`;
+	};
+	renderState();
+
+	function setState(patch) {
+		Object.assign(state, patch);
+		renderState();
+		postToParent({ type: 'v1.avatar.state', state: { ...state } });
+		broadcast({ type: 'v1.avatar.state', state: { ...state } });
+	}
+
+	// ── Mic-driven talking threshold (PNGTuber pattern) ───────────────────
+	// Opt-in via ?mic=1. Floor and ceiling expressed in 0..1 (max byte 255).
+	// Floor is the noise gate (below = not talking). Ceiling is full open.
+	let micCleanup = null;
+	async function enableMic() {
+		if (micCleanup) return;
+		const ctx = ensureAudio();
+		const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+		const src = ctx.createMediaStreamSource(stream);
+		const analyser = ctx.createAnalyser();
+		analyser.fftSize = 1024;
+		analyser.smoothingTimeConstant = 0.6;
+		src.connect(analyser);
+		const buf = new Uint8Array(analyser.frequencyBinCount);
+		let raf = 0;
+		let stopped = false;
+		const tick = () => {
+			if (stopped) return;
+			analyser.getByteFrequencyData(buf);
+			let sum = 0;
+			for (let i = 0; i < buf.length; i++) sum += buf[i];
+			const avg = sum / buf.length / 255;
+			const talking = avg > state.micFloor;
+			// Drive the mouth proportional to the loud band [floor..ceiling].
+			if (mouthTarget) {
+				const t = Math.max(0, Math.min(1, (avg - state.micFloor) / Math.max(0.0001, state.micCeiling - state.micFloor)));
+				try {
+					mouthTarget.setMouthShape({ open: t * 0.85, wide: 0, round: 0 });
+				} catch {}
+			}
+			if (talking !== state.talking) setState({ talking });
+			raf = requestAnimationFrame(tick);
+		};
+		raf = requestAnimationFrame(tick);
+		micCleanup = () => {
+			stopped = true;
+			if (raf) cancelAnimationFrame(raf);
+			for (const t of stream.getTracks()) t.stop();
+			micCleanup = null;
+			if (state.talking) setState({ talking: false });
+			if (mouthTarget) {
+				try { mouthTarget.setMouthShape({ open: 0, wide: 0, round: 0 }); } catch {}
+			}
+		};
+	}
+	function disableMic() {
+		if (micCleanup) micCleanup();
+	}
+	if (params.get('mic') === '1') {
+		enableMic().catch((err) =>
+			console.warn('[avatar-embed] mic auto-start failed', err?.message),
+		);
+	}
+	if (params.get('state') === '1') document.body.classList.add('show-state');
+
+	// ── BroadcastChannel — same-origin control surface ─────────────────────
+	// Lets a sibling tab/window (overlay-control.html) drive this embed
+	// without depending on iframe parent semantics. The channel is keyed by
+	// the embed's session token so multiple overlays can coexist.
+	const channelKey = params.get('channel') || `three-ws-overlay:${resolved.id || resolved.handle || 'default'}`;
+	let bc = null;
+	try {
+		if (typeof BroadcastChannel !== 'undefined') {
+			bc = new BroadcastChannel(channelKey);
+			bc.onmessage = (ev) => handleControl(ev.data, { source: 'broadcast' });
+			// Announce presence so an already-open control panel can light up.
+			bc.postMessage({ type: 'v1.avatar.online', channel: channelKey, name: resolved.name, handle: resolved.handle, id: resolved.id });
+		}
+	} catch (err) {
+		console.warn('[avatar-embed] BroadcastChannel unavailable', err?.message);
+	}
+	function broadcast(msg) {
+		if (!bc) return;
+		try { bc.postMessage(msg); } catch {}
+	}
+
 	// ── postMessage bridge ─────────────────────────────────────────────────
 	let parentOrigin = (() => {
 		try {

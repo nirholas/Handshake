@@ -7,6 +7,7 @@ import { Editor } from './editor/index.js';
 import { SimpleDropzone } from 'simple-dropzone';
 import { Validator } from './validator.js';
 import { Footer } from './components/footer';
+import { startWidgetRpcServer } from './widget/rpc-server.js';
 import { NichAgent } from './nich-agent.js';
 import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
