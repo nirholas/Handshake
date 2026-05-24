@@ -3824,6 +3824,100 @@ function setStatus(text, kind) {
 	el.className = 'payment-status' + (kind ? ' ' + kind : '');
 }
 
+// ── Payment modal chrome helpers ──────────────────────────────────────────
+//
+// The same modal is reused by skill / time-pass / asset flows. These helpers
+// keep title + sub-badge + success card in sync so each flow reads naturally
+// to the user (e.g. "Get 2h access" with an expiry badge, not "Unlock Skill"
+// with no hint that the access is temporary).
+
+function setPaymentTitle(text) {
+	const el = $('payment-modal-title');
+	if (el) el.textContent = text;
+}
+
+function setPaymentLede(text) {
+	const el = $('payment-modal-lede');
+	if (el) el.textContent = text;
+}
+
+function setPaymentFromLabel(text) {
+	const el = $('payment-item-from');
+	if (el) el.textContent = text;
+}
+
+function setPaymentBadge(html, kind) {
+	const el = $('payment-modal-badge');
+	if (!el) return;
+	if (!html) {
+		el.hidden = true;
+		el.innerHTML = '';
+		el.className = 'payment-modal-badge';
+		return;
+	}
+	el.hidden = false;
+	el.className = 'payment-modal-badge' + (kind ? ' ' + kind : '');
+	el.innerHTML = html;
+}
+
+// Swap the modal into "success" mode: persistent confirmation card with a
+// one-click path to use what was just bought. No auto-close — the user
+// decides when to dismiss, and we surface a clear next step (View / Done).
+function renderPaymentSuccess({ title, message, primaryHref, primaryLabel, secondaryLabel = 'Done' }) {
+	const body = $('payment-modal-body');
+	const success = $('payment-modal-success');
+	if (!body || !success) return;
+	body.hidden = true;
+	const primary = primaryHref
+		? `<a class="btn-primary" href="${escapeHtml(primaryHref)}" data-success-primary>${escapeHtml(primaryLabel || 'View')}</a>`
+		: '';
+	success.innerHTML = `
+		<div class="ps-check" aria-hidden="true">✓</div>
+		<h3 class="ps-title">${escapeHtml(title)}</h3>
+		${message ? `<p class="ps-sub">${escapeHtml(message)}</p>` : ''}
+		<div class="ps-actions">
+			${primary}
+			<button type="button" class="btn-secondary" data-success-close>${escapeHtml(secondaryLabel)}</button>
+		</div>`;
+	success.hidden = false;
+	success.querySelector('[data-success-close]')?.addEventListener('click', closePaymentModal);
+}
+
+// Swap the body's status row into a "verify again" card when server-side
+// confirmation times out. The on-chain transfer already landed — only the
+// indexer/poll didn't catch it in 60s. Users must NOT re-pay; they need a
+// way to re-poll. Surface the txid so they can also check Solscan directly.
+function renderPaymentVerifyAgain({ txid, message, retryFn }) {
+	const status = $('payment-status');
+	const confirmBtn = $('payment-confirm-btn');
+	if (confirmBtn) confirmBtn.hidden = true;
+	if (!status) return;
+	const explorer = txid ? `https://solscan.io/tx/${encodeURIComponent(txid)}` : '';
+	status.className = 'payment-status';
+	status.innerHTML = `
+		<div class="payment-modal-retry">
+			<p>${escapeHtml(message || "We couldn't confirm with the server in time. Your payment is safe — re-verify below.")}</p>
+			${explorer ? `<div class="retry-tx">Tx: <a href="${escapeHtml(explorer)}" target="_blank" rel="noopener">${escapeHtml(txid.slice(0, 12))}…</a></div>` : ''}
+			<div class="retry-actions">
+				<button type="button" class="retry-primary" data-retry-verify>Verify again</button>
+				<button type="button" class="retry-secondary" data-retry-close>Close</button>
+			</div>
+		</div>`;
+	const retryBtn = status.querySelector('[data-retry-verify]');
+	retryBtn?.addEventListener('click', async () => {
+		retryBtn.disabled = true;
+		retryBtn.textContent = 'Verifying…';
+		try {
+			await retryFn();
+		} catch (err) {
+			retryBtn.disabled = false;
+			retryBtn.textContent = 'Verify again';
+			setStatus(err.message || 'Verification failed', 'err');
+		}
+	});
+	status.querySelector('[data-retry-close]')?.addEventListener('click', closePaymentModal);
+}
+
 function closePaymentModal() {
 	$('payment-modal-overlay').hidden = true;
 	const qr = $('payment-qr'); if (qr) qr.innerHTML = '';
@@ -3831,7 +3925,17 @@ function closePaymentModal() {
 	if (confirmBtn) {
 		delete confirmBtn.dataset.durationHours;
 		delete confirmBtn.dataset.mode;
+		confirmBtn.hidden = false;
+		confirmBtn.disabled = true;
 	}
+	// Reset success/body visibility so the next open() shows the form, not
+	// the last purchase's confirmation card.
+	const body = $('payment-modal-body');
+	const success = $('payment-modal-success');
+	if (body) body.hidden = false;
+	if (success) { success.hidden = true; success.innerHTML = ''; }
+	setPaymentBadge('');
+	setStatus('');
 	pendingAssetPurchase = null;
 }
 
@@ -3858,19 +3962,25 @@ async function openTimePassFlow(agentId, skill, durationHours, btn) {
 
 	// Open the normal purchase modal but with duration set, so the purchase
 	// will create a time-pass row. We pass duration_hours in the body.
+	setPaymentTitle(`Get ${durationHours}h access`);
+	setPaymentLede('You are renting temporary access to this skill:');
+	setPaymentFromLabel('on agent');
+	setPaymentBadge(`<span class="payment-modal-badge-icon" aria-hidden="true">⏱</span><span>Access expires ${durationHours} hour${durationHours === 1 ? '' : 's'} after purchase. Not a permanent unlock.</span>`, 'warn');
 	$('payment-skill-name').textContent = skill;
 	$('payment-agent-name').textContent = detailState.agent.name;
 	const tpAmount = price.time_pass_amount || price.amount;
 	const decimals = Number(price.mint_decimals ?? 6);
 	const human = (Number(tpAmount) / Math.pow(10, decimals)).toFixed(decimals === 6 ? 2 : 4);
-	$('payment-price-display').textContent = `${human} ${shortMintLabel(price.currency_mint)} · ${durationHours}h access`;
+	$('payment-price-display').textContent = `${human} ${shortMintLabel(price.currency_mint)}`;
 	const qr = $('payment-qr'); if (qr) qr.innerHTML = '';
 	setStatus('');
 	$('payment-modal-overlay').hidden = false;
 	updateWalletUI();
 
 	// Store duration in a data attribute so handlePurchase can pick it up.
-	$('payment-confirm-btn').dataset.durationHours = String(durationHours);
+	const confirmBtn = $('payment-confirm-btn');
+	confirmBtn.dataset.durationHours = String(durationHours);
+	confirmBtn.textContent = `Pay & unlock ${durationHours}h access`;
 
 	if (btn) {
 		btn.disabled = false;
@@ -3923,9 +4033,15 @@ async function openPurchaseFlow(agentId, skill) {
 	const decimals = Number(price.mint_decimals ?? 6);
 	const human = (Number(price.amount) / Math.pow(10, decimals)).toFixed(decimals === 6 ? 2 : 4);
 
+	setPaymentTitle('Unlock skill');
+	setPaymentLede('You are purchasing permanent access to this skill:');
+	setPaymentFromLabel('on agent');
+	setPaymentBadge('');
 	$('payment-skill-name').textContent = skill;
 	$('payment-agent-name').textContent = detailState.agent.name;
 	$('payment-price-display').textContent = `${human} ${shortMintLabel(price.currency_mint)}`;
+	const confirmBtn = $('payment-confirm-btn');
+	if (confirmBtn) confirmBtn.textContent = 'Confirm Purchase';
 	const qr = $('payment-qr'); if (qr) qr.innerHTML = '';
 	setStatus('');
 	$('payment-modal-overlay').hidden = false;
@@ -3984,10 +4100,20 @@ function openAssetPurchaseFlow(asset) {
 	pendingAssetPurchase = asset;
 	confirmBtn.dataset.mode = 'asset';
 	confirmBtn.disabled = false;
+	confirmBtn.hidden = false;
 	delete confirmBtn.dataset.durationHours;
 
+	const typeLabel = asset.item_type ? asset.item_type.charAt(0).toUpperCase() + asset.item_type.slice(1) : 'Asset';
+	setPaymentTitle(`Buy ${typeLabel}`);
+	setPaymentLede(`You are buying this ${asset.item_type || 'asset'}:`);
+	setPaymentFromLabel(typeLabel);
+	setPaymentBadge('');
+	confirmBtn.textContent = `Confirm purchase`;
+
 	skillName.textContent = asset.label || 'Asset';
-	if (agentName) agentName.textContent = asset.item_type.charAt(0).toUpperCase() + asset.item_type.slice(1);
+	// For assets the secondary line is just the type ("Avatar"), so suppress
+	// the agent-name slot — there is no agent to attribute the purchase to.
+	if (agentName) agentName.textContent = '';
 
 	const decimals = Number(asset.price?.mint_decimals ?? 6);
 	const human = (Number(asset.price?.amount || 0) / Math.pow(10, decimals)).toFixed(decimals === 6 ? 2 : 4);
@@ -4019,6 +4145,17 @@ async function pollAssetConfirm(reference, windowMs = 60_000) {
 	return false;
 }
 
+// Where to point the post-purchase "View" CTA for each asset type. Owned
+// assets land in the user's dashboard, so the user can use them immediately
+// without going back through the marketplace.
+function assetViewTarget(asset) {
+	const type = asset?.item_type;
+	if (type === 'avatar') return { href: '/dashboard/avatars', label: 'View avatar' };
+	if (type === 'agent') return { href: '/dashboard/agents', label: 'View agent' };
+	if (type === 'plugin') return { href: '/dashboard', label: 'View plugin' };
+	return { href: '/dashboard', label: 'View in dashboard' };
+}
+
 async function handleAssetPurchase() {
 	const confirmBtn = $('payment-confirm-btn');
 	const asset = pendingAssetPurchase;
@@ -4032,8 +4169,13 @@ async function handleAssetPurchase() {
 	try {
 		purchase = await createPendingAssetPurchase(asset.item_type, asset.item_id);
 		if (purchase.already_owned) {
-			setStatus('Already purchased.', 'ok');
-			setTimeout(closePaymentModal, 1200);
+			const target = assetViewTarget(asset);
+			renderPaymentSuccess({
+				title: 'Already owned',
+				message: `You already purchased ${asset.label}.`,
+				primaryHref: target.href,
+				primaryLabel: target.label,
+			});
 			return;
 		}
 	} catch (e) {
@@ -4042,6 +4184,7 @@ async function handleAssetPurchase() {
 		return;
 	}
 
+	let txid;
 	try {
 		setStatus('Building transfer…');
 		const tx = await buildSplTransferWithReference({
@@ -4053,7 +4196,6 @@ async function handleAssetPurchase() {
 		});
 
 		setStatus('Approve in wallet…');
-		let txid;
 		if (typeof connectedWallet.provider.signAndSendTransaction === 'function') {
 			const result = await connectedWallet.provider.signAndSendTransaction(tx);
 			txid = result?.signature ?? result;
@@ -4066,12 +4208,55 @@ async function handleAssetPurchase() {
 
 		setStatus('Verifying with server…');
 		const ok = await pollAssetConfirm(purchase.reference, 60_000);
-		if (!ok) throw new Error('Server could not verify the transaction within 60 seconds.');
+		if (!ok) {
+			renderPaymentVerifyAgain({
+				txid,
+				message: "We couldn't verify the transfer with the server in 60s. The on-chain transaction is safe — re-verify below.",
+				retryFn: async () => {
+					const ok2 = await pollAssetConfirm(purchase.reference, 60_000);
+					if (!ok2) throw new Error('Still not confirmed — wait a few seconds and try again.');
+					const target = assetViewTarget(asset);
+					renderPaymentSuccess({
+						title: `${asset.label} purchased`,
+						message: `${asset.item_type === 'avatar' ? 'Your new avatar' : 'Your purchase'} is in your dashboard.`,
+						primaryHref: target.href,
+						primaryLabel: target.label,
+					});
+				},
+			});
+			return;
+		}
 
-		setStatus(`✓ ${asset.label} purchased.`, 'ok');
-		setTimeout(closePaymentModal, 1500);
+		const target = assetViewTarget(asset);
+		renderPaymentSuccess({
+			title: `${asset.label} purchased`,
+			message: `${asset.item_type === 'avatar' ? 'Your new avatar' : asset.item_type === 'agent' ? 'Your new agent' : 'Your purchase'} is in your dashboard.`,
+			primaryHref: target.href,
+			primaryLabel: target.label,
+		});
 	} catch (e) {
 		console.error('[marketplace] asset purchase failed', e);
+		// Differentiate "tx already sent, server lookup failing" from
+		// "tx never built". If we have a txid, the user already paid and
+		// must NOT be told to retry — surface the verify-again card.
+		if (txid) {
+			renderPaymentVerifyAgain({
+				txid,
+				message: e.message || 'Payment sent but verification failed — re-verify below.',
+				retryFn: async () => {
+					const ok2 = await pollAssetConfirm(purchase.reference, 60_000);
+					if (!ok2) throw new Error('Still not confirmed — wait a few seconds and try again.');
+					const target = assetViewTarget(asset);
+					renderPaymentSuccess({
+						title: `${asset.label} purchased`,
+						message: `${asset.item_type === 'avatar' ? 'Your new avatar' : 'Your purchase'} is in your dashboard.`,
+						primaryHref: target.href,
+						primaryLabel: target.label,
+					});
+				},
+			});
+			return;
+		}
 		setStatus(e.message || 'Purchase failed', 'err');
 		confirmBtn.disabled = false;
 	}
@@ -4095,14 +4280,31 @@ async function handlePurchase() {
 	const skill = $('payment-skill-name').textContent;
 	const durationHours = confirmBtn.dataset.durationHours ? Number(confirmBtn.dataset.durationHours) : null;
 
+	const onUnlocked = async () => {
+		await fetchUserPurchases();
+		loadDetail(agentId);
+		renderPaymentSuccess({
+			title: durationHours ? `${durationHours}h access unlocked` : 'Skill unlocked',
+			message: durationHours
+				? `${skill} is now usable. Access ends ${durationHours} hour${durationHours === 1 ? '' : 's'} from now.`
+				: `${skill} is now part of your library on ${detailState.agent.name}.`,
+			primaryHref: null,
+			secondaryLabel: 'Done',
+		});
+	};
+
 	let purchase;
 	try {
 		purchase = await createPendingPurchase(agentId, skill, durationHours);
 		if (purchase.already_owned) {
-			setStatus('Already purchased. Refreshing…', 'ok');
 			await fetchUserPurchases();
 			loadDetail(agentId);
-			setTimeout(closePaymentModal, 1200);
+			renderPaymentSuccess({
+				title: 'Already unlocked',
+				message: `You already have access to ${skill}.`,
+				primaryHref: null,
+				secondaryLabel: 'Continue',
+			});
 			return;
 		}
 	} catch (e) {
@@ -4111,6 +4313,7 @@ async function handlePurchase() {
 		return;
 	}
 
+	let txid;
 	try {
 		setStatus('Building transfer…');
 		const tx = await buildSplTransferWithReference({
@@ -4122,7 +4325,6 @@ async function handlePurchase() {
 		});
 
 		setStatus('Approve in wallet…');
-		let txid;
 		if (typeof connectedWallet.provider.signAndSendTransaction === 'function') {
 			const result = await connectedWallet.provider.signAndSendTransaction(tx);
 			txid = result?.signature ?? result;
@@ -4135,14 +4337,34 @@ async function handlePurchase() {
 
 		setStatus('Verifying with server…');
 		const ok = await pollConfirm(purchase.reference, 60_000);
-		if (!ok) throw new Error('Server could not verify the transaction within 60 seconds.');
+		if (!ok) {
+			renderPaymentVerifyAgain({
+				txid,
+				message: "Payment is on-chain but the server hasn't seen it yet. Re-verify below.",
+				retryFn: async () => {
+					const ok2 = await pollConfirm(purchase.reference, 60_000);
+					if (!ok2) throw new Error('Still not confirmed — wait a few seconds and try again.');
+					await onUnlocked();
+				},
+			});
+			return;
+		}
 
-		setStatus('✓ Skill unlocked.', 'ok');
-		await fetchUserPurchases();
-		loadDetail(agentId);
-		setTimeout(closePaymentModal, 1500);
+		await onUnlocked();
 	} catch (e) {
 		console.error('[marketplace] purchase failed', e);
+		if (txid) {
+			renderPaymentVerifyAgain({
+				txid,
+				message: e.message || 'Payment sent but verification failed — re-verify below.',
+				retryFn: async () => {
+					const ok2 = await pollConfirm(purchase.reference, 60_000);
+					if (!ok2) throw new Error('Still not confirmed — wait a few seconds and try again.');
+					await onUnlocked();
+				},
+			});
+			return;
+		}
 		setStatus(e.message || 'Purchase failed', 'err');
 		confirmBtn.disabled = false;
 	}
@@ -4159,10 +4381,14 @@ async function startQrPurchase() {
 	try {
 		purchase = await createPendingPurchase(agentId, skill);
 		if (purchase.already_owned) {
-			setStatus('Already purchased.', 'ok');
 			await fetchUserPurchases();
 			loadDetail(agentId);
-			setTimeout(closePaymentModal, 1200);
+			renderPaymentSuccess({
+				title: 'Already unlocked',
+				message: `You already have access to ${skill}.`,
+				primaryHref: null,
+				secondaryLabel: 'Continue',
+			});
 			return;
 		}
 	} catch (e) { setStatus(e.message, 'err'); return; }
@@ -4187,12 +4413,33 @@ async function startQrPurchase() {
 	setStatus('Waiting for payment on your phone…');
 	const ok = await pollConfirm(purchase.reference, 300_000);
 	if (ok) {
-		setStatus('✓ Skill unlocked.', 'ok');
 		await fetchUserPurchases();
 		loadDetail(agentId);
-		setTimeout(closePaymentModal, 1500);
+		renderPaymentSuccess({
+			title: 'Skill unlocked',
+			message: `${skill} is now part of your library on ${detailState.agent.name}.`,
+			primaryHref: null,
+			secondaryLabel: 'Done',
+		});
 	} else {
-		setStatus('No confirmation in 5 minutes; pending purchase will expire automatically.', 'err');
+		// On QR flow we have no txid (buyer paid from their phone — txid is
+		// known to the server only). Offer a verify-again that re-polls.
+		renderPaymentVerifyAgain({
+			txid: null,
+			message: "No confirmation in 5 minutes. If you paid, re-verify below; otherwise the pending purchase will expire automatically.",
+			retryFn: async () => {
+				const ok2 = await pollConfirm(purchase.reference, 60_000);
+				if (!ok2) throw new Error('Still no confirmation — give it another minute.');
+				await fetchUserPurchases();
+				loadDetail(agentId);
+				renderPaymentSuccess({
+					title: 'Skill unlocked',
+					message: `${skill} is now part of your library on ${detailState.agent.name}.`,
+					primaryHref: null,
+					secondaryLabel: 'Done',
+				});
+			},
+		});
 	}
 }
 
