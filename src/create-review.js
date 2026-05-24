@@ -78,12 +78,17 @@ async function renderPreview(record) {
 	$('#tag-size').textContent =
 		record.size > 0 ? `${Math.round(record.size / 1024)} KB` : '— KB';
 
+	// Keep an object URL around for downstream consumers (Voice preview hands
+	// it to talk-mode, which loads via URL). The viewer itself now mounts
+	// directly from the Blob — `loader.parse(buffer)` instead of fetching the
+	// object URL — which sidesteps the "Failed to fetch" race when the page
+	// reloads or unloads mid-mount.
 	objectUrl = URL.createObjectURL(record.blob);
 	const container = $('#mv-container');
 
 	viewerScene = new TalkScene();
 	try {
-		await viewerScene.mount({ container, glbUrl: objectUrl, cameraPreset: 'full' });
+		await viewerScene.mount({ container, glbBlob: record.blob, cameraPreset: 'full' });
 	} catch (err) {
 		console.error('[create-review] failed to mount viewer', err);
 		$('#viewer-loading').innerHTML =
