@@ -145,7 +145,12 @@
 			// module parses — module-level chrome injection and main-mode-only
 			// setup short-circuit when this flag is set.
 			window.__WIDGET_SHELL = true;
-
+		</script>
+		<script type="module">
+			// Static import so Vite rewrites it to the hashed bundle; dynamic script injection at runtime was invisible to the build graph.
+			window.__loadWidgetApp = () => import('/src/app.js');
+		</script>
+		<script>
 			(function () {
 				var qs = new URLSearchParams(location.search);
 				var hash = location.hash || '';
@@ -176,13 +181,7 @@
 					if (window.__WIDGET_BOOTED) return;
 					window.__WIDGET_BOOTED = true;
 					document.body.classList.add('widget-loading');
-					var script = document.createElement('script');
-					script.type = 'module';
-					// Cache-buster only on first-time interaction boot so the
-					// browser re-parses the module if a poster page was warm
-					// from an earlier visit. Auto mode hits the module fresh.
-					script.src = '/src/app.js';
-					document.head.appendChild(script);
+					window.__loadWidgetApp();
 					// Notify the parent that the visitor revealed this widget —
 					// lets a host page track engagement without our analytics.
 					try {

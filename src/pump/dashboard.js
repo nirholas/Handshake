@@ -1,6 +1,3 @@
-// For now, this is a placeholder for the full dashboard implementation.
-// It will fetch data from the new API endpoint and render it.
-
 async function main() {
 	const loadingEl = document.getElementById('loading');
 	const dashboardEl = document.getElementById('dashboard-content');
@@ -20,9 +17,6 @@ async function main() {
 		const data = await resp.json();
 
 		document.getElementById('price-usd').textContent = `$${data.price?.value.toFixed(6) || 'N/A'}`;
-		
-		// Placeholder for market cap - Birdeye price endpoint doesn't include it.
-		// A different endpoint would be needed for a full implementation.
 		document.getElementById('market-cap').textContent = `$${(data.price?.marketCap || 'N/A')}`;
 
 		const historyEl = document.getElementById('trade-history');

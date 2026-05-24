@@ -4,7 +4,9 @@
  * GET /api/widgets/oembed?url=<widget-url>[&format=json|xml]
  *
  * Implements https://oembed.com with type=rich. Accepts canonical widget URLs
- * (https://host/w/<id>) and the legacy SPA hash form (https://host/app#widget=<id>).
+ * Accepted URL forms: /w/<id> (canonical, server-rendered),
+ * /widget#widget=<id> (slim embed shell, canonical client URL), and the
+ * legacy /app#widget=<id> SPA form (still resolved for old embedders).
  * The html payload is a sandboxed iframe so consumers (WordPress, Ghost, Notion,
  * Discord, Slack) can render the widget inline.
  */

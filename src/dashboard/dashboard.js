@@ -58,8 +58,7 @@ export const api = {
 			'GET',
 			`/api/widgets/${encodeURIComponent(id)}/knowledge?test=${encodeURIComponent(query)}`,
 		),
-	transcriptsCsvUrl: (id) =>
-		`/api/widgets/${encodeURIComponent(id)}/transcripts?format=csv`,
+	transcriptsCsvUrl: (id) => `/api/widgets/${encodeURIComponent(id)}/transcripts?format=csv`,
 	createAvatarSession: (id) => j('POST', `/api/avatars/${id}/session`),
 	getAvatarVersions: (id) => j('GET', `/api/avatars/${id}/versions`),
 	patchAgent: (agentId, patch) => j('PUT', `/api/agents/${agentId}`, patch),
@@ -4543,25 +4542,57 @@ async function loadTranscripts(drawer, w) {
 	const detailEl = drawer.querySelector('#transcripts-detail');
 	if (!totalsEl || !listEl || !detailEl) return;
 
-	try {
-		const data = await api.listTranscripts(w.id, { limit: 25 });
-		const t = data.totals || {};
-		totalsEl.textContent = `${formatNum(t.threads || 0)} threads · ${formatNum(t.messages || 0)} messages · ${formatNum(t.unique_visitors || 0)} unique visitors`;
+	const PAGE = 25;
+	let cursor = null;
+	let loading = false;
 
-		const threads = data.threads || [];
-		if (!threads.length) {
-			listEl.innerHTML =
-				'<div class="muted" style="font-size:12px">No conversations yet — visitors will appear here as they chat.</div>';
-			return;
-		}
-
-		listEl.innerHTML = threads.map((t) => renderThreadRow(t)).join('');
+	const appendThreads = (threads) => {
+		const html = threads.map(renderThreadRow).join('');
+		const moreBtn = listEl.querySelector('[data-load-more]');
+		if (moreBtn) moreBtn.remove();
+		listEl.insertAdjacentHTML('beforeend', html);
+		// Re-bind click handlers for any rows that don't yet have one.
 		for (const row of listEl.querySelectorAll('[data-thread]')) {
+			if (row._wired) continue;
+			row._wired = true;
 			row.addEventListener('click', () => openThread(drawer, w, row.dataset.thread));
 		}
-	} catch (err) {
-		listEl.innerHTML = `<div class="err">${esc(err.message || 'Failed to load transcripts')}</div>`;
-	}
+		if (cursor) {
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'btn sec';
+			btn.dataset.loadMore = '1';
+			btn.style.cssText = 'margin-top:6px; font-size:12px';
+			btn.textContent = 'Load older conversations';
+			btn.addEventListener('click', () => loadPage());
+			listEl.appendChild(btn);
+		}
+	};
+
+	const loadPage = async () => {
+		if (loading) return;
+		loading = true;
+		try {
+			const data = await api.listTranscripts(w.id, { limit: PAGE, before: cursor });
+			const t = data.totals || {};
+			totalsEl.textContent = `${formatNum(t.threads || 0)} threads · ${formatNum(t.messages || 0)} messages · ${formatNum(t.unique_visitors || 0)} unique visitors`;
+			cursor = data.next_cursor || null;
+			const threads = data.threads || [];
+			if (!cursor && !listEl.children.length && !threads.length) {
+				listEl.innerHTML =
+					'<div class="muted" style="font-size:12px">No conversations yet — visitors will appear here as they chat.</div>';
+				return;
+			}
+			appendThreads(threads);
+		} catch (err) {
+			listEl.innerHTML = `<div class="err">${esc(err.message || 'Failed to load transcripts')}</div>`;
+		} finally {
+			loading = false;
+		}
+	};
+
+	listEl.innerHTML = '';
+	await loadPage();
 }
 
 function renderThreadRow(t) {

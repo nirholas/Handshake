@@ -511,7 +511,10 @@ class App {
 			// Boot the voice/chat agent with skills and runtime wired in.
 			// Skip in widget-embed mode — each widget type mounts its own UI
 			// (talking-agent uses its own embedded NichAgent; others need no chat).
-			if (!this.options.widget) {
+			// Also skip in any kiosk surface (slim /widget shell, public embed
+			// snippets) so the "Agent" pill doesn't leak across an iframe
+			// boundary that's meant to be branded by the embedder.
+			if (!this.options.widget && !this.options.kiosk && !this._widgetShell) {
 				this._initNichAgent();
 			}
 
@@ -1146,12 +1149,19 @@ class App {
 		}
 		window.VIEWER.widget = widget;
 
-		// Fire-and-forget view beacon for analytics. Skip owner previews
-		// (Studio + dashboard iframes pass &preview=1) so the creator's own
-		// QA cycles don't pollute their stats.
+		// Fire-and-forget view beacon for analytics. Skip three cases:
+		//   • owner previews (Studio + dashboard pass &preview=1) — creator
+		//     QA cycles shouldn't pollute stats
+		//   • script-embed iframes (embed.js passes &embedded=1) — embed.js
+		//     fires its own visibility-triggered beacon, this would double-count
+		//   • the host page already counted (no flag) — direct visits to
+		//     /w/:id or /app#widget=… always fire here
 		try {
 			const qs = new URLSearchParams(location.search);
-			if (qs.get('preview') !== '1') {
+			const hash = new URLSearchParams((location.hash || '#').slice(1));
+			const isPreview = qs.get('preview') === '1' || hash.get('preview') === '1';
+			const fromEmbed = hash.get('embedded') === '1';
+			if (!isPreview && !fromEmbed) {
 				const url = `/api/widgets/${encodeURIComponent(widgetId)}/view`;
 				if (navigator.sendBeacon) {
 					navigator.sendBeacon(url, new Blob([''], { type: 'text/plain' }));
@@ -1187,10 +1197,16 @@ class App {
 			cfg.bg = this.options.overrideBg;
 		}
 		if (this.options.overrideMint) cfg.mint = this.options.overrideMint;
-		if (this.options.overrideKind && ['all', 'claims', 'graduations'].includes(this.options.overrideKind)) {
+		if (
+			this.options.overrideKind &&
+			['all', 'claims', 'graduations'].includes(this.options.overrideKind)
+		) {
 			cfg.kind = this.options.overrideKind;
 		}
-		if (this.options.overrideMinTier && ['', 'notable', 'influencer', 'mega'].includes(this.options.overrideMinTier)) {
+		if (
+			this.options.overrideMinTier &&
+			['', 'notable', 'influencer', 'mega'].includes(this.options.overrideMinTier)
+		) {
 			cfg.minTier = this.options.overrideMinTier;
 		}
 
@@ -1915,7 +1931,9 @@ class App {
 				<div class="viewer-status__label" data-label>${escHtml(label)}</div>
 				<div class="viewer-status__progress" data-progress hidden>
 					<div class="viewer-status__progress-track">
-						<div class="viewer-status__progress-fill" data-progress-fill style="width:0%"></div>
+						<div class="viewer-status__progress-fill" data-progress-fill
+							role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+							style="width:0%"></div>
 					</div>
 					<div class="viewer-status__progress-meta" data-progress-meta></div>
 				</div>
@@ -1939,7 +1957,10 @@ class App {
 		const pct = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
 		const fill = el.querySelector('[data-progress-fill]');
 		const meta = el.querySelector('[data-progress-meta]');
-		if (fill) fill.style.width = pct + '%';
+		if (fill) {
+			fill.style.width = pct + '%';
+			fill.setAttribute('aria-valuenow', String(pct));
+		}
 		if (meta) meta.textContent = `${pct}% · ${_fmtBytes(loaded)} / ${_fmtBytes(total)}`;
 		progressEl.hidden = false;
 	}

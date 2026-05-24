@@ -67,38 +67,47 @@ async function handleList(req, res, auth) {
 	const includePublic = url.searchParams.get('include_public') === 'true';
 	const onlyPublic = !auth;
 
-	const conditions = [];
+	// Build the WHERE with a positional-parameter array. The Neon serverless
+	// client does not interpolate nested `sql`...`` fragments inside another
+	// tagged template — those degrade to a bound parameter and you get
+	// "syntax error at or near $1". Use the same string+params pattern that
+	// searchPublicAvatars() in api/_lib/avatars.js uses.
+	const params = [];
+	const conds = ['deleted_at is null'];
+
 	if (onlyPublic) {
-		conditions.push(sql`visibility = 'public'`);
+		conds.push(`visibility = 'public'`);
 	} else if (includePublic) {
-		conditions.push(sql`(owner_id = ${auth.userId} OR visibility = 'public')`);
+		params.push(auth.userId);
+		conds.push(`(owner_id = $${params.length} or visibility = 'public')`);
 	} else {
-		conditions.push(sql`owner_id = ${auth.userId}`);
+		params.push(auth.userId);
+		conds.push(`owner_id = $${params.length}`);
 	}
 	if (kindFilter && /^[a-z]+$/.test(kindFilter)) {
-		conditions.push(sql`kind = ${kindFilter}`);
+		params.push(kindFilter);
+		conds.push(`kind = $${params.length}`);
 	}
 	if (cursor) {
 		const decoded = decodeCursor(cursor);
-		if (decoded) conditions.push(sql`created_at < ${decoded.createdAt}`);
+		if (decoded) {
+			params.push(decoded.createdAt);
+			conds.push(`created_at < $${params.length}`);
+		}
 	}
+	params.push(limit + 1);
 
-	const whereClause = conditions.reduce(
-		(acc, c, i) => (i === 0 ? sql`where ${c}` : sql`${acc} and ${c}`),
-		sql``,
+	const rows = await sql(
+		`select id, owner_id, slug, name, description, kind, format,
+		        duration_ms, frame_count, tags, visibility,
+		        price_amount, price_currency, play_count,
+		        created_at, updated_at, avatar_id
+		 from mocap_clips
+		 where ${conds.join(' and ')}
+		 order by created_at desc
+		 limit $${params.length}`,
+		params,
 	);
-
-	const rows = await sql`
-		select id, owner_id, slug, name, description, kind, format,
-		       duration_ms, frame_count, tags, visibility,
-		       price_amount, price_currency, play_count,
-		       created_at, updated_at, avatar_id
-		from mocap_clips
-		${whereClause}
-		and deleted_at is null
-		order by created_at desc
-		limit ${limit + 1}
-	`;
 
 	const hasMore = rows.length > limit;
 	const items = (hasMore ? rows.slice(0, limit) : rows).map((row) => ({

@@ -35,7 +35,8 @@ export function openTalkMode({ avatar, systemPromptFn }) {
 	if (activeSession) return activeSession; // single instance — no overlap
 
 	const glbUrl = avatar.model_url || avatar.url;
-	if (!glbUrl) {
+	const glbBlob = avatar.glbBlob || null;
+	if (!glbUrl && !glbBlob) {
 		console.warn('[talk] avatar has no GLB; cannot enter talk mode');
 		return null;
 	}
@@ -76,7 +77,7 @@ export function openTalkMode({ avatar, systemPromptFn }) {
 	let unloading = false;
 
 	scene
-		.mount({ container: stage, glbUrl, cameraPreset: 'half' })
+		.mount({ container: stage, glbUrl: glbBlob ? undefined : glbUrl, glbBlob, cameraPreset: 'half' })
 		.then(async (root) => {
 			scene.attachMouthTarget(mouthTarget);
 			// Log what we found so debugging mismatched rigs in the field is easy.

@@ -232,12 +232,16 @@ export async function toggleEmoteStrip({ scene, stripEl }) {
  * No agent_id means TalkController falls back to edge TTS for voice and the
  * anonymous Groq tier for chat — both work without sign-in.
  */
-export function openVoicePreview({ glbUrl, name }) {
+export function openVoicePreview({ glbBlob, glbUrl, name }) {
 	const previewName = name?.trim() || 'Your new avatar';
 	const previewAvatar = {
 		id: 'preview-' + Date.now(),
 		name: previewName,
-		model_url: glbUrl,
+		// Prefer the in-memory Blob so TalkScene can use loader.parse() directly
+		// (avoids the "Failed to fetch" race if the object URL is invalidated).
+		// Fall back to URL for callers that don't have the Blob handy.
+		glbBlob: glbBlob || null,
+		model_url: glbBlob ? null : glbUrl,
 	};
 	openTalkMode({
 		avatar: previewAvatar,

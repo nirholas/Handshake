@@ -22,7 +22,11 @@
 (function (root) {
 	'use strict';
 
-	var VERSION = '2.0';
+	// The JSON-RPC 2.0 wire-format version. Distinct from the SDK version
+	// exposed publicly as `ThreeWidget.sdkVersion` below — keeping them
+	// separate so we can ship breaking SDK changes without touching the wire.
+	var RPC_VERSION = '2.0';
+	var SDK_VERSION = '1.0.0';
 
 	function originOf(url) {
 		try {
@@ -51,7 +55,7 @@
 		if (event.source !== this.iframe.contentWindow) return;
 		if (this.origin !== '*' && event.origin !== this.origin) return;
 		var msg = event.data;
-		if (!msg || msg.jsonrpc !== VERSION) return;
+		if (!msg || msg.jsonrpc !== RPC_VERSION) return;
 		// Response to one of our requests.
 		if (msg.id != null && this._pending[msg.id]) {
 			var p = this._pending[msg.id];
@@ -80,7 +84,7 @@
 		var id = self._nextId++;
 		return new Promise(function (resolve, reject) {
 			self._pending[id] = { resolve: resolve, reject: reject };
-			var msg = { jsonrpc: VERSION, id: id, method: method, params: params || {} };
+			var msg = { jsonrpc: RPC_VERSION, id: id, method: method, params: params || {} };
 			try {
 				self.iframe.contentWindow.postMessage(msg, self.origin);
 			} catch (e) {
@@ -163,7 +167,13 @@
 		return new ThreeWidgetClient(iframe, opts);
 	}
 
-	var api = { attach: attach, Client: ThreeWidgetClient, VERSION: '1' };
+	var api = {
+		attach: attach,
+		Client: ThreeWidgetClient,
+		sdkVersion: SDK_VERSION,
+		rpcVersion: RPC_VERSION,
+		VERSION: SDK_VERSION,
+	};
 	root.ThreeWidget = api;
 	if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

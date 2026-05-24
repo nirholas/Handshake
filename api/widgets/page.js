@@ -6,7 +6,8 @@
  * Wired to /w/:id via vercel.json. Returns an HTML page with proper Open Graph
  * + Twitter card + oEmbed link tags so social crawlers (Slack, Discord, X,
  * WordPress, Ghost) get a rich preview. Real browsers run the inline script
- * and replace into the SPA viewer at /app#widget=<id>.
+ * and replace into the slim viewer at /widget#widget=<id> (legacy
+ * /app#widget=<id> still works for any embedders that copied the old URL).
  */
 
 import { sql } from '../_lib/db.js';

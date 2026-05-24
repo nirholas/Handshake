@@ -50,12 +50,12 @@ page.on('pageerror', (err) => consoleErrors.push(`pageerror: ${err.message}`));
 async function gotoWithRetry(url, tries = 3) {
 	for (let i = 0; i < tries; i++) {
 		try {
-			await page.goto(url, { waitUntil: 'load', timeout: 15_000 });
+			await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45_000 });
 			return;
 		} catch (err) {
 			if (i === tries - 1) throw err;
 			console.warn(`[verify] goto attempt ${i + 1} failed (${err.message?.split('\n')[0]}); retrying`);
-			await new Promise((r) => setTimeout(r, 1500));
+			await new Promise((r) => setTimeout(r, 2000));
 		}
 	}
 }
@@ -102,14 +102,16 @@ await page.evaluate(async (b64) => {
 consoleErrors.length = 0;
 
 // Reload so create-review.js boots with the staged avatar already in IDB.
-await page.reload({ waitUntil: 'load' });
+// 'networkidle' waits until all Vite module fetches (lazy dep compilation)
+// settle — on a cold dev-server start this can take 30-60s the first time.
+await page.reload({ waitUntil: 'networkidle', timeout: 90_000 });
 
 // Wait for boot() to flip the content card visible — confirms staged read
 // from IndexedDB worked before we wait on the renderer.
 try {
 	await page.waitForFunction(
 		() => !document.getElementById('content')?.hidden,
-		{ timeout: 10_000 },
+		{ timeout: 15_000 },
 	);
 } catch (err) {
 	const dbg = await page.evaluate(() => ({

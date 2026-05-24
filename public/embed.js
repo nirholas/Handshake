@@ -84,7 +84,10 @@
 		// /widget = slim viewer shell. Same engine as /app but without the
 		// marketing nav/footer/auth chrome in the DOM, so the embed iframe
 		// doesn't flash the parent site before the model renders.
-		var hashParts = ['widget=' + encodeURIComponent(widgetId), 'kiosk=true'];
+		// embedded=1 tells the in-iframe runtime that embed.js already fired
+		// the analytics beacon — without it we'd double-count every script-tag
+		// embed (visibility beacon + runtime beacon).
+		var hashParts = ['widget=' + encodeURIComponent(widgetId), 'kiosk=true', 'embedded=1'];
 		if (reveal === 'interaction') hashParts.push('reveal=interaction');
 		if (poster) hashParts.push('poster=' + encodeURIComponent(poster));
 		var src = ORIGIN + '/widget#' + hashParts.join('&');

@@ -11,12 +11,18 @@
 //   - send402: writes a base64 PAYMENT-REQUIRED header that round-trips through
 //     JSON.parse with the same extensions set.
 
-import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect } from 'vitest';
+
+// env.js exposes process.env via getters, so each test's env mutations are
+// picked up immediately by api/_lib/x402-spec.js without needing a module
+// reset. We import the spec module once for the whole file — a fresh import
+// per test would re-walk @coinbase/x402 + @x402/extensions (cold-load > 30s
+// on a CI worker) for no behavioural benefit.
+const specPromise = import('../../api/_lib/x402-spec.js');
 
 const ORIG_ENV = { ...process.env };
 
 beforeEach(() => {
-	vi.resetModules();
 	// Baseline env every test sees; individual tests may toggle CDP credentials.
 	process.env.X402_PAY_TO_SOLANA = 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN';
 	process.env.X402_PAY_TO_BASE = '0x4022de2d36c334e73c7a108805cea11c0564f402';
@@ -37,7 +43,7 @@ afterEach(() => {
 });
 
 async function loadSpec() {
-	return import('../../api/_lib/x402-spec.js');
+	return specPromise;
 }
 
 describe('permit2VariantOf', () => {
@@ -206,7 +212,8 @@ describe('build402Body extensions', () => {
 	});
 
 	it('auto-declares eip2612GasSponsoring + erc20ApprovalGasSponsoring when a Permit2 accept is present', async () => {
-		const { build402Body, EIP2612_EXTENSION_KEY, ERC20_APPROVAL_EXTENSION_KEY } = await loadSpec();
+		const { build402Body, EIP2612_EXTENSION_KEY, ERC20_APPROVAL_EXTENSION_KEY } =
+			await loadSpec();
 		const body = build402Body({
 			resourceUrl: 'https://three.ws/api/x402/foo',
 			accepts: [baseAccept, permit2Accept],

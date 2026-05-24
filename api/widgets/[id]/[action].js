@@ -18,12 +18,7 @@ import { decorate } from '../index.js';
 import { redactPii } from '../../_lib/pii.js';
 import { embed, cosine, embeddingsConfigured } from '../../_lib/embeddings.js';
 import { listTranscripts, getTranscript } from './_transcripts.js';
-import {
-	listKnowledge,
-	ingestKnowledge,
-	deleteKnowledge,
-	testRetrieval,
-} from './_knowledge.js';
+import { listKnowledge, ingestKnowledge, deleteKnowledge, testRetrieval } from './_knowledge.js';
 
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
@@ -354,11 +349,18 @@ async function callAnthropic({
 	tools,
 	allowedSkills,
 }) {
+	// Anthropic prompt caching — mark the system prompt as ephemeral so the
+	// shared header (persona + skills + knowledge block) lands in the 5-minute
+	// prompt cache. Repeat turns inside a single conversation skip re-encoding
+	// it, cutting cost ~90% and TTFT ~80% on the warm path. Caching needs
+	// ≥1024 tokens to qualify on the smaller models, but Anthropic silently
+	// falls back to no-op when the block is too small, so it's free to always
+	// send the marker.
 	const payload = {
 		model: route.model,
 		max_tokens: maxTokens,
 		temperature,
-		system: systemPrompt,
+		system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
 		messages,
 	};
 	if (tools.length) payload.tools = tools;
@@ -982,7 +984,7 @@ async function knowledgeSummaryFor(id) {
 			where widget_id = ${id}
 		`;
 		return {
-			doc_count:   Number(row?.doc_count   || 0),
+			doc_count: Number(row?.doc_count || 0),
 			chunk_count: Number(row?.chunk_count || 0),
 			token_count: Number(row?.token_count || 0),
 		};

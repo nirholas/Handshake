@@ -219,7 +219,12 @@ function buildMethods(app) {
 		},
 		'animation.stop': () => {
 			const v = requireViewer();
-			v.animationManager?.stop?.();
+			// AnimationManager exposes `stopAll()`; the underscore-named `stop`
+			// I previously called doesn't exist (silent no-op). The baked
+			// THREE.AnimationMixer also stops via stopAllAction when present.
+			v.animationManager?.stopAll?.();
+			if (v.mixer && typeof v.mixer.stopAllAction === 'function') v.mixer.stopAllAction();
+			v.invalidate?.();
 			return {};
 		},
 
@@ -241,6 +246,31 @@ function buildMethods(app) {
 			if (!url) throw new Error('url required');
 			await app.view(url, '', new Map());
 			return { url };
+		},
+
+		// Export the currently-loaded scene as a binary GLB, returned as a
+		// base64 string. Parent pages use this to save user-modified avatars,
+		// stream them to a backend, etc. Matches the legacy
+		// `{ action: 'exportGLB' }` bridge envelope so chat clients that still
+		// use it keep working — this is the same code path, just JSON-RPC
+		// shaped.
+		'model.export': async () => {
+			const v = requireViewer();
+			if (!v.content) throw new Error('no model loaded');
+			const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
+			const exporter = new GLTFExporter();
+			const buffer = await new Promise((resolve, reject) => {
+				exporter.parse(
+					v.content,
+					(result) => resolve(result instanceof ArrayBuffer ? result : result.buffer),
+					(err) => reject(new Error(String(err?.message || err))),
+					{ binary: true },
+				);
+			});
+			const bytes = new Uint8Array(buffer);
+			let binary = '';
+			for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+			return { base64: btoa(binary), bytes: bytes.length };
 		},
 
 		// ── Display config ────────────────────────────────────────────────────

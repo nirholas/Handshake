@@ -176,7 +176,7 @@ function wireControls() {
 		const url = `https://three.ws/@${slug}`;
 		try {
 			await navigator.clipboard.writeText(url);
-			copyBtn.textContent = 'Copied';
+			copyBtn.textContent = '✓ Copied';
 			copyBtn.classList.add('is-copied');
 			setTimeout(() => {
 				copyBtn.textContent = 'Copy';
@@ -208,8 +208,8 @@ function handleFeatureClick(feature) {
 			toggleEmoteStrip({ scene: viewerScene, stripEl: $('#emote-strip') });
 			return;
 		case 'voice':
-			if (!objectUrl) return;
-			openVoicePreview({ glbUrl: objectUrl, name });
+			if (!staged?.blob) return;
+			openVoicePreview({ glbBlob: staged.blob, name });
 			return;
 		case 'identity':
 			openIdentityModal(ctx);
@@ -305,6 +305,13 @@ async function onSave({ auto = false } = {}) {
 		const agent = await attachAvatarToAgent(avatar.id, name);
 		updateSaveOverlay('Opening your avatar…', '');
 		await clearGuest();
+		// Capture and upload a thumbnail from the rendered canvas before leaving
+		// so the user's first visit to /app shows a poster rather than a blank
+		// canvas during the GLB stream. Times out after 4 s to never block.
+		await Promise.race([
+			captureAndUploadThumbnail(avatar.id).catch(() => {}),
+			new Promise((r) => setTimeout(r, 4000)),
+		]);
 		releaseObjectUrl();
 		// If the user backgrounded the tab, ping a Notification so they know to
 		// come back. Best-effort: silently no-ops if permission was never granted.
@@ -486,6 +493,46 @@ function humanizeSaveError(err, auto) {
 	}
 	if (auto) return "Save couldn't finish automatically — try the button again.";
 	return 'Save failed. Try again, or refresh the page if it keeps happening.';
+}
+
+// Capture the current TalkScene canvas, resize to 512², and POST to the
+// thumbnail API. Called once after a successful save — we already have the
+// rendered model in memory, so a snapshot here means the user's first visit
+// to /app shows a poster rather than a blank canvas during the GLB stream.
+// Times out after 4 s so a slow upload never blocks the /app redirect.
+async function captureAndUploadThumbnail(avatarId) {
+	const renderer = viewerScene?.renderer;
+	if (!renderer || !avatarId) return;
+
+	const src = renderer.domElement;
+	const size = 512;
+	const out = document.createElement('canvas');
+	out.width = out.height = size;
+	const ctx = out.getContext('2d');
+	if (!ctx) return;
+
+	const ar = src.width / src.height || 1;
+	let dw = size, dh = size;
+	if (ar > 1) dh = Math.round(size / ar);
+	else dw = Math.round(size * ar);
+	ctx.drawImage(src, (size - dw) / 2, (size - dh) / 2, dw, dh);
+
+	const blob = await new Promise((resolve) => out.toBlob(resolve, 'image/png'));
+	if (!blob) return;
+
+	const dataUrl = await new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => resolve(reader.result);
+		reader.onerror = () => reject(reader.error);
+		reader.readAsDataURL(blob);
+	});
+
+	await fetch('/api/avatars/thumbnail', {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ avatar_id: avatarId, png_base64: dataUrl }),
+	});
 }
 
 async function onStartOver() {

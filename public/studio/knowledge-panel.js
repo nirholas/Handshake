@@ -285,7 +285,22 @@ export function mountKnowledgePanel(root, ctx) {
 			body: JSON.stringify(body),
 		});
 		const data = await res.json().catch(() => ({}));
-		if (!res.ok) throw new Error(data.error_description || `${res.status}`);
+		if (!res.ok) {
+			// Surface known error codes as plain English. The raw status is a
+			// last-resort message — fine for unknown failures, useless to a
+			// creator who doesn't read HTTP.
+			const code = data.error;
+			const msg = data.error_description || `Request failed (${res.status})`;
+			if (code === 'embedder_unavailable') {
+				throw new Error(
+					'Knowledge upload needs an OpenAI key configured on the server. Ask the site admin to set OPENAI_API_KEY.',
+				);
+			}
+			if (code === 'too_many_docs') {
+				throw new Error(msg + ' Remove a doc above first.');
+			}
+			throw new Error(msg);
+		}
 		return data.doc;
 	}
 
