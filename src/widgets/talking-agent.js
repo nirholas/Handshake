@@ -25,11 +25,14 @@ import { ACTION_TYPES } from '../agent-protocol.js';
  *   getSceneCtrl: () => (import('../runtime/scene.js').SceneController|null),
  *   protocol?: import('../agent-protocol.js').AgentProtocol,
  *   identity?: import('../agent-identity.js').AgentIdentity,
- * }} ctx
+ *   onMessage?: (turn: { role: 'user'|'assistant', content: string }) => void,
+ * }} ctx  `onMessage` fires once per visitor turn and once per assistant
+ *   reply; app.js uses it to forward `widget:chat:message` to the host page.
  * @returns {Promise<{ destroy: () => void }>}
  */
 export async function mountTalkingAgent(viewer, config, container, ctx) {
 	const { widgetId, getSceneCtrl, protocol = null, identity = null } = ctx || {};
+	const onMessage = typeof ctx?.onMessage === 'function' ? ctx.onMessage : null;
 	const isPreview = !widgetId;
 
 	const history = [];
@@ -61,6 +64,15 @@ export async function mountTalkingAgent(viewer, config, container, ctx) {
 				if (result.reply) {
 					history.push({ role: 'user', content: text });
 					history.push({ role: 'assistant', content: result.reply });
+					// Surface the turn to whoever mounted us. We emit user + reply
+					// together so the host can mirror the conversation in order
+					// without having to listen to keystrokes.
+					try {
+						onMessage?.({ role: 'user', content: text });
+						onMessage?.({ role: 'assistant', content: result.reply });
+					} catch (cbErr) {
+						console.warn('[talking-agent] onMessage callback threw', cbErr?.message);
+					}
 				}
 				queueMicrotask(() => runActions(result.actions, getSceneCtrl, protocol));
 				return { reply: result.reply, error: result.error };

@@ -22,10 +22,14 @@ const FOCUS_DURATION_MS = 700;
  * @param {import('../viewer.js').Viewer} viewer
  * @param {object} config  Hotspot-tour config (see widget-types.js).
  * @param {HTMLElement} container  Root container (usually document.body).
+ * @param {{ onOpen?: (hotspot: object) => void }} [ctx]  Optional hooks; `onOpen`
+ *   fires every time the visitor activates a marker (used by app.js to forward
+ *   `widget:hotspot:open` to the host page).
  * @returns {Promise<{ destroy: () => void }>}
  */
-export async function mountHotspotTour(viewer, config, container) {
+export async function mountHotspotTour(viewer, config, container, ctx) {
 	const hotspots = Array.isArray(config.hotspots) ? config.hotspots : [];
+	const onOpen = typeof ctx?.onOpen === 'function' ? ctx.onOpen : null;
 	const state = {
 		destroyed: false,
 		layer: null,
@@ -49,6 +53,7 @@ export async function mountHotspotTour(viewer, config, container) {
 		if (!h || !Array.isArray(h.position) || h.position.length !== 3) continue;
 		const marker = _renderMarker(state.layer, h, state.markers.length + 1, () => {
 			_select(viewer, state, h);
+			onOpen?.(h);
 		});
 		state.markers.push({ data: h, el: marker, world: new Vector3(...h.position) });
 	}

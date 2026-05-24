@@ -1251,13 +1251,30 @@ class App {
 					getSceneCtrl: () => this.sceneCtrl || window.VIEWER?.scene_ctrl || null,
 					protocol,
 					identity: this.identity,
+					onMessage: (turn) => {
+						this._postToParent({
+							type: 'widget:chat:message',
+							id: widgetId,
+							role: turn.role,
+							content: turn.content,
+						});
+					},
 				});
 				this._widgetController = ctl;
 			} else if (type === 'turntable') {
 				const ctl = await mountTurntable(this.viewer, cfg);
 				this._widgetController = ctl;
 			} else if (type === 'hotspot-tour') {
-				const ctl = await mountHotspotTour(this.viewer, cfg, document.body);
+				const ctl = await mountHotspotTour(this.viewer, cfg, document.body, {
+					onOpen: (hotspot) => {
+						this._postToParent({
+							type: 'widget:hotspot:open',
+							id: hotspot?.id ?? null,
+							label: hotspot?.label ?? null,
+							widgetId,
+						});
+					},
+				});
 				this._widgetController = ctl;
 			} else if (type === 'pumpfun-feed') {
 				const ctl = await mountPumpfunFeed(this.viewer, cfg, document.body, { protocol });
@@ -1884,6 +1901,15 @@ class App {
 					msg,
 					this._editingAgentId ? () => this._retryAgentLoad() : null,
 				);
+				// Notify the host page that the GLB failed — paired with the
+				// `widget:ready` event so script-tag embeds can show their own
+				// fallback or retry UI instead of staring at a blank iframe.
+				this._postToParent({
+					type: 'widget:load:error',
+					id: this.options?.widget || null,
+					url: this._currentModelUrl || null,
+					error: msg,
+				});
 			}
 		});
 	}

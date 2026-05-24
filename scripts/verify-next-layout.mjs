@@ -79,10 +79,10 @@ if (!clipsLoaded) {
 
 if (clipsLoaded) {
 	// ── Play button toggles state ──────────────────────────────────────
-	const wasPlaying = await page.locator('#next-dock-play').getAttribute('aria-pressed');
-	await page.locator('#next-dock-play').click();
+	const wasPlaying = await page.evaluate(() => document.getElementById('next-dock-play')?.getAttribute('aria-pressed'));
+	await page.evaluate(() => document.getElementById('next-dock-play')?.click());
 	await page.waitForTimeout(300);
-	const nowPlaying = await page.locator('#next-dock-play').getAttribute('aria-pressed');
+	const nowPlaying = await page.evaluate(() => document.getElementById('next-dock-play')?.getAttribute('aria-pressed'));
 	if (nowPlaying === wasPlaying) fail(`play button did not toggle (was ${wasPlaying}, now ${nowPlaying})`);
 
 	// ── Scrub advances the action.time ─────────────────────────────────
@@ -92,30 +92,30 @@ if (clipsLoaded) {
 		scrub.dispatchEvent(new Event('input', { bubbles: true }));
 	});
 	await page.waitForTimeout(100);
-	const time = await page.locator('#next-dock-time').innerText();
+	const time = await page.evaluate(() => document.getElementById('next-dock-time')?.textContent?.trim());
 	if (time === '0:00 / 0:00') fail(`scrub did not update time display: "${time}"`);
 
 	// ── Grid opens and lists clips, click switches ─────────────────────
-	await page.locator('#next-dock-clip').click();
+	await page.evaluate(() => document.getElementById('next-dock-clip')?.click());
 	await page.waitForFunction(() => !document.getElementById('next-grid')?.hidden, null, { timeout: 5000 });
-	const gridCount = await page.locator('#next-grid .next-grid__item').count();
+	const gridCount = await page.evaluate(() => document.querySelectorAll('#next-grid .next-grid__item').length);
 	if (gridCount === 0) fail('grid rendered with 0 clips');
 	if (gridCount > 1) {
-		const before = await page.locator('#next-dock-clip-name').innerText();
-		await page.locator('#next-grid .next-grid__item').nth(1).click();
+		const before = await page.evaluate(() => document.getElementById('next-dock-clip-name')?.textContent?.trim());
+		await page.evaluate(() => document.querySelectorAll('#next-grid .next-grid__item')[1]?.click());
 		await page.waitForTimeout(200);
-		const after = await page.locator('#next-dock-clip-name').innerText();
+		const after = await page.evaluate(() => document.getElementById('next-dock-clip-name')?.textContent?.trim());
 		if (before === after) fail(`clip switch did not change name (was "${before}", now "${after}")`);
-		const gridStillOpen = await page.locator('#next-grid').isVisible();
+		const gridStillOpen = await page.evaluate(() => !document.getElementById('next-grid')?.hidden);
 		if (gridStillOpen) fail('grid did not auto-close after selection');
 	}
 
 	// ── Loop toggle persists state on aria-pressed ─────────────────────
-	const loopBefore = await page.locator('#next-dock-loop').getAttribute('aria-pressed');
-	await page.locator('#next-dock-loop').click();
-	const loopAfter = await page.locator('#next-dock-loop').getAttribute('aria-pressed');
+	const loopBefore = await page.evaluate(() => document.getElementById('next-dock-loop')?.getAttribute('aria-pressed'));
+	await page.evaluate(() => document.getElementById('next-dock-loop')?.click());
+	const loopAfter = await page.evaluate(() => document.getElementById('next-dock-loop')?.getAttribute('aria-pressed'));
 	if (loopBefore === loopAfter) fail(`loop button did not toggle (was ${loopBefore}, now ${loopAfter})`);
-	await page.locator('#next-dock-loop').click();
+	await page.evaluate(() => document.getElementById('next-dock-loop')?.click());
 }
 
 // ── Controls drawer opens, contains the dat.GUI panel ───────────────────

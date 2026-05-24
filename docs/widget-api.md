@@ -110,8 +110,9 @@ The widget exposes a JSON-RPC 2.0 server inside the iframe. Drive it from the pa
 | `animation.list`        | —                                                   | `{ clips: [{ name, duration }] }`       |
 | `animation.play`        | `{ name: string, loop?: bool }`                     | `{ name }`                              |
 | `animation.stop`        | —                                                   | `{}`                                    |
-| `screenshot.capture`    | `{ mime?: string }` (default `image/png`)           | `{ dataUrl: 'data:image/png;base64,…' }` (canvas native resolution) |
+| `screenshot.capture`    | `{ mime?: string, width?: number, height?: number }` | `{ dataUrl: 'data:image/png;base64,…' }` — defaults to the live canvas size; pass `width`/`height` for an exact off-screen render. |
 | `model.load`            | `{ url: string }`                                   | `{ url }`                               |
+| `model.export`          | —                                                   | `{ base64: string, bytes: number }` — current scene as a binary GLB, base64-encoded. |
 | `ping`                  | —                                                   | `{ pong: true, t: <ms> }`               |
 
 ### Events (server → parent)
@@ -123,7 +124,6 @@ Notifications (no `id`) sent to the parent over `postMessage`:
 | `viewer.ready`    | `{}`                                 | First successful model frame. |
 | `model.loaded`    | `{ url, success, error? }`           | After every `model.load` (success or failure). |
 | `widget.revealed` | `{ mode: 'auto' \| 'interaction' }`  | Visitor clicked the play button (interaction mode) or auto mode booted. |
-| `widget.resize`   | `{ width, height, id? }`             | The widget asks the host to resize its iframe. |
 
 ### Wire format
 

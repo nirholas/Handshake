@@ -2,8 +2,7 @@
 // <script async src="https://three.ws/embed.js" data-widget="wdgt_..."></script>
 //
 // Injects a sandboxed iframe at the script tag's location, sized via data-*
-// attributes (or the type's default), then forwards widget:resize events from
-// the iframe to keep the host layout snug.
+// attributes (or the type's default).
 //
 // Zero deps, plain DOM. Intentionally tiny — gets minified/cached at the edge.
 
@@ -22,26 +21,6 @@
 		try { return new URL(document.currentScript.src).origin; }
 		catch (e) { return 'https://three.ws'; }
 	})();
-
-	// Single module-level registry: widgetId → iframe element.
-	// One delegated message listener handles all embeds on the page — no
-	// per-mount listeners that multiply with each <script data-widget>.
-	var registry = Object.create(null);
-
-	function onResize(e) {
-		if (e.origin !== ORIGIN) return;
-		if (!e.data || e.data.type !== 'widget:resize') return;
-		var id = e.data.id;
-		var iframe = id ? registry[id] : null;
-		// If no id given, apply to every registered iframe (legacy broadcast).
-		var targets = iframe ? [iframe] : Object.keys(registry).map(function (k) { return registry[k]; });
-		targets.forEach(function (f) {
-			if (e.data.width)  f.setAttribute('width',  String(e.data.width));
-			if (e.data.height) f.setAttribute('height', String(e.data.height));
-		});
-	}
-
-	window.addEventListener('message', onResize);
 
 	function attr(el, name, fallback) {
 		var v = el && el.getAttribute && el.getAttribute(name);
@@ -156,9 +135,6 @@
 		var anchor = scriptEl.parentNode;
 		if (!anchor) return;
 		anchor.insertBefore(wrapper, scriptEl);
-
-		// Register for the delegated resize listener.
-		registry[widgetId] = iframe;
 
 		// Lazy-load via IntersectionObserver when available (Firefox compat).
 		// Falls back to immediate load when IO is absent. When the iframe first

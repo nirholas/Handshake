@@ -436,9 +436,6 @@ window.addEventListener('message', (e) => {
     case 'widget:hotspot:open':
       // { id, label } — hotspot-tour only: visitor opened a POI
       break;
-    case 'widget:resize':
-      // { width, height } — widget reports its preferred size
-      break;
   }
 });
 ```

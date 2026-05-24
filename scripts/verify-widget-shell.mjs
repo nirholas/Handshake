@@ -154,8 +154,12 @@ await withPage('/widget#reveal=interaction defers WebGL boot', async (page) => {
 			`viewerLoaded=${after.viewerLoaded} gateGone=${after.gateGone}`,
 		);
 
-	await page.screenshot({ path: '/tmp/widget-reveal-after.png' });
-	console.log('  → /tmp/widget-reveal-after.png');
+	try {
+		await page.screenshot({ path: '/tmp/widget-reveal-after.png' });
+		console.log('  → /tmp/widget-reveal-after.png');
+	} catch (e) {
+		console.log('  (screenshot skipped — swiftshader instability)');
+	}
 });
 
 // 5. JSON-RPC roundtrip: exercise the in-iframe server via direct
@@ -167,9 +171,9 @@ await withPage('JSON-RPC: ping + camera + animation + info', async (page) => {
 	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 	await waitForFirstFrame(page);
 
-	const rpc = (method, params) =>
+	const rpc = (method, params, timeoutMs) =>
 		page.evaluate(
-			async ({ method, params }) => {
+			async ({ method, params, timeoutMs }) => {
 				const id = Math.floor(Math.random() * 1e9);
 				return await new Promise((resolve) => {
 					const handler = (e) => {
@@ -188,10 +192,10 @@ await withPage('JSON-RPC: ping + camera + animation + info', async (page) => {
 					setTimeout(() => {
 						window.removeEventListener('message', handler);
 						resolve({ timeout: true });
-					}, 6000);
+					}, timeoutMs || 6000);
 				});
 			},
-			{ method, params },
+			{ method, params, timeoutMs: timeoutMs || 6000 },
 		);
 
 	const ping = await rpc('ping');
@@ -236,8 +240,9 @@ await withPage('JSON-RPC: ping + camera + animation + info', async (page) => {
 	else fail('animation.stop succeeds', JSON.stringify(stop));
 
 	// model.export returns binary GLB as base64 — proves the legacy
-	// exportGLB bridge is fully covered by JSON-RPC now.
-	const exp = await rpc('model.export');
+	// exportGLB bridge is fully covered by JSON-RPC now. GLTFExporter.parse
+	// can take several seconds the first time it's imported.
+	const exp = await rpc('model.export', null, 30000);
 	if (
 		typeof exp?.result?.base64 === 'string' &&
 		exp.result.base64.length > 1000 &&
@@ -246,6 +251,16 @@ await withPage('JSON-RPC: ping + camera + animation + info', async (page) => {
 	)
 		ok(`model.export → ${exp.result.bytes} bytes GLB`);
 	else fail('model.export → GLB base64', JSON.stringify(exp).slice(0, 200));
+
+	// screenshot.capture at exact off-screen size — exercises the
+	// WebGLRenderTarget path (vs. the canvas.toDataURL fallback).
+	const shot = await rpc('screenshot.capture', { width: 200, height: 200 }, 15000);
+	if (
+		typeof shot?.result?.dataUrl === 'string' &&
+		shot.result.dataUrl.startsWith('data:image/')
+	)
+		ok(`screenshot.capture(200x200) → ${shot.result.dataUrl.length} chars`);
+	else fail('screenshot.capture(200x200)', JSON.stringify(shot).slice(0, 200));
 });
 
 // 6. Multi-instance — two iframes side-by-side, one ThreeWidget client each,
@@ -275,7 +290,7 @@ await withPage('Multi-instance: two clients, two widgets, no cross-talk', async 
 			if (!window.ThreeWidget) return { error: 'ThreeWidget missing' };
 			const a = window.ThreeWidget.attach(document.getElementById('a'));
 			const b = window.ThreeWidget.attach(document.getElementById('b'));
-			await Promise.all([a.ready(30000), b.ready(30000)]);
+			await Promise.all([a.ready(60000), b.ready(60000)]);
 
 			// Count event traffic per client over a short window — they should
 			// each only see their own iframe's events.

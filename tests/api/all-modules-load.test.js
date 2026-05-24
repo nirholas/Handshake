@@ -42,9 +42,10 @@ const files = [...walk(API_DIR)]
 	.sort();
 
 // Some handlers transitively load heavy ESM SDKs (@coinbase/x402, jsdom, the
-// neon serverless client, etc.). On slow CI workers the cold-import alone can
-// exceed vitest's default 5s. We give each load 30s — still well under a real
-// hang, but generous enough to absorb a Codespace cache miss.
+// neon serverless client, @anthropic-ai/sdk, etc.). On slow CI workers the
+// cold-import alone can exceed vitest's default 5s. We give each load 60s —
+// well under a real hang, but generous enough to absorb a Codespace cache
+// miss on the first time a given module graph is walked.
 describe('every api/**/*.js handler loads', () => {
 	for (const rel of files) {
 		it(
@@ -56,7 +57,7 @@ describe('every api/**/*.js handler loads', () => {
 				// Most Vercel handlers export `default`; some export named handlers (e.g. cron jobs).
 				// We don't enforce shape — only that the module evaluates without throwing.
 			},
-			30_000,
+			60_000,
 		);
 	}
 });
