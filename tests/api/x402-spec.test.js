@@ -15,17 +15,41 @@ import { afterEach, beforeAll, beforeEach, describe, it, expect, vi } from 'vite
 
 // env.js exposes process.env via getters, so each test's env mutations are
 // picked up immediately by api/_lib/x402-spec.js without needing a module
-// reset. We import the spec module once for the whole file — a fresh import
-// per test would re-walk @coinbase/x402 + @x402/extensions (cold-load > 30s
-// on a CI worker) for no behavioural benefit.
+// reset.
 //
-// The cold-import alone routinely exceeds 60s on a fresh Codespace because it
-// transitively pulls @coinbase/x402, @x402/extensions, the BSC direct-payment
-// module, and (through that) the full ethers core. We warm the import in
-// `beforeAll` so individual tests start with the spec already resolved, and
-// give the warmup itself a generous 120s window. Tests still get 30s each —
-// that's plenty for the synchronous fast paths we actually exercise.
-vi.setConfig({ testTimeout: 30_000, hookTimeout: 120_000 });
+// Cold-loading the real x402-spec module transitively pulls @coinbase/x402,
+// @x402/extensions, and x402-bsc-direct (which loads the full ethers core).
+// On a fresh Codespace that chain alone can exceed 2 minutes, which is well
+// past any reasonable test timeout. None of the tests in this file actually
+// invoke those upstream deps — they exercise pure wire-format helpers
+// (permit2VariantOf, paymentRequirements, build402Body, send402). So we mock
+// the heavy upstream modules with the minimum shape the spec module needs at
+// *import time*, then run the real spec logic against it.
+vi.mock('@coinbase/x402', () => ({
+	createCdpAuthHeaders: vi.fn(async () => ({})),
+}));
+vi.mock('@x402/extensions', () => ({
+	EIP2612_GAS_SPONSORING: { key: 'eip2612GasSponsoring' },
+	ERC20_APPROVAL_GAS_SPONSORING: { key: 'erc20ApprovalGasSponsoring' },
+	declareEip2612GasSponsoringExtension: () => ({
+		eip2612GasSponsoring: { tokens: [], version: 1 },
+	}),
+	declareErc20ApprovalGasSponsoringExtension: () => ({
+		erc20ApprovalGasSponsoring: { tokens: [], version: 1 },
+	}),
+}));
+vi.mock('../../api/_lib/x402-bsc-direct.js', () => ({
+	PAYMENT_EVENT_TOPIC: '0x' + 'a'.repeat(64),
+	settleDirectPayment: vi.fn(async () => ({ success: true })),
+	verifyDirectPayment: vi.fn(async () => ({ isValid: true })),
+}));
+vi.mock('../../api/_lib/x402-builder-code.js', () => ({
+	BUILDER_CODE: 'three.ws',
+	declareBuilderCodeExtension: () => ({ builderCode: { code: 'three.ws' } }),
+	verifyClientEcho: vi.fn(() => true),
+}));
+
+vi.setConfig({ testTimeout: 10_000, hookTimeout: 30_000 });
 
 const specPromise = import('../../api/_lib/x402-spec.js');
 let spec;

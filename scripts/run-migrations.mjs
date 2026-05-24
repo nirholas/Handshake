@@ -6,11 +6,66 @@ import { neon } from '@neondatabase/serverless';
 import { readdir, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { createHash } from 'crypto';
 
-const DB_URL = process.env.DATABASE_URL ||
-  'postgresql://neondb_owner:npg_GnQ0R4LJkZOg@ep-gentle-hill-akxaw862-pooler.c-3.us-west-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require';
+const DB_URL = process.env.DATABASE_URL;
+if (!DB_URL) {
+	console.error('DATABASE_URL env var is required.');
+	process.exit(1);
+}
 
 const sql = neon(DB_URL);
+
+const args = new Set(process.argv.slice(2));
+const DRY_RUN = args.has('--dry-run');
+const CHECK = args.has('--check');
+
+// Split SQL text into individual statements, respecting dollar-quoted blocks
+// and single-line (--) comments.
+function splitSql(text) {
+  const stmts = [];
+  let current = '';
+  let inDollarQuote = null;
+  let i = 0;
+  while (i < text.length) {
+    if (inDollarQuote === null) {
+      // Skip single-line comments (copy them verbatim up to the newline).
+      if (text[i] === '-' && text[i + 1] === '-') {
+        const end = text.indexOf('\n', i);
+        const line = end === -1 ? text.slice(i) : text.slice(i, end + 1);
+        current += line;
+        i += line.length;
+        continue;
+      }
+      // Detect dollar-quote opening tag.
+      const dollarMatch = text.slice(i).match(/^(\$[^$]*\$)/);
+      if (dollarMatch) {
+        inDollarQuote = dollarMatch[1];
+        current += inDollarQuote;
+        i += inDollarQuote.length;
+        continue;
+      }
+      if (text[i] === ';') {
+        const stmt = current.trim();
+        if (stmt) stmts.push(stmt + ';');
+        current = '';
+        i++;
+        continue;
+      }
+    } else {
+      if (text.slice(i).startsWith(inDollarQuote)) {
+        current += inDollarQuote;
+        i += inDollarQuote.length;
+        inDollarQuote = null;
+        continue;
+      }
+    }
+    current += text[i++];
+  }
+  const last = current.trim();
+  if (last) stmts.push(last);
+  return stmts;
+}
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = join(__dir, '../api/_lib/migrations');
@@ -46,19 +101,17 @@ async function main() {
     const sqlText = await readFile(path, 'utf8');
     console.log(`  → applying ${file} ...`);
     try {
-      // Neon HTTP client doesn't support multi-statement strings natively;
-      // split on statement boundaries and execute each one.
-      const statements = sqlText
-        .split(/;(?=\s*(?:--|$|\n))/gm)  // split on ; followed by newline/comment/EOF
-        .map(s => s.trim())
-        .filter(Boolean);
+      // Split on semicolons that are not inside dollar-quoted blocks ($$...$$).
+      const statements = splitSql(sqlText);
 
       for (const stmt of statements) {
-        if (stmt.replace(/--[^\n]*/g, '').trim()) {
-          await sql.unsafe(stmt + ';');
+        const body = stmt.replace(/--[^\n]*/g, '').trim();
+        if (body) {
+          await sql(stmt);
         }
       }
-      await sql`INSERT INTO schema_migrations (filename) VALUES (${file})`;
+      const sha256 = createHash('sha256').update(sqlText).digest('hex');
+      await sql`INSERT INTO schema_migrations (filename, sha256) VALUES (${file}, ${sha256})`;
       console.log(`     ✓ done`);
     } catch (err) {
       console.error(`     ✗ FAILED: ${err.message}`);
