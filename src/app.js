@@ -256,7 +256,14 @@ class App {
 
 		// Editing an existing agent: ?agent=<uuid> (authenticated editing surface)
 		if (options.agentEdit) {
-			this._loadAgentForEdit(options.agentEdit);
+			this._loadAgentForEdit(options.agentEdit).catch((err) => {
+				// Any throw before view() runs would leave the viewer un-mounted
+				// and the user staring at an empty canvas. Fall back to the
+				// default load so a 3D scene is always on screen.
+				console.warn('[3d-agent] agent-edit load failed', err);
+				if (!this.viewer) this._maybeResumeOrLoad(this.options);
+				if (!this._agentSystemBooted) this._initAgentSystem();
+			});
 		} else {
 			// Resume a stashed editor session (post-login round-trip), else
 			// load the model named in the URL or fall back to the CZ avatar.
@@ -367,6 +374,8 @@ class App {
 	// ── Agent System Init ─────────────────────────────────────────────────────
 
 	async _initAgentSystem() {
+		if (this._agentSystemBooted) return;
+		this._agentSystemBooted = true;
 		try {
 			// Wait for identity to resolve (uses local storage immediately, backend async)
 			await this.identity.load();
@@ -955,10 +964,23 @@ class App {
 			/* fall through to default */
 		}
 
-		if (glbUrl) {
-			await this.view(glbUrl, '', new Map());
-		} else {
-			this._maybeResumeOrLoad(this.options);
+		try {
+			if (glbUrl) {
+				await this.view(glbUrl, '', new Map());
+			} else {
+				await this._maybeResumeOrLoad(this.options);
+			}
+		} catch (err) {
+			// If the agent's GLB fails to load (404, decode error, etc.) we
+			// must still mount a viewer so the editor is usable.
+			console.warn('[3d-agent] agent GLB load failed; falling back', err);
+			if (!this.viewer) {
+				try {
+					await this._maybeResumeOrLoad(this.options);
+				} catch (fallbackErr) {
+					console.warn('[3d-agent] fallback load failed', fallbackErr);
+				}
+			}
 		}
 
 		// Restore + auto-save per-agent scene preferences (background, env,

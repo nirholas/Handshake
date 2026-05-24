@@ -226,11 +226,11 @@
 			.unlocks {
 				display: flex;
 				flex-direction: column;
-				gap: 8px;
-				padding: 12px 14px;
+				gap: 10px;
+				padding: 14px;
 				background: rgba(255, 255, 255, 0.02);
-				border: 1px dashed var(--border);
-				border-radius: 10px;
+				border: 1px solid var(--border);
+				border-radius: 12px;
 			}
 			.unlocks-title {
 				font-size: 11px;
@@ -238,23 +238,56 @@
 				text-transform: uppercase;
 				letter-spacing: 0.06em;
 				margin: 0;
-			}
-			.unlocks ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
-			.unlocks li {
 				display: flex;
 				align-items: center;
-				gap: 8px;
-				font-size: 13px;
-				color: var(--text);
+				gap: 6px;
 			}
-			.unlocks li::before {
+			.unlocks-title::before {
 				content: '';
-				width: 14px;
-				height: 14px;
-				flex-shrink: 0;
+				width: 5px;
+				height: 5px;
 				border-radius: 50%;
-				background:
-					radial-gradient(circle at 35% 35%, rgba(214, 255, 61, 0.9), rgba(214, 255, 61, 0.15) 70%);
+				background: var(--accent);
+				box-shadow: 0 0 8px rgba(214, 255, 61, 0.5);
+			}
+			.feature-grid {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 6px;
+			}
+			.feature-tile {
+				display: flex;
+				flex-direction: column;
+				gap: 3px;
+				padding: 10px;
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid transparent;
+				border-radius: 9px;
+				transition: background 0.15s, border-color 0.15s, transform 0.15s;
+				cursor: default;
+			}
+			.feature-tile:hover {
+				background: rgba(214, 255, 61, 0.04);
+				border-color: rgba(214, 255, 61, 0.18);
+				transform: translateY(-1px);
+			}
+			.feature-icon {
+				font-size: 17px;
+				line-height: 1;
+			}
+			.feature-name {
+				font-size: 12.5px;
+				color: var(--text);
+				font-weight: 600;
+				letter-spacing: -0.005em;
+			}
+			.feature-desc {
+				font-size: 10.5px;
+				color: var(--muted);
+				line-height: 1.35;
 			}
 
 			.cta {
@@ -434,11 +467,38 @@
 					</button>
 
 					<div class="unlocks" aria-label="What saving unlocks">
-						<p class="unlocks-title">Saving unlocks</p>
-						<ul>
-							<li>Use as an agent across three.ws</li>
-							<li>Voice, animation, and emotes</li>
-							<li>Embed anywhere with one snippet</li>
+						<p class="unlocks-title">Your avatar unlocks</p>
+						<ul class="feature-grid">
+							<li class="feature-tile" title="glTF / GLB body with animations, expressions, and a posable rig — mobile, desktop, and XR-ready.">
+								<span class="feature-icon" aria-hidden="true">🧍</span>
+								<span class="feature-name">3D Body</span>
+								<span class="feature-desc">Animations, expressions, posable rig</span>
+							</li>
+							<li class="feature-tile" title="Low-latency voice via LiveKit, ElevenLabs voices, and a system prompt you control.">
+								<span class="feature-icon" aria-hidden="true">🗣️</span>
+								<span class="feature-name">Voice &amp; Persona</span>
+								<span class="feature-desc">Mic in, LiveKit voice out, pinned memory</span>
+							</li>
+							<li class="feature-tile" title="Each agent is a Metaplex Core asset on Solana — transferable, composable, browsable in any wallet.">
+								<span class="feature-icon" aria-hidden="true">🪪</span>
+								<span class="feature-name">On-Chain Identity</span>
+								<span class="feature-desc">Solana wallet, transferable asset</span>
+							</li>
+							<li class="feature-tile" title="Charge per call in USDC over the x402 protocol. Other agents pay yours automatically.">
+								<span class="feature-icon" aria-hidden="true">💸</span>
+								<span class="feature-name">Paid Skills</span>
+								<span class="feature-desc">Earn USDC per call via x402</span>
+							</li>
+							<li class="feature-tile" title="One-tag embed via /embed.js, or the agent-3d Web Component. Drop your agent on any page.">
+								<span class="feature-icon" aria-hidden="true">🧩</span>
+								<span class="feature-name">Embed Anywhere</span>
+								<span class="feature-desc">One snippet, any site or app</span>
+							</li>
+							<li class="feature-tile" title="Signed feedback, call history, and validation events accrue to your agent — visible to anyone deciding whether to trust it.">
+								<span class="feature-icon" aria-hidden="true">⭐</span>
+								<span class="feature-name">Reputation</span>
+								<span class="feature-desc">Reviews, history, and validation</span>
+							</li>
 						</ul>
 					</div>
 

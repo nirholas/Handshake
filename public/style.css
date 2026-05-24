@@ -101,11 +101,15 @@ body {
 	flex-direction: column;
 	width: 100vw;
 	flex-grow: 1;
+	/* Hard floor: even if a child fails to mount, the viewport-sized wrap
+	   keeps the dropzone anchored to the bottom instead of floating up
+	   under the header. */
+	min-height: calc(100vh - var(--header-h, 3.5rem));
 	position: relative;
 }
 
 .viewer-container {
-	flex-grow: 1;
+	flex: 1 1 auto;
 	position: relative;
 	min-height: 0;
 }

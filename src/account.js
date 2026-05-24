@@ -18,15 +18,22 @@ async function getCsrfToken() {
 }
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const TRANSIENT_STATUSES = new Set([502, 503, 504]);
 
 // Wrapped fetch that handles expired sessions centrally. A 401 response is
 // treated as a session-expiry signal and redirects to /login?next=<current>
 // with the URL hash preserved (SPAs lose it on a naked location.href hop).
 // Pass allowAnonymous:true for endpoints where a 401 is a legitimate
 // "not signed in" answer the caller wants to inspect itself (e.g. /api/auth/me).
+//
+// Safe-method requests retry once on transient 5xx / network failures —
+// Vercel cold starts and dev-server restarts surface as 502s, and a silent
+// second attempt hides the blip. Mutating methods don't retry: the body is
+// already on the wire and the server may have processed it.
 export async function apiFetch(path, options = {}) {
 	const { allowAnonymous = false, ...init } = options;
 	const method = (init.method || 'GET').toUpperCase();
+	const canRetry = SAFE_METHODS.has(method);
 
 	// Mutating same-origin requests need a CSRF token. Skip for bearer-auth
 	// callers — the server exempts Authorization: Bearer requests.
@@ -38,11 +45,26 @@ export async function apiFetch(path, options = {}) {
 		_csrfToken = null;
 	}
 
-	const res = await fetch(path, {
-		credentials: 'include',
-		...init,
-		headers,
-	});
+	const doFetch = () =>
+		fetch(path, {
+			credentials: 'include',
+			...init,
+			headers,
+		});
+
+	let res;
+	try {
+		res = await doFetch();
+	} catch (networkErr) {
+		if (!canRetry) throw networkErr;
+		await new Promise((r) => setTimeout(r, 400));
+		res = await doFetch();
+	}
+	if (canRetry && TRANSIENT_STATUSES.has(res.status)) {
+		await new Promise((r) => setTimeout(r, 400));
+		res = await doFetch();
+	}
+
 	if (res.status === 401 && !allowAnonymous) {
 		redirectToLogin();
 		const err = new Error('session expired');
@@ -111,15 +133,12 @@ export async function getMe() {
 
 // Uploads a GLB to our R2 bucket and creates the avatar record.
 // `source` may be a Blob (from CharacterStudio postMessage) or a URL string.
-// Throws if the user isn't authenticated.
+//
+// No explicit auth pre-check: `presign` requires a session, so if the cookie
+// is missing or expired apiFetch redirects to /login (and throws with
+// err.redirected = true). Callers that want post-login resume should set
+// their sentinel BEFORE calling — apiFetch's redirect happens synchronously.
 export async function saveRemoteGlbToAccount(source, meta = {}) {
-	const user = await getMe();
-	if (!user) {
-		const err = new Error('not_signed_in');
-		err.code = 'not_signed_in';
-		throw err;
-	}
-
 	let blob;
 	if (source instanceof Blob) {
 		blob = source;

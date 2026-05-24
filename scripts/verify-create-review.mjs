@@ -96,9 +96,22 @@ if (nameInputValue !== '') fail(`name input expected empty, got "${nameInputValu
 const sourceTag = (await page.textContent('#tag-source'))?.trim();
 if (sourceTag !== 'Avaturn') fail(`source tag expected "Avaturn", got "${sourceTag}"`);
 
-// Unlocks block must be present.
-const unlocks = await page.locator('.unlocks li').allTextContents();
-if (unlocks.length !== 3) fail(`unlocks list expected 3 items, got ${unlocks.length}`);
+// Feature grid must show the full 6-capability suite.
+const featureNames = await page.locator('.feature-tile .feature-name').allTextContents();
+const expectedFeatures = [
+	'3D Body',
+	'Voice & Persona',
+	'On-Chain Identity',
+	'Paid Skills',
+	'Embed Anywhere',
+	'Reputation',
+];
+if (featureNames.length !== expectedFeatures.length) {
+	fail(`feature grid expected ${expectedFeatures.length} tiles, got ${featureNames.length}`);
+}
+for (const name of expectedFeatures) {
+	if (!featureNames.includes(name)) fail(`feature grid missing tile "${name}"`);
+}
 
 // Give the emote manifest time to load and the idle clip to start.
 await page.waitForTimeout(2500);
