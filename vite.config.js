@@ -139,6 +139,8 @@ const appConfig = {
 				'agent-embed': resolve(__dirname, 'pages/agent-embed.html'),
 				'agent-detail': resolve(__dirname, 'pages/agent-detail.html'),
 				'avatar-embed': resolve(__dirname, 'pages/avatar-embed.html'),
+				'overlay-control': resolve(__dirname, 'pages/overlay-control.html'),
+				'mocap-studio': resolve(__dirname, 'pages/mocap-studio.html'),
 				handle: resolve(__dirname, 'pages/handle.html'),
 				'a-embed': resolve(__dirname, 'pages/a-embed.html'),
 				'a-edit': resolve(__dirname, 'pages/a-edit.html'),

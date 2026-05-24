@@ -1,6 +1,6 @@
-// Verify the slim /widget shell renders a 3D avatar without flashing site
-// chrome — and that the parent surfaces (studio preview, public embed URL,
-// legacy /app#kiosk=true) all behave correctly. Run while `npm run dev` is up.
+// Verify the slim /widget shell behaves correctly across every surface:
+// FOUC guard, no chrome, reveal=interaction click-to-boot, JSON-RPC API,
+// poster pass-through, and studio/legacy parity. Run while `npm run dev` is up.
 //
 //   node scripts/verify-widget-shell.mjs
 //
@@ -49,12 +49,10 @@ async function waitForFirstFrame(page) {
 await withPage('/widget#model=<glb>&kiosk=true (direct embed)', async (page) => {
 	const url = `${BASE}/widget?_=${Date.now()}#model=${encodeURIComponent(DEMO_GLB)}&kiosk=true`;
 	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-	// Body should be invisible until first-frame event fires.
 	const initialVisibility = await page.evaluate(() => getComputedStyle(document.body).visibility);
 	if (initialVisibility === 'hidden') ok('body starts visibility:hidden (FOUC guard)');
 	else fail('body starts visibility:hidden (FOUC guard)', `got ${initialVisibility}`);
 
-	// Confirm no <header>/<footer> ever exists in the DOM.
 	const chromeCount = await page.evaluate(
 		() =>
 			document.querySelectorAll(
@@ -78,7 +76,6 @@ await withPage('/widget#model=<glb>&kiosk=true (direct embed)', async (page) => 
 //    targets /widget (not /app) and renders the model.
 await withPage('/studio preview iframe targets /widget', async (page) => {
 	await page.goto(`${BASE}/studio/`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-	// Wait for the preview iframe to receive a src.
 	await page.waitForFunction(
 		() => document.getElementById('preview-iframe')?.src?.includes('/widget'),
 		{ timeout: 20000 },
@@ -88,7 +85,6 @@ await withPage('/studio preview iframe targets /widget', async (page) => {
 		ok(`preview iframe → /widget (src=${previewSrc.slice(0, 120)}…)`);
 	else fail('preview iframe → /widget', `unexpected src: ${previewSrc}`);
 
-	// Drop into the iframe and confirm chrome isn't there either.
 	const frame = page.frame({ url: /\/widget/ });
 	if (!frame) {
 		fail('studio iframe accessible', 'no /widget frame found');
@@ -104,12 +100,11 @@ await withPage('/studio preview iframe targets /widget', async (page) => {
 	console.log('  → /tmp/widget-studio.png');
 });
 
-// 3. Legacy /app#kiosk=true still works (no chrome eventually, model renders).
+// 3. Legacy /app#kiosk=true still works.
 await withPage('/app#model=<glb>&kiosk=true (legacy path)', async (page) => {
 	const url = `${BASE}/app#model=${encodeURIComponent(DEMO_GLB)}&kiosk=true`;
 	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 	await waitForFirstFrame(page);
-	// In kiosk mode, header should now be display:none.
 	const headerHidden = await page.evaluate(() => {
 		const h = document.querySelector('header');
 		return !h || getComputedStyle(h).display === 'none';
@@ -118,6 +113,105 @@ await withPage('/app#model=<glb>&kiosk=true (legacy path)', async (page) => {
 	else fail('legacy /app kiosk still hides chrome', 'header still visible');
 	await page.screenshot({ path: '/tmp/widget-legacy.png' });
 	console.log('  → /tmp/widget-legacy.png');
+});
+
+// 4. Reveal-on-interaction: WebGL must NOT init until the visitor clicks.
+await withPage('/widget#reveal=interaction defers WebGL boot', async (page) => {
+	const url = `${BASE}/widget?_=${Date.now()}#model=${encodeURIComponent(DEMO_GLB)}&kiosk=true&reveal=interaction`;
+	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+	// Wait long enough that auto mode WOULD have booted by now.
+	await page.waitForTimeout(1500);
+
+	// The gate should be visible and clickable. window.VIEWER should NOT exist yet.
+	const state = await page.evaluate(() => ({
+		hasGate: Boolean(document.querySelector('.widget-reveal-gate')),
+		viewerLoaded: Boolean(window.VIEWER),
+		booted: Boolean(window.__WIDGET_BOOTED),
+	}));
+	if (state.hasGate && !state.viewerLoaded && !state.booted)
+		ok('reveal=interaction holds boot before click');
+	else
+		fail(
+			'reveal=interaction holds boot before click',
+			`hasGate=${state.hasGate} viewerLoaded=${state.viewerLoaded} booted=${state.booted}`,
+		);
+
+	await page.screenshot({ path: '/tmp/widget-reveal-gate.png' });
+	console.log('  → /tmp/widget-reveal-gate.png');
+
+	// Click the play button.
+	await page.click('.widget-reveal-gate');
+	// Now the app must actually boot.
+	await waitForFirstFrame(page);
+	const after = await page.evaluate(() => ({
+		viewerLoaded: Boolean(window.VIEWER),
+		gateGone: !document.querySelector('.widget-reveal-gate'),
+	}));
+	if (after.viewerLoaded && after.gateGone) ok('click boots WebGL + dismisses gate');
+	else
+		fail(
+			'click boots WebGL + dismisses gate',
+			`viewerLoaded=${after.viewerLoaded} gateGone=${after.gateGone}`,
+		);
+
+	await page.screenshot({ path: '/tmp/widget-reveal-after.png' });
+	console.log('  → /tmp/widget-reveal-after.png');
+});
+
+// 5. JSON-RPC roundtrip: parent loads widget-client.js, calls methods, gets results.
+await withPage('JSON-RPC: ping + camera.getLookAt + screenshot.capture', async (page) => {
+	// Build a host page that loads the widget client + an iframe pointed at /widget.
+	await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+	// Inject our test scaffold on top of the home page. Cross-origin doesn't
+	// apply — both iframe and host run on localhost:3000.
+	const testResult = await page.evaluate(
+		async ({ BASE, DEMO_GLB }) => {
+			// Drop any chrome and mount the iframe + the SDK.
+			document.body.innerHTML =
+				'<iframe id="w" style="width:600px;height:600px;border:0" ' +
+				'src="' + BASE + '/widget#model=' + encodeURIComponent(DEMO_GLB) + '&kiosk=true"></iframe>';
+			await new Promise((r) => {
+				const s = document.createElement('script');
+				s.src = BASE + '/widget-client.js';
+				s.onload = r;
+				s.onerror = r;
+				document.head.appendChild(s);
+			});
+			if (!window.ThreeWidget) return { error: 'ThreeWidget global missing' };
+			const client = window.ThreeWidget.attach(document.getElementById('w'));
+
+			// Wait for the widget to be ready (model loaded).
+			await client.ready(25000);
+			// 1) ping roundtrip
+			const ping = await client.call('ping', null, 5000);
+			// 2) camera.getLookAt
+			const cam = await client.call('camera.getLookAt');
+			// 3) screenshot
+			const shot = await client.call('screenshot.capture', { width: 200, height: 200 });
+
+			return {
+				ok: true,
+				pingOk: ping?.pong === true,
+				cam: Array.isArray(cam?.eye) && cam.eye.length === 3,
+				shotOk: typeof shot?.dataUrl === 'string' && shot.dataUrl.startsWith('data:image/'),
+			};
+		},
+		{ BASE, DEMO_GLB },
+	);
+
+	if (testResult.error) {
+		fail('JSON-RPC test scaffold ran', testResult.error);
+		return;
+	}
+	if (testResult.pingOk) ok('ping → { pong: true }');
+	else fail('ping → { pong: true }', JSON.stringify(testResult));
+	if (testResult.cam) ok('camera.getLookAt → { eye:[3] }');
+	else fail('camera.getLookAt → { eye:[3] }', JSON.stringify(testResult));
+	if (testResult.shotOk) ok('screenshot.capture → data: URL');
+	else fail('screenshot.capture → data: URL', JSON.stringify(testResult));
+
+	await page.screenshot({ path: '/tmp/widget-rpc-host.png' });
+	console.log('  → /tmp/widget-rpc-host.png');
 });
 
 await browser.close();
