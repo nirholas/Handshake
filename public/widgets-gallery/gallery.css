@@ -708,6 +708,323 @@ body.gallery-body {
 	}
 }
 
+/* ── Preview / Code tabs ─────────────────────────────────────────────────────── */
+
+.showcase-frame-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-xs);
+	width: 100%;
+	margin: 0 auto;
+}
+
+.frame-tabs {
+	display: inline-flex;
+	gap: 2px;
+	padding: 3px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: var(--radius-md);
+	align-self: flex-start;
+}
+
+.frame-tab {
+	padding: 0.35rem 0.85rem;
+	font-size: var(--text-xs);
+	font-family: var(--font-body);
+	color: rgba(229, 229, 229, 0.55);
+	background: transparent;
+	border: 0;
+	border-radius: calc(var(--radius-md) - 4px);
+	cursor: pointer;
+	letter-spacing: 0.02em;
+	transition: background 0.15s, color 0.15s;
+}
+
+.frame-tab:hover {
+	color: rgba(229, 229, 229, 0.85);
+}
+
+.frame-tab[data-active='true'] {
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+.frame-tab:focus-visible {
+	outline: 2px solid rgba(255, 255, 255, 0.5);
+	outline-offset: 2px;
+}
+
+/* The code panel reuses the snippet box look but takes the frame's footprint. */
+.frame-code-panel {
+	position: relative;
+	border-radius: var(--radius-md);
+	background: #050505;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	padding: var(--space-md);
+	aspect-ratio: 1 / 1;
+	overflow: auto;
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: rgba(229, 229, 229, 0.9);
+	line-height: 1.55;
+}
+
+.frame-code {
+	margin: 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* ── Customize panel ─────────────────────────────────────────────────────────── */
+
+.customize {
+	margin-top: var(--space-sm);
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: var(--radius-md);
+	overflow: hidden;
+}
+
+.customize > summary {
+	list-style: none;
+	cursor: pointer;
+	padding: 0.5rem 0.75rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	font-size: var(--text-xs);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: rgba(229, 229, 229, 0.7);
+	width: 100%;
+	user-select: none;
+}
+
+.customize > summary::-webkit-details-marker { display: none; }
+.customize > summary::marker { content: ''; }
+
+.customize > summary:hover {
+	color: #fff;
+	background: rgba(255, 255, 255, 0.03);
+}
+
+.customize > summary svg {
+	transition: transform 0.2s;
+}
+
+.customize[open] > summary svg {
+	transform: rotate(60deg);
+	color: var(--type-color, var(--accent));
+}
+
+.customize-knobs {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.5rem;
+	padding: 0.25rem 0.75rem 0.75rem;
+}
+
+.knob-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: var(--text-xs);
+}
+
+.knob-row > label:first-child {
+	flex: 0 0 4.5rem;
+	color: rgba(229, 229, 229, 0.55);
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	font-size: 10px;
+}
+
+.knob-row input[type='text'],
+.knob-row select {
+	flex: 1;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	color: #e5e5e5;
+	border-radius: 6px;
+	padding: 0.35rem 0.55rem;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	min-width: 0;
+}
+
+.knob-row input[type='text']:focus,
+.knob-row select:focus {
+	outline: 1px solid var(--type-color, var(--accent));
+	outline-offset: 0;
+	border-color: var(--type-color, var(--accent));
+}
+
+.knob-row input[type='color'] {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	width: 2rem;
+	height: 1.6rem;
+	border-radius: 6px;
+	padding: 0;
+	cursor: pointer;
+}
+
+.accent-value {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: rgba(229, 229, 229, 0.55);
+	letter-spacing: 0.02em;
+}
+
+.size-presets {
+	display: inline-flex;
+	gap: 2px;
+	padding: 2px;
+	background: rgba(255, 255, 255, 0.04);
+	border-radius: 6px;
+}
+
+.size-presets button {
+	min-width: 1.85rem;
+	padding: 0.2rem 0.45rem;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	color: rgba(229, 229, 229, 0.55);
+	background: transparent;
+	border: 0;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.size-presets button:hover {
+	color: rgba(229, 229, 229, 0.9);
+}
+
+.size-presets button[data-active='true'] {
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+}
+
+.customize-reset {
+	justify-self: end;
+	background: transparent;
+	border: 0;
+	color: rgba(229, 229, 229, 0.4);
+	font-size: 10px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	cursor: pointer;
+	padding: 0.25rem 0.5rem;
+}
+
+.customize-reset:hover {
+	color: rgba(229, 229, 229, 0.85);
+}
+
+/* ── Split-button copy ───────────────────────────────────────────────────────── */
+
+.snippet-row .split-btn {
+	flex: 1 1 auto;
+	min-width: 140px;
+	display: inline-flex;
+	position: relative;
+	border-radius: var(--radius-md);
+	overflow: visible;
+	border: 1px solid var(--type-color, var(--blue));
+	background: var(--type-color, var(--blue));
+	transition: filter 0.15s;
+}
+
+.snippet-row .split-btn:hover {
+	filter: brightness(1.08);
+}
+
+.split-btn-main,
+.split-btn-toggle {
+	background: transparent;
+	border: 0;
+	color: #fff;
+	font-family: var(--font-body);
+	font-size: var(--text-sm);
+	cursor: pointer;
+	padding: var(--space-xs) var(--space-sm);
+}
+
+.split-btn-main {
+	flex: 1;
+	border-right: 1px solid rgba(0, 0, 0, 0.18);
+	text-align: center;
+}
+
+.split-btn-toggle {
+	padding: var(--space-xs) 0.6rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.split-btn-main:focus-visible,
+.split-btn-toggle:focus-visible {
+	outline: 2px solid rgba(255, 255, 255, 0.6);
+	outline-offset: -2px;
+}
+
+.split-btn-main.copied {
+	background: rgba(0, 0, 0, 0.2);
+}
+
+.split-btn-menu {
+	position: absolute;
+	top: calc(100% + 4px);
+	right: 0;
+	min-width: 11rem;
+	background: #0e0e14;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: var(--radius-md);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+	padding: 4px;
+	z-index: 50;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.split-btn-menu-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: transparent;
+	border: 0;
+	color: rgba(229, 229, 229, 0.85);
+	font-family: var(--font-body);
+	font-size: var(--text-sm);
+	padding: 0.45rem 0.7rem;
+	border-radius: 6px;
+	cursor: pointer;
+	text-align: left;
+}
+
+.split-btn-menu-item:hover {
+	background: rgba(255, 255, 255, 0.06);
+	color: #fff;
+}
+
+.split-btn-menu-item[aria-checked='true']::after {
+	content: '✓';
+	color: var(--type-color, var(--accent));
+	margin-left: 0.5rem;
+}
+
+/* Studio link gets a stable secondary look (was previously the only <a>; rules
+ * above still apply, but pin it to a non-flex-grow width so it doesn't fight
+ * the split-btn for space). */
+.snippet-row .studio-link {
+	flex: 0 0 auto;
+}
+
 /* ── Reduced motion ──────────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
@@ -716,7 +1033,11 @@ body.gallery-body {
 	.snippet-row a,
 	.filter-btn,
 	.play-btn,
-	.showcase {
+	.showcase,
+	.frame-tab,
+	.split-btn,
+	.size-presets button,
+	.customize > summary svg {
 		transition: none;
 		animation: none;
 	}

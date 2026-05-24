@@ -1033,6 +1033,23 @@ async function handleTranscripts(req, res) {
 
 	const url = new URL(req.url, 'http://x');
 	const threadId = url.searchParams.get('thread_id');
+	const format = url.searchParams.get('format');
+
+	if (format === 'csv') {
+		// Calendly/Spotify-style export — downloads the full transcript history
+		// so the creator can pipe it into a spreadsheet for review.
+		const csv = await exportTranscriptsCsv(id);
+		res.statusCode = 200;
+		res.setHeader('content-type', 'text/csv; charset=utf-8');
+		res.setHeader(
+			'content-disposition',
+			`attachment; filename="transcripts-${id}-${new Date().toISOString().slice(0, 10)}.csv"`,
+		);
+		res.setHeader('cache-control', 'no-store');
+		res.end(csv);
+		return;
+	}
+
 	if (threadId) {
 		const data = await getTranscript(id, threadId);
 		if (!data) return error(res, 404, 'not_found', 'thread not found');
@@ -1045,6 +1062,66 @@ async function handleTranscripts(req, res) {
 	const data = await listTranscripts(id, { limit, before });
 	res.setHeader('cache-control', 'private, max-age=10');
 	return json(res, 200, data);
+}
+
+async function exportTranscriptsCsv(widgetId) {
+	const rows = await sql`
+		select t.id as thread_id, t.visitor_id, t.referer_host, t.country,
+		       m.role, m.content, m.provider, m.model, m.redacted, m.created_at
+		from widget_chat_messages m
+		join widget_chat_threads   t on t.id = m.thread_id
+		where m.widget_id = ${widgetId}
+		order by t.last_message_at desc, m.created_at asc, m.id asc
+		limit 5000
+	`;
+	const header = [
+		'thread_id',
+		'created_at',
+		'visitor_id',
+		'role',
+		'content',
+		'provider',
+		'model',
+		'redacted',
+		'referer_host',
+		'country',
+	];
+	const lines = [header.join(',')];
+	for (const r of rows) {
+		lines.push(
+			[
+				r.thread_id,
+				toIsoString(r.created_at),
+				r.visitor_id,
+				r.role,
+				r.content,
+				r.provider || '',
+				r.model || '',
+				r.redacted ? 'true' : 'false',
+				r.referer_host || '',
+				r.country || '',
+			]
+				.map(csvCell)
+				.join(','),
+		);
+	}
+	return lines.join('\n') + '\n';
+}
+
+function csvCell(v) {
+	const s = v == null ? '' : String(v);
+	if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+	return s;
+}
+
+function toIsoString(d) {
+	if (!d) return '';
+	if (d instanceof Date) return d.toISOString();
+	try {
+		return new Date(d).toISOString();
+	} catch {
+		return String(d);
+	}
 }
 
 // ── knowledge (talking-agent only) ──────────────────────────────────────────
