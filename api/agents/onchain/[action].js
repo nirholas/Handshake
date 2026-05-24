@@ -20,16 +20,18 @@ import {
 } from '@metaplex-foundation/umi';
 import { Connection } from '@solana/web3.js';
 import { JsonRpcProvider } from 'ethers';
-import { createHash } from 'crypto';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { CID } from 'multiformats/cid';
+import * as raw from 'multiformats/codecs/raw';
+import { sha256 } from 'multiformats/hashes/sha2';
 import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
 import { randomToken } from '../../_lib/crypto.js';
+import { r2, publicUrl } from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
-import { r2 } from '../../_lib/r2.js';
 
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
@@ -84,6 +86,12 @@ const prepBodySchema = z.object({
 		.optional(),
 });
 
+// Pin a manifest. Try web3.storage first for true IPFS pinning. If unavailable,
+// fall back to R2: compute the real CIDv1 (raw codec, sha2-256 multihash) from
+// the bytes so the cid is verifiable IPFS content-addressing, and return the
+// R2 HTTPS URL as the resolvable location. The on-chain registry accepts both
+// ipfs:// and https:// URIs (see src/erc8004/resolver.js), so a real https URL
+// is a first-class result — never a stub.
 async function pinManifest(manifest) {
 	const bytes = Buffer.from(JSON.stringify(manifest), 'utf-8');
 	const token = process.env.WEB3_STORAGE_TOKEN;
@@ -98,15 +106,18 @@ async function pinManifest(manifest) {
 				const data = await r.json();
 				if (data.cid) return { cid: data.cid, uri: `ipfs://${data.cid}` };
 			}
+			console.warn('[onchain/prep] web3.storage returned', r.status);
 		} catch (e) {
 			console.warn('[onchain/prep] web3.storage pin failed:', e.message);
 		}
 	}
-	// Deterministic fallback: stash to R2, generate a content-hash CID stub
-	// so the URL stays pointing at real bytes even if web3.storage is down.
-	const hash = createHash('sha256').update(bytes).digest('hex');
-	const stubCid = `bafkreigenerated${hash.slice(0, 40)}`;
-	const key = `agent-manifests/${Date.now()}-${Math.random().toString(36).slice(2)}.json`;
+	// R2-backed fallback: compute the real raw-codec CIDv1 so the bytes are
+	// verifiable via IPFS gateways (any gateway that supports raw codec can
+	// resolve the same bytes if someone later pins them), but the returned
+	// `uri` is the HTTPS R2 URL — real, resolvable, no stub.
+	const digest = await sha256.digest(bytes);
+	const cid = CID.create(1, raw.code, digest).toString();
+	const key = `agent-manifests/${Date.now()}-${randomToken(8)}.json`;
 	await r2.send(
 		new PutObjectCommand({
 			Bucket: env.S3_BUCKET,
@@ -115,7 +126,7 @@ async function pinManifest(manifest) {
 			ContentType: 'application/json',
 		}),
 	);
-	return { cid: stubCid, uri: `ipfs://${stubCid}` };
+	return { cid, uri: publicUrl(key) };
 }
 
 function buildManifest({ name, description, avatar_id, skills }) {

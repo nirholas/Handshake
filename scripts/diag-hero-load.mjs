@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 
 const url = process.argv[2] || 'http://localhost:3000/marketplace';
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
 const ctx = await browser.newContext({ bypassCSP: false });
 const page = await ctx.newPage();
 

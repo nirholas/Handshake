@@ -19,7 +19,7 @@ function fail(msg) {
 }
 
 const glbBuffer = await readFile(GLB_PATH);
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
 const page = await ctx.newPage();
 

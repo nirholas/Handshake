@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Import RPM Avatar · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta
+			name="description"
+			content="Import your Ready Player Me avatar into three.ws. Paste your GLB URL or upload the file directly."
+		/>
+		<meta name="robots" content="noindex" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<style>
+			*, *::before, *::after { box-sizing: border-box; }
+			:root {
+				--bg: #0b0d10;
+				--panel: #12151a;
+				--panel-2: #181c22;
+				--border: rgba(255,255,255,0.07);
+				--border-2: rgba(255,255,255,0.13);
+				--text: #e9ecef;
+				--text-2: rgba(255,255,255,0.65);
+				--text-3: rgba(255,255,255,0.38);
+				--accent: #7dd3fc;
+				--accent-dim: rgba(125,211,252,0.12);
+				--warn: #f59e0b;
+				--warn-dim: rgba(245,158,11,0.10);
+				--ok: #4ade80;
+				--err: #f87171;
+				--err-dim: rgba(248,113,113,0.10);
+				--radius: 12px;
+			}
+			html, body {
+				margin: 0; padding: 0;
+				background: var(--bg);
+				color: var(--text);
+				font-family: system-ui, -apple-system, sans-serif;
+				font-size: 15px;
+				line-height: 1.55;
+				min-height: 100vh;
+			}
+			a { color: var(--accent); }
+			code {
+				font-family: ui-monospace, 'SF Mono', monospace;
+				font-size: 0.9em;
+				color: var(--text-2);
+				background: rgba(255,255,255,0.05);
+				padding: 1px 5px;
+				border-radius: 4px;
+			}
+
+			/* ── Layout ─────────────────────────────────────────────────── */
+			.page {
+				max-width: 640px;
+				margin: 0 auto;
+				padding: 48px 20px 80px;
+			}
+			.back-link {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				color: var(--text-3);
+				text-decoration: none;
+				font-size: 13px;
+				margin-bottom: 32px;
+				letter-spacing: 0.01em;
+			}
+			.back-link:hover { color: var(--text-2); }
+			h1 {
+				font-size: 26px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				margin: 0 0 6px;
+			}
+			.lede {
+				color: var(--text-2);
+				margin: 0 0 28px;
+				font-size: 14px;
+				line-height: 1.6;
+			}
+
+			/* ── Warning banner ─────────────────────────────────────────── */
+			.warn-banner {
+				display: flex;
+				gap: 12px;
+				align-items: flex-start;
+				background: var(--warn-dim);
+				border: 1px solid rgba(245,158,11,0.22);
+				border-radius: var(--radius);
+				padding: 14px 16px;
+				margin-bottom: 24px;
+				font-size: 13px;
+				color: var(--text-2);
+				line-height: 1.5;
+			}
+			.warn-banner-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+			/* ── Import card ────────────────────────────────────────────── */
+			.import-card {
+				background: var(--panel);
+				border: 1px solid var(--border-2);
+				border-radius: var(--radius);
+				overflow: hidden;
+			}
+
+			/* Tab switcher */
+			.tab-bar {
+				display: flex;
+				border-bottom: 1px solid var(--border);
+			}
+			.tab-btn {
+				flex: 1;
+				padding: 13px 14px;
+				background: none;
+				border: none;
+				border-bottom: 2px solid transparent;
+				color: var(--text-3);
+				font: inherit;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				letter-spacing: 0.02em;
+				text-align: center;
+				transition: color 0.15s, border-color 0.15s;
+				margin-bottom: -1px;
+			}
+			.tab-btn:hover { color: var(--text-2); }
+			.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+			/* Tab panels */
+			.tab-panel { display: none; padding: 24px; }
+			.tab-panel.active { display: block; }
+
+			/* Form elements */
+			label {
+				display: block;
+				font-size: 12px;
+				font-weight: 600;
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
+				color: var(--text-3);
+				margin-bottom: 8px;
+			}
+			.field-hint {
+				font-size: 12px;
+				color: var(--text-3);
+				margin: 6px 0 0;
+				font-weight: 400;
+				text-transform: none;
+				letter-spacing: 0;
+			}
+			input[type="text"], input[type="url"] {
+				display: block;
+				width: 100%;
+				padding: 11px 14px;
+				background: var(--panel-2);
+				border: 1px solid var(--border-2);
+				border-radius: 8px;
+				color: var(--text);
+				font: inherit;
+				font-size: 14px;
+				outline: none;
+				transition: border-color 0.15s, box-shadow 0.15s;
+			}
+			input[type="text"]:focus, input[type="url"]:focus {
+				border-color: var(--accent);
+				box-shadow: 0 0 0 3px rgba(125,211,252,0.10);
+			}
+
+			/* Drop zone */
+			.drop-zone {
+				border: 1.5px dashed var(--border-2);
+				border-radius: 10px;
+				padding: 40px 20px;
+				text-align: center;
+				cursor: pointer;
+				transition: border-color 0.15s, background 0.15s;
+				position: relative;
+			}
+			.drop-zone:hover, .drop-zone.dragover {
+				border-color: var(--accent);
+				background: var(--accent-dim);
+			}
+			.drop-zone input[type="file"] {
+				position: absolute;
+				inset: 0;
+				opacity: 0;
+				cursor: pointer;
+				width: 100%;
+				height: 100%;
+			}
+			.drop-zone-icon {
+				font-size: 32px;
+				margin-bottom: 10px;
+				line-height: 1;
+			}
+			.drop-zone-title {
+				font-size: 14px;
+				font-weight: 600;
+				color: var(--text);
+				margin-bottom: 4px;
+			}
+			.drop-zone-sub {
+				font-size: 12px;
+				color: var(--text-3);
+			}
+			.drop-zone.has-file .drop-zone-icon { font-size: 22px; margin-bottom: 6px; }
+			.drop-zone.has-file .drop-zone-title { color: var(--ok); }
+
+			/* Submit button */
+			.submit-btn {
+				display: block;
+				width: 100%;
+				margin-top: 20px;
+				padding: 13px 20px;
+				background: var(--accent);
+				color: #0b1014;
+				font: inherit;
+				font-weight: 700;
+				font-size: 14px;
+				border: none;
+				border-radius: 8px;
+				cursor: pointer;
+				transition: opacity 0.15s, transform 0.1s;
+				letter-spacing: 0.01em;
+			}
+			.submit-btn:hover:not(:disabled) { opacity: 0.9; }
+			.submit-btn:active:not(:disabled) { transform: scale(0.99); }
+			.submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+			/* ── Progress ────────────────────────────────────────────────── */
+			.progress-wrap {
+				display: none;
+				padding: 24px;
+				border-top: 1px solid var(--border);
+			}
+			.progress-wrap.visible { display: block; }
+			.progress-label {
+				font-size: 13px;
+				color: var(--text-2);
+				margin-bottom: 10px;
+				display: flex;
+				justify-content: space-between;
+			}
+			.progress-bar-track {
+				height: 4px;
+				background: var(--border-2);
+				border-radius: 999px;
+				overflow: hidden;
+			}
+			.progress-bar-fill {
+				height: 100%;
+				background: var(--accent);
+				border-radius: 999px;
+				transition: width 0.3s ease;
+				width: 0%;
+			}
+			.progress-stage {
+				font-size: 11px;
+				color: var(--text-3);
+				margin-top: 8px;
+				letter-spacing: 0.03em;
+			}
+
+			/* ── Status messages ─────────────────────────────────────────── */
+			.status-msg {
+				display: none;
+				padding: 14px 16px;
+				border-radius: 10px;
+				font-size: 13px;
+				line-height: 1.5;
+				margin-top: 16px;
+			}
+			.status-msg.err { display: block; background: var(--err-dim); border: 1px solid rgba(248,113,113,0.2); color: var(--err); }
+			.status-msg.ok { display: block; background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2); color: var(--ok); }
+
+			/* ── Success state ───────────────────────────────────────────── */
+			.success-card {
+				display: none;
+				background: var(--panel);
+				border: 1px solid var(--border-2);
+				border-radius: var(--radius);
+				padding: 32px 24px;
+				text-align: center;
+				margin-top: 20px;
+			}
+			.success-card.visible { display: block; }
+			.success-icon { font-size: 40px; margin-bottom: 12px; }
+			.success-card h2 { font-size: 20px; margin: 0 0 8px; letter-spacing: -0.01em; }
+			.success-card p { color: var(--text-2); font-size: 14px; margin: 0 0 20px; }
+			.success-btn {
+				display: inline-block;
+				padding: 12px 28px;
+				background: var(--accent);
+				color: #0b1014;
+				font-weight: 700;
+				font-size: 14px;
+				border-radius: 8px;
+				text-decoration: none;
+				transition: opacity 0.15s;
+			}
+			.success-btn:hover { opacity: 0.9; }
+
+			/* ── Info blocks ─────────────────────────────────────────────── */
+			.info-section { margin-top: 32px; }
+			.info-section h3 { font-size: 14px; font-weight: 600; color: var(--text-2); margin: 0 0 10px; }
+			.info-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+			.info-steps li {
+				display: flex;
+				gap: 12px;
+				font-size: 13px;
+				color: var(--text-2);
+				align-items: flex-start;
+			}
+			.info-steps li::before {
+				content: attr(data-step);
+				flex-shrink: 0;
+				width: 22px;
+				height: 22px;
+				background: var(--panel-2);
+				border: 1px solid var(--border-2);
+				border-radius: 50%;
+				font-size: 11px;
+				font-weight: 700;
+				color: var(--accent);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+		</style>
+	</head>
+	<body>
+		<main class="page">
+			<a class="back-link" href="/create">
+				← Back to Create
+			</a>
+
+			<h1>Import from Ready Player Me</h1>
+			<p class="lede">
+				Ready Player Me shut down in January 2026. Bring your avatars here
+				— they'll live on three.ws, fully owned by you, on-chain-ready.
+			</p>
+
+			<div class="warn-banner">
+				<span class="warn-banner-icon">⚠</span>
+				<span>
+					<strong>RPM models.readyplayer.me is offline.</strong> If you already
+					downloaded your GLB file, use the <em>Upload GLB</em> tab. If you
+					have a CDN-cached URL (e.g. from d1a370nemizbjq.cloudfront.net), paste
+					it in the URL tab — it may still resolve.
+				</span>
+			</div>
+
+			<div class="import-card" id="import-card">
+				<div class="tab-bar" role="tablist">
+					<button class="tab-btn active" data-tab="url" role="tab" aria-selected="true" id="tab-url">
+						Paste URL
+					</button>
+					<button class="tab-btn" data-tab="file" role="tab" aria-selected="false" id="tab-file">
+						Upload GLB
+					</button>
+				</div>
+
+				<!-- URL tab -->
+				<div class="tab-panel active" id="panel-url">
+					<label for="rpm-url">RPM avatar URL or CDN link</label>
+					<input
+						type="url"
+						id="rpm-url"
+						placeholder="https://models.readyplayer.me/64c3f8e2…glb"
+						autocomplete="off"
+						spellcheck="false"
+					/>
+					<p class="field-hint">
+						Accepts any GLB URL — RPM, CloudFront, or your own storage.
+						The file is fetched server-side so CORS is not an issue.
+					</p>
+
+					<label for="rpm-name" style="margin-top: 18px">Avatar name (optional)</label>
+					<input
+						type="text"
+						id="rpm-name"
+						placeholder="My RPM Avatar"
+						maxlength="64"
+						autocomplete="off"
+					/>
+
+					<button class="submit-btn" id="submit-url" type="button">Import from URL</button>
+					<div class="status-msg" id="url-status"></div>
+				</div>
+
+				<!-- File upload tab -->
+				<div class="tab-panel" id="panel-file">
+					<label>GLB file</label>
+					<div class="drop-zone" id="drop-zone">
+						<input
+							type="file"
+							id="glb-file"
+							accept=".glb,model/gltf-binary,application/octet-stream"
+							aria-label="Choose a GLB file"
+						/>
+						<div class="drop-zone-icon">📦</div>
+						<div class="drop-zone-title" id="drop-title">Drag &amp; drop your GLB here</div>
+						<div class="drop-zone-sub">or click to browse · .glb · max 100 MB</div>
+					</div>
+
+					<label for="file-name" style="margin-top: 18px">Avatar name (optional)</label>
+					<input
+						type="text"
+						id="file-name"
+						placeholder="My RPM Avatar"
+						maxlength="64"
+						autocomplete="off"
+					/>
+
+					<button class="submit-btn" id="submit-file" type="button" disabled>Upload GLB</button>
+					<div class="status-msg" id="file-status"></div>
+				</div>
+
+				<!-- Progress (shared, shown below whichever tab is active) -->
+				<div class="progress-wrap" id="progress-wrap">
+					<div class="progress-label">
+						<span id="progress-text">Importing…</span>
+						<span id="progress-pct">0%</span>
+					</div>
+					<div class="progress-bar-track">
+						<div class="progress-bar-fill" id="progress-fill"></div>
+					</div>
+					<div class="progress-stage" id="progress-stage">Fetching model…</div>
+				</div>
+			</div>
+
+			<!-- Success state (replaces the card) -->
+			<div class="success-card" id="success-card">
+				<div class="success-icon">🎉</div>
+				<h2>Avatar imported!</h2>
+				<p id="success-name">Your avatar is ready on three.ws.</p>
+				<a class="success-btn" id="success-link" href="/avatars">View avatar</a>
+			</div>
+
+			<div class="info-section">
+				<h3>How to find your RPM GLB</h3>
+				<ul class="info-steps">
+					<li data-step="1">
+						If you used the RPM editor, your avatar ID was in the URL
+						(<code>readyplayer.me/avatar/64c3f8e2…</code>). The GLB URL was
+						<code>https://models.readyplayer.me/{id}.glb</code>.
+					</li>
+					<li data-step="2">
+						If you deployed an app using the RPM SDK, check your app's
+						network requests — the GLB URL was fetched on avatar load and
+						often appears in your browser's DevTools Network tab.
+					</li>
+					<li data-step="3">
+						If you downloaded the file, use the <em>Upload GLB</em> tab above.
+					</li>
+				</ul>
+			</div>
+		</main>
+
+		<script type="module">
+			import { saveRemoteGlbToAccount } from '/src/account.js';
+
+			// ── Tab switching ──────────────────────────────────────────────
+			document.querySelectorAll('.tab-btn').forEach((btn) => {
+				btn.addEventListener('click', () => {
+					document.querySelectorAll('.tab-btn').forEach((b) => {
+						b.classList.toggle('active', b === btn);
+						b.setAttribute('aria-selected', String(b === btn));
+					});
+					const target = btn.dataset.tab;
+					document.querySelectorAll('.tab-panel').forEach((p) => {
+						p.classList.toggle('active', p.id === `panel-${target}`);
+					});
+				});
+			});
+
+			// ── File drop zone ─────────────────────────────────────────────
+			const dropZone = document.getElementById('drop-zone');
+			const fileInput = document.getElementById('glb-file');
+			const dropTitle = document.getElementById('drop-title');
+			const submitFile = document.getElementById('submit-file');
+			let selectedFile = null;
+
+			function setFile(f) {
+				if (!f || !f.name.endsWith('.glb')) {
+					showStatus('file-status', 'err', 'Please choose a .glb file.');
+					return;
+				}
+				if (f.size > 100 * 1024 * 1024) {
+					showStatus('file-status', 'err', `File too large (${prettyBytes(f.size)}). Max 100 MB.`);
+					return;
+				}
+				selectedFile = f;
+				dropZone.classList.add('has-file');
+				dropTitle.textContent = `${f.name}  (${prettyBytes(f.size)})`;
+				submitFile.disabled = false;
+				clearStatus('file-status');
+			}
+
+			fileInput.addEventListener('change', () => {
+				if (fileInput.files[0]) setFile(fileInput.files[0]);
+			});
+			dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+			dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+			dropZone.addEventListener('drop', (e) => {
+				e.preventDefault();
+				dropZone.classList.remove('dragover');
+				const f = e.dataTransfer?.files?.[0];
+				if (f) setFile(f);
+			});
+
+			// ── Import from URL ────────────────────────────────────────────
+			document.getElementById('submit-url').addEventListener('click', async () => {
+				const rawUrl = document.getElementById('rpm-url').value.trim();
+				if (!rawUrl) {
+					showStatus('url-status', 'err', 'Please enter a GLB URL.');
+					return;
+				}
+				let url;
+				try {
+					url = new URL(rawUrl);
+					if (!['http:', 'https:'].includes(url.protocol)) throw new Error('bad protocol');
+				} catch {
+					showStatus('url-status', 'err', 'Enter a valid http:// or https:// URL.');
+					return;
+				}
+				const name = document.getElementById('rpm-name').value.trim() || deriveName(rawUrl);
+				clearStatus('url-status');
+				await runImport(rawUrl, name, 'url-status', { source: 'rpm_import', source_url: rawUrl });
+			});
+
+			// ── Upload from file ───────────────────────────────────────────
+			document.getElementById('submit-file').addEventListener('click', async () => {
+				if (!selectedFile) {
+					showStatus('file-status', 'err', 'Please choose a GLB file first.');
+					return;
+				}
+				const name = document.getElementById('file-name').value.trim() || selectedFile.name.replace(/\.glb$/i, '');
+				clearStatus('file-status');
+				await runImport(selectedFile, name, 'file-status', { source: 'rpm_import' });
+			});
+
+			// ── Core import flow ───────────────────────────────────────────
+			async function runImport(source, name, statusId, meta) {
+				setFormBusy(true);
+				showProgress(true, 'Starting…');
+
+				const abortCtrl = new AbortController();
+
+				try {
+					const avatar = await saveRemoteGlbToAccount(source, {
+						name,
+						visibility: 'public',
+						tags: ['rpm', 'imported'],
+						source: meta.source || 'rpm_import',
+						source_meta: meta,
+					}, {
+						signal: abortCtrl.signal,
+						onProgress: (pct) => {
+							const stage = pct < 10 ? 'Fetching model…'
+								: pct < 30 ? 'Normalizing bones…'
+								: pct < 95 ? 'Uploading to three.ws…'
+								: 'Saving avatar record…';
+							updateProgress(pct, stage);
+						},
+					});
+
+					showProgress(false);
+					showSuccess(avatar);
+				} catch (err) {
+					console.error('[import-rpm]', err);
+					showProgress(false);
+
+					if (err.code === 'not_signed_in' || err.status === 401) {
+						const returnTo = encodeURIComponent(location.pathname + location.search);
+						location.href = `/login?return=${returnTo}`;
+						return;
+					}
+
+					const msg = friendlyError(err);
+					showStatus(statusId, 'err', msg);
+					setFormBusy(false);
+				}
+			}
+
+			function showSuccess(avatar) {
+				document.getElementById('import-card').style.display = 'none';
+				const card = document.getElementById('success-card');
+				card.classList.add('visible');
+				document.getElementById('success-name').textContent =
+					avatar?.name ? `"${avatar.name}" is ready on three.ws.` : 'Your avatar is ready on three.ws.';
+				const link = document.getElementById('success-link');
+				if (avatar?.id) link.href = `/avatars/${encodeURIComponent(avatar.id)}`;
+			}
+
+			// ── Progress UI ────────────────────────────────────────────────
+			function showProgress(visible, label) {
+				const wrap = document.getElementById('progress-wrap');
+				wrap.classList.toggle('visible', visible);
+				if (label) {
+					document.getElementById('progress-text').textContent = label;
+					document.getElementById('progress-stage').textContent = '';
+					document.getElementById('progress-fill').style.width = '0%';
+					document.getElementById('progress-pct').textContent = '0%';
+				}
+			}
+
+			function updateProgress(pct, stageLabel) {
+				document.getElementById('progress-fill').style.width = `${pct}%`;
+				document.getElementById('progress-pct').textContent = `${pct}%`;
+				if (stageLabel) document.getElementById('progress-stage').textContent = stageLabel;
+				if (pct === 0) document.getElementById('progress-text').textContent = 'Starting…';
+				else if (pct < 50) document.getElementById('progress-text').textContent = 'Uploading…';
+				else if (pct < 95) document.getElementById('progress-text').textContent = 'Almost there…';
+				else document.getElementById('progress-text').textContent = 'Finishing…';
+			}
+
+			// ── Helpers ────────────────────────────────────────────────────
+			function setFormBusy(busy) {
+				['submit-url', 'submit-file'].forEach((id) => {
+					const btn = document.getElementById(id);
+					if (btn) btn.disabled = busy;
+				});
+				const fileEl = document.getElementById('glb-file');
+				if (fileEl) fileEl.disabled = busy;
+			}
+
+			function showStatus(id, tone, msg) {
+				const el = document.getElementById(id);
+				if (!el) return;
+				el.className = `status-msg ${tone}`;
+				el.textContent = msg;
+			}
+
+			function clearStatus(id) {
+				const el = document.getElementById(id);
+				if (el) el.className = 'status-msg';
+			}
+
+			function deriveName(url) {
+				try {
+					const path = new URL(url).pathname;
+					const seg = path.split('/').pop()?.replace(/\.glb$/i, '') || '';
+					return seg.length > 2 ? seg : 'Imported Avatar';
+				} catch {
+					return 'Imported Avatar';
+				}
+			}
+
+			function prettyBytes(n) {
+				if (n < 1024) return `${n} B`;
+				if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+				return `${(n / 1024 / 1024).toFixed(1)} MB`;
+			}
+
+			function friendlyError(err) {
+				const code = err.code || '';
+				const stage = err.stage || '';
+				if (code === 'upload_blocked') return 'Upload blocked — check your network or try a different connection.';
+				if (code === 'upload_failed') return 'Upload failed — the file may be too large or invalid.';
+				if (code === 'upload_aborted') return 'Upload cancelled.';
+				if (code === 'size_mismatch') return 'File size mismatch — please try again.';
+				if (code === 'upload_missing') return 'Upload did not reach storage — try again.';
+				if (stage === 'fetch') return `Could not fetch that URL: ${err.message}. The file may no longer exist.`;
+				if (stage === 'presign') return "Couldn't start upload — are you signed in?";
+				if (stage === 'commit') return 'File uploaded but save failed — please retry.';
+				return err.message || 'Import failed. Please try again.';
+			}
+		</script>
+	</body>
+</html>

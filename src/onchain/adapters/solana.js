@@ -13,7 +13,6 @@
  */
 
 import { Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { WalletAdapter } from './base.js';
 import { solana } from '../chain-ref.js';
 
 // Route through our same-origin proxy. The public mainnet RPC returns 403 to
@@ -63,13 +62,13 @@ function decodeTx(b64) {
 	}
 }
 
-export class SolanaAdapter extends WalletAdapter {
+/** @implements {import('./base.js').WalletAdapter} */
+export class SolanaAdapter {
 	#provider = null;
 	#address = null;
 	#preferred;
 
 	constructor({ preferredWallet = null } = {}) {
-		super();
 		this.#preferred = preferredWallet;
 	}
 

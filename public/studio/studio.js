@@ -737,17 +737,98 @@ function selectByModelUrl(url) {
 			return url;
 		}
 	})();
+
+	// Search by model_url (public/unlisted avatars) and by storage_key path
+	// (private avatars where model_url is null but storage_key is available).
 	const found = state.avatars.find((a) => {
-		if (!a.model_url) return false;
-		if (a.model_url === url) return true;
-		try {
-			return new URL(a.model_url).pathname === urlPath;
-		} catch {
-			return false;
+		if (a.model_url) {
+			if (a.model_url === url) return true;
+			try {
+				if (new URL(a.model_url).pathname === urlPath) return true;
+			} catch {}
 		}
+		if (a.storage_key) {
+			const keyPath = '/' + a.storage_key.split('/').map(encodeURIComponent).join('/');
+			if (keyPath === urlPath) return true;
+		}
+		return false;
 	});
-	if (found) selectAvatar(found.id);
-	else toast('Pre-selected model not found in your avatar library');
+	if (found) return selectAvatar(found.id);
+
+	// Not in the local list — try to auto-register if this is the user's own R2 file.
+	if (state.user) {
+		const storageKey = extractOwnStorageKey(url, state.user.id);
+		if (storageKey) {
+			autoRegisterAndSelect(url, storageKey);
+			return;
+		}
+	}
+
+	toast('Pre-selected model not found in your avatar library');
+}
+
+// Returns the storage_key if url is an R2 object under this user's prefix,
+// otherwise null.
+function extractOwnStorageKey(url, userId) {
+	let pathname;
+	try {
+		pathname = new URL(url).pathname;
+	} catch {
+		return null;
+	}
+	// Decode percent-encoded segments so the storage_key is clean.
+	const key = pathname.replace(/^\//, '').split('/').map(decodeURIComponent).join('/');
+	if (!key.startsWith(`u/${userId}/`)) return null;
+	if (!key.endsWith('.glb')) return null;
+	return key;
+}
+
+async function autoRegisterAndSelect(url, storageKey) {
+	toast('Registering model…');
+	try {
+		// HEAD the object to get its size — required by the avatar creation endpoint.
+		const head = await fetch(url, { method: 'HEAD' });
+		if (!head.ok) throw new Error(`HEAD ${head.status}`);
+		const sizeBytes = Number(head.headers.get('content-length'));
+		if (!sizeBytes) throw new Error('content-length missing');
+
+		// Derive a name from the URL path (last meaningful segment before the file).
+		const segments = storageKey.split('/');
+		const namePart = segments[segments.length - 2] || segments[segments.length - 1];
+		const name = namePart.replace(/[-_]/g, ' ').slice(0, 80) || 'Uploaded model';
+
+		const res = await fetch('/api/avatars', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				storage_key: storageKey,
+				size_bytes: sizeBytes,
+				name,
+				visibility: 'public',
+				source: 'direct-upload',
+			}),
+		});
+		if (!res.ok) {
+			const err = await res.json().catch(() => ({}));
+			throw new Error(err.message || `${res.status}`);
+		}
+		const { avatar } = await res.json();
+		// Add to state and select.
+		const ownIds = new Set(state.avatars.map((a) => a.id));
+		if (!ownIds.has(avatar.id)) {
+			state.avatars = [
+				state.avatars[0], // keep DEMO_AVATAR first
+				{ ...avatar, model_url: url },
+				...state.avatars.slice(1),
+			];
+			renderAvatarList();
+		}
+		selectAvatar(avatar.id);
+	} catch (err) {
+		console.warn('[studio] autoRegisterAndSelect failed', err);
+		toast('Could not register model — pick one from your library');
+	}
 }
 
 function selectType(key) {

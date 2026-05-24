@@ -220,7 +220,11 @@ function renderShowcase(w) {
 	}
 
 	function widgetUrl() {
-		return `${ORIGIN}/widget#${buildHashParams()}`;
+		// Gallery is dense (N widgets per page) → reveal=interaction keeps
+		// WebGL slots free until the visitor clicks; auto-poster from
+		// /api/widgets/<id>/og means each card shows the avatar instantly.
+		const poster = `${ORIGIN}/api/widgets/${encodeURIComponent(w.id)}/og`;
+		return `${ORIGIN}/widget#${buildHashParams()}&reveal=interaction&poster=${encodeURIComponent(poster)}`;
 	}
 	function pageUrl() {
 		// /w/<id> currently only carries the saved config — for customized embeds

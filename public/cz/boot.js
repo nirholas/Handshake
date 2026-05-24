@@ -121,12 +121,6 @@ async function handleClaimClick(state) {
 				<p>This agent is already owned by <code>${truncate(state.ownerAddress, 20)}</code>.</p>
 				<button class="modal-close-btn" onclick="document.getElementById('cz-claim-modal').style.display='none'">OK</button>
 			`;
-		} else if (result.message === 'transfer_available') {
-			content.innerHTML = `
-				<h3 style="margin:0 0 1rem">Transfer Ownership</h3>
-				<p>This agent can be transferred to your wallet. Follow the prompts to continue.</p>
-				<button class="modal-close-btn" onclick="document.getElementById('cz-claim-modal').style.display='none'">OK</button>
-			`;
 		} else {
 			content.innerHTML = `
 				<h3 style="margin:0 0 1rem">Claim Successful</h3>
@@ -170,7 +164,9 @@ function updateModal(progress, state) {
 			already_owned: 'Already owned.',
 		},
 		transfer: {
-			guide: 'Transfer available. Approve in your wallet…',
+			submitting: 'Submitting transfer…',
+			pending: 'Waiting for confirmation…',
+			confirmed: 'Transfer confirmed!',
 		},
 	};
 

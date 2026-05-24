@@ -16,7 +16,6 @@
  */
 
 import { Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { TokenAdapter } from './base.js';
 import { getAdapter as getWalletAdapter } from '../adapters/index.js';
 
 // Route through our same-origin proxy. The public mainnet RPC returns 403 to
@@ -42,7 +41,8 @@ function decodeTx(b64) {
 	}
 }
 
-export class PumpfunTokenAdapter extends TokenAdapter {
+/** @implements {import('./base.js').TokenAdapter} */
+export class PumpfunTokenAdapter {
 	get provider() {
 		return 'pumpfun';
 	}

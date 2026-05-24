@@ -496,3 +496,9 @@ Each widget load records one minimal analytics event:
 | `created_at` | Timestamp |
 
 No IP addresses, no user-agent strings, no cookies, no chat message content. The widget owner can see aggregated view counts in their [Dashboard](https://three.ws/dashboard).
+
+---
+
+## Programmatic control
+
+Need to drive a widget from the parent page — change the camera, play an animation, grab a screenshot? See the [Widget API (JSON-RPC)](./widget-api.md) reference. The `ThreeWidget` SDK lives at `/widget-client.js` and works with any iframe pointing at `/widget`.

@@ -19,10 +19,15 @@ export function redactPii(text) {
 	let out = String(text ?? '');
 	let redacted = false;
 	for (const { token, re } of PATTERNS) {
-		if (re.test(out)) {
+		// Reset lastIndex before each use: global regexes are module-level
+		// singletons and .test() advances lastIndex, which could cause a
+		// concurrent call (or a second call in the same tick) to start scanning
+		// from a non-zero offset and miss matches near the start of the string.
+		re.lastIndex = 0;
+		out = out.replace(re, (match) => {
 			redacted = true;
-			out = out.replace(re, token);
-		}
+			return token;
+		});
 	}
 	return { content: out, redacted };
 }

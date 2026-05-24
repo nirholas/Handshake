@@ -21,7 +21,7 @@ import { randomUUID } from 'crypto';
 // Cached per-process after first load.
 //
 // Provider name precedence:
-//   1. Explicit env: AVATAR_REGEN_PROVIDER=replicate|gcp|stub
+//   1. Explicit env: AVATAR_REGEN_PROVIDER=replicate|huggingface|gcp
 //   2. Inferred from credentials: if REPLICATE_API_TOKEN is set with no
 //      explicit provider, default to 'replicate'. Same for GCP_RECONSTRUCTION_URL.
 //      This keeps the deploy path 1-step: drop the token in env, ship.
@@ -43,11 +43,6 @@ async function getRegenProvider() {
 	if (name === 'none' || !name) return { name, instance: null };
 	if (_regenProviderCache && _regenProviderName === name) {
 		return { name, instance: _regenProviderCache };
-	}
-	if (name === 'stub') {
-		_regenProviderCache = null;
-		_regenProviderName = name;
-		return { name, instance: null };
 	}
 	if (name === 'replicate') {
 		const mod = await import('../_providers/replicate.js');
@@ -297,19 +292,8 @@ const handleRegenerate = wrap(async (req, res) => {
 			res,
 			501,
 			'regen_unconfigured',
-			'Avatar regeneration is not yet wired to an ML backend. Set AVATAR_REGEN_PROVIDER env var.',
+			'Avatar regeneration requires a configured backend. Set AVATAR_REGEN_PROVIDER and the matching API token (REPLICATE_API_TOKEN, HF_TOKEN, or GCP_RECONSTRUCTION_URL).',
 		);
-	}
-
-	if (provider.name === 'stub') {
-		const jobId = `stub-${randomUUID()}`;
-		await sql`
-			insert into avatar_regen_jobs
-				(job_id, user_id, source_avatar_id, mode, params, status, provider, created_at, updated_at)
-			values
-				(${jobId}, ${userId}, ${body.sourceAvatarId}, ${body.mode}, ${JSON.stringify(body.params ?? {})}, 'queued', 'stub', now(), now())
-		`;
-		return json(res, 202, { ok: true, jobId, status: 'queued', eta: null });
 	}
 
 	// Real provider — submit the job, persist the external id.
@@ -375,7 +359,7 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 	// Pull a fresh status from the provider when the job is still in flight
 	// and we have an external id to query. The status endpoint serves as our
 	// poll trigger — no separate cron needed for short-lived jobs.
-	if ((job.status === 'queued' || job.status === 'running') && job.provider && job.provider !== 'stub' && job.ext_job_id) {
+	if ((job.status === 'queued' || job.status === 'running') && job.provider && job.ext_job_id) {
 		try {
 			const provider = await getRegenProvider();
 			if (provider.instance) {
@@ -738,7 +722,7 @@ const handleReconstruct = wrap(async (req, res) => {
 			res,
 			501,
 			'regen_unconfigured',
-			'Avatar reconstruction is not yet wired to an ML backend. Set AVATAR_REGEN_PROVIDER env var.',
+			'Avatar reconstruction requires a configured backend. Set AVATAR_REGEN_PROVIDER and the matching API token (REPLICATE_API_TOKEN, HF_TOKEN, or GCP_RECONSTRUCTION_URL).',
 		);
 	}
 

@@ -1693,6 +1693,14 @@
             "dest": "/chat/$1"
         },
         {
+            "src": "/import/rpm",
+            "dest": "/import-rpm.html"
+        },
+        {
+            "src": "/import/rpm/",
+            "dest": "/import-rpm.html"
+        },
+        {
             "src": "/create/selfie",
             "dest": "/create-selfie.html"
         },

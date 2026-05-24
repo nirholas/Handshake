@@ -1561,7 +1561,7 @@ export class RegisterUI {
 						<button type="button" class="erc8004-export-opt" data-role="exp-curl">
 							<div class="erc8004-export-emoji">🌐</div>
 							<div class="erc8004-export-title">curl</div>
-							<div class="erc8004-export-sub">Graph query stub</div>
+							<div class="erc8004-export-sub">Query registry via curl</div>
 						</button>
 					</div>
 				</div>

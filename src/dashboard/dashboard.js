@@ -4226,7 +4226,11 @@ function widgetCard(w, ctx) {
 	card.className = 'widget-card card';
 	card.dataset.id = w.id;
 
-	const previewSrc = `/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1`;
+	// Dashboard grid often has many widget cards visible — pass poster=auto so
+	// each card shows the OG snapshot instantly while WebGL warms up only for
+	// the cards actually scrolled into view (the iframe is loading="lazy").
+	const poster = `/api/widgets/${encodeURIComponent(w.id)}/og`;
+	const previewSrc = `/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1&poster=${encodeURIComponent(poster)}`;
 	const previewHtml = w.avatar
 		? `<iframe data-src="${attr(previewSrc)}" loading="lazy" tabindex="-1" title="Preview of ${attr(w.name || 'widget')}"></iframe>`
 		: `<div class="placeholder">Avatar unavailable.<br>Edit to pick a replacement.</div>`;
@@ -4400,7 +4404,8 @@ async function openWidgetDrawer(w, ctx) {
 	drawer.setAttribute('aria-label', `Widget details — ${w.name || 'untitled'}`);
 	drawer.tabIndex = -1;
 
-	const previewSrc = `/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1`;
+	const drawerPoster = `/api/widgets/${encodeURIComponent(w.id)}/og`;
+	const previewSrc = `/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1&poster=${encodeURIComponent(drawerPoster)}`;
 	const pageUrl = `${location.origin}/w/${encodeURIComponent(w.id)}`;
 	const iframeSnippet = makeIframeSnippet(w, pageUrl, 600, 600);
 	const scriptSnippet = `<script async src="${location.origin}/embed.js" data-widget="${esc(w.id)}"></script>`;
@@ -4866,7 +4871,8 @@ function openShareModal(w) {
 		const maxW = 320,
 			maxH = 320;
 		const scale = Math.min(maxW / dim.width, maxH / dim.height, 1);
-		previewEl.innerHTML = `<iframe src="/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1" style="width:${dim.width}px; height:${dim.height}px; border:0; transform:scale(${scale}); transform-origin:center" title="Preview"></iframe>`;
+		const resizePoster = `/api/widgets/${encodeURIComponent(w.id)}/og`;
+		previewEl.innerHTML = `<iframe src="/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1&poster=${encodeURIComponent(resizePoster)}" style="width:${dim.width}px; height:${dim.height}px; border:0; transform:scale(${scale}); transform-origin:center" title="Preview"></iframe>`;
 		previewEl.style.width = `${dim.width * scale}px`;
 		previewEl.style.height = `${dim.height * scale}px`;
 	}

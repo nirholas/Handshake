@@ -8,6 +8,10 @@
  * A "token" here is a fungible asset bound to an agent identity (memecoin on a
  * bonding curve, social token, etc.). Distinct from the agent's *identity* NFT
  * minted via the deploy flow.
+ *
+ * Interface-by-convention: subclasses historically override every method and
+ * never call super. The shape lives in JSDoc so authors get static-analysis
+ * feedback without a runtime base class that exists only to throw.
  */
 
 /**
@@ -30,28 +34,11 @@
  */
 
 /**
- * @abstract
+ * @typedef {object} TokenAdapter
+ * @property {string} provider          'pumpfun' | 'zora' | etc.
+ * @property {'solana'|'evm'} family
+ * @property {(ctx: { agent: object }) => { ok: boolean, reason?: string }} validatePreconditions
+ *   Validate that a launch is permitted for the given agent state. Adapters
+ *   use this to enforce constraints (Pump.fun is Solana-only, requires the
+ *   agent to already have a Solana identity, etc.).
  */
-export class TokenAdapter {
-	/** @returns {string} 'pumpfun' | etc. */
-	get provider() {
-		throw new Error('not implemented');
-	}
-
-	/** @returns {string} 'solana' | 'evm' */
-	get family() {
-		throw new Error('not implemented');
-	}
-
-	/**
-	 * Validate that a launch is permitted for the given agent state. Adapters
-	 * use this to enforce constraints (Pump.fun is Solana-only, requires the
-	 * agent to already have a Solana identity, etc.).
-	 *
-	 * @param {{ agent: object }} ctx
-	 * @returns {{ ok: boolean, reason?: string }}
-	 */
-	validatePreconditions(_ctx) {
-		throw new Error('not implemented');
-	}
-}

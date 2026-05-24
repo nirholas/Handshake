@@ -55,8 +55,14 @@ function _formatTime(seconds) {
 	return '>1d';
 }
 
-/** Sample base58 string (deterministic-ish — not crypto). For preview only. */
-function _sampleAddress(prefix = '') {
+/**
+ * Random base58 suffix used purely to visualize address length in the modal.
+ * The prefix portion is the real user input; the rest is shown grayed-out so
+ * the layout previews the final 44-char keypair. Never persisted, never sent
+ * to the grinder — see the CSS `.vm-preview .rest` rule and the "Preview"
+ * label above the box.
+ */
+function _previewSuffix(prefix = '') {
 	const len = 44 - prefix.length;
 	let out = prefix;
 	for (let i = 0; i < len; i++) {
@@ -159,6 +165,7 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 					placeholder="e.g. AGNT" autocomplete="off" spellcheck="false"
 					value="${_esc(initial)}" />
 
+				<div class="vm-preview-label" style="font-size:.7rem;color:#888;margin-top:.7rem;text-transform:uppercase;letter-spacing:.06em;">Preview — random suffix shown for layout only</div>
 				<div class="vm-preview" aria-live="polite" id="vm-preview"></div>
 
 				<div class="vm-meter" aria-hidden="true">
@@ -283,7 +290,7 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 			okBtn.textContent = 'Use prefix';
 
 			if (!raw) {
-				preview.innerHTML = '<span class="rest">' + _esc(_sampleAddress()) + '</span>';
+				preview.innerHTML = '<span class="rest">' + _esc(_previewSuffix()) + '</span>';
 				estEl.textContent = 'enter a prefix above';
 				tierEl.innerHTML = '';
 				okBtn.disabled = true;
@@ -296,7 +303,7 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 				okBtn.disabled = true;
 				return;
 			}
-			const sample = _sampleAddress(raw);
+			const sample = _previewSuffix(raw);
 			preview.innerHTML = `<span class="pfx">${_esc(raw)}</span><span class="rest">${_esc(sample.slice(raw.length))}</span>`;
 			estEl.textContent = `est. ${_formatTime(_estimateSeconds(raw.length))} on ${_coreCount()} cores`;
 			tierEl.innerHTML = raw.length >= FREE_THRESHOLD
@@ -311,7 +318,7 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 			previewTimer = setInterval(() => {
 				const raw = input.value;
 				if (raw && BASE58_RE.test(raw)) {
-					const sample = _sampleAddress(raw);
+					const sample = _previewSuffix(raw);
 					const pfxNode = preview.querySelector('.pfx');
 					const restNode = preview.querySelector('.rest');
 					if (pfxNode && restNode) restNode.textContent = sample.slice(raw.length);

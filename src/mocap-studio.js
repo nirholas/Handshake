@@ -161,9 +161,14 @@ async function loadByHandle() {
 		await viewer.load(avatar.model_url, '', new Map());
 		// Re-attach idle + face mocap to the freshly loaded root.
 		if (state.idle) state.idle.dispose();
-		state.idle = new IdleAnimation({ getRoot: () => viewer.content, seed: state.avatar.id });
 		if (!viewer._afterAnimateHooks) viewer._afterAnimateHooks = [];
-		viewer._afterAnimateHooks.push((dt) => state.idle?.update(dt));
+		if (state._idleHook) {
+			const idx = viewer._afterAnimateHooks.indexOf(state._idleHook);
+			if (idx !== -1) viewer._afterAnimateHooks.splice(idx, 1);
+		}
+		state.idle = new IdleAnimation({ getRoot: () => viewer.content, seed: state.avatar.id });
+		state._idleHook = (dt) => state.idle?.update(dt);
+		viewer._afterAnimateHooks.push(state._idleHook);
 		if (state.mocap) reattachMocap();
 		avatarInfo.textContent = `${state.avatar.name} · @${state.avatar.handle}`;
 	} catch (err) {

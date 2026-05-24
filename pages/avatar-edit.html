@@ -493,6 +493,85 @@
 				font-variant-numeric: tabular-nums;
 			}
 
+			/* ── Blend wheel ────────────────────────────────────────── */
+			.ae-blend-group > .ae-blend-body {
+				padding: 16px 14px 14px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 10px;
+			}
+			.ae-blend-canvas {
+				position: relative;
+				width: 220px;
+				height: 220px;
+				border: 1px solid var(--border-2);
+				border-radius: 50%;
+				background: radial-gradient(
+					circle at 50% 50%,
+					rgba(125, 211, 252, 0.04) 0%,
+					rgba(255, 255, 255, 0.015) 60%,
+					transparent 100%
+				);
+				cursor: crosshair;
+				flex-shrink: 0;
+				outline: none;
+			}
+			.ae-blend-canvas::before,
+			.ae-blend-canvas::after {
+				content: '';
+				position: absolute;
+				background: rgba(255, 255, 255, 0.07);
+				pointer-events: none;
+			}
+			.ae-blend-canvas::before {
+				left: 0; right: 0;
+				top: 50%; height: 1px;
+				transform: translateY(-50%);
+			}
+			.ae-blend-canvas::after {
+				top: 0; bottom: 0;
+				left: 50%; width: 1px;
+				transform: translateX(-50%);
+			}
+			.ae-blend-canvas:focus-visible {
+				box-shadow: 0 0 0 2px var(--accent);
+			}
+			.ae-blend-label {
+				position: absolute;
+				transform: translate(-50%, -50%);
+				font-size: 9px;
+				font-weight: 600;
+				color: rgba(255, 255, 255, 0.45);
+				letter-spacing: 0.07em;
+				text-transform: uppercase;
+				white-space: nowrap;
+				pointer-events: none;
+				user-select: none;
+			}
+			.ae-blend-puck {
+				position: absolute;
+				left: 50%; top: 50%;
+				width: 20px;
+				height: 20px;
+				border-radius: 50%;
+				background: var(--accent, #7dd3fc);
+				box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.25), 0 2px 8px rgba(0,0,0,0.5);
+				transform: translate(-50%, -50%);
+				cursor: grab;
+				touch-action: none;
+				z-index: 2;
+				transition: box-shadow 0.12s;
+			}
+			.ae-blend-puck:active { cursor: grabbing; box-shadow: 0 0 0 5px rgba(125, 211, 252, 0.35), 0 3px 12px rgba(0,0,0,0.6); }
+			.ae-blend-desc {
+				font-size: 11px;
+				color: var(--text-3);
+				text-align: center;
+				margin: 0;
+				min-height: 16px;
+			}
+
 			/* ── Face capture modal ─────────────────────────────────── */
 			.ae-face-backdrop {
 				position: fixed;

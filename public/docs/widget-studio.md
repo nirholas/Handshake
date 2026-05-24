@@ -240,6 +240,7 @@ You can override these freely in the iframe `width` and `height` attributes. Add
 
 ## Next steps
 
+- [Widget API (JSON-RPC)](./widget-api.md) — programmatic control over an embedded widget: camera, animation, screenshots, model loading
 - [Widgets reference](./widgets.md) — technical details, postMessage API, CSP config, and oEmbed spec
 - [Web component](./web-component.md) — the `<agent-3d>` custom element for developer integrations
 - [Embedding guide](./embedding.md) — advanced embedding patterns and iframe options

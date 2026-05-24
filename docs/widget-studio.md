@@ -127,7 +127,7 @@ The modal contains:
 
 ```html
 <iframe
-  src="https://three.ws/app#widget=wdgt_abc123&kiosk=true"
+  src="https://three.ws/widget#widget=wdgt_abc123&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"
@@ -240,6 +240,7 @@ You can override these freely in the iframe `width` and `height` attributes. Add
 
 ## Next steps
 
+- [Widget API (JSON-RPC)](./widget-api.md) — programmatic control over an embedded widget: camera, animation, screenshots, model loading
 - [Widgets reference](./widgets.md) — technical details, postMessage API, CSP config, and oEmbed spec
 - [Web component](./web-component.md) — the `<agent-3d>` custom element for developer integrations
 - [Embedding guide](./embedding.md) — advanced embedding patterns and iframe options

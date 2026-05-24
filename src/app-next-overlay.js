@@ -717,7 +717,7 @@ function wirePrimaryCTA() {
 	primary.addEventListener('click', async () => {
 		const mode = primary.dataset.mode || 'signin';
 		if (mode !== 'save') {
-			location.href = '/login?return=' + encodeURIComponent(location.pathname);
+			location.href = '/login?next=' + encodeURIComponent(location.pathname);
 			return;
 		}
 
@@ -740,11 +740,11 @@ function wirePrimaryCTA() {
 			const res = await saveRemoteGlbToAccount(url, {
 				name: app?._currentModelName || 'Avatar',
 			});
-			if (res?.ok && res.id) {
+			if (res?.id) {
 				if (primaryLabel) primaryLabel.textContent = 'Saved ✓';
 				toast(`Saved to your account.`, `/avatars/${res.id}`);
 			} else {
-				throw new Error(res?.error || 'save failed');
+				throw new Error('save failed');
 			}
 		} catch (err) {
 			console.warn('[nxt] save failed', err);

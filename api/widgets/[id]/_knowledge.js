@@ -208,16 +208,17 @@ export async function ingestKnowledge({ widgetId, userId, input }) {
 		for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
 			const slice = chunks.slice(i, i + EMBED_BATCH);
 			const embedded = await embed(slice.map((c) => c.content));
-			for (let j = 0; j < slice.length; j++) {
+			const inserts = slice.map((c, j) => {
 				const vec = Array.from(embedded[j]);
-				await sql`
+				return sql`
 					insert into widget_knowledge_chunks
 						(doc_id, widget_id, chunk_index, content, embedding, token_count)
 					values
-						(${docId}, ${widgetId}, ${i + j}, ${slice[j].content},
-						 ${JSON.stringify(vec)}::jsonb, ${slice[j].token_count})
+						(${docId}, ${widgetId}, ${i + j}, ${c.content},
+						 ${JSON.stringify(vec)}::jsonb, ${c.token_count})
 				`;
-			}
+			});
+			await sql.transaction(inserts);
 		}
 		await sql`update widget_knowledge_docs set status = 'ready' where id = ${docId}`;
 	} catch (err) {

@@ -1252,3 +1252,173 @@ CREATE TABLE IF NOT EXISTS agent_payment_intents (
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at     TIMESTAMPTZ NOT NULL
 );
+
+-- ── paid_assets — "buy once, re-download forever" 3D-asset catalog ──────────
+-- Mirror of api/_lib/migrations/2026-05-21-paid-assets.sql. Backs the
+-- /api/x402/asset-download endpoint: creators upload a GLB/avatar/accessory
+-- to R2, price it in USDC atomics. Per-row payout overrides let creators
+-- receive USDC directly to their own wallet; NULL falls back to env X402_PAY_TO_*.
+CREATE TABLE IF NOT EXISTS paid_assets (
+    id                   uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug                 text        NOT NULL UNIQUE,
+    title                text        NOT NULL,
+    description          text        NOT NULL,
+    mime_type            text        NOT NULL,
+    size_bytes           bigint      NOT NULL,
+    r2_key               text        NOT NULL,
+    price_atomics        text        NOT NULL,
+    creator_payto_base   text,
+    creator_payto_solana text,
+    creator_payto_bsc    text,
+    created_at           timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS paid_assets_slug_idx ON paid_assets (slug);
+
+-- ── siwx_payments + siwx_nonces — Sign-In-With-X (CAIP-122) payment history ─
+-- Mirror of api/_lib/migrations/2026-05-21-siwx.sql. A wallet that paid for a
+-- resource can re-access it by signing CAIP-122 instead of re-paying. Stored
+-- addresses follow CAIP-122 payload format exactly (lowercase hex EVM,
+-- base58 Solana); siwx-storage.js normalizes before SELECT/INSERT.
+CREATE TABLE IF NOT EXISTS siwx_payments (
+    resource     text        NOT NULL,
+    address      text        NOT NULL,
+    network      text        NOT NULL,
+    paid_at      timestamptz NOT NULL DEFAULT now(),
+    expires_at   timestamptz,
+    last_used_at timestamptz,
+    use_count    integer     NOT NULL DEFAULT 0,
+    PRIMARY KEY (resource, address)
+);
+CREATE INDEX IF NOT EXISTS siwx_payments_expires_idx
+    ON siwx_payments (expires_at) WHERE expires_at IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS siwx_nonces (
+    nonce    text        PRIMARY KEY,
+    resource text        NOT NULL,
+    address  text        NOT NULL,
+    used_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS siwx_nonces_used_at_idx ON siwx_nonces (used_at);
+
+-- ── x402_subscriptions + x402_access_log — subscription keys + bypass audit ─
+-- Mirror of api/_lib/migrations/2026-05-21-x402-subscriptions.sql. The
+-- installAccessControl() onProtectedRequest hook short-circuits the 402
+-- challenge when a request carries INTERNAL_API_KEY, a subscription key, or
+-- an OAuth bearer with the required scope. Every bypass and abort writes
+-- to x402_access_log so audit dashboards can reconstruct who used what.
+CREATE TABLE IF NOT EXISTS x402_subscriptions (
+    id                    text        PRIMARY KEY,
+    name                  text        NOT NULL,
+    key_hash              text        NOT NULL UNIQUE,
+    key_prefix            text        NOT NULL,
+    rate_limit_per_minute integer     NOT NULL DEFAULT 60,
+    expires_at            timestamptz,
+    revoked_at            timestamptz,
+    meta                  jsonb,
+    created_by            uuid        REFERENCES users(id) ON DELETE SET NULL,
+    created_at            timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS x402_subscriptions_prefix_idx ON x402_subscriptions(key_prefix);
+CREATE INDEX IF NOT EXISTS x402_subscriptions_active_idx ON x402_subscriptions(revoked_at, expires_at);
+
+CREATE TABLE IF NOT EXISTS x402_access_log (
+    id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    caller_id   text        NOT NULL,
+    route       text        NOT NULL,
+    reason      text        NOT NULL,
+    granted     boolean     NOT NULL,
+    meta        jsonb,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS x402_access_log_caller_idx ON x402_access_log(caller_id, created_at desc);
+CREATE INDEX IF NOT EXISTS x402_access_log_route_idx ON x402_access_log(route, created_at desc);
+CREATE INDEX IF NOT EXISTS x402_access_log_created_idx ON x402_access_log(created_at desc);
+
+-- ── club_tips — Pole Club live-tip ledger ───────────────────────────────────
+-- Mirror of api/_lib/migrations/2026-05-22-club-tips.sql. Every settled
+-- /api/x402/dance-tip payment writes one row here; /api/club/tips reads it
+-- for the page boot, /api/club/tips/stream tails for SSE. paid_at/paid_tx
+-- are reserved for the dancer-payouts sweep.
+CREATE TABLE IF NOT EXISTS club_tips (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id       text        NOT NULL UNIQUE,
+    dancer          text        NOT NULL,
+    dance           text        NOT NULL,
+    clip            text,
+    label           text,
+    payer           text,
+    network         text,
+    amount_atomics  numeric,
+    asset           text,
+    started_at      timestamptz NOT NULL,
+    ends_at         timestamptz NOT NULL,
+    paid_at         timestamptz,
+    paid_tx         text,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS club_tips_created_at_desc ON club_tips (created_at desc);
+CREATE INDEX IF NOT EXISTS club_tips_dancer_created ON club_tips (dancer, created_at desc);
+
+-- ── club_dancer_wallets + club_payouts — Pole Club payout sweep ─────────────
+-- Mirror of api/_lib/migrations/2026-05-23-club-dancer-wallets.sql. Each row
+-- carries display metadata + two destination addresses (EVM Base 8453, Solana
+-- mainnet) the cron sweep deposits accumulated tips into. /api/cron/club-payouts
+-- is idempotent — re-running only sweeps tips with paid_at IS NULL.
+CREATE TABLE IF NOT EXISTS club_dancer_wallets (
+    dancer          text         PRIMARY KEY,
+    display_name    text         NOT NULL,
+    bio             text,
+    evm_address     text,
+    solana_address  text,
+    created_at      timestamptz  NOT NULL DEFAULT now(),
+    updated_at      timestamptz  NOT NULL DEFAULT now()
+);
+-- Partial index for the cron filter (unpaid tips grouped by dancer/network/asset).
+CREATE INDEX IF NOT EXISTS club_tips_unpaid_by_dancer_net
+    ON club_tips (dancer, network, asset)
+    WHERE paid_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS club_payouts (
+    id                uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    dancer            text        NOT NULL REFERENCES club_dancer_wallets(dancer),
+    network           text        NOT NULL,
+    asset             text        NOT NULL,
+    amount_atomics    numeric     NOT NULL,
+    tx                text        NOT NULL,
+    swept_tip_count   integer     NOT NULL,
+    created_at        timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS club_payouts_dancer_created
+    ON club_payouts (dancer, created_at desc);
+
+-- Seed the four built-in stage slots with display names hard-coded in
+-- /api/x402/dance-tip and src/club.js. Addresses stay NULL until an admin
+-- sets them; the cron logs + skips (dancer, network) pairs where missing.
+INSERT INTO club_dancer_wallets (dancer, display_name) VALUES
+    ('1', 'Nyx'),
+    ('2', 'Ari'),
+    ('3', 'Sable'),
+    ('4', 'Vesper')
+ON CONFLICT (dancer) DO UPDATE
+    SET display_name = excluded.display_name,
+        updated_at   = now();
+
+-- ── x402_receipts — durable log of x402 offer-receipt artifacts ─────────────
+-- Mirror of api/_lib/migrations/2026-05-24-x402-receipts.sql. Every successful
+-- paid /api/x402/* call writes one row: the signed receipt we returned in the
+-- SettlementResponse, the resource it covered, the payer wallet, and the chain.
+-- Buyers query their own receipts via /api/x402/my-receipts (buyer-signed gate).
+CREATE TABLE IF NOT EXISTS x402_receipts (
+    id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    payer        text        NOT NULL,
+    network      text        NOT NULL,
+    resource_url text        NOT NULL,
+    format       text        NOT NULL,
+    receipt      jsonb       NOT NULL,
+    transaction  text,
+    issued_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS x402_receipts_payer_issued
+    ON x402_receipts (payer, issued_at desc);
+CREATE INDEX IF NOT EXISTS x402_receipts_resource_issued
+    ON x402_receipts (resource_url, issued_at desc);

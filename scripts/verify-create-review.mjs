@@ -22,7 +22,7 @@ function fail(msg) {
 }
 
 const glbBuffer = await readFile(GLB_PATH);
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
 const page = await ctx.newPage();
 
@@ -102,16 +102,14 @@ await page.evaluate(async (b64) => {
 consoleErrors.length = 0;
 
 // Reload so create-review.js boots with the staged avatar already in IDB.
-// 'networkidle' waits until all Vite module fetches (lazy dep compilation)
-// settle — on a cold dev-server start this can take 30-60s the first time.
-await page.reload({ waitUntil: 'networkidle', timeout: 90_000 });
+await page.reload({ waitUntil: 'load', timeout: 60_000 });
 
 // Wait for boot() to flip the content card visible — confirms staged read
 // from IndexedDB worked before we wait on the renderer.
 try {
 	await page.waitForFunction(
 		() => !document.getElementById('content')?.hidden,
-		{ timeout: 15_000 },
+		{ timeout: 12_000 },
 	);
 } catch (err) {
 	const dbg = await page.evaluate(() => ({
@@ -188,6 +186,17 @@ await page.locator('.emote-strip-close').dispatchEvent('click');
 await page.waitForFunction(
 	() => !document.getElementById('emote-strip')?.classList.contains('is-visible'),
 );
+
+// Stub canvas.toBlob in the headless browser so the embed-modal snapshot
+// doesn't trigger a WebGL readPixels call — readPixels on a software
+// (SwiftShader) renderer causes the GPU process to crash repeatedly until
+// the tab is killed. The fallback path in openEmbedModal already handles
+// toBlob(null) gracefully (shows the skeleton placeholder instead).
+await page.evaluate(() => {
+	HTMLCanvasElement.prototype.toBlob = function (cb) {
+		setTimeout(() => cb(null), 0);
+	};
+});
 
 // Info modals: each tile opens .fm-backdrop with the expected heading.
 // state:'attached' rather than the default 'visible' — Playwright's CSS

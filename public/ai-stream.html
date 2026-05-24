@@ -94,47 +94,89 @@
 			iframe.src = `/widget#widget=${widgetId}&kiosk=true&type=pumpfun-feed${modelHash}&narrate=${params.narrate ? '1' : '0'}`;
 		}
 		
+		// Live mint feed via the same SSE endpoint pumpfun.html uses. Reconnects
+		// with exponential backoff so the page stays useful across cold starts
+		// or short network drops. Duplicate-mint suppression so the same mint
+		// doesn't echo when the upstream reissues.
+		let _es = null;
+		let _esClosed = false;
+		let _esBackoffMs = 1000;
+		const _seenMints = new Set();
+
 		function connectFeed() {
-			// WebSocket connection logic from pumpfun.html
-			// This is a complex part, for this step I will mock it
-			setStatus('live', 'live');
-			const mockEvent = {
-				type: 'mint',
-				name: 'Test Token',
-				symbol: 'TEST',
-				description: 'This is a test event for the AI streamer.',
-				mint: '...some addresss',
-				socials: {},
-				market_cap_usd: 10000,
-				initial_buy_sol: 10
-			};
-			setInterval(() => {
-				const card = renderEvtCard(mockEvent);
+			if (_esClosed) return;
+			setStatus('connecting', 'connecting…');
+			if (_es) { try { _es.close(); } catch {} _es = null; }
+
+			const endpoint = new URL('/api/agents/pumpfun-feed', location.href);
+			endpoint.searchParams.set('kind', 'mint');
+			_es = new EventSource(endpoint.href, { withCredentials: true });
+
+			_es.addEventListener('open', () => {
+				_esBackoffMs = 1000;
+				setStatus('live', 'live');
+			});
+			const ingest = (evt) => {
+				let payload;
+				try { payload = JSON.parse(evt.data); } catch { return; }
+				if (!payload || typeof payload !== 'object') return;
+				if (payload.mint && _seenMints.has(payload.mint)) return;
+				if (payload.mint) _seenMints.add(payload.mint);
+
+				const card = renderEvtCard(payload);
 				if (card) {
 					feedEl.insertBefore(card, feedEl.firstChild);
-					if (feedEl.children.length > 20) {
-						feedEl.removeChild(feedEl.lastChild);
-					}
+					while (feedEl.children.length > 20) feedEl.removeChild(feedEl.lastChild);
 				}
-				narrateEvent(mockEvent);
-			}, 5000);
+				narrateEvent(payload);
+			};
+			_es.addEventListener('mint', ingest);
+			_es.addEventListener('ping', () => {});
+			_es.onerror = () => {
+				if (_esClosed || !_es) return;
+				if (_es.readyState === EventSource.CLOSED) {
+					setStatus('down', 'offline');
+					setTimeout(connectFeed, _esBackoffMs);
+					_esBackoffMs = Math.min(_esBackoffMs * 1.5, 15000);
+				} else {
+					setStatus('connecting', 'reconnecting…');
+				}
+			};
 		}
 
+		window.addEventListener('beforeunload', () => {
+			_esClosed = true;
+			if (_es) { try { _es.close(); } catch {} }
+		});
+
 		function renderEvtCard(evt) {
+			const name = String(evt.name || 'Untitled');
+			const symbol = String(evt.symbol || '');
+			const description = String(evt.description || '').slice(0, 200);
+			const mc = Number(evt.market_cap_usd || 0);
 			const card = document.createElement('div');
 			card.className = 'evt';
 			card.innerHTML = `
-				<div class="evt-title">${evt.name} ($${evt.symbol})</div>
-				<div class="evt-desc">${evt.description}</div>
-				<div class="evt-meta">MC: $${evt.market_cap_usd.toLocaleString()}</div>
+				<div class="evt-title">${escapeHtml(name)}${symbol ? ' ($' + escapeHtml(symbol) + ')' : ''}</div>
+				<div class="evt-desc">${escapeHtml(description)}</div>
+				<div class="evt-meta">MC: $${mc.toLocaleString()}</div>
 			`;
 			return card;
 		}
-		
+
+		function escapeHtml(s) {
+			return String(s).replace(/[&<>"']/g, (c) => ({
+				'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+			})[c]);
+		}
+
 		function narrateEvent(evt) {
 			if (!params.narrate) return;
-			const text = `New token minted: ${evt.name}! Initial buy of ${evt.initial_buy_sol} SOL. Market cap is now ${evt.market_cap_usd} dollars.`;
-			iframe.contentWindow?.postMessage({ type: 'say', payload: { text: text, mood: params.mood } }, '*');
+			const name = String(evt.name || 'a new token');
+			const initialBuy = Number(evt.initial_buy_sol || 0);
+			const mc = Number(evt.market_cap_usd || 0);
+			const text = `New token minted: ${name}! Initial buy of ${initialBuy} SOL. Market cap is now ${mc} dollars.`;
+			iframe.contentWindow?.postMessage({ type: 'say', payload: { text, mood: params.mood } }, '*');
 		}
 
 		function init() {

@@ -170,6 +170,9 @@ function startPoll(url, intervalMs, parseFn, protocol, bindings, stats, signal) 
 			});
 	};
 
+	// Fire immediately so callers don't wait an entire intervalMs for the first
+	// payload — the recurring schedule kicks in after this first tick.
+	tick();
 	const timer = setInterval(tick, intervalMs);
 
 	function stop() {

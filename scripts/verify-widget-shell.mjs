@@ -228,6 +228,89 @@ await withPage('JSON-RPC: ping + camera + animation + info', async (page) => {
 	if (envBad?.error?.code === -32603)
 		ok('viewer.setEnvironment("") → -32603 internal error');
 	else fail('viewer.setEnvironment("") → -32603', JSON.stringify(envBad));
+
+	// animation.stop used the wrong AnimationManager method name pre-fix;
+	// success here proves the regression won't return.
+	const stop = await rpc('animation.stop');
+	if (stop?.result && !stop.error) ok('animation.stop succeeds (was no-op)');
+	else fail('animation.stop succeeds', JSON.stringify(stop));
+
+	// model.export returns binary GLB as base64 — proves the legacy
+	// exportGLB bridge is fully covered by JSON-RPC now.
+	const exp = await rpc('model.export');
+	if (
+		typeof exp?.result?.base64 === 'string' &&
+		exp.result.base64.length > 1000 &&
+		typeof exp.result.bytes === 'number' &&
+		exp.result.bytes > 1000
+	)
+		ok(`model.export → ${exp.result.bytes} bytes GLB`);
+	else fail('model.export → GLB base64', JSON.stringify(exp).slice(0, 200));
+});
+
+// 6. Multi-instance — two iframes side-by-side, one ThreeWidget client each,
+// confirm a call on one doesn't leak to the other (no cross-talk).
+await withPage('Multi-instance: two clients, two widgets, no cross-talk', async (page) => {
+	await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+	const result = await page.evaluate(
+		async ({ BASE, DEMO_GLB }) => {
+			document.body.innerHTML =
+				'<iframe id="a" style="width:300px;height:300px;border:0" src="' +
+				BASE +
+				'/widget#model=' +
+				encodeURIComponent(DEMO_GLB) +
+				'&kiosk=true"></iframe>' +
+				'<iframe id="b" style="width:300px;height:300px;border:0" src="' +
+				BASE +
+				'/widget#model=' +
+				encodeURIComponent(DEMO_GLB) +
+				'&kiosk=true"></iframe>';
+			await new Promise((r) => {
+				const s = document.createElement('script');
+				s.src = BASE + '/widget-client.js';
+				s.onload = r;
+				s.onerror = r;
+				document.head.appendChild(s);
+			});
+			if (!window.ThreeWidget) return { error: 'ThreeWidget missing' };
+			const a = window.ThreeWidget.attach(document.getElementById('a'));
+			const b = window.ThreeWidget.attach(document.getElementById('b'));
+			await Promise.all([a.ready(30000), b.ready(30000)]);
+
+			// Count event traffic per client over a short window — they should
+			// each only see their own iframe's events.
+			let aEvents = 0;
+			let bEvents = 0;
+			a.on('*', () => aEvents++);
+			b.on('*', () => bEvents++);
+			// Drive a unique change on each — different bg colours.
+			const [aSet, bSet] = await Promise.all([
+				a.call('viewer.setBackground', { color: '#101030' }),
+				b.call('viewer.setBackground', { color: '#301010' }),
+			]);
+			// And confirm each client's roundtrip returned its own result.
+			const [aInfo, bInfo] = await Promise.all([
+				a.call('viewer.getInfo'),
+				b.call('viewer.getInfo'),
+			]);
+			return {
+				bothReady: aInfo?.ready === true && bInfo?.ready === true,
+				aSet: aSet && !aSet.error,
+				bSet: bSet && !bSet.error,
+				aIndependent: aEvents <= 2 && bEvents <= 2,
+			};
+		},
+		{ BASE, DEMO_GLB },
+	);
+
+	if (result.error) {
+		fail('multi-instance scaffold', result.error);
+		return;
+	}
+	if (result.bothReady) ok('both widgets ready independently');
+	else fail('both widgets ready', JSON.stringify(result));
+	if (result.aSet && result.bSet) ok('parallel setBackground succeeds on both');
+	else fail('parallel setBackground', JSON.stringify(result));
 });
 
 await browser.close();

@@ -7,7 +7,7 @@ Each widget bundles three things: an avatar or 3D model (a `.glb` file stored in
 ```html
 <!-- The simplest possible embed — drop this anywhere -->
 <iframe
-  src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
+  src="https://three.ws/widget#widget=wdgt_abc123def456&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px"
@@ -62,7 +62,7 @@ All [brand options](#the-five-widget-types) apply (background, accent, caption, 
 
 ```html
 <iframe
-  src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
+  src="https://three.ws/widget#widget=wdgt_abc123def456&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"
@@ -153,7 +153,7 @@ All brand options apply.
 
 ```html
 <iframe
-  src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
+  src="https://three.ws/widget#widget=wdgt_abc123def456&kiosk=true"
   width="420"
   height="600"
   style="border:0;border-radius:16px"
@@ -213,7 +213,7 @@ All brand options apply.
 
 ```html
 <iframe
-  src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
+  src="https://three.ws/widget#widget=wdgt_abc123def456&kiosk=true"
   width="480"
   height="560"
   style="border:0;border-radius:16px"
@@ -296,7 +296,7 @@ After creating a widget, copy the iframe snippet from Studio or construct it man
 ```html
 <!-- iframe embed (recommended) -->
 <iframe
-  src="https://three.ws/app#widget=wdgt_abc123def456&kiosk=true"
+  src="https://three.ws/widget#widget=wdgt_abc123def456&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"
@@ -371,7 +371,7 @@ Response:
 }
 ```
 
-Both `/w/<id>` and `/app#widget=<id>` URL forms are accepted. Use `maxwidth` and `maxheight` query params to clamp the returned iframe dimensions.
+The `/w/<id>`, `/widget#widget=<id>`, and legacy `/app#widget=<id>` URL forms are all accepted. Use `maxwidth` and `maxheight` query params to clamp the returned iframe dimensions.
 
 ---
 
@@ -496,3 +496,9 @@ Each widget load records one minimal analytics event:
 | `created_at` | Timestamp |
 
 No IP addresses, no user-agent strings, no cookies, no chat message content. The widget owner can see aggregated view counts in their [Dashboard](https://three.ws/dashboard).
+
+---
+
+## Programmatic control
+
+Need to drive a widget from the parent page — change the camera, play an animation, grab a screenshot? See the [Widget API (JSON-RPC)](./widget-api.md) reference. The `ThreeWidget` SDK lives at `/widget-client.js` and works with any iframe pointing at `/widget`.

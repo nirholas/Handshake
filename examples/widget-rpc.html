@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>three.ws widget — JSON-RPC example</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				padding: 24px;
+				background: #0a0a0f;
+				color: #e8e8e8;
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				display: grid;
+				grid-template-columns: 600px 1fr;
+				gap: 32px;
+				min-height: 100vh;
+			}
+			h1 {
+				margin: 0 0 8px;
+				font-weight: 600;
+				font-size: 1.25rem;
+			}
+			.muted {
+				color: #8a8a96;
+				font-size: 0.85rem;
+				margin: 0 0 16px;
+			}
+			.frame {
+				border: 1px solid #2a2a36;
+				border-radius: 16px;
+				overflow: hidden;
+				background: #0c0c12;
+			}
+			iframe {
+				display: block;
+				width: 600px;
+				height: 600px;
+				border: 0;
+			}
+			.panel {
+				display: flex;
+				flex-direction: column;
+				gap: 14px;
+			}
+			.actions {
+				display: grid;
+				grid-template-columns: repeat(2, 1fr);
+				gap: 10px;
+			}
+			button {
+				background: #1b1b26;
+				color: #eee;
+				border: 1px solid #2a2a36;
+				border-radius: 10px;
+				padding: 12px 14px;
+				font: 500 13px/1.2 inherit;
+				cursor: pointer;
+				transition: border-color 0.15s ease;
+			}
+			button:hover {
+				border-color: #5a5a6c;
+			}
+			button:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			pre {
+				background: #11111a;
+				border: 1px solid #2a2a36;
+				border-radius: 10px;
+				padding: 14px;
+				font-size: 12px;
+				color: #c5c5d0;
+				overflow: auto;
+				max-height: 360px;
+				margin: 0;
+			}
+			.row {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+			.row input {
+				flex: 1;
+				background: #11111a;
+				color: #eee;
+				border: 1px solid #2a2a36;
+				border-radius: 8px;
+				padding: 10px 12px;
+				font: 400 13px/1.2 inherit;
+			}
+			img.snapshot {
+				max-width: 100%;
+				border-radius: 10px;
+				border: 1px solid #2a2a36;
+			}
+			.status {
+				font-size: 12px;
+				color: #8a8a96;
+			}
+			.status.ready {
+				color: #4ade80;
+			}
+			.status.error {
+				color: #f87171;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="frame">
+			<iframe
+				id="agent"
+				title="three.ws widget"
+				src=""
+			></iframe>
+		</div>
+
+		<div class="panel">
+			<div>
+				<h1>three.ws widget — JSON-RPC API</h1>
+				<p class="muted">
+					This page loads <code>/widget</code> in the iframe and drives it through the
+					<code>ThreeWidget</code> SDK. Open the source — it's ~70 lines, no build step.
+				</p>
+				<p class="status" id="status">connecting…</p>
+			</div>
+
+			<div class="actions">
+				<button id="btn-rotate">camera.setLookAt (rotate 90°)</button>
+				<button id="btn-recenter">camera.recenter</button>
+				<button id="btn-bg">viewer.setBackground (random)</button>
+				<button id="btn-env">viewer.setEnvironment</button>
+				<button id="btn-rotate-toggle">toggle auto-rotate</button>
+				<button id="btn-screenshot">screenshot.capture</button>
+				<button id="btn-list-anim">animation.list</button>
+				<button id="btn-play-wave">animation.play (av-waving)</button>
+			</div>
+
+			<div class="row">
+				<input
+					id="model-url"
+					type="text"
+					value="/avatars/cz.glb"
+					spellcheck="false"
+				/>
+				<button id="btn-load">model.load</button>
+			</div>
+
+			<pre id="log">// click any button to call the widget over JSON-RPC</pre>
+
+			<img id="snap" class="snapshot" hidden alt="latest screenshot" />
+		</div>
+
+		<script>
+			// Derive the widget origin from the iframe src so this example works
+			// on any host (localhost dev, production, branch preview).
+			(function () {
+				var origin = location.origin;
+				document.getElementById('agent').src =
+					origin + '/widget#model=' + encodeURIComponent('/avatars/cz.glb') + '&kiosk=true';
+
+				var clientScript = document.createElement('script');
+				clientScript.src = origin + '/widget-client.js';
+				clientScript.onload = boot;
+				document.head.appendChild(clientScript);
+			})();
+
+			function boot() {
+				var iframe = document.getElementById('agent');
+				var statusEl = document.getElementById('status');
+				var logEl = document.getElementById('log');
+				var snapEl = document.getElementById('snap');
+				var rotateOn = true;
+
+				var client = ThreeWidget.attach(iframe);
+
+				function log(label, value) {
+					var head = '→ ' + label + (value !== undefined ? ': ' + JSON.stringify(value, null, 2) : '');
+					logEl.textContent = head + '\n\n' + logEl.textContent;
+				}
+
+				function setStatus(text, kind) {
+					statusEl.textContent = text;
+					statusEl.className = 'status' + (kind ? ' ' + kind : '');
+				}
+
+				client.on('viewer.ready', function () {
+					setStatus('widget ready (sdk ' + ThreeWidget.sdkVersion + ', rpc ' + ThreeWidget.rpcVersion + ')', 'ready');
+				});
+				client.on('model.loaded', function (p) {
+					log('event model.loaded', p);
+				});
+				client.on('widget.revealed', function (p) {
+					log('event widget.revealed', p);
+				});
+
+				client
+					.ready(20000)
+					.then(function () {
+						setStatus('widget ready (sdk ' + ThreeWidget.sdkVersion + ', rpc ' + ThreeWidget.rpcVersion + ')', 'ready');
+					})
+					.catch(function (err) {
+						setStatus('failed: ' + err.message, 'error');
+					});
+
+				function rpc(method, params, label) {
+					client.call(method, params, 10000).then(
+						function (result) { log(label || method, result); },
+						function (err)    { log(label || method + ' (error)', { code: err.code, message: err.message }); },
+					);
+				}
+
+				document.getElementById('btn-rotate').onclick = function () {
+					var t = performance.now() / 1000;
+					var r = 3, h = 1.4;
+					rpc('camera.setLookAt', {
+						eye: [Math.sin(t) * r, h, Math.cos(t) * r],
+						target: [0, 1, 0],
+						duration: 1.2,
+					});
+				};
+				document.getElementById('btn-recenter').onclick = function () {
+					rpc('camera.recenter', { duration: 0.8 });
+				};
+				document.getElementById('btn-bg').onclick = function () {
+					var hex = '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
+					rpc('viewer.setBackground', { color: hex }, 'viewer.setBackground (' + hex + ')');
+				};
+				document.getElementById('btn-env').onclick = function () {
+					var presets = ['neutral', 'venice-sunset', 'footprint-court'];
+					var p = presets[Math.floor(Math.random() * presets.length)];
+					rpc('viewer.setEnvironment', { preset: p }, 'viewer.setEnvironment (' + p + ')');
+				};
+				document.getElementById('btn-rotate-toggle').onclick = function () {
+					rotateOn = !rotateOn;
+					rpc('viewer.setAutoRotate', { enabled: rotateOn }, 'viewer.setAutoRotate (' + rotateOn + ')');
+				};
+				document.getElementById('btn-screenshot').onclick = function () {
+					client.call('screenshot.capture').then(
+						function (result) {
+							snapEl.src = result.dataUrl;
+							snapEl.hidden = false;
+							log('screenshot.capture', { dataUrlLength: result.dataUrl.length });
+						},
+						function (err) { log('screenshot.capture (error)', { message: err.message }); },
+					);
+				};
+				document.getElementById('btn-list-anim').onclick = function () {
+					client.call('animation.list').then(
+						function (result) {
+							log('animation.list', { clipCount: result.clips.length, first5: result.clips.slice(0, 5) });
+						},
+						function (err) { log('animation.list (error)', { message: err.message }); },
+					);
+				};
+				document.getElementById('btn-play-wave').onclick = function () {
+					rpc('animation.play', { name: 'av-waving', loop: true });
+				};
+				document.getElementById('btn-load').onclick = function () {
+					var url = document.getElementById('model-url').value.trim();
+					if (!url) return;
+					rpc('model.load', { url: url }, 'model.load (' + url + ')');
+				};
+			}
+		</script>
+	</body>
+</html>

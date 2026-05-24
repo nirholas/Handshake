@@ -5,12 +5,12 @@
  * don't fork wallet state. The adapter is a thin facade over those helpers.
  */
 
-import { WalletAdapter } from './base.js';
 import { ensureWallet, getIdentityRegistry } from '../../erc8004/agent-registry.js';
 import { switchChain, CHAIN_META } from '../../erc8004/chain-meta.js';
 import { evm } from '../chain-ref.js';
 
-export class EvmAdapter extends WalletAdapter {
+/** @implements {import('./base.js').WalletAdapter} */
+export class EvmAdapter {
 	get family() {
 		return 'evm';
 	}
