@@ -382,7 +382,7 @@ async function cloneTemplate(id) {
 		renderTypeGrid();
 		renderTypeFields();
 	} catch {
-		toast("Couldn't load template");
+		toast("Couldn't load template", 'error');
 	}
 }
 
@@ -724,7 +724,7 @@ async function selectByAvatarId(id) {
 		selectAvatar(avatar.id);
 	} catch (err) {
 		console.warn('[studio] selectByAvatarId failed', err);
-		toast('Pre-selected avatar not available');
+		toast('Pre-selected avatar not available', 'error');
 		if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
 	}
 }
@@ -764,7 +764,7 @@ function selectByModelUrl(url) {
 		}
 	}
 
-	toast('Pre-selected model not found in your avatar library');
+	toast('Model not in your library — try saving it first', 'error');
 }
 
 // Returns the storage_key if url is an R2 object under this user's prefix,
@@ -784,7 +784,7 @@ function extractOwnStorageKey(url, userId) {
 }
 
 async function autoRegisterAndSelect(url, storageKey) {
-	toast('Registering model…');
+	toast('Registering model…', 'loading');
 	try {
 		// HEAD the object to get its size — required by the avatar creation endpoint.
 		const head = await fetch(url, { method: 'HEAD' });
@@ -827,7 +827,7 @@ async function autoRegisterAndSelect(url, storageKey) {
 		selectAvatar(avatar.id);
 	} catch (err) {
 		console.warn('[studio] autoRegisterAndSelect failed', err);
-		toast('Could not register model — pick one from your library');
+		toast('Could not register model — pick one from your library', 'error');
 	}
 }
 
@@ -878,12 +878,12 @@ function wireButtons() {
 		try {
 			const w = previewIfr.contentWindow;
 			const cam = w?.VIEWER?.viewer?.activeCamera;
-			if (!cam) return toast('Preview not ready');
+			if (!cam) return toast('Preview not ready', 'error');
 			state.config.cameraPosition = [cam.position.x, cam.position.y, cam.position.z];
-			toast('Camera captured');
+			toast('Camera captured', 'success');
 			updatePreview(true);
 		} catch {
-			toast('Could not read camera');
+			toast('Could not read camera', 'error');
 		}
 	});
 
@@ -1094,7 +1094,7 @@ async function save({ generate }) {
 		if (wasNew && state.type === 'talking-agent') renderTypeFields();
 
 		if (generate) openEmbedModal(widget);
-		else toast('Saved');
+		else toast('Saved', 'success');
 	} catch (err) {
 		showError(err.message);
 	} finally {
@@ -1167,7 +1167,7 @@ function copyFromSelector(sel, btn) {
 			btn.textContent = 'Copied';
 			setTimeout(() => (btn.textContent = o), 1200);
 		},
-		() => toast('Copy failed'),
+		() => toast('Copy failed', 'error'),
 	);
 }
 
@@ -1177,11 +1177,31 @@ function showError(msg) {
 }
 
 let toastTimer = null;
-function toast(msg) {
-	toastEl.textContent = msg;
-	toastEl.hidden = false;
+let toastHideTimer = null;
+function toast(msg, type = 'info') {
 	clearTimeout(toastTimer);
-	toastTimer = setTimeout(() => (toastEl.hidden = true), 1800);
+	clearTimeout(toastHideTimer);
+	toastEl.textContent = msg;
+	toastEl.dataset.type = type;
+	toastEl.classList.remove('is-hiding');
+	toastEl.hidden = false;
+	const duration = type === 'loading' ? 10000 : type === 'error' ? 3200 : 1900;
+	toastTimer = setTimeout(() => {
+		toastEl.classList.add('is-hiding');
+		toastHideTimer = setTimeout(() => {
+			toastEl.hidden = true;
+			toastEl.classList.remove('is-hiding');
+		}, 200);
+	}, duration);
+}
+
+function toastDismiss() {
+	clearTimeout(toastTimer);
+	toastEl.classList.add('is-hiding');
+	toastHideTimer = setTimeout(() => {
+		toastEl.hidden = true;
+		toastEl.classList.remove('is-hiding');
+	}, 200);
 }
 
 function escapeHtml(s) {
