@@ -721,6 +721,61 @@ describe('POST /api/widgets/:id/knowledge', () => {
 	});
 });
 
+describe('GET /api/widgets/:id/knowledge?test= (retrieval debugger)', () => {
+	it('400s on too-short query', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([{ id: 'wdgt_x', type: 'talking-agent' }]); // ownership ok
+		const req = mockReq({
+			method: 'GET',
+			url: '/api/widgets/wdgt_x/knowledge?id=wdgt_x&test=',
+		});
+		const res = mockRes();
+		await knowledgeHandler(req, res);
+		// `test=''` is "param present, empty string" → endpoint enters test
+		// branch and the testRetrieval helper rejects with 400.
+		expect(res.statusCode).toBe(400);
+	});
+});
+
+describe('GET /api/widgets/:id/transcripts?format=csv', () => {
+	it('returns a CSV download with the right headers', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([{ id: 'wdgt_x' }]); // ownership ok
+		sqlQueue.push([
+			{
+				thread_id: 'wct_a',
+				visitor_id: 'v_abc',
+				referer_host: 'example.com',
+				country: 'US',
+				role: 'user',
+				content: 'hi, "quoted" message',
+				provider: null,
+				model: null,
+				redacted: false,
+				created_at: new Date('2026-05-24T00:00:00Z'),
+			},
+		]);
+
+		const req = mockReq({
+			method: 'GET',
+			url: '/api/widgets/wdgt_x/transcripts?id=wdgt_x&format=csv',
+		});
+		const res = mockRes();
+		await transcriptsHandler(req, res);
+		expect(res.statusCode).toBe(200);
+		expect(res.headers['content-type']).toMatch(/text\/csv/);
+		expect(res.headers['content-disposition']).toMatch(/attachment/);
+		// Header row + the 1 message row.
+		const lines = res._body.split('\n').filter(Boolean);
+		expect(lines[0]).toBe(
+			'thread_id,created_at,visitor_id,role,content,provider,model,redacted,referer_host,country',
+		);
+		expect(lines[1]).toContain('wct_a');
+		// Quoted content must be CSV-escaped (double-quotes doubled).
+		expect(lines[1]).toContain('"hi, ""quoted"" message"');
+	});
+});
+
 describe('DELETE /api/widgets/:id/knowledge', () => {
 	it('400s without doc_id', async () => {
 		authState.session = { id: 'user-1' };

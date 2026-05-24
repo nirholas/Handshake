@@ -328,6 +328,12 @@ class App {
 
 		// Studio preview iframes use postMessage to live-update brand config.
 		this._initWidgetBridge();
+
+		// JSON-RPC 2.0 server for parents that want to drive the widget
+		// programmatically (camera moves, animation playback, screenshots).
+		// Always on — only the legacy bridge handlers had widget-scope checks,
+		// because RPC is opt-in by the message envelope (jsonrpc: '2.0').
+		startWidgetRpcServer(this);
 	}
 
 	/**
