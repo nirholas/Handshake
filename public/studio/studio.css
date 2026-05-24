@@ -333,12 +333,24 @@ a:hover {
 }
 
 /* ── panels ────────────────────────────────────────────────────────────────── */
+@keyframes panel-in {
+	from { opacity: 0; transform: translateY(6px); }
+	to   { opacity: 1; transform: translateY(0);   }
+}
+
 .panel {
 	background: var(--panel);
 	border: 1px solid var(--border);
 	border-radius: var(--radius-lg);
 	padding: 1.1rem 1.1rem 1.2rem;
+	animation: panel-in 0.3s ease both;
 }
+
+.studio-col-left  .panel:nth-child(1) { animation-delay: 0.05s; }
+.studio-col-left  .panel:nth-child(2) { animation-delay: 0.1s;  }
+.studio-col-mid   .panel,
+.studio-col-mid   .preview-shell      { animation: panel-in 0.3s ease 0.07s both; }
+.studio-col-right .panel              { animation-delay: 0.12s; }
 
 .panel h2 {
 	font-family: 'Space Grotesk', sans-serif;
@@ -347,6 +359,26 @@ a:hover {
 	margin: 0 0 0.8rem;
 	letter-spacing: -0.005em;
 	color: #fff;
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+}
+
+/* step number badges inside h2 — content is a digit like "1." */
+.panel h2 .step-num {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: rgba(139, 92, 246, 0.18);
+	border: 1px solid rgba(139, 92, 246, 0.35);
+	color: var(--accent-strong);
+	font-size: 0.65rem;
+	font-weight: 700;
+	flex-shrink: 0;
+	font-family: 'Inter', sans-serif;
 }
 
 .panel .note,
