@@ -332,6 +332,22 @@
             "dest": "/handle.html"
         },
         {
+            "src": "/overlay-control/?",
+            "dest": "/overlay-control.html"
+        },
+        {
+            "src": "/mocap-studio/?",
+            "dest": "/mocap-studio.html"
+        },
+        {
+            "src": "/api/mocap/clips",
+            "dest": "/api/mocap/clips"
+        },
+        {
+            "src": "/api/mocap/clips/([0-9a-f-]+)",
+            "dest": "/api/mocap/[id]?id=$1"
+        },
+        {
             "src": "/widget",
             "dest": "/widget.html"
         },
