@@ -134,7 +134,9 @@ await page.waitForFunction(
 );
 
 // First Save attempt → presign returns 502 → inline error surface appears.
-await page.click('#save-btn');
+// dispatchEvent bypasses Playwright's pointer-simulation stability check,
+// which rejects buttons that are visible but inside a CSS-animated panel.
+await page.locator('#save-btn').dispatchEvent('click');
 await page.waitForFunction(
 	() => document.getElementById('save-loading')?.getAttribute('data-state') === 'error',
 	{ timeout: 10_000 },
@@ -165,7 +167,7 @@ if (!saveStillEnabled) fail('Save button should re-enable after Cancel');
 
 // Trigger the flow again, this time clicking Retry, and assert presign was
 // called a second time (Retry actually re-runs onSave end to end).
-await page.click('#save-btn');
+await page.locator('#save-btn').dispatchEvent('click');
 await page.waitForFunction(
 	() => document.getElementById('save-loading')?.getAttribute('data-state') === 'error',
 	{ timeout: 10_000 },
