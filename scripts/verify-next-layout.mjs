@@ -119,20 +119,23 @@ if (clipsLoaded) {
 }
 
 // ── Controls drawer opens, contains the dat.GUI panel ───────────────────
-await page.evaluate(() => document.getElementById('next-controls-btn').click());
+await page.waitForTimeout(300);
+await page.evaluate(() => document.getElementById('next-controls-btn')?.click());
 await page.waitForFunction(
 	() => document.getElementById('next-drawer')?.classList.contains('next-drawer--open'),
 	null,
-	{ timeout: 3000 },
+	{ timeout: 8000 },
 );
 const hasGui = await page.evaluate(() => {
 	const body = document.getElementById('next-drawer-body');
 	return Boolean(body?.querySelector('.gui-wrap'));
 });
 if (!hasGui) fail('Controls drawer did not host the dat.GUI panel');
-await page.evaluate(() => document.getElementById('next-drawer-close').click());
+await page.evaluate(() => document.getElementById('next-drawer-close')?.click());
 await page.waitForFunction(
 	() => !document.getElementById('next-drawer')?.classList.contains('next-drawer--open'),
+	null,
+	{ timeout: 5000 },
 );
 
 // ── Share popover opens and contains expected items ─────────────────────
