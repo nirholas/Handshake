@@ -449,10 +449,12 @@ function openFaceCaptureModal({ root, working, onDirty, rerender }) {
 				}
 			}
 			applyMorphsToRoot(root, working.morphs);
-			status.textContent = `Applied ${applied} blendshapes.`;
+			status.textContent = applied
+				? `Applied ${applied} identity ratios. Fine-tune with the sliders below.`
+				: "Face read OK, but this avatar doesn't expose matching shape morphs.";
 			onDirty?.();
 			rerender?.();
-			setTimeout(teardown, 600);
+			setTimeout(teardown, 1200);
 		} catch (err) {
 			console.error('[avatar-sculpt] capture failed', err);
 			status.textContent = `Capture failed: ${err.message}`;

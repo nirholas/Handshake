@@ -440,9 +440,10 @@ print(reply.json())  # {"reply": "...", "tx": "<sig>"}`,
 export function openEmbedModal(ctx = {}) {
 	const handle = slugify(ctx.name) || 'your-agent';
 	const snippets = {
-		script: `<script async src="https://three.ws/embed.js"
+		script: `<script src="https://three.ws/embed.js"
         data-widget="${handle}"
-        data-type="talking-agent"></script>`,
+        data-type="talking-agent"
+        async></script>`,
 		webcomponent: `<agent-3d agent="${handle}" mode="full"></agent-3d>
 <script type="module"
   src="https://three.ws/embed/agent-3d.js"></script>`,

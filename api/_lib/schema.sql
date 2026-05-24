@@ -59,6 +59,38 @@ create index if not exists avatars_tags_idx on avatars using gin(tags);
 alter table avatars add column if not exists storage_mode jsonb;
 alter table avatars add column if not exists parent_avatar_id uuid references avatars(id) on delete set null;
 
+-- ── mocap_clips (recorded face / pose / hand motion clips) ──────────────────
+-- See api/_lib/migrations/2026-05-24-mocap-clips.sql for the full schema +
+-- rationale. Mirrored here so a clean schema.sql apply provisions the table.
+create table if not exists mocap_clips (
+    id              uuid primary key default gen_random_uuid(),
+    owner_id        uuid not null references users(id) on delete cascade,
+    avatar_id       uuid references avatars(id) on delete set null,
+    slug            text not null,
+    name            text not null,
+    description     text,
+    kind            text not null default 'face' check (kind in ('face','pose','hand','composite','vmc')),
+    format          text not null default 'three.ws.face-mocap.v1',
+    duration_ms     int not null default 0,
+    frame_count     int not null default 0,
+    frames          jsonb,
+    storage_key     text,
+    thumbnail_key   text,
+    tags            text[] not null default '{}',
+    visibility      text not null default 'private' check (visibility in ('private','unlisted','public')),
+    price_amount    numeric(30,9),
+    price_currency  text,
+    play_count      bigint not null default 0,
+    created_at      timestamptz not null default now(),
+    updated_at      timestamptz not null default now(),
+    deleted_at      timestamptz,
+    unique (owner_id, slug)
+);
+create index if not exists mocap_clips_owner_idx on mocap_clips(owner_id, created_at desc) where deleted_at is null;
+create index if not exists mocap_clips_public_idx on mocap_clips(visibility, created_at desc) where visibility = 'public' and deleted_at is null;
+create index if not exists mocap_clips_kind_idx on mocap_clips(kind, created_at desc) where deleted_at is null;
+create index if not exists mocap_clips_tags_idx on mocap_clips using gin(tags);
+
 -- ── OAuth 2.1 clients (for MCP & third-party apps) ──────────────────────────
 -- Supports RFC 7591 dynamic client registration.
 create table if not exists oauth_clients (
