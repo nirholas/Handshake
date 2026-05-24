@@ -3,7 +3,7 @@
 // public endpoint that mutates avatar_regen_jobs rows, so signature handling
 // is the highest-priority thing to test.
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createHmac, randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
 
@@ -118,8 +118,9 @@ beforeEach(() => {
 	else process.env.REPLICATE_WEBHOOK_SIGNING_KEY = ORIGINAL_SIGNING_KEY;
 });
 
-afterEach();
-function afterEach() { /* placeholder to keep linter calm */ }
+afterEach(() => {
+	globalThis.fetch = ORIGINAL_FETCH;
+});
 
 describe('POST /api/webhooks/replicate', () => {
 	it('accepts unsigned webhook when no signing key is configured (dev)', async () => {

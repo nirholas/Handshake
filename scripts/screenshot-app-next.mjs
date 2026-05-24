@@ -5,9 +5,11 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
-page.on('pageerror', (e) => console.log('PAGEERROR:', e.message.slice(0, 200)));
+page.on('pageerror', (e) => console.log('PAGEERROR:', e.message.slice(0, 400), '\n', (e.stack || '').slice(0, 400)));
 page.on('console', (m) => {
-	if (m.type() === 'error') console.log('[err]', m.text().slice(0, 200));
+	const t = m.type();
+	if (t === 'error') console.log('[err]', m.text().slice(0, 300));
+	else if (t === 'warning') console.log('[warn]', m.text().slice(0, 200));
 });
 
 const baseUrl = process.argv[2] || 'http://localhost:3000/app-next';
