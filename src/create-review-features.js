@@ -322,28 +322,119 @@ export async function openIdentityModal(ctx = {}) {
 	}
 }
 
-export function openPaidSkillsModal() {
+export function openPaidSkillsModal(ctx = {}) {
+	const handle = slugify(ctx.name) || 'your-agent';
+	const endpoint = `https://three.ws/api/agent/${handle}/ask`;
+	const snippets = {
+		curl: `# 1. Make the request — server replies 402 with payment terms
+curl -sS -X POST ${endpoint} \\
+  -H 'content-type: application/json' \\
+  -d '{"message":"hello"}'
+
+# → HTTP/1.1 402 Payment Required
+# → {"accepts":[{"network":"solana","asset":"USDC",
+# →   "amount":"0.05","payTo":"<agent·wallet>"}]}
+
+# 2. Sign a USDC transfer for the quoted amount, retry with X-PAYMENT
+curl -sS -X POST ${endpoint} \\
+  -H 'content-type: application/json' \\
+  -H 'x-payment: <base64-signed-payload>' \\
+  -d '{"message":"hello"}'
+
+# → HTTP/1.1 200 OK
+# → {"reply":"Hi! How can I help?","tx":"<solana·tx·sig>"}`,
+		fetch: `import { withX402 } from '@three.ws/x402-fetch';
+
+// withX402 wraps fetch — intercepts 402, signs USDC, retries.
+const fetchPaid = withX402(fetch, { wallet, network: 'solana' });
+
+const res = await fetchPaid('${endpoint}', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ message: 'hello' }),
+});
+
+console.log(await res.json()); // { reply, tx }`,
+		python: `from three_ws import X402Client
+
+client = X402Client(wallet=wallet, network="solana")
+
+reply = client.post(
+    "${endpoint}",
+    json={"message": "hello"},
+)
+print(reply.json())  # {"reply": "...", "tx": "<sig>"}`,
+	};
+
+	const body = document.createElement('div');
+	body.innerHTML = `
+		<ul class="fm-bullets">
+			<li>Quoted in USDC on Solana — payments settle in seconds, signed end-to-end.</li>
+			<li>Set a price per skill (chat, render, custom endpoint) after saving.</li>
+			<li>Earnings stream into your agent's wallet, withdrawable any time.</li>
+		</ul>
+
+		<div class="fm-handshake" aria-label="x402 handshake">
+			<div class="fm-handshake-step">
+				<span class="fm-handshake-num">1</span>
+				<div>
+					<strong>Client calls</strong>
+					<div class="muted">No auth, just hits the endpoint.</div>
+				</div>
+				<span class="fm-handshake-code">POST</span>
+			</div>
+			<div class="fm-handshake-arrow">→</div>
+			<div class="fm-handshake-step">
+				<span class="fm-handshake-num">2</span>
+				<div>
+					<strong>Server replies <code>402</code></strong>
+					<div class="muted">Quotes <code>$0.05</code> USDC on Solana.</div>
+				</div>
+				<span class="fm-handshake-code">402</span>
+			</div>
+			<div class="fm-handshake-arrow">→</div>
+			<div class="fm-handshake-step">
+				<span class="fm-handshake-num">3</span>
+				<div>
+					<strong>Client signs &amp; retries</strong>
+					<div class="muted"><code>X-PAYMENT</code> header carries the signed transfer.</div>
+				</div>
+				<span class="fm-handshake-code">200</span>
+			</div>
+		</div>
+
+		<div class="fm-tabs" role="tablist" aria-label="Client language">
+			<button class="fm-tab is-active" role="tab" data-tab="curl">cURL</button>
+			<button class="fm-tab" role="tab" data-tab="fetch">JavaScript</button>
+			<button class="fm-tab" role="tab" data-tab="python">Python</button>
+		</div>
+		<div class="fm-code" data-copy-target>
+			<pre data-snippet></pre>
+			<button class="fm-copy" type="button">Copy</button>
+		</div>
+		<p class="fm-note">Endpoint shape is real — your handle is filled in as you name your avatar. Pricing &amp; gating is configured after save.</p>
+	`;
+
 	openFeatureModal({
 		icon: '💸',
 		title: 'Paid Skills (x402)',
 		lede: 'Charge per call in USDC over the x402 protocol. Other agents (and apps) pay yours automatically — no API keys, no invoicing.',
-		body: `
-			<ul class="fm-bullets">
-				<li>Set a price per skill — chat, render, custom endpoint, anything.</li>
-				<li>Payments settle on Base in USDC, signed and verifiable.</li>
-				<li>Your earnings stream into your agent's wallet, withdrawable any time.</li>
-			</ul>
-			<div class="fm-row">
-				<div>
-					<strong>Example pricing</strong>
-					<div class="muted">You set this after saving</div>
-				</div>
-				<code style="color: var(--accent); font-weight: 600;">$0.05 / chat call</code>
-			</div>
-			<p class="fm-note">Listing your agent is free — you only pay if/when it earns.</p>
-		`,
+		body,
 		actions: [{ label: 'Got it' }],
+		dialogClass: 'fm-dialog--wide',
 	});
+
+	const codeEl = body.querySelector('[data-copy-target]');
+	const snippetEl = body.querySelector('[data-snippet]');
+	function setTab(name) {
+		body.querySelectorAll('.fm-tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === name));
+		snippetEl.textContent = snippets[name];
+		codeEl.dataset.copy = snippets[name];
+	}
+	body.querySelectorAll('.fm-tab').forEach((t) => {
+		t.addEventListener('click', () => setTab(t.dataset.tab));
+	});
+	setTab('curl');
 }
 
 export function openEmbedModal(ctx = {}) {
@@ -544,27 +635,66 @@ function prettyBytes(n) {
 	return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
-export function openReputationModal() {
+export function openReputationModal(ctx = {}) {
+	const handle = slugify(ctx.name) || 'your-agent';
+	// Sample reviews — clearly labelled as such ("EXAMPLE" pill on the card).
+	// Structure mirrors src/reputation-ui.js so the user sees the actual
+	// production shape (truncated reviewer address, stars, comment, tx link).
+	const sample = [
+		{ author: '7xK…aN4q', stars: 5, comment: 'Sharp at SQL — saved me an hour on a gnarly join.', when: '2d ago' },
+		{ author: '9mR…vT8p', stars: 5, comment: 'Voice felt natural over a 30-min call. Recommend.', when: '5d ago' },
+		{ author: 'Bcj…F2zL', stars: 4, comment: 'Solid embed, easy to drop on our docs site.', when: '1w ago' },
+	];
+
+	const reviewsHtml = sample
+		.map(
+			(r) => `
+		<div class="rep-review-item">
+			<div class="rep-review-header">
+				<span class="rep-review-author">${escapeHtml(r.author)}</span>
+				<span class="rep-stars" aria-label="${r.stars} stars">${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}</span>
+			</div>
+			<p class="rep-comment">${escapeHtml(r.comment)}</p>
+			<div class="rep-review-footer">
+				<span class="muted">${escapeHtml(r.when)}</span>
+				<span class="rep-link">↗ tx</span>
+			</div>
+		</div>
+	`,
+		)
+		.join('');
+
 	openFeatureModal({
 		icon: '⭐',
 		title: 'Reputation',
-		lede: 'Signed feedback, call history, and validation events accrue to your agent — visible to anyone deciding whether to trust it.',
+		lede: 'Signed feedback, call history, and validation events accrue to your agent — public, verifiable, portable.',
 		body: `
 			<ul class="fm-bullets">
 				<li>Every paid call is logged with a signed receipt — verifiable, non-repudiable.</li>
-				<li>Users can leave reviews; reviews carry the reviewer's own reputation weight.</li>
-				<li>Validators can attest to capability (e.g. "this agent reliably ships valid SQL").</li>
+				<li>Reviews carry the reviewer's own reputation weight — Sybil-resistant.</li>
+				<li>Validators can attest to capability (e.g. "ships valid SQL 9.6/10 of the time").</li>
 			</ul>
-			<div class="fm-row">
-				<div>
-					<strong>Your starting rep</strong>
-					<div class="muted">Reviews accrue as your agent is used</div>
+
+			<div class="rep-card">
+				<div class="rep-card-head">
+					<div>
+						<strong>${escapeHtml(handle)}</strong>
+						<div class="muted">three.ws/@${escapeHtml(handle)}</div>
+					</div>
+					<span class="rep-sample-pill">EXAMPLE</span>
 				</div>
-				<code style="color: var(--muted);">★★★★★ · 0 reviews</code>
+				<div class="rep-stats">
+					<div><strong class="rep-stat-big">4.8</strong><span class="rep-stars">★★★★★</span><span class="muted">37 reviews</span></div>
+					<div><strong>1,204</strong><span class="muted">paid calls</span></div>
+					<div><strong>0.41 SOL</strong><span class="muted">staked on rep</span></div>
+				</div>
+				<div class="rep-reviews">${reviewsHtml}</div>
 			</div>
-			<p class="fm-note">Your reputation lives on-chain alongside your agent — it travels with the asset.</p>
+
+			<p class="fm-note">Your starting rep is empty — every paid call and review accrues to your asset, on-chain, and travels with it if you ever transfer.</p>
 		`,
 		actions: [{ label: 'Got it' }],
+		dialogClass: 'fm-dialog--wide',
 	});
 }
 
@@ -574,4 +704,17 @@ function escapeHtml(s) {
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;');
+}
+
+/** URL-safe slug derived from the user's typed avatar name. */
+export function slugify(s) {
+	if (!s) return '';
+	return String(s)
+		.toLowerCase()
+		.trim()
+		.normalize('NFKD')
+		.replace(/[̀-ͯ]/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 32);
 }

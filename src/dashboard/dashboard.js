@@ -4423,13 +4423,27 @@ async function openWidgetDrawer(w, ctx) {
 				w.type === 'talking-agent'
 					? `
 			<section id="transcripts-region" aria-label="Chat transcripts">
-				<h3 style="margin:18px 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:#aaa">Chat transcripts</h3>
+				<div style="display:flex; justify-content:space-between; align-items:baseline; margin:18px 0 6px">
+					<h3 style="margin:0; font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:#aaa">Chat transcripts</h3>
+					<a href="${attr(api.transcriptsCsvUrl(w.id))}" download class="btn sec" style="font-size:11px; padding:2px 8px">Download CSV</a>
+				</div>
 				<div id="transcripts-totals" class="muted" style="font-size:12px"></div>
 				<div id="transcripts-list" style="display:flex; flex-direction:column; gap:6px; margin-top:8px"></div>
 				<div id="transcripts-detail" hidden></div>
 				<div id="knowledge-region" style="margin-top:14px">
 					<h3 style="margin:0 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:#aaa">Knowledge</h3>
 					<div id="knowledge-summary" class="muted" style="font-size:12px">Loading…</div>
+					<details style="margin-top:8px">
+						<summary style="font-size:12px; cursor:pointer">Test a retrieval query</summary>
+						<div style="margin-top:8px; display:flex; flex-direction:column; gap:6px">
+							<div style="display:flex; gap:6px">
+								<input id="knowledge-test-q" type="text" placeholder='e.g. "what is your refund policy?"'
+									style="flex:1; background:#0f0f17; border:1px solid var(--border); border-radius:6px; padding:6px 8px; font-size:13px; color:#eee">
+								<button id="knowledge-test-go" type="button" class="btn sec" style="font-size:12px">Run</button>
+							</div>
+							<div id="knowledge-test-results" class="muted" style="font-size:12px"></div>
+						</div>
+					</details>
 				</div>
 			</section>
 			`

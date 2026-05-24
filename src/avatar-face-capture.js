@@ -1,21 +1,28 @@
 /**
- * Browser-side selfie → ARKit-52 blendshapes via MediaPipe Face Landmarker.
+ * Browser-side selfie → avatar shape transfer via MediaPipe Face Landmarker.
  *
- * No bundling: the tasks-vision package + WASM model (~5 MB total) load on
- * demand from a CDN. The first call pays a one-time cost; subsequent
- * captures reuse the cached FaceLandmarker instance.
+ * Two outputs:
  *
- *   import { detectFaceBlendshapes } from './avatar-face-capture.js';
- *   const lm = await detectFaceBlendshapes.loadLandmarker();
- *   const map = await detectFaceBlendshapes(canvasOrImage, lm);
- *   // map: { jawOpen: 0.12, mouthSmileLeft: 0.04, ... }  (52 keys)
+ *   1. detectFaceBlendshapes() — raw 52 ARKit blendshape weights from the
+ *      photo. These describe the *expression* the user was making, not their
+ *      face *shape*. If the user smiled, mouthSmileLeft/Right will be high.
+ *      Useful only for live-track or "freeze my current expression" flows.
  *
- * The 52 returned keys are exactly the ARKit blendshape names so they bind
- * 1:1 to RPM / Avaturn / three.ws avatar morphs without any rename pass.
+ *   2. detectFaceIdentity() — identity-only morph weights derived from the
+ *      478-point landmark mesh via geometric ratios (face width, jaw width,
+ *      lip thickness, eye spacing, etc.). This is what you want for
+ *      "personalize from selfie": it captures who they are, not what they
+ *      were doing with their face when the shutter fired.
  *
- * License-trap reminder: MediaPipe and the face-landmarker model are both
- * Apache-2.0 — safe to ship. We do *not* bundle FLAME / DECA / SMPL-X weights
- * because those are research-only / non-commercial. See the survey notes.
+ * Why this split: RPM, Avaturn, and in3D all do the equivalent server-side
+ * via proprietary regressions. We can't bundle FLAME / SMPL / DECA weights
+ * (research-only licenses), and shipping the raw ARKit expression scores
+ * burns a smile into the avatar forever. The ratio heuristics are crude,
+ * but they ship, they respect licensing, and the user fine-tunes from the
+ * Sculpt panel anyway.
+ *
+ * No bundling: tasks-vision + WASM model (~5 MB) load on demand from a CDN.
+ * License: MediaPipe + face_landmarker.task are both Apache-2.0 — safe.
  */
 
 // We load tasks-vision via dynamic ESM import. Pinning to a specific version

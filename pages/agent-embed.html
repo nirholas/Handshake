@@ -450,11 +450,35 @@
 				const avatarCtl = new AgentAvatar(viewer, protocol, identity);
 				avatarCtl.attach();
 
-				// Echo every protocol action onto the bridge so hosts can mirror state
-				// (chat UIs, telemetry, host-side animation triggers).
+				// Echo every protocol action onto the legacy bridge so hosts can mirror
+				// state (chat UIs, telemetry, host-side animation triggers).
 				protocol.on('*', (action) => {
 					postToParent({ type: 'agent:action', agentId, action });
 				});
+
+				// Modern bridge — accepts the v1 EmbedHostBridge envelope used by
+				// `<threews-avatar driveable>` and by the embed-host-bridge npm
+				// surface. Listens on the same window in parallel with the legacy
+				// `agent:action` handler above. Both fan into the same protocol bus,
+				// so AgentAvatar handles speak/gesture/look/emote identically no
+				// matter which envelope the host chose.
+				const modernBridge = new EmbedActionBridge({
+					protocol,
+					avatar: { id: identity.avatarId, name: identity.name },
+					manifest: { id: { agentId }, agentId, policy: null },
+					window,
+					getClips: () => {
+						const defs = viewer?.animationManager?.getAnimationDefs?.() || [];
+						return defs.map((d) => ({
+							name: d.name,
+							label: d.label || d.name,
+							icon: d.icon || null,
+							loop: !!d.loop,
+							source: d.source || null,
+						}));
+					},
+				});
+				modernBridge.start();
 
 				// Report content height to host so embed-sdk can auto-fit the iframe.
 				// Coalesce into rAF so a runaway resize observer can't flood the host.

@@ -60,6 +60,17 @@ function makeReq({ body = Buffer.alloc(0), search = '', headers = {} } = {}) {
 	return stream;
 }
 
+// Synthesize a minimum-viable binary glTF 2.0 buffer that passes the handler's
+// magic+version+length header check. Payload is opaque zero bytes after the
+// 12-byte header — we don't parse JSON/BIN chunks, just header validity.
+function makeFakeGlb(payloadSize = 128) {
+	const header = Buffer.alloc(12);
+	header.writeUInt32LE(0x46546C67, 0); // magic 'glTF'
+	header.writeUInt32LE(2, 4);          // version
+	header.writeUInt32LE(12 + payloadSize, 8); // total length
+	return Buffer.concat([header, Buffer.alloc(payloadSize)]);
+}
+
 function makeRes() {
 	return {
 		statusCode: 200,
