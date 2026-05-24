@@ -5,14 +5,14 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 	<title>Selfie to avatar · three.ws</title>
 	<link rel="icon" href="/favicon.ico" />
-	<meta name="description" content="Snap three photos — three.ws builds you a rigged 3D avatar in about a minute." />
+	<meta name="description" content="One selfie. About a minute. A rigged 3D avatar that works everywhere." />
 	<meta name="robots" content="noindex" />
 
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/create/selfie" />
 	<meta property="og:title" content="Selfie to avatar · three.ws" />
-	<meta property="og:description" content="Snap three photos — three.ws builds you a rigged 3D avatar in about a minute." />
+	<meta property="og:description" content="One selfie. About a minute. A rigged 3D avatar that works everywhere." />
 	<meta property="og:image" content="https://three.ws/assets/og-image.png" />
 
 	<style>
@@ -129,16 +129,95 @@
 		.choice .title { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
 		.choice .desc { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0; }
 
+		.hero-slot-wrap {
+			margin: 8px 0 18px;
+		}
+		.hero-slot {
+			aspect-ratio: 1 / 1;
+			max-width: 360px;
+			margin: 0 auto;
+			background: var(--panel);
+			border: 1.5px dashed var(--border-strong);
+			border-radius: 16px;
+			position: relative;
+			overflow: hidden;
+			cursor: pointer;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+			color: var(--muted);
+			transition: border-color 120ms, background 120ms;
+		}
+		.hero-slot:hover, .hero-slot:focus-visible { border-color: var(--accent); color: var(--text); outline: none; }
+		.hero-slot.drag { border-color: var(--accent); background: rgba(214, 255, 61, 0.05); }
+		.hero-slot.filled { border-style: solid; border-color: var(--border); padding: 0; cursor: default; }
+		.hero-slot.error { border-color: var(--danger); }
+		.hero-slot .hero-icon { font-size: 36px; opacity: 0.7; }
+		.hero-slot .hero-title { font-size: 15.5px; color: var(--text); font-weight: 600; }
+		.hero-slot .hero-sub { font-size: 13px; color: var(--muted); max-width: 240px; text-align: center; line-height: 1.4; }
+		.hero-slot img.preview { width: 100%; height: 100%; object-fit: cover; display: block; }
+		.hero-actions {
+			display: flex;
+			justify-content: center;
+			gap: 10px;
+			margin-top: 12px;
+			flex-wrap: wrap;
+		}
+		.hero-pill {
+			background: var(--panel);
+			border: 1px solid var(--border);
+			color: var(--muted);
+			border-radius: 999px;
+			padding: 7px 14px;
+			font: 500 12.5px/1 inherit;
+			cursor: pointer;
+			transition: color 120ms, border-color 120ms;
+			display: inline-flex;
+			align-items: center;
+			gap: 7px;
+		}
+		.hero-pill:hover { color: var(--text); border-color: var(--border-strong); }
+		.hero-pill[hidden] { display: none; }
+		.hero-pill svg { display: block; }
+
+		.fidelity {
+			margin: 0 0 22px;
+			border: 1px solid var(--border);
+			background: var(--panel);
+			border-radius: 12px;
+			overflow: hidden;
+		}
+		.fidelity summary {
+			list-style: none;
+			padding: 14px 16px;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			color: var(--text);
+		}
+		.fidelity summary::-webkit-details-marker { display: none; }
+		.fidelity .fid-label { font-size: 14px; font-weight: 600; }
+		.fidelity .fid-note { color: var(--muted); font-size: 12.5px; font-weight: 400; }
+		.fidelity .fid-chev {
+			color: var(--muted);
+			transition: transform 200ms;
+		}
+		.fidelity[open] .fid-chev { transform: rotate(180deg); }
+		.fidelity .fid-body {
+			padding: 4px 16px 18px;
+		}
 		.slots {
 			display: grid;
-			grid-template-columns: repeat(3, 1fr);
+			grid-template-columns: 1fr 1fr;
 			gap: 12px;
-			margin: 8px 0 24px;
 		}
-		@media (max-width: 560px) { .slots { grid-template-columns: 1fr; } }
 		.slot-frame {
 			aspect-ratio: 3 / 4;
-			background: var(--panel);
+			background: var(--panel-elev);
 			border: 1.5px dashed var(--border-strong);
 			border-radius: 11px;
 			position: relative;
@@ -155,6 +234,7 @@
 		.slot-frame:hover, .slot-frame:focus-visible { border-color: var(--accent); color: var(--text); outline: none; }
 		.slot-frame.drag { border-color: var(--accent); background: rgba(214, 255, 61, 0.05); }
 		.slot-frame.filled { border-style: solid; border-color: var(--border); padding: 0; }
+		.slot-frame.error { border-color: var(--danger); }
 		.slot-frame .slot-label { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 		.slot-frame .slot-hint { font-size: 13px; color: var(--text); font-weight: 500; }
 		.slot-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -172,18 +252,17 @@
 		}
 
 		.opts {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: 18px;
 			margin: 0 0 22px;
+			display: flex;
+			flex-direction: column;
+			gap: 18px;
 		}
-		@media (max-width: 560px) { .opts { grid-template-columns: 1fr; } }
 		.opt-group .opt-label {
 			font-size: 12px;
 			letter-spacing: 0.06em;
 			text-transform: uppercase;
 			color: var(--muted);
-			margin: 0 0 8px;
+			margin: 0 0 10px;
 		}
 		.toggle {
 			display: inline-flex;
@@ -208,6 +287,48 @@
 		}
 		.toggle button:hover { color: var(--text); }
 		.opt-hint { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+
+		.style-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 10px;
+		}
+		.style-card {
+			background: var(--panel);
+			border: 1.5px solid var(--border);
+			border-radius: 11px;
+			padding: 12px;
+			cursor: pointer;
+			text-align: left;
+			color: var(--text);
+			font: inherit;
+			display: flex;
+			gap: 12px;
+			align-items: center;
+			transition: border-color 120ms, transform 120ms;
+		}
+		.style-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+		.style-card[aria-pressed="true"] {
+			border-color: var(--accent);
+			background: rgba(214, 255, 61, 0.04);
+		}
+		.style-swatch {
+			width: 44px;
+			height: 44px;
+			border-radius: 8px;
+			flex-shrink: 0;
+			background-size: cover;
+			background-position: center;
+			border: 1px solid var(--border);
+		}
+		.style-swatch.photoreal {
+			background: radial-gradient(circle at 35% 30%, #f6c79b 0%, #c98c61 45%, #4a2e1d 95%);
+		}
+		.style-swatch.stylized {
+			background: radial-gradient(circle at 35% 30%, #ffd5e8 0%, #c4a3ff 45%, #5a3aa3 95%);
+		}
+		.style-card .style-title { font-size: 14px; font-weight: 600; line-height: 1.2; margin: 0 0 2px; }
+		.style-card .style-desc { font-size: 12px; color: var(--muted); line-height: 1.35; }
 
 		/* ── Step 3: Building ─────────────────────────────────────────────── */
 		.build-progress {
@@ -294,22 +415,42 @@
 			height: 100%;
 			--poster-color: transparent;
 		}
+		.build-preview {
+			position: absolute;
+			top: 18px;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 110px;
+			height: 110px;
+			border-radius: 50%;
+			object-fit: cover;
+			border: 2px solid var(--accent);
+			box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6), 0 0 0 4px rgba(214, 255, 61, 0.12);
+			background: var(--panel);
+			opacity: 0;
+			transition: opacity 320ms ease;
+			animation: preview-breathe 2.4s ease-in-out infinite;
+		}
+		.build-preview.show { opacity: 1; }
+		@keyframes preview-breathe {
+			0%, 100% { box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6), 0 0 0 4px rgba(214, 255, 61, 0.12); }
+			50%      { box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6), 0 0 0 9px rgba(214, 255, 61, 0.06); }
+		}
 		.build-veil {
 			position: absolute;
 			inset: 0;
 			display: flex;
-			align-items: center;
+			align-items: flex-end;
 			justify-content: center;
-			background: rgba(5, 6, 10, 0.55);
-			backdrop-filter: blur(2px);
-			-webkit-backdrop-filter: blur(2px);
+			padding-bottom: 18px;
+			background: linear-gradient(to bottom, rgba(5,6,10,0.05), rgba(5,6,10,0.45) 65%);
 			pointer-events: none;
 		}
 		.build-ring {
-			width: 72px;
-			height: 72px;
+			width: 36px;
+			height: 36px;
 			border-radius: 50%;
-			border: 3px solid rgba(214, 255, 61, 0.15);
+			border: 2.5px solid rgba(214, 255, 61, 0.15);
 			border-top-color: var(--accent);
 			animation: build-spin 1s linear infinite;
 		}
@@ -429,25 +570,39 @@
 
 		.submit-bar {
 			margin-top: 6px;
+			position: sticky;
+			bottom: 16px;
+			z-index: 2;
 		}
 		.submit-bar[hidden] { display: none; }
 		#submit-btn {
 			width: 100%;
-			padding: 14px 18px;
+			padding: 16px 18px;
 			background: var(--panel);
 			color: var(--muted);
 			border: 1px solid var(--border);
-			border-radius: 10px;
-			font: 600 15px/1 inherit;
+			border-radius: 12px;
+			font: 600 15px/1.2 inherit;
 			cursor: not-allowed;
 			transition: background 120ms, color 120ms, border-color 120ms;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+		}
+		#submit-btn .meta {
+			font: 500 12px/1 inherit;
+			color: var(--muted);
+			opacity: 0.85;
 		}
 		#submit-btn.ready {
 			background: var(--accent);
 			color: var(--accent-ink);
 			border-color: var(--accent);
 			cursor: pointer;
+			box-shadow: 0 10px 30px -10px rgba(214, 255, 61, 0.45);
 		}
+		#submit-btn.ready .meta { color: rgba(10, 10, 10, 0.7); }
 		#submit-btn.ready:hover { filter: brightness(1.04); }
 
 		#cam-overlay {
@@ -487,6 +642,44 @@
 			pointer-events: none;
 		}
 		.cam-prompt strong { font-weight: 600; color: var(--accent); }
+		.cam-oval {
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.cam-oval svg {
+			width: min(70vw, 60vh);
+			height: auto;
+			max-height: 75vh;
+		}
+		.cam-oval ellipse {
+			fill: none;
+			stroke: rgba(255, 255, 255, 0.45);
+			stroke-width: 3;
+			stroke-dasharray: 12 8;
+			transition: stroke 200ms;
+		}
+		.cam-oval.detected ellipse {
+			stroke: var(--accent);
+			stroke-dasharray: 0;
+			filter: drop-shadow(0 0 8px rgba(214, 255, 61, 0.4));
+		}
+		.cam-hint {
+			position: absolute;
+			bottom: 100px;
+			left: 0;
+			right: 0;
+			text-align: center;
+			color: rgba(255, 255, 255, 0.85);
+			font-size: 13px;
+			padding: 8px 18px;
+			pointer-events: none;
+			transition: opacity 200ms;
+		}
+		.cam-hint.ok { color: var(--accent); }
 		#cam-error {
 			position: absolute;
 			top: 60px;
@@ -536,7 +729,46 @@
 			border: 3px solid var(--accent-ink);
 			margin: 0 auto;
 		}
+		.cam-bar button.shutter:disabled {
+			opacity: 0.55;
+			cursor: not-allowed;
+		}
 		.cam-bar .spacer { flex: 1; }
+		.cam-countdown {
+			position: absolute;
+			inset: 0;
+			display: none;
+			align-items: center;
+			justify-content: center;
+			pointer-events: none;
+			z-index: 4;
+		}
+		.cam-countdown.show { display: flex; }
+		.cam-countdown .count-num {
+			font: 700 96px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+			color: var(--accent);
+			text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), 0 0 24px rgba(214, 255, 61, 0.4);
+			animation: cd-pop 1s ease-out forwards;
+		}
+		@keyframes cd-pop {
+			0%   { transform: scale(0.5); opacity: 0; }
+			20%  { transform: scale(1.15); opacity: 1; }
+			80%  { transform: scale(1); opacity: 1; }
+			100% { transform: scale(0.8); opacity: 0; }
+		}
+
+		.done-actions .btn-secondary {
+			width: 100%;
+			padding: 12px 18px;
+			background: transparent;
+			color: var(--text);
+			border: 1px solid var(--accent);
+			border-radius: 10px;
+			font: 600 14px/1 inherit;
+			cursor: pointer;
+			transition: background 120ms;
+		}
+		.done-actions .btn-secondary:hover { background: rgba(214, 255, 61, 0.06); }
 	</style>
 	<link rel="stylesheet" href="/mobile.css" />
 	<script
@@ -560,69 +792,87 @@
 			Your browser can't open the camera here — use Upload instead, or open this page in Safari / Chrome on a device with a camera.
 		</p>
 
-		<!-- Step 1: pick method -->
-		<section class="step active" data-step="method">
-			<h1>How do you want to give us 3 photos?</h1>
-			<p class="sub">Frontal, left, and right shots of your face. Good light, plain background. We'll downscale them locally before upload.</p>
+		<!-- Step 1: capture (entry) -->
+		<section class="step active" data-step="capture">
+			<h1>One selfie. One avatar.</h1>
+			<p class="sub">Front-facing, good light, plain background. We downscale and upload locally — your photo never sits on disk.</p>
 
-			<div class="choice-grid" role="group" aria-label="Choose capture method">
-				<button type="button" class="choice" data-method="camera">
-					<span class="icon" aria-hidden="true">📷</span>
-					<span class="title">Use camera</span>
-					<p class="desc">Snap three live photos in your browser. Best if you're on a phone.</p>
-				</button>
-				<button type="button" class="choice" data-method="upload">
-					<span class="icon" aria-hidden="true">🖼️</span>
-					<span class="title">Upload files</span>
-					<p class="desc">Pick three JPEG / PNG files from your device. Drag-and-drop works too.</p>
-				</button>
-			</div>
-		</section>
-
-		<!-- Step 2: capture slots + selectors -->
-		<section class="step" data-step="capture">
-			<h1>Three photos of your face</h1>
-			<p class="sub">Frontal, left (head turned ~45° left), right (~45° right). Tap a slot to start.</p>
-
-			<div class="slots">
-				<div class="slot-frame" data-slot="frontal" role="button" tabindex="0" aria-label="Frontal photo slot">
-					<span class="slot-label">Frontal</span>
-					<span class="slot-hint">Face the camera</span>
+			<div class="hero-slot-wrap">
+				<div class="hero-slot" data-slot="frontal" role="button" tabindex="0" aria-label="Front-facing photo">
+					<span class="hero-icon" aria-hidden="true">👤</span>
+					<span class="hero-title">Add a front-facing photo</span>
+					<span class="hero-sub">Tap to open camera or upload — works on phone or desktop.</span>
 				</div>
-				<div class="slot-frame" data-slot="left" role="button" tabindex="0" aria-label="Left photo slot">
-					<span class="slot-label">Left</span>
-					<span class="slot-hint">Turn 45° left</span>
-				</div>
-				<div class="slot-frame" data-slot="right" role="button" tabindex="0" aria-label="Right photo slot">
-					<span class="slot-label">Right</span>
-					<span class="slot-hint">Turn 45° right</span>
+				<div class="hero-actions">
+					<button type="button" class="hero-pill" data-action="open-camera" id="hero-camera-btn">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+						Use camera
+					</button>
+					<button type="button" class="hero-pill" data-action="open-upload">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+						Upload photo
+					</button>
 				</div>
 			</div>
 
-			<input type="file" data-slot-input="frontal" accept="image/jpeg,image/png" hidden />
-			<input type="file" data-slot-input="left" accept="image/jpeg,image/png" hidden />
-			<input type="file" data-slot-input="right" accept="image/jpeg,image/png" hidden />
+			<input type="file" data-slot-input="frontal" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden />
+
+			<details class="fidelity" id="fidelity-boost">
+				<summary>
+					<div>
+						<div class="fid-label">Add side angles <span class="fid-note">(optional — bumps fidelity)</span></div>
+					</div>
+					<svg class="fid-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+				</summary>
+				<div class="fid-body">
+					<div class="slots">
+						<div class="slot-frame" data-slot="left" role="button" tabindex="0" aria-label="Left side photo slot">
+							<span class="slot-label">Left</span>
+							<span class="slot-hint">Turn ~45° left</span>
+						</div>
+						<div class="slot-frame" data-slot="right" role="button" tabindex="0" aria-label="Right side photo slot">
+							<span class="slot-label">Right</span>
+							<span class="slot-hint">Turn ~45° right</span>
+						</div>
+					</div>
+					<input type="file" data-slot-input="left" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden />
+					<input type="file" data-slot-input="right" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden />
+				</div>
+			</details>
 
 			<div class="opts">
 				<div class="opt-group">
-					<p class="opt-label">Body</p>
-					<div class="toggle" role="group" aria-label="Body type">
-						<button type="button" data-body="male" aria-pressed="true">Male</button>
-						<button type="button" data-body="female" aria-pressed="false">Female</button>
+					<p class="opt-label">Style</p>
+					<div class="style-grid" role="group" aria-label="Avatar style">
+						<button type="button" class="style-card" data-type="v1" aria-pressed="true">
+							<span class="style-swatch photoreal" aria-hidden="true"></span>
+							<span>
+								<span class="style-title">Photoreal</span>
+								<span class="style-desc">Likeness-first. Closest to how you actually look.</span>
+							</span>
+						</button>
+						<button type="button" class="style-card" data-type="v2" aria-pressed="false">
+							<span class="style-swatch stylized" aria-hidden="true"></span>
+							<span>
+								<span class="style-title">Stylized</span>
+								<span class="style-desc">Cleaner, cartoon-leaning. Good for streaming + games.</span>
+							</span>
+						</button>
 					</div>
 				</div>
 				<div class="opt-group">
-					<p class="opt-label">Style</p>
-					<div class="toggle" role="group" aria-label="Avatar style">
-						<button type="button" data-type="v1" aria-pressed="true">Photoreal</button>
-						<button type="button" data-type="v2" aria-pressed="false">Stylized</button>
+					<p class="opt-label">Body</p>
+					<div class="toggle" role="group" aria-label="Body type">
+						<button type="button" data-body="male" aria-pressed="true">Masc</button>
+						<button type="button" data-body="female" aria-pressed="false">Femme</button>
 					</div>
-					<p class="opt-hint">Stylized renders as a cleaner cartoon-leaning look.</p>
 				</div>
 			</div>
 
-			<div id="submit-bar" class="submit-bar" hidden>
-				<button id="submit-btn" type="button" disabled>Add 3 photos to continue</button>
+			<div id="submit-bar" class="submit-bar">
+				<button id="submit-btn" type="button" disabled>
+					<span class="label">Add a photo to start</span>
+				</button>
 			</div>
 		</section>
 
@@ -660,6 +910,7 @@
 				camera-orbit="0deg 78deg auto"
 				loading="eager"
 			></model-viewer>
+			<img id="build-preview" class="build-preview" alt="" />
 			<div class="build-veil">
 				<div class="build-ring"></div>
 			</div>
@@ -705,7 +956,9 @@
 
 		<div class="done-actions">
 			<button id="done-save-btn" class="btn-save" type="button">Open my avatar →</button>
+			<button id="done-list-btn" class="btn-secondary" type="button">List on marketplace</button>
 			<button id="done-editor-btn" class="btn-ghost" type="button">Customize in editor</button>
+			<button id="done-regen-btn" class="btn-ghost" type="button">Not quite right — try again</button>
 		</div>
 
 		<div class="portability-note">
@@ -715,10 +968,36 @@
 	</section>
 	</main>
 
+	<!-- Step "unavailable" — shown when the avatar-reconstruction backend isn't
+	     wired in this environment (no AVATAR_REGEN_PROVIDER + provider creds).
+	     Hidden by default; the boot script swaps to this and hides the others
+	     when /api/config.features.avatarReconstruct === false. -->
+	<section class="step" data-step="unavailable" hidden style="text-align:center;max-width:520px;margin:0 auto;padding:48px 24px;">
+		<h1 style="margin:0 0 12px;">Selfie avatars are still warming up</h1>
+		<p class="sub" style="margin:0 0 24px;color:#9aa3b2;">
+			The photo-to-avatar engine is being provisioned for this environment.
+			In the meantime, you can build an avatar in the studio — same outputs,
+			same workflow, fully ready today.
+		</p>
+		<div class="done-actions" style="justify-content:center;">
+			<a href="/create" class="btn-save" style="text-decoration:none;display:inline-block;">Open the avatar studio →</a>
+			<a href="/app" class="btn-ghost" style="text-decoration:none;display:inline-block;">Back to my workspace</a>
+		</div>
+	</section>
+
 	<!-- Camera overlay (driven by selfie-capture.js) -->
 	<div id="cam-overlay" role="dialog" aria-modal="true" aria-label="Camera capture">
 		<div id="cam-stage">
 			<video id="cam-video" autoplay playsinline muted></video>
+			<div class="cam-oval" id="cam-oval" aria-hidden="true">
+				<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">
+					<ellipse cx="150" cy="180" rx="115" ry="155" />
+				</svg>
+			</div>
+			<div class="cam-hint" id="cam-hint">Center your face in the oval</div>
+			<div class="cam-countdown" id="cam-countdown" aria-hidden="true">
+				<span class="count-num" id="cam-count-num">3</span>
+			</div>
 		</div>
 		<div class="cam-prompt">
 			Take your <strong id="cam-slot-name">photo</strong>
@@ -727,7 +1006,7 @@
 		<div class="cam-bar">
 			<div id="cam-actions-live" style="display: contents;">
 				<button type="button" data-cam-action="cancel">Cancel</button>
-				<button type="button" class="shutter" data-cam-action="shoot" aria-label="Take photo"></button>
+				<button type="button" class="shutter" data-cam-action="shoot" aria-label="Take photo" id="cam-shutter"></button>
 				<div class="spacer"></div>
 			</div>
 			<div id="cam-actions-review" hidden style="display: contents;">
@@ -738,19 +1017,56 @@
 	</div>
 
 	<script type="module">
-		import '/src/selfie-capture.js';
-		import '/src/selfie-pipeline.js';
-
 		function showStep(name) {
 			document.querySelectorAll('.step[data-step]').forEach((s) => {
 				s.classList.toggle('active', s.dataset.step === name);
+				if (name === 'unavailable') s.hidden = s.dataset.step !== 'unavailable';
 			});
 		}
 
+		// Capability probe — /api/avatars/reconstruct returns 501 unless an ML
+		// backend is wired. If it's not, switch to the "unavailable" step
+		// instead of letting the user take three selfies for nothing.
+		const reconstructReady = await fetch('/api/config', { credentials: 'omit' })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((j) => j?.features?.avatarReconstruct !== false)
+			.catch(() => true); // network failure: assume ready, let the real flow surface the truth
+
+		if (!reconstructReady) {
+			document.querySelectorAll('.step[data-step]').forEach((s) => {
+				s.classList.remove('active');
+				s.hidden = s.dataset.step !== 'unavailable';
+			});
+			const u = document.querySelector('.step[data-step="unavailable"]');
+			if (u) { u.hidden = false; u.classList.add('active'); }
+			const sb = document.getElementById('submit-bar');
+			if (sb) sb.hidden = true;
+		} else {
+			// Only load the camera + pipeline when we actually need them.
+			await import('/src/selfie-capture.js');
+			await import('/src/selfie-pipeline.js');
+		}
+
 		let _avatarId = null;
+		let _docTitleBase = document.title;
+		let _notifyPermission = (typeof Notification !== 'undefined') ? Notification.permission : 'denied';
+
+		document.addEventListener('selfie:preview', (e) => {
+			const dataUrl = /** @type {CustomEvent} */ (e).detail?.dataUrl;
+			if (!dataUrl) return;
+			const img = /** @type {HTMLImageElement|null} */ (document.getElementById('build-preview'));
+			if (!img) return;
+			img.src = dataUrl;
+			requestAnimationFrame(() => img.classList.add('show'));
+		});
 
 		document.addEventListener('selfie:building', () => {
 			showStep('building');
+			// Ask for notification permission once, while the user is engaged — so
+			// when they switch tabs mid-build we can ping them back.
+			if (typeof Notification !== 'undefined' && _notifyPermission === 'default') {
+				Notification.requestPermission().then((p) => { _notifyPermission = p; }).catch(() => {});
+			}
 		});
 
 		document.addEventListener('selfie:progress', (e) => {
@@ -772,12 +1088,10 @@
 			_avatarId = /** @type {CustomEvent} */ (e).detail?.avatarId;
 			if (!_avatarId) return;
 
-			// Mark all build steps complete
 			document.querySelectorAll('.build-step').forEach((s) => {
 				s.className = 'build-step completed';
 			});
 
-			// Fetch avatar to get model URL and name
 			try {
 				const res = await fetch(`/api/avatars/${encodeURIComponent(_avatarId)}`, {
 					credentials: 'include',
@@ -791,15 +1105,63 @@
 				}
 			} catch (_) {}
 
+			notifyDone();
 			showStep('done');
 		});
 
+		function notifyDone() {
+			// Page-visible: nothing to do. Page-hidden: flash the title and fire a
+			// real OS-level notification if the user granted permission.
+			if (!document.hidden) return;
+			let on = true;
+			const tick = window.setInterval(() => {
+				document.title = on ? '✓ Avatar ready — three.ws' : _docTitleBase;
+				on = !on;
+			}, 900);
+			const restore = () => {
+				clearInterval(tick);
+				document.title = _docTitleBase;
+				document.removeEventListener('visibilitychange', restore);
+			};
+			document.addEventListener('visibilitychange', restore);
+
+			if (_notifyPermission === 'granted' && typeof Notification !== 'undefined') {
+				try {
+					const n = new Notification('Your avatar is ready', {
+						body: 'Tap to open it on three.ws.',
+						icon: '/favicon.ico',
+						tag: 'avatar-ready',
+					});
+					n.onclick = () => {
+						window.focus();
+						n.close();
+					};
+				} catch (_) {}
+			}
+		}
+
 		document.addEventListener('selfie:build-error', (e) => {
-			const msg = /** @type {CustomEvent} */ (e).detail?.message || 'Something went wrong. Try again.';
+			const detail = /** @type {CustomEvent} */ (e).detail || {};
+			const msg = detail.message || 'Something went wrong. Try again.';
 			const errEl = document.getElementById('build-error-msg');
 			const retryBtn = document.getElementById('build-retry-btn');
 			if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
 			if (retryBtn) retryBtn.classList.add('show');
+
+			// If we can identify the failing slot, highlight it for retake.
+			if (detail.slot) {
+				const slotFrame = document.querySelector(
+					detail.slot === 'frontal'
+						? `.hero-slot[data-slot="${detail.slot}"]`
+						: `.slot-frame[data-slot="${detail.slot}"]`,
+				);
+				slotFrame?.classList.add('error');
+				// If a side-photo failed, make sure the fidelity panel is open.
+				if (detail.slot !== 'frontal') {
+					const fid = /** @type {HTMLDetailsElement|null} */ (document.getElementById('fidelity-boost'));
+					if (fid) fid.open = true;
+				}
+			}
 		});
 
 		document.getElementById('build-retry-btn')?.addEventListener('click', () => {
@@ -808,6 +1170,26 @@
 			errEl?.classList.remove('show');
 			retryBtn?.classList.remove('show');
 			showStep('capture');
+		});
+
+		document.getElementById('done-list-btn')?.addEventListener('click', async () => {
+			if (!_avatarId) return;
+			const btn = /** @type {HTMLButtonElement} */ (document.getElementById('done-list-btn'));
+			btn.disabled = true;
+			btn.textContent = 'Saving…';
+			const nameEl = /** @type {HTMLInputElement|null} */ (document.getElementById('done-name'));
+			const name = nameEl?.value?.trim();
+			if (name) {
+				try {
+					await fetch(`/api/avatars/${encodeURIComponent(_avatarId)}`, {
+						method: 'PATCH',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ name, visibility: 'public' }),
+					});
+				} catch (_) {}
+			}
+			window.location.assign(`/marketplace/avatars/${encodeURIComponent(_avatarId)}`);
 		});
 
 		document.getElementById('done-save-btn')?.addEventListener('click', async () => {
@@ -835,6 +1217,17 @@
 		document.getElementById('done-editor-btn')?.addEventListener('click', () => {
 			if (!_avatarId) return;
 			window.location.assign(`/avatars/${encodeURIComponent(_avatarId)}/edit`);
+		});
+
+		document.getElementById('done-regen-btn')?.addEventListener('click', () => {
+			// Drop the just-built avatar and reset the capture step. Photos in
+			// memory are gone; the user picks fresh ones. We don't delete the
+			// avatar row — they can still open it later from /dashboard.
+			_avatarId = null;
+			const preview = /** @type {HTMLImageElement|null} */ (document.getElementById('build-preview'));
+			if (preview) { preview.removeAttribute('src'); preview.classList.remove('show'); }
+			document.dispatchEvent(new CustomEvent('selfie:reset'));
+			showStep('capture');
 		});
 	</script>
 </body>

@@ -19,10 +19,27 @@ import { randomUUID } from 'crypto';
 // Dynamically import a provider module by name so we don't pay the cost of
 // loading e.g. the Replicate SDK on every request when regeneration is unused.
 // Cached per-process after first load.
+//
+// Provider name precedence:
+//   1. Explicit env: AVATAR_REGEN_PROVIDER=replicate|gcp|stub
+//   2. Inferred from credentials: if REPLICATE_API_TOKEN is set with no
+//      explicit provider, default to 'replicate'. Same for GCP_RECONSTRUCTION_URL.
+//      This keeps the deploy path 1-step: drop the token in env, ship.
 let _regenProviderCache = null;
 let _regenProviderName = null;
+function resolveProviderName() {
+	const explicit = (process.env.AVATAR_REGEN_PROVIDER || '').trim().toLowerCase();
+	if (explicit) return explicit;
+	// Auto-detect order is paid → free: prefer Replicate's pinned-version
+	// reliability, then our own GCP Cloud Run service, then the HF Spaces
+	// queue (free GPU but variable wait + cold starts).
+	if (process.env.REPLICATE_API_TOKEN) return 'replicate';
+	if (process.env.GCP_RECONSTRUCTION_URL) return 'gcp';
+	if (process.env.HF_TOKEN) return 'huggingface';
+	return 'none';
+}
 async function getRegenProvider() {
-	const name = (env.AVATAR_REGEN_PROVIDER || 'none').trim().toLowerCase();
+	const name = resolveProviderName();
 	if (name === 'none' || !name) return { name, instance: null };
 	if (_regenProviderCache && _regenProviderName === name) {
 		return { name, instance: _regenProviderCache };
@@ -34,6 +51,12 @@ async function getRegenProvider() {
 	}
 	if (name === 'replicate') {
 		const mod = await import('../_providers/replicate.js');
+		_regenProviderCache = mod.createRegenProvider();
+		_regenProviderName = name;
+		return { name, instance: _regenProviderCache };
+	}
+	if (name === 'huggingface' || name === 'hf') {
+		const mod = await import('../_providers/huggingface.js');
 		_regenProviderCache = mod.createRegenProvider();
 		_regenProviderName = name;
 		return { name, instance: _regenProviderCache };
@@ -76,6 +99,107 @@ const handlePresign = wrap(async (req, res) => {
 	const url = await presignUpload({ key, contentType: body.content_type });
 	return json(res, 200, { storage_key: key, upload_url: url, method: 'PUT', headers: { 'content-type': body.content_type }, expires_in: 300 });
 });
+
+// ── upload proxy ──────────────────────────────────────────────────────────────
+// Server-side upload fallback for environments where direct browser→R2 PUT is
+// blocked (Codespaces previews, ephemeral domains not in the bucket CORS
+// allowlist, restrictive corporate networks). The client streams the GLB to
+// this endpoint and we PUT it to R2 server-side using already-authenticated
+// S3 credentials. Same quotas, same key naming as presign — only the wire path
+// differs. Used by account.js after a CORS-blocked presigned PUT.
+//
+// Body: raw octet stream (the GLB bytes). Metadata passed as query params so
+// the body can be a single contiguous buffer:
+//   ?slug=optional-slug&content_type=model/gltf-binary&sha256=hex-or-empty
+//
+// Vercel Pro caps Node function request bodies at 50 MB. Realistic avatars
+// are 5–15 MB; the presign+direct path remains for anything larger.
+const MAX_PROXY_UPLOAD_BYTES = 50 * 1024 * 1024;
+const PROXY_CONTENT_TYPES = new Set([
+	'model/gltf-binary',
+	'application/octet-stream',
+	'application/gltf-binary',
+]);
+
+const handleUpload = wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+	const userId = await resolvePresignUser(req, 'avatars:write');
+	if (!userId) return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
+	const rl = await limits.upload(userId);
+	if (!rl.success) return error(res, 429, 'rate_limited', 'upload rate exceeded');
+
+	const url = new URL(req.url, 'http://x');
+	const rawContentType = url.searchParams.get('content_type') || req.headers['content-type'] || 'model/gltf-binary';
+	const contentType = rawContentType.split(';')[0].trim().toLowerCase();
+	if (!PROXY_CONTENT_TYPES.has(contentType)) {
+		return error(res, 415, 'unsupported_media_type', `content_type must be one of: ${[...PROXY_CONTENT_TYPES].join(', ')}`);
+	}
+
+	const declaredLength = Number(req.headers['content-length']);
+	if (Number.isFinite(declaredLength) && declaredLength > MAX_PROXY_UPLOAD_BYTES) {
+		return error(res, 413, 'payload_too_large', `body exceeds ${MAX_PROXY_UPLOAD_BYTES} bytes — use presigned upload for larger GLBs`);
+	}
+
+	let buffer;
+	try {
+		buffer = await readRawBody(req, MAX_PROXY_UPLOAD_BYTES);
+	} catch (err) {
+		return error(res, err.status || 400, err.code || 'invalid_body', err.message || 'failed to read body');
+	}
+	if (!buffer.length) return error(res, 400, 'empty_body', 'no bytes received');
+
+	try {
+		await enforceQuotas(userId, buffer.length);
+	} catch (err) {
+		return error(res, err.status || 402, err.code || 'plan_limit', err.message);
+	}
+
+	const rawSlug = url.searchParams.get('slug');
+	const slug = rawSlug ? slugSchema.parse(rawSlug) : `draft-${Math.random().toString(36).slice(2, 8)}`;
+	const key = storageKeyFor({ userId, slug });
+
+	const checksum = await sha256Hex(buffer);
+	const claimedChecksum = (url.searchParams.get('sha256') || '').toLowerCase();
+	if (claimedChecksum && claimedChecksum !== checksum) {
+		return error(res, 400, 'checksum_mismatch', 'sha256 query param does not match received bytes');
+	}
+
+	await putObject({ key, body: buffer, contentType });
+
+	return json(res, 200, {
+		storage_key: key,
+		size_bytes: buffer.length,
+		content_type: contentType,
+		checksum_sha256: checksum,
+	});
+});
+
+function readRawBody(req, limit) {
+	return new Promise((resolve, reject) => {
+		const chunks = [];
+		let total = 0;
+		req.on('data', (chunk) => {
+			total += chunk.length;
+			if (total > limit) {
+				const err = new Error(`body exceeds ${limit} bytes`);
+				err.status = 413;
+				err.code = 'payload_too_large';
+				reject(err);
+				req.destroy();
+				return;
+			}
+			chunks.push(chunk);
+		});
+		req.on('end', () => resolve(Buffer.concat(chunks)));
+		req.on('error', reject);
+	});
+}
+
+async function sha256Hex(buf) {
+	const { createHash } = await import('crypto');
+	return createHash('sha256').update(buf).digest('hex');
+}
 
 // ── public ────────────────────────────────────────────────────────────────────
 
@@ -641,6 +765,7 @@ const handleReconstruct = wrap(async (req, res) => {
 
 const DISPATCH = {
 	presign:             handlePresign,
+	upload:              handleUpload,
 	'presign-thumbnail': handlePresignThumbnail,
 	'presign-usdz':      handlePresignUsdz,
 	'presign-halfbody':  handlePresignHalfbody,

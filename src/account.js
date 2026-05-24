@@ -52,18 +52,28 @@ export async function apiFetch(path, options = {}) {
 			headers,
 		});
 
+	// Two retries with 400ms → 1.2s backoff for safe methods. Covers a Vercel
+	// cold start (~600ms) plus one transient proxy blip; non-mutating so re-
+	// firing is free. Mutating methods (POST/PUT) never retry — the body is
+	// already on the wire and the server may have committed it.
 	let res;
-	try {
-		res = await doFetch();
-	} catch (networkErr) {
-		if (!canRetry) throw networkErr;
-		await new Promise((r) => setTimeout(r, 400));
-		res = await doFetch();
+	let lastErr;
+	const maxAttempts = canRetry ? 3 : 1;
+	for (let attempt = 0; attempt < maxAttempts; attempt++) {
+		if (attempt > 0) {
+			await new Promise((r) => setTimeout(r, 400 * attempt * attempt));
+		}
+		try {
+			res = await doFetch();
+		} catch (networkErr) {
+			lastErr = networkErr;
+			res = undefined;
+			continue;
+		}
+		if (canRetry && TRANSIENT_STATUSES.has(res.status)) continue;
+		break;
 	}
-	if (canRetry && TRANSIENT_STATUSES.has(res.status)) {
-		await new Promise((r) => setTimeout(r, 400));
-		res = await doFetch();
-	}
+	if (!res) throw lastErr;
 
 	if (res.status === 401 && !allowAnonymous) {
 		redirectToLogin();
@@ -134,18 +144,52 @@ export async function getMe() {
 // Uploads a GLB to our R2 bucket and creates the avatar record.
 // `source` may be a Blob (from CharacterStudio postMessage) or a URL string.
 //
+// Pass `opts.onProgress(pct)` to receive 0..100 upload-percentage callbacks
+// (R2 PUT only — presign + commit are negligible by comparison).
+//
+// Errors carry a `.stage` ('fetch' | 'canonicalize' | 'presign' | 'upload' |
+// 'commit') and may carry a `.code` for the UI to act on:
+//   - 'upload_blocked'  — XHR completed with status 0 (CORS preflight or
+//                         a network drop between the browser and R2).
+//   - 'upload_failed'   — R2 returned a non-2xx (auth/signature/checksum).
+//   - 'not_signed_in'   — propagated from apiFetch when the cookie is gone.
+//
 // No explicit auth pre-check: `presign` requires a session, so if the cookie
 // is missing or expired apiFetch redirects to /login (and throws with
 // err.redirected = true). Callers that want post-login resume should set
 // their sentinel BEFORE calling — apiFetch's redirect happens synchronously.
-export async function saveRemoteGlbToAccount(source, meta = {}) {
+export async function saveRemoteGlbToAccount(source, meta = {}, opts = {}) {
+	const { onProgress } = opts;
+
+	// Preflight the session ourselves so the caller can set up post-login
+	// resume state *before* any redirect. apiFetch's built-in 401 handler
+	// would jump to /login synchronously, leaving no window to stash a
+	// sentinel — we'd lose the staged blob across the round-trip.
+	// Tolerate transient probe failures: a 5xx on /api/auth/me (Vercel cold
+	// start, dev-proxy hiccup) shouldn't block the upload. If we're truly
+	// signed out, the presign call below will 401 and apiFetch redirects.
+	let me;
+	try {
+		me = await getMe();
+	} catch (err) {
+		console.warn('[account] getMe probe failed, proceeding optimistically:', err?.message);
+		me = { id: null, optimistic: true };
+	}
+	if (me === null) throw stageError('auth', 'Not signed in', { code: 'not_signed_in' });
+
 	let blob;
 	if (source instanceof Blob) {
 		blob = source;
 	} else {
-		const resp = await fetch(source, { mode: 'cors' });
-		if (!resp.ok) throw new Error(`failed to fetch source GLB: ${resp.status}`);
-		blob = await resp.blob();
+		try {
+			const resp = await fetch(source, { mode: 'cors' });
+			if (!resp.ok)
+				throw stageError('fetch', `failed to fetch source GLB: ${resp.status}`);
+			blob = await resp.blob();
+		} catch (err) {
+			if (err.stage) throw err;
+			throw stageError('fetch', err.message || 'failed to fetch source GLB');
+		}
 	}
 
 	// Canonicalize humanoid bone names before upload so the pre-baked Mixamo
@@ -168,18 +212,48 @@ export async function saveRemoteGlbToAccount(source, meta = {}) {
 	const contentType = blob.type || 'model/gltf-binary';
 	const checksum = await sha256Hex(blob);
 
-	const presign = await postJson('/api/avatars/presign', {
-		size_bytes: size,
-		content_type: contentType,
-		checksum_sha256: checksum,
-	});
+	// Presign + direct browser→R2 PUT is the happy path: cheapest, doesn't
+	// route bytes through our function. When the deploy origin isn't in the
+	// bucket CORS allowlist (ephemeral Codespaces hosts, branch deploys with a
+	// new hostname), the preflight fails. In that case fall through to the
+	// server-side proxy upload so the save always completes regardless of
+	// bucket CORS state.
+	let storageKey = null;
+	let presign = null;
 
-	const putRes = await fetch(presign.upload_url, {
-		method: 'PUT',
-		headers: { 'content-type': contentType },
-		body: blob,
-	});
-	if (!putRes.ok) throw new Error(`R2 upload failed: ${putRes.status}`);
+	try {
+		presign = await postJson('/api/avatars/presign', {
+			size_bytes: size,
+			content_type: contentType,
+			checksum_sha256: checksum,
+		});
+	} catch (err) {
+		err.stage = err.stage || 'presign';
+		throw err;
+	}
+
+	try {
+		await putToR2({
+			url: presign.upload_url,
+			blob,
+			contentType,
+			onProgress,
+		});
+		storageKey = presign.storage_key;
+	} catch (err) {
+		if (err.code !== 'upload_blocked') {
+			err.stage = err.stage || 'upload';
+			throw err;
+		}
+		console.warn('[account] direct R2 PUT blocked; retrying via server proxy');
+		try {
+			const proxied = await uploadViaProxy({ blob, contentType, checksum, onProgress });
+			storageKey = proxied.storage_key;
+		} catch (proxyErr) {
+			proxyErr.stage = proxyErr.stage || 'upload';
+			throw proxyErr;
+		}
+	}
 
 	const sourceMeta = {
 		...(meta.source_meta ||
@@ -187,24 +261,30 @@ export async function saveRemoteGlbToAccount(source, meta = {}) {
 		...(retargetedBoneCount > 0 ? { retargeted_bones: retargetedBoneCount } : {}),
 	};
 
-	const created = await postJson('/api/avatars', {
-		storage_key: presign.storage_key,
-		size_bytes: size,
-		content_type: contentType,
-		checksum_sha256: checksum,
-		name: meta.name || deriveAvatarName(source, checksum),
-		description: meta.description,
-		visibility: meta.visibility || 'public',
-		tags: meta.tags || [],
-		source: meta.source || 'upload',
-		source_meta: sourceMeta,
-	});
+	let created;
+	try {
+		created = await postJson('/api/avatars', {
+			storage_key: storageKey,
+			size_bytes: size,
+			content_type: contentType,
+			checksum_sha256: checksum,
+			name: meta.name || deriveAvatarName(source, checksum),
+			description: meta.description,
+			visibility: meta.visibility || 'public',
+			tags: meta.tags || [],
+			source: meta.source || 'upload',
+			source_meta: sourceMeta,
+		});
+	} catch (err) {
+		err.stage = err.stage || 'commit';
+		throw err;
+	}
 	const avatar = created.avatar;
 
 	// Fire-and-forget thumbnail + auto-tag pipeline. Doesn't block the caller.
 	// Uses a hidden off-screen model-viewer to render the GLB, captures a JPEG
 	// poster, uploads to R2, and calls Claude Haiku for tags + description.
-	captureAndTagAvatar(avatar.id, presign.storage_key).catch((err) => {
+	captureAndTagAvatar(avatar.id, storageKey).catch((err) => {
 		console.warn('[account] thumbnail/auto-tag pipeline failed silently', err?.message);
 	});
 
@@ -385,6 +465,127 @@ async function captureAndTagAvatar(avatarId, storageKey) {
 		avatar_id: avatarId,
 		thumb_key: presignRes.thumb_key,
 	});
+}
+
+// PUT a Blob to a presigned R2 URL via XHR so the caller can render real
+// upload progress and so failures can be distinguished by cause:
+//   - status 0       → preflight blocked, network drop, or signed-URL host
+//                      unreachable. Almost always CORS in practice.
+//   - 2xx            → success.
+//   - non-2xx        → R2 returned an error (signature mismatch, expired URL,
+//                      checksum failure). Body is text/xml; surface inline.
+//
+// onProgress is called with an integer 0..100. fetch() has no upload-progress
+// hook in any browser, so XHR is the only path that works today.
+function putToR2({ url, blob, contentType, onProgress }) {
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+		xhr.open('PUT', url, true);
+		xhr.setRequestHeader('content-type', contentType);
+		if (onProgress) {
+			xhr.upload.onprogress = (e) => {
+				if (e.lengthComputable) {
+					onProgress(Math.min(99, Math.round((e.loaded / e.total) * 100)));
+				}
+			};
+			xhr.upload.onload = () => onProgress(100);
+		}
+		xhr.onload = () => {
+			if (xhr.status >= 200 && xhr.status < 300) {
+				resolve();
+				return;
+			}
+			reject(
+				stageError(
+					'upload',
+					`R2 upload failed: ${xhr.status} ${xhr.statusText || ''}`.trim(),
+					{ code: 'upload_failed', status: xhr.status },
+				),
+			);
+		};
+		xhr.onerror = () => {
+			// status 0 ⇒ no HTTP response. CORS preflight failure is by far the
+			// most common cause; surface a hint the UI can render.
+			reject(
+				stageError(
+					'upload',
+					'Upload was blocked before reaching R2 (likely a CORS or network issue).',
+					{ code: 'upload_blocked' },
+				),
+			);
+		};
+		xhr.onabort = () =>
+			reject(stageError('upload', 'Upload aborted', { code: 'upload_aborted' }));
+		xhr.send(blob);
+	});
+}
+
+// Server-side upload fallback used when a direct R2 PUT is blocked (CORS or
+// network). Streams the blob to /api/avatars/upload, which PUTs it to R2
+// using server-side credentials. Same auth + quota path as presign — we get
+// back the storage_key to commit with /api/avatars.
+//
+// Uses XHR (not fetch) so onProgress works in every browser. CSRF is fetched
+// from the same single-use endpoint apiFetch uses; we don't go through
+// apiFetch because it can't propagate upload progress.
+async function uploadViaProxy({ blob, contentType, checksum, onProgress }) {
+	const csrf = await getCsrfToken();
+	_csrfToken = null; // single-use, like apiFetch
+	const qs = new URLSearchParams({ content_type: contentType });
+	if (checksum) qs.set('sha256', checksum);
+	const url = `${API}/api/avatars/upload?${qs.toString()}`;
+
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+		xhr.open('POST', url, true);
+		xhr.withCredentials = true;
+		xhr.setRequestHeader('content-type', contentType);
+		if (csrf) xhr.setRequestHeader('x-csrf-token', csrf);
+		if (onProgress) {
+			xhr.upload.onprogress = (e) => {
+				if (e.lengthComputable) {
+					onProgress(Math.min(99, Math.round((e.loaded / e.total) * 100)));
+				}
+			};
+			xhr.upload.onload = () => onProgress(100);
+		}
+		xhr.onload = () => {
+			if (xhr.status === 401) {
+				redirectToLogin();
+				reject(stageError('upload', 'session expired', { status: 401, code: 'not_signed_in' }));
+				return;
+			}
+			let data = null;
+			try {
+				data = JSON.parse(xhr.responseText);
+			} catch {
+				/* non-JSON body */
+			}
+			if (xhr.status >= 200 && xhr.status < 300 && data?.storage_key) {
+				resolve(data);
+				return;
+			}
+			reject(
+				stageError(
+					'upload',
+					data?.error_description || `proxy upload failed: ${xhr.status}`,
+					{ code: data?.error || 'proxy_upload_failed', status: xhr.status },
+				),
+			);
+		};
+		xhr.onerror = () =>
+			reject(stageError('upload', 'proxy upload network error', { code: 'proxy_upload_failed' }));
+		xhr.onabort = () =>
+			reject(stageError('upload', 'proxy upload aborted', { code: 'upload_aborted' }));
+		xhr.send(blob);
+	});
+}
+
+function stageError(stage, message, extras = {}) {
+	const err = new Error(message);
+	err.stage = stage;
+	Object.assign(err, extras);
+	return err;
 }
 
 async function postJson(path, body) {

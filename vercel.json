@@ -11,6 +11,10 @@
             "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 300
         },
+        "api/avatars/[id].js": {
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
+            "maxDuration": 300
+        },
         "api/tts/speak.js": {
             "includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 60
@@ -300,6 +304,40 @@
         {
             "src": "/embed/",
             "dest": "/embed.html"
+        },
+        {
+            "src": "/embed/avatar",
+            "headers": {
+                "content-security-policy": "frame-ancestors *",
+                "x-content-type-options": "nosniff",
+                "referrer-policy": "strict-origin-when-cross-origin",
+                "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
+                "cross-origin-resource-policy": "cross-origin"
+            },
+            "dest": "/avatar-embed.html"
+        },
+        {
+            "src": "/embed/avatar/([a-z0-9_-]{3,30})",
+            "headers": {
+                "content-security-policy": "frame-ancestors *",
+                "x-content-type-options": "nosniff",
+                "referrer-policy": "strict-origin-when-cross-origin",
+                "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
+                "cross-origin-resource-policy": "cross-origin"
+            },
+            "dest": "/avatar-embed.html?handle=$1"
+        },
+        {
+            "src": "/@([a-z0-9_-]{3,30})/?",
+            "dest": "/handle.html"
+        },
+        {
+            "src": "/widget",
+            "dest": "/widget.html"
+        },
+        {
+            "src": "/widget/",
+            "dest": "/widget.html"
         },
         {
             "src": "/playground",
@@ -944,6 +982,10 @@
             "dest": "/api/avatars/[id]"
         },
         {
+            "src": "/api/avatars/upload",
+            "dest": "/api/avatars/[id]"
+        },
+        {
             "src": "/api/avatars/view",
             "dest": "/api/avatars/view"
         },
@@ -1080,6 +1122,10 @@
             "dest": "/threews-claim.html"
         },
         {
+            "src": "/api/users/([^/]+)/avatar",
+            "dest": "/api/users/[username]/avatar?username=$1"
+        },
+        {
             "src": "/api/users/([^/]+)",
             "dest": "/api/users/[username]?username=$1"
         },
@@ -1164,6 +1210,14 @@
         {
             "src": "/api/widgets/([A-Za-z0-9_-]+)/chat",
             "dest": "/api/widgets/[id]/chat?id=$1"
+        },
+        {
+            "src": "/api/widgets/([A-Za-z0-9_-]+)/transcripts",
+            "dest": "/api/widgets/[id]/transcripts?id=$1"
+        },
+        {
+            "src": "/api/widgets/([A-Za-z0-9_-]+)/knowledge",
+            "dest": "/api/widgets/[id]/knowledge?id=$1"
         },
         {
             "src": "/api/widgets",
@@ -1597,6 +1651,10 @@
         {
             "src": "/app-demo",
             "dest": "/app-demo.html"
+        },
+        {
+            "src": "/app-next",
+            "dest": "/app-next.html"
         },
         {
             "src": "/chat",

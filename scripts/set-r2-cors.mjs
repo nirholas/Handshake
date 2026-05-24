@@ -33,26 +33,45 @@ import { readFileSync, existsSync } from 'node:fs';
 
 // Lightweight .env loader so this runs standalone without dotenv as a dep.
 loadDotenv('.env');
+loadDotenv('.env.local');
+
+// Accept either S3_* env names (what the API runtime uses) or R2_* names (what
+// Cloudflare's dashboard hands out). The R2_* path lets you point this at any
+// bucket using only the four keys from a stock R2 token — no `vercel env pull`
+// required.
+function fallbackEndpointFromAccount(accountId) {
+	if (!accountId) return null;
+	return `https://${accountId.trim()}.r2.cloudflarestorage.com`;
+}
+process.env.S3_ENDPOINT          ||= process.env.R2_ENDPOINT || fallbackEndpointFromAccount(process.env.R2_ACCOUNT_ID);
+process.env.S3_ACCESS_KEY_ID     ||= process.env.R2_ACCESS_KEY_ID;
+process.env.S3_SECRET_ACCESS_KEY ||= process.env.R2_SECRET_ACCESS_KEY;
+process.env.S3_BUCKET            ||= process.env.R2_BUCKET;
 
 const required = ['S3_ENDPOINT', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'S3_BUCKET'];
 const missing = required.filter((k) => !process.env[k]);
 if (missing.length) {
-	console.error(`Missing env: ${missing.join(', ')}`);
-	console.error('Hint: run `vercel env pull .env` first.');
-	process.exit(1);
+	// Deploy-time invocation: missing env is not a deploy failure. Local-dev
+	// invocation: surface the hint. Either way, exit 0 so a CI step can chain.
+	console.log(`[set-r2-cors] skipped — missing env: ${missing.join(', ')}`);
+	console.log('[set-r2-cors] (local: drop R2_ACCOUNT_ID/R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY/R2_BUCKET in .env.local, or run `vercel env pull .env` for production creds.)');
+	process.exit(0);
 }
 
 // Web origins allowed to read assets from R2 and to PUT uploads via presigned
 // URLs. Keep this list authoritative — any origin not listed will be blocked
 // by the browser even if the URL itself is correct.
+// R2/S3 CORS supports a single `*` per origin entry. Wildcards cover ephemeral
+// preview hosts (Vercel branch deploys, Codespaces port-forwards) so a new
+// preview never breaks the upload flow — anything else gets blocked.
 const ALLOWED_ORIGINS = [
 	'https://three.ws',
 	'https://www.three.ws',
 	'https://3d-agent.vercel.app',
+	'https://*.vercel.app',
+	'https://*.app.github.dev',
 	'http://localhost:3000',
 	'http://localhost:5173',
-	// GitHub Codespaces preview hosts: {name}-{port}.app.github.dev
-	'https://*.app.github.dev',
 ];
 
 const POLICY = {
