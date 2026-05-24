@@ -414,6 +414,25 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 			const glbResp = await fetch(job.result_glb_url);
 			if (!glbResp.ok) throw new Error(`fetch result_glb_url: ${glbResp.status}`);
 			const glbBuf = Buffer.from(await glbResp.arrayBuffer());
+
+			// Probe the GLB to capture rigging state. Reconstruction families
+			// differ on whether they emit a skeleton (Hunyuan3D yes, TRELLIS/
+			// TripoSR no) — the UI uses source_meta.is_rigged to badge
+			// "needs rigging" and to gate animation features.
+			const { inspectGlb } = await import('../_lib/glb-inspect.js');
+			const info = inspectGlb(glbBuf);
+			const glbMeta = info
+				? {
+					is_rigged: info.isRigged,
+					skin_count: info.skinCount,
+					skeleton_joint_count: info.skeletonJointCount,
+					node_count: info.nodeCount,
+					mesh_count: info.meshCount,
+					animation_count: info.animationCount,
+					glb_generator: info.generator,
+				}
+				: { is_rigged: null, glb_inspect_error: 'invalid_glb_header' };
+
 			const slug = `selfie-${Math.random().toString(36).slice(2, 8)}`;
 			const key = storageKeyFor({ userId, slug });
 			await putObject({
@@ -422,6 +441,8 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 				contentType: 'model/gltf-binary',
 				metadata: { source: 'reconstruct', job_id: jobId },
 			});
+			const tags = ['selfie'];
+			if (info && !info.isRigged) tags.push('unrigged');
 			const avatar = await createAvatar({
 				userId,
 				storageKey: key,
@@ -432,9 +453,9 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 					size_bytes: glbBuf.length,
 					content_type: 'model/gltf-binary',
 					source: 'reconstruct',
-					source_meta: { jobId, provider: job.provider, replicateGlb: job.result_glb_url },
+					source_meta: { jobId, provider: job.provider, replicateGlb: job.result_glb_url, ...glbMeta },
 					visibility,
-					tags: ['selfie'],
+					tags,
 					checksum_sha256: null,
 					parent_avatar_id: null,
 				},

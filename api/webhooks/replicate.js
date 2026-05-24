@@ -22,6 +22,7 @@ import { sql } from '../_lib/db.js';
 import { putObject } from '../_lib/r2.js';
 import { storageKeyFor, createAvatar } from '../_lib/avatars.js';
 import { json, method, wrap, error } from '../_lib/http.js';
+import { inspectGlb } from '../_lib/glb-inspect.js';
 
 const REPLAY_WINDOW_SECONDS = 5 * 60;
 
@@ -184,6 +185,25 @@ export default wrap(async (req, res) => {
 			if (!glbResp.ok) throw new Error(`fetch result_glb_url: ${glbResp.status}`);
 			const glbBuf = Buffer.from(await glbResp.arrayBuffer());
 
+			// Probe the GLB JSON chunk to capture rigging state. Reconstruction
+			// model families differ on this: Hunyuan3D's generation_all returns
+			// a rigged textured GLB, but TRELLIS / TripoSR return static
+			// meshes. Surfacing is_rigged in source_meta lets the UI badge
+			// "needs rigging" + lets a future auto-rig pass enqueue itself
+			// against avatars that lack a skeleton.
+			const info = inspectGlb(glbBuf);
+			const glbMeta = info
+				? {
+					is_rigged: info.isRigged,
+					skin_count: info.skinCount,
+					skeleton_joint_count: info.skeletonJointCount,
+					node_count: info.nodeCount,
+					mesh_count: info.meshCount,
+					animation_count: info.animationCount,
+					glb_generator: info.generator,
+				}
+				: { is_rigged: null, glb_inspect_error: 'invalid_glb_header' };
+
 			const slug = `selfie-${Math.random().toString(36).slice(2, 8)}`;
 			const key = storageKeyFor({ userId: job.user_id, slug });
 			await putObject({
@@ -192,6 +212,8 @@ export default wrap(async (req, res) => {
 				contentType: 'model/gltf-binary',
 				metadata: { source: 'reconstruct', job_id: job.job_id },
 			});
+			const tags = ['selfie'];
+			if (info && !info.isRigged) tags.push('unrigged');
 			const avatar = await createAvatar({
 				userId: job.user_id,
 				storageKey: key,
@@ -202,9 +224,15 @@ export default wrap(async (req, res) => {
 					size_bytes: glbBuf.length,
 					content_type: 'model/gltf-binary',
 					source: 'reconstruct',
-					source_meta: { jobId: job.job_id, provider: 'replicate', replicateGlb: nextGlbUrl, via: 'webhook' },
+					source_meta: {
+						jobId: job.job_id,
+						provider: 'replicate',
+						replicateGlb: nextGlbUrl,
+						via: 'webhook',
+						...glbMeta,
+					},
 					visibility,
-					tags: ['selfie'],
+					tags,
 					checksum_sha256: null,
 					parent_avatar_id: null,
 				},
