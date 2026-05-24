@@ -106,7 +106,6 @@ export class WalkNet {
 			});
 
 			this.room.onLeave((code) => {
-				console.log('[walk-net] room.onLeave code=', code);
 				this._setStatus('offline');
 				if (!this._destroyed && code !== 1000) this._scheduleReconnect();
 			});

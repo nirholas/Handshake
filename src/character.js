@@ -259,11 +259,7 @@ async function renderToken(agent) {
 				holders,
 				live.volume24h ?? volume24h,
 			);
-			// Update holders stat bubble too
-			if (live.marketCapUsd) {
-				// holders isn't in dexscreener; leave from stored token
-			}
-		});
+		}).catch(() => { /* DexScreener unavailable — static data already rendered */ });
 	}
 }
 

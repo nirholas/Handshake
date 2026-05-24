@@ -33,6 +33,8 @@ const CHUNK_BIN  = 0x004E4942;      // 'BIN\0' little-endian
  *   animationCount: number,
  *   generator: string | null,
  *   extensionsUsed: string[],
+ *   hasBinChunk: boolean,
+ *   binChunkBytes: number,
  * }}
  */
 export function inspectGlb(buf) {
@@ -58,6 +60,23 @@ export function inspectGlb(buf) {
 		return null;
 	}
 
+	// Optional BIN chunk follows the JSON chunk at byte (20 + jsonChunkLen).
+	// We don't read its body — just confirm the header validates so callers
+	// can distinguish embedded-bin GLBs (Hunyuan3D, TRELLIS, model-viewer
+	// exports) from JSON-only GLBs that point at external .bin files (rare in
+	// our reconstruction flow but legal per spec).
+	let hasBinChunk = false;
+	let binChunkBytes = 0;
+	const binChunkStart = 20 + jsonChunkLen;
+	if (binChunkStart + 8 <= buf.length) {
+		const binLen = view.getUint32(binChunkStart, true);
+		const binType = view.getUint32(binChunkStart + 4, true);
+		if (binType === CHUNK_BIN && binChunkStart + 8 + binLen <= buf.length) {
+			hasBinChunk = true;
+			binChunkBytes = binLen;
+		}
+	}
+
 	const skins = Array.isArray(gltf.skins) ? gltf.skins : [];
 	const animations = Array.isArray(gltf.animations) ? gltf.animations : [];
 	const nodes = Array.isArray(gltf.nodes) ? gltf.nodes : [];
@@ -80,6 +99,8 @@ export function inspectGlb(buf) {
 		animationCount: animations.length,
 		generator,
 		extensionsUsed,
+		hasBinChunk,
+		binChunkBytes,
 	};
 }
 

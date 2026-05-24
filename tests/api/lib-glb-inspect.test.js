@@ -6,23 +6,36 @@
 import { describe, it, expect } from 'vitest';
 import { inspectGlb, isValidGlbHeader, isRiggedGlb } from '../../api/_lib/glb-inspect.js';
 
-// Build a minimum-viable GLB with a JSON chunk we control.
-function makeGlb(gltfJson) {
+// Build a minimum-viable GLB with a JSON chunk we control, optionally followed
+// by an empty BIN chunk so we can exercise the BIN-chunk detection branch.
+function makeGlb(gltfJson, { binBytes = null } = {}) {
 	const jsonText = JSON.stringify(gltfJson);
-	// JSON chunk must be padded with spaces to a 4-byte boundary.
 	const padded = jsonText + ' '.repeat((4 - (jsonText.length % 4)) % 4);
 	const jsonBytes = Buffer.from(padded, 'utf8');
 
-	const totalLength = 12 + 8 + jsonBytes.length;
+	const binChunk = binBytes
+		? (() => {
+			const padding = (4 - (binBytes.length % 4)) % 4;
+			const padded = Buffer.concat([binBytes, Buffer.alloc(padding)]);
+			return { header: padded.length, body: padded };
+		})()
+		: null;
+
+	const binSize = binChunk ? 8 + binChunk.body.length : 0;
+	const totalLength = 12 + 8 + jsonBytes.length + binSize;
 	const buf = Buffer.alloc(totalLength);
-	// Header
-	buf.writeUInt32LE(0x46546C67, 0);          // magic 'glTF'
-	buf.writeUInt32LE(2, 4);                    // version
-	buf.writeUInt32LE(totalLength, 8);          // length
-	// JSON chunk header
-	buf.writeUInt32LE(jsonBytes.length, 12);    // chunk length
-	buf.writeUInt32LE(0x4E4F534A, 16);          // chunk type 'JSON'
+	buf.writeUInt32LE(0x46546C67, 0);
+	buf.writeUInt32LE(2, 4);
+	buf.writeUInt32LE(totalLength, 8);
+	buf.writeUInt32LE(jsonBytes.length, 12);
+	buf.writeUInt32LE(0x4E4F534A, 16);
 	jsonBytes.copy(buf, 20);
+	if (binChunk) {
+		const binStart = 20 + jsonBytes.length;
+		buf.writeUInt32LE(binChunk.header, binStart);
+		buf.writeUInt32LE(0x004E4942, binStart + 4); // 'BIN\0'
+		binChunk.body.copy(buf, binStart + 8);
+	}
 	return buf;
 }
 
@@ -135,6 +148,23 @@ describe('glb-inspect', () => {
 				'KHR_materials_pbrSpecularGlossiness',
 				'KHR_texture_basisu',
 			]);
+		});
+
+		it('detects an embedded BIN chunk and reports its byte length', () => {
+			const buf = makeGlb(
+				{ asset: { version: '2.0' }, buffers: [{ byteLength: 32 }] },
+				{ binBytes: Buffer.alloc(32, 0xAB) },
+			);
+			const info = inspectGlb(buf);
+			expect(info.hasBinChunk).toBe(true);
+			expect(info.binChunkBytes).toBe(32);
+		});
+
+		it('reports no BIN chunk on a JSON-only GLB', () => {
+			const buf = makeGlb({ asset: { version: '2.0' } });
+			const info = inspectGlb(buf);
+			expect(info.hasBinChunk).toBe(false);
+			expect(info.binChunkBytes).toBe(0);
 		});
 	});
 

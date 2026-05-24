@@ -1150,7 +1150,6 @@ async function handleVerify(req, res) {
 	if (disabled) {
 		// Self-heal: if DB still tracks it as active, flip to revoked without blocking the response.
 		if (row?.status === 'active') {
-			console.log(`[verify] self-heal queued for ${hash}`);
 			queueMicrotask(() => {
 				sql`
 					UPDATE agent_delegations

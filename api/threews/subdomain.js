@@ -57,30 +57,50 @@ async function handleCheck(req, res) {
 	`;
 
 	let owner = null;
+	let chainCheckError = null;
 	if (claim) {
 		owner = claim.owner_wallet;
 	} else {
-		owner = await getSubdomainOwner(label);
+		// Best-effort SNS lookup. A Solana RPC outage shouldn't 500 the
+		// availability UI — surface the failure on the response payload so the
+		// caller can show a "couldn't verify on-chain" hint while still
+		// answering based on whether anyone has claimed it through us.
+		try {
+			owner = await getSubdomainOwner(label);
+		} catch (err) {
+			chainCheckError = err?.message || 'on-chain check failed';
+			console.warn('[threews/subdomain] on-chain check failed', err?.message);
+		}
 	}
 
-	return json(res, 200, {
-		data: {
-			full: fullDomain(label),
-			label,
-			parent: PARENT_LABEL,
-			available: !owner,
-			owner,
-			claim: claim ? {
-				user_id: claim.user_id,
-				username: claim.username,
-				display_name: claim.display_name,
-				owner_wallet: claim.owner_wallet,
-				url_record: claim.url_record,
-				created_at: claim.created_at,
-			} : null,
-			showcase_url: claim ? `${env.APP_ORIGIN}/u/${claim.username}` : null,
+	return json(
+		res,
+		200,
+		{
+			data: {
+				full: fullDomain(label),
+				label,
+				parent: PARENT_LABEL,
+				available: !owner,
+				owner,
+				on_chain_check: chainCheckError ? 'unavailable' : 'ok',
+				on_chain_error: chainCheckError,
+				claim: claim
+					? {
+							user_id: claim.user_id,
+							username: claim.username,
+							display_name: claim.display_name,
+							owner_wallet: claim.owner_wallet,
+							url_record: claim.url_record,
+							created_at: claim.created_at,
+						}
+					: null,
+				showcase_url: claim ? `${env.APP_ORIGIN}/u/${claim.username}` : null,
+			},
 		},
-	}, { 'cache-control': 'public, max-age=30' });
+		// Don't cache RPC-degraded responses — caller should retry once SNS is back.
+		{ 'cache-control': chainCheckError ? 'no-store' : 'public, max-age=30' },
+	);
 }
 
 async function handleMint(req, res, auth) {

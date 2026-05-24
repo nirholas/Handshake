@@ -6,8 +6,18 @@
  *                    and marks ledger rows settled or failed.
  */
 
+import { encodeFunctionData, parseAbi } from 'viem';
 import { sql } from './db.js';
 import { env } from './env.js';
+import { EVM_USDC, toUsdcAtomics } from '../payments/_config.js';
+
+// USDC transferFrom signature — the delegation manager calls this on the
+// USDC contract on behalf of the agent's wallet. The delegation grants the
+// relayer permission to move USDC from the agent's wallet to the author's
+// wallet, debited from the per-skill allowance scoped in the delegation.
+const USDC_ABI = parseAbi([
+	'function transferFrom(address from, address to, uint256 amount) returns (bool)',
+]);
 
 // ── billSkillRoyalty ──────────────────────────────────────────────────────────
 
@@ -143,7 +153,14 @@ export async function settleAllPendingRoyalties() {
 // ── internal ──────────────────────────────────────────────────────────────────
 
 async function _redeemForGroup(group, authorUserId) {
-	const { agent_id, chain_id, wallet_address } = group;
+	const { agent_id, chain_id, wallet_address, total_usd } = group;
+
+	// USDC contract address must exist for this chain. Royalties are paid in
+	// USDC; chains without a deployed USDC are not eligible.
+	const usdcAddress = EVM_USDC[chain_id];
+	if (!usdcAddress) {
+		throw new Error(`no_usdc_for_chain: chain ${chain_id} has no USDC contract configured`);
+	}
 
 	// Find the author's wallet address to send funds to.
 	const [author] = await sql`
@@ -175,6 +192,18 @@ async function _redeemForGroup(group, authorUserId) {
 		throw new Error(`no_delegation: agent ${agent_id} chain ${chain_id}`);
 	}
 
+	// Encode the real USDC transferFrom call. The delegation manager is the
+	// msg.sender; it calls usdc.transferFrom(agentWallet, authorWallet, amount).
+	const amountAtomics = toUsdcAtomics(Number(total_usd));
+	if (amountAtomics <= 0n) {
+		throw new Error(`invalid_amount: group total ${total_usd} resolves to 0 atomics`);
+	}
+	const transferCalldata = encodeFunctionData({
+		abi: USDC_ABI,
+		functionName: 'transferFrom',
+		args: [wallet_address, author.address, amountAtomics],
+	});
+
 	// Call the relayer endpoint to redeem the delegation.
 	const cronSecret = env.CRON_SECRET;
 	const issuer = env.ISSUER ?? 'http://localhost:3000';
@@ -189,11 +218,9 @@ async function _redeemForGroup(group, authorUserId) {
 			id: delegation.id,
 			calls: [
 				{
-					// Transfer call: recipient = author wallet, value = 0 (off-chain settlement via ledger).
-					// On a real deployment this would be a USDC transferFrom calldata.
-					to: author.address,
+					to: usdcAddress,
 					value: '0x0',
-					data: '0x',
+					data: transferCalldata,
 				},
 			],
 		}),

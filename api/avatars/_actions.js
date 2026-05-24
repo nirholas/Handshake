@@ -14,6 +14,7 @@ import { recordEvent } from '../_lib/usage.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
+import { isValidGlbHeader, inspectGlb } from '../_lib/glb-inspect.js';
 
 // ── regen provider loader ─────────────────────────────────────────────────────
 // Dynamically import a provider module by name so we don't pay the cost of
@@ -179,16 +180,6 @@ const handleUpload = wrap(async (req, res) => {
 		checksum_sha256: checksum,
 	});
 });
-
-// Binary glTF 2.0 header check. See https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#binary-gltf-layout
-function isValidGlbHeader(buffer) {
-	if (!Buffer.isBuffer(buffer) || buffer.length < 12) return false;
-	// Magic = 0x46546C67 ("glTF" in little-endian = 0x67,0x6C,0x54,0x46 in file order)
-	if (buffer.readUInt32LE(0) !== 0x46546C67) return false;
-	if (buffer.readUInt32LE(4) !== 2) return false;
-	if (buffer.readUInt32LE(8) !== buffer.length) return false;
-	return true;
-}
 
 function readRawBody(req, limit) {
 	return new Promise((resolve, reject) => {
@@ -419,7 +410,6 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 			// differ on whether they emit a skeleton (Hunyuan3D yes, TRELLIS/
 			// TripoSR no) — the UI uses source_meta.is_rigged to badge
 			// "needs rigging" and to gate animation features.
-			const { inspectGlb } = await import('../_lib/glb-inspect.js');
 			const info = inspectGlb(glbBuf);
 			const glbMeta = info
 				? {

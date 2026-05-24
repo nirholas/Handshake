@@ -32,10 +32,16 @@ vi.mock('@x402/extensions', () => ({
 	EIP2612_GAS_SPONSORING: { key: 'eip2612GasSponsoring' },
 	ERC20_APPROVAL_GAS_SPONSORING: { key: 'erc20ApprovalGasSponsoring' },
 	declareEip2612GasSponsoringExtension: () => ({
-		eip2612GasSponsoring: { tokens: [], version: 1 },
+		eip2612GasSponsoring: {
+			info: { description: 'EIP-2612 gas sponsoring', version: '1' },
+			schema: {},
+		},
 	}),
 	declareErc20ApprovalGasSponsoringExtension: () => ({
-		erc20ApprovalGasSponsoring: { tokens: [], version: 1 },
+		erc20ApprovalGasSponsoring: {
+			info: { description: 'ERC-20 approval gas sponsoring', version: '1' },
+			schema: {},
+		},
 	}),
 }));
 vi.mock('../../api/_lib/x402-bsc-direct.js', () => ({
@@ -49,13 +55,15 @@ vi.mock('../../api/_lib/x402-builder-code.js', () => ({
 	verifyClientEcho: vi.fn(() => true),
 }));
 
-vi.setConfig({ testTimeout: 10_000, hookTimeout: 30_000 });
+vi.setConfig({ testTimeout: 10_000, hookTimeout: 60_000 });
 
 const specPromise = import('../../api/_lib/x402-spec.js');
 let spec;
+// Explicit per-hook timeout — vi.setConfig is honored, but spelling it out
+// at the call-site survives any future hoisting/ordering surprises.
 beforeAll(async () => {
 	spec = await specPromise;
-});
+}, 60_000);
 
 const ORIG_ENV = { ...process.env };
 

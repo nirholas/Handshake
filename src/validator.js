@@ -236,6 +236,6 @@ function linkify(text) {
 	const urlPattern = /\b(?:https?):\/\/[a-z0-9-+&@#\/%?=~_|!:,.;]*[a-z0-9-+&@#\/%=~_|]/gim;
 	const emailAddressPattern = /(([a-zA-Z0-9_\-\.]+)@[a-zA-Z_]+?(?:\.[a-zA-Z]{2,6}))+/gim;
 	return text
-		.replace(urlPattern, '<a target="_blank" href="$&">$&</a>')
-		.replace(emailAddressPattern, '<a target="_blank" href="mailto:$1">$1</a>');
+		.replace(urlPattern, '<a target="_blank" rel="noopener noreferrer" href="$&">$&</a>')
+		.replace(emailAddressPattern, '<a target="_blank" rel="noopener noreferrer" href="mailto:$1">$1</a>');
 }

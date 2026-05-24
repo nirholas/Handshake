@@ -28,6 +28,26 @@ alter table users add column if not exists username text;
 create unique index if not exists users_wallet_unique on users(wallet_address) where wallet_address is not null;
 create unique index if not exists users_username_unique on users(lower(username)) where username is not null;
 
+-- ── user_subdomains — tracks `<label>.threews.sol` SNS claims ───────────────
+-- Populated by /api/threews/subdomain POST; read by /api/threews/* + a few
+-- on-ramp endpoints (u-og, x402/pay-by-name). Without it every /threews/claim
+-- availability check 500s with "relation does not exist".
+create table if not exists user_subdomains (
+    id              uuid primary key default gen_random_uuid(),
+    user_id         uuid not null references users(id) on delete cascade,
+    label           text not null,
+    parent          text not null,
+    owner_wallet    text not null,
+    url_record      text,
+    signature       text,
+    created_at      timestamptz not null default now()
+);
+
+create unique index if not exists user_subdomains_label_parent
+    on user_subdomains(label, parent);
+create index if not exists user_subdomains_user
+    on user_subdomains(user_id, created_at desc);
+
 -- ── avatars (GLBs stored in R2) ─────────────────────────────────────────────
 create table if not exists avatars (
     id              uuid primary key default gen_random_uuid(),

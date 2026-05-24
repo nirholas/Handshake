@@ -120,9 +120,11 @@ export default wrap(async (req, res) => {
 		return error(res, 502, 'upstream_error', 'ElevenLabs response missing voice_id');
 
 	const userId = session?.id ?? bearer.userId;
-	console.log(
-		`[tts/eleven-clone] user=${userId} cloned voice "${name}" -> ${result.voice_id} (audio=${audio.data.length}B)`,
-	);
+	if (process.env.TTS_DEBUG === '1') {
+		console.log(
+			`[tts/eleven-clone] user=${userId} cloned voice "${name}" -> ${result.voice_id} (audio=${audio.data.length}B)`,
+		);
+	}
 
 	return json(res, 200, {
 		voice_id: result.voice_id,

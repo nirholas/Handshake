@@ -19,11 +19,15 @@ import { zauthProvider } from '@zauthx402/sdk';
 import { env } from './env.js';
 
 let cached;
+let _bootLogged = false;
 
 function buildMiddleware() {
 	const apiKey = env.ZAUTH_API_KEY;
 	if (!apiKey) {
-		console.log('[zauth] disabled: ZAUTH_API_KEY not set');
+		if (env.ZAUTH_DEBUG === '1' && !_bootLogged) {
+			console.log('[zauth] disabled: ZAUTH_API_KEY not set');
+			_bootLogged = true;
+		}
 		return null;
 	}
 	try {
@@ -37,7 +41,10 @@ function buildMiddleware() {
 			debug: env.ZAUTH_DEBUG === '1',
 			batching: { maxBatchSize: 1, maxBatchWaitMs: 0, retry: false },
 		});
-		console.log('[zauth] middleware initialized, key prefix:', apiKey.slice(0, 14));
+		if (env.ZAUTH_DEBUG === '1' && !_bootLogged) {
+			console.log('[zauth] middleware initialized');
+			_bootLogged = true;
+		}
 		return mw;
 	} catch (err) {
 		console.error('[zauth] failed to build middleware:', err.message);
