@@ -1950,7 +1950,7 @@ class App {
 		el.innerHTML = `
 			<div class="viewer-status__card viewer-status__card--error" role="alert">
 				<div class="viewer-status__icon" aria-hidden="true">!</div>
-				<div class="viewer-status__label">${escHtml(label)}</div>
+				<div class="viewer-status__label" data-label>${escHtml(label)}</div>
 				${onRetry ? '<button class="viewer-status__btn" type="button" data-retry>Retry</button>' : ''}
 			</div>
 		`;

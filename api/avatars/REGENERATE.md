@@ -157,13 +157,54 @@ Picking a provider is a separate decision and out of scope for this contract. Wh
 
 ## Environment
 
-Add to `.env.local` or Vercel settings:
+Add to `.env.local` or Vercel settings. The provider is **auto-detected from
+present credentials** (priority: paid → free). Set `AVATAR_REGEN_PROVIDER`
+explicitly to override.
 
 ```
-# Avatar regeneration provider. Set to "stub" for testing, or a provider name.
-# Unset → returns 501 regen_unconfigured.
-AVATAR_REGEN_PROVIDER=stub
+# Explicit override (optional). Auto-detected order is replicate → gcp → huggingface.
+AVATAR_REGEN_PROVIDER=replicate
+
+# --- Replicate (paid, $0.035/run TRELLIS default) ---
+REPLICATE_API_TOKEN=r8_...
+# Optional — defaults to firtoz/trellis (MIT TRELLIS). Pin a version with owner/name:hash
+REPLICATE_RECONSTRUCT_MODEL=firtoz/trellis
+# Optional — if APP_ORIGIN is set this is derived. Replicate POSTs done predictions here.
+REPLICATE_WEBHOOK_URL=https://three.ws/api/webhooks/replicate
+# REQUIRED if you create the webhook in Replicate dashboard (gives you whsec_…)
+REPLICATE_WEBHOOK_SIGNING_KEY=whsec_…
+
+# --- GCP Cloud Run (self-hosted InstantMesh, see workers/avatar-reconstruction/) ---
+GCP_RECONSTRUCTION_URL=https://avatar-reconstruction-…run.app
+GCP_RECONSTRUCTION_KEY=…
+
+# --- HuggingFace (free, Space queue, variable wait) ---
+HF_TOKEN=hf_…
+# Comma-separated failover chain. Format: "owner/name[:api_name]". First success wins.
+# Default chain (when unset): tencent/Hunyuan3D-2.1, tencent/Hunyuan3D-2,
+# JeffreyXiang/TRELLIS, stabilityai/TripoSR.
+HF_RECONSTRUCT_SPACES=tencent/Hunyuan3D-2.1,JeffreyXiang/TRELLIS:image_to_3d
 ```
+
+## Webhooks (Replicate only — optional but recommended)
+
+When `REPLICATE_WEBHOOK_URL` is configured, every prediction submission asks
+Replicate to POST `/api/webhooks/replicate` when the prediction completes.
+That handler verifies the `webhook-signature` (Standard Webhooks spec), updates
+the `avatar_regen_jobs` row, and — for `reconstruct` jobs — materializes the
+avatar inline. The client's status poll then sees `done` + `resultAvatarId`
+on its very next hit without any Replicate API call.
+
+The poll path still works as a fallback: if a webhook is dropped/blocked,
+the next `regenerate-status` call triggers a manual provider.status() poll
+that reconciles the row.
+
+To create the webhook + grab the signing secret:
+
+1. Set `REPLICATE_WEBHOOK_URL=https://three.ws/api/webhooks/replicate` in Vercel.
+2. Replicate dashboard → Webhooks → Add → URL = same → Save.
+3. Copy the `whsec_…` secret → set as `REPLICATE_WEBHOOK_SIGNING_KEY` in Vercel.
+4. Redeploy.
 
 ## Database schema (future migration)
 

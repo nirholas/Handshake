@@ -25,18 +25,21 @@ await page.waitForFunction(
 );
 
 await page.evaluate(async () => {
-	const mgr = window.VIEWER.viewer.animationManager;
+	const v = window.VIEWER.viewer;
+	v.state.autoRotate = false;
+	v.controls.autoRotate = false;
+	const mgr = v.animationManager;
 	await mgr.ensureLoaded('av-waving').catch(() => {});
 	mgr.play('av-waving');
 });
 await page.waitForTimeout(2200);
-await page.screenshot({ path: '/tmp/app-next-hero.png' });
+await page.screenshot({ timeout: 60000, animations: 'disabled', path: '/tmp/app-next-hero.png' });
 console.log('→ /tmp/app-next-hero.png');
 
 // Animation sheet
 await page.evaluate(() => document.getElementById('nxt-anim-btn').click());
 await page.waitForTimeout(900);
-await page.screenshot({ path: '/tmp/app-next-sheet.png' });
+await page.screenshot({ timeout: 60000, animations: 'disabled', path: '/tmp/app-next-sheet.png' });
 console.log('→ /tmp/app-next-sheet.png');
 await page.keyboard.press('Escape');
 await page.waitForTimeout(300);
@@ -44,7 +47,7 @@ await page.waitForTimeout(300);
 // Share popover
 await page.evaluate(() => document.getElementById('nxt-share-btn').click());
 await page.waitForTimeout(400);
-await page.screenshot({ path: '/tmp/app-next-share.png' });
+await page.screenshot({ timeout: 60000, animations: 'disabled', path: '/tmp/app-next-share.png' });
 console.log('→ /tmp/app-next-share.png');
 await page.keyboard.press('Escape');
 await page.waitForTimeout(200);
@@ -54,7 +57,7 @@ await page.evaluate(() => document.getElementById('nxt-share-popover').setAttrib
 // Camera preset — wide
 await page.evaluate(() => document.querySelector('[data-preset="wide"]').click());
 await page.waitForTimeout(900);
-await page.screenshot({ path: '/tmp/app-next-wide.png' });
+await page.screenshot({ timeout: 60000, animations: 'disabled', path: '/tmp/app-next-wide.png' });
 console.log('→ /tmp/app-next-wide.png');
 
 // Back to body shot, then trigger a chat
@@ -62,7 +65,7 @@ await page.evaluate(() => document.querySelector('[data-preset="body"]').click()
 await page.waitForTimeout(700);
 await page.evaluate(() => document.querySelector('.nxt-chat-chip')?.click());
 await page.waitForTimeout(2500);
-await page.screenshot({ path: '/tmp/app-next-chat.png' });
+await page.screenshot({ timeout: 60000, animations: 'disabled', path: '/tmp/app-next-chat.png' });
 console.log('→ /tmp/app-next-chat.png');
 
 // Help overlay
@@ -70,7 +73,7 @@ await page.keyboard.down('Shift');
 await page.keyboard.press('/');
 await page.keyboard.up('Shift');
 await page.waitForTimeout(400);
-await page.screenshot({ path: '/tmp/app-next-help.png' });
+await page.screenshot({ timeout: 60000, animations: 'disabled', path: '/tmp/app-next-help.png' });
 console.log('→ /tmp/app-next-help.png');
 
 await browser.close();
