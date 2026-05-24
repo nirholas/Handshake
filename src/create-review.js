@@ -215,6 +215,10 @@ function applyAuthState({ detail }) {
 	}
 }
 
+// Module-level controller so the cancel button on the overlay can reach into
+// the in-flight save. Reassigned on each onSave() invocation.
+let saveAbortController = /** @type {AbortController | null} */ (null);
+
 async function onSave({ auto = false } = {}) {
 	if (!staged) return;
 	const saveBtn = $('#save-btn');
@@ -230,7 +234,14 @@ async function onSave({ auto = false } = {}) {
 
 	saveBtn.disabled = true;
 	startOverBtn.disabled = true;
-	showSaveOverlay('Preparing upload…', 'Optimizing your avatar.');
+	saveAbortController = new AbortController();
+	showSaveOverlay('Preparing upload…', 'Optimizing your avatar.', {
+		onCancel: () => saveAbortController?.abort(),
+	});
+	// Warm the destination so navigation after a successful save feels instant:
+	// the browser fetches /app and the agent shell scripts in parallel with the
+	// R2 PUT. Removed once we leave the page or on cancel.
+	primeDestinationPrefetch();
 
 	// Arm the resume sentinel before we touch the network. If the session
 	// expired between the cached auth hint and now, apiFetch redirects to
@@ -245,6 +256,7 @@ async function onSave({ auto = false } = {}) {
 			name,
 		};
 		const avatar = await saveRemoteGlbToAccount(staged.blob, meta, {
+			signal: saveAbortController.signal,
 			onProgress: (pct) => {
 				updateSaveOverlay(
 					pct >= 100 ? 'Finishing upload…' : 'Uploading your avatar…',
@@ -254,14 +266,28 @@ async function onSave({ auto = false } = {}) {
 			},
 		});
 		setSaveProgress(null);
+		setSaveCancellable(false);
 		updateSaveOverlay('Preparing your agent…', '');
 		const agent = await attachAvatarToAgent(avatar.id, name);
 		updateSaveOverlay('Opening your avatar…', '');
 		await clearGuest();
 		releaseObjectUrl();
+		// If the user backgrounded the tab, ping a Notification so they know to
+		// come back. Best-effort: silently no-ops if permission was never granted.
+		notifySaveComplete(name);
 		window.location.href = '/app?agent=' + agent.id;
 	} catch (err) {
 		console.error('[create-review] save failed', err);
+		setSaveCancellable(false);
+
+		if (err.code === 'upload_aborted') {
+			// User cancelled — return to the editing UI without an error surface.
+			sessionStorage.removeItem(RESUME_KEY);
+			hideSaveOverlay();
+			saveBtn.disabled = false;
+			startOverBtn.disabled = false;
+			return;
+		}
 
 		if (err.code === 'not_signed_in' || err.redirected) {
 			// Session expired between the cached auth hint and the actual save.
@@ -287,6 +313,13 @@ async function onSave({ auto = false } = {}) {
 			return;
 		}
 
+		// If we were offline-blocked, auto-retry the moment the network comes
+		// back — the blob is still in memory, so the user doesn't have to even
+		// see the error if connectivity recovers within a few seconds.
+		if (err.code === 'upload_blocked') {
+			armReconnectRetry();
+		}
+
 		// Flip the overlay into an inline retry surface. The blob is still in
 		// memory, so retry re-runs the whole pipeline (re-presign → fresh PUT
 		// → fresh commit) without losing any user state.
@@ -295,11 +328,73 @@ async function onSave({ auto = false } = {}) {
 			detail: humanizeSaveError(err, auto),
 			onRetry: () => onSave({ auto: false }),
 			onCancel: () => {
+				disarmReconnectRetry();
 				hideSaveOverlay();
 				saveBtn.disabled = false;
 				startOverBtn.disabled = false;
 			},
 		});
+	}
+}
+
+// Pre-fetches /app and its module graph during the upload so the post-save
+// redirect resolves from cache instead of cold. Idempotent — calling twice is
+// fine; the browser collapses duplicate prefetch requests.
+let prefetchInjected = false;
+function primeDestinationPrefetch() {
+	if (prefetchInjected) return;
+	prefetchInjected = true;
+	const link = document.createElement('link');
+	link.rel = 'prefetch';
+	link.href = '/app';
+	link.as = 'document';
+	document.head.appendChild(link);
+}
+
+// One-shot reconnect retry. If the user comes back online within 30 seconds of
+// an upload_blocked failure, fire the save again without making them click
+// retry. After 30s the listener disarms so a much-later reconnect doesn't
+// surprise them with a save they've moved on from.
+let reconnectHandler = null;
+let reconnectTimer = null;
+function armReconnectRetry() {
+	disarmReconnectRetry();
+	reconnectHandler = () => {
+		if (!navigator.onLine) return;
+		disarmReconnectRetry();
+		onSave({ auto: true });
+	};
+	window.addEventListener('online', reconnectHandler);
+	reconnectTimer = setTimeout(disarmReconnectRetry, 30_000);
+}
+function disarmReconnectRetry() {
+	if (reconnectHandler) {
+		window.removeEventListener('online', reconnectHandler);
+		reconnectHandler = null;
+	}
+	if (reconnectTimer) {
+		clearTimeout(reconnectTimer);
+		reconnectTimer = null;
+	}
+}
+
+// Fire a system notification when the save finishes if the tab is hidden —
+// users who switched away during a long upload get pulled back. Requires the
+// browser's Notification permission, which we never proactively prompt for;
+// this is a best-effort lift only when the user has already opted in elsewhere
+// in the app.
+function notifySaveComplete(name) {
+	if (typeof Notification === 'undefined') return;
+	if (Notification.permission !== 'granted') return;
+	if (typeof document !== 'undefined' && document.visibilityState === 'visible') return;
+	try {
+		new Notification('Avatar saved', {
+			body: `${name || 'Your avatar'} is ready in your account.`,
+			icon: '/three.svg',
+			tag: 'three-ws-avatar-save',
+		});
+	} catch {
+		/* notifications can throw on iOS Safari — ignore */
 	}
 }
 

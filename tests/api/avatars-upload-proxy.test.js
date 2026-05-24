@@ -94,7 +94,7 @@ beforeEach(() => {
 
 describe('POST /api/avatars/upload', () => {
 	it('happy path: stores GLB and returns storage_key + checksum', async () => {
-		const glbBytes = Buffer.from('GLB-FAKE-' + 'x'.repeat(128));
+		const glbBytes = makeFakeGlb(128);
 		const { res, body } = await dispatchUpload(makeReq({ body: glbBytes }), makeRes());
 
 		expect(res.statusCode).toBe(200);
@@ -118,15 +118,34 @@ describe('POST /api/avatars/upload', () => {
 
 	it('rejects bogus content-type with 415', async () => {
 		const { res, body } = await dispatchUpload(
-			makeReq({ body: Buffer.from('hi'), search: '?content_type=text/plain' }),
+			makeReq({ body: makeFakeGlb(32), search: '?content_type=text/plain' }),
 			makeRes(),
 		);
 		expect(res.statusCode).toBe(415);
 		expect(body.error).toBe('unsupported_media_type');
 	});
 
+	it('rejects bytes that are not valid GLB header with 415 invalid_glb', async () => {
+		const notGlb = Buffer.from('<html>error page from a misbehaving proxy</html>');
+		const { res, body } = await dispatchUpload(makeReq({ body: notGlb }), makeRes());
+		expect(res.statusCode).toBe(415);
+		expect(body.error).toBe('invalid_glb');
+		expect(putObjectMock).not.toHaveBeenCalled();
+	});
+
+	it('rejects GLB with wrong total-length field with 415 invalid_glb', async () => {
+		// Hand-craft a header that claims a larger length than the buffer has
+		const bad = Buffer.alloc(20);
+		bad.writeUInt32LE(0x46546C67, 0);
+		bad.writeUInt32LE(2, 4);
+		bad.writeUInt32LE(9999, 8); // lies about length
+		const { res, body } = await dispatchUpload(makeReq({ body: bad }), makeRes());
+		expect(res.statusCode).toBe(415);
+		expect(body.error).toBe('invalid_glb');
+	});
+
 	it('rejects checksum mismatch with 400', async () => {
-		const glb = Buffer.from('mismatch-bytes');
+		const glb = makeFakeGlb(64);
 		const { res, body } = await dispatchUpload(
 			makeReq({ body: glb, search: '?sha256=deadbeef' + 'a'.repeat(56) }),
 			makeRes(),
@@ -139,7 +158,7 @@ describe('POST /api/avatars/upload', () => {
 	it('rejects declared content-length above 50 MB with 413', async () => {
 		const { res, body } = await dispatchUpload(
 			makeReq({
-				body: Buffer.from('x'),
+				body: makeFakeGlb(32),
 				headers: { 'content-length': String(60 * 1024 * 1024) },
 			}),
 			makeRes(),
@@ -150,7 +169,7 @@ describe('POST /api/avatars/upload', () => {
 
 	it('honors caller-supplied slug', async () => {
 		const { res, body } = await dispatchUpload(
-			makeReq({ body: Buffer.from('hi'), search: '?slug=my-cool-avatar' }),
+			makeReq({ body: makeFakeGlb(64), search: '?slug=my-cool-avatar' }),
 			makeRes(),
 		);
 		expect(res.statusCode).toBe(200);
