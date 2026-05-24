@@ -105,12 +105,12 @@ The widget exposes a JSON-RPC 2.0 server inside the iframe. Drive it from the pa
 | `viewer.setAutoRotate`  | `{ enabled?: bool, speed?: number }`                | `{}`                                    |
 | `viewer.setEnvironment` | `{ preset: string }`                                | `{}`                                    |
 | `camera.getLookAt`      | —                                                   | `{ eye: [x,y,z], target: [x,y,z], fov }`|
-| `camera.setLookAt`      | `{ eye?, target?, duration?, ease? }`               | `{ eye, target }`                       |
+| `camera.setLookAt`      | `{ eye?, target?, duration? }`                      | `{ eye, target }`                       |
 | `camera.recenter`       | `{ duration?: seconds }`                            | `{}`                                    |
 | `animation.list`        | —                                                   | `{ clips: [{ name, duration }] }`       |
 | `animation.play`        | `{ name: string, loop?: bool }`                     | `{ name }`                              |
 | `animation.stop`        | —                                                   | `{}`                                    |
-| `screenshot.capture`    | `{ width?: int, height?: int, mime?: string }`      | `{ dataUrl: 'data:image/png;base64,…' }`|
+| `screenshot.capture`    | `{ mime?: string }` (default `image/png`)           | `{ dataUrl: 'data:image/png;base64,…' }` (canvas native resolution) |
 | `model.load`            | `{ url: string }`                                   | `{ url }`                               |
 | `ping`                  | —                                                   | `{ pong: true, t: <ms> }`               |
 

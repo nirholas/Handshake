@@ -153,7 +153,7 @@ async function handleCreate(req, res, auth) {
 			res,
 			413,
 			'payload_too_large',
-			`inline clip exceeds ${MAX_BYTES_INLINE} bytes; upload to R2 (not yet wired)`,
+			`inline clip exceeds ${MAX_BYTES_INLINE} bytes — record a shorter clip or split it`,
 		);
 	}
 	if (input.avatar_id) {

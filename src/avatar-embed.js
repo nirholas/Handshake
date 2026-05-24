@@ -529,7 +529,11 @@ async function main() {
 	// Lets a sibling tab/window (overlay-control.html) drive this embed
 	// without depending on iframe parent semantics. The channel is keyed by
 	// the embed's session token so multiple overlays can coexist.
-	const channelKey = params.get('channel') || `three-ws-overlay:${resolved.id || resolved.handle || 'default'}`;
+	// Handle is preferred over id so the control panel — which only knows the
+	// handle the user typed — lands on the same channel as the overlay window.
+	// Falls back to id when the avatar was mounted by uuid, then a stable
+	// 'default' last resort.
+	const channelKey = params.get('channel') || `three-ws-overlay:${resolved.handle || resolved.id || 'default'}`;
 	let bc = null;
 	try {
 		if (typeof BroadcastChannel !== 'undefined') {

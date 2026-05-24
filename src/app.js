@@ -2333,8 +2333,17 @@ if (!window.__WIDGET_SHELL) {
 	}
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function _bootApp() {
 	const app = new App(document.body, location);
 	window.VIEWER.app = app;
 	console.info('[three.ws] Debugging data exported as `window.VIEWER`.');
-});
+}
+// The slim /widget shell injects this script after DOMContentLoaded (the
+// reveal state machine dynamically appends it), so a plain
+// `addEventListener('DOMContentLoaded')` would attach a listener that never
+// fires. Cover both timings.
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', _bootApp);
+} else {
+	_bootApp();
+}

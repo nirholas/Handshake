@@ -56,7 +56,13 @@ vi.mock('../../api/_lib/avatars.js', () => ({
 }));
 
 // Don't actually fetch the result GLB URL — return a tiny fake buffer.
+// Snapshot fetch eagerly so each test file's tearDown restores its own
+// baseline regardless of cross-file worker ordering.
 const ORIGINAL_FETCH = globalThis.fetch;
+const SCOPED_FETCH = vi.fn(async () => ({
+	ok: true,
+	arrayBuffer: async () => new Uint8Array(Buffer.alloc(256)).buffer,
+}));
 
 function makeReq({ body, headers = {} }) {
 	const buf = Buffer.from(body, 'utf8');
@@ -109,11 +115,8 @@ beforeEach(() => {
 	putObjectMock.mockClear();
 	createAvatarMock.mockClear();
 	sqlMock.mockClear();
-	globalThis.fetch = vi.fn(async () => ({
-		ok: true,
-		arrayBuffer: async () => new Uint8Array(Buffer.alloc(256)).buffer,
-	}));
-	process.env.REPLICATE_WEBHOOK_SIGNING_KEY = undefined;
+	SCOPED_FETCH.mockClear();
+	globalThis.fetch = SCOPED_FETCH;
 	if (ORIGINAL_SIGNING_KEY === undefined) delete process.env.REPLICATE_WEBHOOK_SIGNING_KEY;
 	else process.env.REPLICATE_WEBHOOK_SIGNING_KEY = ORIGINAL_SIGNING_KEY;
 });

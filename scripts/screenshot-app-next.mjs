@@ -11,6 +11,10 @@ page.on('console', (m) => {
 	if (t === 'error') console.log('[err]', m.text().slice(0, 300));
 	else if (t === 'warning') console.log('[warn]', m.text().slice(0, 200));
 });
+page.on('requestfailed', (r) => console.log('REQFAIL:', r.url().slice(0, 150), '—', r.failure()?.errorText));
+page.on('response', (r) => {
+	if (r.status() >= 500) console.log('R500:', r.status(), r.url().slice(0, 150));
+});
 
 const baseUrl = process.argv[2] || 'http://localhost:3000/app-next';
 console.log('→', baseUrl);

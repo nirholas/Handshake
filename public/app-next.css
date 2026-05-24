@@ -59,6 +59,9 @@ body.app-next-body .anim-panel,
 body.app-next-body .agent-presence-sidebar,
 body.app-next-body .save-toast,
 body.app-next-body .controls-toggle,
+body.app-next-body .gui-toggle,
+body.app-next-body .gui-wrap,
+body.app-next-body .ar-btn,
 body.app-next-body .nich-toggle {
 	display: none !important;
 }

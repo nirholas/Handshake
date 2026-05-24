@@ -7810,6 +7810,13 @@ body[data-layout='next'] .next-drawer__body > .gui-wrap > .main {
 body[data-layout='next'] .next-drawer__body .dg.main .close-button.close-bottom {
 	display: none;
 }
+/* Auth-gating of .dg.main is a Classic-only behavior — in Next the drawer
+ * is the primary control surface, so the GUI is always available. None of
+ * camera/lighting/material changes write to the account, so this is safe. */
+body[data-layout='next'] .next-drawer__body .dg.main {
+	display: block !important;
+	visibility: visible !important;
+}
 
 /* ── Interaction prompt ─────────────────────────────────────────────────── */
 .next-prompt {

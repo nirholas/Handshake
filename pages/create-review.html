@@ -249,6 +249,57 @@
 				background: #090a10;
 			}
 
+			/* ── Name + live handle preview ────────────────────────────────── */
+			.name-field { display: flex; flex-direction: column; gap: 6px; }
+			.name-field-head {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 8px;
+				margin-bottom: 0;
+			}
+			.name-field-head .label { margin-bottom: 0; }
+			.handle-copy {
+				appearance: none;
+				background: transparent;
+				border: 1px solid var(--border);
+				color: var(--muted);
+				font: inherit;
+				font-size: 10.5px;
+				font-weight: 500;
+				padding: 2px 8px;
+				border-radius: 6px;
+				cursor: pointer;
+				transition: color 0.15s, border-color 0.15s;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+			}
+			.handle-copy:disabled { opacity: 0.4; cursor: not-allowed; }
+			.handle-copy:not(:disabled):hover { color: var(--accent); border-color: rgba(214, 255, 61, 0.4); }
+			.handle-copy.is-copied { color: var(--accent); border-color: rgba(214, 255, 61, 0.5); }
+			.handle-preview {
+				display: flex;
+				align-items: center;
+				min-height: 28px;
+				padding: 5px 10px;
+				background: #07080d;
+				border: 1px solid var(--border);
+				border-radius: 7px;
+				font-family: ui-monospace, 'SF Mono', monospace;
+				font-size: 11.5px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.handle-host { color: var(--muted); }
+			.handle-slug { color: var(--text); font-weight: 500; }
+			.handle-preview.is-empty .handle-slug { color: #4a4d5a; font-style: italic; }
+			.handle-preview.is-flashing { animation: handleFlash 0.5s ease-out; }
+			@keyframes handleFlash {
+				0% { background: rgba(214, 255, 61, 0.12); border-color: rgba(214, 255, 61, 0.4); }
+				100% { background: #07080d; border-color: var(--border); }
+			}
+
 			.unlocks {
 				display: flex;
 				flex-direction: column;
@@ -1159,10 +1210,10 @@
 		</nav>
 
 		<main class="stage" id="main">
-			<h1 id="heading">Preview your avatar</h1>
+			<h1 id="heading">Meet your avatar</h1>
 			<p class="sub" id="subhead">
-				This is what we just built. Save it to your account to use it across
-				three.ws, or start over with a different look.
+				Try every capability before you save. Talk to it, drop it on any site,
+				take it offline — see what your new agent can do, then claim it.
 			</p>
 
 			<div id="empty-card" class="empty" hidden>
@@ -1195,14 +1246,27 @@
 						</div>
 					</div>
 
-					<div>
-						<label class="label" for="f-name">Name</label>
+					<div class="name-field">
+						<div class="name-field-head">
+							<label class="label" for="f-name">Name &amp; handle</label>
+							<button
+								class="handle-copy"
+								id="handle-copy-btn"
+								type="button"
+								aria-label="Copy your future handle URL"
+								title="Copy handle URL"
+								disabled
+							>Copy</button>
+						</div>
 						<input
 							id="f-name"
-							maxlength="120"
+							maxlength="60"
 							placeholder="Give your avatar a name"
 							autocomplete="off"
 						/>
+						<div class="handle-preview" id="handle-preview" aria-live="polite">
+							<span class="handle-host">three.ws/@</span><span class="handle-slug" id="handle-slug">your-avatar</span>
+						</div>
 					</div>
 
 					<button class="cta" id="save-btn" type="button" disabled>
@@ -1275,8 +1339,8 @@
 					</div>
 
 					<p class="guest-note" id="guest-note" hidden>
-						<strong>Not signed in.</strong> Your preview lives in this browser
-						only. Sign in to save it permanently and use it as an agent.
+						<strong>Not signed in.</strong> This preview lives in your browser
+						only — sign in to claim the handle and ship your agent.
 					</p>
 				</div>
 			</div>

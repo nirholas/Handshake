@@ -890,21 +890,32 @@ function wireKeyboardShortcuts() {
 
 function wireAutoHide() {
 	let idleTimer = null;
+	let hasInteracted = false;
+
 	const arm = () => {
 		document.body.classList.remove('nxt-chrome-hidden');
 		clearTimeout(idleTimer);
+		// Don't hide chrome at all until the user has actually engaged with the page —
+		// otherwise the bottom bar disappears before they've had a chance to read it.
+		if (!hasInteracted) return;
 		idleTimer = setTimeout(() => {
-			// Don't hide while user is in a panel/input.
 			if (document.body.classList.contains('nxt-chat-active')) return;
 			if (anyPanelOpen()) return;
 			document.body.classList.add('nxt-chrome-hidden');
 		}, IDLE_HIDE_MS);
 	};
 
-	['mousemove', 'pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((evt) =>
-		window.addEventListener(evt, arm, { passive: true }),
+	const markInteracted = () => {
+		hasInteracted = true;
+		arm();
+	};
+
+	['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((evt) =>
+		window.addEventListener(evt, markInteracted, { passive: true }),
 	);
-	arm();
+	// mousemove arms but doesn't count as engagement on its own (cursor lands on the
+	// page from another tab without intent).
+	window.addEventListener('mousemove', arm, { passive: true });
 }
 
 function anyPanelOpen() {

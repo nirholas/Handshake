@@ -224,23 +224,12 @@ function buildMethods(app) {
 		},
 
 		// ── Screenshot ────────────────────────────────────────────────────────
-		'screenshot.capture': async (params) => {
+		// Returns a data: URL of the current canvas at its native resolution.
+		// Use `mime` to pick the encoding (default image/png). Resizing isn't
+		// supported here yet — call this in a square iframe if you want a
+		// square image; the canvas matches the iframe's pixel size.
+		'screenshot.capture': (params) => {
 			const v = requireViewer();
-			// Render once into the offscreen buffer at the requested size, then
-			// snapshot. Falls back to canvas.toDataURL() if no resize requested.
-			const w = Math.round(Number(params.width) || 0);
-			const h = Math.round(Number(params.height) || 0);
-			if (w > 0 && h > 0) {
-				const blob = await v.captureScreenshot({ width: w, height: h }).catch(() => null);
-				if (blob) {
-					const reader = new FileReader();
-					return await new Promise((resolve, reject) => {
-						reader.onload = () => resolve({ dataUrl: reader.result });
-						reader.onerror = () => reject(new Error('blob read failed'));
-						reader.readAsDataURL(blob);
-					});
-				}
-			}
 			v.renderer.render(v.scene, v.activeCamera || v.defaultCamera);
 			const mime = String(params.mime || 'image/png');
 			return { dataUrl: v.renderer.domElement.toDataURL(mime) };

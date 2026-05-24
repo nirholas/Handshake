@@ -974,6 +974,24 @@ export class Viewer {
 		});
 	}
 
+	/**
+	 * Public env preset switcher used by the widget config pipeline + JSON-RPC
+	 * `viewer.setEnvironment`. Accepts an environment id (e.g. `neutral`,
+	 * `venice-sunset`) or a display name. Internally we store the name on
+	 * `state.environment` because the GUI dropdown binds to it.
+	 */
+	setEnvironment(preset) {
+		const key = String(preset || '').trim();
+		if (!key) return;
+		const entry =
+			environments.find((e) => e.id === key) ||
+			environments.find((e) => e.name === key) ||
+			environments.find((e) => e.name.toLowerCase() === key.toLowerCase());
+		if (!entry) return;
+		this.state.environment = entry.name;
+		this.updateEnvironment();
+	}
+
 	updateDisplay() {
 		if (this.skeletonHelpers.length) {
 			this.skeletonHelpers.forEach((helper) => this.scene.remove(helper));

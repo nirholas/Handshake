@@ -24,6 +24,7 @@ import {
 	openPaidSkillsModal,
 	openReputationModal,
 	openVoicePreview,
+	slugify,
 	toggleEmoteStrip,
 } from './create-review-features.js';
 
@@ -148,9 +149,43 @@ function wireControls() {
 	const startOverBtn = $('#start-over-btn');
 	const nameInput = $('#f-name');
 
-	nameInput.addEventListener('input', () => {
+	const slugEl = $('#handle-slug');
+	const previewEl = $('#handle-preview');
+	const copyBtn = $('#handle-copy-btn');
+
+	function updateHandle() {
 		const value = nameInput.value.trim();
 		$('#avatar-name').textContent = value || 'Your new avatar';
+		const slug = slugify(value);
+		const display = slug || 'your-avatar';
+		if (slugEl.textContent !== display) {
+			slugEl.textContent = display;
+			previewEl.classList.add('is-flashing');
+			setTimeout(() => previewEl.classList.remove('is-flashing'), 500);
+		}
+		previewEl.classList.toggle('is-empty', !slug);
+		copyBtn.disabled = !slug;
+	}
+
+	nameInput.addEventListener('input', updateHandle);
+	updateHandle();
+
+	copyBtn.addEventListener('click', async () => {
+		const slug = slugify(nameInput.value);
+		if (!slug) return;
+		const url = `https://three.ws/@${slug}`;
+		try {
+			await navigator.clipboard.writeText(url);
+			copyBtn.textContent = 'Copied';
+			copyBtn.classList.add('is-copied');
+			setTimeout(() => {
+				copyBtn.textContent = 'Copy';
+				copyBtn.classList.remove('is-copied');
+			}, 1600);
+		} catch {
+			copyBtn.textContent = '⌘C';
+			setTimeout(() => (copyBtn.textContent = 'Copy'), 1600);
+		}
 	});
 
 	saveBtn.addEventListener('click', () => onSave());
