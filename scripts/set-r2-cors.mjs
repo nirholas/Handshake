@@ -120,8 +120,19 @@ if (flag('--dry-run')) {
 	process.exit(0);
 }
 
-const before = await getCors();
-await s3.send(new PutBucketCorsCommand({ Bucket, CORSConfiguration: POLICY }));
+let before;
+try {
+	before = await getCors();
+} catch (err) {
+	if (!explainAccessDenied(err, 'reading')) throw err;
+	process.exit(1);
+}
+try {
+	await s3.send(new PutBucketCorsCommand({ Bucket, CORSConfiguration: POLICY }));
+} catch (err) {
+	if (!explainAccessDenied(err, 'writing')) throw err;
+	process.exit(1);
+}
 const after = await getCors();
 
 if (JSON.stringify(before) === JSON.stringify(after)) {
@@ -141,6 +152,27 @@ async function getCors() {
 		}
 		throw err;
 	}
+}
+
+// Most R2 tokens are issued with "Object Read & Write" scope, which is enough
+// for PutObject / GetObject but NOT for PutBucketCors / GetBucketCors. Detect
+// that case and print the one-line fix instead of a stack trace.
+function explainAccessDenied(err, op) {
+	const status = err?.$metadata?.httpStatusCode;
+	const code = err?.Code || err?.name;
+	if (status !== 403 && code !== 'AccessDenied') return;
+	console.error('');
+	console.error(`AccessDenied while ${op} bucket CORS on "${Bucket}".`);
+	console.error('');
+	console.error('The R2 token in your environment has object-level access but not');
+	console.error('bucket-level CORS access. To fix:');
+	console.error('  1. Open https://dash.cloudflare.com → R2 → Manage R2 API Tokens');
+	console.error('  2. Create a new token with permission: "Admin Read & Write"');
+	console.error('     (or at minimum: PutBucketCors + GetBucketCors)');
+	console.error(`  3. Scope it to bucket "${Bucket}" only.`);
+	console.error('  4. Replace R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY in .env.local');
+	console.error('     with the new token, then rerun:  node scripts/set-r2-cors.mjs');
+	console.error('');
 }
 
 function loadDotenv(path) {
