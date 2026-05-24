@@ -1,31 +1,55 @@
 // Hugging Face provider for avatar reconstruction.
 //
-// Calls a HF Space's modern Gradio /call/<api_name> endpoint for image-to-3D
-// inference. Default target: tencent/Hunyuan3D-2's `/generation_all` endpoint,
-// which takes 4 multi-view photos (front/back/left/right) and produces a
-// textured GLB — a natural fit for the selfie pipeline's 3-photo capture
-// (frontal → mv_image_front, left → mv_image_left, right → mv_image_right;
-// back is left null).
+// Calls HF Space Gradio /call/<api_name> endpoints for image-to-3D inference.
+// Why "HF Spaces" instead of HF Inference Endpoints: image-to-3D model families
+// (Hunyuan3D, TRELLIS, InstantMesh) need GPUs and aren't served on the
+// serverless Inference API. Spaces give free GPU access — at the cost of
+// queue waits and frequent cold-start / runtime failures.
+//
+// Failover: HF Spaces are unreliable (the headline Space goes down with
+// "No @spaces.GPU function detected" or hits the queue, etc). We try a chain
+// of Spaces in order and return the first GLB we get. Each Space has its own
+// /call API name + payload builder so the chain can include different model
+// families (Hunyuan3D, TRELLIS, etc).
 //
 // Submit is BLOCKING: Gradio queue state lives in the server-side event_id
-// and there's no "reconnect to in-flight job" — once /call/<api>/<event_id>
-// SSE is consumed, the result is gone. The reconstruct endpoint's
-// maxDuration is bumped to 300s in vercel.json to absorb queue wait
-// (typically <30s) plus processing (Hunyuan3D-2 generation_all runs 30-90s
-// on the Space's GPU).
+// with no reconnect; once /call/<api>/<event_id> SSE is consumed, the result
+// is gone. The reconstruct endpoint's maxDuration is 300s in vercel.json to
+// absorb queue wait + processing.
 //
 // status() echoes the resultGlbUrl back from a packed extJobId so the
 // regenerate-status poll loop materializes the avatar without re-hitting HF.
 //
 // Env:
-//   HF_TOKEN                      — required, from huggingface.co/settings/tokens
-//                                   (read-only token is sufficient; the Space is public)
-//   HF_RECONSTRUCT_SPACE          — default 'tencent/Hunyuan3D-2'
-//   HF_RECONSTRUCT_API_NAME       — default 'generation_all'
+//   HF_TOKEN                      — required; huggingface.co/settings/tokens
+//                                   (read-only OK; public Spaces don't need write)
+//   HF_RECONSTRUCT_SPACES         — comma-separated chain of Space slugs to try
+//                                   in order. Format: "owner/name[:api_name]"
+//                                   Default: a hand-curated chain of currently
+//                                   working textured-GLB Spaces.
+//   HF_RECONSTRUCT_SPACE          — legacy single-target alias; converted into
+//                                   a 1-element chain if HF_RECONSTRUCT_SPACES
+//                                   is unset.
+//   HF_RECONSTRUCT_API_NAME       — legacy single-API alias.
 
 const HF_INFERENCE_TIMEOUT_MS = 280_000; // leave headroom for response framing
-const HF_DEFAULT_SPACE = 'tencent/Hunyuan3D-2';
-const HF_DEFAULT_API = 'generation_all';
+
+// Ordered failover chain. We try each entry in order until one returns a GLB.
+// Each entry is { space, api, builder } where builder shapes the Gradio
+// payload from the selfie photos. Add new Spaces as they come online; keep
+// the most reliable / highest-quality at the top.
+//
+// Verified targets (2026-05):
+//   tencent/Hunyuan3D-2                 — textured GLB via /generation_all
+//   tencent/Hunyuan3D-2.1               — successor; same /generation_all shape
+//   JeffreyXiang/TRELLIS                — Microsoft TRELLIS, single image
+//   stabilityai/TripoSR                 — fast feed-forward, single image
+const HF_FAILOVER_CHAIN = [
+	{ space: 'tencent/Hunyuan3D-2.1',           api: 'generation_all',  builder: 'hunyuan' },
+	{ space: 'tencent/Hunyuan3D-2',             api: 'generation_all',  builder: 'hunyuan' },
+	{ space: 'JeffreyXiang/TRELLIS',            api: 'image_to_3d',     builder: 'single' },
+	{ space: 'stabilityai/TripoSR',             api: 'predict',         builder: 'single' },
+];
 
 function readEnv(name) {
 	if (typeof process !== 'undefined' && process.env && process.env[name]) return process.env[name];
@@ -203,6 +227,108 @@ async function consumeSseUntilComplete(response) {
 	return result;
 }
 
+// Resolve the failover chain from env, falling back to the curated default.
+//
+// Precedence (first present wins):
+//   HF_RECONSTRUCT_SPACES — comma-separated "owner/name[:api]" pairs
+//   HF_RECONSTRUCT_SPACE  — legacy single-Space alias (uses HF_RECONSTRUCT_API_NAME or 'generation_all')
+//   HF_FAILOVER_CHAIN     — curated default chain (this module)
+function resolveChain() {
+	const chainCsv = readEnv('HF_RECONSTRUCT_SPACES');
+	if (chainCsv) {
+		return chainCsv
+			.split(',')
+			.map((entry) => entry.trim())
+			.filter(Boolean)
+			.map((entry) => {
+				const [space, api] = entry.split(':');
+				return {
+					space,
+					api: api || 'generation_all',
+					builder: api === 'image_to_3d' || api === 'predict' ? 'single' : 'hunyuan',
+				};
+			});
+	}
+	const legacySpace = readEnv('HF_RECONSTRUCT_SPACE');
+	if (legacySpace) {
+		const api = readEnv('HF_RECONSTRUCT_API_NAME') || 'generation_all';
+		return [{ space: legacySpace, api, builder: api === 'generation_all' ? 'hunyuan' : 'single' }];
+	}
+	return HF_FAILOVER_CHAIN;
+}
+
+// Per-Space payload builders. Map our normalized {photos, params} into the
+// argument list that Space's Gradio endpoint expects.
+const BUILDERS = {
+	hunyuan: ({ photos, params }) => buildHunyuanPayload({ photos, params }),
+	single: ({ photos }) => [toFileData(photos[0])],
+};
+
+// Try one Space end-to-end: enqueue → consume SSE → extract GLB url.
+// Throws with a tagged error containing the Space slug so the failover loop
+// can decide whether to advance to the next entry.
+async function runOnSpace({ token, target, photos, params }) {
+	const { space, api, builder } = target;
+	const spaceUrl = spaceBaseUrl(space);
+	const payloadBuilder = BUILDERS[builder] || BUILDERS.single;
+	const payload = payloadBuilder({ photos, params });
+
+	const tag = (err) => Object.assign(err, { spaceSlug: space, apiName: api });
+
+	// Step 1 — POST /call/<api> to enqueue. Returns event_id.
+	let queueRes;
+	try {
+		queueRes = await fetch(`${spaceUrl}/call/${api}`, {
+			method: 'POST',
+			headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+			body: JSON.stringify({ data: payload }),
+		});
+	} catch (err) {
+		throw tag(Object.assign(new Error(`enqueue failed: ${err?.message}`), {
+			code: 'provider_unreachable',
+			status: 502,
+		}));
+	}
+	if (!queueRes.ok) {
+		const body = await queueRes.text().catch(() => '');
+		throw tag(Object.assign(
+			new Error(`enqueue ${queueRes.status}: ${body.slice(0, 200)}`),
+			{ code: 'provider_error', status: 502, providerStatus: queueRes.status },
+		));
+	}
+	const queueBody = await queueRes.json().catch(() => ({}));
+	const eventId = queueBody?.event_id;
+	if (!eventId) {
+		throw tag(Object.assign(new Error('no event_id returned'), { code: 'provider_error', status: 502 }));
+	}
+
+	// Step 2 — GET /call/<api>/<event_id> SSE; block until complete.
+	let streamRes;
+	try {
+		streamRes = await fetch(`${spaceUrl}/call/${api}/${eventId}`, {
+			headers: { authorization: `Bearer ${token}`, accept: 'text/event-stream' },
+		});
+	} catch (err) {
+		throw tag(Object.assign(new Error(`SSE GET failed: ${err?.message}`), {
+			code: 'provider_unreachable',
+			status: 502,
+		}));
+	}
+
+	const output = await consumeSseUntilComplete(streamRes).catch((err) => {
+		throw tag(err);
+	});
+
+	let glbUrl = extractFirstGlbUrl(output);
+	if (!glbUrl) {
+		throw tag(Object.assign(new Error('no GLB in output'), { code: 'provider_error', status: 502 }));
+	}
+	if (glbUrl.startsWith('/')) glbUrl = `${spaceUrl}${glbUrl}`;
+	else if (!/^https?:\/\//i.test(glbUrl)) glbUrl = `${spaceUrl}/file=${glbUrl}`;
+
+	return { resultGlbUrl: glbUrl, space, api };
+}
+
 export function createRegenProvider() {
 	const token = readEnv('HF_TOKEN');
 	if (!token) {
@@ -212,14 +338,13 @@ export function createRegenProvider() {
 		});
 	}
 
-	const spaceSlug = readEnv('HF_RECONSTRUCT_SPACE') || HF_DEFAULT_SPACE;
-	const apiName = readEnv('HF_RECONSTRUCT_API_NAME') || HF_DEFAULT_API;
-	const spaceUrl = spaceBaseUrl(spaceSlug);
-
-	const authHeaders = {
-		authorization: `Bearer ${token}`,
-		'content-type': 'application/json',
-	};
+	const chain = resolveChain();
+	if (chain.length === 0) {
+		throw Object.assign(new Error('huggingface failover chain is empty'), {
+			code: 'provider_unconfigured',
+			status: 501,
+		});
+	}
 
 	return {
 		async submit(request) {
@@ -238,78 +363,45 @@ export function createRegenProvider() {
 				});
 			}
 
-			// Build the per-Space payload. Today we only support Hunyuan3D-2's
-			// /generation_all shape; when adding a different Space, branch on
-			// apiName here and write its payload builder.
-			const payload = apiName === HF_DEFAULT_API
-				? buildHunyuanPayload({ photos, params: request.params })
-				: [toFileData(photos[0])]; // generic single-image fallback
-
-			// Step 1 — POST to /call/<api> to enqueue. Returns an event_id.
-			let queueRes;
-			try {
-				queueRes = await fetch(`${spaceUrl}/call/${apiName}`, {
-					method: 'POST',
-					headers: authHeaders,
-					body: JSON.stringify({ data: payload }),
-				});
-			} catch (err) {
-				throw Object.assign(new Error(`huggingface /call failed: ${err?.message}`), {
-					code: 'provider_unreachable',
-					status: 502,
-				});
-			}
-			if (!queueRes.ok) {
-				const body = await queueRes.text().catch(() => '');
-				throw Object.assign(
-					new Error(`huggingface /call returned ${queueRes.status}: ${body.slice(0, 200)}`),
-					{ code: 'provider_error', status: 502, providerStatus: queueRes.status },
-				);
-			}
-			const queueBody = await queueRes.json().catch(() => ({}));
-			const eventId = queueBody?.event_id;
-			if (!eventId) {
-				throw Object.assign(new Error('huggingface /call returned no event_id'), {
-					code: 'provider_error',
-					status: 502,
-				});
+			// Try each Space in order. Capture per-Space errors so the final
+			// failure message tells the operator which Spaces were tried and
+			// why each failed — debugging "Avatar engine not available" without
+			// this is painful.
+			const failures = [];
+			for (const target of chain) {
+				try {
+					const { resultGlbUrl, space, api } = await runOnSpace({
+						token,
+						target,
+						photos,
+						params: request.params,
+					});
+					return {
+						extJobId: packExtJobId({ resultGlbUrl, space, api, fellBackFrom: failures.map((f) => f.space) }),
+						eta: 0,
+						rawStatus: 'completed',
+						providerNote: failures.length
+							? `succeeded on ${space} after ${failures.length} failover(s): ${failures.map((f) => `${f.space} (${f.message})`).join('; ')}`
+							: undefined,
+					};
+				} catch (err) {
+					failures.push({
+						space: err.spaceSlug || target.space,
+						api: err.apiName || target.api,
+						message: err.message || 'unknown error',
+						status: err.status,
+					});
+					// Continue to next Space.
+				}
 			}
 
-			// Step 2 — GET /call/<api>/<event_id> as SSE; block until complete.
-			let streamRes;
-			try {
-				streamRes = await fetch(`${spaceUrl}/call/${apiName}/${eventId}`, {
-					headers: {
-						authorization: `Bearer ${token}`,
-						accept: 'text/event-stream',
-					},
-				});
-			} catch (err) {
-				throw Object.assign(new Error(`huggingface SSE GET failed: ${err?.message}`), {
-					code: 'provider_unreachable',
-					status: 502,
-				});
-			}
-
-			const output = await consumeSseUntilComplete(streamRes);
-
-			let glbUrl = extractFirstGlbUrl(output);
-			if (!glbUrl) {
-				throw Object.assign(
-					new Error('huggingface inference returned no GLB in output'),
-					{ code: 'provider_error', status: 502 },
-				);
-			}
-
-			// Gradio may emit relative /file= references; absolutize.
-			if (glbUrl.startsWith('/')) glbUrl = `${spaceUrl}${glbUrl}`;
-			else if (!/^https?:\/\//i.test(glbUrl)) glbUrl = `${spaceUrl}/file=${glbUrl}`;
-
-			return {
-				extJobId: packExtJobId({ resultGlbUrl: glbUrl, space: spaceSlug, api: apiName }),
-				eta: 0,
-				rawStatus: 'completed',
-			};
+			const summary = failures
+				.map((f) => `${f.space} → ${f.message}`)
+				.join(' | ');
+			throw Object.assign(
+				new Error(`all ${chain.length} huggingface Space(s) failed: ${summary}`),
+				{ code: 'all_providers_failed', status: 502, failures },
+			);
 		},
 
 		async status(extJobId) {
