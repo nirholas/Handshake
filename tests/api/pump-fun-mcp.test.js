@@ -3,8 +3,14 @@
 // route's contract: JSON-RPC envelope, tool dispatch, on-chain reads, and
 // the indexer-not-configured error path (no fabricated payloads).
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Readable } from 'node:stream';
+
+// Cold-import of /api/pump-fun-mcp transitively pulls the Solana web3 + pump
+// SDK chain, which on a fresh Codespace can exceed 20s. We warm it in a hook
+// with a generous window so the first test doesn't eat the cost under the
+// default 5s testTimeout.
+vi.setConfig({ testTimeout: 30_000, hookTimeout: 120_000 });
 
 // Mock rate-limit + clientIp so the route never blocks on Upstash.
 vi.mock('../../api/_lib/rate-limit.js', () => ({
@@ -62,10 +68,15 @@ function makeRes() {
 		},
 	};
 }
+let handlerRef;
+beforeAll(async () => {
+	const mod = await import('../../api/pump-fun-mcp.js');
+	handlerRef = mod.default;
+});
+
 async function call(rpc) {
-	const { default: handler } = await import('../../api/pump-fun-mcp.js');
 	const res = makeRes();
-	await handler(makeReq(rpc), res);
+	await handlerRef(makeReq(rpc), res);
 	return { res, json: res.body ? JSON.parse(res.body) : null };
 }
 

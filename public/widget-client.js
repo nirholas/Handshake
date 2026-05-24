@@ -117,37 +117,48 @@
 	};
 
 	ThreeWidgetClient.prototype.ready = function (timeoutMs) {
-		// Resolves on the first `viewer.ready` event, or immediately if a
-		// later attach catches an already-ready widget (we poll once via ping).
+		// Resolves on the first `viewer.ready` event the iframe pushes, or as
+		// soon as a `viewer.getInfo` reports ready (covers attach-after-ready).
+		// Total wait is bounded by `timeoutMs`; the internal ping retries every
+		// 1s until either the deadline or a successful response.
 		var self = this;
 		if (self._closed) return Promise.reject(new Error('client closed'));
+		var deadline = (timeoutMs && timeoutMs > 0) ? Date.now() + timeoutMs : Infinity;
+
 		return new Promise(function (resolve, reject) {
 			var done = false;
-			var off = self.on('viewer.ready', function () {
+			function finish(err) {
 				if (done) return;
 				done = true;
-				off();
-				resolve();
-			});
-			// If the widget is already up, ping succeeds — assume ready.
-			self.call('ping', null, timeoutMs || 4000).then(
-				function () {
-					self.call('viewer.getInfo').then(function (info) {
-						if (!done && info && info.ready) {
-							done = true;
-							off();
-							resolve();
-						}
-					});
-				},
-				function (err) {
-					if (!done) {
-						done = true;
-						off();
-						reject(err);
-					}
-				},
-			);
+				if (off) off();
+				err ? reject(err) : resolve();
+			}
+
+			var off = self.on('viewer.ready', function () { finish(); });
+
+			(function poll() {
+				if (done) return;
+				if (Date.now() >= deadline) {
+					finish(new Error('ready timeout'));
+					return;
+				}
+				// Per-attempt timeout is short (1s) so we re-poll until the
+				// iframe finishes booting; the outer `deadline` bounds the
+				// total wait.
+				self.call('ping', null, 1000).then(
+					function () {
+						if (done) return;
+						self.call('viewer.getInfo', null, 1500).then(
+							function (info) {
+								if (info && info.ready) finish();
+								else setTimeout(poll, 500);
+							},
+							function () { setTimeout(poll, 500); },
+						);
+					},
+					function () { setTimeout(poll, 500); },
+				);
+			})();
 		});
 	};
 

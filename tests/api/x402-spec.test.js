@@ -11,17 +11,27 @@
 //   - send402: writes a base64 PAYMENT-REQUIRED header that round-trips through
 //     JSON.parse with the same extensions set.
 
-import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, it, expect, vi } from 'vitest';
 
 // env.js exposes process.env via getters, so each test's env mutations are
 // picked up immediately by api/_lib/x402-spec.js without needing a module
 // reset. We import the spec module once for the whole file — a fresh import
 // per test would re-walk @coinbase/x402 + @x402/extensions (cold-load > 30s
-// on a CI worker) for no behavioural benefit. The bump to 30s covers the
-// one-off cold-import on the very first test.
-vi.setConfig({ testTimeout: 30_000 });
+// on a CI worker) for no behavioural benefit.
+//
+// The cold-import alone routinely exceeds 60s on a fresh Codespace because it
+// transitively pulls @coinbase/x402, @x402/extensions, the BSC direct-payment
+// module, and (through that) the full ethers core. We warm the import in
+// `beforeAll` so individual tests start with the spec already resolved, and
+// give the warmup itself a generous 120s window. Tests still get 30s each —
+// that's plenty for the synchronous fast paths we actually exercise.
+vi.setConfig({ testTimeout: 30_000, hookTimeout: 120_000 });
 
 const specPromise = import('../../api/_lib/x402-spec.js');
+let spec;
+beforeAll(async () => {
+	spec = await specPromise;
+});
 
 const ORIG_ENV = { ...process.env };
 
@@ -46,7 +56,10 @@ afterEach(() => {
 });
 
 async function loadSpec() {
-	return specPromise;
+	// `spec` is populated in beforeAll, so this returns synchronously after
+	// the module's been warmed up. The await is kept so any straggling
+	// edge-case where a test runs before beforeAll completes still works.
+	return spec ?? (await specPromise);
 }
 
 describe('permit2VariantOf', () => {

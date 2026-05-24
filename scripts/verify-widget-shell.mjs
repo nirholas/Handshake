@@ -85,9 +85,15 @@ await withPage('/studio preview iframe targets /widget', async (page) => {
 		ok(`preview iframe → /widget (src=${previewSrc.slice(0, 120)}…)`);
 	else fail('preview iframe → /widget', `unexpected src: ${previewSrc}`);
 
-	const frame = page.frame({ url: /\/widget/ });
+	// Wait for the iframe to actually register with the browser — playwright
+	// can read the src before page.frame() sees it.
+	let frame = null;
+	for (let i = 0; i < 25 && !frame; i++) {
+		frame = page.frame({ url: /\/widget/ });
+		if (!frame) await page.waitForTimeout(200);
+	}
 	if (!frame) {
-		fail('studio iframe accessible', 'no /widget frame found');
+		fail('studio iframe accessible', 'no /widget frame found after 5s');
 		return;
 	}
 	const chromeCount = await frame.evaluate(
@@ -241,8 +247,9 @@ await withPage('JSON-RPC: ping + camera + animation + info', async (page) => {
 
 	// model.export returns binary GLB as base64 — proves the legacy
 	// exportGLB bridge is fully covered by JSON-RPC now. GLTFExporter.parse
-	// can take several seconds the first time it's imported.
-	const exp = await rpc('model.export', null, 30000);
+	// over a fully-loaded avatar with all clips registered routinely takes
+	// 10-30s on swiftshader; 60s leaves headroom.
+	const exp = await rpc('model.export', null, 60000);
 	if (
 		typeof exp?.result?.base64 === 'string' &&
 		exp.result.base64.length > 1000 &&
