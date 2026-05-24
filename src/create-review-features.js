@@ -18,22 +18,32 @@ import { downloadAvatar } from './avatar-export.js';
 
 let activeModal = null;
 let escHandler = null;
+let keyTrapHandler = null;
+let lastFocusedBeforeOpen = null;
+const FOCUSABLE_SEL =
+	'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /** Open a feature-preview modal. Body may be an HTMLElement or HTML string. */
-export function openFeatureModal({ icon, title, lede, body, actions }) {
+export function openFeatureModal({ icon, title, lede, body, actions, dialogClass }) {
 	closeFeatureModal();
+
+	// Remember the tile (or any element) the user came from so focus can return
+	// there on close — keyboard users get dropped back exactly where they were.
+	lastFocusedBeforeOpen = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
 	const backdrop = document.createElement('div');
 	backdrop.className = 'fm-backdrop';
 	backdrop.setAttribute('role', 'dialog');
 	backdrop.setAttribute('aria-modal', 'true');
+	backdrop.setAttribute('aria-labelledby', 'fm-title');
+	backdrop.setAttribute('aria-describedby', 'fm-lede');
 	backdrop.innerHTML = `
-		<div class="fm-dialog">
+		<div class="fm-dialog${dialogClass ? ' ' + dialogClass : ''}" tabindex="-1">
 			<div class="fm-head">
 				<div class="fm-icon" aria-hidden="true">${icon}</div>
 				<div class="fm-head-text">
-					<h3></h3>
-					<p></p>
+					<h3 id="fm-title"></h3>
+					<p id="fm-lede"></p>
 				</div>
 				<button class="fm-close" type="button" aria-label="Close">✕</button>
 			</div>
@@ -41,8 +51,8 @@ export function openFeatureModal({ icon, title, lede, body, actions }) {
 			<div class="fm-actions"></div>
 		</div>
 	`;
-	backdrop.querySelector('.fm-head-text h3').textContent = title;
-	backdrop.querySelector('.fm-head-text p').textContent = lede;
+	backdrop.querySelector('#fm-title').textContent = title;
+	backdrop.querySelector('#fm-lede').textContent = lede;
 
 	const bodyEl = backdrop.querySelector('.fm-body');
 	if (body instanceof HTMLElement) bodyEl.appendChild(body);
@@ -71,9 +81,35 @@ export function openFeatureModal({ icon, title, lede, body, actions }) {
 	backdrop.querySelector('.fm-close').addEventListener('click', closeFeatureModal);
 
 	escHandler = (e) => {
-		if (e.key === 'Escape') closeFeatureModal();
+		if (e.key === 'Escape') {
+			e.stopPropagation();
+			closeFeatureModal();
+		}
 	};
 	document.addEventListener('keydown', escHandler);
+
+	// Tab/Shift-Tab cycles focus inside the dialog only. Without this, the
+	// underlying page tabs through anchors *behind* the modal — screen readers
+	// and keyboard users see "modal open but focus is on the nav header."
+	keyTrapHandler = (e) => {
+		if (e.key !== 'Tab') return;
+		const focusables = Array.from(backdrop.querySelectorAll(FOCUSABLE_SEL))
+			.filter((el) => !el.hasAttribute('inert') && el.offsetParent !== null);
+		if (!focusables.length) return;
+		const first = focusables[0];
+		const last = focusables[focusables.length - 1];
+		if (e.shiftKey && document.activeElement === first) {
+			e.preventDefault();
+			last.focus();
+		} else if (!e.shiftKey && document.activeElement === last) {
+			e.preventDefault();
+			first.focus();
+		}
+	};
+	backdrop.addEventListener('keydown', keyTrapHandler);
+
+	// Lock page scroll while the modal owns the viewport.
+	document.documentElement.style.overflow = 'hidden';
 
 	document.body.appendChild(backdrop);
 	activeModal = backdrop;
@@ -98,6 +134,17 @@ export function openFeatureModal({ icon, title, lede, body, actions }) {
 		});
 	}
 
+	// Initial focus: first interactive control inside the body (CTA, copy
+	// button, input) rather than the close X — this lets keyboard users hit
+	// Enter immediately to act, not just dismiss.
+	requestAnimationFrame(() => {
+		const initial =
+			backdrop.querySelector('.fm-body button, .fm-body a[href], .fm-body input') ||
+			backdrop.querySelector('.fm-cta') ||
+			backdrop.querySelector('.fm-close');
+		initial?.focus({ preventScroll: true });
+	});
+
 	return backdrop;
 }
 
@@ -109,6 +156,13 @@ export function closeFeatureModal() {
 		document.removeEventListener('keydown', escHandler);
 		escHandler = null;
 	}
+	keyTrapHandler = null;
+	document.documentElement.style.overflow = '';
+	// Restore focus to whatever the user was on when they opened the modal.
+	if (lastFocusedBeforeOpen && document.contains(lastFocusedBeforeOpen)) {
+		lastFocusedBeforeOpen.focus({ preventScroll: true });
+	}
+	lastFocusedBeforeOpen = null;
 }
 
 // ── 3D Body: emote chip strip on the viewer ──────────────────────────────────

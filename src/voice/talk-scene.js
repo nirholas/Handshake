@@ -62,10 +62,10 @@ export class TalkScene {
 		return () => this._onTickFns.delete(fn);
 	}
 
-	async mount({ container, glbUrl, cameraPreset = 'full' }) {
+	async mount({ container, glbUrl, glbBlob, cameraPreset = 'full' }) {
 		this._cameraPreset = CAMERA_PRESETS.includes(cameraPreset) ? cameraPreset : 'full';
 		if (!container) throw new Error('TalkScene.mount: container required');
-		if (!glbUrl) throw new Error('TalkScene.mount: glbUrl required');
+		if (!glbUrl && !glbBlob) throw new Error('TalkScene.mount: glbUrl or glbBlob required');
 		this.container = container;
 
 		// preserveDrawingBuffer keeps the WebGL framebuffer readable via
@@ -117,10 +117,25 @@ export class TalkScene {
 
 		// Load the GLB. Baked avatars carry EXT_meshopt_compression; the
 		// loader can only decode them once the meshopt decoder is wired.
+		//
+		// When a Blob is supplied we read it into an ArrayBuffer once and call
+		// `loader.parse()` directly — no second-fetch hop via object URL. This
+		// avoids the "Failed to fetch" class of errors when an unstaged blob
+		// URL is invalidated mid-load (navigation away, page reload). For
+		// remote URLs we still use `loader.load()`.
 		const loader = new GLTFLoader();
 		loader.setMeshoptDecoder(await getMeshoptDecoder());
-		const gltf = await new Promise((resolve, reject) => {
-			loader.load(glbUrl, resolve, undefined, reject);
+		const gltf = await new Promise(async (resolve, reject) => {
+			try {
+				if (glbBlob) {
+					const buf = await glbBlob.arrayBuffer();
+					loader.parse(buf, '', resolve, reject);
+				} else {
+					loader.load(glbUrl, resolve, undefined, reject);
+				}
+			} catch (err) {
+				reject(err);
+			}
 		});
 		this.gltf = gltf;
 		this.root = gltf.scene;

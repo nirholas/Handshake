@@ -160,7 +160,7 @@ async function getCors() {
 function explainAccessDenied(err, op) {
 	const status = err?.$metadata?.httpStatusCode;
 	const code = err?.Code || err?.name;
-	if (status !== 403 && code !== 'AccessDenied') return;
+	if (status !== 403 && code !== 'AccessDenied') return false;
 	console.error('');
 	console.error(`AccessDenied while ${op} bucket CORS on "${Bucket}".`);
 	console.error('');
@@ -173,6 +173,7 @@ function explainAccessDenied(err, op) {
 	console.error('  4. Replace R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY in .env.local');
 	console.error('     with the new token, then rerun:  node scripts/set-r2-cors.mjs');
 	console.error('');
+	return true;
 }
 
 function loadDotenv(path) {

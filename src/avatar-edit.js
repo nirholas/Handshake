@@ -22,6 +22,7 @@ import { TalkScene } from './voice/talk-scene.js';
 import { AccessoryManager } from './agent-accessories.js';
 import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
 import { IdleAnimation } from './idle-animation.js';
+import { renderSculptPanel } from './avatar-sculpt.js';
 
 // ── Routing ────────────────────────────────────────────────────────────
 
@@ -82,6 +83,7 @@ const TABS = [
 	{ id: 'hat', label: 'Hats', kinds: ['hat'], emoji: '🎩', single: true },
 	{ id: 'glasses', label: 'Glasses', kinds: ['glasses'], emoji: '🕶️', single: true },
 	{ id: 'earrings', label: 'Earrings', kinds: ['earrings'], emoji: '💎', single: false },
+	{ id: 'sculpt', label: 'Sculpt', kinds: [], emoji: '✨', single: true, sculpt: true },
 ];
 const KIND_EMOJI = {
 	outfit: '👕',
@@ -256,6 +258,27 @@ function renderTabs() {
 function renderActivePanel() {
 	const tab = TABS.find((t) => t.id === activeTab);
 	const panel = $('ae-panel');
+
+	// Sculpt tab gets its own UI — morph sliders, not a tile grid. The face-
+	// capture modal lives inside that module, so the avatar-edit shell doesn't
+	// need to know anything about MediaPipe loading or webcam plumbing.
+	if (tab.sculpt) {
+		if (!scene?.root) {
+			panel.innerHTML = `<div class="ae-empty">Waiting for avatar to load…</div>`;
+			return;
+		}
+		renderSculptPanel({
+			container: panel,
+			root: scene.root,
+			working: workingAppearance,
+			onDirty: () => {
+				renderChips();
+				updateDirtyState();
+			},
+		});
+		return;
+	}
+
 	const q = searchQuery.trim().toLowerCase();
 	const items = presets.filter(
 		(p) => tab.kinds.includes(p.kind) && (!q || p.name.toLowerCase().includes(q)),

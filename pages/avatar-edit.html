@@ -336,6 +336,238 @@
 				.ae-shell { grid-template-columns: 1fr; }
 				.ae-stage { border-right: 0; border-bottom: 1px solid var(--border); min-height: 380px; }
 			}
+
+			/* ── Sculpt panel ───────────────────────────────────────── */
+			.ae-sculpt-head {
+				display: flex;
+				gap: 8px;
+				margin-bottom: 10px;
+			}
+			.ae-sculpt-capture {
+				flex: 1;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 6px;
+			}
+			.ae-sculpt-capture-icon { font-size: 14px; line-height: 1; }
+			.ae-sculpt-note {
+				font-size: 12px;
+				color: var(--text-3);
+				line-height: 1.55;
+				margin: 0 0 14px;
+			}
+			.ae-sculpt-group {
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				background: var(--panel);
+				margin-bottom: 8px;
+				overflow: hidden;
+			}
+			.ae-sculpt-group summary {
+				list-style: none;
+				cursor: pointer;
+				padding: 10px 14px;
+				font-size: 13px;
+				font-weight: 600;
+				color: var(--text);
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				transition: background 0.12s;
+				user-select: none;
+			}
+			.ae-sculpt-group summary::-webkit-details-marker { display: none; }
+			.ae-sculpt-group summary::before {
+				content: '▸';
+				color: var(--text-3);
+				font-size: 11px;
+				margin-right: 8px;
+				display: inline-block;
+				transition: transform 0.18s;
+			}
+			.ae-sculpt-group[open] summary::before { transform: rotate(90deg); }
+			.ae-sculpt-group summary:hover { background: var(--panel-2); }
+			.ae-sculpt-count {
+				font-size: 10px;
+				color: var(--text-3);
+				background: var(--panel-2);
+				border: 1px solid var(--border-2);
+				padding: 2px 7px;
+				border-radius: 999px;
+				margin-left: auto;
+			}
+			.ae-sculpt-rows {
+				padding: 6px 14px 14px;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				border-top: 1px solid var(--border);
+				background: rgba(0, 0, 0, 0.2);
+			}
+			.ae-sculpt-row {
+				display: grid;
+				grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 36px;
+				align-items: center;
+				gap: 10px;
+				padding: 6px 0;
+			}
+			.ae-sculpt-label {
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				min-width: 0;
+			}
+			.ae-sculpt-name {
+				font-size: 12px;
+				color: var(--text);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.ae-sculpt-meta {
+				font-size: 9px;
+				color: var(--text-3);
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+			}
+			.ae-sculpt-row input[type='range'] {
+				appearance: none;
+				-webkit-appearance: none;
+				width: 100%;
+				background: transparent;
+				height: 16px;
+				cursor: pointer;
+			}
+			.ae-sculpt-row input[type='range']::-webkit-slider-runnable-track {
+				height: 4px;
+				border-radius: 999px;
+				background: var(--border-2);
+			}
+			.ae-sculpt-row input[type='range']::-moz-range-track {
+				height: 4px;
+				border-radius: 999px;
+				background: var(--border-2);
+			}
+			.ae-sculpt-row input[type='range']::-webkit-slider-thumb {
+				appearance: none;
+				-webkit-appearance: none;
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: var(--accent);
+				margin-top: -5px;
+				border: 0;
+				box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.18);
+				cursor: pointer;
+			}
+			.ae-sculpt-row input[type='range']::-moz-range-thumb {
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: var(--accent);
+				border: 0;
+				cursor: pointer;
+			}
+			.ae-sculpt-value {
+				font-family: ui-monospace, 'SF Mono', monospace;
+				font-size: 11px;
+				color: var(--text-3);
+				text-align: right;
+				font-variant-numeric: tabular-nums;
+			}
+
+			/* ── Face capture modal ─────────────────────────────────── */
+			.ae-face-backdrop {
+				position: fixed;
+				inset: 0;
+				z-index: 200;
+				background: rgba(0, 0, 0, 0.72);
+				backdrop-filter: blur(8px);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 20px;
+				animation: aeFaceFade 0.18s ease-out;
+			}
+			@keyframes aeFaceFade { from { opacity: 0 } to { opacity: 1 } }
+			.ae-face-dialog {
+				background: var(--panel);
+				border: 1.5px solid var(--border-2);
+				border-radius: 14px;
+				width: 100%;
+				max-width: 520px;
+				max-height: calc(100vh - 40px);
+				overflow-y: auto;
+				padding: 24px;
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				gap: 14px;
+				box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+				font-family: inherit;
+			}
+			.ae-face-dialog h3 {
+				margin: 0;
+				font-size: 18px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			.ae-face-lede {
+				margin: 0;
+				color: var(--text-3);
+				font-size: 13px;
+				line-height: 1.5;
+			}
+			.ae-face-close {
+				position: absolute;
+				top: 12px;
+				right: 12px;
+				background: var(--panel-2);
+				border: 1px solid var(--border-2);
+				color: var(--text-2);
+				width: 28px;
+				height: 28px;
+				border-radius: 999px;
+				cursor: pointer;
+				font: inherit;
+				font-size: 13px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.ae-face-close:hover { color: var(--text); border-color: var(--text-3); }
+			.ae-face-stage {
+				position: relative;
+				aspect-ratio: 1 / 1;
+				background: #000;
+				border: 1px solid var(--border-2);
+				border-radius: 10px;
+				overflow: hidden;
+			}
+			.ae-face-stage video {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				transform: scaleX(-1); /* mirror — selfie convention */
+				display: block;
+			}
+			.ae-face-status {
+				position: absolute;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				padding: 8px 12px;
+				font-size: 12px;
+				color: rgba(255, 255, 255, 0.85);
+				background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.7));
+				text-align: center;
+			}
+			.ae-face-actions {
+				display: flex;
+				gap: 8px;
+				justify-content: flex-end;
+			}
 		</style>
 	</head>
 	<body>

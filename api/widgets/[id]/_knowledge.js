@@ -10,7 +10,7 @@
 import { z } from 'zod';
 
 import { sql } from '../../_lib/db.js';
-import { embed, embeddingsConfigured } from '../../_lib/embeddings.js';
+import { embed, embeddingsConfigured, cosine } from '../../_lib/embeddings.js';
 import { chunk, estimateTokens } from '../../_lib/chunker.js';
 import { fetchAndExtract } from '../../_lib/text-extract.js';
 import { shortId } from '../../_lib/ids.js';
@@ -72,6 +72,61 @@ export async function listKnowledge(widgetId) {
 			updated_at: d.updated_at,
 		})),
 	};
+}
+
+// Inkeep-style retrieval debugger: takes a probe query and returns the top-K
+// chunks with cosine scores + the source doc. Lets the creator verify their
+// docs are actually retrievable without having to chat. No LLM call — pure
+// vector lookup, mirrors what handleChat would inject as grounding.
+export async function testRetrieval({ widgetId, query, topK = 5 }) {
+	if (!embeddingsConfigured()) {
+		throw httpError(
+			503,
+			'embedder_unavailable',
+			'Knowledge test needs an OpenAI key on the server (OPENAI_API_KEY).',
+		);
+	}
+	const q = String(query || '').trim();
+	if (q.length < 2) throw httpError(400, 'invalid_request', 'query must be at least 2 chars');
+
+	const rows = await sql`
+		select c.id, c.doc_id, c.chunk_index, c.content, c.embedding, c.token_count,
+		       d.title, d.source_url, d.source_type
+		from widget_knowledge_chunks c
+		join widget_knowledge_docs   d on d.id = c.doc_id
+		where c.widget_id = ${widgetId}
+	`;
+	if (!rows.length) return { query: q, results: [], chunks_searched: 0 };
+
+	const [queryEmbedding] = await embed([q]);
+	const scored = rows
+		.map((r) => {
+			const e = Array.isArray(r.embedding) ? r.embedding : r.embedding?.values || [];
+			return {
+				id: Number(r.id),
+				doc_id: r.doc_id,
+				chunk_index: Number(r.chunk_index),
+				score: cosine(queryEmbedding, e),
+				token_count: Number(r.token_count || 0),
+				excerpt: truncate(String(r.content), 280),
+				title: r.title,
+				source_url: r.source_url,
+				source_type: r.source_type,
+			};
+		})
+		.sort((a, b) => b.score - a.score)
+		.slice(0, Math.max(1, Math.min(20, topK)));
+
+	return {
+		query: q,
+		results: scored,
+		chunks_searched: rows.length,
+	};
+}
+
+function truncate(s, n) {
+	if (s.length <= n) return s;
+	return s.slice(0, n).trim() + '…';
 }
 
 export async function deleteKnowledge({ widgetId, userId, docId }) {

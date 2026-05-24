@@ -79,7 +79,33 @@
 				align-items: start;
 			}
 			@media (max-width: 880px) {
-				.grid { grid-template-columns: 1fr; }
+				.grid { grid-template-columns: 1fr; gap: 16px; }
+			}
+			/* Phone-class viewport: drop the panel padding, drop the modal
+			   max-width, swap modal animation to a slide-up sheet so it feels
+			   native rather than "desktop dialog squashed onto a phone". */
+			@media (max-width: 560px) {
+				main.stage { padding: 12px 14px 60px; }
+				h1 { font-size: 22px; }
+				.sub { margin-bottom: 18px; font-size: 14px; }
+				.viewer { min-height: 360px; aspect-ratio: 3 / 4; }
+				.panel { padding: 16px; gap: 12px; }
+				.panel h2 { font-size: 17px; }
+				.unlocks { padding: 12px; gap: 8px; }
+				.feature-tile { padding: 9px; }
+				.feature-name { font-size: 12px; }
+				.feature-desc { font-size: 10px; }
+				.fm-backdrop { padding: 0; align-items: flex-end; }
+				.fm-dialog {
+					max-width: 100%;
+					max-height: 88vh;
+					border-radius: 18px 18px 0 0;
+					padding: 22px 20px 26px;
+					animation: fmSheet 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+				}
+				@keyframes fmSheet { from { transform: translateY(20px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+				.fm-head h3 { font-size: 17px; }
+				.fm-head p { font-size: 12.5px; }
 			}
 
 			.viewer {

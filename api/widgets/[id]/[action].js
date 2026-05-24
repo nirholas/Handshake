@@ -18,7 +18,12 @@ import { decorate } from '../index.js';
 import { redactPii } from '../../_lib/pii.js';
 import { embed, cosine, embeddingsConfigured } from '../../_lib/embeddings.js';
 import { listTranscripts, getTranscript } from './_transcripts.js';
-import { listKnowledge, ingestKnowledge, deleteKnowledge } from './_knowledge.js';
+import {
+	listKnowledge,
+	ingestKnowledge,
+	deleteKnowledge,
+	testRetrieval,
+} from './_knowledge.js';
 
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
@@ -966,6 +971,25 @@ async function handleKnowledge(req, res) {
 	if (!w) return error(res, 404, 'not_found', 'widget not found or not yours');
 
 	if (req.method === 'GET') {
+		const url = new URL(req.url, 'http://x');
+		// ?test=<query> — Inkeep-style retrieval debugger. Returns top-K
+		// chunks with cosine scores so the creator can verify their docs
+		// surface for the queries they expect, without running a chat turn.
+		const probe = url.searchParams.get('test');
+		if (probe !== null) {
+			try {
+				const topK = parseInt(url.searchParams.get('top_k') || '5', 10) || 5;
+				const data = await testRetrieval({ widgetId: id, query: probe, topK });
+				return json(res, 200, data);
+			} catch (err) {
+				return error(
+					res,
+					err.status || 400,
+					err.code || 'test_failed',
+					err.message || 'retrieval test failed',
+				);
+			}
+		}
 		const out = await listKnowledge(id);
 		res.setHeader('cache-control', 'private, max-age=15');
 		return json(res, 200, out);

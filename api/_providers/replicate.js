@@ -148,6 +148,13 @@ export function createRegenProvider() {
 		'content-type': 'application/json',
 	};
 
+	// Webhook target: when set, every submission asks Replicate to POST status
+	// updates here instead of forcing the client to poll. The route lives at
+	// /api/webhooks/replicate (vercel.json rewrite). Without this URL we fall
+	// back to the old poll-on-status flow — both paths converge in the DB.
+	const webhookUrl = readEnv('REPLICATE_WEBHOOK_URL')
+		|| (readEnv('APP_ORIGIN') ? `${readEnv('APP_ORIGIN').replace(/\/$/, '')}/api/webhooks/replicate` : null);
+
 	return {
 		async submit(request) {
 			const modelRef = modelForMode(request.mode);
@@ -177,15 +184,26 @@ export function createRegenProvider() {
 			const isVersionHash = /^[a-f0-9]{40,64}$/i.test(modelRef);
 			const slugMatch = modelRef.match(/^([a-z0-9-]+)\/([a-z0-9._-]+)(?::([a-f0-9]+))?$/i);
 
+			// Webhook payload — Replicate POSTs the full Prediction object to
+			// this URL on the configured events. We filter to "completed" only
+			// (Replicate's term covers succeeded/failed/canceled) since the
+			// client doesn't care about intermediate "processing" events; the
+			// status endpoint still falls back to polling if a webhook is lost.
+			const requestBody = { input };
+			if (webhookUrl) {
+				requestBody.webhook = webhookUrl;
+				requestBody.webhook_events_filter = ['completed'];
+			}
+
 			let endpoint;
 			let body;
 			if (isVersionHash) {
 				endpoint = `${REPLICATE_BASE}/predictions`;
-				body = JSON.stringify({ version: modelRef, input });
+				body = JSON.stringify({ ...requestBody, version: modelRef });
 			} else if (slugMatch) {
 				const [, owner, name, pinnedVersion] = slugMatch;
 				endpoint = `${REPLICATE_BASE}/models/${owner}/${name}/predictions`;
-				body = JSON.stringify(pinnedVersion ? { version: pinnedVersion, input } : { input });
+				body = JSON.stringify(pinnedVersion ? { ...requestBody, version: pinnedVersion } : requestBody);
 			} else {
 				throw Object.assign(
 					new Error(`replicate model reference "${modelRef}" is neither a version hash nor an owner/name slug`),
