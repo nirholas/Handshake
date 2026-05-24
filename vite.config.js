@@ -601,7 +601,9 @@ const appConfig = {
 						const walk = (dir) => {
 							for (const entry of readdirSync(dir)) {
 								const full = join(dir, entry);
-								if (statSync(full).isDirectory()) walk(full);
+								let stat;
+								try { stat = statSync(full); } catch { continue; }
+								if (stat.isDirectory()) walk(full);
 								else if (entry.endsWith('.html')) {
 									const html = readFileSync(full, 'utf8');
 									let next = html.replace(LEGACY, '');
