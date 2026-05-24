@@ -369,19 +369,12 @@ function hookAgentBubble() {
 		}, AGENT_BUBBLE_MS);
 	};
 
-	// AgentProtocol emits SPEAK events whenever the agent says something.
+	// ACTION_TYPES.SPEAK resolves to 'speak' (lowercase) — match the actual value.
 	const protocol = window.VIEWER?.agent_protocol;
 	if (protocol && typeof protocol.on === 'function') {
-		protocol.on('SPEAK', (action) => {
+		protocol.on('speak', (action) => {
 			const t = action?.payload?.text;
 			if (t) showReply(t);
-		});
-		// Some emit codepaths use the wildcard subscription pattern.
-		protocol.on('*', (action) => {
-			if (action?.type === 'SPEAK' || action?.type === 'speak') {
-				const t = action?.payload?.text;
-				if (t) showReply(t);
-			}
 		});
 	}
 }
