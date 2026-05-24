@@ -258,7 +258,10 @@
 				grid-template-columns: 1fr 1fr;
 				gap: 6px;
 			}
+			.feature-grid > li { display: flex; }
+			.feature-grid .feature-tile { flex: 1; width: 100%; }
 			.feature-tile {
+				appearance: none;
 				display: flex;
 				flex-direction: column;
 				gap: 3px;
@@ -266,13 +269,23 @@
 				background: rgba(255, 255, 255, 0.025);
 				border: 1px solid transparent;
 				border-radius: 9px;
-				transition: background 0.15s, border-color 0.15s, transform 0.15s;
-				cursor: default;
+				transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+				cursor: pointer;
+				color: var(--text);
+				text-align: left;
+				font: inherit;
+				position: relative;
 			}
-			.feature-tile:hover {
-				background: rgba(214, 255, 61, 0.04);
-				border-color: rgba(214, 255, 61, 0.18);
+			.feature-tile:hover, .feature-tile:focus-visible {
+				background: rgba(214, 255, 61, 0.06);
+				border-color: rgba(214, 255, 61, 0.28);
 				transform: translateY(-1px);
+				box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+				outline: none;
+			}
+			.feature-tile:hover .feature-try, .feature-tile:focus-visible .feature-try {
+				opacity: 1;
+				transform: translateX(0);
 			}
 			.feature-icon {
 				font-size: 17px;
@@ -289,6 +302,315 @@
 				color: var(--muted);
 				line-height: 1.35;
 			}
+			.feature-try {
+				position: absolute;
+				top: 8px;
+				right: 9px;
+				font-size: 10px;
+				color: var(--accent);
+				opacity: 0;
+				transform: translateX(-3px);
+				transition: opacity 0.15s, transform 0.15s;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+			}
+
+			/* ── Feature-preview modal ─────────────────────────────────────── */
+			.fm-backdrop {
+				position: fixed;
+				inset: 0;
+				z-index: 200;
+				background: rgba(2, 3, 6, 0.72);
+				backdrop-filter: blur(6px);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 20px;
+				animation: fmFadeIn 0.18s ease-out;
+			}
+			@keyframes fmFadeIn { from { opacity: 0; } to { opacity: 1; } }
+			.fm-dialog {
+				background: var(--panel);
+				border: 1.5px solid var(--border);
+				border-radius: 16px;
+				width: 100%;
+				max-width: 520px;
+				max-height: calc(100vh - 40px);
+				overflow-y: auto;
+				padding: 28px;
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+				box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+				animation: fmRise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+			}
+			@keyframes fmRise { from { transform: translateY(8px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+			.fm-head {
+				display: flex;
+				align-items: flex-start;
+				gap: 14px;
+			}
+			.fm-icon {
+				font-size: 28px;
+				line-height: 1;
+				flex-shrink: 0;
+			}
+			.fm-head-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+			.fm-head-text h3 {
+				margin: 0;
+				font-size: 18px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			.fm-head-text p {
+				margin: 0;
+				color: var(--muted);
+				font-size: 13px;
+				line-height: 1.5;
+			}
+			.fm-close {
+				margin-left: auto;
+				background: rgba(255, 255, 255, 0.05);
+				border: 1px solid var(--border);
+				color: var(--text);
+				width: 30px;
+				height: 30px;
+				border-radius: 999px;
+				cursor: pointer;
+				font-size: 14px;
+				font-family: inherit;
+				flex-shrink: 0;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				transition: background 0.15s, border-color 0.15s;
+			}
+			.fm-close:hover { background: rgba(255, 255, 255, 0.1); border-color: #2c2d3d; }
+			.fm-body { display: flex; flex-direction: column; gap: 14px; }
+			.fm-bullets { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+			.fm-bullets li {
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				font-size: 13px;
+				color: var(--text);
+				line-height: 1.5;
+			}
+			.fm-bullets li::before {
+				content: '';
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: var(--accent);
+				margin-top: 7px;
+				flex-shrink: 0;
+				box-shadow: 0 0 6px rgba(214, 255, 61, 0.5);
+			}
+			.fm-code {
+				background: #07080d;
+				border: 1px solid var(--border);
+				border-radius: 9px;
+				padding: 12px 14px;
+				font-family: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+				font-size: 12px;
+				color: #cdd;
+				overflow-x: auto;
+				white-space: pre;
+				position: relative;
+			}
+			.fm-copy {
+				position: absolute;
+				top: 8px;
+				right: 8px;
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid var(--border);
+				color: var(--muted);
+				border-radius: 6px;
+				padding: 3px 8px;
+				font-size: 10.5px;
+				cursor: pointer;
+				font-family: inherit;
+				transition: color 0.15s, border-color 0.15s;
+			}
+			.fm-copy:hover { color: var(--accent); border-color: rgba(214, 255, 61, 0.4); }
+			.fm-copy.copied { color: var(--accent); }
+			.fm-row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 12px;
+				padding: 10px 12px;
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				font-size: 13px;
+			}
+			.fm-row strong { font-weight: 600; }
+			.fm-row .muted { color: var(--muted); font-size: 12px; }
+			/* Schematic placeholder for "this is the value you'll get on save"
+			   rendering — clearly inert so it doesn't read as a real address. */
+			.fm-placeholder {
+				font-family: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+				font-size: 11px;
+				color: var(--muted);
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px dashed var(--border);
+				border-radius: 6px;
+				padding: 3px 7px;
+				letter-spacing: 0.02em;
+			}
+			.fm-actions { display: flex; gap: 8px; }
+			.fm-cta {
+				flex: 1;
+				background: var(--accent);
+				color: var(--accent-ink);
+				border: none;
+				border-radius: 9px;
+				padding: 10px 14px;
+				font: inherit;
+				font-weight: 600;
+				cursor: pointer;
+				transition: filter 0.15s;
+			}
+			.fm-cta:hover { filter: brightness(1.05); }
+			.fm-cta.ghost {
+				background: transparent;
+				color: var(--text);
+				border: 1.5px solid var(--border);
+			}
+			.fm-cta.ghost:hover { border-color: #2c2d3d; }
+			.fm-note {
+				font-size: 11.5px;
+				color: var(--muted);
+				line-height: 1.45;
+			}
+
+			.fm-download-list {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+			.fm-download-row {
+				width: 100%;
+				appearance: none;
+				background: rgba(255, 255, 255, 0.025);
+				border: 1.5px solid var(--border);
+				border-radius: 10px;
+				padding: 12px 14px;
+				color: var(--text);
+				text-align: left;
+				font: inherit;
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				cursor: pointer;
+				transition: background 0.15s, border-color 0.15s, transform 0.1s;
+			}
+			.fm-download-row:hover:not([data-busy='1']) {
+				background: rgba(214, 255, 61, 0.06);
+				border-color: rgba(214, 255, 61, 0.4);
+				transform: translateY(-1px);
+			}
+			.fm-download-row[data-busy='1'] {
+				cursor: progress;
+				opacity: 0.7;
+			}
+			.fm-download-head {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 8px;
+			}
+			.fm-download-head strong {
+				font-size: 14px;
+				font-weight: 600;
+				letter-spacing: -0.005em;
+			}
+			.fm-download-ext {
+				font-family: ui-monospace, 'SF Mono', monospace;
+				font-size: 11px;
+				color: var(--muted);
+			}
+			.fm-download-blurb {
+				font-size: 12px;
+				color: var(--muted);
+				line-height: 1.4;
+			}
+			.fm-download-status {
+				font-size: 11.5px;
+				color: var(--muted);
+				min-height: 1em;
+				margin-top: 2px;
+			}
+			.fm-download-status[data-tone='busy'] { color: #b9c0ff; }
+			.fm-download-status[data-tone='ok'] { color: var(--accent); }
+			.fm-download-status[data-tone='err'] { color: #ffb3b3; }
+
+			/* ── Emote chip strip on viewer ────────────────────────────────── */
+			.emote-strip {
+				position: absolute;
+				bottom: 12px;
+				left: 50%;
+				transform: translateX(-50%) translateY(6px);
+				display: flex;
+				gap: 6px;
+				padding: 7px 9px;
+				background: rgba(10, 11, 18, 0.85);
+				border: 1px solid var(--border);
+				border-radius: 999px;
+				backdrop-filter: blur(8px);
+				z-index: 4;
+				max-width: calc(100% - 24px);
+				overflow-x: auto;
+				scrollbar-width: none;
+				opacity: 0;
+				transition: opacity 0.2s, transform 0.2s;
+				pointer-events: none;
+			}
+			.emote-strip::-webkit-scrollbar { display: none; }
+			.emote-strip.is-visible {
+				opacity: 1;
+				transform: translateX(-50%) translateY(0);
+				pointer-events: auto;
+			}
+			.emote-chip {
+				appearance: none;
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid transparent;
+				border-radius: 999px;
+				color: var(--text);
+				font: inherit;
+				font-size: 14px;
+				cursor: pointer;
+				width: 32px;
+				height: 32px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				transition: background 0.15s, border-color 0.15s, transform 0.15s;
+			}
+			.emote-chip:hover { background: rgba(214, 255, 61, 0.12); border-color: rgba(214, 255, 61, 0.4); transform: scale(1.05); }
+			.emote-chip.is-active { background: rgba(214, 255, 61, 0.2); border-color: var(--accent); }
+			.emote-strip-close {
+				appearance: none;
+				background: transparent;
+				border: none;
+				color: var(--muted);
+				font-size: 16px;
+				cursor: pointer;
+				width: 26px;
+				height: 32px;
+				padding: 0;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+			}
+			.emote-strip-close:hover { color: var(--text); }
 
 			.cta {
 				background: var(--accent);
@@ -352,8 +674,64 @@
 				gap: 16px;
 			}
 			#save-loading img { width: 56px; height: 56px; animation: pulse 1.6s ease-in-out infinite; }
+			#save-loading[data-state='error'] img { animation: none; opacity: 0.5; }
 			#save-loading .label { color: rgba(255, 255, 255, 0.82); font-size: 15px; font-weight: 500; }
-			#save-loading .sublabel { color: rgba(255, 255, 255, 0.42); font-size: 12.5px; }
+			#save-loading[data-state='error'] .label { color: #ffb3b3; }
+			#save-loading .sublabel {
+				color: rgba(255, 255, 255, 0.42);
+				font-size: 12.5px;
+				max-width: 360px;
+				text-align: center;
+				line-height: 1.5;
+			}
+			#save-loading .progress {
+				width: min(320px, 70vw);
+				height: 4px;
+				background: rgba(255, 255, 255, 0.08);
+				border-radius: 999px;
+				overflow: hidden;
+				margin-top: 4px;
+			}
+			#save-loading .progress[hidden] { display: none; }
+			#save-loading .progress-bar {
+				height: 100%;
+				width: 0%;
+				background: var(--accent);
+				border-radius: 999px;
+				transition: width 0.18s ease-out;
+			}
+			#save-loading .error-actions {
+				display: flex;
+				gap: 10px;
+				margin-top: 8px;
+			}
+			#save-loading .error-actions[hidden] { display: none; }
+			#save-loading .retry-btn {
+				background: var(--accent);
+				color: var(--accent-ink);
+				border: none;
+				border-radius: 10px;
+				padding: 10px 18px;
+				font: inherit;
+				font-weight: 600;
+				cursor: pointer;
+				transition: filter 0.15s;
+			}
+			#save-loading .retry-btn:hover { filter: brightness(1.06); }
+			#save-loading .cancel-btn {
+				background: transparent;
+				color: rgba(255, 255, 255, 0.72);
+				border: 1.5px solid rgba(255, 255, 255, 0.18);
+				border-radius: 10px;
+				padding: 10px 16px;
+				font: inherit;
+				cursor: pointer;
+				transition: border-color 0.15s, color 0.15s;
+			}
+			#save-loading .cancel-btn:hover {
+				border-color: rgba(255, 255, 255, 0.32);
+				color: #fff;
+			}
 			@keyframes pulse {
 				0%, 100% { opacity: 0.55; transform: scale(1); }
 				50% { opacity: 1; transform: scale(1.06); }
@@ -438,6 +816,7 @@
 						4.x does not expose morphTargetInfluences as a stable API.
 					-->
 					<div id="mv-container" class="mv-container" aria-label="Avatar preview"></div>
+					<div id="emote-strip" class="emote-strip" role="toolbar" aria-label="Animations"></div>
 				</div>
 
 				<div class="panel">
@@ -469,35 +848,61 @@
 					<div class="unlocks" aria-label="What saving unlocks">
 						<p class="unlocks-title">Your avatar unlocks</p>
 						<ul class="feature-grid">
-							<li class="feature-tile" title="glTF / GLB body with animations, expressions, and a posable rig — mobile, desktop, and XR-ready.">
-								<span class="feature-icon" aria-hidden="true">🧍</span>
-								<span class="feature-name">3D Body</span>
-								<span class="feature-desc">Animations, expressions, posable rig</span>
+							<li>
+								<button class="feature-tile" type="button" data-feature="body" aria-label="Try animations on your avatar">
+									<span class="feature-icon" aria-hidden="true">🧍</span>
+									<span class="feature-name">3D Body</span>
+									<span class="feature-desc">Animations, expressions, posable rig</span>
+									<span class="feature-try" aria-hidden="true">Try →</span>
+								</button>
 							</li>
-							<li class="feature-tile" title="Low-latency voice via LiveKit, ElevenLabs voices, and a system prompt you control.">
-								<span class="feature-icon" aria-hidden="true">🗣️</span>
-								<span class="feature-name">Voice &amp; Persona</span>
-								<span class="feature-desc">Mic in, LiveKit voice out, pinned memory</span>
+							<li>
+								<button class="feature-tile" type="button" data-feature="voice" aria-label="Try talking to your avatar">
+									<span class="feature-icon" aria-hidden="true">🗣️</span>
+									<span class="feature-name">Voice &amp; Persona</span>
+									<span class="feature-desc">Mic in, LiveKit voice out, pinned memory</span>
+									<span class="feature-try" aria-hidden="true">Try →</span>
+								</button>
 							</li>
-							<li class="feature-tile" title="Each agent is a Metaplex Core asset on Solana — transferable, composable, browsable in any wallet.">
-								<span class="feature-icon" aria-hidden="true">🪪</span>
-								<span class="feature-name">On-Chain Identity</span>
-								<span class="feature-desc">Solana wallet, transferable asset</span>
+							<li>
+								<button class="feature-tile" type="button" data-feature="identity" aria-label="See on-chain identity details">
+									<span class="feature-icon" aria-hidden="true">🪪</span>
+									<span class="feature-name">On-Chain Identity</span>
+									<span class="feature-desc">Solana wallet, transferable asset</span>
+									<span class="feature-try" aria-hidden="true">See →</span>
+								</button>
 							</li>
-							<li class="feature-tile" title="Charge per call in USDC over the x402 protocol. Other agents pay yours automatically.">
-								<span class="feature-icon" aria-hidden="true">💸</span>
-								<span class="feature-name">Paid Skills</span>
-								<span class="feature-desc">Earn USDC per call via x402</span>
+							<li>
+								<button class="feature-tile" type="button" data-feature="paid" aria-label="See paid-skills pricing example">
+									<span class="feature-icon" aria-hidden="true">💸</span>
+									<span class="feature-name">Paid Skills</span>
+									<span class="feature-desc">Earn USDC per call via x402</span>
+									<span class="feature-try" aria-hidden="true">See →</span>
+								</button>
 							</li>
-							<li class="feature-tile" title="One-tag embed via /embed.js, or the agent-3d Web Component. Drop your agent on any page.">
-								<span class="feature-icon" aria-hidden="true">🧩</span>
-								<span class="feature-name">Embed Anywhere</span>
-								<span class="feature-desc">One snippet, any site or app</span>
+							<li>
+								<button class="feature-tile" type="button" data-feature="embed" aria-label="See embed snippet">
+									<span class="feature-icon" aria-hidden="true">🧩</span>
+									<span class="feature-name">Embed Anywhere</span>
+									<span class="feature-desc">One snippet, any site or app</span>
+									<span class="feature-try" aria-hidden="true">See →</span>
+								</button>
 							</li>
-							<li class="feature-tile" title="Signed feedback, call history, and validation events accrue to your agent — visible to anyone deciding whether to trust it.">
-								<span class="feature-icon" aria-hidden="true">⭐</span>
-								<span class="feature-name">Reputation</span>
-								<span class="feature-desc">Reviews, history, and validation</span>
+							<li>
+								<button class="feature-tile" type="button" data-feature="reputation" aria-label="See reputation system">
+									<span class="feature-icon" aria-hidden="true">⭐</span>
+									<span class="feature-name">Reputation</span>
+									<span class="feature-desc">Reviews, history, and validation</span>
+									<span class="feature-try" aria-hidden="true">See →</span>
+								</button>
+							</li>
+							<li>
+								<button class="feature-tile" type="button" data-feature="download" aria-label="Download this avatar as GLB or USDZ">
+									<span class="feature-icon" aria-hidden="true">📦</span>
+									<span class="feature-name">Download</span>
+									<span class="feature-desc">GLB for the web, USDZ for iOS AR</span>
+									<span class="feature-try" aria-hidden="true">Save →</span>
+								</button>
 							</li>
 						</ul>
 					</div>

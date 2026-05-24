@@ -1,5 +1,5 @@
 {
-	"_comment": "Each entry is a showcase widget. Replace placeholder ids with real wdgt_ ids once created in Studio.",
+	"_comment": "Each entry is a showcase widget. wdgt_demo_* ids are resolved server-side by api/widgets/_demo-fixtures.js.",
 	"widgets": [
 		{
 			"type": "turntable",
@@ -45,6 +45,33 @@
 			"width": 800,
 			"height": 600,
 			"features": ["Click hotspots to explore", "Guided camera transitions", "Great for product showcases"]
+		},
+		{
+			"type": "pumpfun-feed",
+			"label": "Pump.fun Live Feed",
+			"tagline": "Solana agent narrates pump.fun claims and graduations in real time.",
+			"id": "wdgt_demo_pumpfun",
+			"width": 520,
+			"height": 640,
+			"features": ["Streams live from pump.fun", "Agent reacts and speaks", "Filter by tier and event kind"]
+		},
+		{
+			"type": "kol-trades",
+			"label": "Smart Money Feed",
+			"tagline": "Live buy/sell activity from KOL and whale wallets for any token.",
+			"id": "wdgt_demo_koltrad",
+			"width": 520,
+			"height": 560,
+			"features": ["Per-token KOL flow", "Polls every 30s", "Wallet labels and PnL"]
+		},
+		{
+			"type": "live-trades-canvas",
+			"label": "Live Trades Canvas",
+			"tagline": "Particle visualization of pump.fun buys and sells.",
+			"id": "wdgt_demo_livetrd",
+			"width": 600,
+			"height": 400,
+			"features": ["Real-time WebGL canvas", "Green/red particles for buys/sells", "Size scales with USD"]
 		}
 	]
 }

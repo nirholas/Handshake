@@ -15,6 +15,9 @@ const TYPE_COLORS = {
 	'talking-agent': '#10b981',
 	passport: '#a78bfa',
 	'hotspot-tour': '#f97316',
+	'pumpfun-feed': '#ec4899',
+	'kol-trades': '#22d3ee',
+	'live-trades-canvas': '#f43f5e',
 };
 
 // Fade-in cards as they scroll into view
@@ -150,7 +153,7 @@ function renderShowcase(w) {
 	root.dataset.type = w.type;
 	root.setAttribute('aria-labelledby', `sc-${w.id}-title`);
 
-	const widgetUrl = `${ORIGIN}/app#widget=${encodeURIComponent(w.id)}&kiosk=true`;
+	const widgetUrl = `${ORIGIN}/widget#widget=${encodeURIComponent(w.id)}&kiosk=true`;
 	const pageUrl = `${ORIGIN}/w/${encodeURIComponent(w.id)}`;
 
 	const allowAttr =
@@ -203,11 +206,13 @@ function renderShowcase(w) {
 	placeholder.querySelector('.play-btn').addEventListener('click', loadIframe);
 	frame.appendChild(placeholder);
 
-	// Auto-load when the frame is 50 % visible for 1 s
+	// Auto-load when the frame becomes 50% visible. No artificial delay —
+	// IntersectionObserver only fires after layout, so by the time we get
+	// here the user has actually scrolled the tile into view.
 	const autoObs = new IntersectionObserver(
 		(entries) => {
 			if (entries[0].isIntersecting) {
-				setTimeout(() => loadIframe(), 1000);
+				loadIframe();
 				autoObs.disconnect();
 			}
 		},
