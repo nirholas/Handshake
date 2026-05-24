@@ -387,20 +387,42 @@ a:hover {
 	border-radius: var(--radius-md);
 	color: var(--text);
 	cursor: pointer;
-	transition: border-color 0.15s ease, transform 0.1s ease, background 0.15s ease;
+	transition: border-color 0.15s ease, transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
 	text-align: center;
 	font: inherit;
 }
 
 .avatar-card:hover {
-	border-color: rgba(139, 92, 246, 0.45);
+	border-color: rgba(139, 92, 246, 0.5);
 	background: #1f1f2a;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 16px rgba(0,0,0,0.3);
 }
 
 .avatar-card.selected {
 	border-color: var(--accent);
 	background: rgba(139, 92, 246, 0.1);
 	box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25) inset;
+}
+
+/* checkmark badge on selected */
+.avatar-card.selected::after {
+	content: '✓';
+	position: absolute;
+	top: 0.28rem;
+	right: 0.28rem;
+	width: 16px;
+	height: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--accent);
+	color: #fff;
+	border-radius: 50%;
+	font-size: 0.58rem;
+	font-weight: 800;
+	line-height: 1;
+	box-shadow: 0 2px 6px rgba(139, 92, 246, 0.5);
 }
 
 .avatar-card .thumb {
@@ -431,6 +453,26 @@ a:hover {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 100%;
+}
+
+/* skeleton loading card */
+.avatar-card--skeleton {
+	cursor: default;
+	pointer-events: none;
+}
+.avatar-card--skeleton .thumb {
+	background: linear-gradient(90deg, #1a1a24 25%, #222230 50%, #1a1a24 75%);
+	background-size: 200% 100%;
+	animation: shimmer 1.5s ease-in-out infinite;
+}
+.avatar-card--skeleton .name {
+	width: 65%;
+	height: 10px;
+	border-radius: 999px;
+	background: linear-gradient(90deg, #1a1a24 25%, #222230 50%, #1a1a24 75%);
+	background-size: 200% 100%;
+	animation: shimmer 1.5s ease-in-out infinite 0.15s;
+	color: transparent;
 }
 
 .badge-demo {
@@ -524,6 +566,11 @@ a:hover {
 .type-card.selected {
 	border-color: var(--accent);
 	background: rgba(139, 92, 246, 0.1);
+	box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) inset;
+}
+
+.type-card.selected .icon {
+	background: rgba(139, 92, 246, 0.25);
 }
 
 .type-card .icon {
@@ -537,6 +584,7 @@ a:hover {
 	background: rgba(139, 92, 246, 0.12);
 	color: var(--accent-strong);
 	font-size: 0.95rem;
+	transition: background 0.15s ease;
 }
 
 .type-card .label {
@@ -809,11 +857,19 @@ a:hover {
 	background: var(--accent);
 	color: #fff;
 	border-color: var(--accent);
+	box-shadow: 0 2px 12px rgba(139, 92, 246, 0.25);
 }
 
 .btn-primary:hover {
 	background: #7c3aed;
 	border-color: #7c3aed;
+	box-shadow: 0 4px 20px rgba(139, 92, 246, 0.45);
+	transform: translateY(-1px);
+}
+
+.btn-primary:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 .btn-primary:disabled {
@@ -821,6 +877,8 @@ a:hover {
 	border-color: #4c3a78;
 	cursor: not-allowed;
 	opacity: 0.7;
+	box-shadow: none;
+	transform: none;
 }
 
 .btn-ghost {

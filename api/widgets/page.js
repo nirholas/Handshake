@@ -16,25 +16,6 @@ import { cors, wrap } from '../_lib/http.js';
 import { isDemoWidgetId, getDemoWidget } from './_demo-fixtures.js';
 import { readEmbedPolicy, originAllowed } from '../_lib/embed-policy.js';
 
-function _originAllowed(refererHeader, policy, appOriginHost) {
-	if (!refererHeader) return true; // no referer → allow (bots, direct)
-	let host;
-	try {
-		host = new URL(refererHeader).hostname.toLowerCase();
-	} catch {
-		return true;
-	}
-	if (host === appOriginHost || host === 'localhost' || host.endsWith('.localhost')) return true;
-	const hosts = policy?.origins?.hosts ?? [];
-	const mode = policy?.origins?.mode ?? 'allowlist';
-	const matched = hosts.some((h) => {
-		const lower = h.toLowerCase();
-		if (lower.startsWith('*.')) return host.endsWith(lower.slice(1)) && host !== lower.slice(2);
-		return host === lower;
-	});
-	return mode === 'allowlist' ? matched : !matched;
-}
-
 const TYPE_LABEL = {
 	turntable: 'Turntable Showcase',
 	'animation-gallery': 'Animation Gallery',
@@ -55,13 +36,13 @@ export default wrap(async (req, res) => {
 
 	// Agent embed-policy gate — only when widget is tied to an agent identity.
 	if (widget.agent_id) {
-		const agentPolicy = await _readPolicyForAgent(widget.agent_id);
+		const agentPolicy = await readEmbedPolicy(widget.agent_id);
 		if (agentPolicy) {
 			if (agentPolicy.surfaces?.widget === false) {
 				return forbidden(res, "This widget's embed is disabled by the agent owner.");
 			}
 			const appHost = new URL(env.APP_ORIGIN).hostname.toLowerCase();
-			if (!_originAllowed(req.headers['referer'], agentPolicy, appHost)) {
+			if (!originAllowed(req.headers['referer'], agentPolicy, appHost)) {
 				return forbidden(res, 'This widget is not permitted on the requesting origin.');
 			}
 		}
