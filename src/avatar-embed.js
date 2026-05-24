@@ -566,7 +566,7 @@ async function main() {
 
 	function postReady() {
 		const conformance = conformanceReport(root);
-		postToParent({
+		const readyMsg = {
 			type: 'v1.avatar.ready',
 			version: BRIDGE_VERSION,
 			capabilities: CAPABILITIES,
@@ -578,29 +578,49 @@ async function main() {
 				total: conformance.implemented.length + conformance.missing.length,
 				coverage: conformance.coverage,
 			},
+			hotkeys: Object.fromEntries(
+				Object.entries(hotkeys).map(([k, v]) => [k, { label: v.label, hold: v.hold }])
+			),
+		};
+		postToParent(readyMsg);
+		// RPM-compatible aliases — emit the same payload under Ready Player
+		// Me's event names so integrators can swap to three.ws with one URL
+		// change. See docs.readyplayer.me/.../avatar-creator/events.
+		postToParent({ ...readyMsg, type: 'v1.frame.ready' });
+		postToParent({
+			eventName: 'v2.avatar.exported',
+			source: 'threews',
+			data: {
+				url: resolved.modelUrl,
+				avatarId: resolved.id,
+				handle: resolved.handle,
+				name: resolved.name,
+			},
 		});
+		broadcast(readyMsg);
 	}
 
-	function handleMessage(ev) {
-		if (ev.source !== window.parent) return;
-		const msg = ev.data;
+	// Unified control handler — same logic for parent postMessage and the
+	// BroadcastChannel sibling-tab pathway. The only difference is origin
+	// locking: postMessage messages are origin-checked above; broadcasts are
+	// already same-origin per the spec.
+	function handleControl(msg, ctx = {}) {
 		if (!msg || typeof msg !== 'object') return;
-		if (typeof msg.type !== 'string' || !msg.type.startsWith('v1.avatar.')) return;
-
-		if (!parentOriginLocked) {
-			parentOrigin = ev.origin;
-			parentOriginLocked = true;
-		} else if (ev.origin !== parentOrigin) {
-			return;
-		}
+		if (typeof msg.type !== 'string') return;
+		// Accept v1.avatar.* messages plus the RPM-compatible v1.frame.hello
+		// handshake from integrators expecting the RPM event vocabulary.
+		const accepted = msg.type.startsWith('v1.avatar.') || msg.type === 'v1.frame.hello';
+		if (!accepted) return;
 
 		switch (msg.type) {
 			case 'v1.avatar.hello':
+			case 'v1.frame.hello':
 				if (bridgeReady) postReady();
 				else pendingHellos.push(true);
 				return;
 			case 'v1.avatar.ping':
 				postToParent({ type: 'v1.avatar.pong', id: msg.id });
+				if (ctx.source === 'broadcast') broadcast({ type: 'v1.avatar.pong', id: msg.id });
 				return;
 			case 'v1.avatar.speak': {
 				const tasks = [];
@@ -650,7 +670,67 @@ async function main() {
 				activeLipsync = null;
 				stopMocap();
 				return;
+			// ── OBS / streaming overlay surface ──────────────────────────
+			case 'v1.avatar.hotkey':
+				if (msg.key != null) triggerHotkey(msg.key, msg);
+				return;
+			case 'v1.avatar.hotkeys':
+				// Replace or merge the hotkey map. Pass `{ replace: true }`
+				// for a clean wipe; otherwise merges so the host can override
+				// just one slot.
+				if (msg.map && typeof msg.map === 'object') {
+					if (msg.replace) {
+						for (const k of Object.keys(hotkeys)) delete hotkeys[k];
+					}
+					for (const [k, entry] of Object.entries(msg.map)) {
+						hotkeys[String(k)] = {
+							label: String(entry?.label || ''),
+							hold: Number.isFinite(entry?.hold) ? Number(entry.hold) : 1200,
+							morphs: entry?.morphs && typeof entry.morphs === 'object' ? entry.morphs : {},
+						};
+					}
+					renderEmotePanel();
+				}
+				return;
+			case 'v1.avatar.state':
+				// Force a state update from outside (e.g. chat command says
+				// "switch to angry expression for the next clip").
+				if (msg.state && typeof msg.state === 'object') setState(msg.state);
+				return;
+			case 'v1.avatar.mic':
+				if (msg.enabled) {
+					if (Number.isFinite(msg.floor)) state.micFloor = clamp01s(msg.floor);
+					if (Number.isFinite(msg.ceiling)) state.micCeiling = clamp01s(msg.ceiling);
+					enableMic().catch((e) =>
+						postToParent({ type: 'v1.avatar.error', message: e?.message || 'mic failed' }),
+					);
+				} else {
+					disableMic();
+				}
+				return;
+			case 'v1.avatar.overlay':
+				// Toggle chrome-free overlay mode at runtime.
+				if (msg.enabled === true) document.body.classList.add('overlay-mode');
+				else if (msg.enabled === false) document.body.classList.remove('overlay-mode');
+				return;
 		}
+	}
+
+	function handleMessage(ev) {
+		if (ev.source !== window.parent) return;
+		const msg = ev.data;
+		if (!msg || typeof msg !== 'object') return;
+		if (typeof msg.type !== 'string') return;
+		// Accept both v1.avatar.* and the RPM-compatible v1.frame.hello.
+		if (!msg.type.startsWith('v1.avatar.') && msg.type !== 'v1.frame.hello') return;
+
+		if (!parentOriginLocked) {
+			parentOrigin = ev.origin;
+			parentOriginLocked = true;
+		} else if (ev.origin !== parentOrigin) {
+			return;
+		}
+		handleControl(msg, { source: 'window' });
 	}
 
 	window.addEventListener('message', handleMessage);
@@ -840,4 +920,24 @@ function showError(msg) {
 	if (!el) return;
 	el.textContent = msg;
 	el.style.display = 'flex';
+}
+
+// ── Misc utilities ──────────────────────────────────────────────────────────
+
+function escapeHtmlSafe(s) {
+	if (s == null) return '';
+	return String(s)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
+function clamp01s(n) {
+	const x = Number(n);
+	if (!Number.isFinite(x)) return 0;
+	if (x < 0) return 0;
+	if (x > 1) return 1;
+	return x;
 }

@@ -14,7 +14,7 @@
  * mesh's `morphTargetInfluences` in real time. Save flow is unchanged.
  */
 
-import { detectFaceBlendshapes } from './avatar-face-capture.js';
+import { detectFaceAll } from './avatar-face-capture.js';
 
 /* ────────────────────────────────────────────────────────────────────────── *
  * Category map — orders + groups the 52 ARKit names + common body morphs
@@ -79,12 +79,9 @@ const CATEGORIES = [
 		match: /^cheek/,
 		preferred: ['cheekPuff', 'cheekSquintLeft', 'cheekSquintRight'],
 	},
-	{
-		id: 'tongue',
-		label: 'Tongue',
-		match: /^tongue/,
-		preferred: ['tongueOut'],
-	},
+	// tongueOut intentionally omitted — RPM/Avaturn bake the morph but nobody
+	// wants a "Tongue Out" slider on their face customizer. Drivers that need
+	// it (lipsync, mocap) still hit it via runtime APIs.
 	{
 		id: 'body',
 		label: 'Body',
@@ -116,15 +113,31 @@ const ARKIT52 = new Set([
 /**
  * Discover every morph target on the loaded scene root and return the union
  * of names (across all skinned meshes). Returns alphabetized for stable UI.
+ * tongueOut filtered out — it's a real morph but a useless slider.
  */
 export function discoverMorphs(root) {
 	const found = new Set();
 	root?.traverse?.((obj) => {
 		if (obj.isMesh && obj.morphTargetDictionary) {
-			for (const k of Object.keys(obj.morphTargetDictionary)) found.add(k);
+			for (const k of Object.keys(obj.morphTargetDictionary)) {
+				if (k === 'tongueOut') continue;
+				found.add(k);
+			}
 		}
 	});
 	return [...found].sort();
+}
+
+/** Detect whether a morph name is a Left/Right variant. Returns the pair root or null. */
+function pairRootOf(name) {
+	const m = name.match(/^(.*)(Left|Right)$/);
+	return m ? m[1] : null;
+}
+/** Detect Left/Right side of a paired morph. */
+function sideOf(name) {
+	if (name.endsWith('Left')) return 'L';
+	if (name.endsWith('Right')) return 'R';
+	return null;
 }
 
 /**
@@ -242,6 +255,87 @@ export function renderSculptPanel({ container, root, working, onDirty }) {
 }
 
 /* ────────────────────────────────────────────────────────────────────────── *
+ * Slider wiring — with mirror-lock support for L/R paired morphs.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+function wireSliders(container, root, working, onDirty) {
+	container.querySelectorAll('input[type="range"][data-morph]').forEach((input) => {
+		const name = input.dataset.morph;
+		const valEl = container.querySelector(`output[data-for="${cssEscape(name)}"]`);
+		const pairName = input.dataset.pair || null; // companion morph when mirroring
+
+		const onChange = () => {
+			const w = Number(input.value);
+			writeMorph(working, name, w);
+			applyMorphsToRoot(root, { [name]: w });
+			if (valEl) valEl.textContent = w.toFixed(2);
+			// Mirror the value to the companion morph if active.
+			if (pairName) {
+				writeMorph(working, pairName, w);
+				applyMorphsToRoot(root, { [pairName]: w });
+			}
+			onDirty?.();
+		};
+		input.addEventListener('input', onChange);
+		input.addEventListener('dblclick', () => {
+			input.value = '0';
+			onChange();
+		});
+	});
+}
+
+function writeMorph(working, name, w) {
+	if (w === 0) delete working.morphs[name];
+	else working.morphs[name] = w;
+}
+
+function renderGroup(g, morphs) {
+	if (_mirrorLocked) {
+		// Collapse {fooLeft, fooRight} → single "Foo" slider that mutates both.
+		const visible = [];
+		const seenPair = new Set();
+		for (const name of g.morphs) {
+			const root = pairRootOf(name);
+			if (root) {
+				if (seenPair.has(root)) continue;
+				seenPair.add(root);
+				const left = `${root}Left`;
+				const right = `${root}Right`;
+				const hasLeft = g.morphs.includes(left);
+				const hasRight = g.morphs.includes(right);
+				if (hasLeft && hasRight) {
+					visible.push({ name: left, pair: right, displayName: root });
+					continue;
+				}
+			}
+			visible.push({ name, pair: null, displayName: name });
+		}
+		return `
+			<details class="ae-sculpt-group" ${g.collapsed ? '' : 'open'}>
+				<summary>
+					<span>${g.label}</span>
+					<span class="ae-sculpt-count">${visible.length}</span>
+				</summary>
+				<div class="ae-sculpt-rows">
+					${visible.map((v) => sliderRow(v.name, morphs[v.name] || 0, v.displayName, v.pair)).join('')}
+				</div>
+			</details>
+		`;
+	}
+	return `
+		<details class="ae-sculpt-group" ${g.collapsed ? '' : 'open'}>
+			<summary>
+				<span>${g.label}</span>
+				<span class="ae-sculpt-count">${g.morphs.length}</span>
+			</summary>
+			<div class="ae-sculpt-rows">
+				${g.morphs.map((m) => sliderRow(m, morphs[m] || 0)).join('')}
+			</div>
+		</details>
+	`;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── *
  * Face capture modal — webcam → MediaPipe → ARKit-52 weights
  * ────────────────────────────────────────────────────────────────────────── */
 
@@ -257,9 +351,11 @@ function openFaceCaptureModal({ root, working, onDirty, rerender }) {
 			<button class="ae-face-close" type="button" aria-label="Close">✕</button>
 			<h3>Capture face shape</h3>
 			<p class="ae-face-lede">
-				Face the camera with a neutral, relaxed expression. We'll read
-				the 52 ARKit blendshapes in your browser — no upload, no
-				server. Lighting matters; a flat front-on shot works best.
+				Face the camera with a relaxed expression. We read the geometry
+				of your face — width, jaw, nose, lips — and write those ratios
+				as identity morphs. The expression you're wearing in the photo
+				is ignored on purpose so a candid smile doesn't burn in
+				forever. Runs entirely in your browser.
 			</p>
 			<div class="ae-face-stage">
 				<video id="ae-face-video" autoplay playsinline muted></video>
@@ -302,7 +398,7 @@ function openFaceCaptureModal({ root, working, onDirty, rerender }) {
 			return;
 		}
 		try {
-			landmarker = await detectFaceBlendshapes.loadLandmarker();
+			landmarker = await detectFaceAll.loadLandmarker();
 			if (cancelled) return;
 			status.textContent = 'Ready. Hold still and capture.';
 			shootBtn.disabled = false;
@@ -330,23 +426,21 @@ function openFaceCaptureModal({ root, working, onDirty, rerender }) {
 			canvas.height = video.videoHeight || 640;
 			const ctx = canvas.getContext('2d');
 			ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-			const blendshapes = await detectFaceBlendshapes(canvas, landmarker);
-			if (!blendshapes || !Object.keys(blendshapes).length) {
+			const full = await detectFaceAll(canvas, landmarker);
+			if (!full || !full.identity || !Object.keys(full.identity).length) {
 				status.textContent = 'No face detected. Try again with better lighting.';
 				shootBtn.disabled = false;
 				return;
 			}
 
-			// Write to working.morphs — only for keys the avatar actually has.
+			// Use identity morphs (from landmark ratios) as the primary signal.
+			// The blendshape map is intentionally ignored for seeding — those
+			// describe the user's expression in the photo, not their face shape.
 			const available = new Set(discoverMorphs(root));
 			let applied = 0;
-			for (const [name, weight] of Object.entries(blendshapes)) {
+			for (const [name, weight] of Object.entries(full.identity)) {
 				if (!available.has(name)) continue;
-				// Capture is a *baseline* — write small weights only. Anything
-				// above 0.95 is almost certainly a smile/eye-wide from the user
-				// blinking mid-capture and we'd rather under-shoot than burn in
-				// a winking face forever.
-				const clamped = Math.max(0, Math.min(0.9, weight));
+				const clamped = Math.max(0, Math.min(0.7, weight));
 				if (clamped < 0.02) {
 					delete working.morphs[name];
 				} else {
@@ -406,9 +500,11 @@ function groupMorphs(all) {
 	return groups;
 }
 
-function sliderRow(name, value) {
-	const label = humanize(name);
+function sliderRow(name, value, displayLabel, pairName) {
+	const labelSource = displayLabel || name;
+	const label = humanize(labelSource);
 	const meta = ARKIT52.has(name) ? 'ARKit' : isVisemeName(name) ? 'Viseme' : '';
+	const pairAttr = pairName ? ` data-pair="${escAttr(pairName)}"` : '';
 	return `
 		<div class="ae-sculpt-row">
 			<div class="ae-sculpt-label">
@@ -419,7 +515,7 @@ function sliderRow(name, value) {
 				type="range"
 				min="0" max="1" step="0.01"
 				value="${value}"
-				data-morph="${escAttr(name)}"
+				data-morph="${escAttr(name)}"${pairAttr}
 				aria-label="${escAttr(label)}"
 			/>
 			<output class="ae-sculpt-value" data-for="${escAttr(name)}">${(+value).toFixed(2)}</output>

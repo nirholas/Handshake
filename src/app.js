@@ -2321,6 +2321,16 @@ class App {
 // embed iframe before kiosk JS hides it.
 if (!window.__WIDGET_SHELL) {
 	document.body.innerHTML += Footer();
+} else {
+	// Tell the shell that the bundle has started executing. The shell uses
+	// this to arm its 6s "still no first frame" fallback — without it, an
+	// interaction-mode widget would fire the fallback during idle and break
+	// the play-to-load promise.
+	try {
+		window.dispatchEvent(new CustomEvent('three-ws:boot-started'));
+	} catch {
+		/* CustomEvent ctor missing only on retired browsers — ignore */
+	}
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -476,7 +476,7 @@ function releaseObjectUrl() {
 	}
 }
 
-function showSaveOverlay(label, sublabel) {
+function showSaveOverlay(label, sublabel, opts = {}) {
 	let el = document.getElementById('save-loading');
 	if (!el) {
 		el = document.createElement('div');
@@ -491,6 +491,7 @@ function showSaveOverlay(label, sublabel) {
 			<div class="progress" hidden>
 				<div class="progress-bar"></div>
 			</div>
+			<button type="button" class="abort-btn" hidden>Cancel upload</button>
 			<div class="error-actions" hidden>
 				<button type="button" class="retry-btn">Retry</button>
 				<button type="button" class="cancel-btn">Cancel</button>
@@ -504,6 +505,28 @@ function showSaveOverlay(label, sublabel) {
 	el.querySelector('.label').textContent = label;
 	el.querySelector('.sublabel').textContent = sublabel || '';
 	el.querySelector('.error-actions').hidden = true;
+
+	const abortBtn = el.querySelector('.abort-btn');
+	if (opts.onCancel) {
+		// Replace node to drop any handler from a previous overlay invocation,
+		// then wire fresh — keeps cancel semantics tied to the current save.
+		const fresh = abortBtn.cloneNode(true);
+		abortBtn.replaceWith(fresh);
+		fresh.hidden = false;
+		fresh.addEventListener('click', opts.onCancel, { once: true });
+	} else {
+		abortBtn.hidden = true;
+	}
+}
+
+// Toggle the in-flight cancel button — called with `false` once we cross the
+// upload boundary into commit/redirect, where cancelling no longer makes
+// sense (the bytes are already in R2 and the row is being inserted).
+function setSaveCancellable(enabled) {
+	const el = document.getElementById('save-loading');
+	if (!el) return;
+	const btn = el.querySelector('.abort-btn');
+	if (btn) btn.hidden = !enabled;
 }
 
 function updateSaveOverlay(label, sublabel) {

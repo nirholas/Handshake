@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Overlay Control · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Stream Deck for your three.ws OBS overlay — emote hotkeys, expression mixer, mic threshold." />
+		<meta name="theme-color" content="#0b0d10" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #07090c;
+				--panel: #11141a;
+				--panel-edge: rgba(255, 255, 255, 0.07);
+				--ink: #e8ecf2;
+				--ink-dim: rgba(255, 255, 255, 0.6);
+				--accent: #5fa8ff;
+				--ok: #5fce6a;
+				--warn: #ffb454;
+			}
+			* { box-sizing: border-box; }
+			body {
+				margin: 0;
+				min-height: 100vh;
+				background: radial-gradient(1200px 600px at 30% -10%, #1a1f29, var(--bg));
+				color: var(--ink);
+				font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+				display: grid;
+				grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+				gap: 22px;
+				padding: 22px;
+			}
+			@media (max-width: 980px) {
+				body { grid-template-columns: 1fr; padding: 14px; gap: 14px; }
+			}
+			h1 {
+				margin: 0 0 4px;
+				font-size: 22px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: var(--ink-dim);
+				font-size: 13px;
+				margin-bottom: 18px;
+			}
+			.card {
+				background: var(--panel);
+				border: 1px solid var(--panel-edge);
+				border-radius: 14px;
+				padding: 16px;
+				margin-bottom: 14px;
+			}
+			.card h2 {
+				margin: 0 0 12px;
+				font-size: 13px;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				color: var(--ink-dim);
+				font-weight: 600;
+			}
+			label.row {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				font-size: 13px;
+				color: var(--ink);
+				margin-bottom: 10px;
+			}
+			label.row input[type="text"],
+			label.row input[type="url"] {
+				flex: 1;
+				min-width: 0;
+				background: #06080b;
+				color: var(--ink);
+				border: 1px solid var(--panel-edge);
+				border-radius: 8px;
+				padding: 9px 11px;
+				font-size: 13px;
+				font-family: inherit;
+			}
+			label.row input[type="text"]:focus,
+			label.row input[type="url"]:focus {
+				border-color: var(--accent);
+				outline: 0;
+			}
+			button.action {
+				appearance: none;
+				background: #fff;
+				color: #0a0c10;
+				border: 0;
+				border-radius: 8px;
+				padding: 10px 14px;
+				font-size: 13px;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+				cursor: pointer;
+				font-family: inherit;
+			}
+			button.action.ghost {
+				background: transparent;
+				color: var(--ink);
+				border: 1px solid var(--panel-edge);
+			}
+			button.action[disabled] {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
+			.actions {
+				display: flex;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+
+			.status {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				padding: 4px 10px;
+				border-radius: 999px;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid var(--panel-edge);
+				font-size: 11px;
+				color: var(--ink-dim);
+			}
+			.status .dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #888;
+			}
+			.status.online .dot {
+				background: var(--ok);
+				box-shadow: 0 0 6px var(--ok);
+			}
+
+			.hotkey-grid {
+				display: grid;
+				grid-template-columns: repeat(5, 1fr);
+				gap: 8px;
+			}
+			.hotkey {
+				background: rgba(255, 255, 255, 0.03);
+				border: 1px solid var(--panel-edge);
+				border-radius: 12px;
+				padding: 14px 10px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 6px;
+				cursor: pointer;
+				user-select: none;
+				transition: transform 0.08s ease, border-color 0.08s ease, background 0.08s ease;
+			}
+			.hotkey:hover {
+				background: rgba(255, 255, 255, 0.07);
+				border-color: rgba(255, 255, 255, 0.18);
+			}
+			.hotkey:active,
+			.hotkey.fired {
+				transform: scale(0.97);
+				background: var(--accent);
+				color: #06080b;
+				border-color: var(--accent);
+			}
+			.hotkey .k {
+				font-size: 22px;
+				font-weight: 700;
+				letter-spacing: 0;
+				font-family: ui-monospace, SFMono-Regular, monospace;
+			}
+			.hotkey .l {
+				font-size: 11px;
+				letter-spacing: 0.04em;
+				color: var(--ink-dim);
+			}
+			.hotkey:active .l,
+			.hotkey.fired .l {
+				color: rgba(6, 8, 11, 0.7);
+			}
+
+			.preview-wrap {
+				background: var(--panel);
+				border: 1px solid var(--panel-edge);
+				border-radius: 14px;
+				overflow: hidden;
+				display: flex;
+				flex-direction: column;
+				min-height: 360px;
+			}
+			.preview-wrap iframe {
+				flex: 1;
+				width: 100%;
+				border: 0;
+				background: transparent;
+				min-height: 360px;
+			}
+			.snippet {
+				margin: 0;
+				background: #06080b;
+				border: 1px solid var(--panel-edge);
+				border-radius: 8px;
+				padding: 10px 12px;
+				font-family: ui-monospace, SFMono-Regular, monospace;
+				font-size: 11px;
+				color: #cad6e8;
+				white-space: pre-wrap;
+				word-break: break-all;
+				margin-bottom: 8px;
+			}
+
+			.slider-row {
+				display: grid;
+				grid-template-columns: 80px 1fr 56px;
+				align-items: center;
+				gap: 10px;
+				margin-bottom: 8px;
+				font-size: 12px;
+				color: var(--ink-dim);
+			}
+			.slider-row input[type=range] {
+				width: 100%;
+			}
+			.slider-row .val {
+				text-align: right;
+				font-family: ui-monospace, monospace;
+				color: var(--ink);
+			}
+
+			.event-log {
+				font-family: ui-monospace, SFMono-Regular, monospace;
+				font-size: 11px;
+				background: #06080b;
+				border: 1px solid var(--panel-edge);
+				border-radius: 8px;
+				padding: 10px 12px;
+				max-height: 140px;
+				overflow: auto;
+				color: var(--ink-dim);
+				white-space: pre-wrap;
+			}
+			.event-log .e {
+				display: block;
+				padding: 2px 0;
+			}
+			.event-log .e.warn { color: var(--warn); }
+
+			.top { display: flex; align-items: center; gap: 12px; justify-content: space-between; margin-bottom: 12px; }
+			.brand a { color: var(--ink); text-decoration: none; font-weight: 600; }
+		</style>
+	</head>
+	<body>
+		<section class="left">
+			<div class="top">
+				<div>
+					<h1>OBS overlay control</h1>
+					<div class="sub">Hotkeys, expression mixer, and mic threshold for your three.ws avatar. Add the overlay URL to OBS Browser Source and keep this tab open.</div>
+				</div>
+				<div class="brand"><a href="/">← three.ws</a></div>
+			</div>
+
+			<div class="card">
+				<h2>Avatar</h2>
+				<label class="row">
+					<span style="min-width:90px;color:var(--ink-dim)">Handle</span>
+					<input id="avatar-handle" type="text" placeholder="@yourname" autocomplete="off" />
+					<button class="action" id="apply-handle">Apply</button>
+				</label>
+				<div class="actions">
+					<button class="action ghost" id="open-overlay">Open overlay window</button>
+					<button class="action ghost" id="copy-overlay">Copy overlay URL</button>
+					<span class="status" id="status"><span class="dot"></span><span class="label">offline</span></span>
+				</div>
+				<pre class="snippet" id="overlay-url" style="margin-top:10px"></pre>
+			</div>
+
+			<div class="card">
+				<h2>Hotkeys · keys 1–9, 0</h2>
+				<div class="hotkey-grid" id="hotkey-grid"></div>
+			</div>
+
+			<div class="card">
+				<h2>Mic-driven talking state</h2>
+				<label class="row" style="gap:14px">
+					<button class="action" id="mic-toggle">Enable mic</button>
+					<span class="status" id="mic-state"><span class="dot"></span><span class="label">off</span></span>
+				</label>
+				<div class="slider-row">
+					<span>Noise floor</span>
+					<input id="mic-floor" type="range" min="0" max="0.5" step="0.005" value="0.04" />
+					<span class="val" id="mic-floor-v">0.040</span>
+				</div>
+				<div class="slider-row">
+					<span>Mouth full</span>
+					<input id="mic-ceiling" type="range" min="0.05" max="1" step="0.01" value="0.18" />
+					<span class="val" id="mic-ceiling-v">0.180</span>
+				</div>
+			</div>
+
+			<div class="card">
+				<h2>Speak</h2>
+				<label class="row">
+					<input id="speak-text" type="text" placeholder="Type something for your avatar to say…" />
+					<button class="action" id="speak-go">Speak</button>
+				</label>
+				<div class="actions">
+					<button class="action ghost" data-control="stop">Stop / reset</button>
+					<button class="action ghost" data-control="overlay-on">Overlay mode</button>
+					<button class="action ghost" data-control="overlay-off">Show chrome</button>
+				</div>
+			</div>
+
+			<div class="card">
+				<h2>Event log</h2>
+				<div class="event-log" id="event-log"></div>
+			</div>
+		</section>
+
+		<section class="right">
+			<div class="card" style="margin-bottom: 10px;">
+				<h2>Preview</h2>
+				<div class="sub" style="margin-bottom:10px">This is the same overlay your stream sees — emotes here fire there too via BroadcastChannel.</div>
+				<div class="preview-wrap">
+					<iframe id="preview" allow="autoplay; camera; microphone; clipboard-write; xr-spatial-tracking" title="Avatar preview"></iframe>
+				</div>
+			</div>
+
+			<div class="card">
+				<h2>How to wire OBS</h2>
+				<ol style="margin:0;padding-left:18px;color:var(--ink-dim);font-size:13px;line-height:1.6;">
+					<li>Click <em>Open overlay window</em> above — copy the URL from the new tab.</li>
+					<li>In OBS, add a <strong>Browser Source</strong>. Paste the URL.</li>
+					<li>Set width 600 px, height 800 px (or to taste). Check <strong>Refresh browser when scene becomes active</strong>.</li>
+					<li>Keep this tab open while you stream — every hotkey or speak action you fire here is broadcast to the OBS overlay via BroadcastChannel.</li>
+				</ol>
+			</div>
+		</section>
+
+		<script type="module" src="/src/overlay-control.js"></script>
+	</body>
+</html>

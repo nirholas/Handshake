@@ -60,6 +60,19 @@ vi.mock('../../api/_lib/avatars.js', () => ({
 	getAvatar: vi.fn(async () => null),
 }));
 
+// Embeddings — keep tests offline. Configured=true so we exercise the test
+// branch's validation; embed() returns a fixed vector if invoked.
+vi.mock('../../api/_lib/embeddings.js', () => ({
+	embeddingsConfigured: () => true,
+	embed: vi.fn(async (texts) => texts.map(() => Float64Array.from([1, 0, 0, 0]))),
+	cosine: (a, b) => {
+		let dot = 0, na = 0, nb = 0;
+		const n = Math.min(a.length, b.length);
+		for (let i = 0; i < n; i++) { dot += a[i] * b[i]; na += a[i] ** 2; nb += b[i] ** 2; }
+		return na && nb ? dot / Math.sqrt(na * nb) : 0;
+	},
+}));
+
 // ── Import handlers AFTER mocks are registered ───────────────────────────────
 
 const listCreateHandler = (await import('../../api/widgets/index.js')).default;

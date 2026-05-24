@@ -60,37 +60,73 @@
 		var height   = attr(scriptEl, 'data-height', String(defaults[1]));
 		var radius   = attr(scriptEl, 'data-radius', '12');
 		var border   = attr(scriptEl, 'data-border', '0');
+		// data-reveal="interaction" gates WebGL boot behind a click. Use for
+		// gallery / grid pages where many widgets coexist — the browser only
+		// pays for the ones the visitor actually opens. Default "auto" boots
+		// the engine as soon as the iframe loads.
+		var reveal   = attr(scriptEl, 'data-reveal', 'auto');
+		// data-poster="auto" uses /api/widgets/<id>/og as the preview image
+		// (the same 1200×630 we ship to OpenGraph cards). Specify a URL to
+		// override, or "off" to suppress. Posters mean visitors see the
+		// avatar instantly instead of a black void during WebGL warm-up.
+		var posterAttr = attr(scriptEl, 'data-poster', 'auto');
+		var poster = null;
+		if (posterAttr === 'auto') {
+			poster = ORIGIN + '/api/widgets/' + encodeURIComponent(widgetId) + '/og';
+		} else if (posterAttr && posterAttr !== 'off') {
+			poster = posterAttr;
+		}
+		// data-priority="high" hints the browser to fetch this iframe ahead
+		// of below-the-fold content — meaningful when a widget is the LCP
+		// element on the embedder's page (hero banners).
+		var priority = attr(scriptEl, 'data-priority', null);
 
 		// /widget = slim viewer shell. Same engine as /app but without the
 		// marketing nav/footer/auth chrome in the DOM, so the embed iframe
 		// doesn't flash the parent site before the model renders.
-		var src = ORIGIN + '/widget#widget=' + encodeURIComponent(widgetId) + '&kiosk=true';
+		var hashParts = ['widget=' + encodeURIComponent(widgetId), 'kiosk=true'];
+		if (reveal === 'interaction') hashParts.push('reveal=interaction');
+		if (poster) hashParts.push('poster=' + encodeURIComponent(poster));
+		var src = ORIGIN + '/widget#' + hashParts.join('&');
 
 		var iframe = document.createElement('iframe');
-		iframe.src = src;
 		iframe.title = 'three.ws widget ' + widgetId;
 		iframe.allow = 'autoplay; clipboard-write; xr-spatial-tracking';
 		iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
 		iframe.setAttribute('width',  width);
 		iframe.setAttribute('height', height);
+		// Default: lazy. Embedders flagged as high-priority opt into eager.
+		iframe.setAttribute('loading', priority === 'high' ? 'eager' : 'lazy');
+		if (priority === 'high' && 'fetchPriority' in iframe) {
+			iframe.fetchPriority = 'high';
+		}
 		iframe.style.border       = border + 'px solid transparent';
 		iframe.style.borderRadius = radius + 'px';
 		iframe.style.maxWidth     = '100%';
 		iframe.style.display      = 'block';
 
-		// Wrap in a positioned container that holds the skeleton placeholder.
+		// Wrap in a positioned container that holds the placeholder. If a
+		// poster is set, the wrapper shows the OG image as its background so
+		// visitors see the avatar instantly. Otherwise we fall back to the
+		// spinner skeleton.
 		var wrapper = document.createElement('div');
+		var bgCss = poster
+			? 'background:#0c0c12 url(' + JSON.stringify(poster).slice(1, -1) +
+			  ') center/contain no-repeat;'
+			: 'background:#0c0c12;';
 		wrapper.style.cssText =
 			'position:relative;display:inline-block;max-width:100%;' +
 			'width:' + width + 'px;height:' + height + 'px;' +
 			'border-radius:' + radius + 'px;overflow:hidden;' +
-			'background:#0c0c12;';
+			bgCss;
 
 		var skeleton = document.createElement('div');
 		skeleton.setAttribute('aria-hidden', 'true');
+		// Spinner is suppressed when we already have a poster — no double-loader.
 		skeleton.style.cssText =
 			'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
-			'pointer-events:none;transition:opacity 0.3s;';
+			'pointer-events:none;transition:opacity 0.3s;' +
+			(poster ? 'opacity:0;' : '');
 		skeleton.innerHTML =
 			'<div style="width:32px;height:32px;border:2px solid rgba(255,255,255,0.08);' +
 			'border-top-color:rgba(255,255,255,0.35);border-radius:50%;' +

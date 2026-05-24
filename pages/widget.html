@@ -62,7 +62,46 @@
 			body.widget-ready .widget-poster {
 				opacity: 0;
 			}
-			/* Spinner — same look as the rest of the app, centred. */
+			/* Reveal-on-interaction: tap-to-load overlay shown when the widget
+			   was embedded with reveal=interaction. Stays visible — and
+			   interactive — until the user clicks. WebGL doesn't init at all
+			   before that click, so a page with 12 widgets only pays the cost
+			   of the ones the user opens. */
+			.widget-reveal-gate {
+				position: fixed;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: rgba(0, 0, 0, 0.55);
+				z-index: 3;
+				cursor: pointer;
+				transition: opacity 0.25s ease;
+			}
+			.widget-reveal-btn {
+				width: 78px;
+				height: 78px;
+				border-radius: 50%;
+				background: rgba(255, 255, 255, 0.9);
+				color: #111;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+				pointer-events: none;
+			}
+			.widget-reveal-btn svg {
+				width: 32px;
+				height: 32px;
+				transform: translateX(2px);
+			}
+			.widget-reveal-gate[data-dismissing] {
+				opacity: 0;
+				pointer-events: none;
+			}
+			/* Spinner — same look as the rest of the app, centred. Hidden
+			   until the reveal gate is dismissed (in interaction mode) so
+			   visitors see "tap to play," not "loading." */
 			.spinner {
 				position: fixed;
 				left: 50%;
@@ -76,6 +115,10 @@
 				animation: widget-spin 0.9s linear infinite;
 				z-index: 2;
 				pointer-events: none;
+				display: none;
+			}
+			body.widget-loading .spinner {
+				display: block;
 			}
 			body.widget-ready .spinner {
 				display: none;
@@ -103,40 +146,109 @@
 			// setup short-circuit when this flag is set.
 			window.__WIDGET_SHELL = true;
 
-			// Optional ?poster=<url> renders a static image while WebGL boots.
-			// Encoded in the URL so it works without any postMessage handshake.
 			(function () {
-				try {
-					var u = new URL(location.href);
-					var poster = u.searchParams.get('poster');
-					if (poster) {
-						document.addEventListener('DOMContentLoaded', function () {
-							var el = document.createElement('div');
-							el.className = 'widget-poster';
-							el.style.backgroundImage = 'url(' + JSON.stringify(poster).slice(1, -1) + ')';
-							document.body.appendChild(el);
-						});
-					}
-				} catch (_) {
-					/* malformed URL — skip poster */
+				var qs = new URLSearchParams(location.search);
+				var hash = location.hash || '';
+				var hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+				function param(name) {
+					return hashParams.get(name) || qs.get(name);
 				}
-			})();
 
-			// Reveal the body on the viewer's first successful frame. App.js fires
-			// a 'three-ws:first-frame' event after LOAD_END(success). 6s fallback
-			// guards against a hung load so visitors don't stare at a black box.
-			(function () {
+				// Poster: ?poster=... or #poster=... — encoded URL of a static
+				// preview shown until first frame (or used as the reveal-gate bg).
+				var poster = param('poster');
+				if (poster) {
+					document.addEventListener('DOMContentLoaded', function () {
+						var el = document.createElement('div');
+						el.className = 'widget-poster';
+						el.style.backgroundImage = 'url(' + JSON.stringify(poster).slice(1, -1) + ')';
+						document.body.appendChild(el);
+					});
+				}
+
+				// Reveal mode: 'auto' (default — boots on load) or 'interaction'
+				// (deferred — boots only after the visitor clicks the play button).
+				// On a gallery page with N embeds, interaction mode means WebGL
+				// only spins up for the one(s) the visitor actually opens.
+				var reveal = param('reveal') === 'interaction' ? 'interaction' : 'auto';
+
+				function bootApp() {
+					if (window.__WIDGET_BOOTED) return;
+					window.__WIDGET_BOOTED = true;
+					document.body.classList.add('widget-loading');
+					var script = document.createElement('script');
+					script.type = 'module';
+					// Cache-buster only on first-time interaction boot so the
+					// browser re-parses the module if a poster page was warm
+					// from an earlier visit. Auto mode hits the module fresh.
+					script.src = '/src/app.js';
+					document.head.appendChild(script);
+					// Notify the parent that the visitor revealed this widget —
+					// lets a host page track engagement without our analytics.
+					try {
+						window.parent.postMessage(
+							{ jsonrpc: '2.0', method: 'widget.revealed', params: { mode: reveal } },
+							'*',
+						);
+					} catch (_) {
+						/* not in an iframe — ignore */
+					}
+				}
+
+				function setupRevealGate() {
+					var gate = document.createElement('button');
+					gate.type = 'button';
+					gate.className = 'widget-reveal-gate';
+					gate.setAttribute('aria-label', 'Play widget');
+					gate.innerHTML =
+						'<span class="widget-reveal-btn" aria-hidden="true">' +
+						'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+						'</span>';
+					gate.addEventListener('click', function () {
+						gate.setAttribute('data-dismissing', '');
+						bootApp();
+						setTimeout(function () {
+							if (gate.parentNode) gate.parentNode.removeChild(gate);
+						}, 280);
+					});
+					document.body.appendChild(gate);
+					// In interaction mode the body has nothing to hide — make it
+					// visible so the play button is interactable.
+					document.body.classList.add('widget-ready');
+				}
+
+				if (reveal === 'interaction') {
+					document.addEventListener('DOMContentLoaded', setupRevealGate);
+				} else {
+					// Auto mode: boot now, no gate.
+					document.addEventListener('DOMContentLoaded', bootApp);
+				}
+
+				// Reveal the body on the viewer's first successful frame. App.js
+				// fires a 'three-ws:first-frame' event after LOAD_END(success).
+				// 6s fallback guards against a hung load so visitors don't stare
+				// at a black box. In interaction mode the body was already shown
+				// for the gate; this re-firing is harmless (class already set).
 				var revealed = false;
-				var reveal = function () {
+				var revealBody = function () {
 					if (revealed) return;
 					revealed = true;
+					document.body.classList.remove('widget-loading');
 					document.body.classList.add('widget-ready');
 				};
-				window.addEventListener('three-ws:first-frame', reveal, { once: true });
-				setTimeout(reveal, 6000);
+				window.addEventListener('three-ws:first-frame', revealBody, { once: true });
+				// Only arm the 6s fallback after the boot actually starts, so the
+				// idle interaction-mode poster doesn't reveal itself.
+				var armFallback = function () {
+					setTimeout(revealBody, 6000);
+				};
+				if (reveal === 'interaction') {
+					window.addEventListener('three-ws:boot-started', armFallback, { once: true });
+				} else {
+					armFallback();
+				}
 			})();
 		</script>
-		<script defer type="module" src="/src/app.js"></script>
 	</head>
 	<body data-viewer-mode="embed">
 		<main class="wrap">
