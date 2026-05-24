@@ -149,6 +149,16 @@ const handleUpload = wrap(async (req, res) => {
 	}
 	if (!buffer.length) return error(res, 400, 'empty_body', 'no bytes received');
 
+	// GLB header (binary glTF 2.0 spec): 12 bytes of
+	//   magic    uint32  0x46546C67  // 'glTF' little-endian
+	//   version  uint32  must be 2
+	//   length   uint32  total file length in bytes (must equal buffer length)
+	// Catches mis-named uploads (JPEGs, HTML error pages, truncated files) and
+	// sets the catalog up to only ever serve well-formed binary glTF.
+	if (!isValidGlbHeader(buffer)) {
+		return error(res, 415, 'invalid_glb', 'body is not a valid binary glTF 2.0 (GLB) — magic/version/length check failed');
+	}
+
 	try {
 		await enforceQuotas(userId, buffer.length);
 	} catch (err) {
@@ -174,6 +184,16 @@ const handleUpload = wrap(async (req, res) => {
 		checksum_sha256: checksum,
 	});
 });
+
+// Binary glTF 2.0 header check. See https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#binary-gltf-layout
+function isValidGlbHeader(buffer) {
+	if (!Buffer.isBuffer(buffer) || buffer.length < 12) return false;
+	// Magic = 0x46546C67 ("glTF" in little-endian = 0x67,0x6C,0x54,0x46 in file order)
+	if (buffer.readUInt32LE(0) !== 0x46546C67) return false;
+	if (buffer.readUInt32LE(4) !== 2) return false;
+	if (buffer.readUInt32LE(8) !== buffer.length) return false;
+	return true;
+}
 
 function readRawBody(req, limit) {
 	return new Promise((resolve, reject) => {

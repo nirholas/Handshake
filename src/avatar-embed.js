@@ -80,9 +80,31 @@ const CAPABILITIES = [
 	'mocap',
 	'idle',
 	'bg',
+	'overlay',
+	'hotkey',
+	'state',
+	'mic',
 ];
 
 const HEAD_BONE_NAMES = ['head', 'neck'];
+
+// ── Default hotkey → ARKit-52 morph map ───────────────────────────────────
+// Modeled after Veadotube/VTube Studio's quick-action panel. Keys 1-9 map to
+// named emotes that any host can override via the v1.avatar.hotkeys message.
+// Each entry is a list of { name, weight, hold } records — names go through
+// MORPH_ALIASES so combined morphs like `mouthSmile` resolve to L+R.
+const DEFAULT_HOTKEYS = Object.freeze({
+	'1': { label: 'smile', hold: 1500, morphs: { mouthSmileLeft: 0.85, mouthSmileRight: 0.85, cheekSquintLeft: 0.4, cheekSquintRight: 0.4 } },
+	'2': { label: 'wink', hold: 280, morphs: { eyeBlinkLeft: 1, mouthSmileLeft: 0.5, mouthSmileRight: 0.3 } },
+	'3': { label: 'surprised', hold: 1400, morphs: { jawOpen: 0.55, eyeWideLeft: 0.8, eyeWideRight: 0.8, browInnerUp: 0.7 } },
+	'4': { label: 'sad', hold: 1800, morphs: { mouthFrownLeft: 0.7, mouthFrownRight: 0.7, browInnerUp: 0.55 } },
+	'5': { label: 'angry', hold: 1600, morphs: { browDownLeft: 0.8, browDownRight: 0.8, mouthPressLeft: 0.6, mouthPressRight: 0.6, noseSneerLeft: 0.4, noseSneerRight: 0.4 } },
+	'6': { label: 'disgust', hold: 1600, morphs: { noseSneerLeft: 0.8, noseSneerRight: 0.8, mouthUpperUpLeft: 0.55, mouthUpperUpRight: 0.55, eyeSquintLeft: 0.45, eyeSquintRight: 0.45 } },
+	'7': { label: 'thinking', hold: 1800, morphs: { eyeLookUpLeft: 0.6, eyeLookUpRight: 0.6, mouthLeft: 0.35, browOuterUpLeft: 0.45 } },
+	'8': { label: 'kiss', hold: 1200, morphs: { mouthPucker: 0.95, eyeBlinkLeft: 0.6, eyeBlinkRight: 0.6 } },
+	'9': { label: 'tongue', hold: 1400, morphs: { tongueOut: 0.9, jawOpen: 0.45, mouthSmileLeft: 0.4, mouthSmileRight: 0.4 } },
+	'0': { label: 'neutral', hold: 80, morphs: {} },
+});
 
 main().catch((err) => {
 	showError(err?.message || 'Could not load avatar');
@@ -92,6 +114,12 @@ async function main() {
 	const params = new URL(location.href).searchParams;
 	applyBackground(params.get('bg') || 'transparent');
 
+	// Overlay mode — chrome-free canvas for OBS Browser Source. Hides the
+	// name plate, mocap pill, and error positioning; treats the body as a
+	// pure render surface. Press space to re-show chrome (VSeeFace "※" pattern).
+	const overlayMode = params.get('overlay') === '1' || params.get('chrome') === '0';
+	if (overlayMode) document.body.classList.add('overlay-mode');
+
 	// ── Resolve which avatar to render ─────────────────────────────────────
 	const resolved = await resolveAvatar(params);
 	if (!resolved) {
@@ -99,7 +127,7 @@ async function main() {
 		return;
 	}
 
-	const namePlate = params.get('name') !== '0';
+	const namePlate = !overlayMode && params.get('name') !== '0';
 	if (namePlate && resolved.name) {
 		document.getElementById('name-plate').textContent = resolved.name;
 	}

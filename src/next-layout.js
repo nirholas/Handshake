@@ -7,17 +7,16 @@
  * buttons (Save / Widget / Deploy / Profile) plus Upload + Create. The layout
  * is toggled via body[data-layout='next'] (see app.js _applyViewerLayout).
  *
- * Wiring is direct: clip selection drives viewer.mixer.clipAction() and
- * playback state is read/written on the same AnimationAction the dock
- * exposes. The Controls drawer physically relocates the existing
- * viewer .gui-wrap DOM into a drawer body so dat.GUI continues to drive
- * camera/lighting/material state through its original onChange handlers —
- * no re-implementation, just a presentational reparent.
+ * Playback is driven through viewer.animationManager — the same path the
+ * existing AnimationPanel uses — so manifest-loaded clips, lazy fetches,
+ * crossfades, and the onChange callback work identically. The Controls
+ * drawer physically relocates the dat.GUI .gui-wrap into a drawer body so
+ * every camera/lighting/material knob keeps working through its original
+ * onChange handlers; no re-implementation.
  *
- * Pulls in three concrete patterns from current best-in-class viewers:
+ * Borrows three concrete patterns from current best-in-class viewers:
  *   - Sketchfab-style single bottom bar with a real scrubbable timeline
- *   - Babylon-Sandbox-style invisible full-page drag-drop with a tiny
- *     floating gear that opens the controls drawer (Khronos drawer body)
+ *   - Babylon-Sandbox-style full-page drop + floating gear → drawer (Khronos)
  *   - Google model-viewer-style auto-rotate-on-idle + a hand swipe prompt
  *     that disappears after the first interaction
  */
@@ -28,18 +27,54 @@ const STORAGE_KEY_INTERACTED = '3dagent:viewer-interacted';
 const POLL_INTERVAL_MS = 100;
 const POLL_MAX_MS = 15000;
 
+const ICON_FALLBACK = {
+	idle: '🧍',
+	breathing: '🧍',
+	standing: '🧍',
+	walking: '🚶',
+	walk: '🚶',
+	running: '🏃',
+	run: '🏃',
+	waving: '👋',
+	wave: '👋',
+	dancing: '💃',
+	dance: '💃',
+	sitting: '🪑',
+	sit: '🪑',
+	jumping: '🦘',
+	jump: '🦘',
+	talking: '🗣️',
+	talk: '🗣️',
+	clapping: '👏',
+	clap: '👏',
+	punching: '👊',
+	punch: '👊',
+	kicking: '🦵',
+	kick: '🦵',
+	covereyes: '🙈',
+	facepalm: '🤦',
+	'av-waving': '👋',
+	'av-superhero-jump': '🦸',
+	'boxer-dance': '🥊',
+	'av-brag-and-clap': '👏',
+	'av-flex-arm': '💪',
+	'av-walk-crouching': '🚶',
+	'av-idle-breath': '🧘',
+	'av-waiting': '🕰️',
+};
+
 export class NextLayout {
 	constructor(app) {
 		this.app = app;
 		this.viewer = null;
-		this.action = null;
-		this.clipIdx = -1;
 		this.loop = true;
 		this.rafId = 0;
 		this.driverAttached = false;
 		this._guiMoved = false;
 		this._idleTimer = 0;
 		this._mounted = false;
+		this._defsRendered = false;
+		this._currentName = null;
 	}
 
 	mount() {
@@ -99,18 +134,20 @@ export class NextLayout {
 		const viewer = await this._waitForViewer();
 		if (!viewer) return;
 		this.viewer = viewer;
-		await this._waitForClips(viewer);
+		await this._waitForDefs(viewer);
 		this._renderClipGrid();
-		this._selectClipByIdx(0, { autoplay: false });
+		this._subscribeOnChange();
 		this._attachDriver();
 		this._armIdleAutoRotate();
+		// Seed dock state from the manager (it may already be playing 'idle').
+		this._onManagerChange(viewer.animationManager.currentName);
 	}
 
 	_waitForViewer() {
 		return new Promise((resolve) => {
 			const start = Date.now();
 			const poll = () => {
-				if (this.app.viewer && this.app.viewer.controls) {
+				if (this.app.viewer && this.app.viewer.controls && this.app.viewer.animationManager) {
 					resolve(this.app.viewer);
 					return;
 				}
@@ -124,16 +161,22 @@ export class NextLayout {
 		});
 	}
 
-	_waitForClips(viewer) {
+	_waitForDefs(viewer) {
 		return new Promise((resolve) => {
 			const start = Date.now();
 			const poll = () => {
-				if (viewer.clips?.length && viewer.mixer) {
-					resolve(viewer.clips.slice());
+				const defs = viewer.animationManager?.getAnimationDefs();
+				if (defs && defs.length > 0) {
+					resolve(defs);
+					return;
+				}
+				// Fall back to the GLB's built-in clips if no manifest exists.
+				if (viewer.clips?.length && viewer.mixer && Date.now() - start > 3000) {
+					resolve(this._defsFromClips(viewer.clips));
 					return;
 				}
 				if (Date.now() - start > POLL_MAX_MS) {
-					resolve([]);
+					resolve(this._defsFromClips(viewer.clips || []));
 					return;
 				}
 				setTimeout(poll, POLL_INTERVAL_MS);
@@ -142,73 +185,128 @@ export class NextLayout {
 		});
 	}
 
+	_defsFromClips(clips) {
+		// Synthesize defs from GLB-built-in clips so the dock has something to
+		// show even on avatars without a manifest. Playback for these goes
+		// through viewer.mixer directly (see _playClipDef).
+		return clips.map((clip) => ({
+			name: clip.name,
+			label: _stripIdx(clip.name),
+			__builtin: clip,
+		}));
+	}
+
 	// ── animation playback ───────────────────────────────────────────────────
 
 	_renderClipGrid() {
+		if (this._defsRendered) return;
 		const grid = this.els.grid;
-		if (!grid || !this.viewer?.clips) return;
+		if (!grid || !this.viewer) return;
+		const defs = this._currentDefs();
 		grid.innerHTML = '';
-		const clips = this.viewer.clips;
 		const frag = document.createDocumentFragment();
-		clips.forEach((clip, i) => {
+		defs.forEach((def) => {
 			const btn = document.createElement('button');
 			btn.type = 'button';
 			btn.className = 'next-grid__item';
-			btn.dataset.idx = String(i);
+			btn.dataset.name = def.name;
 			btn.setAttribute('role', 'option');
 			btn.setAttribute('aria-selected', 'false');
-			btn.title = _stripIdx(clip.name);
+			btn.title = def.label || def.name;
+			const icon = document.createElement('span');
+			icon.className = 'next-grid__icon';
+			icon.textContent = def.icon || ICON_FALLBACK[def.name.toLowerCase()] || '▶';
 			const label = document.createElement('span');
 			label.className = 'next-grid__label';
-			label.textContent = _stripIdx(clip.name);
+			label.textContent = def.label || def.name;
+			btn.appendChild(icon);
 			btn.appendChild(label);
 			btn.addEventListener('click', () => {
-				this._selectClipByIdx(i, { autoplay: true });
+				this._playClipDef(def);
 				this._toggleGrid(false);
 			});
 			frag.appendChild(btn);
 		});
 		grid.appendChild(frag);
+		this._defsRendered = true;
 	}
 
-	_selectClipByIdx(idx, { autoplay }) {
+	_currentDefs() {
+		const mgr = this.viewer?.animationManager;
+		const manifest = mgr?.getAnimationDefs() || [];
+		if (manifest.length > 0) return manifest;
+		return this._defsFromClips(this.viewer?.clips || []);
+	}
+
+	async _playClipDef(def) {
 		const viewer = this.viewer;
-		if (!viewer?.mixer || !viewer.clips || idx < 0 || idx >= viewer.clips.length) return;
-		this._stopAll();
-		const clip = viewer.clips[idx];
+		if (!viewer) return;
+		if (def.__builtin) {
+			this._playBuiltinClip(def.__builtin);
+			return;
+		}
+		await viewer.animationManager.crossfadeTo(def.name, 0.2);
+		// onChange fires from inside crossfadeTo; UI updates land in _onManagerChange.
+	}
+
+	_playBuiltinClip(clip) {
+		const viewer = this.viewer;
+		if (!viewer?.mixer) return;
+		viewer.mixer.stopAllAction();
 		const action = viewer.mixer.clipAction(clip);
 		action.reset();
 		action.enabled = true;
 		action.setEffectiveTimeScale(1);
 		action.setEffectiveWeight(1);
 		this._applyLoop(action);
-		if (autoplay) action.play();
-		else action.paused = true;
-		this.action = action;
-		this.clipIdx = idx;
-		if (viewer.state?.actionStates) {
-			for (const k of Object.keys(viewer.state.actionStates)) {
-				viewer.state.actionStates[k] = false;
-			}
-			viewer.state.actionStates[clip.name] = autoplay;
-		}
-		this._updateClipName();
+		action.play();
+		this._currentName = clip.name;
+		this._updateClipName(_stripIdx(clip.name));
 		this._updatePlayBtn();
-		this._updateScrubAndTime();
 		this._updateGridHighlight();
 		viewer.invalidate();
 	}
 
-	_stopAll() {
+	_subscribeOnChange() {
+		const mgr = this.viewer?.animationManager;
+		if (!mgr) return;
+		const prev = mgr.onChange;
+		mgr.onChange = (name) => {
+			try {
+				prev?.(name);
+			} catch {
+				/* keep our handler running even if a downstream listener throws */
+			}
+			this._onManagerChange(name);
+		};
+	}
+
+	_onManagerChange(name) {
+		this._currentName = name;
+		const def = this._currentDefs().find((d) => d.name === name);
+		this._updateClipName(def?.label || (name ? _stripIdx(name) : '—'));
+		this._updatePlayBtn();
+		this._updateGridHighlight();
+		// Re-apply loop preference on the new action.
+		const action = this._currentAction();
+		if (action) this._applyLoop(action);
+	}
+
+	_currentAction() {
 		const viewer = this.viewer;
-		if (!viewer?.mixer) return;
-		viewer.mixer.stopAllAction();
-		if (viewer.state?.actionStates) {
-			for (const k of Object.keys(viewer.state.actionStates)) viewer.state.actionStates[k] = false;
+		if (!viewer) return null;
+		const mgr = viewer.animationManager;
+		if (mgr?.currentAction) return mgr.currentAction;
+		// Fallback: built-in clip path uses viewer.mixer directly.
+		if (this._currentName && viewer.mixer && viewer.clips) {
+			const clip = viewer.clips.find((c) => c.name === this._currentName);
+			if (clip) return viewer.mixer.clipAction(clip);
 		}
+		return null;
 	}
 
 	_applyLoop(action) {
+		if (!action) return;
 		action.setLoop(this.loop ? LoopRepeat : LoopOnce, this.loop ? Infinity : 1);
 		action.clampWhenFinished = !this.loop;
 	}
@@ -223,28 +321,28 @@ export class NextLayout {
 		this.rafId = requestAnimationFrame(tick);
 	}
 
-	_updateClipName() {
+	_updateClipName(text) {
 		if (!this.els.clipName) return;
-		const clip = this.viewer?.clips?.[this.clipIdx];
-		this.els.clipName.textContent = clip ? _stripIdx(clip.name) : '—';
+		this.els.clipName.textContent = text || '—';
 	}
 
 	_updatePlayBtn() {
 		const btn = this.els.playBtn;
 		if (!btn) return;
-		const playing = Boolean(this.action && !this.action.paused);
+		const a = this._currentAction();
+		const playing = Boolean(a && !a.paused && a.isRunning());
 		btn.setAttribute('aria-pressed', String(playing));
 		btn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
 		btn.classList.toggle('next-dock__play--playing', playing);
 	}
 
 	_updateScrubAndTime() {
-		const a = this.action;
+		const a = this._currentAction();
 		const scrubInput = this.els.scrubInput;
 		const scrubFill = this.els.scrubFill;
 		const time = this.els.time;
 		if (!a) {
-			if (scrubInput) scrubInput.value = '0';
+			if (scrubInput && document.activeElement !== scrubInput) scrubInput.value = '0';
 			if (scrubFill) scrubFill.style.width = '0%';
 			if (time) time.textContent = '0:00 / 0:00';
 			return;
@@ -263,7 +361,7 @@ export class NextLayout {
 		const grid = this.els.grid;
 		if (!grid) return;
 		grid.querySelectorAll('.next-grid__item').forEach((btn) => {
-			const active = Number(btn.dataset.idx) === this.clipIdx;
+			const active = btn.dataset.name === this._currentName;
 			btn.classList.toggle('next-grid__item--active', active);
 			btn.setAttribute('aria-selected', String(active));
 		});
@@ -277,18 +375,23 @@ export class NextLayout {
 		});
 
 		this.els.playBtn?.addEventListener('click', () => {
-			if (!this.action) return;
-			if (this.action.paused) {
-				const duration = this.action.getClip().duration || 0;
-				// If we're at the end of a one-shot clip, rewind before playing.
-				if (!this.loop && duration && this.action.time >= duration - 0.01) {
-					this.action.reset();
-					this._applyLoop(this.action);
+			const a = this._currentAction();
+			if (!a) {
+				// Nothing playing yet — auto-play the first available def.
+				const defs = this._currentDefs();
+				if (defs[0]) this._playClipDef(defs[0]);
+				return;
+			}
+			if (a.paused || !a.isRunning()) {
+				const duration = a.getClip().duration || 0;
+				if (!this.loop && duration && a.time >= duration - 0.01) {
+					a.reset();
+					this._applyLoop(a);
 				}
-				this.action.paused = false;
-				if (!this.action.isRunning()) this.action.play();
+				a.paused = false;
+				if (!a.isRunning()) a.play();
 			} else {
-				this.action.paused = true;
+				a.paused = true;
 			}
 			this._updatePlayBtn();
 			this.viewer?.invalidate();
@@ -297,15 +400,14 @@ export class NextLayout {
 		const scrub = this.els.scrubInput;
 		if (scrub) {
 			const onScrub = () => {
-				if (!this.action) return;
-				const duration = this.action.getClip().duration || 0;
+				const a = this._currentAction();
+				if (!a) return;
+				const duration = a.getClip().duration || 0;
 				const pct = Number(scrub.value) / 1000;
-				this.action.time = Math.max(0, Math.min(duration, pct * duration));
-				if (this.action.paused) {
-					// Manually advance so the mixer applies the new time even
-					// while paused. dt=0 still triggers a pose update.
-					this.viewer?.mixer?.update(0);
-				}
+				a.time = Math.max(0, Math.min(duration, pct * duration));
+				// Tick the mixer with dt=0 so the new pose lands even while paused.
+				this.viewer?.mixer?.update(0);
+				this.viewer?.animationManager?.mixer?.update(0);
 				this._updateScrubAndTime();
 				this.viewer?.invalidate();
 			};
@@ -317,12 +419,12 @@ export class NextLayout {
 			this.loop = !this.loop;
 			this.els.loopBtn.setAttribute('aria-pressed', String(this.loop));
 			this.els.loopBtn.classList.toggle('next-dock__loop--off', !this.loop);
-			if (this.action) this._applyLoop(this.action);
+			const a = this._currentAction();
+			if (a) this._applyLoop(a);
 		});
 	}
 
 	_wireGrid() {
-		// Close grid on outside click.
 		document.addEventListener('click', (e) => {
 			const grid = this.els.grid;
 			const btn = this.els.clipBtn;
@@ -393,13 +495,11 @@ export class NextLayout {
 			this._toggleShare(false);
 		});
 
-		// Wire Save → fire the original button's click handler.
 		this.els.shareSave?.addEventListener('click', () => {
 			document.getElementById('save-to-account-btn')?.click();
 			this._toggleShare(false);
 		});
 
-		// Upload → trigger the existing #file-input picker (SimpleDropzone listens to it).
 		this.els.shareUpload?.addEventListener('click', () => {
 			document.getElementById('file-input')?.click();
 			this._toggleShare(false);
@@ -407,9 +507,6 @@ export class NextLayout {
 	}
 
 	_wireShareItemMirroring() {
-		// The original action buttons toggle hidden + update href dynamically
-		// based on auth/state. Mirror those changes onto the Share popover's
-		// items so they reflect the same set of available actions.
 		const map = [
 			{ src: 'save-to-account-btn', dst: this.els.shareSave, type: 'btn' },
 			{ src: 'make-widget-btn', dst: this.els.shareWidget, type: 'link' },
@@ -434,6 +531,7 @@ export class NextLayout {
 				}
 				const isDeployed = srcEl.classList.contains('is-deployed');
 				dst.classList.toggle('next-share-menu__item--success', isDeployed);
+				this._updateShareDot();
 			};
 			sync();
 			const mo = new MutationObserver(sync);
@@ -445,7 +543,6 @@ export class NextLayout {
 				characterData: true,
 			});
 		}
-		// Reflect available actions count on the corner button (subtle dot).
 		this._updateShareDot();
 	}
 
@@ -546,9 +643,10 @@ export class NextLayout {
 		this.root?.setAttribute('aria-hidden', String(!next));
 		if (next) {
 			this._mountGuiIntoDrawer();
+			// If clips loaded after first mount, ensure grid reflects the latest defs.
+			this._defsRendered = false;
+			this._renderClipGrid();
 		} else if (this._guiMoved) {
-			// Return the dat.GUI panel back to the viewer container so the
-			// Classic .gui-toggle keeps working when the user flips back.
 			const wrap = document.querySelector('.gui-wrap');
 			const viewerEl = document.getElementById('viewer-container');
 			if (wrap && viewerEl) {

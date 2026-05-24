@@ -251,28 +251,75 @@ export function openVoicePreview({ glbUrl, name }) {
 
 // ── Static info modals (identity / paid / embed / reputation) ────────────────
 
-export function openIdentityModal() {
+export async function openIdentityModal(ctx = {}) {
+	// Render the shell synchronously so the modal opens instantly. The keypair
+	// generation is fast (~ms) but the import is a fat dependency — load it
+	// in the background and patch the address in once it resolves.
+	const body = document.createElement('div');
+	body.innerHTML = `
+		<ul class="fm-bullets">
+			<li>Owned by your wallet, not by three.ws — transfer or sell at any time.</li>
+			<li>Metadata (avatar URL, persona, voice) is mutable by you, signed on-chain.</li>
+			<li>Discoverable in the agent registry by capability, price, and reputation.</li>
+		</ul>
+		<div class="fm-id-card" data-state="loading">
+			<div class="fm-id-head">
+				<span class="fm-id-chain">Solana mainnet</span>
+				<span class="fm-id-pill" data-pill>generating…</span>
+			</div>
+			<div class="fm-id-addr" data-addr>—</div>
+			<div class="fm-id-meta">
+				<div><span class="muted">Name</span><strong data-name>${escapeHtml(ctx.name || 'Your new avatar')}</strong></div>
+				<div><span class="muted">Asset standard</span><strong>Metaplex Core</strong></div>
+			</div>
+			<button class="fm-copy fm-id-copy" type="button" data-copy-addr disabled>Copy address</button>
+		</div>
+		<p class="fm-note">Sample keypair generated locally — your real agent gets a unique address on save. Nothing is broadcast.</p>
+	`;
+
 	openFeatureModal({
 		icon: '🪪',
 		title: 'On-Chain Identity',
 		lede: 'Your agent becomes a Metaplex Core asset on Solana the moment you save — transferable, composable, browsable in any wallet.',
-		body: `
-			<ul class="fm-bullets">
-				<li>Owned by your wallet, not by three.ws — transfer or sell at any time.</li>
-				<li>Metadata (avatar URL, persona, voice) is mutable by you, signed on-chain.</li>
-				<li>Discoverable in the registry by capability, price, and reputation.</li>
-			</ul>
-			<div class="fm-row">
-				<div>
-					<strong>Agent wallet</strong>
-					<div class="muted">Solana address · generated when you save</div>
-				</div>
-				<code class="fm-placeholder">&lt;your·agent·wallet&gt;</code>
-			</div>
-			<p class="fm-note">No network calls happen until you save — this preview is local.</p>
-		`,
+		body,
 		actions: [{ label: 'Got it' }],
 	});
+
+	// Generate a real, throwaway sample keypair in-browser so the preview
+	// shows a *real-shaped* base58 address rather than an obvious placeholder.
+	// Private key is discarded — this is purely a visual proof of "real Solana
+	// addresses, not lorem ipsum".
+	try {
+		const { Keypair } = await import('@solana/web3.js');
+		const kp = Keypair.generate();
+		const addr = kp.publicKey.toBase58();
+		const card = body.querySelector('.fm-id-card');
+		card.dataset.state = 'ready';
+		card.querySelector('[data-pill]').textContent = 'preview';
+		card.querySelector('[data-addr]').textContent = addr;
+		const copy = card.querySelector('[data-copy-addr]');
+		copy.disabled = false;
+		copy.addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(addr);
+				copy.textContent = 'Copied';
+				copy.classList.add('copied');
+				setTimeout(() => {
+					copy.textContent = 'Copy address';
+					copy.classList.remove('copied');
+				}, 1600);
+			} catch {
+				copy.textContent = 'Press ⌘C';
+			}
+		});
+	} catch (err) {
+		const card = body.querySelector('.fm-id-card');
+		card.dataset.state = 'error';
+		card.querySelector('[data-pill]').textContent = 'unavailable';
+		card.querySelector('[data-addr]').textContent =
+			'Couldn\'t load keypair generator — your real address is created on save.';
+		console.warn('[identity-preview] keypair gen failed', err);
+	}
 }
 
 export function openPaidSkillsModal() {
@@ -299,29 +346,106 @@ export function openPaidSkillsModal() {
 	});
 }
 
-export function openEmbedModal() {
-	// Template, not a fake value: the placeholder reads as a parameter the user
-	// has to fill in after saving. Copy still works — they get the exact tag
-	// shape they'll need.
-	const snippet = `<script src="https://three.ws/embed.js"
-        data-agent="<your-agent-id>"
-        data-mode="full"
-        async></script>`;
+export function openEmbedModal(ctx = {}) {
+	const handle = slugify(ctx.name) || 'your-agent';
+	const snippets = {
+		script: `<script async src="https://three.ws/embed.js"
+        data-widget="${handle}"
+        data-type="talking-agent"></script>`,
+		webcomponent: `<agent-3d agent="${handle}" mode="full"></agent-3d>
+<script type="module"
+  src="https://three.ws/embed/agent-3d.js"></script>`,
+		react: `import { Agent3D } from '@three.ws/react';
+
+export default function Page() {
+  return <Agent3D agent="${handle}" mode="full" />;
+}`,
+		iframe: `<iframe
+  src="https://three.ws/widget#widget=${handle}&kiosk=true"
+  width="420" height="600"
+  style="border:0;border-radius:14px"
+  allow="microphone; autoplay"
+  loading="lazy"></iframe>`,
+	};
+
+	const body = document.createElement('div');
+	body.innerHTML = `
+		<ul class="fm-bullets">
+			<li>WebGL renders in-browser. No install, no plugin.</li>
+			<li>Modes: floating bubble, fullscreen, inline card, or sidebar.</li>
+			<li>Works in Webflow, Framer, raw HTML, React, Next.js, Squarespace.</li>
+		</ul>
+
+		<div class="fm-tabs" role="tablist" aria-label="Embed format">
+			<button class="fm-tab is-active" role="tab" data-tab="script">Script tag</button>
+			<button class="fm-tab" role="tab" data-tab="webcomponent">Web Component</button>
+			<button class="fm-tab" role="tab" data-tab="react">React</button>
+			<button class="fm-tab" role="tab" data-tab="iframe">iframe</button>
+		</div>
+		<div class="fm-code" data-copy-target>
+			<pre data-snippet></pre>
+			<button class="fm-copy" type="button">Copy</button>
+		</div>
+
+		<div class="fm-browser" aria-label="Live embed preview">
+			<div class="fm-browser-bar">
+				<span class="fm-browser-dot"></span>
+				<span class="fm-browser-dot"></span>
+				<span class="fm-browser-dot"></span>
+				<div class="fm-browser-url">three.ws/@${escapeHtml(handle)}</div>
+			</div>
+			<div class="fm-browser-stage" data-stage>
+				<img class="fm-browser-shot" alt="" data-shot hidden />
+				<div class="fm-browser-skeleton" data-skel>Rendering live preview…</div>
+			</div>
+		</div>
+		<p class="fm-note">Save your avatar to claim the real <code>data-widget</code> ID — copies above keep working with the placeholder.</p>
+	`;
+
 	openFeatureModal({
 		icon: '🧩',
 		title: 'Embed Anywhere',
-		lede: 'One tag drops your agent on any site — Webflow, Framer, raw HTML, React, Squarespace, you name it.',
-		body: `
-			<ul class="fm-bullets">
-				<li>WebGL renders in-browser. No install, no plugin.</li>
-				<li>Modes: floating bubble, fullscreen, inline card, or sidebar.</li>
-				<li>The <code>agent-3d</code> Web Component works in any framework.</li>
-			</ul>
-			<div class="fm-code" data-copy='${snippet.replace(/'/g, '&apos;')}'>${escapeHtml(snippet)}<button class="fm-copy" type="button">Copy</button></div>
-			<p class="fm-note">Save your avatar to get a real <code>data-agent</code> ID and a one-click copy of the live snippet.</p>
-		`,
+		lede: 'One tag drops your avatar on any site. Real snippet, real iframe shape, real preview of how it renders.',
+		body,
 		actions: [{ label: 'Got it' }],
+		dialogClass: 'fm-dialog--wide',
 	});
+
+	// Wire tabs ↔ snippet swap.
+	const codeEl = body.querySelector('[data-copy-target]');
+	const snippetEl = body.querySelector('[data-snippet]');
+	function setTab(name) {
+		body.querySelectorAll('.fm-tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === name));
+		snippetEl.textContent = snippets[name];
+		codeEl.dataset.copy = snippets[name];
+	}
+	body.querySelectorAll('.fm-tab').forEach((t) => {
+		t.addEventListener('click', () => setTab(t.dataset.tab));
+	});
+	setTab('script');
+
+	// Live preview: capture a snapshot from the actual viewer canvas so the
+	// "this is what your embed will look like" frame shows *this avatar*,
+	// not a stock image. Falls back to a styled placeholder if the canvas
+	// isn't ready.
+	const stage = body.querySelector('[data-stage]');
+	const shot = body.querySelector('[data-shot]');
+	const skel = body.querySelector('[data-skel]');
+	const sourceCanvas = document.querySelector('#mv-container canvas');
+	if (sourceCanvas) {
+		try {
+			sourceCanvas.toBlob((b) => {
+				if (!b) return;
+				shot.src = URL.createObjectURL(b);
+				shot.hidden = false;
+				skel.hidden = true;
+			}, 'image/png');
+		} catch (err) {
+			console.warn('[embed-preview] canvas snapshot failed', err);
+		}
+	} else {
+		skel.textContent = 'Preview will render here once your avatar is loaded.';
+	}
 }
 
 // ── Download: real GLB / USDZ / VRM export from the staged blob ──────────────

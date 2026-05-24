@@ -58,8 +58,25 @@ body.app-next-body .phi-grid-label,
 body.app-next-body .anim-panel,
 body.app-next-body .agent-presence-sidebar,
 body.app-next-body .save-toast,
-body.app-next-body .controls-toggle {
+body.app-next-body .controls-toggle,
+body.app-next-body .nich-toggle {
 	display: none !important;
+}
+
+/* When NichAgent's panel is open (manually opened by overlay) restyle it to
+   match the dock — same glass, same accent. Override its absolute positioning
+   so it docks above the chat input rather than floating mid-screen. */
+body.app-next-body .nich-panel {
+	border-radius: 18px;
+	border-color: rgba(255, 255, 255, 0.08);
+	background: rgba(14, 15, 22, 0.92);
+	backdrop-filter: blur(22px) saturate(140%);
+	-webkit-backdrop-filter: blur(22px) saturate(140%);
+	box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6);
+}
+
+body.app-next-body.nxt-chat-open .nxt-chat-dock {
+	z-index: 23;
 }
 
 /* Override style.css `body { display: flex }` since we manage layout ourselves */

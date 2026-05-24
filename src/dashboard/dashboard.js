@@ -53,6 +53,13 @@ export const api = {
 			`/api/widgets/${encodeURIComponent(id)}/transcripts?thread_id=${encodeURIComponent(threadId)}`,
 		),
 	listKnowledge: (id) => j('GET', `/api/widgets/${encodeURIComponent(id)}/knowledge`),
+	testKnowledge: (id, query) =>
+		j(
+			'GET',
+			`/api/widgets/${encodeURIComponent(id)}/knowledge?test=${encodeURIComponent(query)}`,
+		),
+	transcriptsCsvUrl: (id) =>
+		`/api/widgets/${encodeURIComponent(id)}/transcripts?format=csv`,
 	createAvatarSession: (id) => j('POST', `/api/avatars/${id}/session`),
 	getAvatarVersions: (id) => j('GET', `/api/avatars/${id}/versions`),
 	patchAgent: (agentId, patch) => j('PUT', `/api/agents/${agentId}`, patch),
@@ -4643,6 +4650,17 @@ function renderStatsPanel(w, stats) {
 	const refList = referers.length
 		? `<details><summary>Top referrers</summary><ul style="margin:6px 0 0; padding-left:18px; font-size:12px; color:#aaa">${referers.map((r) => `<li>${esc(r.host || '(direct)')} — ${formatNum(r.count)}</li>`).join('')}</ul></details>`
 		: '';
+
+	const chatSpark =
+		stats.recent_chats_7d && stats.recent_chats_7d.length
+			? `<div style="margin-top:10px"><div class="muted" style="font-size:11px; margin-bottom:4px">Visitor messages, last 7 days</div>${sparkline(stats.recent_chats_7d)}</div>`
+			: '';
+
+	const topQs = (stats.top_questions || []).slice(0, 5);
+	const topQsBlock = topQs.length
+		? `<details style="margin-top:10px"><summary>Top questions</summary><ul style="margin:6px 0 0; padding-left:18px; font-size:12px; color:#ccc; display:flex; flex-direction:column; gap:4px">${topQs.map((q) => `<li><span style="opacity:0.7">×${formatNum(q.count)}</span> ${esc((q.question || '').slice(0, 140))}</li>`).join('')}</ul></details>`
+		: '';
+
 	return `
 		<div class="stat-grid">
 			<div class="stat"><div class="n">${formatNum(stats.view_count)}</div><div class="l">Views (lifetime)</div></div>
@@ -4653,7 +4671,9 @@ function renderStatsPanel(w, stats) {
 		<div style="margin-top:14px">
 			${sparkline(stats.recent_views_7d || [])}
 		</div>
+		${chatSpark}
 		${refList}
+		${topQsBlock}
 	`;
 }
 

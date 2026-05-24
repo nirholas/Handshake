@@ -8259,6 +8259,15 @@ body[data-layout='next'] .next-drawer__body .dg.main .close-button.close-bottom 
 	border-color: rgba(139, 92, 246, 0.5);
 	color: #fff;
 }
+.next-grid__icon {
+	flex-shrink: 0;
+	font-size: 16px;
+	line-height: 1;
+	width: 18px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
 .next-grid__label {
 	overflow: hidden;
 	text-overflow: ellipsis;

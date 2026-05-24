@@ -159,7 +159,13 @@ export async function getMe() {
 // err.redirected = true). Callers that want post-login resume should set
 // their sentinel BEFORE calling — apiFetch's redirect happens synchronously.
 export async function saveRemoteGlbToAccount(source, meta = {}, opts = {}) {
-	const { onProgress } = opts;
+	const { onProgress, signal } = opts;
+	const throwIfAborted = () => {
+		if (signal?.aborted) {
+			throw stageError('upload', 'Upload aborted', { code: 'upload_aborted' });
+		}
+	};
+	throwIfAborted();
 
 	// Preflight the session ourselves so the caller can set up post-login
 	// resume state *before* any redirect. apiFetch's built-in 401 handler
@@ -238,16 +244,27 @@ export async function saveRemoteGlbToAccount(source, meta = {}, opts = {}) {
 			blob,
 			contentType,
 			onProgress,
+			signal,
 		});
 		storageKey = presign.storage_key;
 	} catch (err) {
+		if (err.code === 'upload_aborted') throw err;
 		if (err.code !== 'upload_blocked') {
 			err.stage = err.stage || 'upload';
 			throw err;
 		}
 		console.warn('[account] direct R2 PUT blocked; retrying via server proxy');
+		// Reset progress so the proxy attempt restarts visibly at 0% rather than
+		// looking stuck at whatever the direct PUT reached before failing.
+		onProgress?.(0);
 		try {
-			const proxied = await uploadViaProxy({ blob, contentType, checksum, onProgress });
+			const proxied = await uploadViaProxy({
+				blob,
+				contentType,
+				checksum,
+				onProgress,
+				signal,
+			});
 			storageKey = proxied.storage_key;
 		} catch (proxyErr) {
 			proxyErr.stage = proxyErr.stage || 'upload';
@@ -477,8 +494,12 @@ async function captureAndTagAvatar(avatarId, storageKey) {
 //
 // onProgress is called with an integer 0..100. fetch() has no upload-progress
 // hook in any browser, so XHR is the only path that works today.
-function putToR2({ url, blob, contentType, onProgress }) {
+function putToR2({ url, blob, contentType, onProgress, signal }) {
 	return new Promise((resolve, reject) => {
+		if (signal?.aborted) {
+			reject(stageError('upload', 'Upload aborted', { code: 'upload_aborted' }));
+			return;
+		}
 		const xhr = new XMLHttpRequest();
 		xhr.open('PUT', url, true);
 		xhr.setRequestHeader('content-type', contentType);
@@ -490,7 +511,11 @@ function putToR2({ url, blob, contentType, onProgress }) {
 			};
 			xhr.upload.onload = () => onProgress(100);
 		}
+		const onAbort = () => xhr.abort();
+		if (signal) signal.addEventListener('abort', onAbort, { once: true });
+		const cleanup = () => signal?.removeEventListener('abort', onAbort);
 		xhr.onload = () => {
+			cleanup();
 			if (xhr.status >= 200 && xhr.status < 300) {
 				resolve();
 				return;
@@ -504,6 +529,7 @@ function putToR2({ url, blob, contentType, onProgress }) {
 			);
 		};
 		xhr.onerror = () => {
+			cleanup();
 			// status 0 ⇒ no HTTP response. CORS preflight failure is by far the
 			// most common cause; surface a hint the UI can render.
 			reject(
@@ -514,8 +540,10 @@ function putToR2({ url, blob, contentType, onProgress }) {
 				),
 			);
 		};
-		xhr.onabort = () =>
+		xhr.onabort = () => {
+			cleanup();
 			reject(stageError('upload', 'Upload aborted', { code: 'upload_aborted' }));
+		};
 		xhr.send(blob);
 	});
 }
@@ -528,7 +556,10 @@ function putToR2({ url, blob, contentType, onProgress }) {
 // Uses XHR (not fetch) so onProgress works in every browser. CSRF is fetched
 // from the same single-use endpoint apiFetch uses; we don't go through
 // apiFetch because it can't propagate upload progress.
-async function uploadViaProxy({ blob, contentType, checksum, onProgress }) {
+async function uploadViaProxy({ blob, contentType, checksum, onProgress, signal }) {
+	if (signal?.aborted) {
+		throw stageError('upload', 'Upload aborted', { code: 'upload_aborted' });
+	}
 	const csrf = await getCsrfToken();
 	_csrfToken = null; // single-use, like apiFetch
 	const qs = new URLSearchParams({ content_type: contentType });
@@ -549,7 +580,11 @@ async function uploadViaProxy({ blob, contentType, checksum, onProgress }) {
 			};
 			xhr.upload.onload = () => onProgress(100);
 		}
+		const onAbort = () => xhr.abort();
+		if (signal) signal.addEventListener('abort', onAbort, { once: true });
+		const cleanup = () => signal?.removeEventListener('abort', onAbort);
 		xhr.onload = () => {
+			cleanup();
 			if (xhr.status === 401) {
 				redirectToLogin();
 				reject(stageError('upload', 'session expired', { status: 401, code: 'not_signed_in' }));
@@ -573,10 +608,14 @@ async function uploadViaProxy({ blob, contentType, checksum, onProgress }) {
 				),
 			);
 		};
-		xhr.onerror = () =>
+		xhr.onerror = () => {
+			cleanup();
 			reject(stageError('upload', 'proxy upload network error', { code: 'proxy_upload_failed' }));
-		xhr.onabort = () =>
+		};
+		xhr.onabort = () => {
+			cleanup();
 			reject(stageError('upload', 'proxy upload aborted', { code: 'upload_aborted' }));
+		};
 		xhr.send(blob);
 	});
 }

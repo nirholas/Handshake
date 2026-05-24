@@ -31,6 +31,69 @@
 			</a>
 
 			<div class="nxt-header-right">
+				<!-- Camera presets — quick framing shortcuts -->
+				<div class="nxt-preset-cluster" role="toolbar" aria-label="Camera presets">
+					<button
+						class="nxt-preset"
+						data-preset="face"
+						type="button"
+						title="Face shot (1)"
+					>
+						<span>Face</span>
+					</button>
+					<button
+						class="nxt-preset is-active"
+						data-preset="body"
+						type="button"
+						title="Body shot (2)"
+					>
+						<span>Body</span>
+					</button>
+					<button
+						class="nxt-preset"
+						data-preset="wide"
+						type="button"
+						title="Wide shot (3)"
+					>
+						<span>Wide</span>
+					</button>
+					<button
+						class="nxt-preset"
+						data-preset="hero"
+						type="button"
+						title="Hero shot (4)"
+					>
+						<span>Hero</span>
+					</button>
+				</div>
+
+				<button
+					class="nxt-icon-btn"
+					id="nxt-fullscreen-btn"
+					type="button"
+					aria-label="Fullscreen (F)"
+					title="Fullscreen (F)"
+				>
+					<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+						<path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+				</button>
+
+				<button
+					class="nxt-icon-btn"
+					id="nxt-share-btn"
+					type="button"
+					aria-label="Share / embed (S)"
+					title="Share / embed (S)"
+				>
+					<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+						<circle cx="4" cy="8" r="1.6" stroke="currentColor" stroke-width="1.4" fill="none" />
+						<circle cx="12" cy="3.5" r="1.6" stroke="currentColor" stroke-width="1.4" fill="none" />
+						<circle cx="12" cy="12.5" r="1.6" stroke="currentColor" stroke-width="1.4" fill="none" />
+						<path d="M5.4 7.2l5.2-3M5.4 8.8l5.2 3" stroke="currentColor" stroke-width="1.4" fill="none" />
+					</svg>
+				</button>
+
 				<button
 					class="nxt-more"
 					id="nxt-more-btn"
@@ -85,32 +148,64 @@
 			<!-- The 3D viewer (required by app.js) -->
 			<div class="viewer-container nxt-viewer" id="viewer-container"></div>
 
-			<!-- Floor glow + edge vignette (CSS only, sits behind the canvas via z-index) -->
+			<!-- Floor glow + edge vignette (sits behind the transparent canvas) -->
 			<div class="nxt-stage-floor" aria-hidden="true"></div>
 			<div class="nxt-stage-vignette" aria-hidden="true"></div>
 
-			<!-- Rotating "Try …" invitation — floats above the bottom bar -->
-			<div class="nxt-try-pill" id="nxt-try-pill" hidden>
-				<span class="nxt-try-pill__label">Try</span>
-				<button class="nxt-try-pill__btn" id="nxt-try-pill-btn" type="button">
-					<span class="nxt-try-pill__icon" id="nxt-try-pill-icon">👋</span>
-					<span class="nxt-try-pill__name" id="nxt-try-pill-name">Wave</span>
-				</button>
-				<button
-					class="nxt-try-pill__next"
-					id="nxt-try-pill-next"
-					type="button"
-					aria-label="Suggest another"
-					title="Suggest another"
-				>
-					<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-						<path d="M2 8h12M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-					</svg>
-				</button>
+			<!-- Live agent chat reply — speech-bubble style above the avatar -->
+			<div class="nxt-agent-bubble" id="nxt-agent-bubble" hidden>
+				<div class="nxt-agent-bubble__inner">
+					<span class="nxt-agent-bubble__dot" aria-hidden="true"></span>
+					<span class="nxt-agent-bubble__text" id="nxt-agent-bubble-text"></span>
+				</div>
 			</div>
 
-			<!-- Bottom action bar — single hierarchy, no competing CTAs -->
-			<div class="nxt-action-bar">
+			<!-- Chat dock — rotating prompt chips above pinned input -->
+			<div class="nxt-chat-dock" id="nxt-chat-dock">
+				<div class="nxt-chat-chips" id="nxt-chat-chips" role="list" aria-label="Suggested prompts">
+					<!-- chips injected by overlay JS -->
+				</div>
+				<form class="nxt-chat-input-wrap" id="nxt-chat-form">
+					<svg class="nxt-chat-input-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+						<path d="M3 5h10M3 8h7M3 11h10" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" />
+					</svg>
+					<input
+						class="nxt-chat-input"
+						id="nxt-chat-input"
+						type="text"
+						placeholder="Ask the agent…"
+						autocomplete="off"
+						maxlength="500"
+						aria-label="Message the agent"
+					/>
+					<button
+						class="nxt-chat-mic"
+						id="nxt-chat-mic"
+						type="button"
+						aria-label="Push to talk (hold space)"
+						title="Push to talk (hold space)"
+						hidden
+					>
+						<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+							<rect x="6" y="2" width="4" height="8" rx="2" stroke="currentColor" stroke-width="1.4" fill="none" />
+							<path d="M3 8a5 5 0 0010 0M8 13v2M5.5 15h5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" />
+						</svg>
+					</button>
+					<button
+						class="nxt-chat-send"
+						id="nxt-chat-send"
+						type="submit"
+						aria-label="Send"
+					>
+						<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+							<path d="M2 8L14 2L9 14L7.5 9.5L2 8z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round" />
+						</svg>
+					</button>
+				</form>
+			</div>
+
+			<!-- Secondary action bar — animations / upload / save below the chat dock -->
+			<div class="nxt-action-bar nxt-action-bar--secondary">
 				<button
 					class="nxt-action nxt-action--ghost"
 					id="nxt-anim-btn"
@@ -120,7 +215,7 @@
 					aria-controls="nxt-anim-sheet"
 					title="Browse animations (A)"
 				>
-					<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+					<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
 						<circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5" fill="none" />
 						<path d="M8 7.5l4.5 2.5L8 12.5z" fill="currentColor" />
 					</svg>
@@ -129,7 +224,7 @@
 				</button>
 
 				<label class="nxt-action nxt-action--ghost" for="file-input" title="Drop or pick a GLB/glTF (U)">
-					<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+					<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
 						<path d="M10 3v9m-4-4l4-4 4 4M4 15h12" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>
 					<span>Upload model</span>
@@ -142,7 +237,7 @@
 					id="nxt-primary"
 					type="button"
 				>
-					<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+					<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
 						<path d="M5 11l3 3 7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>
 					<span id="nxt-primary-label">Sign in to save</span>
@@ -169,14 +264,61 @@
 				</div>
 			</div>
 
+			<!-- Share / embed popover -->
+			<div class="nxt-share-popover" id="nxt-share-popover" hidden role="dialog" aria-labelledby="nxt-share-title">
+				<header class="nxt-share-popover__head">
+					<h2 id="nxt-share-title">Share this agent</h2>
+					<button class="nxt-share-close" id="nxt-share-close" type="button" aria-label="Close">×</button>
+				</header>
+				<div class="nxt-share-popover__body">
+					<label class="nxt-share-row">
+						<span class="nxt-share-label">Page URL</span>
+						<div class="nxt-share-copy">
+							<input id="nxt-share-url" type="text" readonly />
+							<button id="nxt-share-url-copy" type="button">Copy</button>
+						</div>
+					</label>
+					<label class="nxt-share-row">
+						<span class="nxt-share-label">Embed snippet</span>
+						<div class="nxt-share-copy nxt-share-copy--block">
+							<textarea id="nxt-share-embed" rows="3" readonly></textarea>
+							<button id="nxt-share-embed-copy" type="button">Copy</button>
+						</div>
+					</label>
+					<p class="nxt-share-hint">Drop the snippet on any site. Same agent, same animations, same identity — embedded.</p>
+				</div>
+			</div>
+
 			<!-- Spinner required by app.js -->
 			<div class="spinner"></div>
 		</main>
 
-		<!-- Hint chip — only on first visit -->
+		<!-- First-visit hint -->
 		<div class="nxt-first-hint" id="nxt-first-hint" hidden>
-			<span>Click the avatar — try an animation, drag to rotate, scroll to zoom.</span>
+			<span>Drag to rotate · scroll to zoom · or just <strong>ask the agent</strong> something below.</span>
 			<button id="nxt-first-hint-close" type="button" aria-label="Dismiss">×</button>
 		</div>
+
+		<!-- Keyboard help (toggled with ?) -->
+		<div class="nxt-help" id="nxt-help" hidden role="dialog" aria-labelledby="nxt-help-title">
+			<header class="nxt-help__head">
+				<h2 id="nxt-help-title">Keyboard shortcuts</h2>
+				<button class="nxt-help__close" id="nxt-help-close" type="button" aria-label="Close">×</button>
+			</header>
+			<dl class="nxt-help__grid">
+				<dt><kbd>A</kbd></dt><dd>Open animation picker</dd>
+				<dt><kbd>U</kbd></dt><dd>Upload a model</dd>
+				<dt><kbd>S</kbd></dt><dd>Share / embed</dd>
+				<dt><kbd>F</kbd></dt><dd>Fullscreen</dd>
+				<dt><kbd>/</kbd></dt><dd>Focus chat input</dd>
+				<dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Camera presets (Face / Body / Wide / Hero)</dd>
+				<dt><kbd>Space</kbd></dt><dd>Push-to-talk (if mic available)</dd>
+				<dt><kbd>Esc</kbd></dt><dd>Close any open panel</dd>
+				<dt><kbd>?</kbd></dt><dd>Show this help</dd>
+			</dl>
+		</div>
+
+		<!-- Live toast region -->
+		<div class="nxt-toast" id="nxt-toast" role="status" aria-live="polite" hidden></div>
 	</body>
 </html>
