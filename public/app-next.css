@@ -1,0 +1,803 @@
+/* ==========================================================================
+   app-next — UX preview demo
+   Surface goals:
+   1. The avatar is the page. Stage, not chrome.
+   2. One CTA hierarchy. No competing sign-in / save / upload mid-screen.
+   3. Animation strip is an invitation, not a control panel.
+   ========================================================================== */
+
+:root {
+	--nxt-bg-0: #050608;
+	--nxt-bg-1: #0c0d12;
+	--nxt-ink: #e7e8ec;
+	--nxt-ink-dim: #9ca0aa;
+	--nxt-ink-fade: #6b6f78;
+	--nxt-accent: #9a7cff;
+	--nxt-accent-soft: rgba(154, 124, 255, 0.18);
+	--nxt-glass: rgba(14, 15, 22, 0.55);
+	--nxt-glass-strong: rgba(14, 15, 22, 0.82);
+	--nxt-stroke: rgba(255, 255, 255, 0.08);
+	--nxt-stroke-strong: rgba(255, 255, 255, 0.14);
+	--nxt-radius: 14px;
+	--nxt-radius-sm: 10px;
+	--nxt-radius-pill: 999px;
+	--nxt-header-h: 56px;
+}
+
+/* ── Body / shell ──────────────────────────────────────────────────────── */
+
+html,
+body {
+	height: 100%;
+}
+
+body.app-next-body {
+	margin: 0;
+	background:
+		/* Soft purple lift behind the avatar's head */
+		radial-gradient(ellipse 50% 35% at 50% 38%, rgba(154, 124, 255, 0.10) 0%, transparent 70%),
+		/* Warm cyan accent low-left */
+		radial-gradient(ellipse 40% 30% at 25% 75%, rgba(109, 193, 255, 0.05) 0%, transparent 65%),
+		/* Base depth gradient */
+		radial-gradient(ellipse 90% 70% at 50% 60%, #11131c 0%, #08090e 55%, #020203 100%);
+	color: var(--nxt-ink);
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	overflow: hidden;
+}
+
+/* Hide every chrome element produced by the production app.js that the
+   demo overrides. None of these are required for the viewer to work. */
+body.app-next-body #agent-presence-sidebar,
+body.app-next-body #auth-gate,
+body.app-next-body #agent-onboarding,
+body.app-next-body .dropzone,
+body.app-next-body footer,
+body.app-next-body .h-footer,
+body.app-next-body .phi-grid,
+body.app-next-body .phi-grid-label,
+body.app-next-body .anim-panel,
+body.app-next-body .agent-presence-sidebar,
+body.app-next-body .save-toast,
+body.app-next-body .controls-toggle {
+	display: none !important;
+}
+
+/* Override style.css `body { display: flex }` since we manage layout ourselves */
+body.app-next-body {
+	display: block;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+
+.nxt-header {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: var(--nxt-header-h);
+	padding: 0 18px 0 14px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: linear-gradient(180deg, rgba(5, 6, 8, 0.85) 0%, rgba(5, 6, 8, 0.55) 60%, rgba(5, 6, 8, 0) 100%);
+	backdrop-filter: blur(14px) saturate(140%);
+	-webkit-backdrop-filter: blur(14px) saturate(140%);
+	z-index: 30;
+	pointer-events: none; /* let clicks through to the canvas in dead space */
+}
+
+.nxt-header > * {
+	pointer-events: auto;
+}
+
+.nxt-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	text-decoration: none;
+	color: var(--nxt-ink);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	font-size: 15px;
+	padding: 6px 10px 6px 6px;
+	border-radius: var(--nxt-radius-pill);
+	transition: background 0.15s;
+}
+
+.nxt-brand:hover {
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.nxt-brand-mark {
+	width: 24px;
+	height: 24px;
+	display: block;
+}
+
+.nxt-brand-tag {
+	font-size: 10.5px;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--nxt-accent);
+	background: var(--nxt-accent-soft);
+	padding: 3px 8px;
+	border-radius: var(--nxt-radius-pill);
+	margin-left: 4px;
+}
+
+.nxt-header-right {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.nxt-more {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: transparent;
+	border: 0;
+	color: var(--nxt-ink-dim);
+	font: inherit;
+	font-size: 13.5px;
+	padding: 7px 12px;
+	border-radius: var(--nxt-radius-pill);
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+}
+
+.nxt-more:hover {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.nxt-more svg {
+	transition: transform 0.18s;
+}
+
+.nxt-more[aria-expanded='true'] svg {
+	transform: rotate(180deg);
+}
+
+.nxt-more-menu {
+	position: absolute;
+	top: calc(var(--nxt-header-h) - 4px);
+	right: 72px;
+	min-width: 200px;
+	padding: 6px;
+	background: var(--nxt-glass-strong);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: var(--nxt-radius);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	box-shadow: 0 22px 60px rgba(0, 0, 0, 0.5);
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	z-index: 40;
+}
+
+.nxt-more-menu[hidden] { display: none; }
+
+.nxt-more-menu a,
+.nxt-more-menu button {
+	display: block;
+	background: transparent;
+	border: 0;
+	color: var(--nxt-ink-dim);
+	font: inherit;
+	font-size: 13.5px;
+	text-decoration: none;
+	text-align: left;
+	padding: 9px 12px;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: background 0.12s, color 0.12s;
+}
+
+.nxt-more-menu a:hover,
+.nxt-more-menu button:hover {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.nxt-more-sep {
+	height: 1px;
+	background: var(--nxt-stroke);
+	margin: 4px 4px;
+}
+
+/* Auth surface */
+.nxt-auth {
+	position: relative;
+}
+
+.nxt-signin {
+	display: inline-flex;
+	align-items: center;
+	background: rgba(255, 255, 255, 0.06);
+	color: var(--nxt-ink);
+	font-size: 13.5px;
+	font-weight: 500;
+	padding: 7px 14px;
+	border-radius: var(--nxt-radius-pill);
+	text-decoration: none;
+	border: 1px solid var(--nxt-stroke);
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.nxt-signin:hover {
+	background: rgba(255, 255, 255, 0.1);
+	border-color: var(--nxt-stroke-strong);
+}
+
+.nxt-user-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	background: rgba(255, 255, 255, 0.06);
+	color: var(--nxt-ink);
+	border: 1px solid var(--nxt-stroke);
+	font: inherit;
+	font-size: 13.5px;
+	font-weight: 500;
+	padding: 6px 12px 6px 10px;
+	border-radius: var(--nxt-radius-pill);
+	cursor: pointer;
+}
+
+.nxt-user-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, var(--nxt-accent), #6dc1ff);
+	box-shadow: 0 0 8px var(--nxt-accent);
+}
+
+.nxt-user-menu {
+	position: absolute;
+	top: calc(100% + 6px);
+	right: 0;
+	min-width: 200px;
+	padding: 6px;
+	background: var(--nxt-glass-strong);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: var(--nxt-radius);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	box-shadow: 0 22px 60px rgba(0, 0, 0, 0.5);
+	z-index: 40;
+}
+
+.nxt-user-menu[hidden] { display: none; }
+
+.nxt-user-menu a,
+.nxt-user-menu button {
+	display: block;
+	background: transparent;
+	border: 0;
+	color: var(--nxt-ink-dim);
+	font: inherit;
+	font-size: 13.5px;
+	text-align: left;
+	padding: 9px 12px;
+	border-radius: 8px;
+	cursor: pointer;
+	text-decoration: none;
+	width: 100%;
+}
+
+.nxt-user-menu a:hover,
+.nxt-user-menu button:hover {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.nxt-user-sep {
+	height: 1px;
+	background: var(--nxt-stroke);
+	margin: 4px 4px;
+}
+
+/* ── Stage / Main ──────────────────────────────────────────────────────── */
+
+.nxt-main {
+	position: fixed;
+	inset: 0;
+	width: 100vw;
+	height: 100vh;
+	min-height: 100vh;
+	display: block;
+}
+
+.nxt-viewer {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	/* Sit above the CSS stage layers so the avatar reads first, but allow the
+	   floor glow to shine through the transparent canvas via blend-mode. */
+	z-index: 4;
+	background: transparent;
+	pointer-events: auto;
+}
+
+.nxt-viewer canvas {
+	display: block;
+	width: 100% !important;
+	height: 100% !important;
+}
+
+/* Floor glow: a layered pool of light under the avatar's feet, painted
+   BEHIND the transparent canvas. The overlay JS flips viewer.state.transparentBg
+   so non-avatar pixels reveal these layers. */
+.nxt-stage-floor {
+	position: absolute;
+	left: 50%;
+	bottom: 8%;
+	width: 88vmin;
+	height: 32vmin;
+	transform: translate(-50%, 18%);
+	background:
+		/* Inner hot core */
+		radial-gradient(
+			ellipse 40% 35% at center,
+			rgba(154, 124, 255, 0.55) 0%,
+			rgba(154, 124, 255, 0.18) 35%,
+			rgba(0, 0, 0, 0) 70%
+		),
+		/* Outer cyan halo for depth */
+		radial-gradient(
+			ellipse 90% 70% at center,
+			rgba(109, 193, 255, 0.12) 0%,
+			rgba(0, 0, 0, 0) 65%
+		);
+	pointer-events: none;
+	z-index: 2;
+	filter: blur(3px);
+}
+
+/* Thin ring directly under the avatar — a subtle "agent base" hint */
+.nxt-stage-floor::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -45%);
+	width: 32vmin;
+	height: 32vmin;
+	border-radius: 50%;
+	background: radial-gradient(
+		circle at center,
+		rgba(154, 124, 255, 0.0) 30%,
+		rgba(154, 124, 255, 0.35) 55%,
+		rgba(154, 124, 255, 0.0) 70%
+	);
+	filter: blur(0.5px);
+	opacity: 0.7;
+}
+
+/* Vignette — pulls the eye inward, fades to deep black at the edges */
+.nxt-stage-vignette {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 3;
+	background:
+		radial-gradient(
+			ellipse 70% 80% at center,
+			transparent 30%,
+			rgba(0, 0, 0, 0.55) 78%,
+			rgba(0, 0, 0, 0.85) 100%
+		);
+}
+
+/* ── Rotating "Try …" pill ─────────────────────────────────────────────── */
+
+.nxt-try-pill {
+	position: fixed;
+	left: 50%;
+	bottom: 96px;
+	transform: translateX(-50%);
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 6px 5px 12px;
+	background: var(--nxt-glass-strong);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: var(--nxt-radius-pill);
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+	box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(154, 124, 255, 0.05);
+	z-index: 20;
+	animation: nxt-rise 0.5s 0.4s both;
+}
+
+.nxt-try-pill[hidden] { display: none; }
+
+@keyframes nxt-rise {
+	from { opacity: 0; transform: translate(-50%, 8px); }
+	to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.nxt-try-pill__label {
+	font-size: 11.5px;
+	font-weight: 600;
+	color: var(--nxt-ink-fade);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.nxt-try-pill__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: var(--nxt-accent-soft);
+	border: 0;
+	color: var(--nxt-ink);
+	font: inherit;
+	font-size: 13.5px;
+	font-weight: 500;
+	padding: 6px 12px;
+	border-radius: var(--nxt-radius-pill);
+	cursor: pointer;
+	transition: background 0.15s;
+}
+
+.nxt-try-pill__btn:hover {
+	background: rgba(154, 124, 255, 0.32);
+}
+
+.nxt-try-pill__icon {
+	font-size: 15px;
+	line-height: 1;
+}
+
+.nxt-try-pill__next {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	background: transparent;
+	border: 0;
+	color: var(--nxt-ink-fade);
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+}
+
+.nxt-try-pill__next:hover {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Action bar ────────────────────────────────────────────────────────── */
+
+.nxt-action-bar {
+	position: fixed;
+	left: 50%;
+	bottom: 24px;
+	transform: translateX(-50%);
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px;
+	background: var(--nxt-glass-strong);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: var(--nxt-radius-pill);
+	backdrop-filter: blur(16px) saturate(140%);
+	-webkit-backdrop-filter: blur(16px) saturate(140%);
+	box-shadow: 0 28px 64px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+	z-index: 21;
+	animation: nxt-rise-bar 0.5s 0.2s both;
+}
+
+@keyframes nxt-rise-bar {
+	from { opacity: 0; transform: translate(-50%, 14px); }
+	to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.nxt-action {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	background: transparent;
+	color: var(--nxt-ink-dim);
+	border: 0;
+	font: inherit;
+	font-size: 13.5px;
+	font-weight: 500;
+	padding: 9px 14px;
+	border-radius: var(--nxt-radius-pill);
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+
+.nxt-action svg { flex: none; }
+
+.nxt-action kbd {
+	font: 10.5px 'SF Mono', ui-monospace, monospace;
+	color: var(--nxt-ink-fade);
+	background: rgba(255, 255, 255, 0.06);
+	padding: 2px 6px;
+	border-radius: 5px;
+	border: 1px solid var(--nxt-stroke);
+	letter-spacing: 0.04em;
+	margin-left: 2px;
+}
+
+.nxt-action--ghost:hover {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.06);
+}
+
+.nxt-action--primary {
+	background: linear-gradient(135deg, var(--nxt-accent) 0%, #7a5cff 100%);
+	color: white;
+	box-shadow: 0 6px 18px rgba(154, 124, 255, 0.4);
+}
+
+.nxt-action--primary:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 10px 22px rgba(154, 124, 255, 0.5);
+}
+
+.nxt-action--primary kbd {
+	background: rgba(255, 255, 255, 0.18);
+	color: rgba(255, 255, 255, 0.85);
+	border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Animation picker sheet ────────────────────────────────────────────── */
+
+.nxt-anim-sheet {
+	position: fixed;
+	left: 50%;
+	bottom: 92px;
+	transform: translateX(-50%);
+	width: min(720px, calc(100vw - 32px));
+	max-height: 60vh;
+	display: flex;
+	flex-direction: column;
+	background: var(--nxt-glass-strong);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: 18px;
+	backdrop-filter: blur(22px) saturate(140%);
+	-webkit-backdrop-filter: blur(22px) saturate(140%);
+	box-shadow: 0 28px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+	z-index: 25;
+	overflow: hidden;
+	animation: nxt-sheet-up 0.22s ease-out both;
+}
+
+.nxt-anim-sheet[hidden] { display: none; }
+
+@keyframes nxt-sheet-up {
+	from { opacity: 0; transform: translate(-50%, 10px); }
+	to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.nxt-anim-sheet__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 18px 8px;
+}
+
+.nxt-anim-sheet__head h2 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--nxt-ink);
+	letter-spacing: 0.02em;
+}
+
+.nxt-anim-sheet__close {
+	background: transparent;
+	border: 0;
+	color: var(--nxt-ink-fade);
+	font-size: 22px;
+	line-height: 1;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+}
+
+.nxt-anim-sheet__close:hover {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.06);
+}
+
+.nxt-anim-sheet__filter {
+	padding: 0 18px 12px;
+}
+
+.nxt-anim-search {
+	width: 100%;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: 10px;
+	color: var(--nxt-ink);
+	font: inherit;
+	font-size: 13.5px;
+	padding: 9px 12px;
+	outline: none;
+	transition: border-color 0.15s, background 0.15s;
+}
+
+.nxt-anim-search:focus {
+	border-color: var(--nxt-accent);
+	background: rgba(255, 255, 255, 0.08);
+}
+
+.nxt-anim-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+	gap: 6px;
+	padding: 0 12px 14px;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.nxt-anim-grid::-webkit-scrollbar {
+	width: 8px;
+}
+.nxt-anim-grid::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.12);
+	border-radius: 4px;
+}
+
+.nxt-anim-card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 12px 8px 10px;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	border-radius: 10px;
+	color: var(--nxt-ink);
+	cursor: pointer;
+	font: inherit;
+	font-size: 11.5px;
+	text-align: center;
+	line-height: 1.3;
+	transition: background 0.12s, border-color 0.12s, transform 0.12s;
+}
+
+.nxt-anim-card:hover {
+	background: rgba(255, 255, 255, 0.07);
+	border-color: rgba(255, 255, 255, 0.12);
+	transform: translateY(-1px);
+}
+
+.nxt-anim-card[aria-pressed='true'] {
+	background: var(--nxt-accent-soft);
+	border-color: rgba(154, 124, 255, 0.5);
+	color: var(--nxt-ink);
+}
+
+.nxt-anim-card__icon {
+	font-size: 22px;
+	line-height: 1;
+}
+
+.nxt-anim-empty {
+	grid-column: 1 / -1;
+	text-align: center;
+	color: var(--nxt-ink-fade);
+	padding: 28px 12px;
+	font-size: 13px;
+}
+
+/* ── Drag-over overlay ─────────────────────────────────────────────────── */
+
+body.app-next-body.is-dragover::before {
+	content: 'Drop to load model';
+	position: fixed;
+	inset: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--nxt-accent);
+	background: rgba(154, 124, 255, 0.06);
+	border: 2px dashed rgba(154, 124, 255, 0.5);
+	border-radius: 16px;
+	z-index: 50;
+	pointer-events: none;
+}
+
+/* ── First-visit hint ──────────────────────────────────────────────────── */
+
+.nxt-first-hint {
+	position: fixed;
+	top: calc(var(--nxt-header-h) + 14px);
+	left: 50%;
+	transform: translateX(-50%);
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 8px 8px 14px;
+	background: var(--nxt-glass-strong);
+	border: 1px solid var(--nxt-stroke);
+	border-radius: var(--nxt-radius-pill);
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+	font-size: 12.5px;
+	color: var(--nxt-ink-dim);
+	z-index: 22;
+	animation: nxt-rise 0.5s 0.8s both;
+}
+
+.nxt-first-hint[hidden] { display: none; }
+
+.nxt-first-hint button {
+	background: transparent;
+	border: 0;
+	color: var(--nxt-ink-fade);
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	cursor: pointer;
+	font-size: 18px;
+	line-height: 1;
+}
+
+.nxt-first-hint button:hover {
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Spinner ───────────────────────────────────────────────────────────── */
+
+.spinner {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	width: 36px;
+	height: 36px;
+	margin: -18px 0 0 -18px;
+	border-radius: 50%;
+	border: 2.5px solid rgba(255, 255, 255, 0.08);
+	border-top-color: var(--nxt-accent);
+	animation: nxt-spin 0.8s linear infinite;
+	z-index: 5;
+	pointer-events: none;
+}
+
+@keyframes nxt-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* ── Mobile ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+	.nxt-brand-tag { display: none; }
+	.nxt-more { padding: 7px 8px; }
+	.nxt-more-menu { right: 12px; }
+	.nxt-action kbd { display: none; }
+	.nxt-action { padding: 9px 11px; font-size: 12.5px; }
+	.nxt-action span { display: none; }
+	.nxt-action--primary span { display: inline; }
+	.nxt-try-pill { bottom: 86px; max-width: calc(100vw - 24px); }
+	.nxt-try-pill__label { display: none; }
+	.nxt-anim-sheet { bottom: 80px; max-height: 50vh; }
+	.nxt-first-hint { font-size: 11.5px; padding: 6px 6px 6px 12px; max-width: calc(100vw - 24px); }
+}
+
+/* Hide the production dat.gui by default — controls live inside the viewer
+   panel that's intentionally not surfaced in this UX preview. Power users
+   can re-enable via the explore menu (link routes to /app). */
+body.app-next-body .dg.ac { display: none !important; }

@@ -8,12 +8,15 @@ export const state = { user: null };
 
 function visibilityOptionsHtml(currentValue) {
 	const opts = [
-		{ v: 'public',   label: 'Public (discoverable)' },
+		{ v: 'public', label: 'Public (discoverable)' },
 		{ v: 'unlisted', label: 'Unlisted (anyone with link)' },
-		{ v: 'private',  label: 'Private (only you)' },
+		{ v: 'private', label: 'Private (only you)' },
 	];
 	return opts
-		.map((o) => `<option value="${o.v}"${currentValue === o.v ? ' selected' : ''}>${o.label}</option>`)
+		.map(
+			(o) =>
+				`<option value="${o.v}"${currentValue === o.v ? ' selected' : ''}>${o.label}</option>`,
+		)
 		.join('');
 }
 
@@ -37,6 +40,19 @@ export const api = {
 	deleteWidget: (id) => j('DELETE', `/api/widgets/${encodeURIComponent(id)}`),
 	duplicateWidget: (id) => j('POST', `/api/widgets/${encodeURIComponent(id)}/duplicate`),
 	widgetStats: (id) => j('GET', `/api/widgets/${encodeURIComponent(id)}/stats`),
+	listTranscripts: (id, params = {}) => {
+		const qs = new URLSearchParams();
+		if (params.limit) qs.set('limit', String(params.limit));
+		if (params.before) qs.set('before', params.before);
+		const q = qs.toString();
+		return j('GET', `/api/widgets/${encodeURIComponent(id)}/transcripts${q ? `?${q}` : ''}`);
+	},
+	getTranscript: (id, threadId) =>
+		j(
+			'GET',
+			`/api/widgets/${encodeURIComponent(id)}/transcripts?thread_id=${encodeURIComponent(threadId)}`,
+		),
+	listKnowledge: (id) => j('GET', `/api/widgets/${encodeURIComponent(id)}/knowledge`),
 	createAvatarSession: (id) => j('POST', `/api/avatars/${id}/session`),
 	getAvatarVersions: (id) => j('GET', `/api/avatars/${id}/versions`),
 	patchAgent: (agentId, patch) => j('PUT', `/api/agents/${agentId}`, patch),
@@ -247,12 +263,28 @@ const tabs = {
 // On-chain agents discovered from linked wallets live at /my-agents.
 
 const AGENT_CHAIN_NAMES = {
-	1: 'Ethereum', 10: 'Optimism', 56: 'BNB Chain', 97: 'BSC Testnet',
-	100: 'Gnosis', 137: 'Polygon', 250: 'Fantom', 324: 'zkSync Era',
-	1284: 'Moonbeam', 5000: 'Mantle', 8453: 'Base', 42161: 'Arbitrum',
-	42220: 'Celo', 43113: 'Avalanche Fuji', 43114: 'Avalanche', 59144: 'Linea',
-	80002: 'Polygon Amoy', 84532: 'Base Sepolia', 421614: 'Arb Sepolia',
-	534352: 'Scroll', 11155111: 'Sepolia', 11155420: 'OP Sepolia',
+	1: 'Ethereum',
+	10: 'Optimism',
+	56: 'BNB Chain',
+	97: 'BSC Testnet',
+	100: 'Gnosis',
+	137: 'Polygon',
+	250: 'Fantom',
+	324: 'zkSync Era',
+	1284: 'Moonbeam',
+	5000: 'Mantle',
+	8453: 'Base',
+	42161: 'Arbitrum',
+	42220: 'Celo',
+	43113: 'Avalanche Fuji',
+	43114: 'Avalanche',
+	59144: 'Linea',
+	80002: 'Polygon Amoy',
+	84532: 'Base Sepolia',
+	421614: 'Arb Sepolia',
+	534352: 'Scroll',
+	11155111: 'Sepolia',
+	11155420: 'OP Sepolia',
 };
 
 function agentChainName(id) {
@@ -277,7 +309,9 @@ async function renderAgents(root) {
 	const createHost = root.querySelector('#agents-create-host');
 	list.innerHTML = '<div class="muted">Loading…</div>';
 
-	root.querySelector('#agents-new').addEventListener('click', () => openCreateForm(createHost, list));
+	root.querySelector('#agents-new').addEventListener('click', () =>
+		openCreateForm(createHost, list),
+	);
 
 	let agents = [];
 	try {
@@ -294,7 +328,8 @@ async function renderAgents(root) {
 		return;
 	}
 
-	for (const a of agents) list.appendChild(agentCard(a, () => maybeRenderEmpty(list, createHost)));
+	for (const a of agents)
+		list.appendChild(agentCard(a, () => maybeRenderEmpty(list, createHost)));
 }
 
 function renderAgentsEmpty(list, createHost) {
@@ -310,7 +345,9 @@ function renderAgentsEmpty(list, createHost) {
 				<a href="/my-agents" class="btn-primary" style="background:#222230; color:#ddd;">Import from wallet</a>
 			</div>
 		</div>`;
-	list.querySelector('#agents-empty-new').addEventListener('click', () => openCreateForm(createHost, list));
+	list.querySelector('#agents-empty-new').addEventListener('click', () =>
+		openCreateForm(createHost, list),
+	);
 }
 
 function maybeRenderEmpty(list, createHost) {
@@ -325,11 +362,15 @@ function agentCard(a, onRemoved) {
 		? `<span class="tag" title="Registered on-chain (ERC-8004)" style="background:rgba(106,92,255,0.18); color:#cfc6ff;">on-chain${a.chain_id ? ' · ' + esc(agentChainName(a.chain_id)) : ''}</span>`
 		: `<span class="tag" title="Not yet registered on-chain">off-chain</span>`;
 	const skillCount = (a.skills || []).length;
-	const wallet = a.wallet_address ? `${a.wallet_address.slice(0, 6)}…${a.wallet_address.slice(-4)}` : '';
+	const wallet = a.wallet_address
+		? `${a.wallet_address.slice(0, 6)}…${a.wallet_address.slice(-4)}`
+		: '';
 
 	const agentIdEnc = encodeURIComponent(a.id);
 	const hasAvatar = Boolean(a.avatar_id);
-	const embedDisabledAttr = hasAvatar ? '' : 'disabled title="Link an avatar (Edit → Avatar) to enable embed"';
+	const embedDisabledAttr = hasAvatar
+		? ''
+		: 'disabled title="Link an avatar (Edit → Avatar) to enable embed"';
 	const token = a.token || a.meta?.token || null;
 	const tokenBadge = token?.mint
 		? `<span class="tag" title="${attr(token.mint)}" style="background:rgba(120,200,140,0.18); color:#c6f0d6;">$${esc(token.symbol || 'TOKEN')}</span>`
@@ -363,9 +404,11 @@ function agentCard(a, onRemoved) {
 				<a class="btn sec" href="/agent/${agentIdEnc}/edit" title="Edit name, persona, avatar, skills">Edit</a>
 				<button class="btn sec" data-share type="button" title="Copy public agent link">Share</button>
 				<button class="btn sec" data-embed type="button" ${embedDisabledAttr}>Embed</button>
-				${token?.mint
-					? `<a class="btn sec" href="/dashboard/tokens?agent=${agentIdEnc}" title="Open pump.fun token dashboard">Token ↗</a>`
-					: `<button class="btn sec" data-launch type="button" title="Launch a pump.fun token for this agent">🚀 Launch token</button>`}
+				${
+					token?.mint
+						? `<a class="btn sec" href="/dashboard/tokens?agent=${agentIdEnc}" title="Open pump.fun token dashboard">Token ↗</a>`
+						: `<button class="btn sec" data-launch type="button" title="Launch a pump.fun token for this agent">🚀 Launch token</button>`
+				}
 				${a.is_registered ? '' : `<a class="btn sec" href="/deploy${a.avatar_id ? '?avatar=' + encodeURIComponent(a.avatar_id) : ''}" title="Mint as ERC-8004 agent">Deploy on-chain</a>`}
 				<div class="more-menu-wrap"><button class="btn sec" data-more type="button" aria-haspopup="menu" aria-expanded="false">More ▾</button></div>
 			</div>
@@ -486,7 +529,9 @@ async function duplicateAgent(a, sourceEl) {
 		const { agent } = await api.createAgent(payload);
 		const list = sourceEl.parentElement;
 		if (list) {
-			const newCard = agentCard(agent, () => maybeRenderEmpty(list, list.previousElementSibling || list));
+			const newCard = agentCard(agent, () =>
+				maybeRenderEmpty(list, list.previousElementSibling || list),
+			);
 			sourceEl.insertAdjacentElement('afterend', newCard);
 		}
 		toast(`Created "${agent.name}"`);
@@ -581,7 +626,9 @@ function openCreateForm(host, listEl) {
 		</div>`;
 	const form = host.querySelector('#agents-create-form');
 	const errEl = host.querySelector('[data-err]');
-	host.querySelector('[data-cancel]').addEventListener('click', () => { host.innerHTML = ''; });
+	host.querySelector('[data-cancel]').addEventListener('click', () => {
+		host.innerHTML = '';
+	});
 	form.addEventListener('submit', async (ev) => {
 		ev.preventDefault();
 		const fd = new FormData(form);
@@ -785,7 +832,9 @@ function avatarMoreItems(a, el) {
 	});
 	items.push({
 		label: 'Deploy on-chain',
-		run: () => { location.href = `/deploy?avatar=${encodeURIComponent(a.id)}`; },
+		run: () => {
+			location.href = `/deploy?avatar=${encodeURIComponent(a.id)}`;
+		},
 	});
 	items.push({
 		label: 'Delete',
@@ -844,7 +893,8 @@ async function downloadAvatarGlb(a, btn) {
 		const resp = await fetch(url, { credentials: 'omit' });
 		if (!resp.ok) throw new Error(`Download failed (${resp.status})`);
 		const blob = await resp.blob();
-		const safeName = (a.name || 'avatar').replace(/[^a-z0-9._-]+/gi, '_').slice(0, 80) || 'avatar';
+		const safeName =
+			(a.name || 'avatar').replace(/[^a-z0-9._-]+/gi, '_').slice(0, 80) || 'avatar';
 		const link = document.createElement('a');
 		const objectUrl = URL.createObjectURL(blob);
 		link.href = objectUrl;
@@ -952,9 +1002,10 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 	const quota = status.quota;
 	const remaining = Math.max(0, quota - used);
 	const tier = status.tier || 'free';
-	const tierBadge = tier === 'pro'
-		? `<span style="background:rgba(106,92,255,0.15);color:#a78bfa;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;margin-left:6px">PRO</span>`
-		: `<a href="/pricing" style="background:rgba(255,184,77,0.15);color:#ffb84d;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;margin-left:6px;text-decoration:none">FREE · upgrade</a>`;
+	const tierBadge =
+		tier === 'pro'
+			? `<span style="background:rgba(106,92,255,0.15);color:#a78bfa;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;margin-left:6px">PRO</span>`
+			: `<a href="/pricing" style="background:rgba(255,184,77,0.15);color:#ffb84d;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;margin-left:6px;text-decoration:none">FREE · upgrade</a>`;
 	meterEl.innerHTML = `@${esc(status.username)} ${tierBadge} <span style="color:${remaining === 0 ? '#ffb3b3' : '#9a8cff'};margin-left:6px">${used}/${quota}</span>`;
 
 	bodyEl.innerHTML = `
@@ -1008,19 +1059,28 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 	const threadEl = bodyEl.querySelector('[data-x-thread]');
 	const linkEl = bodyEl.querySelector('[data-x-link]');
 
-	const setMsg = (text, color = '#9a8cff') => { msgEl.style.color = color; msgEl.innerHTML = text; };
-	textEl.addEventListener('input', () => { countEl.textContent = textEl.value.length; });
+	const setMsg = (text, color = '#9a8cff') => {
+		msgEl.style.color = color;
+		msgEl.innerHTML = text;
+	};
+	textEl.addEventListener('input', () => {
+		countEl.textContent = textEl.value.length;
+	});
 
 	function readThreadParts() {
 		const raw = textEl.value;
 		if (!threadEl.checked) return null;
-		return raw.split(/\n---+\n|\n\n\n+/).map((s) => s.trim()).filter(Boolean);
+		return raw
+			.split(/\n---+\n|\n\n\n+/)
+			.map((s) => s.trim())
+			.filter(Boolean);
 	}
 
 	async function generateDrafts(count) {
 		try {
 			const r = await fetch('/api/x/draft', {
-				method: 'POST', credentials: 'include',
+				method: 'POST',
+				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({
 					agent_id: avatar.agent_id || avatar.id,
@@ -1040,7 +1100,10 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 	}
 
 	function renderDrafts(drafts) {
-		if (!drafts || !drafts.length) { draftsEl.innerHTML = ''; return; }
+		if (!drafts || !drafts.length) {
+			draftsEl.innerHTML = '';
+			return;
+		}
 		if (drafts.length === 1) {
 			const d = drafts[0];
 			if (d.thread_parts) textEl.value = d.thread_parts.join('\n\n\n');
@@ -1052,10 +1115,12 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 		}
 		draftsEl.innerHTML = `
 			<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Pick one</div>
-			${drafts.map((d, i) => {
-				const display = d.thread_parts ? d.thread_parts.join('\n\n— —\n\n') : d.text;
-				return `<div data-draft-idx="${i}" style="padding:10px 12px;background:#0f0f17;border:1px solid #22222e;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:13px;color:#ccc;white-space:pre-wrap">${esc(display)}</div>`;
-			}).join('')}
+			${drafts
+				.map((d, i) => {
+					const display = d.thread_parts ? d.thread_parts.join('\n\n— —\n\n') : d.text;
+					return `<div data-draft-idx="${i}" style="padding:10px 12px;background:#0f0f17;border:1px solid #22222e;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:13px;color:#ccc;white-space:pre-wrap">${esc(display)}</div>`;
+				})
+				.join('')}
 		`;
 		draftsEl.querySelectorAll('[data-draft-idx]').forEach((el) => {
 			el.addEventListener('click', () => {
@@ -1090,23 +1155,34 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 		setMsg('Posting…');
 		try {
 			const parts = readThreadParts();
-			const body = parts && parts.length > 1
-				? { thread_parts: parts, agent_id: avatar.agent_id || avatar.id, append_link: linkEl.checked }
-				: { text, agent_id: avatar.agent_id || avatar.id, append_link: linkEl.checked };
+			const body =
+				parts && parts.length > 1
+					? {
+							thread_parts: parts,
+							agent_id: avatar.agent_id || avatar.id,
+							append_link: linkEl.checked,
+						}
+					: { text, agent_id: avatar.agent_id || avatar.id, append_link: linkEl.checked };
 			const r = await fetch('/api/x/post', {
-				method: 'POST', credentials: 'include',
+				method: 'POST',
+				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify(body),
 			});
 			const data = await r.json();
 			if (!r.ok) {
 				if (data.upgrade_url) {
-					setMsg(`${data.error_description} <a href="${data.upgrade_url}">Upgrade to Pro</a>`, '#ffb3b3');
+					setMsg(
+						`${data.error_description} <a href="${data.upgrade_url}">Upgrade to Pro</a>`,
+						'#ffb3b3',
+					);
 					return;
 				}
 				throw new Error(data.error_description || 'post failed');
 			}
-			setMsg(`Posted: <a href="${data.url}" target="_blank" rel="noopener">${data.url}</a>${data.thread ? ` (${data.thread.length}-tweet thread)` : ''}`);
+			setMsg(
+				`Posted: <a href="${data.url}" target="_blank" rel="noopener">${data.url}</a>${data.thread ? ` (${data.thread.length}-tweet thread)` : ''}`,
+			);
 			textEl.value = '';
 			countEl.textContent = 0;
 			loadXPanel({ host, meterEl, bodyEl, avatar });
@@ -1120,16 +1196,24 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 	scheduleBtn.addEventListener('click', async () => {
 		const text = textEl.value.trim();
 		if (!text) return setMsg('Write something first.', '#ffb3b3');
-		const input = prompt('Schedule for (any date — e.g. "tomorrow 9am" or "2026-05-14T15:00"):', new Date(Date.now() + 3600_000).toISOString().slice(0, 16));
+		const input = prompt(
+			'Schedule for (any date — e.g. "tomorrow 9am" or "2026-05-14T15:00"):',
+			new Date(Date.now() + 3600_000).toISOString().slice(0, 16),
+		);
 		if (!input) return;
 		const when = new Date(input);
 		if (isNaN(when.getTime())) return setMsg('Could not parse that date.', '#ffb3b3');
 		setMsg('Scheduling…');
 		try {
 			const r = await fetch('/api/x/schedule', {
-				method: 'POST', credentials: 'include',
+				method: 'POST',
+				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ text, scheduled_at: when.toISOString(), agent_id: avatar.agent_id || avatar.id }),
+				body: JSON.stringify({
+					text,
+					scheduled_at: when.toISOString(),
+					agent_id: avatar.agent_id || avatar.id,
+				}),
 			});
 			const data = await r.json();
 			if (!r.ok) throw new Error(data.error_description || 'schedule failed');
@@ -1163,10 +1247,15 @@ async function loadXReviews(host) {
 	try {
 		const r = await fetch('/api/x/reviews', { credentials: 'include' });
 		const reviews = (await r.json()).reviews || [];
-		if (!reviews.length) { host.innerHTML = ''; return; }
+		if (!reviews.length) {
+			host.innerHTML = '';
+			return;
+		}
 		host.innerHTML = `
 			<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;color:#ffb84d">⚠ ${reviews.length} draft${reviews.length === 1 ? '' : 's'} awaiting your review</div>
-			${reviews.map((r) => `
+			${reviews
+				.map(
+					(r) => `
 				<div style="padding:10px 12px;background:#1a1408;border:1px solid #3a2a14;border-radius:8px;margin-bottom:6px">
 					<div style="color:#ccc;font-size:13px;white-space:pre-wrap">${esc(r.text)}</div>
 					<div class="row" style="gap:6px;margin-top:8px">
@@ -1175,25 +1264,35 @@ async function loadXReviews(host) {
 						<span class="muted" style="font-size:11px;margin-left:auto">${new Date(r.created_at).toLocaleString()}</span>
 					</div>
 				</div>
-			`).join('')}
+			`,
+				)
+				.join('')}
 		`;
 		host.querySelectorAll('[data-approve]').forEach((btn) => {
 			btn.addEventListener('click', async () => {
 				const id = btn.getAttribute('data-approve');
 				btn.disabled = true;
 				const r = await fetch(`/api/x/reviews?id=${encodeURIComponent(id)}`, {
-					method: 'PATCH', credentials: 'include',
+					method: 'PATCH',
+					credentials: 'include',
 					headers: { 'content-type': 'application/json' },
 					body: JSON.stringify({ action: 'approve', append_link: true }),
 				});
-				if (!r.ok) { alert((await r.json()).error_description || 'approve failed'); btn.disabled = false; return; }
+				if (!r.ok) {
+					alert((await r.json()).error_description || 'approve failed');
+					btn.disabled = false;
+					return;
+				}
 				loadXReviews(host);
 			});
 		});
 		host.querySelectorAll('[data-reject]').forEach((btn) => {
 			btn.addEventListener('click', async () => {
 				const id = btn.getAttribute('data-reject');
-				await fetch(`/api/x/reviews?id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+				await fetch(`/api/x/reviews?id=${encodeURIComponent(id)}`, {
+					method: 'DELETE',
+					credentials: 'include',
+				});
 				loadXReviews(host);
 			});
 		});
@@ -1203,10 +1302,16 @@ async function loadXReviews(host) {
 async function loadXAnalytics(host, avatar) {
 	if (!host) return;
 	try {
-		const r = await fetch(`/api/x/analytics?agent_id=${encodeURIComponent(avatar.agent_id || avatar.id)}`, { credentials: 'include' });
+		const r = await fetch(
+			`/api/x/analytics?agent_id=${encodeURIComponent(avatar.agent_id || avatar.id)}`,
+			{ credentials: 'include' },
+		);
 		const data = await r.json();
 		const t = data.totals || {};
-		if (!t.posts) { host.innerHTML = ''; return; }
+		if (!t.posts) {
+			host.innerHTML = '';
+			return;
+		}
 		host.innerHTML = `
 			<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Engagement (last 50 posts)</div>
 			<div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px;color:#ccc">
@@ -1251,9 +1356,11 @@ async function loadXTriggers(host, avatar) {
 
 	const dailyHour = byKind.daily_persona?.config?.hour_utc ?? 13;
 	const dailyTopic = byKind.daily_persona?.config?.topic ?? '';
-	const weeklyDay  = byKind.weekly_digest?.config?.day_of_week ?? 0;
+	const weeklyDay = byKind.weekly_digest?.config?.day_of_week ?? 0;
 	const weeklyHour = byKind.weekly_digest?.config?.hour_utc ?? 16;
-	const priceThresholds = (byKind.price_milestone?.config?.thresholds_usd ?? [10000, 50000, 100000, 500000, 1000000]).join(', ');
+	const priceThresholds = (
+		byKind.price_milestone?.config?.thresholds_usd ?? [10000, 50000, 100000, 500000, 1000000]
+	).join(', ');
 	const paymentMin = byKind.payment_received?.config?.min_amount_usd ?? 1;
 
 	const anyReviewMode = triggers.some((t) => t.auto_publish === false);
@@ -1263,37 +1370,64 @@ async function loadXTriggers(host, avatar) {
 			<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em">Auto-post triggers</div>
 			<label class="muted" style="font-size:11px"><input type="checkbox" data-trig-review-all ${anyReviewMode ? 'checked' : ''} style="width:auto;display:inline-block;margin-right:4px;vertical-align:middle"> Review before publish</label>
 		</div>
-		${row('daily_persona', 'Daily in-character post',
+		${row(
+			'daily_persona',
+			'Daily in-character post',
 			'Agent tweets once a day at your chosen UTC hour, in voice.',
 			`<label style="font-size:12px;color:#888">UTC hour <input type="number" min="0" max="23" data-trig-input="daily_persona.hour_utc" value="${dailyHour}" style="width:60px;display:inline-block;margin-left:6px"></label>
-			 <label style="font-size:12px;color:#888;display:block;margin-top:6px">Topic hint (optional) <input type="text" data-trig-input="daily_persona.topic" value="${attr(dailyTopic)}" placeholder="What should I talk about?" style="width:100%;display:block;margin-top:4px"></label>`)}
-		${row('weekly_digest', 'Weekly digest',
+			 <label style="font-size:12px;color:#888;display:block;margin-top:6px">Topic hint (optional) <input type="text" data-trig-input="daily_persona.topic" value="${attr(dailyTopic)}" placeholder="What should I talk about?" style="width:100%;display:block;margin-top:4px"></label>`,
+		)}
+		${row(
+			'weekly_digest',
+			'Weekly digest',
 			'Once-a-week recap including token activity if linked.',
 			`<label style="font-size:12px;color:#888">Day <select data-trig-input="weekly_digest.day_of_week" style="width:auto;display:inline-block;margin-left:6px">
-				${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>`<option value="${i}" ${i===weeklyDay?'selected':''}>${d}</option>`).join('')}
+				${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => `<option value="${i}" ${i === weeklyDay ? 'selected' : ''}>${d}</option>`).join('')}
 			</select></label>
-			<label style="font-size:12px;color:#888;margin-left:10px">UTC hour <input type="number" min="0" max="23" data-trig-input="weekly_digest.hour_utc" value="${weeklyHour}" style="width:60px;display:inline-block;margin-left:6px"></label>`)}
-		${row('price_milestone', 'Token market-cap milestones',
+			<label style="font-size:12px;color:#888;margin-left:10px">UTC hour <input type="number" min="0" max="23" data-trig-input="weekly_digest.hour_utc" value="${weeklyHour}" style="width:60px;display:inline-block;margin-left:6px"></label>`,
+		)}
+		${row(
+			'price_milestone',
+			'Token market-cap milestones',
 			'Auto-tweets when your pump.fun token crosses each threshold.',
-			`<label style="font-size:12px;color:#888;display:block">USD thresholds (comma-separated) <input type="text" data-trig-input="price_milestone.thresholds_usd" value="${attr(priceThresholds)}" style="width:100%;display:block;margin-top:4px"></label>`)}
-		${row('payment_received', 'Thank-you on every payment',
+			`<label style="font-size:12px;color:#888;display:block">USD thresholds (comma-separated) <input type="text" data-trig-input="price_milestone.thresholds_usd" value="${attr(priceThresholds)}" style="width:100%;display:block;margin-top:4px"></label>`,
+		)}
+		${row(
+			'payment_received',
+			'Thank-you on every payment',
 			'Tweets a thank-you when a user pays your agent for a skill.',
-			`<label style="font-size:12px;color:#888">Minimum amount (USD) <input type="number" min="0" step="0.01" data-trig-input="payment_received.min_amount_usd" value="${paymentMin}" style="width:80px;display:inline-block;margin-left:6px"></label>`)}
+			`<label style="font-size:12px;color:#888">Minimum amount (USD) <input type="number" min="0" step="0.01" data-trig-input="payment_received.min_amount_usd" value="${paymentMin}" style="width:80px;display:inline-block;margin-left:6px"></label>`,
+		)}
 		<div data-trig-msg style="margin-top:8px;font-size:12px"></div>
 	`;
 
 	const trigMsg = host.querySelector('[data-trig-msg]');
-	const setTrigMsg = (text, color = '#9a8cff') => { trigMsg.style.color = color; trigMsg.textContent = text; };
+	const setTrigMsg = (text, color = '#9a8cff') => {
+		trigMsg.style.color = color;
+		trigMsg.textContent = text;
+	};
 
 	function readConfigFromUI(kind) {
 		const get = (k) => host.querySelector(`[data-trig-input="${kind}.${k}"]`)?.value;
-		if (kind === 'daily_persona') return { hour_utc: parseInt(get('hour_utc') || '0', 10), topic: (get('topic') || '').trim() || undefined };
-		if (kind === 'weekly_digest') return { day_of_week: parseInt(get('day_of_week') || '0', 10), hour_utc: parseInt(get('hour_utc') || '0', 10) };
+		if (kind === 'daily_persona')
+			return {
+				hour_utc: parseInt(get('hour_utc') || '0', 10),
+				topic: (get('topic') || '').trim() || undefined,
+			};
+		if (kind === 'weekly_digest')
+			return {
+				day_of_week: parseInt(get('day_of_week') || '0', 10),
+				hour_utc: parseInt(get('hour_utc') || '0', 10),
+			};
 		if (kind === 'price_milestone') {
-			const list = (get('thresholds_usd') || '').split(',').map((s) => parseFloat(s.trim())).filter((n) => Number.isFinite(n) && n > 0);
+			const list = (get('thresholds_usd') || '')
+				.split(',')
+				.map((s) => parseFloat(s.trim()))
+				.filter((n) => Number.isFinite(n) && n > 0);
 			return { thresholds_usd: list };
 		}
-		if (kind === 'payment_received') return { min_amount_usd: parseFloat(get('min_amount_usd') || '0') };
+		if (kind === 'payment_received')
+			return { min_amount_usd: parseFloat(get('min_amount_usd') || '0') };
 		return {};
 	}
 
@@ -1302,7 +1436,8 @@ async function loadXTriggers(host, avatar) {
 		const existing = byKind[kind];
 		if (existing) {
 			const r = await fetch(`/api/x/triggers?id=${encodeURIComponent(existing.id)}`, {
-				method: 'PATCH', credentials: 'include',
+				method: 'PATCH',
+				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ enabled, config }),
 			});
@@ -1311,9 +1446,16 @@ async function loadXTriggers(host, avatar) {
 		} else {
 			const autoPublish = !host.querySelector('[data-trig-review-all]')?.checked;
 			const r = await fetch('/api/x/triggers', {
-				method: 'POST', credentials: 'include',
+				method: 'POST',
+				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ kind, config, enabled, agent_id: agentId, auto_publish: autoPublish }),
+				body: JSON.stringify({
+					kind,
+					config,
+					enabled,
+					agent_id: agentId,
+					auto_publish: autoPublish,
+				}),
 			});
 			if (!r.ok) throw new Error((await r.json()).error_description || 'create failed');
 			byKind[kind] = (await r.json()).trigger;
@@ -1328,7 +1470,8 @@ async function loadXTriggers(host, avatar) {
 			for (const id of ids) {
 				try {
 					const r = await fetch(`/api/x/triggers?id=${encodeURIComponent(id)}`, {
-						method: 'PATCH', credentials: 'include',
+						method: 'PATCH',
+						credentials: 'include',
 						headers: { 'content-type': 'application/json' },
 						body: JSON.stringify({ auto_publish: autoPublish }),
 					});
@@ -1338,7 +1481,11 @@ async function loadXTriggers(host, avatar) {
 					}
 				} catch {}
 			}
-			setTrigMsg(autoPublish ? 'Auto-publish enabled.' : 'New trigger drafts will require your review.');
+			setTrigMsg(
+				autoPublish
+					? 'Auto-publish enabled.'
+					: 'New trigger drafts will require your review.',
+			);
 		});
 	}
 
@@ -1382,10 +1529,15 @@ async function loadScheduledPosts(host) {
 		const r = await fetch('/api/x/schedule', { credentials: 'include' });
 		const data = await r.json();
 		const pending = (data.posts || []).filter((p) => !p.posted_at && !p.error);
-		if (!pending.length) { host.innerHTML = ''; return; }
+		if (!pending.length) {
+			host.innerHTML = '';
+			return;
+		}
 		host.innerHTML = `
 			<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Scheduled</div>
-			${pending.map((p) => `
+			${pending
+				.map(
+					(p) => `
 				<div class="row" style="justify-content:space-between;padding:8px 10px;background:#0f0f17;border:1px solid #22222e;border-radius:8px;margin-bottom:6px;font-size:12px">
 					<div style="flex:1;min-width:0">
 						<div style="color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.text)}</div>
@@ -1393,12 +1545,17 @@ async function loadScheduledPosts(host) {
 					</div>
 					<button class="btn sec" data-cancel="${attr(p.id)}" style="font-size:11px;padding:4px 8px">Cancel</button>
 				</div>
-			`).join('')}
+			`,
+				)
+				.join('')}
 		`;
 		host.querySelectorAll('[data-cancel]').forEach((btn) => {
 			btn.addEventListener('click', async () => {
 				const id = btn.getAttribute('data-cancel');
-				await fetch(`/api/x/schedule?id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+				await fetch(`/api/x/schedule?id=${encodeURIComponent(id)}`, {
+					method: 'DELETE',
+					credentials: 'include',
+				});
 				loadScheduledPosts(host);
 			});
 		});
@@ -1542,8 +1699,8 @@ async function doReplaceUpload(a, file, warnEl, cardEl) {
 	say('Checking skeleton compatibility\u2026');
 	const originalBuf = await file.arrayBuffer();
 	let uploadBytes = originalBuf;
-	let uploadSize  = file.size;
-	let uploadBlob  = file;
+	let uploadSize = file.size;
+	let uploadBlob = file;
 	let retargetReport = null;
 
 	try {
@@ -1551,8 +1708,8 @@ async function doReplaceUpload(a, file, warnEl, cardEl) {
 		const result = canonicalizeGLBBones(originalBuf);
 		if (result.renamed > 0) {
 			uploadBytes = result.buffer;
-			uploadSize  = result.buffer.byteLength;
-			uploadBlob  = new Blob([result.buffer], { type: 'model/gltf-binary' });
+			uploadSize = result.buffer.byteLength;
+			uploadBlob = new Blob([result.buffer], { type: 'model/gltf-binary' });
 			retargetReport = { renamed: result.renamed, samples: result.samples };
 		}
 	} catch (err) {
@@ -1720,9 +1877,7 @@ function renderUpload(root) {
 				size_bytes: uploadSize,
 				content_type: 'model/gltf-binary',
 				source: 'upload',
-				source_meta: retargetReport
-					? { retargeted_bones: retargetReport.renamed }
-					: {},
+				source_meta: retargetReport ? { retargeted_bones: retargetReport.renamed } : {},
 			});
 			progress.innerHTML = `Uploaded! <a href="/dashboard/avatars">View</a>`;
 			goto('avatars');
@@ -2847,7 +3002,11 @@ async function renderMonetization(root) {
 	const body = root.querySelector('#mon-body');
 
 	const CURRENCIES = [
-		{ label: 'Solana USDC', mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', chain: 'solana' },
+		{
+			label: 'Solana USDC',
+			mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+			chain: 'solana',
+		},
 		{ label: 'Base USDC', mint: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', chain: 'base' },
 	];
 
@@ -2865,7 +3024,9 @@ async function renderMonetization(root) {
 		agent = agentData.agent;
 		wallets = walletsRes.ok ? (await walletsRes.json()).wallets || [] : [];
 
-		const pricesRes = await fetch(`/api/agents/${agent.id}/pricing`, { credentials: 'include' });
+		const pricesRes = await fetch(`/api/agents/${agent.id}/pricing`, {
+			credentials: 'include',
+		});
 		prices = pricesRes.ok ? (await pricesRes.json()).prices || [] : [];
 	} catch (e) {
 		body.innerHTML = `<div class="err">${esc(e.message || 'Failed to load monetization data')}</div>`;
@@ -2876,7 +3037,9 @@ async function renderMonetization(root) {
 	const skills = agent.skills || [];
 
 	const priceMap = {};
-	prices.forEach((p) => { priceMap[p.skill] = p; });
+	prices.forEach((p) => {
+		priceMap[p.skill] = p;
+	});
 
 	const solWallet = wallets.find((w) => w.chain === 'solana');
 	const baseWallet = wallets.find((w) => w.chain === 'base' || w.chain === 'evm');
@@ -2990,7 +3153,12 @@ async function renderMonetization(root) {
 						method: 'PUT',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },
-						body: JSON.stringify({ currency_mint: currencyMint, chain, amount, is_active: isActive }),
+						body: JSON.stringify({
+							currency_mint: currencyMint,
+							chain,
+							amount,
+							is_active: isActive,
+						}),
 					},
 				);
 				if (!r.ok) {
@@ -3008,7 +3176,9 @@ async function renderMonetization(root) {
 				}
 				msg.style.color = '#9a8cff';
 				msg.textContent = 'Saved ✓';
-				setTimeout(() => { msg.textContent = ''; }, 2000);
+				setTimeout(() => {
+					msg.textContent = '';
+				}, 2000);
 			} catch (e) {
 				msg.style.color = '#ffb3b3';
 				msg.textContent = e.message;
@@ -3072,7 +3242,9 @@ async function renderMonetization(root) {
 			}
 			msgEl.style.color = '#9a8cff';
 			msgEl.textContent = 'Saved ✓';
-			setTimeout(() => { msgEl.textContent = ''; }, 2000);
+			setTimeout(() => {
+				msgEl.textContent = '';
+			}, 2000);
 		} catch (e) {
 			msgEl.style.color = '#ffb3b3';
 			msgEl.textContent = e.message;
@@ -3080,10 +3252,18 @@ async function renderMonetization(root) {
 	};
 
 	body.querySelector('#mon-sol-save').addEventListener('click', () =>
-		saveWallet('solana', body.querySelector('#mon-sol-addr'), body.querySelector('#mon-sol-msg')),
+		saveWallet(
+			'solana',
+			body.querySelector('#mon-sol-addr'),
+			body.querySelector('#mon-sol-msg'),
+		),
 	);
 	body.querySelector('#mon-base-save').addEventListener('click', () =>
-		saveWallet('base', body.querySelector('#mon-base-addr'), body.querySelector('#mon-base-msg')),
+		saveWallet(
+			'base',
+			body.querySelector('#mon-base-addr'),
+			body.querySelector('#mon-base-msg'),
+		),
 	);
 }
 
@@ -3096,14 +3276,16 @@ async function renderSubscriptions(root) {
 	`;
 	const body = root.querySelector('#sub-body');
 
-	const fmtDate = (d) => d ? new Date(d).toLocaleDateString() : '—';
+	const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : '—');
 	const fmtUsd = (n) => '$' + Number(n).toFixed(2);
 
 	let myId, plans, subs;
 	try {
 		myId = state.user?.id;
 		const [plansRes, subsRes] = await Promise.all([
-			fetch(`/api/subscriptions/plans?creator_id=${encodeURIComponent(myId)}`, { credentials: 'include' }),
+			fetch(`/api/subscriptions/plans?creator_id=${encodeURIComponent(myId)}`, {
+				credentials: 'include',
+			}),
 			fetch('/api/subscriptions/mine', { credentials: 'include' }),
 		]);
 		plans = plansRes.ok ? (await plansRes.json()).plans || [] : [];
@@ -3131,7 +3313,9 @@ async function renderSubscriptions(root) {
 		`;
 	}
 
-	const createForm = plans.length < 3 ? `
+	const createForm =
+		plans.length < 3
+			? `
 		<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
 			<h4 style="margin:0 0 12px;font-size:14px">New plan</h4>
 			<div style="display:flex;flex-direction:column;gap:8px;max-width:420px">
@@ -3148,12 +3332,14 @@ async function renderSubscriptions(root) {
 				<button id="sub-plan-create" class="btn">Create plan</button>
 			</div>
 		</div>
-	` : '<p class="muted" style="font-size:13px">Maximum 3 active plans reached.</p>';
+	`
+			: '<p class="muted" style="font-size:13px">Maximum 3 active plans reached.</p>';
 
 	// ── Subscriber view ───────────────────────────────────────────────────────
 	let subsHtml = '';
 	for (const s of subs) {
-		const statusColor = s.status === 'active' ? '#4caf50' : s.status === 'past_due' ? '#e53935' : '#888';
+		const statusColor =
+			s.status === 'active' ? '#4caf50' : s.status === 'past_due' ? '#e53935' : '#888';
 		subsHtml += `
 			<div class="card" style="margin-bottom:10px">
 				<div class="row" style="gap:12px;align-items:flex-start">
@@ -3189,10 +3375,14 @@ async function renderSubscriptions(root) {
 			if (!confirm('Remove this plan?')) return;
 			btn.disabled = true;
 			const r = await fetch(`/api/subscriptions/plans/${btn.dataset.id}`, {
-				method: 'DELETE', credentials: 'include',
+				method: 'DELETE',
+				credentials: 'include',
 			});
 			if (r.ok) renderSubscriptions(root);
-			else { btn.disabled = false; alert('Failed to remove plan'); }
+			else {
+				btn.disabled = false;
+				alert('Failed to remove plan');
+			}
 		});
 	});
 
@@ -3202,10 +3392,14 @@ async function renderSubscriptions(root) {
 			if (!confirm('Cancel this subscription?')) return;
 			btn.disabled = true;
 			const r = await fetch(`/api/subscriptions/${btn.dataset.id}`, {
-				method: 'DELETE', credentials: 'include',
+				method: 'DELETE',
+				credentials: 'include',
 			});
 			if (r.ok) renderSubscriptions(root);
-			else { btn.disabled = false; alert('Failed to cancel subscription'); }
+			else {
+				btn.disabled = false;
+				alert('Failed to cancel subscription');
+			}
 		});
 	});
 
@@ -3217,10 +3411,19 @@ async function renderSubscriptions(root) {
 			const price = parseFloat(body.querySelector('#sub-plan-price').value);
 			const interval = body.querySelector('#sub-plan-interval').value;
 			const perksRaw = body.querySelector('#sub-plan-perks').value;
-			const perks = perksRaw.split('\n').map((s) => s.trim()).filter(Boolean);
+			const perks = perksRaw
+				.split('\n')
+				.map((s) => s.trim())
+				.filter(Boolean);
 			const msg = body.querySelector('#sub-plan-msg');
-			if (!name) { msg.textContent = 'Name required.'; return; }
-			if (!price || price < 0.99) { msg.textContent = 'Price must be at least $0.99.'; return; }
+			if (!name) {
+				msg.textContent = 'Name required.';
+				return;
+			}
+			if (!price || price < 0.99) {
+				msg.textContent = 'Price must be at least $0.99.';
+				return;
+			}
 			createBtn.disabled = true;
 			msg.textContent = 'Creating…';
 			const r = await fetch('/api/subscriptions/plans', {
@@ -3229,8 +3432,9 @@ async function renderSubscriptions(root) {
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ name, price_usd: price, interval, perks }),
 			});
-			if (r.ok) { renderSubscriptions(root); }
-			else {
+			if (r.ok) {
+				renderSubscriptions(root);
+			} else {
 				const d = await r.json().catch(() => ({}));
 				msg.textContent = d.error_description || 'Failed to create plan';
 				createBtn.disabled = false;
@@ -3252,7 +3456,10 @@ async function renderBilling(root) {
 		const r = await fetch('/api/billing/summary', { credentials: 'include' });
 		if (r.ok) data = await r.json();
 	} catch {}
-	if (!data) { body.innerHTML = '<div class="card muted">Could not load usage data.</div>'; return; }
+	if (!data) {
+		body.innerHTML = '<div class="card muted">Could not load usage data.</div>';
+		return;
+	}
 	const { plan, quotas, usage } = data;
 	function fmtBytes(n) {
 		if (n >= 1e9) return (n / 1e9).toFixed(1) + ' GB';
@@ -3304,15 +3511,20 @@ async function renderBilling(root) {
 
 // ── Revenue dashboard ────────────────────────────────────────────────────────
 function formatUSDC(lamports) {
-	return (lamports / 1_000_000).toLocaleString('en-US', {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	}) + ' USDC';
+	return (
+		(lamports / 1_000_000).toLocaleString('en-US', {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		}) + ' USDC'
+	);
 }
 
 function revenueBarChart(timeseries) {
-	if (!timeseries.length) return '<div class="muted" style="text-align:center;padding:24px 0">No data for this period.</div>';
-	const W = 600, H = 160, PAD = { top: 12, right: 8, bottom: 28, left: 8 };
+	if (!timeseries.length)
+		return '<div class="muted" style="text-align:center;padding:24px 0">No data for this period.</div>';
+	const W = 600,
+		H = 160,
+		PAD = { top: 12, right: 8, bottom: 28, left: 8 };
 	const max = Math.max(...timeseries.map((r) => r.net_total), 1);
 	const barW = Math.max(4, Math.floor((W - PAD.left - PAD.right) / timeseries.length) - 2);
 	const innerW = W - PAD.left - PAD.right;
@@ -3408,7 +3620,9 @@ async function renderRevenue(root) {
 				<h3 style="margin:0 0 12px">Daily earnings</h3>
 				${revenueBarChart(timeseries)}
 			</div>
-			${by_skill.length ? `
+			${
+				by_skill.length
+					? `
 			<div class="card">
 				<h3 style="margin:0 0 12px">Skill breakdown</h3>
 				<table style="width:100%;border-collapse:collapse">
@@ -3420,14 +3634,20 @@ async function renderRevenue(root) {
 						</tr>
 					</thead>
 					<tbody>
-						${by_skill.map((s) => `<tr style="border-bottom:1px solid var(--border)">
+						${by_skill
+							.map(
+								(s) => `<tr style="border-bottom:1px solid var(--border)">
 							<td style="padding:8px">${esc(s.skill)}</td>
 							<td style="padding:8px;text-align:right;font-variant-numeric:tabular-nums">${esc(formatUSDC(s.net_total))}</td>
 							<td style="padding:8px;text-align:right">${esc(String(s.count))}</td>
-						</tr>`).join('')}
+						</tr>`,
+							)
+							.join('')}
 					</tbody>
 				</table>
-			</div>` : ''}
+			</div>`
+					: ''
+			}
 		`;
 	}
 
@@ -3799,7 +4019,9 @@ async function renderAccount(root) {
 				<input id="acct-username" value="${attr(user.username || '')}" maxlength="30" placeholder="e.g. nirholas" style="width:100%" autocomplete="off" spellcheck="false">
 				<span class="muted" style="font-size:11px;display:block;margin-top:4px">Letters, numbers, _ and - only. 3–30 characters.</span>
 			</label>
-			${profileUrl ? `
+			${
+				profileUrl
+					? `
 				<div style="margin-top:12px">
 					<p class="muted" style="font-size:11px;margin:0 0 4px">Your public profile</p>
 					<div class="row" style="gap:6px;align-items:center">
@@ -3807,7 +4029,9 @@ async function renderAccount(root) {
 						<button id="acct-copy" class="btn sec" type="button" style="flex-shrink:0;white-space:nowrap">Copy</button>
 					</div>
 				</div>
-			` : ''}
+			`
+					: ''
+			}
 			<div id="acct-msg" class="muted" style="margin-top:12px"></div>
 			<div class="row" style="gap:8px;margin-top:16px">
 				<button class="btn" type="submit">Save</button>
@@ -3996,7 +4220,7 @@ function widgetCard(w, ctx) {
 	card.className = 'widget-card card';
 	card.dataset.id = w.id;
 
-	const previewSrc = `/app#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1`;
+	const previewSrc = `/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1`;
 	const previewHtml = w.avatar
 		? `<iframe data-src="${attr(previewSrc)}" loading="lazy" tabindex="-1" title="Preview of ${attr(w.name || 'widget')}"></iframe>`
 		: `<div class="placeholder">Avatar unavailable.<br>Edit to pick a replacement.</div>`;
@@ -4170,7 +4394,7 @@ async function openWidgetDrawer(w, ctx) {
 	drawer.setAttribute('aria-label', `Widget details — ${w.name || 'untitled'}`);
 	drawer.tabIndex = -1;
 
-	const previewSrc = `/app#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1`;
+	const previewSrc = `/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1`;
 	const pageUrl = `${location.origin}/w/${encodeURIComponent(w.id)}`;
 	const iframeSnippet = makeIframeSnippet(w, pageUrl, 600, 600);
 	const scriptSnippet = `<script async src="${location.origin}/embed.js" data-widget="${esc(w.id)}"></script>`;
@@ -4188,6 +4412,22 @@ async function openWidgetDrawer(w, ctx) {
 				<span class="muted" style="margin-left:8px">${esc(w.is_public ? 'Public' : 'Private')} · updated ${timeAgo(w.updated_at)}</span>
 			</div>
 			<div id="stats-region" aria-live="polite"><div class="muted">Loading stats…</div></div>
+			${
+				w.type === 'talking-agent'
+					? `
+			<section id="transcripts-region" aria-label="Chat transcripts">
+				<h3 style="margin:18px 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:#aaa">Chat transcripts</h3>
+				<div id="transcripts-totals" class="muted" style="font-size:12px"></div>
+				<div id="transcripts-list" style="display:flex; flex-direction:column; gap:6px; margin-top:8px"></div>
+				<div id="transcripts-detail" hidden></div>
+				<div id="knowledge-region" style="margin-top:14px">
+					<h3 style="margin:0 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:#aaa">Knowledge</h3>
+					<div id="knowledge-summary" class="muted" style="font-size:12px">Loading…</div>
+				</div>
+			</section>
+			`
+					: ''
+			}
 			<details>
 				<summary>Embed code</summary>
 				<div style="display:flex; flex-direction:column; gap:10px; margin-top:8px">
@@ -4267,6 +4507,126 @@ async function openWidgetDrawer(w, ctx) {
 	} catch (err) {
 		drawer.querySelector('#stats-region').innerHTML =
 			`<div class="err">${esc(err.message || 'Failed to load stats')}</div>`;
+	}
+
+	// Transcripts + knowledge — only for talking-agent widgets.
+	if (w.type === 'talking-agent') {
+		loadTranscripts(drawer, w);
+		loadKnowledgeSummary(drawer, w);
+	}
+}
+
+async function loadTranscripts(drawer, w) {
+	const totalsEl = drawer.querySelector('#transcripts-totals');
+	const listEl = drawer.querySelector('#transcripts-list');
+	const detailEl = drawer.querySelector('#transcripts-detail');
+	if (!totalsEl || !listEl || !detailEl) return;
+
+	try {
+		const data = await api.listTranscripts(w.id, { limit: 25 });
+		const t = data.totals || {};
+		totalsEl.textContent = `${formatNum(t.threads || 0)} threads · ${formatNum(t.messages || 0)} messages · ${formatNum(t.unique_visitors || 0)} unique visitors`;
+
+		const threads = data.threads || [];
+		if (!threads.length) {
+			listEl.innerHTML =
+				'<div class="muted" style="font-size:12px">No conversations yet — visitors will appear here as they chat.</div>';
+			return;
+		}
+
+		listEl.innerHTML = threads.map((t) => renderThreadRow(t)).join('');
+		for (const row of listEl.querySelectorAll('[data-thread]')) {
+			row.addEventListener('click', () => openThread(drawer, w, row.dataset.thread));
+		}
+	} catch (err) {
+		listEl.innerHTML = `<div class="err">${esc(err.message || 'Failed to load transcripts')}</div>`;
+	}
+}
+
+function renderThreadRow(t) {
+	const preview = (t.preview || '').slice(0, 120);
+	const when = t.last_message_at ? timeAgo(t.last_message_at) : '';
+	const where = t.referer_host ? esc(t.referer_host) : '(direct)';
+	return `
+		<button class="transcript-row" data-thread="${attr(t.id)}" type="button"
+			style="all:unset; cursor:pointer; padding:8px 10px; border:1px solid var(--border); border-radius:8px; display:grid; grid-template-columns: 1fr auto; gap:8px; background:#0f0f17">
+			<div style="min-width:0">
+				<div style="font-size:12px; font-weight:600; color:#ccc">${esc(t.visitor_label || 'visitor')}<span class="muted" style="font-weight:400; margin-left:6px">· ${where}</span></div>
+				<div class="muted" style="font-size:12px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${esc(preview) || '(no message)'}</div>
+			</div>
+			<div class="muted" style="font-size:11px; align-self:center">${esc(when)}<br>${t.message_count || 0} msg</div>
+		</button>
+	`;
+}
+
+async function openThread(drawer, w, threadId) {
+	const detailEl = drawer.querySelector('#transcripts-detail');
+	if (!detailEl) return;
+	detailEl.hidden = false;
+	detailEl.innerHTML =
+		'<div class="muted" style="font-size:12px; padding:8px">Loading thread…</div>';
+	try {
+		const data = await api.getTranscript(w.id, threadId);
+		detailEl.innerHTML = `
+			<div style="margin-top:10px; padding:10px; background:#0f0f17; border:1px solid var(--border); border-radius:8px">
+				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+					<strong style="font-size:12px">${esc(data.thread?.visitor_label || 'visitor')} · ${esc(data.thread?.referer_host || '(direct)')}</strong>
+					<button class="btn sec" data-thread-close type="button" style="font-size:11px">Close</button>
+				</div>
+				<div style="display:flex; flex-direction:column; gap:6px; max-height:340px; overflow:auto">
+					${(data.messages || []).map(renderMessage).join('') || '<div class="muted">No messages.</div>'}
+				</div>
+			</div>
+		`;
+		detailEl.querySelector('[data-thread-close]').addEventListener('click', () => {
+			detailEl.hidden = true;
+			detailEl.innerHTML = '';
+		});
+	} catch (err) {
+		detailEl.innerHTML = `<div class="err">${esc(err.message || 'Failed to load thread')}</div>`;
+	}
+}
+
+function renderMessage(m) {
+	const isUser = m.role === 'user';
+	const bg = isUser ? '#1a1a26' : 'rgba(139, 92, 246, 0.12)';
+	const label = isUser ? 'visitor' : m.provider ? `agent · ${esc(m.provider)}` : 'agent';
+	const flag = m.redacted
+		? ' <span class="muted" style="font-size:10px">(pii redacted)</span>'
+		: '';
+	return `
+		<div style="padding:8px 10px; background:${bg}; border-radius:6px">
+			<div class="muted" style="font-size:10px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px">${label}${flag}</div>
+			<div style="font-size:13px; white-space:pre-wrap; word-break:break-word">${esc(m.content || '')}</div>
+		</div>
+	`;
+}
+
+async function loadKnowledgeSummary(drawer, w) {
+	const el = drawer.querySelector('#knowledge-summary');
+	if (!el) return;
+	try {
+		const { docs = [] } = await api.listKnowledge(w.id);
+		if (!docs.length) {
+			el.innerHTML = `No knowledge attached. <a href="/studio?edit=${encodeURIComponent(w.id)}">Add some in Studio →</a>`;
+			return;
+		}
+		const totalChunks = docs.reduce((s, d) => s + (d.chunk_count || 0), 0);
+		el.innerHTML = `
+			${docs.length} doc${docs.length === 1 ? '' : 's'} · ${formatNum(totalChunks)} chunks
+			<a href="/studio?edit=${encodeURIComponent(w.id)}" style="margin-left:6px">Manage →</a>
+			<ul style="margin:6px 0 0; padding-left:18px; font-size:12px; color:#aaa">
+				${docs
+					.slice(0, 5)
+					.map(
+						(d) =>
+							`<li>${esc(d.title)} <span style="opacity:0.7">(${d.chunk_count || 0} chunks)</span></li>`,
+					)
+					.join('')}
+			</ul>
+		`;
+	} catch (err) {
+		el.textContent = `Couldn't load knowledge: ${err.message}`;
 	}
 }
 
@@ -4385,7 +4745,7 @@ function openShareModal(w) {
 		const maxW = 320,
 			maxH = 320;
 		const scale = Math.min(maxW / dim.width, maxH / dim.height, 1);
-		previewEl.innerHTML = `<iframe src="/app#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1" style="width:${dim.width}px; height:${dim.height}px; border:0; transform:scale(${scale}); transform-origin:center" title="Preview"></iframe>`;
+		previewEl.innerHTML = `<iframe src="/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1" style="width:${dim.width}px; height:${dim.height}px; border:0; transform:scale(${scale}); transform-origin:center" title="Preview"></iframe>`;
 		previewEl.style.width = `${dim.width * scale}px`;
 		previewEl.style.height = `${dim.height * scale}px`;
 	}
@@ -4936,7 +5296,8 @@ async function renderAnimations(root) {
 				statusEl.style.color = '#9a8cff';
 				statusEl.textContent = 'Saved.';
 				clearTimer = setTimeout(() => {
-					if (seq === saveSeq && statusEl.textContent === 'Saved.') statusEl.textContent = '';
+					if (seq === saveSeq && statusEl.textContent === 'Saved.')
+						statusEl.textContent = '';
 				}, 2000);
 			} catch (err) {
 				if (seq !== saveSeq) return;
@@ -5456,7 +5817,8 @@ async function renderPayments(root) {
 	}
 
 	if (!agentId) {
-		body.innerHTML = '<div class="card" style="text-align:center;padding:48px 24px"><p class="muted">No agent found. Create an agent first.</p></div>';
+		body.innerHTML =
+			'<div class="card" style="text-align:center;padding:48px 24px"><p class="muted">No agent found. Create an agent first.</p></div>';
 		return;
 	}
 
@@ -5467,14 +5829,18 @@ async function renderPayments(root) {
 		if (nextPayCursor) params.set('cursor', nextPayCursor);
 		let data;
 		try {
-			const res = await fetch(`/api/agents/${agentId}/payments?${params}`, { credentials: 'include' });
+			const res = await fetch(`/api/agents/${agentId}/payments?${params}`, {
+				credentials: 'include',
+			});
 			if (!res.ok) {
 				const text = await res.text();
 				let msg = text;
 				try {
 					const j = JSON.parse(text);
 					msg = j.error_description || j.message || j.error || text;
-				} catch { /* not JSON */ }
+				} catch {
+					/* not JSON */
+				}
 				const err = new Error(msg);
 				err.status = res.status;
 				throw err;
@@ -5518,14 +5884,19 @@ async function renderPayments(root) {
 
 		for (const p of data.payments) {
 			const amountEth = p.amount_wei
-				? (Number(BigInt(p.amount_wei)) / 1e18).toFixed(8).replace(/0+$/, '').replace(/\.$/, '.0')
+				? (Number(BigInt(p.amount_wei)) / 1e18)
+						.toFixed(8)
+						.replace(/0+$/, '')
+						.replace(/\.$/, '.0')
 				: '—';
-			const statusColor = p.status === 'confirmed' ? '#00e5a0' : p.status === 'failed' ? '#ff5c5c' : '#888';
-			const explorerBase = p.chain_id === 8453
-				? 'https://basescan.org/tx/'
-				: p.chain_id === 84532
-					? 'https://sepolia.basescan.org/tx/'
-					: 'https://etherscan.io/tx/';
+			const statusColor =
+				p.status === 'confirmed' ? '#00e5a0' : p.status === 'failed' ? '#ff5c5c' : '#888';
+			const explorerBase =
+				p.chain_id === 8453
+					? 'https://basescan.org/tx/'
+					: p.chain_id === 84532
+						? 'https://sepolia.basescan.org/tx/'
+						: 'https://etherscan.io/tx/';
 			const txLink = p.tx_hash
 				? `<a href="${explorerBase}${esc(p.tx_hash)}" target="_blank" rel="noopener" style="font-size:12px">${esc(p.tx_hash.slice(0, 10))}…</a>`
 				: '—';

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Avatar</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Embedded three.ws avatar." />
+		<meta name="robots" content="noindex" />
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+				width: 100%;
+				background: transparent;
+				overflow: hidden;
+				font-family: system-ui, sans-serif;
+			}
+			#stage {
+				position: absolute;
+				inset: 0;
+			}
+			#stage canvas {
+				display: block;
+				width: 100% !important;
+				height: 100% !important;
+			}
+			#stage .gui-wrap,
+			#stage .gui-toggle,
+			#stage .annotation-canvas,
+			#stage .model-info {
+				display: none !important;
+			}
+			#name-plate {
+				position: absolute;
+				left: 12px;
+				bottom: 10px;
+				z-index: 2;
+				pointer-events: none;
+				font-size: 11px;
+				color: rgba(255, 255, 255, 0.55);
+				letter-spacing: 0.04em;
+				text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+			}
+			#error {
+				position: absolute;
+				inset: 0;
+				display: none;
+				align-items: center;
+				justify-content: center;
+				color: rgba(255, 255, 255, 0.4);
+				font-size: 12px;
+				padding: 1rem;
+				text-align: center;
+			}
+			#mocap-pill {
+				position: absolute;
+				right: 10px;
+				top: 10px;
+				z-index: 3;
+				display: none;
+				align-items: center;
+				gap: 6px;
+				padding: 6px 10px;
+				border-radius: 999px;
+				background: rgba(0, 0, 0, 0.55);
+				color: #fff;
+				font-size: 11px;
+				letter-spacing: 0.04em;
+				border: 1px solid rgba(255, 255, 255, 0.18);
+				cursor: pointer;
+				user-select: none;
+			}
+			#mocap-pill .dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #f55;
+			}
+			#mocap-pill.on .dot {
+				background: #5fce6a;
+			}
+			body.bg-dark {
+				background: #0b0d10;
+			}
+			body.bg-light {
+				background: #f5f5f5;
+			}
+			body.bg-light #name-plate {
+				color: rgba(0, 0, 0, 0.55);
+				text-shadow: none;
+			}
+			body.bg-light #mocap-pill {
+				background: rgba(255, 255, 255, 0.85);
+				color: #111;
+				border-color: rgba(0, 0, 0, 0.12);
+			}
+		</style>
+	</head>
+	<body>
+		<div id="stage"></div>
+		<div id="name-plate"></div>
+		<div id="mocap-pill" role="button" tabindex="0" aria-label="Toggle webcam mocap">
+			<span class="dot"></span><span class="label">webcam mocap</span>
+		</div>
+		<div id="error"></div>
+
+		<script type="module" src="/src/avatar-embed.js"></script>
+	</body>
+</html>

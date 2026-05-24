@@ -48,10 +48,22 @@ const MODE_TO_ENV = Object.freeze({
 	rerig: 'REPLICATE_RERIG_MODEL',
 });
 
+// Built-in defaults: commercial-OK models that are stable on Replicate so the
+// provider works end-to-end as soon as REPLICATE_API_TOKEN is set, without
+// the operator having to chase down version hashes. Override per-mode via the
+// matching REPLICATE_*_MODEL env var when you want a different model.
+//
+// `firtoz/trellis` — Microsoft TRELLIS, image-to-textured-GLB, MIT license,
+// 1.2B parameters, ~30–90s on Replicate's A100 fleet. Version-pinned to a
+// known-good build; bump when Replicate publishes a newer one.
+const DEFAULT_MODELS = Object.freeze({
+	reconstruct: 'firtoz/trellis',
+});
+
 function modelForMode(mode) {
 	const envName = MODE_TO_ENV[mode];
 	if (!envName) return null;
-	return readEnv(envName);
+	return readEnv(envName) || DEFAULT_MODELS[mode] || null;
 }
 
 // Map our 5 modes onto the input shape each model expects. The exact shape
@@ -138,8 +150,8 @@ export function createRegenProvider() {
 
 	return {
 		async submit(request) {
-			const version = modelForMode(request.mode);
-			if (!version) {
+			const modelRef = modelForMode(request.mode);
+			if (!modelRef) {
 				throw Object.assign(
 					new Error(
 						`replicate provider has no model configured for mode "${request.mode}" — set ${MODE_TO_ENV[request.mode] || 'the matching REPLICATE_*_MODEL env var'}`,
@@ -154,12 +166,39 @@ export function createRegenProvider() {
 				params: request.params,
 			});
 
+			// Two Replicate API shapes:
+			//   • Version hash (64 hex chars): POST /predictions with { version, input }.
+			//     Locks behavior to a known commit; required for community models that
+			//     don't expose model-level prediction endpoints.
+			//   • Model slug (owner/name[:version]): POST /models/{owner}/{name}/predictions
+			//     with { input }. Resolves to the latest published version unless a
+			//     :version suffix is provided. We use this for the built-in defaults so
+			//     they don't go stale every time Replicate republishes.
+			const isVersionHash = /^[a-f0-9]{40,64}$/i.test(modelRef);
+			const slugMatch = modelRef.match(/^([a-z0-9-]+)\/([a-z0-9._-]+)(?::([a-f0-9]+))?$/i);
+
+			let endpoint;
+			let body;
+			if (isVersionHash) {
+				endpoint = `${REPLICATE_BASE}/predictions`;
+				body = JSON.stringify({ version: modelRef, input });
+			} else if (slugMatch) {
+				const [, owner, name, pinnedVersion] = slugMatch;
+				endpoint = `${REPLICATE_BASE}/models/${owner}/${name}/predictions`;
+				body = JSON.stringify(pinnedVersion ? { version: pinnedVersion, input } : { input });
+			} else {
+				throw Object.assign(
+					new Error(`replicate model reference "${modelRef}" is neither a version hash nor an owner/name slug`),
+					{ code: 'mode_unconfigured', status: 500 },
+				);
+			}
+
 			let response;
 			try {
-				response = await fetch(`${REPLICATE_BASE}/predictions`, {
+				response = await fetch(endpoint, {
 					method: 'POST',
 					headers: authHeaders,
-					body: JSON.stringify({ version, input }),
+					body,
 				});
 			} catch (err) {
 				throw Object.assign(new Error(`replicate submit failed: ${err?.message}`), {

@@ -324,6 +324,63 @@
 			}
 			.av-cta-sec:hover { border-color: var(--text-2); }
 
+			/* Download menu — anchored to #av-download */
+			.av-download-menu {
+				position: absolute;
+				z-index: 60;
+				width: 280px;
+				background: var(--bg-1, #0f1018);
+				border: 1.5px solid var(--border-2, #1e1f2b);
+				border-radius: 12px;
+				padding: 6px;
+				box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				animation: avDlFadeIn 0.16s ease-out;
+			}
+			@keyframes avDlFadeIn {
+				from { opacity: 0; transform: translateY(-4px); }
+				to   { opacity: 1; transform: translateY(0); }
+			}
+			.av-download-menu button {
+				appearance: none;
+				background: transparent;
+				border: 1px solid transparent;
+				color: var(--text, #eee);
+				font: inherit;
+				text-align: left;
+				padding: 9px 10px;
+				border-radius: 8px;
+				cursor: pointer;
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				transition: background 0.12s, border-color 0.12s;
+			}
+			.av-download-menu button:hover {
+				background: rgba(214, 255, 61, 0.07);
+				border-color: rgba(214, 255, 61, 0.3);
+			}
+			.av-download-menu button strong {
+				font-size: 13.5px;
+				font-weight: 600;
+			}
+			.av-download-menu button span {
+				font-size: 11.5px;
+				color: var(--text-3, #8a8d98);
+				line-height: 1.35;
+			}
+			.av-download-status {
+				font-size: 11.5px;
+				color: var(--text-3, #8a8d98);
+				padding: 4px 10px 2px;
+				min-height: 1em;
+			}
+			.av-download-status[data-tone='busy'] { color: #b9c0ff; }
+			.av-download-status[data-tone='ok']   { color: #d6ff3d; }
+			.av-download-status[data-tone='err']  { color: #ffb3b3; }
+
 			/* ── Tabs ────────────────────────────────────────── */
 			.av-tabs {
 				display: flex;

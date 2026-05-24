@@ -8,6 +8,7 @@
  */
 
 import { openTalkMode } from './voice/talk-mode.js';
+import { downloadAvatar } from './avatar-export.js';
 
 const ATTACHED_KEY_PREFIX = 'avatar_attached_v1:';
 
@@ -233,7 +234,7 @@ function renderShell(glbUrl) {
 			<div class="av-cta-row">
 				<button class="av-cta" id="av-use">Start an agent</button>
 				<a class="av-cta-sec" href="/studio?avatar=${encodeURIComponent(avatar.id || avatarId)}" title="Use this avatar in Widget Studio">Open in Studio</a>
-				<a class="av-cta-sec" href="${esc(glbUrl)}" download>Download GLB</a>
+				<button class="av-cta-sec" id="av-download" type="button">Download ▾</button>
 			</div>
 			<nav class="av-tabs" role="tablist">
 				<button class="av-tab active" data-tab="overview" role="tab">Overview</button>
@@ -303,6 +304,134 @@ function renderShell(glbUrl) {
 
 	$('av-use')?.addEventListener('click', startAgentWithAvatar);
 	$('av-talk')?.addEventListener('click', () => enterTalkMode());
+	$('av-download')?.addEventListener('click', openDownloadMenu);
+}
+
+/**
+ * Anchored download menu. GLB / USDZ links straight to the R2-hosted artifacts
+ * when present (no client work) and falls back to a fetched-and-converted blob
+ * when only the canonical GLB is available. VRM is always built client-side.
+ */
+function openDownloadMenu(ev) {
+	closeDownloadMenu();
+	const trigger = ev.currentTarget;
+	const glbUrl = avatar.model_url || avatar.url;
+	const usdzUrl = avatar.usdz_url || null;
+	const fileBase = sanitizeFilename(avatar.name || 'avatar');
+
+	const menu = document.createElement('div');
+	menu.className = 'av-download-menu';
+	menu.id = 'av-download-menu';
+	menu.setAttribute('role', 'menu');
+	menu.innerHTML = `
+		<button type="button" role="menuitem" data-format="glb">
+			<strong>GLB</strong>
+			<span>Universal — game engines, Blender, browsers</span>
+		</button>
+		<button type="button" role="menuitem" data-format="vrm">
+			<strong>VRM</strong>
+			<span>VRChat, Resonite, Hubs, VTube Studio</span>
+		</button>
+		<button type="button" role="menuitem" data-format="usdz">
+			<strong>USDZ</strong>
+			<span>iOS AR — Safari Quick Look</span>
+		</button>
+		<div class="av-download-status" data-status></div>
+	`;
+	document.body.appendChild(menu);
+	positionMenu(menu, trigger);
+
+	const statusEl = menu.querySelector('[data-status]');
+	menu.querySelectorAll('button[data-format]').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			const format = btn.dataset.format;
+			if (menu.dataset.busy === '1') return;
+			menu.dataset.busy = '1';
+			statusEl.textContent = `Preparing ${format.toUpperCase()}…`;
+			statusEl.dataset.tone = 'busy';
+
+			try {
+				// Fast paths: GLB and USDZ already exist on R2 for saved avatars.
+				if (format === 'glb' && glbUrl) {
+					triggerLink(glbUrl, `${fileBase}.glb`);
+					statusEl.textContent = 'Download started.';
+					statusEl.dataset.tone = 'ok';
+				} else if (format === 'usdz' && usdzUrl) {
+					triggerLink(usdzUrl, `${fileBase}.usdz`);
+					statusEl.textContent = 'Download started.';
+					statusEl.dataset.tone = 'ok';
+				} else {
+					// Build client-side from the GLB.
+					if (!glbUrl) throw new Error('No source GLB to convert.');
+					const result = await downloadAvatar(glbUrl, {
+						format,
+						filename: fileBase,
+						meta: { name: avatar.name || 'three.ws avatar' },
+					});
+					statusEl.textContent = `Saved · ${prettyBytes(result.size)}`;
+					statusEl.dataset.tone = 'ok';
+				}
+				setTimeout(closeDownloadMenu, 1500);
+			} catch (err) {
+				console.error('[avatar] download failed', err);
+				statusEl.textContent =
+					format === 'vrm' && /humanoid/i.test(err?.message || '')
+						? "VRM needs a humanoid skeleton — try GLB."
+						: `Couldn't export: ${err?.message || 'unknown error'}`;
+				statusEl.dataset.tone = 'err';
+			} finally {
+				menu.dataset.busy = '0';
+			}
+		});
+	});
+
+	setTimeout(() => {
+		document.addEventListener('click', onOutsideDownloadClick, { once: true });
+	}, 0);
+}
+
+function onOutsideDownloadClick(ev) {
+	const menu = document.getElementById('av-download-menu');
+	if (!menu) return;
+	if (menu.contains(ev.target) || ev.target.id === 'av-download') return;
+	closeDownloadMenu();
+}
+
+function closeDownloadMenu() {
+	document.getElementById('av-download-menu')?.remove();
+	document.removeEventListener('click', onOutsideDownloadClick);
+}
+
+function positionMenu(menu, trigger) {
+	const r = trigger.getBoundingClientRect();
+	const top = r.bottom + 6 + window.scrollY;
+	const left = Math.max(8, r.right - 280 + window.scrollX);
+	menu.style.top = `${top}px`;
+	menu.style.left = `${left}px`;
+}
+
+function triggerLink(href, filename) {
+	const a = document.createElement('a');
+	a.href = href;
+	a.download = filename;
+	a.rel = 'noopener';
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
+}
+
+function sanitizeFilename(name) {
+	return String(name || 'avatar')
+		.replace(/[^a-z0-9._-]+/gi, '-')
+		.replace(/-+/g, '-')
+		.replace(/^-|-$/g, '')
+		.slice(0, 80) || 'avatar';
+}
+
+function prettyBytes(n) {
+	if (n < 1024) return `${n} B`;
+	if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+	return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
 function renderAttribution() {

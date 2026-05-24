@@ -1657,6 +1657,14 @@
             "dest": "/app-next.html"
         },
         {
+            "src": "/embed-demo",
+            "dest": "/embed-demo.html"
+        },
+        {
+            "src": "/embed-demo/",
+            "dest": "/embed-demo.html"
+        },
+        {
             "src": "/chat",
             "dest": "/chat/index.html"
         },

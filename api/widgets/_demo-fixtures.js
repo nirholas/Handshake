@@ -163,6 +163,43 @@ export const DEMO_WIDGETS = {
 			maxCards: 8,
 		},
 	}),
+
+	wdgt_demo_koltrad: fixture({
+		id: 'wdgt_demo_koltrad',
+		type: 'kol-trades',
+		name: 'Smart Money Feed',
+		modelUrl: CZ,
+		config: {
+			background: '#0a0a0a',
+			accent: '#8b5cf6',
+			caption: '',
+			showControls: false,
+			autoRotate: false,
+			envPreset: 'neutral',
+			mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+			limit: 20,
+			refreshMs: 30_000,
+		},
+	}),
+
+	wdgt_demo_livetrd: fixture({
+		id: 'wdgt_demo_livetrd',
+		type: 'live-trades-canvas',
+		name: 'Live Trades Canvas',
+		modelUrl: CZ,
+		config: {
+			background: '#0a0a0a',
+			accent: '#8b5cf6',
+			caption: '',
+			showControls: false,
+			autoRotate: false,
+			envPreset: 'neutral',
+			mint: 'So11111111111111111111111111111111111111112',
+			chain: 'solana',
+			bg: '#0d0d14',
+			minUsd: 0,
+		},
+	}),
 };
 
 export function isDemoWidgetId(id) {

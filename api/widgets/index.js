@@ -17,14 +17,7 @@ import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { publicUrl } from '../_lib/r2.js';
-
-const WIDGET_TYPES = [
-	'turntable',
-	'animation-gallery',
-	'talking-agent',
-	'passport',
-	'hotspot-tour',
-];
+import { WIDGET_TYPES } from '../_lib/widget-types.js';
 
 const createBody = z.object({
 	type: z.enum(WIDGET_TYPES),

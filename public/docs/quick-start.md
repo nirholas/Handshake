@@ -154,7 +154,7 @@ The fastest path to an embeddable 3D experience is an iframe widget. Build one i
 
 ```html
 <iframe
-  src="https://three.ws/app#widget=wdgt_YOUR_ID&kiosk=true"
+  src="https://three.ws/widget#widget=wdgt_YOUR_ID&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"

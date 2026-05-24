@@ -1495,13 +1495,13 @@ export function mountEmbedEditor(root, options = {}) {
 	avatarModalBackdrop.addEventListener('click', closeAvatarModal);
 
 	// If a widget id was passed, swap the bare <agent-3d> preview for an
-	// iframe loading the live widget renderer (/app#widget=<id>&kiosk=true).
+	// iframe loading the live widget renderer (/widget#widget=<id>&kiosk=true).
 	if (state.widgetId) loadWidget(state.widgetId);
 
 	async function loadWidget(id) {
 		const origin = location.origin;
 		// Show the live widget immediately — don't wait on the metadata fetch.
-		widgetFrame.src = `${origin}/app#widget=${encodeURIComponent(id)}&kiosk=true`;
+		widgetFrame.src = `${origin}/widget#widget=${encodeURIComponent(id)}&kiosk=true`;
 		widgetFrame.hidden = false;
 		agentEl.style.display = 'none';
 		widgetBadge.hidden = false;

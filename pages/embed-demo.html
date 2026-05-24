@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Embed your avatar · three.ws</title>
+		<meta name="robots" content="noindex" />
+		<meta
+			name="description"
+			content="Drop a three.ws avatar on any site with a single &lt;threews-avatar&gt; tag — transparent, OBS-friendly, programmable."
+		/>
+
+		<!-- The SDK. One tag. Registers <threews-avatar> globally. -->
+		<script src="/embed.js" defer></script>
+
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #05060a;
+				--panel: #0f1018;
+				--border: #1e1f2b;
+				--text: #eee;
+				--muted: #8a8d98;
+				--accent: #d6ff3d;
+				--accent-ink: #0a0a0a;
+			}
+			* { box-sizing: border-box; }
+			html, body { margin: 0; padding: 0; height: 100%; }
+			body {
+				font: 15px/1.5 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+				color: var(--text);
+				background: var(--bg);
+				background-image:
+					radial-gradient(800px 500px at 20% -10%, rgba(106, 92, 255, 0.12), transparent 70%),
+					radial-gradient(700px 400px at 110% 110%, rgba(214, 255, 61, 0.07), transparent 70%);
+			}
+			.wrap { max-width: 1100px; margin: 0 auto; padding: 56px 24px 96px; }
+			.eyebrow {
+				color: var(--accent);
+				font-size: 12px;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				margin-bottom: 12px;
+			}
+			h1 {
+				font-size: clamp(28px, 5vw, 42px);
+				letter-spacing: -0.02em;
+				margin: 0 0 12px;
+				font-weight: 600;
+			}
+			.lede { color: var(--muted); max-width: 64ch; margin: 0 0 40px; font-size: 16px; }
+
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+				gap: 22px;
+				margin-bottom: 56px;
+			}
+			.card {
+				background: var(--panel);
+				border: 1.5px solid var(--border);
+				border-radius: 14px;
+				padding: 18px;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+			}
+			.card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+			.card-head h2 {
+				margin: 0;
+				font-size: 14px;
+				font-weight: 600;
+				letter-spacing: -0.005em;
+			}
+			.card-head .tag {
+				font-size: 10px;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+			}
+			.frame {
+				aspect-ratio: 1 / 1.15;
+				border-radius: 10px;
+				overflow: hidden;
+				background:
+					radial-gradient(70% 50% at 50% 100%, rgba(255, 255, 255, 0.04), transparent 70%),
+					#0a0c12;
+				position: relative;
+			}
+			.frame threews-avatar {
+				width: 100% !important;
+				height: 100% !important;
+				min-width: 0 !important;
+				min-height: 0 !important;
+				aspect-ratio: auto !important;
+			}
+			.frame.chromakey {
+				background: #00ff00; /* OBS streamer preview */
+			}
+			.controls {
+				display: flex;
+				gap: 6px;
+				flex-wrap: wrap;
+			}
+			.controls button {
+				appearance: none;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid var(--border);
+				color: var(--text);
+				border-radius: 8px;
+				padding: 6px 10px;
+				font: inherit;
+				font-size: 12px;
+				cursor: pointer;
+				transition: background 0.15s, border-color 0.15s;
+			}
+			.controls button:hover {
+				background: rgba(214, 255, 61, 0.08);
+				border-color: rgba(214, 255, 61, 0.4);
+			}
+			.snippet {
+				background: #07080d;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 10px 12px;
+				font-family: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+				font-size: 11.5px;
+				color: #cdd;
+				line-height: 1.5;
+				overflow-x: auto;
+				white-space: pre;
+			}
+			.log {
+				font-family: ui-monospace, 'SF Mono', monospace;
+				font-size: 11px;
+				color: var(--muted);
+				min-height: 1.5em;
+			}
+			.log[data-tone='ok'] { color: var(--accent); }
+			.log[data-tone='err'] { color: #ffb3b3; }
+
+			.snippet-large {
+				background: var(--panel);
+				border: 1.5px solid var(--border);
+				border-radius: 12px;
+				padding: 18px;
+				font-family: ui-monospace, 'SF Mono', monospace;
+				font-size: 13px;
+				color: #cdd;
+				line-height: 1.6;
+				overflow-x: auto;
+				white-space: pre;
+			}
+			.snippet-large .k { color: #d6ff3d; }
+			.snippet-large .a { color: #b9c0ff; }
+			.snippet-large .s { color: #e8b87f; }
+
+			.section-head {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 10px;
+				margin: 8px 0 14px;
+			}
+			.section-head h2 {
+				font-size: 22px;
+				margin: 0;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			.section-head .note {
+				color: var(--muted);
+				font-size: 13px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="wrap">
+			<div class="eyebrow">SDK · v1.0</div>
+			<h1>One tag. Your avatar anywhere.</h1>
+			<p class="lede">
+				Drop <code>&lt;threews-avatar&gt;</code> on Webflow, Framer, React, plain HTML,
+				Squarespace, anywhere. Transparent by default, OBS-ready with a chromakey, and
+				programmable via a small JS API. Examples below run live on this page.
+			</p>
+
+			<div class="section-head">
+				<h2>Live examples</h2>
+				<span class="note">Every avatar below is a real <code>&lt;threews-avatar&gt;</code> mounted from the script tag at the top of this page.</span>
+			</div>
+
+			<div class="grid">
+				<!-- 1) Default — auto-rotate, transparent, no chrome -->
+				<div class="card">
+					<div class="card-head">
+						<h2>Default</h2>
+						<span class="tag">transparent</span>
+					</div>
+					<div class="frame">
+						<threews-avatar
+							id="ex-default"
+							avatar-id="avatar_demo_disk_cz"
+							hide-chrome
+						></threews-avatar>
+					</div>
+					<div class="controls">
+						<button data-target="ex-default" data-action="play" data-arg="wave">Wave</button>
+						<button data-target="ex-default" data-action="play" data-arg="celebrate">Celebrate</button>
+						<button data-target="ex-default" data-action="play" data-arg="dance">Dance</button>
+					</div>
+					<div class="snippet">&lt;threews-avatar avatar-id="avatar_demo_disk_cz" hide-chrome&gt;&lt;/threews-avatar&gt;</div>
+					<div class="log" id="log-default"></div>
+				</div>
+
+				<!-- 2) Card with name plate -->
+				<div class="card">
+					<div class="card-head">
+						<h2>With name plate</h2>
+						<span class="tag">card mode</span>
+					</div>
+					<div class="frame">
+						<threews-avatar
+							id="ex-card"
+							avatar-id="avatar_demo_disk_cz"
+							bg="dark"
+						></threews-avatar>
+					</div>
+					<div class="snippet">&lt;threews-avatar avatar-id="…" bg="dark"&gt;&lt;/threews-avatar&gt;</div>
+					<div class="log" id="log-card"></div>
+				</div>
+
+				<!-- 3) OBS browser source — chromakey -->
+				<div class="card">
+					<div class="card-head">
+						<h2>OBS / chromakey</h2>
+						<span class="tag">streamer mode</span>
+					</div>
+					<div class="frame chromakey">
+						<threews-avatar
+							id="ex-obs"
+							avatar-id="avatar_demo_disk_cz"
+							chromakey="#00ff00"
+							hide-chrome
+							pose="wave"
+						></threews-avatar>
+					</div>
+					<div class="snippet">&lt;threews-avatar avatar-id="…" chromakey="#00ff00"&gt;&lt;/threews-avatar&gt;</div>
+					<div class="log" id="log-obs"></div>
+				</div>
+			</div>
+
+			<div class="section-head">
+				<h2>Copy-paste snippet</h2>
+				<span class="note">Drop this on any page.</span>
+			</div>
+			<div class="snippet-large"><span class="k">&lt;script</span> <span class="a">src</span>=<span class="s">"https://three.ws/embed.js"</span> <span class="a">defer</span><span class="k">&gt;&lt;/script&gt;</span>
+
+<span class="k">&lt;threews-avatar</span>
+   <span class="a">avatar-id</span>=<span class="s">"your-avatar-id"</span>
+   <span class="a">hide-chrome</span>
+   <span class="a">pose</span>=<span class="s">"wave"</span><span class="k">&gt;&lt;/threews-avatar&gt;</span>
+
+<span class="k">&lt;script&gt;</span>
+   <span class="a">const</span> el = document.querySelector(<span class="s">'threews-avatar'</span>);
+   <span class="a">await</span> el.ready;
+   el.play(<span class="s">'celebrate'</span>);
+<span class="k">&lt;/script&gt;</span></div>
+		</div>
+
+		<script>
+			document.addEventListener('click', async (e) => {
+				const btn = e.target.closest('button[data-action]');
+				if (!btn) return;
+				const target = document.getElementById(btn.dataset.target);
+				if (!target) return;
+				const log = document.getElementById('log-' + btn.dataset.target.replace('ex-', ''));
+				try {
+					if (btn.dataset.action === 'play') {
+						await target.play(btn.dataset.arg);
+						if (log) {
+							log.textContent = `played: ${btn.dataset.arg}`;
+							log.dataset.tone = 'ok';
+						}
+					}
+				} catch (err) {
+					if (log) {
+						log.textContent = err.message;
+						log.dataset.tone = 'err';
+					}
+				}
+			});
+
+			// Surface ready/error events into the per-card log line.
+			for (const el of document.querySelectorAll('threews-avatar')) {
+				const log = document.getElementById('log-' + el.id.replace('ex-', ''));
+				el.addEventListener('ready', () => {
+					if (!log) return;
+					log.textContent = 'ready · transparent canvas mounted';
+					log.dataset.tone = 'ok';
+				});
+				el.addEventListener('error', (ev) => {
+					if (!log) return;
+					log.textContent = 'error: ' + (ev.detail?.message || 'unknown');
+					log.dataset.tone = 'err';
+				});
+			}
+		</script>
+	</body>
+</html>

@@ -6,6 +6,7 @@
 // Keep this list in sync with src/widget-types.js as new types light up.
 
 import { mountLaunchPanel } from './launch-panel.js';
+import { mountKnowledgePanel } from './knowledge-panel.js';
 
 const WIDGET_TYPES = {
 	turntable: {
@@ -188,7 +189,11 @@ function userInitial(u) {
 
 async function signOut() {
 	await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
-	try { localStorage.removeItem('3dagent:auth-hint'); } catch { /* ignore */ }
+	try {
+		localStorage.removeItem('3dagent:auth-hint');
+	} catch {
+		/* ignore */
+	}
 	location.href = '/';
 }
 
@@ -421,8 +426,8 @@ function appendAvatarCard(list, a) {
 	const badge = a.is_demo
 		? '<span class="badge-demo">Demo</span>'
 		: a.is_public_browse
-		? '<span class="badge-public">Public</span>'
-		: '';
+			? '<span class="badge-public">Public</span>'
+			: '';
 	card.innerHTML = `${thumb}<span class="name">${escapeHtml(a.name || a.slug || a.id)}</span>${badge}`;
 	card.addEventListener('click', () => selectAvatar(a.id));
 	list.appendChild(card);
@@ -513,6 +518,9 @@ function renderTypeFields() {
 			}),
 		);
 	}
+	if (state.type === 'talking-agent') {
+		mountTalkingAgentExtras(wrap);
+	}
 	if (state.type === 'pumpfun-feed') {
 		wrap.appendChild(
 			selectField('kind', 'Event kind', state.config.kind ?? 'all', [
@@ -542,6 +550,62 @@ function renderTypeFields() {
 	}
 }
 
+function mountTalkingAgentExtras(wrap) {
+	wrap.appendChild(
+		textField('agentName', 'Agent name', state.config.agentName || '', {
+			max: 80,
+			placeholder: 'e.g. "Ada"',
+		}),
+	);
+	wrap.appendChild(
+		textField('agentTitle', 'Agent title', state.config.agentTitle || 'AI Agent', {
+			max: 80,
+			placeholder: 'e.g. "Support bot"',
+		}),
+	);
+	wrap.appendChild(
+		textField('greeting', 'Greeting', state.config.greeting || 'Hi! Ask me anything.', {
+			max: 280,
+			placeholder: 'First message visitors see',
+		}),
+	);
+	wrap.appendChild(
+		textareaField('systemPrompt', 'System prompt', state.config.systemPrompt || '', {
+			max: 4000,
+			placeholder: 'Describe how the agent should behave — tone, topics, what to avoid.',
+			rows: 4,
+		}),
+	);
+	wrap.appendChild(
+		selectField('brainProvider', 'LLM provider', state.config.brainProvider || 'auto', [
+			['auto', 'Auto (first configured)'],
+			['anthropic', 'Anthropic (Claude)'],
+			['openai', 'OpenAI'],
+			['groq', 'Groq'],
+			['openrouter', 'OpenRouter'],
+		]),
+	);
+
+	const knowledgeMount = document.createElement('div');
+	knowledgeMount.id = 'studio-knowledge';
+	wrap.appendChild(knowledgeMount);
+
+	const transcriptsLink = document.createElement('div');
+	transcriptsLink.className = 'kp-transcripts-link';
+	transcriptsLink.innerHTML = state.editingId
+		? `<a href="/dashboard/widgets?w=${encodeURIComponent(state.editingId)}#transcripts" target="_blank" rel="noopener">View chat transcripts →</a>`
+		: '<span class="muted">Save the widget to see chat transcripts in the dashboard.</span>';
+	wrap.appendChild(transcriptsLink);
+
+	if (_knowledgePanel) _knowledgePanel.destroy?.();
+	_knowledgePanel = mountKnowledgePanel(knowledgeMount, {
+		getWidgetId: () => state.editingId || null,
+		getCanEdit: () => !!state.user && !!state.editingId,
+	});
+}
+
+let _knowledgePanel = null;
+
 function selectField(name, label, value, options) {
 	const f = document.createElement('label');
 	f.className = 'field';
@@ -566,6 +630,32 @@ function boolField(name, label, checked) {
 		<span>${escapeHtml(label)}</span>`;
 	f.querySelector('input').addEventListener('change', (e) => {
 		state.config[name] = e.target.checked;
+		schedulePreview();
+	});
+	return f;
+}
+
+function textField(name, label, value, { max = 200, placeholder = '' } = {}) {
+	const f = document.createElement('label');
+	f.className = 'field';
+	f.innerHTML = `<span>${escapeHtml(label)}</span>
+		<input type="text" name="${attr(name)}" maxlength="${max}"
+			placeholder="${attr(placeholder)}" value="${attr(String(value || ''))}">`;
+	f.querySelector('input').addEventListener('input', (e) => {
+		state.config[name] = e.target.value;
+		schedulePreview();
+	});
+	return f;
+}
+
+function textareaField(name, label, value, { max = 4000, placeholder = '', rows = 4 } = {}) {
+	const f = document.createElement('label');
+	f.className = 'field';
+	f.innerHTML = `<span>${escapeHtml(label)}</span>
+		<textarea name="${attr(name)}" maxlength="${max}" rows="${rows}"
+			placeholder="${attr(placeholder)}">${escapeHtml(String(value || ''))}</textarea>`;
+	f.querySelector('textarea').addEventListener('input', (e) => {
+		state.config[name] = e.target.value;
 		schedulePreview();
 	});
 	return f;
@@ -733,10 +823,13 @@ function wireButtons() {
 
 	launchPanel = mountLaunchPanel(panelLaunch, {
 		getAvatar: () => findAvatar(state.avatarId),
-		getUser:   () => state.user,
+		getUser: () => state.user,
 		getPreviewViewer: () => {
-			try { return previewIfr?.contentWindow?.VIEWER?.viewer || null; }
-			catch { return null; }
+			try {
+				return previewIfr?.contentWindow?.VIEWER?.viewer || null;
+			} catch {
+				return null;
+			}
 		},
 	});
 
@@ -822,9 +915,12 @@ function updatePreview(forceReload) {
 		previewSt.textContent = 'Loading preview…';
 		// Cache-buster query forces a full reload. Without it, hash-only
 		// changes (e.g. switching avatars) trigger fragment navigation in
-		// the iframe — and /app reads `model`/`type` from the hash only on
-		// boot, so the preview wouldn't update.
-		previewIfr.src = `/app?_=${Date.now()}#${hashStr}`;
+		// the iframe — and the widget shell reads `model`/`type` from the
+		// hash only on boot, so the preview wouldn't update.
+		// /widget is the slim viewer shell — same /src/app.js bundle, but
+		// without site nav/footer/auth chrome in the DOM, so the preview
+		// doesn't flash the marketing site before the model renders.
+		previewIfr.src = `/widget?_=${Date.now()}#${hashStr}`;
 	}
 	postConfigToPreview();
 }
@@ -904,12 +1000,17 @@ async function save({ generate }) {
 			throw new Error(data.error_description || `save failed: ${res.status}`);
 		}
 		const { widget } = await res.json();
+		const wasNew = !state.editingId;
 		state.editingId = widget.id;
 		const newUrl = new URL(location.href);
 		newUrl.searchParams.set('edit', widget.id);
 		newUrl.searchParams.delete('template');
 		newUrl.searchParams.delete('model');
 		history.replaceState(null, '', newUrl);
+
+		// Re-render type fields so the Knowledge panel picks up the new id
+		// (it was disabled until the widget had a row to attach docs to).
+		if (wasNew && state.type === 'talking-agent') renderTypeFields();
 
 		if (generate) openEmbedModal(widget);
 		else toast('Saved');
@@ -940,14 +1041,15 @@ function _refreshEmbedSnippet() {
 	const url = _buildEmbedUrl(_currentEmbedUrl);
 	const w = parseInt($('#embed-width').value) || 600;
 	const h = parseInt($('#embed-height').value) || 600;
-	$('#embed-iframe-snippet').value = `<iframe src="${url}" width="${w}" height="${h}" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" loading="lazy"></iframe>`;
+	$('#embed-iframe-snippet').value =
+		`<iframe src="${url}" width="${w}" height="${h}" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" loading="lazy"></iframe>`;
 	$('#embed-preview-iframe').src = url;
 }
 
 function openEmbedModal(widget) {
 	const origin = location.origin;
 	const shareUrl = `${origin}/w/${widget.id}`;
-	_currentEmbedUrl = `${origin}/app#widget=${widget.id}&kiosk=true`;
+	_currentEmbedUrl = `${origin}/widget#widget=${widget.id}&kiosk=true`;
 	_currentWidgetType = widget.type || state.type;
 
 	const demoNote = $('#embed-demo-note');

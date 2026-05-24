@@ -17,6 +17,15 @@ import { attachAvatarToAgent } from './attach-avatar-to-agent.js';
 import { load as loadGuest, clear as clearGuest } from './guest-avatar.js';
 import { TalkScene } from './voice/talk-scene.js';
 import { IdleAnimation } from './idle-animation.js';
+import {
+	openDownloadModal,
+	openEmbedModal,
+	openIdentityModal,
+	openPaidSkillsModal,
+	openReputationModal,
+	openVoicePreview,
+	toggleEmoteStrip,
+} from './create-review-features.js';
 
 const RESUME_KEY = '3dagent:guest-avatar-resume';
 const $ = (sel) => document.querySelector(sel);
@@ -141,6 +150,45 @@ function wireControls() {
 
 	saveBtn.addEventListener('click', () => onSave());
 	startOverBtn.addEventListener('click', () => onStartOver());
+
+	wireFeatureTiles();
+}
+
+function wireFeatureTiles() {
+	document.querySelectorAll('.feature-tile[data-feature]').forEach((btn) => {
+		btn.addEventListener('click', () => handleFeatureClick(btn.dataset.feature));
+	});
+}
+
+function handleFeatureClick(feature) {
+	switch (feature) {
+		case 'body':
+			toggleEmoteStrip({ scene: viewerScene, stripEl: $('#emote-strip') });
+			return;
+		case 'voice':
+			if (!objectUrl) return;
+			openVoicePreview({ glbUrl: objectUrl, name: $('#f-name').value });
+			return;
+		case 'identity':
+			openIdentityModal();
+			return;
+		case 'paid':
+			openPaidSkillsModal();
+			return;
+		case 'embed':
+			openEmbedModal();
+			return;
+		case 'reputation':
+			openReputationModal();
+			return;
+		case 'download':
+			if (!staged?.blob) return;
+			openDownloadModal({
+				blob: staged.blob,
+				name: $('#f-name').value.trim() || staged.name,
+			});
+			return;
+	}
 }
 
 function applyAuthState({ detail }) {
@@ -177,7 +225,13 @@ async function onSave({ auto = false } = {}) {
 
 	saveBtn.disabled = true;
 	startOverBtn.disabled = true;
-	showSaveOverlay('Saving your avatar…', 'Uploading to your account.');
+	showSaveOverlay('Preparing upload…', 'Optimizing your avatar.');
+
+	// Arm the resume sentinel before we touch the network. If the session
+	// expired between the cached auth hint and now, apiFetch redirects to
+	// /login synchronously — we need the sentinel already set so the post-
+	// login round-trip auto-resumes the save.
+	sessionStorage.setItem(RESUME_KEY, '1');
 
 	try {
 		const name = $('#f-name').value.trim() || staged.name;
@@ -185,28 +239,42 @@ async function onSave({ auto = false } = {}) {
 			...staged.meta,
 			name,
 		};
-		const avatar = await saveRemoteGlbToAccount(staged.blob, meta);
-		updateSaveOverlay('Preparing your agent…');
+		const avatar = await saveRemoteGlbToAccount(staged.blob, meta, {
+			onProgress: (pct) => {
+				updateSaveOverlay(
+					pct >= 100 ? 'Finishing upload…' : 'Uploading your avatar…',
+					pct >= 100 ? 'almost there' : `${pct}%`,
+				);
+				setSaveProgress(pct);
+			},
+		});
+		setSaveProgress(null);
+		updateSaveOverlay('Preparing your agent…', '');
 		const agent = await attachAvatarToAgent(avatar.id, name);
-		updateSaveOverlay('Opening your avatar…');
+		updateSaveOverlay('Opening your avatar…', '');
 		await clearGuest();
 		releaseObjectUrl();
 		window.location.href = '/app?agent=' + agent.id;
 	} catch (err) {
-		hideSaveOverlay();
-		saveBtn.disabled = false;
-		startOverBtn.disabled = false;
 		console.error('[create-review] save failed', err);
 
-		if (err.code === 'not_signed_in') {
+		if (err.code === 'not_signed_in' || err.redirected) {
 			// Session expired between the cached auth hint and the actual save.
-			sessionStorage.setItem(RESUME_KEY, '1');
+			// The resume sentinel is already armed — kick over to /login and the
+			// post-login round-trip will fire onSave() again automatically.
 			const next = encodeURIComponent('/create-review');
 			window.location.href = `/login?next=${next}`;
 			return;
 		}
 
+		// Disarm the sentinel — without this, a plain reload would auto-fire
+		// onSave again on the next visit and surprise the user.
+		sessionStorage.removeItem(RESUME_KEY);
+
 		if (err.data?.error === 'plan_limit_count') {
+			hideSaveOverlay();
+			saveBtn.disabled = false;
+			startOverBtn.disabled = false;
 			showStatus(
 				"You've reached your avatar limit. Delete an avatar first, then come back to save this one.",
 				'error',
@@ -214,13 +282,76 @@ async function onSave({ auto = false } = {}) {
 			return;
 		}
 
-		showStatus(
-			auto
-				? "Save couldn't finish automatically — try the button again."
-				: err.message || 'Save failed. Try again.',
-			'error',
-		);
+		// Flip the overlay into an inline retry surface. The blob is still in
+		// memory, so retry re-runs the whole pipeline (re-presign → fresh PUT
+		// → fresh commit) without losing any user state.
+		showSaveError({
+			title: saveErrorTitle(err),
+			detail: humanizeSaveError(err, auto),
+			onRetry: () => onSave({ auto: false }),
+			onCancel: () => {
+				hideSaveOverlay();
+				saveBtn.disabled = false;
+				startOverBtn.disabled = false;
+			},
+		});
 	}
+}
+
+function saveErrorTitle(err) {
+	switch (err.code) {
+		case 'upload_blocked':
+			return 'Upload blocked';
+		case 'upload_failed':
+			return 'Upload rejected';
+		case 'upload_aborted':
+			return 'Upload cancelled';
+		default:
+			if (err.stage === 'presign') return "Couldn't reserve upload";
+			if (err.stage === 'commit') return "Couldn't save record";
+			if (err.stage === 'fetch') return "Couldn't read source";
+			return "Save didn't finish";
+	}
+}
+
+function humanizeSaveError(err, auto) {
+	const status = err?.status;
+	const stage = err?.stage;
+	const code = err?.code;
+
+	if (code === 'upload_blocked') {
+		return "Couldn't reach storage. Check your network and try again.";
+	}
+	if (code === 'upload_failed') {
+		return 'Storage rejected the upload. Try again — if it keeps happening, the file may be too large.';
+	}
+	if (code === 'upload_aborted') {
+		return 'Upload was cancelled. Try again when you have a stable connection.';
+	}
+
+	if (status === 502 || status === 503 || status === 504) {
+		return "We couldn't reach the server. Try again in a moment.";
+	}
+	if (status === 413) {
+		return 'That avatar file is too large to save. Try a smaller GLB.';
+	}
+	if (status === 429) {
+		return 'Too many requests right now — wait a few seconds and try again.';
+	}
+
+	if (stage === 'fetch') {
+		return "Couldn't fetch the source model. Check the URL or try again.";
+	}
+	if (stage === 'commit') {
+		return 'Uploaded, but the record didn\'t save. Try again — it won\'t re-upload.';
+	}
+
+	const msg = err?.message || '';
+	if (err?.name === 'TypeError' || /Failed to fetch|NetworkError/i.test(msg)) {
+		return 'Network looks offline. Check your connection and try again.';
+	}
+	if (auto) return "Save couldn't finish automatically — try the button again.";
+	return 'Save failed. Try again, or refresh the page if it keeps happening.';
 }
 
 async function onStartOver() {
@@ -258,13 +389,22 @@ function showSaveOverlay(label, sublabel) {
 			<img src="/three.svg" alt="" />
 			<div class="label"></div>
 			<div class="sublabel"></div>
+			<div class="progress" hidden>
+				<div class="progress-bar"></div>
+			</div>
+			<div class="error-actions" hidden>
+				<button type="button" class="retry-btn">Retry</button>
+				<button type="button" class="cancel-btn">Cancel</button>
+			</div>
 		`;
 		document.body.appendChild(el);
 		document.documentElement.style.overflow = 'hidden';
 		document.body.style.overflow = 'hidden';
 	}
+	el.removeAttribute('data-state');
 	el.querySelector('.label').textContent = label;
 	el.querySelector('.sublabel').textContent = sublabel || '';
+	el.querySelector('.error-actions').hidden = true;
 }
 
 function updateSaveOverlay(label, sublabel) {
@@ -272,6 +412,46 @@ function updateSaveOverlay(label, sublabel) {
 	if (!el) return;
 	el.querySelector('.label').textContent = label;
 	if (sublabel !== undefined) el.querySelector('.sublabel').textContent = sublabel;
+}
+
+// pct: integer 0..100 to show a real progress bar, or null to hide it (used
+// once the upload finishes and we move on to the commit / agent-attach hops).
+function setSaveProgress(pct) {
+	const el = document.getElementById('save-loading');
+	if (!el) return;
+	const wrap = el.querySelector('.progress');
+	const bar = el.querySelector('.progress-bar');
+	if (pct === null || pct === undefined) {
+		wrap.hidden = true;
+		bar.style.width = '0%';
+		return;
+	}
+	wrap.hidden = false;
+	bar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+}
+
+// Reuses the existing fullscreen overlay as an error surface so the page
+// background stays dim and the user can't accidentally double-trigger the
+// save button underneath. Cancel restores the editing UI; Retry re-runs
+// onSave with the staged blob still in memory.
+function showSaveError({ title, detail, onRetry, onCancel }) {
+	const el = document.getElementById('save-loading');
+	if (!el) return;
+	el.setAttribute('data-state', 'error');
+	el.querySelector('.label').textContent = title;
+	el.querySelector('.sublabel').textContent = detail || '';
+	el.querySelector('.progress').hidden = true;
+	const actions = el.querySelector('.error-actions');
+	actions.hidden = false;
+	const retryBtn = actions.querySelector('.retry-btn');
+	const cancelBtn = actions.querySelector('.cancel-btn');
+	// Replace nodes to drop any previous click handler from earlier failures.
+	const freshRetry = retryBtn.cloneNode(true);
+	const freshCancel = cancelBtn.cloneNode(true);
+	retryBtn.replaceWith(freshRetry);
+	cancelBtn.replaceWith(freshCancel);
+	freshRetry.addEventListener('click', onRetry, { once: true });
+	freshCancel.addEventListener('click', onCancel, { once: true });
 }
 
 function hideSaveOverlay() {

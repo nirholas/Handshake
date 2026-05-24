@@ -20,6 +20,7 @@ export const ACTION_TYPES = {
 	REMEMBER: 'remember', // agent stored a memory
 	SIGN: 'sign', // agent signs an action with its wallet
 	LOAD_START: 'load-start', // model/asset loading started
+	LOAD_PROGRESS: 'load-progress', // model/asset download progress (bytes)
 	LOAD_END: 'load-end', // model/asset loading finished
 	VALIDATE: 'validate', // validation result (errors, warnings, hints)
 	PRESENCE: 'presence', // agent came online / went idle
@@ -67,6 +68,20 @@ const _DEFAULT_POLICIES = [
 		},
 	],
 	['look-at', { mode: 'debounce', intervalMs: 100 }],
+	// GLTFLoader's onProgress can fire dozens of times per second during a
+	// fast download — without a policy it trips the burst rate-limiter and
+	// floods the bus with protocol-error events. Coalesce to ~10fps,
+	// keeping only the most-recent bytes-loaded so the progress bar
+	// reflects the latest state.
+	[
+		'load-progress',
+		{
+			mode: 'coalesce',
+			windowMs: 100,
+			key: () => 'progress',
+			merge: (_a, b) => b,
+		},
+	],
 ];
 
 export class AgentProtocol extends EventTarget {

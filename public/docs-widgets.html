@@ -224,8 +224,12 @@
 						<td>Sharing in Slack/Discord/X — server-rendered with rich OG card.</td>
 					</tr>
 					<tr>
+						<td><code>/widget#widget=&lt;id&gt;</code></td>
+						<td>Slim viewer shell — no nav/footer chrome. The canonical embed URL.</td>
+					</tr>
+					<tr>
 						<td><code>/app#widget=&lt;id&gt;</code></td>
-						<td>The SPA viewer with the widget config applied.</td>
+						<td>Legacy SPA viewer — still works, but includes the full main-app chrome.</td>
 					</tr>
 					<tr>
 						<td><code>/api/widgets/&lt;id&gt;/og</code></td>
@@ -277,7 +281,7 @@
 			<h2 id="embedding">Embedding</h2>
 			<h3>iframe (recommended)</h3>
 			<pre><code>&lt;iframe
-  src="https://three.ws/app#widget=wdgt_abc123def456&amp;kiosk=true"
+  src="https://three.ws/widget#widget=wdgt_abc123def456&amp;kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"
@@ -381,7 +385,8 @@
 			<pre><code>GET /api/widgets/oembed?url=&lt;widget-url&gt;&amp;format=json</code></pre>
 			<p>
 				Returns standard <a href="https://oembed.com">oEmbed v1.0</a> JSON, type
-				<code>rich</code>. Accepts both <code>/w/&lt;id&gt;</code> and
+				<code>rich</code>. Accepts <code>/w/&lt;id&gt;</code>,
+				<code>/widget#widget=&lt;id&gt;</code>, and legacy
 				<code>/app#widget=&lt;id&gt;</code> forms.
 			</p>
 

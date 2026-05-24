@@ -334,6 +334,194 @@
 				</a>
 			</div>
 			<div class="spinner"></div>
+
+			<!-- ─────────────────────────────────────────────────────────────────
+				 Next layout chrome — visible only when body[data-layout="next"].
+				 Built once on page load; hidden via CSS when the user is on
+				 the Classic layout so toggling is a single attribute flip.
+				 ──────────────────────────────────────────────────────────── -->
+			<div class="next-chrome" id="next-chrome" aria-hidden="true">
+				<!-- First-interaction swipe affordance, copied from model-viewer.
+					 Hides itself after any pointer/wheel/key event on the stage. -->
+				<div class="next-prompt" id="next-prompt" aria-hidden="true">
+					<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M9 11V6a2 2 0 1 1 4 0v4" />
+						<path d="M13 8a2 2 0 1 1 4 0v6" />
+						<path d="M17 10a2 2 0 1 1 4 0v6a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-1l-2-3 1-2 3 1V8a2 2 0 1 1 4 0v3" />
+					</svg>
+					<span>drag to orbit</span>
+				</div>
+
+				<!-- Top-right floating cluster: Controls gear + Share + AR -->
+				<div class="next-corner" id="next-corner">
+					<button
+						class="next-icon-btn"
+						id="next-share-btn"
+						type="button"
+						aria-haspopup="menu"
+						aria-expanded="false"
+						aria-controls="next-share-menu"
+						title="Share, save, deploy"
+					>
+						<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<circle cx="18" cy="5" r="3" />
+							<circle cx="6" cy="12" r="3" />
+							<circle cx="18" cy="19" r="3" />
+							<line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
+							<line x1="15.4" y1="6.5" x2="8.6" y2="10.5" />
+						</svg>
+					</button>
+
+					<button
+						class="next-icon-btn"
+						id="next-controls-btn"
+						type="button"
+						aria-expanded="false"
+						aria-controls="next-drawer"
+						title="Controls"
+					>
+						<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<circle cx="12" cy="12" r="3" />
+							<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+						</svg>
+					</button>
+
+					<button
+						class="next-icon-btn"
+						id="next-fullscreen-btn"
+						type="button"
+						title="Fullscreen"
+					>
+						<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M3 9V3h6" />
+							<path d="M21 9V3h-6" />
+							<path d="M3 15v6h6" />
+							<path d="M21 15v6h-6" />
+						</svg>
+					</button>
+				</div>
+
+				<!-- Share popover — host for Save/Widget/Deploy/Profile and presence -->
+				<div
+					class="next-share-menu"
+					id="next-share-menu"
+					role="menu"
+					aria-labelledby="next-share-btn"
+					hidden
+				>
+					<div class="next-share-menu__title">Share</div>
+					<button class="next-share-menu__item" id="next-share-save" type="button" role="menuitem" hidden>
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
+						<span>Save to account</span>
+					</button>
+					<a class="next-share-menu__item" id="next-share-widget" role="menuitem" hidden>
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
+						<span>Make this a widget</span>
+					</a>
+					<a class="next-share-menu__item" id="next-share-deploy" role="menuitem" hidden>
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" /><line x1="12" y1="2" x2="12" y2="22" /><polyline points="22 8.5 12 15.5 2 8.5" /></svg>
+						<span>Deploy on-chain</span>
+					</a>
+					<a class="next-share-menu__item" id="next-share-profile" role="menuitem" target="_blank" rel="noopener" hidden>
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+						<span>Public profile</span>
+					</a>
+					<div class="next-share-menu__sep" role="separator"></div>
+					<button class="next-share-menu__item" id="next-share-upload" type="button" role="menuitem">
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+						<span>Upload model (.glb / .gltf)</span>
+					</button>
+					<a class="next-share-menu__item" href="/create" role="menuitem">
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+						<span>Create avatar from selfie</span>
+					</a>
+				</div>
+
+				<!-- Right-side Controls drawer — hosts the dat.GUI panel -->
+				<aside
+					class="next-drawer"
+					id="next-drawer"
+					role="dialog"
+					aria-label="Viewer controls"
+					aria-hidden="true"
+				>
+					<header class="next-drawer__head">
+						<h2 class="next-drawer__title">Controls</h2>
+						<button
+							class="next-drawer__close"
+							id="next-drawer-close"
+							type="button"
+							aria-label="Close controls"
+						>×</button>
+					</header>
+					<div class="next-drawer__body" id="next-drawer-body">
+						<!-- dat.GUI panel is moved here at runtime -->
+					</div>
+				</aside>
+
+				<!-- Bottom command dock: clip name + play/pause + scrubber + clip count -->
+				<section class="next-dock" id="next-dock" aria-label="Playback">
+					<button
+						class="next-dock__clip"
+						id="next-dock-clip"
+						type="button"
+						aria-haspopup="listbox"
+						aria-expanded="false"
+						aria-controls="next-grid"
+						title="Choose animation"
+					>
+						<span class="next-dock__clip-name" id="next-dock-clip-name">—</span>
+						<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="next-dock__caret">
+							<polyline points="6 9 12 15 18 9" />
+						</svg>
+					</button>
+
+					<button
+						class="next-dock__play"
+						id="next-dock-play"
+						type="button"
+						aria-label="Play"
+						aria-pressed="false"
+					>
+						<svg class="next-dock__icon next-dock__icon--play" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+						<svg class="next-dock__icon next-dock__icon--pause" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></svg>
+					</button>
+
+					<div class="next-dock__scrub" id="next-dock-scrub">
+						<input
+							class="next-dock__scrub-input"
+							id="next-dock-scrub-input"
+							type="range"
+							min="0"
+							max="1000"
+							step="1"
+							value="0"
+							aria-label="Animation timeline"
+						/>
+						<div class="next-dock__scrub-fill" id="next-dock-scrub-fill"></div>
+					</div>
+
+					<span class="next-dock__time" id="next-dock-time">0:00 / 0:00</span>
+
+					<button
+						class="next-dock__loop"
+						id="next-dock-loop"
+						type="button"
+						aria-pressed="true"
+						title="Loop"
+					>
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="17 1 21 5 17 9" />
+							<path d="M3 11V9a4 4 0 0 1 4-4h14" />
+							<polyline points="7 23 3 19 7 15" />
+							<path d="M21 13v2a4 4 0 0 1-4 4H3" />
+						</svg>
+					</button>
+				</section>
+
+				<!-- Animation grid that expands upward from the dock -->
+				<div class="next-grid" id="next-grid" role="listbox" aria-label="Animation clips" hidden></div>
+			</div>
 		</main>
 
 		<!-- Golden Ratio dev grid — toggle with Alt+G -->

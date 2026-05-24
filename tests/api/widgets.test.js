@@ -46,6 +46,7 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		widgetRead: vi.fn(async () => ({ success: rlState.success })),
 		widgetWrite: vi.fn(async () => ({ success: rlState.success })),
+		upload: vi.fn(async () => ({ success: rlState.success })),
 	},
 	clientIp: () => '127.0.0.1',
 }));
@@ -67,6 +68,8 @@ const duplicateHandler = (await import('../../api/widgets/[id]/duplicate.js')).d
 const statsHandler = (await import('../../api/widgets/[id]/stats.js')).default;
 const viewHandler = (await import('../../api/widgets/view.js')).default;
 const ogHandler = (await import('../../api/widgets/og.js')).default;
+const transcriptsHandler = (await import('../../api/widgets/[id]/transcripts.js')).default;
+const knowledgeHandler = (await import('../../api/widgets/[id]/knowledge.js')).default;
 
 const { getAvatar } = await import('../../api/_lib/avatars.js');
 
@@ -570,5 +573,174 @@ describe('GET /api/widgets/og', () => {
 		expect(res.statusCode).toBe(200);
 		expect(res._body).toContain('Tour');
 		expect(res._body).toContain('HOTSPOT TOUR');
+	});
+});
+
+// ── GET /api/widgets/:id/transcripts ────────────────────────────────────────
+
+describe('GET /api/widgets/:id/transcripts', () => {
+	it('401s without auth', async () => {
+		const req = mockReq({ method: 'GET', url: '/api/widgets/wdgt_x/transcripts?id=wdgt_x' });
+		const res = mockRes();
+		await transcriptsHandler(req, res);
+		expect(res.statusCode).toBe(401);
+	});
+
+	it('404s when the caller does not own the widget', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([]); // ownership check returns no rows
+		const req = mockReq({ method: 'GET', url: '/api/widgets/wdgt_x/transcripts?id=wdgt_x' });
+		const res = mockRes();
+		await transcriptsHandler(req, res);
+		expect(res.statusCode).toBe(404);
+	});
+
+	it('returns threads + totals envelope', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([{ id: 'wdgt_x' }]); // ownership ok
+		sqlQueue.push([
+			{
+				id: 'wct_a',
+				visitor_id: 'v_abc',
+				referer_host: 'example.com',
+				country: 'US',
+				message_count: 4,
+				started_at: '2026-05-23T00:00:00Z',
+				last_message_at: '2026-05-24T00:00:00Z',
+				preview: 'hello there',
+				user_msgs: 2,
+			},
+		]);
+		sqlQueue.push([{ total_threads: 1, total_messages: 4, unique_visitors: 1 }]);
+
+		const req = mockReq({ method: 'GET', url: '/api/widgets/wdgt_x/transcripts?id=wdgt_x' });
+		const res = mockRes();
+		await transcriptsHandler(req, res);
+		expect(res.statusCode).toBe(200);
+		const body = parseJson(res);
+		expect(body.threads).toHaveLength(1);
+		expect(body.threads[0].id).toBe('wct_a');
+		expect(body.threads[0].visitor_label).toMatch(/visitor/);
+		expect(body.totals.threads).toBe(1);
+		expect(body.totals.messages).toBe(4);
+	});
+
+	it('returns single thread when thread_id is in the query', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([{ id: 'wdgt_x' }]); // ownership ok
+		sqlQueue.push([
+			{
+				id: 'wct_a',
+				visitor_id: 'v_abc',
+				referer_host: null,
+				country: null,
+				message_count: 2,
+				started_at: 't',
+				last_message_at: 't',
+			},
+		]);
+		sqlQueue.push([
+			{ id: 1, role: 'user',      content: 'hi',         actions: null, provider: null,        model: null, redacted: false, created_at: 't' },
+			{ id: 2, role: 'assistant', content: 'hello back', actions: [],   provider: 'anthropic', model: 'm',  redacted: false, created_at: 't' },
+		]);
+
+		const req = mockReq({
+			method: 'GET',
+			url: '/api/widgets/wdgt_x/transcripts?id=wdgt_x&thread_id=wct_a',
+		});
+		const res = mockRes();
+		await transcriptsHandler(req, res);
+		expect(res.statusCode).toBe(200);
+		const body = parseJson(res);
+		expect(body.thread.id).toBe('wct_a');
+		expect(body.messages).toHaveLength(2);
+		expect(body.messages[1].provider).toBe('anthropic');
+	});
+});
+
+// ── /api/widgets/:id/knowledge ──────────────────────────────────────────────
+
+describe('GET /api/widgets/:id/knowledge', () => {
+	it('401s without auth', async () => {
+		const req = mockReq({ method: 'GET', url: '/api/widgets/wdgt_x/knowledge?id=wdgt_x' });
+		const res = mockRes();
+		await knowledgeHandler(req, res);
+		expect(res.statusCode).toBe(401);
+	});
+
+	it('404s when the caller does not own the widget', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([]); // ownership check empty
+		const req = mockReq({ method: 'GET', url: '/api/widgets/wdgt_x/knowledge?id=wdgt_x' });
+		const res = mockRes();
+		await knowledgeHandler(req, res);
+		expect(res.statusCode).toBe(404);
+	});
+
+	it('lists docs for an owned widget', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([{ id: 'wdgt_x', type: 'talking-agent' }]); // ownership ok
+		sqlQueue.push([
+			{
+				id: 'wkd_a',
+				title: 'Docs',
+				source_type: 'url',
+				source_url: 'https://example.com',
+				byte_size: 1024,
+				chunk_count: 4,
+				token_count: 800,
+				status: 'ready',
+				error: null,
+				created_at: 't',
+				updated_at: 't',
+			},
+		]);
+		const req = mockReq({ method: 'GET', url: '/api/widgets/wdgt_x/knowledge?id=wdgt_x' });
+		const res = mockRes();
+		await knowledgeHandler(req, res);
+		expect(res.statusCode).toBe(200);
+		const body = parseJson(res);
+		expect(body.docs).toHaveLength(1);
+		expect(body.docs[0].title).toBe('Docs');
+	});
+});
+
+describe('POST /api/widgets/:id/knowledge', () => {
+	it('rejects non-talking-agent widgets with 400', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([{ id: 'wdgt_x', type: 'turntable' }]); // ownership ok but wrong type
+		const req = mockReq({
+			method: 'POST',
+			url: '/api/widgets/wdgt_x/knowledge?id=wdgt_x',
+			body: { source_type: 'text', content: 'hi' },
+		});
+		const res = mockRes();
+		await knowledgeHandler(req, res);
+		expect(res.statusCode).toBe(400);
+		expect(parseJson(res).error).toBe('invalid_widget_type');
+	});
+});
+
+describe('DELETE /api/widgets/:id/knowledge', () => {
+	it('400s without doc_id', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([{ id: 'wdgt_x', type: 'talking-agent' }]); // ownership ok
+		const req = mockReq({ method: 'DELETE', url: '/api/widgets/wdgt_x/knowledge?id=wdgt_x' });
+		const res = mockRes();
+		await knowledgeHandler(req, res);
+		expect(res.statusCode).toBe(400);
+	});
+
+	it('404s when the doc is not on the widget', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([{ id: 'wdgt_x', type: 'talking-agent' }]); // ownership ok
+		sqlQueue.push([]); // delete returns nothing
+		const req = mockReq({
+			method: 'DELETE',
+			url: '/api/widgets/wdgt_x/knowledge?id=wdgt_x&doc_id=wkd_missing',
+		});
+		const res = mockRes();
+		await knowledgeHandler(req, res);
+		expect(res.statusCode).toBe(404);
 	});
 });

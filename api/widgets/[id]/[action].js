@@ -8,18 +8,17 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 
 import { sql } from '../../_lib/db.js';
-import {
-	getSessionUser,
-	authenticateBearer,
-	extractBearer,
-	hasScope,
-} from '../../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { parse } from '../../_lib/validate.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { captureException } from '../../_lib/sentry.js';
 import { isDemoWidgetId, getDemoWidget } from '../_demo-fixtures.js';
 import { decorate } from '../index.js';
+import { redactPii } from '../../_lib/pii.js';
+import { embed, cosine, embeddingsConfigured } from '../../_lib/embeddings.js';
+import { listTranscripts, getTranscript } from './_transcripts.js';
+import { listKnowledge, ingestKnowledge, deleteKnowledge } from './_knowledge.js';
 
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
@@ -30,6 +29,10 @@ export default wrap(async (req, res) => {
 			return handleDuplicate(req, res);
 		case 'stats':
 			return handleStats(req, res);
+		case 'transcripts':
+			return handleTranscripts(req, res);
+		case 'knowledge':
+			return handleKnowledge(req, res);
 		default:
 			return error(res, 404, 'not_found', 'unknown widget action');
 	}
@@ -90,6 +93,22 @@ const chatBody = z.object({
 		)
 		.max(40)
 		.default([]),
+	// Cookieless visitor + thread identifiers, minted client-side. We only
+	// store them — they're opaque to us and never joined against user data.
+	visitor_id: z
+		.string()
+		.trim()
+		.min(8)
+		.max(64)
+		.regex(/^[A-Za-z0-9_-]+$/)
+		.optional(),
+	thread_id: z
+		.string()
+		.trim()
+		.min(8)
+		.max(64)
+		.regex(/^[A-Za-z0-9_-]+$/)
+		.optional(),
 });
 
 const SKILL_TOOLS = [
@@ -181,6 +200,14 @@ async function handleChat(req, res) {
 	}
 	const allowedSkills = filterSkills(cfg.skills);
 
+	// Pull grounding chunks before we open the stream so latency stays in one
+	// place rather than blocking after the visitor sees "typing…".
+	const knowledgeBlock = await retrieveKnowledge(widget.id, body.message).catch((err) => {
+		if (process.env.DEBUG === 'true')
+			console.warn('[widget-chat] knowledge retrieve', err?.message);
+		return null;
+	});
+
 	// Open SSE stream.
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/event-stream; charset=utf-8');
@@ -190,8 +217,10 @@ async function handleChat(req, res) {
 	// Flush headers immediately so the client opens the stream.
 	res.flushHeaders?.();
 
+	let result;
+	let usedProvider = provider;
+	let usedModel = requestedModel || null;
 	try {
-		let result;
 		if (provider === 'none') {
 			result = { reply: nonePatternReply(body.message, cfg), actions: [] };
 		} else if (provider === 'custom') {
@@ -200,16 +229,17 @@ async function handleChat(req, res) {
 			const route = pickProvider(provider, requestedModel);
 			if (!route) {
 				result = {
-					reply:
-						"I'm not configured to answer just yet — no chat provider key is set on this site.",
+					reply: "I'm not configured to answer just yet — no chat provider key is set on this site.",
 					actions: [],
 				};
 			} else {
+				usedProvider = route.name;
+				usedModel = route.model;
 				result = await callLLM({
 					route,
 					message: body.message,
 					history: body.history,
-					systemPrompt: buildSystemPrompt(cfg, widget),
+					systemPrompt: buildSystemPrompt(cfg, widget, knowledgeBlock),
 					temperature: Number(cfg.temperature) || 0.7,
 					maxTurns: Math.min(20, Math.max(1, Number(cfg.maxTurns) || 20)),
 					allowedSkills,
@@ -229,8 +259,20 @@ async function handleChat(req, res) {
 		res.end();
 	}
 
-	// Best-effort telemetry — count only, never content.
-	logChatEvent(widgetId).catch(() => {});
+	// Persist the turn off the response path — never block the visitor on a
+	// telemetry write, and never let a write failure leak as a 500.
+	persistTurn({
+		widgetId,
+		req,
+		body,
+		userMessage: body.message,
+		reply: result?.reply || '',
+		actions: result?.actions || [],
+		provider: usedProvider,
+		model: usedModel,
+	}).catch((err) => {
+		if (process.env.DEBUG === 'true') console.warn('[widget-chat] persist', err?.message);
+	});
 }
 
 // ── Brain dispatchers ──────────────────────────────────────────────────────
@@ -438,7 +480,7 @@ function nonePatternReply(message, cfg) {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(cfg, widget) {
+function buildSystemPrompt(cfg, widget, knowledgeBlock) {
 	const ownerPrompt = (cfg.systemPrompt || '').trim();
 	const name = (cfg.agentName || widget.name || 'Agent').slice(0, 80);
 	const title = (cfg.agentTitle || 'AI Agent').slice(0, 80);
@@ -451,6 +493,15 @@ function buildSystemPrompt(cfg, widget) {
 	];
 	if (ownerPrompt) {
 		lines.push('', '<owner-instructions>', ownerPrompt, '</owner-instructions>');
+	}
+	if (knowledgeBlock) {
+		lines.push(
+			'',
+			'<reference-material>',
+			"The following excerpts come from the site owner's uploaded knowledge base. Ground your answer in them when relevant. Cite the source title in your reply when you quote from it.",
+			knowledgeBlock,
+			'</reference-material>',
+		);
 	}
 	return lines.join('\n');
 }
@@ -522,18 +573,131 @@ async function loadWidget(id) {
 	}
 }
 
-async function logChatEvent(widgetId) {
+// ── Transcript ingest ───────────────────────────────────────────────────────
+//
+// One thread per (visitor_id × thread_id). If the visitor sent neither — older
+// embed runtime, opt-out, or a client that strips storage — we synthesize a
+// random thread so the turn still lands in widget_chat_messages and the
+// creator's "messages today" counter is accurate, even if it can't be grouped.
+async function persistTurn({ widgetId, req, body, userMessage, reply, actions, provider, model }) {
+	const visitorId = body.visitor_id || `anon_${crypto.randomBytes(6).toString('base64url')}`;
+	const threadId = body.thread_id || `wct_${crypto.randomBytes(9).toString('base64url')}`;
+
+	const refererHost = parseRefererHost(req.headers.referer || req.headers.origin);
+	const country = headerValue(req, 'x-vercel-ip-country') || null;
+	const uaHash = uaFingerprint(req.headers['user-agent']);
+
+	const userRedacted = redactPii(userMessage);
+	const replyRedacted = redactPii(reply || '');
+
 	try {
+		// Upsert thread. `last_message_at` always bumps; everything else is
+		// preserved from the first turn so the creator sees the original
+		// referrer/country/UA hash even if the visitor switches tabs mid-thread.
 		await sql`
-			insert into widget_chat_events (widget_id, created_at)
-			values (${widgetId}, now())
+			insert into widget_chat_threads
+				(id, widget_id, visitor_id, referer_host, country, user_agent_hash, message_count, started_at, last_message_at)
+			values
+				(${threadId}, ${widgetId}, ${visitorId}, ${refererHost}, ${country}, ${uaHash}, 2, now(), now())
+			on conflict (id) do update set
+				message_count   = widget_chat_threads.message_count + 2,
+				last_message_at = excluded.last_message_at
 		`;
+
+		await sql`
+			insert into widget_chat_messages (thread_id, widget_id, role, content, redacted, created_at)
+			values (${threadId}, ${widgetId}, 'user', ${userRedacted.content}, ${userRedacted.redacted}, now())
+		`;
+		if (reply) {
+			await sql`
+				insert into widget_chat_messages
+					(thread_id, widget_id, role, content, actions, provider, model, redacted, created_at)
+				values
+					(${threadId}, ${widgetId}, 'assistant', ${replyRedacted.content},
+					 ${JSON.stringify(actions || [])}::jsonb, ${provider || null}, ${model || null},
+					 ${replyRedacted.redacted}, now())
+			`;
+		}
 	} catch (err) {
-		// Table is optional — Prompt 06 owns the migration. Stay quiet on missing-table.
+		// Missing-table is the only "expected" failure (migrations not applied yet).
 		if (!/relation .* does not exist/i.test(err?.message || '')) {
-			console.warn('[widget-chat] log failed', err?.message);
+			console.warn('[widget-chat] persist failed', err?.message);
 		}
 	}
+}
+
+// ── Knowledge retrieval ─────────────────────────────────────────────────────
+//
+// For talking-agent widgets, pull the top-K chunks for the visitor's message
+// from widget_knowledge_chunks. We compute cosine similarity in JS — fine for
+// the low-thousands-of-chunks scale a single widget will ever hit. If a widget
+// outgrows that, swap embedding storage to pgvector with one column rewrite.
+const RETRIEVAL_TOP_K = 3;
+const RETRIEVAL_MIN_SCORE = 0.18;
+const RETRIEVAL_MAX_CHARS = 4_500; // ~ 1100 tokens, keeps room for chat history
+
+async function retrieveKnowledge(widgetId, message) {
+	if (!message || !embeddingsConfigured()) return null;
+
+	let rows;
+	try {
+		rows = await sql`
+			select c.id, c.doc_id, c.content, c.embedding,
+			       d.title, d.source_url, d.source_type
+			from widget_knowledge_chunks c
+			join widget_knowledge_docs   d on d.id = c.doc_id
+			where c.widget_id = ${widgetId}
+		`;
+	} catch (err) {
+		if (/relation .* does not exist/i.test(err?.message || '')) return null;
+		throw err;
+	}
+	if (!rows.length) return null;
+
+	const [queryEmbedding] = await embed([message]);
+	const scored = rows
+		.map((r) => {
+			const e = Array.isArray(r.embedding) ? r.embedding : r.embedding?.values || [];
+			return { ...r, score: cosine(queryEmbedding, e) };
+		})
+		.filter((r) => r.score >= RETRIEVAL_MIN_SCORE)
+		.sort((a, b) => b.score - a.score)
+		.slice(0, RETRIEVAL_TOP_K);
+
+	if (!scored.length) return null;
+
+	const lines = [];
+	let total = 0;
+	for (const r of scored) {
+		const header = r.source_url
+			? `[Source: ${r.title} — ${r.source_url}]`
+			: `[Source: ${r.title}]`;
+		const block = `${header}\n${r.content.trim()}`;
+		if (total + block.length > RETRIEVAL_MAX_CHARS) break;
+		lines.push(block);
+		total += block.length;
+	}
+	return lines.join('\n\n');
+}
+
+function parseRefererHost(referer) {
+	if (!referer) return null;
+	try {
+		return new URL(referer).hostname || null;
+	} catch {
+		return null;
+	}
+}
+
+function headerValue(req, name) {
+	const v = req.headers[name];
+	if (Array.isArray(v)) return v[0] || null;
+	return v || null;
+}
+
+function uaFingerprint(ua) {
+	if (!ua) return null;
+	return crypto.createHash('sha256').update(String(ua)).digest('hex').slice(0, 16);
 }
 
 function writeSse(res, event, data) {
@@ -715,12 +879,16 @@ async function lastViewedAt(id) {
 	}
 }
 
-// Talking-agent widget chats live in agent_actions (Prompt 03 will wire this).
-// Until that table-or-source is finalized, return null so the UI knows to hide
-// the chat stat line for non-talking-agent types and for un-instrumented ones.
-async function chatCountFor(_id, type) {
+async function chatCountFor(id, type) {
 	if (type !== 'talking-agent') return null;
-	return null;
+	try {
+		const rows =
+			await sql`select count(*)::bigint as n from widget_chat_messages where widget_id = ${id}`;
+		return Number(rows[0]?.n || 0);
+	} catch (err) {
+		if (/relation .* does not exist/i.test(err?.message || '')) return null;
+		throw err;
+	}
 }
 
 function startOfUtcDay(d) {
@@ -740,4 +908,137 @@ async function resolveStatsAuth(req) {
 	if (session)
 		return { userId: session.id, source: 'session', scope: 'avatars:read avatars:write' };
 	return await authenticateBearer(extractBearer(req));
+}
+
+// ── transcripts (talking-agent only) ────────────────────────────────────────
+
+async function handleTranscripts(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const id = actionIdFromReq(req, 'transcripts');
+	if (!id) return error(res, 400, 'invalid_request', 'id required');
+
+	const auth = await resolveOwnerAuth(req, 'avatars:read');
+	if (!auth.error) {
+		const [w] = await sql`
+			select id from widgets
+			where id = ${id} and user_id = ${auth.userId} and deleted_at is null limit 1
+		`;
+		if (!w) return error(res, 404, 'not_found', 'widget not found or not yours');
+	} else {
+		return auth.error(res);
+	}
+
+	const url = new URL(req.url, 'http://x');
+	const threadId = url.searchParams.get('thread_id');
+	if (threadId) {
+		const data = await getTranscript(id, threadId);
+		if (!data) return error(res, 404, 'not_found', 'thread not found');
+		res.setHeader('cache-control', 'private, max-age=10');
+		return json(res, 200, data);
+	}
+
+	const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '25', 10)));
+	const before = url.searchParams.get('before') || null;
+	const data = await listTranscripts(id, { limit, before });
+	res.setHeader('cache-control', 'private, max-age=10');
+	return json(res, 200, data);
+}
+
+// ── knowledge (talking-agent only) ──────────────────────────────────────────
+
+async function handleKnowledge(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'POST', 'DELETE'])) return;
+
+	const id = actionIdFromReq(req, 'knowledge');
+	if (!id) return error(res, 400, 'invalid_request', 'id required');
+
+	const needed = req.method === 'GET' ? 'avatars:read' : 'avatars:write';
+	const auth = await resolveOwnerAuth(req, needed);
+	if (auth.error) return auth.error(res);
+
+	const [w] = await sql`
+		select id, type from widgets
+		where id = ${id} and user_id = ${auth.userId} and deleted_at is null limit 1
+	`;
+	if (!w) return error(res, 404, 'not_found', 'widget not found or not yours');
+
+	if (req.method === 'GET') {
+		const out = await listKnowledge(id);
+		res.setHeader('cache-control', 'private, max-age=15');
+		return json(res, 200, out);
+	}
+
+	if (req.method === 'DELETE') {
+		const url = new URL(req.url, 'http://x');
+		const docId = url.searchParams.get('doc_id');
+		if (!docId) return error(res, 400, 'invalid_request', 'doc_id required');
+		const ok = await deleteKnowledge({ widgetId: id, userId: auth.userId, docId });
+		if (!ok) return error(res, 404, 'not_found', 'doc not found');
+		return json(res, 200, { ok: true });
+	}
+
+	if (w.type !== 'talking-agent') {
+		return error(
+			res,
+			400,
+			'invalid_widget_type',
+			'knowledge upload is only available for talking-agent widgets',
+		);
+	}
+
+	const rl = await limits.upload(auth.userId);
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many uploads — try again later');
+
+	let body;
+	try {
+		body = await readJson(req);
+	} catch (err) {
+		return error(res, err.status || 400, 'invalid_request', err.message);
+	}
+
+	try {
+		const doc = await ingestKnowledge({ widgetId: id, userId: auth.userId, input: body });
+		return json(res, 201, { doc });
+	} catch (err) {
+		return error(
+			res,
+			err.status || 400,
+			err.code || 'ingest_failed',
+			err.message || 'ingest failed',
+		);
+	}
+}
+
+// ── Shared helpers for the new action handlers ──────────────────────────────
+
+function actionIdFromReq(req, action) {
+	const fromQuery = req.query?.id;
+	if (typeof fromQuery === 'string' && fromQuery) return fromQuery;
+	const path = new URL(req.url, 'http://x').pathname;
+	const re = new RegExp(`/api/widgets/([^/]+)/${action}`);
+	const m = path.match(re);
+	return m ? decodeURIComponent(m[1]) : null;
+}
+
+async function resolveOwnerAuth(req, requiredScope) {
+	const session = await getSessionUser(req);
+	if (session)
+		return {
+			userId: session.id,
+			source: 'session',
+			scope: 'avatars:read avatars:write avatars:delete',
+		};
+	const bearer = await authenticateBearer(extractBearer(req));
+	if (!bearer) {
+		return { error: (res) => error(res, 401, 'unauthorized', 'authentication required') };
+	}
+	if (!hasScope(bearer.scope, requiredScope)) {
+		return {
+			error: (res) => error(res, 403, 'insufficient_scope', `${requiredScope} required`),
+		};
+	}
+	return bearer;
 }

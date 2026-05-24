@@ -356,7 +356,7 @@ create table if not exists widgets (
     id              text primary key,                -- 'wdgt_' + 12 base64url chars
     user_id         uuid not null references users(id) on delete cascade,
     avatar_id       uuid references avatars(id) on delete set null,
-    type            text not null check (type in ('turntable','animation-gallery','talking-agent','passport','hotspot-tour')),
+    type            text not null check (type in ('turntable','animation-gallery','talking-agent','passport','hotspot-tour','pumpfun-feed','kol-trades','live-trades-canvas')),
     name            text not null,
     config          jsonb not null default '{}'::jsonb,
     is_public       boolean not null default true,
@@ -388,6 +388,96 @@ create table if not exists widget_views (
 
 create index if not exists widget_views_widget_time
     on widget_views(widget_id, created_at desc);
+
+-- ── widget_chat_threads — one row per (widget, visitor, page-load) ──────────
+-- visitor_id is a cookieless opaque UUID minted client-side in localStorage;
+-- thread_id is per page-load in sessionStorage so each "conversation start"
+-- gets its own bucket. Lets the creator see conversations grouped by visit.
+create table if not exists widget_chat_threads (
+    id              text primary key,                -- 'wct_' + 12 base64url chars
+    widget_id       text not null references widgets(id) on delete cascade,
+    visitor_id      text not null,
+    referer_host    text,
+    country         text,
+    user_agent_hash text,
+    message_count   integer not null default 0,
+    started_at      timestamptz not null default now(),
+    last_message_at timestamptz not null default now()
+);
+
+create index if not exists widget_chat_threads_widget_time
+    on widget_chat_threads(widget_id, last_message_at desc);
+create index if not exists widget_chat_threads_visitor
+    on widget_chat_threads(widget_id, visitor_id, started_at desc);
+
+-- ── widget_chat_messages — append-only log of visitor + assistant turns ─────
+-- content is the redacted form — email/phone/card patterns are scrubbed at
+-- write time so the creator can review without storing PII.
+create table if not exists widget_chat_messages (
+    id           bigserial primary key,
+    thread_id    text not null references widget_chat_threads(id) on delete cascade,
+    widget_id    text not null references widgets(id) on delete cascade,
+    role         text not null check (role in ('user', 'assistant')),
+    content      text not null,
+    actions      jsonb,
+    provider     text,
+    model        text,
+    redacted     boolean not null default false,
+    created_at   timestamptz not null default now()
+);
+
+create index if not exists widget_chat_messages_thread_time
+    on widget_chat_messages(thread_id, created_at);
+create index if not exists widget_chat_messages_widget_time
+    on widget_chat_messages(widget_id, created_at desc);
+
+-- ── widget_knowledge_docs — uploaded docs + URLs that ground the agent ─────
+create table if not exists widget_knowledge_docs (
+    id           text primary key,                   -- 'wkd_' + 12 base64url chars
+    widget_id    text not null references widgets(id) on delete cascade,
+    user_id      uuid not null references users(id) on delete cascade,
+    title        text not null,
+    source_type  text not null check (source_type in ('url', 'text', 'pdf', 'markdown')),
+    source_url   text,
+    byte_size    integer not null default 0,
+    chunk_count  integer not null default 0,
+    token_count  integer not null default 0,
+    status       text not null default 'ready' check (status in ('processing', 'ready', 'failed')),
+    error        text,
+    created_at   timestamptz not null default now(),
+    updated_at   timestamptz not null default now()
+);
+
+create index if not exists widget_knowledge_docs_widget
+    on widget_knowledge_docs(widget_id, created_at desc);
+create index if not exists widget_knowledge_docs_user
+    on widget_knowledge_docs(user_id, created_at desc);
+
+do $$ begin
+    create trigger widget_knowledge_docs_set_updated_at before update on widget_knowledge_docs
+        for each row execute function set_updated_at();
+exception when duplicate_object then null; end $$;
+
+-- ── widget_knowledge_chunks — 512/100-overlap chunks with truncated embeds ──
+-- Embedding is text-embedding-3-small @ 256 dims (Matryoshka), stored as a
+-- JSONB float array. Retrieval scores via cosine similarity in JS at query
+-- time; switch to pgvector if a single widget grows past several thousand
+-- chunks.
+create table if not exists widget_knowledge_chunks (
+    id            bigserial primary key,
+    doc_id        text not null references widget_knowledge_docs(id) on delete cascade,
+    widget_id     text not null references widgets(id) on delete cascade,
+    chunk_index   integer not null,
+    content       text not null,
+    embedding     jsonb not null,
+    token_count   integer not null default 0,
+    created_at    timestamptz not null default now()
+);
+
+create index if not exists widget_knowledge_chunks_widget
+    on widget_knowledge_chunks(widget_id);
+create index if not exists widget_knowledge_chunks_doc
+    on widget_knowledge_chunks(doc_id, chunk_index);
 
 -- ── erc8004_agents_index — crawled directory of every on-chain agent ───────
 -- Populated by api/cron/erc8004-crawl.js from Etherscan V2 getLogs across every

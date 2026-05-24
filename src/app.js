@@ -22,6 +22,7 @@ import { mountLiveTradesCanvas } from './widgets/live-trades-canvas.js';
 import { mountPassport } from './widgets/passport.js';
 import queryString from 'query-string';
 import { ScreenshotModal } from './components/screenshot-modal.js';
+import { NextLayout } from './next-layout.js';
 
 // Agent system — the new primitive layer
 import { protocol, ACTION_TYPES } from './agent-protocol.js';
@@ -58,6 +59,14 @@ function _base64ToFile(b64, name, type) {
 	const bytes = new Uint8Array(bin.length);
 	for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
 	return new File([bytes], name, { type });
+}
+
+function _fmtBytes(n) {
+	if (!Number.isFinite(n) || n <= 0) return '0 B';
+	const units = ['B', 'KB', 'MB', 'GB'];
+	const i = Math.min(units.length - 1, Math.floor(Math.log(n) / Math.log(1024)));
+	const v = n / Math.pow(1024, i);
+	return `${v >= 10 || i === 0 ? Math.round(v) : v.toFixed(1)} ${units[i]}`;
 }
 
 /**
@@ -153,17 +162,33 @@ class App {
 			pending: qp.get('pending') === '1',
 			// avatarSession: selfie pipeline passes a session URL here after processing photos
 			avatarSession: hash.avatarSession ? decodeURIComponent(hash.avatarSession) : '',
-			// Per-embed overrides (appended to iframe URL by Studio embed modal)
+			// Per-embed overrides (appended to iframe URL by Studio embed modal
+			// and the public /widgets gallery customizer).
 			noAnimations: Boolean(hash.noAnimations),
 			noChat: Boolean(hash.noChat),
 			noControls: Boolean(hash.noControls),
 			avatarChatOff: hash['avatar-chat'] === 'off',
+			// Live-customizer overrides — applied on top of the saved widget config.
+			// Hash form is %23-encoded for color values (e.g. accent=%2300ff88).
+			overrideAccent: hash.accent ? decodeURIComponent(hash.accent) : '',
+			overrideBg: hash.bg ? decodeURIComponent(hash.bg) : '',
+			overrideMint: hash.mint ? decodeURIComponent(hash.mint) : '',
+			overrideKind: hash.kind || '',
+			overrideMinTier: hash.minTier || '',
 		};
+
+		// Slim /widget shell — see pages/widget.html. The shell hides every
+		// owner-mode surface and the viewer is the only thing on screen.
+		// Several setup steps below (wallet reconnect, dropzone, selfie pipeline,
+		// auth check, layout switch) are pure dead weight in that surface, so
+		// we short-circuit them when the shell flag is present.
+		this._widgetShell = Boolean(window.__WIDGET_SHELL);
 
 		// Fire-and-forget silent wallet reconnect. Cheap (single `eth_accounts`
 		// RPC), never throws, never prompts. If the user has previously authorized
 		// the site, this populates the shared signer before any wallet UI mounts.
-		eagerConnectWallet();
+		// Skip in the slim widget shell — embeds don't need wallet state.
+		if (!this._widgetShell) eagerConnectWallet();
 
 		this.el = el;
 		this.viewer = null;
@@ -189,27 +214,43 @@ class App {
 		// Wire validator results into the protocol
 		this._hookValidator();
 
+		// Viewer status overlay (loading / error UI) tied to LOAD_START / LOAD_END.
+		this._wireViewerStatus();
+
 		this._editingAgentId = this.options.agentEdit || null;
 
-		this.createDropzone();
-		this.setupAvatarCreator();
-		if (this.options.avatarSession) {
-			this.avatarCreator.open(this.options.avatarSession);
+		// In the slim widget shell there's no dropzone, no selfie pipeline UI,
+		// no sign-in link, no layout switch buttons. Skip those entirely so
+		// we don't waste cycles attaching listeners + a network round-trip
+		// (getMe) for an iframe that only renders a 3D canvas.
+		// _applyViewerMode still runs — it sets `data-viewer-mode="embed"`
+		// which CSS uses to hide ambient chrome on shared pages.
+		if (!this._widgetShell) {
+			this.createDropzone();
+			this.setupAvatarCreator();
+			if (this.options.avatarSession) {
+				this.avatarCreator.open(this.options.avatarSession);
+			}
 		}
 		this.hideSpinner();
 		this._applyViewerMode();
-		this._setupLayoutSwitch();
-		this._updateSignInLink();
-		this._setupSaveToAccount();
-		this._setupMakeWidgetButton();
-		this._setupScreenshotButton();
-		this.screenshotModal = new ScreenshotModal(this.el);
+		if (!this._widgetShell) {
+			this._setupLayoutSwitch();
+			this._setupNextLayout();
+			this._updateSignInLink();
+			this._setupSaveToAccount();
+			this._setupMakeWidgetButton();
+			this._setupScreenshotButton();
+			this.screenshotModal = new ScreenshotModal(this.el);
+		}
 
 		const options = this.options;
 
 		if (options.kiosk) {
+			// In the slim widget shell there's no <header> in the DOM —
+			// hide defensively only if it exists (legacy /app#kiosk=true URLs).
 			const headerEl = document.querySelector('header');
-			headerEl.style.display = 'none';
+			if (headerEl) headerEl.style.display = 'none';
 			const footerEl = document.querySelector('footer');
 			if (footerEl) footerEl.style.display = 'none';
 		}
@@ -246,7 +287,8 @@ class App {
 			return;
 		}
 
-		// Load a saved widget by ID: /app#widget=<wdgt_...>
+		// Load a saved widget by ID: /widget#widget=<wdgt_...> (slim shell,
+		// canonical) or legacy /app#widget=<wdgt_...> (full SPA, still works).
 		if (options.widget) {
 			this._loadWidget(options.widget);
 			this._initAgentSystem();
@@ -257,10 +299,11 @@ class App {
 		// Editing an existing agent: ?agent=<uuid> (authenticated editing surface)
 		if (options.agentEdit) {
 			this._loadAgentForEdit(options.agentEdit).catch((err) => {
-				// Any throw before view() runs would leave the viewer un-mounted
-				// and the user staring at an empty canvas. Fall back to the
-				// default load so a 3D scene is always on screen.
+				// Defensive: _loadAgentForEdit handles its own failures and
+				// always mounts the viewer up-front, but a truly unexpected
+				// throw shouldn't leave the user with no UI to act on.
 				console.warn('[3d-agent] agent-edit load failed', err);
+				this._showViewerError("Couldn't load this agent.", () => this._retryAgentLoad());
 				if (!this.viewer) this._maybeResumeOrLoad(this.options);
 				if (!this._agentSystemBooted) this._initAgentSystem();
 			});
@@ -510,6 +553,13 @@ class App {
 		}
 		const layout = stored === 'next' ? 'next' : 'classic';
 		document.body.dataset.layout = layout;
+	}
+
+	_setupNextLayout() {
+		// Skip in embed/widget/kiosk/deploy contexts — Next chrome is owner-only.
+		if (document.body.dataset.viewerMode !== 'main') return;
+		this._nextLayout = new NextLayout(this);
+		this._nextLayout.mount();
 	}
 
 	_setupLayoutSwitch() {
@@ -930,6 +980,19 @@ class App {
 	}
 
 	async _loadAgentForEdit(agentId) {
+		// Reset onboarding gate so a retry can re-fire it once the GLB actually
+		// loads. The localStorage gate inside _maybeShowOnboarding still
+		// guarantees once-per-agent in steady state.
+		this._onboardingFired = false;
+
+		// Mount the canvas up-front so the loading/error overlay has a parent
+		// and the page layout never collapses around an empty container.
+		if (!this.viewer) this.createViewer();
+
+		// Surface a loading state immediately — the identity name lookup
+		// below may take a moment, and the user shouldn't see an empty stage.
+		this._showViewerLoading('Loading your avatar…');
+
 		// Swap this.identity to the agent being edited so AgentHome (and the
 		// Solana wallet card) render for *this* agent rather than the viewer's
 		// default identity.
@@ -940,10 +1003,19 @@ class App {
 			/* fall through; identity getter still returns _agentId */
 		}
 
-		// Fetch the agent record and load its GLB into the editor (main UI, not embed)
+		// Refresh the loading label now that we know the agent's name.
+		if (this.identity?.name) {
+			this._showViewerLoading(`Loading ${this.identity.name}…`);
+		}
+
+		// Fetch the agent record and resolve its GLB URL.
 		let glbUrl = null;
+		let fetchFailed = false;
+		let thumbnailUrl = null;
 		this._currentUsdzUrl = null;
 		this._currentHalfbodyUrl = null;
+		this._currentAvatarId = null;
+		this._avatarNeedsThumbnail = false;
 		try {
 			const resp = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
 			if (resp.ok) {
@@ -957,30 +1029,45 @@ class App {
 						if (avatar?.url) glbUrl = avatar.url;
 						this._currentUsdzUrl = avatar?.usdz_url || null;
 						this._currentHalfbodyUrl = avatar?.halfbody_url || null;
+						this._currentAvatarId = avatar?.id || null;
+						thumbnailUrl = avatar?.thumbnail_url || null;
+						// Flag for the LOAD_END(success) listener to capture
+						// and upload a thumbnail once the avatar is rendered.
+						this._avatarNeedsThumbnail = !thumbnailUrl && !!glbUrl;
+					} else {
+						fetchFailed = true;
 					}
 				}
+			} else {
+				fetchFailed = true;
 			}
 		} catch {
-			/* fall through to default */
+			fetchFailed = true;
 		}
 
-		try {
-			if (glbUrl) {
-				await this.view(glbUrl, '', new Map());
-			} else {
-				await this._maybeResumeOrLoad(this.options);
-			}
-		} catch (err) {
-			// If the agent's GLB fails to load (404, decode error, etc.) we
-			// must still mount a viewer so the editor is usable.
-			console.warn('[3d-agent] agent GLB load failed; falling back', err);
-			if (!this.viewer) {
-				try {
-					await this._maybeResumeOrLoad(this.options);
-				} catch (fallbackErr) {
-					console.warn('[3d-agent] fallback load failed', fallbackErr);
-				}
-			}
+		// Show the thumbnail as a poster behind the canvas so a 4-5 MB GLB
+		// stream isn't a black void. Crossfades out on LOAD_END(success).
+		if (thumbnailUrl) this._showPoster(thumbnailUrl);
+
+		// Three outcomes:
+		//   1. GLB URL found       → load it. Success/error overlay is driven
+		//      by the LOAD_END protocol listener.
+		//   2. Agent has no avatar → load the default CZ avatar so the editor
+		//      is usable; no error overlay (this is a legitimate state).
+		//   3. Agent fetch failed  → show error overlay with Retry. Still
+		//      load the default CZ so the editor canvas isn't empty.
+		if (glbUrl) {
+			this.view(glbUrl, '', new Map());
+		} else if (fetchFailed) {
+			// Don't trigger a fallback load — its LOAD_START would clobber
+			// the error overlay. The renderer is already mounted from
+			// createViewer() above; the user sees the error message on top
+			// of an empty 3D scene, which honestly reflects the state.
+			this._showViewerError("Couldn't load your avatar.", () => this._retryAgentLoad());
+		} else {
+			// Agent has no avatar attached yet — load the default so the
+			// editor is usable. LOAD_END will hide the overlay normally.
+			this._maybeResumeOrLoad(this.options);
 		}
 
 		// Restore + auto-save per-agent scene preferences (background, env,
@@ -998,7 +1085,8 @@ class App {
 
 		this._refreshDeployButton(agentId);
 
-		this._maybeShowOnboarding(agentId);
+		// Onboarding is fired from the LOAD_END(success) listener so the
+		// "ready" popup only appears once the avatar is actually on screen.
 
 		this._initAgentSystem();
 		this._initWidgetBridge();
@@ -1051,6 +1139,28 @@ class App {
 		}
 		window.VIEWER.widget = widget;
 
+		// Fire-and-forget view beacon for analytics. Skip owner previews
+		// (Studio + dashboard iframes pass &preview=1) so the creator's own
+		// QA cycles don't pollute their stats.
+		try {
+			const qs = new URLSearchParams(location.search);
+			if (qs.get('preview') !== '1') {
+				const url = `/api/widgets/${encodeURIComponent(widgetId)}/view`;
+				if (navigator.sendBeacon) {
+					navigator.sendBeacon(url, new Blob([''], { type: 'text/plain' }));
+				} else {
+					fetch(url, {
+						method: 'POST',
+						keepalive: true,
+						credentials: 'omit',
+						mode: 'no-cors',
+					});
+				}
+			}
+		} catch {
+			/* best-effort */
+		}
+
 		const cfg = { ...(widget.config || {}) };
 		const modelUrl = widget.avatar?.model_url || '/avatars/cz.glb';
 
@@ -1059,6 +1169,23 @@ class App {
 		if (this.options.noChat) cfg._noChat = true;
 		if (this.options.noControls) cfg.showControls = false;
 		if (this.options.avatarChatOff) cfg.avatarChatOff = true;
+
+		// Live-customizer hash overrides (validated lightly — bad input is ignored).
+		const HEX = /^#[0-9a-fA-F]{3,8}$/;
+		if (this.options.overrideAccent && HEX.test(this.options.overrideAccent)) {
+			cfg.accent = this.options.overrideAccent;
+		}
+		if (this.options.overrideBg && HEX.test(this.options.overrideBg)) {
+			cfg.background = this.options.overrideBg;
+			cfg.bg = this.options.overrideBg;
+		}
+		if (this.options.overrideMint) cfg.mint = this.options.overrideMint;
+		if (this.options.overrideKind && ['all', 'claims', 'graduations'].includes(this.options.overrideKind)) {
+			cfg.kind = this.options.overrideKind;
+		}
+		if (this.options.overrideMinTier && ['', 'notable', 'influencer', 'mega'].includes(this.options.overrideMinTier)) {
+			cfg.minTier = this.options.overrideMinTier;
+		}
 
 		// Apply config to options BEFORE creating the viewer so first frame is right.
 		if (Array.isArray(cfg.cameraPosition) && cfg.cameraPosition.length === 3) {
@@ -1113,12 +1240,22 @@ class App {
 				const ctl = await mountPumpfunFeed(this.viewer, cfg, document.body, { protocol });
 				this._widgetController = ctl;
 			} else if (type === 'kol-trades') {
-				const ctl = mountKolTradesWidget(document.body, {
+				const host = document.createElement('div');
+				host.className = 'kol-trades-host';
+				host.style.cssText =
+					'position:absolute;top:16px;right:16px;width:min(360px,calc(100% - 32px));max-height:calc(100% - 32px);overflow-y:auto;background:rgba(14,14,22,0.86);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:8px 10px;z-index:5';
+				document.body.appendChild(host);
+				const inner = mountKolTradesWidget(host, {
 					mint: cfg.mint,
 					limit: cfg.limit,
 					refreshMs: cfg.refreshMs,
 				});
-				this._widgetController = ctl;
+				this._widgetController = {
+					destroy() {
+						inner?.destroy?.();
+						host.remove();
+					},
+				};
 			} else if (type === 'live-trades-canvas') {
 				const ctl = mountLiveTradesCanvas(document.body, {
 					mint: cfg.mint,
@@ -1189,7 +1326,13 @@ class App {
 		// Handles exportGLB and takeScreenshot (returning base64 data to caller).
 		window.addEventListener('message', (event) => {
 			const data = event.data;
-			if (!data || typeof data !== 'object' || typeof data.id !== 'string' || typeof data.action !== 'string') return;
+			if (
+				!data ||
+				typeof data !== 'object' ||
+				typeof data.id !== 'string' ||
+				typeof data.action !== 'string'
+			)
+				return;
 			// Only handle our specific action verbs to avoid intercepting unrelated messages.
 			if (data.action !== 'exportGLB' && data.action !== 'takeScreenshot') return;
 			if (!event.origin || event.origin === 'null') return;
@@ -1197,7 +1340,12 @@ class App {
 			const replyOrigin = event.origin;
 			const replyTo = event.source || window.parent;
 			const reply = (result, err) => {
-				try { replyTo.postMessage(err ? { id: data.id, error: err } : { id: data.id, result }, replyOrigin); } catch (_) {}
+				try {
+					replyTo.postMessage(
+						err ? { id: data.id, error: err } : { id: data.id, result },
+						replyOrigin,
+					);
+				} catch (_) {}
 			};
 			const viewer = this.viewer || window.VIEWER?.app?.viewer;
 			if (!viewer) return reply(null, 'viewer not ready');
@@ -1206,23 +1354,38 @@ class App {
 					viewer.renderer.render(viewer.scene, viewer.activeCamera);
 					const dataUrl = viewer.renderer.domElement.toDataURL('image/png');
 					reply(dataUrl.replace('data:image/png;base64,', ''));
-				} catch (e) { reply(null, e.message); }
+				} catch (e) {
+					reply(null, e.message);
+				}
 				return;
 			}
 			if (data.action === 'exportGLB') {
 				const scene = viewer.scene;
 				const content = viewer.content;
 				if (!content) return reply(null, 'no model loaded');
-				import('three/addons/exporters/GLTFExporter.js').then(({ GLTFExporter }) => {
-					const exporter = new GLTFExporter();
-					exporter.parse(content, (result) => {
-						const bytes = result instanceof ArrayBuffer ? result : result.buffer;
-						let binary = '';
-						const arr = new Uint8Array(bytes);
-						for (let i = 0; i < arr.length; i++) binary += String.fromCharCode(arr[i]);
-						reply(btoa(binary));
-					}, (err) => { reply(null, String(err?.message || err)); }, { binary: true });
-				}).catch((e) => { reply(null, 'GLTFExporter load failed: ' + e.message); });
+				import('three/addons/exporters/GLTFExporter.js')
+					.then(({ GLTFExporter }) => {
+						const exporter = new GLTFExporter();
+						exporter.parse(
+							content,
+							(result) => {
+								const bytes =
+									result instanceof ArrayBuffer ? result : result.buffer;
+								let binary = '';
+								const arr = new Uint8Array(bytes);
+								for (let i = 0; i < arr.length; i++)
+									binary += String.fromCharCode(arr[i]);
+								reply(btoa(binary));
+							},
+							(err) => {
+								reply(null, String(err?.message || err));
+							},
+							{ binary: true },
+						);
+					})
+					.catch((e) => {
+						reply(null, 'GLTFExporter load failed: ' + e.message);
+					});
 				return;
 			}
 		});
@@ -1286,7 +1449,8 @@ class App {
 					const proto = window.VIEWER?.agent_protocol || protocol;
 					const r = data.reaction;
 					if (proto && r.emote) proto.emit({ type: 'emote', payload: r.emote });
-					if (proto && r.lookAt) proto.emit({ type: 'look-at', payload: { target: r.lookAt } });
+					if (proto && r.lookAt)
+						proto.emit({ type: 'look-at', payload: { target: r.lookAt } });
 					if (proto && r.gesture) proto.emit({ type: 'gesture', payload: r.gesture });
 					if (proto && r.speak && data.speak !== false) {
 						proto.emit({ type: 'speak', payload: r.speak });
@@ -1378,7 +1542,8 @@ class App {
 		let dragDepth = 0;
 		const wrap = this.dropEl;
 		wrap.addEventListener('dragenter', (e) => {
-			if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+			if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files'))
+				return;
 			dragDepth += 1;
 			document.body.classList.add('is-dragover');
 		});
@@ -1462,12 +1627,23 @@ class App {
 		};
 
 		return viewer
-			.load(fileURL, rootPath, fileMap)
+			.load(fileURL, rootPath, fileMap, (xhr) => {
+				// Emit download progress. `total` is 0 when Content-Length
+				// is missing (blob URLs, some CDNs) — the overlay falls back
+				// to an indeterminate spinner in that case.
+				const total = xhr?.total > 0 ? xhr.total : 0;
+				const loaded = xhr?.loaded || 0;
+				protocol.emit({
+					type: ACTION_TYPES.LOAD_PROGRESS,
+					payload: { loaded, total, indeterminate: total === 0 },
+					agentId: this.identity?.id || 'default',
+				});
+			})
 			.catch((e) => {
 				// Emit load error
 				protocol.emit({
 					type: ACTION_TYPES.LOAD_END,
-					payload: { error: e.message },
+					payload: { error: e?.message || String(e), errorObj: e },
 					agentId: this.identity?.id || 'default',
 				});
 				this.onError(e);
@@ -1539,7 +1715,7 @@ class App {
 		// BrowserTTS has no analyserNode, so it skips connectLipSync and continues
 		// using the text-based startLipsync path already in speech.js.
 		if (this.runtime?.tts) {
-			const tts    = this.runtime.tts;
+			const tts = this.runtime.tts;
 			const avatar = this.avatar;
 			tts.onStart = () => {
 				if (tts.analyserNode) avatar.connectLipSync(tts.analyserNode);
@@ -1626,6 +1802,246 @@ class App {
 		observer.observe(document.body, { childList: true, subtree: true, attributes: true });
 	}
 
+	// ── Viewer status overlay ────────────────────────────────────────────────
+	// Reflects load state inside #viewer-container so the user never sees a
+	// black canvas with no explanation. Wired to the protocol load events,
+	// not the spinner — so it stays honest even when the load fails silently.
+
+	_wireViewerStatus() {
+		protocol.on(ACTION_TYPES.LOAD_START, () => {
+			const name = this._editingAgentId ? this.identity?.name : null;
+			this._showViewerLoading(
+				this._editingAgentId ? `Loading ${name || 'your avatar'}…` : 'Loading model…',
+			);
+		});
+
+		protocol.on(ACTION_TYPES.LOAD_PROGRESS, (action) => {
+			const { loaded = 0, total = 0, indeterminate = false } = action?.payload || {};
+			this._updateLoadProgress(loaded, total, indeterminate);
+		});
+
+		protocol.on(ACTION_TYPES.LOAD_END, (action) => {
+			const success = action?.payload?.success === true;
+			if (success) {
+				this._fadeOutPoster();
+				this._hideViewerStatus();
+				// Signal the slim /widget shell that the canvas has pixels.
+				// The shell starts the body invisible to avoid chrome/canvas
+				// FOUC bleeding into the parent iframe; flips to visible on
+				// this event.
+				if (!this._firstFrameSignalled) {
+					this._firstFrameSignalled = true;
+					try {
+						window.dispatchEvent(new CustomEvent('three-ws:first-frame'));
+					} catch {
+						/* CustomEvent ctor missing only on retired browsers — ignore */
+					}
+				}
+				// Fire the first-time-onboarding popup only after the GLB is
+				// actually visible on the canvas — otherwise the "ready"
+				// label lies during a slow or failing load.
+				if (this._editingAgentId && !this._onboardingFired) {
+					this._onboardingFired = true;
+					this._maybeShowOnboarding(this._editingAgentId);
+				}
+				// Backfill a thumbnail for this agent's avatar if it doesn't
+				// have one — captures the freshly-rendered canvas to PNG and
+				// uploads it so the next visit shows a poster instead of a
+				// black screen during the multi-MB GLB stream.
+				if (this._editingAgentId && this._avatarNeedsThumbnail) {
+					this._avatarNeedsThumbnail = false;
+					this._captureAndUploadThumbnail().catch((err) =>
+						console.warn('[3d-agent] thumbnail upload failed', err),
+					);
+				}
+			} else {
+				const err = action?.payload?.errorObj;
+				const msg = this._classifyLoadError(err, action?.payload?.error);
+				this._showViewerError(
+					msg,
+					this._editingAgentId ? () => this._retryAgentLoad() : null,
+				);
+			}
+		});
+	}
+
+	// Map a thrown load error into a clear, actionable message. Three.js
+	// surfaces XHR errors as ProgressEvent or Error, so we inspect the
+	// message string plus the underlying request when present.
+	_classifyLoadError(err, msgFallback) {
+		const text = String(err?.message || msgFallback || '');
+		const status = err?.target?.status ?? err?.status ?? null;
+		if (status === 404 || /\b404\b/.test(text)) {
+			return 'Avatar file not found. It may have been moved or deleted.';
+		}
+		if (status === 403 || /\b403\b/.test(text)) {
+			return "You don't have permission to view this avatar.";
+		}
+		if (status && status >= 500) {
+			return 'Avatar storage is unavailable right now. Try again shortly.';
+		}
+		if (/Failed to fetch|NetworkError|net::|ERR_INTERNET_DISCONNECTED/i.test(text)) {
+			return 'Network error. Check your connection and try again.';
+		}
+		if (/JSON|parse|invalid|magic|version|chunk|corrupt/i.test(text)) {
+			return "This avatar file looks corrupted and couldn't be decoded.";
+		}
+		return this._editingAgentId ? "Couldn't load your avatar." : "Couldn't load the model.";
+	}
+
+	_ensureViewerStatusEl() {
+		if (this._viewerStatusEl) return this._viewerStatusEl;
+		const el = document.createElement('div');
+		el.className = 'viewer-status';
+		el.hidden = true;
+		this.viewerContainerEl.appendChild(el);
+		this._viewerStatusEl = el;
+		return el;
+	}
+
+	_showViewerLoading(label) {
+		const el = this._ensureViewerStatusEl();
+		el.dataset.state = 'loading';
+		el.innerHTML = `
+			<div class="viewer-status__card" role="status" aria-live="polite">
+				<div class="viewer-status__spinner" aria-hidden="true"></div>
+				<div class="viewer-status__label" data-label>${escHtml(label)}</div>
+				<div class="viewer-status__progress" data-progress hidden>
+					<div class="viewer-status__progress-track">
+						<div class="viewer-status__progress-fill" data-progress-fill style="width:0%"></div>
+					</div>
+					<div class="viewer-status__progress-meta" data-progress-meta></div>
+				</div>
+			</div>
+		`;
+		el.hidden = false;
+	}
+
+	// Update bytes/percent. Called from the LOAD_PROGRESS listener — only
+	// reveals the progress bar once we know the total (Content-Length),
+	// otherwise the indeterminate spinner stays solo.
+	_updateLoadProgress(loaded, total, indeterminate) {
+		const el = this._viewerStatusEl;
+		if (!el || el.dataset.state !== 'loading') return;
+		const progressEl = el.querySelector('[data-progress]');
+		if (!progressEl) return;
+		if (indeterminate || !total) {
+			progressEl.hidden = true;
+			return;
+		}
+		const pct = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
+		const fill = el.querySelector('[data-progress-fill]');
+		const meta = el.querySelector('[data-progress-meta]');
+		if (fill) fill.style.width = pct + '%';
+		if (meta) meta.textContent = `${pct}% · ${_fmtBytes(loaded)} / ${_fmtBytes(total)}`;
+		progressEl.hidden = false;
+	}
+
+	_showViewerError(label, onRetry) {
+		const el = this._ensureViewerStatusEl();
+		el.dataset.state = 'error';
+		el.innerHTML = `
+			<div class="viewer-status__card viewer-status__card--error" role="alert">
+				<div class="viewer-status__icon" aria-hidden="true">!</div>
+				<div class="viewer-status__label">${escHtml(label)}</div>
+				${onRetry ? '<button class="viewer-status__btn" type="button" data-retry>Retry</button>' : ''}
+			</div>
+		`;
+		el.hidden = false;
+		if (onRetry) {
+			el.querySelector('[data-retry]')?.addEventListener('click', () => {
+				this._showViewerLoading('Retrying…');
+				Promise.resolve(onRetry()).catch(() => {});
+			});
+		}
+	}
+
+	_hideViewerStatus() {
+		if (!this._viewerStatusEl) return;
+		this._viewerStatusEl.hidden = true;
+		this._viewerStatusEl.dataset.state = '';
+	}
+
+	// ── Poster image (model-viewer–style) ───────────────────────────────────
+	// Renders the avatar's thumbnail behind the WebGL canvas while the GLB
+	// streams in, then fades out on LOAD_END(success). For 4-5MB avatars on
+	// a slow connection this turns 5+ seconds of black void into 5 seconds
+	// of "your avatar, just not interactive yet."
+
+	_showPoster(url) {
+		if (!url) return;
+		this._fadeOutPoster(); // remove any previous
+		const img = document.createElement('img');
+		img.className = 'viewer-poster';
+		img.alt = '';
+		img.setAttribute('aria-hidden', 'true');
+		img.src = url;
+		// Insert UNDER the WebGL canvas so the canvas paints over it. The
+		// canvas is transparent by default until content renders, so the
+		// poster shows through.
+		this.viewerContainerEl.insertBefore(img, this.viewerContainerEl.firstChild);
+		this._posterEl = img;
+	}
+
+	_fadeOutPoster() {
+		if (!this._posterEl) return;
+		const el = this._posterEl;
+		this._posterEl = null;
+		el.classList.add('viewer-poster--fading');
+		setTimeout(() => el.remove(), 600);
+	}
+
+	// ── Auto-thumbnail capture ──────────────────────────────────────────────
+	// Reads the WebGL canvas pixels, downsamples to a 512² PNG, and POSTs
+	// to /api/avatars/thumbnail. Fire-and-forget — the only consequence of
+	// failure is that the next page load runs through this path again.
+
+	async _captureAndUploadThumbnail() {
+		const avatarId = this._currentAvatarId;
+		if (!avatarId || !this.viewer?.renderer) return;
+
+		// Give the renderer one extra frame so the first idle pose is on
+		// screen, not the canonical T-pose / default expression.
+		await new Promise((r) => setTimeout(r, 800));
+
+		const src = this.viewer.renderer.domElement;
+		const out = document.createElement('canvas');
+		const size = 512;
+		out.width = out.height = size;
+		const ctx = out.getContext('2d');
+		if (!ctx) return;
+		// Fit-to-canvas, preserving aspect with letterboxing on a
+		// transparent background.
+		const ar = src.width / src.height || 1;
+		let dw = size,
+			dh = size;
+		if (ar > 1) dh = Math.round(size / ar);
+		else dw = Math.round(size * ar);
+		ctx.drawImage(src, (size - dw) / 2, (size - dh) / 2, dw, dh);
+
+		const blob = await new Promise((resolve) => out.toBlob(resolve, 'image/png'));
+		if (!blob) return;
+		const dataUrl = await _blobToBase64(blob);
+
+		const resp = await fetch('/api/avatars/thumbnail', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				avatar_id: avatarId,
+				png_base64: `data:image/png;base64,${dataUrl}`,
+			}),
+		});
+		if (!resp.ok) {
+			throw new Error(`thumbnail upload HTTP ${resp.status}`);
+		}
+	}
+
+	async _retryAgentLoad() {
+		if (!this._editingAgentId) return;
+		await this._loadAgentForEdit(this._editingAgentId);
+	}
+
 	// ── UI Helpers ────────────────────────────────────────────────────────────
 
 	_flashSaved(avatar) {
@@ -1640,16 +2056,10 @@ class App {
 	 * @param  {Error} error
 	 */
 	onError(error) {
-		let message = (error || {}).message || error.toString();
-		if (message.match(/ProgressEvent/)) {
-			message = 'Unable to retrieve this file. Check JS console and browser network tab.';
-		} else if (message.match(/Unexpected token/)) {
-			message = `Unable to parse file content. Verify that this file is valid. Error: "${message}"`;
-		} else if (error && error.target && error.target instanceof Image) {
-			message = 'Missing texture: ' + error.target.src.split('/').pop();
-		}
-		window.alert(message);
-		console.error(error);
+		// The viewer-status overlay (driven by LOAD_END payload) is the
+		// user-facing error surface now — see _classifyLoadError above.
+		// onError is kept as a console-only fallback for diagnostics.
+		console.error('[3d-agent] load error:', error);
 	}
 
 	/**
@@ -1898,7 +2308,13 @@ class App {
 	}
 }
 
-document.body.innerHTML += Footer();
+// The slim /widget shell (pages/widget.html) sets `window.__WIDGET_SHELL`
+// before this module parses, signalling that no site chrome should be
+// injected. Without this guard the marketing footer flashes inside every
+// embed iframe before kiosk JS hides it.
+if (!window.__WIDGET_SHELL) {
+	document.body.innerHTML += Footer();
+}
 
 document.addEventListener('DOMContentLoaded', () => {
 	const app = new App(document.body, location);

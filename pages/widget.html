@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws widget</title>
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+		/>
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#000000" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			/* Slim widget shell — no nav, no footer, no auth chrome.
+			   Held invisible until the viewer fires its first frame so the
+			   parent iframe never sees a chrome flash. */
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+				width: 100%;
+				background: #000;
+				color: #eee;
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				overflow: hidden;
+			}
+			body {
+				visibility: hidden;
+			}
+			body.widget-ready {
+				visibility: visible;
+			}
+			.wrap {
+				position: absolute;
+				inset: 0;
+				width: 100%;
+				height: 100%;
+			}
+			.viewer-container {
+				position: absolute;
+				inset: 0;
+				width: 100%;
+				height: 100%;
+			}
+			/* Poster image shown until the model's first frame. Hides on the
+			   `widget-ready` body flip with a soft cross-fade. */
+			.widget-poster {
+				position: fixed;
+				inset: 0;
+				background-color: #000;
+				background-position: center;
+				background-repeat: no-repeat;
+				background-size: contain;
+				z-index: 1;
+				pointer-events: none;
+				transition: opacity 0.35s ease;
+			}
+			body.widget-ready .widget-poster {
+				opacity: 0;
+			}
+			/* Spinner — same look as the rest of the app, centred. */
+			.spinner {
+				position: fixed;
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%);
+				width: 32px;
+				height: 32px;
+				border: 2px solid rgba(255, 255, 255, 0.12);
+				border-top-color: rgba(255, 255, 255, 0.72);
+				border-radius: 50%;
+				animation: widget-spin 0.9s linear infinite;
+				z-index: 2;
+				pointer-events: none;
+			}
+			body.widget-ready .spinner {
+				display: none;
+			}
+			@keyframes widget-spin {
+				to {
+					transform: translate(-50%, -50%) rotate(360deg);
+				}
+			}
+			/* Force-hide anything the app accidentally injects (e.g. Footer())
+			   despite the guard — defence-in-depth in case a future code path
+			   re-introduces injection without checking the flag. */
+			body > header,
+			body > footer,
+			body > .auth-gate,
+			body > .agent-onboarding,
+			body > .agent-presence-sidebar,
+			body > .dropzone {
+				display: none !important;
+			}
+		</style>
+		<script>
+			// Signal to /src/app.js that this is the slim widget shell BEFORE the
+			// module parses — module-level chrome injection and main-mode-only
+			// setup short-circuit when this flag is set.
+			window.__WIDGET_SHELL = true;
+
+			// Optional ?poster=<url> renders a static image while WebGL boots.
+			// Encoded in the URL so it works without any postMessage handshake.
+			(function () {
+				try {
+					var u = new URL(location.href);
+					var poster = u.searchParams.get('poster');
+					if (poster) {
+						document.addEventListener('DOMContentLoaded', function () {
+							var el = document.createElement('div');
+							el.className = 'widget-poster';
+							el.style.backgroundImage = 'url(' + JSON.stringify(poster).slice(1, -1) + ')';
+							document.body.appendChild(el);
+						});
+					}
+				} catch (_) {
+					/* malformed URL — skip poster */
+				}
+			})();
+
+			// Reveal the body on the viewer's first successful frame. App.js fires
+			// a 'three-ws:first-frame' event after LOAD_END(success). 6s fallback
+			// guards against a hung load so visitors don't stare at a black box.
+			(function () {
+				var revealed = false;
+				var reveal = function () {
+					if (revealed) return;
+					revealed = true;
+					document.body.classList.add('widget-ready');
+				};
+				window.addEventListener('three-ws:first-frame', reveal, { once: true });
+				setTimeout(reveal, 6000);
+			})();
+		</script>
+		<script defer type="module" src="/src/app.js"></script>
+	</head>
+	<body data-viewer-mode="embed">
+		<main class="wrap">
+			<div class="viewer-container" id="viewer-container"></div>
+		</main>
+		<div class="spinner" aria-label="Loading"></div>
+	</body>
+</html>

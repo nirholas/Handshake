@@ -682,7 +682,7 @@ export class Viewer {
 		this.invalidate();
 	}
 
-	load(url, rootPath, assetMap) {
+	load(url, rootPath, assetMap, onProgress) {
 		const baseURL = LoaderUtils.extractUrlBase(url);
 
 		// Load.
@@ -753,7 +753,18 @@ export class Viewer {
 
 						resolve(gltf);
 					},
-					undefined,
+					// XHR progress events while the GLB streams down. The `total`
+					// field is only populated when the server sends a
+					// Content-Length header — R2 does, our blob URLs do not.
+					typeof onProgress === 'function'
+						? (xhr) => {
+								try {
+									onProgress(xhr);
+								} catch (e) {
+									console.warn('[viewer] onProgress threw', e);
+								}
+							}
+						: undefined,
 					reject,
 				);
 			}, reject);

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Live 3D avatar on three.ws — embed me anywhere." />
+		<meta name="theme-color" content="#0b0d10" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+
+		<meta property="og:type" content="profile" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="three.ws" id="og-title" />
+		<meta property="og:description" content="Live 3D avatar on three.ws." id="og-description" />
+		<meta property="og:image" content="https://three.ws/assets/og-image.png" id="og-image" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="three.ws" id="tw-title" />
+		<meta name="twitter:description" content="Live 3D avatar on three.ws." id="tw-description" />
+		<meta name="twitter:image" content="https://three.ws/assets/og-image.png" id="tw-image" />
+
+		<style>
+			body {
+				margin: 0;
+				background: #0a0c10;
+				color: #e8ecf2;
+				font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+			}
+			.topbar {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 14px 22px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+			.topbar a.brand {
+				color: #fff;
+				text-decoration: none;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+			}
+			.topbar .links {
+				display: flex;
+				gap: 18px;
+				font-size: 14px;
+			}
+			.topbar .links a {
+				color: rgba(255, 255, 255, 0.7);
+				text-decoration: none;
+			}
+			.topbar .links a:hover {
+				color: #fff;
+			}
+
+			main {
+				flex: 1;
+				display: grid;
+				grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+				gap: 28px;
+				padding: 28px 28px 40px;
+				max-width: 1240px;
+				margin: 0 auto;
+				width: 100%;
+				box-sizing: border-box;
+			}
+			@media (max-width: 960px) {
+				main {
+					grid-template-columns: 1fr;
+				}
+			}
+
+			.stage {
+				position: relative;
+				background: linear-gradient(180deg, #11141a, #0a0c10);
+				border-radius: 16px;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				overflow: hidden;
+				min-height: 540px;
+				display: flex;
+				flex-direction: column;
+			}
+			.stage iframe {
+				flex: 1;
+				width: 100%;
+				border: 0;
+				background: transparent;
+				min-height: 540px;
+			}
+			.stage-overlay {
+				position: absolute;
+				inset: auto 16px 16px;
+				display: flex;
+				gap: 8px;
+				flex-wrap: wrap;
+				pointer-events: none;
+			}
+			.stage-overlay .chip {
+				pointer-events: auto;
+				padding: 7px 12px;
+				border-radius: 999px;
+				font-size: 12px;
+				letter-spacing: 0.04em;
+				background: rgba(0, 0, 0, 0.55);
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				color: #fff;
+				cursor: pointer;
+				user-select: none;
+			}
+			.stage-overlay .chip:hover {
+				background: rgba(255, 255, 255, 0.08);
+			}
+
+			.side h1 {
+				margin: 0 0 6px;
+				font-size: 28px;
+				letter-spacing: -0.01em;
+			}
+			.side .handle {
+				color: rgba(255, 255, 255, 0.55);
+				font-size: 14px;
+				margin-bottom: 18px;
+			}
+			.side .desc {
+				color: rgba(255, 255, 255, 0.78);
+				font-size: 15px;
+				line-height: 1.55;
+				margin-bottom: 22px;
+			}
+
+			.stat-grid {
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 12px;
+				margin-bottom: 22px;
+			}
+			.stat {
+				background: rgba(255, 255, 255, 0.03);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 12px;
+				padding: 12px 14px;
+			}
+			.stat .v {
+				font-size: 18px;
+				font-weight: 600;
+			}
+			.stat .k {
+				font-size: 11px;
+				color: rgba(255, 255, 255, 0.5);
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				margin-top: 4px;
+			}
+
+			.embed-card {
+				background: rgba(255, 255, 255, 0.03);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 14px;
+				padding: 16px;
+				margin-bottom: 14px;
+			}
+			.embed-card h3 {
+				font-size: 13px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: rgba(255, 255, 255, 0.6);
+				margin: 0 0 10px;
+			}
+			.embed-card pre {
+				background: #06080b;
+				border: 1px solid rgba(255, 255, 255, 0.05);
+				border-radius: 8px;
+				padding: 12px 14px;
+				font-family: ui-monospace, SFMono-Regular, monospace;
+				font-size: 12px;
+				color: #cad6e8;
+				margin: 0;
+				white-space: pre-wrap;
+				word-break: break-all;
+			}
+			.embed-card .copy {
+				margin-top: 10px;
+				background: #fff;
+				color: #0a0c10;
+				border: 0;
+				border-radius: 8px;
+				padding: 8px 14px;
+				font-size: 12px;
+				letter-spacing: 0.04em;
+				cursor: pointer;
+				font-weight: 600;
+			}
+			.embed-card .copy.copied {
+				background: #5fce6a;
+				color: #04150a;
+			}
+
+			.cta-row {
+				display: flex;
+				gap: 10px;
+				flex-wrap: wrap;
+				margin-bottom: 22px;
+			}
+			.cta-row a {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				background: #fff;
+				color: #0a0c10;
+				padding: 10px 16px;
+				border-radius: 10px;
+				font-size: 13px;
+				font-weight: 600;
+				text-decoration: none;
+			}
+			.cta-row a.ghost {
+				background: transparent;
+				color: #fff;
+				border: 1px solid rgba(255, 255, 255, 0.18);
+			}
+
+			.not-found {
+				text-align: center;
+				padding: 80px 20px;
+				color: rgba(255, 255, 255, 0.6);
+			}
+			.not-found h1 {
+				font-size: 22px;
+				margin-bottom: 8px;
+				color: #fff;
+			}
+			.not-found a {
+				color: #5fa8ff;
+			}
+		</style>
+	</head>
+	<body>
+		<header class="topbar">
+			<a class="brand" href="/">three.ws</a>
+			<nav class="links">
+				<a href="/explore">explore</a>
+				<a href="/create">create</a>
+				<a href="/dashboard">dashboard</a>
+			</nav>
+		</header>
+		<main id="main"></main>
+
+		<script type="module" src="/src/handle.js"></script>
+	</body>
+</html>

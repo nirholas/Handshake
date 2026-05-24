@@ -37,6 +37,7 @@ const patchSchema = z.object({
 // Action endpoints that share this file (no id needed)
 const ACTION_ENDPOINTS = new Set([
 	'presign',
+	'upload',
 	'presign-thumbnail',
 	'presign-usdz',
 	'presign-halfbody',

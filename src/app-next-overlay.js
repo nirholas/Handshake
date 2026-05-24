@@ -1,29 +1,10 @@
-/**
- * app-next overlay — UX preview layer for /app-next demo.
- *
- * Boots after /src/app.js (the real production viewer + agent system) and
- * adds the new UX surface:
- *   1. Stage polish — transparent canvas so the CSS floor-glow shows through.
- *   2. Camera idle drift — gentle auto-rotate that pauses on interaction.
- *   3. "Try X" rotating invitation pill (driven by the real animation manifest).
- *   4. Compact animation picker sheet with search + grid (replaces the strip).
- *   5. Single-hierarchy action bar: Animations, Upload, Save / Sign-in.
- *   6. Header menus (explore + auth) with open/close + outside-click dismiss.
- *   7. Keyboard shortcuts: A (animations), U (upload), Esc (close sheet).
- *   8. First-visit hint shown once per browser.
- *
- * This file deliberately does NOT touch any other surface — same /src/app.js
- * bootstraps the viewer, same animation manifest, same auth APIs.
- */
+// UX preview overlay for /app-next — re-skins /src/app.js without touching it.
 
 import { getMe, readAuthHint, saveRemoteGlbToAccount } from './account.js';
 
 const STORAGE_HINT_KEY = 'nxt:first-hint-dismissed';
 const TRY_ROTATE_MS = 8000;
 
-// Curated subset for the rotating "Try X" prompt — these clips look great as
-// 2-second teasers and crossfade cleanly back to idle. Names match the entries
-// in /public/animations/manifest.json.
 const TRY_PICKS = [
 	{ name: 'av-waving', icon: '👋', label: 'Wave' },
 	{ name: 'av-superhero-jump', icon: '🦸', label: 'Superhero jump' },
@@ -35,9 +16,6 @@ const TRY_PICKS = [
 	{ name: 'av-walk-crouching', icon: '🚶', label: 'Sneak walk' },
 ];
 
-// Animation defs ship with an `icon` field that's usually right, but a few
-// common ones are missing or have wrong glyphs — patch them here so the grid
-// always reads cleanly. Fallback chain: icon override → manifest icon → ✨.
 const ICON_OVERRIDES = {
 	idle: '🧍',
 	lookdown: '👀',
@@ -56,7 +34,6 @@ const ICON_OVERRIDES = {
 document.addEventListener('DOMContentLoaded', boot);
 
 function boot() {
-	console.info('[nxt] boot');
 	wireExploreMenu();
 	wireUserMenu();
 	wireFirstHint();
@@ -64,22 +41,17 @@ function boot() {
 	wirePrimaryCTA();
 	wireAnimationSheet();
 
-	// The viewer is created asynchronously by App. Poll briefly until it's
-	// ready, then attach stage polish + start the Try pill rotation.
 	waitForViewer().then((viewer) => {
 		if (!viewer) {
 			console.warn('[nxt] viewer never appeared — stage polish skipped');
 			return;
 		}
-		console.info('[nxt] viewer ready');
 		polishStage(viewer);
 		startTryPillRotation(viewer);
 		startCameraDrift(viewer);
 	});
 
-	// Auth state can resolve before or after viewer; refresh CTA when ready.
 	refreshAuthState();
-	// Refresh once more when other tabs sign in/out.
 	window.addEventListener('storage', (e) => {
 		if (e.key === 'nxt-auth-touch' || e.key?.startsWith('auth')) refreshAuthState();
 	});
@@ -103,10 +75,7 @@ function waitForViewer(timeoutMs = 15000) {
 // ── Stage polish ──────────────────────────────────────────────────────────
 
 function polishStage(viewer) {
-	// Make the canvas transparent so the CSS radial floor-glow + vignette
-	// (rendered behind via the same stacking context) show through. The viewer
-	// owns its own transparentBg state — flipping it directly survives any
-	// subsequent updateBackground() call (saved scene prefs, brand sync, etc).
+	// transparentBg via the viewer's own state — survives later updateBackground() calls.
 	try {
 		viewer.state.transparentBg = true;
 		viewer.updateBackground();
@@ -124,10 +93,10 @@ function startCameraDrift(viewer) {
 	let resumeTimer = null;
 
 	const enableDrift = () => {
-		// Mirror viewer.state so updateDisplay() doesn't undo us later.
+		// Mirror state.autoRotate so viewer.updateDisplay() doesn't undo it later.
 		viewer.state.autoRotate = true;
 		viewer.controls.autoRotate = true;
-		viewer.controls.autoRotateSpeed = 0.35; // very slow — alive, not spinning
+		viewer.controls.autoRotateSpeed = 0.35;
 		viewer.invalidate?.();
 	};
 
@@ -136,7 +105,6 @@ function startCameraDrift(viewer) {
 		viewer.controls.autoRotate = false;
 		userInteracted = true;
 		clearTimeout(resumeTimer);
-		// Resume after 10s of no interaction
 		resumeTimer = setTimeout(() => {
 			if (userInteracted) {
 				userInteracted = false;
@@ -175,16 +143,12 @@ function startTryPillRotation(viewer) {
 		render();
 	};
 
-	// Wait until at least one clip is loadable before showing the pill.
-	pollForClips(viewer).then((defs) => {
-		console.info('[nxt] pollForClips resolved, defs=', defs?.length || 0);
-		// Filter picks down to clips that exist in this avatar's manifest.
+	pollForClips(viewer).then(() => {
 		const available = new Set(getAvailableClipNames(viewer));
 		if (available.size > 0) {
 			order = TRY_PICKS.filter((p) => available.has(p.name));
-			if (order.length === 0) order = TRY_PICKS.slice(); // fall back
+			if (order.length === 0) order = TRY_PICKS.slice();
 		}
-		console.info('[nxt] try pill picks count=', order.length);
 		cursor = Math.floor(Math.random() * order.length);
 		render();
 		pill.hidden = false;
@@ -194,10 +158,8 @@ function startTryPillRotation(viewer) {
 	btn.addEventListener('click', () => {
 		const pick = order[cursor % order.length];
 		playClip(viewer, pick.name);
-		// Pause rotation after explicit try — let the user enjoy what they picked
 		clearInterval(intervalId);
 		intervalId = null;
-		// Resume after 12s if no further interaction
 		setTimeout(() => {
 			if (!intervalId) intervalId = setInterval(advance, TRY_ROTATE_MS);
 		}, 12000);
@@ -231,11 +193,9 @@ function playClip(viewer, name) {
 	const defs = mgr.getAnimationDefs();
 	const def = defs.find((d) => d.name === name);
 	if (!def) return;
-
-	// ensureLoaded fetches the JSON clip if not yet cached, then play() runs it.
 	mgr.ensureLoaded(name)
 		.then(() => mgr.play(name))
-		.catch((err) => console.warn('[app-next] clip play failed', name, err));
+		.catch((err) => console.warn('[nxt] clip play failed', name, err));
 }
 
 // ── Animation sheet ───────────────────────────────────────────────────────
@@ -275,7 +235,6 @@ function wireAnimationSheet() {
 
 	closeBtn?.addEventListener('click', close);
 
-	// Esc closes; outside click closes.
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape' && !sheet.hidden) close();
 	});
@@ -318,7 +277,6 @@ function wireAnimationSheet() {
 				`<span>${escHtml(label)}</span>`;
 			card.addEventListener('click', () => {
 				playClip(viewer, def.name);
-				// Sync aria-pressed across all cards
 				grid.querySelectorAll('.nxt-anim-card').forEach((c) => {
 					c.setAttribute('aria-pressed', c.dataset.name === def.name ? 'true' : 'false');
 				});
@@ -326,10 +284,7 @@ function wireAnimationSheet() {
 			grid.appendChild(card);
 		}
 
-		// Keep card pressed-state in sync when clip changes from elsewhere
-		// (try-pill, keyboard shortcut, programmatic). Chain through any prior
-		// onChange handler so we don't clobber a subscriber the production
-		// viewer (or another overlay) may have installed.
+		// Chain through any existing onChange so we don't clobber a viewer subscriber.
 		const prevOnChange = viewer.animationManager.onChange;
 		viewer.animationManager.onChange = (...args) => {
 			try { prevOnChange?.(...args); } catch (e) { console.warn('[nxt] prior onChange threw', e); }
@@ -432,8 +387,7 @@ async function refreshAuthState() {
 	const primary = document.getElementById('nxt-primary');
 	const primaryLabel = document.getElementById('nxt-primary-label');
 
-	// readAuthHint is a synchronous local-storage lookup — useful for the first
-	// paint before getMe() resolves. We always confirm with the real API.
+	// Hint paints synchronously; getMe() then confirms.
 	const hint = readAuthHint?.();
 	if (hint?.username && userLabel) {
 		userLabel.textContent = hint.username;
@@ -466,8 +420,7 @@ function wirePrimaryCTA() {
 	const primaryLabel = document.getElementById('nxt-primary-label');
 	if (!primary) return;
 
-	// Held outside the closure so a rapid second save can clear the prior
-	// "Saved ✓ → Save to account" revert before it fires.
+	// Outside the closure so a second save can cancel the previous revert.
 	let revertTimer = null;
 
 	primary.addEventListener('click', async () => {
@@ -477,7 +430,6 @@ function wirePrimaryCTA() {
 			return;
 		}
 
-		// Save the current model to the signed-in user's account.
 		const viewer = window.VIEWER?.viewer;
 		const app = window.VIEWER?.app;
 		const url = app?._currentModelUrl;
@@ -504,7 +456,7 @@ function wirePrimaryCTA() {
 				throw new Error(res?.error || 'save failed');
 			}
 		} catch (err) {
-			console.warn('[app-next] save failed', err);
+			console.warn('[nxt] save failed', err);
 			if (primaryLabel) primaryLabel.textContent = original;
 			toast('Save failed — try again.');
 		} finally {

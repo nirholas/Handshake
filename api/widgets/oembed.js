@@ -45,7 +45,7 @@ export default wrap(async (req, res) => {
 	if (!widget) return error(res, 404, 'not_found', 'widget not found');
 
 	const origin = env.APP_ORIGIN;
-	const embedUrl = `${origin}/app#widget=${widget.id}&kiosk=true`;
+	const embedUrl = `${origin}/widget#widget=${widget.id}&kiosk=true`;
 	const pageUrl = `${origin}/w/${widget.id}`;
 	const thumbUrl = `${origin}/api/widgets/${widget.id}/og`;
 	const title = widget.name || 'Widget';
@@ -125,8 +125,13 @@ function extractWidgetId(target) {
 	const pathMatch = parsed.pathname.match(/^\/w\/([A-Za-z0-9_-]+)\/?$/);
 	if (pathMatch) return pathMatch[1];
 
-	// Accept both legacy /#widget=<id> and current /app#widget=<id> forms.
-	if (parsed.hash && (parsed.pathname === '/' || parsed.pathname === '/app')) {
+	// Accept legacy /#widget=<id>, the /app#widget=<id> SPA form, and the
+	// current /widget#widget=<id> slim shell — embedders may have copied any
+	// of them. All three resolve to the same widget id.
+	if (
+		parsed.hash &&
+		(parsed.pathname === '/' || parsed.pathname === '/app' || parsed.pathname === '/widget')
+	) {
 		const hashMatch = parsed.hash.match(/(?:^|[#&])widget=([A-Za-z0-9_-]+)/);
 		if (hashMatch) return hashMatch[1];
 	}

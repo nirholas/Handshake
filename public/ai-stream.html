@@ -91,7 +91,7 @@
 		function mountAgent() {
 			const modelHash = '&model=' + encodeURIComponent(params.avatar);
 			const widgetId = 'wdgt_demo_pumpfun_stream';
-			iframe.src = `/app#widget=${widgetId}&kiosk=true&type=pumpfun-feed${modelHash}&narrate=${params.narrate ? '1' : '0'}`;
+			iframe.src = `/widget#widget=${widgetId}&kiosk=true&type=pumpfun-feed${modelHash}&narrate=${params.narrate ? '1' : '0'}`;
 		}
 		
 		function connectFeed() {

@@ -20,14 +20,7 @@ import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { decorate } from './index.js';
 import { isDemoWidgetId, getDemoWidget } from './_demo-fixtures.js';
-
-const WIDGET_TYPES = [
-	'turntable',
-	'animation-gallery',
-	'talking-agent',
-	'passport',
-	'hotspot-tour',
-];
+import { WIDGET_TYPES } from '../_lib/widget-types.js';
 
 const patchSchema = z.object({
 	name: z.string().trim().min(1).max(120).optional(),

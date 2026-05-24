@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws — app-next (UX preview)</title>
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+		/>
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#06070a" />
+
+		<link rel="canonical" href="https://three.ws/app-next" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/app-next.css" />
+
+		<!-- Re-uses the production app boot (real viewer, real agent system, real animations). -->
+		<script defer type="module" src="/src/app.js"></script>
+		<script defer type="module" src="/src/app-next-overlay.js"></script>
+	</head>
+	<body class="app-next-body">
+		<!-- Minimal glass header — wordmark left, single action right -->
+		<header class="nxt-header">
+			<a class="nxt-brand" href="/" aria-label="three.ws home">
+				<img class="nxt-brand-mark" src="/three.svg" alt="" aria-hidden="true" />
+				<span class="nxt-brand-text">three.ws</span>
+				<span class="nxt-brand-tag">app · next</span>
+			</a>
+
+			<div class="nxt-header-right">
+				<button
+					class="nxt-more"
+					id="nxt-more-btn"
+					type="button"
+					aria-haspopup="true"
+					aria-expanded="false"
+					aria-controls="nxt-more-menu"
+				>
+					<span>Explore</span>
+					<svg viewBox="0 0 12 8" width="10" height="7" aria-hidden="true">
+						<path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+				</button>
+				<div class="nxt-more-menu" id="nxt-more-menu" role="menu" hidden>
+					<a href="/discover" role="menuitem">Discover agents</a>
+					<a href="/create" role="menuitem">Create an avatar</a>
+					<a href="/marketplace" role="menuitem">Marketplace</a>
+					<a href="/studio" role="menuitem">Studio</a>
+					<a href="/docs" role="menuitem">Docs</a>
+					<div class="nxt-more-sep" role="separator"></div>
+					<a href="/app" role="menuitem">Open classic viewer</a>
+				</div>
+
+				<!-- Auth surface — single pill, swaps to user chip when signed in -->
+				<div class="nxt-auth">
+					<a class="nxt-signin" id="nav-sign-in" href="/login">Sign in</a>
+					<div class="nav-user-wrap" id="nav-user-wrap" hidden>
+						<button
+							class="nxt-user-btn nav-user"
+							id="nav-user-btn"
+							type="button"
+							aria-haspopup="true"
+							aria-expanded="false"
+						>
+							<span class="nxt-user-dot" aria-hidden="true"></span>
+							<span id="nav-user-label">Account</span>
+						</button>
+						<div class="nav-user-menu nxt-user-menu" id="nav-user-menu" role="menu" hidden>
+							<a href="/profile" id="nav-my-profile-link" role="menuitem">My profile</a>
+							<a href="/dashboard" role="menuitem">Dashboard</a>
+							<a href="/settings" role="menuitem">Settings</a>
+							<div class="nxt-user-sep" role="separator"></div>
+							<button id="nav-sign-out-btn" type="button" role="menuitem">Sign out</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<!-- Main viewer surface — full bleed, the avatar IS the page -->
+		<main class="wrap nxt-main">
+			<!-- The 3D viewer (required by app.js) -->
+			<div class="viewer-container nxt-viewer" id="viewer-container"></div>
+
+			<!-- Floor glow + edge vignette (CSS only, sits behind the canvas via z-index) -->
+			<div class="nxt-stage-floor" aria-hidden="true"></div>
+			<div class="nxt-stage-vignette" aria-hidden="true"></div>
+
+			<!-- Rotating "Try …" invitation — floats above the bottom bar -->
+			<div class="nxt-try-pill" id="nxt-try-pill" hidden>
+				<span class="nxt-try-pill__label">Try</span>
+				<button class="nxt-try-pill__btn" id="nxt-try-pill-btn" type="button">
+					<span class="nxt-try-pill__icon" id="nxt-try-pill-icon">👋</span>
+					<span class="nxt-try-pill__name" id="nxt-try-pill-name">Wave</span>
+				</button>
+				<button
+					class="nxt-try-pill__next"
+					id="nxt-try-pill-next"
+					type="button"
+					aria-label="Suggest another"
+					title="Suggest another"
+				>
+					<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+						<path d="M2 8h12M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+				</button>
+			</div>
+
+			<!-- Bottom action bar — single hierarchy, no competing CTAs -->
+			<div class="nxt-action-bar">
+				<button
+					class="nxt-action nxt-action--ghost"
+					id="nxt-anim-btn"
+					type="button"
+					aria-haspopup="true"
+					aria-expanded="false"
+					aria-controls="nxt-anim-sheet"
+					title="Browse animations (A)"
+				>
+					<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+						<circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5" fill="none" />
+						<path d="M8 7.5l4.5 2.5L8 12.5z" fill="currentColor" />
+					</svg>
+					<span>Animations</span>
+					<kbd>A</kbd>
+				</button>
+
+				<label class="nxt-action nxt-action--ghost" for="file-input" title="Drop or pick a GLB/glTF (U)">
+					<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+						<path d="M10 3v9m-4-4l4-4 4 4M4 15h12" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+					<span>Upload model</span>
+					<kbd>U</kbd>
+					<input type="file" name="file-input[]" id="file-input" multiple hidden />
+				</label>
+
+				<button
+					class="nxt-action nxt-action--primary"
+					id="nxt-primary"
+					type="button"
+				>
+					<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+						<path d="M5 11l3 3 7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+					<span id="nxt-primary-label">Sign in to save</span>
+				</button>
+			</div>
+
+			<!-- Animation picker sheet — slides up when "Animations" is clicked -->
+			<div class="nxt-anim-sheet" id="nxt-anim-sheet" hidden aria-hidden="true">
+				<div class="nxt-anim-sheet__head">
+					<h2>Animations</h2>
+					<button class="nxt-anim-sheet__close" id="nxt-anim-sheet-close" type="button" aria-label="Close">×</button>
+				</div>
+				<div class="nxt-anim-sheet__filter">
+					<input
+						class="nxt-anim-search"
+						id="nxt-anim-search"
+						type="search"
+						placeholder="Search animations… (idle, wave, jump)"
+						autocomplete="off"
+					/>
+				</div>
+				<div class="nxt-anim-grid" id="nxt-anim-grid">
+					<div class="nxt-anim-empty">Loading clips…</div>
+				</div>
+			</div>
+
+			<!-- Spinner required by app.js -->
+			<div class="spinner"></div>
+		</main>
+
+		<!-- Hint chip — only on first visit -->
+		<div class="nxt-first-hint" id="nxt-first-hint" hidden>
+			<span>Click the avatar — try an animation, drag to rotate, scroll to zoom.</span>
+			<button id="nxt-first-hint-close" type="button" aria-label="Dismiss">×</button>
+		</div>
+	</body>
+</html>

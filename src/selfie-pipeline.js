@@ -1,24 +1,29 @@
 /**
- * Selfie pipeline — bridges the 3-photo capture UI on /create/selfie to the
- * native avatar reconstruction backend.
+ * Selfie pipeline — bridges the capture UI on /create/selfie to the native
+ * avatar reconstruction backend.
  *
  * Flow:
- *   [selfie:submit] → downscale photos → POST /api/avatars/reconstruct
+ *   [selfie:submit] → downscale photos (frontal required, sides optional)
+ *     → dispatches selfie:preview { dataUrl } so the build view can show the
+ *       user's own photo on a placeholder body while the real GLB renders
+ *     → POST /api/avatars/reconstruct
  *     → dispatches selfie:building { jobId }
  *     → poll /api/avatars/regenerate-status?jobId=…
  *     → dispatches selfie:progress { label } on each poll tick
  *     → on { status: 'done', resultAvatarId } → dispatches selfie:done { avatarId }
- *     → on { status: 'failed' } or timeout → dispatches selfie:build-error { message }
+ *     → on { status: 'failed' } or timeout → dispatches selfie:build-error
+ *         { message, slot? } where slot is the photo that likely caused the failure
  */
 
 const SUBMIT_ENDPOINT = '/api/avatars/reconstruct';
 const STATUS_ENDPOINT = '/api/avatars/regenerate-status';
-const MAX_DIM = 1024; // downscale so each base64 photo stays well under the 8MB string cap
+const MAX_DIM = 1024;
 const JPEG_QUALITY = 0.88;
 const POLL_INTERVAL_MS = 3000;
-const POLL_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes — image-to-3D models take 30-180s
+const POLL_TIMEOUT_MS = 5 * 60 * 1000;
 
 let _building = false;
+let _lastSlotsSent = /** @type {string[]} */ ([]);
 
 document.addEventListener('selfie:submit', (event) => {
 	const ev = /** @type {CustomEvent} */ (event);
@@ -31,7 +36,10 @@ document.addEventListener('selfie:submit', (event) => {
 		}
 		if (_building) {
 			document.dispatchEvent(new CustomEvent('selfie:build-error', {
-				detail: { message: err.userMessage || 'Something went wrong. Try again.' },
+				detail: {
+					message: err.userMessage || 'Something went wrong. Try again.',
+					slot: err.slot || null,
+				},
 			}));
 		} else {
 			setStatus(err.userMessage || 'Something went wrong. Try again.', { error: true });
@@ -50,16 +58,26 @@ document.addEventListener('selfie:submit', (event) => {
  */
 async function run(detail) {
 	_building = false;
-	if (!detail?.files?.frontal || !detail.files.left || !detail.files.right) {
-		throw withMessage(new Error('missing photos'), 'Please add all 3 photos.');
+	if (!detail?.files?.frontal) {
+		throw withMessage(new Error('missing frontal'), 'Add a front-facing photo to start.', 'frontal');
 	}
 
 	setStatus('Preparing photos…');
-	const photos = [
-		await fileToDataUrl(detail.files.frontal),
-		await fileToDataUrl(detail.files.left),
-		await fileToDataUrl(detail.files.right),
-	];
+	const slots = /** @type {const} */ (['frontal', 'left', 'right']);
+	_lastSlotsSent = [];
+	const photos = [];
+	for (const slot of slots) {
+		const file = detail.files[slot];
+		if (!file) continue;
+		photos.push(await fileToDataUrl(file));
+		_lastSlotsSent.push(slot);
+	}
+
+	// Emit the frontal photo immediately for the build view's fast preview —
+	// a real image, mapped to the placeholder body until the engine returns.
+	document.dispatchEvent(new CustomEvent('selfie:preview', {
+		detail: { dataUrl: photos[0] },
+	}));
 
 	setStatus('Submitting to avatar engine…');
 	const submitRes = await fetch(SUBMIT_ENDPOINT, {
@@ -141,6 +159,7 @@ async function pollUntilDone(jobId) {
 			throw withMessage(
 				new Error(job.error || 'reconstruct failed'),
 				friendlyJobError(job.error),
+				inferFailingSlot(job.error),
 			);
 		}
 	}
@@ -171,9 +190,32 @@ function friendlyJobError(raw) {
 	if (!raw) return 'Avatar reconstruction failed. Try clearer photos in better light.';
 	const lower = raw.toLowerCase();
 	if (lower.includes('face') && lower.includes('detect'))
-		return 'We could not find a face in one of the photos. Try again with clearer shots.';
-	if (lower.includes('nsfw')) return 'Photos were flagged. Try different shots.';
-	return 'Avatar reconstruction failed. Try again with clearer photos.';
+		return 'We could not find a face in your front photo. Try a clearer, well-lit shot.';
+	if (lower.includes('nsfw')) return 'Your photo was flagged by content safety. Try a different shot.';
+	if (lower.includes('blur')) return 'Your photo looks blurry. Try again with a sharper shot in better light.';
+	if (lower.includes('timeout')) return 'The engine took too long. Try again in a moment.';
+	return 'Avatar reconstruction failed. Try again with a clearer photo.';
+}
+
+/**
+ * Server errors don't always tell us which photo caused the failure. Use the
+ * order we submitted (frontal first) plus error-text hints to guess so the UI
+ * can flag the right slot for retake. Returns null when there's nothing useful
+ * to infer.
+ * @param {string | null | undefined} raw
+ */
+function inferFailingSlot(raw) {
+	if (!_lastSlotsSent.length) return null;
+	if (!raw) {
+		// No detail — frontal is the most likely culprit and the one the user
+		// definitely supplied.
+		return _lastSlotsSent[0];
+	}
+	const lower = raw.toLowerCase();
+	if (lower.includes('left')) return _lastSlotsSent.includes('left') ? 'left' : null;
+	if (lower.includes('right')) return _lastSlotsSent.includes('right') ? 'right' : null;
+	if (lower.includes('front') || lower.includes('face')) return _lastSlotsSent[0];
+	return _lastSlotsSent[0];
 }
 
 function defaultAvatarName() {
@@ -278,9 +320,11 @@ function mapApiError(status, payload) {
 /**
  * @param {Error} err
  * @param {string} userMessage
+ * @param {string | null} [slot]
  */
-function withMessage(err, userMessage) {
+function withMessage(err, userMessage, slot) {
 	/** @type {any} */ (err).userMessage = userMessage;
+	if (slot) /** @type {any} */ (err).slot = slot;
 	return err;
 }
 
@@ -296,7 +340,11 @@ let errorBanner = /** @type {HTMLElement | null} */ (null);
 /** @param {string} text @param {{ error?: boolean }} [opts] */
 function setStatus(text, opts = {}) {
 	if (submitBtn) {
-		submitBtn.textContent = text;
+		const labelEl = submitBtn.querySelector('.label');
+		const metaEl = submitBtn.querySelector('.meta');
+		if (labelEl) labelEl.textContent = text;
+		else submitBtn.textContent = text;
+		if (metaEl) metaEl.remove();
 		submitBtn.disabled = true;
 		submitBtn.classList.remove('ready');
 	}
@@ -320,6 +368,8 @@ function setStatus(text, opts = {}) {
 function resetSubmit() {
 	if (!submitBtn) return;
 	submitBtn.disabled = false;
-	submitBtn.textContent = 'Submit';
 	submitBtn.classList.add('ready');
+	const labelEl = submitBtn.querySelector('.label');
+	if (labelEl) labelEl.textContent = 'Build my avatar';
+	else submitBtn.textContent = 'Build my avatar';
 }

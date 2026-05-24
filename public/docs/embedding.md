@@ -264,7 +264,7 @@ The `allow` attribute controls browser feature access:
 |---------|-----|
 | Backend agent | `/agent/{agent-id}/embed` or `/agent-embed.html?id={agent-id}` |
 | On-chain agent | `/a/{chainId}/{agentId}/embed` |
-| Widget (kiosk) | `/app#widget={widget-id}&kiosk=true` |
+| Widget (kiosk) | `/widget#widget={widget-id}&kiosk=true` (slim shell, recommended) or `/app#widget={widget-id}&kiosk=true` (legacy) |
 | Model viewer only | `/#model={glb-url}` |
 
 ### postMessage protocol

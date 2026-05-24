@@ -119,6 +119,7 @@ const appConfig = {
 				'footer-bot': resolve(__dirname, 'src/footer-bot.js'),
 				app: resolve(__dirname, 'pages/app.html'),
 				'app-demo': resolve(__dirname, 'pages/app-demo.html'),
+				'app-next': resolve(__dirname, 'pages/app-next.html'),
 				home: resolve(__dirname, 'pages/home.html'),
 				'home-v2': resolve(__dirname, 'pages/home-v2.html'),
 				features: resolve(__dirname, 'pages/features.html'),
@@ -126,6 +127,8 @@ const appConfig = {
 				tutorial: resolve(__dirname, 'pages/tutorial.html'),
 				playground: resolve(__dirname, 'pages/playground.html'),
 				embed: resolve(__dirname, 'pages/embed.html'),
+				'embed-demo': resolve(__dirname, 'pages/embed-demo.html'),
+				widget: resolve(__dirname, 'pages/widget.html'),
 				launchpad: resolve(__dirname, 'pages/launchpad.html'),
 				create: resolve(__dirname, 'pages/create.html'),
 				'create-selfie': resolve(__dirname, 'pages/create-selfie.html'),
@@ -135,6 +138,8 @@ const appConfig = {
 				'agent-edit': resolve(__dirname, 'pages/agent-edit.html'),
 				'agent-embed': resolve(__dirname, 'pages/agent-embed.html'),
 				'agent-detail': resolve(__dirname, 'pages/agent-detail.html'),
+				'avatar-embed': resolve(__dirname, 'pages/avatar-embed.html'),
+				handle: resolve(__dirname, 'pages/handle.html'),
 				'a-embed': resolve(__dirname, 'pages/a-embed.html'),
 				'a-edit': resolve(__dirname, 'pages/a-edit.html'),
 				'pump-live': resolve(__dirname, 'pages/pump-live.html'),
@@ -228,6 +233,8 @@ const appConfig = {
 				const fileMap = {
 					'/app': resolve(root, 'pages/app.html'),
 					'/app-demo': resolve(root, 'pages/app-demo.html'),
+					'/widget': resolve(root, 'pages/widget.html'),
+					'/widget/': resolve(root, 'pages/widget.html'),
 					'/login': resolve(root, 'public/login.html'),
 					'/deploy': resolve(root, 'pages/app.html'),
 					'/agents': resolve(root, 'public/agents/index.html'),
@@ -445,6 +452,13 @@ const appConfig = {
 					// /a/<chainId>/<agentId>/embed or /a/<chainId>/<registry>/<agentId>/embed  → iframe viewer
 					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/embed\/?$/.test(path))
 						filePath = resolve(root, 'pages/a-embed.html');
+					// /embed/avatar          → portable avatar embed (?id= / ?model=)
+					// /embed/avatar/:handle  → portable avatar embed by handle
+					else if (!filePath && /^\/embed\/avatar(\/[a-z0-9_-]{3,30})?\/?$/i.test(path))
+						filePath = resolve(root, 'pages/avatar-embed.html');
+					// /@<handle>  → public live profile page
+					else if (!filePath && /^\/@[a-z0-9_-]{3,30}\/?$/i.test(path))
+						filePath = resolve(root, 'pages/handle.html');
 					// /a/<chainId>/<agentId>  or  /a/<chainId>/<registry>/<agentId>
 					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/?$/.test(path))
 						filePath = resolve(root, 'pages/app.html');
@@ -653,6 +667,41 @@ const appConfig = {
 					return;
 				}
 				cpSync(src, resolve(__dirname, 'dist/avatar-studio'), { recursive: true });
+			},
+		},
+		{
+			// Serve `/api/widgets/wdgt_demo_*` from the local fixture file in dev.
+			// Without this, those requests fall through to the `/api` proxy and hit
+			// production — which may not yet have new demo IDs, so the gallery
+			// renders dead iframes locally even though the fixture exists in source.
+			// Production resolves the same IDs via api/widgets/[id].js → fixtures.
+			name: 'widgets-demo-fixtures',
+			configureServer(server) {
+				server.middlewares.use(async (req, res, next) => {
+					const url = req.url || '';
+					const m = url.match(/^\/api\/widgets\/(wdgt_demo_[A-Za-z0-9_-]+)(?:[?#]|$)/);
+					if (!m) return next();
+					try {
+						const mod = await server.ssrLoadModule(
+							'/api/widgets/_demo-fixtures.js',
+						);
+						const widget = mod.getDemoWidget(m[1]);
+						if (!widget) {
+							res.statusCode = 404;
+							res.setHeader('content-type', 'application/json');
+							res.end(JSON.stringify({ error: 'not_found', message: 'widget not found' }));
+							return;
+						}
+						res.statusCode = 200;
+						res.setHeader('content-type', 'application/json');
+						res.setHeader('cache-control', 'public, max-age=60');
+						res.end(JSON.stringify({ widget }));
+					} catch (err) {
+						res.statusCode = 500;
+						res.setHeader('content-type', 'application/json');
+						res.end(JSON.stringify({ error: 'fixture_load_failed', message: err.message }));
+					}
+				});
 			},
 		},
 		{

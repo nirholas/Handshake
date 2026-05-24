@@ -35,6 +35,13 @@ export async function mountTalkingAgent(viewer, config, container, ctx) {
 	const history = [];
 	let destroyed = false;
 
+	// Cookieless visitor + thread identity (Vercel AI SDK / Intercom pattern):
+	//   visitor_id — long-lived UUID in localStorage, lets the creator see
+	//                "this is the same visitor returning across sessions"
+	//   thread_id  — sessionStorage so a new tab / new visit starts a new
+	//                conversation bucket the creator can browse independently
+	const ids = isPreview ? { visitorId: null, threadId: null } : ensureVisitorThread(widgetId);
+
 	const agent = new NichAgent(container, protocol, null, identity, null, {
 		layout: 'embedded',
 		position: config.chatPosition || 'right',
@@ -50,7 +57,7 @@ export async function mountTalkingAgent(viewer, config, container, ctx) {
 				return { reply: 'Preview mode — save your widget to enable live chat.' };
 			}
 			try {
-				const result = await dispatchChat(widgetId, text, history.slice(-20));
+				const result = await dispatchChat(widgetId, text, history.slice(-20), ids);
 				if (result.reply) {
 					history.push({ role: 'user', content: text });
 					history.push({ role: 'assistant', content: result.reply });
@@ -78,12 +85,16 @@ export async function mountTalkingAgent(viewer, config, container, ctx) {
 
 // ── SSE round-trip ─────────────────────────────────────────────────────────
 
-async function dispatchChat(widgetId, message, history) {
+async function dispatchChat(widgetId, message, history, ids) {
+	const body = { message, history };
+	if (ids?.visitorId) body.visitor_id = ids.visitorId;
+	if (ids?.threadId) body.thread_id = ids.threadId;
+
 	const res = await fetch(`/api/widgets/${encodeURIComponent(widgetId)}/chat`, {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
-		body: JSON.stringify({ message, history }),
+		body: JSON.stringify(body),
 	});
 
 	if (res.status === 429) {
@@ -127,6 +138,52 @@ function parseSse(text) {
 		}
 	}
 	return { reply, actions, error };
+}
+
+// ── Visitor + thread identity ──────────────────────────────────────────────
+//
+// localStorage holds a long-lived per-widget UUID — same visitor across tabs
+// and visits. sessionStorage holds the current thread — a fresh tab or a
+// browser restart starts a new bucket so the creator can browse conversations
+// grouped by visit. Both fail gracefully when storage is blocked (private
+// browsing / sandboxed iframes); the server falls back to an anon thread id.
+function ensureVisitorThread(widgetId) {
+	const safeId = String(widgetId || '').replace(/[^A-Za-z0-9_-]/g, '');
+	const vKey = `3dws:visitor:${safeId}`;
+	const tKey = `3dws:thread:${safeId}`;
+
+	let visitorId = null;
+	let threadId = null;
+	try {
+		visitorId = localStorage.getItem(vKey);
+		if (!visitorId) {
+			visitorId = randomId('v_');
+			localStorage.setItem(vKey, visitorId);
+		}
+	} catch {
+		/* localStorage blocked */
+	}
+	try {
+		threadId = sessionStorage.getItem(tKey);
+		if (!threadId) {
+			threadId = randomId('wct_');
+			sessionStorage.setItem(tKey, threadId);
+		}
+	} catch {
+		/* sessionStorage blocked */
+	}
+
+	return { visitorId, threadId };
+}
+
+function randomId(prefix) {
+	const bytes = new Uint8Array(9);
+	(globalThis.crypto || window.crypto)?.getRandomValues?.(bytes);
+	let s = '';
+	for (let i = 0; i < bytes.length; i++) {
+		s += bytes[i].toString(16).padStart(2, '0');
+	}
+	return prefix + s.slice(0, 12);
 }
 
 // ── Action dispatch ────────────────────────────────────────────────────────

@@ -123,6 +123,20 @@
 			body.bg-light {
 				background: #f5f5f5;
 			}
+			/* OBS browser-source: solid chromakey colour for streamers whose
+			   compositor can't keep alpha. ?chromakey=%2300ff00 → bg green. */
+			body.bg-chromakey {
+				background: var(--chromakey-color, #00ff00) !important;
+			}
+			/* ?hide-chrome=1 — for kiosk / OBS / app-shell usage where the
+			   embed is the whole frame and chrome (name plate, link, etc) is
+			   redundant. Doesn't affect postMessage handshake. */
+			body.hide-chrome #name-plate,
+			body.hide-chrome #chain-plate,
+			body.hide-chrome #open-link,
+			body.hide-chrome #loading {
+				display: none !important;
+			}
 			body.bg-light #name-plate {
 				color: rgba(0, 0, 0, 0.65);
 				text-shadow: none;
@@ -159,14 +173,29 @@
 
 			const params = new URL(location.href).searchParams;
 			const bg = params.get('bg') || 'transparent';
-			if (bg === 'dark') document.body.classList.add('bg-dark');
-			if (bg === 'light') document.body.classList.add('bg-light');
+			const chromakey = params.get('chromakey');
+			if (chromakey) {
+				// Validate hex (#rgb / #rrggbb) or three named colours we
+				// support out of the box. Anything else falls back to the
+				// default OBS green.
+				const safe = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(chromakey)
+					? chromakey
+					: { green: '#00ff00', blue: '#0000ff', magenta: '#ff00ff' }[chromakey.toLowerCase()] ||
+						'#00ff00';
+				document.documentElement.style.setProperty('--chromakey-color', safe);
+				document.body.classList.add('bg-chromakey');
+			} else if (bg === 'dark') document.body.classList.add('bg-dark');
+			else if (bg === 'light') document.body.classList.add('bg-light');
+
+			const hideChrome = params.get('hide-chrome') === '1' || params.get('chrome') === '0';
+			if (hideChrome) document.body.classList.add('hide-chrome');
 
 			const avatar = params.get('avatar');
+			const startAnimation = params.get('animation') || params.get('pose') || null;
 
-			const plateOn = params.get('name') !== '0';
-			const chainOn = params.get('chain-plate') !== '0';
-			const openLinkOn = params.get('open-link') !== '0';
+			const plateOn = !hideChrome && params.get('name') !== '0';
+			const chainOn = !hideChrome && params.get('chain-plate') !== '0';
+			const openLinkOn = !hideChrome && params.get('open-link') !== '0';
 
 			// URL: /a/:chainId/:agentId/embed
 			const ref = parseAgentRef(location.pathname);
@@ -260,6 +289,10 @@
 					await loadWithFallback(viewer, candidates);
 
 					document.getElementById('loading').style.display = 'none';
+					if (startAnimation) {
+						try { await viewer.onGesture({ name: startAnimation, loop: true }); }
+						catch (err) { console.warn('[a-embed] start animation failed', err); }
+					}
 					postToParent({
 						__agent: true,
 						type: 'ready',
@@ -311,6 +344,11 @@
 				await loadWithFallback(viewer, candidates);
 
 				document.getElementById('loading').style.display = 'none';
+
+				if (startAnimation) {
+					try { await viewer.onGesture({ name: startAnimation, loop: true }); }
+					catch (err) { console.warn('[a-embed] start animation failed', err); }
+				}
 
 				postToParent({
 					__agent: true,

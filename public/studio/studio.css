@@ -1063,3 +1063,127 @@ a:hover {
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 }
+
+/* ── Knowledge panel ────────────────────────────────────────────────── */
+.knowledge-panel {
+	margin-top: 1.1rem;
+	padding-top: 1rem;
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.kp-head { display: flex; flex-direction: column; gap: 0.2rem; }
+.kp-head h3 { margin: 0; font-size: 0.95rem; font-weight: 600; }
+.kp-sub { margin: 0; color: var(--muted); font-size: 0.78rem; line-height: 1.4; }
+
+.kp-list-wrap { position: relative; }
+.kp-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.kp-empty {
+	color: var(--muted);
+	font-size: 0.8rem;
+	text-align: center;
+	padding: 0.6rem;
+	border: 1px dashed rgba(255, 255, 255, 0.08);
+	border-radius: 8px;
+}
+.kp-row {
+	display: grid;
+	grid-template-columns: 28px 1fr auto;
+	align-items: center;
+	gap: 0.55rem;
+	padding: 0.5rem 0.6rem;
+	background: rgba(255, 255, 255, 0.025);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 8px;
+}
+.kp-row-err { border-color: rgba(255, 80, 80, 0.4); }
+.kp-row-icon {
+	width: 26px; height: 26px;
+	display: grid; place-items: center;
+	border-radius: 6px;
+	background: rgba(139, 92, 246, 0.15);
+	color: var(--accent-strong, #b794f6);
+	font-size: 0.9rem;
+}
+.kp-row-meta { min-width: 0; }
+.kp-row-title {
+	font-size: 0.82rem;
+	font-weight: 500;
+	overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.kp-row-sub {
+	font-size: 0.7rem;
+	color: var(--muted);
+	overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+	margin-top: 2px;
+}
+.kp-row-sub a { color: inherit; text-decoration: underline; }
+.kp-row-del {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	color: var(--muted);
+	width: 26px; height: 26px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 0.95rem;
+	line-height: 1;
+}
+.kp-row-del:hover { color: #fff; border-color: rgba(255, 80, 80, 0.5); }
+
+.kp-drop {
+	padding: 1rem 0.8rem;
+	border: 1px dashed rgba(255, 255, 255, 0.18);
+	border-radius: 10px;
+	text-align: center;
+	background: rgba(255, 255, 255, 0.015);
+	transition: background 0.15s ease, border-color 0.15s ease;
+}
+.kp-drop.over {
+	border-color: var(--accent-strong, #b794f6);
+	background: rgba(139, 92, 246, 0.08);
+}
+.kp-drop-inner { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.82rem; }
+.kp-drop-link { cursor: pointer; text-decoration: underline; }
+.kp-drop-hint { color: var(--muted); font-size: 0.7rem; }
+
+.kp-section { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 0.55rem 0.7rem; }
+.kp-section[open] { padding-bottom: 0.7rem; }
+.kp-section summary { cursor: pointer; font-size: 0.8rem; }
+.kp-section[open] summary { margin-bottom: 0.55rem; }
+.kp-row-form, .kp-paste-form { display: flex; flex-direction: column; gap: 0.45rem; }
+.kp-row-form input, .kp-paste-form textarea {
+	width: 100%;
+	background: #0f0f17;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	color: #eee;
+	border-radius: 6px;
+	padding: 0.45rem 0.6rem;
+	font-family: inherit;
+	font-size: 0.85rem;
+}
+.kp-paste-form textarea { resize: vertical; min-height: 80px; }
+
+.kp-status { font-size: 0.78rem; color: var(--muted); min-height: 1.1em; }
+.kp-status.kp-ok  { color: #6fe8a4; }
+.kp-status.kp-err { color: #ff7676; }
+
+.kp-busy { opacity: 0.7; pointer-events: none; }
+
+.kp-preview {
+	background: rgba(139, 92, 246, 0.08);
+	border: 1px solid rgba(139, 92, 246, 0.25);
+	border-radius: 8px;
+	padding: 0.7rem 0.85rem;
+}
+.kp-preview-title { font-size: 0.8rem; margin-bottom: 0.4rem; }
+.kp-preview-list { margin: 0; padding-left: 1.1rem; font-size: 0.78rem; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+
+.kp-transcripts-link {
+	margin-top: 0.7rem;
+	padding-top: 0.7rem;
+	border-top: 1px dashed rgba(255, 255, 255, 0.08);
+	font-size: 0.8rem;
+}
+.kp-transcripts-link a { color: var(--accent-strong, #b794f6); text-decoration: none; }
+.kp-transcripts-link a:hover { text-decoration: underline; }
