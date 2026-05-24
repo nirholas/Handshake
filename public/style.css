@@ -81,7 +81,7 @@ body {
 	padding: 0;
 	font-family: 'Inter', system-ui, -apple-system, sans-serif;
 	background: #000;
-	min-height: 100%;
+	min-height: 100vh;
 	color: #e0e0e0;
 	font-size: var(--text-base);
 	line-height: var(--leading-normal);
@@ -3584,6 +3584,59 @@ body.deploy-page {
 	.view-public-profile-btn {
 		padding: var(--space-xs) var(--space-sm);
 	}
+}
+
+/******************************************************************************
+ * Layout switch — segmented toggle between "Classic" (current viewer chrome)
+ * and "Next" (the in-development alternate layout). Persists across sessions
+ * via localStorage and writes data-layout on <body> so CSS rules can scope
+ * overrides under body[data-layout='next'].
+ */
+.layout-switch {
+	display: inline-flex;
+	align-items: stretch;
+	padding: 2px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: var(--radius-md);
+	gap: 2px;
+}
+.layout-switch[hidden] {
+	display: none;
+}
+.layout-switch__btn {
+	appearance: none;
+	background: transparent;
+	border: 0;
+	color: rgba(255, 255, 255, 0.6);
+	font: inherit;
+	font-size: var(--text-xs);
+	font-weight: 500;
+	letter-spacing: 0.01em;
+	padding: 4px 10px;
+	border-radius: calc(var(--radius-md) - 3px);
+	cursor: pointer;
+	transition:
+		background 0.18s ease,
+		color 0.18s ease;
+}
+.layout-switch__btn:hover {
+	color: #fff;
+}
+.layout-switch__btn--active {
+	background: rgba(255, 255, 255, 0.12);
+	color: #fff;
+}
+.layout-switch__btn:focus-visible {
+	outline: 2px solid rgba(255, 255, 255, 0.5);
+	outline-offset: 2px;
+}
+
+/* The switch is meaningless in embed/widget/kiosk/deploy/explore contexts. */
+body[data-viewer-mode='embed'] #layout-switch,
+body[data-viewer-mode='deploy'] #layout-switch,
+body[data-viewer-mode='explore'] #layout-switch {
+	display: none !important;
 }
 
 /******************************************************************************

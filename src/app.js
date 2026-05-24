@@ -198,6 +198,7 @@ class App {
 		}
 		this.hideSpinner();
 		this._applyViewerMode();
+		this._setupLayoutSwitch();
 		this._updateSignInLink();
 		this._setupSaveToAccount();
 		this._setupMakeWidgetButton();
@@ -487,6 +488,50 @@ class App {
 			// or a 'false' hint) show the auth gate immediately so it never appears after the
 			// CZ model renders (which is instant when the GLB is cached from the homepage).
 			document.body.dataset.authed = readAuthHint() === 'true' ? 'pending' : 'false';
+		}
+		this._applyViewerLayout();
+	}
+
+	_applyViewerLayout() {
+		let stored = null;
+		try {
+			stored = localStorage.getItem('3dagent:viewer-layout');
+		} catch {
+			/* ignore — storage may be unavailable in private mode */
+		}
+		const layout = stored === 'next' ? 'next' : 'classic';
+		document.body.dataset.layout = layout;
+	}
+
+	_setupLayoutSwitch() {
+		const root = document.getElementById('layout-switch');
+		if (!root) return;
+		if (document.body.dataset.viewerMode !== 'main') return;
+		root.hidden = false;
+
+		const buttons = Array.from(root.querySelectorAll('[data-layout-value]'));
+		const sync = () => {
+			const current = document.body.dataset.layout || 'classic';
+			for (const btn of buttons) {
+				const active = btn.dataset.layoutValue === current;
+				btn.setAttribute('aria-pressed', String(active));
+				btn.classList.toggle('layout-switch__btn--active', active);
+			}
+		};
+		sync();
+
+		for (const btn of buttons) {
+			btn.addEventListener('click', () => {
+				const value = btn.dataset.layoutValue === 'next' ? 'next' : 'classic';
+				if (document.body.dataset.layout === value) return;
+				document.body.dataset.layout = value;
+				try {
+					localStorage.setItem('3dagent:viewer-layout', value);
+				} catch {
+					/* ignore */
+				}
+				sync();
+			});
 		}
 	}
 

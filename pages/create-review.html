@@ -83,13 +83,34 @@
 			}
 
 			.viewer {
-				background: var(--panel);
+				background:
+					radial-gradient(120% 60% at 50% 108%, rgba(214, 255, 61, 0.07) 0, transparent 55%),
+					radial-gradient(80% 80% at 50% 0%, rgba(106, 92, 255, 0.10) 0, transparent 60%),
+					var(--panel);
 				border: 1.5px solid var(--border);
 				border-radius: 14px;
 				aspect-ratio: 4 / 5;
 				min-height: 480px;
 				position: relative;
 				overflow: hidden;
+			}
+			/* Soft ground ellipse — anchors the avatar so it doesn't look like
+			   it's floating in a void. Sits behind the canvas, pure decoration. */
+			.viewer::after {
+				content: '';
+				position: absolute;
+				left: 50%;
+				bottom: 8%;
+				width: 46%;
+				height: 28px;
+				transform: translateX(-50%);
+				background: radial-gradient(ellipse at center,
+					rgba(0, 0, 0, 0.55) 0%,
+					rgba(0, 0, 0, 0.25) 38%,
+					transparent 72%);
+				filter: blur(6px);
+				pointer-events: none;
+				z-index: 0;
 			}
 			.viewer .mv-container {
 				position: absolute;
@@ -98,6 +119,7 @@
 				height: 100%;
 				background: transparent;
 				display: block;
+				z-index: 2;
 			}
 			.viewer .mv-container canvas {
 				display: block;
@@ -113,6 +135,13 @@
 				color: var(--muted);
 				font-size: 13px;
 				gap: 8px;
+				background: var(--panel);
+				z-index: 3;
+				transition: opacity 0.25s ease;
+			}
+			.viewer-loading.is-hidden {
+				opacity: 0;
+				pointer-events: none;
 			}
 			.spinner-sm {
 				width: 16px;
@@ -125,36 +154,56 @@
 			@keyframes spin { to { transform: rotate(360deg); } }
 
 			.panel {
-				background: var(--panel);
+				background:
+					linear-gradient(180deg, rgba(214, 255, 61, 0.04) 0, transparent 90px),
+					var(--panel);
 				border: 1.5px solid var(--border);
 				border-radius: 14px;
 				padding: 22px;
 				display: flex;
 				flex-direction: column;
-				gap: 14px;
+				gap: 16px;
+				position: relative;
+				overflow: hidden;
 			}
+			.panel-head { display: flex; flex-direction: column; gap: 8px; }
 			.panel h2 {
 				margin: 0;
-				font-size: 18px;
+				font-size: 19px;
 				font-weight: 600;
-				letter-spacing: -0.005em;
+				letter-spacing: -0.01em;
+				line-height: 1.25;
+				word-break: break-word;
 			}
 			.tags { display: flex; gap: 6px; flex-wrap: wrap; }
 			.meta-tag {
-				display: inline-block;
-				background: var(--border);
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid var(--border);
 				color: var(--muted);
-				padding: 2px 9px;
-				border-radius: 6px;
+				padding: 3px 9px;
+				border-radius: 999px;
 				font-size: 11px;
 				letter-spacing: 0.02em;
+				text-transform: capitalize;
 			}
+			.meta-tag::before {
+				content: '';
+				width: 5px;
+				height: 5px;
+				border-radius: 50%;
+				background: var(--accent);
+				opacity: 0.75;
+			}
+			.meta-tag.is-size::before { background: #6a5cff; }
 			.label {
 				display: block;
-				font-size: 12px;
+				font-size: 11px;
 				color: var(--muted);
 				text-transform: uppercase;
-				letter-spacing: 0.05em;
+				letter-spacing: 0.06em;
 				margin-bottom: 6px;
 			}
 			.panel input {
@@ -165,10 +214,47 @@
 				border-radius: 9px;
 				padding: 10px 12px;
 				font: inherit;
+				transition: border-color 0.15s, background 0.15s;
 			}
+			.panel input::placeholder { color: #4a4d5a; }
 			.panel input:focus {
 				outline: none;
 				border-color: var(--accent);
+				background: #090a10;
+			}
+
+			.unlocks {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				padding: 12px 14px;
+				background: rgba(255, 255, 255, 0.02);
+				border: 1px dashed var(--border);
+				border-radius: 10px;
+			}
+			.unlocks-title {
+				font-size: 11px;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				margin: 0;
+			}
+			.unlocks ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+			.unlocks li {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 13px;
+				color: var(--text);
+			}
+			.unlocks li::before {
+				content: '';
+				width: 14px;
+				height: 14px;
+				flex-shrink: 0;
+				border-radius: 50%;
+				background:
+					radial-gradient(circle at 35% 35%, rgba(214, 255, 61, 0.9), rgba(214, 255, 61, 0.15) 70%);
 			}
 
 			.cta {
@@ -322,10 +408,12 @@
 				</div>
 
 				<div class="panel">
-					<h2 id="avatar-name">Your avatar</h2>
-					<div class="tags">
-						<span class="meta-tag" id="tag-source">—</span>
-						<span class="meta-tag" id="tag-size">— KB</span>
+					<div class="panel-head">
+						<h2 id="avatar-name">Your avatar</h2>
+						<div class="tags">
+							<span class="meta-tag" id="tag-source">—</span>
+							<span class="meta-tag is-size" id="tag-size">— KB</span>
+						</div>
 					</div>
 
 					<div>
@@ -333,7 +421,7 @@
 						<input
 							id="f-name"
 							maxlength="120"
-							placeholder="e.g. My agent"
+							placeholder="Give your avatar a name"
 							autocomplete="off"
 						/>
 					</div>
@@ -344,6 +432,15 @@
 					<button class="secondary" id="start-over-btn" type="button">
 						Start over
 					</button>
+
+					<div class="unlocks" aria-label="What saving unlocks">
+						<p class="unlocks-title">Saving unlocks</p>
+						<ul>
+							<li>Use as an agent across three.ws</li>
+							<li>Voice, animation, and emotes</li>
+							<li>Embed anywhere with one snippet</li>
+						</ul>
+					</div>
 
 					<p class="guest-note" id="guest-note" hidden>
 						<strong>Not signed in.</strong> Your preview lives in this browser

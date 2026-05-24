@@ -51,6 +51,8 @@ const ALLOWED_ORIGINS = [
 	'https://3d-agent.vercel.app',
 	'http://localhost:3000',
 	'http://localhost:5173',
+	// GitHub Codespaces preview hosts: {name}-{port}.app.github.dev
+	'https://*.app.github.dev',
 ];
 
 const POLICY = {

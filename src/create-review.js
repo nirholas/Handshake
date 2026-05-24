@@ -56,9 +56,16 @@ async function boot() {
 }
 
 async function renderPreview(record) {
-	$('#avatar-name').textContent = record.name;
-	$('#f-name').value = record.name;
-	$('#tag-source').textContent = record.meta?.source || record.meta?.provider || 'glb';
+	// guest-avatar.stage() falls back to "Avatar #abc123" when no name was
+	// supplied (Avaturn / generator flow). That string isn't something the user
+	// chose, so don't pre-fill the input with it — leave the placeholder hint
+	// visible and show a friendly heading until they type.
+	const isAutoName = /^Avatar #[a-f0-9]{4,}$/i.test(record.name || '');
+	const userFacingName = isAutoName ? '' : record.name;
+	$('#avatar-name').textContent = userFacingName || 'Your new avatar';
+	$('#f-name').value = userFacingName;
+	$('#tag-source').textContent =
+		prettySource(record.meta?.source || record.meta?.provider);
 	$('#tag-size').textContent =
 		record.size > 0 ? `${Math.round(record.size / 1024)} KB` : '— KB';
 
@@ -75,7 +82,8 @@ async function renderPreview(record) {
 		return;
 	}
 
-	$('#viewer-loading').hidden = true;
+	const loadingEl = $('#viewer-loading');
+	loadingEl.classList.add('is-hidden');
 
 	// Procedural idle layer — breathing (spine), micro-saccades, blink, weight shift.
 	// No AgentProtocol on this static preview; IdleAnimation's no-op stub covers it.
@@ -84,6 +92,41 @@ async function renderPreview(record) {
 		seed: record.id || 'create-review',
 	});
 	viewerIdleDispose = viewerScene.addOnTick((dt) => viewerIdle.update(dt));
+
+	// Pull the avatar out of T-pose. The GLB usually ships no clips, so we play
+	// a baked external emote — TalkEmotes loads its manifest async, so wait for
+	// it before requesting. Prefer the calmer breathing loop; fall back to the
+	// plain idle clip if breathing isn't in the manifest.
+	playBaseIdle().catch((err) =>
+		console.warn('[create-review] base idle failed', err),
+	);
+}
+
+function prettySource(raw) {
+	if (!raw) return 'GLB';
+	const key = String(raw).toLowerCase();
+	const map = {
+		avaturn: 'Avaturn',
+		upload: 'Uploaded',
+		import: 'Imported',
+		'three-ws-studio': 'Studio',
+		'three-ws-selfie': 'Selfie',
+		glb: 'GLB',
+	};
+	return map[key] || raw;
+}
+
+async function playBaseIdle() {
+	const emotes = viewerScene?.getEmoteController();
+	if (!emotes) return;
+	try {
+		await emotes.loadManifest();
+	} catch {
+		return;
+	}
+	if (!viewerScene) return; // unmounted during await
+	const started = await viewerScene.playEmote('av-idle-breath');
+	if (!started && viewerScene) await viewerScene.playEmote('idle');
 }
 
 function wireControls() {
@@ -93,7 +136,7 @@ function wireControls() {
 
 	nameInput.addEventListener('input', () => {
 		const value = nameInput.value.trim();
-		$('#avatar-name').textContent = value || 'Your avatar';
+		$('#avatar-name').textContent = value || 'Your new avatar';
 	});
 
 	saveBtn.addEventListener('click', () => onSave());
