@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Mocap Studio · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Record, save, and replay face mocap clips on any three.ws avatar." />
+		<meta name="theme-color" content="#0b0d10" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #07090c;
+				--panel: #11141a;
+				--panel-edge: rgba(255, 255, 255, 0.07);
+				--ink: #e8ecf2;
+				--ink-dim: rgba(255, 255, 255, 0.6);
+				--accent: #5fa8ff;
+				--rec: #ff5b6b;
+				--ok: #5fce6a;
+			}
+			* { box-sizing: border-box; }
+			body {
+				margin: 0;
+				min-height: 100vh;
+				background: radial-gradient(1200px 600px at 70% -10%, #1a1f29, var(--bg));
+				color: var(--ink);
+				font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+				display: grid;
+				grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.9fr);
+				gap: 22px;
+				padding: 22px;
+			}
+			@media (max-width: 980px) {
+				body { grid-template-columns: 1fr; padding: 14px; gap: 14px; }
+			}
+			h1 { margin: 0 0 6px; font-size: 22px; }
+			.sub { color: var(--ink-dim); font-size: 13px; margin-bottom: 18px; }
+
+			.stage {
+				position: relative;
+				background: linear-gradient(180deg, #11141a, #0a0c10);
+				border-radius: 14px;
+				border: 1px solid var(--panel-edge);
+				min-height: 560px;
+				overflow: hidden;
+			}
+			.stage canvas {
+				display: block;
+				width: 100% !important;
+				height: 100% !important;
+			}
+			#webcam-pip {
+				position: absolute;
+				right: 12px;
+				top: 12px;
+				width: 160px;
+				height: 120px;
+				object-fit: cover;
+				border-radius: 10px;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: #000;
+				z-index: 3;
+				transform: scaleX(-1);
+				display: none;
+			}
+			#webcam-pip.live { display: block; }
+			.rec-pill {
+				position: absolute;
+				left: 12px;
+				top: 12px;
+				z-index: 3;
+				display: none;
+				align-items: center;
+				gap: 6px;
+				padding: 6px 12px;
+				border-radius: 999px;
+				background: rgba(0, 0, 0, 0.6);
+				color: #fff;
+				font-size: 11px;
+				letter-spacing: 0.06em;
+				border: 1px solid rgba(255, 255, 255, 0.18);
+			}
+			.rec-pill.on {
+				display: inline-flex;
+			}
+			.rec-pill .dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: var(--rec);
+				box-shadow: 0 0 8px var(--rec);
+				animation: pulse 1s ease-in-out infinite;
+			}
+			@keyframes pulse {
+				0%, 100% { opacity: 1; }
+				50% { opacity: 0.4; }
+			}
+
+			.card {
+				background: var(--panel);
+				border: 1px solid var(--panel-edge);
+				border-radius: 14px;
+				padding: 16px;
+				margin-bottom: 14px;
+			}
+			.card h2 {
+				margin: 0 0 12px;
+				font-size: 13px;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				color: var(--ink-dim);
+				font-weight: 600;
+			}
+			.row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+			.row > label { color: var(--ink-dim); font-size: 13px; min-width: 90px; }
+			.row input,
+			.row select,
+			.row textarea {
+				flex: 1;
+				background: #06080b;
+				color: var(--ink);
+				border: 1px solid var(--panel-edge);
+				border-radius: 8px;
+				padding: 9px 11px;
+				font-size: 13px;
+				font-family: inherit;
+				min-width: 0;
+			}
+			.row textarea { resize: vertical; min-height: 56px; }
+			.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+			button.btn {
+				appearance: none;
+				background: #fff;
+				color: #0a0c10;
+				border: 0;
+				border-radius: 8px;
+				padding: 10px 16px;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				font-family: inherit;
+			}
+			button.btn.danger { background: var(--rec); color: #fff; }
+			button.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--panel-edge); }
+			button.btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+			.clip-list { display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow: auto; }
+			.clip {
+				background: rgba(255, 255, 255, 0.03);
+				border: 1px solid var(--panel-edge);
+				border-radius: 10px;
+				padding: 12px;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+			.clip .meta { flex: 1; min-width: 0; }
+			.clip .meta .n { font-size: 13px; font-weight: 500; color: var(--ink); }
+			.clip .meta .d { font-size: 11px; color: var(--ink-dim); margin-top: 2px; }
+			.clip .v-pill {
+				font-size: 10px;
+				padding: 2px 6px;
+				border-radius: 6px;
+				background: rgba(255, 255, 255, 0.06);
+				color: var(--ink-dim);
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+			}
+			.clip .v-pill.public { background: rgba(95, 206, 106, 0.18); color: var(--ok); }
+			.clip .actions { gap: 6px; }
+			.clip button {
+				appearance: none;
+				background: transparent;
+				color: var(--ink-dim);
+				border: 1px solid var(--panel-edge);
+				border-radius: 6px;
+				padding: 5px 9px;
+				font-size: 11px;
+				cursor: pointer;
+				font-family: inherit;
+			}
+			.clip button:hover { color: var(--ink); border-color: rgba(255, 255, 255, 0.2); }
+
+			.timer {
+				font-family: ui-monospace, SFMono-Regular, monospace;
+				font-size: 36px;
+				font-weight: 600;
+				letter-spacing: 0.03em;
+				color: var(--ink);
+				margin: 12px 0;
+				text-align: center;
+			}
+			.timer.recording { color: var(--rec); }
+			.empty {
+				color: var(--ink-dim);
+				font-size: 13px;
+				padding: 18px 0;
+				text-align: center;
+				font-style: italic;
+			}
+			.brand { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+			.brand a { color: var(--ink); text-decoration: none; font-weight: 600; }
+			.signed-out {
+				background: rgba(255, 180, 84, 0.1);
+				border: 1px solid rgba(255, 180, 84, 0.3);
+				border-radius: 10px;
+				padding: 12px 14px;
+				font-size: 13px;
+				color: rgba(255, 180, 84, 0.95);
+			}
+			.signed-out a { color: rgba(255, 180, 84, 0.95); font-weight: 600; }
+		</style>
+	</head>
+	<body>
+		<section class="left">
+			<div class="brand">
+				<div>
+					<h1>Mocap studio</h1>
+					<div class="sub">Record your face, save the clip, replay it on any avatar — yours or someone else's.</div>
+				</div>
+				<a href="/">← three.ws</a>
+			</div>
+
+			<div id="auth-warning" class="signed-out" style="display:none;margin-bottom:14px;">
+				You're not signed in — clips can be recorded locally and replayed, but they can't be saved.
+				<a href="/login">Sign in</a> to save and share.
+			</div>
+
+			<div class="stage" id="stage-wrap">
+				<div id="stage"></div>
+				<div id="rec-pill" class="rec-pill"><span class="dot"></span><span>REC <span id="rec-time">0.0s</span></span></div>
+				<video id="webcam-pip" autoplay playsinline muted aria-hidden="true"></video>
+			</div>
+
+			<div class="card" style="margin-top:14px;">
+				<h2>Record</h2>
+				<div class="timer" id="timer">00.0s</div>
+				<div class="actions">
+					<button class="btn" id="start-cam">Start camera</button>
+					<button class="btn ghost" id="calibrate" disabled>Calibrate neutral</button>
+					<button class="btn danger" id="record" disabled>Record</button>
+					<button class="btn ghost" id="replay" disabled>Replay last</button>
+					<button class="btn ghost" id="discard" disabled>Discard</button>
+				</div>
+			</div>
+
+			<div class="card">
+				<h2>Save clip</h2>
+				<div class="row">
+					<label for="clip-name">Name</label>
+					<input id="clip-name" type="text" placeholder="head nod" maxlength="120" />
+				</div>
+				<div class="row">
+					<label for="clip-desc">Description</label>
+					<textarea id="clip-desc" placeholder="Optional — what is this for?" maxlength="2000"></textarea>
+				</div>
+				<div class="row">
+					<label for="clip-tags">Tags</label>
+					<input id="clip-tags" type="text" placeholder="comma, separated, tags" />
+				</div>
+				<div class="row">
+					<label for="clip-visibility">Visibility</label>
+					<select id="clip-visibility">
+						<option value="private">Private (just you)</option>
+						<option value="unlisted">Unlisted (anyone with the link)</option>
+						<option value="public">Public (in marketplace)</option>
+					</select>
+				</div>
+				<div class="actions">
+					<button class="btn" id="save-clip" disabled>Save clip</button>
+					<button class="btn ghost" id="download-clip" disabled>Download JSON</button>
+				</div>
+			</div>
+		</section>
+
+		<section class="right">
+			<div class="card">
+				<h2>Source avatar</h2>
+				<div class="row">
+					<label for="avatar-handle">Handle</label>
+					<input id="avatar-handle" type="text" placeholder="@yourname or leave blank" autocomplete="off" />
+					<button class="btn" id="load-avatar">Load</button>
+				</div>
+				<div class="sub" id="avatar-info" style="margin:0;">no avatar loaded</div>
+			</div>
+
+			<div class="card">
+				<h2>Saved clips</h2>
+				<div class="clip-list" id="clip-list"><div class="empty">Loading…</div></div>
+			</div>
+
+			<div class="card">
+				<h2>Format</h2>
+				<div class="sub" style="margin:0;">
+					Clips are stored as <code style="color:#cad6e8">three.ws.face-mocap.v1</code> — JSON of <code style="color:#cad6e8">{ format, duration, frames: [{ t, shapes, mat }] }</code>. Frame data is the raw MediaPipe ARKit-52 output plus an optional 4×4 head transform. Compatible with any three.ws avatar via the ARKit-52 canonical morph map.
+				</div>
+			</div>
+		</section>
+
+		<script type="module" src="/src/mocap-studio.js"></script>
+	</body>
+</html>

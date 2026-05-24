@@ -134,12 +134,14 @@ export class NextLayout {
 		const viewer = await this._waitForViewer();
 		if (!viewer) return;
 		this.viewer = viewer;
-		await this._waitForDefs(viewer);
-		this._renderClipGrid();
+		// Subscribe and attach the rAF driver immediately. The driver re-renders
+		// the grid when defs arrive later, so it's fine if defs aren't ready yet.
 		this._subscribeOnChange();
 		this._attachDriver();
 		this._armIdleAutoRotate();
-		// Seed dock state from the manager (it may already be playing 'idle').
+		// Best-effort: wait briefly for defs, then render once explicitly.
+		await this._waitForDefs(viewer);
+		this._renderClipGrid();
 		this._onManagerChange(viewer.animationManager.currentName);
 	}
 
@@ -314,8 +316,27 @@ export class NextLayout {
 	_attachDriver() {
 		if (this.driverAttached) return;
 		this.driverAttached = true;
+		let lastDefsLen = -1;
+		let lastName = '__init__';
 		const tick = () => {
 			this.rafId = requestAnimationFrame(tick);
+			// Re-render the grid when new defs arrive after first mount.
+			const defs = this._currentDefs();
+			if (defs.length !== lastDefsLen) {
+				lastDefsLen = defs.length;
+				this._defsRendered = false;
+				this._renderClipGrid();
+				// Refresh the clip-name label too in case it was '—' before defs landed.
+				const cur = this.viewer?.animationManager?.currentName ?? this._currentName;
+				const def = defs.find((d) => d.name === cur);
+				if (def) this._updateClipName(def.label || _stripIdx(cur));
+			}
+			// Mirror manager's currentName even if onChange fired before subscription.
+			const liveName = this.viewer?.animationManager?.currentName ?? null;
+			if (liveName !== lastName) {
+				lastName = liveName;
+				this._onManagerChange(liveName);
+			}
 			this._updateScrubAndTime();
 		};
 		this.rafId = requestAnimationFrame(tick);
