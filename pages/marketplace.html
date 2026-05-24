@@ -14,9 +14,7 @@
 <link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<link rel="stylesheet" href="/marketplace.css" />
-		<link rel="stylesheet" href="/marketplace-skills.css" />
 		<link rel="stylesheet" href="/marketplace-v2.css" />
-		<link rel="stylesheet" href="/marketplace-improvements.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<style>
 			/* Author display rules on modal overlays override the UA stylesheet's
@@ -1476,6 +1474,161 @@
 				border-color: #6366f1;
 				color: #fff;
 			}
+
+			/* Sub-title badge under the modal heading. Used by the time-pass flow
+			   to make the temporary-access nature of the purchase impossible to
+			   miss, and by the asset flow to distinguish "Buy Avatar" vs the
+			   permanent "Unlock skill" copy. Hidden by default; opened flows
+			   populate it via setPaymentBadge(). */
+			.payment-modal-badge {
+				margin: -6px 0 14px;
+				padding: 8px 12px;
+				background: rgba(99, 102, 241, 0.10);
+				border: 1px solid rgba(99, 102, 241, 0.32);
+				border-radius: 8px;
+				font-size: 12px;
+				color: #c7d2fe;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+			.payment-modal-badge .payment-modal-badge-icon {
+				width: 16px;
+				height: 16px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				flex: 0 0 auto;
+			}
+			.payment-modal-badge.warn {
+				background: rgba(253, 224, 71, 0.08);
+				border-color: rgba(253, 224, 71, 0.30);
+				color: #fde68a;
+			}
+
+			/* Persistent post-purchase success card. Replaces the modal body so
+			   the user sees what they bought + a one-click path to use it,
+			   instead of a 1.5s status flash before the modal closes. */
+			.payment-modal-success {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				text-align: center;
+				padding: 8px 8px 4px;
+				gap: 12px;
+			}
+			.payment-modal-success .ps-check {
+				width: 56px;
+				height: 56px;
+				border-radius: 50%;
+				background: rgba(134, 239, 172, 0.16);
+				border: 1px solid rgba(134, 239, 172, 0.40);
+				color: #86efac;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 28px;
+				font-weight: 700;
+				line-height: 1;
+			}
+			.payment-modal-success .ps-title {
+				font-size: 18px;
+				font-weight: 700;
+				color: #fff;
+				margin: 0;
+			}
+			.payment-modal-success .ps-sub {
+				font-size: 13px;
+				color: rgba(255, 255, 255, 0.62);
+				margin: 0;
+				line-height: 1.4;
+			}
+			.payment-modal-success .ps-actions {
+				display: flex;
+				gap: 10px;
+				width: 100%;
+				margin-top: 6px;
+			}
+			.payment-modal-success .ps-actions .btn-primary,
+			.payment-modal-success .ps-actions .btn-secondary {
+				flex: 1;
+				padding: 11px 14px;
+				font-size: 14px;
+				font-weight: 600;
+				border-radius: 8px;
+				text-align: center;
+				text-decoration: none;
+				border: 1px solid transparent;
+				cursor: pointer;
+			}
+			.payment-modal-success .ps-actions .btn-primary {
+				background: #6366f1;
+				color: #fff;
+			}
+			.payment-modal-success .ps-actions .btn-primary:hover { background: #4f46e5; }
+			.payment-modal-success .ps-actions .btn-secondary {
+				background: transparent;
+				color: rgba(255, 255, 255, 0.78);
+				border-color: rgba(255, 255, 255, 0.18);
+			}
+			.payment-modal-success .ps-actions .btn-secondary:hover {
+				background: rgba(255, 255, 255, 0.06);
+				color: #fff;
+			}
+
+			/* Verify-again retry card: lets the user re-poll without re-paying
+			   when the server can't confirm the on-chain transfer in the initial
+			   60s window. Signature already on chain — only the server lookup
+			   needs to retry. */
+			.payment-modal-retry {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+				padding: 14px;
+				background: rgba(253, 224, 71, 0.06);
+				border: 1px solid rgba(253, 224, 71, 0.22);
+				border-radius: 10px;
+				margin-top: 10px;
+			}
+			.payment-modal-retry p {
+				margin: 0;
+				font-size: 13px;
+				color: #fde68a;
+				line-height: 1.45;
+			}
+			.payment-modal-retry .retry-tx {
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 11px;
+				color: rgba(255, 255, 255, 0.55);
+				word-break: break-all;
+			}
+			.payment-modal-retry .retry-tx a { color: #93c5fd; }
+			.payment-modal-retry .retry-actions {
+				display: flex;
+				gap: 8px;
+			}
+			.payment-modal-retry .retry-actions button {
+				flex: 1;
+				padding: 9px 12px;
+				font-size: 13px;
+				font-weight: 600;
+				border-radius: 7px;
+				cursor: pointer;
+				border: 1px solid transparent;
+			}
+			.payment-modal-retry .retry-primary {
+				background: #fde047;
+				color: #1f1500;
+			}
+			.payment-modal-retry .retry-primary:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+			}
+			.payment-modal-retry .retry-secondary {
+				background: transparent;
+				color: rgba(255, 255, 255, 0.7);
+				border-color: rgba(255, 255, 255, 0.18);
+			}
 		</style>
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content="Agent Marketplace · three.ws" />
@@ -2199,11 +2352,13 @@
 							<h2 id="payment-modal-title">Unlock Skill</h2>
 							<button class="market-modal-close" id="payment-modal-close" aria-label="Close">×</button>
 					</div>
-					<div class="payment-modal-body">
-							<p>You are purchasing access to the following skill:</p>
+					<div class="payment-modal-body" id="payment-modal-body">
+							<div class="payment-modal-badge" id="payment-modal-badge" hidden></div>
+
+							<p id="payment-modal-lede">You are purchasing access to the following skill:</p>
 							<div class="payment-item">
 									<strong id="payment-skill-name"></strong>
-									<span>from agent</span>
+									<span id="payment-item-from">from agent</span>
 									<em id="payment-agent-name"></em>
 							</div>
 
@@ -2216,13 +2371,14 @@
 									<!-- Wallet connection status and button will be rendered here by JS -->
 									<button class="btn-primary" id="payment-connect-wallet-btn">Connect Wallet</button>
 							</div>
-							
+
 							<button class="btn-primary payment-confirm-btn" id="payment-confirm-btn" disabled>Confirm Purchase</button>
 
 							<div class="payment-qr" id="payment-qr" aria-live="polite"></div>
 
 							<div class="payment-status" id="payment-status" role="status" aria-live="polite"></div>
 					</div>
+					<div class="payment-modal-success" id="payment-modal-success" hidden role="status" aria-live="polite"></div>
 			</div>
 	</div>
   

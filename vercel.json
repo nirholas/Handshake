@@ -1619,6 +1619,14 @@
             "dest": "/create-selfie.html"
         },
         {
+            "src": "/create-review",
+            "dest": "/create-review.html"
+        },
+        {
+            "src": "/create-review/",
+            "dest": "/create-review.html"
+        },
+        {
             "src": "/create",
             "dest": "/create.html"
         },

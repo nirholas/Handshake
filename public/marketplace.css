@@ -891,6 +891,15 @@ body.market-page {
 	cursor: not-allowed;
 }
 
+.skill-btn.purchase {
+	background-color: #3b82f6;
+	color: white;
+}
+
+.skill-btn.purchase:hover {
+	background-color: #2563eb;
+}
+
 /* ── Skills / Library panels ─────────────────────────────────────────── */
 
 .market-skills,
