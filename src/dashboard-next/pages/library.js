@@ -2,7 +2,7 @@
 // Hash-driven tab switcher (#tab=animations|memory|strategy|voice).
 
 import { mountShell } from '../shell.js';
-import { requireUser, get, esc } from '../api.js';
+import { requireUser, esc } from '../api.js';
 import { renderAnimations } from './library/animations.js';
 import { renderMemory }     from './library/memory.js';
 import { renderStrategy }   from './library/strategy.js';
@@ -114,12 +114,23 @@ function writeTab(tab) {
 		Promise.resolve()
 			.then(() => render(body, { me }))
 			.catch((err) => {
+				const raw = err?.message || String(err);
+				const status = err?.status || 0;
+				const friendly = (status === 401 || /unauthorized|sign in|bearer/i.test(raw))
+					? 'Your session expired. Refresh the page to sign back in.'
+					: (status === 403 || /forbidden/i.test(raw))
+						? "You don't have permission to view this."
+						: (status === 429 || /rate.?limit/i.test(raw))
+							? 'Slow down — try again in a moment.'
+							: raw.replace(/^HTTP\s+\d+\s*/i, '') || 'Unknown error.';
 				body.innerHTML = `
 					<div class="dn-empty">
-						<h3>Couldn’t load this tab</h3>
-						<p>${esc(err.message || String(err))}</p>
+						<h3>Couldn't load this tab</h3>
+						<p>${esc(friendly)}</p>
+						<div style="margin-top:12px"><button class="dn-btn" type="button" id="lib-retry">Retry</button></div>
 					</div>
 				`;
+				body.querySelector('#lib-retry')?.addEventListener('click', () => activate(tab));
 			});
 	}
 

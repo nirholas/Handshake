@@ -1,12 +1,14 @@
 // Voice clone management for an agent.
 //
 // GET    /api/agents/:id/voice        — current voice status
+// PUT    /api/agents/:id/voice        — assign a voice_id from the server's
+//                                       ElevenLabs library (body { voice_id })
 // POST   /api/agents/:id/voice/clone  — clone voice from uploaded audio
-// DELETE /api/agents/:id/voice        — remove cloned voice
+// DELETE /api/agents/:id/voice        — remove cloned voice / clear selection
 
 import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
-import { cors, json, method, wrap, error } from '../../_lib/http.js';
+import { cors, json, method, wrap, error, readJson } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
 
@@ -41,8 +43,8 @@ function readRawBody(req) {
 }
 
 export const handleVoice = wrap(async (req, res, id, action) => {
-	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
-	if (!method(req, res, ['GET', 'POST', 'DELETE'])) return;
+	if (cors(req, res, { methods: 'GET,PUT,POST,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'PUT', 'POST', 'DELETE'])) return;
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
@@ -62,6 +64,81 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 			voice_id: row.voice_id || null,
 			voice_cloned_at: row.voice_cloned_at || null,
 		});
+	}
+
+	// ── PUT — assign a voice from the ElevenLabs library ────────────────────
+	//
+	// Body: { voice_id: string | null }
+	//   - null/empty: equivalent to DELETE (clear selection, free clone slot)
+	//   - non-null:   must be a voice_id present in /v1/voices for this account
+	//
+	// If the agent currently holds a *cloned* voice and the new pick is
+	// different, the old clone is freed in ElevenLabs to recover the quota
+	// slot. voice_cloned_at is cleared (the new pick is a library voice,
+	// not a clone owned by this user).
+
+	if (req.method === 'PUT') {
+		const apiKey = env.ELEVENLABS_API_KEY;
+		if (!apiKey)
+			return error(res, 503, 'not_configured', 'voice library is not configured on this server');
+
+		let body;
+		try { body = await readJson(req); }
+		catch { return error(res, 400, 'validation_error', 'invalid JSON body'); }
+
+		const nextVoiceId = body?.voice_id == null ? null : String(body.voice_id).trim() || null;
+
+		const [current] =
+			await sql`SELECT voice_id, voice_cloned_at FROM agent_identities WHERE id = ${id}`;
+		const wasCloned = !!current?.voice_cloned_at;
+		const oldVoiceId = current?.voice_id || null;
+
+		// Validate library membership for non-null picks.
+		if (nextVoiceId) {
+			let voices;
+			try {
+				const resp = await fetch(`${ELEVEN_BASE}/voices`, {
+					headers: { 'xi-api-key': apiKey },
+				});
+				if (!resp.ok) {
+					console.error('[voice/put] elevenlabs voices fetch failed', resp.status);
+					return error(res, 502, 'upstream_error', 'voice library is unavailable');
+				}
+				const data = await resp.json();
+				voices = data?.voices || [];
+			} catch (err) {
+				console.error('[voice/put] elevenlabs fetch threw', err);
+				return error(res, 502, 'upstream_error', 'voice library is unavailable');
+			}
+			if (!voices.some((v) => v.voice_id === nextVoiceId)) {
+				return error(res, 400, 'validation_error', 'voice_id is not in the available library');
+			}
+		}
+
+		// Free the prior cloned voice on ElevenLabs (best-effort) only when
+		// we're actually replacing a clone with something else.
+		if (wasCloned && oldVoiceId && oldVoiceId !== nextVoiceId) {
+			fetch(`${ELEVEN_BASE}/voices/${encodeURIComponent(oldVoiceId)}`, {
+				method: 'DELETE',
+				headers: { 'xi-api-key': apiKey },
+			}).catch(() => {});
+		}
+
+		if (nextVoiceId) {
+			await sql`
+				UPDATE agent_identities
+				SET voice_provider = 'elevenlabs', voice_id = ${nextVoiceId}, voice_cloned_at = NULL
+				WHERE id = ${id}
+			`;
+			return json(res, 200, { voice_provider: 'elevenlabs', voice_id: nextVoiceId, voice_cloned_at: null });
+		}
+
+		await sql`
+			UPDATE agent_identities
+			SET voice_provider = 'browser', voice_id = NULL, voice_cloned_at = NULL
+			WHERE id = ${id}
+		`;
+		return json(res, 200, { voice_provider: 'browser', voice_id: null, voice_cloned_at: null });
 	}
 
 	// ── DELETE — remove cloned voice ─────────────────────────────────────────

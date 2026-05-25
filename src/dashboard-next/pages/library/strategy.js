@@ -4,6 +4,16 @@
 
 import { get, post, esc, relTime, ApiError } from '../../api.js';
 
+function friendly(err) {
+	if (!err) return 'Something went wrong.';
+	const status = err.status || 0;
+	const msg = err.message || String(err);
+	if (status === 401 || /unauthorized|sign in|bearer/i.test(msg)) return 'Your session expired — refresh the page.';
+	if (status === 403 || /forbidden/i.test(msg))                   return "You don't have permission for that.";
+	if (status === 429 || /rate.?limit/i.test(msg))                 return 'Slow down — try again in a moment.';
+	return msg.replace(/^HTTP\s+\d+\s*/i, '') || 'Save failed.';
+}
+
 export async function renderStrategy(host) {
 	host.innerHTML = `
 		<div class="strat-head">
@@ -52,7 +62,7 @@ export async function renderStrategy(host) {
 		const res = await get('/api/agents');
 		agents = res?.agents || [];
 	} catch (err) {
-		body.innerHTML = `<div class="dn-empty"><h3>Couldn’t load agents</h3><p>${esc(err.message || 'Failed')}</p></div>`;
+		body.innerHTML = `<div class="dn-empty"><h3>Couldn't load agents</h3><p>${esc(friendly(err))}</p></div>`;
 		return;
 	}
 
@@ -99,11 +109,11 @@ export async function renderStrategy(host) {
 		}
 
 		if (loadErr) {
-			body.innerHTML = `<div class="dn-empty"><h3>Couldn’t load strategy</h3><p>${esc(loadErr.message || 'Failed')}</p></div>`;
+			body.innerHTML = `<div class="dn-empty"><h3>Couldn't load strategy</h3><p>${esc(friendly(loadErr))}</p></div>`;
 			return;
 		}
 
-		const placeholder = '{\n  "objective": "trade memes profitably",\n  "max_position_sol": 0.5,\n  "stop_loss_pct": 20\n}';
+		const placeholder = '{\n  "objective": "describe what this agent is optimizing for",\n  "constraints": []\n}';
 		body.innerHTML = `
 			<div class="strat-panel">
 				<textarea class="strat-textarea" id="strat-text" spellcheck="false" placeholder=${JSON.stringify(placeholder)}>${esc(initial)}</textarea>
@@ -154,7 +164,7 @@ export async function renderStrategy(host) {
 			} catch (err) {
 				if (seq !== inflight) return;
 				setChip('error', 'save failed');
-				msg.textContent = err.message || String(err);
+				msg.textContent = friendly(err);
 			}
 		}
 

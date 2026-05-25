@@ -4,6 +4,16 @@
 
 import { get, post, esc, relTime } from '../../api.js';
 
+function friendly(err) {
+	if (!err) return 'Something went wrong.';
+	const status = err.status || 0;
+	const msg = err.message || String(err);
+	if (status === 401 || /unauthorized|sign in|bearer/i.test(msg)) return 'Your session expired — refresh the page.';
+	if (status === 403 || /forbidden/i.test(msg))                   return "You don't have permission for that.";
+	if (status === 429 || /rate.?limit/i.test(msg))                 return 'Slow down — try again in a moment.';
+	return msg.replace(/^HTTP\s+\d+\s*/i, '') || 'Unknown error.';
+}
+
 export async function renderMemory(host) {
 	host.innerHTML = `
 		<div class="mem-head">
@@ -76,7 +86,7 @@ export async function renderMemory(host) {
 		const res = await get('/api/agents');
 		agents = res?.agents || [];
 	} catch (err) {
-		listEl.innerHTML = `<div class="dn-empty"><h3>Couldn’t load agents</h3><p>${esc(err.message || 'Failed')}</p></div>`;
+		listEl.innerHTML = `<div class="dn-empty"><h3>Couldn't load agents</h3><p>${esc(friendly(err))}</p></div>`;
 		return;
 	}
 
@@ -119,7 +129,7 @@ export async function renderMemory(host) {
 	function renderList() {
 		const html = [];
 		if (errors.length) {
-			html.push(`<div class="dn-empty" style="margin-bottom:12px"><h3>Some agents’ memories couldn’t be loaded</h3><p>${errors.map((e) => `${esc(e.agent)}: ${esc(e.message)}`).join(' · ')}</p></div>`);
+			html.push(`<div class="dn-empty" style="margin-bottom:12px"><h3>Some agents' memories couldn't be loaded</h3><p>${errors.map((e) => `${esc(e.agent)}: ${esc(friendly({ message: e.message }))}`).join(' · ')}</p></div>`);
 		}
 		if (!all.length) {
 			html.push(`
@@ -187,7 +197,7 @@ export async function renderMemory(host) {
 			host.querySelector('#mem-add-content').value = '';
 			setTimeout(() => { statusEl.textContent = ''; addPanel.hidden = true; }, 600);
 		} catch (err) {
-			statusEl.textContent = err.message || 'Save failed.';
+			statusEl.textContent = friendly(err);
 		} finally {
 			submitBtn.disabled = false;
 		}

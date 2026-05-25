@@ -5,6 +5,17 @@
 
 import { get, put, post, esc, relTime } from '../../api.js';
 
+function friendly(err) {
+	if (!err) return 'Something went wrong.';
+	const status = err.status || 0;
+	const msg = err.message || String(err);
+	if (status === 401 || /unauthorized|sign in|bearer/i.test(msg)) return 'Your session expired — refresh the page.';
+	if (status === 403 || /forbidden/i.test(msg))                   return "You don't have permission for that.";
+	if (status === 429 || /rate.?limit/i.test(msg))                 return 'Slow down — try again in a moment.';
+	if (status === 413 || /too large/i.test(msg))                   return 'File is too large.';
+	return msg.replace(/^HTTP\s+\d+\s*/i, '') || 'Upload failed.';
+}
+
 export async function renderAnimations(host) {
 	host.innerHTML = `
 		<div class="anim-head">
@@ -86,7 +97,7 @@ export async function renderAnimations(host) {
 		const res = await get('/api/agents');
 		agents = res?.agents || [];
 	} catch (err) {
-		grid.innerHTML = `<div class="dn-empty"><h3>Couldn’t load agents</h3><p>${esc(err.message || 'Failed')}</p></div>`;
+		grid.innerHTML = `<div class="dn-empty"><h3>Couldn't load agents</h3><p>${esc(friendly(err))}</p></div>`;
 		return;
 	}
 
@@ -199,7 +210,7 @@ function openUploadDialog(host, agents, onDone) {
 			onDone?.();
 		} catch (err) {
 			statusEl.textContent = '';
-			errorEl.textContent = err.message || 'Upload failed.';
+			errorEl.textContent = friendly(err);
 		}
 	};
 
