@@ -622,7 +622,10 @@ async function idxRpc(urls, method, params) {
 // pump-agent-stats
 // ═══════════════════════════════════════════════════════════════════════════
 
-const PUMP_STATS_MAX_PER_RUN = 100;
+// Keep small: each mint makes 2-3 Solana RPC calls; public RPC rate-limits at
+// 429 immediately, so large batches reliably 504 within Vercel's 30s window.
+const PUMP_STATS_MAX_PER_RUN = 20;
+const PUMP_STATS_MINT_TIMEOUT_MS = 8_000;
 
 // Pump.fun graduation threshold (mainnet curve). Used only as a UI hint —
 // progress_pct is a coarse bar, not financial advice.
@@ -645,10 +648,15 @@ async function handlePumpAgentStats(req, res) {
 		order by id limit ${PUMP_STATS_MAX_PER_RUN}
 	`;
 
-	const report = { scanned: mints.length, updated: 0, errors: 0, graduations: 0 };
+	const report = { scanned: mints.length, updated: 0, errors: 0, graduations: 0, timeouts: 0 };
 	for (const m of mints) {
 		try {
-			const stats = await pumpStatsSnapshotMint(m);
+			const stats = await Promise.race([
+				pumpStatsSnapshotMint(m),
+				new Promise((_, rej) =>
+					setTimeout(() => rej(Object.assign(new Error('snapshot timeout'), { code: 'TIMEOUT' })), PUMP_STATS_MINT_TIMEOUT_MS),
+				),
+			]);
 
 			// Detect graduation flip false→true vs prior snapshot.
 			const [prior] = await sql`
@@ -707,7 +715,8 @@ async function handlePumpAgentStats(req, res) {
 
 			report.updated++;
 		} catch (e) {
-			report.errors++;
+			if (e.code === 'TIMEOUT') report.timeouts++;
+			else report.errors++;
 			await sql`
 				insert into pump_agent_stats (mint_id, network, mint, error, refreshed_at)
 				values (${m.id}, ${m.network}, ${m.mint}, ${e.message || 'snapshot failed'}, now())
@@ -778,9 +787,9 @@ async function pumpStatsSnapshotMint({ network, mint }) {
 		}
 	}
 
-	// Recent activity snapshot via RPC
+	// Recent activity snapshot via RPC (use fallback pool if Helius is configured)
 	try {
-		const conn = getConnection({ network });
+		const conn = getRpcFallback({ network });
 		const sigs = await conn.getSignaturesForAddress(mintPk, { limit: 50 });
 		out.recent_tx_count = sigs.length;
 		if (sigs.length > 0) {

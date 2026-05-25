@@ -352,9 +352,27 @@ export const env = {
 		return opt('ZAUTH_DEBUG');
 	},
 
-	// Solana RPC URL used for SNS reads/writes and NFT minting. Falls back to public mainnet RPC.
+	// Solana RPC URL — single source of truth for all Solana RPC calls.
+	// Set to a Helius/QuickNode/Triton URL in production to avoid public RPC rate limits.
 	get SOLANA_RPC_URL() {
 		return opt('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com');
+	},
+
+	// Helius API key — extracted from SOLANA_RPC_URL when it's a Helius endpoint,
+	// or set independently. Used by helius-stats, nft/resolve, and scene/gate-check
+	// to call Helius DAS APIs (getAsset, etc.) that are Helius-specific.
+	get HELIUS_API_KEY() {
+		const direct = opt('HELIUS_API_KEY');
+		if (direct) return direct;
+		// Auto-derive from SOLANA_RPC_URL if it's a Helius endpoint
+		const rpc = opt('SOLANA_RPC_URL', '');
+		const match = rpc.match(/[?&]api-key=([^&]+)/);
+		return match ? match[1] : '';
+	},
+
+	// Solana devnet RPC URL. Falls back to the public devnet endpoint.
+	get SOLANA_RPC_URL_DEVNET() {
+		return opt('SOLANA_RPC_URL_DEVNET', 'https://api.devnet.solana.com');
 	},
 
 	// ── threews.sol subdomain minting ─────────────────────────────────────

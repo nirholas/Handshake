@@ -341,5 +341,31 @@
 		"pattern": "RPM",
 		"file": "avatar-sdk/README.md",
 		"reason": "SDK README — same context as the Ready Player Me reference above; abbreviation appears alongside the full name."
+	},
+
+	{
+		"pattern": "Ready Player Me",
+		"file": "pages/import-rpm.html",
+		"reason": "Migration page for users coming from Ready Player Me — the brand name is required to identify the importer's purpose. RPM shut down Jan 2026; this page captures their stranded users."
+	},
+	{
+		"pattern": "readyplayer.me",
+		"file": "pages/import-rpm.html",
+		"reason": "Same migration page — references the now-offline upstream domain so users recognise their old avatar URLs."
+	},
+	{
+		"pattern": "RPM",
+		"file": "pages/import-rpm.html",
+		"reason": "Same migration page — abbreviation appears in form labels, placeholders, and instructions so users know they're in the right importer."
+	},
+	{
+		"pattern": "Ready Player Me",
+		"file": "pages/create.html",
+		"reason": "Single line linking ex-RPM users to the importer at /import/rpm — required for discoverability of the migration page."
+	},
+	{
+		"pattern": "RPM",
+		"file": "pages/create.html",
+		"reason": "Same single-line RPM importer entry point on /create — the abbreviation appears in the link text."
 	}
 ]

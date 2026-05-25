@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS x_scheduled_posts (
     published_at timestamptz,
     created_at   timestamptz NOT NULL DEFAULT now()
 );
+-- Backfill published_at if table already existed without it
+ALTER TABLE x_scheduled_posts ADD COLUMN IF NOT EXISTS published_at timestamptz;
 CREATE INDEX IF NOT EXISTS x_scheduled_posts_pending
     ON x_scheduled_posts(scheduled_at) WHERE published_at IS NULL;
 

@@ -17,6 +17,71 @@ const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
 const AIRDROP_LAMPORTS = LAMPORTS_PER_SOL;
 
+// ── Solana RPC in-process cache ───────────────────────────────────────────────
+// Keys: "sol:bal:<address>:<network>" and "sol:sigs:<address>:<network>:<limit>"
+// Prevents Helius free-plan 429s on repeated wallet card polls.
+
+const SOL_CACHE_TTL_MS = 60_000; // 60 s
+const _solRpcCache = new Map();
+
+function _solCacheGet(key) {
+	const entry = _solRpcCache.get(key);
+	if (!entry) return undefined;
+	if (entry.expiry < Date.now()) {
+		_solRpcCache.delete(key);
+		return undefined;
+	}
+	return entry.value;
+}
+
+function _solCacheSet(key, value) {
+	// Purge stale entries on each write so the map doesn't grow unbounded.
+	const now = Date.now();
+	for (const [k, e] of _solRpcCache.entries()) {
+		if (e.expiry < now) _solRpcCache.delete(k);
+	}
+	_solRpcCache.set(key, { value, expiry: now + SOL_CACHE_TTL_MS });
+}
+
+// Calls `fn(conn)` with exponential backoff (500 ms → 1000 ms) before the
+// public-RPC fallback fires. Returns { ok, value } or { ok: false, error }.
+async function _solRpcWithBackoffFallback(primaryConn, fallbackConn, fn, label) {
+	// Attempt 1 — primary
+	try {
+		return { ok: true, value: await fn(primaryConn) };
+	} catch (err1) {
+		const is429 =
+			err1?.message?.includes('429') ||
+			err1?.message?.includes('Too Many Requests') ||
+			err1?.status === 429;
+		console.warn(`[agents/solana] ${label} primary failed${is429 ? ' (429)' : ''}: ${err1?.message || err1}`);
+
+		// 500 ms wait before first retry
+		await new Promise((r) => setTimeout(r, 500));
+
+		// Attempt 2 — retry primary (backoff)
+		try {
+			return { ok: true, value: await fn(primaryConn) };
+		} catch (err2) {
+			console.warn(`[agents/solana] ${label} primary retry failed: ${err2?.message || err2}`);
+
+			// 1000 ms wait before falling back to public RPC
+			await new Promise((r) => setTimeout(r, 1_000));
+		}
+	}
+
+	// Attempt 3 — public fallback
+	if (fallbackConn) {
+		try {
+			return { ok: true, value: await fn(fallbackConn) };
+		} catch (err3) {
+			console.error(`[agents/solana] ${label} fallback failed: ${err3?.message || err3}`);
+			return { ok: false, error: err3 };
+		}
+	}
+	return { ok: false, error: new Error(`${label}: all RPC attempts failed`) };
+}
+
 // Bonfida reverse-lookup is rate-limited and pulls a few KB per call. Memoize
 // 10 minutes per-address so wallet card refreshes (every 30s) don't refetch.
 const SNS_CACHE_TTL_MS = 10 * 60_000;
@@ -80,28 +145,34 @@ async function handleActivity(req, res, id) {
 	const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10) || 20, 50);
 	const pk = new PublicKey(address);
 
-	// Try the configured RPC first, then the public RPC. Distinct connection
-	// objects each call so a hung socket on one doesn't poison retries.
-	const conns = [solanaConnection(network), solanaPublicConnection(network)];
+	const primaryConn = solanaConnection(network);
+	const fallbackConn = solanaPublicConnection(network);
+	const sigsCacheKey = `sol:sigs:${address}:${network}:${limit}`;
 
-	const sigInfos = await withRpcRetry(
-		conns,
-		(c) => c.getSignaturesForAddress(pk, { limit }),
-		'getSignaturesForAddress',
-	);
-	if (!sigInfos.ok) {
-		console.error('[agents/solana/activity] signature fetch failed on all RPCs', sigInfos.error);
-		return error(res, 502, 'rpc_error', 'failed to fetch on-chain activity');
+	let sigs = _solCacheGet(sigsCacheKey);
+	if (sigs === undefined) {
+		const sigInfos = await _solRpcWithBackoffFallback(
+			primaryConn,
+			fallbackConn,
+			(c) => c.getSignaturesForAddress(pk, { limit }),
+			'getSignaturesForAddress',
+		);
+		if (!sigInfos.ok) {
+			console.error('[agents/solana/activity] signature fetch failed on all RPCs', sigInfos.error);
+			return error(res, 502, 'rpc_error', 'failed to fetch on-chain activity');
+		}
+		sigs = sigInfos.value;
+		_solCacheSet(sigsCacheKey, sigs);
 	}
-	const sigs = sigInfos.value;
 
 	// getParsedTransactions is the expensive call and the one most often rate-limited.
 	// Degrade gracefully: if it fails everywhere, we still return the signature list
 	// without the lamport delta / summary enrichment instead of 502-ing the whole call.
 	let parsed = null;
 	if (sigs.length) {
-		const parsedRes = await withRpcRetry(
-			conns,
+		const parsedRes = await _solRpcWithBackoffFallback(
+			primaryConn,
+			fallbackConn,
 			(c) => c.getParsedTransactions(sigs.map((s) => s.signature), {
 				maxSupportedTransactionVersion: 0,
 				commitment: 'confirmed',
@@ -144,26 +215,6 @@ async function handleActivity(req, res, id) {
 	return json(res, 200, {
 		data: { address, network, signatures, parsed_available: parsed !== null },
 	});
-}
-
-// Walk an ordered list of connections, returning the first successful result.
-// Skips duplicates (e.g. when SOLANA_RPC_URL is unset, both entries point at
-// the same public endpoint — no point in calling it twice).
-async function withRpcRetry(conns, call, label) {
-	let lastErr = null;
-	const seen = new Set();
-	for (const conn of conns) {
-		const key = conn?.rpcEndpoint || '';
-		if (key && seen.has(key)) continue;
-		seen.add(key);
-		try {
-			return { ok: true, value: await call(conn) };
-		} catch (err) {
-			lastErr = err;
-			console.warn(`[agents/solana/activity] ${label} via ${key} failed: ${err?.message || err}`);
-		}
-	}
-	return { ok: false, error: lastErr };
 }
 
 // ── airdrop ───────────────────────────────────────────────────────────────────
@@ -263,20 +314,17 @@ async function handleWallet(req, res, id) {
 
 	const network = (req.query?.network || new URL(req.url, 'http://x').searchParams.get('network') || 'mainnet').toString();
 	const net = network === 'devnet' ? 'devnet' : 'mainnet';
-	let lamports = null;
-	try {
-		const conn = solanaConnection(net);
-		lamports = await conn.getBalance(new PublicKey(meta.solana_address));
-	} catch (err) {
-		if (err?.message?.includes('401') || err?.message?.includes('invalid api key')) {
-			try {
-				lamports = await solanaPublicConnection(net).getBalance(new PublicKey(meta.solana_address));
-			} catch (fallbackErr) {
-				console.error('[agents/solana/wallet] balance fetch failed (fallback)', fallbackErr);
-			}
-		} else {
-			console.error('[agents/solana/wallet] balance fetch failed', err);
-		}
+	const balCacheKey = `sol:bal:${meta.solana_address}:${net}`;
+	let lamports = _solCacheGet(balCacheKey);
+	if (lamports === undefined) {
+		const balResult = await _solRpcWithBackoffFallback(
+			solanaConnection(net),
+			solanaPublicConnection(net),
+			(c) => c.getBalance(new PublicKey(meta.solana_address)),
+			'getBalance',
+		);
+		lamports = balResult.ok ? balResult.value : null;
+		if (balResult.ok) _solCacheSet(balCacheKey, lamports);
 	}
 
 	// SNS is mainnet-only. Skip the lookup on devnet — it always returns null

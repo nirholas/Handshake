@@ -44,6 +44,7 @@ export default async function handleTipsStream(req, res) {
 	// Initial frame so the client's `onopen` analogue fires immediately.
 	send('hello', { ts: Date.now() });
 
+	const startMs = Date.now();
 	let cursor = new Date();
 	let polling = false;
 
@@ -73,6 +74,13 @@ export default async function handleTipsStream(req, res) {
 
 	const heartbeat = setInterval(() => {
 		if (closed || res.writableEnded) return;
+		// Graceful shutdown before Vercel's 300s hard timeout.
+		// Send retry directive so the client auto-reconnects within 1s.
+		if (Date.now() - startMs > 275_000) {
+			res.write('retry: 1000\n\n');
+			cleanup();
+			return;
+		}
 		res.write(':hb\n\n');
 	}, HEARTBEAT_MS);
 

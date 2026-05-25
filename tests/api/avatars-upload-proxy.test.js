@@ -89,9 +89,13 @@ function makeRes() {
 	};
 }
 
+// Static-import the dispatcher so the first test doesn't pay the cold-import
+// penalty (which has flaked the happy-path test under the default vitest
+// timeout in the past).
+import { dispatch as actionsDispatch } from '../../api/avatars/_actions.js';
+
 async function dispatchUpload(req, res) {
-	const { dispatch } = await import('../../api/avatars/_actions.js');
-	await dispatch('upload', req, res);
+	await actionsDispatch('upload', req, res);
 	return { res, body: res._body ? JSON.parse(res._body) : null };
 }
 

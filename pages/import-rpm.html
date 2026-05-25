@@ -2,11 +2,11 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Import RPM Avatar · three.ws</title>
+		<title>Import Your 3D Avatar · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta
 			name="description"
-			content="Import your Ready Player Me avatar into three.ws. Paste your GLB URL or upload the file directly."
+			content="Import your 3D avatar into three.ws. Paste the GLB URL or upload the file directly — your avatar lives on three.ws, on-chain-ready."
 		/>
 		<meta name="robots" content="noindex" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -335,16 +335,16 @@
 				← Back to Create
 			</a>
 
-			<h1>Import from Ready Player Me</h1>
+			<h1>Import Your 3D Avatar</h1>
 			<p class="lede">
-				Ready Player Me shut down in January 2026. Bring your avatars here
-				— they'll live on three.ws, fully owned by you, on-chain-ready.
+				Bring your existing avatar to three.ws — it'll live here, fully
+				owned by you, on-chain-ready.
 			</p>
 
 			<div class="warn-banner">
 				<span class="warn-banner-icon">⚠</span>
 				<span>
-					<strong>RPM models.readyplayer.me is offline.</strong> If you already
+					<strong>The original avatar CDN is offline.</strong> If you already
 					downloaded your GLB file, use the <em>Upload GLB</em> tab. If you
 					have a CDN-cached URL (e.g. from d1a370nemizbjq.cloudfront.net), paste
 					it in the URL tab — it may still resolve.
@@ -363,16 +363,16 @@
 
 				<!-- URL tab -->
 				<div class="tab-panel active" id="panel-url">
-					<label for="rpm-url">RPM avatar URL or CDN link</label>
+					<label for="rpm-url">Avatar GLB URL or CDN link</label>
 					<input
 						type="url"
 						id="rpm-url"
-						placeholder="https://models.readyplayer.me/64c3f8e2…glb"
+						placeholder="https://d1a370nemizbjq.cloudfront.net/64c3f8e2….glb"
 						autocomplete="off"
 						spellcheck="false"
 					/>
 					<p class="field-hint">
-						Accepts any GLB URL — RPM, CloudFront, or your own storage.
+						Accepts any GLB URL — CloudFront, Arweave, or your own storage.
 						The file is fetched server-side so CORS is not an issue.
 					</p>
 
@@ -380,7 +380,7 @@
 					<input
 						type="text"
 						id="rpm-name"
-						placeholder="My RPM Avatar"
+						placeholder="My Avatar"
 						maxlength="64"
 						autocomplete="off"
 					/>
@@ -408,7 +408,7 @@
 					<input
 						type="text"
 						id="file-name"
-						placeholder="My RPM Avatar"
+						placeholder="My Avatar"
 						maxlength="64"
 						autocomplete="off"
 					/>
@@ -439,20 +439,21 @@
 			</div>
 
 			<div class="info-section">
-				<h3>How to find your RPM GLB</h3>
+				<h3>How to find your avatar's GLB URL</h3>
 				<ul class="info-steps">
 					<li data-step="1">
-						If you used the RPM editor, your avatar ID was in the URL
-						(<code>readyplayer.me/avatar/64c3f8e2…</code>). The GLB URL was
-						<code>https://models.readyplayer.me/{id}.glb</code>.
+						If your avatar was hosted at a CDN (e.g.
+						<code>d1a370nemizbjq.cloudfront.net</code>), paste that URL
+						directly — the file is fetched server-side so CORS is not an issue.
 					</li>
 					<li data-step="2">
-						If you deployed an app using the RPM SDK, check your app's
-						network requests — the GLB URL was fetched on avatar load and
-						often appears in your browser's DevTools Network tab.
+						If your app fetched the GLB on load, open your browser's
+						DevTools → Network tab, filter by <code>.glb</code>, and copy
+						the request URL from there.
 					</li>
 					<li data-step="3">
-						If you downloaded the file, use the <em>Upload GLB</em> tab above.
+						If you already have the file on disk, use the
+						<em>Upload GLB</em> tab above.
 					</li>
 				</ul>
 			</div>

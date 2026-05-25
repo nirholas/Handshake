@@ -567,7 +567,11 @@ export default wrap(async (req, res) => {
 		if (!kp) return json(res, 403, { error: 'agent_not_found_or_no_solana_wallet' });
 		buyer = kp;
 	} else {
-		buyer = loadAgentKeypair();
+		try {
+			buyer = loadAgentKeypair();
+		} catch (err) {
+			return json(res, 503, { error: 'config_missing', error_description: 'payment processing not available' });
+		}
 	}
 
 	const wantsStream =

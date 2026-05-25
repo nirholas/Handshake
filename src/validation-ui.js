@@ -201,7 +201,7 @@ export class ValidationDashboard {
 				</div>
 				${notes ? `<div class="record-notes">${this.escapeHtml(notes)}</div>` : ''}
 				<div class="record-actions">
-					${reportUri ? `<a href="${this.resolveIPFS(this.escapeHtml(reportUri))}" target="_blank">View Report ↗</a>` : ''}
+					${reportUri ? `<a href="${this.resolveIPFS(this.escapeHtml(reportUri))}" target="_blank" rel="noopener noreferrer">View Report ↗</a>` : ''}
 					${reportHash ? `<button onclick="valDash._copyHash('${this.escapeHtml(reportHash)}')">Copy Hash</button>` : ''}
 				</div>
 			</div>

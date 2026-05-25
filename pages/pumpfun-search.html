@@ -96,7 +96,7 @@
 					html += `<div class="token-details">`;
 					html += `<div><span class="name">${esc(displayName)}</span> <span class="symbol">${esc(displaySymbol)}</span></div>`;
 					html += `<div class="meta-row">`;
-					if (token.mint) html += `<span><a href="https://pump.fun/coin/${token.mint}" target="_blank">View on Pump.fun</a></span>`;
+					if (token.mint) html += `<span><a href="https://pump.fun/coin/${token.mint}" target="_blank" rel="noopener noreferrer">View on Pump.fun</a></span>`;
 					if (mcap) html += `<span>MCap: <span class="mcap">$${mcap}</span></span>`;
 					html += `</div>`;
 					html += `</div>`;

@@ -219,6 +219,36 @@ const appConfig = {
 		},
 	},
 	plugins: [
+		// Strip the VitePWA service-worker registration <script> from any
+		// page meant to be embedded in a third-party iframe. Without this,
+		// the slim /widget shell — loaded under arbitrary origins as an
+		// iframe — would register a service worker scoped to three.ws, then
+		// intercept and cache requests across every other page on the same
+		// origin. Privacy & correctness hazard for embedders.
+		// The list below is the source-relative HTML basename (without .html).
+		{
+			name: 'three-ws-strip-sw-from-embeds',
+			apply: 'build',
+			enforce: 'post',
+			transformIndexHtml(html, ctx) {
+				const EMBED_ENTRIES = new Set([
+					'widget',
+					'embed',
+					'avatar-embed',
+					'agent-embed',
+					'a-embed',
+					'agent-token-page',
+				]);
+				const fname = (ctx.filename || ctx.path || '')
+					.replace(/^.*\//, '')
+					.replace(/\.html$/, '');
+				if (!EMBED_ENTRIES.has(fname)) return html;
+				return html.replace(
+					/<script\s+[^>]*id=["']vite-plugin-pwa:register-sw["'][^>]*><\/script>\s*/g,
+					'',
+				);
+			},
+		},
 		// Polyfill the Node `buffer` and `process` globals so @solana/web3.js
 		// (and any other dep that does `import { Buffer } from 'buffer'`) works
 		// in the browser without the "Module 'buffer' has been externalized"
