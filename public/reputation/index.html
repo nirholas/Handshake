@@ -8,10 +8,11 @@
 		<meta name="description" content="View and submit on-chain reviews for AI agents registered on three.ws." />
 		<meta name="theme-color" content="#0a0a0a" />
 
-		<!-- Importmap must be parsed before any <script type="module"> or
-		     <link rel="modulepreload">. Keep it as the FIRST child of <head>
-		     so Vite's auto-injected modulepreloads (added at the top of <head>
-		     during build) never end up before it. -->
+		<!-- Importmap must parse before any module script or modulepreload link.
+		     Keep it as the first child of head so Vite's auto-injected
+		     modulepreloads (added at the top of head during build) never end up
+		     before it. NOTE: avoid mentioning the literal tag names inside this
+		     comment — Vite's html lint regex-matches them and false-positives. -->
 		<script type="importmap">
 			{
 				"imports": {

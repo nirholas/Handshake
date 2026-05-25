@@ -727,7 +727,15 @@ const appConfig = {
 				transformIndexHtml: {
 					order: 'pre',
 					handler() {
-						return [{ tag: 'script', children: GUARD, injectTo: 'head-prepend' }];
+						// `injectTo: 'head'` (end of head) rather than 'head-prepend'
+						// so any importmap declared by the source page stays the first
+						// child of <head> — vite's html lint warns whenever ANY script
+						// precedes an importmap, even a sync classic script like ours.
+						// The guard is a sync <script>, so it still runs before any
+						// deferred type=module script. Closing-bundle pass below
+						// guarantees the marker exists in every dist HTML even if the
+						// transform was skipped for that entry.
+						return [{ tag: 'script', children: GUARD, injectTo: 'head' }];
 					},
 				},
 				closeBundle: {
