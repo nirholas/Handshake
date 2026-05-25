@@ -18,9 +18,8 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 
 const HELIUS_RPC = () => {
-	const k = process.env.HELIUS_API_KEY;
-	if (!k) throw Object.assign(new Error('HELIUS_API_KEY not configured'), { status: 503, code: 'not_configured' });
-	return `https://mainnet.helius-rpc.com/?api-key=${k}`;
+	const url = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+	return url;
 };
 
 const RECENT_TX_URL = () => {

@@ -200,3 +200,174 @@
 		justify-content: center;
 	}
 }
+
+/* ── Safe-area insets for fixed/sticky UI ──────────────────────────────
+ * Applied globally so every page benefits. Modals and drawers that sit
+ * at the viewport edge need padding-bottom to clear the iPhone home
+ * indicator and Android navigation bar.
+ */
+@supports (padding: env(safe-area-inset-bottom)) {
+	/* Modals anchored to full viewport height */
+	.modal-content,
+	.plugin-modal,
+	.avatar-modal-side,
+	.auth-form-wrap {
+		padding-bottom: max(24px, env(safe-area-inset-bottom));
+	}
+
+	/* Toast / snackbar that sits at bottom-center */
+	.agent-deploy-toast,
+	.status-toast,
+	.toast {
+		bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 1rem));
+	}
+
+	/* Sticky bottom nav / tab bars */
+	.nav-bottom,
+	.bottom-bar,
+	.mobile-tab-bar {
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+
+	/* Auth shell on very small iPhones */
+	@media (max-width: 860px) {
+		body:has(.shell) {
+			padding-bottom: env(safe-area-inset-bottom);
+		}
+	}
+}
+
+/* ── 360px — very small Android phones ────────────────────────────────
+ * Galaxy A series, Moto G, etc. sit at 360px.
+ */
+@media (max-width: 360px) {
+	/* Marketplace: force single column so cards don't shrink below usable size */
+	.market-grid {
+		grid-template-columns: 1fr !important;
+	}
+
+	/* Create page: full-bleed cards */
+	.card-grid {
+		grid-template-columns: 1fr !important;
+		max-width: none !important;
+		padding: 0;
+	}
+
+	/* Auth: let the avatar panel compress more */
+	.panel {
+		min-height: 160px !important;
+	}
+	.agent-avatar {
+		width: 140px !important;
+		height: 140px !important;
+	}
+
+	/* Nav: shrink wordmark gap */
+	.wordmark-logo {
+		width: 18px;
+		height: 18px;
+	}
+}
+
+/* ── PWA standalone mode ────────────────────────────────────────────────
+ * When installed as a PWA (no browser chrome), compensate for the absence
+ * of the browser status bar and adjust top-anchored sticky headers.
+ */
+@media (display-mode: standalone) {
+	/* Give the topmost sticky header extra top padding for the status bar area */
+	header:first-of-type,
+	.nav-top,
+	.market-topbar,
+	.agent-page-header {
+		padding-top: max(0.75rem, env(safe-area-inset-top));
+	}
+
+	/* Bottom of scrollable main content — clear the home indicator */
+	main,
+	.stage,
+	.market-main {
+		padding-bottom: max(2rem, calc(env(safe-area-inset-bottom) + 1rem));
+	}
+
+	/* Hide browser-specific UI hints that don't apply in standalone */
+	.h-scroll-hint {
+		display: none;
+	}
+}
+
+/* ── Marketplace mobile polish ─────────────────────────────────────────
+ * Supplements marketplace.css at breakpoints it doesn't cover.
+ */
+@media (max-width: 480px) {
+	/* Modal: full-screen bottom sheet on phones */
+	.avatar-modal {
+		position: fixed !important;
+		inset: 0 !important;
+		max-height: 100dvh !important;
+		border-radius: 0 !important;
+		grid-template-columns: 1fr !important;
+		grid-template-rows: 48vw 1fr !important;
+	}
+
+	.avatar-modal-side {
+		max-height: none;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	/* Topbar: stack filter row below search on very narrow screens */
+	.market-filter-chips {
+		gap: 6px;
+	}
+	.market-filter-chip {
+		font-size: 0.72rem;
+		padding: 5px 10px;
+	}
+}
+
+/* ── Create page mobile polish ─────────────────────────────────────────
+ */
+@media (max-width: 700px) {
+	/* Upload drop zone: increase height so it's easier to tap */
+	.upload-zone,
+	[class*='drop-zone'] {
+		min-height: 140px;
+	}
+
+	/* Card CTAs: full tap width */
+	.create-card {
+		-webkit-tap-highlight-color: transparent;
+	}
+}
+
+/* ── Auth / login mobile polish ────────────────────────────────────────
+ */
+@media (max-width: 480px) {
+	/* Sign-in form: use full available height */
+	.shell {
+		border-radius: 0;
+		min-height: 100dvh;
+	}
+
+	/* Wallet connect button row: stack if too many */
+	.wallet-list,
+	.wallet-grid {
+		grid-template-columns: 1fr !important;
+	}
+}
+
+/* ── Scroll behaviour ──────────────────────────────────────────────────
+ * Smooth momentum scroll on iOS for overflow containers.
+ */
+@media (hover: none) and (pointer: coarse) {
+	[style*='overflow: auto'],
+	[style*='overflow-y: auto'],
+	[style*='overflow-y: scroll'],
+	.scrollable,
+	.avatar-modal-side,
+	.market-main,
+	.agent-chat-history {
+		-webkit-overflow-scrolling: touch;
+		scroll-behavior: smooth;
+	}
+}

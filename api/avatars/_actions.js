@@ -5,7 +5,6 @@ import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../
 import { presignUpload, headObject, r2, publicUrl, putObject } from '../_lib/r2.js';
 import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor } from '../_lib/avatars.js';
 import { listAvatars, createAvatar } from '../_lib/avatars.js';
-import { HeadObjectCommand } from '@aws-sdk/client-s3';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';

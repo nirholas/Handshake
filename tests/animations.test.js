@@ -72,12 +72,22 @@ const AVATURN_BONES = new Set([
 
 let manifest;
 let AnimationClip;
+let parsedClips; // pre-parsed cache: { name, clip }[] — loaded once for all clip tests
 
 beforeAll(async () => {
 	expect(existsSync(MANIFEST), `manifest not found — run npm run build:animations`).toBe(true);
 	manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
 	({ AnimationClip } = await import('three'));
-});
+
+	// Parse all 67+ JSON animation files once so each test suite doesn't repeat
+	// the ~80 MB parse. Total parse time is ~60s on a cold Codespace — captured
+	// in beforeAll's hookTimeout rather than individual test timeouts.
+	parsedClips = manifest.map((entry) => {
+		const file = resolve(ROOT, 'public', entry.url.replace(/^\//, ''));
+		const json = JSON.parse(readFileSync(file, 'utf8'));
+		return { name: entry.name, clip: AnimationClip.parse(json) };
+	});
+}, 120_000);
 
 describe('animation manifest', () => {
 	it('has at least one clip', () => {
@@ -103,28 +113,20 @@ describe('animation manifest', () => {
 
 describe('animation clips', () => {
 	it('every clip parses as a valid AnimationClip', () => {
-		for (const entry of manifest) {
-			const file = resolve(ROOT, 'public', entry.url.replace(/^\//, ''));
-			const json = JSON.parse(readFileSync(file, 'utf8'));
-			const clip = AnimationClip.parse(json);
-
-			expect(clip.name, `${entry.name}: clip.name`).toBe(entry.name);
-			expect(clip.duration, `${entry.name}: duration must be > 0`).toBeGreaterThan(0);
-			expect(clip.tracks.length, `${entry.name}: must have tracks`).toBeGreaterThan(0);
+		for (const { name, clip } of parsedClips) {
+			expect(clip.name, `${name}: clip.name`).toBe(name);
+			expect(clip.duration, `${name}: duration must be > 0`).toBeGreaterThan(0);
+			expect(clip.tracks.length, `${name}: must have tracks`).toBeGreaterThan(0);
 		}
 	});
 
 	it('every track target resolves to a bone in the Avaturn reference rig', () => {
 		const mismatches = [];
-		for (const entry of manifest) {
-			const file = resolve(ROOT, 'public', entry.url.replace(/^\//, ''));
-			const json = JSON.parse(readFileSync(file, 'utf8'));
-			const clip = AnimationClip.parse(json);
-
+		for (const { name, clip } of parsedClips) {
 			for (const track of clip.tracks) {
 				const boneName = track.name.split('.')[0];
 				if (!AVATURN_BONES.has(boneName)) {
-					mismatches.push(`${entry.name}: unknown bone "${boneName}"`);
+					mismatches.push(`${name}: unknown bone "${boneName}"`);
 				}
 			}
 		}
@@ -133,15 +135,11 @@ describe('animation clips', () => {
 
 	it('no track contains NaN keyframe values', () => {
 		const nanTracks = [];
-		for (const entry of manifest) {
-			const file = resolve(ROOT, 'public', entry.url.replace(/^\//, ''));
-			const json = JSON.parse(readFileSync(file, 'utf8'));
-			const clip = AnimationClip.parse(json);
-
+		for (const { name, clip } of parsedClips) {
 			for (const track of clip.tracks) {
 				for (const v of track.values) {
 					if (Number.isNaN(v)) {
-						nanTracks.push(`${entry.name} / ${track.name}`);
+						nanTracks.push(`${name} / ${track.name}`);
 						break;
 					}
 				}
@@ -151,18 +149,14 @@ describe('animation clips', () => {
 	});
 
 	it('Hips.position values are in meter range (< 10m)', () => {
-		for (const entry of manifest) {
-			const file = resolve(ROOT, 'public', entry.url.replace(/^\//, ''));
-			const json = JSON.parse(readFileSync(file, 'utf8'));
-			const clip = AnimationClip.parse(json);
-
+		for (const { name, clip } of parsedClips) {
 			const hipsPos = clip.tracks.find((t) => t.name === 'Hips.position');
 			if (!hipsPos) continue;
 
 			const maxVal = Math.max(...hipsPos.values.map(Math.abs));
 			expect(
 				maxVal,
-				`${entry.name}: Hips.position max=${maxVal.toFixed(2)}m — avatar will float (scale issue)`,
+				`${name}: Hips.position max=${maxVal.toFixed(2)}m — avatar will float (scale issue)`,
 			).toBeLessThan(10);
 		}
 	});

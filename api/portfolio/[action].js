@@ -301,9 +301,7 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 	}
 
 	const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
-	const rpcUrl = process.env.HELIUS_API_KEY
-		? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-		: 'https://api.mainnet-beta.solana.com';
+	const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 	const conn = new Connection(rpcUrl, 'confirmed');
 
 	const kp = await recoverSolanaAgentKeypair(encryptedSecret, {

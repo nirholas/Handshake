@@ -105,6 +105,7 @@ const BASE_STYLE = `
 		inset: 0;
 		width: 100vw;
 		height: 100vh;
+		height: 100dvh;
 		z-index: 2147483000;
 	}
 	:host([hidden]) { display: none; }

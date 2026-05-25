@@ -141,13 +141,7 @@ async function queryBalance(gate, walletAddress) {
 }
 
 async function querySolanaBalance(gate, walletAddress) {
-	const heliusKey = process.env.HELIUS_API_KEY;
-	if (!heliusKey) {
-		const e = new Error('HELIUS_API_KEY not configured');
-		e.status = 503;
-		throw e;
-	}
-	const rpcUrl = `https://mainnet.helius-rpc.com/?api-key=${heliusKey}`;
+	const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
 	if (gate.kind === 'spl') {
 		const resp = await fetch(rpcUrl, {

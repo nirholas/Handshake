@@ -28,16 +28,7 @@ async function fetchJson(url, opts = {}) {
 }
 
 async function getSolanaBalances(address) {
-	const heliusKey = process.env.HELIUS_API_KEY;
-	if (!heliusKey) {
-		const e = new Error('not_configured: HELIUS_API_KEY');
-		e.status = 503;
-		e.code = 'not_configured';
-		e.missing = 'HELIUS_API_KEY';
-		throw e;
-	}
-
-	const rpcUrl = `https://mainnet.helius-rpc.com/?api-key=${heliusKey}`;
+	const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
 	const solResp = await fetchJson(rpcUrl, {
 		method: 'POST',

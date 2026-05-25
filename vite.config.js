@@ -939,6 +939,21 @@ const appConfig = {
 				clientsClaim: true,
 				cleanupOutdatedCaches: true,
 				runtimeCaching: [
+					// Embed surfaces (/widget, /embed, /a-embed, /agent-embed)
+					// must never be served from the SW cache — embedders rely
+					// on the iframe always reflecting the latest config.
+					{
+						urlPattern: /^https?:\/\/[^/]+\/widget(\/.*|\?.*|#.*|$)/i,
+						handler: 'NetworkOnly',
+					},
+					{
+						urlPattern: /^https?:\/\/[^/]+\/(embed|a-embed|agent-embed|avatar-embed)(\/.*|\?.*|#.*|$)/i,
+						handler: 'NetworkOnly',
+					},
+					{
+						urlPattern: /^https?:\/\/[^/]+\/api\/widgets\//i,
+						handler: 'NetworkOnly',
+					},
 					{
 						urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
 						handler: 'CacheFirst',

@@ -24,6 +24,7 @@
 			body {
 				margin: 0;
 				min-height: 100vh;
+				min-height: 100dvh;
 				background: radial-gradient(1200px 600px at 70% -10%, #1a1f29, var(--bg));
 				color: var(--ink);
 				font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -211,6 +212,58 @@
 				color: rgba(255, 180, 84, 0.95);
 			}
 			.signed-out a { color: rgba(255, 180, 84, 0.95); font-weight: 600; }
+
+			/* ── Mobile improvements ───────────────────────────────────────── */
+			button.btn {
+				min-height: 44px;
+				padding: 10px 18px;
+			}
+			.row input,
+			.row select,
+			.row textarea {
+				min-height: 44px;
+			}
+			@media (max-width: 640px) {
+				body {
+					padding: 12px;
+					gap: 12px;
+					min-height: 100dvh;
+				}
+				.stage {
+					min-height: 280px;
+					min-height: min(56vw, 420px);
+				}
+				#webcam-pip {
+					width: 100px;
+					height: 75px;
+					top: max(12px, env(safe-area-inset-top, 12px));
+					right: max(12px, env(safe-area-inset-right, 12px));
+				}
+				.rec-pill {
+					top: max(12px, env(safe-area-inset-top, 12px));
+					left: max(12px, env(safe-area-inset-left, 12px));
+				}
+				.timer { font-size: 28px; }
+				.actions { gap: 6px; }
+				button.btn { font-size: 12px; padding: 10px 13px; }
+				h1 { font-size: 18px; }
+				.card { padding: 12px; }
+				.row { flex-direction: column; gap: 4px; }
+				.row > label { min-width: unset; }
+				.clip-list { max-height: 280px; }
+			}
+			@media (orientation: landscape) and (max-height: 500px) {
+				body {
+					grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr);
+					padding: 10px;
+					gap: 10px;
+				}
+				.stage { min-height: 200px; }
+				#webcam-pip { width: 80px; height: 60px; }
+				h1 { font-size: 16px; margin: 0 0 2px; }
+				.sub { display: none; }
+				.timer { font-size: 24px; margin: 6px 0; }
+			}
 		</style>
 	</head>
 	<body>

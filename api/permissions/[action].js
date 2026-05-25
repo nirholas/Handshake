@@ -326,6 +326,11 @@ async function handleList(req, res) {
 		return error(res, 400, 'missing_filter', 'agentId or delegator query param is required');
 	}
 
+	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	if (agentId && !UUID_RE.test(agentId)) {
+		return error(res, 400, 'invalid_id', 'agentId must be a valid UUID');
+	}
+
 	const statusParam = url.searchParams.get('status') || 'active';
 	if (!VALID_STATUSES.has(statusParam)) {
 		return error(

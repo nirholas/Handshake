@@ -1,6 +1,6 @@
 -- Migration: agent_reviews, x_triggers, x_scheduled_posts, x_pending_reviews
 -- Also: club_tips.amount_atomics column if missing
--- All idempotent.
+-- All idempotent — handles tables that already exist with fewer columns.
 
 BEGIN;
 
@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS agent_reviews (
     updated_at   timestamptz NOT NULL DEFAULT now(),
     UNIQUE (agent_id, user_id)
 );
+ALTER TABLE agent_reviews ADD COLUMN IF NOT EXISTS rating     int;
+ALTER TABLE agent_reviews ADD COLUMN IF NOT EXISTS review     text;
+ALTER TABLE agent_reviews ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 CREATE INDEX IF NOT EXISTS agent_reviews_agent_id ON agent_reviews(agent_id);
 CREATE INDEX IF NOT EXISTS agent_reviews_user_id  ON agent_reviews(user_id);
 
@@ -31,7 +34,9 @@ CREATE TABLE IF NOT EXISTS x_triggers (
     last_state     jsonb,
     created_at     timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS x_triggers_user_id ON x_triggers(user_id) WHERE enabled;
+ALTER TABLE x_triggers ADD COLUMN IF NOT EXISTS auto_publish  boolean NOT NULL DEFAULT false;
+ALTER TABLE x_triggers ADD COLUMN IF NOT EXISTS last_state    jsonb;
+CREATE INDEX IF NOT EXISTS x_triggers_user_id  ON x_triggers(user_id)  WHERE enabled;
 CREATE INDEX IF NOT EXISTS x_triggers_agent_id ON x_triggers(agent_id) WHERE enabled;
 
 -- ── x_scheduled_posts — queued social posts ───────────────────────────────────
@@ -44,7 +49,6 @@ CREATE TABLE IF NOT EXISTS x_scheduled_posts (
     published_at timestamptz,
     created_at   timestamptz NOT NULL DEFAULT now()
 );
--- Backfill published_at if table already existed without it
 ALTER TABLE x_scheduled_posts ADD COLUMN IF NOT EXISTS published_at timestamptz;
 CREATE INDEX IF NOT EXISTS x_scheduled_posts_pending
     ON x_scheduled_posts(scheduled_at) WHERE published_at IS NULL;
@@ -60,10 +64,14 @@ CREATE TABLE IF NOT EXISTS x_pending_reviews (
     approved     boolean,
     created_at   timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE x_pending_reviews ADD COLUMN IF NOT EXISTS trigger_id  uuid REFERENCES x_triggers(id) ON DELETE SET NULL;
+ALTER TABLE x_pending_reviews ADD COLUMN IF NOT EXISTS reviewed_at timestamptz;
+ALTER TABLE x_pending_reviews ADD COLUMN IF NOT EXISTS approved    boolean;
 CREATE INDEX IF NOT EXISTS x_pending_reviews_user_pending
     ON x_pending_reviews(user_id) WHERE reviewed_at IS NULL;
 
--- ── club_tips — backfill amount_atomics if column absent ─────────────────────
+-- ── club_tips — backfill columns if absent ───────────────────────────────────
 ALTER TABLE club_tips ADD COLUMN IF NOT EXISTS amount_atomics numeric;
+ALTER TABLE club_tips ADD COLUMN IF NOT EXISTS paid_at timestamptz;
 
 COMMIT;

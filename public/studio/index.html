@@ -55,6 +55,13 @@
 				.studio-layout { grid-template-columns: 1fr; }
 				.studio-col-mid { position: static; order: -1; }
 			}
+			@media (max-width: 640px) {
+				.studio-layout { padding: 0.6rem; gap: 0.6rem; }
+				.avatar-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+			}
+			@media (max-width: 400px) {
+				.avatar-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			}
 			.panel {
 				background: #14141c;
 				border: 1px solid #2a2a36;

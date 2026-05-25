@@ -74,7 +74,17 @@
 		var iframe = document.createElement('iframe');
 		iframe.title = 'three.ws widget ' + widgetId;
 		iframe.allow = 'autoplay; clipboard-write; xr-spatial-tracking';
-		iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
+		// Sandbox set:
+		//   allow-scripts          — viewer + RPC server need JS.
+		//   allow-same-origin      — postMessage handshake to /widget needs it.
+		//   allow-forms            — talking-agent chat input is a <form>.
+		//   allow-popups + escape  — passport "view on chain" target=_blank.
+		// Notably NOT allowed: top-navigation, modals, pointer-lock, presentation.
+		iframe.setAttribute(
+			'sandbox',
+			'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox',
+		);
+		iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
 		iframe.setAttribute('width',  width);
 		iframe.setAttribute('height', height);
 		// Default: lazy. Embedders flagged as high-priority opt into eager.
@@ -362,8 +372,19 @@
 
 		var iframe = document.createElement('iframe');
 		iframe.src = src;
-		iframe.allow = 'autoplay; camera; microphone; xr-spatial-tracking';
+		iframe.allow = 'autoplay; camera; microphone; xr-spatial-tracking; clipboard-write';
+		// Explicit sandbox matching the widget snippet — same engine, same
+		// surface area. allow-same-origin is required for postMessage handshake
+		// + the bridge upgrade path that imports embed-host-bridge.js.
+		// allow-forms covers the talking-agent chat input; allow-popups lets
+		// passport-style "view on chain" links open in a new tab.
+		iframe.setAttribute(
+			'sandbox',
+			'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox',
+		);
 		iframe.setAttribute('allowtransparency', 'true');
+		iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+		iframe.setAttribute('loading', 'lazy');
 		iframe.setAttribute('aria-label', el.getAttribute('name') || 'three.ws avatar');
 		el.shadowRoot.appendChild(iframe);
 		el._iframe = iframe;

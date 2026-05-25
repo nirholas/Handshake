@@ -349,11 +349,45 @@
         },
         {
             "src": "/widget",
+            "headers": {
+                "content-security-policy": "frame-ancestors *",
+                "x-content-type-options": "nosniff",
+                "referrer-policy": "strict-origin-when-cross-origin",
+                "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*, autoplay=*",
+                "cross-origin-resource-policy": "cross-origin"
+            },
             "dest": "/widget.html"
         },
         {
             "src": "/widget/",
+            "headers": {
+                "content-security-policy": "frame-ancestors *",
+                "x-content-type-options": "nosniff",
+                "referrer-policy": "strict-origin-when-cross-origin",
+                "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*, autoplay=*",
+                "cross-origin-resource-policy": "cross-origin"
+            },
             "dest": "/widget.html"
+        },
+        {
+            "src": "/widget\\.html$",
+            "headers": {
+                "content-security-policy": "frame-ancestors *",
+                "x-content-type-options": "nosniff",
+                "referrer-policy": "strict-origin-when-cross-origin",
+                "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*, autoplay=*",
+                "cross-origin-resource-policy": "cross-origin"
+            },
+            "dest": "/widget.html"
+        },
+        {
+            "src": "/widget-client\\.js$",
+            "headers": {
+                "cross-origin-resource-policy": "cross-origin",
+                "cache-control": "public, max-age=86400, s-maxage=86400, immutable",
+                "x-content-type-options": "nosniff"
+            },
+            "dest": "/widget-client.js"
         },
         {
             "src": "/playground",
@@ -514,6 +548,10 @@
         {
             "src": "/api/dashboard/prefs",
             "dest": "/api/dashboard/prefs"
+        },
+        {
+            "src": "/api/marketplace/theme",
+            "dest": "/api/marketplace/[action]?action=theme"
         },
         {
             "src": "/api/marketplace/categories",

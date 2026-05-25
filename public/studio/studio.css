@@ -332,6 +332,73 @@ a:hover {
 	}
 }
 
+@media (max-width: 640px) {
+	.studio-header {
+		height: 52px;
+		padding: 0 0.75rem;
+		gap: 0.5rem;
+	}
+	.studio-header nav {
+		gap: 0;
+	}
+	.studio-header nav a {
+		display: none;
+	}
+	.studio-header nav #user-menu {
+		display: flex;
+	}
+	.studio-layout {
+		padding: 0.6rem;
+		gap: 0.6rem;
+	}
+	.panel {
+		padding: 0.85rem 0.85rem 1rem;
+		border-radius: 10px;
+	}
+	.panel h2 {
+		font-size: 0.88rem;
+		margin-bottom: 0.6rem;
+	}
+	.avatar-list {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.4rem;
+	}
+	.preview-frame {
+		border-radius: 10px;
+	}
+	.preview-frame iframe {
+		height: 56vw;
+		min-height: 240px;
+		max-height: 380px;
+	}
+	.action-row {
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.action-row .btn-ghost,
+	.action-row .btn-primary {
+		width: 100%;
+		text-align: center;
+	}
+	.studio-right-tabs {
+		gap: 0.25rem;
+	}
+	.embed-preview iframe {
+		height: 50vw;
+		min-height: 200px;
+	}
+}
+
+@media (max-width: 400px) {
+	.avatar-list {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.studio-layout {
+		padding: 0.4rem;
+		gap: 0.4rem;
+	}
+}
+
 /* ── panels ────────────────────────────────────────────────────────────────── */
 @keyframes panel-in {
 	from { opacity: 0; transform: translateY(6px); }

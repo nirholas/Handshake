@@ -111,6 +111,7 @@
 			.tab-btn {
 				flex: 1;
 				padding: 13px 14px;
+				min-height: 48px;
 				background: none;
 				border: none;
 				border-bottom: 2px solid transparent;
@@ -153,12 +154,13 @@
 				display: block;
 				width: 100%;
 				padding: 11px 14px;
+				min-height: 48px;
 				background: var(--panel-2);
 				border: 1px solid var(--border-2);
 				border-radius: 8px;
 				color: var(--text);
 				font: inherit;
-				font-size: 14px;
+				font-size: 16px;
 				outline: none;
 				transition: border-color 0.15s, box-shadow 0.15s;
 			}
@@ -212,12 +214,13 @@
 				display: block;
 				width: 100%;
 				margin-top: 20px;
-				padding: 13px 20px;
+				padding: 14px 20px;
+				min-height: 52px;
 				background: var(--accent);
 				color: #0b1014;
 				font: inherit;
 				font-weight: 700;
-				font-size: 14px;
+				font-size: 15px;
 				border: none;
 				border-radius: 8px;
 				cursor: pointer;
@@ -227,6 +230,25 @@
 			.submit-btn:hover:not(:disabled) { opacity: 0.9; }
 			.submit-btn:active:not(:disabled) { transform: scale(0.99); }
 			.submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+			/* On touch devices: hide drag-drop language, surface tap-to-browse */
+			@media (hover: none) and (pointer: coarse) {
+				.drop-zone-title { display: none; }
+				.drop-zone-title-touch { display: block; }
+				.drop-zone {
+					padding: 32px 20px;
+				}
+				.page {
+					padding: 28px 16px 80px;
+				}
+			}
+			.drop-zone-title-touch {
+				display: none;
+				font-size: 14px;
+				font-weight: 600;
+				color: var(--text);
+				margin-bottom: 4px;
+			}
 
 			/* ── Progress ────────────────────────────────────────────────── */
 			.progress-wrap {
@@ -401,6 +423,7 @@
 						/>
 						<div class="drop-zone-icon">📦</div>
 						<div class="drop-zone-title" id="drop-title">Drag &amp; drop your GLB here</div>
+						<div class="drop-zone-title-touch">Tap to choose your GLB file</div>
 						<div class="drop-zone-sub">or click to browse · .glb · max 100 MB</div>
 					</div>
 

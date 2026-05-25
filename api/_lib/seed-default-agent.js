@@ -20,14 +20,14 @@ const DEFAULT_GREETING = "Hi! I'm your first agent. What should we work on today
 export async function seedDefaultAgent(userId) {
 	if (!userId) return null;
 
-	const existing = await sql`
-		SELECT 1 AS x FROM agent_identities
-		WHERE user_id = ${userId} AND deleted_at IS NULL
-		LIMIT 1
-	`;
-	if (existing.length) return null;
-
 	try {
+		const existing = await sql`
+			SELECT 1 AS x FROM agent_identities
+			WHERE user_id = ${userId} AND deleted_at IS NULL
+			LIMIT 1
+		`;
+		if (existing.length) return null;
+
 		const [agent] = await sql`
 			INSERT INTO agent_identities (
 				user_id, name, description, system_prompt, greeting,

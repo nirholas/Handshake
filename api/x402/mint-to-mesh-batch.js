@@ -19,6 +19,7 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { readJson } from '../_lib/http.js';
 import { createThemedGLB, colorFromMint } from '../_lib/glb-themer.js';
 import { fetchTokenMeta } from '../_lib/solana-token-meta.js';
+import { priceFor } from '../_lib/x402-prices.js';
 
 const ROUTE = '/api/x402/mint-to-mesh-batch';
 
@@ -157,7 +158,7 @@ async function buildOne(mint) {
 export default paidEndpoint({
 	route: ROUTE,
 	method: 'POST',
-	priceAtomics: '50000',
+	priceAtomics: priceFor('mint-to-mesh-batch', '50000'),
 	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,

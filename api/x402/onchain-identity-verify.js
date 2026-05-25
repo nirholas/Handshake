@@ -17,6 +17,7 @@ import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { sql } from '../_lib/db.js';
+import { priceFor } from '../_lib/x402-prices.js';
 
 const ROUTE = '/api/x402/onchain-identity-verify';
 
@@ -168,7 +169,7 @@ async function verifyIdentity({ agentId, chain, address }) {
 export default paidEndpoint({
 	route: ROUTE,
 	method: 'GET',
-	priceAtomics: '5000',
+	priceAtomics: priceFor('onchain-identity-verify', '5000'),
 	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,

@@ -14,7 +14,6 @@
 import { cors, json, method, wrap } from '../_lib/http.js';
 import { recentBuffered } from '../_lib/pumpfun-ws-feed.js';
 
-const HELIUS_RPC = 'https://mainnet.helius-rpc.com';
 let _solCache = { price: 0, at: 0 };
 let _heliusCache = { value: null, at: 0 };
 
@@ -31,13 +30,14 @@ async function getSolPrice() {
 }
 
 async function getHeliusInfo() {
-	const key = process.env.HELIUS_API_KEY;
-	if (!key) return { enabled: false };
+	const rpcUrl = process.env.SOLANA_RPC_URL || '';
+	const isHelius = rpcUrl.includes('helius-rpc.com');
+	if (!isHelius) return { enabled: false };
 	if (Date.now() - _heliusCache.at < 4_000 && _heliusCache.value) return _heliusCache.value;
 	try {
 		const ctrl = new AbortController();
 		const tid = setTimeout(() => ctrl.abort(), 1500);
-		const r = await fetch(`${HELIUS_RPC}/?api-key=${key}`, {
+		const r = await fetch(rpcUrl, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			signal: ctrl.signal,
@@ -51,7 +51,7 @@ async function getHeliusInfo() {
 		const value = { enabled: true, slot, network: 'mainnet', endpoint: 'helius-rpc' };
 		_heliusCache = { value, at: Date.now() };
 		return value;
-	} catch (err) {
+	} catch {
 		const value = { enabled: true, slot: null, network: 'mainnet', error: 'unreachable' };
 		_heliusCache = { value, at: Date.now() };
 		return value;

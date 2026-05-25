@@ -82,6 +82,7 @@ export default wrap(async (req, res) => {
 	const sub = parts[4];
 
 	if (head === 'categories') return handleCategories(req, res);
+	if (head === 'theme') return handleTheme(req, res);
 
 	if (head === 'agents') {
 		if (!id) {
@@ -151,6 +152,68 @@ async function handleCategories(req, res) {
 			},
 		},
 		{ 'cache-control': 'public, max-age=60' },
+	);
+}
+
+// ── Weekly theme strip ──────────────────────────────────────────────────────
+
+// Rotate through categories by week number so the strip feels curated without
+// requiring manual editor input. Deterministic: same week = same category.
+const THEME_CATEGORIES = [
+	{ slug: 'programming', title: 'Code & Dev Tools', blurb: 'Agents that write, review, and debug code.' },
+	{ slug: 'marketing', title: 'Marketing & Growth', blurb: 'AI that crafts copy, campaigns, and SEO.' },
+	{ slug: 'education', title: 'Learn Anything', blurb: 'Tutors, explainers, and knowledge companions.' },
+	{ slug: 'design', title: 'Creative Design', blurb: 'Image concepts, design briefs, and visual direction.' },
+	{ slug: 'general', title: 'Top Picks This Week', blurb: 'The community\'s most-viewed agents right now.' },
+	{ slug: 'entertainment', title: 'Fun & Games', blurb: 'Storytellers, role-players, and game companions.' },
+	{ slug: 'career', title: 'Career & Productivity', blurb: 'Résumés, interview prep, and workplace tools.' },
+];
+
+async function handleTheme(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const rl = await limits.widgetRead(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const weekNum = Math.floor(Date.now() / (7 * 24 * 3600 * 1000));
+	const cat = THEME_CATEGORIES[weekNum % THEME_CATEGORIES.length];
+
+	const rows = await sql`
+		SELECT a.id, a.name, a.description, a.category, a.tags, a.skills,
+		       a.views_count, a.forks_count, a.rating_avg, a.rating_count,
+		       a.published_at, a.created_at,
+		       v.storage_key AS avatar_storage_key, v.is_public AS avatar_public,
+		       v.thumbnail_key
+		FROM agent_identities a
+		LEFT JOIN avatars v ON v.id = a.avatar_id AND v.deleted_at IS NULL
+		WHERE a.is_published = true AND a.deleted_at IS NULL
+		  AND (${cat.slug === 'general'} OR a.category = ${cat.slug})
+		ORDER BY a.views_count DESC, a.rating_avg DESC
+		LIMIT 8
+	`;
+
+	const agents = rows.map((row) => ({
+		id: row.id,
+		name: row.name,
+		description: row.description,
+		category: row.category,
+		tags: row.tags || [],
+		skills: row.skills || [],
+		views_count: row.views_count || 0,
+		forks_count: row.forks_count || 0,
+		rating_avg: Number(row.rating_avg || 0),
+		rating_count: row.rating_count || 0,
+		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
+		avatar_glb_url: row.avatar_public && row.avatar_storage_key ? publicUrl(row.avatar_storage_key) : null,
+		published_at: row.published_at,
+	}));
+
+	return json(
+		res,
+		200,
+		{ data: { theme: { title: cat.title, blurb: cat.blurb, category: cat.slug, agents } } },
+		{ 'cache-control': 'public, max-age=3600, stale-while-revalidate=7200' },
 	);
 }
 
@@ -300,44 +363,50 @@ async function handleList(req, res, url) {
 	const cat = category && CATEGORIES.includes(category) ? category : null;
 	const qLike = q ? `%${q}%` : null;
 
-	const rows = await sql`
-		SELECT ai.id, ai.name, ai.description, ai.category, ai.tags, ai.avatar_id, ai.user_id,
-		       ai.forks_count, ai.views_count, ai.published_at, ai.created_at, ai.skills,
-		       av.thumbnail_key,
-			   u.display_name AS author_name,
-		       EXISTS (
-		         SELECT 1 FROM agent_skill_prices asp
-		         WHERE asp.agent_id = ai.id AND asp.is_active = true
-		       ) AS has_paid_skills,
-		       (SELECT count(*)::int FROM skill_purchases sp
-		        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed') AS buyers_total,
-		       (SELECT count(*)::int FROM skill_purchases sp
-		        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed'
-		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h,
-		       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = ai.id), 0) AS rating_avg,
-		       COALESCE((SELECT count(*)::int FROM agent_reviews r WHERE r.agent_id = ai.id), 0) AS rating_count,
-		       ap.amount        AS asset_price_amount,
-		       ap.currency_mint AS asset_price_currency_mint,
-		       ap.chain         AS asset_price_chain,
-		       ap.mint_decimals AS asset_price_mint_decimals
-		FROM agent_identities ai
-		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
-		LEFT JOIN users u ON u.id = ai.user_id
-		LEFT JOIN asset_prices ap
-		       ON ap.item_type = 'agent' AND ap.item_id = ai.id AND ap.is_active = true
-		WHERE ai.is_published = true
-		  AND ai.deleted_at IS NULL
-		  AND ai.name !~* ${AGENT_AUTONAMED_RE_SQL}
-		  AND (${cat}::text IS NULL OR ai.category = ${cat})
-		  AND (
-		    ${qLike}::text IS NULL
-		    OR ai.name ILIKE ${qLike}
-		    OR ai.description ILIKE ${qLike}
-		    OR EXISTS (SELECT 1 FROM unnest(ai.tags) t WHERE t ILIKE ${qLike})
-		  )
-		ORDER BY ${orderBy}
-		LIMIT ${limit + 1} OFFSET ${offset}
-	`;
+	let rows;
+	try {
+		rows = await sql`
+			SELECT ai.id, ai.name, ai.description, ai.category, ai.tags, ai.avatar_id, ai.user_id,
+			       ai.forks_count, ai.views_count, ai.published_at, ai.created_at, ai.skills,
+			       av.thumbnail_key,
+				   u.display_name AS author_name,
+			       EXISTS (
+			         SELECT 1 FROM agent_skill_prices asp
+			         WHERE asp.agent_id = ai.id AND asp.is_active = true
+			       ) AS has_paid_skills,
+			       COALESCE((SELECT count(*)::int FROM skill_purchases sp
+			        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed'), 0) AS buyers_total,
+			       COALESCE((SELECT count(*)::int FROM skill_purchases sp
+			        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed'
+			          AND sp.created_at > now() - interval '24 hours'), 0) AS buyers_24h,
+			       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = ai.id), 0) AS rating_avg,
+			       COALESCE((SELECT count(*)::int FROM agent_reviews r WHERE r.agent_id = ai.id), 0) AS rating_count,
+			       ap.amount        AS asset_price_amount,
+			       ap.currency_mint AS asset_price_currency_mint,
+			       ap.chain         AS asset_price_chain,
+			       ap.mint_decimals AS asset_price_mint_decimals
+			FROM agent_identities ai
+			LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+			LEFT JOIN users u ON u.id = ai.user_id
+			LEFT JOIN asset_prices ap
+			       ON ap.item_type = 'agent' AND ap.item_id = ai.id AND ap.is_active = true
+			WHERE ai.is_published = true
+			  AND ai.deleted_at IS NULL
+			  AND ai.name !~* ${AGENT_AUTONAMED_RE_SQL}
+			  AND (${cat}::text IS NULL OR ai.category = ${cat})
+			  AND (
+			    ${qLike}::text IS NULL
+			    OR ai.name ILIKE ${qLike}
+			    OR ai.description ILIKE ${qLike}
+			    OR EXISTS (SELECT 1 FROM unnest(ai.tags) t WHERE t ILIKE ${qLike})
+			  )
+			ORDER BY ${orderBy}
+			LIMIT ${limit + 1} OFFSET ${offset}
+		`;
+	} catch (err) {
+		console.error('[marketplace/list]', err?.message || err);
+		return error(res, 500, 'db_error', 'Failed to load marketplace listing');
+	}
 
 	const hasMore = rows.length > limit;
 	const items = rows.slice(0, limit).map(toCard);

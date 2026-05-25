@@ -420,7 +420,7 @@ async function handleIndexDelegations(req, res) {
 		const chainId = Number(chainIdStr);
 		const t0 = Date.now();
 		try {
-			const r = await idxIndexChain(chainId, contract);
+			const r = await idxIndexChain(chainId, contract, started);
 			const summary = { chainId, ...r, elapsedMs: Date.now() - t0 };
 			report.chains.push(summary);
 			console.log(JSON.stringify({ stage: 'index-delegations', ...summary }));
@@ -458,9 +458,12 @@ async function handleIndexDelegations(req, res) {
 	return json(res, 200, report);
 }
 
-async function idxIndexChain(chainId, contract) {
+async function idxIndexChain(chainId, contract, cronStart = Date.now()) {
 	const urls = idxRpcUrls(chainId);
 	if (!urls.length) throw new Error(`no RPC URL configured for chain ${chainId}`);
+
+	// Per-chain batch size: ETH mainnet nodes cap eth_getLogs at 50 blocks.
+	const BATCH = chainId === 1 ? IDX_MAINNET_BLOCK_CAP : IDX_BLOCK_CAP;
 
 	const latestHex = await idxRpc(urls, 'eth_blockNumber', []);
 	const latestBlock = parseInt(latestHex, 16);
@@ -478,18 +481,62 @@ async function idxIndexChain(chainId, contract) {
 	let revokedCount = 0;
 	let redeemedCount = 0;
 	let logErrorCount = 0;
+	let earlyExit = false;
 
 	while (fromBlock <= latestBlock) {
-		toBlock = Math.min(fromBlock + IDX_BLOCK_CAP - 1, latestBlock);
+		// Hard time budget: save cursor and break before the function times out.
+		if (Date.now() - cronStart > IDX_TIME_BUDGET_MS) {
+			console.warn(
+				JSON.stringify({
+					stage: 'index-delegations',
+					chainId,
+					warning: 'time-budget-exceeded',
+					elapsedMs: Date.now() - cronStart,
+					stoppedAtBlock: fromBlock,
+				}),
+			);
+			earlyExit = true;
+			break;
+		}
 
-		const logs = await idxRpc(urls, 'eth_getLogs', [
-			{
-				address: contract,
-				topics: [[DISABLED_TOPIC, REDEEMED_TOPIC]],
-				fromBlock: '0x' + fromBlock.toString(16),
-				toBlock: '0x' + toBlock.toString(16),
-			},
-		]);
+		toBlock = Math.min(fromBlock + BATCH - 1, latestBlock);
+
+		let logs;
+		try {
+			logs = await idxRpc(urls, 'eth_getLogs', [
+				{
+					address: contract,
+					topics: [[DISABLED_TOPIC, REDEEMED_TOPIC]],
+					fromBlock: '0x' + fromBlock.toString(16),
+					toBlock: '0x' + toBlock.toString(16),
+				},
+			]);
+		} catch (fetchErr) {
+			// AbortError means this batch timed out — save the cursor at the start
+			// of this batch so the next invocation can retry it, then stop.
+			if (fetchErr.name === 'AbortError' || fetchErr.name === 'TimeoutError') {
+				console.warn(
+					JSON.stringify({
+						stage: 'index-delegations',
+						chainId,
+						warning: 'rpc-abort',
+						message: fetchErr.message,
+						stoppedAtBlock: fromBlock,
+					}),
+				);
+				// Rewind cursor to fromBlock-1 so the next run retries this batch.
+				await sql`
+					INSERT INTO indexer_state (contract, chain_id, last_indexed_block, updated_at)
+					VALUES (${contract.toLowerCase()}, ${chainId}, ${fromBlock - 1}, NOW())
+					ON CONFLICT (contract, chain_id) DO UPDATE SET
+						last_indexed_block = LEAST(indexer_state.last_indexed_block, ${fromBlock - 1}),
+						updated_at = NOW()
+				`;
+				earlyExit = true;
+				break;
+			}
+			throw fetchErr;
+		}
 
 		if (logs.length > 0) {
 			// Fetch block timestamps only for blocks that have events.
@@ -592,7 +639,7 @@ async function idxIndexChain(chainId, contract) {
 		fromBlock = toBlock + 1;
 	}
 
-	return { fromBlock: initialFrom, toBlock, revokedCount, redeemedCount, logErrorCount };
+	return { fromBlock: initialFrom, toBlock, revokedCount, redeemedCount, logErrorCount, earlyExit };
 }
 
 async function idxRpc(urls, method, params) {
@@ -654,8 +701,21 @@ async function handlePumpAgentStats(req, res) {
 		order by id limit ${PUMP_STATS_MAX_PER_RUN}
 	`;
 
-	const report = { scanned: mints.length, updated: 0, errors: 0, graduations: 0, timeouts: 0 };
+	const DEADLINE = Date.now() + 22_000;
+	const report = { scanned: mints.length, updated: 0, errors: 0, graduations: 0, timeouts: 0, rate_limited: 0, skipped: 0 };
+	let consecutiveRateLimit = 0;
+
 	for (const m of mints) {
+		if (Date.now() >= DEADLINE) {
+			report.skipped += mints.length - mints.indexOf(m);
+			break;
+		}
+		if (consecutiveRateLimit >= 3) {
+			report.skipped += mints.length - mints.indexOf(m);
+			console.log(JSON.stringify({ event: 'pump_agent_stats.circuit_open', consecutive_429: consecutiveRateLimit }));
+			break;
+		}
+
 		try {
 			const stats = await Promise.race([
 				pumpStatsSnapshotMint(m),
@@ -663,6 +723,8 @@ async function handlePumpAgentStats(req, res) {
 					setTimeout(() => rej(Object.assign(new Error('snapshot timeout'), { code: 'TIMEOUT' })), PUMP_STATS_MINT_TIMEOUT_MS),
 				),
 			]);
+
+			consecutiveRateLimit = 0;
 
 			// Detect graduation flip false→true vs prior snapshot.
 			const [prior] = await sql`
@@ -721,13 +783,20 @@ async function handlePumpAgentStats(req, res) {
 
 			report.updated++;
 		} catch (e) {
-			if (e.code === 'TIMEOUT') report.timeouts++;
-			else report.errors++;
+			if (e.code === 'TIMEOUT') {
+				report.timeouts++;
+			} else if (e.code === 'RATE_LIMITED' || /429/.test(e.message)) {
+				report.rate_limited++;
+				consecutiveRateLimit++;
+			} else {
+				report.errors++;
+				consecutiveRateLimit = 0;
+			}
 			await sql`
 				insert into pump_agent_stats (mint_id, network, mint, error, refreshed_at)
 				values (${m.id}, ${m.network}, ${m.mint}, ${e.message || 'snapshot failed'}, now())
 				on conflict (mint_id) do update set error = excluded.error, refreshed_at = now()
-			`;
+			`.catch(() => {});
 		}
 	}
 
@@ -804,8 +873,11 @@ async function pumpStatsSnapshotMint({ network, mint }) {
 				out.last_signature_at = new Date(sigs[0].blockTime * 1000).toISOString();
 			}
 		}
-	} catch {
-		// RPC hiccup — leave activity fields null
+	} catch (e) {
+		if (/429|rate.limit|max usage/i.test(e?.message || '')) {
+			throw Object.assign(new Error(`RPC 429: ${e.message}`), { code: 'RATE_LIMITED' });
+		}
+		// Other RPC hiccup — leave activity fields null
 	}
 
 	return out;

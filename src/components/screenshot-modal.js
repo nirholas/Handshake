@@ -24,7 +24,7 @@ export class ScreenshotModal {
 					<button class="btn-secondary screenshot-modal-copy">Copy</button>
 					<a href="https://x.com/intent/tweet?text=Check%20out%20my%203D%20Agent!&url=${encodeURIComponent(
 						window.location.href,
-					)}" target="_blank" class="btn-secondary screenshot-modal-share">Share on X</a>
+					)}" target="_blank" rel="noopener noreferrer" class="btn-secondary screenshot-modal-share">Share on X</a>
 					<button class="btn-primary screenshot-modal-download">Download</button>
 				</div>
 			</div>

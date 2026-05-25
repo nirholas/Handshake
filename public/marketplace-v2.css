@@ -363,14 +363,14 @@ body.market-page > #footer-container {
 .market-sidebar-toggle {
 	display: none;
 	position: fixed;
-	top: 14px;
-	left: 14px;
+	top: max(14px, env(safe-area-inset-top, 14px));
+	left: max(14px, env(safe-area-inset-left, 14px));
 	z-index: 50;
 	background: #111;
 	border: 1px solid #2a2a2a;
 	color: #fafafa;
-	width: 38px;
-	height: 38px;
+	width: 44px;
+	height: 44px;
 	border-radius: 10px;
 	cursor: pointer;
 	font-size: 18px;

@@ -15,6 +15,7 @@ import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { sql } from '../_lib/db.js';
+import { priceFor } from '../_lib/x402-prices.js';
 
 const ROUTE = '/api/x402/skill-marketplace';
 
@@ -178,7 +179,7 @@ async function loadListings({ skill, limit }) {
 export default paidEndpoint({
 	route: ROUTE,
 	method: 'GET',
-	priceAtomics: '1000',
+	priceAtomics: priceFor('skill-marketplace', '1000'),
 	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,

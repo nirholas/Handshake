@@ -89,13 +89,12 @@ function makeRes() {
 	};
 }
 
-// Static-import the dispatcher so the first test doesn't pay the cold-import
-// penalty (which has flaked the happy-path test under the default vitest
-// timeout in the past).
-import { dispatch as actionsDispatch } from '../../api/avatars/_actions.js';
-
+// Dynamic import so vi.mock hoisting can intercept the dependency graph
+// (top-level static imports would race the mock registration). The first
+// test pays the cold-import cost — granted a longer timeout below.
 async function dispatchUpload(req, res) {
-	await actionsDispatch('upload', req, res);
+	const { dispatch } = await import('../../api/avatars/_actions.js');
+	await dispatch('upload', req, res);
 	return { res, body: res._body ? JSON.parse(res._body) : null };
 }
 

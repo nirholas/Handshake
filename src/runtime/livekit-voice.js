@@ -24,10 +24,18 @@ export class LiveKitVoice {
 		const room = new Room();
 		this._room = room;
 
-		// Agent TTS audio — attach <audio> element when track arrives
+		// Agent TTS audio — attach <audio> element when track arrives.
+		// In the slim widget shell we still need the element to exist so the
+		// browser plays the track, but it must be hidden (no DOM leak) and
+		// detached from any user-visible layout. The audio is what the
+		// embedder asked for; the <audio> tag itself is invisible chrome.
 		room.on(RoomEvent.TrackSubscribed, (track, _pub, _participant) => {
 			if (track.kind !== Track.Kind.Audio) return;
 			const el = track.attach();
+			if (window.__WIDGET_SHELL) {
+				el.style.display = 'none';
+				el.setAttribute('aria-hidden', 'true');
+			}
 			document.body.appendChild(el);
 			this._audioEls.push({ track, el });
 		});

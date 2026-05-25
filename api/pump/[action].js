@@ -74,8 +74,8 @@ import {
 const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 
 const RPC = {
-	mainnet: process.env.SOLANA_MAINNET_RPC || 'https://api.mainnet-beta.solana.com',
-	devnet: process.env.SOLANA_DEVNET_RPC || 'https://api.devnet.solana.com',
+	mainnet: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+	devnet: process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com',
 };
 
 async function resolveAuth(req) {

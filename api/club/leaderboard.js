@@ -16,7 +16,13 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const window = (req.query?.window || 'all').toString();
-	const rows = await runForWindow(window);
+	let rows;
+	try {
+		rows = await runForWindow(window);
+	} catch (err) {
+		console.error('[club/leaderboard]', err?.message || err);
+		return error(res, 500, 'db_error', 'Failed to load leaderboard');
+	}
 	if (rows === null) {
 		return error(res, 400, 'bad_window', 'window must be hour|day|week|all');
 	}

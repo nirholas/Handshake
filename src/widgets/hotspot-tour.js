@@ -237,12 +237,12 @@ function _injectStyles() {
 			top: 0;
 			left: 0;
 			transform: translate(-9999px, -9999px);
-			margin: -14px 0 0 -14px;
+			margin: -22px 0 0 -22px;
 			background: rgba(10, 10, 10, 0.7);
 			color: #fff;
 			border: 1px solid rgba(255, 255, 255, 0.18);
 			border-radius: 999px;
-			padding: 0 10px 0 0;
+			padding: 0 12px 0 0;
 			font: 500 13px/1 Inter, system-ui, sans-serif;
 			display: inline-flex;
 			align-items: center;
@@ -255,6 +255,7 @@ function _injectStyles() {
 			max-width: 220px;
 			white-space: nowrap;
 			overflow: hidden;
+			min-height: 44px;
 		}
 		.hotspot-marker:hover,
 		.hotspot-marker.is-active {
@@ -264,13 +265,13 @@ function _injectStyles() {
 		.hotspot-marker-dot {
 			display: grid;
 			place-items: center;
-			width: 28px;
-			height: 28px;
+			width: 44px;
+			height: 44px;
 			border-radius: 999px;
 			background: rgba(139, 92, 246, 0.9);
 			color: #fff;
 			font-weight: 600;
-			font-size: 12px;
+			font-size: 13px;
 			flex: 0 0 auto;
 		}
 		.hotspot-marker.is-active .hotspot-marker-dot {
@@ -286,7 +287,7 @@ function _injectStyles() {
 			right: 16px;
 			top: 16px;
 			width: 280px;
-			max-height: calc(100vh - 32px);
+			max-height: calc(100dvh - 32px);
 			background: rgba(10, 10, 10, 0.88);
 			color: #e0e0e0;
 			border: 1px solid rgba(255, 255, 255, 0.08);
@@ -300,18 +301,24 @@ function _injectStyles() {
 		.hotspot-panel[hidden] { display: none; }
 		.hotspot-panel-close {
 			position: absolute;
-			top: 6px;
-			right: 8px;
+			top: 0;
+			right: 0;
+			width: 44px;
+			height: 44px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
 			background: transparent;
 			border: 0;
 			color: rgba(255, 255, 255, 0.6);
 			font-size: 22px;
 			line-height: 1;
 			cursor: pointer;
+			border-radius: 0 12px 0 8px;
 		}
-		.hotspot-panel-close:hover { color: #fff; }
+		.hotspot-panel-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
 		.hotspot-panel-title {
-			margin: 0 24px 8px 0;
+			margin: 0 44px 8px 0;
 			font-size: 15px;
 			font-weight: 600;
 			color: #fff;
@@ -326,10 +333,11 @@ function _injectStyles() {
 				right: 8px;
 				left: 8px;
 				top: auto;
-				bottom: 8px;
+				bottom: max(8px, env(safe-area-inset-bottom, 8px));
 				width: auto;
-				max-height: 40vh;
+				max-height: 40dvh;
 				overflow-y: auto;
+				padding-bottom: max(18px, env(safe-area-inset-bottom, 18px));
 			}
 			.hotspot-marker { max-width: 160px; }
 		}

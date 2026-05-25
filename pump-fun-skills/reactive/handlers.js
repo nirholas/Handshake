@@ -12,6 +12,7 @@ let _reconnectTimer = null;
 let _reconnectAttempts = 0;
 let _protocol = null;
 let _buffer = [];
+let _enabled = false;
 
 const MAX_ATTEMPTS = 10;
 const WINDOW_MS = 2000;
@@ -76,6 +77,12 @@ function _connect() {
 		_reconnectAttempts = 0;
 		ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
 		ws.send(JSON.stringify({ method: 'subscribeMigration' }));
+		// Start the flush interval only after the connection is open so the first
+		// window begins after messages can actually arrive. Guard against restarts
+		// on reconnect — the interval persists across dropped connections.
+		if (_intervalId === null) {
+			_intervalId = setInterval(_flush, WINDOW_MS);
+		}
 	});
 
 	ws.addEventListener('message', (evt) => {
@@ -87,7 +94,7 @@ function _connect() {
 	});
 
 	ws.addEventListener('close', () => {
-		if (_intervalId === null) return; // disabled — don't reconnect
+		if (!_enabled) return; // disabled — don't reconnect
 		_scheduleReconnect();
 	});
 }
@@ -100,14 +107,14 @@ function _scheduleReconnect() {
 }
 
 export async function enable_live_reactions(_args, ctx) {
-	if (_intervalId !== null) {
+	if (_enabled) {
 		return { ok: true, already: true };
 	}
+	_enabled = true;
 	_protocol = ctx.protocol;
 	_buffer = [];
 	_reconnectAttempts = 0;
 	_connect();
-	_intervalId = setInterval(_flush, WINDOW_MS);
 	return { ok: true, started: true };
 }
 
@@ -126,5 +133,6 @@ export async function disable_live_reactions(_args, _ctx) {
 	}
 	_buffer = [];
 	_protocol = null;
+	_enabled = false;
 	return { ok: true, stopped: true };
 }

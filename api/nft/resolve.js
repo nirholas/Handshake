@@ -19,8 +19,7 @@ export default wrap(async (req, res) => {
 	if (!id) return error(res, 400, 'bad_request', 'id required');
 
 	if (chain === 'solana') {
-		const apiKey = env.HELIUS_API_KEY;
-		const resp = await fetch(`https://mainnet.helius-rpc.com/?api-key=${apiKey}`, {
+		const resp = await fetch(env.SOLANA_RPC_URL, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getAsset', params: { id } }),

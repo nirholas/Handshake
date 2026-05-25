@@ -31,12 +31,26 @@ export default wrap(async (req, res) => {
 			insert into widget_views (widget_id, country, referer_host, created_at)
 			values (${widgetId}, ${country}, ${refererHost}, now())
 		`;
+	} catch (err) {
+		if (err?.code === '23503') {
+			// FK violation: widget_id does not exist — best-effort analytics, swallow silently
+		} else if (/relation .* does not exist/i.test(err?.message || '')) {
+			// Table not yet migrated — swallow silently
+		} else {
+			throw err;
+		}
+	}
+	try {
 		await sql`
 			update widgets set view_count = view_count + 1 where id = ${widgetId}
 		`;
 	} catch (err) {
-		if (!/relation .* does not exist/i.test(err?.message || '')) {
-			console.warn('[widgets/view] log failed', err?.message);
+		if (err?.code === '23503') {
+			// FK violation — swallow silently
+		} else if (/relation .* does not exist/i.test(err?.message || '')) {
+			// Table not yet migrated — swallow silently
+		} else {
+			throw err;
 		}
 	}
 

@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3D-Agent Crypto Demo</title>
   <style>
     body { margin: 0; background: #1a1a1a; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }
-    agent-3d { width: 400px; height: 560px; display: block; border-radius: 16px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    agent-3d { width: min(400px, calc(100vw - 32px)); height: min(560px, 70vh); display: block; border-radius: 16px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
     h1 { margin-bottom: 20px; }
   </style>
 </head>

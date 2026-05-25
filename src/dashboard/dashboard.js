@@ -2415,7 +2415,7 @@ async function renderEmbed(root) {
 					<div id="embed-verify-out" class="muted" style="padding:6px 6px 0; font-size:12px; min-height:16px"></div>
 					<div class="row" style="justify-content:space-between; padding:10px 6px 4px">
 						<strong>${esc(agent.name || 'My Agent')}</strong>
-						<a href="${attr(homeUrl)}" target="_blank" class="muted">Home page →</a>
+						<a href="${attr(homeUrl)}" target="_blank" rel="noopener noreferrer" class="muted">Home page →</a>
 					</div>
 					<p class="muted" style="padding:0 6px">Agent ID <code>${esc(agent.id)}</code></p>
 					${
@@ -4031,7 +4031,7 @@ async function renderAccount(root) {
 				<div style="margin-top:12px">
 					<p class="muted" style="font-size:11px;margin:0 0 4px">Your public profile</p>
 					<div class="row" style="gap:6px;align-items:center">
-						<a href="${attr(profileUrl)}" target="_blank" style="font-size:12px;color:#9a8cff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(profileUrl)}</a>
+						<a href="${attr(profileUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#9a8cff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(profileUrl)}</a>
 						<button id="acct-copy" class="btn sec" type="button" style="flex-shrink:0;white-space:nowrap">Copy</button>
 					</div>
 				</div>
@@ -4074,7 +4074,7 @@ async function renderAccount(root) {
 			msg.textContent = 'Saved.';
 			if (data.user.username) {
 				const url = `${location.origin}/u/${encodeURIComponent(data.user.username)}`;
-				msg.innerHTML = `Saved. Your profile is at <a href="${attr(url)}" target="_blank" style="color:#9a8cff">${esc(url)}</a>`;
+				msg.innerHTML = `Saved. Your profile is at <a href="${attr(url)}" target="_blank" rel="noopener noreferrer" style="color:#9a8cff">${esc(url)}</a>`;
 			}
 		} catch (err) {
 			msg.style.color = '#ffb3b3';

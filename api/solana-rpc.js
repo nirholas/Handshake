@@ -12,17 +12,14 @@
 
 import { cors, method, json, error } from './_lib/http.js';
 
-const HELIUS_MAINNET = 'https://mainnet.helius-rpc.com';
-const HELIUS_DEVNET  = 'https://devnet.helius-rpc.com';
 const PUBLIC_MAINNET = 'https://api.mainnet-beta.solana.com';
 const PUBLIC_DEVNET  = 'https://api.devnet.solana.com';
 
 function upstreamUrl(network) {
-	const key = process.env.HELIUS_API_KEY;
 	if (network === 'devnet') {
-		return key ? `${HELIUS_DEVNET}/?api-key=${key}` : PUBLIC_DEVNET;
+		return process.env.SOLANA_RPC_URL_DEVNET || PUBLIC_DEVNET;
 	}
-	return key ? `${HELIUS_MAINNET}/?api-key=${key}` : PUBLIC_MAINNET;
+	return process.env.SOLANA_RPC_URL || PUBLIC_MAINNET;
 }
 
 export default async function handler(req, res) {

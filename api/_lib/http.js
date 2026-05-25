@@ -166,8 +166,13 @@ export function wrap(handler) {
 
 export function method(req, res, allowed) {
 	const m = req.method || 'GET';
-	if (!allowed.includes(m)) {
-		res.setHeader('allow', allowed.join(', '));
+	// HEAD must be allowed wherever GET is allowed (RFC 9110 §9.3.2).
+	// Treat an incoming HEAD as GET for the purposes of the allowlist check;
+	// Node.js HTTP automatically strips the response body on HEAD responses.
+	const effective = (m === 'HEAD' && allowed.includes('GET')) ? 'GET' : m;
+	if (!allowed.includes(effective)) {
+		const advertised = allowed.includes('GET') ? [...allowed, 'HEAD'] : allowed;
+		res.setHeader('allow', advertised.join(', '));
 		error(res, 405, 'method_not_allowed', `method ${m} not allowed`);
 		return false;
 	}
