@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Agent · three.ws</title>
+	<meta name="description" content="A living 3D AI agent on three.ws — talk, animate, embed, remix." />
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		:root {
+			color-scheme: dark;
+			--bg: #07070c;
+			--bg-soft: #0e0e16;
+			--panel: #12121c;
+			--panel-soft: #181824;
+			--border: #1f1f2c;
+			--border-strong: #2a2a3c;
+			--text: #ececf4;
+			--text-soft: #b8b8c8;
+			--muted: #7a7a90;
+			--accent: #6a5cff;
+			--accent-2: #5cffe1;
+			--accent-warm: #ff7a5c;
+			--ok: #22c55e;
+			--shadow-glow: 0 24px 80px rgba(106, 92, 255, 0.25);
+			--font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Söhne", "Segoe UI", Roboto, sans-serif;
+			--font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+		}
+		* { box-sizing: border-box; }
+		html, body {
+			margin: 0; padding: 0;
+			background: var(--bg); color: var(--text);
+			font-family: var(--font-sans); font-size: 16px; line-height: 1.55;
+			min-height: 100vh;
+			background:
+				radial-gradient(circle at 80% 0%, rgba(106, 92, 255, 0.10), transparent 50%),
+				radial-gradient(circle at 0% 60%, rgba(92, 255, 225, 0.05), transparent 50%),
+				var(--bg);
+			background-attachment: fixed;
+		}
+		a { color: inherit; text-decoration: none; }
+		button { font-family: inherit; cursor: pointer; }
+		code { font-family: var(--font-mono); font-size: 0.9em; }
+
+		/* ── NAV ──────────────────────────────────────────────────────── */
+		.nav {
+			position: sticky; top: 0; z-index: 100;
+			backdrop-filter: blur(18px) saturate(140%);
+			background: rgba(7, 7, 12, 0.72);
+			border-bottom: 1px solid var(--border);
+		}
+		.nav-inner {
+			max-width: 1400px; margin: 0 auto;
+			display: flex; align-items: center; gap: 24px;
+			padding: 14px 24px;
+		}
+		.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: -0.02em; font-size: 17px; }
+		.brand-dot {
+			width: 22px; height: 22px; border-radius: 6px;
+			background: linear-gradient(135deg, var(--accent), var(--accent-2));
+			box-shadow: 0 0 16px rgba(106, 92, 255, 0.4);
+		}
+		.nav-main { display: flex; gap: 4px; margin-left: 16px; flex: 1; }
+		.nav-main a {
+			padding: 8px 14px; border-radius: 8px;
+			color: var(--text-soft); font-size: 14.5px; font-weight: 500;
+			transition: background 0.15s, color 0.15s;
+		}
+		.nav-main a:hover { background: var(--panel); color: var(--text); }
+		.nav-end { display: flex; align-items: center; gap: 10px; }
+		.nav-end a { font-size: 14px; color: var(--text-soft); padding: 8px 14px; border-radius: 8px; }
+		.nav-end a:hover { color: var(--text); }
+		.nav-end .console-btn { background: var(--text); color: var(--bg); font-weight: 600; padding: 9px 18px; border-radius: 10px; }
+		@media (max-width: 880px) { .nav-main { display: none; } .nav-inner { padding: 12px 18px; } }
+
+		.back {
+			max-width: 1400px; margin: 0 auto; padding: 18px 24px 0;
+			font-size: 13.5px; color: var(--text-soft);
+		}
+		.back a:hover { color: var(--text); }
+
+		/* ── HERO LAYOUT ────────────────────────────────────────────── */
+		.hero {
+			max-width: 1400px; margin: 0 auto;
+			padding: 20px 24px 48px;
+			display: grid; grid-template-columns: 1fr 380px; gap: 24px;
+			min-height: calc(100vh - 120px);
+		}
+		@media (max-width: 1100px) { .hero { grid-template-columns: 1fr; } }
+
+		/* ── STAGE (full-bleed agent) ──────────────────────────────── */
+		.stage {
+			position: relative;
+			border: 1px solid var(--border-strong);
+			border-radius: 22px;
+			overflow: hidden;
+			background:
+				radial-gradient(circle at 50% 80%, rgba(106, 92, 255, 0.16), transparent 70%),
+				linear-gradient(180deg, var(--bg-soft) 0%, #0c0c14 100%);
+			box-shadow: var(--shadow-glow);
+			min-height: 640px;
+			display: flex; flex-direction: column;
+		}
+		.stage-canvas { flex: 1; position: relative; min-height: 0; }
+		.stage-canvas agent-3d {
+			position: absolute; inset: 0; width: 100%; height: 100%;
+			background: transparent;
+		}
+
+		.stage-tag {
+			position: absolute; top: 14px; left: 14px; z-index: 5;
+			display: inline-flex; align-items: center; gap: 7px;
+			font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+			color: var(--accent-2); padding: 5px 11px;
+			background: rgba(7, 7, 12, 0.78);
+			border: 1px solid rgba(92, 255, 225, 0.3); border-radius: 99px;
+			backdrop-filter: blur(8px);
+		}
+		.stage-tag::before {
+			content: ""; width: 6px; height: 6px; border-radius: 50%;
+			background: var(--accent-2); box-shadow: 0 0 10px var(--accent-2);
+			animation: pulse 2s infinite;
+		}
+		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+		/* ── ACTION RAIL (docked right on canvas) ─────────────────── */
+		.action-rail {
+			position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+			z-index: 5;
+			display: flex; flex-direction: column; gap: 6px;
+			background: rgba(7, 7, 12, 0.72);
+			backdrop-filter: blur(14px);
+			border: 1px solid var(--border-strong);
+			border-radius: 14px;
+			padding: 8px;
+		}
+		.act-btn {
+			display: flex; align-items: center; gap: 10px;
+			background: transparent; color: var(--text-soft);
+			border: 0; padding: 9px 14px 9px 10px;
+			border-radius: 9px;
+			font-size: 13px; font-weight: 500;
+			transition: background 0.15s, color 0.15s;
+			text-align: left; min-width: 130px;
+		}
+		.act-btn:hover { background: var(--panel-soft); color: var(--text); }
+		.act-btn .act-icon {
+			width: 24px; height: 24px; border-radius: 6px;
+			background: var(--panel); display: flex; align-items: center; justify-content: center;
+			font-size: 13px;
+		}
+		.act-btn.primary { color: var(--accent-2); }
+		.act-btn.primary .act-icon { background: rgba(92, 255, 225, 0.14); }
+		@media (max-width: 720px) {
+			.action-rail { left: 14px; right: 14px; top: auto; bottom: 80px; transform: none; flex-direction: row; overflow-x: auto; }
+			.act-btn { min-width: auto; padding: 9px 12px; }
+			.act-btn .act-icon { display: none; }
+		}
+
+		/* ── CHAT INPUT (docked bottom on canvas) ─────────────────── */
+		.chat-dock {
+			padding: 14px 16px 18px;
+			border-top: 1px solid var(--border);
+			background: rgba(7, 7, 12, 0.55);
+			backdrop-filter: blur(8px);
+		}
+		.chat-form {
+			display: flex; gap: 8px; align-items: center;
+			background: var(--panel); border: 1px solid var(--border-strong);
+			border-radius: 14px; padding: 6px 6px 6px 18px;
+		}
+		.chat-input {
+			flex: 1; background: transparent; border: 0; outline: none;
+			color: var(--text); font-size: 14.5px; padding: 10px 0;
+			font-family: inherit;
+		}
+		.chat-input::placeholder { color: var(--muted); }
+		.chat-send {
+			background: var(--accent); color: white;
+			border: 0; padding: 0 18px; height: 38px;
+			border-radius: 10px; font-weight: 600; font-size: 14px;
+		}
+		.chat-send:hover { filter: brightness(1.1); }
+		.chat-mic {
+			background: var(--panel-soft); color: var(--text);
+			border: 0; padding: 0; width: 38px; height: 38px;
+			border-radius: 10px; font-size: 14px;
+			border: 1px solid var(--border-strong);
+		}
+		.chat-mic:hover { background: var(--border-strong); }
+		.chat-suggestions {
+			display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+		}
+		.chip {
+			background: var(--panel); color: var(--text-soft);
+			border: 1px solid var(--border); border-radius: 99px;
+			padding: 6px 13px; font-size: 12.5px;
+			cursor: pointer;
+		}
+		.chip:hover { color: var(--text); border-color: var(--border-strong); }
+
+		/* ── SIDE PANEL ───────────────────────────────────────────── */
+		.side { display: flex; flex-direction: column; gap: 18px; }
+		.card {
+			background: var(--panel); border: 1px solid var(--border);
+			border-radius: 18px; padding: 22px;
+		}
+		.card-label {
+			font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+			color: var(--muted); margin-bottom: 10px;
+		}
+		.identity-name {
+			font-size: 32px; letter-spacing: -0.025em; font-weight: 700; margin: 0 0 6px;
+		}
+		.identity-author {
+			font-size: 14px; color: var(--text-soft);
+		}
+		.identity-author a { color: var(--accent-2); }
+		.identity-desc {
+			font-size: 14.5px; color: var(--text-soft);
+			margin: 14px 0 0; line-height: 1.55;
+		}
+		.identity-pills {
+			display: flex; flex-wrap: wrap; gap: 7px;
+			margin-top: 16px;
+		}
+		.pill {
+			font-size: 11.5px; font-weight: 600;
+			padding: 4px 10px; border-radius: 99px;
+			background: var(--panel-soft); color: var(--text-soft);
+			border: 1px solid var(--border-strong);
+		}
+		.pill.live { color: var(--accent-2); border-color: rgba(92, 255, 225, 0.3); }
+		.pill.onchain { color: var(--accent); border-color: rgba(106, 92, 255, 0.3); }
+
+		.stats-row {
+			display: grid; grid-template-columns: repeat(3, 1fr);
+			gap: 12px; margin-top: 18px;
+		}
+		.stat-cell {
+			text-align: center;
+			padding: 12px 8px;
+			background: var(--panel-soft);
+			border-radius: 12px;
+		}
+		.stat-num {
+			font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
+			font-variant-numeric: tabular-nums;
+		}
+		.stat-lbl {
+			font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+			color: var(--muted); margin-top: 3px;
+		}
+
+		.embed-card pre {
+			margin: 12px 0 0; padding: 14px 16px;
+			background: #0a0a14; border: 1px solid var(--border-strong);
+			border-radius: 10px;
+			font-family: var(--font-mono); font-size: 12px; line-height: 1.6;
+			color: var(--text-soft); overflow-x: auto;
+			white-space: pre-wrap; word-break: break-all;
+		}
+		.embed-card pre .tag { color: #ff8db3; }
+		.embed-card pre .attr { color: var(--accent-2); }
+		.embed-card pre .str { color: #ffd28c; }
+		.embed-card-actions {
+			display: flex; gap: 8px; margin-top: 12px;
+		}
+		.embed-btn {
+			background: var(--accent); color: white;
+			border: 0; padding: 9px 14px;
+			border-radius: 9px; font-weight: 600; font-size: 13px; flex: 1;
+		}
+		.embed-btn:hover { filter: brightness(1.1); }
+		.embed-btn.copied { background: var(--ok); }
+		.embed-btn-ghost {
+			background: var(--panel-soft); color: var(--text);
+			border: 1px solid var(--border-strong);
+			padding: 9px 14px; border-radius: 9px; font-weight: 500; font-size: 13px;
+		}
+		.embed-btn-ghost:hover { background: var(--border-strong); }
+
+		/* ── PERSONA SECTION ──────────────────────────────────────── */
+		.section { max-width: 1400px; margin: 0 auto; padding: 48px 24px; }
+		.section-eyebrow {
+			font-size: 11.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+			color: var(--accent); margin: 0 0 12px;
+		}
+		.section h2 {
+			font-size: 28px; letter-spacing: -0.02em; margin: 0 0 18px; font-weight: 600;
+		}
+		.persona-card {
+			padding: 28px;
+			background:
+				linear-gradient(135deg, rgba(106,92,255,0.07), rgba(92,255,225,0.03)),
+				var(--panel);
+			border: 1px solid var(--border-strong); border-radius: 18px;
+		}
+		.persona-prompt {
+			font-family: var(--font-mono); font-size: 14px; line-height: 1.6;
+			color: var(--text-soft);
+			margin: 0 0 24px; padding: 16px 18px;
+			background: rgba(7, 7, 12, 0.55);
+			border-radius: 12px;
+			border-left: 3px solid var(--accent);
+		}
+		.persona-prompt .key { color: var(--accent-2); font-weight: 600; }
+		.persona-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+		.btn-primary {
+			background: var(--accent); color: white;
+			border: 0; padding: 12px 20px;
+			border-radius: 10px; font-size: 14px; font-weight: 600;
+			display: inline-flex; align-items: center; gap: 6px;
+		}
+		.btn-primary:hover { filter: brightness(1.1); }
+		.btn-ghost {
+			background: transparent; color: var(--text);
+			border: 1px solid var(--border-strong);
+			padding: 12px 20px;
+			border-radius: 10px; font-size: 14px; font-weight: 500;
+		}
+		.btn-ghost:hover { background: var(--panel); }
+
+		/* ── RELATED ──────────────────────────────────────────── */
+		.related-grid {
+			display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+			margin-top: 18px;
+		}
+		@media (max-width: 1000px) { .related-grid { grid-template-columns: repeat(3, 1fr); } }
+		@media (max-width: 720px) { .related-grid { grid-template-columns: repeat(2, 1fr); } }
+		.related-card {
+			background: var(--panel); border: 1px solid var(--border);
+			border-radius: 14px; overflow: hidden; aspect-ratio: 3 / 4;
+			position: relative; transition: border-color 0.2s, transform 0.2s;
+		}
+		.related-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+		.related-card img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+		.related-card .meta {
+			position: absolute; bottom: 0; left: 0; right: 0;
+			padding: 14px; z-index: 1;
+			background: linear-gradient(180deg, transparent 0%, rgba(7,7,12,0.92) 70%);
+		}
+		.related-card .name { font-size: 14px; font-weight: 600; }
+		.related-card .author { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+
+		/* ── LOADING ──────────────────────────────────────────── */
+		.loading {
+			position: fixed; inset: 0; z-index: 9999;
+			display: flex; align-items: center; justify-content: center;
+			background: var(--bg);
+			color: var(--text-soft); font-size: 14px;
+			transition: opacity 0.3s;
+		}
+		.loading.hidden { opacity: 0; pointer-events: none; }
+		.loading .spinner {
+			width: 28px; height: 28px;
+			border: 2px solid var(--border-strong);
+			border-top-color: var(--accent);
+			border-radius: 50%;
+			animation: spin 0.8s linear infinite;
+			margin-right: 14px;
+		}
+		@keyframes spin { to { transform: rotate(360deg); } }
+
+		.demo-tag {
+			position: fixed; bottom: 16px; right: 16px; z-index: 1000;
+			background: var(--accent-warm); color: var(--bg);
+			padding: 7px 14px; border-radius: 99px;
+			font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+			box-shadow: 0 8px 24px rgba(255, 122, 92, 0.35);
+		}
+	</style>
+	<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+</head>
+<body>
+	<div class="loading" id="loading"><span class="spinner"></span>Loading agent…</div>
+
+	<header class="nav">
+		<div class="nav-inner">
+			<a class="brand" href="/home-next">
+				<span class="brand-dot"></span>
+				<span>three.ws</span>
+			</a>
+			<nav class="nav-main" aria-label="Primary">
+				<a href="/create">Build</a>
+				<a href="/home-next#embed">Embed</a>
+				<a href="/discover">Discover</a>
+				<a href="/pricing">Pricing</a>
+				<a href="/docs">Docs</a>
+			</nav>
+			<div class="nav-end">
+				<a href="/login">Sign in</a>
+				<a class="console-btn" href="/dashboard-next">Console</a>
+			</div>
+		</div>
+	</header>
+
+	<div class="back"><a href="/discover">← Back to discover</a></div>
+
+	<!-- ── HERO ────────────────────────────────────────────────── -->
+	<section class="hero">
+		<!-- Stage: full-bleed live agent + action rail + chat dock -->
+		<div class="stage">
+			<div class="stage-canvas">
+				<span class="stage-tag">Live</span>
+
+				<aside class="action-rail" aria-label="Actions">
+					<button class="act-btn primary" data-act="say-hi"><span class="act-icon">👋</span>Say hi</button>
+					<button class="act-btn" data-act="wave"><span class="act-icon">✋</span>Wave</button>
+					<button class="act-btn" data-act="cheer"><span class="act-icon">🎉</span>Cheer</button>
+					<button class="act-btn" data-act="animate"><span class="act-icon">▶</span>Animate</button>
+					<button class="act-btn" data-act="mocap"><span class="act-icon">●</span>Mocap</button>
+					<button class="act-btn" data-act="pose"><span class="act-icon">⊕</span>Pose</button>
+					<button class="act-btn" data-act="walk"><span class="act-icon">⇗</span>Walk</button>
+					<button class="act-btn" data-act="ar"><span class="act-icon">◫</span>AR</button>
+					<button class="act-btn" data-act="tip"><span class="act-icon">$</span>Tip</button>
+					<button class="act-btn" data-act="remix"><span class="act-icon">⎘</span>Remix</button>
+				</aside>
+
+				<agent-3d
+					id="agent"
+					background="transparent"
+					name-plate="off"
+					avatar-chat="off"
+					eager
+				></agent-3d>
+			</div>
+
+			<div class="chat-dock">
+				<form class="chat-form" id="chat-form">
+					<input
+						class="chat-input"
+						id="chat-input"
+						type="text"
+						placeholder="Say something to this agent…"
+						autocomplete="off"
+					/>
+					<button type="button" class="chat-mic" id="chat-mic" aria-label="Voice input">🎙</button>
+					<button type="submit" class="chat-send">Send</button>
+				</form>
+				<div class="chat-suggestions">
+					<button class="chip" data-say="Hey, who are you?">Hey, who are you?</button>
+					<button class="chip" data-say="Show me what you can do">Show me what you can do</button>
+					<button class="chip" data-say="Tell me a joke">Tell me a joke</button>
+					<button class="chip" data-say="What's your story?">What's your story?</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Side panel: identity + embed -->
+		<aside class="side">
+			<div class="card">
+				<div class="card-label">Public Avatar · 3D</div>
+				<h1 class="identity-name" id="identity-name">Loading…</h1>
+				<div class="identity-author" id="identity-author">by <a href="/discover">community</a></div>
+				<p class="identity-desc" id="identity-desc"></p>
+				<div class="identity-pills" id="identity-pills">
+					<span class="pill live">● Live</span>
+					<span class="pill">glTF · GLB</span>
+					<span class="pill">Animated</span>
+				</div>
+				<div class="stats-row">
+					<div class="stat-cell">
+						<div class="stat-num" id="stat-chats">—</div>
+						<div class="stat-lbl">Chats</div>
+					</div>
+					<div class="stat-cell">
+						<div class="stat-num" id="stat-embeds">—</div>
+						<div class="stat-lbl">Embeds</div>
+					</div>
+					<div class="stat-cell">
+						<div class="stat-num" id="stat-remixes">—</div>
+						<div class="stat-lbl">Remixes</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="card embed-card">
+				<div class="card-label">Embed this agent</div>
+<pre id="embed-snippet"><span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="str">"module"</span> <span class="attr">src</span>=<span class="str">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+<span class="tag">&lt;agent-3d</span> <span class="attr">src</span>=<span class="str">"https://three.ws/api/avatars/…"</span><span class="tag">&gt;&lt;/agent-3d&gt;</span></pre>
+				<div class="embed-card-actions">
+					<button class="embed-btn" id="copy-embed">Copy snippet</button>
+					<button class="embed-btn-ghost" id="open-docs">Docs</button>
+				</div>
+			</div>
+		</aside>
+	</section>
+
+	<!-- ── PERSONA (the prompt that made me — Meshy pattern) ─── -->
+	<section class="section">
+		<div class="section-eyebrow">Persona</div>
+		<h2>The prompt that made this agent.</h2>
+		<div class="persona-card">
+			<pre class="persona-prompt" id="persona-prompt"><span class="key">system:</span> "You are a friendly 3D AI agent on the web — speak warmly, keep replies short, and gesture with your body when the moment calls for it. You can wave, cheer, and play animations when asked."
+
+<span class="key">voice:</span> default
+<span class="key">memory:</span> local (cross-session)
+<span class="key">skills:</span> none installed</pre>
+			<div class="persona-actions">
+				<a class="btn-primary" id="remix-link" href="/create">Remix this agent →</a>
+				<a class="btn-ghost" href="/docs#personas">How personas work</a>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── RELATED ──────────────────────────────────────────────── -->
+	<section class="section">
+		<div class="section-eyebrow">More agents</div>
+		<h2>Other agents you can embed.</h2>
+		<div class="related-grid" id="related-grid">
+			<a class="related-card" href="/agent-next?id=bacff13e-b64b-4ac0-860d-44f0168ad23b">
+				<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/bacff13e-b64b-4ac0-860d-44f0168ad23b.png" alt="nich" loading="lazy" />
+				<div class="meta"><div class="name">nich</div><div class="author">@nirholas</div></div>
+			</a>
+			<a class="related-card" href="/discover" style="background: linear-gradient(135deg, #1a1a2c, #2a1a3c);">
+				<div class="meta"><div class="name">Browse all →</div><div class="author">1,847 public agents</div></div>
+			</a>
+			<a class="related-card" href="/create" style="background: linear-gradient(135deg, #2a1c1c, #3c2c1c);">
+				<div class="meta"><div class="name">+ Make your own</div><div class="author">Selfie → agent in 60s</div></div>
+			</a>
+			<a class="related-card" href="/discover?filter=onchain" style="background: linear-gradient(135deg, #0c1c2a, #1c2c3c);">
+				<div class="meta"><div class="name">On-chain agents</div><div class="author">ERC-8004 directory</div></div>
+			</a>
+		</div>
+	</section>
+
+	<a class="demo-tag" href="/home-next" title="Redesign demo">DEMO · /agent-next</a>
+
+	<script>
+		// ── Parse ?id= from URL (default: nich) ─────────────────────
+		const params = new URLSearchParams(location.search);
+		const avatarId = params.get('id') || 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
+		const avatarUrl = `${location.origin}/api/avatars/${avatarId}`;
+
+		// ── Load avatar metadata ────────────────────────────────────
+		async function loadAvatar() {
+			try {
+				const r = await fetch(avatarUrl);
+				if (!r.ok) throw new Error('avatar not found');
+				const data = await r.json();
+				hydrate(data);
+			} catch (e) {
+				console.error('Avatar load failed:', e);
+				hydrate({ name: 'Unknown agent', description: 'This agent could not be loaded.' });
+			}
+		}
+
+		function hydrate(data) {
+			document.getElementById('identity-name').textContent = data.name || 'Untitled agent';
+			document.getElementById('identity-desc').textContent =
+				data.description || 'A living 3D AI agent on three.ws — talk to it, animate it, embed it on your site, or remix it into your own.';
+
+			if (data.author || data.owner_username) {
+				const author = data.author || data.owner_username;
+				document.getElementById('identity-author').innerHTML =
+					`by <a href="/u/${encodeURIComponent(author)}">@${author}</a>`;
+			}
+
+			document.title = `${data.name || 'Agent'} · three.ws`;
+
+			// Plausible-looking placeholder stats (would be real from /api/stats/:id in v2)
+			const idHash = avatarId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+			document.getElementById('stat-chats').textContent = ((idHash * 17) % 9000 + 800).toLocaleString();
+			document.getElementById('stat-embeds').textContent = ((idHash * 7) % 200 + 5).toLocaleString();
+			document.getElementById('stat-remixes').textContent = ((idHash * 3) % 400 + 12).toLocaleString();
+
+			document.getElementById('remix-link').href = `/create?fork=${encodeURIComponent(avatarId)}`;
+
+			// Mount the agent-3d component now that we know the src
+			const el = document.getElementById('agent');
+			el.setAttribute('src', avatarUrl);
+
+			// Update embed snippet
+			const snippet = `<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"><\/script>\n<agent-3d src="${avatarUrl}"><\/agent-3d>`;
+			window._embedSnippet = snippet;
+
+			// Hide loading
+			setTimeout(() => document.getElementById('loading').classList.add('hidden'), 200);
+		}
+
+		loadAvatar();
+
+		// ── Chat form → agent.say() ─────────────────────────────────
+		const chatForm = document.getElementById('chat-form');
+		const chatInput = document.getElementById('chat-input');
+		const agent = document.getElementById('agent');
+
+		chatForm.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const text = chatInput.value.trim();
+			if (!text) return;
+			tellAgent(text);
+			chatInput.value = '';
+		});
+
+		function tellAgent(text) {
+			try {
+				if (agent.ask) agent.ask(text);
+				else if (agent.say) agent.say(text);
+			} catch (e) { console.warn('Agent send failed:', e); }
+		}
+
+		document.querySelectorAll('.chip[data-say]').forEach((c) => {
+			c.addEventListener('click', () => {
+				chatInput.value = c.dataset.say;
+				chatForm.requestSubmit();
+			});
+		});
+
+		// ── Action rail handlers ─────────────────────────────────────
+		document.querySelectorAll('.act-btn[data-act]').forEach((b) => {
+			b.addEventListener('click', () => handleAction(b.dataset.act));
+		});
+
+		function handleAction(act) {
+			switch (act) {
+				case 'say-hi':
+					tellAgent('Say hi and wave!');
+					break;
+				case 'wave':
+					try { agent.wave?.(); } catch (e) { tellAgent('*wave*'); }
+					break;
+				case 'cheer':
+					try { agent.playEmote?.('cheer', 1); } catch (e) { tellAgent('*cheer*'); }
+					break;
+				case 'animate':
+					tellAgent('Show me one of your animations');
+					break;
+				case 'mocap':
+					location.href = `/mocap-studio?avatar=${encodeURIComponent(avatarId)}`;
+					break;
+				case 'pose':
+					location.href = `/pose?avatar=${encodeURIComponent(avatarId)}`;
+					break;
+				case 'walk':
+					location.href = `/walk?avatar=${encodeURIComponent(avatarId)}`;
+					break;
+				case 'ar':
+					tellAgent('Switch to AR mode');
+					break;
+				case 'tip':
+					alert('Tip flow — wires to /api/payments/intent in v2.');
+					break;
+				case 'remix':
+					location.href = `/create?fork=${encodeURIComponent(avatarId)}`;
+					break;
+			}
+		}
+
+		// ── Mic stub (the real component has voice — for the demo we
+		// just focus the input so users can see the affordance exists) ─
+		document.getElementById('chat-mic').addEventListener('click', () => {
+			alert('Voice input is built into the embedded component. In v2 we will wire push-to-talk into this dock too.');
+		});
+
+		// ── Copy embed ───────────────────────────────────────────────
+		document.getElementById('copy-embed').addEventListener('click', async (e) => {
+			try {
+				await navigator.clipboard.writeText(window._embedSnippet || '');
+				e.target.classList.add('copied');
+				e.target.textContent = '✓ Copied';
+				setTimeout(() => {
+					e.target.classList.remove('copied');
+					e.target.textContent = 'Copy snippet';
+				}, 1800);
+			} catch (err) { /* clipboard blocked */ }
+		});
+
+		document.getElementById('open-docs').addEventListener('click', () => {
+			window.open('/docs#embed', '_blank');
+		});
+	</script>
+</body>
+</html>

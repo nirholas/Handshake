@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>The 3D layer of the internet · three.ws embed v1</title>
+		<meta name="description" content="One script tag. Any website. Embodied 3D AI agents." />
+		<meta name="theme-color" content="#000000" />
+		<meta name="robots" content="noindex" />
+		<link rel="canonical" href="https://three.ws/embed/v1/preview" />
+		<style>
+			:root {
+				--bg: #07070a;
+				--panel: #0e0e12;
+				--ink: #f5f5f7;
+				--ink-dim: #8a8a93;
+				--ink-faint: #45454c;
+				--accent: #ffffff;
+				--ring: rgba(255, 255, 255, 0.08);
+				--ring-strong: rgba(255, 255, 255, 0.16);
+				--radius: 16px;
+				--mono:
+					ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, Consolas, monospace;
+				--sans:
+					-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+			}
+			* { box-sizing: border-box; }
+			html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+			body { min-height: 100vh; overflow-x: hidden; }
+
+			a { color: inherit; }
+
+			.shell { max-width: 1200px; margin: 0 auto; padding: 64px 24px 96px; }
+
+			.hero { text-align: center; padding: 48px 0 80px; }
+			.eyebrow {
+				display: inline-flex; align-items: center; gap: 8px;
+				font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em;
+				text-transform: uppercase; color: var(--ink-dim);
+				padding: 6px 12px; border: 1px solid var(--ring); border-radius: 999px;
+				margin-bottom: 28px;
+			}
+			.eyebrow .dot {
+				width: 6px; height: 6px; border-radius: 50%; background: #4ade80;
+				box-shadow: 0 0 10px #4ade80;
+			}
+			.hero h1 {
+				font-size: clamp(40px, 7vw, 88px);
+				font-weight: 700; letter-spacing: -0.03em; line-height: 1.02;
+				margin: 0 0 24px;
+				background: linear-gradient(180deg, #fff 0%, #b8b8c2 100%);
+				-webkit-background-clip: text; background-clip: text; color: transparent;
+			}
+			.hero p.sub {
+				font-size: clamp(16px, 1.6vw, 19px); color: var(--ink-dim);
+				max-width: 620px; margin: 0 auto 32px; line-height: 1.5;
+			}
+			.snippet {
+				display: inline-block; text-align: left; background: #0a0a0d;
+				border: 1px solid var(--ring); border-radius: 12px;
+				padding: 14px 18px; font-family: var(--mono); font-size: 13px;
+				color: #e8e8ec; max-width: 100%; overflow-x: auto;
+			}
+			.snippet .tag { color: #ff7ab6; }
+			.snippet .attr { color: #c4b5fd; }
+			.snippet .str { color: #fde68a; }
+
+			.section-label {
+				display: flex; align-items: baseline; gap: 14px;
+				margin: 64px 0 24px;
+			}
+			.section-label .n {
+				font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
+				letter-spacing: 0.1em;
+			}
+			.section-label h2 {
+				margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em;
+			}
+			.section-label .rule { flex: 1; height: 1px; background: var(--ring); }
+
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(2, 1fr);
+				gap: 28px;
+			}
+			@media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+
+			.surface {
+				background: var(--panel);
+				border: 1px solid var(--ring);
+				border-radius: var(--radius);
+				overflow: hidden;
+				position: relative;
+				transition: border-color 0.2s, transform 0.2s;
+			}
+			.surface:hover { border-color: var(--ring-strong); }
+			.surface .bar {
+				display: flex; align-items: center; gap: 8px;
+				padding: 12px 16px;
+				border-bottom: 1px solid var(--ring);
+				font-family: var(--mono); font-size: 11px;
+				color: var(--ink-dim); letter-spacing: 0.06em; text-transform: uppercase;
+			}
+			.surface .bar .dot {
+				width: 9px; height: 9px; border-radius: 50%; background: #2a2a31;
+			}
+			.surface .bar .pull { margin-left: auto; color: var(--ink-faint); font-size: 10px; }
+
+			/* ---- Surface: Twitter / X ------------------------------------ */
+			.x-post { padding: 18px 20px; background: #15171a; color: #e7e9ea; font-family: 'Helvetica Neue', system-ui, sans-serif; }
+			.x-row { display: flex; gap: 12px; }
+			.x-av { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#1d9bf0,#7856ff); flex-shrink: 0; }
+			.x-name { font-weight: 700; font-size: 15px; }
+			.x-name .handle { color: #71767b; font-weight: 400; margin-left: 6px; }
+			.x-time { color: #71767b; font-size: 14px; }
+			.x-body { font-size: 15px; line-height: 1.4; margin: 6px 0 12px; color: #e7e9ea; }
+			.x-embed { border-radius: 16px; overflow: hidden; border: 1px solid #2f3336; aspect-ratio: 16 / 10; background: #000; }
+
+			/* ---- Surface: Notion ----------------------------------------- */
+			.notion { padding: 32px 40px; background: #191919; color: #e7e7e6; font-family: 'Inter', system-ui; }
+			.notion h3 { margin: 0 0 12px; font-size: 28px; font-weight: 700; }
+			.notion p { font-size: 15px; line-height: 1.5; color: #a8a8a3; margin: 0 0 16px; }
+			.notion .block { border-radius: 4px; aspect-ratio: 4 / 3; overflow: hidden; background: #2a2a2a; }
+
+			/* ---- Surface: Discord ---------------------------------------- */
+			.discord { background: #313338; padding: 16px 18px; color: #dbdee1; font-family: 'gg sans','Noto Sans',system-ui; }
+			.dc-msg { display: flex; gap: 14px; align-items: flex-start; }
+			.dc-av { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#5865f2,#eb459e); flex-shrink: 0; }
+			.dc-meta { display: flex; align-items: baseline; gap: 8px; }
+			.dc-name { color: #f23f43; font-weight: 600; font-size: 16px; }
+			.dc-time { font-size: 12px; color: #949ba4; }
+			.dc-body { font-size: 15px; line-height: 1.375; color: #dbdee1; margin: 2px 0 8px; }
+			.dc-embed { width: 100%; max-width: 420px; border-left: 4px solid #5865f2; background: #2b2d31; border-radius: 4px; padding: 12px; }
+			.dc-embed-title { font-size: 14px; font-weight: 600; color: #00a8fc; margin-bottom: 8px; }
+			.dc-embed .stage { aspect-ratio: 1 / 1; border-radius: 4px; overflow: hidden; background: #1e1f22; }
+
+			/* ---- Surface: Shopify product -------------------------------- */
+			.shop { background: #fff; color: #111; padding: 0; font-family: 'Inter', system-ui; }
+			.shop-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 0; }
+			@media (max-width: 540px) { .shop-grid { grid-template-columns: 1fr; } }
+			.shop-img { background: #f3f3f3; aspect-ratio: 1 / 1; }
+			.shop-info { padding: 22px 24px; }
+			.shop-brand { font-size: 11px; letter-spacing: 0.18em; color: #777; text-transform: uppercase; }
+			.shop-title { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; margin: 6px 0 8px; }
+			.shop-price { font-size: 18px; font-weight: 500; color: #111; margin-bottom: 12px; }
+			.shop-desc { font-size: 13px; color: #555; line-height: 1.5; margin: 0 0 16px; }
+			.shop-cta { background: #111; color: #fff; padding: 12px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block; text-decoration: none; }
+
+			/* ---- Surface: Substack / newsletter -------------------------- */
+			.news { background: #fdfaf5; color: #1a1a1a; padding: 36px 44px; font-family: Georgia, 'Iowan Old Style', serif; }
+			.news .kicker { font-family: var(--sans); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #ad6a1a; margin-bottom: 8px; }
+			.news h3 { margin: 0 0 12px; font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+			.news .by { font-family: var(--sans); font-size: 12px; color: #66554a; margin-bottom: 20px; }
+			.news p { font-size: 16px; line-height: 1.6; color: #2a2a2a; margin: 0 0 16px; }
+			.news .figure { aspect-ratio: 16 / 10; border-radius: 6px; overflow: hidden; background: #ece6dc; margin: 20px 0; }
+			.news .caption { font-family: var(--sans); font-size: 12px; color: #66554a; text-align: center; margin-top: -8px; }
+
+			/* ---- Surface: Personal blog ---------------------------------- */
+			.blog { background: #0f1419; color: #c9d1d9; padding: 36px 40px; font-family: 'Inter', system-ui; }
+			.blog .meta { font-size: 12px; color: #6e7681; margin-bottom: 8px; }
+			.blog h3 { margin: 0 0 14px; font-size: 24px; font-weight: 700; color: #f0f6fc; letter-spacing: -0.01em; }
+			.blog p { font-size: 14px; line-height: 1.6; color: #b1bac4; margin: 0 0 16px; }
+			.blog .embedded { aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #0a0d11; border: 1px solid #21262d; }
+
+			/* ---- Install + docs section --------------------------------- */
+			.docs { margin-top: 96px; padding: 48px; border: 1px solid var(--ring); border-radius: var(--radius); background: linear-gradient(180deg, #0c0c10 0%, #07070a 100%); }
+			.docs h2 { margin: 0 0 8px; font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+			.docs p.lead { color: var(--ink-dim); margin: 0 0 32px; font-size: 15px; }
+			.docs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+			@media (max-width: 800px) { .docs-grid { grid-template-columns: 1fr; } }
+			.docs-card { padding: 20px; background: #0a0a0d; border: 1px solid var(--ring); border-radius: 10px; }
+			.docs-card h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--ink); }
+			.docs-card p { margin: 0 0 12px; font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
+			pre { margin: 0; padding: 12px 14px; background: #050507; border: 1px solid var(--ring); border-radius: 8px; font-family: var(--mono); font-size: 12px; color: #d6d6dd; overflow-x: auto; }
+
+			footer.foot {
+				margin-top: 96px; padding-top: 32px; border-top: 1px solid var(--ring);
+				display: flex; justify-content: space-between; align-items: center;
+				font-size: 12px; color: var(--ink-dim);
+			}
+			footer.foot a { color: var(--ink-dim); text-decoration: none; }
+			footer.foot a:hover { color: var(--ink); }
+		</style>
+	</head>
+	<body>
+		<!-- Load the embed once for the whole page. -->
+		<script src="/embed/v1.js" async></script>
+
+		<main class="shell">
+			<section class="hero">
+				<div class="eyebrow"><span class="dot"></span> embed v1 · preview</div>
+				<h1>The 3D layer of the&nbsp;internet.</h1>
+				<p class="sub">
+					One script tag. Any website. Embodied 3D AI agents that resolve from on-chain
+					identity, render on any device, and feel native to the page they live in.
+				</p>
+				<div class="snippet">
+					<span class="tag">&lt;script</span>
+					<span class="attr"> src</span>=<span class="str">"https://three.ws/embed/v1.js"</span>
+					<span class="attr"> async</span><span class="tag">&gt;&lt;/script&gt;</span><br />
+					<span class="tag">&lt;three-d</span>
+					<span class="attr"> agent</span>=<span class="str">"8453:42"</span><span class="tag">&gt;&lt;/three-d&gt;</span>
+				</div>
+			</section>
+
+			<div class="section-label">
+				<span class="n">01</span>
+				<h2>Agents appear inside the surfaces people already use</h2>
+				<span class="rule"></span>
+			</div>
+
+			<div class="grid">
+				<!-- 1. Twitter / X -->
+				<div class="surface">
+					<div class="bar"><span class="dot"></span><span>x.com</span><span class="pull">post</span></div>
+					<div class="x-post">
+						<div class="x-row">
+							<div class="x-av"></div>
+							<div style="flex:1">
+								<div class="x-name">three.ws <span class="handle">@threews · 2h</span></div>
+								<div class="x-body">made my agent. lives on Base, earns x402, embeds anywhere ↓</div>
+								<div class="x-embed">
+									<three-d src="https://three.ws/animations/robotexpressive.glb" name="Saga" theme="dark" autoplay></three-d>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 2. Notion -->
+				<div class="surface">
+					<div class="bar"><span class="dot"></span><span>notion.so</span><span class="pull">doc</span></div>
+					<div class="notion">
+						<h3>Q3 product memo</h3>
+						<p>Adding our team agent inline so reviewers can interact with it while reading the spec.</p>
+						<div class="block">
+							<three-d src="https://three.ws/avatars/cz.glb" name="CZ" theme="dark" autoplay></three-d>
+						</div>
+					</div>
+				</div>
+
+				<!-- 3. Discord -->
+				<div class="surface">
+					<div class="bar"><span class="dot"></span><span>discord.com</span><span class="pull">#agents</span></div>
+					<div class="discord">
+						<div class="dc-msg">
+							<div class="dc-av"></div>
+							<div style="flex:1;min-width:0">
+								<div class="dc-meta">
+									<span class="dc-name">commander</span>
+									<span class="dc-time">Today at 14:22</span>
+								</div>
+								<div class="dc-body">new operative just rolled into the squad. say hi 👋</div>
+								<div class="dc-embed">
+									<div class="dc-embed-title">Boss · ERC-8004</div>
+									<div class="stage">
+										<three-d src="https://three.ws/animations/soldier.glb" name="Boss" theme="dark" autoplay></three-d>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 4. Shopify product page -->
+				<div class="surface">
+					<div class="bar" style="background:#fafafa;color:#666;border-color:#ececec"><span class="dot" style="background:#ddd"></span><span>shop.example</span><span class="pull">product</span></div>
+					<div class="shop">
+						<div class="shop-grid">
+							<div class="shop-img">
+								<three-d src="https://three.ws/animations/soldier.glb" name="Agent" theme="light" autoplay></three-d>
+							</div>
+							<div class="shop-info">
+								<div class="shop-brand">three.ws · agents</div>
+								<div class="shop-title">Operative</div>
+								<div class="shop-price">0.05 ETH</div>
+								<p class="shop-desc">Rigged, animated, agent-ready. On-chain provenance. Drops into any site with one tag.</p>
+								<a class="shop-cta" href="/discover">Mint yours →</a>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 5. Substack-like newsletter -->
+				<div class="surface">
+					<div class="bar"><span class="dot"></span><span>read.example</span><span class="pull">newsletter</span></div>
+					<div class="news">
+						<div class="kicker">Field notes · agent infra</div>
+						<h3>Why every newsletter will soon ship an agent.</h3>
+						<div class="by">By a researcher · May 24</div>
+						<p>Long-form is reading. Agents are conversation. Soon every post will have one beside the byline — yours to ask, prompt, replay.</p>
+						<div class="figure">
+							<three-d src="https://three.ws/avatars/default.glb" name="Claude" theme="light" autoplay></three-d>
+						</div>
+						<p class="caption">Embedded agent — click and drag to inspect.</p>
+					</div>
+				</div>
+
+				<!-- 6. Developer blog -->
+				<div class="surface">
+					<div class="bar"><span class="dot"></span><span>blog.example</span><span class="pull">post</span></div>
+					<div class="blog">
+						<div class="meta">May 24 · 6 min read</div>
+						<h3>Adding a 3D agent to my site in 90 seconds.</h3>
+						<p>I added two lines to my MDX template and now every post can host an embodied agent. Here's the result inline:</p>
+						<div class="embedded">
+							<three-d src="https://three.ws/animations/robotexpressive.glb" name="3D" theme="dark" interactive></three-d>
+						</div>
+						<p>It resolves from on-chain identity, ships with voice and gaze, and works on mobile. Mind-bending.</p>
+					</div>
+				</div>
+			</div>
+
+			<div class="section-label">
+				<span class="n">02</span>
+				<h2>Three doors, one artifact</h2>
+				<span class="rule"></span>
+			</div>
+
+			<section class="docs">
+				<h2>Install</h2>
+				<p class="lead">
+					Pick whichever fits your stack. All three forms ship from the same bundle and
+					render identically.
+				</p>
+				<div class="docs-grid">
+					<div class="docs-card">
+						<h3>1 · Custom element</h3>
+						<p>For HTML, MDX, Webflow, Framer. Drop the tag where you want the agent.</p>
+<pre>&lt;script src="https://three.ws/embed/v1.js" async&gt;&lt;/script&gt;
+&lt;three-d agent="8453:42"&gt;&lt;/three-d&gt;</pre>
+					</div>
+					<div class="docs-card">
+						<h3>2 · Script-tag drop-in</h3>
+						<p>Zero markup. The script auto-mounts itself in place — perfect for Squarespace, Substack, and no-code surfaces.</p>
+<pre>&lt;script src="https://three.ws/embed/v1.js"
+        data-agent="8453:42" async&gt;&lt;/script&gt;</pre>
+					</div>
+					<div class="docs-card">
+						<h3>3 · JS API</h3>
+						<p>For React, Vue, Svelte, or any framework that builds the DOM itself.</p>
+<pre>import 'https://three.ws/embed/v1.js';
+Three.mount('#root', {
+  agent: '8453:42',
+  interactive: true,
+});</pre>
+					</div>
+					<div class="docs-card">
+						<h3>4 · Direct GLB</h3>
+						<p>Skip the resolver — point at any glTF/GLB URL. Useful for assets you already host.</p>
+<pre>&lt;three-d src="https://you.com/model.glb"
+         name="My agent"&gt;&lt;/three-d&gt;</pre>
+					</div>
+				</div>
+			</section>
+
+			<footer class="foot">
+				<div>three.ws · embed v1 · the 3D layer of the internet</div>
+				<div>
+					<a href="/discover">Discover</a> &nbsp;·&nbsp;
+					<a href="/">Home</a>
+				</div>
+			</footer>
+		</main>
+	</body>
+</html>

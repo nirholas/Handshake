@@ -1572,13 +1572,12 @@ class Agent3DElement extends HTMLElement {
 					const { skill = 'skill', price = {} } = e.detail || {};
 					const amountUsdc = (Number(price?.amount || 0) / 1e6).toFixed(2);
 
-					// Narrate so the user understands what's happening
+					// Narrate in chat + avatar walk so the user understands what's happening
+					const preText = `To use the ${skill} skill I need a quick payment of $${amountUsdc} USDC. Approval card below.`;
+					this._renderMessage({ role: 'assistant', content: preText });
 					protocol.emit({
 						type: ACTION_TYPES.SPEAK,
-						payload: {
-							text: `To use the ${skill} skill I'll need a quick payment of $${amountUsdc} USDC. I've dropped the approval card in our chat.`,
-							sentiment: 0,
-						},
+						payload: { text: preText, sentiment: 0 },
 					});
 
 					let purchased = false;
@@ -1593,9 +1592,11 @@ class Agent3DElement extends HTMLElement {
 					}
 
 					if (purchased) {
+						const doneText = 'Payment confirmed. Continuing...';
+						this._renderMessage({ role: 'assistant', content: doneText });
 						protocol.emit({
 							type: ACTION_TYPES.SPEAK,
-							payload: { text: 'Payment confirmed. Continuing...', sentiment: 0.4 },
+							payload: { text: doneText, sentiment: 0.4 },
 						});
 						// Refresh skillAccess so next call goes through without re-prompting.
 						try {

@@ -65,12 +65,14 @@ export function createRegenProvider() {
 				);
 			}
 
+			const bodyType = request.params?.bodyType || 'neutral';
+
 			let response;
 			try {
 				response = await fetch(`${base}/reconstruct`, {
 					method: 'POST',
 					headers: authHeaders,
-					body: JSON.stringify({ images }),
+					body: JSON.stringify({ images, body_type: bodyType }),
 				});
 			} catch (err) {
 				throw Object.assign(
@@ -89,8 +91,8 @@ export function createRegenProvider() {
 
 			return {
 				extJobId: data.job_id,
-				// InstantMesh on an L4 typically takes 45–90 s.
-				eta: 90,
+				// Face texture pipeline: rembg + MediaPipe + TPS + GLB ops ≈ 15–30 s.
+				eta: 30,
 			};
 		},
 

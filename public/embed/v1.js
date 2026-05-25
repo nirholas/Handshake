@@ -217,6 +217,7 @@
 	};
 
 	ThreeWsAgentElement.prototype.__boot = async function () {
+		var self = this;
 		var agentSpec = this.getAttribute('agent');
 		var src = this.getAttribute('src');
 		var nameAttr = this.getAttribute('name');
@@ -288,7 +289,6 @@
 			self.__fail(e && e.detail ? e.detail : new Error('model failed to load'));
 		});
 
-		var self = this;
 		this.__stage.appendChild(mv);
 		this.__mv = mv;
 

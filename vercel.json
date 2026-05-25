@@ -322,6 +322,33 @@
             "dest": "/launchpad.html"
         },
         {
+            "src": "/embed/v1.js",
+            "headers": {
+                "content-type": "application/javascript; charset=utf-8",
+                "cache-control": "public, max-age=300, s-maxage=86400, stale-while-revalidate=604800",
+                "access-control-allow-origin": "*",
+                "cross-origin-resource-policy": "cross-origin",
+                "x-content-type-options": "nosniff"
+            },
+            "dest": "/embed/v1.js"
+        },
+        {
+            "src": "/embed/v1/preview/?",
+            "dest": "/embed/v1/preview.html"
+        },
+        {
+            "src": "/embed/v1/preview.html",
+            "dest": "/embed/v1/preview.html"
+        },
+        {
+            "src": "/api/embed/resolve",
+            "headers": {
+                "access-control-allow-origin": "*",
+                "cross-origin-resource-policy": "cross-origin"
+            },
+            "dest": "/api/embed/resolve"
+        },
+        {
             "src": "/embed",
             "dest": "/embed.html"
         },
@@ -428,6 +455,10 @@
         {
             "src": "/pricing/?",
             "dest": "/pricing.html"
+        },
+        {
+            "src": "/x-pricing/?",
+            "dest": "/x-pricing.html"
         },
         {
             "src": "/deploy",

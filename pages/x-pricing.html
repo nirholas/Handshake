@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Pricing · three.ws</title>
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		:root { color-scheme: dark; --accent:#6a5cff; --accent2:#ff5ca8; --border:#22222e; --bg:#0b0b10; --panel:#14141c; }
+		* { box-sizing: border-box; }
+		body { font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; color:#eee; margin:0; background:var(--bg); min-height:100vh; }
+		.wrap { max-width: 880px; margin: 0 auto; padding: 56px 24px 80px; }
+		h1 { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.02em; }
+		.sub { color:#888; margin: 0 0 36px; font-size:15px; }
+		.grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+		@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+		.card { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:28px 24px; display:flex; flex-direction:column; }
+		.card.pro { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; position:relative; }
+		.tag { position:absolute; top:-10px; right:18px; background:var(--accent); color:#fff; font-size:11px; padding:3px 10px; border-radius:99px; font-weight:600; letter-spacing:0.05em; }
+		.tier { font-size:13px; text-transform:uppercase; letter-spacing:0.08em; color:#888; font-weight:600; }
+		.price { font-size:38px; margin:8px 0 4px; font-weight:600; letter-spacing:-0.01em; }
+		.price small { font-size:14px; color:#888; font-weight:400; }
+		.feat { list-style:none; padding:0; margin:18px 0 0; }
+		.feat li { padding:8px 0; border-bottom:1px solid #1c1c26; color:#ccc; font-size:14px; display:flex; align-items:center; gap:8px; }
+		.feat li:last-child { border-bottom:none; }
+		.feat li::before { content:"✓"; color:var(--accent); font-weight:600; }
+		.btn { padding:12px 16px; border-radius:10px; border:0; background:var(--accent); color:#fff; font-size:14px; font-weight:600; cursor:pointer; margin-top:auto; }
+		.btn:hover { filter:brightness(1.1); }
+		.btn.sec { background:#222230; color:#ddd; }
+		.btn:disabled { opacity:0.5; cursor:not-allowed; }
+		.checkout { display:none; margin-top:36px; padding:24px; border:1px solid var(--accent); border-radius:14px; background:rgba(106,92,255,0.06); }
+		.checkout.show { display:block; }
+		.qr { display:block; width:200px; height:200px; margin:16px 0; background:#fff; padding:10px; border-radius:10px; }
+		code.payurl { display:block; font-size:11px; word-break:break-all; padding:10px; background:#0f0f17; border:1px solid var(--border); border-radius:8px; color:#9a8cff; margin:10px 0; }
+		.muted { color:#888; font-size:13px; }
+		.status { margin-top:12px; font-size:13px; }
+		.ok { color:#4ade80; }
+		.err { color:#ffb3b3; }
+		a { color:#9a8cff; }
+		header { padding:18px 24px; border-bottom:1px solid var(--border); }
+		header a { color:#aaa; text-decoration:none; font-size:14px; }
+	</style>
+	<link rel="stylesheet" href="/mobile.css" />
+</head>
+<body>
+	<header><a href="/">← three.ws</a></header>
+	<div class="wrap">
+		<h1>Pricing</h1>
+		<p class="sub">Run autonomous AI agents that post, trade, and earn on-chain. <span id="current-plan" class="muted"></span></p>
+
+		<div class="grid">
+			<div class="card">
+				<div class="tier">Free</div>
+				<div class="price">$0<small> /month</small></div>
+				<ul class="feat">
+					<li>5 X posts per month</li>
+					<li>1 post every 30 min</li>
+					<li>All trigger types (daily, weekly, milestones)</li>
+					<li>AI-drafted tweets with tone presets</li>
+					<li>Manual + scheduled posts</li>
+					<li>Engagement analytics</li>
+				</ul>
+				<button class="btn sec" disabled>You're on Free</button>
+			</div>
+			<div class="card pro">
+				<div class="tag">Recommended</div>
+				<div class="tier">Pro</div>
+				<div class="price">$19<small> /month</small></div>
+				<ul class="feat">
+					<li>100 X posts per month</li>
+					<li>1 post every 5 min</li>
+					<li>Threads (multi-tweet posts)</li>
+					<li>Review-before-publish mode</li>
+					<li>Multi-draft picker (3 options)</li>
+					<li>Priority support</li>
+				</ul>
+				<button class="btn" id="upgrade-btn">Upgrade with USDC</button>
+			</div>
+		</div>
+
+		<div class="checkout" id="checkout">
+			<h3 style="margin:0 0 8px">Pay $19 USDC on Solana</h3>
+			<p class="muted">Scan with Phantom or any Solana wallet, or open the link on the device with your wallet.</p>
+			<img class="qr" id="qr" alt="Solana Pay QR" />
+			<code class="payurl" id="payurl"></code>
+			<a class="btn" id="open-link" href="#" target="_blank" rel="noopener" style="display:inline-block; text-align:center; text-decoration:none">Open in wallet</a>
+			<div class="muted" style="margin-top:14px">After paying, paste the transaction signature:</div>
+			<input id="txsig" placeholder="Transaction signature" style="width:100%; margin-top:6px; padding:9px 11px; background:#0f0f17; border:1px solid var(--border); border-radius:8px; color:#eee; font-size:13px; font-family:inherit" />
+			<button class="btn" id="confirm-btn" style="margin-top:10px">I've paid — confirm</button>
+			<div class="status" id="status"></div>
+		</div>
+	</div>
+
+	<script type="module">
+		const $ = (id) => document.getElementById(id);
+		const setStatus = (text, cls = '') => { $('status').textContent = text; $('status').className = 'status ' + cls; };
+
+		let currentIntent = null;
+
+		// Show current plan if signed in.
+		try {
+			const r = await fetch('/api/x/status', { credentials: 'include' });
+			if (r.ok) {
+				const d = await r.json();
+				$('current-plan').textContent = d.tier === 'pro' ? "You're already on Pro." : '';
+				if (d.tier === 'pro') $('upgrade-btn').textContent = 'Already Pro ✓', $('upgrade-btn').disabled = true;
+			}
+		} catch {}
+
+		$('upgrade-btn').addEventListener('click', async () => {
+			$('upgrade-btn').disabled = true;
+			$('upgrade-btn').textContent = 'Creating checkout…';
+			try {
+				const r = await fetch('/api/payments/solana?action=checkout', {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ plan: 'pro', network: 'mainnet' }),
+				});
+				const d = await r.json();
+				if (!r.ok) throw new Error(d.error_description || 'checkout failed');
+				currentIntent = d;
+				$('payurl').textContent = d.solana_pay_url;
+				$('qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(d.solana_pay_url)}`;
+				$('open-link').href = d.solana_pay_url;
+				$('checkout').classList.add('show');
+				$('upgrade-btn').textContent = 'Pay below ↓';
+			} catch (err) {
+				$('upgrade-btn').disabled = false;
+				$('upgrade-btn').textContent = 'Upgrade with USDC';
+				alert(err.message);
+			}
+		});
+
+		$('confirm-btn').addEventListener('click', async () => {
+			const txsig = $('txsig').value.trim();
+			if (!txsig) return setStatus('Paste the transaction signature first.', 'err');
+			if (!currentIntent) return setStatus('No active checkout — click Upgrade first.', 'err');
+			$('confirm-btn').disabled = true;
+			setStatus('Verifying transaction on-chain…');
+			try {
+				const r = await fetch('/api/payments/solana?action=confirm', {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ intent_id: currentIntent.intent_id, tx_signature: txsig, network: 'mainnet' }),
+				});
+				const d = await r.json();
+				if (!r.ok) throw new Error(d.error_description || 'confirm failed');
+				setStatus(`You're Pro until ${new Date(d.active_until).toLocaleDateString()}. Redirecting…`, 'ok');
+				setTimeout(() => { location.href = '/dashboard'; }, 1800);
+			} catch (err) {
+				setStatus(err.message, 'err');
+				$('confirm-btn').disabled = false;
+			}
+		});
+	</script>
+</body>
+</html>

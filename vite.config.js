@@ -173,6 +173,7 @@ const appConfig = {
 				'widget-studio': resolve(__dirname, 'pages/widget-studio.html'),
 				creating: resolve(__dirname, 'pages/creating.html'),
 				pricing: resolve(__dirname, 'pages/pricing.html'),
+				'x-pricing': resolve(__dirname, 'pages/x-pricing.html'),
 				walk: resolve(__dirname, 'pages/walk.html'),
 				pose: resolve(__dirname, 'pages/pose.html'),
 				club: resolve(__dirname, 'pages/club.html'),
