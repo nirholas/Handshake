@@ -36,7 +36,19 @@ import nipplejs from 'nipplejs';
 import { AnimationManager } from './animation-manager.js';
 import { WalkNet } from './walk-net.js';
 
-const AVATAR_URL = '/avatars/default.glb';
+const AVATAR_URL_DEFAULT = '/avatars/default.glb';
+
+async function resolveAvatarUrl() {
+	const params = new URLSearchParams(location.search);
+	const id = params.get('avatar');
+	if (!id) return AVATAR_URL_DEFAULT;
+	const res = await fetch(`/api/avatars/${encodeURIComponent(id)}`);
+	if (!res.ok) throw new Error(`avatar ${id} not found (HTTP ${res.status})`);
+	const { avatar } = await res.json();
+	if (!avatar?.url) throw new Error(`avatar ${id} has no GLB URL`);
+	return avatar.url;
+}
+
 const ANIMATIONS_MANIFEST_URL = '/animations/manifest.json';
 const CLIP_IDLE = 'idle';
 const CLIP_WALK = 'av-walk-feminine';
@@ -273,8 +285,9 @@ let animationDefs = null;
 async function loadAvatar() {
 	setStatus('loading avatar…', { sticky: true });
 
+	const avatarUrl = await resolveAvatarUrl();
 	const loader = new GLTFLoader();
-	const gltf = await loader.loadAsync(AVATAR_URL);
+	const gltf = await loader.loadAsync(avatarUrl);
 	avatar = gltf.scene;
 	avatarTemplate = gltf.scene;
 	avatar.traverse((n) => {
@@ -750,8 +763,12 @@ loadAvatar()
 	})
 	.catch((err) => {
 		console.error('[walk] failed to load avatar:', err);
-		setStatus(`failed to load avatar: ${err?.message ?? err}`, { error: true, sticky: true });
-		// Render the empty scene anyway so the user sees the ground/sky and
-		// understands the page loaded — better than a blank screen.
+		const hasParam = new URLSearchParams(location.search).has('avatar');
+		const suffix = hasParam ? ' — <a href="/walk">try the default avatar</a>' : '';
+		if (statusEl) statusEl.innerHTML = `failed to load avatar: ${err?.message ?? err}${suffix}`;
+		if (statusEl) {
+			statusEl.classList.add('is-error');
+			statusEl.classList.remove('is-hidden');
+		}
 		requestAnimationFrame(tick);
 	});
