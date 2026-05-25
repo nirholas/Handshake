@@ -33,7 +33,13 @@ const PAYMENT_FILTERS = [
 
 (async function boot() {
 	const main = await mountShell();
-	await requireUser();
+	const meResp = await requireUser();
+	// /api/auth/me returns { user: {...} } — peel the envelope.
+	const me = meResp?.user || meResp;
+	if (!me?.id) {
+		location.href = `/login?return=${encodeURIComponent(location.pathname)}`;
+		return;
+	}
 
 	main.innerHTML = `
 		<h1 class="dn-h1">Money</h1>
@@ -42,15 +48,16 @@ const PAYMENT_FILTERS = [
 	`;
 	const host = main.querySelector('[data-slot="content"]');
 	renderSkeleton(host);
-	await loadAndRender(host);
+	await loadAndRender(host, me);
 })();
 
 // ── Data loading ───────────────────────────────────────────────────────────
 
-async function loadAndRender(host) {
+async function loadAndRender(host, me) {
 	const since30 = new Date(Date.now() - 30 * 86400_000).toISOString();
+	const creatorParam = encodeURIComponent(me.id);
 
-	const [revenue, withdrawalsResp, walletsResp, summary, referrals, plans, mineSubs, agentsResp] =
+	const [revenue, withdrawalsResp, walletsResp, summary, plans, mineSubs, agentsResp, earningsResp] =
 		await Promise.all([
 			safe(() =>
 				get(`/api/billing/revenue?from=${encodeURIComponent(since30)}&granularity=day`),
@@ -58,10 +65,10 @@ async function loadAndRender(host) {
 			safe(() => get('/api/billing/withdrawals?limit=50')),
 			safe(() => get('/api/billing/payout-wallets')),
 			safe(() => get('/api/billing/summary')),
-			safe(() => get('/api/users/referrals')),
-			safe(() => get('/api/subscriptions/plans?creator_id=me')),
+			safe(() => get(`/api/subscriptions/plans?creator_id=${creatorParam}`)),
 			safe(() => get('/api/subscriptions/mine')),
 			safe(() => get('/api/agents')),
+			safe(() => get('/api/users/me/earnings')),
 		]);
 
 	const withdrawals = withdrawalsResp?.withdrawals || [];
@@ -70,22 +77,23 @@ async function loadAndRender(host) {
 	const creatorPlans = plans?.plans || [];
 	const subscribedTo = mineSubs?.subscriptions || [];
 
-	// Compute available to withdraw: net revenue + referral earnings - inflight withdrawals
+	// Compute available to withdraw: net revenue + pending royalties − inflight withdrawals.
 	const earned = Number(revenue?.summary?.net_total ?? 0);
 	const inflight = withdrawals
 		.filter((w) => w.status === 'pending' || w.status === 'processing')
 		.reduce((s, w) => s + Number(w.amount), 0);
-	const referralAtomics = Math.round(Number(referrals?.referral_earnings_total ?? 0) * 1_000_000);
-	const available = Math.max(0, earned + referralAtomics - inflight);
+	const pendingRoyaltyUsd = Number(earningsResp?.pending_usd ?? 0);
+	const pendingRoyaltyAtomics = Math.round(pendingRoyaltyUsd * 1_000_000);
+	const available = Math.max(0, earned + pendingRoyaltyAtomics - inflight);
 
 	// Pull recent payments across the user's agents (received side).
 	const payments = await fetchRecentPayments(agents);
 
 	host.innerHTML = '';
-	host.appendChild(renderHero({ available, revenue, creatorPlans, subscribedTo }));
+	host.appendChild(renderHero({ available, revenue, creatorPlans, subscribedTo, pendingRoyaltyAtomics }));
 	host.appendChild(renderRevenueChart({ initial: revenue, defaultRange: '30d' }));
 	host.appendChild(renderPaymentsPanel(payments));
-	host.appendChild(renderWithdrawals({ withdrawals, wallets, available, host }));
+	host.appendChild(renderWithdrawals({ withdrawals, wallets, available, host, me }));
 	host.appendChild(renderPlanUsage(summary));
 
 	const tokensPanel = renderTokensPanel(agents);
@@ -104,7 +112,7 @@ async function safe(fn) {
 
 // ── Hero metrics ───────────────────────────────────────────────────────────
 
-function renderHero({ available, revenue, creatorPlans, subscribedTo }) {
+function renderHero({ available, revenue, creatorPlans, subscribedTo, pendingRoyaltyAtomics }) {
 	const wrap = document.createElement('div');
 	wrap.className = 'dn-hero-grid';
 	wrap.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px';
@@ -126,7 +134,9 @@ function renderHero({ available, revenue, creatorPlans, subscribedTo }) {
 		card({
 			title: 'Available to withdraw',
 			value: formatUsdc(available),
-			sub: `Net revenue + referrals, minus inflight withdrawals.`,
+			sub: pendingRoyaltyAtomics > 0
+				? `Net revenue + ${formatUsdc(pendingRoyaltyAtomics)} pending royalties, minus inflight withdrawals.`
+				: `Net revenue, minus inflight withdrawals.`,
 			button: { label: 'Withdraw', primary: true, action: 'open-withdraw' },
 		}),
 	);
@@ -462,7 +472,7 @@ function formatWeiAsEth(wei) {
 
 // ── Withdrawals ────────────────────────────────────────────────────────────
 
-function renderWithdrawals({ withdrawals, wallets, available, host }) {
+function renderWithdrawals({ withdrawals, wallets, available, host, me }) {
 	const panel = document.createElement('div');
 	panel.className = 'dn-panel';
 
@@ -510,7 +520,7 @@ function renderWithdrawals({ withdrawals, wallets, available, host }) {
 		});
 	}
 
-	const openModal = () => openWithdrawModal({ available, wallets, host });
+	const openModal = () => openWithdrawModal({ available, wallets, host, me });
 	panel.querySelector('[data-action="open-withdraw"]').addEventListener('click', openModal);
 	document.addEventListener('dn:monetize:open-withdraw', openModal);
 
@@ -578,7 +588,7 @@ function withdrawalTx(w) {
 
 // ── Withdraw modal ─────────────────────────────────────────────────────────
 
-function openWithdrawModal({ available, wallets, host }) {
+function openWithdrawModal({ available, wallets, host, me }) {
 	const existing = document.querySelector('[data-monetize-modal]');
 	if (existing) existing.remove();
 
@@ -730,7 +740,7 @@ function openWithdrawModal({ available, wallets, host }) {
 			});
 			close();
 			renderSkeleton(host);
-			await loadAndRender(host);
+			await loadAndRender(host, me);
 		} catch (err) {
 			submitBtn.disabled = false;
 			submitBtn.textContent = 'Request withdrawal';
