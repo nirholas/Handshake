@@ -100,3 +100,4 @@ scratch/screenshots/
 
 # Playwright run artifacts
 test-results/
+.env*

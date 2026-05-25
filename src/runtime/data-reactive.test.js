@@ -273,8 +273,13 @@ describe('startDataReactive — stop', () => {
 			bindings: passthrough('ev'),
 		});
 
-		// Wait for at least one tick
-		await new Promise((r) => setTimeout(r, 120));
+		// Wait until at least one tick has been received. A fixed sleep here
+		// flaked on slow CI workers where the first fetch + parse round-trip
+		// took longer than the budget — poll up to 3s for a real signal.
+		const t0 = Date.now();
+		while (stats().received < 1 && Date.now() - t0 < 3000) {
+			await new Promise((r) => setTimeout(r, 25));
+		}
 		const snapshot = { ...stats() };
 		expect(snapshot.received).toBeGreaterThanOrEqual(1);
 

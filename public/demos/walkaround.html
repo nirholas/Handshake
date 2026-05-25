@@ -73,7 +73,10 @@
 			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 			import RAPIER from '@dimforge/rapier3d-compat';
 			import { init as initRecast, NavMesh, NavMeshQuery } from '@recast-navigation/core';
-			import { threeToSoloNavMesh } from '@recast-navigation/three';
+			// Pull NavMeshHelper here too so the second dynamic import below
+			// goes through the same chunk — without this, rollup warns about the
+			// module being both static and dynamic.
+			import { threeToSoloNavMesh, NavMeshHelper } from '@recast-navigation/three';
 			import nipplejs from 'nipplejs';
 
 			const $ = (id) => document.getElementById(id);
@@ -244,7 +247,6 @@
 				navMesh = nm;
 				navQuery = new NavMeshQuery(navMesh);
 
-				const { NavMeshHelper } = await import('@recast-navigation/three');
 				navmeshHelper = new NavMeshHelper(navMesh, {
 					navMeshMaterial: new THREE.MeshBasicMaterial({
 						color: 0x3dc1ff, transparent: true, opacity: 0.18, depthWrite: false,

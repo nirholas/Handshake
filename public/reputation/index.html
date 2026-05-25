@@ -8,16 +8,10 @@
 		<meta name="description" content="View and submit on-chain reviews for AI agents registered on three.ws." />
 		<meta name="theme-color" content="#0a0a0a" />
 
-		<link rel="shortcut icon" href="/favicon.ico" />
-		<link rel="stylesheet" href="/fonts/fonts.css" />
-		<link rel="stylesheet" href="/style.css" />
-		<link rel="stylesheet" href="/nav.css" />
-		<link rel="stylesheet" href="/home.css" />
-		<link rel="stylesheet" href="/footer.css" />
-		<script defer src="/footer-newsletter.js"></script>
 		<!-- Importmap must be parsed before any <script type="module"> or
-		     <link rel="modulepreload">. Keep it as the first script-of-any-kind
-		     in <head> so reputation.js can `import "ethers"` against the CDN. -->
+		     <link rel="modulepreload">. Keep it as the FIRST child of <head>
+		     so Vite's auto-injected modulepreloads (added at the top of <head>
+		     during build) never end up before it. -->
 		<script type="importmap">
 			{
 				"imports": {
@@ -25,6 +19,14 @@
 				}
 			}
 		</script>
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/home.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"

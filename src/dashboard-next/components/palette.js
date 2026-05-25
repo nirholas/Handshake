@@ -259,6 +259,7 @@ function onKeydown(e) {
 	if (e.key === 'ArrowDown') { e.preventDefault(); move(1);  return; }
 	if (e.key === 'ArrowUp')   { e.preventDefault(); move(-1); return; }
 	if (e.key === 'Enter')     { e.preventDefault(); activate(activeIndex); return; }
+	if (e.key === 'Tab')       { e.preventDefault(); inputEl.focus(); return; }
 }
 
 function move(delta) {

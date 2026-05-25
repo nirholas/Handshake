@@ -18,6 +18,12 @@
  */
 
 import { mountBondingCurve } from '../components/bonding-curve.js';
+// pump-modals was previously dynamic-imported here, but it's already
+// statically imported on /agent (via mountPumpModals) so the dynamic split
+// produced no actual code-splitting — just a vite/rollup warning about a
+// module being both static and dynamic. A plain static import keeps the
+// withdraw path in the same chunk as the widget that calls it.
+import { resolveUsdcAta, signAndSendVTx } from './pump-modals.js';
 
 const POLL_MS = 10_000;
 
@@ -716,10 +722,6 @@ export class AgentTokenWidget {
 		wd.disabled = true;
 		wd.textContent = 'Preparing…';
 		try {
-			// Lazy-import so non-owner views don't pay the bundle cost.
-			const [
-				{ resolveUsdcAta, signAndSendVTx },
-			] = await Promise.all([import('./pump-modals.js')]);
 			const wallet =
 				typeof window !== 'undefined' &&
 				(window.solana || window.phantom?.solana || window.backpack || window.solflare);
