@@ -36,12 +36,14 @@ import {
 import { env } from '../_lib/env.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
+import { priceFor } from '../_lib/x402-prices.js';
 
 const ROUTE = '/api/x402/permit2-paid-demo';
 const REQUIRED_SCOPE = 'x402:bypass';
 const accessControl = installAccessControl({ requiredScope: REQUIRED_SCOPE });
 const routeConfig = { path: ROUTE, method: 'GET', requiredScope: REQUIRED_SCOPE };
-const PRICE_ATOMICS = '1000'; // $0.001 USDC (6 decimals)
+// Env override: X402_PRICE_PERMIT2_PAID_DEMO=<atomics>. Default = $0.001 USDC.
+const PRICE_ATOMICS = priceFor('permit2-paid-demo', '1000');
 
 const ROUTE_DESCRIPTION =
 	'Permit2 + EIP-2612 Gas Sponsoring Demo — forces the gasless Permit2 path so ' +

@@ -355,6 +355,12 @@ function scanForPattern(forbidden, files, extraGate) {
 describe('three.ws branding lock', () => {
 	const files = collectScopedFiles();
 
+	// The scanner walks every user-facing file end-to-end for each brand. On a
+	// large monorepo (hundreds of HTML/JS/MD files in scope) that comfortably
+	// exceeds the default 20s vitest timeout — bump per-test to 5 minutes so
+	// CI doesn't false-fail on perfectly clean trees.
+	const SCAN_TIMEOUT_MS = 5 * 60 * 1000;
+
 	for (const forbidden of FORBIDDEN) {
 		test(`no "${forbidden.label}" in user-facing files`, () => {
 			const hits = scanForPattern(forbidden, files);
@@ -370,7 +376,7 @@ describe('three.ws branding lock', () => {
 				);
 			}
 			expect(hits).toEqual([]);
-		});
+		}, SCAN_TIMEOUT_MS);
 	}
 
 	test('no "RPM" referring to Ready Player Me (heuristic: near avatar/selfie)', () => {
@@ -412,5 +418,5 @@ describe('three.ws branding lock', () => {
 			);
 		}
 		expect(hits).toEqual([]);
-	});
+	}, SCAN_TIMEOUT_MS);
 });
