@@ -21,12 +21,9 @@ export default defineConfig({
 		include: ['tests/**/*.test.js', 'tests/**/*.test.mjs', 'src/**/*.test.js'],
 		testTimeout: 45_000,
 		hookTimeout: 45_000,
+		// Vitest 4 hoisted poolOptions.forks.* to top-level.
 		pool: 'forks',
-		poolOptions: {
-			forks: {
-				maxForks: MAX_FORKS,
-				minForks: 1,
-			},
-		},
+		maxForks: MAX_FORKS,
+		minForks: 1,
 	},
 });
