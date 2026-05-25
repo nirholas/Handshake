@@ -1192,6 +1192,10 @@
             "dest": "/character.html"
         },
         {
+            "src": "/api/user/provider-keys",
+            "dest": "/api/user/provider-keys.js"
+        },
+        {
             "src": "/api/users/me/earnings",
             "dest": "/api/users/earnings.js"
         },

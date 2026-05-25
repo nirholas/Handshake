@@ -1051,8 +1051,14 @@ const appConfig = {
 				maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
 				// MPA: every route is a separate HTML file served by the server.
 				// No navigation fallback — uncached navigations go to the network.
+				// HTML is intentionally excluded from globPatterns so it is never
+				// precached: (1) the SW install is dramatically faster (hundreds fewer
+				// files), (2) old SWs can activate the new one in seconds instead of
+				// minutes, (3) navigation requests fall through to the network and
+				// always return the current page from Vercel's edge — no stale HTML
+				// and no offline.html served to online users.
 				navigateFallback: null,
-				globPatterns: ['**/*.{js,css,html,ico,woff2}'],
+				globPatterns: ['**/*.{js,css,ico,woff2}'],
 				globIgnores: [
 					'pages/**',
 					'**/animations/**',

@@ -21,6 +21,7 @@ import { recordEvent } from './_lib/usage.js';
 import { captureException } from './_lib/sentry.js';
 import { sql } from './_lib/db.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { loadUserProviderKeys } from './_lib/provider-keys.js';
 import { z } from 'zod';
 
 // Providers anonymous (unauthenticated) callers may use. Groq's free tier is
@@ -253,7 +254,13 @@ export default wrap(async (req, res) => {
 		anonymous = true;
 	}
 
-	let route = pickProvider(body.provider, body.model);
+	let userProviderKeys = {};
+	if (auth?.userId) {
+		const [urow] = await sql`SELECT provider_keys FROM users WHERE id = ${auth.userId}`;
+		userProviderKeys = await loadUserProviderKeys(urow?.provider_keys);
+	}
+
+	let route = pickProvider(body.provider, body.model, userProviderKeys);
 	if (!route) {
 		return error(res, 503, 'chat_unavailable', 'no chat provider is configured');
 	}
@@ -285,7 +292,7 @@ export default wrap(async (req, res) => {
 	// Provider/model failover chain. The first entry is the picked route; if it
 	// returns 429 (rate-limit) or 5xx (provider down) we cycle through a
 	// pre-built fallback list before surfacing an error.
-	const fallbackRoutes = buildFallbackChain(route);
+	const fallbackRoutes = buildFallbackChain(route, userProviderKeys);
 
 	let upstream;
 	let routeIdx = 0;
@@ -401,14 +408,14 @@ export default wrap(async (req, res) => {
 
 // ── Provider selection ───────────────────────────────────────────────────────
 
-function pickProvider(requested, model) {
+function pickProvider(requested, model, userKeys = {}) {
 	const order = requested
 		? [requested, ...Object.keys(PROVIDERS).filter((p) => p !== requested)]
 		: ['anthropic', 'openrouter', 'groq', 'openai'];
 
 	for (const name of order) {
 		const cfg = PROVIDERS[name];
-		const apiKey = process.env[cfg.envKey];
+		const apiKey = userKeys[name] || process.env[cfg.envKey];
 		if (!apiKey) continue;
 		const chosenModel = (requested === name && model) || process.env.CHAT_MODEL || cfg.defaultModel;
 		return makeRoute(name, cfg, apiKey, chosenModel);
@@ -437,7 +444,7 @@ const FALLBACK_SIBLINGS = {
 	openai: ['gpt-4o-mini'],
 };
 
-function buildFallbackChain(primary) {
+function buildFallbackChain(primary, userKeys = {}) {
 	const chain = [primary];
 	const seen = new Set([`${primary.name}:${primary.model}`]);
 
@@ -448,7 +455,7 @@ function buildFallbackChain(primary) {
 		if (seen.has(key)) continue;
 		seen.add(key);
 		const cfg = PROVIDERS[primary.name];
-		const apiKey = process.env[cfg.envKey];
+		const apiKey = userKeys[primary.name] || process.env[cfg.envKey];
 		if (!apiKey) continue;
 		chain.push(makeRoute(primary.name, cfg, apiKey, m));
 	}
@@ -457,7 +464,7 @@ function buildFallbackChain(primary) {
 	for (const name of Object.keys(PROVIDERS)) {
 		if (name === primary.name) continue;
 		const cfg = PROVIDERS[name];
-		const apiKey = process.env[cfg.envKey];
+		const apiKey = userKeys[name] || process.env[cfg.envKey];
 		if (!apiKey) continue;
 		const key = `${name}:${cfg.defaultModel}`;
 		if (seen.has(key)) continue;

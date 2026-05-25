@@ -1065,6 +1065,11 @@
 				align-items: center;
 				gap: 12px;
 			}
+			/* CSS-level mutex: whichever data-page-state the JS sets, the OTHER
+			   section is forced invisible — guards against any race or error that
+			   could leave both un-hidden at the same time. */
+			#main[data-page-state="content"] #empty-card { display: none !important; }
+			#main[data-page-state="empty"]   #content    { display: none !important; }
 			.empty-icon {
 				font-size: 48px;
 				line-height: 1;

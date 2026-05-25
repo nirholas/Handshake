@@ -108,6 +108,14 @@ async function copyToClipboard(text) {
 				<div data-slot="profile"></div>
 			</section>
 
+			<section class="dn-panel" data-section="provider-keys">
+				<div style="margin-bottom:14px">
+					<div class="dn-panel-title">AI Provider Keys</div>
+					<div class="dn-panel-sub" style="margin:0">Bring your own API key to use Claude or GPT-4. OpenRouter and Groq are provided free by the platform.</div>
+				</div>
+				<div data-slot="provider-keys"><div class="dn-skeleton" style="height:80px"></div></div>
+			</section>
+
 			<section class="dn-panel" data-section="wallets">
 				<div style="display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:14px;flex-wrap:wrap">
 					<div>
@@ -155,6 +163,7 @@ async function copyToClipboard(text) {
 	`;
 
 	renderProfile(main.querySelector('[data-slot="profile"]'), me);
+	loadProviderKeys(main.querySelector('[data-slot="provider-keys"]'));
 
 	const walletsHost = main.querySelector('[data-slot="wallets"]');
 	const snsHost = main.querySelector('[data-slot="sns"]');
@@ -197,6 +206,95 @@ async function copyToClipboard(text) {
 		}
 	});
 })();
+
+// ── AI Provider Keys (BYOK) ───────────────────────────────────────────────
+
+const PROVIDER_META = {
+	anthropic: { label: 'Anthropic (Claude)', placeholder: 'sk-ant-api03-…', url: 'https://console.anthropic.com/settings/keys' },
+	openai:    { label: 'OpenAI (GPT-4)',      placeholder: 'sk-proj-…',      url: 'https://platform.openai.com/api-keys' },
+};
+
+async function loadProviderKeys(host) {
+	try {
+		const r = await get('/api/user/provider-keys');
+		renderProviderKeys(host, r?.keys || {});
+	} catch (err) {
+		host.innerHTML = `<div class="dn-empty" style="padding:16px"><h3>Couldn't load keys</h3><p>${esc(err?.message || 'Try again.')}</p></div>`;
+	}
+}
+
+function renderProviderKeys(host, keyStatus) {
+	const rows = Object.entries(PROVIDER_META).map(([provider, meta]) => {
+		const isSet = !!keyStatus[provider]?.set;
+		return `
+			<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--nxt-stroke);flex-wrap:wrap" data-provider="${esc(provider)}">
+				<div style="flex:1;min-width:180px">
+					<div style="font-size:13.5px;font-weight:500;color:var(--nxt-ink)">${esc(meta.label)}</div>
+					<a href="${esc(meta.url)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--nxt-ink-fade)">${esc(meta.url)}</a>
+				</div>
+				<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+					${isSet
+						? `<span class="dn-tag success">Key set</span>
+						   <button class="dn-btn danger" data-action="clear-key" data-provider="${esc(provider)}" style="padding:5px 10px;font-size:12px">Remove</button>`
+						: `<input type="password" data-key-input data-provider="${esc(provider)}"
+							   placeholder="${esc(meta.placeholder)}"
+							   style="background:rgba(255,255,255,0.04);border:1px solid var(--nxt-stroke-strong);border-radius:6px;
+							          padding:6px 10px;color:var(--nxt-ink);font-size:12.5px;width:260px;font-family:${MONO}"
+							   autocomplete="off" spellcheck="false" />
+						   <button class="dn-btn primary" data-action="save-key" data-provider="${esc(provider)}" style="padding:6px 12px;font-size:12.5px">Save</button>`
+					}
+				</div>
+			</div>
+		`;
+	}).join('');
+
+	host.innerHTML = `
+		<div style="padding:0 2px">
+			${rows}
+			<div style="padding-top:10px;font-size:12px;color:var(--nxt-ink-fade)">
+				Keys are encrypted at rest. OpenRouter and Groq are provided free — no key needed.
+			</div>
+		</div>
+	`;
+
+	host.querySelectorAll('[data-action="save-key"]').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			const provider = btn.dataset.provider;
+			const input = host.querySelector(`[data-key-input][data-provider="${provider}"]`);
+			const val = input?.value?.trim();
+			if (!val) { toast('Enter a key first'); return; }
+			btn.disabled = true;
+			btn.textContent = 'Saving…';
+			try {
+				const r = await patch('/api/user/provider-keys', { [provider]: val });
+				renderProviderKeys(host, r?.keys || {});
+				toast('Key saved');
+			} catch (err) {
+				toast(err?.message ? `Failed: ${err.message}` : 'Save failed');
+				btn.disabled = false;
+				btn.textContent = 'Save';
+			}
+		});
+	});
+
+	host.querySelectorAll('[data-action="clear-key"]').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			const provider = btn.dataset.provider;
+			if (!confirm(`Remove your ${PROVIDER_META[provider]?.label} key?`)) return;
+			btn.disabled = true;
+			btn.textContent = 'Removing…';
+			try {
+				const r = await patch('/api/user/provider-keys', { [provider]: null });
+				renderProviderKeys(host, r?.keys || {});
+				toast('Key removed');
+			} catch (err) {
+				toast(err?.message ? `Failed: ${err.message}` : 'Remove failed');
+				btn.disabled = false;
+				btn.textContent = 'Remove';
+			}
+		});
+	});
+}
 
 // ── Profile ───────────────────────────────────────────────────────────────
 

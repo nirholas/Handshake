@@ -31,6 +31,15 @@ import {
 const RESUME_KEY = '3dagent:guest-avatar-resume';
 const $ = (sel) => document.querySelector(sel);
 
+function setPageState(state) {
+	const main = document.getElementById('main');
+	const emptyCard = document.getElementById('empty-card');
+	const content = document.getElementById('content');
+	if (main) main.setAttribute('data-page-state', state);
+	if (emptyCard) emptyCard.hidden = state !== 'empty';
+	if (content) content.hidden = state !== 'content';
+}
+
 let staged = /** @type {Awaited<ReturnType<typeof loadGuest>>} */ (null);
 let objectUrl = /** @type {string | null} */ (null);
 let viewerScene = /** @type {TalkScene | null} */ (null);
@@ -40,13 +49,11 @@ let viewerIdleDispose = /** @type {(() => void) | null} */ (null);
 async function boot() {
 	staged = await loadGuest();
 	if (!staged) {
-		$('#content').hidden = true;
-		$('#empty-card').hidden = false;
+		setPageState('empty');
 		return;
 	}
 
-	$('#content').hidden = false;
-	$('#empty-card').hidden = true;
+	setPageState('content');
 
 	// Kick off the 3D mount but don't block UI wiring on it — the loading
 	// overlay stays up until renderPreview() resolves and hides it.
@@ -680,6 +687,5 @@ window.addEventListener('beforeunload', releaseObjectUrl);
 
 boot().catch((err) => {
 	console.error('[create-review] boot failed', err);
-	$('#content').hidden = true;
-	$('#empty-card').hidden = false;
+	setPageState('empty');
 });
