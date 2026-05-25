@@ -12,6 +12,7 @@ import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { parse, presignUploadBody, slug as slugSchema, createAvatarBody } from '../_lib/validate.js';
 import { recordEvent } from '../_lib/usage.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { requireCsrf } from '../_lib/csrf.js';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { isValidGlbHeader, inspectGlb } from '../_lib/glb-inspect.js';
@@ -122,6 +123,7 @@ const handleUpload = wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
 	const userId = await resolvePresignUser(req, 'avatars:write');
 	if (!userId) return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
+	if (!(await requireCsrf(req, res, userId))) return;
 	const rl = await limits.upload(userId);
 	if (!rl.success) return error(res, 429, 'rate_limited', 'upload rate exceeded');
 

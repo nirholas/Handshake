@@ -143,8 +143,8 @@ export const env = {
 	},
 
 	// IPFS pinning provider credentials. Optional — when unset, pin endpoints
-	// fall back to a content-hash stub so the rest of the flow still works in
-	// dev. Set PINATA_JWT in production for real pins.
+	// fall back to R2 storage and return a public HTTPS metadataURI.
+	// Set PINATA_JWT in production for real IPFS CIDs on-chain.
 	get PINATA_JWT() {
 		return opt('PINATA_JWT');
 	},
@@ -534,6 +534,13 @@ export const env = {
 	get CHROMIUM_PACK_URL() {
 		return opt('CHROMIUM_PACK_URL');
 	},
+
+	// CZ Agent campaign — on-chain registry contract for the transfer flow.
+	// Set CZ_REGISTRY_CONTRACT to the deployed identity registry address.
+	// CZ_AGENT_ID and CZ_AGENT_NAME can override the defaults.
+	get CZ_REGISTRY_CONTRACT() { return opt('CZ_REGISTRY_CONTRACT', '0x0000000000000000000000000000000000000000'); },
+	get CZ_AGENT_ID() { return opt('CZ_AGENT_ID', 'cz-preview'); },
+	get CZ_AGENT_NAME() { return opt('CZ_AGENT_NAME', 'CZ Agent'); },
 
 	getRpcUrl(chainId) {
 		return (

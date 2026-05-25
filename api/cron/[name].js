@@ -2272,7 +2272,14 @@ async function handleProcessSubscriptions(req, res) {
 	}
 
 	const runId = `psub-${Date.now()}`;
-	const report = { runId, processed: 0, charged: 0, pastDue: 0, errors: [] };
+	const report = {
+		runId,
+		processed: 0,
+		charged: 0,        // succeeded outright (instantaneous settlement)
+		pendingApproval: 0, // payment intent created; subscriber must approve
+		pastDue: 0,
+		errors: [],
+	};
 
 	// Find subscriptions whose period ends within the next hour (charge a bit
 	// early to allow for retry windows before period actually expires).
@@ -2332,13 +2339,33 @@ async function handleProcessSubscriptions(req, res) {
 			}
 
 			const result = await chargeSubscription(row.id);
-			if (result.pending) {
-				report.charged++; // pending = payment request created
-			} else if (!result.success) {
-				await failPayment(result.paymentId, row.id);
-				report.errors.push({ id: row.id, error: result.error || 'charge_failed' });
-			} else {
+			if (result.success) {
 				report.charged++;
+			} else if (result.pending) {
+				// A payment intent was created and the subscriber was notified
+				// in-app. Do not increment `charged` — the subscription has
+				// NOT been paid yet. A follow-up email reminder is best-effort
+				// and only fires when subscriber_email is present.
+				report.pendingApproval++;
+				if (row.subscriber_email && result.payUrl) {
+					sendEmail({
+						to: row.subscriber_email,
+						subject: 'Your subscription renewal is due',
+						html: `<p>Hi ${row.subscriber_name || 'there'},</p>
+<p>Your subscription is up for renewal. The amount is $${result.amount_usd?.toFixed(2) || row.price_usd}.</p>
+<p><a href="${result.payUrl}">Approve renewal payment</a></p>`,
+						text: `Your subscription renewal of $${result.amount_usd?.toFixed(2) || row.price_usd} is ready. Approve at ${result.payUrl}`,
+					}).catch((e) => console.error(JSON.stringify({
+						event: 'process_subscriptions.email_failed',
+						subscriptionId: row.id,
+						error: e.message,
+					})));
+				}
+			} else {
+				if (result.paymentId) {
+					await failPayment(result.paymentId, row.id);
+				}
+				report.errors.push({ id: row.id, error: result.error || 'charge_failed' });
 			}
 		} catch (e) {
 			report.errors.push({ id: row.id, error: e.message || String(e) });
@@ -2473,14 +2500,27 @@ async function handleProcessWithdrawals(req, res) {
 	}
 
 	const treasuryKeypair = process.env.TREASURY_KEYPAIR;
-	if (!treasuryKeypair) {
-		return json(res, 200, { skipped: true, reason: 'TREASURY_KEYPAIR not configured' });
+	const evmTreasuryKey = process.env.EVM_TREASURY_PRIVATE_KEY;
+	if (!treasuryKeypair && !evmTreasuryKey) {
+		return json(res, 200, {
+			skipped: true,
+			reason: 'No treasury key configured (set TREASURY_KEYPAIR for Solana, EVM_TREASURY_PRIVATE_KEY for EVM)',
+		});
 	}
 
 	const { transferSolanaUSDC } = await import('../_lib/solana-transfer.js');
+	const { sendEvmUsdc, resolveEvmChainId } = await import('../_lib/evm-transfer.js');
 	const { insertNotification } = await import('../_lib/notify.js');
 
-	// Fetch pending Solana withdrawals, join user earnings to verify available balance
+	// Build the chain filter to match what we can actually process. A row whose
+	// chain has no treasury key configured stays 'pending' for the next pass
+	// once an operator wires the key.
+	const supportedChains = [];
+	if (treasuryKeypair) supportedChains.push('solana');
+	if (evmTreasuryKey) supportedChains.push('ethereum', 'base', 'optimism', 'arbitrum', 'polygon', 'sepolia', 'base-sepolia', '1', '8453', '10', '42161', '137', '11155111', '84532');
+
+	// Fetch pending withdrawals across all supported chains, join user earnings
+	// to verify available balance.
 	const pending = await sql`
 		SELECT
 			w.id,
@@ -2504,7 +2544,7 @@ async function handleProcessWithdrawals(req, res) {
 				  AND w2.currency_mint = w.currency_mint
 			) AS available
 		FROM agent_withdrawals w
-		WHERE w.status = 'pending' AND w.chain = 'solana'
+		WHERE w.status = 'pending' AND w.chain = ANY(${supportedChains})
 		ORDER BY w.created_at ASC
 		LIMIT ${WITHDRAWALS_BATCH}
 	`;
@@ -2548,12 +2588,31 @@ async function handleProcessWithdrawals(req, res) {
 		}
 
 		try {
-			const sig = await transferSolanaUSDC({
-				fromWallet: treasuryKeypair,
-				toAddress: w.to_address,
-				amount: BigInt(w.amount),
-				mint: w.currency_mint,
-			});
+			let sig;
+			if (w.chain === 'solana') {
+				if (!treasuryKeypair) {
+					throw new Error('TREASURY_KEYPAIR not configured for solana withdrawal');
+				}
+				sig = await transferSolanaUSDC({
+					fromWallet: treasuryKeypair,
+					toAddress: w.to_address,
+					amount: BigInt(w.amount),
+					mint: w.currency_mint,
+				});
+			} else {
+				// EVM dispatch — resolve the chain name/id to a viem chain ID,
+				// then send the real USDC transfer.
+				const chainId = resolveEvmChainId(w.chain);
+				if (!chainId) {
+					throw new Error(`unsupported chain for withdrawal: ${w.chain}`);
+				}
+				const result = await sendEvmUsdc({
+					chainId,
+					recipient: w.to_address,
+					amount: BigInt(w.amount),
+				});
+				sig = result.hash;
+			}
 
 			await sql`
 				UPDATE agent_withdrawals
@@ -2572,6 +2631,7 @@ async function handleProcessWithdrawals(req, res) {
 				withdrawal_id: w.id,
 				amount: w.amount,
 				currency_mint: w.currency_mint,
+				chain: w.chain,
 				tx_signature: sig,
 			});
 

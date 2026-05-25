@@ -33,6 +33,7 @@ import { bsc } from 'viem/chains';
 
 import { env } from './env.js';
 import { X402Error } from './x402-errors.js';
+import { sql } from './db.js';
 
 export const PAYMENT_EVENT = parseAbiItem(
 	'event Payment(address indexed payer, uint256 amount, bytes32 indexed ref)',
@@ -43,25 +44,46 @@ export const PAYMENT_EVENT = parseAbiItem(
 export const PAYMENT_EVENT_TOPIC =
 	'0xd17e8b542e550255f0bc5a7b2230f59fdc24847d2003255bf6199ab46ad8f300';
 
-// In-process anti-replay set keyed by txHash. Vercel cold starts forget, so a
-// rapidly-replayed payload could briefly slip through across function instances.
-// The pay() event is public on BSC, so any abuse is auditable on-chain; for the
-// launch demo (where per-call cost is $0.001) this trade-off is acceptable.
-// Production hardening: persist to Postgres in a (tx_hash PRIMARY KEY) table.
-const seenTx = new Map();
+// Anti-replay: Postgres-backed `bsc_consumed_tx` table is the source of truth
+// (PRIMARY KEY on tx_hash enforces single-consumption across Vercel replicas
+// and cold starts). A short-lived in-process Map fronts it to avoid a DB round
+// trip on the verify hot path when the same instance just consumed the tx.
 const SEEN_TTL_MS = 10 * 60 * 1000;
+const seenTx = new Map();
 
 function pruneSeen() {
 	const now = Date.now();
 	for (const [k, exp] of seenTx) if (exp < now) seenTx.delete(k);
 }
-function rememberTx(key) {
+
+async function isReplay(txHash) {
 	pruneSeen();
-	seenTx.set(key, Date.now() + SEEN_TTL_MS);
+	if (seenTx.has(txHash)) return true;
+	const rows = await sql`
+		SELECT 1 FROM bsc_consumed_tx WHERE tx_hash = ${txHash} LIMIT 1
+	`;
+	return rows.length > 0;
 }
-function isReplay(key) {
+
+async function rememberTx({ txHash, ref, payer, amount, payTo }) {
 	pruneSeen();
-	return seenTx.has(key);
+	seenTx.set(txHash, Date.now() + SEEN_TTL_MS);
+	// INSERT … ON CONFLICT DO NOTHING — concurrent verifiers of the same tx
+	// resolve to one consumer; the second caller will see the row on read.
+	try {
+		await sql`
+			INSERT INTO bsc_consumed_tx (tx_hash, ref, payer, amount, pay_to)
+			VALUES (${txHash}, ${ref}, ${payer}, ${amount?.toString() ?? null}, ${payTo})
+			ON CONFLICT (tx_hash) DO NOTHING
+		`;
+	} catch (err) {
+		// DB persist failure is observable but must not roll back the verify —
+		// the on-chain settlement happened, the buyer paid. Surface for ops.
+		console.error('[x402-bsc-direct] persist consumed_tx failed', {
+			tx_hash: txHash,
+			error: err?.message,
+		});
+	}
 }
 
 let cachedClient = null;
@@ -87,7 +109,7 @@ export async function verifyDirectPayment({ paymentPayload, requirement }) {
 	const ref = requireHex32(paymentPayload?.ref, 'ref');
 	const txHash = requireHex32(paymentPayload?.txHash, 'txHash');
 
-	if (isReplay(txHash)) {
+	if (await isReplay(txHash)) {
 		throw new X402Error(
 			'invalid_payment',
 			`tx ${txHash} has already been consumed by an earlier paid request`,
@@ -164,7 +186,13 @@ export async function verifyDirectPayment({ paymentPayload, requirement }) {
 		);
 	}
 
-	rememberTx(txHash);
+	await rememberTx({
+		txHash,
+		ref,
+		payer,
+		amount,
+		payTo: expectedTo,
+	});
 	return { isValid: true, payer, txHash, amount: amount.toString() };
 }
 

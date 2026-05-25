@@ -2837,7 +2837,7 @@ async function loadDetail(id) {
 			renderVersions(versions);
 			const similar = similarRes?.data?.items || similarRes?.data?.similar || [];
 			renderSimilar(similar);
-		});
+		}).catch(() => { /* best-effort — main detail already rendered */ });
 	} catch (err) {
 		console.error('[marketplace] detail load', err);
 		if (!cached) renderDetailError('Failed to load agent.');
@@ -3412,22 +3412,22 @@ function bindEvents() {
 		else if (state.featured.length) startHeroAutoplay();
 	});
 
-	document.body.addEventListener('click', async (e) => {
+	document.body.addEventListener('click', (e) => {
 		if (e.target.matches('.purchase-btn')) {
 			const skillName = e.target.dataset.skillName;
 			const agentId = e.target.dataset.agentId;
-			if (agentId && skillName) await openPurchaseFlow(agentId, skillName);
+			if (agentId && skillName) openPurchaseFlow(agentId, skillName).catch((err) => console.error('[marketplace] purchase flow', err));
 		}
 		if (e.target.matches('.trial-btn')) {
 			const skillName = e.target.dataset.skillName;
 			const agentId = e.target.dataset.agentId;
-			if (agentId && skillName) await openTrialFlow(agentId, skillName, e.target);
+			if (agentId && skillName) openTrialFlow(agentId, skillName, e.target).catch((err) => console.error('[marketplace] trial flow', err));
 		}
 		if (e.target.matches('.time-pass-btn')) {
 			const skillName = e.target.dataset.skillName;
 			const agentId = e.target.dataset.agentId;
 			const duration = Number(e.target.dataset.duration);
-			if (agentId && skillName && duration) await openTimePassFlow(agentId, skillName, duration, e.target);
+			if (agentId && skillName && duration) openTimePassFlow(agentId, skillName, duration, e.target).catch((err) => console.error('[marketplace] time-pass flow', err));
 		}
 	});
 

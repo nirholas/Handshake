@@ -81,13 +81,39 @@
 				<a href="/community">Community</a>
 				<a href="/tutorials">Tutorials</a>
 			</div>
+			<div class="h-footer-link-col">
+				<h4 class="h-footer-link-heading">$THREE</h4>
+				<a href="https://solscan.io/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" target="_blank" rel="noopener">Solscan</a>
+				<a href="https://jup.ag/tokens/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" target="_blank" rel="noopener">Buy on Jupiter</a>
+				<a href="https://www.coingecko.com/en/coins/three-ws" target="_blank" rel="noopener">CoinGecko</a>
+				<a href="/rider">Rider VR Gate</a>
+			</div>
 		</nav>
 	</div>
 	<div class="h-footer-bottom">
 		<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+		<div class="h-footer-ca-wrap">
+			<span class="h-footer-ca-label">$THREE</span>
+			<button class="h-footer-ca-btn" id="footer-ca-copy" data-ca="FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" title="Copy contract address">
+				FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
+			</button>
+		</div>
 		<div class="h-footer-legal-links">
 			<a href="/legal/privacy">Privacy Policy</a>
 			<a href="/legal/tos">Terms of Use</a>
 		</div>
 	</div>
+	<script>
+		(function () {
+			var btn = document.getElementById('footer-ca-copy');
+			if (!btn) return;
+			btn.addEventListener('click', function () {
+				navigator.clipboard.writeText(btn.dataset.ca).then(function () {
+					var orig = btn.textContent;
+					btn.textContent = 'Copied!';
+					setTimeout(function () { btn.textContent = orig; }, 1500);
+				});
+			});
+		})();
+	</script>
 </footer>

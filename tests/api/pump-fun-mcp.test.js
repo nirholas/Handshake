@@ -6,11 +6,31 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Readable } from 'node:stream';
 
-// Cold-import of /api/pump-fun-mcp transitively pulls the Solana web3 + pump
-// SDK chain, which on a fresh Codespace can exceed 20s. We warm it in a hook
-// with a generous window so the first test doesn't eat the cost under the
-// default 5s testTimeout.
-vi.setConfig({ testTimeout: 30_000, hookTimeout: 120_000 });
+// Cold-import of /api/pump-fun-mcp transitively pulls @solana/web3.js (via
+// src/solana/sns.js and src/pump/vanity-keygen.js), which on a fresh
+// Codespace under contention can exceed 2 minutes. None of these tests
+// actually call SNS or vanity-keygen, so we mock both upstream modules with
+// the minimum surface the handler touches at *call time* — the routes that
+// would invoke them aren't exercised here.
+vi.mock('@solana/web3.js', () => ({
+	Keypair: { generate: () => ({ publicKey: { toBase58: () => 'mocked' }, secretKey: new Uint8Array(64) }) },
+	Connection: class {},
+	PublicKey: class {
+		constructor(s) { this._s = s; }
+		toBase58() { return String(this._s); }
+		toString() { return String(this._s); }
+		toBuffer() { return Buffer.alloc(32); }
+	},
+}));
+vi.mock('../../src/solana/sns.js', () => ({
+	resolveSnsName: vi.fn(async () => null),
+	reverseLookupAddress: vi.fn(async () => null),
+}));
+vi.mock('../../src/pump/vanity-keygen.js', () => ({
+	generateVanityKey: vi.fn(async () => ({ publicKey: 'mocked', secretKey: 'mocked' })),
+}));
+
+vi.setConfig({ testTimeout: 15_000, hookTimeout: 60_000 });
 
 // Mock rate-limit + clientIp so the route never blocks on Upstash.
 vi.mock('../../api/_lib/rate-limit.js', () => ({
@@ -72,7 +92,7 @@ let handlerRef;
 beforeAll(async () => {
 	const mod = await import('../../api/pump-fun-mcp.js');
 	handlerRef = mod.default;
-});
+}, 60_000);
 
 async function call(rpc) {
 	const res = makeRes();

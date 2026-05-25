@@ -20,6 +20,13 @@ vi.mock('../../api/_lib/auth.js', () => ({
 	hasScope: () => true,
 }));
 
+// CSRF check is wired into the proxy upload handler. Mock to always-pass —
+// the CSRF contract is tested separately; here we want to exercise upload
+// validation and storage paths.
+vi.mock('../../api/_lib/csrf.js', () => ({
+	requireCsrf: async () => true,
+}));
+
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		upload: async () => ({ success: true }),

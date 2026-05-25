@@ -15,8 +15,9 @@
 //   x402:spend:hr:<address>:<UTC_HOUR>    → integer microUSD (TTL 7200s)
 //   x402:spend:day:<address>:<UTC_DAY>    → integer microUSD (TTL 172800s)
 // Falls back to an in-process Map when UPSTASH_REDIS_REST_* is unset so
-// local dev / tests work, with the documented caveat that caps are then
-// per-instance and not enforced across Vercel function replicas.
+// local dev / tests work. In production the fallback only fires when
+// X402_ALLOW_MEMORY_FALLBACK=1; otherwise getRedis() refuses to return so
+// the cap module fails closed rather than silently per-instance.
 
 import { Redis } from '@upstash/redis';
 import { env } from './env.js';
@@ -24,11 +25,27 @@ import { env } from './env.js';
 const KEY_PREFIX = 'x402:spend:';
 const HOUR_TTL_SECONDS = 7200; // keep one extra hour for slow-cron debugging
 const DAY_TTL_SECONDS = 60 * 60 * 48;
+const IS_PROD = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+const ALLOW_MEMORY_FALLBACK = process.env.X402_ALLOW_MEMORY_FALLBACK === '1';
 
 let redisClient = null;
+let memoryWarned = false;
 function getRedis() {
 	if (redisClient !== null) return redisClient;
 	if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
+		if (IS_PROD && !ALLOW_MEMORY_FALLBACK) {
+			throw new Error(
+				'[x402-spending-ledger] UPSTASH_REDIS_REST_URL/TOKEN required in production. ' +
+					'Set them, or set X402_ALLOW_MEMORY_FALLBACK=1 to accept per-instance spend caps.',
+			);
+		}
+		if (IS_PROD && !memoryWarned) {
+			memoryWarned = true;
+			console.warn(
+				'[x402-spending-ledger] Running in production with memory fallback; ' +
+					'spend caps are per-instance only.',
+			);
+		}
 		redisClient = false; // sentinel: configured-as-absent
 		return null;
 	}

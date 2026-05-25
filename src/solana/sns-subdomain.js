@@ -18,10 +18,45 @@
  * user.
  */
 
-import { Connection, Keypair, PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import { createHash } from 'node:crypto';
+import { Connection, Keypair, PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 const DEFAULT_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+
+// SNS on-chain constants — do not change without verifying against bonfida's source.
+const SNS_PROGRAM_ID = new PublicKey('namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX');
+const ROOT_DOMAIN_ACCOUNT = new PublicKey('58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx');
+const HASH_PREFIX = 'SPL Name Service';
+
+function _getHashedName(name) {
+	return createHash('sha256').update(`${HASH_PREFIX}${name}`).digest();
+}
+
+function _getNameAccountKey(hashedName, nameClass, nameParent) {
+	const seeds = [
+		hashedName,
+		nameClass ? nameClass.toBuffer() : Buffer.alloc(32),
+		nameParent ? nameParent.toBuffer() : Buffer.alloc(32),
+	];
+	const [pubkey] = PublicKey.findProgramAddressSync(seeds, SNS_PROGRAM_ID);
+	return pubkey;
+}
+
+// Returns the on-chain PDA for `label.parentDomain` (e.g. "test.threews").
+function _computeSubdomainKey(label, parentDomain) {
+	const parentKey = _getNameAccountKey(
+		_getHashedName(parentDomain),
+		null,
+		ROOT_DOMAIN_ACCOUNT,
+	);
+	const subKey = _getNameAccountKey(
+		_getHashedName(`\x00${label}`),
+		null,
+		parentKey,
+	);
+	return subKey;
+}
 
 /**
  * Load the platform keypair that owns the parent .sol from
@@ -85,14 +120,20 @@ export function normalizeLabel(input) {
 /**
  * Check whether `label.<parent>` already exists on-chain.
  * Returns { exists: boolean, owner: string|null }.
+ *
+ * Implemented without @bonfida/spl-name-service to avoid ESM/borsh
+ * version conflicts in Vercel's serverless bundler. Derivation is
+ * verified to match bonfida's getDomainKeySync output.
  */
 export async function checkSubdomainAvailability({ connection, parentDomain, label }) {
-	const sns = await import('@bonfida/spl-name-service');
-	const fullName = `${label}.${parentDomain.replace(/\.sol$/, '')}`;
-	const { pubkey } = sns.getDomainKeySync(fullName);
+	const cleanParent = parentDomain.replace(/\.sol$/, '');
+	const pubkey = _computeSubdomainKey(label, cleanParent);
 	try {
-		const { registry } = await sns.NameRegistryState.retrieve(connection, pubkey);
-		return { exists: true, owner: registry.owner.toBase58() };
+		const info = await connection.getAccountInfo(pubkey);
+		if (!info) return { exists: false, owner: null };
+		// NameRegistryState header layout: [parentName(32), owner(32), class(32)]
+		const owner = new PublicKey(info.data.slice(32, 64));
+		return { exists: true, owner: owner.toBase58() };
 	} catch {
 		return { exists: false, owner: null };
 	}

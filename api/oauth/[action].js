@@ -1,6 +1,6 @@
 // Consolidated OAuth 2.1 endpoints dispatcher.
-// Routes: /oauth/authorize, /oauth/token, /oauth/register,
-//         /oauth/revoke, /oauth/introspect
+// Routes: /oauth/authorize, /oauth/consent (post-login redirect alias for authorize),
+//         /oauth/token, /oauth/register, /oauth/revoke, /oauth/introspect
 
 import { sql } from '../_lib/db.js';
 import {
@@ -257,6 +257,7 @@ async function handleIntrospect(req, res) {
 
 const DISPATCH = {
 	authorize:  handleAuthorize,
+	consent:    handleAuthorize,
 	token:      handleToken,
 	register:   handleRegister,
 	revoke:     handleRevoke,

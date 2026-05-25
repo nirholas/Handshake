@@ -8,12 +8,11 @@ import { cors, json, method, wrap, error, readJson } from '../../_lib/http.js';
 import { parse } from '../../_lib/validate.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
-import { r2 } from '../../_lib/r2.js';
+import { r2, publicUrl } from '../../_lib/r2.js';
 import { SERVER_CHAIN_META } from '../../_lib/onchain.js';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { AbiCoder, getAddress, keccak256, toUtf8Bytes } from 'ethers';
 import { z } from 'zod';
-import { createHash } from 'crypto';
 
 // ── prep ──────────────────────────────────────────────────────────────────────
 
@@ -27,24 +26,62 @@ const prepSchema = z.object({
 	demoSlug: z.string().optional(),
 });
 
+// Store registration JSON to R2 and return a public HTTPS URL.
+// Always succeeds — R2 is the source of truth even when IPFS is available.
+async function storeToR2(jsonBytes) {
+	const key = `agent-registrations/${Date.now()}-${Math.random().toString(36).slice(2)}.json`;
+	await r2.send(new PutObjectCommand({ Bucket: env.S3_BUCKET, Key: key, Body: jsonBytes, ContentType: 'application/json' }));
+	return { key, httpsUrl: publicUrl(key) };
+}
+
 async function pinRegistrationJson(jsonObj) {
 	const jsonStr = JSON.stringify(jsonObj);
 	const jsonBytes = Buffer.from(jsonStr, 'utf-8');
-	const token = process.env.WEB3_STORAGE_TOKEN;
-	if (token) {
+
+	// 1. Try web3.storage (legacy, still supported).
+	const web3Token = process.env.WEB3_STORAGE_TOKEN;
+	if (web3Token) {
 		try {
-			const res = await fetch('https://api.web3.storage/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: jsonBytes });
+			const res = await fetch('https://api.web3.storage/upload', {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${web3Token}` },
+				body: jsonBytes,
+			});
 			if (res.ok) {
 				const r = await res.json();
-				if (r.cid) return { cid: r.cid, metadataURI: `ipfs://${r.cid}` };
+				if (r.cid) {
+					await storeToR2(jsonBytes);
+					return { cid: r.cid, metadataURI: `ipfs://${r.cid}` };
+				}
 			}
 		} catch {}
 	}
-	const contentHash = createHash('sha256').update(jsonStr).digest('hex');
-	const stubCid = `bafkreigenerated${contentHash.slice(0, 40)}`;
-	const key = `agent-registrations/${Date.now()}-${Math.random().toString(36).slice(2)}.json`;
-	await r2.send(new PutObjectCommand({ Bucket: env.S3_BUCKET, Key: key, Body: jsonBytes, ContentType: 'application/json' }));
-	return { cid: stubCid, metadataURI: `ipfs://${stubCid}` };
+
+	// 2. Try Pinata if configured.
+	const pinataJwt = env.PINATA_JWT;
+	if (pinataJwt) {
+		try {
+			const form = new FormData();
+			form.append('file', new Blob([jsonBytes], { type: 'application/json' }), 'agent-manifest.json');
+			const res = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${pinataJwt}` },
+				body: form,
+			});
+			if (res.ok) {
+				const r = await res.json();
+				if (r.IpfsHash) {
+					await storeToR2(jsonBytes);
+					return { cid: r.IpfsHash, metadataURI: `ipfs://${r.IpfsHash}` };
+				}
+			}
+		} catch {}
+	}
+
+	// 3. No IPFS provider — store in R2 and return a real HTTPS URL.
+	// On-chain consumers can resolve it; the metadata is fully public.
+	const { httpsUrl } = await storeToR2(jsonBytes);
+	return { cid: null, metadataURI: httpsUrl };
 }
 
 async function handlePrep(req, res) {

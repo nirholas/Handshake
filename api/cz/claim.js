@@ -16,15 +16,14 @@ import { verifyMessage, Interface } from 'ethers';
 import { sql } from '../_lib/db.js';
 import { cors, json, error, wrap, readJson } from '../_lib/http.js';
 import { clientIp } from '../_lib/rate-limit.js';
+import { env } from '../_lib/env.js';
 
-// Pre-registered agent details — update these once the agent is registered on-chain.
-const CZ_AGENT_ID = 'cz-preview';
-const CZ_AGENT_NAME = 'CZ Agent';
-// On-chain registry address (placeholder — update to real address before mainnet).
-const REGISTRY_CONTRACT = '0x0000000000000000000000000000000000000000';
+const CZ_AGENT_ID = env.CZ_AGENT_ID || 'cz-preview';
+const CZ_AGENT_NAME = env.CZ_AGENT_NAME || 'CZ Agent';
+// Reads from env so the contract can be deployed without a code redeploy.
+// Frontend skips the on-chain tx when the address is empty/zero.
+const REGISTRY_CONTRACT = env.CZ_REGISTRY_CONTRACT || '0x0000000000000000000000000000000000000000';
 
-// ABI fragment for the ownership transfer call.
-// Replace the function signature when the final contract ABI is known.
 const _iface = new Interface(['function transferAgent(string agentId, address newOwner)']);
 function encodeTransferAgent(agentId, newOwner) {
 	return _iface.encodeFunctionData('transferAgent', [agentId, newOwner]);

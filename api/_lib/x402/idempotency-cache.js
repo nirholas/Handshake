@@ -6,13 +6,17 @@
 // what the spec calls for: same id + different payload → 409 Conflict.
 //
 // The store falls back to an in-process Map when Upstash isn't configured, so
-// `npm test` and local dev work without Redis. Production deployments must set
-// UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN — without them, idempotency
-// is per-instance and provides no protection across Vercel function replicas.
+// `npm test` and local dev work without Redis. In production the fallback
+// only fires when X402_ALLOW_MEMORY_FALLBACK=1 is set — otherwise the module
+// boot-checks and refuses to load without Upstash, preventing accidental
+// silent degradation across Vercel function replicas.
 
 import { createHash } from 'node:crypto';
 import { Redis } from '@upstash/redis';
 import { env } from '../env.js';
+
+const IS_PROD = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+const ALLOW_MEMORY_FALLBACK = process.env.X402_ALLOW_MEMORY_FALLBACK === '1';
 
 let redis = null;
 if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
@@ -20,6 +24,16 @@ if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
 		url: env.UPSTASH_REDIS_REST_URL,
 		token: env.UPSTASH_REDIS_REST_TOKEN,
 	});
+} else if (IS_PROD && !ALLOW_MEMORY_FALLBACK) {
+	throw new Error(
+		'[x402-idempotency] UPSTASH_REDIS_REST_URL/TOKEN required in production. ' +
+			'Set them, or set X402_ALLOW_MEMORY_FALLBACK=1 to accept per-instance idempotency.',
+	);
+} else if (IS_PROD) {
+	console.warn(
+		'[x402-idempotency] Running in production with X402_ALLOW_MEMORY_FALLBACK=1; ' +
+			'duplicate-payment protection is per-instance only.',
+	);
 }
 
 const KEY_PREFIX = 'x402:idem:';
