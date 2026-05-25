@@ -1,6 +1,8 @@
 // Lightweight client helpers for talking to the three.ws backend from the viewer.
 // Keeps the UI code in app.js/avatar-creator.js clean.
 
+import { identifyUser, resetIdentity } from './analytics.js';
+
 const API = ''; // same origin
 
 // Single-use CSRF token: fetched lazily, burned by the server on consumption.
@@ -133,11 +135,13 @@ export async function getMe() {
 	const res = await apiFetch(`${API}/api/auth/me`, { allowAnonymous: true });
 	if (res.status === 401) {
 		writeAuthHint(false);
+		resetIdentity();
 		return null;
 	}
 	if (!res.ok) throw new Error(`auth/me failed: ${res.status}`);
 	const user = (await res.json()).user;
 	writeAuthHint(!!user);
+	if (user) identifyUser(user);
 	return user;
 }
 

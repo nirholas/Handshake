@@ -1,4 +1,5 @@
 import { ensureWallet } from './erc8004/agent-registry.js';
+import { identifyUser, resetIdentity } from './analytics.js';
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ export async function signOut() {
 		method: 'POST',
 		credentials: 'include',
 	}).catch(() => {});
+	resetIdentity();
 }
 
 /** @returns {Promise<object|null>} */
@@ -73,6 +75,7 @@ export async function getCurrentUser() {
 		const res = await fetch('/api/auth/me', { credentials: 'include' });
 		if (!res.ok) return null;
 		const { user } = await res.json();
+		if (user) identifyUser(user);
 		return user ?? null;
 	} catch {
 		return null;

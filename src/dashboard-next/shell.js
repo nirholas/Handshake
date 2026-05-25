@@ -76,9 +76,9 @@ export async function mountShell() {
 	return shell.querySelector('[data-slot="page"]');
 }
 
-// Listen for new-event signals (dispatched by the drawer/activity feed
-// once prompt #9 wires it up) and briefly pulse the drawer toggle so
-// the user knows there's something fresh to look at.
+// Listen for new-event signals dispatched by the drawer's live feed and
+// briefly pulse the drawer toggle so the user knows there's something
+// fresh to look at without having to open the drawer first.
 function mountDrawerPulse(shellEl) {
 	window.addEventListener('dn:drawer:new-event', () => {
 		const btn = shellEl.querySelector('[data-action="toggle-drawer"]');

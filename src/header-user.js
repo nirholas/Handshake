@@ -14,6 +14,8 @@
 // If a `user` object is already available, pass it in to skip the fetch:
 //   mountHeaderUser({ slot: '#header-user-slot', user });
 
+import { resetIdentity } from './analytics.js';
+
 let stylesInjected = false;
 
 function injectStyles() {
@@ -147,6 +149,7 @@ async function performSignOut() {
 		await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
 	} finally {
 		try { localStorage.removeItem('3dagent:auth-hint'); } catch {}
+		resetIdentity();
 		location.href = '/';
 	}
 }

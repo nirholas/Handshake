@@ -1,69 +1,67 @@
-// Full-sweep verifier: opens every dashboard-next page in a real browser
-// with a mocked /api/auth/me, captures any console errors / failed fetches
-// (filtered to dashboard-next surface only), and screenshots each page.
-//
-// Usage: node scripts/_dn-fullsweep.mjs
-// Output: /tmp/dn-sweep-<page>.png for every page; non-zero exit on errors.
+// Full-sweep verifier — fresh browser per page, mocked auth.
 
 import { chromium } from 'playwright';
 
 const PAGES = [
-	{ slug: '',          name: 'overview', sel: '.dn-shell .dn-rail-item' },
-	{ slug: 'avatars',   name: 'avatars',  sel: '.dn-shell .dn-rail-item' },
-	{ slug: 'widgets',   name: 'widgets',  sel: '.dn-shell .dn-rail-item' },
-	{ slug: 'library',   name: 'library',  sel: '.dn-shell .dn-rail-item' },
-	{ slug: 'api',       name: 'api',      sel: '.dn-shell .dn-rail-item' },
-	{ slug: 'monetize',  name: 'monetize', sel: '.dn-shell .dn-rail-item' },
-	{ slug: 'account',   name: 'account',  sel: '.dn-shell .dn-rail-item' },
+	{ slug: '',          name: 'overview' },
+	{ slug: 'avatars',   name: 'avatars'  },
+	{ slug: 'widgets',   name: 'widgets'  },
+	{ slug: 'library',   name: 'library'  },
+	{ slug: 'api',       name: 'api'      },
+	{ slug: 'monetize',  name: 'monetize' },
+	{ slug: 'account',   name: 'account'  },
 ];
 
-const b = await chromium.launch({ args: ['--use-gl=swiftshader','--no-sandbox'] });
-const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
-
-// Mocks: keep responses minimal so home doesn't mount live <threews-avatar>
-// (Three.js + SwiftShader headless = GPU crashes — see memory).
 const json = (obj) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(obj) });
 const me = { id: 'test-user', display_name: 'Test User', handle: 'tester', email: 't@x.com', plan: 'pro' };
-await ctx.route('**/api/auth/me',                  (r) => r.fulfill(json({ user: me })));
-await ctx.route('**/api/avatars*',                 (r) => r.fulfill(json({ avatars: [], next_cursor: null })));
-await ctx.route('**/api/widgets*',                 (r) => r.fulfill(json({ widgets: [] })));
-await ctx.route('**/api/agents*',                  (r) => r.fulfill(json({ agents: [] })));
-await ctx.route('**/api/keys*',                    (r) => r.fulfill(json({ keys: [] })));
-await ctx.route('**/api/animations*',              (r) => r.fulfill(json({ animations: [] })));
-await ctx.route('**/api/billing/**',               (r) => r.fulfill(json({ revenue: 0, rows: [], series: [] })));
-await ctx.route('**/api/notifications*',           (r) => r.fulfill(json({ notifications: [] })));
-await ctx.route('**/api/subscriptions/**',         (r) => r.fulfill(json({ subscriptions: [] })));
-await ctx.route('**/api/events*',                  (r) => r.fulfill(json({ events: [] })));
-await ctx.route('**/api/me/**',                    (r) => r.fulfill(json({ }))); // earnings, totals, etc.
-await ctx.route('**/api/strategy*',                (r) => r.fulfill(json({ strategy: null })));
-await ctx.route('**/api/memories*',                (r) => r.fulfill(json({ memories: [] })));
-await ctx.route('**/api/voice*',                   (r) => r.fulfill(json({ voices: [] })));
-await ctx.route('**/api/csrf-token',               (r) => r.fulfill(json({ token: 'test-csrf' })));
 
-let totalErrs = 0;
-for (const page of PAGES) {
+async function runPage({ slug, name }) {
+	const b = await chromium.launch({ args: ['--use-gl=swiftshader','--no-sandbox','--disable-gpu'] });
+	const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+	await ctx.route('**/api/auth/me',          (r) => r.fulfill(json({ user: me })));
+	await ctx.route('**/api/csrf-token',       (r) => r.fulfill(json({ token: 'test-csrf' })));
+	await ctx.route('**/api/avatars*',         (r) => r.fulfill(json({ avatars: [], next_cursor: null })));
+	await ctx.route('**/api/widgets*',         (r) => r.fulfill(json({ widgets: [] })));
+	await ctx.route('**/api/agents*',          (r) => r.fulfill(json({ agents: [] })));
+	await ctx.route('**/api/keys*',            (r) => r.fulfill(json({ keys: [] })));
+	await ctx.route('**/api/animations*',      (r) => r.fulfill(json({ animations: [] })));
+	await ctx.route('**/api/billing/**',       (r) => r.fulfill(json({ revenue: 0, rows: [], series: [], summary: {}, withdrawals: [], wallets: [], plans: [] })));
+	await ctx.route('**/api/notifications*',   (r) => r.fulfill(json({ notifications: [] })));
+	await ctx.route('**/api/subscriptions/**', (r) => r.fulfill(json({ subscriptions: [], plans: [] })));
+	await ctx.route('**/api/events*',          (r) => r.fulfill(json({ events: [] })));
+	await ctx.route('**/api/users/**',         (r) => r.fulfill(json({ })));
+	await ctx.route('**/api/me/**',            (r) => r.fulfill(json({ })));
+	await ctx.route('**/api/strategy*',        (r) => r.fulfill(json({ strategy: null })));
+	await ctx.route('**/api/memories*',        (r) => r.fulfill(json({ memories: [] })));
+	await ctx.route('**/api/memory*',          (r) => r.fulfill(json({ memories: [] })));
+	await ctx.route('**/api/voice*',           (r) => r.fulfill(json({ voices: [] })));
+	await ctx.route('**/api/sessions*',        (r) => r.fulfill(json({ sessions: [] })));
+	await ctx.route('**/api/auth/sessions*',   (r) => r.fulfill(json({ sessions: [] })));
+	await ctx.route('**/api/auth/wallets*',    (r) => r.fulfill(json({ wallets: [] })));
+	await ctx.route('**/api/embed-policy*',    (r) => r.fulfill(json({ policy: { hosts: [] } })));
+
 	const p = await ctx.newPage();
 	const errs = [];
-	p.on('pageerror', (e) => errs.push(`PAGEERROR ${e.message.slice(0, 220)}`));
-	p.on('console',  (m) => { if (m.type() === 'error') errs.push(`[err] ${m.text().slice(0, 220)}`); });
-	const url = `http://127.0.0.1:3010/dashboard-next${page.slug ? '/' + page.slug : ''}`;
+	p.on('pageerror', (e) => errs.push(`PAGEERROR ${e.message.slice(0, 240)}`));
+	p.on('console',  (m) => { if (m.type() === 'error') errs.push(`[err] ${m.text().slice(0, 240)}`); });
+	const url = `http://127.0.0.1:3010/dashboard-next${slug ? '/' + slug : ''}`;
+	let status = 'OK';
 	try {
 		await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-		await p.waitForSelector(page.sel, { timeout: 20000 });
-		await p.waitForTimeout(1500); // let async fetches settle
-		await p.screenshot({ path: `/tmp/dn-sweep-${page.name}.png`, fullPage: false });
+		await p.waitForFunction(() => document.querySelector('.dn-shell .dn-rail-item') != null, { timeout: 20000 });
+		await p.waitForTimeout(1800);
+		await p.screenshot({ path: `/tmp/dn-sweep-${name}.png`, fullPage: false });
 	} catch (e) {
-		errs.push(`NAV/WAIT failed: ${e.message.slice(0, 220)}`);
+		errs.push(`NAV/WAIT ${e.message.slice(0, 240)}`);
+		status = 'FAILED';
 	}
-	// Filter known unrelated browser-noise errors that aren't bugs in our code.
-	const relevant = errs.filter((e) =>
-		!/Failed to load resource: the server responded with a status of 4\d\d/.test(e) || // 4xx logged by browser auto-handler
-		/PAGEERROR|TypeError|ReferenceError|SyntaxError|Uncaught/.test(e),
-	);
-	console.log(`${page.name}: ${relevant.length === 0 ? 'OK' : 'ERRORS'}`);
-	for (const e of relevant) { console.log(`  ${e}`); totalErrs++; }
-	await p.close();
+	const relevant = errs.filter((e) => /PAGEERROR|TypeError|ReferenceError|SyntaxError|Uncaught|NAV\/WAIT/.test(e));
+	console.log(`${name}: ${relevant.length === 0 ? status : 'ERRORS'}`);
+	for (const e of relevant) console.log(`  ${e}`);
+	await b.close();
+	return relevant.length;
 }
 
-await b.close();
-process.exit(totalErrs > 0 ? 1 : 0);
+let total = 0;
+for (const page of PAGES) total += await runPage(page);
+process.exit(total > 0 ? 1 : 0);

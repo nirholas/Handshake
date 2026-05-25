@@ -35,7 +35,7 @@ const EXPIRY_OPTIONS = [
 	{ label: '1 year',  days: 365 },
 ];
 
-const KEY_PLACEHOLDER = 'sk_live_yourkeyhere';
+const KEY_PLACEHOLDER = 'YOUR_API_KEY';
 
 (async function boot() {
 	const main = await mountShell();
