@@ -35,6 +35,7 @@ import {
 	getPumpAgent,
 	getPumpAgentOffline,
 	getConnection,
+	getRpcFallback,
 	getPumpSdk,
 	getAmmPoolState,
 	buildUnsignedTxBase64,
@@ -342,8 +343,13 @@ const DISABLED_TOPIC = dmIface.getEvent('DisabledDelegation').topicHash;
 const REDEEMED_TOPIC = dmIface.getEvent('RedeemedDelegation').topicHash;
 
 // Max blocks per eth_getLogs call. Public RPCs 429 above ~2000.
+// Ethereum mainnet (chainId 1) nodes cap eth_getLogs at 50 blocks; use 25 to
+// stay safely under the limit and avoid 504s.
 const IDX_BLOCK_CAP = 2000;
+const IDX_MAINNET_BLOCK_CAP = 25; // ETH mainnet is far more restrictive
 const IDX_RPC_TIMEOUT_MS = 10_000;
+// Hard time budget per cron invocation — leave 8 s headroom before Vercel's 30 s limit.
+const IDX_TIME_BUDGET_MS = 22_000;
 
 // Approximate blocks per day, used only to seed the cursor on first run.
 const BLOCKS_PER_DAY = {
