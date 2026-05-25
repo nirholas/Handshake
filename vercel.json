@@ -461,6 +461,14 @@
             "dest": "/x-pricing.html"
         },
         {
+            "src": "/home-next/?",
+            "dest": "/home-next.html"
+        },
+        {
+            "src": "/agent-next/?",
+            "dest": "/agent-next.html"
+        },
+        {
             "src": "/deploy",
             "dest": "/app.html"
         },
@@ -1787,6 +1795,18 @@
             "dest": "/sitemap/index.html"
         },
         {
+            "src": "/news",
+            "dest": "/news/index.html"
+        },
+        {
+            "src": "/news/",
+            "dest": "/news/index.html"
+        },
+        {
+            "src": "/news/([a-z0-9_-]+)/?",
+            "dest": "/news/$1.html"
+        },
+        {
             "src": "/blog",
             "dest": "/blog/index.html"
         },
@@ -1885,6 +1905,14 @@
         {
             "src": "/creating/",
             "dest": "/creating.html"
+        },
+        {
+            "src": "/legal/privacy/?",
+            "dest": "/legal/privacy.html"
+        },
+        {
+            "src": "/legal/tos/?",
+            "dest": "/legal/tos.html"
         },
         {
             "src": "/features",

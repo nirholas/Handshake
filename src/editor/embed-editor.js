@@ -924,6 +924,13 @@ export function mountEmbedEditor(root, options = {}) {
 		// the avatar reads against the plain hero — toggle from the Backdrop
 		// glow select in the Options panel. Preview-only, not exported.
 		glow: false,
+		// New customization options
+		defaultClip: '',
+		defaultClipLoop: true,
+		accentColor: '#3b82f6',
+		namePlate: 'on',
+		agentId: '',
+		borderRadius: '16px',
 		...options,
 	};
 
@@ -1080,6 +1087,47 @@ export function mountEmbedEditor(root, options = {}) {
 							<option value="off">Off (no background)</option>
 							<option value="on">Purple → cyan glow</option>
 						</select>
+					</div>
+
+					<div class="section-title">Identity &amp; Agent</div>
+					<div class="field-row">
+						<label>Agent ID</label>
+						<input id="agent-id-input" placeholder="Optional — connects to AI brain">
+					</div>
+					<div class="field-row">
+						<label>Name plate</label>
+						<select id="nameplate-select">
+							<option value="on">Visible</option>
+							<option value="off">Hidden</option>
+						</select>
+					</div>
+
+					<div class="section-title">Animation</div>
+					<div class="field-row">
+						<label>Default</label>
+						<select id="default-clip-select">
+							<option value="">None (idle)</option>
+						</select>
+					</div>
+					<div class="field-row">
+						<label>Loop</label>
+						<select id="default-clip-loop">
+							<option value="true">Loop indefinitely</option>
+							<option value="false">Play once</option>
+						</select>
+					</div>
+
+					<div class="section-title">Styling</div>
+					<div class="field-row">
+						<label>Accent color</label>
+						<div style="display:flex;gap:6px;align-items:center;flex:1">
+							<input type="color" id="accent-color-input" value="#3b82f6" style="flex:1;height:32px;cursor:pointer">
+							<button id="accent-reset-btn" class="btn secondary" type="button" style="padding:4px 8px;font-size:11px;flex:0 0 auto">↺</button>
+						</div>
+					</div>
+					<div class="field-row">
+						<label>Border radius</label>
+						<input id="radius-input" type="text" placeholder="16px">
 					</div>
 
 					<div class="section-title">Embed snippet</div>
@@ -1623,6 +1671,40 @@ export function mountEmbedEditor(root, options = {}) {
 	});
 	$('#responsive-select').addEventListener('change', (e) => {
 		state.responsivePreset = e.target.value;
+		writeSnippet();
+	});
+	$('#agent-id-input').addEventListener('change', (e) => {
+		state.agentId = e.target.value.trim();
+		applyAgentAttrs();
+		writeSnippet();
+	});
+	$('#nameplate-select').addEventListener('change', (e) => {
+		state.namePlate = e.target.value;
+		applyAgentAttrs();
+		writeSnippet();
+	});
+	$('#default-clip-select').addEventListener('change', (e) => {
+		state.defaultClip = e.target.value;
+		writeSnippet();
+	});
+	$('#default-clip-loop').addEventListener('change', (e) => {
+		state.defaultClipLoop = e.target.value === 'true';
+		writeSnippet();
+	});
+	$('#accent-color-input').addEventListener('input', (e) => {
+		state.accentColor = e.target.value;
+		applyAgentAttrs();
+		writeSnippet();
+	});
+	$('#accent-reset-btn').addEventListener('click', () => {
+		state.accentColor = '#3b82f6';
+		$('#accent-color-input').value = '#3b82f6';
+		applyAgentAttrs();
+		writeSnippet();
+	});
+	$('#radius-input').addEventListener('change', (e) => {
+		state.borderRadius = e.target.value.trim();
+		applyAgentAttrs();
 		writeSnippet();
 	});
 

@@ -273,9 +273,8 @@ function renderCard(a) {
 	const detailUrl = `/discover/avatar/${a.id}`;
 	const studioUrl = `/studio?avatar=${encodeURIComponent(a.id)}`;
 
-	const thumb = a.thumbnail_url
-		? `<img src="${escapeAttr(a.thumbnail_url)}" alt="${escapeAttr(a.name || 'Avatar')}" loading="lazy" decoding="async" />`
-		: `<div class="gallery-card-ph">🎭</div>`;
+	const thumbSrc = a.thumbnail_url || `/api/avatars/${encodeURIComponent(a.id)}/og`;
+	const thumb = `<img src="${escapeAttr(thumbSrc)}" alt="${escapeAttr(a.name || 'Avatar')}" loading="lazy" decoding="async" />`;
 
 	const tagChips = (a.tags || [])
 		.slice(0, 3)
@@ -285,7 +284,6 @@ function renderCard(a) {
 		.join('');
 
 	const created = formatRelative(a.created_at);
-	const views = Number(a.view_count) || 0;
 
 	card.innerHTML = `
 		<a class="gallery-card-thumb" href="${escapeAttr(detailUrl)}" aria-label="${escapeAttr(a.name || 'Avatar')} details">
@@ -300,8 +298,6 @@ function renderCard(a) {
 			<div class="gallery-card-foot">
 				<span class="gallery-card-meta">
 					<span title="${escapeAttr(new Date(a.created_at || Date.now()).toLocaleString())}">${escapeHtml(created)}</span>
-					<span class="gallery-card-dot" aria-hidden="true">·</span>
-					<span title="${views.toLocaleString()} view${views === 1 ? '' : 's'}">${formatCompact(views)} views</span>
 				</span>
 				<div class="gallery-card-actions">
 					<a class="gallery-card-btn" href="${escapeAttr(viewerUrl)}" title="Open in viewer">View 3D</a>

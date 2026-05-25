@@ -366,6 +366,16 @@
 				if (params.get('gaze') === 'off') viewer.state.followMode = 'off';
 				await viewer.load(glbUrl, '', new Map());
 
+				// Load animation manifest so gestures and state transitions work
+				try {
+					const manifest = await fetch('/animations/manifest.json').then(r => r.json());
+					if (Array.isArray(manifest) && manifest.length > 0) {
+						viewer.setAnimationDefs(manifest);
+					}
+				} catch (err) {
+					console.warn('[agent-embed] failed to load animation manifest:', err.message);
+				}
+
 				if (bg === 'dark') {
 					// Midnight-blue atmosphere with volumetric clouds.
 					const { Clouds, Cloud } = await import('/src/cloud.js');

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Voice Interaction with 3D AI Agents — Preview</title>
+    <meta name="description" content="three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.">
+    <meta name="keywords" content="three.ws, voice interaction, real-time voice, 3D agents, TTS, AR, VR, lipsync, voice chat, AI agents">
+    <link rel="canonical" href="https://three.ws/blog/real-time-voice-interaction">
+
+    <meta property="og:title" content="Real-Time Voice Interaction with 3D AI Agents — Preview">
+    <meta property="og:description" content="three.ws agents now listen, reason, and respond in voice — with natural conversation, memory, emotions, and AR/VR support in development.">
+    <meta property="og:url" content="https://three.ws/blog/real-time-voice-interaction">
+    <meta property="og:type" content="article">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Real-Time Voice Interaction with 3D AI Agents — Preview">
+    <meta name="twitter:description" content="three.ws agents now listen, reason, and respond in voice. AR/VR support is also in development.">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; letter-spacing: -0.01em; }
+        p { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 6px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        strong { color: #e7e7f5; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 40px 0; }
+    </style>
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-05-19</span>
+            <span class="post-tag">Preview</span>
+            <span class="post-tag">Voice</span>
+            <span class="post-tag">AR/VR</span>
+        </div>
+        <h1>Real-Time Voice Interaction with 3D AI Agents — Preview</h1>
+
+        <p><strong>Today we're sharing an early preview of real-time voice interaction with three.ws 3D AI avatars.</strong> Agents listen, reason with memory and emotions and tools, then respond in voice — natural conversation with a 3D character that has a face, a body, and a persistent identity.</p>
+
+        <h2>How it works</h2>
+        <p>Voice interaction in three.ws is built as a full duplex pipeline running entirely in the browser:</p>
+        <ol>
+            <li><strong>Microphone input.</strong> The browser's Web Audio API captures the user's voice. VAD (voice activity detection) handles turn-taking — no push-to-talk required.</li>
+            <li><strong>Speech-to-text.</strong> The audio stream is transcribed in real time using Groq's Whisper endpoint for low-latency, high-accuracy transcription.</li>
+            <li><strong>LLM reasoning.</strong> The transcription is passed to the agent's configured LLM brain (Claude, GPT, or others) along with the agent's memory context, emotion state, and active tools. The LLM responds with both the spoken reply and any tool calls or emotion state changes.</li>
+            <li><strong>Text-to-speech.</strong> The reply is synthesized using Groq, Anthropic, or OpenAI TTS — selectable per agent. The audio stream is returned to the browser.</li>
+            <li><strong>Lipsync.</strong> The TTS audio stream is analyzed in real time to extract viseme timing data, which drives the avatar's mouth movement frame-by-frame in WebGL.</li>
+            <li><strong>Emotion and animation.</strong> Any emotion state changes from the LLM response are applied to the avatar simultaneously — the agent can be speaking, gesturing, and expressing an emotion all at once.</li>
+        </ol>
+
+        <h2>AR and VR support in development</h2>
+        <p>Voice interaction is the prerequisite for AR/VR deployment. A 3D agent in a headset that you can only text with is a poor experience. With voice wired up, we're now integrating WebXR to bring three.ws agents into headset environments:</p>
+        <ul>
+            <li>WebXR passthrough (mixed reality) for compatible headsets</li>
+            <li>Spatial audio — the agent's voice comes from where the avatar is in 3D space</li>
+            <li>Gaze and gesture interaction as supplementary input alongside voice</li>
+            <li>Persistent spatial anchoring so the agent appears in the same location across sessions</li>
+        </ul>
+
+        <h2>Voice model options</h2>
+        <p>Developers can select the voice provider per agent from the studio:</p>
+        <ul>
+            <li><strong>Groq</strong> — fastest end-to-end latency</li>
+            <li><strong>Anthropic</strong> — high quality, character-consistent voices</li>
+            <li><strong>OpenAI</strong> — widest voice selection</li>
+        </ul>
+        <p>All three providers are configurable as environment variables — no code changes to switch.</p>
+
+        <h2>Links</h2>
+        <ul>
+            <li>Try it: <a href="https://three.ws/chat" rel="noopener">three.ws/chat</a></li>
+            <li>Docs: <a href="https://three.ws/docs" rel="noopener">three.ws/docs</a></li>
+            <li>Open source: <a href="https://github.com/nirholas/three.ws" rel="noopener">github.com/nirholas/three.ws</a></li>
+        </ul>
+
+        <hr>
+        <p><a href="/blog">&larr; All posts</a></p>
+    </main>
+    <script src="/nav.js"></script>
+</body>
+</html>

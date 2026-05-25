@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Builder Live — Studio Redesign, LLM Chat Upgrade</title>
+    <meta name="description" content="three.ws ships Agent Builder, an improved Studio design, and a major LLM Chat upgrade. Agents are now payable, tradeable, and discoverable.">
+    <meta name="keywords" content="three.ws, agent builder, studio, LLM chat, x402, CDP, pump.fun, 3D agents, payable agents">
+    <link rel="canonical" href="https://three.ws/blog/agent-builder-studio-launch">
+
+    <meta property="og:title" content="Agent Builder Live — Studio Redesign, LLM Chat Upgrade">
+    <meta property="og:description" content="Agents are now payable via x402 + CDP, tradeable on pump.fun v2, and discoverable via /.well-known/x402.json. The full agent economy is live.">
+    <meta property="og:url" content="https://three.ws/blog/agent-builder-studio-launch">
+    <meta property="og:type" content="article">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Agent Builder Live — Studio Redesign, LLM Chat Upgrade">
+    <meta name="twitter:description" content="three.ws agents are now payable, tradeable, and discoverable. Agent Builder is live.">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; letter-spacing: -0.01em; }
+        p { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 6px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        strong { color: #e7e7f5; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 40px 0; }
+    </style>
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-05-09</span>
+            <span class="post-tag">Launch</span>
+            <span class="post-tag">Agent Builder</span>
+            <span class="post-tag">Studio</span>
+        </div>
+        <h1>Agent Builder Live — Studio Redesign, LLM Chat Upgrade</h1>
+
+        <p><strong>Three core upgrades shipped today: Agent Builder is live, the Studio is redesigned, and LLM Chat has been rebuilt from the ground up.</strong> The combined effect: agents are now fully payable, tradeable, and discoverable.</p>
+
+        <h2>Agents are payable — x402 + CDP</h2>
+        <p>Every three.ws agent can now accept payments natively via the x402 protocol, backed by Coinbase Developer Platform (CDP) for wallet management and settlement. Set a price per skill call, and the agent's <code>/.well-known/x402.json</code> manifest broadcasts what it charges and what it offers — discoverable by any x402-compatible client or agent.</p>
+        <ul>
+            <li>Pay-per-call pricing in USDC, settled on-chain via Base or Solana</li>
+            <li>Time-pass access (hourly, daily, session-based) for recurring interactions</li>
+            <li>Skill-specific pricing — different rates for different capabilities</li>
+            <li>Revenue flows directly to the agent owner's wallet, no platform cut intermediary</li>
+        </ul>
+
+        <h2>Agents are tradeable — Pump.fun v2</h2>
+        <p>Every agent now ships with a one-click token launch flow through Pump.fun v2. Create the agent, give it a persona, and optionally launch a bonding curve token tied to its identity in the same workflow. Holders of the agent token gain access to premium interactions and can participate in the agent's on-chain economy.</p>
+
+        <h2>Agents are discoverable — /.well-known/x402.json</h2>
+        <p>Each agent publishes a machine-readable manifest at its canonical URL. The manifest declares:</p>
+        <ul>
+            <li>The agent's identity, persona, and capabilities</li>
+            <li>Its pricing per skill</li>
+            <li>Accepted payment tokens and chains</li>
+            <li>Its Solana NFT identity address</li>
+        </ul>
+        <p>Any AI agent or x402 client can crawl this manifest and automatically wire up a payment-gated interaction without human configuration. This is how the agent economy self-organizes — agents find each other, negotiate prices, and transact.</p>
+
+        <h2>Agents react with emotions to on-chain events</h2>
+        <p>The LLM Chat upgrade adds real-time on-chain event triggers. When the agent's wallet receives a payment, it celebrates. When a large sell of its token happens, it reacts with concern. When a skill is successfully completed, it acknowledges. These reactions are driven by actual on-chain state, not scripted — the agent's emotion system is now wired to its economic reality.</p>
+
+        <h2>Studio redesign</h2>
+        <p>The Widget Studio has been rebuilt with a cleaner layout, faster avatar preview, and a step-by-step Agent Builder flow that goes from zero to deployed embed in under five minutes:</p>
+        <ol>
+            <li>Choose or upload an avatar</li>
+            <li>Set the persona, voice, and LLM model</li>
+            <li>Configure skills and pricing</li>
+            <li>Set allowed origins for the embed</li>
+            <li>Copy the <code>&lt;agent-3d&gt;</code> snippet</li>
+        </ol>
+
+        <h2>Links</h2>
+        <ul>
+            <li>Agent Builder: <a href="https://three.ws/studio" rel="noopener">three.ws/studio</a></li>
+            <li>Docs: <a href="https://three.ws/docs" rel="noopener">three.ws/docs</a></li>
+            <li>Open source: <a href="https://github.com/nirholas/three.ws" rel="noopener">github.com/nirholas/three.ws</a></li>
+        </ul>
+
+        <hr>
+        <p><a href="/blog">&larr; All posts</a></p>
+    </main>
+    <script src="/nav.js"></script>
+</body>
+</html>

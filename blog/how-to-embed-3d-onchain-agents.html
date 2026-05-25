@@ -1,35 +1,160 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>How to Embed 3D On-Chain Agents on Your Site</title>
-    <meta name="description" content="A simple guide to embedding 3D on-chain agents on your website.">
-    <meta name="keywords" content="3D agents, on-chain agents, embedding, web3, blockchain">
-    <link rel="stylesheet" href="/style.css">
+    <meta name="description" content="A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the &lt;agent-3d&gt; web component — from setup to CORS configuration and page integration.">
+    <meta name="keywords" content="three.ws, embed, agent-3d, web component, tutorial, CORS, on-chain agents, 3D agents, widget">
+    <link rel="canonical" href="https://three.ws/blog/how-to-embed-3d-onchain-agents">
+
+    <meta property="og:title" content="How to Embed 3D On-Chain Agents on Your Site">
+    <meta property="og:description" content="A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the &lt;agent-3d&gt; web component.">
+    <meta property="og:url" content="https://three.ws/blog/how-to-embed-3d-onchain-agents">
+    <meta property="og:type" content="article">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="How to Embed 3D On-Chain Agents on Your Site">
+    <meta name="twitter:description" content="From zero to embedded 3D agent in five minutes. Complete guide for the &lt;agent-3d&gt; web component.">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; letter-spacing: -0.01em; }
+        h3 { font-size: 17px; font-weight: 600; margin: 28px 0 8px; }
+        p { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 6px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        pre { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 0 0 20px; }
+        pre code { background: none; padding: 0; font-size: 14px; color: #c8c8e0; }
+        strong { color: #e7e7f5; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 40px 0; }
+        .callout { background: rgba(154,212,255,.05); border: 1px solid rgba(154,212,255,.15); border-radius: 8px; padding: 14px 18px; margin: 0 0 20px; }
+        .callout p { margin: 0; font-size: 15px; }
+    </style>
 </head>
 <body>
-    <header>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-05-15</span>
+            <span class="post-tag">Guide</span>
+            <span class="post-tag">Embed</span>
+        </div>
         <h1>How to Embed 3D On-Chain Agents on Your Site</h1>
-    </header>
-    <main>
-        <article>
-            <h2>Introduction</h2>
-            <p>Embedding 3D on-chain agents on your website can create a more engaging and interactive experience for your users. This guide will walk you through the process step by step.</p>
-            
-            <h2>Step 1: Get Your Agent's Embed Code</h2>
-            <p>First, you'll need to get the embed code for your 3D on-chain agent. You can usually find this on the agent's profile page.</p>
-            
-            <h2>Step 2: Add the Embed Code to Your HTML</h2>
-            <p>Next, you'll need to add the embed code to your website's HTML. This is as simple as copying and pasting the code into the desired location in your HTML file.</p>
-            
-            <h2>Step 3: Customize the Appearance</h2>
-            <p>Finally, you can customize the appearance of your embedded agent using CSS. You can change the size, position, and more to match your website's design.</p>
-        </article>
+
+        <p>This guide walks through embedding a three.ws 3D agent on any website — from creating the agent to dropping the <code>&lt;agent-3d&gt;</code> snippet into your HTML and configuring the page integration.</p>
+
+        <h2>Step 1 — Create your agent in Widget Studio</h2>
+        <p>Go to <a href="https://three.ws/widget-studio" rel="noopener">three.ws/widget-studio</a> and create an agent. You'll configure:</p>
+        <ul>
+            <li><strong>Avatar.</strong> Choose from the three.ws gallery or upload a custom GLB file.</li>
+            <li><strong>Persona.</strong> Name, personality description, and system prompt for the LLM.</li>
+            <li><strong>LLM brain.</strong> Claude, GPT, or another supported model.</li>
+            <li><strong>Voice.</strong> TTS provider and voice selection.</li>
+            <li><strong>Skills.</strong> What tools and capabilities the agent has access to.</li>
+            <li><strong>Allowed origins.</strong> The domains that are permitted to embed this agent — <strong>required</strong> for the action bridge to work.</li>
+        </ul>
+
+        <div class="callout">
+            <p><strong>Add your domain to allowed origins before going live.</strong> Without it, the action bridge is blocked by CORS and the agent can't communicate with your page.</p>
+        </div>
+
+        <h2>Step 2 — Copy the embed snippet</h2>
+        <p>After saving, the Studio gives you an embed snippet that looks like this:</p>
+        <pre><code>&lt;script src="https://three.ws/agent.js"&gt;&lt;/script&gt;
+&lt;agent-3d agent-id="your-agent-id"&gt;&lt;/agent-3d&gt;</code></pre>
+
+        <p>That's the minimum. The script registers the custom element and the tag renders the agent. Add it anywhere in your HTML — the agent loads asynchronously and won't block the rest of your page.</p>
+
+        <h2>Step 3 — Place the tag</h2>
+        <p>The <code>&lt;agent-3d&gt;</code> element behaves like any inline block element. By default it renders at a sensible size in the flow of your page. Common placements:</p>
+
+        <h3>Fixed corner widget (most common)</h3>
+        <pre><code>&lt;style&gt;
+  agent-3d {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 280px;
+    height: 400px;
+    z-index: 999;
+  }
+&lt;/style&gt;
+&lt;agent-3d agent-id="your-agent-id"&gt;&lt;/agent-3d&gt;</code></pre>
+
+        <h3>Inline in a section</h3>
+        <pre><code>&lt;section class="hero"&gt;
+  &lt;div class="hero-copy"&gt;
+    &lt;h1&gt;Your headline&lt;/h1&gt;
+    &lt;p&gt;Your description&lt;/p&gt;
+  &lt;/div&gt;
+  &lt;agent-3d agent-id="your-agent-id" style="width:360px;height:520px;"&gt;&lt;/agent-3d&gt;
+&lt;/section&gt;</code></pre>
+
+        <h2>Step 4 — Wire page events (optional)</h2>
+        <p>The agent can receive events from your page and send events back. Use the <code>postMessage</code> action bridge:</p>
+
+        <h3>Send an event to the agent</h3>
+        <pre><code>const agent = document.querySelector('agent-3d');
+agent.postMessage({ type: 'event', name: 'cart-updated', data: { items: 3 } });</code></pre>
+
+        <h3>Listen for events from the agent</h3>
+        <pre><code>window.addEventListener('message', (e) => {
+  if (e.data?.source === 'agent-3d') {
+    console.log('Agent event:', e.data);
+  }
+});</code></pre>
+
+        <h3>Set emotion or animation from JavaScript</h3>
+        <pre><code>agent.postMessage({ type: 'set-emotion', emotion: 'excited' });
+agent.postMessage({ type: 'play-animation', clip: 'wave' });</code></pre>
+
+        <h2>Step 5 — Configure mode and size</h2>
+        <p>The <code>&lt;agent-3d&gt;</code> element accepts attributes for common configuration without JavaScript:</p>
+        <pre><code>&lt;agent-3d
+  agent-id="your-agent-id"
+  mode="minimal"
+  theme="dark"
+  start-open="false"
+&gt;&lt;/agent-3d&gt;</code></pre>
+        <ul>
+            <li><code>mode</code> — <code>full</code> (default, chat + 3D), <code>minimal</code> (3D only, no chat panel)</li>
+            <li><code>theme</code> — <code>dark</code> or <code>light</code></li>
+            <li><code>start-open</code> — whether the chat panel opens automatically on load</li>
+        </ul>
+
+        <h2>Common issues</h2>
+        <ul>
+            <li><strong>Agent renders but action bridge doesn't work.</strong> Add your domain to the allowed origins list in the Widget Studio.</li>
+            <li><strong>Agent doesn't render at all.</strong> Check that your browser supports WebGL (all modern browsers do). Check the console for errors.</li>
+            <li><strong>Agent is the wrong size.</strong> Size it with CSS on the <code>agent-3d</code> element selector — it respects width and height like a replaced element.</li>
+        </ul>
+
+        <h2>Links</h2>
+        <ul>
+            <li>Widget Studio: <a href="https://three.ws/widget-studio" rel="noopener">three.ws/widget-studio</a></li>
+            <li>Full docs: <a href="https://three.ws/docs" rel="noopener">three.ws/docs</a></li>
+            <li>Web component reference: <a href="https://three.ws/docs/agent-3d" rel="noopener">three.ws/docs/agent-3d</a></li>
+        </ul>
+
+        <hr>
+        <p><a href="/blog">&larr; All posts</a></p>
     </main>
-    <footer>
-        <p>&copy; 2026 3D-Agent</p>
-    </footer>
+    <script src="/nav.js"></script>
 </body>
 </html>

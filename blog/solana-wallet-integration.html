@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Wallet Integration for Autonomous 3D Agents</title>
+    <meta name="description" content="three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously — earning from skills, paying for inference, and executing on-chain transactions while you sleep.">
+    <meta name="keywords" content="three.ws, Solana, wallet, autonomous agents, 3D agents, on-chain, USDC, SPL tokens, agent payments">
+    <link rel="canonical" href="https://three.ws/blog/solana-wallet-integration">
+
+    <meta property="og:title" content="Solana Wallet Integration for Autonomous 3D Agents">
+    <meta property="og:description" content="Give your agents access to money. three.ws 3D agents now hold native Solana wallets — earning, spending, and transacting autonomously.">
+    <meta property="og:url" content="https://three.ws/blog/solana-wallet-integration">
+    <meta property="og:type" content="article">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Solana Wallet Integration for Autonomous 3D Agents">
+    <meta name="twitter:description" content="Give your agents access to money. three.ws 3D agents now hold native Solana wallets.">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; letter-spacing: -0.01em; }
+        p { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 6px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        strong { color: #e7e7f5; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 40px 0; }
+    </style>
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-04-30</span>
+            <span class="post-tag">Launch</span>
+            <span class="post-tag">Solana</span>
+            <span class="post-tag">Payments</span>
+        </div>
+        <h1>Solana Wallet Integration for Autonomous 3D Agents</h1>
+
+        <p><strong>three.ws 3D agents now have native Solana wallets.</strong> Your agent can hold and spend money — earning from skill calls, paying for inference, executing on-chain transactions, and routing revenue back to its owner. All while you sleep.</p>
+
+        <h2>What changed</h2>
+        <p>Previously, three.ws agents had on-chain identity (minted as Solana NFTs) but no ability to independently manage funds. That changes today. Every agent now ships with a custodial Solana keypair that:</p>
+        <ul>
+            <li>Accepts SPL token deposits (USDC, SOL, and any SPL asset)</li>
+            <li>Signs transactions autonomously to pay for skills and inference</li>
+            <li>Earns revenue through x402 pay-per-call interactions</li>
+            <li>Routes a configurable portion of earnings back to the agent owner's wallet</li>
+            <li>Can launch, buy, and sell tokens on Pump.fun via the agent-payments SDK</li>
+        </ul>
+
+        <h2>Autonomous agent economy in practice</h2>
+        <p>A three.ws agent with a Solana wallet is no longer just a 3D character with an LLM brain. It's a self-sustaining economic actor:</p>
+        <ul>
+            <li><strong>Users pay the agent</strong> for its skills — analysis, content, trading signals, entertainment — via x402 micropayments in USDC.</li>
+            <li><strong>The agent pays for what it uses</strong> — LLM inference, RPC calls, storage — from its own wallet, without requiring any developer intervention.</li>
+            <li><strong>Revenue flows upstream</strong> — the owner wallet receives earnings on a configurable schedule.</li>
+            <li><strong>Buyback and burn</strong> — a portion of revenue can be automatically routed to buy back the agent's associated token and send it to a burn address.</li>
+        </ul>
+
+        <h2>Security model</h2>
+        <p>Agent wallets use a server-side custodial keypair scoped to the agent's on-chain identity. The private key never touches the client. Transaction signing is gated behind the agent's permission model — agents can only spend within their configured budget and to approved destination categories. Owners retain full withdrawal authority at all times.</p>
+
+        <h2>Getting started</h2>
+        <p>Wallet integration is automatically provisioned for every new agent created in the three.ws studio. Existing agents can opt in through the agent settings panel. The Solana SDK is open source and available at <a href="https://github.com/nirholas/three.ws" rel="noopener">github.com/nirholas/three.ws</a>.</p>
+
+        <h2>Links</h2>
+        <ul>
+            <li>Project site: <a href="https://three.ws" rel="noopener">three.ws</a></li>
+            <li>Agent studio: <a href="https://three.ws/studio" rel="noopener">three.ws/studio</a></li>
+            <li>Solana SDK: <a href="https://github.com/nirholas/three.ws" rel="noopener">github.com/nirholas/three.ws</a></li>
+        </ul>
+
+        <hr>
+        <p><a href="/blog">&larr; All posts</a></p>
+    </main>
+    <script src="/nav.js"></script>
+</body>
+</html>

@@ -576,8 +576,9 @@ body.nav-open {
 		display: none !important;
 		position: fixed;
 		top: calc(var(--header-h, 3.5rem) + env(safe-area-inset-top, 0px) + 8px);
+		left: 12px;
 		right: 12px;
-		width: min(300px, calc(100vw - 24px));
+		width: auto;
 		max-height: calc(100dvh - var(--header-h, 3.5rem) - env(safe-area-inset-top, 0px) - 24px);
 		overflow-y: auto;
 		overscroll-behavior: contain;
@@ -652,11 +653,13 @@ body.nav-open {
 		pointer-events: auto !important;
 		display: none;
 		min-width: 0;
-		padding: 2px 0 4px 12px;
+		padding: 2px 0 6px 8px;
+		margin: 0 0 4px 0;
 		background: none;
 		backdrop-filter: none;
 		-webkit-backdrop-filter: none;
 		border: none;
+		border-left: 2px solid rgba(139, 92, 246, 0.3);
 		box-shadow: none;
 		border-radius: 0;
 	}
@@ -665,13 +668,31 @@ body.nav-open {
 		display: block;
 	}
 
+	/* Divider after every dropdown group so the next top-level item
+	   is visually separate — prevents flat links reading as sub-items */
+	.home-nav .nav-has-menu {
+		border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+		margin-bottom: 2px;
+		padding-bottom: 2px;
+	}
+
 	.home-nav .nav-menu a {
+		min-height: 40px;
 		padding: 8px 12px;
 		border-radius: 7px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
 	}
 
 	.home-nav .nav-menu a:hover {
 		transform: none;
+		background: rgba(139, 92, 246, 0.08);
+	}
+
+	/* Hide sub-descriptions on mobile — keep it scannable */
+	.home-nav .nav-mi-sub {
+		display: none;
 	}
 
 	.home-nav .nav-cta {
@@ -690,17 +711,7 @@ body.nav-open {
 		box-sizing: border-box;
 	}
 
-	/* Sub-menu items also need 44px tap targets */
-	.home-nav .nav-menu a {
-		min-height: 44px;
-		padding: 10px 14px;
-		border-radius: 8px;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-	}
-
-	/* Divider between main items and CTA */
+	/* Divider before CTA */
 	.home-nav .nav-root > li:last-child {
 		padding-top: 4px;
 		margin-top: 4px;

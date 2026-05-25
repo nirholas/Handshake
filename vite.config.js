@@ -174,6 +174,8 @@ const appConfig = {
 				creating: resolve(__dirname, 'pages/creating.html'),
 				pricing: resolve(__dirname, 'pages/pricing.html'),
 				'x-pricing': resolve(__dirname, 'pages/x-pricing.html'),
+				'home-next': resolve(__dirname, 'pages/home-next.html'),
+				'agent-next': resolve(__dirname, 'pages/agent-next.html'),
 				walk: resolve(__dirname, 'pages/walk.html'),
 				pose: resolve(__dirname, 'pages/pose.html'),
 				club: resolve(__dirname, 'pages/club.html'),

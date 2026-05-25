@@ -16,6 +16,7 @@
 				cursor: pointer;
 				margin-top: 8px;
 			}
+			.customize-btn:hover { background: #2a2a2a; }
 			.modal {
 				display: none;
 				position: fixed;
@@ -29,11 +30,12 @@
 			}
 			.modal-content {
 				background-color: #1a1a1a;
-				margin: 10% auto;
-				padding: 20px;
+				margin: 5% auto;
+				padding: 24px;
 				border: 1px solid #333;
-				width: 80%;
-				max-width: 600px;
+				width: 90%;
+				max-width: 660px;
+				border-radius: 6px;
 			}
 			.modal-header {
 				display: flex;
@@ -41,15 +43,145 @@
 				align-items: center;
 				margin-bottom: 20px;
 			}
-			.modal-header h2 {
-				margin: 0;
-			}
+			.modal-header h2 { margin: 0; font-size: 18px; }
 			.close-btn {
 				color: #aaa;
 				font-size: 28px;
 				font-weight: bold;
 				cursor: pointer;
+				line-height: 1;
 			}
+			.close-btn:hover { color: #fff; }
+
+			/* option rows */
+			.opt-row {
+				margin-bottom: 14px;
+			}
+			.opt-row label {
+				display: block;
+				font-size: 12px;
+				color: #888;
+				margin-bottom: 6px;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+			}
+			.opt-row select,
+			.opt-row input[type="text"],
+			.opt-row input[type="number"] {
+				width: 100%;
+				padding: 7px 9px;
+				background: #111;
+				border: 1px solid #333;
+				color: #eee;
+				border-radius: 4px;
+				font-size: 13px;
+				box-sizing: border-box;
+			}
+			.opt-row input[type="color"] {
+				width: 48px;
+				height: 32px;
+				padding: 2px;
+				background: #111;
+				border: 1px solid #333;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+
+			/* avatar picker */
+			.avatar-grid {
+				display: flex;
+				gap: 10px;
+				flex-wrap: wrap;
+				margin-bottom: 8px;
+			}
+			.avatar-card {
+				width: 100px;
+				height: 100px;
+				border: 2px solid #333;
+				border-radius: 6px;
+				cursor: pointer;
+				overflow: hidden;
+				background: #111;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: flex-end;
+				padding-bottom: 8px;
+				position: relative;
+				transition: border-color 0.15s;
+			}
+			.avatar-card:hover { border-color: #555; }
+			.avatar-card.selected { border-color: #4a9eff; }
+			.avatar-card model-viewer {
+				position: absolute;
+				inset: 0;
+				width: 100%;
+				height: 100%;
+				--poster-color: transparent;
+			}
+			.avatar-card-label {
+				position: relative;
+				z-index: 1;
+				font-size: 11px;
+				color: #ddd;
+				background: rgba(0,0,0,0.6);
+				padding: 2px 6px;
+				border-radius: 3px;
+			}
+			.avatar-card-custom {
+				background: #0d0d0d;
+				border: 2px dashed #333;
+				color: #666;
+				font-size: 11px;
+				text-align: center;
+				gap: 4px;
+			}
+			.avatar-card-custom span { display: block; font-size: 20px; color: #444; }
+			.custom-url-row {
+				margin-top: 6px;
+			}
+			.custom-url-row input {
+				width: 100%;
+				padding: 7px 9px;
+				background: #111;
+				border: 1px solid #333;
+				color: #eee;
+				border-radius: 4px;
+				font-size: 12px;
+				box-sizing: border-box;
+			}
+
+			/* embed code */
+			.embed-preview {
+				width: 100%;
+				height: 220px;
+				border: 1px solid #2a2a2a;
+				border-radius: 4px;
+				margin: 16px 0 10px;
+			}
+			.embed-code-wrap {
+				background: #0a0a0a;
+				border: 1px solid #222;
+				border-radius: 4px;
+				padding: 10px 12px;
+				font-size: 11px;
+				color: #00ff41;
+				white-space: pre-wrap;
+				word-break: break-all;
+				font-family: monospace;
+				min-height: 36px;
+			}
+			.copy-btn {
+				background: #1e1e1e;
+				border: 1px solid #333;
+				color: #ccc;
+				padding: 6px 14px;
+				font-size: 12px;
+				cursor: pointer;
+				border-radius: 4px;
+				margin-top: 8px;
+			}
+			.copy-btn:hover { background: #2a2a2a; color: #fff; }
 		</style>
 		<link rel="canonical" href="https://three.ws/widgets" />
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -59,6 +191,7 @@
 			<link rel="stylesheet" href="/nav.css" />
 			<link rel="stylesheet" href="/footer.css" />
 			<script defer src="/footer-newsletter.js"></script>
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 	</head>
 	<body class="market-page">
 		<header class="site-header">
@@ -104,7 +237,7 @@
 							<div class="market-item-meta">
 								<h3>3D Agent Chat</h3>
 								<p>Embed a customizable 3D agent on your site.</p>
-								<a href="/widget-studio.html" class="customize-btn">Customize & Embed</a>
+								<button class="customize-btn" data-widget="chat">Customize & Embed</button>
 							</div>
 						</div>
 						<div class="market-item">
@@ -167,7 +300,178 @@
 			const modalBody = document.getElementById('modal-body');
 			const closeBtn = document.querySelector('.close-btn');
 
+			const AVATARS = [
+				{ id: 'default', label: 'Default', url: '/avatars/default.glb' },
+				{ id: 'cz', label: 'CZ', url: '/avatars/cz.glb' },
+			];
+
+			const IDLE_ANIMS = [
+				{ value: 'Idle_Breath', label: 'Idle Breath' },
+				{ value: 'Just_chilling', label: 'Just Chilling' },
+				{ value: 'Standard_Vtubing_Movement', label: 'Vtubing Movement' },
+				{ value: 'Standard_Waiting', label: 'Waiting' },
+				{ value: 'dance_shuffle', label: 'Dance Shuffle' },
+				{ value: 'Expressing_joy', label: 'Expressing Joy' },
+				{ value: 'Cheering', label: 'Cheering' },
+				{ value: 'Brag_n_Claps', label: 'Brag & Claps' },
+				{ value: 'Flexing_Arm', label: 'Flexing Arm' },
+				{ value: 'Energic_conductor', label: 'Energetic Conductor' },
+				{ value: 'Facepalm', label: 'Facepalm' },
+				{ value: 'Call_Me', label: 'Call Me' },
+			];
+
 			const widgetConfig = {
+				chat: {
+					title: '3D Agent Chat',
+					buildUI(body, onChange) {
+						const state = {
+							avatarUrl: AVATARS[0].url,
+							idleAnim: IDLE_ANIMS[0].value,
+							brandColor: '#4a9eff',
+							theme: 'dark',
+							customUrl: '',
+						};
+
+						// Avatar picker
+						const avatarRow = document.createElement('div');
+						avatarRow.className = 'opt-row';
+						avatarRow.innerHTML = '<label>Avatar</label>';
+
+						const grid = document.createElement('div');
+						grid.className = 'avatar-grid';
+
+						AVATARS.forEach(av => {
+							const card = document.createElement('div');
+							card.className = 'avatar-card' + (av.url === state.avatarUrl ? ' selected' : '');
+							card.dataset.url = av.url;
+
+							const mv = document.createElement('model-viewer');
+							mv.setAttribute('src', av.url);
+							mv.setAttribute('auto-rotate', '');
+							mv.setAttribute('camera-controls', '');
+							mv.setAttribute('shadow-intensity', '0.5');
+							mv.style.width = '100%';
+							mv.style.height = '100%';
+							mv.style.position = 'absolute';
+							mv.style.inset = '0';
+
+							const lbl = document.createElement('span');
+							lbl.className = 'avatar-card-label';
+							lbl.textContent = av.label;
+
+							card.appendChild(mv);
+							card.appendChild(lbl);
+							card.addEventListener('click', () => {
+								grid.querySelectorAll('.avatar-card').forEach(c => c.classList.remove('selected'));
+								card.classList.add('selected');
+								state.avatarUrl = av.url;
+								state.customUrl = '';
+								customInput.value = '';
+								onChange(state);
+							});
+							grid.appendChild(card);
+						});
+
+						// Custom avatar card
+						const customCard = document.createElement('div');
+						customCard.className = 'avatar-card avatar-card-custom';
+						customCard.innerHTML = '<span>+</span>Custom URL';
+						customCard.addEventListener('click', () => {
+							customInput.focus();
+						});
+						grid.appendChild(customCard);
+
+						avatarRow.appendChild(grid);
+
+						const customUrlRow = document.createElement('div');
+						customUrlRow.className = 'custom-url-row';
+						const customInput = document.createElement('input');
+						customInput.type = 'text';
+						customInput.placeholder = 'Paste GLB/GLTF URL or Ready Player Me link…';
+						customInput.addEventListener('input', () => {
+							const val = customInput.value.trim();
+							if (val) {
+								grid.querySelectorAll('.avatar-card').forEach(c => c.classList.remove('selected'));
+								customCard.classList.add('selected');
+								state.avatarUrl = val;
+								state.customUrl = val;
+							} else {
+								customCard.classList.remove('selected');
+								// reselect default
+								const first = grid.querySelector('.avatar-card:not(.avatar-card-custom)');
+								if (first) {
+									first.classList.add('selected');
+									state.avatarUrl = first.dataset.url;
+								}
+							}
+							onChange(state);
+						});
+						customUrlRow.appendChild(customInput);
+						avatarRow.appendChild(customUrlRow);
+						body.appendChild(avatarRow);
+
+						// Animation picker
+						const animRow = document.createElement('div');
+						animRow.className = 'opt-row';
+						animRow.innerHTML = '<label>Idle Animation</label>';
+						const animSelect = document.createElement('select');
+						IDLE_ANIMS.forEach(a => {
+							const opt = document.createElement('option');
+							opt.value = a.value;
+							opt.textContent = a.label;
+							animSelect.appendChild(opt);
+						});
+						animSelect.addEventListener('change', () => {
+							state.idleAnim = animSelect.value;
+							onChange(state);
+						});
+						animRow.appendChild(animSelect);
+						body.appendChild(animRow);
+
+						// Brand color
+						const colorRow = document.createElement('div');
+						colorRow.className = 'opt-row';
+						colorRow.innerHTML = '<label>Brand Color</label>';
+						const colorInput = document.createElement('input');
+						colorInput.type = 'color';
+						colorInput.value = state.brandColor;
+						colorInput.addEventListener('input', () => {
+							state.brandColor = colorInput.value;
+							onChange(state);
+						});
+						colorRow.appendChild(colorInput);
+						body.appendChild(colorRow);
+
+						// Theme
+						const themeRow = document.createElement('div');
+						themeRow.className = 'opt-row';
+						themeRow.innerHTML = '<label>Theme</label>';
+						const themeSelect = document.createElement('select');
+						[['dark', 'Dark'], ['light', 'Light']].forEach(([val, label]) => {
+							const opt = document.createElement('option');
+							opt.value = val;
+							opt.textContent = label;
+							themeSelect.appendChild(opt);
+						});
+						themeSelect.addEventListener('change', () => {
+							state.theme = themeSelect.value;
+							onChange(state);
+						});
+						themeRow.appendChild(themeSelect);
+						body.appendChild(themeRow);
+
+						return () => state;
+					},
+					getUrl(state) {
+						const p = new URLSearchParams({
+							avatarUrl: state.avatarUrl,
+							idleAnim: state.idleAnim,
+							brandColor: state.brandColor,
+							theme: state.theme,
+						});
+						return `/agent-chat-widget.html?${p}`;
+					},
+				},
 				search: {
 					title: 'Pump.fun Search',
 					options: [
@@ -211,90 +515,102 @@
 				btn.addEventListener('click', () => {
 					const widgetId = btn.dataset.widget;
 					const config = widgetConfig[widgetId];
-					modalTitle.innerText = `Customize ${config.title}`;
+					modalTitle.textContent = `Customize ${config.title}`;
 					modalBody.innerHTML = '';
 
-					const options = {};
-					config.options.forEach(opt => {
-						const el = document.createElement('div');
-						el.innerHTML = `<label>${opt.label}</label>`;
-						if (opt.type === 'select') {
-							const select = document.createElement('select');
-							select.id = `opt-${opt.id}`;
-							opt.options.forEach(o => {
-								const option = document.createElement('option');
-								option.value = o;
-								option.innerText = o;
-								select.appendChild(option);
-							});
-							el.appendChild(select);
-							options[opt.id] = select;
-						} else if (opt.type === 'text' || opt.type === 'number') {
-							const input = document.createElement('input');
-							input.type = opt.type;
-							input.id = `opt-${opt.id}`;
-							input.value = opt.value || '';
-							el.appendChild(input);
-							options[opt.id] = input;
-						}
-						modalBody.appendChild(el);
-					});
-
 					const preview = document.createElement('iframe');
-					preview.style.width = '100%';
-					preview.style.height = '200px';
-					preview.style.border = '1px solid #333';
-					modalBody.appendChild(preview);
+					preview.className = 'embed-preview';
+					preview.style.display = 'none';
 
-					const code = document.createElement('pre');
-					const codeBlock = document.createElement('code');
-					code.appendChild(codeBlock);
-					modalBody.appendChild(code);
+					const codeWrap = document.createElement('div');
+					codeWrap.className = 'embed-code-wrap';
 
 					const copyBtn = document.createElement('button');
-					copyBtn.innerText = 'Copy';
-					copyBtn.style.marginTop = '10px';
-					modalBody.appendChild(copyBtn);
+					copyBtn.className = 'copy-btn';
+					copyBtn.textContent = 'Copy Embed Code';
 
 					copyBtn.addEventListener('click', () => {
-						navigator.clipboard.writeText(codeBlock.innerText);
-						copyBtn.innerText = 'Copied!';
-						setTimeout(() => {
-							copyBtn.innerText = 'Copy';
-						}, 2000);
+						navigator.clipboard.writeText(codeWrap.textContent);
+						copyBtn.textContent = 'Copied!';
+						setTimeout(() => { copyBtn.textContent = 'Copy Embed Code'; }, 2000);
 					});
 
-					function update() {
-						const opts = {};
-						for (const id in options) {
-							opts[id] = options[id].value;
-						}
-						const url = config.getUrl(opts);
+					// Chat widget uses custom builder
+					if (config.buildUI) {
+						const getState = config.buildUI(modalBody, (state) => {
+							const url = config.getUrl(state);
+							preview.src = url;
+							codeWrap.textContent = `<iframe src="${location.origin}${url}" width="400" height="600" style="border:none;"></iframe>`;
+						});
+
+						modalBody.appendChild(preview);
+						modalBody.appendChild(codeWrap);
+						modalBody.appendChild(copyBtn);
+
+						// Trigger initial render
+						const url = config.getUrl(getState());
 						preview.src = url;
-						codeBlock.innerText = `<iframe src="${location.origin}${url}" width="100%" height="200px" style="border:none;"></iframe>`;
+						preview.style.display = 'block';
+						codeWrap.textContent = `<iframe src="${location.origin}${url}" width="400" height="600" style="border:none;"></iframe>`;
+					} else {
+						// Standard options-based widgets
+						const options = {};
+						config.options.forEach(opt => {
+							const row = document.createElement('div');
+							row.className = 'opt-row';
+							row.innerHTML = `<label>${opt.label}</label>`;
+							if (opt.type === 'select') {
+								const select = document.createElement('select');
+								select.id = `opt-${opt.id}`;
+								opt.options.forEach(o => {
+									const option = document.createElement('option');
+									option.value = o;
+									option.textContent = o;
+									select.appendChild(option);
+								});
+								row.appendChild(select);
+								options[opt.id] = select;
+							} else if (opt.type === 'text' || opt.type === 'number') {
+								const input = document.createElement('input');
+								input.type = opt.type;
+								input.id = `opt-${opt.id}`;
+								input.value = opt.value || '';
+								row.appendChild(input);
+								options[opt.id] = input;
+							}
+							modalBody.appendChild(row);
+						});
+
+						modalBody.appendChild(preview);
+						modalBody.appendChild(codeWrap);
+						modalBody.appendChild(copyBtn);
+
+						function update() {
+							const opts = {};
+							for (const id in options) opts[id] = options[id].value;
+							const url = config.getUrl(opts);
+							preview.src = url;
+							preview.style.display = 'block';
+							codeWrap.textContent = `<iframe src="${location.origin}${url}" width="100%" height="200px" style="border:none;"></iframe>`;
+						}
+
+						for (const id in options) {
+							options[id].addEventListener('change', update);
+							options[id].addEventListener('input', update);
+						}
+						update();
 					}
 
-					for (const id in options) {
-						options[id].addEventListener('change', update);
-						options[id].addEventListener('input', update);
-					}
-
-					update();
 					modal.style.display = 'block';
 				});
 			});
 
-			closeBtn.addEventListener('click', () => {
-				modal.style.display = 'none';
-			});
-
+			closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
 			window.addEventListener('click', (event) => {
-				if (event.target == modal) {
-					modal.style.display = 'none';
-				}
+				if (event.target === modal) modal.style.display = 'none';
 			});
 		</script>
-	
+
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 </body>

@@ -180,6 +180,118 @@
 			body.show-state #state-pill {
 				display: inline-block;
 			}
+
+			/* ── Animation picker ─────────────────────────────────────── */
+			#anim-toggle {
+				position: absolute;
+				right: 10px;
+				bottom: 10px;
+				z-index: 5;
+				display: none;
+				align-items: center;
+				gap: 5px;
+				padding: 5px 10px;
+				border-radius: 999px;
+				background: rgba(0, 0, 0, 0.55);
+				color: #fff;
+				font-size: 11px;
+				letter-spacing: 0.04em;
+				border: 1px solid rgba(255, 255, 255, 0.18);
+				cursor: pointer;
+				user-select: none;
+				font-family: system-ui, sans-serif;
+				transition: background 0.15s;
+			}
+			#anim-toggle:hover { background: rgba(0, 0, 0, 0.75); }
+			#anim-toggle .anim-toggle-icon { font-size: 12px; }
+
+			#anim-picker {
+				position: absolute;
+				bottom: 42px;
+				right: 10px;
+				z-index: 5;
+				display: none;
+				width: 252px;
+				max-height: 320px;
+				overflow-y: auto;
+				background: rgba(10, 10, 10, 0.88);
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				border-radius: 10px;
+				padding: 8px;
+				backdrop-filter: blur(8px);
+				-webkit-backdrop-filter: blur(8px);
+				scrollbar-width: thin;
+				scrollbar-color: rgba(255,255,255,0.15) transparent;
+			}
+			body.anim-picker-open #anim-picker { display: block; }
+
+			#anim-picker .anim-picker-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 7px;
+				padding: 0 2px;
+			}
+			#anim-picker .anim-picker-title {
+				font-size: 10px;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: rgba(255, 255, 255, 0.45);
+				font-family: system-ui, sans-serif;
+			}
+			#anim-picker .anim-stop-btn {
+				background: rgba(255,255,255,0.07);
+				border: 1px solid rgba(255,255,255,0.14);
+				color: rgba(255,255,255,0.6);
+				border-radius: 4px;
+				font-size: 10px;
+				padding: 2px 7px;
+				cursor: pointer;
+				font-family: system-ui, sans-serif;
+			}
+			#anim-picker .anim-stop-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+			.anim-chip-grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 5px;
+			}
+			.anim-chip {
+				display: flex;
+				align-items: center;
+				gap: 5px;
+				padding: 5px 7px;
+				border-radius: 6px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				background: rgba(255, 255, 255, 0.04);
+				color: rgba(255, 255, 255, 0.8);
+				font-size: 10px;
+				font-family: system-ui, sans-serif;
+				cursor: pointer;
+				text-align: left;
+				line-height: 1.2;
+				transition: background 0.1s, border-color 0.1s;
+				overflow: hidden;
+			}
+			.anim-chip:hover {
+				background: rgba(255, 255, 255, 0.1);
+				border-color: rgba(255, 255, 255, 0.25);
+				color: #fff;
+			}
+			.anim-chip.active {
+				background: rgba(74, 158, 255, 0.2);
+				border-color: rgba(74, 158, 255, 0.5);
+				color: #fff;
+			}
+			.anim-chip .anim-chip-icon { font-size: 14px; flex-shrink: 0; }
+			.anim-chip .anim-chip-label {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+
+			body.overlay-mode #anim-toggle,
+			body.overlay-mode #anim-picker { display: none !important; }
 		</style>
 	</head>
 	<body>
@@ -190,6 +302,10 @@
 			<span class="dot"></span><span class="label">webcam mocap</span>
 		</div>
 		<div id="emote-panel" role="toolbar" aria-label="Emote hotkeys"></div>
+		<button id="anim-toggle" aria-label="Toggle animation picker" aria-expanded="false">
+			<span class="anim-toggle-icon">▶</span> Animations
+		</button>
+		<div id="anim-picker" role="region" aria-label="Animation picker"></div>
 		<div id="error"></div>
 
 		<script type="module" src="/src/avatar-embed.js"></script>

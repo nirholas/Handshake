@@ -39,8 +39,8 @@ import { WalkNet } from './walk-net.js';
 const AVATAR_URL = '/avatars/default.glb';
 const ANIMATIONS_MANIFEST_URL = '/animations/manifest.json';
 const CLIP_IDLE = 'idle';
-const CLIP_WALK = 'walking';
-const CLIP_RUN = 'running';
+const CLIP_WALK = 'av-walk-feminine';
+const CLIP_RUN = 'av-walk-feminine'; // no separate run clip; timeScale handles pace difference
 
 const WALK_SPEED = 1.6; // m/s — target ground speed in walk mode
 const RUN_SPEED = 4.0;  // m/s — target ground speed in run mode
@@ -168,9 +168,17 @@ applyCameraImmediate();
 	let downId = -1;
 
 	canvas.addEventListener('pointerdown', (e) => {
-		// Joystick lives on its own div — pointer-events on that div eat its
-		// own touches, so any pointerdown that reaches the canvas is an orbit
-		// gesture by definition.
+		// Don't steal pointer events that belong to the joystick zone.
+		// On some mobile browsers the canvas (being full-screen) can receive
+		// a pointerdown before nipplejs does, and setPointerCapture would
+		// redirect all subsequent pointermove events here — breaking movement.
+		const jRect = joystickEl.getBoundingClientRect();
+		const overJoystick = (
+			e.clientX >= jRect.left && e.clientX <= jRect.right &&
+			e.clientY >= jRect.top  && e.clientY <= jRect.bottom
+		);
+		if (overJoystick) return;
+
 		dragging = true;
 		downId = e.pointerId;
 		lastX = e.clientX;

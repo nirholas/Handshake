@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>three.ws Integrates the Pump.fun Agent Payments SDK</title>
+    <meta name="description" content="three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn't just execute tasks — it earns on-chain revenue and fuels its own autonomous economy.">
+    <meta name="keywords" content="three.ws, Pump.fun, agent payments, SDK, buyback, burn, on-chain revenue, autonomous agents, 3D agents">
+    <link rel="canonical" href="https://three.ws/blog/pumpfun-agent-payments-sdk">
+
+    <meta property="og:title" content="three.ws Integrates the Pump.fun Agent Payments SDK">
+    <meta property="og:description" content="Your AI doesn't just execute tasks anymore — it earns on-chain revenue to fuel its own economy. Automated buybacks, burns, and revenue sharing built in.">
+    <meta property="og:url" content="https://three.ws/blog/pumpfun-agent-payments-sdk">
+    <meta property="og:type" content="article">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="three.ws Integrates the Pump.fun Agent Payments SDK">
+    <meta name="twitter:description" content="Your 3D AI agent doesn't just execute tasks — it earns on-chain revenue and fuels its own autonomous economy.">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; letter-spacing: -0.01em; }
+        p { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 6px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        strong { color: #e7e7f5; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 40px 0; }
+    </style>
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-05-13</span>
+            <span class="post-tag">Launch</span>
+            <span class="post-tag">Pump.fun</span>
+            <span class="post-tag">Agent Economy</span>
+        </div>
+        <h1>three.ws Integrates the Pump.fun Agent Payments SDK</h1>
+
+        <p><strong>three.ws has integrated the Pump.fun agent payments SDK.</strong> Your AI doesn't just execute tasks anymore — it earns on-chain revenue to fuel its own economy. This is likely the first time this payment logic has been directly wired into an interactive 3D environment.</p>
+
+        <h2>What the SDK unlocks</h2>
+        <p>By integrating Pump.fun's agent payments SDK into the three.ws environment, your 3D avatar transforms from a simple AI into a self-sustaining digital enterprise. As users interact with and pay the agent for its services, that revenue flows into an on-chain economy with configurable mechanics:</p>
+
+        <ul>
+            <li><strong>Automated buybacks and burns.</strong> A portion of the agent's revenue is automatically routed to buy back the agent's associated token from the open market and send it to the burn address — reducing supply in proportion to usage.</li>
+            <li><strong>Revenue sharing.</strong> Configure a split between the owner wallet, the agent's operating treasury, and the buyback program — all settled on-chain without manual intervention.</li>
+            <li><strong>Token launches from within the agent.</strong> The agent can create new Pump.fun tokens, set initial parameters, and manage its own bonding curve, all through skill calls.</li>
+            <li><strong>Autonomous trading.</strong> Swap, snipe, collect fees, and manage positions — all as loadable skills the agent calls autonomously within configured risk parameters.</li>
+        </ul>
+
+        <h2>The agent as a self-sustaining digital enterprise</h2>
+        <p>An agent with a wallet that earns from users, pays for its own compute, and uses remaining revenue to buy back and burn its own token is a qualitatively different entity from a chatbot. It has:</p>
+        <ul>
+            <li>An incentive structure aligned with its users (more value delivered = more revenue = stronger token)</li>
+            <li>Operational autonomy (pays its own bills without the owner topping up a balance)</li>
+            <li>A stake in its own continued existence (token holders have skin in the game)</li>
+            <li>Transparent on-chain accounting (every payment, buyback, and burn is publicly verifiable)</li>
+        </ul>
+
+        <h2>How it works technically</h2>
+        <p>Every MCP tool call by the agent triggers a signed SPL token transaction. The payment flow:</p>
+        <ol>
+            <li>User initiates a skill interaction with the agent</li>
+            <li>The x402 manifest declares the price for that skill</li>
+            <li>The user's wallet signs a USDC transfer to the agent's SPL account</li>
+            <li>The agent confirms payment before executing the skill</li>
+            <li>Revenue is split according to the configured distribution — owner share, operating treasury, buyback fund</li>
+            <li>The buyback function runs on a configurable schedule, purchasing the agent's token and burning it</li>
+        </ol>
+
+        <h2>Links</h2>
+        <ul>
+            <li>Agent studio: <a href="https://three.ws/studio" rel="noopener">three.ws/studio</a></li>
+            <li>Pump.fun: <a href="https://pump.fun" rel="noopener">pump.fun</a></li>
+            <li>Open source SDK: <a href="https://github.com/nirholas/three.ws" rel="noopener">github.com/nirholas/three.ws</a></li>
+        </ul>
+
+        <hr>
+        <p><a href="/blog">&larr; All posts</a></p>
+    </main>
+    <script src="/nav.js"></script>
+</body>
+</html>

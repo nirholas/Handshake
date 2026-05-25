@@ -2507,7 +2507,7 @@ function bindEmbedTryIt(body, agent) {
 	if (!frame) return;
 	const samples = {
 		speak: { type: 'speak', payload: { text: `Hi, I'm ${agent.name || 'your agent'}.` } },
-		emote: { type: 'emote', payload: { name: 'smile' } },
+		emote: { type: 'emote', payload: { trigger: 'celebration', weight: 0.9 } },
 		gesture: { type: 'gesture', payload: { name: 'wave' } },
 	};
 	let frameOrigin = '';
@@ -2524,6 +2524,40 @@ function bindEmbedTryIt(body, agent) {
 			}
 			frame.contentWindow?.postMessage(
 				{ __agent: agent.id, type: 'action', action },
+				frameOrigin,
+			);
+		});
+	}
+
+	// Verify button: test handshake with iframe
+	const verifyBtn = body.querySelector('#embed-verify-btn');
+	const verifyOut = body.querySelector('#embed-verify-out');
+	if (verifyBtn && verifyOut && frameOrigin) {
+		verifyBtn.addEventListener('click', async () => {
+			verifyOut.textContent = 'Checking...';
+			verifyBtn.disabled = true;
+			const msgId = Math.random().toString(36).slice(2);
+			let timedOut = false;
+
+			const timeout = setTimeout(() => {
+				timedOut = true;
+				verifyOut.textContent = 'No response (timeout after 5s)';
+				verifyBtn.disabled = false;
+			}, 5000);
+
+			const handler = (ev) => {
+				if (ev.source !== frame.contentWindow) return;
+				if (ev.data?.type === 'agent:pong' && ev.data?.id === msgId) {
+					if (timedOut) return;
+					clearTimeout(timeout);
+					window.removeEventListener('message', handler);
+					verifyOut.textContent = `✓ Connected (agent: ${agent.id.slice(0, 8)}...)`;
+					verifyBtn.disabled = false;
+				}
+			};
+			window.addEventListener('message', handler);
+			frame.contentWindow?.postMessage(
+				{ type: 'agent:ping', agentId: agent.id, id: msgId },
 				frameOrigin,
 			);
 		});

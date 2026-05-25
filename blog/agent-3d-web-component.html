@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>We Just Shipped the 3D Layer for the Internet — &lt;agent-3d&gt;</title>
+    <meta name="description" content="Drop one &lt;agent-3d&gt; web component on your site and give any page an AI with LLM brain, memory, emotions, DOM awareness, password field privacy, and an on-chain identity that lives forever.">
+    <meta name="keywords" content="three.ws, agent-3d, web component, 3D layer, LLM, on-chain identity, DOM awareness, AI agent, browser AI">
+    <link rel="canonical" href="https://three.ws/blog/agent-3d-web-component">
+
+    <meta property="og:title" content="We Just Shipped the 3D Layer for the Internet — &lt;agent-3d&gt;">
+    <meta property="og:description" content="One web component. An AI with a body, memory, emotions, and DOM awareness. Covers its eyes when you type a password. Lives on-chain.">
+    <meta property="og:url" content="https://three.ws/blog/agent-3d-web-component">
+    <meta property="og:type" content="article">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="We Just Shipped the 3D Layer for the Internet">
+    <meta name="twitter:description" content="Drop &lt;agent-3d&gt; on your site. AI with a body, memory, emotions, DOM awareness, and on-chain identity that lives forever.">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; letter-spacing: -0.01em; }
+        p { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 6px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        pre { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 0 0 20px; }
+        pre code { background: none; padding: 0; font-size: 14px; }
+        strong { color: #e7e7f5; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 40px 0; }
+    </style>
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-05-23</span>
+            <span class="post-tag">Launch</span>
+            <span class="post-tag">Web Component</span>
+            <span class="post-tag">Platform</span>
+        </div>
+        <h1>We Just Shipped the 3D Layer for the Internet — <code>&lt;agent-3d&gt;</code></h1>
+
+        <p><strong>Drop one <code>&lt;agent-3d&gt;</code> web component on your site and give any page an AI with a body.</strong> LLM brain with memory and emotions. Physical DOM awareness. An on-chain identity that persists forever. And it covers its eyes when you type a password.</p>
+
+        <pre><code>&lt;script src="https://three.ws/agent.js"&gt;&lt;/script&gt;
+&lt;agent-3d agent-id="your-agent-id"&gt;&lt;/agent-3d&gt;</code></pre>
+
+        <p>That's it. The component is a standard HTML custom element — no framework, no build step, no bundler. It renders in any browser that supports WebGL, which is all of them.</p>
+
+        <h2>What &lt;agent-3d&gt; ships with</h2>
+
+        <h3>An LLM brain with memory and emotions</h3>
+        <p>The agent runs on the LLM you configure in the three.ws studio — Claude, GPT, and others. It has persistent memory across sessions so it remembers who it's talking to. Its emotion state — happy, curious, concerned, excited — is updated by the LLM with each response and drives the avatar's body language in real time.</p>
+
+        <h3>Physical DOM awareness</h3>
+        <p>The agent knows what's on the page. It can read element content, observe DOM mutations, understand layout, and physically react to it. In demos: watch it hop from card to card as you scroll. It can point to specific UI elements when explaining them. It moves through the page's actual space — not floating in a fixed corner disconnected from the content.</p>
+
+        <h3>Password field privacy</h3>
+        <p>When the browser's focus moves to an <code>input[type="password"]</code> element, the agent covers its eyes. It's a small interaction, but it immediately communicates that the agent is aware of what's happening, respects user privacy, and has social intelligence — not just chat capability.</p>
+
+        <h3>An on-chain identity that lives</h3>
+        <p>Every agent is minted as a Solana NFT with an ERC-8004 cross-chain wallet. The on-chain identity is the agent's persistent self — it carries the agent's history, reputation, and accumulated interactions. The agent doesn't disappear when you close the tab. Its identity is on-chain and it persists anywhere it's embedded.</p>
+
+        <h2>Why a web component</h2>
+        <p>Web components work everywhere HTML works. No React. No Next.js. No framework lock-in. You can drop <code>&lt;agent-3d&gt;</code> into a WordPress page, a Webflow site, a vanilla HTML file, or a React component tree — it behaves identically in all of them. The shadow DOM keeps the agent's internal structure isolated from the host page's styles, and the custom element API lets the host page communicate with the agent through standard attributes and events.</p>
+        <p>This was a deliberate choice. The internet is mostly not React. The 3D layer for the internet has to work on the whole internet.</p>
+
+        <h2>The action bridge</h2>
+        <p>The agent communicates bidirectionally with the host page through a secure postMessage bridge. The host page can:</p>
+        <ul>
+            <li>Send events to the agent ("user clicked checkout", "price alert triggered", "form submitted")</li>
+            <li>Set the agent's emotion or animation state from page JavaScript</li>
+            <li>Receive events from the agent ("agent completed task", "user wants to pay", "agent needs clarification")</li>
+        </ul>
+        <p>The bridge is gated by allowed origins — you configure which domains the agent will accept messages from in the Widget Studio. This is required: add your embedding domain to the allowed origins list or the action bridge will be blocked by CORS.</p>
+
+        <h2>CORS note for embedders</h2>
+        <p>Add the domain you're embedding on to the widget's allowed origins list in the three.ws studio before going live. Without it, the action bridge is blocked and the agent won't be able to communicate with your page — it will still render and chat, but page-level integrations won't work.</p>
+
+        <h2>Get started</h2>
+        <ul>
+            <li>Widget Studio: <a href="https://three.ws/widget-studio" rel="noopener">three.ws/widget-studio</a></li>
+            <li>Web component docs: <a href="https://three.ws/docs" rel="noopener">three.ws/docs</a></li>
+            <li>Open source: <a href="https://github.com/nirholas/three.ws" rel="noopener">github.com/nirholas/three.ws</a></li>
+        </ul>
+
+        <hr>
+        <p><a href="/blog">&larr; All posts</a></p>
+    </main>
+    <script src="/nav.js"></script>
+</body>
+</html>

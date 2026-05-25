@@ -84,6 +84,8 @@ const CAPABILITIES = [
 	'hotkey',
 	'state',
 	'mic',
+	'gesture',
+	'animation',
 ];
 
 const HEAD_BONE_NAMES = ['head', 'neck'];

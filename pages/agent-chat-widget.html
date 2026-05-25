@@ -87,9 +87,10 @@
 
 			const params = new URL(location.href).searchParams;
 			const agentId = params.get('agentId') || 'default';
-			const avatarUrl = params.get('avatarUrl') || '/default-avatar.glb';
+			const avatarUrl = params.get('avatarUrl') || '/avatars/default.glb';
 			const brandColor = params.get('brandColor') || '#4a9eff';
 			const theme = params.get('theme') || 'dark';
+			const idleAnim = params.get('idleAnim') || '';
 
 			document.documentElement.style.setProperty('--brand-color', brandColor);
 			if (theme === 'light') {
@@ -99,7 +100,14 @@
 			}
 
 			const viewer = new Viewer(document.getElementById('stage'), {});
-			viewer.load(avatarUrl, '', new Map());
+			viewer.load(avatarUrl, '', new Map()).then(() => {
+				if (idleAnim) {
+					const animUrl = `/animations/${idleAnim}.glb`;
+					viewer.animationManager.loadAnimation(idleAnim, animUrl, { loop: true })
+						.then(() => viewer.animationManager.play(idleAnim))
+						.catch(err => console.warn('[widget] animation load failed:', err));
+				}
+			});
 			
 			const sendBtn = document.getElementById('send-btn');
 			const chatInput = document.getElementById('chat-input');

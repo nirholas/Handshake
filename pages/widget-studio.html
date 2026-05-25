@@ -6,47 +6,139 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/marketplace.css" />
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 		<style>
 			.studio-container {
 				display: flex;
 				height: 100vh;
 			}
 			.studio-sidebar {
-				width: 300px;
+				width: 320px;
 				padding: 20px;
 				background: #111;
 				color: #eee;
+				overflow-y: auto;
+				flex-shrink: 0;
 			}
 			.studio-preview {
 				flex-grow: 1;
 				padding: 20px;
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+			}
+			.studio-preview iframe {
+				flex: 1;
+				border: 1px solid #333;
+				border-radius: 6px;
 			}
 			.form-group {
-				margin-bottom: 15px;
+				margin-bottom: 18px;
 			}
 			.form-group label {
 				display: block;
-				margin-bottom: 5px;
+				margin-bottom: 6px;
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				color: #888;
 			}
-			.form-group input, .form-group select {
+			.form-group input[type="text"],
+			.form-group input[type="color"],
+			.form-group select {
 				width: 100%;
 				padding: 8px;
-				background: #222;
-				border: 1px solid #444;
+				background: #1a1a1a;
+				border: 1px solid #333;
 				color: #eee;
 				border-radius: 4px;
+				box-sizing: border-box;
+				font-size: 13px;
 			}
+			.form-group input[type="color"] {
+				height: 36px;
+				padding: 2px 4px;
+				cursor: pointer;
+			}
+
+			/* avatar gallery */
+			.avatar-gallery {
+				display: grid;
+				grid-template-columns: repeat(2, 1fr);
+				gap: 8px;
+				margin-bottom: 10px;
+			}
+			.av-card {
+				border: 2px solid #2a2a2a;
+				border-radius: 6px;
+				cursor: pointer;
+				background: #0d0d0d;
+				overflow: hidden;
+				position: relative;
+				height: 110px;
+				display: flex;
+				align-items: flex-end;
+				justify-content: center;
+				padding-bottom: 7px;
+				transition: border-color 0.15s;
+			}
+			.av-card:hover { border-color: #444; }
+			.av-card.selected { border-color: #4a9eff; }
+			.av-card model-viewer {
+				position: absolute;
+				inset: 0;
+				width: 100%;
+				height: 100%;
+				--poster-color: transparent;
+			}
+			.av-card-label {
+				position: relative;
+				z-index: 1;
+				font-size: 11px;
+				color: #ddd;
+				background: rgba(0,0,0,0.6);
+				padding: 2px 7px;
+				border-radius: 3px;
+			}
+			.av-card-custom {
+				background: #0d0d0d;
+				border: 2px dashed #2a2a2a;
+				color: #555;
+				font-size: 12px;
+				text-align: center;
+				flex-direction: column;
+				gap: 4px;
+				justify-content: center;
+				align-items: center;
+				padding-bottom: 0;
+			}
+			.av-card-custom .plus { font-size: 22px; color: #333; line-height: 1; }
+
 			#embed-code {
 				width: 100%;
 				background: #0a0a0a;
 				color: #00ff41;
 				padding: 10px;
-				border: 1px solid #333;
+				border: 1px solid #2a2a2a;
 				border-radius: 4px;
-				min-height: 100px;
+				min-height: 80px;
 				white-space: pre-wrap;
 				word-wrap: break-word;
+				font-family: monospace;
+				font-size: 11px;
 			}
+			#copy-btn {
+				background: #1e1e1e;
+				border: 1px solid #333;
+				color: #ccc;
+				padding: 8px 16px;
+				font-size: 12px;
+				cursor: pointer;
+				border-radius: 4px;
+				width: 100%;
+				margin-top: 8px;
+			}
+			#copy-btn:hover { background: #252525; color: #fff; }
 		</style>
 			<link rel="stylesheet" href="/nav.css" />
 			<link rel="stylesheet" href="/footer.css" />
@@ -63,67 +155,143 @@
 
 		<div class="studio-container">
 			<aside class="studio-sidebar">
-				<h2>Widget Studio</h2>
+				<h2 style="margin-top:0">Widget Studio</h2>
+
 				<div class="form-group">
-					<label for="agent-select">Select Agent</label>
-					<select id="agent-select">
-						<!-- This would be populated dynamically -->
-						<option value="default">Default Agent</option>
+					<label>Avatar</label>
+					<div class="avatar-gallery" id="avatar-gallery">
+						<!-- built by JS -->
+					</div>
+					<input type="text" id="custom-avatar-url" placeholder="Paste custom GLB/GLTF URL…" />
+				</div>
+
+				<div class="form-group">
+					<label>Idle Animation</label>
+					<select id="anim-select">
+						<option value="">None</option>
+						<option value="Idle_Breath">Idle Breath</option>
+						<option value="Just_chilling">Just Chilling</option>
+						<option value="Standard_Vtubing_Movement">Vtubing Movement</option>
+						<option value="Standard_Waiting">Waiting</option>
+						<option value="dance_shuffle">Dance Shuffle</option>
+						<option value="Expressing_joy">Expressing Joy</option>
+						<option value="Cheering">Cheering</option>
+						<option value="Brag_n_Claps">Brag &amp; Claps</option>
+						<option value="Flexing_Arm">Flexing Arm</option>
+						<option value="Energic_conductor">Energetic Conductor</option>
+						<option value="Facepalm">Facepalm</option>
+						<option value="Call_Me">Call Me</option>
 					</select>
 				</div>
+
 				<div class="form-group">
-					<label for="avatar-url">Avatar URL</label>
-					<input type="text" id="avatar-url" value="/avatars/default.glb" />
-				</div>
-				<div class="form-group">
-					<label for="brand-color">Brand Color</label>
+					<label>Brand Color</label>
 					<input type="color" id="brand-color" value="#4a9eff" />
 				</div>
+
 				<div class="form-group">
-					<label for="theme-select">Theme</label>
+					<label>Theme</label>
 					<select id="theme-select">
 						<option value="dark">Dark</option>
 						<option value="light">Light</option>
 					</select>
 				</div>
-				<h3>Embed Code</h3>
+
+				<h3 style="font-size:13px;color:#888;margin-bottom:6px;">Embed Code</h3>
 				<pre id="embed-code"><code></code></pre>
 				<button id="copy-btn">Copy Code</button>
 			</aside>
 			<main class="studio-preview">
-				<iframe id="widget-preview" style="width: 100%; height: 100%; border: 1px solid #333;"></iframe>
+				<iframe id="widget-preview" style="width:100%;height:100%;border:1px solid #333;border-radius:6px;"></iframe>
 			</main>
 		</div>
 
 		<script>
-			const agentSelect = document.getElementById('agent-select');
-			const avatarUrlInput = document.getElementById('avatar-url');
+			const AVATARS = [
+				{ id: 'default', label: 'Default', url: '/avatars/default.glb' },
+				{ id: 'cz', label: 'CZ', url: '/avatars/cz.glb' },
+			];
+
+			const gallery = document.getElementById('avatar-gallery');
+			const customUrlInput = document.getElementById('custom-avatar-url');
+			const animSelect = document.getElementById('anim-select');
 			const brandColorInput = document.getElementById('brand-color');
 			const themeSelect = document.getElementById('theme-select');
 			const embedCodeEl = document.getElementById('embed-code').querySelector('code');
 			const previewFrame = document.getElementById('widget-preview');
 			const copyBtn = document.getElementById('copy-btn');
 
+			let selectedAvatarUrl = AVATARS[0].url;
+
+			AVATARS.forEach(av => {
+				const card = document.createElement('div');
+				card.className = 'av-card' + (av.url === selectedAvatarUrl ? ' selected' : '');
+				card.dataset.url = av.url;
+
+				const mv = document.createElement('model-viewer');
+				mv.setAttribute('src', av.url);
+				mv.setAttribute('auto-rotate', '');
+				mv.setAttribute('camera-controls', '');
+				mv.setAttribute('shadow-intensity', '0.5');
+				mv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;--poster-color:transparent';
+
+				const lbl = document.createElement('span');
+				lbl.className = 'av-card-label';
+				lbl.textContent = av.label;
+
+				card.appendChild(mv);
+				card.appendChild(lbl);
+
+				card.addEventListener('click', () => {
+					gallery.querySelectorAll('.av-card').forEach(c => c.classList.remove('selected'));
+					card.classList.add('selected');
+					selectedAvatarUrl = av.url;
+					customUrlInput.value = '';
+					updatePreviewAndCode();
+				});
+
+				gallery.appendChild(card);
+			});
+
+			// Custom URL card
+			const customCard = document.createElement('div');
+			customCard.className = 'av-card av-card-custom';
+			customCard.innerHTML = '<span class="plus">+</span>Custom URL';
+			customCard.addEventListener('click', () => { customUrlInput.focus(); });
+			gallery.appendChild(customCard);
+
+			customUrlInput.addEventListener('input', () => {
+				const val = customUrlInput.value.trim();
+				if (val) {
+					gallery.querySelectorAll('.av-card').forEach(c => c.classList.remove('selected'));
+					customCard.classList.add('selected');
+					selectedAvatarUrl = val;
+				} else {
+					customCard.classList.remove('selected');
+					const first = gallery.querySelector('.av-card:not(.av-card-custom)');
+					if (first) {
+						first.classList.add('selected');
+						selectedAvatarUrl = first.dataset.url;
+					}
+				}
+				updatePreviewAndCode();
+			});
+
 			function updatePreviewAndCode() {
-				const agentId = agentSelect.value;
-				const avatarUrl = avatarUrlInput.value;
+				const idleAnim = animSelect.value;
 				const brandColor = brandColorInput.value;
 				const theme = themeSelect.value;
 
-				const widgetUrl = new URL('/agent-chat-widget.html', location.origin);
-				widgetUrl.searchParams.set('agentId', agentId);
-				widgetUrl.searchParams.set('avatarUrl', avatarUrl);
-				widgetUrl.searchParams.set('brandColor', brandColor);
-				widgetUrl.searchParams.set('theme', theme);
+				const p = new URLSearchParams({ avatarUrl: selectedAvatarUrl, brandColor, theme });
+				if (idleAnim) p.set('idleAnim', idleAnim);
 
-				previewFrame.src = widgetUrl.href;
-				
-				const embedCode = `<iframe src="${widgetUrl.href}" width="400" height="600" style="border:none;"></iframe>`;
-				embedCodeEl.textContent = embedCode;
+				const widgetUrl = `/agent-chat-widget.html?${p}`;
+				previewFrame.src = widgetUrl;
+
+				embedCodeEl.textContent = `<iframe src="${location.origin}${widgetUrl}" width="400" height="600" style="border:none;"></iframe>`;
 			}
-			
-			agentSelect.addEventListener('change', updatePreviewAndCode);
-			avatarUrlInput.addEventListener('input', updatePreviewAndCode);
+
+			animSelect.addEventListener('change', updatePreviewAndCode);
 			brandColorInput.addEventListener('input', updatePreviewAndCode);
 			themeSelect.addEventListener('change', updatePreviewAndCode);
 
@@ -135,7 +303,7 @@
 
 			updatePreviewAndCode();
 		</script>
-	
+
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 </body>

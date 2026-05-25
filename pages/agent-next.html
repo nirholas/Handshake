@@ -538,8 +538,8 @@
 			try {
 				const r = await fetch(avatarUrl);
 				if (!r.ok) throw new Error('avatar not found');
-				const data = await r.json();
-				hydrate(data);
+				const json = await r.json();
+				hydrate(json.avatar || json.item || json);
 			} catch (e) {
 				console.error('Avatar load failed:', e);
 				hydrate({ name: 'Unknown agent', description: 'This agent could not be loaded.' });
@@ -551,10 +551,10 @@
 			document.getElementById('identity-desc').textContent =
 				data.description || 'A living 3D AI agent on three.ws — talk to it, animate it, embed it on your site, or remix it into your own.';
 
-			if (data.author || data.owner_username) {
-				const author = data.author || data.owner_username;
+			const author = data.author || data.owner_username || (data.source_meta && data.source_meta.provider);
+			if (author) {
 				document.getElementById('identity-author').innerHTML =
-					`by <a href="/u/${encodeURIComponent(author)}">@${author}</a>`;
+					`by <a href="/discover">${author === 'three-ws-selfie' ? 'three.ws' : '@' + author}</a>`;
 			}
 
 			document.title = `${data.name || 'Agent'} · three.ws`;
