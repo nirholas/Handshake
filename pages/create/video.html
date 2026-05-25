@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>Talking avatar video · three.ws</title>
+		<meta name="theme-color" content="#000000" />
+		<meta name="robots" content="noindex" />
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="stylesheet" href="/nav.css" />
+
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #d6ff3d;
+				--accent-ink: #0a0a0a;
+				--bg: #05060a;
+				--panel: #0f1018;
+				--panel2: #13141f;
+				--border: #1e1f2b;
+				--text: #eee;
+				--muted: #8a8d98;
+				--radius: 16px;
+			}
+			* { box-sizing: border-box; }
+			html, body { margin: 0; padding: 0; }
+			body {
+				font: 15px/1.55 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+				color: var(--text);
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			body::before {
+				content: '';
+				position: fixed;
+				inset: 0;
+				z-index: -1;
+				pointer-events: none;
+				background:
+					radial-gradient(800px 500px at 50% -100px, rgba(106,92,255,.1) 0, transparent 70%),
+					radial-gradient(600px 400px at 50% 110%, rgba(214,255,61,.04) 0, transparent 70%),
+					#05060a;
+			}
+
+			/* ── Page chrome ───────────────────────────────────────────── */
+			:root {
+				--space-xs: 0.382rem; --space-sm: 0.618rem;
+				--space-md: 1rem; --space-lg: 1.618rem;
+				--text-sm: 0.764rem; --text-lg: 1.236rem;
+				--radius-md: 5px; --header-h: 3.5rem;
+				--font-display: 'Space Grotesk','Inter',system-ui,sans-serif;
+			}
+			.skip-link { position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
+			.skip-link:focus { left:1rem; top:1rem; width:auto; height:auto; padding:.5rem 1rem; background:var(--bg); border:1px solid var(--border); border-radius:6px; z-index:9999; }
+
+			header.site-header {
+				display:flex; background:rgba(0,0,0,.8);
+				backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+				padding:0 var(--space-lg); height:var(--header-h);
+				align-items:center; overflow-x:auto; overflow-y:hidden;
+				white-space:nowrap; border-bottom:1px solid rgba(255,255,255,.06); z-index:10;
+			}
+			header.site-header h1 {
+				color:#fff; font-family:var(--font-display); font-size:var(--text-lg);
+				font-weight:600; margin:0; letter-spacing:-.01em;
+				display:flex; align-items:center; gap:var(--space-xs); line-height:var(--header-h);
+			}
+			header.site-header h1>a { color:inherit; font-size:inherit; text-decoration:none; display:flex; align-items:center; gap:.5rem; }
+			.wordmark-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#a78bfa,#6366f1); box-shadow:0 0 10px rgba(139,92,246,.6); display:inline-block; }
+			.nav-logo-img { width:28px; height:28px; object-fit:contain; border-radius:6px; }
+			.features-nav { margin-left:auto; display:flex; gap:var(--space-md); align-items:center; }
+			.features-nav a { color:rgba(255,255,255,.5); text-decoration:none; font-size:var(--text-sm); font-weight:500; padding:.35rem .7rem; border-radius:var(--radius-md); transition:color .18s,background .18s; }
+			.features-nav a:hover { color:#fff; background:rgba(255,255,255,.04); }
+			.nav-sign-in { border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-md); }
+			.nav-user { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.04); font-size:var(--text-sm); color:rgba(255,255,255,.55); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+			.nav-user::before { content:''; width:6px; height:6px; border-radius:50%; background:#4ade80; flex-shrink:0; }
+			#btn-wallet-signin { background:none; border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.5); font-size:var(--text-sm); font-weight:500; padding:.35rem .7rem; border-radius:var(--radius-md); cursor:pointer; transition:color .18s,background .18s,border-color .18s; font-family:inherit; }
+			#btn-wallet-signin:hover { color:#fff; background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.2); }
+
+			/* ── Layout ─────────────────────────────────────────────────── */
+			main {
+				max-width: 1100px;
+				margin: 0 auto;
+				padding: 48px 24px 80px;
+			}
+
+			.page-header {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				margin-bottom: 40px;
+			}
+			.back-btn {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 36px;
+				height: 36px;
+				border-radius: 10px;
+				background: rgba(255,255,255,.04);
+				border: 1px solid var(--border);
+				color: var(--muted);
+				cursor: pointer;
+				text-decoration: none;
+				flex-shrink: 0;
+				transition: color .15s, border-color .15s;
+			}
+			.back-btn:hover { color: var(--text); border-color: #2c2d3d; }
+			.back-btn svg { width: 18px; height: 18px; }
+			.page-title { font-size: 22px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+			.page-subtitle { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+
+			/* ── Two-panel layout ───────────────────────────────────────── */
+			.workspace {
+				display: grid;
+				grid-template-columns: 1fr 380px;
+				gap: 24px;
+				align-items: start;
+			}
+
+			/* ── Left: avatar preview ───────────────────────────────────── */
+			.avatar-panel {
+				background: var(--panel);
+				border: 1.5px solid var(--border);
+				border-radius: var(--radius);
+				overflow: hidden;
+			}
+			.avatar-preview-wrap {
+				position: relative;
+				aspect-ratio: 4/5;
+				background: radial-gradient(circle at 50% 30%, rgba(214,255,61,.05) 0, transparent 60%), rgba(255,255,255,.015);
+			}
+			model-viewer {
+				width: 100%;
+				height: 100%;
+				--poster-color: transparent;
+			}
+			.avatar-select-bar {
+				padding: 12px 16px;
+				border-top: 1px solid var(--border);
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				overflow-x: auto;
+				scrollbar-width: none;
+			}
+			.avatar-select-bar::-webkit-scrollbar { display: none; }
+			.avatar-thumb {
+				width: 48px;
+				height: 48px;
+				border-radius: 10px;
+				border: 2px solid var(--border);
+				overflow: hidden;
+				cursor: pointer;
+				flex-shrink: 0;
+				background: var(--panel2);
+				transition: border-color .15s;
+				position: relative;
+			}
+			.avatar-thumb.is-selected { border-color: var(--accent); }
+			.avatar-thumb img { width: 100%; height: 100%; object-fit: cover; }
+			.avatar-thumb-placeholder {
+				width: 100%;
+				height: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: var(--muted);
+			}
+			.avatar-thumb-placeholder svg { width: 20px; height: 20px; }
+			.avatar-select-loading {
+				color: var(--muted);
+				font-size: 12px;
+				padding: 4px 0;
+			}
+
+			/* ── Right: controls ────────────────────────────────────────── */
+			.controls-panel {
+				display: flex;
+				flex-direction: column;
+				gap: 20px;
+			}
+			.control-block {
+				background: var(--panel);
+				border: 1.5px solid var(--border);
+				border-radius: var(--radius);
+				padding: 20px;
+			}
+			.control-label {
+				font-size: 12px;
+				font-weight: 600;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: var(--muted);
+				margin: 0 0 12px;
+			}
+
+			/* Audio upload */
+			.audio-drop {
+				border: 1.5px dashed var(--border);
+				border-radius: 12px;
+				padding: 28px 20px;
+				text-align: center;
+				cursor: pointer;
+				transition: border-color .2s, background .2s;
+				color: var(--muted);
+				font-size: 13px;
+				position: relative;
+			}
+			.audio-drop:hover, .audio-drop.is-dragover {
+				border-color: rgba(214,255,61,.4);
+				background: rgba(214,255,61,.03);
+				color: var(--text);
+			}
+			.audio-drop svg { width: 28px; height: 28px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
+			.audio-drop input[type="file"] {
+				position: absolute;
+				inset: 0;
+				opacity: 0;
+				cursor: pointer;
+				width: 100%;
+				height: 100%;
+			}
+			.audio-file-name {
+				display: none;
+				align-items: center;
+				gap: 10px;
+				padding: 10px 12px;
+				border-radius: 10px;
+				background: rgba(255,255,255,.04);
+				border: 1px solid var(--border);
+				font-size: 13px;
+			}
+			.audio-file-name.is-visible { display: flex; }
+			.audio-file-name svg { width: 16px; height: 16px; color: var(--accent); flex-shrink: 0; }
+			.audio-file-name .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.audio-file-clear {
+				background: none;
+				border: none;
+				color: var(--muted);
+				cursor: pointer;
+				padding: 2px;
+				border-radius: 4px;
+				display: flex;
+				align-items: center;
+			}
+			.audio-file-clear:hover { color: var(--text); }
+			.audio-file-clear svg { width: 14px; height: 14px; }
+
+			/* Prompt */
+			.prompt-input {
+				width: 100%;
+				background: rgba(255,255,255,.04);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 10px 12px;
+				color: var(--text);
+				font: inherit;
+				font-size: 13px;
+				resize: vertical;
+				min-height: 72px;
+				transition: border-color .15s;
+				outline: none;
+			}
+			.prompt-input:focus { border-color: rgba(214,255,61,.35); }
+			.prompt-input::placeholder { color: var(--muted); }
+
+			/* Generate button */
+			.generate-btn {
+				width: 100%;
+				padding: 13px 20px;
+				border-radius: 12px;
+				background: var(--accent);
+				border: none;
+				color: var(--accent-ink);
+				font: inherit;
+				font-size: 15px;
+				font-weight: 700;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
+				transition: opacity .15s, transform .12s;
+			}
+			.generate-btn:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+			.generate-btn:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+			.generate-btn svg { width: 18px; height: 18px; }
+
+			/* ── Progress / result ──────────────────────────────────────── */
+			.result-block {
+				background: var(--panel);
+				border: 1.5px solid var(--border);
+				border-radius: var(--radius);
+				overflow: hidden;
+				display: none;
+			}
+			.result-block.is-visible { display: block; }
+
+			.progress-area {
+				padding: 32px 24px;
+				text-align: center;
+				display: none;
+			}
+			.progress-area.is-visible { display: block; }
+			.progress-spinner {
+				width: 36px;
+				height: 36px;
+				border: 3px solid rgba(255,255,255,.08);
+				border-top-color: var(--accent);
+				border-radius: 50%;
+				animation: spin .8s linear infinite;
+				margin: 0 auto 16px;
+			}
+			@keyframes spin { to { transform: rotate(360deg); } }
+			.progress-label { font-size: 14px; font-weight: 500; margin: 0 0 6px; }
+			.progress-sublabel { font-size: 12px; color: var(--muted); margin: 0; }
+
+			.video-area {
+				display: none;
+			}
+			.video-area.is-visible { display: block; }
+			.result-video {
+				width: 100%;
+				display: block;
+				background: #000;
+				max-height: 480px;
+			}
+			.video-actions {
+				display: flex;
+				gap: 10px;
+				padding: 14px 16px;
+				border-top: 1px solid var(--border);
+			}
+			.video-action-btn {
+				flex: 1;
+				padding: 9px 14px;
+				border-radius: 10px;
+				background: rgba(255,255,255,.05);
+				border: 1px solid var(--border);
+				color: var(--text);
+				font: inherit;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 6px;
+				text-decoration: none;
+				transition: background .15s, border-color .15s;
+			}
+			.video-action-btn:hover { background: rgba(255,255,255,.09); border-color: #2c2d3d; }
+			.video-action-btn svg { width: 15px; height: 15px; }
+
+			.error-area {
+				padding: 24px;
+				display: none;
+				text-align: center;
+			}
+			.error-area.is-visible { display: block; }
+			.error-msg { font-size: 13px; color: #ffb3b3; margin: 0 0 14px; }
+			.retry-btn {
+				padding: 8px 16px;
+				border-radius: 10px;
+				background: rgba(255,255,255,.05);
+				border: 1px solid var(--border);
+				color: var(--text);
+				font: inherit;
+				font-size: 13px;
+				cursor: pointer;
+			}
+			.retry-btn:hover { background: rgba(255,255,255,.09); }
+
+			/* ── Status toast ───────────────────────────────────────────── */
+			.status-toast {
+				position: fixed;
+				bottom: 32px;
+				left: 50%;
+				transform: translateX(-50%);
+				padding: 11px 20px;
+				border-radius: 12px;
+				font-size: 13px;
+				font-weight: 500;
+				border: 1px solid var(--border);
+				background: var(--panel);
+				white-space: nowrap;
+				z-index: 50;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				box-shadow: 0 8px 24px rgba(0,0,0,.5);
+			}
+			.status-toast.error { border-color: rgba(255,92,92,.4); color: #ffb3b3; background: #140a0a; }
+
+			/* ── Responsive ─────────────────────────────────────────────── */
+			@media (max-width: 780px) {
+				main { padding: 32px 16px 60px; }
+				.workspace { grid-template-columns: 1fr; }
+				.avatar-preview-wrap { aspect-ratio: 1; }
+			}
+		</style>
+	</head>
+	<body>
+		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main id="main-content">
+			<div class="page-header">
+				<a href="/create" class="back-btn" aria-label="Back to Create">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+				</a>
+				<div>
+					<h1 class="page-title">Talking avatar video</h1>
+					<p class="page-subtitle">Pick your avatar, upload audio, and generate a lip-synced video.</p>
+				</div>
+			</div>
+
+			<div class="workspace">
+				<!-- Left: 3D avatar preview + selector -->
+				<div class="avatar-panel">
+					<div class="avatar-preview-wrap">
+						<model-viewer
+							id="avatar-viewer"
+							src="/avatars/default.glb"
+							alt="Selected avatar preview"
+							auto-rotate
+							auto-rotate-delay="500"
+							rotation-per-second="12deg"
+							interaction-prompt="none"
+							disable-zoom
+							disable-pan
+							camera-orbit="0deg 80deg auto"
+							shadow-intensity="0.4"
+							exposure="0.95"
+							environment-image="neutral"
+							loading="eager"
+						></model-viewer>
+					</div>
+					<div class="avatar-select-bar" id="avatar-bar">
+						<span class="avatar-select-loading" id="avatar-bar-loading">Loading avatars…</span>
+					</div>
+				</div>
+
+				<!-- Right: controls -->
+				<div class="controls-panel">
+					<!-- Audio -->
+					<div class="control-block">
+						<p class="control-label">Audio file</p>
+						<div class="audio-drop" id="audio-drop">
+							<input type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac" id="audio-input" aria-label="Upload audio file" />
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M9 18V5l12-2v13"/>
+								<circle cx="6" cy="18" r="3"/>
+								<circle cx="18" cy="16" r="3"/>
+							</svg>
+							<div>Drop a WAV, MP3, or M4A here</div>
+							<div style="font-size:11.5px; margin-top:5px; opacity:.6">or click to browse</div>
+						</div>
+						<div class="audio-file-name" id="audio-file-name">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+							<span class="fname" id="audio-fname"></span>
+							<button class="audio-file-clear" id="audio-clear" aria-label="Remove audio">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+							</button>
+						</div>
+					</div>
+
+					<!-- Prompt -->
+					<div class="control-block">
+						<p class="control-label">Scene description <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></p>
+						<textarea
+							class="prompt-input"
+							id="prompt-input"
+							placeholder="e.g. A person speaking on a stage with dramatic lighting…"
+							rows="3"
+						></textarea>
+					</div>
+
+					<!-- Generate -->
+					<button class="generate-btn" id="generate-btn" disabled>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+						Generate video
+					</button>
+
+					<!-- Result block -->
+					<div class="result-block" id="result-block">
+						<!-- Progress -->
+						<div class="progress-area" id="progress-area">
+							<div class="progress-spinner"></div>
+							<p class="progress-label" id="progress-label">Generating…</p>
+							<p class="progress-sublabel">Takes 2–4 minutes on GPU. Hang tight.</p>
+						</div>
+						<!-- Video -->
+						<div class="video-area" id="video-area">
+							<video class="result-video" id="result-video" controls playsinline></video>
+							<div class="video-actions">
+								<a class="video-action-btn" id="download-btn" download="avatar-video.mp4">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+									Download
+								</a>
+								<button class="video-action-btn" id="new-video-btn">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.43"/></svg>
+									New video
+								</button>
+							</div>
+						</div>
+						<!-- Error -->
+						<div class="error-area" id="error-area">
+							<p class="error-msg" id="error-msg">Generation failed. Please try again.</p>
+							<button class="retry-btn" id="retry-btn">Try again</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<div class="status-toast" id="status-toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
+		<script type="module" src="/src/create-video.js"></script>
+		<script>
+			(function () {
+				try {
+					const raw = localStorage.getItem('3dagent:auth-hint');
+					if (raw) {
+						const { authed, name } = JSON.parse(raw);
+						if (authed) {
+							const el = document.getElementById('nav-sign-in');
+							if (el) { el.textContent = 'Dashboard'; el.href = '/dashboard'; }
+							const myAgents = document.getElementById('nav-my-agents');
+							if (myAgents) myAgents.hidden = false;
+							const userEl = document.getElementById('nav-user');
+							if (userEl && name) { userEl.textContent = name; userEl.hidden = false; }
+						}
+					}
+				} catch (_) {}
+			})();
+		</script>
+		<script type="module">
+			import { wireSigninButton } from '/src/wallet-auth.js';
+			const btn = document.getElementById('btn-wallet-signin');
+			if (btn) wireSigninButton(btn);
+		</script>
+	</body>
+</html>

@@ -3,22 +3,24 @@
 // Submits a talking-avatar video generation job to the LongCat-Video-Avatar-1.5
 // Cloud Run worker. Returns immediately with a job_id for polling.
 //
+// Free-plan users get 1 lifetime generation. Paid users are unlimited.
+//
 // Request body (JSON):
 //   image_url  string  — publicly accessible reference image (PNG/JPG)
 //   audio_url  string  — publicly accessible audio file (WAV/MP3)
-//   prompt     string? — optional text description (default: natural speech)
-//   avatar_id  string? — three.ws avatar id; resolved to a GLB render URL
-//                        if image_url is not supplied
+//   prompt     string? — optional text description
+//   avatar_id  string? — three.ws avatar id; resolved to a render URL
+//                        when image_url is not supplied
 //
 // Response 202:
 //   { job_id, status: "queued" }
 //
 // Errors:
-//   400 invalid_request  — missing required fields
-//   502 worker_error     — Cloud Run worker returned an error
+//   400 invalid_request   — missing required fields
+//   402 free_trial_used   — free user has already used their 1 free generation
+//   502 worker_error      — Cloud Run worker returned an error
 
 import { cors, error, json, wrap } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { publicUrl } from '../_lib/r2.js';
 import { requireSession } from '../_lib/zauth.js';
@@ -56,6 +58,22 @@ export default wrap(async (req, res) => {
 		return error(res, 401, 'unauthorized', 'valid session required');
 	}
 
+	const userId = session.id ?? session.userId;
+
+	// Check plan + usage. Free plan users get exactly 1 lifetime generation.
+	const [userRow] = await sql`
+		select plan from users where id = ${userId} and deleted_at is null limit 1
+	`;
+	if (userRow?.plan === 'free') {
+		const [usageRow] = await sql`
+			select count(*) as n from usage_events
+			where user_id = ${userId} and kind = 'video_generate'
+		`;
+		if (Number(usageRow?.n) >= 1) {
+			return error(res, 402, 'free_trial_used', 'You have used your 1 free video. Upgrade to generate more.');
+		}
+	}
+
 	const body = req.body || {};
 	let { image_url: imageUrl, audio_url: audioUrl, avatar_id: avatarId, prompt } = body;
 
@@ -71,12 +89,6 @@ export default wrap(async (req, res) => {
 
 	if (!imageUrl) return error(res, 400, 'invalid_request', 'image_url or avatar_id is required');
 
-	const workerBody = {
-		image_url: imageUrl,
-		audio_url: audioUrl,
-		prompt: prompt || 'A person talking naturally.',
-	};
-
 	let workerRes;
 	try {
 		workerRes = await fetch(`${workerUrl()}/generate`, {
@@ -85,7 +97,11 @@ export default wrap(async (req, res) => {
 				'content-type': 'application/json',
 				authorization: `Bearer ${workerKey()}`,
 			},
-			body: JSON.stringify(workerBody),
+			body: JSON.stringify({
+				image_url: imageUrl,
+				audio_url: audioUrl,
+				prompt: prompt || 'A person talking naturally.',
+			}),
 		});
 	} catch (err) {
 		return error(res, 502, 'worker_unreachable', err?.message || 'worker request failed');
@@ -97,5 +113,12 @@ export default wrap(async (req, res) => {
 	}
 
 	const result = await workerRes.json();
+
+	// Record usage so we can enforce the free trial limit.
+	await sql`
+		insert into usage_events (user_id, kind, meta)
+		values (${userId}, 'video_generate', ${JSON.stringify({ job_id: result.job_id })}::jsonb)
+	`.catch(() => {});
+
 	return json(res, 202, { job_id: result.job_id, status: result.status });
 });

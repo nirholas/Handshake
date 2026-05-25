@@ -1895,6 +1895,10 @@
             "dest": "/import-rpm.html"
         },
         {
+            "src": "/create/video/?",
+            "dest": "/create/video.html"
+        },
+        {
             "src": "/create/selfie",
             "dest": "/create-selfie.html"
         },

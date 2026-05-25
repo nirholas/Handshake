@@ -161,7 +161,7 @@
 				pointer-events: none;
 			}
 			section.s {
-				padding: 140px 32px;
+				padding: 96px 32px;
 				max-width: 1280px; margin: 0 auto;
 			}
 			.s-num {
@@ -308,17 +308,21 @@
 		<div class="stage" aria-hidden="true">
 			<model-viewer
 				id="hero-mv"
-				src="https://three.ws/avatars/cz.glb"
+				src="https://three.ws/animations/robotexpressive.glb"
 				camera-controls
 				disable-zoom
 				interaction-prompt="none"
-				exposure="1.1"
-				shadow-intensity="0.8"
+				exposure="1.05"
+				shadow-intensity="0.9"
 				shadow-softness="1"
-				camera-orbit="0deg 90deg 2.2m"
-				field-of-view="28deg"
+				camera-orbit="15deg 82deg 4.2m"
+				camera-target="0m 1m 0m"
+				min-camera-orbit="auto auto 3.5m"
+				max-camera-orbit="auto auto 5.5m"
+				field-of-view="32deg"
 				touch-action="pan-y"
 				autoplay
+				animation-name="Wave"
 			></model-viewer>
 		</div>
 
@@ -489,7 +493,7 @@
 				var mv = document.getElementById('hero-mv');
 				if (!mv) return;
 
-				var baseTheta = 0, baseRadius = 2.2, basePhi = 90;
+				var baseTheta = 15, baseRadius = 4.2, basePhi = 82;
 				var mouseX = 0, mouseY = 0, scrollY = 0;
 				var raf = null;
 

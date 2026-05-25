@@ -110,7 +110,7 @@ async function boot() {
 		if (await isAtAvatarLimit()) return;
 		window.location.href = '/create/selfie';
 	});
-	wireCard('card-video-avatar', async () => {
+	wireCard('card-video-avatar', () => {
 		if (!_videoAvatarReady) {
 			showStatus('Talking avatar video is coming soon — stay tuned.', 'info');
 			return;
@@ -118,19 +118,6 @@ async function boot() {
 		if (window.__authed === false) {
 			window.location.replace(`/login?next=${encodeURIComponent('/create/video')}`);
 			return;
-		}
-		// Gate on paid plan — free users see an upgrade prompt.
-		try {
-			const res = await apiFetch('/api/usage/summary');
-			if (res.ok) {
-				const { plan } = await res.json();
-				if (plan?.plan === 'free') {
-					showStatus('Talking avatar video requires a paid plan. Upgrade in your dashboard.', 'error');
-					return;
-				}
-			}
-		} catch {
-			// network blip — let the destination page do the final auth check.
 		}
 		window.location.href = '/create/video';
 	});
