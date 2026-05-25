@@ -18,17 +18,16 @@ substitutions:
   _REPO: avatar-reconstruction
   _GCS_BUCKET: three-ws-avatar-reconstructions
   _MIN_INSTANCES: "1"   # keep one warm — face pipeline cold-start is ~15 s
-  _MAX_INSTANCES: "5"   # scale out for burst selfie creation
+  _MAX_INSTANCES: "3"   # capped at 3 by GPU quota (NvidiaL4 no-zonal-redundancy)
 
 steps:
   # ── Build ──────────────────────────────────────────────────────────────────
   - id: build
     name: gcr.io/cloud-builders/docker
-    dir: workers/avatar-reconstruction
     args:
       - build
       - --tag
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID
       - --tag
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
       - --cache-from
@@ -51,15 +50,18 @@ steps:
       - run
       - deploy
       - ${_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID
+      - --service-account=avatar-reconstruction-sa@$PROJECT_ID.iam.gserviceaccount.com
       - --region=${_REGION}
       - --platform=managed
       - --port=8080
       # GPU: NVIDIA L4 (24 GB VRAM) — sufficient for InstantMesh-large
       - --gpu=1
       - --gpu-type=nvidia-l4
+      - --no-gpu-zonal-redundancy
+      - --no-cpu-throttling
       - --cpu=4
-      - --memory=8Gi
+      - --memory=16Gi
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
       # Face texture pipeline completes in ~30 s; 120 s is generous headroom.
@@ -70,8 +72,10 @@ steps:
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+
+serviceAccount: projects/$PROJECT_ID/serviceAccounts/avatar-reconstruction-sa@$PROJECT_ID.iam.gserviceaccount.com
 
 options:
   # Use a beefier builder machine to speed up the large Docker build.

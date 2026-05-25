@@ -25,7 +25,7 @@ def load_glb(data: bytes) -> pygltflib.GLTF2:
 
 
 def save_glb(glb: pygltflib.GLTF2) -> bytes:
-    return bytes(glb.save_to_bytes())
+    return b"".join(glb.save_to_bytes())
 
 
 def _extract_image_bytes(glb: pygltflib.GLTF2, image_idx: int) -> bytes:
