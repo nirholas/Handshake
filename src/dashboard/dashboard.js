@@ -4433,87 +4433,108 @@ async function openWidgetDrawer(w, ctx) {
 	const overlay = document.createElement('div');
 	overlay.className = 'drawer-overlay';
 	const drawer = document.createElement('aside');
-	drawer.className = 'drawer';
+	drawer.className = 'drawer drawer-wide';
 	drawer.setAttribute('role', 'dialog');
 	drawer.setAttribute('aria-label', `Widget details — ${w.name || 'untitled'}`);
 	drawer.tabIndex = -1;
 
+	const origin = location.origin;
 	const drawerPoster = `/api/widgets/${encodeURIComponent(w.id)}/og`;
 	const previewSrc = `/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1&poster=${encodeURIComponent(drawerPoster)}`;
-	const pageUrl = `${location.origin}/w/${encodeURIComponent(w.id)}`;
+	const pageUrl = `${origin}/w/${encodeURIComponent(w.id)}`;
 	const iframeSnippet = makeIframeSnippet(w, pageUrl, 600, 600);
-	const scriptSnippet = `<script async src="${location.origin}/embed.js" data-widget="${esc(w.id)}"></script>`;
+	const scriptSnippet = `<script async src="${origin}/embed.js" data-widget="${esc(w.id)}"></script>`;
+	const reactSnippet = [
+		`import { useRef } from 'react';`,
+		``,
+		`export function Widget({ onMessage }) {`,
+		`  const ref = useRef(null);`,
+		`  const WIDGET_ID = ${JSON.stringify(w.id)};`,
+		`  const WIDGET_URL = ${JSON.stringify(pageUrl)};`,
+		``,
+		`  return (`,
+		`    <iframe`,
+		`      ref={ref}`,
+		`      src={WIDGET_URL}`,
+		`      style={{ width: '100%', height: 600, border: 0, borderRadius: 12 }}`,
+		`      title="${esc(w.name || 'Widget')}"`,
+		`    />`,
+		`  );`,
+		`}`,
+	].join('\n');
+	const nextSnippet = [
+		`'use client';`,
+		`import Script from 'next/script';`,
+		``,
+		`export default function Page() {`,
+		`  return (`,
+		`    <>`,
+		`      <div id="widget-${w.id.slice(0, 8)}"></div>`,
+		`      <Script`,
+		`        src="${origin}/embed.js"`,
+		`        data-widget="${w.id}"`,
+		`        onLoad={() => console.log('widget loaded')}`,
+		`      />`,
+		`    </>`,
+		`  );`,
+		`}`,
+	].join('\n');
 	const meta = WIDGET_TYPE_META[w.type] || { label: w.type, color: '#888' };
 
+	const snippets = [
+		{ label: 'Iframe', code: iframeSnippet },
+		{ label: 'Script tag', code: scriptSnippet },
+		{ label: 'React component', code: reactSnippet },
+		{ label: 'Next.js', code: nextSnippet },
+		{ label: 'Direct link', code: pageUrl },
+	];
+
 	drawer.innerHTML = `
-		<header>
-			<h2>${esc(w.name || 'Untitled')}</h2>
+		<header style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center">
+			<div>
+				<h2 style="margin:0 0 4px">${esc(w.name || 'Untitled')}</h2>
+				<p class="muted" style="margin:0; font-size:12px">${esc(w.id)}</p>
+			</div>
 			<button class="btn sec" data-close type="button" aria-label="Close details">Close</button>
 		</header>
-		<div class="body">
-			<div class="frame-lg"><iframe src="${attr(previewSrc)}" title="Preview"></iframe></div>
+		<div class="body" style="display:grid; grid-template-columns:minmax(260px,1fr) minmax(320px,1.4fr); gap:20px; align-items:start; padding:16px 20px">
 			<div>
-				<span class="pill"><span class="dot" style="background:${attr(meta.color)}"></span>${esc(meta.label)}</span>
-				<span class="muted" style="margin-left:8px">${esc(w.is_public ? 'Public' : 'Private')} · updated ${timeAgo(w.updated_at)}</span>
+				<div class="card" style="padding:8px">
+					<iframe id="widget-preview-frame" src="${attr(previewSrc)}" style="width:100%;aspect-ratio:3/4;border:0;border-radius:10px;background:#0f0f17" title="Preview"></iframe>
+					<div class="row" style="gap:6px; flex-wrap:wrap; padding:8px 6px 0">
+						<button class="btn sec" type="button" data-widget-test="send" title="Send test data">Test</button>
+						<a href="${attr(pageUrl)}" target="_blank" rel="noopener noreferrer" class="btn sec" style="text-decoration:none">Open →</a>
+					</div>
+					<div class="row" style="justify-content:space-between; padding:10px 6px 4px">
+						<strong>${esc(w.name || 'Widget')}</strong>
+						<span class="pill"><span class="dot" style="background:${attr(meta.color)}"></span>${esc(meta.label)}</span>
+					</div>
+					<p class="muted" style="padding:0 6px; margin:4px 0 0; font-size:11px">${esc(w.is_public ? 'Public' : 'Private')} · updated ${timeAgo(w.updated_at)}</p>
+					<div id="widget-stats-region" style="padding:0 6px; margin-top:8px"><div class="muted" style="font-size:11px">Loading stats…</div></div>
+				</div>
 			</div>
-			<div id="stats-region" aria-live="polite"><div class="muted">Loading stats…</div></div>
-			${
-				w.type === 'talking-agent'
-					? `
-			<section id="transcripts-region" aria-label="Chat transcripts">
-				<div style="display:flex; justify-content:space-between; align-items:baseline; margin:18px 0 6px">
-					<h3 style="margin:0; font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:#aaa">Chat transcripts</h3>
-					<a href="${attr(api.transcriptsCsvUrl(w.id))}" download class="btn sec" style="font-size:11px; padding:2px 8px">Download CSV</a>
+			<div id="widget-embed-region" style="display:flex; flex-direction:column; gap:14px">
+				${snippetTabs(snippets)}
+				<div class="card">
+					<h3 style="margin:0 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#aaa">Configuration</h3>
+					<pre style="margin:0; max-height:160px; overflow:auto; white-space:pre; font-size:11px">${esc(JSON.stringify(w.config || {}, null, 2))}</pre>
 				</div>
-				<div id="transcripts-totals" class="muted" style="font-size:12px"></div>
-				<div id="transcripts-list" style="display:flex; flex-direction:column; gap:6px; margin-top:8px"></div>
-				<div id="transcripts-detail" hidden></div>
-				<div id="knowledge-region" style="margin-top:14px">
-					<h3 style="margin:0 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:#aaa">Knowledge</h3>
-					<div id="knowledge-summary" class="muted" style="font-size:12px">Loading…</div>
-					<details style="margin-top:8px">
-						<summary style="font-size:12px; cursor:pointer">Test a retrieval query</summary>
-						<div style="margin-top:8px; display:flex; flex-direction:column; gap:6px">
-							<div style="display:flex; gap:6px">
-								<input id="knowledge-test-q" type="text" placeholder='e.g. "what is your refund policy?"'
-									style="flex:1; background:#0f0f17; border:1px solid var(--border); border-radius:6px; padding:6px 8px; font-size:13px; color:#eee">
-								<button id="knowledge-test-go" type="button" class="btn sec" style="font-size:12px">Run</button>
-							</div>
-							<div id="knowledge-test-results" class="muted" style="font-size:12px"></div>
-						</div>
-					</details>
+				${w.type === 'talking-agent' ? `<div id="widget-transcripts-region"></div>` : ''}
+				<div class="danger-zone">
+					<h3 style="margin:0 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#f84747">Delete widget</h3>
+					<p class="muted" style="margin:0 0 10px; font-size:12px">This removes the widget for everyone. Embeds will return 404.</p>
+					<button class="btn-primary btn-danger" data-drawer-delete type="button">Delete</button>
 				</div>
-			</section>
-			`
-					: ''
-			}
-			<details>
-				<summary>Embed code</summary>
-				<div style="display:flex; flex-direction:column; gap:10px; margin-top:8px">
-					<div>
-						<div class="row" style="justify-content:space-between; margin-bottom:4px"><strong style="font-size:12px">Iframe</strong><button class="btn sec" data-copy="iframe" type="button">Copy</button></div>
-						<pre id="snip-iframe" style="margin:0">${esc(iframeSnippet)}</pre>
-					</div>
-					<div>
-						<div class="row" style="justify-content:space-between; margin-bottom:4px"><strong style="font-size:12px">One-line script</strong><button class="btn sec" data-copy="script" type="button">Copy</button></div>
-						<pre id="snip-script" style="margin:0">${esc(scriptSnippet)}</pre>
-					</div>
-					<div>
-						<div class="row" style="justify-content:space-between; margin-bottom:4px"><strong style="font-size:12px">Direct URL</strong><button class="btn sec" data-copy="url" type="button">Copy</button></div>
-						<pre id="snip-url" style="margin:0">${esc(pageUrl)}</pre>
-					</div>
-				</div>
-			</details>
-			<details>
-				<summary>Configuration (read-only)</summary>
-				<pre style="margin:8px 0 0; max-height:220px">${esc(JSON.stringify(w.config || {}, null, 2))}</pre>
-			</details>
-			<div class="danger-zone">
-				<h3>Danger zone</h3>
-				<p class="muted" style="margin:0 0 10px; font-size:12px">Deleting removes the widget for everyone. Embeds will return 404.</p>
-				<button class="btn-primary btn-danger" data-drawer-delete type="button">Delete this widget</button>
 			</div>
 		</div>
+		<style>
+			.drawer-wide { width: 90vw; max-width: 1200px; }
+			.drawer-wide .body { max-height: calc(100vh - 140px); overflow-y: auto; }
+			@media (max-width: 960px) {
+				.drawer-wide { width: 100vw; }
+				.body { grid-template-columns: 1fr !important; }
+			}
+		</style>
 	`;
 
 	document.body.appendChild(overlay);
@@ -4540,10 +4561,12 @@ async function openWidgetDrawer(w, ctx) {
 	overlay.addEventListener('click', close);
 	drawer.querySelector('[data-close]').addEventListener('click', close);
 
+	bindSnippetTabs(drawer);
 	for (const btn of drawer.querySelectorAll('[data-copy]')) {
 		btn.addEventListener('click', async () => {
-			const target = drawer.querySelector(`#snip-${btn.dataset.copy}`);
-			if (target) await copyToClipboard(target.textContent, btn);
+			const panelIdx = btn.closest('.embed-tab-panel')?.dataset.panelIndex || '0';
+			const pre = btn.closest('[data-tabs]')?.querySelector(`[data-panel-index="${panelIdx}"] pre`);
+			if (pre) await copyToClipboard(pre.textContent, btn);
 		});
 	}
 
@@ -4559,19 +4582,43 @@ async function openWidgetDrawer(w, ctx) {
 		}
 	});
 
-	// Stats — load async, render sparkline.
+	drawer.querySelector('[data-widget-test]')?.addEventListener('click', () => {
+		const frame = drawer.querySelector('#widget-preview-frame');
+		if (!frame) return;
+		const msg = { type: 'test', timestamp: new Date().toISOString() };
+		try {
+			const frameOrigin = new URL(frame.src, location.href).origin;
+			frame.contentWindow?.postMessage(msg, frameOrigin);
+		} catch (e) {
+			console.warn('test message failed:', e);
+		}
+	});
+
+	// Stats
 	try {
 		const { stats } = await api.widgetStats(w.id);
-		drawer.querySelector('#stats-region').innerHTML = renderStatsPanel(w, stats);
+		drawer.querySelector('#widget-stats-region').innerHTML = renderStatsPanel(w, stats);
 	} catch (err) {
-		drawer.querySelector('#stats-region').innerHTML =
-			`<div class="err">${esc(err.message || 'Failed to load stats')}</div>`;
+		drawer.querySelector('#widget-stats-region').innerHTML =
+			`<div class="err" style="font-size:11px">${esc(err.message || 'Failed to load stats')}</div>`;
 	}
 
-	// Transcripts + knowledge — only for talking-agent widgets.
+	// Transcripts + knowledge for talking-agent
 	if (w.type === 'talking-agent') {
-		loadTranscripts(drawer, w);
-		loadKnowledgeSummary(drawer, w);
+		const transcriptsRegion = drawer.querySelector('#widget-transcripts-region');
+		if (transcriptsRegion) {
+			transcriptsRegion.innerHTML = `
+				<div class="card">
+					<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px">
+						<h3 style="margin:0; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#aaa">Transcripts</h3>
+						<a href="${attr(api.transcriptsCsvUrl(w.id))}" download class="btn sec" style="font-size:11px; padding:2px 8px">CSV</a>
+					</div>
+					<div id="transcripts-totals" class="muted" style="font-size:11px"></div>
+					<div id="transcripts-list" style="display:flex; flex-direction:column; gap:4px; margin-top:8px; max-height:180px; overflow-y:auto"></div>
+				</div>
+			`;
+			loadTranscripts(drawer, w);
+		}
 	}
 }
 
