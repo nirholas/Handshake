@@ -349,6 +349,177 @@
 #deploy-act,
 .h-bento-section,
 .h-dev-section,
-.h-cta-section {
+.h-cta-section,
+.h-journey {
 	scroll-margin-top: 88px;
+}
+
+/* ── How it works — journey section ─────────────────────────────────────── */
+
+.h-journey {
+	position: relative;
+	padding: clamp(64px, 8vw, 100px) 24px;
+	background: linear-gradient(180deg, rgba(8, 8, 14, 0) 0%, rgba(16, 14, 28, 0.6) 50%, rgba(8, 8, 14, 0) 100%);
+}
+
+.h-journey-inner {
+	max-width: 1140px;
+	margin: 0 auto;
+}
+
+.h-journey-header {
+	text-align: center;
+	margin-bottom: clamp(40px, 5vw, 64px);
+}
+
+.h-journey-title {
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: clamp(2rem, 3.8vw, 3.2rem);
+	font-weight: 700;
+	color: #fff;
+	line-height: 1.1;
+	letter-spacing: -0.03em;
+	margin: 0;
+	text-wrap: balance;
+}
+
+.h-journey-title em {
+	font-style: normal;
+	background: linear-gradient(135deg, #ffb940 0%, #ff7a3d 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.h-journey-steps {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 16px;
+}
+
+@media (max-width: 900px) {
+	.h-journey-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 540px) {
+	.h-journey-steps { grid-template-columns: 1fr; }
+}
+
+.h-journey-card {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding: 24px 22px;
+	border-radius: 16px;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	text-decoration: none;
+	color: inherit;
+	transition:
+		border-color 0.22s ease,
+		background 0.22s ease,
+		transform 0.22s ease,
+		box-shadow 0.22s ease;
+	position: relative;
+	overflow: hidden;
+}
+
+.h-journey-card::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(circle at 30% 20%, rgba(255, 175, 60, 0.06) 0%, transparent 70%);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	pointer-events: none;
+}
+
+.h-journey-card:hover {
+	border-color: rgba(255, 175, 60, 0.3);
+	background: rgba(255, 255, 255, 0.055);
+	transform: translateY(-4px);
+	box-shadow: 0 20px 48px -16px rgba(255, 143, 60, 0.18);
+}
+
+.h-journey-card:hover::before { opacity: 1; }
+
+.h-jc-num {
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	color: rgba(255, 175, 60, 0.7);
+	text-transform: uppercase;
+}
+
+.h-jc-icon {
+	width: 44px;
+	height: 44px;
+	border-radius: 12px;
+	background: rgba(255, 175, 60, 0.1);
+	border: 1px solid rgba(255, 175, 60, 0.18);
+	display: grid;
+	place-items: center;
+	color: rgba(255, 175, 60, 0.9);
+	flex-shrink: 0;
+	transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.h-journey-card:hover .h-jc-icon {
+	background: rgba(255, 175, 60, 0.16);
+	border-color: rgba(255, 175, 60, 0.35);
+}
+
+.h-jc-body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.h-jc-body h3 {
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 16px;
+	font-weight: 600;
+	color: #fff;
+	margin: 0;
+	letter-spacing: -0.01em;
+}
+
+.h-jc-body p {
+	font-size: 13.5px;
+	line-height: 1.55;
+	color: rgba(255, 255, 255, 0.5);
+	margin: 0;
+}
+
+.h-jc-body code {
+	font-family: 'Space Mono', 'Fira Code', monospace;
+	font-size: 12px;
+	background: rgba(255, 255, 255, 0.07);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 4px;
+	padding: 1px 5px;
+	color: rgba(255, 175, 60, 0.85);
+}
+
+.h-jc-cta {
+	font-size: 13px;
+	font-weight: 600;
+	color: rgba(255, 175, 60, 0.7);
+	margin-top: auto;
+	transition: color 0.18s ease;
+}
+
+.h-journey-card:hover .h-jc-cta { color: rgba(255, 175, 60, 1); }
+
+.h-journey-footer {
+	display: flex;
+	justify-content: center;
+	margin-top: clamp(40px, 5vw, 56px);
 }

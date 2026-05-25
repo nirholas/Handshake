@@ -127,6 +127,19 @@ async function copyToClipboard(text) {
 				<div data-slot="wallets"><div class="dn-skeleton" style="height:120px"></div></div>
 			</section>
 
+			<section class="dn-panel" data-section="vanity">
+				<div style="display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:14px;flex-wrap:wrap">
+					<div>
+						<div class="dn-panel-title">Vanity wallets</div>
+						<div class="dn-panel-sub" style="margin:0">Generate wallet addresses with a custom prefix — Solana vanity keypair or Ethereum CREATE2 contract address.</div>
+					</div>
+				</div>
+				<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+					<a class="dn-btn" href="/vanity-wallet" target="_blank" rel="noopener" style="justify-content:center">Solana vanity ✦ ↗</a>
+					<a class="dn-btn" href="/eth-vanity" target="_blank" rel="noopener" style="justify-content:center">ETH vanity (CREATE2) ✦ ↗</a>
+				</div>
+			</section>
+
 			<section class="dn-panel" data-section="sns">
 				<div style="display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:14px;flex-wrap:wrap">
 					<div>
@@ -158,6 +171,16 @@ async function copyToClipboard(text) {
 					<button class="dn-btn" data-action="export-csv">Export CSV</button>
 				</div>
 				<div data-slot="actions"><div class="dn-skeleton" style="height:200px"></div></div>
+			</section>
+
+			<section class="dn-panel" data-section="quick-links">
+				<div class="dn-panel-title" style="margin-bottom:12px">More settings</div>
+				<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+					<a class="dn-btn" href="/dashboard-next/settings" style="justify-content:center">Sessions &amp; notifications →</a>
+					<a class="dn-btn" href="/dashboard-next/settings" style="justify-content:center">Storage &amp; LLM usage →</a>
+					<a class="dn-btn" href="/dashboard-next/settings" style="justify-content:center">Preferences →</a>
+					<a class="dn-btn" href="/onchain" target="_blank" rel="noopener" style="justify-content:center">ERC-8004 registry ↗</a>
+				</div>
 			</section>
 		</div>
 	`;

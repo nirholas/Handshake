@@ -5,7 +5,7 @@
 // from real /api/* endpoints — no mocks.
 
 import { mountShell } from '../shell.js';
-import { requireUser, get, post, esc, relTime, formatUsdc, ApiError } from '../api.js';
+import { requireUser, get, post, put, del, esc, relTime, formatUsdc, ApiError } from '../api.js';
 
 const USDC_MINTS = {
 	solana: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
@@ -100,11 +100,10 @@ async function loadAndRender(host, me) {
 	host.appendChild(renderHero({ available, revenue, creatorPlans, subscribedTo, pendingRoyaltyAtomics }));
 	host.appendChild(renderRevenueChart({ initial: revenue, defaultRange: '30d' }));
 	host.appendChild(renderPaymentsPanel(payments));
+	host.appendChild(renderSubscriptionPlans({ creatorPlans, me }));
 	host.appendChild(renderWithdrawals({ withdrawals, wallets, available, host, me }));
 	host.appendChild(renderPlanUsage(summary));
-
-	const tokensPanel = renderTokensPanel(agents);
-	if (tokensPanel) host.appendChild(tokensPanel);
+	host.appendChild(renderTokensPanel(agents));
 }
 
 async function safe(fn) {
@@ -821,13 +820,36 @@ function renderTokensPanel(agents) {
 		const m = a?.meta?.pumpfun || a?.meta?.token;
 		return Boolean(m?.mint || m?.address || m?.ca);
 	});
-	if (!launched.length) return null;
 
 	const panel = document.createElement('div');
 	panel.className = 'dn-panel';
+
+	if (!launched.length) {
+		panel.innerHTML = `
+			<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+				<div>
+					<div class="dn-panel-title">Token earnings</div>
+					<div class="dn-panel-sub" style="margin:2px 0 0">Royalties from Pump.fun tokens your agents launched.</div>
+				</div>
+				<a class="dn-btn" href="/dashboard-next/tokens">Token dashboard →</a>
+			</div>
+			<div class="dn-empty">
+				<h3>No tokens launched</h3>
+				<p>Launch a Pump.fun token from any agent to earn royalties on every trade.</p>
+				<a class="dn-btn primary" href="/dashboard-next/agents">Go to Agents →</a>
+			</div>
+		`;
+		return panel;
+	}
+
 	panel.innerHTML = `
-		<div class="dn-panel-title">Token earnings</div>
-		<div class="dn-panel-sub" style="margin:2px 0 12px">Agents you've launched on Pump.fun.</div>
+		<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+			<div>
+				<div class="dn-panel-title">Token earnings</div>
+				<div class="dn-panel-sub" style="margin:2px 0 0">Royalties from Pump.fun tokens your agents launched.</div>
+			</div>
+			<a class="dn-btn" href="/dashboard-next/tokens">Full token dashboard →</a>
+		</div>
 		<div style="overflow-x:auto">
 			<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px">
 				<thead>
@@ -863,6 +885,262 @@ function renderTokensPanel(agents) {
 		</div>
 	`;
 	return panel;
+}
+
+// ── Subscription plans (creator) ───────────────────────────────────────────
+
+function renderSubscriptionPlans({ creatorPlans, me }) {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel';
+
+	let plans = [...creatorPlans];
+
+	function paint() {
+		panel.innerHTML = `
+			<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+				<div>
+					<div class="dn-panel-title">Subscription plans</div>
+					<div class="dn-panel-sub" style="margin:2px 0 0">Plans you offer — users can subscribe to unlock premium access to your agents.</div>
+				</div>
+				<button class="dn-btn primary" data-action="create-plan">+ New plan</button>
+			</div>
+			<div data-slot="plans-list"></div>
+		`;
+
+		const listHost = panel.querySelector('[data-slot="plans-list"]');
+
+		if (!plans.length) {
+			listHost.innerHTML = `
+				<div class="dn-empty">
+					<h3>No subscription plans</h3>
+					<p>Create a plan to let users subscribe to your agents and unlock premium skills.</p>
+				</div>`;
+		} else {
+			listHost.innerHTML = `
+				<div style="overflow-x:auto">
+					<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:560px">
+						<thead>
+							<tr style="text-align:left;color:var(--nxt-ink-fade);border-bottom:1px solid var(--nxt-stroke)">
+								<th style="padding:8px 10px;font-weight:500">Plan</th>
+								<th style="padding:8px 10px;font-weight:500;text-align:right">Price</th>
+								<th style="padding:8px 10px;font-weight:500">Interval</th>
+								<th style="padding:8px 10px;font-weight:500">Status</th>
+								<th style="padding:8px 10px;font-weight:500"></th>
+							</tr>
+						</thead>
+						<tbody>
+							${plans.map((p) => `
+								<tr style="border-bottom:1px solid var(--nxt-stroke)">
+									<td style="padding:10px">
+										<div style="font-weight:600">${esc(p.name || 'Unnamed plan')}</div>
+										${p.description ? `<div style="font-size:12px;color:var(--nxt-ink-dim)">${esc(p.description.slice(0, 80))}</div>` : ''}
+									</td>
+									<td style="padding:10px;text-align:right;font-variant-numeric:tabular-nums">
+										$${esc(Number(p.price_usd || 0).toFixed(2))}
+									</td>
+									<td style="padding:10px;color:var(--nxt-ink-dim)">${esc(p.interval || 'monthly')}</td>
+									<td style="padding:10px">
+										${p.active
+											? `<span class="dn-tag success">Active</span>`
+											: `<span class="dn-tag">Inactive</span>`
+										}
+									</td>
+									<td style="padding:10px;text-align:right">
+										<div style="display:inline-flex;gap:6px">
+											<button class="dn-btn" data-action="edit-plan" data-id="${esc(p.id)}" style="padding:5px 10px;font-size:12px">Edit</button>
+											<button class="dn-btn danger" data-action="delete-plan" data-id="${esc(p.id)}" style="padding:5px 10px;font-size:12px">Delete</button>
+										</div>
+									</td>
+								</tr>
+							`).join('')}
+						</tbody>
+					</table>
+				</div>
+			`;
+		}
+
+		panel.querySelector('[data-action="create-plan"]').addEventListener('click', () => {
+			openPlanModal(null, (saved) => {
+				plans.unshift(saved);
+				paint();
+			});
+		});
+
+		panel.querySelectorAll('[data-action="edit-plan"]').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const plan = plans.find((p) => p.id === btn.dataset.id);
+				if (!plan) return;
+				openPlanModal(plan, (updated) => {
+					const idx = plans.findIndex((p) => p.id === updated.id);
+					if (idx >= 0) plans[idx] = updated;
+					paint();
+				});
+			});
+		});
+
+		panel.querySelectorAll('[data-action="delete-plan"]').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				const id = btn.dataset.id;
+				const plan = plans.find((p) => p.id === id);
+				if (!confirm(`Delete plan "${plan?.name || id}"?`)) return;
+				btn.disabled = true;
+				btn.textContent = 'Deleting…';
+				try {
+					await del(`/api/subscriptions/plans/${encodeURIComponent(id)}`);
+					plans = plans.filter((p) => p.id !== id);
+					paint();
+					toastMonetize('Plan deleted');
+				} catch (err) {
+					toastMonetize(err?.message || 'Delete failed');
+					btn.disabled = false;
+					btn.textContent = 'Delete';
+				}
+			});
+		});
+	}
+
+	paint();
+	return panel;
+}
+
+function openPlanModal(existing, onSaved) {
+	const overlay = document.createElement('div');
+	overlay.style.cssText = `
+		position:fixed;inset:0;z-index:1000;
+		background:rgba(8,9,14,0.72);backdrop-filter:blur(6px);
+		display:grid;place-items:center;padding:20px;
+	`;
+	overlay.innerHTML = `
+		<div role="dialog" aria-modal="true" style="
+			width:min(460px,100%);
+			background:linear-gradient(180deg,rgba(22,24,32,0.97),rgba(16,17,24,0.97));
+			border:1px solid var(--nxt-stroke-strong);border-radius:14px;padding:24px;
+			box-shadow:0 20px 60px rgba(0,0,0,0.6);
+		">
+			<div style="font-size:16px;font-weight:600;margin-bottom:18px">${existing ? 'Edit plan' : 'Create plan'}</div>
+
+			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+				<span style="font-size:12.5px;color:var(--nxt-ink-dim)">Plan name</span>
+				<input data-slot="name" type="text" maxlength="80" value="${esc(existing?.name || '')}"
+					placeholder="e.g. Pro access, VIP, Founder…"
+					style="padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
+			</label>
+
+			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+				<span style="font-size:12.5px;color:var(--nxt-ink-dim)">Description (optional)</span>
+				<textarea data-slot="description" maxlength="300" rows="2"
+					placeholder="What does this plan unlock?"
+					style="padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px;resize:vertical">${esc(existing?.description || '')}</textarea>
+			</label>
+
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+				<label style="display:flex;flex-direction:column;gap:6px">
+					<span style="font-size:12.5px;color:var(--nxt-ink-dim)">Price (USD)</span>
+					<input data-slot="price" type="number" min="0.5" step="0.01" value="${esc(String(existing?.price_usd || ''))}"
+						placeholder="9.99"
+						style="padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
+				</label>
+				<label style="display:flex;flex-direction:column;gap:6px">
+					<span style="font-size:12.5px;color:var(--nxt-ink-dim)">Interval</span>
+					<select data-slot="interval"
+						style="padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px">
+						<option value="monthly"${(!existing || existing.interval === 'monthly') ? ' selected' : ''}>Monthly</option>
+						<option value="weekly"${existing?.interval === 'weekly' ? ' selected' : ''}>Weekly</option>
+						<option value="yearly"${existing?.interval === 'yearly' ? ' selected' : ''}>Yearly</option>
+					</select>
+				</label>
+			</div>
+
+			<label style="display:flex;align-items:center;gap:10px;margin-bottom:18px;cursor:pointer">
+				<input data-slot="active" type="checkbox" ${(!existing || existing.active) ? 'checked' : ''}
+					style="width:16px;height:16px;cursor:pointer;accent-color:var(--nxt-accent)" />
+				<span style="font-size:13px;color:var(--nxt-ink)">Plan is active (visible to subscribers)</span>
+			</label>
+
+			<div data-slot="error" style="font-size:12.5px;color:var(--nxt-danger);min-height:18px;margin-bottom:10px"></div>
+
+			<div style="display:flex;gap:8px;justify-content:flex-end">
+				<button class="dn-btn ghost" data-action="cancel">Cancel</button>
+				<button class="dn-btn primary" data-action="submit">${existing ? 'Save changes' : 'Create plan'}</button>
+			</div>
+		</div>
+	`;
+
+	document.body.appendChild(overlay);
+	const nameEl = overlay.querySelector('[data-slot="name"]');
+	const descEl = overlay.querySelector('[data-slot="description"]');
+	const priceEl = overlay.querySelector('[data-slot="price"]');
+	const intervalEl = overlay.querySelector('[data-slot="interval"]');
+	const activeEl = overlay.querySelector('[data-slot="active"]');
+	const errorEl = overlay.querySelector('[data-slot="error"]');
+	const submitBtn = overlay.querySelector('[data-action="submit"]');
+	nameEl.focus();
+
+	const close = () => overlay.remove();
+	overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);
+	overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+	document.addEventListener('keydown', function onKey(e) {
+		if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+	});
+
+	submitBtn.addEventListener('click', async () => {
+		const name = nameEl.value.trim();
+		const price = parseFloat(priceEl.value);
+		if (!name) { errorEl.textContent = 'Plan name is required.'; return; }
+		if (!Number.isFinite(price) || price < 0.5) { errorEl.textContent = 'Price must be at least $0.50.'; return; }
+		errorEl.textContent = '';
+		submitBtn.disabled = true;
+		submitBtn.textContent = existing ? 'Saving…' : 'Creating…';
+		const body = {
+			name,
+			description: descEl.value.trim() || undefined,
+			price_usd: price,
+			interval: intervalEl.value,
+			active: activeEl.checked,
+		};
+		try {
+			let saved;
+			if (existing) {
+				const r = await put(`/api/subscriptions/plans/${encodeURIComponent(existing.id)}`, body);
+				saved = r?.plan || { ...existing, ...body };
+			} else {
+				const r = await post('/api/subscriptions/plans', body);
+				saved = r?.plan || body;
+			}
+			toastMonetize(existing ? 'Plan updated' : 'Plan created');
+			close();
+			onSaved(saved);
+		} catch (err) {
+			errorEl.textContent = err?.body?.error || err?.message || 'Save failed';
+			submitBtn.disabled = false;
+			submitBtn.textContent = existing ? 'Save changes' : 'Create plan';
+		}
+	});
+}
+
+function toastMonetize(msg) {
+	let el = document.getElementById('dn-monetize-toast');
+	if (!el) {
+		el = document.createElement('div');
+		el.id = 'dn-monetize-toast';
+		el.style.cssText = `
+			position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);
+			background:rgba(20,21,28,0.95);border:1px solid var(--nxt-stroke-strong);
+			color:var(--nxt-ink);padding:9px 16px;border-radius:999px;font-size:13px;
+			z-index:9999;opacity:0;transition:opacity .18s,transform .18s;
+			backdrop-filter:blur(20px);box-shadow:0 8px 24px rgba(0,0,0,0.4);pointer-events:none;`;
+		document.body.appendChild(el);
+	}
+	el.textContent = msg;
+	requestAnimationFrame(() => {
+		el.style.opacity = '1';
+		el.style.transform = 'translateX(-50%) translateY(0)';
+	});
+	clearTimeout(el._t);
+	el._t = setTimeout(() => {
+		el.style.opacity = '0';
+		el.style.transform = 'translateX(-50%) translateY(20px)';
+	}, 1800);
 }
 
 // ── Skeleton ───────────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import { requireUser, get, esc, relTime, ApiError } from '../api.js';
 const POLL_MS = 30_000;
 const DAYS_WINDOW = 7;
 const REL_TIME_TICK_MS = 60_000;
+const ONBOARDING_DISMISSED_KEY = 'twx_onboarding_dismissed';
 
 const STATE = {
 	pollHandle: null,
@@ -22,9 +23,14 @@ const STATE = {
 	const me = await requireUser();
 
 	const greeting = me.display_name || me.username || (me.email ? me.email.split('@')[0] : 'creator');
+	const isNew = !me.created_at || (Date.now() - new Date(me.created_at).getTime()) < 30 * 86400_000;
+	const dismissed = localStorage.getItem(ONBOARDING_DISMISSED_KEY) === '1';
+
 	main.innerHTML = `
 		<h1 class="dn-h1">Welcome back, ${esc(greeting)}.</h1>
 		<p class="dn-h1-sub">Your live avatars, revenue, widget reach, and the latest visitor activity.</p>
+
+		${!dismissed ? `<section data-slot="onboarding" class="dnx-onboarding-wrap"></section>` : ''}
 
 		<div class="dnx-grid">
 			<div class="dnx-col-main">
@@ -40,6 +46,7 @@ const STATE = {
 	renderSkeletons(main);
 
 	const slots = {
+		onboarding: main.querySelector('[data-slot="onboarding"]'),
 		hero: main.querySelector('[data-slot="hero"]'),
 		kpis: main.querySelector('[data-slot="kpis"]'),
 		quick: main.querySelector('[data-slot="quick"]'),
@@ -48,15 +55,21 @@ const STATE = {
 
 	renderQuickActions(slots.quick);
 
-	const [avatarsRes, widgetsRes] = await Promise.allSettled([
+	const [avatarsRes, widgetsRes, agentsRes] = await Promise.allSettled([
 		get('/api/avatars?limit=50'),
 		get('/api/widgets'),
+		get('/api/agents?limit=1'),
 	]);
 
 	const avatars = avatarsRes.status === 'fulfilled' ? (avatarsRes.value?.avatars ?? []) : [];
 	const widgets = widgetsRes.status === 'fulfilled' ? (widgetsRes.value?.widgets ?? []) : [];
+	const agents  = agentsRes.status === 'fulfilled'  ? (agentsRes.value?.agents  ?? []) : [];
 
 	renderHero(slots.hero, avatars, avatarsRes.status === 'rejected' ? avatarsRes.reason : null);
+
+	if (slots.onboarding) {
+		renderOnboarding(slots.onboarding, { avatars, agents, widgets });
+	}
 
 	const refresh = async () => {
 		await Promise.all([
@@ -358,6 +371,91 @@ function repaintRelTimes(host) {
 const ICON_CHAT = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10v7H6l-3 2.5V4z"/></svg>';
 const ICON_COIN = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v6M6 7h3.2a1.2 1.2 0 010 2.4H7a1.2 1.2 0 000 2.4h3.2"/></svg>';
 
+// ── Onboarding checklist ──────────────────────────────────────────────────
+
+function renderOnboarding(host, { avatars, agents, widgets }) {
+	const steps = [
+		{
+			id: 'avatar',
+			label: 'Create your first avatar',
+			sub: 'Snap a selfie — your 3D agent is ready in under 60 seconds.',
+			href: '/create',
+			cta: 'Create avatar',
+			done: avatars.length > 0,
+		},
+		{
+			id: 'agent',
+			label: 'Build an agent identity',
+			sub: 'Give your avatar a name, personality, and on-chain address.',
+			href: '/dashboard-next/agents',
+			cta: 'Set up agent',
+			done: agents.length > 0,
+		},
+		{
+			id: 'widget',
+			label: 'Embed a chat widget',
+			sub: 'Drop your agent onto any website with a single HTML tag.',
+			href: '/dashboard-next/widgets',
+			cta: 'Create widget',
+			done: widgets.length > 0,
+		},
+		{
+			id: 'monetize',
+			label: 'Start earning',
+			sub: 'Charge per message, set a subscription, or let fans tip.',
+			href: '/dashboard-next/monetize',
+			cta: 'Set up monetization',
+			done: false,
+		},
+	];
+
+	const doneCount = steps.filter((s) => s.done).length;
+	if (doneCount === steps.length) {
+		host.remove();
+		return;
+	}
+
+	const pct = Math.round((doneCount / steps.length) * 100);
+
+	host.innerHTML = `
+		<div class="dn-panel dnx-ob" id="dnx-onboarding">
+			<div class="dnx-ob-head">
+				<div>
+					<div class="dn-panel-title" style="margin:0 0 2px">Getting started</div>
+					<div class="dn-panel-sub" style="margin:0">${doneCount} of ${steps.length} steps complete</div>
+				</div>
+				<button class="dnx-ob-dismiss" aria-label="Dismiss getting started" title="Dismiss">
+					<svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
+				</button>
+			</div>
+			<div class="dnx-ob-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
+				<div class="dnx-ob-fill" style="width:${pct}%"></div>
+			</div>
+			<ol class="dnx-ob-steps">
+				${steps.map((s, i) => `
+					<li class="dnx-ob-step ${s.done ? 'is-done' : ''}">
+						<span class="dnx-ob-num" aria-hidden="true">
+							${s.done
+								? `<svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7l3.5 3.5L12 3"/></svg>`
+								: `${i + 1}`}
+						</span>
+						<div class="dnx-ob-text">
+							<span class="dnx-ob-label">${esc(s.label)}</span>
+							<span class="dnx-ob-sub">${esc(s.sub)}</span>
+						</div>
+						${!s.done ? `<a class="dn-btn dnx-ob-btn" href="${s.href}">${esc(s.cta)} →</a>` : ''}
+					</li>
+				`).join('')}
+			</ol>
+		</div>
+	`;
+
+	host.querySelector('.dnx-ob-dismiss').addEventListener('click', () => {
+		localStorage.setItem(ONBOARDING_DISMISSED_KEY, '1');
+		host.remove();
+	});
+}
+
 // ── Quick actions ─────────────────────────────────────────────────────────
 
 function renderQuickActions(host) {
@@ -609,6 +707,65 @@ function injectStyles() {
 		.dnx-activity-icon { color: var(--nxt-ink-fade); display: inline-grid; place-items: center; }
 		.dnx-activity-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 		.dnx-activity-time { color: var(--nxt-ink-fade); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+		/* ── Onboarding checklist ── */
+		.dnx-onboarding-wrap { margin-bottom: 4px; }
+		.dnx-ob { padding: 18px 20px; }
+		.dnx-ob-head {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-start;
+			margin-bottom: 12px;
+		}
+		.dnx-ob-dismiss {
+			background: none; border: none; cursor: pointer;
+			color: var(--nxt-ink-fade); padding: 4px; border-radius: 6px;
+			display: grid; place-items: center; flex-shrink: 0;
+			transition: color 0.12s ease, background 0.12s ease;
+		}
+		.dnx-ob-dismiss:hover { color: var(--nxt-ink); background: rgba(255,255,255,0.06); }
+		.dnx-ob-bar {
+			height: 4px; border-radius: 4px;
+			background: var(--nxt-stroke);
+			margin-bottom: 16px; overflow: hidden;
+		}
+		.dnx-ob-fill {
+			height: 100%; border-radius: 4px;
+			background: var(--nxt-accent);
+			transition: width 0.4s ease;
+		}
+		.dnx-ob-steps {
+			list-style: none; padding: 0; margin: 0;
+			display: flex; flex-direction: column; gap: 2px;
+		}
+		.dnx-ob-step {
+			display: flex; align-items: center; gap: 12px;
+			padding: 9px 8px; border-radius: 8px;
+			transition: background 0.12s ease;
+		}
+		.dnx-ob-step:hover { background: rgba(255,255,255,0.04); }
+		.dnx-ob-step.is-done { opacity: 0.5; }
+		.dnx-ob-num {
+			width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+			display: grid; place-items: center;
+			font-size: 11px; font-weight: 600;
+			background: var(--nxt-accent-soft);
+			color: var(--nxt-accent-strong);
+			border: 1px solid rgba(154,124,255,0.2);
+		}
+		.dnx-ob-step.is-done .dnx-ob-num {
+			background: rgba(52,199,89,0.12);
+			color: #34c759;
+			border-color: rgba(52,199,89,0.25);
+		}
+		.dnx-ob-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+		.dnx-ob-label { font-size: 13.5px; font-weight: 500; color: var(--nxt-ink); }
+		.dnx-ob-sub { font-size: 12px; color: var(--nxt-ink-fade); }
+		.dnx-ob-btn { flex-shrink: 0; font-size: 12px; padding: 5px 10px; white-space: nowrap; }
+		@media (max-width: 600px) {
+			.dnx-ob-step { flex-wrap: wrap; }
+			.dnx-ob-btn { margin-left: 36px; }
+		}
 	`;
 	const tag = document.createElement('style');
 	tag.id = 'dnx-home-styles';
