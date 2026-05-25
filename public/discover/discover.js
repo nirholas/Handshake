@@ -416,7 +416,7 @@ function renderAvatarCard(item) {
 		.join('');
 
 	const viewerUrl = item.viewerUrl || '#';
-	const detailUrl = `/avatars/${item.avatarId}`;
+	const detailUrl = `/agent-next?id=${encodeURIComponent(item.avatarId)}`;
 
 	card.innerHTML = `
 		<a class="explore-card-thumb" href="${escapeAttr(detailUrl)}">
@@ -433,8 +433,7 @@ function renderAvatarCard(item) {
 			<div class="explore-card-foot">
 				<span class="explore-card-owner" title="Avatar made public by its creator">@${escapeHtml(item.slug || 'avatar')}</span>
 				<div class="explore-card-actions">
-					<a class="explore-card-link" href="${escapeAttr(detailUrl)}">Details</a>
-					<a class="explore-card-link" href="${escapeAttr(viewerUrl)}">View 3D</a>
+					<a class="explore-card-link" href="${escapeAttr(detailUrl)}">View agent</a>
 					<button type="button" class="explore-card-link explore-card-link--ghost" data-role="card-embed"
 						data-kind="avatar"
 						data-avatar-id="${escapeAttr(String(item.avatarId))}"

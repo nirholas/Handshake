@@ -159,7 +159,13 @@ async function handleRegisterAgent(req, res, id, auth) {
 			data: { ok: true, address: meta.solana_address, sns_domain: domain, signature: sig, mode: 'agent' },
 		});
 	} catch (err) {
-		console.error('[agents/sns/register-agent] failed', err);
+		console.error('[agents/sns/register-agent] failed', {
+			agentId: id,
+			domain,
+			agentAddress: meta.solana_address,
+			err: err?.message,
+			stack: err?.stack,
+		});
 		const msg = err?.message || 'registration failed';
 		return error(res, 502, 'upstream_error', msg);
 	}
@@ -189,25 +195,36 @@ async function handleRegisterPrep(req, res, id, auth) {
 	`;
 	if (!walletRow) return error(res, 403, 'forbidden', 'wallet not linked to your account');
 
-	const { PublicKey, TransactionMessage, VersionedTransaction } = await import('@solana/web3.js');
-	const conn = solanaConnection('mainnet');
-	if (await getRegistryOwner(conn, domain).catch(() => null)) {
-		return error(res, 409, 'conflict', `${domain}.sol is already registered`);
-	}
+	try {
+		const { PublicKey, TransactionMessage, VersionedTransaction } = await import('@solana/web3.js');
+		const conn = solanaConnection('mainnet');
+		if (await getRegistryOwner(conn, domain).catch(() => null)) {
+			return error(res, 409, 'conflict', `${domain}.sol is already registered`);
+		}
 
-	const buyer = new PublicKey(walletAddress);
-	const ixs = await buildRegisterIxs({ connection: conn, domain, buyer, space });
-	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
-	const msg = new TransactionMessage({ payerKey: buyer, recentBlockhash: blockhash, instructions: ixs }).compileToV0Message();
-	const tx = new VersionedTransaction(msg);
-	return json(res, 200, {
-		data: {
-			tx_base64: Buffer.from(tx.serialize()).toString('base64'),
-			blockhash,
-			last_valid_block_height: lastValidBlockHeight,
+		const buyer = new PublicKey(walletAddress);
+		const ixs = await buildRegisterIxs({ connection: conn, domain, buyer, space });
+		const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+		const msg = new TransactionMessage({ payerKey: buyer, recentBlockhash: blockhash, instructions: ixs }).compileToV0Message();
+		const tx = new VersionedTransaction(msg);
+		return json(res, 200, {
+			data: {
+				tx_base64: Buffer.from(tx.serialize()).toString('base64'),
+				blockhash,
+				last_valid_block_height: lastValidBlockHeight,
+				domain,
+			},
+		});
+	} catch (err) {
+		console.error('[agents/sns/register-prep] failed', {
+			agentId: id,
 			domain,
-		},
-	});
+			wallet: walletAddress,
+			err: err?.message,
+			stack: err?.stack,
+		});
+		return error(res, 502, 'upstream_error', err?.message || 'failed to build registration tx');
+	}
 }
 
 // ── Option B step 2: confirm and attach ───────────────────────────────────

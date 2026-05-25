@@ -335,6 +335,21 @@
 					<input type="file" name="file-input[]" id="file-input" multiple hidden />
 				</label>
 
+				<a
+					class="nxt-action nxt-action--deploy"
+					id="nxt-deploy-btn"
+					hidden
+					aria-label="Publish this agent on-chain (ERC-8004)"
+					title="Publish this agent on-chain (ERC-8004)"
+				>
+					<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
+						<polygon points="10 2 18 7 18 13 10 18 2 13 2 7 10 2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round" />
+						<line x1="10" y1="2" x2="10" y2="18" stroke="currentColor" stroke-width="1.5" />
+						<polyline points="18 7 10 12 2 7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round" />
+					</svg>
+					<span id="nxt-deploy-label" data-state-label>Deploy on-chain</span>
+				</a>
+
 				<button
 					class="nxt-action nxt-action--primary"
 					id="nxt-primary"
@@ -345,6 +360,17 @@
 					</svg>
 					<span id="nxt-primary-label">Sign in to save</span>
 				</button>
+			</div>
+
+			<!--
+				Hidden DOM hosts that /src/app.js drives directly (href, hidden,
+				[data-state-label]). The Next overlay mirrors their state into the
+				visible "Deploy on-chain" UI above and inside the share popover —
+				keep IDs and inner structure stable.
+			-->
+			<div class="nxt-hidden-hosts" aria-hidden="true" hidden>
+				<a id="deploy-onchain-btn" hidden><span data-state-label>Deploy on-chain</span></a>
+				<a id="view-public-profile-btn" hidden></a>
 			</div>
 
 			<!-- Animation picker sheet — slides up when "Animations" is clicked -->
@@ -389,6 +415,29 @@
 						</div>
 					</label>
 					<p class="nxt-share-hint">Drop the snippet on any site. Same agent, same animations, same identity — embedded.</p>
+
+					<div class="nxt-share-divider" id="nxt-share-deploy-divider" hidden role="presentation"></div>
+					<a
+						class="nxt-share-deploy"
+						id="nxt-share-deploy"
+						hidden
+						aria-label="Publish this agent on-chain"
+					>
+						<span class="nxt-share-deploy__icon" aria-hidden="true">
+							<svg viewBox="0 0 20 20" width="16" height="16">
+								<polygon points="10 2 18 7 18 13 10 18 2 13 2 7 10 2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round" />
+								<line x1="10" y1="2" x2="10" y2="18" stroke="currentColor" stroke-width="1.5" />
+								<polyline points="18 7 10 12 2 7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round" />
+							</svg>
+						</span>
+						<span class="nxt-share-deploy__copy">
+							<span class="nxt-share-deploy__title" id="nxt-share-deploy-label" data-state-label>Deploy on-chain</span>
+							<span class="nxt-share-deploy__sub" id="nxt-share-deploy-sub">Register this agent's identity on ERC-8004 — anyone can find and embed it.</span>
+						</span>
+						<svg class="nxt-share-deploy__chev" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+							<path d="M5 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					</a>
 				</div>
 			</div>
 

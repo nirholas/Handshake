@@ -1285,7 +1285,8 @@
 		},
 		{
 			"src": "/avatars/([^/]+)",
-			"dest": "/avatar-page.html"
+			"status": 301,
+			"headers": { "Location": "/agent-next?id=$1" }
 		},
 		{
 			"src": "/api/characters",

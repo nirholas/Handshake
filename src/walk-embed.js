@@ -48,14 +48,16 @@ const AUTOPLAY = params.get('autoplay') === 'true' || params.get('autoplay') ===
 const SHOW_GROUND = params.get('ground') !== 'false';
 const ORBIT_ENABLED = params.get('orbit') !== 'false';
 
-async function resolveAvatarUrl() {
+function resolveAvatarUrl() {
 	const id = params.get('avatar');
 	if (!id) return AVATAR_URL_DEFAULT;
-	const res = await fetch(`/api/avatars/${encodeURIComponent(id)}`);
-	if (!res.ok) throw new Error(`avatar ${id} not found (HTTP ${res.status})`);
-	const { avatar } = await res.json();
-	if (!avatar?.url) throw new Error(`avatar ${id} has no GLB URL`);
-	return avatar.url;
+	// Go through the same-origin GLB proxy (api/avatars/[id]/glb) instead
+	// of the metadata JSON. The proxy streams the bytes with
+	// `Access-Control-Allow-Origin: *` so hosts on any origin can iframe
+	// this page. Fetching the JSON first would just give us back the raw
+	// R2 URL, which R2 only allows from the three.ws origin and breaks the
+	// moment the embed is dropped onto a third-party site.
+	return `/api/avatars/${encodeURIComponent(id)}/glb`;
 }
 
 const ANIMATIONS_MANIFEST_URL = '/animations/manifest.json';
@@ -295,7 +297,7 @@ let currentMotion = 'idle';
 async function loadAvatar() {
 	setStatus('loading avatar…', { sticky: true });
 
-	const avatarUrl = await resolveAvatarUrl();
+	const avatarUrl = resolveAvatarUrl();
 	const loader = new GLTFLoader();
 	const gltf = await loader.loadAsync(avatarUrl);
 	avatar = gltf.scene;
@@ -503,12 +505,8 @@ window.addEventListener('message', async (e) => {
 	if (!msg || typeof msg !== 'object') return;
 	if (msg.type === 'walk:setAvatar' && msg.id) {
 		try {
-			const res = await fetch(`/api/avatars/${encodeURIComponent(msg.id)}`);
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			const { avatar: a } = await res.json();
-			if (!a?.url) throw new Error('no GLB url');
 			const loader = new GLTFLoader();
-			const gltf = await loader.loadAsync(a.url);
+			const gltf = await loader.loadAsync(`/api/avatars/${encodeURIComponent(msg.id)}/glb`);
 			if (avatar) avatarRig.remove(avatar);
 			avatar = gltf.scene;
 			avatar.traverse((n) => { if (n.isMesh) n.castShadow = true; });

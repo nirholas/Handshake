@@ -11,7 +11,7 @@
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
-			content="Walk a 3D avatar around with a joystick — or through your phone camera in AR. Built on three.ws."
+			content="See a 3D agent walking on your real floor through your phone camera. Joystick or WASD. One-tap AR. Built on three.ws."
 		/>
 		<meta name="theme-color" content="#000000" />
 
@@ -328,6 +328,107 @@
 				-webkit-backdrop-filter: blur(6px);
 				will-change: transform;
 			}
+
+			/* ── IRL AR mobile CTA ─────────────────────────────────────────
+			   Hidden until walk.js detects a touch device with camera
+			   support and the avatar has finished loading. Sells the
+			   project's IRL-not-metaverse positioning: "your agent on
+			   your real floor" instead of "explore a virtual world".
+			*/
+			#walk-ar-cta {
+				position: fixed;
+				z-index: 7;
+				left: 50%;
+				top: calc(env(safe-area-inset-top, 0) + 76px);
+				transform: translateX(-50%) translateY(-6px);
+				display: none;
+				align-items: center;
+				gap: 10px;
+				padding: 10px 14px 10px 12px;
+				background: linear-gradient(135deg, rgba(125, 211, 252, 0.92), rgba(96, 165, 250, 0.92));
+				color: #07111c;
+				border: 1px solid rgba(255, 255, 255, 0.35);
+				border-radius: 999px;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				opacity: 0;
+				transition: opacity 0.25s ease, transform 0.25s ease;
+				white-space: nowrap;
+				max-width: calc(100vw - 32px);
+			}
+			#walk-ar-cta.is-visible {
+				display: inline-flex;
+				opacity: 1;
+				transform: translateX(-50%) translateY(0);
+			}
+			#walk-ar-cta .pulse {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #f87171;
+				box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.6);
+				animation: walk-cta-pulse 1.6s infinite;
+			}
+			@keyframes walk-cta-pulse {
+				0%   { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.55); }
+				70%  { box-shadow: 0 0 0 10px rgba(248, 113, 113, 0); }
+				100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+			}
+			#walk-ar-cta .dismiss {
+				margin-left: 4px;
+				padding: 2px 6px;
+				font-size: 14px;
+				line-height: 1;
+				background: rgba(7, 17, 28, 0.18);
+				border-radius: 999px;
+				color: #07111c;
+				font-weight: 700;
+			}
+
+			/* ── Recording UI ──────────────────────────────────────────── */
+			#walk-record-btn .dot { transition: background 0.15s ease, box-shadow 0.15s ease; }
+			#walk-record-btn[data-recording="true"] .dot {
+				background: #f87171;
+				box-shadow: 0 0 8px rgba(248, 113, 113, 0.8);
+				animation: walk-rec-pulse 0.9s infinite;
+			}
+			@keyframes walk-rec-pulse {
+				0%, 100% { opacity: 1; }
+				50%      { opacity: 0.45; }
+			}
+			#walk-record-status {
+				position: fixed;
+				z-index: 6;
+				left: 50%;
+				top: calc(env(safe-area-inset-top, 0) + 12px);
+				transform: translateX(-50%);
+				background: rgba(248, 113, 113, 0.92);
+				color: #fff;
+				border: 1px solid rgba(255, 255, 255, 0.25);
+				border-radius: 999px;
+				padding: 6px 12px;
+				font-size: 12px;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+				display: none;
+				align-items: center;
+				gap: 8px;
+				pointer-events: none;
+				backdrop-filter: blur(6px);
+				-webkit-backdrop-filter: blur(6px);
+			}
+			#walk-record-status.is-visible { display: inline-flex; }
+			#walk-record-status .rec-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #fff;
+				animation: walk-rec-pulse 0.9s infinite;
+			}
 		</style>
 	</head>
 	<body>
@@ -356,15 +457,36 @@
 						class="walk-btn"
 						id="walk-ar-toggle"
 						aria-pressed="false"
-						title="Toggle AR camera passthrough"
+						title="Put your avatar on your real floor"
 					>
 						<span class="dot"></span>
 						<span data-label>AR</span>
+					</button>
+					<button
+						type="button"
+						class="walk-btn"
+						id="walk-record-btn"
+						data-recording="false"
+						title="Record a 6-second clip to share"
+					>
+						<span class="dot"></span>
+						<span data-label>Record</span>
 					</button>
 					<a class="walk-btn" href="/" title="Back to three.ws home" style="text-decoration:none">
 						<span>← home</span>
 					</a>
 				</div>
+			</div>
+
+			<button type="button" id="walk-ar-cta" aria-hidden="true">
+				<span class="pulse"></span>
+				<span>See your avatar on your floor — tap for AR</span>
+				<span class="dismiss" aria-label="Dismiss">×</span>
+			</button>
+
+			<div id="walk-record-status" role="status" aria-live="polite">
+				<span class="rec-dot"></span>
+				<span data-label>REC 6s</span>
 			</div>
 
 			<div id="walk-joystick" aria-label="Movement joystick"></div>

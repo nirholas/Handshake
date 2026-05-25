@@ -63,6 +63,7 @@ function boot() {
 	wireCameraPresets();
 	wireHelp();
 	wireAutoHide();
+	wireDeployMirror();
 
 	waitForViewer().then((viewer) => {
 		if (!viewer) {
@@ -760,6 +761,103 @@ function wirePrimaryCTA() {
 			}, 2400);
 		}
 	});
+}
+
+// ── Deploy on-chain mirror ────────────────────────────────────────────────
+//
+// /src/app.js owns the canonical deploy CTA via #deploy-onchain-btn — it sets
+// .href, .hidden, and the inner [data-state-label] (e.g. "Deployed ✓ base").
+// We mirror that state into two visible Next surfaces:
+//
+//   • #nxt-deploy-btn        — pill in the secondary action bar
+//   • #nxt-share-deploy      — row inside the Share/Embed popover
+//
+// A MutationObserver on the source keeps the mirrors in sync as app.js
+// re-runs _refreshDeployButton (e.g. after the agent record is fetched and
+// the deployed state is known).
+
+function wireDeployMirror() {
+	const src = document.getElementById('deploy-onchain-btn');
+	if (!src) return;
+
+	const targets = [
+		{
+			btn: document.getElementById('nxt-deploy-btn'),
+			label: document.getElementById('nxt-deploy-label'),
+			subEl: null,
+			divider: null,
+		},
+		{
+			btn: document.getElementById('nxt-share-deploy'),
+			label: document.getElementById('nxt-share-deploy-label'),
+			subEl: document.getElementById('nxt-share-deploy-sub'),
+			divider: document.getElementById('nxt-share-deploy-divider'),
+		},
+	].filter((t) => t.btn);
+
+	if (!targets.length) return;
+
+	const sync = () => {
+		const hidden = src.hidden || src.hasAttribute('hidden');
+		const href = src.getAttribute('href') || '';
+		const target = src.getAttribute('target') || '';
+		const rel = src.getAttribute('rel') || '';
+		const title = src.getAttribute('title') || '';
+		const aria = src.getAttribute('aria-label') || '';
+		const labelText =
+			src.querySelector('[data-state-label]')?.textContent?.trim() ||
+			src.textContent?.trim() ||
+			'Deploy on-chain';
+		const isDeployed = src.classList.contains('is-deployed') || /Deployed/i.test(labelText);
+
+		for (const t of targets) {
+			t.btn.hidden = hidden;
+			if (t.divider) t.divider.hidden = hidden;
+
+			if (href) t.btn.setAttribute('href', href);
+			else t.btn.removeAttribute('href');
+
+			if (target) t.btn.setAttribute('target', target);
+			else t.btn.removeAttribute('target');
+
+			if (rel) t.btn.setAttribute('rel', rel);
+			else t.btn.removeAttribute('rel');
+
+			if (title) t.btn.setAttribute('title', title);
+			if (aria) t.btn.setAttribute('aria-label', aria);
+
+			t.btn.classList.toggle('is-deployed', isDeployed);
+			if (t.label) t.label.textContent = labelText;
+			if (t.subEl) {
+				t.subEl.textContent = isDeployed
+					? 'This agent is live on-chain. Open the block explorer to verify.'
+					: "Register this agent's identity on ERC-8004 — anyone can find and embed it.";
+			}
+		}
+	};
+
+	sync();
+
+	// Re-run whenever app.js re-paints the source button.
+	const obs = new MutationObserver(sync);
+	obs.observe(src, {
+		attributes: true,
+		attributeFilter: ['href', 'hidden', 'target', 'rel', 'title', 'aria-label', 'class'],
+		childList: true,
+		subtree: true,
+		characterData: true,
+	});
+
+	// If the user clicks the share-popover row while the popover is open, dismiss
+	// it so the navigation feels intentional. (Anchor navigation handles the rest.)
+	const shareRow = document.getElementById('nxt-share-deploy');
+	const pop = document.getElementById('nxt-share-popover');
+	if (shareRow && pop) {
+		shareRow.addEventListener('click', () => {
+			pop.hidden = true;
+			document.getElementById('nxt-share-btn')?.setAttribute('aria-expanded', 'false');
+		});
+	}
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────

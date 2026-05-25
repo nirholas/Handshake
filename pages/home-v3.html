@@ -20,6 +20,55 @@
 	<link rel="shortcut icon" href="/favicon.ico" />
 	<link rel="apple-touch-icon" href="/pwa-192x192.png" />
 
+	<script type="application/ld+json">
+	{
+		"@context": "https://schema.org",
+		"@graph": [
+			{
+				"@type": "WebSite",
+				"@id": "https://three.ws/#website",
+				"url": "https://three.ws/",
+				"name": "three.ws",
+				"description": "The 3D layer of the internet",
+				"publisher": { "@id": "https://three.ws/#org" },
+				"potentialAction": {
+					"@type": "SearchAction",
+					"target": "https://three.ws/discover?q={search_term_string}",
+					"query-input": "required name=search_term_string"
+				}
+			},
+			{
+				"@type": "Organization",
+				"@id": "https://three.ws/#org",
+				"name": "three.ws",
+				"url": "https://three.ws/",
+				"logo": "https://three.ws/og-image.png",
+				"sameAs": [
+					"https://github.com/nirholas/three.ws",
+					"https://x.com/trythreews"
+				]
+			},
+			{
+				"@type": "SoftwareApplication",
+				"name": "three.ws",
+				"applicationCategory": "DeveloperApplication",
+				"operatingSystem": "Web",
+				"browserRequirements": "Requires WebGL2",
+				"offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+			}
+		]
+	}
+	</script>
+
+	<script>
+		(function () {
+			var h = location.hash || '';
+			if (/^#(?:model|agent|onchain|widget|kiosk|preset|brain|deploy|type)=/.test(h)) {
+				location.replace('/app' + h);
+			}
+		})();
+	</script>
+
 	<link rel="preconnect" href="https://ajax.googleapis.com" crossorigin />
 	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 	<script src="/embed/v1.js" defer></script>
@@ -364,6 +413,53 @@
 			text-transform: uppercase; white-space: nowrap; padding-top: 2px; min-width: 80px;
 		}
 		.deploy-fact p { color: var(--ink-2); font-size: 14px; line-height: 1.6; }
+
+		/* ── Features grid ── */
+		.features-grid {
+			margin-top: 56px;
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 2px;
+			border: 1px solid var(--ink-4);
+			border-radius: 12px;
+			overflow: hidden;
+		}
+		@media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+		@media (max-width: 520px) { .features-grid { grid-template-columns: 1fr; } }
+		.feat {
+			padding: 28px 24px;
+			background: var(--panel);
+			border-right: 1px solid var(--ink-4);
+			border-bottom: 1px solid var(--ink-4);
+			transition: background .2s;
+		}
+		.feat:hover { background: rgba(255,255,255,0.02); }
+		.feat-tag {
+			display: inline-block;
+			font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+			text-transform: uppercase; color: var(--ink-3);
+			border: 1px solid var(--ink-4); border-radius: 4px;
+			padding: 3px 8px; margin-bottom: 14px;
+		}
+		.feat-tag--mint { color: #6ee7b7; border-color: #6ee7b7; }
+		.feat-tag--violet { color: #c4b5fd; border-color: #c4b5fd; }
+		.feat h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 8px; }
+		.feat p { color: var(--ink-2); font-size: 13.5px; line-height: 1.6; }
+		.feat .feat-link {
+			display: inline-block; margin-top: 14px;
+			font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+			letter-spacing: 0.1em; text-transform: uppercase; transition: color .2s;
+		}
+		.feat:hover .feat-link { color: var(--ink); }
+		.feat-code {
+			margin-top: 12px;
+			background: rgba(255,255,255,0.04); border-radius: 6px;
+			padding: 10px 12px;
+			font-family: var(--mono); font-size: 12px; line-height: 1.7;
+		}
+		.feat-code .tag { color: #c8b8ff; }
+		.feat-code .attr { color: #b8e6c2; }
+		.feat-code .val { color: #ffd9a8; }
 
 		/* ── Install ── */
 		.install-wrap {
@@ -720,9 +816,55 @@
 
 <hr class="sec-divider" />
 
-<!-- ── 07 Install ── -->
+<!-- ── 07 Features ── -->
+<section class="sec" id="features">
+	<div class="sec-eye reveal">07 — What you get</div>
+	<h2 class="sec-h reveal">everything an agent<br />needs to exist.</h2>
+	<p class="sec-p reveal">Open source. MIT licensed. Every piece ships today.</p>
+
+	<div class="features-grid">
+		<div class="feat reveal">
+			<span class="feat-tag">Viewer</span>
+			<h3>WebGL rendering, zero install.</h3>
+			<p>Drag any GLB into the browser. Full animations, lighting, and materials — instantly, on any device.</p>
+			<a href="/app" class="feat-link">Open viewer →</a>
+		</div>
+		<div class="feat reveal">
+			<span class="feat-tag">Embed</span>
+			<h3>One tag. Any site.</h3>
+			<p>Drop a web component into Notion, Ghost, WordPress, Framer, or your own app — no SDK required.</p>
+			<div class="feat-code"><span class="tag">&lt;three-d</span><br />&nbsp;&nbsp;<span class="attr">agent</span>=<span class="val">"erc8004:42"</span><br /><span class="tag">&gt;&lt;/three-d&gt;</span></div>
+		</div>
+		<div class="feat reveal">
+			<span class="feat-tag feat-tag--mint">On-chain</span>
+			<h3>Verifiable identity.</h3>
+			<p>Metaplex Core asset on Solana. One transaction, sub-cent fees. Discoverable by any A2A or MCP client.</p>
+		</div>
+		<div class="feat reveal">
+			<span class="feat-tag feat-tag--violet">AI</span>
+			<h3>Expression, in real time.</h3>
+			<p>Your agent reacts as it speaks, thinks, succeeds, and fails — emotion wired directly to model output, not scripted.</p>
+		</div>
+		<div class="feat reveal">
+			<span class="feat-tag">Widgets</span>
+			<h3>5 widget types.</h3>
+			<p>Turntable · Talking Agent · Animation Gallery · ERC-8004 Passport · Hotspot Tour</p>
+			<a href="/studio" class="feat-link">Widget Studio →</a>
+		</div>
+		<div class="feat reveal">
+			<span class="feat-tag feat-tag--mint">SNS · pay-by-name</span>
+			<h3>Get paid by name.</h3>
+			<p>Claim <code style="font-family:var(--mono);font-size:.88em;background:rgba(255,255,255,.06);padding:.1em .3em;border-radius:3px">yourname.threews.sol</code> as a Solana Name Service subdomain. Agents pay you in USDC by name, not address.</p>
+			<a href="/threews/claim" class="feat-link">Claim your subdomain →</a>
+		</div>
+	</div>
+</section>
+
+<hr class="sec-divider" />
+
+<!-- ── 08 Install ── -->
 <section class="sec" id="install">
-	<div class="sec-eye reveal">07 — Install</div>
+	<div class="sec-eye reveal">08 — Install</div>
 	<h2 class="sec-h reveal">two lines.<br />live.</h2>
 	<p class="sec-p reveal">Paste once in &lt;head&gt;. Use &lt;three-d&gt; anywhere. Works in React, Vue, Svelte, plain HTML, Webflow, Notion, Shopify — any host that allows a script tag.</p>
 
@@ -748,9 +890,9 @@
 
 <hr class="sec-divider" />
 
-<!-- ── 08 Developer ── -->
+<!-- ── 09 Developer ── -->
 <section class="sec" id="developers">
-	<div class="sec-eye reveal">08 — Developers</div>
+	<div class="sec-eye reveal">09 — Developers</div>
 	<h2 class="sec-h reveal">drop one tag.<br />ship a 3d agent.</h2>
 	<div class="dev-wrap">
 		<div class="dev-text reveal">

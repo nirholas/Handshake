@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Privacy Policy — three.ws Walk Avatar Extension</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		.legal-wrap { max-width: 720px; margin: 0 auto; padding: 80px 24px; }
+		h1 { font-size: 32px; font-weight: 600; margin-bottom: 8px; }
+		.updated { color: var(--text-2, #888); font-size: 13px; margin-bottom: 48px; }
+		h2 { font-size: 18px; font-weight: 600; margin: 40px 0 12px; }
+		p, li { font-size: 15px; line-height: 1.7; color: var(--text-2, #ccc); }
+		li { margin-bottom: 6px; }
+		ul { padding-left: 20px; }
+		a { color: var(--accent, #7dd3fc); }
+	</style>
+</head>
+<body>
+	<div id="nav-root"></div>
+	<div class="legal-wrap">
+		<h1>Privacy Policy</h1>
+		<p class="updated">three.ws Walk Avatar Chrome Extension · Last updated 2026-05-25</p>
+
+		<h2>What we collect</h2>
+		<p>The extension stores the following data locally on your device via <code>chrome.storage</code>:</p>
+		<ul>
+			<li><strong>Avatar selection</strong> — the ID of the avatar you chose to display</li>
+			<li><strong>Settings</strong> — walk speed, position, size, site allowlist/blocklist, narration preference, voice selection</li>
+			<li><strong>Session token</strong> — a three.ws authentication token if you sign in, stored in <code>chrome.storage.local</code> (device only, not synced)</li>
+		</ul>
+
+		<h2>What we do not collect</h2>
+		<ul>
+			<li>We do not collect or store the content of pages you visit</li>
+			<li>We do not track browsing history</li>
+			<li>We do not sell any data to third parties</li>
+			<li>We do not use analytics or tracking pixels in the extension itself</li>
+		</ul>
+
+		<h2>Network requests</h2>
+		<p>The extension makes network requests only to <strong>three.ws</strong>:</p>
+		<ul>
+			<li><code>https://three.ws/api/avatars/*</code> — to fetch your avatar list and GLB model URLs when you open the popup</li>
+			<li><code>https://three.ws/walk-embed</code> — the avatar iframe that renders the 3D character on your screen</li>
+			<li><code>https://three.ws/api/tts/speak</code> — only when you explicitly enable "Read page sections aloud" in settings. Text from the visible section is sent to this endpoint to generate audio. This feature is disabled by default.</li>
+			<li><code>https://three.ws/api/me</code> — once per popup open to verify your session, if signed in</li>
+		</ul>
+		<p>No requests are made to any third-party domains.</p>
+
+		<h2>Permissions used</h2>
+		<ul>
+			<li><strong>storage</strong> — to save your settings and session token locally</li>
+			<li><strong>activeTab</strong> — to read the current tab's domain name and send messages to the content script</li>
+			<li><strong>scripting</strong> — to inject the avatar into tabs where you have explicitly enabled it via the popup toggle</li>
+			<li><strong>&lt;all_urls&gt;</strong> — required because you can enable the avatar on any website you choose; the script is only injected when you explicitly enable it</li>
+		</ul>
+
+		<h2>Data retention</h2>
+		<p>All data is stored on your device and can be cleared at any time by clicking "Sign out" in the extension settings or by removing the extension from Chrome.</p>
+
+		<h2>Contact</h2>
+		<p>Questions? Email <a href="mailto:privacy@three.ws">privacy@three.ws</a> or visit <a href="https://three.ws">three.ws</a>.</p>
+	</div>
+	<script type="module" src="/public/nav.js"></script>
+</body>
+</html>

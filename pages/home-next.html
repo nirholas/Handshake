@@ -535,10 +535,10 @@
 				<a class="btn primary" href="/create">Build an agent <span class="arrow">→</span></a>
 				<a class="btn" href="#embed">See the embed</a>
 			</div>
-			<div class="metrics">
-				<div class="metric"><strong id="m-agents">1,847</strong>agents live</div>
-				<div class="metric"><strong id="m-sites">312</strong>sites embedded</div>
-				<div class="metric"><strong id="m-chats">28,401</strong>chats today</div>
+			<div class="metrics" id="metrics-strip" style="display:none">
+				<div class="metric"><strong id="m-agents">—</strong>agents live</div>
+				<div class="metric"><strong id="m-sites">—</strong>widgets built</div>
+				<div class="metric"><strong id="m-onchain">—</strong>on-chain</div>
 			</div>
 		</div>
 		<div class="hero-stage" id="hero-stage">
@@ -883,19 +883,19 @@
 			} catch (e) {}
 		});
 
-		// ── Live metric ticker ──────────────────────────────────
-		const stats = { agents: 1847, sites: 312, chats: 28401 };
-		const m = {
-			agents: document.getElementById('m-agents'),
-			sites: document.getElementById('m-sites'),
-			chats: document.getElementById('m-chats'),
-		};
-		const fmt = (n) => n.toLocaleString('en-US');
-		setInterval(() => {
-			if (Math.random() < 0.45) { stats.chats += 1 + Math.floor(Math.random() * 3); m.chats.textContent = fmt(stats.chats); }
-			if (Math.random() < 0.08) { stats.agents += 1; m.agents.textContent = fmt(stats.agents); }
-			if (Math.random() < 0.04) { stats.sites += 1; m.sites.textContent = fmt(stats.sites); }
-		}, 1400);
+		// ── Real marketing stats ────────────────────────────────
+		(async () => {
+			try {
+				const r = await fetch('/api/home-stats');
+				const d = await r.json();
+				if (!d.available) return;
+				const fmt = (n) => Number(n).toLocaleString('en-US');
+				document.getElementById('m-agents').textContent = fmt(d.agents);
+				document.getElementById('m-sites').textContent = fmt(d.widgets);
+				document.getElementById('m-onchain').textContent = fmt(d.onchain_agents);
+				document.getElementById('metrics-strip').style.display = '';
+			} catch (_) {}
+		})();
 	</script>
 </body>
 </html>

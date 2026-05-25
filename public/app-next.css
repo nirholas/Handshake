@@ -493,6 +493,57 @@ body.app-next-body {
 	border-color: rgba(255, 255, 255, 0.25);
 }
 
+/* ── Deploy on-chain action ────────────────────────────────────────────── */
+.nxt-action--deploy {
+	text-decoration: none;
+	color: var(--nxt-ink);
+	background: rgba(154, 124, 255, 0.10);
+	border: 1px solid rgba(154, 124, 255, 0.35);
+	box-shadow: 0 0 0 0 rgba(154, 124, 255, 0);
+	position: relative;
+}
+
+.nxt-action--deploy:hover {
+	background: rgba(154, 124, 255, 0.18);
+	border-color: rgba(154, 124, 255, 0.55);
+	transform: translateY(-1px);
+	box-shadow: 0 6px 16px rgba(154, 124, 255, 0.25);
+}
+
+.nxt-action--deploy::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 14px;
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: #c4b5fd;
+	box-shadow: 0 0 8px rgba(196, 181, 253, 0.9);
+	transform: translateY(-50%);
+	opacity: 0;
+	pointer-events: none;
+}
+
+.nxt-action--deploy.is-deployed {
+	color: #d8ffe0;
+	background: rgba(34, 197, 94, 0.12);
+	border-color: rgba(34, 197, 94, 0.45);
+}
+
+.nxt-action--deploy.is-deployed:hover {
+	background: rgba(34, 197, 94, 0.20);
+	border-color: rgba(34, 197, 94, 0.65);
+	box-shadow: 0 6px 16px rgba(34, 197, 94, 0.25);
+}
+
+.nxt-action--deploy.is-deployed::before {
+	background: #4ade80;
+	box-shadow: 0 0 8px rgba(74, 222, 128, 0.9);
+}
+
+.nxt-hidden-hosts { display: none !important; }
+
 /* ── Animation picker sheet ────────────────────────────────────────────── */
 
 .nxt-anim-sheet {
@@ -1125,6 +1176,84 @@ body.app-next-body.is-dragover::before {
 	font-size: 11.5px;
 	color: var(--nxt-ink-fade);
 	line-height: 1.5;
+}
+
+/* ── Share popover: Deploy on-chain row ────────────────────────────────── */
+.nxt-share-divider {
+	height: 1px;
+	background: var(--nxt-stroke);
+	margin: 14px -16px 12px;
+}
+
+.nxt-share-deploy {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	margin: 0 -4px;
+	border-radius: 12px;
+	text-decoration: none;
+	color: var(--nxt-ink);
+	background: rgba(154, 124, 255, 0.08);
+	border: 1px solid rgba(154, 124, 255, 0.30);
+	transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.nxt-share-deploy:hover {
+	background: rgba(154, 124, 255, 0.16);
+	border-color: rgba(154, 124, 255, 0.55);
+}
+
+.nxt-share-deploy__icon {
+	flex: none;
+	width: 32px;
+	height: 32px;
+	display: grid;
+	place-items: center;
+	border-radius: 9px;
+	background: rgba(154, 124, 255, 0.18);
+	color: #c4b5fd;
+}
+
+.nxt-share-deploy.is-deployed .nxt-share-deploy__icon {
+	background: rgba(34, 197, 94, 0.20);
+	color: #86efac;
+}
+
+.nxt-share-deploy.is-deployed {
+	background: rgba(34, 197, 94, 0.10);
+	border-color: rgba(34, 197, 94, 0.40);
+}
+
+.nxt-share-deploy.is-deployed:hover {
+	background: rgba(34, 197, 94, 0.18);
+	border-color: rgba(34, 197, 94, 0.60);
+}
+
+.nxt-share-deploy__copy {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	flex: 1;
+	min-width: 0;
+}
+
+.nxt-share-deploy__title {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--nxt-ink);
+	letter-spacing: 0.005em;
+}
+
+.nxt-share-deploy__sub {
+	font-size: 11.5px;
+	color: var(--nxt-ink-fade);
+	line-height: 1.4;
+}
+
+.nxt-share-deploy__chev {
+	flex: none;
+	color: var(--nxt-ink-fade);
 }
 
 /* ── Keyboard help ─────────────────────────────────────────────────────── */
