@@ -32,12 +32,8 @@ const RESUME_KEY = '3dagent:guest-avatar-resume';
 const $ = (sel) => document.querySelector(sel);
 
 function setPageState(state) {
-	const main = document.getElementById('main');
-	const emptyCard = document.getElementById('empty-card');
-	const content = document.getElementById('content');
-	if (main) main.setAttribute('data-page-state', state);
-	if (emptyCard) emptyCard.hidden = state !== 'empty';
-	if (content) content.hidden = state !== 'content';
+	document.getElementById('empty-card').hidden = state !== 'empty';
+	document.getElementById('content').hidden = state !== 'content';
 }
 
 let staged = /** @type {Awaited<ReturnType<typeof loadGuest>>} */ (null);

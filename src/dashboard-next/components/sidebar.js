@@ -19,10 +19,14 @@ export function renderSidebar(pathname) {
 			.map((r) => {
 				const active = r.path === here ? ' aria-current="page"' : '';
 				const icon = ICONS[r.icon] || '';
+				const extAttrs = r.external ? ' target="_blank" rel="noopener"' : '';
+				const extBadge = r.external
+					? `<span class="dn-rail-item-ext" aria-hidden="true"><svg viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2H2v6h6V6M6 2h2v2M5 5l3-3"/></svg></span>`
+					: '';
 				return `
-					<a href="${esc(r.path)}" class="dn-rail-item"${active} data-route="${esc(r.path)}">
+					<a href="${esc(r.path)}" class="dn-rail-item"${active} data-route="${esc(r.path)}"${extAttrs}>
 						<span class="dn-rail-item-icon" aria-hidden="true">${icon}</span>
-						<span class="dn-rail-item-text">${esc(r.label)}</span>
+						<span class="dn-rail-item-text">${esc(r.label)}${extBadge}</span>
 					</a>`;
 			})
 			.join('');
