@@ -19,6 +19,10 @@
             "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/cjs/node_modules/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 60
         },
+        "api/widgets/[id]/knowledge-process.js": {
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/cjs/node_modules/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
+            "maxDuration": 300
+        },
         "api/**/*.js": {
             "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/cjs/node_modules/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 30
