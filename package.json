@@ -148,6 +148,7 @@
 		"@tetsuo-ai/protocol": "^0.2.0",
 		"@tetsuo-ai/sdk": "^1.4.0",
 		"@three-ws/solana-agent": "file:solana-agent-sdk",
+		"@upstash/qstash": "^2.11.0",
 		"@upstash/ratelimit": "^2.0.5",
 		"@upstash/redis": "^1.34.3",
 		"@vercel/og": "^0.11.1",

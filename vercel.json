@@ -418,6 +418,14 @@
             "dest": "/dashboard/index.html"
         },
         {
+            "src": "/dashboard-next/?",
+            "dest": "/dashboard-next/index.html"
+        },
+        {
+            "src": "/dashboard-next/([^./]+)/?",
+            "dest": "/dashboard-next/$1.html"
+        },
+        {
             "src": "/dashboard/agent-pumpfun",
             "dest": "/dashboard/agent-pumpfun.html"
         },

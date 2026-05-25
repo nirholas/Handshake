@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import { readFileSync, cpSync, createReadStream, existsSync, statSync, rmSync } from 'fs';
-import { extname } from 'path';
+import { readFileSync, readdirSync, cpSync, createReadStream, existsSync, statSync, rmSync } from 'fs';
+import { extname, basename } from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
@@ -27,6 +27,22 @@ const DEV_API_PROXY = process.env.DEV_API_PROXY || 'https://three.ws';
 // proxy when the helper isn't running — otherwise the first hit to /pay would
 // crash the dev server with an unhandled ECONNREFUSED proxy error.
 const X402_PAY_DEV_URL = process.env.X402_PAY_DEV_URL ?? '';
+
+// Auto-discover dashboard-next sub-pages so each agent can add an HTML file
+// under pages/dashboard-next/ without touching this config. The Rollup input
+// key is `dn-<filename>` (e.g. dn-index, dn-avatars). Missing directory is
+// tolerated so the build keeps working before any page has landed.
+function discoverDashboardNextInputs() {
+	const dir = resolve(__dirname, 'pages/dashboard-next');
+	if (!existsSync(dir)) return {};
+	const entries = {};
+	for (const f of readdirSync(dir)) {
+		if (!f.endsWith('.html')) continue;
+		const name = basename(f, '.html');
+		entries[`dn-${name}`] = resolve(dir, f);
+	}
+	return entries;
+}
 
 const appConfig = {
 	server: {
@@ -215,6 +231,10 @@ const appConfig = {
 				'agents-face-mocap':       resolve(__dirname, 'public/demos/agents/face-mocap.html'),
 				'agents-gemini-live':      resolve(__dirname, 'public/demos/agents/gemini-live.html'),
 				'agents-auto-rig':         resolve(__dirname, 'public/demos/agents/auto-rig.html'),
+				// dashboard-next prototype — sub-pages auto-discovered so the parallel
+				// agents that land new pages/dashboard-next/*.html files don't have to
+				// touch this config to register them as Rollup inputs.
+				...discoverDashboardNextInputs(),
 			},
 		},
 	},
@@ -320,6 +340,8 @@ const appConfig = {
 					'/import/rpm': resolve(root, 'pages/import-rpm.html'),
 					'/import/rpm/': resolve(root, 'pages/import-rpm.html'),
 					'/dashboard': resolve(root, 'public/dashboard/index.html'),
+					'/dashboard-next': resolve(root, 'pages/dashboard-next/index.html'),
+					'/dashboard-next/': resolve(root, 'pages/dashboard-next/index.html'),
 					'/studio': resolve(root, 'public/studio/index.html'),
 					'/studio/': resolve(root, 'public/studio/index.html'),
 					'/widgets': resolve(root, 'public/widgets-gallery/index.html'),
@@ -883,8 +905,16 @@ const appConfig = {
 					for (const entry of readdirSync(pagesOut)) {
 						const from = resolve(pagesOut, entry);
 						const to = resolve(__dirname, 'dist', entry);
-						if (!statSync(from).isFile()) continue;
-						cpSync(from, to, { force: true });
+						const stat = statSync(from);
+						if (stat.isFile()) {
+							cpSync(from, to, { force: true });
+						} else if (stat.isDirectory()) {
+							// Nested page directories (e.g. pages/dashboard-next/) keep
+							// their structure inside dist/ so /dashboard-next/<page> URLs
+							// resolve. Recursive merge preserves any sibling assets
+							// already copied from public/dashboard-next/.
+							cpSync(from, to, { recursive: true, force: true });
+						}
 					}
 					rmSync(pagesOut, { recursive: true, force: true });
 				},

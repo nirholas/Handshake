@@ -1,0 +1,39 @@
+/* ==========================================================================
+   dashboard-next — design tokens
+   Reuses the --nxt-* palette established by /app-next so the prototype
+   feels like one product. Anything dashboard-shell specific (rail widths,
+   drawer width, content gutters) lives here.
+   ========================================================================== */
+
+:root {
+	/* Palette — mirrors app-next.css. Edit there first if it's a global change. */
+	--nxt-bg-0: #050608;
+	--nxt-bg-1: #0c0d12;
+	--nxt-bg-2: #14151c;
+	--nxt-bg-3: #1c1d27;
+	--nxt-ink: #e7e8ec;
+	--nxt-ink-dim: #9ca0aa;
+	--nxt-ink-fade: #6b6f78;
+	--nxt-accent: #9a7cff;
+	--nxt-accent-soft: rgba(154, 124, 255, 0.18);
+	--nxt-accent-strong: #b39bff;
+	--nxt-glass: rgba(14, 15, 22, 0.55);
+	--nxt-glass-strong: rgba(14, 15, 22, 0.82);
+	--nxt-stroke: rgba(255, 255, 255, 0.08);
+	--nxt-stroke-strong: rgba(255, 255, 255, 0.14);
+	--nxt-success: #4ec38a;
+	--nxt-warn: #ffb454;
+	--nxt-danger: #ff6b8a;
+
+	--nxt-radius: 14px;
+	--nxt-radius-sm: 10px;
+	--nxt-radius-pill: 999px;
+
+	/* Dashboard chrome dimensions */
+	--dn-rail-w: 232px;          /* sidebar width on >= md */
+	--dn-rail-w-collapsed: 64px; /* sidebar width when user collapses it */
+	--dn-drawer-w: 360px;        /* right drawer width on >= xl */
+	--dn-topbar-h: 56px;
+	--dn-content-max: 1280px;
+	--dn-gutter: 24px;
+}
