@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>GMGN Smart Money · three.ws</title>
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/home.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+	<script defer src="/footer-newsletter.js"></script>
+	<style>
+		:root { color-scheme: dark; --accent: #6a5cff; --gmgn: #00c896; --border: #1f1f29; --bg: #0a0a0f; --panel: #14141c; --muted: #888; --header-h: 48px; }
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg); color: #eee; font: 14px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; }
+		body.home-page { padding-top: var(--header-h); min-height: 100vh; display: flex; flex-direction: column; }
+
+		/* Filter bar */
+		.pf-filterbar { padding: 8px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--panel); position: sticky; top: var(--header-h); z-index: 50; row-gap: 6px; }
+		.pf-filterbar h1 { margin: 0; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+		.dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+		.dot.live { background: var(--gmgn); animation: pulse 1.6s ease-in-out infinite; }
+		.dot.connecting { background: #fbbf24; }
+		.dot.down { background: #f87171; }
+		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+		.status-pill { font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border: 1px solid var(--border); border-radius: 999px; background: transparent; cursor: default; }
+		.pf-filterbar .ctl { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; row-gap: 6px; }
+		.pf-filterbar label { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+		.pf-filterbar input[type="number"], .pf-filterbar select, .pf-filterbar button { background: #161620; color: #eee; border: 1px solid #2a2a36; border-radius: 6px; padding: 5px 9px; font-size: 12px; }
+		.pf-filterbar input[type="number"].ctl-num { width: 86px; -moz-appearance: textfield; appearance: textfield; }
+		.pf-filterbar input[type="number"].ctl-num::-webkit-outer-spin-button, .pf-filterbar input[type="number"].ctl-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+		.pf-filterbar .ctl-sep { width: 1px; height: 20px; background: #2a2a36; margin: 0 2px; }
+		.pf-filterbar button { cursor: pointer; }
+		.pf-filterbar button:hover { background: #20202c; }
+		.pf-filterbar button.toggle[data-on="0"] { color: var(--muted); }
+		#ctl-avatar-wrap { display: inline-flex; align-items: center; gap: 6px; }
+		#ctl-avatar-btn { display: inline-flex; align-items: center; gap: 8px; max-width: 240px; }
+		#ctl-avatar-btn .avatar-thumb { width: 22px; height: 22px; border-radius: 4px; background: #1a1a24 center/cover no-repeat; border: 1px solid #2a2a36; flex: 0 0 auto; }
+		#ctl-avatar-btn .avatar-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+		#ctl-avatar-btn .avatar-caret { color: var(--muted); font-size: 10px; }
+
+		/* Avatar picker modal */
+		.pf-modal-backdrop { position: fixed; inset: 0; background: rgba(4,4,8,0.72); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 24px; animation: fade-in 0.15s ease; }
+		.pf-modal-backdrop[data-open="true"] { display: flex; }
+		.pf-modal { width: min(1080px, 100%); max-height: min(760px, calc(100vh - 48px)); background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.5); animation: pop-in 0.18s ease; }
+		.pf-modal-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+		.pf-modal-head h2 { margin: 0; font-size: 14px; font-weight: 600; }
+		.pf-modal-head .spacer { flex: 1; }
+		.pf-modal-close { background: transparent; border: 0; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 4px; }
+		.pf-modal-close:hover { background: #1f1f29; color: #eee; }
+		.pf-tabs { display: flex; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--border); background: #10101a; overflow-x: auto; }
+		.pf-tab { background: transparent; border: 0; color: var(--muted); cursor: pointer; padding: 10px 14px; font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; white-space: nowrap; }
+		.pf-tab:hover { color: #eee; }
+		.pf-tab[aria-selected="true"] { color: #eee; border-bottom-color: var(--accent); }
+		.pf-tab .badge { display: inline-block; margin-left: 6px; font-size: 10px; color: var(--muted); }
+		.pf-toolbar { display: flex; gap: 8px; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+		.pf-toolbar input[type="search"] { flex: 1; background: #161620; color: #eee; border: 1px solid #2a2a36; border-radius: 6px; padding: 7px 10px; font-size: 13px; }
+		.pf-toolbar input[type="search"]:focus { outline: none; border-color: var(--accent); }
+		.pf-toolbar .custom-row { display: flex; gap: 6px; align-items: center; }
+		.pf-toolbar .custom-row input { background: #161620; color: #eee; border: 1px solid #2a2a36; border-radius: 6px; padding: 7px 10px; font-size: 13px; width: 220px; }
+		.pf-toolbar .custom-row button { background: var(--accent); border: 0; color: #fff; border-radius: 6px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+		.pf-toolbar .custom-row button:hover { filter: brightness(1.1); }
+		.pf-content { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 280px; }
+		.pf-body { min-height: 0; overflow-y: auto; padding: 16px 18px; }
+		.pf-preview { border-left: 1px solid var(--border); background: #0d0d15; display: flex; flex-direction: column; min-height: 0; }
+		.pf-preview-stage { flex: 1; min-height: 0; position: relative; background: radial-gradient(ellipse at center, #1a1a26 0%, #0a0a12 70%); }
+		.pf-preview-stage model-viewer { width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
+		.pf-preview-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #2a2a3a; font-size: 48px; pointer-events: none; }
+		.pf-preview-meta { padding: 12px 14px; border-top: 1px solid var(--border); }
+		.pf-preview-meta .name { font-size: 13px; font-weight: 600; }
+		.pf-preview-meta .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+		.pf-preview-meta .actions { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+		.pf-preview-meta .actions button { font-size: 11px; padding: 5px 10px; border-radius: 5px; background: #161620; border: 1px solid #2a2a36; color: #cbd5e1; cursor: pointer; }
+		.pf-preview-meta .actions button:hover { background: #20202c; }
+		.pf-preview-meta .actions .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+		.pf-preview-meta .actions .primary:hover { filter: brightness(1.1); background: var(--accent); }
+		.pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+		.pf-card { position: relative; background: #161620; border: 1px solid #232330; border-radius: 8px; overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.1s; display: flex; flex-direction: column; text-align: left; padding: 0; color: #eee; font: inherit; }
+		.pf-card:hover, .pf-card:focus-visible { border-color: #3a3a4a; outline: none; }
+		.pf-card[data-selected="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+		.pf-card .thumb { aspect-ratio: 1/1; background: #0e0e16 center/cover no-repeat; border-bottom: 1px solid #232330; display: flex; align-items: center; justify-content: center; color: #2a2a3a; font-size: 32px; }
+		.pf-card .meta { padding: 8px 10px; }
+		.pf-card .name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.pf-card .sub { font-size: 10px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.pf-card .selected-mark { position: absolute; top: 6px; left: 6px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); display: none; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; }
+		.pf-card[data-selected="true"] .selected-mark { display: flex; }
+		@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+		@keyframes pop-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: none; } }
+
+		/* Layout */
+		.pf-main { flex: 1; display: grid; grid-template-columns: 1fr 340px; overflow: hidden; }
+		#stage { position: relative; background: radial-gradient(ellipse at center 70%, #0f1a28 0%, #06080f 70%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+		#stage model-viewer { width: 100%; height: 100%; min-height: 340px; --poster-color: transparent; background: transparent; }
+		#stage-overlay { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; pointer-events: none; }
+		#stage-title { font-size: 18px; font-weight: 700; color: var(--gmgn); text-shadow: 0 0 20px rgba(0,200,150,0.4); margin-bottom: 6px; }
+		#stage-caption { font-size: 13px; color: #94a3b8; max-width: 480px; margin: 0 auto; padding: 0 16px; }
+
+		/* Feed sidebar */
+		#side { display: flex; flex-direction: column; border-left: 1px solid var(--border); background: var(--panel); overflow: hidden; min-width: 260px; max-width: 480px; resize: horizontal; }
+		.side-header { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); background: #10101a; cursor: move; user-select: none; gap: 8px; }
+		.side-title { font-size: 13px; font-weight: 600; flex: 1; }
+		.side-control-btn { background: transparent; border: 0; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 6px; border-radius: 3px; }
+		.side-control-btn:hover { background: #1f1f29; color: #eee; }
+		#side-content { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+		#side-content h2 { margin: 0 0 8px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+		/* Feed */
+		#feed-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+		#feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
+		.empty { color: var(--muted); font-size: 12px; padding: 16px 0; text-align: center; }
+		.feed-jump { display: none; background: var(--accent); border: 0; color: #fff; border-radius: 999px; padding: 4px 14px; font-size: 12px; cursor: pointer; margin: 4px auto; }
+		.feed-jump[data-visible="true"] { display: block; }
+
+		/* Smart money event cards */
+		.ev-card { background: #0e0e18; border: 1px solid #1e1e2a; border-radius: 8px; padding: 10px 12px; font-size: 12px; transition: border-color 0.2s; cursor: default; }
+		.ev-card.replay { opacity: 0.65; }
+		.ev-card.is-new { border-left: 3px solid var(--gmgn); }
+		.ev-card.is-alert { border-left: 3px solid #f59e0b; }
+		.ev-card:hover { border-color: #2e2e3e; }
+		.ev-card .ev-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+		.ev-card .ev-symbol { font-size: 14px; font-weight: 700; color: #eee; }
+		.ev-card .ev-name { color: var(--muted); font-size: 11px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.ev-card .ev-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(0,200,150,0.12); color: var(--gmgn); border: 1px solid rgba(0,200,150,0.25); border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+		.ev-card .ev-badge.alert { background: rgba(245,158,11,0.12); color: #f59e0b; border-color: rgba(245,158,11,0.25); }
+		.ev-card .ev-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+		.ev-card .ev-stat { display: flex; flex-direction: column; gap: 1px; }
+		.ev-card .ev-stat .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+		.ev-card .ev-stat .val { font-size: 12px; font-weight: 600; color: #cbd5e1; }
+		.ev-card .ev-stat .val.up { color: #4ade80; }
+		.ev-card .ev-stat .val.dn { color: #f87171; }
+		.ev-card .ev-delta { display: inline-block; font-size: 10px; color: #4ade80; background: rgba(74,222,128,0.1); border-radius: 999px; padding: 1px 6px; margin-left: 4px; }
+		.ev-card .ev-tag-new { font-size: 10px; background: rgba(0,200,150,0.15); color: var(--gmgn); border-radius: 4px; padding: 1px 5px; font-weight: 600; }
+		.ev-card .ev-time { font-size: 10px; color: #444; margin-top: 6px; }
+		.ev-card .ev-link { font-size: 10px; color: var(--accent); text-decoration: none; }
+		.ev-card .ev-link:hover { text-decoration: underline; }
+
+		/* Stats bar */
+		#stats-bar { display: flex; gap: 16px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0d0d15; font-size: 11px; flex-wrap: wrap; }
+		.stat-item { display: flex; flex-direction: column; gap: 1px; }
+		.stat-item .lbl { color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; }
+		.stat-item .val { color: #eee; font-weight: 600; }
+		.stat-item .val.gmgn { color: var(--gmgn); }
+
+		@media (max-width: 768px) {
+			.pf-main { grid-template-columns: 1fr; }
+			#side { border-left: 0; border-top: 1px solid var(--border); height: 50vh; }
+		}
+	</style>
+</head>
+<body class="home-page">
+	<script>window.__PAGE_INIT_TS = Date.now();</script>
+	<div id="nav-root"></div>
+	<script type="module">
+		import { mountNav } from '/src/nav.js';
+		mountNav(document.getElementById('nav-root'), { active: 'gmgn' });
+	</script>
+
+	<!-- Filter bar -->
+	<div class="pf-filterbar" role="toolbar" aria-label="Feed controls">
+		<h1>
+			<span class="dot connecting" id="status-dot" aria-label="Connecting"></span>
+			GMGN Smart Money
+		</h1>
+		<button class="status-pill" id="status-pill" type="button" title="Connection status">
+			<span id="status-text">Connecting…</span>
+		</button>
+		<div class="ctl">
+			<label>Chain
+				<select id="ctl-chain">
+					<option value="sol">Solana</option>
+					<option value="eth">Ethereum</option>
+					<option value="base">Base</option>
+					<option value="bsc">BNB Chain</option>
+				</select>
+			</label>
+			<label>Interval
+				<select id="ctl-interval">
+					<option value="1m">1m</option>
+					<option value="5m">5m</option>
+					<option value="1h" selected>1h</option>
+					<option value="6h">6h</option>
+					<option value="24h">24h</option>
+				</select>
+			</label>
+			<label>Min wallets
+				<input id="ctl-min-smart" type="number" class="ctl-num" placeholder="2" min="1" step="1" value="2" title="Minimum smart wallet buy count" />
+			</label>
+			<span class="ctl-sep" aria-hidden="true"></span>
+			<div id="ctl-avatar-wrap">
+				<button id="ctl-avatar-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose avatar">
+					<span class="avatar-thumb" id="ctl-avatar-thumb" aria-hidden="true"></span>
+					<span class="avatar-name" id="ctl-avatar-label">Avatar</span>
+					<span class="avatar-caret" aria-hidden="true">▾</span>
+				</button>
+			</div>
+			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle narration">🔊 Narration</button>
+			<select id="ctl-mood" title="Agent mood">
+				<option value="chill">😎 Chill</option>
+				<option value="normal" selected>🙂 Normal</option>
+				<option value="hype">🤩 Hype</option>
+			</select>
+			<button id="ctl-reconnect" class="pf-icon-btn" type="button" title="Apply filters and reconnect">↻ Apply</button>
+		</div>
+	</div>
+
+	<!-- Stats bar -->
+	<div id="stats-bar">
+		<div class="stat-item"><span class="lbl">Smart entries seen</span><span class="val gmgn" id="stat-entries">0</span></div>
+		<div class="stat-item"><span class="lbl">Tokens tracked</span><span class="val" id="stat-tracked">—</span></div>
+		<div class="stat-item"><span class="lbl">Last poll</span><span class="val" id="stat-polled">—</span></div>
+		<div class="stat-item"><span class="lbl">Source</span><span class="val">GMGN.ai</span></div>
+	</div>
+
+	<!-- Avatar picker modal -->
+	<div class="pf-modal-backdrop" id="avatar-picker" role="dialog" aria-modal="true" aria-label="Choose avatar" data-open="false">
+		<div class="pf-modal">
+			<div class="pf-modal-head">
+				<h2>Choose avatar</h2>
+				<div class="spacer"></div>
+				<button class="pf-modal-close" type="button" data-picker-close aria-label="Close">×</button>
+			</div>
+			<div class="pf-tabs" role="tablist">
+				<button class="pf-tab" role="tab" aria-selected="true" data-tab="defaults">Defaults<span class="badge" id="tab-badge-defaults"></span></button>
+				<button class="pf-tab" role="tab" aria-selected="false" data-tab="community">Community<span class="badge" id="tab-badge-community"></span></button>
+				<button class="pf-tab" role="tab" aria-selected="false" data-tab="mine">My agents<span class="badge" id="tab-badge-mine"></span></button>
+			</div>
+			<div class="pf-toolbar">
+				<input type="search" id="picker-search" placeholder="Search avatars…" aria-label="Search" />
+				<div class="custom-row">
+					<input type="url" id="picker-custom-url" placeholder="Paste .glb / .gltf / .vrm URL" aria-label="Custom avatar URL" />
+					<button type="button" id="picker-custom-go">Use</button>
+				</div>
+			</div>
+			<div class="pf-content">
+				<div class="pf-body" id="picker-body"></div>
+				<div class="pf-preview">
+					<div class="pf-preview-stage">
+						<div class="pf-preview-empty" id="preview-empty" aria-hidden="true">🤖</div>
+						<model-viewer id="picker-preview" interaction-prompt="none" camera-controls disable-zoom autoplay auto-rotate shadow-intensity="0.4" environment-image="neutral" camera-orbit="0deg 75deg 105%" field-of-view="auto" bounds="tight" loading="lazy" style="display:none" aria-label="Avatar preview"></model-viewer>
+					</div>
+					<div class="pf-preview-meta" id="picker-meta" hidden>
+						<div class="name" id="preview-name"></div>
+						<div class="sub" id="preview-sub"></div>
+						<div class="actions">
+							<button type="button" class="primary" id="picker-use-btn">Use this avatar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<main class="pf-main">
+		<div id="stage">
+			<model-viewer id="agent" camera-controls disable-zoom interaction-prompt="none" autoplay auto-rotate auto-rotate-delay="2000" rotation-per-second="15deg" shadow-intensity="0.6" shadow-softness="0.8" exposure="1.0" environment-image="neutral" camera-orbit="0deg 75deg 105%" min-camera-orbit="auto auto 50%" max-camera-orbit="auto auto 200%" field-of-view="auto" bounds="tight" loading="eager" aria-label="3D agent"></model-viewer>
+			<div id="stage-overlay">
+				<div id="stage-title" aria-live="polite"></div>
+				<div id="stage-caption" aria-live="polite"></div>
+			</div>
+		</div>
+		<aside id="side">
+			<div class="side-header" id="side-header">
+				<span class="side-title">Smart Money Feed</span>
+				<button class="side-control-btn" id="side-minimize" title="Minimize">_</button>
+			</div>
+			<div id="side-content">
+				<h2>Live smart money entries</h2>
+				<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite">↑ <span id="feed-jump-count">0</span> new</button>
+				<div id="feed"><div class="empty">Waiting for smart money events…</div></div>
+			</div>
+		</aside>
+	</main>
+
+	<footer class="h-footer h-footer-horizon">
+		<div class="h-footer-glow-line" aria-hidden="true"></div>
+		<div class="h-footer-floor" aria-hidden="true"></div>
+		<div class="h-footer-haze" aria-hidden="true"></div>
+		<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+		<div class="h-footer-avatar" aria-hidden="true">
+			<model-viewer src="/animations/robotexpressive.glb" auto-rotate auto-rotate-delay="0" rotation-per-second="20deg" interaction-prompt="none" camera-controls="false" disable-zoom shadow-intensity="0" exposure="0.7" environment-image="neutral" camera-orbit="0deg 80deg 9m" field-of-view="45deg" loading="lazy"></model-viewer>
+		</div>
+		<div class="h-footer-cta">
+			<div class="h-footer-newsletter">
+				<h3>Stay in the loop</h3>
+				<p>Get updates on new features, agent tooling, and protocol changes.</p>
+				<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+					<input type="email" class="h-footer-newsletter-input" name="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email" required />
+					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
+					</button>
+				</form>
+				<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
+			</div>
+			<div class="h-footer-community">
+				<h3>Join the community</h3>
+				<p>Follow along for builds, demos, and conversations with the team.</p>
+				<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+					Follow on X
+				</a>
+			</div>
+		</div>
+		<div class="h-footer-inner">
+			<nav class="h-footer-links" aria-label="Footer links">
+				<a href="/">Home</a>
+				<a href="/docs">Docs</a>
+				<a href="/pumpfun">Pump.fun Feed</a>
+				<a href="/gmgn" aria-current="page">GMGN Smart Money</a>
+				<a href="https://x.com/trythreews" target="_blank" rel="noopener">X / Twitter</a>
+			</nav>
+			<p class="h-footer-copy">&copy; 2026 three.ws. Powered by <a href="https://gmgn.ai" target="_blank" rel="noopener">GMGN.ai</a>.</p>
+		</div>
+	</footer>
+
+	<script type="module">
+		const $ = (id) => document.getElementById(id);
+		const url = new URL(location.href);
+
+		// ── Params ───────────────────────────────────────────────────────────────
+		const params = {
+			chain: url.searchParams.get('chain') || 'sol',
+			interval: url.searchParams.get('interval') || '1h',
+			minSmartBuys: Math.max(1, Number(url.searchParams.get('minSmartBuys')) || 2),
+			narrate: url.searchParams.get('narrate') !== '0',
+			mood: url.searchParams.get('mood') || 'normal',
+			avatar: url.searchParams.get('avatar') || '/avatars/cz.glb',
+		};
+		if (!['chill', 'normal', 'hype'].includes(params.mood)) params.mood = 'normal';
+
+		$('ctl-chain').value = params.chain;
+		$('ctl-interval').value = params.interval;
+		$('ctl-min-smart').value = params.minSmartBuys;
+		$('ctl-narrate').dataset.on = params.narrate ? '1' : '0';
+		$('ctl-mood').value = params.mood;
+
+		// ── Agent / model-viewer ─────────────────────────────────────────────────
+		const viewer = $('agent');
+		viewer.src = params.avatar;
+		setAvatarLabel(params.avatar);
+		function setAvatarLabel(src) {
+			const name = src.split('/').pop().replace(/\.[^.]+$/, '') || 'Agent';
+			$('ctl-avatar-label').textContent = name;
+			$('ctl-avatar-thumb').style.backgroundImage = `url('/api/avatars/thumb?src=${encodeURIComponent(src)}')`;
+		}
+
+		// ── TTS queue ────────────────────────────────────────────────────────────
+		const synth = window.speechSynthesis;
+		let _ttsQueue = [];
+		let _ttsBusy = false;
+		let _voices = [];
+		function loadVoices() { _voices = synth.getVoices(); }
+		loadVoices();
+		if (speechSynthesis.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+
+		function pickVoice() {
+			const pref = ['Google US English', 'Samantha', 'Alex'];
+			for (const p of pref) {
+				const v = _voices.find((v) => v.name === p);
+				if (v) return v;
+			}
+			return _voices.find((v) => v.lang?.startsWith('en')) || null;
+		}
+
+		function speak(text) {
+			_ttsQueue.push(text);
+			if (!_ttsBusy) drainTts();
+		}
+
+		function drainTts() {
+			if (!_ttsQueue.length || !synth) return;
+			_ttsBusy = true;
+			const text = _ttsQueue.shift();
+			const u = new SpeechSynthesisUtterance(text);
+			const v = pickVoice();
+			if (v) u.voice = v;
+			u.rate = params.mood === 'hype' ? 1.2 : params.mood === 'chill' ? 0.9 : 1.0;
+			u.pitch = params.mood === 'hype' ? 1.1 : 1.0;
+			u.onend = () => { _ttsBusy = false; drainTts(); };
+			u.onerror = () => { _ttsBusy = false; drainTts(); };
+			synth.speak(u);
+		}
+
+		// ── Animations ───────────────────────────────────────────────────────────
+		function playAnim(name) {
+			if (!viewer.availableAnimations?.includes(name)) return false;
+			viewer.animationName = name;
+			viewer.currentTime = 0;
+			viewer.play({ repetitions: 1 });
+			return true;
+		}
+
+		function reactToEvent(ev) {
+			const delta = ev.smart_buy_delta ?? 0;
+			const isNew = ev.is_new;
+			const isAlert = delta >= 3;
+
+			if (isAlert) {
+				playAnim('Surprised') || playAnim('Victory');
+			} else if (isNew) {
+				playAnim('Greeting') || playAnim('Happy');
+			} else {
+				playAnim('Thinking') || playAnim('Idle');
+			}
+		}
+
+		// ── Narration ────────────────────────────────────────────────────────────
+		function narrateEvent(ev) {
+			if (!params.narrate) return;
+			const sym = ev.symbol || 'Unknown';
+			const mc = ev.market_cap ? formatMc(ev.market_cap) : null;
+			const total = ev.smart_buy_24h ?? 0;
+			const delta = ev.smart_buy_delta ?? 0;
+
+			let text;
+			if (delta >= 5) {
+				text = `Alert! ${sym} exploding on smart money radar! ${delta} new wallets just entered.`;
+			} else if (ev.is_new) {
+				text = mc
+					? `New smart money entry. ${total} wallets loading ${sym}. Market cap ${mc}.`
+					: `New smart money entry. ${sym} just hit the radar with ${total} wallets.`;
+			} else if (delta > 0) {
+				text = `${delta} more smart wallet${delta > 1 ? 's' : ''} entered ${sym}. Total ${total} in.`;
+			} else {
+				text = `Smart money holding ${sym}. ${total} wallets tracked.`;
+			}
+
+			$('stage-title').textContent = sym;
+			$('stage-caption').textContent = text;
+			speak(text);
+			setTimeout(() => {
+				if ($('stage-title').textContent === sym) $('stage-title').textContent = '';
+				if ($('stage-caption').textContent === text) $('stage-caption').textContent = '';
+			}, 8000);
+		}
+
+		// ── Feed rendering ───────────────────────────────────────────────────────
+		let entryCount = 0;
+		const feed = $('feed');
+		const feedJump = $('feed-jump');
+		const feedJumpCount = $('feed-jump-count');
+		let jumpPending = 0;
+
+		function isAtBottom() {
+			const el = feed.parentElement;
+			return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+		}
+
+		function renderCard(ev, replay = false) {
+			const delta = ev.smart_buy_delta ?? 0;
+			const isNew = ev.is_new;
+			const isAlert = delta >= 3;
+			const mc = ev.market_cap ? formatMc(ev.market_cap) : '—';
+			const vol = ev.volume ? formatMc(ev.volume) : '—';
+			const pct1h = ev.price_change_1h != null ? ev.price_change_1h.toFixed(1) : null;
+			const pct24h = ev.price_change_24h != null ? ev.price_change_24h.toFixed(1) : null;
+			const addr = ev.address;
+			const chain = ev.chain || 'sol';
+
+			const div = document.createElement('div');
+			div.className = `ev-card${replay ? ' replay' : ''}${isNew ? ' is-new' : ''}${isAlert ? ' is-alert' : ''}`;
+			div.innerHTML = `
+				<div class="ev-head">
+					<span class="ev-symbol">$${escHtml(ev.symbol)}</span>
+					${isNew ? '<span class="ev-tag-new">NEW</span>' : ''}
+					<span class="ev-name">${escHtml(ev.name)}</span>
+					<span class="ev-badge${isAlert ? ' alert' : ''}">
+						🧠 ${ev.smart_buy_24h}${delta > 0 ? `<span class="ev-delta">+${delta}</span>` : ''}
+					</span>
+				</div>
+				<div class="ev-stats">
+					<div class="ev-stat"><span class="lbl">Market cap</span><span class="val">${escHtml(mc)}</span></div>
+					<div class="ev-stat"><span class="lbl">Volume</span><span class="val">${escHtml(vol)}</span></div>
+					${pct1h != null ? `<div class="ev-stat"><span class="lbl">1h</span><span class="val ${Number(pct1h) >= 0 ? 'up' : 'dn'}">${Number(pct1h) >= 0 ? '+' : ''}${pct1h}%</span></div>` : ''}
+					${pct24h != null ? `<div class="ev-stat"><span class="lbl">24h</span><span class="val ${Number(pct24h) >= 0 ? 'up' : 'dn'}">${Number(pct24h) >= 0 ? '+' : ''}${pct24h}%</span></div>` : ''}
+				</div>
+				<div class="ev-time">
+					${new Date(ev.timestamp * 1000).toLocaleTimeString()} ·
+					${chain === 'sol' && addr ? `<a class="ev-link" href="https://gmgn.ai/sol/token/${escHtml(addr)}" target="_blank" rel="noopener">View on GMGN ↗</a>` : ''}
+					${chain === 'eth' && addr ? `<a class="ev-link" href="https://gmgn.ai/eth/token/${escHtml(addr)}" target="_blank" rel="noopener">View on GMGN ↗</a>` : ''}
+					${chain === 'base' && addr ? `<a class="ev-link" href="https://gmgn.ai/base/token/${escHtml(addr)}" target="_blank" rel="noopener">View on GMGN ↗</a>` : ''}
+					${chain === 'bsc' && addr ? `<a class="ev-link" href="https://gmgn.ai/bsc/token/${escHtml(addr)}" target="_blank" rel="noopener">View on GMGN ↗</a>` : ''}
+				</div>`;
+			return div;
+		}
+
+		function handleEvent(ev, replay = false) {
+			const card = renderCard(ev, replay);
+			const atBottom = isAtBottom();
+
+			if (atBottom || replay) {
+				const empty = feed.querySelector('.empty');
+				if (empty) empty.remove();
+				feed.prepend(card);
+				while (feed.children.length > 150) feed.lastElementChild?.remove();
+			} else {
+				jumpPending++;
+				feedJump.dataset.visible = 'true';
+				feedJumpCount.textContent = jumpPending;
+				feed.prepend(card);
+				while (feed.children.length > 150) feed.lastElementChild?.remove();
+			}
+
+			if (!replay) {
+				entryCount++;
+				$('stat-entries').textContent = entryCount;
+				reactToEvent(ev);
+				narrateEvent(ev);
+			}
+		}
+
+		feedJump.addEventListener('click', () => {
+			feed.firstElementChild?.scrollIntoView({ behavior: 'smooth' });
+			jumpPending = 0;
+			feedJump.dataset.visible = 'false';
+		});
+
+		// ── SSE connection ───────────────────────────────────────────────────────
+		let es = null;
+		const dot = $('status-dot');
+		const statusText = $('status-text');
+
+		function setStatus(state, text) {
+			dot.className = `dot ${state}`;
+			statusText.textContent = text;
+		}
+
+		function connect() {
+			if (es) { es.close(); es = null; }
+			setStatus('connecting', 'Connecting…');
+
+			const endpoint = new URL('/api/agents/gmgn-feed', location.href);
+			endpoint.searchParams.set('chain', $('ctl-chain').value);
+			endpoint.searchParams.set('interval', $('ctl-interval').value);
+			endpoint.searchParams.set('minSmartBuys', $('ctl-min-smart').value || '2');
+
+			es = new EventSource(endpoint.href, { withCredentials: true });
+
+			es.addEventListener('open', (msg) => {
+				const d = JSON.parse(msg.data);
+				setStatus('live', `Live · ${d.chain?.toUpperCase() || 'SOL'} · ${d.interval}`);
+			});
+
+			es.addEventListener('smart_entry', (msg) => {
+				const ev = JSON.parse(msg.data);
+				handleEvent(ev, ev.replay || false);
+			});
+
+			es.addEventListener('status', (msg) => {
+				const d = JSON.parse(msg.data);
+				if (d.state === 'live') {
+					setStatus('live', `Live · polled ${new Date(d.polled_at).toLocaleTimeString()}`);
+					$('stat-tracked').textContent = d.count ?? '—';
+					$('stat-polled').textContent = new Date(d.polled_at).toLocaleTimeString();
+				} else if (d.state === 'error') {
+					setStatus('down', `GMGN API error ${d.status || ''}`);
+				}
+			});
+
+			es.addEventListener('ping', () => {});
+
+			es.addEventListener('close', () => {
+				setStatus('down', 'Disconnected — reconnecting…');
+				es = null;
+				setTimeout(connect, 4000);
+			});
+
+			es.onerror = () => {
+				setStatus('down', 'Error — retrying…');
+				es?.close();
+				es = null;
+				setTimeout(connect, 5000);
+			};
+		}
+
+		// ── Controls ─────────────────────────────────────────────────────────────
+		$('ctl-narrate').addEventListener('click', (e) => {
+			const btn = e.currentTarget;
+			const on = btn.dataset.on === '1' ? '0' : '1';
+			btn.dataset.on = on;
+			params.narrate = on === '1';
+			if (!params.narrate) synth.cancel();
+		});
+
+		$('ctl-mood').addEventListener('change', (e) => {
+			params.mood = e.target.value;
+		});
+
+		$('ctl-reconnect').addEventListener('click', () => {
+			params.chain = $('ctl-chain').value;
+			params.interval = $('ctl-interval').value;
+			params.minSmartBuys = Math.max(1, Number($('ctl-min-smart').value) || 2);
+			connect();
+		});
+
+		// ── Avatar picker ────────────────────────────────────────────────────────
+		const DEFAULT_AVATARS = [
+			{ url: '/avatars/cz.glb', name: 'CZ', sub: 'Default narrator', emoji: '🟡' },
+			{ url: '/avatars/default.glb', name: 'Default', sub: 'Generic agent', emoji: '🤖' },
+		];
+
+		let selectedAvatarId = null;
+		const pickerPreview = $('picker-preview');
+		const pickerMeta = $('picker-meta');
+		const previewEmpty = $('preview-empty');
+		const pickerData = { defaults: DEFAULT_AVATARS.map((a) => ({ ...a, _kind: 'default' })), community: [], mine: [] };
+		const pickerLoaded = { defaults: true, community: false, mine: false };
+		const pickerLoading = { community: false, mine: false };
+		const pickerCursor = { community: null, mine: null };
+		const pickerHasMore = { community: false, mine: false };
+		let pickerTab = 'defaults';
+		let pickerQuery = '';
+		let pickerAuthed = null;
+		let pickerLastFocus = null;
+		let pickerSelectedUrl = null;
+
+		function openPicker() {
+			pickerLastFocus = document.activeElement;
+			$('avatar-picker').dataset.open = 'true';
+			$('ctl-avatar-btn').setAttribute('aria-expanded', 'true');
+			document.body.style.overflow = 'hidden';
+			renderPickerBody();
+			ensurePickerLoaded('community');
+			ensurePickerLoaded('mine');
+			setTimeout(() => $('picker-search').focus(), 30);
+		}
+		function closePicker() {
+			$('avatar-picker').dataset.open = 'false';
+			$('ctl-avatar-btn').setAttribute('aria-expanded', 'false');
+			document.body.style.overflow = '';
+			pickerLastFocus?.focus?.();
+		}
+		$('ctl-avatar-btn').addEventListener('click', openPicker);
+		$('avatar-picker').addEventListener('click', (e) => {
+			if (e.target === $('avatar-picker') || e.target.closest('[data-picker-close]')) closePicker();
+		});
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && $('avatar-picker').dataset.open === 'true') closePicker();
+		});
+		document.querySelectorAll('.pf-tab').forEach((tab) => {
+			tab.addEventListener('click', () => {
+				document.querySelectorAll('.pf-tab').forEach((t) => t.setAttribute('aria-selected', String(t === tab)));
+				pickerTab = tab.dataset.tab;
+				renderPickerBody();
+				ensurePickerLoaded(pickerTab);
+			});
+		});
+		$('picker-search').addEventListener('input', (e) => {
+			pickerQuery = e.target.value.trim().toLowerCase();
+			renderPickerBody();
+		});
+		$('picker-custom-go').addEventListener('click', useCustomUrl);
+		$('picker-custom-url').addEventListener('keydown', (e) => { if (e.key === 'Enter') useCustomUrl(); });
+
+		function useCustomUrl() {
+			const v = $('picker-custom-url').value.trim();
+			if (!v) return;
+			try { new URL(v, location.href); } catch { alert('Invalid URL.'); return; }
+			$('picker-custom-url').value = '';
+			setAvatar(v, v.split('/').pop().replace(/\.[^.]+$/, ''), 'Custom');
+			closePicker();
+		}
+
+		async function ensurePickerLoaded(tab) {
+			if (pickerLoaded[tab] || pickerLoading[tab]) return;
+			pickerLoading[tab] = true;
+			try {
+				if (tab === 'community') {
+					const r = await fetch('/api/avatars/public?limit=48', { credentials: 'include' });
+					if (r.ok) {
+						const d = await r.json();
+						pickerData.community = (d.items || d).map((a) => ({ ...a, _kind: 'community' }));
+						pickerLoaded.community = true;
+					}
+				} else if (tab === 'mine') {
+					const probe = await fetch('/api/avatars?limit=1', { credentials: 'include' });
+					pickerAuthed = probe.ok;
+					if (probe.ok) {
+						const r = await fetch('/api/avatars?limit=100', { credentials: 'include' });
+						if (r.ok) {
+							const d = await r.json();
+							pickerData.mine = (d.items || d).map((a) => ({ ...a, _kind: 'mine' }));
+							pickerLoaded.mine = true;
+						}
+					}
+				}
+			} catch {}
+			pickerLoading[tab] = false;
+			renderPickerBody();
+		}
+
+		function renderPickerBody() {
+			const body = $('picker-body');
+			const items = pickerData[pickerTab] || [];
+			const filtered = pickerQuery ? items.filter((a) => (a.name || a.url || '').toLowerCase().includes(pickerQuery)) : items;
+
+			if (!filtered.length) {
+				body.innerHTML = `<div class="empty">${pickerLoading[pickerTab] ? 'Loading…' : pickerTab === 'mine' && pickerAuthed === false ? '<a href="/auth">Sign in</a> to see your agents' : 'No avatars found'}</div>`;
+				return;
+			}
+			const grid = document.createElement('div');
+			grid.className = 'pf-grid';
+			filtered.forEach((a) => {
+				const card = document.createElement('button');
+				card.className = 'pf-card';
+				card.dataset.selected = String((a.url || a.glb_url) === pickerSelectedUrl);
+				const src = a.url || a.glb_url || a.src || '';
+				const thumb = a.image_url || a.thumbnail_url || '';
+				card.innerHTML = `
+					<div class="thumb" style="${thumb ? `background-image:url('${escHtml(thumb)}')` : ''}">${thumb ? '' : (a.emoji || '🤖')}</div>
+					<div class="meta"><div class="name">${escHtml(a.name || 'Agent')}</div><div class="sub">${escHtml(a.sub || a.description || '')}</div></div>
+					<div class="selected-mark" aria-hidden="true">✓</div>`;
+				card.addEventListener('click', () => previewAvatar(a));
+				grid.appendChild(card);
+			});
+			body.innerHTML = '';
+			body.appendChild(grid);
+		}
+
+		function previewAvatar(a) {
+			const src = a.url || a.glb_url || a.src || '';
+			pickerPreview.src = src;
+			pickerPreview.style.display = 'block';
+			previewEmpty.style.display = 'none';
+			pickerMeta.hidden = false;
+			$('preview-name').textContent = a.name || 'Agent';
+			$('preview-sub').textContent = a.sub || a.description || '';
+			pickerSelectedUrl = src;
+			document.querySelectorAll('.pf-card').forEach((c) => {
+				c.dataset.selected = String((c.querySelector('.name')?.textContent || '') === (a.name || ''));
+			});
+			$('picker-use-btn').onclick = () => {
+				setAvatar(src, a.name || 'Agent', a.sub || '');
+				closePicker();
+			};
+		}
+
+		function setAvatar(src, name, sub) {
+			viewer.src = src;
+			params.avatar = src;
+			$('ctl-avatar-label').textContent = name || src.split('/').pop().replace(/\.[^.]+$/, '');
+		}
+
+		// ── Side panel ───────────────────────────────────────────────────────────
+		$('side-minimize').addEventListener('click', () => {
+			$('side').classList.toggle('minimized');
+			$('side-minimize').textContent = $('side').classList.contains('minimized') ? '▭' : '_';
+		});
+
+		// ── Utils ─────────────────────────────────────────────────────────────────
+		function escHtml(s) {
+			return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+		}
+
+		function formatMc(n) {
+			if (n == null) return '—';
+			if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+			if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
+			if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
+			return `$${Number(n).toFixed(2)}`;
+		}
+
+		// ── Go ───────────────────────────────────────────────────────────────────
+		connect();
+	</script>
+</body>
+</html>

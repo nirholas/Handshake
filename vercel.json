@@ -34,6 +34,10 @@
         "api/**/*.js": {
             "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/cjs/node_modules/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 30
+        },
+        "api/agents/gmgn.js": {
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/cjs/node_modules/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
+            "maxDuration": 120
         }
     },
     "routes": [
@@ -204,6 +208,14 @@
         {
             "src": "/pumpfun/",
             "dest": "/pumpfun.html"
+        },
+        {
+            "src": "/gmgn",
+            "dest": "/gmgn.html"
+        },
+        {
+            "src": "/gmgn/",
+            "dest": "/gmgn.html"
         },
         {
             "src": "/vanity-wallet",
@@ -828,6 +840,14 @@
         {
             "src": "/api/agents/pumpfun",
             "dest": "/api/agents/pumpfun"
+        },
+        {
+            "src": "/api/agents/gmgn-feed",
+            "dest": "/api/agents/gmgn?_handler=feed"
+        },
+        {
+            "src": "/api/agents/gmgn",
+            "dest": "/api/agents/gmgn"
         },
         {
             "src": "/api/agents/register-prep",
