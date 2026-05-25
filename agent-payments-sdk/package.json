@@ -68,7 +68,7 @@
     "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.98.0",
     "bn.js": "^5.2.1",
-    "viem": "^2.0.0"
+    "viem": "^2.51.0"
   },
   "peerDependencies": {
     "zod": "^3.0.0"
@@ -93,7 +93,7 @@
     "ts-jest": "^29.4.6",
     "tsup": "^8.3.5",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.59.4",
+    "typescript-eslint": "^8.60.0",
     "zod": "^3.25.76"
   }
 }
