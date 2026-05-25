@@ -235,58 +235,126 @@ export default wrap(async (req, res) => {
 
 	const rawBody = await readJson(req);
 	const body = parse(bodySchema, rawBody);
-	const model = body.model || policy.brain?.model || 'meta-llama/llama-3.3-70b-instruct:free';
-	const route = MODELS[model];
-	if (!route) {
-		return error(res, 400, 'validation_error', `model "${model}" not in allowlist`);
-	}
+	const requestedModel = body.model || policy.brain?.model || 'meta-llama/llama-3.3-70b-instruct:free';
 
-	const apiKey = process.env[route.envKey];
-	if (!apiKey) {
-		return error(res, 503, 'provider_unavailable', `${route.envKey} not configured on host`);
-	}
+	// Ordered fallback chain for 429 / 5xx from OpenRouter free tier:
+	//   1. Requested model (e.g. llama-3.3-70b:free)
+	//   2. meta-llama/llama-3.1-8b-instruct:free  (smaller free model)
+	//   3. claude-haiku-4-5-20251001              (paid Anthropic — last resort)
+	const modelFallbacks = [
+		requestedModel,
+		...([
+			'meta-llama/llama-3.1-8b-instruct:free',
+			'claude-haiku-4-5-20251001',
+		].filter((m) => m !== requestedModel)),
+	];
 
 	const isStreaming = body.stream === true;
 	const t0 = Date.now();
 
-	const upstreamUrl = route.kind === 'anthropic' ? UPSTREAM_URL.anthropic : UPSTREAM_URL[route.provider];
-	const upstreamHeaders =
-		route.kind === 'anthropic'
-			? {
-					'content-type': 'application/json',
-					'anthropic-version': '2023-06-01',
-					'x-api-key': apiKey,
-			  }
-			: {
-					'content-type': 'application/json',
-					authorization: `Bearer ${apiKey}`,
-					...(route.provider === 'openrouter'
-						? { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws agent' }
-						: {}),
-			  };
-	const upstreamBody =
-		route.kind === 'anthropic'
-			? JSON.stringify({ ...body, model })
-			: JSON.stringify(anthropicBodyToOpenAI({ ...body, model }));
+	let upstream;
+	let usedModel = requestedModel;
+	let usedRoute = null;
 
-	const upstream = await fetch(upstreamUrl, {
-		method: 'POST',
-		headers: upstreamHeaders,
-		body: upstreamBody,
-	});
+	for (let attempt = 0; attempt < modelFallbacks.length; attempt++) {
+		usedModel = modelFallbacks[attempt];
+		const route = MODELS[usedModel];
+		if (!route) {
+			if (attempt === 0) {
+				return error(res, 400, 'validation_error', `model "${usedModel}" not in allowlist`);
+			}
+			continue;
+		}
 
-	if (upstream.status >= 400) {
-		const errText = await upstream.text();
-		log.error('upstream_error', {
-			agentId,
-			model,
-			kind: route.kind,
-			provider: route.provider || 'anthropic',
-			status: upstream.status,
-			body: errText.slice(0, 2000),
+		const apiKey = process.env[route.envKey];
+		if (!apiKey) {
+			if (attempt === 0) {
+				return error(res, 503, 'provider_unavailable', `${route.envKey} not configured on host`);
+			}
+			continue;
+		}
+
+		usedRoute = route;
+		const upstreamUrl = route.kind === 'anthropic' ? UPSTREAM_URL.anthropic : UPSTREAM_URL[route.provider];
+		const upstreamHeaders =
+			route.kind === 'anthropic'
+				? {
+						'content-type': 'application/json',
+						'anthropic-version': '2023-06-01',
+						'x-api-key': apiKey,
+				  }
+				: {
+						'content-type': 'application/json',
+						authorization: `Bearer ${apiKey}`,
+						...(route.provider === 'openrouter'
+							? { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws agent' }
+							: {}),
+				  };
+		const upstreamBody =
+			route.kind === 'anthropic'
+				? JSON.stringify({ ...body, model: usedModel })
+				: JSON.stringify(anthropicBodyToOpenAI({ ...body, model: usedModel }));
+
+		upstream = await fetch(upstreamUrl, {
+			method: 'POST',
+			headers: upstreamHeaders,
+			body: upstreamBody,
 		});
-		return json(res, 502, { error: 'upstream_error', status: upstream.status });
+
+		if (upstream.status === 429 || upstream.status >= 500) {
+			const errText = await upstream.text().catch(() => '');
+			const provider = route.provider || 'anthropic';
+			log.warn('upstream_rate_limited', {
+				agentId,
+				model: usedModel,
+				provider,
+				status: upstream.status,
+				attempt,
+				body: errText.slice(0, 400),
+			});
+			if (attempt + 1 < modelFallbacks.length) {
+				console.warn(
+					`[llm/anthropic] ${provider}/${usedModel} returned ${upstream.status} — ` +
+					`falling back to ${modelFallbacks[attempt + 1]}`,
+				);
+				continue;
+			}
+			// All fallbacks exhausted — surface error.
+			log.error('upstream_error', {
+				agentId,
+				model: usedModel,
+				kind: route.kind,
+				provider,
+				status: upstream.status,
+				body: errText.slice(0, 2000),
+			});
+			return json(res, 502, { error: 'upstream_error', status: upstream.status });
+		}
+
+		if (upstream.status >= 400) {
+			const errText = await upstream.text().catch(() => '');
+			log.error('upstream_error', {
+				agentId,
+				model: usedModel,
+				kind: route.kind,
+				provider: route.provider || 'anthropic',
+				status: upstream.status,
+				body: errText.slice(0, 2000),
+			});
+			return json(res, 502, { error: 'upstream_error', status: upstream.status });
+		}
+
+		// Success — log the model used if it differed from the requested one.
+		if (usedModel !== requestedModel) {
+			console.info(
+				`[llm/anthropic] agentId=${agentId} used fallback model ${usedModel} ` +
+				`(requested: ${requestedModel})`,
+			);
+		}
+		break;
 	}
+
+	const route = usedRoute;
 
 	// ── Streaming path ────────────────────────────────────────────────────────
 	if (isStreaming) {
@@ -328,7 +396,7 @@ export default wrap(async (req, res) => {
 			}
 		} else {
 			// OpenAI-shape upstream → translate to Anthropic SSE shape on the fly.
-			const usage = await pipeOpenAIAsAnthropic(upstream, res, { model });
+			const usage = await pipeOpenAIAsAnthropic(upstream, res, { model: usedModel });
 			inputTokens = usage.inputTokens;
 			outputTokens = usage.outputTokens;
 		}
@@ -348,7 +416,7 @@ export default wrap(async (req, res) => {
 			bytes: 0,
 			latencyMs,
 			status: 'ok',
-			meta: { model, input_tokens: inputTokens, output_tokens: outputTokens, upstream_status: upstream.status },
+			meta: { model: usedModel, requested_model: requestedModel, input_tokens: inputTokens, output_tokens: outputTokens, upstream_status: upstream.status },
 		});
 		return;
 	}
@@ -375,7 +443,7 @@ export default wrap(async (req, res) => {
 	} else if (upstreamJson) {
 		inputTokens = upstreamJson?.usage?.prompt_tokens ?? 0;
 		outputTokens = upstreamJson?.usage?.completion_tokens ?? 0;
-		const translated = openAIResponseToAnthropic(upstreamJson, { model });
+		const translated = openAIResponseToAnthropic(upstreamJson, { model: usedModel });
 		outBody = JSON.stringify(translated);
 		outContentType = 'application/json';
 	}
@@ -395,7 +463,7 @@ export default wrap(async (req, res) => {
 		bytes: upstreamText.length,
 		latencyMs,
 		status: 'ok',
-		meta: { model, input_tokens: inputTokens, output_tokens: outputTokens, upstream_status: upstream.status },
+		meta: { model: usedModel, requested_model: requestedModel, input_tokens: inputTokens, output_tokens: outputTokens, upstream_status: upstream.status },
 	});
 
 	res.statusCode = 200;

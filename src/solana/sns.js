@@ -4,6 +4,11 @@ import { Connection, PublicKey } from '@solana/web3.js';
 // function bundler on cold start when statically imported by serverless
 // endpoints. Load it on demand inside each call so the dispatcher modules
 // (e.g. /api/portfolio, /api/pump-fun-mcp) don't pay the cost up front.
+//
+// Note: we used to import the CJS entry directly (`.../dist/cjs/index.js`)
+// to skip ESM init, but Vite 7 enforces the package's `exports` map and
+// rejects that subpath. The bare package import works under both the dev
+// bundler and Vercel because the dynamic import keeps it lazy.
 
 // Server-side: prefer SOLANA_RPC_URL (typically Helius). Browser-side: route
 // through our same-origin proxy because public mainnet-beta 403s most origins.
@@ -28,7 +33,7 @@ function stripSol(name) {
  */
 export async function resolveSnsName(name) {
 	try {
-		const { resolve } = await import('@bonfida/spl-name-service/dist/cjs/index.js');
+		const { resolve } = await import('@bonfida/spl-name-service');
 		const pk = await resolve(makeConnection(), stripSol(name));
 		return pk.toBase58();
 	} catch {
@@ -43,7 +48,7 @@ export async function resolveSnsName(name) {
  */
 export async function reverseLookupAddress(addr) {
 	try {
-		const { getFavoriteDomain } = await import('@bonfida/spl-name-service/dist/cjs/index.js');
+		const { getFavoriteDomain } = await import('@bonfida/spl-name-service');
 		const owner = new PublicKey(addr);
 		const { reverse } = await getFavoriteDomain(makeConnection(), owner);
 		return reverse.endsWith('.sol') ? reverse : `${reverse}.sol`;

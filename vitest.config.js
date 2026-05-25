@@ -12,8 +12,12 @@ import os from 'node:os';
 // repeatedly miss their hookTimeout. We cap forks at min(4, cpus - 1) so worker
 // startup never queues behind a busy peer. Locally on a beefy machine
 // (CPUs > 4) this still parallelizes; small hosts get safe serialisation.
+// On CI / Codespaces the box is small (typically 2-4 cores, capped memory),
+// and heavy ESM cold-imports across files compete for the same V8 instance.
+// We cap forks at 2 for hosts with <=4 cores so cold loads aren't blocked by
+// peer workers. Beefier machines (>4 cores) parallelise up to (cpus - 1, max 6).
 const _cpus = Math.max(1, (os.availableParallelism?.() ?? os.cpus().length) - 1);
-const MAX_FORKS = Math.max(1, Math.min(4, _cpus));
+const MAX_FORKS = _cpus <= 3 ? 2 : Math.min(6, _cpus);
 
 export default defineConfig({
 	test: {
