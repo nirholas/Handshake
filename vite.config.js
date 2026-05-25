@@ -1049,12 +1049,8 @@ const appConfig = {
 			},
 			workbox: {
 				maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-				// null disables the VitePWA default navigateFallback ("index.html").
-				// This is an MPA — every /marketplace, /agent, etc. is a separate HTML
-				// file that must be fetched from the network, not redirected to a fallback.
-				// The old SW had offline.html wired as a NavigationRoute catch-all, which
-				// caused every navigation to a non-precached URL to be served offline.html
-				// even when the user was fully online.
+				// MPA: every route is a separate HTML file served by the server.
+				// No navigation fallback — uncached navigations go to the network.
 				navigateFallback: null,
 				globPatterns: ['**/*.{js,css,html,ico,woff2}'],
 				globIgnores: [
