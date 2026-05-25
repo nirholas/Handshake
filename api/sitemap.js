@@ -27,10 +27,25 @@ function fmtDate(d) {
 	return t.toISOString().slice(0, 10);
 }
 
-async function newestUpdate(table, col = 'updated_at', where = '') {
+// Coalesce on created_at because most rows in this DB never get an explicit
+// updated_at write — many writes happen via INSERT rather than UPDATE, so
+// `max(updated_at)` returns NULL even when there's plenty of content.
+async function newestTimestamp(table, where = '') {
 	try {
 		const rows = await sql.unsafe(
-			`select max(${col}) as ts from ${table} ${where ? 'where ' + where : ''}`,
+			`select max(coalesce(updated_at, created_at)) as ts from ${table} ${where ? 'where ' + where : ''}`,
+		);
+		return rows?.[0]?.ts || null;
+	} catch {
+		return null;
+	}
+}
+
+// agent_identities has no updated_at on every row — use created_at directly.
+async function newestCreated(table, where = '') {
+	try {
+		const rows = await sql.unsafe(
+			`select max(created_at) as ts from ${table} ${where ? 'where ' + where : ''}`,
 		);
 		return rows?.[0]?.ts || null;
 	} catch {
@@ -40,23 +55,24 @@ async function newestUpdate(table, col = 'updated_at', where = '') {
 
 export default async function handler(req, res) {
 	const [agentsTs, avatarsTs, widgetsTs, usersTs, subdomainsTs] = await Promise.all([
-		newestUpdate('agent_identities', 'updated_at', 'deleted_at is null').catch(() => null),
-		newestUpdate('avatars', 'updated_at', "visibility = 'public' and deleted_at is null"),
-		newestUpdate('widgets', 'updated_at', 'is_public = true and deleted_at is null'),
-		newestUpdate('users', 'updated_at', 'deleted_at is null and username is not null'),
-		newestUpdate('user_subdomains', 'created_at'),
+		newestCreated('agent_identities', 'deleted_at is null and is_public = true'),
+		newestTimestamp('avatars', "visibility = 'public' and deleted_at is null"),
+		newestTimestamp('widgets', 'is_public = true and deleted_at is null'),
+		newestTimestamp('users', 'deleted_at is null and username is not null'),
+		newestCreated('user_subdomains'),
 	]);
 
+	// Always emit every sub-sitemap entry — the sub-sitemap itself decides if
+	// it has zero rows. An empty <urlset> is valid and lets Google retry later
+	// without us having to remember to "turn it on" once content appears.
+	const today = fmtDate(new Date());
 	const entries = [
-		{ loc: `${ORIGIN}/sitemap/core.xml`, lastmod: fmtDate(new Date()) },
-		agentsTs && { loc: `${ORIGIN}/sitemap/agents.xml`, lastmod: fmtDate(agentsTs) },
-		avatarsTs && { loc: `${ORIGIN}/sitemap/avatars.xml`, lastmod: fmtDate(avatarsTs) },
-		widgetsTs && { loc: `${ORIGIN}/sitemap/widgets.xml`, lastmod: fmtDate(widgetsTs) },
-		(usersTs || subdomainsTs) && {
-			loc: `${ORIGIN}/sitemap/profiles.xml`,
-			lastmod: fmtDate(usersTs || subdomainsTs),
-		},
-	].filter(Boolean);
+		{ loc: `${ORIGIN}/sitemap/core.xml`, lastmod: today },
+		{ loc: `${ORIGIN}/sitemap/agents.xml`, lastmod: fmtDate(agentsTs || today) },
+		{ loc: `${ORIGIN}/sitemap/avatars.xml`, lastmod: fmtDate(avatarsTs || today) },
+		{ loc: `${ORIGIN}/sitemap/widgets.xml`, lastmod: fmtDate(widgetsTs || today) },
+		{ loc: `${ORIGIN}/sitemap/profiles.xml`, lastmod: fmtDate(usersTs || subdomainsTs || today) },
+	];
 
 	const body =
 		`<?xml version="1.0" encoding="UTF-8"?>\n` +
