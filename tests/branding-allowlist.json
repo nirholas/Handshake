@@ -147,6 +147,16 @@
 	},
 	{
 		"pattern": "Avaturn",
+		"file": "docs/agent-fixes/fix-avaturn-api-key.md",
+		"reason": "Internal remediation guide for restoring the AVATURN_API_KEY env var — the vendor name identifies the integration being fixed."
+	},
+	{
+		"pattern": "avaturn",
+		"file": "docs/agent-fixes/fix-avaturn-api-key.md",
+		"reason": "Same remediation guide — lowercase appears in inline code samples and the avaturn-session route name."
+	},
+	{
+		"pattern": "Avaturn",
 		"file": "public/docs/configuration.md",
 		"reason": "Configuration reference describing optional env vars that point at the upstream photo-pipeline editor."
 	},
