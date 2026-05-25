@@ -253,11 +253,73 @@ async function handleAirdrop(req, res, id) {
 	return json(res, 200, { data: { signature, address, network: 'devnet', lamports: AIRDROP_LAMPORTS, sol: AIRDROP_LAMPORTS / 1e9 } });
 }
 
+// ── public wallet read ─────────────────────────────────────────────────────────
+// GET /api/agents/:id/solana — no auth required. Returns wallet address + balance
+// so external services (explorers, dashboards, other agents) can look up an
+// agent's on-chain identity without a session. Write operations (POST, DELETE)
+// still require owner auth — see handleWallet below.
+
+async function handlePublicWalletRead(req, res, id) {
+	const url = new URL(req.url, 'http://x');
+	const network = (url.searchParams.get('network') || 'mainnet').toString();
+	const net = network === 'devnet' ? 'devnet' : 'mainnet';
+
+	const [row] = await sql`SELECT id, meta FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL`;
+	if (!row) return error(res, 404, 'not_found', 'agent not found');
+
+	const address = row.meta?.solana_address ?? null;
+	if (!address) {
+		return json(res, 200, {
+			data: {
+				agentId: id,
+				wallet: null,
+				balance: null,
+				chain: 'solana',
+			},
+		});
+	}
+
+	let lamports = null;
+	const balCacheKey = `sol:bal:${address}:${net}`;
+	const cached = _solCacheGet(balCacheKey);
+	if (cached !== undefined) {
+		lamports = cached;
+	} else {
+		const balResult = await _solRpcWithBackoffFallback(
+			solanaConnection(net),
+			solanaPublicConnection(net),
+			(c) => c.getBalance(new PublicKey(address)),
+			'getBalance',
+		);
+		lamports = balResult.ok ? balResult.value : null;
+		if (balResult.ok) _solCacheSet(balCacheKey, lamports);
+	}
+
+	console.info(`[agents/solana] public read agentId=${id} address=${address} net=${net} lamports=${lamports}`);
+	return json(res, 200, {
+		data: {
+			agentId: id,
+			wallet: address,
+			balance: lamports == null ? null : lamports / 1e9,
+			chain: 'solana',
+			network: net,
+			lamports,
+		},
+	});
+}
+
 // ── wallet ────────────────────────────────────────────────────────────────────
 
 async function handleWallet(req, res, id) {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST', 'DELETE'])) return;
+
+	// Unauthenticated GET: serve public wallet info without requiring sign-in.
+	// Write operations still require owner auth below.
+	if (req.method === 'GET') {
+		const auth = await resolveAuth(req);
+		if (!auth) return handlePublicWalletRead(req, res, id);
+	}
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
