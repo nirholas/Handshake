@@ -64,8 +64,9 @@ function walk(dir) {
 		if (!EMBED_ENTRIES.has(name)) continue;
 		scanned.push(full);
 		const html = readFileSync(full, 'utf8');
-		if (!REGISTER_SW_RE.test(html)) continue;
-		writeFileSync(full, html.replace(REGISTER_SW_RE, ''));
+		const next = html.replace(REGISTER_SW_RE, '');
+		if (next === html) continue;
+		writeFileSync(full, next);
 		stripped.push(full);
 	}
 }

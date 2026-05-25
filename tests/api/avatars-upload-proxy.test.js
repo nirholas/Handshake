@@ -35,7 +35,11 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: () => '127.0.0.1',
 }));
 
-const putObjectMock = vi.fn(async () => undefined);
+// vi.hoisted ensures the mock factory can reference putObjectMock even after
+// vi.mock() is hoisted above const declarations by Vitest's transformer.
+const { putObjectMock } = vi.hoisted(() => ({
+	putObjectMock: vi.fn(async () => undefined),
+}));
 vi.mock('../../api/_lib/r2.js', () => ({
 	presignUpload: async ({ key }) => `https://r2.test/upload/${key}?sig=mock`,
 	headObject: async () => null,
