@@ -204,7 +204,7 @@
 		"jsdom": "^29.1.0",
 		"knip": "^6.14.2",
 		"playwright": "^1.45.1",
-		"prettier": "^3.2.5",
+		"prettier": "^3.8.3",
 		"sharp": "latest",
 		"vite": "latest",
 		"vite-plugin-node-polyfills": "^0.28.0",
