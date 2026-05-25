@@ -69,10 +69,17 @@ export const patch = (path, body) => api('PATCH',  path, body);
 let mePromise = null;
 export function getMe() {
 	if (!mePromise) {
-		mePromise = get('/api/auth/me').catch((err) => {
-			if (err.status === 401) return null;
-			throw err;
-		});
+		mePromise = get('/api/auth/me')
+			.then((data) => {
+				// /api/auth/me returns { user } — unwrap so callers receive the
+				// user record directly, or null when there's no live session.
+				if (data && typeof data === 'object' && 'user' in data) return data.user;
+				return data || null;
+			})
+			.catch((err) => {
+				if (err.status === 401) return null;
+				throw err;
+			});
 	}
 	return mePromise;
 }

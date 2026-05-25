@@ -422,6 +422,30 @@
             "dest": "/dashboard-next/index.html"
         },
         {
+            "src": "/dashboard-next/avatars/?",
+            "dest": "/dashboard-next/avatars.html"
+        },
+        {
+            "src": "/dashboard-next/library/?",
+            "dest": "/dashboard-next/library.html"
+        },
+        {
+            "src": "/dashboard-next/widgets/?",
+            "dest": "/dashboard-next/widgets.html"
+        },
+        {
+            "src": "/dashboard-next/api/?",
+            "dest": "/dashboard-next/api.html"
+        },
+        {
+            "src": "/dashboard-next/monetize/?",
+            "dest": "/dashboard-next/monetize.html"
+        },
+        {
+            "src": "/dashboard-next/account/?",
+            "dest": "/dashboard-next/account.html"
+        },
+        {
             "src": "/dashboard-next/([^./]+)/?",
             "dest": "/dashboard-next/$1.html"
         },

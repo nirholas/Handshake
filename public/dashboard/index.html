@@ -1224,6 +1224,31 @@
 		<script type="module" src="/session-client.js"></script>
 	</head>
 	<body>
+		<div id="dn-next-banner" style="
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 20px;
+  background: linear-gradient(90deg, rgba(154,124,255,0.12), rgba(255,92,168,0.08));
+  border-bottom: 1px solid rgba(154,124,255,0.25);
+  font-size: 13px;
+  color: #c8bfff;
+">
+  <span>
+    &#10022; The redesigned dashboard is in preview &mdash;
+    <a href="/dashboard-next" style="color:#b39bff;font-weight:600;text-decoration:underline">try it now</a>
+  </span>
+  <button onclick="document.getElementById('dn-next-banner').remove();localStorage.setItem('dn-next-dismissed','1')"
+    style="background:none;border:none;color:#888;font-size:18px;cursor:pointer;line-height:1;padding:0 2px"
+    aria-label="Dismiss">&times;</button>
+</div>
+<script>
+  if (localStorage.getItem('dn-next-dismissed') === '1') {
+    var __dnb = document.getElementById('dn-next-banner');
+    if (__dnb) __dnb.style.display = 'none';
+  }
+</script>
 		<header>
 			<h1>
 				<a href="/"><img src="/three.svg" alt="three.ws" class="wordmark-logo" /></a>

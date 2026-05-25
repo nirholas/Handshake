@@ -342,6 +342,8 @@ const appConfig = {
 					'/dashboard': resolve(root, 'public/dashboard/index.html'),
 					'/dashboard-next': resolve(root, 'pages/dashboard-next/index.html'),
 					'/dashboard-next/': resolve(root, 'pages/dashboard-next/index.html'),
+					'/dashboard-next/avatars': resolve(root, 'pages/dashboard-next/avatars.html'),
+					'/dashboard-next/avatars/': resolve(root, 'pages/dashboard-next/avatars.html'),
 					'/studio': resolve(root, 'public/studio/index.html'),
 					'/studio/': resolve(root, 'public/studio/index.html'),
 					'/widgets': resolve(root, 'public/widgets-gallery/index.html'),
@@ -572,6 +574,15 @@ const appConfig = {
 						filePath = resolve(root, 'public/dashboard/index.html');
 					else if (!filePath && /^\/dashboard\/edit\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'public/dashboard/index.html');
+					// /dashboard-next/<slug> → pages/dashboard-next/<slug>.html
+					// Mirrors vercel.json so the dev server resolves the sub-pages
+					// landed by parallel agents without each one having to touch
+					// this rewrite map.
+					else if (!filePath && /^\/dashboard-next\/[a-z0-9][a-z0-9-]*\/?$/.test(path)) {
+						const slug = path.replace(/^\/dashboard-next\//, '').replace(/\/$/, '');
+						const candidate = resolve(root, `pages/dashboard-next/${slug}.html`);
+						if (existsSync(candidate)) filePath = candidate;
+					}
 					// /dashboard/<page> → corresponding static HTML page
 					else if (!filePath && /^\/dashboard\/portfolio\/asset\/?$/.test(path))
 						filePath = resolve(root, 'public/dashboard/portfolio-asset.html');
