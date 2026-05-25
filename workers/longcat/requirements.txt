@@ -1,0 +1,9 @@
+# Service dependencies (LongCat model deps installed separately in Dockerfile
+# from the cloned repo's requirements.txt)
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+httpx==0.28.1
+google-cloud-firestore==2.20.1
+google-cloud-storage==2.19.0
+huggingface-hub==0.30.2
+pydantic==2.11.3

@@ -362,6 +362,12 @@ export class RegisterUI {
 		this._signedIn = false;
 		this._savedAvatars = null; // loaded lazily when user switches source to 'saved'
 
+		// True when the form was pre-filled from URL params (?name=, ?avatar=,
+		// ?agent=). In this case the quickstart bar is hidden — the user already
+		// has a specific deployment context and the chips would just confuse them
+		// (or silently overwrite the pre-filled data).
+		this._urlPrefilled = !!(initial.name || initial.imageUrl || opts.avatarId);
+
 		this._build();
 		this._bind();
 		this._fetchBackendAgent(); // fire & forget
@@ -1010,7 +1016,9 @@ export class RegisterUI {
 					})
 					.join('')}
 			</ol>`;
-		const quickstart = pageMode
+		// Hide the quickstart bar when the form was seeded from URL params —
+		// the user has a specific deployment context and the chips add noise.
+		const quickstart = pageMode && !this._urlPrefilled
 			? `
 				<div class="deploy-quickstart-bar">
 					<span class="deploy-quickstart-bar-label">Start from</span>
@@ -1019,7 +1027,7 @@ export class RegisterUI {
 					<button class="deploy-qs-chip" data-role="qs-scratch" type="button">Scratch</button>
 					<button class="deploy-qs-chip" data-role="qs-update" type="button">Edit existing →</button>
 				</div>`
-			: `
+			: pageMode ? '' : `
 				<div class="erc8004-quickstart" data-role="quickstart">
 					<div class="erc8004-quickstart-title">How would you like to start?</div>
 					<div class="erc8004-quickstart-grid">
@@ -1048,16 +1056,16 @@ export class RegisterUI {
 				<div class="erc8004-wizard-body" data-role="wizard-body"></div>
 			</div>
 		`;
-		body.querySelector('[data-role="qs-saved"]').addEventListener('click', () =>
+		body.querySelector('[data-role="qs-saved"]')?.addEventListener('click', () =>
 			this._applyQuickStart('saved'),
 		);
-		body.querySelector('[data-role="qs-current"]').addEventListener('click', () =>
+		body.querySelector('[data-role="qs-current"]')?.addEventListener('click', () =>
 			this._applyQuickStart('current'),
 		);
-		body.querySelector('[data-role="qs-scratch"]').addEventListener('click', () =>
+		body.querySelector('[data-role="qs-scratch"]')?.addEventListener('click', () =>
 			this._applyQuickStart('scratch'),
 		);
-		body.querySelector('[data-role="qs-update"]').addEventListener('click', () =>
+		body.querySelector('[data-role="qs-update"]')?.addEventListener('click', () =>
 			this._applyQuickStart('update'),
 		);
 		body.querySelectorAll('[data-role="goto-step"]').forEach((el) => {
@@ -1147,7 +1155,7 @@ export class RegisterUI {
 			<label class="erc8004-label">Description <span class="erc8004-req">*</span>
 				<textarea class="erc8004-input erc8004-textarea" name="description" maxlength="1000" rows="4" placeholder="Describe what your agent does, capabilities, pricing…">${esc(this.form.description)}</textarea>
 			</label>
-			<p class="erc8004-hint">Clear description (max 1000 chars)</p>
+			<p class="erc8004-hint">Required before deploying on-chain (max 1000 chars)</p>
 
 			<label class="erc8004-label">Image URL
 				<div class="erc8004-image-row">
@@ -1178,8 +1186,8 @@ export class RegisterUI {
 			this._captureFromViewer(body);
 		});
 		body.querySelector('[data-role="next"]').addEventListener('click', () => {
-			if (!this.form.name.trim() || !this.form.description.trim()) {
-				this._toast('Name and description are required.', true);
+			if (!this.form.name.trim()) {
+				this._toast('Agent name is required.', true);
 				return;
 			}
 			this.wizardStep = 2;
@@ -1679,6 +1687,13 @@ export class RegisterUI {
 		const deployBtn = body.querySelector('[data-role="deploy"]');
 		deployBtn.disabled = true;
 
+		// Guard: name + description are required before any on-chain transaction.
+		if (!this.form.name.trim() || !this.form.description.trim()) {
+			this._toast('Name and description are required before deploying.', true);
+			deployBtn.disabled = false;
+			return;
+		}
+
 		const network = _solanaNetwork(this.selectedChainId);
 		const synthAgent = {
 			id: this._backendAgentId || 'wizard',
@@ -1847,6 +1862,13 @@ export class RegisterUI {
 		};
 		const deployBtn = body.querySelector('[data-role="deploy"]');
 		deployBtn.disabled = true;
+
+		// Guard: name + description are required before any on-chain transaction.
+		if (!this.form.name.trim() || !this.form.description.trim()) {
+			this._toast('Name and description are required before deploying.', true);
+			deployBtn.disabled = false;
+			return;
+		}
 
 		try {
 			// Ensure we're on the target chain

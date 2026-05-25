@@ -495,7 +495,7 @@
 		<div class="hero-canvas">
 			<span class="canvas-tag">● Live</span>
 			<agent-3d
-				src="https://three.ws/api/avatars/bacff13e-b64b-4ac0-860d-44f0168ad23b"
+				class="hero-agent"
 				background="transparent"
 				name-plate="off"
 				eager
@@ -538,7 +538,7 @@
 					<span style="color: var(--ok);">● running</span>
 				</div>
 				<agent-3d
-					src="https://three.ws/api/avatars/bacff13e-b64b-4ac0-860d-44f0168ad23b"
+					class="hero-agent"
 					background="transparent"
 					name-plate="off"
 					eager
@@ -702,6 +702,16 @@
 	<a class="demo-tag" href="/" title="This is a redesign demo">DEMO · /home-next</a>
 
 	<script>
+		// ── Boot the live <agent-3d> instances ───────────────────────
+		// The component's `src` requires an absolute URL (the production
+		// discover page does the same). Setting it after upgrade keeps
+		// the page working in dev (port-forwarded Codespaces) and prod.
+		const AVATAR_ID = 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
+		const AVATAR_SRC = `${location.origin}/api/avatars/${AVATAR_ID}`;
+		document.querySelectorAll('agent-3d.hero-agent').forEach((el) => {
+			el.setAttribute('src', AVATAR_SRC);
+		});
+
 		// ── Copy snippet ─────────────────────────────────────────────
 		const SNIPPETS = {
 			html: `<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"><\/script>\n<agent-3d src="https://three.ws/api/avatars/bacff13e-b64b-4ac0-860d-44f0168ad23b"><\/agent-3d>`,

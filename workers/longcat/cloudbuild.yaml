@@ -1,0 +1,84 @@
+# Cloud Build pipeline: build the longcat-video-avatar Docker image and deploy
+# it to Cloud Run (GPU) in us-central1.
+#
+# Substitution variables (override via --substitutions flag or trigger config):
+#   _REGION         — Cloud Run region            (default: us-central1)
+#   _SERVICE        — Cloud Run service name      (default: longcat-video-avatar)
+#   _REPO           — Artifact Registry repo name  (default: longcat-video-avatar)
+#   _GCS_BUCKET     — Cloud Storage bucket for output MP4s
+#   _WEIGHTS_BUCKET — GCS bucket holding pre-downloaded model weights
+#   _MIN_INSTANCES  — minimum warm instances       (default: 1)
+#   _MAX_INSTANCES  — maximum instances            (default: 2)
+#
+# Required secrets in Secret Manager (must exist before first deploy):
+#   longcat-video-avatar-key — the API_KEY bearer secret
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: longcat-video-avatar
+  _REPO: longcat-video-avatar
+  _GCS_BUCKET: three-ws-avatar-videos
+  _WEIGHTS_BUCKET: three-ws-longcat-weights
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "2"
+
+steps:
+  # ── Build ──────────────────────────────────────────────────────────────────
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    dir: workers/longcat
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+
+  # ── Push ───────────────────────────────────────────────────────────────────
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server
+
+  # ── Deploy to Cloud Run ────────────────────────────────────────────────────
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --port=8080
+      # GPU: NVIDIA L4 (24 GB VRAM) — Avatar-1.5 INT8 fits at ~14 GB
+      - --gpu=1
+      - --gpu-type=nvidia-l4
+      - --cpu=8
+      - --memory=32Gi
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      # Inference timeout: up to 10 min for 720p generation
+      - --timeout=600
+      - --allow-unauthenticated
+      # GCS volume mount for persistent model weights — avoids re-downloading
+      # 14 GB on every cold start. The weights bucket must be pre-populated
+      # (see README.md for the one-time download command).
+      - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
+      - --add-volume-mount=volume=weights,mount-path=/weights
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},FIRESTORE_PROJECT=$PROJECT_ID,RESOLUTION=720p,MAX_CONCURRENT=1
+      - --set-secrets=API_KEY=longcat-video-avatar-key:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+
+options:
+  machineType: E2_HIGHCPU_32
+  logging: CLOUD_LOGGING_ONLY
