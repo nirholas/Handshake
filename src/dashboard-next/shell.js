@@ -11,7 +11,7 @@
 //   const main = await mountShell();
 //   main.innerHTML = '<h1>Hello</h1>';
 
-import { renderSidebar,  mountSidebarBehavior } from './components/sidebar.js';
+import { renderSidebar,  mountSidebarBehavior, mountMobileNavBehavior } from './components/sidebar.js';
 import { renderTopbar,   mountTopbarBehavior  } from './components/topbar.js';
 import { renderDrawer,   mountDrawerBehavior  } from './components/drawer.js';
 import { mountPaletteBehavior } from './components/palette.js';
@@ -31,6 +31,16 @@ export async function mountShell() {
 
 	document.body.classList.add('dn-body');
 
+	// Skip-link — hidden until focused, then jumps to main content. Lives
+	// outside the shell grid so it can absolutely-position over chrome.
+	if (!document.querySelector('.dn-skip')) {
+		const skip = document.createElement('a');
+		skip.className = 'dn-skip';
+		skip.href = '#dn-main';
+		skip.textContent = 'Skip to content';
+		document.body.insertBefore(skip, document.body.firstChild);
+	}
+
 	const shell = document.createElement('div');
 	shell.className = 'dn-shell';
 	shell.setAttribute('data-rail-collapsed', 'false');
@@ -38,7 +48,7 @@ export async function mountShell() {
 	shell.innerHTML = `
 		${renderSidebar(location.pathname)}
 		${renderTopbar(location.pathname)}
-		<main class="dn-main" id="dn-main">
+		<main class="dn-main" id="dn-main" tabindex="-1">
 			<div class="dn-main-inner" data-slot="page"></div>
 		</main>
 		${renderDrawer()}
@@ -46,9 +56,11 @@ export async function mountShell() {
 	document.body.appendChild(shell);
 
 	mountSidebarBehavior(shell);
+	mountMobileNavBehavior(shell, location.pathname);
 	mountTopbarBehavior(shell);
 	mountDrawerBehavior(shell);
 	mountPaletteBehavior();
+	mountDrawerPulse(shell);
 
 	// Light-up touch — the sidebar item we land on gets a brief accent
 	// pulse so users see "you are here" without having to track the
@@ -62,4 +74,16 @@ export async function mountShell() {
 	}
 
 	return shell.querySelector('[data-slot="page"]');
+}
+
+// Listen for new-event signals (dispatched by the drawer/activity feed
+// once prompt #9 wires it up) and briefly pulse the drawer toggle so
+// the user knows there's something fresh to look at.
+function mountDrawerPulse(shellEl) {
+	window.addEventListener('dn:drawer:new-event', () => {
+		const btn = shellEl.querySelector('[data-action="toggle-drawer"]');
+		if (!btn) return;
+		btn.setAttribute('data-pulse', 'true');
+		setTimeout(() => btn.removeAttribute('data-pulse'), 2500);
+	});
 }
