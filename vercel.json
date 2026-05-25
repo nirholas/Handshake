@@ -739,11 +739,13 @@
 		},
 		{
 			"src": "/marketplace/agents/([^/]+)",
-			"dest": "/marketplace.html"
+			"status": 301,
+			"headers": { "Location": "/agent-next?id=$1" }
 		},
 		{
 			"src": "/marketplace/avatars/([^/]+)",
-			"dest": "/marketplace.html"
+			"status": 301,
+			"headers": { "Location": "/agent-next?id=$1" }
 		},
 		{
 			"src": "/api/agents/me",
