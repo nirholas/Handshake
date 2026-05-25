@@ -135,12 +135,43 @@ function renderHtml(p) {
 	<script type="application/ld+json">
 ${escapeJsonLd({
 	'@context': 'https://schema.org',
-	'@type': 'Person',
-	name: p.title,
-	description: p.desc,
-	url: p.pageUrl,
-	image: p.ogUrl,
-	provider: { '@type': 'Organization', name: 'three.ws', url: 'https://three.ws/' },
+	'@graph': [
+		{
+			'@type': ['SoftwareApplication', 'Service'],
+			'@id': `${p.pageUrl}#agent`,
+			name: p.title,
+			description: p.desc,
+			url: p.pageUrl,
+			image: p.ogUrl,
+			applicationCategory: 'AIApplication',
+			applicationSubCategory: 'EmbodiedAgent',
+			operatingSystem: 'Web',
+			browserRequirements: 'Requires WebGL2',
+			provider: { '@id': `${p.origin}/#org` },
+			offers: {
+				'@type': 'Offer',
+				price: '0',
+				priceCurrency: 'USD',
+				availability: 'https://schema.org/InStock',
+				url: p.pageUrl,
+			},
+		},
+		{
+			'@type': 'Organization',
+			'@id': `${p.origin}/#org`,
+			name: 'three.ws',
+			url: p.origin,
+			logo: `${p.origin}/icon.png`,
+		},
+		{
+			'@type': 'BreadcrumbList',
+			itemListElement: [
+				{ '@type': 'ListItem', position: 1, name: 'Home', item: p.origin },
+				{ '@type': 'ListItem', position: 2, name: 'Discover', item: `${p.origin}/discover` },
+				{ '@type': 'ListItem', position: 3, name: p.title, item: p.pageUrl },
+			],
+		},
+	],
 })}
 	</script>
 </body>

@@ -1709,7 +1709,11 @@
         },
         {
             "src": "/sitemap.xml",
-            "dest": "/sitemap.xml"
+            "dest": "/api/sitemap"
+        },
+        {
+            "src": "/sitemap/(core|agents|avatars|widgets|profiles)\\.xml",
+            "dest": "/api/sitemap/[type]?type=$1"
         },
         {
             "src": "/sitemap",

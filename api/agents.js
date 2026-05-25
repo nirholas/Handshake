@@ -18,6 +18,8 @@ import { requireCsrf } from './_lib/csrf.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { generateAgentWallet, generateSolanaAgentWallet } from './_lib/agent-wallet.js';
 import { publicUrl } from './_lib/r2.js';
+import { pingIndexNow } from './_lib/indexnow.js';
+import { env } from './_lib/env.js';
 import { z } from 'zod';
 
 const animationEntrySchema = z.object({
@@ -211,6 +213,11 @@ async function handleCreate(req, res) {
 		)
 		RETURNING *
 	`;
+
+	// Push the new agent's URL to IndexNow so Bing / Yandex discover it within
+	// minutes instead of waiting for the next crawl. Fire-and-forget — IndexNow
+	// failures must never block agent creation.
+	pingIndexNow(`${env.APP_ORIGIN}/agent/${agent.id}`).catch(() => {});
 
 	return json(res, 201, { agent: decorate(agent) });
 }

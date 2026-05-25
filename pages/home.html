@@ -65,6 +65,51 @@
 		></script>
 		<script src="/fluid-particles.js" defer></script>
 		<script type="module" src="/src/home-act2-viewer.js"></script>
+
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@graph": [
+					{
+						"@type": "WebSite",
+						"@id": "https://three.ws/#website",
+						"url": "https://three.ws/",
+						"name": "three.ws",
+						"description": "The 3D layer for your AI agent",
+						"publisher": { "@id": "https://three.ws/#org" },
+						"potentialAction": {
+							"@type": "SearchAction",
+							"target": "https://three.ws/discover?q={search_term_string}",
+							"query-input": "required name=search_term_string"
+						}
+					},
+					{
+						"@type": "Organization",
+						"@id": "https://three.ws/#org",
+						"name": "three.ws",
+						"url": "https://three.ws/",
+						"logo": "https://three.ws/icon.png",
+						"sameAs": [
+							"https://github.com/nirholas/three.ws",
+							"https://x.com/three_ws"
+						]
+					},
+					{
+						"@type": "SoftwareApplication",
+						"name": "three.ws",
+						"applicationCategory": "DeveloperApplication",
+						"applicationSubCategory": "EmbodiedAgentPlatform",
+						"operatingSystem": "Web",
+						"browserRequirements": "Requires WebGL2",
+						"offers": {
+							"@type": "Offer",
+							"price": "0",
+							"priceCurrency": "USD"
+						}
+					}
+				]
+			}
+		</script>
 	</head>
 	<body class="home-page">
 		<div class="cursor" id="cursor" aria-hidden="true"></div>

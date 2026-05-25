@@ -3,6 +3,18 @@ Allow: /
 Disallow: /my-agents
 Disallow: /dashboard
 Disallow: /settings
+Disallow: /api/
+Disallow: /admin/
+Disallow: /studio-deposit-harness*
+
+# Embed routes serve raw runtime, not human content — keep them out of SERPs.
+Disallow: /agent/*/embed
+Disallow: /widget/*/embed
+Disallow: /avatar/*/embed
+
+# Cosmetic OG image endpoints — fine for social crawlers, useless for SERP.
+Disallow: /api/agent/*/og
+Disallow: /api/avatar/*/og
 
 Sitemap: https://three.ws/sitemap.xml
 

@@ -1,0 +1,40 @@
+# Lighthouse CI — runs against the Vercel preview URL on every PR and
+# comments the scores back as a check. Stops perf regressions before they
+# ship instead of catching them in PostHog after real users hit them.
+#
+# Reads the preview URL from the Vercel deployment-status event so we test
+# the actual artifact going to prod, not a fresh local build.
+
+name: Lighthouse
+
+on:
+  deployment_status:
+
+jobs:
+  lighthouse:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment_status.environment != 'production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Audit Vercel preview with Lighthouse
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            ${{ github.event.deployment_status.target_url }}
+            ${{ github.event.deployment_status.target_url }}/discover
+            ${{ github.event.deployment_status.target_url }}/marketplace
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configPath: ./.lighthouserc.json
+
+      - name: Comment scores on PR
+        if: always() && github.event.deployment_status.environment != 'production'
+        uses: marocchino/sticky-pull-request-comment@v2
+        continue-on-error: true
+        with:
+          header: lighthouse
+          message: |
+            🔎 **Lighthouse audit run** — see the workflow logs for full reports.
+            Audited: `/`, `/discover`, `/marketplace` on the preview URL.

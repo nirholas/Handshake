@@ -1,0 +1,45 @@
+# Dependabot config — auto-PR weekly for npm + GitHub Actions updates.
+#
+# Strategy:
+#   - npm: weekly batched PRs (per-package PR storms are unmanageable for a
+#     repo this size). Patch + minor go in one combined PR; majors get their
+#     own PR so we can review the changelog before merging.
+#   - actions: pinned via SHA elsewhere, but Dependabot still helps with
+#     version-tag bumps in workflows we author.
+#
+# Security alerts always open immediately regardless of schedule.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "10:00"
+      timezone: America/Los_Angeles
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Three.js majors break a lot at once — pin until we manually upgrade.
+      - dependency-name: three
+        update-types: [version-update:semver-major]
+      # ethers v6 → v7 will need a code sweep when the time comes.
+      - dependency-name: ethers
+        update-types: [version-update:semver-major]
+    labels:
+      - dependencies
+      - automerge-eligible
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - github-actions

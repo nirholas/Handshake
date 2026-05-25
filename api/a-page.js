@@ -164,14 +164,31 @@ function renderHtml(p) {
 	<script type="application/ld+json">
 ${escapeJsonLd({
 	'@context': 'https://schema.org',
-	'@type': 'Person',
-	name: p.title,
-	description: p.desc,
-	url: p.pageUrl,
-	image: p.ogUrl,
-	identifier: `eip155:${p.chainId}:${p.agentId}`,
-	sameAs: p.manifestURI ? [p.manifestURI] : undefined,
-	provider: { '@type': 'Organization', name: 'three.ws', url: 'https://three.ws/' },
+	'@graph': [
+		{
+			'@type': ['SoftwareApplication', 'Service'],
+			'@id': `${p.pageUrl}#agent`,
+			name: p.title,
+			description: p.desc,
+			url: p.pageUrl,
+			image: p.ogUrl,
+			identifier: `eip155:${p.chainId}:${p.agentId}`,
+			sameAs: p.manifestURI ? [p.manifestURI] : undefined,
+			applicationCategory: 'AIApplication',
+			applicationSubCategory: 'OnChainAgent',
+			operatingSystem: 'Web',
+			browserRequirements: 'Requires WebGL2',
+			provider: { '@type': 'Organization', name: 'three.ws', url: 'https://three.ws/' },
+		},
+		{
+			'@type': 'BreadcrumbList',
+			itemListElement: [
+				{ '@type': 'ListItem', position: 1, name: 'Home', item: 'https://three.ws/' },
+				{ '@type': 'ListItem', position: 2, name: 'Discover', item: 'https://three.ws/discover' },
+				{ '@type': 'ListItem', position: 3, name: p.title, item: p.pageUrl },
+			],
+		},
+	],
 })}
 	</script>
 </body>

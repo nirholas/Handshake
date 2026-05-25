@@ -340,6 +340,7 @@ const appConfig = {
 					'/import/rpm': resolve(root, 'pages/import-rpm.html'),
 					'/import/rpm/': resolve(root, 'pages/import-rpm.html'),
 					'/dashboard': resolve(root, 'public/dashboard/index.html'),
+					'/dashboard/': resolve(root, 'public/dashboard/index.html'),
 					'/dashboard-next': resolve(root, 'pages/dashboard-next/index.html'),
 					'/dashboard-next/': resolve(root, 'pages/dashboard-next/index.html'),
 					'/dashboard-next/avatars': resolve(root, 'pages/dashboard-next/avatars.html'),
@@ -675,6 +676,29 @@ const appConfig = {
 					if (EMBED_FILES.has(filename)) return [];
 					const SNIPPET = `!function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias set_config reset opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_distinct_id get_session_id get_session_replay_url register register_once unregister on onFeatureFlags reloadFeatureFlags getFeatureFlag getFeatureFlagPayload isFeatureEnabled addExceptionStep captureException".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);posthog.init('phc_kvi8nrXqrNkLNy2NhaiwkbGyj77XpSJo54P5k2ZHYo9n',{api_host:'https://us.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'})`;
 					return [{ tag: 'script', children: SNIPPET, injectTo: 'head' }];
+				},
+			},
+		},
+		{
+			// Native View Transitions for internal nav. Chrome/Safari ship it,
+			// Firefox falls back to a normal location change (no UX regression).
+			// Skip on embed pages — they're iframes and shouldn't intercept clicks.
+			name: 'view-transitions',
+			transformIndexHtml: {
+				order: 'pre',
+				handler(_html, ctx) {
+					const EMBED_FILES = new Set([
+						'widget.html', 'embed.html', 'avatar-embed.html',
+						'agent-embed.html', 'a-embed.html',
+					]);
+					const filename = (ctx.filename || ctx.path || '').replace(/\\/g, '/').split('/').pop();
+					if (EMBED_FILES.has(filename)) return [];
+					return [{
+						tag: 'script',
+						attrs: { type: 'module' },
+						children: `import('/src/view-transitions.js').then(m=>m.enableViewTransitions()).catch(()=>{});`,
+						injectTo: 'head',
+					}];
 				},
 			},
 		},
