@@ -94,7 +94,7 @@ jobs:
           $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner verify --print-certs "$APK"
 
       - name: Upload signed APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: three-ws-seeker-${{ github.ref_name }}
           path: solana-mobile/build/three-ws-release.apk
@@ -102,7 +102,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload assetlinks.json artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: assetlinks-${{ github.ref_name }}
           path: public/.well-known/assetlinks.json
