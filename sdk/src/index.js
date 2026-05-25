@@ -6,8 +6,8 @@
  *
  * Quick start:
  *
- *   import { AgentKit } from '@nirholas/agent-kit';
- *   import '@nirholas/agent-kit/styles';
+ *   import { AgentKit } from '@three-ws/sdk';
+ *   import '@three-ws/sdk/styles';
  *
  *   const agent = new AgentKit({
  *     name: 'My Agent',

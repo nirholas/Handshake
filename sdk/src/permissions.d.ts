@@ -1,5 +1,5 @@
 /**
- * @nirholas/agent-kit — Permissions module types
+ * @three-ws/sdk — Permissions module types
  */
 
 import type { Signer } from 'ethers';

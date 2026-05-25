@@ -253,7 +253,7 @@ export default wrap(async (req, res) => {
 		anonymous = true;
 	}
 
-	const route = pickProvider(body.provider, body.model);
+	let route = pickProvider(body.provider, body.model);
 	if (!route) {
 		return error(res, 503, 'chat_unavailable', 'no chat provider is configured');
 	}
@@ -282,19 +282,43 @@ export default wrap(async (req, res) => {
 	history.push({ role: 'user', content: body.message });
 
 	const started = Date.now();
+	// Provider/model failover chain. The first entry is the picked route; if it
+	// returns 429 (rate-limit) or 5xx (provider down) we cycle through a
+	// pre-built fallback list before surfacing an error.
+	const fallbackRoutes = buildFallbackChain(route);
+
 	let upstream;
-	try {
-		upstream = await fetch(route.url, {
-			method: 'POST',
-			headers: route.headers,
-			body: JSON.stringify(route.buildPayload({ systemPrompt, history, maxTokens })),
-		});
-	} catch (err) {
-		captureException(err, { route: 'chat', stage: 'fetch', provider: route.name });
-		if (process.env.DEBUG === 'true') {
-			console.warn(`[chat:${route.name}] upstream fetch failed:`, err.message);
+	let routeIdx = 0;
+	while (true) {
+		try {
+			upstream = await fetch(route.url, {
+				method: 'POST',
+				headers: route.headers,
+				body: JSON.stringify(route.buildPayload({ systemPrompt, history, maxTokens })),
+			});
+		} catch (err) {
+			captureException(err, { route: 'chat', stage: 'fetch', provider: route.name });
+			console.error(`[chat:${route.name}] upstream fetch failed:`, err.message);
+			// Network blip — try next route if available.
+			routeIdx++;
+			if (routeIdx < fallbackRoutes.length) {
+				route = fallbackRoutes[routeIdx];
+				continue;
+			}
+			return error(res, 502, 'upstream_unavailable', 'chat backend unreachable');
 		}
-		return error(res, 502, 'upstream_unavailable', 'chat backend unreachable');
+
+		// Fall over on rate-limit (429) and transient gateway errors (502/503/504).
+		// Don't re-fetch on 4xx other than 429 — those are caller mistakes that
+		// the next provider would also reject.
+		if ((upstream.status === 429 || upstream.status >= 500) && routeIdx + 1 < fallbackRoutes.length) {
+			const text = await upstream.text().catch(() => '');
+			console.warn(`[chat:${route.name}] ${upstream.status} — falling over to ${fallbackRoutes[routeIdx + 1].name}/${fallbackRoutes[routeIdx + 1].model}: ${text.slice(0, 120)}`);
+			routeIdx++;
+			route = fallbackRoutes[routeIdx];
+			continue;
+		}
+		break;
 	}
 
 	if (!upstream.ok) {
@@ -306,7 +330,7 @@ export default wrap(async (req, res) => {
 			body: text.slice(0, 400),
 		});
 		// Always log — diagnosing prod 502s without provider context is hopeless.
-		console.warn(`[chat:${route.name}]`, upstream.status, text.slice(0, 400));
+		console.error(`[chat:${route.name}]`, upstream.status, text.slice(0, 400));
 		// Surface the upstream reason in the response body. Strip any API-key
 		// fragments out of defence; the body is generally short JSON like
 		// {"error":{"type":"invalid_request_error","message":"..."}}.
@@ -390,6 +414,58 @@ function pickProvider(requested, model) {
 		return makeRoute(name, cfg, apiKey, chosenModel);
 	}
 	return null;
+}
+
+// Build an ordered failover list starting with the primary route. Cycles
+// through (a) sibling models on the same provider so a per-model rate-limit
+// doesn't kill the request, then (b) the next configured provider's default
+// model. Stops as soon as a provider has no API key. The primary is always
+// position 0 so the happy path is one entry.
+//
+// Why per-provider sibling models: OpenRouter's `:free` tier rate-limits per
+// model. Falling over from llama-3.3-70b:free → llama-3.1-8b:free → mistral-
+// 7b:free recovers from a single upstream burst without paying. Last resort
+// is paid Anthropic so the user still gets a response.
+const FALLBACK_SIBLINGS = {
+	openrouter: [
+		'meta-llama/llama-3.3-70b-instruct:free',
+		'meta-llama/llama-3.1-8b-instruct:free',
+		'mistralai/mistral-7b-instruct:free',
+	],
+	groq: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
+	anthropic: ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
+	openai: ['gpt-4o-mini'],
+};
+
+function buildFallbackChain(primary) {
+	const chain = [primary];
+	const seen = new Set([`${primary.name}:${primary.model}`]);
+
+	// Sibling models on the same provider
+	const siblings = FALLBACK_SIBLINGS[primary.name] || [];
+	for (const m of siblings) {
+		const key = `${primary.name}:${m}`;
+		if (seen.has(key)) continue;
+		seen.add(key);
+		const cfg = PROVIDERS[primary.name];
+		const apiKey = process.env[cfg.envKey];
+		if (!apiKey) continue;
+		chain.push(makeRoute(primary.name, cfg, apiKey, m));
+	}
+
+	// Other providers, in declared order, picking the configured default model
+	for (const name of Object.keys(PROVIDERS)) {
+		if (name === primary.name) continue;
+		const cfg = PROVIDERS[name];
+		const apiKey = process.env[cfg.envKey];
+		if (!apiKey) continue;
+		const key = `${name}:${cfg.defaultModel}`;
+		if (seen.has(key)) continue;
+		seen.add(key);
+		chain.push(makeRoute(name, cfg, apiKey, cfg.defaultModel));
+	}
+
+	return chain;
 }
 
 function makeRoute(name, cfg, apiKey, model) {

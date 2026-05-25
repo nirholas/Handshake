@@ -1634,7 +1634,8 @@
         {
             "src": "/assets/(.*)",
             "headers": {
-                "cache-control": "max-age=604800, public"
+                "cache-control": "max-age=604800, public",
+                "cross-origin-resource-policy": "cross-origin"
             },
             "dest": "/assets/$1"
         },

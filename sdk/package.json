@@ -3,26 +3,39 @@
 	"version": "0.1.0",
 	"description": "Ship a cross-chain 3D AI agent with EVM + Solana identity, a chat panel, and discoverable .well-known endpoints.",
 	"type": "module",
-	"main": "./dist/index.js",
-	"module": "./dist/index.mjs",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
 	"types": "./types/index.d.ts",
 	"exports": {
 		".": {
 			"types": "./types/index.d.ts",
-			"import": "./dist/index.mjs",
-			"require": "./dist/index.js",
-			"default": "./dist/index.mjs"
+			"import": "./src/index.js",
+			"default": "./src/index.js"
 		},
 		"./permissions": {
 			"types": "./types/permissions.d.ts",
-			"import": "./dist/index.mjs",
-			"require": "./dist/index.js",
-			"default": "./dist/index.mjs"
+			"import": "./src/permissions.js",
+			"default": "./src/permissions.js"
 		},
-		"./styles": "./dist/styles.css"
+		"./permissions/advanced": {
+			"types": "./src/permissions/advanced.d.ts",
+			"import": "./src/permissions/advanced.js",
+			"default": "./src/permissions/advanced.js"
+		},
+		"./styles": "./src/styles.css",
+		"./solana": {
+			"types": "./types/solana.d.ts",
+			"import": "./src/solana.js",
+			"default": "./src/solana.js"
+		},
+		"./solana-attestations": {
+			"types": "./types/solana-attestations.d.ts",
+			"import": "./src/solana-attestations.js",
+			"default": "./src/solana-attestations.js"
+		}
 	},
 	"files": [
-		"dist",
+		"src",
 		"types",
 		"README.md",
 		"LICENSE",
@@ -30,6 +43,7 @@
 	],
 	"scripts": {
 		"build": "node build.mjs",
+		"prepublishOnly": "node build.mjs",
 		"test": "node --test 'test/**/*.test.js'"
 	},
 	"publishConfig": {

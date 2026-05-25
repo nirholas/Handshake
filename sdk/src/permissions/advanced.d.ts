@@ -1,5 +1,5 @@
 /**
- * @nirholas/agent-kit/permissions/advanced — TypeScript definitions
+ * @three-ws/sdk/permissions/advanced — TypeScript definitions
  */
 
 import type { Signer } from 'ethers';

@@ -33,6 +33,12 @@ vi.mock('../../api/_lib/agent-pumpfun.js', () => ({
 	solanaConnection: vi.fn(() => ({
 		getBalance: vi.fn(async () => 0),
 	})),
+	// solanaPublicConnection is the read-only RPC fallback the handler uses
+	// when the primary (private) RPC is rate-limited or returns 5xx. Stub it
+	// with the same surface as the primary so the backoff wrapper has both.
+	solanaPublicConnection: vi.fn(() => ({
+		getBalance: vi.fn(async () => 0),
+	})),
 }));
 
 vi.mock('../../api/_lib/agent-wallet.js', () => ({

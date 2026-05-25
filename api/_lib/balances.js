@@ -27,30 +27,51 @@ async function fetchJson(url, opts = {}) {
 	return r.json();
 }
 
-async function getSolanaBalances(address) {
-	const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+// Helius primary, public mainnet-beta fallback. Helius is required for `getAsset`
+// (DAS) — token metadata silently degrades when we fall back, but balances still
+// resolve, which is better than 503ing the whole portfolio when Helius is rate-
+// limited or out of credits.
+const PUBLIC_SOL_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+function heliusRpc() {
+	const key = process.env.HELIUS_API_KEY;
+	return key ? `https://mainnet.helius-rpc.com/?api-key=${key}` : null;
+}
 
-	const solResp = await fetchJson(rpcUrl, {
+async function solRpc(body, { allowFallback = true } = {}) {
+	const helius = heliusRpc();
+	if (helius) {
+		try {
+			return await fetchJson(helius, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(body),
+			});
+		} catch (err) {
+			if (!allowFallback) throw err;
+			console.warn('[balances] helius failed, falling back to public RPC:', err?.message);
+		}
+	}
+	return fetchJson(PUBLIC_SOL_RPC, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getBalance', params: [address] }),
+		body: JSON.stringify(body),
 	});
+}
+
+async function getSolanaBalances(address) {
+	const solResp = await solRpc({ jsonrpc: '2.0', id: 1, method: 'getBalance', params: [address] });
 	const lamports = solResp.result?.value ?? 0;
 	const solAmount = lamports / 1e9;
 
-	const tokenResp = await fetchJson(rpcUrl, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({
-			jsonrpc: '2.0',
-			id: 2,
-			method: 'getTokenAccountsByOwner',
-			params: [
-				address,
-				{ programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
-				{ encoding: 'jsonParsed' },
-			],
-		}),
+	const tokenResp = await solRpc({
+		jsonrpc: '2.0',
+		id: 2,
+		method: 'getTokenAccountsByOwner',
+		params: [
+			address,
+			{ programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
+			{ encoding: 'jsonParsed' },
+		],
 	});
 
 	const tokenAccounts = tokenResp.result?.value ?? [];
@@ -91,21 +112,25 @@ async function getSolanaBalances(address) {
 		// best-effort
 	}
 
-	// DAS metadata is one RPC per mint; run them concurrently.
-	const metaResults = await Promise.all(
-		fungible.map((t) =>
-			fetchJson(rpcUrl, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					jsonrpc: '2.0',
-					id: 'meta',
-					method: 'getAsset',
-					params: { id: t.mint },
-				}),
-			}).catch(() => null),
-		),
-	);
+	// DAS metadata (getAsset) is Helius-only — skip entirely if no key, since
+	// public mainnet-beta returns "method not found" for every mint.
+	const helius = heliusRpc();
+	const metaResults = helius
+		? await Promise.all(
+				fungible.map((t) =>
+					fetchJson(helius, {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({
+							jsonrpc: '2.0',
+							id: 'meta',
+							method: 'getAsset',
+							params: { id: t.mint },
+						}),
+					}).catch(() => null),
+				),
+			)
+		: fungible.map(() => null);
 
 	const tokens = fungible.map((t, i) => {
 		const priceInfo = cgTokenPrices[t.mint.toLowerCase()] || cgTokenPrices[t.mint] || {};

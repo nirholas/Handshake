@@ -9,7 +9,7 @@
 import { PermissionError } from '../permissions.js';
 export { PermissionError };
 
-import { DELEGATION_MANAGER_ABI, DELEGATION_MANAGER_DEPLOYMENTS } from '../erc7710/abi.js';
+import { DELEGATION_MANAGER_ABI, getDelegationManager } from '../erc7710/abi.js';
 
 /**
  * Build an unsigned delegation envelope ready to be signed via `signDelegation`.
@@ -51,11 +51,15 @@ export function encodeScopedDelegation({ delegator, delegate, caveats, expiry, c
  * @returns {Promise<object>} signed delegation (unsigned + signature)
  */
 export async function signDelegation(unsigned, signer) {
+	// getDelegationManager throws if no real deployment is configured — this
+	// prevents EIP-712 signatures from binding to the zero address, which
+	// would silently authorize an unowned contract on every chain.
+	const verifyingContract = getDelegationManager(unsigned.chainId);
 	const domain = {
 		name: 'DelegationManager',
 		version: '1',
 		chainId: unsigned.chainId,
-		verifyingContract: DELEGATION_MANAGER_DEPLOYMENTS[unsigned.chainId],
+		verifyingContract,
 	};
 
 	const types = {
@@ -102,9 +106,11 @@ export async function isDelegationValid({ hash, chainId, rpcUrl }) {
 			`No RPC URL available for chain ${chainId}. Pass rpcUrl or set RPC_URL_${chainId} env var.`,
 		);
 	}
-	const managerAddr = DELEGATION_MANAGER_DEPLOYMENTS[chainId];
-	if (!managerAddr || managerAddr === '0x0000000000000000000000000000000000000000') {
-		throw new PermissionError('chain_not_supported', `No DelegationManager for chain ${chainId}`);
+	let managerAddr;
+	try {
+		managerAddr = getDelegationManager(chainId);
+	} catch (err) {
+		throw new PermissionError('chain_not_supported', err.message);
 	}
 
 	// eth_call: isDelegationDisabled(bytes32)

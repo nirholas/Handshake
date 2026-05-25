@@ -1,5 +1,5 @@
 /**
- * @nirholas/agent-kit — TypeScript definitions
+ * @three-ws/sdk — TypeScript definitions
  */
 
 // ---------------------------------------------------------------------------

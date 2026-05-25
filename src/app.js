@@ -1824,6 +1824,12 @@ class App {
 	// ── Validator hook ────────────────────────────────────────────────────────
 
 	_hookValidator() {
+		// In the slim widget shell the validator overlay never renders (the
+		// `.validate()` call is gated on `!options.kiosk`), so a tree-wide
+		// MutationObserver here is pure CPU waste. Skip it entirely in that
+		// surface — saves a 60Hz-ish observer on the embedder's parent paint.
+		if (this._widgetShell) return;
+
 		// Intercept the validator toggle DOM node to emit validation results
 		const observer = new MutationObserver(() => {
 			const el = document.querySelector('.validator-toggle');

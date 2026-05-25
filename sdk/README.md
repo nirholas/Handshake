@@ -1,11 +1,11 @@
-# @nirholas/agent-kit
+# @three-ws/sdk
 
 Ship an **ERC-8004 agent** with on-chain identity, a chat panel, and discoverable `.well-known` endpoints — in minutes.
 
 ## Install
 
 ```bash
-npm install @nirholas/agent-kit ethers
+npm install @three-ws/sdk ethers
 ```
 
 `ethers@^6` is a peer dependency (only needed if you call `register()`).
@@ -13,8 +13,8 @@ npm install @nirholas/agent-kit ethers
 ## Quick start
 
 ```js
-import { AgentKit } from '@nirholas/agent-kit';
-import '@nirholas/agent-kit/styles';
+import { AgentKit } from '@three-ws/sdk';
+import '@three-ws/sdk/styles';
 
 const agent = new AgentKit({
 	name: 'My Agent',
@@ -36,7 +36,7 @@ framework or plain HTML — the helper lazy-loads the published
 from the three.ws CDN.
 
 ```js
-import { loadAvatar } from '@nirholas/agent-kit';
+import { loadAvatar } from '@three-ws/sdk';
 
 const handle = await loadAvatar({
 	agentId: 'agt_abc123',
@@ -135,7 +135,7 @@ import {
 	aiPlugin,
 	IDENTITY_REGISTRY_ABI,
 	REGISTRY_DEPLOYMENTS,
-} from '@nirholas/agent-kit';
+} from '@three-ws/sdk';
 ```
 
 ## Configuring registry addresses
@@ -155,8 +155,8 @@ Grant, list, redeem, and revoke ERC-7710 scoped delegations via the `Permissions
 `grant` and `revoke` require a browser wallet (MetaMask / any injected ethers v6 Signer).
 
 ```ts
-import { AgentKit } from '@nirholas/agent-kit';
-import { PermissionsClient } from '@nirholas/agent-kit/permissions';
+import { AgentKit } from '@three-ws/sdk';
+import { PermissionsClient } from '@three-ws/sdk/permissions';
 
 const client = new PermissionsClient({ baseUrl: 'https://three.ws/' });
 
@@ -191,7 +191,7 @@ For advanced use (direct toolkit access with tree-shaking):
 import {
 	encodeScopedDelegation,
 	isDelegationValid,
-} from '@nirholas/agent-kit/permissions/advanced';
+} from '@three-ws/sdk/permissions/advanced';
 ```
 
 ## License

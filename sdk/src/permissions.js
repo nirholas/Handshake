@@ -1,10 +1,10 @@
 /**
- * @nirholas/agent-kit — Permissions module
+ * @three-ws/sdk — Permissions module
  *
  * ERC-7710 scoped delegation client for three.ws.
  *
  * Quick start:
- *   import { PermissionsClient } from '@nirholas/agent-kit/permissions';
+ *   import { PermissionsClient } from '@three-ws/sdk/permissions';
  *   const client = new PermissionsClient({ baseUrl: 'https://three.ws/' });
  *   const { delegations } = await client.getMetadata(agentId);
  */
