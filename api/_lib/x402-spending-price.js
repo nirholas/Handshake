@@ -11,7 +11,9 @@
 // We deliberately avoid `import { fetch }` — Node 18+ + browsers ship
 // global fetch, and this module needs to run unchanged in both.
 
-const PRICE_TTL_MS = 5 * 60 * 1000;
+import { cacheGet, cacheSet } from './cache.js';
+
+const PRICE_TTL_S = 5 * 60;
 const PRICE_API = 'https://api.coinbase.com/v2/prices';
 
 // Tokens known to be 1:1 USD pegged. The asset address on the requirement
@@ -29,7 +31,9 @@ const USD_STABLECOINS = new Set([
 // Decimals defaults — when accept.extra.decimals isn't present.
 const DEFAULT_TOKEN_DECIMALS = 6;
 
-const priceCache = new Map();
+// Per-process micro-cache to short-circuit the Redis round-trip when the same
+// symbol is hit twice in one function invocation (e.g. multi-leg settlement).
+const localCache = new Map();
 
 function isStablecoin(name) {
 	if (!name) return false;
@@ -41,8 +45,14 @@ function isStablecoin(name) {
 // Cached for PRICE_TTL_MS.
 async function fetchSpotUsd(symbol) {
 	const key = symbol.toUpperCase();
-	const cached = priceCache.get(key);
-	if (cached && cached.expiresAt > Date.now()) return cached.value;
+	const local = localCache.get(key);
+	if (local && local.expiresAt > Date.now()) return local.value;
+	const cacheKey = `spot-usd:${key}`;
+	const shared = await cacheGet(cacheKey);
+	if (typeof shared === 'number' && Number.isFinite(shared) && shared > 0) {
+		localCache.set(key, { value: shared, expiresAt: Date.now() + PRICE_TTL_S * 1000 });
+		return shared;
+	}
 	let res;
 	try {
 		res = await fetch(`${PRICE_API}/${key}-USD/spot`, {
@@ -60,7 +70,8 @@ async function fetchSpotUsd(symbol) {
 	if (!Number.isFinite(value) || value <= 0) {
 		throw new Error(`spending-price: ${key}-USD invalid response: ${raw}`);
 	}
-	priceCache.set(key, { value, expiresAt: Date.now() + PRICE_TTL_MS });
+	localCache.set(key, { value, expiresAt: Date.now() + PRICE_TTL_S * 1000 });
+	await cacheSet(cacheKey, value, PRICE_TTL_S);
 	return value;
 }
 
@@ -120,6 +131,6 @@ export const _internal = {
 	rescaleAtomics,
 	inferSymbol,
 	resetCache() {
-		priceCache.clear();
+		localCache.clear();
 	},
 };

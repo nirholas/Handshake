@@ -11,6 +11,7 @@
  */
 
 import { JsonRpcProvider, Contract, getAddress } from 'ethers';
+import { cacheGet, cacheSet } from './cache.js';
 
 const IDENTITY_ABI = [
 	'function tokenURI(uint256 tokenId) external view returns (string)',
@@ -208,8 +209,9 @@ export const SERVER_CHAIN_META = {
 const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 const AR_GATEWAY = 'https://arweave.net/';
 
-const _cache = new Map();
-const CACHE_TTL_MS = 10 * 60 * 1000;
+// Shared via Upstash when configured — see api/_lib/cache.js. Falls back to
+// an in-process Map for local/dev. Either way, TTL is 10 minutes.
+const CACHE_TTL_S = 10 * 60;
 
 /** @param {string} uri */
 export function resolveURI(uri) {
@@ -253,9 +255,9 @@ export async function resolveOnChainAgent({
 		return _emptyResult(chainId, agentId, 'unsupported_chain');
 	}
 
-	const cacheKey = `${chainId}:${agentId}`;
-	const cached = _cache.get(cacheKey);
-	if (cached && cached.expiresAt > Date.now()) return cached.result;
+	const cacheKey = `onchain-agent:${chainId}:${agentId}:${fetchManifest ? '1' : '0'}`;
+	const cached = await cacheGet(cacheKey);
+	if (cached) return cached;
 
 	const base = {
 		chainId,
@@ -318,7 +320,7 @@ export async function resolveOnChainAgent({
 	}
 
 	if (!base.error) {
-		_cache.set(cacheKey, { result: base, expiresAt: Date.now() + CACHE_TTL_MS });
+		await cacheSet(cacheKey, base, CACHE_TTL_S);
 	}
 	return base;
 }
