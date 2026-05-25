@@ -84,15 +84,17 @@ export function getMe() {
 	return mePromise;
 }
 
-/** Redirect to /login if the user isn't signed in. Returns the user record. */
+/** Redirect to /login if the user isn't signed in. Returns the user record.
+ *  When the session is missing this kicks off navigation to /login and then
+ *  returns a never-resolving promise — callers `await` it and naturally halt
+ *  while the browser unloads, instead of throwing an uncaught "redirecting"
+ *  error that pollutes the console and Sentry. */
 export async function requireUser() {
 	const me = await getMe();
-	if (!me) {
-		const ret = encodeURIComponent(location.pathname + location.search);
-		location.href = `/login?return=${ret}`;
-		throw new Error('redirecting');
-	}
-	return me;
+	if (me) return me;
+	const ret = encodeURIComponent(location.pathname + location.search);
+	location.href = `/login?return=${ret}`;
+	return new Promise(() => {});
 }
 
 // ── Small UI helpers used across pages ────────────────────────────────────
