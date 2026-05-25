@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-05-25T15:10:15.004Z",
+	"generated_at": "2026-05-25T15:40:08.065Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -214,15 +214,6 @@
 					"title": "Launchpad Studio",
 					"description": "Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.",
 					"added": "2026-05-18",
-					"auth": null,
-					"indexable": true,
-					"tags": []
-				},
-				{
-					"path": "/walkaround",
-					"title": "3D Walkaround",
-					"description": "WASD + mobile joystick navigation with Rapier physics and Recast navmesh. Click the ground to autopilot.",
-					"added": null,
 					"auth": null,
 					"indexable": true,
 					"tags": []

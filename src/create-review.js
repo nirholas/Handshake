@@ -32,7 +32,6 @@ const RESUME_KEY = '3dagent:guest-avatar-resume';
 const $ = (sel) => document.querySelector(sel);
 
 function setPageState(state) {
-	document.getElementById('empty-card').hidden = state !== 'empty';
 	document.getElementById('content').hidden = state !== 'content';
 }
 
@@ -45,7 +44,7 @@ let viewerIdleDispose = /** @type {(() => void) | null} */ (null);
 async function boot() {
 	staged = await loadGuest();
 	if (!staged) {
-		setPageState('empty');
+		location.replace('/create');
 		return;
 	}
 

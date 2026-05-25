@@ -250,12 +250,13 @@
 				color: var(--text);
 			}
 
-			/* Hide help text on small/touch screens — joystick is enough */
+			/* Hide help text on small/touch screens — joystick is enough.
+			   Joystick stays visible on all devices: mouse-drag works on
+			   desktop the same way touch does on mobile, and keeping the
+			   element laid out from page load ensures nipplejs measures
+			   its 140×140 zone correctly. */
 			@media (hover: none), (max-width: 640px) {
 				#walk-help { display: none; }
-			}
-			@media (hover: hover) and (min-width: 641px) {
-				#walk-joystick { display: none; }
 			}
 
 			/* ── Multiplayer HUD ────────────────────────────────────────────── */

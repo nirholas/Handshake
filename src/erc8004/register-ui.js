@@ -603,18 +603,43 @@ export class RegisterUI {
 	// Silent reconnect on mount — uses `eth_accounts` (no popup). If the wallet
 	// has previously authorized this origin and is unlocked, we restore the
 	// connection transparently so the user doesn't see "Connect MetaMask" twice.
+	// Also tries a silent Phantom reconnect so users signed in with Solana
+	// land on the Solana chain by default instead of the EVM fallback.
 	async _eagerConnectWallet() {
 		const result = await eagerConnectWallet();
-		if (!result) return;
-		this.wallet = { address: result.address, chainId: Number(result.chainId) };
-		if (
-			!_isSolana(this.selectedChainId) &&
-			REGISTRY_DEPLOYMENTS[this.wallet.chainId]
-		) {
-			this.selectedChainId = this.wallet.chainId;
-			const sel = this.el.querySelector('.erc8004-chain-select');
-			if (sel) sel.value = String(this.selectedChainId);
+		if (result) {
+			this.wallet = { address: result.address, chainId: Number(result.chainId) };
+			if (
+				!_isSolana(this.selectedChainId) &&
+				REGISTRY_DEPLOYMENTS[this.wallet.chainId]
+			) {
+				this.selectedChainId = this.wallet.chainId;
+				const sel = this.el.querySelector('.erc8004-chain-select');
+				if (sel) sel.value = String(this.selectedChainId);
+			}
 		}
+
+		// If no EVM wallet adopted the selection and a Solana wallet is
+		// already trusted by this origin, prefer Solana. `onlyIfTrusted` is
+		// silent — no popup if the user hasn't previously connected.
+		if (!_isSolana(this.selectedChainId) && !result) {
+			const solProvider = detectSolanaWallet();
+			if (solProvider) {
+				try {
+					if (!solProvider.publicKey && typeof solProvider.connect === 'function') {
+						await solProvider.connect({ onlyIfTrusted: true });
+					}
+					if (solProvider.publicKey) {
+						this.selectedChainId = SOLANA_MAINNET;
+						const sel = this.el.querySelector('.erc8004-chain-select');
+						if (sel) sel.value = String(this.selectedChainId);
+					}
+				} catch {
+					// Silent — user hasn't trusted this origin yet.
+				}
+			}
+		}
+
 		this._refreshWalletButton();
 		this._renderActiveTab();
 		this._refreshMainnetBanner();

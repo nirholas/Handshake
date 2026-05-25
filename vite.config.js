@@ -170,8 +170,7 @@ const appConfig = {
 				profile: resolve(__dirname, 'pages/profile.html'),
 				'threews-claim': resolve(__dirname, 'pages/threews-claim.html'),
 				'avatar-page': resolve(__dirname, 'pages/avatar-page.html'),
-				'widget-studio': resolve(__dirname, 'pages/widget-studio.html'),
-				creating: resolve(__dirname, 'pages/creating.html'),
+creating: resolve(__dirname, 'pages/creating.html'),
 				pricing: resolve(__dirname, 'pages/pricing.html'),
 				'x-pricing': resolve(__dirname, 'pages/x-pricing.html'),
 				'home-next': resolve(__dirname, 'pages/home-next.html'),
@@ -209,7 +208,6 @@ const appConfig = {
 				'demos-brain': resolve(__dirname, 'public/demos/brain.html'),
 				'demos-lipsync-tts': resolve(__dirname, 'public/demos/lipsync-tts.html'),
 				'demos-lipsync-mic': resolve(__dirname, 'public/demos/lipsync-mic.html'),
-				'demos-walkaround': resolve(__dirname, 'public/demos/walkaround.html'),
 				'demos-erc8004': resolve(__dirname, 'public/demos/erc8004.html'),
 				'demos-button-jump': resolve(__dirname, 'public/demos/button-jump.html'),
 				'demos-button': resolve(__dirname, 'public/demos/button.html'),
@@ -404,8 +402,6 @@ const appConfig = {
 					'/agenc/embodied/': resolve(root, 'pages/agenc/embodied.html'),
 					'/agenc/room': resolve(root, 'pages/agenc/room.html'),
 					'/agenc/room/': resolve(root, 'pages/agenc/room.html'),
-					'/walkaround': resolve(root, 'public/demos/walkaround.html'),
-					'/walkaround/': resolve(root, 'public/demos/walkaround.html'),
 					'/brain': resolve(root, 'public/demos/brain.html'),
 					'/brain/': resolve(root, 'public/demos/brain.html'),
 					'/lipsync': resolve(root, 'public/demos/lipsync-tts.html'),
@@ -491,6 +487,12 @@ const appConfig = {
 					if (discoverAvatarM) {
 						res.statusCode = 301;
 						res.setHeader('Location', `/marketplace/agents/${discoverAvatarM[1]}`);
+						return res.end();
+					}
+					// /widget-studio was a legacy standalone page; /studio is canonical
+					if (path === '/widget-studio' || path === '/widget-studio/') {
+						res.statusCode = 301;
+						res.setHeader('Location', '/studio');
 						return res.end();
 					}
 					// /coin is the legacy URL for /demo/coin (the lottery+reflection
@@ -943,7 +945,6 @@ const appConfig = {
 					['dist/public/demos/brain.html', 'dist/demos/brain.html'],
 					['dist/public/demos/lipsync-tts.html', 'dist/demos/lipsync-tts.html'],
 					['dist/public/demos/lipsync-mic.html', 'dist/demos/lipsync-mic.html'],
-					['dist/public/demos/walkaround.html', 'dist/demos/walkaround.html'],
 					['dist/public/demos/erc8004.html', 'dist/demos/erc8004.html'],
 					['dist/public/demos/button-jump.html', 'dist/demos/button-jump.html'],
 					['dist/public/demos/button.html', 'dist/demos/button.html'],

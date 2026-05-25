@@ -8,7 +8,7 @@
  * Card actions:
  *   • Preview  → /app#model=<glb-url>  (opens in the main viewer)
  *   • Studio   → /studio?avatar=<id>   (preselect in widget studio)
- *   • Details  → /discover/avatar/<id> (existing avatar detail page)
+ *   • Details  → /avatars/<id> (avatar studio page)
  *   • Embed    → /api/avatars/view tracker fires when the link is followed
  */
 
@@ -270,7 +270,7 @@ function renderCard(a) {
 
 	const glbUrl = a.model_url || '';
 	const viewerUrl = glbUrl ? `/app#model=${encodeURIComponent(glbUrl)}` : '#';
-	const detailUrl = `/discover/avatar/${a.id}`;
+	const detailUrl = `/avatars/${a.id}`;
 	const studioUrl = `/studio?avatar=${encodeURIComponent(a.id)}`;
 
 	const thumbSrc = a.thumbnail_url || `/api/avatars/${encodeURIComponent(a.id)}/og`;

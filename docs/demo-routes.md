@@ -49,9 +49,8 @@ Both must be kept in sync.
 | `/demos/skill-royalty` | `public/demos/skill-royalty.html` | Skill royalty distribution demo. |
 | `/demos/usdz-ar` | `public/demos/usdz-ar.html` | USDZ + AR Quick Look (iOS). |
 | `/demos/voice-clone` | `public/demos/voice-clone.html` | Voice cloning demo. |
-| `/demos/walkaround` | `public/demos/walkaround.html` | 3D walkaround scene. |
 
-The legacy `/walkaround`, `/brain`, `/lipsync`, `/lipsync/mic`
+The legacy `/brain`, `/lipsync`, `/lipsync/mic`
 shortcuts in `vercel.json` still resolve to the `/demos/*.html` files
 above. They predate the `/demos/` namespace and are kept for backward
 compatibility — prefer the `/demos/<slug>` form for new links.

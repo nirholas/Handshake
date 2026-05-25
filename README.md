@@ -1507,7 +1507,6 @@ Commands live in [`.claude/commands/`](.claude/commands/) and are picked up auto
 | **Audio-driven lipsync (mic)**      | `/lipsync/mic`                   | Live microphone → ARKit-52 lip-sync                      |
 | **Audio-driven lipsync (TTS)**      | `/lipsync`                       | ElevenLabs TTS → ARKit-52 lip-sync                       |
 | **Multi-LLM brain**                 | `/brain`                         | Side-by-side comparison of Claude / GPT / Groq / Gemini  |
-| **3D walkaround**                   | `/walkaround`                    | Single-player walking + camera controls                  |
 | **ERC-8004 registry browser**       | `/demos/erc8004.html`            | Browse all registered agents across chains               |
 | **Button jump**                     | `/demos/button-jump.html`        | Avatar reacts to a 2D button press                       |
 | **Tactile button (Gemini concept)** | `/demos/gemini-jump.html`        | Tactile button demo with avatar                          |

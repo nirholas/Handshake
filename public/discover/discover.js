@@ -416,7 +416,7 @@ function renderAvatarCard(item) {
 		.join('');
 
 	const viewerUrl = item.viewerUrl || '#';
-	const detailUrl = `/discover/avatar/${item.avatarId}`;
+	const detailUrl = `/avatars/${item.avatarId}`;
 
 	card.innerHTML = `
 		<a class="explore-card-thumb" href="${escapeAttr(detailUrl)}">

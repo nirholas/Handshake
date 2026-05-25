@@ -42,7 +42,6 @@ Create and customize an agent.
 Experimental features actively shipping. Expect fast iteration.
 
 - [Launchpad Studio](https://three.ws/launchpad): Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.
-- [3D Walkaround](https://three.ws/walkaround): WASD + mobile joystick navigation with Rapier physics and Recast navmesh. Click the ground to autopilot.
 - [Multi-LLM Brain](https://three.ws/brain): Send one prompt to Claude, GPT, Qwen, ModelScope, and Groq simultaneously. Side-by-side streaming with latency and token stats.
 - [Lipsync (TTS)](https://three.ws/lipsync): Type text, stream it through OpenAI TTS, and the avatar's mouth animates in real time via wawa-lipsync viseme detection.
 - [Lipsync (Mic)](https://three.ws/lipsync/mic): Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.

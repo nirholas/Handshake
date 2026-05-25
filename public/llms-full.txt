@@ -147,12 +147,6 @@ URL: https://three.ws/launchpad
 
 Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.
 
-### 3D Walkaround
-
-URL: https://three.ws/walkaround
-
-WASD + mobile joystick navigation with Rapier physics and Recast navmesh. Click the ground to autopilot.
-
 ### Multi-LLM Brain
 
 URL: https://three.ws/brain

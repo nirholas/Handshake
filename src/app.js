@@ -259,8 +259,11 @@ class App {
 		// Check for deploy (ERC-8004 mint) page. We still load the default
 		// avatar in the background so `_currentModelUrl` is populated for the
 		// RegisterUI pre-fill — it reflects the viewer's current model.
+		// Honor `?model=<url>` passed from the /app deploy button so an
+		// unsaved viewer model still flows through instead of falling to CZ.
 		if (options.deploy) {
-			const model = options.model || '/avatars/cz.glb';
+			const qpModel = new URLSearchParams(location.search).get('model') || '';
+			const model = options.model || qpModel || '/avatars/cz.glb';
 			this.view(isDecentralizedURI(model) ? resolveURI(model) : model, '', new Map())
 				.catch(() => {})
 				.finally(() => this._showDeployPage());
@@ -687,6 +690,16 @@ class App {
 		btn.hidden = !hasModel;
 	}
 
+	// Build a `&model=<url>` suffix for the deploy button when the viewer is
+	// currently showing a hosted GLB. blob:/data: URLs aren't carryable across
+	// a navigation, so we drop them and let /deploy fall back to its defaults.
+	_deployModelParam() {
+		const url = this._currentModelUrl || '';
+		if (!url) return '';
+		if (url.startsWith('blob:') || url.startsWith('data:')) return '';
+		return `&model=${encodeURIComponent(url)}`;
+	}
+
 	// Surface the right deploy CTA next to the public-profile link in /app:
 	//   • "Deploy on-chain" → /deploy?avatar=<id>   (un-registered agent)
 	//   • "Deployed ✓"      → block-explorer URL    (already on-chain)
@@ -704,7 +717,11 @@ class App {
 		if (label) label.textContent = 'Deploy on-chain';
 		btn.setAttribute('aria-label', 'Publish this agent on-chain');
 		btn.setAttribute('title', 'Publish this agent on-chain (ERC-8004)');
-		btn.href = `/deploy?agent=${encodeURIComponent(agentId)}`;
+		// Carry the viewer's current model URL across so /deploy doesn't fall
+		// back to the CZ avatar when the agent hasn't been saved yet. Skip
+		// blob:/data: URLs — they don't survive a navigation.
+		const modelParam = this._deployModelParam();
+		btn.href = `/deploy?agent=${encodeURIComponent(agentId)}${modelParam}`;
 		btn.hidden = false;
 
 		try {
@@ -2288,7 +2305,8 @@ class App {
 		const qpDesc = qp.get('description') || '';
 		const qpImage = qp.get('image') || '';
 		const qpNetwork = qp.get('network') || '';
-		const base = { glbUrl: this._currentModelUrl || '' };
+		const qpModel = qp.get('model') || '';
+		const base = { glbUrl: qpModel || this._currentModelUrl || '' };
 		let resolved = base;
 		if (avatarId) {
 			try {

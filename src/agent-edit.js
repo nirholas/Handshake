@@ -4,6 +4,33 @@ import { saveRemoteGlbToAccount } from './account.js';
 const API_BASE = '/api';
 const params = new URLSearchParams(location.search);
 
+// CSRF — server enforces a single-use double-submit token on every session-
+// cookie mutation (PUT/POST/PATCH/DELETE). Fetch a fresh token per request;
+// the server burns it after one use, so caching breaks the next mutation.
+async function _csrfToken() {
+  try {
+    const r = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j?.data?.token || null;
+  } catch {
+    return null;
+  }
+}
+
+// Drop-in replacement for fetch() that auto-attaches the CSRF header on any
+// non-safe method. Every fetch in this module that targets ${API_BASE} should
+// use this helper; raw fetch() bypasses CSRF and the server returns 403.
+async function apiFetch(url, init = {}) {
+  const method = (init.method || 'GET').toUpperCase();
+  const headers = new Headers(init.headers || {});
+  if (method !== 'GET' && method !== 'HEAD') {
+    const token = await _csrfToken();
+    if (token) headers.set('x-csrf-token', token);
+  }
+  return fetch(url, { credentials: 'include', ...init, headers });
+}
+
 // Resolve agent id from the canonical clean URL /agent/<uuid>(/edit)?, falling
 // back to the legacy /agent-edit.html?id=<uuid> querystring form. Kept as a
 // `let` so it can be reassigned after the create-from-avatar flow mints a real
@@ -40,7 +67,7 @@ async function loadAgent() {
     return;
   }
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}`, { credentials: 'include' });
     if (r.status === 401) {
       sessionStorage.setItem('login_redirect', location.href);
       location.replace('/login');
@@ -63,7 +90,7 @@ async function createAgentFromAvatar() {
   showLoading('Creating agent…');
   try {
     const name = initAvatarName ? `${initAvatarName} Agent` : 'My Agent';
-    const createRes = await fetch(`${API_BASE}/agents`, {
+    const createRes = await apiFetch(`${API_BASE}/agents`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -81,7 +108,7 @@ async function createAgentFromAvatar() {
     const { agent } = await createRes.json();
 
     if (initAvatarId) {
-      const patchRes = await fetch(`${API_BASE}/agents/${agent.id}`, {
+      const patchRes = await apiFetch(`${API_BASE}/agents/${agent.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -311,7 +338,7 @@ async function renderAvatarList() {
   const container = $('avatar-picker-list');
   container.textContent = 'Loading avatars…';
   try {
-    const r = await fetch(`${API_BASE}/avatars?limit=50`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/avatars?limit=50`, { credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     availableAvatars = j.avatars || [];
@@ -651,7 +678,7 @@ async function saveAnimationGraph() {
   status.className = 'form-status';
 
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/animations`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/animations`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -706,7 +733,7 @@ async function saveAnimations() {
   status.className = 'form-status';
 
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/animations`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/animations`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -740,7 +767,7 @@ async function selectAvatar(avatarId) {
   status.textContent = 'Saving…';
   status.className = 'outfit-status saving';
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -802,7 +829,7 @@ $('persona-save').addEventListener('click', async () => {
   status.textContent = 'Saving…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -848,7 +875,7 @@ $('publish-save').addEventListener('click', async () => {
   status.textContent = 'Publishing…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/marketplace/agents/${agentId}/publish`, {
+    const r = await apiFetch(`${API_BASE}/marketplace/agents/${agentId}/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -897,7 +924,7 @@ $('monetization-save').addEventListener('click', async () => {
 
   const status = $('monetization-status');
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/skills-pricing`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/skills-pricing`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -922,7 +949,7 @@ $('autopilot-save').addEventListener('click', async () => {
   status.className = 'form-status';
   try {
     const strategy = parseStrategy(text);
-    const r = await fetch(`${API_BASE}/agent-strategy?id=${encodeURIComponent(agentId)}`, {
+    const r = await apiFetch(`${API_BASE}/agent-strategy?id=${encodeURIComponent(agentId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -960,7 +987,7 @@ async function ensureVoiceTab() {
 async function loadVoiceStatus() {
   const el = $('voice-current');
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/voice`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/voice`, { credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     voiceStatus = await r.json();
     renderVoiceStatus();
@@ -990,7 +1017,7 @@ async function loadVoiceList(filter = '') {
   const container = $('voice-list');
   if (!voicesCache) {
     try {
-      const r = await fetch(`${API_BASE}/tts/eleven/voices`, { credentials: 'include' });
+      const r = await apiFetch(`${API_BASE}/tts/eleven/voices`, { credentials: 'include' });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const j = await r.json();
       voicesCache = j.voices || [];
@@ -1044,7 +1071,7 @@ async function selectVoice(voiceId) {
   status.textContent = 'Saving…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -1078,7 +1105,7 @@ $('voice-remove-btn').addEventListener('click', async () => {
   status.textContent = 'Removing…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/voice`, { method: 'DELETE', credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/voice`, { method: 'DELETE', credentials: 'include' });
     if (!r.ok) {
       const j = await r.json().catch(() => ({}));
       throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
@@ -1106,7 +1133,7 @@ $('voice-clone-file').addEventListener('change', async (e) => {
     const cloneName = $('voice-clone-name').value.trim() || `${agentData.name || 'Agent'} voice`;
     const qs = new URLSearchParams({ name: cloneName });
     const audio = await blobToArrayBuffer(file);
-    const r = await fetch(`${API_BASE}/agents/${agentId}/voice/clone?${qs}`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/voice/clone?${qs}`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': file.type || 'audio/mpeg' },
@@ -1153,7 +1180,7 @@ async function ensureKnowledgeTab() {
 async function loadMemories() {
   const container = $('mem-list');
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/memories`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/memories`, { credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     renderMemories(j.data || []);
@@ -1185,7 +1212,7 @@ function renderMemories(rows) {
 
 async function deleteMemory(id) {
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/memories/${id}`, { method: 'DELETE', credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/memories/${id}`, { method: 'DELETE', credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     await loadMemories();
   } catch (err) {
@@ -1207,7 +1234,7 @@ $('mem-add-btn').addEventListener('click', async () => {
   status.textContent = 'Saving…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/memories`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/memories`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -1239,7 +1266,7 @@ $('mem-seed-btn').addEventListener('click', async () => {
   status.textContent = 'Seeding…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/memory-seed`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/memory-seed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -1297,7 +1324,7 @@ function renderSkillsChips() {
 async function loadMarketplaceSkillSuggestions() {
   const datalist = $('skills-marketplace');
   try {
-    const r = await fetch(`${API_BASE}/skills?limit=50`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/skills?limit=50`, { credentials: 'include' });
     if (!r.ok) return;
     const j = await r.json();
     const items = j.skills || j.data || [];
@@ -1327,7 +1354,7 @@ $('skills-save').addEventListener('click', async () => {
   status.textContent = 'Saving…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -1406,7 +1433,7 @@ async function loadWallet() {
 
 async function refreshBalances() {
   try {
-    const r = await fetch(`${API_BASE}/portfolio/summary`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/portfolio/summary`, { credentials: 'include' });
     if (!r.ok) return;
     const j = await r.json();
     const mine = (j.wallets || []).filter((w) => w.agent_id === agentId);
@@ -1435,7 +1462,7 @@ async function loadWalletActivity() {
     return;
   }
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/solana/activity?limit=5`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/solana/activity?limit=5`, { credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     const items = j.activity || [];
@@ -1481,7 +1508,7 @@ $('send-confirm').addEventListener('click', async () => {
   status.textContent = 'Sending…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/portfolio/send`, {
+    const r = await apiFetch(`${API_BASE}/portfolio/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -1538,7 +1565,7 @@ async function ensureSocialTab() {
 async function loadXStatus() {
   const el = $('x-status');
   try {
-    const r = await fetch(`${API_BASE}/x/status`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/x/status`, { credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     xConnection = await r.json();
     renderXStatus();
@@ -1569,7 +1596,7 @@ $('x-connect-btn').addEventListener('click', () => {
 $('x-disconnect-btn').addEventListener('click', async () => {
   if (!confirm('Disconnect X account?')) return;
   try {
-    const r = await fetch(`${API_BASE}/x/status`, { method: 'DELETE', credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/x/status`, { method: 'DELETE', credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     await loadXStatus();
   } catch (err) {
@@ -1580,7 +1607,7 @@ $('x-disconnect-btn').addEventListener('click', async () => {
 $('x-username-save').addEventListener('click', async () => {
   const val = $('x-username').value.trim().replace(/^@/, '') || null;
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -1602,7 +1629,7 @@ $('x-username-save').addEventListener('click', async () => {
 async function loadXTriggers() {
   const container = $('x-triggers-list');
   try {
-    const r = await fetch(`${API_BASE}/x/triggers`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/x/triggers`, { credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     const mine = (j.triggers || []).filter((t) => !t.agent_id || t.agent_id === agentId);
@@ -1696,7 +1723,7 @@ function readTriggerConfig(item) {
 async function saveTrigger(item, id) {
   const cfg = readTriggerConfig(item);
   try {
-    const r = await fetch(`${API_BASE}/x/triggers?id=${encodeURIComponent(id)}`, {
+    const r = await apiFetch(`${API_BASE}/x/triggers?id=${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -1712,7 +1739,7 @@ async function saveTrigger(item, id) {
 }
 
 async function patchTrigger(id, body) {
-  await fetch(`${API_BASE}/x/triggers?id=${encodeURIComponent(id)}`, {
+  await apiFetch(`${API_BASE}/x/triggers?id=${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -1722,7 +1749,7 @@ async function patchTrigger(id, body) {
 
 async function deleteTrigger(id) {
   if (!confirm('Delete this trigger?')) return;
-  await fetch(`${API_BASE}/x/triggers?id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+  await apiFetch(`${API_BASE}/x/triggers?id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
   await loadXTriggers();
 }
 
@@ -1730,7 +1757,7 @@ $('x-trigger-add').addEventListener('click', async () => {
   const kind = $('x-trigger-kind').value;
   const config = defaultTriggerConfig(kind);
   try {
-    const r = await fetch(`${API_BASE}/x/triggers`, {
+    const r = await apiFetch(`${API_BASE}/x/triggers`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -1757,7 +1784,7 @@ $('x-post-btn').addEventListener('click', async () => {
   status.textContent = 'Posting…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/x/post`, {
+    const r = await apiFetch(`${API_BASE}/x/post`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -1789,7 +1816,7 @@ async function ensureAnalyticsTab() {
 
 async function loadUsage() {
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/usage`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/usage`, { credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     $('m-llm-month').textContent = String(j.currentMonthCalls ?? 0);
@@ -1825,7 +1852,7 @@ async function loadPayments(direction) {
   const el = direction === 'received' ? $('m-pay-in') : $('m-pay-out');
   const totalEl = direction === 'received' ? $('m-earn-in') : $('m-earn-out');
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/payments?direction=${direction}&limit=10`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/payments?direction=${direction}&limit=10`, { credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     const rows = j.payments || j.data || [];
@@ -1885,7 +1912,7 @@ function updateEmbedPreview() {
 
 async function loadEmbedPolicy() {
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/embed-policy`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/embed-policy`, { credentials: 'include' });
     if (!r.ok) return;
     const j = await r.json();
     const origins = j.policy?.allowed_origins || [];
@@ -1914,7 +1941,7 @@ $('embed-policy-save').addEventListener('click', async () => {
   status.textContent = 'Saving…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/embed-policy`, {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/embed-policy`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -1938,7 +1965,7 @@ $('embed-policy-clear').addEventListener('click', async () => {
   status.textContent = 'Clearing…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}/embed-policy`, { method: 'DELETE', credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/embed-policy`, { method: 'DELETE', credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     $('embed-allowed-origins').value = '';
     status.textContent = 'Cleared.';
@@ -1964,7 +1991,7 @@ async function ensureWidgetsTab() {
 async function loadWidgets() {
   const container = $('widgets-list');
   try {
-    const r = await fetch(`${API_BASE}/widgets`, { credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/widgets`, { credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     const items = j.widgets || [];
@@ -2015,7 +2042,7 @@ $('widget-new-btn').addEventListener('click', async () => {
   status.textContent = 'Creating…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/widgets`, {
+    const r = await apiFetch(`${API_BASE}/widgets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -2038,7 +2065,7 @@ $('widget-new-btn').addEventListener('click', async () => {
 async function deleteWidget(id) {
   if (!confirm('Delete this widget?')) return;
   try {
-    const r = await fetch(`${API_BASE}/widgets/${id}`, { method: 'DELETE', credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/widgets/${id}`, { method: 'DELETE', credentials: 'include' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     await loadWidgets();
   } catch (err) {
@@ -2088,7 +2115,7 @@ $('danger-delete-btn').addEventListener('click', async () => {
   status.textContent = 'Deleting…';
   status.className = 'form-status';
   try {
-    const r = await fetch(`${API_BASE}/agents/${agentId}`, { method: 'DELETE', credentials: 'include' });
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}`, { method: 'DELETE', credentials: 'include' });
     if (!r.ok) {
       const j = await r.json().catch(() => ({}));
       throw new Error(j.error_description || j.error || `HTTP ${r.status}`);

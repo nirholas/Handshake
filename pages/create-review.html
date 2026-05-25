@@ -1051,59 +1051,6 @@
 			}
 			.guest-note strong { color: var(--text); font-weight: 600; }
 
-			.empty {
-				text-align: center;
-				background: var(--panel);
-				border: 1.5px solid var(--border);
-				border-radius: 14px;
-				padding: 56px 32px 48px;
-				color: var(--muted);
-				max-width: 520px;
-				margin: 32px auto 0;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				gap: 12px;
-			}
-			.empty-icon {
-				font-size: 48px;
-				line-height: 1;
-				opacity: 0.55;
-				margin-bottom: 4px;
-			}
-			.empty-title {
-				font-size: 17px;
-				font-weight: 600;
-				color: var(--text);
-				margin: 0;
-				letter-spacing: -0.01em;
-			}
-			.empty-sub {
-				font-size: 13px;
-				color: var(--muted);
-				margin: 0;
-				max-width: 36ch;
-				line-height: 1.5;
-			}
-			.empty-cta {
-				display: inline-flex;
-				align-items: center;
-				gap: 6px;
-				margin-top: 8px;
-				background: var(--accent);
-				color: var(--accent-ink);
-				border: none;
-				border-radius: 10px;
-				padding: 11px 20px;
-				font: inherit;
-				font-weight: 600;
-				font-size: 14px;
-				text-decoration: none;
-				cursor: pointer;
-				transition: filter 0.15s;
-			}
-			.empty-cta:hover { filter: brightness(1.05); }
-
 			#save-loading {
 				position: fixed;
 				inset: 0;
@@ -1256,13 +1203,6 @@
 				Try every capability before you save. Talk to it, drop it on any site,
 				take it offline — see what your new agent can do, then claim it.
 			</p>
-
-			<div id="empty-card" class="empty" hidden>
-				<div class="empty-icon" aria-hidden="true">🧍</div>
-				<p class="empty-title">No avatar in progress</p>
-				<p class="empty-sub">Generate a 3D avatar — then come back here to try voice, embed it anywhere, and claim it on-chain.</p>
-				<a href="/create" class="empty-cta">Create an avatar →</a>
-			</div>
 
 			<div id="content" class="grid" hidden>
 				<div class="viewer">

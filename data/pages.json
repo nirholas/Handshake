@@ -185,13 +185,6 @@
 					"added": "2026-05-18"
 				},
 				{
-					"path": "/walkaround",
-					"title": "3D Walkaround",
-					"description": "WASD + mobile joystick navigation with Rapier physics and Recast navmesh. Click the ground to autopilot.",
-					"priority": 0.7,
-					"changefreq": "weekly"
-				},
-				{
 					"path": "/brain",
 					"title": "Multi-LLM Brain",
 					"description": "Send one prompt to Claude, GPT, Qwen, ModelScope, and Groq simultaneously. Side-by-side streaming with latency and token stats.",
