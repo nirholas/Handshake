@@ -25,6 +25,15 @@ const SKIP_MODULES = new Set([
 	// which exercises them with proper mocking.
 	'api/_mcp/auth.js',
 	'api/_mcp/catalog.js',
+
+	// @bonfida/spl-name-service v3 uses a CJS exports map that Vitest's module
+	// resolver cannot satisfy (Missing "./dist/cjs/index.js" specifier) even
+	// though plain Node resolves it correctly. Modules that directly or
+	// transitively import @bonfida/spl-name-service are skipped here; the
+	// actual runtime behaviour is exercised by tests/api/pay-by-name-resolve.test.js
+	// and tests/api/x402-pay-by-name.test.js with proper mocking.
+	'api/agents/sns.js',
+	'api/x402/pay-by-name.js',
 ]);
 
 function* walk(dir) {
