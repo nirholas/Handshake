@@ -9,6 +9,9 @@
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/mobile.css" />
 		<style>
 			body {
 				min-height: 100vh;
@@ -148,6 +151,14 @@
 		</style>
 	</head>
 	<body>
+		<header class="site-header">
+			<h1 class="site-header-brand">
+				<a href="/" aria-label="three.ws home"><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a>
+			</h1>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
 		<main class="tw-wrap">
 			<div class="tw-eyebrow">threews.sol</div>
 			<h1>Claim your subdomain</h1>
@@ -184,6 +195,9 @@
 				</ul>
 			</section>
 		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
 
 		<script type="module">
 			const labelEl = document.getElementById('tw-label');
