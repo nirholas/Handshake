@@ -818,6 +818,7 @@ async function handleStats(req, res) {
 		recentChats,
 		topQuestions,
 		knowledgeSummary,
+		sessionStats,
 	] = await Promise.all([
 		recentViewsByDay(id),
 		topAggregates(id, 'referer_host'),
@@ -827,6 +828,7 @@ async function handleStats(req, res) {
 		isTalkingAgent ? recentChatsByDay(id) : Promise.resolve(null),
 		isTalkingAgent ? topQuestionsFor(id) : Promise.resolve(null),
 		isTalkingAgent ? knowledgeSummaryFor(id) : Promise.resolve(null),
+		isTalkingAgent ? sessionStatsFor(id) : Promise.resolve(null),
 	]);
 
 	res.setHeader('cache-control', 'private, max-age=30');
@@ -841,6 +843,9 @@ async function handleStats(req, res) {
 			recent_chats_7d: recentChats,
 			top_questions: topQuestions,
 			knowledge: knowledgeSummary,
+			// Rolling-7-day chat session metrics derived from widget_chat_threads.
+			// Null for non-talking-agent widgets (no chat threads exist).
+			sessions_7d: sessionStats,
 		},
 	});
 }
@@ -968,6 +973,40 @@ async function topQuestionsFor(id) {
 			}));
 	} catch (err) {
 		if (/relation .* does not exist/i.test(err?.message || '')) return [];
+		throw err;
+	}
+}
+
+// Rolling 7-day chat-session metrics. Sessions are widget_chat_threads rows
+// where the visitor sent at least one message in the window. Avg duration is
+// (last_message_at − started_at) clamped at zero so single-message threads
+// register as a 0s session rather than a negative outlier.
+async function sessionStatsFor(id) {
+	try {
+		const [row] = await sql`
+			select
+				count(*)::int as thread_count,
+				coalesce(
+					avg(
+						greatest(extract(epoch from (last_message_at - started_at)), 0)
+					)::float,
+					0
+				) as avg_seconds,
+				coalesce(
+					sum(message_count)::int,
+					0
+				) as total_messages
+			from widget_chat_threads
+			where widget_id = ${id}
+			  and started_at >= now() - interval '7 days'
+		`;
+		return {
+			thread_count: Number(row?.thread_count || 0),
+			avg_seconds: Math.round(Number(row?.avg_seconds || 0)),
+			total_messages: Number(row?.total_messages || 0),
+		};
+	} catch (err) {
+		if (/relation .* does not exist/i.test(err?.message || '')) return null;
 		throw err;
 	}
 }

@@ -152,6 +152,9 @@ export const limits = {
 	xSeed: (agentId) => getLimiter('memory:seed:x', { limit: 1, window: '6 h' }).limit(agentId),
 	// Withdrawal requests: 5 per user per day to prevent spam.
 	withdrawalPerUser: (userId) => getLimiter('withdrawal:user', { limit: 5, window: '1 d' }).limit(userId),
+	// Per-user audit-log reads — the page polls on mount + "load older". 120/min
+	// per user is generous for browse but discourages scraping the full year.
+	auditLogRead: (userId) => getLimiter('audit-log:read', { limit: 120, window: '1 m' }).limit(userId),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

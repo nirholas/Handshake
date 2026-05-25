@@ -19,13 +19,7 @@ const STATE = {
 
 (async function boot() {
 	const main = await mountShell();
-	const env = await requireUser().catch(() => null);
-	const me = env?.user ?? env;
-	if (!me || !me.id) {
-		const ret = encodeURIComponent(location.pathname + location.search);
-		location.href = `/login?return=${ret}`;
-		return;
-	}
+	const me = await requireUser();
 
 	const greeting = me.display_name || me.username || (me.email ? me.email.split('@')[0] : 'creator');
 	main.innerHTML = `
@@ -81,7 +75,16 @@ const STATE = {
 		if (STATE.relTimeHandle) clearInterval(STATE.relTimeHandle);
 	});
 })().catch((err) => {
-	console.error('[dashboard-next/home] boot failed', err);
+	if (err?.message === 'redirecting') return;
+	const main = document.querySelector('.dn-main-inner') || document.body;
+	main.innerHTML = `
+		<h1 class="dn-h1">Overview</h1>
+		<div class="dn-panel" style="border-color:rgba(255,107,138,0.3)">
+			<div class="dn-panel-title" style="color:var(--nxt-danger)">Couldn't load this page</div>
+			<div class="dn-panel-sub">${(err && err.message ? err.message : 'unknown error').replace(/[<>&]/g, (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;' }[c]))}</div>
+			<button class="dn-btn" onclick="location.reload()">Reload</button>
+		</div>
+	`;
 });
 
 // ── Skeletons ─────────────────────────────────────────────────────────────
@@ -453,11 +456,6 @@ function tweenNumber(node, from, to, finalLabel) {
 function injectStyles() {
 	if (document.getElementById('dnx-home-styles')) return;
 	const css = `
-		/* Foundation workaround: the drawer component injects an inline style
-		   forcing display:flex on .dn-drawer, which defeats the shell's
-		   closed-state hide rule and steals a phantom grid column. */
-		.dn-shell[data-drawer-open='false'] .dn-drawer { display: none !important; }
-
 		.dnx-grid {
 			display: grid;
 			grid-template-columns: minmax(0, 1fr) 340px;

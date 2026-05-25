@@ -65,6 +65,11 @@ export default wrap(async (req, res) => {
 		return handleLinkSolana(req, res);
 	}
 
+	// /api/auth/wallets/primary — mark one of the caller's wallets as primary
+	if (action === 'primary') {
+		return handleSetPrimary(req, res);
+	}
+
 	// /api/auth/wallets/<address> — unlink wallet (action carries the address)
 	return handleUnlinkWallet(req, res, action);
 });
@@ -197,6 +202,13 @@ async function handleLinkWallet(userId, req, res) {
 		insert into user_wallets (user_id, address, chain_id, is_primary)
 		values (${userId}, ${addrLower}, ${chainId}, false)
 	`;
+	logAudit({
+		userId,
+		action: 'link_wallet',
+		resourceId: addrLower,
+		meta: { chain_id: chainId },
+		req,
+	});
 
 	return json(res, 201, { wallet: { address: claimed, chain_id: chainId } });
 }
@@ -437,12 +449,14 @@ async function handleLinkSolana(req, res) {
 			action: 'unlink_wallet_transferred',
 			resourceId: addr,
 			meta: { to_user_id: session.id },
+			req,
 		});
 		logAudit({
 			userId: session.id,
 			action: 'link_wallet_solana_takeover',
 			resourceId: addr,
 			meta: { from_user_id: conflict.user_id },
+			req,
 		});
 		return json(res, 200, {
 			wallet: { address: addr, chain_type: 'solana', chain_id: chain },
@@ -454,9 +468,59 @@ async function handleLinkSolana(req, res) {
 		insert into user_wallets (user_id, address, chain_type, is_primary)
 		values (${session.id}, ${addr}, 'solana', false)
 	`;
-	logAudit({ userId: session.id, action: 'link_wallet_solana', resourceId: addr });
+	logAudit({ userId: session.id, action: 'link_wallet_solana', resourceId: addr, req });
 
 	return json(res, 201, { wallet: { address: addr, chain_type: 'solana', chain_id: chain } });
+}
+
+// ── Set primary ────────────────────────────────────────────────────────────
+// Mark one of the caller's wallets as primary; demote every other row in
+// the same transaction so exactly one wallet is primary at a time.
+//
+// Body: { address }. EVM addresses are stored lowercased; Solana base58 is
+// case-sensitive — we try the literal address first, then the lowercased
+// form as a fallback for EVM callers who send a mixed-case checksum.
+
+async function handleSetPrimary(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const session = await getSessionUser(req);
+	if (!session) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const body = await readJson(req).catch(() => null);
+	const rawAddress = body?.address;
+	if (!rawAddress || typeof rawAddress !== 'string') {
+		return error(res, 400, 'validation_error', 'address required');
+	}
+
+	const candidates = [rawAddress, rawAddress.toLowerCase()].filter(
+		(v, i, a) => a.indexOf(v) === i,
+	);
+
+	const [wallet] = await sql`
+		select id, address, is_primary
+		from user_wallets
+		where user_id = ${session.id}
+		  and address = any(${candidates}::text[])
+		limit 1
+	`;
+	if (!wallet) return error(res, 404, 'not_found', 'wallet not found');
+
+	if (!wallet.is_primary) {
+		await sql.transaction([
+			sql`update user_wallets set is_primary = false where user_id = ${session.id} and is_primary = true`,
+			sql`update user_wallets set is_primary = true  where id = ${wallet.id}`,
+		]);
+		logAudit({
+			userId: session.id,
+			action: 'set_primary_wallet',
+			resourceId: wallet.address,
+			req,
+		});
+	}
+
+	return json(res, 200, { primary: { address: wallet.address } });
 }
 
 // ── Unlink ─────────────────────────────────────────────────────────────────
@@ -506,7 +570,7 @@ async function handleUnlinkWallet(req, res, address) {
 
 	// 4. Delete the wallet.
 	await sql`delete from user_wallets where user_id = ${session.id} and address = ${addrLower}`;
-	logAudit({ userId: session.id, action: 'unlink_wallet', resourceId: addrLower });
+	logAudit({ userId: session.id, action: 'unlink_wallet', resourceId: addrLower, req });
 
 	return json(res, 200, { removed: true });
 }

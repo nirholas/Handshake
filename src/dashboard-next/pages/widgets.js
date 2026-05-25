@@ -10,6 +10,10 @@ import { requireUser, get, post, del, esc } from '../api.js';
 const STATS_DAYS = 7;
 const SKELETON_COUNT = 6;
 
+// Module-scoped cache so card-level handlers and duplicate flows can look up
+// a widget by id without re-querying the list.
+const WIDGETS = new Map();
+
 (async function boot() {
 	const main = await mountShell();
 	await requireUser();
@@ -55,10 +59,13 @@ async function render(main) {
 		return;
 	}
 
-	// Render cards immediately (posters first, stats pending).
+	// Refresh the lookup cache; render cards immediately (poster-first, stats
+	// pending in parallel below).
+	WIDGETS.clear();
+	for (const w of widgets) WIDGETS.set(w.id, w);
 	grid.innerHTML = widgets.map(cardHtml).join('');
 
-	wireCardBehavior(grid, widgets);
+	wireCardBehavior(grid);
 	observeIframes(grid);
 
 	// Fetch stats per widget in parallel; update each card + the aggregate strip.
@@ -116,7 +123,8 @@ function cardHtml(w) {
 					</div>
 				</div>
 			</div>
-			<button class="dn-wx-menu-btn" data-menu type="button" aria-label="Widget menu">
+			<button class="dn-wx-menu-btn" data-menu type="button"
+			        aria-label="Widget menu" aria-haspopup="menu" aria-expanded="false">
 				<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
 					<circle cx="8" cy="3" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="8" cy="13" r="1.4"/>
 				</svg>
@@ -150,6 +158,8 @@ function markStatsFailed(card) {
 function renderStatStrip(strip, widgetCount, statsResults) {
 	let views = 0;
 	let turns = 0;
+	let weightedDurationSec = 0;
+	let totalThreads = 0;
 	let anyStat = false;
 	for (const r of statsResults) {
 		if (r.status !== 'fulfilled') continue;
@@ -157,12 +167,16 @@ function renderStatStrip(strip, widgetCount, statsResults) {
 		const s = r.value?.stats || {};
 		views += sumDaily(s.recent_views_7d);
 		turns += sumDaily(s.recent_chats_7d);
+		const ss = s.sessions_7d;
+		if (ss && Number(ss.thread_count) > 0) {
+			weightedDurationSec += Number(ss.avg_seconds || 0) * Number(ss.thread_count);
+			totalThreads += Number(ss.thread_count);
+		}
 	}
 
-	// "Avg session (s)" — there's no thread-duration field on /stats and we're
-	// instructed not to invent a new endpoint, so the slot stays a dash until
-	// stats gains a duration field.
-	const avgSession = '—';
+	const avgSession = totalThreads > 0
+		? formatDuration(weightedDurationSec / totalThreads)
+		: '—';
 
 	const allZero = widgetCount === 0 && views === 0 && turns === 0;
 	if (allZero) {
@@ -174,7 +188,7 @@ function renderStatStrip(strip, widgetCount, statsResults) {
 		`<span><strong>${formatCount(widgetCount)}</strong> ${widgetCount === 1 ? 'widget' : 'widgets'}</span>`,
 		`<span><strong>${anyStat ? formatCount(views) : '—'}</strong> views (7d)</span>`,
 		`<span><strong>${anyStat ? formatCount(turns) : '—'}</strong> chat turns (7d)</span>`,
-		`<span><strong>${avgSession}</strong> avg session (s)</span>`,
+		`<span><strong>${avgSession}</strong> avg session</span>`,
 	];
 	strip.innerHTML = parts.join('<span class="dn-wx-sep">·</span>');
 	strip.hidden = false;
@@ -182,11 +196,7 @@ function renderStatStrip(strip, widgetCount, statsResults) {
 
 // ── Card interactions (menu, popover, duplicate, delete) ─────────────────
 
-const WIDGETS = new Map();
-
-function wireCardBehavior(grid, widgets) {
-	for (const w of widgets) WIDGETS.set(w.id, w);
-
+function wireCardBehavior(grid) {
 	grid.addEventListener('click', (ev) => {
 		const menuBtn = ev.target.closest('[data-menu]');
 		if (menuBtn) {
@@ -208,10 +218,12 @@ function wireCardBehavior(grid, widgets) {
 
 function openMenu(anchor, card, widget) {
 	closeAllMenus();
+	anchor.setAttribute('aria-expanded', 'true');
 
 	const menu = document.createElement('div');
 	menu.className = 'dn-wx-menu';
 	menu.setAttribute('role', 'menu');
+	menu.dataset.anchor = anchor.dataset.cardAnchor || '';
 	menu.innerHTML = `
 		<button role="menuitem" data-act="studio">Open studio</button>
 		<button role="menuitem" data-act="embed">Copy embed snippet</button>
@@ -226,14 +238,31 @@ function openMenu(anchor, card, widget) {
 	menu.style.top = `${Math.round(r.bottom + window.scrollY + 4)}px`;
 	menu.style.left = `${Math.round(r.right + window.scrollX - menu.offsetWidth)}px`;
 
+	const firstItem = menu.querySelector('button[role="menuitem"]');
+	firstItem?.focus({ preventScroll: true });
+
 	const dismiss = (ev) => {
 		if (ev && menu.contains(ev.target)) return;
 		menu.remove();
+		anchor.setAttribute('aria-expanded', 'false');
 		document.removeEventListener('mousedown', dismiss, true);
 		document.removeEventListener('keydown', onKey, true);
 	};
 	const onKey = (ev) => {
-		if (ev.key === 'Escape') dismiss();
+		if (ev.key === 'Escape') {
+			dismiss();
+			anchor.focus({ preventScroll: true });
+			return;
+		}
+		if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+			ev.preventDefault();
+			const items = [...menu.querySelectorAll('button[role="menuitem"]')];
+			const i = items.indexOf(document.activeElement);
+			const next = ev.key === 'ArrowDown'
+				? items[(i + 1 + items.length) % items.length]
+				: items[(i - 1 + items.length) % items.length];
+			next?.focus({ preventScroll: true });
+		}
 	};
 	setTimeout(() => {
 		document.addEventListener('mousedown', dismiss, true);
@@ -261,6 +290,9 @@ function openMenu(anchor, card, widget) {
 }
 
 function closeAllMenus() {
+	document.querySelectorAll('.dn-wx-menu-btn[aria-expanded="true"]').forEach((b) => {
+		b.setAttribute('aria-expanded', 'false');
+	});
 	document.querySelectorAll('.dn-wx-menu').forEach((m) => m.remove());
 	document.querySelectorAll('.dn-wx-popover.open').forEach((p) => p.classList.remove('open'));
 }
@@ -349,6 +381,8 @@ function openEmbedPopover(anchor, widget) {
 	};
 
 	const pop = document.querySelector('[data-slot="popover"]');
+	pop.setAttribute('role', 'dialog');
+	pop.setAttribute('aria-label', 'Embed snippet');
 	pop.innerHTML = `
 		<div class="dn-wx-pop-head">
 			<div class="dn-wx-pop-title">Embed snippet</div>
@@ -475,14 +509,24 @@ function activateIframe(frame, force) {
 	frame.appendChild(iframe);
 
 	const play = frame.querySelector('[data-poster-play]');
+	const poster = frame.querySelector('[data-poster-img]');
 	if (force && play) play.style.display = 'none';
 
-	iframe.addEventListener('load', () => {
+	// Reveal on real load, but cap the wait — three.js + GLB downloads inside
+	// the widget can stall behind a slow network and we'd rather show a
+	// half-loaded iframe than a poster forever. Also handles error events so
+	// embeds that 404 still surface the failure to the user.
+	let revealed = false;
+	const reveal = () => {
+		if (revealed) return;
+		revealed = true;
 		iframe.style.opacity = '1';
-		const poster = frame.querySelector('[data-poster-img]');
 		if (poster) poster.style.opacity = '0';
 		if (play) play.style.display = 'none';
-	});
+	};
+	iframe.addEventListener('load', reveal);
+	iframe.addEventListener('error', reveal);
+	setTimeout(reveal, 4000);
 }
 
 // ── Confirm modal ────────────────────────────────────────────────────────
@@ -593,6 +637,20 @@ function formatCount(n) {
 	if (v >= 10000) return `${(v / 1000).toFixed(1)}k`;
 	if (v >= 1000) return v.toLocaleString('en-US');
 	return String(Math.round(v));
+}
+
+// Render an integer number of seconds as a compact "Xs / Ym Xs / Hh Mm" string.
+// Used by the aggregate strip — keep the value short so the strip stays a single
+// line on a typical viewport even with four stats.
+function formatDuration(sec) {
+	const s = Math.max(0, Math.round(Number(sec) || 0));
+	if (s < 60) return `${s}s`;
+	const m = Math.floor(s / 60);
+	const rs = s % 60;
+	if (m < 60) return rs ? `${m}m ${rs}s` : `${m}m`;
+	const h = Math.floor(m / 60);
+	const rm = m % 60;
+	return rm ? `${h}h ${rm}m` : `${h}h`;
 }
 
 function setText(el, text) {

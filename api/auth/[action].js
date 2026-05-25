@@ -16,6 +16,7 @@ import { parse, loginBody, registerBody, usernameRegisterBody, username as usern
 import { sendPasswordResetEmail, sendVerificationEmail } from '../_lib/email.js';
 import { generateReferralCode } from '../_lib/referrals.js';
 import { seedDefaultAgent } from '../_lib/seed-default-agent.js';
+import { logAudit } from '../_lib/audit.js';
 import { z } from 'zod';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
@@ -39,6 +40,7 @@ async function handleLogin(req, res) {
 	await destroySession(req);
 	const token = await createSession({ userId: user.id, userAgent: req.headers['user-agent'], ip });
 	res.setHeader('set-cookie', sessionCookie(token));
+	logAudit({ userId: user.id, action: 'login', req });
 	const { password_hash: _p, ...safe } = user;
 	return json(res, 200, { user: safe });
 }
@@ -48,8 +50,10 @@ async function handleLogin(req, res) {
 async function handleLogout(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
+	const sessionUser = await getSessionUser(req).catch(() => null);
 	await destroySession(req);
 	res.setHeader('set-cookie', sessionCookie('', { clear: true }));
+	if (sessionUser) logAudit({ userId: sessionUser.id, action: 'logout', req });
 	return json(res, 200, { ok: true });
 }
 
@@ -185,6 +189,17 @@ async function handleProfile(req, res) {
 		if (taken[0]) return error(res, 409, 'conflict', 'username already taken');
 	}
 	const [updated] = await sql`update users set username = coalesce(${body.username ?? null}, username), display_name = coalesce(${body.display_name ?? null}, display_name), updated_at = now() where id = ${user.id} and deleted_at is null returning id, display_name, username`;
+	logAudit({
+		userId: user.id,
+		action: 'update_profile',
+		meta: {
+			fields: [
+				body.username !== undefined ? 'username' : null,
+				body.display_name !== undefined ? 'display_name' : null,
+			].filter(Boolean),
+		},
+		req,
+	});
 	return json(res, 200, { user: updated });
 }
 

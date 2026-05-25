@@ -17,6 +17,7 @@ const RELTIME_TICK_MS = 30_000;
 const SSE_CONNECT_TIMEOUT_MS = 5_000;
 const NOTIFICATIONS_PATH = '/api/notifications?limit=50';
 const SSE_PATH = '/api/events/stream';
+const SEEN_IDS_CAP = 1000;
 
 const CATEGORIES = [
 	{ key: 'widget.view',          label: 'Widget views' },
@@ -151,6 +152,8 @@ export function renderDrawer() {
 					transition: background 120ms;
 				}
 				.dnd-row:hover { background: rgba(255, 255, 255, 0.03); }
+				.dnd-row[data-read="1"] .dnd-row-title { color: var(--nxt-ink-dim); font-weight: 400; }
+				.dnd-row[data-read="1"] .dnd-row-icon { opacity: 0.6; }
 				.dnd-row[data-fresh="1"] { animation: dnd-slide-in 200ms ease-out, dnd-highlight 1800ms ease-out; }
 				@keyframes dnd-slide-in {
 					from { transform: translateY(-6px); opacity: 0; }
@@ -434,6 +437,7 @@ function startPolling() {
 
 async function pollOnce() {
 	if (!state.open) return;
+	let scheduleNext = true;
 	try {
 		const data = await get(NOTIFICATIONS_PATH);
 		const list = Array.isArray(data?.notifications) ? data.notifications : [];
@@ -444,6 +448,7 @@ async function pollOnce() {
 		state.loadedOnce = true;
 		state.pollFails = 0;
 		state.pollDelay = POLL_INTERVAL_MS;
+		pruneSeenIds();
 		setStatus(state.events.length ? 'ok' : '');
 		if (!state.events.length) renderEmpty();
 	} catch (err) {
@@ -452,21 +457,34 @@ async function pollOnce() {
 			state.pollDelay = Math.min(state.pollDelay * 2, POLL_MAX_INTERVAL_MS);
 			setStatus('reconnecting');
 		}
-		if (!state.loadedOnce && state.pollFails === 1) {
-			// First load failed — keep skeletons visible so the UI doesn't
-			// flash empty between attempts.
+		// 401 = signed out. Don't keep nagging the server — give the user a
+		// quiet "sign in" empty state instead. Polling resumes on next open.
+		if (err && err.status === 401) {
+			scheduleNext = false;
+			state.loadedOnce = true;
+			renderSignedOut();
+			setStatus('');
+			return;
 		}
-		// 404 from a missing notifications endpoint should still show empty
-		// state rather than spinning forever.
+		// 404 from a missing notifications endpoint: surface the empty state
+		// rather than spinning forever, but keep retrying in case the
+		// endpoint comes back (handy during local backend restarts).
 		if (err && err.status === 404 && !state.loadedOnce) {
 			state.loadedOnce = true;
 			renderEmpty();
 		}
 	} finally {
-		if (state.open) {
+		if (scheduleNext && state.open) {
 			state.pollTimer = setTimeout(pollOnce, state.pollDelay);
 		}
 	}
+}
+
+function pruneSeenIds() {
+	if (state.seenIds.size <= SEEN_IDS_CAP) return;
+	// Keep only IDs that correspond to events we're still rendering.
+	const live = new Set(state.events.map((e) => e.id));
+	state.seenIds = live;
 }
 
 // ── Event normalization ──────────────────────────────────────────────────
@@ -481,6 +499,7 @@ function normalizeNotification(n) {
 		category,
 		payload:    n.payload && typeof n.payload === 'object' ? n.payload : {},
 		created_at: n.created_at || n.timestamp || new Date().toISOString(),
+		read:       Boolean(n.read_at),
 	};
 }
 
@@ -526,6 +545,17 @@ function renderEmpty() {
 		</div>`;
 }
 
+function renderSignedOut() {
+	state.listEl.setAttribute('aria-busy', 'false');
+	const ret = encodeURIComponent(location.pathname + location.search);
+	state.listEl.innerHTML = `
+		<div class="dn-empty" style="margin:18px 16px">
+			<h3>Sign in to see your activity</h3>
+			<p>Your session expired or you're not signed in.</p>
+			<a class="dn-btn primary" href="/login?return=${ret}" style="margin-top:10px">Sign in</a>
+		</div>`;
+}
+
 function renderList() {
 	state.listEl.setAttribute('aria-busy', 'false');
 
@@ -558,8 +588,9 @@ function renderRow(ev) {
 	const colour = COLOR_FOR_CATEGORY[ev.category] || COLOR_FOR_CATEGORY.unknown;
 	const icon   = ICONS[ev.category] || ICONS.unknown;
 	const fresh  = ev.__fresh ? '1' : '0';
+	const read   = ev.read ? '1' : '0';
 	return `
-		<div class="dnd-row" role="article" aria-expanded="false" data-id="${esc(ev.id)}" data-fresh="${fresh}">
+		<div class="dnd-row" role="article" aria-expanded="false" data-id="${esc(ev.id)}" data-fresh="${fresh}" data-read="${read}">
 			<span class="dnd-row-icon" style="color:${colour};background:rgba(255,255,255,0.03)">${icon}</span>
 			<div class="dnd-row-body">
 				<div class="dnd-row-title">${esc(detail.title)}</div>
@@ -583,7 +614,7 @@ function describeEvent(ev) {
 			return {
 				title:    'Widget viewed',
 				subtitle: w ? String(w) : '',
-				link:     w ? { label: 'Open in viewer', href: `/dashboard/widgets/${encodeURIComponent(w)}` } : null,
+				link:     w ? { label: 'Open in studio', href: `/widget-studio?id=${encodeURIComponent(w)}` } : null,
 			};
 		}
 		case 'widget.chat_turn': {
@@ -592,13 +623,12 @@ function describeEvent(ev) {
 			return {
 				title:    'Chat turn',
 				subtitle: msg ? `"${String(msg).slice(0, 90)}"` : '',
-				link:     w ? { label: 'Open transcript', href: `/dashboard/widgets/${encodeURIComponent(w)}` } : null,
+				link:     w ? { label: 'Open transcript', href: `/widget-studio?id=${encodeURIComponent(w)}` } : null,
 			};
 		}
 		case 'payment.received': {
 			const amount = formatAmount(p);
 			const from   = p.from || p.buyer || p.payer || p.referrer || '';
-			const tx     = p.tx || p.transaction || p.signature || '';
 			const title  = ev.type === 'referral_earned' ? 'Referral earned'
 			              : ev.type === 'skill_purchased' ? 'Skill purchased'
 			              : ev.type === 'skill_purchase_confirmed' ? 'Purchase confirmed'
@@ -606,7 +636,7 @@ function describeEvent(ev) {
 			return {
 				title,
 				subtitle: [amount, from && `from ${shorten(from)}`].filter(Boolean).join(' · '),
-				link:     tx ? { label: 'Open payment', href: `/dashboard/x402.html` } : null,
+				link:     { label: 'Open monetize', href: '/dashboard-next/monetize' },
 			};
 		}
 		case 'avatar.updated': {
@@ -615,7 +645,8 @@ function describeEvent(ev) {
 			return {
 				title:    'Avatar updated',
 				subtitle: name || (id ? shorten(id) : ''),
-				link:     id ? { label: 'Open avatar', href: `/dashboard-next/avatars` } : null,
+				link:     id ? { label: 'Open avatar', href: `/avatars/${encodeURIComponent(id)}` }
+				             : { label: 'Open avatars', href: '/dashboard-next/avatars' },
 			};
 		}
 		case 'withdrawal.completed': {
