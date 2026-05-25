@@ -281,16 +281,17 @@ function resetToIdle() {
 // Uses the existing presigned-upload flow via R2/S3.
 
 async function uploadAudio(file) {
-	// Get a presigned upload URL from the server.
-	const presignRes = await apiFetch('/api/avatars/presign', {
+	const contentType = file.type || 'audio/mpeg';
+
+	// Get a presigned upload URL from the dedicated audio presign endpoint.
+	const presignRes = await apiFetch('/api/avatar/presign-audio', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ filename: file.name, content_type: file.type || 'audio/mpeg', kind: 'audio' }),
+		body: JSON.stringify({ filename: file.name, content_type: contentType }),
 	});
 
 	if (!presignRes.ok) {
-		// Fallback: convert to data URI if presign endpoint isn't available yet.
-		// The LongCat worker supports downloading from data URIs via httpx.
+		// Fallback: the worker accepts data URIs when a public URL is unavailable.
 		return await fileToDataUri(file);
 	}
 
@@ -298,11 +299,11 @@ async function uploadAudio(file) {
 
 	const uploadRes = await fetch(upload_url, {
 		method: 'PUT',
-		headers: { 'content-type': file.type || 'audio/mpeg' },
+		headers: { 'content-type': contentType },
 		body: file,
 	});
 
-	if (!uploadRes.ok) throw new Error(`Upload failed: HTTP ${uploadRes.status}`);
+	if (!uploadRes.ok) throw new Error(`Audio upload failed: HTTP ${uploadRes.status}`);
 	return public_url;
 }
 

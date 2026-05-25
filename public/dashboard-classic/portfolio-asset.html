@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Asset · Portfolio · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--ok: #2ed4a3;
+				--warn: #ffb35c;
+				--err: #ff6a6a;
+				--border: #161620;
+				--border-2: #1f1f2c;
+				--bg: #000;
+				--panel: #0c0c12;
+				--panel-2: #10101a;
+				--text: #f3f3f7;
+				--muted: #7c7c8a;
+			}
+			* { box-sizing: border-box; }
+			html, body { background: var(--bg); }
+			body {
+				font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+				color: var(--text);
+				margin: 0; min-height: 100vh;
+			}
+			a { color: #9a8cff; text-decoration: none; }
+			header {
+				display: flex; align-items: center; justify-content: space-between;
+				padding: 16px 24px; border-bottom: 1px solid var(--border);
+				position: sticky; top: 0; background: var(--bg); z-index: 5;
+				backdrop-filter: blur(8px);
+			}
+			.brand { font-weight: 600; letter-spacing: -0.01em; }
+			.row { display: flex; align-items: center; gap: 8px; }
+			main { padding: 28px; max-width: 1180px; margin: 0 auto; }
+			.back {
+				display: inline-flex; align-items: center; gap: 6px;
+				color: var(--muted); font-size: 13px; margin-bottom: 16px;
+			}
+			.back:hover { color: #ccc; }
+
+			.btn {
+				padding: 9px 14px; border-radius: 9px; border: 0;
+				font-size: 13px; font-weight: 600; cursor: pointer;
+				background: var(--accent); color: #fff;
+				font-family: inherit;
+			}
+			.btn:hover { filter: brightness(1.08); }
+			.btn.sec { background: #1a1a26; color: #ddd; }
+			.btn.ghost { background: transparent; color: #ccc; border: 1px solid var(--border-2); }
+			.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+			.btn.sm { padding: 6px 10px; font-size: 12px; }
+
+			.pill {
+				display: inline-flex; align-items: center; gap: 6px;
+				font-size: 10.5px; padding: 3px 8px; border-radius: 99px;
+				background: #15151f; color: #ccc; white-space: nowrap;
+				text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+			}
+			.pill.sol { background: rgba(20,241,149,0.12); color: var(--ok); }
+			.pill.evm { background: rgba(106,92,255,0.16); color: #9a8cff; }
+			.chip {
+				display: inline-flex; align-items: center; gap: 4px;
+				padding: 4px 9px; border-radius: 99px; font-size: 12px; font-weight: 600;
+				font-variant-numeric: tabular-nums;
+			}
+			.chip.up { background: rgba(46,212,163,0.12); color: var(--ok); }
+			.chip.down { background: rgba(255,106,106,0.12); color: var(--err); }
+			.chip.flat { background: #1a1a26; color: #aaa; }
+
+			.hero {
+				background:
+					radial-gradient(900px 240px at 20% -40%, rgba(106,92,255,0.16), transparent 60%),
+					radial-gradient(600px 200px at 90% -20%, rgba(255,92,168,0.12), transparent 60%),
+					#06060a;
+				border: 1px solid var(--border-2);
+				border-radius: 18px;
+				padding: 26px;
+				margin-bottom: 18px;
+			}
+			.hero-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+			.tok-logo {
+				width: 56px; height: 56px; border-radius: 50%;
+				background: #161620; flex-shrink: 0;
+				display: inline-flex; align-items: center; justify-content: center;
+				font-size: 18px; font-weight: 700; color: #ccc;
+				overflow: hidden;
+				border: 1px solid var(--border-2);
+			}
+			.tok-logo img { width: 100%; height: 100%; object-fit: cover; }
+			.tok-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+			.tok-title h1 { margin: 0; font-size: 24px; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+			.tok-title .name { color: var(--muted); font-size: 14px; }
+			.hero-spacer { flex: 1; }
+			.hero-price { text-align: right; }
+			.hero-price .px { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+			.hero-price .ch { margin-top: 4px; }
+
+			.tok-meta {
+				margin-top: 18px;
+				display: grid; grid-template-columns: repeat(4, 1fr);
+				gap: 8px; padding-top: 18px; border-top: 1px solid var(--border);
+			}
+			.tok-meta .m { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+			.tok-meta .v { font-size: 14px; font-weight: 600; margin-top: 3px; font-variant-numeric: tabular-nums; }
+			@media (max-width: 720px) {
+				.tok-meta { grid-template-columns: repeat(2, 1fr); }
+			}
+
+			.cols {
+				display: grid; grid-template-columns: 2fr 1fr;
+				gap: 14px;
+			}
+			@media (max-width: 960px) { .cols { grid-template-columns: 1fr; } }
+
+			.panel {
+				background: var(--panel); border: 1px solid var(--border);
+				border-radius: 14px; padding: 18px;
+			}
+			.panel h2 {
+				margin: 0 0 14px; font-size: 12px; color: var(--muted);
+				text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+			}
+			.panel .head-row { display: flex; align-items: center; justify-content: space-between; }
+
+			.chart-wrap { position: relative; }
+			#chart { height: 320px; margin: 0 -18px -8px; }
+			#chart-tooltip {
+				position: absolute; top: 8px; left: 8px;
+				background: rgba(8,8,12,0.85); border: 1px solid var(--border-2);
+				border-radius: 8px; padding: 8px 12px;
+				font-size: 12px; pointer-events: none; opacity: 0;
+				transition: opacity 0.12s;
+			}
+			#chart-tooltip .tt-date { color: var(--muted); font-size: 11px; }
+			#chart-tooltip .tt-val { font-size: 15px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+			#chart-empty {
+				height: 320px; display: none; align-items: center; justify-content: center;
+				color: #444; font-size: 13px; margin: 0 -18px;
+			}
+			.range-tabs {
+				display: flex; gap: 4px; padding-top: 10px;
+				justify-content: flex-end;
+			}
+			.range-tab {
+				background: transparent; border: 0; cursor: pointer;
+				color: var(--muted); font-size: 12px; font-weight: 600;
+				padding: 6px 10px; border-radius: 7px;
+				font-family: inherit;
+			}
+			.range-tab:hover { color: #ccc; }
+			.range-tab[aria-pressed="true"] { background: #16161f; color: var(--text); }
+
+			.holding-summary { padding: 14px; border-radius: 10px; background: #08080d; margin-bottom: 14px; border: 1px solid var(--border); }
+			.holding-summary .lbl { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+			.holding-summary .v { font-size: 22px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+			.holding-summary .s { color: var(--muted); font-size: 13px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+			.wallet-row {
+				display: flex; align-items: center; justify-content: space-between;
+				gap: 10px; padding: 10px 12px; border-radius: 9px;
+				border: 1px solid var(--border); background: #08080d;
+				margin-bottom: 8px;
+			}
+			.wallet-row:last-child { margin-bottom: 0; }
+			.wallet-row .nm { font-size: 13px; font-weight: 600; }
+			.wallet-row .ad {
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 11px; color: var(--muted); margin-top: 2px;
+			}
+			.wallet-row .vu { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+			.wallet-row .vs { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+			.actions-row { display: flex; gap: 8px; margin-top: 14px; }
+			.actions-row .btn { flex: 1; }
+
+			.desc {
+				font-size: 13px; line-height: 1.6; color: #b8b8c4;
+			}
+			.desc a { color: #9a8cff; }
+			.address {
+				display: flex; align-items: center; gap: 6px; margin-top: 10px;
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 11.5px; color: var(--muted);
+				padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+				background: #08080d;
+			}
+			.copy-btn {
+				background: none; border: none; color: #555; cursor: pointer;
+				padding: 0 2px; font-size: 12px; margin-left: auto;
+			}
+			.copy-btn:hover { color: #aaa; }
+
+			.err-banner {
+				padding: 12px 14px; background: rgba(255,92,92,0.1);
+				border: 1px solid rgba(255,92,92,0.3); border-radius: 10px;
+				color: #ffb3b3; margin-bottom: 14px; display: none; font-size: 13px;
+			}
+			.muted { color: var(--muted); font-size: 13px; }
+			body[data-auth-pending] { visibility: hidden; }
+			.header-logo { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; }
+
+			.scrim {
+				position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+				display: none; align-items: center; justify-content: center;
+				z-index: 50; padding: 20px;
+				backdrop-filter: blur(4px);
+			}
+			.scrim[data-open="true"] { display: flex; }
+			.modal {
+				background: var(--panel); border: 1px solid var(--border-2);
+				border-radius: 14px; padding: 22px;
+				width: 100%; max-width: 460px; max-height: 90vh; overflow: auto;
+			}
+			.modal h3 { margin: 0 0 4px; font-size: 17px; }
+			.modal .sub { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+			.modal label { display: block; margin-bottom: 10px; }
+			.modal label span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+			.modal input, .modal select {
+				width: 100%; padding: 10px 12px; border-radius: 8px;
+				border: 1px solid var(--border-2); background: #08080d; color: #eee;
+				font-size: 14px; font-family: inherit;
+			}
+			.modal input[data-mono] { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+			.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+			.qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px 0; }
+			.qr-wrap canvas { background: #fff; padding: 10px; border-radius: 10px; }
+			.qr-addr {
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 12px; color: #ccc; word-break: break-all; text-align: center; max-width: 100%;
+			}
+		</style>
+	</head>
+	<body data-auth-pending>
+		<header>
+			<div class="brand"><a href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a></div>
+			<div class="row">
+				<a href="/dashboard" class="muted" style="font-size:13px">← Dashboard</a>
+				<div id="header-user-slot"></div>
+			</div>
+		</header>
+		<main>
+			<a href="/dashboard/portfolio" class="back">← Portfolio</a>
+
+			<div id="error" class="err-banner"></div>
+			<div id="root">
+				<div class="hero">
+					<div class="hero-head">
+						<div class="tok-logo">⏳</div>
+						<div class="tok-title"><h1>Loading…</h1></div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<div id="scrim" class="scrim" role="dialog" aria-modal="true">
+			<div class="modal" id="modal-body"></div>
+		</div>
+
+		<script type="module">
+			import { renderHeaderUser } from '/src/header-user.js';
+
+			const apiUrl = '/api';
+			const params = new URLSearchParams(location.search);
+			const chain = params.get('chain') || '';
+			const id = params.get('id') || '';
+
+			let csrfToken = null;
+			let chart = null;
+			let series = null;
+			let chartEl = null;
+			let chartTooltip = null;
+			let currentAsset = null;
+			let activeDays = 30;
+
+			const $ = (sel) => document.querySelector(sel);
+			const $$ = (id) => document.getElementById(id);
+
+			function fmtUsd(n, opts = {}) {
+				if (!Number.isFinite(n)) return '$0.00';
+				const abs = Math.abs(n);
+				if (abs >= 1_000_000_000) return '$' + (n / 1_000_000_000).toFixed(2) + 'B';
+				if (abs >= 1_000_000) return '$' + (n / 1_000_000).toFixed(2) + 'M';
+				if (abs >= 10_000) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+				if (abs >= 1) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+				if (abs > 0) {
+					if (opts.precise) {
+						if (abs < 0.0001) return '$' + n.toExponential(3);
+						return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 8 });
+					}
+					return '$' + n.toFixed(abs < 0.01 ? 4 : 2);
+				}
+				return '$0.00';
+			}
+			function fmtPct(n) {
+				if (!Number.isFinite(n)) return '—';
+				const sign = n >= 0 ? '+' : '';
+				return sign + n.toFixed(2) + '%';
+			}
+			function fmtAmt(n) {
+				if (!Number.isFinite(n) || n === 0) return '0';
+				if (n < 0.0001) return n.toExponential(2);
+				if (n < 1) return n.toFixed(4);
+				if (n < 1000) return n.toFixed(3);
+				return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+			}
+			function shortAddr(a) {
+				if (!a) return '';
+				return a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
+			}
+			function escapeHtml(s) {
+				return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+			}
+			function setError(msg) {
+				const el = $$('error');
+				if (!msg) { el.style.display = 'none'; return; }
+				el.textContent = msg;
+				el.style.display = 'block';
+			}
+			function chainLabel(c) {
+				if (c === 'solana') return 'Solana';
+				return 'EVM';
+			}
+
+			async function fetchUser() {
+				const res = await fetch(`${apiUrl}/auth/me`, { credentials: 'include' });
+				const data = res.ok ? await res.json() : null;
+				if (!data?.user) {
+					location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search);
+					return null;
+				}
+				document.body.removeAttribute('data-auth-pending');
+				return data;
+			}
+
+			async function getCsrf() {
+				if (csrfToken) return csrfToken;
+				const r = await fetch(`${apiUrl}/csrf-token`, { credentials: 'include' });
+				if (!r.ok) throw new Error('csrf failed');
+				const d = await r.json();
+				csrfToken = d?.data?.token;
+				return csrfToken;
+			}
+
+			async function loadAsset(days) {
+				const u = `${apiUrl}/portfolio/asset?chain=${encodeURIComponent(chain)}&id=${encodeURIComponent(id)}&days=${days || 30}`;
+				const r = await fetch(u, { credentials: 'include' });
+				if (!r.ok) {
+					const e = await r.json().catch(() => ({}));
+					throw new Error(e.error_description || 'failed to load asset');
+				}
+				return r.json();
+			}
+
+			// ── Render ────────────────────────────────────────────────────────
+
+			function render(asset) {
+				const m = asset.market || {};
+				const change = m.change_24h_pct;
+				const changeCls = change == null ? 'flat' : change >= 0 ? 'up' : 'down';
+				const logoInner = asset.logo
+					? `<img src="${escapeHtml(asset.logo)}" alt="" onerror="this.style.display='none';this.parentElement.textContent='${escapeHtml((asset.symbol || '?').slice(0,3))}'" />`
+					: escapeHtml((asset.symbol || '?').slice(0, 3));
+				const name = m.name || asset.symbol || asset.id;
+				const isAddr = !asset.is_native;
+				const explorerHref = isAddr
+					? (asset.chain === 'solana' ? `https://solscan.io/token/${asset.id}` : `https://etherscan.io/token/${asset.id}`)
+					: null;
+
+				$$('root').innerHTML = `
+					<div class="hero">
+						<div class="hero-head">
+							<div class="tok-logo">${logoInner}</div>
+							<div class="tok-title">
+								<h1>${escapeHtml(asset.symbol)} <span class="pill ${asset.chain === 'solana' ? 'sol' : 'evm'}">${escapeHtml(chainLabel(asset.chain))}</span></h1>
+								<div class="name">${escapeHtml(name)}</div>
+							</div>
+							<div class="hero-spacer"></div>
+							<div class="hero-price">
+								<div class="px">${m.price_usd != null ? fmtUsd(m.price_usd, { precise: true }) : '—'}</div>
+								<div class="ch"><span class="chip ${changeCls}">${change == null ? '—' : fmtPct(change)} <span style="opacity:0.6">24h</span></span></div>
+							</div>
+						</div>
+						<div class="tok-meta">
+							<div><div class="m">Market cap</div><div class="v">${m.market_cap_usd != null ? fmtUsd(m.market_cap_usd) : '—'}</div></div>
+							<div><div class="m">24h volume</div><div class="v">${m.total_volume_usd != null ? fmtUsd(m.total_volume_usd) : '—'}</div></div>
+							<div><div class="m">24h high</div><div class="v">${m.high_24h_usd != null ? fmtUsd(m.high_24h_usd, { precise: true }) : '—'}</div></div>
+							<div><div class="m">24h low</div><div class="v">${m.low_24h_usd != null ? fmtUsd(m.low_24h_usd, { precise: true }) : '—'}</div></div>
+						</div>
+					</div>
+
+					<div class="cols">
+						<section>
+							<div class="panel">
+								<div class="head-row">
+									<h2>Price · ${asset.symbol}/USD</h2>
+									<div id="chart-change" class="muted" style="font-size:12px"></div>
+								</div>
+								<div class="chart-wrap">
+									<div id="chart"></div>
+									<div id="chart-empty">No price history available.</div>
+									<div id="chart-tooltip">
+										<div class="tt-date"></div>
+										<div class="tt-val"></div>
+									</div>
+								</div>
+								<div class="range-tabs" id="range-tabs">
+									<button class="range-tab" data-days="1">24H</button>
+									<button class="range-tab" data-days="7">7D</button>
+									<button class="range-tab" data-days="30" aria-pressed="true">30D</button>
+									<button class="range-tab" data-days="90">90D</button>
+									<button class="range-tab" data-days="365">1Y</button>
+								</div>
+							</div>
+
+							${m.description ? `
+								<div class="panel" style="margin-top:14px">
+									<h2>About ${escapeHtml(name)}</h2>
+									<div class="desc">${escapeHtml(m.description)}</div>
+									${m.homepage ? `<p style="margin-top:10px"><a href="${escapeHtml(m.homepage)}" target="_blank" rel="noopener noreferrer">${escapeHtml(m.homepage)} ↗</a></p>` : ''}
+									${isAddr ? `
+										<div class="address">
+											<span>${escapeHtml(asset.id)}</span>
+											<button class="copy-btn" id="copy-contract" title="Copy address">📋</button>
+											${explorerHref ? `<a href="${explorerHref}" target="_blank" rel="noopener noreferrer" style="margin-left:8px;font-size:11.5px">explorer ↗</a>` : ''}
+										</div>` : ''}
+								</div>
+							` : isAddr ? `
+								<div class="panel" style="margin-top:14px">
+									<h2>Contract</h2>
+									<div class="address">
+										<span>${escapeHtml(asset.id)}</span>
+										<button class="copy-btn" id="copy-contract" title="Copy address">📋</button>
+										${explorerHref ? `<a href="${explorerHref}" target="_blank" rel="noopener noreferrer" style="margin-left:8px;font-size:11.5px">explorer ↗</a>` : ''}
+									</div>
+								</div>
+							` : ''}
+						</section>
+
+						<aside>
+							<div class="panel">
+								<h2>Your holdings</h2>
+								<div class="holding-summary">
+									<div class="lbl">Total value</div>
+									<div class="v">${fmtUsd(asset.total_usd)}</div>
+									<div class="s">${fmtAmt(asset.total_amount)} ${escapeHtml(asset.symbol)}${asset.unit_price_usd ? ' · avg ' + fmtUsd(asset.unit_price_usd, { precise: true }) : ''}</div>
+								</div>
+								${asset.holdings.length ? `
+									<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:8px">By wallet</div>
+									${asset.holdings.map((h) => `
+										<div class="wallet-row">
+											<div style="min-width:0">
+												<div class="nm">${escapeHtml(h.agent_name)}</div>
+												<div class="ad">${shortAddr(h.address)}</div>
+											</div>
+											<div style="text-align:right">
+												<div class="vu">${fmtUsd(h.usd)}</div>
+												<div class="vs">${fmtAmt(h.amount)}</div>
+											</div>
+										</div>
+									`).join('')}
+								` : '<div class="muted" style="text-align:center;padding:12px 0">No wallets hold this asset.</div>'}
+								${asset.holdings.length ? `
+									<div class="actions-row">
+										<button class="btn sec sm" id="send-btn">Send</button>
+										<button class="btn ghost sm" id="receive-btn">Receive</button>
+									</div>
+								` : ''}
+							</div>
+
+							${m.ath_usd != null ? `
+								<div class="panel" style="margin-top:14px">
+									<h2>Performance</h2>
+									<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+										<div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600">7d</div><div style="font-weight:600;color:${m.change_7d_pct == null ? 'inherit' : m.change_7d_pct >= 0 ? 'var(--ok)' : 'var(--err)'}">${m.change_7d_pct == null ? '—' : fmtPct(m.change_7d_pct)}</div></div>
+										<div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600">30d</div><div style="font-weight:600;color:${m.change_30d_pct == null ? 'inherit' : m.change_30d_pct >= 0 ? 'var(--ok)' : 'var(--err)'}">${m.change_30d_pct == null ? '—' : fmtPct(m.change_30d_pct)}</div></div>
+										<div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600">ATH</div><div style="font-weight:600">${fmtUsd(m.ath_usd, { precise: true })}</div></div>
+										<div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600">From ATH</div><div style="font-weight:600;color:${m.ath_change_pct == null ? 'inherit' : m.ath_change_pct >= 0 ? 'var(--ok)' : 'var(--err)'}">${m.ath_change_pct == null ? '—' : fmtPct(m.ath_change_pct)}</div></div>
+									</div>
+								</div>
+							` : ''}
+						</aside>
+					</div>
+				`;
+
+				const copyEl = $$('copy-contract');
+				if (copyEl) {
+					copyEl.addEventListener('click', () => {
+						navigator.clipboard.writeText(asset.id);
+						const orig = copyEl.textContent;
+						copyEl.textContent = '✓';
+						setTimeout(() => (copyEl.textContent = orig), 1200);
+					});
+				}
+				const sendBtn = $$('send-btn');
+				if (sendBtn) sendBtn.addEventListener('click', () => openSend(asset));
+				const recvBtn = $$('receive-btn');
+				if (recvBtn) recvBtn.addEventListener('click', () => openReceive(asset));
+
+				$$('range-tabs').addEventListener('click', async (e) => {
+					const btn = e.target.closest('.range-tab');
+					if (!btn) return;
+					const days = parseInt(btn.dataset.days, 10);
+					if (days === activeDays && asset.chart?.points?.length) {
+						renderChart(asset.chart.points);
+						return;
+					}
+					activeDays = days;
+					document.querySelectorAll('.range-tab').forEach((b) => b.removeAttribute('aria-pressed'));
+					btn.setAttribute('aria-pressed', 'true');
+					try {
+						const updated = await loadAsset(days);
+						currentAsset = updated;
+						renderChart(updated.chart?.points || []);
+					} catch (err) {
+						setError(err.message);
+					}
+				});
+
+				renderChart(asset.chart?.points || []);
+			}
+
+			async function ensureChart() {
+				if (chart) return;
+				const mod = await import('https://esm.sh/lightweight-charts@4.2.3');
+				const { createChart, AreaSeries } = mod;
+				chartEl = $$('chart');
+				chartTooltip = $$('chart-tooltip');
+				chart = createChart(chartEl, {
+					layout: { background: { color: 'transparent' }, textColor: '#666', fontFamily: 'inherit', fontSize: 11 },
+					grid: { vertLines: { visible: false }, horzLines: { color: '#0e0e16' } },
+					rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.15, bottom: 0.05 } },
+					timeScale: { borderVisible: false, timeVisible: false, secondsVisible: false },
+					crosshair: {
+						vertLine: { color: '#2a2a36', style: 0, width: 1, labelVisible: false },
+						horzLine: { color: '#2a2a36', style: 0, width: 1, labelVisible: true },
+					},
+					handleScroll: false,
+					handleScale: false,
+				});
+				const seriesOpts = {
+					lineColor: '#9a8cff',
+					topColor: 'rgba(154,140,255,0.35)',
+					bottomColor: 'rgba(154,140,255,0)',
+					lineWidth: 2,
+					priceFormat: { type: 'price', precision: 6, minMove: 0.000001 },
+					crosshairMarkerRadius: 5,
+					crosshairMarkerBorderColor: '#9a8cff',
+					crosshairMarkerBackgroundColor: '#fff',
+				};
+				series = chart.addAreaSeries
+					? chart.addAreaSeries(seriesOpts)
+					: chart.addSeries(AreaSeries, seriesOpts);
+
+				chart.subscribeCrosshairMove((param) => {
+					if (!param.time || !param.seriesData?.size) {
+						chartTooltip.style.opacity = '0';
+						return;
+					}
+					const pt = param.seriesData.get(series);
+					if (!pt) { chartTooltip.style.opacity = '0'; return; }
+					const date = new Date(param.time * 1000);
+					chartTooltip.querySelector('.tt-date').textContent = date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+					chartTooltip.querySelector('.tt-val').textContent = fmtUsd(pt.value, { precise: true });
+					chartTooltip.style.opacity = '1';
+				});
+
+				new ResizeObserver(() => {
+					if (chartEl.clientWidth) chart.applyOptions({ width: chartEl.clientWidth, height: chartEl.clientHeight });
+				}).observe(chartEl);
+			}
+
+			async function renderChart(points) {
+				if (!points || points.length < 1) {
+					$$('chart').style.display = 'none';
+					$$('chart-empty').style.display = 'flex';
+					$$('chart-change').textContent = '';
+					return;
+				}
+				$$('chart').style.display = 'block';
+				$$('chart-empty').style.display = 'none';
+				await ensureChart();
+				const sorted = [...points]
+					.map((p) => ({ time: Math.floor(new Date(p.t).getTime() / 1000), value: Number(p.price) }))
+					// lightweight-charts rejects NaN/null values — drop bad rows from upstream
+					.filter((d) => Number.isFinite(d.time) && Number.isFinite(d.value))
+					.sort((a, b) => a.time - b.time)
+					.filter((d, i, arr) => i === 0 || d.time !== arr[i - 1].time);
+				if (!sorted.length) {
+					$$('chart').style.display = 'none';
+					$$('chart-empty').style.display = 'flex';
+					$$('chart-change').textContent = '';
+					return;
+				}
+				series.setData(sorted);
+				chart.timeScale().fitContent();
+
+				const first = sorted[0].value;
+				const last = sorted[sorted.length - 1].value;
+				const pct = first > 0 ? ((last - first) / first) * 100 : 0;
+				const cls = pct >= 0 ? 'up' : 'down';
+				$$('chart-change').innerHTML = `<span class="chip ${cls}">${fmtPct(pct)}</span>`;
+			}
+
+			// ── Send / Receive ────────────────────────────────────────────────
+
+			function openModal(html, after) {
+				$$('modal-body').innerHTML = html;
+				$$('scrim').setAttribute('data-open', 'true');
+				if (after) after();
+			}
+			function closeModal() { $$('scrim').removeAttribute('data-open'); }
+			$$('scrim').addEventListener('click', (e) => { if (e.target.id === 'scrim') closeModal(); });
+
+			function openReceive(asset) {
+				const w = asset.holdings[0];
+				if (!w) return;
+				openModal(`
+					<h3>Receive ${escapeHtml(asset.symbol)}</h3>
+					<p class="sub">${escapeHtml(w.agent_name)} · ${chainLabel(asset.chain)}</p>
+					<div class="qr-wrap">
+						<canvas id="qr-canvas" width="220" height="220"></canvas>
+						<div class="qr-addr">${escapeHtml(w.address)}</div>
+						<button class="btn sec sm" id="qr-copy">Copy address</button>
+					</div>
+					<div class="modal-actions">
+						<button class="btn ghost" id="close">Done</button>
+					</div>
+				`, async () => {
+					$$('close').onclick = closeModal;
+					$$('qr-copy').onclick = () => navigator.clipboard.writeText(w.address);
+					const mod = await import('https://esm.sh/qrcode@1.5.3');
+					const QR = mod.default ?? mod;
+					await QR.toCanvas($$('qr-canvas'), w.address, { width: 220, margin: 1, color: { dark: '#000', light: '#ffffff' } });
+				});
+			}
+
+			function openSend(asset) {
+				const opts = asset.holdings.map((h) => ({ value: h.agent_id, label: `${h.agent_name} · ${fmtAmt(h.amount)} ${asset.symbol}`, address: h.address }));
+				if (!opts.length) return;
+				const placeholder = asset.chain === 'solana' ? 'Solana address or yourname.sol' : '0x…';
+				openModal(`
+					<h3>Send ${escapeHtml(asset.symbol)}</h3>
+					<p class="sub">${chainLabel(asset.chain)}</p>
+					<form id="send-form">
+						<label><span>From wallet</span>
+							<select name="agent_id">${opts.map((o) => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join('')}</select>
+						</label>
+						<label><span>Recipient${asset.chain === 'solana' ? ' address or .sol name' : ' address'}</span>
+							<input name="recipient" data-mono required placeholder="${placeholder}" autocomplete="off" spellcheck="false" />
+							<small id="recipient-resolved" class="muted" style="display:none;margin-top:6px;font-family:ui-monospace,monospace;font-size:11.5px;word-break:break-all"></small>
+						</label>
+						<label><span>Amount</span>
+							<input name="amount" inputmode="decimal" required placeholder="0.0" pattern="[0-9]*\\.?[0-9]*" />
+						</label>
+						<div class="modal-actions">
+							<button type="button" class="btn ghost" id="cancel">Cancel</button>
+							<button type="submit" class="btn">Send</button>
+						</div>
+						<p id="send-err" class="muted" style="color:#ff9a9a;display:none;margin-top:10px"></p>
+					</form>
+				`, () => {
+					$$('cancel').onclick = closeModal;
+					const form = $$('send-form');
+					form.addEventListener('submit', (e) => onSendSubmit(e, asset));
+					if (asset.chain === 'solana') {
+						const input = form.querySelector('input[name="recipient"]');
+						const status = $$('recipient-resolved');
+						attachSnsTypeahead(input, status);
+					}
+				});
+			}
+
+			const SOL_NAME_RE = /^[a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63})*(?:\.sol)?$/i;
+			const SOL_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+			function attachSnsTypeahead(input, status) {
+				let seq = 0;
+				function setStatus(kind, text) {
+					status.style.display = text ? '' : 'none';
+					status.textContent = text || '';
+					status.style.color = kind === 'ok'
+						? '#7be07b'
+						: kind === 'warn'
+							? '#ff9a9a'
+							: 'var(--muted)';
+				}
+				async function lookup(name) {
+					const myId = ++seq;
+					try {
+						const r = await fetch(`/api/sns?name=${encodeURIComponent(name)}`);
+						if (myId !== seq) return;
+						if (r.status === 404) { setStatus('warn', `${name} does not resolve`); return; }
+						if (!r.ok) {
+							const j = await r.json().catch(() => ({}));
+							setStatus('warn', j.error_description || `lookup failed (${r.status})`);
+							return;
+						}
+						const { data } = await r.json();
+						if (myId !== seq) return;
+						setStatus('ok', `→ ${data.address}`);
+					} catch (err) {
+						if (myId === seq) setStatus('warn', err.message || 'lookup failed');
+					}
+				}
+				input.addEventListener('input', () => {
+					const raw = input.value.trim();
+					seq++;
+					if (!raw) { setStatus('', ''); return; }
+					if (SOL_ADDR_RE.test(raw)) { setStatus('', ''); return; }
+					if (/\.sol$/i.test(raw) || (SOL_NAME_RE.test(raw) && !SOL_ADDR_RE.test(raw))) {
+						setStatus('', 'Resolving .sol…');
+						const myId = seq;
+						setTimeout(() => { if (myId === seq) lookup(raw); }, 300);
+						return;
+					}
+					setStatus('warn', 'Not a valid Solana address or .sol name');
+				});
+			}
+
+			async function onSendSubmit(e, asset) {
+				e.preventDefault();
+				const f = e.target;
+				const agentId = f.agent_id.value;
+				const recipient = f.recipient.value.trim();
+				const amount = f.amount.value.trim();
+				const submit = f.querySelector('button[type="submit"]');
+				submit.disabled = true;
+				$$('send-err').style.display = 'none';
+				try {
+					const token = await getCsrf();
+					const r = await fetch(`${apiUrl}/portfolio/send`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json', 'x-csrf-token': token },
+						body: JSON.stringify({
+							agent_id: agentId,
+							chain: asset.chain,
+							asset: asset.is_native ? 'native' : asset.id,
+							recipient,
+							amount,
+						}),
+					});
+					const d = await r.json();
+					if (!r.ok) throw new Error(d.error_description || 'send failed');
+					csrfToken = null;
+					closeModal();
+					await refresh();
+				} catch (err) {
+					$$('send-err').textContent = err.message;
+					$$('send-err').style.display = 'block';
+					csrfToken = null;
+				} finally {
+					submit.disabled = false;
+				}
+			}
+
+			async function refresh() {
+				try {
+					const asset = await loadAsset(activeDays);
+					currentAsset = asset;
+					render(asset);
+				} catch (err) {
+					setError(err.message);
+				}
+			}
+
+			(async () => {
+				if (!chain || !id) {
+					setError('Missing chain or asset id in URL');
+					return;
+				}
+				const me = await fetchUser();
+				if (!me) return;
+				renderHeaderUser($$('header-user-slot'), me.user, { activePath: '/dashboard/portfolio' });
+				try {
+					const asset = await loadAsset(activeDays);
+					currentAsset = asset;
+					document.title = `${asset.symbol} · Portfolio · three.ws`;
+					render(asset);
+				} catch (err) {
+					setError(err.message);
+				}
+			})();
+		</script>
+	</body>
+</html>

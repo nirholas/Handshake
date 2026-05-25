@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Linked Wallets · Dashboard · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--border: #22222e;
+				--bg: #000;
+				--panel: #14141c;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.55 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a {
+				color: #9a8cff;
+				text-decoration: none;
+			}
+			header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 16px 24px;
+				border-bottom: 1px solid var(--border);
+				position: sticky;
+				top: 0;
+				background: var(--bg);
+				z-index: 5;
+			}
+			.brand {
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			.row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+			main {
+				padding: 28px;
+				max-width: 800px;
+				margin: 0 auto;
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: #888;
+				margin: 0 0 22px;
+				font-size: 14px;
+			}
+			.btn {
+				padding: 8px 14px;
+				border-radius: 6px;
+				border: 1px solid #2a2a36;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				background: #000;
+				color: #fff;
+				transition: border-color 0.12s ease, background 0.12s ease;
+			}
+			.btn:hover:not(:disabled) {
+				border-color: #3d3d52;
+				background: #0a0a12;
+			}
+			.btn.sec {
+				background: #15151d;
+				color: #ddd;
+				border-color: #22222e;
+			}
+			.btn.sec:hover:not(:disabled) {
+				background: #1c1c26;
+				border-color: #2e2e3e;
+			}
+			.btn.danger {
+				background: #15151d;
+				border-color: rgba(204, 64, 64, 0.4);
+				color: #ffb3b3;
+			}
+			.btn.danger:hover:not(:disabled) {
+				background: rgba(204, 64, 64, 0.12);
+				border-color: rgba(204, 64, 64, 0.6);
+			}
+			.btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			.wallet-table {
+				width: 100%;
+				border-collapse: collapse;
+				margin-bottom: 24px;
+			}
+			.wallet-table th {
+				text-align: left;
+				padding: 12px;
+				border-bottom: 1px solid var(--border);
+				font-size: 12px;
+				font-weight: 600;
+				color: #aaa;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+			.wallet-table td {
+				padding: 12px;
+				border-bottom: 1px solid var(--border);
+				font-size: 14px;
+			}
+			.wallet-table tr:last-child td {
+				border-bottom: none;
+			}
+			.address-cell {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-family:
+					ui-monospace,
+					SF Mono,
+					Menlo,
+					monospace;
+				font-size: 13px;
+			}
+			.copy-btn {
+				background: none;
+				border: none;
+				color: #666;
+				cursor: pointer;
+				padding: 2px 4px;
+				font-size: 12px;
+			}
+			.copy-btn:hover {
+				color: #aaa;
+			}
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 11px;
+				padding: 3px 8px;
+				border-radius: 99px;
+				background: #20202c;
+				color: #ccc;
+				white-space: nowrap;
+			}
+			.meta {
+				color: #888;
+				font-size: 13px;
+			}
+			.err {
+				padding: 12px;
+				background: rgba(255, 92, 92, 0.1);
+				border: 1px solid rgba(255, 92, 92, 0.3);
+				border-radius: 8px;
+				color: #ffb3b3;
+				margin-bottom: 14px;
+				display: none;
+			}
+			.empty {
+				text-align: center;
+				padding: 40px 20px;
+				border: 1px dashed var(--border);
+				border-radius: 14px;
+				color: #888;
+			}
+			.loading {
+				opacity: 0.6;
+			}
+			.muted {
+				color: #888;
+				font-size: 13px;
+			}
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
+			.header-logo {
+				width: 14px;
+				height: 14px;
+				vertical-align: -2px;
+				margin-right: 6px;
+			}
+		</style>
+	</head>
+	<body data-auth-pending>
+		<header>
+			<div class="brand"><a href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a></div>
+			<div class="row">
+				<a href="/dashboard" class="muted" style="font-size:13px">← Dashboard</a>
+				<div id="header-user-slot"></div>
+			</div>
+		</header>
+		<main>
+			<h1>Linked Wallets</h1>
+			<p class="sub">Manage Ethereum wallets connected to your account.</p>
+
+			<div id="error" class="err"></div>
+
+			<div id="wallets-container" class="loading">
+				<p style="color: #666">Loading wallets…</p>
+			</div>
+
+			<div class="row" style="margin-top: 20px; gap: 10px; flex-wrap: wrap">
+				<button id="link-evm-btn" class="btn">Link Ethereum Wallet</button>
+				<button id="link-solana-btn" class="btn sec">Link Solana Wallet</button>
+			</div>
+			<p class="muted" id="link-hint" style="margin-top: 10px"></p>
+		</main>
+
+		<script type="module">
+			import { renderHeaderUser } from '/src/header-user.js';
+			let apiUrl = '/api';
+
+			async function fetchUser() {
+				const res = await fetch(`${apiUrl}/auth/me`, { credentials: 'include' });
+				const data = res.ok ? await res.json() : null;
+				if (!data?.user) {
+					location.href = '/login?next=' + encodeURIComponent(location.pathname);
+					return null;
+				}
+				document.body.removeAttribute('data-auth-pending');
+				return data;
+			}
+
+			async function loadWallets() {
+				try {
+					const res = await fetch(`${apiUrl}/auth/wallets`, { credentials: 'include' });
+					if (!res.ok) throw new Error('Failed to load wallets');
+					const data = await res.json();
+					renderWallets(data.wallets);
+				} catch (err) {
+					showError(err.message);
+				}
+			}
+
+			function chainLabel(w) {
+				if (w.chain_type === 'solana') {
+					return w.chain_id && w.chain_id !== 'mainnet' ? `Solana (${w.chain_id})` : 'Solana';
+				}
+				if (w.chain_id) {
+					const evmNames = { 1: 'Ethereum', 8453: 'Base', 10: 'Optimism', 137: 'Polygon', 42161: 'Arbitrum', 56: 'BNB Chain' };
+					return evmNames[w.chain_id] || `Chain ${w.chain_id}`;
+				}
+				return w.chain_type === 'evm' ? 'Ethereum' : 'Unknown';
+			}
+
+			function renderWallets(wallets) {
+				const container = document.getElementById('wallets-container');
+				if (wallets.length === 0) {
+					container.innerHTML = `
+						<div class="empty">
+							<p>No wallets linked yet.</p>
+							<p class="muted">Click a link button below to add your first wallet.</p>
+						</div>
+					`;
+					return;
+				}
+
+				const rows = wallets
+					.map(
+						(w) => `
+					<tr>
+						<td>
+							<div class="address-cell">
+								<span>${w.address.slice(0, 6)}…${w.address.slice(-4)}</span>
+								<button
+									class="copy-btn"
+									onclick="copyToClipboard('${w.address}')"
+									title="Copy full address"
+								>
+									📋
+								</button>
+							</div>
+						</td>
+						<td class="meta">${chainLabel(w)}</td>
+						<td class="meta">${new Date(w.created_at).toLocaleDateString()}</td>
+						<td>
+							${w.is_primary ? '<span class="pill">Primary</span>' : ''}
+						</td>
+						<td style="text-align: right">
+							<button
+								class="btn sec btn-sm"
+								onclick="unlinkWallet('${w.address}')"
+								style="padding: 6px 10px; font-size: 12px"
+							>
+								Unlink
+							</button>
+						</td>
+					</tr>
+				`,
+					)
+					.join('');
+
+				container.innerHTML = `
+					<table class="wallet-table">
+						<thead>
+							<tr>
+								<th>Address</th>
+								<th>Chain</th>
+								<th>Linked</th>
+								<th></th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							${rows}
+						</tbody>
+					</table>
+				`;
+			}
+
+			function copyToClipboard(text) {
+				navigator.clipboard.writeText(text).then(
+					() => {
+						// Show brief feedback
+						const btn = event.target;
+						const orig = btn.textContent;
+						btn.textContent = '✓';
+						setTimeout(() => {
+							btn.textContent = orig;
+						}, 1500);
+					},
+					() => alert('Copy failed'),
+				);
+			}
+
+			async function unlinkWallet(address) {
+				if (!confirm(`Unlink ${address.slice(0, 6)}…${address.slice(-4)}?`)) return;
+
+				try {
+					const res = await fetch(`${apiUrl}/auth/wallets/${address}`, {
+						method: 'DELETE',
+						credentials: 'include',
+					});
+					if (!res.ok) {
+						const err = await res.json();
+						throw new Error(err.error_description || 'Failed to unlink wallet');
+					}
+					loadWallets();
+				} catch (err) {
+					showError(err.message);
+				}
+			}
+
+			function detectEvmProvider() {
+				if (typeof window === 'undefined') return null;
+				const eth = window.ethereum;
+				if (!eth) return null;
+				// Prefer a non-Solana EVM injection. Phantom's EVM provider works but
+				// surfaces an address-match warning when used alongside a Solana session.
+				if (Array.isArray(eth.providers)) {
+					const real = eth.providers.find((p) => !p.isPhantom) || eth.providers[0];
+					return real;
+				}
+				return eth;
+			}
+
+			function detectSolanaProvider() {
+				if (typeof window === 'undefined') return null;
+				return window.phantom?.solana || window.solana || window.backpack || window.solflare || null;
+			}
+
+			async function linkEvmWallet() {
+				const provider = detectEvmProvider();
+				if (!provider) {
+					showError('No Ethereum wallet detected. Install MetaMask, Rabby, or Coinbase Wallet to link.');
+					return;
+				}
+
+				const btn = document.getElementById('link-evm-btn');
+				btn.disabled = true;
+				try {
+					const accounts = await provider.request({ method: 'eth_requestAccounts' });
+					const address = accounts[0];
+					const chainIdHex = await provider.request({ method: 'eth_chainId' });
+					const chainId = parseInt(chainIdHex, 16);
+
+					const nonceRes = await fetch(`${apiUrl}/auth/wallets/nonce`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ address, chainId }),
+					});
+					const nonceData = await nonceRes.json();
+					if (!nonceRes.ok) {
+						throw new Error(nonceData.error_description || 'Failed to get nonce');
+					}
+					const { message } = nonceData;
+
+					let signature;
+					try {
+						signature = await provider.request({
+							method: 'personal_sign',
+							params: [message, address],
+						});
+					} catch (err) {
+						if (err.code === 4001) {
+							showError('Signature cancelled');
+						} else {
+							showError(err.message || 'Signature failed');
+						}
+						return;
+					}
+
+					const linkRes = await fetch(`${apiUrl}/auth/wallets`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ message, signature }),
+					});
+					const linkData = await linkRes.json();
+					if (!linkRes.ok) {
+						throw new Error(linkData.error_description || 'Failed to link wallet');
+					}
+
+					showError('', 'success');
+					loadWallets();
+				} catch (err) {
+					showError(err.message);
+				} finally {
+					btn.disabled = false;
+				}
+			}
+
+			async function linkSolanaWallet() {
+				const provider = detectSolanaProvider();
+				if (!provider) {
+					showError('No Solana wallet detected. Install Phantom, Backpack, or Solflare to link.');
+					return;
+				}
+
+				const btn = document.getElementById('link-solana-btn');
+				btn.disabled = true;
+				try {
+					if (!provider.isConnected) {
+						await provider.connect();
+					}
+					const address = provider.publicKey?.toBase58?.() || provider.publicKey?.toString?.();
+					if (!address) throw new Error('Could not read wallet public key.');
+
+					const nonceRes = await fetch(`${apiUrl}/auth/wallets/nonce-solana`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ address, chainId: 'mainnet' }),
+					});
+					const nonceData = await nonceRes.json();
+					if (!nonceRes.ok) {
+						throw new Error(nonceData.error_description || 'Failed to get nonce');
+					}
+
+					let sigBase64;
+					try {
+						const msgBytes = new TextEncoder().encode(nonceData.message);
+						const { signature } = await provider.signMessage(msgBytes, 'utf8');
+						sigBase64 = btoa(String.fromCharCode(...signature));
+					} catch (err) {
+						if (err?.code === 4001 || /reject/i.test(err?.message || '')) {
+							showError('Signature cancelled');
+						} else {
+							showError(err.message || 'Signature failed');
+						}
+						return;
+					}
+
+					const linkRes = await fetch(`${apiUrl}/auth/wallets/link-solana`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ message: nonceData.message, signature: sigBase64 }),
+					});
+					const linkData = await linkRes.json();
+					if (!linkRes.ok) {
+						throw new Error(linkData.error_description || 'Failed to link wallet');
+					}
+
+					showError('', 'success');
+					loadWallets();
+				} catch (err) {
+					showError(err.message);
+				} finally {
+					btn.disabled = false;
+				}
+			}
+
+			function refreshLinkButtons() {
+				const evmBtn = document.getElementById('link-evm-btn');
+				const solBtn = document.getElementById('link-solana-btn');
+				const hint = document.getElementById('link-hint');
+				const hasEvm = !!detectEvmProvider();
+				const hasSol = !!detectSolanaProvider();
+				evmBtn.disabled = !hasEvm;
+				solBtn.disabled = !hasSol;
+				evmBtn.title = hasEvm ? '' : 'Install MetaMask, Rabby, or Coinbase Wallet';
+				solBtn.title = hasSol ? '' : 'Install Phantom, Backpack, or Solflare';
+				if (!hasEvm && !hasSol) {
+					hint.textContent = 'Install a browser wallet extension to link.';
+				} else {
+					hint.textContent = '';
+				}
+			}
+
+			function showError(msg, type = 'error') {
+				const el = document.getElementById('error');
+				if (!msg) {
+					el.style.display = 'none';
+					return;
+				}
+				if (type === 'success') {
+					el.textContent = '✓ Wallet linked successfully!';
+					el.style.background = 'rgba(92, 255, 92, 0.1)';
+					el.style.borderColor = 'rgba(92, 255, 92, 0.3)';
+					el.style.color = '#b3ffb3';
+				} else {
+					el.textContent = msg;
+					el.style.background = 'rgba(255, 92, 92, 0.1)';
+					el.style.borderColor = 'rgba(255, 92, 92, 0.3)';
+					el.style.color = '#ffb3b3';
+				}
+				el.style.display = 'block';
+			}
+
+			window.copyToClipboard = copyToClipboard;
+			window.unlinkWallet = unlinkWallet;
+
+			// Initialize
+			(async () => {
+				const me = await fetchUser();
+				if (me) {
+					renderHeaderUser(document.getElementById('header-user-slot'), me.user, { activePath: '/dashboard/wallets' });
+					loadWallets();
+				}
+			})();
+
+			document.getElementById('link-evm-btn').addEventListener('click', linkEvmWallet);
+			document.getElementById('link-solana-btn').addEventListener('click', linkSolanaWallet);
+			refreshLinkButtons();
+		</script>
+	</body>
+</html>

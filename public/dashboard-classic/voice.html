@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Agent Voice · three.ws</title>
+		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
+	</head>
+	<body>
+		<div class="dash-shell">
+			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
+			<h1 class="dash-title">Agent Voice</h1>
+			<p class="dash-sub">
+				Clone a voice from a ≥30-second sample (ElevenLabs) or fall back to browser TTS. Used by chat,
+				agent-3d, and the X-Spaces voice agent.
+			</p>
+
+			<div id="picker"></div>
+			<div id="status"></div>
+			<div id="content"></div>
+		</div>
+
+		<script type="module">
+			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+
+			const statusEl = document.getElementById('status');
+			const contentEl = document.getElementById('content');
+
+			function showStatus(msg, kind = '') {
+				statusEl.innerHTML = msg
+					? `<div class="${kind === 'err' ? 'dash-err' : 'dash-ok'}">${escapeHtml(msg)}</div>`
+					: '';
+			}
+			function escapeHtml(s) {
+				return String(s == null ? '' : s).replace(
+					/[&<>"']/g,
+					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c],
+				);
+			}
+
+			async function getVoice(agentId) {
+				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/voice`, {
+					credentials: 'include',
+				});
+				if (!r.ok) throw new Error(`HTTP ${r.status}`);
+				return r.json();
+			}
+
+			async function deleteVoice(agentId) {
+				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/voice`, {
+					method: 'DELETE',
+					credentials: 'include',
+				});
+				if (!r.ok) throw new Error(`HTTP ${r.status}`);
+				return r.json();
+			}
+
+			let recorder = null;
+			let chunks = [];
+			let startedAt = 0;
+			let timerInt = null;
+
+			function pickMime() {
+				const cands = [
+					'audio/webm;codecs=opus',
+					'audio/webm',
+					'audio/mp4',
+					'audio/mpeg',
+				];
+				for (const c of cands) {
+					if (window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c;
+				}
+				return 'audio/webm';
+			}
+
+			async function startRecord() {
+				const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+				const mime = pickMime();
+				recorder = new MediaRecorder(stream, { mimeType: mime });
+				chunks = [];
+				recorder.ondataavailable = (e) => {
+					if (e.data && e.data.size) chunks.push(e.data);
+				};
+				recorder.start();
+				startedAt = Date.now();
+				const timerEl = document.getElementById('rec-timer');
+				timerInt = setInterval(() => {
+					const sec = Math.floor((Date.now() - startedAt) / 1000);
+					timerEl.textContent = sec + 's';
+				}, 200);
+			}
+
+			async function stopRecord() {
+				if (!recorder) return null;
+				const r = recorder;
+				const durationSec = Math.max(1, Math.floor((Date.now() - startedAt) / 1000));
+				const blob = await new Promise((resolve) => {
+					r.onstop = () => resolve(new Blob(chunks, { type: r.mimeType }));
+					r.stop();
+				});
+				r.stream.getTracks().forEach((t) => t.stop());
+				clearInterval(timerInt);
+				recorder = null;
+				return { blob, durationSec };
+			}
+
+			async function uploadClone(agentId, blob, durationSec) {
+				const r = await fetch(
+					`/api/agents/${encodeURIComponent(agentId)}/voice/clone?name=${encodeURIComponent(
+						(document.getElementById('voice-name').value || 'Agent Voice').slice(0, 100),
+					)}`,
+					{
+						method: 'POST',
+						credentials: 'include',
+						headers: {
+							'content-type': blob.type || 'audio/webm',
+							'x-recording-duration': String(durationSec),
+						},
+						body: blob,
+					},
+				);
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			function render(agentId, voice) {
+				const hasClone = !!voice.voice_id;
+				contentEl.innerHTML = `
+					<div class="dash-card">
+						<h2>Current voice</h2>
+						<div class="dash-row" style="gap:14px">
+							<span class="dash-pill">${escapeHtml(voice.voice_provider || 'browser')}</span>
+							${hasClone ? `<span class="dash-mono">${escapeHtml(voice.voice_id)}</span>` : '<span class="dash-muted">No cloned voice — falls back to browser TTS.</span>'}
+							${hasClone ? `<button class="dash-btn danger" id="remove-voice">Remove clone</button>` : ''}
+						</div>
+						${voice.voice_cloned_at ? `<div class="dash-muted" style="margin-top:8px">Cloned ${new Date(voice.voice_cloned_at).toLocaleString()}</div>` : ''}
+					</div>
+					<div class="dash-card">
+						<h2>Clone a new voice</h2>
+						<label style="display:block;margin-bottom:10px">
+							<div class="dash-muted" style="margin-bottom:4px">Voice name</div>
+							<input id="voice-name" class="dash-input" value="${escapeHtml(voice.voice_name || 'Agent Voice')}" maxlength="100" />
+						</label>
+						<div class="dash-row" style="gap:12px;align-items:center">
+							<button class="dash-btn primary" id="rec-toggle">Start recording</button>
+							<span class="dash-mono" id="rec-timer">0s</span>
+							<span class="dash-muted">Min 30 seconds. Limit 10 MB.</span>
+						</div>
+						<div id="rec-out" style="margin-top:14px"></div>
+					</div>
+				`;
+
+				const removeBtn = document.getElementById('remove-voice');
+				if (removeBtn) {
+					removeBtn.addEventListener('click', async () => {
+						if (!confirm('Remove the cloned voice? The agent will fall back to browser TTS.')) return;
+						removeBtn.disabled = true;
+						try {
+							await deleteVoice(agentId);
+							showStatus('Removed.', 'ok');
+							await refresh(agentId);
+						} catch (e) {
+							showStatus(e.message || 'Remove failed', 'err');
+							removeBtn.disabled = false;
+						}
+					});
+				}
+
+				const toggleBtn = document.getElementById('rec-toggle');
+				const outEl = document.getElementById('rec-out');
+				toggleBtn.addEventListener('click', async () => {
+					if (!recorder) {
+						try {
+							await startRecord();
+							toggleBtn.textContent = 'Stop & upload';
+							toggleBtn.classList.add('danger');
+							toggleBtn.classList.remove('primary');
+						} catch (e) {
+							showStatus('Microphone access denied: ' + (e.message || e.name), 'err');
+						}
+						return;
+					}
+					toggleBtn.disabled = true;
+					toggleBtn.textContent = 'Uploading…';
+					try {
+						const { blob, durationSec } = await stopRecord();
+						outEl.innerHTML = `<audio controls src="${URL.createObjectURL(blob)}" style="width:100%;margin-bottom:10px"></audio>`;
+						if (durationSec < 30) throw new Error(`Recording was ${durationSec}s — need ≥30s.`);
+						const { voice_id } = await uploadClone(agentId, blob, durationSec);
+						showStatus(`Voice cloned: ${voice_id}`, 'ok');
+						await refresh(agentId);
+					} catch (e) {
+						showStatus(e.message || 'Upload failed', 'err');
+						toggleBtn.disabled = false;
+						toggleBtn.textContent = 'Start recording';
+						toggleBtn.classList.add('primary');
+						toggleBtn.classList.remove('danger');
+					}
+				});
+			}
+
+			async function refresh(agentId) {
+				contentEl.innerHTML = '<div class="dash-empty">Loading voice status…</div>';
+				try {
+					const voice = await getVoice(agentId);
+					render(agentId, voice);
+				} catch (e) {
+					showStatus(e.message || 'Failed to load voice', 'err');
+				}
+			}
+
+			mountAgentPicker({
+				host: document.getElementById('picker'),
+				onPick: (agentId) => refresh(agentId),
+			});
+		</script>
+	</body>
+</html>

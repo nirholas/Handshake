@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Sessions · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--border: #22222e;
+				--bg: #000;
+				--panel: #14141c;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.55 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a {
+				color: #9a8cff;
+				text-decoration: none;
+			}
+			header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 16px 24px;
+				border-bottom: 1px solid var(--border);
+				position: sticky;
+				top: 0;
+				background: var(--bg);
+				z-index: 5;
+			}
+			.brand {
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			.row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+			main {
+				padding: 28px;
+				max-width: 800px;
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: #888;
+				margin: 0 0 22px;
+				font-size: 14px;
+			}
+			.btn {
+				padding: 8px 14px;
+				border-radius: 6px;
+				border: 1px solid #2a2a36;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				background: #000;
+				color: #fff;
+				transition: border-color 0.12s ease, background 0.12s ease;
+			}
+			.btn:hover:not(:disabled) {
+				border-color: #3d3d52;
+				background: #0a0a12;
+			}
+			.btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			.btn.sec {
+				background: #15151d;
+				color: #ddd;
+				border-color: #22222e;
+			}
+			.btn.sec:hover:not(:disabled) {
+				background: #1c1c26;
+				border-color: #2e2e3e;
+			}
+			.btn.danger {
+				background: #15151d;
+				border-color: rgba(204, 64, 64, 0.4);
+				color: #ffb3b3;
+			}
+			.btn.danger:hover:not(:disabled) {
+				background: rgba(204, 64, 64, 0.12);
+				border-color: rgba(204, 64, 64, 0.6);
+			}
+			.btn-group {
+				display: flex;
+				gap: 8px;
+				margin-bottom: 20px;
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				overflow: hidden;
+				background: var(--panel);
+			}
+			thead {
+				background: #0f0f17;
+				border-bottom: 1px solid var(--border);
+			}
+			th {
+				padding: 12px 16px;
+				text-align: left;
+				font-size: 12px;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+				color: #888;
+			}
+			td {
+				padding: 12px 16px;
+				border-bottom: 1px solid var(--border);
+				font-size: 14px;
+			}
+			tr:last-child td {
+				border-bottom: 0;
+			}
+			.pill {
+				display: inline-block;
+				font-size: 11px;
+				padding: 3px 8px;
+				border-radius: 99px;
+				background: rgba(106, 92, 255, 0.2);
+				color: #a8a0ff;
+				white-space: nowrap;
+			}
+			.agent-cell {
+				max-width: 200px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				color: #bbb;
+				font-size: 13px;
+			}
+			.time-cell {
+				color: #999;
+				font-size: 13px;
+			}
+			.actions {
+				text-align: right;
+			}
+			.empty {
+				text-align: center;
+				padding: 40px 20px;
+				color: #888;
+			}
+			.toast {
+				position: fixed;
+				bottom: 24px;
+				left: 50%;
+				transform: translateX(-50%);
+				background: #1a1a24;
+				border: 1px solid var(--border);
+				padding: 10px 18px;
+				border-radius: 99px;
+				font-size: 13px;
+				color: #ddd;
+				z-index: 70;
+				box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+				animation: toast-in 0.2s;
+			}
+			.toast.error {
+				background: rgba(204, 64, 64, 0.15);
+				border-color: rgba(204, 64, 64, 0.3);
+				color: #ffb3b3;
+			}
+			@keyframes toast-in {
+				from {
+					opacity: 0;
+					transform: translate(-50%, 8px);
+				}
+				to {
+					opacity: 1;
+					transform: translateX(-50%);
+				}
+			}
+			.btn-sec {
+				background: #222230;
+				color: #ddd;
+			}
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
+			.header-logo {
+				width: 14px;
+				height: 14px;
+				vertical-align: -2px;
+				margin-right: 6px;
+			}
+		</style>
+	</head>
+	<body data-auth-pending>
+		<header>
+			<div class="brand"><a href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a></div>
+			<div id="header-user-slot"></div>
+		</header>
+		<main>
+			<h1>Sessions</h1>
+			<p class="sub">Manage your active login sessions across devices.</p>
+
+			<div class="btn-group">
+				<button class="btn danger" id="signOutBtn" style="display: none">
+					Sign out of all other devices
+				</button>
+			</div>
+
+			<table id="sessionsTable" style="display: none">
+				<thead>
+					<tr>
+						<th>Device / User Agent</th>
+						<th>IP Address</th>
+						<th>Created</th>
+						<th>Last Seen</th>
+						<th class="actions">Actions</th>
+					</tr>
+				</thead>
+				<tbody id="sessionsList"></tbody>
+			</table>
+
+			<div class="empty" id="loadingMessage">Loading sessions...</div>
+		</main>
+
+		<script type="module">
+			import { mountHeaderUser } from '/src/header-user.js';
+			mountHeaderUser({ slot: '#header-user-slot', activePath: '/dashboard/sessions' });
+		</script>
+		<script>
+			function showToast(message, isError = false) {
+				const toast = document.createElement('div');
+				toast.className = 'toast' + (isError ? ' error' : '');
+				toast.textContent = message;
+				document.body.appendChild(toast);
+				setTimeout(() => {
+					toast.remove();
+				}, 3000);
+			}
+
+			function formatRelativeTime(date) {
+				const now = new Date();
+				const diff = now - new Date(date);
+				const seconds = Math.floor(diff / 1000);
+				const minutes = Math.floor(seconds / 60);
+				const hours = Math.floor(minutes / 60);
+				const days = Math.floor(hours / 24);
+
+				if (seconds < 60) return 'Just now';
+				if (minutes < 60) return `${minutes}m ago`;
+				if (hours < 24) return `${hours}h ago`;
+				if (days < 7) return `${days}d ago`;
+
+				return new Date(date).toLocaleDateString('en-US', {
+					month: 'short',
+					day: 'numeric',
+				});
+			}
+
+			function formatAbsoluteDate(date) {
+				return new Date(date).toLocaleDateString('en-US', {
+					month: 'short',
+					day: 'numeric',
+					year: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit',
+				});
+			}
+
+			function truncateUA(ua) {
+				if (!ua) return 'Unknown';
+				if (ua.length > 50) return ua.substring(0, 47) + '…';
+				return ua;
+			}
+
+			async function loadSessions() {
+				try {
+					const res = await fetch('/api/auth/me', { credentials: 'include' });
+					if (!res.ok) throw new Error('Failed to verify auth');
+					const { user } = await res.json();
+					if (!user) {
+						location.href = '/login?next=' + encodeURIComponent(location.pathname);
+						return;
+					}
+					document.body.removeAttribute('data-auth-pending');
+
+					const sessionsRes = await fetch('/api/auth/sessions', {
+						credentials: 'include',
+					});
+					if (!sessionsRes.ok) throw new Error('Failed to load sessions');
+
+					const { sessions } = await sessionsRes.json();
+
+					const tbody = document.getElementById('sessionsList');
+					tbody.innerHTML = '';
+
+					if (sessions.length === 0) {
+						document.getElementById('loadingMessage').textContent =
+							'No active sessions';
+						return;
+					}
+
+					document.getElementById('sessionsTable').style.display = 'table';
+					document.getElementById('loadingMessage').style.display = 'none';
+
+					const hasMultiple = sessions.length > 1;
+					document.getElementById('signOutBtn').style.display = hasMultiple
+						? 'block'
+						: 'none';
+
+					sessions.forEach((session) => {
+						const row = document.createElement('tr');
+						row.id = `session-${session.id}`;
+
+						const isCurrentSession = session.current;
+						const uaCell = document.createElement('td');
+						uaCell.className = 'agent-cell';
+						uaCell.textContent = truncateUA(session.user_agent);
+
+						const ipCell = document.createElement('td');
+						ipCell.className = 'agent-cell';
+						ipCell.textContent = session.ip || 'Unknown';
+
+						const createdCell = document.createElement('td');
+						createdCell.className = 'time-cell';
+						createdCell.textContent = formatAbsoluteDate(session.created_at);
+
+						const lastSeenCell = document.createElement('td');
+						lastSeenCell.className = 'time-cell';
+						if (isCurrentSession) {
+							lastSeenCell.innerHTML = '<span class="pill">This device</span>';
+						} else {
+							lastSeenCell.textContent = formatRelativeTime(session.last_seen_at);
+						}
+
+						const actionsCell = document.createElement('td');
+						actionsCell.className = 'actions';
+						if (!isCurrentSession) {
+							const revokeBtn = document.createElement('button');
+							revokeBtn.className = 'btn sec';
+							revokeBtn.style.padding = '6px 12px';
+							revokeBtn.style.fontSize = '12px';
+							revokeBtn.textContent = 'Revoke';
+							revokeBtn.onclick = () => revokeSession(session.id, row);
+							actionsCell.appendChild(revokeBtn);
+						} else {
+							const placeholder = document.createElement('span');
+							placeholder.style.color = '#666';
+							placeholder.style.fontSize = '12px';
+							placeholder.textContent = '—';
+							actionsCell.appendChild(placeholder);
+						}
+
+						row.appendChild(uaCell);
+						row.appendChild(ipCell);
+						row.appendChild(createdCell);
+						row.appendChild(lastSeenCell);
+						row.appendChild(actionsCell);
+						tbody.appendChild(row);
+					});
+				} catch (err) {
+					console.error(err);
+					document.getElementById('loadingMessage').textContent =
+						'Error loading sessions';
+				}
+			}
+
+			async function revokeSession(sessionId, row) {
+				const originalRow = row.cloneNode(true);
+				row.style.opacity = '0.5';
+				row.querySelector('button').disabled = true;
+
+				try {
+					const res = await fetch(`/api/auth/sessions/${sessionId}`, {
+						method: 'DELETE',
+						credentials: 'include',
+					});
+
+					if (!res.ok) {
+						throw new Error('Failed to revoke session');
+					}
+
+					row.style.animation = 'fade-out 0.3s';
+					setTimeout(() => {
+						row.remove();
+						showToast('Session revoked');
+						const remaining = document.querySelectorAll('#sessionsList tr').length;
+						if (remaining === 1) {
+							document.getElementById('signOutBtn').style.display = 'none';
+						}
+					}, 300);
+				} catch (err) {
+					console.error(err);
+					row.replaceWith(originalRow);
+					originalRow.querySelector('button').onclick = () =>
+						revokeSession(sessionId, originalRow);
+					showToast('Failed to revoke session', true);
+				}
+			}
+
+			async function signOutEverywhere() {
+				if (
+					!confirm(
+						'Sign out of all other devices? You will stay signed in on this device.',
+					)
+				)
+					return;
+
+				const signOutBtn = document.getElementById('signOutBtn');
+				const originalText = signOutBtn.textContent;
+				signOutBtn.disabled = true;
+				signOutBtn.textContent = 'Signing out...';
+
+				try {
+					const res = await fetch('/api/auth/sessions', {
+						method: 'DELETE',
+						credentials: 'include',
+					});
+
+					if (!res.ok) throw new Error('Failed to sign out');
+
+					const { revoked } = await res.json();
+					showToast(`Signed out of ${revoked} device${revoked === 1 ? '' : 's'}`);
+					loadSessions();
+				} catch (err) {
+					console.error(err);
+					signOutBtn.disabled = false;
+					signOutBtn.textContent = originalText;
+					showToast('Failed to sign out of other devices', true);
+				}
+			}
+
+			document.getElementById('signOutBtn').onclick = signOutEverywhere;
+
+			loadSessions();
+
+			// Add CSS animation
+			const style = document.createElement('style');
+			style.textContent = `
+				@keyframes fade-out {
+					to {
+						opacity: 0;
+						transform: translateX(-20px);
+					}
+				}
+			`;
+			document.head.appendChild(style);
+		</script>
+	</body>
+</html>

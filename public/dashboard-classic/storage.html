@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Storage · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--border: #22222e;
+				--bg: #000;
+				--panel: #14141c;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.55 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a {
+				color: #9a8cff;
+				text-decoration: none;
+			}
+			header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 16px 24px;
+				border-bottom: 1px solid var(--border);
+				position: sticky;
+				top: 0;
+				background: var(--bg);
+				z-index: 5;
+			}
+			.brand {
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			main {
+				padding: 28px;
+				max-width: 720px;
+				margin: 0 auto;
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: #888;
+				margin: 0 0 22px;
+				font-size: 14px;
+			}
+			.card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 14px;
+				padding: 20px;
+				margin-bottom: 20px;
+			}
+			fieldset {
+				border: 0;
+				padding: 0;
+				margin: 0;
+			}
+			legend {
+				font-size: 13px;
+				font-weight: 600;
+				color: #ccc;
+				margin-bottom: 12px;
+				letter-spacing: 0.02em;
+				text-transform: uppercase;
+			}
+			label {
+				display: block;
+				margin: 14px 0 6px;
+				font-size: 13px;
+				color: #bbb;
+			}
+			input,
+			select {
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				color: #eee;
+				padding: 9px 11px;
+				border-radius: 8px;
+				font-size: 14px;
+				font-family: inherit;
+				width: 100%;
+			}
+			input:focus,
+			select:focus {
+				outline: none;
+				border-color: var(--accent);
+			}
+			.kv {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				margin: 10px 0;
+			}
+			.kv-label {
+				font-size: 13px;
+				color: #888;
+				min-width: 120px;
+			}
+			.kv-value {
+				font-size: 13px;
+				color: #ddd;
+				word-break: break-all;
+			}
+			.badge {
+				display: inline-block;
+				font-size: 11px;
+				font-weight: 700;
+				padding: 2px 8px;
+				border-radius: 99px;
+				letter-spacing: 0.04em;
+			}
+			.badge.green {
+				background: rgba(92, 255, 140, 0.1);
+				color: #7ef0a3;
+				border: 1px solid rgba(92, 255, 140, 0.25);
+			}
+			.badge.grey {
+				background: rgba(180, 180, 200, 0.08);
+				color: #aaa;
+				border: 1px solid rgba(180, 180, 200, 0.15);
+			}
+			.badge.yellow {
+				background: rgba(255, 220, 92, 0.1);
+				color: #f0dc7e;
+				border: 1px solid rgba(255, 220, 92, 0.25);
+			}
+			.btn {
+				padding: 8px 14px;
+				border-radius: 6px;
+				border: 1px solid #2a2a36;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				background: #000;
+				color: #fff;
+				transition: border-color 0.12s ease, background 0.12s ease;
+			}
+			.btn:hover:not(:disabled) {
+				border-color: #3d3d52;
+				background: #0a0a12;
+			}
+			.btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			.btn.sec {
+				background: #15151d;
+				color: #ddd;
+				border-color: #22222e;
+			}
+			.btn.sec:hover:not(:disabled) {
+				background: #1c1c26;
+				border-color: #2e2e3e;
+			}
+			.muted {
+				color: #888;
+				font-size: 13px;
+			}
+			.err {
+				padding: 12px;
+				background: rgba(255, 92, 92, 0.1);
+				border: 1px solid rgba(255, 92, 92, 0.3);
+				border-radius: 8px;
+				color: #ffb3b3;
+				margin-bottom: 14px;
+			}
+			.ok {
+				padding: 12px;
+				background: rgba(92, 255, 140, 0.07);
+				border: 1px solid rgba(92, 255, 140, 0.2);
+				border-radius: 8px;
+				color: #b6f2c6;
+				margin-bottom: 14px;
+			}
+			code {
+				font-family:
+					ui-monospace,
+					SF Mono,
+					Menlo,
+					monospace;
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				border-radius: 4px;
+				padding: 1px 6px;
+				font-size: 12px;
+			}
+			.actions {
+				display: flex;
+				gap: 10px;
+				margin-top: 16px;
+			}
+			hr {
+				border: 0;
+				border-top: 1px solid var(--border);
+				margin: 22px 0;
+			}
+			.hidden {
+				display: none !important;
+			}
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
+		</style>
+	</head>
+	<body data-auth-pending>
+		<header>
+			<div class="brand"><a href="/dashboard">← Dashboard</a></div>
+			<div class="muted"><span id="avatar-name">Avatar</span></div>
+		</header>
+		<main>
+			<h1>Storage</h1>
+			<p class="sub">
+				Manage where <code id="avatar-id-label">your avatar</code>'s bytes live and track content
+				attestation.
+			</p>
+
+			<div id="picker"></div>
+			<div id="status"></div>
+
+			<div id="storage-cards" class="hidden">
+
+			<!-- R2 -->
+			<div class="card">
+				<fieldset>
+					<legend>R2 (primary storage)</legend>
+					<div class="kv">
+						<span class="kv-label">Status</span>
+						<span class="badge green" id="r2-present-badge">Present</span>
+					</div>
+					<div class="kv">
+						<span class="kv-label">Storage key</span>
+						<code id="r2-key" class="kv-value">—</code>
+					</div>
+				</fieldset>
+			</div>
+
+			<!-- IPFS -->
+			<div class="card">
+				<fieldset>
+					<legend>IPFS</legend>
+					<div class="kv">
+						<span class="kv-label">Pinned</span>
+						<span class="badge grey" id="ipfs-pinned-badge">Not pinned</span>
+					</div>
+					<div class="kv" id="ipfs-cid-row">
+						<span class="kv-label">CID</span>
+						<code id="ipfs-cid" class="kv-value">—</code>
+					</div>
+					<div class="kv" id="ipfs-pinned-at-row">
+						<span class="kv-label">Pinned at</span>
+						<span id="ipfs-pinned-at" class="kv-value muted">—</span>
+					</div>
+					<div class="actions">
+						<button class="btn" id="pin-btn">Pin to IPFS</button>
+					</div>
+					<p class="muted" style="margin-top: 10px">
+						Real pinning runs through Pinata when <code>PINATA_JWT</code> is configured
+						on the server. Otherwise the endpoint records a content-hash stub CID so the
+						rest of the flow still works in dev.
+					</p>
+				</fieldset>
+			</div>
+
+			<!-- Attestation -->
+			<div class="card">
+				<fieldset>
+					<legend>On-chain attestation</legend>
+					<div class="kv">
+						<span class="kv-label">Content hash</span>
+						<code id="attest-hash" class="kv-value">—</code>
+					</div>
+					<div class="kv">
+						<span class="kv-label">Chain</span>
+						<span id="attest-chain" class="kv-value muted">—</span>
+					</div>
+					<div class="kv">
+						<span class="kv-label">Tx hash</span>
+						<code id="attest-tx" class="kv-value">—</code>
+					</div>
+					<div class="kv">
+						<span class="kv-label">Attested at</span>
+						<span id="attest-at" class="kv-value muted">—</span>
+					</div>
+					<p class="muted" style="margin-top: 10px">
+						On-chain attestation is read-only. Content hashing runs server-side
+						post-upload. Transaction broadcasting is a future feature.
+					</p>
+				</fieldset>
+			</div>
+
+			<div class="actions">
+				<button class="btn sec" id="reload">Reload</button>
+				</div>
+				<!-- /storage-cards -->
+			</div>
+		</main>
+		<script type="module">
+			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+
+			const statusEl = document.getElementById('status');
+			const nameEl = document.getElementById('avatar-name');
+			const labelEl = document.getElementById('avatar-id-label');
+			const cardsEl = document.getElementById('storage-cards');
+			const pickerEl = document.getElementById('picker');
+
+			let avatarId = null;
+
+			async function api(method, path, body) {
+				const res = await fetch(path, {
+					method,
+					credentials: 'include',
+					headers: body ? { 'content-type': 'application/json' } : {},
+					body: body ? JSON.stringify(body) : undefined,
+				});
+				const ct = res.headers.get('content-type') || '';
+				const data = ct.includes('application/json') ? await res.json() : null;
+				if (!res.ok)
+					throw Object.assign(
+						new Error((data && data.error_description) || res.statusText),
+						{ status: res.status },
+					);
+				return data;
+			}
+
+			function setStatus(html) {
+				statusEl.innerHTML = html;
+			}
+
+			function escapeHtml(s) {
+				return String(s ?? '').replace(
+					/[&<>"']/g,
+					(c) =>
+						({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[
+							c
+						],
+				);
+			}
+
+			function populateMode(mode) {
+				if (!mode) return;
+
+				// R2
+				document.getElementById('r2-key').textContent = mode.r2?.key || '—';
+				const r2Badge = document.getElementById('r2-present-badge');
+				if (mode.r2?.present) {
+					r2Badge.textContent = 'Present';
+					r2Badge.className = 'badge green';
+				} else {
+					r2Badge.textContent = 'Missing';
+					r2Badge.className = 'badge grey';
+				}
+
+				// IPFS
+				const ipfsBadge = document.getElementById('ipfs-pinned-badge');
+				if (mode.ipfs?.pinned) {
+					ipfsBadge.textContent = 'Pinned';
+					ipfsBadge.className = 'badge green';
+					document.getElementById('pin-btn').disabled = true;
+					document.getElementById('pin-btn').textContent = 'Already pinned';
+				} else {
+					ipfsBadge.textContent = 'Not pinned';
+					ipfsBadge.className = 'badge grey';
+					document.getElementById('pin-btn').disabled = false;
+					document.getElementById('pin-btn').textContent = 'Pin to IPFS';
+				}
+				document.getElementById('ipfs-cid').textContent = mode.ipfs?.cid || '—';
+				document.getElementById('ipfs-pinned-at').textContent = mode.ipfs?.pinned_at
+					? new Date(mode.ipfs.pinned_at).toLocaleString()
+					: '—';
+
+				// Attestation
+				const hash = mode.attestation?.hash;
+				document.getElementById('attest-hash').textContent = hash || 'Not yet computed';
+				document.getElementById('attest-chain').textContent =
+					mode.attestation?.chain_id != null ? String(mode.attestation.chain_id) : '—';
+				document.getElementById('attest-tx').textContent = mode.attestation?.tx_hash || '—';
+				document.getElementById('attest-at').textContent = mode.attestation?.attested_at
+					? new Date(mode.attestation.attested_at).toLocaleString()
+					: '—';
+			}
+
+			async function loadMe() {
+				let data;
+				try {
+					data = await api('GET', '/api/auth/me');
+				} catch {
+					data = null;
+				}
+				if (!data?.user) {
+					location.href =
+						'/login?next=' + encodeURIComponent(location.pathname + location.search);
+					throw new Error('redirecting');
+				}
+				document.body.removeAttribute('data-auth-pending');
+			}
+
+			async function loadAvatar() {
+				try {
+					const data = await api('GET', `/api/avatars/${avatarId}`);
+					const av = data.avatar || data;
+					nameEl.textContent = av.name || avatarId;
+					labelEl.textContent = av.name || avatarId;
+				} catch (e) {
+					setStatus(
+						`<div class="err">Could not load avatar: ${escapeHtml(e.message)}</div>`,
+					);
+				}
+			}
+
+			async function loadMode() {
+				try {
+					const { storage_mode } = await api(
+						'GET',
+						`/api/avatars/${avatarId}/storage-mode`,
+					);
+					populateMode(storage_mode);
+				} catch (e) {
+					setStatus(
+						`<div class="err">Could not load storage mode: ${escapeHtml(e.message)}</div>`,
+					);
+				}
+			}
+
+			async function pinIpfs() {
+				setStatus('');
+				document.getElementById('pin-btn').disabled = true;
+				try {
+					const result = await api('POST', `/api/avatars/${avatarId}/pin-ipfs`);
+					populateMode(result.storage_mode);
+					setStatus(
+						result.stub
+							? '<div class="ok">Pinned (stub CID). Set PINATA_JWT on the server for real IPFS pins.</div>'
+							: '<div class="ok">Pinned to IPFS via Pinata.</div>',
+					);
+				} catch (e) {
+					document.getElementById('pin-btn').disabled = false;
+					setStatus(`<div class="err">${escapeHtml(e.message)}</div>`);
+				}
+			}
+
+			async function loadForAvatar(id) {
+				avatarId = id;
+				setStatus('');
+				cardsEl.classList.remove('hidden');
+				labelEl.textContent = id;
+				await loadAvatar();
+				await loadMode();
+			}
+
+			async function loadForAgent(agent) {
+				if (!agent?.avatar_id) {
+					cardsEl.classList.add('hidden');
+					setStatus(
+						`<div class="err">${escapeHtml(agent?.name || 'This agent')} has no avatar attached. Attach one from the agent editor first.</div>`,
+					);
+					return;
+				}
+				nameEl.textContent = agent.name || 'Avatar';
+				await loadForAvatar(agent.avatar_id);
+			}
+
+			document.getElementById('pin-btn').addEventListener('click', pinIpfs);
+			document.getElementById('reload').addEventListener('click', loadMode);
+
+			(async () => {
+				await loadMe();
+
+				const params = new URLSearchParams(location.search);
+				const directAvatarId = params.get('id');
+
+				if (directAvatarId) {
+					await loadForAvatar(directAvatarId);
+					return;
+				}
+
+				await mountAgentPicker({
+					host: pickerEl,
+					onPick: (_agentId, agent) => loadForAgent(agent),
+				});
+			})();
+		</script>
+	</body>
+</html>

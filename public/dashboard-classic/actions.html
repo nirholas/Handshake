@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Action Log — three.ws</title>
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--border: #22222e;
+				--bg: #000;
+				--panel: #14141c;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.55 system-ui,
+					-apple-system,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a {
+				color: #9a8cff;
+				text-decoration: none;
+			}
+			.container {
+				max-width: 900px;
+				margin: 0 auto;
+				padding: 28px;
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+				letter-spacing: -0.01em;
+			}
+			.header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 20px;
+				gap: 20px;
+				flex-wrap: wrap;
+			}
+			.agent-info {
+				flex: 1;
+				min-width: 300px;
+			}
+			.sub {
+				color: #888;
+				margin: 4px 0 0;
+				font-size: 14px;
+			}
+			.signer-pill {
+				display: inline-block;
+				background: rgba(106, 92, 255, 0.15);
+				border: 1px solid var(--accent);
+				border-radius: 999px;
+				padding: 4px 12px;
+				font-size: 13px;
+				margin-top: 8px;
+				color: #aaa;
+				font-family: monospace;
+			}
+			.signer-pill.verified {
+				background: rgba(34, 197, 94, 0.1);
+				border-color: #22c55e;
+				color: #86efac;
+			}
+			.actions-toolbar {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+				margin-bottom: 20px;
+				flex-wrap: wrap;
+			}
+			.filter-chip {
+				padding: 6px 14px;
+				border: 1px solid var(--border);
+				background: transparent;
+				color: #aaa;
+				border-radius: 999px;
+				cursor: pointer;
+				font-size: 13px;
+				transition: all 0.2s;
+			}
+			.filter-chip:hover {
+				border-color: var(--accent);
+				color: #fff;
+			}
+			.filter-chip.active {
+				background: var(--accent);
+				border-color: var(--accent);
+				color: #fff;
+			}
+			.export-btn {
+				margin-left: auto;
+				padding: 6px 14px;
+				border: 1px solid var(--border);
+				background: transparent;
+				color: #aaa;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 13px;
+				transition: all 0.2s;
+			}
+			.export-btn:hover {
+				border-color: var(--accent);
+				color: var(--accent);
+			}
+			.timeline {
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+			}
+			.action-row {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 6px;
+				padding: 14px;
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+			.action-row:hover {
+				border-color: var(--accent);
+				background: rgba(106, 92, 255, 0.04);
+			}
+			.action-row.expanded {
+				border-color: var(--accent);
+			}
+			.action-row-header {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+			}
+			.action-icon {
+				width: 20px;
+				height: 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 12px;
+				border-radius: 3px;
+				flex-shrink: 0;
+			}
+			.action-icon.speak {
+				background: rgba(106, 92, 255, 0.2);
+				color: #a5b4fc;
+			}
+			.action-icon.remember {
+				background: rgba(34, 197, 94, 0.2);
+				color: #86efac;
+			}
+			.action-icon.sign {
+				background: rgba(168, 85, 247, 0.2);
+				color: #d8b4fe;
+			}
+			.action-icon.skill-done {
+				background: rgba(59, 130, 246, 0.2);
+				color: #93c5fd;
+			}
+			.action-icon.validate {
+				background: rgba(249, 115, 22, 0.2);
+				color: #fed7aa;
+			}
+			.action-icon.load-end {
+				background: rgba(236, 72, 153, 0.2);
+				color: #f472b6;
+			}
+			.action-summary {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				min-width: 0;
+			}
+			.action-type {
+				font-weight: 600;
+				font-size: 14px;
+				color: #fff;
+			}
+			.action-preview {
+				color: #aaa;
+				font-size: 13px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.action-meta {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+			}
+			.verify-badge {
+				width: 20px;
+				height: 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 12px;
+				flex-shrink: 0;
+			}
+			.verify-badge.verified {
+				color: #22c55e;
+			}
+			.verify-badge.unverified {
+				color: #888;
+			}
+			.verify-badge.unsigned {
+				color: #666;
+			}
+			.action-time {
+				color: #666;
+				font-size: 12px;
+				flex-shrink: 0;
+			}
+			.action-time:hover {
+				color: #aaa;
+			}
+			.action-detail {
+				display: none;
+				margin-top: 14px;
+				padding-top: 14px;
+				border-top: 1px solid var(--border);
+			}
+			.action-row.expanded .action-detail {
+				display: block;
+			}
+			.json-block {
+				background: rgba(0, 0, 0, 0.3);
+				border: 1px solid var(--border);
+				border-radius: 4px;
+				padding: 12px;
+				font-family: monospace;
+				font-size: 12px;
+				color: #888;
+				overflow-x: auto;
+				max-height: 300px;
+				overflow-y: auto;
+			}
+			.empty-state {
+				text-align: center;
+				color: #666;
+				padding: 40px 20px;
+			}
+			.empty-state-icon {
+				font-size: 40px;
+				margin-bottom: 12px;
+			}
+			.loading {
+				text-align: center;
+				color: #666;
+				padding: 40px 20px;
+			}
+			.error-msg {
+				background: rgba(239, 68, 68, 0.1);
+				border: 1px solid #ef4444;
+				color: #fca5a5;
+				padding: 12px 14px;
+				border-radius: 6px;
+				margin-bottom: 20px;
+			}
+			.infinite-scroll-trigger {
+				height: 1px;
+				margin-top: 20px;
+			}
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
+		</style>
+	</head>
+	<body data-auth-pending>
+		<div class="container">
+			<div class="header">
+				<div class="agent-info">
+					<h1 id="agent-name">Action Log</h1>
+					<div class="sub" id="agent-id"></div>
+					<div class="signer-pill" id="signer-pill" style="display: none"></div>
+				</div>
+			</div>
+
+			<div id="error-msg"></div>
+
+			<div class="actions-toolbar">
+				<button class="filter-chip active" data-filter="all">All</button>
+				<button class="filter-chip" data-filter="speak">Speak</button>
+				<button class="filter-chip" data-filter="remember">Remember</button>
+				<button class="filter-chip" data-filter="sign">Sign</button>
+				<button class="filter-chip" data-filter="skill-done">Skill Done</button>
+				<button class="filter-chip" data-filter="validate">Validate</button>
+				<button class="filter-chip" data-filter="load-end">Load End</button>
+				<button class="export-btn" id="export-btn">Download JSON</button>
+			</div>
+
+			<div id="timeline" class="timeline"></div>
+			<div class="infinite-scroll-trigger" id="scroll-trigger"></div>
+		</div>
+
+		<script>
+			const pageSize = 50;
+			let currentFilter = 'all';
+			let allActions = [];
+			let nextCursor = null;
+			let isLoading = false;
+			let hasMore = true;
+
+			const params = new URLSearchParams(location.search);
+			const agentId = params.get('agent');
+
+			if (!agentId) {
+				// No agent id in the URL (e.g. the dashboard sidebar "Action log"
+				// link). Resolve the user's default agent and redirect.
+				(async () => {
+					try {
+						const r = await fetch('/api/agents/me', { credentials: 'include' });
+						if (r.status === 401) {
+							window.location.href = '/login?next=' + encodeURIComponent('/dashboard/actions');
+							return;
+						}
+						if (!r.ok) {
+							document.body.removeAttribute('data-auth-pending');
+							showError(`Could not load your default agent (HTTP ${r.status}).`);
+							return;
+						}
+						const data = await r.json();
+						const id = data?.agent?.id;
+						if (!id) {
+							document.body.removeAttribute('data-auth-pending');
+							showError(
+								'No agent found on this account yet. Create one from the dashboard first.',
+							);
+							return;
+						}
+						window.location.replace(
+							`/dashboard/actions?agent=${encodeURIComponent(id)}`,
+						);
+					} catch (e) {
+						document.body.removeAttribute('data-auth-pending');
+						showError(`Could not resolve your default agent: ${e.message}`);
+					}
+				})();
+			} else {
+				// Auth check
+				(async () => {
+					try {
+						const r = await fetch(`/api/agents/${agentId}/actions?limit=1`, {
+							credentials: 'include',
+						});
+						if (r.status === 401) {
+							window.location.href = `/login?next=/dashboard/actions.html?agent=${agentId}`;
+							return;
+						}
+						if (r.status === 403) {
+							showError('Not authorized to view this agent.');
+							document.body.removeAttribute('data-auth-pending');
+							return;
+						}
+						if (r.status === 404) {
+							showError('Agent not found.');
+							document.body.removeAttribute('data-auth-pending');
+							return;
+						}
+						if (!r.ok) {
+							showError(`Error ${r.status}`);
+							document.body.removeAttribute('data-auth-pending');
+							return;
+						}
+
+						document.body.removeAttribute('data-auth-pending');
+						const data = await r.json();
+						const { actions, nextCursor: nc } = data;
+
+						// Fetch agent info
+						const agentR = await fetch(`/api/agents/${agentId}`, {
+							credentials: 'include',
+						});
+						if (agentR.ok) {
+							const agentData = await agentR.json();
+							const agent = agentData.agent;
+							document.getElementById('agent-name').textContent = agent?.name || agentId;
+							document.getElementById('agent-id').textContent = `${agentId}${
+								agent?.wallet_address ? ` · ${agent.wallet_address.slice(0, 10)}…` : ''
+							}`;
+
+							if (agent?.wallet_address) {
+								const pill = document.getElementById('signer-pill');
+								pill.textContent = `Signed by ${agent.wallet_address.slice(0, 10)}…${agent.wallet_address.slice(
+									-8,
+								)}`;
+								pill.className = 'signer-pill verified';
+								pill.style.display = 'inline-block';
+							}
+						}
+
+						// Load initial page
+						nextCursor = nc;
+						await loadMore();
+					} catch (e) {
+						showError(`Fetch failed: ${e.message}`);
+					}
+				})();
+
+				// IntersectionObserver for infinite scroll
+				const observer = new IntersectionObserver(
+					(entries) => {
+						if (entries[0].isIntersecting && !isLoading && hasMore) {
+							loadMore();
+						}
+					},
+					{ rootMargin: '200px' },
+				);
+
+				observer.observe(document.getElementById('scroll-trigger'));
+
+				// Filter changes
+				document.querySelectorAll('.filter-chip').forEach((btn) => {
+					btn.addEventListener('click', () => {
+						document
+							.querySelectorAll('.filter-chip')
+							.forEach((b) => b.classList.remove('active'));
+						btn.classList.add('active');
+						currentFilter = btn.dataset.filter;
+						render();
+					});
+				});
+
+				// Export
+				document.getElementById('export-btn').addEventListener('click', () => {
+					const filtered = getFiltered();
+					const json = JSON.stringify(filtered, null, 2);
+					const blob = new Blob([json], { type: 'application/json' });
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = `actions-${agentId}-${new Date().toISOString().split('T')[0]}.json`;
+					a.click();
+					URL.revokeObjectURL(url);
+				});
+			}
+
+			// Load more actions
+			async function loadMore() {
+				if (isLoading || !hasMore) return;
+				isLoading = true;
+
+				try {
+					const url = new URL(`/api/agents/${agentId}/actions`, window.location.origin);
+					url.searchParams.set('limit', pageSize);
+					if (nextCursor) {
+						url.searchParams.set('cursor', nextCursor);
+					}
+
+					const r = await fetch(url, { credentials: 'include' });
+					if (!r.ok) {
+						hasMore = false;
+						return;
+					}
+
+					const data = await r.json();
+					const { actions, nextCursor: nc } = data;
+
+					allActions.push(...actions);
+					nextCursor = nc;
+					hasMore = Boolean(nc);
+
+					render();
+				} catch (e) {
+					console.error('loadMore failed:', e);
+				} finally {
+					isLoading = false;
+				}
+			}
+
+			function getFiltered() {
+				if (currentFilter === 'all') return allActions;
+				return allActions.filter((a) => a.type === currentFilter);
+			}
+
+			function render() {
+				const filtered = getFiltered();
+				const timeline = document.getElementById('timeline');
+
+				if (filtered.length === 0 && allActions.length === 0) {
+					timeline.innerHTML =
+						'<div class="empty-state"><div class="empty-state-icon">—</div><div>No actions yet.</div></div>';
+					return;
+				}
+
+				if (filtered.length === 0) {
+					timeline.innerHTML =
+						'<div class="empty-state"><div class="empty-state-icon">—</div><div>No actions match this filter.</div></div>';
+					return;
+				}
+
+				timeline.innerHTML = filtered.map((action) => renderRow(action)).join('');
+
+				// Add expand listeners
+				document.querySelectorAll('.action-row').forEach((row) => {
+					row.addEventListener('click', () => {
+						row.classList.toggle('expanded');
+					});
+				});
+			}
+
+			function renderRow(action) {
+				const type = action.type;
+				const preview = summarizePayload(action.payload);
+				const timestamp = new Date(action.timestamp);
+				const now = new Date();
+				const relTime = formatRelativeTime(timestamp, now);
+
+				let verifyIcon = '—';
+				let verifyClass = 'unsigned';
+				if (action.signature) {
+					if (action.verified === true) {
+						verifyIcon = '✓';
+						verifyClass = 'verified';
+					} else if (action.verified === false) {
+						verifyIcon = '✗';
+						verifyClass = 'unverified';
+					}
+				}
+
+				return `
+					<div class="action-row" data-id="${action.id}">
+						<div class="action-row-header">
+							<div class="action-icon ${type}">
+								${getTypeIcon(type)}
+							</div>
+							<div class="action-summary">
+								<div class="action-type">${escapeHtml(type)}</div>
+								<div class="action-preview">${escapeHtml(preview)}</div>
+							</div>
+							<div class="action-meta">
+								<div class="verify-badge ${verifyClass}" title="${
+									action.verified === true
+										? 'Verified'
+										: action.verified === false
+											? 'Invalid signature'
+											: 'Unsigned'
+								}">${verifyIcon}</div>
+								<div class="action-time" title="${timestamp.toISOString()}">${escapeHtml(relTime)}</div>
+							</div>
+						</div>
+						<div class="action-detail">
+							<div class="json-block">${escapeHtml(JSON.stringify(action.payload, null, 2))}</div>
+							${
+								action.signer
+									? `<div style="margin-top:8px;color:#666;font-size:12px">Signer: <code style="color:#888">${escapeHtml(
+											action.signer,
+										)}</code></div>`
+									: ''
+							}
+						</div>
+					</div>
+				`;
+			}
+
+			function getTypeIcon(type) {
+				const icons = {
+					speak: '💬',
+					remember: '📝',
+					sign: '✍️',
+					'skill-done': '✓',
+					validate: '✔',
+					'load-end': '📦',
+				};
+				return icons[type] || '•';
+			}
+
+			function summarizePayload(payload) {
+				if (typeof payload !== 'object' || !payload) return '(empty)';
+				const keys = Object.keys(payload);
+				if (keys.length === 0) return '(empty)';
+
+				// For speak actions, show the text
+				if (payload.text) return payload.text.slice(0, 80);
+
+				// For remember, show content
+				if (payload.content) return payload.content.slice(0, 80);
+
+				// Generic: show key=value preview
+				const parts = keys.slice(0, 2).map((k) => {
+					const v = payload[k];
+					if (typeof v === 'string') return `${k}=${v.slice(0, 30)}`;
+					if (typeof v === 'number') return `${k}=${v}`;
+					if (typeof v === 'boolean') return `${k}=${v}`;
+					return `${k}=(object)`;
+				});
+				return parts.join(', ');
+			}
+
+			function formatRelativeTime(date, now) {
+				const seconds = Math.floor((now - date) / 1000);
+
+				if (seconds < 60) return `${seconds}s ago`;
+				if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+				if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+				if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+
+				const months = Math.floor(seconds / 2592000);
+				if (months < 12) return `${months}mo ago`;
+
+				return `${Math.floor(seconds / 31536000)}y ago`;
+			}
+
+			function showError(msg) {
+				const el = document.getElementById('error-msg');
+				el.innerHTML = `<div class="error-msg">${escapeHtml(msg)}</div>`;
+			}
+
+			function escapeHtml(text) {
+				if (!text) return '';
+				const map = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					"'": '&#039;',
+				};
+				return String(text).replace(/[&<>"']/g, (c) => map[c]);
+			}
+		</script>
+	</body>
+</html>

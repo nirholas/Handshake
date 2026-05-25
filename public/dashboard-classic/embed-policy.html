@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Embed policy · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
+		</style>
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--border: #22222e;
+				--bg: #000;
+				--panel: #14141c;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.55 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a {
+				color: #9a8cff;
+				text-decoration: none;
+			}
+			header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 16px 24px;
+				border-bottom: 1px solid var(--border);
+				position: sticky;
+				top: 0;
+				background: var(--bg);
+				z-index: 5;
+			}
+			.brand {
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			main {
+				padding: 28px;
+				max-width: 720px;
+				margin: 0 auto;
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: #888;
+				margin: 0 0 22px;
+				font-size: 14px;
+			}
+			.card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 14px;
+				padding: 20px;
+				margin-bottom: 20px;
+			}
+			fieldset {
+				border: 0;
+				padding: 0;
+				margin: 0;
+			}
+			legend {
+				font-size: 13px;
+				font-weight: 600;
+				color: #ccc;
+				margin-bottom: 12px;
+				letter-spacing: 0.02em;
+				text-transform: uppercase;
+			}
+			label {
+				display: block;
+				margin: 14px 0 6px;
+				font-size: 13px;
+				color: #bbb;
+			}
+			label.check {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				margin: 8px 0;
+				cursor: pointer;
+				color: #ccc;
+			}
+			label.check input {
+				width: auto;
+				margin: 0;
+			}
+			input,
+			select,
+			textarea {
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				color: #eee;
+				padding: 9px 11px;
+				border-radius: 8px;
+				font-size: 14px;
+				font-family: inherit;
+				width: 100%;
+			}
+			textarea {
+				min-height: 120px;
+				font-family:
+					ui-monospace,
+					SF Mono,
+					Menlo,
+					monospace;
+				font-size: 13px;
+			}
+			input:focus,
+			textarea:focus,
+			select:focus {
+				outline: none;
+				border-color: var(--accent);
+			}
+			input[type='checkbox'] {
+				width: 16px;
+				height: 16px;
+				accent-color: var(--accent);
+			}
+			input[type='number'] {
+				-moz-appearance: textfield;
+			}
+			.row {
+				display: flex;
+				gap: 10px;
+				align-items: center;
+			}
+			.col2 {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 12px;
+			}
+			.btn {
+				padding: 8px 14px;
+				border-radius: 6px;
+				border: 1px solid #2a2a36;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				background: #000;
+				color: #fff;
+				transition: border-color 0.12s ease, background 0.12s ease;
+			}
+			.btn:hover:not(:disabled) {
+				border-color: #3d3d52;
+				background: #0a0a12;
+			}
+			.btn.sec {
+				background: #15151d;
+				color: #ddd;
+				border-color: #22222e;
+			}
+			.btn.sec:hover:not(:disabled) {
+				background: #1c1c26;
+				border-color: #2e2e3e;
+			}
+			.btn.danger {
+				background: #15151d;
+				border-color: rgba(204, 64, 64, 0.4);
+				color: #ff9c9c;
+			}
+			.btn.danger:hover:not(:disabled) {
+				background: rgba(204, 64, 64, 0.12);
+				border-color: rgba(204, 64, 64, 0.6);
+			}
+			.muted {
+				color: #888;
+				font-size: 13px;
+			}
+			.err {
+				padding: 12px;
+				background: rgba(255, 92, 92, 0.1);
+				border: 1px solid rgba(255, 92, 92, 0.3);
+				border-radius: 8px;
+				color: #ffb3b3;
+				margin-bottom: 14px;
+			}
+			.ok {
+				padding: 12px;
+				background: rgba(92, 255, 140, 0.07);
+				border: 1px solid rgba(92, 255, 140, 0.2);
+				border-radius: 8px;
+				color: #b6f2c6;
+				margin-bottom: 14px;
+			}
+			code {
+				font-family:
+					ui-monospace,
+					SF Mono,
+					Menlo,
+					monospace;
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				border-radius: 4px;
+				padding: 1px 6px;
+				font-size: 12px;
+			}
+			.actions {
+				display: flex;
+				gap: 10px;
+				margin-top: 22px;
+			}
+			hr {
+				border: 0;
+				border-top: 1px solid var(--border);
+				margin: 22px 0;
+			}
+			.hidden {
+				display: none !important;
+			}
+			body[data-auth-pending] {
+				visibility: hidden;
+			}
+		</style>
+	</head>
+	<body data-auth-pending>
+		<header>
+			<div class="brand"><a href="/dashboard">← Dashboard</a></div>
+			<div class="muted"><span id="agent-name">Agent</span></div>
+		</header>
+		<main>
+			<h1>Embed policy</h1>
+			<p class="sub">
+				Control how <code id="embed-url"></code> can be embedded across the web.
+			</p>
+
+			<div id="status"></div>
+
+			<!-- Origins -->
+			<div class="card">
+				<fieldset>
+					<legend>Origins</legend>
+					<label for="mode">Policy mode</label>
+					<select id="mode">
+						<option value="off">Off — allow all embeds</option>
+						<option value="allowlist">Allowlist — only these hosts</option>
+						<option value="denylist">Denylist — everywhere except these hosts</option>
+					</select>
+
+					<div id="hosts-wrap">
+						<label for="hosts">Hosts (one per line)</label>
+						<textarea
+							id="hosts"
+							placeholder="example.com&#10;*.substack.com"
+						></textarea>
+						<div class="muted" style="margin-top: 6px">
+							One host per line. Use <code>*.example.com</code> to match all
+							subdomains.
+						</div>
+					</div>
+				</fieldset>
+			</div>
+
+			<!-- Surfaces -->
+			<div class="card">
+				<fieldset>
+					<legend>Surfaces</legend>
+					<div class="muted" style="margin-bottom: 12px">
+						Choose which embed surfaces are enabled for this agent.
+					</div>
+					<label class="check"
+						><input type="checkbox" id="surf-script" />
+						<span
+							><strong>Script tag</strong> — <code>&lt;agent-3d&gt;</code> on
+							third-party pages</span
+						></label
+					>
+					<label class="check"
+						><input type="checkbox" id="surf-iframe" />
+						<span
+							><strong>iframe</strong> —
+							<code>&lt;iframe src="/agent/:id/embed"&gt;</code></span
+						></label
+					>
+					<label class="check"
+						><input type="checkbox" id="surf-widget" />
+						<span
+							><strong>Widget</strong> — <code>/w/:id</code> widget pages</span
+						></label
+					>
+					<label class="check"
+						><input type="checkbox" id="surf-mcp" />
+						<span
+							><strong>MCP</strong> — exposed as an MCP tool over
+							<code>/api/mcp</code></span
+						></label
+					>
+				</fieldset>
+			</div>
+
+			<!-- Brain -->
+			<div class="card">
+				<fieldset>
+					<legend>Brain / LLM</legend>
+					<label for="brain-mode">Payment mode</label>
+					<select id="brain-mode">
+						<option value="we-pay">
+							We-pay — three.ws covers API costs (quota-limited)
+						</option>
+						<option value="key-proxy">
+							Key-proxy — calls routed through your proxy URL
+						</option>
+						<option value="wallet-gated">
+							Wallet-gated — user pays via connected wallet
+						</option>
+						<option value="none">None — LLM disabled for this agent</option>
+					</select>
+
+					<div id="proxy-url-wrap">
+						<label for="brain-proxy-url">Proxy URL</label>
+						<input
+							type="url"
+							id="brain-proxy-url"
+							placeholder="https://owner.example/llm"
+						/>
+					</div>
+
+					<div class="col2" style="margin-top: 14px">
+						<div>
+							<label for="brain-quota">Monthly quota (completions)</label>
+							<input
+								type="number"
+								id="brain-quota"
+								min="0"
+								placeholder="1000 (blank = unlimited)"
+							/>
+						</div>
+						<div>
+							<label for="brain-rate">Rate limit (req / min)</label>
+							<input
+								type="number"
+								id="brain-rate"
+								min="0"
+								placeholder="10 (blank = unlimited)"
+							/>
+						</div>
+					</div>
+
+					<label for="brain-model">Model</label>
+					<select id="brain-model">
+						<optgroup label="Free — host-paid (recommended)">
+							<option value="meta-llama/llama-3.3-70b-instruct:free">
+								OpenRouter · Llama 3.3 70B (free) — default
+							</option>
+							<option value="openai/gpt-oss-120b:free">
+								OpenRouter · GPT-OSS 120B (free)
+							</option>
+							<option value="nousresearch/hermes-3-llama-3.1-405b:free">
+								OpenRouter · Hermes 3 405B (free)
+							</option>
+							<option value="llama-3.3-70b-versatile">
+								Groq · Llama 3.3 70B (free, sub-second)
+							</option>
+							<option value="llama-3.1-8b-instant">
+								Groq · Llama 3.1 8B (free, fastest)
+							</option>
+						</optgroup>
+						<optgroup label="Paid Claude — uses host's Anthropic key">
+							<option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+							<option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+							<option value="claude-opus-4-6">Claude Opus 4.6</option>
+							<option value="claude-opus-4-7">Claude Opus 4.7</option>
+						</optgroup>
+					</select>
+				</fieldset>
+			</div>
+
+			<!-- Storage -->
+			<div class="card">
+				<fieldset>
+					<legend>Storage</legend>
+					<label for="storage-primary">Primary storage</label>
+					<select id="storage-primary">
+						<option value="r2">R2 (Cloudflare) — default</option>
+						<option value="ipfs">IPFS — decentralised</option>
+					</select>
+
+					<label class="check" style="margin-top: 14px">
+						<input type="checkbox" id="storage-ipfs" disabled />
+						<span
+							><strong>IPFS pin</strong> — avatar pinned to IPFS
+							<em class="muted">(pin flow coming soon)</em></span
+						>
+					</label>
+					<label class="check">
+						<input type="checkbox" id="storage-attested" disabled />
+						<span
+							><strong>On-chain attestation</strong> — content hash recorded on-chain
+							<em class="muted">(coming soon)</em></span
+						>
+					</label>
+				</fieldset>
+			</div>
+
+			<div class="actions">
+				<button class="btn" id="save">Save</button>
+				<button class="btn sec" id="reload">Reload</button>
+				<button class="btn danger" id="clear" style="margin-left: auto">
+					Clear policy
+				</button>
+			</div>
+
+			<hr />
+
+			<div class="muted">
+				Signed-in owners can preview the embed bypassing this policy by appending
+				<code>?preview=1</code> to the embed URL.
+			</div>
+		</main>
+		<script type="module">
+			const params = new URL(location.href).searchParams;
+			let agentId = params.get('agent');
+			const statusEl = document.getElementById('status');
+			const modeSel = document.getElementById('mode');
+			const hostsEl = document.getElementById('hosts');
+			const hostsWrap = document.getElementById('hosts-wrap');
+			const nameEl = document.getElementById('agent-name');
+			const urlEl = document.getElementById('embed-url');
+			const brainModeSel = document.getElementById('brain-mode');
+			const proxyWrap = document.getElementById('proxy-url-wrap');
+			const formEls = document.querySelectorAll(
+				'main > .card, main > .actions, main > hr, main > .muted',
+			);
+
+			function setFormVisible(visible) {
+				for (const el of formEls) el.style.display = visible ? '' : 'none';
+			}
+
+			async function api(method, path, body) {
+				const res = await fetch(path, {
+					method,
+					credentials: 'include',
+					headers: body ? { 'content-type': 'application/json' } : {},
+					body: body ? JSON.stringify(body) : undefined,
+				});
+				const ct = res.headers.get('content-type') || '';
+				const data = ct.includes('application/json') ? await res.json() : null;
+				if (!res.ok)
+					throw Object.assign(
+						new Error((data && data.error_description) || res.statusText),
+						{ status: res.status, fields: data?.fields },
+					);
+				return data;
+			}
+
+			function setStatus(html) {
+				statusEl.innerHTML = html;
+			}
+
+			function updateOriginVisibility() {
+				hostsWrap.style.display = modeSel.value === 'off' ? 'none' : '';
+			}
+
+			function updateBrainVisibility() {
+				proxyWrap.classList.toggle('hidden', brainModeSel.value !== 'key-proxy');
+			}
+
+			async function loadMe() {
+				let data;
+				try {
+					data = await api('GET', '/api/auth/me');
+				} catch {
+					data = null;
+				}
+				if (!data?.user) {
+					location.href =
+						'/login?next=' + encodeURIComponent(location.pathname + location.search);
+					throw new Error('redirecting');
+				}
+				document.body.removeAttribute('data-auth-pending');
+			}
+
+			async function loadAgent() {
+				try {
+					const { agent } = await api('GET', `/api/agents/${agentId}`);
+					nameEl.textContent = agent.name || 'Agent';
+				} catch (e) {
+					setStatus(
+						`<div class="err">Could not load agent: ${escapeHtml(e.message)}</div>`,
+					);
+				}
+			}
+
+			function populateForm(policy) {
+				if (!policy) {
+					modeSel.value = 'off';
+					hostsEl.value = '';
+					document.getElementById('surf-script').checked = true;
+					document.getElementById('surf-iframe').checked = true;
+					document.getElementById('surf-widget').checked = true;
+					document.getElementById('surf-mcp').checked = false;
+					brainModeSel.value = 'we-pay';
+					document.getElementById('brain-proxy-url').value = '';
+					document.getElementById('brain-quota').value = '1000';
+					document.getElementById('brain-rate').value = '10';
+					document.getElementById('brain-model').value =
+						'meta-llama/llama-3.3-70b-instruct:free';
+					document.getElementById('storage-primary').value = 'r2';
+					document.getElementById('storage-ipfs').checked = false;
+					document.getElementById('storage-attested').checked = false;
+					updateOriginVisibility();
+					updateBrainVisibility();
+					return;
+				}
+
+				const orig = policy.origins || {};
+				modeSel.value = orig.mode === 'denylist' ? 'denylist' : 'allowlist';
+				hostsEl.value = (orig.hosts || []).join('\n');
+
+				const surf = policy.surfaces || {};
+				document.getElementById('surf-script').checked = surf.script !== false;
+				document.getElementById('surf-iframe').checked = surf.iframe !== false;
+				document.getElementById('surf-widget').checked = surf.widget !== false;
+				document.getElementById('surf-mcp').checked = !!surf.mcp;
+
+				const brain = policy.brain || {};
+				brainModeSel.value = brain.mode || 'we-pay';
+				document.getElementById('brain-proxy-url').value = brain.proxy_url || '';
+				document.getElementById('brain-quota').value =
+					brain.monthly_quota != null ? String(brain.monthly_quota) : '';
+				document.getElementById('brain-rate').value =
+					brain.rate_limit_per_min != null ? String(brain.rate_limit_per_min) : '';
+				document.getElementById('brain-model').value =
+					brain.model || 'meta-llama/llama-3.3-70b-instruct:free';
+
+				const storage = policy.storage || {};
+				document.getElementById('storage-primary').value = storage.primary || 'r2';
+				document.getElementById('storage-ipfs').checked = !!storage.pinned_ipfs;
+				document.getElementById('storage-attested').checked = !!storage.onchain_attested;
+
+				updateOriginVisibility();
+				updateBrainVisibility();
+			}
+
+			async function loadPolicy() {
+				try {
+					const { policy } = await api('GET', `/api/agents/${agentId}/embed-policy`);
+					populateForm(policy);
+				} catch (e) {
+					setStatus(
+						`<div class="err">Could not load policy: ${escapeHtml(e.message)}</div>`,
+					);
+				}
+			}
+
+			function buildPolicy() {
+				const numOrNull = (id) => {
+					const v = document.getElementById(id).value.trim();
+					return v === '' ? null : parseInt(v, 10);
+				};
+
+				return {
+					version: 1,
+					origins: {
+						mode: modeSel.value === 'off' ? 'allowlist' : modeSel.value,
+						hosts:
+							modeSel.value === 'off'
+								? []
+								: hostsEl.value
+										.split(/\r?\n/)
+										.map((s) => s.trim())
+										.filter(Boolean),
+					},
+					surfaces: {
+						script: document.getElementById('surf-script').checked,
+						iframe: document.getElementById('surf-iframe').checked,
+						widget: document.getElementById('surf-widget').checked,
+						mcp: document.getElementById('surf-mcp').checked,
+					},
+					brain: {
+						mode: brainModeSel.value,
+						proxy_url: document.getElementById('brain-proxy-url').value.trim() || null,
+						monthly_quota: numOrNull('brain-quota'),
+						rate_limit_per_min: numOrNull('brain-rate'),
+						model:
+							document.getElementById('brain-model').value.trim() ||
+							'meta-llama/llama-3.3-70b-instruct:free',
+					},
+					storage: {
+						primary: document.getElementById('storage-primary').value,
+						pinned_ipfs: document.getElementById('storage-ipfs').checked,
+						onchain_attested: document.getElementById('storage-attested').checked,
+					},
+				};
+			}
+
+			async function save() {
+				setStatus('');
+				try {
+					const { policy } = await api(
+						'PUT',
+						`/api/agents/${agentId}/embed-policy`,
+						buildPolicy(),
+					);
+					populateForm(policy);
+					setStatus('<div class="ok">Policy saved.</div>');
+				} catch (e) {
+					let msg = escapeHtml(e.message);
+					if (e.fields && e.fields.length) {
+						msg +=
+							'<br><small>' +
+							e.fields
+								.map((f) => escapeHtml(f.path?.join('.') + ': ' + f.message))
+								.join('<br>') +
+							'</small>';
+					}
+					setStatus(`<div class="err">${msg}</div>`);
+				}
+			}
+
+			async function clearPolicy() {
+				if (!confirm('Clear the embed policy? Defaults will apply.')) return;
+				try {
+					await api('DELETE', `/api/agents/${agentId}/embed-policy`);
+					populateForm(null);
+					setStatus('<div class="ok">Policy cleared.</div>');
+				} catch (e) {
+					setStatus(`<div class="err">${escapeHtml(e.message)}</div>`);
+				}
+			}
+
+			function escapeHtml(s) {
+				return String(s ?? '').replace(
+					/[&<>"']/g,
+					(c) =>
+						({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[
+							c
+						],
+				);
+			}
+
+			modeSel.addEventListener('change', updateOriginVisibility);
+			brainModeSel.addEventListener('change', updateBrainVisibility);
+			document.getElementById('save').addEventListener('click', save);
+			document.getElementById('reload').addEventListener('click', loadPolicy);
+			document.getElementById('clear').addEventListener('click', clearPolicy);
+
+			async function pickAgent() {
+				let list = [];
+				try {
+					const { agents } = await api('GET', '/api/agents');
+					list = Array.isArray(agents) ? agents : [];
+				} catch (e) {
+					setStatus(
+						`<div class="err">Could not load your agents: ${escapeHtml(e.message)}</div>`,
+					);
+					return null;
+				}
+
+				if (list.length === 0) {
+					setFormVisible(false);
+					setStatus(
+						`<div class="err">You don't have any agents yet. <a href="/dashboard/create">Create one</a> to configure an embed policy.</div>`,
+					);
+					return null;
+				}
+
+				if (list.length === 1) {
+					const u = new URL(location.href);
+					u.searchParams.set('agent', list[0].id);
+					location.replace(u.toString());
+					return null;
+				}
+
+				setFormVisible(false);
+				const opts = list
+					.map(
+						(a) =>
+							`<option value="${escapeHtml(a.id)}">${escapeHtml(a.name || a.id)}</option>`,
+					)
+					.join('');
+				setStatus(
+					`<div class="card"><label for="agent-pick">Choose an agent</label>` +
+						`<select id="agent-pick">${opts}</select>` +
+						`<div class="actions"><button class="btn" id="agent-pick-go">Continue</button></div></div>`,
+				);
+				return await new Promise((resolve) => {
+					document
+						.getElementById('agent-pick-go')
+						.addEventListener('click', () => {
+							const id = document.getElementById('agent-pick').value;
+							const u = new URL(location.href);
+							u.searchParams.set('agent', id);
+							location.replace(u.toString());
+							resolve(null);
+						});
+				});
+			}
+
+			(async () => {
+				await loadMe();
+				if (!agentId) {
+					await pickAgent();
+					return;
+				}
+				urlEl.textContent = `/agent/${agentId}/embed`;
+				await loadAgent();
+				await loadPolicy();
+			})();
+		</script>
+	</body>
+</html>

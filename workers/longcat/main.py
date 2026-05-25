@@ -21,6 +21,7 @@ Environment variables (all required unless noted):
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 import os
@@ -235,6 +236,14 @@ def _run_inference(job_id: str, config_path: Path, output_dir: Path) -> None:
 
 
 async def _download_file(url: str, dest: Path) -> None:
+    if url.startswith("data:"):
+        # Inline data URI — decode base64 directly, no HTTP request needed.
+        try:
+            _, encoded = url.split(",", 1)
+            dest.write_bytes(base64.b64decode(encoded))
+        except Exception as exc:
+            raise RuntimeError(f"failed to decode data URI: {exc}") from exc
+        return
     async with _http.stream("GET", url) as r:
         r.raise_for_status()
         with dest.open("wb") as f:

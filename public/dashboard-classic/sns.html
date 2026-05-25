@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>SNS Domains · three.ws</title>
+		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
+	</head>
+	<body>
+		<div class="dash-shell">
+			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
+			<h1 class="dash-title">SNS Domains</h1>
+			<p class="dash-sub">
+				Attach a Solana Name Service <code class="dash-mono">.sol</code> domain as your
+				agent's readable id. Domains owned by either the agent's wallet or any wallet linked
+				to your account are eligible.
+			</p>
+
+			<div id="picker"></div>
+			<div id="status"></div>
+			<div id="content"></div>
+		</div>
+
+		<script type="module">
+			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+
+			const statusEl = document.getElementById('status');
+			const contentEl = document.getElementById('content');
+
+			function showStatus(msg, kind = '') {
+				statusEl.innerHTML = msg
+					? `<div class="${kind === 'err' ? 'dash-err' : 'dash-ok'}">${escapeHtml(msg)}</div>`
+					: '';
+			}
+			function escapeHtml(s) {
+				return String(s == null ? '' : s).replace(
+					/[&<>"']/g,
+					(c) =>
+						({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[
+							c
+						],
+				);
+			}
+
+			async function getSns(agentId) {
+				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/sns`, {
+					credentials: 'include',
+				});
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			async function attach(agentId, domain) {
+				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/sns`, {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ domain }),
+				});
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			async function detach(agentId) {
+				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/sns`, {
+					method: 'DELETE',
+					credentials: 'include',
+				});
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			async function checkDomain(agentId, domain) {
+				const url = `/api/agents/${encodeURIComponent(agentId)}/sns/check?domain=${encodeURIComponent(domain)}`;
+				const r = await fetch(url, { credentials: 'include' });
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				const { data } = await r.json();
+				return data;
+			}
+
+			async function registerWithAgent(agentId, domain) {
+				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/sns/register`, {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ domain }),
+				});
+				const j = await r.json().catch(() => ({}));
+				if (!r.ok) throw new Error(j.error_description || `HTTP ${r.status}`);
+				return j.data;
+			}
+
+			function detectSolanaProvider() {
+				if (typeof window === 'undefined') return null;
+				return (
+					window.phantom?.solana ||
+					window.solana ||
+					window.backpack ||
+					window.solflare ||
+					null
+				);
+			}
+
+			async function registerWithBrowserWallet(agentId, domain) {
+				const provider = detectSolanaProvider();
+				if (!provider)
+					throw new Error(
+						'No Solana wallet detected. Install Phantom, Backpack, or Solflare.',
+					);
+				if (!provider.isConnected) {
+					try {
+						await provider.connect();
+					} catch (e) {
+						throw new Error(e?.message || 'Wallet connection refused');
+					}
+				}
+				const walletAddress = provider.publicKey?.toBase58?.();
+				if (!walletAddress) throw new Error('Wallet did not return a public key');
+
+				const prepRes = await fetch(
+					`/api/agents/${encodeURIComponent(agentId)}/sns/register-prep`,
+					{
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ domain, wallet_address: walletAddress }),
+					},
+				);
+				const prepJson = await prepRes.json().catch(() => ({}));
+				if (!prepRes.ok) {
+					if (
+						prepRes.status === 403 &&
+						/not linked/.test(prepJson.error_description || '')
+					) {
+						throw new Error(
+							`Link this Solana wallet first at /dashboard/wallets (${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}).`,
+						);
+					}
+					throw new Error(
+						prepJson.error_description || `register-prep failed (${prepRes.status})`,
+					);
+				}
+
+				const { tx_base64 } = prepJson.data;
+				const { VersionedTransaction } = await import(
+					'https://esm.sh/@solana/web3.js@1.95.3'
+				);
+				const txBytes = Uint8Array.from(atob(tx_base64), (c) => c.charCodeAt(0));
+				const tx = VersionedTransaction.deserialize(txBytes);
+
+				const signed = await provider.signTransaction(tx);
+				const signedBytes = signed.serialize();
+				const submitRes = await fetch('/api/solana-rpc', {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({
+						jsonrpc: '2.0',
+						id: 1,
+						method: 'sendTransaction',
+						params: [
+							btoa(String.fromCharCode(...signedBytes)),
+							{ encoding: 'base64', preflightCommitment: 'confirmed' },
+						],
+					}),
+				});
+				const submitJson = await submitRes.json();
+				if (submitJson.error)
+					throw new Error(submitJson.error.message || 'tx submit failed');
+				const signature = submitJson.result;
+
+				// Poll for confirmation up to ~30s, then ask the API to mark it attached.
+				for (let i = 0; i < 15; i++) {
+					await new Promise((r) => setTimeout(r, 2000));
+					const confirmRes = await fetch(
+						`/api/agents/${encodeURIComponent(agentId)}/sns/register-confirm`,
+						{
+							method: 'POST',
+							credentials: 'include',
+							headers: { 'content-type': 'application/json' },
+							body: JSON.stringify({
+								signature,
+								domain,
+								wallet_address: walletAddress,
+							}),
+						},
+					);
+					const confirmJson = await confirmRes.json().catch(() => ({}));
+					if (confirmRes.ok) return confirmJson.data;
+					if (confirmJson.error !== 'not_confirmed') {
+						throw new Error(confirmJson.error_description || 'register-confirm failed');
+					}
+				}
+				throw new Error(
+					'Registered on-chain but confirmation timed out — retry attaching from the owned-domains list in a moment.',
+				);
+			}
+
+			function render(agentId, data) {
+				const current = data.sns_domain;
+				const domains = data.domains || [];
+				const favorite = data.favorite;
+
+				contentEl.innerHTML = `
+					<div class="dash-card">
+						<h2>Current SNS id</h2>
+						<div class="dash-row">
+							${
+								current
+									? `<span class="dash-pill" style="font-size:13px">${escapeHtml(current)}.sol</span>
+									   ${data.sns_owner_wallet ? `<span class="dash-muted">owned by <span class="dash-mono">${escapeHtml(data.sns_owner_wallet)}</span></span>` : ''}
+									   <button class="dash-btn danger" id="detach-btn">Detach</button>`
+									: '<span class="dash-muted">None attached.</span>'
+							}
+						</div>
+						<div class="dash-muted" style="margin-top:10px">
+							Agent wallet: <span class="dash-mono">${escapeHtml(data.address || '')}</span>
+						</div>
+					</div>
+
+					<div class="dash-card">
+						<h2>Owned domains</h2>
+						${!data.upstream_ok ? '<div class="dash-err">SNS API unreachable — retry in a moment.</div>' : ''}
+						${
+							domains.length
+								? `<ul class="dash-list">
+									${domains
+										.map(
+											(
+												d,
+											) => `<li class="dash-row" style="justify-content:space-between">
+												<div>
+													<span class="dash-mono" style="font-size:14px">${escapeHtml(d)}.sol</span>
+													${favorite === d ? ' <span class="dash-pill">favorite</span>' : ''}
+													${current === d ? ' <span class="dash-pill">attached</span>' : ''}
+												</div>
+												${current === d ? '' : `<button class="dash-btn primary" data-attach="${escapeHtml(d)}">Use as agent id</button>`}
+											</li>`,
+										)
+										.join('')}
+								  </ul>`
+								: '<div class="dash-empty">No .sol domains found for this agent\'s wallet or your linked Solana wallets.</div>'
+						}
+					</div>
+
+					<div class="dash-card">
+						<h2>Register a new domain</h2>
+						<p class="dash-muted">Buy a <code class="dash-mono">.sol</code> with USDC, paid by either this agent's wallet or your linked browser wallet.</p>
+						<div class="dash-row" style="gap:8px;margin-top:8px;flex-wrap:wrap">
+							<input id="register-input" type="text" placeholder="yourname" autocomplete="off" spellcheck="false"
+								style="flex:1;min-width:220px;padding:8px 10px;border-radius:8px;border:1px solid var(--dash-line,#2a2a36);background:#0e0e16;color:inherit;font-family:ui-monospace,monospace" />
+							<span class="dash-muted" style="font-family:ui-monospace,monospace">.sol</span>
+							<button class="dash-btn" id="register-check">Check</button>
+						</div>
+						<div id="register-status" style="margin-top:10px"></div>
+						<div id="register-actions" class="dash-row" style="gap:8px;margin-top:10px;flex-wrap:wrap;display:none"></div>
+						<p class="dash-muted" style="font-size:11.5px;margin-top:10px">
+							Or
+							<a href="${escapeHtml(data.register_url || 'https://www.sns.id/?search=')}" target="_blank" rel="noopener">register on sns.id</a>
+							and return to attach it.
+						</p>
+					</div>
+				`;
+
+				const detachBtn = document.getElementById('detach-btn');
+				if (detachBtn) {
+					detachBtn.addEventListener('click', async () => {
+						if (!confirm(`Detach ${current}.sol?`)) return;
+						detachBtn.disabled = true;
+						try {
+							await detach(agentId);
+							showStatus('Detached.', 'ok');
+							await refresh(agentId);
+						} catch (e) {
+							showStatus(e.message || 'Detach failed', 'err');
+							detachBtn.disabled = false;
+						}
+					});
+				}
+				contentEl.querySelectorAll('[data-attach]').forEach((btn) => {
+					btn.addEventListener('click', async () => {
+						btn.disabled = true;
+						try {
+							await attach(agentId, btn.dataset.attach);
+							showStatus(`Attached ${btn.dataset.attach}.sol`, 'ok');
+							await refresh(agentId);
+						} catch (e) {
+							showStatus(e.message || 'Attach failed', 'err');
+							btn.disabled = false;
+						}
+					});
+				});
+
+				bindRegisterCard(agentId);
+			}
+
+			function setRegisterStatus(text, kind = '') {
+				const el = document.getElementById('register-status');
+				if (!el) return;
+				el.innerHTML = text
+					? `<div class="${kind === 'err' ? 'dash-err' : kind === 'ok' ? 'dash-ok' : 'dash-muted'}">${escapeHtml(text)}</div>`
+					: '';
+			}
+
+			function bindRegisterCard(agentId) {
+				const input = document.getElementById('register-input');
+				const checkBtn = document.getElementById('register-check');
+				const actionsEl = document.getElementById('register-actions');
+				if (!input || !checkBtn || !actionsEl) return;
+
+				input.addEventListener('input', () => {
+					actionsEl.style.display = 'none';
+					actionsEl.innerHTML = '';
+					setRegisterStatus('');
+				});
+				input.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						checkBtn.click();
+					}
+				});
+
+				checkBtn.addEventListener('click', async () => {
+					const raw = (input.value || '')
+						.trim()
+						.toLowerCase()
+						.replace(/\.sol$/, '');
+					if (!/^[a-z0-9-]{1,63}$/.test(raw)) {
+						setRegisterStatus('Use a–z, 0–9, hyphen (max 63 chars).', 'err');
+						return;
+					}
+					checkBtn.disabled = true;
+					setRegisterStatus('Checking availability…');
+					try {
+						const info = await checkDomain(agentId, raw);
+						if (!info.available) {
+							setRegisterStatus(
+								`${raw}.sol is already registered (owner ${info.owner}).`,
+								'err',
+							);
+							actionsEl.style.display = 'none';
+							return;
+						}
+						setRegisterStatus(
+							`${raw}.sol is available — ${info.price_usdc} USDC.`,
+							'ok',
+						);
+						actionsEl.innerHTML = `
+							<button class="dash-btn primary" id="register-agent-btn">
+								Buy with agent wallet (${info.price_usdc} USDC)
+							</button>
+							<button class="dash-btn" id="register-browser-btn">
+								Buy with my browser wallet
+							</button>
+						`;
+						actionsEl.style.display = '';
+
+						document
+							.getElementById('register-agent-btn')
+							.addEventListener('click', async () => {
+								if (
+									!confirm(
+										`Register ${raw}.sol using the agent's wallet for ${info.price_usdc} USDC? The agent's USDC ATA must be funded.`,
+									)
+								)
+									return;
+								const btn = document.getElementById('register-agent-btn');
+								btn.disabled = true;
+								setRegisterStatus('Registering on-chain (this can take 10-30s)…');
+								try {
+									const out = await registerWithAgent(agentId, raw);
+									setRegisterStatus(
+										`Registered ${out.sns_domain}.sol — signature ${out.signature.slice(0, 8)}…`,
+										'ok',
+									);
+									input.value = '';
+									actionsEl.style.display = 'none';
+									await refresh(agentId);
+								} catch (e) {
+									setRegisterStatus(e.message || 'Register failed', 'err');
+									btn.disabled = false;
+								}
+							});
+
+						document
+							.getElementById('register-browser-btn')
+							.addEventListener('click', async () => {
+								const btn = document.getElementById('register-browser-btn');
+								btn.disabled = true;
+								setRegisterStatus('Connecting wallet…');
+								try {
+									const out = await registerWithBrowserWallet(agentId, raw);
+									setRegisterStatus(
+										`Registered ${out.sns_domain}.sol — signature ${out.signature.slice(0, 8)}…`,
+										'ok',
+									);
+									input.value = '';
+									actionsEl.style.display = 'none';
+									await refresh(agentId);
+								} catch (e) {
+									setRegisterStatus(e.message || 'Register failed', 'err');
+									btn.disabled = false;
+								}
+							});
+					} catch (e) {
+						setRegisterStatus(e.message || 'Check failed', 'err');
+					} finally {
+						checkBtn.disabled = false;
+					}
+				});
+			}
+
+			async function refresh(agentId) {
+				contentEl.innerHTML = '<div class="dash-empty">Loading SNS data…</div>';
+				try {
+					const { data } = await getSns(agentId);
+					render(agentId, data);
+				} catch (e) {
+					showStatus(e.message || 'Failed to load', 'err');
+					contentEl.innerHTML = '';
+				}
+			}
+
+			mountAgentPicker({
+				host: document.getElementById('picker'),
+				onPick: (agentId) => refresh(agentId),
+			});
+		</script>
+	</body>
+</html>

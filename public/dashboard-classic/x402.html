@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>x402 Checkout · Dashboard</title>
+<link rel="icon" href="/favicon.ico" />
+<style>
+	:root {
+		color-scheme: dark;
+		--bg: #0a0b10;
+		--bg-2: #0f1119;
+		--panel: #14161f;
+		--panel-2: #1a1d29;
+		--border: #232636;
+		--border-strong: #2e3447;
+		--text: #f0f2f8;
+		--muted: #8a90a8;
+		--muted-2: #6b7088;
+		--accent: #0a84ff;
+		--accent-2: #60a5fa;
+		--green: #4ade80;
+		--red: #ef4444;
+		--mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, monospace;
+	}
+	* { box-sizing: border-box; }
+	html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+		-webkit-font-smoothing: antialiased;
+		line-height: 1.5;
+		min-height: 100dvh;
+	}
+	a { color: var(--accent-2); text-decoration: none; }
+	a:hover { color: #93c5fd; }
+
+	header {
+		display: flex; align-items: center; gap: 16px;
+		padding: 16px 28px;
+		border-bottom: 1px solid var(--border);
+		background: rgba(10, 11, 16, 0.92);
+		backdrop-filter: blur(12px);
+		position: sticky; top: 0; z-index: 10;
+	}
+	header .brand {
+		display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px;
+		letter-spacing: -0.01em;
+	}
+	header .brand .dot {
+		width: 22px; height: 22px;
+		background: conic-gradient(from 200deg, #ffffff, #60a5fa);
+		border-radius: 6px;
+	}
+	header .crumb { color: var(--muted); margin-left: 4px; }
+	header .right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+	.btn {
+		padding: 9px 16px;
+		background: #ffffff; color: #0a0b10;
+		border: none; border-radius: 9px;
+		font-size: 13px; font-weight: 600; font-family: inherit;
+		cursor: pointer;
+		transition: background 0.12s, transform 0.05s;
+	}
+	.btn:hover:not(:disabled) { background: #e7e9ee; }
+	.btn:active:not(:disabled) { transform: translateY(1px); }
+	.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+	.btn.ghost {
+		background: var(--panel); color: var(--text);
+		border: 1px solid var(--border);
+	}
+	.btn.ghost:hover:not(:disabled) { background: var(--panel-2); border-color: var(--border-strong); }
+	.btn.danger { background: #1f1416; color: #fca5a5; border: 1px solid #7f1d1d; }
+	.btn.danger:hover:not(:disabled) { background: #2a1d20; }
+
+	.wrap { max-width: 1080px; margin: 0 auto; padding: 32px 28px 60px; }
+	@media (max-width: 640px) { .wrap { padding: 24px 18px 60px; } header { padding: 14px 18px; } }
+
+	h1 {
+		font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+		margin: 0 0 4px;
+	}
+	.sub { color: var(--muted); margin: 0 0 28px; font-size: 14px; }
+
+	.stats {
+		display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: 12px; margin-bottom: 28px;
+	}
+	.stat-card {
+		background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+		padding: 18px;
+	}
+	.stat-card .k {
+		font-size: 11px; color: var(--muted); font-weight: 600;
+		text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;
+	}
+	.stat-card .v {
+		font-size: 24px; font-weight: 700; letter-spacing: -0.01em;
+		font-variant-numeric: tabular-nums;
+	}
+	.stat-card .v .unit { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+
+	.skus-head {
+		display: flex; align-items: center; justify-content: space-between;
+		margin-bottom: 14px;
+	}
+	.skus-head h2 { margin: 0; font-size: 18px; letter-spacing: -0.01em; }
+
+	.sku-table {
+		background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+		overflow: hidden;
+	}
+	.sku-row {
+		display: grid; grid-template-columns: 1fr auto auto auto;
+		gap: 14px; padding: 14px 18px;
+		align-items: center;
+		border-bottom: 1px solid var(--border);
+		transition: background 0.1s;
+	}
+	.sku-row:hover { background: var(--panel-2); }
+	.sku-row:last-child { border-bottom: none; }
+	.sku-row .name { font-weight: 600; font-size: 14px; letter-spacing: -0.005em; }
+	.sku-row .slug { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 3px; }
+	.sku-row .calls { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+	.sku-row .calls strong { color: var(--text); font-size: 13px; font-weight: 700; }
+	.sku-row .revenue { font-family: var(--mono); font-size: 13px; color: var(--green); font-weight: 700; font-variant-numeric: tabular-nums; }
+	.sku-row .actions { display: flex; gap: 6px; }
+	.sku-row .actions .btn { padding: 6px 12px; font-size: 12px; }
+	@media (max-width: 640px) {
+		.sku-row { grid-template-columns: 1fr; gap: 8px; }
+		.sku-row .actions { justify-content: flex-start; }
+	}
+
+	.empty {
+		text-align: center; padding: 60px 24px;
+		color: var(--muted); font-size: 14px;
+	}
+	.empty h3 { color: var(--text); font-size: 17px; margin: 0 0 6px; }
+
+	.modal-overlay {
+		position: fixed; inset: 0;
+		background: rgba(8, 10, 18, 0.7);
+		backdrop-filter: blur(10px);
+		display: none; align-items: center; justify-content: center;
+		z-index: 100; padding: 18px;
+	}
+	.modal-overlay.show { display: flex; }
+	.modal {
+		background: var(--panel); border: 1px solid var(--border-strong);
+		border-radius: 16px; width: 100%; max-width: 520px;
+		max-height: calc(100dvh - 36px); overflow: auto;
+		box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+	}
+	.modal-head {
+		padding: 18px 22px; border-bottom: 1px solid var(--border);
+		display: flex; align-items: center; justify-content: space-between;
+	}
+	.modal-head h3 { margin: 0; font-size: 17px; font-weight: 700; }
+	.modal-close {
+		background: none; border: none; color: var(--muted); cursor: pointer;
+		font-size: 18px; width: 30px; height: 30px; border-radius: 7px;
+	}
+	.modal-close:hover { background: var(--panel-2); color: var(--text); }
+	.modal-body { padding: 18px 22px 22px; display: flex; flex-direction: column; gap: 14px; }
+
+	label {
+		display: flex; flex-direction: column; gap: 5px;
+		font-size: 12px; font-weight: 600; color: var(--muted);
+		text-transform: uppercase; letter-spacing: 0.03em;
+	}
+	label input, label select, label textarea {
+		background: var(--bg-2); border: 1px solid var(--border);
+		color: var(--text);
+		padding: 11px 13px; border-radius: 9px;
+		font-size: 14px; font-family: inherit;
+		text-transform: none; letter-spacing: 0; font-weight: 400;
+		outline: none;
+		transition: border-color 0.12s;
+	}
+	label input:focus, label select:focus, label textarea:focus { border-color: var(--accent); }
+	label textarea { min-height: 70px; resize: vertical; font-family: var(--mono); font-size: 12px; }
+	label .hint { font-size: 11px; color: var(--muted-2); font-weight: 500; text-transform: none; letter-spacing: 0; margin-top: -2px; }
+	.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+	@media (max-width: 540px) { .row-2 { grid-template-columns: 1fr; } }
+
+	.form-error {
+		padding: 10px 12px; border-radius: 8px;
+		background: #1f1416; border: 1px solid #7f1d1d; color: #fca5a5;
+		font-size: 12px; font-family: var(--mono);
+	}
+	.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+
+	/* Drawer for SKU detail */
+	.drawer {
+		position: fixed; top: 0; right: 0; bottom: 0;
+		width: 100%; max-width: 540px;
+		background: var(--panel); border-left: 1px solid var(--border);
+		transform: translateX(100%); transition: transform 0.22s ease-out;
+		z-index: 90; overflow: auto;
+		box-shadow: -24px 0 60px rgba(0, 0, 0, 0.4);
+	}
+	.drawer.show { transform: translateX(0); }
+	.drawer-head {
+		padding: 22px 24px 14px;
+		border-bottom: 1px solid var(--border);
+	}
+	.drawer-head .merchant { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+	.drawer-head .action-name { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
+	.drawer-head .url {
+		margin-top: 12px; font-family: var(--mono); font-size: 12px;
+		color: var(--muted);
+		background: var(--bg-2); padding: 8px 12px; border-radius: 8px;
+		display: flex; align-items: center; gap: 8px; word-break: break-all;
+	}
+	.drawer-head .url-copy {
+		background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+		font-size: 11px; padding: 4px 8px; border-radius: 5px; cursor: pointer; font-family: inherit;
+		flex: 0 0 auto;
+	}
+	.drawer-head .url-copy:hover { color: var(--text); border-color: var(--border-strong); }
+	.drawer-head .url-copy.copied { color: var(--green); border-color: var(--green); }
+	.drawer-body { padding: 18px 24px 24px; }
+	.drawer-body section { margin-bottom: 26px; }
+	.drawer-body section h4 {
+		margin: 0 0 10px; font-size: 11px; color: var(--muted);
+		text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+	}
+
+	.call-list { font-family: var(--mono); font-size: 12px; }
+	.call-row {
+		display: grid; grid-template-columns: 110px 1fr 100px 80px;
+		gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border);
+		align-items: center;
+	}
+	.call-row:last-child { border-bottom: none; }
+	.call-row .ago { color: var(--muted); }
+	.call-row .who { color: var(--text); word-break: break-all; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.call-row .amount { color: var(--green); text-align: right; font-weight: 600; }
+	.call-row .net { color: var(--muted-2); text-align: right; }
+
+	.drawer-actions {
+		display: flex; gap: 8px; padding: 14px 24px;
+		border-top: 1px solid var(--border);
+		position: sticky; bottom: 0; background: var(--panel);
+	}
+</style>
+</head>
+<body>
+
+<header>
+	<a class="brand" href="/x402">
+		<div class="dot"></div>
+		<span>x402</span>
+	</a>
+	<span class="crumb">/ Dashboard</span>
+	<div class="right">
+		<a href="/x402" class="btn ghost">View landing</a>
+		<button class="btn" id="newBtn">+ New SKU</button>
+	</div>
+</header>
+
+<div class="wrap">
+	<h1>Checkout SKUs</h1>
+	<p class="sub">Hosted checkout links for your paid endpoints. Each SKU gets a shareable URL — buyers pay with one click.</p>
+
+	<div class="stats" id="stats" style="display:none">
+		<div class="stat-card">
+			<div class="k">Active SKUs</div>
+			<div class="v" id="s-skus">—</div>
+		</div>
+		<div class="stat-card">
+			<div class="k">Paid calls</div>
+			<div class="v" id="s-calls">—</div>
+		</div>
+		<div class="stat-card">
+			<div class="k">Gross revenue</div>
+			<div class="v" id="s-revenue">—<span class="unit"> USDC</span></div>
+		</div>
+	</div>
+
+	<div class="skus-head">
+		<h2>Your SKUs</h2>
+	</div>
+
+	<div id="content"></div>
+</div>
+
+<!-- Create / edit modal -->
+<div class="modal-overlay" id="modal">
+	<div class="modal">
+		<div class="modal-head">
+			<h3 id="modalTitle">New SKU</h3>
+			<button class="modal-close" id="modalClose">✕</button>
+		</div>
+		<form class="modal-body" id="skuForm">
+			<label>
+				URL slug
+				<input name="slug" required pattern="^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$" placeholder="pro-summary" />
+				<span class="hint">Used in the public URL: /pay/c/&lt;slug&gt;. 3–64 chars, lowercase + hyphens.</span>
+			</label>
+			<div class="row-2">
+				<label>
+					Merchant
+					<input name="merchant_name" required maxlength="80" placeholder="Acme" />
+				</label>
+				<label>
+					Action
+					<input name="action_name" required maxlength="80" placeholder="Summarize text" />
+				</label>
+			</div>
+			<label>
+				Description
+				<textarea name="description" maxlength="2000" placeholder="What does this charge for?"></textarea>
+				<span class="hint">Optional. Shown on the hosted checkout page.</span>
+			</label>
+			<label>
+				Target endpoint
+				<input name="target_endpoint" type="url" required placeholder="https://api.acme.com/summarize" />
+				<span class="hint">A 402-enabled URL. Returns the price + a settlement receipt.</span>
+			</label>
+			<div class="row-2">
+				<label>
+					Method
+					<select name="target_method">
+						<option value="GET">GET</option>
+						<option value="POST">POST</option>
+					</select>
+				</label>
+				<label>
+					Accent color
+					<input name="accent_color" type="color" value="#0a84ff" />
+				</label>
+			</div>
+			<label id="bodyLabel" style="display:none">
+				Request body (JSON)
+				<textarea name="target_body" placeholder='{"text":"hello"}'></textarea>
+			</label>
+			<label>
+				Logo URL
+				<input name="logo_url" type="url" placeholder="https://acme.com/logo.png" />
+				<span class="hint">Optional.</span>
+			</label>
+			<label>
+				Success redirect
+				<input name="success_url" type="url" placeholder="https://acme.com/thanks" />
+				<span class="hint">Optional. Where to send the buyer after a successful payment.</span>
+			</label>
+			<div id="formError" class="form-error" style="display:none"></div>
+			<div class="form-actions">
+				<button type="button" class="btn ghost" id="cancelBtn">Cancel</button>
+				<button type="submit" class="btn" id="saveBtn">Create</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- Detail drawer -->
+<aside class="drawer" id="drawer">
+	<div class="drawer-head">
+		<div class="merchant" id="d-merchant">—</div>
+		<div class="action-name" id="d-action">—</div>
+		<div class="url" id="d-url">
+			<span id="d-url-text">—</span>
+			<button class="url-copy" id="d-url-copy">copy</button>
+		</div>
+	</div>
+	<div class="drawer-body">
+		<section>
+			<h4>Performance</h4>
+			<div class="stats" style="display:grid;margin-bottom:0">
+				<div class="stat-card"><div class="k">Calls</div><div class="v" id="d-s-calls">—</div></div>
+				<div class="stat-card"><div class="k">Revenue</div><div class="v" id="d-s-revenue">—<span class="unit"> USDC</span></div></div>
+				<div class="stat-card"><div class="k">Unique payers</div><div class="v" id="d-s-payers">—</div></div>
+			</div>
+		</section>
+		<section>
+			<h4>Recent calls</h4>
+			<div class="call-list" id="d-calls"><div style="color:var(--muted);font-family:inherit;font-size:13px">No calls yet.</div></div>
+		</section>
+		<section>
+			<h4>Endpoint</h4>
+			<div class="url" id="d-endpoint">—</div>
+		</section>
+	</div>
+	<div class="drawer-actions">
+		<button class="btn ghost" id="d-edit">Edit</button>
+		<button class="btn ghost" id="d-open">Open page ↗</button>
+		<button class="btn danger" id="d-archive" style="margin-left:auto">Archive</button>
+	</div>
+</aside>
+
+<script type="module">
+	const $ = (id) => document.getElementById(id);
+	const content = $('content');
+	let cachedSkus = [];
+	let editingId = null;
+
+	function escapeHtml(s) {
+		return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+	}
+	function fmtUsdc(atomics) {
+		const n = Number(atomics || 0) / 1_000_000;
+		if (n === 0) return '0.00';
+		if (n < 0.01) return n.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
+		if (n < 1) return n.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+		return n.toFixed(2);
+	}
+	function fmtAgo(ts) {
+		if (!ts) return '—';
+		const d = Math.max(0, Date.now() - new Date(ts).getTime());
+		if (d < 60_000) return `${Math.floor(d / 1000)}s ago`;
+		if (d < 3600_000) return `${Math.floor(d / 60_000)}m ago`;
+		if (d < 86400_000) return `${Math.floor(d / 3600_000)}h ago`;
+		return `${Math.floor(d / 86400_000)}d ago`;
+	}
+
+	async function loadList() {
+		try {
+			const r = await fetch('/api/x402-skus', { credentials: 'include' });
+			if (r.status === 401) {
+				renderUnauth();
+				return;
+			}
+			if (!r.ok) throw new Error(`HTTP ${r.status}`);
+			const { skus } = await r.json();
+			cachedSkus = skus || [];
+			renderList();
+		} catch (err) {
+			content.innerHTML = `<div class="empty"><h3>Couldn't load SKUs</h3><p>${escapeHtml(err.message)}</p></div>`;
+		}
+	}
+
+	function renderUnauth() {
+		content.innerHTML = `
+			<div class="empty">
+				<h3>Sign in to manage your checkout SKUs</h3>
+				<p>Each SKU becomes a hosted /pay/c/&lt;slug&gt; URL that accepts x402 payments.</p>
+				<p style="margin-top:18px"><a class="btn ghost" href="/login?redirect=/dashboard/x402">Sign in</a></p>
+			</div>`;
+		$('stats').style.display = 'none';
+	}
+
+	function renderList() {
+		if (!cachedSkus.length) {
+			content.innerHTML = `
+				<div class="empty">
+					<h3>No SKUs yet</h3>
+					<p>Create your first checkout link — point it at any 402-enabled endpoint.</p>
+					<p style="margin-top:18px"><button class="btn" onclick="document.getElementById('newBtn').click()">+ Create SKU</button></p>
+				</div>`;
+			$('stats').style.display = 'none';
+			return;
+		}
+		// roll-up stats
+		const totalCalls = cachedSkus.reduce((s, x) => s + (x.paid_calls || 0), 0);
+		const totalAtomics = cachedSkus.reduce((s, x) => s + Number(x.gross_atomics || 0), 0);
+		$('s-skus').textContent = cachedSkus.length;
+		$('s-calls').textContent = totalCalls;
+		$('s-revenue').innerHTML = `${fmtUsdc(totalAtomics)}<span class="unit"> USDC</span>`;
+		$('stats').style.display = 'grid';
+
+		content.innerHTML = `<div class="sku-table">${cachedSkus.map((s) => `
+			<div class="sku-row" data-id="${s.id}">
+				<div>
+					<div class="name">${escapeHtml(s.merchant_name)} · ${escapeHtml(s.action_name)}</div>
+					<div class="slug">/pay/c/${escapeHtml(s.slug)}</div>
+				</div>
+				<div class="calls"><strong>${s.paid_calls || 0}</strong> calls</div>
+				<div class="revenue">${fmtUsdc(s.gross_atomics)}</div>
+				<div class="actions">
+					<button class="btn ghost" data-act="open">Details</button>
+				</div>
+			</div>
+		`).join('')}</div>`;
+		content.querySelectorAll('.sku-row').forEach((row) => {
+			const id = row.dataset.id;
+			row.querySelector('[data-act="open"]').addEventListener('click', () => openDrawer(id));
+		});
+	}
+
+	// ─── Modal (create / edit) ───
+	const modal = $('modal');
+	const modalTitle = $('modalTitle');
+	const skuForm = $('skuForm');
+	const saveBtn = $('saveBtn');
+	const formError = $('formError');
+	const bodyLabel = $('bodyLabel');
+
+	function openModal(sku) {
+		editingId = sku?.id || null;
+		modalTitle.textContent = sku ? 'Edit SKU' : 'New SKU';
+		saveBtn.textContent = sku ? 'Save' : 'Create';
+		formError.style.display = 'none';
+		skuForm.reset();
+		if (sku) {
+			for (const [k, v] of Object.entries(sku)) {
+				if (k === 'target_body' && v) skuForm.target_body.value = JSON.stringify(v, null, 2);
+				else if (skuForm[k] != null && v != null) skuForm[k].value = v;
+			}
+		}
+		toggleBody();
+		modal.classList.add('show');
+	}
+	function closeModal() {
+		modal.classList.remove('show');
+		editingId = null;
+	}
+	function toggleBody() {
+		bodyLabel.style.display = skuForm.target_method.value === 'POST' ? '' : 'none';
+	}
+	skuForm.target_method.addEventListener('change', toggleBody);
+
+	$('newBtn').addEventListener('click', () => openModal(null));
+	$('modalClose').addEventListener('click', closeModal);
+	$('cancelBtn').addEventListener('click', closeModal);
+	modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+	skuForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		formError.style.display = 'none';
+		saveBtn.disabled = true;
+		try {
+			const fd = new FormData(skuForm);
+			const payload = Object.fromEntries(fd.entries());
+			// Drop empties so PATCH doesn't clobber existing values.
+			for (const k of Object.keys(payload)) if (payload[k] === '') delete payload[k];
+			if (payload.target_body) {
+				try { payload.target_body = JSON.parse(payload.target_body); }
+				catch { throw new Error('Request body must be valid JSON.'); }
+			} else delete payload.target_body;
+
+			const url = editingId ? `/api/x402-skus?id=${editingId}` : '/api/x402-skus';
+			const method = editingId ? 'PATCH' : 'POST';
+			const r = await fetch(url, {
+				method, credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(payload),
+			});
+			const data = await r.json();
+			if (!r.ok) throw new Error(data.error_description || data.error || `HTTP ${r.status}`);
+			closeModal();
+			await loadList();
+		} catch (err) {
+			formError.textContent = err.message;
+			formError.style.display = '';
+		} finally {
+			saveBtn.disabled = false;
+		}
+	});
+
+	// ─── Drawer (detail) ───
+	const drawer = $('drawer');
+	let openSkuId = null;
+	async function openDrawer(id) {
+		openSkuId = id;
+		drawer.classList.add('show');
+		try {
+			const r = await fetch(`/api/x402-skus?id=${id}&stats=1`, { credentials: 'include' });
+			if (!r.ok) throw new Error(`HTTP ${r.status}`);
+			const { sku, stats, recent } = await r.json();
+			renderDrawer(sku, stats, recent);
+		} catch (err) {
+			$('d-calls').innerHTML = `<div class="form-error">${escapeHtml(err.message)}</div>`;
+		}
+	}
+	function closeDrawer() {
+		drawer.classList.remove('show');
+		openSkuId = null;
+	}
+	function renderDrawer(sku, stats, recent) {
+		$('d-merchant').textContent = sku.merchant_name;
+		$('d-action').textContent = sku.action_name;
+		const publicUrl = `${location.origin}/pay/c/${sku.slug}`;
+		$('d-url-text').textContent = publicUrl;
+		$('d-url-copy').onclick = async () => {
+			await navigator.clipboard.writeText(publicUrl);
+			$('d-url-copy').textContent = '✓';
+			$('d-url-copy').classList.add('copied');
+			setTimeout(() => { $('d-url-copy').textContent = 'copy'; $('d-url-copy').classList.remove('copied'); }, 1600);
+		};
+		$('d-s-calls').textContent = stats.paid_calls || 0;
+		$('d-s-revenue').innerHTML = `${fmtUsdc(stats.gross_atomics)}<span class="unit"> USDC</span>`;
+		$('d-s-payers').textContent = stats.unique_payers || 0;
+		$('d-endpoint').innerHTML = `<span style="word-break:break-all">${escapeHtml(sku.target_method)} ${escapeHtml(sku.target_endpoint)}</span>`;
+		if (recent?.length) {
+			$('d-calls').innerHTML = recent.map((c) => {
+				const netLabel = c.network?.startsWith('solana') ? 'sol' : c.network === 'eip155:8453' ? 'base' : c.network?.slice(0, 8);
+				const explorer = c.tx_signature
+					? (c.network?.startsWith('solana') ? `https://solscan.io/tx/${c.tx_signature}` : `https://basescan.org/tx/${c.tx_signature}`)
+					: null;
+				const who = c.payer_address ? `${c.payer_address.slice(0, 6)}…${c.payer_address.slice(-4)}` : '—';
+				return `<div class="call-row">
+					<span class="ago">${fmtAgo(c.paid_at)}</span>
+					<span class="who">${escapeHtml(who)}</span>
+					<span class="amount">${fmtUsdc(c.amount_atomics)}</span>
+					<span class="net">${explorer ? `<a href="${explorer}" target="_blank">${netLabel} ↗</a>` : escapeHtml(netLabel || '—')}</span>
+				</div>`;
+			}).join('');
+		} else {
+			$('d-calls').innerHTML = `<div style="color:var(--muted);font-family:inherit;font-size:13px">No calls yet. Share your link to start collecting.</div>`;
+		}
+		$('d-edit').onclick = () => { closeDrawer(); openModal(sku); };
+		$('d-open').onclick = () => window.open(publicUrl, '_blank');
+		$('d-archive').onclick = async () => {
+			if (!confirm(`Archive "${sku.merchant_name} · ${sku.action_name}"? The link will stop working.`)) return;
+			const r = await fetch(`/api/x402-skus?id=${sku.id}`, { method: 'DELETE', credentials: 'include' });
+			if (r.ok) { closeDrawer(); await loadList(); }
+			else alert('Archive failed: ' + (await r.text()));
+		};
+	}
+
+	// Click outside drawer to close
+	document.addEventListener('click', (e) => {
+		if (!drawer.classList.contains('show')) return;
+		if (drawer.contains(e.target)) return;
+		if (e.target.closest('.sku-row')) return;
+		closeDrawer();
+	});
+	document.addEventListener('keydown', (e) => {
+		if (e.key !== 'Escape') return;
+		if (drawer.classList.contains('show')) closeDrawer();
+		if (modal.classList.contains('show')) closeModal();
+	});
+
+	loadList();
+</script>
+
+</body>
+</html>

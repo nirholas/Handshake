@@ -1,0 +1,1840 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Agent · Pump.fun · Dashboard · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--ok: #4ade80;
+				--warn: #fbbf24;
+				--err: #f87171;
+				--border: #22222e;
+				--bg: #000;
+				--panel: #14141c;
+				--panel2: #1a1a24;
+				--muted: #888;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font:
+					15px/1.55 -apple-system,
+					system-ui,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a {
+				color: #9a8cff;
+				text-decoration: none;
+			}
+			a:hover {
+				text-decoration: underline;
+			}
+			header.site-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 18px;
+				padding: 14px 24px;
+				border-bottom: 1px solid var(--border);
+				position: sticky;
+				top: 0;
+				background: rgba(0, 0, 0, 0.85);
+				backdrop-filter: blur(8px);
+				z-index: 5;
+			}
+			.site-header .brand {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+				color: #fff;
+			}
+			.site-header .brand img {
+				height: 22px;
+				width: auto;
+				display: block;
+			}
+			.site-nav {
+				display: flex;
+				gap: 2px;
+				flex-wrap: wrap;
+				margin-left: auto;
+			}
+			.site-nav a {
+				font-size: 13px;
+				padding: 7px 11px;
+				border-radius: 7px;
+				color: #bbb;
+			}
+			.site-nav a:hover {
+				background: var(--panel);
+				text-decoration: none;
+				color: #eee;
+			}
+			.site-nav a.active {
+				background: var(--panel);
+				color: #fff;
+			}
+			.brand {
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			.crumb {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 10px 24px;
+				border-bottom: 1px solid var(--border);
+				background: var(--bg);
+				position: sticky;
+				top: 53px;
+				z-index: 4;
+				font-size: 13px;
+			}
+			.crumb a { color: #9a8cff; }
+			.crumb .sep { color: #555; }
+			footer.site-footer {
+				margin-top: 40px;
+				padding: 28px 24px 36px;
+				border-top: 1px solid var(--border);
+				background: #06060a;
+				color: var(--muted);
+				font-size: 13px;
+			}
+			.site-footer-inner {
+				max-width: 1280px;
+				margin: 0 auto;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 18px;
+				align-items: center;
+				justify-content: space-between;
+			}
+			.site-footer-brand {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				color: #ddd;
+				font-weight: 600;
+			}
+			.site-footer-brand img { height: 18px; width: auto; }
+			.site-footer-links {
+				display: flex;
+				gap: 14px;
+				flex-wrap: wrap;
+			}
+			.site-footer-links a { color: #aaa; }
+			.site-footer-links a:hover { color: #fff; }
+			.site-footer-legal { color: #666; font-size: 12px; }
+			main {
+				padding: 28px;
+				max-width: 1280px;
+				margin: 0 auto;
+			}
+			.layout {
+				display: grid;
+				grid-template-columns: 360px 1fr;
+				gap: 18px;
+				align-items: start;
+			}
+			.layout > .col-side {
+				position: sticky;
+				top: 110px;
+			}
+			@media (max-width: 900px) {
+				.layout {
+					grid-template-columns: 1fr;
+				}
+				.layout > .col-side {
+					position: static;
+				}
+			}
+			h1 {
+				font-size: 22px;
+				margin: 0 0 6px;
+				letter-spacing: -0.01em;
+			}
+			.sub {
+				color: var(--muted);
+				margin: 0 0 22px;
+				font-size: 14px;
+			}
+			.panel {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 14px;
+				padding: 18px 20px;
+				margin: 0 0 18px;
+			}
+			.panel h2 {
+				margin: 0 0 12px;
+				font-size: 15px;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+				color: #ddd;
+				text-transform: uppercase;
+			}
+			.row {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				flex-wrap: wrap;
+			}
+			.col {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+			label {
+				display: block;
+				font-size: 12px;
+				color: var(--muted);
+				margin-bottom: 4px;
+			}
+			input,
+			select {
+				background: var(--panel2);
+				color: #eee;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 9px 11px;
+				font: inherit;
+				min-width: 0;
+			}
+			input:focus,
+			select:focus {
+				outline: none;
+				border-color: var(--accent);
+			}
+			.field {
+				flex: 1 1 180px;
+				min-width: 0;
+			}
+			.btn {
+				padding: 8px 14px;
+				border-radius: 6px;
+				border: 1px solid #2a2a36;
+				font: inherit;
+				font-weight: 600;
+				cursor: pointer;
+				background: #000;
+				color: #fff;
+				transition: border-color 0.12s ease, background 0.12s ease;
+			}
+			.btn:hover:not(:disabled) {
+				border-color: #3d3d52;
+				background: #0a0a12;
+			}
+			.btn:disabled {
+				opacity: 0.45;
+				cursor: not-allowed;
+			}
+			.btn.ghost {
+				background: transparent;
+				border: 1px solid #22222e;
+				color: #ddd;
+			}
+			.btn.ghost:hover:not(:disabled) {
+				background: #15151d;
+				border-color: #2e2e3e;
+			}
+			.btn.danger {
+				background: #3a1d22;
+				color: var(--err);
+				border: 1px solid #4a2329;
+			}
+			.btn.buy {
+				background: #16a34a;
+				color: #fff;
+			}
+			.btn.sell {
+				background: #3a1d22;
+				color: #fca5a5;
+				border: 1px solid #6b2530;
+			}
+			.btn.sell:hover {
+				background: #4a2329;
+			}
+			.subnav {
+				display: flex;
+				gap: 4px;
+				flex-wrap: wrap;
+				padding: 8px 24px;
+				border-bottom: 1px solid var(--border);
+				background: var(--bg);
+				position: sticky;
+				top: 96px;
+				z-index: 4;
+			}
+			.subnav a {
+				font-size: 13px;
+				padding: 6px 11px;
+				border-radius: 7px;
+				color: #bbb;
+			}
+			.subnav a:hover {
+				background: var(--panel);
+				text-decoration: none;
+				color: #eee;
+			}
+			.subnav a.active {
+				background: var(--panel);
+				color: #fff;
+				border: 1px solid var(--border);
+			}
+			.kv {
+				display: grid;
+				grid-template-columns: 140px 1fr;
+				gap: 6px 14px;
+				font-size: 13px;
+			}
+			.kv dt {
+				color: var(--muted);
+			}
+			.kv dd {
+				margin: 0;
+				word-break: break-all;
+				font-family: ui-monospace, Menlo, monospace;
+			}
+			pre {
+				background: var(--panel2);
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 10px 12px;
+				overflow-x: auto;
+				font-size: 12px;
+				color: #cbd5e1;
+				white-space: pre-wrap;
+				word-break: break-all;
+			}
+			.toast {
+				position: fixed;
+				right: 22px;
+				bottom: 22px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 11px 14px;
+				font-size: 13px;
+				max-width: 400px;
+				box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+				opacity: 0;
+				transform: translateY(8px);
+				transition:
+					opacity 0.18s,
+					transform 0.18s;
+				pointer-events: none;
+			}
+			.toast.show {
+				opacity: 1;
+				transform: none;
+			}
+			.toast.ok {
+				border-color: #1f4232;
+			}
+			.toast.err {
+				border-color: #4a2329;
+				color: var(--err);
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 13px;
+			}
+			th,
+			td {
+				padding: 8px 10px;
+				border-bottom: 1px solid var(--border);
+				text-align: left;
+			}
+			th {
+				color: var(--muted);
+				font-weight: 500;
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+			}
+			td.mono {
+				font-family: ui-monospace, Menlo, monospace;
+				font-size: 12px;
+			}
+			.pnl-pos {
+				color: var(--ok);
+			}
+			.pnl-neg {
+				color: var(--err);
+			}
+			.muted {
+				color: var(--muted);
+			}
+			.tag {
+				font-size: 11px;
+				padding: 2px 7px;
+				border-radius: 999px;
+				background: var(--panel2);
+				border: 1px solid var(--border);
+			}
+			.tag.devnet {
+				color: var(--warn);
+				border-color: #4a3a18;
+				background: #2a200a;
+			}
+			.tag.mainnet {
+				color: var(--ok);
+				border-color: #1f4232;
+				background: #0e1f17;
+			}
+			.net-badge {
+				font-size: 11px;
+				padding: 2px 8px;
+				border-radius: 999px;
+				margin-left: 8px;
+				vertical-align: middle;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+			}
+			.skeleton {
+				display: inline-block;
+				min-width: 80px;
+				height: 12px;
+				border-radius: 4px;
+				background: linear-gradient(90deg, #1a1a24 0%, #24242e 50%, #1a1a24 100%);
+				background-size: 200% 100%;
+				animation: shimmer 1.2s linear infinite;
+				vertical-align: middle;
+			}
+			@keyframes shimmer {
+				0% { background-position: 200% 0; }
+				100% { background-position: -200% 0; }
+			}
+			.empty-cta {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 6px;
+				padding: 24px 12px;
+				color: var(--muted);
+				font-size: 13px;
+			}
+			.empty-cta b { color: #ddd; font-weight: 600; }
+			details.debug summary {
+				cursor: pointer;
+				color: var(--muted);
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				user-select: none;
+			}
+			details.debug[open] summary { margin-bottom: 10px; }
+			.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+			.stat-card { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+			.stat-card.bad { background: #1f1418; border-color: #4a1f23; }
+			.stat-card.good { background: #0e1f17; border-color: #1f4232; }
+			.stat-card .v { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: #f1f1f1; }
+			.stat-card .l { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+			.stat-card .l .delta { text-transform: none; letter-spacing: 0; margin-left: 4px; color: #aaa; }
+		</style>
+	</head>
+	<body>
+		<header class="site-header">
+			<a class="brand" href="/" aria-label="three.ws home">
+				<img src="/three.svg" alt="" aria-hidden="true" />
+				<span>three.ws</span>
+			</a>
+			<nav class="site-nav" aria-label="Primary">
+				<a href="/app">Viewer</a>
+				<a href="/create">Create</a>
+				<a href="/discover">Discover</a>
+				<a href="/widgets">Widgets</a>
+				<a href="/studio">Studio</a>
+				<a href="/docs">Docs</a>
+				<a href="/dashboard" class="active" aria-current="page">Dashboard</a>
+			</nav>
+			<div id="header-user-slot"></div>
+		</header>
+
+		<div class="crumb">
+			<a href="/dashboard">← Dashboard</a>
+			<span class="sep">/</span>
+			<span class="brand">Agent · Pump.fun</span>
+		</div>
+
+		<nav class="subnav" aria-label="Agent wallet tools">
+			<a href="/dashboard/agent-pumpfun" class="active" aria-current="page">Pump.fun</a>
+			<a href="/dashboard/wallets">Wallets</a>
+			<a href="/vanity-wallet">Vanity ✦</a>
+			<a href="/strategy-lab">Strategy lab</a>
+			<a href="/reputation">Reputation</a>
+			<a href="/pumpfun" target="_blank" rel="noopener">Live feed ↗</a>
+		</nav>
+
+		<main>
+			<h1>Agent control panel<span class="tag net-badge mainnet" id="net-badge">mainnet</span></h1>
+			<p class="sub">
+				Each agent has its own Solana wallet. Launch tokens, trade on the bonding curve, and
+				watch positions — the agent signs every transaction from its server-held keypair
+				(subject to its spend policy).
+			</p>
+
+			<div class="layout">
+			<div class="col-side">
+			<section class="panel" id="agent-panel">
+				<h2>Agent</h2>
+				<div class="row">
+					<div class="field">
+						<label for="agent-select">Identity</label>
+						<select id="agent-select"></select>
+					</div>
+					<div class="field" style="flex: 0 0 160px">
+						<label for="network-select">Network</label>
+						<select id="network-select">
+							<option value="mainnet">mainnet</option>
+							<option value="devnet">devnet</option>
+						</select>
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn ghost" id="refresh-btn">Refresh</button>
+					</div>
+				</div>
+				<div style="margin-top: 14px">
+					<dl class="kv">
+						<dt>Address</dt>
+						<dd id="agent-address" class="muted"><span class="skeleton" style="width:180px"></span></dd>
+						<dt>Balance</dt>
+						<dd id="agent-balance" class="muted"><span class="skeleton" style="width:80px"></span></dd>
+					</dl>
+					<div class="row" style="margin-top: 10px">
+						<button class="btn ghost" id="provision-btn" hidden>
+							Provision Solana wallet
+						</button>
+						<a
+							class="btn ghost"
+							id="vanity-link"
+							href="/vanity-wallet"
+							target="_blank"
+							rel="noopener"
+							>Grind vanity address ✦</a
+						>
+						<a
+							id="explorer-link"
+							class="muted"
+							href="#"
+							target="_blank"
+							rel="noopener"
+							hidden
+							>Open on Solscan ↗</a
+						>
+					</div>
+				</div>
+			</section>
+
+			<section class="panel" id="sns-panel">
+				<h2>
+					SNS identity
+					<span class="muted" style="font-size: 13px; font-weight: normal"
+						>(Solana Name Service)</span
+					>
+				</h2>
+				<p class="muted" style="margin: 0 0 10px; font-size: 13px">
+					Attach a <code>.sol</code> domain owned by this agent's wallet so it can be
+					referenced by name.
+				</p>
+				<dl class="kv">
+					<dt>Current</dt>
+					<dd id="sns-current" class="muted">—</dd>
+				</dl>
+				<div
+					id="sns-domain-list"
+					class="row"
+					style="margin-top: 8px; flex-wrap: wrap; gap: 6px"
+				></div>
+				<div class="row" style="margin-top: 10px">
+					<button class="btn ghost" id="sns-refresh-btn">Refresh domains</button>
+					<button class="btn ghost" id="sns-clear-btn" hidden>Clear SNS id</button>
+					<a
+						id="sns-register-link"
+						class="muted"
+						href="https://www.sns.id"
+						target="_blank"
+						rel="noopener"
+						>Register a name on sns.id</a
+					>
+				</div>
+				<div id="sns-registrar" style="margin-top: 14px">
+					<div class="field">
+						<label for="sns-register-label">Register a .sol domain</label>
+						<div class="row" style="gap: 6px; align-items: center">
+							<input id="sns-register-label" placeholder="myagent" maxlength="63" autocomplete="off" />
+							<span class="muted" style="font-family: ui-monospace, Menlo, monospace; font-size: 13px">.sol</span>
+						</div>
+						<p id="sns-check-status" class="muted" style="margin: 6px 0 0; font-size: 12px; min-height: 1.3em">
+							Bonfida pricing (1y): 1 char $750 · 2 $700 · 3 $640 · 4 $160 · 5+ $20. Paid in USDC.
+						</p>
+					</div>
+					<div class="row" style="margin-top: 10px; gap: 8px; flex-wrap: wrap">
+						<button class="btn" id="sns-register-agent-btn" disabled>Pay with agent wallet</button>
+						<button class="btn ghost" id="sns-register-user-btn" disabled>Pay with my wallet</button>
+					</div>
+				</div>
+			</section>
+			</div>
+
+			<div class="col-main">
+			<section class="panel">
+				<h2>Launch a pump.fun token</h2>
+				<div class="row">
+					<div class="field">
+						<label for="launch-name">Name</label>
+						<input id="launch-name" placeholder="My Agent Coin" />
+					</div>
+					<div class="field" style="flex: 0 0 160px">
+						<label for="launch-symbol">Symbol</label>
+						<input id="launch-symbol" placeholder="AGENT" maxlength="10" />
+					</div>
+					<div class="field" style="flex: 0 0 120px">
+						<label for="launch-vanity">Vanity prefix</label>
+						<input id="launch-vanity" placeholder="PUMP" maxlength="6" />
+					</div>
+					<div class="field" style="flex: 0 0 120px">
+						<label for="launch-vanity-suffix">Vanity suffix</label>
+						<input id="launch-vanity-suffix" placeholder="pump" maxlength="6" />
+					</div>
+					<div class="field" style="flex: 0 0 130px">
+						<label for="launch-sol">Initial buy (SOL)</label>
+						<input id="launch-sol" type="number" min="0" step="0.001" placeholder="0" />
+					</div>
+					<div class="field" style="flex: 0 0 auto; padding-top: 22px">
+						<label style="display: flex; align-items: center; gap: 6px; color: #ddd">
+							<input type="checkbox" id="launch-vanity-ic" /> ignore case
+						</label>
+					</div>
+				</div>
+				<div class="row" style="margin-top: 10px">
+					<div class="field">
+						<label for="launch-uri"
+							>Metadata URI
+							<span class="muted">(auto-filled to agent metadata)</span></label
+						>
+						<input id="launch-uri" />
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn" id="launch-btn">Launch</button>
+					</div>
+				</div>
+				<p class="muted" style="margin: 10px 0 0; font-size: 12px">
+					Base58 only (no 0/O/I/l). Combined prefix+suffix length: 3 chars ≈ instant, 4 ≈
+					seconds, 5 ≈ minutes, 6+ may time out. Powered by
+					<a
+						href="https://github.com/nirholas/solana-wallet-toolkit"
+						target="_blank"
+						rel="noopener"
+						>solana-wallet-toolkit</a
+					>.
+				</p>
+			</section>
+
+			<section class="panel" id="vanity-panel">
+				<h2>Vanity grinder ✦</h2>
+				<p class="muted" style="margin: 0 0 10px; font-size: 13px">
+					Grind a Solana keypair entirely in your browser — keys never leave this tab.
+					Use the result for your next pump.fun launch, or assign it as the agent's wallet.
+					Base58 only (no <code>0/O/I/l</code>). 5–6 chars can take minutes; 7+ is impractical.
+				</p>
+				<div class="row">
+					<div class="field" style="flex: 0 0 140px">
+						<label for="vg-prefix">Prefix</label>
+						<input id="vg-prefix" placeholder="PUMP" maxlength="6" autocomplete="off" />
+					</div>
+					<div class="field" style="flex: 0 0 140px">
+						<label for="vg-suffix">Suffix</label>
+						<input id="vg-suffix" placeholder="pump" maxlength="6" autocomplete="off" />
+					</div>
+					<div class="field" style="flex: 0 0 auto; padding-top: 22px">
+						<label style="display:flex;align-items:center;gap:6px;color:#ddd">
+							<input type="checkbox" id="vg-ic" /> ignore case
+						</label>
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn" id="vg-start">Start grinding</button>
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn ghost" id="vg-stop" hidden>Stop</button>
+					</div>
+				</div>
+				<div id="vg-progress" class="muted" style="margin-top:10px;font-size:13px;font-family:ui-monospace,Menlo,monospace">
+					Idle. Estimated attempts shown after you enter a pattern.
+				</div>
+				<div id="vg-result" hidden style="margin-top:12px">
+					<dl class="kv">
+						<dt>Address</dt>
+						<dd id="vg-address" class="mono"></dd>
+						<dt>Attempts</dt>
+						<dd id="vg-attempts"></dd>
+						<dt>Duration</dt>
+						<dd id="vg-duration"></dd>
+					</dl>
+					<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+						<button class="btn" id="vg-use-launch">Use for next launch</button>
+						<button class="btn ghost" id="vg-assign">Assign as agent wallet</button>
+						<button class="btn ghost" id="vg-copy">Copy secret JSON</button>
+						<button class="btn ghost" id="vg-discard">Discard</button>
+					</div>
+					<p class="muted" style="margin:8px 0 0;font-size:12px">
+						The secret is held in this tab only. Closing or refreshing this page erases it.
+					</p>
+				</div>
+			</section>
+
+			<section class="panel">
+				<h2>Trade on the bonding curve</h2>
+				<div class="row">
+					<div class="field">
+						<label for="trade-mint">Mint</label>
+						<input id="trade-mint" placeholder="Mint address" />
+					</div>
+					<div class="field" style="flex: 0 0 140px">
+						<label for="trade-slippage">Slippage (bps)</label>
+						<input id="trade-slippage" type="number" min="0" max="10000" value="500" />
+					</div>
+				</div>
+				<div class="row" style="margin-top: 10px">
+					<div class="field">
+						<label for="buy-sol">Buy with SOL</label>
+						<input id="buy-sol" type="number" min="0" step="0.001" placeholder="0.05" />
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn buy" id="buy-btn">Buy</button>
+					</div>
+					<div class="field">
+						<label for="sell-tokens">Sell tokens (base units)</label>
+						<input id="sell-tokens" placeholder="1000000000" />
+					</div>
+					<div style="flex: 0 0 auto; padding-top: 19px">
+						<button class="btn sell" id="sell-btn">Sell</button>
+					</div>
+				</div>
+			</section>
+
+			<section class="panel">
+				<div class="row" style="justify-content: space-between">
+					<h2 style="margin: 0">Portfolio</h2>
+					<button class="btn ghost" id="portfolio-btn">Refresh portfolio</button>
+				</div>
+				<div id="portfolio-totals" class="muted" style="margin: 10px 0; font-size: 13px">
+					—
+				</div>
+				<div id="portfolio-table-wrap">
+					<table id="portfolio-table">
+						<thead>
+							<tr>
+								<th>Mint</th>
+								<th>SOL in</th>
+								<th>SOL out</th>
+								<th>Token bal</th>
+								<th>Est. value (SOL)</th>
+								<th>Unrealized PnL</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td colspan="7">
+									<div class="empty-cta">
+										<b>No positions yet.</b>
+										<span>Launch a token above, or paste a mint into the trade panel to start tracking.</span>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="panel" id="indexer-panel" hidden>
+				<div style="display: flex; justify-content: space-between; align-items: center">
+					<h2 style="margin: 0">Token indexer</h2>
+					<button class="btn ghost" id="indexer-refresh">Refresh</button>
+				</div>
+				<div class="muted" style="font-size: 13px; margin: 6px 0 12px">
+					Live snapshot from <code>/api/cron/pump-agent-stats</code> + price history.
+				</div>
+				<div id="token-stats">Pick a launched mint above (Trade panel) to see stats.</div>
+				<canvas
+					id="price-chart"
+					width="640"
+					height="120"
+					style="
+						display: block;
+						margin-top: 12px;
+						max-width: 100%;
+						border: 1px solid var(--border);
+						border-radius: 8px;
+						background: #0a0a12;
+					"
+				></canvas>
+			</section>
+
+			<section class="panel" id="signals-panel">
+				<h2>
+					Live pump.fun signals
+					<span class="muted" style="font-weight:400;font-size:13px">
+						— off-chain claim/graduation activity tied to your agent's wallet
+					</span>
+				</h2>
+				<div id="signals-grid" class="muted">No signals yet. The crawler runs every 15 minutes.</div>
+				<div class="row" style="margin-top: 12px">
+					<a class="btn ghost" id="open-live-feed" href="/pumpfun" target="_blank" rel="noopener">
+						Open live feed ↗
+					</a>
+					<a class="btn ghost" id="open-passport" href="#" target="_blank" rel="noopener">
+						Open agent passport ↗
+					</a>
+				</div>
+			</section>
+
+			<section class="panel">
+				<details class="debug">
+					<summary>Debug · last response</summary>
+					<pre id="log">—</pre>
+				</details>
+			</section>
+			</div>
+			</div>
+		</main>
+
+		<div class="toast" id="toast"></div>
+
+		<footer class="site-footer">
+			<div class="site-footer-inner">
+				<a class="site-footer-brand" href="/">
+					<img src="/three.svg" alt="" aria-hidden="true" />
+					<span>three.ws</span>
+				</a>
+				<nav class="site-footer-links" aria-label="Footer">
+					<a href="/discover">Discover</a>
+					<a href="/dashboard">Dashboard</a>
+					<a href="/dashboard/wallets">Wallets</a>
+					<a href="/pumpfun" target="_blank" rel="noopener">Pump.fun feed ↗</a>
+					<a href="/docs">Docs</a>
+					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+					<a href="/legal/privacy">Privacy</a>
+					<a href="/legal/tos">Terms</a>
+				</nav>
+				<span class="site-footer-legal">© 2026 three.ws</span>
+			</div>
+		</footer>
+
+		<script type="module">
+			import { mountHeaderUser } from '/src/header-user.js';
+			mountHeaderUser({ slot: '#header-user-slot' }).catch(() => {});
+		</script>
+
+		<script type="module">
+			const $ = (sel) => document.querySelector(sel);
+			const els = {
+				agentSelect: $('#agent-select'),
+				networkSelect: $('#network-select'),
+				refreshBtn: $('#refresh-btn'),
+				provisionBtn: $('#provision-btn'),
+				agentAddress: $('#agent-address'),
+				agentBalance: $('#agent-balance'),
+				explorerLink: $('#explorer-link'),
+				snsCurrent: $('#sns-current'),
+				snsDomainList: $('#sns-domain-list'),
+				snsRefreshBtn: $('#sns-refresh-btn'),
+				snsClearBtn: $('#sns-clear-btn'),
+				snsRegisterLink: $('#sns-register-link'),
+				snsRegistrar: $('#sns-registrar'),
+				snsRegisterLabel: $('#sns-register-label'),
+				snsRegisterAgentBtn: $('#sns-register-agent-btn'),
+				snsRegisterUserBtn: $('#sns-register-user-btn'),
+				snsCheckStatus: $('#sns-check-status'),
+				launchName: $('#launch-name'),
+				launchSymbol: $('#launch-symbol'),
+				launchVanity: $('#launch-vanity'),
+				launchVanitySuffix: $('#launch-vanity-suffix'),
+				launchVanityIc: $('#launch-vanity-ic'),
+				launchSol: $('#launch-sol'),
+				launchUri: $('#launch-uri'),
+				launchBtn: $('#launch-btn'),
+				tradeMint: $('#trade-mint'),
+				tradeSlippage: $('#trade-slippage'),
+				buySol: $('#buy-sol'),
+				buyBtn: $('#buy-btn'),
+				sellTokens: $('#sell-tokens'),
+				sellBtn: $('#sell-btn'),
+				portfolioBtn: $('#portfolio-btn'),
+				portfolioTotals: $('#portfolio-totals'),
+				portfolioTable: $('#portfolio-table tbody'),
+				log: $('#log'),
+				toast: $('#toast'),
+			};
+
+			let toastTimer;
+			function toast(msg, kind = 'ok') {
+				els.toast.textContent = msg;
+				els.toast.className = `toast show ${kind}`;
+				clearTimeout(toastTimer);
+				toastTimer = setTimeout(() => (els.toast.className = 'toast'), 3500);
+			}
+
+			function logResponse(label, body) {
+				els.log.textContent = `[${label}]\n` + JSON.stringify(body, null, 2);
+			}
+
+			function explorerTxUrl(sig, network) {
+				return `https://solscan.io/tx/${sig}${network === 'devnet' ? '?cluster=devnet' : ''}`;
+			}
+
+			function explorerAddrUrl(addr, network) {
+				return `https://solscan.io/account/${addr}${network === 'devnet' ? '?cluster=devnet' : ''}`;
+			}
+
+			async function api(path, opts = {}) {
+				const res = await fetch(path, {
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					...opts,
+				});
+				const body = await res.json().catch(() => ({}));
+				if (!res.ok) {
+					const code = body.error || res.status;
+					const msg = body.error_description || res.statusText;
+					throw Object.assign(new Error(`${code}: ${msg}`), { body });
+				}
+				return body;
+			}
+
+			function currentAgentId() {
+				return els.agentSelect.value || '';
+			}
+			function currentNetwork() {
+				return els.networkSelect.value;
+			}
+
+			async function loadAgents() {
+				try {
+					const { agents = [] } = await api('/api/agents');
+					els.agentSelect.innerHTML = '';
+					if (!agents.length) {
+						const opt = document.createElement('option');
+						opt.textContent = 'No agents — create one in the dashboard';
+						opt.disabled = true;
+						els.agentSelect.appendChild(opt);
+						return;
+					}
+					for (const a of agents) {
+						const opt = document.createElement('option');
+						opt.value = a.id;
+						opt.textContent = `${a.name || 'Untitled'} · ${a.id.slice(0, 8)}`;
+						els.agentSelect.appendChild(opt);
+					}
+				} catch (err) {
+					toast(err.message, 'err');
+				}
+			}
+
+			async function refreshAgent() {
+				const id = currentAgentId();
+				if (!id) return;
+				const network = currentNetwork();
+				const origin = window.location.origin;
+				els.launchUri.value = `${origin}/api/agents/pumpfun-metadata?id=${encodeURIComponent(id)}`;
+				els.agentAddress.innerHTML = '<span class="skeleton" style="width:200px"></span>';
+				els.agentBalance.innerHTML = '<span class="skeleton" style="width:90px"></span>';
+				els.explorerLink.hidden = true;
+				els.provisionBtn.hidden = true;
+				try {
+					const { data } = await api(`/api/agents/${id}/solana?network=${network}`);
+					els.agentAddress.textContent = data.address;
+					els.agentAddress.classList.remove('muted');
+					els.agentBalance.textContent =
+						data.sol == null ? 'unknown' : `${data.sol.toFixed(6)} SOL`;
+					els.agentBalance.classList.remove('muted');
+					els.explorerLink.href = explorerAddrUrl(data.address, network);
+					els.explorerLink.hidden = false;
+				} catch (err) {
+					if (err.body?.error === 'not_found') {
+						els.agentAddress.textContent = 'No Solana wallet yet';
+						els.provisionBtn.hidden = false;
+					} else {
+						els.agentAddress.textContent = err.message;
+					}
+				}
+				refreshSns();
+				refreshSignals();
+			}
+
+			async function refreshSignals() {
+				const grid = document.getElementById('signals-grid');
+				const passportLink = document.getElementById('open-passport');
+				const id = currentAgentId();
+				const network = currentNetwork();
+				if (!id) {
+					grid.textContent = 'Select an agent.';
+					return;
+				}
+				grid.textContent = 'Loading…';
+				try {
+					// Resolve the agent's Solana asset pubkey, then pull reputation aggregates.
+					const agentRes = await fetch(`/api/agents/${encodeURIComponent(id)}`, { credentials: 'include' });
+					const agent = agentRes.ok ? await agentRes.json() : null;
+					const asset = agent?.data?.meta?.sol_mint_address || agent?.meta?.sol_mint_address;
+					if (!asset) {
+						grid.innerHTML =
+							'<span class="muted">This agent has no Solana identity yet — register on Solana to start collecting pump.fun signals.</span>';
+						passportLink.removeAttribute('href');
+						return;
+					}
+					passportLink.href = `/agent-passport.html?asset=${encodeURIComponent(asset)}&network=${network}`;
+					const repRes = await fetch(
+						`/api/agents/solana-reputation?asset=${encodeURIComponent(asset)}&network=${network}`,
+					);
+					const rep = repRes.ok ? await repRes.json() : null;
+					const pf = rep?.pumpfun_signals || { count: 0, weight: 0, by_kind: {} };
+					if (!pf.count) {
+						grid.innerHTML =
+							'<span class="muted">No pump.fun signals yet. The crawler runs every 15 minutes; signals appear here when this wallet is the claimer or creator on a pump.fun event.</span>';
+						return;
+					}
+					const wKind = pf.weight > 0 ? ' good' : pf.weight < 0 ? ' bad' : '';
+					const cards = [
+						`<div class="stat-card"><div class="v">${pf.count}</div><div class="l">Total signals</div></div>`,
+						`<div class="stat-card${wKind}"><div class="v">${pf.weight >= 0 ? '+' : ''}${pf.weight.toFixed(2)}</div><div class="l">Aggregate weight</div></div>`,
+						...Object.entries(pf.by_kind).map(
+							([k, info]) => {
+								const kk = info.weight > 0 ? ' good' : info.weight < 0 ? ' bad' : '';
+								return `<div class="stat-card${kk}"><div class="v">${info.count}</div><div class="l">${k.replace(/_/g, ' ')}<span class="delta">(${info.weight >= 0 ? '+' : ''}${info.weight})</span></div></div>`;
+							},
+						),
+					];
+					grid.innerHTML = `<div class="stat-grid">${cards.join('')}</div>`;
+				} catch (err) {
+					grid.innerHTML = `<span class="muted">Could not load signals: ${err.message}</span>`;
+				}
+			}
+
+			function renderSnsList(data) {
+				const cur = data.sns_domain;
+				if (cur) {
+					els.snsCurrent.textContent = `${cur}.sol`;
+					els.snsCurrent.classList.remove('muted');
+					els.snsClearBtn.hidden = false;
+				} else {
+					els.snsCurrent.textContent = '— none attached —';
+					els.snsCurrent.classList.add('muted');
+					els.snsClearBtn.hidden = true;
+				}
+				const owned = Array.isArray(data.domains) ? data.domains : [];
+				if (!owned.length) {
+					els.snsDomainList.innerHTML =
+						'<span class="muted" style="font-size:13px">This wallet does not own any .sol domains yet. Register one on sns.id, then refresh.</span>';
+					return;
+				}
+				els.snsDomainList.innerHTML = '';
+				for (const d of owned) {
+					const btn = document.createElement('button');
+					btn.className = 'btn ghost';
+					btn.style.fontSize = '12px';
+					btn.textContent = d === cur ? `★ ${d}.sol` : `${d}.sol`;
+					btn.disabled = d === cur;
+					btn.addEventListener('click', () => attachSns(d));
+					els.snsDomainList.appendChild(btn);
+				}
+				if (data.favorite && !owned.includes(data.favorite)) {
+					const fav = document.createElement('span');
+					fav.className = 'muted';
+					fav.style.fontSize = '12px';
+					fav.textContent = `(favorite: ${data.favorite}.sol)`;
+					els.snsDomainList.appendChild(fav);
+				}
+			}
+
+			async function refreshSns() {
+				const id = currentAgentId();
+				if (!id) return;
+				els.snsCurrent.innerHTML = '<span class="skeleton" style="width:120px"></span>';
+				els.snsDomainList.innerHTML = '';
+				try {
+					const { data } = await api(`/api/agents/${id}/sns`);
+					renderSnsList(data);
+				} catch (err) {
+					els.snsCurrent.textContent =
+						err.body?.error === 'conflict'
+							? 'Provision a Solana wallet first'
+							: err.message;
+					els.snsDomainList.innerHTML = '';
+					els.snsClearBtn.hidden = true;
+				}
+			}
+
+			function readRegisterLabel() {
+				const v = els.snsRegisterLabel.value.trim().toLowerCase().replace(/\.sol$/, '');
+				if (!/^[a-z0-9-]{1,63}$/.test(v)) {
+					toast('Domain must be a–z, 0–9, or hyphen (max 63 chars)', 'err');
+					return null;
+				}
+				return v;
+			}
+
+			function snsPriceFor(len) {
+				if (len === 1) return 750;
+				if (len === 2) return 700;
+				if (len === 3) return 640;
+				if (len === 4) return 160;
+				return 20;
+			}
+
+			let snsCheckSeq = 0;
+			let snsCheckTimer = null;
+			function setSnsCheckStatus(html, kind) {
+				const el = els.snsCheckStatus;
+				el.innerHTML = html;
+				el.style.color =
+					kind === 'ok' ? '#3ddc84' : kind === 'bad' ? '#ff6b6b' : '';
+				if (!kind) el.classList.add('muted');
+				else el.classList.remove('muted');
+			}
+			function setSnsRegisterButtons(enabled) {
+				els.snsRegisterAgentBtn.disabled = !enabled;
+				els.snsRegisterUserBtn.disabled = !enabled;
+			}
+			function onSnsLabelInput() {
+				clearTimeout(snsCheckTimer);
+				const raw = els.snsRegisterLabel.value.trim().toLowerCase().replace(/\.sol$/, '');
+				setSnsRegisterButtons(false);
+				if (!raw) {
+					setSnsCheckStatus(
+						'Bonfida pricing (1y): 1 char $750 · 2 $700 · 3 $640 · 4 $160 · 5+ $20. Paid in USDC.',
+						null,
+					);
+					return;
+				}
+				if (!/^[a-z0-9-]{1,63}$/.test(raw)) {
+					setSnsCheckStatus('Invalid: a–z, 0–9, hyphen only (max 63 chars).', 'bad');
+					return;
+				}
+				const price = snsPriceFor(raw.length);
+				setSnsCheckStatus(`Checking ${raw}.sol… ($${price}/yr)`, null);
+				const seq = ++snsCheckSeq;
+				const id = currentAgentId();
+				if (!id) return;
+				snsCheckTimer = setTimeout(async () => {
+					try {
+						const { data } = await api(
+							`/api/agents/${id}/sns/check?domain=${encodeURIComponent(raw)}`,
+						);
+						if (seq !== snsCheckSeq) return;
+						if (data.available) {
+							setSnsCheckStatus(
+								`✓ <strong>${raw}.sol</strong> is available — $${data.price_usdc} USDC for 1 year`,
+								'ok',
+							);
+							setSnsRegisterButtons(true);
+						} else {
+							const owner = data.owner ? ` (owner: ${data.owner.slice(0, 4)}…${data.owner.slice(-4)})` : '';
+							setSnsCheckStatus(`✗ ${raw}.sol is already registered${owner}`, 'bad');
+						}
+					} catch (err) {
+						if (seq !== snsCheckSeq) return;
+						setSnsCheckStatus(`Could not check: ${err.message}`, 'bad');
+					}
+				}, 400);
+			}
+
+			async function registerWithAgent() {
+				const id = currentAgentId();
+				if (!id) return;
+				const domain = readRegisterLabel();
+				if (!domain) return;
+				if (!confirm(`Register ${domain}.sol using the agent's wallet? The agent's USDC balance will be charged.`)) return;
+				const btn = els.snsRegisterAgentBtn;
+				btn.disabled = true;
+				btn.textContent = 'Registering…';
+				try {
+					const { data } = await api(`/api/agents/${id}/sns/register`, {
+						method: 'POST',
+						body: JSON.stringify({ domain }),
+					});
+					toast(`Registered ${data.sns_domain}.sol`);
+					els.snsRegisterLabel.value = '';
+					onSnsLabelInput();
+					await refreshSns();
+				} catch (err) {
+					toast(err.body?.error_description || err.message, 'err');
+				} finally {
+					btn.textContent = 'Pay with agent wallet';
+					onSnsLabelInput();
+				}
+			}
+
+			async function getConnectedSolanaWallet() {
+				// Phantom / Solflare standard: window.solana with isPhantom or window.solflare.
+				const provider = window.phantom?.solana || window.solana || window.solflare;
+				if (!provider) {
+					throw new Error('No Solana wallet found. Install Phantom or Solflare.');
+				}
+				if (!provider.isConnected) await provider.connect();
+				const pubkey = provider.publicKey?.toString();
+				if (!pubkey) throw new Error('Wallet did not return a public key');
+				return { provider, pubkey };
+			}
+
+			async function registerWithUserWallet() {
+				const id = currentAgentId();
+				if (!id) return;
+				const domain = readRegisterLabel();
+				if (!domain) return;
+
+				const btn = els.snsRegisterUserBtn;
+				btn.disabled = true;
+				btn.textContent = 'Connecting…';
+				try {
+					const { provider, pubkey } = await getConnectedSolanaWallet();
+					btn.textContent = 'Building tx…';
+					const { data: prep } = await api(`/api/agents/${id}/sns/register-prep`, {
+						method: 'POST',
+						body: JSON.stringify({ domain, wallet_address: pubkey }),
+					});
+
+					const { VersionedTransaction } = await import('https://esm.sh/@solana/web3.js@1.98.4');
+					const tx = VersionedTransaction.deserialize(
+						Uint8Array.from(atob(prep.tx_base64), (c) => c.charCodeAt(0)),
+					);
+
+					btn.textContent = 'Awaiting signature…';
+					const { signature } = await provider.signAndSendTransaction(tx);
+
+					btn.textContent = 'Confirming…';
+					// Poll the confirm endpoint a few times — the RPC needs a beat to index.
+					let lastErr;
+					for (let i = 0; i < 12; i++) {
+						try {
+							const { data } = await api(`/api/agents/${id}/sns/register-confirm`, {
+								method: 'POST',
+								body: JSON.stringify({ domain, signature, wallet_address: pubkey }),
+							});
+							toast(`Registered ${data.sns_domain}.sol`);
+							els.snsRegisterLabel.value = '';
+					onSnsLabelInput();
+							await refreshSns();
+							return;
+						} catch (err) {
+							lastErr = err;
+							if (err.body?.error !== 'not_confirmed') throw err;
+							await new Promise((r) => setTimeout(r, 2500));
+						}
+					}
+					throw lastErr || new Error('confirmation timed out');
+				} catch (err) {
+					toast(err.body?.error_description || err.message, 'err');
+				} finally {
+					btn.textContent = 'Pay with my wallet';
+					onSnsLabelInput();
+				}
+			}
+
+			async function attachSns(domain) {
+				const id = currentAgentId();
+				if (!id) return;
+				try {
+					await api(`/api/agents/${id}/sns`, {
+						method: 'POST',
+						body: JSON.stringify({ domain }),
+					});
+					toast(`Attached ${domain}.sol`);
+					await refreshSns();
+				} catch (err) {
+					toast(err.message, 'err');
+				}
+			}
+
+			async function clearSns() {
+				const id = currentAgentId();
+				if (!id) return;
+				try {
+					await api(`/api/agents/${id}/sns`, { method: 'DELETE' });
+					toast('SNS id cleared');
+					await refreshSns();
+				} catch (err) {
+					toast(err.message, 'err');
+				}
+			}
+
+			async function provision() {
+				const id = currentAgentId();
+				if (!id) return;
+				try {
+					await api(`/api/agents/${id}/solana`, { method: 'POST' });
+					toast('Wallet provisioned');
+					await refreshAgent();
+				} catch (err) {
+					toast(err.message, 'err');
+				}
+			}
+
+			async function launchToken() {
+				const id = currentAgentId();
+				if (!id) return;
+				const body = {
+					name: els.launchName.value.trim(),
+					symbol: els.launchSymbol.value.trim().toUpperCase(),
+					uri: els.launchUri.value.trim(),
+					network: currentNetwork(),
+				};
+				if (!body.name || !body.symbol || !body.uri) {
+					toast('Name, symbol, and metadata URI are required', 'err');
+					return;
+				}
+				const vanity = els.launchVanity.value.trim();
+				const vanitySuffix = els.launchVanitySuffix.value.trim();
+				if (vanity) body.vanityPrefix = vanity;
+				if (vanitySuffix) body.vanitySuffix = vanitySuffix;
+				if (els.launchVanityIc.checked) body.vanityIgnoreCase = true;
+				if (window.__pendingMintSecret) {
+					body.mintSecretKey = Array.from(window.__pendingMintSecret);
+				}
+				const sol = parseFloat(els.launchSol.value);
+				if (sol > 0) body.solAmount = sol;
+				els.launchBtn.disabled = true;
+				els.launchBtn.textContent =
+					vanity || vanitySuffix ? 'Grinding & launching…' : 'Launching…';
+				try {
+					const { data } = await api(`/api/agents/${id}/pumpfun/launch`, {
+						method: 'POST',
+						body: JSON.stringify(body),
+					});
+					logResponse('launch', data);
+					toast(
+						`Launched ${data.mint.slice(0, 12)}… (${data.vanity_iterations.toLocaleString()} attempts in ${data.vanity_duration_ms}ms)`,
+					);
+					els.tradeMint.value = data.mint;
+					if (window.__pendingMintSecret) {
+						window.__pendingMintSecret = null;
+						const banner = document.getElementById('vg-launch-banner');
+						if (banner) banner.remove();
+					}
+					await refreshAgent();
+					await refreshPortfolio();
+				} catch (err) {
+					logResponse('launch error', err.body || { error: err.message });
+					toast(err.message, 'err');
+				} finally {
+					els.launchBtn.disabled = false;
+					els.launchBtn.textContent = 'Launch';
+				}
+			}
+
+			async function buy() {
+				const id = currentAgentId();
+				const mint = els.tradeMint.value.trim();
+				const solAmount = parseFloat(els.buySol.value);
+				if (!id || !mint || !solAmount) {
+					toast('Mint and SOL amount required', 'err');
+					return;
+				}
+				const slippageBps = parseInt(els.tradeSlippage.value, 10) || 500;
+				const network = currentNetwork();
+				els.buyBtn.disabled = true;
+				try {
+					let data;
+					try {
+						({ data } = await api(`/api/agents/${id}/pumpfun/swap`, {
+							method: 'POST',
+							body: JSON.stringify({ mint, side: 'buy', solAmount, slippageBps, network }),
+						}));
+					} catch (err) {
+						if (err.body?.error === 'not_graduated') {
+							({ data } = await api(`/api/agents/${id}/pumpfun/buy`, {
+								method: 'POST',
+								body: JSON.stringify({ mint, solAmount, slippageBps, network }),
+							}));
+							data.venue = 'curve';
+						} else throw err;
+					}
+					logResponse('buy', data);
+					toast(`Bought ${solAmount} SOL of ${mint.slice(0, 8)}… (${data.venue || 'curve'})`);
+					await refreshAgent();
+					await refreshPortfolio();
+				} catch (err) {
+					logResponse('buy error', err.body || { error: err.message });
+					toast(err.message, 'err');
+				} finally {
+					els.buyBtn.disabled = false;
+				}
+			}
+
+			async function sell() {
+				const id = currentAgentId();
+				const mint = els.tradeMint.value.trim();
+				const tokenAmount = els.sellTokens.value.trim();
+				if (!id || !mint || !tokenAmount) {
+					toast('Mint and token amount required', 'err');
+					return;
+				}
+				const slippageBps = parseInt(els.tradeSlippage.value, 10) || 500;
+				const network = currentNetwork();
+				els.sellBtn.disabled = true;
+				try {
+					let data;
+					try {
+						({ data } = await api(`/api/agents/${id}/pumpfun/swap`, {
+							method: 'POST',
+							body: JSON.stringify({ mint, side: 'sell', tokenAmount, slippageBps, network }),
+						}));
+					} catch (err) {
+						if (err.body?.error === 'not_graduated') {
+							({ data } = await api(`/api/agents/${id}/pumpfun/sell`, {
+								method: 'POST',
+								body: JSON.stringify({ mint, tokenAmount, slippageBps, network }),
+							}));
+							data.venue = 'curve';
+						} else throw err;
+					}
+					logResponse('sell', data);
+					toast(`Sold ${tokenAmount} of ${mint.slice(0, 8)}… (${data.venue || 'curve'})`);
+					await refreshAgent();
+					await refreshPortfolio();
+				} catch (err) {
+					logResponse('sell error', err.body || { error: err.message });
+					toast(err.message, 'err');
+				} finally {
+					els.sellBtn.disabled = false;
+				}
+			}
+
+			function pnlClass(n) {
+				if (n == null) return 'muted';
+				if (n > 0.000001) return 'pnl-pos';
+				if (n < -0.000001) return 'pnl-neg';
+				return '';
+			}
+			function fmtSol(n) {
+				if (n == null || Number.isNaN(n)) return '—';
+				return Number(n).toFixed(6);
+			}
+
+			async function refreshPortfolio() {
+				const id = currentAgentId();
+				if (!id) return;
+				const network = currentNetwork();
+				try {
+					const { data } = await api(
+						`/api/agents/${id}/pumpfun/portfolio?network=${network}`,
+					);
+					logResponse('portfolio', data);
+					const t = data.totals || {};
+					els.portfolioTotals.innerHTML =
+						`SOL in: <b>${fmtSol(t.sol_in)}</b> · SOL out: <b>${fmtSol(t.sol_out)}</b> · ` +
+						`Est. value: <b>${fmtSol(t.estimated_value_sol)}</b> · Unrealized: ` +
+						`<b class="${pnlClass(t.unrealized_pnl_sol)}">${fmtSol(t.unrealized_pnl_sol)}</b>`;
+
+					const tbody = els.portfolioTable;
+					if (!data.positions.length) {
+						tbody.innerHTML =
+							'<tr><td colspan="7"><div class="empty-cta"><b>No positions yet.</b><span>Launch a token above, or paste a mint into the trade panel to start tracking.</span></div></td></tr>';
+						return;
+					}
+					tbody.innerHTML = '';
+					for (const p of data.positions) {
+						const tr = document.createElement('tr');
+						const grad = p.graduated ? ' <span class="tag">graduated</span>' : '';
+						const err = p.error
+							? ` <span class="tag" style="color:var(--err)">${p.error}</span>`
+							: '';
+						tr.innerHTML =
+							`<td class="mono"><a href="https://pump.fun/${p.mint}" target="_blank" rel="noopener">${p.mint.slice(0, 12)}…</a>${grad}${err}</td>` +
+							`<td>${fmtSol(p.sol_in)}</td>` +
+							`<td>${fmtSol(p.sol_out)}</td>` +
+							`<td class="mono">${p.token_balance}</td>` +
+							`<td>${fmtSol(p.estimated_sol_value)}</td>` +
+							`<td class="${pnlClass(p.unrealized_pnl_sol)}">${fmtSol(p.unrealized_pnl_sol)}</td>` +
+							`<td><button class="btn ghost" data-mint="${p.mint}" data-action="use">Use</button></td>`;
+						tbody.appendChild(tr);
+					}
+					tbody.querySelectorAll('button[data-action="use"]').forEach((b) => {
+						b.addEventListener('click', () => {
+							els.tradeMint.value = b.dataset.mint;
+							toast('Mint copied to trade panel');
+						});
+					});
+				} catch (err) {
+					els.portfolioTotals.textContent = err.message;
+				}
+			}
+
+			els.agentSelect.addEventListener('change', async () => {
+				await refreshAgent();
+				await refreshPortfolio();
+			});
+			function syncNetBadge() {
+				const net = currentNetwork();
+				const badge = document.getElementById('net-badge');
+				if (badge) {
+					badge.textContent = net;
+					badge.className = `tag net-badge ${net === 'devnet' ? 'devnet' : 'mainnet'}`;
+				}
+			}
+			els.networkSelect.addEventListener('change', async () => {
+				syncNetBadge();
+				await refreshAgent();
+				await refreshPortfolio();
+			});
+			syncNetBadge();
+			els.refreshBtn.addEventListener('click', () => {
+				refreshAgent();
+				refreshPortfolio();
+			});
+			els.provisionBtn.addEventListener('click', provision);
+			els.snsRefreshBtn.addEventListener('click', refreshSns);
+			els.snsClearBtn.addEventListener('click', clearSns);
+			els.snsRegisterAgentBtn.addEventListener('click', registerWithAgent);
+			els.snsRegisterUserBtn.addEventListener('click', registerWithUserWallet);
+			els.snsRegisterLabel.addEventListener('input', onSnsLabelInput);
+			els.launchBtn.addEventListener('click', launchToken);
+			els.buyBtn.addEventListener('click', buy);
+			els.sellBtn.addEventListener('click', sell);
+			els.portfolioBtn.addEventListener('click', refreshPortfolio);
+
+			// ── Token indexer panel ──────────────────────────────────────────
+			const indexerPanel = document.getElementById('indexer-panel');
+			const tokenStatsEl = document.getElementById('token-stats');
+			const chartEl = document.getElementById('price-chart');
+
+			function fmtSolLamports(s) {
+				if (s == null) return '—';
+				return (Number(s) / 1e9).toFixed(4) + ' SOL';
+			}
+
+			async function refreshIndexer() {
+				const mint = els.tradeMint.value.trim();
+				const network = currentNetwork();
+				if (!mint) {
+					indexerPanel.hidden = true;
+					return;
+				}
+				indexerPanel.hidden = false;
+				tokenStatsEl.innerHTML = '<div class="muted">Loading…</div>';
+				try {
+					const card = await fetch(`/api/agents/solana-card?asset=${mint}`)
+						.then((r) => (r.ok ? r.json() : null))
+						.catch(() => null);
+					const ts = card?.token_stats;
+					if (!ts) {
+						tokenStatsEl.innerHTML =
+							'<div class="muted">No indexed stats yet — pump-agent-stats cron runs every 10 min after launch.</div>';
+					} else {
+						const refreshedAgo = ts.refreshed_at
+							? `${Math.max(0, Math.round((Date.now() - new Date(ts.refreshed_at)) / 60000))}m ago`
+							: '—';
+						let body;
+						if (ts.graduated) {
+							const a = ts.amm || {};
+							body =
+								`<span class="tag" style="background:#5c8fff22;color:#9bf;border-color:#2a3a55">graduated · AMM</span>` +
+								` <span class="muted">refreshed ${refreshedAgo}</span>` +
+								`<div class="stat-grid" style="margin-top:10px">` +
+								`<div class="stat-card"><div class="v">${fmtSolLamports(a.quote_reserve)}</div><div class="l">Pool quote</div></div>` +
+								`<div class="stat-card"><div class="v">${a.base_reserve ? Number(a.base_reserve).toExponential(2) : '—'}</div><div class="l">Pool base (tokens)</div></div>` +
+								`<div class="stat-card"><div class="v">${ts.recent_tx_count || 0}</div><div class="l">Recent tx (50-tail)</div></div>` +
+								`</div>`;
+						} else if (ts.bonding_curve) {
+							const c = ts.bonding_curve;
+							const pct = Number(c.progress_pct || 0);
+							body =
+								`<div>Curve · <b>${pct.toFixed(1)}%</b> to graduation <span class="muted">refreshed ${refreshedAgo}</span></div>` +
+								`<div style="background:#222;border-radius:6px;height:10px;overflow:hidden;margin:6px 0 10px"><div style="background:linear-gradient(90deg,#5c8fff,#00d4ff);width:${Math.min(100, pct)}%;height:100%"></div></div>` +
+								`<div class="stat-grid">` +
+								`<div class="stat-card"><div class="v">${fmtSolLamports(c.real_sol)}</div><div class="l">Real SOL reserves</div></div>` +
+								`<div class="stat-card"><div class="v">${c.real_token ? Number(c.real_token).toExponential(2) : '—'}</div><div class="l">Real token reserves</div></div>` +
+								`<div class="stat-card"><div class="v">${ts.recent_tx_count || 0}</div><div class="l">Recent tx (50-tail)</div></div>` +
+								`</div>`;
+						} else {
+							body = `<div class="muted">No bonding curve or AMM pool detected.</div>`;
+						}
+						tokenStatsEl.innerHTML = body;
+					}
+
+					const hist = await fetch(
+						`/api/agents/solana-price-history?asset=${mint}&network=${network}&hours=72`,
+					)
+						.then((r) => (r.ok ? r.json() : null))
+						.catch(() => null);
+					drawSparkline(chartEl, hist?.points || []);
+				} catch (e) {
+					tokenStatsEl.innerHTML = `<div class="muted">${e.message}</div>`;
+				}
+			}
+
+			function drawSparkline(canvas, points) {
+				const ctx = canvas.getContext('2d');
+				const w = canvas.width,
+					h = canvas.height;
+				ctx.clearRect(0, 0, w, h);
+				if (!points.length) {
+					ctx.fillStyle = '#666';
+					ctx.font = '12px system-ui';
+					ctx.fillText('No price points yet (cron runs every 10 min).', 10, h / 2);
+					return;
+				}
+				const xs = points.map((_, i) => i);
+				const ys = points.map((p) => Number(p.sol_per_token) || 0);
+				const min = Math.min(...ys),
+					max = Math.max(...ys);
+				const span = max - min || 1;
+				const sx = (i) => (i / Math.max(1, xs.length - 1)) * (w - 16) + 8;
+				const sy = (v) => h - 8 - ((v - min) / span) * (h - 16);
+				ctx.strokeStyle = '#6a5cff';
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ys.forEach((v, i) => {
+					const x = sx(i),
+						y = sy(v);
+					if (i === 0) ctx.moveTo(x, y);
+					else ctx.lineTo(x, y);
+				});
+				ctx.stroke();
+				ctx.fillStyle = '#888';
+				ctx.font = '11px system-ui';
+				ctx.fillText(
+					`${ys[0].toExponential(2)} → ${ys[ys.length - 1].toExponential(2)} SOL/tok`,
+					8,
+					14,
+				);
+			}
+
+			document.getElementById('indexer-refresh').addEventListener('click', refreshIndexer);
+			els.tradeMint.addEventListener('change', refreshIndexer);
+
+			// ── Vanity grinder (browser-side) ───────────────────────────────
+			const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+			const BASE58_SET = new Set(BASE58);
+			const vg = {
+				prefix: document.getElementById('vg-prefix'),
+				suffix: document.getElementById('vg-suffix'),
+				ic: document.getElementById('vg-ic'),
+				start: document.getElementById('vg-start'),
+				stop: document.getElementById('vg-stop'),
+				progress: document.getElementById('vg-progress'),
+				result: document.getElementById('vg-result'),
+				address: document.getElementById('vg-address'),
+				attempts: document.getElementById('vg-attempts'),
+				duration: document.getElementById('vg-duration'),
+				useLaunch: document.getElementById('vg-use-launch'),
+				assign: document.getElementById('vg-assign'),
+				copy: document.getElementById('vg-copy'),
+				discard: document.getElementById('vg-discard'),
+			};
+			let vgRunning = false;
+			let vgAbort = false;
+			let vgHit = null; // { address, secretKey: Uint8Array, iterations, durationMs, prefix, suffix, ignoreCase }
+
+			function vgValidPattern(p) {
+				if (!p) return true;
+				if (p.length > 6) return false;
+				for (const c of p) if (!BASE58_SET.has(c)) return false;
+				return true;
+			}
+			function vgEstimate(prefix, suffix, ic) {
+				const len = (prefix?.length || 0) + (suffix?.length || 0);
+				if (!len) return 1;
+				return Math.pow(ic ? 33 : 58, len);
+			}
+			function vgUpdateIdle() {
+				if (vgRunning) return;
+				const p = vg.prefix.value.trim();
+				const s = vg.suffix.value.trim();
+				if (!vgValidPattern(p) || !vgValidPattern(s)) {
+					vg.progress.textContent = 'Invalid pattern: base58 only (no 0/O/I/l), max 6 chars each.';
+					return;
+				}
+				if (!p && !s) {
+					vg.progress.textContent = 'Idle. Enter a prefix and/or suffix.';
+					return;
+				}
+				const est = vgEstimate(p, s, vg.ic.checked);
+				vg.progress.textContent = `Estimated ~${Math.round(est).toLocaleString()} attempts.`;
+			}
+			vg.prefix.addEventListener('input', vgUpdateIdle);
+			vg.suffix.addEventListener('input', vgUpdateIdle);
+			vg.ic.addEventListener('change', vgUpdateIdle);
+			vgUpdateIdle();
+
+			async function vgRun() {
+				const prefix = vg.prefix.value.trim();
+				const suffix = vg.suffix.value.trim();
+				const ic = vg.ic.checked;
+				if (!vgValidPattern(prefix) || !vgValidPattern(suffix)) {
+					toast('Invalid pattern', 'err');
+					return;
+				}
+				if (!prefix && !suffix) {
+					toast('Enter a prefix or suffix', 'err');
+					return;
+				}
+				const { Keypair } = await import('https://esm.sh/@solana/web3.js@1.98.4');
+				vgRunning = true;
+				vgAbort = false;
+				vg.start.hidden = true;
+				vg.stop.hidden = false;
+				vg.result.hidden = true;
+				vgHit = null;
+				const target = { p: ic ? prefix.toLowerCase() : prefix, s: ic ? suffix.toLowerCase() : suffix };
+				const pLen = prefix.length, sLen = suffix.length;
+				const start = performance.now();
+				let attempts = 0;
+				let lastTick = start;
+				let lastAttempts = 0;
+				const BATCH = 1500;
+				try {
+					while (!vgAbort) {
+						for (let i = 0; i < BATCH; i++) {
+							attempts++;
+							const kp = Keypair.generate();
+							const addr = kp.publicKey.toBase58();
+							if (pLen) {
+								const head = ic ? addr.slice(0, pLen).toLowerCase() : addr.slice(0, pLen);
+								if (head !== target.p) continue;
+							}
+							if (sLen) {
+								const tail = ic ? addr.slice(-sLen).toLowerCase() : addr.slice(-sLen);
+								if (tail !== target.s) continue;
+							}
+							const dur = performance.now() - start;
+							vgHit = {
+								address: addr,
+								secretKey: kp.secretKey,
+								iterations: attempts,
+								durationMs: Math.round(dur),
+								prefix, suffix, ignoreCase: ic,
+							};
+							vg.address.textContent = addr;
+							vg.attempts.textContent = attempts.toLocaleString();
+							vg.duration.textContent = `${(dur / 1000).toFixed(2)}s`;
+							vg.result.hidden = false;
+							vg.progress.textContent = `Found a match in ${attempts.toLocaleString()} attempts.`;
+							vgRunning = false;
+							vg.start.hidden = false;
+							vg.stop.hidden = true;
+							return;
+						}
+						const now = performance.now();
+						if (now - lastTick > 250) {
+							const rate = ((attempts - lastAttempts) / (now - lastTick)) * 1000;
+							lastTick = now;
+							lastAttempts = attempts;
+							vg.progress.textContent =
+								`Grinding… ${attempts.toLocaleString()} attempts · ${Math.round(rate).toLocaleString()}/s · ${((now - start) / 1000).toFixed(1)}s elapsed`;
+							await new Promise((r) => setTimeout(r, 0));
+						}
+					}
+					vg.progress.textContent = `Stopped after ${attempts.toLocaleString()} attempts.`;
+				} catch (err) {
+					vg.progress.textContent = `Error: ${err.message}`;
+				} finally {
+					vgRunning = false;
+					vg.start.hidden = false;
+					vg.stop.hidden = true;
+				}
+			}
+
+			vg.start.addEventListener('click', vgRun);
+			vg.stop.addEventListener('click', () => { vgAbort = true; });
+
+			vg.useLaunch.addEventListener('click', () => {
+				if (!vgHit) return;
+				window.__pendingMintSecret = vgHit.secretKey;
+				els.launchVanity.value = vgHit.prefix || '';
+				els.launchVanitySuffix.value = vgHit.suffix || '';
+				els.launchVanityIc.checked = !!vgHit.ignoreCase;
+				let banner = document.getElementById('vg-launch-banner');
+				if (!banner) {
+					banner = document.createElement('div');
+					banner.id = 'vg-launch-banner';
+					banner.style.cssText =
+						'margin-top:10px;padding:8px 12px;background:#0e1f17;border:1px solid #1f4232;border-radius:8px;font-size:13px;color:var(--ok)';
+					els.launchBtn.closest('.panel').appendChild(banner);
+				}
+				banner.innerHTML = `✦ Pre-ground mint <code>${vgHit.address.slice(0, 12)}…</code> will be used for the next launch.`;
+				toast('Pre-ground mint armed for launch');
+				els.launchName.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			});
+
+			vg.copy.addEventListener('click', async () => {
+				if (!vgHit) return;
+				const s = JSON.stringify(Array.from(vgHit.secretKey));
+				try {
+					await navigator.clipboard.writeText(s);
+					toast('Secret JSON copied');
+				} catch {
+					toast('Clipboard blocked — secret in console', 'err');
+					console.log(s);
+				}
+			});
+
+			vg.discard.addEventListener('click', () => {
+				if (vgHit) vgHit.secretKey.fill(0);
+				vgHit = null;
+				vg.result.hidden = true;
+				vg.progress.textContent = 'Discarded.';
+			});
+
+			vg.assign.addEventListener('click', async () => {
+				if (!vgHit) return;
+				const id = currentAgentId();
+				if (!id) return toast('Select an agent first', 'err');
+				const ok = confirm(
+					`Assign ${vgHit.address.slice(0, 16)}… as this agent's wallet?\n\n` +
+					`If the agent already has a wallet, you must remove it first ` +
+					`(this dialog will tell you to). Funds in the old wallet are NOT migrated automatically.`,
+				);
+				if (!ok) return;
+				vg.assign.disabled = true;
+				vg.assign.textContent = 'Assigning…';
+				try {
+					const body = { secret_key: Array.from(vgHit.secretKey) };
+					if (vgHit.prefix) body.vanity_prefix = vgHit.prefix;
+					await api(`/api/agents/${id}/solana`, {
+						method: 'POST',
+						body: JSON.stringify(body),
+					});
+					toast('Wallet assigned');
+					vgHit.secretKey.fill(0);
+					vgHit = null;
+					vg.result.hidden = true;
+					await refreshAgent();
+				} catch (err) {
+					if (err.body?.error === 'conflict') {
+						toast('Agent already has a wallet — remove it first via DELETE', 'err');
+					} else {
+						toast(err.body?.error_description || err.message, 'err');
+					}
+				} finally {
+					vg.assign.disabled = false;
+					vg.assign.textContent = 'Assign as agent wallet';
+				}
+			});
+
+			(async () => {
+				await loadAgents();
+				if (currentAgentId()) {
+					await refreshAgent();
+					await refreshPortfolio();
+				}
+			})();
+		</script>
+	</body>
+</html>

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>LLM Usage — three.ws</title>
+		<style>
+			body {
+				font-family:
+					system-ui,
+					-apple-system,
+					sans-serif;
+				max-width: 640px;
+				margin: 2rem auto;
+				padding: 0 1rem;
+				color: #111;
+			}
+			h1 {
+				font-size: 1.25rem;
+				margin-bottom: 0.25rem;
+			}
+			.sub {
+				color: #555;
+				font-size: 0.875rem;
+				margin-bottom: 1.5rem;
+			}
+			.quota-bar {
+				background: #e5e7eb;
+				border-radius: 999px;
+				height: 12px;
+				overflow: hidden;
+				margin: 0.5rem 0 0.25rem;
+			}
+			.quota-fill {
+				background: #3b82f6;
+				height: 100%;
+				border-radius: 999px;
+				transition: width 0.4s;
+			}
+			.quota-fill.warn {
+				background: #f59e0b;
+			}
+			.quota-fill.danger {
+				background: #ef4444;
+			}
+			.quota-label {
+				font-size: 0.8rem;
+				color: #555;
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				margin-top: 1.5rem;
+				font-size: 0.875rem;
+			}
+			th {
+				text-align: left;
+				padding: 6px 8px;
+				border-bottom: 2px solid #e5e7eb;
+				color: #555;
+				font-weight: 600;
+			}
+			td {
+				padding: 5px 8px;
+				border-bottom: 1px solid #f3f4f6;
+			}
+			.sparkline {
+				display: flex;
+				align-items: flex-end;
+				gap: 2px;
+				height: 40px;
+				margin-top: 1.5rem;
+			}
+			.sparkline-bar {
+				flex: 1;
+				background: #3b82f6;
+				border-radius: 2px 2px 0 0;
+				min-height: 2px;
+			}
+			.sparkline-bar:hover {
+				background: #2563eb;
+			}
+			.error {
+				color: #dc2626;
+				padding: 1rem 0;
+			}
+			.section {
+				margin-top: 2rem;
+			}
+			h2 {
+				font-size: 1rem;
+				margin-bottom: 0.5rem;
+				color: #374151;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>LLM Usage</h1>
+		<div class="sub" id="agent-label">Loading…</div>
+
+		<div class="section" id="quota-section" style="display: none">
+			<h2>Current month</h2>
+			<div class="quota-bar">
+				<div class="quota-fill" id="quota-fill" style="width: 0%"></div>
+			</div>
+			<div class="quota-label" id="quota-label"></div>
+		</div>
+
+		<div class="section" id="spark-section" style="display: none">
+			<h2>Last 30 days</h2>
+			<div class="sparkline" id="sparkline"></div>
+		</div>
+
+		<div class="section" id="table-section" style="display: none">
+			<table>
+				<thead>
+					<tr>
+						<th>Day</th>
+						<th>Calls</th>
+					</tr>
+				</thead>
+				<tbody id="daily-tbody"></tbody>
+			</table>
+		</div>
+
+		<div class="error" id="error-msg" style="display: none"></div>
+
+		<script>
+			(async () => {
+				const params = new URLSearchParams(location.search);
+				const id = params.get('id');
+				if (!id) {
+					show('error-msg', 'Missing ?id= parameter.');
+					return;
+				}
+
+				document.getElementById('agent-label').textContent = `Agent ${id}`;
+
+				let data;
+				try {
+					const r = await fetch(`/api/agents/${id}/usage`, { credentials: 'include' });
+					if (r.status === 401) {
+						show('error-msg', 'Not signed in. Visit /login first.');
+						return;
+					}
+					if (r.status === 404) {
+						show('error-msg', 'Agent not found or not yours.');
+						return;
+					}
+					if (!r.ok) {
+						show('error-msg', `Error ${r.status}`);
+						return;
+					}
+					data = await r.json();
+				} catch (e) {
+					show('error-msg', `Fetch failed: ${e.message}`);
+					return;
+				}
+
+				const { currentMonthCalls, monthlyQuota, dailyBreakdown, agentId } = data;
+				document.getElementById('agent-label').textContent = `Agent ${agentId}`;
+
+				// Quota bar
+				if (typeof monthlyQuota === 'number') {
+					const pct = Math.min(100, (currentMonthCalls / monthlyQuota) * 100);
+					const fill = document.getElementById('quota-fill');
+					fill.style.width = pct + '%';
+					fill.className =
+						'quota-fill' + (pct >= 90 ? ' danger' : pct >= 70 ? ' warn' : '');
+					document.getElementById('quota-label').textContent =
+						`${currentMonthCalls.toLocaleString()} / ${monthlyQuota.toLocaleString()} calls this month (${Math.round(pct)}%)`;
+					document.getElementById('quota-section').style.display = '';
+				} else {
+					document.getElementById('quota-section').style.display = '';
+					document.getElementById('quota-label').textContent =
+						`${currentMonthCalls.toLocaleString()} calls this month (no quota set)`;
+				}
+
+				// Sparkline + table
+				if (dailyBreakdown && dailyBreakdown.length) {
+					const max = Math.max(1, ...dailyBreakdown.map((r) => r.calls));
+					const spark = document.getElementById('sparkline');
+					const tbody = document.getElementById('daily-tbody');
+					for (const row of dailyBreakdown) {
+						const bar = document.createElement('div');
+						bar.className = 'sparkline-bar';
+						bar.style.height = Math.max(2, Math.round((row.calls / max) * 40)) + 'px';
+						bar.title = `${row.day}: ${row.calls}`;
+						spark.appendChild(bar);
+
+						const tr = document.createElement('tr');
+						tr.innerHTML = `<td>${row.day}</td><td>${row.calls.toLocaleString()}</td>`;
+						tbody.appendChild(tr);
+					}
+					document.getElementById('spark-section').style.display = '';
+					document.getElementById('table-section').style.display = '';
+				} else {
+					document.getElementById('spark-section').style.display = '';
+					document.getElementById('spark-section').innerHTML +=
+						'<p style="color:#555;font-size:0.875rem">No calls in the last 30 days.</p>';
+				}
+			})();
+
+			function show(id, msg) {
+				const el = document.getElementById(id);
+				el.textContent = msg;
+				el.style.display = '';
+			}
+		</script>
+	</body>
+</html>

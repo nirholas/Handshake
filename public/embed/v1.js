@@ -85,7 +85,7 @@
 	// matter. One shared observer for the whole page.
 	var visibilityObserver = null;
 	function observeVisibility(el) {
-		if (!('IntersectionObserver' in window)) {
+		if (el.hasAttribute('eager') || !('IntersectionObserver' in window)) {
 			el.__threeVisible = true;
 			el.__bootIfReady && el.__bootIfReady();
 			return;

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Agent Tokens · three.ws</title>
+		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
+	</head>
+	<body>
+		<div class="dash-shell">
+			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
+			<h1 class="dash-title">Agent Tokens</h1>
+			<p class="dash-sub">
+				If your agent has launched a Pump.fun token, the live state lives here. Launch a new one via
+				<a href="/dashboard/agent-pumpfun">Agent · Pump.fun</a> or from the agent's home page.
+			</p>
+
+			<div id="picker"></div>
+			<div id="status"></div>
+			<div id="content"></div>
+		</div>
+
+		<script type="module">
+			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+
+			const statusEl = document.getElementById('status');
+			const contentEl = document.getElementById('content');
+
+			function showStatus(msg, kind = '') {
+				statusEl.innerHTML = msg
+					? `<div class="${kind === 'err' ? 'dash-err' : 'dash-ok'}">${escapeHtml(msg)}</div>`
+					: '';
+			}
+			function escapeHtml(s) {
+				return String(s == null ? '' : s).replace(
+					/[&<>"']/g,
+					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c],
+				);
+			}
+
+			async function getAgent(agentId) {
+				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
+					credentials: 'include',
+				});
+				if (!r.ok) throw new Error(`HTTP ${r.status}`);
+				return (await r.json()).agent;
+			}
+
+			// Pump.fun Frontend API for live state. Public, no auth.
+			async function fetchPumpData(mint) {
+				try {
+					const r = await fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`);
+					if (!r.ok) return null;
+					return r.json();
+				} catch {
+					return null;
+				}
+			}
+
+			async function render(agentId) {
+				contentEl.innerHTML = '<div class="dash-empty">Loading token data…</div>';
+				let agent;
+				try {
+					agent = await getAgent(agentId);
+				} catch (e) {
+					showStatus(e.message || 'Failed to load agent', 'err');
+					return;
+				}
+
+				const token = agent?.token || agent?.meta?.token || null;
+				if (!token?.mint) {
+					contentEl.innerHTML = `
+						<div class="dash-card">
+							<h2>No token launched</h2>
+							<p class="dash-muted" style="margin-bottom:14px">
+								This agent has no Pump.fun token yet. Launch one from the agent's home page or via the
+								Pump.fun studio.
+							</p>
+							<div class="dash-row">
+								<a class="dash-btn primary" href="/agent/${encodeURIComponent(agentId)}">Open agent</a>
+								<a class="dash-btn" href="/dashboard/agent-pumpfun">Pump.fun studio</a>
+							</div>
+						</div>`;
+					return;
+				}
+
+				const live = token.cluster === 'mainnet' ? await fetchPumpData(token.mint) : null;
+				const usdMc = live?.usd_market_cap;
+				const solBalance = (live?.virtual_sol_reserves || 0) / 1e9;
+				const tokensLeft = (live?.virtual_token_reserves || 0) / 1e6;
+				const complete = live?.complete;
+
+				contentEl.innerHTML = `
+					<div class="dash-card">
+						<h2>${escapeHtml(token.name || 'Token')} · ${escapeHtml(token.symbol || '')}</h2>
+						<div class="dash-row" style="gap:18px;flex-wrap:wrap;margin-bottom:14px">
+							${token.image ? `<img src="${escapeHtml(token.image)}" alt="" width="64" height="64" style="border-radius:10px;background:#1a1a24" />` : ''}
+							<div style="flex:1;min-width:240px">
+								<div class="dash-mono">${escapeHtml(token.mint)}</div>
+								<div class="dash-muted" style="margin-top:4px">
+									Launched ${token.launched_at ? new Date(token.launched_at).toLocaleString() : '—'}
+									${token.cluster ? ' · ' + escapeHtml(token.cluster) : ''}
+								</div>
+								${token.description ? `<p style="margin:8px 0 0;color:#ccc">${escapeHtml(token.description)}</p>` : ''}
+							</div>
+						</div>
+						<div class="dash-row">
+							${token.pumpfun_url ? `<a class="dash-btn primary" href="${escapeHtml(token.pumpfun_url)}" target="_blank" rel="noopener">Pump.fun ↗</a>` : ''}
+							${token.explorer_url ? `<a class="dash-btn" href="${escapeHtml(token.explorer_url)}" target="_blank" rel="noopener">Explorer ↗</a>` : ''}
+							<a class="dash-btn" href="https://dexscreener.com/solana/${encodeURIComponent(token.mint)}" target="_blank" rel="noopener">DEX Screener ↗</a>
+							<a class="dash-btn" href="https://birdeye.so/token/${encodeURIComponent(token.mint)}?chain=solana" target="_blank" rel="noopener">Birdeye ↗</a>
+						</div>
+					</div>
+
+					${
+						live
+							? `<div class="dash-card">
+									<h2>Live state</h2>
+									<div class="dash-row" style="gap:24px">
+										<div>
+											<div class="dash-muted" style="font-size:11px;text-transform:uppercase">Market cap</div>
+											<div style="font-size:18px">${usdMc != null ? '$' + Number(usdMc).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—'}</div>
+										</div>
+										<div>
+											<div class="dash-muted" style="font-size:11px;text-transform:uppercase">SOL in curve</div>
+											<div style="font-size:18px">${solBalance.toFixed(2)}</div>
+										</div>
+										<div>
+											<div class="dash-muted" style="font-size:11px;text-transform:uppercase">Tokens left</div>
+											<div style="font-size:18px">${tokensLeft.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+										</div>
+										<div>
+											<div class="dash-muted" style="font-size:11px;text-transform:uppercase">Status</div>
+											<div style="font-size:18px">${complete ? '🎓 Graduated' : '📈 Bonding'}</div>
+										</div>
+									</div>
+								</div>`
+							: token.cluster === 'mainnet'
+								? '<div class="dash-empty">Pump.fun returned no data for this mint — token may be very new.</div>'
+								: '<div class="dash-muted" style="text-align:center;padding:12px">Devnet token — live Pump.fun stats are mainnet-only.</div>'
+					}
+
+					<div class="dash-card">
+						<h2>Launch tx</h2>
+						${
+							token.tx_signature
+								? `<div class="dash-mono" style="word-break:break-all">${escapeHtml(token.tx_signature)}</div>
+									<a class="dash-btn" style="margin-top:10px" target="_blank" rel="noopener" href="https://solscan.io/tx/${encodeURIComponent(token.tx_signature)}${token.cluster === 'devnet' ? '?cluster=devnet' : ''}">View on Solscan ↗</a>`
+								: '<div class="dash-muted">No tx signature recorded.</div>'
+						}
+					</div>
+				`;
+			}
+
+			mountAgentPicker({
+				host: document.getElementById('picker'),
+				onPick: (agentId) => render(agentId),
+			});
+		</script>
+	</body>
+</html>

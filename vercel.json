@@ -1231,6 +1231,18 @@
             "dest": "/api/avatar-og?id=$1"
         },
         {
+            "src": "/api/avatar/video-generate",
+            "dest": "/api/avatar/video-generate"
+        },
+        {
+            "src": "/api/avatar/video-status",
+            "dest": "/api/avatar/video-status"
+        },
+        {
+            "src": "/api/avatar/presign-audio",
+            "dest": "/api/avatar/presign-audio"
+        },
+        {
             "src": "/api/avatars/([^/]+)/og",
             "dest": "/api/avatar-og?id=$1"
         },

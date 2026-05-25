@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Agent Memory · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
+		<style>
+			.skip-link { position: absolute; left: -9999px; }
+			.skip-link:focus { left: 1rem; top: 1rem; padding: .5rem 1rem; background: #0c0c0c; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; z-index: 9999; color: #fff; text-decoration: none; }
+
+			/* ── Stats bar ─────────────────────────────────────────────── */
+			.mem-stats {
+				display: flex;
+				gap: 10px;
+				margin-bottom: 18px;
+				flex-wrap: wrap;
+			}
+			.mem-stat {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 10px 16px;
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				min-width: 80px;
+			}
+			.mem-stat-val { font-size: 22px; font-weight: 700; line-height: 1; }
+			.mem-stat-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .06em; }
+
+			/* ── Toolbar ────────────────────────────────────────────────── */
+			.mem-toolbar {
+				display: flex;
+				gap: 10px;
+				margin-bottom: 16px;
+				flex-wrap: wrap;
+				align-items: center;
+			}
+			.mem-search {
+				flex: 1;
+				min-width: 180px;
+				background: #0f0f17;
+				color: #eee;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 8px 12px;
+				font-size: 13px;
+				font-family: inherit;
+			}
+			.mem-search:focus { outline: none; border-color: var(--accent); }
+			.mem-filter-tabs {
+				display: flex;
+				gap: 4px;
+				flex-wrap: wrap;
+			}
+			.mem-tab {
+				background: transparent;
+				color: #888;
+				border: 1px solid transparent;
+				border-radius: 20px;
+				padding: 5px 12px;
+				font-size: 12px;
+				cursor: pointer;
+				font-family: inherit;
+				transition: all .15s;
+			}
+			.mem-tab:hover { color: #ddd; border-color: var(--border); }
+			.mem-tab.active { border-color: var(--accent); color: #c8c0ff; background: rgba(106,92,255,.1); }
+
+			/* ── Memory cards ───────────────────────────────────────────── */
+			.mem-card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 14px 16px;
+				margin-bottom: 8px;
+				transition: border-color .15s;
+			}
+			.mem-card:hover { border-color: #2f2f40; }
+			.mem-card-header {
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				margin-bottom: 6px;
+			}
+			.mem-type-badge {
+				display: inline-block;
+				border-radius: 4px;
+				padding: 2px 8px;
+				font-size: 10px;
+				font-weight: 600;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				flex-shrink: 0;
+				margin-top: 2px;
+			}
+			.mem-type-user    { background: rgba(59,130,246,.15); color: #93c5fd; border: 1px solid rgba(59,130,246,.3); }
+			.mem-type-feedback{ background: rgba(168,85,247,.15); color: #d8b4fe; border: 1px solid rgba(168,85,247,.3); }
+			.mem-type-project { background: rgba(34,197,94,.15);  color: #86efac; border: 1px solid rgba(34,197,94,.3); }
+			.mem-type-reference{background: rgba(251,146,60,.15); color: #fdba74; border: 1px solid rgba(251,146,60,.3); }
+
+			.mem-name {
+				font-size: 14px;
+				font-weight: 600;
+				color: #eee;
+				flex: 1;
+			}
+			.mem-description {
+				font-size: 12px;
+				color: #888;
+				margin-bottom: 8px;
+				font-style: italic;
+			}
+			.mem-content {
+				font-size: 13px;
+				color: #ccc;
+				white-space: pre-wrap;
+				word-break: break-word;
+				line-height: 1.5;
+			}
+			.mem-content.collapsed {
+				display: -webkit-box;
+				-webkit-line-clamp: 3;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+			}
+			.mem-expand-btn {
+				background: none;
+				border: none;
+				color: var(--accent);
+				font-size: 12px;
+				cursor: pointer;
+				padding: 2px 0;
+				font-family: inherit;
+				margin-top: 4px;
+			}
+			.mem-expand-btn:hover { text-decoration: underline; }
+
+			.mem-footer {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				margin-top: 10px;
+				flex-wrap: wrap;
+			}
+			.mem-meta { font-size: 11px; color: #555; }
+
+			.mem-salience-bar {
+				height: 3px;
+				border-radius: 2px;
+				background: var(--border);
+				width: 60px;
+				overflow: hidden;
+				flex-shrink: 0;
+			}
+			.mem-salience-fill {
+				height: 100%;
+				border-radius: 2px;
+			}
+
+			.mem-actions {
+				margin-left: auto;
+				display: flex;
+				gap: 6px;
+			}
+			.mem-action-btn {
+				background: transparent;
+				border: 1px solid transparent;
+				border-radius: 6px;
+				color: #666;
+				font-size: 12px;
+				cursor: pointer;
+				padding: 4px 9px;
+				font-family: inherit;
+				transition: all .12s;
+			}
+			.mem-action-btn:hover { background: #1f1f2c; border-color: var(--border); color: #ccc; }
+			.mem-action-btn.danger:hover { color: #ff8a9c; border-color: #3a2530; background: #2a1820; }
+
+			/* ── Edit form (inline) ─────────────────────────────────────── */
+			.mem-edit-form {
+				display: grid;
+				gap: 10px;
+				margin-top: 10px;
+			}
+			.mem-edit-row { display: grid; gap: 4px; }
+			.mem-edit-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .06em; }
+			.mem-edit-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+			.mem-edit-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+			/* ── Add form card ──────────────────────────────────────────── */
+			.mem-add-toggle {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				cursor: pointer;
+				user-select: none;
+			}
+			.mem-add-body { display: none; margin-top: 14px; }
+			.mem-add-body.open { display: block; }
+
+			/* ── Export/Import bar ──────────────────────────────────────── */
+			.mem-io-bar {
+				display: flex;
+				gap: 8px;
+				margin-bottom: 18px;
+				flex-wrap: wrap;
+			}
+
+			/* ── Salience slider ────────────────────────────────────────── */
+			.mem-slider-row {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+			.mem-slider-row input[type=range] {
+				flex: 1;
+				accent-color: var(--accent);
+			}
+			.mem-slider-val { font-size: 12px; color: #aaa; width: 28px; text-align: right; }
+
+			/* ── Empty state ────────────────────────────────────────────── */
+			.mem-empty {
+				text-align: center;
+				color: #555;
+				padding: 48px 16px;
+				font-size: 14px;
+			}
+
+			/* ── Sort control ───────────────────────────────────────────── */
+			.mem-sort {
+				background: #0f0f17;
+				color: #aaa;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 6px 10px;
+				font-size: 12px;
+				font-family: inherit;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<body>
+		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main id="main-content" class="dash-shell">
+			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
+			<div style="display:flex;align-items:baseline;gap:14px;margin-bottom:4px">
+				<h1 class="dash-title" style="margin:0">Agent Memory</h1>
+			</div>
+			<p class="dash-sub">
+				Browse, search, edit, and manage long-term memories your agent uses for context.
+			</p>
+
+			<div id="picker"></div>
+			<div id="status"></div>
+			<div id="content"></div>
+		</main>
+
+		<script type="module">
+			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+
+			const TYPES = ['user', 'feedback', 'project', 'reference'];
+			const TYPE_LABELS = { user: 'User', feedback: 'Feedback', project: 'Project', reference: 'Reference' };
+
+			const $ = (id) => document.getElementById(id);
+			const statusEl = $('status');
+			const contentEl = $('content');
+
+			let allEntries = [];
+			let activeType = 'all';
+			let searchQuery = '';
+			let sortMode = 'salience';
+			let currentAgentId = null;
+			let addFormOpen = false;
+
+			// ── HTML helpers ──────────────────────────────────────────────
+
+			function escapeHtml(s) {
+				return String(s == null ? '' : s).replace(
+					/[&<>"']/g,
+					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c],
+				);
+			}
+
+			function fmtTime(ms) {
+				if (!ms) return '';
+				const d = new Date(ms);
+				const now = Date.now();
+				const diff = now - ms;
+				if (diff < 60000) return 'just now';
+				if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+				if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+				if (diff < 7 * 86400000) return `${Math.floor(diff / 86400000)}d ago`;
+				return d.toLocaleDateString();
+			}
+
+			function showStatus(msg, kind = '') {
+				statusEl.innerHTML = msg
+					? `<div class="${kind === 'err' ? 'dash-err' : 'dash-ok'}">${escapeHtml(msg)}</div>`
+					: '';
+				if (msg) setTimeout(() => { statusEl.innerHTML = ''; }, 4000);
+			}
+
+			function salienceColor(v) {
+				const r = Math.round(255 * (1 - v));
+				const g = Math.round(180 * v);
+				return `rgb(${r},${g},80)`;
+			}
+
+			// ── API ───────────────────────────────────────────────────────
+
+			async function loadMemories(agentId) {
+				const r = await fetch(
+					`/api/agent-memory?agentId=${encodeURIComponent(agentId)}&limit=500`,
+					{ credentials: 'include' },
+				);
+				if (!r.ok) throw new Error(`HTTP ${r.status}`);
+				const data = await r.json();
+				return data.entries || [];
+			}
+
+			async function deleteMemory(id) {
+				const r = await fetch(`/api/agent-memory/${encodeURIComponent(id)}`, {
+					method: 'DELETE',
+					credentials: 'include',
+				});
+				if (!r.ok) throw new Error(`HTTP ${r.status}`);
+				return r.json();
+			}
+
+			async function saveMemory(agentId, entry) {
+				const r = await fetch('/api/agent-memory', {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ agentId, entry }),
+				});
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			// ── Filter + sort ─────────────────────────────────────────────
+
+			function filteredEntries() {
+				let list = allEntries;
+				if (activeType !== 'all') list = list.filter((e) => e.type === activeType);
+				if (searchQuery) {
+					const q = searchQuery.toLowerCase();
+					list = list.filter((e) => {
+						const name = (e.context?.name || '').toLowerCase();
+						const desc = (e.context?.description || '').toLowerCase();
+						const content = (e.content || '').toLowerCase();
+						const tags = (e.tags || []).join(' ').toLowerCase();
+						return name.includes(q) || desc.includes(q) || content.includes(q) || tags.includes(q);
+					});
+				}
+				if (sortMode === 'salience') list = [...list].sort((a, b) => (b.salience || 0) - (a.salience || 0));
+				if (sortMode === 'newest') list = [...list].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+				if (sortMode === 'oldest') list = [...list].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+				if (sortMode === 'updated') list = [...list].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+				return list;
+			}
+
+			// ── Render ────────────────────────────────────────────────────
+
+			function renderAll(agentId) {
+				const entries = filteredEntries();
+				const counts = { all: allEntries.length };
+				for (const t of TYPES) counts[t] = allEntries.filter((e) => e.type === t).length;
+
+				contentEl.innerHTML = `
+					<div class="mem-stats">
+						<div class="mem-stat">
+							<div class="mem-stat-val">${counts.all}</div>
+							<div class="mem-stat-label">Total</div>
+						</div>
+						${TYPES.map((t) => `
+							<div class="mem-stat">
+								<div class="mem-stat-val" style="color:${typeColor(t)}">${counts[t]}</div>
+								<div class="mem-stat-label">${TYPE_LABELS[t]}</div>
+							</div>
+						`).join('')}
+					</div>
+
+					<div class="mem-io-bar">
+						<button class="dash-btn" id="export-btn">Export JSON</button>
+						<label class="dash-btn" style="cursor:pointer">
+							Import JSON
+							<input type="file" id="import-file" accept=".json" style="display:none" />
+						</label>
+					</div>
+
+					<div class="dash-card" id="add-card">
+						<div class="mem-add-toggle" id="add-toggle">
+							<h2 style="margin:0">Add memory</h2>
+							<span id="add-caret" style="font-size:18px;color:#666;transition:transform .2s">${addFormOpen ? '▲' : '▼'}</span>
+						</div>
+						<div class="mem-add-body ${addFormOpen ? 'open' : ''}" id="add-body">
+							<form id="add-form" class="mem-edit-form">
+								<div class="mem-edit-grid2">
+									<div class="mem-edit-row">
+										<label class="mem-edit-label">Name</label>
+										<input class="dash-input" name="name" placeholder="Brief title (e.g. "Preferred response tone")" />
+									</div>
+									<div class="mem-edit-row">
+										<label class="mem-edit-label">Type</label>
+										<select class="dash-select" name="type">
+											${TYPES.map((t) => `<option value="${t}">${TYPE_LABELS[t]}</option>`).join('')}
+										</select>
+									</div>
+								</div>
+								<div class="mem-edit-row">
+									<label class="mem-edit-label">Description <span class="mem-meta">(one-line summary for retrieval)</span></label>
+									<input class="dash-input" name="description" placeholder="Used by the AI to judge relevance when building context" />
+								</div>
+								<div class="mem-edit-row">
+									<label class="mem-edit-label">Content</label>
+									<textarea class="dash-textarea" name="content" required maxlength="10000" placeholder="What the agent should remember — include Why and How to apply for feedback memories."></textarea>
+								</div>
+								<div class="mem-edit-grid2">
+									<div class="mem-edit-row">
+										<label class="mem-edit-label">Tags <span class="mem-meta">(comma-separated)</span></label>
+										<input class="dash-input" name="tags" placeholder="trading, defi" />
+									</div>
+									<div class="mem-edit-row">
+										<label class="mem-edit-label">Expires</label>
+										<input class="dash-input" type="date" name="expiresAt" />
+									</div>
+								</div>
+								<div class="mem-edit-row">
+									<label class="mem-edit-label">Salience <span class="mem-meta">(how strongly to weight this memory)</span></label>
+									<div class="mem-slider-row">
+										<input type="range" name="salience" min="0" max="1" step="0.05" value="0.5" id="add-salience" />
+										<span class="mem-slider-val" id="add-salience-val">0.5</span>
+									</div>
+								</div>
+								<div class="mem-edit-actions">
+									<button class="dash-btn primary" type="submit">Save memory</button>
+									<span class="dash-muted" id="add-form-status"></span>
+								</div>
+							</form>
+						</div>
+					</div>
+
+					<div class="mem-toolbar">
+						<input class="mem-search" id="mem-search" placeholder="Search name, content, tags…" value="${escapeHtml(searchQuery)}" />
+						<div class="mem-filter-tabs">
+							<button class="mem-tab ${activeType === 'all' ? 'active' : ''}" data-type="all">All (${counts.all})</button>
+							${TYPES.map((t) => `<button class="mem-tab ${activeType === t ? 'active' : ''}" data-type="${t}">${TYPE_LABELS[t]} (${counts[t]})</button>`).join('')}
+						</div>
+						<select class="mem-sort" id="mem-sort">
+							<option value="salience" ${sortMode === 'salience' ? 'selected' : ''}>Sort: Salience</option>
+							<option value="newest" ${sortMode === 'newest' ? 'selected' : ''}>Sort: Newest</option>
+							<option value="oldest" ${sortMode === 'oldest' ? 'selected' : ''}>Sort: Oldest</option>
+							<option value="updated" ${sortMode === 'updated' ? 'selected' : ''}>Sort: Updated</option>
+						</select>
+					</div>
+
+					<div id="mem-list">
+						${entries.length === 0
+							? `<div class="mem-empty">${allEntries.length === 0 ? 'No memories yet. Add the first one above.' : 'No memories match your search.'}</div>`
+							: entries.map((m) => renderMemoryCard(m)).join('')
+						}
+					</div>
+				`;
+
+				// Wire up events
+				wireAddForm(agentId);
+				wireToolbar(agentId);
+				wireExportImport(agentId);
+				wireCardEvents(agentId);
+			}
+
+			function typeColor(t) {
+				return { user: '#93c5fd', feedback: '#d8b4fe', project: '#86efac', reference: '#fdba74' }[t] || '#aaa';
+			}
+
+			function renderMemoryCard(m, editing = false) {
+				const name = m.context?.name || '';
+				const description = m.context?.description || '';
+				const isLong = (m.content || '').length > 300;
+				const salience = m.salience ?? 0.5;
+				const tags = (m.tags || []).filter(Boolean);
+				const expiry = m.expiresAt ? `· expires ${fmtTime(m.expiresAt)}` : '';
+
+				if (editing) {
+					return `
+						<div class="mem-card" data-id="${escapeHtml(m.id)}">
+							<form class="mem-edit-form" data-edit="${escapeHtml(m.id)}">
+								<div class="mem-edit-grid2">
+									<div class="mem-edit-row">
+										<label class="mem-edit-label">Name</label>
+										<input class="dash-input" name="name" value="${escapeHtml(name)}" placeholder="Brief title" />
+									</div>
+									<div class="mem-edit-row">
+										<label class="mem-edit-label">Type</label>
+										<select class="dash-select" name="type">
+											${TYPES.map((t) => `<option value="${t}" ${m.type === t ? 'selected' : ''}>${TYPE_LABELS[t]}</option>`).join('')}
+										</select>
+									</div>
+								</div>
+								<div class="mem-edit-row">
+									<label class="mem-edit-label">Description</label>
+									<input class="dash-input" name="description" value="${escapeHtml(description)}" placeholder="One-line summary for retrieval" />
+								</div>
+								<div class="mem-edit-row">
+									<label class="mem-edit-label">Content</label>
+									<textarea class="dash-textarea" name="content" required maxlength="10000">${escapeHtml(m.content || '')}</textarea>
+								</div>
+								<div class="mem-edit-grid2">
+									<div class="mem-edit-row">
+										<label class="mem-edit-label">Tags</label>
+										<input class="dash-input" name="tags" value="${escapeHtml((m.tags || []).join(', '))}" />
+									</div>
+									<div class="mem-edit-row">
+										<label class="mem-edit-label">Expires</label>
+										<input class="dash-input" type="date" name="expiresAt" value="${m.expiresAt ? new Date(m.expiresAt).toISOString().slice(0,10) : ''}" />
+									</div>
+								</div>
+								<div class="mem-edit-row">
+									<label class="mem-edit-label">Salience</label>
+									<div class="mem-slider-row">
+										<input type="range" name="salience" min="0" max="1" step="0.05" value="${salience}" class="edit-salience-slider" data-id="${escapeHtml(m.id)}" />
+										<span class="mem-slider-val edit-salience-val" data-id="${escapeHtml(m.id)}">${salience.toFixed(2)}</span>
+									</div>
+								</div>
+								<div class="mem-edit-actions">
+									<button class="dash-btn primary" type="submit">Save changes</button>
+									<button class="dash-btn cancel-edit" type="button" data-id="${escapeHtml(m.id)}">Cancel</button>
+									<span class="dash-muted edit-status" data-id="${escapeHtml(m.id)}"></span>
+								</div>
+							</form>
+						</div>
+					`;
+				}
+
+				return `
+					<div class="mem-card" data-id="${escapeHtml(m.id)}">
+						<div class="mem-card-header">
+							<span class="mem-type-badge mem-type-${escapeHtml(m.type)}">${escapeHtml(TYPE_LABELS[m.type] || m.type)}</span>
+							<div class="mem-name">${name ? escapeHtml(name) : '<span style="color:#555;font-weight:400;font-style:italic">Untitled</span>'}</div>
+						</div>
+						${description ? `<div class="mem-description">${escapeHtml(description)}</div>` : ''}
+						<div class="mem-content ${isLong ? 'collapsed' : ''}" data-id="${escapeHtml(m.id)}">${escapeHtml(m.content || '')}</div>
+						${isLong ? `<button class="mem-expand-btn" data-expand="${escapeHtml(m.id)}">Show more</button>` : ''}
+						<div class="mem-footer">
+							<div class="mem-salience-bar" title="Salience: ${salience.toFixed(2)}">
+								<div class="mem-salience-fill" style="width:${(salience * 100).toFixed(0)}%;background:${salienceColor(salience)}"></div>
+							</div>
+							${tags.length ? tags.map((t) => `<span class="dash-pill">${escapeHtml(t)}</span>`).join('') : ''}
+							<span class="mem-meta">${fmtTime(m.createdAt)} ${expiry}</span>
+							<div class="mem-actions">
+								<button class="mem-action-btn edit-mem-btn" data-id="${escapeHtml(m.id)}">Edit</button>
+								<button class="mem-action-btn danger forget-mem-btn" data-id="${escapeHtml(m.id)}">Forget</button>
+							</div>
+						</div>
+					</div>
+				`;
+			}
+
+			// ── Wire: toolbar ─────────────────────────────────────────────
+
+			function wireToolbar(agentId) {
+				const search = $('mem-search');
+				if (search) {
+					search.addEventListener('input', () => {
+						searchQuery = search.value;
+						renderAll(agentId);
+					});
+				}
+
+				document.querySelectorAll('.mem-tab').forEach((btn) => {
+					btn.addEventListener('click', () => {
+						activeType = btn.dataset.type;
+						renderAll(agentId);
+					});
+				});
+
+				const sortEl = $('mem-sort');
+				if (sortEl) {
+					sortEl.addEventListener('change', () => {
+						sortMode = sortEl.value;
+						renderAll(agentId);
+					});
+				}
+			}
+
+			// ── Wire: add form ────────────────────────────────────────────
+
+			function wireAddForm(agentId) {
+				const toggle = $('add-toggle');
+				const body = $('add-body');
+				const caret = $('add-caret');
+				if (toggle) {
+					toggle.addEventListener('click', () => {
+						addFormOpen = !addFormOpen;
+						body.classList.toggle('open', addFormOpen);
+						caret.textContent = addFormOpen ? '▲' : '▼';
+					});
+				}
+
+				const salienceInput = $('add-salience');
+				const salienceVal = $('add-salience-val');
+				if (salienceInput) {
+					salienceInput.addEventListener('input', () => {
+						salienceVal.textContent = Number(salienceInput.value).toFixed(2);
+					});
+				}
+
+				const form = $('add-form');
+				if (!form) return;
+				form.addEventListener('submit', async (e) => {
+					e.preventDefault();
+					const fd = new FormData(form);
+					const tags = String(fd.get('tags') || '').split(',').map((t) => t.trim()).filter(Boolean);
+					const expiresRaw = fd.get('expiresAt');
+					const entry = {
+						type: String(fd.get('type')),
+						content: String(fd.get('content')),
+						tags,
+						salience: Number(fd.get('salience')) || 0.5,
+						context: {
+							name: String(fd.get('name') || '').trim(),
+							description: String(fd.get('description') || '').trim(),
+						},
+						createdAt: Date.now(),
+						updatedAt: Date.now(),
+						expiresAt: expiresRaw ? new Date(expiresRaw).getTime() : undefined,
+					};
+					const formStatus = $('add-form-status');
+					formStatus.textContent = 'Saving…';
+					try {
+						await saveMemory(agentId, entry);
+						formStatus.textContent = '';
+						form.reset();
+						if ($('add-salience-val')) $('add-salience-val').textContent = '0.5';
+						await refresh(agentId);
+						showStatus('Memory saved.', 'ok');
+					} catch (err) {
+						formStatus.textContent = err.message || 'Save failed';
+					}
+				});
+			}
+
+			// ── Wire: card events (edit, delete, expand) ──────────────────
+
+			function wireCardEvents(agentId) {
+				// Expand/collapse
+				document.querySelectorAll('[data-expand]').forEach((btn) => {
+					btn.addEventListener('click', () => {
+						const id = btn.dataset.expand;
+						const el = document.querySelector(`.mem-content[data-id="${id}"]`);
+						if (!el) return;
+						const collapsed = el.classList.toggle('collapsed');
+						btn.textContent = collapsed ? 'Show more' : 'Show less';
+					});
+				});
+
+				// Edit salience sliders (edit mode)
+				document.querySelectorAll('.edit-salience-slider').forEach((slider) => {
+					slider.addEventListener('input', () => {
+						const val = document.querySelector(`.edit-salience-val[data-id="${slider.dataset.id}"]`);
+						if (val) val.textContent = Number(slider.value).toFixed(2);
+					});
+				});
+
+				// Edit buttons — replace card with edit form
+				document.querySelectorAll('.edit-mem-btn').forEach((btn) => {
+					btn.addEventListener('click', () => {
+						const id = btn.dataset.id;
+						const m = allEntries.find((e) => e.id === id);
+						if (!m) return;
+						const card = document.querySelector(`.mem-card[data-id="${id}"]`);
+						if (card) card.outerHTML = renderMemoryCard(m, true);
+						// Re-wire after DOM replacement
+						wireEditForm(agentId, id);
+					});
+				});
+
+				// Cancel edit — .cancel-edit buttons in wireCardEvents are only on
+				// read-only cards (which have none); the edit form's cancel is wired
+				// exclusively in wireEditForm. This block is intentionally empty to
+				// avoid double-registration.
+
+				// Forget buttons
+				document.querySelectorAll('.forget-mem-btn').forEach((btn) => {
+					btn.addEventListener('click', async () => {
+						const id = btn.dataset.id;
+						if (!confirm('Forget this memory? This cannot be undone.')) return;
+						btn.disabled = true;
+						try {
+							await deleteMemory(id);
+							allEntries = allEntries.filter((e) => e.id !== id);
+							renderAll(agentId);
+						} catch (err) {
+							showStatus(err.message || 'Delete failed', 'err');
+							btn.disabled = false;
+						}
+					});
+				});
+			}
+
+			function wireEditForm(agentId, id) {
+				const form = document.querySelector(`[data-edit="${id}"]`);
+				if (!form) return;
+
+				const slider = form.querySelector('.edit-salience-slider');
+				const val = form.querySelector('.edit-salience-val');
+				if (slider && val) {
+					slider.addEventListener('input', () => {
+						val.textContent = Number(slider.value).toFixed(2);
+					});
+				}
+
+				const cancelBtn = form.querySelector('.cancel-edit');
+				if (cancelBtn) {
+					cancelBtn.addEventListener('click', () => renderAll(agentId));
+				}
+
+				form.addEventListener('submit', async (e) => {
+					e.preventDefault();
+					const fd = new FormData(form);
+					const tags = String(fd.get('tags') || '').split(',').map((t) => t.trim()).filter(Boolean);
+					const expiresRaw = fd.get('expiresAt');
+					const existing = allEntries.find((en) => en.id === id);
+					const entry = {
+						id,
+						type: String(fd.get('type')),
+						content: String(fd.get('content')),
+						tags,
+						salience: Number(fd.get('salience')) || 0.5,
+						context: {
+							name: String(fd.get('name') || '').trim(),
+							description: String(fd.get('description') || '').trim(),
+						},
+						createdAt: existing?.createdAt || Date.now(),
+						updatedAt: Date.now(),
+						expiresAt: expiresRaw ? new Date(expiresRaw).getTime() : undefined,
+					};
+					const statusSpan = form.querySelector(`.edit-status[data-id="${id}"]`);
+					if (statusSpan) statusSpan.textContent = 'Saving…';
+					try {
+						const result = await saveMemory(agentId, entry);
+						// Update in local list
+						const idx = allEntries.findIndex((en) => en.id === id);
+						if (idx >= 0) allEntries[idx] = result.entry;
+						renderAll(agentId);
+						showStatus('Memory updated.', 'ok');
+					} catch (err) {
+						if (statusSpan) statusSpan.textContent = err.message || 'Save failed';
+					}
+				});
+			}
+
+			// ── Wire: export / import ─────────────────────────────────────
+
+			function wireExportImport(agentId) {
+				const exportBtn = $('export-btn');
+				if (exportBtn) {
+					exportBtn.addEventListener('click', () => {
+						const blob = new Blob([JSON.stringify(allEntries, null, 2)], { type: 'application/json' });
+						const url = URL.createObjectURL(blob);
+						const a = document.createElement('a');
+						a.href = url;
+						a.download = `agent-memory-${agentId.slice(0, 8)}-${Date.now()}.json`;
+						a.click();
+						URL.revokeObjectURL(url);
+					});
+				}
+
+				const importFile = $('import-file');
+				if (importFile) {
+					importFile.addEventListener('change', async (e) => {
+						const file = e.target.files[0];
+						if (!file) return;
+						let entries;
+						try {
+							entries = JSON.parse(await file.text());
+							if (!Array.isArray(entries)) throw new Error('Expected JSON array');
+						} catch (err) {
+							showStatus('Invalid JSON file: ' + err.message, 'err');
+							importFile.value = '';
+							return;
+						}
+						let ok = 0, fail = 0;
+						for (const entry of entries) {
+							try {
+								// Strip old id so we get a fresh one (avoids id conflicts)
+								const { id: _drop, agent_id: _drop2, ...rest } = entry;
+								await saveMemory(agentId, rest);
+								ok++;
+							} catch { fail++; }
+						}
+						importFile.value = '';
+						await refresh(agentId);
+						showStatus(`Imported ${ok} memories${fail ? `, ${fail} failed` : ''}.`, fail ? 'err' : 'ok');
+					});
+				}
+			}
+
+			// ── Refresh ───────────────────────────────────────────────────
+
+			async function refresh(agentId) {
+				try {
+					allEntries = await loadMemories(agentId);
+					renderAll(agentId);
+				} catch (e) {
+					showStatus(e.message || 'Failed to load memories', 'err');
+				}
+			}
+
+			// ── Boot ──────────────────────────────────────────────────────
+
+			mountAgentPicker({
+				host: document.getElementById('picker'),
+				onPick: (agentId) => {
+					currentAgentId = agentId;
+					contentEl.innerHTML = '<div class="mem-empty">Loading memories…</div>';
+					refresh(agentId);
+				},
+			});
+
+		</script>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js" defer></script>
+	</body>
+</html>

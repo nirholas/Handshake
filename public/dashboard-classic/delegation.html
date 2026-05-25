@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Agent Delegation · three.ws</title>
+		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
+	</head>
+	<body>
+		<div class="dash-shell">
+			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
+			<h1 class="dash-title">Agent Delegation</h1>
+			<p class="dash-sub">
+				Send a message from one of your agents to any other agent. Calls
+				<code class="dash-mono">/api/agent-delegate</code>. Nested calls are rejected — depth is
+				capped at 1 to prevent recursion.
+			</p>
+
+			<div id="picker"></div>
+			<div id="status"></div>
+			<div id="content"></div>
+		</div>
+
+		<script type="module">
+			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+
+			const statusEl = document.getElementById('status');
+			const contentEl = document.getElementById('content');
+			let allAgents = [];
+
+			function showStatus(msg, kind = '') {
+				statusEl.innerHTML = msg
+					? `<div class="${kind === 'err' ? 'dash-err' : 'dash-ok'}">${escapeHtml(msg)}</div>`
+					: '';
+			}
+			function escapeHtml(s) {
+				return String(s == null ? '' : s).replace(
+					/[&<>"']/g,
+					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c],
+				);
+			}
+
+			async function callDelegate(fromAgentId, toAgentId, message) {
+				const r = await fetch('/api/agent-delegate', {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ fromAgentId, toAgentId, message }),
+				});
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			async function fetchAllAgents() {
+				const r = await fetch('/api/agents', { credentials: 'include' });
+				if (!r.ok) return [];
+				const data = await r.json();
+				return data.agents || [];
+			}
+
+			function render(fromAgentId) {
+				contentEl.innerHTML = `
+					<div class="dash-card">
+						<h2>Send message</h2>
+						<form id="del-form" style="display:grid;gap:12px">
+							<label>
+								<div class="dash-muted" style="margin-bottom:4px">From (this agent)</div>
+								<input class="dash-input" readonly value="${escapeHtml(fromAgentId)}" />
+							</label>
+							<label>
+								<div class="dash-muted" style="margin-bottom:4px">To (target agent)</div>
+								<select class="dash-select" name="to" required>
+									<option value="">Pick a target agent…</option>
+									${allAgents
+										.filter((a) => a.id !== fromAgentId)
+										.map(
+											(a) =>
+												`<option value="${escapeHtml(a.id)}">${escapeHtml(a.name || 'Agent')} · ${escapeHtml(a.id.slice(0, 8))}…</option>`,
+										)
+										.join('')}
+								</select>
+								<div class="dash-muted" style="margin-top:4px;font-size:11px">
+									Pasting any UUID works too — targets need not belong to you.
+								</div>
+								<input class="dash-input" name="to_manual" placeholder="…or paste any agent UUID" style="margin-top:6px" />
+							</label>
+							<label>
+								<div class="dash-muted" style="margin-bottom:4px">Message</div>
+								<textarea class="dash-textarea" name="message" required maxlength="8000" placeholder="What should the target agent respond to?"></textarea>
+							</label>
+							<div class="dash-row">
+								<button class="dash-btn primary" type="submit">Send</button>
+								<span class="dash-muted" id="del-status"></span>
+							</div>
+						</form>
+					</div>
+					<div class="dash-card" id="reply-card" style="display:none">
+						<h2>Reply</h2>
+						<div id="reply-body" style="white-space:pre-wrap;color:#ddd"></div>
+					</div>
+				`;
+
+				document.getElementById('del-form').addEventListener('submit', async (e) => {
+					e.preventDefault();
+					const fd = new FormData(e.target);
+					const toAgentId = String(fd.get('to_manual') || fd.get('to') || '').trim();
+					const message = String(fd.get('message') || '').trim();
+					if (!toAgentId || !message) return;
+					const replyCard = document.getElementById('reply-card');
+					const replyBody = document.getElementById('reply-body');
+					const delStatus = document.getElementById('del-status');
+					delStatus.textContent = 'Sending…';
+					replyCard.style.display = 'none';
+					try {
+						const { response } = await callDelegate(fromAgentId, toAgentId, message);
+						replyBody.textContent = response || '(empty response)';
+						replyCard.style.display = 'block';
+						delStatus.textContent = '';
+					} catch (err) {
+						delStatus.textContent = '';
+						showStatus(err.message || 'Delegate failed', 'err');
+					}
+				});
+			}
+
+			async function refresh(agentId) {
+				contentEl.innerHTML = '<div class="dash-empty">Loading agents…</div>';
+				if (!allAgents.length) allAgents = await fetchAllAgents();
+				render(agentId);
+			}
+
+			mountAgentPicker({
+				host: document.getElementById('picker'),
+				onPick: (agentId) => refresh(agentId),
+			});
+		</script>
+	</body>
+</html>

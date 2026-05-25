@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Agent Strategy · three.ws</title>
+		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
+	</head>
+	<body>
+		<div class="dash-shell">
+			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
+			<h1 class="dash-title">Agent Strategy</h1>
+			<p class="dash-sub">
+				Freeform JSON your agent's skills can read at runtime. Stored on
+				<code class="dash-mono">agent_identities.meta.strategy</code>. For typed DCA rules see
+				<a href="/strategy-lab">Strategy lab</a>.
+			</p>
+
+			<div id="picker"></div>
+			<div id="status"></div>
+			<div id="content"></div>
+		</div>
+
+		<script type="module">
+			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+
+			const statusEl = document.getElementById('status');
+			const contentEl = document.getElementById('content');
+
+			function showStatus(msg, kind = '') {
+				statusEl.innerHTML = msg
+					? `<div class="${kind === 'err' ? 'dash-err' : 'dash-ok'}">${escapeHtml(msg)}</div>`
+					: '';
+			}
+			function escapeHtml(s) {
+				return String(s == null ? '' : s).replace(
+					/[&<>"']/g,
+					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c],
+				);
+			}
+
+			async function loadStrategy(agentId) {
+				const r = await fetch(`/api/agent-strategy?id=${encodeURIComponent(agentId)}`, {
+					credentials: 'include',
+				});
+				if (r.status === 404) return null;
+				if (!r.ok) throw new Error(`HTTP ${r.status}`);
+				const data = await r.json();
+				return data?.data?.strategy ?? null;
+			}
+
+			async function saveStrategy(agentId, strategy) {
+				const r = await fetch(`/api/agent-strategy?id=${encodeURIComponent(agentId)}`, {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ strategy }),
+				});
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			function render(agentId, current) {
+				const initial =
+					current === null
+						? '{\n  "objective": "trade memes profitably",\n  "max_position_sol": 0.5,\n  "stop_loss_pct": 20\n}'
+						: JSON.stringify(current, null, 2);
+
+				contentEl.innerHTML = `
+					<div class="dash-card">
+						<h2>Strategy JSON</h2>
+						<textarea id="strategy-input" class="dash-textarea" style="min-height:340px" spellcheck="false">${escapeHtml(initial)}</textarea>
+						<div class="dash-row" style="margin-top:12px">
+							<button class="dash-btn primary" id="save-btn">Save strategy</button>
+							<button class="dash-btn" id="format-btn">Reformat JSON</button>
+							<span class="dash-muted" id="form-status"></span>
+						</div>
+						<p class="dash-muted" style="margin-top:10px">
+							Skills receive this object from
+							<code class="dash-mono">getStrategy()</code>. Empty <code class="dash-mono">{}</code> is valid.
+						</p>
+					</div>
+				`;
+
+				const input = document.getElementById('strategy-input');
+				const formStatus = document.getElementById('form-status');
+
+				document.getElementById('format-btn').addEventListener('click', () => {
+					try {
+						input.value = JSON.stringify(JSON.parse(input.value), null, 2);
+						formStatus.textContent = '';
+					} catch (e) {
+						formStatus.textContent = 'Invalid JSON: ' + e.message;
+					}
+				});
+
+				document.getElementById('save-btn').addEventListener('click', async () => {
+					let parsed;
+					try {
+						parsed = JSON.parse(input.value);
+					} catch (e) {
+						formStatus.textContent = 'Invalid JSON: ' + e.message;
+						return;
+					}
+					formStatus.textContent = 'Saving…';
+					try {
+						await saveStrategy(agentId, parsed);
+						formStatus.textContent = 'Saved.';
+						showStatus('Strategy saved.', 'ok');
+					} catch (e) {
+						formStatus.textContent = '';
+						showStatus(e.message || 'Save failed', 'err');
+					}
+				});
+			}
+
+			async function refresh(agentId) {
+				contentEl.innerHTML = '<div class="dash-empty">Loading strategy…</div>';
+				try {
+					const current = await loadStrategy(agentId);
+					render(agentId, current);
+				} catch (e) {
+					showStatus(e.message || 'Failed to load', 'err');
+				}
+			}
+
+			mountAgentPicker({
+				host: document.getElementById('picker'),
+				onPick: (agentId) => refresh(agentId),
+			});
+		</script>
+	</body>
+</html>
