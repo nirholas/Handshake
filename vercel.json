@@ -1282,6 +1282,10 @@
             "dest": "/api/widgets/[id]/knowledge?id=$1"
         },
         {
+            "src": "/api/widgets/([A-Za-z0-9_-]+)/knowledge-process",
+            "dest": "/api/widgets/[id]/knowledge-process?id=$1"
+        },
+        {
             "src": "/api/agent-strategy",
             "dest": "/api/agent-strategy"
         },

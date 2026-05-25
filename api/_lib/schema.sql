@@ -511,8 +511,9 @@ create table if not exists widget_knowledge_docs (
     byte_size    integer not null default 0,
     chunk_count  integer not null default 0,
     token_count  integer not null default 0,
-    status       text not null default 'ready' check (status in ('processing', 'ready', 'failed')),
+    status       text not null default 'ready' check (status in ('queued', 'processing', 'ready', 'failed')),
     error        text,
+    source_text  text,                                   -- held server-side until QStash worker consumes it
     created_at   timestamptz not null default now(),
     updated_at   timestamptz not null default now()
 );

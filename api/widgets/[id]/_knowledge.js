@@ -14,6 +14,8 @@ import { embed, embeddingsConfigured, cosine } from '../../_lib/embeddings.js';
 import { chunk, estimateTokens } from '../../_lib/chunker.js';
 import { fetchAndExtract } from '../../_lib/text-extract.js';
 import { shortId } from '../../_lib/ids.js';
+import { publishJob, qstashEnabled } from '../../_lib/qstash.js';
+import { env } from '../../_lib/env.js';
 
 const MAX_DOCS_PER_WIDGET = 25;
 const MAX_TEXT_BYTES = 4 * 1024 * 1024;
@@ -24,6 +26,11 @@ const MAX_PREVIEW_QS = 3;
 // inputs per call, but 64 keeps memory predictable and lets failures retry
 // at a small unit.
 const EMBED_BATCH = 64;
+
+// Docs bigger than this run async via QStash to avoid Vercel function timeouts
+// on large PDFs. Small docs stay inline so the studio UI doesn't have to poll
+// for the common case.
+const INLINE_CHUNK_THRESHOLD = 32;
 
 const baseSchema = z.object({
 	title: z.string().trim().min(1).max(160).optional(),
@@ -196,30 +203,57 @@ export async function ingestKnowledge({ widgetId, userId, input }) {
 	const docId = shortId('wkd');
 	const tokenSum = chunks.reduce((s, c) => s + (c.token_count || 0), 0);
 
+	// Route to QStash worker when the doc is large enough to risk a function
+	// timeout AND a publish endpoint is configured. The worker reads source_text
+	// straight off the doc row — no chunk payload over the wire.
+	const shouldQueue = qstashEnabled() && chunks.length > INLINE_CHUNK_THRESHOLD;
+
 	await sql`
 		insert into widget_knowledge_docs
-			(id, widget_id, user_id, title, source_type, source_url, byte_size, chunk_count, token_count, status)
+			(id, widget_id, user_id, title, source_type, source_url, byte_size,
+			 chunk_count, token_count, status, source_text)
 		values
 			(${docId}, ${widgetId}, ${userId}, ${title.slice(0, 160)}, ${body.source_type},
-			 ${sourceUrl}, ${byteSize}, ${chunks.length}, ${tokenSum}, 'processing')
+			 ${sourceUrl}, ${byteSize}, ${chunks.length}, ${tokenSum},
+			 ${shouldQueue ? 'queued' : 'processing'},
+			 ${shouldQueue ? text : null})
 	`;
 
-	try {
-		for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
-			const slice = chunks.slice(i, i + EMBED_BATCH);
-			const embedded = await embed(slice.map((c) => c.content));
-			const inserts = slice.map((c, j) => {
-				const vec = Array.from(embedded[j]);
-				return sql`
-					insert into widget_knowledge_chunks
-						(doc_id, widget_id, chunk_index, content, embedding, token_count)
-					values
-						(${docId}, ${widgetId}, ${i + j}, ${c.content},
-						 ${JSON.stringify(vec)}::jsonb, ${c.token_count})
-				`;
+	if (shouldQueue) {
+		try {
+			await publishJob({
+				url: `${env.APP_ORIGIN}/api/widgets/${widgetId}/knowledge-process`,
+				body: { doc_id: docId, widget_id: widgetId },
+				deduplicationId: `wkd:${docId}`,
+				retries: 3,
 			});
-			await sql.transaction(inserts);
+		} catch (err) {
+			// QStash itself failed — mark failed so the UI doesn't spin forever.
+			await sql`
+				update widget_knowledge_docs
+				set status = 'failed', error = ${String(err?.message || 'queue failed').slice(0, 500)},
+				    source_text = null
+				where id = ${docId}
+			`.catch(() => {});
+			throw httpError(502, 'queue_failed', err.message || 'queueing failed');
 		}
+
+		return {
+			id: docId,
+			title: title.slice(0, 160),
+			source_type: body.source_type,
+			source_url: sourceUrl,
+			byte_size: byteSize,
+			chunk_count: chunks.length,
+			token_count: tokenSum,
+			status: 'queued',
+			preview_questions: synthesizePreviewQs(chunks),
+		};
+	}
+
+	// Inline path for small docs: embed + insert here, return when ready.
+	try {
+		await embedAndInsertChunks({ docId, widgetId, chunks });
 		await sql`update widget_knowledge_docs set status = 'ready' where id = ${docId}`;
 	} catch (err) {
 		await sql`
@@ -230,8 +264,6 @@ export async function ingestKnowledge({ widgetId, userId, input }) {
 		throw httpError(err.status || 502, 'embed_failed', err.message || 'embedding failed');
 	}
 
-	const previewQuestions = synthesizePreviewQs(chunks);
-
 	return {
 		id: docId,
 		title: title.slice(0, 160),
@@ -241,8 +273,79 @@ export async function ingestKnowledge({ widgetId, userId, input }) {
 		chunk_count: chunks.length,
 		token_count: tokenSum,
 		status: 'ready',
-		preview_questions: previewQuestions,
+		preview_questions: synthesizePreviewQs(chunks),
 	};
+}
+
+// Shared embed+insert loop used by both the inline path and the QStash worker.
+async function embedAndInsertChunks({ docId, widgetId, chunks }) {
+	for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
+		const slice = chunks.slice(i, i + EMBED_BATCH);
+		const embedded = await embed(slice.map((c) => c.content));
+		const inserts = slice.map((c, j) => {
+			const vec = Array.from(embedded[j]);
+			return sql`
+				insert into widget_knowledge_chunks
+					(doc_id, widget_id, chunk_index, content, embedding, token_count)
+				values
+					(${docId}, ${widgetId}, ${i + j}, ${c.content},
+					 ${JSON.stringify(vec)}::jsonb, ${c.token_count})
+			`;
+		});
+		await sql.transaction(inserts);
+	}
+}
+
+// Worker entrypoint — called by QStash after publishJob in ingestKnowledge.
+// Reads source_text off the doc row, re-chunks (chunker is deterministic so
+// indices match what we returned to the client), embeds + inserts chunks,
+// clears source_text, marks ready. Idempotent: re-running after partial
+// failure picks up where chunks left off.
+export async function processQueuedDoc({ docId, widgetId }) {
+	const [doc] = await sql`
+		select id, widget_id, source_text, status, chunk_count
+		from widget_knowledge_docs
+		where id = ${docId} and widget_id = ${widgetId}
+		limit 1
+	`;
+	if (!doc) throw httpError(404, 'not_found', 'doc not found');
+	if (doc.status === 'ready') return { ok: true, status: 'ready' };
+
+	if (!doc.source_text || doc.source_text.length < 12) {
+		await sql`
+			update widget_knowledge_docs set status = 'failed',
+				error = 'source_text missing on queued doc'
+			where id = ${docId}
+		`.catch(() => {});
+		throw httpError(500, 'empty_source', 'no source_text on queued doc');
+	}
+
+	await sql`update widget_knowledge_docs set status = 'processing' where id = ${docId}`;
+
+	try {
+		const chunks = chunk(doc.source_text).slice(0, MAX_CHUNKS_PER_DOC);
+
+		// Idempotency: drop any partial chunks from a previous failed run so we
+		// don't end up with duplicates at the same chunk_index.
+		await sql`delete from widget_knowledge_chunks where doc_id = ${docId}`;
+
+		await embedAndInsertChunks({ docId, widgetId: doc.widget_id, chunks });
+
+		await sql`
+			update widget_knowledge_docs
+			set status = 'ready', source_text = null, error = null,
+			    chunk_count = ${chunks.length}
+			where id = ${docId}
+		`;
+		return { ok: true, status: 'ready', chunk_count: chunks.length };
+	} catch (err) {
+		await sql`
+			update widget_knowledge_docs
+			set status = 'failed', error = ${String(err?.message || 'embed failed').slice(0, 500)}
+			where id = ${docId}
+		`.catch(() => {});
+		throw err;
+	}
 }
 
 // "Your bot now knows X" preview — pulls salient sentences from the first few
