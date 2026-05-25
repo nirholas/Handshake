@@ -4,7 +4,7 @@
 // and the audit trail behind a single sidebar destination.
 
 import { mountShell } from '../shell.js';
-import { requireUser, get, post, patch, del, esc, relTime, initialsOf, ApiError } from '../api.js';
+import { requireUser, get, post, patch, del, esc, relTime, initialsOf } from '../api.js';
 
 const CHAIN_STYLES = {
 	solana:   { label: 'Solana',   bg: 'rgba(154, 124, 255, 0.16)', border: 'rgba(154, 124, 255, 0.32)', ink: '#c7b6ff' },
@@ -567,14 +567,6 @@ async function loadActions(host, append = false) {
 		}
 		renderActions(host, items, append);
 	} catch (err) {
-		if (err instanceof ApiError && (err.status === 404 || err.code === 'not_found')) {
-			host.innerHTML = `
-				<div class="dn-empty">
-					<h3>Audit log coming soon</h3>
-					<p>The per-user activity feed is being aggregated server-side. Individual agent action logs are available under <a href="/dashboard/actions" style="color:var(--nxt-accent)">Dashboard → Actions</a>.</p>
-				</div>`;
-			return;
-		}
 		host.innerHTML = `<div class="dn-empty"><h3>Couldn't load audit log</h3><p>${esc(err?.message || 'Try again in a moment.')}</p></div>`;
 	}
 }
