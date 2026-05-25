@@ -78,7 +78,7 @@ export default wrap(async (req, res) => {
 				poster: demo.image || null,
 				has3d: true,
 				x402: false,
-				passportUrl: `/discover/avatar/${demo.avatarId}`,
+				passportUrl: `/avatars/${demo.avatarId}`,
 			});
 		}
 
@@ -100,7 +100,7 @@ export default wrap(async (req, res) => {
 			poster: r.thumbnail_key ? publicUrl(r.thumbnail_key) : null,
 			has3d: true,
 			x402: false,
-			passportUrl: `/discover/avatar/${r.id}`,
+			passportUrl: `/avatars/${r.id}`,
 		});
 	}
 

@@ -268,7 +268,7 @@ function buildEmbedPanel(item, $) {
 			},
 		];
 	} else {
-		const detailUrl = `${origin}/discover/avatar/${item.avatarId}`;
+		const detailUrl = `${origin}/avatars/${item.avatarId}`;
 		const name = item.name || 'Avatar';
 		const apiSrc = `${origin}/api/avatars/${item.avatarId}`;
 		snippets = [
