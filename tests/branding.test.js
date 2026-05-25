@@ -18,6 +18,13 @@ const ALLOWLIST_PATH = join(REPO_ROOT, 'tests', 'branding-allowlist.json');
 /** @type {Array<{ pattern: string, file: string, reason: string }>} */
 const allowlist = JSON.parse(readFileSync(ALLOWLIST_PATH, 'utf8'));
 
+// Module-level read cache — each file is read exactly once across all test cases.
+const _fileCache = new Map();
+function cachedRead(absPath) {
+	if (!_fileCache.has(absPath)) _fileCache.set(absPath, readFileSync(absPath, 'utf8'));
+	return _fileCache.get(absPath);
+}
+
 // ── Forbidden strings ───────────────────────────────────────────────────────
 //
 // Each entry: { id, regex, label }
@@ -182,6 +189,23 @@ function collectScopedFiles() {
  * covering only the JSDoc bodies themselves.
  */
 function findExportedJSDocRanges(source) {
+	// Precompute cumulative byte offsets per line for O(log n) char→line lookup.
+	// Without this, source.slice(0, idx).split('\n').length is O(n) per call,
+	// making the whole function O(n * jsdocCount) — too slow on large src/ files.
+	const lineOffsets = [0];
+	for (let k = 0; k < source.length; k++) {
+		if (source[k] === '\n') lineOffsets.push(k + 1);
+	}
+	function charToLine(idx) {
+		let lo = 0, hi = lineOffsets.length - 1;
+		while (lo < hi) {
+			const mid = (lo + hi + 1) >> 1;
+			if (lineOffsets[mid] <= idx) lo = mid;
+			else hi = mid - 1;
+		}
+		return lo + 1;
+	}
+
 	const ranges = [];
 	const openRe = /\/\*\*/g;
 	let om;
@@ -199,10 +223,7 @@ function findExportedJSDocRanges(source) {
 				tail,
 			)
 		) {
-			const startLine = source.slice(0, openIdx).split('\n').length;
-			const endLine =
-				source.slice(0, afterClose).split('\n').length;
-			ranges.push({ startLine, endLine });
+			ranges.push({ startLine: charToLine(openIdx), endLine: charToLine(afterClose) });
 		}
 		// Continue scanning *after* this JSDoc's close so we don't overlap.
 		openRe.lastIndex = afterClose;
@@ -216,7 +237,7 @@ function findExportedJSDocRanges(source) {
  * { lineNo, text } pairs.
  */
 function getExportedJSDocLines(absPath) {
-	const source = readFileSync(absPath, 'utf8');
+	const source = cachedRead(absPath);
 	const lines = source.split('\n');
 	const ranges = findExportedJSDocRanges(source);
 	const out = [];
@@ -305,7 +326,7 @@ function scanForPattern(forbidden, files, extraGate) {
 	const hits = [];
 	for (const f of files) {
 		const relPath = relative(REPO_ROOT, f.abs);
-		const text = readFileSync(f.abs, 'utf8');
+		const text = cachedRead(f.abs);
 		const allLines = text.split('\n');
 
 		// For src JS files, restrict to JSDoc-on-exports lines.
@@ -385,7 +406,7 @@ describe('three.ws branding lock', () => {
 		const hits = [];
 		for (const f of files) {
 			const relPath = relative(REPO_ROOT, f.abs);
-			const text = readFileSync(f.abs, 'utf8');
+			const text = cachedRead(f.abs);
 			const allLines = text.split('\n');
 
 			const candidateLines =

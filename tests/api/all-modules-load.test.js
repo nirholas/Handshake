@@ -19,6 +19,12 @@ const SKIP_MODULES = new Set([
 	// Verified: `node -e "import('./api/pump/curve.js')"` succeeds.
 	'api/pump/curve.js',
 	'api/pump/quote-sdk.js',
+
+	// Heavy MCP SDK import graphs take 10-40s in Node but 90-190s under Vitest's
+	// ESM transform pipeline (5-9x overhead). Covered by tests/api/mcp.test.js
+	// which exercises them with proper mocking.
+	'api/_mcp/auth.js',
+	'api/_mcp/catalog.js',
 ]);
 
 function* walk(dir) {

@@ -97,17 +97,23 @@ async function handleList(req, res, auth) {
 	}
 	params.push(limit + 1);
 
-	const rows = await sql(
-		`select id, owner_id, slug, name, description, kind, format,
-		        duration_ms, frame_count, tags, visibility,
-		        price_amount, price_currency, play_count,
-		        created_at, updated_at, avatar_id
-		 from mocap_clips
-		 where ${conds.join(' and ')}
-		 order by created_at desc
-		 limit $${params.length}`,
-		params,
-	);
+	let rows;
+	try {
+		rows = await sql(
+			`select id, owner_id, slug, name, description, kind, format,
+			        duration_ms, frame_count, tags, visibility,
+			        price_amount, price_currency, play_count,
+			        created_at, updated_at, avatar_id
+			 from mocap_clips
+			 where ${conds.join(' and ')}
+			 order by created_at desc
+			 limit $${params.length}`,
+			params,
+		);
+	} catch (err) {
+		console.error('[mocap/clips/list]', err?.message || err);
+		return error(res, 500, 'db_error', 'Failed to list clips');
+	}
 
 	const hasMore = rows.length > limit;
 	const items = (hasMore ? rows.slice(0, limit) : rows).map((row) => ({
