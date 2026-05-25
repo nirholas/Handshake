@@ -1702,7 +1702,7 @@ class Agent3DElement extends HTMLElement {
 			spec: 'agent-manifest/0.1',
 			_baseURI: '',
 			name: this.getAttribute('name') || 'Agent',
-			body: { uri: '/avatars/cz.glb', format: 'gltf-binary' },
+			body: { uri: 'https://assets.three.ws/models/avatars/Default.glb', format: 'gltf-binary' },
 			brain: { provider: 'none' },
 			voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
 			skills: [],

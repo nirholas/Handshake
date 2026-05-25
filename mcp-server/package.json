@@ -49,8 +49,11 @@
 		"prepublishOnly": "node -e \"import('./src/index.js').catch(e => { if (!e.message.includes('facilitator')) throw e })\" 2>/dev/null; echo 'package check ok'"
 	},
 	"dependencies": {
+		"@bonfida/spl-name-service": "0.1.67",
 		"@coinbase/x402": "^2.1.0",
 		"@coral-xyz/anchor": "^0.32.1",
+		"@ethereum-attestation-service/eas-sdk": "0.29.1",
+		"@metaplex-foundation/js": "^0.20.1",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@solana/web3.js": "latest",
 		"@tetsuo-ai/protocol": "^0.2.0",
@@ -60,8 +63,11 @@
 		"@x402/extensions": "^2.12.0",
 		"@x402/mcp": "^2.13.0",
 		"@x402/svm": "^2.13.0",
+		"agent0-sdk": "^1.7.1",
 		"bs58": "^6.0.0",
+		"colyseus": "0.17.10",
 		"ethers": "^6.16.0",
+		"short-uuid": "6.0.3",
 		"zod": "^3.23.8"
 	}
 }

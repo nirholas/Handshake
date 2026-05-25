@@ -63,11 +63,20 @@
     "prepublishOnly": "npm run typecheck && npm run build:prod"
   },
   "dependencies": {
+    "@bonfida/spl-name-service": "0.1.67",
     "@coral-xyz/anchor": "^0.31.1",
-    "@pump-fun/pump-sdk": "^1.35.0",
+    "@ethereum-attestation-service/eas-sdk": "0.29.1",
+    "@metaplex-foundation/js": "^0.20.1",
+    "@pump-fun/pump-sdk": "^1.1.0",
+    "@pump-fun/pump-swap-sdk": "1.0.0",
     "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.98.0",
+    "agent0-sdk": "^1.7.1",
     "bn.js": "^5.2.1",
+    "colyseus": "0.17.10",
+    "ethers": "^6.16.0",
+    "livepeer": "3.2.4",
+    "short-uuid": "6.0.3",
     "viem": "^2.0.0"
   },
   "peerDependencies": {

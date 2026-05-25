@@ -13,10 +13,21 @@
 		"node": ">=20"
 	},
 	"dependencies": {
-		"colyseus": "^0.17.10",
+		"@bonfida/spl-name-service": "^0.1.67",
 		"@colyseus/core": "^0.17.43",
+		"@colyseus/monitor": "^0.17.8",
 		"@colyseus/schema": "^3.0.0",
 		"@colyseus/ws-transport": "^0.17.13",
-		"@colyseus/monitor": "^0.17.8"
+		"@ethereum-attestation-service/eas-sdk": "0.29.1",
+		"@metaplex-foundation/js": "^0.20.1",
+		"@pump-fun/pump-sdk": "1.1.0",
+		"@pump-fun/pump-swap-sdk": "1.0.0",
+		"@solana/actions": "0.0.2",
+		"@solana/pay": "1.0.16",
+		"agent0-sdk": "^1.7.1",
+		"colyseus": "^0.17.10",
+		"ethers": "^6.16.0",
+		"livepeer": "3.2.4",
+		"short-uuid": "6.0.3"
 	}
 }
