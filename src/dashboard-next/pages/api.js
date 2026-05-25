@@ -432,16 +432,22 @@ function renderMcp(host, state) {
 				<div class="dn-panel-sub">Point Claude Desktop, Cursor, or any MCP client at your agents.</div>
 			</div>
 			<div class="dn-mcp-key-picker">
-				<label>
-					<span class="dn-dim">Key:</span>
-					${live.length
-						? `<select data-mcp-key>
+				${live.length
+					? `<label>
+						<span class="dn-dim">Key:</span>
+						<select data-mcp-key>
 							${live.map((k) => `<option value="${esc(k.id)}" ${k.id === selected?.id ? 'selected' : ''}>${esc(k.name)} (${esc(k.prefix)}…)</option>`).join('')}
-						</select>`
-						: `<span class="dn-dim">No keys yet — placeholder shown below</span>`}
-				</label>
+						</select>
+					</label>`
+					: `<button type="button" class="dn-btn primary" data-create-key-from-mcp>+ Create an API key</button>`}
 			</div>
 		</div>
+
+		${!live.length ? `
+			<div class="dn-mcp-hint">
+				Snippets below use the placeholder <code class="dn-mono-sm">${esc(KEY_PLACEHOLDER)}</code>. Create a key above and the snippets refresh with your real key prefix.
+			</div>
+		` : ''}
 
 		<div class="dn-tabs" role="tablist">
 			${MCP_TABS.map((t, i) => `
@@ -458,11 +464,20 @@ function renderMcp(host, state) {
 		</div>
 
 		<div class="dn-mcp-test">
-			<button class="dn-btn" data-mcp-test ${!selected ? 'disabled' : ''}>Test connection</button>
+			<button class="dn-btn" data-mcp-test ${!selected ? 'disabled title="Create a key to test the live connection"' : ''}>Test connection</button>
 			<span data-mcp-result class="dn-mcp-result"></span>
 			<span class="dn-dim" style="margin-left:auto">POST <code class="dn-mono-sm">${esc(mcpUrl)}</code> · <code class="dn-mono-sm">tools/list</code></span>
 		</div>
 	`;
+
+	const createBtn = host.querySelector('[data-create-key-from-mcp]');
+	if (createBtn) {
+		createBtn.addEventListener('click', () => {
+			const keysSection = document.querySelector('[data-section="keys"]');
+			keysSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			document.querySelector('[data-act="new-key"]')?.click();
+		});
+	}
 
 	host.querySelectorAll('[data-mcp-tab]').forEach((btn) => {
 		btn.addEventListener('click', () => {
@@ -1048,6 +1063,8 @@ function injectStyles() {
 		.dn-mcp-key-picker { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; }
 		.dn-mcp-key-picker select { background: rgba(255,255,255,0.04); border: 1px solid var(--nxt-stroke); color: var(--nxt-ink); padding: 6px 9px; border-radius: var(--nxt-radius-sm); font-size: 12.5px; }
 		.dn-mcp-panels { margin-bottom: 14px; }
+		.dn-mcp-hint { font-size: 12.5px; color: var(--nxt-ink-dim); background: rgba(154, 124, 255, 0.06); border: 1px solid var(--nxt-accent-soft); border-radius: var(--nxt-radius-sm); padding: 9px 12px; margin-bottom: 12px; }
+		.dn-mcp-hint code { color: var(--nxt-ink); background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; }
 		.dn-mcp-test { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 		.dn-mcp-result { display: inline-flex; align-items: center; }
 
