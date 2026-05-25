@@ -89,7 +89,10 @@ export default wrap(async function handler(req, res) {
 		return error(res, 400, 'unsupported_chain',
 			`chain ${chainId} not supported`, { supported: SUPPORTED_CHAINS });
 	}
-	const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 50);
+	const hasQuery = (url.searchParams.get('q') || '').trim().length > 0;
+	const limit = hasQuery
+		? Math.min(Math.max(Number(url.searchParams.get('limit')) || 10, 1), 20)
+		: Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 50);
 	const skip = Math.max(Number(url.searchParams.get('skip')) || 0, 0);
 	const q = (url.searchParams.get('q') || '').trim().slice(0, 200);
 
@@ -110,6 +113,7 @@ export default wrap(async function handler(req, res) {
 	}
 
 	let rawAgents;
+	let timedOut = false;
 	try {
 		rawAgents = await querySubgraph(subgraphUrl, {
 			where,
@@ -120,9 +124,11 @@ export default wrap(async function handler(req, res) {
 		});
 	} catch (e) {
 		if (e?.name === 'AbortError') {
-			return error(res, 504, 'subgraph_timeout', 'subgraph query timed out');
+			timedOut = true;
+			rawAgents = [];
+		} else {
+			return error(res, 502, 'subgraph_error', e?.message || 'subgraph query failed');
 		}
-		return error(res, 502, 'subgraph_error', e?.message || 'subgraph query failed');
 	}
 
 	const agents = (rawAgents || []).map((a) => {
@@ -160,5 +166,6 @@ export default wrap(async function handler(req, res) {
 		skip,
 		count: agents.length,
 		agents,
-	}, { 'cache-control': 'public, max-age=30, stale-while-revalidate=120' });
+		...(timedOut ? { timed_out: true } : {}),
+	}, { 'cache-control': timedOut ? 'no-store' : 'public, max-age=30, stale-while-revalidate=120' });
 });

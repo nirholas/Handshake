@@ -55,18 +55,16 @@ Node.js process exited with exit status: 1.
 
 ### 1. `pump-agent-stats` cron — 7,000+ consecutive 504 timeouts
 
-**Status:** ✅ **FIXED** — `handlePumpAgentStats` in `api/cron/[name].js` already has:
-- Wall-clock deadline (`DEADLINE = Date.now() + 22_000`) checked at the top of the mint loop.
-- In-loop circuit breaker: bails immediately when `consecutiveRateLimit >= 3` and logs `{ event: 'pump_agent_stats.circuit_open' }`.
-- Per-mint `Promise.race` timeout of 8 s (`PUMP_STATS_MINT_TIMEOUT_MS`).
+**Status:** ⚠️ **CODE OK, ENV VAR MISSING** — Circuit breaker + deadline already in code. Root cause is `SOLANA_RPC_URL` not set in Vercel — falls back to `https://api.mainnet-beta.solana.com` which rate-limits immediately. Set `SOLANA_RPC_URL` to a paid Helius/QuickNode endpoint in Vercel production env.
 
 ---
 
 ### 2. `api/marketplace/agents` — 105 × 500 errors
 
-**Status:** ✅ **FIXED** — `handleList` in `api/marketplace/[action].js` now:
-- Wraps the main SELECT in a `sql.transaction([...])` with `SET LOCAL statement_timeout = '8000'` as the first query, capping the query at 8 s.
-- Already has `try/catch` with `console.error('[marketplace/list]', err)` for structured 500 logging.
+**Status:** ✅ **FIXED** — `handleList` in `api/marketplace/[action].js`:
+- `LIMIT ${limit + 1}::int OFFSET ${offset}::int` — `::int` casts added (was 42P18 root cause).
+- `sql.transaction([sql\`SET LOCAL statement_timeout = '8000'\`, ...])` caps query at 8 s.
+- `try/catch` with `console.error('[marketplace/list]', err)` for structured logging.
 
 ---
 
@@ -167,7 +165,7 @@ To fully resolve: set `ZAUTH_API_KEY` in Vercel env to enable the zauth layer, o
 
 ### 15. `api/agents/8004/search` — 6 × 504 (ERC8004 search timeout)
 
-The ERC8004 search endpoint is timing out on complex on-chain queries. Add a timeout guard and return partial results rather than a 504. Limit query complexity.
+**Status:** ✅ **FIXED** — Handler now returns `HTTP 200` with `{ timed_out: true, agents: [] }` on AbortError instead of 504. Text-search queries are capped at 20 results (down from 50) to reduce subgraph load. Timeout stays at 12 s.
 
 **Agent prompt:** `docs/agent-fixes/fix-agents-8004-search-timeout.md`
 
@@ -175,7 +173,7 @@ The ERC8004 search endpoint is timing out on complex on-chain queries. Add a tim
 
 ### 16. `api/x402-pay` — 503 (2 occurrences)
 
-The x402 payment processing endpoint returned 503 (service unavailable) twice. Check if the Coinbase x402 SDK or upstream settlement service was temporarily down. Add retry logic for transient 5xx from the upstream payment network.
+**Status:** ⚠️ **ENV VAR MISSING** — Root cause is `X402_AGENT_SOLANA_SECRET_BASE58` not set in Vercel production env. `loadAgentKeypair()` throws a 503 with `{ error: 'wallet_unconfigured' }` when the key is absent. Set `X402_AGENT_SOLANA_SECRET_BASE58` in Vercel env. The error handling code is already correct.
 
 **Agent prompt:** `docs/agent-fixes/fix-x402-pay-503.md`
 
@@ -197,9 +195,9 @@ External scanners/bots are hitting `/.well-known/x402` with POST/DELETE methods.
 
 | Priority | Endpoint | Status | Root Cause | Volume |
 |----------|----------|--------|------------|--------|
-| P0 | `pump-agent-stats` cron | ✅ Fixed | Wall-clock deadline + circuit breaker already in code | 7,200+ |
-| P0 | `api/marketplace/agents` | ✅ Fixed | Added 8s statement_timeout via transaction | 109 |
-| P0 | `api/club/leaderboard` | ✅ Fixed | Error logging already in code | 16 |
+| P0 | `pump-agent-stats` cron | ⚠️ Env missing | Code ok — set `SOLANA_RPC_URL` (paid RPC) in Vercel | 7,200+ |
+| P0 | `api/marketplace/agents` | ✅ Fixed | `::int` casts on LIMIT/OFFSET + 8s statement_timeout | 109 |
+| P0 | `api/club/leaderboard` | ✅ Fixed | DB schema verified OK; error logging in code | 16 |
 | P1 | `api/threews/subdomain` | ✅ Fixed | All @bonfida imports already dynamic | 5 |
 | P1 | `api/mocap/clips` | ✅ Fixed | Error logging + SQL audit already in code | 6 |
 | P1 | `api/permissions/list` | ✅ Fixed | Error logging already in code | 2 |
@@ -207,13 +205,13 @@ External scanners/bots are hitting `/.well-known/x402` with POST/DELETE methods.
 | P1 | `api/chat` | ✅ Fixed | Full failover chain + logging already in code | 18 |
 | P1 | `api/auth/register` | ✅ Fixed | try/catch + retry already in seed-default-agent | ~10 |
 | P1 | `GET /api/billing/withdrawals` | ✅ Fixed | `::int` casts on LIMIT/OFFSET params | pervasive |
-| P1 | `GET /api/subscriptions/plans` | ✅ Fixed | UUID validation already in handleList | varies |
+| P1 | `GET /api/subscriptions/plans` | ✅ Fixed | UUID validation + frontend guard | varies |
 | P2 | `ZAUTH_API_KEY` unset | ✅ Fixed | Log already gated behind ZAUTH_DEBUG flag | pervasive |
-| P2 | `api/avatars/reconstruct` | ⏳ Env config | Set `REPLICATE_RECONSTRUCT_MODEL` in Vercel | 14 |
-| P2 | `api/onboarding/avaturn-session` | ⏳ Env config | Set `AVATURN_API_KEY` in Vercel | 10 |
-| P2 | ALL x402 endpoints | ⏳ Env config | Set `UPSTASH_REDIS_REST_URL`/`TOKEN` in Vercel | all |
+| P2 | `api/avatars/reconstruct` | ⚠️ Env missing | Set `REPLICATE_RECONSTRUCT_MODEL` in Vercel | 14 |
+| P2 | `api/onboarding/avaturn-session` | ⚠️ Env missing | Set `AVATURN_API_KEY` in Vercel | 10 |
+| P2 | ALL x402 endpoints | ⚠️ Env missing | Set `UPSTASH_REDIS_REST_URL`/`TOKEN` in Vercel | all |
+| P2 | `api/x402-pay` | ⚠️ Env missing | Set `X402_AGENT_SOLANA_SECRET_BASE58` in Vercel | 2 |
 | P3 | `api/agent-strategy` | ✅ Fixed | Route already in vercel.json | 2 |
 | P3 | `api/widgets/index` | ✅ Fixed | Route already in vercel.json | 3 |
-| P3 | `api/agents/8004/search` | Open | Query timeout — needs timeout guard | 6 |
-| P3 | `api/x402-pay` | Open | Upstream transient 503 | 2 |
-| P3 | `cron/erc8004-crawl` | ✅ Fixed | ERC8004_BLOCK_CHUNK reduced 2000→1000 | varies |
+| P3 | `api/agents/8004/search` | ✅ Fixed | Returns 200+timed_out; text-search limit reduced | 6 |
+| P3 | `cron/erc8004-crawl` | ✅ Fixed | ERC8004_BLOCK_CHUNK=1000; 10s RPC timeout in place | varies |

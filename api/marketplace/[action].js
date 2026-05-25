@@ -403,7 +403,7 @@ async function handleList(req, res, url) {
 			    OR EXISTS (SELECT 1 FROM unnest(ai.tags) t WHERE t ILIKE ${qLike})
 			  )
 			ORDER BY ${orderBy}
-			LIMIT ${limit + 1} OFFSET ${offset}
+			LIMIT ${limit + 1}::int OFFSET ${offset}::int
 		`,
 		]);
 	} catch (err) {

@@ -366,10 +366,10 @@ async function handleList(req, res) {
 				  AND (${statusParam} = 'all' OR status = ${statusParam})
 				  AND (${chainId}::integer IS NULL OR chain_id = ${chainId}::integer)
 				ORDER BY created_at DESC
-				LIMIT ${limitParam} OFFSET ${offset}
+				LIMIT ${limitParam}::int OFFSET ${offset}::int
 			`;
 		} catch (err) {
-			console.error('[permissions/list] public query failed', err?.message || err);
+			console.error('[permissions/list] public query failed', err?.code, err?.message || err);
 			return error(res, 500, 'db_error', 'Failed to list delegations');
 		}
 
@@ -420,10 +420,10 @@ async function handleList(req, res) {
 			  AND (${statusParam} = 'all' OR status = ${statusParam})
 			  AND (${chainId}::integer IS NULL OR chain_id = ${chainId}::integer)
 			ORDER BY created_at DESC
-			LIMIT ${limitParam} OFFSET ${offset}
+			LIMIT ${limitParam}::int OFFSET ${offset}::int
 		`;
 	} catch (err) {
-		console.error('[permissions/list] auth query failed', err?.message || err);
+		console.error('[permissions/list] auth query failed', err?.code, err?.message || err);
 		return error(res, 500, 'db_error', 'Failed to list delegations');
 	}
 
