@@ -20,6 +20,22 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
 
+// @solana/web3.js calls console.error() on every 429 retry attempt. Those
+// retries succeed (callers see a resolved value, not a thrown error), but
+// Vercel captures console.error as level:error which pollutes the error log.
+// Downgrade just those messages to console.warn so they stay visible as
+// warnings without triggering alert thresholds.
+{
+	const _err = console.error.bind(console);
+	console.error = (...args) => {
+		if (typeof args[0] === 'string' && /Server responded with \d+ .*Retrying after/.test(args[0])) {
+			console.warn(...args);
+		} else {
+			_err(...args);
+		}
+	};
+}
+
 const RPC_MAINNET = () => process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const RPC_DEVNET = () => process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com';
 

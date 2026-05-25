@@ -1,35 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import styles from './Load.module.css';
 import { ethers } from 'ethers';
-// TODO: @web3-react/core v6 + InjectedConnector are incompatible with ethers v6.
-// Upgrade to @web3-react/core v8 (and replace library with BrowserProvider) to resolve.
 import { useWeb3React } from '@web3-react/core';
-import { InjectedConnector } from "@web3-react/injected-connector"
+import { metaMask } from '../connectors/metamask';
 import { ViewContext, ViewMode } from '../context/ViewContext';
 
 import { SoundContext } from "../context/SoundContext"
 import { AudioContext } from "../context/AudioContext"
 
 function Load() {
-    const { account, library, activate } = useWeb3React();
+    const { accounts, provider } = useWeb3React();
+    const account = accounts?.[0];
     const [characters, setCharacters] = useState([]);
     const { setViewMode } = React.useContext(ViewContext);
     const { playSound } = React.useContext(SoundContext)
     const { isMute } = React.useContext(AudioContext)
 
-    const injectedConnector = new InjectedConnector({
-        supportedChainIds: [137, 1, 3, 4, 5, 42, 97],
-      })
-    
     useEffect(() => {
-        if (account && library) {
+        if (account && provider) {
             const contractAddress = '0x69341F01C2113E2d09Cd4837bbF1786dfbBc41d7';
             const abi = [
                 'function balanceOf(address owner) external view returns (uint256)',
                 'function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)',
                 'function tokenURI(uint256 tokenId) external view returns (string)',
             ];
-            const contract = new ethers.Contract(contractAddress, abi, library);
+            const browserProvider = new ethers.BrowserProvider(provider);
+            const contract = new ethers.Contract(contractAddress, abi, browserProvider);
             contract.balanceOf(account).then((balance) => {
                 const promises = [];
                 for (let i = 0; i < balance; i++) {
@@ -45,10 +41,10 @@ function Load() {
                 });
             });
         }
-    }, [account, library]);
+    }, [account, provider]);
 
     const connectWallet = () => {
-        activate(injectedConnector)
+        metaMask.activate()
     }
 
     const loadCharacter = (character) => {

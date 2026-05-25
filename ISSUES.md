@@ -185,7 +185,26 @@ External scanners/bots are hitting `/.well-known/x402` with POST/DELETE methods.
 
 ### 18. `cron/erc8004-crawl` — multiple 504 timeouts
 
-**Status:** ✅ **FIXED** — `ERC8004_BLOCK_CHUNK` reduced from `2_000` to `1_000` in `api/cron/[name].js`. The crawl cursor persists to `erc8004_crawl_cursor` after every batch, so partial progress is preserved across invocations.
+**Status:** ✅ **FIXED** — `ERC8004_BLOCK_CHUNK` reduced to `1_000`. Root cause of 30s timeout: `api/cron/[name].js` was matched by the wildcard `api/**/*.js` in `vercel.json` (maxDuration: 30), overriding the intended 240s budget. Fixed by adding an explicit `api/cron/[name].js` entry in `vercel.json` with `maxDuration: 300`.
+
+---
+
+---
+
+### 19. Cron jobs — `level:error` 429 noise from `@solana/web3.js` retries
+
+**Endpoints:** `pump-agent-stats`, `pumpfun-monitor`, `run-coin-payouts`, `club-payouts`, `run-x-scheduled-posts`
+
+**Error:**
+```
+Server responded with 429 Too Many Requests.  Retrying after Xms delay...
+```
+
+**Root cause:** `@solana/web3.js` v1.x hardcodes `console.error()` on every 429 retry attempt. Vercel captures `console.error` as `level:error`. The crons succeed (all return HTTP 200) so these are not real failures — they're retry noise polluting the error log.
+
+**Status:** ✅ **FIXED** — Added a module-level `console.error` interceptor in `api/_lib/pump.js` (imported by the cron dispatcher before any handler runs). Messages matching `@solana/web3.js`'s retry pattern are downgraded to `console.warn`, which Vercel records as `level:warning` instead of `level:error`.
+
+**File:** `api/_lib/pump.js` (module-level interceptor block)
 
 ---
 
@@ -212,4 +231,5 @@ External scanners/bots are hitting `/.well-known/x402` with POST/DELETE methods.
 | P3 | `api/agent-strategy` | ✅ Fixed | Route confirmed in vercel.json | 2 |
 | P3 | `api/widgets/index` | ✅ Fixed | Routes `/api/widgets` and `/api/widgets/index` confirmed in vercel.json | 3 |
 | P3 | `api/agents/8004/search` | ✅ Fixed | AbortError → 200 `{timed_out:true}`; text-search limit capped at 20 | 6 |
-| P3 | `cron/erc8004-crawl` | ✅ Fixed | ERC8004_BLOCK_CHUNK=1000; cursor persists after every batch | varies |
+| P3 | `cron/erc8004-crawl` | ✅ Fixed | ERC8004_BLOCK_CHUNK=1000; `api/cron/[name].js` now has maxDuration:300 in vercel.json | varies |
+| P3 | 5× crons — 429 `level:error` noise | ✅ Fixed | `@solana/web3.js` retry messages downgraded to `console.warn` in `pump.js` | recurring |

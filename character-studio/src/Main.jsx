@@ -1,7 +1,5 @@
-// TODO: @web3-react/core v6 requires @ethersproject/providers (ethers v5 fork).
-// Upgrade to @web3-react/core v8 to fully support ethers v6 BrowserProvider.
-import { Web3Provider } from "@ethersproject/providers"
 import { Web3ReactProvider } from "@web3-react/core"
+import { metaMask, hooks as metaMaskHooks } from "./connectors/metamask"
 import React, { Suspense } from "react"
 import ReactDOM from "react-dom/client"
 import { AudioProvider } from "./context/AudioContext"
@@ -18,15 +16,11 @@ import "./lib/localization/i18n"
 import App from "./App"
 import { LanguageProvider } from "./context/LanguageContext"
 
-const getLibrary = (provider) => {
-  const library = new Web3Provider(provider)
-  library.pollingInterval = 12000
-  return library
-}
+const connectors = [[metaMask, metaMaskHooks]]
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <Web3ReactProvider getLibrary={getLibrary}>
+    <Web3ReactProvider connectors={connectors}>
       <AccountProvider>
         <LanguageProvider>
           <AudioProvider>

@@ -1062,8 +1062,6 @@ const appConfig = {
 					'**/ddd.png',
 					'chat/**',
 				],
-				navigateFallback: '/offline.html',
-				navigateFallbackDenylist: [/^\/api\//, /^\/chat\//],
 				skipWaiting: true,
 				clientsClaim: true,
 				cleanupOutdatedCaches: true,
