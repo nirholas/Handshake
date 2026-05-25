@@ -117,6 +117,18 @@ async function onToolCall(params, auth, started) {
 	if (tool.scope && !hasScope(auth.scope, tool.scope)) {
 		throw rpcError(-32002, `insufficient scope, requires ${tool.scope}`);
 	}
+	// Defense-in-depth: validate args against the tool's inputSchema before
+	// hitting the handler. Ajv mutates `args` to fill defaults + coerce types,
+	// matching what the handlers used to expect from informal argv shaping
+	// (`args.limit || 25`). When validation fails we surface the first error
+	// as an `invalid params` (-32602) — same code MCP clients already handle.
+	if (tool.validate && !tool.validate(args)) {
+		const first = tool.validate.errors?.[0];
+		const detail = first
+			? `${first.instancePath || '(root)'} ${first.message || 'invalid'}`
+			: 'invalid arguments';
+		throw rpcError(-32602, `invalid params for ${name}: ${detail}`);
+	}
 
 	// Pump-agent-payments gate. Free tools and paid-bearer-authenticated users
 	// (existing subscription plans) bypass. x402 callers and anonymous payers

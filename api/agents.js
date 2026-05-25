@@ -234,29 +234,36 @@ export async function handleGetOne(req, res, id) {
 		const rl = await limits.publicIp(clientIp(req));
 		if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
+		// Single roundtrip: pull skill_prices as a JSON-aggregated subquery
+		// instead of a follow-up SELECT. Saves a second DB hop per GET on
+		// /api/agents/:id (was the dominant cost on cached pages where
+		// healStaleAvatarId is a no-op).
 		const [row] = await sql`
 			SELECT i.*,
 			       u.display_name as author_name,
 			       u.avatar_url   as author_avatar,
 			       a.storage_key  AS avatar_storage_key,
 			       a.thumbnail_key AS avatar_thumbnail_key,
-			       a.visibility   AS avatar_visibility
+			       a.visibility   AS avatar_visibility,
+			       COALESCE(
+			         (SELECT jsonb_object_agg(
+			                   sp.skill,
+			                   jsonb_build_object(
+			                     'amount', sp.amount,
+			                     'currency_mint', sp.currency_mint,
+			                     'chain', sp.chain
+			                   )
+			                 )
+			            FROM agent_skill_prices sp
+			           WHERE sp.agent_id = i.id AND sp.is_active = true),
+			         '{}'::jsonb
+			       ) AS skill_prices
 			FROM agent_identities i
 			LEFT JOIN users u   ON i.user_id = u.id
 			LEFT JOIN avatars a ON a.id = i.avatar_id AND a.deleted_at IS NULL
 			WHERE i.id = ${id} AND i.deleted_at IS NULL
 		`;
 		if (!row) return error(res, 404, 'not_found', 'agent not found');
-
-		const prices = await sql`
-			SELECT skill, amount, currency_mint, chain
-			FROM agent_skill_prices
-			WHERE agent_id = ${id} AND is_active = true
-		`;
-		row.skill_prices = prices.reduce((acc, p) => {
-			acc[p.skill] = { amount: p.amount, currency_mint: p.currency_mint, chain: p.chain };
-			return acc;
-		}, {});
 
 		await healStaleAvatarId(row);
 

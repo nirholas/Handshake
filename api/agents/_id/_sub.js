@@ -39,9 +39,53 @@ export const handleActions = wrap(async (req, res, id) => {
 	const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
 	const cursor = url.searchParams.get('cursor');
 
-	const actions = cursor
-		? await sql`SELECT id, type, payload, source_skill, signature, signer_address, created_at FROM agent_actions WHERE agent_id = ${id} AND created_at < ${cursor} ORDER BY created_at DESC LIMIT ${limit + 1}`
-		: await sql`SELECT id, type, payload, source_skill, signature, signer_address, created_at FROM agent_actions WHERE agent_id = ${id} ORDER BY created_at DESC LIMIT ${limit + 1}`;
+	// Cursor format: `<iso_timestamp>|<id>`. The `|<id>` tiebreaker prevents
+	// row skipping or duplication when multiple actions share the same
+	// `created_at` (sub-millisecond bursts during high-volume logging
+	// previously caused either silently-dropped rows or repeated rows across
+	// page boundaries because `created_at < $cursor` is not a strict total
+	// order). Old cursors without a `|` keep working via the timestamp-only
+	// branch below; new cursors always include the id.
+	let parsedCursorTs = null;
+	let parsedCursorId = null;
+	if (cursor) {
+		const pipe = cursor.indexOf('|');
+		if (pipe > 0) {
+			parsedCursorTs = cursor.slice(0, pipe);
+			parsedCursorId = cursor.slice(pipe + 1);
+		} else {
+			parsedCursorTs = cursor;
+		}
+	}
+
+	let actions;
+	if (parsedCursorTs && parsedCursorId) {
+		actions = await sql`
+			SELECT id, type, payload, source_skill, signature, signer_address, created_at
+			FROM agent_actions
+			WHERE agent_id = ${id}
+			  AND (created_at < ${parsedCursorTs}
+			       OR (created_at = ${parsedCursorTs} AND id < ${parsedCursorId}))
+			ORDER BY created_at DESC, id DESC
+			LIMIT ${limit + 1}
+		`;
+	} else if (parsedCursorTs) {
+		actions = await sql`
+			SELECT id, type, payload, source_skill, signature, signer_address, created_at
+			FROM agent_actions
+			WHERE agent_id = ${id} AND created_at < ${parsedCursorTs}
+			ORDER BY created_at DESC, id DESC
+			LIMIT ${limit + 1}
+		`;
+	} else {
+		actions = await sql`
+			SELECT id, type, payload, source_skill, signature, signer_address, created_at
+			FROM agent_actions
+			WHERE agent_id = ${id}
+			ORDER BY created_at DESC, id DESC
+			LIMIT ${limit + 1}
+		`;
+	}
 
 	const hasMore = actions.length > limit;
 	const trimmed = hasMore ? actions.slice(0, limit) : actions;
@@ -58,7 +102,11 @@ export const handleActions = wrap(async (req, res, id) => {
 	});
 
 	res.setHeader('Cache-Control', 'private, max-age=10');
-	return json(res, 200, { actions: decorated, nextCursor: hasMore ? trimmed[trimmed.length - 1].created_at.toISOString() : null });
+	const last = trimmed[trimmed.length - 1];
+	return json(res, 200, {
+		actions: decorated,
+		nextCursor: hasMore && last ? `${last.created_at.toISOString()}|${last.id}` : null,
+	});
 });
 
 // ── animations ────────────────────────────────────────────────────────────────

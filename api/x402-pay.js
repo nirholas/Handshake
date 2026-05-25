@@ -432,10 +432,7 @@ async function runFlow({ tool, args, emit, buyer: buyerOverride, resourceUrl }) 
 		);
 	}
 
-	const settled = await settlePayment({
-		paymentPayload: verified.paymentPayload,
-		requirement: verified.requirement,
-	});
+	const settled = await settlePayment({ verified });
 	const tSettled = Date.now();
 	emit('settled', {
 		settle_ms: tSettled - tDispatched,

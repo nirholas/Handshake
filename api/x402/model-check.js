@@ -368,10 +368,7 @@ export default wrap(async (req, res) => {
 
 	let settled;
 	try {
-		settled = await settlePayment({
-			paymentPayload: verified.paymentPayload,
-			requirement: verified.requirement,
-		});
+		settled = await settlePayment({ verified });
 	} catch (err) {
 		return error(res, err.status || 502, err.code || 'settle_failed', err.message);
 	}

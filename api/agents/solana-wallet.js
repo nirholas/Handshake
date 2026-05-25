@@ -22,6 +22,11 @@ const AIRDROP_LAMPORTS = LAMPORTS_PER_SOL;
 // Prevents Helius free-plan 429s on repeated wallet card polls.
 
 const SOL_CACHE_TTL_MS = 60_000; // 60 s
+// Hard cap so a long-running serverless instance with cycling addresses
+// can't grow this Map without bound. When we hit the cap, drop the
+// oldest-inserted entry — Map preserves insertion order, so the first key
+// from .keys() is always the oldest. 1000 entries × ~200 bytes ≈ 200 KB.
+const SOL_CACHE_MAX_ENTRIES = 1000;
 const _solRpcCache = new Map();
 
 function _solCacheGet(key) {
@@ -35,10 +40,18 @@ function _solCacheGet(key) {
 }
 
 function _solCacheSet(key, value) {
-	// Purge stale entries on each write so the map doesn't grow unbounded.
+	// Purge expired entries on each write — the active set is small and the
+	// loop is fast enough that opportunistic eviction beats a periodic timer.
 	const now = Date.now();
 	for (const [k, e] of _solRpcCache.entries()) {
 		if (e.expiry < now) _solRpcCache.delete(k);
+	}
+	// LRU-by-insertion cap. If everything in the map is still fresh and we're
+	// at the cap, evict the oldest insertion(s) before adding the new entry.
+	while (_solRpcCache.size >= SOL_CACHE_MAX_ENTRIES) {
+		const oldest = _solRpcCache.keys().next().value;
+		if (oldest === undefined) break;
+		_solRpcCache.delete(oldest);
 	}
 	_solRpcCache.set(key, { value, expiry: now + SOL_CACHE_TTL_MS });
 }

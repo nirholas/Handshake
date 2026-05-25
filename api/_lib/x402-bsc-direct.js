@@ -65,25 +65,35 @@ async function isReplay(txHash) {
 	return rows.length > 0;
 }
 
-async function rememberTx({ txHash, ref, payer, amount, payTo }) {
+// Atomic "claim this tx" — returns true exactly once for any given tx_hash.
+// Concurrent verifiers of the same tx all hit ON CONFLICT; only the row
+// returned by RETURNING corresponds to the winner. INSERT-not-found means
+// another in-flight request beat us and we must refuse this verify to
+// prevent double-spend (audit HIGH-1: BSC verify/settle race across Vercel
+// replicas where the in-memory `seenTx` Map can't help).
+//
+// DB-side errors are still fatal — the audit's prior comment that "the
+// on-chain settlement happened, the buyer paid, surface for ops" was wrong:
+// without the DB row, the next request with the same tx will pass isReplay()
+// and double-spend. Better to fail this request and let the client retry
+// once the DB is reachable than to let the payment get consumed twice.
+async function claimTx({ txHash, ref, payer, amount, payTo }) {
 	pruneSeen();
-	seenTx.set(txHash, Date.now() + SEEN_TTL_MS);
-	// INSERT … ON CONFLICT DO NOTHING — concurrent verifiers of the same tx
-	// resolve to one consumer; the second caller will see the row on read.
-	try {
-		await sql`
-			INSERT INTO bsc_consumed_tx (tx_hash, ref, payer, amount, pay_to)
-			VALUES (${txHash}, ${ref}, ${payer}, ${amount?.toString() ?? null}, ${payTo})
-			ON CONFLICT (tx_hash) DO NOTHING
-		`;
-	} catch (err) {
-		// DB persist failure is observable but must not roll back the verify —
-		// the on-chain settlement happened, the buyer paid. Surface for ops.
-		console.error('[x402-bsc-direct] persist consumed_tx failed', {
-			tx_hash: txHash,
-			error: err?.message,
-		});
+	const rows = await sql`
+		INSERT INTO bsc_consumed_tx (tx_hash, ref, payer, amount, pay_to)
+		VALUES (${txHash}, ${ref}, ${payer}, ${amount?.toString() ?? null}, ${payTo})
+		ON CONFLICT (tx_hash) DO NOTHING
+		RETURNING tx_hash
+	`;
+	if (rows.length === 0) {
+		// Another request just claimed this tx. The in-memory map may or may
+		// not know — populate it so this instance fails fast on the next
+		// isReplay() check.
+		seenTx.set(txHash, Date.now() + SEEN_TTL_MS);
+		return false;
 	}
+	seenTx.set(txHash, Date.now() + SEEN_TTL_MS);
+	return true;
 }
 
 let cachedClient = null;
@@ -186,19 +196,61 @@ export async function verifyDirectPayment({ paymentPayload, requirement }) {
 		);
 	}
 
-	await rememberTx({
+	const won = await claimTx({
 		txHash,
 		ref,
 		payer,
 		amount,
 		payTo: expectedTo,
 	});
+	if (!won) {
+		// Lost the race against a concurrent verifier in another replica/
+		// process. The on-chain tx is real but it's already been consumed by
+		// the request that won the claim — accepting it here would let the
+		// payer get two paid responses for one BSC payment.
+		throw new X402Error(
+			'invalid_payment',
+			`tx ${txHash} was concurrently claimed by another paid request — retry with a fresh payment`,
+			402,
+		);
+	}
 	return { isValid: true, payer, txHash, amount: amount.toString() };
 }
 
 // Synthesise the same shape PayAI/CDP /settle returns, so callers in
 // x402-spec.js can emit X-PAYMENT-RESPONSE identically.
+//
+// We re-assert amount >= requirement.amount here as a belt-and-braces check.
+// verifyDirectPayment already enforces this, but defensive double-checking
+// at settle time means a future code path that calls settleDirectPayment
+// without going through verifyDirectPayment can't silently settle for less
+// than was charged.
 export function settleDirectPayment({ verified, requirement }) {
+	let required;
+	try { required = BigInt(requirement.amount); }
+	catch {
+		throw new X402Error('invalid_requirement', `requirement.amount must parse as BigInt, got "${requirement.amount}"`, 500);
+	}
+	let verifiedAmount;
+	try { verifiedAmount = BigInt(verified.amount ?? '0'); }
+	catch { verifiedAmount = 0n; }
+	if (verifiedAmount < required) {
+		throw new X402Error(
+			'settle_failed',
+			`direct-scheme settle blocked: verified amount ${verifiedAmount.toString()} below required ${required.toString()}`,
+			500,
+		);
+	}
+	if (requirement.network !== 'eip155:56') {
+		// We only synthesise direct-scheme settlements for BSC. A misconfigured
+		// requirement.network here would silently route the wrong settlement to
+		// the X-PAYMENT-RESPONSE header — block it explicitly.
+		throw new X402Error(
+			'settle_failed',
+			`direct-scheme settle expected network eip155:56, got ${requirement.network}`,
+			500,
+		);
+	}
 	return {
 		success: true,
 		transaction: verified.txHash,

@@ -55,6 +55,10 @@ export async function authenticateRequest(req, res) {
 				requirement: verified.requirement,
 				paymentPayload: verified.paymentPayload,
 				payer: verified.payer,
+				// Carry the full verified envelope so the settle path can
+				// pass it to settlePayment({ verified }) and enforce
+				// payer-binding on the facilitator's response.
+				verified,
 			};
 			// Anonymous paid caller — synthesize an auth principal scoped to public-read tools.
 			// userId is null because usage_events.user_id is a UUID FK; the payer wallet is

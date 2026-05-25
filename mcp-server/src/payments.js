@@ -366,7 +366,36 @@ export async function paidUpto(cfg, handler) {
 		if (!result) {
 			return paymentRequiredResult('Tool handler returned no result');
 		}
-		const overrides = settleAmount ? { amount: String(settleAmount) } : undefined;
+		// Defense-in-depth: cap settleAmount at the matched requirement's max.
+		// The facilitator will reject an override that exceeds what the client
+		// signed, but a buggy/compromised handler returning an inflated
+		// settleAmount should fail fast server-side with a clear error rather
+		// than reaching the facilitator with a value that looks valid against
+		// other concurrent payments. Numeric settleAmount only — percent
+		// strings ("50%") and $-strings ("$0.25") pass through to the
+		// facilitator unchanged.
+		let overrides;
+		if (settleAmount) {
+			const amountStr = String(settleAmount);
+			if (/^\d+$/.test(amountStr)) {
+				let requested;
+				try { requested = BigInt(amountStr); }
+				catch {
+					return paymentRequiredResult(`Settlement failed: settleAmount ${amountStr} did not parse as atomic units`);
+				}
+				let maxAuthorized = 0n;
+				try { maxAuthorized = BigInt(matched.amount || '0'); }
+				catch { maxAuthorized = 0n; }
+				if (maxAuthorized > 0n && requested > maxAuthorized) {
+					return paymentRequiredResult(
+						`Settlement failed: handler returned settleAmount ${requested.toString()} exceeding authorized max ${maxAuthorized.toString()}`,
+					);
+				}
+				overrides = { amount: amountStr };
+			} else {
+				overrides = { amount: amountStr };
+			}
+		}
 		let settle;
 		try {
 			settle = await resourceServer.settlePayment(paymentPayload, matched, bazaar, undefined, overrides);

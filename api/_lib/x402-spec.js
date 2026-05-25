@@ -31,6 +31,8 @@
 //   5. Server POSTs facilitator /settle (same body) → { success, transaction, network, payer }
 //      Server attaches a base64 settlement object as `X-PAYMENT-RESPONSE` on the success reply.
 
+import { createHash } from 'crypto';
+
 import { createCdpAuthHeaders } from '@coinbase/x402';
 import {
 	EIP2612_GAS_SPONSORING,
@@ -301,7 +303,17 @@ function hostOf(url) {
 	}
 }
 
-async function callFacilitator(network, path, body) {
+// Facilitator HTTP timeout. Defaults to 15s; tunable via env so chains/
+// networks with congested settlement (e.g. Solana under load) don't fail
+// settle for legitimate payments. Caller-supplied per-call override wins
+// when present so we can keep verify quick and give settle a longer leash.
+const FACILITATOR_TIMEOUT_MS_DEFAULT = (() => {
+	const raw = Number(env.X402_FACILITATOR_TIMEOUT_MS);
+	if (Number.isFinite(raw) && raw >= 1_000 && raw <= 120_000) return raw;
+	return 15_000;
+})();
+
+async function callFacilitator(network, path, body, { timeoutMs, idempotencyKey } = {}) {
 	const config = facilitatorFor(network);
 	const url = `${config.url}${path}`;
 	const host = hostOf(config.url);
@@ -310,18 +322,28 @@ async function callFacilitator(network, path, body) {
 		accept: 'application/json',
 		...(await authHeadersFor(config, path)),
 	};
+	if (idempotencyKey) {
+		// Both casing variants appear in the wild (PayAI uses `Idempotency-Key`,
+		// some Cloudflare-fronted facilitators normalize to lowercase). Send both
+		// for maximum compatibility — fetch headers are case-insensitive on the
+		// wire so this is just a Node-level convenience.
+		headers['Idempotency-Key'] = idempotencyKey;
+	}
 	let res;
 	try {
 		res = await fetch(url, {
 			method: 'POST',
 			headers,
 			body: JSON.stringify(body),
-			signal: AbortSignal.timeout(15_000),
+			signal: AbortSignal.timeout(timeoutMs || FACILITATOR_TIMEOUT_MS_DEFAULT),
 		});
 	} catch (err) {
+		// Server logs keep the host for diagnosis; user-facing X402Error message
+		// omits it so we don't leak internal facilitator topology to clients.
+		console.warn(`[x402] facilitator ${path} unreachable (host=${host}, network=${network}): ${err.message}`);
 		throw new X402Error(
 			'facilitator_unreachable',
-			`facilitator ${path} (${host}, network=${network}) fetch failed: ${err.message}`,
+			`facilitator ${path} (network=${network}) fetch failed: ${err.message}`,
 			502,
 		);
 	}
@@ -331,9 +353,10 @@ async function callFacilitator(network, path, body) {
 		try {
 			data = JSON.parse(text);
 		} catch {
+			console.warn(`[x402] facilitator ${path} non-JSON (host=${host}, network=${network}, status=${res.status})`);
 			throw new X402Error(
 				'facilitator_bad_response',
-				`facilitator ${path} (${host}, network=${network}) returned non-JSON (status ${res.status})`,
+				`facilitator ${path} (network=${network}) returned non-JSON (status ${res.status})`,
 				502,
 			);
 		}
@@ -342,9 +365,10 @@ async function callFacilitator(network, path, body) {
 		// PayAI returns 400 with { isValid: false } for invalid payments —
 		// pass through so verifyPayment can emit a clean 402 to the caller.
 		if (path === '/verify' && data.isValid === false) return data;
+		console.warn(`[x402] facilitator ${path} ${res.status} (host=${host}, network=${network})`);
 		throw new X402Error(
 			'facilitator_error',
-			`facilitator ${path} (${host}, network=${network}) ${res.status}: ${data.error || data.message || data.invalidReason || text.slice(0, 200)}`,
+			`facilitator ${path} (network=${network}) ${res.status}: ${data.error || data.message || data.invalidReason || text.slice(0, 200)}`,
 			502,
 		);
 	}
@@ -491,6 +515,66 @@ function selectRequirement(paymentPayload, allRequirements) {
 	return allRequirements[0];
 }
 
+// Extract the signed amount from a v2 PaymentPayload, regardless of scheme.
+// Returns a BigInt in the asset's atomic units (USDC → 6-decimal micros).
+// Returns null when the payload's amount can't be located without trusting
+// the facilitator — Solana SPL transfers carry the amount inside an opaque
+// serialized transaction we won't parse client-side, so we leave that check
+// to the facilitator + the on-chain confirmation. Returning null means
+// "facilitator-trusted amount"; returning a BigInt means "we just verified
+// the signed amount equals or exceeds the requirement".
+//
+// Defense-in-depth: a compromised facilitator could otherwise verify a
+// payment for a smaller amount than the requirement and we'd happily
+// deliver the resource. Per the audit, this is the underpayment vector.
+function decodeSignedAmount(paymentPayload) {
+	const inner = paymentPayload?.payload;
+	if (!inner || typeof inner !== 'object') return null;
+	// EIP-3009 transferWithAuthorization — `authorization.value` is the
+	// EIP-712 typed-data field clients sign. uint256 string in atomic units.
+	if (inner.authorization && typeof inner.authorization === 'object') {
+		const v = inner.authorization.value;
+		if (typeof v === 'string' || typeof v === 'number' || typeof v === 'bigint') {
+			try { return BigInt(v); } catch { return null; }
+		}
+	}
+	// Permit2 PermitWitnessTransferFrom — `permitted.amount` is what the user
+	// authorizes. @x402/evm exposes the structured permit object pre-broadcast.
+	if (inner.permit2Authorization && typeof inner.permit2Authorization === 'object') {
+		const permitted = inner.permit2Authorization?.permit?.permitted;
+		const v = permitted?.amount;
+		if (typeof v === 'string' || typeof v === 'number' || typeof v === 'bigint') {
+			try { return BigInt(v); } catch { return null; }
+		}
+		// Some clients flatten to `permit2Authorization.amount`.
+		const flat = inner.permit2Authorization.amount;
+		if (typeof flat === 'string' || typeof flat === 'number' || typeof flat === 'bigint') {
+			try { return BigInt(flat); } catch { return null; }
+		}
+	}
+	return null;
+}
+
+// Build a deterministic idempotency key per (verified-payment-payload, requirement).
+// Idempotent retries of /settle (timeouts, transient 5xx) will hash to the same
+// key and let the facilitator de-duplicate, preventing double-settlement. Hashing
+// the full payload+requirement means two distinct payments by the same payer
+// generate distinct keys.
+function buildIdempotencyKey({ paymentPayload, requirement }) {
+	const material = JSON.stringify({
+		// Order matters for deterministic hashing — stringify the fields in a
+		// fixed shape rather than the raw payload (which has insertion-order
+		// dependence in some clients).
+		network: requirement?.network,
+		payTo: requirement?.payTo,
+		asset: requirement?.asset,
+		amount: requirement?.amount,
+		scheme: requirement?.scheme,
+		payload: paymentPayload,
+	});
+	return createHash('sha256').update(material).digest('hex').slice(0, 32);
+}
+
 // Verify a base64 X-PAYMENT header against the offered requirements.
 // Returns { paymentPayload, requirement, payer, directVerified? } on success.
 // For direct-scheme networks (BSC), the on-chain verification result is stashed
@@ -527,6 +611,25 @@ export async function verifyPayment({ paymentHeader, requirements, builderCode }
 			throw new X402Error('builder_code_tampered', echo.reason, 402);
 		}
 	}
+	// Defense-in-depth amount check. For EVM (EIP-3009 + Permit2) the signed
+	// amount is inside the payload; reject under-payment before we even ask
+	// the facilitator. For Solana SPL (amount inside an opaque serialized tx)
+	// we still rely on the facilitator + on-chain confirmation.
+	const signedAmount = decodeSignedAmount(paymentPayload);
+	if (signedAmount !== null) {
+		let required;
+		try { required = BigInt(requirement.amount); }
+		catch {
+			throw new X402Error('invalid_requirement', `requirement.amount must parse as BigInt, got "${requirement.amount}"`, 500);
+		}
+		if (signedAmount < required) {
+			throw new X402Error(
+				'invalid_payment',
+				`signed payment amount ${signedAmount.toString()} is below required ${required.toString()}`,
+				402,
+			);
+		}
+	}
 	const config = facilitatorFor(requirement.network);
 	if (config.direct) {
 		const directVerified = await verifyDirectPayment({ paymentPayload, requirement });
@@ -549,13 +652,49 @@ export async function verifyPayment({ paymentHeader, requirements, builderCode }
 			402,
 		);
 	}
+	// Facilitator response cross-check. When it echoes network/asset (most do),
+	// confirm they match the requirement we sent — a compromised or buggy
+	// facilitator could otherwise verify a payment intended for chain A as if
+	// it were chain B. Missing echoed fields don't fail (older facilitators).
+	if (result.network && result.network !== requirement.network) {
+		throw new X402Error(
+			'facilitator_bad_response',
+			`facilitator /verify network mismatch: requested ${requirement.network}, got ${result.network}`,
+			502,
+		);
+	}
+	if (result.asset && requirement.asset && String(result.asset).toLowerCase() !== String(requirement.asset).toLowerCase()) {
+		throw new X402Error(
+			'facilitator_bad_response',
+			`facilitator /verify asset mismatch: requested ${requirement.asset}, got ${result.asset}`,
+			502,
+		);
+	}
 	return { paymentPayload, requirement, payer: result.payer || null };
 }
 
 // Settle the verified payment on-chain via the matching facilitator.
 // For direct-scheme networks (BSC), the user already broadcast the tx during
 // verifyPayment — settle just synthesises the response shape callers expect.
-export async function settlePayment({ paymentPayload, requirement, directVerified }) {
+//
+// Two call shapes supported:
+//   1. settlePayment({ verified })   ← preferred. `verified` is the object
+//      verifyPayment returned. Payer-binding is enforced.
+//   2. settlePayment({ paymentPayload, requirement, directVerified })
+//      ← legacy. Payer-binding cannot be enforced (no `verified.payer`
+//      anchor). Kept so external/older callers don't break, but new code
+//      should pass `verified`.
+export async function settlePayment(args) {
+	const verified = args?.verified || null;
+	const paymentPayload = verified?.paymentPayload || args?.paymentPayload;
+	const requirement = verified?.requirement || args?.requirement;
+	const directVerified = verified?.directVerified || args?.directVerified;
+	const verifiedPayer = verified?.payer || args?.verifiedPayer || null;
+
+	if (!requirement) {
+		throw new X402Error('settle_failed', 'settlePayment requires `verified` or `requirement`', 500);
+	}
+
 	const config = facilitatorFor(requirement.network);
 	if (config.direct) {
 		if (!directVerified) {
@@ -567,15 +706,40 @@ export async function settlePayment({ paymentPayload, requirement, directVerifie
 		}
 		return settleDirectPayment({ verified: directVerified, requirement });
 	}
-	const result = await callFacilitator(requirement.network, '/settle', {
-		x402Version: X402_VERSION,
-		paymentPayload,
-		paymentRequirements: requirement,
-	});
+	const idempotencyKey = buildIdempotencyKey({ paymentPayload, requirement });
+	const result = await callFacilitator(
+		requirement.network,
+		'/settle',
+		{
+			x402Version: X402_VERSION,
+			paymentPayload,
+			paymentRequirements: requirement,
+		},
+		{ idempotencyKey },
+	);
 	if (!result.success) {
 		throw new X402Error(
 			'settle_failed',
 			`settle failed: ${result.errorReason || 'unknown reason'}`,
+			502,
+		);
+	}
+	// Defense-in-depth: a compromised facilitator could return success for
+	// settlement on a different chain or to a different recipient. Cross-check
+	// the network/payer it claims against the requirement we sent and the
+	// payer we verified earlier. Missing echoed fields are tolerated for
+	// backward-compat with older facilitator implementations.
+	if (result.network && result.network !== requirement.network) {
+		throw new X402Error(
+			'facilitator_bad_response',
+			`facilitator /settle network mismatch: requested ${requirement.network}, got ${result.network}`,
+			502,
+		);
+	}
+	if (verifiedPayer && result.payer && String(result.payer).toLowerCase() !== String(verifiedPayer).toLowerCase()) {
+		throw new X402Error(
+			'facilitator_bad_response',
+			`facilitator /settle payer mismatch: verified ${verifiedPayer}, settled ${result.payer}`,
 			502,
 		);
 	}

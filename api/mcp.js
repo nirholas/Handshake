@@ -47,10 +47,7 @@ export default wrap(async (req, res) => {
 	// and they get a 502 instead of having paid for nothing.
 	if (x402Ctx) {
 		try {
-			const settled = await settlePayment({
-				paymentPayload: x402Ctx.paymentPayload,
-				requirement: x402Ctx.requirement,
-			});
+			const settled = await settlePayment({ verified: x402Ctx.verified });
 			res.setHeader('x-payment-response', encodePaymentResponseHeader(settled));
 		} catch (err) {
 			return sendX402Error(

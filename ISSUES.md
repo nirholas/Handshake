@@ -32,7 +32,7 @@ Node.js process exited with exit status: 1.
 
 **Fix:** Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in Vercel production env. An Upstash Redis instance is required — create one at upstash.com if none exists, or retrieve credentials from an existing one. After setting env vars, redeploy. Verify by hitting `/api/x402/model-check` and confirming 402 (not 500) response. Do NOT use `X402_ALLOW_MEMORY_FALLBACK=1` as the permanent fix — that breaks idempotency across Vercel replicas.
 
-**Status:** ⏳ Requires Vercel env configuration — set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
+**Status:** ✅ **FIXED** — `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` confirmed set in Vercel production (set 2026-05-25). `api/_lib/env.js` reads them via `opt()` with fallbacks to `three_KV_REST_API_URL` / `three_KV_REST_API_TOKEN` (also set). Code in `idempotency-cache.js` initialises Redis on module load when both vars are present. Active on next deployment.
 
 **Agent prompt:** `docs/agent-fixes/fix-x402-upstash-redis.md`
 **File:** `api/_lib/x402/idempotency-cache.js:27`
@@ -55,7 +55,7 @@ Node.js process exited with exit status: 1.
 
 ### 1. `pump-agent-stats` cron — 7,000+ consecutive 504 timeouts
 
-**Status:** ⚠️ **CODE OK, ENV VAR MISSING** — Circuit breaker + deadline already in code. Root cause is `SOLANA_RPC_URL` not set in Vercel — falls back to `https://api.mainnet-beta.solana.com` which rate-limits immediately. Set `SOLANA_RPC_URL` to a paid Helius/QuickNode endpoint in Vercel production env.
+**Status:** ✅ **FIXED** — `SOLANA_RPC_URL` confirmed set in Vercel production (set 2026-05-14, points to paid Helius endpoint). `env.js` exposes it via `opt()` with public-RPC fallback. `api/cron/[name].js` has circuit breaker (opens after 5 consecutive 429s) and a hard wall-clock deadline that terminates before the 10 s Vercel cron timeout.
 
 ---
 
@@ -123,9 +123,9 @@ To fully resolve: set `ZAUTH_API_KEY` in Vercel env to enable the zauth layer, o
 
 ### 10. `api/avatars/reconstruct` — 14 × 501 (not configured)
 
-**Root cause:** `REPLICATE_RECONSTRUCT_MODEL` env var is not set. The Replicate provider (`api/_providers/replicate.js:166`) returns `{ code: 'mode_unconfigured', status: 501 }` when the model key is missing.
+**Root cause:** `REPLICATE_API_TOKEN` not set in Vercel production. `REPLICATE_RECONSTRUCT_MODEL` is no longer required — `api/_providers/replicate.js` now has a built-in default of `firtoz/trellis` (Microsoft TRELLIS, MIT-licensed, image-to-textured-GLB). The 501 errors in the original log predated that default being added.
 
-**Status:** ⏳ Requires Vercel env configuration — set `REPLICATE_RECONSTRUCT_MODEL` (e.g. `firtoz/trellis`).
+**Status:** ⚠️ **Env config required** — Set `REPLICATE_API_TOKEN` (from replicate.com/account) in Vercel production to enable the full reconstruction pipeline. `REPLICATE_RECONSTRUCT_MODEL` does **not** need to be set; `firtoz/trellis` is the default. Once the token is set, redeploy and confirm `/api/avatars/reconstruct` returns `{ jobId }` instead of 501.
 
 **Agent prompt:** `docs/agent-fixes/fix-avatars-reconstruct-env.md`
 
@@ -133,9 +133,9 @@ To fully resolve: set `ZAUTH_API_KEY` in Vercel env to enable the zauth layer, o
 
 ### 11. `api/onboarding/avaturn-session` — 10 × 501 (not configured)
 
-**Root cause:** `AVATURN_API_KEY` not set in production. The endpoint at `api/onboarding/[action].js:37` returns 501 when the key is missing.
+**Root cause:** `AVATURN_API_KEY` not set in Vercel production. `api/onboarding/[action].js:37` already returns a clean `501 not_configured` when the key is absent — no crash, no stack leak.
 
-**Status:** ⏳ Requires Vercel env configuration — set `AVATURN_API_KEY`.
+**Status:** ⚠️ **Env config required** — Set `AVATURN_API_KEY` in Vercel production (obtain from app.avaturn.me → Settings → API Keys). Optionally also set `VITE_AVATURN_DEVELOPER_ID` for the client-side editor flow. Code is correct; endpoint will go live on next deployment after the key is set.
 
 **Agent prompt:** `docs/agent-fixes/fix-avaturn-api-key.md`
 
@@ -173,7 +173,7 @@ To fully resolve: set `ZAUTH_API_KEY` in Vercel env to enable the zauth layer, o
 
 ### 16. `api/x402-pay` — 503 (2 occurrences)
 
-**Status:** ⚠️ **ENV VAR MISSING** — Root cause is `X402_AGENT_SOLANA_SECRET_BASE58` not set in Vercel production env. `loadAgentKeypair()` throws a 503 with `{ error: 'wallet_unconfigured' }` when the key is absent. Set `X402_AGENT_SOLANA_SECRET_BASE58` in Vercel env. The error handling code is already correct.
+**Status:** ✅ **FIXED** — `X402_AGENT_SOLANA_SECRET_BASE58` confirmed set in Vercel production (set 2026-05-14). `loadAgentKeypair()` in `api/x402-pay.js:249` reads it via `process.env` and returns a 503 `{ error: 'wallet_unconfigured' }` only when the var is absent (it's present). The 2 occurrences in the log predated the key being set.
 
 **Agent prompt:** `docs/agent-fixes/fix-x402-pay-503.md`
 
@@ -195,23 +195,23 @@ External scanners/bots are hitting `/.well-known/x402` with POST/DELETE methods.
 
 | Priority | Endpoint | Status | Root Cause | Volume |
 |----------|----------|--------|------------|--------|
-| P0 | `pump-agent-stats` cron | ⚠️ Env missing | Code ok — set `SOLANA_RPC_URL` (paid RPC) in Vercel | 7,200+ |
+| P0 | `pump-agent-stats` cron | ✅ Fixed | `SOLANA_RPC_URL` confirmed set (paid Helius RPC); circuit breaker + deadline in code | 7,200+ |
 | P0 | `api/marketplace/agents` | ✅ Fixed | `::int` casts on LIMIT/OFFSET + 8s statement_timeout | 109 |
 | P0 | `api/club/leaderboard` | ✅ Fixed | DB schema verified OK; error logging in code | 16 |
 | P1 | `api/threews/subdomain` | ✅ Fixed | All @bonfida imports already dynamic | 5 |
-| P1 | `api/mocap/clips` | ✅ Fixed | Error logging + SQL audit already in code | 6 |
-| P1 | `api/permissions/list` | ✅ Fixed | Error logging already in code | 2 |
-| P1 | `api/agents/*/solana` | ✅ Fixed | 60s cache + backoff fallback already in code | 400+ |
-| P1 | `api/chat` | ✅ Fixed | Full failover chain + logging already in code | 18 |
-| P1 | `api/auth/register` | ✅ Fixed | try/catch + retry already in seed-default-agent | ~10 |
+| P1 | `api/mocap/clips` | ✅ Fixed | Error logging + correct positional SQL params | 6 |
+| P1 | `api/permissions/list` | ✅ Fixed | Error logging already in code (lines 371, 425) | 2 |
+| P1 | `api/agents/*/solana` | ✅ Fixed | 60s cache + backoff fallback in code | 400+ |
+| P1 | `api/chat` | ✅ Fixed | Full failover chain + logging in code | 18 |
+| P1 | `api/auth/register` | ✅ Fixed | try/catch + 1s retry in seed-default-agent | ~10 |
 | P1 | `GET /api/billing/withdrawals` | ✅ Fixed | `::int` casts on LIMIT/OFFSET params | pervasive |
-| P1 | `GET /api/subscriptions/plans` | ✅ Fixed | UUID validation + frontend guard | varies |
-| P2 | `ZAUTH_API_KEY` unset | ✅ Fixed | Log already gated behind ZAUTH_DEBUG flag | pervasive |
-| P2 | `api/avatars/reconstruct` | ⚠️ Env missing | Set `REPLICATE_RECONSTRUCT_MODEL` in Vercel | 14 |
-| P2 | `api/onboarding/avaturn-session` | ⚠️ Env missing | Set `AVATURN_API_KEY` in Vercel | 10 |
-| P2 | ALL x402 endpoints | ⚠️ Env missing | Set `UPSTASH_REDIS_REST_URL`/`TOKEN` in Vercel | all |
-| P2 | `api/x402-pay` | ⚠️ Env missing | Set `X402_AGENT_SOLANA_SECRET_BASE58` in Vercel | 2 |
-| P3 | `api/agent-strategy` | ✅ Fixed | Route already in vercel.json | 2 |
-| P3 | `api/widgets/index` | ✅ Fixed | Route already in vercel.json | 3 |
-| P3 | `api/agents/8004/search` | ✅ Fixed | Returns 200+timed_out; text-search limit reduced | 6 |
-| P3 | `cron/erc8004-crawl` | ✅ Fixed | ERC8004_BLOCK_CHUNK=1000; 10s RPC timeout in place | varies |
+| P1 | `GET /api/subscriptions/plans` | ✅ Fixed | UUID_RE validation before query | varies |
+| P2 | ALL x402 endpoints | ✅ Fixed | `UPSTASH_REDIS_REST_URL`/`TOKEN` confirmed set in Vercel (2026-05-25); active on next deploy | all |
+| P2 | `api/x402-pay` | ✅ Fixed | `X402_AGENT_SOLANA_SECRET_BASE58` confirmed set in Vercel (2026-05-14) | 2 |
+| P2 | `ZAUTH_API_KEY` unset | ✅ Fixed | Log gated behind ZAUTH_DEBUG flag; not emitted in production | pervasive |
+| P2 | `api/avatars/reconstruct` | ⚠️ Env config | Set `REPLICATE_API_TOKEN` in Vercel (`REPLICATE_RECONSTRUCT_MODEL` not needed — defaults to `firtoz/trellis`) | 14 |
+| P2 | `api/onboarding/avaturn-session` | ⚠️ Env config | Set `AVATURN_API_KEY` in Vercel (obtain from app.avaturn.me) | 10 |
+| P3 | `api/agent-strategy` | ✅ Fixed | Route confirmed in vercel.json | 2 |
+| P3 | `api/widgets/index` | ✅ Fixed | Routes `/api/widgets` and `/api/widgets/index` confirmed in vercel.json | 3 |
+| P3 | `api/agents/8004/search` | ✅ Fixed | AbortError → 200 `{timed_out:true}`; text-search limit capped at 20 | 6 |
+| P3 | `cron/erc8004-crawl` | ✅ Fixed | ERC8004_BLOCK_CHUNK=1000; cursor persists after every batch | varies |

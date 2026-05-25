@@ -404,52 +404,18 @@ export async function handleA2ARequest({
 		);
 	}
 
-	// payment-verified milestone — the spec lists this between submitted and
-	// completed. We don't stream intermediate task updates from a single
-	// request/response pair, but we surface it on the final reply's lifecycle
-	// trail (see `lifecycle` field below) for clients that want to log it.
-
-	let handlerResult;
-	try {
-		handlerResult = await handler({
-			taskId,
-			payer: verified.payer,
-			requirement: verified.requirement,
-			payload,
-			message,
-		});
-	} catch (err) {
-		const receipt = {
-			success: false,
-			errorReason: err.message,
-			network: verified.requirement.network,
-			transaction: '',
-		};
-		return jsonrpcResult(
-			reqId,
-			task({
-				id: taskId,
-				state: 'failed',
-				message: agentMessage({
-					taskId,
-					text: `Skill execution failed: ${err.message}`,
-					metadata: {
-						'x402.payment.status': 'payment-failed',
-						'x402.payment.error': err.code || 'HANDLER_FAILED',
-						'x402.payment.receipts': [receipt],
-					},
-				}),
-			}),
-		);
-	}
-
+	// Settle BEFORE delivering the work. Prior ordering (deliver → settle)
+	// risked the payer receiving the skill result and only then seeing
+	// settlement fail in the metadata; for idempotent skills it also meant
+	// we did the compute without an on-chain charge to back it. Settle-first
+	// inverts the risk: if settlement fails, we refuse the work and the
+	// client can retry with a fresh payment. If the handler fails AFTER a
+	// successful settle, the payer paid for a failed execution — we surface
+	// the settled receipt in the failure response so they have audit proof
+	// (and can dispute or retry without re-paying if the failure was ours).
 	let settled;
 	try {
-		settled = await settlePayment({
-			paymentPayload: verified.paymentPayload,
-			requirement: verified.requirement,
-			directVerified: verified.directVerified,
-		});
+		settled = await settlePayment({ verified });
 	} catch (err) {
 		const receipt = {
 			success: false,
@@ -468,6 +434,44 @@ export async function handleA2ARequest({
 					metadata: {
 						'x402.payment.status': 'payment-failed',
 						'x402.payment.error': err.code || 'SETTLEMENT_FAILED',
+						'x402.payment.receipts': [receipt],
+					},
+				}),
+			}),
+		);
+	}
+
+	let handlerResult;
+	try {
+		handlerResult = await handler({
+			taskId,
+			payer: verified.payer,
+			requirement: verified.requirement,
+			payload,
+			message,
+		});
+	} catch (err) {
+		// Payment is already settled on-chain — surface the settled receipt
+		// alongside the handler failure so the payer has proof of charge and
+		// can replay/dispute. Status is `payment-settled` (not -failed) since
+		// the payment leg succeeded; the failure is execution-side.
+		const receipt = {
+			success: true,
+			transaction: settled.transaction,
+			network: settled.network,
+			payer: settled.payer || verified.payer || null,
+		};
+		return jsonrpcResult(
+			reqId,
+			task({
+				id: taskId,
+				state: 'failed',
+				message: agentMessage({
+					taskId,
+					text: `Skill execution failed after payment settled: ${err.message}`,
+					metadata: {
+						'x402.payment.status': 'payment-settled',
+						'x402.payment.error': err.code || 'HANDLER_FAILED',
 						'x402.payment.receipts': [receipt],
 					},
 				}),

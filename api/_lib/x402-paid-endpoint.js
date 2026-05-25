@@ -659,11 +659,7 @@ export function paidEndpoint(spec) {
 
 		let settled;
 		try {
-			settled = await settlePayment({
-				paymentPayload: verified.paymentPayload,
-				requirement: verified.requirement,
-				directVerified: verified.directVerified,
-			});
+			settled = await settlePayment({ verified });
 		} catch (err) {
 			return error(res, err.status || 502, err.code || 'settle_failed', err.message);
 		}

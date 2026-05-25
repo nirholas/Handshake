@@ -45,7 +45,13 @@ async function main() {
 		name: '3d-agent-mcp',
 		version: '1.0.0',
 	}, {
-		capabilities: { tools: {} },
+		// Declare full tools capability so clients on the strict MCP 2025-06-18
+		// spec know we don't push tools/list_changed notifications (our tool
+		// surface is fixed per-process). `resources` + `logging` left
+		// undeclared because we don't ship resource or logging APIs over this
+		// transport; declaring them empty would mislead clients into calling
+		// resources/list and getting a method-not-found.
+		capabilities: { tools: { listChanged: false } },
 		instructions:
 			'Paid x402 MCP tools from three.ws. Each tool quotes its USDC price in its description. ' +
 			'Tool calls without an x402 payment payload in _meta return a PaymentRequired structuredContent ' +

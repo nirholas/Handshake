@@ -87,10 +87,30 @@ async function submitPrediction({ version, input }) {
 async function pollPrediction(predictionId, { timeoutMs, intervalMs }) {
 	const deadline = Date.now() + timeoutMs;
 	let last = null;
+	// Per-fetch ceiling so a single hung HTTP roundtrip can't block the whole
+	// poll loop past `deadline`. Without this, Node's fetch has no default
+	// timeout — a Replicate edge-stall would dangle the request indefinitely
+	// and the outer loop never gets a chance to re-check Date.now() < deadline.
+	const perFetchTimeoutMs = Math.max(intervalMs * 3, 10_000);
 	while (Date.now() < deadline) {
-		const r = await fetch(`${REPLICATE_BASE}/predictions/${encodeURIComponent(predictionId)}`, {
-			headers: authHeaders(),
-		});
+		let r;
+		try {
+			r = await fetch(`${REPLICATE_BASE}/predictions/${encodeURIComponent(predictionId)}`, {
+				headers: authHeaders(),
+				signal: AbortSignal.timeout(perFetchTimeoutMs),
+			});
+		} catch (err) {
+			// Aborted polls are transient; resume the loop until `deadline`
+			// expires. Other network failures bubble up as provider errors so
+			// the caller sees them instead of an opaque _timedOut.
+			if (err?.name === 'AbortError' || err?.name === 'TimeoutError') {
+				await new Promise((res) => setTimeout(res, intervalMs));
+				continue;
+			}
+			const e = new Error(`replicate poll fetch failed: ${err?.message || err}`);
+			e.code = 'provider_error';
+			throw e;
+		}
 		const data = await r.json().catch(() => ({}));
 		if (!r.ok) {
 			const err = new Error(data?.detail || `replicate poll returned ${r.status}`);

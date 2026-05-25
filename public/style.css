@@ -3090,6 +3090,12 @@ body.deploy-page {
 	cursor: pointer;
 }
 
+.erc8004-chain-select option,
+.erc8004-chain-select optgroup {
+	background-color: #14141c;
+	color: #e6e6e6;
+}
+
 .erc8004-btn--wallet.erc8004-btn--connected {
 	background: rgba(34, 197, 94, 0.18);
 	border-color: rgba(34, 197, 94, 0.4);
