@@ -125,7 +125,7 @@ To fully resolve: set `ZAUTH_API_KEY` in Vercel env to enable the zauth layer, o
 
 **Root cause:** `REPLICATE_API_TOKEN` not set in Vercel production. `REPLICATE_RECONSTRUCT_MODEL` is no longer required — `api/_providers/replicate.js` now has a built-in default of `firtoz/trellis` (Microsoft TRELLIS, MIT-licensed, image-to-textured-GLB). The 501 errors in the original log predated that default being added.
 
-**Status:** ⚠️ **Env config required** — Set `REPLICATE_API_TOKEN` (from replicate.com/account) in Vercel production to enable the full reconstruction pipeline. `REPLICATE_RECONSTRUCT_MODEL` does **not** need to be set; `firtoz/trellis` is the default. Once the token is set, redeploy and confirm `/api/avatars/reconstruct` returns `{ jobId }` instead of 501.
+**Status:** ✅ **FIXED** — `REPLICATE_API_TOKEN` confirmed set in Vercel (2026-05-25). `REPLICATE_RECONSTRUCT_MODEL` not needed — provider defaults to `firtoz/trellis`. Active on next deployment.
 
 **Agent prompt:** `docs/agent-fixes/fix-avatars-reconstruct-env.md`
 
@@ -133,9 +133,7 @@ To fully resolve: set `ZAUTH_API_KEY` in Vercel env to enable the zauth layer, o
 
 ### 11. `api/onboarding/avaturn-session` — 10 × 501 (not configured)
 
-**Root cause:** `AVATURN_API_KEY` not set in Vercel production. `api/onboarding/[action].js:37` already returns a clean `501 not_configured` when the key is absent — no crash, no stack leak.
-
-**Status:** ⚠️ **Env config required** — Set `AVATURN_API_KEY` in Vercel production (obtain from app.avaturn.me → Settings → API Keys). Optionally also set `VITE_AVATURN_DEVELOPER_ID` for the client-side editor flow. Code is correct; endpoint will go live on next deployment after the key is set.
+**Status:** ✅ **CLOSED — NOT USING AVATURN** — Avaturn is intentionally not subscribed to. The endpoint returns `501 not_configured` gracefully. No action needed.
 
 **Agent prompt:** `docs/agent-fixes/fix-avaturn-api-key.md`
 
@@ -209,8 +207,8 @@ External scanners/bots are hitting `/.well-known/x402` with POST/DELETE methods.
 | P2 | ALL x402 endpoints | ✅ Fixed | `UPSTASH_REDIS_REST_URL`/`TOKEN` confirmed set in Vercel (2026-05-25); active on next deploy | all |
 | P2 | `api/x402-pay` | ✅ Fixed | `X402_AGENT_SOLANA_SECRET_BASE58` confirmed set in Vercel (2026-05-14) | 2 |
 | P2 | `ZAUTH_API_KEY` unset | ✅ Fixed | Log gated behind ZAUTH_DEBUG flag; not emitted in production | pervasive |
-| P2 | `api/avatars/reconstruct` | ⚠️ Env config | Set `REPLICATE_API_TOKEN` in Vercel (`REPLICATE_RECONSTRUCT_MODEL` not needed — defaults to `firtoz/trellis`) | 14 |
-| P2 | `api/onboarding/avaturn-session` | ⚠️ Env config | Set `AVATURN_API_KEY` in Vercel (obtain from app.avaturn.me) | 10 |
+| P2 | `api/avatars/reconstruct` | ✅ Fixed | `REPLICATE_API_TOKEN` set in Vercel; defaults to `firtoz/trellis` | 14 |
+| P2 | `api/onboarding/avaturn-session` | ✅ Closed | Avaturn not subscribed to — 501 is intentional, no action | 10 |
 | P3 | `api/agent-strategy` | ✅ Fixed | Route confirmed in vercel.json | 2 |
 | P3 | `api/widgets/index` | ✅ Fixed | Routes `/api/widgets` and `/api/widgets/index` confirmed in vercel.json | 3 |
 | P3 | `api/agents/8004/search` | ✅ Fixed | AbortError → 200 `{timed_out:true}`; text-search limit capped at 20 | 6 |
