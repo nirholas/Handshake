@@ -32,17 +32,27 @@ const PAYMENT_FILTERS = [
 ];
 
 (async function boot() {
-	const main = await mountShell();
-	const me = await requireUser();
+	try {
+		const main = await mountShell();
+		const me = await requireUser();
 
-	main.innerHTML = `
-		<h1 class="dn-h1">Money</h1>
-		<p class="dn-h1-sub">Where your agents earn — and where it goes.</p>
-		<div data-slot="content" style="display:flex;flex-direction:column;gap:18px"></div>
-	`;
-	const host = main.querySelector('[data-slot="content"]');
-	renderSkeleton(host);
-	await loadAndRender(host, me);
+		main.innerHTML = `
+			<h1 class="dn-h1">Money</h1>
+			<p class="dn-h1-sub">Where your agents earn — and where it goes.</p>
+			<div data-slot="content" style="display:flex;flex-direction:column;gap:18px"></div>
+		`;
+		const host = main.querySelector('[data-slot="content"]');
+		renderSkeleton(host);
+		await loadAndRender(host, me);
+	} catch (err) {
+		// Session expired mid-load — bounce to login the same way requireUser would.
+		if (err instanceof ApiError && err.status === 401) {
+			const ret = encodeURIComponent(location.pathname + location.search);
+			location.href = `/login?return=${ret}`;
+			return;
+		}
+		throw err;
+	}
 })();
 
 // ── Data loading ───────────────────────────────────────────────────────────
