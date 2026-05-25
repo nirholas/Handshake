@@ -8,19 +8,19 @@
     },
     "functions": {
         "api/club/tips-stream.js": {
-            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/cjs/node_modules/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 300
         },
         "api/avatars/[id].js": {
-            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/cjs/node_modules/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 300
         },
         "api/tts/speak.js": {
-            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/cjs/node_modules/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 60
         },
         "api/**/*.js": {
-            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
+            "includeFiles": "node_modules/@zauthx402/sdk/dist/**,node_modules/@bonfida/spl-name-service/dist/cjs/node_modules/**,node_modules/@bonfida/spl-name-service/dist/esm/node_modules/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**,data/_generated/**",
             "maxDuration": 30
         }
     },
@@ -1274,7 +1274,15 @@
             "dest": "/api/widgets/[id]/knowledge?id=$1"
         },
         {
+            "src": "/api/agent-strategy",
+            "dest": "/api/agent-strategy"
+        },
+        {
             "src": "/api/widgets",
+            "dest": "/api/widgets"
+        },
+        {
+            "src": "/api/widgets/index",
             "dest": "/api/widgets"
         },
         {

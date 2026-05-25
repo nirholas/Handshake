@@ -94,7 +94,7 @@ async function resolveName(rawName) {
 			}
 		}
 		try {
-			const sns = await import('@bonfida/spl-name-service');
+			const sns = await import('@bonfida/spl-name-service/dist/cjs/index.js');
 			const conn = solanaConnection('mainnet');
 			const pk = await sns.resolve(conn, bare);
 			return {
