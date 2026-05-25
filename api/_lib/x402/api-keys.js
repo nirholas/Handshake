@@ -22,7 +22,11 @@ import { randomToken, sha256 } from '../crypto.js';
 const KEY_PREFIX = 'x402_live_';
 
 let _redis = null;
+const IS_PROD = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+const ALLOW_MEMORY_FALLBACK = process.env.X402_ALLOW_MEMORY_FALLBACK === '1';
+
 let _redisChecked = false;
+let _memoryFallbackWarned = false;
 function getRedis() {
 	if (_redisChecked) return _redis;
 	_redisChecked = true;
@@ -31,6 +35,20 @@ function getRedis() {
 			url: env.UPSTASH_REDIS_REST_URL,
 			token: env.UPSTASH_REDIS_REST_TOKEN,
 		});
+		return _redis;
+	}
+	if (IS_PROD && !ALLOW_MEMORY_FALLBACK) {
+		throw new Error(
+			'[x402/api-keys] UPSTASH_REDIS_REST_URL/TOKEN required in production. ' +
+				'Set them, or set X402_ALLOW_MEMORY_FALLBACK=1 to accept per-instance subscription rate-limits.',
+		);
+	}
+	if (IS_PROD && !_memoryFallbackWarned) {
+		_memoryFallbackWarned = true;
+		console.warn(
+			'[x402/api-keys] Running in production with memory rate-limit; ' +
+				'subscription caps are per-instance only.',
+		);
 	}
 	return _redis;
 }
