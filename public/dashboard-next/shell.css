@@ -142,6 +142,14 @@ button { font: inherit; }
 [data-rail-collapsed='true'] .dn-rail-item-text { display: none; }
 [data-rail-collapsed='true'] .dn-rail-item { justify-content: center; padding: 10px; }
 
+.dn-rail-item-ext {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 4px;
+	opacity: 0.5;
+	vertical-align: middle;
+}
+
 .dn-rail-foot {
 	padding: 12px 10px;
 	border-top: 1px solid var(--nxt-stroke);

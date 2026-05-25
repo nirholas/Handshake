@@ -228,7 +228,8 @@ function openMenu(anchor, card, widget) {
 		<button role="menuitem" data-act="studio">Open studio</button>
 		<button role="menuitem" data-act="embed">Copy embed snippet</button>
 		<button role="menuitem" data-act="duplicate">Duplicate</button>
-		<button role="menuitem" data-act="transcripts">Open transcripts</button>
+		<button role="menuitem" data-act="transcripts">Transcripts</button>
+		<button role="menuitem" data-act="knowledge">Knowledge base</button>
 		<div class="dn-wx-menu-sep"></div>
 		<button role="menuitem" data-act="delete" class="danger">Delete</button>
 	`;
@@ -282,7 +283,9 @@ function openMenu(anchor, card, widget) {
 		} else if (act === 'duplicate') {
 			await duplicateWidget(card, widget);
 		} else if (act === 'transcripts') {
-			location.href = `/dashboard?tab=widgets&w=${encodeURIComponent(widget.id)}&pane=transcripts`;
+			openTranscriptsModal(widget);
+		} else if (act === 'knowledge') {
+			openKnowledgeModal(widget);
 		} else if (act === 'delete') {
 			await deleteWidget(card, widget);
 		}

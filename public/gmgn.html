@@ -4,6 +4,17 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 	<title>GMGN Smart Money · three.ws</title>
+	<meta name="description" content="Live smart money signals narrated by a 3D AI agent. Powered by GMGN.ai — tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time." />
+	<meta property="og:title" content="GMGN Smart Money · three.ws" />
+	<meta property="og:description" content="Live smart money signals narrated by a 3D AI agent. Powered by GMGN.ai." />
+	<meta property="og:image" content="https://three.ws/og/gmgn.png" />
+	<meta property="og:url" content="https://three.ws/gmgn" />
+	<meta property="og:type" content="website" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="GMGN Smart Money · three.ws" />
+	<meta name="twitter:description" content="Live smart money signals narrated by a 3D AI agent. Powered by GMGN.ai." />
+	<meta name="twitter:image" content="https://three.ws/og/gmgn.png" />
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/home.css" />
@@ -212,6 +223,13 @@
 		<div class="stat-item"><span class="lbl">Tokens tracked</span><span class="val" id="stat-tracked">—</span></div>
 		<div class="stat-item"><span class="lbl">Last poll</span><span class="val" id="stat-polled">—</span></div>
 		<div class="stat-item"><span class="lbl">Source</span><span class="val">GMGN.ai</span></div>
+		<div class="stat-item" style="margin-left:auto">
+			<span class="lbl">$THREE on GMGN</span>
+			<span class="val" id="three-gmgn-status" style="display:inline-flex;align-items:center;gap:6px">
+				<a href="https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" target="_blank" rel="noopener" style="color:var(--gmgn);font-size:11px;text-decoration:none" id="three-gmgn-link">Watch ↗</a>
+				<span id="three-smart-count" style="font-size:11px;color:var(--muted)">—</span>
+			</span>
+		</div>
 	</div>
 
 	<!-- Avatar picker modal -->
@@ -527,6 +545,12 @@
 			statusText.textContent = text;
 		}
 
+		let _reconnectTimer = null;
+		function scheduleReconnect(ms) {
+			if (_reconnectTimer) return; // already scheduled — don't double-fire
+			_reconnectTimer = setTimeout(() => { _reconnectTimer = null; connect(); }, ms);
+		}
+
 		function connect() {
 			if (es) { es.close(); es = null; }
 			setStatus('connecting', 'Connecting…');
@@ -546,6 +570,7 @@
 			es.addEventListener('smart_entry', (msg) => {
 				const ev = JSON.parse(msg.data);
 				handleEvent(ev, ev.replay || false);
+				if ($('ctl-chain').value === 'sol') checkThreeToken(ev);
 			});
 
 			es.addEventListener('status', (msg) => {
@@ -562,16 +587,18 @@
 			es.addEventListener('ping', () => {});
 
 			es.addEventListener('close', () => {
-				setStatus('down', 'Disconnected — reconnecting…');
+				// Server sends event: close then closes stream. onerror will also fire
+				// immediately after — scheduleReconnect deduplicates both.
+				setStatus('down', 'Session ended — reconnecting…');
 				es = null;
-				setTimeout(connect, 4000);
+				scheduleReconnect(4000);
 			});
 
 			es.onerror = () => {
 				setStatus('down', 'Error — retrying…');
 				es?.close();
 				es = null;
-				setTimeout(connect, 5000);
+				scheduleReconnect(5000);
 			};
 		}
 
@@ -760,6 +787,18 @@
 			if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
 			if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
 			return `$${Number(n).toFixed(2)}`;
+		}
+
+		// ── $THREE spotlight ─────────────────────────────────────────────────────
+		const THREE_CA = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
+		function checkThreeToken(ev) {
+			if (ev.address !== THREE_CA) return;
+			const el = $('three-smart-count');
+			const link = $('three-gmgn-link');
+			el.textContent = `🧠 ${ev.smart_buy_24h} wallets${ev.smart_buy_delta > 0 ? ` (+${ev.smart_buy_delta})` : ''}`;
+			el.style.color = ev.smart_buy_delta > 0 ? 'var(--gmgn)' : 'var(--muted)';
+			link.textContent = '$THREE live ↗';
 		}
 
 		// ── Go ───────────────────────────────────────────────────────────────────

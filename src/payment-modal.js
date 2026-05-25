@@ -23,6 +23,29 @@ async function loadSolana() {
 }
 
 const STYLE = `
+.pay-chip {
+	background: rgba(167,139,250,.08);
+	border: 1px solid rgba(167,139,250,.22);
+	border-radius: 12px; padding: 12px 14px; margin: 2px 0;
+}
+.pay-chip-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.pay-chip-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .06em; }
+.pay-chip-skill { font-size: 13px; color: #a78bfa; font-family: monospace; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pay-chip-price { font-size: 15px; color: #34d399; font-weight: 700; margin-bottom: 10px; }
+.pay-chip-actions { display: flex; gap: 8px; }
+.pay-chip-btn {
+	flex: 1; padding: 8px 12px; border-radius: 8px; border: none;
+	font-size: 13px; font-weight: 600; cursor: pointer;
+	background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff;
+	transition: opacity .15s; letter-spacing: .02em;
+}
+.pay-chip-btn:hover:not(:disabled) { opacity: .85; }
+.pay-chip-btn:disabled { opacity: .4; cursor: default; }
+.pay-chip-btn-pay { background: linear-gradient(135deg, #059669, #047857); }
+.pay-chip-btn-cancel { flex: 0 0 auto; background: rgba(255,255,255,.08); color: rgba(255,255,255,.45); }
+.pay-chip-status { font-size: 12px; color: rgba(255,255,255,.45); margin-top: 7px; min-height: 15px; }
+.pay-chip-status.err { color: #f87171; }
+.pay-chip-status.ok  { color: #34d399; }
 .skill-pay-overlay {
 	position: fixed; inset: 0; background: rgba(0,0,0,0.72);
 	display: flex; align-items: center; justify-content: center;
@@ -332,6 +355,193 @@ export class SkillPaymentModal {
 	destroy() {
 		this._el?.remove();
 		this._el = null;
+	}
+}
+
+/**
+ * PaymentChip — compact inline payment card that renders inside the chat thread.
+ * Replaces the blocking SkillPaymentModal overlay with a conversational flow.
+ * The agent narrates before/after; the chip handles wallet connection + SPL transfer.
+ */
+export class PaymentChip {
+	/** @param {string} agentId  seller agent UUID */
+	constructor(agentId) {
+		this._agentId = agentId;
+		this._wallet = null;
+		this._connection = null;
+	}
+
+	/**
+	 * Inject a payment chip into chatEl and return a promise that resolves
+	 * true (purchased) or false (dismissed / failed).
+	 * @param {Element} chatEl
+	 * @param {{ skill: string, price?: { amount: string|number, currency_mint: string, chain: string } }} payload
+	 * @returns {Promise<boolean>}
+	 */
+	show(chatEl, payload) {
+		return new Promise((resolve) => {
+			const { skill = 'skill', price = {} } = payload;
+			const amountUsdc = (Number(price.amount || 0) / 10 ** USDC_DECIMALS).toFixed(2);
+			const currency = price.chain === 'solana' ? 'USDC' : (price.currency_mint?.slice(0, 8) || 'USDC');
+
+			const wrapper = document.createElement('div');
+			wrapper.className = 'msg';
+			wrapper.innerHTML = `
+				<div class="role">agent</div>
+				<div class="body">
+					<div class="pay-chip">
+						<div class="pay-chip-head">
+							<span class="pay-chip-label">Payment required</span>
+						</div>
+						<div class="pay-chip-skill">${skill}</div>
+						<div class="pay-chip-price">${amountUsdc} ${currency}</div>
+						<div class="pay-chip-actions"></div>
+						<div class="pay-chip-status"></div>
+					</div>
+				</div>
+			`;
+
+			const setStatus = (msg, kind = '') => {
+				const el = wrapper.querySelector('.pay-chip-status');
+				el.textContent = msg;
+				el.className = 'pay-chip-status' + (kind ? ' ' + kind : '');
+			};
+
+			const dismiss = (result) => {
+				wrapper.remove();
+				resolve(result);
+			};
+
+			const updateActions = () => {
+				const actions = wrapper.querySelector('.pay-chip-actions');
+				const connected = this._wallet?.isConnected || window.solana?.isConnected;
+				if (connected) {
+					actions.innerHTML = `
+						<button class="pay-chip-btn pay-chip-btn-pay">Pay ${amountUsdc} ${currency}</button>
+						<button class="pay-chip-btn pay-chip-btn-cancel">Cancel</button>
+					`;
+					actions.querySelector('.pay-chip-btn-pay').addEventListener('click', () => runPurchase());
+				} else {
+					actions.innerHTML = `
+						<button class="pay-chip-btn pay-chip-btn-connect">Connect Phantom</button>
+						<button class="pay-chip-btn pay-chip-btn-cancel">Dismiss</button>
+					`;
+					actions.querySelector('.pay-chip-btn-connect').addEventListener('click', () => connectWallet());
+				}
+				actions.querySelector('.pay-chip-btn-cancel').addEventListener('click', () => dismiss(false));
+			};
+
+			const connectWallet = async () => {
+				setStatus('Connecting…');
+				try {
+					if (window.solana?.isPhantom || window.solana?.connect) {
+						await window.solana.connect();
+						this._wallet = window.solana;
+						setStatus('');
+						updateActions();
+					} else {
+						setStatus('Phantom not detected. Install Phantom to pay.', 'err');
+					}
+				} catch (e) {
+					setStatus(e.message || 'Connection failed', 'err');
+				}
+			};
+
+			const runPurchase = async () => {
+				const payBtn = wrapper.querySelector('.pay-chip-btn-pay');
+				if (payBtn) payBtn.disabled = true;
+
+				setStatus('Creating purchase…');
+				let purch;
+				try {
+					const r = await fetch('/api/marketplace/purchase', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						credentials: 'include',
+						body: JSON.stringify({ agent_id: this._agentId, skill }),
+					});
+					const j = await r.json();
+					if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+					purch = j.data;
+					if (purch.already_owned) {
+						setStatus('Already purchased.', 'ok');
+						await delay(800);
+						dismiss(true);
+						return;
+					}
+				} catch (e) {
+					setStatus(e.message || 'Failed to start purchase', 'err');
+					if (payBtn) payBtn.disabled = false;
+					return;
+				}
+
+				setStatus('Building transaction…');
+				try {
+					const { web3, spl } = await loadSolana();
+					const { Connection, PublicKey, Transaction } = web3;
+					const { getAssociatedTokenAddressSync, createTransferInstruction } = spl;
+
+					if (!this._connection) {
+						const rpc = window.__solanaRpc || `${window.location.origin}/api/solana-rpc`;
+						this._connection = new Connection(rpc, 'confirmed');
+					}
+
+					const payer = this._wallet?.publicKey || window.solana?.publicKey;
+					if (!payer) throw new Error('Wallet not connected');
+
+					const payerKey = new PublicKey(payer.toBase58());
+					const recipientKey = new PublicKey(purch.recipient);
+					const mintKey = new PublicKey(purch.currency_mint);
+					const referenceKey = new PublicKey(purch.reference);
+
+					const fromAta = getAssociatedTokenAddressSync(mintKey, payerKey);
+					const toAta = getAssociatedTokenAddressSync(mintKey, recipientKey);
+
+					const ix = createTransferInstruction(fromAta, toAta, payerKey, BigInt(purch.amount));
+					ix.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
+
+					const { blockhash } = await this._connection.getLatestBlockhash('confirmed');
+					const tx = new Transaction({ feePayer: payerKey, recentBlockhash: blockhash }).add(ix);
+
+					setStatus('Approve in Phantom…');
+					const wallet = this._wallet || window.solana;
+					const txid = await wallet.sendTransaction(tx, this._connection);
+
+					setStatus('Confirming…');
+					await this._connection.confirmTransaction(txid, 'confirmed');
+
+					setStatus('Verifying…');
+					const ok = await this._pollConfirm(purch.reference);
+					if (!ok) throw new Error('Verification failed — contact support. tx: ' + txid);
+
+					setStatus('Unlocked!', 'ok');
+					await delay(900);
+					dismiss(true);
+				} catch (e) {
+					setStatus(e.message || 'Purchase failed', 'err');
+					if (payBtn) payBtn.disabled = false;
+				}
+			};
+
+			updateActions();
+			chatEl.appendChild(wrapper);
+			chatEl.scrollTop = chatEl.scrollHeight;
+		});
+	}
+
+	async _pollConfirm(reference, maxMs = 60_000) {
+		const deadline = Date.now() + maxMs;
+		while (Date.now() < deadline) {
+			const r = await fetch(`/api/marketplace/purchase/${reference}/confirm`, {
+				method: 'POST',
+				credentials: 'include',
+			});
+			const j = await r.json().catch(() => ({}));
+			if (r.ok && j.data?.status === 'confirmed') return true;
+			if (r.status === 409) throw new Error(j.error_description || 'Transfer mismatch');
+			await delay(2500);
+		}
+		return false;
 	}
 }
 

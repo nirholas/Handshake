@@ -4,7 +4,7 @@
 import { Box3 } from 'three';
 import { Viewer } from './viewer.js';
 import { Runtime, skillAccessFromAgentDetail } from './runtime/index.js';
-import { SkillPaymentModal } from './payment-modal.js';
+import { SkillPaymentModal, PaymentChip } from './payment-modal.js';
 import { SceneController } from './runtime/scene.js';
 import { SkillRegistry } from './skills/index.js';
 import { Memory } from './memory/index.js';
@@ -1555,25 +1555,49 @@ class Agent3DElement extends HTMLElement {
 
 			this._mounted = true;
 
-			// ── Skill payment modal ────────────────────────────────────────────
-			// Shows a self-contained purchase UI inside the shadow DOM when the
-			// runtime blocks a paid skill. On success, refreshes skillAccess so
-			// the next invocation goes through without re-prompting.
+			// ── Skill payment ─────────────────────────────────────────────────
+			// When a paid skill is invoked, render an inline payment chip inside
+			// the chat thread (no blocking overlay) and narrate before/after via
+			// the agent protocol. Falls back to the full modal when there is no
+			// chat thread (e.g. avatar-only embed with avatar-chat="off").
 			if (_backendId && this.shadowRoot) {
 				this._paymentModal = new SkillPaymentModal(this.shadowRoot, _backendId);
-				let _modalOpen = false;
+				this._paymentChip = new PaymentChip(_backendId);
+				let _paymentInFlight = false;
+
 				this._runtime.addEventListener('skill:payment-required', async (e) => {
-					if (_modalOpen) return;
-					_modalOpen = true;
+					if (_paymentInFlight) return;
+					_paymentInFlight = true;
+
+					const { skill = 'skill', price = {} } = e.detail || {};
+					const amountUsdc = (Number(price?.amount || 0) / 1e6).toFixed(2);
+
+					// Narrate so the user understands what's happening
+					protocol.emit({
+						type: ACTION_TYPES.SPEAK,
+						payload: {
+							text: `To use the ${skill} skill I'll need a quick payment of $${amountUsdc} USDC. I've dropped the approval card in our chat.`,
+							sentiment: 0,
+						},
+					});
+
 					let purchased = false;
 					try {
-						purchased = await this._paymentModal.show(e.detail);
+						if (this._chatEl) {
+							purchased = await this._paymentChip.show(this._chatEl, e.detail);
+						} else {
+							purchased = await this._paymentModal.show(e.detail);
+						}
 					} finally {
-						_modalOpen = false;
+						_paymentInFlight = false;
 					}
+
 					if (purchased) {
-						// Refresh skillAccess from the updated agent detail so the
-						// next tool call succeeds without re-prompting.
+						protocol.emit({
+							type: ACTION_TYPES.SPEAK,
+							payload: { text: 'Payment confirmed. Continuing...', sentiment: 0.4 },
+						});
+						// Refresh skillAccess so next call goes through without re-prompting.
 						try {
 							const base = _scriptOrigin || window.location.origin;
 							const r = await fetch(
