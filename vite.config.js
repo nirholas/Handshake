@@ -239,7 +239,7 @@ const appConfig = {
 				async handler() {
 					const { readdirSync, statSync, readFileSync, writeFileSync } =
 						await import('node:fs');
-					const { join } = await import('node:path');
+					const { join, resolve: resolvePath } = await import('node:path');
 					const EMBED_ENTRIES = new Set([
 						'widget.html',
 						'embed.html',
@@ -249,7 +249,7 @@ const appConfig = {
 						'agent-token-page.html',
 					]);
 					const RE = /<script[^>]*id=["']vite-plugin-pwa:register-sw["'][^>]*><\/script>\s*/g;
-					const outDir = 'dist';
+					const outDir = resolvePath(__dirname, 'dist');
 					const stripped = [];
 					const walk = (dir) => {
 						let entries;
@@ -272,8 +272,9 @@ const appConfig = {
 							}
 							if (!EMBED_ENTRIES.has(name)) continue;
 							const html = readFileSync(full, 'utf8');
-							if (!RE.test(html)) continue;
-							writeFileSync(full, html.replace(RE, ''));
+							const next = html.replace(RE, '');
+							if (next === html) continue;
+							writeFileSync(full, next);
 							stripped.push(full);
 						}
 					};

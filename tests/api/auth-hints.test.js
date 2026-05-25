@@ -7,6 +7,9 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 process.env.PUBLIC_APP_ORIGIN ||= 'https://app.test';
 process.env.JWT_SECRET ||= 'test-auth-hints-secret-at-least-32-chars-long';
 process.env.VERCEL_ENV ||= 'production';
+// Allow the in-process memory store for the idempotency cache so tests run
+// without Upstash credentials even when VERCEL_ENV=production is set.
+process.env.X402_ALLOW_MEMORY_FALLBACK ||= '1';
 
 // Sql stub — auth.js touches it for API-key lookups but JWT verification
 // hits jwtVerify directly (no DB).
