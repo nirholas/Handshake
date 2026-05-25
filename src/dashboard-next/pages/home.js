@@ -359,10 +359,10 @@ const ICON_COIN = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" s
 
 function renderQuickActions(host) {
 	const actions = [
-		{ href: '/create',                          title: 'Create avatar from selfie', sub: 'Snap → 3D agent in 60s',     icon: '+' },
-		{ href: '/dashboard-next/widgets',          title: 'Embed an agent',            sub: 'Drop-in widget for any site', icon: '◧' },
-		{ href: '/dashboard-next/monetize',         title: 'View revenue',              sub: 'Earnings, payouts, plans',    icon: '$' },
-		{ href: '/dashboard-next/api',              title: 'Open API keys',             sub: 'REST + MCP for your agents',  icon: '⌘' },
+		{ href: '/create',                  title: 'Create avatar from selfie', sub: 'Snap → 3D agent in 60s',     icon: '+' },
+		{ href: '/dashboard-next/widgets',  title: 'Embed an agent',            sub: 'Drop-in widget for any site', icon: '◧' },
+		{ href: '/dashboard-next/monetize', title: 'View revenue',              sub: 'Earnings, payouts, plans',    icon: '$' },
+		{ href: '/dashboard-next/api',      title: 'Open API keys',             sub: 'REST + MCP for your agents',  icon: '⌘' },
 	];
 	host.innerHTML = actions.map((a) => `
 		<a class="dn-panel dnx-quick-card" href="${a.href}">
@@ -453,6 +453,11 @@ function tweenNumber(node, from, to, finalLabel) {
 function injectStyles() {
 	if (document.getElementById('dnx-home-styles')) return;
 	const css = `
+		/* Foundation workaround: the drawer component injects an inline style
+		   forcing display:flex on .dn-drawer, which defeats the shell's
+		   closed-state hide rule and steals a phantom grid column. */
+		.dn-shell[data-drawer-open='false'] .dn-drawer { display: none !important; }
+
 		.dnx-grid {
 			display: grid;
 			grid-template-columns: minmax(0, 1fr) 340px;
