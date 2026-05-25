@@ -342,8 +342,10 @@ const appConfig = {
 					'/create-review/': resolve(root, 'pages/create-review.html'),
 					'/import/rpm': resolve(root, 'pages/import-rpm.html'),
 					'/import/rpm/': resolve(root, 'pages/import-rpm.html'),
-					'/dashboard': resolve(root, 'public/dashboard/index.html'),
-					'/dashboard/': resolve(root, 'public/dashboard/index.html'),
+					'/dashboard': resolve(root, 'pages/dashboard-next/index.html'),
+					'/dashboard/': resolve(root, 'pages/dashboard-next/index.html'),
+					'/dashboard-classic': resolve(root, 'public/dashboard-classic/index.html'),
+					'/dashboard-classic/': resolve(root, 'public/dashboard-classic/index.html'),
 					'/dashboard-next': resolve(root, 'pages/dashboard-next/index.html'),
 					'/dashboard-next/': resolve(root, 'pages/dashboard-next/index.html'),
 					'/dashboard-next/avatars': resolve(root, 'pages/dashboard-next/avatars.html'),
@@ -484,6 +486,13 @@ const appConfig = {
 						res.setHeader('Location', '/discover/');
 						return res.end();
 					}
+					// /discover/avatar/:id → canonical marketplace detail page
+					const discoverAvatarM = path.match(/^\/discover\/avatar\/([^/]+)\/?$/);
+					if (discoverAvatarM) {
+						res.statusCode = 301;
+						res.setHeader('Location', `/marketplace/agents/${discoverAvatarM[1]}`);
+						return res.end();
+					}
 					// /coin is the legacy URL for /demo/coin (the lottery+reflection
 					// demo). Kept as a 301 so old links and shares keep working.
 					if (path === '/coin' || path === '/coin/') {
@@ -568,16 +577,28 @@ const appConfig = {
 					// /pay/calls/<base58 tx sig> → permalink for a paid x402 call
 					else if (!filePath && /^\/pay\/calls\/[1-9A-HJ-NP-Za-km-z]+\/?$/.test(path))
 						filePath = resolve(root, 'public/pay/calls/index.html');
-					// /dashboard/<tab> and /dashboard/edit/<id> → SPA index
+					// /dashboard/<tab> and /dashboard/edit/<id> → pages/dashboard-next/index.html (new SPA)
 					else if (
 						!filePath &&
 						/^\/dashboard\/(?:agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|withdrawals|earnings|account)\/?$/.test(
 							path,
 						)
 					)
-						filePath = resolve(root, 'public/dashboard/index.html');
+						filePath = resolve(root, 'pages/dashboard-next/index.html');
 					else if (!filePath && /^\/dashboard\/edit\/[^/]+\/?$/.test(path))
-						filePath = resolve(root, 'public/dashboard/index.html');
+						filePath = resolve(root, 'pages/dashboard-next/index.html');
+					// /dashboard-classic/<tab> → public/dashboard-classic/index.html (classic SPA)
+					else if (
+						!filePath &&
+						/^\/dashboard-classic\/(?:agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|withdrawals|earnings|account|portfolio|wallets|sessions|actions|embed-policy|agent-pumpfun|usage|storage|memory|strategy|voice|sns|delegation|tokens)\/?$/.test(
+							path,
+						)
+					)
+						filePath = resolve(root, 'public/dashboard-classic/index.html');
+					else if (!filePath && /^\/dashboard-classic\/edit\/[^/]+\/?$/.test(path))
+						filePath = resolve(root, 'public/dashboard-classic/index.html');
+					else if (!filePath && /^\/dashboard-classic\/portfolio\/asset\/?$/.test(path))
+						filePath = resolve(root, 'public/dashboard-classic/portfolio-asset.html');
 					// /dashboard-next/<slug> → pages/dashboard-next/<slug>.html
 					// Mirrors vercel.json so the dev server resolves the sub-pages
 					// landed by parallel agents without each one having to touch
@@ -587,12 +608,18 @@ const appConfig = {
 						const candidate = resolve(root, `pages/dashboard-next/${slug}.html`);
 						if (existsSync(candidate)) filePath = candidate;
 					}
-					// /dashboard/<page> → corresponding static HTML page
-					else if (!filePath && /^\/dashboard\/portfolio\/asset\/?$/.test(path))
-						filePath = resolve(root, 'public/dashboard/portfolio-asset.html');
-					else if (!filePath && /^\/dashboard\/(?:portfolio|wallets|sessions|actions|embed-policy|agent-pumpfun|usage|storage|memory|strategy|voice|sns|delegation|tokens)\/?$/.test(path)) {
+					// /dashboard/<page> → pages/dashboard/<page>.html (new dashboard-next pages)
+					else if (!filePath && /^\/dashboard\/[a-z0-9][a-z0-9-]*\/?$/.test(path)) {
 						const slug = path.replace(/^\/dashboard\//, '').replace(/\/$/, '');
-						filePath = resolve(root, `public/dashboard/${slug}.html`);
+						const candidate = resolve(root, `pages/dashboard/${slug}.html`);
+						if (existsSync(candidate)) filePath = candidate;
+					}
+					// /dashboard-classic/<page> → corresponding static HTML page (classic pages)
+					else if (!filePath && /^\/dashboard-classic\/portfolio\/asset\/?$/.test(path))
+						filePath = resolve(root, 'public/dashboard-classic/portfolio-asset.html');
+					else if (!filePath && /^\/dashboard-classic\/(?:portfolio|wallets|sessions|actions|embed-policy|agent-pumpfun|usage|storage|memory|strategy|voice|sns|delegation|tokens)\/?$/.test(path)) {
+						const slug = path.replace(/^\/dashboard-classic\//, '').replace(/\/$/, '');
+						filePath = resolve(root, `public/dashboard-classic/${slug}.html`);
 					}
 					// Generic fallback: /<slug> or /<slug>.html → pages/<slug>.html
 					// Catches the long tail of bundled root-level pages (community,

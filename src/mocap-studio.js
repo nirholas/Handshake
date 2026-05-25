@@ -64,7 +64,7 @@ nameInput.value = '';
 // ── Auth state ────────────────────────────────────────────────────────────
 detectAuth().then((ok) => {
 	state.signedIn = ok;
-	authWarning.style.display = ok ? 'none' : 'block';
+	authWarning.classList.toggle('visible', !ok);
 });
 
 // ── Boot: try to load user's primary public avatar ────────────────────────
@@ -339,7 +339,7 @@ function downloadClip() {
 }
 
 async function refreshClipList() {
-	clipListEl.innerHTML = '<div class="empty">Loading…</div>';
+	clipListEl.innerHTML = '<div class="empty-state">Loading…</div>';
 	try {
 		const r = await fetch('/api/mocap/clips?include_public=true&limit=30', {
 			credentials: 'include',
@@ -347,7 +347,7 @@ async function refreshClipList() {
 		if (!r.ok) throw new Error(`list failed (${r.status})`);
 		const { items } = await r.json();
 		if (!items || items.length === 0) {
-			clipListEl.innerHTML = '<div class="empty">No clips saved yet. Record one above.</div>';
+			clipListEl.innerHTML = '<div class="empty-state">No clips saved yet. Record one above.</div>';
 			return;
 		}
 		clipListEl.innerHTML = '';
@@ -359,9 +359,9 @@ async function refreshClipList() {
 					<div class="n">${escapeHtml(c.name)} <span class="v-pill ${escapeAttr(c.visibility)}">${escapeHtml(c.visibility)}</span></div>
 					<div class="d">${escapeHtml(c.kind)} · ${formatTime((c.duration_ms || 0) / 1000)} · ${c.frame_count} frames${c.owner === 'self' ? '' : ' · public'}</div>
 				</div>
-				<div class="actions">
-					<button data-act="play" data-id="${escapeAttr(c.id)}">Replay</button>
-					${c.owner === 'self' ? `<button data-act="delete" data-id="${escapeAttr(c.id)}">Delete</button>` : ''}
+				<div class="clip-actions">
+					<button class="clip-btn" data-act="play" data-id="${escapeAttr(c.id)}">Replay</button>
+					${c.owner === 'self' ? `<button class="clip-btn" data-act="delete" data-id="${escapeAttr(c.id)}">Delete</button>` : ''}
 				</div>
 			`;
 			clipListEl.appendChild(el);
@@ -374,7 +374,7 @@ async function refreshClipList() {
 			});
 		});
 	} catch (err) {
-		clipListEl.innerHTML = `<div class="empty">${escapeHtml(err?.message || 'Could not load clips.')}</div>`;
+		clipListEl.innerHTML = `<div class="empty-state">${escapeHtml(err?.message || 'Could not load clips.')}</div>`;
 	}
 }
 

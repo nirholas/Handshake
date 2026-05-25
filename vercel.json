@@ -1698,7 +1698,8 @@
         },
         {
             "src": "/discover/avatar/([^/]+)",
-            "dest": "/api/discover-detail?kind=avatar&id=$1"
+            "status": 301,
+            "headers": { "Location": "/marketplace/agents/$1" }
         },
         {
             "src": "/discover/(.*)",

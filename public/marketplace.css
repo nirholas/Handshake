@@ -2494,3 +2494,94 @@ body.market-page {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
+
+/* ── Embed tab ──────────────────────────────────────────────────────────── */
+.d-embed-section {
+	margin-bottom: 18px;
+}
+.d-embed-label {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 6px;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--mk-text-3);
+}
+.d-embed-code {
+	background: #050505;
+	border: 1px solid var(--mk-border);
+	border-radius: 10px;
+	padding: 12px 14px;
+	font-family: ui-monospace, 'SF Mono', monospace;
+	font-size: 12px;
+	color: var(--mk-text-2);
+	overflow-x: auto;
+	white-space: pre;
+	line-height: 1.5;
+	margin: 0;
+}
+.d-embed-copy {
+	background: transparent;
+	border: 1px solid var(--mk-border-2);
+	color: var(--mk-text-2);
+	padding: 3px 9px;
+	border-radius: 6px;
+	font-size: 10px;
+	font-weight: 600;
+	cursor: pointer;
+	font-family: inherit;
+	transition: color 0.15s, border-color 0.15s;
+}
+.d-embed-copy:hover { color: var(--mk-text); border-color: var(--mk-text-3); }
+.d-embed-copy.copied { color: #34d399; border-color: #34d399; }
+
+/* ── Token card (sidebar) ───────────────────────────────────────────────── */
+.d-token-card {
+	background: rgba(253, 224, 71, 0.04);
+	border: 1px solid rgba(253, 224, 71, 0.18);
+	border-radius: 12px;
+	padding: 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.d-token-eyebrow {
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	color: #fde047;
+	font-weight: 600;
+}
+.d-token-mint {
+	font-family: ui-monospace, 'SF Mono', monospace;
+	font-size: 11px;
+	color: var(--mk-text-2);
+	word-break: break-all;
+}
+.d-token-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.d-token-btn {
+	display: block;
+	text-align: center;
+	padding: 8px 12px;
+	border-radius: 8px;
+	font-size: 12px;
+	font-weight: 600;
+	text-decoration: none;
+	background: rgba(253, 224, 71, 0.12);
+	color: #fde047;
+	border: 1px solid rgba(253, 224, 71, 0.25);
+	transition: background 0.15s;
+}
+.d-token-btn:hover { background: rgba(253, 224, 71, 0.2); }
+.d-token-btn-sec {
+	background: transparent;
+	color: var(--mk-text-2);
+	border-color: var(--mk-border-2);
+}
+.d-token-btn-sec:hover { background: rgba(255,255,255,0.04); color: var(--mk-text); }

@@ -443,6 +443,8 @@ async function handleDetail(req, res, id) {
 			       av.storage_key AS avatar_storage_key,
 			       av.thumbnail_key AS avatar_thumbnail_key,
 			       av.visibility AS avatar_visibility,
+			       a.meta->>'sol_mint_address' AS sol_mint_address,
+			       a.meta->>'pumpfun_network'  AS pumpfun_network,
 			       COALESCE((SELECT count(*)::int FROM skill_purchases sp
 			        WHERE sp.agent_id = a.id AND sp.status = 'confirmed'), 0) AS buyers_total,
 			       COALESCE((SELECT count(*)::int FROM skill_purchases sp
@@ -1032,6 +1034,8 @@ function toDetail(row, skill_prices = {}) {
 		fork_of: row.fork_of || null,
 		author_name: row.author_name || null,
 		author_avatar: row.author_avatar || null,
+		sol_mint_address: row.sol_mint_address || null,
+		pumpfun_network: row.pumpfun_network || 'mainnet',
 		skill_prices,
 	};
 }

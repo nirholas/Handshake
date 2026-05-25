@@ -4,353 +4,579 @@
 		<meta charset="utf-8" />
 		<title>Mocap Studio · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Record, save, and replay face mocap clips on any three.ws avatar." />
-		<meta name="theme-color" content="#0b0d10" />
+		<meta name="description" content="Record your face, save the clip, replay it on any three.ws avatar." />
+		<meta name="theme-color" content="#050505" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
 		<style>
 			:root {
 				color-scheme: dark;
-				--bg: #07090c;
-				--panel: #11141a;
-				--panel-edge: rgba(255, 255, 255, 0.07);
-				--ink: #e8ecf2;
-				--ink-dim: rgba(255, 255, 255, 0.6);
-				--accent: #5fa8ff;
-				--rec: #ff5b6b;
-				--ok: #5fce6a;
+				--bg:        #050505;
+				--surface-0: #0b0b0b;
+				--surface-1: #111111;
+				--surface-2: #181818;
+				--hairline:  #1c1c1c;
+				--hairline-strong: #2a2a2a;
+				--text:      #f6f6f6;
+				--text-2:    #a8a8a8;
+				--text-3:    #6a6a6a;
+				--text-4:    #4a4a4a;
+				--accent:    #8b5cf6;
+				--accent-2:  #6366f1;
+				--accent-glow: rgba(139, 92, 246, 0.35);
+				--rec:       #f43f5e;
+				--rec-glow:  rgba(244, 63, 94, 0.4);
+				--ok:        #4ade80;
+				--font-display: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+				--font-body:    "Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+				--font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 			}
 			* { box-sizing: border-box; }
+			html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
 			body {
-				margin: 0;
+				font-size: 14.5px;
+				line-height: 1.55;
 				min-height: 100vh;
-				min-height: 100dvh;
-				background: radial-gradient(1200px 600px at 70% -10%, #1a1f29, var(--bg));
-				color: var(--ink);
-				font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+				overflow-x: hidden;
+				-webkit-font-smoothing: antialiased;
+				text-rendering: optimizeLegibility;
+				display: flex;
+				flex-direction: column;
+			}
+			a { color: inherit; text-decoration: none; }
+			button { font-family: inherit; cursor: pointer; }
+			::selection { background: var(--accent); color: #fff; }
+
+			/* ── Site header ───────────────────────────────────── */
+			.site-header {
+				display: flex;
+				align-items: center;
+				gap: 0;
+				padding: 0 32px;
+				height: 56px;
+				position: sticky;
+				top: 0;
+				z-index: 100;
+			}
+			.site-header-brand h1 {
+				margin: 0;
+				font-size: inherit;
+				font-weight: inherit;
+				line-height: inherit;
+			}
+			@media (max-width: 640px) {
+				.site-header { padding: 0 20px; }
+			}
+
+			/* ── Page layout ───────────────────────────────────── */
+			.page-wrap {
+				flex: 1;
+				max-width: 1280px;
+				width: 100%;
+				margin: 0 auto;
+				padding: 40px 32px 64px;
+			}
+			@media (max-width: 720px) {
+				.page-wrap { padding: 24px 20px 48px; }
+			}
+
+			.page-header {
+				margin-bottom: 32px;
+			}
+			.page-eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				font-family: var(--font-mono);
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.16em;
+				color: var(--text-3);
+				margin-bottom: 12px;
+			}
+			.page-eyebrow::before {
+				content: "";
+				width: 5px;
+				height: 5px;
+				border-radius: 50%;
+				background: var(--accent);
+				box-shadow: 0 0 10px var(--accent-glow);
+			}
+			.page-title {
+				font-family: var(--font-display);
+				font-size: clamp(28px, 3.5vw, 40px);
+				font-weight: 600;
+				letter-spacing: -0.03em;
+				margin: 0 0 8px;
+				color: var(--text);
+				line-height: 1.1;
+			}
+			.page-sub {
+				color: var(--text-3);
+				font-size: 14px;
+				max-width: 480px;
+			}
+
+			/* ── Auth warning ───────────────────────────────────── */
+			.auth-banner {
+				display: none;
+				align-items: center;
+				gap: 10px;
+				padding: 12px 16px;
+				border-radius: 10px;
+				background: rgba(251, 191, 36, 0.06);
+				border: 1px solid rgba(251, 191, 36, 0.2);
+				font-size: 13px;
+				color: rgba(251, 191, 36, 0.9);
+				margin-bottom: 24px;
+			}
+			.auth-banner.visible { display: flex; }
+			.auth-banner a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+			/* ── Studio grid ────────────────────────────────────── */
+			.studio-grid {
 				display: grid;
-				grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.9fr);
-				gap: 22px;
-				padding: 22px;
+				grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.85fr);
+				gap: 20px;
 			}
 			@media (max-width: 980px) {
-				body { grid-template-columns: 1fr; padding: 14px; gap: 14px; }
+				.studio-grid { grid-template-columns: 1fr; }
 			}
-			h1 { margin: 0 0 6px; font-size: 22px; }
-			.sub { color: var(--ink-dim); font-size: 13px; margin-bottom: 18px; }
+			@media (orientation: landscape) and (max-height: 500px) {
+				.studio-grid {
+					grid-template-columns: minmax(0, 1fr) minmax(240px, 0.65fr);
+					gap: 14px;
+				}
+			}
 
-			.stage {
+			/* ── Stage (3D canvas) ──────────────────────────────── */
+			.stage-wrap {
 				position: relative;
-				background: linear-gradient(180deg, #11141a, #0a0c10);
-				border-radius: 14px;
-				border: 1px solid var(--panel-edge);
-				min-height: 560px;
+				background: linear-gradient(160deg, #0f0f12 0%, #070709 100%);
+				border-radius: 16px;
+				border: 1px solid var(--hairline-strong);
 				overflow: hidden;
+				min-height: 540px;
+				box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset, 0 24px 48px -24px rgba(0,0,0,0.8);
 			}
-			.stage canvas {
+			.stage-wrap canvas {
 				display: block;
 				width: 100% !important;
 				height: 100% !important;
 			}
 			#webcam-pip {
 				position: absolute;
-				right: 12px;
-				top: 12px;
-				width: 160px;
-				height: 120px;
+				right: 14px;
+				top: 14px;
+				width: 152px;
+				height: 114px;
 				object-fit: cover;
 				border-radius: 10px;
-				border: 1px solid rgba(255, 255, 255, 0.16);
+				border: 1px solid rgba(255, 255, 255, 0.14);
 				background: #000;
 				z-index: 3;
 				transform: scaleX(-1);
 				display: none;
+				box-shadow: 0 8px 24px rgba(0,0,0,0.7);
 			}
 			#webcam-pip.live { display: block; }
+
 			.rec-pill {
 				position: absolute;
-				left: 12px;
-				top: 12px;
+				left: 14px;
+				top: 14px;
 				z-index: 3;
 				display: none;
 				align-items: center;
-				gap: 6px;
-				padding: 6px 12px;
+				gap: 7px;
+				padding: 6px 13px;
 				border-radius: 999px;
-				background: rgba(0, 0, 0, 0.6);
+				background: rgba(0, 0, 0, 0.72);
+				backdrop-filter: blur(12px);
 				color: #fff;
 				font-size: 11px;
-				letter-spacing: 0.06em;
-				border: 1px solid rgba(255, 255, 255, 0.18);
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				font-family: var(--font-mono);
+				border: 1px solid rgba(244, 63, 94, 0.35);
+				box-shadow: 0 0 12px rgba(244, 63, 94, 0.2);
 			}
-			.rec-pill.on {
-				display: inline-flex;
-			}
+			.rec-pill.on { display: inline-flex; }
 			.rec-pill .dot {
-				width: 8px;
-				height: 8px;
+				width: 7px;
+				height: 7px;
 				border-radius: 50%;
 				background: var(--rec);
-				box-shadow: 0 0 8px var(--rec);
-				animation: pulse 1s ease-in-out infinite;
+				box-shadow: 0 0 8px var(--rec-glow);
+				animation: recpulse 1s ease-in-out infinite;
 			}
-			@keyframes pulse {
-				0%, 100% { opacity: 1; }
-				50% { opacity: 0.4; }
+			@keyframes recpulse {
+				0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--rec-glow); }
+				50% { opacity: 0.5; box-shadow: 0 0 4px var(--rec-glow); }
 			}
 
+			@media (max-width: 640px) {
+				.stage-wrap { min-height: min(58vw, 380px); }
+				#webcam-pip { width: 96px; height: 72px; top: max(10px, env(safe-area-inset-top, 10px)); right: max(10px, env(safe-area-inset-right, 10px)); }
+				.rec-pill { top: max(10px, env(safe-area-inset-top, 10px)); left: max(10px, env(safe-area-inset-left, 10px)); }
+			}
+			@media (orientation: landscape) and (max-height: 500px) {
+				.stage-wrap { min-height: 200px; }
+				#webcam-pip { width: 76px; height: 57px; }
+			}
+
+			/* ── Cards ──────────────────────────────────────────── */
 			.card {
-				background: var(--panel);
-				border: 1px solid var(--panel-edge);
+				background: var(--surface-0);
+				border: 1px solid var(--hairline);
 				border-radius: 14px;
-				padding: 16px;
-				margin-bottom: 14px;
+				padding: 20px;
+				margin-bottom: 16px;
 			}
-			.card h2 {
-				margin: 0 0 12px;
-				font-size: 13px;
+			.card:last-child { margin-bottom: 0; }
+			.card-label {
+				font-family: var(--font-mono);
+				font-size: 10.5px;
 				text-transform: uppercase;
-				letter-spacing: 0.1em;
-				color: var(--ink-dim);
+				letter-spacing: 0.14em;
+				color: var(--text-4);
 				font-weight: 600;
+				margin: 0 0 16px;
 			}
-			.row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-			.row > label { color: var(--ink-dim); font-size: 13px; min-width: 90px; }
-			.row input,
-			.row select,
-			.row textarea {
-				flex: 1;
-				background: #06080b;
-				color: var(--ink);
-				border: 1px solid var(--panel-edge);
-				border-radius: 8px;
-				padding: 9px 11px;
-				font-size: 13px;
-				font-family: inherit;
-				min-width: 0;
-			}
-			.row textarea { resize: vertical; min-height: 56px; }
-			.actions { display: flex; gap: 8px; flex-wrap: wrap; }
-			button.btn {
-				appearance: none;
-				background: #fff;
-				color: #0a0c10;
-				border: 0;
-				border-radius: 8px;
-				padding: 10px 16px;
-				font-size: 13px;
-				font-weight: 600;
-				cursor: pointer;
-				font-family: inherit;
-			}
-			button.btn.danger { background: var(--rec); color: #fff; }
-			button.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--panel-edge); }
-			button.btn[disabled] { opacity: 0.4; cursor: not-allowed; }
 
-			.clip-list { display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow: auto; }
+			/* ── Timer ──────────────────────────────────────────── */
+			.timer {
+				font-family: var(--font-mono);
+				font-size: 40px;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+				color: var(--text-2);
+				margin: 0 0 16px;
+				text-align: center;
+				line-height: 1;
+				transition: color 0.2s;
+			}
+			.timer.recording {
+				color: var(--rec);
+				text-shadow: 0 0 20px var(--rec-glow);
+			}
+			@media (max-width: 640px) {
+				.timer { font-size: 30px; }
+			}
+			@media (orientation: landscape) and (max-height: 500px) {
+				.timer { font-size: 22px; margin-bottom: 10px; }
+			}
+
+			/* ── Form rows ──────────────────────────────────────── */
+			.field-row {
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				margin-bottom: 10px;
+			}
+			.field-row > label {
+				color: var(--text-3);
+				font-size: 13px;
+				min-width: 88px;
+				padding-top: 11px;
+				flex-shrink: 0;
+			}
+			.field-row input,
+			.field-row select,
+			.field-row textarea {
+				flex: 1;
+				background: #0a0a0a;
+				color: var(--text);
+				border: 1px solid var(--hairline-strong);
+				border-radius: 8px;
+				padding: 10px 13px;
+				font-size: 13.5px;
+				font-family: var(--font-body);
+				min-width: 0;
+				min-height: 44px;
+				outline: none;
+				transition: border-color 0.15s;
+			}
+			.field-row input:focus,
+			.field-row select:focus,
+			.field-row textarea:focus {
+				border-color: rgba(139, 92, 246, 0.5);
+				box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+			}
+			.field-row textarea { resize: vertical; min-height: 64px; }
+			.field-row select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236a6a6a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 32px; }
+			@media (max-width: 640px) {
+				.field-row { flex-direction: column; gap: 4px; }
+				.field-row > label { min-width: unset; padding-top: 0; }
+			}
+
+			/* ── Buttons ────────────────────────────────────────── */
+			.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+			.btn {
+				appearance: none;
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				padding: 10px 18px;
+				border-radius: 8px;
+				font-size: 13.5px;
+				font-weight: 600;
+				font-family: var(--font-body);
+				border: 0;
+				cursor: pointer;
+				transition: opacity 0.15s, transform 0.1s, background 0.15s;
+				min-height: 44px;
+				white-space: nowrap;
+			}
+			.btn:active { transform: scale(0.97); }
+			.btn[disabled] { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+			.btn-primary {
+				background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+				color: #fff;
+				box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset, 0 6px 18px -8px rgba(139, 92, 246, 0.6);
+			}
+			.btn-primary:hover { opacity: 0.9; }
+			.btn-danger {
+				background: var(--rec);
+				color: #fff;
+				box-shadow: 0 1px 0 rgba(255,255,255,0.1) inset, 0 6px 18px -8px var(--rec-glow);
+			}
+			.btn-danger:hover { opacity: 0.9; }
+			.btn-ghost {
+				background: transparent;
+				color: var(--text-2);
+				border: 1px solid var(--hairline-strong);
+			}
+			.btn-ghost:hover { border-color: rgba(255,255,255,0.18); color: var(--text); background: rgba(255,255,255,0.03); }
+			@media (max-width: 640px) {
+				.btn { font-size: 12.5px; padding: 10px 14px; }
+			}
+			@media (orientation: landscape) and (max-height: 500px) {
+				.btn { min-height: 38px; padding: 8px 13px; }
+			}
+
+			/* ── Avatar info ────────────────────────────────────── */
+			.avatar-info {
+				color: var(--text-3);
+				font-size: 12.5px;
+				margin-top: 6px;
+			}
+
+			/* ── Clip list ──────────────────────────────────────── */
+			.clip-list {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				max-height: 400px;
+				overflow-y: auto;
+				scrollbar-width: thin;
+				scrollbar-color: var(--hairline-strong) transparent;
+			}
 			.clip {
-				background: rgba(255, 255, 255, 0.03);
-				border: 1px solid var(--panel-edge);
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid var(--hairline);
 				border-radius: 10px;
-				padding: 12px;
+				padding: 12px 14px;
 				display: flex;
 				align-items: center;
 				gap: 10px;
+				transition: border-color 0.15s, background 0.15s;
 			}
+			.clip:hover { border-color: var(--hairline-strong); background: rgba(255,255,255,0.04); }
 			.clip .meta { flex: 1; min-width: 0; }
-			.clip .meta .n { font-size: 13px; font-weight: 500; color: var(--ink); }
-			.clip .meta .d { font-size: 11px; color: var(--ink-dim); margin-top: 2px; }
-			.clip .v-pill {
-				font-size: 10px;
-				padding: 2px 6px;
-				border-radius: 6px;
-				background: rgba(255, 255, 255, 0.06);
-				color: var(--ink-dim);
-				text-transform: uppercase;
-				letter-spacing: 0.05em;
+			.clip .meta .n {
+				font-size: 13.5px;
+				font-weight: 500;
+				color: var(--text);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
-			.clip .v-pill.public { background: rgba(95, 206, 106, 0.18); color: var(--ok); }
-			.clip .actions { gap: 6px; }
-			.clip button {
+			.clip .meta .d {
+				font-size: 11.5px;
+				color: var(--text-3);
+				margin-top: 2px;
+				font-family: var(--font-mono);
+			}
+			.clip .v-pill {
+				font-size: 9.5px;
+				padding: 2px 7px;
+				border-radius: 999px;
+				background: rgba(255, 255, 255, 0.05);
+				color: var(--text-3);
+				text-transform: uppercase;
+				letter-spacing: 0.07em;
+				font-family: var(--font-mono);
+				flex-shrink: 0;
+			}
+			.clip .v-pill.public {
+				background: rgba(74, 222, 128, 0.12);
+				color: var(--ok);
+				border: 1px solid rgba(74, 222, 128, 0.2);
+			}
+			.clip-actions { display: flex; gap: 5px; flex-shrink: 0; }
+			.clip-btn {
 				appearance: none;
 				background: transparent;
-				color: var(--ink-dim);
-				border: 1px solid var(--panel-edge);
+				color: var(--text-3);
+				border: 1px solid var(--hairline);
 				border-radius: 6px;
-				padding: 5px 9px;
-				font-size: 11px;
+				padding: 5px 10px;
+				font-size: 11.5px;
 				cursor: pointer;
-				font-family: inherit;
+				font-family: var(--font-body);
+				transition: color 0.15s, border-color 0.15s;
 			}
-			.clip button:hover { color: var(--ink); border-color: rgba(255, 255, 255, 0.2); }
+			.clip-btn:hover { color: var(--text); border-color: var(--hairline-strong); }
 
-			.timer {
-				font-family: ui-monospace, SFMono-Regular, monospace;
-				font-size: 36px;
-				font-weight: 600;
-				letter-spacing: 0.03em;
-				color: var(--ink);
-				margin: 12px 0;
-				text-align: center;
-			}
-			.timer.recording { color: var(--rec); }
-			.empty {
-				color: var(--ink-dim);
+			/* ── Empty / format notes ───────────────────────────── */
+			.empty-state {
+				color: var(--text-3);
 				font-size: 13px;
-				padding: 18px 0;
+				padding: 24px 0;
 				text-align: center;
 				font-style: italic;
 			}
-			.brand { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-			.brand a { color: var(--ink); text-decoration: none; font-weight: 600; }
-			.signed-out {
-				background: rgba(255, 180, 84, 0.1);
-				border: 1px solid rgba(255, 180, 84, 0.3);
-				border-radius: 10px;
-				padding: 12px 14px;
-				font-size: 13px;
-				color: rgba(255, 180, 84, 0.95);
+			.format-note {
+				color: var(--text-3);
+				font-size: 12.5px;
+				line-height: 1.7;
 			}
-			.signed-out a { color: rgba(255, 180, 84, 0.95); font-weight: 600; }
+			.format-note code {
+				font-family: var(--font-mono);
+				font-size: 11.5px;
+				color: var(--text-2);
+				background: rgba(255,255,255,0.05);
+				padding: 1px 5px;
+				border-radius: 4px;
+			}
 
-			/* ── Mobile improvements ───────────────────────────────────────── */
-			button.btn {
-				min-height: 44px;
-				padding: 10px 18px;
-			}
-			.row input,
-			.row select,
-			.row textarea {
-				min-height: 44px;
-			}
-			@media (max-width: 640px) {
-				body {
-					padding: 12px;
-					gap: 12px;
-					min-height: 100dvh;
-				}
-				.stage {
-					min-height: 280px;
-					min-height: min(56vw, 420px);
-				}
-				#webcam-pip {
-					width: 100px;
-					height: 75px;
-					top: max(12px, env(safe-area-inset-top, 12px));
-					right: max(12px, env(safe-area-inset-right, 12px));
-				}
-				.rec-pill {
-					top: max(12px, env(safe-area-inset-top, 12px));
-					left: max(12px, env(safe-area-inset-left, 12px));
-				}
-				.timer { font-size: 28px; }
-				.actions { gap: 6px; }
-				button.btn { font-size: 12px; padding: 10px 13px; }
-				h1 { font-size: 18px; }
-				.card { padding: 12px; }
-				.row { flex-direction: column; gap: 4px; }
-				.row > label { min-width: unset; }
-				.clip-list { max-height: 280px; }
-			}
-			@media (orientation: landscape) and (max-height: 500px) {
-				body {
-					grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr);
-					padding: 10px;
-					gap: 10px;
-				}
-				.stage { min-height: 200px; }
-				#webcam-pip { width: 80px; height: 60px; }
-				h1 { font-size: 16px; margin: 0 0 2px; }
-				.sub { display: none; }
-				.timer { font-size: 24px; margin: 6px 0; }
-			}
+			/* ── Section divider ────────────────────────────────── */
+			.col-left,
+			.col-right { display: flex; flex-direction: column; gap: 0; }
 		</style>
 	</head>
 	<body>
-		<section class="left">
-			<div class="brand">
-				<div>
-					<h1>Mocap studio</h1>
-					<div class="sub">Record your face, save the clip, replay it on any avatar — yours or someone else's.</div>
-				</div>
-				<a href="/">← three.ws</a>
+
+		<!-- ── NAV ─────────────────────────────────────────────────── -->
+		<header class="site-header">
+			<h1 class="site-header-brand">
+				<a href="/" aria-label="three.ws home">
+					<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+					<span class="wordmark-dot" aria-hidden="true"></span>three.ws
+				</a>
+			</h1>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<!-- ── PAGE ─────────────────────────────────────────────────── -->
+		<main class="page-wrap">
+
+			<div class="page-header">
+				<div class="page-eyebrow">Labs · Face Capture</div>
+				<h2 class="page-title">Mocap Studio</h2>
+				<p class="page-sub">Record your face, save the clip, replay it on any avatar — yours or someone else's.</p>
 			</div>
 
-			<div id="auth-warning" class="signed-out" style="display:none;margin-bottom:14px;">
-				You're not signed in — clips can be recorded locally and replayed, but they can't be saved.
-				<a href="/login">Sign in</a> to save and share.
+			<div id="auth-warning" class="auth-banner">
+				<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" stroke-width="1.2"/><path d="M7.5 4.5v4m0 2v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+				You're not signed in — clips can be recorded locally but won't be saved.
+				<a href="/login">Sign in to save and share</a>
 			</div>
 
-			<div class="stage" id="stage-wrap">
-				<div id="stage"></div>
-				<div id="rec-pill" class="rec-pill"><span class="dot"></span><span>REC <span id="rec-time">0.0s</span></span></div>
-				<video id="webcam-pip" autoplay playsinline muted aria-hidden="true"></video>
-			</div>
+			<div class="studio-grid">
 
-			<div class="card" style="margin-top:14px;">
-				<h2>Record</h2>
-				<div class="timer" id="timer">00.0s</div>
-				<div class="actions">
-					<button class="btn" id="start-cam">Start camera</button>
-					<button class="btn ghost" id="calibrate" disabled>Calibrate neutral</button>
-					<button class="btn danger" id="record" disabled>Record</button>
-					<button class="btn ghost" id="replay" disabled>Replay last</button>
-					<button class="btn ghost" id="discard" disabled>Discard</button>
-				</div>
-			</div>
+				<!-- LEFT: Stage + controls -->
+				<div class="col-left">
+					<div class="stage-wrap" id="stage-wrap">
+						<div id="stage"></div>
+						<div id="rec-pill" class="rec-pill">
+							<span class="dot"></span>
+							<span>REC <span id="rec-time">0.0s</span></span>
+						</div>
+						<video id="webcam-pip" autoplay playsinline muted aria-hidden="true"></video>
+					</div>
 
-			<div class="card">
-				<h2>Save clip</h2>
-				<div class="row">
-					<label for="clip-name">Name</label>
-					<input id="clip-name" type="text" placeholder="head nod" maxlength="120" />
-				</div>
-				<div class="row">
-					<label for="clip-desc">Description</label>
-					<textarea id="clip-desc" placeholder="Optional — what is this for?" maxlength="2000"></textarea>
-				</div>
-				<div class="row">
-					<label for="clip-tags">Tags</label>
-					<input id="clip-tags" type="text" placeholder="comma, separated, tags" />
-				</div>
-				<div class="row">
-					<label for="clip-visibility">Visibility</label>
-					<select id="clip-visibility">
-						<option value="private">Private (just you)</option>
-						<option value="unlisted">Unlisted (anyone with the link)</option>
-						<option value="public">Public (in marketplace)</option>
-					</select>
-				</div>
-				<div class="actions">
-					<button class="btn" id="save-clip" disabled>Save clip</button>
-					<button class="btn ghost" id="download-clip" disabled>Download JSON</button>
-				</div>
-			</div>
-		</section>
+					<div class="card" style="margin-top:16px;">
+						<p class="card-label">Record</p>
+						<div class="timer" id="timer">00.0s</div>
+						<div class="btn-row">
+							<button class="btn btn-primary" id="start-cam">Start camera</button>
+							<button class="btn btn-ghost" id="calibrate" disabled>Calibrate neutral</button>
+							<button class="btn btn-danger" id="record" disabled>Record</button>
+							<button class="btn btn-ghost" id="replay" disabled>Replay last</button>
+							<button class="btn btn-ghost" id="discard" disabled>Discard</button>
+						</div>
+					</div>
 
-		<section class="right">
-			<div class="card">
-				<h2>Source avatar</h2>
-				<div class="row">
-					<label for="avatar-handle">Handle</label>
-					<input id="avatar-handle" type="text" placeholder="@yourname or leave blank" autocomplete="off" />
-					<button class="btn" id="load-avatar">Load</button>
+					<div class="card">
+						<p class="card-label">Save clip</p>
+						<div class="field-row">
+							<label for="clip-name">Name</label>
+							<input id="clip-name" type="text" placeholder="head nod" maxlength="120" />
+						</div>
+						<div class="field-row">
+							<label for="clip-desc">Description</label>
+							<textarea id="clip-desc" placeholder="Optional — what is this for?" maxlength="2000"></textarea>
+						</div>
+						<div class="field-row">
+							<label for="clip-tags">Tags</label>
+							<input id="clip-tags" type="text" placeholder="comma, separated" />
+						</div>
+						<div class="field-row">
+							<label for="clip-visibility">Visibility</label>
+							<select id="clip-visibility">
+								<option value="private">Private (just you)</option>
+								<option value="unlisted">Unlisted (anyone with link)</option>
+								<option value="public">Public (in marketplace)</option>
+							</select>
+						</div>
+						<div class="btn-row" style="margin-top:4px;">
+							<button class="btn btn-primary" id="save-clip" disabled>Save clip</button>
+							<button class="btn btn-ghost" id="download-clip" disabled>Download JSON</button>
+						</div>
+					</div>
 				</div>
-				<div class="sub" id="avatar-info" style="margin:0;">no avatar loaded</div>
-			</div>
 
-			<div class="card">
-				<h2>Saved clips</h2>
-				<div class="clip-list" id="clip-list"><div class="empty">Loading…</div></div>
-			</div>
+				<!-- RIGHT: Avatar + clips -->
+				<div class="col-right">
+					<div class="card">
+						<p class="card-label">Source avatar</p>
+						<div class="field-row">
+							<label for="avatar-handle">Handle</label>
+							<input id="avatar-handle" type="text" placeholder="@yourname" autocomplete="off" />
+							<button class="btn btn-ghost" id="load-avatar" style="flex-shrink:0;">Load</button>
+						</div>
+						<div class="avatar-info" id="avatar-info">no avatar loaded</div>
+					</div>
 
-			<div class="card">
-				<h2>Format</h2>
-				<div class="sub" style="margin:0;">
-					Clips are stored as <code style="color:#cad6e8">three.ws.face-mocap.v1</code> — JSON of <code style="color:#cad6e8">{ format, duration, frames: [{ t, shapes, mat }] }</code>. Frame data is the raw MediaPipe ARKit-52 output plus an optional 4×4 head transform. Compatible with any three.ws avatar via the ARKit-52 canonical morph map.
+					<div class="card" style="flex:1;">
+						<p class="card-label">Saved clips</p>
+						<div class="clip-list" id="clip-list">
+							<div class="empty-state">Loading…</div>
+						</div>
+					</div>
+
+					<div class="card">
+						<p class="card-label">Format</p>
+						<p class="format-note">
+							Clips are stored as <code>three.ws.face-mocap.v1</code> — JSON of <code>{ format, duration, frames: [{ t, shapes, mat }] }</code>.
+							Frame data is raw MediaPipe ARKit-52 output plus an optional 4×4 head transform.
+							Compatible with any three.ws avatar via the ARKit-52 canonical morph map.
+						</p>
+					</div>
 				</div>
+
 			</div>
-		</section>
+		</main>
+
+		<!-- ── FOOTER ───────────────────────────────────────────────── -->
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
 
 		<script type="module" src="/src/mocap-studio.js"></script>
 	</body>

@@ -199,7 +199,7 @@ export function navigate(routeOrNull) {
 	const route = routeOrNull || currentRoute();
 	if (location.hash) {
 		const clean = route.replace(/^\/+|\/+$/g, '');
-		history.replaceState({ route: clean }, '', '/dashboard/' + clean);
+		history.replaceState({ route: clean }, '', '/dashboard-classic/' + clean);
 	}
 	renderRoute(route);
 }
@@ -230,9 +230,9 @@ export function installRouting() {
 			return;
 		}
 
-		// Same-origin /dashboard/<tab> links.
-		if (href.startsWith('/dashboard/')) {
-			const tab = href.slice('/dashboard/'.length).split(/[?#]/)[0];
+		// Same-origin /dashboard-classic/<tab> links.
+		if (href.startsWith('/dashboard-classic/')) {
+			const tab = href.slice('/dashboard-classic/'.length).split(/[?#]/)[0];
 			const base = tab.split('/')[0];
 			if (KNOWN_TABS.includes(base)) {
 				e.preventDefault();

@@ -1800,6 +1800,7 @@
 					<button data-tab="overview" class="active" role="tab">Overview</button>
 					<button data-tab="profile" role="tab">Agent Profile</button>
 					<button data-tab="capabilities" role="tab">Agent Capabilities</button>
+					<button data-tab="embed" role="tab">Embed</button>
 					<button data-tab="versions" role="tab">Version History</button>
 					<button data-tab="similar" role="tab">Similar Agents</button>
 				</nav>
@@ -1870,6 +1871,32 @@
 							<div id="d-library" class="market-library"></div>
 						</div>
 
+						<div data-panel="embed" class="market-panel">
+							<h2>Embed this Agent</h2>
+							<p class="market-prose" style="font-size:13px;color:var(--mk-text-2);margin:0 0 18px">Drop the agent anywhere — as a web component, iframe, or direct link.</p>
+							<div class="d-embed-section">
+								<div class="d-embed-label">
+									<span>Web component</span>
+									<button class="d-embed-copy" data-embed="wc">Copy</button>
+								</div>
+								<pre class="d-embed-code" id="d-embed-wc"></pre>
+							</div>
+							<div class="d-embed-section">
+								<div class="d-embed-label">
+									<span>Iframe</span>
+									<button class="d-embed-copy" data-embed="iframe">Copy</button>
+								</div>
+								<pre class="d-embed-code" id="d-embed-iframe"></pre>
+							</div>
+							<div class="d-embed-section">
+								<div class="d-embed-label">
+									<span>Direct link</span>
+									<button class="d-embed-copy" data-embed="link">Copy</button>
+								</div>
+								<pre class="d-embed-code" id="d-embed-link"></pre>
+							</div>
+						</div>
+
 						<div data-panel="versions" class="market-panel">
 							<h2>Version History</h2>
 							<ul id="d-versions" class="market-versions"></ul>
@@ -1884,6 +1911,14 @@
 					<aside class="market-detail-side">
 						<button class="market-fork" id="d-fork">Fork &amp; Chat</button>
 						<button class="market-export-btn" id="d-export-json">↓ Export JSON</button>
+						<div class="d-token-card" id="d-token-card" hidden>
+							<div class="d-token-eyebrow">On-chain token</div>
+							<div class="d-token-mint" id="d-token-mint"></div>
+							<div class="d-token-actions">
+								<a class="d-token-btn" id="d-token-pump" target="_blank" rel="noopener">View on pump.fun</a>
+								<a class="d-token-btn d-token-btn-sec" id="d-token-jup" target="_blank" rel="noopener">Trade on Jupiter</a>
+							</div>
+						</div>
 						<div class="market-related-side" id="d-related-side"></div>
 					</aside>
 				</div>

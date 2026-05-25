@@ -3208,6 +3208,55 @@ function renderDetail(a, bookmarked) {
 	$('d-capabilities-list').innerHTML = list
 		.map((b) => `<li>${escapeHtml(b)}</li>`)
 		.join('');
+
+	// Embed tab
+	renderEmbedTab(a);
+
+	// Token card
+	renderTokenCard(a);
+}
+
+function renderEmbedTab(a) {
+	const agentId = a.id;
+	const glbUrl = a.avatar_glb_url || '';
+	const embedPageUrl = `${location.origin}/marketplace/agents/${agentId}`;
+	const iframeSrc = `/agent/${agentId}/embed`;
+
+	const wcSnippet = glbUrl
+		? `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>\n<agent-3d\n  src="${glbUrl}"\n  agent-id="${agentId}"\n  style="width:480px;height:480px"\n></agent-3d>`
+		: `<!-- No 3D avatar attached yet -->`;
+
+	const iframeSnippet = `<iframe\n  src="${iframeSrc}"\n  width="480"\n  height="640"\n  style="border:0;border-radius:14px"\n  allow="autoplay; xr-spatial-tracking"\n></iframe>`;
+
+	const wc = $('d-embed-wc');
+	const iframe = $('d-embed-iframe');
+	const link = $('d-embed-link');
+	if (wc) wc.textContent = wcSnippet;
+	if (iframe) iframe.textContent = iframeSnippet;
+	if (link) link.textContent = embedPageUrl;
+}
+
+function renderTokenCard(a) {
+	const card = $('d-token-card');
+	if (!card) return;
+	const mint = a.sol_mint_address;
+	if (!mint) {
+		card.hidden = true;
+		return;
+	}
+	const net = a.pumpfun_network || 'mainnet';
+	const short = `${mint.slice(0, 6)}…${mint.slice(-4)}`;
+	const mintEl = $('d-token-mint');
+	if (mintEl) mintEl.textContent = short;
+	mintEl?.setAttribute('title', mint);
+
+	const pumpEl = $('d-token-pump');
+	if (pumpEl) pumpEl.href = `https://pump.fun/${mint}`;
+
+	const jupEl = $('d-token-jup');
+	if (jupEl) jupEl.href = `https://jup.ag/swap/SOL-${mint}`;
+
+	card.hidden = false;
 }
 
 function renderVersions(versions) {
@@ -3412,7 +3461,25 @@ function bindEvents() {
 		else if (state.featured.length) startHeroAutoplay();
 	});
 
-	document.body.addEventListener('click', (e) => {
+	document.body.addEventListener('click', async (e) => {
+		const embedBtn = e.target.closest('.d-embed-copy');
+		if (embedBtn) {
+			const which = embedBtn.dataset.embed;
+			const srcMap = { wc: 'd-embed-wc', iframe: 'd-embed-iframe', link: 'd-embed-link' };
+			const src = $(srcMap[which]);
+			if (src) {
+				try {
+					await navigator.clipboard.writeText(src.textContent);
+					embedBtn.textContent = 'Copied ✓';
+					embedBtn.classList.add('copied');
+					setTimeout(() => {
+						embedBtn.textContent = 'Copy';
+						embedBtn.classList.remove('copied');
+					}, 1800);
+				} catch (_) { /* clipboard unavailable */ }
+			}
+			return;
+		}
 		if (e.target.matches('.purchase-btn')) {
 			const skillName = e.target.dataset.skillName;
 			const agentId = e.target.dataset.agentId;

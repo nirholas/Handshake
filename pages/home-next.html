@@ -10,450 +10,498 @@
 	<meta property="og:image" content="/og-image.png" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<link rel="icon" href="/favicon.ico" />
-	<link rel="preconnect" href="https://three.ws" />
 	<style>
 		:root {
 			color-scheme: dark;
-			--bg: #07070c;
-			--bg-soft: #0e0e16;
-			--panel: #12121c;
-			--panel-soft: #181824;
-			--border: #1f1f2c;
-			--border-strong: #2a2a3c;
-			--text: #ececf4;
-			--text-soft: #b8b8c8;
-			--muted: #7a7a90;
-			--accent: #6a5cff;
-			--accent-2: #5cffe1;
-			--accent-warm: #ff7a5c;
-			--ok: #22c55e;
-			--shadow-glow: 0 24px 80px rgba(106, 92, 255, 0.25);
-			--font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Söhne", "Segoe UI", Roboto, sans-serif;
-			--font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+			--bg:        #050505;
+			--surface-0: #0b0b0b;
+			--surface-1: #111111;
+			--surface-2: #181818;
+			--hairline:  #1c1c1c;
+			--hairline-strong: #2a2a2a;
+			--text:      #f6f6f6;
+			--text-2:    #a8a8a8;
+			--text-3:    #6a6a6a;
+			--text-4:    #4a4a4a;
+			--font-display: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+			--font-body:    "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+			--font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 		}
 		* { box-sizing: border-box; }
-		html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); }
+		html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
 		body {
-			font-size: 16px;
-			line-height: 1.6;
-			min-height: 100vh;
-			background:
-				radial-gradient(circle at 20% 0%, rgba(106, 92, 255, 0.12), transparent 50%),
-				radial-gradient(circle at 80% 30%, rgba(92, 255, 225, 0.06), transparent 50%),
-				var(--bg);
-			background-attachment: fixed;
-			overflow-x: hidden;
+			font-size: 15.5px; line-height: 1.55;
+			min-height: 100vh; overflow-x: hidden;
+			-webkit-font-smoothing: antialiased;
+			text-rendering: optimizeLegibility;
 		}
 		a { color: inherit; text-decoration: none; }
-		button { font-family: inherit; }
+		button { font-family: inherit; cursor: pointer; }
+		::selection { background: var(--text); color: var(--bg); }
 
-		/* ── HEADER ─────────────────────────────────────────────────────── */
+		/* ── Top-level page rhythm ─────────────────────────────── */
+		.wrap-1280 { max-width: 1280px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
+		.wrap-1440 { max-width: 1440px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
+		@media (max-width: 720px) {
+			.wrap-1280, .wrap-1440 { padding-left: 20px; padding-right: 20px; }
+		}
+
+		/* ── NAV ───────────────────────────────────────────────── */
 		.nav {
 			position: sticky; top: 0; z-index: 100;
-			backdrop-filter: blur(18px) saturate(140%);
-			-webkit-backdrop-filter: blur(18px) saturate(140%);
-			background: rgba(7, 7, 12, 0.72);
-			border-bottom: 1px solid var(--border);
+			border-bottom: 1px solid var(--hairline);
+			background: rgba(5,5,5,0.78);
+			backdrop-filter: blur(20px) saturate(140%);
 		}
 		.nav-inner {
-			max-width: 1280px; margin: 0 auto;
-			display: flex; align-items: center; gap: 24px;
-			padding: 14px 28px;
+			display: flex; align-items: center; gap: 32px;
+			padding: 16px 32px; max-width: 1440px; margin: 0 auto;
 		}
 		.brand {
-			display: flex; align-items: center; gap: 8px;
-			font-weight: 700; letter-spacing: -0.02em;
-			font-size: 17px;
+			display: flex; align-items: center; gap: 10px;
+			font-family: var(--font-display);
+			font-weight: 600; letter-spacing: -0.025em; font-size: 16.5px;
 		}
-		.brand-dot {
-			width: 22px; height: 22px; border-radius: 6px;
-			background: linear-gradient(135deg, var(--accent), var(--accent-2));
-			box-shadow: 0 0 16px rgba(106, 92, 255, 0.4);
+		.brand-mark {
+			width: 18px; height: 18px;
+			border: 1px solid var(--text); border-radius: 3px;
+			position: relative;
 		}
-		.nav-main { display: flex; gap: 4px; margin-left: 16px; flex: 1; }
+		.brand-mark::after {
+			content: ""; position: absolute; inset: 4px;
+			background: var(--text);
+		}
+		.nav-main { display: flex; gap: 2px; margin-left: 12px; flex: 1; }
 		.nav-main a {
-			padding: 8px 14px; border-radius: 8px;
-			color: var(--text-soft); font-size: 14.5px; font-weight: 500;
-			transition: background 0.15s, color 0.15s;
+			padding: 7px 12px; font-size: 14px; font-weight: 450;
+			color: var(--text-2); transition: color 0.12s;
 		}
-		.nav-main a:hover { background: var(--panel); color: var(--text); }
-		.nav-end { display: flex; align-items: center; gap: 10px; }
-		.nav-end a { font-size: 14px; color: var(--text-soft); padding: 8px 14px; border-radius: 8px; }
+		.nav-main a:hover { color: var(--text); }
+		.nav-end { display: flex; align-items: center; gap: 4px; }
+		.nav-end a {
+			padding: 7px 12px; font-size: 14px; font-weight: 450;
+			color: var(--text-2);
+		}
 		.nav-end a:hover { color: var(--text); }
-		.nav-end .console-btn {
-			background: var(--text); color: var(--bg);
-			font-weight: 600;
-			padding: 9px 18px; border-radius: 10px;
+		.nav-end .console {
+			color: var(--text); font-weight: 500;
+			border: 1px solid var(--hairline-strong);
+			padding: 7px 16px; border-radius: 7px;
+			margin-left: 6px;
+			transition: border-color 0.15s, background 0.15s;
 		}
-		.nav-end .console-btn:hover { filter: brightness(0.92); }
+		.nav-end .console:hover { border-color: var(--text); background: rgba(255,255,255,0.04); }
 		@media (max-width: 880px) {
 			.nav-main { display: none; }
-			.nav-inner { padding: 12px 18px; }
+			.nav-inner { padding: 14px 20px; gap: 16px; }
 		}
 
-		/* ── HERO ───────────────────────────────────────────────────────── */
+		/* ── HERO ──────────────────────────────────────────────── */
 		.hero {
-			max-width: 1280px; margin: 0 auto;
-			padding: 72px 28px 56px;
-			display: grid; grid-template-columns: 1.15fr 1fr; gap: 56px;
-			align-items: center;
-			min-height: calc(100vh - 64px);
+			display: grid; grid-template-columns: 1.05fr 1fr;
+			gap: 0;
+			min-height: calc(100vh - 57px);
+			position: relative;
 		}
-		@media (max-width: 980px) {
-			.hero { grid-template-columns: 1fr; padding: 40px 18px 32px; gap: 32px; min-height: 0; }
+		.hero::after {
+			content: ""; position: absolute; left: 50%; top: 0; bottom: 0;
+			width: 1px; background: var(--hairline);
 		}
+		@media (max-width: 980px) { .hero { grid-template-columns: 1fr; min-height: 0; } .hero::after { display: none; } }
+		.hero-text {
+			padding: 96px 48px 96px 72px;
+			display: flex; flex-direction: column; justify-content: center;
+		}
+		@media (max-width: 980px) { .hero-text { padding: 64px 20px 32px; } }
 		.eyebrow {
-			display: inline-flex; align-items: center; gap: 8px;
-			font-size: 11.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
-			color: var(--accent-2);
-			padding: 6px 12px; border: 1px solid rgba(92, 255, 225, 0.25); border-radius: 99px;
-			background: rgba(92, 255, 225, 0.04);
-			margin-bottom: 24px;
+			display: inline-flex; align-items: center; gap: 10px;
+			font-family: var(--font-mono); font-size: 11.5px;
+			text-transform: uppercase; letter-spacing: 0.18em;
+			color: var(--text-3);
+			margin-bottom: 32px;
 		}
 		.eyebrow::before {
 			content: ""; width: 6px; height: 6px; border-radius: 50%;
-			background: var(--accent-2);
-			box-shadow: 0 0 10px var(--accent-2);
-			animation: pulse 2s infinite;
+			background: var(--text); opacity: 0.55;
 		}
-		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-		h1.hero-title {
-			font-size: clamp(44px, 6.4vw, 84px);
-			line-height: 0.98; letter-spacing: -0.035em;
-			margin: 0 0 24px; font-weight: 700;
+		h1.hero-h {
+			font-family: var(--font-display);
+			font-size: clamp(56px, 7.2vw, 112px);
+			line-height: 0.92; letter-spacing: -0.045em;
+			font-weight: 600;
+			margin: 0 0 32px;
+			color: var(--text);
 		}
-		h1.hero-title span.gradient {
-			background: linear-gradient(135deg, var(--accent-2) 0%, var(--accent) 60%, var(--accent-warm) 100%);
-			-webkit-background-clip: text; background-clip: text; color: transparent;
+		h1.hero-h em {
+			font-style: normal; color: var(--text-3); font-weight: 500;
 		}
 		.hero-sub {
-			font-size: 18.5px; color: var(--text-soft);
-			max-width: 540px; margin: 0 0 36px; line-height: 1.55;
+			font-size: 18px; color: var(--text-2);
+			max-width: 480px; margin: 0 0 40px; line-height: 1.5;
+			font-weight: 400;
 		}
-		.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px; }
+		.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 56px; }
 		.btn {
-			display: inline-flex; align-items: center; gap: 8px;
-			padding: 14px 22px; border-radius: 12px;
-			font-size: 15px; font-weight: 600;
-			border: 0; cursor: pointer; text-decoration: none;
-			transition: transform 0.15s, filter 0.15s, background 0.15s;
-		}
-		.btn:hover { transform: translateY(-1px); }
-		.btn.primary {
-			background: linear-gradient(135deg, var(--accent), #4d3fe6);
-			color: white;
-			box-shadow: 0 8px 24px rgba(106, 92, 255, 0.35);
-		}
-		.btn.primary:hover { box-shadow: 0 12px 32px rgba(106, 92, 255, 0.5); }
-		.btn.ghost {
+			display: inline-flex; align-items: center; gap: 10px;
+			padding: 13px 22px; border-radius: 8px;
+			font-size: 14.5px; font-weight: 500;
+			border: 1px solid var(--hairline-strong);
 			background: transparent; color: var(--text);
-			border: 1px solid var(--border-strong);
+			transition: border-color 0.15s, background 0.15s;
+			cursor: pointer; text-decoration: none;
+			font-family: inherit;
 		}
-		.btn.ghost:hover { background: var(--panel); border-color: var(--text-soft); }
+		.btn:hover { border-color: var(--text); background: rgba(255,255,255,0.04); }
+		.btn.primary {
+			background: var(--text); color: var(--bg);
+			border-color: var(--text); font-weight: 550;
+		}
+		.btn.primary:hover { background: #fff; }
+		.btn .arrow { transition: transform 0.18s; }
+		.btn:hover .arrow { transform: translateX(3px); }
 
-		.live-strip {
-			display: flex; gap: 24px; flex-wrap: wrap;
-			padding-top: 24px; border-top: 1px solid var(--border);
-		}
-		.live-stat {
-			display: flex; align-items: center; gap: 8px;
-			font-size: 13.5px; color: var(--text-soft);
-		}
-		.live-stat strong { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
-		.live-dot {
-			width: 7px; height: 7px; border-radius: 50%;
-			background: var(--ok); box-shadow: 0 0 8px var(--ok);
-			animation: pulse 2s infinite;
-		}
-
-		/* ── HERO CANVAS (live agent) ────────────────────────────────── */
-		.hero-canvas {
-			position: relative;
-			aspect-ratio: 3 / 4;
-			max-width: 480px; width: 100%;
-			margin: 0 auto;
-			border-radius: 24px;
-			background: linear-gradient(180deg, rgba(106, 92, 255, 0.08), rgba(92, 255, 225, 0.04) 100%);
-			border: 1px solid var(--border-strong);
-			box-shadow: var(--shadow-glow);
-			overflow: hidden;
-		}
-		.hero-canvas::before {
-			content: ""; position: absolute; inset: 0;
-			background: radial-gradient(circle at 50% 80%, rgba(106, 92, 255, 0.2), transparent 60%);
-			pointer-events: none; z-index: 0;
-		}
-		.hero-canvas agent-3d {
-			position: absolute; inset: 0; z-index: 1;
-			display: block; width: 100%; height: 100%;
-			background: transparent;
-		}
-		.hero-canvas .canvas-tag {
-			position: absolute; top: 14px; left: 14px; z-index: 2;
-			font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
-			color: var(--accent-2); padding: 5px 10px;
-			background: rgba(7, 7, 12, 0.72);
-			border: 1px solid rgba(92, 255, 225, 0.3); border-radius: 99px;
-			backdrop-filter: blur(8px);
-		}
-		.hero-canvas .canvas-hint {
-			position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 2;
-			font-size: 12px; color: var(--text-soft);
-			background: rgba(7, 7, 12, 0.78);
-			padding: 6px 14px; border-radius: 99px;
-			border: 1px solid var(--border);
-			backdrop-filter: blur(8px); white-space: nowrap;
-		}
-
-		/* ── EMBED SHOWCASE ──────────────────────────────────────────── */
-		.section { max-width: 1280px; margin: 0 auto; padding: 96px 28px; }
-		.section-eyebrow {
-			font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
-			color: var(--accent); margin: 0 0 14px;
-		}
-		.section h2 {
-			font-size: clamp(32px, 4vw, 48px);
-			line-height: 1.05; letter-spacing: -0.025em;
-			margin: 0 0 16px; font-weight: 600; max-width: 720px;
-		}
-		.section .lede {
-			font-size: 17px; color: var(--text-soft);
-			max-width: 620px; margin: 0 0 48px; line-height: 1.55;
-		}
-
-		.embed-grid {
-			display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
-			align-items: stretch;
-		}
-		@media (max-width: 880px) { .embed-grid { grid-template-columns: 1fr; } }
-		.code-card, .render-card {
-			background: var(--panel);
-			border: 1px solid var(--border);
-			border-radius: 18px;
-			overflow: hidden;
-			display: flex; flex-direction: column;
-			min-height: 380px;
-		}
-		.code-card-head, .render-card-head {
-			display: flex; align-items: center; justify-content: space-between;
-			padding: 12px 18px;
-			border-bottom: 1px solid var(--border);
-			font-size: 12.5px; color: var(--muted);
-			font-family: var(--font-mono);
-		}
-		.code-card-head .tabs { display: flex; gap: 2px; }
-		.code-card-head .tab {
-			padding: 5px 11px; border-radius: 6px;
+		.metrics {
+			display: flex; gap: 28px; flex-wrap: wrap;
+			padding-top: 28px;
+			border-top: 1px solid var(--hairline);
 			font-family: var(--font-mono); font-size: 12px;
-			color: var(--muted); background: transparent;
+			color: var(--text-3);
+			text-transform: uppercase; letter-spacing: 0.12em;
+		}
+		.metric { display: flex; align-items: baseline; gap: 7px; }
+		.metric strong {
+			font-family: var(--font-display);
+			color: var(--text); font-weight: 600;
+			font-size: 17px; letter-spacing: -0.02em;
+			text-transform: none;
+			font-variant-numeric: tabular-nums;
+		}
+
+		/* ── Hero stage (live agent — full column) ──────────── */
+		.hero-stage {
+			position: relative; overflow: hidden;
+			background: var(--bg);
+		}
+		.hero-stage agent-3d {
+			position: absolute; inset: 0;
+			display: block; width: 100%; height: 100%;
+		}
+		.stage-marker {
+			position: absolute; top: 24px; left: 24px; z-index: 5;
+			display: flex; align-items: center; gap: 10px;
+			font-family: var(--font-mono); font-size: 10.5px;
+			letter-spacing: 0.18em; text-transform: uppercase;
+			color: var(--text-3);
+		}
+		.stage-marker::before {
+			content: ""; width: 6px; height: 6px; border-radius: 50%;
+			background: var(--text); animation: pulse 2.4s ease-in-out infinite;
+		}
+		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+		.stage-meta {
+			position: absolute; bottom: 24px; right: 28px; z-index: 5;
+			text-align: right;
+			font-family: var(--font-mono); font-size: 10.5px;
+			letter-spacing: 0.14em; text-transform: uppercase;
+			color: var(--text-4);
+			line-height: 1.6;
+		}
+		.stage-meta span { display: block; }
+		.stage-meta span:first-child { color: var(--text-3); }
+
+		/* Subtle perspective tilt of the hero stage on mouse move */
+		.hero-stage-inner {
+			position: absolute; inset: 0;
+			transform-style: preserve-3d;
+			transition: transform 0.35s cubic-bezier(.2,.7,.3,1);
+			will-change: transform;
+		}
+
+		/* ── Section frame ─────────────────────────────────── */
+		section.block {
+			padding: 128px 0;
+			border-top: 1px solid var(--hairline);
+		}
+		@media (max-width: 720px) { section.block { padding: 80px 0; } }
+		.block-head { margin-bottom: 64px; max-width: 760px; }
+		.block-eyebrow {
+			font-family: var(--font-mono); font-size: 11.5px;
+			letter-spacing: 0.2em; text-transform: uppercase;
+			color: var(--text-3); margin: 0 0 16px;
+		}
+		.block-eyebrow .num { color: var(--text); margin-right: 12px; }
+		.block-h {
+			font-family: var(--font-display);
+			font-size: clamp(36px, 4.2vw, 60px);
+			line-height: 1.0; letter-spacing: -0.035em;
+			font-weight: 600; margin: 0 0 20px;
+		}
+		.block-h em { font-style: normal; color: var(--text-3); font-weight: 500; }
+		.block-lede {
+			font-size: 17px; color: var(--text-2);
+			max-width: 600px; line-height: 1.55; margin: 0;
+		}
+
+		/* ── EMBED SHOWCASE ────────────────────────────────── */
+		.embed-grid {
+			display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+			background: var(--hairline);
+			border: 1px solid var(--hairline);
+			border-radius: 14px; overflow: hidden;
+		}
+		@media (max-width: 980px) { .embed-grid { grid-template-columns: 1fr; } }
+		.pane {
+			background: var(--surface-0);
+			min-height: 420px;
+			display: flex; flex-direction: column;
+		}
+		.pane-head {
+			display: flex; align-items: center; justify-content: space-between;
+			padding: 14px 18px;
+			border-bottom: 1px solid var(--hairline);
+			font-family: var(--font-mono); font-size: 12px;
+			color: var(--text-3);
+		}
+		.pane-head .tabs { display: flex; gap: 4px; }
+		.pane-head .tab {
+			padding: 5px 11px; border-radius: 5px;
+			font-family: var(--font-mono); font-size: 11.5px;
+			color: var(--text-3); background: transparent;
 			border: 0; cursor: pointer;
 		}
-		.code-card-head .tab.active { background: var(--panel-soft); color: var(--text); }
-		.code-card pre {
-			margin: 0; padding: 22px 24px;
-			font-family: var(--font-mono); font-size: 13.5px; line-height: 1.65;
+		.pane-head .tab.active { background: var(--surface-2); color: var(--text); }
+		.code-pane pre {
+			margin: 0; padding: 28px 28px;
+			font-family: var(--font-mono); font-size: 13px; line-height: 1.75;
 			color: var(--text); overflow-x: auto; flex: 1;
+			background: var(--surface-0);
 		}
-		.code-card pre .tag { color: #ff8db3; }
-		.code-card pre .attr { color: var(--accent-2); }
-		.code-card pre .str { color: #ffd28c; }
-		.code-card pre .com { color: var(--muted); font-style: italic; }
-		.code-card-foot { padding: 14px 18px; border-top: 1px solid var(--border); }
+		.code-pane pre .tag { color: #d3d3d3; }
+		.code-pane pre .attr { color: #989898; }
+		.code-pane pre .str { color: #f6f6f6; }
+		.code-pane pre .com { color: var(--text-4); }
+		.code-pane .pane-foot {
+			padding: 14px 18px; border-top: 1px solid var(--hairline);
+		}
 		.copy-btn {
-			background: var(--panel-soft); color: var(--text);
-			border: 1px solid var(--border-strong); cursor: pointer;
-			padding: 8px 14px; border-radius: 8px;
+			background: transparent; color: var(--text);
+			border: 1px solid var(--hairline-strong); cursor: pointer;
+			padding: 7px 14px; border-radius: 7px;
 			font-size: 13px; font-weight: 500;
 		}
-		.copy-btn:hover { background: var(--border-strong); }
-		.copy-btn.copied { background: var(--ok); color: var(--bg); border-color: var(--ok); }
-
-		.render-card { position: relative; padding: 0; }
-		.render-card agent-3d {
-			position: absolute; inset: 56px 0 0; display: block;
-			width: 100%; height: calc(100% - 56px);
-			background: transparent;
+		.copy-btn:hover { border-color: var(--text); }
+		.copy-btn.copied { background: var(--text); color: var(--bg); border-color: var(--text); }
+		.render-pane { position: relative; padding: 0; }
+		.render-pane agent-3d {
+			position: absolute; inset: 49px 0 0; display: block;
+			width: 100%; height: calc(100% - 49px);
 		}
 
-		/* ── LOGO WALL ──────────────────────────────────────────────── */
-		.logos {
-			padding: 56px 28px;
-			max-width: 1280px; margin: 0 auto;
-			border-top: 1px solid var(--border);
-			border-bottom: 1px solid var(--border);
+		/* ── LOGO STRIP ─────────────────────────────────────── */
+		.logo-strip {
+			padding: 32px 0;
+			border-top: 1px solid var(--hairline);
+			border-bottom: 1px solid var(--hairline);
 		}
-		.logos-caption {
-			font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
-			color: var(--muted); text-align: center; margin-bottom: 28px;
+		.logo-strip-cap {
+			font-family: var(--font-mono); font-size: 10.5px;
+			letter-spacing: 0.2em; text-transform: uppercase;
+			color: var(--text-4); text-align: center; margin-bottom: 22px;
 		}
 		.logo-row {
 			display: flex; flex-wrap: wrap; justify-content: center;
 			gap: 56px; align-items: center;
 		}
 		.logo-row .logo {
-			font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
-			color: var(--text-soft); opacity: 0.7;
-			transition: opacity 0.2s;
+			font-family: var(--font-display);
+			font-size: 16px; font-weight: 500;
+			letter-spacing: -0.02em;
+			color: var(--text-3); opacity: 0.75;
 		}
-		.logo-row .logo:hover { opacity: 1; }
 
-		/* ── THREE DOORS ────────────────────────────────────────────── */
+		/* ── DOORS ──────────────────────────────────────────── */
 		.doors {
-			display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+			display: grid; grid-template-columns: repeat(3, 1fr);
+			gap: 1px; background: var(--hairline);
+			border: 1px solid var(--hairline);
+			border-radius: 14px; overflow: hidden;
 		}
-		@media (max-width: 880px) { .doors { grid-template-columns: 1fr; } }
+		@media (max-width: 980px) { .doors { grid-template-columns: 1fr; } }
 		.door {
-			background: var(--panel);
-			border: 1px solid var(--border);
-			border-radius: 18px;
-			padding: 32px 28px;
+			background: var(--surface-0);
+			padding: 44px 36px 38px;
 			display: flex; flex-direction: column;
-			transition: border-color 0.2s, transform 0.2s;
+			transition: background 0.15s;
 		}
-		.door:hover { border-color: var(--border-strong); transform: translateY(-2px); }
-		.door .door-icon {
-			width: 44px; height: 44px; border-radius: 12px;
-			display: flex; align-items: center; justify-content: center;
-			font-size: 22px; margin-bottom: 20px;
+		.door:hover { background: var(--surface-1); }
+		.door-num {
+			font-family: var(--font-mono); font-size: 11.5px;
+			letter-spacing: 0.18em; color: var(--text-4);
+			margin-bottom: 28px;
+			display: flex; justify-content: space-between; align-items: baseline;
 		}
-		.door.dev .door-icon { background: rgba(106, 92, 255, 0.15); color: var(--accent); }
-		.door.creator .door-icon { background: rgba(92, 255, 225, 0.12); color: var(--accent-2); }
-		.door.consumer .door-icon { background: rgba(255, 122, 92, 0.12); color: var(--accent-warm); }
-		.door .door-label {
-			font-size: 11.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
-			color: var(--muted); margin-bottom: 6px;
-		}
+		.door-num .lbl { color: var(--text-3); }
 		.door h3 {
-			font-size: 24px; margin: 0 0 12px; letter-spacing: -0.02em; font-weight: 600;
+			font-family: var(--font-display);
+			font-size: 26px; line-height: 1.1; letter-spacing: -0.025em;
+			font-weight: 600; margin: 0 0 14px;
 		}
-		.door p { color: var(--text-soft); margin: 0 0 24px; flex: 1; font-size: 15px; }
+		.door p {
+			color: var(--text-2); margin: 0 0 28px;
+			font-size: 15px; line-height: 1.55; flex: 1;
+		}
 		.door .door-cta {
-			font-size: 14px; font-weight: 600; color: var(--text);
-			display: inline-flex; align-items: center; gap: 6px;
+			font-size: 14px; font-weight: 500; color: var(--text);
+			display: inline-flex; align-items: center; gap: 8px;
 		}
-		.door .door-cta::after {
-			content: "→"; transition: transform 0.2s;
-		}
+		.door .door-cta::after { content: "→"; transition: transform 0.18s; }
 		.door:hover .door-cta::after { transform: translateX(4px); }
 
-		/* ── HOW IT WORKS ──────────────────────────────────────────── */
+		/* ── STEPS ──────────────────────────────────────────── */
 		.steps {
-			display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
-			margin-top: 32px;
+			display: grid; grid-template-columns: repeat(3, 1fr); gap: 64px;
 		}
-		@media (max-width: 880px) { .steps { grid-template-columns: 1fr; } }
+		@media (max-width: 980px) { .steps { grid-template-columns: 1fr; gap: 48px; } }
 		.step {
-			padding: 28px;
-			background: linear-gradient(180deg, var(--panel) 0%, transparent 100%);
-			border: 1px solid var(--border); border-radius: 18px;
-			position: relative;
+			border-top: 1px solid var(--hairline-strong);
+			padding-top: 28px;
 		}
 		.step-num {
-			font-family: var(--font-mono); font-size: 11px; color: var(--muted);
-			letter-spacing: 0.14em; margin-bottom: 16px;
+			font-family: var(--font-mono); font-size: 11.5px;
+			letter-spacing: 0.18em; color: var(--text-3);
+			margin-bottom: 22px;
 		}
 		.step-title {
-			font-size: 22px; margin: 0 0 10px; letter-spacing: -0.02em; font-weight: 600;
+			font-family: var(--font-display);
+			font-size: 24px; letter-spacing: -0.025em;
+			font-weight: 600; margin: 0 0 12px;
 		}
-		.step-body { color: var(--text-soft); font-size: 15px; margin: 0; line-height: 1.55; }
+		.step-body { color: var(--text-2); font-size: 15px; line-height: 1.55; margin: 0; }
 
-		/* ── SHOWCASE ──────────────────────────────────────────────── */
-		.showcase-grid {
-			display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
-			margin-top: 32px;
+		/* ── SHOWCASE ──────────────────────────────────────── */
+		.showcase {
+			display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+			background: var(--hairline);
+			border: 1px solid var(--hairline);
+			border-radius: 14px; overflow: hidden;
 		}
-		@media (max-width: 1100px) { .showcase-grid { grid-template-columns: repeat(3, 1fr); } }
-		@media (max-width: 800px) { .showcase-grid { grid-template-columns: repeat(2, 1fr); } }
-		@media (max-width: 480px) { .showcase-grid { grid-template-columns: 1fr; } }
-		.showcase-card {
-			background: var(--panel);
-			border: 1px solid var(--border); border-radius: 16px;
-			overflow: hidden;
-			display: flex; flex-direction: column;
-			transition: border-color 0.2s, transform 0.2s;
-			cursor: pointer; aspect-ratio: 3 / 4;
+		@media (max-width: 1080px) { .showcase { grid-template-columns: repeat(2, 1fr); } }
+		.shot {
+			background: var(--surface-0);
+			aspect-ratio: 3 / 4;
 			position: relative;
+			overflow: hidden;
+			transition: background 0.15s;
 		}
-		.showcase-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-		.showcase-card img {
-			width: 100%; height: 100%; object-fit: cover;
+		.shot:hover { background: var(--surface-1); }
+		.shot-fill {
 			position: absolute; inset: 0;
 		}
-		.showcase-card .card-meta {
-			position: absolute; bottom: 0; left: 0; right: 0;
-			padding: 18px;
-			background: linear-gradient(180deg, transparent 0%, rgba(7, 7, 12, 0.92) 70%);
-			color: var(--text); z-index: 1;
+		.shot-fill img {
+			width: 100%; height: 100%; object-fit: cover;
+			filter: grayscale(0.3) contrast(1.05);
+			transition: filter 0.3s;
 		}
-		.showcase-card .card-name { font-size: 15px; font-weight: 600; margin: 0 0 2px; }
-		.showcase-card .card-author { font-size: 12.5px; color: var(--text-soft); }
-		.showcase-card .card-tag {
-			position: absolute; top: 12px; right: 12px; z-index: 1;
-			font-size: 10.5px; font-weight: 600; padding: 3px 9px;
-			border-radius: 99px; background: rgba(7,7,12,0.6); color: var(--accent-2);
-			border: 1px solid rgba(92, 255, 225, 0.3); backdrop-filter: blur(6px);
+		.shot:hover .shot-fill img { filter: grayscale(0) contrast(1.05); }
+		.shot-fill agent-3d {
+			position: absolute; inset: 0; display: block;
+			width: 100%; height: 100%;
+		}
+		.shot-meta {
+			position: absolute; bottom: 0; left: 0; right: 0;
+			padding: 20px;
+			background: linear-gradient(180deg, transparent 0%, rgba(5,5,5,0.92) 70%);
+			color: var(--text); z-index: 2;
+		}
+		.shot-name {
+			font-family: var(--font-display);
+			font-size: 16px; font-weight: 600; letter-spacing: -0.015em;
+			margin: 0 0 2px;
+		}
+		.shot-sub {
+			font-family: var(--font-mono); font-size: 11px;
+			color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase;
+		}
+		.shot-tag {
+			position: absolute; top: 14px; left: 14px; z-index: 2;
+			font-family: var(--font-mono); font-size: 10px;
+			letter-spacing: 0.18em; text-transform: uppercase;
+			color: var(--text);
+			padding: 4px 9px;
+			background: rgba(5,5,5,0.55);
+			border: 1px solid var(--hairline-strong);
+			border-radius: 99px;
+			backdrop-filter: blur(6px);
 		}
 
-		/* ── FEATURE PILLS ─────────────────────────────────────────── */
+		/* ── VERB PILLS ────────────────────────────────────── */
 		.pills {
-			display: flex; flex-wrap: wrap; gap: 10px;
-			margin-top: 32px;
+			display: flex; flex-wrap: wrap; gap: 8px;
 		}
 		.pill {
 			padding: 9px 16px;
-			background: var(--panel); border: 1px solid var(--border);
-			border-radius: 99px;
-			font-size: 14px; color: var(--text-soft);
+			border: 1px solid var(--hairline-strong); border-radius: 99px;
+			font-size: 13.5px; color: var(--text-2);
+			font-weight: 450;
 		}
-		.pill strong { color: var(--text); font-weight: 600; }
+		.pill strong {
+			color: var(--text); font-weight: 600;
+			font-family: var(--font-display);
+			letter-spacing: -0.01em;
+		}
+		.pill .sep { color: var(--text-4); margin: 0 8px; }
 
-		/* ── BOTTOM CTA ────────────────────────────────────────────── */
-		.bottom-cta {
-			max-width: 1280px; margin: 0 auto; padding: 0 28px 96px;
-		}
-		.bottom-cta-inner {
-			padding: 64px 56px;
-			background: linear-gradient(135deg, rgba(106,92,255,0.16), rgba(92,255,225,0.08));
-			border: 1px solid var(--border-strong); border-radius: 24px;
+		/* ── CTA ───────────────────────────────────────────── */
+		.cta-card {
+			padding: 80px 64px;
+			border: 1px solid var(--hairline-strong); border-radius: 16px;
 			text-align: center;
+			background: var(--surface-0);
 		}
-		.bottom-cta h2 {
-			font-size: clamp(28px, 4vw, 42px);
-			letter-spacing: -0.025em; margin: 0 0 16px; font-weight: 600;
+		.cta-card h2 {
+			font-family: var(--font-display);
+			font-size: clamp(32px, 4vw, 52px);
+			line-height: 1.0; letter-spacing: -0.035em;
+			font-weight: 600; margin: 0 0 18px;
 		}
-		.bottom-cta p { color: var(--text-soft); margin: 0 0 28px; font-size: 17px; }
+		.cta-card p {
+			color: var(--text-2); font-size: 17px; margin: 0 0 36px;
+		}
+		.cta-card .cta-row { justify-content: center; margin-bottom: 0; }
 
-		/* ── FOOTER ───────────────────────────────────────────────── */
+		/* ── FOOTER ────────────────────────────────────────── */
 		footer {
-			border-top: 1px solid var(--border);
-			padding: 36px 28px;
+			border-top: 1px solid var(--hairline);
+			padding: 40px 0 56px;
+			margin-top: 0;
 		}
 		.foot-inner {
-			max-width: 1280px; margin: 0 auto;
-			display: flex; justify-content: space-between; align-items: center; gap: 24px;
-			flex-wrap: wrap;
-			color: var(--muted); font-size: 13.5px;
+			display: flex; justify-content: space-between; align-items: center;
+			gap: 24px; flex-wrap: wrap;
+			color: var(--text-4); font-size: 13px;
+			font-family: var(--font-mono);
+			letter-spacing: 0.04em;
 		}
-		.foot-links { display: flex; gap: 20px; flex-wrap: wrap; }
+		.foot-links { display: flex; gap: 22px; flex-wrap: wrap; }
+		.foot-links a { color: var(--text-3); }
 		.foot-links a:hover { color: var(--text); }
 
 		.demo-tag {
-			position: fixed; bottom: 16px; right: 16px; z-index: 1000;
-			background: var(--accent-warm); color: var(--bg);
-			padding: 7px 14px; border-radius: 99px;
-			font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-			box-shadow: 0 8px 24px rgba(255, 122, 92, 0.35);
+			position: fixed; bottom: 18px; right: 18px; z-index: 1000;
+			background: var(--text); color: var(--bg);
+			padding: 7px 13px; border-radius: 99px;
+			font-family: var(--font-mono); font-size: 10.5px;
+			font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
 		}
 	</style>
 	<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 </head>
 <body>
-	<!-- ── NAV ────────────────────────────────────────────────────────── -->
+	<!-- ── NAV ───────────────────────────────────────────────────── -->
 	<header class="nav">
 		<div class="nav-inner">
 			<a class="brand" href="/home-next">
-				<span class="brand-dot"></span>
+				<span class="brand-mark"></span>
 				<span>three.ws</span>
 			</a>
 			<nav class="nav-main" aria-label="Primary">
@@ -465,86 +513,39 @@
 			</nav>
 			<div class="nav-end">
 				<a href="/login">Sign in</a>
-				<a class="console-btn" href="/dashboard-next">Console</a>
+				<a class="console" href="/dashboard-next">Console</a>
 			</div>
 		</div>
 	</header>
 
-	<!-- ── HERO ──────────────────────────────────────────────────────── -->
+	<!-- ── HERO ──────────────────────────────────────────────────── -->
 	<section class="hero">
 		<div class="hero-text">
-			<div class="eyebrow">3D agents · embeddable · one tag</div>
-			<h1 class="hero-title">
-				Drop one tag.<br/>
-				Any character.<br/>
-				<span class="gradient">Every page.</span>
+			<div class="eyebrow">v0.1 · open beta</div>
+			<h1 class="hero-h">
+				The 3D agent<br/>
+				layer of the<br/>
+				<em>internet.</em>
 			</h1>
 			<p class="hero-sub">
-				three.ws is the 3D agent layer of the internet. Embed a living 3D AI agent
-				on any website — voice, animation, memory, and on-chain identity included — with one line of HTML.
+				Embed a living 3D AI agent on any website with one line of HTML.
+				Voice, animation, memory, and on-chain identity included.
 			</p>
 			<div class="cta-row">
-				<a class="btn primary" href="/create">Build an agent →</a>
-				<a class="btn ghost" href="#embed">See the embed ↓</a>
+				<a class="btn primary" href="/create">Build an agent <span class="arrow">→</span></a>
+				<a class="btn" href="#embed">See the embed</a>
 			</div>
-			<div class="live-strip" aria-label="Live platform stats">
-				<div class="live-stat"><span class="live-dot"></span><strong id="stat-agents">1,847</strong> agents live</div>
-				<div class="live-stat"><span class="live-dot"></span><strong id="stat-sites">312</strong> sites embedded</div>
-				<div class="live-stat"><span class="live-dot"></span><strong id="stat-chats">28,401</strong> chats today</div>
+			<div class="metrics">
+				<div class="metric"><strong id="m-agents">1,847</strong>agents live</div>
+				<div class="metric"><strong id="m-sites">312</strong>sites embedded</div>
+				<div class="metric"><strong id="m-chats">28,401</strong>chats today</div>
 			</div>
 		</div>
-		<div class="hero-canvas">
-			<span class="canvas-tag">● Live</span>
-			<agent-3d
-				class="hero-agent"
-				mode="inline"
-				responsive
-				background="transparent"
-				name-plate="off"
-				avatar-chat="off"
-				kiosk
-				eager
-				style="width:100%;height:100%;display:block"
-			></agent-3d>
-			<span class="canvas-hint">Try: "wave at me"</span>
-		</div>
-	</section>
-
-	<!-- ── EMBED SHOWCASE ────────────────────────────────────────── -->
-	<section class="section" id="embed">
-		<div class="section-eyebrow">Two lines. Any HTML.</div>
-		<h2>This is the entire embed.</h2>
-		<p class="lede">
-			Copy these two lines into any page on the web. The agent you see on the right is rendered
-			by the exact code on the left — no iframe wrapper, no SDK install, no build step.
-		</p>
-		<div class="embed-grid">
-			<div class="code-card">
-				<div class="code-card-head">
-					<div class="tabs">
-						<button class="tab active" data-flavor="html">HTML</button>
-						<button class="tab" data-flavor="react">React</button>
-						<button class="tab" data-flavor="vue">Vue</button>
-					</div>
-					<span>index.html</span>
-				</div>
-<pre id="embed-snippet"><span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="str">"module"</span>
-  <span class="attr">src</span>=<span class="str">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
-
-<span class="tag">&lt;agent-3d</span>
-  <span class="attr">src</span>=<span class="str">"https://three.ws/api/avatars/bacff13e…"</span>
-<span class="tag">&gt;&lt;/agent-3d&gt;</span></pre>
-				<div class="code-card-foot">
-					<button class="copy-btn" id="copy-btn" data-clip="snippet">Copy snippet</button>
-				</div>
-			</div>
-			<div class="render-card">
-				<div class="code-card-head">
-					<span>↪ live render</span>
-					<span style="color: var(--ok);">● running</span>
-				</div>
+		<div class="hero-stage" id="hero-stage">
+			<span class="stage-marker">live</span>
+			<div class="hero-stage-inner" id="hero-stage-inner">
 				<agent-3d
-					class="hero-agent"
+					class="live-agent"
 					mode="inline"
 					responsive
 					background="transparent"
@@ -552,178 +553,267 @@
 					avatar-chat="off"
 					kiosk
 					eager
-					style="display:block;position:absolute;inset:56px 0 0;width:100%;height:calc(100% - 56px);"
 				></agent-3d>
+			</div>
+			<div class="stage-meta">
+				<span>nich</span>
+				<span>/api/avatars/bacff13e</span>
 			</div>
 		</div>
 	</section>
 
-	<!-- ── LOGO WALL ─────────────────────────────────────────────── -->
-	<div class="logos">
-		<div class="logos-caption">Embedded across the web</div>
-		<div class="logo-row">
-			<span class="logo">claude.ai</span>
-			<span class="logo">lobehub</span>
-			<span class="logo">agenc.tech</span>
-			<span class="logo">pump.fun</span>
-			<span class="logo">solana</span>
-			<span class="logo">metaplex</span>
-			<span class="logo">erc-8004</span>
+	<!-- ── EMBED SHOWCASE ────────────────────────────────────────── -->
+	<section class="block" id="embed">
+		<div class="wrap-1280">
+			<div class="block-head">
+				<p class="block-eyebrow"><span class="num">01</span>The embed</p>
+				<h2 class="block-h">Two lines. <em>Any HTML.</em></h2>
+				<p class="block-lede">
+					Copy these into any page on the web. The agent on the right is rendered
+					by the exact code on the left — no iframe, no SDK install, no build step.
+				</p>
+			</div>
+			<div class="embed-grid">
+				<div class="pane code-pane">
+					<div class="pane-head">
+						<div class="tabs">
+							<button class="tab active" data-flavor="html">HTML</button>
+							<button class="tab" data-flavor="react">React</button>
+							<button class="tab" data-flavor="vue">Vue</button>
+						</div>
+						<span>index.html</span>
+					</div>
+<pre id="embed-snippet"><span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="str">"module"</span>
+  <span class="attr">src</span>=<span class="str">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+
+<span class="tag">&lt;agent-3d</span>
+  <span class="attr">src</span>=<span class="str">"https://three.ws/api/avatars/bacff13e…"</span>
+<span class="tag">&gt;&lt;/agent-3d&gt;</span></pre>
+					<div class="pane-foot">
+						<button class="copy-btn" id="copy-btn">Copy</button>
+					</div>
+				</div>
+				<div class="pane render-pane">
+					<div class="pane-head">
+						<span>↪ live render</span>
+						<span style="color: var(--text-3);">running</span>
+					</div>
+					<agent-3d
+						class="live-agent"
+						mode="inline"
+						responsive
+						background="transparent"
+						name-plate="off"
+						avatar-chat="off"
+						kiosk
+						eager
+					></agent-3d>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── LOGO STRIP ────────────────────────────────────────── -->
+	<div class="logo-strip">
+		<div class="wrap-1280">
+			<div class="logo-strip-cap">Embedded across the web</div>
+			<div class="logo-row">
+				<span class="logo">claude.ai</span>
+				<span class="logo">lobehub</span>
+				<span class="logo">agenc.tech</span>
+				<span class="logo">pump.fun</span>
+				<span class="logo">solana</span>
+				<span class="logo">metaplex</span>
+				<span class="logo">erc-8004</span>
+			</div>
 		</div>
 	</div>
 
-	<!-- ── THREE DOORS ────────────────────────────────────────── -->
-	<section class="section">
-		<div class="section-eyebrow">Three ways in</div>
-		<h2>Built for everyone who touches an agent.</h2>
-		<p class="lede">
-			A three-sided marketplace: developers integrate, creators build, communities discover.
-			Pick the door that fits.
-		</p>
-		<div class="doors">
-			<a class="door dev" href="/docs">
-				<div class="door-icon">&#60;/&#62;</div>
-				<div class="door-label">For developers</div>
-				<h3>Two lines. Any HTML.</h3>
-				<p>Drop <code>&lt;agent-3d&gt;</code> into any page. React, Vue, Svelte, plain HTML — works everywhere. Voice, memory, animation, payments built-in.</p>
-				<span class="door-cta">Read the docs</span>
-			</a>
-			<a class="door creator" href="/create">
-				<div class="door-icon">✦</div>
-				<div class="door-label">For creators</div>
-				<h3>Selfie to agent in 60 seconds.</h3>
-				<p>Snap a selfie, pick a personality, publish. Earn from every conversation with x402 paid skills. Keep 100% during open beta.</p>
-				<span class="door-cta">Start building</span>
-			</a>
-			<a class="door consumer" href="/discover">
-				<div class="door-icon">◎</div>
-				<div class="door-label">For everyone</div>
-				<h3>Discover, chat, collect.</h3>
-				<p>Browse thousands of public agents. Talk to them inline. Remix anyone's into your own. Own them on-chain, tip them in USDC.</p>
-				<span class="door-cta">Explore agents</span>
-			</a>
-		</div>
-	</section>
-
-	<!-- ── HOW IT WORKS ─────────────────────────────────────────── -->
-	<section class="section">
-		<div class="section-eyebrow">How it works</div>
-		<h2>Three steps. One living character.</h2>
-		<div class="steps">
-			<div class="step">
-				<div class="step-num">01 · CREATE</div>
-				<div class="step-title">Make an agent</div>
-				<p class="step-body">Selfie → 3D avatar in a minute. Or upload your own GLB. Then add personality with a prompt. Or skip ahead and use a pre-built agent from the marketplace.</p>
+	<!-- ── THREE DOORS ──────────────────────────────────────── -->
+	<section class="block">
+		<div class="wrap-1280">
+			<div class="block-head">
+				<p class="block-eyebrow"><span class="num">02</span>Three doors</p>
+				<h2 class="block-h">Built for everyone <em>who touches an agent.</em></h2>
+				<p class="block-lede">
+					A three-sided marketplace: developers integrate, creators build, communities discover.
+				</p>
 			</div>
-			<div class="step">
-				<div class="step-num">02 · EMBED</div>
-				<div class="step-title">Drop the tag</div>
-				<p class="step-body">Two lines of HTML. No SDK install, no iframe wrapper, no build step. Works in React, Vue, Svelte, and plain HTML. Lazy-loaded by default.</p>
-			</div>
-			<div class="step">
-				<div class="step-num">03 · SHIP</div>
-				<div class="step-title">Your site is alive</div>
-				<p class="step-body">Visitors talk to your agent with text or voice. It remembers conversations across sessions. Charge per chat with x402. Watch it grow on-chain.</p>
+			<div class="doors">
+				<a class="door" href="/docs">
+					<div class="door-num"><span>01</span><span class="lbl">Developers</span></div>
+					<h3>Two lines. Any HTML.</h3>
+					<p>Drop <code>&lt;agent-3d&gt;</code> into any page. React, Vue, Svelte, plain HTML. Voice, memory, animation, payments built-in.</p>
+					<span class="door-cta">Read the docs</span>
+				</a>
+				<a class="door" href="/create">
+					<div class="door-num"><span>02</span><span class="lbl">Creators</span></div>
+					<h3>Selfie to agent in 60 seconds.</h3>
+					<p>Snap a selfie, pick a personality, publish. Earn from every conversation with x402 paid skills. Keep 100% during open beta.</p>
+					<span class="door-cta">Start building</span>
+				</a>
+				<a class="door" href="/discover">
+					<div class="door-num"><span>03</span><span class="lbl">Everyone</span></div>
+					<h3>Discover, chat, collect.</h3>
+					<p>Browse public agents. Talk to them inline. Remix anyone's into your own. Own them on-chain, tip them in USDC.</p>
+					<span class="door-cta">Explore agents</span>
+				</a>
 			</div>
 		</div>
 	</section>
 
-	<!-- ── LIVE SHOWCASE ──────────────────────────────────────────── -->
-	<section class="section">
-		<div class="section-eyebrow">Discover</div>
-		<h2>Living agents, right now.</h2>
-		<p class="lede">A taste of what's running across the web today. Click any agent to talk to them, remix them, or grab their embed code.</p>
-		<div class="showcase-grid" id="showcase">
-			<a class="showcase-card" href="/agent-next?id=bacff13e-b64b-4ac0-860d-44f0168ad23b">
-				<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/bacff13e-b64b-4ac0-860d-44f0168ad23b.png" alt="nich" loading="lazy" />
-				<span class="card-tag">FEATURED</span>
-				<div class="card-meta">
-					<div class="card-name">nich</div>
-					<div class="card-author">@nirholas · 3D avatar</div>
+	<!-- ── STEPS ────────────────────────────────────────────── -->
+	<section class="block">
+		<div class="wrap-1280">
+			<div class="block-head">
+				<p class="block-eyebrow"><span class="num">03</span>How it works</p>
+				<h2 class="block-h">Three steps. <em>One living character.</em></h2>
+			</div>
+			<div class="steps">
+				<div class="step">
+					<div class="step-num">01 · CREATE</div>
+					<div class="step-title">Make an agent</div>
+					<p class="step-body">Selfie → 3D avatar in a minute. Or upload your own GLB. Then add personality with a prompt. Or skip ahead and use a pre-built agent from the marketplace.</p>
 				</div>
-			</a>
-			<!-- Placeholder cards — would be populated from /api/explore in v2 -->
-			<a class="showcase-card" href="/discover" style="background: linear-gradient(135deg, #1a1a2c, #2a1a3c);">
-				<div class="card-meta">
-					<div class="card-name">Explore all →</div>
-					<div class="card-author">1,847 public agents</div>
+				<div class="step">
+					<div class="step-num">02 · EMBED</div>
+					<div class="step-title">Drop the tag</div>
+					<p class="step-body">Two lines of HTML. No SDK install, no iframe wrapper, no build step. Works in React, Vue, Svelte, and plain HTML. Lazy-loaded by default.</p>
 				</div>
-			</a>
-			<a class="showcase-card" href="/discover?filter=onchain" style="background: linear-gradient(135deg, #0c1c2a, #1c2c3c);">
-				<div class="card-meta">
-					<div class="card-name">On-chain agents</div>
-					<div class="card-author">ERC-8004 directory</div>
+				<div class="step">
+					<div class="step-num">03 · SHIP</div>
+					<div class="step-title">Your site is alive</div>
+					<p class="step-body">Visitors talk to your agent with text or voice. It remembers across sessions. Charge per chat with x402. Watch it grow on-chain.</p>
 				</div>
-			</a>
-			<a class="showcase-card" href="/create" style="background: linear-gradient(135deg, #2a1c1c, #3c2c1c);">
-				<div class="card-meta">
-					<div class="card-name">+ Make your own</div>
-					<div class="card-author">Selfie → agent in 60s</div>
-				</div>
-			</a>
-		</div>
-	</section>
-
-	<!-- ── FEATURE PILLS ──────────────────────────────────────────── -->
-	<section class="section">
-		<div class="section-eyebrow">What you get</div>
-		<h2>Every verb your agent can do.</h2>
-		<div class="pills">
-			<span class="pill"><strong>Talk</strong> · text + voice</span>
-			<span class="pill"><strong>Animate</strong> · 200+ clips</span>
-			<span class="pill"><strong>Mocap</strong> · webcam → avatar</span>
-			<span class="pill"><strong>Walk</strong> · joystick + multiplayer</span>
-			<span class="pill"><strong>AR</strong> · WebXR + iOS Quick Look</span>
-			<span class="pill"><strong>Voice clone</strong> · ElevenLabs + LiveKit</span>
-			<span class="pill"><strong>Memory</strong> · cross-device sync</span>
-			<span class="pill"><strong>Skills</strong> · MCP + A2A</span>
-			<span class="pill"><strong>Payments</strong> · x402 USDC</span>
-			<span class="pill"><strong>Identity</strong> · ERC-8004 on-chain</span>
-			<span class="pill"><strong>Remix</strong> · fork anyone's agent</span>
-			<span class="pill"><strong>Token</strong> · launch on Pump.fun</span>
-		</div>
-	</section>
-
-	<!-- ── BOTTOM CTA ────────────────────────────────────────────── -->
-	<section class="bottom-cta">
-		<div class="bottom-cta-inner">
-			<h2>Add a living 3D agent to your product today.</h2>
-			<p>Free during open beta. No credit card. Two lines of HTML.</p>
-			<div class="cta-row" style="justify-content: center;">
-				<a class="btn primary" href="/create">Build your first agent →</a>
-				<a class="btn ghost" href="/docs">Read the docs</a>
 			</div>
 		</div>
 	</section>
 
-	<!-- ── FOOTER ────────────────────────────────────────────────── -->
+	<!-- ── SHOWCASE ─────────────────────────────────────────── -->
+	<section class="block">
+		<div class="wrap-1280">
+			<div class="block-head">
+				<p class="block-eyebrow"><span class="num">04</span>Discover</p>
+				<h2 class="block-h">Living agents, <em>right now.</em></h2>
+				<p class="block-lede">A taste of what's running across the web today. Click any agent to talk, remix, or grab their embed.</p>
+			</div>
+			<div class="showcase">
+				<a class="shot" href="/agent-next?id=bacff13e-b64b-4ac0-860d-44f0168ad23b">
+					<div class="shot-fill">
+						<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/bacff13e-b64b-4ac0-860d-44f0168ad23b.png" alt="nich" loading="lazy" />
+					</div>
+					<span class="shot-tag">Featured</span>
+					<div class="shot-meta"><div class="shot-name">nich</div><div class="shot-sub">@nirholas</div></div>
+				</a>
+				<a class="shot" href="/discover">
+					<div class="shot-meta">
+						<div class="shot-name">Browse all</div>
+						<div class="shot-sub">1,847 public agents</div>
+					</div>
+				</a>
+				<a class="shot" href="/discover?filter=onchain">
+					<div class="shot-meta">
+						<div class="shot-name">On-chain</div>
+						<div class="shot-sub">ERC-8004 directory</div>
+					</div>
+				</a>
+				<a class="shot" href="/create">
+					<div class="shot-meta">
+						<div class="shot-name">Make your own</div>
+						<div class="shot-sub">Selfie → agent · 60s</div>
+					</div>
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── VERB PILLS ───────────────────────────────────────── -->
+	<section class="block">
+		<div class="wrap-1280">
+			<div class="block-head">
+				<p class="block-eyebrow"><span class="num">05</span>Capabilities</p>
+				<h2 class="block-h">Every verb your <em>agent can do.</em></h2>
+			</div>
+			<div class="pills">
+				<span class="pill"><strong>Talk</strong><span class="sep">·</span>text + voice</span>
+				<span class="pill"><strong>Animate</strong><span class="sep">·</span>200+ clips</span>
+				<span class="pill"><strong>Mocap</strong><span class="sep">·</span>webcam → avatar</span>
+				<span class="pill"><strong>Walk</strong><span class="sep">·</span>joystick + multiplayer</span>
+				<span class="pill"><strong>AR</strong><span class="sep">·</span>WebXR + iOS</span>
+				<span class="pill"><strong>Voice clone</strong><span class="sep">·</span>ElevenLabs · LiveKit</span>
+				<span class="pill"><strong>Memory</strong><span class="sep">·</span>cross-device sync</span>
+				<span class="pill"><strong>Skills</strong><span class="sep">·</span>MCP · A2A</span>
+				<span class="pill"><strong>Payments</strong><span class="sep">·</span>x402 USDC</span>
+				<span class="pill"><strong>Identity</strong><span class="sep">·</span>ERC-8004 on-chain</span>
+				<span class="pill"><strong>Remix</strong><span class="sep">·</span>fork anyone's agent</span>
+				<span class="pill"><strong>Token</strong><span class="sep">·</span>launch on Pump.fun</span>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── BOTTOM CTA ──────────────────────────────────────── -->
+	<section class="block" style="padding-bottom: 64px;">
+		<div class="wrap-1280">
+			<div class="cta-card">
+				<h2>Add a living 3D agent<br/>to your product today.</h2>
+				<p>Free during open beta. No credit card. Two lines of HTML.</p>
+				<div class="cta-row">
+					<a class="btn primary" href="/create">Build your first agent <span class="arrow">→</span></a>
+					<a class="btn" href="/docs">Read the docs</a>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── FOOTER ──────────────────────────────────────────── -->
 	<footer>
-		<div class="foot-inner">
-			<div>© 2026 three.ws · The 3D agent layer of the internet</div>
-			<div class="foot-links">
-				<a href="/docs">Docs</a>
-				<a href="/pricing">Pricing</a>
-				<a href="/discover">Discover</a>
-				<a href="https://github.com/nirholas/three.ws">GitHub</a>
-				<a href="/agenc">Status</a>
+		<div class="wrap-1280">
+			<div class="foot-inner">
+				<div>© 2026 · three.ws · the 3D agent layer of the internet</div>
+				<div class="foot-links">
+					<a href="/docs">Docs</a>
+					<a href="/pricing">Pricing</a>
+					<a href="/discover">Discover</a>
+					<a href="https://github.com/nirholas/three.ws">GitHub</a>
+				</div>
 			</div>
 		</div>
 	</footer>
 
-	<a class="demo-tag" href="/" title="This is a redesign demo">DEMO · /home-next</a>
+	<a class="demo-tag" href="/" title="Redesign demo">demo · /home-next</a>
 
 	<script>
-		// ── Boot the live <agent-3d> instances ───────────────────────
-		// The component's `src` requires an absolute URL (the production
-		// discover page does the same). Setting it after upgrade keeps
-		// the page working in dev (port-forwarded Codespaces) and prod.
+		// ── Boot live <agent-3d> instances ──────────────────────
 		const AVATAR_ID = 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
 		const AVATAR_SRC = `${location.origin}/api/avatars/${AVATAR_ID}`;
-		document.querySelectorAll('agent-3d.hero-agent').forEach((el) => {
+		document.querySelectorAll('agent-3d.live-agent').forEach((el) => {
 			el.setAttribute('src', AVATAR_SRC);
 		});
 
-		// ── Copy snippet ─────────────────────────────────────────────
+		// ── Hero parallax tilt (subtle "3D site" feel) ──────────
+		const stage = document.getElementById('hero-stage');
+		const inner = document.getElementById('hero-stage-inner');
+		if (stage && inner && window.matchMedia('(min-width: 980px)').matches) {
+			let rx = 0, ry = 0, tx = 0, ty = 0;
+			const lerp = (a, b, t) => a + (b - a) * t;
+			stage.addEventListener('mousemove', (e) => {
+				const r = stage.getBoundingClientRect();
+				const x = (e.clientX - r.left) / r.width - 0.5;   // -0.5..0.5
+				const y = (e.clientY - r.top) / r.height - 0.5;
+				tx = x * 6;   // max 6° rotateY
+				ty = -y * 4;  // max 4° rotateX
+			});
+			stage.addEventListener('mouseleave', () => { tx = 0; ty = 0; });
+			function tick() {
+				rx = lerp(rx, ty, 0.08);
+				ry = lerp(ry, tx, 0.08);
+				inner.style.transform = `perspective(1400px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+				requestAnimationFrame(tick);
+			}
+			tick();
+		}
+
+		// ── Copy snippet / flavor tabs ──────────────────────────
 		const SNIPPETS = {
 			html: `<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"><\/script>\n<agent-3d src="https://three.ws/api/avatars/bacff13e-b64b-4ac0-860d-44f0168ad23b"><\/agent-3d>`,
 			react: `import 'https://three.ws/agent-3d/latest/agent-3d.js';\n\nexport default function MyAgent() {\n  return <agent-3d src="https://three.ws/api/avatars/bacff13e..." />;\n}`,
@@ -731,53 +821,43 @@
 		};
 		const snippetEl = document.getElementById('embed-snippet');
 		const copyBtn = document.getElementById('copy-btn');
-		const tabBtns = document.querySelectorAll('.code-card-head .tab');
+		const tabBtns = document.querySelectorAll('.pane-head .tab');
 		let activeFlavor = 'html';
-
-		function escapeHtml(s) {
-			return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-		}
+		const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 		function highlight(code) {
-			// minimal hand-rolled syntax color (HTML tags + JSX-ish)
-			return escapeHtml(code)
+			return esc(code)
 				.replace(/(&lt;\/?[a-z][a-z0-9-]*)/gi, '<span class="tag">$1</span>')
 				.replace(/(\s)([a-z-]+)(=)/gi, '$1<span class="attr">$2</span>$3')
 				.replace(/(&quot;[^&]*?&quot;|"[^"]*?")/g, '<span class="str">$1</span>');
 		}
-		function setFlavor(flavor) {
-			activeFlavor = flavor;
-			tabBtns.forEach((b) => b.classList.toggle('active', b.dataset.flavor === flavor));
-			snippetEl.innerHTML = highlight(SNIPPETS[flavor]);
+		function setFlavor(f) {
+			activeFlavor = f;
+			tabBtns.forEach((b) => b.classList.toggle('active', b.dataset.flavor === f));
+			snippetEl.innerHTML = highlight(SNIPPETS[f]);
 		}
 		tabBtns.forEach((b) => b.addEventListener('click', () => setFlavor(b.dataset.flavor)));
 		copyBtn.addEventListener('click', async () => {
 			try {
 				await navigator.clipboard.writeText(SNIPPETS[activeFlavor]);
 				copyBtn.classList.add('copied');
-				copyBtn.textContent = '✓ Copied';
-				setTimeout(() => {
-					copyBtn.classList.remove('copied');
-					copyBtn.textContent = 'Copy snippet';
-				}, 1800);
-			} catch (e) { /* clipboard blocked */ }
+				copyBtn.textContent = 'Copied';
+				setTimeout(() => { copyBtn.classList.remove('copied'); copyBtn.textContent = 'Copy'; }, 1600);
+			} catch (e) {}
 		});
 
-		// ── Live counter "ticker" — fake but plausible ────────────
-		// In v2 this wires to /api/stats/live or similar.
+		// ── Live metric ticker ──────────────────────────────────
 		const stats = { agents: 1847, sites: 312, chats: 28401 };
-		const els = {
-			agents: document.getElementById('stat-agents'),
-			sites: document.getElementById('stat-sites'),
-			chats: document.getElementById('stat-chats'),
+		const m = {
+			agents: document.getElementById('m-agents'),
+			sites: document.getElementById('m-sites'),
+			chats: document.getElementById('m-chats'),
 		};
-		function fmt(n) { return n.toLocaleString('en-US'); }
-		function tick() {
-			// occasional growth — keeps the page feeling alive
-			if (Math.random() < 0.4) { stats.chats += 1 + Math.floor(Math.random() * 3); els.chats.textContent = fmt(stats.chats); }
-			if (Math.random() < 0.08) { stats.agents += 1; els.agents.textContent = fmt(stats.agents); }
-			if (Math.random() < 0.04) { stats.sites += 1; els.sites.textContent = fmt(stats.sites); }
-		}
-		setInterval(tick, 1400);
+		const fmt = (n) => n.toLocaleString('en-US');
+		setInterval(() => {
+			if (Math.random() < 0.45) { stats.chats += 1 + Math.floor(Math.random() * 3); m.chats.textContent = fmt(stats.chats); }
+			if (Math.random() < 0.08) { stats.agents += 1; m.agents.textContent = fmt(stats.agents); }
+			if (Math.random() < 0.04) { stats.sites += 1; m.sites.textContent = fmt(stats.sites); }
+		}, 1400);
 	</script>
 </body>
 </html>
