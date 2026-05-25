@@ -48,8 +48,29 @@ export async function seedDefaultAgent(userId) {
 		`;
 		return agent?.id || null;
 	} catch (err) {
-		// Don't ever block signup if seeding fails — just log and move on.
-		console.error('[seed-default-agent] failed', { userId, error: err?.message });
-		return null;
+		// One retry after 1 s — transient Neon cold-start failures recover quickly.
+		// Never block signup regardless; both paths log and return null on failure.
+		console.warn('[seed-default-agent] first attempt failed, retrying', { userId, error: err?.message });
+		await new Promise((r) => setTimeout(r, 1000));
+		try {
+			const [agent] = await sql`
+				INSERT INTO agent_identities (
+					user_id, name, description, system_prompt, greeting,
+					category, tags, capabilities, is_published, published_at
+				)
+				SELECT ${userId}, ${DEFAULT_NAME}, ${DEFAULT_DESCRIPTION}, ${DEFAULT_PROMPT}, ${DEFAULT_GREETING},
+				       'general', ARRAY['starter']::text[],
+				       '{"bullets": ["Answers questions","Helps with writing","Suggests next steps"], "skills": [], "library": []}'::jsonb,
+				       false, null
+				WHERE NOT EXISTS (
+					SELECT 1 FROM agent_identities WHERE user_id = ${userId} AND deleted_at IS NULL LIMIT 1
+				)
+				RETURNING id
+			`;
+			return agent?.id || null;
+		} catch (err2) {
+			console.error('[seed-default-agent] failed', { userId, error: err2?.message });
+			return null;
+		}
 	}
 }
