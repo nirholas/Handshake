@@ -9,6 +9,8 @@ export default wrap(async (req, res) => {
 	const regen = (process.env.AVATAR_REGEN_PROVIDER || '').trim().toLowerCase();
 	const reconstructEnabled = regen !== '' && regen !== 'none';
 
+	const videoAvatarEnabled = !!(process.env.LONGCAT_WORKER_URL || '').trim();
+
 	return json(res, 200, {
 		walletConnectProjectId: process.env.VITE_WALLETCONNECT_PROJECT_ID || '',
 		features: {
@@ -16,6 +18,9 @@ export default wrap(async (req, res) => {
 			// ML backend is wired. The selfie page reads this to either show the
 			// capture flow or fall through to a "coming soon — try /create" panel.
 			avatarReconstruct: reconstructEnabled,
+			// /create/video uses the LongCat GPU worker on Cloud Run; only
+			// available once LONGCAT_WORKER_URL is set in Vercel env.
+			videoAvatar: videoAvatarEnabled,
 		},
 	});
 });

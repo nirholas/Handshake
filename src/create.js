@@ -39,17 +39,29 @@ function requireAuthForSelfie() {
 // so the user can't dead-end on it; the click handler short-circuits and shows
 // an explanatory toast instead of navigating to a page that would 501.
 let _reconstructReady = true;
+let _videoAvatarReady = false;
 async function probeReconstruct() {
 	try {
 		const r = await fetch('/api/config', { credentials: 'omit' });
 		if (!r.ok) return;
 		const j = await r.json();
 		_reconstructReady = j?.features?.avatarReconstruct !== false;
+		_videoAvatarReady = j?.features?.videoAvatar === true;
 	} catch {
-		// network blip — keep _reconstructReady true and let the page-level
-		// gate inside /create/selfie do the final check.
+		// network blip — keep defaults and let page-level gates do the final check.
 	}
 	if (!_reconstructReady) markSelfieUnavailable();
+	if (!_videoAvatarReady) markVideoAvatarUnavailable();
+}
+
+function markVideoAvatarUnavailable() {
+	const card = document.getElementById('card-video-avatar');
+	if (!card) return;
+	card.setAttribute('aria-disabled', 'true');
+	card.style.opacity = '0.45';
+	card.style.cursor = 'not-allowed';
+	const title = card.querySelector('.card-title');
+	if (title) title.textContent = 'Talking avatar video · coming soon';
 }
 
 function markSelfieUnavailable() {
@@ -97,6 +109,30 @@ async function boot() {
 		if (!requireAuthForSelfie()) return;
 		if (await isAtAvatarLimit()) return;
 		window.location.href = '/create/selfie';
+	});
+	wireCard('card-video-avatar', async () => {
+		if (!_videoAvatarReady) {
+			showStatus('Talking avatar video is coming soon — stay tuned.', 'info');
+			return;
+		}
+		if (window.__authed === false) {
+			window.location.replace(`/login?next=${encodeURIComponent('/create/video')}`);
+			return;
+		}
+		// Gate on paid plan — free users see an upgrade prompt.
+		try {
+			const res = await apiFetch('/api/usage/summary');
+			if (res.ok) {
+				const { plan } = await res.json();
+				if (plan?.plan === 'free') {
+					showStatus('Talking avatar video requires a paid plan. Upgrade in your dashboard.', 'error');
+					return;
+				}
+			}
+		} catch {
+			// network blip — let the destination page do the final auth check.
+		}
+		window.location.href = '/create/video';
 	});
 	wireCard('card-upload-glb', (e) => {
 		// Tooltip anchors live inside the card; let them navigate normally.

@@ -103,7 +103,8 @@
 		}
 		.stage-canvas { flex: 1; position: relative; min-height: 0; }
 		.stage-canvas agent-3d {
-			position: absolute; inset: 0; width: 100%; height: 100%;
+			position: absolute; inset: 0; display: block;
+			width: 100%; height: 100%;
 			background: transparent;
 		}
 
@@ -419,10 +420,13 @@
 
 				<agent-3d
 					id="agent"
+					mode="inline"
+					responsive
 					background="transparent"
 					name-plate="off"
 					avatar-chat="off"
 					eager
+					style="width:100%;height:100%;display:block"
 				></agent-3d>
 			</div>
 

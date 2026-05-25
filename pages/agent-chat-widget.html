@@ -99,6 +99,8 @@
 				chatContainer.style.color = 'var(--light-text)';
 			}
 
+			const motionParam = params.get('motion');
+
 			const viewer = new Viewer(document.getElementById('stage'), {});
 			viewer.load(avatarUrl, '', new Map()).then(() => {
 				if (idleAnim) {
@@ -106,6 +108,34 @@
 					viewer.animationManager.loadAnimation(idleAnim, animUrl, { loop: true })
 						.then(() => viewer.animationManager.play(idleAnim))
 						.catch(err => console.warn('[widget] animation load failed:', err));
+				}
+
+				if (motionParam) {
+					import('/motion-path.js').then(mod => {
+						const MP = mod.default || window.MotionPath;
+						try {
+							const cfg = JSON.parse(atob(motionParam));
+							const container = document.getElementById('viewer-container');
+							const mp = new MP(container, cfg, null);
+							mp.start();
+						} catch (e) {
+							console.warn('[widget] invalid motion param', e);
+						}
+					}).catch(() => {
+						const s = document.createElement('script');
+						s.src = '/motion-path.js';
+						s.onload = () => {
+							try {
+								const cfg = JSON.parse(atob(motionParam));
+								const container = document.getElementById('viewer-container');
+								const mp = new window.MotionPath(container, cfg, null);
+								mp.start();
+							} catch (e) {
+								console.warn('[widget] invalid motion param', e);
+							}
+						};
+						document.head.appendChild(s);
+					});
 				}
 			});
 			

@@ -316,7 +316,24 @@
 			const previewFrame = document.getElementById('widget-preview');
 			const copyBtn = document.getElementById('copy-btn');
 
+			// ── Motion controls ───────────────────────────────────────────────
+			const motionPresetSel   = document.getElementById('motion-preset');
+			const drawGroup         = document.getElementById('draw-group');
+			const motionOptionsGrp  = document.getElementById('motion-options-group');
+			const pathCanvas        = document.getElementById('path-canvas');
+			const pathHint          = document.getElementById('path-hint');
+			const clearPathBtn      = document.getElementById('clear-path-btn');
+			const motionDurationEl  = document.getElementById('motion-duration');
+			const motionDurationVal = document.getElementById('motion-duration-val');
+			const motionLoopSel     = document.getElementById('motion-loop');
+			const motionWalkSel     = document.getElementById('motion-walk-anim');
+			const previewMotionBtn  = document.getElementById('preview-motion-btn');
+			const motionOverlay     = document.getElementById('motion-preview-overlay');
+
 			let selectedAvatarUrl = AVATARS[0].url;
+			let customPathPoints  = [];
+			let activeMotionPath  = null;
+			let motionPathLoaded  = false;
 
 			// ── Populate animation dropdown from real manifest ────────────────
 			fetch('/animations/manifest.json')
@@ -385,28 +402,200 @@
 				updatePreviewAndCode();
 			});
 
+			// ── Motion preset change ──────────────────────────────────────────
+			motionPresetSel.addEventListener('change', () => {
+				const val = motionPresetSel.value;
+				drawGroup.style.display        = val === 'custom' ? 'block' : 'none';
+				motionOptionsGrp.style.display = val ? 'block' : 'none';
+				previewMotionBtn.disabled      = !val || (val === 'custom' && customPathPoints.length < 2);
+				updatePreviewAndCode();
+			});
+
+			motionDurationEl.addEventListener('input', () => {
+				motionDurationVal.textContent = motionDurationEl.value + 's';
+				updatePreviewAndCode();
+			});
+			motionLoopSel.addEventListener('change', updatePreviewAndCode);
+			motionWalkSel.addEventListener('change', updatePreviewAndCode);
+
+			// ── Canvas draw mode ──────────────────────────────────────────────
+			function resizeCanvas() {
+				const wrap = pathCanvas.parentElement;
+				pathCanvas.width  = wrap.clientWidth;
+				pathCanvas.height = wrap.clientHeight;
+				drawPathCanvas();
+			}
+
+			function evalSplinePreview(pts, t) {
+				const n = pts.length;
+				if (n === 1) return pts[0];
+				if (n === 2) return [pts[0][0] + (pts[1][0] - pts[0][0]) * t, pts[0][1] + (pts[1][1] - pts[0][1]) * t];
+				const segments = n - 1;
+				const seg = Math.min(Math.floor(t * segments), segments - 1);
+				const lt  = t * segments - seg;
+				const p0  = pts[Math.max(seg - 1, 0)];
+				const p1  = pts[seg];
+				const p2  = pts[Math.min(seg + 1, n - 1)];
+				const p3  = pts[Math.min(seg + 2, n - 1)];
+				const t2  = lt * lt, t3 = t2 * lt;
+				return [
+					0.5 * ((2*p1[0]) + (-p0[0]+p2[0])*lt + (2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2 + (-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),
+					0.5 * ((2*p1[1]) + (-p0[1]+p2[1])*lt + (2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2 + (-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)
+				];
+			}
+
+			function drawPathCanvas() {
+				const ctx = pathCanvas.getContext('2d');
+				const w = pathCanvas.width, h = pathCanvas.height;
+				ctx.clearRect(0, 0, w, h);
+
+				if (customPathPoints.length === 0) return;
+
+				const toCanvas = ([fx, fy]) => [fx * w, fy * h];
+
+				if (customPathPoints.length >= 2) {
+					ctx.beginPath();
+					ctx.strokeStyle = '#4a9eff';
+					ctx.lineWidth = 2;
+					const start = toCanvas(evalSplinePreview(customPathPoints, 0));
+					ctx.moveTo(start[0], start[1]);
+					for (let i = 1; i <= 80; i++) {
+						const pt = toCanvas(evalSplinePreview(customPathPoints, i / 80));
+						ctx.lineTo(pt[0], pt[1]);
+					}
+					ctx.stroke();
+				}
+
+				customPathPoints.forEach((p, i) => {
+					const [cx, cy] = toCanvas(p);
+					ctx.beginPath();
+					ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+					ctx.fillStyle = i === 0 ? '#00ff88' : i === customPathPoints.length - 1 ? '#ff4444' : '#4a9eff';
+					ctx.fill();
+				});
+			}
+
+			pathCanvas.addEventListener('pointerdown', e => {
+				const rect = pathCanvas.getBoundingClientRect();
+				const fx = (e.clientX - rect.left) / rect.width;
+				const fy = (e.clientY - rect.top)  / rect.height;
+				customPathPoints.push([fx, fy]);
+				pathHint.style.display = 'none';
+				drawPathCanvas();
+				previewMotionBtn.disabled = customPathPoints.length < 2;
+				updatePreviewAndCode();
+			});
+
+			clearPathBtn.addEventListener('click', () => {
+				customPathPoints = [];
+				pathHint.style.display = '';
+				drawPathCanvas();
+				previewMotionBtn.disabled = true;
+				updatePreviewAndCode();
+			});
+
+			new ResizeObserver(resizeCanvas).observe(pathCanvas.parentElement);
+			setTimeout(resizeCanvas, 50);
+
+			// ── Motion path lazy loader ───────────────────────────────────────
+			function loadMotionPath(cb) {
+				if (motionPathLoaded) { cb(); return; }
+				const s = document.createElement('script');
+				s.src = '/motion-path.js';
+				s.onload = () => { motionPathLoaded = true; cb(); };
+				document.head.appendChild(s);
+			}
+
+			function stopMotionPreview() {
+				if (activeMotionPath) {
+					activeMotionPath.stop();
+					activeMotionPath = null;
+				}
+				// Return iframe to its normal position in the preview pane
+				const previewPane = document.querySelector('.studio-preview');
+				if (previewFrame.parentElement !== previewPane) {
+					previewPane.appendChild(previewFrame);
+				}
+				previewFrame.style.position = '';
+				previewFrame.style.left = '';
+				previewFrame.style.top  = '';
+				previewFrame.style.width  = '';
+				previewFrame.style.height = '';
+				motionOverlay.innerHTML = '';
+			}
+
+			previewMotionBtn.addEventListener('click', () => {
+				stopMotionPreview();
+				loadMotionPath(() => {
+					const cfg = buildMotionConfig();
+					if (!cfg) return;
+
+					// Move iframe into overlay for isolated motion demo
+					motionOverlay.style.pointerEvents = 'none';
+					const overlayRect = motionOverlay.getBoundingClientRect();
+
+					previewFrame.style.position = 'absolute';
+					previewFrame.style.width    = '200px';
+					previewFrame.style.height   = '320px';
+					previewFrame.style.border   = 'none';
+					motionOverlay.appendChild(previewFrame);
+
+					// Scale points to overlay-relative fractions
+					const scaledCfg = Object.assign({}, cfg, { duration: cfg.duration });
+
+					activeMotionPath = new window.MotionPath(previewFrame, scaledCfg, previewFrame);
+					activeMotionPath.preview();
+
+					// Restore after duration
+					setTimeout(stopMotionPreview, (cfg.duration || 4000) + 500);
+				});
+			});
+
+			// ── Build motion config from current UI state ─────────────────────
+			function buildMotionConfig() {
+				const preset = motionPresetSel.value;
+				if (!preset) return null;
+				const duration = parseFloat(motionDurationEl.value) * 1000;
+				const loop     = motionLoopSel.value === 'true';
+				const walkAnim = motionWalkSel.value;
+				if (preset === 'custom') {
+					if (customPathPoints.length < 2) return null;
+					return { type: 'custom', points: customPathPoints, duration, loop, walkAnim };
+				}
+				return { type: 'preset', preset, duration, loop, walkAnim };
+			}
+
 			// ── Preview + embed code ──────────────────────────────────────────
 			function updatePreviewAndCode() {
 				const animation = animSelect.value;
 				const showPicker = animPickerToggle.checked;
 				const bg = bgSelect.value;
 
-				// Preview uses avatar-embed.html (the portable embed) for accurate
-				// representation of the actual embed code.
 				const previewParams = new URLSearchParams({ model: selectedAvatarUrl, bg });
 				if (animation) previewParams.set('animation', animation);
 				if (!showPicker) previewParams.set('animPicker', '0');
 
-				previewFrame.src = `/pages/avatar-embed.html?${previewParams}`;
+				const motionCfg = buildMotionConfig();
 
-				// Embed code — full origin so it works pasted anywhere.
+				if (!motionCfg) {
+					previewFrame.src = `/pages/avatar-embed.html?${previewParams}`;
+				}
+
 				const embedParams = new URLSearchParams({ model: selectedAvatarUrl, bg });
 				if (animation) embedParams.set('animation', animation);
 				if (!showPicker) embedParams.set('animPicker', '0');
 
-				const embedUrl = `${location.origin}/pages/avatar-embed.html?${embedParams}`;
-				embedCodeEl.textContent =
-					`<iframe\n  src="${embedUrl}"\n  width="400"\n  height="600"\n  style="border:none;"\n  allow="autoplay; clipboard-write"\n></iframe>`;
+				const widgetUrl  = `/pages/avatar-embed.html?${embedParams}`;
+				const origin     = location.origin;
+
+				if (motionCfg) {
+					embedCodeEl.textContent =
+						`<script async src="${origin}/embed.js"\n  data-widget-url="${origin}${widgetUrl}"\n  data-type="talking-agent"\n  data-motion='${JSON.stringify(motionCfg)}'><\/script>`;
+				} else {
+					const embedUrl = `${origin}${widgetUrl}`;
+					embedCodeEl.textContent =
+						`<iframe\n  src="${embedUrl}"\n  width="400"\n  height="600"\n  style="border:none;"\n  allow="autoplay; clipboard-write"\n></iframe>`;
+				}
 			}
 
 			animSelect.addEventListener('change', updatePreviewAndCode);

@@ -3,448 +3,521 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>three.ws — The 3D layer of the internet</title>
-		<meta name="description" content="Embodied 3D AI agents. One script tag, any website. Studio, registry, embed, payments, embodiment — the full stack for the 3D web." />
-		<meta name="theme-color" content="#07070a" />
+		<title>three.ws</title>
+		<meta name="description" content="The 3D layer of the internet." />
+		<meta name="theme-color" content="#000" />
 		<link rel="canonical" href="https://three.ws/next" />
-		<meta property="og:title" content="three.ws — The 3D layer of the internet" />
-		<meta property="og:description" content="Embodied 3D AI agents. One script tag, any website." />
-		<meta property="og:type" content="website" />
-		<meta property="og:url" content="https://three.ws/next" />
-		<meta name="twitter:card" content="summary_large_image" />
+		<meta property="og:title" content="three.ws" />
+		<meta property="og:description" content="The 3D layer of the internet." />
 
 		<link rel="preconnect" href="https://ajax.googleapis.com" crossorigin />
-		<link rel="preconnect" href="https://three.ws" crossorigin />
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 
 		<style>
 			:root {
-				--bg: #07070a;
-				--bg-2: #0c0c11;
-				--panel: #0e0e12;
-				--ink: #f5f5f7;
-				--ink-dim: #8a8a93;
-				--ink-faint: #45454c;
-				--ring: rgba(255, 255, 255, 0.08);
-				--ring-strong: rgba(255, 255, 255, 0.16);
-				--accent: #4ade80;
-				--accent-2: #a78bfa;
-				--accent-3: #60a5fa;
-				--radius: 16px;
-				--radius-lg: 24px;
+				--ink: #fff;
+				--ink-2: #a8a8a8;
+				--ink-3: #6b6b6b;
+				--ink-4: #2a2a2a;
+				--bg: #000;
 				--mono: ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, Consolas, monospace;
-				--sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+				--display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 			}
-			* { box-sizing: border-box; }
-			html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-			body { min-height: 100vh; overflow-x: hidden; }
+			* { box-sizing: border-box; margin: 0; padding: 0; }
+			html, body { background: var(--bg); color: var(--ink); font-family: var(--display); -webkit-font-smoothing: antialiased; }
+			body { overflow-x: hidden; min-height: 100vh; }
 			a { color: inherit; text-decoration: none; }
-			button { font: inherit; color: inherit; }
-			img { max-width: 100%; display: block; }
+
+			/* fixed stage — the agent IS the background */
+			.stage {
+				position: fixed; inset: 0; z-index: 0;
+				background: radial-gradient(ellipse at 50% 60%, #0a0a0a 0%, #000 70%);
+			}
+			.stage model-viewer {
+				width: 100%; height: 100%;
+				--poster-color: #000;
+				background: transparent;
+			}
+			.stage::after {
+				content: ''; position: absolute; inset: 0;
+				background:
+					radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.6), transparent 60%),
+					radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.5), transparent 50%);
+				pointer-events: none;
+			}
 
 			/* nav */
 			.nav {
-				position: sticky; top: 0; z-index: 50;
+				position: fixed; top: 0; left: 0; right: 0; z-index: 20;
 				display: flex; align-items: center; justify-content: space-between;
-				padding: 16px 28px;
-				background: rgba(7, 7, 10, 0.72);
-				backdrop-filter: saturate(180%) blur(18px);
-				-webkit-backdrop-filter: saturate(180%) blur(18px);
-				border-bottom: 1px solid var(--ring);
+				padding: 22px 32px;
+				mix-blend-mode: difference;
 			}
-			.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
-			.brand-mark {
-				width: 22px; height: 22px; border-radius: 6px;
-				background: conic-gradient(from 220deg, #fff, #a78bfa, #60a5fa, #4ade80, #fff);
-				box-shadow: 0 0 0 1px var(--ring-strong) inset;
+			.brand {
+				font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em;
+				font-weight: 500;
 			}
-			.nav-links { display: flex; gap: 22px; font-size: 14px; color: var(--ink-dim); }
-			.nav-links a:hover { color: var(--ink); }
-			.nav-cta {
-				display: inline-flex; align-items: center; gap: 8px;
-				padding: 8px 14px; border-radius: 999px;
-				background: var(--ink); color: #07070a; font-weight: 600; font-size: 13px;
-				transition: transform .15s ease;
+			.brand-dot {
+				display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+				background: #4ade80; margin-right: 10px; vertical-align: middle;
+				box-shadow: 0 0 12px #4ade80;
+				animation: live 2.4s ease-in-out infinite;
 			}
-			.nav-cta:hover { transform: translateY(-1px); }
-			@media (max-width: 760px) { .nav-links { display: none; } }
+			@keyframes live { 0%,100%{opacity:1} 50%{opacity:0.35} }
+			.nav-right {
+				display: flex; align-items: center; gap: 28px;
+				font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em;
+				color: var(--ink);
+			}
+			.nav-right a { opacity: 0.7; transition: opacity .2s; }
+			.nav-right a:hover { opacity: 1; }
 
-			/* hero */
+			/* hero — overlaid type */
 			.hero {
-				position: relative;
-				padding: 56px 24px 24px;
-				text-align: center;
-				overflow: hidden;
-			}
-			.hero::before {
-				content: ''; position: absolute; inset: -20% -10% auto -10%; height: 70%;
-				background:
-					radial-gradient(ellipse at 30% 20%, rgba(167, 139, 250, 0.18), transparent 60%),
-					radial-gradient(ellipse at 70% 40%, rgba(96, 165, 250, 0.16), transparent 60%),
-					radial-gradient(ellipse at 50% 80%, rgba(74, 222, 128, 0.10), transparent 60%);
-				filter: blur(40px); pointer-events: none; z-index: 0;
-			}
-			.hero-inner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; }
-
-			.eyebrow {
-				display: inline-flex; align-items: center; gap: 8px;
-				font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em;
-				text-transform: uppercase; color: var(--ink-dim);
-				padding: 6px 12px; border: 1px solid var(--ring); border-radius: 999px;
-				margin-bottom: 22px;
-			}
-			.eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-
-			h1.hero-title {
-				font-size: clamp(44px, 8vw, 112px);
-				line-height: 0.98; letter-spacing: -0.035em; font-weight: 700;
-				margin: 0 0 18px;
-			}
-			.grad {
-				background: linear-gradient(90deg, #fff 0%, #d3c6ff 35%, #b9d8ff 65%, #c8ffd9 100%);
-				-webkit-background-clip: text; background-clip: text; color: transparent;
-			}
-			.hero-sub {
-				font-size: clamp(16px, 1.6vw, 20px); color: var(--ink-dim);
-				max-width: 640px; margin: 0 auto 28px; line-height: 1.5;
-			}
-			.cta-row { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-			.btn {
-				display: inline-flex; align-items: center; gap: 8px;
-				padding: 12px 18px; border-radius: 12px; font-weight: 600; font-size: 14px;
-				border: 1px solid transparent; transition: transform .15s ease, background .15s ease;
-			}
-			.btn-primary { background: var(--ink); color: #07070a; }
-			.btn-primary:hover { transform: translateY(-1px); }
-			.btn-ghost { background: transparent; color: var(--ink); border-color: var(--ring-strong); }
-			.btn-ghost:hover { background: rgba(255,255,255,0.04); }
-
-			/* hero stage */
-			.stage-wrap {
-				position: relative; margin: 40px auto 0; max-width: 1100px;
-				border: 1px solid var(--ring); border-radius: var(--radius-lg);
-				background: linear-gradient(180deg, #0a0a0e, #06060a);
-				overflow: hidden;
-				box-shadow: 0 30px 80px -30px rgba(0,0,0,0.7), 0 0 0 1px var(--ring) inset;
-			}
-			.stage-wrap::before {
-				content: ''; position: absolute; inset: 0;
-				background:
-					radial-gradient(ellipse at 20% 0%, rgba(167, 139, 250, 0.18), transparent 50%),
-					radial-gradient(ellipse at 80% 100%, rgba(74, 222, 128, 0.12), transparent 50%);
+				position: relative; z-index: 10;
+				min-height: 100vh;
+				display: grid;
+				grid-template-rows: 1fr auto;
+				padding: 120px 32px 32px;
 				pointer-events: none;
 			}
-			.stage-hero { position: relative; z-index: 1; height: clamp(360px, 60vh, 620px); }
-			.stage-hero three-d { width: 100%; height: 100%; display: block; }
-			.stage-bar {
-				display: flex; align-items: center; justify-content: space-between;
-				padding: 10px 14px; border-top: 1px solid var(--ring);
-				font-family: var(--mono); font-size: 11px; color: var(--ink-dim);
-				background: rgba(7,7,10,0.6);
-			}
-			.stage-bar .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: pulse 2s ease-in-out infinite; }
-			@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+			.hero > * { pointer-events: auto; }
 
-			/* stack section */
-			section { padding: 96px 24px; }
-			.shell { max-width: 1200px; margin: 0 auto; }
-			.section-eyebrow {
+			.title {
+				font-family: var(--display);
+				font-size: clamp(72px, 18vw, 280px);
+				line-height: 0.84;
+				letter-spacing: -0.055em;
+				font-weight: 700;
+				text-transform: lowercase;
+				align-self: end;
+				white-space: nowrap;
+			}
+			.title .l1 { display: block; }
+			.title .l2 { display: block; color: var(--ink-3); }
+			.title .l2 em {
+				font-style: normal;
+				background: linear-gradient(180deg, #fff 0%, #a8a8a8 100%);
+				-webkit-background-clip: text; background-clip: text; color: transparent;
+			}
+
+			.foot-bar {
+				display: grid; grid-template-columns: 1fr auto 1fr;
+				align-items: end; gap: 24px;
+				padding-top: 32px;
+				border-top: 1px solid var(--ink-4);
+				font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em;
+			}
+			.foot-bar .col { color: var(--ink-2); }
+			.foot-bar .col b { color: var(--ink); font-weight: 500; }
+			.foot-bar .center {
+				display: flex; gap: 14px; align-items: center;
+			}
+			.cta {
+				display: inline-flex; align-items: center; gap: 10px;
+				padding: 14px 22px;
+				background: var(--ink); color: #000;
+				border-radius: 999px;
+				font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+				text-transform: uppercase; font-weight: 600;
+				transition: transform .2s, background .2s;
+			}
+			.cta:hover { transform: translateY(-2px); }
+			.cta-ghost {
+				display: inline-flex; align-items: center; gap: 10px;
+				padding: 14px 22px;
+				border: 1px solid var(--ink-4); color: var(--ink);
+				border-radius: 999px;
+				font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+				text-transform: uppercase; font-weight: 500;
+				transition: border-color .2s, background .2s;
+			}
+			.cta-ghost:hover { border-color: var(--ink); background: rgba(255,255,255,0.04); }
+
+			.scroll-hint {
+				position: fixed; bottom: 32px; right: 32px;
+				z-index: 15;
+				font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em;
+				color: var(--ink-2); text-transform: uppercase;
+				display: flex; align-items: center; gap: 10px;
+				opacity: 0; transition: opacity .4s;
+			}
+			.scroll-hint.visible { opacity: 1; }
+			.scroll-hint .arrow {
+				width: 1px; height: 28px; background: var(--ink-2);
+				position: relative;
+				animation: scrollLine 2s ease-in-out infinite;
+			}
+			@keyframes scrollLine { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+			/* sections below fold */
+			.fold {
+				position: relative; z-index: 10;
+				background: var(--bg);
+			}
+			.fold::before {
+				content: ''; display: block; height: 25vh;
+				background: linear-gradient(180deg, transparent 0%, #000 100%);
+				pointer-events: none;
+			}
+			section.s {
+				padding: 140px 32px;
+				max-width: 1280px; margin: 0 auto;
+			}
+			.s-num {
 				font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
-				text-transform: uppercase; color: var(--ink-dim); margin-bottom: 14px;
+				color: var(--ink-3); text-transform: uppercase; margin-bottom: 32px;
 			}
-			.section-title { font-size: clamp(32px, 5vw, 56px); letter-spacing: -0.03em; font-weight: 700; margin: 0 0 14px; line-height: 1.05; }
-			.section-lede { color: var(--ink-dim); max-width: 620px; font-size: 17px; line-height: 1.55; margin: 0 0 48px; }
+			.s-h {
+				font-size: clamp(48px, 8vw, 120px);
+				line-height: 0.92; letter-spacing: -0.035em;
+				font-weight: 700; text-transform: lowercase;
+				margin-bottom: 32px;
+				max-width: 18ch;
+			}
+			.s-p {
+				font-size: clamp(18px, 1.7vw, 22px);
+				color: var(--ink-2); line-height: 1.5;
+				max-width: 56ch;
+			}
 
-			.stack {
-				display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-				background: var(--ring); border: 1px solid var(--ring);
-				border-radius: var(--radius-lg); overflow: hidden;
+			/* stack — six rows, brutalist list */
+			.stack-list {
+				margin-top: 80px;
+				border-top: 1px solid var(--ink-4);
 			}
-			.stack-cell {
-				background: var(--bg-2);
-				padding: 28px 24px;
-				display: flex; flex-direction: column; gap: 10px;
-				min-height: 200px;
-				transition: background .2s ease;
+			.stack-row {
+				display: grid;
+				grid-template-columns: 64px 1fr 2fr 80px;
+				align-items: center;
+				padding: 32px 0;
+				border-bottom: 1px solid var(--ink-4);
+				gap: 24px;
+				transition: padding .25s, color .25s;
+				cursor: pointer;
+				color: var(--ink);
 			}
-			.stack-cell:hover { background: #111118; }
-			.stack-cell .num { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); letter-spacing: 0.18em; }
-			.stack-cell h3 { margin: 0; font-size: 20px; letter-spacing: -0.01em; }
-			.stack-cell p { margin: 0; color: var(--ink-dim); font-size: 14px; line-height: 1.55; }
-			.stack-cell a.cell-link { font-family: var(--mono); font-size: 12px; color: var(--ink); margin-top: auto; }
-			.stack-cell a.cell-link:hover { color: var(--accent); }
-			@media (max-width: 920px) { .stack { grid-template-columns: repeat(2, 1fr); } }
-			@media (max-width: 600px) { .stack { grid-template-columns: 1fr; } }
+			.stack-row:hover { padding-left: 16px; }
+			.stack-row .n { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+			.stack-row .t {
+				font-size: clamp(28px, 3.4vw, 44px);
+				font-weight: 600; letter-spacing: -0.02em;
+				text-transform: lowercase;
+			}
+			.stack-row .d { color: var(--ink-2); font-size: 15px; line-height: 1.5; }
+			.stack-row .arrow {
+				font-family: var(--mono); font-size: 18px; opacity: 0.4;
+				transition: opacity .25s, transform .25s;
+				text-align: right;
+			}
+			.stack-row:hover .arrow { opacity: 1; transform: translateX(4px); }
+			@media (max-width: 760px) {
+				.stack-row { grid-template-columns: 40px 1fr 40px; }
+				.stack-row .d { display: none; }
+			}
 
-			/* embed showcase */
-			.embed-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-			@media (max-width: 920px) { .embed-grid { grid-template-columns: repeat(2, 1fr); } }
-			@media (max-width: 600px) { .embed-grid { grid-template-columns: 1fr; } }
-			.embed-tile {
-				border: 1px solid var(--ring); border-radius: var(--radius);
-				background: var(--bg-2); overflow: hidden;
-				display: flex; flex-direction: column;
+			/* embed-anywhere section: floating tiles */
+			.tiles {
+				margin-top: 80px;
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				gap: 12px;
 			}
-			.embed-tile three-d { width: 100%; height: 280px; display: block; }
-			.embed-tile .label {
-				padding: 12px 14px; border-top: 1px solid var(--ring);
-				display: flex; align-items: center; justify-content: space-between;
-				font-family: var(--mono); font-size: 11px; color: var(--ink-dim);
+			@media (max-width: 920px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+			.tile {
+				aspect-ratio: 3 / 4;
+				background: #0a0a0a;
+				border: 1px solid var(--ink-4);
+				border-radius: 4px;
+				overflow: hidden;
+				position: relative;
 			}
-			.embed-tile .label b { color: var(--ink); font-weight: 600; letter-spacing: 0.02em; }
+			.tile three-d { width: 100%; height: 100%; display: block; }
+			.tile .cap {
+				position: absolute; left: 12px; bottom: 12px; right: 12px;
+				display: flex; justify-content: space-between;
+				font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+				color: var(--ink-2); text-transform: uppercase;
+				pointer-events: none;
+			}
 
-			/* code */
-			.install { display: grid; grid-template-columns: 1.1fr 1fr; gap: 36px; align-items: center; }
-			@media (max-width: 920px) { .install { grid-template-columns: 1fr; } }
+			/* code block */
+			.code-wrap { margin-top: 64px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: start; }
+			@media (max-width: 860px) { .code-wrap { grid-template-columns: 1fr; } }
 			.code {
-				background: #050507; border: 1px solid var(--ring); border-radius: var(--radius);
-				padding: 22px 24px; font-family: var(--mono); font-size: 13px; line-height: 1.7;
-				color: #d6d6de; overflow: auto;
-				box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6);
+				background: #060606; border: 1px solid var(--ink-4); border-radius: 6px;
+				padding: 28px 32px;
+				font-family: var(--mono); font-size: 14px; line-height: 1.75;
+				color: #ccc; overflow: auto;
+				white-space: pre;
 			}
-			.code .c { color: var(--ink-faint); }
-			.code .t { color: #c7b4ff; }
-			.code .a { color: #9ee6a8; }
-			.code .s { color: #ffd6a8; }
-			.code .k { color: #9bc7ff; }
-			.code .h { color: var(--ink); font-weight: 600; }
+			.code .c { color: var(--ink-3); }
+			.code .t { color: #d8d0ff; }
+			.code .a { color: #b8e6c2; }
+			.code .s { color: #ffd9a8; }
 
-			/* metrics */
-			.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--ring); border: 1px solid var(--ring); border-radius: var(--radius-lg); overflow: hidden; }
-			.metric { background: var(--bg-2); padding: 28px 22px; }
-			.metric .v { font-size: 36px; letter-spacing: -0.02em; font-weight: 700; }
-			.metric .k { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); letter-spacing: 0.16em; text-transform: uppercase; margin-top: 6px; }
-			@media (max-width: 760px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
-
-			/* cta band */
-			.cta-band {
-				position: relative; margin: 0 24px 96px; padding: 64px 48px;
-				border: 1px solid var(--ring-strong); border-radius: var(--radius-lg);
-				background: radial-gradient(ellipse at 0% 0%, rgba(167, 139, 250, 0.18), transparent 60%),
-					radial-gradient(ellipse at 100% 100%, rgba(74, 222, 128, 0.12), transparent 60%),
-					linear-gradient(180deg, #0e0e14, #08080c);
-				display: flex; align-items: center; justify-content: space-between; gap: 32px;
-				max-width: 1200px; margin-left: auto; margin-right: auto;
-				flex-wrap: wrap;
+			.bullets { list-style: none; padding: 0; }
+			.bullets li {
+				padding: 14px 0; border-bottom: 1px solid var(--ink-4);
+				display: grid; grid-template-columns: 80px 1fr; gap: 16px; align-items: baseline;
+				font-size: 15px;
 			}
-			.cta-band h2 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.02em; }
-			.cta-band p { margin: 0; color: var(--ink-dim); max-width: 520px; }
+			.bullets li:last-child { border-bottom: 0; }
+			.bullets li b { font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
+			.bullets li span { color: var(--ink); }
 
-			/* footer */
-			footer { padding: 48px 24px 80px; border-top: 1px solid var(--ring); color: var(--ink-dim); font-size: 13px; }
-			.foot { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-			.foot-links { display: flex; gap: 22px; flex-wrap: wrap; }
-			.foot-links a:hover { color: var(--ink); }
+			/* end cta */
+			.end {
+				padding: 200px 32px;
+				text-align: center;
+				border-top: 1px solid var(--ink-4);
+			}
+			.end .big {
+				font-size: clamp(56px, 10vw, 160px);
+				line-height: 0.9; letter-spacing: -0.04em;
+				font-weight: 700; text-transform: lowercase;
+				margin-bottom: 48px;
+			}
+			.end .row { display: inline-flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+
+			footer {
+				padding: 48px 32px;
+				border-top: 1px solid var(--ink-4);
+				font-family: var(--mono); font-size: 12px;
+				color: var(--ink-2);
+				display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+			}
+			footer a:hover { color: var(--ink); }
+			footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
 
 			@media (prefers-reduced-motion: reduce) {
-				.pulse { animation: none !important; }
-				.btn, .nav-cta { transition: none !important; }
+				.brand-dot, .arrow { animation: none !important; }
+			}
+
+			@media (max-width: 560px) {
+				.nav { padding: 16px 18px; }
+				.hero { padding: 100px 20px 24px; }
+				.foot-bar { grid-template-columns: 1fr; }
+				.foot-bar .center { justify-content: flex-start; }
 			}
 		</style>
 
 		<script src="/embed/v1.js" defer></script>
 	</head>
 	<body>
+		<div class="stage" aria-hidden="true">
+			<model-viewer
+				id="hero-mv"
+				src="https://three.ws/avatars/cz.glb"
+				camera-controls
+				disable-zoom
+				interaction-prompt="none"
+				exposure="1.1"
+				shadow-intensity="0.8"
+				shadow-softness="1"
+				camera-orbit="0deg 90deg 2.2m"
+				field-of-view="28deg"
+				touch-action="pan-y"
+				autoplay
+			></model-viewer>
+		</div>
+
 		<nav class="nav" aria-label="Primary">
-			<a class="brand" href="/">
-				<span class="brand-mark" aria-hidden="true"></span>
-				three.ws
-			</a>
-			<div class="nav-links">
-				<a href="#stack">Stack</a>
-				<a href="#embed">Embed</a>
-				<a href="#install">Install</a>
-				<a href="/docs">Docs</a>
-				<a href="/discover">Registry</a>
+			<span class="brand"><span class="brand-dot" aria-hidden="true"></span>three.ws / v1</span>
+			<div class="nav-right">
+				<a href="/discover">registry</a>
+				<a href="/character-studio">studio</a>
+				<a href="/docs">docs</a>
+				<a href="#install">embed →</a>
 			</div>
-			<a class="nav-cta" href="#install">Get the tag →</a>
 		</nav>
 
 		<header class="hero">
-			<div class="hero-inner">
-				<span class="eyebrow"><span class="dot"></span>EMBED V1 · LIVE</span>
-				<h1 class="hero-title">The <span class="grad">3D layer</span><br />of the internet.</h1>
-				<p class="hero-sub">Embodied 3D AI agents you can drop on any page with one tag. Built on open registries, paid by x402, rendered by Three.js.</p>
-				<div class="cta-row">
-					<a class="btn btn-primary" href="#install">Drop the tag</a>
-					<a class="btn btn-ghost" href="/embed/v1/preview">See it in 6 contexts →</a>
-				</div>
+			<h1 class="title">
+				<span class="l1">the 3d layer</span>
+				<span class="l2">of the <em>internet.</em></span>
+			</h1>
 
-				<div class="stage-wrap">
-					<div class="stage-hero">
-						<three-d
-							src="https://three.ws/avatars/cz.glb"
-							name="three.ws live"
-							interactive
-							autoplay
-						></three-d>
-					</div>
-					<div class="stage-bar">
-						<span><span class="pulse" aria-hidden="true" style="display:inline-block;vertical-align:middle;margin-right:8px"></span>RENDERED BY &lt;three-d&gt;</span>
-						<span>SHADOW DOM · LAZY · CORS · 15KB</span>
-					</div>
+			<div class="foot-bar">
+				<div class="col">
+					<b>Embodied AI agents.</b><br />
+					One tag. Any website.<br />
+					Open identity. Stablecoin paid.
+				</div>
+				<div class="center">
+					<a class="cta" href="#install">Drop the tag</a>
+					<a class="cta-ghost" href="/embed/v1/preview">See it live →</a>
+				</div>
+				<div class="col" style="text-align:right;">
+					<b>v1.0 · LIVE</b><br />
+					ERC-8004 · x402 · WebXR<br />
+					Three.js · glTF · Shadow DOM
 				</div>
 			</div>
 		</header>
 
-		<section id="stack">
-			<div class="shell">
-				<div class="section-eyebrow">The full stack</div>
-				<h2 class="section-title">Six pieces. One web layer.</h2>
-				<p class="section-lede">Everything you need to create, register, embed, monetize, and embody an agent. Each layer is open, each layer is real, each layer ships today.</p>
+		<div class="scroll-hint" id="scrollHint">
+			<span>SCROLL</span>
+			<span class="arrow" aria-hidden="true"></span>
+		</div>
 
-				<div class="stack">
-					<div class="stack-cell">
-						<span class="num">01</span>
-						<h3>Studio</h3>
-						<p>Selfie to rigged avatar in seconds. Faces, fits, voices, motion — all browser-native.</p>
-						<a class="cell-link" href="/character-studio">Open Studio →</a>
+		<main class="fold">
+			<section class="s">
+				<div class="s-num">01 — Thesis</div>
+				<h2 class="s-h">every site gets a body.</h2>
+				<p class="s-p">Text became the web. Video took the feed. The next layer is embodied — agents that walk into any page, speak, sell, sign, and pay. three.ws is the rail that carries them.</p>
+			</section>
+
+			<section class="s">
+				<div class="s-num">02 — Stack</div>
+				<h2 class="s-h">six pieces. one layer.</h2>
+				<p class="s-p">Every piece is open, real, and shipping today. Use one. Use all. They compose.</p>
+
+				<div class="stack-list">
+					<a href="/character-studio" class="stack-row">
+						<div class="n">01</div>
+						<div class="t">studio</div>
+						<div class="d">Selfie to rigged avatar in seconds. Browser-native, GPU-accelerated.</div>
+						<div class="arrow">↗</div>
+					</a>
+					<a href="/discover" class="stack-row">
+						<div class="n">02</div>
+						<div class="t">registry</div>
+						<div class="d">ERC-8004 on-chain identity. Agents discoverable, portable, attestable.</div>
+						<div class="arrow">↗</div>
+					</a>
+					<a href="#install" class="stack-row">
+						<div class="n">03</div>
+						<div class="t">embed</div>
+						<div class="d">&lt;three-d&gt; web component. One tag. Any host. Lazy, themed, contained.</div>
+						<div class="arrow">↗</div>
+					</a>
+					<a href="/.well-known/x402.json" class="stack-row">
+						<div class="n">04</div>
+						<div class="t">x402</div>
+						<div class="d">HTTP-native micropayments. Bill per skill, minute, or call. Stablecoin rails.</div>
+						<div class="arrow">↗</div>
+					</a>
+					<a href="/vr" class="stack-row">
+						<div class="n">05</div>
+						<div class="t">vr gate</div>
+						<div class="d">WebXR embodiment. Same identity. Walk in as them. $THREE-gated.</div>
+						<div class="arrow">↗</div>
+					</a>
+					<a href="/docs" class="stack-row">
+						<div class="n">06</div>
+						<div class="t">sdk</div>
+						<div class="d">JS, Python, Rust. Mint, sign, attest, render, pay. MIT. On npm.</div>
+						<div class="arrow">↗</div>
+					</a>
+				</div>
+			</section>
+
+			<section class="s">
+				<div class="s-num">03 — Embed</div>
+				<h2 class="s-h">drop one anywhere.</h2>
+				<p class="s-p">Each tile is a real &lt;three-d&gt; instance with isolated shadow DOM. Same tag in your blog, landing page, docs, dashboard, product card, newsletter.</p>
+
+				<div class="tiles">
+					<div class="tile">
+						<three-d src="https://three.ws/animations/robotexpressive.glb" name="atlas" interactive></three-d>
+						<div class="cap"><span>atlas</span><span>blog</span></div>
 					</div>
-					<div class="stack-cell">
-						<span class="num">02</span>
-						<h3>Registry</h3>
-						<p>ERC-8004 on-chain identity. Agents discoverable, attestable, portable across hosts.</p>
-						<a class="cell-link" href="/discover">Browse Registry →</a>
+					<div class="tile">
+						<three-d src="https://three.ws/animations/soldier.glb" name="vega" interactive></three-d>
+						<div class="cap"><span>vega</span><span>product</span></div>
 					</div>
-					<div class="stack-cell">
-						<span class="num">03</span>
-						<h3>Embed</h3>
-						<p>&lt;three-d&gt; web component. One script tag, any site, any CMS. Lazy-mounts, shadow DOM, themeable.</p>
-						<a class="cell-link" href="#install">Get the tag →</a>
+					<div class="tile">
+						<three-d src="https://three.ws/avatars/default.glb" name="mira" interactive></three-d>
+						<div class="cap"><span>mira</span><span>docs</span></div>
 					</div>
-					<div class="stack-cell">
-						<span class="num">04</span>
-						<h3>x402 Payments</h3>
-						<p>HTTP-native micropayments. Agents bill per skill, per minute, per call. Stablecoin settlement.</p>
-						<a class="cell-link" href="/.well-known/x402.json">x402 manifest →</a>
-					</div>
-					<div class="stack-cell">
-						<span class="num">05</span>
-						<h3>VR Gate</h3>
-						<p>WebXR embodiment. Same agent, same identity, walk in as them. $THREE-gated experiences.</p>
-						<a class="cell-link" href="/vr">Enter VR →</a>
-					</div>
-					<div class="stack-cell">
-						<span class="num">06</span>
-						<h3>SDK</h3>
-						<p>JS, Python, Rust. Mint, sign, attest, render, pay. Open source, MIT-licensed, on npm.</p>
-						<a class="cell-link" href="/docs">Read the docs →</a>
+					<div class="tile">
+						<three-d src="https://three.ws/animations/robotexpressive.glb" name="nova" interactive></three-d>
+						<div class="cap"><span>nova</span><span>letter</span></div>
 					</div>
 				</div>
-			</div>
-		</section>
+			</section>
 
-		<section id="embed" style="background: linear-gradient(180deg, transparent, rgba(167,139,250,0.04), transparent);">
-			<div class="shell">
-				<div class="section-eyebrow">Embed showcase</div>
-				<h2 class="section-title">Drop one anywhere.</h2>
-				<p class="section-lede">Each tile below is a real &lt;three-d&gt; instance with isolated shadow DOM. Same syntax in your blog, your landing page, your docs.</p>
+			<section class="s" id="install">
+				<div class="s-num">04 — Install</div>
+				<h2 class="s-h">two lines. live.</h2>
+				<p class="s-p">Paste once in &lt;head&gt;. Use &lt;three-d&gt; anywhere. Works in React, Vue, Svelte, plain HTML, Webflow, Notion, Shopify — any host that allows a script tag.</p>
 
-				<div class="embed-grid">
-					<div class="embed-tile">
-						<three-d src="https://three.ws/animations/robotexpressive.glb" name="Atlas" interactive></three-d>
-						<div class="label"><b>Atlas</b><span>blog post</span></div>
-					</div>
-					<div class="embed-tile">
-						<three-d src="https://three.ws/animations/soldier.glb" name="Vega" interactive></three-d>
-						<div class="label"><b>Vega</b><span>product page</span></div>
-					</div>
-					<div class="embed-tile">
-						<three-d src="https://three.ws/avatars/default.glb" name="Mira" interactive></three-d>
-						<div class="label"><b>Mira</b><span>docs sidebar</span></div>
-					</div>
-					<div class="embed-tile">
-						<three-d src="https://three.ws/avatars/cz.glb" name="CZ" interactive></three-d>
-						<div class="label"><b>CZ</b><span>profile card</span></div>
-					</div>
-					<div class="embed-tile">
-						<three-d src="https://three.ws/animations/soldier.glb" name="Echo" interactive></three-d>
-						<div class="label"><b>Echo</b><span>landing hero</span></div>
-					</div>
-					<div class="embed-tile">
-						<three-d src="https://three.ws/animations/robotexpressive.glb" name="Nova" interactive></three-d>
-						<div class="label"><b>Nova</b><span>newsletter</span></div>
-					</div>
-				</div>
-			</div>
-		</section>
-
-		<section id="install">
-			<div class="shell">
-				<div class="section-eyebrow">Install</div>
-				<h2 class="section-title">Two lines. Live.</h2>
-				<p class="section-lede">Paste the script tag once in &lt;head&gt;. Use &lt;three-d&gt; anywhere on the page. Works in React, Vue, Svelte, plain HTML, Notion embeds, Webflow, Shopify — any host that allows a script tag.</p>
-
-				<div class="install">
-					<div>
-						<pre class="code"><span class="c">&lt;!-- in &lt;head&gt; --&gt;</span>
+				<div class="code-wrap">
+					<pre class="code"><span class="c">// in &lt;head&gt;</span>
 <span class="t">&lt;script</span> <span class="a">src</span>=<span class="s">"https://three.ws/embed/v1.js"</span> <span class="a">defer</span><span class="t">&gt;&lt;/script&gt;</span>
 
-<span class="c">&lt;!-- anywhere in &lt;body&gt; --&gt;</span>
+<span class="c">// anywhere</span>
 <span class="t">&lt;three-d</span>
   <span class="a">agent</span>=<span class="s">"eip155:8453:42"</span>
-  <span class="a">name</span>=<span class="s">"Atlas"</span>
-  <span class="a">interactive</span>
-  <span class="a">autoplay</span>
-<span class="t">&gt;&lt;/three-d&gt;</span>
-
-<span class="c">// or via JS</span>
-<span class="k">Three</span>.<span class="h">mount</span>(<span class="s">'#slot'</span>, {
-  <span class="a">agent</span>: <span class="s">'eip155:8453:42'</span>,
-  <span class="a">theme</span>: <span class="s">'transparent'</span>
-});</pre>
-					</div>
-					<div>
-						<h3 style="margin:0 0 12px; font-size:22px; letter-spacing:-0.01em;">Built for the open web.</h3>
-						<ul style="margin:0; padding:0 0 0 18px; color:var(--ink-dim); line-height:1.8; font-size:15px;">
-							<li><b style="color:var(--ink)">Lazy by default.</b> Boots only when scrolled into view.</li>
-							<li><b style="color:var(--ink)">Shadow DOM.</b> Zero CSS leakage either way.</li>
-							<li><b style="color:var(--ink)">Themeable.</b> <code style="font-family:var(--mono);font-size:13px;color:var(--ink)">theme="light"</code>, <code style="font-family:var(--mono);font-size:13px;color:var(--ink)">"transparent"</code>, or your own.</li>
-							<li><b style="color:var(--ink)">Aliases.</b> <code style="font-family:var(--mono);font-size:13px;color:var(--ink)">&lt;three-d&gt;</code>, <code style="font-family:var(--mono);font-size:13px;color:var(--ink)">&lt;three-agent&gt;</code>, <code style="font-family:var(--mono);font-size:13px;color:var(--ink)">&lt;three-ws&gt;</code> — pick your taste.</li>
-							<li><b style="color:var(--ink)">Identity-native.</b> Pass an ERC-8004 ID or a direct GLB URL.</li>
-							<li><b style="color:var(--ink)">15KB loader.</b> model-viewer pulled from CDN, deduped.</li>
-						</ul>
-					</div>
+  <span class="a">interactive</span> <span class="a">autoplay</span>
+<span class="t">&gt;&lt;/three-d&gt;</span></pre>
+					<ul class="bullets">
+						<li><b>lazy</b><span>Boots on intersect. Zero cost off-screen.</span></li>
+						<li><b>shadow</b><span>Isolated CSS. No leakage in or out.</span></li>
+						<li><b>theme</b><span>Dark, light, transparent, custom.</span></li>
+						<li><b>alias</b><span>&lt;three-d&gt;, &lt;three-agent&gt;, &lt;three-ws&gt;.</span></li>
+						<li><b>id</b><span>ERC-8004 address or raw glTF URL.</span></li>
+						<li><b>size</b><span>15KB loader. CDN deduped runtime.</span></li>
+					</ul>
 				</div>
+			</section>
+		</main>
+
+		<section class="end">
+			<div class="big">ship a body.</div>
+			<div class="row">
+				<a class="cta" href="/character-studio">Open Studio</a>
+				<a class="cta-ghost" href="/docs">Read Docs</a>
 			</div>
 		</section>
-
-		<section>
-			<div class="shell">
-				<div class="metrics">
-					<div class="metric"><div class="v">15<span style="font-size:18px;color:var(--ink-dim)">KB</span></div><div class="k">Loader Size</div></div>
-					<div class="metric"><div class="v">3</div><div class="k">Custom Element Aliases</div></div>
-					<div class="metric"><div class="v">6</div><div class="k">Stack Layers</div></div>
-					<div class="metric"><div class="v">∞</div><div class="k">Hosts Supported</div></div>
-				</div>
-			</div>
-		</section>
-
-		<aside class="cta-band">
-			<div>
-				<h2>Ship the 3D layer.</h2>
-				<p>Open source. ERC-8004 identity. x402 payments. WebXR-ready. The whole stack is live today — drop the tag and watch your agent walk onto any page.</p>
-			</div>
-			<div class="cta-row">
-				<a class="btn btn-primary" href="/character-studio">Open Studio</a>
-				<a class="btn btn-ghost" href="/docs">Read Docs</a>
-			</div>
-		</aside>
 
 		<footer>
-			<div class="foot">
-				<div>
-					<span class="brand"><span class="brand-mark"></span>three.ws</span>
-					<div style="margin-top:8px;font-size:12px;color:var(--ink-faint);">The 3D layer of the internet · © 2026</div>
-				</div>
-				<nav class="foot-links" aria-label="Footer">
-					<a href="/discover">Registry</a>
-					<a href="/character-studio">Studio</a>
-					<a href="/embed/v1/preview">Embed</a>
-					<a href="/docs">Docs</a>
-					<a href="/blog">Blog</a>
-					<a href="https://github.com/nirholas/three.ws">GitHub</a>
-				</nav>
+			<div>three.ws · the 3d layer · 2026</div>
+			<div class="links">
+				<a href="/discover">registry</a>
+				<a href="/character-studio">studio</a>
+				<a href="/embed/v1/preview">embed</a>
+				<a href="/docs">docs</a>
+				<a href="/blog">blog</a>
+				<a href="https://github.com/nirholas/three.ws">github</a>
 			</div>
 		</footer>
+
+		<script>
+			(function () {
+				var mv = document.getElementById('hero-mv');
+				if (!mv) return;
+
+				var baseTheta = 0, baseRadius = 2.2, basePhi = 90;
+				var mouseX = 0, mouseY = 0, scrollY = 0;
+				var raf = null;
+
+				function apply() {
+					var theta = baseTheta + mouseX * 18; // deg
+					var phi = basePhi - mouseY * 8 + Math.min(scrollY * 0.04, 18);
+					var radius = baseRadius + Math.min(scrollY * 0.0015, 0.6);
+					mv.setAttribute('camera-orbit', theta + 'deg ' + phi + 'deg ' + radius + 'm');
+					raf = null;
+				}
+				function queue() { if (!raf) raf = requestAnimationFrame(apply); }
+
+				window.addEventListener('mousemove', function (e) {
+					mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+					mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+					queue();
+				}, { passive: true });
+
+				window.addEventListener('scroll', function () {
+					scrollY = window.scrollY || window.pageYOffset;
+					queue();
+					var hint = document.getElementById('scrollHint');
+					if (hint) hint.classList.toggle('visible', scrollY < 80);
+				}, { passive: true });
+
+				var hint = document.getElementById('scrollHint');
+				if (hint && (window.scrollY || 0) < 80) hint.classList.add('visible');
+			})();
+		</script>
 	</body>
 </html>
