@@ -18,11 +18,11 @@ const CHAIN_STYLES = {
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 
 const CATEGORY_BY_ACTION = [
-	[/^(link_wallet|unlink_wallet|password_|email_|login|logout|session)/, 'Auth'],
+	[/^(link_wallet|unlink_wallet|set_primary_wallet|password_|email_|login|logout|session|revoke_oauth_token)/, 'Auth'],
 	[/^(avatar_|create_avatar|delete_avatar|upload_avatar)/,             'Avatar'],
 	[/^(widget_|embed_)/,                                                'Widget'],
 	[/^(payment_|invoice_|payout_|withdraw_|stripe_|x402_)/,             'Payment'],
-	[/^(api_key|key_|delegate_|delegation_)/,                            'Auth'],
+	[/^(api_key|key_|revoke_api_key|delegate_|delegation_)/,             'Auth'],
 ];
 
 function categoryOf(action) {
@@ -166,8 +166,35 @@ async function copyToClipboard(text) {
 	loadDelegations(delegationHost);
 	loadActions(actionsHost);
 
-	main.querySelector('[data-action="export-csv"]').addEventListener('click', () => {
-		window.location.href = '/api/audit-log?format=csv';
+	main.querySelector('[data-action="export-csv"]').addEventListener('click', async (e) => {
+		const btn = e.currentTarget;
+		const originalText = btn.textContent;
+		btn.disabled = true;
+		btn.textContent = 'Exporting…';
+		try {
+			const res = await fetch('/api/audit-log?format=csv', { credentials: 'include' });
+			if (!res.ok) {
+				if (res.status === 404) toast('Audit log endpoint not deployed yet');
+				else if (res.status === 401) toast('Sign in required');
+				else toast(`Export failed: HTTP ${res.status}`);
+				return;
+			}
+			const blob = await res.blob();
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			URL.revokeObjectURL(url);
+			toast('CSV downloaded');
+		} catch (err) {
+			toast(err?.message ? `Export failed: ${err.message}` : 'Export failed');
+		} finally {
+			btn.disabled = false;
+			btn.textContent = originalText;
+		}
 	});
 })();
 
@@ -318,7 +345,10 @@ function renderWallets(host, wallets) {
 					${isPrimary ? '<span class="dn-tag" style="background:rgba(255,212,121,0.12);border-color:rgba(255,212,121,0.28);color:#ffd479">primary</span>' : ''}
 				</td>
 				<td style="padding:11px 12px;text-align:right;white-space:nowrap">
-					<button class="dn-btn danger" data-action="unlink" data-address="${esc(w.address)}" style="padding:5px 10px;font-size:12px">Disconnect</button>
+					<div style="display:inline-flex;gap:6px">
+						${isPrimary ? '' : `<button class="dn-btn" data-action="make-primary" data-address="${esc(w.address)}" style="padding:5px 10px;font-size:12px">Make primary</button>`}
+						<button class="dn-btn danger" data-action="unlink" data-address="${esc(w.address)}" style="padding:5px 10px;font-size:12px">Disconnect</button>
+					</div>
 				</td>
 			</tr>
 		`;
@@ -361,6 +391,23 @@ function renderWallets(host, wallets) {
 				toast(err?.message ? `Failed: ${err.message}` : 'Disconnect failed');
 				btn.disabled = false;
 				btn.textContent = 'Disconnect';
+			}
+		});
+	});
+	host.querySelectorAll('[data-action="make-primary"]').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			const addr = btn.dataset.address;
+			btn.disabled = true;
+			btn.textContent = 'Setting…';
+			try {
+				await post('/api/auth/wallets/primary', { address: addr });
+				toast('Primary wallet updated');
+				const r = await get('/api/auth/wallets');
+				renderWallets(host, Array.isArray(r?.wallets) ? r.wallets : []);
+			} catch (err) {
+				toast(err?.message ? `Failed: ${err.message}` : 'Couldn’t set primary');
+				btn.disabled = false;
+				btn.textContent = 'Make primary';
 			}
 		});
 	});

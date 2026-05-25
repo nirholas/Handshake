@@ -33,13 +33,7 @@ const PAYMENT_FILTERS = [
 
 (async function boot() {
 	const main = await mountShell();
-	const meResp = await requireUser();
-	// /api/auth/me returns { user: {...} } — peel the envelope.
-	const me = meResp?.user || meResp;
-	if (!me?.id) {
-		location.href = `/login?return=${encodeURIComponent(location.pathname)}`;
-		return;
-	}
+	const me = await requireUser();
 
 	main.innerHTML = `
 		<h1 class="dn-h1">Money</h1>
@@ -105,7 +99,6 @@ async function safe(fn) {
 		return await fn();
 	} catch (err) {
 		if (err instanceof ApiError && err.status === 401) throw err;
-		console.warn('[monetize] request failed:', err?.message || err);
 		return null;
 	}
 }

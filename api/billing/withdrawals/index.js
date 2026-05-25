@@ -33,22 +33,38 @@ export default wrap(async (req, res) => {
 		const limit = Math.min(100, Math.max(1, parseInt(params.get('limit') || '20', 10)));
 		const offset = Math.max(0, parseInt(params.get('offset') || '0', 10));
 
-		const withdrawals = await sql`
-			select id, agent_id, amount, currency_mint, chain, to_address,
-			       status, tx_signature, created_at, updated_at
-			from agent_withdrawals
-			where user_id = ${user.id}
-			  and (${status} is null or status = ${status})
-			order by created_at desc
-			limit ${limit} offset ${offset}
-		`;
+		// Branching on `status` avoids Postgres's `42P18: could not determine
+		// data type of parameter` when the entire predicate compares two NULLs
+		// (the `(${status} is null or status = ${status})` shape).
+		const withdrawals = status
+			? await sql`
+				select id, agent_id, amount, currency_mint, chain, to_address,
+				       status, tx_signature, created_at, updated_at
+				from agent_withdrawals
+				where user_id = ${user.id} and status = ${status}
+				order by created_at desc
+				limit ${limit} offset ${offset}
+			`
+			: await sql`
+				select id, agent_id, amount, currency_mint, chain, to_address,
+				       status, tx_signature, created_at, updated_at
+				from agent_withdrawals
+				where user_id = ${user.id}
+				order by created_at desc
+				limit ${limit} offset ${offset}
+			`;
 
-		const [{ total }] = await sql`
-			select count(*)::int as total
-			from agent_withdrawals
-			where user_id = ${user.id}
-			  and (${status} is null or status = ${status})
-		`;
+		const [{ total }] = status
+			? await sql`
+				select count(*)::int as total
+				from agent_withdrawals
+				where user_id = ${user.id} and status = ${status}
+			`
+			: await sql`
+				select count(*)::int as total
+				from agent_withdrawals
+				where user_id = ${user.id}
+			`;
 
 		return json(res, 200, { withdrawals, total, limit, offset });
 	}
