@@ -433,29 +433,35 @@ async function handleDetail(req, res, id) {
 	const rl = await limits.widgetRead(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	const [row] = await sql`
-		SELECT a.*, u.display_name AS author_name, u.avatar_url AS author_avatar,
-		       av.storage_key AS avatar_storage_key,
-		       av.thumbnail_key AS avatar_thumbnail_key,
-		       av.visibility AS avatar_visibility,
-		       (SELECT count(*)::int FROM skill_purchases sp
-		        WHERE sp.agent_id = a.id AND sp.status = 'confirmed') AS buyers_total,
-		       (SELECT count(*)::int FROM skill_purchases sp
-		        WHERE sp.agent_id = a.id AND sp.status = 'confirmed'
-		          AND sp.confirmed_at > now() - interval '24 hours') AS buyers_24h,
-		       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_avg,
-		       COALESCE((SELECT count(*)::int FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_count,
-		       ap.amount        AS asset_price_amount,
-		       ap.currency_mint AS asset_price_currency_mint,
-		       ap.chain         AS asset_price_chain,
-		       ap.mint_decimals AS asset_price_mint_decimals
-		FROM agent_identities a
-		LEFT JOIN users u ON u.id = a.user_id
-		LEFT JOIN avatars av ON av.id = a.avatar_id AND av.deleted_at IS NULL
-		LEFT JOIN asset_prices ap
-		       ON ap.item_type = 'agent' AND ap.item_id = a.id AND ap.is_active = true
-		WHERE a.id = ${id} AND a.deleted_at IS NULL
-	`;
+	let row;
+	try {
+		[row] = await sql`
+			SELECT a.*, u.display_name AS author_name, u.avatar_url AS author_avatar,
+			       av.storage_key AS avatar_storage_key,
+			       av.thumbnail_key AS avatar_thumbnail_key,
+			       av.visibility AS avatar_visibility,
+			       COALESCE((SELECT count(*)::int FROM skill_purchases sp
+			        WHERE sp.agent_id = a.id AND sp.status = 'confirmed'), 0) AS buyers_total,
+			       COALESCE((SELECT count(*)::int FROM skill_purchases sp
+			        WHERE sp.agent_id = a.id AND sp.status = 'confirmed'
+			          AND sp.created_at > now() - interval '24 hours'), 0) AS buyers_24h,
+			       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_avg,
+			       COALESCE((SELECT count(*)::int FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_count,
+			       ap.amount        AS asset_price_amount,
+			       ap.currency_mint AS asset_price_currency_mint,
+			       ap.chain         AS asset_price_chain,
+			       ap.mint_decimals AS asset_price_mint_decimals
+			FROM agent_identities a
+			LEFT JOIN users u ON u.id = a.user_id
+			LEFT JOIN avatars av ON av.id = a.avatar_id AND av.deleted_at IS NULL
+			LEFT JOIN asset_prices ap
+			       ON ap.item_type = 'agent' AND ap.item_id = a.id AND ap.is_active = true
+			WHERE a.id = ${id} AND a.deleted_at IS NULL
+		`;
+	} catch (err) {
+		console.error('[marketplace/detail]', err?.message || err);
+		return error(res, 500, 'db_error', 'Failed to load agent');
+	}
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 
 	const auth = await resolveAuth(req).catch(() => null);

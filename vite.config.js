@@ -225,28 +225,67 @@ const appConfig = {
 		// iframe — would register a service worker scoped to three.ws, then
 		// intercept and cache requests across every other page on the same
 		// origin. Privacy & correctness hazard for embedders.
-		// The list below is the source-relative HTML basename (without .html).
+		//
+		// VitePWA itself injects the script via its own enforce:'post'
+		// transformIndexHtml, so this strip has to run *after* the bundle is
+		// emitted to disk — a closeBundle hook on the dist/ output directory
+		// is the only ordering that's stable across Vite versions.
 		{
 			name: 'three-ws-strip-sw-from-embeds',
 			apply: 'build',
-			enforce: 'post',
-			transformIndexHtml(html, ctx) {
-				const EMBED_ENTRIES = new Set([
-					'widget',
-					'embed',
-					'avatar-embed',
-					'agent-embed',
-					'a-embed',
-					'agent-token-page',
-				]);
-				const fname = (ctx.filename || ctx.path || '')
-					.replace(/^.*\//, '')
-					.replace(/\.html$/, '');
-				if (!EMBED_ENTRIES.has(fname)) return html;
-				return html.replace(
-					/<script\s+[^>]*id=["']vite-plugin-pwa:register-sw["'][^>]*><\/script>\s*/g,
-					'',
-				);
+			closeBundle: {
+				sequential: true,
+				order: 'post',
+				async handler() {
+					const { readdirSync, statSync, readFileSync, writeFileSync } =
+						await import('node:fs');
+					const { join } = await import('node:path');
+					const EMBED_ENTRIES = new Set([
+						'widget.html',
+						'embed.html',
+						'avatar-embed.html',
+						'agent-embed.html',
+						'a-embed.html',
+						'agent-token-page.html',
+					]);
+					const RE = /<script[^>]*id=["']vite-plugin-pwa:register-sw["'][^>]*><\/script>\s*/g;
+					const outDir = 'dist';
+					const stripped = [];
+					const walk = (dir) => {
+						let entries;
+						try {
+							entries = readdirSync(dir);
+						} catch {
+							return;
+						}
+						for (const name of entries) {
+							const full = join(dir, name);
+							let s;
+							try {
+								s = statSync(full);
+							} catch {
+								continue;
+							}
+							if (s.isDirectory()) {
+								walk(full);
+								continue;
+							}
+							if (!EMBED_ENTRIES.has(name)) continue;
+							const html = readFileSync(full, 'utf8');
+							if (!RE.test(html)) continue;
+							writeFileSync(full, html.replace(RE, ''));
+							stripped.push(full);
+						}
+					};
+					walk(outDir);
+					if (stripped.length) {
+						// eslint-disable-next-line no-console
+						console.log(
+							'[strip-sw] removed registerSW script from:',
+							stripped.map((p) => p.replace(outDir + '/', '')).join(', '),
+						);
+					}
+				},
 			},
 		},
 		// Polyfill the Node `buffer` and `process` globals so @solana/web3.js

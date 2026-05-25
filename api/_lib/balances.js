@@ -1,21 +1,28 @@
 // Live on-chain balance + USD-price helpers, shared by /api/wallet/balances and
-// /api/portfolio. Server-side memoizes results per (chain, address) for 60s to
-// shield upstream RPCs and CoinGecko from per-page-load fan-out.
+// /api/portfolio.
+//
+// Optimization strategy (2026-05-25):
+//   - Solana: single Helius `getAssetsByOwner` (DAS) call returns native SOL +
+//     all fungible token balances *with metadata*. Eliminates the previous
+//     N+1 (getTokenAccountsByOwner + N×getAsset) burn (~200 Helius credits
+//     per portfolio → ~10).
+//   - Falls back to public RPC + token_metadata cache when Helius is missing
+//     or rate-limited. DAS isn't available on public RPC, so metadata then
+//     comes from our Postgres `token_metadata` cache.
+//   - Jupiter Lite Price API replaces CoinGecko for Solana token prices —
+//     faster, no rate limits, knows pump.fun bondings.
+//   - Cache layer uses Upstash Redis if configured (shared across function
+//     instances), in-memory otherwise.
 
-const RPC_CACHE_TTL_MS = 60_000;
-const _cache = new Map(); // key: `${chain}:${address}` → { at, value }
+import { cacheGet, cacheSet, cacheDel } from './cache.js';
+import { getMetadataForMints } from './token-metadata.js';
 
-function cacheGet(key) {
-	const hit = _cache.get(key);
-	if (!hit) return null;
-	if (Date.now() - hit.at > RPC_CACHE_TTL_MS) {
-		_cache.delete(key);
-		return null;
-	}
-	return hit.value;
-}
-function cacheSet(key, value) {
-	_cache.set(key, { at: Date.now(), value });
+const BALANCES_TTL_S = 60;
+
+const PUBLIC_SOL_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+function heliusRpc() {
+	const key = process.env.HELIUS_API_KEY;
+	return key ? `https://mainnet.helius-rpc.com/?api-key=${key}` : null;
 }
 
 async function fetchJson(url, opts = {}) {
@@ -25,16 +32,6 @@ async function fetchJson(url, opts = {}) {
 		throw Object.assign(new Error(`upstream ${r.status}: ${text}`), { status: 502 });
 	}
 	return r.json();
-}
-
-// Helius primary, public mainnet-beta fallback. Helius is required for `getAsset`
-// (DAS) — token metadata silently degrades when we fall back, but balances still
-// resolve, which is better than 503ing the whole portfolio when Helius is rate-
-// limited or out of credits.
-const PUBLIC_SOL_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-function heliusRpc() {
-	const key = process.env.HELIUS_API_KEY;
-	return key ? `https://mainnet.helius-rpc.com/?api-key=${key}` : null;
 }
 
 async function solRpc(body, { allowFallback = true } = {}) {
@@ -58,7 +55,184 @@ async function solRpc(body, { allowFallback = true } = {}) {
 	});
 }
 
-async function getSolanaBalances(address) {
+// -- Solana price helpers --
+
+async function jupiterPrices(mints) {
+	if (mints.length === 0) return {};
+	const out = {};
+	// Jupiter caps each request at ~100 ids
+	for (let i = 0; i < mints.length; i += 100) {
+		const chunk = mints.slice(i, i + 100).join(',');
+		try {
+			const data = await fetchJson(`https://lite-api.jup.ag/price/v3?ids=${chunk}`);
+			if (data && typeof data === 'object') Object.assign(out, data);
+		} catch (err) {
+			console.warn('[balances] jupiter price chunk failed:', err?.message);
+		}
+	}
+	return out;
+}
+
+const SOL_MINT = 'So11111111111111111111111111111111111111112';
+
+async function solNativePrice() {
+	try {
+		const data = await fetchJson(`https://lite-api.jup.ag/price/v3?ids=${SOL_MINT}`);
+		const usd = data?.[SOL_MINT]?.usdPrice ?? data?.[SOL_MINT]?.price ?? 0;
+		return Number(usd) || 0;
+	} catch {
+		try {
+			const cg = await fetchJson(
+				'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true',
+			);
+			return cg?.solana?.usd ?? 0;
+		} catch {
+			return 0;
+		}
+	}
+}
+
+// -- Solana balance path: Helius DAS getAssetsByOwner --
+
+async function getSolanaBalancesViaDas(address) {
+	const helius = heliusRpc();
+	if (!helius) return null; // signal caller to take fallback path
+
+	let allItems = [];
+	let nativeLamports = 0;
+	let page = 1;
+	// Helius paginates at 1000/page; loop until empty.
+	while (page < 6) {
+		const resp = await fetchJson(helius, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				jsonrpc: '2.0',
+				id: 'getAssetsByOwner',
+				method: 'getAssetsByOwner',
+				params: {
+					ownerAddress: address,
+					page,
+					limit: 1000,
+					displayOptions: { showFungible: true, showNativeBalance: true },
+				},
+			}),
+		});
+		const result = resp?.result;
+		if (!result) break;
+		if (page === 1 && result.nativeBalance) {
+			nativeLamports = Number(result.nativeBalance.lamports || 0);
+		}
+		const items = Array.isArray(result.items) ? result.items : [];
+		allItems = allItems.concat(items);
+		if (items.length < 1000) break;
+		page += 1;
+	}
+
+	const fungible = allItems
+		.filter((a) => a?.interface === 'FungibleToken' || a?.interface === 'FungibleAsset' || a?.token_info)
+		.map((a) => {
+			const ti = a.token_info || {};
+			const decimals = ti.decimals ?? 0;
+			const rawBalance = Number(ti.balance || 0);
+			if (!rawBalance) return null;
+			const amount = rawBalance / Math.pow(10, decimals);
+			const md = a?.content?.metadata || {};
+			const symbol = ti.symbol || md.symbol || a.id.slice(0, 6);
+			const name = md.name || symbol;
+			const logo = a?.content?.links?.image || a?.content?.files?.[0]?.uri || null;
+			const priceFromHelius = ti.price_info?.price_per_token ?? null;
+			return { mint: a.id, decimals, amount, symbol, name, logo, priceFromHelius };
+		})
+		.filter(Boolean)
+		.filter((t) => t.amount > 0);
+
+	// Persist metadata for everything we just resolved so other callers
+	// (which may not use DAS) can hit cache instead of re-fetching.
+	const metaPayload = fungible.map((t) => ({
+		mint: t.mint,
+		symbol: t.symbol,
+		name: t.name,
+		logo: t.logo,
+		decimals: t.decimals,
+	}));
+	if (metaPayload.length > 0) {
+		// Fire-and-forget — never block balance response on cache write.
+		import('./token-metadata.js')
+			.then((mod) => mod.getMetadataForMints([])) // ensure module loaded
+			.catch(() => {});
+		// Direct write (cheaper than going through getMetadataForMints):
+		try {
+			const { sql } = await import('./db.js');
+			await sql`
+				INSERT INTO token_metadata (mint, chain, symbol, name, logo, decimals, source, refreshed_at)
+				SELECT * FROM ${sql(
+					metaPayload.map((m) => [
+						m.mint,
+						'solana',
+						m.symbol,
+						m.name,
+						m.logo,
+						m.decimals,
+						'helius-das',
+						new Date(),
+					]),
+				)}
+				ON CONFLICT (mint) DO UPDATE SET
+					symbol = EXCLUDED.symbol,
+					name = EXCLUDED.name,
+					logo = EXCLUDED.logo,
+					decimals = EXCLUDED.decimals,
+					refreshed_at = EXCLUDED.refreshed_at
+			`;
+		} catch (err) {
+			console.warn('[balances] token_metadata persist failed:', err?.message);
+		}
+	}
+
+	// Prices: trust Helius price_info first, fall back to Jupiter for any gaps.
+	const missingPrice = fungible.filter((t) => !t.priceFromHelius).map((t) => t.mint);
+	const jupPrices = missingPrice.length > 0 ? await jupiterPrices(missingPrice) : {};
+	const solUsd = await solNativePrice();
+
+	const tokens = fungible
+		.map((t) => {
+			const price =
+				t.priceFromHelius ??
+				Number(jupPrices?.[t.mint]?.usdPrice ?? jupPrices?.[t.mint]?.price ?? 0) ??
+				0;
+			return {
+				symbol: t.symbol,
+				name: t.name,
+				mint: t.mint,
+				decimals: t.decimals,
+				amount: t.amount,
+				price,
+				change24h: null,
+				usd: t.amount * price,
+				logo: t.logo,
+			};
+		})
+		.sort((a, b) => (b.usd || 0) - (a.usd || 0));
+
+	return {
+		chain: 'solana',
+		address,
+		native: {
+			symbol: 'SOL',
+			name: 'Solana',
+			amount: nativeLamports / 1e9,
+			price: solUsd,
+			change24h: null,
+			usd: (nativeLamports / 1e9) * solUsd,
+		},
+		tokens,
+	};
+}
+
+// -- Solana balance fallback: plain RPC + DB metadata cache --
+
+async function getSolanaBalancesFallback(address) {
 	const solResp = await solRpc({ jsonrpc: '2.0', id: 1, method: 'getBalance', params: [address] });
 	const lamports = solResp.result?.value ?? 0;
 	const solAmount = lamports / 1e9;
@@ -83,77 +257,34 @@ async function getSolanaBalances(address) {
 			if (!tokenAmount || !tokenAmount.uiAmount || tokenAmount.uiAmount === 0) return null;
 			return { mint, amount: tokenAmount.uiAmount, decimals: tokenAmount.decimals };
 		})
-		.filter(Boolean)
-		.sort((a, b) => b.amount - a.amount);
+		.filter(Boolean);
 
-	// CoinGecko caps each request at ~100 contract addresses; chunk to stay safe.
-	const cgTokenPrices = {};
-	for (let i = 0; i < fungible.length; i += 80) {
-		const chunk = fungible.slice(i, i + 80).map((t) => t.mint).join(',');
-		try {
-			const part = await fetchJson(
-				`https://api.coingecko.com/api/v3/simple/token_price/solana?contract_addresses=${chunk}&vs_currencies=usd&include_24hr_change=true`,
-			);
-			Object.assign(cgTokenPrices, part);
-		} catch {
-			// best-effort
-		}
-	}
+	const mints = fungible.map((t) => t.mint);
+	const [metadata, jupPrices, solUsd] = await Promise.all([
+		getMetadataForMints(mints),
+		jupiterPrices(mints),
+		solNativePrice(),
+	]);
 
-	let solUsdPrice = 0;
-	let solChange24h = 0;
-	try {
-		const cgSol = await fetchJson(
-			'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true',
-		);
-		solUsdPrice = cgSol?.solana?.usd ?? 0;
-		solChange24h = cgSol?.solana?.usd_24h_change ?? 0;
-	} catch {
-		// best-effort
-	}
+	const tokens = fungible
+		.map((t) => {
+			const md = metadata.get(t.mint) || {};
+			const priceInfo = jupPrices?.[t.mint] || {};
+			const price = Number(priceInfo.usdPrice ?? priceInfo.price ?? 0);
+			return {
+				symbol: md.symbol || t.mint.slice(0, 6),
+				name: md.name || md.symbol || t.mint.slice(0, 6),
+				mint: t.mint,
+				decimals: t.decimals,
+				amount: t.amount,
+				price,
+				change24h: null,
+				usd: t.amount * price,
+				logo: md.logo || null,
+			};
+		})
+		.sort((a, b) => (b.usd || 0) - (a.usd || 0));
 
-	// DAS metadata (getAsset) is Helius-only — skip entirely if no key, since
-	// public mainnet-beta returns "method not found" for every mint.
-	const helius = heliusRpc();
-	const metaResults = helius
-		? await Promise.all(
-				fungible.map((t) =>
-					fetchJson(helius, {
-						method: 'POST',
-						headers: { 'content-type': 'application/json' },
-						body: JSON.stringify({
-							jsonrpc: '2.0',
-							id: 'meta',
-							method: 'getAsset',
-							params: { id: t.mint },
-						}),
-					}).catch(() => null),
-				),
-			)
-		: fungible.map(() => null);
-
-	const tokens = fungible.map((t, i) => {
-		const priceInfo = cgTokenPrices[t.mint.toLowerCase()] || cgTokenPrices[t.mint] || {};
-		const price = priceInfo.usd ?? 0;
-		const change24h = priceInfo.usd_24h_change ?? null;
-		const das = metaResults[i];
-		const symbol = das?.result?.content?.metadata?.symbol || t.mint.slice(0, 6);
-		const name = das?.result?.content?.metadata?.name || symbol;
-		const logo = das?.result?.content?.links?.image || null;
-		return {
-			symbol,
-			name,
-			mint: t.mint,
-			decimals: t.decimals,
-			amount: t.amount,
-			price,
-			change24h,
-			usd: t.amount * price,
-			logo,
-		};
-	});
-
-	tokens.sort((a, b) => (b.usd || 0) - (a.usd || 0));
 	return {
 		chain: 'solana',
 		address,
@@ -161,13 +292,25 @@ async function getSolanaBalances(address) {
 			symbol: 'SOL',
 			name: 'Solana',
 			amount: solAmount,
-			price: solUsdPrice,
-			change24h: solChange24h,
-			usd: solAmount * solUsdPrice,
+			price: solUsd,
+			change24h: null,
+			usd: solAmount * solUsd,
 		},
 		tokens,
 	};
 }
+
+async function getSolanaBalances(address) {
+	try {
+		const viaDas = await getSolanaBalancesViaDas(address);
+		if (viaDas) return viaDas;
+	} catch (err) {
+		console.warn('[balances] DAS path failed, using fallback:', err?.message);
+	}
+	return getSolanaBalancesFallback(address);
+}
+
+// -- EVM (Alchemy) — unchanged behavior, kept on CoinGecko since Jupiter is Solana-only --
 
 async function getEvmBalances(address) {
 	const alchemyKey = process.env.ALCHEMY_API_KEY;
@@ -205,8 +348,9 @@ async function getEvmBalances(address) {
 		}),
 	});
 
-	const rawTokens = (tokenBalResp.result?.tokenBalances ?? [])
-		.filter((t) => t.tokenBalance && t.tokenBalance !== '0x0' && t.tokenBalance !== '0x');
+	const rawTokens = (tokenBalResp.result?.tokenBalances ?? []).filter(
+		(t) => t.tokenBalance && t.tokenBalance !== '0x0' && t.tokenBalance !== '0x',
+	);
 
 	const metadataResults = await Promise.allSettled(
 		rawTokens.map((t) =>
@@ -286,16 +430,16 @@ async function getEvmBalances(address) {
 }
 
 export async function getBalances({ chain, address }) {
-	const key = `${chain}:${address}`;
-	const cached = cacheGet(key);
+	const key = `bal:${chain}:${address}`;
+	const cached = await cacheGet(key);
 	if (cached) return cached;
 	const value = chain === 'solana' ? await getSolanaBalances(address) : await getEvmBalances(address);
-	cacheSet(key, value);
+	await cacheSet(key, value, BALANCES_TTL_S);
 	return value;
 }
 
-export function invalidateBalances({ chain, address }) {
-	_cache.delete(`${chain}:${address}`);
+export async function invalidateBalances({ chain, address }) {
+	await cacheDel(`bal:${chain}:${address}`);
 }
 
 export function walletUsdTotal(balances) {

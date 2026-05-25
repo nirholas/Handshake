@@ -355,17 +355,23 @@ async function handleList(req, res) {
 
 	// agentId-only path: public, no auth required
 	if (agentId && !delegator) {
-		const rows = await sql`
-			SELECT
-				id, chain_id, delegator_address, delegate_address, delegation_hash,
-				scope, status, expires_at, created_at, last_redeemed_at, redemption_count
-			FROM agent_delegations
-			WHERE agent_id = ${agentId}
-			  AND (${statusParam} = 'all' OR status = ${statusParam})
-			  AND (${chainId}::integer IS NULL OR chain_id = ${chainId}::integer)
-			ORDER BY created_at DESC
-			LIMIT ${limitParam} OFFSET ${offset}
-		`;
+		let rows;
+		try {
+			rows = await sql`
+				SELECT
+					id, chain_id, delegator_address, delegate_address, delegation_hash,
+					scope, status, expires_at, created_at, last_redeemed_at, redemption_count
+				FROM agent_delegations
+				WHERE agent_id = ${agentId}
+				  AND (${statusParam} = 'all' OR status = ${statusParam})
+				  AND (${chainId}::integer IS NULL OR chain_id = ${chainId}::integer)
+				ORDER BY created_at DESC
+				LIMIT ${limitParam} OFFSET ${offset}
+			`;
+		} catch (err) {
+			console.error('[permissions/list] public query failed', err?.message || err);
+			return error(res, 500, 'db_error', 'Failed to list delegations');
+		}
 
 		const delegations = rows.map(toListPublicShape);
 		const body = { ok: true, delegations };
@@ -402,18 +408,24 @@ async function handleList(req, res) {
 	}
 
 	const whereAgentId = agentId;
-	const rows = await sql`
-		SELECT
-			id, chain_id, delegator_address, delegate_address, delegation_hash,
-			delegation_json, scope, status, expires_at, created_at, last_redeemed_at, redemption_count
-		FROM agent_delegations
-		WHERE (${whereAgentId}::uuid IS NULL OR agent_id = ${whereAgentId}::uuid)
-		  AND (${targetDelegator}::text IS NULL OR lower(delegator_address) = lower(${targetDelegator}::text))
-		  AND (${statusParam} = 'all' OR status = ${statusParam})
-		  AND (${chainId}::integer IS NULL OR chain_id = ${chainId}::integer)
-		ORDER BY created_at DESC
-		LIMIT ${limitParam} OFFSET ${offset}
-	`;
+	let rows;
+	try {
+		rows = await sql`
+			SELECT
+				id, chain_id, delegator_address, delegate_address, delegation_hash,
+				delegation_json, scope, status, expires_at, created_at, last_redeemed_at, redemption_count
+			FROM agent_delegations
+			WHERE (${whereAgentId}::uuid IS NULL OR agent_id = ${whereAgentId}::uuid)
+			  AND (${targetDelegator}::text IS NULL OR lower(delegator_address) = lower(${targetDelegator}::text))
+			  AND (${statusParam} = 'all' OR status = ${statusParam})
+			  AND (${chainId}::integer IS NULL OR chain_id = ${chainId}::integer)
+			ORDER BY created_at DESC
+			LIMIT ${limitParam} OFFSET ${offset}
+		`;
+	} catch (err) {
+		console.error('[permissions/list] auth query failed', err?.message || err);
+		return error(res, 500, 'db_error', 'Failed to list delegations');
+	}
 
 	const delegations = rows.map(toListAuthShape);
 	const body = { ok: true, delegations };

@@ -48,6 +48,23 @@ create unique index if not exists user_subdomains_label_parent
 create index if not exists user_subdomains_user
     on user_subdomains(user_id, created_at desc);
 
+-- ── token_metadata — server cache of Solana token info (symbol/name/logo) ──
+-- Resolved once via Helius DAS, then served from Postgres on every subsequent
+-- portfolio load. Biggest Helius-credit saver in the system.
+create table if not exists token_metadata (
+    mint           text primary key,
+    chain          text not null default 'solana',
+    symbol         text,
+    name           text,
+    logo           text,
+    decimals       smallint,
+    source         text,
+    refreshed_at   timestamptz not null default now(),
+    created_at     timestamptz not null default now()
+);
+create index if not exists token_metadata_chain on token_metadata(chain);
+create index if not exists token_metadata_refreshed on token_metadata(refreshed_at);
+
 -- ── avatars (GLBs stored in R2) ─────────────────────────────────────────────
 create table if not exists avatars (
     id              uuid primary key default gen_random_uuid(),

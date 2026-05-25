@@ -28,7 +28,7 @@ function stripSol(name) {
  */
 export async function resolveSnsName(name) {
 	try {
-		const { resolve } = await import('@bonfida/spl-name-service');
+		const { resolve } = await import('@bonfida/spl-name-service/dist/cjs/index.js');
 		const pk = await resolve(makeConnection(), stripSol(name));
 		return pk.toBase58();
 	} catch {
@@ -43,7 +43,7 @@ export async function resolveSnsName(name) {
  */
 export async function reverseLookupAddress(addr) {
 	try {
-		const { getFavoriteDomain } = await import('@bonfida/spl-name-service');
+		const { getFavoriteDomain } = await import('@bonfida/spl-name-service/dist/cjs/index.js');
 		const owner = new PublicKey(addr);
 		const { reverse } = await getFavoriteDomain(makeConnection(), owner);
 		return reverse.endsWith('.sol') ? reverse : `${reverse}.sol`;

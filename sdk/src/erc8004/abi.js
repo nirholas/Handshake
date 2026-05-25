@@ -81,9 +81,12 @@ export const VALIDATION_REGISTRY_ABI = [
 
 // Canonical ERC-8004 reference deployments — same address on every chain via
 // CREATE2. Source: https://github.com/nirholas/erc8004-agents
-// ValidationRegistry mainnet deployment is pending. After running
-// contracts/script/deploy-validation-registry.sh, fill in the address
-// produced by computeAddress(DEPLOYER_ADDRESS) in MAINNET.validationRegistry.
+//
+// `null` for a registry means it has not yet been deployed on this network
+// tier. Callers should resolve via `getRegistry(chainId, kind)` below, which
+// reads `THREE_WS_REGISTRY_<KIND>_<CHAIN_ID>` env overrides first and throws
+// a clear error rather than returning empty/zero, preventing accidental
+// "send to nothing" txs.
 
 const TESTNET = {
 	identityRegistry: '0x8004A818BFB912233c491871b3d84c89A494BD9e',
@@ -94,7 +97,7 @@ const TESTNET = {
 const MAINNET = {
 	identityRegistry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
 	reputationRegistry: '0x8004BAa17C55a88189AE136b182e5fdA19dE9b63',
-	validationRegistry: '',
+	validationRegistry: null,
 };
 
 /**
@@ -137,4 +140,38 @@ export const REGISTRY_DEPLOYMENTS = {
  */
 export function agentRegistryId(chainId, registryAddress) {
 	return `eip155:${chainId}:${registryAddress}`;
+}
+
+/**
+ * Resolve a registry address for a chain with an env override path. Throws
+ * if no real address is available rather than returning an empty/falsy
+ * value that would silently land at the zero address.
+ *
+ * Env: `THREE_WS_REGISTRY_<KIND>_<chainId>=0x…` where KIND is one of
+ * IDENTITY / REPUTATION / VALIDATION.
+ *
+ * @param {number} chainId
+ * @param {'identityRegistry'|'reputationRegistry'|'validationRegistry'} kind
+ * @returns {string} 0x EVM address
+ */
+export function getRegistry(chainId, kind) {
+	const slug = {
+		identityRegistry: 'IDENTITY',
+		reputationRegistry: 'REPUTATION',
+		validationRegistry: 'VALIDATION',
+	}[kind];
+	if (!slug) throw new Error(`unknown_registry_kind: ${kind}`);
+	if (typeof process !== 'undefined' && process.env) {
+		const env = process.env[`THREE_WS_REGISTRY_${slug}_${chainId}`];
+		if (env && /^0x[0-9a-fA-F]{40}$/.test(env.trim())) return env.trim();
+	}
+	const deployments = REGISTRY_DEPLOYMENTS[chainId];
+	const addr = deployments?.[kind];
+	if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) {
+		throw new Error(
+			`erc8004_not_deployed: ${kind} is not available on chain ${chainId}. ` +
+				`Set THREE_WS_REGISTRY_${slug}_${chainId}=0x… to opt in.`,
+		);
+	}
+	return addr;
 }
