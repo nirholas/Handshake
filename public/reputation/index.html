@@ -15,6 +15,16 @@
 		<link rel="stylesheet" href="/home.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<script defer src="/footer-newsletter.js"></script>
+		<!-- Importmap must be parsed before any <script type="module"> or
+		     <link rel="modulepreload">. Keep it as the first script-of-any-kind
+		     in <head> so reputation.js can `import "ethers"` against the CDN. -->
+		<script type="importmap">
+			{
+				"imports": {
+					"ethers": "https://esm.sh/ethers@6.16.0"
+				}
+			}
+		</script>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
@@ -639,13 +649,6 @@
 			</div>
 		</footer>
 
-		<script type="importmap">
-			{
-				"imports": {
-					"ethers": "https://esm.sh/ethers@6.16.0"
-				}
-			}
-		</script>
 		<script type="module" src="/reputation/reputation.js"></script>
 	</body>
 </html>
