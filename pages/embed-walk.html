@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Walk Avatar Embed Generator · three.ws</title>
+	<meta name="description" content="Generate an embed snippet for your three.ws walking avatar — iframe or one-line JS tag." />
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+		:root {
+			--bg: #0a0a0a;
+			--surface: #111111;
+			--surface2: #1a1a1a;
+			--border: rgba(255,255,255,0.08);
+			--text: #f5f5f5;
+			--text-muted: #71717a;
+			--accent: #7c3aed;
+			--accent-light: #a78bfa;
+			--radius: 10px;
+			--font: 'Inter', system-ui, -apple-system, sans-serif;
+			--mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+		}
+
+		html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+		a { color: var(--accent-light); text-decoration: none; }
+		a:hover { text-decoration: underline; }
+
+		/* ── Layout ─────────────────────────────────────────────────────── */
+		.ew-topbar {
+			display: flex; align-items: center; gap: 12px;
+			padding: 14px 24px;
+			border-bottom: 1px solid var(--border);
+			background: var(--surface);
+		}
+		.ew-topbar-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; color: var(--text); text-decoration: none; }
+		.ew-topbar-logo svg { width: 22px; height: 22px; }
+		.ew-topbar-sep { color: var(--text-muted); }
+		.ew-topbar-title { color: var(--text-muted); font-size: 14px; }
+		.ew-topbar-back { margin-left: auto; font-size: 13px; color: var(--text-muted); }
+
+		.ew-layout {
+			display: grid;
+			grid-template-columns: 380px 1fr;
+			min-height: calc(100vh - 53px);
+		}
+		@media (max-width: 800px) { .ew-layout { grid-template-columns: 1fr; } }
+
+		/* ── Left panel (config) ─────────────────────────────────────────── */
+		.ew-config {
+			border-right: 1px solid var(--border);
+			overflow-y: auto;
+			padding: 24px;
+			display: flex;
+			flex-direction: column;
+			gap: 20px;
+		}
+
+		.ew-section-title {
+			font-size: 11px;
+			font-weight: 600;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: var(--text-muted);
+			margin-bottom: 8px;
+		}
+
+		.ew-field { display: flex; flex-direction: column; gap: 6px; }
+		.ew-label { font-size: 13px; color: var(--text-muted); }
+		.ew-input, .ew-select {
+			background: var(--surface2);
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			color: var(--text);
+			font-size: 13px;
+			padding: 8px 10px;
+			font-family: var(--font);
+			outline: none;
+			width: 100%;
+			transition: border-color 0.15s;
+		}
+		.ew-input:focus, .ew-select:focus { border-color: var(--accent); }
+		.ew-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+		.ew-select option { background: #1a1a1a; }
+
+		.ew-radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
+		.ew-radio-group label {
+			display: flex; align-items: center; gap: 6px;
+			padding: 6px 12px;
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			cursor: pointer;
+			font-size: 13px;
+			transition: border-color 0.15s, background 0.15s;
+		}
+		.ew-radio-group label:has(input:checked) { border-color: var(--accent); background: rgba(124,58,237,0.12); color: var(--accent-light); }
+		.ew-radio-group input { display: none; }
+
+		.ew-toggle-row { display: flex; align-items: center; justify-content: space-between; }
+		.ew-toggle {
+			position: relative; width: 36px; height: 20px;
+			background: var(--surface2);
+			border: 1px solid var(--border);
+			border-radius: 999px;
+			cursor: pointer;
+			transition: background 0.2s;
+			flex-shrink: 0;
+		}
+		.ew-toggle.on { background: var(--accent); border-color: var(--accent); }
+		.ew-toggle::after {
+			content: ''; position: absolute; width: 14px; height: 14px;
+			background: #fff; border-radius: 50%; top: 2px; left: 2px;
+			transition: transform 0.2s;
+		}
+		.ew-toggle.on::after { transform: translateX(16px); }
+
+		.ew-slider-row { display: flex; align-items: center; gap: 10px; }
+		.ew-slider { flex: 1; accent-color: var(--accent); cursor: pointer; }
+		.ew-slider-val { font-size: 12px; color: var(--text-muted); min-width: 30px; text-align: right; font-family: var(--mono); }
+
+		.ew-size-presets { display: flex; gap: 6px; margin-bottom: 8px; }
+		.ew-size-preset {
+			padding: 5px 10px;
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			font-size: 12px;
+			cursor: pointer;
+			background: none;
+			color: var(--text-muted);
+			transition: all 0.15s;
+		}
+		.ew-size-preset:hover, .ew-size-preset.active { border-color: var(--accent); color: var(--accent-light); background: rgba(124,58,237,0.1); }
+
+		.ew-wh { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+		.ew-avatar-input-row { display: flex; gap: 8px; align-items: flex-end; }
+		.ew-avatar-input-row .ew-input { flex: 1; }
+		.ew-avatar-preview {
+			width: 52px; height: 52px; border-radius: 8px;
+			background: var(--surface2); border: 1px solid var(--border);
+			object-fit: cover; flex-shrink: 0; display: block;
+		}
+
+		/* ── Right panel (preview + snippet) ────────────────────────────── */
+		.ew-preview-panel {
+			display: flex; flex-direction: column;
+			padding: 24px;
+			gap: 20px;
+		}
+
+		.ew-preview-wrap {
+			flex: 1;
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+			overflow: hidden;
+			background: var(--surface);
+			position: relative;
+			min-height: 300px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.ew-preview-iframe {
+			border: none;
+			display: block;
+		}
+		.ew-preview-label {
+			position: absolute;
+			top: 10px;
+			left: 50%;
+			transform: translateX(-50%);
+			font-size: 11px;
+			color: var(--text-muted);
+			background: rgba(0,0,0,0.7);
+			padding: 3px 10px;
+			border-radius: 999px;
+			pointer-events: none;
+			white-space: nowrap;
+		}
+		.ew-preview-new-tab {
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			font-size: 11px;
+			color: var(--text-muted);
+			background: rgba(0,0,0,0.7);
+			padding: 3px 10px;
+			border-radius: 999px;
+			text-decoration: none;
+			transition: color 0.15s;
+		}
+		.ew-preview-new-tab:hover { color: var(--text); text-decoration: none; }
+
+		.ew-snippet-section { display: flex; flex-direction: column; gap: 10px; }
+
+		.ew-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+		.ew-tab {
+			padding: 8px 14px;
+			font-size: 13px;
+			color: var(--text-muted);
+			cursor: pointer;
+			border: none;
+			background: none;
+			border-bottom: 2px solid transparent;
+			margin-bottom: -1px;
+			transition: color 0.15s, border-color 0.15s;
+		}
+		.ew-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+		.ew-tab:hover:not(.active) { color: var(--text); }
+
+		.ew-code-block {
+			position: relative;
+			background: var(--surface2);
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+			overflow: hidden;
+		}
+		.ew-code-block pre {
+			padding: 14px 16px;
+			font-family: var(--mono);
+			font-size: 12px;
+			line-height: 1.6;
+			color: var(--text);
+			overflow-x: auto;
+			white-space: pre;
+		}
+		.ew-copy-btn {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			padding: 4px 10px;
+			background: var(--surface);
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			font-size: 11px;
+			color: var(--text-muted);
+			cursor: pointer;
+			transition: all 0.15s;
+			font-family: var(--font);
+		}
+		.ew-copy-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+		.ew-copy-btn.copied { color: #4ade80; border-color: rgba(74,222,128,0.3); }
+
+		.ew-note {
+			font-size: 12px;
+			color: var(--text-muted);
+			line-height: 1.5;
+			padding: 10px 12px;
+			background: rgba(124,58,237,0.08);
+			border: 1px solid rgba(124,58,237,0.2);
+			border-radius: 6px;
+		}
+
+		/* color swatch */
+		.ew-color-row { display: flex; align-items: center; gap: 8px; }
+		.ew-color-row input[type=color] { width: 36px; height: 32px; border: 1px solid var(--border); border-radius: 6px; padding: 2px; background: var(--surface2); cursor: pointer; }
+
+		/* skeleton for avatar thumb */
+		@keyframes shimmer { from { opacity: 0.4; } to { opacity: 1; } }
+		.ew-avatar-preview.loading { animation: shimmer 0.9s ease-in-out alternate infinite; }
+	</style>
+</head>
+<body>
+<nav class="ew-topbar">
+	<a href="/" class="ew-topbar-logo">
+		<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="15" stroke="#7c3aed" stroke-width="2"/><path d="M8 16l8-8 8 8-8 8-8-8z" fill="#7c3aed" opacity=".5"/><circle cx="16" cy="16" r="4" fill="#a78bfa"/></svg>
+		three.ws
+	</a>
+	<span class="ew-topbar-sep">/</span>
+	<span class="ew-topbar-title">Walk Embed Generator</span>
+	<a href="/walk" class="ew-topbar-back">← Back to Walk</a>
+</nav>
+
+<div class="ew-layout">
+	<!-- ── Left: config ──────────────────────────────────────────── -->
+	<aside class="ew-config">
+
+		<div>
+			<div class="ew-section-title">Avatar</div>
+			<div class="ew-field">
+				<label class="ew-label" for="cfg-avatar">Avatar ID</label>
+				<div class="ew-avatar-input-row">
+					<input id="cfg-avatar" class="ew-input" type="text" placeholder="paste avatar UUID…" spellcheck="false" />
+					<img id="avatar-thumb" class="ew-avatar-preview" src="" alt="avatar preview" />
+				</div>
+			</div>
+		</div>
+
+		<div>
+			<div class="ew-section-title">Controls</div>
+			<div class="ew-radio-group" id="cfg-controls">
+				<label><input type="radio" name="controls" value="joystick" checked> Joystick</label>
+				<label><input type="radio" name="controls" value="keyboard"> Keyboard</label>
+				<label><input type="radio" name="controls" value="none"> None (autoplay)</label>
+				<label><input type="radio" name="controls" value="auto"> Auto (device)</label>
+			</div>
+		</div>
+
+		<div>
+			<div class="ew-section-title">Background</div>
+			<div class="ew-radio-group" id="cfg-bg-type">
+				<label><input type="radio" name="bg-type" value="transparent" checked> Transparent</label>
+				<label><input type="radio" name="bg-type" value="color"> Color</label>
+				<label><input type="radio" name="bg-type" value="none"> Black</label>
+			</div>
+			<div class="ew-color-row" id="bg-color-row" style="margin-top:10px;display:none">
+				<input type="color" id="cfg-bg-color" value="#1a1a2e" />
+				<span class="ew-label" id="bg-color-label">#1a1a2e</span>
+			</div>
+		</div>
+
+		<div>
+			<div class="ew-section-title">Size</div>
+			<div class="ew-size-presets" id="size-presets">
+				<button class="ew-size-preset" data-w="200" data-h="280">S</button>
+				<button class="ew-size-preset active" data-w="320" data-h="480">M</button>
+				<button class="ew-size-preset" data-w="480" data-h="720">L</button>
+				<button class="ew-size-preset" data-w="" data-h="">Custom</button>
+			</div>
+			<div class="ew-wh">
+				<div class="ew-field">
+					<label class="ew-label" for="cfg-w">Width (px)</label>
+					<input id="cfg-w" class="ew-input" type="number" value="320" min="100" max="2000" />
+				</div>
+				<div class="ew-field">
+					<label class="ew-label" for="cfg-h">Height (px)</label>
+					<input id="cfg-h" class="ew-input" type="number" value="480" min="100" max="2000" />
+				</div>
+			</div>
+		</div>
+
+		<div>
+			<div class="ew-section-title">Walk Speed</div>
+			<div class="ew-slider-row">
+				<input type="range" id="cfg-speed" class="ew-slider" min="0.5" max="2" step="0.05" value="1" />
+				<span class="ew-slider-val" id="cfg-speed-val">1×</span>
+			</div>
+		</div>
+
+		<div>
+			<div class="ew-section-title">Options</div>
+			<div class="ew-field" style="gap:12px">
+				<div class="ew-toggle-row">
+					<span class="ew-label">Autoplay idle animation</span>
+					<div class="ew-toggle on" id="cfg-autoplay" role="switch" aria-checked="true" tabindex="0"></div>
+				</div>
+				<div class="ew-toggle-row">
+					<span class="ew-label">Shadow ground disc</span>
+					<div class="ew-toggle" id="cfg-ground" role="switch" aria-checked="false" tabindex="0"></div>
+				</div>
+				<div class="ew-toggle-row">
+					<span class="ew-label">Orbit drag (desktop)</span>
+					<div class="ew-toggle" id="cfg-orbit" role="switch" aria-checked="false" tabindex="0"></div>
+				</div>
+			</div>
+		</div>
+
+		<div>
+			<div class="ew-section-title">Embed Type</div>
+			<div class="ew-radio-group" id="cfg-embed-type">
+				<label><input type="radio" name="embed-type" value="iframe" checked> iframe</label>
+				<label><input type="radio" name="embed-type" value="js"> JS SDK (script tag)</label>
+			</div>
+		</div>
+
+	</aside>
+
+	<!-- ── Right: preview + snippet ──────────────────────────────── -->
+	<main class="ew-preview-panel">
+		<div class="ew-preview-wrap" id="preview-wrap">
+			<span class="ew-preview-label">Live preview</span>
+			<a class="ew-preview-new-tab" id="preview-new-tab" href="#" target="_blank" rel="noopener">↗ New tab</a>
+			<iframe id="preview-iframe" class="ew-preview-iframe" title="Avatar preview" allow="autoplay" loading="lazy"></iframe>
+		</div>
+
+		<div class="ew-snippet-section">
+			<div class="ew-tabs" id="snippet-tabs">
+				<button class="ew-tab active" data-tab="html">HTML</button>
+				<button class="ew-tab" data-tab="react">React</button>
+				<button class="ew-tab" data-tab="vue">Vue</button>
+				<button class="ew-tab" data-tab="svelte">Svelte</button>
+			</div>
+
+			<div class="ew-code-block">
+				<pre id="snippet-code"></pre>
+				<button class="ew-copy-btn" id="copy-btn">Copy</button>
+			</div>
+
+			<p id="framework-note" class="ew-note" style="display:none">
+				Install the React wrapper: <code>npm i @threews/react</code> — then import <code>WalkEmbed</code> from it.
+			</p>
+		</div>
+	</main>
+</div>
+
+<script type="module">
+const ORIGIN = location.origin;
+
+// ── State ──────────────────────────────────────────────────────────────────
+const cfg = {
+	avatarId: '',
+	controls: 'joystick',
+	bgType: 'transparent',
+	bgColor: '#1a1a2e',
+	w: 320,
+	h: 480,
+	speed: 1,
+	autoplay: true,
+	ground: false,
+	orbit: false,
+	embedType: 'iframe',
+	tab: 'html',
+};
+
+// ── Read URL state ─────────────────────────────────────────────────────────
+(function readUrl() {
+	const p = new URLSearchParams(location.search);
+	if (p.get('avatar'))   cfg.avatarId   = p.get('avatar');
+	if (p.get('controls')) cfg.controls   = p.get('controls');
+	if (p.get('bg'))       { const v = p.get('bg'); if (v === 'transparent') { cfg.bgType = 'transparent'; } else { cfg.bgType = 'color'; cfg.bgColor = v; } }
+	if (p.get('w'))        cfg.w          = parseInt(p.get('w')) || 320;
+	if (p.get('h'))        cfg.h          = parseInt(p.get('h')) || 480;
+	if (p.get('speed'))    cfg.speed      = parseFloat(p.get('speed')) || 1;
+	if (p.get('autoplay') === 'false') cfg.autoplay = false;
+	if (p.get('ground')   === 'true')  cfg.ground   = true;
+	if (p.get('orbit')    === 'true')  cfg.orbit    = true;
+	if (p.get('type'))     cfg.embedType  = p.get('type');
+})();
+
+// ── DOM refs ───────────────────────────────────────────────────────────────
+const avatarInput   = document.getElementById('cfg-avatar');
+const avatarThumb   = document.getElementById('avatar-thumb');
+const speedSlider   = document.getElementById('cfg-speed');
+const speedVal      = document.getElementById('cfg-speed-val');
+const wInput        = document.getElementById('cfg-w');
+const hInput        = document.getElementById('cfg-h');
+const bgColorInput  = document.getElementById('cfg-bg-color');
+const bgColorLabel  = document.getElementById('bg-color-label');
+const bgColorRow    = document.getElementById('bg-color-row');
+const iframe        = document.getElementById('preview-iframe');
+const newTabLink    = document.getElementById('preview-new-tab');
+const snippetCode   = document.getElementById('snippet-code');
+const copyBtn       = document.getElementById('copy-btn');
+const frameworkNote = document.getElementById('framework-note');
+const previewWrap   = document.getElementById('preview-wrap');
+
+// ── Wire initial values ────────────────────────────────────────────────────
+avatarInput.value = cfg.avatarId;
+speedSlider.value = cfg.speed;
+speedVal.textContent = cfg.speed + '×';
+wInput.value = cfg.w;
+hInput.value = cfg.h;
+bgColorInput.value = cfg.bgColor;
+bgColorLabel.textContent = cfg.bgColor;
+
+document.querySelectorAll('input[name=controls]').forEach(r => { if (r.value === cfg.controls) r.checked = true; });
+document.querySelectorAll('input[name=bg-type]').forEach(r => { if (r.value === cfg.bgType) r.checked = true; });
+document.querySelectorAll('input[name=embed-type]').forEach(r => { if (r.value === cfg.embedType) r.checked = true; });
+
+if (cfg.bgType === 'color') bgColorRow.style.display = 'flex';
+setToggle('cfg-autoplay', cfg.autoplay);
+setToggle('cfg-ground',   cfg.ground);
+setToggle('cfg-orbit',    cfg.orbit);
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function setToggle(id, val) {
+	const el = document.getElementById(id);
+	el.classList.toggle('on', val);
+	el.setAttribute('aria-checked', String(val));
+}
+
+function buildSrc() {
+	const p = new URLSearchParams();
+	if (cfg.avatarId) p.set('avatar', cfg.avatarId);
+	p.set('controls', cfg.controls);
+	const bg = cfg.bgType === 'transparent' ? 'transparent' : cfg.bgType === 'color' ? cfg.bgColor : '#000000';
+	p.set('bg', bg);
+	if (cfg.speed !== 1) p.set('speed', String(cfg.speed));
+	if (!cfg.autoplay) p.set('autoplay', 'false');
+	if (cfg.ground) p.set('ground', 'true');
+	if (cfg.orbit) p.set('orbit', 'true');
+	return `${ORIGIN}/walk-embed?${p}`;
+}
+
+function buildSnippet(tab) {
+	const src = buildSrc();
+	const w = cfg.w, h = cfg.h;
+
+	if (cfg.embedType === 'js') {
+		const attrs = [`src="${ORIGIN}/walk-embed-sdk.js"`];
+		if (cfg.avatarId) attrs.push(`data-avatar="${cfg.avatarId}"`);
+		attrs.push(`data-controls="${cfg.controls}"`);
+		const bg = cfg.bgType === 'transparent' ? 'transparent' : cfg.bgType === 'color' ? cfg.bgColor : '#000000';
+		if (bg !== 'transparent') attrs.push(`data-bg="${bg}"`);
+		attrs.push(`data-width="${w}"`, `data-height="${h}"`);
+		if (cfg.speed !== 1) attrs.push(`data-speed="${cfg.speed}"`);
+		if (!cfg.autoplay) attrs.push(`data-autoplay="false"`);
+		if (cfg.ground) attrs.push(`data-ground="true"`);
+		if (cfg.orbit) attrs.push(`data-orbit="true"`);
+		const tag = `<script\n  ${attrs.join('\n  ')}>\n<\/script>`;
+		if (tab === 'react') return `import { useEffect } from 'react';\n\nexport function WalkAvatar() {\n  useEffect(() => {\n    const s = document.createElement('script');\n    s.src = '${ORIGIN}/walk-embed-sdk.js';\n    ${cfg.avatarId ? `s.dataset.avatar = '${cfg.avatarId}';\n    ` : ''}s.dataset.controls = '${cfg.controls}';\n    s.dataset.width = '${w}';\n    s.dataset.height = '${h}';\n    document.body.appendChild(s);\n    return () => window.ThreeWalkAvatar?.unmount();\n  }, []);\n  return null;\n}`;
+		if (tab === 'vue') return `<!-- In your component -->\n<script setup>\nimport { onMounted, onUnmounted } from 'vue';\nonMounted(() => {\n  const s = document.createElement('script');\n  s.src = '${ORIGIN}/walk-embed-sdk.js';\n  ${cfg.avatarId ? `s.dataset.avatar = '${cfg.avatarId}';\n  ` : ''}s.dataset.controls = '${cfg.controls}';\n  s.dataset.width = '${w}';\n  s.dataset.height = '${h}';\n  document.body.appendChild(s);\n});\nonUnmounted(() => window.ThreeWalkAvatar?.unmount());\n<\/script>`;
+		if (tab === 'svelte') return `<script>\n  import { onMount, onDestroy } from 'svelte';\n  onMount(() => {\n    const s = document.createElement('script');\n    s.src = '${ORIGIN}/walk-embed-sdk.js';\n    ${cfg.avatarId ? `s.dataset.avatar = '${cfg.avatarId}';\n    ` : ''}s.dataset.controls = '${cfg.controls}';\n    s.dataset.width = '${w}';\n    s.dataset.height = '${h}';\n    document.body.appendChild(s);\n    return () => window.ThreeWalkAvatar?.unmount();\n  });\n<\/script>`;
+		return tag;
+	}
+
+	// iframe
+	const style = `border:0;border-radius:12px;max-width:100%`;
+	const base = `<iframe\n  src="${src}"\n  width="${w}"\n  height="${h}"\n  style="${style}"\n  allow="autoplay"\n  title="Walking avatar"\n  loading="lazy">\n</iframe>`;
+
+	if (tab === 'react') return `export function WalkAvatar() {\n  return (\n    <iframe\n      src="${src}"\n      width={${w}}\n      height={${h}}\n      style={{ border: 0, borderRadius: 12, maxWidth: '100%' }}\n      allow="autoplay"\n      title="Walking avatar"\n      loading="lazy"\n    />\n  );\n}`;
+	if (tab === 'vue') return `<template>\n  <iframe\n    :src="\`${src}\`"\n    :width="${w}"\n    :height="${h}"\n    style="border:0;border-radius:12px;max-width:100%"\n    allow="autoplay"\n    title="Walking avatar"\n    loading="lazy"\n  />\n</template>`;
+	if (tab === 'svelte') return `<iframe\n  src="${src}"\n  width="${w}"\n  height="${h}"\n  style="border:0;border-radius:12px;max-width:100%"\n  allow="autoplay"\n  title="Walking avatar"\n  loading="lazy"\n/>`;
+	return base;
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+let updateTimer = null;
+function scheduleUpdate() {
+	clearTimeout(updateTimer);
+	updateTimer = setTimeout(update, 120);
+}
+
+function update() {
+	const src = buildSrc();
+	if (iframe.src !== src) {
+		iframe.src = src;
+		newTabLink.href = src;
+	}
+	iframe.width = cfg.w;
+	iframe.height = cfg.h;
+
+	// Keep preview container reasonable
+	const maxW = previewWrap.clientWidth - 32;
+	const maxH = Math.max(300, window.innerHeight * 0.55);
+	const scale = Math.min(1, maxW / cfg.w, maxH / cfg.h);
+	iframe.style.width = Math.round(cfg.w * scale) + 'px';
+	iframe.style.height = Math.round(cfg.h * scale) + 'px';
+
+	// Snippet
+	const activeTab = document.querySelector('.ew-tab.active')?.dataset.tab || 'html';
+	snippetCode.textContent = buildSnippet(activeTab);
+	frameworkNote.style.display = (activeTab !== 'html' && cfg.embedType === 'iframe') ? 'none' : (activeTab !== 'html' ? 'block' : 'none');
+
+	// URL state
+	const p = new URLSearchParams();
+	if (cfg.avatarId)     p.set('avatar', cfg.avatarId);
+	if (cfg.controls !== 'joystick') p.set('controls', cfg.controls);
+	const bg = cfg.bgType === 'transparent' ? null : cfg.bgType === 'color' ? cfg.bgColor : '#000000';
+	if (bg) p.set('bg', bg);
+	if (cfg.w !== 320) p.set('w', cfg.w);
+	if (cfg.h !== 480) p.set('h', cfg.h);
+	if (cfg.speed !== 1) p.set('speed', cfg.speed);
+	if (!cfg.autoplay) p.set('autoplay', 'false');
+	if (cfg.ground) p.set('ground', 'true');
+	if (cfg.orbit) p.set('orbit', 'true');
+	if (cfg.embedType !== 'iframe') p.set('type', cfg.embedType);
+	const qs = p.toString();
+	history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+
+	// Avatar thumb
+	if (cfg.avatarId && cfg.avatarId.length > 8) {
+		avatarThumb.classList.add('loading');
+		avatarThumb.src = `${ORIGIN}/api/avatars/${encodeURIComponent(cfg.avatarId)}/thumbnail`;
+		avatarThumb.onerror = () => { avatarThumb.classList.remove('loading'); avatarThumb.removeAttribute('src'); };
+		avatarThumb.onload = () => avatarThumb.classList.remove('loading');
+	}
+}
+
+// ── Event wiring ───────────────────────────────────────────────────────────
+avatarInput.addEventListener('input', () => { cfg.avatarId = avatarInput.value.trim(); scheduleUpdate(); });
+
+document.querySelectorAll('input[name=controls]').forEach(r => r.addEventListener('change', () => { cfg.controls = r.value; scheduleUpdate(); }));
+
+document.querySelectorAll('input[name=bg-type]').forEach(r => r.addEventListener('change', () => {
+	cfg.bgType = r.value;
+	bgColorRow.style.display = r.value === 'color' ? 'flex' : 'none';
+	scheduleUpdate();
+}));
+
+bgColorInput.addEventListener('input', () => {
+	cfg.bgColor = bgColorInput.value;
+	bgColorLabel.textContent = bgColorInput.value;
+	scheduleUpdate();
+});
+
+document.querySelectorAll('input[name=embed-type]').forEach(r => r.addEventListener('change', () => { cfg.embedType = r.value; scheduleUpdate(); }));
+
+wInput.addEventListener('input', () => { cfg.w = parseInt(wInput.value) || 320; scheduleUpdate(); });
+hInput.addEventListener('input', () => { cfg.h = parseInt(hInput.value) || 480; scheduleUpdate(); });
+
+speedSlider.addEventListener('input', () => {
+	cfg.speed = parseFloat(speedSlider.value);
+	speedVal.textContent = cfg.speed.toFixed(2).replace(/\.?0+$/, '') + '×';
+	scheduleUpdate();
+});
+
+document.getElementById('size-presets').addEventListener('click', e => {
+	const btn = e.target.closest('.ew-size-preset');
+	if (!btn) return;
+	document.querySelectorAll('.ew-size-preset').forEach(b => b.classList.remove('active'));
+	btn.classList.add('active');
+	const w = parseInt(btn.dataset.w), h = parseInt(btn.dataset.h);
+	if (w && h) { cfg.w = w; cfg.h = h; wInput.value = w; hInput.value = h; }
+	scheduleUpdate();
+});
+
+['cfg-autoplay', 'cfg-ground', 'cfg-orbit'].forEach(id => {
+	const el = document.getElementById(id);
+	const key = id.replace('cfg-', '');
+	el.addEventListener('click', () => {
+		cfg[key] = !cfg[key];
+		setToggle(id, cfg[key]);
+		scheduleUpdate();
+	});
+	el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
+});
+
+document.getElementById('snippet-tabs').addEventListener('click', e => {
+	const btn = e.target.closest('.ew-tab');
+	if (!btn) return;
+	document.querySelectorAll('.ew-tab').forEach(t => t.classList.remove('active'));
+	btn.classList.add('active');
+	cfg.tab = btn.dataset.tab;
+	scheduleUpdate();
+});
+
+copyBtn.addEventListener('click', async () => {
+	try {
+		await navigator.clipboard.writeText(snippetCode.textContent);
+		copyBtn.textContent = 'Copied!';
+		copyBtn.classList.add('copied');
+		setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 2000);
+	} catch {
+		copyBtn.textContent = 'Copy';
+	}
+});
+
+window.addEventListener('resize', scheduleUpdate);
+
+// ── Initial render ─────────────────────────────────────────────────────────
+update();
+</script>
+</body>
+</html>

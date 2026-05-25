@@ -196,7 +196,7 @@ const PITCH_MAX = 0.7;
 
 // Place the camera at its starting pose immediately so frame 0 isn't blank.
 function applyCameraImmediate() {
-	const offset = CAM_OFFSET.clone();
+	const offset = CAM_OFFSET.clone().multiplyScalar(camZoom);
 	offset.applyAxisAngle(new Vector3(1, 0, 0), -cameraPitch);
 	offset.applyAxisAngle(new Vector3(0, 1, 0), cameraYaw);
 	camDesired.copy(avatarRig.position).add(offset);
@@ -257,13 +257,107 @@ const input = {
 	joy: { x: 0, y: 0, active: false },
 };
 
+// ── Jump state ────────────────────────────────────────────────────────────
+let jumpVelocity = 0;
+let jumpActive = false;
+const JUMP_FORCE = 5.8;
+const GRAVITY = -14;
+const GROUND_Y = 0;
+
+function triggerJump() {
+	if (jumpActive) return;
+	jumpActive = true;
+	jumpVelocity = JUMP_FORCE;
+}
+
+// ── Snap-turn (Q / E) ────────────────────────────────────────────────────
+const SNAP_TURN_RAD = Math.PI / 4; // 45°
+
+// ── Scroll-wheel zoom ────────────────────────────────────────────────────
+const CAM_ZOOM_MIN = 0.6;
+const CAM_ZOOM_MAX = 3.2;
+let camZoom = 1.0; // multiplier on CAM_OFFSET distance
+
+canvas.addEventListener('wheel', (e) => {
+	e.preventDefault();
+	camZoom = Math.max(CAM_ZOOM_MIN, Math.min(CAM_ZOOM_MAX, camZoom + e.deltaY * 0.001));
+}, { passive: false });
+
+// ── Pointer lock (click canvas → lock; Esc → unlock) ────────────────────
+let pointerLocked = false;
+
+canvas.addEventListener('click', () => {
+	if (!pointerLocked && !IS_TOUCH) {
+		canvas.requestPointerLock?.();
+	}
+});
+document.addEventListener('pointerlockchange', () => {
+	pointerLocked = document.pointerLockElement === canvas;
+});
+document.addEventListener('mousemove', (e) => {
+	if (!pointerLocked) return;
+	cameraYaw -= e.movementX * 0.002;
+	cameraPitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, cameraPitch - e.movementY * 0.002));
+});
+
+// ── Help overlay (? key) ─────────────────────────────────────────────────
+const helpOverlay = (() => {
+	const el = document.createElement('div');
+	el.id = 'walk-help-overlay';
+	el.setAttribute('aria-hidden', 'true');
+	el.style.cssText = [
+		'position:fixed', 'inset:0', 'z-index:9999',
+		'display:flex', 'align-items:center', 'justify-content:center',
+		'background:rgba(0,0,0,0.72)', 'backdrop-filter:blur(6px)',
+		'color:#fff', 'font-family:system-ui,sans-serif',
+		'opacity:0', 'pointer-events:none',
+		'transition:opacity 0.18s',
+	].join(';');
+	el.innerHTML = `
+		<div style="max-width:380px;width:90%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:28px 32px">
+			<h2 style="margin:0 0 20px;font-size:18px;font-weight:600;letter-spacing:-0.3px">Controls</h2>
+			<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:2">
+				<tr><td style="color:#aaa;padding-right:16px">W A S D / Arrows</td><td>Move</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Shift</td><td>Run</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Space</td><td>Jump</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Q / E</td><td>Snap turn 45°</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Mouse drag / click</td><td>Orbit camera</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Scroll wheel</td><td>Zoom in / out</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">?</td><td>Toggle this overlay</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Esc</td><td>Release pointer lock</td></tr>
+			</table>
+			<p style="margin:20px 0 0;font-size:12px;color:#666">Click the canvas to lock the mouse for first-person look.</p>
+		</div>`;
+	document.body.appendChild(el);
+	return el;
+})();
+
+let helpVisible = false;
+function toggleHelp() {
+	helpVisible = !helpVisible;
+	helpOverlay.style.opacity = helpVisible ? '1' : '0';
+	helpOverlay.style.pointerEvents = helpVisible ? 'auto' : 'none';
+	helpOverlay.setAttribute('aria-hidden', String(!helpVisible));
+}
+helpOverlay.addEventListener('click', (e) => {
+	if (e.target === helpOverlay) toggleHelp();
+});
+
 window.addEventListener('keydown', (e) => {
+	// Don't steal events from text inputs.
+	if (e.target !== document.body && e.target !== canvas) return;
 	switch (e.code) {
 		case 'KeyW': case 'ArrowUp':    input.keys.forward = 1; break;
 		case 'KeyS': case 'ArrowDown':  input.keys.back = 1; break;
 		case 'KeyA': case 'ArrowLeft':  input.keys.left = 1; break;
 		case 'KeyD': case 'ArrowRight': input.keys.right = 1; break;
 		case 'ShiftLeft': case 'ShiftRight': input.keys.run = true; break;
+		case 'Space': e.preventDefault(); triggerJump(); break;
+		case 'KeyQ': cameraYaw += SNAP_TURN_RAD; break;
+		case 'KeyE': cameraYaw -= SNAP_TURN_RAD; break;
+		case 'Slash':
+			if (e.shiftKey) { e.preventDefault(); toggleHelp(); }
+			break;
 		default: return;
 	}
 });
@@ -733,6 +827,17 @@ function readMoveInput() {
 function tick() {
 	const dt = Math.min(clock.getDelta(), 0.05); // clamp huge frames after a tab switch
 
+	// Jump physics — simple parabola in Y, lands back at GROUND_Y.
+	if (jumpActive && avatar) {
+		jumpVelocity += GRAVITY * dt;
+		avatarRig.position.y += jumpVelocity * dt;
+		if (avatarRig.position.y <= GROUND_Y) {
+			avatarRig.position.y = GROUND_Y;
+			jumpVelocity = 0;
+			jumpActive = false;
+		}
+	}
+
 	// 1. Resolve move input in camera-relative XZ space.
 	const { ix, iy } = readMoveInput();
 	const mag = Math.min(1, Math.hypot(ix, iy));
@@ -811,7 +916,7 @@ function tick() {
 	if (avatar) avatar.rotation.x = avatarLean;
 
 	// 2. Update camera follow-rig.
-	const offset = CAM_OFFSET.clone();
+	const offset = CAM_OFFSET.clone().multiplyScalar(camZoom);
 	offset.applyAxisAngle(new Vector3(1, 0, 0), -cameraPitch);
 	offset.applyAxisAngle(upY, cameraYaw);
 	camDesired.copy(avatarRig.position).add(offset);

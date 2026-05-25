@@ -274,6 +274,19 @@
 			"dest": "/walk.html"
 		},
 		{
+			"src": "/wk/([A-Za-z0-9_-]+)",
+			"dest": "/walk?avatar=$1",
+			"status": 302
+		},
+		{
+			"src": "/api/walk-og",
+			"dest": "/api/walk-og.js"
+		},
+		{
+			"src": "/embed/walk/?",
+			"dest": "/embed-walk.html"
+		},
+		{
 			"src": "/walk-embed/?",
 			"headers": {
 				"content-security-policy": "frame-ancestors *",
@@ -1983,6 +1996,14 @@
 		{
 			"src": "/legal/tos/?",
 			"dest": "/legal/tos.html"
+		},
+		{
+			"src": "/extension/privacy/?",
+			"dest": "/extension-privacy.html"
+		},
+		{
+			"src": "/extension/terms/?",
+			"dest": "/extension-terms.html"
 		},
 		{
 			"src": "/features",

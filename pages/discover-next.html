@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Discover agents · three.ws</title>
+	<meta name="description" content="Browse every 3D AI agent on three.ws. Talk, embed, remix." />
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+	<style>
+		:root {
+			color-scheme: dark;
+			--bg: #050505;
+			--bg-soft: #0a0a0a;
+			--panel: #111;
+			--panel-soft: #161616;
+			--border: #1e1e1e;
+			--border-strong: #2a2a2a;
+			--text: #f0f0f0;
+			--text-soft: #888;
+			--muted: #444;
+			--ok: #22c55e;
+			--font: "Inter Tight", -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 16px; line-height: 1.5; min-height: 100vh; }
+		a { color: inherit; text-decoration: none; }
+		button { font-family: inherit; cursor: pointer; }
+
+		/* ── NAV ── */
+		.nav {
+			position: sticky; top: 0; z-index: 100;
+			backdrop-filter: blur(18px);
+			background: rgba(5, 5, 5, 0.86);
+			border-bottom: 1px solid var(--border);
+		}
+		.nav-inner {
+			max-width: 1440px; margin: 0 auto;
+			display: flex; align-items: center; gap: 24px;
+			padding: 14px 24px;
+		}
+		.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: -0.02em; font-size: 17px; }
+		.brand-dot { width: 20px; height: 20px; border-radius: 5px; background: var(--text); }
+		.nav-links { display: flex; gap: 2px; margin-left: 16px; flex: 1; }
+		.nav-links a { padding: 8px 13px; border-radius: 8px; color: var(--text-soft); font-size: 14px; font-weight: 500; transition: background 0.12s, color 0.12s; }
+		.nav-links a:hover, .nav-links a.active { background: var(--panel); color: var(--text); }
+		.nav-end { display: flex; align-items: center; gap: 8px; }
+		.nav-end a { font-size: 13px; color: var(--text-soft); padding: 7px 13px; border-radius: 8px; }
+		.nav-end a:hover { color: var(--text); }
+		.nav-end .cta { background: var(--text); color: var(--bg); font-weight: 600; padding: 7px 15px; border-radius: 8px; font-size: 13px; }
+		.nav-end .cta:hover { opacity: 0.88; }
+		@media (max-width: 860px) { .nav-links { display: none; } .nav-inner { padding: 12px 18px; } }
+
+		/* ── HERO SEARCH ── */
+		.hero {
+			max-width: 720px; margin: 0 auto;
+			padding: 64px 24px 40px;
+			text-align: center;
+		}
+		.hero-eyebrow {
+			font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+			color: var(--muted); margin-bottom: 16px;
+		}
+		.hero h1 {
+			font-size: clamp(36px, 5vw, 56px);
+			letter-spacing: -0.03em; font-weight: 800;
+			margin: 0 0 12px; line-height: 1.05;
+		}
+		.hero-sub { font-size: 15px; color: var(--text-soft); margin: 0 0 32px; }
+
+		.search-wrap {
+			position: relative; max-width: 540px; margin: 0 auto;
+		}
+		.search-icon {
+			position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+			color: var(--muted); font-size: 15px; pointer-events: none;
+		}
+		.search-input {
+			width: 100%;
+			background: var(--panel); border: 1px solid var(--border-strong);
+			border-radius: 12px; outline: none;
+			color: var(--text); font-family: var(--font); font-size: 15px;
+			padding: 14px 44px 14px 44px;
+		}
+		.search-input::placeholder { color: var(--muted); }
+		.search-input:focus { border-color: var(--text-soft); }
+		.search-clear {
+			position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+			background: none; border: 0; color: var(--muted); font-size: 18px; padding: 4px 8px;
+			display: none;
+		}
+		.search-clear.visible { display: block; }
+		.search-clear:hover { color: var(--text); }
+
+		/* ── STATS ── */
+		.stats-bar {
+			max-width: 1440px; margin: 0 auto; padding: 0 24px 32px;
+			display: flex; align-items: center; gap: 24px;
+			font-size: 12.5px; color: var(--muted);
+		}
+		.stats-bar strong { color: var(--text-soft); font-weight: 600; }
+
+		/* ── FILTER BAR ── */
+		.filter-bar {
+			max-width: 1440px; margin: 0 auto; padding: 0 24px 28px;
+			display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+		}
+		.filter-btn {
+			background: transparent; color: var(--text-soft);
+			border: 1px solid var(--border-strong); border-radius: 99px;
+			padding: 6px 14px; font-size: 12.5px; font-weight: 500;
+			transition: background 0.12s, color 0.12s, border-color 0.12s;
+		}
+		.filter-btn:hover { color: var(--text); border-color: var(--text-soft); }
+		.filter-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+		/* ── GRID ── */
+		.grid-wrap { max-width: 1440px; margin: 0 auto; padding: 0 24px 80px; }
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+			gap: 12px;
+		}
+		@media (max-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
+
+		.card {
+			position: relative; aspect-ratio: 3 / 4;
+			background: var(--panel); border: 1px solid var(--border);
+			border-radius: 14px; overflow: hidden;
+			display: block;
+			transition: border-color 0.18s, transform 0.18s;
+		}
+		.card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+		.card img {
+			position: absolute; inset: 0;
+			width: 100%; height: 100%; object-fit: cover;
+			transition: opacity 0.3s;
+		}
+		.card img.loading { opacity: 0; }
+		.card-meta {
+			position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+			padding: 32px 14px 14px;
+			background: linear-gradient(transparent, rgba(5,5,5,0.9) 60%);
+		}
+		.card-name { font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.card-author { font-size: 11.5px; color: var(--text-soft); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.card-badge {
+			position: absolute; top: 10px; left: 10px; z-index: 3;
+			font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+			padding: 3px 8px; border-radius: 99px;
+			background: rgba(5,5,5,0.75); color: var(--text-soft);
+			border: 1px solid var(--border-strong);
+			backdrop-filter: blur(6px);
+		}
+		.card-badge.live { color: var(--ok); border-color: rgba(34,197,94,0.3); }
+
+		/* ── LOAD MORE / STATUS ── */
+		.load-more-wrap { text-align: center; padding: 32px 0 0; }
+		.load-more {
+			background: transparent; color: var(--text-soft);
+			border: 1px solid var(--border-strong);
+			border-radius: 10px; padding: 12px 32px;
+			font-size: 14px; font-weight: 500;
+			transition: color 0.12s, border-color 0.12s;
+		}
+		.load-more:hover { color: var(--text); border-color: var(--text-soft); }
+		.load-more[disabled] { opacity: 0.4; pointer-events: none; }
+
+		.status-msg {
+			text-align: center; color: var(--muted); font-size: 14px;
+			padding: 48px 0; display: none;
+		}
+		.status-msg.visible { display: block; }
+
+		/* ── SKELETON ── */
+		.card-skel {
+			aspect-ratio: 3 / 4; background: var(--panel);
+			border: 1px solid var(--border); border-radius: 14px;
+			animation: shimmer 1.4s infinite;
+		}
+		@keyframes shimmer {
+			0%, 100% { opacity: 1; }
+			50% { opacity: 0.5; }
+		}
+	</style>
+</head>
+<body>
+	<header class="nav">
+		<div class="nav-inner">
+			<a class="brand" href="/home-next">
+				<span class="brand-dot"></span>
+				<span>three.ws</span>
+			</a>
+			<nav class="nav-links">
+				<a href="/create">Build</a>
+				<a href="/home-next#embed">Embed</a>
+				<a href="/discover-next" class="active">Discover</a>
+				<a href="/pricing">Pricing</a>
+				<a href="/docs">Docs</a>
+			</nav>
+			<div class="nav-end">
+				<a href="/login">Sign in</a>
+				<a class="cta" href="/dashboard-next">Console</a>
+			</div>
+		</div>
+	</header>
+
+	<section class="hero">
+		<p class="hero-eyebrow">Agent directory</p>
+		<h1>Discover agents.</h1>
+		<p class="hero-sub">Talk to a 3D AI agent, embed it on your site, or remix it into your own.</p>
+		<div class="search-wrap">
+			<span class="search-icon">⌕</span>
+			<input class="search-input" id="search" type="search" placeholder="Search by name…" autocomplete="off" />
+			<button class="search-clear" id="search-clear" aria-label="Clear">×</button>
+		</div>
+	</section>
+
+	<div class="stats-bar" id="stats-bar" style="display:none">
+		<span><strong id="stat-total">—</strong> agents</span>
+		<span><strong id="stat-3d">—</strong> with 3D avatars</span>
+	</div>
+
+	<div class="filter-bar" id="filter-bar">
+		<button class="filter-btn active" data-source="all">All</button>
+		<button class="filter-btn" data-source="avatar">3D avatars</button>
+		<button class="filter-btn" data-source="onchain">On-chain</button>
+	</div>
+
+	<div class="grid-wrap">
+		<div class="grid" id="grid"></div>
+		<p class="status-msg" id="status-msg">No agents found.</p>
+		<div class="load-more-wrap">
+			<button class="load-more" id="load-more" style="display:none">Load more</button>
+		</div>
+	</div>
+
+	<script>
+		const grid = document.getElementById('grid');
+		const loadMoreBtn = document.getElementById('load-more');
+		const statusMsg = document.getElementById('status-msg');
+		const searchInput = document.getElementById('search');
+		const searchClear = document.getElementById('search-clear');
+
+		let cursor = null;
+		let loading = false;
+		let exhausted = false;
+		let activeSource = 'all';
+		let activeQ = '';
+		let debounceTimer;
+
+		// ── Fetch a page ────────────────────────────────────────────────
+		async function fetchPage() {
+			if (loading || exhausted) return;
+			loading = true;
+			loadMoreBtn.disabled = true;
+
+			const params = new URLSearchParams({ limit: '36', quality: 'high', source: activeSource });
+			if (activeQ) params.set('q', activeQ);
+			if (cursor) params.set('cursor', cursor);
+
+			try {
+				const r = await fetch(`/api/explore?${params}`);
+				if (!r.ok) throw new Error(`${r.status}`);
+				const d = await r.json();
+
+				// First page: remove skeletons
+				if (!cursor) grid.innerHTML = '';
+
+				const items = d.items || [];
+				if (items.length === 0 && !cursor) {
+					statusMsg.classList.add('visible');
+				} else {
+					statusMsg.classList.remove('visible');
+					items.forEach((item) => grid.appendChild(renderCard(item)));
+				}
+
+				cursor = d.nextCursor || null;
+				exhausted = !cursor;
+				loadMoreBtn.style.display = exhausted ? 'none' : '';
+				loadMoreBtn.disabled = false;
+
+				// Stats on first page
+				if (!params.get('cursor') && d.totalCount != null) {
+					const total = document.getElementById('stat-total');
+					const s3d = document.getElementById('stat-3d');
+					if (total) total.textContent = Number(d.totalCount).toLocaleString();
+					if (s3d && d.count3d != null) s3d.textContent = Number(d.count3d).toLocaleString();
+					document.getElementById('stats-bar').style.display = '';
+				}
+			} catch (err) {
+				console.error('explore fetch failed:', err);
+				if (!cursor) {
+					statusMsg.textContent = 'Failed to load agents.';
+					statusMsg.classList.add('visible');
+					grid.innerHTML = '';
+				}
+			}
+			loading = false;
+		}
+
+		// ── Render a card ────────────────────────────────────────────────
+		function escHtml(s) {
+			return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+		}
+
+		function renderCard(item) {
+			const a = document.createElement('a');
+			a.className = 'card';
+
+			if (item.kind === 'avatar') {
+				a.href = `/agent-next?id=${encodeURIComponent(item.avatarId)}`;
+				const imgSrc = item.image || '';
+				const author = item.slug ? `@${item.slug}` : '';
+				a.innerHTML = `
+					${imgSrc ? `<img src="${escHtml(imgSrc)}" alt="${escHtml(item.name)}" loading="lazy" class="loading" />` : ''}
+					<span class="card-badge live">● Live</span>
+					<div class="card-meta">
+						<div class="card-name">${escHtml(item.name || 'Untitled')}</div>
+						${author ? `<div class="card-author">${escHtml(author)}</div>` : ''}
+					</div>
+				`;
+				const img = a.querySelector('img');
+				if (img) img.addEventListener('load', () => img.classList.remove('loading'));
+			} else {
+				// On-chain ERC-8004 agent
+				const detailUrl = `/discover/a/${encodeURIComponent(item.chainId)}/${encodeURIComponent(item.agentId)}`;
+				a.href = detailUrl;
+				const imgSrc = item.image || '';
+				a.innerHTML = `
+					${imgSrc ? `<img src="${escHtml(imgSrc)}" alt="${escHtml(item.name)}" loading="lazy" class="loading" />` : ''}
+					<span class="card-badge">On-chain</span>
+					<div class="card-meta">
+						<div class="card-name">${escHtml(item.name || 'Agent')}</div>
+						${item.chainName ? `<div class="card-author">${escHtml(item.chainName)}</div>` : ''}
+					</div>
+				`;
+				const img = a.querySelector('img');
+				if (img) img.addEventListener('load', () => img.classList.remove('loading'));
+			}
+			return a;
+		}
+
+		// ── Skeletons while loading ──────────────────────────────────────
+		function showSkeletons(n = 12) {
+			grid.innerHTML = '';
+			for (let i = 0; i < n; i++) {
+				const d = document.createElement('div');
+				d.className = 'card-skel';
+				grid.appendChild(d);
+			}
+		}
+
+		// ── Reset and reload ─────────────────────────────────────────────
+		function reload() {
+			cursor = null;
+			exhausted = false;
+			statusMsg.classList.remove('visible');
+			showSkeletons();
+			fetchPage();
+		}
+
+		// ── Filters ──────────────────────────────────────────────────────
+		document.getElementById('filter-bar').addEventListener('click', (e) => {
+			const btn = e.target.closest('[data-source]');
+			if (!btn) return;
+			document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+			btn.classList.add('active');
+			activeSource = btn.dataset.source;
+			reload();
+		});
+
+		// ── Search ───────────────────────────────────────────────────────
+		searchInput.addEventListener('input', () => {
+			const q = searchInput.value.trim();
+			searchClear.classList.toggle('visible', q.length > 0);
+			clearTimeout(debounceTimer);
+			debounceTimer = setTimeout(() => {
+				activeQ = q;
+				reload();
+			}, 320);
+		});
+		searchClear.addEventListener('click', () => {
+			searchInput.value = '';
+			searchClear.classList.remove('visible');
+			activeQ = '';
+			reload();
+		});
+
+		// ── Load more ────────────────────────────────────────────────────
+		loadMoreBtn.addEventListener('click', fetchPage);
+
+		// ── Init ─────────────────────────────────────────────────────────
+		showSkeletons();
+		fetchPage();
+	</script>
+</body>
+</html>
