@@ -314,14 +314,12 @@ async function handleWallet(req, res, id) {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST', 'DELETE'])) return;
 
-	// Unauthenticated GET: serve public wallet info without requiring sign-in.
-	// Write operations still require owner auth below.
-	if (req.method === 'GET') {
-		const auth = await resolveAuth(req);
-		if (!auth) return handlePublicWalletRead(req, res, id);
-	}
-
 	const auth = await resolveAuth(req);
+
+	// Unauthenticated GET: serve public wallet info without requiring sign-in.
+	// Write operations (POST, DELETE) still require owner auth below.
+	if (req.method === 'GET' && !auth) return handlePublicWalletRead(req, res, id);
+
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = req.method === 'GET'

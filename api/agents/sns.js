@@ -70,7 +70,7 @@ async function fetchFavoriteDomain(address) {
 }
 
 async function getRegistryOwner(connection, domain) {
-	const sns = await import('@bonfida/spl-name-service/dist/cjs/index.js');
+	const sns = await import('@bonfida/spl-name-service');
 	const { pubkey } = sns.getDomainKeySync(domain);
 	const { registry } = await sns.NameRegistryState.retrieve(connection, pubkey);
 	return registry.owner.toBase58();
@@ -79,7 +79,7 @@ async function getRegistryOwner(connection, domain) {
 async function buildRegisterIxs({ connection, domain, buyer, space }) {
 	const { PublicKey } = await import('@solana/web3.js');
 	const { getAssociatedTokenAddressSync } = await import('@solana/spl-token');
-	const sns = await import('@bonfida/spl-name-service/dist/cjs/index.js');
+	const sns = await import('@bonfida/spl-name-service');
 	const usdcMint = new PublicKey(USDC_MINT);
 	const buyerAta = getAssociatedTokenAddressSync(usdcMint, buyer, true);
 	return sns.registerDomainNameV2(connection, domain, space || 1000, buyer, buyerAta, usdcMint);

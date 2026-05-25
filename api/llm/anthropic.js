@@ -51,6 +51,7 @@ const MODELS = {
 	// OpenRouter free tier (no per-token cost; daily rate cap shared across host).
 	// All three are tool-call capable in OpenRouter's catalog.
 	'meta-llama/llama-3.3-70b-instruct:free':       { kind: 'openai', provider: 'openrouter', envKey: 'OPENROUTER_API_KEY' },
+	'meta-llama/llama-3.1-8b-instruct:free':        { kind: 'openai', provider: 'openrouter', envKey: 'OPENROUTER_API_KEY' },
 	'openai/gpt-oss-120b:free':                     { kind: 'openai', provider: 'openrouter', envKey: 'OPENROUTER_API_KEY' },
 	'nousresearch/hermes-3-llama-3.1-405b:free':    { kind: 'openai', provider: 'openrouter', envKey: 'OPENROUTER_API_KEY' },
 
@@ -352,6 +353,10 @@ export default wrap(async (req, res) => {
 			);
 		}
 		break;
+	}
+
+	if (!usedRoute || !upstream) {
+		return json(res, 503, { error: 'provider_unavailable', message: 'no configured fallback model is available' });
 	}
 
 	const route = usedRoute;
