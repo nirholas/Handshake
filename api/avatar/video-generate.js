@@ -64,7 +64,9 @@ export default wrap(async (req, res) => {
 	const [userRow] = await sql`
 		select plan from users where id = ${userId} and deleted_at is null limit 1
 	`;
-	if (userRow?.plan === 'free') {
+	const isFree = userRow?.plan === 'free';
+
+	if (isFree) {
 		const [usageRow] = await sql`
 			select count(*) as n from usage_events
 			where user_id = ${userId} and kind = 'video_generate'
@@ -113,12 +115,24 @@ export default wrap(async (req, res) => {
 	}
 
 	const result = await workerRes.json();
+	const jobId = result.job_id;
 
-	// Record usage so we can enforce the free trial limit.
-	await sql`
-		insert into usage_events (user_id, kind, meta)
-		values (${userId}, 'video_generate', ${JSON.stringify({ job_id: result.job_id })}::jsonb)
-	`.catch(() => {});
+	// Record usage so we can enforce the free trial limit and verify job ownership.
+	// For free users, a failed insert means we cannot enforce quota — refuse rather
+	// than silently allow unlimited free generations.
+	try {
+		await sql`
+			insert into usage_events (user_id, kind, meta)
+			values (${userId}, 'video_generate', ${JSON.stringify({ job_id: jobId })}::jsonb)
+		`;
+	} catch (err) {
+		if (isFree) {
+			// Cannot record quota usage — unsafe to hand back the job.
+			return error(res, 500, 'internal_error', 'Could not record usage; please try again.');
+		}
+		// Paid users: audit logging best-effort, do not block the response.
+		console.error('[video-generate] failed to record usage event for paid user:', err);
+	}
 
-	return json(res, 202, { job_id: result.job_id, status: result.status });
+	return json(res, 202, { job_id: jobId, status: result.status });
 });

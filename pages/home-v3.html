@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>three.ws — the 3d layer of the internet</title>
+	<meta name="description" content="Embodied AI agents you can drop on any page with one tag. Open identity, stablecoin paid, rendered by Three.js." />
+	<meta name="theme-color" content="#000" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:title" content="three.ws — the 3d layer of the internet" />
+	<meta property="og:description" content="Embodied AI agents. One tag. Any website." />
+	<meta property="og:url" content="https://three.ws/" />
+	<meta property="og:image" content="https://three.ws/og-image.png" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="three.ws — the 3d layer of the internet" />
+	<meta name="twitter:description" content="Embodied AI agents. One tag. Any website." />
+	<meta name="twitter:image" content="https://three.ws/og-image.png" />
+	<link rel="canonical" href="https://three.ws/" />
+	<link rel="shortcut icon" href="/favicon.ico" />
+	<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+
+	<link rel="preconnect" href="https://ajax.googleapis.com" crossorigin />
+	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+	<script src="/embed/v1.js" defer></script>
+	<script type="module" src="/src/home-act2-viewer.js"></script>
+
+	<style>
+		:root {
+			--ink: #fff;
+			--ink-2: #b4b4b4;
+			--ink-3: #6b6b6b;
+			--ink-4: #2a2a2a;
+			--bg: #000;
+			--panel: #0a0a0c;
+			--mono: ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, Consolas, monospace;
+			--display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+		}
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		html, body { background: var(--bg); color: var(--ink); font-family: var(--display); -webkit-font-smoothing: antialiased; }
+		body { overflow-x: hidden; min-height: 100vh; }
+		a { color: inherit; text-decoration: none; }
+		button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+		/* ── Scroll reveal ── */
+		.reveal { opacity: 0; transform: translateY(24px); transition: opacity .55s ease, transform .55s ease; }
+		.reveal.revealed { opacity: 1; transform: none; }
+
+		/* ── Nav ── */
+		.nav {
+			position: sticky; top: 0; z-index: 50;
+			display: flex; align-items: center; justify-content: space-between;
+			padding: 20px 28px;
+			background: rgba(0,0,0,0.7);
+			backdrop-filter: saturate(180%) blur(20px);
+			-webkit-backdrop-filter: saturate(180%) blur(20px);
+			border-bottom: 1px solid var(--ink-4);
+		}
+		.brand {
+			font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em;
+			display: inline-flex; align-items: center; gap: 10px;
+		}
+		.brand-dot {
+			width: 8px; height: 8px; border-radius: 50%;
+			background: #4ade80; box-shadow: 0 0 12px #4ade80;
+			animation: live 2.4s ease-in-out infinite;
+		}
+		@keyframes live { 0%,100%{opacity:1} 50%{opacity:0.35} }
+		.nav-right { display: flex; gap: 24px; font-family: var(--mono); font-size: 12px; }
+		.nav-right a { color: var(--ink-2); transition: color .2s; }
+		.nav-right a:hover { color: var(--ink); }
+		.nav-right .nav-cta {
+			color: var(--ink); border: 1px solid var(--ink-4); padding: 6px 14px;
+			border-radius: 999px; transition: border-color .2s, background .2s;
+		}
+		.nav-right .nav-cta:hover { border-color: var(--ink); background: rgba(255,255,255,.06); }
+		@media (max-width: 600px) { .nav-right { display: none; } }
+
+		/* ── Hero ── */
+		.hero {
+			display: grid;
+			grid-template-columns: 1.1fr 1fr;
+			gap: 56px;
+			align-items: center;
+			padding: 80px 48px 120px;
+			max-width: 1480px; margin: 0 auto;
+			min-height: calc(100vh - 64px);
+		}
+		@media (max-width: 960px) {
+			.hero { grid-template-columns: 1fr; padding: 48px 24px 80px; gap: 32px; }
+		}
+		.hero-eyebrow {
+			font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+			color: var(--ink-2); text-transform: uppercase; margin-bottom: 28px;
+			display: inline-flex; align-items: center; gap: 10px;
+			padding: 6px 12px; border: 1px solid var(--ink-4); border-radius: 999px;
+		}
+		.hero-eyebrow .dot {
+			width: 6px; height: 6px; border-radius: 50%; background: #4ade80;
+			box-shadow: 0 0 10px #4ade80;
+		}
+		.hero-title {
+			font-size: clamp(56px, 8.5vw, 132px);
+			line-height: 0.92; letter-spacing: -0.04em;
+			font-weight: 700;
+			text-transform: lowercase;
+			margin-bottom: 28px;
+		}
+		.hero-title em {
+			font-style: normal;
+			background: linear-gradient(180deg, #fff 0%, #888 100%);
+			-webkit-background-clip: text; background-clip: text; color: transparent;
+		}
+		.hero-sub {
+			font-size: clamp(17px, 1.5vw, 20px);
+			color: var(--ink-2); line-height: 1.55;
+			max-width: 44ch; margin-bottom: 36px;
+		}
+		.cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+		.cta {
+			display: inline-flex; align-items: center; gap: 8px;
+			padding: 14px 22px;
+			background: var(--ink); color: #000;
+			border-radius: 999px;
+			font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+			text-transform: uppercase; font-weight: 600;
+			transition: transform .2s, opacity .2s;
+		}
+		.cta:hover { transform: translateY(-2px); }
+		.cta-ghost {
+			display: inline-flex; align-items: center; gap: 8px;
+			padding: 14px 22px;
+			border: 1px solid var(--ink-4); color: var(--ink);
+			border-radius: 999px;
+			font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+			text-transform: uppercase;
+			transition: border-color .2s, background .2s;
+		}
+		.cta-ghost:hover { border-color: var(--ink); background: rgba(255,255,255,0.04); }
+		.hero-meta {
+			margin-top: 40px;
+			display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+			padding-top: 24px; border-top: 1px solid var(--ink-4);
+			font-family: var(--mono); font-size: 11px;
+		}
+		.hero-meta .k { color: var(--ink-3); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 4px; }
+		.hero-meta .v { color: var(--ink); font-size: 13px; }
+
+		/* ── Hero stage ── */
+		.stage {
+			position: relative;
+			border-radius: 24px;
+			background: radial-gradient(ellipse at 50% 65%, #141418 0%, #050507 70%);
+			border: 1px solid var(--ink-4);
+			overflow: hidden;
+			aspect-ratio: 4 / 5;
+			min-height: 480px;
+			box-shadow: 0 40px 100px -30px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04) inset;
+		}
+		.stage model-viewer {
+			width: 100%; height: 100%;
+			background: transparent;
+			--poster-color: transparent;
+		}
+		.stage-bar {
+			position: absolute; bottom: 0; left: 0; right: 0;
+			display: flex; align-items: center; justify-content: space-between;
+			padding: 10px 14px;
+			font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+			color: var(--ink-2); text-transform: uppercase;
+			background: linear-gradient(180deg, transparent, rgba(0,0,0,0.7));
+			pointer-events: none;
+		}
+		.stage-bar .pulse {
+			display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+			background: #4ade80; box-shadow: 0 0 10px #4ade80;
+			margin-right: 8px; vertical-align: middle;
+			animation: live 2s ease-in-out infinite;
+		}
+
+		/* ── Section base ── */
+		section.sec {
+			padding: 96px 32px;
+			max-width: 1280px; margin: 0 auto;
+		}
+		.sec-eye {
+			font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+			color: var(--ink-3); text-transform: uppercase; margin-bottom: 24px;
+		}
+		.sec-h {
+			font-size: clamp(40px, 6vw, 88px);
+			line-height: 0.95; letter-spacing: -0.035em;
+			font-weight: 700; text-transform: lowercase;
+			margin-bottom: 24px;
+			max-width: 18ch;
+		}
+		.sec-p {
+			font-size: clamp(16px, 1.5vw, 19px);
+			color: var(--ink-2); line-height: 1.55;
+			max-width: 60ch;
+		}
+		.sec-divider { border: none; border-top: 1px solid var(--ink-4); margin: 0; }
+
+		/* ── Stack list ── */
+		.stack { margin-top: 56px; border-top: 1px solid var(--ink-4); }
+		.stack-row {
+			display: grid;
+			grid-template-columns: 64px 1fr 2.2fr 60px;
+			align-items: center;
+			padding: 28px 0;
+			border-bottom: 1px solid var(--ink-4);
+			gap: 24px;
+			transition: padding .25s ease, background .25s ease;
+			color: var(--ink);
+			cursor: pointer;
+		}
+		.stack-row:hover { padding-left: 16px; background: rgba(255,255,255,0.015); }
+		.stack-row .n { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+		.stack-row .t { font-size: clamp(26px, 3vw, 40px); font-weight: 600; letter-spacing: -0.02em; text-transform: lowercase; }
+		.stack-row .d { color: var(--ink-2); font-size: 15px; line-height: 1.5; }
+		.stack-row .a { font-family: var(--mono); font-size: 18px; color: var(--ink-3); text-align: right; transition: color .25s, transform .25s; }
+		.stack-row:hover .a { color: var(--ink); transform: translateX(4px); }
+		@media (max-width: 760px) {
+			.stack-row { grid-template-columns: 40px 1fr 32px; }
+			.stack-row .d { display: none; }
+		}
+
+		/* ── Journey ── */
+		.journey {
+			margin-top: 56px;
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 2px;
+			border: 1px solid var(--ink-4);
+			border-radius: 12px;
+			overflow: hidden;
+		}
+		@media (max-width: 900px) { .journey { grid-template-columns: repeat(2, 1fr); } }
+		@media (max-width: 520px) { .journey { grid-template-columns: 1fr; } }
+		.journey-step {
+			padding: 32px 28px;
+			background: var(--panel);
+			display: flex; flex-direction: column; gap: 16px;
+			border-right: 1px solid var(--ink-4);
+			transition: background .2s;
+		}
+		.journey-step:last-child { border-right: none; }
+		@media (max-width: 900px) {
+			.journey-step:nth-child(2) { border-right: none; }
+			.journey-step:nth-child(odd) { border-right: 1px solid var(--ink-4); }
+		}
+		@media (max-width: 520px) {
+			.journey-step { border-right: none; border-bottom: 1px solid var(--ink-4); }
+			.journey-step:last-child { border-bottom: none; }
+		}
+		.journey-step:hover { background: rgba(255,255,255,0.02); }
+		.journey-step .j-num { font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.14em; }
+		.journey-step h3 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+		.journey-step p { color: var(--ink-2); font-size: 14px; line-height: 1.6; flex: 1; }
+		.journey-step .j-link {
+			font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.1em;
+			text-transform: uppercase; transition: color .2s;
+		}
+		.journey-step:hover .j-link { color: var(--ink); }
+
+		/* ── Embed tiles ── */
+		.tiles {
+			margin-top: 56px;
+			display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+		}
+		@media (max-width: 960px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+		.tile {
+			position: relative;
+			aspect-ratio: 3 / 4;
+			border-radius: 8px;
+			border: 1px solid var(--ink-4);
+			overflow: hidden;
+			background: radial-gradient(ellipse at 50% 70%, #18181c 0%, #050507 80%);
+		}
+		.tile three-d { width: 100%; height: 100%; display: block; }
+		.tile .cap {
+			position: absolute; left: 12px; bottom: 12px; right: 12px;
+			display: flex; justify-content: space-between;
+			font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+			color: var(--ink-2); text-transform: uppercase;
+			pointer-events: none;
+		}
+		.tile .cap b { color: var(--ink); font-weight: 500; }
+
+		/* ── Anim picker ── */
+		.picker-wrap {
+			margin-top: 56px;
+			display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+		}
+		@media (max-width: 860px) { .picker-wrap { grid-template-columns: 1fr; } }
+		.picker-stage {
+			position: relative;
+			border-radius: 16px;
+			border: 1px solid var(--ink-4);
+			background: radial-gradient(ellipse at 50% 60%, #141418 0%, #050507 80%);
+			aspect-ratio: 4 / 5;
+			overflow: hidden;
+		}
+		.picker-stage canvas { width: 100% !important; height: 100% !important; display: block; }
+		.picker-controls { display: flex; flex-direction: column; gap: 32px; }
+		.picker-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; color: var(--ink-3); text-transform: uppercase; margin-bottom: 12px; }
+		.av-opts { display: flex; gap: 8px; flex-wrap: wrap; }
+		.av-opt {
+			padding: 8px 16px;
+			font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+			text-transform: uppercase; color: var(--ink-2);
+			border: 1px solid var(--ink-4); border-radius: 999px;
+			transition: border-color .2s, color .2s, background .2s;
+		}
+		.av-opt:hover { border-color: var(--ink-3); color: var(--ink); }
+		.av-opt[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); background: rgba(255,255,255,0.06); }
+		.anim-chips { display: flex; gap: 8px; flex-wrap: wrap; min-height: 36px; }
+		.anim-chip {
+			padding: 7px 14px;
+			font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+			text-transform: uppercase; color: var(--ink-2);
+			border: 1px solid var(--ink-4); border-radius: 6px;
+			transition: border-color .2s, color .2s, background .2s;
+		}
+		.anim-chip:hover { border-color: var(--ink-3); color: var(--ink); background: rgba(255,255,255,0.04); }
+		.anim-chip.active { border-color: var(--ink); color: var(--ink); background: rgba(255,255,255,0.08); }
+
+		/* ── Mint/deploy ── */
+		.deploy-wrap {
+			margin-top: 56px;
+			display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start;
+		}
+		@media (max-width: 860px) { .deploy-wrap { grid-template-columns: 1fr; } }
+		.deploy-form {
+			display: flex; flex-direction: column; gap: 16px;
+			padding: 32px;
+			border: 1px solid var(--ink-4); border-radius: 12px;
+			background: var(--panel);
+		}
+		.deploy-form label { font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.14em; text-transform: uppercase; }
+		.deploy-form input, .deploy-form select {
+			background: #060608; border: 1px solid var(--ink-4); border-radius: 6px;
+			padding: 12px 16px; color: var(--ink); font-family: var(--mono); font-size: 13px;
+			width: 100%; outline: none; transition: border-color .2s;
+		}
+		.deploy-form input:focus, .deploy-form select:focus { border-color: var(--ink-3); }
+		.deploy-form select { appearance: none; cursor: pointer; }
+		.deploy-stats {
+			display: grid; grid-template-columns: repeat(3, 1fr);
+			gap: 0; border: 1px solid var(--ink-4); border-radius: 8px; overflow: hidden;
+		}
+		.deploy-stats div {
+			padding: 14px 16px;
+			border-right: 1px solid var(--ink-4);
+			font-family: var(--mono);
+		}
+		.deploy-stats div:last-child { border-right: none; }
+		.deploy-stats .ds-label { font-size: 10px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 4px; }
+		.deploy-stats .ds-val { font-size: 13px; color: var(--ink); }
+		.deploy-facts { display: flex; flex-direction: column; gap: 20px; }
+		.deploy-fact { display: flex; gap: 16px; align-items: flex-start; }
+		.deploy-fact .df-n {
+			font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.12em;
+			text-transform: uppercase; white-space: nowrap; padding-top: 2px; min-width: 80px;
+		}
+		.deploy-fact p { color: var(--ink-2); font-size: 14px; line-height: 1.6; }
+
+		/* ── Install ── */
+		.install-wrap {
+			margin-top: 56px;
+			display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px;
+			align-items: start;
+		}
+		@media (max-width: 920px) { .install-wrap { grid-template-columns: 1fr; } }
+		.code {
+			background: #060608; border: 1px solid var(--ink-4); border-radius: 8px;
+			padding: 24px 28px;
+			font-family: var(--mono); font-size: 13px; line-height: 1.8;
+			color: #d8d8de; overflow: auto;
+			white-space: pre;
+		}
+		.code .c { color: var(--ink-3); }
+		.code .t { color: #c8b8ff; }
+		.code .a { color: #b8e6c2; }
+		.code .s { color: #ffd9a8; }
+		.bullets { list-style: none; }
+		.bullets li {
+			padding: 16px 0; border-bottom: 1px solid var(--ink-4);
+			display: grid; grid-template-columns: 88px 1fr; gap: 16px; align-items: baseline;
+			font-size: 15px;
+		}
+		.bullets li:last-child { border-bottom: 0; }
+		.bullets li b { font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
+		.bullets li span { color: var(--ink); }
+
+		/* ── Dev section ── */
+		.dev-wrap {
+			margin-top: 56px;
+			display: grid; grid-template-columns: 1fr 1.2fr; gap: 48px; align-items: center;
+		}
+		@media (max-width: 860px) { .dev-wrap { grid-template-columns: 1fr; } }
+		.dev-text p { color: var(--ink-2); font-size: 15px; line-height: 1.65; margin-bottom: 24px; }
+		.dev-links { display: flex; gap: 20px; flex-wrap: wrap; }
+		.dev-link {
+			font-family: var(--mono); font-size: 12px; color: var(--ink-2);
+			letter-spacing: 0.08em; transition: color .2s;
+		}
+		.dev-link:hover { color: var(--ink); }
+		.dev-code {
+			background: #060608; border: 1px solid var(--ink-4); border-radius: 10px;
+			overflow: hidden;
+		}
+		.dev-code-bar {
+			padding: 10px 16px; border-bottom: 1px solid var(--ink-4);
+			display: flex; align-items: center; gap: 6px;
+		}
+		.dev-code-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ink-4); }
+		.dev-code-bar span:last-child { font-family: var(--mono); font-size: 11px; color: var(--ink-3); margin-left: 8px; }
+		.dev-pre {
+			padding: 20px 24px;
+			font-family: var(--mono); font-size: 13px; line-height: 1.85;
+			color: #d8d8de; overflow: auto;
+			white-space: pre;
+		}
+		.dev-pre .c { color: var(--ink-3); }
+		.dev-pre .tag { color: #c8b8ff; }
+		.dev-pre .attr { color: #b8e6c2; }
+		.dev-pre .val { color: #ffd9a8; }
+
+		/* ── End CTA ── */
+		.end {
+			padding: 120px 32px; text-align: center;
+			border-top: 1px solid var(--ink-4);
+		}
+		.end .big {
+			font-size: clamp(48px, 9vw, 140px);
+			line-height: 0.9; letter-spacing: -0.04em;
+			font-weight: 700; text-transform: lowercase;
+			margin-bottom: 36px;
+		}
+
+		/* ── Footer ── */
+		footer {
+			padding: 48px 32px 32px;
+			border-top: 1px solid var(--ink-4);
+		}
+		.footer-top {
+			display: grid;
+			grid-template-columns: 1fr 2fr;
+			gap: 48px;
+			margin-bottom: 40px;
+		}
+		@media (max-width: 720px) { .footer-top { grid-template-columns: 1fr; } }
+		.footer-brand-name {
+			font-family: var(--mono); font-size: 14px; letter-spacing: 0.04em; font-weight: 600;
+			margin-bottom: 8px;
+		}
+		.footer-tagline { color: var(--ink-3); font-size: 13px; margin-bottom: 16px; }
+		.footer-socials { display: flex; gap: 14px; }
+		.footer-social {
+			width: 30px; height: 30px;
+			display: flex; align-items: center; justify-content: center;
+			color: var(--ink-3); transition: color .2s;
+		}
+		.footer-social:hover { color: var(--ink); }
+		.footer-social svg { width: 16px; height: 16px; }
+		.footer-links-grid {
+			display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+		}
+		@media (max-width: 480px) { .footer-links-grid { grid-template-columns: repeat(2, 1fr); } }
+		.footer-link-col { display: flex; flex-direction: column; gap: 10px; }
+		.footer-link-heading {
+			font-family: var(--mono); font-size: 10px; color: var(--ink-3);
+			letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 4px;
+		}
+		.footer-link-col a { font-size: 13px; color: var(--ink-2); transition: color .2s; }
+		.footer-link-col a:hover { color: var(--ink); }
+		.footer-bottom {
+			display: flex; justify-content: space-between; align-items: center;
+			flex-wrap: wrap; gap: 12px;
+			padding-top: 24px; border-top: 1px solid var(--ink-4);
+			font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+		}
+		.footer-legal-links { display: flex; gap: 16px; }
+		.footer-legal-links a { color: var(--ink-3); transition: color .2s; }
+		.footer-legal-links a:hover { color: var(--ink-2); }
+	</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Primary">
+	<a class="brand" href="/"><span class="brand-dot" aria-hidden="true"></span>three.ws / v1</a>
+	<div class="nav-right">
+		<a href="#stack">stack</a>
+		<a href="#embed">embed</a>
+		<a href="#install">install</a>
+		<a href="/discover">registry</a>
+		<a href="/docs">docs</a>
+		<a href="/create" class="nav-cta">get started</a>
+	</div>
+</nav>
+
+<!-- ── 01 Hero ── -->
+<header class="hero">
+	<div>
+		<div class="hero-eyebrow"><span class="dot"></span>EMBED V1 · LIVE</div>
+		<h1 class="hero-title">the 3d layer<br /><em>of the internet.</em></h1>
+		<p class="hero-sub">Embodied AI agents you can drop on any page with one tag. Open identity, stablecoin paid, rendered by Three.js.</p>
+		<div class="cta-row">
+			<a class="cta" href="/create">Build your agent</a>
+			<a class="cta-ghost" href="/embed/v1/preview">See it live →</a>
+		</div>
+		<div class="hero-meta">
+			<div><div class="k">Identity</div><div class="v">ERC-8004</div></div>
+			<div><div class="k">Payments</div><div class="v">x402</div></div>
+			<div><div class="k">Renderer</div><div class="v">Three.js · glTF</div></div>
+		</div>
+	</div>
+
+	<div class="stage" aria-hidden="true">
+		<model-viewer
+			id="hero-mv"
+			src="https://three.ws/animations/robotexpressive.glb"
+			camera-controls
+			disable-zoom
+			interaction-prompt="none"
+			exposure="1.1"
+			shadow-intensity="0.6"
+			shadow-softness="1"
+			environment-image="neutral"
+			touch-action="pan-y"
+			autoplay
+		></model-viewer>
+		<div class="stage-bar">
+			<span><span class="pulse"></span>RENDERED BY &lt;three-d&gt;</span>
+			<span>15KB · SHADOW DOM · CORS</span>
+		</div>
+	</div>
+</header>
+
+<hr class="sec-divider" />
+
+<!-- ── 02 Stack ── -->
+<section class="sec" id="stack">
+	<div class="sec-eye reveal">02 — Stack</div>
+	<h2 class="sec-h reveal">six pieces.<br />one layer.</h2>
+	<p class="sec-p reveal">Every piece is open, real, and shipping today. Use one. Use all. They compose.</p>
+
+	<div class="stack">
+		<a href="/studio" class="stack-row reveal">
+			<div class="n">01</div><div class="t">studio</div>
+			<div class="d">Selfie to rigged avatar in seconds. Browser-native, GPU-accelerated.</div><div class="a">↗</div>
+		</a>
+		<a href="/discover" class="stack-row reveal">
+			<div class="n">02</div><div class="t">registry</div>
+			<div class="d">ERC-8004 on-chain identity. Agents discoverable, portable, attestable.</div><div class="a">↗</div>
+		</a>
+		<a href="#install" class="stack-row reveal">
+			<div class="n">03</div><div class="t">embed</div>
+			<div class="d">&lt;three-d&gt; web component. One tag. Any host. Lazy, themed, contained.</div><div class="a">↗</div>
+		</a>
+		<a href="/.well-known/x402.json" class="stack-row reveal">
+			<div class="n">04</div><div class="t">x402</div>
+			<div class="d">HTTP-native micropayments. Bill per skill, minute, or call.</div><div class="a">↗</div>
+		</a>
+		<a href="/demos/halfbody-xr.html" class="stack-row reveal">
+			<div class="n">05</div><div class="t">vr gate</div>
+			<div class="d">WebXR embodiment. Same identity. Walk in as them. $THREE-gated.</div><div class="a">↗</div>
+		</a>
+		<a href="/docs" class="stack-row reveal">
+			<div class="n">06</div><div class="t">sdk</div>
+			<div class="d">JS, Python, Rust. Mint, sign, attest, render, pay. MIT. On npm.</div><div class="a">↗</div>
+		</a>
+	</div>
+</section>
+
+<hr class="sec-divider" />
+
+<!-- ── 03 Journey ── -->
+<section class="sec" id="journey">
+	<div class="sec-eye reveal">03 — How it works</div>
+	<h2 class="sec-h reveal">selfie to<br />earning agent.</h2>
+	<p class="sec-p reveal">Four steps. Any LLM. Owned on Solana.</p>
+
+	<div class="journey reveal">
+		<a href="/create" class="journey-step">
+			<div class="j-num">01</div>
+			<h3>Create your avatar</h3>
+			<p>Snap a selfie or upload a GLB. three.ws renders a full-body 3D agent in the browser — no software to install.</p>
+			<span class="j-link">Start creating →</span>
+		</a>
+		<a href="/dashboard-next/agents" class="journey-step">
+			<div class="j-num">02</div>
+			<h3>Build your agent</h3>
+			<p>Give your avatar an on-chain identity and AI brain. Connect Claude, GPT, or your own model over MCP or A2A.</p>
+			<span class="j-link">Configure agent →</span>
+		</a>
+		<a href="/dashboard-next/widgets" class="journey-step">
+			<div class="j-num">03</div>
+			<h3>Embed anywhere</h3>
+			<p>Drop a single &lt;three-d&gt; tag on any site. Chat widget, floating button, full-screen — one line of HTML.</p>
+			<span class="j-link">Create widget →</span>
+		</a>
+		<a href="/dashboard-next/monetize" class="journey-step">
+			<div class="j-num">04</div>
+			<h3>Start earning</h3>
+			<p>Charge per message, set a subscription, or accept tips in USDC. Withdrawals land in your Solana wallet.</p>
+			<span class="j-link">Set up monetization →</span>
+		</a>
+	</div>
+</section>
+
+<hr class="sec-divider" />
+
+<!-- ── 04 Embed ── -->
+<section class="sec" id="embed">
+	<div class="sec-eye reveal">04 — Embed</div>
+	<h2 class="sec-h reveal">drop one<br />anywhere.</h2>
+	<p class="sec-p reveal">Each tile is a real &lt;three-d&gt; instance with isolated shadow DOM. Same tag in your blog, landing page, docs, dashboard, product card, newsletter.</p>
+
+	<div class="tiles">
+		<div class="tile reveal">
+			<three-d src="https://three.ws/animations/robotexpressive.glb" name="atlas" interactive eager autoplay></three-d>
+			<div class="cap"><b>atlas</b><span>blog</span></div>
+		</div>
+		<div class="tile reveal">
+			<three-d src="https://three.ws/animations/robotexpressive.glb" name="vega" interactive eager autoplay></three-d>
+			<div class="cap"><b>vega</b><span>product</span></div>
+		</div>
+		<div class="tile reveal">
+			<three-d src="https://three.ws/animations/robotexpressive.glb" name="mira" interactive eager autoplay></three-d>
+			<div class="cap"><b>mira</b><span>docs</span></div>
+		</div>
+		<div class="tile reveal">
+			<three-d src="https://three.ws/animations/robotexpressive.glb" name="nova" interactive eager autoplay></three-d>
+			<div class="cap"><b>nova</b><span>letter</span></div>
+		</div>
+	</div>
+</section>
+
+<hr class="sec-divider" />
+
+<!-- ── 05 Animate ── -->
+<section class="sec" id="animate">
+	<div class="sec-eye reveal">05 — Animate</div>
+	<h2 class="sec-h reveal">your agent.<br />any move.</h2>
+	<p class="sec-p reveal">Choose an avatar, trigger any animation. The same renderer ships in your embed.</p>
+
+	<div class="picker-wrap">
+		<div class="picker-stage reveal">
+			<canvas id="home-act2-canvas"></canvas>
+		</div>
+		<div class="picker-controls reveal">
+			<div>
+				<div class="picker-label">Character</div>
+				<div class="av-opts" id="av-opts">
+					<button class="av-opt" data-src="/animations/robotexpressive.glb" aria-pressed="true">Robot</button>
+					<button class="av-opt" data-src="/animations/soldier.glb" aria-pressed="false">Soldier</button>
+					<button class="av-opt" data-src="/avatars/cz.glb" aria-pressed="false">CZ</button>
+				</div>
+			</div>
+			<div>
+				<div class="picker-label">Animation</div>
+				<div class="anim-chips" id="anim-chips" data-role="anim-chips"></div>
+			</div>
+			<a class="cta" href="/create" style="align-self:flex-start;">Create your agent</a>
+		</div>
+	</div>
+</section>
+
+<hr class="sec-divider" />
+
+<!-- ── 06 On-chain ── -->
+<section class="sec" id="onchain">
+	<div class="sec-eye reveal">06 — On-chain</div>
+	<h2 class="sec-h reveal">one transaction.<br />one identity.</h2>
+	<p class="sec-p reveal">A portable, verifiable agentId every A2A or MCP client can find. Sub-cent fees on Solana.</p>
+
+	<div class="deploy-wrap">
+		<form class="deploy-form reveal" id="home-deploy-form" action="/deploy" method="get">
+			<div>
+				<label for="agent-name-home">Agent name</label>
+				<input id="agent-name-home" name="name" type="text" placeholder="my-agent" autocomplete="off" spellcheck="false" />
+			</div>
+			<div>
+				<label for="network-home">Network</label>
+				<select id="network-home" name="network">
+					<option value="mainnet-beta" selected>Solana Mainnet</option>
+					<option value="devnet">Solana Devnet</option>
+				</select>
+			</div>
+			<div class="deploy-stats">
+				<div><div class="ds-label">Chain</div><div class="ds-val">Solana</div></div>
+				<div><div class="ds-label">Standard</div><div class="ds-val">Metaplex Core</div></div>
+				<div><div class="ds-label">Fee</div><div class="ds-val">~$0.01</div></div>
+			</div>
+			<button type="submit" class="cta">Mint your agent</button>
+		</form>
+
+		<div class="deploy-facts reveal">
+			<div class="deploy-fact">
+				<div class="df-n">Portable</div>
+				<p>Your agentId is a Metaplex Core asset — discoverable by any A2A or MCP client without going through three.ws.</p>
+			</div>
+			<div class="deploy-fact">
+				<div class="df-n">Verifiable</div>
+				<p>On-chain attestations from any service you use — reputation, skills, and payment rails in one place.</p>
+			</div>
+			<div class="deploy-fact">
+				<div class="df-n">Yours</div>
+				<p>Your keys, your agent. Transfer it, sell it, or keep it. No lock-in.</p>
+			</div>
+			<div class="deploy-fact">
+				<div class="df-n">Free to start</div>
+				<p>Open source. MIT licensed. Hosting is free for the first agent. Pay only when you scale.</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<hr class="sec-divider" />
+
+<!-- ── 07 Install ── -->
+<section class="sec" id="install">
+	<div class="sec-eye reveal">07 — Install</div>
+	<h2 class="sec-h reveal">two lines.<br />live.</h2>
+	<p class="sec-p reveal">Paste once in &lt;head&gt;. Use &lt;three-d&gt; anywhere. Works in React, Vue, Svelte, plain HTML, Webflow, Notion, Shopify — any host that allows a script tag.</p>
+
+	<div class="install-wrap">
+		<pre class="code reveal"><span class="c">// in &lt;head&gt;</span>
+<span class="t">&lt;script</span> <span class="a">src</span>=<span class="s">"https://three.ws/embed/v1.js"</span> <span class="a">defer</span><span class="t">&gt;&lt;/script&gt;</span>
+
+<span class="c">// anywhere</span>
+<span class="t">&lt;three-d</span>
+  <span class="a">agent</span>=<span class="s">"eip155:8453:42"</span>
+  <span class="a">interactive</span> <span class="a">autoplay</span>
+<span class="t">&gt;&lt;/three-d&gt;</span></pre>
+		<ul class="bullets reveal">
+			<li><b>lazy</b><span>Boots on intersect. Zero cost off-screen.</span></li>
+			<li><b>eager</b><span>Add the attribute to force above-the-fold mount.</span></li>
+			<li><b>shadow</b><span>Isolated CSS. No leakage in or out.</span></li>
+			<li><b>theme</b><span>Dark, light, transparent, custom.</span></li>
+			<li><b>id</b><span>ERC-8004 address or raw glTF URL.</span></li>
+			<li><b>size</b><span>15KB loader. CDN-deduped runtime.</span></li>
+		</ul>
+	</div>
+</section>
+
+<hr class="sec-divider" />
+
+<!-- ── 08 Developer ── -->
+<section class="sec" id="developers">
+	<div class="sec-eye reveal">08 — Developers</div>
+	<h2 class="sec-h reveal">drop one tag.<br />ship a 3d agent.</h2>
+	<div class="dev-wrap">
+		<div class="dev-text reveal">
+			<p>The <code style="font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.06);padding:.1em .35em;border-radius:4px">&lt;agent-3d&gt;</code> web component lazy-loads, renders anywhere, and connects to your existing AI stack via MCP or A2A. No framework. No build step.</p>
+			<div class="dev-links">
+				<a href="/docs" class="dev-link">Read the docs →</a>
+				<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer" class="dev-link">GitHub →</a>
+				<a href="/bazaar" class="dev-link">Browse the bazaar →</a>
+			</div>
+		</div>
+		<div class="dev-code reveal">
+			<div class="dev-code-bar">
+				<span class="dev-code-dot"></span>
+				<span class="dev-code-dot"></span>
+				<span class="dev-code-dot"></span>
+				<span>index.html</span>
+			</div>
+			<pre class="dev-pre"><span class="c">&lt;!-- 1. Load the component --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"module"</span>
+  <span class="attr">src</span>=<span class="val">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+
+<span class="c">&lt;!-- 2. Drop the tag --&gt;</span>
+<span class="tag">&lt;agent-3d</span>
+  <span class="attr">agent-id</span>=<span class="val">"3DAg…uPL"</span>
+  <span class="attr">kiosk</span>
+<span class="tag">&gt;&lt;/agent-3d&gt;</span></pre>
+		</div>
+	</div>
+</section>
+
+<!-- ── End CTA ── -->
+<section class="end">
+	<div class="big reveal">ship a body.</div>
+	<div class="cta-row reveal" style="justify-content:center;">
+		<a class="cta" href="/studio">Open Studio</a>
+		<a class="cta-ghost" href="/docs">Read Docs</a>
+	</div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+	<div class="footer-top">
+		<div>
+			<div class="footer-brand-name">three.ws</div>
+			<p class="footer-tagline">Give your AI a body.</p>
+			<div class="footer-socials">
+				<a class="footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer" aria-label="three.ws on X">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+				</a>
+				<a class="footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer" aria-label="three.ws on GitHub">
+					<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+				</a>
+			</div>
+		</div>
+		<div class="footer-links-grid">
+			<div class="footer-link-col">
+				<div class="footer-link-heading">Product</div>
+				<a href="/create">Create</a>
+				<a href="/studio">Studio</a>
+				<a href="/widgets">Widgets</a>
+				<a href="/discover">Discover</a>
+				<a href="/marketplace">Marketplace</a>
+			</div>
+			<div class="footer-link-col">
+				<div class="footer-link-heading">Developers</div>
+				<a href="/docs">Docs</a>
+				<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer">GitHub</a>
+				<a href="/bazaar">Bazaar</a>
+				<a href="/embed/v1/preview">Embed preview</a>
+			</div>
+			<div class="footer-link-col">
+				<div class="footer-link-heading">Resources</div>
+				<a href="/blog">Blog</a>
+				<a href="/dashboard">Dashboard</a>
+				<a href="/legal/privacy">Privacy</a>
+				<a href="/legal/tos">Terms</a>
+			</div>
+		</div>
+	</div>
+	<div class="footer-bottom">
+		<div>three.ws · the 3d layer · 2026</div>
+		<div class="footer-legal-links">
+			<a href="/legal/privacy">Privacy Policy</a>
+			<a href="/legal/tos">Terms of Use</a>
+		</div>
+	</div>
+</footer>
+
+<script>
+	// Hero model-viewer mouse orbit
+	(function () {
+		var mv = document.getElementById('hero-mv');
+		if (!mv) return;
+		var raf = null, mouseX = 0;
+		function apply() {
+			var theta = 15 + mouseX * 25;
+			mv.cameraOrbit = theta + 'deg 82deg auto';
+			raf = null;
+		}
+		window.addEventListener('mousemove', function (e) {
+			mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+			if (!raf) raf = requestAnimationFrame(apply);
+		}, { passive: true });
+	})();
+
+	// Scroll reveal
+	(function () {
+		var els = document.querySelectorAll('.reveal');
+		var io = new IntersectionObserver(function (entries) {
+			entries.forEach(function (entry) {
+				if (entry.isIntersecting) {
+					entry.target.classList.add('revealed');
+					io.unobserve(entry.target);
+				}
+			});
+		}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+		els.forEach(function (el, i) {
+			var siblings = Array.from(el.parentElement.querySelectorAll('.reveal'));
+			var idx = siblings.indexOf(el);
+			el.style.transitionDelay = (idx * 0.08) + 's';
+			io.observe(el);
+		});
+	})();
+
+	// Animation picker — wires av-opts buttons + anim-chips to Act2Viewer on #home-act2-canvas
+	(function () {
+		var canvas = document.getElementById('home-act2-canvas');
+		var avOpts = document.querySelectorAll('#av-opts .av-opt');
+		var chipsEl = document.getElementById('anim-chips');
+		if (!canvas || !chipsEl) return;
+
+		var viewer = null;
+
+		function whenReady(cb) {
+			if (window.Act2Viewer) return cb();
+			setTimeout(function () { whenReady(cb); }, 60);
+		}
+
+		whenReady(function () {
+			viewer = new window.Act2Viewer(canvas, { fov: 22 });
+
+			var currentSrc = avOpts[0] ? avOpts[0].dataset.src : '/animations/robotexpressive.glb';
+
+			function loadModel(src) {
+				currentSrc = src;
+				chipsEl.innerHTML = '';
+				viewer.loadModel(src, { autoPlay: true }).then(function () {
+					var clips = viewer.getClipNames ? viewer.getClipNames() : [];
+					clips.forEach(function (name) {
+						var btn = document.createElement('button');
+						btn.className = 'anim-chip';
+						btn.textContent = name;
+						btn.addEventListener('click', function () {
+							document.querySelectorAll('.anim-chip').forEach(function (c) { c.classList.remove('active'); });
+							btn.classList.add('active');
+							viewer.playClip(name).catch(function () {});
+						});
+						chipsEl.appendChild(btn);
+					});
+				}).catch(function () {});
+			}
+
+			avOpts.forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					avOpts.forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+					btn.setAttribute('aria-pressed', 'true');
+					loadModel(btn.dataset.src);
+				});
+			});
+
+			loadModel(currentSrc);
+		});
+	})();
+</script>
+
+</body>
+</html>

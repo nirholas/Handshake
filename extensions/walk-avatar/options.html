@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Walk Avatar — Settings</title>
+	<style>
+		*, *::before, *::after { box-sizing: border-box; }
+		:root {
+			--bg: #0a0a0a;
+			--surface: #141414;
+			--border: rgba(255,255,255,0.08);
+			--text: #fafafa;
+			--text-2: #a1a1aa;
+			--accent: #7dd3fc;
+			--danger: #f87171;
+		}
+		html, body {
+			margin: 0;
+			min-height: 100vh;
+			background: var(--bg);
+			color: var(--text);
+			font-family: 'Inter', system-ui, -apple-system, sans-serif;
+			font-size: 14px;
+			-webkit-font-smoothing: antialiased;
+		}
+		.wrap { max-width: 640px; margin: 0 auto; padding: 40px 20px 80px; }
+		h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+		.subtitle { color: var(--text-2); margin: 0 0 40px; font-size: 13px; }
+		.section { margin-bottom: 32px; }
+		.section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-2); margin: 0 0 12px; }
+		.field { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 16px; }
+		.field:last-child { border-bottom: 0; }
+		.field-label { font-size: 13px; font-weight: 500; }
+		.field-sub { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+		.field-control { flex-shrink: 0; }
+
+		select, input[type=text], textarea {
+			background: var(--surface);
+			border: 1px solid var(--border);
+			color: var(--text);
+			font-family: inherit;
+			font-size: 13px;
+			padding: 6px 10px;
+			border-radius: 8px;
+			outline: none;
+		}
+		select:focus, input:focus, textarea:focus { border-color: var(--accent); }
+		textarea { width: 100%; min-height: 80px; resize: vertical; margin-top: 8px; }
+		input[type=range] { width: 140px; accent-color: var(--accent); }
+
+		.toggle-switch { position: relative; width: 44px; height: 24px; }
+		.toggle-switch input { opacity: 0; width: 0; height: 0; }
+		.toggle-track { position: absolute; inset: 0; border-radius: 24px; background: var(--border); cursor: pointer; transition: background 0.2s; }
+		.toggle-switch input:checked + .toggle-track { background: var(--accent); }
+		.toggle-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: white; transition: transform 0.2s; }
+		.toggle-switch input:checked + .toggle-track::after { transform: translateX(20px); }
+
+		.save-btn {
+			background: var(--accent);
+			color: #000;
+			border: 0;
+			padding: 10px 24px;
+			border-radius: 8px;
+			font-size: 14px;
+			font-weight: 600;
+			cursor: pointer;
+			margin-top: 24px;
+		}
+		.save-btn:hover { opacity: 0.88; }
+		.save-btn.saved { background: #34d399; }
+
+		.diagnostics { border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-top: 32px; }
+		.diag-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; font-size: 12px; color: var(--text-2); }
+		.diag-value { color: var(--text); }
+		.sign-out-btn {
+			background: transparent;
+			border: 1px solid var(--danger);
+			color: var(--danger);
+			padding: 5px 12px;
+			border-radius: 6px;
+			font-size: 12px;
+			cursor: pointer;
+		}
+		.sign-out-btn:hover { background: rgba(248,113,113,0.1); }
+	</style>
+</head>
+<body>
+	<div class="wrap">
+		<h1>Walk Avatar Settings</h1>
+		<p class="subtitle">Configure your walking avatar companion for all websites.</p>
+
+		<div class="section">
+			<div class="section-title">Appearance</div>
+			<div class="field">
+				<div>
+					<div class="field-label">Default position</div>
+					<div class="field-sub">Where the avatar appears on pages</div>
+				</div>
+				<div class="field-control">
+					<select id="opt-position">
+						<option value="bottom-right">Bottom right</option>
+						<option value="bottom-left">Bottom left</option>
+						<option value="top-right">Top right</option>
+						<option value="top-left">Top left</option>
+					</select>
+				</div>
+			</div>
+			<div class="field">
+				<div>
+					<div class="field-label">Default size</div>
+					<div class="field-sub">Width × height in pixels</div>
+				</div>
+				<div class="field-control" style="display:flex;gap:6px;align-items:center">
+					<input type="text" id="opt-width" style="width:60px" placeholder="180" />
+					<span style="color:var(--text-2)">×</span>
+					<input type="text" id="opt-height" style="width:60px" placeholder="260" />
+				</div>
+			</div>
+			<div class="field">
+				<div>
+					<div class="field-label">Walk speed</div>
+				</div>
+				<div class="field-control" style="display:flex;align-items:center;gap:8px">
+					<input type="range" id="opt-speed" min="0.5" max="2" step="0.1" value="1" />
+					<span id="opt-speed-val" style="font-size:12px;width:28px">1.0×</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="section">
+			<div class="section-title">Narration</div>
+			<div class="field">
+				<div>
+					<div class="field-label">Read page sections aloud</div>
+					<div class="field-sub">Avatar narrates visible content using TTS</div>
+				</div>
+				<label class="toggle-switch field-control">
+					<input type="checkbox" id="opt-narration" />
+					<div class="toggle-track"></div>
+				</label>
+			</div>
+			<div class="field">
+				<div>
+					<div class="field-label">Voice</div>
+				</div>
+				<div class="field-control">
+					<select id="opt-voice">
+						<option value="default">Default</option>
+					</select>
+				</div>
+			</div>
+		</div>
+
+		<div class="section">
+			<div class="section-title">Site Filters</div>
+			<div class="field" style="flex-direction:column;align-items:flex-start">
+				<div>
+					<div class="field-label">Allowlist</div>
+					<div class="field-sub">Avatar only appears on these domains (one per line). Leave empty for all sites.</div>
+				</div>
+				<textarea id="opt-allowlist" placeholder="example.com&#10;mysite.org"></textarea>
+			</div>
+			<div class="field" style="flex-direction:column;align-items:flex-start">
+				<div>
+					<div class="field-label">Blocklist</div>
+					<div class="field-sub">Avatar never appears on these domains (one per line). Takes precedence over allowlist.</div>
+				</div>
+				<textarea id="opt-blocklist" placeholder="bank.com&#10;health-app.io"></textarea>
+			</div>
+		</div>
+
+		<button class="save-btn" id="save-btn">Save settings</button>
+
+		<div class="diagnostics">
+			<div class="section-title" style="margin-bottom:12px">Diagnostics</div>
+			<div class="diag-row">
+				<span>Session</span>
+				<span class="diag-value" id="diag-session">checking…</span>
+			</div>
+			<div class="diag-row">
+				<span>Extension version</span>
+				<span class="diag-value" id="diag-version">–</span>
+			</div>
+			<div class="diag-row">
+				<span>Docs</span>
+				<a href="https://three.ws/docs/walk/chrome-extension.html" target="_blank" style="color:var(--accent);font-size:12px">three.ws/docs/walk →</a>
+			</div>
+			<div class="diag-row" style="margin-top:8px">
+				<button class="sign-out-btn" id="sign-out-btn">Sign out</button>
+			</div>
+		</div>
+	</div>
+	<script src="options.js"></script>
+</body>
+</html>

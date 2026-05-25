@@ -790,6 +790,44 @@
 			el.setAttribute('src', AVATAR_SRC);
 		});
 
+		// ── Hero walking animation cycle ─────────────────────────
+		// After the hero avatar finishes loading, idle for 2s then
+		// crossfade to walk, then back to idle in a continuous loop.
+		// Uses the public playClipByName API on the agent-3d element.
+		(function initHeroWalk() {
+			const heroAgent = document.querySelector('.hero agent-3d');
+			if (!heroAgent) return;
+			const WALK_CLIP = 'av-walk-feminine';
+			const IDLE_CLIP = 'idle';
+			let looping = true;
+
+			async function walkCycle() {
+				// Wait 2s in idle, then walk for 5s, repeat.
+				await new Promise(r => setTimeout(r, 2000));
+				if (!looping) return;
+				heroAgent.playClipByName?.(WALK_CLIP, { loop: true, fade_ms: 400 });
+				await new Promise(r => setTimeout(r, 5000));
+				if (!looping) return;
+				heroAgent.playClipByName?.(IDLE_CLIP, { loop: true, fade_ms: 600 });
+				await new Promise(r => setTimeout(r, 3000));
+				if (!looping) walkCycle();
+				else walkCycle();
+			}
+
+			heroAgent.addEventListener('agent:ready', () => {
+				walkCycle();
+			}, { once: true });
+
+			// If element is already ready (e.g. from cache), start immediately.
+			if (heroAgent._viewer) walkCycle();
+
+			// Pause walk cycle when tab is hidden (saves GPU)
+			document.addEventListener('visibilitychange', () => {
+				looping = !document.hidden;
+				if (looping) walkCycle();
+			});
+		})();
+
 		// ── Hero parallax tilt (subtle "3D site" feel) ──────────
 		const stage = document.getElementById('hero-stage');
 		const inner = document.getElementById('hero-stage-inner');

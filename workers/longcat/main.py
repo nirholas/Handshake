@@ -4,7 +4,7 @@ LongCat Video Avatar service — audio-driven talking avatar video generation.
   POST /generate  { image_url, audio_url, prompt?, job_id? }
                →  202 { job_id, status: "queued" }
 
-  GET  /jobs/:id  → { job_id, status, video_url?, error?, updated_at }
+  GET  /jobs/:id  → { job_id, status, progress?, video_url?, error?, updated_at }
 
   GET  /health    → { ok, model_loaded }
 
@@ -25,6 +25,7 @@ import base64
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -56,6 +57,35 @@ MAX_CONCURRENT    = int(os.environ.get("MAX_CONCURRENT", "1"))
 RESOLUTION        = os.environ.get("RESOLUTION", "720p")
 
 WEIGHTS_SUBDIR    = WEIGHTS_DIR / "LongCat-Video-Avatar"
+
+# Progress line patterns, tried in order. Each yields a 0–1 float.
+# Covers tqdm bars ("42%|"), "frame X/Y", "step X/Y", and bare "X%".
+_PROGRESS_PATTERNS: list[tuple[re.Pattern, callable]] = [
+    # tqdm: "42%|████..." or "42it [" (no denominator → skip)
+    (re.compile(r'^\s*(\d+)%\|'), lambda m: float(m.group(1)) / 100),
+    # "frame(s) X / Y" or "frame X/Y"
+    (re.compile(r'frames?\s+(\d+)\s*/\s*(\d+)', re.IGNORECASE),
+     lambda m: int(m.group(1)) / int(m.group(2)) if int(m.group(2)) > 0 else None),
+    # "step(s) X / Y"
+    (re.compile(r'steps?\s+(\d+)\s*/\s*(\d+)', re.IGNORECASE),
+     lambda m: int(m.group(1)) / int(m.group(2)) if int(m.group(2)) > 0 else None),
+    # bare percentage anywhere in the line
+    (re.compile(r'\b(\d{1,3})%'), lambda m: min(float(m.group(1)) / 100, 1.0)),
+]
+
+
+def _parse_progress(line: str) -> float | None:
+    for pattern, extractor in _PROGRESS_PATTERNS:
+        m = pattern.search(line)
+        if m:
+            try:
+                val = extractor(m)
+                if val is not None and 0.0 <= val <= 1.0:
+                    return val
+            except (ZeroDivisionError, ValueError):
+                continue
+    return None
+
 
 # ── global state ───────────────────────────────────────────────────────────────
 
@@ -149,7 +179,7 @@ async def _process_job(
     prompt: str,
 ) -> None:
     async with _job_sem:
-        _set_job(job_id, {"status": "running"})
+        _set_job(job_id, {"status": "running", "progress": 0.0})
         workdir = Path(tempfile.mkdtemp(prefix=f"longcat_{job_id}_"))
         try:
             log.info("[%s] downloading inputs", job_id)
@@ -193,7 +223,7 @@ async def _process_job(
             )
             video_url = f"https://storage.googleapis.com/{GCS_BUCKET}/{blob_name}"
 
-            _set_job(job_id, {"status": "done", "video_url": video_url})
+            _set_job(job_id, {"status": "done", "progress": 1.0, "video_url": video_url})
             log.info("[%s] done → %s", job_id, video_url)
 
         except Exception:
@@ -220,18 +250,35 @@ def _run_inference(job_id: str, config_path: Path, output_dir: Path) -> None:
         "--num_inference_steps", "8",
     ]
     log.info("[%s] cmd: %s", job_id, " ".join(cmd))
-    result = subprocess.run(
+
+    # Stream stdout+stderr so we can parse progress in real time.
+    process = subprocess.Popen(
         cmd,
         cwd=str(LONGCAT_REPO_DIR),
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         text=True,
-        timeout=3600,
+        bufsize=1,
     )
-    if result.returncode != 0:
+
+    stdout_lines: list[str] = []
+    last_progress: float | None = None
+
+    for raw_line in process.stdout:
+        line = raw_line.rstrip()
+        stdout_lines.append(line)
+        log.info("[%s] %s", job_id, line)
+
+        progress = _parse_progress(line)
+        if progress is not None and progress != last_progress:
+            last_progress = progress
+            _set_job(job_id, {"progress": progress})
+
+    process.wait()
+    if process.returncode != 0:
+        tail = "\n".join(stdout_lines[-100:])
         raise RuntimeError(
-            f"torchrun failed (exit {result.returncode}):\n"
-            f"stdout: {result.stdout[-4000:]}\n"
-            f"stderr: {result.stderr[-4000:]}"
+            f"torchrun failed (exit {process.returncode}):\n{tail}"
         )
 
 
@@ -271,6 +318,7 @@ async def generate(
     _set_job(job_id, {
         "job_id":    job_id,
         "status":    "queued",
+        "progress":  None,
         "image_url": body.image_url,
         "audio_url": body.audio_url,
         "prompt":    body.prompt,

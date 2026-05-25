@@ -163,11 +163,8 @@
 </head>
 <body class="home-page">
 	<script>window.__PAGE_INIT_TS = Date.now();</script>
-	<div id="nav-root"></div>
-	<script type="module">
-		import { mountNav } from '/src/nav.js';
-		mountNav(document.getElementById('nav-root'), { active: 'gmgn' });
-	</script>
+	<div id="nav-container"></div>
+	<script src="/nav.js"></script>
 
 	<!-- Filter bar -->
 	<div class="pf-filterbar" role="toolbar" aria-label="Feed controls">
@@ -361,7 +358,7 @@
 		function setAvatarLabel(src) {
 			const name = src.split('/').pop().replace(/\.[^.]+$/, '') || 'Agent';
 			$('ctl-avatar-label').textContent = name;
-			$('ctl-avatar-thumb').style.backgroundImage = `url('/api/avatars/thumb?src=${encodeURIComponent(src)}')`;
+			$('ctl-avatar-thumb').style.backgroundImage = '';
 		}
 
 		// ── TTS queue ────────────────────────────────────────────────────────────
@@ -562,7 +559,7 @@
 
 			es = new EventSource(endpoint.href, { withCredentials: true });
 
-			es.addEventListener('open', (msg) => {
+			es.addEventListener('hello', (msg) => {
 				const d = JSON.parse(msg.data);
 				setStatus('live', `Live · ${d.chain?.toUpperCase() || 'SOL'} · ${d.interval}`);
 			});

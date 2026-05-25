@@ -168,7 +168,9 @@ async function main() {
 		animMgr.crossfadeTo(startAnim, 0.3).catch(() => {});
 	}
 
-	const pickerEnabled = params.get('animPicker') !== '0' && !overlayMode;
+	const hideChrome = params.get('hide-chrome') === '1';
+
+	const pickerEnabled = params.get('animPicker') !== '0' && !overlayMode && !hideChrome;
 	if (pickerEnabled && animDefs.length > 0) {
 		buildAnimPicker(animDefs, animMgr);
 	}
@@ -294,7 +296,7 @@ async function main() {
 	});
 	// Show pill if a mocap-capable surface was requested.
 	if ((params.get('mocap') || 'off') !== 'off') {
-		pill.style.display = 'inline-flex';
+		if (!hideChrome) pill.style.display = 'inline-flex';
 		// Auto-start when explicitly opted in. Browsers block getUserMedia
 		// from auto-running without a user gesture in most cases — the pill
 		// is the click target if so.
@@ -303,7 +305,7 @@ async function main() {
 		} catch (err) {
 			console.warn('[avatar-embed] mocap auto-start failed', err);
 		}
-	} else {
+	} else if (!hideChrome) {
 		pill.style.display = 'inline-flex';
 	}
 
@@ -442,7 +444,7 @@ async function main() {
 		}
 	}
 
-	renderEmotePanel();
+	if (!hideChrome) renderEmotePanel();
 
 	// Hotkey listener — captures 1-9 + 0 globally, plus space to toggle the
 	// panel (VSeeFace ※ pattern), plus h to toggle chrome.

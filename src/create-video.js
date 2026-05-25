@@ -30,6 +30,9 @@ let selectedThumbnail  = null;
 let audioFile          = null;
 let currentJobId       = null;
 let pollTimer          = null;
+let pollDeadline       = null;   // ms timestamp after which we give up polling
+
+const POLL_TIMEOUT_MS  = 20 * 60 * 1000;  // 20 minutes — safety net for hung jobs
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
@@ -228,32 +231,50 @@ async function startGeneration() {
 	}
 
 	setProgressLabel('Generating video…');
+	pollDeadline = Date.now() + POLL_TIMEOUT_MS;
 	pollTimer = setInterval(() => pollJob(jobId), 5000);
 }
 
 async function pollJob(jobId) {
 	if (currentJobId !== jobId) return;
 
-	let data;
-	try {
-		const res = await apiFetch(`/api/avatar/video-status?job_id=${encodeURIComponent(jobId)}`);
-		if (!res.ok) return;
-		data = await res.json();
-	} catch {
+	if (pollDeadline && Date.now() > pollDeadline) {
+		clearInterval(pollTimer);
+		pollTimer = null;
+		currentJobId = null;
+		showResult('error', 'Generation timed out. Please try again.');
+		generateBtn.disabled = false;
 		return;
 	}
 
-	if (data.status === 'running') {
-		setProgressLabel('Rendering frames…');
+	let data;
+	try {
+		const res = await apiFetch(`/api/avatar/video-status?job_id=${encodeURIComponent(jobId)}`);
+		if (!res.ok) {
+			// Non-2xx but not a network failure — surface it if it persists.
+			// For now keep polling; transient 5xx from the worker resolve quickly.
+			return;
+		}
+		data = await res.json();
+	} catch {
+		// Network error — keep polling until the deadline.
+		return;
+	}
+
+	if (data.status === 'queued' || data.status === 'running') {
+		const pct = data.progress != null ? ` ${Math.round(data.progress * 100)}%` : '';
+		setProgressLabel(`Rendering frames…${pct}`);
 	} else if (data.status === 'done' && data.video_url) {
 		clearInterval(pollTimer);
 		pollTimer = null;
 		currentJobId = null;
+		pollDeadline = null;
 		showVideo(data.video_url);
 	} else if (data.status === 'failed') {
 		clearInterval(pollTimer);
 		pollTimer = null;
 		currentJobId = null;
+		pollDeadline = null;
 		showResult('error', 'Generation failed on the server. Please try again.');
 		generateBtn.disabled = false;
 	}
@@ -268,6 +289,7 @@ function showVideo(url) {
 function resetToIdle() {
 	if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 	currentJobId = null;
+	pollDeadline = null;
 	resultVideo.src = '';
 	resultBlock.classList.remove('is-visible');
 	progressArea.classList.remove('is-visible');

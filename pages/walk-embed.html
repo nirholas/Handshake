@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Walk Embed · three.ws</title>
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+		/>
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="Embeddable walking 3D avatar — drop into any page via iframe."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<!--
+			Embed page is intentionally chrome-less. No nav, no footer, no
+			multiplayer pill. Hosts that drop this into an <iframe> get just
+			the walking avatar + (optionally) the joystick. Multiplayer is
+			disabled because random embeds shouldn't connect strangers to
+			one shared room.
+		-->
+		<meta name="walk-embed" content="1" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+
+		<style>
+			html, body {
+				margin: 0;
+				padding: 0;
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+				background: transparent;
+				color: #fafafa;
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				-webkit-font-smoothing: antialiased;
+				touch-action: none;
+				overscroll-behavior: none;
+			}
+
+			#walk-stage {
+				position: fixed;
+				inset: 0;
+				background: transparent;
+			}
+
+			#walk-canvas {
+				position: fixed;
+				inset: 0;
+				width: 100vw;
+				height: 100vh;
+				z-index: 2;
+				display: block;
+			}
+
+			#walk-joystick {
+				position: fixed;
+				z-index: 5;
+				left: 16px;
+				bottom: calc(16px + env(safe-area-inset-bottom, 0));
+				width: 110px;
+				height: 110px;
+				touch-action: none;
+				pointer-events: auto;
+				display: none;
+			}
+			#walk-stage[data-controls="joystick"] #walk-joystick { display: block; }
+
+			#walk-status {
+				position: fixed;
+				z-index: 6;
+				left: 50%;
+				bottom: 16px;
+				transform: translateX(-50%);
+				background: rgba(17, 17, 17, 0.72);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 999px;
+				padding: 6px 12px;
+				font-size: 11px;
+				color: #a1a1aa;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				pointer-events: none;
+				transition: opacity 0.2s ease;
+			}
+			#walk-status.is-error { color: #f87171; border-color: rgba(248, 113, 113, 0.5); }
+			#walk-status.is-hidden { opacity: 0; }
+		</style>
+	</head>
+	<body>
+		<div id="walk-stage" data-controls="joystick">
+			<canvas id="walk-canvas"></canvas>
+
+			<div id="walk-joystick" aria-label="Movement joystick"></div>
+
+			<div id="walk-status">loading avatar…</div>
+		</div>
+
+		<script type="module" src="/src/walk-embed.js"></script>
+	</body>
+</html>

@@ -81,6 +81,8 @@
 		"release:lib": "npm run build:lib && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
+		"build:extension": "node scripts/build-extension-icons.mjs && node scripts/build-extension.mjs",
+		"build:extension:prod": "node scripts/build-extension-icons.mjs && node scripts/build-extension.mjs --prod",
 		"optimize:glb": "node scripts/optimize-glb.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",
 		"fetch:mixamo-catalog": "node scripts/fetch-mixamo-catalog.mjs",

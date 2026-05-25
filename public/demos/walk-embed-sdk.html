@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Walk Embed SDK Demo · three.ws</title>
+		<meta name="description" content="Live demo: a walking 3D avatar dropped onto a blank page with one script tag." />
+
+		<style>
+			* { box-sizing: border-box; }
+			html, body {
+				margin: 0;
+				padding: 0;
+				min-height: 100vh;
+				background: linear-gradient(180deg, #0b0d12 0%, #14171f 100%);
+				color: #e6e9ef;
+				font-family: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
+			main {
+				max-width: 920px;
+				margin: 0 auto;
+				padding: 80px 24px 200px;
+			}
+			h1 { font-size: 40px; line-height: 1.05; margin: 0 0 18px; letter-spacing: -0.02em; }
+			h2 { font-size: 22px; margin: 48px 0 12px; letter-spacing: -0.01em; }
+			p { font-size: 15px; line-height: 1.65; color: #a1a8b8; }
+			.lede { font-size: 17px; color: #cdd3df; }
+			code, pre {
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 13px;
+			}
+			pre {
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 10px;
+				padding: 16px 18px;
+				overflow-x: auto;
+				color: #d6dbe6;
+			}
+			.note {
+				background: rgba(125, 211, 252, 0.08);
+				border: 1px solid rgba(125, 211, 252, 0.25);
+				border-radius: 10px;
+				padding: 12px 14px;
+				font-size: 13px;
+				color: #cfe7ff;
+				margin: 16px 0;
+			}
+			.controls {
+				display: flex;
+				gap: 8px;
+				flex-wrap: wrap;
+				margin-top: 12px;
+			}
+			button {
+				appearance: none;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(255, 255, 255, 0.04);
+				color: #e6e9ef;
+				font: inherit;
+				font-size: 13px;
+				padding: 8px 14px;
+				border-radius: 999px;
+				cursor: pointer;
+			}
+			button:hover { background: rgba(255, 255, 255, 0.08); }
+			#events {
+				margin-top: 10px;
+				max-height: 160px;
+				overflow: auto;
+				background: rgba(0, 0, 0, 0.32);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 10px;
+				padding: 10px 12px;
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 12px;
+				color: #98a2b3;
+				line-height: 1.5;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>One tag. A walking avatar on any page.</h1>
+			<p class="lede">
+				This page is a blank HTML document. The script tag at the bottom is the only
+				three.ws code on it — yet there's a real 3D walking avatar in the corner.
+			</p>
+
+			<h2>How it works</h2>
+			<p>Drop this into the <code>&lt;body&gt;</code> of any page on the web:</p>
+			<pre>&lt;script src="https://three.ws/walk-embed-sdk.js"
+        data-avatar="bacff13e-b64b-4ac0-860d-44f0168ad23b"
+        data-position="bottom-right"&gt;&lt;/script&gt;</pre>
+
+			<div class="note">
+				The avatar is a real Three.js scene rendered inside a transparent iframe.
+				It autoplays a slow circular walk so the page never feels static.
+			</div>
+
+			<h2>Try the runtime API</h2>
+			<p>The SDK exposes <code>window.ThreeWalkAvatar</code> for live control:</p>
+			<div class="controls">
+				<button id="btn-position-bl">Bottom-left</button>
+				<button id="btn-position-br">Bottom-right</button>
+				<button id="btn-position-tr">Top-right</button>
+				<button id="btn-size-small">Small</button>
+				<button id="btn-size-large">Large</button>
+				<button id="btn-reset">Reset pose</button>
+			</div>
+
+			<h2>Live events from the iframe</h2>
+			<p>
+				The SDK re-emits <code>postMessage</code> events from the iframe as document-level
+				<code>CustomEvent</code>s. Here's a live tail:
+			</p>
+			<div id="events"></div>
+		</main>
+
+		<!--
+			This is the entire integration. No build step, no framework, no auth.
+			The script auto-mounts on DOMContentLoaded because data-auto is unset
+			(defaults to true). The SDK file is served from /public/.
+		-->
+		<!--
+			data-avatar is omitted so the SDK falls back to the bundled
+			default avatar — that GLB is served same-origin and works in
+			dev/preview/prod without R2 CORS configuration. Hosts using
+			their own avatar should add e.g. data-avatar="<uuid>".
+		-->
+		<script
+			src="/walk-embed-sdk.js"
+			data-position="bottom-right"
+			data-width="240"
+			data-height="340"
+		></script>
+
+		<script>
+			// Demo-page glue — exercise the runtime API and surface events
+			// in the log box so visitors can see what hosts can plug into.
+			const log = document.getElementById('events');
+			function logEvent(name, detail) {
+				const line = document.createElement('div');
+				const summary = name + (detail && detail.x != null
+					? ` · x=${detail.x.toFixed(2)} z=${detail.z.toFixed(2)} motion=${detail.motion}`
+					: '');
+				line.textContent = summary;
+				log.appendChild(line);
+				log.scrollTop = log.scrollHeight;
+				// Cap the log so the DOM doesn't grow without bound on long sessions.
+				while (log.children.length > 200) log.removeChild(log.firstChild);
+			}
+			['walk:ready', 'walk:position', 'walk:error', 'walk:avatarChanged'].forEach((name) => {
+				document.addEventListener(name, (e) => logEvent(name, e.detail));
+			});
+
+			function ready() {
+				const API = window.ThreeWalkAvatar;
+				if (!API) return setTimeout(ready, 60);
+				document.getElementById('btn-position-bl').onclick = () => API.setPosition('bottom-left');
+				document.getElementById('btn-position-br').onclick = () => API.setPosition('bottom-right');
+				document.getElementById('btn-position-tr').onclick = () => API.setPosition('top-right');
+				document.getElementById('btn-size-small').onclick = () => API.setSize(180, 260);
+				document.getElementById('btn-size-large').onclick = () => API.setSize(320, 460);
+				document.getElementById('btn-reset').onclick = () => API.resetPose();
+			}
+			ready();
+		</script>
+	</body>
+</html>

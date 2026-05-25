@@ -1,0 +1,553 @@
+// /walk-embed — chrome-less, iframe-safe walking avatar
+//
+// Duplicated from src/walk.js so embeds can evolve independently without
+// destabilizing the canonical /walk page. Differences vs /walk:
+//   • No multiplayer (WalkNet) — embeds don't connect strangers to a room.
+//   • No AR camera passthrough — embed hosts can't grant getUserMedia.
+//   • No HUD card, no help text, no online pill.
+//   • Reads ?bg, ?controls, ?autoplay query params.
+//   • postMessage's `walk:ready` on load and `walk:position` each tick.
+//
+// If you find yourself fixing the same bug here and in walk.js, consider
+// extracting a shared controller — but until then duplication keeps the
+// blast radius small.
+
+import {
+	AmbientLight,
+	Box3,
+	CircleGeometry,
+	Clock,
+	Color,
+	DirectionalLight,
+	Group,
+	HemisphereLight,
+	Mesh,
+	MeshStandardMaterial,
+	PCFSoftShadowMap,
+	PerspectiveCamera,
+	PMREMGenerator,
+	Quaternion,
+	Scene,
+	ShadowMaterial,
+	Vector3,
+	WebGLRenderer,
+} from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import nipplejs from 'nipplejs';
+
+import { AnimationManager } from './animation-manager.js';
+
+const AVATAR_URL_DEFAULT = '/avatars/default.glb';
+
+// ── Embed params ─────────────────────────────────────────────────────────
+const params = new URLSearchParams(location.search);
+const BG_PARAM = params.get('bg'); // '' or 'transparent' or '#rrggbb'
+const CONTROLS = (params.get('controls') || 'joystick').toLowerCase(); // 'joystick' | 'keyboard' | 'none'
+const AUTOPLAY = params.get('autoplay') === 'true' || params.get('autoplay') === '1';
+const SHOW_GROUND = params.get('ground') !== 'false';
+const ORBIT_ENABLED = params.get('orbit') !== 'false';
+
+async function resolveAvatarUrl() {
+	const id = params.get('avatar');
+	if (!id) return AVATAR_URL_DEFAULT;
+	const res = await fetch(`/api/avatars/${encodeURIComponent(id)}`);
+	if (!res.ok) throw new Error(`avatar ${id} not found (HTTP ${res.status})`);
+	const { avatar } = await res.json();
+	if (!avatar?.url) throw new Error(`avatar ${id} has no GLB URL`);
+	return avatar.url;
+}
+
+const ANIMATIONS_MANIFEST_URL = '/animations/manifest.json';
+const CLIP_IDLE = 'idle';
+const CLIP_WALK = 'av-walk-feminine';
+const CLIP_RUN = 'av-walk-feminine'; // no separate run clip; timeScale handles pace difference
+
+const WALK_SPEED = 1.6;
+const RUN_SPEED = 4.0;
+const NATURAL_WALK_SPEED = 1.5;
+const NATURAL_RUN_SPEED = 3.4;
+const TURN_LERP = 0.18;
+const CAM_LERP = 0.12;
+const LEAN_WALK_RAD = 0.05;
+const LEAN_RUN_RAD = 0.13;
+const LEAN_LERP = 0.12;
+const CAM_OFFSET = new Vector3(0, 1.85, 3.6);
+const CAM_LOOK_OFFSET = new Vector3(0, 1.1, 0);
+const GROUND_RADIUS = 12;
+
+// ── DOM ───────────────────────────────────────────────────────────────────
+const stage = document.getElementById('walk-stage');
+const canvas = document.getElementById('walk-canvas');
+const joystickEl = document.getElementById('walk-joystick');
+const statusEl = document.getElementById('walk-status');
+
+stage.dataset.controls = CONTROLS;
+
+// Apply background. Default is transparent so the host page shows through.
+// `?bg=#101820` paints a solid color; `?bg=transparent` is explicit no-op.
+if (BG_PARAM && BG_PARAM !== 'transparent') {
+	document.body.style.background = BG_PARAM;
+	stage.style.background = BG_PARAM;
+}
+
+function setStatus(text, { error = false, sticky = false } = {}) {
+	if (!statusEl) return;
+	statusEl.textContent = text;
+	statusEl.classList.toggle('is-error', error);
+	statusEl.classList.remove('is-hidden');
+	if (!sticky) {
+		clearTimeout(setStatus._t);
+		setStatus._t = setTimeout(() => statusEl.classList.add('is-hidden'), 2200);
+	}
+}
+
+// ── postMessage bridge to host page ──────────────────────────────────────
+// The host frame learns about embed lifecycle + avatar position via
+// window.postMessage. We post to window.parent only when it's a different
+// window (i.e. we're actually inside an iframe). Direct page loads still
+// work — they just don't emit messages.
+const INSIDE_IFRAME = window.parent && window.parent !== window;
+function postToHost(payload) {
+	if (!INSIDE_IFRAME) return;
+	try { window.parent.postMessage(payload, '*'); } catch {}
+}
+
+// ── Renderer / scene ──────────────────────────────────────────────────────
+const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight, false);
+renderer.setClearColor(0x000000, BG_PARAM && BG_PARAM !== 'transparent' ? 1 : 0);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = PCFSoftShadowMap;
+
+const scene = new Scene();
+
+const pmrem = new PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+scene.add(new AmbientLight(0xffffff, 0.55));
+const hemi = new HemisphereLight(0xbcd6ff, 0x202830, 0.6);
+hemi.position.set(0, 5, 0);
+scene.add(hemi);
+const sun = new DirectionalLight(0xffffff, 1.4);
+sun.position.set(4, 8, 6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.camera.near = 0.5;
+sun.shadow.camera.far = 30;
+sun.shadow.camera.left = -8;
+sun.shadow.camera.right = 8;
+sun.shadow.camera.top = 8;
+sun.shadow.camera.bottom = -8;
+sun.shadow.bias = -0.0005;
+scene.add(sun);
+
+// Ground disc — visible by default; ?ground=false swaps it for a shadow
+// catcher so the avatar floats on the host page's background.
+const groundOpaque = new Mesh(
+	new CircleGeometry(GROUND_RADIUS, 64),
+	new MeshStandardMaterial({ color: 0x202833, roughness: 0.95, metalness: 0.0 }),
+);
+groundOpaque.rotation.x = -Math.PI / 2;
+groundOpaque.receiveShadow = true;
+groundOpaque.visible = SHOW_GROUND;
+scene.add(groundOpaque);
+
+const groundShadowCatcher = new Mesh(
+	new CircleGeometry(GROUND_RADIUS, 64),
+	new ShadowMaterial({ opacity: 0.32 }),
+);
+groundShadowCatcher.rotation.x = -Math.PI / 2;
+groundShadowCatcher.receiveShadow = true;
+groundShadowCatcher.visible = !SHOW_GROUND;
+scene.add(groundShadowCatcher);
+
+const camera = new PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.05, 200);
+const avatarRig = new Group();
+scene.add(avatarRig);
+
+const camTarget = new Vector3();
+const camDesired = new Vector3();
+const camLookTarget = new Vector3();
+const camLookCurrent = new Vector3();
+
+let cameraYaw = 0;
+let cameraPitch = 0.05;
+const PITCH_MIN = -0.6;
+const PITCH_MAX = 0.7;
+
+function applyCameraImmediate() {
+	const offset = CAM_OFFSET.clone();
+	offset.applyAxisAngle(new Vector3(1, 0, 0), -cameraPitch);
+	offset.applyAxisAngle(new Vector3(0, 1, 0), cameraYaw);
+	camDesired.copy(avatarRig.position).add(offset);
+	camera.position.copy(camDesired);
+	camLookTarget.copy(avatarRig.position).add(CAM_LOOK_OFFSET);
+	camLookCurrent.copy(camLookTarget);
+	camera.lookAt(camLookCurrent);
+}
+applyCameraImmediate();
+
+// ── Drag-to-orbit ─────────────────────────────────────────────────────────
+// Skipped entirely when ?orbit=false (e.g. the SDK uses it for autoplay-only
+// floating avatars where stray pointer drags would just look broken).
+if (ORBIT_ENABLED) {
+	let dragging = false;
+	let lastX = 0, lastY = 0;
+	let downId = -1;
+
+	canvas.addEventListener('pointerdown', (e) => {
+		const jRect = joystickEl.getBoundingClientRect();
+		const overJoystick = CONTROLS === 'joystick' && (
+			e.clientX >= jRect.left && e.clientX <= jRect.right &&
+			e.clientY >= jRect.top  && e.clientY <= jRect.bottom
+		);
+		if (overJoystick) return;
+
+		dragging = true;
+		downId = e.pointerId;
+		lastX = e.clientX;
+		lastY = e.clientY;
+		canvas.setPointerCapture?.(e.pointerId);
+	});
+	const onMove = (e) => {
+		if (!dragging || e.pointerId !== downId) return;
+		const dx = e.clientX - lastX;
+		const dy = e.clientY - lastY;
+		lastX = e.clientX;
+		lastY = e.clientY;
+		cameraYaw -= dx * 0.005;
+		cameraPitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, cameraPitch - dy * 0.0035));
+	};
+	const onUp = (e) => {
+		if (e.pointerId !== downId) return;
+		dragging = false;
+		downId = -1;
+		try { canvas.releasePointerCapture?.(e.pointerId); } catch {}
+	};
+	canvas.addEventListener('pointermove', onMove);
+	canvas.addEventListener('pointerup', onUp);
+	canvas.addEventListener('pointercancel', onUp);
+}
+
+// ── Input state ───────────────────────────────────────────────────────────
+const input = {
+	keys: { forward: 0, back: 0, left: 0, right: 0, run: false },
+	joy: { x: 0, y: 0, active: false },
+	autoplay: { active: false, t: 0 },
+};
+
+if (CONTROLS === 'keyboard' || CONTROLS === 'joystick') {
+	window.addEventListener('keydown', (e) => {
+		switch (e.code) {
+			case 'KeyW': case 'ArrowUp':    input.keys.forward = 1; break;
+			case 'KeyS': case 'ArrowDown':  input.keys.back = 1; break;
+			case 'KeyA': case 'ArrowLeft':  input.keys.left = 1; break;
+			case 'KeyD': case 'ArrowRight': input.keys.right = 1; break;
+			case 'ShiftLeft': case 'ShiftRight': input.keys.run = true; break;
+			default: return;
+		}
+	});
+	window.addEventListener('keyup', (e) => {
+		switch (e.code) {
+			case 'KeyW': case 'ArrowUp':    input.keys.forward = 0; break;
+			case 'KeyS': case 'ArrowDown':  input.keys.back = 0; break;
+			case 'KeyA': case 'ArrowLeft':  input.keys.left = 0; break;
+			case 'KeyD': case 'ArrowRight': input.keys.right = 0; break;
+			case 'ShiftLeft': case 'ShiftRight': input.keys.run = false; break;
+		}
+	});
+}
+
+if (CONTROLS === 'joystick') {
+	const joystick = nipplejs.create({
+		zone: joystickEl,
+		mode: 'static',
+		position: { left: '50%', top: '50%' },
+		size: 110,
+		color: 'rgba(255,255,255,0.85)',
+		restOpacity: 0.6,
+	});
+	joystick.on('move', (_evt, data) => {
+		if (data?.vector) {
+			const mag = Math.min(1, data.distance / 50);
+			input.joy.x = data.vector.x * mag;
+			input.joy.y = data.vector.y * mag;
+			input.joy.active = mag > 0.05;
+		}
+	});
+	joystick.on('end', () => {
+		input.joy.x = 0;
+		input.joy.y = 0;
+		input.joy.active = false;
+	});
+}
+
+// ── Avatar loading + animations ──────────────────────────────────────────
+const animationManager = new AnimationManager();
+let avatar = null;
+let avatarYaw = 0;
+let avatarLean = 0;
+let currentMotion = 'idle';
+
+async function loadAvatar() {
+	setStatus('loading avatar…', { sticky: true });
+
+	const avatarUrl = await resolveAvatarUrl();
+	const loader = new GLTFLoader();
+	const gltf = await loader.loadAsync(avatarUrl);
+	avatar = gltf.scene;
+	avatar.traverse((n) => {
+		if (n.isMesh) {
+			n.castShadow = true;
+			n.receiveShadow = false;
+			if (n.material && 'envMapIntensity' in n.material) {
+				n.material.envMapIntensity = 0.85;
+			}
+		}
+	});
+
+	const box = new Box3().setFromObject(avatar);
+	const minY = box.min.y;
+	avatar.position.y -= minY;
+
+	avatarRig.add(avatar);
+
+	const height = Math.max(0.5, box.max.y - box.min.y);
+	CAM_OFFSET.set(0, height * 1.05, height * 1.95);
+	CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
+	applyCameraImmediate();
+
+	animationManager.attach(avatar);
+
+	const manifest = await fetch(ANIMATIONS_MANIFEST_URL, { cache: 'force-cache' })
+		.then((r) => {
+			if (!r.ok) throw new Error(`HTTP ${r.status} fetching animation manifest`);
+			return r.json();
+		});
+	const needed = manifest.filter((d) =>
+		d.name === CLIP_IDLE || d.name === CLIP_WALK || d.name === CLIP_RUN,
+	);
+	if (needed.length === 0) {
+		throw new Error('Animation manifest missing idle/walking/running clips');
+	}
+	animationManager.setAnimationDefs(needed);
+	await animationManager.loadAll();
+
+	await animationManager.crossfadeTo(CLIP_IDLE, 0.0);
+	currentMotion = 'idle';
+
+	if (AUTOPLAY) {
+		input.autoplay.active = true;
+		input.autoplay.t = 0;
+	}
+
+	setStatus('walk it');
+	postToHost({ type: 'walk:ready', avatar: avatarUrl });
+}
+
+// ── Resize ────────────────────────────────────────────────────────────────
+function resize() {
+	const w = window.innerWidth;
+	const h = window.innerHeight;
+	renderer.setSize(w, h, false);
+	camera.aspect = w / h;
+	camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', resize);
+
+// ── Main loop ─────────────────────────────────────────────────────────────
+const clock = new Clock();
+const moveWorld = new Vector3();
+const moveForward = new Vector3();
+const moveRight = new Vector3();
+const upY = new Vector3(0, 1, 0);
+
+function readMoveInput(dt) {
+	if (input.joy.active) return { ix: input.joy.x, iy: input.joy.y };
+	if (CONTROLS !== 'none') {
+		const ix = input.keys.right - input.keys.left;
+		const iy = input.keys.forward - input.keys.back;
+		if (ix || iy) return { ix, iy };
+	}
+	if (input.autoplay.active) {
+		// Lazy "walk in a slow circle" pattern — readable, non-distracting,
+		// and keeps the avatar within the visible ground disc no matter how
+		// long the page sits idle. Period ~16s, radius ramps in over 1s so
+		// the avatar starts from rest instead of snapping into motion.
+		input.autoplay.t += dt;
+		const ramp = Math.min(1, input.autoplay.t / 1.0);
+		const angle = input.autoplay.t * (Math.PI * 2 / 16);
+		return { ix: Math.cos(angle) * 0.6 * ramp, iy: Math.sin(angle) * 0.6 * ramp };
+	}
+	return { ix: 0, iy: 0 };
+}
+
+let lastBroadcastX = 0;
+let lastBroadcastZ = 0;
+const BROADCAST_EPSILON = 0.02; // metres — skip duplicate post messages
+
+function tick() {
+	const dt = Math.min(clock.getDelta(), 0.05);
+
+	const { ix, iy } = readMoveInput(dt);
+	const mag = Math.min(1, Math.hypot(ix, iy));
+
+	const wantRun = mag > 0.9 || input.keys.run;
+	const speed = mag * (wantRun ? RUN_SPEED : WALK_SPEED);
+
+	if (mag > 0.01 && avatar) {
+		moveForward.copy(camLookCurrent).sub(camera.position);
+		moveForward.y = 0;
+		if (moveForward.lengthSq() < 1e-6) moveForward.set(0, 0, -1);
+		else moveForward.normalize();
+		moveRight.crossVectors(moveForward, upY).normalize();
+
+		moveWorld.set(0, 0, 0)
+			.addScaledVector(moveForward, iy / Math.max(mag, 1e-6))
+			.addScaledVector(moveRight, ix / Math.max(mag, 1e-6))
+			.normalize()
+			.multiplyScalar(speed * dt);
+
+		avatarRig.position.add(moveWorld);
+
+		const r = Math.hypot(avatarRig.position.x, avatarRig.position.z);
+		const max = GROUND_RADIUS - 0.5;
+		if (r > max) {
+			const k = max / r;
+			avatarRig.position.x *= k;
+			avatarRig.position.z *= k;
+		}
+
+		const wantYaw = Math.atan2(moveWorld.x, moveWorld.z);
+		avatarYaw = lerpAngle(avatarYaw, wantYaw, TURN_LERP);
+		avatarRig.quaternion.setFromAxisAngle(upY, avatarYaw);
+
+		const want = wantRun ? 'run' : 'walk';
+		if (currentMotion !== want) {
+			currentMotion = want;
+			animationManager.crossfadeTo(want === 'run' ? CLIP_RUN : CLIP_WALK, 0.18);
+		}
+	} else if (currentMotion !== 'idle' && avatar) {
+		currentMotion = 'idle';
+		animationManager.crossfadeTo(CLIP_IDLE, 0.25);
+	}
+
+	if (animationManager.mixer) {
+		let ts = 1.0;
+		if (currentMotion === 'walk') {
+			ts = Math.max(0.45, speed / NATURAL_WALK_SPEED);
+		} else if (currentMotion === 'run') {
+			ts = Math.max(0.6, speed / NATURAL_RUN_SPEED);
+		}
+		animationManager.mixer.timeScale = ts;
+	}
+
+	const targetLean = currentMotion === 'run'
+		? LEAN_RUN_RAD * mag
+		: currentMotion === 'walk'
+			? LEAN_WALK_RAD * mag
+			: 0;
+	avatarLean += (targetLean - avatarLean) * LEAN_LERP;
+	if (avatar) avatar.rotation.x = avatarLean;
+
+	const offset = CAM_OFFSET.clone();
+	offset.applyAxisAngle(new Vector3(1, 0, 0), -cameraPitch);
+	offset.applyAxisAngle(upY, cameraYaw);
+	camDesired.copy(avatarRig.position).add(offset);
+	camera.position.lerp(camDesired, CAM_LERP);
+
+	camLookTarget.copy(avatarRig.position).add(CAM_LOOK_OFFSET);
+	camLookCurrent.lerp(camLookTarget, CAM_LERP);
+	camera.lookAt(camLookCurrent);
+
+	animationManager.update(dt);
+
+	if (
+		avatar && (
+			Math.abs(avatarRig.position.x - lastBroadcastX) > BROADCAST_EPSILON ||
+			Math.abs(avatarRig.position.z - lastBroadcastZ) > BROADCAST_EPSILON
+		)
+	) {
+		lastBroadcastX = avatarRig.position.x;
+		lastBroadcastZ = avatarRig.position.z;
+		postToHost({
+			type: 'walk:position',
+			x: avatarRig.position.x,
+			z: avatarRig.position.z,
+			yaw: avatarYaw,
+			motion: currentMotion,
+		});
+	}
+
+	renderer.render(scene, camera);
+	requestAnimationFrame(tick);
+}
+
+function lerpAngle(a, b, t) {
+	let diff = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI;
+	if (diff < -Math.PI) diff += Math.PI * 2;
+	return a + diff * t;
+}
+
+// ── Host commands ─────────────────────────────────────────────────────────
+// Hosts can drive the embed via window.postMessage. Supported commands:
+//   { type: 'walk:setAvatar', id }   — swap avatar live
+//   { type: 'walk:setMotion', motion } — 'idle' | 'walk' | 'run' (autoplay)
+//   { type: 'walk:resetPose' }       — recenter avatar on the ground
+window.addEventListener('message', async (e) => {
+	const msg = e.data;
+	if (!msg || typeof msg !== 'object') return;
+	if (msg.type === 'walk:setAvatar' && msg.id) {
+		try {
+			const res = await fetch(`/api/avatars/${encodeURIComponent(msg.id)}`);
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const { avatar: a } = await res.json();
+			if (!a?.url) throw new Error('no GLB url');
+			const loader = new GLTFLoader();
+			const gltf = await loader.loadAsync(a.url);
+			if (avatar) avatarRig.remove(avatar);
+			avatar = gltf.scene;
+			avatar.traverse((n) => { if (n.isMesh) n.castShadow = true; });
+			const box = new Box3().setFromObject(avatar);
+			avatar.position.y -= box.min.y;
+			avatarRig.add(avatar);
+			animationManager.attach(avatar);
+			await animationManager.crossfadeTo(CLIP_IDLE, 0.0);
+			currentMotion = 'idle';
+			postToHost({ type: 'walk:avatarChanged', id: msg.id });
+		} catch (err) {
+			postToHost({ type: 'walk:error', error: String(err?.message || err) });
+		}
+	} else if (msg.type === 'walk:setMotion') {
+		if (msg.motion === 'walk' || msg.motion === 'run') {
+			input.autoplay.active = true;
+			input.autoplay.t = 0;
+		} else if (msg.motion === 'idle') {
+			input.autoplay.active = false;
+		}
+	} else if (msg.type === 'walk:resetPose') {
+		avatarRig.position.set(0, 0, 0);
+		avatarYaw = 0;
+		avatarRig.quaternion.setFromAxisAngle(upY, 0);
+		applyCameraImmediate();
+	}
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+loadAvatar()
+	.then(() => {
+		requestAnimationFrame(tick);
+	})
+	.catch((err) => {
+		console.error('[walk-embed] failed to load avatar:', err);
+		if (statusEl) {
+			statusEl.textContent = `failed to load avatar: ${err?.message ?? err}`;
+			statusEl.classList.add('is-error');
+			statusEl.classList.remove('is-hidden');
+		}
+		postToHost({ type: 'walk:error', error: String(err?.message || err) });
+		requestAnimationFrame(tick);
+	});

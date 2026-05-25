@@ -9,21 +9,17 @@
 	<style>
 		:root {
 			color-scheme: dark;
-			--bg: #07070c;
-			--bg-soft: #0e0e16;
-			--panel: #12121c;
-			--panel-soft: #181824;
-			--border: #1f1f2c;
-			--border-strong: #2a2a3c;
-			--text: #ececf4;
-			--text-soft: #b8b8c8;
-			--muted: #7a7a90;
-			--accent: #6a5cff;
-			--accent-2: #5cffe1;
-			--accent-warm: #ff7a5c;
+			--bg: #050505;
+			--bg-soft: #0a0a0a;
+			--panel: #111;
+			--panel-soft: #161616;
+			--border: #1e1e1e;
+			--border-strong: #2a2a2a;
+			--text: #f0f0f0;
+			--text-soft: #888;
+			--muted: #555;
 			--ok: #22c55e;
-			--shadow-glow: 0 24px 80px rgba(106, 92, 255, 0.25);
-			--font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Söhne", "Segoe UI", Roboto, sans-serif;
+			--font-sans: "Inter Tight", -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
 			--font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
 		}
 		* { box-sizing: border-box; }
@@ -32,11 +28,6 @@
 			background: var(--bg); color: var(--text);
 			font-family: var(--font-sans); font-size: 16px; line-height: 1.55;
 			min-height: 100vh;
-			background:
-				radial-gradient(circle at 80% 0%, rgba(106, 92, 255, 0.10), transparent 50%),
-				radial-gradient(circle at 0% 60%, rgba(92, 255, 225, 0.05), transparent 50%),
-				var(--bg);
-			background-attachment: fixed;
 		}
 		a { color: inherit; text-decoration: none; }
 		button { font-family: inherit; cursor: pointer; }
@@ -46,7 +37,7 @@
 		.nav {
 			position: sticky; top: 0; z-index: 100;
 			backdrop-filter: blur(18px) saturate(140%);
-			background: rgba(7, 7, 12, 0.72);
+			background: rgba(5, 5, 5, 0.82);
 			border-bottom: 1px solid var(--border);
 		}
 		.nav-inner {
@@ -57,8 +48,7 @@
 		.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: -0.02em; font-size: 17px; }
 		.brand-dot {
 			width: 22px; height: 22px; border-radius: 6px;
-			background: linear-gradient(135deg, var(--accent), var(--accent-2));
-			box-shadow: 0 0 16px rgba(106, 92, 255, 0.4);
+			background: var(--text);
 		}
 		.nav-main { display: flex; gap: 4px; margin-left: 16px; flex: 1; }
 		.nav-main a {
@@ -70,7 +60,7 @@
 		.nav-end { display: flex; align-items: center; gap: 10px; }
 		.nav-end a { font-size: 14px; color: var(--text-soft); padding: 8px 14px; border-radius: 8px; }
 		.nav-end a:hover { color: var(--text); }
-		.nav-end .console-btn { background: var(--text); color: var(--bg); font-weight: 600; padding: 9px 18px; border-radius: 10px; }
+		.nav-end .console-btn { background: var(--text); color: var(--bg); font-weight: 600; padding: 8px 16px; border-radius: 8px; font-size: 13px; }
 		@media (max-width: 880px) { .nav-main { display: none; } .nav-inner { padding: 12px 18px; } }
 
 		.back {
@@ -83,25 +73,25 @@
 		.hero {
 			max-width: 1400px; margin: 0 auto;
 			padding: 20px 24px 48px;
-			display: grid; grid-template-columns: 1fr 380px; gap: 24px;
-			min-height: calc(100vh - 120px);
+			display: grid; grid-template-columns: 1fr 360px; gap: 20px;
+			height: calc(100vh - 57px);
 		}
-		@media (max-width: 1100px) { .hero { grid-template-columns: 1fr; } }
+		@media (max-width: 1100px) {
+			.hero { grid-template-columns: 1fr; height: auto; min-height: calc(100vh - 57px); }
+		}
 
 		/* ── STAGE (full-bleed agent) ──────────────────────────────── */
 		.stage {
 			position: relative;
-			border: 1px solid var(--border-strong);
-			border-radius: 22px;
+			border: 1px solid var(--border);
+			border-radius: 18px;
 			overflow: hidden;
-			background:
-				radial-gradient(circle at 50% 80%, rgba(106, 92, 255, 0.16), transparent 70%),
-				linear-gradient(180deg, var(--bg-soft) 0%, #0c0c14 100%);
-			box-shadow: var(--shadow-glow);
-			min-height: 640px;
+			background: var(--bg-soft);
 			display: flex; flex-direction: column;
+			height: 100%;
 		}
-		.stage-canvas { flex: 1; position: relative; min-height: 0; }
+		@media (max-width: 1100px) { .stage { min-height: 560px; height: auto; } }
+		.stage-canvas { flex: 1; position: relative; min-height: 0; overflow: hidden; }
 		.stage-canvas agent-3d {
 			position: absolute; inset: 0; display: block;
 			width: 100%; height: 100%;
@@ -111,15 +101,15 @@
 		.stage-tag {
 			position: absolute; top: 14px; left: 14px; z-index: 5;
 			display: inline-flex; align-items: center; gap: 7px;
-			font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
-			color: var(--accent-2); padding: 5px 11px;
-			background: rgba(7, 7, 12, 0.78);
-			border: 1px solid rgba(92, 255, 225, 0.3); border-radius: 99px;
+			font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+			color: var(--text-soft); padding: 5px 11px;
+			background: rgba(5, 5, 5, 0.8);
+			border: 1px solid var(--border-strong); border-radius: 99px;
 			backdrop-filter: blur(8px);
 		}
 		.stage-tag::before {
 			content: ""; width: 6px; height: 6px; border-radius: 50%;
-			background: var(--accent-2); box-shadow: 0 0 10px var(--accent-2);
+			background: var(--ok); box-shadow: 0 0 8px var(--ok);
 			animation: pulse 2s infinite;
 		}
 		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -128,201 +118,155 @@
 		.action-rail {
 			position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
 			z-index: 5;
-			display: flex; flex-direction: column; gap: 6px;
-			background: rgba(7, 7, 12, 0.72);
+			display: flex; flex-direction: column; gap: 4px;
+			background: rgba(5, 5, 5, 0.82);
 			backdrop-filter: blur(14px);
-			border: 1px solid var(--border-strong);
-			border-radius: 14px;
-			padding: 8px;
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			padding: 6px;
 		}
 		.act-btn {
-			display: flex; align-items: center; gap: 10px;
+			display: flex; align-items: center; gap: 9px;
 			background: transparent; color: var(--text-soft);
-			border: 0; padding: 9px 14px 9px 10px;
-			border-radius: 9px;
-			font-size: 13px; font-weight: 500;
-			transition: background 0.15s, color 0.15s;
-			text-align: left; min-width: 130px;
+			border: 0; padding: 8px 12px 8px 9px;
+			border-radius: 8px;
+			font-size: 12.5px; font-weight: 500;
+			transition: background 0.12s, color 0.12s;
+			text-align: left; min-width: 118px;
 		}
 		.act-btn:hover { background: var(--panel-soft); color: var(--text); }
 		.act-btn .act-icon {
-			width: 24px; height: 24px; border-radius: 6px;
+			width: 22px; height: 22px; border-radius: 5px;
 			background: var(--panel); display: flex; align-items: center; justify-content: center;
-			font-size: 13px;
+			font-size: 12px;
 		}
-		.act-btn.primary { color: var(--accent-2); }
-		.act-btn.primary .act-icon { background: rgba(92, 255, 225, 0.14); }
+		.act-btn.primary { color: var(--text); }
+		.act-btn.primary .act-icon { background: var(--panel-soft); }
 		@media (max-width: 720px) {
-			.action-rail { left: 14px; right: 14px; top: auto; bottom: 80px; transform: none; flex-direction: row; overflow-x: auto; }
-			.act-btn { min-width: auto; padding: 9px 12px; }
+			.action-rail { left: 12px; right: 12px; top: auto; bottom: 80px; transform: none; flex-direction: row; overflow-x: auto; border-radius: 10px; }
+			.act-btn { min-width: auto; padding: 8px 10px; }
 			.act-btn .act-icon { display: none; }
 		}
 
 		/* ── CHAT INPUT (docked bottom on canvas) ─────────────────── */
 		.chat-dock {
-			padding: 14px 16px 18px;
+			padding: 12px 14px 16px;
 			border-top: 1px solid var(--border);
-			background: rgba(7, 7, 12, 0.55);
+			background: rgba(5, 5, 5, 0.75);
 			backdrop-filter: blur(8px);
 		}
 		.chat-form {
 			display: flex; gap: 8px; align-items: center;
 			background: var(--panel); border: 1px solid var(--border-strong);
-			border-radius: 14px; padding: 6px 6px 6px 18px;
+			border-radius: 12px; padding: 5px 5px 5px 16px;
 		}
 		.chat-input {
 			flex: 1; background: transparent; border: 0; outline: none;
-			color: var(--text); font-size: 14.5px; padding: 10px 0;
+			color: var(--text); font-size: 14px; padding: 9px 0;
 			font-family: inherit;
 		}
 		.chat-input::placeholder { color: var(--muted); }
 		.chat-send {
-			background: var(--accent); color: white;
-			border: 0; padding: 0 18px; height: 38px;
-			border-radius: 10px; font-weight: 600; font-size: 14px;
+			background: var(--text); color: var(--bg);
+			border: 0; padding: 0 16px; height: 36px;
+			border-radius: 9px; font-weight: 600; font-size: 13px;
 		}
-		.chat-send:hover { filter: brightness(1.1); }
+		.chat-send:hover { opacity: 0.88; }
 		.chat-mic {
-			background: var(--panel-soft); color: var(--text);
-			border: 0; padding: 0; width: 38px; height: 38px;
-			border-radius: 10px; font-size: 14px;
-			border: 1px solid var(--border-strong);
+			background: var(--panel-soft); color: var(--text-soft);
+			border: 0; padding: 0; width: 36px; height: 36px;
+			border-radius: 9px; font-size: 14px;
+			border: 1px solid var(--border);
 		}
-		.chat-mic:hover { background: var(--border-strong); }
+		.chat-mic:hover { background: var(--border-strong); color: var(--text); }
 		.chat-suggestions {
 			display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
 		}
 		.chip {
-			background: var(--panel); color: var(--text-soft);
+			background: transparent; color: var(--muted);
 			border: 1px solid var(--border); border-radius: 99px;
-			padding: 6px 13px; font-size: 12.5px;
+			padding: 5px 12px; font-size: 12px;
 			cursor: pointer;
 		}
-		.chip:hover { color: var(--text); border-color: var(--border-strong); }
+		.chip:hover { color: var(--text-soft); border-color: var(--border-strong); }
 
 		/* ── SIDE PANEL ───────────────────────────────────────────── */
-		.side { display: flex; flex-direction: column; gap: 18px; }
+		.side { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; height: 100%; }
 		.card {
 			background: var(--panel); border: 1px solid var(--border);
-			border-radius: 18px; padding: 22px;
+			border-radius: 14px; padding: 20px;
 		}
 		.card-label {
-			font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+			font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
 			color: var(--muted); margin-bottom: 10px;
 		}
 		.identity-name {
-			font-size: 32px; letter-spacing: -0.025em; font-weight: 700; margin: 0 0 6px;
+			font-size: 28px; letter-spacing: -0.025em; font-weight: 700; margin: 0 0 5px;
 		}
 		.identity-author {
-			font-size: 14px; color: var(--text-soft);
+			font-size: 13px; color: var(--text-soft);
 		}
-		.identity-author a { color: var(--accent-2); }
+		.identity-author a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
 		.identity-desc {
-			font-size: 14.5px; color: var(--text-soft);
-			margin: 14px 0 0; line-height: 1.55;
+			font-size: 14px; color: var(--text-soft);
+			margin: 12px 0 0; line-height: 1.55;
 		}
 		.identity-pills {
-			display: flex; flex-wrap: wrap; gap: 7px;
-			margin-top: 16px;
+			display: flex; flex-wrap: wrap; gap: 6px;
+			margin-top: 14px;
 		}
 		.pill {
-			font-size: 11.5px; font-weight: 600;
-			padding: 4px 10px; border-radius: 99px;
-			background: var(--panel-soft); color: var(--text-soft);
+			font-size: 11px; font-weight: 500;
+			padding: 3px 9px; border-radius: 99px;
+			background: transparent; color: var(--text-soft);
 			border: 1px solid var(--border-strong);
 		}
-		.pill.live { color: var(--accent-2); border-color: rgba(92, 255, 225, 0.3); }
-		.pill.onchain { color: var(--accent); border-color: rgba(106, 92, 255, 0.3); }
-
-		.stats-row {
-			display: grid; grid-template-columns: repeat(3, 1fr);
-			gap: 12px; margin-top: 18px;
-		}
-		.stat-cell {
-			text-align: center;
-			padding: 12px 8px;
-			background: var(--panel-soft);
-			border-radius: 12px;
-		}
-		.stat-num {
-			font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
-			font-variant-numeric: tabular-nums;
-		}
-		.stat-lbl {
-			font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
-			color: var(--muted); margin-top: 3px;
-		}
+		.pill.live { color: var(--ok); border-color: rgba(34, 197, 94, 0.3); }
 
 		.embed-card pre {
-			margin: 12px 0 0; padding: 14px 16px;
-			background: #0a0a14; border: 1px solid var(--border-strong);
-			border-radius: 10px;
-			font-family: var(--font-mono); font-size: 12px; line-height: 1.6;
+			margin: 12px 0 0; padding: 12px 14px;
+			background: var(--bg); border: 1px solid var(--border);
+			border-radius: 8px;
+			font-family: var(--font-mono); font-size: 11.5px; line-height: 1.6;
 			color: var(--text-soft); overflow-x: auto;
 			white-space: pre-wrap; word-break: break-all;
 		}
-		.embed-card pre .tag { color: #ff8db3; }
-		.embed-card pre .attr { color: var(--accent-2); }
-		.embed-card pre .str { color: #ffd28c; }
+		.embed-card pre .tag { color: #aaa; }
+		.embed-card pre .attr { color: var(--text-soft); }
+		.embed-card pre .str { color: var(--text); }
 		.embed-card-actions {
-			display: flex; gap: 8px; margin-top: 12px;
+			display: flex; gap: 8px; margin-top: 10px;
 		}
 		.embed-btn {
-			background: var(--accent); color: white;
-			border: 0; padding: 9px 14px;
-			border-radius: 9px; font-weight: 600; font-size: 13px; flex: 1;
+			background: var(--text); color: var(--bg);
+			border: 0; padding: 8px 14px;
+			border-radius: 8px; font-weight: 600; font-size: 13px; flex: 1;
 		}
-		.embed-btn:hover { filter: brightness(1.1); }
-		.embed-btn.copied { background: var(--ok); }
+		.embed-btn:hover { opacity: 0.88; }
+		.embed-btn.copied { background: var(--ok); color: #000; }
 		.embed-btn-ghost {
-			background: var(--panel-soft); color: var(--text);
+			background: transparent; color: var(--text-soft);
 			border: 1px solid var(--border-strong);
-			padding: 9px 14px; border-radius: 9px; font-weight: 500; font-size: 13px;
+			padding: 8px 14px; border-radius: 8px; font-weight: 500; font-size: 13px;
 		}
-		.embed-btn-ghost:hover { background: var(--border-strong); }
-
-		/* ── PERSONA SECTION ──────────────────────────────────────── */
-		.section { max-width: 1400px; margin: 0 auto; padding: 48px 24px; }
-		.section-eyebrow {
-			font-size: 11.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
-			color: var(--accent); margin: 0 0 12px;
-		}
-		.section h2 {
-			font-size: 28px; letter-spacing: -0.02em; margin: 0 0 18px; font-weight: 600;
-		}
-		.persona-card {
-			padding: 28px;
-			background:
-				linear-gradient(135deg, rgba(106,92,255,0.07), rgba(92,255,225,0.03)),
-				var(--panel);
-			border: 1px solid var(--border-strong); border-radius: 18px;
-		}
-		.persona-prompt {
-			font-family: var(--font-mono); font-size: 14px; line-height: 1.6;
-			color: var(--text-soft);
-			margin: 0 0 24px; padding: 16px 18px;
-			background: rgba(7, 7, 12, 0.55);
-			border-radius: 12px;
-			border-left: 3px solid var(--accent);
-		}
-		.persona-prompt .key { color: var(--accent-2); font-weight: 600; }
-		.persona-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-		.btn-primary {
-			background: var(--accent); color: white;
-			border: 0; padding: 12px 20px;
-			border-radius: 10px; font-size: 14px; font-weight: 600;
-			display: inline-flex; align-items: center; gap: 6px;
-		}
-		.btn-primary:hover { filter: brightness(1.1); }
-		.btn-ghost {
-			background: transparent; color: var(--text);
-			border: 1px solid var(--border-strong);
-			padding: 12px 20px;
-			border-radius: 10px; font-size: 14px; font-weight: 500;
-		}
-		.btn-ghost:hover { background: var(--panel); }
+		.embed-btn-ghost:hover { color: var(--text); border-color: var(--text-soft); }
 
 		/* ── RELATED ──────────────────────────────────────────── */
+		.section { max-width: 1400px; margin: 0 auto; padding: 40px 24px; }
+		.section-eyebrow {
+			font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+			color: var(--muted); margin: 0 0 10px;
+		}
+		.section h2 {
+			font-size: 24px; letter-spacing: -0.02em; margin: 0 0 18px; font-weight: 600;
+		}
+		.btn-ghost {
+			background: transparent; color: var(--text-soft);
+			border: 1px solid var(--border-strong);
+			padding: 10px 18px;
+			border-radius: 9px; font-size: 13.5px; font-weight: 500;
+		}
+		.btn-ghost:hover { color: var(--text); border-color: var(--text-soft); }
 		.related-grid {
 			display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
 			margin-top: 18px;
@@ -334,7 +278,7 @@
 			border-radius: 14px; overflow: hidden; aspect-ratio: 3 / 4;
 			position: relative; transition: border-color 0.2s, transform 0.2s;
 		}
-		.related-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+		.related-card:hover { border-color: var(--text-soft); transform: translateY(-2px); }
 		.related-card img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
 		.related-card .meta {
 			position: absolute; bottom: 0; left: 0; right: 0;
@@ -354,21 +298,21 @@
 		}
 		.loading.hidden { opacity: 0; pointer-events: none; }
 		.loading .spinner {
-			width: 28px; height: 28px;
+			width: 24px; height: 24px;
 			border: 2px solid var(--border-strong);
-			border-top-color: var(--accent);
+			border-top-color: var(--text-soft);
 			border-radius: 50%;
 			animation: spin 0.8s linear infinite;
-			margin-right: 14px;
+			margin-right: 12px;
 		}
 		@keyframes spin { to { transform: rotate(360deg); } }
 
 		.demo-tag {
 			position: fixed; bottom: 16px; right: 16px; z-index: 1000;
-			background: var(--accent-warm); color: var(--bg);
-			padding: 7px 14px; border-radius: 99px;
-			font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-			box-shadow: 0 8px 24px rgba(255, 122, 92, 0.35);
+			background: var(--panel); color: var(--muted);
+			border: 1px solid var(--border);
+			padding: 6px 12px; border-radius: 99px;
+			font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
 		}
 	</style>
 	<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
@@ -420,6 +364,7 @@
 
 				<agent-3d
 					id="agent"
+					kiosk
 					mode="inline"
 					responsive
 					background="transparent"
@@ -463,19 +408,9 @@
 					<span class="pill">glTF · GLB</span>
 					<span class="pill">Animated</span>
 				</div>
-				<div class="stats-row">
-					<div class="stat-cell">
-						<div class="stat-num" id="stat-chats">—</div>
-						<div class="stat-lbl">Chats</div>
-					</div>
-					<div class="stat-cell">
-						<div class="stat-num" id="stat-embeds">—</div>
-						<div class="stat-lbl">Embeds</div>
-					</div>
-					<div class="stat-cell">
-						<div class="stat-num" id="stat-remixes">—</div>
-						<div class="stat-lbl">Remixes</div>
-					</div>
+				<div style="margin-top:16px;display:flex;gap:8px;">
+					<a class="btn-ghost" id="remix-link" href="/create" style="flex:1;text-align:center;display:block;padding:9px 14px;font-size:13px;border-radius:9px;">Remix →</a>
+					<a class="btn-ghost" href="/discover" style="flex:1;text-align:center;display:block;padding:9px 14px;font-size:13px;border-radius:9px;">Browse</a>
 				</div>
 			</div>
 
@@ -491,23 +426,6 @@
 		</aside>
 	</section>
 
-	<!-- ── PERSONA (the prompt that made me — Meshy pattern) ─── -->
-	<section class="section">
-		<div class="section-eyebrow">Persona</div>
-		<h2>The prompt that made this agent.</h2>
-		<div class="persona-card">
-			<pre class="persona-prompt" id="persona-prompt"><span class="key">system:</span> "You are a friendly 3D AI agent on the web — speak warmly, keep replies short, and gesture with your body when the moment calls for it. You can wave, cheer, and play animations when asked."
-
-<span class="key">voice:</span> default
-<span class="key">memory:</span> local (cross-session)
-<span class="key">skills:</span> none installed</pre>
-			<div class="persona-actions">
-				<a class="btn-primary" id="remix-link" href="/create">Remix this agent →</a>
-				<a class="btn-ghost" href="/docs#personas">How personas work</a>
-			</div>
-		</div>
-	</section>
-
 	<!-- ── RELATED ──────────────────────────────────────────────── -->
 	<section class="section">
 		<div class="section-eyebrow">More agents</div>
@@ -517,13 +435,13 @@
 				<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/bacff13e-b64b-4ac0-860d-44f0168ad23b.png" alt="nich" loading="lazy" />
 				<div class="meta"><div class="name">nich</div><div class="author">@nirholas</div></div>
 			</a>
-			<a class="related-card" href="/discover" style="background: linear-gradient(135deg, #1a1a2c, #2a1a3c);">
-				<div class="meta"><div class="name">Browse all →</div><div class="author">1,847 public agents</div></div>
+			<a class="related-card" href="/discover">
+				<div class="meta"><div class="name">Browse all →</div><div class="author">Public agents</div></div>
 			</a>
-			<a class="related-card" href="/create" style="background: linear-gradient(135deg, #2a1c1c, #3c2c1c);">
+			<a class="related-card" href="/create">
 				<div class="meta"><div class="name">+ Make your own</div><div class="author">Selfie → agent in 60s</div></div>
 			</a>
-			<a class="related-card" href="/discover?filter=onchain" style="background: linear-gradient(135deg, #0c1c2a, #1c2c3c);">
+			<a class="related-card" href="/discover?filter=onchain">
 				<div class="meta"><div class="name">On-chain agents</div><div class="author">ERC-8004 directory</div></div>
 			</a>
 		</div>
@@ -562,13 +480,6 @@
 			}
 
 			document.title = `${data.name || 'Agent'} · three.ws`;
-
-			// Plausible-looking placeholder stats (would be real from /api/stats/:id in v2)
-			const idHash = avatarId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-			document.getElementById('stat-chats').textContent = ((idHash * 17) % 9000 + 800).toLocaleString();
-			document.getElementById('stat-embeds').textContent = ((idHash * 7) % 200 + 5).toLocaleString();
-			document.getElementById('stat-remixes').textContent = ((idHash * 3) % 400 + 12).toLocaleString();
-
 			document.getElementById('remix-link').href = `/create?fork=${encodeURIComponent(avatarId)}`;
 
 			// Mount the agent-3d component now that we know the src
@@ -644,7 +555,7 @@
 					tellAgent('Switch to AR mode');
 					break;
 				case 'tip':
-					alert('Tip flow — wires to /api/payments/intent in v2.');
+					window.location.href = `/tip?avatar=${encodeURIComponent(avatarId)}`;
 					break;
 				case 'remix':
 					location.href = `/create?fork=${encodeURIComponent(avatarId)}`;
@@ -652,10 +563,8 @@
 			}
 		}
 
-		// ── Mic stub (the real component has voice — for the demo we
-		// just focus the input so users can see the affordance exists) ─
 		document.getElementById('chat-mic').addEventListener('click', () => {
-			alert('Voice input is built into the embedded component. In v2 we will wire push-to-talk into this dock too.');
+			chatInput.focus();
 		});
 
 		// ── Copy embed ───────────────────────────────────────────────

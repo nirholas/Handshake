@@ -274,6 +274,16 @@
 			"dest": "/walk.html"
 		},
 		{
+			"src": "/walk-embed/?",
+			"headers": {
+				"content-security-policy": "frame-ancestors *",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "strict-origin-when-cross-origin",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"dest": "/walk-embed.html"
+		},
+		{
 			"src": "/pose/?",
 			"dest": "/pose.html"
 		},
@@ -479,6 +489,14 @@
 		{
 			"src": "/home-next/?",
 			"dest": "/home-next.html"
+		},
+		{
+			"src": "/home-classic/?",
+			"dest": "/home.html"
+		},
+		{
+			"src": "/home-v3/?",
+			"dest": "/home-v3.html"
 		},
 		{
 			"src": "/agent-next/?",

@@ -1,0 +1,58 @@
+{
+	"manifest_version": 3,
+	"name": "three.ws Walk Avatar",
+	"short_name": "Walk Avatar",
+	"version": "1.0.0",
+	"description": "Walk your three.ws avatar on any website you visit — browse the web with a living 3D companion.",
+	"homepage_url": "https://three.ws/extension",
+
+	"icons": {
+		"16":  "icons/icon-16.png",
+		"32":  "icons/icon-32.png",
+		"48":  "icons/icon-48.png",
+		"128": "icons/icon-128.png"
+	},
+
+	"action": {
+		"default_popup": "popup.html",
+		"default_icon": {
+			"16":  "icons/icon-16.png",
+			"32":  "icons/icon-32.png",
+			"48":  "icons/icon-48.png",
+			"128": "icons/icon-128.png"
+		},
+		"default_title": "three.ws Walk Avatar"
+	},
+
+	"background": {
+		"service_worker": "background.js",
+		"type": "module"
+	},
+
+	"content_scripts": [],
+
+	"permissions": [
+		"storage",
+		"activeTab",
+		"scripting"
+	],
+
+	"host_permissions": [
+		"<all_urls>"
+	],
+
+	"options_page": "options.html",
+
+	"web_accessible_resources": [
+		{
+			"resources": ["styles/inject.css"],
+			"matches": ["<all_urls>"]
+		}
+	],
+
+	"content_security_policy": {
+		"extension_pages": "script-src 'self'; object-src 'self'"
+	},
+
+	"minimum_chrome_version": "109"
+}

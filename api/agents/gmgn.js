@@ -62,7 +62,7 @@ async function handleFeed(req, res) {
 		onEvent: (ev) => { if (active) queue.push(ev); },
 	});
 
-	writeSse(res, 'open', { chain, interval, minSmartBuys, source: 'gmgn-poll' });
+	writeSse(res, 'hello', { chain, interval, minSmartBuys, source: 'gmgn-poll' });
 
 	// Replay recent buffer so a fresh client isn't blank
 	const replay = recentGmgnBuffered({ limit: 10 });
