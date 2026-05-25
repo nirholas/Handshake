@@ -246,6 +246,18 @@
 	border-radius: 6px;
 }
 
+/* Active page indicator */
+.home-nav a[aria-current='page']:not(.nav-cta):not(.nav-user) {
+	color: #fff;
+	background: rgba(139, 92, 246, 0.12);
+}
+
+.home-nav a[aria-current='page']:not(.nav-cta):not(.nav-user)::after {
+	left: 12px;
+	right: 12px;
+	opacity: 0.9;
+}
+
 /* ── Badges & pills ─────────────────────────────────────────────────── */
 
 .home-nav .nav-badge {
@@ -560,6 +572,12 @@ body.nav-open {
 /* ── Mobile: hamburger + slide-down panel ──────────────────────────── */
 
 @media (max-width: 768px) {
+	/* Labs has 14+ sub-items — not worth the accordion space on mobile.
+	   Users who want Labs features land there from other pages or search. */
+	.home-nav #home-nav-labs-li {
+		display: none !important;
+	}
+
 	.home-nav {
 		position: relative;
 		align-items: center;

@@ -28,9 +28,10 @@
 	}
 
 	function mount(scriptEl) {
-		var widgetId = attr(scriptEl, 'data-widget', null);
-		if (!widgetId) {
-			console.warn('[3d-agent embed] missing data-widget attribute');
+		var widgetId  = attr(scriptEl, 'data-widget', null);
+		var widgetUrl = attr(scriptEl, 'data-widget-url', null);
+		if (!widgetId && !widgetUrl) {
+			console.warn('[3d-agent embed] missing data-widget or data-widget-url attribute');
 			return;
 		}
 		var type     = attr(scriptEl, 'data-type', null);
@@ -66,10 +67,15 @@
 		// embedded=1 tells the in-iframe runtime that embed.js already fired
 		// the analytics beacon — without it we'd double-count every script-tag
 		// embed (visibility beacon + runtime beacon).
-		var hashParts = ['widget=' + encodeURIComponent(widgetId), 'kiosk=true', 'embedded=1'];
-		if (reveal === 'interaction') hashParts.push('reveal=interaction');
-		if (poster) hashParts.push('poster=' + encodeURIComponent(poster));
-		var src = ORIGIN + '/widget#' + hashParts.join('&');
+		var src;
+		if (widgetUrl) {
+			src = widgetUrl;
+		} else {
+			var hashParts = ['widget=' + encodeURIComponent(widgetId), 'kiosk=true', 'embedded=1'];
+			if (reveal === 'interaction') hashParts.push('reveal=interaction');
+			if (poster) hashParts.push('poster=' + encodeURIComponent(poster));
+			src = ORIGIN + '/widget#' + hashParts.join('&');
+		}
 
 		var iframe = document.createElement('iframe');
 		iframe.title = 'three.ws widget ' + widgetId;
@@ -145,6 +151,55 @@
 		var anchor = scriptEl.parentNode;
 		if (!anchor) return;
 		anchor.insertBefore(wrapper, scriptEl);
+
+		// Motion path — data-motion='{"type":"patrol","duration":4000}' moves
+		// the iframe wrapper along a Bezier path at the DOM level. Syncs the
+		// avatar's walk animation via postMessage JSON-RPC 2.0.
+		var motionAttr = attr(scriptEl, 'data-motion', null);
+		if (motionAttr) {
+			wrapper.style.position = 'fixed';
+			wrapper.style.display  = 'block';
+			wrapper.style.zIndex   = '9990';
+			wrapper.style.left     = '0px';
+			wrapper.style.top      = '0px';
+
+			var mpScript = document.createElement('script');
+			mpScript.src = ORIGIN + '/motion-path.js';
+			mpScript.onload = function () {
+				try {
+					var cfg = JSON.parse(motionAttr);
+					var mp  = new window.MotionPath(wrapper, cfg, iframe);
+					var started = false;
+					function onReadyMsg(e) {
+						if (started) return;
+						if (e.source !== iframe.contentWindow) return;
+						var d = e.data;
+						if (!d) return;
+						if (
+							(d.jsonrpc === '2.0' && d.method === 'viewer.ready') ||
+							(d.__agent && d.type === 'ready') ||
+							d.type === 'three-ws:first-frame'
+						) {
+							started = true;
+							window.removeEventListener('message', onReadyMsg);
+							mp.start();
+						}
+					}
+					window.addEventListener('message', onReadyMsg);
+					// Fallback: start after 4 s if no ready signal arrives.
+					setTimeout(function () {
+						if (!started) {
+							started = true;
+							window.removeEventListener('message', onReadyMsg);
+							mp.start();
+						}
+					}, 4000);
+				} catch (err) {
+					console.warn('[3d-agent embed] invalid data-motion JSON', err);
+				}
+			};
+			document.head.appendChild(mpScript);
+		}
 
 		// Lazy-load via IntersectionObserver when available (Firefox compat).
 		// Falls back to immediate load when IO is absent. When the iframe first

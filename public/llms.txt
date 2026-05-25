@@ -18,6 +18,7 @@ Entry points into the product.
 - [Marketplace](https://three.ws/marketplace): Buy access to agents, skills, and avatars from other creators.
 - [Community](https://three.ws/community): Featured creators, builds, and conversations from the three.ws community.
 - [Sitemap](https://three.ws/sitemap): Human-readable index of every page on three.ws.
+- [Characters](https://three.ws/characters): Discover AI characters on three.ws. Chat, trade, and create.
 
 ## Build
 
@@ -31,6 +32,10 @@ Create and customize an agent.
 - [Widgets Gallery](https://three.ws/widgets): Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.
 - [Hydrate](https://three.ws/hydrate): Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.
 - [Features](https://three.ws/features): Full feature overview of the three.ws platform: avatars, agents, on-chain identity, x402 payments, and embedding.
+- [New Agent](https://three.ws/agent/new): Create a new agent from scratch — avatar, brain, skills, and on-chain identity.
+- [Selfie to Avatar](https://three.ws/create/selfie): One selfie. About a minute. A rigged 3D avatar that works everywhere.
+- [Import Ready Player Me](https://three.ws/import/rpm): Import your Ready Player Me avatar into three.ws and give it an agent brain.
+- [Claim threews.sol Subdomain](https://three.ws/threews/claim): Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal showcase page.
 
 ## Labs
 
@@ -42,6 +47,8 @@ Experimental features actively shipping. Expect fast iteration.
 - [Lipsync (TTS)](https://three.ws/lipsync): Type text, stream it through OpenAI TTS, and the avatar's mouth animates in real time via wawa-lipsync viseme detection.
 - [Lipsync (Mic)](https://three.ws/lipsync/mic): Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.
 - [Avatar Artifact](https://three.ws/avatar-artifact): Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page.
+- [Rider (VR)](https://three.ws/rider): A free, open-source VR music visualization — surf the musical road among the stars, moon, and lights.
+- [Playground](https://three.ws/playground): Sandbox for experimenting with agents, prompts, and 3D scenes.
 
 ## Crypto
 
@@ -55,6 +62,8 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [Solana Vanity Wallet](https://three.ws/vanity-wallet): Grind a Solana address with a custom prefix using your browser's GPU.
 - [ETH Vanity (CREATE2)](https://three.ws/eth-vanity): Grind a vanity smart-contract address using the ThreeWSFactory CREATE2 deployer on BSC.
 - [Pump Visualizer](https://three.ws/pump-visualizer): 3D visualizer of trending pump.fun tokens — live market data rendered as an interactive scene.
+- [x402 Bazaar](https://three.ws/bazaar): Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.
+- [GMGN Smart Money](https://three.ws/gmgn): Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.
 
 ## Agent Tools
 

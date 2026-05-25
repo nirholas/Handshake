@@ -8,6 +8,8 @@
 // short enough that newly minted agents are discoverable within minutes
 // (and IndexNow gives them an instant push too).
 
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
 
@@ -53,30 +55,52 @@ function send(res, body) {
 	res.end(body);
 }
 
-const STATIC_CORE = [
-	{ path: '/', changefreq: 'daily', priority: '1.0' },
-	{ path: '/discover', changefreq: 'daily', priority: '0.9' },
-	{ path: '/marketplace', changefreq: 'daily', priority: '0.9' },
-	{ path: '/gallery', changefreq: 'daily', priority: '0.8' },
-	{ path: '/explore', changefreq: 'daily', priority: '0.8' },
-	{ path: '/create', changefreq: 'weekly', priority: '0.7' },
-	{ path: '/agent/new', changefreq: 'weekly', priority: '0.6' },
-	{ path: '/pumpfun', changefreq: 'hourly', priority: '0.8' },
-	{ path: '/vanity-wallet', changefreq: 'weekly', priority: '0.5' },
-	{ path: '/eth-vanity', changefreq: 'weekly', priority: '0.5' },
-	{ path: '/strategy-lab', changefreq: 'weekly', priority: '0.5' },
-	{ path: '/login', changefreq: 'monthly', priority: '0.3' },
-	{ path: '/register', changefreq: 'monthly', priority: '0.3' },
-];
+// Core (static) routes are read from data/pages.json — the same source of
+// truth that build-page-index.mjs uses for llms.txt / sitemap.html / the
+// features manifest. One file to edit; this route + the human sitemap + the
+// AI indexes all stay in lockstep.
+async function loadPagesManifest() {
+	// In the Vercel bundle data/ ships alongside the function via includeFiles;
+	// in dev it's at repo root. Try both.
+	const candidates = [
+		path.join(process.cwd(), 'data', 'pages.json'),
+		path.join(process.cwd(), 'public', 'features.json'),
+	];
+	for (const file of candidates) {
+		try {
+			const raw = await readFile(file, 'utf8');
+			return JSON.parse(raw);
+		} catch {
+			// try next
+		}
+	}
+	return null;
+}
 
 async function coreSitemap() {
 	const today = fmtDate(new Date());
-	return STATIC_CORE.map((s) => ({
-		loc: `${ORIGIN}${s.path}`,
-		lastmod: today,
-		changefreq: s.changefreq,
-		priority: s.priority,
-	}));
+	const manifest = await loadPagesManifest();
+	if (!manifest?.sections) {
+		// Fallback to the home page only — never 500 the crawler.
+		return [{ loc: `${ORIGIN}/`, lastmod: today, changefreq: 'daily', priority: '1.0' }];
+	}
+	const out = [];
+	for (const section of manifest.sections) {
+		// Skip news (it has its own long-tail) and any non-indexable section.
+		if (section.id === 'news') continue;
+		for (const p of section.pages || []) {
+			if (p.indexable === false) continue;
+			if (p.auth === 'required') continue;
+			if (!p.path || p.path.startsWith('http')) continue;
+			out.push({
+				loc: `${ORIGIN}${p.path === '/' ? '/' : p.path}`,
+				lastmod: p.lastmod || today,
+				changefreq: p.changefreq || 'weekly',
+				priority: typeof p.priority === 'number' ? p.priority.toFixed(1) : '0.6',
+			});
+		}
+	}
+	return out.length ? out : [{ loc: `${ORIGIN}/`, lastmod: today, changefreq: 'daily', priority: '1.0' }];
 }
 
 async function agentsSitemap() {

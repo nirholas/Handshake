@@ -19,6 +19,18 @@ function initNav(root) {
 	initDropdowns(root);
 	initBurger(root);
 	initAuthHint(root);
+	initActivePage(root);
+}
+
+function initActivePage(root) {
+	const path = location.pathname.replace(/\/$/, '') || '/';
+	root.querySelectorAll('.home-nav a[href]').forEach((a) => {
+		const href = a.getAttribute('href').replace(/\/$/, '') || '/';
+		if (!href.startsWith('/')) return;
+		if (href === path || (href !== '/' && path.startsWith(href + '/'))) {
+			a.setAttribute('aria-current', 'page');
+		}
+	});
 }
 
 function initDropdowns(root) {

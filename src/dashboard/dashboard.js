@@ -4615,6 +4615,7 @@ async function openWidgetDrawer(w, ctx) {
 					</div>
 					<div id="transcripts-totals" class="muted" style="font-size:11px"></div>
 					<div id="transcripts-list" style="display:flex; flex-direction:column; gap:4px; margin-top:8px; max-height:180px; overflow-y:auto"></div>
+					<div id="transcripts-detail" hidden></div>
 				</div>
 			`;
 			loadTranscripts(drawer, w);

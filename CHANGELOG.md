@@ -1,0 +1,38 @@
+# Changelog
+
+<!-- Generated from data/pages.json by scripts/build-page-index.mjs — DO NOT EDIT BY HAND. -->
+
+Public feature history for [three.ws](https://three.ws), newest first. Feature dates are tracked from 2026-05-25 forward; earlier pages are omitted.
+
+## 2026-05-25
+
+- **Characters** (`/characters`) — Discover AI characters on three.ws. Chat, trade, and create.
+- **Claim threews.sol Subdomain** (`/threews/claim`) — Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal showcase page.
+- **Dashboard** (`/dashboard`) — Your account dashboard: agents, avatars, payments, keys, MCP servers, monetization, billing.
+- **GMGN Smart Money** (`/gmgn`) — Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.
+- **Import Ready Player Me** (`/import/rpm`) — Import your Ready Player Me avatar into three.ws and give it an agent brain.
+- **New Agent** (`/agent/new`) — Create a new agent from scratch — avatar, brain, skills, and on-chain identity.
+- **Playground** (`/playground`) — Sandbox for experimenting with agents, prompts, and 3D scenes.
+- **Rider (VR)** (`/rider`) — A free, open-source VR music visualization — surf the musical road among the stars, moon, and lights.
+- **Selfie to Avatar** (`/create/selfie`) — One selfie. About a minute. A rigged 3D avatar that works everywhere.
+- **x402 Bazaar** (`/bazaar`) — Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.
+
+## 2026-05-24
+
+- **Widget Studio** (`/studio`) — Pick an avatar, configure embed options, copy a one-line snippet for your site.
+
+## 2026-05-20
+
+- **Hydrate** (`/hydrate`) — Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.
+
+## 2026-05-18
+
+- **Launchpad Studio** (`/launchpad`) — Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.
+
+## 2026-05-15
+
+- **Strategy Lab** (`/strategy-lab`) — Build DCA and subscription strategies that trade on-chain on your behalf.
+
+## 2026-05-10
+
+- **Walk** (`/walk`) — Drive a 3D avatar around with a joystick or WASD — toggle the back camera for AR-style passthrough.

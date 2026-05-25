@@ -149,6 +149,30 @@ async function main() {
 	const root = viewer.content;
 	if (!root) throw new Error('avatar failed to load');
 
+	// ── Animation clips (manifest-based) ──────────────────────────────────
+	const animMgr = viewer.animationManager;
+	let animDefs = [];
+	try {
+		const mRes = await fetch('/animations/manifest.json');
+		if (mRes.ok) {
+			animDefs = await mRes.json();
+			animMgr.setAnimationDefs(animDefs);
+			animMgr.loadAll().catch(() => {});
+		}
+	} catch (err) {
+		console.warn('[avatar-embed] animation manifest load failed', err?.message);
+	}
+
+	const startAnim = params.get('animation') || params.get('pose');
+	if (startAnim) {
+		animMgr.crossfadeTo(startAnim, 0.3).catch(() => {});
+	}
+
+	const pickerEnabled = params.get('animPicker') !== '0' && !overlayMode;
+	if (pickerEnabled && animDefs.length > 0) {
+		buildAnimPicker(animDefs, animMgr);
+	}
+
 	// ── Mouth lipsync (audio-driven) ───────────────────────────────────────
 	const mouthTarget = new AvatarMouthTarget();
 	mouthTarget.attach(root);
@@ -676,6 +700,16 @@ async function main() {
 				activeLipsync = null;
 				stopMocap();
 				return;
+			// ── Animation clip playback ───────────────────────────────
+			case 'v1.avatar.gesture':
+			case 'v1.avatar.animation': {
+				const clipName = msg.name || msg.clip;
+				if (!clipName) return;
+				animMgr.crossfadeTo(String(clipName), 0.35).catch(() => {});
+				postToParent({ type: 'v1.avatar.gesture:playing', name: String(clipName) });
+				broadcast({ type: 'v1.avatar.gesture:playing', name: String(clipName) });
+				return;
+			}
 			// ── OBS / streaming overlay surface ──────────────────────────
 			case 'v1.avatar.hotkey':
 				if (msg.key != null) triggerHotkey(msg.key, msg);
@@ -917,6 +951,75 @@ function decodeYawPitchRoll(m) {
 		roll = 0;
 	}
 	return { yaw, pitch, roll };
+}
+
+// ── Animation picker UI ─────────────────────────────────────────────────────
+
+function buildAnimPicker(defs, animMgr) {
+	const toggle = document.getElementById('anim-toggle');
+	const panel = document.getElementById('anim-picker');
+	if (!toggle || !panel) return;
+
+	toggle.style.display = 'inline-flex';
+
+	function render() {
+		panel.innerHTML = '';
+
+		const header = document.createElement('div');
+		header.className = 'anim-picker-header';
+
+		const title = document.createElement('span');
+		title.className = 'anim-picker-title';
+		title.textContent = 'Animations';
+
+		const stopBtn = document.createElement('button');
+		stopBtn.className = 'anim-stop-btn';
+		stopBtn.textContent = '⏹ Stop';
+		stopBtn.addEventListener('click', () => {
+			animMgr.stopAll();
+			render();
+		});
+
+		header.appendChild(title);
+		header.appendChild(stopBtn);
+		panel.appendChild(header);
+
+		const grid = document.createElement('div');
+		grid.className = 'anim-chip-grid';
+
+		for (const def of defs) {
+			const chip = document.createElement('button');
+			chip.className = 'anim-chip' + (animMgr.currentName === def.name ? ' active' : '');
+			chip.title = def.label || def.name;
+
+			const icon = document.createElement('span');
+			icon.className = 'anim-chip-icon';
+			icon.textContent = def.icon || '▶';
+
+			const label = document.createElement('span');
+			label.className = 'anim-chip-label';
+			label.textContent = def.label || def.name;
+
+			chip.appendChild(icon);
+			chip.appendChild(label);
+
+			chip.addEventListener('click', () => {
+				animMgr.crossfadeTo(def.name, 0.35).then(render).catch(() => {});
+			});
+
+			grid.appendChild(chip);
+		}
+
+		panel.appendChild(grid);
+	}
+
+	animMgr.onChange = () => render();
+	render();
+
+	toggle.addEventListener('click', () => {
+		const open = document.body.classList.toggle('anim-picker-open');
+		toggle.setAttribute('aria-expanded', String(open));
+	});
 }
 
 // ── Error ───────────────────────────────────────────────────────────────────

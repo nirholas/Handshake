@@ -70,10 +70,14 @@
  */
 
 @media (max-width: 768px) {
-	/* Chapter rail navigation dots — only useful on wide viewports where the
-	   user can see the section number without losing their place. On mobile
-	   they float over content and are too small to tap reliably. */
+	/* Chapter rail navigation dots — only useful on wide viewports. */
 	.h-chapter-rail {
+		display: none !important;
+	}
+
+	/* Ghost model loads a full GLB at opacity 0.1 — invisible on mobile,
+	   pure bandwidth waste. The layer div still occupies its z-index slot. */
+	.h-ghost-model {
 		display: none !important;
 	}
 

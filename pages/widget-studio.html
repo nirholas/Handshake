@@ -139,6 +139,42 @@
 				margin-top: 8px;
 			}
 			#copy-btn:hover { background: #252525; color: #fff; }
+
+			/* motion path section */
+			.section-divider { border: none; border-top: 1px solid #1e1e1e; margin: 18px 0 14px; }
+			.section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; margin: 0 0 12px; }
+			#path-canvas-wrap {
+				position: relative; border: 1px solid #2a2a2a; border-radius: 4px;
+				overflow: hidden; height: 150px; background: #070707; cursor: crosshair;
+			}
+			#path-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+			#path-hint {
+				position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+				color: #333; font-size: 11px; pointer-events: none; white-space: nowrap;
+			}
+			#clear-path-btn {
+				background: #111; border: 1px solid #2a2a2a; color: #666;
+				padding: 5px 10px; font-size: 11px; cursor: pointer;
+				border-radius: 3px; width: 100%; margin-top: 6px;
+			}
+			#clear-path-btn:hover { color: #ccc; border-color: #444; }
+			.range-row { display: flex; align-items: center; gap: 8px; }
+			.range-row input[type="range"] { flex: 1; accent-color: #4a9eff; }
+			.range-val { font-size: 12px; color: #aaa; min-width: 28px; text-align: right; }
+			#preview-motion-btn {
+				background: #0e2340; border: 1px solid #1a4a80; color: #4a9eff;
+				padding: 8px; font-size: 12px; cursor: pointer;
+				border-radius: 4px; width: 100%; margin-top: 10px;
+			}
+			#preview-motion-btn:hover { background: #132d55; }
+			#preview-motion-btn:disabled { opacity: 0.4; cursor: default; }
+
+			/* preview pane overlay for motion demo */
+			.studio-preview { position: relative; }
+			#motion-preview-overlay {
+				position: absolute; inset: 20px; pointer-events: none;
+				z-index: 10; overflow: hidden; border-radius: 6px;
+			}
 		</style>
 			<link rel="stylesheet" href="/nav.css" />
 			<link rel="stylesheet" href="/footer.css" />
@@ -166,21 +202,25 @@
 				</div>
 
 				<div class="form-group">
-					<label>Idle Animation</label>
+					<label>Starting Animation</label>
 					<select id="anim-select">
-						<option value="">None</option>
-						<option value="Idle_Breath">Idle Breath</option>
-						<option value="Just_chilling">Just Chilling</option>
-						<option value="Standard_Vtubing_Movement">Vtubing Movement</option>
-						<option value="Standard_Waiting">Waiting</option>
-						<option value="dance_shuffle">Dance Shuffle</option>
-						<option value="Expressing_joy">Expressing Joy</option>
-						<option value="Cheering">Cheering</option>
-						<option value="Brag_n_Claps">Brag &amp; Claps</option>
-						<option value="Flexing_Arm">Flexing Arm</option>
-						<option value="Energic_conductor">Energetic Conductor</option>
-						<option value="Facepalm">Facepalm</option>
-						<option value="Call_Me">Call Me</option>
+						<option value="">None (idle)</option>
+					</select>
+				</div>
+
+				<div class="form-group">
+					<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+						<input type="checkbox" id="anim-picker-toggle" checked style="width:auto;margin:0;" />
+						Show animation picker in embed
+					</label>
+				</div>
+
+				<div class="form-group">
+					<label>Background</label>
+					<select id="bg-select">
+						<option value="transparent">Transparent</option>
+						<option value="dark">Dark</option>
+						<option value="light">Light</option>
 					</select>
 				</div>
 
@@ -197,11 +237,64 @@
 					</select>
 				</div>
 
-				<h3 style="font-size:13px;color:#888;margin-bottom:6px;">Embed Code</h3>
+				<hr class="section-divider" />
+				<p class="section-title">Motion Path</p>
+
+				<div class="form-group">
+					<label>Preset</label>
+					<select id="motion-preset">
+						<option value="">None (Static)</option>
+						<option value="patrol">Patrol — left &harr; right</option>
+						<option value="slide-in">Slide In</option>
+						<option value="bounce-across">Bounce Across</option>
+						<option value="orbit">Orbit</option>
+						<option value="figure-eight">Figure Eight</option>
+						<option value="float">Float</option>
+						<option value="custom">Custom (Draw Path)</option>
+					</select>
+				</div>
+
+				<div class="form-group" id="draw-group" style="display:none">
+					<label>Draw Path <span style="color:#555;font-weight:normal">(click to place points)</span></label>
+					<div id="path-canvas-wrap">
+						<canvas id="path-canvas"></canvas>
+						<span id="path-hint">Click to add control points</span>
+					</div>
+					<button id="clear-path-btn">Clear Path</button>
+				</div>
+
+				<div id="motion-options-group" style="display:none">
+					<div class="form-group">
+						<label>Duration</label>
+						<div class="range-row">
+							<input type="range" id="motion-duration" min="1" max="15" step="0.5" value="4" />
+							<span class="range-val" id="motion-duration-val">4s</span>
+						</div>
+					</div>
+					<div class="form-group">
+						<label>Repeat</label>
+						<select id="motion-loop">
+							<option value="true">Loop</option>
+							<option value="false">Play Once</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label>Walk Animation</label>
+						<select id="motion-walk-anim">
+							<option value="Walking">Walking</option>
+							<option value="dance_shuffle">Dancing</option>
+							<option value="Energic_conductor">Energetic</option>
+						</select>
+					</div>
+					<button id="preview-motion-btn" disabled>&#9654; Preview Motion</button>
+				</div>
+
+				<h3 style="font-size:13px;color:#888;margin-bottom:6px;margin-top:18px;">Embed Code</h3>
 				<pre id="embed-code"><code></code></pre>
 				<button id="copy-btn">Copy Code</button>
 			</aside>
 			<main class="studio-preview">
+				<div id="motion-preview-overlay"></div>
 				<iframe id="widget-preview" style="width:100%;height:100%;border:1px solid #333;border-radius:6px;"></iframe>
 			</main>
 		</div>
@@ -215,6 +308,8 @@
 			const gallery = document.getElementById('avatar-gallery');
 			const customUrlInput = document.getElementById('custom-avatar-url');
 			const animSelect = document.getElementById('anim-select');
+			const animPickerToggle = document.getElementById('anim-picker-toggle');
+			const bgSelect = document.getElementById('bg-select');
 			const brandColorInput = document.getElementById('brand-color');
 			const themeSelect = document.getElementById('theme-select');
 			const embedCodeEl = document.getElementById('embed-code').querySelector('code');
@@ -223,6 +318,20 @@
 
 			let selectedAvatarUrl = AVATARS[0].url;
 
+			// ── Populate animation dropdown from real manifest ────────────────
+			fetch('/animations/manifest.json')
+				.then(r => r.ok ? r.json() : [])
+				.then(defs => {
+					for (const def of defs) {
+						const opt = document.createElement('option');
+						opt.value = def.name;
+						opt.textContent = (def.icon ? def.icon + ' ' : '') + (def.label || def.name);
+						animSelect.appendChild(opt);
+					}
+				})
+				.catch(() => {});
+
+			// ── Avatar gallery ────────────────────────────────────────────────
 			AVATARS.forEach(av => {
 				const card = document.createElement('div');
 				card.className = 'av-card' + (av.url === selectedAvatarUrl ? ' selected' : '');
@@ -253,7 +362,6 @@
 				gallery.appendChild(card);
 			});
 
-			// Custom URL card
 			const customCard = document.createElement('div');
 			customCard.className = 'av-card av-card-custom';
 			customCard.innerHTML = '<span class="plus">+</span>Custom URL';
@@ -277,21 +385,33 @@
 				updatePreviewAndCode();
 			});
 
+			// ── Preview + embed code ──────────────────────────────────────────
 			function updatePreviewAndCode() {
-				const idleAnim = animSelect.value;
-				const brandColor = brandColorInput.value;
-				const theme = themeSelect.value;
+				const animation = animSelect.value;
+				const showPicker = animPickerToggle.checked;
+				const bg = bgSelect.value;
 
-				const p = new URLSearchParams({ avatarUrl: selectedAvatarUrl, brandColor, theme });
-				if (idleAnim) p.set('idleAnim', idleAnim);
+				// Preview uses avatar-embed.html (the portable embed) for accurate
+				// representation of the actual embed code.
+				const previewParams = new URLSearchParams({ model: selectedAvatarUrl, bg });
+				if (animation) previewParams.set('animation', animation);
+				if (!showPicker) previewParams.set('animPicker', '0');
 
-				const widgetUrl = `/agent-chat-widget.html?${p}`;
-				previewFrame.src = widgetUrl;
+				previewFrame.src = `/pages/avatar-embed.html?${previewParams}`;
 
-				embedCodeEl.textContent = `<iframe src="${location.origin}${widgetUrl}" width="400" height="600" style="border:none;"></iframe>`;
+				// Embed code — full origin so it works pasted anywhere.
+				const embedParams = new URLSearchParams({ model: selectedAvatarUrl, bg });
+				if (animation) embedParams.set('animation', animation);
+				if (!showPicker) embedParams.set('animPicker', '0');
+
+				const embedUrl = `${location.origin}/pages/avatar-embed.html?${embedParams}`;
+				embedCodeEl.textContent =
+					`<iframe\n  src="${embedUrl}"\n  width="400"\n  height="600"\n  style="border:none;"\n  allow="autoplay; clipboard-write"\n></iframe>`;
 			}
 
 			animSelect.addEventListener('change', updatePreviewAndCode);
+			animPickerToggle.addEventListener('change', updatePreviewAndCode);
+			bgSelect.addEventListener('change', updatePreviewAndCode);
 			brandColorInput.addEventListener('input', updatePreviewAndCode);
 			themeSelect.addEventListener('change', updatePreviewAndCode);
 

@@ -1,0 +1,43 @@
+# Docs / feature-index drift guard.
+#
+# Fails the PR if a public page route in vercel.json isn't documented in
+# data/pages.json, and verifies the generated indexes (llms.txt, sitemap.html,
+# features.json, CHANGELOG.md) are in sync with the manifest — i.e. someone
+# edited a generated file by hand or forgot to regenerate.
+
+name: Docs audit
+
+on:
+  pull_request:
+    paths:
+      - 'vercel.json'
+      - 'data/pages.json'
+      - 'scripts/build-page-index.mjs'
+      - 'scripts/audit-page-index.mjs'
+      - 'public/llms.txt'
+      - 'public/llms-full.txt'
+      - 'public/sitemap/index.html'
+      - 'CHANGELOG.md'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Every public route is documented
+        run: node scripts/audit-page-index.mjs --strict
+
+      - name: Generated indexes are in sync with data/pages.json
+        run: |
+          node scripts/build-page-index.mjs
+          if ! git diff --quiet -- public/llms.txt public/llms-full.txt public/sitemap/index.html public/features.json CHANGELOG.md; then
+            echo "::error::Generated docs are out of sync. Run 'npm run build:pages' and commit the result."
+            git --no-pager diff --stat -- public/llms.txt public/llms-full.txt public/sitemap/index.html public/features.json CHANGELOG.md
+            exit 1
+          fi
+          echo "✓ generated docs match data/pages.json"

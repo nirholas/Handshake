@@ -1,11 +1,20 @@
 #!/usr/bin/env node
 /**
- * Generate every public discovery surface from data/pages.json:
+ * Generate every public discovery surface from data/pages.json — the single
+ * source of truth for "what exists on three.ws". Edit pages.json; never edit
+ * the generated files (they carry a DO-NOT-EDIT banner and get overwritten).
  *
- *   public/sitemap.xml          — search-engine crawlers
  *   public/llms.txt             — AI-agent index (Jeremy Howard convention)
  *   public/llms-full.txt        — expanded, prose-friendly variant
  *   public/sitemap/index.html   — human-readable site map at /sitemap
+ *   public/features.json        — machine manifest served at /api/features.json
+ *   CHANGELOG.md                — derived from per-page `added` dates
+ *
+ * Note: the crawler sitemap.xml is NO LONGER static. It's served dynamically
+ * by /api/sitemap (index) + /api/sitemap/[type] (per-entity), which augments
+ * these curated routes with every agent / avatar / widget / profile from the
+ * database. The /api/sitemap core route reads this same pages.json so there's
+ * still one source of truth for the static portion.
  *
  * Run via `npm run build:pages` or automatically before `vite build`.
  */
@@ -45,7 +54,6 @@ if (existsSync(newsRoutesFile)) {
 	}
 }
 const baseUrl = site.url.replace(/\/$/, '');
-const today = new Date().toISOString().slice(0, 10);
 
 const allPages = sections.flatMap((s) =>
 	s.pages.map((p) => ({ ...p, section: s })),
@@ -54,15 +62,6 @@ const allPages = sections.flatMap((s) =>
 const indexable = (p) =>
 	p.indexable !== false && !p.path.startsWith('/.') && !p.path.endsWith('.xml') && !p.path.endsWith('.txt') && !p.path.endsWith('.json');
 
-const escapeXml = (s) =>
-	String(s).replace(/[<>&'"]/g, (c) => ({
-		'<': '&lt;',
-		'>': '&gt;',
-		'&': '&amp;',
-		"'": '&apos;',
-		'"': '&quot;',
-	})[c]);
-
 const escapeHtml = (s) =>
 	String(s).replace(/[<>&"]/g, (c) => ({
 		'<': '&lt;',
@@ -70,22 +69,6 @@ const escapeHtml = (s) =>
 		'&': '&amp;',
 		'"': '&quot;',
 	})[c]);
-
-// ────────────────────────────────────────────────────────────────────────
-// sitemap.xml
-// ────────────────────────────────────────────────────────────────────────
-function buildSitemap() {
-	const urls = allPages.filter(indexable).map((p) => {
-		const lines = [
-			`\t\t<loc>${escapeXml(baseUrl + p.path)}</loc>`,
-			`\t\t<lastmod>${p.lastmod || today}</lastmod>`,
-		];
-		if (p.changefreq) lines.push(`\t\t<changefreq>${p.changefreq}</changefreq>`);
-		if (p.priority != null) lines.push(`\t\t<priority>${p.priority.toFixed(1)}</priority>`);
-		return `\t<url>\n${lines.join('\n')}\n\t</url>`;
-	});
-	return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
-}
 
 // ────────────────────────────────────────────────────────────────────────
 // llms.txt — concise AI index per https://llmstxt.org/
@@ -242,6 +225,8 @@ ${items}
 \t\t\t\t<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 \t\t\t\t<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
 \t\t\t\t<a href="/llms-full.txt"><code>llms-full.txt</code> · long form</a>
+\t\t\t\t<a href="/api/features.json"><code>features.json</code> · machine manifest</a>
+\t\t\t\t<a href="/changelog"><code>changelog</code> · what's new</a>
 \t\t\t\t<a href="/openapi.json"><code>openapi.json</code> · HTTP API</a>
 \t\t\t</div>
 \t\t</div>
@@ -259,6 +244,70 @@ ${sectionHtml}
 }
 
 // ────────────────────────────────────────────────────────────────────────
+// features.json — machine manifest served verbatim at /api/features.json.
+// Mirrors pages.json plus a generated-at stamp; lets the dashboard, third
+// parties, and our own tooling pull a live feature list without scraping.
+// ────────────────────────────────────────────────────────────────────────
+function buildFeaturesJson() {
+	const manifest = {
+		generated_at: new Date().toISOString(),
+		generated_by: 'scripts/build-page-index.mjs from data/pages.json',
+		site,
+		sections: sections.map((s) => ({
+			id: s.id,
+			title: s.title,
+			description: s.description || null,
+			pages: s.pages.map((p) => ({
+				path: p.path,
+				title: p.title,
+				description: p.description,
+				added: p.added || null,
+				auth: p.auth || null,
+				indexable: p.indexable !== false,
+				tags: p.tags || [],
+			})),
+		})),
+	};
+	return JSON.stringify(manifest, null, '\t') + '\n';
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// CHANGELOG.md — derived from per-page `added` dates, newest first. Pages
+// without an `added` date predate tracking and are omitted; every NEW page
+// added to pages.json should carry one (the route-audit guard enforces it).
+// ────────────────────────────────────────────────────────────────────────
+function buildChangelog() {
+	const dated = allPages.filter((p) => p.added);
+	const byDate = new Map();
+	for (const p of dated) {
+		if (!byDate.has(p.added)) byDate.set(p.added, []);
+		byDate.get(p.added).push(p);
+	}
+	const dates = [...byDate.keys()].sort((a, b) => (a < b ? 1 : -1));
+
+	const lines = [];
+	lines.push('# Changelog');
+	lines.push('');
+	lines.push('<!-- Generated from data/pages.json by scripts/build-page-index.mjs — DO NOT EDIT BY HAND. -->');
+	lines.push('');
+	lines.push(`Public feature history for [${site.name}](${baseUrl}), newest first. Feature dates are tracked from 2026-05-25 forward; earlier pages are omitted.`);
+	lines.push('');
+	if (dates.length === 0) {
+		lines.push('_No dated features yet. Add an `"added": "YYYY-MM-DD"` field to a page in data/pages.json to start the log._');
+		lines.push('');
+	}
+	for (const date of dates) {
+		lines.push(`## ${date}`);
+		lines.push('');
+		for (const p of byDate.get(date).sort((a, b) => a.title.localeCompare(b.title))) {
+			lines.push(`- **${p.title}** (\`${p.path}\`) — ${p.description}`);
+		}
+		lines.push('');
+	}
+	return lines.join('\n').trimEnd() + '\n';
+}
+
+// ────────────────────────────────────────────────────────────────────────
 // emit
 // ────────────────────────────────────────────────────────────────────────
 function writeIfChanged(file, content) {
@@ -271,10 +320,11 @@ function writeIfChanged(file, content) {
 }
 
 const outputs = [
-	{ file: resolve(publicDir, 'sitemap.xml'), content: buildSitemap() },
 	{ file: resolve(publicDir, 'llms.txt'), content: buildLlmsTxt() },
 	{ file: resolve(publicDir, 'llms-full.txt'), content: buildLlmsFull() },
 	{ file: resolve(publicDir, 'sitemap/index.html'), content: buildSitemapHtml() },
+	{ file: resolve(publicDir, 'features.json'), content: buildFeaturesJson() },
+	{ file: resolve(root, 'CHANGELOG.md'), content: buildChangelog() },
 ];
 
 let wrote = 0;

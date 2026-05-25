@@ -1245,6 +1245,14 @@ export function mountEmbedEditor(root, options = {}) {
 	function playClip(clip) {
 		setActiveClip(clip.name);
 		agentEl.play?.(clip.name, { loop: clip.loop !== false, fade_ms: 250 });
+		// Also set as the embed default animation
+		state.defaultClip = clip.name;
+		state.defaultClipLoop = clip.loop !== false;
+		const sel = $('#default-clip-select');
+		if (sel) sel.value = clip.name;
+		const loopSel = $('#default-clip-loop');
+		if (loopSel) loopSel.value = state.defaultClipLoop ? 'true' : 'false';
+		writeSnippet();
 	}
 
 	function makeChip(clip, { shortcut, withKbd = false, extraClass = '' } = {}) {
@@ -1276,6 +1284,24 @@ export function mountEmbedEditor(root, options = {}) {
 			? agentEl._listAvailableClips()
 			: [];
 		if (!clips.length) { animDock.hidden = true; return; }
+
+		// Populate the default-clip dropdown with available clips
+		const clipSelect = $('#default-clip-select');
+		if (clipSelect) {
+			const currentValue = clipSelect.value;
+			clipSelect.replaceChildren();
+			const noneOpt = document.createElement('option');
+			noneOpt.value = '';
+			noneOpt.textContent = 'None (idle)';
+			clipSelect.appendChild(noneOpt);
+			for (const clip of clips) {
+				const opt = document.createElement('option');
+				opt.value = clip.name;
+				opt.textContent = `${clip.icon || '✨'} ${clip.label || clip.name}`;
+				clipSelect.appendChild(opt);
+			}
+			clipSelect.value = currentValue;
+		}
 
 		chipsByName = new Map();
 		animDock.replaceChildren();
@@ -1889,6 +1915,12 @@ export function mountEmbedEditor(root, options = {}) {
 		$('#ar-select').value = state.ar ? 'on' : 'off';
 		$('#bg-select').value = state.background || 'transparent';
 		$('#glow-select').value = state.glow ? 'on' : 'off';
+		$('#agent-id-input').value = state.agentId || '';
+		$('#nameplate-select').value = state.namePlate || 'on';
+		$('#default-clip-select').value = state.defaultClip || '';
+		$('#default-clip-loop').value = state.defaultClipLoop !== false ? 'true' : 'false';
+		$('#accent-color-input').value = state.accentColor || '#3b82f6';
+		$('#radius-input').value = state.borderRadius || '16px';
 		sync();
 	});
 
@@ -2026,6 +2058,15 @@ export function mountEmbedEditor(root, options = {}) {
 		else agentEl.removeAttribute('ar');
 		if (state.background) agentEl.setAttribute('background', state.background);
 		else agentEl.removeAttribute('background');
+		if (state.agentId) agentEl.setAttribute('agent-id', state.agentId);
+		else agentEl.removeAttribute('agent-id');
+		if (state.namePlate === 'off') agentEl.setAttribute('name-plate', 'off');
+		else agentEl.removeAttribute('name-plate');
+		// Apply CSS custom properties for styling
+		const styleVars = [];
+		if (state.accentColor) styleVars.push(`--agent-accent: ${state.accentColor}`);
+		if (state.borderRadius) styleVars.push(`--agent-bubble-radius: ${state.borderRadius}`);
+		agentEl.style.cssText = styleVars.length ? styleVars.join(';') : '';
 	}
 
 	function applyToPreview() {
@@ -2137,9 +2178,38 @@ export function mountEmbedEditor(root, options = {}) {
 		// they want a contained widget instead.
 		attrs.push(`background="${escapeAttr(state.background || 'transparent')}"`);
 
+		// Add optional attributes for customization
+		if (state.agentId) attrs.push(`agent-id="${escapeAttr(state.agentId)}"`);
+		if (state.namePlate === 'off') attrs.push(`name-plate="off"`);
+
+		// Add style vars for accent color and border radius
+		const styleVars = [];
+		if (state.accentColor && state.accentColor !== '#3b82f6') {
+			styleVars.push(`--agent-accent:${state.accentColor}`);
+		}
+		if (state.borderRadius && state.borderRadius !== '16px') {
+			styleVars.push(`--agent-bubble-radius:${state.borderRadius}`);
+		}
+		if (styleVars.length) {
+			// Merge with existing style attr if present
+			const existingStyleIdx = attrs.findIndex(a => a.startsWith('style="'));
+			const newStyle = styleVars.join(';');
+			if (existingStyleIdx >= 0) {
+				attrs[existingStyleIdx] = attrs[existingStyleIdx].replace(/"$/, `;${newStyle}"`);
+			} else {
+				attrs.push(`style="${newStyle}"`);
+			}
+		}
+
 		const script = `<script type="module" async src="${AGENT_3D_HOST}/agent-3d/${AGENT_3D_VERSION}/agent-3d.js"></` + 'script>';
 		const element = `<agent-3d ${attrs.join(' ')}></agent-3d>`;
 		let snippet = `${script}\n${element}`;
+
+		// Add inline script for default animation if specified
+		if (state.defaultClip && !state.widgetId) {
+			const loop = state.defaultClipLoop !== false ? 'true' : 'false';
+			snippet += `\n<script>(function(){var a=document.currentScript.previousElementSibling;if(a)a.addEventListener('agent:ready',function(){a.play?.('${escapeAttr(state.defaultClip)}',{loop:${loop}});});})();<\/script>`;
+		}
 
 		if (preset !== 'fixed') {
 			snippet = `<!-- generated responsive styles -->\n${snippet}`;

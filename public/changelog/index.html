@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Changelog · three.ws</title>
+<meta name="description" content="What's new on three.ws — public feature history, newest first." />
+<link rel="canonical" href="https://three.ws/changelog" />
+<link rel="stylesheet" href="/nav.css" />
+<link rel="stylesheet" href="/footer.css" />
+<style>
+	:root { color-scheme: dark; }
+	body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+	.cl-wrap { max-width: 760px; margin: 0 auto; padding: 96px 24px 64px; }
+	.cl-hero h1 { font-size: clamp(34px, 5vw, 52px); margin: 0 0 12px; letter-spacing: -0.02em; }
+	.cl-hero p { color: #b6b6cf; font-size: 17px; margin: 0 0 8px; line-height: 1.55; }
+	.cl-hero a { color: #9ad4ff; }
+	.cl-day { margin: 44px 0 0; padding-top: 28px; border-top: 1px solid #1d1d36; }
+	.cl-day:first-of-type { border-top: none; padding-top: 0; }
+	.cl-date { font-size: 13px; color: #7a7ac0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.04em; margin: 0 0 16px; }
+	.cl-item { display: block; background: #0d0d1c; border: 1px solid #1d1d36; border-radius: 12px; padding: 16px 18px; margin-bottom: 10px; text-decoration: none; transition: border-color .15s, transform .15s; }
+	.cl-item:hover { border-color: #6a5cff; transform: translateY(-1px); }
+	.cl-item-title { color: #fff; font-weight: 600; font-size: 15px; }
+	.cl-item-path { color: #7a7ac0; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-left: 8px; }
+	.cl-item-desc { color: #b6b6cf; font-size: 13px; line-height: 1.5; margin-top: 6px; }
+	.cl-empty, .cl-error { color: #9a9ac0; font-size: 15px; }
+	.cl-badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #6affb0; border: 1px solid #1f5a3f; background: #0c2419; border-radius: 999px; padding: 2px 8px; margin-left: 8px; vertical-align: middle; }
+</style>
+</head>
+<body>
+	<div id="nav-container"></div>
+	<script src="/nav.js"></script>
+	<main class="cl-wrap">
+		<div class="cl-hero">
+			<h1>Changelog</h1>
+			<p>What's new on three.ws, newest first. Machine-readable: <a href="/api/features.json">features.json</a>, <a href="/llms.txt">llms.txt</a>, <a href="/sitemap">sitemap</a>.</p>
+		</div>
+		<div id="cl-content"><p class="cl-empty">Loading…</p></div>
+	</main>
+
+	<script type="module">
+		const RECENT_DAYS = 30;
+		const elt = document.getElementById('cl-content');
+
+		function fmtDate(iso) {
+			try {
+				return new Date(iso + 'T00:00:00Z').toLocaleDateString(undefined, {
+					year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
+				});
+			} catch { return iso; }
+		}
+
+		try {
+			const res = await fetch('/api/features.json', { headers: { accept: 'application/json' } });
+			if (!res.ok) throw new Error('manifest ' + res.status);
+			const data = await res.json();
+
+			const dated = [];
+			for (const s of data.sections || []) {
+				for (const p of s.pages || []) {
+					if (p.added) dated.push(p);
+				}
+			}
+			if (dated.length === 0) {
+				elt.innerHTML = '<p class="cl-empty">No dated features yet — check back soon.</p>';
+			} else {
+				const byDate = new Map();
+				for (const p of dated) {
+					if (!byDate.has(p.added)) byDate.set(p.added, []);
+					byDate.get(p.added).push(p);
+				}
+				const dates = [...byDate.keys()].sort((a, b) => (a < b ? 1 : -1));
+				const now = Date.now();
+				const html = dates.map((date) => {
+					const isNew = (now - new Date(date + 'T00:00:00Z').getTime()) < RECENT_DAYS * 86400000;
+					const items = byDate.get(date)
+						.sort((a, b) => a.title.localeCompare(b.title))
+						.map((p) => `
+							<a class="cl-item" href="${p.path}">
+								<span class="cl-item-title">${p.title}</span>
+								<span class="cl-item-path">${p.path}</span>
+								<div class="cl-item-desc">${p.description || ''}</div>
+							</a>`).join('');
+					return `<section class="cl-day">
+						<p class="cl-date">${fmtDate(date)}${isNew ? '<span class="cl-badge">new</span>' : ''}</p>
+						${items}
+					</section>`;
+				}).join('');
+				elt.innerHTML = html;
+			}
+		} catch (err) {
+			elt.innerHTML = '<p class="cl-error">Couldn\'t load the changelog right now. Try <a href="/api/features.json">features.json</a> directly.</p>';
+			console.error('[changelog]', err);
+		}
+	</script>
+</body>
+</html>

@@ -55,6 +55,12 @@ URL: https://three.ws/sitemap
 
 Human-readable index of every page on three.ws.
 
+### Characters
+
+URL: https://three.ws/characters
+
+Discover AI characters on three.ws. Chat, trade, and create.
+
 ## Build
 
 Create and customize an agent.
@@ -107,6 +113,30 @@ URL: https://three.ws/features
 
 Full feature overview of the three.ws platform: avatars, agents, on-chain identity, x402 payments, and embedding.
 
+### New Agent
+
+URL: https://three.ws/agent/new
+
+Create a new agent from scratch — avatar, brain, skills, and on-chain identity.
+
+### Selfie to Avatar
+
+URL: https://three.ws/create/selfie
+
+One selfie. About a minute. A rigged 3D avatar that works everywhere.
+
+### Import Ready Player Me
+
+URL: https://three.ws/import/rpm
+
+Import your Ready Player Me avatar into three.ws and give it an agent brain.
+
+### Claim threews.sol Subdomain
+
+URL: https://three.ws/threews/claim
+
+Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal showcase page.
+
 ## Labs
 
 Experimental features actively shipping. Expect fast iteration.
@@ -146,6 +176,18 @@ Feed live mic audio through the viseme analyser and watch the avatar's mouth tra
 URL: https://three.ws/avatar-artifact
 
 Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page.
+
+### Rider (VR)
+
+URL: https://three.ws/rider
+
+A free, open-source VR music visualization — surf the musical road among the stars, moon, and lights.
+
+### Playground
+
+URL: https://three.ws/playground
+
+Sandbox for experimenting with agents, prompts, and 3D scenes.
 
 ## Crypto
 
@@ -198,6 +240,18 @@ Grind a vanity smart-contract address using the ThreeWSFactory CREATE2 deployer 
 URL: https://three.ws/pump-visualizer
 
 3D visualizer of trending pump.fun tokens — live market data rendered as an interactive scene.
+
+### x402 Bazaar
+
+URL: https://three.ws/bazaar
+
+Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.
+
+### GMGN Smart Money
+
+URL: https://three.ws/gmgn
+
+Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.
 
 ## Agent Tools
 

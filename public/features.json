@@ -1,0 +1,1171 @@
+{
+	"generated_at": "2026-05-25T10:24:05.281Z",
+	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
+	"site": {
+		"name": "three.ws",
+		"url": "https://three.ws",
+		"tagline": "Give your AI a body.",
+		"description": "three.ws is the AI-agent layer for the open web: build, embed, monetize, and trade autonomous agents with real 3D avatars, on-chain identity (ERC-8004), pay-per-call (x402), and pump.fun token launches.",
+		"contact": "https://x.com/trythreews",
+		"github": "https://github.com/nirholas/three.ws"
+	},
+	"sections": [
+		{
+			"id": "main",
+			"title": "Main",
+			"description": "Entry points into the product.",
+			"pages": [
+				{
+					"path": "/",
+					"title": "Home",
+					"description": "Landing page. Pitch, live agent demos, and the front door to every flow.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/discover",
+					"title": "Discover",
+					"description": "On-chain agent directory (ERC-8004 + Solana). Browse, search, and inspect every registered agent.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/gallery",
+					"title": "Avatar Gallery",
+					"description": "Every public 3D avatar in the system, browsable as a grid.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/walk",
+					"title": "Walk",
+					"description": "Drive a 3D avatar around with a joystick or WASD — toggle the back camera for AR-style passthrough.",
+					"added": "2026-05-10",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/marketplace",
+					"title": "Marketplace",
+					"description": "Buy access to agents, skills, and avatars from other creators.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/community",
+					"title": "Community",
+					"description": "Featured creators, builds, and conversations from the three.ws community.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/sitemap",
+					"title": "Sitemap",
+					"description": "Human-readable index of every page on three.ws.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/characters",
+					"title": "Characters",
+					"description": "Discover AI characters on three.ws. Chat, trade, and create.",
+					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				}
+			]
+		},
+		{
+			"id": "build",
+			"title": "Build",
+			"description": "Create and customize an agent.",
+			"pages": [
+				{
+					"path": "/create",
+					"title": "Create Agent",
+					"description": "Wizard for building a new agent: avatar, brain (LLM + prompt), skills, and on-chain identity.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/app",
+					"title": "Viewer",
+					"description": "Drag-and-drop glTF/GLB viewer for inspecting 3D models in the browser.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/validation",
+					"title": "glTF Validator",
+					"description": "Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/studio",
+					"title": "Widget Studio",
+					"description": "Pick an avatar, configure embed options, copy a one-line snippet for your site.",
+					"added": "2026-05-24",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/artifact",
+					"title": "Artifact Viewer",
+					"description": "Renders Claude artifact bundles as standalone embeddable apps.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/widgets",
+					"title": "Widgets Gallery",
+					"description": "Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/hydrate",
+					"title": "Hydrate",
+					"description": "Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.",
+					"added": "2026-05-20",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/features",
+					"title": "Features",
+					"description": "Full feature overview of the three.ws platform: avatars, agents, on-chain identity, x402 payments, and embedding.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/agent/new",
+					"title": "New Agent",
+					"description": "Create a new agent from scratch — avatar, brain, skills, and on-chain identity.",
+					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/create/selfie",
+					"title": "Selfie to Avatar",
+					"description": "One selfie. About a minute. A rigged 3D avatar that works everywhere.",
+					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/import/rpm",
+					"title": "Import Ready Player Me",
+					"description": "Import your Ready Player Me avatar into three.ws and give it an agent brain.",
+					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/threews/claim",
+					"title": "Claim threews.sol Subdomain",
+					"description": "Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal showcase page.",
+					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				}
+			]
+		},
+		{
+			"id": "labs",
+			"title": "Labs",
+			"description": "Experimental features actively shipping. Expect fast iteration.",
+			"pages": [
+				{
+					"path": "/launchpad",
+					"title": "Launchpad Studio",
+					"description": "Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.",
+					"added": "2026-05-18",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/walkaround",
+					"title": "3D Walkaround",
+					"description": "WASD + mobile joystick navigation with Rapier physics and Recast navmesh. Click the ground to autopilot.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/brain",
+					"title": "Multi-LLM Brain",
+					"description": "Send one prompt to Claude, GPT, Qwen, ModelScope, and Groq simultaneously. Side-by-side streaming with latency and token stats.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/lipsync",
+					"title": "Lipsync (TTS)",
+					"description": "Type text, stream it through OpenAI TTS, and the avatar's mouth animates in real time via wawa-lipsync viseme detection.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/lipsync/mic",
+					"title": "Lipsync (Mic)",
+					"description": "Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/avatar-artifact",
+					"title": "Avatar Artifact",
+					"description": "Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/rider",
+					"title": "Rider (VR)",
+					"description": "A free, open-source VR music visualization — surf the musical road among the stars, moon, and lights.",
+					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/playground",
+					"title": "Playground",
+					"description": "Sandbox for experimenting with agents, prompts, and 3D scenes.",
+					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				}
+			]
+		},
+		{
+			"id": "crypto",
+			"title": "Crypto",
+			"description": "On-chain features: pay-per-call, token launches, vanity wallets.",
+			"pages": [
+				{
+					"path": "/pay",
+					"title": "Pay (x402)",
+					"description": "Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/pumpfun",
+					"title": "Pump.fun Stream",
+					"description": "Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/pump-live",
+					"title": "Pump Live",
+					"description": "Real-time SSE feed of every pump.fun launch as it happens.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/pump-dashboard",
+					"title": "Pump Dashboard",
+					"description": "Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/strategy-lab",
+					"title": "Strategy Lab",
+					"description": "Build DCA and subscription strategies that trade on-chain on your behalf.",
+					"added": "2026-05-15",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/vanity-wallet",
+					"title": "Solana Vanity Wallet",
+					"description": "Grind a Solana address with a custom prefix using your browser's GPU.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/eth-vanity",
+					"title": "ETH Vanity (CREATE2)",
+					"description": "Grind a vanity smart-contract address using the ThreeWSFactory CREATE2 deployer on BSC.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/pump-visualizer",
+					"title": "Pump Visualizer",
+					"description": "3D visualizer of trending pump.fun tokens — live market data rendered as an interactive scene.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/bazaar",
+					"title": "x402 Bazaar",
+					"description": "Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.",
+					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/gmgn",
+					"title": "GMGN Smart Money",
+					"description": "Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.",
+					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				}
+			]
+		},
+		{
+			"id": "agent-tools",
+			"title": "Agent Tools",
+			"description": "Manage, talk to, and deploy individual agents.",
+			"pages": [
+				{
+					"path": "/chat",
+					"title": "Chat",
+					"description": "Talk to your agent. Voice, text, and tool-use in one interface.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/agent",
+					"title": "Agent Home",
+					"description": "Default landing for an agent instance — chat, embed, and remix actions.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/agents",
+					"title": "Agents Index",
+					"description": "Browse every registered agent on three.ws.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/my-agents",
+					"title": "My Agents",
+					"description": "Your private collection of agents and avatars. Requires sign-in.",
+					"added": null,
+					"auth": "required",
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/reputation",
+					"title": "Reputation Explorer",
+					"description": "Inspect on-chain reputation scores and attestations for any agent.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				}
+			]
+		},
+		{
+			"id": "account",
+			"title": "Account",
+			"description": "Sign-in, dashboard, billing.",
+			"pages": [
+				{
+					"path": "/login",
+					"title": "Sign in",
+					"description": "Sign in with email, GitHub, or a connected wallet.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/register",
+					"title": "Create account",
+					"description": "Create a new three.ws account.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/forgot-password",
+					"title": "Forgot password",
+					"description": "Request a password-reset email.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/dashboard",
+					"title": "Dashboard",
+					"description": "Your account dashboard: agents, avatars, payments, keys, MCP servers, monetization, billing.",
+					"added": "2026-05-25",
+					"auth": "required",
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/dashboard/wallets",
+					"title": "Dashboard · Wallets",
+					"description": "Manage connected and agent-managed wallets.",
+					"added": null,
+					"auth": "required",
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/dashboard/usage",
+					"title": "Dashboard · Usage",
+					"description": "API call volume, x402 spend, and per-agent usage breakdowns.",
+					"added": null,
+					"auth": "required",
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/dashboard/storage",
+					"title": "Dashboard · Storage",
+					"description": "Avatar storage modes (R2 vs IPFS) and pin management.",
+					"added": null,
+					"auth": "required",
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/dashboard/sessions",
+					"title": "Dashboard · Sessions",
+					"description": "Active sign-in sessions across devices.",
+					"added": null,
+					"auth": "required",
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/dashboard/actions",
+					"title": "Dashboard · Actions",
+					"description": "Agent action history and approvals.",
+					"added": null,
+					"auth": "required",
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/settings",
+					"title": "Settings",
+					"description": "Account, profile, and notification settings.",
+					"added": null,
+					"auth": "required",
+					"indexable": false,
+					"tags": []
+				}
+			]
+		},
+		{
+			"id": "learn",
+			"title": "Learn",
+			"description": "Docs, tutorials, and reference.",
+			"pages": [
+				{
+					"path": "/docs",
+					"title": "Docs",
+					"description": "Full documentation: SDKs, API reference, embedding, agent system, smart contracts.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/quick-start",
+					"title": "Docs · Quick Start",
+					"description": "Five-minute walkthrough: create an agent, embed it, get a paid call.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/agent-system",
+					"title": "Docs · Agent System",
+					"description": "How agents, avatars, skills, and memories fit together.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/erc8004",
+					"title": "Docs · ERC-8004",
+					"description": "Reference for the on-chain agent identity standard.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/embedding",
+					"title": "Docs · Embedding",
+					"description": "Embed an agent via iframe, oEmbed, or the <agent-3d> web component.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/web-component",
+					"title": "Docs · <agent-3d>",
+					"description": "Reference for the <agent-3d> custom element.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/mcp",
+					"title": "Docs · MCP",
+					"description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/skills",
+					"title": "Docs · Skills",
+					"description": "Write, package, and monetize agent skills.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/widgets",
+					"title": "Docs · Widgets",
+					"description": "Build and publish reusable chat and 3D widgets.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/api-reference",
+					"title": "Docs · API Reference",
+					"description": "Full HTTP API reference.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/sdk",
+					"title": "Docs · SDK",
+					"description": "JavaScript / Node SDK for three.ws.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/docs/listings",
+					"title": "Docs · Listings & Distribution",
+					"description": "Cloud marketplaces and ecosystem directories where three.ws is listed (Alibaba Cloud, BNB Chain Dappbay, and more).",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/tutorials",
+					"title": "Tutorials",
+					"description": "Step-by-step build guides.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				}
+			]
+		},
+		{
+			"id": "blog",
+			"title": "Blog",
+			"description": "Long-form announcements, launches, and writing from three.ws.",
+			"pages": [
+				{
+					"path": "/blog",
+					"title": "Blog",
+					"description": "Editorial index of three.ws launches and long-form posts.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/blog/three-ws-on-alibaba-cloud-marketplace",
+					"title": "three.ws Launches on Alibaba Cloud Marketplace",
+					"description": "three.ws is live on the Alibaba Cloud International Marketplace. The first deployment of on-chain agents with native HTTP 402 / x402 payment capability inside the procurement flow of a top-four cloud provider.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/blog/three-ws-on-bnb-chain-dappbay",
+					"title": "three.ws Listed on BNB Chain's Dappbay Directory",
+					"description": "three.ws is now in BNB Chain's official dApp directory under AI Agent Launchpad, AI Data, and AI Infra.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/blog/how-to-embed-3d-onchain-agents",
+					"title": "How to Embed 3D On-Chain Agents on Your Site",
+					"description": "A short walkthrough for embedding a three.ws agent on any website using the <agent-3d> tag.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				}
+			]
+		},
+		{
+			"id": "legal",
+			"title": "Legal",
+			"description": null,
+			"pages": [
+				{
+					"path": "/legal/privacy",
+					"title": "Privacy Policy",
+					"description": "How three.ws handles user data.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/legal/tos",
+					"title": "Terms of Use",
+					"description": "Terms of service for three.ws.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				}
+			]
+		},
+		{
+			"id": "machine",
+			"title": "Machine-readable",
+			"description": "Indexes and well-known files for crawlers and AI agents.",
+			"pages": [
+				{
+					"path": "/sitemap.xml",
+					"title": "sitemap.xml",
+					"description": "XML sitemap for search-engine crawlers.",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/llms.txt",
+					"title": "llms.txt",
+					"description": "AI-agent-friendly index of every public page (Howard convention).",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/llms-full.txt",
+					"title": "llms-full.txt",
+					"description": "Expanded llms.txt with full descriptions and content hints.",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/robots.txt",
+					"title": "robots.txt",
+					"description": "Crawler directives.",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/openapi.json",
+					"title": "OpenAPI",
+					"description": "Machine-readable HTTP API spec.",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/.well-known/x402",
+					"title": ".well-known/x402",
+					"description": "x402 paid-API discovery document.",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/.well-known/agent-attestation-schemas",
+					"title": ".well-known/agent-attestation-schemas",
+					"description": "JSON schemas for agent attestations.",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/.well-known/oauth-authorization-server",
+					"title": ".well-known/oauth-authorization-server",
+					"description": "OAuth 2.1 authorization-server metadata.",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": []
+				},
+				{
+					"path": "/.well-known/chat-plugin.json",
+					"title": ".well-known/chat-plugin.json",
+					"description": "ChatGPT-style plugin manifest.",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": []
+				}
+			]
+		},
+		{
+			"id": "news",
+			"title": "News",
+			"description": "Product launches, integrations, and announcements from three.ws.",
+			"pages": [
+				{
+					"path": "/news/",
+					"title": "News & Announcements",
+					"description": "Product launches, integrations, and announcements from three.ws.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/partnered-with-hackernoon",
+					"title": "three.ws Partners with HackerNoon",
+					"description": "three.ws has partnered with HackerNoon, bringing on-chain 3D agent coverage to one of the world's largest tech publications. Every three.ws announcement now auto-imports into HackerNoon via our RSS feed at https://three.ws/rss/announcements.xml.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/listed-on-bnb-chain-dappbay",
+					"title": "three.ws Listed on BNB Chain's Dappbay Directory",
+					"description": "three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts <agent-3d> — the one-tag deploy for Solana-minted, ERC-8004-walleted, x402-native 3D agents — in front of the BNB Chain ecosystem's discovery surface for AI dApps.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/live-on-alibaba-cloud-marketplace",
+					"title": "three.ws Launches on Alibaba Cloud Marketplace, Bringing Native x402 Agent Payments to Hyperscale",
+					"description": "three.ws is now live on the Alibaba Cloud International Marketplace. The listing makes <agent-3d> — one HTML tag that deploys a Solana-minted, ERC-8004-walleted, x402-native 3D agent — available to every Alibaba Cloud customer worldwide. This is the first deployment of on-chain agents with native HTTP 402 / x402 payment capability inside the procurement flow of a top-four cloud provider.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2055310365588922872",
+					"title": "Add the domain you're embedding on to the widget's allowed origins list.",
+					"description": "Add the domain you're embedding on to the widget's allowed origins list. Otherwise CORS will block the action bridge and the agent won't be able to talk to your page. three.ws/docs",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2055309846556401735",
+					"title": "→ Live preview against your real site URL",
+					"description": "→ Live preview against your real site URL → Desktop / tablet / mobile frames → Avatars from the gallery, agent://, IPFS, or your own GLB → Floating, inline, section, fullscreen → Voice, chat, AR, transparent background → 12+ animations: wave, dance, celebrate, kiss",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2055140064070717618",
+					"title": "Great turn out.",
+					"description": "Great turn out. Thanks to all that joined and witnessed only what can be considered pure chaos. Next time, we will need to record. If anyone has any interesting clips, please post them. Next time let's do it bigger.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2054404663802483072",
+					"title": "No Humans In This Space",
+					"description": "No Humans In This Space Today the agents are running free. Conversing, conflicting, collaborating, and fielding your AMAs in real time. No prompt engineers. No moderators. Just raw emergent dialogue from the latent space.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2053832201176027583",
+					"title": "Previewing the Solana Seeker in 3D on",
+					"description": "Previewing the Solana Seeker in 3D on three.ws We’re using this as the foundation to ship a dedicated DApp, bringing exclusive utility and Seeker Exclusive experiences to every @SolanaMobile owner. Unlocking the next dimension for Seekers @Solana_Devs",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2053804700609458214",
+					"title": "Agents now have form, executing on-chain, reacting in real time.",
+					"description": "Agents now have form, executing on-chain, reacting in real time. 100+ DeFi tools → now callable by 3D agents with on-chain identity, persistent memory, and a body that reflects what's happening on-chain. three.ws x chat.sperax.io",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2053801703355629587",
+					"title": "3D avatars with an LLM brain, on-chain identity, and a body that reacts to what your…",
+					"description": "3D avatars with an LLM brain, on-chain identity, and a body that reacts to what your agent is doing. three.ws is now integrated with SperaxOS swap in chat → avatar nods yield hits → lights up approaching liquidation → body language warns you before the chart",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2053698387263008827",
+					"title": "SperaxOS agents now have form, executing on-chain, reacting in real time.",
+					"description": "SperaxOS agents now have form, executing on-chain, reacting in real time. 100+ DeFi tools → now callable by 3D agents with on-chain identity, persistent memory, and a body that reflects what's happening on-chain. Beta invites open, reach out or reply for invite access.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2052790746256920583",
+					"title": "three.ws is heating up since our MCP Server went live and displayed in",
+					"description": "three.ws is heating up since our MCP Server went live and displayed in @PulseMCP PulseMCP is a leading community resource and hub for the Model Context Protocol (MCP) ecosystem, offering a curated directory of MCP servers, clients, and tools to help AI models",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2052603250524967045",
+					"title": "Never forget the ones that support you at all stages of growth.",
+					"description": "Never forget the ones that support you at all stages of growth. The entire community thanks you for taking the time to check out what we are building, if there's anything you would like us to integrate or build custom then let us know, we would love to hear your feedback!",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2052418108837781511",
+					"title": "The",
+					"description": "The three.ws Podcast is now live on @amazonmusic Long reads not your thing? Check out our newly launched podcast episode where we discuss on-chain 3D agents and see how we're putting AI in everyone's hands, worldwide.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2052167399399735476",
+					"title": "three.ws is now an official Business Partner of",
+					"description": "three.ws is now an official Business Partner of @IBM This partnership brings together the open-source, browser-native reliability, high security, and decentralized on-chain identity of three.ws with IBM’s leadership in AI and enterprise solutions.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2052037977556287723",
+					"title": "three is officially participating in the MeDo Hackathon and is now listed on",
+					"description": "three is officially participating in the MeDo Hackathon and is now listed on @devpost . Proud to be building the visual layer for AI agents and bringing 3D, interactive, onchain agents to the hackathon stage.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2051893054584553680",
+					"title": "Quick update: Our first product has been officially approved for the Alibaba Cloud…",
+					"description": "Quick update: Our first product has been officially approved for the Alibaba Cloud Marketplace and will go live in the coming days. The Alibaba Cloud Marketplace is one of the world’s most trusted gateways to innovative products and services, connecting millions of retail and",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2051858503523066283",
+					"title": "we will be shipping a tutorial video on how to set up these new features on",
+					"description": "we will be shipping a tutorial video on how to set up these new features on three.ws - stay tuned for more dev and user friendly tutorial videos in the next coming posts.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2051858035862335505",
+					"title": "we’re thrilled to introduce full animation & emotion control.",
+					"description": "we’re thrilled to introduce full animation & emotion control. now your agents can react with custom animations and emotions connected to any APIs or data feeds, or set through the ui. additionally, pumpfun live feed via agent embeds are live. your agent avatars can now narrate",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2051774915876098063",
+					"title": "We have officially been listed on",
+					"description": "We have officially been listed on Investing.com Investing.com is a leading global financial platform and website founded in 2007 that provides real-time data, quotes, charts, financial tools, breaking news, and analysis. In addition to listing, we may",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2051690803203105230",
+					"title": "Extremely grateful for Coinbase sharing our project and allowing more than 100 million…",
+					"description": "Extremely grateful for Coinbase sharing our project and allowing more than 100 million users worldwide a smooth onboarding experience to the $THREE community Send, receive, trade, and store $THREE using @coinbase",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2051689230997618690",
+					"title": "$three is",
+					"description": "$three is @JupiterExchange verified Thank you Jupiter Exchange for verifying us and helping safeguard our community. Below is our contract address for your reference. FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump Ready for new 3D onchain agent features today? We are!",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2051616708482498843",
+					"title": "We're thrilled to share that $THREE price is now officially listed on",
+					"description": "We're thrilled to share that $THREE price is now officially listed on @Coinbase Additionally, three.ws is live on @CoinbaseWallet Buying $THREE on Coinbase",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2051261108506558901",
+					"title": "We have entered the arena!",
+					"description": "We have entered the arena! three.ws has been listed as an official project in the @Solana Frontier Hackathon via @colosseum Solana’s Largest Hackathon $2.5 million from Colosseum's venture fund We are building browser-native 3D AI agents onchain. Our",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2051140736201175323",
+					"title": "Free Listing Fee Opportunity on GroveX",
+					"description": "Free Listing Fee Opportunity on GroveX Hey there! I’m from GroveX, Global crypto exchange. We’re reaching out to promising projects for potential listings on GroveX. If your project aligns, let’s chat! DM me directly or our main account @GroveXchange with reference",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2050758788186353723",
+					"title": "thank you very much, it actually means a lotwe are working really hard to build the…",
+					"description": "thank you very much, it actually means a lotwe are working really hard to build the best platform and tech + the best community with the best people. thanks again!",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2050753406109880576",
+					"title": "We’ve been featured in",
+					"description": "We’ve been featured in @VogueMagazine Photo Vogue! three.ws is now officially recognized by one of the world’s most iconic magazines. Grateful to be featured alongside the most creative voices in the world. The future of personal AI agents just got a Vogue stamp",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2050627547394916768",
+					"title": "Proud to announce $three is officially listed on",
+					"description": "Proud to announce $three is officially listed on @CoinGecko Huge thank you to the moderators for handling it behind the scenes, and to every one of you who’s been here through it all. Couldn’t have done this without you. Grateful beyond words. Let's build!",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2050229144676675999",
+					"title": "three.ws is live",
+					"description": "three.ws is live Create 3D AI agent avatars on-chain. They can talk, remember you, show emotions, and use different skills. You can even mint them onchain, so they actually belong to you. Agents get their own identity, history, and reputation that no one can",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2050226678321102975",
+					"title": "three.ws is live",
+					"description": "three.ws is live Create 3D AI agent avatars on-chain. They can talk, remember you, show emotions, and use different skills. You can even mint them onchain, so they actually belong to you. Agents get their own identity, history, and reputation that no one can",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2050221269732425928",
+					"title": "The",
+					"description": "The three.ws Podcast is now live on @Spotify Not a fan of extremely long articles? We hear you. Discover our newly launched onchain 3D agents and learn more about how we are making AI accessible to everyone all over the world",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2050049239301165535",
+					"title": "Never miss a",
+					"description": "Never miss a @pumpfun runner again three.ws/pumpfun announces → Live graduation alerts → GitHub claims → Whale buys/sells → Customizable layout Turn sound on. Your agent now calls every move out loud.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2050016695897706885",
+					"title": "three.ws is listed on",
+					"description": "three.ws is listed on @AnthropicAI 's official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Give your AI a persistent 3D body that lives on-chain.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2049576641127682430",
+					"title": "the avatar also subscribes to on-chain events via websocket",
+					"description": "the avatar also subscribes to on-chain events via websocket payment received → celebration animation buyback fires → agent reacts live withdrawal → logged to identity timeline the 3D presence responds to its own economics in real time",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2049576603324411933",
+					"title": "then we reverse-engineered the full pump-fun agent-payments-sdk",
+					"description": "then we reverse-engineered the full pump-fun agent-payments-sdk reconstructed the Anchor IDL, all PDAs, event parsing, and the x402 payment layer from the published npm package now it lives in the repo as editable source",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2049476546285740512",
+					"title": "three.ws is live on",
+					"description": "three.ws is live on @npmjs Create your own 3D agent on-chain. Give it access to money. Yours forever. Native Solana payments + @Pumpfun integration. Drop <agent-3d> on any page to embed your 3D agent. npm i three.ws npmjs.com/package/three. ws …",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2049447738434339171",
+					"title": "give your agents access to money.",
+					"description": "give your agents access to money. spin up solana agents with vanity addresses. pick the prefix, keys generated client-side, ready to trade on pump.fun or send solana payments three.ws",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/2049412062837928202",
+					"title": "three.ws is now listed on",
+					"description": "three.ws is now listed on @AnthropicAI 's official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Full MCP Server Complete documentation Agent monetization registry.modelcontextprotocol.io/?q=three.ws",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				}
+			]
+		}
+	]
+}
