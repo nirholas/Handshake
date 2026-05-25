@@ -76,7 +76,10 @@ export function renderDrawer() {
 	return `
 		<aside class="dn-drawer" data-component="drawer" aria-label="Activity">
 			<style>
-				.dn-drawer { display: flex; flex-direction: column; height: 100%; }
+				/* Only impose layout when the shell has opened us. Otherwise the
+				   shell's display:none rule must win — without this guard the
+				   drawer claims a phantom grid column and crushes the main area. */
+				.dn-shell[data-drawer-open='true'] .dn-drawer { display: flex; flex-direction: column; height: 100%; }
 				.dnd-head {
 					padding: 16px 18px 12px;
 					border-bottom: 1px solid var(--nxt-stroke);
