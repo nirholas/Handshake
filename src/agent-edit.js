@@ -1,35 +1,9 @@
 import { AvatarCreator } from './avatar-creator.js';
 import { saveRemoteGlbToAccount } from './account.js';
+import { apiFetch } from './api.js';
 
 const API_BASE = '/api';
 const params = new URLSearchParams(location.search);
-
-// CSRF — server enforces a single-use double-submit token on every session-
-// cookie mutation (PUT/POST/PATCH/DELETE). Fetch a fresh token per request;
-// the server burns it after one use, so caching breaks the next mutation.
-async function _csrfToken() {
-  try {
-    const r = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
-    if (!r.ok) return null;
-    const j = await r.json();
-    return j?.data?.token || null;
-  } catch {
-    return null;
-  }
-}
-
-// Drop-in replacement for fetch() that auto-attaches the CSRF header on any
-// non-safe method. Every fetch in this module that targets ${API_BASE} should
-// use this helper; raw fetch() bypasses CSRF and the server returns 403.
-async function apiFetch(url, init = {}) {
-  const method = (init.method || 'GET').toUpperCase();
-  const headers = new Headers(init.headers || {});
-  if (method !== 'GET' && method !== 'HEAD') {
-    const token = await _csrfToken();
-    if (token) headers.set('x-csrf-token', token);
-  }
-  return fetch(url, { credentials: 'include', ...init, headers });
-}
 
 // Resolve agent id from the canonical clean URL /agent/<uuid>(/edit)?, falling
 // back to the legacy /agent-edit.html?id=<uuid> querystring form. Kept as a

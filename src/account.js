@@ -2,98 +2,13 @@
 // Keeps the UI code in app.js/avatar-creator.js clean.
 
 import { identifyUser, resetIdentity } from './analytics.js';
+import { apiFetch, consumeCsrfToken } from './api.js';
+
+// Re-export for back-compat — many modules still `import { apiFetch } from
+// './account.js'`. New code should import from './api.js' directly.
+export { apiFetch };
 
 const API = ''; // same origin
-
-// Single-use CSRF token: fetched lazily, burned by the server on consumption.
-// Re-issued on the next mutating call. Matches the dashboard's pattern so any
-// page using apiFetch gets CSRF-gated endpoints (PUT/PATCH/DELETE on agents,
-// keys, withdrawals, marketplace, etc.) for free.
-let _csrfToken = null;
-async function getCsrfToken() {
-	if (_csrfToken) return _csrfToken;
-	const r = await fetch('/api/csrf-token', { credentials: 'include' });
-	if (!r.ok) return null;
-	const j = await r.json().catch(() => null);
-	_csrfToken = j?.data?.token || null;
-	return _csrfToken;
-}
-
-const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-const TRANSIENT_STATUSES = new Set([502, 503, 504]);
-
-// Wrapped fetch that handles expired sessions centrally. A 401 response is
-// treated as a session-expiry signal and redirects to /login?next=<current>
-// with the URL hash preserved (SPAs lose it on a naked location.href hop).
-// Pass allowAnonymous:true for endpoints where a 401 is a legitimate
-// "not signed in" answer the caller wants to inspect itself (e.g. /api/auth/me).
-//
-// Safe-method requests retry once on transient 5xx / network failures —
-// Vercel cold starts and dev-server restarts surface as 502s, and a silent
-// second attempt hides the blip. Mutating methods don't retry: the body is
-// already on the wire and the server may have processed it.
-export async function apiFetch(path, options = {}) {
-	const { allowAnonymous = false, ...init } = options;
-	const method = (init.method || 'GET').toUpperCase();
-	const canRetry = SAFE_METHODS.has(method);
-
-	// Mutating same-origin requests need a CSRF token. Skip for bearer-auth
-	// callers — the server exempts Authorization: Bearer requests.
-	const headers = new Headers(init.headers || {});
-	const hasBearer = (headers.get('authorization') || '').startsWith('Bearer ');
-	if (!SAFE_METHODS.has(method) && !hasBearer) {
-		const token = await getCsrfToken();
-		if (token) headers.set('x-csrf-token', token);
-		_csrfToken = null;
-	}
-
-	const doFetch = () =>
-		fetch(path, {
-			credentials: 'include',
-			...init,
-			headers,
-		});
-
-	// Two retries with 400ms → 1.2s backoff for safe methods. Covers a Vercel
-	// cold start (~600ms) plus one transient proxy blip; non-mutating so re-
-	// firing is free. Mutating methods (POST/PUT) never retry — the body is
-	// already on the wire and the server may have committed it.
-	let res;
-	let lastErr;
-	const maxAttempts = canRetry ? 3 : 1;
-	for (let attempt = 0; attempt < maxAttempts; attempt++) {
-		if (attempt > 0) {
-			await new Promise((r) => setTimeout(r, 400 * attempt * attempt));
-		}
-		try {
-			res = await doFetch();
-		} catch (networkErr) {
-			lastErr = networkErr;
-			res = undefined;
-			continue;
-		}
-		if (canRetry && TRANSIENT_STATUSES.has(res.status)) continue;
-		break;
-	}
-	if (!res) throw lastErr;
-
-	if (res.status === 401 && !allowAnonymous) {
-		redirectToLogin();
-		const err = new Error('session expired');
-		err.status = 401;
-		err.redirected = true;
-		throw err;
-	}
-	return res;
-}
-
-function redirectToLogin() {
-	if (typeof location === 'undefined') return;
-	// Don't loop if we're already on the login page.
-	if (/^\/login(\/|$|\?)/.test(location.pathname)) return;
-	const next = location.pathname + location.search + location.hash;
-	location.href = '/login?next=' + encodeURIComponent(next);
-}
 
 // Optimistic auth hint — non-authoritative, used only for first-paint gating
 // on the viewer. The real session cookie is HttpOnly so we can't read it
@@ -564,8 +479,7 @@ async function uploadViaProxy({ blob, contentType, checksum, onProgress, signal 
 	if (signal?.aborted) {
 		throw stageError('upload', 'Upload aborted', { code: 'upload_aborted' });
 	}
-	const csrf = await getCsrfToken();
-	_csrfToken = null; // single-use, like apiFetch
+	const csrf = await consumeCsrfToken();
 	const qs = new URLSearchParams({ content_type: contentType });
 	if (checksum) qs.set('sha256', checksum);
 	const url = `${API}/api/avatars/upload?${qs.toString()}`;

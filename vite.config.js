@@ -490,11 +490,11 @@ creating: resolve(__dirname, 'pages/creating.html'),
 						res.setHeader('Location', '/discover/');
 						return res.end();
 					}
-					// /discover/avatar/:id → canonical marketplace detail page
+					// /discover/avatar/:id → canonical /avatars/:id (avatar studio page)
 					const discoverAvatarM = path.match(/^\/discover\/avatar\/([^/]+)\/?$/);
 					if (discoverAvatarM) {
 						res.statusCode = 301;
-						res.setHeader('Location', `/marketplace/agents/${discoverAvatarM[1]}`);
+						res.setHeader('Location', `/avatars/${discoverAvatarM[1]}`);
 						return res.end();
 					}
 					// /widget-studio was a legacy standalone page; /studio is canonical
@@ -578,6 +578,9 @@ creating: resolve(__dirname, 'pages/creating.html'),
 					// /embed/avatar/:handle  → portable avatar embed by handle
 					else if (!filePath && /^\/embed\/avatar(\/[a-z0-9_-]{3,30})?\/?$/i.test(path))
 						filePath = resolve(root, 'pages/avatar-embed.html');
+					// /avatars/:id  → avatar studio page (mirrors vercel.json rewrite)
+					else if (!filePath && /^\/avatars\/[^/.]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/avatar-page.html');
 					// /@<handle>  → public live profile page
 					else if (!filePath && /^\/@[a-z0-9_-]{3,30}\/?$/i.test(path))
 						filePath = resolve(root, 'pages/handle.html');

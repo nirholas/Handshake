@@ -41,6 +41,8 @@ export default wrap(async (req, res) => {
 	switch (action) {
 		case 'agents':
 			return handleAgentsByAvatar(req, res);
+		case 'glb':
+			return handleGlb(req, res);
 		case 'glb-versions':
 			return handleGlbVersions(req, res);
 		case 'pin-ipfs':
@@ -554,4 +556,86 @@ function redirect(res, url) {
 	res.setHeader('location', url);
 	res.setHeader('cache-control', 'public, max-age=60, s-maxage=300');
 	res.end();
+}
+
+// ── glb (same-origin CORS-friendly proxy) ─────────────────────────────────
+// GET /api/avatars/:id/glb — streams the avatar's GLB through the API so
+// hosts on any origin can fetch it without R2 CORS configuration. The R2
+// public domain serves `Access-Control-Allow-Origin: https://three.ws` only,
+// which breaks the embed SDK when dropped on third-party sites and the
+// /walk-embed page when loaded from a dev host. Routing the bytes through
+// this endpoint side-steps that — we attach `Access-Control-Allow-Origin: *`
+// because the underlying GLBs are already publicly readable on the CDN.
+//
+// Permission rules mirror handleThumbnail:
+//   • public + unlisted: anyone
+//   • private:           owner only (session or bearer with avatars:read)
+//   • demo avatars:      302 to the bundled GLB url
+async function handleGlb(req, res) {
+	// Reply with CORS for all origins. Browsers also need the preflight,
+	// which the shared `cors()` helper doesn't open up to wildcard origins,
+	// so we set the headers directly.
+	res.setHeader('access-control-allow-origin', '*');
+	res.setHeader('access-control-allow-methods', 'GET,OPTIONS');
+	res.setHeader('access-control-allow-headers', 'range,accept');
+	res.setHeader('access-control-expose-headers', 'content-length,content-range,etag');
+	if (req.method === 'OPTIONS') { res.statusCode = 204; return res.end(); }
+	if (!method(req, res, ['GET'])) return;
+
+	const id =
+		req.query?.id || new URL(req.url, 'http://x').pathname.split('/').filter(Boolean)[2];
+	if (!id) return error(res, 400, 'invalid_request', 'avatar id required');
+
+	if (String(id).startsWith('avatar_demo_')) {
+		const demo = DEMO_AVATARS.find((a) => a.avatarId === id);
+		if (!demo?.url) return error(res, 404, 'not_found', 'demo avatar has no glb');
+		// Demo avatars live in /public so the redirect target is same-origin
+		// and already CORS-clean.
+		return redirect(res, demo.url);
+	}
+
+	const avatar = await getAvatar({ id, requesterId: null });
+	if (!avatar) return error(res, 404, 'not_found', 'avatar not found');
+
+	if (avatar.visibility === 'private') {
+		const auth = await resolveVersionsAuth(req);
+		if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+		if (auth.userId !== avatar.owner_id) return error(res, 403, 'forbidden', 'not your avatar');
+	}
+
+	// Resolve the same R2 key the canonical avatar URL serves. Streaming
+	// from R2 directly with the S3 SDK avoids a second hop through the
+	// public CDN — and gives us a Node readable stream we can pipe straight
+	// into res with no buffer-the-whole-thing memory blow-up.
+	const key = avatar.baked_storage_key && avatar.appearance_hash
+		? (avatar.baked_storage_key)
+		: avatar.storage_key;
+	if (!key) return error(res, 404, 'not_found', 'avatar has no glb');
+
+	try {
+		const { Body, ContentLength, ETag } = await r2.send(
+			new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }),
+		);
+		res.statusCode = 200;
+		res.setHeader('content-type', 'model/gltf-binary');
+		if (ContentLength != null) res.setHeader('content-length', String(ContentLength));
+		if (ETag) res.setHeader('etag', ETag);
+		// GLBs are content-addressed by key (rotation produces a new key), so
+		// long-cache the bytes — clients revalidate via the avatar metadata
+		// endpoint, not by re-hitting /glb.
+		res.setHeader('cache-control', 'public, max-age=300, s-maxage=86400, immutable');
+		Body.pipe(res);
+		Body.on('error', (err) => {
+			console.error('[avatars/glb] stream error:', err);
+			try { res.destroy(err); } catch {}
+		});
+	} catch (err) {
+		// 404 if R2 doesn't know the key (deleted out-of-band); 502 otherwise.
+		const code = err?.Code || err?.name;
+		if (code === 'NoSuchKey' || code === 'NotFound') {
+			return error(res, 404, 'not_found', 'avatar glb missing from storage');
+		}
+		console.error('[avatars/glb] r2 fetch failed:', err);
+		return error(res, 502, 'upstream_error', 'failed to fetch avatar glb');
+	}
 }

@@ -504,7 +504,7 @@
 		},
 		{
 			"src": "/deploy",
-			"dest": "/app.html"
+			"dest": "/app-next.html"
 		},
 		{
 			"src": "/dashboard",
@@ -1892,15 +1892,22 @@
 		},
 		{
 			"src": "/app",
+			"dest": "/app-next.html"
+		},
+		{
+			"src": "/app-classic",
 			"dest": "/app.html"
+		},
+		{
+			"src": "/app-next",
+			"status": 301,
+			"headers": {
+				"Location": "/app"
+			}
 		},
 		{
 			"src": "/app-demo",
 			"dest": "/app-demo.html"
-		},
-		{
-			"src": "/app-next",
-			"dest": "/app-next.html"
 		},
 		{
 			"src": "/embed-demo",
@@ -2045,7 +2052,7 @@
 		},
 		{
 			"src": "/a/(.*)",
-			"dest": "/app.html"
+			"dest": "/app-next.html"
 		},
 		{
 			"src": "/dist-lib/(.*)",

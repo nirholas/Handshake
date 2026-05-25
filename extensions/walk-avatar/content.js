@@ -1,6 +1,8 @@
 // content.js — injected into pages to mount the walking avatar iframe.
 // Handles: mounting, dragging, close, SPA navigation survival, postMessage relay.
 
+import { Narrator } from './narrator.js';
+
 (function () {
 	'use strict';
 
@@ -222,13 +224,46 @@
 		// Avatar survives popstate naturally.
 	});
 
+	// ── Narrator ──────────────────────────────────────────────────────────
+	let narrator = null;
+
+	function initNarrator(settings) {
+		if (!settings?.narrationEnabled) return;
+		if (narrator) return;
+		narrator = new Narrator({
+			getIframe: () => iframe,
+			getSession: () => {
+				// Session is accessed async but cached here for sync use
+				return contentSession;
+			},
+			getSettings: () => {
+				return syncSettings;
+			},
+		});
+		narrator.start();
+	}
+
+	// Cache settings/session for narrator access
+	let contentSession = null;
+	let syncSettings = {};
+	chrome.storage.local.get('threews_session', ({ threews_session }) => {
+		contentSession = threews_session || null;
+	});
+	chrome.storage.sync.get(null, (s) => {
+		syncSettings = s || {};
+	});
+
 	// ── Message listener from background / popup ──────────────────────────
 	chrome.runtime.onMessage.addListener((msg) => {
 		if (msg.type === 'walk:mount') {
 			chrome.storage.sync.get(null, (settings) => {
+				syncSettings = settings;
 				mount(msg.avatarId || settings.avatarId, settings);
+				initNarrator(settings);
 			});
 		} else if (msg.type === 'walk:unmount') {
+			narrator?.stop();
+			narrator = null;
 			unmount();
 		} else if (msg.type === 'walk:setAvatar') {
 			if (iframe) {
@@ -238,6 +273,10 @@
 			if (iframe) {
 				iframe.contentWindow?.postMessage({ type: 'walk:config', speed: msg.speed }, THREEWS);
 			}
+		} else if (msg.type === 'walk:muteNarration') {
+			narrator?.mute();
+		} else if (msg.type === 'walk:unmuteNarration') {
+			narrator?.unmute();
 		}
 	});
 })();

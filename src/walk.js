@@ -11,6 +11,7 @@
 import {
 	AmbientLight,
 	Box3,
+	CanvasTexture,
 	CircleGeometry,
 	Clock,
 	Color,
@@ -18,9 +19,11 @@ import {
 	Group,
 	HemisphereLight,
 	Mesh,
+	MeshBasicMaterial,
 	MeshStandardMaterial,
 	PCFSoftShadowMap,
 	PerspectiveCamera,
+	PlaneGeometry,
 	PMREMGenerator,
 	Quaternion,
 	Scene,
@@ -109,7 +112,8 @@ const pmrem = new PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 // Lights — ambient + hemi for soft fill, directional for shadow cast.
-scene.add(new AmbientLight(0xffffff, 0.55));
+const ambientLight = new AmbientLight(0xffffff, 0.55);
+scene.add(ambientLight);
 const hemi = new HemisphereLight(0xbcd6ff, 0x202830, 0.6);
 hemi.position.set(0, 5, 0);
 scene.add(hemi);
@@ -125,6 +129,8 @@ sun.shadow.camera.top = 8;
 sun.shadow.camera.bottom = -8;
 sun.shadow.bias = -0.0005;
 scene.add(sun);
+// sun.target must be in the scene for position updates to take effect.
+scene.add(sun.target);
 
 // Ground — opaque disc in non-AR mode, swapped to a shadow-only catcher in AR.
 const groundOpaque = new Mesh(
@@ -143,6 +149,27 @@ groundShadowCatcher.rotation.x = -Math.PI / 2;
 groundShadowCatcher.receiveShadow = true;
 groundShadowCatcher.visible = false;
 scene.add(groundShadowCatcher);
+
+// Blob contact shadow — radial gradient decal that moves with the avatar.
+// Ensures there is always a convincing foot-contact cue even on low-end
+// devices where PCF shadow maps may be coarse or disabled.
+const _blobCanvas = document.createElement('canvas');
+_blobCanvas.width = 64;
+_blobCanvas.height = 64;
+const _blobCtx = _blobCanvas.getContext('2d');
+const _blobGrad = _blobCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+_blobGrad.addColorStop(0, 'rgba(0,0,0,0.68)');
+_blobGrad.addColorStop(0.45, 'rgba(0,0,0,0.28)');
+_blobGrad.addColorStop(1, 'rgba(0,0,0,0)');
+_blobCtx.fillStyle = _blobGrad;
+_blobCtx.fillRect(0, 0, 64, 64);
+const blobShadow = new Mesh(
+	new PlaneGeometry(1.0, 1.0),
+	new MeshBasicMaterial({ map: new CanvasTexture(_blobCanvas), transparent: true, depthWrite: false, opacity: 0 }),
+);
+blobShadow.rotation.x = -Math.PI / 2;
+blobShadow.position.y = 0.004;
+scene.add(blobShadow);
 
 // Camera + follow-rig — avatar lives at scene origin (translated by a group)
 // so the camera offset math stays in local space.
@@ -338,6 +365,44 @@ async function loadAvatar() {
 	setStatus('walk it', { sticky: false });
 }
 
+// ── AR depth: light estimation ────────────────────────────────────────────
+// Sample the camera feed at low resolution each second, derive scene
+// brightness and tint, and adapt ambient/directional/hemi lights so the
+// avatar is lit by the real environment instead of a static studio rig.
+const _leSampleCanvas = document.createElement('canvas');
+_leSampleCanvas.width = 8;
+_leSampleCanvas.height = 6;
+const _leSampleCtx = _leSampleCanvas.getContext('2d', { willReadFrequently: true });
+let _leTickCount = 0;
+const _leColor = new Color();
+
+function estimateLighting() {
+	if (!arActive || video.readyState < 2) return;
+	_leTickCount++;
+	if (_leTickCount % 30 !== 0) return;
+	try {
+		_leSampleCtx.drawImage(video, 0, 0, 8, 6);
+		const px = _leSampleCtx.getImageData(0, 0, 8, 6).data;
+		let r = 0, g = 0, b = 0;
+		const n = px.length / 4;
+		for (let i = 0; i < px.length; i += 4) { r += px[i]; g += px[i + 1]; b += px[i + 2]; }
+		r = r / n / 255;
+		g = g / n / 255;
+		b = b / n / 255;
+		const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+		// Smoothly adapt intensities to real scene brightness.
+		ambientLight.intensity += (0.25 + lum * 0.95 - ambientLight.intensity) * 0.12;
+		sun.intensity += (0.4 + lum * 1.6 - sun.intensity) * 0.12;
+		// Tint the hemisphere sky to the dominant scene color.
+		_leColor.setRGB(
+			Math.min(1, 0.55 + r * 0.9),
+			Math.min(1, 0.55 + g * 0.9),
+			Math.min(1, 0.65 + b * 0.9),
+		);
+		hemi.color.lerp(_leColor, 0.12);
+	} catch { /* cross-origin or tainted canvas — skip */ }
+}
+
 // ── AR passthrough ───────────────────────────────────────────────────────
 let arActive = false;
 let mediaStream = null;
@@ -367,8 +432,29 @@ async function enableAR() {
 	arBtn.setAttribute('aria-pressed', 'true');
 	groundOpaque.visible = false;
 	groundShadowCatcher.visible = true;
+	groundShadowCatcher.material.opacity = 0.55;
 	renderer.setClearColor(0x000000, 0);
 	scene.background = null;
+
+	// Match the Three.js camera FOV to the device rear camera so the avatar's
+	// perspective agrees with the real world (phones are typically ~70-75°).
+	{
+		const track = mediaStream?.getVideoTracks?.()[0];
+		const s = track?.getSettings?.() ?? {};
+		const w = s.width ?? window.innerWidth;
+		const h = s.height ?? window.innerHeight;
+		// Estimate horizontal FOV from diagonal FOV ≈ 72° default for rear cameras.
+		const diagFov = 72;
+		const diagPx = Math.hypot(w, h);
+		const hFovRad = 2 * Math.atan((w / diagPx) * Math.tan((diagFov * Math.PI / 180) / 2));
+		const aspect = window.innerWidth / window.innerHeight;
+		const vFovDeg = (2 * Math.atan(Math.tan(hFovRad / 2) / aspect)) * (180 / Math.PI);
+		camera.fov = Math.max(50, Math.min(90, vFovDeg));
+		camera.updateProjectionMatrix();
+	}
+
+	// Show blob contact shadow.
+	blobShadow.material.opacity = 1;
 
 	setStatus('AR on — point at a floor');
 }
@@ -386,7 +472,18 @@ function disableAR() {
 	arBtn.setAttribute('aria-pressed', 'false');
 	groundOpaque.visible = true;
 	groundShadowCatcher.visible = false;
+	groundShadowCatcher.material.opacity = 0.32;
 	scene.background = null; // CSS gradient on #walk-stage shows through
+
+	// Restore camera FOV and lighting defaults.
+	camera.fov = 50;
+	camera.updateProjectionMatrix();
+	ambientLight.intensity = 0.55;
+	sun.intensity = 1.4;
+	hemi.color.set(0xbcd6ff);
+
+	// Hide blob shadow.
+	blobShadow.material.opacity = 0;
 
 	setStatus('AR off');
 }
@@ -518,6 +615,18 @@ function tick() {
 	camLookTarget.copy(avatarRig.position).add(CAM_LOOK_OFFSET);
 	camLookCurrent.lerp(camLookTarget, CAM_LERP);
 	camera.lookAt(camLookCurrent);
+
+	// AR depth: track sun + blob shadow to the avatar each frame so the
+	// grounding shadow always lands under the feet, and estimate real-world
+	// lighting from the camera feed.
+	if (arActive) {
+		const ap = avatarRig.position;
+		sun.position.set(ap.x + 4, ap.y + 8, ap.z + 6);
+		sun.target.position.copy(ap);
+		sun.target.updateMatrixWorld();
+		blobShadow.position.set(ap.x, 0.004, ap.z);
+		estimateLighting();
+	}
 
 	// 3. Tick the animation mixer.
 	animationManager.update(dt);

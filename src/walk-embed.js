@@ -236,6 +236,7 @@ const input = {
 	keys: { forward: 0, back: 0, left: 0, right: 0, run: false },
 	joy: { x: 0, y: 0, active: false },
 	autoplay: { active: false, t: 0 },
+	_speedMultiplier: 1.0,
 };
 
 if (CONTROLS === 'keyboard' || CONTROLS === 'joystick') {
@@ -396,7 +397,7 @@ function tick() {
 	const mag = Math.min(1, Math.hypot(ix, iy));
 
 	const wantRun = mag > 0.9 || input.keys.run;
-	const speed = mag * (wantRun ? RUN_SPEED : WALK_SPEED);
+	const speed = mag * (wantRun ? RUN_SPEED : WALK_SPEED) * (input._speedMultiplier || 1.0);
 
 	if (mag > 0.01 && avatar) {
 		moveForward.copy(camLookCurrent).sub(camera.position);
@@ -533,8 +534,82 @@ window.addEventListener('message', async (e) => {
 		avatarYaw = 0;
 		avatarRig.quaternion.setFromAxisAngle(upY, 0);
 		applyCameraImmediate();
+	} else if (msg.type === 'walk:narrate' && typeof msg.text === 'string') {
+		// Show a DOM speech bubble above the avatar for the narration text.
+		showSpeechBubble(msg.text);
+	} else if (msg.type === 'walk:narrateEnd') {
+		hideSpeechBubble();
+	} else if (msg.type === 'walk:config') {
+		if (typeof msg.speed === 'number') {
+			// Walk speed multiplier — applied to input magnitude each frame
+			input._speedMultiplier = Math.max(0.3, Math.min(3, msg.speed));
+		}
 	}
 });
+
+// ── Speech bubble (DOM overlay) ───────────────────────────────────────────
+let bubbleEl = null;
+let bubbleHideTimer = null;
+
+function ensureBubble() {
+	if (bubbleEl) return bubbleEl;
+	bubbleEl = document.createElement('div');
+	bubbleEl.style.cssText = `
+		position: fixed;
+		left: 50%;
+		bottom: 180px;
+		transform: translateX(-50%);
+		max-width: 280px;
+		background: rgba(10,10,10,0.88);
+		color: #fafafa;
+		font-family: Inter, system-ui, sans-serif;
+		font-size: 13px;
+		line-height: 1.45;
+		padding: 10px 14px;
+		border-radius: 14px;
+		border: 1px solid rgba(255,255,255,0.12);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		pointer-events: none;
+		z-index: 10;
+		opacity: 0;
+		transition: opacity 0.25s ease;
+		word-break: break-word;
+	`;
+	// Pointer triangle
+	const tri = document.createElement('div');
+	tri.style.cssText = `
+		position: absolute;
+		bottom: -7px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 0;
+		height: 0;
+		border-left: 7px solid transparent;
+		border-right: 7px solid transparent;
+		border-top: 7px solid rgba(10,10,10,0.88);
+	`;
+	bubbleEl.appendChild(tri);
+	document.body.appendChild(bubbleEl);
+	return bubbleEl;
+}
+
+function showSpeechBubble(text) {
+	clearTimeout(bubbleHideTimer);
+	const el = ensureBubble();
+	// Set text without the pointer triangle child
+	const tri = el.lastChild;
+	el.textContent = text.slice(0, 220);
+	el.appendChild(tri);
+	el.style.opacity = '1';
+	// Auto-hide after estimated reading time
+	const ms = Math.max(2500, text.length * 55);
+	bubbleHideTimer = setTimeout(hideSpeechBubble, ms);
+}
+
+function hideSpeechBubble() {
+	if (bubbleEl) bubbleEl.style.opacity = '0';
+}
 
 // ── Boot ──────────────────────────────────────────────────────────────────
 loadAvatar()

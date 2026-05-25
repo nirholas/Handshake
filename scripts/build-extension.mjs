@@ -36,7 +36,6 @@ await Promise.all([
 		minify: isProd,
 		sourcemap: !isProd,
 		target: 'chrome109',
-		// Exclude chrome API from bundle — it's injected by the browser
 		external: ['chrome'],
 	}),
 	build({

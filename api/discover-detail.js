@@ -132,7 +132,7 @@ export default wrap(async (req, res) => {
 		}
 
 		if (item) {
-			canonicalUrl = `${origin}/discover/avatar/${id}`;
+			canonicalUrl = `${origin}/avatars/${id}`;
 			ogImageUrl = `${origin}/api/avatar/${id}/og`;
 		}
 	}

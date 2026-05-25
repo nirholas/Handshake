@@ -898,15 +898,16 @@
 				currentSrc = src;
 				chipsEl.innerHTML = '';
 				viewer.loadModel(src, { autoPlay: true }).then(function () {
-					var clips = viewer.getClipNames ? viewer.getClipNames() : [];
-					clips.forEach(function (name) {
+					var clips = viewer.listAvailableClips();
+					clips.forEach(function (clip) {
 						var btn = document.createElement('button');
 						btn.className = 'anim-chip';
-						btn.textContent = name;
+						btn.textContent = clip.label || clip.name;
+						btn.dataset.clipName = clip.name;
 						btn.addEventListener('click', function () {
 							document.querySelectorAll('.anim-chip').forEach(function (c) { c.classList.remove('active'); });
 							btn.classList.add('active');
-							viewer.playClip(name).catch(function () {});
+							viewer.playClip(clip.name).catch(function () {});
 						});
 						chipsEl.appendChild(btn);
 					});
