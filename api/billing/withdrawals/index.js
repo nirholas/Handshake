@@ -43,7 +43,7 @@ export default wrap(async (req, res) => {
 				from agent_withdrawals
 				where user_id = ${user.id} and status = ${status}
 				order by created_at desc
-				limit ${limit} offset ${offset}
+				limit ${limit}::int offset ${offset}::int
 			`
 			: await sql`
 				select id, agent_id, amount, currency_mint, chain, to_address,
@@ -51,7 +51,7 @@ export default wrap(async (req, res) => {
 				from agent_withdrawals
 				where user_id = ${user.id}
 				order by created_at desc
-				limit ${limit} offset ${offset}
+				limit ${limit}::int offset ${offset}::int
 			`;
 
 		const [{ total }] = status

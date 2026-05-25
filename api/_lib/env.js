@@ -42,10 +42,10 @@ export const env = {
 	},
 
 	get UPSTASH_REDIS_REST_URL() {
-		return opt('UPSTASH_REDIS_REST_URL');
+		return opt('UPSTASH_REDIS_REST_URL') || opt('three_KV_REST_API_URL') || opt('KV_REST_API_URL');
 	},
 	get UPSTASH_REDIS_REST_TOKEN() {
-		return opt('UPSTASH_REDIS_REST_TOKEN');
+		return opt('UPSTASH_REDIS_REST_TOKEN') || opt('three_KV_REST_API_TOKEN') || opt('KV_REST_API_TOKEN');
 	},
 
 	get JWT_SECRET() {

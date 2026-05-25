@@ -6,6 +6,12 @@
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, del, esc } from '../api.js';
+import {
+	sumDaily,
+	formatCount,
+	formatDuration,
+	weightedAvgSessionSeconds,
+} from './widgets-helpers.js';
 
 const STATS_DAYS = 7;
 const SKELETON_COUNT = 6;
@@ -158,25 +164,19 @@ function markStatsFailed(card) {
 function renderStatStrip(strip, widgetCount, statsResults) {
 	let views = 0;
 	let turns = 0;
-	let weightedDurationSec = 0;
-	let totalThreads = 0;
 	let anyStat = false;
+	const fulfilled = [];
 	for (const r of statsResults) {
 		if (r.status !== 'fulfilled') continue;
 		anyStat = true;
 		const s = r.value?.stats || {};
+		fulfilled.push(s);
 		views += sumDaily(s.recent_views_7d);
 		turns += sumDaily(s.recent_chats_7d);
-		const ss = s.sessions_7d;
-		if (ss && Number(ss.thread_count) > 0) {
-			weightedDurationSec += Number(ss.avg_seconds || 0) * Number(ss.thread_count);
-			totalThreads += Number(ss.thread_count);
-		}
 	}
 
-	const avgSession = totalThreads > 0
-		? formatDuration(weightedDurationSec / totalThreads)
-		: '—';
+	const avgSec = weightedAvgSessionSeconds(fulfilled);
+	const avgSession = avgSec == null ? '—' : formatDuration(avgSec);
 
 	const allZero = widgetCount === 0 && views === 0 && turns === 0;
 	if (allZero) {
@@ -623,35 +623,6 @@ function errorBanner(err) {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-
-function sumDaily(arr) {
-	if (!Array.isArray(arr)) return 0;
-	let total = 0;
-	for (const r of arr) total += Number(r?.count || 0);
-	return total;
-}
-
-function formatCount(n) {
-	const v = Number(n);
-	if (!Number.isFinite(v)) return '—';
-	if (v >= 10000) return `${(v / 1000).toFixed(1)}k`;
-	if (v >= 1000) return v.toLocaleString('en-US');
-	return String(Math.round(v));
-}
-
-// Render an integer number of seconds as a compact "Xs / Ym Xs / Hh Mm" string.
-// Used by the aggregate strip — keep the value short so the strip stays a single
-// line on a typical viewport even with four stats.
-function formatDuration(sec) {
-	const s = Math.max(0, Math.round(Number(sec) || 0));
-	if (s < 60) return `${s}s`;
-	const m = Math.floor(s / 60);
-	const rs = s % 60;
-	if (m < 60) return rs ? `${m}m ${rs}s` : `${m}m`;
-	const h = Math.floor(m / 60);
-	const rm = m % 60;
-	return rm ? `${h}h ${rm}m` : `${h}h`;
-}
 
 function setText(el, text) {
 	if (!el) return;

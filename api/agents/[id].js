@@ -22,6 +22,7 @@ import { handleGetOne, handleWallet } from '../agents.js';
 import { cors, error, wrap } from '../_lib/http.js';
 
 const CID_RE = /^[a-zA-Z0-9]+$/;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default wrap(async function handler(req, res) {
 	const url = new URL(req.url, 'http://x');
@@ -33,6 +34,14 @@ export default wrap(async function handler(req, res) {
 	if (!id) {
 		if (cors(req, res)) return;
 		return error(res, 400, 'bad_request', 'missing agent id');
+	}
+
+	// Every sub-resource under /api/agents/:id queries `WHERE id = $1` against
+	// a uuid column. A malformed id otherwise leaks Postgres error 22P02 to
+	// the caller as a 500. Return a clean 404 instead.
+	if (!UUID_RE.test(id)) {
+		if (cors(req, res)) return;
+		return error(res, 404, 'not_found', 'agent not found');
 	}
 
 	if (sub === 'wallet') return handleWallet(req, res, id);

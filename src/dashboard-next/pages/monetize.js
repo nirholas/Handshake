@@ -59,7 +59,8 @@ const PAYMENT_FILTERS = [
 
 async function loadAndRender(host, me) {
 	const since30 = new Date(Date.now() - 30 * 86400_000).toISOString();
-	const creatorParam = encodeURIComponent(me.id);
+	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	const creatorParam = me.id && UUID_RE.test(me.id) ? encodeURIComponent(me.id) : null;
 
 	const [revenue, withdrawalsResp, walletsResp, summary, plans, mineSubs, agentsResp, earningsResp] =
 		await Promise.all([
@@ -69,7 +70,9 @@ async function loadAndRender(host, me) {
 			safe(() => get('/api/billing/withdrawals?limit=50')),
 			safe(() => get('/api/billing/payout-wallets')),
 			safe(() => get('/api/billing/summary')),
-			safe(() => get(`/api/subscriptions/plans?creator_id=${creatorParam}`)),
+			creatorParam
+				? safe(() => get(`/api/subscriptions/plans?creator_id=${creatorParam}`))
+				: Promise.resolve(null),
 			safe(() => get('/api/subscriptions/mine')),
 			safe(() => get('/api/agents')),
 			safe(() => get('/api/users/me/earnings')),

@@ -22,6 +22,8 @@ import { z } from 'zod';
 import { avatarVisibility, avatarAppearance, parse } from '../_lib/validate.js';
 import { DEMO_AVATARS } from '../_lib/demo-avatars.js';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const patchSchema = z.object({
 	name: z.string().trim().min(1).max(120).optional(),
 	description: z.string().trim().max(2000).optional(),
@@ -60,6 +62,13 @@ export default wrap(async (req, res) => {
 
 	if (cors(req, res, { methods: 'GET,PATCH,DELETE,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'PATCH', 'DELETE'])) return;
+
+	// Guard the DB call: an id that isn't a uuid and isn't a known demo slug
+	// would otherwise hit Postgres as `WHERE id = $1`, which raises 22P02 and
+	// leaks the raw error code to the caller. Return a clean 404 instead.
+	if (!UUID_RE.test(id) && !id.startsWith('avatar_demo_')) {
+		return error(res, 404, 'not_found', 'avatar not found');
+	}
 
 	const auth = await resolveAuth(req);
 

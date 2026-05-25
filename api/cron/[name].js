@@ -93,7 +93,7 @@ const ABI_CODER = AbiCoder.defaultAbiCoder();
 
 // Blocks scanned per chain per cron invocation. Public RPCs typically allow
 // 2000-block ranges; lower this if a chain's RPC rejects with "block range".
-const ERC8004_BLOCK_CHUNK = 2_000;
+const ERC8004_BLOCK_CHUNK = 1_000;
 
 // On first run (no cursor), scan this many recent blocks. Keep small so the
 // initial cron run stays well under Vercel's 300s limit. Set

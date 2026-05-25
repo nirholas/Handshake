@@ -365,7 +365,9 @@ async function handleList(req, res, url) {
 
 	let rows;
 	try {
-		rows = await sql`
+		[, rows] = await sql.transaction([
+		sql`SET LOCAL statement_timeout = '8000'`,
+		sql`
 			SELECT ai.id, ai.name, ai.description, ai.category, ai.tags, ai.avatar_id, ai.user_id,
 			       ai.forks_count, ai.views_count, ai.published_at, ai.created_at, ai.skills,
 			       av.thumbnail_key,
@@ -402,7 +404,8 @@ async function handleList(req, res, url) {
 			  )
 			ORDER BY ${orderBy}
 			LIMIT ${limit + 1} OFFSET ${offset}
-		`;
+		`,
+		]);
 	} catch (err) {
 		console.error('[marketplace/list]', err?.message || err);
 		return error(res, 500, 'db_error', 'Failed to load marketplace listing');

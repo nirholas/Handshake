@@ -27,9 +27,17 @@ import { env } from '../../_lib/env.js';
 import { DEMO_AVATARS } from '../../_lib/demo-avatars.js';
 
 const PINATA_ENDPOINT = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
+	// Every sub-action below ends up querying `WHERE id = $1` against a uuid
+	// column. A malformed id leaks Postgres 22P02 to the caller as a 500;
+	// short-circuit with a clean 404 unless it's a demo-fixture id.
+	const id = req.query?.id;
+	if (id && !UUID_RE.test(id) && !String(id).startsWith('avatar_demo_')) {
+		return error(res, 404, 'not_found', 'avatar not found');
+	}
 	switch (action) {
 		case 'agents':
 			return handleAgentsByAvatar(req, res);

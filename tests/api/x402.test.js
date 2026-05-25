@@ -22,6 +22,11 @@ function makeRes() {
 	};
 }
 
+// Both fixture strings must be valid base58 (32-44 chars, no 0/O/I/l) so
+// resolveSolanaRecipient() short-circuits on the "raw address" branch and
+// never makes a SNS RPC call. Earlier fixtures used 'OwnerWallet111…' which
+// fails the base58 charset (contains 'l'), fell through to the SNS path, and
+// hit the real Solana RPC — the test then 429-looped under load.
 function makeAgent(overrides = {}) {
 	return {
 		id: 'agent-uuid',
@@ -30,8 +35,8 @@ function makeAgent(overrides = {}) {
 			payments: {
 				configured: true,
 				provider: 'pumpfun',
-				mint: 'MintPubkey1111111111111111111111111111111',
-				receiver: 'OwnerWallet111111111111111111111111111111',
+				mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+				receiver: 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN',
 				cluster: 'mainnet',
 			},
 			...overrides,
@@ -60,7 +65,7 @@ describe('emit402', () => {
 		expect(body.skill).toBe('summarize');
 		expect(body.amount).toBe('10000');
 		expect(body.currency).toBe('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
-		expect(body.recipient).toBe('OwnerWallet111111111111111111111111111111');
+		expect(body.recipient).toBe('BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN');
 		expect(body.intent_url).toBe('/api/agents/payments/pay-prep');
 		expect(body.verify_url).toBe('/api/agents/payments/pay-confirm');
 		expect(body.retry_with_header).toBe('x-payment-intent');
@@ -84,8 +89,8 @@ describe('emit402', () => {
 				payments: {
 					configured: true,
 					provider: 'pumpfun',
-					mint: 'MintPubkey1111111111111111111111111111111',
-					receiver: 'OwnerWallet111111111111111111111111111111',
+					mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+					receiver: 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN',
 					cluster: 'mainnet',
 				},
 			}),
@@ -94,7 +99,7 @@ describe('emit402', () => {
 			currency: 'X',
 		});
 		const body = JSON.parse(res.body);
-		expect(body.recipient).toBe('OwnerWallet111111111111111111111111111111');
+		expect(body.recipient).toBe('BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN');
 		expect(body.recipient_name).toBe('vernington.threews.sol');
 	});
 
@@ -106,8 +111,8 @@ describe('emit402', () => {
 				payments: {
 					configured: true,
 					provider: 'pumpfun',
-					mint: 'MintPubkey1111111111111111111111111111111',
-					receiver: 'OwnerWallet111111111111111111111111111111',
+					mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+					receiver: 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN',
 					cluster: 'mainnet',
 				},
 			}),

@@ -476,6 +476,59 @@ describe('GET /api/widgets/:id/stats', () => {
 		expect(body.stats.top_countries).toEqual([]);
 		expect(body.stats.last_viewed_at).toBeNull();
 		expect(body.stats.chat_count).toBeNull();
+		// Non-talking-agent widgets always return null for chat-only fields,
+		// including the new rolling 7-day session metrics.
+		expect(body.stats.sessions_7d).toBeNull();
+	});
+
+	it('returns sessions_7d aggregates for talking-agent widgets', async () => {
+		authState.session = { id: 'user-1' };
+		// 1. ownership check returns a talking-agent widget
+		sqlQueue.push([{ id: 'wdgt_x', type: 'talking-agent', view_count: 12 }]);
+		const missing = new Error('relation "widget_views" does not exist');
+		sqlQueue.push(missing);      // recentViewsByDay
+		sqlQueue.push(missing);      // topReferers
+		sqlQueue.push(missing);      // topCountries
+		sqlQueue.push(missing);      // lastViewedAt
+		sqlQueue.push([{ n: 8 }]);   // chatCountFor (talking-agent)
+		sqlQueue.push([]);           // recentChatsByDay
+		sqlQueue.push([]);           // topQuestionsFor
+		sqlQueue.push([{ doc_count: 0, chunk_count: 0, token_count: 0 }]); // knowledgeSummaryFor
+		sqlQueue.push([{ thread_count: 3, avg_seconds: 47.7, total_messages: 14 }]); // sessionStatsFor
+
+		const req = mockReq({ method: 'GET', url: '/api/widgets/wdgt_x/stats' });
+		const res = mockRes();
+		await statsHandler(req, res);
+		expect(res.statusCode).toBe(200);
+		const body = parseJson(res);
+		expect(body.stats.sessions_7d).toEqual({
+			thread_count: 3,
+			avg_seconds: 48, // rounded
+			total_messages: 14,
+		});
+	});
+
+	it('returns null sessions_7d when widget_chat_threads is missing', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([{ id: 'wdgt_x', type: 'talking-agent', view_count: 0 }]);
+		const missing = new Error('relation "widget_views" does not exist');
+		sqlQueue.push(missing); // recentViewsByDay
+		sqlQueue.push(missing); // topReferers
+		sqlQueue.push(missing); // topCountries
+		sqlQueue.push(missing); // lastViewedAt
+		const chatMissing = new Error('relation "widget_chat_messages" does not exist');
+		sqlQueue.push(chatMissing); // chatCountFor
+		sqlQueue.push(chatMissing); // recentChatsByDay
+		sqlQueue.push(chatMissing); // topQuestionsFor
+		sqlQueue.push(new Error('relation "widget_knowledge_docs" does not exist'));
+		sqlQueue.push(new Error('relation "widget_chat_threads" does not exist'));
+
+		const req = mockReq({ method: 'GET', url: '/api/widgets/wdgt_x/stats' });
+		const res = mockRes();
+		await statsHandler(req, res);
+		expect(res.statusCode).toBe(200);
+		const body = parseJson(res);
+		expect(body.stats.sessions_7d).toBeNull();
 	});
 });
 

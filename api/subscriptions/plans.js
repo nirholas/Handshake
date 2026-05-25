@@ -59,6 +59,14 @@ async function handleList(req, res) {
 		return error(res, 400, 'validation_error', 'creator_id or agent_id required');
 	}
 
+	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	if (creatorId && !UUID_RE.test(creatorId)) {
+		return error(res, 400, 'validation_error', 'creator_id must be a valid UUID');
+	}
+	if (agentId && !UUID_RE.test(agentId)) {
+		return error(res, 400, 'validation_error', 'agent_id must be a valid UUID');
+	}
+
 	let rows;
 	if (agentId) {
 		// Look up all plans belonging to this agent's creator (agent_id is public).
