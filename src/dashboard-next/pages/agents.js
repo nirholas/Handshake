@@ -143,6 +143,14 @@ function renderAgents(host, agents, avatars, root) {
 		});
 	});
 
+	host.querySelectorAll('[data-action="persona-agent"]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const id = btn.dataset.id;
+			const agent = agents.find((a) => a.id === id);
+			if (agent) openPersonaModal(host, agent, agents, avatars);
+		});
+	});
+
 	host.querySelectorAll('[data-action="view-reputation"]').forEach((btn) => {
 		btn.addEventListener('click', async () => {
 			const id = btn.dataset.id;
@@ -198,6 +206,7 @@ function agentCard(a, avatars) {
 				<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
 					<a class="dn-btn ghost" href="/app?agent=${encodeURIComponent(a.id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">View ↗</a>
 					<button class="dn-btn" data-action="edit-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Edit</button>
+					<button class="dn-btn" data-action="persona-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Persona</button>
 					<button class="dn-btn" data-action="view-reputation" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Reputation</button>
 					<button class="dn-btn danger" data-action="delete-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Delete</button>
 				</div>
@@ -410,6 +419,174 @@ function openEditModal(host, agent, avatars, allAgents) {
 			submitBtn.textContent = 'Save changes';
 		}
 	});
+}
+
+// ── Persona editor + memory seeding modal ─────────────────────────────────
+
+function openPersonaModal(host, agent, allAgents, avatars) {
+	const overlay = makeOverlay();
+	const persona = agent.persona || {};
+	const systemPrompt = persona.system_prompt || agent.system_prompt || '';
+	const tone = persona.tone || agent.tone || '';
+	const traits = Array.isArray(persona.traits) ? persona.traits.join(', ') : (persona.traits || '');
+
+	overlay.innerHTML = `
+		<div role="dialog" aria-modal="true" aria-label="Agent persona" style="
+			width:min(600px,100%);
+			background:linear-gradient(180deg,rgba(22,24,32,0.97),rgba(16,17,24,0.97));
+			border:1px solid var(--nxt-stroke-strong);border-radius:14px;padding:24px;
+			box-shadow:0 20px 60px rgba(0,0,0,0.6);
+			max-height:calc(100vh - 48px);overflow-y:auto;
+		">
+			<div style="font-size:17px;font-weight:600;margin-bottom:4px">Persona — ${esc(agent.name || agent.display_name || 'Agent')}</div>
+			<div style="font-size:12.5px;color:var(--nxt-ink-dim);margin-bottom:20px">System context, tone, traits, and memory seeding.</div>
+
+			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+				<span style="font-size:12.5px;color:var(--nxt-ink-dim)">System prompt</span>
+				<textarea data-slot="system-prompt" rows="5" maxlength="4000"
+					placeholder="You are an AI assistant named… Your purpose is…"
+					style="padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);
+					background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px;
+					resize:vertical;line-height:1.5">${esc(systemPrompt)}</textarea>
+			</label>
+
+			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+				<span style="font-size:12.5px;color:var(--nxt-ink-dim)">Tone</span>
+				<input data-slot="tone" type="text" maxlength="120"
+					value="${esc(tone)}"
+					placeholder="e.g. professional, friendly, witty, concise…"
+					style="padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);
+					background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
+			</label>
+
+			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px">
+				<span style="font-size:12.5px;color:var(--nxt-ink-dim)">Traits (comma-separated)</span>
+				<input data-slot="traits" type="text" maxlength="300"
+					value="${esc(traits)}"
+					placeholder="e.g. curious, empathetic, direct…"
+					style="padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);
+					background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
+			</label>
+
+			<div data-slot="error" style="font-size:12.5px;color:var(--nxt-danger);min-height:18px;margin-bottom:12px"></div>
+
+			<div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:24px">
+				<button class="dn-btn ghost" data-action="cancel">Cancel</button>
+				<button class="dn-btn primary" data-action="save-persona">Save persona</button>
+			</div>
+
+			<div style="border-top:1px solid var(--nxt-stroke);padding-top:18px;margin-top:4px">
+				<div style="font-size:13px;font-weight:600;color:var(--nxt-ink);margin-bottom:4px">Memory seeding</div>
+				<div style="font-size:12.5px;color:var(--nxt-ink-dim);margin-bottom:14px">
+					Seed this agent's long-term memory from public profiles. Each source is fetched and summarised into the agent's memory store.
+				</div>
+				<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px">
+					<input data-slot="seed-twitter" type="text" maxlength="50" placeholder="Twitter / X handle (without @)"
+						style="padding:8px 11px;border-radius:8px;border:1px solid var(--nxt-stroke);
+						background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
+					<button class="dn-btn" data-action="seed-twitter" type="button" style="flex-shrink:0">Seed from X</button>
+				</div>
+				<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px">
+					<input data-slot="seed-github" type="text" maxlength="60" placeholder="GitHub username"
+						style="padding:8px 11px;border-radius:8px;border:1px solid var(--nxt-stroke);
+						background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
+					<button class="dn-btn" data-action="seed-github" type="button" style="flex-shrink:0">Seed from GitHub</button>
+				</div>
+				<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:0">
+					<input data-slot="seed-farcaster" type="text" maxlength="50" placeholder="Farcaster username (FID or handle)"
+						style="padding:8px 11px;border-radius:8px;border:1px solid var(--nxt-stroke);
+						background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
+					<button class="dn-btn" data-action="seed-farcaster" type="button" style="flex-shrink:0">Seed from Farcaster</button>
+				</div>
+				<div data-slot="seed-status" style="font-size:12.5px;color:var(--nxt-ink-dim);margin-top:10px;min-height:18px"></div>
+			</div>
+		</div>
+	`;
+
+	document.body.appendChild(overlay);
+
+	const errorEl = overlay.querySelector('[data-slot="error"]');
+	const seedStatus = overlay.querySelector('[data-slot="seed-status"]');
+
+	const close = () => overlay.remove();
+	overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);
+	overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+	document.addEventListener('keydown', function onKey(e) {
+		if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+	});
+
+	overlay.querySelector('[data-action="save-persona"]').addEventListener('click', async () => {
+		errorEl.textContent = '';
+		const systemPromptVal = overlay.querySelector('[data-slot="system-prompt"]').value.trim();
+		const toneVal = overlay.querySelector('[data-slot="tone"]').value.trim();
+		const traitsVal = overlay.querySelector('[data-slot="traits"]').value
+			.split(',').map((t) => t.trim()).filter(Boolean);
+
+		const saveBtn = overlay.querySelector('[data-action="save-persona"]');
+		saveBtn.disabled = true;
+		saveBtn.textContent = 'Saving…';
+		try {
+			const body = {
+				persona: {
+					system_prompt: systemPromptVal || undefined,
+					tone: toneVal || undefined,
+					traits: traitsVal.length ? traitsVal : undefined,
+				},
+			};
+			const r = await put(`/api/agents/${encodeURIComponent(agent.id)}`, body);
+			const updated = r?.agent || { ...agent, ...body };
+			toast('Persona saved');
+			close();
+			const idx = allAgents.findIndex((a) => a.id === agent.id);
+			if (idx >= 0) allAgents[idx] = { ...allAgents[idx], ...updated };
+			renderAgents(host, allAgents, avatars, null);
+		} catch (err) {
+			errorEl.textContent = err?.body?.error || err?.message || 'Save failed';
+			saveBtn.disabled = false;
+			saveBtn.textContent = 'Save persona';
+		}
+	});
+
+	const seedAction = async (action) => {
+		const SEED_ENDPOINTS = {
+			'seed-twitter': `/api/agents/${encodeURIComponent(agent.id)}/memory-seed-x`,
+			'seed-github': `/api/seed/github`,
+			'seed-farcaster': `/api/seed/farcaster`,
+		};
+		const SEED_SLOTS = {
+			'seed-twitter': 'seed-twitter',
+			'seed-github': 'seed-github',
+			'seed-farcaster': 'seed-farcaster',
+		};
+		const endpoint = SEED_ENDPOINTS[action];
+		const handle = overlay.querySelector(`[data-slot="${SEED_SLOTS[action]}"]`).value.trim();
+		if (!handle) { seedStatus.textContent = 'Enter a handle first.'; return; }
+
+		const btn = overlay.querySelector(`[data-action="${action}"]`);
+		btn.disabled = true;
+		btn.textContent = 'Seeding…';
+		seedStatus.textContent = 'Fetching and seeding memory…';
+
+		try {
+			const body = action === 'seed-twitter'
+				? { handle }
+				: { agent_id: agent.id, username: handle };
+			await post(endpoint, body);
+			seedStatus.style.color = 'var(--nxt-accent)';
+			seedStatus.textContent = `Memory seeded from ${action.replace('seed-', '')}.`;
+		} catch (err) {
+			seedStatus.style.color = 'var(--nxt-danger)';
+			seedStatus.textContent = err?.body?.error || err?.message || 'Seeding failed.';
+		} finally {
+			btn.disabled = false;
+			const labels = { 'seed-twitter': 'Seed from X', 'seed-github': 'Seed from GitHub', 'seed-farcaster': 'Seed from Farcaster' };
+			btn.textContent = labels[action];
+		}
+	};
+
+	overlay.querySelector('[data-action="seed-twitter"]').addEventListener('click', () => seedAction('seed-twitter'));
+	overlay.querySelector('[data-action="seed-github"]').addEventListener('click', () => seedAction('seed-github'));
+	overlay.querySelector('[data-action="seed-farcaster"]').addEventListener('click', () => seedAction('seed-farcaster'));
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

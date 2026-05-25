@@ -569,6 +569,253 @@ function confirmModal({ title, body, confirmLabel = 'Confirm', danger = false })
 	});
 }
 
+// ── Transcripts modal ────────────────────────────────────────────────────
+
+function openTranscriptsModal(widget) {
+	const root = document.createElement('div');
+	root.className = 'dn-wx-modal-root dn-wx-full-modal';
+	root.innerHTML = `
+		<div class="dn-wx-modal-back"></div>
+		<div class="dn-wx-full-panel" role="dialog" aria-modal="true" aria-label="Transcripts">
+			<div class="dn-wx-full-head">
+				<div class="dn-wx-full-title">Transcripts — <span class="dn-wx-full-sub">${esc(widget.name || 'Widget')}</span></div>
+				<button class="dn-wx-pop-close" data-close type="button" aria-label="Close">×</button>
+			</div>
+			<div class="dn-wx-tx-layout">
+				<div class="dn-wx-tx-threads" data-slot="threads">
+					<div class="dn-skeleton-line"></div>
+					<div class="dn-skeleton-line" style="width:70%"></div>
+					<div class="dn-skeleton-line" style="width:85%"></div>
+				</div>
+				<div class="dn-wx-tx-detail" data-slot="detail">
+					<div class="dn-wx-tx-empty">Select a conversation to read</div>
+				</div>
+			</div>
+		</div>
+	`;
+	document.body.appendChild(root);
+
+	const close = () => {
+		root.remove();
+		document.removeEventListener('keydown', onEsc, true);
+	};
+	const onEsc = (ev) => { if (ev.key === 'Escape') close(); };
+	document.addEventListener('keydown', onEsc, true);
+	root.querySelector('[data-close]').addEventListener('click', close);
+	root.querySelector('.dn-wx-modal-back').addEventListener('click', close);
+
+	const threadsEl = root.querySelector('[data-slot="threads"]');
+	const detailEl = root.querySelector('[data-slot="detail"]');
+
+	fetch(`/api/widgets/${encodeURIComponent(widget.id)}/transcripts`, { credentials: 'include' })
+		.then((r) => r.ok ? r.json() : Promise.reject(r.status))
+		.then((data) => {
+			const threads = data?.transcripts || data?.threads || [];
+			if (!threads.length) {
+				threadsEl.innerHTML = `<div class="dn-wx-tx-empty" style="padding:20px 0">No conversations yet.</div>`;
+				return;
+			}
+			threadsEl.innerHTML = threads.map((t, i) => {
+				const ts = t.started_at || t.created_at || t.updated_at || '';
+				const preview = t.preview || t.first_message || '';
+				const turns = t.message_count || t.turns || 0;
+				return `
+					<div class="dn-wx-tx-row${i === 0 ? ' active' : ''}" data-thread="${esc(t.id)}" tabindex="0">
+						<div class="dn-wx-tx-row-top">
+							<span class="dn-wx-tx-meta">${ts ? timeAgoFull(ts) : '—'}</span>
+							<span class="dn-wx-tx-turns">${turns} turn${turns !== 1 ? 's' : ''}</span>
+						</div>
+						${preview ? `<div class="dn-wx-tx-preview">${esc(preview.slice(0, 80))}</div>` : ''}
+					</div>
+				`;
+			}).join('');
+
+			const loadThread = (threadId) => {
+				threadsEl.querySelectorAll('.dn-wx-tx-row').forEach((r) =>
+					r.classList.toggle('active', r.dataset.thread === threadId));
+				detailEl.innerHTML = `<div class="dn-wx-tx-loading">Loading…</div>`;
+				fetch(`/api/widgets/${encodeURIComponent(widget.id)}/transcripts/${encodeURIComponent(threadId)}`, { credentials: 'include' })
+					.then((r) => r.ok ? r.json() : Promise.reject(r.status))
+					.then((d) => {
+						const msgs = d?.messages || d?.transcript || [];
+						if (!msgs.length) {
+							detailEl.innerHTML = `<div class="dn-wx-tx-empty">No messages in this conversation.</div>`;
+							return;
+						}
+						detailEl.innerHTML = `<div class="dn-wx-tx-msgs">${msgs.map((m) => `
+							<div class="dn-wx-tx-msg ${m.role === 'user' ? 'user' : 'agent'}">
+								<div class="dn-wx-tx-msg-role">${m.role === 'user' ? 'User' : 'Agent'}</div>
+								<div class="dn-wx-tx-msg-text">${esc(m.content || m.text || m.message || '')}</div>
+								${m.created_at ? `<div class="dn-wx-tx-msg-ts">${timeAgoFull(m.created_at)}</div>` : ''}
+							</div>
+						`).join('')}</div>`;
+					})
+					.catch(() => {
+						detailEl.innerHTML = `<div class="dn-wx-tx-empty" style="color:var(--nxt-danger)">Could not load messages.</div>`;
+					});
+			};
+
+			threadsEl.addEventListener('click', (ev) => {
+				const row = ev.target.closest('[data-thread]');
+				if (row) loadThread(row.dataset.thread);
+			});
+			threadsEl.addEventListener('keydown', (ev) => {
+				if (ev.key === 'Enter' || ev.key === ' ') {
+					const row = ev.target.closest('[data-thread]');
+					if (row) { ev.preventDefault(); loadThread(row.dataset.thread); }
+				}
+			});
+
+			if (threads[0]) loadThread(threads[0].id);
+		})
+		.catch(() => {
+			threadsEl.innerHTML = `<div class="dn-wx-tx-empty" style="color:var(--nxt-danger)">Could not load transcripts.</div>`;
+		});
+}
+
+// ── Knowledge base modal ─────────────────────────────────────────────────
+
+function openKnowledgeModal(widget) {
+	const root = document.createElement('div');
+	root.className = 'dn-wx-modal-root dn-wx-full-modal';
+	root.innerHTML = `
+		<div class="dn-wx-modal-back"></div>
+		<div class="dn-wx-full-panel" role="dialog" aria-modal="true" aria-label="Knowledge base" style="max-width:680px">
+			<div class="dn-wx-full-head">
+				<div class="dn-wx-full-title">Knowledge base — <span class="dn-wx-full-sub">${esc(widget.name || 'Widget')}</span></div>
+				<button class="dn-wx-pop-close" data-close type="button" aria-label="Close">×</button>
+			</div>
+			<div data-slot="kb-body" style="padding:0 20px 20px;overflow-y:auto;flex:1">
+				<div class="dn-skeleton-line"></div>
+				<div class="dn-skeleton-line" style="width:75%"></div>
+			</div>
+		</div>
+	`;
+	document.body.appendChild(root);
+
+	const close = () => {
+		root.remove();
+		document.removeEventListener('keydown', onEsc, true);
+	};
+	const onEsc = (ev) => { if (ev.key === 'Escape') close(); };
+	document.addEventListener('keydown', onEsc, true);
+	root.querySelector('[data-close]').addEventListener('click', close);
+	root.querySelector('.dn-wx-modal-back').addEventListener('click', close);
+
+	const body = root.querySelector('[data-slot="kb-body"]');
+
+	const loadKb = () => {
+		fetch(`/api/widgets/${encodeURIComponent(widget.id)}/knowledge`, { credentials: 'include' })
+			.then((r) => r.ok ? r.json() : Promise.reject(r.status))
+			.then((data) => renderKb(data?.entries || data?.knowledge || []))
+			.catch(() => {
+				body.innerHTML = `<p style="color:var(--nxt-danger);font-size:13px">Could not load knowledge base.</p>`;
+			});
+	};
+
+	const renderKb = (entries) => {
+		body.innerHTML = `
+			<p style="font-size:13px;color:var(--nxt-ink-dim);margin:0 0 16px">
+				These snippets are injected into the widget's system context, giving the agent extra knowledge.
+			</p>
+			<div data-slot="entries" style="display:flex;flex-direction:column;gap:8px">
+				${entries.map((e) => `
+					<div class="dn-kb-entry" data-id="${esc(e.id)}">
+						<div class="dn-kb-entry-text">${esc(e.content || e.text || '')}</div>
+						<div class="dn-kb-entry-actions">
+							<button class="dn-btn small" data-edit-kb="${esc(e.id)}" type="button">Edit</button>
+							<button class="dn-btn small danger" data-del-kb="${esc(e.id)}" type="button">Remove</button>
+						</div>
+					</div>
+				`).join('')}
+				${!entries.length ? `<div class="dn-wx-tx-empty">No knowledge entries yet.</div>` : ''}
+			</div>
+			<div class="dn-kb-add" style="margin-top:16px">
+				<textarea class="dn-input" data-slot="new-entry" rows="3" placeholder="Add a knowledge snippet…" style="width:100%;resize:vertical;font-size:13px"></textarea>
+				<div style="display:flex;justify-content:flex-end;margin-top:8px">
+					<button class="dn-btn primary" data-add-kb type="button">Add entry</button>
+				</div>
+			</div>
+		`;
+
+		body.querySelector('[data-add-kb]').addEventListener('click', async () => {
+			const textarea = body.querySelector('[data-slot="new-entry"]');
+			const text = textarea.value.trim();
+			if (!text) return;
+			const btn = body.querySelector('[data-add-kb]');
+			btn.disabled = true;
+			btn.textContent = 'Saving…';
+			try {
+				await fetch(`/api/widgets/${encodeURIComponent(widget.id)}/knowledge`, {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ content: text }),
+				}).then((r) => { if (!r.ok) throw new Error(r.status); });
+				loadKb();
+			} catch {
+				btn.disabled = false;
+				btn.textContent = 'Add entry';
+				toast('Failed to add entry', true);
+			}
+		});
+
+		body.addEventListener('click', async (ev) => {
+			const delBtn = ev.target.closest('[data-del-kb]');
+			if (delBtn) {
+				const id = delBtn.dataset.delKb;
+				delBtn.disabled = true;
+				try {
+					await fetch(`/api/widgets/${encodeURIComponent(widget.id)}/knowledge/${encodeURIComponent(id)}`, {
+						method: 'DELETE',
+						credentials: 'include',
+					}).then((r) => { if (!r.ok) throw new Error(r.status); });
+					loadKb();
+				} catch {
+					delBtn.disabled = false;
+					toast('Remove failed', true);
+				}
+				return;
+			}
+
+			const editBtn = ev.target.closest('[data-edit-kb]');
+			if (editBtn) {
+				const id = editBtn.dataset.editKb;
+				const entryEl = body.querySelector(`[data-id="${CSS.escape(id)}"]`);
+				const current = entryEl?.querySelector('.dn-kb-entry-text')?.textContent || '';
+				if (!entryEl) return;
+				entryEl.innerHTML = `
+					<textarea class="dn-input" rows="3" style="width:100%;resize:vertical;font-size:13px">${esc(current)}</textarea>
+					<div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">
+						<button class="dn-btn small" data-cancel-edit type="button">Cancel</button>
+						<button class="dn-btn small primary" data-save-edit type="button">Save</button>
+					</div>
+				`;
+				entryEl.querySelector('[data-cancel-edit]').addEventListener('click', () => loadKb());
+				entryEl.querySelector('[data-save-edit]').addEventListener('click', async () => {
+					const text = entryEl.querySelector('textarea').value.trim();
+					if (!text) return;
+					entryEl.querySelector('[data-save-edit]').disabled = true;
+					try {
+						await fetch(`/api/widgets/${encodeURIComponent(widget.id)}/knowledge/${encodeURIComponent(id)}`, {
+							method: 'PUT',
+							credentials: 'include',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ content: text }),
+						}).then((r) => { if (!r.ok) throw new Error(r.status); });
+						loadKb();
+					} catch {
+						entryEl.querySelector('[data-save-edit]').disabled = false;
+						toast('Save failed', true);
+					}
+				});
+			}
+		});
+	};
+
+	loadKb();
+}
+
 // ── Toast ────────────────────────────────────────────────────────────────
 
 let toastTimer = null;
@@ -635,6 +882,19 @@ function setText(el, text) {
 function cssEscape(s) {
 	if (window.CSS?.escape) return window.CSS.escape(s);
 	return String(s).replace(/["\\]/g, '\\$&');
+}
+
+function timeAgoFull(iso) {
+	const d = new Date(iso);
+	const diff = Date.now() - d.getTime();
+	const m = Math.floor(diff / 60_000);
+	if (m < 1) return 'just now';
+	if (m < 60) return `${m}m ago`;
+	const h = Math.floor(m / 60);
+	if (h < 24) return `${h}h ago`;
+	const days = Math.floor(h / 24);
+	if (days < 7) return `${days}d ago`;
+	return d.toLocaleDateString();
 }
 
 // ── Styles (scoped to this page) ─────────────────────────────────────────
@@ -858,6 +1118,115 @@ function injectStyles() {
 		}
 		.dn-wx-modal-actions {
 			display: flex; justify-content: flex-end; gap: 8px;
+		}
+
+		/* Full-screen modals (transcripts / knowledge) */
+		.dn-wx-full-modal .dn-wx-modal-back { cursor: default; }
+		.dn-wx-full-panel {
+			position: relative; z-index: 1;
+			width: min(860px, calc(100vw - 32px));
+			max-height: calc(100vh - 48px);
+			display: flex; flex-direction: column;
+			background: var(--nxt-bg-1, #14151c);
+			border: 1px solid var(--nxt-stroke);
+			border-radius: 16px;
+			box-shadow: 0 32px 80px rgba(0,0,0,0.65);
+			overflow: hidden;
+		}
+		.dn-wx-full-head {
+			display: flex; justify-content: space-between; align-items: center;
+			padding: 16px 20px;
+			border-bottom: 1px solid var(--nxt-stroke);
+			flex-shrink: 0;
+		}
+		.dn-wx-full-title { font-size: 15px; font-weight: 600; color: var(--nxt-ink); }
+		.dn-wx-full-sub { font-weight: 400; color: var(--nxt-ink-dim); }
+
+		/* Transcripts layout */
+		.dn-wx-tx-layout {
+			display: grid; grid-template-columns: 260px 1fr;
+			flex: 1; overflow: hidden;
+			min-height: 0;
+		}
+		.dn-wx-tx-threads {
+			border-right: 1px solid var(--nxt-stroke);
+			overflow-y: auto;
+			padding: 8px 0;
+		}
+		.dn-wx-tx-row {
+			padding: 10px 16px;
+			cursor: pointer;
+			border-radius: 0;
+			border-left: 2px solid transparent;
+			transition: background 0.1s;
+		}
+		.dn-wx-tx-row:hover { background: rgba(255,255,255,0.04); }
+		.dn-wx-tx-row.active {
+			background: rgba(255,255,255,0.06);
+			border-left-color: var(--nxt-accent);
+		}
+		.dn-wx-tx-row-top {
+			display: flex; justify-content: space-between; align-items: center; gap: 6px;
+			margin-bottom: 3px;
+		}
+		.dn-wx-tx-meta { font-size: 11.5px; color: var(--nxt-ink-fade); }
+		.dn-wx-tx-turns { font-size: 11px; color: var(--nxt-ink-fade); }
+		.dn-wx-tx-preview {
+			font-size: 12.5px; color: var(--nxt-ink-dim);
+			white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+		}
+		.dn-wx-tx-detail {
+			overflow-y: auto;
+			padding: 16px;
+			display: flex; flex-direction: column; gap: 2px;
+		}
+		.dn-wx-tx-msgs { display: flex; flex-direction: column; gap: 10px; }
+		.dn-wx-tx-msg {
+			padding: 10px 12px;
+			border-radius: 10px;
+			max-width: 88%;
+		}
+		.dn-wx-tx-msg.user {
+			align-self: flex-end;
+			background: rgba(var(--nxt-accent-rgb, 108, 100, 255), 0.12);
+			border: 1px solid rgba(var(--nxt-accent-rgb, 108, 100, 255), 0.2);
+		}
+		.dn-wx-tx-msg.agent {
+			align-self: flex-start;
+			background: rgba(255,255,255,0.04);
+			border: 1px solid var(--nxt-stroke);
+		}
+		.dn-wx-tx-msg-role {
+			font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
+			color: var(--nxt-ink-fade); margin-bottom: 4px;
+		}
+		.dn-wx-tx-msg-text { font-size: 13.5px; color: var(--nxt-ink); line-height: 1.5; white-space: pre-wrap; }
+		.dn-wx-tx-msg-ts { font-size: 11px; color: var(--nxt-ink-fade); margin-top: 4px; }
+		.dn-wx-tx-loading, .dn-wx-tx-empty {
+			color: var(--nxt-ink-dim); font-size: 13px; text-align: center;
+			padding: 32px 16px;
+		}
+
+		/* Knowledge entries */
+		.dn-kb-entry {
+			background: rgba(255,255,255,0.03);
+			border: 1px solid var(--nxt-stroke);
+			border-radius: 8px;
+			padding: 10px 12px;
+			display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+		}
+		.dn-kb-entry-text {
+			font-size: 13px; color: var(--nxt-ink); line-height: 1.5;
+			flex: 1; white-space: pre-wrap;
+		}
+		.dn-kb-entry-actions { display: flex; gap: 6px; flex-shrink: 0; }
+		.dn-skeleton-line {
+			height: 14px; background: var(--nxt-stroke); border-radius: 4px;
+			margin-bottom: 10px; animation: skeleton-pulse 1.4s ease infinite;
+		}
+		@keyframes skeleton-pulse {
+			0%, 100% { opacity: 1; }
+			50% { opacity: 0.45; }
 		}
 	`;
 	const style = document.createElement('style');

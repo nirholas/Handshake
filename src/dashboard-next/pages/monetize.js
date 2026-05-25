@@ -102,6 +102,7 @@ async function loadAndRender(host, me) {
 	host.appendChild(renderPaymentsPanel(payments));
 	host.appendChild(renderSubscriptionPlans({ creatorPlans, me }));
 	host.appendChild(renderWithdrawals({ withdrawals, wallets, available, host, me }));
+	host.appendChild(renderPayoutWallets({ wallets, host, me }));
 	host.appendChild(renderPlanUsage(summary));
 	host.appendChild(renderTokensPanel(agents));
 }
@@ -751,6 +752,163 @@ function openWithdrawModal({ available, wallets, host, me }) {
 			submitBtn.textContent = 'Request withdrawal';
 			errorEl.textContent =
 				err?.body?.error_description || err?.message || 'Withdrawal request failed.';
+		}
+	});
+}
+
+// ── Payout wallets ─────────────────────────────────────────────────────────
+
+function renderPayoutWallets({ wallets, host, me }) {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel';
+	panel.setAttribute('data-payout-wallets-panel', '');
+
+	const render = (ws) => {
+		panel.innerHTML = `
+			<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+				<div>
+					<div class="dn-panel-title">Payout wallets</div>
+					<div class="dn-panel-sub" style="margin:2px 0 0">Default addresses used when withdrawing USDC. One per chain.</div>
+				</div>
+				<button class="dn-btn primary" data-action="add-payout-wallet" style="flex-shrink:0">+ Add wallet</button>
+			</div>
+			${ws.length ? `
+				<div style="display:flex;flex-direction:column;gap:8px">
+					${ws.map((w) => `
+						<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--nxt-stroke);border-radius:8px;flex-wrap:wrap" data-wallet-id="${esc(w.id)}">
+							<div style="min-width:0">
+								<div style="font-size:12px;color:var(--nxt-ink-fade);text-transform:capitalize;letter-spacing:0.04em;margin-bottom:2px">${esc(w.chain || 'unknown')}</div>
+								<div style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;color:var(--nxt-ink);word-break:break-all">${esc(w.address || '')}</div>
+								${w.label ? `<div style="font-size:11.5px;color:var(--nxt-ink-dim);margin-top:2px">${esc(w.label)}</div>` : ''}
+							</div>
+							<button class="dn-btn danger" data-action="remove-payout-wallet" data-id="${esc(w.id)}" style="padding:5px 10px;font-size:12px;flex-shrink:0">Remove</button>
+						</div>
+					`).join('')}
+				</div>
+			` : `<div style="color:var(--nxt-ink-dim);font-size:13px">No payout wallets saved. Add one to pre-fill the withdrawal form.</div>`}
+		`;
+
+		panel.querySelector('[data-action="add-payout-wallet"]').addEventListener('click', () => {
+			openAddPayoutWalletModal({ panel, host, me });
+		});
+
+		panel.querySelectorAll('[data-action="remove-payout-wallet"]').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				const id = btn.dataset.id;
+				btn.disabled = true;
+				btn.textContent = 'Removing…';
+				try {
+					await del(`/api/billing/payout-wallets/${encodeURIComponent(id)}`);
+					const updated = ws.filter((w) => w.id !== id);
+					render(updated);
+				} catch (err) {
+					btn.disabled = false;
+					btn.textContent = 'Remove';
+					toastMonetize(err?.body?.error || err?.message || 'Remove failed', true);
+				}
+			});
+		});
+	};
+
+	render(wallets);
+	return panel;
+}
+
+function openAddPayoutWalletModal({ panel, host, me }) {
+	const existing = document.querySelector('[data-add-payout-modal]');
+	if (existing) existing.remove();
+
+	const overlay = document.createElement('div');
+	overlay.setAttribute('data-add-payout-modal', '');
+	overlay.style.cssText = `
+		position:fixed;inset:0;z-index:1000;
+		background:rgba(8,9,14,0.72);backdrop-filter:blur(6px);
+		display:grid;place-items:center;padding:20px;
+	`;
+	overlay.innerHTML = `
+		<div role="dialog" aria-modal="true" aria-label="Add payout wallet" style="
+			width:min(420px,100%);
+			background:linear-gradient(180deg,rgba(22,24,32,0.97),rgba(16,17,24,0.97));
+			border:1px solid var(--nxt-stroke-strong);border-radius:14px;padding:22px;
+			box-shadow:0 20px 60px rgba(0,0,0,0.6);
+		">
+			<div style="font-size:16px;font-weight:600;color:var(--nxt-ink);margin-bottom:18px">Add payout wallet</div>
+
+			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+				<span style="font-size:12px;color:var(--nxt-ink-dim)">Chain</span>
+				<select data-slot="chain" style="
+					padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);
+					background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px">
+					<option value="solana">Solana</option>
+					<option value="base">Base (EVM)</option>
+				</select>
+			</label>
+
+			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+				<span style="font-size:12px;color:var(--nxt-ink-dim)">Wallet address</span>
+				<input data-slot="address" type="text" placeholder="Paste address…" style="
+					padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);
+					background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px;
+					font-family:ui-monospace,monospace" />
+			</label>
+
+			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+				<span style="font-size:12px;color:var(--nxt-ink-dim)">Label (optional)</span>
+				<input data-slot="label" type="text" maxlength="60" placeholder="e.g. Main treasury" style="
+					padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);
+					background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
+			</label>
+
+			<div data-slot="error" style="font-size:12.5px;color:var(--nxt-danger);min-height:18px;margin-bottom:10px"></div>
+
+			<div style="display:flex;gap:8px;justify-content:flex-end">
+				<button class="dn-btn ghost" data-action="cancel">Cancel</button>
+				<button class="dn-btn primary" data-action="submit">Save wallet</button>
+			</div>
+		</div>
+	`;
+	document.body.appendChild(overlay);
+
+	const chainEl = overlay.querySelector('[data-slot="chain"]');
+	const addrEl = overlay.querySelector('[data-slot="address"]');
+	const labelEl = overlay.querySelector('[data-slot="label"]');
+	const errorEl = overlay.querySelector('[data-slot="error"]');
+	const submitBtn = overlay.querySelector('[data-action="submit"]');
+	addrEl.focus();
+
+	const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey); };
+	const onKey = (e) => { if (e.key === 'Escape') close(); };
+	document.addEventListener('keydown', onKey);
+	overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);
+	overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+	submitBtn.addEventListener('click', async () => {
+		errorEl.textContent = '';
+		const chain = chainEl.value;
+		const address = addrEl.value.trim();
+		const label = labelEl.value.trim();
+
+		if (!address) { errorEl.textContent = 'Wallet address is required.'; return; }
+		if (chain === 'solana' && !SOLANA_ADDR_RE.test(address)) {
+			errorEl.textContent = 'Invalid Solana address.';
+			return;
+		}
+		if (chain === 'base' && !EVM_ADDR_RE.test(address)) {
+			errorEl.textContent = 'Invalid Base/EVM address (expected 0x + 40 hex chars).';
+			return;
+		}
+
+		submitBtn.disabled = true;
+		submitBtn.textContent = 'Saving…';
+		try {
+			await post('/api/billing/payout-wallets', { chain, address, label: label || undefined });
+			close();
+			renderSkeleton(host);
+			await loadAndRender(host, me);
+		} catch (err) {
+			submitBtn.disabled = false;
+			submitBtn.textContent = 'Save wallet';
+			errorEl.textContent = err?.body?.error || err?.message || 'Save failed.';
 		}
 	});
 }
