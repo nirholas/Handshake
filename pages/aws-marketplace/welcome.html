@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Welcome to three.ws · AWS Marketplace</title>
+	<meta name="robots" content="noindex" />
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		:root { color-scheme: dark; --accent:#6a5cff; --accent2:#ff5ca8; --border:#22222e; --bg:#0b0b10; --panel:#14141c; --text:#e8e8f0; --muted:#8a8aa0; --green:#22c55e; --yellow:#f59e0b; }
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		body { font: 15px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); min-height: 100vh; display: flex; flex-direction: column; }
+		header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+		header a { color: #aaa; text-decoration: none; font-size: 14px; }
+		.wrap { max-width: 540px; margin: 0 auto; padding: 72px 24px 96px; width: 100%; }
+
+		.aws-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 99px; padding: 6px 14px 6px 10px; font-size: 12px; color: var(--muted); margin-bottom: 28px; }
+		.aws-badge svg { flex-shrink: 0; }
+
+		.state { display: none; }
+		.state.active { display: block; }
+
+		/* ── loading ── */
+		#state-loading { text-align: center; padding-top: 32px; }
+		.spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 20px; }
+		@keyframes spin { to { transform: rotate(360deg); } }
+		#state-loading p { color: var(--muted); font-size: 14px; }
+
+		/* ── shared card styles ── */
+		h1 { font-size: clamp(26px, 4vw, 36px); letter-spacing: -0.025em; line-height: 1.1; font-weight: 600; margin-bottom: 12px; }
+		.sub { color: var(--muted); font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
+		.sub strong { color: var(--text); }
+
+		.trial-banner { background: linear-gradient(135deg, rgba(106,92,255,0.15), rgba(255,92,168,0.1)); border: 1px solid rgba(106,92,255,0.35); border-radius: 14px; padding: 18px 22px; margin-bottom: 28px; font-size: 14px; line-height: 1.55; }
+		.trial-banner strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 15px; }
+
+		/* ── auth form ── */
+		.form-group { margin-bottom: 16px; }
+		label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+		input { width: 100%; padding: 11px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.15s; }
+		input:focus { border-color: var(--accent); }
+		input::placeholder { color: #555570; }
+
+		.tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 11px; overflow: hidden; margin-bottom: 28px; }
+		.tab { flex: 1; padding: 10px; background: var(--panel); color: var(--muted); font-size: 13px; font-weight: 500; border: none; cursor: pointer; transition: background 0.15s, color 0.15s; }
+		.tab.active { background: var(--accent); color: #fff; }
+
+		.btn { width: 100%; padding: 13px; border-radius: 11px; border: 0; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: filter 0.15s; margin-top: 8px; }
+		.btn:hover:not(:disabled) { filter: brightness(1.12); }
+		.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+		.btn-sec { background: var(--panel); border: 1px solid var(--border); color: var(--text); }
+
+		.divider { text-align: center; color: var(--muted); font-size: 12px; margin: 18px 0; position: relative; }
+		.divider::before, .divider::after { content: ""; position: absolute; top: 50%; width: calc(50% - 20px); height: 1px; background: var(--border); }
+		.divider::before { left: 0; }
+		.divider::after { right: 0; }
+
+		.err { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: #f87171; margin-bottom: 16px; display: none; }
+		.err.visible { display: block; }
+
+		/* ── success ── */
+		#state-linked .check { width: 56px; height: 56px; border-radius: 50%; background: rgba(34,197,94,0.12); border: 2px solid var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+		#state-linked { text-align: center; }
+		#state-linked .sub { margin-bottom: 28px; }
+		#state-linked .btn { max-width: 260px; margin: 0 auto; display: block; }
+
+		/* ── error state ── */
+		#state-error { text-align: center; }
+		#state-error .icon { font-size: 40px; margin-bottom: 16px; }
+		#state-error .btn { max-width: 260px; margin: 12px auto 0; display: block; }
+
+		.feature-list { list-style: none; margin: 0 0 32px; }
+		.feature-list li { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid #1c1c26; font-size: 14px; color: #cfcfdc; }
+		.feature-list li:last-child { border-bottom: none; }
+		.feature-list li::before { content: "✓"; color: var(--accent); font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+
+		@media (max-width: 500px) { .wrap { padding: 48px 16px 72px; } }
+	</style>
+</head>
+<body>
+	<header>
+		<a href="/">← three.ws</a>
+	</header>
+
+	<div class="wrap">
+		<div class="aws-badge">
+			<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7.17 8.8c0 .48.05.87.14 1.16.1.29.24.61.44.95.07.11.1.22.1.32 0 .14-.08.28-.26.42l-.85.57c-.12.08-.24.12-.35.12-.14 0-.28-.07-.42-.2a4.3 4.3 0 0 1-.5-.65 11 11 0 0 1-.43-1.02c-1.08 1.27-2.43 1.9-4.06 1.9-1.16 0-2.09-.33-2.77-.99C-2.06 11.72-2.4 10.86-2.4 9.8c0-1.12.4-2.03 1.2-2.72.8-.69 1.86-1.03 3.2-1.03.45 0 .91.04 1.4.11.48.07.98.18 1.5.31V5.5c0-.99-.21-1.68-.62-2.09-.42-.41-1.13-.61-2.14-.61-.46 0-.93.06-1.41.18a10.4 10.4 0 0 0-1.41.47 3.74 3.74 0 0 1-.46.17.8.8 0 0 1-.2.03c-.18 0-.27-.13-.27-.4V2.5c0-.2.02-.35.07-.44.05-.08.15-.17.31-.25.46-.24 1.01-.43 1.65-.59A8.52 8.52 0 0 1 2.2.97C3.6.97 4.64 1.3 5.3 1.96c.65.66.98 1.67.98 3.02V8.8z" fill="#FF9900" transform="translate(8,4) scale(0.85)"/></svg>
+			AWS Marketplace
+		</div>
+
+		<!-- loading -->
+		<div id="state-loading" class="state active">
+			<div class="spinner"></div>
+			<p>Setting up your subscription…</p>
+		</div>
+
+		<!-- auth: sign up or sign in -->
+		<div id="state-auth" class="state">
+			<h1 id="auth-heading">You're almost in.</h1>
+			<p class="sub" id="auth-sub">Create a three.ws account to activate your AWS Marketplace subscription.</p>
+
+			<div id="trial-banner-auth" class="trial-banner" style="display:none">
+				<strong>Free trial activated</strong>
+				Your AWS Marketplace free trial is confirmed. Create an account to start using three.ws — no payment required during the trial period.
+			</div>
+
+			<div class="tabs">
+				<button class="tab active" id="tab-signup" type="button">Create account</button>
+				<button class="tab" id="tab-signin" type="button">Sign in</button>
+			</div>
+
+			<div id="err-auth" class="err"></div>
+
+			<!-- sign-up form -->
+			<form id="form-signup" autocomplete="on">
+				<div class="form-group">
+					<label for="su-email">Email</label>
+					<input id="su-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+				</div>
+				<div class="form-group">
+					<label for="su-password">Password</label>
+					<input id="su-password" type="password" name="password" placeholder="Min. 8 characters" required autocomplete="new-password" />
+				</div>
+				<button class="btn" id="btn-signup" type="submit">Create account &amp; activate</button>
+			</form>
+
+			<!-- sign-in form -->
+			<form id="form-signin" autocomplete="on" style="display:none">
+				<div class="form-group">
+					<label for="si-email">Email</label>
+					<input id="si-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+				</div>
+				<div class="form-group">
+					<label for="si-password">Password</label>
+					<input id="si-password" type="password" name="password" placeholder="Your password" required autocomplete="current-password" />
+				</div>
+				<button class="btn" id="btn-signin" type="submit">Sign in &amp; activate</button>
+			</form>
+		</div>
+
+		<!-- already signed in: link -->
+		<div id="state-link" class="state">
+			<h1>Link your AWS subscription.</h1>
+			<p class="sub">You're signed in as <strong id="link-email"></strong>. Confirm to link your AWS Marketplace subscription to this account.</p>
+
+			<div id="trial-banner-link" class="trial-banner" style="display:none">
+				<strong>Free trial activated</strong>
+				Your AWS Marketplace free trial is confirmed. Linking will activate it on your account — no additional payment during the trial.
+			</div>
+
+			<ul class="feature-list">
+				<li>Usage billed directly to your AWS account</li>
+				<li>Eligible for AWS credits and EDP commitments</li>
+				<li>Consolidated billing under AWS Marketplace Software</li>
+			</ul>
+
+			<div id="err-link" class="err"></div>
+			<button class="btn" id="btn-link" type="button">Confirm &amp; activate</button>
+		</div>
+
+		<!-- success -->
+		<div id="state-linked" class="state">
+			<div class="check">
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+			</div>
+			<h1>Subscription activated.</h1>
+			<p class="sub" id="linked-sub">Your AWS Marketplace subscription is now linked to your three.ws account. Usage will be metered and billed through AWS.</p>
+			<a href="/dashboard" class="btn">Go to dashboard</a>
+		</div>
+
+		<!-- error -->
+		<div id="state-error" class="state">
+			<div class="icon">⚠</div>
+			<h1 id="err-heading">Something went wrong.</h1>
+			<p class="sub" id="err-body">We couldn't complete your AWS Marketplace subscription setup.</p>
+			<a href="https://github.com/nirholas/three.ws/issues" class="btn btn-sec" target="_blank" rel="noopener">Contact support</a>
+		</div>
+	</div>
+
+	<script type="module" src="/src/aws-marketplace-welcome.js"></script>
+</body>
+</html>

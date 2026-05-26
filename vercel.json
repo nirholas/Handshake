@@ -42,6 +42,14 @@
 	},
 	"routes": [
 		{
+			"src": "/aws-marketplace/welcome",
+			"dest": "/aws-marketplace/welcome.html"
+		},
+		{
+			"src": "/aws-marketplace/error",
+			"dest": "/aws-marketplace/welcome.html"
+		},
+		{
 			"src": "/rss/announcements\\.xml",
 			"dest": "/api/rss/announcements"
 		},
