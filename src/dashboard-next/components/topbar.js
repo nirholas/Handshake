@@ -73,7 +73,7 @@ export function mountTopbarBehavior(shellEl) {
 		}
 		if (e.target.closest?.('[data-action="back-to-classic"]')) {
 			localStorage.removeItem('dashboard-version');
-			const path = location.pathname.replace(/^\/dashboard/, '/dashboard-classic');
+			const path = location.pathname.replace(/^\/dashboard(-next)?/, '/dashboard-classic');
 			location.href = path || '/dashboard-classic';
 			return;
 		}

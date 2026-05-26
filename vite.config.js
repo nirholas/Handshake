@@ -119,6 +119,7 @@ const appConfig = {
 		// large bundles (Three.js, ethers) without affecting the output.
 		reportCompressedSize: false,
 		rollupOptions: {
+			external: ['/studio/launch-panel.js'],
 			output: {
 				manualChunks(id) {
 					if (id.includes('node_modules/three/')) return 'three';

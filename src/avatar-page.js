@@ -648,7 +648,8 @@ async function openLaunchPumpFun() {
 		header.querySelector('.av-pump-close').addEventListener('click', closeModal);
 		backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
 
-		const { mountLaunchPanel } = await import(/* @vite-ignore */ '/studio/launch-panel.js');
+		const launchPanelUrl = '/studio/launch-panel.js';
+		const { mountLaunchPanel } = await import(/* @vite-ignore */ launchPanelUrl);
 		mountLaunchPanel(inner, {
 			getAvatar: () => ({ ...avatar, id: avatar.id || avatarId }),
 			getUser: () => user,
