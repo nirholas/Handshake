@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agent-3d · loaded in claude</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0a0512;
+    --plum: #2a0e1a;
+    --wine: #5c1a3e;
+    --ember: #d94d1a;
+    --sun: #ffb347;
+    --sand: #f4d5a3;
+    --cream: #fef0d8;
+    --ink: #1a0a0f;
+    --ok: #7dd87d;
+    --warn: #ffc555;
+    --err: #ff6655;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-deep);
+    color: var(--cream);
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: "opsz" 14, "SOFT" 50;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background:
+      radial-gradient(ellipse at 50% 92%, rgba(255, 179, 71, 0.55) 0%, transparent 45%),
+      radial-gradient(ellipse at 30% 25%, rgba(217, 77, 26, 0.25) 0%, transparent 55%),
+      linear-gradient(180deg, #0a0512 0%, #2a0e1a 28%, #5c1a3e 58%, #d94d1a 88%, #ffb347 100%);
+    background-attachment: fixed;
+    padding: 3rem 1.5rem 5rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    opacity: 0.07;
+    z-index: 100;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+  }
+  .container { max-width: 1100px; margin: 0 auto; position: relative; z-index: 2; }
+
+  /* HEADER */
+  header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid rgba(254, 240, 216, 0.18);
+    padding-bottom: 1.5rem; margin-bottom: 3rem;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .brand {
+    font-family: 'Fraunces', serif;
+    font-weight: 900; font-style: italic;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    font-size: 1.55rem; letter-spacing: -0.025em;
+  }
+  .brand .dot { color: var(--sun); }
+  .brand .small { font-style: normal; font-weight: 400; font-size: 0.95rem; opacity: 0.6; margin-left: 0.4rem; }
+  .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.18em;
+    text-transform: uppercase; opacity: 0.65;
+  }
+  .meta .pulse {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--sun); border-radius: 50%; margin-right: 0.4em;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 0.4 } 50% { opacity: 1 } }
+
+  /* HERO */
+  .hero { text-align: center; margin-bottom: 3rem; max-width: 38rem; margin-left: auto; margin-right: auto; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; letter-spacing: 0.32em;
+    text-transform: uppercase; color: var(--sun);
+    margin-bottom: 1.5rem;
+  }
+  .eyebrow::before, .eyebrow::after {
+    content: '—'; display: inline-block; margin: 0 0.7em; opacity: 0.6;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 350;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    font-size: clamp(2.4rem, 6.5vw, 4.6rem);
+    line-height: 0.95; letter-spacing: -0.035em;
+    margin-bottom: 1.5rem;
+  }
+  h1 em {
+    font-style: italic; font-weight: 250;
+    color: var(--sun);
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+  }
+  .lede {
+    font-size: 1.1rem; line-height: 1.55; opacity: 0.88;
+    font-weight: 350;
+  }
+
+  /* STAGE */
+  .stage-wrap { text-align: center; margin: 3rem auto; }
+  .stage {
+    position: relative;
+    width: 100%; max-width: 480px;
+    aspect-ratio: 4 / 5;
+    margin: 0 auto;
+    border-radius: 4px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #1a0a1f 0%, #3a1428 50%, #5c1a3e 100%);
+    box-shadow:
+      0 40px 80px -20px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(254, 240, 216, 0.12),
+      0 0 0 8px rgba(254, 240, 216, 0.03);
+  }
+  .stage::before {
+    content: ''; position: absolute;
+    bottom: -10%; left: 50%;
+    transform: translateX(-50%);
+    width: 75%; aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--sun) 0%, var(--ember) 35%, transparent 65%);
+    filter: blur(28px); opacity: 0.55;
+    z-index: 0;
+  }
+  agent-3d {
+    position: relative; z-index: 1;
+    width: 100%; height: 100%;
+    display: block;
+  }
+  /* Loading placeholder visible until the script + element register */
+  .stage[data-state="pending"]::after {
+    content: 'waiting for agent-3d.js';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(254, 240, 216, 0.4);
+    z-index: 2;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .stage[data-state="error"]::after {
+    content: '✕ sandbox blocked load';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem; letter-spacing: 0.15em;
+    color: var(--err);
+    z-index: 2;
+  }
+  .stage-caption {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.22em;
+    text-transform: uppercase; opacity: 0.5;
+    margin-top: 1.2rem;
+  }
+
+  /* CONTROLS */
+  .controls {
+    display: flex; gap: 0.6rem;
+    justify-content: center; flex-wrap: wrap;
+    margin: 2.5rem auto 0; max-width: 480px;
+  }
+  .ctrl {
+    background: transparent;
+    border: 1px solid rgba(254, 240, 216, 0.4);
+    color: var(--cream);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.7rem 1.1rem;
+    cursor: pointer; transition: all 0.18s ease;
+    border-radius: 2px;
+  }
+  .ctrl:not(:disabled):hover {
+    background: var(--cream); color: var(--ink);
+    border-color: var(--cream);
+  }
+  .ctrl:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* STATUS PANEL */
+  .status {
+    background: rgba(10, 5, 18, 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(254, 240, 216, 0.15);
+    border-radius: 4px;
+    padding: 1.4rem 1.6rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    margin: 3.5rem auto;
+    max-width: 480px;
+  }
+  .status-title {
+    font-size: 0.65rem; letter-spacing: 0.28em;
+    text-transform: uppercase; opacity: 0.55;
+    margin-bottom: 1rem; padding-bottom: 0.7rem;
+    border-bottom: 1px dashed rgba(254, 240, 216, 0.12);
+  }
+  .status-row {
+    display: flex; justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0;
+  }
+  .status-key { opacity: 0.65; }
+  .status-val { font-weight: 500; }
+  .status-val.pending { color: var(--cream); opacity: 0.5; }
+  .status-val.ok { color: var(--ok); }
+  .status-val.warn { color: var(--warn); }
+  .status-val.err { color: var(--err); }
+  .status-val::before {
+    content: '◦ '; opacity: 0.6;
+  }
+  .status-val.ok::before { content: '✓ '; opacity: 1; }
+  .status-val.err::before { content: '✕ '; opacity: 1; }
+  .status-val.warn::before { content: '! '; opacity: 1; }
+
+  /* NOTES */
+  .notes {
+    max-width: 560px; margin: 4rem auto 0;
+    border-top: 1px solid rgba(254, 240, 216, 0.18);
+    padding-top: 2.5rem;
+  }
+  .notes-eye {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.28em;
+    text-transform: uppercase; opacity: 0.55;
+    margin-bottom: 0.7rem;
+  }
+  .notes h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 350; font-style: italic;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    font-size: 1.7rem; letter-spacing: -0.02em;
+    margin-bottom: 1.2rem;
+    color: var(--sand);
+  }
+  .notes p {
+    font-size: 1.02rem; line-height: 1.65;
+    margin-bottom: 1.1rem; opacity: 0.88;
+    font-weight: 350;
+  }
+  .notes code, .lede code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82em;
+    background: rgba(254, 240, 216, 0.09);
+    padding: 0.15em 0.45em;
+    border-radius: 2px;
+    color: var(--sun);
+  }
+  .notes a { color: var(--sun); text-decoration: none; border-bottom: 1px dotted var(--sun); }
+  .notes a:hover { background: var(--sun); color: var(--ink); }
+
+  /* MOTION */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero, .stage-wrap, .controls, .status, .notes {
+    animation: fadeUp 0.7s cubic-bezier(.2,.7,.3,1) backwards;
+  }
+  .stage-wrap { animation-delay: 0.15s; }
+  .controls { animation-delay: 0.3s; }
+  .status { animation-delay: 0.4s; }
+  .notes { animation-delay: 0.5s; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">three<span class="dot">.</span>ws<span class="small">— inside claude</span></div>
+      <div class="meta"><span class="pulse"></span>SANDBOX PROBE · v1</div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">Embed Probe</div>
+      <h1>An agent, <em>at sunset.</em></h1>
+      <p class="lede">Loading <code>agent-3d.js</code> from the three.ws CDN directly into this Claude artifact. If the sandbox allows the external script and the cross-origin GLB fetch, a rotating avatar appears below. The panel under it reports what actually happened.</p>
+    </section>
+
+    <div class="stage-wrap">
+      <div class="stage" id="stage" data-state="pending">
+        <agent-3d id="agent"
+          body="https//assets.three.ws/models/sample-avatar.glb"
+          mode="view"
+          watermark="false"
+          eager></agent-3d>
+      </div>
+      <p class="stage-caption">— sample-avatar · assets.three.ws —</p>
+
+      <div class="controls">
+        <button class="ctrl" id="btn-wave" disabled>Wave</button>
+        <button class="ctrl" id="btn-look" disabled>Look at camera</button>
+        <button class="ctrl" id="btn-reload">Reload</button>
+      </div>
+    </div>
+
+    <div class="status">
+      <div class="status-title">Diagnostic</div>
+      <div class="status-row"><span class="status-key">script load</span><span class="status-val pending" id="s-script">pending</span></div>
+      <div class="status-row"><span class="status-key">custom element</span><span class="status-val pending" id="s-elem">pending</span></div>
+      <div class="status-row"><span class="status-key">agent:ready event</span><span class="status-val pending" id="s-ready">pending</span></div>
+      <div class="status-row"><span class="status-key">script URL</span><span class="status-val ok" style="font-size:0.7em;opacity:0.7" id="s-url">three.ws/agent-3d/1.5.1</span></div>
+    </div>
+
+    <section class="notes">
+      <div class="notes-eye">Reading the result</div>
+      <h2>What this tells us.</h2>
+      <p>The viewer is the <code>&lt;agent-3d&gt;</code> custom element from <a href="https://three.ws" target="_blank" rel="noopener">three.ws</a>, loaded as an external module script. The artifact runs in Claude's sandboxed iframe — script-tag loads usually work, but some sandboxes block cross-origin script execution or cross-origin model fetches.</p>
+      <p>If <em>script load</em> fails, the sandbox is blocking external module scripts entirely. The fallback is to inline the library or use the <code>&lt;iframe src="https://three.ws/a/{chain}/{id}/embed"&gt;</code> approach, which runs in its own browsing context with its own CSP.</p>
+      <p>If <em>script load</em> succeeds but <em>agent:ready</em> times out, the script ran but the model fetch from <code>assets.three.ws</code> was blocked. Same fallback applies, or host the GLB on a CORS-friendly origin.</p>
+      <p>To wire in a brain, set <code>brain="claude-sonnet-4-6"</code> and an <code>instructions</code> attribute. That routes chat through their API, which needs the host origin to be allowed in their CORS config.</p>
+    </section>
+  </div>
+
+  <script type="module">
+    const $ = (id) => document.getElementById(id);
+    const setStatus = (id, txt, cls) => {
+      const el = $(id);
+      el.textContent = txt;
+      el.className = 'status-val ' + cls;
+    };
+
+    const stage = $('stage');
+    const SCRIPT_URL = 'https://three.ws/agent-3d/1.5.1/agent-3d.js';
+
+    setStatus('s-script', 'loading…', 'pending');
+
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = SCRIPT_URL;
+
+    let scriptLoaded = false;
+    script.onload = () => {
+      scriptLoaded = true;
+      setStatus('s-script', 'loaded', 'ok');
+
+      // Custom element may register before or after script onload; whenDefined handles both.
+      setStatus('s-elem', 'waiting…', 'pending');
+      customElements.whenDefined('agent-3d').then(() => {
+        setStatus('s-elem', 'registered', 'ok');
+
+        const agent = $('agent');
+        setStatus('s-ready', 'waiting…', 'pending');
+
+        const readyHandler = () => {
+          setStatus('s-ready', 'fired', 'ok');
+          stage.dataset.state = 'ready';
+          $('btn-wave').disabled = false;
+          $('btn-look').disabled = false;
+        };
+        agent.addEventListener('agent:ready', readyHandler, { once: true });
+
+        // Fallback: if the canvas appears inside the element, treat that as visual readiness
+        const obs = new MutationObserver(() => {
+          if (agent.querySelector('canvas') || agent.shadowRoot?.querySelector('canvas')) {
+            stage.dataset.state = 'ready';
+            obs.disconnect();
+          }
+        });
+        obs.observe(agent, { childList: true, subtree: true });
+
+        setTimeout(() => {
+          if ($('s-ready').textContent === 'waiting…') {
+            setStatus('s-ready', 'timeout (12s) · check console', 'warn');
+          }
+        }, 12000);
+      }).catch(err => {
+        setStatus('s-elem', 'failed: ' + (err?.message || 'unknown'), 'err');
+        stage.dataset.state = 'error';
+      });
+    };
+
+    script.onerror = (e) => {
+      setStatus('s-script', 'blocked or 404', 'err');
+      setStatus('s-elem', 'not reached', 'err');
+      setStatus('s-ready', 'not reached', 'err');
+      stage.dataset.state = 'error';
+    };
+
+    // Hard timeout for script load itself
+    setTimeout(() => {
+      if (!scriptLoaded && $('s-script').textContent === 'loading…') {
+        setStatus('s-script', 'still loading after 15s', 'warn');
+      }
+    }, 15000);
+
+    document.head.appendChild(script);
+
+    // Control wiring (only fires after agent:ready enables them)
+    $('btn-wave').addEventListener('click', () => {
+      const agent = $('agent');
+      if (typeof agent.wave === 'function') agent.wave();
+      else if (typeof agent.play === 'function') agent.play('wave');
+    });
+    $('btn-look').addEventListener('click', () => {
+      const agent = $('agent');
+      if (typeof agent.lookAt === 'function') agent.lookAt('camera');
+    });
+    $('btn-reload').addEventListener('click', () => {
+      const agent = $('agent');
+      const body = agent.getAttribute('body');
+      stage.dataset.state = 'pending';
+      $('btn-wave').disabled = true;
+      $('btn-look').disabled = true;
+      setStatus('s-ready', 'reloading…', 'pending');
+      agent.removeAttribute('body');
+      requestAnimationFrame(() => {
+        setTimeout(() => agent.setAttribute('body', body), 60);
+      });
+    });
+  </script>
+</body>
+</html>

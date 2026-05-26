@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Immersive 3D Beach Meme Experience</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        #loading {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; font-family: sans-serif; font-size: 24px; pointer-events: none;
+        }
+    </style>
+    <!-- Load Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="loading">Loading 3D Experience...</div>
+    <script>
+        // 1. Setup Scene, Camera, and Renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // 2. Load the Images (Original and Depth Map)
+        const loader = new THREE.TextureLoader();
+        
+        // IMPORTANT: Ensure your images are named exactly like this in the same folder!
+        const imgTexture = loader.load('image.jpg'); 
+        const depthTexture = loader.load('depth.jpg', () => {
+            document.getElementById('loading').style.display = 'none'; // Hide loading text
+        });
+
+        // 3. Create the 3D Shader Material
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                u_image: { type: 't', value: imgTexture },
+                u_depth: { type: 't', value: depthTexture },
+                u_mouse: { type: 'v2', value: new THREE.Vector2(0.5, 0.5) },
+                u_intensity: { type: 'f', value: 0.05 } // Adjust for more/less 3D effect
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D u_image;
+                uniform sampler2D u_depth;
+                uniform vec2 u_mouse;
+                uniform float u_intensity;
+                varying vec2 vUv;
+
+                void main() {
+                    // Read depth (0.0 to 1.0)
+                    vec4 depthColor = texture2D(u_depth, vUv);
+                    float depth = depthColor.r;
+
+                    // Calculate 3D offset based on mouse position and depth
+                    vec2 offset = (u_mouse - 0.5) * u_intensity * (1.0 - depth);
+                    
+                    // Apply offset and render
+                    vec4 color = texture2D(u_image, vUv + offset);
+                    gl_FragColor = color;
+                }
+            `
+        });
+
+        // 4. Map to a flat plane that fits the screen
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // 5. Track Mouse/Touch for Interactive 3D Parallax
+        let targetMouse = new THREE.Vector2(0.5, 0.5);
+        let currentMouse = new THREE.Vector2(0.5, 0.5);
+
+        window.addEventListener('mousemove', (e) => {
+            targetMouse.x = e.clientX / window.innerWidth;
+            targetMouse.y = 1.0 - (e.clientY / window.innerHeight);
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            targetMouse.x = e.touches[0].clientX / window.innerWidth;
+            targetMouse.y = 1.0 - (e.touches[0].clientY / window.innerHeight);
+        });
+
+        // Handle Window Resize
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 6. Animation Loop (Smooth easing)
+        function animate() {
+            requestAnimationFrame(animate);
+            // Ease the mouse movement for a smooth, natural camera feel
+            currentMouse.lerp(targetMouse, 0.05);
+            material.uniforms.u_mouse.value = currentMouse;
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

@@ -191,6 +191,12 @@ const camLookCurrent = new Vector3();
 
 let cameraYaw = 0;     // user-controlled orbit yaw around avatar (radians)
 let cameraPitch = 0.05; // small downward tilt by default
+// In AR mode the camera is frozen in world space instead of following the
+// avatar — the joystick then walks the avatar around physically and natural
+// perspective makes it grow/shrink as it approaches/recedes. Captured when
+// AR is enabled, cleared when AR is disabled.
+let arFrozenCamPos = null;
+let arFrozenCamLook = null;
 const PITCH_MIN = -0.6;
 const PITCH_MAX = 0.7;
 
@@ -557,7 +563,14 @@ async function enableAR() {
 	// Show blob contact shadow.
 	blobShadow.material.opacity = 1;
 
-	setStatus('AR on — point at a floor');
+	// Freeze the camera at its current pose so the avatar walks around in
+	// world space instead of being chased by a follow cam. With the camera
+	// fixed, joystick-forward = avatar walks away (gets smaller), joystick-
+	// back = avatar walks toward you (gets bigger).
+	arFrozenCamPos = camera.position.clone();
+	arFrozenCamLook = camLookCurrent.clone();
+
+	setStatus('AR on — joystick walks your agent');
 }
 
 function disableAR() {
@@ -585,6 +598,10 @@ function disableAR() {
 
 	// Hide blob shadow.
 	blobShadow.material.opacity = 0;
+
+	// Resume follow-camera behavior.
+	arFrozenCamPos = null;
+	arFrozenCamLook = null;
 
 	setStatus('AR off');
 }
@@ -915,16 +932,22 @@ function tick() {
 	avatarLean += (targetLean - avatarLean) * LEAN_LERP;
 	if (avatar) avatar.rotation.x = avatarLean;
 
-	// 2. Update camera follow-rig.
-	const offset = CAM_OFFSET.clone().multiplyScalar(camZoom);
-	offset.applyAxisAngle(new Vector3(1, 0, 0), -cameraPitch);
-	offset.applyAxisAngle(upY, cameraYaw);
-	camDesired.copy(avatarRig.position).add(offset);
-	camera.position.lerp(camDesired, CAM_LERP);
+	// 2. Update camera — frozen in AR, follow-rig otherwise.
+	if (arFrozenCamPos && arFrozenCamLook) {
+		camera.position.copy(arFrozenCamPos);
+		camLookCurrent.copy(arFrozenCamLook);
+		camera.lookAt(camLookCurrent);
+	} else {
+		const offset = CAM_OFFSET.clone().multiplyScalar(camZoom);
+		offset.applyAxisAngle(new Vector3(1, 0, 0), -cameraPitch);
+		offset.applyAxisAngle(upY, cameraYaw);
+		camDesired.copy(avatarRig.position).add(offset);
+		camera.position.lerp(camDesired, CAM_LERP);
 
-	camLookTarget.copy(avatarRig.position).add(CAM_LOOK_OFFSET);
-	camLookCurrent.lerp(camLookTarget, CAM_LERP);
-	camera.lookAt(camLookCurrent);
+		camLookTarget.copy(avatarRig.position).add(CAM_LOOK_OFFSET);
+		camLookCurrent.lerp(camLookTarget, CAM_LERP);
+		camera.lookAt(camLookCurrent);
+	}
 
 	// AR depth: track sun + blob shadow to the avatar each frame so the
 	// grounding shadow always lands under the feet, and estimate real-world

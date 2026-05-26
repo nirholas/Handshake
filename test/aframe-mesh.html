@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beach Meme — Depth Mesh (true 3D)</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <style>
+      body { margin: 0; background: #000; }
+      #hud {
+        position: fixed; left: 12px; top: 12px; z-index: 10;
+        font: 12px/1.4 -apple-system, system-ui, sans-serif;
+        color: #fff; background: rgba(0,0,0,0.45);
+        padding: 8px 10px; border-radius: 6px; pointer-events: none;
+        max-width: 360px;
+      }
+      #hud b { color: #ffb968; }
+      #hud .sub { color:#bbb; font-size:11px; }
+      #prompt {
+        position: fixed; inset: 0; display: flex; align-items: center;
+        justify-content: center; pointer-events: none; z-index: 20;
+        font: 600 28px/1.4 -apple-system, system-ui, sans-serif;
+        color: rgba(255,255,255,0.95);
+        text-shadow: 0 2px 14px rgba(0,0,0,0.55);
+        animation: bob 2.6s ease-in-out infinite;
+        transition: opacity 0.5s ease;
+      }
+      #prompt span {
+        background: rgba(0,0,0,0.35); padding: 14px 22px; border-radius: 10px;
+        backdrop-filter: blur(4px);
+      }
+      #prompt.hidden { opacity: 0; }
+      @keyframes bob {
+        0%, 100% { transform: translateY(0);    }
+        50%      { transform: translateY(-6px); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud">
+      <b>WASD</b> walk &nbsp; <b>mouse</b> look &nbsp; <b>click</b> capture pointer
+      &nbsp;&nbsp;<b>Q / E</b> bend ± &nbsp; <b>M</b> mute<br>
+      <span class="sub">depth-map drives real 3D geometry. VR button → Quest / Vision Pro / Cardboard.</span>
+    </div>
+    <div id="prompt"><span>Click to walk in</span></div>
+
+    <a-scene background="color: #ff7e3a"
+             renderer="colorManagement: true"
+             fog="type: linear; near: 10; far: 22; color: #ff7e3a">
+
+      <a-assets>
+        <img id="photo" src="image.jpg" crossorigin="anonymous">
+        <!-- depth_hd.png is the 16-bit pf_disparity.png normalized to 8-bit
+             over its full dynamic range — ~256 distinct depth levels actually
+             in use, vs ~50 useful levels in the JPEG depth.jpg -->
+        <img id="depth" src="depth_hd.png" crossorigin="anonymous">
+        <!-- characters removed and replaced with cv2.inpaint extrapolated
+             sky/sand — shown through the edge-discard holes of the main mesh
+             so silhouettes show real backdrop instead of bare sunset colour -->
+        <img id="backdrop" src="image_inpainted.jpg" crossorigin="anonymous">
+      </a-assets>
+
+      <!-- Sunset-tinted sky so the mesh boundary blends rather than going to black.
+           Same colour as the fog so distant mesh fades into the sky seamlessly. -->
+      <a-sky color="#ff7e3a"></a-sky>
+
+      <!-- BACKDROP PASS: inpainted photo on identical depth geometry, sat just
+           behind the foreground. edgeStretch huge so nothing discards;
+           borderFade tiny so the photo stays opaque all the way to the
+           rectangle edge — that way the foreground's border fade reveals real
+           inpainted photo content, not the bare sunset sky colour. -->
+      <a-entity
+        depth-mesh="image: #backdrop; depth: #depth; width: 16; height: 12;
+                    displacement: 8; segments: 220; edgeStretch: 999;
+                    borderFade: 0.005"
+        position="0 1.6 -6.06">
+      </a-entity>
+
+      <!-- FOREGROUND PASS: original photo with UV-space edge-discard.
+           edgeFeather gives anti-aliased silhouettes (smooth alpha falloff
+           below the discard threshold). shimmer animates the ocean band UV
+           so the sun reflection on the water breathes. -->
+      <a-entity
+        depth-mesh="image: #photo; depth: #depth; width: 16; height: 12;
+                    displacement: 8; segments: 220;
+                    edgeStretch: 0.08; edgeFeather: 0.025;
+                    borderFade: 0.06; shimmer: 1.0"
+        position="0 1.6 -6">
+      </a-entity>
+
+      <!-- Player rig:
+             #rig         — WASD walks (wasd-controls owns its position)
+             #parallaxWrap — mouse-driven micro-parallax offset (pre-lock only)
+             <a-camera>   — look-controls owns rotation; eye height 1.6 m
+             <a-cursor>   — pulses while you're hovering, idle hint -->
+      <a-entity id="rig" position="0 0 2"
+                wasd-controls="acceleration: 25"
+                walk-bounds="minX: -6; maxX: 6; minZ: -3.5; maxZ: 8">
+        <a-entity id="parallaxWrap" position="0 0 0">
+          <a-camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
+            <a-cursor color="#ffb968" raycaster="far: 25"
+                      animation__pulse="property: scale; from: 0.9 0.9 0.9; to: 1.18 1.18 1.18; dir: alternate; loop: true; dur: 1500; easing: easeInOutSine">
+            </a-cursor>
+          </a-camera>
+        </a-entity>
+      </a-entity>
+
+    </a-scene>
+
+    <script>
+      /**
+       * depth-mesh component
+       * Builds a tessellated PlaneGeometry textured with `image` and displaces
+       * each vertex along -Z proportional to the depth-map brightness.
+       *   depth.jpg convention: bright = near, dark = far.
+       * Vertex displacement happens in the vertex shader so we don't have to
+       * rebuild geometry on parameter changes.
+       */
+      AFRAME.registerComponent('depth-mesh', {
+        schema: {
+          image: { type: 'selector' },
+          depth: { type: 'selector' },
+          width: { type: 'number', default: 16 },
+          height: { type: 'number', default: 12 },
+          displacement: { type: 'number', default: 6 },
+          segments: { type: 'number', default: 200 },
+          edgeStretch: { type: 'number', default: 0.08 },
+          edgeFeather: { type: 'number', default: 0.025 },  // alpha-falloff band
+          borderFade:  { type: 'number', default: 0.06 },   // rectangle-edge fade fraction
+          shimmer:     { type: 'number', default: 0.0  }    // 0 = none, >0 = ocean wobble strength
+        },
+
+        init() {
+          const d = this.data;
+          const loader = new THREE.TextureLoader();
+
+          const imageTex = loader.load(d.image.src);
+          imageTex.colorSpace = THREE.SRGBColorSpace;
+          imageTex.minFilter = THREE.LinearFilter;
+          imageTex.magFilter = THREE.LinearFilter;
+
+          const depthTex = loader.load(d.depth.src);
+          depthTex.colorSpace = THREE.NoColorSpace;
+          depthTex.minFilter = THREE.LinearFilter;
+          depthTex.magFilter = THREE.LinearFilter;
+
+          const wSegs = d.segments;
+          const hSegs = Math.max(8, Math.floor(d.segments * d.height / d.width));
+          const geometry = new THREE.PlaneGeometry(d.width, d.height, wSegs, hSegs);
+
+          // Extend MeshBasicMaterial so three.js handles colour management
+          // and fog automatically; we just inject vertex displacement and
+          // a fragment-stage discard for stretched edges.
+          const material = new THREE.MeshBasicMaterial({
+            map: imageTex,
+            side: THREE.DoubleSide,
+            transparent: true,
+            fog: true
+          });
+          this._uDisplacement = { value: d.displacement };
+          this._uEdgeStretch = { value: d.edgeStretch };
+          this._uEdgeFeather = { value: d.edgeFeather };
+          this._uBorderFade = { value: d.borderFade };
+          this._uTime = { value: 0 };
+          this._uShimmer = { value: d.shimmer };
+          // Depth-texel size in UV space. Populated once the depth image loads
+          // so we know its true resolution; until then we use 1/1200,1/900
+          // which matches the supplied assets.
+          this._uDepthTexel = { value: new THREE.Vector2(1 / 1200, 1 / 900) };
+          if (depthTex.image && depthTex.image.width) {
+            this._uDepthTexel.value.set(1 / depthTex.image.width, 1 / depthTex.image.height);
+          } else {
+            depthTex.onUpdate = () => {
+              if (depthTex.image)
+                this._uDepthTexel.value.set(1 / depthTex.image.width, 1 / depthTex.image.height);
+            };
+          }
+          material.onBeforeCompile = (shader) => {
+            shader.uniforms.uDepth = { value: depthTex };
+            shader.uniforms.uDisplacement = this._uDisplacement;
+            shader.uniforms.uEdgeStretch = this._uEdgeStretch;
+            shader.uniforms.uEdgeFeather = this._uEdgeFeather;
+            shader.uniforms.uBorderFade = this._uBorderFade;
+            shader.uniforms.uTime = this._uTime;
+            shader.uniforms.uShimmer = this._uShimmer;
+            shader.uniforms.uDepthTexel = this._uDepthTexel;
+
+            shader.vertexShader = shader.vertexShader
+              .replace(
+                '#include <common>',
+                `#include <common>
+                 uniform sampler2D uDepth;
+                 uniform float uDisplacement;`
+              )
+              .replace(
+                '#include <begin_vertex>',
+                `#include <begin_vertex>
+                 float _d = texture2D(uDepth, uv).r;
+                 transformed.z -= (1.0 - _d) * uDisplacement;`
+              );
+
+            // UV-space depth-gradient mask with a smoothstep alpha falloff
+            // (anti-aliased silhouettes) + a parameterised rectangle border
+            // fade. Ocean shimmer warps the UV slightly on the mid-depth band
+            // for the colour sample only, so the displaced geometry is stable.
+            shader.fragmentShader = shader.fragmentShader
+              .replace(
+                '#include <common>',
+                `#include <common>
+                 uniform sampler2D uDepth;
+                 uniform float uEdgeStretch;
+                 uniform float uEdgeFeather;
+                 uniform float uBorderFade;
+                 uniform float uTime;
+                 uniform float uShimmer;
+                 uniform vec2  uDepthTexel;`
+              )
+              .replace(
+                '#include <map_fragment>',
+                `// --- Silhouette mask in UV space (view-angle independent) ---
+                 float _dC = texture2D(uDepth, vMapUv).r;
+                 float _dR = texture2D(uDepth, vMapUv + vec2(uDepthTexel.x, 0.0)).r;
+                 float _dD = texture2D(uDepth, vMapUv + vec2(0.0, uDepthTexel.y)).r;
+                 float _stretch = max(abs(_dC - _dR), abs(_dC - _dD));
+                 // Smooth falloff just below the discard threshold => AA edges
+                 float _silAlpha = 1.0 - smoothstep(uEdgeStretch - uEdgeFeather,
+                                                   uEdgeStretch, _stretch);
+
+                 // --- Ocean shimmer: warp the colour-sample UV on the water band ---
+                 vec2 _uvSample = vMapUv;
+                 if (uShimmer > 0.0) {
+                   // weight peaks at depth ~0.18..0.32 (ocean band in this map)
+                   float _w = smoothstep(0.10, 0.20, _dC) * (1.0 - smoothstep(0.32, 0.42, _dC));
+                   float _phase = uTime * 0.7 + vMapUv.x * 14.0 + vMapUv.y * 6.0;
+                   _uvSample.x += sin(_phase) * 0.0018 * uShimmer * _w;
+                   _uvSample.y += cos(_phase * 0.83) * 0.0010 * uShimmer * _w;
+                 }
+                 vec4 sampledDiffuseColor = texture2D(map, _uvSample);
+                 diffuseColor *= sampledDiffuseColor;
+                 // (replaces stock <map_fragment>)
+                 diffuseColor.a *= _silAlpha;
+
+                 // --- Rectangle border fade ---
+                 float _bf = max(uBorderFade, 0.0001);
+                 float _ex = smoothstep(0.0, _bf, vMapUv.x) * smoothstep(1.0, 1.0 - _bf, vMapUv.x);
+                 float _ey = smoothstep(0.0, _bf, vMapUv.y) * smoothstep(1.0, 1.0 - _bf, vMapUv.y);
+                 diffuseColor.a *= _ex * _ey;`
+              );
+          };
+
+          const mesh = new THREE.Mesh(geometry, material);
+          this.material = material;
+          this.el.setObject3D('mesh', mesh);
+        },
+
+        tick(time) {
+          // shader time in seconds, only sent if shimmer is active so we don't
+          // force a uniform write every frame on the static backdrop pass
+          if (this._uShimmer && this._uShimmer.value > 0.0) {
+            this._uTime.value = time * 0.001;
+          }
+        },
+
+        update(oldData) {
+          if (!this.material) return;
+          if (oldData.displacement !== this.data.displacement) this._uDisplacement.value = this.data.displacement;
+          if (oldData.edgeStretch !== this.data.edgeStretch)   this._uEdgeStretch.value = this.data.edgeStretch;
+          if (oldData.edgeFeather !== this.data.edgeFeather)   this._uEdgeFeather.value = this.data.edgeFeather;
+          if (oldData.borderFade  !== this.data.borderFade)    this._uBorderFade.value  = this.data.borderFade;
+          if (oldData.shimmer     !== this.data.shimmer)       this._uShimmer.value     = this.data.shimmer;
+        }
+      });
+
+      // Clamps the rig position every tick so the player can't walk through
+      // the mesh and out the back (where the world is just sky colour).
+      AFRAME.registerComponent('walk-bounds', {
+        schema: {
+          minX: { type: 'number', default: -10 },
+          maxX: { type: 'number', default:  10 },
+          minZ: { type: 'number', default: -3.5 },
+          maxZ: { type: 'number', default:  10 }
+        },
+        tick() {
+          const p = this.el.object3D.position;
+          const d = this.data;
+          if (p.x < d.minX) p.x = d.minX; else if (p.x > d.maxX) p.x = d.maxX;
+          if (p.z < d.minZ) p.z = d.minZ; else if (p.z > d.maxZ) p.z = d.maxZ;
+        }
+      });
+
+      // Q / E to tweak displacement live (useful to feel how the scene bends)
+      // M toggles the ambient bed mute.
+      window.addEventListener('keydown', (e) => {
+        const ents = document.querySelectorAll('[depth-mesh]');
+        if (e.key === 'q' || e.key === 'Q') {
+          ents.forEach((ent) => {
+            const cur = ent.getAttribute('depth-mesh').displacement;
+            ent.setAttribute('depth-mesh', 'displacement', Math.max(0, cur - 0.5));
+          });
+        }
+        if (e.key === 'e' || e.key === 'E') {
+          ents.forEach((ent) => {
+            const cur = ent.getAttribute('depth-mesh').displacement;
+            ent.setAttribute('depth-mesh', 'displacement', cur + 0.5);
+          });
+        }
+        if (e.key === 'm' || e.key === 'M') toggleAudio();
+      });
+
+      // ===== Mouse micro-parallax =====
+      // Before the user clicks to lock pointer, drag the camera wrapper a tiny
+      // amount with the cursor so the scene feels alive even when standing still.
+      // Once pointer locks, look-controls takes over and we reset the offset.
+      const parallaxWrap = document.querySelector('#parallaxWrap');
+      let parallaxTarget = { x: 0, y: 0 };
+      let parallaxCurrent = { x: 0, y: 0 };
+      window.addEventListener('mousemove', (e) => {
+        if (document.pointerLockElement) return;
+        const nx = (e.clientX / window.innerWidth - 0.5) * 2;
+        const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+        parallaxTarget.x = -nx * 0.35;
+        parallaxTarget.y =  ny * 0.18;
+      });
+      function tickParallax() {
+        parallaxCurrent.x += (parallaxTarget.x - parallaxCurrent.x) * 0.08;
+        parallaxCurrent.y += (parallaxTarget.y - parallaxCurrent.y) * 0.08;
+        if (parallaxWrap) parallaxWrap.object3D.position.set(parallaxCurrent.x, parallaxCurrent.y, 0);
+        requestAnimationFrame(tickParallax);
+      }
+      requestAnimationFrame(tickParallax);
+
+      // ===== Pointer-lock prompt =====
+      const promptEl = document.getElementById('prompt');
+      document.addEventListener('pointerlockchange', () => {
+        const locked = !!document.pointerLockElement;
+        promptEl.classList.toggle('hidden', locked);
+        if (locked) parallaxTarget = { x: 0, y: 0 };
+      });
+
+      // ===== Web Audio ambient bed =====
+      // All-synthesised: filtered pink noise modulated by an LFO for waves,
+      // plus four detuned oscillators forming a slow minor-pad chord.
+      // Browsers block AudioContext until a user gesture, so we wait for click.
+      let audioCtx = null;
+      let masterGain = null;
+      let muted = false;
+      function startAudio() {
+        if (audioCtx) return;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        audioCtx = new AC();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.3;
+        masterGain.connect(audioCtx.destination);
+
+        // ---- Waves: pink noise → lowpass → gain, with LFOs on filter + gain ----
+        const sr = audioCtx.sampleRate;
+        const buf = audioCtx.createBuffer(1, sr * 4, sr);
+        const data = buf.getChannelData(0);
+        let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+        for (let i = 0; i < data.length; i++) {
+          const w = Math.random() * 2 - 1;
+          b0 = 0.99886*b0 + w*0.0555179;
+          b1 = 0.99332*b1 + w*0.0750759;
+          b2 = 0.96900*b2 + w*0.1538520;
+          b3 = 0.86650*b3 + w*0.3104856;
+          b4 = 0.55000*b4 + w*0.5329522;
+          b5 = -0.7616*b5 - w*0.0168980;
+          data[i] = (b0+b1+b2+b3+b4+b5+b6 + w*0.5362) * 0.11;
+          b6 = w*0.115926;
+        }
+        const wavesSrc = audioCtx.createBufferSource();
+        wavesSrc.buffer = buf; wavesSrc.loop = true;
+        const wavesFilter = audioCtx.createBiquadFilter();
+        wavesFilter.type = 'lowpass';
+        wavesFilter.frequency.value = 700;
+        wavesFilter.Q.value = 0.7;
+        const wavesGain = audioCtx.createGain();
+        wavesGain.gain.value = 0.0;
+        wavesSrc.connect(wavesFilter); wavesFilter.connect(wavesGain); wavesGain.connect(masterGain);
+        wavesSrc.start();
+        // Wave-crash gain LFO
+        const wLfo = audioCtx.createOscillator();
+        wLfo.frequency.value = 0.13;
+        const wLfoAmt = audioCtx.createGain(); wLfoAmt.gain.value = 0.32;
+        wLfo.connect(wLfoAmt); wLfoAmt.connect(wavesGain.gain); wLfo.start();
+        // Filter sweep LFO
+        const fLfo = audioCtx.createOscillator();
+        fLfo.frequency.value = 0.09;
+        const fLfoAmt = audioCtx.createGain(); fLfoAmt.gain.value = 350;
+        fLfo.connect(fLfoAmt); fLfoAmt.connect(wavesFilter.frequency); fLfo.start();
+
+        // ---- Ambient pad: A minor chord with slow detune drift ----
+        const padGain = audioCtx.createGain();
+        padGain.gain.value = 0.0;
+        padGain.connect(masterGain);
+        [110, 164.81, 220, 329.63].forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          osc.type = i < 2 ? 'sine' : 'triangle';
+          osc.frequency.value = f;
+          const og = audioCtx.createGain();
+          og.gain.value = 0.18 / 4;
+          osc.connect(og); og.connect(padGain); osc.start();
+          const dLfo = audioCtx.createOscillator();
+          dLfo.frequency.value = 0.06 + i * 0.014;
+          const dAmt = audioCtx.createGain(); dAmt.gain.value = 9;
+          dLfo.connect(dAmt); dAmt.connect(osc.detune); dLfo.start();
+        });
+
+        const t = audioCtx.currentTime;
+        wavesGain.gain.setValueAtTime(0, t);
+        wavesGain.gain.linearRampToValueAtTime(0.5, t + 2.0);
+        padGain.gain.setValueAtTime(0, t);
+        padGain.gain.linearRampToValueAtTime(0.55, t + 4.0);
+      }
+      function toggleAudio() {
+        if (!masterGain || !audioCtx) return;
+        muted = !muted;
+        masterGain.gain.linearRampToValueAtTime(muted ? 0 : 0.3, audioCtx.currentTime + 0.3);
+      }
+      // First interaction kicks off audio (browsers require a gesture).
+      window.addEventListener('click', startAudio, { once: true });
+      window.addEventListener('keydown', startAudio, { once: true });
+    </script>
+  </body>
+</html>
