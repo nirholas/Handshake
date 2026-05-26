@@ -296,6 +296,29 @@ export const env = {
 	get X402_PAY_TO_BSC() {
 		return opt('X402_PAY_TO_BSC', '0x00000000381f09742a30a5a49975514AeC1B72Cc');
 	},
+	// ── AWS Marketplace ──────────────────────────────────────────────────────
+	// IAM credentials with marketplaceMetering:ResolveCustomer,
+	// marketplaceMetering:MeterUsage, and aws-marketplace:GetEntitlements.
+	// Keep separate from S3_* credentials so each key has minimal permissions.
+	get AWS_MP_ACCESS_KEY_ID() {
+		return req('AWS_MP_ACCESS_KEY_ID');
+	},
+	get AWS_MP_SECRET_ACCESS_KEY() {
+		return req('AWS_MP_SECRET_ACCESS_KEY');
+	},
+	get AWS_MP_REGION() {
+		return opt('AWS_MP_REGION', 'us-east-1');
+	},
+	// Product code from the AWS Marketplace listing (shown in Seller portal).
+	get AWS_MP_PRODUCT_CODE() {
+		return req('AWS_MP_PRODUCT_CODE');
+	},
+	// SNS topic ARN that AWS sends subscription notifications to. Used to
+	// reject SNS messages that did not originate from the Marketplace topic.
+	get AWS_MP_SNS_TOPIC_ARN() {
+		return opt('AWS_MP_SNS_TOPIC_ARN');
+	},
+
 	// Optional operator EOA private key for scripts/erc8004-mint-bsc.mjs.
 	// Used to register marketplace agents on the BSC IdentityRegistry. Never
 	// referenced by request handlers — keep it out of the serverless surface.
