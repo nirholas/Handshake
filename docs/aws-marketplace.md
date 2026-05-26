@@ -43,4 +43,4 @@ These endpoints are called automatically by AWS during the subscription flow. Yo
 
 For billing questions related to your AWS Marketplace subscription, contact [AWS Support](https://aws.amazon.com/contact-us/).
 
-For platform support, open a ticket at [https://three.ws/support](https://three.ws/support).
+For platform support, open an issue at [github.com/nirholas/three.ws/issues](https://github.com/nirholas/three.ws/issues).
