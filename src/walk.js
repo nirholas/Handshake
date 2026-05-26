@@ -447,6 +447,15 @@ async function loadAvatar() {
 	CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
 	applyCameraImmediate();
 
+	// On touch devices, freeze the camera so the joystick walks the avatar
+	// around in world space — the avatar then visibly approaches/recedes via
+	// natural perspective instead of being pinned to screen-center by a follow
+	// cam. AR turns this on for everyone separately.
+	if (IS_TOUCH) {
+		arFrozenCamPos = camera.position.clone();
+		arFrozenCamLook = camLookCurrent.clone();
+	}
+
 	animationManager.attach(avatar);
 
 	// Load only the three clips the controller actually uses — keeps startup
@@ -599,9 +608,19 @@ function disableAR() {
 	// Hide blob shadow.
 	blobShadow.material.opacity = 0;
 
-	// Resume follow-camera behavior.
-	arFrozenCamPos = null;
-	arFrozenCamLook = null;
+	if (IS_TOUCH) {
+		// Touch devices keep the camera frozen even outside AR — re-derive a
+		// fresh third-person pose centered on the current avatar position so
+		// the avatar is back in frame when AR turns off.
+		const off = CAM_OFFSET.clone().multiplyScalar(camZoom);
+		off.applyAxisAngle(new Vector3(1, 0, 0), -cameraPitch);
+		off.applyAxisAngle(new Vector3(0, 1, 0), cameraYaw);
+		arFrozenCamPos = avatarRig.position.clone().add(off);
+		arFrozenCamLook = avatarRig.position.clone().add(CAM_LOOK_OFFSET);
+	} else {
+		arFrozenCamPos = null;
+		arFrozenCamLook = null;
+	}
 
 	setStatus('AR off');
 }
@@ -827,6 +846,8 @@ const moveForward = new Vector3();
 const moveRight = new Vector3();
 const tmpQuat = new Quaternion();
 const upY = new Vector3(0, 1, 0);
+const _camFwdTmp = new Vector3();
+const _camToAvatarTmp = new Vector3();
 
 function readMoveInput() {
 	let ix, iy;
@@ -932,8 +953,23 @@ function tick() {
 	avatarLean += (targetLean - avatarLean) * LEAN_LERP;
 	if (avatar) avatar.rotation.x = avatarLean;
 
-	// 2. Update camera — frozen in AR, follow-rig otherwise.
+	// 2. Update camera — frozen on touch / in AR, follow-rig on desktop non-AR.
 	if (arFrozenCamPos && arFrozenCamLook) {
+		// Clamp the avatar so it can't walk through (or past) the frozen camera.
+		// We project (avatar - camera) onto the ground-plane camera-forward axis
+		// and push the avatar back to a minimum forward distance.
+		_camFwdTmp.subVectors(arFrozenCamLook, arFrozenCamPos);
+		_camFwdTmp.y = 0;
+		if (_camFwdTmp.lengthSq() > 1e-6) {
+			_camFwdTmp.normalize();
+			_camToAvatarTmp.subVectors(avatarRig.position, arFrozenCamPos);
+			_camToAvatarTmp.y = 0;
+			const forwardDist = _camToAvatarTmp.dot(_camFwdTmp);
+			const MIN_FRONT_DIST = 0.8;
+			if (forwardDist < MIN_FRONT_DIST) {
+				avatarRig.position.addScaledVector(_camFwdTmp, MIN_FRONT_DIST - forwardDist);
+			}
+		}
 		camera.position.copy(arFrozenCamPos);
 		camLookCurrent.copy(arFrozenCamLook);
 		camera.lookAt(camLookCurrent);
