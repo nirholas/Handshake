@@ -154,21 +154,21 @@ export async function runSolanaDeploy({ agent, network, vanity }) {
 	const prep = await prepResp.json();
 	const tx = decodeBase64Tx(prep.tx_base64);
 
-	// If we used a vanity keypair, the server built the tx with a noop signer
-	// for the asset slot — we must fill it in here before the wallet signs.
-	// VersionedTransaction.sign() only modifies signatures whose pubkey matches
-	// a provided signer, so the wallet sig slot is preserved as zero for Phantom.
-	if (vanityKeypair && tx instanceof VersionedTransaction) {
-		tx.sign([vanityKeypair]);
-	} else if (vanityKeypair && tx instanceof Transaction) {
-		tx.partialSign(vanityKeypair);
-	}
-
 	// Always sign locally and submit via our Helius-backed proxy. Wallet
 	// `signAndSendTransaction` routes through the wallet's own RPC, which
 	// returns 403 "Access forbidden" intermittently on mainnet.
+	// Phantom Lighthouse requires the wallet to sign FIRST when there are
+	// multiple signers; if a vanity keypair is in play, the server built the tx
+	// with a noop signer for the asset slot and we fill it in after Phantom.
+	// VersionedTransaction.sign() / Transaction.partialSign() only update the
+	// matching signer's slot, so Phantom's signature is preserved.
 	const endpoint = RPC[network] || RPC.mainnet;
 	const signed = await wallet.signTransaction(tx);
+	if (vanityKeypair && signed instanceof VersionedTransaction) {
+		signed.sign([vanityKeypair]);
+	} else if (vanityKeypair && signed instanceof Transaction) {
+		signed.partialSign(vanityKeypair);
+	}
 	const conn2 = new Connection(endpoint, 'confirmed');
 	const raw = signed.serialize();
 	const signature = await conn2.sendRawTransaction(raw, {

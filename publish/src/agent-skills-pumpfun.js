@@ -67,8 +67,10 @@ async function sendIxs({ web3, connection, wallet, payer, instructions, extraSig
 	const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 	const tx = new web3.Transaction({ feePayer: payer, blockhash, lastValidBlockHeight });
 	tx.add(...instructions);
-	if (extraSigners.length) tx.partialSign(...extraSigners);
+	// Phantom Lighthouse requires the wallet to sign FIRST when there are
+	// multiple signers; additional signers must sign afterward.
 	const signed = await wallet.signTransaction(tx);
+	if (extraSigners.length) signed.partialSign(...extraSigners);
 	const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
 	await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight });
 	return sig;

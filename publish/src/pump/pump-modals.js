@@ -163,8 +163,10 @@ async function signAndSend(txBase64, { extraSigners = [], network = 'mainnet' } 
 	const tx = VersionedTransaction.deserialize(
 		Uint8Array.from(atob(txBase64), (c) => c.charCodeAt(0)),
 	);
-	for (const kp of extraSigners) tx.sign([kp]);
+	// Phantom Lighthouse requires the wallet to sign FIRST when there are
+	// multiple signers; additional signers must sign afterward.
 	const signed = await wallet.signTransaction(tx);
+	for (const kp of extraSigners) signed.sign([kp]);
 	const conn = new Connection(RPC(network), 'confirmed');
 	const sig = await conn.sendRawTransaction(signed.serialize(), {
 		skipPreflight: false,
@@ -210,8 +212,10 @@ export async function signAndSendVTx(
 		toSign = new VersionedTransaction(merged);
 	}
 
-	for (const kp of extraSigners) toSign.sign([kp]);
+	// Phantom Lighthouse requires the wallet to sign FIRST when there are
+	// multiple signers; additional signers must sign afterward.
 	const signed = await w.signTransaction(toSign);
+	for (const kp of extraSigners) signed.sign([kp]);
 	const sig = await conn.sendRawTransaction(signed.serialize(), {
 		skipPreflight: false,
 	});

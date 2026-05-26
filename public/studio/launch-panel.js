@@ -1053,12 +1053,14 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const tx = VersionedTransaction.deserialize(
 			Uint8Array.from(atob(prep.tx_base64), (c) => c.charCodeAt(0)),
 		);
+		// Phantom Lighthouse requires the wallet to sign FIRST when there are
+		// multiple signers; additional signers must sign afterward.
+		const signed = await w.signTransaction(tx);
 		if (prep.mint_secret_key_b64) {
-			tx.sign([Keypair.fromSecretKey(
+			signed.sign([Keypair.fromSecretKey(
 				Uint8Array.from(atob(prep.mint_secret_key_b64), (c) => c.charCodeAt(0)),
 			)]);
 		}
-		const signed = await w.signTransaction(tx);
 
 		// Send + poll confirmation (75s timeout)
 		s.phase = 'confirming'; s.phaseLabel = 'Confirming on-chain…'; render();
