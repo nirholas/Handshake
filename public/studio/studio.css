@@ -1469,3 +1469,13 @@ a:hover {
 }
 .kp-transcripts-link a { color: var(--accent-strong, #b794f6); text-decoration: none; }
 .kp-transcripts-link a:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+	.field select,
+	.field input,
+	.field textarea,
+	.copy-row input,
+	.copy-row textarea {
+		font-size: max(16px, 1em);
+	}
+}

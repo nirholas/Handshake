@@ -2712,3 +2712,10 @@
 		animation: none !important;
 	}
 }
+
+@media (max-width: 768px) {
+	.h-form-select,
+	.h-form-input {
+		font-size: max(16px, 1em);
+	}
+}

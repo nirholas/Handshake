@@ -546,3 +546,9 @@
 		bottom: 18%;
 	}
 }
+
+@media (max-width: 768px) {
+	.h-footer-newsletter-input {
+		font-size: max(16px, 1em);
+	}
+}
