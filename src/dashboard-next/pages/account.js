@@ -176,9 +176,9 @@ async function copyToClipboard(text) {
 			<section class="dn-panel" data-section="quick-links">
 				<div class="dn-panel-title" style="margin-bottom:12px">More settings</div>
 				<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
-					<a class="dn-btn" href="/dashboard-next/settings" style="justify-content:center">Sessions &amp; notifications →</a>
-					<a class="dn-btn" href="/dashboard-next/settings" style="justify-content:center">Storage &amp; LLM usage →</a>
-					<a class="dn-btn" href="/dashboard-next/settings" style="justify-content:center">Preferences →</a>
+					<a class="dn-btn" href="/dashboard/settings" style="justify-content:center">Sessions &amp; notifications →</a>
+					<a class="dn-btn" href="/dashboard/settings" style="justify-content:center">Storage &amp; LLM usage →</a>
+					<a class="dn-btn" href="/dashboard/settings" style="justify-content:center">Preferences →</a>
 					<a class="dn-btn" href="/onchain" target="_blank" rel="noopener" style="justify-content:center">ERC-8004 registry ↗</a>
 				</div>
 			</section>
@@ -352,7 +352,7 @@ function renderProfile(host, me) {
 					${handle ? `@${esc(handle)}` : ''}${handle && me.email ? ' · ' : ''}${me.email ? esc(me.email) : ''}${me.email ? verified : ''}
 				</div>
 				<div style="color:var(--nxt-ink-fade);font-size:12.5px;margin-top:6px">
-					Member since ${esc(memberSince)} · Plan: <a href="/dashboard-next/monetize" style="color:var(--nxt-accent)">${esc(planName)}</a>
+					Member since ${esc(memberSince)} · Plan: <a href="/dashboard/monetize" style="color:var(--nxt-accent)">${esc(planName)}</a>
 				</div>
 			</div>
 
@@ -625,7 +625,7 @@ async function loadDelegations(host) {
 				<div class="dn-empty" style="padding:32px 24px">
 					<h3>No agents to delegate</h3>
 					<p>Create an agent first, then return here to let another agent answer on its behalf.</p>
-					<a class="dn-btn" href="/dashboard-next/avatars">Create an agent →</a>
+					<a class="dn-btn" href="/dashboard/avatars">Create an agent →</a>
 				</div>`;
 			return;
 		}

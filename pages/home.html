@@ -53,12 +53,15 @@
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/home.css" />
-		<link rel="stylesheet" href="/home-polish.css" />
-		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<!-- mobile.css must load last so its rules win on equal specificity -->
+		<link rel="stylesheet" href="/mobile.css" />
+		<!-- home-polish and footer styles are non-critical (below-fold / decorative);
+		     load them after first paint to avoid blocking LCP. -->
+		<link rel="stylesheet" href="/home-polish.css" media="print" onload="this.media='all'" />
+		<link rel="stylesheet" href="/footer.css" media="print" onload="this.media='all'" />
 		<script defer src="/footer-newsletter.js"></script>
 		<script defer src="/home-polish.js"></script>
-		<link rel="stylesheet" href="/fonts/fonts.css" />
-		<link rel="stylesheet" href="/mobile.css" />
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
@@ -864,6 +867,13 @@
 			// see the avatars (without auto-rotate); skipping rendering for them left
 			// the bento/Act 2/Act 3 canvases permanently blank.
 			const SKIP_OFFSCREEN_GL = LOW_MEMORY;
+
+			// Footer model-viewer is decorative — skip on low-memory devices to
+			// avoid hitting the WebGL context limit alongside the bento/act viewers.
+			if (LOW_MEMORY) {
+				const footerAvatar = document.querySelector('.h-footer-avatar');
+				if (footerAvatar) footerAvatar.hidden = true;
+			}
 
 			// Scroll reveal — use viewport (root: null) so IntersectionObserver
 			// avoids the perspective transform on .home-parallax breaking intersection math.

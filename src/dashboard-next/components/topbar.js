@@ -73,8 +73,8 @@ export function mountTopbarBehavior(shellEl) {
 		}
 		if (e.target.closest?.('[data-action="back-to-classic"]')) {
 			localStorage.removeItem('dashboard-version');
-			const path = location.pathname.replace(/^\/dashboard-next/, '/dashboard');
-			location.href = path || '/dashboard';
+			const path = location.pathname.replace(/^\/dashboard/, '/dashboard-classic');
+			location.href = path || '/dashboard-classic';
 			return;
 		}
 		if (e.target.closest?.('[data-action="toggle-notifs"]')) {
@@ -163,7 +163,7 @@ function toggleNotifsDropdown(btn) {
 	drop.innerHTML = `
 		<div style="padding:12px 16px;border-bottom:1px solid var(--nxt-stroke);display:flex;align-items:center;justify-content:space-between">
 			<span style="font-size:13.5px;font-weight:600">Notifications</span>
-			<a href="/dashboard-next/settings" style="font-size:12px;color:var(--nxt-accent)">Settings →</a>
+			<a href="/dashboard/settings" style="font-size:12px;color:var(--nxt-accent)">Settings →</a>
 		</div>
 		<div data-slot="notif-items" style="padding:8px 0">
 			<div style="padding:14px 16px;color:var(--nxt-ink-dim);font-size:13px">Loading…</div>
@@ -234,9 +234,9 @@ function toggleUserMenu(chip) {
 			<div style="margin-top:6px"><span class="dn-tag" style="font-size:11px;text-transform:capitalize">${esc(plan)}</span></div>
 		</div>
 		<div style="padding:6px 0">
-			<a href="/dashboard-next/portfolio" class="dn-user-menu-item">Portfolio & NFTs</a>
-			<a href="/dashboard-next/account" class="dn-user-menu-item">Account</a>
-			<a href="/dashboard-next/settings" class="dn-user-menu-item">Settings</a>
+			<a href="/dashboard/portfolio" class="dn-user-menu-item">Portfolio & NFTs</a>
+			<a href="/dashboard/account" class="dn-user-menu-item">Account</a>
+			<a href="/dashboard/settings" class="dn-user-menu-item">Settings</a>
 			${wallet ? `<button class="dn-user-menu-item" data-action="copy-wallet" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:inherit">Copy wallet address</button>` : ''}
 			${email ? `<button class="dn-user-menu-item" data-action="copy-email" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:inherit">Copy email</button>` : ''}
 		</div>

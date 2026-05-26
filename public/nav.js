@@ -88,7 +88,10 @@ function initBurger(root) {
 
 	const backdrop = document.createElement('div');
 	backdrop.className = 'nav-backdrop';
-	document.body.appendChild(backdrop);
+	// Must be in the same stacking context as nav-root: header's backdrop-filter
+	// creates a stacking context (z-index 200 in root), so a backdrop appended
+	// to body at z-index 997 paints above the nav panel at z-index 1001-within-header.
+	(root.parentElement ?? document.body).appendChild(backdrop);
 
 	function close() {
 		burger.setAttribute('aria-expanded', 'false');

@@ -929,6 +929,12 @@
 		grid-column: span 2;
 		grid-row: auto;
 	}
+	/* Give the visual area a stable height so the layout doesn't shift when
+	   the model-viewer canvas initialises (prevents CLS on mobile). */
+	.h-bento-card--lg .h-bento-visual {
+		aspect-ratio: 4 / 3;
+		min-height: unset;
+	}
 	.h-dev-inner {
 		grid-template-columns: 1fr;
 	}
@@ -941,6 +947,10 @@
 	.h-bento-card--lg {
 		grid-column: span 1;
 		grid-row: auto;
+	}
+	.h-bento-card--lg .h-bento-visual {
+		aspect-ratio: 1 / 1;
+		min-height: unset;
 	}
 	.h-trust-inner {
 		gap: 1rem;
@@ -2570,6 +2580,14 @@
 		transform: none;
 		animation: none;
 		position: absolute;
+	}
+
+	/* No GPU compositing hints needed on mobile — perspective is disabled and
+	   will-change just wastes VRAM on low-end devices. */
+	.h-bento-visual,
+	.h-avatar-wrap {
+		will-change: auto;
+		transform: none;
 	}
 
 	.h-avatar-stage {

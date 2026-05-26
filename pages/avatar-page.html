@@ -236,16 +236,6 @@
 				gap: 8px;
 				align-items: stretch;
 			}
-			.av-cta-edit-link {
-				align-self: center;
-				color: var(--text-3);
-				font-size: 12px;
-				text-decoration: none;
-				padding: 2px 4px;
-				border-radius: 4px;
-				transition: color 0.15s;
-			}
-			.av-cta-edit-link:hover { color: var(--text); }
 			.av-cta-talk {
 				width: 100%;
 				background: linear-gradient(135deg, #7dd3fc 0%, #a78bfa 100%);
@@ -323,6 +313,96 @@
 				transition: border-color 0.15s, color 0.15s;
 			}
 			.av-cta-sec:hover { border-color: var(--text-2); }
+
+			/* ── Owner actions row ───────────────────────── */
+			.av-owner-row {
+				display: flex;
+				gap: 6px;
+				padding: 0 24px 14px;
+				flex-wrap: wrap;
+			}
+			.av-owner-btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				padding: 7px 11px;
+				background: transparent;
+				border: 1px solid var(--border-2);
+				border-radius: 8px;
+				color: var(--text-2);
+				font-size: 12px;
+				font-weight: 500;
+				font-family: inherit;
+				cursor: pointer;
+				text-decoration: none;
+				transition: border-color 0.15s, color 0.15s, background 0.15s;
+				white-space: nowrap;
+			}
+			.av-owner-btn:hover {
+				border-color: var(--text-3);
+				color: var(--text);
+				background: rgba(255,255,255,0.04);
+			}
+			.av-owner-btn svg { flex-shrink: 0; }
+
+			/* ── Pump.fun launch modal ────────────────────── */
+			.av-pump-backdrop {
+				position: fixed;
+				inset: 0;
+				background: rgba(0,0,0,0.72);
+				backdrop-filter: blur(6px);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 9999;
+				padding: 1rem;
+			}
+			.av-pump-modal {
+				width: 100%;
+				max-width: 480px;
+				max-height: 90vh;
+				overflow-y: auto;
+				background: #111;
+				border: 1px solid var(--border-2);
+				border-radius: 16px;
+				display: flex;
+				flex-direction: column;
+				box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+			}
+			.av-pump-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 14px 18px 12px;
+				border-bottom: 1px solid var(--border);
+				flex-shrink: 0;
+			}
+			.av-pump-title {
+				font-size: 14px;
+				font-weight: 600;
+				color: var(--text);
+			}
+			.av-pump-close {
+				background: transparent;
+				border: 1px solid var(--border-2);
+				color: var(--text-3);
+				width: 26px;
+				height: 26px;
+				border-radius: 50%;
+				cursor: pointer;
+				font-size: 16px;
+				line-height: 1;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-family: inherit;
+				transition: color 0.15s, border-color 0.15s;
+			}
+			.av-pump-close:hover { color: var(--text); border-color: var(--text-3); }
+			.av-pump-inner {
+				padding: 18px;
+				flex: 1;
+			}
 
 			/* Download menu — anchored to #av-download */
 			.av-download-menu {

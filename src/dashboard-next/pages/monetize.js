@@ -989,12 +989,12 @@ function renderTokensPanel(agents) {
 					<div class="dn-panel-title">Token earnings</div>
 					<div class="dn-panel-sub" style="margin:2px 0 0">Royalties from Pump.fun tokens your agents launched.</div>
 				</div>
-				<a class="dn-btn" href="/dashboard-next/tokens">Token dashboard →</a>
+				<a class="dn-btn" href="/dashboard/tokens">Token dashboard →</a>
 			</div>
 			<div class="dn-empty">
 				<h3>No tokens launched</h3>
 				<p>Launch a Pump.fun token from any agent to earn royalties on every trade.</p>
-				<a class="dn-btn primary" href="/dashboard-next/agents">Go to Agents →</a>
+				<a class="dn-btn primary" href="/dashboard/agents">Go to Agents →</a>
 			</div>
 		`;
 		return panel;
@@ -1006,7 +1006,7 @@ function renderTokensPanel(agents) {
 				<div class="dn-panel-title">Token earnings</div>
 				<div class="dn-panel-sub" style="margin:2px 0 0">Royalties from Pump.fun tokens your agents launched.</div>
 			</div>
-			<a class="dn-btn" href="/dashboard-next/tokens">Full token dashboard →</a>
+			<a class="dn-btn" href="/dashboard/tokens">Full token dashboard →</a>
 		</div>
 		<div style="overflow-x:auto">
 			<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px">

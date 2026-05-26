@@ -264,7 +264,7 @@ function renderStorage(summary) {
 		</div>
 		<div style="margin-top:14px;font-size:12.5px;color:var(--nxt-ink-dim)">
 			${totalBytes > 0 ? `Using ${fmtBytes(totalBytes)}${maxBytes ? ` of ${fmtBytes(maxBytes)} on your plan.` : '.'}` : 'No usage data available.'}
-			<a href="/dashboard-next/monetize" style="color:var(--nxt-accent);margin-left:8px">Upgrade plan →</a>
+			<a href="/dashboard/monetize" style="color:var(--nxt-accent);margin-left:8px">Upgrade plan →</a>
 		</div>
 	`;
 	return panel;

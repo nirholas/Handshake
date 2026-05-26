@@ -73,7 +73,7 @@ export async function renderStrategy(host) {
 				<p>Strategy is scoped to one agent. Create one to get started.</p>
 				<div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
 					<a class="dn-btn primary" href="/create">Create an agent</a>
-					<a class="dn-btn ghost"   href="/dashboard-next/account">Account</a>
+					<a class="dn-btn ghost"   href="/dashboard/account">Account</a>
 				</div>
 			</div>
 		`;

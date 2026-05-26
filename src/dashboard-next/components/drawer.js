@@ -636,7 +636,7 @@ function describeEvent(ev) {
 			return {
 				title,
 				subtitle: [amount, from && `from ${shorten(from)}`].filter(Boolean).join(' · '),
-				link:     { label: 'Open monetize', href: '/dashboard-next/monetize' },
+				link:     { label: 'Open monetize', href: '/dashboard/monetize' },
 			};
 		}
 		case 'avatar.updated': {
@@ -646,7 +646,7 @@ function describeEvent(ev) {
 				title:    'Avatar updated',
 				subtitle: name || (id ? shorten(id) : ''),
 				link:     id ? { label: 'Open avatar', href: `/avatars/${encodeURIComponent(id)}` }
-				             : { label: 'Open avatars', href: '/dashboard-next/avatars' },
+				             : { label: 'Open avatars', href: '/dashboard/avatars' },
 			};
 		}
 		case 'withdrawal.completed': {

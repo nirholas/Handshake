@@ -15,23 +15,23 @@
 
 export const NAV = [
 	// ── Create ──────────────────────────────────────────────────────────
-	{ path: '/dashboard-next',             label: 'Overview',        icon: 'home',      group: 'Create',     tags: ['home', 'dashboard', 'start'] },
-	{ path: '/dashboard-next/avatars',     label: 'Avatars',         icon: 'avatar',    group: 'Create',     tags: ['models', 'glb', 'creations', 'selfie', 'upload'] },
-	{ path: '/dashboard-next/agents',      label: 'Agents',          icon: 'agent',     group: 'Create',     tags: ['bot', 'ai', 'identity', 'erc-8004', 'persona', 'reputation'] },
-	{ path: '/dashboard-next/library',     label: 'Library',         icon: 'library',   group: 'Create',     tags: ['animations', 'memory', 'voice', 'strategy', 'clips', 'strategy-lab'] },
+	{ path: '/dashboard',             label: 'Overview',        icon: 'home',      group: 'Create',     tags: ['home', 'dashboard', 'start'] },
+	{ path: '/dashboard/avatars',     label: 'Avatars',         icon: 'avatar',    group: 'Create',     tags: ['models', 'glb', 'creations', 'selfie', 'upload'] },
+	{ path: '/dashboard/agents',      label: 'Agents',          icon: 'agent',     group: 'Create',     tags: ['bot', 'ai', 'identity', 'erc-8004', 'persona', 'reputation'] },
+	{ path: '/dashboard/library',     label: 'Library',         icon: 'library',   group: 'Create',     tags: ['animations', 'memory', 'voice', 'strategy', 'clips', 'strategy-lab'] },
 
 	// ── Distribute ──────────────────────────────────────────────────────
-	{ path: '/dashboard-next/widgets',     label: 'Widgets',         icon: 'widget',    group: 'Distribute', tags: ['embed', 'iframe', '<threews-avatar>', 'transcripts', 'knowledge'] },
-	{ path: '/dashboard-next/api',         label: 'API & Embed',     icon: 'code',      group: 'Distribute', tags: ['keys', 'token', 'mcp', 'snippets', 'embed-policy'] },
+	{ path: '/dashboard/widgets',     label: 'Widgets',         icon: 'widget',    group: 'Distribute', tags: ['embed', 'iframe', '<threews-avatar>', 'transcripts', 'knowledge'] },
+	{ path: '/dashboard/api',         label: 'API & Embed',     icon: 'code',      group: 'Distribute', tags: ['keys', 'token', 'mcp', 'snippets', 'embed-policy'] },
 
 	// ── Monetize ────────────────────────────────────────────────────────
-	{ path: '/dashboard-next/monetize',    label: 'Monetize',        icon: 'coin',      group: 'Monetize',   tags: ['revenue', 'payments', 'subscriptions', 'withdrawals', 'earnings', 'plan', 'billing'] },
-	{ path: '/dashboard-next/tokens',      label: 'Tokens',          icon: 'token',     group: 'Monetize',   tags: ['pump.fun', 'launch', 'bonding curve', 'royalties', 'trade'] },
-	{ path: '/dashboard-next/portfolio',   label: 'Portfolio & NFTs', icon: 'portfolio', group: 'Monetize',  tags: ['nft', 'holdings', 'balances', 'wallet', 'collection'] },
+	{ path: '/dashboard/monetize',    label: 'Monetize',        icon: 'coin',      group: 'Monetize',   tags: ['revenue', 'payments', 'subscriptions', 'withdrawals', 'earnings', 'plan', 'billing'] },
+	{ path: '/dashboard/tokens',      label: 'Tokens',          icon: 'token',     group: 'Monetize',   tags: ['pump.fun', 'launch', 'bonding curve', 'royalties', 'trade'] },
+	{ path: '/dashboard/portfolio',   label: 'Portfolio & NFTs', icon: 'portfolio', group: 'Monetize',  tags: ['nft', 'holdings', 'balances', 'wallet', 'collection'] },
 
 	// ── Account ─────────────────────────────────────────────────────────
-	{ path: '/dashboard-next/account',     label: 'Account',         icon: 'user',      group: 'Account',    tags: ['wallets', 'sns', 'delegation', 'profile', 'action log', 'provider keys'] },
-	{ path: '/dashboard-next/settings',    label: 'Settings',        icon: 'settings',  group: 'Account',    tags: ['sessions', 'notifications', 'preferences', 'storage', 'llm usage', 'vanity'] },
+	{ path: '/dashboard/account',     label: 'Account',         icon: 'user',      group: 'Account',    tags: ['wallets', 'sns', 'delegation', 'profile', 'action log', 'provider keys'] },
+	{ path: '/dashboard/settings',    label: 'Settings',        icon: 'settings',  group: 'Account',    tags: ['sessions', 'notifications', 'preferences', 'storage', 'llm usage', 'vanity'] },
 	{ path: '/onchain',                    label: 'On-chain (ERC-8004)', icon: 'chain', group: 'Account',    tags: ['erc8004', 'registry', 'onchain', 'identity'], external: true },
 	{ path: '/discover',                   label: 'Discover on-chain',   icon: 'globe', group: 'Account',    tags: ['explore', 'discover', 'directory'], external: true },
 ];
@@ -59,6 +59,6 @@ export const ICONS = {
 export function currentRoute(pathname = location.pathname) {
 	const exact = NAV.find((r) => r.path === pathname);
 	if (exact) return exact;
-	return NAV.find((r) => r.path !== '/dashboard-next' && pathname.startsWith(r.path)) ||
-		NAV.find((r) => r.path === '/dashboard-next');
+	return NAV.find((r) => r.path !== '/dashboard' && pathname.startsWith(r.path)) ||
+		NAV.find((r) => r.path === '/dashboard');
 }

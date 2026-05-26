@@ -83,7 +83,7 @@ function renderBalances(balances, wallets) {
 				<div class="dn-panel-title">Token balances</div>
 				<div class="dn-panel-sub" style="margin:2px 0 0">Across ${wallets.length} linked wallet${wallets.length === 1 ? '' : 's'}.</div>
 			</div>
-			<a class="dn-btn" href="/dashboard-next/account">Manage wallets →</a>
+			<a class="dn-btn" href="/dashboard/account">Manage wallets →</a>
 		</div>
 		<div data-slot="balances"></div>
 	`;
@@ -95,7 +95,7 @@ function renderBalances(balances, wallets) {
 			<div class="dn-empty">
 				<h3>No wallets linked</h3>
 				<p>Link a wallet to see your token balances.</p>
-				<a class="dn-btn primary" href="/dashboard-next/account">Link wallet →</a>
+				<a class="dn-btn primary" href="/dashboard/account">Link wallet →</a>
 			</div>`;
 		return panel;
 	}
@@ -169,7 +169,7 @@ function renderNftAvatars(nftAvatars) {
 				<div class="dn-panel-title">Avatar NFTs</div>
 				<div class="dn-panel-sub" style="margin:2px 0 0">Avatars you've minted on-chain as NFTs.</div>
 			</div>
-			<a class="dn-btn" href="/dashboard-next/avatars">All avatars →</a>
+			<a class="dn-btn" href="/dashboard/avatars">All avatars →</a>
 		</div>
 		<div data-slot="nfts"></div>
 	`;
@@ -180,7 +180,7 @@ function renderNftAvatars(nftAvatars) {
 			<div class="dn-empty">
 				<h3>No avatar NFTs</h3>
 				<p>Mint an avatar as an NFT to anchor your 3D identity on-chain.</p>
-				<a class="dn-btn primary" href="/dashboard-next/avatars">View avatars →</a>
+				<a class="dn-btn primary" href="/dashboard/avatars">View avatars →</a>
 			</div>`;
 		return panel;
 	}
@@ -217,7 +217,7 @@ function renderPumpTokens(pumpAgents) {
 				<div class="dn-panel-title">Pump.fun tokens</div>
 				<div class="dn-panel-sub" style="margin:2px 0 0">Tokens your agents launched on Pump.fun.</div>
 			</div>
-			<a class="dn-btn" href="/dashboard-next/tokens">Token dashboard →</a>
+			<a class="dn-btn" href="/dashboard/tokens">Token dashboard →</a>
 		</div>
 		<div data-slot="tokens"></div>
 	`;
@@ -228,7 +228,7 @@ function renderPumpTokens(pumpAgents) {
 			<div class="dn-empty">
 				<h3>No tokens launched</h3>
 				<p>Launch a Pump.fun token from any of your agents to see it here.</p>
-				<a class="dn-btn primary" href="/dashboard-next/tokens">Token dashboard →</a>
+				<a class="dn-btn primary" href="/dashboard/tokens">Token dashboard →</a>
 			</div>`;
 		return panel;
 	}

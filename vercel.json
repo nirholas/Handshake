@@ -520,12 +520,180 @@
 			"dest": "/app-next.html"
 		},
 		{
-			"src": "/dashboard",
-			"dest": "/dashboard/index.html"
+			"src": "/dashboard-classic/?",
+			"dest": "/dashboard-classic/index.html"
 		},
 		{
-			"src": "/dashboard/",
-			"dest": "/dashboard/index.html"
+			"src": "/dashboard-classic/portfolio/asset",
+			"dest": "/dashboard-classic/portfolio-asset.html"
+		},
+		{
+			"src": "/dashboard-classic/portfolio",
+			"dest": "/dashboard-classic/portfolio.html"
+		},
+		{
+			"src": "/dashboard-classic/wallets",
+			"dest": "/dashboard-classic/wallets.html"
+		},
+		{
+			"src": "/dashboard-classic/sessions",
+			"dest": "/dashboard-classic/sessions.html"
+		},
+		{
+			"src": "/dashboard-classic/actions",
+			"dest": "/dashboard-classic/actions.html"
+		},
+		{
+			"src": "/dashboard-classic/embed-policy",
+			"dest": "/dashboard-classic/embed-policy.html"
+		},
+		{
+			"src": "/dashboard-classic/memory",
+			"dest": "/dashboard-classic/memory.html"
+		},
+		{
+			"src": "/dashboard-classic/strategy",
+			"dest": "/dashboard-classic/strategy.html"
+		},
+		{
+			"src": "/dashboard-classic/voice",
+			"dest": "/dashboard-classic/voice.html"
+		},
+		{
+			"src": "/dashboard-classic/sns",
+			"dest": "/dashboard-classic/sns.html"
+		},
+		{
+			"src": "/dashboard-classic/delegation",
+			"dest": "/dashboard-classic/delegation.html"
+		},
+		{
+			"src": "/dashboard-classic/tokens",
+			"dest": "/dashboard-classic/tokens.html"
+		},
+		{
+			"src": "/dashboard-classic/agent-pumpfun",
+			"dest": "/dashboard-classic/agent-pumpfun.html"
+		},
+		{
+			"src": "/dashboard-classic/x402",
+			"dest": "/dashboard-classic/x402.html"
+		},
+		{
+			"src": "/dashboard-classic/storage",
+			"dest": "/dashboard-classic/storage.html"
+		},
+		{
+			"src": "/dashboard-classic/usage",
+			"dest": "/dashboard-classic/usage.html"
+		},
+		{
+			"src": "/dashboard-classic/(.*)",
+			"dest": "/dashboard-classic/$1"
+		},
+		{
+			"src": "/dashboard/?",
+			"dest": "/dashboard-next/index.html"
+		},
+		{
+			"src": "/dashboard/avatars/?",
+			"dest": "/dashboard-next/avatars.html"
+		},
+		{
+			"src": "/dashboard/agents/?",
+			"dest": "/dashboard-next/agents.html"
+		},
+		{
+			"src": "/dashboard/library/?",
+			"dest": "/dashboard-next/library.html"
+		},
+		{
+			"src": "/dashboard/widgets/?",
+			"dest": "/dashboard-next/widgets.html"
+		},
+		{
+			"src": "/dashboard/api/?",
+			"dest": "/dashboard-next/api.html"
+		},
+		{
+			"src": "/dashboard/monetize/?",
+			"dest": "/dashboard-next/monetize.html"
+		},
+		{
+			"src": "/dashboard/account/?",
+			"dest": "/dashboard-next/account.html"
+		},
+		{
+			"src": "/dashboard/settings/?",
+			"dest": "/dashboard-next/settings.html"
+		},
+		{
+			"src": "/dashboard/tokens/?",
+			"dest": "/dashboard-next/tokens.html"
+		},
+		{
+			"src": "/dashboard/portfolio/asset",
+			"dest": "/dashboard-classic/portfolio-asset.html"
+		},
+		{
+			"src": "/dashboard/portfolio/?",
+			"dest": "/dashboard-next/portfolio.html"
+		},
+		{
+			"src": "/dashboard/wallets",
+			"dest": "/dashboard-classic/wallets.html"
+		},
+		{
+			"src": "/dashboard/sessions",
+			"dest": "/dashboard-classic/sessions.html"
+		},
+		{
+			"src": "/dashboard/actions",
+			"dest": "/dashboard-classic/actions.html"
+		},
+		{
+			"src": "/dashboard/embed-policy",
+			"dest": "/dashboard-classic/embed-policy.html"
+		},
+		{
+			"src": "/dashboard/memory",
+			"dest": "/dashboard-classic/memory.html"
+		},
+		{
+			"src": "/dashboard/strategy",
+			"dest": "/dashboard-classic/strategy.html"
+		},
+		{
+			"src": "/dashboard/voice",
+			"dest": "/dashboard-classic/voice.html"
+		},
+		{
+			"src": "/dashboard/sns",
+			"dest": "/dashboard-classic/sns.html"
+		},
+		{
+			"src": "/dashboard/delegation",
+			"dest": "/dashboard-classic/delegation.html"
+		},
+		{
+			"src": "/dashboard/agent-pumpfun",
+			"dest": "/dashboard-classic/agent-pumpfun.html"
+		},
+		{
+			"src": "/dashboard/x402",
+			"dest": "/dashboard/x402.html"
+		},
+		{
+			"src": "/dashboard/edit/[^/]+/?",
+			"dest": "/dashboard-next/index.html"
+		},
+		{
+			"src": "/dashboard/([^./]+)/?",
+			"dest": "/dashboard-next/$1.html"
+		},
+		{
+			"src": "/dashboard/(.*)",
+			"dest": "/dashboard/$1"
 		},
 		{
 			"src": "/dashboard-next/?",
@@ -558,74 +726,6 @@
 		{
 			"src": "/dashboard-next/([^./]+)/?",
 			"dest": "/dashboard-next/$1.html"
-		},
-		{
-			"src": "/dashboard/agent-pumpfun",
-			"dest": "/dashboard/agent-pumpfun.html"
-		},
-		{
-			"src": "/dashboard/wallets",
-			"dest": "/dashboard/wallets.html"
-		},
-		{
-			"src": "/dashboard/portfolio/asset",
-			"dest": "/dashboard/portfolio-asset.html"
-		},
-		{
-			"src": "/dashboard/portfolio",
-			"dest": "/dashboard/portfolio.html"
-		},
-		{
-			"src": "/dashboard/sessions",
-			"dest": "/dashboard/sessions.html"
-		},
-		{
-			"src": "/dashboard/actions",
-			"dest": "/dashboard/actions.html"
-		},
-		{
-			"src": "/dashboard/embed-policy",
-			"dest": "/dashboard/embed-policy.html"
-		},
-		{
-			"src": "/dashboard/memory",
-			"dest": "/dashboard/memory.html"
-		},
-		{
-			"src": "/dashboard/strategy",
-			"dest": "/dashboard/strategy.html"
-		},
-		{
-			"src": "/dashboard/voice",
-			"dest": "/dashboard/voice.html"
-		},
-		{
-			"src": "/dashboard/sns",
-			"dest": "/dashboard/sns.html"
-		},
-		{
-			"src": "/dashboard/delegation",
-			"dest": "/dashboard/delegation.html"
-		},
-		{
-			"src": "/dashboard/tokens",
-			"dest": "/dashboard/tokens.html"
-		},
-		{
-			"src": "/dashboard/x402",
-			"dest": "/dashboard/x402.html"
-		},
-		{
-			"src": "/dashboard/(agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|withdrawals|earnings|account)/?",
-			"dest": "/dashboard/index.html"
-		},
-		{
-			"src": "/dashboard/edit/[^/]+/?",
-			"dest": "/dashboard/index.html"
-		},
-		{
-			"src": "/dashboard/(.*)",
-			"dest": "/dashboard/$1"
 		},
 		{
 			"src": "/hydrate",
@@ -822,7 +922,7 @@
 		},
 		{
 			"src": "/dashboard/storage",
-			"dest": "/dashboard/storage.html"
+			"dest": "/dashboard-classic/storage.html"
 		},
 		{
 			"src": "/api/agents/([^/]+)/embed-policy",
@@ -1655,7 +1755,7 @@
 		},
 		{
 			"src": "/dashboard/usage",
-			"dest": "/dashboard/usage.html"
+			"dest": "/dashboard-classic/usage.html"
 		},
 		{
 			"src": "/api/erc8004/register-confirm",

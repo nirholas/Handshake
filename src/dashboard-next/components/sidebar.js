@@ -40,7 +40,7 @@ export function renderSidebar(pathname) {
 	return `
 		<aside class="dn-rail" data-component="rail">
 			<div class="dn-rail-head">
-				<a href="/dashboard-next" aria-label="Dashboard home">
+				<a href="/dashboard" aria-label="Dashboard home">
 					<img class="dn-rail-full" src="/three.svg" alt="three.ws" />
 					<img class="dn-rail-mark" src="/favicon.ico" alt="three.ws" style="width:22px;height:22px;border-radius:5px" />
 				</a>
@@ -55,7 +55,7 @@ export function renderSidebar(pathname) {
 					</span>
 					<span class="dn-rail-item-text">Collapse</span>
 				</button>
-				<a href="/dashboard" class="dn-rail-foot-back">&larr; Production dashboard</a>
+				<a href="/dashboard-classic" class="dn-rail-foot-back">&larr; Classic dashboard</a>
 			</div>
 		</aside>`;
 }
@@ -79,10 +79,10 @@ export function mountSidebarBehavior(shellEl) {
 }
 
 const MOBILE_NAV_ROUTES = [
-	'/dashboard-next',
-	'/dashboard-next/avatars',
-	'/dashboard-next/widgets',
-	'/dashboard-next/monetize',
+	'/dashboard',
+	'/dashboard/avatars',
+	'/dashboard/widgets',
+	'/dashboard/monetize',
 ];
 const SHEET_ROUTES = NAV.filter((r) => !MOBILE_NAV_ROUTES.includes(r.path));
 

@@ -128,7 +128,7 @@ function renderEmpty() {
 			You earn royalties on every trade.
 		</p>
 		<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-			<a class="dn-btn primary" href="/dashboard-next/agents">Go to Agents →</a>
+			<a class="dn-btn primary" href="/dashboard/agents">Go to Agents →</a>
 			<a class="dn-btn" href="/pump-dashboard" target="_blank" rel="noopener">Pump dashboard ↗</a>
 		</div>
 	`;
@@ -200,7 +200,7 @@ function renderTokenCard({ agent, mint, token, stats }) {
 			</div>
 			<div style="display:flex;gap:6px;flex-shrink:0">
 				${mint ? `<a class="dn-btn ghost" href="https://pump.fun/coin/${encodeURIComponent(mint)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">pump.fun ↗</a>` : ''}
-				<a class="dn-btn" href="/dashboard-next/agents" style="padding:5px 10px;font-size:12px">Agent →</a>
+				<a class="dn-btn" href="/dashboard/agents" style="padding:5px 10px;font-size:12px">Agent →</a>
 			</div>
 		</div>
 

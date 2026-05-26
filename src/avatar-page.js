@@ -97,6 +97,7 @@ async function init() {
 	bindShareButtons();
 	bindTabs();
 	bindChat();
+	bindOwnerActions();
 	loadSkills();
 	loadPlugins();
 	loadRelated();
@@ -229,13 +230,28 @@ function renderShell(glbUrl) {
 					<span class="av-cta-talk-dot" aria-hidden="true"></span>
 					<span>Talk to ${esc(avatar.name)}</span>
 				</button>
-				${avatar.owner_id ? `<a class="av-cta-edit-link" href="/avatars/${encodeURIComponent(avatar.id || avatarId)}/edit">Customize appearance →</a>` : ''}
 			</div>
 			<div class="av-cta-row">
 				<button class="av-cta" id="av-use">Start an agent</button>
 				<a class="av-cta-sec" href="/studio?avatar=${encodeURIComponent(avatar.id || avatarId)}" title="Use this avatar in Widget Studio">Open in Studio</a>
 				<button class="av-cta-sec" id="av-download" type="button">Download ▾</button>
 			</div>
+			${avatar.owner_id ? `
+			<div class="av-owner-row" id="av-owner-row">
+				<a class="av-owner-btn" href="/avatars/${encodeURIComponent(avatar.id || avatarId)}/edit">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+					Edit
+				</a>
+				<button class="av-owner-btn" id="av-deploy-onchain" type="button">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+					Deploy on-chain
+				</button>
+				<button class="av-owner-btn" id="av-launch-pumpfun" type="button">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+					Launch Pump.fun
+				</button>
+			</div>
+			` : ''}
 			<nav class="av-tabs" role="tablist">
 				<button class="av-tab active" data-tab="overview" role="tab">Overview</button>
 				<button class="av-tab" data-tab="chat" role="tab">Chat</button>
@@ -561,6 +577,87 @@ function bindShareButtons() {
 		const text = `Check out "${avatar.name}" — a 3D avatar on three.ws`;
 		const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
 		twBtn.href = url;
+	}
+}
+
+// ── Owner actions (Edit / Deploy on-chain / Launch Pump.fun) ─────────
+
+function bindOwnerActions() {
+	$('av-deploy-onchain')?.addEventListener('click', openDeployOnchain);
+	$('av-launch-pumpfun')?.addEventListener('click', openLaunchPumpFun);
+}
+
+async function openDeployOnchain() {
+	const btn = $('av-deploy-onchain');
+	if (!btn || btn.disabled) return;
+	btn.disabled = true;
+	const origText = btn.textContent.trim();
+	btn.lastChild.textContent = ' Opening…';
+	try {
+		const initial = {
+			name: avatar.name || '',
+			description: avatar.description || '',
+			glbUrl: avatar.model_url || avatar.url || '',
+			imageUrl: avatar.thumbnail_url || '',
+		};
+		const { RegisterUI } = await import('./erc8004/register-ui.js');
+		const wrap = document.createElement('div');
+		wrap.className = 'agent-register-overlay';
+		document.body.appendChild(wrap);
+		new RegisterUI(wrap, () => { wrap.remove(); }, { initial });
+	} catch (err) {
+		console.error('[avatar] deploy on-chain failed', err);
+	} finally {
+		btn.disabled = false;
+		if (btn.lastChild) btn.lastChild.textContent = ' Deploy on-chain';
+	}
+}
+
+async function openLaunchPumpFun() {
+	const btn = $('av-launch-pumpfun');
+	if (!btn || btn.disabled) return;
+	btn.disabled = true;
+	try {
+		let user = null;
+		try {
+			const r = await fetch('/api/auth/me', { credentials: 'include' });
+			if (r.ok) user = (await r.json()).user || null;
+		} catch { /* best-effort */ }
+
+		const backdrop = document.createElement('div');
+		backdrop.className = 'av-pump-backdrop';
+
+		const modal = document.createElement('div');
+		modal.className = 'av-pump-modal';
+
+		const header = document.createElement('div');
+		header.className = 'av-pump-header';
+		header.innerHTML = `
+			<span class="av-pump-title">Launch on Pump.fun</span>
+			<button class="av-pump-close" type="button" aria-label="Close">×</button>
+		`;
+		const inner = document.createElement('div');
+		inner.className = 'av-pump-inner';
+
+		modal.appendChild(header);
+		modal.appendChild(inner);
+		backdrop.appendChild(modal);
+		document.body.appendChild(backdrop);
+
+		const closeModal = () => backdrop.remove();
+		header.querySelector('.av-pump-close').addEventListener('click', closeModal);
+		backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
+
+		const { mountLaunchPanel } = await import(/* @vite-ignore */ '/studio/launch-panel.js');
+		mountLaunchPanel(inner, {
+			getAvatar: () => ({ ...avatar, id: avatar.id || avatarId }),
+			getUser: () => user,
+			getPreviewViewer: () => null,
+		});
+	} catch (err) {
+		console.error('[avatar] launch pump.fun failed', err);
+	} finally {
+		btn.disabled = false;
 	}
 }
 

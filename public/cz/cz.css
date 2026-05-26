@@ -51,6 +51,13 @@ header {
 	color: var(--accent);
 }
 
+.header-logo {
+	width: 20px;
+	height: 20px;
+	vertical-align: middle;
+	margin-right: 6px;
+}
+
 main {
 	display: grid;
 	grid-template-columns: 1fr 440px;

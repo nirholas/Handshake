@@ -349,6 +349,8 @@ creating: resolve(__dirname, 'pages/creating.html'),
 					'/dashboard-classic/': resolve(root, 'public/dashboard-classic/index.html'),
 					'/dashboard-next': resolve(root, 'pages/dashboard-next/index.html'),
 					'/dashboard-next/': resolve(root, 'pages/dashboard-next/index.html'),
+					'/dashboard/avatars': resolve(root, 'pages/dashboard-next/avatars.html'),
+					'/dashboard/avatars/': resolve(root, 'pages/dashboard-next/avatars.html'),
 					'/dashboard-next/avatars': resolve(root, 'pages/dashboard-next/avatars.html'),
 					'/dashboard-next/avatars/': resolve(root, 'pages/dashboard-next/avatars.html'),
 					'/studio': resolve(root, 'public/studio/index.html'),
@@ -622,10 +624,10 @@ creating: resolve(__dirname, 'pages/creating.html'),
 						const candidate = resolve(root, `pages/dashboard-next/${slug}.html`);
 						if (existsSync(candidate)) filePath = candidate;
 					}
-					// /dashboard/<page> → pages/dashboard/<page>.html (new dashboard-next pages)
+					// /dashboard/<page> → pages/dashboard-next/<page>.html
 					else if (!filePath && /^\/dashboard\/[a-z0-9][a-z0-9-]*\/?$/.test(path)) {
 						const slug = path.replace(/^\/dashboard\//, '').replace(/\/$/, '');
-						const candidate = resolve(root, `pages/dashboard/${slug}.html`);
+						const candidate = resolve(root, `pages/dashboard-next/${slug}.html`);
 						if (existsSync(candidate)) filePath = candidate;
 					}
 					// /dashboard-classic/<page> → corresponding static HTML page (classic pages)

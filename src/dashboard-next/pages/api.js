@@ -602,7 +602,7 @@ function renderEmbed(host, state) {
 			<div class="dn-empty">
 				<h3>Nothing to embed yet</h3>
 				<p>Create an avatar or widget first, then come back here for the snippet.</p>
-				<a class="dn-btn" href="/dashboard-next/avatars">Go to avatars</a>
+				<a class="dn-btn" href="/dashboard/avatars">Go to avatars</a>
 			</div>
 		`;
 		return;

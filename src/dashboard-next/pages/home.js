@@ -155,8 +155,8 @@ function renderHero(host, avatars, err) {
 				<threews-avatar avatar-id="${esc(a.id)}" bg="transparent" hide-chrome></threews-avatar>
 				<div class="dnx-hero-overlay">
 					<a class="dn-btn" href="/a/${esc(slug)}">Open</a>
-					<a class="dn-btn" href="/dashboard-next/widgets?avatar=${encodeURIComponent(a.id)}">Embed</a>
-					<a class="dn-btn" href="/dashboard-next/avatars?edit=${encodeURIComponent(a.id)}">Edit</a>
+					<a class="dn-btn" href="/dashboard/widgets?avatar=${encodeURIComponent(a.id)}">Embed</a>
+					<a class="dn-btn" href="/dashboard/avatars?edit=${encodeURIComponent(a.id)}">Edit</a>
 				</div>
 				<div class="dnx-hero-name">${esc(name)}</div>
 			</article>
@@ -207,7 +207,7 @@ async function refreshKpis(host, ctx) {
 			numeric: revTotal,
 			series: revSeries,
 			empty: revTotal === 0,
-			emptyCta: { label: 'Set up monetization', href: '/dashboard-next/monetize' },
+			emptyCta: { label: 'Set up monetization', href: '/dashboard/monetize' },
 		},
 		{
 			key: 'views',
@@ -216,7 +216,7 @@ async function refreshKpis(host, ctx) {
 			numeric: viewTotal,
 			series: viewSeries,
 			empty: ctx.widgets.length === 0,
-			emptyCta: { label: 'Embed an agent', href: '/dashboard-next/widgets' },
+			emptyCta: { label: 'Embed an agent', href: '/dashboard/widgets' },
 		},
 		{
 			key: 'transcripts',
@@ -225,7 +225,7 @@ async function refreshKpis(host, ctx) {
 			numeric: chatTotal,
 			series: chatSeries,
 			empty: ctx.widgets.length === 0,
-			emptyCta: { label: 'Create a chat widget', href: '/dashboard-next/widgets' },
+			emptyCta: { label: 'Create a chat widget', href: '/dashboard/widgets' },
 		},
 		{
 			key: 'avatars',
@@ -328,7 +328,7 @@ async function collectActivity(widgets) {
 				text: preview
 					? `${visitor} on ${bundle.widget.name}: "${preview}"`
 					: `${visitor} chatted with ${bundle.widget.name}`,
-				href: `/dashboard-next/widgets?id=${encodeURIComponent(bundle.widget.id)}&thread=${encodeURIComponent(t.id)}`,
+				href: `/dashboard/widgets?id=${encodeURIComponent(bundle.widget.id)}&thread=${encodeURIComponent(t.id)}`,
 			});
 		}
 	}
@@ -346,7 +346,7 @@ async function collectActivity(widgets) {
 				iso,
 				icon: ICON_COIN,
 				text: `${p.count} payment${p.count === 1 ? '' : 's'} · ${usd} earned`,
-				href: '/dashboard-next/monetize',
+				href: '/dashboard/monetize',
 			});
 		}
 	}
@@ -387,7 +387,7 @@ function renderOnboarding(host, { avatars, agents, widgets }) {
 			id: 'agent',
 			label: 'Build an agent identity',
 			sub: 'Give your avatar a name, personality, and on-chain address.',
-			href: '/dashboard-next/agents',
+			href: '/dashboard/agents',
 			cta: 'Set up agent',
 			done: agents.length > 0,
 		},
@@ -395,7 +395,7 @@ function renderOnboarding(host, { avatars, agents, widgets }) {
 			id: 'widget',
 			label: 'Embed a chat widget',
 			sub: 'Drop your agent onto any website with a single HTML tag.',
-			href: '/dashboard-next/widgets',
+			href: '/dashboard/widgets',
 			cta: 'Create widget',
 			done: widgets.length > 0,
 		},
@@ -403,7 +403,7 @@ function renderOnboarding(host, { avatars, agents, widgets }) {
 			id: 'monetize',
 			label: 'Start earning',
 			sub: 'Charge per message, set a subscription, or let fans tip.',
-			href: '/dashboard-next/monetize',
+			href: '/dashboard/monetize',
 			cta: 'Set up monetization',
 			done: false,
 		},
@@ -461,9 +461,9 @@ function renderOnboarding(host, { avatars, agents, widgets }) {
 function renderQuickActions(host) {
 	const actions = [
 		{ href: '/create',                  title: 'Create avatar from selfie', sub: 'Snap → 3D agent in 60s',     icon: '+' },
-		{ href: '/dashboard-next/widgets',  title: 'Embed an agent',            sub: 'Drop-in widget for any site', icon: '◧' },
-		{ href: '/dashboard-next/monetize', title: 'View revenue',              sub: 'Earnings, payouts, plans',    icon: '$' },
-		{ href: '/dashboard-next/api',      title: 'Open API keys',             sub: 'REST + MCP for your agents',  icon: '⌘' },
+		{ href: '/dashboard/widgets',  title: 'Embed an agent',            sub: 'Drop-in widget for any site', icon: '◧' },
+		{ href: '/dashboard/monetize', title: 'View revenue',              sub: 'Earnings, payouts, plans',    icon: '$' },
+		{ href: '/dashboard/api',      title: 'Open API keys',             sub: 'REST + MCP for your agents',  icon: '⌘' },
 	];
 	host.innerHTML = actions.map((a) => `
 		<a class="dn-panel dnx-quick-card" href="${a.href}">

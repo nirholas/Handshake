@@ -387,6 +387,9 @@ a:hover {
 		height: 50vw;
 		min-height: 200px;
 	}
+	[data-tooltip]::after {
+		display: none;
+	}
 }
 
 @media (max-width: 400px) {
