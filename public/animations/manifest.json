@@ -245,6 +245,27 @@
 		"loop": true
 	},
 	{
+		"name": "av-listening-music",
+		"url": "/animations/clips/av-listening-music.json",
+		"label": "Listening To Music",
+		"icon": "🎧",
+		"loop": true
+	},
+	{
+		"name": "av-leaning-wall",
+		"url": "/animations/clips/av-leaning-wall.json",
+		"label": "Leaning On Wall",
+		"icon": "🧱",
+		"loop": true
+	},
+	{
+		"name": "av-rap-dance",
+		"url": "/animations/clips/av-rap-dance.json",
+		"label": "Rap Dancing",
+		"icon": "🎤",
+		"loop": true
+	},
+	{
 		"name": "dance",
 		"url": "/animations/clips/dance.json",
 		"label": "Dance",

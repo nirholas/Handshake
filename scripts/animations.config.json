@@ -34,6 +34,9 @@
 	{ "name": "av-cheering", "source": "Cheering.glb", "label": "Cheering", "icon": "📣", "loop": false },
 	{ "name": "av-joy", "source": "Expressing_joy.glb", "label": "Joy", "icon": "😊", "loop": false },
 	{ "name": "av-conductor", "source": "Energic_conductor.glb", "label": "Conductor", "icon": "🎼", "loop": true },
+	{ "name": "av-listening-music", "source": "Listening To Music.fbx", "label": "Listening To Music", "icon": "🎧", "loop": true },
+	{ "name": "av-leaning-wall", "source": "Leaning On A Wall.fbx", "label": "Leaning On Wall", "icon": "🧱", "loop": true },
+	{ "name": "av-rap-dance", "source": "RapDancing.fbx", "label": "Rap Dancing", "icon": "🎤", "loop": true },
 	{
 		"name": "dance",
 		"source": "Hip Hop Dancing.fbx",

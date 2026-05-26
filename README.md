@@ -426,7 +426,7 @@ The architecture above is the bird's-eye view; each load-bearing surface has a d
 | [specs/VALIDATORS.md](specs/VALIDATORS.md)                   | Validator attestation rules — what gets signed, who can sign, how to read attestations.                          |
 | [specs/SECURITY.md](specs/SECURITY.md)                       | Threat model, trust boundaries, and the hardening checklist for production deployments.                          |
 
-Longer-form architecture and how-to documentation lives under [docs/](docs/): [docs/architecture.md](docs/architecture.md), [docs/agent-system.md](docs/agent-system.md), [docs/web-component.md](docs/web-component.md), [docs/api-reference.md](docs/api-reference.md), [docs/mcp.md](docs/mcp.md), [docs/permissions.md](docs/permissions.md), [docs/security.md](docs/security.md), [docs/smart-contracts.md](docs/smart-contracts.md), and more.
+Longer-form architecture and how-to documentation lives under [docs/](docs/): [docs/architecture.md](docs/architecture.md), [docs/agent-system.md](docs/agent-system.md), [docs/animations.md](docs/animations.md), [docs/web-component.md](docs/web-component.md), [docs/api-reference.md](docs/api-reference.md), [docs/mcp.md](docs/mcp.md), [docs/permissions.md](docs/permissions.md), [docs/security.md](docs/security.md), [docs/smart-contracts.md](docs/smart-contracts.md), and more.
 
 ---
 

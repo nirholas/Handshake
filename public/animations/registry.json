@@ -33,7 +33,10 @@
         { "name": "stepback",  "label": "Step Back",  "icon": "👣", "loop": false, "clip": "public/animations/clips/stepback.json",  "source_fbx": "public/animations/Stepping Backward.fbx",         "agent_slots": [] },
         { "name": "shoved",    "label": "Shoved",     "icon": "💥", "loop": false, "clip": "public/animations/clips/shoved.json",    "source_fbx": "public/animations/Shoved Reaction With Spin.fbx", "agent_slots": [] },
         { "name": "standup",   "label": "Stand Up",   "icon": "⬆️", "loop": false, "clip": "public/animations/clips/standup.json",   "source_fbx": "public/animations/Crouch To Stand.fbx",           "agent_slots": [] },
-        { "name": "header",    "label": "Header",     "icon": "⚽", "loop": false, "clip": "public/animations/clips/header.json",    "source_fbx": "public/animations/Header Soccerball.fbx",         "agent_slots": [] }
+        { "name": "header",    "label": "Header",     "icon": "⚽", "loop": false, "clip": "public/animations/clips/header.json",    "source_fbx": "public/animations/Header Soccerball.fbx",         "agent_slots": [] },
+        { "name": "av-listening-music", "label": "Listening To Music", "icon": "🎧", "loop": true, "clip": "public/animations/clips/av-listening-music.json", "source_fbx": "public/animations/Listening To Music.fbx", "agent_slots": [] },
+        { "name": "av-leaning-wall",    "label": "Leaning On Wall",    "icon": "🧱", "loop": true, "clip": "public/animations/clips/av-leaning-wall.json",    "source_fbx": "public/animations/Leaning On A Wall.fbx",  "agent_slots": [] },
+        { "name": "av-rap-dance",       "label": "Rap Dancing",        "icon": "🎤", "loop": true, "clip": "public/animations/clips/av-rap-dance.json",       "source_fbx": "public/animations/RapDancing.fbx",         "agent_slots": [] }
       ]
     },
 
