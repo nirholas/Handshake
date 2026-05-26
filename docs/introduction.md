@@ -13,6 +13,7 @@ The result is an agent that doesn't just respond in a chat box. It occupies a th
 - **CDN library:** `https://assets.three.wsagent-3d.js`
 - **No server required** for basic use — the viewer, agent runtime, and skill system all run in the browser via WebGL 2.0
 - **glTF 2.0 / GLB** with Draco, KTX2, and Meshopt decompression supported out of the box
+- **AWS Partner** — three.ws is a verified AWS Partner and available on [AWS Marketplace](https://aws.amazon.com/marketplace) as a SaaS product
 
 ---
 
