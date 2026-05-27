@@ -197,7 +197,8 @@ async function handleTheme(req, res) {
 			LIMIT 8
 		`;
 	} catch (err) {
-		if (err.code === '42P01') {
+		// 42P01 = table does not exist, 42703 = column does not exist
+		if (err.code === '42P01' || err.code === '42703') {
 			rows = await sql`
 				SELECT a.id, a.name, a.description, a.category, a.tags, a.skills,
 				       a.views_count, a.forks_count,

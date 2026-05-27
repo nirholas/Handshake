@@ -89,6 +89,15 @@ const STATE = {
 		if (STATE.pollHandle) clearInterval(STATE.pollHandle);
 		if (STATE.relTimeHandle) clearInterval(STATE.relTimeHandle);
 	});
+
+	main.addEventListener('click', (e) => {
+		const link = e.target.closest('a[href]');
+		if (!link) return;
+		const href = link.getAttribute('href');
+		if (href && href.startsWith('/') && !href.startsWith('//')) {
+			trackVisit(href.split('?')[0].split('#')[0]);
+		}
+	});
 })().catch((err) => {
 	if (err?.message === 'redirecting') return;
 	const main = document.querySelector('.dn-main-inner') || document.body;
@@ -113,15 +122,17 @@ function renderSkeletons(main) {
 		<div class="dn-skeleton" style="height:28px;width:100px;margin-bottom:10px"></div>
 		<div class="dn-skeleton" style="height:36px;width:100%"></div></div>
 	`).join('');
-	main.querySelector('[data-slot="quick"]').innerHTML = Array.from({ length: 4 }, () => `
-		<div class="dn-panel" style="display:flex;align-items:center;gap:14px;padding:16px">
-			<div class="dn-skeleton" style="width:40px;height:40px;border-radius:10px;flex-shrink:0"></div>
-			<div style="flex:1;min-width:0">
-				<div class="dn-skeleton" style="height:13px;width:60%;margin-bottom:6px"></div>
-				<div class="dn-skeleton" style="height:11px;width:40%"></div>
+	main.querySelector('[data-slot="quick"]').innerHTML = `
+		<div style="margin-bottom:12px"><div class="dn-skeleton" style="height:14px;width:90px;margin-bottom:6px"></div><div class="dn-skeleton" style="height:11px;width:200px"></div></div>
+		<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">${Array.from({ length: 6 }, () => `
+			<div class="dn-panel" style="display:flex;align-items:center;gap:12px;padding:14px">
+				<div class="dn-skeleton" style="width:36px;height:36px;border-radius:10px;flex-shrink:0"></div>
+				<div style="flex:1;min-width:0">
+					<div class="dn-skeleton" style="height:13px;width:65%;margin-bottom:5px"></div>
+					<div class="dn-skeleton" style="height:11px;width:45%"></div>
+				</div>
 			</div>
-		</div>
-	`).join('');
+		`).join('')}</div>`;
 	main.querySelector('[data-slot="activity"]').innerHTML = `
 		<div class="dn-panel">
 			<div class="dn-panel-title">Recent activity</div>
@@ -466,58 +477,83 @@ function renderOnboarding(host, { avatars, agents, widgets }) {
 	});
 }
 
-// ── Quick actions ─────────────────────────────────────────────────────────
+// ── Shortcuts (quick actions) ─────────────────────────────────────────────
+
+function categoryFor(href) {
+	for (const s of DIRECTORY) {
+		if (s.items.some((i) => i.href === href)) return s.group;
+	}
+	return 'Account & Settings';
+}
 
 function renderQuickActions(host, { avatars = [], agents = [] } = {}) {
 	const firstAvatar = avatars[0];
 	const firstAgent = agents[0];
+	const pins = getPins();
 
-	const actions = [];
-
+	const defaults = [];
 	if (firstAvatar) {
-		actions.push({
-			href: `/agent-next?id=${encodeURIComponent(firstAvatar.id)}`,
-			title: 'View live agent page',
-			sub: 'See how visitors experience your agent',
-			icon: '▶',
-		});
+		defaults.push({ href: `/agent-next?id=${encodeURIComponent(firstAvatar.id)}`, title: 'View live agent page', sub: 'See how visitors experience your agent', iconKey: '/dashboard/agents', cat: 'Agents & Identity' });
 	} else {
-		actions.push({ href: '/create', title: 'Create avatar from selfie', sub: 'Snap → 3D agent in 60s', icon: '+' });
+		defaults.push({ href: '/create', title: 'Create avatar from selfie', sub: 'Snap a photo, get a 3D agent in 60 seconds', iconKey: '/create', cat: 'Create & Build' });
 	}
-
 	if (firstAgent) {
-		actions.push({
-			href: `/app?agent=${encodeURIComponent(firstAgent.id)}`,
-			title: 'Open 3D studio',
-			sub: 'Edit, animate, and customize in 3D',
-			icon: '◇',
-		});
+		defaults.push({ href: `/app?agent=${encodeURIComponent(firstAgent.id)}`, title: 'Open 3D studio', sub: 'Edit, animate, and customize in 3D', iconKey: '/app', cat: '3D & Immersive' });
 	} else {
-		actions.push({ href: '/dashboard/agents', title: 'Create an agent', sub: 'On-chain identity with wallet and skills', icon: '⬡' });
+		defaults.push({ href: '/dashboard/agents', title: 'Create an agent', sub: 'On-chain identity with wallet and skills', iconKey: '/dashboard/agents', cat: 'Agents & Identity' });
 	}
-
 	const repHref = (firstAvatar?.owner_wallet || firstAvatar?.owner_address)
 		? `/reputation?address=${encodeURIComponent(firstAvatar.owner_wallet || firstAvatar.owner_address)}`
 		: '/reputation';
-
-	actions.push(
-		{ href: '/gallery-picker', title: 'Browse avatar gallery', sub: 'Explore public 3D avatars', icon: '▣' },
-		{ href: '/dashboard/widgets', title: 'Embed an agent', sub: 'Drop-in widget for any site', icon: '◧' },
-		{ href: '/voice', title: 'Voice Lab', sub: 'Clone your voice for avatars and agents', icon: '◉' },
-		{ href: repHref, title: 'Reputation', sub: 'On-chain reviews and attestations for your agent', icon: '★' },
-		{ href: '/dashboard/api', title: 'Open API keys', sub: 'REST + MCP for your agents', icon: '⌘' },
-		{ href: '/brain', title: 'Brain — Persona + Playground', sub: 'Build a persona, compare models, test your agent voice', icon: '◎' },
+	defaults.push(
+		{ href: '/gallery-picker', title: 'Browse avatar gallery', sub: 'Explore public 3D avatars', iconKey: '/gallery-picker', cat: 'Create & Build' },
+		{ href: '/dashboard/widgets', title: 'Embed an agent', sub: 'Drop-in chat widget for any site', iconKey: '/dashboard/widgets', cat: 'Distribute & Embed' },
+		{ href: '/voice', title: 'Voice Lab', sub: 'Clone your voice for avatars', iconKey: '/voice', cat: 'Create & Build' },
+		{ href: repHref, title: 'Reputation', sub: 'On-chain reviews and attestations', iconKey: '/reputation', cat: 'Agents & Identity' },
+		{ href: '/dashboard/api', title: 'API keys', sub: 'REST + MCP for your agents', iconKey: '/dashboard/api', cat: 'Distribute & Embed' },
+		{ href: '/brain', title: 'Brain', sub: 'Persona builder and model playground', iconKey: '/brain', cat: 'Create & Build' },
 	);
 
-	host.innerHTML = actions.map((a) => `
-		<a class="dn-panel dnx-quick-card" href="${a.href}">
-			<div class="dnx-quick-icon">${a.icon}</div>
-			<div>
-				<div class="dn-panel-title" style="margin:0 0 2px">${esc(a.title)}</div>
-				<div class="dn-panel-sub" style="margin:0">${esc(a.sub)}</div>
-			</div>
-		</a>
-	`).join('');
+	const used = new Set();
+	const actions = [];
+	for (const href of pins) {
+		if (actions.length >= 8) break;
+		const item = lookupItem(href);
+		if (!item) continue;
+		actions.push({ href: item.href, title: item.title, sub: item.sub, iconKey: item.href, cat: categoryFor(item.href), pinned: true });
+		used.add(item.href);
+	}
+	for (const d of defaults) {
+		if (actions.length >= 8) break;
+		const base = d.href.split('?')[0];
+		if (used.has(base) || used.has(d.href)) continue;
+		actions.push(d);
+		used.add(d.href);
+	}
+
+	const hasPins = pins.length > 0;
+
+	host.innerHTML = `
+		<div class="dnx-shortcuts-head">
+			<h2 class="dnx-shortcuts-title">Shortcuts</h2>
+			<p class="dnx-shortcuts-sub">${hasPins ? `${pins.length} pinned` : 'Pin pages from the directory below to customize'}</p>
+		</div>
+		<div class="dnx-shortcuts-grid" role="list">
+			${actions.map((a) => {
+				const icon = DIR_ICONS[a.iconKey] || DIR_ICONS['/create'] || '';
+				const cc = CATEGORY_COLORS[a.cat] || CATEGORY_COLORS['Account & Settings'];
+				return `
+					<a class="dn-panel dnx-quick-card" href="${a.href}" role="listitem">
+						<span class="dnx-quick-icon" style="background:rgba(${cc.accent},0.12);color:${cc.label}" aria-hidden="true">${icon}</span>
+						<div class="dnx-quick-text">
+							<span class="dnx-quick-title">${esc(a.title)}</span>
+							<span class="dnx-quick-sub">${esc(a.sub)}</span>
+						</div>
+						${a.pinned ? '<span class="dnx-quick-pin-badge" aria-hidden="true"><svg viewBox="0 0 14 14" width="10" height="10" fill="currentColor"><path d="M5 1l1 4-3 2v1h4.5L8 13l.5-5H13v-1l-3-2 1-4z"/></svg></span>' : ''}
+					</a>`;
+			}).join('')}
+		</div>
+	`;
 }
 
 // ── Feature directory ─────────────────────────────────────────────────────
@@ -693,9 +729,15 @@ function lookupItem(href) {
 }
 
 function trackVisit(href) {
-	const recents = getRecents().filter((r) => r !== href);
-	recents.unshift(href);
+	const base = href.split('?')[0].split('#')[0];
+	const recents = getRecents().filter((r) => r !== base);
+	recents.unshift(base);
 	localStorage.setItem(RECENTS_KEY, JSON.stringify(recents.slice(0, 20)));
+}
+
+function debounce(fn, ms) {
+	let id;
+	return (...args) => { clearTimeout(id); id = setTimeout(() => fn(...args), ms); };
 }
 
 function renderDirectory(host) {
@@ -767,9 +809,10 @@ function renderDirectory(host) {
 						<svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5l3 3 3-3"/></svg>
 					</span>
 				</button>
-				<div class="dnx-dir-search-wrap">
+				<div class="dnx-dir-search-wrap" role="search" aria-label="Filter pages">
 					<svg class="dnx-dir-search-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M13 13l-3-3"/></svg>
-					<input type="text" class="dnx-dir-search" placeholder="Filter pages..." data-action="dir-search" autocomplete="off" spellcheck="false" />
+					<input type="text" class="dnx-dir-search" placeholder="Filter pages..." data-action="dir-search" autocomplete="off" spellcheck="false" aria-label="Filter pages" aria-controls="dnx-dir-body" />
+					<span class="dnx-dir-search-count" aria-live="polite" data-slot="search-count"></span>
 				</div>
 			</div>
 			<div class="dnx-dir-body${collapsed ? ' is-collapsed' : ''}" data-slot="dir-body">
@@ -799,7 +842,9 @@ function renderDirectory(host) {
 	});
 
 	const searchInput = host.querySelector('[data-action="dir-search"]');
-	searchInput.addEventListener('input', () => {
+	const searchCount = host.querySelector('[data-slot="search-count"]');
+
+	function runFilter() {
 		const q = searchInput.value.trim().toLowerCase();
 		const body = host.querySelector('[data-slot="dir-body"]');
 		const items = body.querySelectorAll('.dnx-dir-item');
@@ -808,9 +853,10 @@ function renderDirectory(host) {
 		let visibleCount = 0;
 
 		if (!q) {
-			items.forEach((el) => el.style.display = '');
+			items.forEach((el) => { el.style.display = ''; el.style.opacity = ''; });
 			sections.forEach((el) => el.style.display = '');
 			noResults.style.display = 'none';
+			searchCount.textContent = '';
 			if (body.classList.contains('is-collapsed')) {
 				body.classList.remove('is-collapsed');
 				host.querySelector('[data-action="dir-toggle"]').setAttribute('aria-expanded', 'true');
@@ -838,6 +884,18 @@ function renderDirectory(host) {
 		});
 
 		noResults.style.display = visibleCount === 0 ? '' : 'none';
+		searchCount.textContent = q ? `${visibleCount} result${visibleCount !== 1 ? 's' : ''}` : '';
+	}
+
+	const debouncedFilter = debounce(runFilter, 120);
+	searchInput.addEventListener('input', debouncedFilter);
+
+	searchInput.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') {
+			searchInput.value = '';
+			runFilter();
+			searchInput.blur();
+		}
 	});
 
 	host.addEventListener('click', (e) => {
@@ -1046,35 +1104,55 @@ function injectStyles() {
 		.dnx-kpi-spark { height: 38px; }
 		.dnx-kpi-empty { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 
-		.dnx-quick {
+		/* ── Shortcuts ── */
+		.dnx-quick { display: flex; flex-direction: column; }
+		.dnx-shortcuts-head { margin-bottom: 12px; }
+		.dnx-shortcuts-title {
+			font-size: 15px; font-weight: 600; color: var(--nxt-ink);
+			margin: 0 0 2px; line-height: 1.3;
+		}
+		.dnx-shortcuts-sub {
+			font-size: 12.5px; color: var(--nxt-ink-fade); margin: 0;
+		}
+		.dnx-shortcuts-grid {
 			display: grid;
 			grid-template-columns: repeat(2, minmax(0, 1fr));
-			gap: 14px;
+			gap: 10px;
 		}
-		@media (max-width: 620px) { .dnx-quick { grid-template-columns: 1fr; } }
+		@media (max-width: 620px) { .dnx-shortcuts-grid { grid-template-columns: 1fr; } }
 		.dnx-quick-card {
-			display: flex;
-			align-items: center;
-			gap: 14px;
-			padding: 16px;
-			cursor: pointer;
-			transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+			display: flex; align-items: center; gap: 12px;
+			padding: 13px 14px; cursor: pointer; position: relative;
+			transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
 		}
-		.dnx-quick-card:hover { border-color: var(--nxt-stroke-strong); transform: translateY(-2px); }
-		.dnx-quick-icon {
-			width: 40px; height: 40px; border-radius: 10px;
-			background: rgba(255,255,255,0.05);
-			border: 1px solid var(--nxt-stroke);
-			color: var(--nxt-ink-dim);
-			display: grid; place-items: center;
-			font-size: 18px; font-weight: 600;
-			flex-shrink: 0;
-			transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
-		}
-		.dnx-quick-card:hover .dnx-quick-icon {
-			background: rgba(255,255,255,0.08);
+		.dnx-quick-card:hover {
 			border-color: var(--nxt-stroke-strong);
-			color: var(--nxt-ink);
+			transform: translateY(-2px);
+			box-shadow: 0 6px 20px -8px rgba(0,0,0,0.3);
+		}
+		.dnx-quick-card:focus-visible {
+			outline: 2px solid var(--nxt-ink-dim);
+			outline-offset: 2px;
+		}
+		.dnx-quick-icon {
+			width: 36px; height: 36px; border-radius: 10px;
+			display: grid; place-items: center; flex-shrink: 0;
+			transition: transform 0.14s ease;
+		}
+		.dnx-quick-icon svg { width: 18px; height: 18px; }
+		.dnx-quick-card:hover .dnx-quick-icon { transform: scale(1.1); }
+		.dnx-quick-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+		.dnx-quick-title {
+			font-size: 13.5px; font-weight: 550; color: var(--nxt-ink);
+			line-height: 1.3;
+		}
+		.dnx-quick-sub {
+			font-size: 12px; color: var(--nxt-ink-fade);
+			overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+		}
+		.dnx-quick-pin-badge {
+			position: absolute; top: 7px; right: 7px;
+			color: #fbbf24; opacity: 0.5;
 		}
 
 		.dnx-activity { min-width: 0; position: sticky; top: calc(var(--dn-topbar-h) + 16px); }
@@ -1093,6 +1171,7 @@ function injectStyles() {
 		}
 		.dnx-activity-list li:first-child .dnx-activity-row { border-top: none; }
 		.dnx-activity-row:hover { background: rgba(255,255,255,0.04); color: var(--nxt-ink); }
+		.dnx-activity-row:focus-visible { outline: 2px solid var(--nxt-ink-dim); outline-offset: -2px; border-radius: 8px; }
 		.dnx-activity-icon { color: var(--nxt-ink-fade); display: inline-grid; place-items: center; }
 		.dnx-activity-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 		.dnx-activity-time { color: var(--nxt-ink-fade); font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -1194,6 +1273,11 @@ function injectStyles() {
 			border-color: var(--nxt-stroke-strong);
 			background: rgba(255,255,255,0.06);
 		}
+		.dnx-dir-search-count {
+			position: absolute; right: 32px; top: 50%; transform: translateY(calc(-50% - 6px));
+			font-size: 11px; color: var(--nxt-ink-fade);
+			pointer-events: none; font-variant-numeric: tabular-nums;
+		}
 		.dnx-dir-body {
 			padding: 0 20px 20px;
 			display: flex; flex-direction: column; gap: 20px;
@@ -1231,6 +1315,10 @@ function injectStyles() {
 			border-color: var(--nxt-stroke-strong);
 			background: rgba(255,255,255,0.04);
 			transform: translateY(-1px);
+		}
+		.dnx-dir-item:focus-visible {
+			outline: 2px solid var(--nxt-ink-dim);
+			outline-offset: 2px;
 		}
 		.dnx-dir-item-row {
 			display: flex; align-items: flex-start; gap: 10px;

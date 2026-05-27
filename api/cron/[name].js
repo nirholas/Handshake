@@ -2887,16 +2887,33 @@ function ymdUTC(d)  { return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).
 // pending-review queue for the user to approve (auto_publish=false).
 async function enqueueTriggerPost(t, text) {
 	if (t.auto_publish === false) {
-		await sql`
-			insert into x_pending_reviews (user_id, trigger_id, agent_id, text)
-			values (${t.user_id}, ${t.id}, ${t.agent_id}, ${text})
-		`;
+		try {
+			await sql`
+				insert into x_pending_reviews (user_id, trigger_id, agent_id, text)
+				values (${t.user_id}, ${t.id}, ${t.agent_id}, ${text})
+			`;
+		} catch (err) {
+			if (err.code !== '42703') throw err;
+			// agent_id column not yet present — insert without it
+			await sql`
+				insert into x_pending_reviews (user_id, trigger_id, text)
+				values (${t.user_id}, ${t.id}, ${text})
+			`;
+		}
 		return;
 	}
-	await sql`
-		insert into x_scheduled_posts (user_id, agent_id, text, scheduled_at)
-		values (${t.user_id}, ${t.agent_id}, ${text}, now())
-	`;
+	try {
+		await sql`
+			insert into x_scheduled_posts (user_id, agent_id, text, scheduled_at)
+			values (${t.user_id}, ${t.agent_id}, ${text}, now())
+		`;
+	} catch (err) {
+		if (err.code !== '42703') throw err;
+		await sql`
+			insert into x_scheduled_posts (user_id, text, scheduled_at)
+			values (${t.user_id}, ${text}, now())
+		`;
+	}
 }
 
 async function setTriggerState(t, state) {
