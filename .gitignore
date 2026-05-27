@@ -104,3 +104,4 @@ test-results/
 docs/internal/COINMARKETCAP_PARTNERSHIP_ARTICLE.md
 docs/internal/COINMARKETCAP_ARTICLE.md
 docs/internal/PRESS_RELEASE_SHORT.md
+scripts/load-test.mjs

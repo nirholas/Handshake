@@ -26,6 +26,7 @@ export const NAV = [
 	// ── Distribute ──────────────────────────────────────────────────────
 	{ path: '/dashboard/widgets',     label: 'Widgets',         icon: 'widget',    group: 'Distribute', tags: ['embed', 'iframe', '<threews-avatar>', 'transcripts', 'knowledge'] },
 	{ path: '/dashboard/api',         label: 'API & Embed',     icon: 'code',      group: 'Distribute', tags: ['keys', 'token', 'mcp', 'snippets', 'embed-policy'] },
+	{ path: '/dashboard/developers',  label: 'Developer Hub',   icon: 'devhub',   group: 'Distribute', tags: ['render', 'webhooks', 'sdk', 'unity', 'unreal', 'integration', 'api', 'partner'] },
 	{ path: '/marketplace',           label: 'Marketplace',     icon: 'market',    group: 'Distribute', tags: ['browse', 'buy', 'sell', 'agents', 'avatars', 'directory'], external: true },
 	{ path: '/skills',                label: 'Skills',          icon: 'skills',    group: 'Distribute', tags: ['tool', 'pack', 'capability', 'install', 'browse', 'skill'], external: true },
 
@@ -77,6 +78,7 @@ export const ICONS = {
 	live:      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2"/><path d="M6 6a5.5 5.5 0 000 8"/><path d="M14 6a5.5 5.5 0 010 8"/><path d="M3.5 3.5a9 9 0 000 13"/><path d="M16.5 3.5a9 9 0 010 13"/></svg>',
 	chart:     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V7l4 3 3-6 4 4 3-3v12H3z"/><path d="M3 17h14"/></svg>',
 	skills:    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="M7 7h6M7 10h4M7 13h5"/></svg>',
+	devhub:    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="12" rx="2"/><path d="M6 7l-2 2.5L6 12M14 7l2 2.5L14 12M9 13l2-8"/></svg>',
 };
 
 /** Resolve the route for the current pathname (exact match wins; falls back to startsWith). */
