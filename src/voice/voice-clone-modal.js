@@ -143,7 +143,7 @@ function injectStylesOnce() {
 	font-size: 10px;
 	letter-spacing: 0.18em;
 	text-transform: uppercase;
-	color: #7dd3fc;
+	color: #ffffff;
 	margin-bottom: 4px;
 }
 .tws-vcm-title {

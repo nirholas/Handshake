@@ -7,7 +7,7 @@
 	<meta name="robots" content="noindex" />
 	<link rel="icon" href="/favicon.ico" />
 	<style>
-		:root { color-scheme: dark; --accent:#6a5cff; --accent2:#ff5ca8; --border:#22222e; --bg:#0b0b10; --panel:#14141c; --text:#e8e8f0; --muted:#8a8aa0; --green:#22c55e; --yellow:#f59e0b; }
+		:root { color-scheme: dark; --accent:#ffffff; --accent2:#cccccc; --border:#222222; --bg:#000000; --panel:#141414; --text:#e8e8f0; --muted:#888888; --green:#22c55e; --yellow:#f59e0b; }
 		* { box-sizing: border-box; margin: 0; padding: 0; }
 		body { font: 15px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); min-height: 100vh; display: flex; flex-direction: column; }
 		header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
@@ -31,7 +31,7 @@
 		.sub { color: var(--muted); font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
 		.sub strong { color: var(--text); }
 
-		.trial-banner { background: linear-gradient(135deg, rgba(106,92,255,0.15), rgba(255,92,168,0.1)); border: 1px solid rgba(106,92,255,0.35); border-radius: 14px; padding: 18px 22px; margin-bottom: 28px; font-size: 14px; line-height: 1.55; }
+		.trial-banner { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(204,204,204,0.06)); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; padding: 18px 22px; margin-bottom: 28px; font-size: 14px; line-height: 1.55; }
 		.trial-banner strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 15px; }
 
 		/* ── auth form ── */
@@ -39,7 +39,7 @@
 		label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
 		input { width: 100%; padding: 11px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.15s; }
 		input:focus { border-color: var(--accent); }
-		input::placeholder { color: #555570; }
+		input::placeholder { color: #555555; }
 
 		.tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 11px; overflow: hidden; margin-bottom: 28px; }
 		.tab { flex: 1; padding: 10px; background: var(--panel); color: var(--muted); font-size: 13px; font-weight: 500; border: none; cursor: pointer; transition: background 0.15s, color 0.15s; }
@@ -70,7 +70,7 @@
 		#state-error .btn { max-width: 260px; margin: 12px auto 0; display: block; }
 
 		.feature-list { list-style: none; margin: 0 0 32px; }
-		.feature-list li { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid #1c1c26; font-size: 14px; color: #cfcfdc; }
+		.feature-list li { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid #1c1c1c; font-size: 14px; color: #cfcfdc; }
 		.feature-list li:last-child { border-bottom: none; }
 		.feature-list li::before { content: "✓"; color: var(--accent); font-weight: 700; flex-shrink: 0; margin-top: 2px; }
 

@@ -597,7 +597,7 @@ function showSearchForm(appEl) {
 
 			<div class="rep-info-cards">
 				<div class="rep-info-card">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
 					<div>
 						<strong>On-chain reviews</strong>
 						<p>Attestations are signed transactions — permanent, public, and tamper-proof.</p>
@@ -779,7 +779,7 @@ async function renderProfile(appEl, { address, chainId }) {
 
 			${erc8004Rep && erc8004Rep.count > 0 ? `
 				<div class="rep-erc8004-badge">
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
 					ERC-8004 registry: ${erc8004Rep.count} vote${erc8004Rep.count !== 1 ? 's' : ''} · avg ${erc8004Rep.average.toFixed(1)}/100
 					<a href="/reputation?agent=${chainId}:${agentId}" class="rep-erc8004-link">View ERC-8004 ↗</a>
 				</div>

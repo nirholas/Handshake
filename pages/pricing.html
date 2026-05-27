@@ -2,118 +2,678 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 	<title>Pricing · three.ws</title>
-	<meta name="description" content="three.ws is free during open beta. Embed 3D AI agents on any site, with no per-view or per-chat limits." />
+	<meta name="description" content="Free during open beta. Pro and Enterprise plans for teams shipping 3D AI agents at scale. No view caps, no chat-turn limits." />
+	<meta property="og:title" content="Pricing · three.ws" />
+	<meta property="og:description" content="Free during open beta. Pro and Enterprise plans for teams shipping 3D AI agents at scale." />
+	<meta property="og:url" content="https://three.ws/pricing" />
+	<meta property="og:image" content="https://three.ws/og-image.png" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<link rel="canonical" href="https://three.ws/pricing" />
 	<link rel="icon" href="/favicon.ico" />
-	<style>
-		:root { color-scheme: dark; --accent:#6a5cff; --accent2:#ff5ca8; --border:#22222e; --bg:#0b0b10; --panel:#14141c; --text:#e8e8f0; --muted:#8a8aa0; }
-		* { box-sizing: border-box; }
-		body { font: 15px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; color:var(--text); margin:0; background:var(--bg); min-height:100vh; }
-		header { padding:18px 24px; border-bottom:1px solid var(--border); }
-		header a { color:#aaa; text-decoration:none; font-size:14px; }
-		.wrap { max-width: 960px; margin: 0 auto; padding: 64px 24px 96px; }
-		.eyebrow { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 14px; }
-		h1 { font-size: clamp(36px, 5vw, 56px); margin: 0 0 14px; letter-spacing: -0.025em; line-height: 1.05; font-weight: 600; }
-		.sub { color:var(--muted); font-size:17px; margin: 0 0 48px; max-width: 620px; line-height: 1.55; }
-		.grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
-		@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } h1 { font-size: 32px; } }
-		.card { background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:32px 28px; display:flex; flex-direction:column; min-height: 380px; }
-		.card.featured { border-color:var(--accent); box-shadow: 0 0 0 1px var(--accent) inset, 0 24px 64px rgba(106,92,255,0.18); position:relative; }
-		.tag { position:absolute; top:-11px; right:22px; background:var(--accent); color:#fff; font-size:11px; padding:4px 11px; border-radius:99px; font-weight:600; letter-spacing:0.06em; text-transform: uppercase; }
-		.tier { font-size:12px; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); font-weight:600; }
-		.price { font-size:42px; margin:10px 0 4px; font-weight:600; letter-spacing:-0.02em; line-height: 1; }
-		.price small { font-size:14px; color:var(--muted); font-weight:400; margin-left: 4px; }
-		.feat { list-style:none; padding:0; margin:22px 0 0; }
-		.feat li { padding:9px 0; border-bottom:1px solid #1c1c26; color:#cfcfdc; font-size:14.5px; display:flex; align-items:flex-start; gap:10px; line-height: 1.5; }
-		.feat li:last-child { border-bottom:none; }
-		.feat li::before { content:"✓"; color:var(--accent); font-weight:700; flex-shrink: 0; }
-		.btn { padding:13px 18px; border-radius:11px; border:0; background:var(--accent); color:#fff; font-size:14px; font-weight:600; cursor:pointer; margin-top:auto; text-decoration: none; display: inline-block; text-align: center; transition: filter 0.15s; }
-		.btn:hover { filter:brightness(1.12); }
-		.btn.sec { background:#222230; color:var(--text); }
-		.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
-		.cta-row { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
-		a { color:#9a8cff; }
-		.note { margin-top: 48px; padding: 20px 24px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; font-size: 14px; color: var(--muted); }
-		.note strong { color: var(--text); }
-		.faq { margin-top: 56px; }
-		.faq h2 { font-size: 22px; margin: 0 0 20px; letter-spacing: -0.01em; font-weight: 600; }
-		.faq details { padding: 16px 0; border-bottom: 1px solid var(--border); }
-		.faq summary { cursor: pointer; font-weight: 500; color: var(--text); font-size: 15px; list-style: none; }
-		.faq summary::after { content: "+"; float: right; color: var(--muted); font-size: 18px; line-height: 1; }
-		.faq details[open] summary::after { content: "−"; }
-		.faq details p { color: var(--muted); margin: 12px 0 0; line-height: 1.6; font-size: 14.5px; }
-	</style>
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/pricing.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<link rel="stylesheet" href="/mobile.css" />
 </head>
 <body>
-	<header><a href="/">← three.ws</a></header>
-	<div class="wrap">
-		<div class="eyebrow">Pricing · Open Beta</div>
-		<h1>Free during beta.<br/>Built for scale.</h1>
-		<p class="sub">three.ws is the 3D agent layer of the internet — drop one tag and embed a living 3D AI agent on any page. While we’re in open beta, every feature is free. No view caps, no chat-turn limits, no credit card required.</p>
+	<a href="#main-content" class="h-skip-link">Skip to main content</a>
 
-		<div class="grid">
-			<div class="card">
-				<div class="tier">Free</div>
-				<div class="price">$0<small>/forever for hobby & open-source</small></div>
-				<ul class="feat">
-					<li>Unlimited <code>&lt;agent-3d&gt;</code> embeds during beta</li>
-					<li>Create unlimited avatars & agents</li>
-					<li>Voice, animation, mocap, and AR included</li>
-					<li>x402 paid skills (you keep 100% during beta)</li>
-					<li>Community support on Discord</li>
-				</ul>
-				<div class="cta-row">
-					<a class="btn" href="/create">Build your first agent</a>
-					<a class="btn ghost" href="/docs">Read the docs</a>
+	<header class="site-header" style="position:sticky;top:0;z-index:100;">
+		<div style="display:flex;align-items:center;padding:0 var(--space-lg, 1.5rem);height:var(--header-h, 3.5rem);">
+			<h1 style="margin:0;font-size:inherit;font-weight:inherit;">
+				<a href="/" style="display:inline-flex;align-items:center;gap:0.6rem;text-decoration:none;color:#fff;">
+					<img class="wordmark-logo" src="/three.svg" width="28" height="28" alt="" />
+					<span class="wordmark-dot" aria-hidden="true"></span>
+					<span style="font-family:'Space Grotesk','Inter',sans-serif;font-weight:600;font-size:0.95rem;">three.ws</span>
+				</a>
+			</h1>
+			<div id="nav-container"></div>
+		</div>
+	</header>
+	<script src="/nav.js"></script>
+
+	<main id="main-content">
+
+		<!-- ── HERO ────────────────────────────────────────────────────── -->
+		<section class="pricing-hero">
+			<div class="eyebrow"><span class="eyebrow-dot"></span><span>Pricing</span></div>
+			<h1>Free to start.<br/><em>Scale when you&rsquo;re ready.</em></h1>
+			<p class="lead">Every feature is free during open beta &mdash; unlimited agents, embeds, voice, animation, and x402 payments. Pro and Enterprise unlock higher limits and dedicated support when you need them.</p>
+
+			<div class="billing-toggle" id="billing-toggle">
+				<span class="label-monthly is-active" data-period="monthly">Monthly</span>
+				<div class="toggle-track" role="switch" aria-checked="false" aria-label="Toggle annual billing" tabindex="0">
+					<div class="toggle-thumb"></div>
 				</div>
+				<span class="label-annual" data-period="annual">Annual <span class="billing-save">Save 17%</span></span>
 			</div>
-			<div class="card featured">
-				<div class="tag">Early access</div>
-				<div class="tier">For teams & enterprises</div>
-				<div class="price">Let’s talk</div>
-				<ul class="feat">
-					<li>Custom subdomain (<code>yourapp.three.ws</code>)</li>
-					<li>White-label embed & brand-locked themes</li>
+		</section>
+
+		<!-- ── TIERS ───────────────────────────────────────────────────── -->
+		<div class="pricing-tiers" id="pricing-tiers">
+			<div class="pricing-tier-card" data-tier="free">
+				<div class="pricing-tier-name">Free</div>
+				<div class="pricing-amount">$0<sub>/forever</sub></div>
+				<div class="pricing-cycle-info">No credit card required</div>
+				<ul class="pricing-features">
+					<li>1 agent + 1 custom avatar</li>
+					<li>Unlimited &lt;agent-3d&gt; embeds</li>
+					<li>Default rig + 200 animation clips</li>
+					<li>Voice chat &amp; lipsync</li>
+					<li>Public deploy at three.ws/&lt;name&gt;</li>
+					<li>x402 paid skills (0% platform fee)</li>
+					<li>Community support</li>
+				</ul>
+				<a href="/create" class="pricing-cta">Start free</a>
+			</div>
+
+			<div class="pricing-tier-card featured" data-tier="pro">
+				<span class="pricing-popular">Most popular</span>
+				<div class="pricing-tier-name">Pro</div>
+				<div class="pricing-amount" data-monthly="$49" data-annual="$40">$49<sub>/mo</sub></div>
+				<div class="pricing-cycle-info" data-monthly="Billed monthly" data-annual="$480/yr — billed annually">Billed monthly</div>
+				<ul class="pricing-features">
+					<li>Everything in Free</li>
+					<li>Unlimited agents &amp; custom avatars</li>
+					<li>Custom voice cloning</li>
+					<li>Animation studio + memory seeds</li>
+					<li>Custom subdomain embed</li>
+					<li>Priority CDN &amp; GPU rendering</li>
+					<li>Advanced analytics dashboard</li>
+					<li>Priority email support &amp; SLA</li>
+				</ul>
+				<a href="/login?plan=pro" class="pricing-cta primary">Choose Pro</a>
+			</div>
+
+			<div class="pricing-tier-card" data-tier="enterprise">
+				<div class="pricing-tier-name">Enterprise</div>
+				<div class="pricing-amount" style="font-size:36px;margin-top:6px;">Custom</div>
+				<div class="pricing-cycle-info">Volume pricing · tailored SLA</div>
+				<ul class="pricing-features">
+					<li>Everything in Pro</li>
+					<li>Self-hosted runtime option</li>
+					<li>White-label embed &amp; API</li>
+					<li>On-chain identity (ERC-8004)</li>
+					<li>Custom rigs &amp; licensing</li>
 					<li>SSO, audit logs, embed-policy whitelisting</li>
-					<li>Usage analytics, custom voice cloning</li>
-					<li>SLA, priority support, design partnership</li>
+					<li>Dedicated infrastructure &amp; solutions engineer</li>
 				</ul>
-				<div class="cta-row">
-					<a class="btn" href="mailto:hello@three.ws?subject=three.ws%20for%20teams">Talk to us</a>
-					<a class="btn ghost" href="/discover">See live embeds</a>
-				</div>
+				<a href="mailto:hello@three.ws?subject=three.ws%20Enterprise" class="pricing-cta">Contact sales</a>
 			</div>
 		</div>
 
-		<div class="note">
-			<strong>Already on the X-posting plan?</strong> Your subscription continues unchanged. Manage it at <a href="/x-pricing">/x-pricing</a>. New platform-wide pricing for embed volume, API calls, and creator payouts ships after open beta.
-		</div>
+		<!-- ── 3D AVATAR CANVAS ────────────────────────────────────────── -->
+		<canvas class="pricing-avatar-canvas" id="avatar-canvas"></canvas>
 
-		<div class="faq">
-			<h2>FAQ</h2>
+		<!-- ── FEATURE COMPARISON ──────────────────────────────────────── -->
+		<section class="pricing-comparison">
+			<h2>Compare every feature</h2>
+			<table class="comparison-table">
+				<thead>
+					<tr>
+						<th>Feature</th>
+						<th>Free</th>
+						<th class="featured-col">Pro</th>
+						<th>Enterprise</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="section-row"><td colspan="4">Agents &amp; avatars</td></tr>
+					<tr>
+						<td>Agents</td>
+						<td class="val">1</td>
+						<td class="val featured-col">Unlimited</td>
+						<td class="val">Unlimited</td>
+					</tr>
+					<tr>
+						<td>Custom avatars</td>
+						<td class="val">1</td>
+						<td class="val featured-col">Unlimited</td>
+						<td class="val">Unlimited</td>
+					</tr>
+					<tr>
+						<td>Animation clips</td>
+						<td class="val">200</td>
+						<td class="val featured-col">200 + custom</td>
+						<td class="val">Unlimited + custom rigs</td>
+					</tr>
+					<tr>
+						<td>Memory seeds</td>
+						<td><span class="check"></span></td>
+						<td class="featured-col"><span class="check yes"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+
+					<tr class="section-row"><td colspan="4">Voice &amp; lipsync</td></tr>
+					<tr>
+						<td>Voice chat</td>
+						<td><span class="check yes"></span></td>
+						<td class="featured-col"><span class="check yes"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+					<tr>
+						<td>TTS lipsync</td>
+						<td><span class="check yes"></span></td>
+						<td class="featured-col"><span class="check yes"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+					<tr>
+						<td>Custom voice cloning</td>
+						<td><span class="check"></span></td>
+						<td class="featured-col"><span class="check yes"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+
+					<tr class="section-row"><td colspan="4">Embed &amp; deploy</td></tr>
+					<tr>
+						<td>&lt;agent-3d&gt; embeds</td>
+						<td class="val">Unlimited</td>
+						<td class="val featured-col">Unlimited</td>
+						<td class="val">Unlimited</td>
+					</tr>
+					<tr>
+						<td>Custom domain embeds</td>
+						<td><span class="check"></span></td>
+						<td class="featured-col"><span class="check yes"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+					<tr>
+						<td>White-label theming</td>
+						<td><span class="check"></span></td>
+						<td><span class="check"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+					<tr>
+						<td>Embed-policy whitelisting</td>
+						<td><span class="check"></span></td>
+						<td><span class="check"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+
+					<tr class="section-row"><td colspan="4">Platform &amp; infra</td></tr>
+					<tr>
+						<td>CDN delivery</td>
+						<td class="val">Shared</td>
+						<td class="val featured-col">Priority</td>
+						<td class="val">Dedicated</td>
+					</tr>
+					<tr>
+						<td>GPU rendering</td>
+						<td class="val">Shared</td>
+						<td class="val featured-col">Priority</td>
+						<td class="val">Dedicated</td>
+					</tr>
+					<tr>
+						<td>Analytics dashboard</td>
+						<td class="val">Basic</td>
+						<td class="val featured-col">Advanced</td>
+						<td class="val">Custom</td>
+					</tr>
+					<tr>
+						<td>Self-hosted runtime</td>
+						<td><span class="check"></span></td>
+						<td><span class="check"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+
+					<tr class="section-row"><td colspan="4">Monetization &amp; identity</td></tr>
+					<tr>
+						<td>x402 paid skills</td>
+						<td><span class="check yes"></span></td>
+						<td class="featured-col"><span class="check yes"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+					<tr>
+						<td>Platform fee</td>
+						<td class="val">0% (beta)</td>
+						<td class="val featured-col">2.9%</td>
+						<td class="val">Custom</td>
+					</tr>
+					<tr>
+						<td>On-chain identity (ERC-8004)</td>
+						<td><span class="check"></span></td>
+						<td><span class="check"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+
+					<tr class="section-row"><td colspan="4">Support</td></tr>
+					<tr>
+						<td>Community (Discord)</td>
+						<td><span class="check yes"></span></td>
+						<td class="featured-col"><span class="check yes"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+					<tr>
+						<td>Priority email</td>
+						<td><span class="check"></span></td>
+						<td class="featured-col"><span class="check yes"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+					<tr>
+						<td>SLA guarantee</td>
+						<td><span class="check"></span></td>
+						<td class="featured-col"><span class="check yes"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+					<tr>
+						<td>Dedicated solutions engineer</td>
+						<td><span class="check"></span></td>
+						<td><span class="check"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+					<tr>
+						<td>SSO &amp; audit logs</td>
+						<td><span class="check"></span></td>
+						<td><span class="check"></span></td>
+						<td><span class="check yes"></span></td>
+					</tr>
+				</tbody>
+			</table>
+		</section>
+
+		<!-- ── FAQ ─────────────────────────────────────────────────────── -->
+		<section class="pricing-faq">
+			<h2>Frequently asked questions</h2>
+
 			<details>
-				<summary>What’s included in the free beta?</summary>
-				<p>Everything: unlimited avatars, unlimited agents, unlimited embeds, voice, animation, mocap, AR, x402 paid skills, the dashboard, and the API. We’re intentionally not metering anything during beta — we want to see how people actually use the platform before drawing pricing lines.</p>
+				<summary>What's included in the free beta?</summary>
+				<p>Everything: unlimited embeds, voice, animation, mocap, AR, x402 paid skills, the dashboard, and the API. We're intentionally not metering anything during beta — we want to see how people actually use the platform before drawing pricing lines.</p>
 			</details>
 			<details>
 				<summary>What happens when beta ends?</summary>
-				<p>A generous free tier will stay free forever for hobby and open-source projects. Paid tiers will be usage-based on embed views, chat turns, and API calls — priced to be cheaper than rolling your own. Existing users get 60 days’ notice and a grandfathered transition rate.</p>
+				<p>A generous free tier stays free forever for hobby and open-source projects. Paid tiers add higher agent limits, custom domains, priority infrastructure, and dedicated support. Existing users get 60 days' notice and a grandfathered transition rate.</p>
 			</details>
 			<details>
 				<summary>Can I monetize my own agents?</summary>
-				<p>Yes. The x402 protocol lets you charge per skill invocation (per chat turn, per generation, per API call) in USDC on Solana. During beta you keep 100% of revenue. After beta there will be a small platform fee (target: 2.9%, similar to Stripe).</p>
+				<p>Yes. The x402 protocol lets you charge per skill invocation (per chat turn, per generation, per API call) in USDC. During beta you keep 100% of revenue. After beta the platform fee is 2.9% on Pro and negotiable on Enterprise.</p>
 			</details>
 			<details>
 				<summary>Do I need crypto to use three.ws?</summary>
-				<p>No. The web component, dashboard, and API work without a wallet. Crypto unlocks: on-chain agent identity (ERC-8004), payable skills (x402), and creator payouts. If you don’t need those, the platform works like any other SaaS.</p>
+				<p>No. The web component, dashboard, and API work without a wallet. Crypto unlocks: on-chain agent identity (ERC-8004), payable skills (x402), and creator payouts. If you don't need those, the platform works like any other SaaS.</p>
+			</details>
+			<details>
+				<summary>Can I switch plans later?</summary>
+				<p>Upgrade or downgrade any time from your dashboard. When upgrading, you're prorated for the remainder of the current billing cycle. When downgrading, the change takes effect at the start of the next cycle.</p>
 			</details>
 			<details>
 				<summary>What about enterprise pricing?</summary>
-				<p>Custom subdomain, SSO, audit logs, embed-policy whitelisting, white-label themes, and SLA. Email <a href="mailto:hello@three.ws">hello@three.ws</a> and we’ll set up a call.</p>
+				<p>Custom subdomain, SSO, audit logs, embed-policy whitelisting, white-label themes, self-hosted runtime, and SLA. Email hello@three.ws and we'll set up a call within 24 hours.</p>
 			</details>
-		</div>
-	</div>
+			<details>
+				<summary>How does the annual discount work?</summary>
+				<p>Annual billing saves 17% compared to monthly. You're billed once per year at the discounted rate. If you cancel mid-year, your access continues through the end of the paid period.</p>
+			</details>
+		</section>
+
+		<!-- ── BOTTOM CTA ──────────────────────────────────────────────── -->
+		<section class="pricing-bottom-cta">
+			<div class="cta-card">
+				<h2>Ready to give your<br/>AI agent a body?</h2>
+				<p>Free during open beta. No credit card. Two lines of HTML.</p>
+				<div class="cta-row">
+					<a href="/create" class="pricing-cta primary">Build your first agent</a>
+					<a href="/docs" class="pricing-cta">Read the docs</a>
+				</div>
+			</div>
+		</section>
+
+		<!-- ── FOOTER ──────────────────────────────────────────────────── -->
+		<footer class="h-footer h-footer-horizon">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div class="h-footer-haze" aria-hidden="true"></div>
+			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+
+			<div class="h-footer-cta">
+				<div class="h-footer-newsletter">
+					<h3>Stay in the loop</h3>
+					<p>Get updates on new features, agent tooling, and protocol changes.</p>
+					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+						<input
+							type="email"
+							class="h-footer-newsletter-input"
+							name="email"
+							placeholder="Enter your email"
+							aria-label="Email address"
+							autocomplete="email"
+							required
+						/>
+						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4" /></svg>
+						</button>
+					</form>
+					<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
+				</div>
+				<div class="h-footer-community">
+					<h3>Join the community</h3>
+					<p>Follow along for builds, demos, and conversations with the team.</p>
+					<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+						Follow on X
+					</a>
+				</div>
+			</div>
+			<div class="h-footer-inner">
+				<div class="h-footer-brand-col">
+					<div class="h-footer-brand">
+						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+						<span class="wordmark-dot" aria-hidden="true"></span>
+						<span>three.ws</span>
+					</div>
+					<p class="h-footer-tagline">Give your AI a body.</p>
+					<div class="h-footer-socials">
+						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer" aria-label="three.ws on X">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+						</a>
+						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer" aria-label="three.ws on GitHub">
+							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" /></svg>
+						</a>
+					</div>
+				</div>
+				<nav class="h-footer-links" aria-label="Footer">
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Product</h4>
+						<a href="/create">Create</a>
+						<a href="/studio">Studio</a>
+						<a href="/widgets">Widgets</a>
+						<a href="/discover">Discover</a>
+						<a href="/pricing">Pricing</a>
+					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Developers</h4>
+						<a href="/docs">Docs</a>
+						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer">GitHub</a>
+						<a href="/dashboard/api">API</a>
+					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Resources</h4>
+						<a href="/blog">Blog</a>
+						<a href="/dashboard">Dashboard</a>
+						<a href="/community">Community</a>
+					</div>
+				</nav>
+			</div>
+			<div class="h-footer-bottom">
+				<p class="h-footer-legal">&copy; 2026 three.ws &mdash; All rights reserved.</p>
+				<div class="h-footer-legal-links">
+					<a href="/legal/privacy">Privacy Policy</a>
+					<a href="/legal/tos">Terms of Use</a>
+				</div>
+			</div>
+		</footer>
+	</main>
+
+	<!-- ── Billing toggle ──────────────────────────────────────────────── -->
+	<script>
+	(function () {
+		const toggle = document.getElementById('billing-toggle');
+		if (!toggle) return;
+		const track = toggle.querySelector('.toggle-track');
+		const labelM = toggle.querySelector('.label-monthly');
+		const labelA = toggle.querySelector('.label-annual');
+		let annual = false;
+
+		function apply() {
+			toggle.classList.toggle('annual', annual);
+			track.setAttribute('aria-checked', String(annual));
+			labelM.classList.toggle('is-active', !annual);
+			labelA.classList.toggle('is-active', annual);
+
+			document.querySelectorAll('[data-monthly][data-annual]').forEach(el => {
+				const val = annual ? el.dataset.annual : el.dataset.monthly;
+				if (el.classList.contains('pricing-amount')) {
+					el.innerHTML = val + '<sub>/mo</sub>';
+				} else {
+					el.textContent = val;
+				}
+			});
+		}
+
+		track.addEventListener('click', () => { annual = !annual; apply(); });
+		track.addEventListener('keydown', e => {
+			if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); annual = !annual; apply(); }
+		});
+		labelM.addEventListener('click', () => { annual = false; apply(); });
+		labelA.addEventListener('click', () => { annual = true; apply(); });
+	})();
+	</script>
+
+	<!-- ── 3D Avatar on pricing tiers ──────────────────────────────────── -->
+	<script type="module">
+	import * as THREE from 'three';
+	import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+	const canvas = document.getElementById('avatar-canvas');
+	const tierCards = [...document.querySelectorAll('.pricing-tier-card')];
+	if (!canvas || !tierCards.length) throw new Error('Missing pricing DOM');
+
+	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+	renderer.outputColorSpace = THREE.SRGBColorSpace;
+	renderer.toneMapping = THREE.ACESFilmicToneMapping;
+	renderer.toneMappingExposure = 1.1;
+
+	const scene = new THREE.Scene();
+	const PX_PER_UNIT = 120;
+	const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+	camera.position.z = 10;
+
+	function updateFrustum() {
+		const hw = window.innerWidth / PX_PER_UNIT / 2;
+		const hh = window.innerHeight / PX_PER_UNIT / 2;
+		camera.left = -hw; camera.right = hw;
+		camera.top = hh; camera.bottom = -hh;
+		camera.updateProjectionMatrix();
+	}
+
+	const _v3 = new THREE.Vector3();
+	function domToWorld(sx, sy) {
+		_v3.set((sx / window.innerWidth) * 2 - 1, -(sy / window.innerHeight) * 2 + 1, 0);
+		_v3.unproject(camera);
+		return { x: _v3.x, y: _v3.y };
+	}
+
+	let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
+	let phase = 'loading';
+	let activeTier = null;
+
+	function resize() {
+		renderer.setSize(window.innerWidth, window.innerHeight, false);
+		updateFrustum();
+		if (avatar && activeTier && phase === 'idle') {
+			const t = standOnTopOf(activeTier);
+			avatar.position.set(t.x, t.y, 0);
+		}
+	}
+	window.addEventListener('resize', resize);
+	resize();
+
+	scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+	const key = new THREE.DirectionalLight(0xfff4dc, 2.0); key.position.set(3, 6, 5); scene.add(key);
+	const rim = new THREE.DirectionalLight(0x4060ff, 0.6); rim.position.set(-4, 3, -2); scene.add(rim);
+	const fill = new THREE.DirectionalLight(0xffeedd, 0.4); fill.position.set(0, 2, 7); scene.add(fill);
+
+	const actions = {};
+	let currentAction = null;
+	const FADE_S = 0.3;
+
+	function setAnimation(name, { loop = true, hold = false } = {}) {
+		const next = actions[name];
+		if (!next || next === currentAction) return;
+		next.reset();
+		next.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+		next.clampWhenFinished = hold;
+		if (currentAction) next.crossFadeFrom(currentAction, FADE_S, false).play();
+		else next.fadeIn(FADE_S).play();
+		currentAction = next;
+	}
+
+	function standOnTopOf(tierEl) {
+		const r = tierEl.getBoundingClientRect();
+		return domToWorld(r.left + r.width / 2, r.top);
+	}
+
+	let walkT = 0, walkStart = null, walkEnd = null, walkDur = 0.85, walkPeakRise = 0;
+	let onArrival = null;
+	const WALK_SPEED = 5;
+
+	function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+	function beginMove(tierEl) {
+		if (activeTier) activeTier.classList.remove('is-active');
+		activeTier = tierEl;
+		activeTier.classList.add('is-active');
+	}
+
+	function walkToTier(tierEl) {
+		if (!avatar || tierEl === activeTier) return;
+		beginMove(tierEl);
+		phase = 'walking';
+		walkT = 0;
+		walkStart = { x: avatar.position.x, y: avatar.position.y };
+		walkEnd = standOnTopOf(tierEl);
+		const dx = Math.abs(walkEnd.x - walkStart.x);
+		walkDur = Math.max(0.4, dx / WALK_SPEED);
+		const minX = Math.min(walkStart.x, walkEnd.x);
+		const maxX = Math.max(walkStart.x, walkEnd.x);
+		const baseY = Math.max(walkStart.y, walkEnd.y);
+		let peakY = baseY;
+		for (const tt of tierCards) {
+			const tp = standOnTopOf(tt);
+			if (tp.x > minX && tp.x < maxX && tp.y > peakY) peakY = tp.y;
+		}
+		walkPeakRise = peakY - baseY;
+		setAnimation('walk', { loop: true });
+		const dir = Math.sign(walkEnd.x - walkStart.x) || 0;
+		avatar.rotation.y = dir * (Math.PI / 2);
+	}
+
+	const CTA_REACTION = { free: 'wave', pro: 'av-celebrating', enterprise: 'av-brag-claps' };
+	const CTA_REACTION_MAX_MS = 3500;
+
+	function landOnTier() {
+		phase = 'idle';
+		const snap = standOnTopOf(activeTier);
+		avatar.position.set(snap.x, snap.y, 0);
+		avatar.rotation.y = 0;
+		setAnimation('idle', { loop: true });
+		if (onArrival) { const cb = onArrival; onArrival = null; setTimeout(cb, 300); }
+	}
+
+	let hoverTimer = null, hoverPendingTier = null;
+	function scheduleMove(tierEl) {
+		if (!tierEl) { clearTimeout(hoverTimer); hoverPendingTier = null; return; }
+		if (tierEl === activeTier) { clearTimeout(hoverTimer); hoverPendingTier = null; return; }
+		if (tierEl === hoverPendingTier) return;
+		clearTimeout(hoverTimer);
+		hoverPendingTier = tierEl;
+		hoverTimer = setTimeout(() => {
+			hoverPendingTier = null;
+			if (phase === 'walking') { setTimeout(() => scheduleMove(tierEl), 200); }
+			else walkToTier(tierEl);
+		}, 120);
+	}
+
+	function tierAtPoint(cx, cy) {
+		for (const t of tierCards) {
+			const r = t.getBoundingClientRect();
+			if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) return t;
+		}
+		return null;
+	}
+
+	const tiersGrid = document.getElementById('pricing-tiers');
+	tiersGrid.addEventListener('mousemove', e => scheduleMove(tierAtPoint(e.clientX, e.clientY)));
+	tiersGrid.addEventListener('mouseleave', () => scheduleMove(null));
+
+	document.querySelectorAll('.pricing-cta').forEach(cta => {
+		const tierEl = cta.closest('.pricing-tier-card');
+		if (!tierEl) return;
+		cta.addEventListener('click', e => {
+			if (!avatar) return;
+			const tierName = tierEl.dataset.tier;
+			const reactionClip = CTA_REACTION[tierName] ?? 'wave';
+			const fireReaction = () => {
+				setAnimation(reactionClip, { loop: false, hold: true });
+				const clipDur = actions[reactionClip]?.getClip().duration ?? 2.0;
+				setTimeout(() => { if (phase === 'idle') setAnimation('idle', { loop: true }); }, Math.min(clipDur * 1000, CTA_REACTION_MAX_MS));
+			};
+			if (tierEl === activeTier && phase === 'idle') { fireReaction(); }
+			else { onArrival = fireReaction; if (tierEl !== activeTier) walkToTier(tierEl); }
+		});
+	});
+
+	let mouseNx = 0, mouseNy = 0;
+	window.addEventListener('mousemove', e => {
+		mouseNx = (e.clientX / window.innerWidth) * 2 - 1;
+		mouseNy = (e.clientY / window.innerHeight) * 2 - 1;
+	});
+
+	const ro = new ResizeObserver(() => {
+		if (avatar && activeTier && phase === 'idle') {
+			const t = standOnTopOf(activeTier);
+			avatar.position.set(t.x, t.y, 0);
+		}
+	});
+	tierCards.forEach(t => ro.observe(t));
+
+	const CLIPS = ['idle', 'walk', 'wave', 'av-celebrating', 'av-brag-claps'];
+
+	new GLTFLoader().load('/avatars/cz.glb', gltf => {
+		avatar = gltf.scene;
+		avatar.traverse(n => {
+			if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name)) rootBone = n;
+		});
+		avatar.rotation.y = 0;
+		scene.add(avatar);
+		mixer = new THREE.AnimationMixer(avatar);
+
+		Promise.all(CLIPS.map(name =>
+			fetch(`/animations/clips/${name}.json`).then(r => r.json())
+		)).then(jsons => {
+			CLIPS.forEach((name, i) => { actions[name] = mixer.clipAction(THREE.AnimationClip.parse(jsons[i])); });
+			if (rootBone) baseRootPos = rootBone.position.clone();
+			const _r = renderer.render.bind(renderer);
+			renderer.render = (sc, cam) => {
+				try { if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos); } catch (_) {}
+				_r(sc, cam);
+			};
+
+			const pro = document.querySelector('[data-tier="pro"]');
+			activeTier = pro;
+			pro.classList.add('is-active');
+			const start = standOnTopOf(pro);
+			avatar.position.set(start.x, start.y, 0);
+			setAnimation('idle', { loop: true });
+			phase = 'idle';
+		});
+	});
+
+	const clock = new THREE.Clock();
+	(function tick() {
+		requestAnimationFrame(tick);
+		try {
+			const dt = Math.min(clock.getDelta(), 0.05);
+			mixer?.update(dt);
+			if (phase === 'walking' && avatar && walkStart && walkEnd) {
+				walkT += dt;
+				const p = Math.min(walkT / walkDur, 1);
+				const e = smoothstep(p);
+				const x = walkStart.x + (walkEnd.x - walkStart.x) * e;
+				const arc = walkPeakRise * 4 * p * (1 - p);
+				const y = walkStart.y + (walkEnd.y - walkStart.y) * e + arc;
+				avatar.position.set(x, y, 0);
+				if (p >= 1) landOnTier();
+			}
+			camera.position.x += (mouseNx * 0.1 - camera.position.x) * 0.04;
+			camera.position.y += (-mouseNy * 0.07 - camera.position.y) * 0.04;
+			renderer.render(scene, camera);
+		} catch (_) {}
+	})();
+	</script>
 </body>
 </html>

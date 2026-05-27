@@ -15,6 +15,7 @@ import {
 	applyMorphsToRoot,
 	renderSculptPanel,
 } from './avatar-sculpt.js';
+
 const BASE_GLB = '/avatars/default.glb';
 const PRESETS_URL = '/accessories/presets.json';
 
@@ -31,8 +32,10 @@ const $$ = (sel) => document.querySelectorAll(sel);
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 async function boot() {
+	const presetsRes = await fetch(PRESETS_URL);
+	if (!presetsRes.ok) throw new Error(`Failed to load presets: ${presetsRes.status}`);
 	const [presetsData] = await Promise.all([
-		fetch(PRESETS_URL).then((r) => r.json()),
+		presetsRes.json(),
 		mountScene(),
 	]);
 	presets = presetsData;
@@ -44,6 +47,7 @@ async function boot() {
 	wireAnimationSelect();
 	wireExport();
 	wireResetAll();
+	wirePresetInteraction();
 
 	renderActiveTab();
 	renderChips();
@@ -60,7 +64,6 @@ async function mountScene() {
 }
 
 // ── AccessoryManager adapter ──────────────────────────────────────────────────
-// AccessoryManager expects a viewer-like object with .content and .invalidate().
 
 function wireAccessoryManager() {
 	const viewerAdapter = {
@@ -121,11 +124,11 @@ async function wireAnimationSelect() {
 		return;
 	}
 
-	const names = emotes.listNames?.() || [];
-	for (const name of names) {
+	const defs = emotes.getAllDefs();
+	for (const def of defs) {
 		const opt = document.createElement('option');
-		opt.value = name;
-		opt.textContent = name;
+		opt.value = def.name;
+		opt.textContent = def.label || def.name;
 		select.appendChild(opt);
 	}
 
@@ -133,7 +136,7 @@ async function wireAnimationSelect() {
 		const val = select.value;
 		if (!val) return;
 		scene.playEmote(val);
-		setTimeout(() => { select.value = ''; }, 2000);
+		select.value = '';
 	});
 }
 
@@ -190,6 +193,51 @@ function wireResetAll() {
 	});
 }
 
+// ── Preset interaction (event delegation) ─────────────────────────────────────
+// Wired once on #as-tab-content. Hover → live preview. Click → commit.
+
+let _hoverPreview = null;
+
+function wirePresetInteraction() {
+	const container = $('#as-tab-content');
+
+	container.addEventListener('click', async (e) => {
+		const card = e.target.closest('.as-preset-card');
+		if (!card) return;
+		try {
+			await handlePresetClick(card);
+		} catch (err) {
+			console.warn('[studio] preset click failed:', err);
+			setStatus(`Failed: ${err.message}`);
+		}
+	});
+
+	container.addEventListener('pointerenter', async (e) => {
+		const card = e.target.closest('.as-preset-card');
+		if (!card) return;
+		const id = card.dataset.presetId;
+		const preset = presets.find((p) => p.id === id);
+		if (!preset) return;
+		_hoverPreview = id;
+		try {
+			await accessoryMgr.applyPreset(preset);
+		} catch (err) {
+			console.warn('[studio] hover preview failed:', err);
+		}
+	}, true);
+
+	container.addEventListener('pointerleave', async (e) => {
+		const card = e.target.closest('.as-preset-card');
+		if (!card || !_hoverPreview) return;
+		_hoverPreview = null;
+		try {
+			await revertToCommitted();
+		} catch (err) {
+			console.warn('[studio] revert failed:', err);
+		}
+	}, true);
+}
+
 // ── Tab rendering ─────────────────────────────────────────────────────────────
 
 function renderActiveTab() {
@@ -217,50 +265,23 @@ function renderPresetTab(container, kind) {
 	container.innerHTML = `
 		<div class="as-preset-grid">
 			${items.map((p) => `
-				<div class="as-preset-card ${isActive(p) ? 'active' : ''}" data-preset-id="${esc(p.id)}">
+				<div class="as-preset-card ${isActive(p) ? 'active' : ''}"
+				     data-preset-id="${esc(p.id)}" role="button" tabindex="0">
 					<div class="as-preset-icon">
 						${p.thumbnail
-							? `<img src="${esc(p.thumbnail)}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${iconFallback[p.kind] || '?'}'))">`
-							: iconFallback[p.kind] || '?'}
+							? `<img src="${esc(p.thumbnail)}" alt="${esc(p.name)}" loading="lazy">`
+							: `<span>${iconFallback[p.kind] || '?'}</span>`}
 					</div>
 					<span class="as-preset-name">${esc(p.name)}</span>
 				</div>
 			`).join('')}
 		</div>
 	`;
-
-	container.addEventListener('click', handlePresetClick);
-	container.addEventListener('pointerenter', handlePresetHover, true);
-	container.addEventListener('pointerleave', handlePresetLeave, true);
 }
 
-// ── Preset interaction ────────────────────────────────────────────────────────
-// Hover → live preview (temporary). Click → commit. Leave → revert to committed.
+// ── Preset commit logic ───────────────────────────────────────────────────────
 
-let _hoverPreview = null;
-
-async function handlePresetHover(e) {
-	const card = e.target.closest('.as-preset-card');
-	if (!card) return;
-	const id = card.dataset.presetId;
-	const preset = presets.find((p) => p.id === id);
-	if (!preset) return;
-
-	_hoverPreview = id;
-	await accessoryMgr.applyPreset(preset);
-}
-
-async function handlePresetLeave(e) {
-	const card = e.target.closest('.as-preset-card');
-	if (!card || !_hoverPreview) return;
-
-	_hoverPreview = null;
-	await revertToCommitted();
-}
-
-async function handlePresetClick(e) {
-	const card = e.target.closest('.as-preset-card');
-	if (!card) return;
+async function handlePresetClick(card) {
 	const id = card.dataset.presetId;
 	const preset = presets.find((p) => p.id === id);
 	if (!preset) return;
@@ -328,6 +349,36 @@ async function revertToCommitted() {
 
 // ── Sculpt tab ────────────────────────────────────────────────────────────────
 
+const AE_TO_AS_MAP = [
+	['ae-sculpt-group', 'as-sculpt-group'],
+	['ae-sculpt-row', 'as-sculpt-row'],
+	['ae-sculpt-head', 'as-sculpt-head'],
+	['ae-sculpt-rows', 'as-sculpt-rows'],
+	['ae-sculpt-label', 'as-sculpt-label'],
+	['ae-sculpt-name', 'as-sculpt-name'],
+	['ae-sculpt-meta', 'as-sculpt-meta'],
+	['ae-sculpt-value', 'as-sculpt-value'],
+	['ae-sculpt-count', 'as-sculpt-count'],
+	['ae-sculpt-mirror', 'as-sculpt-mirror'],
+	['ae-sculpt-note', 'as-sculpt-note'],
+	['ae-sculpt-capture', 'as-btn as-btn-ghost as-btn-sm'],
+	['ae-sculpt-reset', 'as-btn as-btn-ghost as-btn-sm'],
+	['ae-blend-canvas', 'as-blend-canvas'],
+	['ae-blend-puck', 'as-blend-puck'],
+	['ae-blend-label', 'as-blend-label'],
+	['ae-blend-group', 'as-blend-group'],
+	['ae-blend-body', 'as-sculpt-rows'],
+	['ae-blend-desc', 'as-blend-desc'],
+	['ae-btn', 'as-btn as-btn-ghost as-btn-sm'],
+	['ae-face-backdrop', 'as-face-backdrop'],
+	['ae-face-dialog', 'as-face-dialog'],
+	['ae-face-close', 'as-face-close'],
+	['ae-face-lede', 'as-face-lede'],
+	['ae-face-stage', 'as-face-stage'],
+	['ae-face-status', 'as-face-status'],
+	['ae-face-actions', 'as-face-actions'],
+];
+
 function renderSculptTab(container) {
 	renderSculptPanel({
 		container,
@@ -336,26 +387,18 @@ function renderSculptTab(container) {
 		onDirty: () => {},
 	});
 
-	container.querySelectorAll('.ae-sculpt-group').forEach((el) => {
-		el.classList.add('as-sculpt-group');
-	});
-	container.querySelectorAll('.ae-sculpt-row').forEach((el) => {
-		el.classList.add('as-sculpt-row');
-	});
-	container.querySelectorAll('.ae-sculpt-head').forEach((el) => {
-		el.classList.add('as-sculpt-head');
-	});
-	container.querySelectorAll('.ae-blend-canvas').forEach((el) => {
-		el.classList.add('as-blend-canvas');
-	});
-	container.querySelectorAll('.ae-blend-puck').forEach((el) => {
-		el.classList.add('as-blend-puck');
-	});
-	container.querySelectorAll('.ae-blend-label').forEach((el) => {
-		el.classList.add('as-blend-label');
-	});
-	container.querySelectorAll('.ae-btn').forEach((el) => {
-		el.classList.add('as-btn', 'as-btn-ghost', 'as-btn-sm');
+	for (const [aeClass, asClasses] of AE_TO_AS_MAP) {
+		container.querySelectorAll(`.${aeClass}`).forEach((el) => {
+			el.classList.add(...asClasses.split(' '));
+		});
+	}
+
+	document.querySelectorAll(`.ae-face-backdrop`).forEach((el) => {
+		for (const [aeClass, asClasses] of AE_TO_AS_MAP) {
+			el.querySelectorAll(`.${aeClass}`).forEach((child) => {
+				child.classList.add(...asClasses.split(' '));
+			});
+		}
 	});
 }
 
@@ -419,6 +462,13 @@ function esc(s) {
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#39;');
 }
+
+// ── Teardown ──────────────────────────────────────────────────────────────────
+
+window.addEventListener('pagehide', () => {
+	idle?.dispose();
+	scene?.unmount();
+});
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 

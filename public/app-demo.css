@@ -6,7 +6,7 @@
  * Aesthetic sourced from /studio (public/studio/studio.css):
  *   - bg #0a0a0f, panels #14141c on #2a2a36, radius 14px
  *   - Inter 14/1.45, sticky 60px header with backdrop blur
- *   - accent #8b5cf6, active nav as filled purple pill
+ *   - accent #ffffff, active nav as filled white pill
  */
 
 body.app-demo-body {
@@ -100,9 +100,9 @@ body.app-demo-body .features-nav a:hover {
 
 body.app-demo-body .features-nav a.active,
 body.app-demo-body .features-nav a[aria-current='page'] {
-	color: #fff;
-	background: #8b5cf6;
-	border-color: #8b5cf6;
+	color: #000000;
+	background: #ffffff;
+	border-color: #ffffff;
 }
 
 body.app-demo-body .features-nav a.active::after,
@@ -245,9 +245,9 @@ body.app-demo-body .dropzone .upload-btn label {
 	font: inherit;
 	font-size: 0.85rem;
 	font-weight: 500;
-	color: #fff;
-	background: #8b5cf6;
-	border: 1px solid #8b5cf6;
+	color: #000000;
+	background: #ffffff;
+	border: 1px solid #ffffff;
 	border-radius: 10px;
 	box-shadow: none;
 	letter-spacing: 0;
@@ -257,13 +257,13 @@ body.app-demo-body .dropzone .upload-btn label {
 }
 
 body.app-demo-body .dropzone .upload-btn label:hover {
-	background: #7c4ef0;
-	border-color: #7c4ef0;
+	background: #e8e8e8;
+	border-color: #e8e8e8;
 }
 
 body.app-demo-body .dropzone .upload-btn label:active {
-	background: #6d3fe2;
-	border-color: #6d3fe2;
+	background: #d4d4d4;
+	border-color: #d4d4d4;
 }
 
 body.app-demo-body .dropzone .upload-btn svg {
@@ -321,7 +321,7 @@ body.app-demo-body .auth-gate__inner {
 }
 
 body.app-demo-body .auth-gate__eyebrow {
-	color: #8b5cf6;
+	color: #ffffff;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	font-size: 0.72rem;
@@ -363,14 +363,14 @@ body.app-demo-body .auth-gate__btn:hover {
 }
 
 body.app-demo-body .auth-gate__btn--primary {
-	color: #fff;
-	background: #8b5cf6;
-	border-color: #8b5cf6;
+	color: #000000;
+	background: #ffffff;
+	border-color: #ffffff;
 }
 
 body.app-demo-body .auth-gate__btn--primary:hover {
-	background: #7c4ef0;
-	border-color: #7c4ef0;
+	background: #e8e8e8;
+	border-color: #e8e8e8;
 }
 
 body.app-demo-body .auth-gate__perks li {
@@ -379,7 +379,7 @@ body.app-demo-body .auth-gate__perks li {
 }
 
 body.app-demo-body .auth-gate__perks li::before {
-	color: #8b5cf6;
+	color: #ffffff;
 }
 
 /* ---------- Agent presence sidebar — soften into studio aesthetic ---------- */
@@ -418,14 +418,14 @@ body.app-demo-body .agent-onboarding__btn {
 }
 
 body.app-demo-body .agent-onboarding__btn--primary {
-	color: #fff;
-	background: #8b5cf6;
-	border-color: #8b5cf6;
+	color: #000000;
+	background: #ffffff;
+	border-color: #ffffff;
 }
 
 body.app-demo-body .agent-onboarding__btn--primary:hover {
-	background: #7c4ef0;
-	border-color: #7c4ef0;
+	background: #e8e8e8;
+	border-color: #e8e8e8;
 }
 
 /* ---------- Demo banner — tiny indicator so the user knows this isn't /app ---------- */
@@ -442,9 +442,9 @@ body.app-demo-body::before {
 	font-weight: 500;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	color: #c4b8ff;
-	background: rgba(139, 92, 246, 0.15);
-	border: 1px solid rgba(139, 92, 246, 0.4);
+	color: rgba(255, 255, 255, 0.7);
+	background: rgba(255, 255, 255, 0.15);
+	border: 1px solid rgba(255, 255, 255, 0.4);
 	border-radius: 999px;
 	pointer-events: none;
 }

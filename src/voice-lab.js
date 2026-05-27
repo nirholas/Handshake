@@ -87,6 +87,19 @@ const BAR_COUNT = 64;
 let idlePhase = 0;
 let smoothBars = new Float32Array(BAR_COUNT);
 
+function roundRect(x, y, w, h, r) {
+	if (ctx.roundRect) {
+		ctx.roundRect(x, y, w, h, r);
+	} else {
+		ctx.moveTo(x + r, y);
+		ctx.arcTo(x + w, y, x + w, y + h, r);
+		ctx.arcTo(x + w, y + h, x, y + h, r);
+		ctx.arcTo(x, y + h, x, y, r);
+		ctx.arcTo(x, y, x + w, y, r);
+		ctx.closePath();
+	}
+}
+
 function lerpColor(t) {
 	const r = Math.round(61 + t * (167 - 61));
 	const g = Math.round(193 + t * (139 - 193));
@@ -115,10 +128,10 @@ function drawIdle() {
 
 		ctx.fillStyle = barColors[i] + alpha + ')';
 		ctx.beginPath();
-		ctx.roundRect(x, centerY - h, barW, h, 2);
+		roundRect(x, centerY - h, barW, h, 2);
 		ctx.fill();
 		ctx.beginPath();
-		ctx.roundRect(x, centerY + 1, barW, h, 2);
+		roundRect(x, centerY + 1, barW, h, 2);
 		ctx.fill();
 	}
 }
@@ -153,10 +166,10 @@ function drawLive() {
 
 		ctx.fillStyle = barColors[i] + alpha + ')';
 		ctx.beginPath();
-		ctx.roundRect(x, centerY - h, barW, h, 2);
+		roundRect(x, centerY - h, barW, h, 2);
 		ctx.fill();
 		ctx.beginPath();
-		ctx.roundRect(x, centerY + 1, barW, h, 2);
+		roundRect(x, centerY + 1, barW, h, 2);
 		ctx.fill();
 	}
 

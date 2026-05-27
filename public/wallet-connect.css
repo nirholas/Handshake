@@ -26,7 +26,7 @@
 
 .cwb-btn:hover:not(:disabled) {
 	background: #22222e;
-	border-color: #6a5cff;
+	border-color: #ffffff;
 }
 
 .cwb-btn:disabled {

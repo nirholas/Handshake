@@ -25,7 +25,7 @@
 				font: 800 clamp(28px, 3.5vw, 48px)/1.08 'Space Grotesk','Inter',sans-serif;
 				letter-spacing: -0.03em; color: #fff; text-align: center;
 			}
-			#overlay h2 em { color: #3dc1ff; font-style: normal; }
+			#overlay h2 em { color: #ffffff; font-style: normal; }
 			#overlay p {
 				margin: 0; color: #555870; font-size: 15px;
 				line-height: 1.7; max-width: 38ch; text-align: center;
@@ -43,12 +43,12 @@
 				font: 500 13px/1 'Inter', sans-serif; cursor: pointer;
 				outline: none;
 			}
-			#voice-select:focus { border-color: rgba(61, 193, 255,0.5); }
+			#voice-select:focus { border-color: rgba(255,255,255,0.5); }
 
 			#start-btn {
 				margin-top: 4px;
 				padding: 16px 44px; border: none; border-radius: 100px;
-				background: #3dc1ff; color: #04050d;
+				background: #ffffff; color: #000000;
 				font: 700 15px/1 'Space Grotesk','Inter',sans-serif;
 				letter-spacing: 0.01em; cursor: pointer;
 				transition: opacity 0.15s, transform 0.15s;
@@ -60,7 +60,7 @@
 			/* ── Stage copy ── */
 			.stage { pointer-events: none; transition: opacity 0.4s; }
 			.stage.hidden { opacity: 0; }
-			.stage h1 em { color: #3dc1ff; font-style: normal; }
+			.stage h1 em { color: #ffffff; font-style: normal; }
 
 			/* ── Controls bar ── */
 			#controls {
@@ -83,7 +83,7 @@
 				outline: none;
 			}
 			#text-input::placeholder { color: #444860; }
-			#text-input:focus { border-color: rgba(61, 193, 255,0.4); }
+			#text-input:focus { border-color: rgba(255,255,255,0.4); }
 			#send-btn {
 				background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
 				color: #ccc; border-radius: 10px; padding: 9px 14px;
@@ -106,8 +106,8 @@
 			.ctrl-btn:active { transform: scale(0.97); }
 
 			#mic-btn {
-				background: #3dc1ff; color: #04050d;
-				box-shadow: 0 4px 0 0 #005a8a, 0 6px 20px rgba(61, 193, 255,0.22);
+				background: #ffffff; color: #000000;
+				box-shadow: 0 4px 0 0 #888888, 0 6px 20px rgba(255, 255, 255,0.22);
 			}
 			#mic-btn.recording {
 				background: #ef4444; color: #fff;
@@ -118,7 +118,7 @@
 				background: rgba(255,255,255,0.06);
 				border: 1px solid rgba(255,255,255,0.12); color: #ccc;
 			}
-			#cam-btn.active { background: rgba(61, 193, 255,0.1); border-color: rgba(61, 193, 255,0.4); color: #3dc1ff; }
+			#cam-btn.active { background: rgba(255, 255, 255,0.1); border-color: rgba(255, 255, 255,0.4); color: #ffffff; }
 
 			#end-btn {
 				background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171;
@@ -132,7 +132,7 @@
 			}
 			#mic-level-fill {
 				height: 100%; width: 0; border-radius: 2px;
-				background: #3dc1ff;
+				background: #ffffff;
 				transition: width 0.05s linear;
 			}
 			#mic-level.muted #mic-level-fill { background: #555870; }
@@ -155,7 +155,7 @@
 				width: 7px; height: 7px; border-radius: 50%;
 				background: #555870; transition: background 0.3s; flex-shrink: 0;
 			}
-			#status[data-state="idle"]      #status-dot { background: #3dc1ff; }
+			#status[data-state="idle"]      #status-dot { background: #ffffff; }
 			#status[data-state="listening"] #status-dot { background: #ef4444; animation: pulse 0.9s ease-in-out infinite alternate; }
 			#status[data-state="thinking"]  #status-dot { background: #a78bfa; animation: pulse 1.2s ease-in-out infinite alternate; }
 			#status[data-state="speaking"]  #status-dot { background: #34d399; animation: pulse 0.7s ease-in-out infinite alternate; }
@@ -180,18 +180,18 @@
 			}
 			.tx-msg-user {
 				align-self: flex-end;
-				background: rgba(125,211,252,0.09);
-				border: 1px solid rgba(125,211,252,0.2); color: #7dd3fc;
+				background: rgba(255,255,255,0.09);
+				border: 1px solid rgba(255,255,255,0.2); color: #ffffff;
 			}
 			.tx-msg-model {
 				align-self: flex-start;
 				background: rgba(255,255,255,0.04);
 				border: 1px solid rgba(255,255,255,0.07); color: #ccc;
 			}
-			.tx-msg-model.streaming { border-color: rgba(61, 193, 255,0.2); }
+			.tx-msg-model.streaming { border-color: rgba(255, 255, 255,0.2); }
 			/* Typing cursor on streaming model messages */
 			.tx-msg-model.streaming::after {
-				content: '▌'; color: #3dc1ff; animation: blink-cursor 0.7s step-end infinite;
+				content: '▌'; color: #ffffff; animation: blink-cursor 0.7s step-end infinite;
 			}
 			@keyframes blink-cursor { 50% { opacity: 0; } }
 

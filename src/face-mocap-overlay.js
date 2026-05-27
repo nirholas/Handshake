@@ -19,14 +19,14 @@ import { Matrix4, Vector3 } from 'three';
 
 // Three.ws brand palette — the rest of the lab uses these exact values.
 const COLORS = {
-	dot:      '#d6ff3d',
-	wire:     'rgba(214,255,61,0.18)',
+	dot:      '#ffffff',
+	wire:     'rgba(255,255,255,0.18)',
 	lips:     '#ff5e7e',
 	eye:      '#7fc4ff',
 	brow:     '#ffd23d',
 	iris:     '#ffffff',
 	axisX:    '#ff5e7e',
-	axisY:    '#d6ff3d',
+	axisY:    '#ffffff',
 	axisZ:    '#7fc4ff',
 };
 

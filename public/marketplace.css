@@ -498,7 +498,7 @@ body.market-page {
 .avatar-detail-load-bar {
 	height: 100%;
 	width: 0;
-	background: linear-gradient(90deg, #a78bfa, #6366f1);
+	background: #ffffff;
 	border-radius: 999px;
 	transition: width 0.2s;
 }

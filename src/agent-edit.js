@@ -1,6 +1,7 @@
 import { AvatarCreator } from './avatar-creator.js';
 import { saveRemoteGlbToAccount } from './account.js';
 import { apiFetch } from './api.js';
+import { openAvatarPicker } from './avatar-gallery-picker.js';
 
 const API_BASE = '/api';
 const params = new URLSearchParams(location.search);
@@ -119,8 +120,8 @@ function showBanner(msg) {
     el = document.createElement('div');
     el.id = 'avatar-origin-banner';
     el.style.cssText =
-      'padding:10px 20px;background:rgba(125,211,252,.1);border-bottom:1px solid rgba(125,211,252,.25);' +
-      'color:#7dd3fc;font-size:13px;font-weight:500;';
+      'padding:10px 20px;background:rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.25);' +
+      'color:#ffffff;font-size:13px;font-weight:500;';
     document.body.prepend(el);
   }
   el.textContent = msg;
@@ -390,6 +391,10 @@ function openAvatarCreateMenu() {
       <span class="acm-title">Upload GLB</span>
       <span class="acm-sub">Bring your own model</span>
     </button>
+    <button type="button" role="menuitem" data-source="gallery">
+      <span class="acm-title">Browse public gallery</span>
+      <span class="acm-sub">Pick from community avatars</span>
+    </button>
   `;
   document.body.appendChild(menu);
 
@@ -415,9 +420,26 @@ function openAvatarCreateMenu() {
     btn.addEventListener('click', () => {
       const src = btn.dataset.source;
       close();
-      startAvatarCreate(src);
+      if (src === 'gallery') {
+        openGalleryPicker();
+      } else {
+        startAvatarCreate(src);
+      }
     });
   });
+}
+
+async function openGalleryPicker() {
+  const picked = await openAvatarPicker({
+    source: 'both',
+    title: 'Choose an avatar for this agent',
+    selectedId: agentData?.avatar_id || '',
+    showModes: false,
+    ctaLabel: 'Use this avatar',
+  });
+  if (picked) {
+    await selectAvatar(picked.id);
+  }
 }
 
 function startAvatarCreate(source) {

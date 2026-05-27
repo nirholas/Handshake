@@ -259,7 +259,7 @@ function _injectStyles() {
 		}
 		.hotspot-marker:hover,
 		.hotspot-marker.is-active {
-			background: rgba(139, 92, 246, 0.85);
+			background: rgba(255, 255, 255, 0.85);
 			border-color: rgba(255, 255, 255, 0.4);
 		}
 		.hotspot-marker-dot {
@@ -268,7 +268,7 @@ function _injectStyles() {
 			width: 44px;
 			height: 44px;
 			border-radius: 999px;
-			background: rgba(139, 92, 246, 0.9);
+			background: rgba(255, 255, 255, 0.9);
 			color: #fff;
 			font-weight: 600;
 			font-size: 13px;
@@ -276,7 +276,7 @@ function _injectStyles() {
 		}
 		.hotspot-marker.is-active .hotspot-marker-dot {
 			background: #fff;
-			color: #8b5cf6;
+			color: #ffffff;
 		}
 		.hotspot-marker-label {
 			text-overflow: ellipsis;

@@ -220,7 +220,7 @@ body {
 	background: linear-gradient(
 		90deg,
 		rgba(167, 139, 250, 0.9),
-		rgba(139, 92, 246, 0.9)
+		rgba(255, 255, 255, 0.9)
 	);
 	border-radius: inherit;
 	transition: width 0.18s ease-out;
@@ -280,8 +280,8 @@ body {
 
 /* Drag-over highlight — lifts when a file is hovering anywhere on the page */
 body.is-dragover .dropzone {
-	background: linear-gradient(180deg, rgba(139, 92, 246, 0.16), rgba(139, 92, 246, 0.08));
-	border-top-color: rgba(139, 92, 246, 0.5);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+	border-top-color: rgba(255, 255, 255, 0.5);
 }
 
 .placeholder {
@@ -400,8 +400,8 @@ header h1 .wordmark-dot {
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
-	box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+	background: #ffffff;
+	box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
 	display: inline-block;
 }
 
@@ -453,7 +453,7 @@ header h1 .wordmark-logo {
 	width: 18px;
 	height: 2px;
 	border-radius: 2px;
-	background: linear-gradient(90deg, #a78bfa, #6366f1);
+	background: #ffffff;
 }
 
 .nav-sign-in {
@@ -623,7 +623,7 @@ header h1 .wordmark-logo {
 .gui-toggle--active {
 	color: #fff;
 	background: var(--accent-soft);
-	border-color: rgba(139, 92, 246, 0.45);
+	border-color: rgba(255, 255, 255, 0.45);
 }
 
 .gui-toggle__label {
@@ -666,7 +666,7 @@ header h1 .wordmark-logo {
 .ar-btn--active {
 	color: #fff;
 	background: var(--accent-soft);
-	border-color: rgba(139, 92, 246, 0.45);
+	border-color: rgba(255, 255, 255, 0.45);
 }
 
 .ar-btn__label {
@@ -1071,7 +1071,7 @@ footer .separator {
 	border: 2px solid rgba(255, 255, 255, 0.08);
 	border-top-color: rgba(167, 139, 250, 0.9);
 	border-right-color: rgba(167, 139, 250, 0.4);
-	box-shadow: 0 0 24px rgba(139, 92, 246, 0.25);
+	box-shadow: 0 0 24px rgba(255, 255, 255, 0.25);
 	-webkit-animation: sk-spin 0.9s linear infinite;
 	animation: sk-spin 0.9s linear infinite;
 }
@@ -1173,8 +1173,8 @@ footer .separator {
 }
 
 .price-free {
-  color: #a7f3d0;
-  background-color: rgba(52, 211, 153, 0.1);
+  color: #e0e0e0;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .price-paid {
@@ -1194,8 +1194,8 @@ footer .separator {
 }
 
 .price-free {
-  color: #a7f3d0;
-  background-color: rgba(52, 211, 153, 0.1);
+  color: #e0e0e0;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .price-paid {
@@ -1590,7 +1590,7 @@ body.explore-page {
 body.deploy-page {
 	background:
 		radial-gradient(900px 500px at 80% -10%, rgba(99, 102, 241, 0.12), transparent 60%),
-		radial-gradient(700px 400px at 10% 5%, rgba(139, 92, 246, 0.10), transparent 60%),
+		radial-gradient(700px 400px at 10% 5%, rgba(255, 255, 255, 0.10), transparent 60%),
 		#070710;
 }
 
@@ -2417,8 +2417,8 @@ body.deploy-page {
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	color: rgba(255, 255, 255, 0.7);
-	background: rgba(139, 92, 246, 0.12);
-	border: 1px solid rgba(139, 92, 246, 0.35);
+	background: rgba(255, 255, 255, 0.12);
+	border: 1px solid rgba(255, 255, 255, 0.35);
 	border-radius: 999px;
 }
 
@@ -2426,7 +2426,7 @@ body.deploy-page {
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	background: #a78bfa;
+	background: #ffffff;
 	box-shadow: 0 0 12px rgba(167, 139, 250, 0.9);
 }
 
@@ -2554,7 +2554,7 @@ body.deploy-page {
 	width: 100%;
 	aspect-ratio: 1;
 	margin-bottom: var(--space-sm);
-	background: radial-gradient(60% 60% at 50% 40%, rgba(139, 92, 246, 0.18), rgba(0, 0, 0, 0));
+	background: radial-gradient(60% 60% at 50% 40%, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0));
 	border: 1px solid rgba(255, 255, 255, 0.07);
 	border-radius: 12px;
 	overflow: hidden;
@@ -2746,10 +2746,10 @@ body.deploy-page {
 }
 
 .deploy-step--active .erc8004-step-num {
-	background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
-	border-color: rgba(139, 92, 246, 0.8);
-	color: #fff;
-	box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+	background: linear-gradient(135deg, #ffffff, #ffffff) !important;
+	border-color: rgba(255, 255, 255, 0.8);
+	color: #000000;
+	box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
 }
 
 .deploy-step--done .erc8004-step-num {
@@ -2800,9 +2800,9 @@ body.deploy-page {
 }
 
 .deploy-wizard .erc8004-input:focus {
-	border-color: rgba(139, 92, 246, 0.55);
+	border-color: rgba(255, 255, 255, 0.55);
 	background: rgba(255, 255, 255, 0.05);
-	box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
 .deploy-wizard .erc8004-wizard-nav {
@@ -2814,14 +2814,14 @@ body.deploy-page {
 .deploy-wizard .erc8004-btn--primary {
 	padding: 10px 18px;
 	font-weight: 500;
-	background: linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(99, 102, 241, 0.8));
-	border-color: rgba(139, 92, 246, 0.6);
+	background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(99, 102, 241, 0.8));
+	border-color: rgba(255, 255, 255, 0.6);
 	box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2);
 }
 
 .deploy-wizard .erc8004-btn--primary:hover:not(:disabled) {
-	background: linear-gradient(135deg, rgba(139, 92, 246, 0.95), rgba(99, 102, 241, 0.95));
-	border-color: rgba(139, 92, 246, 0.75);
+	background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(99, 102, 241, 0.95));
+	border-color: rgba(255, 255, 255, 0.75);
 }
 
 @media (max-width: 900px) {
@@ -2980,12 +2980,12 @@ body.deploy-page {
 	width: 100%;
 	justify-content: center;
 	padding: var(--space-sm) var(--space-md);
-	background: rgba(139, 92, 246, 0.25);
-	border-color: rgba(139, 92, 246, 0.45);
+	background: rgba(255, 255, 255, 0.25);
+	border-color: rgba(255, 255, 255, 0.45);
 }
 
 .erc8004-btn--register:hover:not(:disabled) {
-	background: rgba(139, 92, 246, 0.45);
+	background: rgba(255, 255, 255, 0.45);
 }
 
 .erc8004-btn--view {
@@ -3136,7 +3136,7 @@ body.deploy-page {
 }
 
 .erc8004-btn--primary {
-	background: rgba(139, 92, 246, 0.35);
+	background: rgba(255, 255, 255, 0.35);
 	border-color: rgba(99, 102, 241, 0.5);
 }
 
@@ -3613,7 +3613,7 @@ body.deploy-page {
 	align-items: center;
 	gap: var(--space-xs);
 	padding: var(--space-sm) var(--space-md);
-	background: linear-gradient(180deg, rgba(139, 92, 246, 0.22), rgba(139, 92, 246, 0.1));
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.1));
 	border: 1px solid rgba(167, 139, 250, 0.42);
 	border-radius: var(--radius-md);
 	color: #fff;
@@ -3632,7 +3632,7 @@ body.deploy-page {
 }
 
 .create-avatar-btn:hover {
-	background: linear-gradient(180deg, rgba(139, 92, 246, 0.36), rgba(139, 92, 246, 0.16));
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0.16));
 	border-color: rgba(167, 139, 250, 0.7);
 }
 
@@ -4376,7 +4376,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 }
 
 .agent-timeline-empty-icon {
-	color: rgba(139, 92, 246, 0.4);
+	color: rgba(255, 255, 255, 0.4);
 	margin-bottom: 2px;
 }
 
@@ -4819,7 +4819,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 
 .anim-btn--active .anim-btn__key {
 	color: #fff;
-	background: rgba(139, 92, 246, 0.35);
+	background: rgba(255, 255, 255, 0.35);
 }
 
 .anim-btn:hover:not(:disabled) {
@@ -4830,13 +4830,13 @@ body[data-viewer-mode='explore'] #layout-switch {
 
 .anim-btn--active {
 	background: var(--accent-soft);
-	border-color: rgba(139, 92, 246, 0.5);
+	border-color: rgba(255, 255, 255, 0.5);
 	color: #fff;
-	box-shadow: 0 0 16px rgba(139, 92, 246, 0.18);
+	box-shadow: 0 0 16px rgba(255, 255, 255, 0.18);
 }
 
 .anim-btn--active:hover {
-	background: rgba(139, 92, 246, 0.28);
+	background: rgba(255, 255, 255, 0.28);
 }
 
 .anim-btn--loading {
@@ -5452,7 +5452,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	box-shadow:
 		0 20px 50px rgba(0, 0, 0, 0.55),
 		0 1px 0 rgba(255, 255, 255, 0.04) inset,
-		0 -40px 80px -40px rgba(139, 92, 246, 0.35) inset;
+		0 -40px 80px -40px rgba(255, 255, 255, 0.35) inset;
 	color: rgba(255, 255, 255, 0.92);
 	overflow: hidden;
 }
@@ -5553,18 +5553,18 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 }
 
 .agent-onboarding__btn--primary {
-	background: linear-gradient(180deg, rgba(139, 92, 246, 0.95), rgba(124, 58, 237, 0.95));
-	border-color: rgba(167, 139, 250, 0.7);
-	color: #fff;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95));
+	border-color: rgba(255, 255, 255, 0.7);
+	color: #000000;
 	box-shadow:
-		0 4px 14px rgba(139, 92, 246, 0.32),
+		0 4px 14px rgba(255, 255, 255, 0.32),
 		0 1px 0 rgba(255, 255, 255, 0.15) inset;
 }
 
 .agent-onboarding__btn--primary:hover {
-	background: linear-gradient(180deg, rgba(151, 109, 255, 1), rgba(139, 92, 246, 1));
-	border-color: rgba(167, 139, 250, 0.9);
-	color: #fff;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 1));
+	border-color: rgba(255, 255, 255, 0.9);
+	color: #000000;
 }
 
 @media (max-width: 700px) {
@@ -5587,7 +5587,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	box-shadow:
 		0 20px 60px rgba(0, 0, 0, 0.55),
 		0 1px 0 rgba(255, 255, 255, 0.05) inset,
-		0 -20px 40px -20px rgba(139, 92, 246, 0.25) inset;
+		0 -20px 40px -20px rgba(255, 255, 255, 0.25) inset;
 	overflow: hidden;
 }
 
@@ -5612,8 +5612,8 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	margin-bottom: var(--space-sm);
 	padding: 0.18rem 0.5rem;
 	border-radius: 999px;
-	background: rgba(139, 92, 246, 0.1);
-	border: 1px solid rgba(139, 92, 246, 0.25);
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .auth-gate__lock {
@@ -6081,7 +6081,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	padding: 6px 14px;
 	border-radius: 20px;
 	background: rgba(99, 102, 241, 0.15);
-	border: 1px solid rgba(139, 92, 246, 0.35);
+	border: 1px solid rgba(255, 255, 255, 0.35);
 	color: #a5b4fc;
 	font-size: 12px;
 	font-weight: 500;
@@ -6106,7 +6106,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 }
 
 .erc8004-hero-accent {
-	background: linear-gradient(90deg, #6366f1, #a78bfa);
+	background: #ffffff;
 	-webkit-background-clip: text;
 	background-clip: text;
 	color: transparent;
@@ -6265,7 +6265,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 
 .erc8004-progress-fill {
 	height: 100%;
-	background: linear-gradient(90deg, #6366f1, #a78bfa);
+	background: #ffffff;
 	transition: width 0.3s;
 	width: 0;
 }
@@ -6357,8 +6357,8 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	align-items: flex-start;
 	gap: var(--space-sm);
 	padding: var(--space-sm) var(--space-md);
-	background: rgba(139, 92, 246, 0.08);
-	border: 1px solid rgba(139, 92, 246, 0.25);
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.25);
 	border-radius: var(--radius-md);
 	font-size: var(--text-sm);
 	color: #fff;
@@ -6514,7 +6514,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 
 .erc8004-export-opt:hover {
 	background: rgba(99, 102, 241, 0.1);
-	border-color: rgba(139, 92, 246, 0.35);
+	border-color: rgba(255, 255, 255, 0.35);
 }
 
 .erc8004-export-emoji {
@@ -6626,7 +6626,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 }
 .erc8004-embed-tabs .erc8004-tab.is-active {
 	color: #fff;
-	border-bottom-color: var(--accent, #8b5cf6);
+	border-bottom-color: var(--accent, #ffffff);
 }
 .erc8004-embed-panels {
 	padding: var(--space-md) 0;
@@ -7084,9 +7084,9 @@ textarea.erc8004-code {
 	border-color: rgba(255, 255, 255, 0.12);
 }
 .explore-badge--avatar {
-	background: rgba(139, 92, 246, 0.15);
+	background: rgba(255, 255, 255, 0.15);
 	color: #c4b5fd;
-	border-color: rgba(139, 92, 246, 0.4);
+	border-color: rgba(255, 255, 255, 0.4);
 }
 .explore-card-desc {
 	margin: 0;
@@ -7952,13 +7952,13 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	border-color: rgba(255, 255, 255, 0.18);
 }
 .next-icon-btn:focus-visible {
-	outline: 2px solid rgba(139, 92, 246, 0.6);
+	outline: 2px solid rgba(255, 255, 255, 0.6);
 	outline-offset: 2px;
 }
 .next-icon-btn--active {
-	background: rgba(139, 92, 246, 0.22);
+	background: rgba(255, 255, 255, 0.22);
 	color: #fff;
-	border-color: rgba(139, 92, 246, 0.5);
+	border-color: rgba(255, 255, 255, 0.5);
 }
 .next-icon-btn--has-actions::after {
 	content: '';
@@ -8409,8 +8409,8 @@ body[data-layout='next'] .next-chrome::after {
 	border-color: rgba(255, 255, 255, 0.14);
 }
 .next-grid__item--active {
-	background: rgba(139, 92, 246, 0.2);
-	border-color: rgba(139, 92, 246, 0.5);
+	background: rgba(255, 255, 255, 0.2);
+	border-color: rgba(255, 255, 255, 0.5);
 	color: #fff;
 }
 .next-grid__icon {

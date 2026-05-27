@@ -8,6 +8,7 @@
 import { mountShell } from '../shell.js';
 import { requireUser, get, patch, del, esc, relTime, ApiError } from '../api.js';
 import { openSelfieModal } from '../../selfie-modal.js';
+import { openAvatarPicker } from '../../avatar-gallery-picker.js';
 
 const PAGE_SIZE = 24;
 const VISIBILITIES = ['public', 'unlisted', 'private'];
@@ -44,6 +45,7 @@ const state = {
 					<a href="/create/selfie" role="menuitem">Full selfie flow</a>
 					<a href="/create" role="menuitem">Upload a GLB</a>
 					<a href="/marketplace" role="menuitem">From an existing avatar</a>
+					<button type="button" role="menuitem" data-browse-gallery>Browse public gallery</button>
 				</div>
 			</div>
 		</div>
@@ -180,6 +182,19 @@ function wireNewMenu(root) {
 				state.nextCursor = null;
 				await loadInitial(root);
 			}
+		});
+	}
+
+	const browseGallery = pop.querySelector('[data-browse-gallery]');
+	if (browseGallery) {
+		browseGallery.addEventListener('click', async () => {
+			close();
+			const picked = await openAvatarPicker({
+				source: 'public',
+				title: 'Browse public avatars',
+				showModes: true,
+				ctaLabel: 'Copy to clipboard',
+			});
 		});
 	}
 }

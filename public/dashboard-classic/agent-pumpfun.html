@@ -8,15 +8,15 @@
 		<style>
 			:root {
 				color-scheme: dark;
-				--accent: #6a5cff;
-				--accent2: #ff5ca8;
+				--accent: #ffffff;
+				--accent2: #cccccc;
 				--ok: #4ade80;
 				--warn: #fbbf24;
 				--err: #f87171;
-				--border: #22222e;
+				--border: #222222;
 				--bg: #000;
-				--panel: #14141c;
-				--panel2: #1a1a24;
+				--panel: #141414;
+				--panel2: #1a1a1a;
 				--muted: #888;
 			}
 			* {
@@ -244,7 +244,7 @@
 			}
 			.btn.ghost {
 				background: transparent;
-				border: 1px solid #22222e;
+				border: 1px solid #222222;
 				color: #ddd;
 			}
 			.btn.ghost:hover:not(:disabled) {
@@ -411,7 +411,7 @@
 				min-width: 80px;
 				height: 12px;
 				border-radius: 4px;
-				background: linear-gradient(90deg, #1a1a24 0%, #24242e 50%, #1a1a24 100%);
+				background: linear-gradient(90deg, #1a1a1a 0%, #24242e 50%, #1a1a1a 100%);
 				background-size: 200% 100%;
 				animation: shimmer 1.2s linear infinite;
 				vertical-align: middle;
@@ -1597,7 +1597,7 @@
 				const span = max - min || 1;
 				const sx = (i) => (i / Math.max(1, xs.length - 1)) * (w - 16) + 8;
 				const sy = (v) => h - 8 - ((v - min) / span) * (h - 16);
-				ctx.strokeStyle = '#6a5cff';
+				ctx.strokeStyle = '#ffffff';
 				ctx.lineWidth = 2;
 				ctx.beginPath();
 				ys.forEach((v, i) => {

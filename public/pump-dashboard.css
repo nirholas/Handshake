@@ -252,7 +252,7 @@ html.pump-dashboard-page body {
 
 .pd-status-chip .pd-dot.is-on {
 	background: var(--pd-success);
-	box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.16);
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.16);
 }
 
 .pd-status-chip .pd-dot.is-err {

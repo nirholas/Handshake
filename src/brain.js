@@ -2,12 +2,16 @@
 
 // ── Provider registry ────────────────────────────────────────────────────────
 const PROVIDERS = [
-	{ key: 'anthropic',       label: 'Claude Sonnet 4.6',  short: 'Claude',      network: 'Anthropic',  color: '#c8a96e', ctx: '200K', tier: '$$'   },
-	{ key: 'openai',          label: 'GPT-4o-mini',        short: 'GPT-4o-mini', network: 'OpenAI',     color: '#74c0fc', ctx: '128K', tier: '$'    },
-	{ key: 'qwen-plus',       label: 'Qwen Plus',          short: 'Qwen+',       network: 'DashScope',  color: '#69db7c', ctx: '131K', tier: '$'    },
-	{ key: 'qwen-vl-max',     label: 'Qwen VL Max',        short: 'Qwen-VL',     network: 'DashScope',  color: '#51cf66', ctx: '32K',  tier: '$$'   },
-	{ key: 'modelscope-qwen', label: 'Qwen3-Coder 480B',   short: 'Qwen3-Code',  network: 'ModelScope', color: '#40c057', ctx: '32K',  tier: '$$$'  },
-	{ key: 'groq-llama',      label: 'Llama 3.3 70B',      short: 'Llama 3.3',   network: 'Groq',       color: '#ff9a3c', ctx: '128K', tier: 'Fast' },
+	{ key: 'claude-opus-4-7',   label: 'Claude Opus 4.7',    short: 'Opus 4.7',    network: 'Anthropic',  color: '#c8a96e', ctx: '200K', tier: 'Flagship' },
+	{ key: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6',  short: 'Sonnet 4.6',  network: 'Anthropic',  color: '#d4b87a', ctx: '200K', tier: 'Balanced' },
+	{ key: 'claude-haiku-4-5',  label: 'Claude Haiku 4.5',   short: 'Haiku 4.5',   network: 'Anthropic',  color: '#e0c88a', ctx: '200K', tier: 'Fast'     },
+	{ key: 'gpt-4o',            label: 'GPT-4o',             short: 'GPT-4o',      network: 'OpenAI',     color: '#74c0fc', ctx: '128K', tier: 'Flagship' },
+	{ key: 'gpt-4o-mini',       label: 'GPT-4o-mini',        short: 'GPT-4o-mini', network: 'OpenAI',     color: '#90ccfc', ctx: '128K', tier: 'Fast'     },
+	{ key: 'o3-mini',            label: 'o3-mini',            short: 'o3-mini',     network: 'OpenAI',     color: '#5cb0f4', ctx: '128K', tier: 'Reasoning' },
+	{ key: 'groq-llama',        label: 'Llama 3.3 70B',      short: 'Llama 3.3',   network: 'Groq',       color: '#ff9a3c', ctx: '128K', tier: 'Fast'     },
+	{ key: 'qwen-plus',         label: 'Qwen Plus',           short: 'Qwen+',       network: 'DashScope',  color: '#69db7c', ctx: '131K', tier: 'Balanced' },
+	{ key: 'modelscope-qwen',   label: 'Qwen3-Coder 480B',   short: 'Qwen3-Code',  network: 'ModelScope', color: '#40c057', ctx: '32K',  tier: 'Flagship' },
+	{ key: 'deepseek-r1',       label: 'DeepSeek R1',         short: 'DeepSeek',    network: 'DeepSeek',   color: '#b197fc', ctx: '64K',  tier: 'Reasoning' },
 ];
 const PMAP = new Map(PROVIDERS.map(p => [p.key, p]));
 
@@ -37,8 +41,8 @@ const state = {
 	personaEnabled: true,
 
 	playMode: 'compare',
-	focusKey: 'anthropic',
-	active: new Set(['anthropic', 'openai', 'qwen-plus', 'groq-llama']),
+	focusKey: 'claude-sonnet-4-6',
+	active: new Set(['claude-sonnet-4-6', 'gpt-4o-mini', 'groq-llama', 'deepseek-r1']),
 	sessions: [],
 	currentId: null,
 	streaming: false,
@@ -571,6 +575,7 @@ async function streamProvider(provKey, messages, system, { onChunk, onDone, onEr
 	const reader = res.body.getReader();
 	const decoder = new TextDecoder();
 	let buf = '';
+	let gotDone = false;
 	const t0 = performance.now();
 
 	try {
@@ -590,14 +595,18 @@ async function streamProvider(provKey, messages, system, { onChunk, onDone, onEr
 				if (evType === 'message' && data && data !== '[DONE]') {
 					try { onChunk?.(JSON.parse(data)); } catch {}
 				} else if (evType === 'done') {
-					try { onDone?.({ elapsedMs: JSON.parse(data).elapsedMs, usage: JSON.parse(data).usage }); } catch {}
+					gotDone = true;
+					try {
+						const info = JSON.parse(data);
+						onDone?.({ elapsedMs: info.elapsedMs, usage: info.usage });
+					} catch {}
 				} else if (evType === 'error') {
 					try { onError?.(JSON.parse(data).message || 'upstream error'); } catch {}
 				}
 			}
 		}
 	} finally {
-		onDone?.({ elapsedMs: Math.round(performance.now() - t0), usage: null });
+		if (!gotDone) onDone?.({ elapsedMs: Math.round(performance.now() - t0), usage: null });
 	}
 }
 

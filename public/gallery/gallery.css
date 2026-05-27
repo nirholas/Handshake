@@ -88,8 +88,8 @@ body.gallery-page {
 	width: 7px;
 	height: 7px;
 	border-radius: 99px;
-	background: #34d399;
-	box-shadow: 0 0 12px rgba(52, 211, 153, 0.7);
+	background: #ffffff;
+	box-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
 }
 
 .gallery-title {

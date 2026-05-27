@@ -2010,7 +2010,7 @@ function renderPurchaseCard(p) {
 	const isTrial = p.kind === 'trial' || p.status === 'trial';
 	const kindBadge = isTrial
 		? `<span class="stat-pill" style="color:#86efac">Trial${p.trial_remaining != null ? ` (${p.trial_remaining} left)` : ''}</span>`
-		: `<span class="stat-pill" style="color:#7dd3fc">Owned</span>`;
+		: `<span class="stat-pill" style="color:#ffffff">Owned</span>`;
 	const hasReceipt = !isTrial;
 	const thumb = p.agent_thumbnail
 		? `<div class="avatar avatar-img" style="background-image:url('${escapeHtml(p.agent_thumbnail)}');width:36px;height:36px;border-radius:8px;flex-shrink:0"></div>`

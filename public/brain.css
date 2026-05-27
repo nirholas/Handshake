@@ -239,7 +239,7 @@ body {
 	font-weight: 700;
 	letter-spacing: -0.02em;
 	margin: 0 0 8px;
-	background: linear-gradient(135deg, #3dc1ff 0%, #a78bfa 50%, #f472b6 100%);
+	background: linear-gradient(135deg, #3dc1ff 0%, #ffffff 50%, #f472b6 100%);
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
 	background-clip: text;
@@ -431,7 +431,7 @@ body {
 	font-weight: 500;
 }
 .br-chip-blue { background: rgba(61,193,255,0.1); color: #3dc1ff; border: 1px solid rgba(61,193,255,0.25); }
-.br-chip-purple { background: rgba(167,139,250,0.1); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
+.br-chip-purple { background: rgba(255,255,255,0.06); color: #ffffff; border: 1px solid rgba(255,255,255,0.15); }
 .br-chip-red { background: rgba(255,100,100,0.08); color: #ff8a8a; border: 1px solid rgba(255,100,100,0.2); }
 .br-chip-muted { background: rgba(255,255,255,0.04); color: #8a8faa; border: 1px solid #1e2035; }
 

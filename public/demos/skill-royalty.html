@@ -3,82 +3,702 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws · Skill royalty distribution</title>
-		<meta
-			name="description"
-			content="Create an on-chain royalty split that pays skill authors automatically. Pull split contract on Base Sepolia testnet, real wallet signing, no mocks."
-		/>
+		<title>three.ws · Skill Earnings Split</title>
+		<meta name="description" content="Configure how earnings from your skills are automatically divided. Every payment splits instantly — no manual distributions." />
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
 		<style>
-			:root { color-scheme: dark; }
-			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
-			.stage { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
-			.crumb a { color: #8a8d98; text-decoration: none; }
-			.crumb a:hover { color: #3dc1ff; }
-			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
-			.sub { color: #8a8d98; max-width: 72ch; margin: 0 0 26px; }
-			.sub code { background: #0f1018; padding: 1px 6px; border-radius: 5px; font-size: 12.5px; color: #3dc1ff; }
-			h2 { font-size: 18px; font-weight: 600; margin: 0 0 14px; letter-spacing: -0.01em; }
-			.card { background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px; padding: 22px; margin: 0 0 22px; }
-			.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-			label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #8a8d98; text-transform: uppercase; letter-spacing: 0.08em; flex: 1 1 240px; }
-			input[type=text], input[type=number] {
-				background: #07080d; border: 1px solid #1e1f2b; color: #eee;
-				padding: 9px 11px; border-radius: 9px; font: inherit;
+			:root {
+				color-scheme: dark;
+				--bg: #03040a;
+				--surface: #0a0b14;
+				--surface-2: #0f1020;
+				--border: #1e2035;
+				--border-2: #2a2d47;
+				--text: #e8eaf0;
+				--text-2: #8a8faa;
+				--text-3: #565870;
+				--accent: #3dc1ff;
+				--accent-glow: rgba(61, 193, 255, 0.15);
+				--green: #4ade80;
+				--orange: #fb923c;
+				--red: #f87171;
 			}
-			button {
-				background: #3dc1ff; color: #0a0a0a; border: 0; border-radius: 9px;
-				padding: 9px 16px; font-weight: 600; cursor: pointer; font: inherit;
+
+			*, *::before, *::after { box-sizing: border-box; }
+
+			body {
+				background: var(--bg);
+				color: var(--text);
+				font: 14px/1.6 -apple-system, system-ui, 'Segoe UI', sans-serif;
+				margin: 0;
 			}
-			button.secondary { background: rgba(255,255,255,0.06); color: #eee; border: 1px solid #1e1f2b; }
-			button.tiny { padding: 5px 9px; font-size: 12px; border-radius: 7px; }
-			button:disabled { opacity: 0.35; cursor: not-allowed; }
-			.pill {
-				display: inline-flex; align-items: center; gap: 6px;
-				font-family: ui-monospace, monospace; font-size: 11.5px;
-				padding: 4px 9px; border-radius: 999px;
-				background: rgba(61, 193, 255,0.08); color: #3dc1ff;
-				border: 1px solid rgba(61, 193, 255,0.2);
+
+			.page {
+				max-width: 860px;
+				margin: 0 auto;
+				padding: 40px 20px 100px;
+			}
+
+			/* ── Page header ── */
+			.page-header {
+				margin-bottom: 36px;
+			}
+			.page-header .crumb {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				margin-bottom: 18px;
+			}
+			.page-header .crumb a {
+				color: var(--text-3);
+				text-decoration: none;
+				font-size: 12px;
+				letter-spacing: 0.04em;
+				transition: color 0.15s;
+			}
+			.page-header .crumb a:hover { color: var(--accent); }
+			.page-header h1 {
+				font-size: 26px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				margin: 0 0 8px;
+				color: var(--text);
+			}
+			.page-header .sub {
+				color: var(--text-2);
+				font-size: 14px;
+				max-width: 66ch;
+				margin: 0 0 14px;
+				line-height: 1.65;
+			}
+			.net-badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 11px;
+				color: var(--text-2);
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 99px;
+				padding: 3px 10px 3px 6px;
+				letter-spacing: 0.04em;
+			}
+			.net-badge .dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: var(--orange);
+				flex-shrink: 0;
+			}
+
+			/* ── Step indicator ── */
+			.steps-nav {
+				display: flex;
+				align-items: center;
+				gap: 0;
+				margin-bottom: 28px;
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 4px;
+				overflow-x: auto;
+			}
+			.step-btn {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 8px 14px;
+				border-radius: 9px;
+				border: none;
+				background: transparent;
+				color: var(--text-3);
+				font-size: 13px;
+				font-weight: 500;
+				cursor: default;
+				white-space: nowrap;
+				transition: background 0.2s, color 0.2s;
+				flex: 1;
+				justify-content: center;
+			}
+			.step-btn.active {
+				background: var(--surface-2);
+				color: var(--text);
+				border: 1px solid var(--border-2);
+			}
+			.step-btn.done { color: var(--green); cursor: pointer; }
+			.step-btn.done:hover { background: rgba(74, 222, 128, 0.06); }
+			.step-btn .num {
+				width: 22px;
+				height: 22px;
+				border-radius: 50%;
+				background: var(--border);
+				color: var(--text-3);
+				font-size: 11px;
+				font-weight: 700;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				transition: background 0.2s, color 0.2s;
+			}
+			.step-btn.active .num {
+				background: var(--accent);
+				color: #03040a;
+			}
+			.step-btn.done .num {
+				background: rgba(74, 222, 128, 0.15);
+				color: var(--green);
+			}
+			.step-sep {
+				color: var(--border-2);
+				font-size: 16px;
+				padding: 0 2px;
+				flex-shrink: 0;
+			}
+
+			/* ── Cards ── */
+			.card {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 14px;
+				padding: 24px;
+				margin-bottom: 16px;
+			}
+			.card-title {
+				font-size: 15px;
+				font-weight: 600;
+				margin: 0 0 4px;
+				color: var(--text);
+				letter-spacing: -0.01em;
+			}
+			.card-desc {
+				font-size: 13px;
+				color: var(--text-2);
+				margin: 0 0 18px;
+				line-height: 1.55;
+			}
+
+			/* ── Step panels ── */
+			.step-panel {
+				display: none;
+				animation: fadeSlide 0.25s ease;
+			}
+			.step-panel.active { display: block; }
+			@keyframes fadeSlide {
+				from { opacity: 0; transform: translateY(6px); }
+				to   { opacity: 1; transform: translateY(0); }
+			}
+
+			/* ── Wallet bar ── */
+			.wallet-bar {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				flex-wrap: wrap;
+			}
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 7px;
+				padding: 9px 18px;
+				border-radius: 9px;
+				border: none;
+				font: inherit;
+				font-size: 13px;
+				font-weight: 600;
 				cursor: pointer;
+				transition: opacity 0.15s, background 0.15s;
+				white-space: nowrap;
 			}
-			.pill.bad { background: rgba(255,138,138,0.08); color: #ff8a8a; border-color: rgba(255,138,138,0.25); }
-			.pill.muted { background: rgba(255,255,255,0.04); color: #8a8d98; border-color: #1e1f2b; cursor: default; }
+			.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+			.btn-primary {
+				background: var(--accent);
+				color: #03040a;
+			}
+			.btn-primary:not(:disabled):hover { background: #5dceff; }
+			.btn-secondary {
+				background: rgba(255,255,255,0.05);
+				color: var(--text);
+				border: 1px solid var(--border-2);
+			}
+			.btn-secondary:not(:disabled):hover { background: rgba(255,255,255,0.08); }
+			.btn-ghost {
+				background: transparent;
+				color: var(--text-2);
+				border: 1px solid var(--border);
+				padding: 7px 12px;
+				font-size: 12px;
+			}
+			.btn-ghost:not(:disabled):hover { color: var(--text); border-color: var(--border-2); }
+			.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 7px; }
+			.btn-danger {
+				background: rgba(248, 113, 113, 0.1);
+				color: var(--red);
+				border: 1px solid rgba(248, 113, 113, 0.25);
+			}
+			.btn-danger:not(:disabled):hover { background: rgba(248, 113, 113, 0.18); }
+
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				font-size: 12px;
+				font-family: ui-monospace, monospace;
+				padding: 4px 10px;
+				border-radius: 99px;
+				border: 1px solid var(--border-2);
+				background: var(--surface-2);
+				color: var(--text-2);
+			}
+			.pill.connected { border-color: rgba(61,193,255,0.3); background: rgba(61,193,255,0.07); color: var(--accent); cursor: pointer; }
+			.pill.connected:hover { background: rgba(61,193,255,0.12); }
+			.pill.wrong-chain { border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.07); color: var(--red); }
+			.pill.ok-chain { border-color: rgba(74,222,128,0.25); background: rgba(74,222,128,0.07); color: var(--green); }
+
+			/* ── Notices ── */
 			.notice {
-				padding: 11px 14px; border-radius: 10px; font-size: 13px; margin: 12px 0;
-				background: rgba(154,212,255,0.06); border: 1px solid rgba(154,212,255,0.2); color: #9ad4ff;
+				padding: 10px 14px;
+				border-radius: 9px;
+				font-size: 13px;
+				margin: 12px 0;
+				line-height: 1.55;
 			}
-			.notice.warn { background: rgba(255,196,87,0.07); border-color: rgba(255,196,87,0.3); color: #ffc457; }
-			.notice.err { background: rgba(255,138,138,0.07); border-color: rgba(255,138,138,0.3); color: #ff8a8a; }
-			.notice.ok { background: rgba(61, 193, 255,0.07); border-color: rgba(61, 193, 255,0.3); color: #3dc1ff; }
-			.log {
-				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
-				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
-				line-height: 1.6; color: #8a8d98; max-height: 280px; overflow: auto; white-space: pre-wrap;
+			.notice-info { background: rgba(61,193,255,0.06); border: 1px solid rgba(61,193,255,0.2); color: #9ad4ff; }
+			.notice-warn { background: rgba(251,146,60,0.07); border: 1px solid rgba(251,146,60,0.25); color: var(--orange); }
+			.notice-err  { background: rgba(248,113,113,0.07); border: 1px solid rgba(248,113,113,0.25); color: var(--red); }
+			.notice-ok   { background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.2); color: var(--green); }
+
+			/* ── Donut chart ── */
+			.chart-wrap {
+				display: flex;
+				align-items: center;
+				gap: 24px;
+				padding: 20px;
+				background: var(--surface-2);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				margin-bottom: 20px;
+				flex-wrap: wrap;
 			}
-			.log .ok { color: #3dc1ff; }
-			.log .err { color: #ff6b6b; }
-			.log .info { color: #66d9ef; }
-			.kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 14px; font-size: 12.5px; }
-			.kv dt { color: #8a8d98; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; }
-			.kv dd { margin: 0; font-family: ui-monospace, monospace; color: #ddd; word-break: break-all; }
-			.kv dd a { color: #9ad4ff; }
-			table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-			th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #1e1f2b; vertical-align: middle; }
-			th { color: #8a8d98; font-weight: 500; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.08em; }
-			td { font-family: ui-monospace, monospace; color: #ddd; word-break: break-word; }
-			td input[type=text] { width: 100%; }
-			td input[type=number] { width: 90px; }
-			td.actions { width: 60px; text-align: right; }
-			.sum-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 13px; }
-			.sum-row .sum-good { color: #3dc1ff; }
-			.sum-row .sum-bad { color: #ff8a8a; }
-			.copy-addr { cursor: pointer; color: #9ad4ff; text-decoration: none; }
-			.copy-addr:hover { color: #3dc1ff; }
-			.full { flex-basis: 100%; }
-			footer.foot { color: #5b5d6b; font-size: 11.5px; margin-top: 30px; text-align: center; }
-			footer.foot a { color: #8a8d98; }
+			.donut-svg { flex-shrink: 0; }
+			.donut-svg circle {
+				transition: stroke-dashoffset 0.4s cubic-bezier(0.4,0,0.2,1),
+				            stroke-dasharray 0.4s cubic-bezier(0.4,0,0.2,1);
+			}
+			.chart-legend {
+				flex: 1;
+				min-width: 160px;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+			.legend-item {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 12px;
+				color: var(--text-2);
+				cursor: pointer;
+				padding: 4px 6px;
+				border-radius: 6px;
+				transition: background 0.15s;
+			}
+			.legend-item:hover { background: rgba(255,255,255,0.04); }
+			.legend-item.highlighted { background: rgba(255,255,255,0.06); color: var(--text); }
+			.legend-dot {
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				flex-shrink: 0;
+			}
+			.legend-addr { font-family: ui-monospace, monospace; flex: 1; }
+			.legend-pct { font-weight: 600; font-family: ui-monospace, monospace; }
+			.chart-center-label {
+				font-size: 11px;
+				fill: var(--text-3);
+				text-anchor: middle;
+			}
+			.chart-center-pct {
+				font-size: 18px;
+				font-weight: 700;
+				fill: var(--text);
+				text-anchor: middle;
+			}
+			.chart-warn-overlay {
+				font-size: 10px;
+				fill: var(--orange);
+				text-anchor: middle;
+			}
+
+			/* ── Sum bar ── */
+			.sum-bar-wrap {
+				margin-top: 16px;
+				margin-bottom: 4px;
+			}
+			.sum-bar-track {
+				height: 5px;
+				border-radius: 99px;
+				background: var(--border);
+				overflow: hidden;
+				margin-top: 6px;
+			}
+			.sum-bar-fill {
+				height: 100%;
+				border-radius: 99px;
+				background: var(--accent);
+				transition: width 0.35s cubic-bezier(0.4,0,0.2,1), background 0.25s;
+			}
+			.sum-bar-fill.overage { background: var(--red); }
+			.sum-bar-fill.perfect { background: var(--green); }
+			.sum-label {
+				display: flex;
+				justify-content: space-between;
+				font-size: 12px;
+				color: var(--text-2);
+			}
+			.sum-label .sum-val { font-weight: 600; font-family: ui-monospace, monospace; }
+			.sum-label .sum-val.good { color: var(--green); }
+			.sum-label .sum-val.bad  { color: var(--red); }
+
+			/* ── Recipients table ── */
+			.recipients-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+			.recipients-table th {
+				font-size: 10.5px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: var(--text-3);
+				font-weight: 500;
+				padding: 0 10px 8px;
+				text-align: left;
+			}
+			.recipients-table td { padding: 5px 6px; vertical-align: middle; }
+			.recipients-table tbody tr { border-bottom: 1px solid var(--border); }
+			.recipients-table tbody tr:last-child { border-bottom: none; }
+			.r-dot-cell { width: 28px; }
+			.r-dot {
+				width: 12px;
+				height: 12px;
+				border-radius: 50%;
+				flex-shrink: 0;
+				display: block;
+				margin: 0 auto;
+				transition: transform 0.2s;
+			}
+			tr.row-highlighted .r-dot { transform: scale(1.4); }
+			.r-addr-cell { min-width: 200px; }
+			.r-addr-cell input {
+				width: 100%;
+				background: var(--bg);
+				border: 1px solid var(--border);
+				color: var(--text);
+				padding: 7px 10px;
+				border-radius: 8px;
+				font: 13px/1 ui-monospace, monospace;
+				transition: border-color 0.15s;
+			}
+			.r-addr-cell input:focus { outline: none; border-color: var(--accent); }
+			.r-addr-cell input.invalid { border-color: rgba(248,113,113,0.5); }
+			.r-pct-cell { width: 160px; }
+			.r-pct-wrap {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+			}
+			.r-pct-wrap input[type=range] {
+				flex: 1;
+				-webkit-appearance: none;
+				height: 4px;
+				border-radius: 99px;
+				background: var(--border-2);
+				outline: none;
+			}
+			.r-pct-wrap input[type=range]::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: var(--accent);
+				cursor: pointer;
+				transition: transform 0.15s;
+			}
+			.r-pct-wrap input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+			.r-pct-wrap input[type=number] {
+				width: 56px;
+				background: var(--bg);
+				border: 1px solid var(--border);
+				color: var(--text);
+				padding: 6px 8px;
+				border-radius: 7px;
+				font: 12px/1 ui-monospace, monospace;
+				text-align: right;
+			}
+			.r-pct-wrap input[type=number]:focus { outline: none; border-color: var(--accent); }
+			.r-remove-cell { width: 36px; text-align: right; }
+			.r-remove-btn {
+				background: transparent;
+				border: none;
+				color: var(--text-3);
+				cursor: pointer;
+				font-size: 16px;
+				line-height: 1;
+				padding: 4px;
+				border-radius: 5px;
+				transition: color 0.15s, background 0.15s;
+			}
+			.r-remove-btn:hover:not(:disabled) { color: var(--red); background: rgba(248,113,113,0.1); }
+			.r-remove-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+			.add-recipient-row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				margin-top: 12px;
+			}
+
+			/* ── Deploy summary card ── */
+			.deploy-summary {
+				background: var(--surface-2);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 14px 16px;
+				margin-bottom: 16px;
+			}
+			.deploy-summary-row {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 5px 0;
+				font-size: 13px;
+				border-bottom: 1px solid var(--border);
+			}
+			.deploy-summary-row:last-child { border-bottom: none; }
+			.deploy-summary-row .ds-dot {
+				width: 9px;
+				height: 9px;
+				border-radius: 50%;
+				flex-shrink: 0;
+			}
+			.deploy-summary-row .ds-addr {
+				font-family: ui-monospace, monospace;
+				color: var(--text-2);
+				flex: 1;
+			}
+			.deploy-summary-row .ds-pct {
+				font-family: ui-monospace, monospace;
+				font-weight: 600;
+				color: var(--text);
+			}
+
+			.contract-deployed-box {
+				background: rgba(74,222,128,0.05);
+				border: 1px solid rgba(74,222,128,0.2);
+				border-radius: 10px;
+				padding: 16px;
+				margin: 14px 0;
+				animation: successPulse 0.5s ease;
+			}
+			@keyframes successPulse {
+				0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0.3); }
+				50%  { box-shadow: 0 0 0 8px rgba(74,222,128,0); }
+				100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+			}
+			.contract-deployed-box .label {
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: var(--green);
+				margin-bottom: 6px;
+			}
+			.contract-addr-row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+			.contract-addr-row code {
+				font-family: ui-monospace, monospace;
+				font-size: 13px;
+				color: var(--text);
+				word-break: break-all;
+			}
+			.copy-btn {
+				background: var(--surface-2);
+				border: 1px solid var(--border-2);
+				color: var(--text-2);
+				padding: 4px 9px;
+				border-radius: 6px;
+				font-size: 11px;
+				cursor: pointer;
+				transition: background 0.15s, color 0.15s;
+			}
+			.copy-btn:hover { background: var(--border); color: var(--text); }
+			.immutable-note {
+				display: flex;
+				align-items: center;
+				gap: 7px;
+				font-size: 12px;
+				color: var(--text-3);
+				margin-top: 10px;
+			}
+
+			/* ── Fund & Distribute ── */
+			.fund-row {
+				display: flex;
+				gap: 10px;
+				align-items: flex-end;
+				flex-wrap: wrap;
+				margin-bottom: 16px;
+			}
+			.form-field {
+				display: flex;
+				flex-direction: column;
+				gap: 5px;
+			}
+			.form-field label {
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.07em;
+				color: var(--text-3);
+				font-weight: 500;
+			}
+			.form-field input[type=number],
+			.form-field input[type=text] {
+				background: var(--bg);
+				border: 1px solid var(--border);
+				color: var(--text);
+				padding: 8px 12px;
+				border-radius: 8px;
+				font: 13px/1 ui-monospace, monospace;
+				transition: border-color 0.15s;
+			}
+			.form-field input:focus { outline: none; border-color: var(--accent); }
+
+			.balance-display {
+				font-size: 13px;
+				color: var(--text-2);
+				margin-bottom: 14px;
+			}
+			.balance-display .eth-val {
+				font-family: ui-monospace, monospace;
+				font-weight: 600;
+				color: var(--text);
+			}
+
+			.payout-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 12px 0; }
+			.payout-table th {
+				font-size: 10.5px;
+				text-transform: uppercase;
+				letter-spacing: 0.07em;
+				color: var(--text-3);
+				font-weight: 500;
+				padding: 0 10px 8px;
+				text-align: left;
+				border-bottom: 1px solid var(--border);
+			}
+			.payout-table td {
+				padding: 9px 10px;
+				border-bottom: 1px solid var(--border);
+				vertical-align: middle;
+			}
+			.payout-table tbody tr:last-child td { border-bottom: none; }
+			.payout-dot {
+				width: 9px;
+				height: 9px;
+				border-radius: 50%;
+				display: inline-block;
+				margin-right: 7px;
+				vertical-align: middle;
+			}
+			.payout-addr { font-family: ui-monospace, monospace; color: var(--text-2); }
+			.payout-pct  { font-family: ui-monospace, monospace; color: var(--text-2); }
+			.payout-eth  { font-family: ui-monospace, monospace; font-weight: 600; color: var(--text); }
+			.you-badge {
+				font-size: 10px;
+				padding: 1px 6px;
+				border-radius: 99px;
+				background: rgba(61,193,255,0.1);
+				color: var(--accent);
+				border: 1px solid rgba(61,193,255,0.2);
+				margin-left: 6px;
+			}
+
+			.action-row {
+				display: flex;
+				gap: 10px;
+				flex-wrap: wrap;
+				align-items: center;
+			}
+
+			/* ── Event log ── */
+			.log-section { margin-top: 20px; }
+			.log-toggle {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				cursor: pointer;
+				padding: 10px 14px;
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				font-size: 12px;
+				color: var(--text-3);
+				user-select: none;
+				transition: background 0.15s, border-color 0.15s;
+			}
+			.log-toggle:hover { background: var(--surface-2); border-color: var(--border-2); color: var(--text-2); }
+			.log-toggle .chevron { transition: transform 0.2s; font-size: 10px; }
+			.log-toggle.open .chevron { transform: rotate(180deg); }
+			.log-body {
+				margin-top: 8px;
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				overflow: hidden;
+				max-height: 0;
+				transition: max-height 0.3s ease;
+			}
+			.log-body.open { max-height: 320px; }
+			.log-inner {
+				max-height: 310px;
+				overflow-y: auto;
+				padding: 8px 0;
+			}
+			.log-event {
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				padding: 7px 14px;
+				font-size: 12px;
+				animation: slideUp 0.2s ease;
+				border-bottom: 1px solid var(--border);
+			}
+			.log-event:last-child { border-bottom: none; }
+			@keyframes slideUp {
+				from { opacity: 0; transform: translateY(4px); }
+				to   { opacity: 1; transform: translateY(0); }
+			}
+			.log-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+			.log-text { flex: 1; color: var(--text-2); line-height: 1.5; }
+			.log-text a { color: var(--accent); text-decoration: none; }
+			.log-text a:hover { text-decoration: underline; }
+			.log-text.is-ok  { color: var(--green); }
+			.log-text.is-err { color: var(--red); }
+			.log-time { color: var(--text-3); font-family: ui-monospace, monospace; font-size: 10.5px; flex-shrink: 0; }
+
+			/* ── Footer ── */
+			.page-footer {
+				margin-top: 40px;
+				text-align: center;
+				font-size: 12px;
+				color: var(--text-3);
+			}
+			.page-footer a { color: var(--text-2); text-decoration: none; }
+			.page-footer a:hover { color: var(--accent); }
+
+			/* ── Faucet notice ── */
+			.faucet-notice a { color: var(--accent); }
 		</style>
 		<script type="importmap">
 			{
@@ -94,108 +714,197 @@
 	<body>
 		<header><div id="nav-container"></div></header>
 
-		<main class="stage">
-			<p class="crumb"><a href="/demos/">&larr; lab</a></p>
-			<h1>three.ws &middot; Skill royalty distribution</h1>
-			<p class="sub">
-				A royalty primitive for skill authors: deploy a single
-				<b>pull-split contract</b> on <b>Base Sepolia</b> (testnet, chainId
-				<code>84532</code>) that automatically slices every incoming ETH
-				payment by your configured percentages. Fund it once, then call
-				<code>distribute</code> &mdash; each author can withdraw their
-				share whenever. No backend, no custodial keys; you sign every
-				write yourself. The contract is immutable (no owner).
-			</p>
-
-			<section class="card">
-				<h2>1. Wallet</h2>
-				<div class="row" id="wallet-row">
-					<button id="connect-btn">Connect wallet</button>
-					<span id="wallet-pill" class="pill muted" title="click to copy">not connected</span>
-					<span id="chain-pill" class="pill muted">no chain</span>
-					<button id="switch-btn" class="secondary" style="display:none">Switch to Base Sepolia</button>
+		<main class="page">
+			<div class="page-header">
+				<div class="crumb">
+					<a href="/demos/">&larr; lab</a>
+					<span style="color:var(--border-2)">·</span>
+					<span style="color:var(--text-3);font-size:12px">Skill Earnings Split</span>
 				</div>
-				<p class="notice">
-					You need a few drops of Base Sepolia ETH. Free at the
-					<a href="https://portal.cdp.coinbase.com/products/faucet" target="_blank" rel="noopener">Coinbase Base Sepolia faucet</a>,
-					the <a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank" rel="noopener">Alchemy faucet</a>,
+				<h1>Skill Earnings Split</h1>
+				<p class="sub">Configure how earnings from your skills are automatically divided. Every payment splits instantly — no manual distributions.</p>
+				<div class="net-badge"><span class="dot"></span>Base Sepolia testnet</div>
+			</div>
+
+			<!-- wallet bar (always visible) -->
+			<div class="card" style="margin-bottom:20px">
+				<div class="wallet-bar">
+					<button class="btn btn-primary btn-sm" id="connect-btn">Connect wallet</button>
+					<span class="pill" id="wallet-pill">not connected</span>
+					<span class="pill" id="chain-pill">no chain</span>
+					<button class="btn btn-secondary btn-sm" id="switch-btn" style="display:none">Switch to Base Sepolia</button>
+					<button class="btn btn-ghost btn-sm" id="forget-btn" style="display:none">Reset split</button>
+				</div>
+				<div class="notice notice-info faucet-notice" style="margin-top:12px;margin-bottom:0">
+					Need testnet ETH? Use the
+					<a href="https://portal.cdp.coinbase.com/products/faucet" target="_blank" rel="noopener">Coinbase faucet</a>,
+					<a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank" rel="noopener">Alchemy faucet</a>,
 					or the <a href="https://faucets.chain.link/base-sepolia" target="_blank" rel="noopener">Chainlink faucet</a>.
-				</p>
-				<p class="notice warn" id="wallet-warn" style="display:none"></p>
-			</section>
-
-			<section class="card">
-				<h2>2. Configure skill-author recipients</h2>
-				<p style="margin:0 0 10px;color:#8a8d98;font-size:13px">
-					Up to 10 rows. Percentages must sum to <b>100</b>. Distributor fee
-					is fixed at <code>0%</code> &mdash; nobody skims the pot.
-				</p>
-				<table id="recipients-tbl">
-					<thead>
-						<tr>
-							<th style="width:60px">#</th>
-							<th>Skill-author address (0x&hellip;)</th>
-							<th style="width:130px">Share %</th>
-							<th class="actions"></th>
-						</tr>
-					</thead>
-					<tbody id="recipients-body"></tbody>
-				</table>
-				<div class="sum-row">
-					<button id="add-row" class="secondary tiny" type="button">+ Add recipient</button>
-					<div id="sum-display">Sum: <span id="sum-val" class="sum-good">100.00</span> %</div>
 				</div>
-			</section>
+				<div class="notice notice-err" id="wallet-warn" style="display:none;margin-bottom:0"></div>
+			</div>
 
-			<section class="card">
-				<h2>3. Create Split contract</h2>
-				<p style="margin:0 0 10px;color:#8a8d98;font-size:13px">
-					Calls <code>SplitV2Client.createSplit({ splitType: 'pull', ownerAddress: 0x0 })</code>
-					on the official Split V2 factory at
-					<code id="factory-addr">…</code>.
-				</p>
-				<div class="row">
-					<button id="create-btn" disabled>Deploy immutable pull split</button>
-					<button id="forget-btn" class="secondary" style="display:none">Forget this split</button>
+			<!-- step navigator -->
+			<nav class="steps-nav" id="steps-nav">
+				<button class="step-btn active" data-step="0" id="step-btn-0">
+					<span class="num">1</span> Recipients
+				</button>
+				<span class="step-sep">›</span>
+				<button class="step-btn" data-step="1" id="step-btn-1">
+					<span class="num">2</span> Deploy
+				</button>
+				<span class="step-sep">›</span>
+				<button class="step-btn" data-step="2" id="step-btn-2">
+					<span class="num">3</span> Fund &amp; Distribute
+				</button>
+				<span class="step-sep">›</span>
+				<button class="step-btn" data-step="3" id="step-btn-3">
+					<span class="num">✓</span> Done
+				</button>
+			</nav>
+
+			<!-- STEP 0: Recipients -->
+			<div class="step-panel active" id="panel-0">
+				<div class="card">
+					<div class="card-title">Configure recipients</div>
+					<div class="card-desc">Add addresses and set their percentage. Shares must total exactly 100%.</div>
+
+					<!-- Donut chart -->
+					<div class="chart-wrap" id="chart-wrap">
+						<svg class="donut-svg" id="donut-svg" width="120" height="120" viewBox="0 0 120 120">
+							<g id="donut-segments"></g>
+							<text x="60" y="55" class="chart-center-pct" id="chart-center-pct">0%</text>
+							<text x="60" y="70" class="chart-center-label" id="chart-center-label">allocated</text>
+						</svg>
+						<div class="chart-legend" id="chart-legend"></div>
+					</div>
+
+					<!-- Table -->
+					<table class="recipients-table" id="recipients-table">
+						<thead>
+							<tr>
+								<th class="r-dot-cell"></th>
+								<th>Address</th>
+								<th>Share</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody id="recipients-body"></tbody>
+					</table>
+
+					<div class="add-recipient-row">
+						<button class="btn btn-secondary btn-sm" id="add-row" type="button">+ Add recipient</button>
+						<button class="btn btn-ghost btn-sm" id="add-my-wallet" type="button" style="display:none">+ Add my wallet</button>
+					</div>
+
+					<div class="sum-bar-wrap">
+						<div class="sum-label">
+							<span>Total allocation</span>
+							<span class="sum-val" id="sum-val">0.00%</span>
+						</div>
+						<div class="sum-bar-track">
+							<div class="sum-bar-fill" id="sum-bar-fill" style="width:0%"></div>
+						</div>
+					</div>
+
+					<div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
+						<button class="btn btn-primary" id="go-deploy-btn" disabled>Continue to Deploy →</button>
+					</div>
 				</div>
-				<div id="split-info" style="margin-top:14px"></div>
-			</section>
+			</div>
 
-			<section class="card" id="fund-card" style="display:none">
-				<h2>4. Fund the split (test payment)</h2>
-				<div class="row">
-					<label>
-						ETH amount
-						<input type="number" id="fund-amount" value="0.001" step="0.0001" min="0" />
-					</label>
-					<label>
-						Recipient
-						<input type="text" id="fund-target" readonly />
-					</label>
-					<button id="fund-btn">Send test payment</button>
+			<!-- STEP 1: Deploy -->
+			<div class="step-panel" id="panel-1">
+				<div class="card">
+					<div class="card-title">Create earnings split</div>
+					<div class="card-desc">Deploy an immutable pull-split contract. Recipients are permanent — no owner can change them after deployment.</div>
+
+					<div class="deploy-summary" id="deploy-summary"></div>
+
+					<div id="split-deployed-area"></div>
+
+					<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+						<button class="btn btn-primary" id="create-btn" disabled>Create earnings split</button>
+						<span id="create-status" style="font-size:12px;color:var(--text-2)"></span>
+					</div>
+
+					<div style="margin-top:16px;display:flex;gap:10px;justify-content:space-between;align-items:center">
+						<button class="btn btn-ghost btn-sm" id="back-to-recipients">← Back</button>
+						<button class="btn btn-secondary btn-sm" id="go-fund-btn" style="display:none">Continue to Fund →</button>
+					</div>
 				</div>
-				<div id="fund-result" style="margin-top:12px"></div>
-			</section>
+			</div>
 
-			<section class="card" id="inspect-card" style="display:none">
-				<h2>5. Inspect &amp; distribute</h2>
-				<div class="row">
-					<button id="refresh-btn" class="secondary">Refresh balance</button>
-					<button id="distribute-btn">Distribute to recipients</button>
-					<button id="withdraw-btn" class="secondary" style="display:none">Withdraw your share</button>
+			<!-- STEP 2: Fund & Distribute -->
+			<div class="step-panel" id="panel-2">
+				<div class="card">
+					<div class="card-title">Send a test payment</div>
+					<div class="card-desc">Fund your split contract with a small ETH amount to verify payouts.</div>
+
+					<div class="fund-row">
+						<div class="form-field">
+							<label>ETH amount</label>
+							<input type="number" id="fund-amount" value="0.001" step="0.0001" min="0" style="width:140px" />
+						</div>
+						<div class="form-field" style="flex:1">
+							<label>Split contract</label>
+							<input type="text" id="fund-target" readonly placeholder="deploy a split first" />
+						</div>
+						<button class="btn btn-primary" id="fund-btn">Send payment</button>
+					</div>
+					<div id="fund-result"></div>
 				</div>
-				<div id="inspect-body" style="margin-top:14px"></div>
-			</section>
 
-			<section class="card">
-				<h2>Log</h2>
-				<div class="log" id="log">ready.</div>
-			</section>
+				<div class="card" style="margin-top:12px">
+					<div class="card-title">Balance &amp; projected payouts</div>
 
-			<footer class="foot">
+					<div class="balance-display">
+						Current balance: <span class="eth-val" id="balance-display">—</span>
+						<button class="btn btn-ghost btn-sm" id="refresh-btn" style="margin-left:10px">Refresh</button>
+					</div>
+
+					<div id="payout-table-wrap"></div>
+
+					<div class="action-row" style="margin-top:14px">
+						<button class="btn btn-primary" id="distribute-btn" disabled>Distribute to recipients</button>
+						<button class="btn btn-secondary" id="withdraw-btn" style="display:none">Claim your share</button>
+					</div>
+				</div>
+
+				<div style="margin-top:12px">
+					<button class="btn btn-ghost btn-sm" id="back-to-deploy">← Back to Deploy</button>
+				</div>
+			</div>
+
+			<!-- STEP 3: Done -->
+			<div class="step-panel" id="panel-3">
+				<div class="card" style="text-align:center;padding:40px 24px">
+					<div style="font-size:36px;margin-bottom:12px">⚡</div>
+					<div class="card-title" style="font-size:18px;margin-bottom:8px">Your earnings split is live</div>
+					<div class="card-desc" style="max-width:50ch;margin:0 auto 20px">Every payment to your split contract is automatically distributed to recipients. Share the contract address with collaborators.</div>
+					<div id="done-contract-info"></div>
+					<div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+						<button class="btn btn-secondary" id="go-fund-again">Test another payment</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Transaction log -->
+			<div class="log-section">
+				<div class="log-toggle" id="log-toggle">
+					<span>Transaction log</span>
+					<span id="log-count" style="background:var(--border-2);padding:1px 7px;border-radius:99px;font-size:11px">0</span>
+					<span style="flex:1"></span>
+					<span class="chevron">▲</span>
+				</div>
+				<div class="log-body" id="log-body">
+					<div class="log-inner" id="log-inner"></div>
+				</div>
+			</div>
+
+			<footer class="page-footer">
 				Powered by <a href="https://docs.splits.org/sdk/splits-v2" target="_blank" rel="noopener">0xSplits V2</a>
-				&middot; Pull-split contract address per chain documented at
-				<a href="https://docs.splits.org/sdk/splits-v2#supported-chains" target="_blank" rel="noopener">docs.splits.org/sdk/splits-v2#supported-chains</a>.
+				&middot; Pull-split on <a href="https://sepolia.basescan.org" target="_blank" rel="noopener">Base Sepolia</a>
 			</footer>
 		</main>
 
@@ -216,7 +925,7 @@
 			import { SplitV2Client } from '@0xsplits/splits-sdk';
 			import { NATIVE_TOKEN_ADDRESS, getSplitV2FactoryAddress } from '@0xsplits/splits-sdk/constants';
 
-			// --- constants ---
+			// ── Constants ──
 			const BASE_SEPOLIA_CHAIN_ID = 84532;
 			const BASE_SEPOLIA_HEX = '0x14a34';
 			const BASE_SEPOLIA_RPC = 'https://sepolia.base.org';
@@ -224,172 +933,450 @@
 			const SPLITS_APP_BASE = 'https://app.splits.org';
 			const STORAGE_KEY = 'three-ws.skill-royalty.v1';
 			const MAX_RECIPIENTS = 10;
-
-			// SDK exports the canonical native-token sentinel; fall back to zero
-			// address only if (somehow) absent.
 			const NATIVE = NATIVE_TOKEN_ADDRESS || '0x0000000000000000000000000000000000000000';
 
-			const $ = (id) => document.getElementById(id);
-			const log = $('log');
-			const logLine = (msg, cls = '') => {
-				const t = new Date().toTimeString().slice(0, 8);
-				log.innerHTML += `\n<span class="${cls}">[${t}] ${msg}</span>`;
-				log.scrollTop = log.scrollHeight;
-			};
-
-			const escapeHtml = (s) =>
-				String(s ?? '').replace(/[&<>"']/g, (c) => ({
-					'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-				})[c]);
-
-			const shortAddr = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—');
-
-			// Three deterministic example addresses for the default rows. These
-			// are well-known burn / vanity addresses on testnets; users should
-			// replace them before deploying anything meaningful.
-			const DEFAULT_RECIPIENTS = [
-				{ address: '0x000000000000000000000000000000000000dEaD', percentAllocation: 50 },
-				{ address: '0x000000000000000000000000000000000000bEEF', percentAllocation: 30 },
-				{ address: '0x00000000000000000000000000000000DeaDBeef', percentAllocation: 20 },
+			const SEGMENT_COLORS = [
+				'#3dc1ff','#c8a96e','#69db7c','#ff9a3c',
+				'#b47eff','#f87171','#74c0fc','#51cf66','#ffd43b','#ff6b9d',
 			];
 
-			// --- state ---
+			// ── State ──
 			let publicClient = createPublicClient({ chain: baseSepolia, transport: http(BASE_SEPOLIA_RPC) });
 			let walletClient = null;
 			let splitsClient = null;
 			let connectedAddress = null;
 			let connectedChainId = null;
-			let recipients = [...DEFAULT_RECIPIENTS];
-			let splitAddress = null; // cached/created
+			let recipients = [
+				{ address: '', percentAllocation: 50 },
+				{ address: '', percentAllocation: 50 },
+			];
+			let splitAddress = null;
+			let currentStep = 0;
+			let splitBalance = 0n;
+			let highlightedRow = null;
 
-			// Factory address — used only for the on-page display.
-			try {
-				const factoryAddr = getSplitV2FactoryAddress(BASE_SEPOLIA_CHAIN_ID, 'pull');
-				$('factory-addr').textContent = factoryAddr;
-			} catch (_) {
-				$('factory-addr').textContent = '(pull factory)';
+			// ── Utilities ──
+			const $ = (id) => document.getElementById(id);
+			const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+			const shortAddr = (a) => (a ? `${a.slice(0,6)}…${a.slice(-4)}` : '—');
+
+			// ── Log ──
+			let logCount = 0;
+			const LOG_ICONS = { connect:'🔗', deploy:'✓', fund:'→', distribute:'⚡', withdraw:'↓', error:'✕', info:'·' };
+			function addLog(text, type = 'info', htmlText = null) {
+				logCount++;
+				$('log-count').textContent = logCount;
+				const t = new Date().toTimeString().slice(0,8);
+				const icon = LOG_ICONS[type] || '·';
+				const cls = type === 'deploy' ? 'is-ok' : type === 'error' ? 'is-err' : '';
+				const content = htmlText || escHtml(text);
+				const el = document.createElement('div');
+				el.className = 'log-event';
+				el.innerHTML = `<span class="log-icon">${icon}</span><span class="log-text ${cls}">${content}</span><span class="log-time">${t}</span>`;
+				const inner = $('log-inner');
+				inner.insertBefore(el, inner.firstChild);
+				// auto-open log when something happens
+				openLog();
 			}
+			function openLog() {
+				const toggle = $('log-toggle');
+				const body = $('log-body');
+				if (!toggle.classList.contains('open')) {
+					toggle.classList.add('open');
+					body.classList.add('open');
+				}
+			}
+			$('log-toggle').addEventListener('click', () => {
+				const toggle = $('log-toggle');
+				const body = $('log-body');
+				toggle.classList.toggle('open');
+				body.classList.toggle('open');
+			});
 
-			// --- localStorage cache ---
+			// ── localStorage ──
 			function loadCache() {
-				try {
-					const raw = localStorage.getItem(STORAGE_KEY);
-					if (!raw) return null;
-					return JSON.parse(raw);
-				} catch { return null; }
+				try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
 			}
-			function saveCache(obj) {
-				localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
-			}
-			function clearCache() {
-				localStorage.removeItem(STORAGE_KEY);
+			function saveCache(obj) { localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }
+			function clearCache() { localStorage.removeItem(STORAGE_KEY); }
+
+			// ── Step navigation ──
+			function goToStep(n) {
+				currentStep = n;
+				document.querySelectorAll('.step-panel').forEach((p, i) => {
+					p.classList.toggle('active', i === n);
+				});
+				document.querySelectorAll('.step-btn').forEach((b, i) => {
+					b.classList.remove('active', 'done');
+					if (i === n) b.classList.add('active');
+					else if (i < n) b.classList.add('done');
+				});
+				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}
 
-			// --- recipients UI ---
+			$('go-deploy-btn').addEventListener('click', () => {
+				renderDeploySummary();
+				goToStep(1);
+			});
+			$('back-to-recipients').addEventListener('click', () => goToStep(0));
+			$('back-to-deploy').addEventListener('click', () => goToStep(1));
+			$('go-fund-btn').addEventListener('click', () => goToStep(2));
+			$('go-fund-again').addEventListener('click', () => goToStep(2));
+
+			document.querySelectorAll('.step-btn').forEach((b) => {
+				b.addEventListener('click', () => {
+					const s = parseInt(b.dataset.step);
+					if (b.classList.contains('done')) goToStep(s);
+				});
+			});
+
+			// ── Donut chart ──
+			const DONUT_R = 44;
+			const DONUT_CX = 60;
+			const DONUT_CY = 60;
+			const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_R;
+
+			function renderChart() {
+				const svg = $('donut-segments');
+				const legend = $('chart-legend');
+				const validRecips = recipients.filter(r => isAddress(r.address) && Number(r.percentAllocation) > 0);
+				const sum = recipients.reduce((a, r) => a + (Number(r.percentAllocation) || 0), 0);
+				const sumOk = Math.abs(sum - 100) < 0.001;
+
+				// Update center text
+				$('chart-center-pct').textContent = Math.round(sum) + '%';
+				$('chart-center-label').textContent = sumOk ? 'ready' : 'allocated';
+				$('chart-center-pct').setAttribute('fill', sumOk ? 'var(--green)' : sum > 100 ? 'var(--red)' : 'var(--text)');
+
+				// Segments
+				let offset = 0;
+				// background circle
+				const existing = svg.querySelectorAll('circle');
+				existing.forEach(c => c.remove());
+
+				// bg track
+				const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+				bg.setAttribute('cx', DONUT_CX);
+				bg.setAttribute('cy', DONUT_CY);
+				bg.setAttribute('r', DONUT_R);
+				bg.setAttribute('fill', 'none');
+				bg.setAttribute('stroke', 'var(--border)');
+				bg.setAttribute('stroke-width', '14');
+				svg.appendChild(bg);
+
+				if (validRecips.length === 0) {
+					legend.innerHTML = '<div style="color:var(--text-3);font-size:12px;padding:4px 0">Add recipient addresses to see the split.</div>';
+					return;
+				}
+
+				const scale = sumOk ? 1 : Math.min(1, 100 / sum);
+				offset = -DONUT_CIRCUMFERENCE / 4; // start at top
+
+				validRecips.forEach((r, i) => {
+					const colorIdx = recipients.indexOf(r);
+					const color = SEGMENT_COLORS[colorIdx % SEGMENT_COLORS.length];
+					const pct = (Number(r.percentAllocation) || 0) * scale;
+					const dash = (pct / 100) * DONUT_CIRCUMFERENCE;
+					const gap = DONUT_CIRCUMFERENCE - dash;
+
+					const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+					circle.setAttribute('cx', DONUT_CX);
+					circle.setAttribute('cy', DONUT_CY);
+					circle.setAttribute('r', DONUT_R);
+					circle.setAttribute('fill', 'none');
+					circle.setAttribute('stroke', color);
+					circle.setAttribute('stroke-width', colorIdx === highlightedRow ? '18' : '14');
+					circle.setAttribute('stroke-dasharray', `${dash} ${gap}`);
+					circle.setAttribute('stroke-dashoffset', -offset);
+					circle.style.transition = 'stroke-dashoffset 0.4s cubic-bezier(0.4,0,0.2,1), stroke-dasharray 0.4s cubic-bezier(0.4,0,0.2,1), stroke-width 0.2s';
+					svg.appendChild(circle);
+
+					offset += dash;
+				});
+
+				// Legend
+				legend.innerHTML = recipients.map((r, i) => {
+					const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+					const pct = Number(r.percentAllocation) || 0;
+					const addr = isAddress(r.address) ? shortAddr(r.address) : (r.address ? r.address.slice(0,10)+'…' : 'Address '+(i+1));
+					const hl = highlightedRow === i ? 'highlighted' : '';
+					return `<div class="legend-item ${hl}" data-row="${i}">
+						<span class="legend-dot" style="background:${color}"></span>
+						<span class="legend-addr">${escHtml(addr)}</span>
+						<span class="legend-pct" style="color:${color}">${pct.toFixed(1)}%</span>
+					</div>`;
+				}).join('');
+
+				legend.querySelectorAll('.legend-item').forEach(el => {
+					el.addEventListener('click', () => {
+						const ri = parseInt(el.dataset.row);
+						highlightedRow = highlightedRow === ri ? null : ri;
+						renderChart();
+						renderRecipients();
+					});
+				});
+			}
+
+			// ── Recipients ──
 			function renderRecipients() {
 				const tbody = $('recipients-body');
-				tbody.innerHTML = recipients.map((r, i) => `
-					<tr>
-						<td>${i + 1}</td>
-						<td><input type="text" data-i="${i}" data-f="address" value="${escapeHtml(r.address)}" spellcheck="false" placeholder="0x…" /></td>
-						<td><input type="number" data-i="${i}" data-f="percentAllocation" value="${r.percentAllocation}" min="0" max="100" step="0.01" /></td>
-						<td class="actions">
-							<button class="secondary tiny remove-row" data-i="${i}" type="button" ${recipients.length <= 1 ? 'disabled' : ''}>×</button>
+				tbody.innerHTML = recipients.map((r, i) => {
+					const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+					const hl = highlightedRow === i ? 'row-highlighted' : '';
+					const addrInvalid = r.address && !isAddress(r.address) ? 'invalid' : '';
+					return `<tr data-row="${i}" class="${hl}">
+						<td class="r-dot-cell"><span class="r-dot" style="background:${color}"></span></td>
+						<td class="r-addr-cell">
+							<input type="text" data-i="${i}" data-f="address" value="${escHtml(r.address)}" class="${addrInvalid}" spellcheck="false" placeholder="0x…" />
 						</td>
-					</tr>
-				`).join('');
-				tbody.querySelectorAll('input').forEach((el) => {
-					el.addEventListener('input', (e) => {
-						const i = Number(e.target.dataset.i);
-						const f = e.target.dataset.f;
-						const v = f === 'percentAllocation' ? Number(e.target.value) : e.target.value.trim();
-						recipients[i] = { ...recipients[i], [f]: v };
+						<td class="r-pct-cell">
+							<div class="r-pct-wrap">
+								<input type="range" data-i="${i}" data-f="pct-range" value="${r.percentAllocation}" min="0" max="100" step="0.5" style="accent-color:${color}" />
+								<input type="number" data-i="${i}" data-f="percentAllocation" value="${r.percentAllocation}" min="0" max="100" step="0.5" />
+							</div>
+						</td>
+						<td class="r-remove-cell">
+							<button class="r-remove-btn remove-row" data-i="${i}" type="button" ${recipients.length <= 1 ? 'disabled' : ''} title="Remove">×</button>
+						</td>
+					</tr>`;
+				}).join('');
+
+				tbody.querySelectorAll('input[data-f="address"]').forEach(el => {
+					el.addEventListener('input', e => {
+						const i = +e.target.dataset.i;
+						recipients[i] = { ...recipients[i], address: e.target.value.trim() };
+						renderChart();
 						updateSum();
 					});
-				});
-				tbody.querySelectorAll('.remove-row').forEach((btn) => {
-					btn.addEventListener('click', () => {
-						const i = Number(btn.dataset.i);
-						recipients.splice(i, 1);
+					el.addEventListener('focus', e => {
+						highlightedRow = +e.target.dataset.i;
+						renderChart();
 						renderRecipients();
+					});
+				});
+
+				tbody.querySelectorAll('input[data-f="pct-range"]').forEach(el => {
+					el.addEventListener('input', e => {
+						const i = +e.target.dataset.i;
+						const v = Number(e.target.value);
+						recipients[i] = { ...recipients[i], percentAllocation: v };
+						// sync number input
+						const numInput = tbody.querySelector(`input[data-i="${i}"][data-f="percentAllocation"]`);
+						if (numInput) numInput.value = v;
+						renderChart();
 						updateSum();
 					});
 				});
+
+				tbody.querySelectorAll('input[data-f="percentAllocation"]').forEach(el => {
+					el.addEventListener('input', e => {
+						const i = +e.target.dataset.i;
+						const v = Number(e.target.value);
+						recipients[i] = { ...recipients[i], percentAllocation: v };
+						// sync range input
+						const rangeInput = tbody.querySelector(`input[data-i="${i}"][data-f="pct-range"]`);
+						if (rangeInput) rangeInput.value = v;
+						renderChart();
+						updateSum();
+					});
+					el.addEventListener('focus', e => {
+						highlightedRow = +e.target.dataset.i;
+						renderChart();
+						renderRecipients();
+					});
+				});
+
+				tbody.querySelectorAll('.remove-row').forEach(btn => {
+					btn.addEventListener('click', () => {
+						const i = +btn.dataset.i;
+						recipients.splice(i, 1);
+						highlightedRow = null;
+						renderRecipients();
+						renderChart();
+						updateSum();
+					});
+				});
+
+				tbody.querySelectorAll('tr[data-row]').forEach(row => {
+					row.addEventListener('mouseenter', () => {
+						highlightedRow = +row.dataset.row;
+						renderChart();
+					});
+					row.addEventListener('mouseleave', () => {
+						// only clear if no focused input in this row
+						if (!row.contains(document.activeElement)) {
+							highlightedRow = null;
+							renderChart();
+						}
+					});
+				});
+
 				updateSum();
 			}
 
 			function updateSum() {
 				const sum = recipients.reduce((a, r) => a + (Number(r.percentAllocation) || 0), 0);
-				const el = $('sum-val');
 				const rounded = Math.round(sum * 100) / 100;
-				el.textContent = rounded.toFixed(2);
-				el.className = Math.abs(sum - 100) < 0.001 ? 'sum-good' : 'sum-bad';
-				updateCreateBtn();
+				const el = $('sum-val');
+				el.textContent = rounded.toFixed(2) + '%';
+				el.className = 'sum-val ' + (Math.abs(sum - 100) < 0.001 ? 'good' : 'bad');
+
+				const fill = $('sum-bar-fill');
+				const pct = Math.min(100, rounded);
+				fill.style.width = pct + '%';
+				fill.className = 'sum-bar-fill' + (rounded > 100 ? ' overage' : Math.abs(sum - 100) < 0.001 ? ' perfect' : '');
+
+				updateGoDeployBtn();
+			}
+
+			function updateGoDeployBtn() {
+				const sum = recipients.reduce((a, r) => a + (Number(r.percentAllocation) || 0), 0);
+				const allValid = recipients.every(r => isAddress(r.address) && Number(r.percentAllocation) > 0);
+				const sumOk = Math.abs(sum - 100) < 0.001;
+				$('go-deploy-btn').disabled = !(allValid && sumOk);
 			}
 
 			function updateCreateBtn() {
 				const sum = recipients.reduce((a, r) => a + (Number(r.percentAllocation) || 0), 0);
-				const allValid = recipients.every((r) => isAddress(r.address) && Number(r.percentAllocation) > 0);
+				const allValid = recipients.every(r => isAddress(r.address) && Number(r.percentAllocation) > 0);
 				const sumOk = Math.abs(sum - 100) < 0.001;
 				const chainOk = connectedChainId === BASE_SEPOLIA_CHAIN_ID;
 				$('create-btn').disabled = !(allValid && sumOk && chainOk && walletClient);
+				if (splitAddress) $('create-btn').disabled = true;
 			}
 
 			$('add-row').addEventListener('click', () => {
-				if (recipients.length >= MAX_RECIPIENTS) {
-					logLine(`max ${MAX_RECIPIENTS} recipients`, 'err');
-					return;
-				}
+				if (recipients.length >= MAX_RECIPIENTS) { addLog(`max ${MAX_RECIPIENTS} recipients`, 'error'); return; }
 				recipients.push({ address: '', percentAllocation: 0 });
 				renderRecipients();
+				renderChart();
+			});
+
+			$('add-my-wallet').addEventListener('click', () => {
+				if (!connectedAddress) return;
+				const already = recipients.some(r => r.address.toLowerCase() === connectedAddress.toLowerCase());
+				if (already) { addLog('Your wallet is already in the list', 'info'); return; }
+				if (recipients.length >= MAX_RECIPIENTS) { addLog(`max ${MAX_RECIPIENTS} recipients`, 'error'); return; }
+				recipients.push({ address: connectedAddress, percentAllocation: 0 });
+				renderRecipients();
+				renderChart();
+				updateSum();
 			});
 
 			renderRecipients();
+			renderChart();
 
-			// --- wallet ---
+			// ── Deploy summary ──
+			function renderDeploySummary() {
+				const el = $('deploy-summary');
+				el.innerHTML = recipients.map((r, i) => {
+					const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+					return `<div class="deploy-summary-row">
+						<span class="ds-dot" style="background:${color}"></span>
+						<span class="ds-addr">${escHtml(isAddress(r.address) ? r.address : r.address)}</span>
+						<span class="ds-pct">${Number(r.percentAllocation).toFixed(2)}%</span>
+					</div>`;
+				}).join('');
+				updateCreateBtn();
+			}
+
+			// ── Split info ──
+			function renderSplitDeployed() {
+				if (!splitAddress) {
+					$('split-deployed-area').innerHTML = '';
+					$('go-fund-btn').style.display = 'none';
+					return;
+				}
+				const baseScanUrl = `${BASESCAN_BASE}/address/${splitAddress}`;
+				const splitsUrl = `${SPLITS_APP_BASE}/accounts/${splitAddress}/?chainId=${BASE_SEPOLIA_CHAIN_ID}`;
+				$('split-deployed-area').innerHTML = `
+					<div class="contract-deployed-box">
+						<div class="label">Contract deployed</div>
+						<div class="contract-addr-row">
+							<code>${splitAddress}</code>
+							<button class="copy-btn" id="copy-contract-addr">Copy</button>
+							<a href="${baseScanUrl}" target="_blank" rel="noopener" style="font-size:12px;color:var(--accent);text-decoration:none">Basescan ↗</a>
+							<a href="${splitsUrl}" target="_blank" rel="noopener" style="font-size:12px;color:var(--accent);text-decoration:none">splits.org ↗</a>
+						</div>
+						<div class="immutable-note">
+							<span>🔒</span>
+							<span>This split is immutable — recipients are permanent and cannot be changed.</span>
+						</div>
+					</div>
+				`;
+				$('copy-contract-addr').addEventListener('click', () => {
+					navigator.clipboard.writeText(splitAddress);
+					$('copy-contract-addr').textContent = 'Copied!';
+					setTimeout(() => { if ($('copy-contract-addr')) $('copy-contract-addr').textContent = 'Copy'; }, 1500);
+				});
+				$('go-fund-btn').style.display = '';
+				$('fund-target').value = splitAddress;
+				updateDoneInfo();
+			}
+
+			function updateDoneInfo() {
+				if (!splitAddress) return;
+				const baseScanUrl = `${BASESCAN_BASE}/address/${splitAddress}`;
+				$('done-contract-info').innerHTML = `
+					<div class="contract-addr-row" style="justify-content:center">
+						<code style="font-size:13px;word-break:break-all">${splitAddress}</code>
+						<button class="copy-btn" id="copy-done-addr">Copy</button>
+						<a href="${baseScanUrl}" target="_blank" rel="noopener" style="font-size:12px;color:var(--accent);text-decoration:none">View on Basescan ↗</a>
+					</div>
+				`;
+				$('copy-done-addr').addEventListener('click', () => {
+					navigator.clipboard.writeText(splitAddress);
+					$('copy-done-addr').textContent = 'Copied!';
+					setTimeout(() => { if ($('copy-done-addr')) $('copy-done-addr').textContent = 'Copy'; }, 1500);
+				});
+			}
+
+			// ── Wallet ──
 			function updateWalletUI() {
 				const pill = $('wallet-pill');
 				const chainPill = $('chain-pill');
 				const switchBtn = $('switch-btn');
 				const warn = $('wallet-warn');
+				const addMyWallet = $('add-my-wallet');
 
 				if (connectedAddress) {
 					pill.textContent = shortAddr(connectedAddress);
-					pill.className = 'pill';
+					pill.className = 'pill connected';
 					pill.title = `${connectedAddress} — click to copy`;
 					$('connect-btn').textContent = 'Reconnect';
+					addMyWallet.style.display = '';
 				} else {
 					pill.textContent = 'not connected';
-					pill.className = 'pill muted';
+					pill.className = 'pill';
+					addMyWallet.style.display = 'none';
 				}
 
 				if (connectedChainId === BASE_SEPOLIA_CHAIN_ID) {
 					chainPill.textContent = 'Base Sepolia · 84532';
-					chainPill.className = 'pill';
+					chainPill.className = 'pill ok-chain';
 					switchBtn.style.display = 'none';
 					warn.style.display = 'none';
 				} else if (connectedChainId != null) {
 					chainPill.textContent = `wrong chain · ${connectedChainId}`;
-					chainPill.className = 'pill bad';
+					chainPill.className = 'pill wrong-chain';
 					switchBtn.style.display = '';
-					warn.textContent = `Your wallet is on chain ${connectedChainId}. This demo refuses to write on any chain other than Base Sepolia (84532). Click "Switch" above.`;
+					warn.textContent = `Wallet is on chain ${connectedChainId}. Switch to Base Sepolia (84532) to continue.`;
 					warn.style.display = '';
 				} else {
 					chainPill.textContent = 'no chain';
-					chainPill.className = 'pill muted';
+					chainPill.className = 'pill';
 					switchBtn.style.display = 'none';
 					warn.style.display = 'none';
 				}
 
+				updateGoDeployBtn();
 				updateCreateBtn();
 				renderWithdrawButton();
 			}
 
 			async function rebuildClients() {
 				if (!window.ethereum || !connectedAddress) {
-					walletClient = null;
-					splitsClient = null;
-					return;
+					walletClient = null; splitsClient = null; return;
 				}
 				walletClient = createWalletClient({
 					chain: baseSepolia,
@@ -405,24 +1392,24 @@
 
 			async function connect() {
 				if (!window.ethereum) {
-					logLine('no injected wallet found — install MetaMask, Rabby, or similar.', 'err');
+					addLog('No injected wallet found — install MetaMask or Rabby.', 'error');
 					return;
 				}
 				try {
-					logLine('requesting accounts…', 'info');
+					addLog('Requesting wallet access…', 'info');
 					const accts = await window.ethereum.request({ method: 'eth_requestAccounts' });
 					connectedAddress = accts[0] ? getAddress(accts[0]) : null;
 					const chainHex = await window.ethereum.request({ method: 'eth_chainId' });
 					connectedChainId = parseInt(chainHex, 16);
 					await rebuildClients();
-					logLine(`connected ${connectedAddress} on chain ${connectedChainId}`, 'ok');
+					addLog(`Connected ${shortAddr(connectedAddress)} on chain ${connectedChainId}`, 'connect');
 					if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
-						logLine(`wrong chain (${connectedChainId}) — switch to Base Sepolia (84532) to continue.`, 'err');
+						addLog(`Wrong chain (${connectedChainId}) — switch to Base Sepolia to continue.`, 'error');
 					}
 					updateWalletUI();
 					hydrateFromCache();
 				} catch (err) {
-					logLine(`connect failed: ${err.shortMessage || err.message}`, 'err');
+					addLog(`Connect failed: ${err.shortMessage || err.message}`, 'error');
 				}
 			}
 
@@ -447,18 +1434,16 @@
 								}],
 							});
 						} catch (addErr) {
-							logLine(`add chain failed: ${addErr.message}`, 'err');
-							return;
+							addLog(`Add chain failed: ${addErr.message}`, 'error'); return;
 						}
 					} else {
-						logLine(`switch chain failed: ${err.message}`, 'err');
-						return;
+						addLog(`Switch chain failed: ${err.message}`, 'error'); return;
 					}
 				}
 				const chainHex = await window.ethereum.request({ method: 'eth_chainId' });
 				connectedChainId = parseInt(chainHex, 16);
 				await rebuildClients();
-				logLine(`now on chain ${connectedChainId}`, connectedChainId === BASE_SEPOLIA_CHAIN_ID ? 'ok' : 'err');
+				addLog(`Now on chain ${connectedChainId}`, connectedChainId === BASE_SEPOLIA_CHAIN_ID ? 'deploy' : 'error');
 				updateWalletUI();
 			}
 
@@ -467,14 +1452,13 @@
 					connectedChainId = parseInt(hex, 16);
 					await rebuildClients();
 					updateWalletUI();
-					logLine(`chainChanged → ${connectedChainId}`, 'info');
+					addLog(`Chain changed → ${connectedChainId}`, 'info');
 				});
 				window.ethereum.on?.('accountsChanged', async (accts) => {
 					connectedAddress = accts[0] ? getAddress(accts[0]) : null;
 					await rebuildClients();
 					updateWalletUI();
-					renderWithdrawButton();
-					logLine(`accountsChanged → ${connectedAddress || 'none'}`, 'info');
+					addLog(`Account changed → ${shortAddr(connectedAddress)}`, 'info');
 				});
 			}
 
@@ -483,39 +1467,58 @@
 			$('wallet-pill').addEventListener('click', () => {
 				if (!connectedAddress) return;
 				navigator.clipboard.writeText(connectedAddress);
-				logLine(`copied ${connectedAddress}`, 'info');
+				addLog(`Copied ${connectedAddress}`, 'info');
 			});
 
-			// --- create split ---
+			$('forget-btn').addEventListener('click', () => {
+				clearCache();
+				splitAddress = null;
+				splitBalance = 0n;
+				$('split-deployed-area').innerHTML = '';
+				$('go-fund-btn').style.display = 'none';
+				$('forget-btn').style.display = 'none';
+				$('create-btn').disabled = false;
+				$('create-status').textContent = '';
+				$('fund-target').value = '';
+				$('balance-display').textContent = '—';
+				$('payout-table-wrap').innerHTML = '';
+				$('distribute-btn').disabled = true;
+				renderWithdrawButton();
+				addLog('Split reset — you can deploy a new one.', 'info');
+				goToStep(0);
+			});
+
+			// ── Create split ──
 			$('create-btn').addEventListener('click', async () => {
 				if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
-					logLine('refusing to write — wallet is not on Base Sepolia.', 'err');
-					return;
+					addLog('Refusing — wallet is not on Base Sepolia.', 'error'); return;
 				}
 				if (!splitsClient) {
-					logLine('no splits client — connect wallet first.', 'err');
-					return;
+					addLog('Connect wallet first.', 'error'); return;
 				}
+				const btn = $('create-btn');
+				const status = $('create-status');
 				try {
-					const checksummed = recipients.map((r) => ({
+					const checksummed = recipients.map(r => ({
 						address: getAddress(r.address),
 						percentAllocation: Number(r.percentAllocation),
 					}));
-					logLine(`creating pull split with ${checksummed.length} recipient(s)…`, 'info');
-					$('create-btn').disabled = true;
-					$('create-btn').textContent = 'Waiting for wallet…';
+					addLog(`Deploying pull split with ${checksummed.length} recipient(s)…`, 'info');
+					btn.disabled = true;
+					btn.textContent = 'Waiting for wallet…';
+					status.textContent = 'Check your wallet for a signature request…';
 
 					const result = await splitsClient.createSplit({
 						recipients: checksummed,
 						distributorFeePercent: 0,
 						totalAllocationPercent: 100,
 						splitType: 'pull',
-						ownerAddress: zeroAddress, // immutable — no owner can update recipients
+						ownerAddress: zeroAddress,
 						creatorAddress: connectedAddress,
 					});
 
 					splitAddress = getAddress(result.splitAddress);
-					logLine(`✓ split deployed at ${splitAddress}`, 'ok');
+					addLog(`Split deployed at ${splitAddress}`, 'deploy', `Split deployed at <a href="${BASESCAN_BASE}/address/${splitAddress}" target="_blank" rel="noopener">${splitAddress}</a>`);
 					saveCache({
 						splitAddress,
 						recipients: checksummed,
@@ -523,160 +1526,93 @@
 						creator: connectedAddress,
 						createdAt: Date.now(),
 					});
-					renderSplitInfo();
-					showFundCard();
-					showInspectCard();
-					await refreshBalance();
+					btn.textContent = 'Deployed ✓';
+					status.textContent = '';
+					$('forget-btn').style.display = '';
+					renderSplitDeployed();
+					refreshBalance();
 				} catch (err) {
-					logLine(`create split failed: ${err.shortMessage || err.message}`, 'err');
-				} finally {
-					$('create-btn').textContent = 'Deploy immutable pull split';
-					updateCreateBtn();
+					addLog(`Deploy failed: ${err.shortMessage || err.message}`, 'error');
+					btn.disabled = false;
+					btn.textContent = 'Create earnings split';
+					status.textContent = '';
 				}
 			});
 
-			$('forget-btn').addEventListener('click', () => {
-				clearCache();
-				splitAddress = null;
-				$('split-info').innerHTML = '';
-				$('forget-btn').style.display = 'none';
-				$('fund-card').style.display = 'none';
-				$('inspect-card').style.display = 'none';
-				logLine('forgot cached split — you can deploy a new one.', 'info');
-			});
-
-			function renderSplitInfo() {
-				if (!splitAddress) {
-					$('split-info').innerHTML = '';
-					$('forget-btn').style.display = 'none';
-					return;
-				}
-				$('forget-btn').style.display = '';
-				const baseScanUrl = `${BASESCAN_BASE}/address/${splitAddress}`;
-				const splitsUrl = `${SPLITS_APP_BASE}/accounts/${splitAddress}/?chainId=${BASE_SEPOLIA_CHAIN_ID}`;
-				$('split-info').innerHTML = `
-					<div class="notice ok">
-						Split contract is live and <b>immutable</b> on Base Sepolia.
-					</div>
-					<dl class="kv">
-						<dt>Address</dt>
-						<dd>
-							<a class="copy-addr" href="${baseScanUrl}" target="_blank" rel="noopener">${splitAddress}</a>
-							&middot; <a href="${splitsUrl}" target="_blank" rel="noopener">view on app.splits.org</a>
-						</dd>
-						<dt>Type</dt>
-						<dd>pull · distributorFee 0% · owner ${zeroAddress}</dd>
-						<dt>Recipients</dt>
-						<dd>${recipients.length} address(es) — sum 100%</dd>
-					</dl>
-				`;
-				$('fund-target').value = splitAddress;
-			}
-
-			// --- fund ---
-			function showFundCard() { $('fund-card').style.display = ''; }
-
+			// ── Fund ──
 			$('fund-btn').addEventListener('click', async () => {
 				if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
-					logLine('refusing to write — wallet is not on Base Sepolia.', 'err');
-					return;
+					addLog('Refusing — wallet is not on Base Sepolia.', 'error'); return;
 				}
 				if (!walletClient || !splitAddress) {
-					logLine('connect wallet and create a split first.', 'err');
-					return;
+					addLog('Connect wallet and deploy a split first.', 'error'); return;
 				}
 				const raw = $('fund-amount').value;
 				let valueWei;
 				try { valueWei = parseEther(String(raw)); } catch {
-					logLine(`invalid ETH amount: ${raw}`, 'err');
-					return;
+					addLog(`Invalid ETH amount: ${raw}`, 'error'); return;
 				}
-				if (valueWei <= 0n) {
-					logLine('amount must be > 0', 'err');
-					return;
-				}
+				if (valueWei <= 0n) { addLog('Amount must be > 0', 'error'); return; }
+				const btn = $('fund-btn');
+				const result = $('fund-result');
 				try {
-					$('fund-btn').disabled = true;
-					$('fund-btn').textContent = 'Waiting for wallet…';
-					logLine(`sending ${raw} ETH → ${splitAddress}…`, 'info');
-					const hash = await walletClient.sendTransaction({
-						to: splitAddress,
-						value: valueWei,
-					});
-					logLine(`tx submitted: ${hash}`, 'info');
-					$('fund-result').innerHTML = `
-						<div class="notice">
-							Tx submitted &middot;
-							<a href="${BASESCAN_BASE}/tx/${hash}" target="_blank" rel="noopener">${hash.slice(0, 14)}…</a>
-							&middot; waiting 1 confirmation…
-						</div>
-					`;
+					btn.disabled = true;
+					btn.textContent = 'Waiting for wallet…';
+					addLog(`Sending ${raw} ETH → ${shortAddr(splitAddress)}…`, 'info');
+					result.innerHTML = `<div class="notice notice-info">Submitting transaction…</div>`;
+					const hash = await walletClient.sendTransaction({ to: splitAddress, value: valueWei });
+					addLog(`Tx submitted`, 'fund', `Payment submitted · <a href="${BASESCAN_BASE}/tx/${hash}" target="_blank" rel="noopener">${hash.slice(0,14)}…</a>`);
+					result.innerHTML = `<div class="notice notice-info">Confirming… <a href="${BASESCAN_BASE}/tx/${hash}" target="_blank" rel="noopener">${hash.slice(0,14)}…</a></div>`;
 					const receipt = await publicClient.waitForTransactionReceipt({ hash });
-					logLine(`✓ funded (block ${receipt.blockNumber}, status ${receipt.status})`, 'ok');
-					$('fund-result').innerHTML = `
-						<div class="notice ok">
-							✓ ${escapeHtml(raw)} ETH sent to split &middot;
-							<a href="${BASESCAN_BASE}/tx/${hash}" target="_blank" rel="noopener">${hash.slice(0, 14)}…</a>
-						</div>
-					`;
-					showInspectCard();
+					addLog(`Payment confirmed (block ${receipt.blockNumber})`, 'fund', `${raw} ETH sent to split · <a href="${BASESCAN_BASE}/tx/${hash}" target="_blank" rel="noopener">view tx</a>`);
+					result.innerHTML = `<div class="notice notice-ok">✓ ${escHtml(raw)} ETH sent · <a href="${BASESCAN_BASE}/tx/${hash}" target="_blank" rel="noopener">view tx</a></div>`;
 					await refreshBalance();
 				} catch (err) {
-					logLine(`fund failed: ${err.shortMessage || err.message}`, 'err');
-					$('fund-result').innerHTML = `<div class="notice err">${escapeHtml(err.shortMessage || err.message)}</div>`;
+					addLog(`Fund failed: ${err.shortMessage || err.message}`, 'error');
+					result.innerHTML = `<div class="notice notice-err">${escHtml(err.shortMessage || err.message)}</div>`;
 				} finally {
-					$('fund-btn').disabled = false;
-					$('fund-btn').textContent = 'Send test payment';
+					btn.disabled = false;
+					btn.textContent = 'Send payment';
 				}
 			});
 
-			// --- inspect & distribute ---
-			function showInspectCard() { $('inspect-card').style.display = ''; }
-
+			// ── Balance & payouts ──
 			$('refresh-btn').addEventListener('click', () => refreshBalance());
 
 			async function refreshBalance() {
 				if (!splitAddress) return;
 				try {
-					const bal = await publicClient.getBalance({ address: splitAddress });
-					renderInspect(bal);
+					splitBalance = await publicClient.getBalance({ address: splitAddress });
+					renderBalanceAndPayouts();
 				} catch (err) {
-					logLine(`balance read failed: ${err.shortMessage || err.message}`, 'err');
+					addLog(`Balance fetch failed: ${err.shortMessage || err.message}`, 'error');
 				}
 			}
 
-			function renderInspect(balanceWei) {
-				const ethStr = formatEther(balanceWei);
-				const cells = recipients.map((r) => {
+			function renderBalanceAndPayouts() {
+				const ethStr = formatEther(splitBalance);
+				$('balance-display').textContent = ethStr + ' ETH';
+				$('distribute-btn').disabled = splitBalance === 0n || !splitsClient;
+
+				const rows = recipients.map((r, i) => {
+					const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
 					const pct = Number(r.percentAllocation) || 0;
-					// projected payout = balance × pct / 100, integer division on bigint
-					const projWei = (balanceWei * BigInt(Math.round(pct * 1e6))) / BigInt(1e8);
-					const isUser = connectedAddress && r.address.toLowerCase() === connectedAddress.toLowerCase();
-					return `
-						<tr>
-							<td title="${escapeHtml(r.address)}">${shortAddr(r.address)}${isUser ? ' <span class="pill" style="font-size:10px;padding:1px 6px">you</span>' : ''}</td>
-							<td>${pct.toFixed(2)} %</td>
-							<td>${formatEther(projWei)} ETH</td>
-						</tr>
-					`;
+					const projWei = (splitBalance * BigInt(Math.round(pct * 1e6))) / BigInt(1e8);
+					const isUser = connectedAddress && isAddress(r.address) && r.address.toLowerCase() === connectedAddress.toLowerCase();
+					return `<tr>
+						<td><span class="payout-dot" style="background:${color}"></span><span class="payout-addr">${escHtml(shortAddr(r.address))}</span>${isUser ? '<span class="you-badge">you</span>' : ''}</td>
+						<td class="payout-pct">${pct.toFixed(2)}%</td>
+						<td class="payout-eth">${formatEther(projWei)} ETH</td>
+					</tr>`;
 				}).join('');
-				$('inspect-body').innerHTML = `
-					<dl class="kv">
-						<dt>Split address</dt>
-						<dd><a class="copy-addr" href="${BASESCAN_BASE}/address/${splitAddress}" target="_blank" rel="noopener">${splitAddress}</a></dd>
-						<dt>Current balance</dt>
-						<dd>${ethStr} ETH (${balanceWei.toString()} wei)</dd>
-					</dl>
-					<table style="margin-top:14px">
+
+				$('payout-table-wrap').innerHTML = `
+					<table class="payout-table">
 						<thead><tr><th>Recipient</th><th>Share</th><th>Projected payout</th></tr></thead>
-						<tbody>${cells}</tbody>
+						<tbody>${rows}</tbody>
 					</table>
-					<p style="margin-top:10px;color:#8a8d98;font-size:12px">
-						Pull splits route funds through the Splits Warehouse. After you
-						click <b>Distribute</b>, each recipient must call
-						<code>warehouse.withdraw</code> to claim. If your connected
-						wallet matches a recipient, a <b>Withdraw your share</b> button
-						appears below.
+					<p style="margin-top:8px;font-size:12px;color:var(--text-3)">
+						After distributing, each recipient must withdraw from the Splits Warehouse to receive funds in their wallet.
 					</p>
 				`;
 				renderWithdrawButton();
@@ -686,46 +1622,40 @@
 				const btn = $('withdraw-btn');
 				if (!btn || !splitAddress) return;
 				const isRecipient = connectedAddress && recipients.some(
-					(r) => isAddress(r.address) && r.address.toLowerCase() === connectedAddress.toLowerCase(),
+					r => isAddress(r.address) && r.address.toLowerCase() === connectedAddress.toLowerCase()
 				);
 				btn.style.display = isRecipient ? '' : 'none';
 			}
 
+			// ── Distribute ──
 			$('distribute-btn').addEventListener('click', async () => {
 				if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
-					logLine('refusing to write — wallet is not on Base Sepolia.', 'err');
-					return;
+					addLog('Refusing — wallet is not on Base Sepolia.', 'error'); return;
 				}
 				if (!splitsClient || !splitAddress) {
-					logLine('connect wallet and create a split first.', 'err');
-					return;
+					addLog('Connect wallet and deploy a split first.', 'error'); return;
 				}
+				const btn = $('distribute-btn');
 				try {
-					$('distribute-btn').disabled = true;
-					$('distribute-btn').textContent = 'Waiting for wallet…';
-					logLine('calling splitV2.distribute(NATIVE_TOKEN_ADDRESS)…', 'info');
-					const checksummed = recipients.map((r) => ({
+					btn.disabled = true;
+					btn.textContent = 'Waiting for wallet…';
+					addLog('Calling distribute(NATIVE)…', 'info');
+					const checksummed = recipients.map(r => ({
 						address: getAddress(r.address),
 						percentAllocation: Number(r.percentAllocation),
 					}));
-					// We pass `splitFields` so the SDK does not need to query a
-					// subgraph (Base Sepolia subgraph requires an API key). The
-					// on-chain `ownership` is the bigint allocation; for total
-					// = 100% and PERCENTAGE_SCALE = 1e6, each recipient's
-					// ownership = pct * 1e4.
 					const PERCENTAGE_SCALE = 1_000_000n;
 					const splitFields = {
 						distributorFeePercent: 0,
-						recipients: checksummed.map((r) => ({
+						recipients: checksummed.map(r => ({
 							recipient: { address: r.address },
 							ownership: BigInt(Math.round(r.percentAllocation * 1e4)),
 							percentAllocation: r.percentAllocation,
 						})),
 					};
-					// sanity-check totals match PERCENTAGE_SCALE
 					const total = splitFields.recipients.reduce((a, x) => a + x.ownership, 0n);
 					if (total !== PERCENTAGE_SCALE) {
-						throw new Error(`internal: allocations ${total} ≠ 1e6 scale`);
+						throw new Error(`Internal: allocations ${total} ≠ 1e6 scale`);
 					}
 					const res = await splitsClient.distribute({
 						splitAddress,
@@ -733,31 +1663,32 @@
 						distributorAddress: connectedAddress,
 						splitFields,
 					});
-					logLine(`✓ distribute event emitted in tx ${res?.event?.transactionHash || ''}`.trim(), 'ok');
+					const txHash = res?.event?.transactionHash || '';
+					addLog('Funds distributed to recipients', 'distribute', `Funds distributed · ${txHash ? `<a href="${BASESCAN_BASE}/tx/${txHash}" target="_blank" rel="noopener">view tx</a>` : ''}`);
 					await refreshBalance();
+					// advance to done step
+					goToStep(3);
 				} catch (err) {
-					logLine(`distribute failed: ${err.shortMessage || err.message}`, 'err');
+					addLog(`Distribute failed: ${err.shortMessage || err.message}`, 'error');
 				} finally {
-					$('distribute-btn').disabled = false;
-					$('distribute-btn').textContent = 'Distribute to recipients';
+					btn.disabled = false;
+					btn.textContent = 'Distribute to recipients';
 				}
 			});
 
+			// ── Withdraw ──
 			$('withdraw-btn').addEventListener('click', async () => {
 				if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
-					logLine('refusing to write — wallet is not on Base Sepolia.', 'err');
-					return;
+					addLog('Refusing — wallet is not on Base Sepolia.', 'error'); return;
 				}
 				if (!walletClient || !connectedAddress) {
-					logLine('connect wallet first.', 'err');
-					return;
+					addLog('Connect wallet first.', 'error'); return;
 				}
+				const btn = $('withdraw-btn');
 				try {
-					$('withdraw-btn').disabled = true;
-					$('withdraw-btn').textContent = 'Waiting for wallet…';
-					logLine('calling warehouse.withdraw(self, NATIVE)…', 'info');
-					// Lazy-load WarehouseClient — keeps the createSplit happy
-					// path lean for users who never withdraw on this device.
+					btn.disabled = true;
+					btn.textContent = 'Waiting for wallet…';
+					addLog('Withdrawing from Splits Warehouse…', 'info');
 					const { WarehouseClient } = await import('@0xsplits/splits-sdk');
 					const wh = new WarehouseClient({
 						chainId: BASE_SEPOLIA_CHAIN_ID,
@@ -768,38 +1699,43 @@
 						ownerAddress: connectedAddress,
 						tokenAddress: NATIVE,
 					});
-					logLine(`✓ withdraw event ${res?.event?.transactionHash || ''}`.trim(), 'ok');
+					const txHash = res?.event?.transactionHash || '';
+					addLog('Withdrawal complete', 'withdraw', `Withdrawal complete · ${txHash ? `<a href="${BASESCAN_BASE}/tx/${txHash}" target="_blank" rel="noopener">view tx</a>` : ''}`);
 				} catch (err) {
-					logLine(`withdraw failed: ${err.shortMessage || err.message}`, 'err');
+					addLog(`Withdraw failed: ${err.shortMessage || err.message}`, 'error');
 				} finally {
-					$('withdraw-btn').disabled = false;
-					$('withdraw-btn').textContent = 'Withdraw your share';
+					btn.disabled = false;
+					btn.textContent = 'Claim your share';
 				}
 			});
 
-			// --- cache hydration ---
+			// ── Cache hydration ──
 			function hydrateFromCache() {
 				const c = loadCache();
 				if (!c || c.chainId !== BASE_SEPOLIA_CHAIN_ID || !isAddress(c.splitAddress)) return;
 				splitAddress = getAddress(c.splitAddress);
 				if (Array.isArray(c.recipients) && c.recipients.length) {
-					recipients = c.recipients.map((r) => ({
+					recipients = c.recipients.map(r => ({
 						address: r.address,
 						percentAllocation: Number(r.percentAllocation),
 					}));
 					renderRecipients();
+					renderChart();
+					updateSum();
 				}
-				logLine(`restored cached split ${splitAddress}`, 'info');
-				renderSplitInfo();
-				showFundCard();
-				showInspectCard();
+				addLog(`Restored split ${shortAddr(splitAddress)}`, 'info');
+				$('forget-btn').style.display = '';
+				$('create-btn').disabled = true;
+				$('create-btn').textContent = 'Deployed ✓';
+				renderDeploySummary();
+				renderSplitDeployed();
 				refreshBalance();
+				goToStep(2);
 			}
 
-			// Try to silently pre-detect an already-permitted account so the
-			// "Connect" button shows the connected state on page refresh.
+			// ── Auto-detect session ──
 			(async () => {
-				if (!window.ethereum) return;
+				if (!window.ethereum) { hydrateFromCache(); return; }
 				try {
 					const accts = await window.ethereum.request({ method: 'eth_accounts' });
 					if (accts && accts[0]) {
@@ -809,10 +1745,8 @@
 						await rebuildClients();
 						updateWalletUI();
 						hydrateFromCache();
-						logLine(`auto-restored session: ${connectedAddress} on chain ${connectedChainId}`, 'info');
+						addLog(`Session restored: ${shortAddr(connectedAddress)} on chain ${connectedChainId}`, 'connect');
 					} else {
-						// No connected account — still try to hydrate so the
-						// user can see their previous split address.
 						hydrateFromCache();
 					}
 				} catch {

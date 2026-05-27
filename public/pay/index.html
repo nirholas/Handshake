@@ -27,7 +27,7 @@
     --border-strong: #2e3447;
     --text: #e6e8f0;
     --muted: #8a90a8;
-    --accent: #8b5cf6;
+    --accent: #ffffff;
     --accent-2: #22d3ee;
     --green: #22c55e;
     --orange: #f59e0b;
@@ -57,14 +57,14 @@
     justify-content: space-between;
     gap: 16px;
     border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, rgba(139,92,246,0.04), transparent);
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent);
   }
   .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
   .brand .logo {
     width: 32px; height: 32px;
     background: conic-gradient(from 230deg, var(--accent), var(--accent-2), var(--accent));
     border-radius: 9px;
-    box-shadow: 0 0 24px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 24px rgba(255, 255, 255, 0.5);
     flex: 0 0 auto;
   }
   .brand .title { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; white-space: nowrap; }
@@ -169,7 +169,7 @@
     font-size: 12px; cursor: pointer;
     transition: border-color 0.15s, background 0.15s, transform 0.05s;
   }
-  .quick button:hover { border-color: var(--accent); background: rgba(139, 92, 246, 0.08); }
+  .quick button:hover { border-color: var(--accent); background: rgba(255, 255, 255, 0.08); }
   .quick button:active { transform: translateY(1px); }
   .quick button:disabled { opacity: 0.4; cursor: not-allowed; }
   .input-row { display: flex; gap: 10px; align-items: stretch; }
@@ -185,12 +185,12 @@
   }
   .input-row input:focus { border-color: var(--accent); }
   .input-row .send {
-    background: var(--accent); color: #fff;
+    background: var(--accent); color: #000000;
     border: none; padding: 0 22px; border-radius: 10px;
     font-weight: 600; font-size: 14px; cursor: pointer;
     transition: background 0.15s, transform 0.05s;
   }
-  .input-row .send:hover { background: #7c3aed; }
+  .input-row .send:hover { background: #e0e0e0; }
   .input-row .send:active { transform: translateY(1px); }
   .input-row .send:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -230,10 +230,10 @@
   }
   .step.active {
     border-color: var(--accent);
-    background: linear-gradient(180deg, rgba(139,92,246,0.06), var(--panel-2));
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), var(--panel-2));
   }
   .step.active .icon {
-    background: var(--accent); color: #fff; border-color: var(--accent);
+    background: var(--accent); color: #000000; border-color: var(--accent);
     animation: spin 1.2s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -480,11 +480,11 @@
   .walkthrough .step-item .text { font-size: 13px; line-height: 1.5; }
   .walkthrough .step-item .text b { color: var(--accent-2); }
   .walkthrough button {
-    background: var(--accent); color: #fff; border: none;
+    background: var(--accent); color: #000000; border: none;
     width: 100%; padding: 12px; border-radius: 10px;
     font-weight: 600; font-size: 14px; cursor: pointer;
   }
-  .walkthrough button:hover { background: #7c3aed; }
+  .walkthrough button:hover { background: #e0e0e0; }
 
   /* Mobile polish */
   @media (max-width: 640px) {
@@ -529,7 +529,7 @@
     transition: border-color 0.15s, background 0.15s;
     font-size: 12px;
   }
-  .agent-card:hover { border-color: var(--accent); background: rgba(139,92,246,0.06); }
+  .agent-card:hover { border-color: var(--accent); background: rgba(255,255,255,0.06); }
   .agent-card.selected { border-color: var(--accent-2); background: rgba(34,211,238,0.07); }
   .agent-card .av {
     width: 24px; height: 24px; border-radius: 6px;
@@ -574,8 +574,8 @@
     transition: border-color 0.15s;
   }
   .gen-modal button:hover { border-color: var(--accent); }
-  .gen-modal button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .gen-modal button.primary:hover { background: #7c3aed; }
+  .gen-modal button.primary { background: var(--accent); color: #000000; border-color: var(--accent); }
+  .gen-modal button.primary:hover { background: #e0e0e0; }
   .gen-modal .cancel { color: var(--muted); margin-top: 8px; font-size: 12px; text-align: center; cursor: pointer; }
   .gen-modal .cancel:hover { color: var(--text); }
   .gen-modal .spinner { font-size: 18px; animation: spin 1.2s linear infinite; }

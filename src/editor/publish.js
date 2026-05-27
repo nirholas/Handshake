@@ -23,7 +23,7 @@ const TURNTABLE_DEFAULTS = Object.freeze({
 	autoRotate: true,
 	showControls: true,
 	background: '#0a0a0a',
-	accent: '#8b5cf6',
+	accent: '#ffffff',
 });
 
 export class AuthRequiredError extends Error {

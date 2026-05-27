@@ -62,7 +62,7 @@ export const WIDGET_TYPE_KEYS = Object.keys(WIDGET_TYPES);
 
 export const BRAND_DEFAULTS = Object.freeze({
 	background: '#0a0a0a',
-	accent: '#8b5cf6',
+	accent: '#ffffff',
 	caption: '',
 	showControls: true,
 	autoRotate: true,

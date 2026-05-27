@@ -190,7 +190,7 @@ function renderShowcase(w) {
 	// Customizer state — mutated by inputs, read by snippet + iframe builders.
 	const state = {
 		size: 'M',
-		accent: TYPE_COLORS[w.type] || '#8b5cf6',
+		accent: TYPE_COLORS[w.type] || '#ffffff',
 		mint:
 			w.type === 'live-trades-canvas'
 				? 'So11111111111111111111111111111111111111112'
@@ -491,7 +491,7 @@ function renderShowcase(w) {
 	resetBtn.textContent = 'Reset';
 	resetBtn.addEventListener('click', () => {
 		state.size = 'M';
-		state.accent = TYPE_COLORS[w.type] || '#8b5cf6';
+		state.accent = TYPE_COLORS[w.type] || '#ffffff';
 		state.mint = defaultMint(w.type);
 		state.kind = 'all';
 		accentInput.value = state.accent;

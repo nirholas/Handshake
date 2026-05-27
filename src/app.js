@@ -1374,7 +1374,7 @@ class App {
 		const el = document.createElement('div');
 		el.style.cssText =
 			'position:fixed;inset:0;display:grid;place-items:center;background:#0a0a0a;color:#e0e0e0;font-family:Inter,system-ui,sans-serif;text-align:center;padding:2rem;z-index:9999';
-		el.innerHTML = `<div><h1 style="font-weight:300;margin:0 0 0.5rem">Widget unavailable</h1><p style="opacity:0.7;margin:0">${message.replace(/[<>&"]/g, '')}</p><p style="margin-top:1.5rem"><a href="/" style="color:#8b5cf6">Open viewer</a> · <a href="/widgets" style="color:#8b5cf6">Browse gallery</a></p></div>`;
+		el.innerHTML = `<div><h1 style="font-weight:300;margin:0 0 0.5rem">Widget unavailable</h1><p style="opacity:0.7;margin:0">${message.replace(/[<>&"]/g, '')}</p><p style="margin-top:1.5rem"><a href="/" style="color:#ffffff">Open viewer</a> · <a href="/widgets" style="color:#ffffff">Browse gallery</a></p></div>`;
 		document.body.appendChild(el);
 	}
 

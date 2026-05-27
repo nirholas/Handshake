@@ -309,12 +309,12 @@ function _injectStyles() {
 			background: rgba(255, 255, 255, 0.06);
 		}
 		.anim-gallery-item.is-active {
-			background: rgba(139, 92, 246, 0.22);
+			background: rgba(255, 255, 255, 0.22);
 			color: #fff;
-			box-shadow: inset 3px 0 0 #8b5cf6;
+			box-shadow: inset 3px 0 0 #ffffff;
 		}
 		.anim-gallery-item:focus-visible {
-			outline: 2px solid #8b5cf6;
+			outline: 2px solid #ffffff;
 			outline-offset: -2px;
 		}
 		.anim-gallery-empty {
