@@ -33,6 +33,12 @@ const PROFILE_TIERS = ['high', 'medium', 'low'];
  * @param {Window}    [env.window]
  * @returns {'high'|'medium'|'low'}
  */
+/**
+ * @param {object} [env]
+ * @param {Navigator} [env.navigator]
+ * @param {Window}    [env.window]
+ * @returns {'high'|'medium'|'low'}
+ */
 export function detectProfile(env = {}) {
 	const nav = env.navigator ?? (typeof navigator !== 'undefined' ? navigator : {});
 	const win = env.window ?? (typeof window !== 'undefined' ? window : {});
@@ -42,11 +48,23 @@ export function detectProfile(env = {}) {
 	const lowMem = (nav.deviceMemory ?? 8) < 4;
 	const lowCores = (nav.hardwareConcurrency ?? 8) < 4;
 	const coarse = !!(win.matchMedia && win.matchMedia('(pointer: coarse)').matches);
+	const touchPrimary = !!(win.matchMedia && win.matchMedia('(pointer: coarse)').matches);
 
 	if (!isMobile && !lowMem && !lowCores) return 'high';
-	if (isMobile && (lowMem || lowCores)) return 'low';
+	if ((isMobile && (lowMem || lowCores)) || (touchPrimary && lowMem)) return 'low';
 	if (coarse) return 'medium';
 	return 'medium';
+}
+
+/**
+ * Whether the current device should be treated as mobile for layout purposes.
+ * Checks screen width + touch primary pointer. Exported so other modules
+ * can default to single-pole VIP view on small screens.
+ */
+export function isMobileLayout(env = {}) {
+	const win = env.window ?? (typeof window !== 'undefined' ? window : {});
+	if (!win.innerWidth) return false;
+	return win.innerWidth < 768;
 }
 
 /**

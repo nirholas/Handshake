@@ -36,6 +36,7 @@ const STATE = {
 			<div class="dnx-col-main">
 				<section data-slot="hero" class="dnx-hero"></section>
 				<section data-slot="kpis"  class="dnx-kpis"></section>
+				<section data-slot="health" class="dnx-health-wrap"></section>
 				<section data-slot="quick" class="dnx-quick"></section>
 				<section data-slot="directory" class="dnx-directory"></section>
 			</div>
@@ -50,6 +51,7 @@ const STATE = {
 		onboarding: main.querySelector('[data-slot="onboarding"]'),
 		hero: main.querySelector('[data-slot="hero"]'),
 		kpis: main.querySelector('[data-slot="kpis"]'),
+		health: main.querySelector('[data-slot="health"]'),
 		quick: main.querySelector('[data-slot="quick"]'),
 		directory: main.querySelector('[data-slot="directory"]'),
 		activity: main.querySelector('[data-slot="activity"]'),
@@ -58,7 +60,7 @@ const STATE = {
 	const [avatarsRes, widgetsRes, agentsRes] = await Promise.allSettled([
 		get('/api/avatars?limit=50'),
 		get('/api/widgets'),
-		get('/api/agents?limit=1'),
+		get('/api/agents?limit=20'),
 	]);
 
 	const avatars = avatarsRes.status === 'fulfilled' ? (avatarsRes.value?.avatars ?? []) : [];
@@ -66,6 +68,7 @@ const STATE = {
 	const agents  = agentsRes.status === 'fulfilled'  ? (agentsRes.value?.agents  ?? []) : [];
 
 	renderHero(slots.hero, avatars, avatarsRes.status === 'rejected' ? avatarsRes.reason : null);
+	renderAgentHealth(slots.health, agents, widgets);
 	renderQuickActions(slots.quick, { avatars, agents });
 	renderDirectory(slots.directory);
 

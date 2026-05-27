@@ -7,8 +7,11 @@
 // for ~12s, then drifts back to backstage. No tip, no dance.
 
 import {
+	AdditiveBlending,
 	AmbientLight,
 	Box3,
+	BufferAttribute,
+	BufferGeometry,
 	Clock,
 	Color,
 	EquirectangularReflectionMapping,
@@ -18,6 +21,8 @@ import {
 	PerspectiveCamera,
 	PMREMGenerator,
 	PointLight,
+	Points,
+	PointsMaterial,
 	Scene,
 	SpotLight,
 	SRGBColorSpace,
@@ -33,7 +38,7 @@ import { AnimationManager } from './animation-manager.js';
 import { ClubCamera } from './club-camera.js';
 import { ClubAudio, styleAudioFor, TRACK_LABELS } from './club-audio.js';
 import { playSequence, ticketSteps } from './club-sequence.js';
-import { detectProfile, PROFILES, createFrameWatchdog } from './club-perf.js';
+import { detectProfile, PROFILES, createFrameWatchdog, isMobileLayout } from './club-perf.js';
 
 const AVATAR_URL = '/avatars/default.glb';
 const MANIFEST_URL = '/animations/manifest.json';
@@ -328,6 +333,14 @@ document.querySelector('#club-stage')?.setAttribute('data-cam-mode', clubCam.get
 // ── Poles + spotlights ───────────────────────────────────────────────────
 const POLE_COLORS = [0xff3bd6, 0x4ad6ff, 0xff8a3b, 0x9b5dff];
 
+// Dancer registry — display names, bios, accent palette.
+const DANCER_META = [
+	{ name: 'Aria', bio: 'Neon pink fire. Classical meets street.', palette: 'pink' },
+	{ name: 'Nova', bio: 'Cyan ice. Fluid and hypnotic.', palette: 'cyan' },
+	{ name: 'Blaze', bio: 'Amber heat. Power and precision.', palette: 'amber' },
+	{ name: 'Luna', bio: 'Violet dream. Gravity-defying flow.', palette: 'violet' },
+];
+
 class PoleStation {
 	constructor(idx, layout) {
 		this.idx = idx;
@@ -517,14 +530,17 @@ class PoleStation {
 		this._accentTarget = 2.4;
 
 		// Auto-cam: if the user opted in and no manual VIP/house shot is active,
-		// switch to this pole's VIP cam for the duration. We remember that the
+		// switch to an orbiting auto-cam for the duration. We remember that the
 		// auto-cam started this transition so we can release it on end.
 		if (autoFollow && clubCam.getMode() === 'free') {
 			this._autoCammed = true;
-			clubCam.setVip(this.layout);
+			clubCam.setAuto(this.layout);
 		} else {
 			this._autoCammed = false;
 		}
+
+		// Update pole card status.
+		updatePoleCardStatus(this.id, 'performing');
 
 		// Crossfade idle → walking → dance once the dancer reaches the pole.
 		await this.anim?.crossfadeTo(WALK_CLIP, PERFORMANCE_FADE);
@@ -574,10 +590,13 @@ class PoleStation {
 		this._spotTarget = this.spotIdleIntensity;
 		this._accentTarget = 0.4;
 		// Release auto-cam back to free if we were the ones who took it.
-		if (this._autoCammed && clubCam.getMode() === 'vip') {
+		if (this._autoCammed && (clubCam.getMode() === 'auto' || clubCam.getMode() === 'vip')) {
 			clubCam.setFree();
 		}
 		this._autoCammed = false;
+
+		// Update pole card status back to idle.
+		updatePoleCardStatus(this.id, 'idle');
 		// Signal the audio mixer (and anyone else listening) to fade the
 		// style loop back to ambience. Dispatched on window so the page-
 		// level audio binding can stay decoupled from this class.
@@ -984,34 +1003,99 @@ const DANCES = [
 	{ key: 'thriller', label: 'Thriller' },
 	{ key: 'capoeira', label: 'Capoeira' },
 	{ key: 'hiphop',   label: 'Hip Hop' },
+	{ key: 'spin',     label: 'Pole Spin' },
+	{ key: 'climb',    label: 'Climb + Invert' },
+	{ key: 'combo',    label: 'Combo' },
 ];
+
+// Track per-pole card elements for status updates.
+const poleCardEls = new Map();
+
+function updatePoleCardStatus(poleId, status) {
+	const cardEl = poleCardEls.get(poleId);
+	if (!cardEl) return;
+	const dotEl = cardEl.querySelector('.club-status-dot');
+	const labelEl = cardEl.querySelector('.club-pole-status-label');
+	const btnEl = cardEl.querySelector('.club-tip-btn');
+	const progressEl = cardEl.querySelector('.club-pole-progress');
+
+	if (dotEl) {
+		dotEl.classList.remove('is-idle', 'is-performing', 'is-backstage');
+		dotEl.classList.add(status === 'performing' ? 'is-performing' : status === 'backstage' ? 'is-backstage' : 'is-idle');
+	}
+	if (labelEl) {
+		labelEl.textContent = status === 'performing' ? 'Performing' : status === 'backstage' ? 'Backstage' : 'Idle';
+	}
+	if (btnEl) {
+		if (status === 'performing') {
+			btnEl.disabled = true;
+			btnEl.textContent = 'Performing...';
+		} else {
+			btnEl.disabled = false;
+			const meta = DANCER_META[parseInt(poleId, 10) - 1] || DANCER_META[0];
+			btnEl.textContent = `Tip $0.001`;
+		}
+	}
+	if (progressEl) {
+		progressEl.style.display = status === 'performing' ? '' : 'none';
+	}
+}
+
+function flashPoleCard(poleId) {
+	const cardEl = poleCardEls.get(poleId);
+	if (!cardEl) return;
+	cardEl.classList.remove('is-flash');
+	void cardEl.offsetWidth; // force reflow for re-triggering animation
+	cardEl.classList.add('is-flash');
+	cardEl.addEventListener('animationend', () => cardEl.classList.remove('is-flash'), { once: true });
+}
 
 function renderPoles() {
 	if (!polesPanel) return;
 	polesPanel.innerHTML = '';
 	for (const pole of POLES) {
+		const idx = parseInt(pole.id, 10) - 1;
+		const meta = DANCER_META[idx] || DANCER_META[0];
 		const card = document.createElement('div');
 		card.className = 'club-pole-card';
+		card.setAttribute('role', 'listitem');
+		card.setAttribute('aria-label', `Pole ${pole.id} - ${meta.name}`);
+		card.dataset.poleId = pole.id;
+
 		card.innerHTML = `
 			<div class="club-pole-head">
-				<span class="club-pole-id">Pole ${pole.id}</span>
+				<div>
+					<span class="club-dancer-name">${meta.name}</span>
+					<span class="club-dancer-bio" title="${meta.bio}">${meta.bio}</span>
+				</div>
 				<span class="club-pole-row-right">
-					<span class="club-pole-price">$0.001 USDC</span>
-					<button type="button" class="club-cam-btn" data-pole="${pole.id}" title="VIP cam">🎬</button>
+					<button type="button" class="club-cam-btn" data-pole="${pole.id}" title="VIP camera for ${meta.name}" aria-label="VIP camera for pole ${pole.id}">VIP</button>
 				</span>
 			</div>
+			<div class="club-pole-status" aria-label="Status: Idle">
+				<span class="club-status-dot is-idle" aria-hidden="true"></span>
+				<span class="club-pole-status-label">Idle</span>
+				<span class="club-pole-stats" id="club-pole-stats-${pole.id}" aria-label="Tips today: 0">0 tips today</span>
+			</div>
+			<div class="club-pole-progress" style="display:none" role="progressbar" aria-label="Performance progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+				<div class="club-pole-progress-bar" style="width:0%"></div>
+			</div>
 			<label class="club-pole-style">
+				<span class="sr-only">Dance style for ${meta.name}</span>
 				Style
-				<select data-dancer="${pole.id}" class="club-pole-select">
+				<select data-dancer="${pole.id}" class="club-pole-select" aria-label="Dance style for pole ${pole.id}">
 					${DANCES.map((d) => `<option value="${d.key}">${d.label}</option>`).join('')}
 				</select>
 			</label>
-			<button type="button" class="club-tip-btn" data-dancer="${pole.id}">
-				Tip ${pole.id} — make her dance
+			<button type="button" class="club-tip-btn" data-dancer="${pole.id}" aria-label="Tip ${meta.name} $0.001 USDC">
+				Tip $0.001
 			</button>
 		`;
 		polesPanel.appendChild(card);
+		poleCardEls.set(pole.id, card);
 	}
+
+	// Tap card on mobile to VIP.
 	polesPanel.addEventListener('click', (e) => {
 		const camBtn = e.target.closest('.club-cam-btn');
 		if (camBtn) {
@@ -1020,11 +1104,20 @@ function renderPoles() {
 			return;
 		}
 		const btn = e.target.closest('.club-tip-btn');
-		if (!btn) return;
-		const dancer = btn.dataset.dancer;
-		const select = polesPanel.querySelector(`.club-pole-select[data-dancer="${dancer}"]`);
-		const dance = select?.value || 'rumba';
-		tipDancer({ dancer, dance, button: btn });
+		if (btn) {
+			const dancer = btn.dataset.dancer;
+			const select = polesPanel.querySelector(`.club-pole-select[data-dancer="${dancer}"]`);
+			const dance = select?.value || 'rumba';
+			tipDancer({ dancer, dance, button: btn });
+			return;
+		}
+		// Tap the card itself (not a button/select) on mobile → VIP cam.
+		const card = e.target.closest('.club-pole-card');
+		if (card && isMobileLayout()) {
+			const poleId = card.dataset.poleId;
+			const layout = POLES.find((p) => p.id === poleId);
+			if (layout) clubCam.setVip(layout);
+		}
 	});
 }
 

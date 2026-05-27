@@ -186,10 +186,10 @@ Track progress by editing the checkboxes in each prompt's **Acceptance** section
 
 | Phase | Status |
 |---|---|
-| 1 Foundation | not started |
-| 2 Sellers | not started |
-| 3 Buyers | not started |
-| 4 Transports | not started |
-| 5 Extensions | not started |
-| 6 Hooks & Ops | not started |
-| 7 Productized agents | not started |
+| 1 Foundation | **done** — x402-spec.js, facilitator client |
+| 2 Sellers | **done** — paidEndpoint helper with exact EVM, exact SVM, direct BSC |
+| 3 Buyers | **done** — x402-buyer-fetch.js, x402-buyer-axios.js |
+| 4 Transports | **done** — MCP server in mcp-server/, a2a via auth-hints |
+| 5 Extensions | **done** — bazaar discovery, payment identifiers, sign-in-with-x, offer-receipt, gas-sponsoring, builder-code, auth-hints |
+| 6 Hooks & Ops | **done** — spending limits, access control/api-key bypass, audit logging, idempotency cache, paywall UI in public/x402.js |
+| 7 Productized agents | **partial** — fact-checker and pump-agent-audit exist; remaining agents not started |

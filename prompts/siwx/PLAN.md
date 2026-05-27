@@ -169,14 +169,14 @@ End-to-end test plan in `07-verify-end-to-end.md`:
 
 ## Run order
 
-| # | Prompt | Depends on |
-|---|---|---|
-| 1 | [01-db-schema.md](01-db-schema.md) | — |
-| 2 | [02-storage-adapter.md](02-storage-adapter.md) | 1 |
-| 3 | [03-paid-endpoint-integration.md](03-paid-endpoint-integration.md) | 2 |
-| 4 | [04-wire-endpoints.md](04-wire-endpoints.md) | 3 |
-| 5 | [05-browser-modal.md](05-browser-modal.md) | 3 |
-| 6 | [06-nonce-gc-cron.md](06-nonce-gc-cron.md) | 1 |
-| 7 | [07-verify-end-to-end.md](07-verify-end-to-end.md) | 4, 5 |
+| # | Prompt | Depends on | Status |
+|---|---|---|---|
+| 1 | [01-db-schema.md](01-db-schema.md) | — | **done** |
+| 2 | [02-storage-adapter.md](02-storage-adapter.md) | 1 | **done** — siwx-storage.js |
+| 3 | [03-paid-endpoint-integration.md](03-paid-endpoint-integration.md) | 2 | **done** — integrated in paidEndpoint() |
+| 4 | [04-wire-endpoints.md](04-wire-endpoints.md) | 3 | **done** — asset-download endpoint wired |
+| 5 | [05-browser-modal.md](05-browser-modal.md) | 3 | **done** — browser modal in x402.js |
+| 6 | [06-nonce-gc-cron.md](06-nonce-gc-cron.md) | 1 | **done** — siwx-gc cron |
+| 7 | [07-verify-end-to-end.md](07-verify-end-to-end.md) | 4, 5 | **done** — system live in production |
 
-Prompts 4, 5, 6 can run in parallel after 3 is merged.
+All 7 steps are complete. The SIWX system is fully implemented and live in production.

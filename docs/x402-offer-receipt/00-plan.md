@@ -50,14 +50,14 @@ Each prompt is self-contained and assumes only that prior prompts in the sequenc
 
 All of these must be verifiable, not asserted:
 
-- [ ] `X402_RECEIPT_SIGNING_KEY` is set in `.env.example` (placeholder), `.env` (real value), and configured in Vercel for `production` + `preview`.
-- [ ] `npm test` passes.
-- [ ] Hitting any paid endpoint without a payment header returns `402` with `body.extensions["offer-receipt"].signedOffers[]` containing one entry per accepted network.
-- [ ] Hitting any paid endpoint with a valid payment returns `200` with `x-payment-response` decoding to an envelope whose `extensions["offer-receipt"].signedReceipt` verifies under the signer's recovered address.
-- [ ] The verification script at `scripts/verify-x402-receipts.js` runs against a deployed (or `vercel dev`) instance, verifies both artifacts, and exits `0`.
-- [ ] No handler in `api/x402/*.js` was modified — the wiring is purely in the shared lib.
-- [ ] Completionist agent run against the diff returns clean.
-- [ ] Pushed to **both** `origin` and `threews` remotes.
+- [x] `X402_RECEIPT_SIGNING_KEY` is set in `.env.example` (placeholder), `.env` (real value), and configured in Vercel for `production` + `preview`.
+- [x] `npm test` passes.
+- [x] Hitting any paid endpoint without a payment header returns `402` with `body.extensions["offer-receipt"].signedOffers[]` containing one entry per accepted network.
+- [x] Hitting any paid endpoint with a valid payment returns `200` with `x-payment-response` decoding to an envelope whose `extensions["offer-receipt"].signedReceipt` verifies under the signer's recovered address.
+- [x] The verification script at `scripts/verify-x402-receipts.js` runs against a deployed (or `vercel dev`) instance, verifies both artifacts, and exits `0`.
+- [x] No handler in `api/x402/*.js` was modified — the wiring is purely in the shared lib.
+- [x] Completionist agent run against the diff returns clean.
+- [x] Pushed to **both** `origin` and `threews` remotes.
 
 ## Risks & caveats
 

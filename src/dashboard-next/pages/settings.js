@@ -73,12 +73,16 @@ function toast(msg) {
 		]);
 
 		host.innerHTML = '';
+		host.appendChild(renderTheme());
 		host.appendChild(renderSessions(sessionsResp?.sessions || []));
 		host.appendChild(renderNotifications(notifResp));
+		host.appendChild(renderDefaultNetwork(prefsResp?.prefs || prefsResp || {}));
 		host.appendChild(renderStorage(summaryResp));
 		host.appendChild(renderLlmUsage(usageResp));
 		host.appendChild(renderVanityTools());
 		host.appendChild(renderPrefs(prefsResp?.prefs || prefsResp || {}));
+		host.appendChild(renderDataExport());
+		host.appendChild(renderAbout());
 	} catch (err) {
 		if (err instanceof ApiError && err.status === 401) {
 			location.href = `/login?return=${encodeURIComponent(location.pathname)}`;
@@ -419,6 +423,218 @@ function renderPrefs(prefs) {
 			btn.textContent = 'Save preferences';
 		}
 	});
+
+	return panel;
+}
+
+// ── Theme ─────────────────────────────────────────────────────────────────
+
+function renderTheme() {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel';
+
+	const stored = localStorage.getItem('twx_theme') || 'dark';
+
+	panel.innerHTML = `
+		<div style="margin-bottom:14px">
+			<div class="dn-panel-title">Appearance</div>
+			<div class="dn-panel-sub" style="margin:2px 0 0">Choose your dashboard color scheme.</div>
+		</div>
+		<div style="display:flex;gap:10px;flex-wrap:wrap">
+			${['dark', 'light', 'auto'].map((t) => `
+				<button class="dn-btn ${t === stored ? 'primary' : ''}" data-theme="${t}" type="button"
+					style="min-width:90px;justify-content:center;text-transform:capitalize">
+					${t === 'dark' ? '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13.5 8.5a5.5 5.5 0 11-6-6 4.5 4.5 0 006 6z"/></svg>' : ''}
+					${t === 'light' ? '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4"/></svg>' : ''}
+					${t === 'auto' ? '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M8 3v10"/></svg>' : ''}
+					${t}
+				</button>
+			`).join('')}
+		</div>
+		<div style="margin-top:10px;font-size:12px;color:var(--nxt-ink-fade)">
+			${stored === 'auto' ? 'Following your system preference.' : `Currently using ${stored} mode.`}
+			The platform is designed for dark mode. Light mode support is coming.
+		</div>
+	`;
+
+	panel.querySelectorAll('[data-theme]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const theme = btn.dataset.theme;
+			localStorage.setItem('twx_theme', theme);
+			panel.querySelectorAll('[data-theme]').forEach((b) => {
+				b.classList.toggle('primary', b.dataset.theme === theme);
+			});
+			const hint = panel.querySelector('div:last-child');
+			hint.textContent = theme === 'auto'
+				? 'Following your system preference.'
+				: `Set to ${theme} mode. The platform is designed for dark mode. Light mode support is coming.`;
+			toast('Theme preference saved');
+		});
+	});
+
+	return panel;
+}
+
+// ── Default network ───────────────────────────────────────────────────────
+
+function renderDefaultNetwork(prefs) {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel';
+
+	const current = prefs.default_network || localStorage.getItem('twx_default_network') || 'base';
+
+	panel.innerHTML = `
+		<div style="margin-bottom:14px">
+			<div class="dn-panel-title">Default payment network</div>
+			<div class="dn-panel-sub" style="margin:2px 0 0">Select the default blockchain for payments and token operations.</div>
+		</div>
+		<div style="display:flex;gap:10px;flex-wrap:wrap">
+			${[
+				{ value: 'base', label: 'Base', note: 'Low-fee EVM L2' },
+				{ value: 'solana', label: 'Solana', note: 'Fast, low-cost' },
+				{ value: 'polygon', label: 'Polygon', note: 'EVM L2' },
+			].map((n) => `
+				<button class="dn-btn ${n.value === current ? 'primary' : ''}" data-network="${n.value}" type="button"
+					style="min-width:120px;flex-direction:column;align-items:center;gap:4px;padding:14px 16px">
+					<span style="font-weight:600;font-size:14px">${esc(n.label)}</span>
+					<span style="font-size:11px;color:${n.value === current ? 'rgba(0,0,0,0.6)' : 'var(--nxt-ink-fade)'}">${esc(n.note)}</span>
+				</button>
+			`).join('')}
+		</div>
+	`;
+
+	panel.querySelectorAll('[data-network]').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			const network = btn.dataset.network;
+			localStorage.setItem('twx_default_network', network);
+			panel.querySelectorAll('[data-network]').forEach((b) => {
+				b.classList.toggle('primary', b.dataset.network === network);
+				const sub = b.querySelector('span:last-child');
+				if (sub) sub.style.color = b.dataset.network === network ? 'rgba(0,0,0,0.6)' : 'var(--nxt-ink-fade)';
+			});
+			try {
+				await patch('/api/dashboard/prefs', { default_network: network });
+			} catch { /* best-effort server save */ }
+			toast(`Default network set to ${network}`);
+		});
+	});
+
+	return panel;
+}
+
+// ── Data export ───────────────────────────────────────────────────────────
+
+function renderDataExport() {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel';
+
+	panel.innerHTML = `
+		<div style="margin-bottom:14px">
+			<div class="dn-panel-title">Data export</div>
+			<div class="dn-panel-sub" style="margin:2px 0 0">Download a copy of your account data including agents, avatars, and settings.</div>
+		</div>
+		<div style="display:flex;gap:10px;flex-wrap:wrap">
+			<button class="dn-btn" data-action="export-agents" type="button">
+				<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v10M5 9l3 3 3-3"/><path d="M2 12v2h12v-2"/></svg>
+				Export agents
+			</button>
+			<button class="dn-btn" data-action="export-avatars" type="button">
+				<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v10M5 9l3 3 3-3"/><path d="M2 12v2h12v-2"/></svg>
+				Export avatars
+			</button>
+			<button class="dn-btn" data-action="export-all" type="button">
+				<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v10M5 9l3 3 3-3"/><path d="M2 12v2h12v-2"/></svg>
+				Export all data (JSON)
+			</button>
+		</div>
+	`;
+
+	async function exportData(type) {
+		const btn = panel.querySelector(`[data-action="export-${type}"]`);
+		const originalHtml = btn.innerHTML;
+		btn.disabled = true;
+		btn.textContent = 'Exporting...';
+		try {
+			const calls = [];
+			if (type === 'agents' || type === 'all') calls.push(get('/api/agents').catch(() => ({ agents: [] })));
+			if (type === 'avatars' || type === 'all') calls.push(get('/api/avatars?limit=100').catch(() => ({ avatars: [] })));
+			if (type === 'all') calls.push(get('/api/widgets').catch(() => ({ widgets: [] })));
+
+			const results = await Promise.all(calls);
+			const data = {};
+			let i = 0;
+			if (type === 'agents' || type === 'all') { data.agents = results[i]?.agents || []; i++; }
+			if (type === 'avatars' || type === 'all') { data.avatars = results[i]?.avatars || []; i++; }
+			if (type === 'all') { data.widgets = results[i]?.widgets || []; i++; }
+			data.exported_at = new Date().toISOString();
+
+			const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `threews-${type}-${new Date().toISOString().slice(0, 10)}.json`;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			URL.revokeObjectURL(url);
+			toast('Data exported');
+		} catch (err) {
+			toast(err?.message || 'Export failed');
+		} finally {
+			btn.disabled = false;
+			btn.innerHTML = originalHtml;
+		}
+	}
+
+	panel.querySelector('[data-action="export-agents"]').addEventListener('click', () => exportData('agents'));
+	panel.querySelector('[data-action="export-avatars"]').addEventListener('click', () => exportData('avatars'));
+	panel.querySelector('[data-action="export-all"]').addEventListener('click', () => exportData('all'));
+
+	return panel;
+}
+
+// ── About ─────────────────────────────────────────────────────────────────
+
+function renderAbout() {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel';
+
+	const buildDate = new Date().toISOString().slice(0, 10);
+
+	panel.innerHTML = `
+		<div style="margin-bottom:14px">
+			<div class="dn-panel-title">About three.ws</div>
+			<div class="dn-panel-sub" style="margin:2px 0 0">Platform information and helpful links.</div>
+		</div>
+		<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13px;margin-bottom:16px">
+			<span style="color:var(--nxt-ink-fade)">Platform</span>
+			<span style="color:var(--nxt-ink)">three.ws</span>
+			<span style="color:var(--nxt-ink-fade)">Dashboard</span>
+			<span style="color:var(--nxt-ink)">dashboard-next</span>
+			<span style="color:var(--nxt-ink-fade)">Build</span>
+			<span style="color:var(--nxt-ink);font-family:${MONO};font-size:12px">${esc(buildDate)}</span>
+			<span style="color:var(--nxt-ink-fade)">Language</span>
+			<span style="color:var(--nxt-ink)">English</span>
+		</div>
+		<div style="display:flex;gap:10px;flex-wrap:wrap">
+			<a class="dn-btn" href="/features" style="text-decoration:none">
+				<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h12v12H4z"/><path d="M4 10h12M10 4v12"/></svg>
+				Features
+			</a>
+			<a class="dn-btn" href="/tutorials" style="text-decoration:none">
+				<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3h5a2 2 0 012 2v9a1.5 1.5 0 00-1.5-1.5H1V3z"/><path d="M15 3h-5a2 2 0 00-2 2v9a1.5 1.5 0 011.5-1.5H15V3z"/></svg>
+				Documentation
+			</a>
+			<a class="dn-btn" href="/community" style="text-decoration:none">
+				<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="2"/><circle cx="11" cy="6" r="1.5"/><path d="M1.5 13c.6-2.2 2.2-3.3 4.5-3.3s3.9 1.1 4.5 3.3"/></svg>
+				Community
+			</a>
+			<a class="dn-btn" href="mailto:support@three.ws" style="text-decoration:none">
+				<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 3l7 5 7-5"/></svg>
+				Support
+			</a>
+		</div>
+	`;
 
 	return panel;
 }

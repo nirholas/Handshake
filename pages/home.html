@@ -119,7 +119,7 @@
 		<a href="#main-content" class="h-skip-link">Skip to main content</a>
 		<header>
 			<h1>
-				<a href="/marketplace?tab=mine" aria-label="three.ws home"
+				<a href="/" aria-label="three.ws home"
 					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span
 						class="wordmark-dot"
 						aria-hidden="true"
@@ -193,17 +193,17 @@
 						<span class="h-eyebrow-dot"></span>
 						<span>The 3D layer for onchain AI agents</span>
 					</div>
-					<h2 class="h-title h-reveal">Give your AI<br />a <em>body</em>.</h2>
+					<h2 class="h-title h-reveal">Where AI Agents<br />Come <em>Alive</em>.</h2>
 					<p class="h-subtitle h-reveal">
-						three.ws is the open identity layer for 3D AI agents — one GLB, any LLM,
-						owned on Solana. Born in 3D. Raised on-chain. Yours forever.
+						Give any AI agent a 3D body, a voice, and an on-chain identity.
+						One GLB. Any LLM. Owned on Solana. Earn USDC with every interaction.
 					</p>
 					<div class="h-cta-row h-reveal">
-						<a href="/create" class="h-btn-primary">
-							<span>Build your agent</span>
+						<a href="/dashboard" class="h-btn-primary">
+							<span>Launch Dashboard</span>
 							<span class="arrow">→</span>
 						</a>
-						<a href="#pick-animate" class="h-btn-ghost">See it live</a>
+						<a href="/marketplace" class="h-btn-ghost">Browse Marketplace</a>
 					</div>
 					<ul class="h-standards h-reveal" aria-label="Supported formats and standards">
 						<li>glTF 2.0</li>
@@ -212,6 +212,7 @@
 						<li>Metaplex Core</li>
 						<li>A2A</li>
 						<li>MCP</li>
+						<li>x402</li>
 					</ul>
 				</div>
 
@@ -850,9 +851,10 @@
 						<div class="h-footer-link-col">
 							<h4 class="h-footer-link-heading">Product</h4>
 							<a href="/create">Create</a>
+							<a href="/marketplace">Marketplace</a>
 							<a href="/studio">Studio</a>
 							<a href="/widgets">Widgets</a>
-							<a href="/discover">Discover</a>
+							<a href="/pricing">Pricing</a>
 						</div>
 						<div class="h-footer-link-col">
 							<h4 class="h-footer-link-heading">Developers</h4>
@@ -863,6 +865,7 @@
 								rel="noopener noreferrer"
 								>GitHub</a
 							>
+							<a href="/bazaar">x402 Bazaar</a>
 							<a
 								href="https://developers.metaplex.com/core"
 								target="_blank"
@@ -871,9 +874,16 @@
 							>
 						</div>
 						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Resources</h4>
+							<h4 class="h-footer-link-heading">Company</h4>
 							<a href="/blog">Blog</a>
+							<a href="/community">Community</a>
+							<a href="/features">Features</a>
 							<a href="/dashboard">Dashboard</a>
+						</div>
+						<div class="h-footer-link-col">
+							<h4 class="h-footer-link-heading">Legal</h4>
+							<a href="/legal/privacy">Privacy</a>
+							<a href="/legal/tos">Terms</a>
 						</div>
 					</nav>
 				</div>
@@ -1484,7 +1494,7 @@
 		</script>
 
 		<script>
-			// Traction stats — fetch /api/platform/stats and animate counters.
+			// Traction stats — fetch /api/platform/stats, animate counters on scroll into view.
 			(function () {
 				function fmtNum(n) {
 					if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
@@ -1493,37 +1503,56 @@
 				}
 
 				function animateCount(el, target) {
-					const duration = 900;
+					const duration = 1200;
 					const start = performance.now();
-					const from = 0;
 					function step(now) {
 						const t = Math.min((now - start) / duration, 1);
 						const ease = 1 - Math.pow(1 - t, 3);
-						const val = Math.round(from + (target - from) * ease);
+						const val = Math.round(target * ease);
 						el.textContent = fmtNum(val);
 						if (t < 1) requestAnimationFrame(step);
 					}
 					requestAnimationFrame(step);
 				}
 
+				const section = document.querySelector('.h-traction');
 				const vals = document.querySelectorAll('[data-traction-val]');
+				if (!section) return;
 				vals.forEach((el) => el.classList.add('is-loading'));
+
+				let statsData = null;
+				let animated = false;
+
+				function triggerAnimation() {
+					if (animated || !statsData) return;
+					animated = true;
+					vals.forEach((el) => {
+						const key = el.dataset.tractionVal;
+						const raw = statsData[key];
+						if (raw == null) return;
+						el.classList.remove('is-loading');
+						animateCount(el, Number(raw));
+					});
+				}
+
+				// Observe when section scrolls into view
+				const io = new IntersectionObserver((entries) => {
+					if (entries[0].isIntersecting) {
+						io.disconnect();
+						triggerAnimation();
+					}
+				}, { threshold: 0.3 });
+				io.observe(section);
 
 				fetch('/api/platform/stats')
 					.then((r) => r.ok ? r.json() : Promise.reject(r.status))
 					.then((data) => {
-						vals.forEach((el) => {
-							const key = el.dataset.tractionVal;
-							const raw = data[key];
-							if (raw == null) return;
-							el.classList.remove('is-loading');
-							animateCount(el, Number(raw));
-						});
+						statsData = data;
+						// If section is already in view, trigger immediately
+						triggerAnimation();
 					})
 					.catch(() => {
-						// On failure, just hide the section rather than show broken state.
-						const section = document.querySelector('.h-traction');
-						if (section) section.hidden = true;
+						section.hidden = true;
 					});
 			})();
 		</script>

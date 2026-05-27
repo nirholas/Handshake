@@ -12,6 +12,7 @@ import { parse, presignUploadBody, slug as slugSchema, createAvatarBody } from '
 import { recordEvent } from '../_lib/usage.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
+import { dispatchWebhooks } from '../_lib/webhook-dispatch.js';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { isValidGlbHeader, inspectGlb } from '../_lib/glb-inspect.js';
@@ -456,6 +457,11 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 				set result_avatar_id = ${avatar.id}, updated_at = now()
 				where job_id = ${jobId} and user_id = ${userId}
 			`;
+			dispatchWebhooks({
+				userId,
+				eventType: 'avatar.created',
+				data: { id: avatar.id, name: avatar.name, slug: avatar.slug, source: 'reconstruct' },
+			}).catch(() => {});
 			job = { ...job, result_avatar_id: avatar.id };
 		} catch (err) {
 			job = { ...job, error: job.error || `materialize failed: ${err?.message}` };

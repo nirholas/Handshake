@@ -68,6 +68,7 @@ const HANDLERS = {
 	'expire-pending-purchases': handleExpirePendingPurchases,
 	'cleanup-csrf-tokens': handleCleanupCsrfTokens,
 	'process-withdrawals': handleProcessWithdrawals,
+	'monetization-payouts': handleProcessWithdrawals,
 	'run-x-scheduled-posts': handleRunXScheduledPosts,
 	'run-x-triggers': handleRunXTriggers,
 	'fetch-x-metrics': handleFetchXMetrics,
@@ -2542,8 +2543,9 @@ async function handleCleanupCsrfTokens(req, res) {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // siwx-gc — prune SIWX nonces (replay window) and expired payment grants.
-// Hourly. Nonce window of 10 min is well above the 5-min SIWX maxAge;
-// payments grace of 7 days avoids cutting off slow clients at the boundary.
+// Daily at 03:00 UTC. Nonce window of 10 min (600s) is well above the 5-min
+// SIWX maxAge; payments grace of 7 days avoids cutting off slow clients at
+// the boundary.
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function handleSiwxGc(req, res) {
@@ -2558,14 +2560,12 @@ async function handleSiwxGc(req, res) {
 
 	const { pruneOldNonces, pruneExpiredPayments } = await import('../_lib/siwx-storage.js');
 
-	const noncesDeleted = await pruneOldNonces(10 * 60);
-	const paymentsDeleted = await pruneExpiredPayments(7 * 24 * 3600);
+	const nonces_pruned = await pruneOldNonces(600);
+	const payments_pruned = await pruneExpiredPayments(7 * 24 * 3600);
 
 	return json(res, 200, {
-		ok: true,
-		noncesDeleted,
-		paymentsDeleted,
-		ranAt: new Date().toISOString(),
+		nonces_pruned,
+		payments_pruned,
 	});
 }
 

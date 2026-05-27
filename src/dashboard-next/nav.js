@@ -31,6 +31,7 @@ export const NAV = [
 	{ path: '/skills',                label: 'Skills',          icon: 'skills',    group: 'Distribute', tags: ['tool', 'pack', 'capability', 'install', 'browse', 'skill'], external: true },
 
 	// ── Monetize ────────────────────────────────────────────────────────
+	{ path: '/dashboard/three-token', label: '$THREE',          icon: 'three',     group: 'Monetize',   tags: ['token', 'utility', 'burn', 'revenue share', 'protocol', '$three', 'economy', 'holders'] },
 	{ path: '/dashboard/analytics',   label: 'Analytics',       icon: 'chart',     group: 'Monetize',   tags: ['revenue', 'charts', 'metrics', 'funnel', 'performance', 'views', 'engagement'] },
 	{ path: '/dashboard/monetize',    label: 'Monetize',        icon: 'coin',      group: 'Monetize',   tags: ['revenue', 'payments', 'subscriptions', 'withdrawals', 'earnings', 'plan', 'billing'] },
 	{ path: '/dashboard/tokens',      label: 'Tokens',          icon: 'token',     group: 'Monetize',   tags: ['pump.fun', 'launch', 'bonding curve', 'royalties', 'trade'] },
@@ -76,6 +77,7 @@ export const ICONS = {
 	community: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="2.5"/><circle cx="14" cy="7" r="2"/><path d="M2 16c.8-2.8 2.8-4.2 5-4.2s4.2 1.4 5 4.2"/><path d="M13.5 11.8c1.5 0 3 1.2 3.5 3.2"/></svg>',
 	play:      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M8 7.5v5l4.5-2.5z"/></svg>',
 	live:      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2"/><path d="M6 6a5.5 5.5 0 000 8"/><path d="M14 6a5.5 5.5 0 010 8"/><path d="M3.5 3.5a9 9 0 000 13"/><path d="M16.5 3.5a9 9 0 010 13"/></svg>',
+	three:     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.5"/><path d="M7.5 6.5h5L10 10h2.5a2.5 2.5 0 01 0 5H7.5"/></svg>',
 	chart:     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V7l4 3 3-6 4 4 3-3v12H3z"/><path d="M3 17h14"/></svg>',
 	skills:    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="M7 7h6M7 10h4M7 13h5"/></svg>',
 	devhub:    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="12" rx="2"/><path d="M6 7l-2 2.5L6 12M14 7l2 2.5L14 12M9 13l2-8"/></svg>',

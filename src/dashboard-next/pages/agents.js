@@ -64,6 +64,24 @@ function truncMid(s, head = 6, tail = 4) {
 				</div>
 				<button class="dn-btn primary" data-action="create-agent">+ New agent</button>
 			</div>
+
+			<div data-slot="filter-bar" class="dn-agents-filter-bar">
+				<div class="dn-agents-search-wrap">
+					<svg class="dn-agents-search-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M13 13l-3-3"/></svg>
+					<input type="text" class="dn-agents-search" placeholder="Filter agents..." data-action="filter-search" autocomplete="off" spellcheck="false" aria-label="Filter agents" />
+				</div>
+				<div class="dn-agents-sort-wrap">
+					<label style="font-size:12px;color:var(--nxt-ink-fade);white-space:nowrap">Sort by</label>
+					<select class="dn-agents-sort" data-action="sort-select" aria-label="Sort agents">
+						<option value="created-desc">Newest first</option>
+						<option value="created-asc">Oldest first</option>
+						<option value="name-asc">Name A-Z</option>
+						<option value="name-desc">Name Z-A</option>
+					</select>
+				</div>
+				<span class="dn-agents-count" data-slot="agents-count"></span>
+			</div>
+
 			<div data-slot="content" style="display:flex;flex-direction:column;gap:16px"></div>
 		`;
 
@@ -78,7 +96,72 @@ function truncMid(s, head = 6, tail = 4) {
 		const agents = agentsResp?.agents || [];
 		const avatars = avatarsResp?.avatars || [];
 
-		renderAgents(host, agents, avatars, main);
+		let currentFilter = '';
+		let currentSort = 'created-desc';
+
+		function getFilteredAgents() {
+			let filtered = agents;
+			if (currentFilter) {
+				const q = currentFilter.toLowerCase();
+				filtered = agents.filter((a) => {
+					const name = (a.name || a.display_name || '').toLowerCase();
+					const wallet = (a.wallet_address || a.solana_address || '').toLowerCase();
+					const tagline = (a.persona?.tagline || a.tagline || '').toLowerCase();
+					return name.includes(q) || wallet.includes(q) || tagline.includes(q);
+				});
+			}
+			filtered = [...filtered].sort((a, b) => {
+				switch (currentSort) {
+					case 'created-asc':
+						return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+					case 'name-asc':
+						return (a.name || '').localeCompare(b.name || '');
+					case 'name-desc':
+						return (b.name || '').localeCompare(a.name || '');
+					case 'created-desc':
+					default:
+						return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+				}
+			});
+			return filtered;
+		}
+
+		function rerender() {
+			const filtered = getFilteredAgents();
+			const countEl = main.querySelector('[data-slot="agents-count"]');
+			if (countEl) {
+				countEl.textContent = currentFilter
+					? `${filtered.length} of ${agents.length} agent${agents.length !== 1 ? 's' : ''}`
+					: `${agents.length} agent${agents.length !== 1 ? 's' : ''}`;
+			}
+			renderAgents(host, filtered, avatars, main);
+		}
+
+		rerender();
+
+		const searchInput = main.querySelector('[data-action="filter-search"]');
+		let searchTimeout = null;
+		searchInput.addEventListener('input', () => {
+			clearTimeout(searchTimeout);
+			searchTimeout = setTimeout(() => {
+				currentFilter = searchInput.value.trim();
+				rerender();
+			}, 150);
+		});
+		searchInput.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') {
+				searchInput.value = '';
+				currentFilter = '';
+				rerender();
+				searchInput.blur();
+			}
+		});
+
+		main.querySelector('[data-action="sort-select"]').addEventListener('change', (e) => {
+			currentSort = e.target.value;
+			rerender();
+		});
+
 		main.querySelector('[data-action="create-agent"]').addEventListener('click', () => {
 			openCreateModal(host, agents, avatars);
 		});
@@ -739,6 +822,72 @@ function injectStyles() {
 	const css = document.createElement('style');
 	css.id = 'dn-agents-css';
 	css.textContent = `
+		.dn-agents-filter-bar {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			margin-bottom: 14px;
+			flex-wrap: wrap;
+		}
+		.dn-agents-search-wrap {
+			position: relative;
+			flex: 1;
+			min-width: 180px;
+		}
+		.dn-agents-search-icon {
+			position: absolute;
+			left: 12px;
+			top: 50%;
+			transform: translateY(-50%);
+			color: var(--nxt-ink-fade);
+			pointer-events: none;
+		}
+		.dn-agents-search {
+			width: 100%;
+			padding: 9px 12px 9px 34px;
+			background: rgba(255,255,255,0.04);
+			border: 1px solid var(--nxt-stroke);
+			border-radius: 8px;
+			color: var(--nxt-ink);
+			font-size: 13px;
+			font-family: inherit;
+			outline: none;
+			transition: border-color 0.14s ease, background 0.14s ease;
+		}
+		.dn-agents-search::placeholder { color: var(--nxt-ink-fade); }
+		.dn-agents-search:focus {
+			border-color: var(--nxt-stroke-strong);
+			background: rgba(255,255,255,0.06);
+		}
+		.dn-agents-sort-wrap {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+		.dn-agents-sort {
+			background: rgba(255,255,255,0.04);
+			border: 1px solid var(--nxt-stroke);
+			border-radius: 8px;
+			color: var(--nxt-ink);
+			font-size: 12.5px;
+			font-family: inherit;
+			padding: 8px 10px;
+			cursor: pointer;
+			outline: none;
+			transition: border-color 0.14s ease;
+		}
+		.dn-agents-sort:focus { border-color: var(--nxt-stroke-strong); }
+		.dn-agents-sort option { background: #14151c; color: var(--nxt-ink); }
+		.dn-agents-count {
+			font-size: 12px;
+			color: var(--nxt-ink-fade);
+			white-space: nowrap;
+			font-variant-numeric: tabular-nums;
+		}
+		@media (max-width: 600px) {
+			.dn-agents-filter-bar { flex-direction: column; align-items: stretch; }
+			.dn-agents-sort-wrap { justify-content: space-between; }
+		}
 		.dn-agent-card {
 			display: grid;
 			grid-template-columns: auto 1fr;

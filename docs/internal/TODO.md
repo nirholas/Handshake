@@ -86,3 +86,9 @@ work or refactor for the sake of it.
   can confirm inbox delivery (and that it didn't go to spam — a known issue
   when sending from `onboarding@resend.dev` to a Gmail address with no SPF
   alignment on three.ws).
+
+---
+
+## Finish-features prompts (all completed)
+
+All 8 finish-features prompts (referral-code uniqueness, speech-provider errors, mesh compression, viewer light fix, pump-swap inner IX, Resend integration, server-side GLB render, WASM vanity grinder) have been completed. See prompts/finish-features/ for individual prompts.

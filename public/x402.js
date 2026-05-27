@@ -792,14 +792,18 @@ class CheckoutModal {
 			<button class="x402-pay-secondary" data-action="pay">Pay ${priceText} USDC instead</button>
 			<div class="x402-siwx-hint">Already paid for this once? Sign in to re-enter without paying again.</div>
 		`;
-		this.bodyEl.querySelector('[data-action="siwx"]').addEventListener('click', () => {
+		const siwxBtn = this.bodyEl.querySelector('[data-action="siwx"]');
+		const payBtn = this.bodyEl.querySelector('[data-action="pay"]');
+		siwxBtn.addEventListener('click', () => {
 			if (siwxTarget.kind === 'solana') this.runSiwxSolana(siwxTarget.chain);
 			else this.runSiwxEvm(siwxTarget.chain);
 		});
-		this.bodyEl.querySelector('[data-action="pay"]').addEventListener('click', () => {
+		payBtn.addEventListener('click', () => {
 			this.payFlowOverride = true;
 			this.renderConnect();
 		});
+		// Focus the primary SIWX button for keyboard accessibility.
+		requestAnimationFrame(() => siwxBtn.focus());
 	}
 
 	renderProgress(activeId, meta = {}) {
@@ -834,7 +838,7 @@ class CheckoutModal {
 			const addrShort = siwx.address ? `${siwx.address.slice(0, 8)}…${siwx.address.slice(-6)}` : '—';
 			receiptHtml = `
 				<div class="x402-receipt">
-					<div class="x402-receipt-title">Signed in</div>
+					<div class="x402-receipt-title">Welcome back!</div>
 					<div class="x402-receipt-row">
 						<span class="x402-k">network</span>
 						<span class="x402-v">${escapeHtml(networkLabel(siwx.network) || siwx.network || '—')}</span>
@@ -854,7 +858,7 @@ class CheckoutModal {
 			const txShort = payment?.transaction ? `${payment.transaction.slice(0, 8)}…${payment.transaction.slice(-6)}` : '—';
 			receiptHtml = `
 				<div class="x402-receipt">
-					<div class="x402-receipt-title">Paid</div>
+					<div class="x402-receipt-title">Payment confirmed!</div>
 					<div class="x402-receipt-row">
 						<span class="x402-k">network</span>
 						<span class="x402-v">${escapeHtml(networkLabel(payment?.network) || '—')}</span>

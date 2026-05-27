@@ -22,10 +22,12 @@
 //   to the avatar (appearance, GLB, etc.) automatically bust the cache.
 
 import { createHash } from 'node:crypto';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium-min';
 import { cors, error, json, wrap } from '../_lib/http.js';
+import { env } from '../_lib/env.js';
 import { getAvatar } from '../_lib/avatars.js';
 import { publicUrl, putObject, headObject } from '../_lib/r2.js';
-import { renderClip } from '../_lib/render-clip.js';
 import { PRESETS } from '../../src/pose-presets.js';
 
 export const maxDuration = 30;
@@ -168,7 +170,7 @@ export default wrap(async function handler(req, res) {
 	const key = cacheKey(avatar.id, paramFingerprint, format);
 
 	try {
-		const head = await headObject({ key });
+		const head = await headObject(key);
 		if (head) {
 			const cdnUrl = publicUrl(key);
 			res.statusCode = 302;

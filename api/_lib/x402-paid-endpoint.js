@@ -30,6 +30,8 @@
 
 import { cors, error } from './http.js';
 import { env } from './env.js';
+import { clientIp } from './rate-limit.js';
+import { logPaymentEvent } from './x402/audit-log.js';
 import { PAYMENT_EVENT_TOPIC as BSC_PAYMENT_EVENT_TOPIC } from './x402-bsc-direct.js';
 import {
 	BUILDER_CODE,
@@ -277,6 +279,7 @@ export function paidEndpoint(spec) {
 	const pidExtension = paymentIdentifierExtension(pidRequired);
 
 	return async function paidHandler(req, res) {
+		const requestStartTime = Date.now();
 		if (cors(req, res, { methods: allowMethods, origins: '*' })) return;
 		if (req.method !== method.toUpperCase()) {
 			res.setHeader('allow', method.toUpperCase());
@@ -476,6 +479,16 @@ export function paidEndpoint(spec) {
 				res.end(
 					typeof bypassResult === 'string' ? bypassResult : JSON.stringify(bypassResult),
 				);
+				logPaymentEvent({
+					eventType: 'bypass_granted',
+					route,
+					resourceUrl,
+					payer: result.principal.userId || result.principal.address || null,
+					durationMs: Date.now() - requestStartTime,
+					ipAddress: clientIp(req),
+					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+					metadata: { reason: `auth-hints:${result.principal.method}` },
+				});
 				return;
 			}
 		}
@@ -542,6 +555,16 @@ export function paidEndpoint(spec) {
 				res.end(
 					typeof bypassResult === 'string' ? bypassResult : JSON.stringify(bypassResult),
 				);
+				logPaymentEvent({
+					eventType: 'bypass_granted',
+					route,
+					resourceUrl,
+					payer: acResult.callerId || null,
+					durationMs: Date.now() - requestStartTime,
+					ipAddress: clientIp(req),
+					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+					metadata: { reason: acResult.reason || 'access_control' },
+				});
 				return;
 			}
 		}
@@ -580,6 +603,16 @@ export function paidEndpoint(spec) {
 				res.setHeader('cache-control', 'no-store');
 				res.setHeader('content-type', `${mimeType}; charset=utf-8`);
 				res.end(typeof result === 'string' ? result : JSON.stringify(result));
+				logPaymentEvent({
+					eventType: 'siwx_access',
+					route,
+					resourceUrl,
+					payer: auth.address,
+					network: auth.network || null,
+					durationMs: Date.now() - requestStartTime,
+					ipAddress: clientIp(req),
+					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+				});
 				return;
 			}
 			if (auth && !auth.ok) {
@@ -661,6 +694,20 @@ export function paidEndpoint(spec) {
 		try {
 			settled = await settlePayment({ verified });
 		} catch (err) {
+			logPaymentEvent({
+				eventType: 'payment_failed',
+				route,
+				resourceUrl,
+				payer: verified.payer || null,
+				network: verified.requirement?.network || null,
+				amountAtomics: verified.requirement?.amount || null,
+				asset: verified.requirement?.asset || null,
+				settlementStatus: 'failed',
+				durationMs: Date.now() - requestStartTime,
+				ipAddress: clientIp(req),
+				userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+				metadata: { error: err.message, code: err.code },
+			});
 			return error(res, err.status || 502, err.code || 'settle_failed', err.message);
 		}
 
@@ -675,6 +722,16 @@ export function paidEndpoint(spec) {
 					payer: normalizeAddress(verified.requirement.network, verified.payer),
 					network: verified.requirement.network,
 					ttlSeconds: siwx.ttlSeconds ?? null,
+				});
+				logPaymentEvent({
+					eventType: 'siwx_grant',
+					route,
+					resourceUrl,
+					payer: verified.payer,
+					network: verified.requirement.network,
+					ipAddress: clientIp(req),
+					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+					metadata: { ttlSeconds: siwx.ttlSeconds ?? null },
 				});
 			} catch (err) {
 				return error(res, 502, 'siwx_record_failed', err.message);

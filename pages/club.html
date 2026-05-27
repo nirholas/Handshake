@@ -618,6 +618,363 @@
 				padding: 12px 0;
 			}
 
+			/* ── Skip-to-content (a11y) ─────────────────────────── */
+			.club-skip-link {
+				position: absolute;
+				top: -100px;
+				left: 8px;
+				z-index: 9999;
+				padding: 8px 16px;
+				background: var(--accent);
+				color: #fff;
+				font-size: 13px;
+				font-weight: 700;
+				border-radius: 0 0 8px 8px;
+				text-decoration: none;
+				transition: top 0.15s ease;
+			}
+			.club-skip-link:focus {
+				top: 0;
+				outline: 2px solid #fff;
+				outline-offset: 2px;
+			}
+
+			/* ── Entrance fade ──────────────────────────────────── */
+			.club-entrance {
+				position: fixed;
+				inset: 0;
+				background: #000;
+				z-index: 9000;
+				pointer-events: none;
+				animation: clubEntranceFade 1.2s ease-out 0.3s forwards;
+			}
+			@keyframes clubEntranceFade {
+				0%   { opacity: 1; }
+				100% { opacity: 0; visibility: hidden; }
+			}
+
+			/* ── Neon club name ─────────────────────────────────── */
+			.club-neon-title {
+				text-align: center;
+				padding: 18px 0 6px;
+				font-size: 22px;
+				font-weight: 900;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: var(--accent);
+				text-shadow:
+					0 0 7px var(--accent),
+					0 0 20px rgba(255, 59, 214, 0.5),
+					0 0 42px rgba(255, 59, 214, 0.25);
+				user-select: none;
+				line-height: 1;
+			}
+			.club-neon-subtitle {
+				text-align: center;
+				font-size: 10px;
+				letter-spacing: 0.22em;
+				text-transform: uppercase;
+				color: var(--text-3);
+				padding-bottom: 8px;
+			}
+
+			/* ── Pole card redesign ────────────────────────────── */
+			.club-pole-card {
+				border: 1px solid var(--border);
+				background: rgba(255, 59, 214, 0.04);
+				border-radius: 10px;
+				padding: 10px 11px;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				transition: border-color 0.18s ease, box-shadow 0.18s ease;
+				cursor: pointer;
+				position: relative;
+			}
+			.club-pole-card:hover {
+				border-color: var(--border-strong);
+				box-shadow: 0 0 12px rgba(255, 59, 214, 0.12);
+			}
+			.club-pole-card:focus-within {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.club-pole-card.is-vip-active {
+				border-color: var(--accent);
+				box-shadow: 0 0 18px rgba(255, 59, 214, 0.22);
+			}
+			.club-dancer-name {
+				font-size: 13px;
+				font-weight: 700;
+				color: var(--text);
+				line-height: 1.2;
+			}
+			.club-dancer-bio {
+				font-size: 10.5px;
+				color: var(--text-3);
+				line-height: 1.35;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.club-pole-status {
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				font-size: 10px;
+				font-weight: 600;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+			}
+			.club-status-dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				flex-shrink: 0;
+			}
+			.club-status-dot.is-idle {
+				background: var(--text-3);
+			}
+			.club-status-dot.is-performing {
+				background: var(--ok);
+				box-shadow: 0 0 6px var(--ok);
+				animation: statusPulse 1.4s ease-in-out infinite;
+			}
+			@keyframes statusPulse {
+				0%, 100% { opacity: 1; transform: scale(1); }
+				50% { opacity: 0.6; transform: scale(0.75); }
+			}
+			.club-status-dot.is-backstage {
+				background: var(--warn);
+			}
+			.club-pole-progress {
+				width: 100%;
+				height: 3px;
+				border-radius: 3px;
+				background: rgba(255, 255, 255, 0.06);
+				overflow: hidden;
+				margin-top: 2px;
+			}
+			.club-pole-progress-bar {
+				height: 100%;
+				border-radius: 3px;
+				background: linear-gradient(90deg, var(--accent), var(--accent-2));
+				transition: width 0.3s linear;
+				will-change: width;
+			}
+			.club-pole-stats {
+				font-size: 10px;
+				color: var(--text-3);
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+			.club-tip-btn {
+				appearance: none;
+				border: none;
+				border-radius: 8px;
+				padding: 8px 10px;
+				font: inherit;
+				font-size: 12px;
+				font-weight: 700;
+				color: #fff;
+				cursor: pointer;
+				background: linear-gradient(135deg, var(--accent) 0%, #ff5fda 100%);
+				box-shadow:
+					0 4px 12px rgba(255, 59, 214, 0.32),
+					inset 0 1px 0 rgba(255, 255, 255, 0.2);
+				transition: transform 0.08s ease, filter 0.12s ease, box-shadow 0.18s ease;
+				position: relative;
+				overflow: hidden;
+			}
+			.club-tip-btn::after {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.15) 100%);
+				opacity: 0;
+				transition: opacity 0.18s ease;
+				pointer-events: none;
+			}
+			.club-tip-btn:hover::after { opacity: 1; }
+			.club-tip-btn:hover {
+				filter: brightness(1.08);
+				box-shadow:
+					0 6px 18px rgba(255, 59, 214, 0.4),
+					inset 0 1px 0 rgba(255, 255, 255, 0.2);
+			}
+			.club-tip-btn:active { transform: translateY(1px); }
+			.club-tip-btn:focus-visible {
+				outline: 2px solid var(--accent-2);
+				outline-offset: 2px;
+			}
+			.club-tip-btn.is-pending {
+				background: linear-gradient(135deg, #5a3a78 0%, #6b4d8c 100%);
+				box-shadow: none;
+				cursor: progress;
+			}
+			.club-tip-btn:disabled {
+				background: linear-gradient(135deg, #3a2a4e 0%, #4b3d5c 100%);
+				box-shadow: none;
+				cursor: not-allowed;
+				opacity: 0.7;
+			}
+
+			/* ── Leaderboard rank badges ──────────────────────── */
+			.club-lb-rank {
+				color: var(--text-3);
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 11px;
+				text-align: center;
+				width: 22px;
+				height: 22px;
+				line-height: 22px;
+				border-radius: 50%;
+			}
+			.club-lb-rank.is-gold {
+				background: linear-gradient(135deg, #ffd700, #ffaa00);
+				color: #1a0e00;
+				font-weight: 800;
+				box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+			}
+			.club-lb-rank.is-silver {
+				background: linear-gradient(135deg, #e0e0e0, #a8a8a8);
+				color: #1a1a1a;
+				font-weight: 800;
+				box-shadow: 0 0 6px rgba(200, 200, 200, 0.25);
+			}
+			.club-lb-rank.is-bronze {
+				background: linear-gradient(135deg, #cd7f32, #a0622e);
+				color: #1a0e00;
+				font-weight: 800;
+				box-shadow: 0 0 6px rgba(205, 127, 50, 0.25);
+			}
+			.club-lb-row {
+				display: grid;
+				grid-template-columns: 28px 1fr auto auto;
+				gap: 8px;
+				align-items: center;
+				font-size: 12px;
+				padding: 7px 8px;
+				border-radius: 7px;
+				background: rgba(255, 255, 255, 0.02);
+				transition: transform 0.2s ease, opacity 0.2s ease;
+			}
+			.club-lb-row.is-entering {
+				animation: lbRowEnter 0.35s ease forwards;
+			}
+			@keyframes lbRowEnter {
+				from { transform: translateX(-8px); opacity: 0; }
+				to   { transform: none; opacity: 1; }
+			}
+			.club-lb-skeleton {
+				height: 36px;
+				border-radius: 7px;
+				background: linear-gradient(90deg,
+					rgba(255, 255, 255, 0.03) 0%,
+					rgba(255, 255, 255, 0.06) 50%,
+					rgba(255, 255, 255, 0.03) 100%);
+				background-size: 200% 100%;
+				animation: lbSkeleton 1.5s ease-in-out infinite;
+			}
+			@keyframes lbSkeleton {
+				0% { background-position: 200% 0; }
+				100% { background-position: -200% 0; }
+			}
+
+			/* ── Tip feed enhancements ───────────────────────── */
+			.club-tip-row {
+				display: grid;
+				grid-template-columns: 54px 1fr auto;
+				gap: 6px;
+				align-items: center;
+				font-size: 11.5px;
+				padding: 6px 8px;
+				border-radius: 7px;
+				background: rgba(255, 255, 255, 0.02);
+				animation: tipSlideIn 0.4s cubic-bezier(0.22, 0.68, 0.35, 1.0);
+				will-change: transform, opacity;
+			}
+			@keyframes tipSlideIn {
+				from { transform: translateX(30px); opacity: 0; }
+				to   { transform: none; opacity: 1; }
+			}
+			.club-tip-row.is-fading {
+				animation: tipFadeOut 0.3s ease forwards;
+			}
+			@keyframes tipFadeOut {
+				from { opacity: 1; max-height: 40px; }
+				to   { opacity: 0; max-height: 0; padding: 0; margin: 0; overflow: hidden; }
+			}
+			.club-tip-time {
+				font-size: 10px;
+				color: var(--text-3);
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+			.club-tip-who {
+				color: var(--accent-2);
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 10.5px;
+			}
+			.club-tip-mid { color: var(--text); font-size: 11px; }
+
+			/* ── Status bar (bottom) ─────────────────────────── */
+			.club-status-bar {
+				position: fixed;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				height: 28px;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 0 14px;
+				background: rgba(7, 5, 11, 0.88);
+				border-top: 1px solid rgba(255, 80, 200, 0.1);
+				backdrop-filter: blur(8px);
+				-webkit-backdrop-filter: blur(8px);
+				font-size: 10.5px;
+				color: var(--text-3);
+				z-index: 8;
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+			.club-status-bar-left,
+			.club-status-bar-right {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+			}
+			.club-status-bar .club-conn-dot {
+				width: 5px;
+				height: 5px;
+				border-radius: 50%;
+				background: var(--ok);
+				box-shadow: 0 0 4px var(--ok);
+			}
+			.club-status-bar .club-conn-dot.is-disconnected {
+				background: var(--danger);
+				box-shadow: 0 0 4px var(--danger);
+			}
+
+			/* ── Focus indicators (a11y) ─────────────────────── */
+			.club-cam-btn:focus-visible,
+			.club-pole-select:focus-visible,
+			.club-lb-tab:focus-visible,
+			.club-react-btn:focus-visible,
+			#club-audio-toggle:focus-visible,
+			#club-free-cam:focus-visible,
+			#club-sheet-handle:focus-visible {
+				outline: 2px solid var(--accent-2);
+				outline-offset: 2px;
+			}
+
+			/* ── Spotlight flash for tipped pole ─────────────── */
+			.club-pole-card.is-flash {
+				animation: poleFlash 0.6s ease;
+			}
+			@keyframes poleFlash {
+				0%, 100% { box-shadow: none; }
+				50% { box-shadow: 0 0 24px rgba(255, 59, 214, 0.5), inset 0 0 12px rgba(255, 59, 214, 0.15); }
+			}
+
 			/* ── Responsive ─────────────────────────────────────── */
 			@media (max-width: 800px) {
 				#club-app {
@@ -626,6 +983,33 @@
 					grid-template-areas:
 						"top"
 						"stage";
+				}
+				/* Hide status bar on mobile — the sheet owns the bottom */
+				.club-status-bar {
+					display: none;
+				}
+				/* Neon title: smaller on mobile */
+				.club-neon-title {
+					font-size: 16px;
+					padding: 12px 0 4px;
+				}
+				.club-neon-subtitle {
+					font-size: 9px;
+					padding-bottom: 6px;
+				}
+				/* Pole cards: horizontal scroll strip */
+				#club-poles {
+					display: flex;
+					gap: 8px;
+					overflow-x: auto;
+					-webkit-overflow-scrolling: touch;
+					scroll-snap-type: x mandatory;
+					padding-bottom: 6px;
+				}
+				#club-poles::-webkit-scrollbar { display: none; }
+				.club-pole-card {
+					flex: 0 0 200px;
+					scroll-snap-align: start;
 				}
 				/* Bottom-sheet: the panel is fixed to the viewport bottom
 				   instead of stacking in the grid, so the canvas can fill
@@ -755,6 +1139,12 @@
 			<link rel="stylesheet" href="/mobile.css" />
 </head>
 	<body>
+		<!-- Skip-to-content link for keyboard/screen-reader users -->
+		<a href="#club-stage" class="club-skip-link" id="club-skip-link">Skip to stage</a>
+
+		<!-- Entrance overlay — fades out over 1s on load -->
+		<div id="club-entrance" class="club-entrance" aria-hidden="true"></div>
+
 		<div id="club-app">
 			<!-- TOP BAR -->
 			<header id="club-top">
@@ -798,7 +1188,7 @@
 			<div id="club-reaction-canvas" class="club-reaction-canvas" aria-hidden="true"></div>
 
 			<!-- RIGHT PANEL -->
-			<aside id="club-right">
+			<aside id="club-right" role="complementary" aria-label="Club controls and information">
 				<button
 					id="club-sheet-handle"
 					type="button"
@@ -806,8 +1196,12 @@
 					aria-controls="club-right"
 					aria-expanded="false"
 				></button>
-				<section class="club-section">
-					<h2>How it works</h2>
+
+				<div class="club-neon-title" aria-hidden="true">Pole Club</div>
+				<div class="club-neon-subtitle" aria-hidden="true">three.ws</div>
+
+				<section class="club-section" aria-label="How it works">
+					<h2 id="club-howto-heading">How it works</h2>
 					<p class="club-intro">
 						Four poles, four dancers backstage. Pick a pole, pick a style, hit
 						<b>Tip</b>. Your wallet signs a <b>$0.001 USDC</b> x402 payment, the
@@ -816,43 +1210,57 @@
 					</p>
 				</section>
 
-				<section class="club-section">
-					<h2>Poles</h2>
-					<div id="club-poles"></div>
+				<section class="club-section" aria-label="Pole stations">
+					<h2 id="club-poles-heading">Poles</h2>
+					<div id="club-poles" role="list" aria-labelledby="club-poles-heading"></div>
 					<label class="club-toggle" for="club-auto-follow">
-						<input type="checkbox" id="club-auto-follow" />
-						<span>Auto-follow tips (VIP cam during dance)</span>
+						<input type="checkbox" id="club-auto-follow" aria-describedby="club-auto-follow-desc" />
+						<span id="club-auto-follow-desc">Auto-follow tips (orbit cam during dance)</span>
 					</label>
 					<p class="club-hint">
-						Shortcuts: <b>1</b>–<b>4</b> VIP · <b>0</b> overhead · <b>Esc</b> free
+						Shortcuts: <b>1</b>-<b>4</b> VIP <b>0</b> overhead <b>Esc</b> free
 					</p>
 				</section>
 
-				<section class="club-section">
+				<section class="club-section" aria-label="Leaderboard">
 					<details class="club-lb-details" id="club-lb-details">
 						<summary>Leaderboard</summary>
-						<h2>Leaderboard</h2>
-						<div class="club-lb-tabs" role="tablist">
-							<button type="button" class="club-lb-tab is-active" data-window="day" role="tab">24h</button>
-							<button type="button" class="club-lb-tab" data-window="hour" role="tab">1h</button>
-							<button type="button" class="club-lb-tab" data-window="all" role="tab">All</button>
+						<h2 id="club-lb-heading">Leaderboard</h2>
+						<div class="club-lb-tabs" role="tablist" aria-label="Leaderboard time window">
+							<button type="button" class="club-lb-tab is-active" data-window="day" role="tab" aria-selected="true" aria-controls="club-lb-rows">24h</button>
+							<button type="button" class="club-lb-tab" data-window="hour" role="tab" aria-selected="false" aria-controls="club-lb-rows">1h</button>
+							<button type="button" class="club-lb-tab" data-window="all" role="tab" aria-selected="false" aria-controls="club-lb-rows">All</button>
 						</div>
-						<div id="club-lb-rows">
-							<div class="club-lb-empty">Loading…</div>
+						<div id="club-lb-rows" role="tabpanel" aria-labelledby="club-lb-heading">
+							<div class="club-lb-skeleton" aria-label="Loading leaderboard"></div>
+							<div class="club-lb-skeleton" style="opacity:0.7"></div>
+							<div class="club-lb-skeleton" style="opacity:0.4"></div>
 						</div>
 					</details>
 				</section>
 
-				<section class="club-section">
+				<section class="club-section" aria-label="Live tip feed">
 					<div class="club-feed-head">
-						<h2>Live tips</h2>
+						<h2 id="club-feed-heading">Live tips</h2>
 						<span id="club-feed-status" class="club-feed-status" hidden></span>
 					</div>
-					<div id="club-tip-feed">
-						<div class="club-feed-empty">No tips yet. Be the first.</div>
+					<div id="club-tip-feed" role="log" aria-live="polite" aria-labelledby="club-feed-heading">
+						<div class="club-feed-empty">No tips yet. Be the first to tip a dancer!</div>
 					</div>
 				</section>
 			</aside>
+
+			<!-- Status bar -->
+			<div class="club-status-bar" role="status" aria-label="Club status">
+				<div class="club-status-bar-left">
+					<span class="club-conn-dot" id="club-conn-dot" aria-hidden="true"></span>
+					<span id="club-conn-label">Connected</span>
+				</div>
+				<div class="club-status-bar-right">
+					<span id="club-clock"></span>
+					<span id="club-viewer-bar-count">1 watching</span>
+				</div>
+			</div>
 		</div>
 
 		<!-- x402 drop-in modal (Phantom/MetaMask wallet flow + 402 retry) -->

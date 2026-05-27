@@ -21,6 +21,7 @@ import { recordEvent } from '../_lib/usage.js';
 import { z } from 'zod';
 import { avatarVisibility, avatarAppearance, parse } from '../_lib/validate.js';
 import { DEMO_AVATARS } from '../_lib/demo-avatars.js';
+import { dispatchWebhooks } from '../_lib/webhook-dispatch.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -186,6 +187,12 @@ export default wrap(async (req, res) => {
 			}
 		}
 
+		dispatchWebhooks({
+			userId: auth.userId,
+			eventType: appearanceChanged ? 'avatar.appearance.changed' : 'avatar.updated',
+			data: { id: avatar.id, name: avatar.name, slug: avatar.slug, updated_at: avatar.updated_at },
+		}).catch(() => {});
+
 		return json(res, 200, { avatar });
 	}
 
@@ -202,6 +209,11 @@ export default wrap(async (req, res) => {
 		resourceId: id,
 		meta: { via: auth.source },
 	});
+	dispatchWebhooks({
+		userId: auth.userId,
+		eventType: 'avatar.deleted',
+		data: { id },
+	}).catch(() => {});
 	return json(res, 200, { ok: true });
 });
 

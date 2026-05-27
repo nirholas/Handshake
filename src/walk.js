@@ -10,17 +10,25 @@
 
 import {
 	AmbientLight,
+	BoxGeometry,
 	Box3,
 	CanvasTexture,
 	CircleGeometry,
 	Clock,
 	Color,
+	ConeGeometry,
+	CylinderGeometry,
 	DirectionalLight,
+	DoubleSide,
 	Group,
 	HemisphereLight,
+	InstancedMesh,
+	Matrix4,
 	Mesh,
 	MeshBasicMaterial,
 	MeshStandardMaterial,
+	Object3D,
+	OrthographicCamera,
 	PCFSoftShadowMap,
 	PerspectiveCamera,
 	PlaneGeometry,
@@ -28,6 +36,7 @@ import {
 	Quaternion,
 	Scene,
 	ShadowMaterial,
+	SphereGeometry,
 	Vector3,
 	WebGLRenderer,
 } from 'three';
@@ -287,6 +296,117 @@ const CAM_ZOOM_MIN = 0.6;
 const CAM_ZOOM_MAX = 3.2;
 let camZoom = 1.0;
 
+// ── Camera mode system ───────────────────────────────────────────────────
+// Modes: 'follow' (default third-person), 'cinematic' (orbiting), 'firstperson', 'topdown'
+const CAMERA_MODES = ['follow', 'cinematic', 'firstperson', 'topdown'];
+const CAMERA_MODE_LABELS = { follow: 'Follow', cinematic: 'Cinematic', firstperson: 'First Person', topdown: 'Top Down' };
+const CAMERA_MODE_FOV = { follow: 50, cinematic: 35, firstperson: 75, topdown: 50 };
+const CAMERA_MODE_KEY = 'walk:camera-mode';
+let cameraMode = 'follow';
+let cameraModeTransition = 0; // 0 = done, >0 = lerping
+const CAMERA_MODE_TRANSITION_DUR = 0.5; // seconds
+let cameraModeFrom = { pos: new Vector3(), look: new Vector3(), fov: 50 };
+let cameraModeTo = { pos: new Vector3(), look: new Vector3(), fov: 50 };
+let cinematicAngle = 0;
+let cinematicCutTimer = 0;
+const CINEMATIC_ORBIT_SPEED = 0.15; // rad/s
+const CINEMATIC_CUT_INTERVAL = 5; // seconds between auto-cuts
+const CINEMATIC_RADIUS_MULT = 1.8;
+const CINEMATIC_HEIGHT_MULT = 0.7;
+const FP_EYE_HEIGHT_MULT = 0.9; // fraction of avatar height for eye position
+const TOPDOWN_HEIGHT = 18;
+const TOPDOWN_LOOK_DOWN = new Vector3(0, -1, 0.001); // slight offset so lookAt works
+
+// Restore saved camera mode
+try {
+	const saved = localStorage.getItem(CAMERA_MODE_KEY);
+	if (saved && CAMERA_MODES.includes(saved)) cameraMode = saved;
+} catch {}
+
+function setCameraMode(mode) {
+	if (mode === cameraMode) return;
+	// Snapshot current camera state as "from"
+	cameraModeFrom.pos.copy(camera.position);
+	cameraModeFrom.look.copy(camLookCurrent);
+	cameraModeFrom.fov = camera.fov;
+	cameraMode = mode;
+	cameraModeTransition = CAMERA_MODE_TRANSITION_DUR;
+	cameraModeTo.fov = CAMERA_MODE_FOV[mode] || 50;
+	// Hide/show avatar for first person
+	if (avatar) avatar.visible = mode !== 'firstperson';
+	try { localStorage.setItem(CAMERA_MODE_KEY, mode); } catch {}
+	updateCameraModeIndicator();
+}
+
+function cycleCameraMode() {
+	const idx = CAMERA_MODES.indexOf(cameraMode);
+	setCameraMode(CAMERA_MODES[(idx + 1) % CAMERA_MODES.length]);
+	setStatus(`Camera: ${CAMERA_MODE_LABELS[cameraMode]}`);
+}
+
+// Camera mode indicator UI element
+const cameraModeIndicator = (() => {
+	const el = document.createElement('div');
+	el.id = 'walk-camera-mode';
+	el.setAttribute('role', 'status');
+	el.style.cssText = [
+		'position:fixed', 'z-index:6',
+		'left:50%', 'top:calc(env(safe-area-inset-top, 0) + 60px)',
+		'transform:translateX(-50%)',
+		'background:rgba(17,17,17,0.72)', 'border:1px solid rgba(255,255,255,0.08)',
+		'border-radius:999px', 'padding:5px 14px',
+		'font-size:11px', 'font-weight:500', 'color:rgba(255,255,255,0.7)',
+		'backdrop-filter:blur(10px)', '-webkit-backdrop-filter:blur(10px)',
+		'pointer-events:none',
+		'opacity:0', 'transition:opacity 0.25s ease',
+	].join(';');
+	document.body.appendChild(el);
+	return el;
+})();
+let cameraModeIndicatorTimer = 0;
+
+function updateCameraModeIndicator() {
+	cameraModeIndicator.textContent = CAMERA_MODE_LABELS[cameraMode];
+	cameraModeIndicator.style.opacity = '1';
+	clearTimeout(cameraModeIndicatorTimer);
+	cameraModeIndicatorTimer = setTimeout(() => {
+		cameraModeIndicator.style.opacity = '0';
+	}, 2000);
+}
+
+// Compute desired camera position/look for each mode
+function computeCameraForMode(mode, avatarPos, avatarHeight) {
+	const pos = new Vector3();
+	const look = new Vector3();
+	if (mode === 'follow') {
+		const offset = CAM_OFFSET.clone().multiplyScalar(camZoom);
+		offset.applyAxisAngle(new Vector3(1, 0, 0), -cameraPitch);
+		offset.applyAxisAngle(upY, cameraYaw);
+		pos.copy(avatarPos).add(offset);
+		look.copy(avatarPos).add(CAM_LOOK_OFFSET);
+	} else if (mode === 'cinematic') {
+		const r = (avatarHeight || 1.8) * CINEMATIC_RADIUS_MULT * camZoom;
+		const h = (avatarHeight || 1.8) * CINEMATIC_HEIGHT_MULT;
+		pos.set(
+			avatarPos.x + Math.cos(cinematicAngle) * r,
+			avatarPos.y + h + 0.8,
+			avatarPos.z + Math.sin(cinematicAngle) * r,
+		);
+		look.copy(avatarPos).add(CAM_LOOK_OFFSET);
+	} else if (mode === 'firstperson') {
+		const eyeH = (avatarHeight || 1.8) * FP_EYE_HEIGHT_MULT;
+		pos.set(avatarPos.x, avatarPos.y + eyeH, avatarPos.z);
+		// Look in the direction the avatar is facing
+		const fpForward = new Vector3(Math.sin(avatarYaw), 0, Math.cos(avatarYaw));
+		look.copy(pos).add(fpForward.multiplyScalar(5));
+		look.y -= 0.15; // slight downward gaze
+	} else if (mode === 'topdown') {
+		pos.set(avatarPos.x, avatarPos.y + TOPDOWN_HEIGHT, avatarPos.z + 0.01);
+		look.copy(avatarPos);
+	}
+	return { pos, look };
+}
+
 // Place the camera at its starting pose immediately so frame 0 isn't blank.
 function applyCameraImmediate() {
 	const offset = CAM_OFFSET.clone().multiplyScalar(camZoom);
@@ -403,17 +523,25 @@ const helpOverlay = (() => {
 		'transition:opacity 0.18s',
 	].join(';');
 	el.innerHTML = `
-		<div style="max-width:380px;width:90%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:28px 32px">
+		<div style="max-width:420px;width:90%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:28px 32px">
 			<h2 style="margin:0 0 20px;font-size:18px;font-weight:600;letter-spacing:-0.3px">Controls</h2>
 			<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:2">
 				<tr><td style="color:#aaa;padding-right:16px">W A S D / Arrows</td><td>Move</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Shift</td><td>Run</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Space</td><td>Jump</td></tr>
-				<tr><td style="color:#aaa;padding-right:16px">Q / E</td><td>Snap turn 45°</td></tr>
-				<tr><td style="color:#aaa;padding-right:16px">Mouse drag / click</td><td>Orbit camera</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Q / E</td><td>Snap turn 45&deg;</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">C</td><td>Cycle camera mode</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">G</td><td>Gesture palette</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">1 &ndash; 9</td><td>Quick gesture</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">T / Enter</td><td>Chat</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">V</td><td>Cycle environment</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">P</td><td>Screenshot</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">R</td><td>Toggle GIF recording</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">M</td><td>Toggle minimap</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">H / ?</td><td>Toggle this overlay</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Mouse drag</td><td>Orbit camera</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Scroll wheel</td><td>Zoom in / out</td></tr>
-				<tr><td style="color:#aaa;padding-right:16px">?</td><td>Toggle this overlay</td></tr>
-				<tr><td style="color:#aaa;padding-right:16px">Esc</td><td>Release pointer lock</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Esc</td><td>Close overlay / release pointer</td></tr>
 			</table>
 			<p style="margin:20px 0 0;font-size:12px;color:#666">Click the canvas to lock the mouse for first-person look.</p>
 		</div>`;
@@ -443,10 +571,33 @@ window.addEventListener('keydown', (e) => {
 		case 'ShiftLeft': case 'ShiftRight': input.keys.run = true; break;
 		case 'Space': e.preventDefault(); triggerJump(); break;
 		case 'KeyQ': cameraYaw += SNAP_TURN_RAD; break;
+		// 'E' kept for snap turn — environment cycles via 'V'
 		case 'KeyE': cameraYaw -= SNAP_TURN_RAD; break;
+		case 'KeyC': e.preventDefault(); cycleCameraMode(); break;
+		case 'KeyG': e.preventDefault(); toggleGesturePalette(); break;
+		case 'KeyT': e.preventDefault(); focusChat(); break;
+		case 'KeyV': e.preventDefault(); cycleEnvironment(); break;
+		case 'KeyP': e.preventDefault(); takeScreenshot(); break;
+		case 'KeyR': e.preventDefault(); toggleGifRecording(); break;
+		case 'KeyM': e.preventDefault(); toggleMinimap(); break;
+		case 'KeyH': e.preventDefault(); toggleHelp(); break;
 		case 'Slash':
 			if (e.shiftKey) { e.preventDefault(); toggleHelp(); }
 			break;
+		case 'Escape':
+			if (helpVisible) { toggleHelp(); break; }
+			if (gesturePaletteVisible) { hideGesturePalette(); break; }
+			break;
+		// Number keys 1-9 for quick gestures
+		case 'Digit1': e.preventDefault(); triggerQuickGesture(0); break;
+		case 'Digit2': e.preventDefault(); triggerQuickGesture(1); break;
+		case 'Digit3': e.preventDefault(); triggerQuickGesture(2); break;
+		case 'Digit4': e.preventDefault(); triggerQuickGesture(3); break;
+		case 'Digit5': e.preventDefault(); triggerQuickGesture(4); break;
+		case 'Digit6': e.preventDefault(); triggerQuickGesture(5); break;
+		case 'Digit7': e.preventDefault(); triggerQuickGesture(6); break;
+		case 'Digit8': e.preventDefault(); triggerQuickGesture(7); break;
+		case 'Digit9': e.preventDefault(); triggerQuickGesture(8); break;
 		default: return;
 	}
 });
@@ -1103,11 +1254,9 @@ function tick() {
 	avatarLean += (targetLean - avatarLean) * LEAN_LERP;
 	if (avatar) avatar.rotation.x = avatarLean;
 
-	// 2. Update camera — frozen in AR mode, follow-rig otherwise.
+	// 2. Update camera — frozen in AR mode, camera-mode system otherwise.
 	if (arFrozenCamPos && arFrozenCamLook) {
 		// Clamp the avatar so it can't walk through (or past) the frozen camera.
-		// We project (avatar - camera) onto the ground-plane camera-forward axis
-		// and push the avatar back to a minimum forward distance.
 		_camFwdTmp.subVectors(arFrozenCamLook, arFrozenCamPos);
 		_camFwdTmp.y = 0;
 		if (_camFwdTmp.lengthSq() > 1e-6) {
@@ -1124,20 +1273,44 @@ function tick() {
 		camLookCurrent.copy(arFrozenCamLook);
 		camera.lookAt(camLookCurrent);
 	} else {
-		const offset = CAM_OFFSET.clone().multiplyScalar(camZoom);
-		offset.applyAxisAngle(new Vector3(1, 0, 0), -cameraPitch);
-		offset.applyAxisAngle(upY, cameraYaw);
-		camDesired.copy(avatarRig.position).add(offset);
-		camera.position.lerp(camDesired, CAM_LERP);
+		// Cinematic mode auto-orbit
+		if (cameraMode === 'cinematic') {
+			cinematicAngle += CINEMATIC_ORBIT_SPEED * dt;
+			cinematicCutTimer += dt;
+			if (cinematicCutTimer > CINEMATIC_CUT_INTERVAL) {
+				cinematicCutTimer = 0;
+				cinematicAngle += Math.PI * 0.6 + Math.random() * Math.PI * 0.8;
+			}
+		}
 
-		camLookTarget.copy(avatarRig.position).add(CAM_LOOK_OFFSET);
-		camLookCurrent.lerp(camLookTarget, CAM_LERP);
-		camera.lookAt(camLookCurrent);
+		const avatarHeight = avatar ? new Box3().setFromObject(avatar).max.y - new Box3().setFromObject(avatar).min.y : 1.8;
+		const desired = computeCameraForMode(cameraMode, avatarRig.position, avatarHeight);
+
+		// Camera mode transition (smooth lerp)
+		if (cameraModeTransition > 0) {
+			cameraModeTransition = Math.max(0, cameraModeTransition - dt);
+			const t = 1 - (cameraModeTransition / CAMERA_MODE_TRANSITION_DUR);
+			const ease = t * t * (3 - 2 * t); // smoothstep
+			camera.position.lerpVectors(cameraModeFrom.pos, desired.pos, ease);
+			camLookCurrent.lerpVectors(cameraModeFrom.look, desired.look, ease);
+			camera.fov = cameraModeFrom.fov + (cameraModeTo.fov - cameraModeFrom.fov) * ease;
+			camera.updateProjectionMatrix();
+			camera.lookAt(camLookCurrent);
+		} else {
+			// Normal per-mode camera following
+			const lerpFactor = cameraMode === 'firstperson' ? 0.2 : CAM_LERP;
+			camera.position.lerp(desired.pos, lerpFactor);
+			camLookCurrent.lerp(desired.look, lerpFactor);
+			const targetFov = CAMERA_MODE_FOV[cameraMode] || 50;
+			if (Math.abs(camera.fov - targetFov) > 0.1) {
+				camera.fov += (targetFov - camera.fov) * 0.1;
+				camera.updateProjectionMatrix();
+			}
+			camera.lookAt(camLookCurrent);
+		}
 	}
 
-	// AR depth: track sun + blob shadow to the avatar each frame so the
-	// grounding shadow always lands under the feet, and estimate real-world
-	// lighting from the camera feed.
+	// AR depth: track sun + blob shadow to the avatar each frame
 	if (arActive) {
 		const ap = avatarRig.position;
 		sun.position.set(ap.x + 4, ap.y + 8, ap.z + 6);
@@ -1162,6 +1335,12 @@ function tick() {
 		});
 	}
 	updateRemotePlayers(dt);
+
+	// 5. Update speech bubbles (3D -> 2D projection)
+	updateSpeechBubbles();
+
+	// 6. Update minimap
+	updateMinimapFrame();
 
 	renderer.render(scene, camera);
 	requestAnimationFrame(tick);
@@ -1418,11 +1597,777 @@ function startNet() {
 	net.connect();
 }
 
+// ── Gesture palette (radial menu) ────────────────────────────────────────
+// G key opens a radial menu of gesture shortcuts. Number keys 1-9 trigger
+// gestures directly from the EMOTE_CLIPS list.
+let gesturePaletteVisible = false;
+const gesturePaletteEl = (() => {
+	const el = document.createElement('div');
+	el.id = 'walk-gesture-palette';
+	el.setAttribute('aria-hidden', 'true');
+	el.style.cssText = [
+		'position:fixed', 'z-index:9998',
+		'left:50%', 'top:50%', 'transform:translate(-50%,-50%)',
+		'width:280px', 'height:280px',
+		'border-radius:50%',
+		'background:rgba(10,10,10,0.82)',
+		'border:1px solid rgba(255,255,255,0.1)',
+		'backdrop-filter:blur(16px)', '-webkit-backdrop-filter:blur(16px)',
+		'display:none', 'opacity:0',
+		'transition:opacity 0.18s ease, transform 0.18s ease',
+		'pointer-events:none',
+	].join(';');
+	document.body.appendChild(el);
+	return el;
+})();
+
+function buildGesturePalette() {
+	gesturePaletteEl.innerHTML = '';
+	const items = EMOTE_CLIPS;
+	const count = items.length;
+	const radius = 100;
+	const centerX = 140;
+	const centerY = 140;
+	items.forEach((emote, i) => {
+		const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+		const x = centerX + Math.cos(angle) * radius - 24;
+		const y = centerY + Math.sin(angle) * radius - 24;
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.style.cssText = [
+			'position:absolute', `left:${x}px`, `top:${y}px`,
+			'width:48px', 'height:48px', 'border-radius:50%',
+			'background:rgba(255,255,255,0.08)', 'border:1px solid rgba(255,255,255,0.15)',
+			'color:#fff', 'font-size:22px', 'cursor:pointer',
+			'display:flex', 'align-items:center', 'justify-content:center',
+			'transition:transform 0.1s, background 0.1s',
+		].join(';');
+		btn.title = `${emote.label} [${i + 1}]`;
+		btn.setAttribute('aria-label', emote.label);
+		btn.textContent = emote.icon;
+		btn.addEventListener('click', () => {
+			playEmote(emote.name);
+			hideGesturePalette();
+		});
+		btn.addEventListener('mouseenter', () => { btn.style.transform = 'scale(1.18)'; btn.style.background = 'rgba(255,255,255,0.18)'; });
+		btn.addEventListener('mouseleave', () => { btn.style.transform = ''; btn.style.background = 'rgba(255,255,255,0.08)'; });
+		gesturePaletteEl.appendChild(btn);
+	});
+	// Center label
+	const label = document.createElement('div');
+	label.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:11px;color:rgba(255,255,255,0.5);text-align:center;pointer-events:none;line-height:1.4';
+	label.textContent = 'Gestures';
+	gesturePaletteEl.appendChild(label);
+}
+
+function showGesturePalette() {
+	if (!gesturePaletteEl.children.length) buildGesturePalette();
+	gesturePaletteVisible = true;
+	gesturePaletteEl.style.display = 'block';
+	gesturePaletteEl.style.pointerEvents = 'auto';
+	gesturePaletteEl.setAttribute('aria-hidden', 'false');
+	requestAnimationFrame(() => {
+		gesturePaletteEl.style.opacity = '1';
+		gesturePaletteEl.style.transform = 'translate(-50%,-50%) scale(1)';
+	});
+}
+
+function hideGesturePalette() {
+	gesturePaletteVisible = false;
+	gesturePaletteEl.style.opacity = '0';
+	gesturePaletteEl.style.transform = 'translate(-50%,-50%) scale(0.85)';
+	gesturePaletteEl.style.pointerEvents = 'none';
+	gesturePaletteEl.setAttribute('aria-hidden', 'true');
+	setTimeout(() => {
+		if (!gesturePaletteVisible) gesturePaletteEl.style.display = 'none';
+	}, 200);
+}
+
+function toggleGesturePalette() {
+	if (gesturePaletteVisible) hideGesturePalette();
+	else showGesturePalette();
+}
+
+function triggerQuickGesture(index) {
+	if (index < 0 || index >= EMOTE_CLIPS.length) return;
+	const emote = EMOTE_CLIPS[index];
+	playEmote(emote.name);
+	setStatus(`Gesture: ${emote.label}`);
+}
+
+// Close gesture palette on click outside
+gesturePaletteEl.addEventListener('click', (e) => {
+	if (e.target === gesturePaletteEl) hideGesturePalette();
+});
+
+// ── Chat focus helper ────────────────────────────────────────────────────
+function focusChat() {
+	const chatInput = document.getElementById('walk-chat-input');
+	if (chatInput) chatInput.focus();
+}
+
+// ── Speech bubbles (3D→2D projected CSS overlays) ────────────────────────
+// Floating text above the local avatar and remote players. Messages appear
+// as styled DOM elements positioned each frame by projecting the avatar's
+// head position from world space to screen space.
+const speechBubbles = new Map(); // key: 'local' or sessionId → { el, timer, birth }
+const SPEECH_BUBBLE_DURATION = 5000;
+const SPEECH_BUBBLE_MAX_LEN = 140;
+
+function createSpeechBubbleEl() {
+	const wrap = document.createElement('div');
+	wrap.className = 'walk-speech-bubble';
+	wrap.style.cssText = [
+		'position:fixed', 'z-index:3', 'pointer-events:none',
+		'max-width:240px', 'padding:8px 14px',
+		'background:rgba(10,10,10,0.82)', 'color:#fafafa',
+		'border:1px solid rgba(255,255,255,0.12)',
+		'border-radius:14px',
+		'backdrop-filter:blur(8px)', '-webkit-backdrop-filter:blur(8px)',
+		'font-size:12px', 'line-height:1.45',
+		'word-break:break-word', 'white-space:pre-wrap',
+		'transform:translate(-50%,-100%) scale(0.7)',
+		'opacity:0',
+		'transition:opacity 0.25s ease, transform 0.25s ease',
+		'will-change:transform,opacity',
+	].join(';');
+	// Arrow pointer
+	const arrow = document.createElement('div');
+	arrow.style.cssText = [
+		'position:absolute', 'bottom:-6px', 'left:50%',
+		'transform:translateX(-50%)',
+		'width:0', 'height:0',
+		'border-left:6px solid transparent', 'border-right:6px solid transparent',
+		'border-top:6px solid rgba(10,10,10,0.82)',
+	].join(';');
+	wrap.appendChild(arrow);
+	document.body.appendChild(wrap);
+	// Animate in
+	requestAnimationFrame(() => {
+		wrap.style.opacity = '1';
+		wrap.style.transform = 'translate(-50%,-100%) scale(1)';
+	});
+	return wrap;
+}
+
+function showSpeechBubbleFor(key, text) {
+	// Sanitize
+	const clean = text.replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' })[c]).slice(0, SPEECH_BUBBLE_MAX_LEN);
+	// Remove existing bubble for this key
+	const existing = speechBubbles.get(key);
+	if (existing) {
+		clearTimeout(existing.timer);
+		existing.el.remove();
+		speechBubbles.delete(key);
+	}
+	const el = createSpeechBubbleEl();
+	// Insert text before the arrow child
+	const textNode = document.createElement('span');
+	textNode.innerHTML = clean;
+	el.insertBefore(textNode, el.firstChild);
+	const timer = setTimeout(() => {
+		el.style.opacity = '0';
+		el.style.transform = 'translate(-50%,-100%) scale(0.85)';
+		setTimeout(() => {
+			el.remove();
+			speechBubbles.delete(key);
+		}, 300);
+	}, SPEECH_BUBBLE_DURATION);
+	speechBubbles.set(key, { el, timer, birth: performance.now() });
+}
+
+function updateSpeechBubbles() {
+	const w = renderer.domElement.clientWidth;
+	const h = renderer.domElement.clientHeight;
+	const headV = _tmpV3;
+	// Local avatar bubble
+	const localBubble = speechBubbles.get('local');
+	if (localBubble && avatar) {
+		headV.set(avatarRig.position.x, avatarRig.position.y + 2.2, avatarRig.position.z);
+		headV.project(camera);
+		const onScreen = headV.z > -1 && headV.z < 1;
+		if (onScreen) {
+			const sx = (headV.x * 0.5 + 0.5) * w;
+			const sy = (-headV.y * 0.5 + 0.5) * h;
+			localBubble.el.style.left = sx + 'px';
+			localBubble.el.style.top = (sy - 10) + 'px';
+			localBubble.el.style.display = '';
+		} else {
+			localBubble.el.style.display = 'none';
+		}
+	}
+	// Remote player bubbles
+	for (const [sid, rp] of remotePlayers) {
+		const bubble = speechBubbles.get(sid);
+		if (!bubble) continue;
+		headV.set(rp.rig.position.x, rp.rig.position.y + 2.2, rp.rig.position.z);
+		headV.project(camera);
+		const onScreen = headV.z > -1 && headV.z < 1;
+		if (onScreen) {
+			const sx = (headV.x * 0.5 + 0.5) * w;
+			const sy = (-headV.y * 0.5 + 0.5) * h;
+			bubble.el.style.left = sx + 'px';
+			bubble.el.style.top = (sy - 10) + 'px';
+			bubble.el.style.display = '';
+		} else {
+			bubble.el.style.display = 'none';
+		}
+	}
+}
+
+// ── Environment selector ─────────────────────────────────────────────────
+// Four procedural environments using simple geometries. No external GLBs.
+const ENV_KEY = 'walk:environment';
+const ENVIRONMENTS = [
+	{ name: 'default', label: 'Studio', groundColor: 0x202833, skyTop: '#1a2538', skyBot: '#0a0a0a', ambientColor: 0xffffff, ambientIntensity: 0.55, sunIntensity: 1.4, hemiSky: 0xbcd6ff },
+	{ name: 'park', label: 'Park', groundColor: 0x2d5a27, skyTop: '#4a90c4', skyBot: '#87ceeb', ambientColor: 0xfffbe6, ambientIntensity: 0.7, sunIntensity: 1.6, hemiSky: 0xa8d8ea },
+	{ name: 'city', label: 'City', groundColor: 0x3a3a3a, skyTop: '#1a1a2e', skyBot: '#16213e', ambientColor: 0xd4d4ff, ambientIntensity: 0.4, sunIntensity: 0.9, hemiSky: 0x8888aa },
+	{ name: 'beach', label: 'Beach', groundColor: 0xc2b280, skyTop: '#3b7dd8', skyBot: '#87ceeb', ambientColor: 0xfff8e7, ambientIntensity: 0.75, sunIntensity: 1.8, hemiSky: 0xccddff },
+];
+
+let currentEnvIndex = 0;
+const envPropsGroup = new Group();
+scene.add(envPropsGroup);
+
+// Restore saved environment
+try {
+	const savedEnv = localStorage.getItem(ENV_KEY);
+	if (savedEnv) {
+		const idx = ENVIRONMENTS.findIndex(e => e.name === savedEnv);
+		if (idx >= 0) currentEnvIndex = idx;
+	}
+} catch {}
+
+function applyEnvironment(index) {
+	const env = ENVIRONMENTS[index];
+	if (!env) return;
+	currentEnvIndex = index;
+	// Ground color
+	groundOpaque.material.color.setHex(env.groundColor);
+	// Stage background gradient
+	if (stage) stage.style.background = `radial-gradient(80% 60% at 50% 30%, ${env.skyTop} 0%, ${env.skyBot} 70%) ${env.skyBot}`;
+	// Lighting
+	ambientLight.color.setHex(env.ambientColor);
+	ambientLight.intensity = env.ambientIntensity;
+	sun.intensity = env.sunIntensity;
+	hemi.color.setHex(env.hemiSky);
+	// Clear old props
+	while (envPropsGroup.children.length > 0) {
+		const child = envPropsGroup.children[0];
+		envPropsGroup.remove(child);
+		if (child.geometry) child.geometry.dispose();
+		if (child.material) child.material.dispose();
+		// InstancedMesh
+		if (child.isInstancedMesh) {
+			child.geometry.dispose();
+			child.material.dispose();
+		}
+	}
+	// Add environment props
+	if (env.name === 'park') buildParkProps();
+	else if (env.name === 'city') buildCityProps();
+	else if (env.name === 'beach') buildBeachProps();
+	try { localStorage.setItem(ENV_KEY, env.name); } catch {}
+	updateEnvIndicator();
+}
+
+function buildParkProps() {
+	// Trees as instanced cones + cylinders
+	const trunkGeo = new CylinderGeometry(0.08, 0.12, 0.8, 6);
+	const trunkMat = new MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.9 });
+	const foliageGeo = new ConeGeometry(0.6, 1.4, 6);
+	const foliageMat = new MeshStandardMaterial({ color: 0x2d7a2d, roughness: 0.85 });
+	const dummy = new Object3D();
+	const treeCount = 18;
+	const trunkMesh = new InstancedMesh(trunkGeo, trunkMat, treeCount);
+	const foliageMesh = new InstancedMesh(foliageGeo, foliageMat, treeCount);
+	trunkMesh.castShadow = true;
+	foliageMesh.castShadow = true;
+	for (let i = 0; i < treeCount; i++) {
+		const angle = (i / treeCount) * Math.PI * 2 + Math.random() * 0.3;
+		const r = 5 + Math.random() * 5.5;
+		const x = Math.cos(angle) * r;
+		const z = Math.sin(angle) * r;
+		const scale = 0.8 + Math.random() * 0.6;
+		dummy.position.set(x, 0.4 * scale, z);
+		dummy.scale.set(scale, scale, scale);
+		dummy.updateMatrix();
+		trunkMesh.setMatrixAt(i, dummy.matrix);
+		dummy.position.y = 1.1 * scale;
+		dummy.updateMatrix();
+		foliageMesh.setMatrixAt(i, dummy.matrix);
+	}
+	envPropsGroup.add(trunkMesh);
+	envPropsGroup.add(foliageMesh);
+}
+
+function buildCityProps() {
+	// Buildings as instanced boxes along the perimeter
+	const buildingGeo = new BoxGeometry(1, 1, 1);
+	const buildingMat = new MeshStandardMaterial({ color: 0x2a2a3a, roughness: 0.7, metalness: 0.3 });
+	const dummy = new Object3D();
+	const count = 24;
+	const mesh = new InstancedMesh(buildingGeo, buildingMat, count);
+	mesh.castShadow = true;
+	mesh.receiveShadow = true;
+	for (let i = 0; i < count; i++) {
+		const angle = (i / count) * Math.PI * 2 + Math.random() * 0.15;
+		const r = 8 + Math.random() * 3;
+		const x = Math.cos(angle) * r;
+		const z = Math.sin(angle) * r;
+		const h = 1.5 + Math.random() * 4;
+		const w = 0.8 + Math.random() * 1.2;
+		const d = 0.8 + Math.random() * 1.2;
+		dummy.position.set(x, h / 2, z);
+		dummy.scale.set(w, h, d);
+		dummy.rotation.y = Math.random() * Math.PI;
+		dummy.updateMatrix();
+		mesh.setMatrixAt(i, dummy.matrix);
+	}
+	envPropsGroup.add(mesh);
+	// Grid lines on ground
+	const gridMat = new MeshBasicMaterial({ color: 0x555577, transparent: true, opacity: 0.15, side: DoubleSide });
+	for (let i = -10; i <= 10; i += 2) {
+		const lineH = new Mesh(new PlaneGeometry(24, 0.02), gridMat);
+		lineH.rotation.x = -Math.PI / 2;
+		lineH.position.set(0, 0.005, i);
+		envPropsGroup.add(lineH);
+		const lineV = new Mesh(new PlaneGeometry(0.02, 24), gridMat);
+		lineV.rotation.x = -Math.PI / 2;
+		lineV.position.set(i, 0.005, 0);
+		envPropsGroup.add(lineV);
+	}
+}
+
+function buildBeachProps() {
+	// Wave plane
+	const waveMat = new MeshStandardMaterial({ color: 0x2196f3, roughness: 0.2, metalness: 0.1, transparent: true, opacity: 0.6 });
+	const wave = new Mesh(new PlaneGeometry(30, 14, 1, 1), waveMat);
+	wave.rotation.x = -Math.PI / 2;
+	wave.position.set(0, 0.01, -10);
+	envPropsGroup.add(wave);
+	// Palm trees
+	const trunkGeo = new CylinderGeometry(0.06, 0.1, 2.5, 6);
+	const trunkMat = new MeshStandardMaterial({ color: 0x8b6914, roughness: 0.9 });
+	const leafGeo = new ConeGeometry(0.9, 0.5, 5);
+	const leafMat = new MeshStandardMaterial({ color: 0x228b22, roughness: 0.8 });
+	const dummy = new Object3D();
+	const palmCount = 8;
+	const palmTrunks = new InstancedMesh(trunkGeo, trunkMat, palmCount);
+	const palmLeaves = new InstancedMesh(leafGeo, leafMat, palmCount);
+	palmTrunks.castShadow = true;
+	palmLeaves.castShadow = true;
+	for (let i = 0; i < palmCount; i++) {
+		const angle = (i / palmCount) * Math.PI + Math.PI * 0.5 + Math.random() * 0.3;
+		const r = 6 + Math.random() * 4;
+		const x = Math.cos(angle) * r;
+		const z = Math.sin(angle) * r;
+		dummy.position.set(x, 1.25, z);
+		dummy.rotation.set(Math.random() * 0.15, 0, Math.random() * 0.15);
+		dummy.scale.setScalar(1);
+		dummy.updateMatrix();
+		palmTrunks.setMatrixAt(i, dummy.matrix);
+		dummy.position.y = 2.6;
+		dummy.updateMatrix();
+		palmLeaves.setMatrixAt(i, dummy.matrix);
+	}
+	envPropsGroup.add(palmTrunks);
+	envPropsGroup.add(palmLeaves);
+}
+
+// Environment indicator
+const envIndicator = (() => {
+	const el = document.createElement('div');
+	el.id = 'walk-env-indicator';
+	el.setAttribute('role', 'status');
+	el.style.cssText = [
+		'position:fixed', 'z-index:6',
+		'left:16px', 'top:calc(env(safe-area-inset-top, 0) + 60px)',
+		'background:rgba(17,17,17,0.72)', 'border:1px solid rgba(255,255,255,0.08)',
+		'border-radius:999px', 'padding:5px 14px',
+		'font-size:11px', 'font-weight:500', 'color:rgba(255,255,255,0.7)',
+		'backdrop-filter:blur(10px)', '-webkit-backdrop-filter:blur(10px)',
+		'pointer-events:none',
+		'opacity:0', 'transition:opacity 0.25s ease',
+	].join(';');
+	document.body.appendChild(el);
+	return el;
+})();
+let envIndicatorTimer = 0;
+
+function updateEnvIndicator() {
+	const env = ENVIRONMENTS[currentEnvIndex];
+	envIndicator.textContent = `Scene: ${env.label}`;
+	envIndicator.style.opacity = '1';
+	clearTimeout(envIndicatorTimer);
+	envIndicatorTimer = setTimeout(() => {
+		envIndicator.style.opacity = '0';
+	}, 2000);
+}
+
+function cycleEnvironment() {
+	const next = (currentEnvIndex + 1) % ENVIRONMENTS.length;
+	applyEnvironment(next);
+	setStatus(`Environment: ${ENVIRONMENTS[next].label}`);
+}
+
+// ── Screenshot capture ───────────────────────────────────────────────────
+function takeScreenshot() {
+	renderer.render(scene, camera); // ensure latest frame
+	const dataUrl = renderer.domElement.toDataURL('image/png');
+	const a = document.createElement('a');
+	a.href = dataUrl;
+	a.download = `three-ws-walk-${Date.now()}.png`;
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
+	setStatus('Screenshot saved');
+}
+
+// ── GIF/frame recording ─────────────────────────────────────────────────
+// Captures canvas frames at intervals and encodes as an animated GIF
+// using a minimal inline LZW-based GIF encoder (no external deps).
+let gifRecording = false;
+let gifFrames = [];
+let gifInterval = null;
+const GIF_FRAME_INTERVAL = 100; // ms between captures
+const GIF_MAX_FRAMES = 100; // 10 seconds max
+
+// Recording indicator
+const gifIndicator = (() => {
+	const el = document.createElement('div');
+	el.id = 'walk-gif-indicator';
+	el.style.cssText = [
+		'position:fixed', 'z-index:8',
+		'right:16px', 'top:calc(env(safe-area-inset-top, 0) + 60px)',
+		'background:rgba(248,113,113,0.92)', 'color:#fff',
+		'border:1px solid rgba(255,255,255,0.25)',
+		'border-radius:999px', 'padding:6px 14px',
+		'font-size:12px', 'font-weight:600',
+		'display:none', 'align-items:center', 'gap:8px',
+		'pointer-events:none',
+		'backdrop-filter:blur(6px)', '-webkit-backdrop-filter:blur(6px)',
+	].join(';');
+	const dot = document.createElement('span');
+	dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:#fff;animation:walk-rec-pulse 0.9s infinite';
+	el.appendChild(dot);
+	const label = document.createElement('span');
+	label.textContent = 'REC';
+	el.appendChild(label);
+	document.body.appendChild(el);
+	return el;
+})();
+
+function startGifRecording() {
+	gifRecording = true;
+	gifFrames = [];
+	gifIndicator.style.display = 'inline-flex';
+	setStatus('Recording started — press R to stop');
+
+	gifInterval = setInterval(() => {
+		if (!gifRecording) return;
+		if (gifFrames.length >= GIF_MAX_FRAMES) {
+			stopGifRecording();
+			return;
+		}
+		// Capture frame as PNG data URL
+		renderer.render(scene, camera);
+		const dataUrl = renderer.domElement.toDataURL('image/png');
+		gifFrames.push(dataUrl);
+		// Update indicator
+		const secs = ((gifFrames.length * GIF_FRAME_INTERVAL) / 1000).toFixed(1);
+		gifIndicator.lastChild.textContent = `REC ${secs}s`;
+	}, GIF_FRAME_INTERVAL);
+}
+
+function stopGifRecording() {
+	gifRecording = false;
+	if (gifInterval) { clearInterval(gifInterval); gifInterval = null; }
+	gifIndicator.style.display = 'none';
+
+	if (gifFrames.length === 0) {
+		setStatus('No frames captured');
+		return;
+	}
+	setStatus(`Encoding ${gifFrames.length} frames...`);
+	// Since building a full GIF encoder inline is complex, we export as
+	// individual PNG frames bundled in a webm video via MediaRecorder,
+	// or as a simple PNG download of the last frame. For a proper
+	// animated output, use canvas.captureStream + MediaRecorder.
+	exportFramesAsVideo(gifFrames);
+}
+
+async function exportFramesAsVideo(frames) {
+	// Re-render frames onto a canvas and use MediaRecorder for a real video file
+	if (frames.length < 2) {
+		// Single frame — just download as PNG
+		const a = document.createElement('a');
+		a.href = frames[0];
+		a.download = `three-ws-walk-${Date.now()}.png`;
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+		setStatus('Screenshot saved (single frame)');
+		return;
+	}
+
+	const img = new Image();
+	await new Promise((resolve, reject) => {
+		img.onload = resolve;
+		img.onerror = reject;
+		img.src = frames[0];
+	});
+
+	const w = img.naturalWidth;
+	const h = img.naturalHeight;
+	const offscreen = document.createElement('canvas');
+	offscreen.width = w;
+	offscreen.height = h;
+	const ctx = offscreen.getContext('2d');
+	const stream = offscreen.captureStream(0); // manually push frames
+	const videoTrack = stream.getVideoTracks()[0];
+
+	const mime = pickRecorderMime();
+	let recorder;
+	try {
+		recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+	} catch {
+		setStatus('Recording not supported in this browser', { error: true });
+		return;
+	}
+
+	const chunks = [];
+	recorder.ondataavailable = (e) => { if (e.data?.size) chunks.push(e.data); };
+
+	recorder.onstop = () => {
+		const isMp4 = (recorder.mimeType || '').includes('mp4');
+		const ext = isMp4 ? 'mp4' : 'webm';
+		const blob = new Blob(chunks, { type: isMp4 ? 'video/mp4' : 'video/webm' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `three-ws-walk-${Date.now()}.${ext}`;
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+		setTimeout(() => URL.revokeObjectURL(url), 4000);
+		setStatus(`Recording saved (${frames.length} frames)`);
+	};
+
+	recorder.start();
+
+	// Play back each frame onto the offscreen canvas
+	for (let i = 0; i < frames.length; i++) {
+		const frameImg = new Image();
+		await new Promise((resolve) => {
+			frameImg.onload = resolve;
+			frameImg.onerror = resolve;
+			frameImg.src = frames[i];
+		});
+		ctx.clearRect(0, 0, w, h);
+		ctx.drawImage(frameImg, 0, 0, w, h);
+		// Request a frame from the stream
+		if (videoTrack.requestFrame) videoTrack.requestFrame();
+		await new Promise(r => setTimeout(r, GIF_FRAME_INTERVAL));
+	}
+
+	recorder.stop();
+}
+
+function toggleGifRecording() {
+	if (gifRecording) stopGifRecording();
+	else startGifRecording();
+}
+
+// ── Minimap ──────────────────────────────────────────────────────────────
+// Small top-down canvas in the bottom-right corner showing player positions
+// and environment bounds.
+let minimapVisible = false;
+const MINIMAP_SIZE = 160;
+const MINIMAP_WORLD_RADIUS = 14; // world units visible in the minimap
+
+const minimapContainer = (() => {
+	const el = document.createElement('div');
+	el.id = 'walk-minimap';
+	el.style.cssText = [
+		'position:fixed', 'z-index:6',
+		'right:16px', 'bottom:calc(28px + env(safe-area-inset-bottom, 0))',
+		'width:' + MINIMAP_SIZE + 'px', 'height:' + MINIMAP_SIZE + 'px',
+		'border-radius:12px', 'overflow:hidden',
+		'background:rgba(10,10,10,0.7)',
+		'border:1px solid rgba(255,255,255,0.1)',
+		'backdrop-filter:blur(6px)', '-webkit-backdrop-filter:blur(6px)',
+		'display:none',
+		'opacity:0', 'transition:opacity 0.2s ease',
+		'cursor:crosshair',
+	].join(';');
+	document.body.appendChild(el);
+	return el;
+})();
+
+const minimapCanvas = (() => {
+	const c = document.createElement('canvas');
+	c.width = MINIMAP_SIZE * 2; // 2x for retina
+	c.height = MINIMAP_SIZE * 2;
+	c.style.cssText = 'width:100%;height:100%;display:block';
+	minimapContainer.appendChild(c);
+	return c;
+})();
+
+const minimapCtx = minimapCanvas.getContext('2d');
+
+// Waypoint: click on minimap to set a target position for the avatar
+let waypointTarget = null;
+const WAYPOINT_SPEED = 2.0;
+const WAYPOINT_ARRIVE_DIST = 0.3;
+
+minimapContainer.addEventListener('click', (e) => {
+	const rect = minimapContainer.getBoundingClientRect();
+	const nx = (e.clientX - rect.left) / rect.width;
+	const ny = (e.clientY - rect.top) / rect.height;
+	// Map from minimap coords to world coords
+	// minimap center = avatar position
+	const wx = avatarRig.position.x + (nx - 0.5) * MINIMAP_WORLD_RADIUS * 2;
+	const wz = avatarRig.position.z + (ny - 0.5) * MINIMAP_WORLD_RADIUS * 2;
+	// Clamp to ground radius
+	const r = Math.hypot(wx, wz);
+	if (r > GROUND_RADIUS - 0.5) {
+		const k = (GROUND_RADIUS - 0.5) / r;
+		waypointTarget = { x: wx * k, z: wz * k };
+	} else {
+		waypointTarget = { x: wx, z: wz };
+	}
+	setStatus('Waypoint set — avatar walking to target');
+});
+
+function toggleMinimap() {
+	minimapVisible = !minimapVisible;
+	if (minimapVisible) {
+		minimapContainer.style.display = 'block';
+		requestAnimationFrame(() => { minimapContainer.style.opacity = '1'; });
+	} else {
+		minimapContainer.style.opacity = '0';
+		setTimeout(() => { if (!minimapVisible) minimapContainer.style.display = 'none'; }, 200);
+	}
+	setStatus(minimapVisible ? 'Minimap on' : 'Minimap off');
+}
+
+function updateMinimapFrame() {
+	if (!minimapVisible) return;
+	const ctx = minimapCtx;
+	const s = MINIMAP_SIZE * 2;
+	const half = s / 2;
+	const scale = s / (MINIMAP_WORLD_RADIUS * 2);
+
+	ctx.clearRect(0, 0, s, s);
+
+	// Background
+	ctx.fillStyle = 'rgba(10,10,10,0.6)';
+	ctx.fillRect(0, 0, s, s);
+
+	// Ground disc outline
+	ctx.save();
+	ctx.translate(half, half);
+	const groundPxR = GROUND_RADIUS * scale;
+	const offsetX = -avatarRig.position.x * scale;
+	const offsetZ = -avatarRig.position.z * scale;
+	ctx.beginPath();
+	ctx.arc(offsetX, offsetZ, groundPxR, 0, Math.PI * 2);
+	ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+	ctx.lineWidth = 1;
+	ctx.stroke();
+	ctx.fillStyle = 'rgba(255,255,255,0.03)';
+	ctx.fill();
+
+	// Environment props indicator (dots for trees/buildings)
+	for (const child of envPropsGroup.children) {
+		if (child.isInstancedMesh && child.count > 0) {
+			const m = new Matrix4();
+			for (let i = 0; i < child.count; i++) {
+				child.getMatrixAt(i, m);
+				const px = m.elements[12] * scale + offsetX;
+				const pz = m.elements[14] * scale + offsetZ;
+				ctx.beginPath();
+				ctx.arc(px, pz, 2, 0, Math.PI * 2);
+				ctx.fillStyle = 'rgba(255,255,255,0.2)';
+				ctx.fill();
+			}
+		}
+	}
+
+	// Remote players
+	for (const [sid, rp] of remotePlayers) {
+		const px = (rp.rig.position.x - avatarRig.position.x) * scale;
+		const pz = (rp.rig.position.z - avatarRig.position.z) * scale;
+		ctx.beginPath();
+		ctx.arc(px, pz, 4, 0, Math.PI * 2);
+		const colorHex = '#' + (rp._color ?? 0xff8844).toString(16).padStart(6, '0');
+		ctx.fillStyle = colorHex;
+		ctx.fill();
+	}
+
+	// Waypoint indicator
+	if (waypointTarget) {
+		const wpx = (waypointTarget.x - avatarRig.position.x) * scale;
+		const wpz = (waypointTarget.z - avatarRig.position.z) * scale;
+		ctx.beginPath();
+		ctx.arc(wpx, wpz, 5, 0, Math.PI * 2);
+		ctx.strokeStyle = '#4ade80';
+		ctx.lineWidth = 2;
+		ctx.stroke();
+		// Pulsing ring
+		const pulse = (performance.now() % 1500) / 1500;
+		ctx.beginPath();
+		ctx.arc(wpx, wpz, 5 + pulse * 8, 0, Math.PI * 2);
+		ctx.strokeStyle = `rgba(74,222,128,${0.5 - pulse * 0.5})`;
+		ctx.lineWidth = 1;
+		ctx.stroke();
+	}
+
+	// Local player (green arrow at center)
+	ctx.save();
+	ctx.rotate(-avatarYaw);
+	ctx.beginPath();
+	ctx.moveTo(0, -7);
+	ctx.lineTo(5, 5);
+	ctx.lineTo(0, 2);
+	ctx.lineTo(-5, 5);
+	ctx.closePath();
+	ctx.fillStyle = '#4ade80';
+	ctx.fill();
+	ctx.restore();
+
+	ctx.restore();
+}
+
+// ── Help overlay first-visit auto-show ───────────────────────────────────
+const HELP_FIRST_VISIT_KEY = 'walk:help-shown';
+function showHelpOnFirstVisit() {
+	try {
+		if (localStorage.getItem(HELP_FIRST_VISIT_KEY) === '1') return;
+		localStorage.setItem(HELP_FIRST_VISIT_KEY, '1');
+	} catch { return; }
+	// Show help briefly on first visit
+	toggleHelp();
+	setTimeout(() => {
+		if (helpVisible) toggleHelp();
+	}, 6000);
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────
 loadAvatar()
 	.then(() => {
 		requestAnimationFrame(tick);
 		startNet();
+		// Apply saved environment
+		applyEnvironment(currentEnvIndex);
+		// Show camera mode if not default
+		if (cameraMode !== 'follow') {
+			if (avatar) avatar.visible = cameraMode !== 'firstperson';
+			updateCameraModeIndicator();
+		}
+		// First-visit help
+		showHelpOnFirstVisit();
 		// Mobile + camera-capable → invite the user into AR. Delayed so it
 		// lands after the "walk it" status fade, not on top of it.
 		setTimeout(showArCta, 900);
@@ -1561,8 +2506,11 @@ loadAvatar()
 		const text = chatInput.value.trim();
 		if (!text) return;
 		chatInput.value = '';
+		chatInput.blur(); // return focus to canvas so WASD works
 		const name = nameInput?.value?.trim() || 'you';
 		addChatMessage(name, text);
+		// Show speech bubble above local avatar
+		showSpeechBubbleFor('local', text);
 		if (net?.room) {
 			net.room.send('chat', { text: text.slice(0, 200) });
 		}

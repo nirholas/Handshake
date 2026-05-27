@@ -11,6 +11,7 @@ import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { parse, createAvatarBody } from '../_lib/validate.js';
 import { recordEvent } from '../_lib/usage.js';
 import { defaultStorageMode } from '../_lib/storage-mode.js';
+import { dispatchWebhooks } from '../_lib/webhook-dispatch.js';
 import { z } from 'zod';
 
 const createWithStorage = createAvatarBody.extend({
@@ -96,6 +97,12 @@ async function handleCreate(req, res) {
 		input: body,
 		storageKey: body.storage_key,
 	});
+
+	dispatchWebhooks({
+		userId: auth.userId,
+		eventType: 'avatar.created',
+		data: { id: avatar.id, name: avatar.name, slug: avatar.slug, source: body.source },
+	}).catch(() => {});
 
 	// Re-point any agent identity that currently uses the parent avatar.
 	// agentId, wallet_address, chain_id, and erc8004_agent_id are unchanged.

@@ -1869,6 +1869,14 @@
 			"dest": "/api/billing/revenue"
 		},
 		{
+			"src": "/api/developer/webhooks/([^/]+)",
+			"dest": "/api/developer/webhooks/[id]?id=$1"
+		},
+		{
+			"src": "/api/developer/webhooks/?",
+			"dest": "/api/developer/webhooks"
+		},
+		{
 			"src": "/agents",
 			"dest": "/agents/index.html"
 		},
@@ -2450,7 +2458,7 @@
 		},
 		{
 			"path": "/api/cron/siwx-gc",
-			"schedule": "23 * * * *"
+			"schedule": "0 3 * * *"
 		},
 		{
 			"path": "/api/cron/unstoppable-tick",
