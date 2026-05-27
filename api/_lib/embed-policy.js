@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import { sql } from './db.js';
+import { isUuid } from './validate.js';
 
 const hostPattern =
 	/^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i;
@@ -78,6 +79,8 @@ export function normalizeLegacyPolicy(input) {
 }
 
 export async function readEmbedPolicy(agentId) {
+	if (!isUuid(agentId)) return null;
+
 	let row;
 	try {
 		[row] = await sql`
@@ -101,6 +104,8 @@ export async function readEmbedPolicy(agentId) {
 // Read the embed policy for an agent_identity row identified by its avatar_id.
 // Used by the MCP middleware where only the avatar id is on the request.
 export async function readEmbedPolicyByAvatarId(avatarId) {
+	if (!isUuid(avatarId)) return null;
+
 	let row;
 	try {
 		[row] = await sql`

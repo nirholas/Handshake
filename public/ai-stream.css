@@ -50,9 +50,9 @@ html, body {
 	gap: 12px;
 }
 .ai-stream-header select, .ai-stream-header button {
-	background: #161620;
+	background: #111111;
 	color: #eee;
-	border: 1px solid #2a2a36;
+	border: 1px solid #2a2a2a;
 	border-radius: 6px;
 	padding: 6px 10px;
 	font-size: 13px;
@@ -105,8 +105,8 @@ html, body {
 }
 /* Event card styles from pumpfun.html can be reused here */
 .evt {
-	border: 1px solid #232330;
-	background: #15151d;
+	border: 1px solid #1a1a1a;
+	background: #111111;
 	border-radius: 8px;
 	padding: 10px 12px;
 	font-size: 12px;

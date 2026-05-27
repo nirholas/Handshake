@@ -102,6 +102,12 @@ export const presignUploadBody = z.object({
 		.optional(),
 });
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuid(value) {
+	return typeof value === 'string' && UUID_RE.test(value);
+}
+
 export function isValidSolanaAddress(address) {
 	return typeof address === 'string' && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
 }

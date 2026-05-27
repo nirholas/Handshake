@@ -158,7 +158,7 @@ a:hover {
 
 .my-agents-card__thumb {
 	aspect-ratio: 1 / 1;
-	background: #0f0f17;
+	background: #0a0a0a;
 	display: grid;
 	place-items: center;
 	color: #444;
@@ -177,8 +177,8 @@ a:hover {
 	width: 100%;
 	height: 100%;
 	display: block;
-	background: #0f0f17;
-	--poster-color: #0f0f17;
+	background: #0a0a0a;
+	--poster-color: #0a0a0a;
 }
 
 .my-agents-card__body {
@@ -264,7 +264,7 @@ a:hover {
 }
 
 .my-agents-btn--sec {
-	background: #222230;
+	background: #222222;
 	color: #ddd;
 }
 
@@ -294,7 +294,7 @@ a:hover {
 
 .my-agents-skeleton__thumb {
 	aspect-ratio: 1 / 1;
-	background: linear-gradient(90deg, #1a1a24 25%, #22222e 50%, #1a1a24 75%);
+	background: linear-gradient(90deg, #1a1a1a 25%, #222222 50%, #1a1a1a 75%);
 	background-size: 600px 100%;
 	animation: my-agents-shimmer 1.4s infinite linear;
 }
@@ -309,7 +309,7 @@ a:hover {
 .my-agents-skeleton__line {
 	height: 12px;
 	border-radius: 6px;
-	background: linear-gradient(90deg, #1a1a24 25%, #22222e 50%, #1a1a24 75%);
+	background: linear-gradient(90deg, #1a1a1a 25%, #222222 50%, #1a1a1a 75%);
 	background-size: 600px 100%;
 	animation: my-agents-shimmer 1.4s infinite linear;
 }

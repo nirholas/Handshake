@@ -61,7 +61,7 @@ a:hover {
 	gap: 1rem;
 	height: var(--header-h);
 	padding: 0 1.25rem;
-	background: rgba(10, 10, 15, 0.85);
+	background: rgba(0, 0, 0, 0.85);
 	backdrop-filter: blur(12px);
 	border-bottom: 1px solid var(--border-soft);
 }
@@ -153,7 +153,7 @@ a:hover {
 
 .user-menu-signin:hover {
 	background: rgba(255, 255, 255, 0.05);
-	border-color: #3a3a48;
+	border-color: #333333;
 	text-decoration: none;
 }
 
@@ -174,12 +174,12 @@ a:hover {
 
 .user-menu-trigger:hover {
 	background: rgba(255, 255, 255, 0.05) !important;
-	border-color: #3a3a48;
+	border-color: #333333;
 }
 
 .user-menu-trigger[aria-expanded='true'] {
 	background: rgba(255, 255, 255, 0.06);
-	border-color: #3a3a48;
+	border-color: #333333;
 }
 
 .user-menu-avatar {
@@ -189,7 +189,7 @@ a:hover {
 	width: 26px;
 	height: 26px;
 	border-radius: 999px;
-	background: linear-gradient(135deg, #3a3a4a, #2a2a38);
+	background: linear-gradient(135deg, #333333, #2a2a2a);
 	color: #ccc;
 	font-size: 0.78rem;
 	font-weight: 600;
@@ -501,7 +501,7 @@ a:hover {
 
 .avatar-card:hover {
 	border-color: rgba(255, 255, 255, 0.25);
-	background: #1f1f2a;
+	background: #1a1a1a;
 	transform: translateY(-1px);
 	box-shadow: 0 4px 16px rgba(0,0,0,0.3);
 }
@@ -539,7 +539,7 @@ a:hover {
 	align-items: center;
 	justify-content: center;
 	border-radius: var(--radius-sm);
-	background: #0d0d14;
+	background: #0a0a0a;
 	overflow: hidden;
 	font-size: 1.6rem;
 	color: rgba(255, 255, 255, 0.4);
@@ -568,7 +568,7 @@ a:hover {
 	pointer-events: none;
 }
 .avatar-card--skeleton .thumb {
-	background: linear-gradient(90deg, #1a1a24 25%, #222230 50%, #1a1a24 75%);
+	background: linear-gradient(90deg, #1a1a1a 25%, #222222 50%, #1a1a1a 75%);
 	background-size: 200% 100%;
 	animation: shimmer 1.5s ease-in-out infinite;
 }
@@ -576,7 +576,7 @@ a:hover {
 	width: 65%;
 	height: 10px;
 	border-radius: 999px;
-	background: linear-gradient(90deg, #1a1a24 25%, #222230 50%, #1a1a24 75%);
+	background: linear-gradient(90deg, #1a1a1a 25%, #222222 50%, #1a1a1a 75%);
 	background-size: 200% 100%;
 	animation: shimmer 1.5s ease-in-out infinite 0.15s;
 	color: transparent;
@@ -667,7 +667,7 @@ a:hover {
 
 .type-card:hover {
 	border-color: rgba(255, 255, 255, 0.22);
-	background: #1f1f2a;
+	background: #1a1a1a;
 }
 
 .type-card.selected {
@@ -751,14 +751,14 @@ a:hover {
 	width: 100%;
 	aspect-ratio: 1 / 1;
 	max-height: calc(100vh - var(--header-h) - 8rem);
-	background: #050507;
+	background: #000000;
 	border-radius: var(--radius-md);
 	overflow: hidden;
 	background-image:
-		linear-gradient(45deg, #15151c 25%, transparent 25%),
-		linear-gradient(-45deg, #15151c 25%, transparent 25%),
-		linear-gradient(45deg, transparent 75%, #15151c 75%),
-		linear-gradient(-45deg, transparent 75%, #15151c 75%);
+		linear-gradient(45deg, #111111 25%, transparent 25%),
+		linear-gradient(-45deg, #111111 25%, transparent 25%),
+		linear-gradient(45deg, transparent 75%, #111111 75%),
+		linear-gradient(-45deg, transparent 75%, #111111 75%);
 	background-size: 24px 24px;
 	background-position: 0 0, 0 12px, 12px -12px, -12px 0;
 }
@@ -825,7 +825,7 @@ a:hover {
 	gap: 0.25rem;
 	margin: -0.4rem -0.4rem 0.9rem;
 	padding: 0.3rem;
-	background: #0d0d14;
+	background: #0a0a0a;
 	border: 1px solid var(--border);
 	border-radius: var(--radius-md);
 }
@@ -892,7 +892,7 @@ a:hover {
 .field textarea {
 	width: 100%;
 	padding: 0.5rem 0.65rem;
-	background: #0d0d14;
+	background: #0a0a0a;
 	border: 1px solid var(--border);
 	border-radius: var(--radius-sm);
 	color: var(--text);
@@ -912,7 +912,7 @@ a:hover {
 	width: 60px;
 	height: 30px;
 	padding: 2px;
-	background: #0d0d14;
+	background: #0a0a0a;
 	border: 1px solid var(--border);
 	border-radius: var(--radius-sm);
 	cursor: pointer;
@@ -997,7 +997,7 @@ a:hover {
 
 .btn-ghost:hover {
 	background: rgba(255, 255, 255, 0.04);
-	border-color: #3a3a48;
+	border-color: #333333;
 	color: #fff;
 }
 
@@ -1112,7 +1112,7 @@ a:hover {
 	margin: 0.85rem 0;
 	border-radius: var(--radius-md);
 	border: 1px solid var(--border);
-	background: #050507;
+	background: #000000;
 	overflow: hidden;
 }
 
@@ -1134,7 +1134,7 @@ a:hover {
 	flex: 1;
 	font-family: ui-monospace, 'SF Mono', Menlo, monospace;
 	font-size: 0.78rem;
-	background: #0d0d14;
+	background: #0a0a0a;
 	border: 1px solid var(--border);
 	border-radius: var(--radius-sm);
 	color: var(--text);
@@ -1188,7 +1188,7 @@ a:hover {
 	z-index: 200;
 	white-space: nowrap;
 	/* default: info */
-	background: #1f1f2a;
+	background: #1a1a1a;
 	color: #eee;
 }
 
@@ -1255,7 +1255,7 @@ a:hover {
 	bottom: calc(100% + 6px);
 	left: 50%;
 	transform: translateX(-50%) translateY(2px);
-	background: #1f1f2a;
+	background: #1a1a1a;
 	color: #eee;
 	font-size: 0.72rem;
 	font-weight: 400;
@@ -1307,7 +1307,7 @@ a:hover {
 }
 
 .bonding-curve-preview {
-	background: #0d0d14;
+	background: #0a0a0a;
 	border: 1px solid var(--border);
 	border-radius: var(--radius-md);
 	padding: 0.7rem 0.8rem;
@@ -1331,7 +1331,7 @@ a:hover {
 
 .bonding-curve-track {
 	height: 6px;
-	background: #1f1f2a;
+	background: #1a1a1a;
 	border-radius: 999px;
 	overflow: hidden;
 }
@@ -1442,7 +1442,7 @@ a:hover {
 .kp-row-form, .kp-paste-form { display: flex; flex-direction: column; gap: 0.45rem; }
 .kp-row-form input, .kp-paste-form textarea {
 	width: 100%;
-	background: #0f0f17;
+	background: #0a0a0a;
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	color: #eee;
 	border-radius: 6px;
@@ -1728,7 +1728,7 @@ a:hover {
 .hotspot-pos-row input[type='number'] {
 	width: 100%;
 	padding: 0.4rem 0.45rem;
-	background: #0d0d14;
+	background: #0a0a0a;
 	border: 1px solid var(--border);
 	border-radius: var(--radius-sm);
 	color: var(--text);

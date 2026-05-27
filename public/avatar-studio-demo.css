@@ -438,7 +438,7 @@ html, body {
 	top: 50%;
 	border-radius: 50%;
 	background: var(--as-accent);
-	box-shadow: 0 0 8px rgba(125, 211, 252, 0.4);
+	box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 	cursor: grab;
 	touch-action: none;
 	z-index: 2;

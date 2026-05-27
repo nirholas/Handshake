@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { sql } from './db.js';
 import { publicUrl, presignGet, deleteObject } from './r2.js';
 import { defaultStorageMode } from './storage-mode.js';
+import { isUuid } from './validate.js';
 
 export async function listAvatars({
 	userId,
@@ -55,6 +56,11 @@ export async function listAvatars({
 }
 
 export async function getAvatar({ id, requesterId = null }) {
+	// Non-UUID ids (e.g. "badid", "undefined") would cause a Postgres 22P02
+	// error when cast to uuid. Short-circuit with null — callers already
+	// handle null as "not found".
+	if (!isUuid(id)) return null;
+
 	const rows = await sql`
 		select a.*, ai.id as agent_id, ai.wallet_address as agent_wallet_address
 		from avatars a

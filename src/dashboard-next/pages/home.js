@@ -496,6 +496,7 @@ function renderQuickActions(host, { avatars = [], agents = [] } = {}) {
 	actions.push(
 		{ href: '/dashboard/widgets', title: 'Embed an agent', sub: 'Drop-in widget for any site', icon: '◧' },
 		{ href: '/dashboard/api', title: 'Open API keys', sub: 'REST + MCP for your agents', icon: '⌘' },
+		{ href: '/brain', title: 'Brain — multi-LLM chat', sub: 'Compare Claude, GPT, Llama side-by-side', icon: '◎' },
 	);
 
 	host.innerHTML = actions.map((a) => `

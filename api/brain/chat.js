@@ -2,11 +2,13 @@
 //
 // Body: { provider, messages, system?, maxTokens? }
 // Response: SSE stream:
-//   event: meta    → { provider, label, network, model }
-//   event: first   → { firstTokenMs }   (time to first token)
+//   event: meta    → { provider, label, network, model, tier }
+//   event: first   → { firstTokenMs }
 //   (data-only)    → JSON-encoded text chunk
 //   event: done    → { elapsedMs, firstTokenMs, usage }
 //   event: error   → { message, elapsedMs }
+//
+// GET /api/brain/chat → returns available providers list
 
 import { streamText } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -15,13 +17,14 @@ import { createQwen } from 'qwen-ai-provider';
 import { env } from '../_lib/env.js';
 import { cors, method, readJson, error, wrap } from '../_lib/http.js';
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const PROVIDERS = {
 	'claude-opus-4-7': {
 		label: 'Claude Opus 4.7',
 		network: 'Anthropic',
 		tier: 'flagship',
+		maxOutput: 16384,
 		description: 'Most capable. Extended thinking, complex reasoning.',
 		build: () => {
 			const key = env.ANTHROPIC_API_KEY;
@@ -33,6 +36,7 @@ const PROVIDERS = {
 		label: 'Claude Sonnet 4.6',
 		network: 'Anthropic',
 		tier: 'balanced',
+		maxOutput: 16384,
 		description: 'Balanced speed and intelligence. Best for most tasks.',
 		build: () => {
 			const key = env.ANTHROPIC_API_KEY;
@@ -44,6 +48,7 @@ const PROVIDERS = {
 		label: 'Claude Haiku 4.5',
 		network: 'Anthropic',
 		tier: 'fast',
+		maxOutput: 8192,
 		description: 'Fastest Claude. Low latency, high throughput.',
 		build: () => {
 			const key = env.ANTHROPIC_API_KEY;
@@ -55,6 +60,7 @@ const PROVIDERS = {
 		label: 'GPT-4o',
 		network: 'OpenAI',
 		tier: 'flagship',
+		maxOutput: 16384,
 		description: 'OpenAI flagship. Strong multimodal reasoning.',
 		build: () => {
 			const key = env.OPENAI_API_KEY;
@@ -66,6 +72,7 @@ const PROVIDERS = {
 		label: 'GPT-4o-mini',
 		network: 'OpenAI',
 		tier: 'fast',
+		maxOutput: 16384,
 		description: 'Fast, affordable GPT. Great for simple tasks.',
 		build: () => {
 			const key = env.OPENAI_API_KEY;
@@ -73,11 +80,24 @@ const PROVIDERS = {
 			return createOpenAI({ apiKey: key })('gpt-4o-mini');
 		},
 	},
+	'o3-mini': {
+		label: 'o3-mini',
+		network: 'OpenAI',
+		tier: 'reasoning',
+		maxOutput: 16384,
+		description: 'Reasoning-optimized. Fast chain-of-thought.',
+		build: () => {
+			const key = env.OPENAI_API_KEY;
+			if (!key) return null;
+			return createOpenAI({ apiKey: key })('o3-mini');
+		},
+	},
 	'groq-llama': {
 		label: 'Llama 3.3 70B',
 		network: 'Groq',
 		tier: 'fast',
-		description: 'Open-weight model on Groq. Extremely fast inference.',
+		maxOutput: 8192,
+		description: 'Open-weight on Groq. Extremely fast inference.',
 		build: () => {
 			const key = env.GROQ_API_KEY;
 			if (!key) return null;
@@ -89,9 +109,10 @@ const PROVIDERS = {
 	},
 	'qwen-plus': {
 		label: 'Qwen Plus',
-		network: 'Alibaba DashScope',
+		network: 'DashScope',
 		tier: 'balanced',
-		description: 'Qwen Plus on Alibaba DashScope. Strong multilingual.',
+		maxOutput: 8192,
+		description: 'Qwen Plus on DashScope. Strong multilingual.',
 		build: () => {
 			if (env.DASHSCOPE_API_KEY) {
 				return createQwen({ apiKey: env.DASHSCOPE_API_KEY })('qwen-plus');
@@ -103,10 +124,11 @@ const PROVIDERS = {
 		},
 	},
 	'modelscope-qwen': {
-		label: 'Qwen3-Coder-480B',
+		label: 'Qwen3-Coder 480B',
 		network: 'ModelScope',
 		tier: 'flagship',
-		description: 'Largest Qwen coder model. Exceptional at code generation.',
+		maxOutput: 16384,
+		description: 'Largest Qwen coder. Exceptional code generation.',
 		build: () => {
 			if (env.MODELSCOPE_API_KEY) {
 				return createOpenAI({
@@ -116,6 +138,25 @@ const PROVIDERS = {
 			}
 			if (env.OPENROUTER_API_KEY) {
 				return openrouter()('qwen/qwen3-coder');
+			}
+			return null;
+		},
+	},
+	'deepseek-r1': {
+		label: 'DeepSeek R1',
+		network: 'DeepSeek',
+		tier: 'reasoning',
+		maxOutput: 8192,
+		description: 'Open reasoning model. Strong at math and code.',
+		build: () => {
+			if (env.DEEPSEEK_API_KEY) {
+				return createOpenAI({
+					apiKey: env.DEEPSEEK_API_KEY,
+					baseURL: 'https://api.deepseek.com/v1',
+				})('deepseek-reasoner');
+			}
+			if (env.OPENROUTER_API_KEY) {
+				return openrouter()('deepseek/deepseek-r1');
 			}
 			return null;
 		},
@@ -134,14 +175,14 @@ function validateMessages(input) {
 	if (!Array.isArray(input)) {
 		throw Object.assign(new Error('messages must be an array'), { status: 400 });
 	}
-	if (input.length === 0 || input.length > 60) {
+	if (input.length === 0 || input.length > 100) {
 		throw Object.assign(new Error('messages length out of range'), { status: 400 });
 	}
 	const out = [];
 	for (const m of input) {
 		if (!m || typeof m !== 'object') throw Object.assign(new Error('bad message'), { status: 400 });
 		const role = m.role;
-		const content = typeof m.content === 'string' ? m.content.slice(0, 8000) : '';
+		const content = typeof m.content === 'string' ? m.content.slice(0, 16000) : '';
 		if (!['user', 'assistant'].includes(role)) {
 			throw Object.assign(new Error('role must be user|assistant'), { status: 400 });
 		}
@@ -151,8 +192,32 @@ function validateMessages(input) {
 	return out;
 }
 
+function getAvailableProviders() {
+	return Object.entries(PROVIDERS).map(([key, spec]) => {
+		const available = Boolean(spec.build());
+		return {
+			key,
+			label: spec.label,
+			network: spec.network,
+			tier: spec.tier,
+			maxOutput: spec.maxOutput,
+			description: spec.description,
+			available,
+		};
+	});
+}
+
 export default wrap(async function handler(req, res) {
-	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+
+	if (req.method === 'GET') {
+		const providers = getAvailableProviders();
+		res.setHeader('content-type', 'application/json');
+		res.setHeader('cache-control', 'public, s-maxage=60, stale-while-revalidate=120');
+		res.end(JSON.stringify({ providers }));
+		return;
+	}
+
 	if (method(req, res, ['POST'])) return;
 
 	let body;
@@ -183,8 +248,8 @@ export default wrap(async function handler(req, res) {
 		return error(res, e.status || 400, 'bad_request', e.message);
 	}
 
-	const system = typeof body.system === 'string' ? body.system.slice(0, 4000) : undefined;
-	const maxTokens = Math.min(Math.max(Number(body.maxTokens) || 1024, 32), 4096);
+	const system = typeof body.system === 'string' ? body.system.slice(0, 8000) : undefined;
+	const maxTokens = Math.min(Math.max(Number(body.maxTokens) || 4096, 64), spec.maxOutput);
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/event-stream; charset=utf-8');

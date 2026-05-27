@@ -208,11 +208,19 @@
 				viewer.scene.add(root);
 				viewer.content = root;
 
-				// Attach animations
-				await viewer.animationManager.loadAll();
+				// Attach animations — fetch manifest lazily
+				try {
+					const manifest = await fetch('/animations/manifest.json', { cache: 'force-cache' })
+						.then((r) => r.ok ? r.json() : []);
+					const idleDef = manifest.find((d) => d.name === 'idle') || manifest[0];
+					if (idleDef) {
+						viewer.animationManager.setAnimationDefs([idleDef]);
+						await viewer.animationManager.loadAll();
+					}
+				} catch {}
 				viewer.animationManager.attach(root);
 				viewer.mixer = viewer.animationManager.mixer;
-				viewer.animationManager.play('idle');
+				if (viewer.animationManager._animationDefs.length) viewer.animationManager.play('idle');
 
 				if (applyHalfBody) {
 					let hidden = 0;

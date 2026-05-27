@@ -420,11 +420,19 @@ async function loadAvatar() {
 	camera.position.set(0, center.y + size * 0.2, size * 1.4);
 	controls.update();
 
-	// Animations
-	await animationManager.loadAll();
+	// Animations — fetch manifest, load idle clip, attach to model
+	try {
+		const manifest = await fetch('/animations/manifest.json', { cache: 'force-cache' })
+			.then((r) => r.ok ? r.json() : []);
+		const idleDef = manifest.find((d) => d.name === 'idle') || manifest[0];
+		if (idleDef) {
+			animationManager.setAnimationDefs([idleDef]);
+			await animationManager.loadAll();
+		}
+	} catch {}
 	animationManager.attach(root);
 	xrViewer.mixer = animationManager.mixer;
-	animationManager.play('idle');
+	if (animationManager._animationDefs.length) animationManager.play('idle');
 
 	// Avatar name from URL param
 	const params = new URLSearchParams(location.search);

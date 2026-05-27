@@ -361,7 +361,7 @@ body.home-page {
 .h-livewall-card-visual {
 	position: relative;
 	flex: 1 1 auto;
-	background: var(--card-grad, linear-gradient(135deg, #1c1438, #0b0a14));
+	background: var(--card-grad, linear-gradient(135deg, #1a1a1a, #0a0a0a));
 	display: grid;
 	place-items: center;
 	overflow: hidden;

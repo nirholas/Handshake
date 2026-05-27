@@ -8,7 +8,12 @@
  * On submit, dispatches a `selfie:submit` CustomEvent on document with
  *   detail = { files: { frontal, left?, right? }, bodyType, avatarType, method }
  * which the selfie pipeline picks up to drive avatar reconstruction.
+ *
+ * Camera overlay uses the face-quality engine for real-time 468-point wireframe,
+ * head-pose estimation, blur/lighting/centering quality gates.
  */
+
+import { createQualitySession, preload, SLOT_PRESETS } from './face-quality.js';
 
 const REQUIRED_SLOT = 'frontal';
 const OPTIONAL_SLOTS = /** @type {const} */ (['left', 'right']);
@@ -351,8 +356,7 @@ const cam = {
 	slot: /** @type {string | null} */ (null),
 	pendingFile: /** @type {File | null} */ (null),
 	pendingUrl: /** @type {string | null} */ (null),
-	detector: /** @type {any} */ (null),
-	detectInterval: /** @type {number | null} */ (null),
+	qualitySession: /** @type {any} */ (null),
 	faceLocked: false,
 	countdownTimers: /** @type {number[]} */ ([]),
 };
@@ -395,87 +399,118 @@ async function openCamera(slot) {
 		return;
 	}
 
-	// Best-effort face tracking. FaceDetector is non-standard but ships in
-	// Chromium on Android/desktop; on Safari/Firefox we fall back to always-
-	// enabled shutter and a softer hint.
-	if (slot === REQUIRED_SLOT) {
-		startFaceDetect();
-	}
+	startFaceQuality(slot);
 }
 
-function startFaceDetect() {
-	const FD = /** @type {any} */ (window).FaceDetector;
-	if (typeof FD !== 'function') {
-		// No detector available — let the user shoot freely; keep the dashed oval
-		// as a framing guide.
+async function startFaceQuality(slot) {
+	const meshOverlay = document.getElementById('cam-mesh-overlay');
+	const badges = document.getElementById('cam-badges');
+	if (!camVideo || !meshOverlay) {
 		setShutterEnabled(true);
 		return;
 	}
+
+	preload();
+
+	await new Promise((res) => {
+		if (camVideo.readyState >= 2) return res();
+		camVideo.addEventListener('loadeddata', res, { once: true });
+	});
+
 	try {
-		cam.detector = new FD({ fastMode: true, maxDetectedFaces: 1 });
+		const slotKey = slot === REQUIRED_SLOT ? 'frontal' : slot;
+		cam.qualitySession = await createQualitySession(camVideo, meshOverlay, {
+			slot: slotKey,
+			onUpdate: (report) => {
+				renderQualityBadges(badges, report, slotKey);
+				updateCameraHints(report, slotKey);
+			},
+		});
+		cam.qualitySession.start();
+		camOval?.setAttribute('hidden', '');
 	} catch (err) {
-		console.warn('[selfie] FaceDetector init failed:', err);
+		console.warn('[selfie] face-quality init failed, falling back:', err);
 		setShutterEnabled(true);
-		return;
 	}
-	cam.detectInterval = window.setInterval(runDetect, 250);
 }
 
-async function runDetect() {
-	if (!cam.detector || !camVideo || !cam.stream) return;
-	if (camVideo.readyState < 2) return;
-	let faces;
-	try {
-		faces = await cam.detector.detect(camVideo);
-	} catch (_) {
-		// Detector failed mid-stream — degrade gracefully, never block the user.
-		stopFaceDetect();
-		setShutterEnabled(true);
+function renderQualityBadges(container, report, slot) {
+	if (!container) return;
+
+	if (!report.faceFound) {
+		container.innerHTML = '<span class="cam-badge-chip bad">No face</span>';
 		return;
 	}
-	const got = Array.isArray(faces) && faces.length > 0;
-	if (got) {
-		const face = faces[0];
-		const bb = face.boundingBox;
-		const vw = camVideo.videoWidth || 1;
-		const vh = camVideo.videoHeight || 1;
-		const cx = (bb.x + bb.width / 2) / vw;
-		const cy = (bb.y + bb.height / 2) / vh;
-		const sz = Math.max(bb.width / vw, bb.height / vh);
-		const centered = Math.abs(cx - 0.5) < 0.18 && Math.abs(cy - 0.5) < 0.22;
-		const sized = sz > 0.32 && sz < 0.85;
-		const ok = centered && sized;
-		setShutterEnabled(true);
-		camOval?.classList.toggle('detected', ok);
-		if (camHint) {
-			if (ok) {
-				camHint.textContent = 'Looks good — tap the shutter';
-				camHint.classList.add('ok');
-				cam.faceLocked = true;
-			} else if (!sized) {
-				camHint.textContent = sz <= 0.32 ? 'Move closer' : 'Move back';
-				camHint.classList.remove('ok');
-			} else {
-				camHint.textContent = 'Center your face in the oval';
-				camHint.classList.remove('ok');
-			}
-		}
-	} else {
+
+	const slotCfg = SLOT_PRESETS[slot] || SLOT_PRESETS.frontal;
+	const chips = [
+		{ text: 'Face', ok: true },
+		{ text: `Yaw ${Math.round(report.yaw)}°`, ok: report.yawOk },
+		{ text: report.centered ? 'Centered' : 'Recenter', ok: report.centered },
+		{ text: report.blurOk ? 'Sharp' : 'Blurry', ok: report.blurOk },
+	];
+
+	const lumaLabel = report.luma < 40 ? 'Too dark' : report.luma > 218 ? 'Bright' : 'Lit';
+	chips.push({ text: lumaLabel, ok: report.lumaOk });
+
+	container.innerHTML = chips.map((c) =>
+		`<span class="cam-badge-chip ${c.ok ? 'ok' : 'bad'}">${c.text}</span>`
+	).join('');
+}
+
+function updateCameraHints(report, slot) {
+	if (!report.faceFound) {
 		setShutterEnabled(false);
 		camOval?.classList.remove('detected');
 		if (camHint) {
 			camHint.textContent = 'No face detected — face the camera';
 			camHint.classList.remove('ok');
 		}
+		return;
+	}
+
+	const allPass = report.allPass;
+	setShutterEnabled(true);
+	camOval?.classList.toggle('detected', allPass);
+
+	if (camHint) {
+		if (allPass) {
+			camHint.textContent = 'Looks good — tap the shutter';
+			camHint.classList.add('ok');
+			cam.faceLocked = true;
+		} else if (!report.yawOk) {
+			camHint.textContent = slot === 'frontal'
+				? 'Face the camera straight on'
+				: `Turn your head ${slot} (~45°)`;
+			camHint.classList.remove('ok');
+		} else if (!report.centered) {
+			camHint.textContent = 'Center your face in the oval';
+			camHint.classList.remove('ok');
+		} else if (!report.blurOk) {
+			camHint.textContent = 'Hold steady — image is blurry';
+			camHint.classList.remove('ok');
+		} else if (!report.lumaOk) {
+			camHint.textContent = report.luma < 40 ? 'Too dark — find better light' : 'Too bright — reduce glare';
+			camHint.classList.remove('ok');
+		} else {
+			camHint.textContent = 'Almost there...';
+			camHint.classList.remove('ok');
+		}
 	}
 }
 
-function stopFaceDetect() {
-	if (cam.detectInterval != null) {
-		clearInterval(cam.detectInterval);
-		cam.detectInterval = null;
+function stopFaceQuality() {
+	if (cam.qualitySession) {
+		cam.qualitySession.stop();
+		cam.qualitySession = null;
 	}
-	cam.detector = null;
+	const meshOverlay = document.getElementById('cam-mesh-overlay');
+	if (meshOverlay) {
+		const ctx = meshOverlay.getContext('2d');
+		if (ctx) ctx.clearRect(0, 0, meshOverlay.width, meshOverlay.height);
+	}
+	const badges = document.getElementById('cam-badges');
+	if (badges) badges.innerHTML = '';
 }
 
 /** @param {boolean} on */
@@ -486,7 +521,7 @@ function setShutterEnabled(on) {
 }
 
 function closeCamera() {
-	stopFaceDetect();
+	stopFaceQuality();
 	cancelCountdown();
 	if (cam.stream) {
 		cam.stream.getTracks().forEach((t) => t.stop());
@@ -538,7 +573,7 @@ camOverlay?.addEventListener('click', (e) => {
 	else if (action === 'retake') {
 		clearPending();
 		setCamMode('live');
-		if (cam.slot === REQUIRED_SLOT) startFaceDetect();
+		startFaceQuality(cam.slot || REQUIRED_SLOT);
 	} else if (action === 'use') confirmCamShot();
 });
 
@@ -591,7 +626,7 @@ async function shoot() {
 	// should match what the camera actually sees.
 	ctx.drawImage(camVideo, 0, 0, w, h);
 
-	stopFaceDetect();
+	stopFaceQuality();
 
 	const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.92));
 	if (!blob) {
