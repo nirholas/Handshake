@@ -1,7 +1,7 @@
 # Demo routes
 
 The canonical map of every `/demo/*` and `/demos/*` route as of
-2026-05-20. Update whenever a route is added, removed, or moved.
+2026-05-27. Update whenever a route is added, removed, or moved.
 
 The demo namespace splits in two:
 
@@ -36,19 +36,23 @@ Both must be kept in sync.
 | `/demos/create-v2` | `public/demos/create-v2.html` | Create-avatar v2 flow. |
 | `/demos/eas-reputation` | `public/demos/eas-reputation.html` | Reputation attestations on Base via EAS. |
 | `/demos/erc8004` | `public/demos/erc8004.html` | ERC-8004 registry browser. |
+| `/demos/checkout` | `public/demos/checkout.html` | Subscription checkout flow. |
 | `/demos/gallery-picker` | `public/demos/gallery-picker.html` | Avatar gallery picker UI. |
-| `/demos/gemini-jump` | `public/demos/gemini-jump.html` | Tactile button (Gemini concept). |
 | `/demos/halfbody-xr` | `public/demos/halfbody-xr.html` | Half-body avatar in WebXR. |
+| `/demos/login` | `public/demos/login.html` | Auth / sign-in flow demo. |
+| `/demos/login-2` | `public/demos/login-2.html` | Alternate sign-in UI variant. |
 | `/demos/lipsync-mic` | `public/demos/lipsync-mic.html` | Audio-driven lipsync from microphone. |
 | `/demos/lipsync-tts` | `public/demos/lipsync-tts.html` | TTS-driven lipsync. |
 | `/demos/livepeer-inference` | `public/demos/livepeer-inference.html` | Decentralized inference via Livepeer. |
 | `/demos/memory-seed` | `public/demos/memory-seed.html` | Agent memory seeding flow. |
 | `/demos/persona-extract` | `public/demos/persona-extract.html` | Persona extraction from social handles. |
+| `/demos/pricing` | `public/demos/pricing.html` | Plan pricing page demo. |
 | `/demos/react-sdk` | `public/demos/react-sdk.html` | `@three-ws/avatar/react` SDK walkthrough. |
 | `/demos/selfie-fit` | `public/demos/selfie-fit.html` | Selfie-fit avatar pipeline. |
 | `/demos/skill-royalty` | `public/demos/skill-royalty.html` | Skill royalty distribution demo. |
 | `/demos/usdz-ar` | `public/demos/usdz-ar.html` | USDZ + AR Quick Look (iOS). |
 | `/demos/voice-clone` | `public/demos/voice-clone.html` | Voice cloning demo. |
+| `/demos/walk-embed-sdk` | `public/demos/walk-embed-sdk.html` | Walk animation embed via SDK. |
 
 The legacy `/brain`, `/lipsync`, `/lipsync/mic`
 shortcuts in `vercel.json` still resolve to the `/demos/*.html` files

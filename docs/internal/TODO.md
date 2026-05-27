@@ -20,27 +20,27 @@ work or refactor for the sake of it.
 
 ## Agent-doable
 
-- [ ] **Audit Resend integration end-to-end.** Read `api/_lib/email.js` and
+- [x] **Audit Resend integration end-to-end.** Read `api/_lib/email.js` and
   every caller (auth, siwe, siws, payments evm+solana, cron, newsletter).
   Verify each call site handles the no-API-key case correctly (returns instead
   of throwing), uses the right template, and the templates render valid HTML.
   Write any missing fixture-based unit tests under `tests/email.test.js`. Run
   `npm test` and confirm green before committing.
 
-- [ ] **Add `/api/healthz` Resend probe.** Extend the existing healthz endpoint
+- [x] **Add `/api/healthz` Resend probe.** Extend the existing healthz endpoint
   to include a `resend: "configured" | "missing" | "key_invalid"` field by
   doing a cheap `GET https://api.resend.com/domains` (or whatever the
   send-only key permits — likely a 401 with `restricted_api_key` is still a
   positive "key valid" signal). Cache the result for 5 min so we don't spam
   Resend. Add a test.
 
-- [ ] **Document Persona Hub.** `docs/persona-hub.md` exists but is partial.
+- [x] **Document Persona Hub.** `docs/persona-hub.md` exists but is partial.
   Fill it in: how to generate keys with `scripts/generate-persona-key.mjs`,
   how `/api/auth/persona/issue` and `/verify` work, what `/.well-known/jwks.json`
   publishes, ES256 vs HS256 fallback, example tenant verification code in
   Node + a browser snippet. No new code — pure docs.
 
-- [ ] **Stale-TODO sweep.** CLAUDE.md forbids `TODO`, `// implement later`,
+- [x] **Stale-TODO sweep.** CLAUDE.md forbids `TODO`, `// implement later`,
   stub functions, and `throw new Error("not implemented")` in shipped code.
   Grep the repo for these patterns (exclude `node_modules`, `dist`, vendor
   directories, and this TODO.md). For each hit: implement it properly, or if
@@ -48,13 +48,13 @@ work or refactor for the sake of it.
   path and a one-line reason. Do NOT delete code to silence the lint — finish
   it or escalate it.
 
-- [ ] **Lip-sync test gaps.** `tests/agent-avatar-lipsync.test.js` is new.
+- [x] **Lip-sync test gaps.** `tests/agent-avatar-lipsync.test.js` is new.
   Read it, look at `src/lip-sync-analyser.js` and `src/agent-avatar.js`, and
   identify any obvious behavior not covered (e.g. very short audio, silence,
   multiple back-to-back utterances, browser without `AnalyserNode`). Add
   those tests if missing. Skip cleanly if coverage is already comprehensive.
 
-- [ ] **Verify the demo route reorg.** The previous commit moved `/coin` →
+- [x] **Verify the demo route reorg.** The previous commit moved `/coin` →
   `/demo/coin` and added `/demo/avatar-os/*` and `/demos/*`. Start the dev
   server (`npm run dev`), curl each new route + the legacy redirect from
   `/coin`, confirm 200s and no console errors in the rendered HTML. Document
