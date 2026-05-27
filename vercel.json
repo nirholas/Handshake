@@ -537,11 +537,14 @@
 		},
 		{
 			"src": "/home-next/?",
-			"dest": "/home-next.html"
+			"status": 301,
+			"headers": {
+				"Location": "/"
+			}
 		},
 		{
 			"src": "/home-classic/?",
-			"dest": "/home.html"
+			"dest": "/home-classic.html"
 		},
 		{
 			"src": "/home-v3/?",

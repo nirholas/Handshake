@@ -1,4 +1,4 @@
-// Mini walk viewer for the home-next "Walk Embed" section.
+// Mini walk viewer for the homepage "Walk Embed" section.
 // Stripped-down version of walk.js: avatar + joystick + WASD + camera follow.
 // No multiplayer, AR, recording, chat, or HUD — just the interactive 3D demo.
 

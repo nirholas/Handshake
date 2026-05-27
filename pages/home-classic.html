@@ -1,0 +1,1573 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws — Where AI Agents Come Alive</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="Give any AI agent a 3D body, a voice, and an on-chain identity. One GLB, any LLM, owned on Solana. Earn USDC with every interaction."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="three.ws" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="three.ws — Where AI Agents Come Alive" />
+		<meta
+			property="og:description"
+			content="Give any AI agent a 3D body, a voice, and an on-chain identity. One GLB, any LLM, owned on Solana. Earn USDC with every interaction."
+		/>
+		<meta property="og:url" content="https://three.ws/" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="three.ws — Where AI Agents Come Alive" />
+		<meta
+			name="twitter:description"
+			content="Give any AI agent a 3D body, a voice, and an on-chain identity. One GLB, any LLM, owned on Solana. Earn USDC with every interaction."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+
+		<link rel="canonical" href="https://three.ws/" />
+		<script>
+			// Forward legacy /#model=… (and /#agent=, /#onchain=, /#widget=) viewer links to /app,
+			// which is where the Three.js viewer actually mounts. home.html is the marketing page
+			// and ignores these hashes, so without this redirect the user lands on home with no model.
+			(function () {
+				var h = location.hash || '';
+				if (/^#(?:model|agent|onchain|widget|kiosk|preset|brain|deploy|type)=/.test(h)) {
+					location.replace('/app' + h);
+				}
+			})();
+		</script>
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/home.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<!-- mobile.css must load last so its rules win on equal specificity -->
+		<link rel="stylesheet" href="/mobile.css" />
+		<!-- home-polish and footer styles are non-critical (below-fold / decorative);
+		     load them after first paint to avoid blocking LCP. -->
+		<link rel="stylesheet" href="/home-polish.css" media="print" onload="this.media='all'" />
+		<link rel="stylesheet" href="/footer.css" media="print" onload="this.media='all'" />
+		<script defer src="/footer-newsletter.js"></script>
+		<script defer src="/home-polish.js"></script>
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
+		<script src="/fluid-particles.js" defer></script>
+		<script type="module" src="/src/home-act2-viewer.js"></script>
+
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@graph": [
+					{
+						"@type": "WebSite",
+						"@id": "https://three.ws/#website",
+						"url": "https://three.ws/",
+						"name": "three.ws",
+						"description": "Where AI agents come alive. Give any AI agent a 3D body, a voice, and an on-chain identity.",
+						"publisher": { "@id": "https://three.ws/#org" },
+						"potentialAction": {
+							"@type": "SearchAction",
+							"target": "https://three.ws/discover?q={search_term_string}",
+							"query-input": "required name=search_term_string"
+						}
+					},
+					{
+						"@type": "Organization",
+						"@id": "https://three.ws/#org",
+						"name": "three.ws",
+						"url": "https://three.ws/",
+						"logo": "https://three.ws/icon.png",
+						"sameAs": [
+							"https://github.com/nirholas/three.ws",
+							"https://x.com/three_ws"
+						]
+					},
+					{
+						"@type": "SoftwareApplication",
+						"name": "three.ws",
+						"applicationCategory": "DeveloperApplication",
+						"applicationSubCategory": "EmbodiedAgentPlatform",
+						"operatingSystem": "Web",
+						"browserRequirements": "Requires WebGL2",
+						"offers": {
+							"@type": "Offer",
+							"price": "0",
+							"priceCurrency": "USD"
+						}
+					}
+				]
+			}
+		</script>
+	</head>
+	<body class="home-page">
+		<div class="cursor" id="cursor" aria-hidden="true"></div>
+		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+		<header>
+			<h1>
+				<a href="/" aria-label="three.ws home"
+					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span
+						class="wordmark-dot"
+						aria-hidden="true"
+					></span
+					>three.ws</a
+				>
+			</h1>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main id="main-content" class="home-parallax">
+			<!-- ── Hero (parallax act) ── -->
+			<section class="h-hero-act">
+				<!-- Depth 8: fluid particles + nebula -->
+				<div class="h-layer" style="--depth: 8" aria-hidden="true">
+					<div class="h-layer-nebula"></div>
+					<canvas id="home-fluid-canvas" class="h-fluid-canvas"></canvas>
+				</div>
+				<!-- Depth 4: perspective grid -->
+				<div class="h-layer" style="--depth: 4" aria-hidden="true">
+					<div class="h-hero-grid"></div>
+				</div>
+				<!-- Depth 3: ghost model drifting in background -->
+				<div class="h-layer" style="--depth: 3" aria-hidden="true">
+					<model-viewer
+						class="h-ghost-model"
+						src="/animations/robotexpressive.glb"
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="5deg"
+						interaction-prompt="none"
+						camera-controls="false"
+						disable-zoom
+						shadow-intensity="0"
+						exposure="0.5"
+						environment-image="neutral"
+						camera-orbit="15deg 80deg 4m"
+						field-of-view="45deg"
+						loading="lazy"
+					></model-viewer>
+				</div>
+				<!-- Depth 2: atmosphere -->
+				<div class="h-layer" style="--depth: 2" aria-hidden="true">
+					<div class="h-hero-mesh"></div>
+					<div class="h-hero-glow-a"></div>
+					<div class="h-hero-glow-b"></div>
+				</div>
+				<!-- Depth 1: main avatar that waves on load and tracks the cursor -->
+				<div class="h-layer" style="--depth: 1">
+					<div class="h-avatar-stage">
+						<div class="h-avatar-wrap">
+							<div class="h-avatar-ring"></div>
+							<div class="h-avatar-glow"></div>
+							<canvas
+								id="hero-avatar"
+								class="h-avatar-viewer"
+								aria-label="three.ws — interactive 3D agent. Click for surprises."
+							></canvas>
+						</div>
+					</div>
+				</div>
+				<!-- Depth 0.5: vignette closest to camera -->
+				<div class="h-layer" style="--depth: 0.5" aria-hidden="true">
+					<div class="h-vignette"></div>
+				</div>
+
+				<!-- Sticky text pinned to bottom-left — same pattern as features page -->
+				<div class="h-hero-text">
+					<div class="h-eyebrow h-reveal">
+						<span class="h-eyebrow-dot"></span>
+						<span>The 3D layer for onchain AI agents</span>
+					</div>
+					<h2 class="h-title h-reveal">Where AI Agents<br />Come <em>Alive</em>.</h2>
+					<p class="h-subtitle h-reveal">
+						Give any AI agent a 3D body, a voice, and an on-chain identity.
+						One GLB. Any LLM. Owned on Solana. Earn USDC with every interaction.
+					</p>
+					<div class="h-cta-row h-reveal">
+						<a href="/create" class="h-btn-primary">
+							<span>Get Started Free</span>
+							<span class="arrow">→</span>
+						</a>
+						<a href="/marketplace" class="h-btn-ghost">Browse Marketplace</a>
+					</div>
+					<ul class="h-standards h-reveal" aria-label="Supported formats and standards">
+						<li>glTF 2.0</li>
+						<li>GLB</li>
+						<li>Solana</li>
+						<li>Metaplex Core</li>
+						<li>A2A</li>
+						<li>MCP</li>
+						<li>x402</li>
+					</ul>
+				</div>
+
+				<div class="h-scroll-hint" aria-hidden="true">
+					<span>scroll</span>
+					<span class="h-scroll-line"></span>
+				</div>
+			</section>
+
+			<!-- ── Traction stats bar ── -->
+			<section class="h-traction" aria-label="Platform traction">
+				<div class="h-traction-inner">
+					<div class="h-traction-stat" data-traction-key="agents">
+						<span class="h-traction-val" data-traction-val="agents">—</span>
+						<span class="h-traction-label">Agents created</span>
+					</div>
+					<div class="h-traction-divider" aria-hidden="true"></div>
+					<div class="h-traction-stat" data-traction-key="views">
+						<span class="h-traction-val" data-traction-val="views">—</span>
+						<span class="h-traction-label">Widget views</span>
+					</div>
+					<div class="h-traction-divider" aria-hidden="true"></div>
+					<div class="h-traction-stat" data-traction-key="chats">
+						<span class="h-traction-val" data-traction-val="chats">—</span>
+						<span class="h-traction-label">Conversations</span>
+					</div>
+					<div class="h-traction-divider" aria-hidden="true"></div>
+					<div class="h-traction-stat" data-traction-key="countries">
+						<span class="h-traction-val" data-traction-val="countries">—</span>
+						<span class="h-traction-label">Countries reached</span>
+					</div>
+					<div class="h-traction-divider" aria-hidden="true"></div>
+					<div class="h-traction-stat" data-traction-key="chains">
+						<span class="h-traction-val" data-traction-val="chains">—</span>
+						<span class="h-traction-label">Chains supported</span>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Pillars transition band (between hero and Act 2) ── -->
+			<section class="h-pillars" aria-label="What you get">
+				<div class="h-pillars-inner">
+					<article class="h-pillar h-reveal">
+						<span class="h-pillar-num">01 / Identity</span>
+						<h3>A 3D body for any agent</h3>
+						<p>
+							Any glTF model becomes a fully rendered, animated avatar in the
+							browser — embeddable in a single tag, on any site.
+						</p>
+					</article>
+					<article class="h-pillar h-reveal">
+						<span class="h-pillar-num">02 / Intelligence</span>
+						<h3>Your stack, your brain</h3>
+						<p>
+							Connect Claude, GPT, Gemini, or your own model over MCP or A2A.
+							Real-time expression and voice ride on top — no rewrites to your
+							existing agent.
+						</p>
+					</article>
+					<article class="h-pillar h-reveal">
+						<span class="h-pillar-num">03 / Ownership</span>
+						<h3>Owned on Solana</h3>
+						<p>
+							Mint a Metaplex Core asset and your agent becomes a verifiable,
+							portable identity — discoverable by any A2A or MCP client.
+							Your agent, your keys.
+						</p>
+					</article>
+				</div>
+			</section>
+
+			<!-- ── How it works ── -->
+			<section class="h-journey" aria-label="How it works">
+				<div class="h-journey-inner">
+					<div class="h-journey-header h-reveal">
+						<p class="h-section-label">How it works</p>
+						<h2 class="h-journey-title">From selfie to<br /><em>earning agent</em> in four steps.</h2>
+					</div>
+					<ol class="h-journey-steps">
+						<li class="h-journey-step h-reveal">
+							<a href="/create" class="h-journey-card">
+								<div class="h-jc-num">01</div>
+								<div class="h-jc-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+										<circle cx="12" cy="8" r="4"/>
+										<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+										<path d="M16 3.5a4 4 0 010 9"/>
+									</svg>
+								</div>
+								<div class="h-jc-body">
+									<h3>Create your avatar</h3>
+									<p>Snap a selfie or upload a GLB. three.ws renders a full-body 3D agent in the browser — no software to install.</p>
+								</div>
+								<span class="h-jc-cta">Start creating →</span>
+							</a>
+						</li>
+						<li class="h-journey-step h-reveal">
+							<a href="/dashboard/agents" class="h-journey-card">
+								<div class="h-jc-num">02</div>
+								<div class="h-jc-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+										<rect x="5" y="2" width="14" height="14" rx="3"/>
+										<circle cx="9" cy="8" r="1.2"/>
+										<circle cx="15" cy="8" r="1.2"/>
+										<path d="M9 11.5h6M2 19l3-3h14l3 3v2a1 1 0 01-1 1H3a1 1 0 01-1-1v-2z"/>
+									</svg>
+								</div>
+								<div class="h-jc-body">
+									<h3>Build your agent</h3>
+									<p>Give your avatar a name, on-chain identity, and AI brain. Connect Claude, GPT, or your own model over MCP or A2A — no rewrites required.</p>
+								</div>
+								<span class="h-jc-cta">Configure agent →</span>
+							</a>
+						</li>
+						<li class="h-journey-step h-reveal">
+							<a href="/dashboard/widgets" class="h-journey-card">
+								<div class="h-jc-num">03</div>
+								<div class="h-jc-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+										<rect x="2" y="3" width="9" height="9" rx="1.5"/>
+										<rect x="13" y="3" width="9" height="9" rx="1.5"/>
+										<rect x="2" y="14" width="9" height="9" rx="1.5"/>
+										<rect x="13" y="14" width="9" height="9" rx="1.5"/>
+									</svg>
+								</div>
+								<div class="h-jc-body">
+									<h3>Embed anywhere</h3>
+									<p>Drop a single <code>&lt;threews-avatar&gt;</code> tag on any site. Chat widget, floating button, full-screen — five widget types, one line of HTML.</p>
+								</div>
+								<span class="h-jc-cta">Create widget →</span>
+							</a>
+						</li>
+						<li class="h-journey-step h-reveal">
+							<a href="/dashboard/monetize" class="h-journey-card">
+								<div class="h-jc-num">04</div>
+								<div class="h-jc-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+										<circle cx="12" cy="12" r="8.5"/>
+										<path d="M12 7v10M9 9.5h4.5a2.5 2.5 0 010 5H10a2.5 2.5 0 000 5H14"/>
+									</svg>
+								</div>
+								<div class="h-jc-body">
+									<h3>Start earning</h3>
+									<p>Charge per message, set a subscription, or accept tips in USDC. Your agent earns while you sleep — withdrawals land in your Solana wallet.</p>
+								</div>
+								<span class="h-jc-cta">Set up monetization →</span>
+							</a>
+						</li>
+					</ol>
+					<div class="h-journey-footer h-reveal">
+						<a href="/create" class="h-btn-primary">
+							<span>Build your agent now</span>
+							<span class="arrow">→</span>
+						</a>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Act 2: Pick & Animate ── -->
+			<section class="h-act h-act--animate" data-act="2" id="pick-animate">
+				<div class="h-act-warp h-act-warp--amber" aria-hidden="true"></div>
+				<div class="h-layer" style="--depth: 8" aria-hidden="true">
+					<div class="h-layer-bg h-layer-bg--amber"></div>
+					<canvas
+						class="h-star-canvas"
+						data-role="star-canvas"
+						data-tint="255,190,80"
+						data-count="200"
+					></canvas>
+				</div>
+				<div class="h-layer" style="--depth: 4" aria-hidden="true">
+					<svg
+						class="h-layer-words"
+						viewBox="0 0 1600 900"
+						preserveAspectRatio="xMidYMid slice"
+						role="presentation"
+					>
+						<g
+							fill="rgba(255,200,80,0.13)"
+							font-family="'Space Grotesk','Inter',sans-serif"
+							font-weight="600"
+						>
+							<text x="80" y="200" font-size="52">Dance</text>
+							<text x="1100" y="160" font-size="44">Wave</text>
+							<text x="200" y="710" font-size="44">Jump</text>
+							<text x="980" y="760" font-size="40">ThumbsUp</text>
+							<text x="560" y="440" font-size="96" fill="rgba(255,255,255,0.05)">
+								Idle
+							</text>
+							<text x="55" y="860" font-size="40">Punch</text>
+							<text x="1260" y="520" font-size="48">Run</text>
+						</g>
+					</svg>
+				</div>
+				<div class="h-layer" style="--depth: 2" aria-hidden="true">
+					<div class="h-layer-orb h-layer-orb--amber"></div>
+				</div>
+				<div class="h-layer" style="--depth: 1">
+					<div class="h-avatar-stage">
+						<div class="h-avatar-wrap">
+							<canvas id="home-act2-canvas" class="h-avatar-viewer"></canvas>
+						</div>
+					</div>
+				</div>
+				<div class="h-layer" style="--depth: 0.5" aria-hidden="true">
+					<div class="h-vignette"></div>
+				</div>
+
+				<div class="h-act-text">
+					<div class="h-act-eyebrow">
+						<span class="h-act-dot"></span>
+						<span>Pick &amp; animate</span>
+					</div>
+					<h2 class="h-act-title">Your agent.<br /><em>Any move.</em></h2>
+					<p class="h-act-lede">
+						Choose an avatar. Trigger any animation. The same renderer ships in
+						your embed.
+					</p>
+
+					<div class="h-avatar-picker" role="group" aria-label="Choose avatar">
+						<button
+							class="h-av-opt"
+							data-src="/animations/robotexpressive.glb"
+							aria-pressed="true"
+						>
+							Robot
+						</button>
+						<button
+							class="h-av-opt"
+							data-src="/animations/soldier.glb"
+							aria-pressed="false"
+						>
+							Soldier
+						</button>
+						<button class="h-av-opt" data-src="/avatars/cz.glb" aria-pressed="false">
+							CZ
+						</button>
+					</div>
+
+					<div
+						class="h-anim-chips"
+						role="group"
+						aria-label="Trigger animation"
+						data-role="anim-chips"
+					></div>
+
+					<div class="h-act-cta">
+						<a href="/create" class="h-btn-primary"
+							><span>Create your agent</span><span class="arrow">→</span></a
+						>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Act 3: Deploy on-chain ── -->
+			<section class="h-act h-act--deploy" data-act="3" id="deploy-act">
+				<div class="h-act-warp h-act-warp--mint" aria-hidden="true"></div>
+				<div class="h-layer" style="--depth: 8" aria-hidden="true">
+					<div class="h-layer-bg h-layer-bg--mint"></div>
+					<canvas
+						class="h-star-canvas"
+						data-role="star-canvas"
+						data-tint="110,231,183"
+						data-count="200"
+					></canvas>
+				</div>
+
+				<div class="h-layer" style="--depth: 2" aria-hidden="true">
+					<div class="h-layer-orb h-layer-orb--mint"></div>
+				</div>
+				<div class="h-layer" style="--depth: 1" aria-hidden="true">
+					<div class="h-avatar-stage h-avatar-stage--trio">
+						<div class="h-avatar-wrap h-avatar-wrap--ghost h-avatar-wrap--trio">
+							<canvas
+								id="act3-avatar-a"
+								class="h-avatar-viewer h-avatar-viewer--tall"
+							></canvas>
+						</div>
+						<div class="h-avatar-wrap h-avatar-wrap--ghost h-avatar-wrap--trio">
+							<canvas
+								id="act3-avatar-b"
+								class="h-avatar-viewer h-avatar-viewer--tall"
+							></canvas>
+						</div>
+						<div class="h-avatar-wrap h-avatar-wrap--ghost h-avatar-wrap--trio">
+							<canvas
+								id="act3-avatar-c"
+								class="h-avatar-viewer h-avatar-viewer--tall"
+							></canvas>
+						</div>
+					</div>
+				</div>
+				<div class="h-layer" style="--depth: 0.5" aria-hidden="true">
+					<div class="h-vignette"></div>
+				</div>
+
+				<div class="h-act-text">
+					<div class="h-act-eyebrow">
+						<span class="h-act-dot h-act-dot--mint"></span>
+						<span>Metaplex native</span>
+					</div>
+					<h2 class="h-act-title h-act-title--mint">
+						One transaction.<br /><em>One identity.</em>
+					</h2>
+					<p class="h-act-lede">
+						One Solana transaction. A portable, verifiable agentId every A2A or
+						MCP client can find.
+					</p>
+
+					<form class="h-deploy-form" id="home-deploy-form" action="/deploy" method="get">
+						<div class="h-form-row">
+							<label class="h-form-label" for="agent-name-home">Agent name</label>
+							<input
+								id="agent-name-home"
+								name="name"
+								class="h-form-input"
+								type="text"
+								placeholder="my-agent"
+								autocomplete="off"
+								spellcheck="false"
+							/>
+						</div>
+						<div class="h-form-row">
+							<label class="h-form-label" for="network-home">Network</label>
+							<select id="network-home" name="network" class="h-form-select">
+								<option value="mainnet-beta" selected>Solana Mainnet</option>
+								<option value="devnet">Solana Devnet</option>
+							</select>
+						</div>
+						<div class="h-deploy-stats">
+							<div>
+								<span class="h-stat-label">Chain</span
+								><span class="h-stat-val">Solana</span>
+							</div>
+							<div>
+								<span class="h-stat-label">Standard</span
+								><span class="h-stat-val">Metaplex Core</span>
+							</div>
+							<div>
+								<span class="h-stat-label">Fee</span
+								><span class="h-stat-val">~$0.01</span>
+							</div>
+						</div>
+						<button type="submit" class="h-btn-primary h-btn-deploy">
+							<span>Mint your agent</span>
+							<span class="arrow">→</span>
+						</button>
+					</form>
+				</div>
+			</section>
+
+			<!-- ── Bento feature grid ── -->
+			<section class="h-bento-section">
+				<div class="h-bento-header h-reveal">
+					<p class="h-section-label">What you get</p>
+					<h2 class="h-section-title">
+						Everything an agent needs<br />to exist in the world.
+					</h2>
+				</div>
+				<div class="h-bento-grid">
+					<!-- Large card: 3D viewer + inline animation panel -->
+					<div class="h-bento-card h-bento-card--lg h-reveal">
+						<div class="h-bento-visual">
+							<canvas id="bento-cz-canvas" class="h-bento-cz-canvas"></canvas>
+						</div>
+						<div class="h-bento-anim-panel" data-role="bento-anim-panel">
+							<div class="h-bento-anim-header">
+								<span class="h-bento-anim-title">Animations</span>
+								<button
+									type="button"
+									class="h-bento-anim-stop"
+									data-role="bento-anim-stop"
+									title="Stop all"
+								>
+									⏹
+								</button>
+							</div>
+							<div class="h-bento-anim-grid" data-role="bento-anim-grid"></div>
+						</div>
+						<div class="h-bento-body">
+							<span class="h-bento-tag">Viewer</span>
+							<h3>WebGL rendering, zero install.</h3>
+							<p>
+								Drag any GLB into the browser. Full animations, lighting, and
+								materials — instantly, on any device.
+							</p>
+							<a href="/app" class="h-feature-link">Open viewer →</a>
+						</div>
+					</div>
+					<!-- Small cards -->
+					<div class="h-bento-card h-reveal">
+						<div class="h-bento-body">
+							<span class="h-bento-tag">Embed</span>
+							<h3>One tag. Any site.</h3>
+							<p>Drop a web component into Notion, Ghost, WordPress, Framer, or your own app — no SDK required.</p>
+							<div class="h-bento-code">
+								<span class="tag">&lt;agent-3d</span>
+								<br />&nbsp;&nbsp;<span class="attr">agent-id</span>=<span
+									class="val"
+									>"3DAg…uPL"</span
+								>
+								<br /><span class="tag">&gt;&lt;/agent-3d&gt;</span>
+							</div>
+						</div>
+					</div>
+					<div class="h-bento-card h-reveal">
+						<div class="h-bento-body">
+							<span class="h-bento-tag h-bento-tag--mint">On-chain</span>
+							<h3>Verifiable identity.</h3>
+							<p>
+								Metaplex Core asset on Solana. One transaction, sub-cent fees.
+								Discoverable by any A2A or MCP client.
+							</p>
+						</div>
+					</div>
+					<div class="h-bento-card h-reveal">
+						<div class="h-bento-body">
+							<span class="h-bento-tag h-bento-tag--violet">AI</span>
+							<h3>Expression, in real time.</h3>
+							<p>
+								Your agent reacts as it speaks, thinks, succeeds, and fails — emotion
+								wired directly to model output, not scripted.
+							</p>
+							<ul class="h-bento-emotions" aria-label="Emotion states">
+								<li><span class="h-em-dot"></span>Celebration</li>
+								<li><span class="h-em-dot"></span>Curiosity</li>
+								<li><span class="h-em-dot"></span>Empathy</li>
+								<li><span class="h-em-dot"></span>Concern</li>
+							</ul>
+						</div>
+					</div>
+					<div class="h-bento-card h-reveal">
+						<div class="h-bento-body">
+							<span class="h-bento-tag">Widgets</span>
+							<h3>5 widget types.</h3>
+							<p>
+								Turntable · Talking Agent · Animation Gallery · ERC-8004 Passport ·
+								Hotspot Tour
+							</p>
+							<a href="/studio" class="h-feature-link">Widget Studio →</a>
+						</div>
+					</div>
+					<div class="h-bento-card h-reveal">
+						<div class="h-bento-body">
+							<span class="h-bento-tag h-bento-tag--mint">SNS · pay-by-name</span>
+							<h3>Get paid by name.</h3>
+							<p>
+								Claim <code style="background:rgba(255,255,255,.06);padding:.1em .35em;border-radius:4px;font-size:.9em">yourname.threews.sol</code>
+								as a Solana Name Service subdomain. Brave routes it straight to your showcase;
+								agents pay you in USDC by name, not address. We absorb the gas.
+							</p>
+							<a href="/threews/claim" class="h-feature-link">Claim your subdomain →</a>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Developer section ── -->
+			<div class="h-dev-section h-reveal">
+				<div class="h-dev-inner">
+					<div class="h-dev-text">
+						<p class="h-section-label">For developers</p>
+						<h2>Drop one tag.<br />Ship a 3D agent.</h2>
+						<p class="h-dev-sub">
+							The <code>&lt;agent-3d&gt;</code> web component lazy-loads, renders
+							anywhere, and connects to your existing AI stack via MCP or A2A. No
+							framework. No build step.
+						</p>
+						<div class="h-dev-links">
+							<a href="/docs" class="h-feature-link">Read the docs →</a>
+							<a
+								href="https://github.com/nirholas/three.ws"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="h-feature-link"
+								>GitHub →</a
+							>
+						</div>
+					</div>
+					<div class="h-dev-code">
+						<div class="h-dev-code-bar">
+							<span class="h-dev-code-dot"></span>
+							<span class="h-dev-code-dot"></span>
+							<span class="h-dev-code-dot"></span>
+							<span class="h-dev-code-filename">index.html</span>
+						</div>
+						<pre
+							class="h-dev-pre"
+						><code><span class="c">&lt;!-- 1. Load the component --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"module"</span>
+  <span class="attr">src</span>=<span class="val">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+
+<span class="c">&lt;!-- 2. Drop the tag --&gt;</span>
+<span class="tag">&lt;agent-3d</span>
+  <span class="attr">agent-id</span>=<span class="val">"3DAg…uPL"</span>
+  <span class="attr">kiosk</span>
+<span class="tag">&gt;&lt;/agent-3d&gt;</span></code></pre>
+					</div>
+				</div>
+			</div>
+
+			<!-- ── Final CTA ── -->
+			<section class="h-cta-section">
+				<div class="h-cta-inner h-reveal">
+					<h2>Ready to build<br />the future?</h2>
+					<p>Free to start. No credit card. Deploy in minutes.</p>
+					<div class="h-cta-row-center">
+						<a href="/create" class="h-btn-primary">
+							<span>Create your agent</span>
+							<span class="arrow">→</span>
+						</a>
+						<a href="/marketplace" class="h-btn-ghost">Explore the marketplace</a>
+					</div>
+				</div>
+			</section>
+
+			<footer class="h-footer h-footer-horizon">
+				<div class="h-footer-glow-line" aria-hidden="true"></div>
+				<div class="h-footer-floor" aria-hidden="true"></div>
+				<div class="h-footer-haze" aria-hidden="true"></div>
+				<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+				<div class="h-footer-avatar" aria-hidden="true">
+					<model-viewer
+						src="/animations/robotexpressive.glb"
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="20deg"
+						interaction-prompt="none"
+						camera-controls="false"
+						disable-zoom
+						shadow-intensity="0"
+						exposure="0.7"
+						environment-image="neutral"
+						camera-orbit="0deg 80deg 9m"
+						field-of-view="45deg"
+						loading="lazy"
+					></model-viewer>
+				</div>
+
+				<div class="h-footer-cta">
+					<div class="h-footer-newsletter">
+						<h3>Stay in the loop</h3>
+						<p>Get updates on new features, agent tooling, and protocol changes.</p>
+						<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+							<input
+								type="email"
+								class="h-footer-newsletter-input"
+								name="email"
+								placeholder="Enter your email"
+								aria-label="Email address"
+								autocomplete="email"
+								required
+							/>
+							<button
+								type="submit"
+								class="h-footer-newsletter-btn"
+								aria-label="Subscribe"
+							>
+								<svg viewBox="0 0 16 16" aria-hidden="true">
+									<path
+										fill="none"
+										stroke="currentColor"
+										stroke-width="1.6"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M2 8h11m0 0L9 4m4 4l-4 4"
+									/>
+								</svg>
+							</button>
+						</form>
+						<p
+							class="h-footer-newsletter-msg"
+							data-newsletter-msg
+							aria-live="polite"
+						></p>
+					</div>
+					<div class="h-footer-community">
+						<h3>Join the community</h3>
+						<p>Follow along for builds, demos, and conversations with the team.</p>
+						<a
+							class="h-footer-community-btn"
+							href="https://x.com/trythreews"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path
+									fill="currentColor"
+									d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+								/>
+							</svg>
+							Follow on X
+						</a>
+					</div>
+				</div>
+				<div class="h-footer-inner">
+					<div class="h-footer-brand-col">
+						<div class="h-footer-brand">
+							<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+							<span class="wordmark-dot" aria-hidden="true"></span>
+							<span>three.ws</span>
+						</div>
+						<p class="h-footer-tagline">Give your AI a body.</p>
+						<div class="h-footer-socials">
+							<a
+								class="h-footer-social"
+								href="https://x.com/trythreews"
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label="three.ws on X"
+							>
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path
+										fill="currentColor"
+										d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+									/>
+								</svg>
+							</a>
+							<a
+								class="h-footer-social"
+								href="https://github.com/nirholas/three.ws"
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label="three.ws on GitHub"
+							>
+								<svg viewBox="0 0 16 16" aria-hidden="true">
+									<path
+										fill="currentColor"
+										d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+									/>
+								</svg>
+							</a>
+						</div>
+					</div>
+					<nav class="h-footer-links" aria-label="Footer">
+						<div class="h-footer-link-col">
+							<h4 class="h-footer-link-heading">Product</h4>
+							<a href="/create">Create</a>
+							<a href="/marketplace">Marketplace</a>
+							<a href="/studio">Studio</a>
+							<a href="/widgets">Widgets</a>
+							<a href="/pricing">Pricing</a>
+						</div>
+						<div class="h-footer-link-col">
+							<h4 class="h-footer-link-heading">Developers</h4>
+							<a href="/docs">Docs</a>
+							<a
+								href="https://github.com/nirholas/three.ws"
+								target="_blank"
+								rel="noopener noreferrer"
+								>GitHub</a
+							>
+							<a href="/bazaar">x402 Bazaar</a>
+							<a
+								href="https://developers.metaplex.com/core"
+								target="_blank"
+								rel="noopener noreferrer"
+								>Metaplex Core</a
+							>
+						</div>
+						<div class="h-footer-link-col">
+							<h4 class="h-footer-link-heading">Company</h4>
+							<a href="/blog">Blog</a>
+							<a href="/community">Community</a>
+							<a href="/features">Features</a>
+							<a href="/dashboard">Dashboard</a>
+						</div>
+						<div class="h-footer-link-col">
+							<h4 class="h-footer-link-heading">Legal</h4>
+							<a href="/legal/privacy">Privacy</a>
+							<a href="/legal/tos">Terms</a>
+						</div>
+					</nav>
+				</div>
+				<div class="h-footer-bottom">
+					<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+					<div class="h-footer-badges">
+						<a href="/pay" class="h-footer-badge" aria-label="Built with x402 payments">
+							<svg viewBox="0 0 16 16" aria-hidden="true">
+								<circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+								<path d="M8 4v8M5.5 6h3.5a1.5 1.5 0 010 3H6.5a1.5 1.5 0 000 3H11" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+							Built with x402
+						</a>
+						<span class="h-footer-badge" aria-label="All systems operational">
+							<span class="h-footer-status-dot"></span>
+							All systems operational
+						</span>
+					</div>
+					<div class="h-footer-legal-links">
+						<a href="/legal/privacy">Privacy Policy</a>
+						<a href="/legal/tos">Terms of Use</a>
+					</div>
+				</div>
+			</footer>
+		</main>
+
+		<script>
+			// Devices with < 2 GB RAM get no WebGL viewers — avoids GPU OOM and
+			// context-limit issues. navigator.deviceMemory is undefined on Firefox/Safari
+			// so we default to "capable" when the API is absent.
+			const LOW_MEMORY = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory < 2;
+			const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			// Skip GL only on truly constrained devices. Reduced-motion users still
+			// see the avatars (without auto-rotate); skipping rendering for them left
+			// the bento/Act 2/Act 3 canvases permanently blank.
+			const SKIP_OFFSCREEN_GL = LOW_MEMORY;
+
+			// Footer model-viewer is decorative — skip on low-memory devices to
+			// avoid hitting the WebGL context limit alongside the bento/act viewers.
+			if (LOW_MEMORY) {
+				const footerAvatar = document.querySelector('.h-footer-avatar');
+				if (footerAvatar) footerAvatar.hidden = true;
+			}
+
+			// Scroll reveal — use viewport (root: null) so IntersectionObserver
+			// avoids the perspective transform on .home-parallax breaking intersection math.
+			(function () {
+				const root = document.querySelector('.home-parallax');
+				const els = document.querySelectorAll('.h-reveal');
+				const observer = new IntersectionObserver(
+					(entries) => {
+						entries.forEach((entry) => {
+							if (entry.isIntersecting) {
+								entry.target.classList.add('revealed');
+								observer.unobserve(entry.target);
+							}
+						});
+					},
+					{ root: null, threshold: 0.12, rootMargin: '0px 0px -50px 0px' },
+				);
+				els.forEach((el) => {
+					const siblings = Array.from(el.parentElement.querySelectorAll('.h-reveal'));
+					const idx = siblings.indexOf(el);
+					el.style.transitionDelay = idx * 0.09 + 's';
+					observer.observe(el);
+				});
+			})();
+
+			// Hero avatar — Act2Viewer with cursor/scroll orbit + click → real animations
+			(function () {
+				const scrollEl = document.querySelector('.home-parallax');
+				const canvas = document.getElementById('hero-avatar');
+				const heroAct = document.querySelector('.h-hero-act');
+				if (!scrollEl || !canvas || !heroAct) return;
+
+				let mouseX = 0,
+					mouseY = 0,
+					scrollProgress = 0;
+				const BASE_THETA = -45,
+					BASE_PHI = 80,
+					BASE_R = 20;
+				let curTheta = BASE_THETA,
+					curPhi = BASE_PHI,
+					curR = BASE_R;
+
+				window.addEventListener(
+					'mousemove',
+					(e) => {
+						mouseX = (e.clientX / innerWidth) * 2 - 1;
+						mouseY = (e.clientY / innerHeight) * 2 - 1;
+					},
+					{ passive: true },
+				);
+
+				scrollEl.addEventListener(
+					'scroll',
+					() => {
+						scrollProgress = Math.min(scrollEl.scrollTop / heroAct.offsetHeight, 1);
+					},
+					{ passive: true },
+				);
+
+				function whenReady(cb) {
+					if (window.Act2Viewer) return cb();
+					setTimeout(() => whenReady(cb), 60);
+				}
+
+				whenReady(() => {
+					const viewer = new window.Act2Viewer(canvas, { fov: 18 });
+					let orbitActive = false;
+
+					/* cursor + scroll orbit loop — starts after model loads to avoid camera snap */
+					(function tick() {
+						if (orbitActive) {
+							const scrollTheta = scrollProgress * 90;
+							const scrollPhi = -scrollProgress * 8;
+							const scrollR = scrollProgress * 0.8;
+							curTheta += (BASE_THETA + scrollTheta + mouseX * 16 - curTheta) * 0.07;
+							curPhi += (BASE_PHI + scrollPhi + mouseY * 6 - curPhi) * 0.07;
+							curR += (BASE_R + scrollR - curR) * 0.12;
+							viewer.setOrbit(curTheta, curPhi, curR);
+						}
+						requestAnimationFrame(tick);
+					})();
+
+					const wrap = canvas.closest('.h-avatar-wrap');
+
+					/* falling: wait for clip to play out, then expand and slide across.
+					   alreadyPlaying=true skips the playClip call (used on first load). */
+					async function doFalling(alreadyPlaying = false) {
+						if (!alreadyPlaying) {
+							try {
+								await viewer.playClip('falling');
+							} catch (_) {}
+						}
+
+						/* wait for the actual clip to finish on the ground */
+						const clipDur = viewer.currentAction
+							? viewer.currentAction.getClip().duration * 1000
+							: 2200;
+						await new Promise((r) => setTimeout(r, clipDur));
+
+						/* expand to full-width and slide the model slowly across the ground */
+						wrap.classList.add('h-avatar-wrap--traversing');
+						const SLIDE_DUR = 3200;
+						const SLIDE_DIST = 8;
+						const t0 = performance.now();
+						await new Promise((r) => {
+							(function step(now) {
+								const t = Math.min((now - t0) / SLIDE_DUR, 1);
+								const x = SLIDE_DIST * t;
+								if (viewer.model) viewer.model.position.x = x;
+								viewer._focusX = x;
+								if (t < 1) {
+									requestAnimationFrame(step);
+								} else {
+									r();
+								}
+							})(performance.now());
+						});
+
+						/* reset + back to dance */
+						if (viewer.model) viewer.model.position.x = 0;
+						viewer._focusX = 0;
+						wrap.classList.remove('h-avatar-wrap--traversing');
+						viewer.playClip('dance').catch(() => {});
+					}
+
+					canvas.style.opacity = '0';
+					viewer
+						.loadModel('/avatars/cz.glb', { autoPlay: false })
+						.then(async () => {
+							/* Scale up ring geometry so it fills the canvas */
+							viewer.model.traverse((node) => {
+								if (node.isMesh || node.isGroup) {
+									const n = node.name.toLowerCase();
+									if (n.includes('ring') || n.includes('circle') || n.includes('halo') || n.includes('orbit') || n.includes('arc')) {
+										node.scale.setScalar(2.5);
+									}
+								}
+							});
+							viewer._modelFocusY = 1.1;
+							viewer.setOrbit(curTheta, curPhi, curR);
+							orbitActive = true;
+							/* fetch + start the falling clip before revealing — no T-pose flash */
+							try {
+								await viewer.playClip('falling');
+							} catch (_) {}
+							canvas.style.transition = 'opacity 0.15s';
+							canvas.style.opacity = '1';
+							/* clip is already playing — pass flag so doFalling skips the restart */
+							doFalling(true);
+						})
+						.catch(console.error);
+
+					/* click → random manifest animation; falling gets full traverse treatment */
+					const FUN = [
+						'falling',
+						'wave',
+						'dance',
+						'celebrate',
+						'jump',
+						'rumba',
+						'capoeira',
+						'thriller',
+						'kiss',
+						'taunt',
+						'pray',
+						'idle',
+						'angry',
+						'defeated',
+						'dying',
+						'reaction',
+						'silly',
+						'sitclap',
+						'sitlaugh',
+						'walk',
+						'dodge',
+						'stepback',
+						'shoved',
+						'standup',
+						'header',
+						'coverstand',
+						'goalkeeper',
+						'jumpdown',
+						'jumpdown2',
+						'jumpdown3',
+						'removing',
+						'falltolanding',
+					];
+					let lastAnim = null;
+					canvas.style.cursor = 'pointer';
+					canvas.addEventListener('click', async () => {
+						const pool = FUN.filter((a) => a !== lastAnim);
+						const name = pool[Math.floor(Math.random() * pool.length)];
+						lastAnim = name;
+						if (name === 'falling') {
+							doFalling();
+							return;
+						}
+						try {
+							await viewer.playClip(name);
+							const def = viewer._manifest.find((d) => d.name === name);
+							if (def && !def.loop) {
+								setTimeout(() => viewer.playClip('dance').catch(() => {}), 2600);
+							}
+						} catch (_) {}
+					});
+				});
+			})();
+
+			// Act 2 viewer — Three.js + animation manifest, same trick as /app.
+			// Every model gets every clip from /animations/manifest.json (retargeted
+			// onto its skeleton via AnimationMixer), regardless of what's baked in.
+			(function () {
+				const canvas = document.getElementById('home-act2-canvas');
+				const chipsWrap = document.querySelector('[data-role="anim-chips"]');
+				const picker = document.querySelector('.h-avatar-picker');
+				if (!canvas || !chipsWrap || !picker) return;
+
+				/* The viewer (heavy Three.js) loads lazily when Act 2 enters view.
+				   The picker (lightweight DOM + fetch) hydrates on page load so
+				   featured-agent names are correct *before* the user scrolls. */
+				let _resolveViewer;
+				const viewerReady = new Promise((r) => (_resolveViewer = r));
+
+				function bindOpt(btn) {
+					btn.addEventListener('click', async () => {
+						picker
+							.querySelectorAll('.h-av-opt')
+							.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+						btn.setAttribute('aria-pressed', 'true');
+						const viewer = await viewerReady;
+						try {
+							await viewer.loadModel(btn.dataset.src);
+						} catch (e) {
+							console.error(e);
+						}
+					});
+				}
+				picker.querySelectorAll('.h-av-opt').forEach(bindOpt);
+
+				/* Eagerly populate the picker from /api/explore so featured agents
+				   (Ansem, Boss Vernington, …) appear immediately. Static buttons
+				   stay if the fetch fails or returns nothing usable. */
+				(async function hydratePicker() {
+					try {
+						const r = await fetch(
+							'/api/explore?source=avatar&quality=high&limit=12',
+						);
+						if (!r.ok) return;
+						const j = await r.json();
+						const seen = new Set();
+						const named = (j?.items || [])
+							.filter((it) => {
+								if (it.kind !== 'avatar' || !it.glbUrl) return false;
+								const name = String(it.name || '').trim();
+								if (name.length < 2) return false;
+								if (/^avatar[\s_-]?\d/i.test(name)) return false;
+								if (seen.has(name.toLowerCase())) return false;
+								seen.add(name.toLowerCase());
+								return true;
+							})
+							.slice(0, 3);
+						if (named.length < 2) return;
+						picker.innerHTML = '';
+						named.forEach((a, i) => {
+							const btn = document.createElement('button');
+							btn.type = 'button';
+							btn.className = 'h-av-opt';
+							btn.dataset.src = a.glbUrl;
+							btn.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+							btn.textContent = a.name;
+							picker.appendChild(btn);
+							bindOpt(btn);
+						});
+					} catch (e) {
+						// Keep static picker; surface in dev so genuine bugs aren't swallowed.
+						console.warn('[home] picker hydration failed', e);
+					}
+				})();
+
+				/* Wait for the Act2Viewer ESM to load (it sets window.Act2Viewer) */
+				function whenReady(cb) {
+					if (window.Act2Viewer) return cb();
+					setTimeout(() => whenReady(cb), 60);
+				}
+
+				function initAct2() {
+				whenReady(() => {
+					const viewer = new window.Act2Viewer(canvas);
+
+					function prettyLabel(def) {
+						const icon = def.icon || '✨';
+						const label = (def.label || def.name).replace(/\s*\([^)]*\)/g, '').trim();
+						return icon + ' ' + label;
+					}
+
+					function rebuildChips(defs) {
+						chipsWrap.innerHTML = '';
+						defs.forEach((def, i) => {
+							const btn = document.createElement('button');
+							btn.type = 'button';
+							btn.className = 'h-anim-chip';
+							btn.dataset.anim = def.name;
+							btn.textContent = prettyLabel(def);
+							if (i === 0) btn.dataset.active = 'true';
+							btn.addEventListener('click', async () => {
+								chipsWrap
+									.querySelectorAll('.h-anim-chip')
+									.forEach((c) => delete c.dataset.active);
+								btn.dataset.active = 'true';
+								try {
+									await viewer.playClip(def.name);
+								} catch (e) {
+									/* ignore */
+								}
+							});
+							chipsWrap.appendChild(btn);
+						});
+					}
+
+					viewer.onClipsReady = rebuildChips;
+
+					/* Default load: whichever picker button is currently pressed
+					   (after hydration this is the first featured agent). */
+					const activeBtn = picker.querySelector('.h-av-opt[aria-pressed="true"]');
+					const defaultSrc =
+						activeBtn?.dataset.src || '/animations/robotexpressive.glb';
+					viewer.loadModel(defaultSrc).catch(console.error);
+
+					/* Resolve viewerReady so any queued picker clicks proceed. */
+					_resolveViewer(viewer);
+
+					/* click on canvas to toggle zoom (default → extra-wide) */
+					let wider = false;
+					const NEAR = 22,
+						FAR = 36;
+					canvas.addEventListener('click', () => {
+						wider = !wider;
+						viewer.zoom(wider ? FAR : NEAR);
+					});
+				});
+				}
+
+				if (!SKIP_OFFSCREEN_GL) {
+					let act2Inited = false;
+					const act2Obs = new IntersectionObserver((entries) => {
+						if (entries[0].isIntersecting && !act2Inited) {
+							act2Inited = true;
+							act2Obs.disconnect();
+							initAct2();
+						}
+					}, { threshold: 0, rootMargin: '600px 0px 600px 0px' });
+					act2Obs.observe(canvas);
+				}
+			})();
+
+			// Bento Viewer card — same Act2Viewer + animation panel as Act 2
+			(function () {
+				const canvas = document.getElementById('bento-cz-canvas');
+				const grid = document.querySelector('[data-role="bento-anim-grid"]');
+				const stopBtn = document.querySelector('[data-role="bento-anim-stop"]');
+				if (!canvas || !grid) return;
+
+				function whenReady(cb) {
+					if (window.Act2Viewer) return cb();
+					setTimeout(() => whenReady(cb), 60);
+				}
+
+				function initViewer() {
+					whenReady(() => {
+					const viewer = new window.Act2Viewer(canvas, { fov: 20 });
+
+					function prettyLabel(def) {
+						return (def.label || def.name).replace(/\s*\([^)]*\)/g, '').trim();
+					}
+
+					function buildButtons(defs) {
+						grid.innerHTML = '';
+						defs.forEach((def, i) => {
+							const btn = document.createElement('button');
+							btn.type = 'button';
+							btn.className = 'h-bento-anim-btn';
+							btn.dataset.anim = def.name;
+							btn.title = def.label || def.name;
+							const icon = document.createElement('span');
+							icon.className = 'h-bento-anim-btn__icon';
+							icon.textContent = def.icon || '✨';
+							const label = document.createElement('span');
+							label.className = 'h-bento-anim-btn__label';
+							label.textContent = prettyLabel(def);
+							btn.appendChild(icon);
+							btn.appendChild(label);
+							if (i === 0) btn.classList.add('h-bento-anim-btn--active');
+							btn.addEventListener('click', async () => {
+								grid.querySelectorAll('.h-bento-anim-btn').forEach((b) =>
+									b.classList.remove('h-bento-anim-btn--active'),
+								);
+								btn.classList.add('h-bento-anim-btn--active');
+								btn.classList.add('h-bento-anim-btn--loading');
+								try {
+									await viewer.playClip(def.name);
+								} catch (_) {}
+								btn.classList.remove('h-bento-anim-btn--loading');
+							});
+							grid.appendChild(btn);
+						});
+					}
+
+					viewer.onClipsReady = buildButtons;
+					viewer
+						.loadModel('/avatars/cz.glb', { autoPlay: false })
+						.then(() => viewer.playClip('celebrate').catch(() => {}))
+						.catch(console.error);
+
+					if (stopBtn) {
+						stopBtn.addEventListener('click', () => {
+							if (viewer.mixer) viewer.mixer.stopAllAction();
+							viewer.currentAction = null;
+							grid.querySelectorAll('.h-bento-anim-btn').forEach((b) =>
+								b.classList.remove('h-bento-anim-btn--active'),
+							);
+						});
+					}
+					});
+				}
+
+				// Defer viewer init until canvas scrolls into view — avoids creating
+				// WebGL context before the card is visible inside the parallax container.
+				if (!SKIP_OFFSCREEN_GL) {
+					let inited = false;
+					const io = new IntersectionObserver((entries) => {
+						if (entries[0].isIntersecting && !inited) {
+							inited = true;
+							io.disconnect();
+							initViewer();
+						}
+					}, { threshold: 0, rootMargin: '600px 0px 600px 0px' });
+					io.observe(canvas);
+				}
+			})();
+
+			// Chain ribbon (Act 3)
+			(function () {
+				const ribbon = document.querySelector('[data-role="home-chain-ribbon"]');
+				if (!ribbon) return;
+				const labels = [
+					'Solana',
+					'Base',
+					'Ethereum',
+					'BSC',
+					'Arbitrum',
+					'Avalanche',
+					'Celo',
+					'Linea',
+					'zkSync',
+					'Scroll',
+					'Optimism',
+					'Mode',
+				];
+				ribbon.replaceChildren(
+					...labels.map((l) => {
+						const s = document.createElement('span');
+						s.className = 'chain-pill';
+						s.textContent = l;
+						return s;
+					}),
+				);
+			})();
+
+			// Custom cursor
+			(function () {
+				const cursor = document.getElementById('cursor');
+				if (!cursor || window.matchMedia('(hover: none)').matches || REDUCED_MOTION) return;
+				let cx = -100,
+					cy = -100,
+					tx = -100,
+					ty = -100;
+				document.addEventListener('mousemove', (e) => {
+					tx = e.clientX;
+					ty = e.clientY;
+				});
+				document.addEventListener('mouseleave', () => {
+					tx = cy = -100;
+				});
+				const hover = 'a,button,[role="button"],.h-av-opt,.h-anim-chip';
+				document.querySelectorAll(hover).forEach((el) => {
+					el.addEventListener('mouseenter', () => cursor.classList.add('cursor--hover'));
+					el.addEventListener('mouseleave', () =>
+						cursor.classList.remove('cursor--hover'),
+					);
+				});
+				(function loop() {
+					cx += (tx - cx) * 0.18;
+					cy += (ty - cy) * 0.18;
+					cursor.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
+					requestAnimationFrame(loop);
+				})();
+			})();
+
+			// Act 3 — animated trio of ghost avatars (robot, CZ, soldier)
+			(function () {
+				const configs = [
+					{
+						id: 'act3-avatar-a',
+						src: '/animations/robotexpressive.glb',
+						anim: 'capoeira',
+					},
+					{ id: 'act3-avatar-b', src: '/avatars/cz.glb', anim: 'rumba' },
+					{ id: 'act3-avatar-c', src: '/animations/soldier.glb', anim: 'wave' },
+				];
+
+				function whenReady(cb) {
+					if (window.Act2Viewer) return cb();
+					setTimeout(() => whenReady(cb), 60);
+				}
+
+				function initAct3() {
+					whenReady(() => {
+						configs.forEach(({ id, src, anim }) => {
+							const canvas = document.getElementById(id);
+							if (!canvas) return;
+							const viewer = new window.Act2Viewer(canvas, { fov: 22 });
+							viewer
+								.loadModel(src)
+								.then(() => viewer.playClip(anim).catch(() => {}))
+								.catch(() => {});
+						});
+					});
+				}
+
+				// Observe the first Act3 canvas; when it enters view, init all three.
+				const firstCanvas = document.getElementById('act3-avatar-a');
+				if (firstCanvas && !SKIP_OFFSCREEN_GL) {
+					let act3Inited = false;
+					const act3Obs = new IntersectionObserver((entries) => {
+						if (entries[0].isIntersecting && !act3Inited) {
+							act3Inited = true;
+							act3Obs.disconnect();
+							initAct3();
+						}
+					}, { threshold: 0, rootMargin: '600px 0px 600px 0px' });
+					act3Obs.observe(firstCanvas);
+				}
+			})();
+
+			// Star field canvas
+			(function () {
+				for (const canvas of document.querySelectorAll('[data-role="star-canvas"]')) {
+					const dpr = Math.min(window.devicePixelRatio || 1, 2);
+					const w = window.innerWidth * dpr;
+					const h = window.innerHeight * 8 * dpr;
+					canvas.width = w;
+					canvas.height = h;
+					const ctx = canvas.getContext('2d');
+					const tint = canvas.dataset.tint || '255,255,255';
+					const count = parseInt(canvas.dataset.count || '250', 10);
+					for (let i = 0; i < count; i++) {
+						const x = Math.random() * w;
+						const y = Math.random() * h;
+						const r = (Math.random() * 1.4 + 0.3) * dpr;
+						ctx.beginPath();
+						ctx.arc(x, y, r, 0, Math.PI * 2);
+						ctx.fillStyle = `rgba(${tint},${Math.random() * 0.65 + 0.2})`;
+						ctx.fill();
+					}
+					for (let i = 0; i < 10; i++) {
+						const x = Math.random() * w,
+							y = Math.random() * h;
+						const g = ctx.createRadialGradient(x, y, 0, x, y, 6 * dpr);
+						g.addColorStop(0, `rgba(${tint},0.9)`);
+						g.addColorStop(1, `rgba(${tint},0)`);
+						ctx.beginPath();
+						ctx.arc(x, y, 6 * dpr, 0, Math.PI * 2);
+						ctx.fillStyle = g;
+						ctx.fill();
+					}
+				}
+			})();
+		</script>
+
+		<script>
+			// Traction stats — fetch /api/platform/stats, animate counters on scroll into view.
+			(function () {
+				function fmtNum(n) {
+					if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+					if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+					return String(n);
+				}
+
+				function animateCount(el, target) {
+					const duration = 1200;
+					const start = performance.now();
+					function step(now) {
+						const t = Math.min((now - start) / duration, 1);
+						const ease = 1 - Math.pow(1 - t, 3);
+						const val = Math.round(target * ease);
+						el.textContent = fmtNum(val);
+						if (t < 1) requestAnimationFrame(step);
+					}
+					requestAnimationFrame(step);
+				}
+
+				const section = document.querySelector('.h-traction');
+				const vals = document.querySelectorAll('[data-traction-val]');
+				if (!section) return;
+				vals.forEach((el) => el.classList.add('is-loading'));
+
+				let statsData = null;
+				let animated = false;
+
+				function triggerAnimation() {
+					if (animated || !statsData) return;
+					animated = true;
+					vals.forEach((el) => {
+						const key = el.dataset.tractionVal;
+						const raw = statsData[key];
+						if (raw == null) return;
+						el.classList.remove('is-loading');
+						animateCount(el, Number(raw));
+					});
+				}
+
+				// Observe when section scrolls into view
+				const io = new IntersectionObserver((entries) => {
+					if (entries[0].isIntersecting) {
+						io.disconnect();
+						triggerAnimation();
+					}
+				}, { threshold: 0.3 });
+				io.observe(section);
+
+				fetch('/api/platform/stats')
+					.then((r) => r.ok ? r.json() : Promise.reject(r.status))
+					.then((data) => {
+						statsData = data;
+						// If section is already in view, trigger immediately
+						triggerAnimation();
+					})
+					.catch(() => {
+						section.hidden = true;
+					});
+			})();
+		</script>
+	</body>
+</html>

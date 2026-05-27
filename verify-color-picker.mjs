@@ -4,11 +4,11 @@ const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
 console.log('--- Step 1: Navigate and scroll to Playground ---');
-await page.goto('http://localhost:3000/pages/home-next.html', { waitUntil: 'domcontentloaded', timeout: 15000 });
-await page.waitForTimeout(1500);
+await page.goto('http://localhost:3000/pages/home-next.html', { waitUntil: 'load', timeout: 30000 });
+await page.waitForTimeout(3000);
 
 // Scroll to the embed/playground section
-await page.locator('#embed').scrollIntoViewIfNeeded({ timeout: 5000 });
+await page.locator('#embed').scrollIntoViewIfNeeded({ timeout: 10000 });
 await page.waitForTimeout(500);
 await page.screenshot({ path: '/tmp/ss-01-playground.png', fullPage: false });
 console.log('Screenshot: /tmp/ss-01-playground.png');

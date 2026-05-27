@@ -96,7 +96,7 @@ function toast(msg) {
 	document.body.innerHTML = `
 		<header class="ame-nav">
 			<div class="ame-nav-inner">
-				<a class="ame-brand" href="/home-next"><span class="ame-brand-dot"></span><span>three.ws</span></a>
+				<a class="ame-brand" href="/"><span class="ame-brand-dot"></span><span>three.ws</span></a>
 				<nav class="ame-nav-main">
 					<a href="/create">Build</a>
 					<a href="/discover">Discover</a>

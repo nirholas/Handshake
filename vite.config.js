@@ -204,7 +204,7 @@ const appConfig = {
 				creating: resolve(__dirname, 'pages/creating.html'),
 				pricing: resolve(__dirname, 'pages/pricing.html'),
 				'x-pricing': resolve(__dirname, 'pages/x-pricing.html'),
-				'home-next': resolve(__dirname, 'pages/home-next.html'),
+				'home-classic': resolve(__dirname, 'pages/home-classic.html'),
 				'home-v3': resolve(__dirname, 'pages/home-v3.html'),
 				'home-v4': resolve(__dirname, 'pages/home-v4.html'),
 				'agent-next': resolve(__dirname, 'pages/agent-next.html'),
