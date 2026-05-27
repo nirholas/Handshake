@@ -1,9 +1,3 @@
-/**
- * Hero particle-to-avatar materialization for home-v4.
- * Loads a GLB, samples 6000 points from the mesh surface,
- * animates particles converging into the avatar shape,
- * then crossfades to the solid model.
- */
 import {
 	WebGLRenderer,
 	Scene,
@@ -71,6 +65,7 @@ export class HeroScene {
 		this.canvas = canvas;
 		this._raf = 0;
 		this._disposed = false;
+		this._visible = true;
 
 		const LOW_MEMORY = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory < 2;
 		const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -117,8 +112,20 @@ export class HeroScene {
 		this._focusY = 1.0;
 
 		this._resize();
-		const ro = new ResizeObserver(() => this._resize());
-		ro.observe(canvas);
+		this._ro = new ResizeObserver(() => this._resize());
+		this._ro.observe(canvas);
+
+		this._visibilityObserver = new IntersectionObserver(
+			(entries) => {
+				this._visible = entries[0].isIntersecting;
+				if (this._visible && !this._raf) {
+					this._clock.start();
+					this._raf = requestAnimationFrame(this._tick);
+				}
+			},
+			{ rootMargin: '100px' },
+		);
+		this._visibilityObserver.observe(canvas);
 
 		this._onMouseMove = this._onMouseMove.bind(this);
 		window.addEventListener('mousemove', this._onMouseMove, { passive: true });
@@ -144,7 +151,12 @@ export class HeroScene {
 	}
 
 	async _load() {
-		const gltf = await this._loader.loadAsync(MODEL_URL);
+		let gltf;
+		try {
+			gltf = await this._loader.loadAsync(MODEL_URL);
+		} catch {
+			return;
+		}
 		if (this._disposed) return;
 
 		this.model = gltf.scene;
@@ -156,6 +168,8 @@ export class HeroScene {
 		this.model.position.x -= center.x;
 		this.model.position.z -= center.z;
 		this.model.position.y -= box.min.y;
+
+		this.model.updateMatrixWorld(true);
 
 		const targetHeight = size.y;
 		const dist = (targetHeight / 2) / Math.tan((this.camera.fov / 2) * (Math.PI / 180));
@@ -207,7 +221,7 @@ export class HeroScene {
 			const filtered = new AnimationClip(clip.name, clip.duration, tracks);
 			const action = this.mixer.clipAction(filtered);
 			action.play();
-		} catch { /* non-critical */ }
+		} catch { /* manifest/clip fetch is non-critical enhancement */ }
 	}
 
 	_collectOpacityTargets() {
@@ -250,18 +264,17 @@ export class HeroScene {
 			for (let i = 0; i < count; i++) {
 				sampler.sample(pos);
 				pos.applyMatrix4(mesh.matrixWorld);
-				pos.x -= this.model.position.x === 0 ? 0 : 0;
 
-				targets[idx * 3] = pos.x + this.model.position.x;
-				targets[idx * 3 + 1] = pos.y + this.model.position.y;
-				targets[idx * 3 + 2] = pos.z + this.model.position.z;
+				targets[idx * 3] = pos.x;
+				targets[idx * 3 + 1] = pos.y;
+				targets[idx * 3 + 2] = pos.z;
 
 				const theta = Math.random() * Math.PI * 2;
 				const phi = Math.acos(2 * Math.random() - 1);
 				const r = 2 + Math.random() * 4;
-				starts[idx * 3] = targets[idx * 3] + r * Math.sin(phi) * Math.cos(theta);
-				starts[idx * 3 + 1] = targets[idx * 3 + 1] + r * Math.sin(phi) * Math.sin(theta);
-				starts[idx * 3 + 2] = targets[idx * 3 + 2] + r * Math.cos(phi);
+				starts[idx * 3] = pos.x + r * Math.sin(phi) * Math.cos(theta);
+				starts[idx * 3 + 1] = pos.y + r * Math.sin(phi) * Math.sin(theta);
+				starts[idx * 3 + 2] = pos.z + r * Math.cos(phi);
 
 				seeds[idx] = Math.random();
 				idx++;
@@ -298,6 +311,12 @@ export class HeroScene {
 
 	_tick() {
 		if (this._disposed) return;
+
+		if (!this._visible && this._materialized) {
+			this._raf = 0;
+			return;
+		}
+
 		const dt = this._clock.getDelta();
 		const elapsed = this._clock.getElapsedTime();
 
@@ -348,6 +367,8 @@ export class HeroScene {
 	dispose() {
 		this._disposed = true;
 		cancelAnimationFrame(this._raf);
+		this._ro.disconnect();
+		this._visibilityObserver.disconnect();
 		window.removeEventListener('mousemove', this._onMouseMove);
 		if (this.particles) {
 			this.particles.geometry.dispose();

@@ -184,8 +184,9 @@ body.app-next-body {
 .nxt-more-menu {
 	position: fixed;
 	top: var(--nxt-header-h);
-	right: 0;
+	right: 12px;
 	min-width: 200px;
+	max-width: calc(100vw - 24px);
 	padding: 6px;
 	background: var(--nxt-glass-strong);
 	border: 1px solid var(--nxt-stroke);
@@ -1452,6 +1453,8 @@ body.app-next-body.nxt-chat-active .nxt-chat-dock {
 @media (max-width: 640px) {
 	.nxt-brand-tag { display: none; }
 	.nxt-more { padding: 7px 8px; }
+	.nxt-more-menu a,
+	.nxt-more-menu button { padding: 12px 14px; font-size: 15px; min-height: 44px; }
 	.nxt-action kbd { display: none; }
 	.nxt-action { padding: 7px 10px; font-size: 12px; }
 	.nxt-action span { display: none; }

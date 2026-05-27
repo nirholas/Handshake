@@ -214,7 +214,7 @@ function handleFeatureClick(feature) {
 			openVoicePreview({ glbBlob: staged.blob, name });
 			return;
 		case 'identity':
-			openIdentityModal(ctx);
+			openIdentityModal({ ...ctx, canvas: viewerScene?.renderer?.domElement });
 			return;
 		case 'paid':
 			openPaidSkillsModal(ctx);

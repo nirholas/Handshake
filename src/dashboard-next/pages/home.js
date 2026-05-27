@@ -110,6 +110,15 @@ function renderSkeletons(main) {
 		<div class="dn-skeleton" style="height:28px;width:100px;margin-bottom:10px"></div>
 		<div class="dn-skeleton" style="height:36px;width:100%"></div></div>
 	`).join('');
+	main.querySelector('[data-slot="quick"]').innerHTML = Array.from({ length: 4 }, () => `
+		<div class="dn-panel" style="display:flex;align-items:center;gap:14px;padding:16px">
+			<div class="dn-skeleton" style="width:40px;height:40px;border-radius:10px;flex-shrink:0"></div>
+			<div style="flex:1;min-width:0">
+				<div class="dn-skeleton" style="height:13px;width:60%;margin-bottom:6px"></div>
+				<div class="dn-skeleton" style="height:11px;width:40%"></div>
+			</div>
+		</div>
+	`).join('');
 	main.querySelector('[data-slot="activity"]').innerHTML = `
 		<div class="dn-panel">
 			<div class="dn-panel-title">Recent activity</div>

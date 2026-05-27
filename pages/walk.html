@@ -448,53 +448,73 @@
 				animation: walk-rec-pulse 0.9s infinite;
 			}
 		</style>
+		<link rel="stylesheet" href="/nav.css" />
 	</head>
 	<body>
+		<header class="walk-site-header" id="walk-header">
+			<h1 class="site-header-brand">
+				<a href="/" aria-label="three.ws home">
+					<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws
+				</a>
+			</h1>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<!-- Loading overlay -->
+		<div id="walk-loading" class="walk-loading">
+			<div class="walk-loading-inner">
+				<div class="walk-loading-spinner"></div>
+				<p class="walk-loading-text" id="walk-loading-text">Loading avatar...</p>
+			</div>
+		</div>
+
 		<div id="walk-stage">
 			<video id="walk-camera-feed" autoplay playsinline muted></video>
 			<canvas id="walk-canvas"></canvas>
 
 			<div id="walk-hud">
-				<div class="walk-card">
-					<h1>three.ws · walk</h1>
+				<div class="walk-card" id="walk-identity-card">
+					<div class="walk-identity-row">
+						<input type="text" id="walk-name-input" class="walk-name-input"
+							placeholder="your name" maxlength="24" autocomplete="off" spellcheck="false"
+							aria-label="Your display name" />
+					</div>
 					<p>Drag to orbit. Joystick or <kbd>WASD</kbd> to move.</p>
 				</div>
 				<div class="walk-actions">
-					<button
-						type="button"
-						id="walk-online"
-						data-status="idle"
-						title="Multiplayer presence"
-					>
+					<button type="button" id="walk-online" data-status="idle" title="Players online">
 						<span class="dot"></span>
 						<span data-label>solo</span>
 						<span class="count" id="walk-online-count">1</span>
 					</button>
-					<button
-						type="button"
-						class="walk-btn"
-						id="walk-ar-toggle"
-						aria-pressed="false"
-						title="Put your avatar on your real floor"
-					>
+					<button type="button" class="walk-btn" id="walk-ar-toggle"
+						aria-pressed="false" title="Put your avatar on your real floor">
 						<span class="dot"></span>
 						<span data-label>AR</span>
 					</button>
-					<button
-						type="button"
-						class="walk-btn"
-						id="walk-record-btn"
-						data-recording="false"
-						title="Record a 6-second clip to share"
-					>
+					<button type="button" class="walk-btn" id="walk-record-btn"
+						data-recording="false" title="Record a 6-second clip to share">
 						<span class="dot"></span>
 						<span data-label>Record</span>
 					</button>
-					<a class="walk-btn" href="/" title="Back to three.ws home" style="text-decoration:none">
-						<span>← home</span>
-					</a>
+					<button type="button" class="walk-btn" id="walk-help-toggle" title="Show controls">
+						<span>?</span>
+					</button>
 				</div>
 			</div>
+
+			<!-- Player list panel -->
+			<div id="walk-players-panel" class="walk-players-panel" hidden>
+				<div class="walk-players-header">
+					<span>Players</span>
+					<button type="button" id="walk-players-close" aria-label="Close">&times;</button>
+				</div>
+				<ul id="walk-players-list" class="walk-players-list"></ul>
+			</div>
+
+			<!-- Emote tray -->
+			<div id="walk-emote-tray" class="walk-emote-tray" hidden></div>
 
 			<button type="button" id="walk-ar-cta" aria-hidden="true">
 				<span class="pulse"></span>
@@ -512,6 +532,8 @@
 			<div id="walk-help" aria-hidden="true">
 				<span class="walk-key"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
 				<span class="walk-key"><kbd>shift</kbd> run</span>
+				<span class="walk-key"><kbd>space</kbd> jump</span>
+				<span class="walk-key"><kbd>Q</kbd><kbd>E</kbd> snap turn</span>
 				<span class="walk-key"><kbd>drag</kbd> orbit camera</span>
 			</div>
 

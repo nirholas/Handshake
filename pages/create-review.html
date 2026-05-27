@@ -48,7 +48,6 @@
 			.topbar {
 				display: flex;
 				align-items: center;
-				gap: 14px;
 				margin-bottom: 20px;
 			}
 			.back-link {
@@ -58,16 +57,22 @@
 				background: var(--panel);
 				border: 1px solid var(--border);
 				color: var(--muted);
-				padding: 8px 14px 8px 10px;
+				padding: 10px 16px 10px 12px;
 				border-radius: 9px;
 				font-size: 13px;
 				font-weight: 500;
 				text-decoration: none;
 				cursor: pointer;
-				transition: border-color 120ms, color 120ms;
+				transition: border-color 150ms, color 150ms, background 150ms;
+				-webkit-tap-highlight-color: transparent;
 			}
-			.back-link:hover { border-color: var(--border-strong, #2a2c3a); color: var(--text); }
-			.back-link svg { flex-shrink: 0; }
+			.back-link:hover {
+				border-color: #2a2c3a;
+				color: var(--text);
+				background: #13141d;
+			}
+			.back-link:active { transform: scale(0.97); }
+			.back-link svg { flex-shrink: 0; display: block; }
 
 			main.stage {
 				flex: 1;
@@ -102,6 +107,12 @@
 			   native rather than "desktop dialog squashed onto a phone". */
 			@media (max-width: 560px) {
 				main.stage { padding: 12px 14px 60px; }
+				.topbar { margin-bottom: 14px; }
+				.back-link {
+					padding: 11px 16px 11px 12px;
+					font-size: 14px;
+					border-radius: 10px;
+				}
 				h1 { font-size: 22px; }
 				.sub { margin-bottom: 18px; font-size: 14px; }
 				.viewer { min-height: 360px; aspect-ratio: 3 / 4; }
@@ -1209,7 +1220,7 @@
 
 		<main class="stage" id="main">
 			<div class="topbar">
-				<a href="/create/selfie" class="back-link" id="back-link" aria-label="Back to create">
+				<a href="/create" class="back-link" id="back-link" aria-label="Back to create">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<line x1="19" y1="12" x2="5" y2="12" />
 						<polyline points="12 19 5 12 12 5" />

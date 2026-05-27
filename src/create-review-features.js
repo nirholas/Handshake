@@ -330,27 +330,12 @@ export function openPaidSkillsModal(ctx = {}) {
 	const handle = slugify(ctx.name) || 'your-agent';
 	const endpoint = `https://three.ws/api/agent/${handle}/ask`;
 	const snippets = {
-		curl: `# 1. Make the request — server replies 402 with payment terms
-curl -sS -X POST ${endpoint} \\
-  -H 'content-type: application/json' \\
-  -d '{"message":"hello"}'
-
-# → HTTP/1.1 402 Payment Required
-# → {"accepts":[{"network":"solana","asset":"USDC",
-# →   "amount":"0.05","payTo":"<agent·wallet>"}]}
-
-# 2. Sign a USDC transfer for the quoted amount, retry with X-PAYMENT
-curl -sS -X POST ${endpoint} \\
-  -H 'content-type: application/json' \\
-  -H 'x-payment: <base64-signed-payload>' \\
-  -d '{"message":"hello"}'
-
-# → HTTP/1.1 200 OK
-# → {"reply":"Hi! How can I help?","tx":"<solana·tx·sig>"}`,
 		fetch: `import { withX402 } from '@three.ws/x402-fetch';
 
-// withX402 wraps fetch — intercepts 402, signs USDC, retries.
-const fetchPaid = withX402(fetch, { wallet, network: 'solana' });
+const fetchPaid = withX402(fetch, {
+  wallet,
+  network: 'solana',
+});
 
 const res = await fetchPaid('${endpoint}', {
   method: 'POST',
@@ -358,7 +343,24 @@ const res = await fetchPaid('${endpoint}', {
   body: JSON.stringify({ message: 'hello' }),
 });
 
-console.log(await res.json()); // { reply, tx }`,
+const { reply, tx } = await res.json();`,
+		curl: `# 1. Hit the endpoint — server quotes a price
+curl -sS -X POST ${endpoint} \\
+  -H 'content-type: application/json' \\
+  -d '{"message":"hello"}'
+
+# HTTP/1.1 402 Payment Required
+# {"accepts":[{"network":"solana","asset":"USDC",
+#   "amount":"0.05","payTo":"<agent-wallet>"}]}
+
+# 2. Sign a USDC transfer, retry with X-PAYMENT
+curl -sS -X POST ${endpoint} \\
+  -H 'content-type: application/json' \\
+  -H 'x-payment: <base64-signed-payload>' \\
+  -d '{"message":"hello"}'
+
+# HTTP/1.1 200 OK
+# {"reply":"Hi! How can I help?","tx":"<solana-tx-sig>"}`,
 		python: `from three_ws import X402Client
 
 client = X402Client(wallet=wallet, network="solana")
@@ -367,62 +369,84 @@ reply = client.post(
     "${endpoint}",
     json={"message": "hello"},
 )
-print(reply.json())  # {"reply": "...", "tx": "<sig>"}`,
+print(reply.json())  # {"reply": ..., "tx": "<sig>"}`,
 	};
 
 	const body = document.createElement('div');
 	body.innerHTML = `
 		<ul class="fm-bullets">
-			<li>Quoted in USDC on Solana — payments settle in seconds, signed end-to-end.</li>
-			<li>Set a price per skill (chat, render, custom endpoint) after saving.</li>
-			<li>Earnings stream into your agent's wallet, withdrawable any time.</li>
+			<li>Your agent earns USDC every time another agent or app calls it — no API keys, no invoicing.</li>
+			<li>Payments settle on Solana in seconds, signed end-to-end via the <code>x402</code> protocol.</li>
+			<li>Set a price per skill after saving — chat, render, or any custom endpoint you define.</li>
 		</ul>
 
-		<div class="fm-handshake" aria-label="x402 handshake">
-			<div class="fm-handshake-step">
-				<span class="fm-handshake-num">1</span>
-				<div>
-					<strong>Client calls</strong>
-					<div class="muted">No auth, just hits the endpoint.</div>
-				</div>
-				<span class="fm-handshake-code">POST</span>
+		<div class="fm-flow" aria-label="x402 payment flow">
+			<div class="fm-flow-step">
+				<div class="fm-flow-num" aria-hidden="true">1</div>
+				<div class="fm-flow-label"><strong>Request</strong></div>
+				<div class="fm-flow-detail">Client hits your endpoint. No auth needed.</div>
+				<span class="fm-flow-badge">POST</span>
 			</div>
-			<div class="fm-handshake-arrow">→</div>
-			<div class="fm-handshake-step">
-				<span class="fm-handshake-num">2</span>
-				<div>
-					<strong>Server replies <code>402</code></strong>
-					<div class="muted">Quotes <code>$0.05</code> USDC on Solana.</div>
-				</div>
-				<span class="fm-handshake-code">402</span>
+			<div class="fm-flow-connector" aria-hidden="true">
+				<div class="fm-flow-line"></div>
+				<div class="fm-flow-pulse"></div>
 			</div>
-			<div class="fm-handshake-arrow">→</div>
-			<div class="fm-handshake-step">
-				<span class="fm-handshake-num">3</span>
-				<div>
-					<strong>Client signs &amp; retries</strong>
-					<div class="muted"><code>X-PAYMENT</code> header carries the signed transfer.</div>
-				</div>
-				<span class="fm-handshake-code">200</span>
+			<div class="fm-flow-step fm-flow-step--mid">
+				<div class="fm-flow-num" aria-hidden="true">2</div>
+				<div class="fm-flow-label"><strong>Quote</strong></div>
+				<div class="fm-flow-detail">Server replies <code>402</code> with USDC price.</div>
+				<span class="fm-flow-badge fm-flow-badge--warn">402</span>
 			</div>
+			<div class="fm-flow-connector" aria-hidden="true">
+				<div class="fm-flow-line"></div>
+				<div class="fm-flow-pulse"></div>
+			</div>
+			<div class="fm-flow-step fm-flow-step--end">
+				<div class="fm-flow-num" aria-hidden="true">3</div>
+				<div class="fm-flow-label"><strong>Paid</strong></div>
+				<div class="fm-flow-detail">Client signs USDC transfer, retries. Done.</div>
+				<span class="fm-flow-badge fm-flow-badge--ok">200</span>
+			</div>
+		</div>
+
+		<div class="fm-pricing-preview">
+			<div class="fm-pricing-head">
+				<span class="fm-pricing-title">Skill pricing</span>
+				<span class="fm-pricing-pill">CONFIGURE AFTER SAVE</span>
+			</div>
+			<div class="fm-pricing-rows">
+				<div class="fm-pricing-row">
+					<span class="fm-pricing-skill">Chat</span>
+					<span class="fm-pricing-amount">$0.02 <span class="muted">USDC / call</span></span>
+				</div>
+				<div class="fm-pricing-row">
+					<span class="fm-pricing-skill">Render</span>
+					<span class="fm-pricing-amount">$0.10 <span class="muted">USDC / call</span></span>
+				</div>
+				<div class="fm-pricing-row">
+					<span class="fm-pricing-skill">Custom endpoint</span>
+					<span class="fm-pricing-amount">$0.05 <span class="muted">USDC / call</span></span>
+				</div>
+			</div>
+			<div class="fm-pricing-foot">Earnings stream into your agent's wallet, withdrawable any time.</div>
 		</div>
 
 		<div class="fm-tabs" role="tablist" aria-label="Client language">
-			<button class="fm-tab is-active" role="tab" data-tab="curl">cURL</button>
-			<button class="fm-tab" role="tab" data-tab="fetch">JavaScript</button>
+			<button class="fm-tab is-active" role="tab" data-tab="fetch">JavaScript</button>
+			<button class="fm-tab" role="tab" data-tab="curl">cURL</button>
 			<button class="fm-tab" role="tab" data-tab="python">Python</button>
 		</div>
-		<div class="fm-code" data-copy-target>
+		<div class="fm-code fm-code--highlighted" data-copy-target>
 			<pre data-snippet></pre>
 			<button class="fm-copy" type="button">Copy</button>
 		</div>
-		<p class="fm-note">Endpoint shape is real — your handle is filled in as you name your avatar. Pricing &amp; gating is configured after save.</p>
+		<p class="fm-note">Endpoint uses your avatar's handle — filled in live as you type. Pricing is configured after save.</p>
 	`;
 
 	openFeatureModal({
 		icon: '💸',
 		title: 'Paid Skills (x402)',
-		lede: 'Charge per call in USDC over the x402 protocol. Other agents (and apps) pay yours automatically — no API keys, no invoicing.',
+		lede: 'Turn every skill into revenue. Other agents pay yours automatically — USDC settles in seconds.',
 		body,
 		actions: [{ label: 'Got it' }],
 		dialogClass: 'fm-dialog--wide',
@@ -430,15 +454,46 @@ print(reply.json())  # {"reply": "...", "tx": "<sig>"}`,
 
 	const codeEl = body.querySelector('[data-copy-target]');
 	const snippetEl = body.querySelector('[data-snippet]');
+
+	function highlightSnippet(lang, raw) {
+		const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		const lines = raw.split('\n');
+		return lines
+			.map((line) => {
+				const e = esc(line);
+				if (lang === 'curl') {
+					if (/^\s*#/.test(line)) return `<span class="syn-comment">${e}</span>`;
+					return e
+						.replace(/('(?:[^'\\]|\\.)*')/g, '<span class="syn-string">$1</span>')
+						.replace(/(\b(?:curl)\b)/g, '<span class="syn-keyword">$1</span>');
+				}
+				if (lang === 'fetch') {
+					if (/^\s*\/\//.test(line)) return `<span class="syn-comment">${e}</span>`;
+					return e
+						.replace(/(import|from|const|await|new)\b/g, '<span class="syn-keyword">$1</span>')
+						.replace(/('(?:[^'\\]|\\.)*')/g, '<span class="syn-string">$1</span>')
+						.replace(/(`(?:[^`\\]|\\.)*`)/g, '<span class="syn-string">$1</span>');
+				}
+				if (lang === 'python') {
+					if (/^\s*#/.test(line)) return `<span class="syn-comment">${e}</span>`;
+					return e
+						.replace(/(from|import)\b/g, '<span class="syn-keyword">$1</span>')
+						.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="syn-string">$1</span>');
+				}
+				return e;
+			})
+			.join('\n');
+	}
+
 	function setTab(name) {
 		body.querySelectorAll('.fm-tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === name));
-		snippetEl.textContent = snippets[name];
+		snippetEl.innerHTML = highlightSnippet(name, snippets[name]);
 		codeEl.dataset.copy = snippets[name];
 	}
 	body.querySelectorAll('.fm-tab').forEach((t) => {
 		t.addEventListener('click', () => setTab(t.dataset.tab));
 	});
-	setTab('curl');
+	setTab('fetch');
 }
 
 export function openEmbedModal(ctx = {}) {

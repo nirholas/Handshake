@@ -618,8 +618,14 @@ function wireExploreMenu() {
 
 	const positionMenu = () => {
 		const r = btn.getBoundingClientRect();
+		const rightOffset = window.innerWidth - r.right;
+		const minEdge = 12;
 		menu.style.top = `${r.bottom + 6}px`;
-		menu.style.right = `${window.innerWidth - r.right}px`;
+		menu.style.right = `${Math.max(minEdge, rightOffset)}px`;
+		menu.style.left = '';
+		if (rightOffset < minEdge) {
+			menu.style.right = `${minEdge}px`;
+		}
 	};
 
 	const close = () => {
@@ -646,6 +652,10 @@ function wireExploreMenu() {
 
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape' && !menu.hidden) close();
+	});
+
+	window.addEventListener('resize', () => {
+		if (!menu.hidden) close();
 	});
 }
 

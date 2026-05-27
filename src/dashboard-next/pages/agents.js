@@ -53,6 +53,7 @@ function truncMid(s, head = 6, tail = 4) {
 	try {
 		const main = await mountShell();
 		await requireUser();
+		injectStyles();
 
 		main.innerHTML = `
 			<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px">
@@ -600,4 +601,63 @@ function makeOverlay() {
 		display:grid;place-items:center;padding:20px;
 	`;
 	return el;
+}
+
+function injectStyles() {
+	if (document.getElementById('dn-agents-css')) return;
+	const css = document.createElement('style');
+	css.id = 'dn-agents-css';
+	css.textContent = `
+		.dn-agent-card {
+			display: grid;
+			grid-template-columns: auto 1fr;
+			gap: 16px;
+			align-items: start;
+		}
+		.dn-agent-actions {
+			grid-column: 1 / -1;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			flex-wrap: wrap;
+			padding-top: 10px;
+			border-top: 1px solid var(--nxt-stroke);
+		}
+		.dn-agent-actions-primary {
+			display: flex;
+			gap: 6px;
+			flex-wrap: wrap;
+		}
+		.dn-agent-actions-secondary {
+			display: flex;
+			gap: 6px;
+			flex-wrap: wrap;
+			margin-left: auto;
+		}
+		.dn-agent-links {
+			grid-column: 1 / -1;
+			display: flex;
+			gap: 12px;
+			flex-wrap: wrap;
+			padding-top: 4px;
+		}
+		@media (max-width: 600px) {
+			.dn-agent-actions {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			.dn-agent-actions-primary,
+			.dn-agent-actions-secondary {
+				justify-content: stretch;
+			}
+			.dn-agent-actions-primary { order: 0; }
+			.dn-agent-actions-secondary { margin-left: 0; order: 1; }
+			.dn-agent-actions-primary .dn-btn,
+			.dn-agent-actions-secondary .dn-btn {
+				flex: 1 1 auto;
+				text-align: center;
+			}
+		}
+	`;
+	document.head.appendChild(css);
 }

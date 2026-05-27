@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Avatar Studio · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<meta name="description" content="Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories — no selfie required." />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/create/studio" />
+		<meta property="og:title" content="Avatar Studio · three.ws" />
+		<meta property="og:description" content="Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories." />
+		<meta property="og:image" content="https://three.ws/assets/og-image.png" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+
+		<style>
+			:root {
+				--bg: #0a0a0a;
+				--panel: #111;
+				--panel-2: #161616;
+				--border: #1f1f1f;
+				--border-2: #2a2a2a;
+				--text: #fafafa;
+				--text-2: #a1a1aa;
+				--text-3: #71717a;
+				--accent: #d6ff3d;
+				--accent-dim: rgba(214, 255, 61, 0.12);
+				--accent-ink: #0a0a0a;
+				--success: #34d399;
+				--danger: #f43f5e;
+				--radius: 14px;
+			}
+			html, body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--text);
+				font-family: 'Inter', system-ui, sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
+			body {
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
+
+			/* ── Top bar ──────────────────────────────────────────── */
+			.as-bar {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 12px;
+				padding: 12px 24px;
+				border-bottom: 1px solid var(--border);
+				background: rgba(10, 10, 10, 0.85);
+				backdrop-filter: blur(8px);
+				position: sticky;
+				top: 0;
+				z-index: 20;
+			}
+			.as-back {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				color: var(--text-2);
+				text-decoration: none;
+				font-size: 13px;
+			}
+			.as-back:hover { color: var(--text); }
+			.as-bar-title {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 14px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+				color: var(--text);
+				text-align: center;
+				flex: 1;
+			}
+			.as-actions { display: flex; gap: 8px; }
+			.as-btn {
+				background: transparent;
+				border: 1px solid var(--border-2);
+				color: var(--text-2);
+				padding: 7px 14px;
+				border-radius: 8px;
+				cursor: pointer;
+				font-size: 13px;
+				font-family: inherit;
+				font-weight: 500;
+				transition: color 0.15s, border-color 0.15s, background 0.15s;
+			}
+			.as-btn:hover { color: var(--text); border-color: var(--text-3); }
+			.as-btn[disabled] { opacity: 0.4; cursor: default; pointer-events: none; }
+			.as-btn.primary {
+				background: var(--accent);
+				color: var(--accent-ink);
+				border-color: var(--accent);
+				font-weight: 600;
+			}
+			.as-btn.primary:hover { filter: brightness(1.06); }
+			.as-btn.primary[disabled] { filter: none; opacity: 0.4; }
+
+			/* ── Main layout ──────────────────────────────────────── */
+			.as-shell {
+				display: grid;
+				grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
+				flex: 1;
+				min-height: 0;
+			}
+			.as-stage {
+				border-right: 1px solid var(--border);
+				background:
+					radial-gradient(ellipse at 50% 35%, rgba(214, 255, 61, 0.04), transparent 60%),
+					radial-gradient(ellipse at 70% 80%, rgba(167, 139, 250, 0.03), transparent 50%),
+					var(--bg);
+				position: relative;
+				min-height: 500px;
+			}
+			.as-stage-loading {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: var(--text-3);
+				font-size: 13px;
+				pointer-events: none;
+			}
+
+			.as-side {
+				display: flex;
+				flex-direction: column;
+				min-height: 0;
+			}
+
+			/* ── Body type selector ───────────────────────────────── */
+			.as-body-type {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 12px 16px;
+				border-bottom: 1px solid var(--border);
+				background: var(--panel);
+			}
+			.as-body-label {
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: var(--text-3);
+				font-weight: 600;
+			}
+			.as-body-toggle {
+				display: inline-flex;
+				background: var(--panel-2);
+				border: 1px solid var(--border-2);
+				border-radius: 8px;
+				padding: 2px;
+				gap: 2px;
+			}
+			.as-body-toggle button {
+				background: transparent;
+				border: none;
+				color: var(--text-3);
+				font: 600 12px/1 inherit;
+				padding: 7px 14px;
+				border-radius: 6px;
+				cursor: pointer;
+				transition: color 0.12s, background 0.12s;
+			}
+			.as-body-toggle button[aria-pressed="true"] {
+				background: rgba(214, 255, 61, 0.12);
+				color: var(--text);
+			}
+			.as-body-toggle button:hover { color: var(--text); }
+
+			/* ── Name input ───────────────────────────────────────── */
+			.as-name-row {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 12px 16px;
+				border-bottom: 1px solid var(--border);
+				background: var(--panel);
+			}
+			.as-name-input {
+				flex: 1;
+				background: var(--panel-2);
+				border: 1px solid var(--border-2);
+				border-radius: 8px;
+				color: var(--text);
+				padding: 8px 12px;
+				font-size: 13px;
+				font-family: inherit;
+				outline: none;
+				transition: border-color 0.15s;
+			}
+			.as-name-input:focus { border-color: var(--accent); }
+			.as-name-input::placeholder { color: var(--text-3); }
+
+			/* ── Tabs ─────────────────────────────────────────────── */
+			.as-tabs {
+				display: flex;
+				border-bottom: 1px solid var(--border);
+				background: var(--panel);
+				padding: 0 8px;
+				overflow-x: auto;
+			}
+			.as-tab {
+				background: transparent;
+				border: 0;
+				color: var(--text-3);
+				padding: 12px 14px;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				font-family: inherit;
+				border-bottom: 2px solid transparent;
+				transition: color 0.15s, border-color 0.15s;
+				white-space: nowrap;
+			}
+			.as-tab:hover { color: var(--text-2); }
+			.as-tab.active { color: var(--text); border-color: var(--accent); }
+
+			/* ── Chips ────────────────────────────────────────────── */
+			.as-chips {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 10px 16px;
+				border-bottom: 1px solid var(--border);
+				background: var(--panel);
+				min-height: 44px;
+				overflow-x: auto;
+				white-space: nowrap;
+			}
+			.as-chips:empty::before {
+				content: 'Nothing on yet. Pick something below.';
+				color: var(--text-3);
+				font-size: 12px;
+			}
+			.as-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				background: var(--panel-2);
+				border: 1px solid var(--border-2);
+				border-radius: 999px;
+				padding: 4px 6px 4px 10px;
+				font-size: 12px;
+				color: var(--text);
+				white-space: nowrap;
+				font-family: inherit;
+			}
+			.as-chip .as-chip-kind {
+				color: var(--text-3);
+				font-size: 10px;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+			}
+			.as-chip button {
+				background: transparent;
+				border: 0;
+				color: var(--text-3);
+				cursor: pointer;
+				font-size: 14px;
+				line-height: 1;
+				padding: 2px 6px;
+				border-radius: 999px;
+				font-family: inherit;
+			}
+			.as-chip button:hover { color: var(--danger); background: rgba(244, 63, 94, 0.08); }
+
+			/* ── Panel (tile grid + sculpt) ────────────────────────── */
+			.as-panel {
+				flex: 1;
+				min-height: 0;
+				overflow-y: auto;
+				padding: 16px;
+			}
+			.as-search-wrap {
+				position: sticky;
+				top: -16px;
+				margin: -16px -16px 12px;
+				padding: 12px 16px;
+				background: var(--bg);
+				border-bottom: 1px solid var(--border);
+				z-index: 2;
+			}
+			.as-search {
+				width: 100%;
+				background: var(--panel-2);
+				border: 1px solid var(--border-2);
+				border-radius: 8px;
+				color: var(--text);
+				padding: 8px 12px;
+				font-size: 13px;
+				font-family: inherit;
+				outline: none;
+				transition: border-color 0.15s;
+			}
+			.as-search:focus { border-color: var(--accent); }
+			.as-search::placeholder { color: var(--text-3); }
+			.as-empty {
+				color: var(--text-3);
+				font-size: 13px;
+				padding: 24px 4px;
+				text-align: center;
+			}
+			.as-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+				gap: 10px;
+			}
+			.as-tile {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 10px 10px 8px;
+				cursor: pointer;
+				transition: border-color 0.15s, transform 0.15s, background 0.15s;
+				color: inherit;
+				text-align: left;
+				font-family: inherit;
+			}
+			.as-tile:hover {
+				border-color: var(--accent);
+				transform: translateY(-1px);
+				background: rgba(214, 255, 61, 0.03);
+			}
+			.as-tile.selected {
+				border-color: var(--accent);
+				background: rgba(214, 255, 61, 0.05);
+			}
+			.as-tile.previewing {
+				border-color: #a78bfa;
+				box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.35);
+			}
+			.as-tile-preview {
+				aspect-ratio: 1 / 1;
+				border-radius: 8px;
+				background:
+					radial-gradient(ellipse at center, rgba(255,255,255,0.05), transparent 70%),
+					var(--panel-2);
+				margin-bottom: 8px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 36px;
+				overflow: hidden;
+				position: relative;
+			}
+			.as-tile-preview img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				display: block;
+			}
+			.as-tile-name {
+				font-size: 12px;
+				font-weight: 600;
+				color: var(--text);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.as-tile-kind {
+				font-size: 10px;
+				color: var(--text-3);
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				margin-top: 1px;
+			}
+			.as-tile-none {
+				background: transparent;
+				border-style: dashed;
+			}
+
+			/* ── Status bar ────────────────────────────────────────── */
+			.as-status {
+				padding: 10px 16px;
+				border-top: 1px solid var(--border);
+				background: var(--panel);
+				font-size: 12px;
+				color: var(--text-3);
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				min-height: 36px;
+			}
+			.as-status.ok { color: var(--success); }
+			.as-status.err { color: var(--danger); }
+			.as-status .spin {
+				width: 11px; height: 11px;
+				border-radius: 50%;
+				border: 2px solid rgba(255,255,255,0.2);
+				border-top-color: var(--accent);
+				animation: as-spin 0.9s linear infinite;
+			}
+			@keyframes as-spin { to { transform: rotate(360deg); } }
+
+			.as-error {
+				padding: 80px 24px;
+				text-align: center;
+				color: var(--text-3);
+				font-size: 14px;
+			}
+
+			@media (max-width: 980px) {
+				.as-shell { grid-template-columns: 1fr; }
+				.as-stage { border-right: 0; border-bottom: 1px solid var(--border); min-height: 380px; }
+			}
+
+			/* ── Reuse avatar-edit sculpt styles ─────────────────── */
+			.ae-sculpt-head {
+				display: flex;
+				gap: 8px;
+				margin-bottom: 10px;
+			}
+			.ae-sculpt-capture {
+				flex: 1;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 6px;
+			}
+			.ae-sculpt-capture-icon { font-size: 14px; line-height: 1; }
+			.ae-sculpt-note {
+				font-size: 12px;
+				color: var(--text-3);
+				line-height: 1.55;
+				margin: 0 0 14px;
+			}
+			.ae-sculpt-mirror {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				margin: 0 0 8px;
+				padding: 6px 10px;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				background: var(--panel);
+				cursor: pointer;
+				font-size: 12px;
+				color: var(--text-2);
+				user-select: none;
+			}
+			.ae-sculpt-mirror input { accent-color: var(--accent); }
+			.ae-sculpt-mirror:hover { color: var(--text); border-color: var(--border-2); }
+			.ae-sculpt-group {
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				background: var(--panel);
+				margin-bottom: 8px;
+				overflow: hidden;
+			}
+			.ae-sculpt-group summary {
+				list-style: none;
+				cursor: pointer;
+				padding: 10px 14px;
+				font-size: 13px;
+				font-weight: 600;
+				color: var(--text);
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				transition: background 0.12s;
+				user-select: none;
+			}
+			.ae-sculpt-group summary::-webkit-details-marker { display: none; }
+			.ae-sculpt-group summary::before {
+				content: '\25B8';
+				color: var(--text-3);
+				font-size: 11px;
+				margin-right: 8px;
+				display: inline-block;
+				transition: transform 0.18s;
+			}
+			.ae-sculpt-group[open] summary::before { transform: rotate(90deg); }
+			.ae-sculpt-group summary:hover { background: var(--panel-2); }
+			.ae-sculpt-count {
+				font-size: 10px;
+				color: var(--text-3);
+				background: var(--panel-2);
+				border: 1px solid var(--border-2);
+				padding: 2px 7px;
+				border-radius: 999px;
+				margin-left: auto;
+			}
+			.ae-sculpt-rows {
+				padding: 6px 14px 14px;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				border-top: 1px solid var(--border);
+				background: rgba(0, 0, 0, 0.2);
+			}
+			.ae-sculpt-row {
+				display: grid;
+				grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 36px;
+				align-items: center;
+				gap: 10px;
+				padding: 6px 0;
+			}
+			.ae-sculpt-label {
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				min-width: 0;
+			}
+			.ae-sculpt-name {
+				font-size: 12px;
+				color: var(--text);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.ae-sculpt-meta {
+				font-size: 9px;
+				color: var(--text-3);
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+			}
+			.ae-sculpt-row input[type='range'] {
+				appearance: none;
+				-webkit-appearance: none;
+				width: 100%;
+				background: transparent;
+				height: 16px;
+				cursor: pointer;
+			}
+			.ae-sculpt-row input[type='range']::-webkit-slider-runnable-track {
+				height: 4px;
+				border-radius: 999px;
+				background: var(--border-2);
+			}
+			.ae-sculpt-row input[type='range']::-moz-range-track {
+				height: 4px;
+				border-radius: 999px;
+				background: var(--border-2);
+			}
+			.ae-sculpt-row input[type='range']::-webkit-slider-thumb {
+				appearance: none;
+				-webkit-appearance: none;
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: var(--accent);
+				margin-top: -5px;
+				border: 0;
+				box-shadow: 0 0 0 2px rgba(214, 255, 61, 0.18);
+				cursor: pointer;
+			}
+			.ae-sculpt-row input[type='range']::-moz-range-thumb {
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: var(--accent);
+				border: 0;
+				cursor: pointer;
+			}
+			.ae-sculpt-value {
+				font-family: ui-monospace, 'SF Mono', monospace;
+				font-size: 11px;
+				color: var(--text-3);
+				text-align: right;
+				font-variant-numeric: tabular-nums;
+			}
+
+			/* ── Blend wheel ──────────────────────────────────────── */
+			.ae-blend-group > .ae-blend-body {
+				padding: 16px 14px 14px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 10px;
+			}
+			.ae-blend-canvas {
+				position: relative;
+				width: 220px;
+				height: 220px;
+				border: 1px solid var(--border-2);
+				border-radius: 50%;
+				background: radial-gradient(circle at 50% 50%, rgba(214, 255, 61, 0.03) 0%, rgba(255,255,255,0.015) 60%, transparent 100%);
+				cursor: crosshair;
+				flex-shrink: 0;
+				outline: none;
+			}
+			.ae-blend-canvas::before, .ae-blend-canvas::after {
+				content: '';
+				position: absolute;
+				background: rgba(255, 255, 255, 0.07);
+				pointer-events: none;
+			}
+			.ae-blend-canvas::before { left: 0; right: 0; top: 50%; height: 1px; transform: translateY(-50%); }
+			.ae-blend-canvas::after { top: 0; bottom: 0; left: 50%; width: 1px; transform: translateX(-50%); }
+			.ae-blend-canvas:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+			.ae-blend-label {
+				position: absolute;
+				transform: translate(-50%, -50%);
+				font-size: 9px;
+				font-weight: 600;
+				color: rgba(255, 255, 255, 0.45);
+				letter-spacing: 0.07em;
+				text-transform: uppercase;
+				white-space: nowrap;
+				pointer-events: none;
+				user-select: none;
+			}
+			.ae-blend-puck {
+				position: absolute;
+				left: 50%; top: 50%;
+				width: 20px; height: 20px;
+				border-radius: 50%;
+				background: var(--accent);
+				box-shadow: 0 0 0 3px rgba(214, 255, 61, 0.25), 0 2px 8px rgba(0,0,0,0.5);
+				transform: translate(-50%, -50%);
+				cursor: grab;
+				touch-action: none;
+				z-index: 2;
+				transition: box-shadow 0.12s;
+			}
+			.ae-blend-puck:active { cursor: grabbing; box-shadow: 0 0 0 5px rgba(214, 255, 61, 0.35), 0 3px 12px rgba(0,0,0,0.6); }
+			.ae-blend-desc {
+				font-size: 11px;
+				color: var(--text-3);
+				text-align: center;
+				margin: 0;
+				min-height: 16px;
+			}
+
+			/* ── Face capture modal ─────────────────────────────── */
+			.ae-face-backdrop {
+				position: fixed;
+				inset: 0;
+				z-index: 200;
+				background: rgba(0, 0, 0, 0.72);
+				backdrop-filter: blur(8px);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 20px;
+				animation: asFaceFade 0.18s ease-out;
+			}
+			@keyframes asFaceFade { from { opacity: 0 } to { opacity: 1 } }
+			.ae-face-dialog {
+				background: var(--panel);
+				border: 1.5px solid var(--border-2);
+				border-radius: 14px;
+				width: 100%;
+				max-width: 520px;
+				max-height: calc(100vh - 40px);
+				overflow-y: auto;
+				padding: 24px;
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				gap: 14px;
+				box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+				font-family: inherit;
+			}
+			.ae-face-dialog h3 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+			.ae-face-lede { margin: 0; color: var(--text-3); font-size: 13px; line-height: 1.5; }
+			.ae-face-close {
+				position: absolute;
+				top: 12px; right: 12px;
+				background: var(--panel-2);
+				border: 1px solid var(--border-2);
+				color: var(--text-2);
+				width: 28px; height: 28px;
+				border-radius: 999px;
+				cursor: pointer;
+				font: inherit;
+				font-size: 13px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.ae-face-close:hover { color: var(--text); border-color: var(--text-3); }
+			.ae-face-stage {
+				position: relative;
+				aspect-ratio: 1 / 1;
+				background: #000;
+				border: 1px solid var(--border-2);
+				border-radius: 10px;
+				overflow: hidden;
+			}
+			.ae-face-stage video {
+				width: 100%; height: 100%;
+				object-fit: cover;
+				transform: scaleX(-1);
+				display: block;
+			}
+			.ae-face-status {
+				position: absolute;
+				left: 0; right: 0; bottom: 0;
+				padding: 8px 12px;
+				font-size: 12px;
+				color: rgba(255,255,255,0.85);
+				background: linear-gradient(180deg, transparent, rgba(0,0,0,0.7));
+				text-align: center;
+			}
+			.ae-face-actions {
+				display: flex;
+				gap: 8px;
+				justify-content: flex-end;
+			}
+
+			/* ── Save overlay ─────────────────────────────────────── */
+			.as-save-overlay {
+				position: fixed;
+				inset: 0;
+				z-index: 300;
+				background: rgba(0, 0, 0, 0.85);
+				backdrop-filter: blur(12px);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 16px;
+			}
+			.as-save-overlay .spin-lg {
+				width: 40px; height: 40px;
+				border-radius: 50%;
+				border: 3px solid rgba(255,255,255,0.12);
+				border-top-color: var(--accent);
+				animation: as-spin 0.8s linear infinite;
+			}
+			.as-save-label {
+				font-size: 15px;
+				font-weight: 500;
+				color: var(--text);
+			}
+			.as-save-sublabel {
+				font-size: 12px;
+				color: var(--text-3);
+				margin-top: -8px;
+			}
+			.as-progress-bar {
+				width: 260px;
+				height: 4px;
+				border-radius: 999px;
+				background: var(--border-2);
+				overflow: hidden;
+			}
+			.as-progress-fill {
+				height: 100%;
+				border-radius: 999px;
+				background: var(--accent);
+				transition: width 0.3s ease;
+				width: 0%;
+			}
+		</style>
+	</head>
+	<body>
+		<header class="as-bar">
+			<a class="as-back" id="as-back" href="/create">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+				Back
+			</a>
+			<div class="as-bar-title">Avatar Studio</div>
+			<div class="as-actions">
+				<button class="as-btn" id="as-reset" type="button">Reset</button>
+				<button class="as-btn primary" id="as-save" type="button">Save avatar</button>
+			</div>
+		</header>
+		<main class="as-shell" id="as-shell">
+			<div class="as-stage" id="as-stage">
+				<div class="as-stage-loading" id="as-loading">Loading avatar...</div>
+			</div>
+			<aside class="as-side">
+				<div class="as-name-row">
+					<input class="as-name-input" id="as-name" type="text" placeholder="Name your avatar" maxlength="60" autocomplete="off" aria-label="Avatar name" />
+				</div>
+				<div class="as-body-type">
+					<span class="as-body-label">Body</span>
+					<div class="as-body-toggle" role="group" aria-label="Body type">
+						<button type="button" data-body="male" aria-pressed="true">Masculine</button>
+						<button type="button" data-body="female" aria-pressed="false">Feminine</button>
+					</div>
+				</div>
+				<nav class="as-tabs" id="as-tabs" role="tablist"></nav>
+				<div class="as-chips" id="as-chips" aria-label="Current outfit"></div>
+				<div class="as-panel" id="as-panel"></div>
+				<div class="as-status" id="as-status">Choose a style below to get started.</div>
+			</aside>
+		</main>
+		<script src="/src/avatar-studio.js" type="module"></script>
+	</body>
+</html>
