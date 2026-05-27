@@ -17,6 +17,8 @@ export class Player extends Schema {
 		this.z = 0;
 		this.yaw = 0;
 		this.motion = 'idle'; // 'idle' | 'walk' | 'run'
+		this.emote = '';       // animation name or '' when not emoting
+		this.emoteTs = 0;      // epoch ms when the emote was triggered
 		this.tsServer = 0;     // server-side last-update epoch ms (for interpolation)
 	}
 }
@@ -29,6 +31,8 @@ defineTypes(Player, {
 	z: 'float32',
 	yaw: 'float32',
 	motion: 'string',
+	emote: 'string',
+	emoteTs: 'float64',
 	tsServer: 'float64',
 });
 

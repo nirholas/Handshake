@@ -53,11 +53,41 @@ const MORPH_ROUND = [
 	'pucker',
 ];
 
-const JAW_BONE_NAMES = ['Jaw', 'jaw', 'mixamorig:Jaw', 'mixamorigJaw', 'CC_Base_JawRoot', 'Bip01_Jaw'];
+const JAW_BONE_NAMES = [
+	'Jaw', 'jaw',
+	'mixamorig:Jaw', 'mixamorigJaw',
+	'CC_Base_JawRoot',
+	'Bip01_Jaw',
+	'J_Bip_C_Jaw',
+	'lowerJaw', 'LowerJaw',
+	'jaw_01',
+	'FACIAL_C_Jaw',
+	'JawBone', 'jaw_bone', 'Jaw_bone',
+	'lowerFaceJnt',
+	'DEF-jaw',
+	'ORG-jaw',
+];
+
+const HEAD_BONE_NAMES = [
+	'Head', 'head',
+	'mixamorig:Head', 'mixamorigHead',
+	'CC_Base_Head',
+	'Bip01_Head',
+	'J_Bip_C_Head',
+	'head_01',
+	'HeadBone', 'head_bone',
+	'DEF-spine.006',
+	'DEF-head',
+	'ORG-head',
+];
 
 // Max jaw rotation in radians when there's no morph available. ~12° looks
 // like talking without crossing into rictus territory.
 const MAX_JAW_ROT = 0.21;
+
+// Max head nod in radians for the head-bone fallback. ~2.5° — subtle enough
+// to read as speech cadence without looking like a deliberate nod.
+const MAX_HEAD_NOD = 0.044;
 
 export class AvatarMouthTarget {
 	constructor() {
@@ -65,6 +95,8 @@ export class AvatarMouthTarget {
 		this._morphBindings = [];
 		this._jawBone = null;
 		this._jawBaseRotX = 0;
+		this._headBone = null;
+		this._headBaseRotX = 0;
 		this._attached = false;
 	}
 
@@ -78,21 +110,30 @@ export class AvatarMouthTarget {
 	attach(root) {
 		this._morphBindings = [];
 		this._jawBone = null;
+		this._headBone = null;
 		this._attached = false;
 		if (!root || typeof root.traverse !== 'function') return;
 
 		const meshesWithMorphs = [];
+		let headCandidate = null;
 		root.traverse((node) => {
 			if (node.isMesh && node.morphTargetDictionary && node.morphTargetInfluences) {
 				meshesWithMorphs.push(node);
 			}
-			if (!this._jawBone && (node.isBone || node.type === 'Bone')) {
-				if (JAW_BONE_NAMES.some((n) => n.toLowerCase() === String(node.name).toLowerCase())) {
-					this._jawBone = node;
-					this._jawBaseRotX = node.rotation.x;
-				}
+			if (!(node.isBone || node.type === 'Bone')) return;
+			const name = String(node.name).toLowerCase();
+			if (!this._jawBone && JAW_BONE_NAMES.some((n) => n.toLowerCase() === name)) {
+				this._jawBone = node;
+				this._jawBaseRotX = node.rotation.x;
+			}
+			if (!headCandidate && HEAD_BONE_NAMES.some((n) => n.toLowerCase() === name)) {
+				headCandidate = node;
 			}
 		});
+		if (!this._jawBone && headCandidate) {
+			this._headBone = headCandidate;
+			this._headBaseRotX = headCandidate.rotation.x;
+		}
 
 		// Per channel: find the first morph name from the priority list that
 		// exists on any mesh; bind every mesh that has it.
@@ -114,6 +155,14 @@ export class AvatarMouthTarget {
 		return !!this._jawBone;
 	}
 
+	hasHeadFallback() {
+		return !this._jawBone && !!this._headBone;
+	}
+
+	hasAnyMouthDriver() {
+		return this.hasMouthMorphs() || this.hasJawBone() || this.hasHeadFallback();
+	}
+
 	/** Channel diagnostics for debugging which shapes are wired. */
 	describe() {
 		const channels = {};
@@ -123,6 +172,7 @@ export class AvatarMouthTarget {
 		return {
 			morphs: channels,
 			jawBone: this._jawBone ? this._jawBone.name : null,
+			headFallback: this._headBone ? this._headBone.name : null,
 		};
 	}
 
@@ -151,11 +201,18 @@ export class AvatarMouthTarget {
 		if (this._jawBone && !this._channelBound('open')) {
 			this._jawBone.rotation.x = this._jawBaseRotX + open * MAX_JAW_ROT;
 		}
+
+		// Head micro-nod — last resort when neither morphs nor jaw bone exist.
+		// Subtle chin dip (~2.5°) that reads as speech without looking like nodding.
+		if (this._headBone && !this._jawBone && !this._channelBound('open')) {
+			this._headBone.rotation.x = this._headBaseRotX + open * MAX_HEAD_NOD;
+		}
 	}
 
 	dispose() {
 		this._morphBindings = [];
 		this._jawBone = null;
+		this._headBone = null;
 		this._attached = false;
 	}
 

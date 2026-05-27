@@ -60,6 +60,7 @@ export function openTalkMode({ avatar, systemPromptFn }) {
 	const frameBtn = overlay.querySelector('.tws-talk-frame');
 	const frameLabel = frameBtn?.querySelector('.tws-talk-frame-label');
 	const emoteBar = overlay.querySelector('.tws-talk-emotes');
+	const lipsyncNotice = overlay.querySelector('.tws-talk-lipsync-notice');
 	nameEl.textContent = avatar.name || 'Avatar';
 
 	// Owner-only affordance: `owner_id` is stripped from the API response for
@@ -80,16 +81,18 @@ export function openTalkMode({ avatar, systemPromptFn }) {
 		.mount({ container: stage, glbUrl: glbBlob ? undefined : glbUrl, glbBlob, cameraPreset: 'half' })
 		.then(async (root) => {
 			scene.attachMouthTarget(mouthTarget);
-			// Log what we found so debugging mismatched rigs in the field is easy.
 			const diag = mouthTarget.describe();
-			if (!mouthTarget.hasMouthMorphs() && !mouthTarget.hasJawBone()) {
-				console.warn('[talk] avatar has no mouth morphs or jaw bone — speech will play but the mouth won\'t move. Diagnostics:', diag);
+			if (!mouthTarget.hasAnyMouthDriver()) {
+				console.warn('[talk] avatar has no mouth morphs, jaw bone, or head fallback. Diagnostics:', diag);
+				showLipsyncNotice(lipsyncNotice, 'none');
+			} else if (!mouthTarget.hasMouthMorphs() && !mouthTarget.hasJawBone() && mouthTarget.hasHeadFallback()) {
+				console.info('[talk] mouth binding (head fallback):', diag);
+				showLipsyncNotice(lipsyncNotice, 'head');
 			} else {
 				console.info('[talk] mouth binding:', diag);
 			}
 			setStatus(statusEl, 'idle');
 
-			// Render the emote bar once the animation manifest is available.
 			const emotes = scene.getEmoteController();
 			if (emotes) {
 				await emotes.loadManifest();
@@ -213,6 +216,7 @@ const TEMPLATE = `
 		</div>
 	</div>
 	<div class="tws-talk-stage"></div>
+	<div class="tws-talk-lipsync-notice" hidden role="status"></div>
 	<div class="tws-talk-emotes" hidden role="toolbar" aria-label="Emote shortcuts"></div>
 	<div class="tws-talk-transcript" aria-live="polite"></div>
 	<div class="tws-talk-controls">
@@ -279,6 +283,22 @@ function showError(el, message) {
 	}, 4000);
 }
 
+function showLipsyncNotice(el, level) {
+	if (!el) return;
+	if (level === 'head') {
+		el.dataset.level = 'limited';
+		el.innerHTML =
+			'<span class="tws-lipsync-icon" aria-hidden="true">◐</span>' +
+			'<span class="tws-lipsync-text">Limited lip sync — this avatar has no mouth blend shapes. Using subtle head motion as a fallback.</span>';
+	} else {
+		el.dataset.level = 'none';
+		el.innerHTML =
+			'<span class="tws-lipsync-icon" aria-hidden="true">○</span>' +
+			'<span class="tws-lipsync-text">No lip sync — this avatar\'s model doesn\'t include mouth shapes or a jaw bone. Voice will still play normally.</span>';
+	}
+	el.hidden = false;
+}
+
 function injectStylesOnce() {
 	if (document.getElementById('tws-talk-mode-css')) return;
 	const css = document.createElement('style');
@@ -298,7 +318,7 @@ const TALK_CSS = `
 	color: #fafafa;
 	font-family: 'Inter', system-ui, sans-serif;
 	display: grid;
-	grid-template-rows: auto 1fr auto auto;
+	grid-template-rows: auto 1fr auto auto auto auto;
 	animation: tws-talk-in 200ms ease-out;
 }
 @keyframes tws-talk-in { from { opacity: 0; } to { opacity: 1; } }
@@ -474,8 +494,42 @@ const TALK_CSS = `
 	padding: 8px 14px; border-radius: 10px;
 	font-size: 13px;
 }
+.tws-talk-lipsync-notice {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0 24px;
+	padding: 10px 14px;
+	border-radius: 10px;
+	font-size: 13px;
+	line-height: 1.45;
+	animation: tws-notice-in 300ms ease-out;
+}
+@keyframes tws-notice-in {
+	from { opacity: 0; transform: translateY(-4px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+.tws-talk-lipsync-notice[data-level="limited"] {
+	background: rgba(250,204,21,0.08);
+	border: 1px solid rgba(250,204,21,0.22);
+	color: rgba(253,224,71,0.9);
+}
+.tws-talk-lipsync-notice[data-level="none"] {
+	background: rgba(161,161,170,0.08);
+	border: 1px solid rgba(161,161,170,0.18);
+	color: rgba(161,161,170,0.9);
+}
+.tws-lipsync-icon {
+	flex-shrink: 0;
+	font-size: 16px;
+	line-height: 1;
+}
+.tws-lipsync-text {
+	min-width: 0;
+}
 @media (max-width: 600px) {
 	.tws-talk-header { padding: 12px 16px 0; }
+	.tws-talk-lipsync-notice { margin: 0 16px; padding: 8px 12px; font-size: 12px; }
 	.tws-talk-transcript { padding: 8px 16px; max-height: 120px; }
 	.tws-talk-controls { padding: 12px 16px 20px; }
 	.tws-talk-hold { padding: 12px 22px; font-size: 14px; }

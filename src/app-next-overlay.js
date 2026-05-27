@@ -64,6 +64,8 @@ function boot() {
 	wireHelp();
 	wireAutoHide();
 	wireDeployMirror();
+	wireVisitorCard();
+	wirePosterSkeleton();
 
 	waitForViewer().then((viewer) => {
 		if (!viewer) {
@@ -533,18 +535,20 @@ function wireShare() {
 	if (!btn || !pop) return;
 
 	const refresh = () => {
-		// Page URL: use current location stripped of hash demo-state.
 		const baseUrl = location.origin + '/app';
 		const params = new URLSearchParams();
-		const currentModelUrl = window.VIEWER?.app?._currentModelUrl;
-		if (currentModelUrl && !currentModelUrl.includes('/avatars/cz.glb')) {
-			// Only surface non-default avatars in the share URL.
-			params.set('model', currentModelUrl);
+		const agentId = new URLSearchParams(location.search).get('agent');
+		if (agentId) {
+			params.set('agent', agentId);
+		} else {
+			const currentModelUrl = window.VIEWER?.app?._currentModelUrl;
+			if (currentModelUrl && !currentModelUrl.includes('/avatars/cz.glb')) {
+				params.set('model', currentModelUrl);
+			}
 		}
 		const share = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
 		urlEl.value = share;
 
-		// Embed snippet — iframe pointing at the same viewer in kiosk mode.
 		const kiosk = share + (share.includes('?') ? '&' : '?') + 'kiosk=1';
 		embedEl.value =
 			`<iframe src="${kiosk}" width="540" height="720" ` +
@@ -590,6 +594,36 @@ function wireShare() {
 
 	urlCopyBtn?.addEventListener('click', () => copy(urlEl, urlCopyBtn));
 	embedCopyBtn?.addEventListener('click', () => copy(embedEl, embedCopyBtn));
+
+	// Social share buttons
+	const twitterBtn = document.getElementById('nxt-share-twitter');
+	const farcasterBtn = document.getElementById('nxt-share-farcaster');
+	const telegramBtn = document.getElementById('nxt-share-telegram');
+
+	const shareText = () => {
+		const app = window.VIEWER?.app;
+		const name = app?.identity?.name;
+		return name
+			? `Meet ${name} — an embodied AI agent on @threews_`
+			: 'Check out this embodied AI agent on @threews_';
+	};
+
+	const shareUrl = () => urlEl?.value || location.href;
+
+	twitterBtn?.addEventListener('click', () => {
+		const url = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText())}&url=${encodeURIComponent(shareUrl())}`;
+		window.open(url, '_blank', 'noopener,noreferrer,width=600,height=400');
+	});
+
+	farcasterBtn?.addEventListener('click', () => {
+		const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText() + ' ' + shareUrl())}`;
+		window.open(url, '_blank', 'noopener,noreferrer,width=600,height=600');
+	});
+
+	telegramBtn?.addEventListener('click', () => {
+		const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl())}&text=${encodeURIComponent(shareText())}`;
+		window.open(url, '_blank', 'noopener,noreferrer,width=600,height=400');
+	});
 }
 
 // ── Fullscreen ────────────────────────────────────────────────────────────

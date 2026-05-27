@@ -6,11 +6,7 @@
 :root {
 	--v4-gold: #ffd76a;
 	--v4-gold-dim: rgba(255, 215, 106, 0.15);
-	--v4-mint: #6ee7b7;
-	--v4-violet: #a78bfa;
 	--v4-bg: #050505;
-	--v4-surface: rgba(10, 8, 6, 0.72);
-	--v4-glass: blur(20px) saturate(140%);
 	--v4-ink: #f0efe8;
 	--v4-ink-dim: rgba(240, 239, 232, 0.5);
 	--v4-stroke: rgba(255, 255, 255, 0.08);
@@ -754,4 +750,24 @@
 	.v4-scroll-hint {
 		animation: none;
 	}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Accessibility — focus-visible
+   ══════════════════════════════════════════════════════════════ */
+.v4-btn-primary:focus-visible,
+.v4-btn-ghost:focus-visible {
+	outline: 2px solid var(--v4-gold);
+	outline-offset: 2px;
+}
+
+.v4-model-btn:focus-visible,
+.v4-chip:focus-visible {
+	outline: 2px solid var(--v4-gold);
+	outline-offset: 1px;
+}
+
+.v4-step-card:focus-visible {
+	outline: 2px solid var(--v4-gold);
+	outline-offset: -2px;
 }

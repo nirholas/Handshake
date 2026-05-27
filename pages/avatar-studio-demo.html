@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Avatar Studio · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Create and customize 3D avatars — face sculpting, body morphs, outfits, and accessories. No third-party dependency." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/avatar-studio-demo.css" />
+	</head>
+	<body>
+		<!-- ── Header ──────────────────────────────────────────── -->
+		<header class="as-bar">
+			<a href="/" class="as-logo" aria-label="three.ws home">
+				<img src="/three-ws-icon.svg" alt="" width="28" height="28" />
+				<span>Avatar Studio</span>
+			</a>
+			<div class="as-bar-actions">
+				<button class="as-btn as-btn-ghost" type="button" id="as-reset-all" title="Reset everything to default">Reset</button>
+				<button class="as-btn as-btn-primary" type="button" id="as-export" title="Download avatar as .glb">Export GLB</button>
+			</div>
+		</header>
+
+		<!-- ── Main layout ─────────────────────────────────────── -->
+		<main class="as-main">
+			<!-- 3D viewport -->
+			<section class="as-viewport" id="as-viewport">
+				<div class="as-viewport-loader" id="as-viewport-loader">
+					<div class="as-spinner"></div>
+					<span>Loading avatar…</span>
+				</div>
+				<!-- Camera presets -->
+				<div class="as-cam-bar" id="as-cam-bar">
+					<button class="as-cam-btn active" type="button" data-preset="full" title="Full body">Full</button>
+					<button class="as-cam-btn" type="button" data-preset="head" title="Head closeup">Head</button>
+					<button class="as-cam-btn" type="button" data-preset="tight" title="Tight portrait">Portrait</button>
+				</div>
+				<!-- Animation controls -->
+				<div class="as-anim-bar" id="as-anim-bar">
+					<select class="as-anim-select" id="as-anim-select" title="Preview animation">
+						<option value="">Idle</option>
+					</select>
+				</div>
+			</section>
+
+			<!-- Side panel -->
+			<aside class="as-panel" id="as-panel">
+				<!-- Tabs -->
+				<nav class="as-tabs" id="as-tabs" role="tablist">
+					<button class="as-tab active" role="tab" aria-selected="true" data-tab="outfit">Outfits</button>
+					<button class="as-tab" role="tab" aria-selected="false" data-tab="hat">Hats</button>
+					<button class="as-tab" role="tab" aria-selected="false" data-tab="glasses">Glasses</button>
+					<button class="as-tab" role="tab" aria-selected="false" data-tab="earrings">Earrings</button>
+					<button class="as-tab" role="tab" aria-selected="false" data-tab="sculpt">Sculpt</button>
+				</nav>
+
+				<!-- Active chips -->
+				<div class="as-chips" id="as-chips"></div>
+
+				<!-- Tab content -->
+				<div class="as-tab-content" id="as-tab-content"></div>
+
+				<!-- Status -->
+				<div class="as-status" id="as-status"></div>
+			</aside>
+		</main>
+
+		<script type="module" src="/src/avatar-studio-demo.js"></script>
+	</body>
+</html>

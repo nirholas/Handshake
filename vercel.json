@@ -286,6 +286,10 @@
 			"dest": "/avatar-artifact.html"
 		},
 		{
+			"src": "/avatar-studio-demo/?",
+			"dest": "/avatar-studio-demo.html"
+		},
+		{
 			"src": "/walk/?",
 			"dest": "/walk.html"
 		},
@@ -2036,6 +2040,22 @@
 		},
 		{
 			"src": "/app",
+			"has": [
+				{
+					"type": "query",
+					"key": "agent",
+					"value": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+				},
+				{
+					"type": "header",
+					"key": "user-agent",
+					"value": "(?i).*(Twitterbot|facebookexternalhit|Slackbot|LinkedInBot|Discordbot|TelegramBot|WhatsApp|Googlebot|bingbot|Applebot|Pinterestbot|redditbot|Embedly|Quora|outbrain|vkShare|Iframely).*"
+				}
+			],
+			"dest": "/api/app-og?agent=$agent"
+		},
+		{
+			"src": "/app",
 			"dest": "/app-next.html"
 		},
 		{
@@ -2084,6 +2104,14 @@
 		{
 			"src": "/create/video/?",
 			"dest": "/create/video.html"
+		},
+		{
+			"src": "/create/studio",
+			"dest": "/avatar-studio.html"
+		},
+		{
+			"src": "/create/studio/",
+			"dest": "/avatar-studio.html"
 		},
 		{
 			"src": "/create/selfie",

@@ -91,6 +91,16 @@ const recordStatusLabel = recordStatus?.querySelector('[data-label]');
 const statusEl = document.getElementById('walk-status');
 const onlinePill = document.getElementById('walk-online');
 const onlineCountEl = document.getElementById('walk-online-count');
+const loadingOverlay = document.getElementById('walk-loading');
+const loadingText = document.getElementById('walk-loading-text');
+const nameInput = /** @type {HTMLInputElement|null} */ (document.getElementById('walk-name-input'));
+const playersPanelEl = document.getElementById('walk-players-panel');
+const playersListEl = document.getElementById('walk-players-list');
+const playersCloseBtn = document.getElementById('walk-players-close');
+const helpToggleBtn = document.getElementById('walk-help-toggle');
+const emoteTrayEl = document.getElementById('walk-emote-tray');
+
+const NAME_STORAGE_KEY = 'walk:player-name';
 
 function setStatus(text, { error = false, sticky = false } = {}) {
 	if (!statusEl) return;
@@ -102,6 +112,79 @@ function setStatus(text, { error = false, sticky = false } = {}) {
 		setStatus._t = setTimeout(() => statusEl.classList.add('is-hidden'), 2200);
 	}
 }
+
+function setLoadingText(text) {
+	if (loadingText) loadingText.textContent = text;
+}
+
+function dismissLoading() {
+	if (!loadingOverlay) return;
+	loadingOverlay.classList.add('is-done');
+	loadingOverlay.addEventListener('transitionend', () => loadingOverlay.remove(), { once: true });
+}
+
+// ── Name persistence ─────────────────────────────────────────────────────
+function getStoredName() {
+	const params = new URLSearchParams(location.search);
+	return params.get('name')
+		|| (typeof localStorage !== 'undefined' && localStorage.getItem(NAME_STORAGE_KEY))
+		|| '';
+}
+function storeName(name) {
+	try { localStorage.setItem(NAME_STORAGE_KEY, name); } catch {}
+}
+if (nameInput) {
+	const initial = getStoredName();
+	if (initial) nameInput.value = initial;
+	const commitName = () => {
+		const v = nameInput.value.trim().slice(0, 24);
+		if (v) {
+			storeName(v);
+			if (net) net.rename(v);
+		}
+	};
+	nameInput.addEventListener('blur', commitName);
+	nameInput.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') { nameInput.blur(); }
+	});
+}
+
+// ── Help toggle ──────────────────────────────────────────────────────────
+const helpEl = document.getElementById('walk-help');
+let helpAutoHideTimer = null;
+if (helpToggleBtn && helpEl) {
+	helpToggleBtn.addEventListener('click', () => {
+		const show = helpEl.style.display === 'none';
+		helpEl.style.display = show ? '' : 'none';
+		if (helpAutoHideTimer) { clearTimeout(helpAutoHideTimer); helpAutoHideTimer = null; }
+	});
+}
+
+// ── Players panel ────────────────────────────────────────────────────────
+let playersPanelOpen = false;
+function togglePlayersPanel() {
+	playersPanelOpen = !playersPanelOpen;
+	if (playersPanelEl) playersPanelEl.hidden = !playersPanelOpen;
+	if (playersPanelOpen) renderPlayerList();
+}
+if (playersCloseBtn) playersCloseBtn.addEventListener('click', togglePlayersPanel);
+
+function renderPlayerList() {
+	if (!playersListEl) return;
+	playersListEl.innerHTML = '';
+	const localName = nameInput?.value?.trim() || 'you';
+	const li = document.createElement('li');
+	li.className = 'is-you';
+	li.innerHTML = `<span class="player-dot" style="background:var(--accent)"></span>${esc(localName)}<span class="player-motion">${currentMotion}</span>`;
+	playersListEl.appendChild(li);
+	for (const [sid, rp] of remotePlayers) {
+		const row = document.createElement('li');
+		const colorHex = '#' + (rp._color ?? 0xffffff).toString(16).padStart(6, '0');
+		row.innerHTML = `<span class="player-dot" style="background:${colorHex}"></span>${esc(rp.label?.textContent || sid.slice(0, 6))}<span class="player-motion">${rp.motion}</span>`;
+		playersListEl.appendChild(row);
+	}
+}
+function esc(s) { return String(s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' })[c]); }
 
 // ── Renderer / scene ──────────────────────────────────────────────────────
 // preserveDrawingBuffer is required so the canvas pixels remain readable for
@@ -350,7 +433,7 @@ helpOverlay.addEventListener('click', (e) => {
 });
 
 window.addEventListener('keydown', (e) => {
-	// Don't steal events from text inputs.
+	if (e.target?.tagName === 'INPUT' || e.target?.tagName === 'TEXTAREA') return;
 	if (e.target !== document.body && e.target !== canvas) return;
 	switch (e.code) {
 		case 'KeyW': case 'ArrowUp':    input.keys.forward = 1; break;
@@ -417,9 +500,9 @@ let avatarTemplate = null;
 let animationDefs = null;
 
 async function loadAvatar() {
-	setStatus('loading avatar…', { sticky: true });
-
+	setLoadingText('Resolving avatar...');
 	const avatarUrl = await resolveAvatarUrl();
+	setLoadingText('Loading 3D model...');
 	const loader = new GLTFLoader();
 	const gltf = await loader.loadAsync(avatarUrl);
 	avatar = gltf.scene;
@@ -449,13 +532,14 @@ async function loadAvatar() {
 
 	animationManager.attach(avatar);
 
-	// Load only the three clips the controller actually uses — keeps startup
-	// fast and avoids fetching ~30MB of dance/jump clips we don't need.
+	setLoadingText('Preparing animations...');
 	const manifest = await fetch(ANIMATIONS_MANIFEST_URL, { cache: 'force-cache' })
 		.then((r) => {
 			if (!r.ok) throw new Error(`HTTP ${r.status} fetching animation manifest`);
 			return r.json();
 		});
+	// Store the full manifest for emote tray population.
+	_fullManifest = manifest;
 	const needed = manifest.filter((d) =>
 		d.name === CLIP_IDLE || d.name === CLIP_WALK || d.name === CLIP_RUN,
 	);
@@ -469,7 +553,93 @@ async function loadAvatar() {
 	await animationManager.crossfadeTo(CLIP_IDLE, 0.0);
 	currentMotion = 'idle';
 
-	setStatus('walk it', { sticky: false });
+	dismissLoading();
+	buildEmoteTray();
+
+	// Auto-hide help hints after 5 seconds.
+	if (helpEl) {
+		helpAutoHideTimer = setTimeout(() => {
+			helpEl.style.display = 'none';
+			helpAutoHideTimer = null;
+		}, 5000);
+	}
+}
+
+// ── Emote tray ───────────────────────────────────────────────────────────
+let _fullManifest = null;
+let _emoteActive = false;
+
+const EMOTE_CLIPS = [
+	{ name: 'wave', icon: '👋', label: 'Wave' },
+	{ name: 'dance', icon: '💃', label: 'Dance' },
+	{ name: 'celebrate', icon: '🎉', label: 'Celebrate' },
+	{ name: 'angry', icon: '😠', label: 'Angry' },
+	{ name: 'silly', icon: '🤪', label: 'Silly' },
+	{ name: 'pray', icon: '🙏', label: 'Pray' },
+	{ name: 'taunt', icon: '😏', label: 'Taunt' },
+	{ name: 'kiss', icon: '😘', label: 'Kiss' },
+];
+
+function buildEmoteTray() {
+	if (!emoteTrayEl || !_fullManifest) return;
+	const available = EMOTE_CLIPS.filter(e =>
+		_fullManifest.some(d => d.name === e.name),
+	);
+	if (available.length === 0) return;
+	emoteTrayEl.hidden = false;
+	emoteTrayEl.innerHTML = '';
+	for (const emote of available) {
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'walk-emote-btn';
+		btn.title = emote.label;
+		btn.setAttribute('aria-pressed', 'false');
+		btn.innerHTML = `<span>${emote.icon}</span><span class="emote-label">${emote.label}</span>`;
+		btn.addEventListener('click', () => playEmote(emote.name, btn));
+		emoteTrayEl.appendChild(btn);
+	}
+}
+
+async function playEmote(name, btn) {
+	if (_emoteActive) return;
+	_emoteActive = true;
+
+	emoteTrayEl?.querySelectorAll('.walk-emote-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+	if (btn) btn.setAttribute('aria-pressed', 'true');
+
+	const def = _fullManifest?.find(d => d.name === name);
+	if (!def) { _emoteActive = false; return; }
+
+	if (!animationDefs.some(d => d.name === name)) {
+		animationDefs.push(def);
+		animationManager.setAnimationDefs(animationDefs);
+	}
+	try {
+		await animationManager.ensureLoaded(name);
+	} catch {
+		_emoteActive = false;
+		return;
+	}
+
+	await animationManager.crossfadeTo(name, 0.2);
+	if (net) net.sendEmote(name);
+
+	const action = animationManager.currentAction;
+	if (action && !action.loop) {
+		const dur = action.getClip().duration * 1000;
+		setTimeout(() => {
+			if (!_emoteActive) return;
+			_emoteActive = false;
+			animationManager.crossfadeTo(motionToClipName(currentMotion), 0.25);
+			if (btn) btn.setAttribute('aria-pressed', 'false');
+		}, dur + 100);
+	} else {
+		setTimeout(() => {
+			_emoteActive = false;
+			animationManager.crossfadeTo(motionToClipName(currentMotion), 0.25);
+			if (btn) btn.setAttribute('aria-pressed', 'false');
+		}, 3000);
+	}
 }
 
 // ── AR depth: light estimation ────────────────────────────────────────────
@@ -1043,6 +1213,10 @@ class RemotePlayer {
 			}
 		});
 
+		this._color = initial?.color ?? 0xffffff;
+		this._lastEmoteTs = 0;
+		this._emoting = false;
+
 		this.rig = new Group();
 		this.rig.add(root);
 		scene.add(this.rig);
@@ -1081,11 +1255,36 @@ class RemotePlayer {
 		this.targetYaw = player.yaw;
 		if (player.motion !== this.motion) {
 			this.motion = player.motion;
-			this.anim.crossfadeTo(motionToClipName(player.motion), 0.18);
+			if (!this._emoting) {
+				this.anim.crossfadeTo(motionToClipName(player.motion), 0.18);
+			}
 		}
 		if (this.label.textContent !== player.name && player.name) {
 			this.label.textContent = player.name;
 		}
+		if (player.emote && player.emoteTs !== this._lastEmoteTs) {
+			this._lastEmoteTs = player.emoteTs;
+			this._playRemoteEmote(player.emote);
+		}
+	}
+
+	async _playRemoteEmote(name) {
+		if (!_fullManifest) return;
+		const def = _fullManifest.find(d => d.name === name);
+		if (!def) return;
+		if (!animationDefs.some(d => d.name === name)) {
+			animationDefs.push(def);
+			this.anim.setAnimationDefs(animationDefs);
+		}
+		try { await this.anim.ensureLoaded(name); } catch { return; }
+		this._emoting = true;
+		this.anim.crossfadeTo(name, 0.2);
+		const action = this.anim.currentAction;
+		const dur = (action && !action.loop) ? action.getClip().duration * 1000 : 3000;
+		setTimeout(() => {
+			this._emoting = false;
+			this.anim.crossfadeTo(motionToClipName(this.motion), 0.25);
+		}, dur + 100);
 	}
 
 	tick(dt) {
@@ -1144,6 +1343,8 @@ function setupOnlinePill() {
 		if (!net) return;
 		if (net.status === 'failed' || net.status === 'offline') {
 			net.retry();
+		} else {
+			togglePlayersPanel();
 		}
 	});
 }
@@ -1173,10 +1374,11 @@ function setOnlineStatus(status) {
 }
 
 function startNet() {
-	if (!avatarTemplate || !animationDefs) return; // wait until loadAvatar finished
+	if (!avatarTemplate || !animationDefs) return;
 	if (net) return;
-	const params = new URLSearchParams(location.search);
-	const name = (params.get('name') || `guest-${Math.random().toString(36).slice(2, 6)}`).slice(0, 24);
+	const stored = getStoredName();
+	const name = (stored || `guest-${Math.random().toString(36).slice(2, 6)}`).slice(0, 24);
+	if (nameInput && !nameInput.value) nameInput.value = name;
 	net = new WalkNet({ name });
 
 	net.on('status', ({ status }) => {
@@ -1196,7 +1398,10 @@ function startNet() {
 	net.on('change', (player, sessionId) => {
 		if (sessionId === net.mySessionId) return;
 		const r = remotePlayers.get(sessionId);
-		if (r) r.applyServerState(player);
+		if (r) {
+			r.applyServerState(player);
+			if (playersPanelOpen) renderPlayerList();
+		}
 	});
 	net.on('remove', (sessionId) => {
 		const r = remotePlayers.get(sessionId);

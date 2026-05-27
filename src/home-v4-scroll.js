@@ -1,9 +1,5 @@
 /**
- * home-v4 scroll orchestration:
- * - Scroll reveal animations
- * - Experience section: Act2Viewer + animation chips + model picker
- * - Stats bar from /api/home-stats
- * - CTA section wave avatar
+ * home-v4 scroll orchestration.
  */
 
 const LOW_MEMORY = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory < 2;
@@ -41,12 +37,41 @@ const LOW_MEMORY = typeof navigator.deviceMemory === 'number' && navigator.devic
 		const onchainEl = document.querySelector('[data-stat="onchain"]');
 		if (agentEl && data.agents != null) agentEl.textContent = formatNum(data.agents);
 		if (onchainEl && data.onchain != null) onchainEl.textContent = formatNum(data.onchain);
-	} catch { /* non-critical */ }
+	} catch { /* stats are non-critical enhancement */ }
 })();
 
 function formatNum(n) {
 	if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
 	return String(n);
+}
+
+/* ── Off-screen pause helper for Act2Viewer instances ── */
+function observeViewerVisibility(canvas, viewer) {
+	let visible = true;
+	let paused = false;
+	const original = viewer._tick.bind(viewer);
+
+	const observer = new IntersectionObserver(
+		(entries) => {
+			visible = entries[0].isIntersecting;
+			if (visible && paused) {
+				paused = false;
+				viewer._clock.start();
+				requestAnimationFrame(original);
+			}
+		},
+		{ rootMargin: '200px' },
+	);
+	observer.observe(canvas);
+
+	const originalTick = viewer._tick;
+	viewer._tick = function () {
+		if (!visible) {
+			paused = true;
+			return;
+		}
+		originalTick.call(viewer);
+	};
 }
 
 /* ── Experience section: Act2Viewer + animation chips ── */
@@ -72,6 +97,7 @@ function formatNum(n) {
 	function boot() {
 		if (!window.Act2Viewer) return;
 		viewer = new window.Act2Viewer(canvas, { fov: 14 });
+		observeViewerVisibility(canvas, viewer);
 
 		viewer.onClipsReady = (clips) => {
 			buildChips(clips);
@@ -132,6 +158,7 @@ function formatNum(n) {
 	async function boot() {
 		if (!window.Act2Viewer) return;
 		const viewer = new window.Act2Viewer(canvas, { fov: 14 });
+		observeViewerVisibility(canvas, viewer);
 		await viewer.loadModel('/avatars/cz.glb', { autoPlay: false });
 		const waveClip = viewer.listAvailableClips().find(c => /wave|waving/i.test(c.name));
 		if (waveClip) {

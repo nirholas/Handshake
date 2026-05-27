@@ -180,7 +180,7 @@ function agentCard(a, avatars) {
 	const pumpMint = a.meta?.pumpfun?.mint || a.meta?.token?.mint || a.meta?.token?.ca;
 
 	return `
-		<div class="dn-panel" style="display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:start" data-agent-id="${esc(a.id)}">
+		<div class="dn-panel dn-agent-card" data-agent-id="${esc(a.id)}">
 			<div style="
 				width:56px;height:56px;border-radius:12px;overflow:hidden;
 				background:linear-gradient(135deg,rgba(154,124,255,0.3),rgba(109,193,255,0.2));
@@ -203,18 +203,25 @@ function agentCard(a, avatars) {
 				${a.persona?.tagline || a.tagline ? `<div style="font-size:13px;color:var(--nxt-ink-dim);margin-top:6px;font-style:italic">${esc((a.persona?.tagline || a.tagline).slice(0, 120))}</div>` : ''}
 			</div>
 
-			<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:flex-end">
-				<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+			<div class="dn-agent-actions">
+				<div class="dn-agent-actions-primary">
 					${a.avatar_id ? `<a class="dn-btn primary" href="/agent-next?id=${encodeURIComponent(a.avatar_id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">Live page ↗</a>` : ''}
-					<a class="dn-btn ghost" href="/app?agent=${encodeURIComponent(a.id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">3D Studio ↗</a>
-					<button class="dn-btn" data-action="edit-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Edit</button>
-					<button class="dn-btn" data-action="persona-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Persona</button>
-					<button class="dn-btn" data-action="view-reputation" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Reputation</button>
+					<a class="dn-btn" href="/app?agent=${encodeURIComponent(a.id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">3D Studio ↗</a>
+				</div>
+				<div class="dn-agent-actions-secondary">
+					<button class="dn-btn ghost" data-action="edit-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Edit</button>
+					<button class="dn-btn ghost" data-action="persona-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Persona</button>
+					<button class="dn-btn ghost" data-action="view-reputation" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Reputation</button>
 					<button class="dn-btn danger" data-action="delete-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Delete</button>
 				</div>
-				${onchain ? `<a href="/onchain?agent=${encodeURIComponent(a.id)}" style="font-size:11.5px;color:var(--nxt-accent)">ERC-8004 registry ↗</a>` : ''}
-				${pumpMint ? `<a href="https://pump.fun/coin/${encodeURIComponent(pumpMint)}" target="_blank" rel="noopener" style="font-size:11.5px;color:#ffb454">View on Pump.fun ↗</a>` : ''}
 			</div>
+
+			${onchain || pumpMint ? `
+				<div class="dn-agent-links">
+					${onchain ? `<a href="/onchain?agent=${encodeURIComponent(a.id)}" style="font-size:11.5px;color:var(--nxt-accent)">ERC-8004 registry ↗</a>` : ''}
+					${pumpMint ? `<a href="https://pump.fun/coin/${encodeURIComponent(pumpMint)}" target="_blank" rel="noopener" style="font-size:11.5px;color:#ffb454">View on Pump.fun ↗</a>` : ''}
+				</div>
+			` : ''}
 		</div>
 	`;
 }

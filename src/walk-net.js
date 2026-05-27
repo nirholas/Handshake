@@ -173,6 +173,10 @@ export class WalkNet {
 		this.room?.send('rename', { name });
 	}
 
+	sendEmote(name) {
+		this.room?.send('emote', { name });
+	}
+
 	/** Force a reconnect (e.g. after the user clicks the offline pill). */
 	retry() {
 		if (this._reconnectTimer) {

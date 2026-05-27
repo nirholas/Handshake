@@ -256,9 +256,31 @@ export function openVoicePreview({ glbBlob, glbUrl, name }) {
 // ── Static info modals (identity / paid / embed / reputation) ────────────────
 
 export async function openIdentityModal(ctx = {}) {
-	// Render the shell synchronously so the modal opens instantly. The keypair
-	// generation is fast (~ms) but the import is a fat dependency — load it
-	// in the background and patch the address in once it resolves.
+	const displayName = escapeHtml(ctx.name || 'Your new avatar');
+
+	let thumbSrc = '';
+	if (ctx.canvas) {
+		try {
+			const size = 96;
+			const tmp = document.createElement('canvas');
+			tmp.width = tmp.height = size;
+			const tc = tmp.getContext('2d');
+			if (tc) {
+				const src = ctx.canvas;
+				const ar = src.width / src.height || 1;
+				let dw = size, dh = size;
+				if (ar > 1) dh = Math.round(size / ar);
+				else dw = Math.round(size * ar);
+				tc.drawImage(src, (size - dw) / 2, (size - dh) / 2, dw, dh);
+				thumbSrc = tmp.toDataURL('image/png');
+			}
+		} catch { /* fallback initial renders fine */ }
+	}
+
+	const avatarHtml = thumbSrc
+		? `<img class="fm-id-avatar" src="${thumbSrc}" alt="${displayName}" />`
+		: `<div class="fm-id-avatar fm-id-avatar--fallback">${displayName.charAt(0).toUpperCase()}</div>`;
+
 	const body = document.createElement('div');
 	body.innerHTML = `
 		<ul class="fm-bullets">
@@ -267,18 +289,25 @@ export async function openIdentityModal(ctx = {}) {
 			<li>Discoverable in the agent registry by capability, price, and reputation.</li>
 		</ul>
 		<div class="fm-id-card" data-state="loading">
-			<div class="fm-id-head">
-				<span class="fm-id-chain">Solana mainnet</span>
-				<span class="fm-id-pill" data-pill>generating…</span>
+			<div class="fm-id-card-top">
+				${avatarHtml}
+				<div class="fm-id-card-top-right">
+					<div class="fm-id-head">
+						<span class="fm-id-chain">Solana mainnet</span>
+						<span class="fm-id-pill" data-pill>generating…</span>
+					</div>
+					<div class="fm-id-meta">
+						<div><span class="muted">Name</span><strong data-name>${displayName}</strong></div>
+						<div><span class="muted">Asset standard</span><strong>Metaplex Core</strong></div>
+					</div>
+				</div>
 			</div>
-			<div class="fm-id-addr" data-addr>—</div>
-			<div class="fm-id-meta">
-				<div><span class="muted">Name</span><strong data-name>${escapeHtml(ctx.name || 'Your new avatar')}</strong></div>
-				<div><span class="muted">Asset standard</span><strong>Metaplex Core</strong></div>
-			</div>
-			<button class="fm-copy fm-id-copy" type="button" data-copy-addr disabled>Copy address</button>
+			<a class="fm-id-addr-link" data-addr-link target="_blank" rel="noopener noreferrer">
+				<span class="fm-id-addr" data-addr>—</span>
+				<span class="fm-id-explorer-hint" data-explorer-hint>View on Solscan</span>
+			</a>
+			<p class="fm-id-sample-note" data-sample-note>Sample keypair — your real address is created on save</p>
 		</div>
-		<p class="fm-note">Sample keypair generated locally — your real agent gets a unique address on save. Nothing is broadcast.</p>
 	`;
 
 	openFeatureModal({
@@ -289,10 +318,6 @@ export async function openIdentityModal(ctx = {}) {
 		actions: [{ label: 'Got it' }],
 	});
 
-	// Generate a real, throwaway sample keypair in-browser so the preview
-	// shows a *real-shaped* base58 address rather than an obvious placeholder.
-	// Private key is discarded — this is purely a visual proof of "real Solana
-	// addresses, not lorem ipsum".
 	try {
 		const { Keypair } = await import('@solana/web3.js');
 		const kp = Keypair.generate();
@@ -300,28 +325,22 @@ export async function openIdentityModal(ctx = {}) {
 		const card = body.querySelector('.fm-id-card');
 		card.dataset.state = 'ready';
 		card.querySelector('[data-pill]').textContent = 'preview';
+
 		card.querySelector('[data-addr]').textContent = addr;
-		const copy = card.querySelector('[data-copy-addr]');
-		copy.disabled = false;
-		copy.addEventListener('click', async () => {
-			try {
-				await navigator.clipboard.writeText(addr);
-				copy.textContent = 'Copied';
-				copy.classList.add('copied');
-				setTimeout(() => {
-					copy.textContent = 'Copy address';
-					copy.classList.remove('copied');
-				}, 1600);
-			} catch {
-				copy.textContent = 'Press ⌘C';
-			}
-		});
+
+		const link = card.querySelector('[data-addr-link]');
+		link.href = `https://solscan.io/account/${addr}`;
+		link.title = 'Open in Solscan (sample address)';
 	} catch (err) {
 		const card = body.querySelector('.fm-id-card');
 		card.dataset.state = 'error';
 		card.querySelector('[data-pill]').textContent = 'unavailable';
 		card.querySelector('[data-addr]').textContent =
-			'Couldn\'t load keypair generator — your real address is created on save.';
+			'Couldn\'t generate preview — your real address is created on save.';
+		const link = card.querySelector('[data-addr-link]');
+		link.removeAttribute('href');
+		link.style.pointerEvents = 'none';
+		card.querySelector('[data-explorer-hint]').hidden = true;
 		console.warn('[identity-preview] keypair gen failed', err);
 	}
 }

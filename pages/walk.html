@@ -119,7 +119,7 @@
 
 			#walk-hud {
 				position: fixed;
-				top: env(safe-area-inset-top, 0);
+				top: calc(env(safe-area-inset-top, 0) + 56px);
 				left: 0;
 				right: 0;
 				z-index: 4;
@@ -405,6 +405,224 @@
 				border-radius: 999px;
 				color: #07111c;
 				font-weight: 700;
+			}
+
+			/* ── Site header (glass overlay) ───────────────────────────── */
+			.walk-site-header {
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				z-index: 10;
+				display: flex;
+				align-items: center;
+				padding: 0 24px;
+				height: 52px;
+				background: rgba(10, 10, 10, 0.55);
+				backdrop-filter: blur(16px);
+				-webkit-backdrop-filter: blur(16px);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+			.walk-site-header h1 { margin: 0; font-size: inherit; font-weight: inherit; line-height: inherit; }
+			.walk-site-header a { color: var(--text); text-decoration: none; }
+
+			/* ── Loading overlay ───────────────────────────────────────── */
+			.walk-loading {
+				position: fixed;
+				inset: 0;
+				z-index: 9;
+				background: var(--bg);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: opacity 0.4s ease;
+			}
+			.walk-loading.is-done {
+				opacity: 0;
+				pointer-events: none;
+			}
+			.walk-loading-inner {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 20px;
+			}
+			.walk-loading-spinner {
+				width: 40px;
+				height: 40px;
+				border: 2.5px solid rgba(255, 255, 255, 0.08);
+				border-top-color: var(--accent);
+				border-radius: 50%;
+				animation: walk-spin 0.8s linear infinite;
+			}
+			@keyframes walk-spin { to { transform: rotate(360deg); } }
+			.walk-loading-text {
+				margin: 0;
+				color: var(--text-2);
+				font-size: 14px;
+				font-weight: 500;
+				letter-spacing: 0.02em;
+			}
+
+			/* ── Name input ────────────────────────────────────────────── */
+			.walk-identity-row {
+				margin-bottom: 4px;
+			}
+			.walk-name-input {
+				background: transparent;
+				border: none;
+				border-bottom: 1.5px solid rgba(255, 255, 255, 0.12);
+				color: var(--text);
+				font: 600 15px/1.3 inherit;
+				padding: 2px 0 4px;
+				width: 100%;
+				max-width: 180px;
+				outline: none;
+				transition: border-color 0.15s;
+			}
+			.walk-name-input:focus {
+				border-color: var(--accent);
+			}
+			.walk-name-input::placeholder {
+				color: var(--text-2);
+				font-weight: 400;
+			}
+
+			/* ── Players panel ─────────────────────────────────────────── */
+			.walk-players-panel {
+				position: fixed;
+				z-index: 6;
+				top: calc(env(safe-area-inset-top, 0) + 68px);
+				right: 16px;
+				width: 220px;
+				max-height: 60vh;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				backdrop-filter: blur(12px);
+				-webkit-backdrop-filter: blur(12px);
+				overflow: hidden;
+				animation: walk-panel-in 0.18s ease;
+			}
+			@keyframes walk-panel-in {
+				from { opacity: 0; transform: translateY(-8px); }
+				to { opacity: 1; transform: none; }
+			}
+			.walk-players-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 10px 14px;
+				font-size: 12px;
+				font-weight: 600;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: var(--text-2);
+				border-bottom: 1px solid var(--border);
+			}
+			.walk-players-header button {
+				background: none;
+				border: none;
+				color: var(--text-2);
+				cursor: pointer;
+				font-size: 18px;
+				line-height: 1;
+				padding: 0 2px;
+			}
+			.walk-players-header button:hover { color: var(--text); }
+			.walk-players-list {
+				list-style: none;
+				margin: 0;
+				padding: 6px 0;
+				overflow-y: auto;
+				max-height: calc(60vh - 44px);
+			}
+			.walk-players-list li {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 7px 14px;
+				font-size: 13px;
+				color: var(--text);
+			}
+			.walk-players-list .player-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				flex-shrink: 0;
+			}
+			.walk-players-list .player-motion {
+				margin-left: auto;
+				font-size: 11px;
+				color: var(--text-2);
+			}
+			.walk-players-list li.is-you {
+				color: var(--accent);
+			}
+
+			/* ── Emote tray ────────────────────────────────────────────── */
+			.walk-emote-tray {
+				position: fixed;
+				z-index: 5;
+				right: 16px;
+				bottom: calc(28px + env(safe-area-inset-bottom, 0));
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				align-items: flex-end;
+			}
+			.walk-emote-btn {
+				appearance: none;
+				width: 44px;
+				height: 44px;
+				border-radius: 50%;
+				border: 1px solid var(--border);
+				background: var(--panel);
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				cursor: pointer;
+				font-size: 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: transform 0.1s, border-color 0.1s, background 0.1s;
+				position: relative;
+			}
+			.walk-emote-btn:hover {
+				border-color: rgba(255, 255, 255, 0.2);
+				background: rgba(34, 34, 34, 0.85);
+				transform: scale(1.08);
+			}
+			.walk-emote-btn:active { transform: scale(0.95); }
+			.walk-emote-btn[aria-pressed="true"] {
+				border-color: var(--accent);
+				background: rgba(125, 211, 252, 0.18);
+			}
+			.walk-emote-btn .emote-label {
+				position: absolute;
+				right: calc(100% + 8px);
+				top: 50%;
+				transform: translateY(-50%);
+				font-size: 11px;
+				color: var(--text-2);
+				white-space: nowrap;
+				pointer-events: none;
+				opacity: 0;
+				transition: opacity 0.15s;
+			}
+			.walk-emote-btn:hover .emote-label { opacity: 1; }
+
+			@media (hover: none), (max-width: 640px) {
+				.walk-emote-tray {
+					right: auto;
+					left: 50%;
+					transform: translateX(-50%);
+					bottom: calc(180px + env(safe-area-inset-bottom, 0));
+					flex-direction: row;
+					gap: 8px;
+				}
+				.walk-emote-btn { width: 40px; height: 40px; font-size: 18px; }
+				.walk-emote-btn .emote-label { display: none; }
 			}
 
 			/* ── Recording UI ──────────────────────────────────────────── */

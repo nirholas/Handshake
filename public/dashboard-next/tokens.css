@@ -14,16 +14,16 @@
 	--nxt-ink: #e7e8ec;
 	--nxt-ink-dim: #9ca0aa;
 	--nxt-ink-fade: #6b6f78;
-	--nxt-accent: #9a7cff;
-	--nxt-accent-soft: rgba(154, 124, 255, 0.18);
-	--nxt-accent-strong: #b39bff;
+	--nxt-accent: #c8cad0;
+	--nxt-accent-soft: rgba(200, 202, 208, 0.14);
+	--nxt-accent-strong: #dddfe4;
 	--nxt-glass: rgba(14, 15, 22, 0.55);
 	--nxt-glass-strong: rgba(14, 15, 22, 0.82);
 	--nxt-stroke: rgba(255, 255, 255, 0.08);
 	--nxt-stroke-strong: rgba(255, 255, 255, 0.14);
-	--nxt-success: #4ec38a;
-	--nxt-warn: #ffb454;
-	--nxt-danger: #ff6b8a;
+	--nxt-success: #b8bcc4;
+	--nxt-warn: #a8adb5;
+	--nxt-danger: #969ba3;
 
 	--nxt-radius: 14px;
 	--nxt-radius-sm: 10px;

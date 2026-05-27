@@ -76,7 +76,43 @@ function markSelfieUnavailable() {
 	}
 }
 
+async function handleFork(avatarId) {
+	showSaveOverlay('Loading avatar…');
+	try {
+		const metaRes = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`);
+		if (!metaRes.ok) throw new Error('Could not load the original avatar.');
+		const { avatar } = await metaRes.json();
+
+		const glbUrl = avatar.url || avatar.model_url;
+		if (!glbUrl) throw new Error('Original avatar has no downloadable model.');
+
+		updateSaveOverlay('Downloading model…');
+		const glbRes = await fetch(glbUrl, { mode: 'cors' });
+		if (!glbRes.ok) throw new Error('Could not download the avatar model.');
+		const blob = await glbRes.blob();
+
+		updateSaveOverlay('Preparing remix…');
+		await stageGuestAvatar(blob, {
+			source: 'import',
+			name: avatar.name || 'Remixed avatar',
+			source_meta: { provider: 'remix', fork_of: avatarId },
+		});
+
+		window.location.href = '/create-review';
+	} catch (err) {
+		hideSaveOverlay();
+		console.error('[create] fork failed:', err);
+		showStatus(err.message || 'Could not remix this avatar. Try again.', 'error');
+	}
+}
+
 async function boot() {
+	const forkId = new URLSearchParams(location.search).get('fork');
+	if (forkId) {
+		await handleFork(forkId);
+		return;
+	}
+
 	probeReconstruct();
 	const creator = new AvatarCreator(document.body, (blob, meta = {}) => {
 		const provider = meta.provider || 'avaturn';
@@ -96,7 +132,7 @@ async function boot() {
 
 	wireCard('card-default-editor', async () => {
 		if (window.__authed && (await isAtAvatarLimit())) return;
-		creator.openDefaultEditor();
+		window.location.href = '/create/studio';
 	});
 	wireCard('card-selfie', async () => {
 		if (!_reconstructReady) {

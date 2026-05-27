@@ -160,11 +160,16 @@ export function normalize(json, { baseURI = '' } = {}) {
 			uri: bodyURI,
 			format: json.body?.format || json.content_type || 'gltf-binary',
 		},
-		brain: json.brain || { provider: 'none' },
+		brain: json.brain || {
+			provider: json.id ? 'anthropic' : 'none',
+			instructions: json.id
+				? `You are ${json.name || 'an AI agent'} on three.ws — a living, embodied 3D avatar.${json.description ? ' ' + json.description : ''} Be friendly and conversational. You can wave, play animations, and change expressions using your tools. When greeting someone, use the wave tool. Only use play_clip when the user explicitly asks for an animation.`
+				: undefined,
+		},
 		voice: json.voice || { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
 		skills: json.skills || [],
 		memory: json.memory || { mode: 'local' },
-		tools: json.tools || ['wave', 'lookAt', 'play_clip', 'setExpression'],
+		tools: json.tools || ['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember'],
 		version: json.version || '0.1.0',
 	};
 }
