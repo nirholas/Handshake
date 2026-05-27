@@ -20,24 +20,33 @@ export const NAV = [
 	{ path: '/dashboard/agents',      label: 'Agents',          icon: 'agent',     group: 'Create',     tags: ['bot', 'ai', 'identity', 'erc-8004', 'persona', 'reputation'] },
 	{ path: '/dashboard/library',     label: 'Library',         icon: 'library',   group: 'Create',     tags: ['animations', 'memory', 'voice', 'strategy', 'clips', 'strategy-lab'] },
 	{ path: '/voice',                 label: 'Voice Lab',       icon: 'voice',     group: 'Create',     tags: ['clone', 'tts', 'speech', 'recording', 'elevenlabs'], external: true },
+	{ path: '/brain',                 label: 'Brain',           icon: 'brain',     group: 'Create',     tags: ['persona', 'playground', 'compare', 'models', 'test'], external: true },
 
 	// ── Distribute ──────────────────────────────────────────────────────
 	{ path: '/dashboard/widgets',     label: 'Widgets',         icon: 'widget',    group: 'Distribute', tags: ['embed', 'iframe', '<threews-avatar>', 'transcripts', 'knowledge'] },
 	{ path: '/dashboard/api',         label: 'API & Embed',     icon: 'code',      group: 'Distribute', tags: ['keys', 'token', 'mcp', 'snippets', 'embed-policy'] },
+	{ path: '/marketplace',           label: 'Marketplace',     icon: 'market',    group: 'Distribute', tags: ['browse', 'buy', 'sell', 'agents', 'avatars', 'directory'], external: true },
 
 	// ── Monetize ────────────────────────────────────────────────────────
 	{ path: '/dashboard/monetize',    label: 'Monetize',        icon: 'coin',      group: 'Monetize',   tags: ['revenue', 'payments', 'subscriptions', 'withdrawals', 'earnings', 'plan', 'billing'] },
 	{ path: '/dashboard/tokens',      label: 'Tokens',          icon: 'token',     group: 'Monetize',   tags: ['pump.fun', 'launch', 'bonding curve', 'royalties', 'trade'] },
 	{ path: '/dashboard/portfolio',   label: 'Portfolio & NFTs', icon: 'portfolio', group: 'Monetize',  tags: ['nft', 'holdings', 'balances', 'wallet', 'collection'] },
+	{ path: '/reputation',            label: 'Reputation',      icon: 'star',      group: 'Monetize',   tags: ['reviews', 'attestations', 'onchain', 'trust', 'score'], external: true },
+
+	// ── Explore ─────────────────────────────────────────────────────────
+	{ path: '/gallery-picker',        label: 'Gallery',         icon: 'gallery',   group: 'Explore',    tags: ['browse', 'avatars', 'public', 'models', 'pick'], external: true },
+	{ path: '/discover',              label: 'Discover',        icon: 'globe',     group: 'Explore',    tags: ['explore', 'directory', 'onchain', 'agents'], external: true },
+	{ path: '/community',             label: 'Community',       icon: 'community', group: 'Explore',    tags: ['social', 'forum', 'connect', 'members'], external: true },
+	{ path: '/demos',                 label: 'Demos',           icon: 'play',      group: 'Explore',    tags: ['examples', 'showcase', 'interactive', 'try'], external: true },
+	{ path: '/pump-live',             label: 'Pump.fun Live',   icon: 'live',      group: 'Explore',    tags: ['feed', 'trending', 'tokens', 'trade', 'realtime'], external: true },
 
 	// ── Account ─────────────────────────────────────────────────────────
 	{ path: '/dashboard/account',     label: 'Account',         icon: 'user',      group: 'Account',    tags: ['wallets', 'sns', 'delegation', 'profile', 'action log', 'provider keys'] },
 	{ path: '/dashboard/settings',    label: 'Settings',        icon: 'settings',  group: 'Account',    tags: ['sessions', 'notifications', 'preferences', 'storage', 'llm usage', 'vanity'] },
-	{ path: '/onchain',                    label: 'On-chain (ERC-8004)', icon: 'chain', group: 'Account',    tags: ['erc8004', 'registry', 'onchain', 'identity'], external: true },
-	{ path: '/discover',                   label: 'Discover on-chain',   icon: 'globe', group: 'Account',    tags: ['explore', 'discover', 'directory'], external: true },
+	{ path: '/onchain',               label: 'On-chain (ERC-8004)', icon: 'chain', group: 'Account',    tags: ['erc8004', 'registry', 'onchain', 'identity'], external: true },
 ];
 
-export const GROUPS = ['Create', 'Distribute', 'Monetize', 'Account'];
+export const GROUPS = ['Create', 'Distribute', 'Monetize', 'Explore', 'Account'];
 
 /** Inline-SVG icon strings keyed by the `icon` field above. */
 export const ICONS = {
@@ -55,6 +64,13 @@ export const ICONS = {
 	chain:     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12a4 4 0 005.7 0l2-2a4 4 0 00-5.7-5.7l-1 1"/><path d="M12 8a4 4 0 00-5.7 0l-2 2a4 4 0 005.7 5.7l1-1"/></svg>',
 	globe:     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.5"/><path d="M10 2.5c-2 2.5-2 12.5 0 15M10 2.5c2 2.5 2 12.5 0 15M2.5 10h15"/></svg>',
 	voice:     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="6" height="10" rx="3"/><path d="M4 10a6 6 0 0012 0"/><path d="M10 16v2"/></svg>',
+	brain:     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3C7.5 3 5 5 5 8c0 1.5.5 2.5 1.2 3.3.5.5.8 1.2.8 2V15h6v-1.7c0-.8.3-1.5.8-2C14.5 10.5 15 9.5 15 8c0-3-2.5-5-5-5z"/><path d="M8 15v1a2 2 0 004 0v-1"/><path d="M8.5 8h3M8.5 10.5h3"/></svg>',
+	market:    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l1.5-4h11L17 7"/><path d="M3 7h14v10H3V7z"/><path d="M8 12h4v5H8v-5z"/><path d="M3 7c0 1.1.9 2 2 2s2-.9 2-2M7 7c0 1.1.9 2 2 2s2-.9 2-2M11 7c0 1.1.9 2 2 2s2-.9 2-2M15 7c0 1.1.9 2 2 2"/></svg>',
+	star:      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3l2 4.5 5 .7-3.6 3.5.9 5L10 14.5 5.7 16.7l.9-5L3 8.2l5-.7L10 3z"/></svg>',
+	gallery:   '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="14" rx="2"/><circle cx="7" cy="8" r="1.5"/><path d="M2 14l4-4 3 3 4-5 5 6"/></svg>',
+	community: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="2.5"/><circle cx="14" cy="7" r="2"/><path d="M2 16c.8-2.8 2.8-4.2 5-4.2s4.2 1.4 5 4.2"/><path d="M13.5 11.8c1.5 0 3 1.2 3.5 3.2"/></svg>',
+	play:      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M8 7.5v5l4.5-2.5z"/></svg>',
+	live:      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2"/><path d="M6 6a5.5 5.5 0 000 8"/><path d="M14 6a5.5 5.5 0 010 8"/><path d="M3.5 3.5a9 9 0 000 13"/><path d="M16.5 3.5a9 9 0 010 13"/></svg>',
 };
 
 /** Resolve the route for the current pathname (exact match wins; falls back to startsWith). */

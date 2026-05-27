@@ -37,6 +37,7 @@ const STATE = {
 				<section data-slot="hero" class="dnx-hero"></section>
 				<section data-slot="kpis"  class="dnx-kpis"></section>
 				<section data-slot="quick" class="dnx-quick"></section>
+				<section data-slot="directory" class="dnx-directory"></section>
 			</div>
 			<aside data-slot="activity" class="dnx-activity"></aside>
 		</div>
@@ -50,6 +51,7 @@ const STATE = {
 		hero: main.querySelector('[data-slot="hero"]'),
 		kpis: main.querySelector('[data-slot="kpis"]'),
 		quick: main.querySelector('[data-slot="quick"]'),
+		directory: main.querySelector('[data-slot="directory"]'),
 		activity: main.querySelector('[data-slot="activity"]'),
 	};
 
@@ -65,6 +67,7 @@ const STATE = {
 
 	renderHero(slots.hero, avatars, avatarsRes.status === 'rejected' ? avatarsRes.reason : null);
 	renderQuickActions(slots.quick, { avatars, agents });
+	renderDirectory(slots.directory);
 
 	if (slots.onboarding) {
 		renderOnboarding(slots.onboarding, { avatars, agents, widgets });
@@ -517,6 +520,117 @@ function renderQuickActions(host, { avatars = [], agents = [] } = {}) {
 	`).join('');
 }
 
+// ── Feature directory ─────────────────────────────────────────────────────
+
+const DIRECTORY = [
+	{
+		group: 'Create & Build',
+		items: [
+			{ href: '/create',          title: 'Create Avatar',      sub: 'Snap a selfie — 3D agent in 60 seconds' },
+			{ href: '/avatar-studio',   title: 'Avatar Studio',      sub: 'Full 3D editor with lighting and poses' },
+			{ href: '/brain',           title: 'Brain',              sub: 'Persona builder, model playground, agent voice' },
+			{ href: '/voice',           title: 'Voice Lab',          sub: 'Clone your voice for TTS and lip-sync' },
+			{ href: '/mocap-studio',    title: 'MoCap Studio',       sub: 'Motion capture for custom animations' },
+			{ href: '/gallery-picker',  title: 'Gallery Picker',     sub: 'Browse and pick from public 3D avatars' },
+			{ href: '/import-rpm',      title: 'Import RPM',         sub: 'Import a Ready Player Me avatar' },
+		],
+	},
+	{
+		group: 'Agents & Identity',
+		items: [
+			{ href: '/dashboard/agents', title: 'Manage Agents',     sub: 'Agent identity, wallet, personality' },
+			{ href: '/onchain',          title: 'On-chain (ERC-8004)', sub: 'Register agents on-chain' },
+			{ href: '/reputation',       title: 'Reputation',        sub: 'Reviews, attestations, and trust scores' },
+			{ href: '/strategy-lab',     title: 'Strategy Lab',      sub: 'Configure agent trading strategies' },
+			{ href: '/profile',          title: 'Profile',           sub: 'Your public creator profile' },
+		],
+	},
+	{
+		group: 'Distribute & Embed',
+		items: [
+			{ href: '/dashboard/widgets', title: 'Widgets',          sub: 'Chat widgets, embed codes, transcripts' },
+			{ href: '/dashboard/api',     title: 'API & Embed',      sub: 'REST keys, MCP config, embed policy' },
+			{ href: '/marketplace',       title: 'Marketplace',      sub: 'Browse, buy, and sell agents and avatars' },
+			{ href: '/discover',          title: 'Discover',         sub: 'Explore the on-chain agent directory' },
+			{ href: '/embed',             title: 'Embed Docs',       sub: 'How to embed agents on your site' },
+		],
+	},
+	{
+		group: 'Monetize & Trade',
+		items: [
+			{ href: '/dashboard/monetize',   title: 'Monetize',      sub: 'Revenue, subscriptions, and withdrawals' },
+			{ href: '/dashboard/tokens',     title: 'Tokens',        sub: 'Launch tokens on Pump.fun with bonding curves' },
+			{ href: '/dashboard/portfolio',  title: 'Portfolio & NFTs', sub: 'Holdings, balances, and NFT collections' },
+			{ href: '/pump-live',            title: 'Pump.fun Live',  sub: 'Real-time token feed and trending' },
+			{ href: '/launchpad',            title: 'Launchpad',      sub: 'Token and project launchpad creator' },
+			{ href: '/pay',                  title: 'Payments (x402)', sub: 'Payment hub and hosted checkout' },
+			{ href: '/pricing',              title: 'Pricing',        sub: 'Platform plans and feature comparison' },
+		],
+	},
+	{
+		group: 'Learn & Explore',
+		items: [
+			{ href: '/demos',              title: 'Demos',           sub: 'Interactive agent demos and showcases' },
+			{ href: '/tutorials',          title: 'Tutorials',       sub: 'Step-by-step guides and walkthroughs' },
+			{ href: '/community',          title: 'Community',       sub: 'Connect with other creators' },
+			{ href: '/features',           title: 'Features',        sub: 'Platform capabilities overview' },
+			{ href: '/playground',         title: 'Playground',      sub: 'Experiment with agents interactively' },
+			{ href: '/avatar-sdk',         title: 'Avatar SDK',      sub: 'Developer docs for avatar integration' },
+		],
+	},
+	{
+		group: 'Account & Settings',
+		items: [
+			{ href: '/dashboard/account',   title: 'Account',       sub: 'Wallets, SNS names, delegation, provider keys' },
+			{ href: '/dashboard/settings',  title: 'Settings',      sub: 'Notifications, storage, LLM usage, vanity URLs' },
+			{ href: '/dashboard/library',   title: 'Library',       sub: 'Animations, memory, voice clips, strategy' },
+			{ href: '/dashboard/avatars',   title: 'Avatars',       sub: 'Manage all your 3D avatar creations' },
+		],
+	},
+];
+
+function renderDirectory(host) {
+	const DIR_COLLAPSED_KEY = 'twx_dir_collapsed';
+	const collapsed = localStorage.getItem(DIR_COLLAPSED_KEY) === '1';
+
+	host.innerHTML = `
+		<div class="dn-panel dnx-dir">
+			<button class="dnx-dir-head" aria-expanded="${!collapsed}" data-action="dir-toggle">
+				<div>
+					<div class="dn-panel-title" style="margin:0 0 2px">All Features & Pages</div>
+					<div class="dn-panel-sub" style="margin:0">Every tool, page, and feature on three.ws — all in one place.</div>
+				</div>
+				<span class="dnx-dir-chevron" aria-hidden="true">
+					<svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5l3 3 3-3"/></svg>
+				</span>
+			</button>
+			<div class="dnx-dir-body${collapsed ? ' is-collapsed' : ''}">
+				${DIRECTORY.map((section) => `
+					<div class="dnx-dir-section">
+						<div class="dnx-dir-group-label">${esc(section.group)}</div>
+						<div class="dnx-dir-items">
+							${section.items.map((item) => `
+								<a href="${item.href}" class="dnx-dir-item">
+									<div class="dnx-dir-item-title">${esc(item.title)}</div>
+									<div class="dnx-dir-item-sub">${esc(item.sub)}</div>
+								</a>
+							`).join('')}
+						</div>
+					</div>
+				`).join('')}
+			</div>
+		</div>
+	`;
+
+	host.querySelector('[data-action="dir-toggle"]').addEventListener('click', () => {
+		const body = host.querySelector('.dnx-dir-body');
+		const btn = host.querySelector('[data-action="dir-toggle"]');
+		const isCollapsed = body.classList.toggle('is-collapsed');
+		btn.setAttribute('aria-expanded', !isCollapsed);
+		localStorage.setItem(DIR_COLLAPSED_KEY, isCollapsed ? '1' : '0');
+	});
+}
+
 // ── Sparkline ─────────────────────────────────────────────────────────────
 
 function sparkSvg(series) {
@@ -814,6 +928,69 @@ function injectStyles() {
 		@media (max-width: 600px) {
 			.dnx-ob-step { flex-wrap: wrap; }
 			.dnx-ob-btn { margin-left: 36px; }
+		}
+
+		/* ── Feature directory ── */
+		.dnx-dir { padding: 0; overflow: hidden; }
+		.dnx-dir-head {
+			display: flex; justify-content: space-between; align-items: center;
+			width: 100%; padding: 18px 20px;
+			background: none; border: none; cursor: pointer;
+			text-align: left; color: inherit;
+			transition: background 0.12s ease;
+		}
+		.dnx-dir-head:hover { background: rgba(255,255,255,0.03); }
+		.dnx-dir-chevron {
+			color: var(--nxt-ink-fade);
+			transition: transform 0.2s ease;
+			display: grid; place-items: center;
+			flex-shrink: 0;
+		}
+		.dnx-dir-head[aria-expanded="false"] .dnx-dir-chevron { transform: rotate(-90deg); }
+		.dnx-dir-body {
+			padding: 0 20px 20px;
+			display: flex; flex-direction: column; gap: 20px;
+			transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
+			max-height: 3000px; opacity: 1; overflow: hidden;
+		}
+		.dnx-dir-body.is-collapsed {
+			max-height: 0; opacity: 0;
+			padding-top: 0; padding-bottom: 0;
+		}
+		.dnx-dir-section {}
+		.dnx-dir-group-label {
+			font-size: 11px; font-weight: 700;
+			letter-spacing: 0.08em; text-transform: uppercase;
+			color: var(--nxt-ink-fade);
+			margin-bottom: 8px; padding-left: 2px;
+		}
+		.dnx-dir-items {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 8px;
+		}
+		@media (max-width: 920px) { .dnx-dir-items { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+		@media (max-width: 560px) { .dnx-dir-items { grid-template-columns: 1fr; } }
+		.dnx-dir-item {
+			display: block; padding: 12px 14px;
+			border-radius: 10px; border: 1px solid var(--nxt-stroke);
+			background: rgba(255,255,255,0.015);
+			transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+			cursor: pointer;
+		}
+		.dnx-dir-item:hover {
+			border-color: var(--nxt-stroke-strong);
+			background: rgba(255,255,255,0.04);
+			transform: translateY(-1px);
+		}
+		.dnx-dir-item-title {
+			font-size: 13.5px; font-weight: 550;
+			color: var(--nxt-ink); margin-bottom: 2px;
+		}
+		.dnx-dir-item-sub {
+			font-size: 12px; color: var(--nxt-ink-fade);
+			line-height: 1.35;
+			overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 		}
 	`;
 	const tag = document.createElement('style');

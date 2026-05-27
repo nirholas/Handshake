@@ -132,6 +132,10 @@ async function boot() {
 
 	wireCard('card-default-editor', async () => {
 		if (window.__authed && (await isAtAvatarLimit())) return;
+		creator.openDefaultEditor();
+	});
+	wireCard('card-agent-studio', async () => {
+		if (window.__authed && (await isAtAvatarLimit())) return;
 		window.location.href = '/create/studio';
 	});
 	wireCard('card-selfie', async () => {
