@@ -183,6 +183,7 @@
 		"graphql": "^16.14.0",
 		"helius-sdk": "^2.2.2",
 		"jose": "^5.9.6",
+		"lightweight-charts": "^5.2.0",
 		"livekit-client": "^2.19.0",
 		"livepeer": "^3.2.4",
 		"meshoptimizer": "^1.1.1",

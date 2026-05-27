@@ -522,11 +522,68 @@ function renderQuickActions(host, { avatars = [], agents = [] } = {}) {
 
 // ── Feature directory ─────────────────────────────────────────────────────
 
+const DIR_ICONS = {
+	'/create':              '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M16 18c0-3.3-2.7-6-6-6s-6 2.7-6 6"/><path d="M15 3v4M13 5h4"/></svg>',
+	'/avatar-studio':       '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="16" height="16" rx="2"/><circle cx="10" cy="8.5" r="2.5"/><path d="M6 15c0-2.2 1.8-4 4-4s4 1.8 4 4"/></svg>',
+	'/brain':               '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3C7.5 3 5 5 5 8c0 1.5.5 2.5 1.2 3.3.5.5.8 1.2.8 2V15h6v-1.7c0-.8.3-1.5.8-2C14.5 10.5 15 9.5 15 8c0-3-2.5-5-5-5z"/><path d="M8 15v1a2 2 0 004 0v-1"/><path d="M8.5 8h3M8.5 10.5h3"/></svg>',
+	'/voice':               '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="6" height="10" rx="3"/><path d="M4 10a6 6 0 0012 0"/><path d="M10 16v2"/></svg>',
+	'/mocap-studio':        '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="4" r="2"/><path d="M10 6v5M10 11l-3 5M10 11l3 5M7 9h6"/></svg>',
+	'/gallery-picker':      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="14" rx="2"/><circle cx="7" cy="8" r="1.5"/><path d="M2 14l4-4 3 3 4-5 5 6"/></svg>',
+	'/import-rpm':          '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v12M6 10l4 4 4-4"/><path d="M3 14v3h14v-3"/></svg>',
+	'/create/selfie':       '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="14" rx="2"/><circle cx="10" cy="10" r="3"/><path d="M6 3V2M14 3V2"/></svg>',
+	'/walk':                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="4" r="2"/><path d="M10 6v4l-2 4M10 10l2 4M7 8l3 2 3-2"/></svg>',
+	'/pose':                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="4" r="2"/><path d="M10 6v5M6 8l4 2 4-2M8 11l-2 5M12 11l2 5"/></svg>',
+	'/dashboard/agents':    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="10" height="10" rx="2"/><circle cx="8" cy="6.5" r="1"/><circle cx="12" cy="6.5" r="1"/><path d="M8 9h4M3 14l2-2h10l2 2v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3z"/></svg>',
+	'/onchain':             '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12a4 4 0 005.7 0l2-2a4 4 0 00-5.7-5.7l-1 1"/><path d="M12 8a4 4 0 00-5.7 0l-2 2a4 4 0 005.7 5.7l1-1"/></svg>',
+	'/reputation':          '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.5L10 14.7l-4.9 2.5.9-5.5L2 7.8l5.5-.8L10 2z"/></svg>',
+	'/strategy-lab':        '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v5l-4 8h14l-4-8V2"/><path d="M5 18h10"/><path d="M7 2h6"/></svg>',
+	'/profile':             '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M4 18c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>',
+	'/dashboard/widgets':   '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg>',
+	'/dashboard/api':       '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5l-4 5 4 5M13 5l4 5-4 5"/></svg>',
+	'/marketplace':         '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l1.5-4h11L17 7"/><path d="M3 7h14v10H3V7z"/><path d="M8 12h4v5H8v-5z"/></svg>',
+	'/discover':            '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.5"/><path d="M10 2.5c-2 2.5-2 12.5 0 15M10 2.5c2 2.5 2 12.5 0 15M2.5 10h15"/></svg>',
+	'/embed':               '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M8 9l-2 1.5L8 12M12 9l2 1.5L12 12"/></svg>',
+	'/dashboard/monetize':  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M10 6v8M7.5 8h4a1.5 1.5 0 010 3H8.5a1.5 1.5 0 000 3h4"/></svg>',
+	'/dashboard/tokens':    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.5L10 14.7l-4.9 2.5.9-5.5L2 7.8l5.5-.8L10 2z"/></svg>',
+	'/dashboard/portfolio': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="11" rx="1.5"/><path d="M6 7V5a4 4 0 018 0v2"/><path d="M2 11h16"/></svg>',
+	'/pump-live':           '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2"/><path d="M6 6a5.5 5.5 0 000 8M14 6a5.5 5.5 0 010 8"/><path d="M3.5 3.5a9 9 0 000 13M16.5 3.5a9 9 0 010 13"/></svg>',
+	'/launchpad':           '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l-3 10h6L10 2z"/><path d="M7 12l-2 6M13 12l2 6M8 18h4"/></svg>',
+	'/pay':                 '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="16" height="12" rx="2"/><path d="M2 8h16"/><path d="M6 13h3"/></svg>',
+	'/pricing':             '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h3v16H5zM12 6h3v12h-3z"/></svg>',
+	'/pumpfun-trending':    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l4-6 3 3 7-11"/><path d="M14 3h3v3"/></svg>',
+	'/pumpfun-search':      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="5"/><path d="M15 15l2.5 2.5"/></svg>',
+	'/demos':               '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M8 7.5v5l4.5-2.5z"/></svg>',
+	'/tutorials':           '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h5a3 3 0 013 3v11a2 2 0 00-2-2H2V4z"/><path d="M18 4h-5a3 3 0 00-3 3v11a2 2 0 012-2h6V4z"/></svg>',
+	'/community':           '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="2.5"/><circle cx="14" cy="7" r="2"/><path d="M2 16c.8-2.8 2.8-4.2 5-4.2s4.2 1.4 5 4.2"/><path d="M13.5 11.8c1.5 0 3 1.2 3.5 3.2"/></svg>',
+	'/features':            '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12v12H4z"/><path d="M4 10h12M10 4v12"/></svg>',
+	'/playground':          '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4-4 4"/><path d="M10 14h6"/></svg>',
+	'/avatar-sdk':          '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M7 8h6M7 11h4"/></svg>',
+	'/xr':                  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="18" height="10" rx="3"/><circle cx="7" cy="10" r="2.5"/><circle cx="13" cy="10" r="2.5"/></svg>',
+	'/club':                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l1.5 3.5H16l-3 3 1.5 4L10 10l-4.5 2.5 1.5-4-3-3h4.5z"/><path d="M5 16h10"/><path d="M7 18h6"/></svg>',
+	'/app':                 '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h16v12H2V4z"/><path d="M2 8h16"/><circle cx="4.5" cy="6" r=".6" fill="currentColor"/><circle cx="7" cy="6" r=".6" fill="currentColor"/></svg>',
+	'/dashboard/account':   '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M4 18c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>',
+	'/dashboard/settings':  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M4.2 15.8l1.4-1.4M14.4 5.6l1.4-1.4"/></svg>',
+	'/dashboard/library':   '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h4v12H4zM12 4h4v12h-4z"/><path d="M6 7h0M14 7h0"/></svg>',
+	'/dashboard/avatars':   '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.1-3.4 3.8-5 6.5-5s5.4 1.6 6.5 5"/></svg>',
+};
+
+const CATEGORY_COLORS = {
+	'Create & Build':     { accent: '139,92,246',  label: '#a78bfa' },
+	'Agents & Identity':  { accent: '59,130,246',  label: '#60a5fa' },
+	'Distribute & Embed': { accent: '16,185,129',  label: '#34d399' },
+	'Monetize & Trade':   { accent: '245,158,11',  label: '#fbbf24' },
+	'Learn & Explore':    { accent: '236,72,153',  label: '#f472b6' },
+	'Account & Settings': { accent: '148,163,184', label: '#94a3b8' },
+	'3D & Immersive':     { accent: '6,182,212',   label: '#22d3ee' },
+	'Trading & Pump.fun': { accent: '249,115,22',  label: '#fb923c' },
+};
+
 const DIRECTORY = [
 	{
 		group: 'Create & Build',
 		items: [
 			{ href: '/create',          title: 'Create Avatar',      sub: 'Snap a selfie — 3D agent in 60 seconds' },
+			{ href: '/create/selfie',   title: 'Selfie Capture',     sub: 'Camera-based avatar creation flow' },
 			{ href: '/avatar-studio',   title: 'Avatar Studio',      sub: 'Full 3D editor with lighting and poses' },
 			{ href: '/brain',           title: 'Brain',              sub: 'Persona builder, model playground, agent voice' },
 			{ href: '/voice',           title: 'Voice Lab',          sub: 'Clone your voice for TTS and lip-sync' },
@@ -561,10 +618,26 @@ const DIRECTORY = [
 			{ href: '/dashboard/monetize',   title: 'Monetize',      sub: 'Revenue, subscriptions, and withdrawals' },
 			{ href: '/dashboard/tokens',     title: 'Tokens',        sub: 'Launch tokens on Pump.fun with bonding curves' },
 			{ href: '/dashboard/portfolio',  title: 'Portfolio & NFTs', sub: 'Holdings, balances, and NFT collections' },
-			{ href: '/pump-live',            title: 'Pump.fun Live',  sub: 'Real-time token feed and trending' },
 			{ href: '/launchpad',            title: 'Launchpad',      sub: 'Token and project launchpad creator' },
 			{ href: '/pay',                  title: 'Payments (x402)', sub: 'Payment hub and hosted checkout' },
 			{ href: '/pricing',              title: 'Pricing',        sub: 'Platform plans and feature comparison' },
+		],
+	},
+	{
+		group: 'Trading & Pump.fun',
+		items: [
+			{ href: '/pump-live',           title: 'Pump.fun Live',   sub: 'Real-time token feed and activity' },
+			{ href: '/pumpfun-trending',    title: 'Trending Tokens', sub: 'Top trending tokens right now' },
+			{ href: '/pumpfun-search',      title: 'Token Search',    sub: 'Search for any Pump.fun token' },
+		],
+	},
+	{
+		group: '3D & Immersive',
+		items: [
+			{ href: '/app',                title: '3D Viewer',        sub: 'Interactive 3D agent editor and viewer' },
+			{ href: '/walk',               title: 'Walk Viewer',      sub: 'Walk and animation preview' },
+			{ href: '/pose',               title: 'Pose Editor',      sub: 'Pose and position your avatar' },
+			{ href: '/xr',                 title: 'XR / AR',          sub: 'Augmented and extended reality views' },
 		],
 	},
 	{
@@ -576,6 +649,7 @@ const DIRECTORY = [
 			{ href: '/features',           title: 'Features',        sub: 'Platform capabilities overview' },
 			{ href: '/playground',         title: 'Playground',      sub: 'Experiment with agents interactively' },
 			{ href: '/avatar-sdk',         title: 'Avatar SDK',      sub: 'Developer docs for avatar integration' },
+			{ href: '/club',               title: 'Club / VIP',      sub: 'Exclusive membership and perks' },
 		],
 	},
 	{
@@ -589,35 +663,129 @@ const DIRECTORY = [
 	},
 ];
 
+const RECENTS_KEY = 'twx_recent_pages';
+const PINS_KEY = 'twx_pinned_pages';
+const MAX_RECENTS = 6;
+
+function getRecents() {
+	try { return JSON.parse(localStorage.getItem(RECENTS_KEY)) || []; } catch { return []; }
+}
+
+function getPins() {
+	try { return JSON.parse(localStorage.getItem(PINS_KEY)) || []; } catch { return []; }
+}
+
+function togglePin(href) {
+	const pins = getPins();
+	const idx = pins.indexOf(href);
+	if (idx >= 0) pins.splice(idx, 1);
+	else pins.unshift(href);
+	localStorage.setItem(PINS_KEY, JSON.stringify(pins.slice(0, 12)));
+	return pins;
+}
+
+function allItems() {
+	return DIRECTORY.flatMap((s) => s.items);
+}
+
+function lookupItem(href) {
+	return allItems().find((i) => i.href === href);
+}
+
+function trackVisit(href) {
+	const recents = getRecents().filter((r) => r !== href);
+	recents.unshift(href);
+	localStorage.setItem(RECENTS_KEY, JSON.stringify(recents.slice(0, 20)));
+}
+
 function renderDirectory(host) {
 	const DIR_COLLAPSED_KEY = 'twx_dir_collapsed';
 	const collapsed = localStorage.getItem(DIR_COLLAPSED_KEY) === '1';
+	const pins = getPins();
+	const recents = getRecents().filter((r) => !pins.includes(r)).slice(0, MAX_RECENTS);
+	const hasPersonalized = pins.length > 0 || recents.length > 0;
+
+	const dirItemHtml = (item, section) => {
+		const icon = DIR_ICONS[item.href] || '';
+		const cc = CATEGORY_COLORS[section.group] || CATEGORY_COLORS['Account & Settings'];
+		const isPinned = getPins().includes(item.href);
+		return `
+			<a href="${item.href}" class="dnx-dir-item" data-href="${esc(item.href)}" data-title="${esc(item.title)}" data-sub="${esc(item.sub)}">
+				<div class="dnx-dir-item-row">
+					<span class="dnx-dir-item-icon" style="background:rgba(${cc.accent},0.1);color:${cc.label}">${icon}</span>
+					<div class="dnx-dir-item-text">
+						<div class="dnx-dir-item-title">${esc(item.title)}</div>
+						<div class="dnx-dir-item-sub">${esc(item.sub)}</div>
+					</div>
+					<button class="dnx-dir-pin${isPinned ? ' is-pinned' : ''}" data-pin="${esc(item.href)}" title="${isPinned ? 'Unpin' : 'Pin to shortcuts'}" aria-label="${isPinned ? 'Unpin' : 'Pin'}">
+						<svg viewBox="0 0 14 14" width="12" height="12" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 1l1 4-3 2v1h4.5L8 13l.5-5H13v-1l-3-2 1-4z"/></svg>
+					</button>
+				</div>
+			</a>
+		`;
+	};
+
+	const personalizedHtml = hasPersonalized ? `
+		${pins.length ? `
+			<div class="dnx-dir-section">
+				<div class="dnx-dir-group-label" style="color:#fbbf24">Pinned</div>
+				<div class="dnx-dir-items">
+					${pins.map((href) => {
+						const item = lookupItem(href);
+						if (!item) return '';
+						const section = DIRECTORY.find((s) => s.items.includes(item)) || DIRECTORY[0];
+						return dirItemHtml(item, section);
+					}).join('')}
+				</div>
+			</div>
+		` : ''}
+		${recents.length ? `
+			<div class="dnx-dir-section">
+				<div class="dnx-dir-group-label" style="color:#94a3b8">Recently Visited</div>
+				<div class="dnx-dir-items">
+					${recents.map((href) => {
+						const item = lookupItem(href);
+						if (!item) return '';
+						const section = DIRECTORY.find((s) => s.items.includes(item)) || DIRECTORY[0];
+						return dirItemHtml(item, section);
+					}).join('')}
+				</div>
+			</div>
+		` : ''}
+		<div class="dnx-dir-divider"></div>
+	` : '';
 
 	host.innerHTML = `
 		<div class="dn-panel dnx-dir">
-			<button class="dnx-dir-head" aria-expanded="${!collapsed}" data-action="dir-toggle">
-				<div>
-					<div class="dn-panel-title" style="margin:0 0 2px">All Features & Pages</div>
-					<div class="dn-panel-sub" style="margin:0">Every tool, page, and feature on three.ws — all in one place.</div>
-				</div>
-				<span class="dnx-dir-chevron" aria-hidden="true">
-					<svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5l3 3 3-3"/></svg>
-				</span>
-			</button>
-			<div class="dnx-dir-body${collapsed ? ' is-collapsed' : ''}">
-				${DIRECTORY.map((section) => `
-					<div class="dnx-dir-section">
-						<div class="dnx-dir-group-label">${esc(section.group)}</div>
-						<div class="dnx-dir-items">
-							${section.items.map((item) => `
-								<a href="${item.href}" class="dnx-dir-item">
-									<div class="dnx-dir-item-title">${esc(item.title)}</div>
-									<div class="dnx-dir-item-sub">${esc(item.sub)}</div>
-								</a>
-							`).join('')}
-						</div>
+			<div class="dnx-dir-head-bar">
+				<button class="dnx-dir-head-toggle" aria-expanded="${!collapsed}" data-action="dir-toggle">
+					<div>
+						<div class="dn-panel-title" style="margin:0 0 2px">All Features & Pages</div>
+						<div class="dn-panel-sub" style="margin:0">Every tool, page, and feature on three.ws — all in one place.</div>
 					</div>
-				`).join('')}
+					<span class="dnx-dir-chevron" aria-hidden="true">
+						<svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5l3 3 3-3"/></svg>
+					</span>
+				</button>
+				<div class="dnx-dir-search-wrap">
+					<svg class="dnx-dir-search-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M13 13l-3-3"/></svg>
+					<input type="text" class="dnx-dir-search" placeholder="Filter pages..." data-action="dir-search" autocomplete="off" spellcheck="false" />
+				</div>
+			</div>
+			<div class="dnx-dir-body${collapsed ? ' is-collapsed' : ''}" data-slot="dir-body">
+				${personalizedHtml}
+				${DIRECTORY.map((section) => {
+					const cc = CATEGORY_COLORS[section.group] || CATEGORY_COLORS['Account & Settings'];
+					return `
+						<div class="dnx-dir-section" data-group="${esc(section.group)}">
+							<div class="dnx-dir-group-label" style="color:${cc.label}">${esc(section.group)}</div>
+							<div class="dnx-dir-items">
+								${section.items.map((item) => dirItemHtml(item, section)).join('')}
+							</div>
+						</div>
+					`;
+				}).join('')}
+				<div class="dnx-dir-no-results" style="display:none">No pages match your search.</div>
 			</div>
 		</div>
 	`;
@@ -628,6 +796,64 @@ function renderDirectory(host) {
 		const isCollapsed = body.classList.toggle('is-collapsed');
 		btn.setAttribute('aria-expanded', !isCollapsed);
 		localStorage.setItem(DIR_COLLAPSED_KEY, isCollapsed ? '1' : '0');
+	});
+
+	const searchInput = host.querySelector('[data-action="dir-search"]');
+	searchInput.addEventListener('input', () => {
+		const q = searchInput.value.trim().toLowerCase();
+		const body = host.querySelector('[data-slot="dir-body"]');
+		const items = body.querySelectorAll('.dnx-dir-item');
+		const sections = body.querySelectorAll('.dnx-dir-section');
+		const noResults = body.querySelector('.dnx-dir-no-results');
+		let visibleCount = 0;
+
+		if (!q) {
+			items.forEach((el) => el.style.display = '');
+			sections.forEach((el) => el.style.display = '');
+			noResults.style.display = 'none';
+			if (body.classList.contains('is-collapsed')) {
+				body.classList.remove('is-collapsed');
+				host.querySelector('[data-action="dir-toggle"]').setAttribute('aria-expanded', 'true');
+			}
+			return;
+		}
+
+		if (body.classList.contains('is-collapsed')) {
+			body.classList.remove('is-collapsed');
+			host.querySelector('[data-action="dir-toggle"]').setAttribute('aria-expanded', 'true');
+		}
+
+		items.forEach((el) => {
+			const title = (el.dataset.title || '').toLowerCase();
+			const sub = (el.dataset.sub || '').toLowerCase();
+			const href = (el.dataset.href || '').toLowerCase();
+			const match = title.includes(q) || sub.includes(q) || href.includes(q);
+			el.style.display = match ? '' : 'none';
+			if (match) visibleCount++;
+		});
+
+		sections.forEach((el) => {
+			const hasVisible = [...el.querySelectorAll('.dnx-dir-item')].some((i) => i.style.display !== 'none');
+			el.style.display = hasVisible ? '' : 'none';
+		});
+
+		noResults.style.display = visibleCount === 0 ? '' : 'none';
+	});
+
+	host.addEventListener('click', (e) => {
+		const pinBtn = e.target.closest('.dnx-dir-pin');
+		if (pinBtn) {
+			e.preventDefault();
+			e.stopPropagation();
+			const href = pinBtn.dataset.pin;
+			togglePin(href);
+			renderDirectory(host);
+			return;
+		}
+		const link = e.target.closest('.dnx-dir-item');
+		if (link && link.dataset.href) {
+			trackVisit(link.dataset.href);
+		}
 	});
 }
 
@@ -932,36 +1158,59 @@ function injectStyles() {
 
 		/* ── Feature directory ── */
 		.dnx-dir { padding: 0; overflow: hidden; }
-		.dnx-dir-head {
+		.dnx-dir-head-bar {
+			display: flex; flex-direction: column; gap: 0;
+		}
+		.dnx-dir-head-toggle {
 			display: flex; justify-content: space-between; align-items: center;
-			width: 100%; padding: 18px 20px;
+			width: 100%; padding: 18px 20px 10px;
 			background: none; border: none; cursor: pointer;
 			text-align: left; color: inherit;
 			transition: background 0.12s ease;
 		}
-		.dnx-dir-head:hover { background: rgba(255,255,255,0.03); }
+		.dnx-dir-head-toggle:hover { background: rgba(255,255,255,0.03); }
 		.dnx-dir-chevron {
 			color: var(--nxt-ink-fade);
 			transition: transform 0.2s ease;
 			display: grid; place-items: center;
 			flex-shrink: 0;
 		}
-		.dnx-dir-head[aria-expanded="false"] .dnx-dir-chevron { transform: rotate(-90deg); }
+		.dnx-dir-head-toggle[aria-expanded="false"] .dnx-dir-chevron { transform: rotate(-90deg); }
+		.dnx-dir-search-wrap {
+			position: relative; padding: 0 20px 12px;
+		}
+		.dnx-dir-search-icon {
+			position: absolute; left: 32px; top: 50%; transform: translateY(calc(-50% - 6px));
+			color: var(--nxt-ink-fade); pointer-events: none;
+		}
+		.dnx-dir-search {
+			width: 100%; padding: 9px 12px 9px 34px;
+			background: rgba(255,255,255,0.04); border: 1px solid var(--nxt-stroke);
+			border-radius: 8px; color: var(--nxt-ink); font-size: 13px;
+			outline: none; transition: border-color 0.14s ease, background 0.14s ease;
+		}
+		.dnx-dir-search::placeholder { color: var(--nxt-ink-fade); }
+		.dnx-dir-search:focus {
+			border-color: var(--nxt-stroke-strong);
+			background: rgba(255,255,255,0.06);
+		}
 		.dnx-dir-body {
 			padding: 0 20px 20px;
 			display: flex; flex-direction: column; gap: 20px;
-			transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
-			max-height: 3000px; opacity: 1; overflow: hidden;
+			transition: max-height 0.35s ease, opacity 0.2s ease, padding 0.3s ease;
+			max-height: 5000px; opacity: 1; overflow: hidden;
 		}
 		.dnx-dir-body.is-collapsed {
 			max-height: 0; opacity: 0;
 			padding-top: 0; padding-bottom: 0;
 		}
+		.dnx-dir-divider {
+			height: 1px; background: var(--nxt-stroke); margin: 4px 0;
+		}
 		.dnx-dir-section {}
 		.dnx-dir-group-label {
 			font-size: 11px; font-weight: 700;
 			letter-spacing: 0.08em; text-transform: uppercase;
-			color: var(--nxt-ink-fade);
 			margin-bottom: 8px; padding-left: 2px;
 		}
 		.dnx-dir-items {
@@ -972,25 +1221,61 @@ function injectStyles() {
 		@media (max-width: 920px) { .dnx-dir-items { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 		@media (max-width: 560px) { .dnx-dir-items { grid-template-columns: 1fr; } }
 		.dnx-dir-item {
-			display: block; padding: 12px 14px;
+			display: block; padding: 10px 12px;
 			border-radius: 10px; border: 1px solid var(--nxt-stroke);
 			background: rgba(255,255,255,0.015);
 			transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
-			cursor: pointer;
+			cursor: pointer; position: relative;
 		}
 		.dnx-dir-item:hover {
 			border-color: var(--nxt-stroke-strong);
 			background: rgba(255,255,255,0.04);
 			transform: translateY(-1px);
 		}
+		.dnx-dir-item-row {
+			display: flex; align-items: flex-start; gap: 10px;
+		}
+		.dnx-dir-item-icon {
+			width: 32px; height: 32px; border-radius: 8px;
+			display: grid; place-items: center; flex-shrink: 0;
+			transition: transform 0.14s ease;
+		}
+		.dnx-dir-item-icon svg { width: 16px; height: 16px; }
+		.dnx-dir-item:hover .dnx-dir-item-icon { transform: scale(1.08); }
+		.dnx-dir-item-text { flex: 1; min-width: 0; }
 		.dnx-dir-item-title {
-			font-size: 13.5px; font-weight: 550;
-			color: var(--nxt-ink); margin-bottom: 2px;
+			font-size: 13px; font-weight: 550;
+			color: var(--nxt-ink); margin-bottom: 1px;
+			line-height: 1.3;
 		}
 		.dnx-dir-item-sub {
-			font-size: 12px; color: var(--nxt-ink-fade);
+			font-size: 11.5px; color: var(--nxt-ink-fade);
 			line-height: 1.35;
 			overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+		}
+		.dnx-dir-pin {
+			background: none; border: none; cursor: pointer;
+			color: var(--nxt-ink-fade); padding: 4px;
+			border-radius: 6px; flex-shrink: 0;
+			opacity: 0; transition: opacity 0.12s ease, color 0.12s ease, background 0.12s ease;
+			display: grid; place-items: center;
+			margin-top: 2px;
+		}
+		.dnx-dir-item:hover .dnx-dir-pin,
+		.dnx-dir-pin.is-pinned { opacity: 1; }
+		.dnx-dir-pin.is-pinned { color: #fbbf24; }
+		.dnx-dir-pin:hover { background: rgba(255,255,255,0.08); color: var(--nxt-ink); }
+		.dnx-dir-pin.is-pinned:hover { color: #fbbf24; }
+		.dnx-dir-no-results {
+			text-align: center; padding: 32px 16px;
+			color: var(--nxt-ink-fade); font-size: 13px;
+		}
+		@media (max-width: 560px) {
+			.dnx-dir-item-icon { width: 28px; height: 28px; border-radius: 7px; }
+			.dnx-dir-item-icon svg { width: 14px; height: 14px; }
+			.dnx-dir-search-wrap { padding: 0 14px 10px; }
+			.dnx-dir-head-toggle { padding: 14px 14px 8px; }
+			.dnx-dir-body { padding: 0 14px 14px; }
 		}
 	`;
 	const tag = document.createElement('style');

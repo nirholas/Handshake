@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-05-27T06:38:13.963Z",
+	"generated_at": "2026-05-27T10:06:15.054Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -220,9 +220,9 @@
 				},
 				{
 					"path": "/brain",
-					"title": "Brain",
-					"description": "Multi-turn chat with Claude, GPT, DeepSeek, Qwen, and Llama. Conversation history, model switching, side-by-side comparison, real streaming with token metrics.",
-					"added": "2026-05-27",
+					"title": "Multi-LLM Brain",
+					"description": "Send one prompt to Claude, GPT, Qwen, ModelScope, and Groq simultaneously. Side-by-side streaming with latency and token stats.",
+					"added": null,
 					"auth": null,
 					"indexable": true,
 					"tags": []

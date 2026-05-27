@@ -43,6 +43,7 @@ import { addLights, removeLights } from './viewer/lights.js';
 import { getCubeMapTexture } from './viewer/environment.js';
 import { takeScreenshot, captureScreenshot } from './viewer/screenshot.js';
 import { setClips, playAllClips } from './viewer/animation.js';
+import { LightProbeGrid } from './light-probe-grid.js';
 import { AnimationManager } from './animation-manager.js';
 
 Cache.enabled = true;
@@ -64,6 +65,7 @@ export class Viewer {
 		this.mixer = null;
 		this.clips = [];
 		this.gui = null;
+		this._lightProbeGrid = null;
 
 		// External animation system (Mixamo-style)
 		this.animationManager = new AnimationManager();
@@ -107,6 +109,12 @@ export class Viewer {
 
 			// Avatar follow mode
 			followMode: 'mouse',
+
+			// Light probe grid
+			probeNx: 4,
+			probeNy: 2,
+			probeNz: 4,
+			probeCubeFace: 64,
 		};
 
 		this.prevTime = 0;
@@ -500,6 +508,7 @@ export class Viewer {
 		this.stats.update();
 		if (this.mixer) this.mixer.update(dt);
 		this.animationManager.update(dt);
+		if (this._lightProbeGrid) this._lightProbeGrid.update(this.activeCamera.position);
 
 		// Extension point for the AgentAvatar empathy tick and any other per-frame hooks
 		if (this._afterAnimateHooks) {
@@ -611,6 +620,95 @@ export class Viewer {
 
 	captureScreenshot() {
 		return captureScreenshot(this);
+	}
+
+	async bakeLightProbes() {
+		if (!this.content) {
+			console.warn('LightProbeGrid: load a model first');
+			return;
+		}
+
+		if (this._lightProbeGrid) {
+			this._lightProbeGrid.removeFromScene(this.scene);
+			this._lightProbeGrid.dispose();
+		}
+
+		const bounds = new Box3().setFromObject(this.content);
+		// Expand slightly so probes sit inside the volume, not on surface.
+		bounds.expandByScalar(0.5);
+
+		const { probeNx, probeNy, probeNz, probeCubeFace } = this.state;
+		const grid = new LightProbeGrid(probeNx, probeNy, probeNz, bounds);
+
+		let progressEl = this.el.querySelector('.lpg-progress');
+		if (!progressEl) {
+			progressEl = document.createElement('div');
+			progressEl.className = 'lpg-progress';
+			progressEl.style.cssText =
+				'position:absolute;bottom:12px;left:50%;transform:translateX(-50%);' +
+				'background:rgba(0,0,0,.7);color:#fff;font:12px/1.5 monospace;' +
+				'padding:6px 12px;border-radius:4px;pointer-events:none;z-index:100';
+			this.el.appendChild(progressEl);
+		}
+		progressEl.textContent = 'Baking probes… 0%';
+		progressEl.style.display = 'block';
+
+		try {
+			await grid.bake(this.renderer, this.scene, probeCubeFace, (t) => {
+				progressEl.textContent = `Baking probes… ${Math.round(t * 100)}%`;
+			});
+		} catch (err) {
+			console.error('LightProbeGrid bake failed:', err);
+			return;
+		} finally {
+			progressEl.style.display = 'none';
+		}
+
+		this._lightProbeGrid = grid;
+		grid.addToScene(this.scene);
+
+		console.log(`LightProbeGrid baked: ${probeNx}×${probeNy}×${probeNz} cells`);
+	}
+
+	saveLightProbes() {
+		if (!this._lightProbeGrid) {
+			console.warn('LightProbeGrid: bake or load a grid first');
+			return;
+		}
+		const json = JSON.stringify(this._lightProbeGrid.toJSON());
+		const blob = new Blob([json], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'light-probe-grid.json';
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+
+	loadLightProbes() {
+		const input = document.createElement('input');
+		input.type = 'file';
+		input.accept = '.json,application/json';
+		input.onchange = async (e) => {
+			const file = e.target.files[0];
+			if (!file) return;
+			const text = await file.text();
+			let json;
+			try {
+				json = JSON.parse(text);
+			} catch {
+				console.error('LightProbeGrid: invalid JSON file');
+				return;
+			}
+			if (this._lightProbeGrid) {
+				this._lightProbeGrid.removeFromScene(this.scene);
+				this._lightProbeGrid.dispose();
+			}
+			this._lightProbeGrid = LightProbeGrid.fromJSON(json);
+			this._lightProbeGrid.addToScene(this.scene);
+			console.log(`LightProbeGrid loaded: ${json.nx}×${json.ny}×${json.nz} cells`);
+		};
+		input.click();
 	}
 
 	/**
@@ -1223,6 +1321,16 @@ export class Viewer {
 			lightFolder.addColor(this.state, 'directColor'),
 		].forEach((ctrl) => ctrl.onChange(() => this.updateLights()));
 
+		// Light Probe Grid controls.
+		const probeFolder = gui.addFolder('Light Probes');
+		probeFolder.add(this.state, 'probeNx', 1, 8, 1).name('grid X');
+		probeFolder.add(this.state, 'probeNy', 1, 4, 1).name('grid Y');
+		probeFolder.add(this.state, 'probeNz', 1, 8, 1).name('grid Z');
+		probeFolder.add(this.state, 'probeCubeFace', { '32px': 32, '64px': 64, '128px': 128 }).name('cube face');
+		probeFolder.add({ bake: () => this.bakeLightProbes() }, 'bake').name('Bake Probes');
+		probeFolder.add({ save: () => this.saveLightProbes() }, 'save').name('Save JSON');
+		probeFolder.add({ load: () => this.loadLightProbes() }, 'load').name('Load JSON');
+
 		// Animation controls.
 		this.animFolder = gui.addFolder('Animation');
 		this.animFolder.domElement.style.display = 'none';
@@ -1750,6 +1858,12 @@ export class Viewer {
 		if (this.scene) {
 			this.scene.environment = null;
 			this.scene.background = null;
+		}
+
+		if (this._lightProbeGrid) {
+			this._lightProbeGrid.removeFromScene(this.scene);
+			this._lightProbeGrid.dispose();
+			this._lightProbeGrid = null;
 		}
 
 		if (this.pmremGenerator) {
