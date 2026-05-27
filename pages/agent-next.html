@@ -482,6 +482,78 @@
 			border-radius: 4px; cursor: text;
 		}
 
+		/* ── FORK BUTTON ────────────────────────────────────── */
+		.fork-btn {
+			display: flex; align-items: center; justify-content: center; gap: 8px;
+			background: var(--text); color: var(--bg);
+			border: 0; padding: 9px 14px;
+			border-radius: 9px; font-weight: 600; font-size: 13px;
+			cursor: pointer; flex: 1; text-align: center;
+			transition: opacity 0.15s;
+		}
+		.fork-btn:hover { opacity: 0.88; }
+		.fork-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+		/* ── MONETIZE CARD ───────────────────────────────────── */
+		.monetize-card { display: none; }
+		.monetize-card.visible { display: block; }
+		.monetize-row {
+			display: flex; align-items: center; justify-content: space-between;
+			padding: 10px 0;
+			border-bottom: 1px solid var(--border);
+		}
+		.monetize-row:last-child { border-bottom: 0; }
+		.monetize-row-label { font-size: 13px; color: var(--text-soft); }
+		.monetize-row-value { font-size: 13px; font-weight: 600; }
+		.monetize-row-value.ok { color: #22c55e; }
+		.monetize-row-value.off { color: var(--muted); }
+		.monetize-toggle {
+			position: relative;
+			width: 36px; height: 20px;
+			background: var(--border-strong);
+			border: 0; border-radius: 99px;
+			cursor: pointer; transition: background 0.2s;
+			flex-shrink: 0;
+		}
+		.monetize-toggle::after {
+			content: ""; position: absolute;
+			top: 2px; left: 2px;
+			width: 16px; height: 16px;
+			background: var(--text-soft);
+			border-radius: 50%;
+			transition: transform 0.2s, background 0.2s;
+		}
+		.monetize-toggle.on { background: #22c55e; }
+		.monetize-toggle.on::after { transform: translateX(16px); background: #fff; }
+		.monetize-actions {
+			display: flex; gap: 8px; margin-top: 14px;
+		}
+		.monetize-action-btn {
+			flex: 1; text-align: center;
+			background: transparent; color: var(--text-soft);
+			border: 1px solid var(--border-strong);
+			padding: 8px 12px; border-radius: 8px;
+			font-size: 12.5px; font-weight: 500;
+			cursor: pointer; text-decoration: none;
+			transition: background 0.12s, color 0.12s, border-color 0.12s;
+		}
+		.monetize-action-btn:hover { background: var(--panel-soft); color: var(--text); border-color: var(--text-soft); }
+		.monetize-stats-row {
+			display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;
+			margin-bottom: 10px;
+		}
+		.monetize-stat {
+			display: flex; flex-direction: column; align-items: center;
+			padding: 10px 0;
+		}
+		.monetize-stat-value {
+			font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
+		}
+		.monetize-stat-label {
+			font-size: 11px; color: var(--muted); margin-top: 2px;
+			text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;
+		}
+
 		/* ── RELATED CARD SKELETON ───────────────────────────── */
 		.related-card.skeleton {
 			background: var(--panel);

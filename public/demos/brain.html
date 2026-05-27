@@ -1,1120 +1,300 @@
 <!doctype html>
 <html lang="en">
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Brain · three.ws</title>
-	<meta name="description" content="Chat with Claude, GPT, Qwen, and Llama side-by-side. Multi-turn conversations, streaming responses, real token metrics." />
-	<link rel="canonical" href="https://three.ws/brain" />
-	<meta property="og:title" content="Brain · three.ws" />
-	<meta property="og:description" content="Chat with Claude, GPT, Qwen, and Llama. Multi-turn conversations, streaming, real token metrics." />
-	<meta property="og:url" content="https://three.ws/brain" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<link rel="icon" href="/favicon.ico" />
-	<link rel="stylesheet" href="/style.css" />
-	<link rel="stylesheet" href="/nav.css" />
-	<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
-	<style>
-		:root {
-			color-scheme: dark;
-			--bg: #05060a;
-			--surface: #0c0d13;
-			--surface2: #111219;
-			--border: #1a1b26;
-			--border2: #24253a;
-			--text: #e8e9f0;
-			--text2: #8b8d9e;
-			--text3: #555768;
-			--accent: #3dc1ff;
-			--accent-dim: rgba(61,193,255,0.12);
-			--ok: #22d17a;
-			--warn: #f5a623;
-			--err: #ff5a5a;
-			--anthropic: #d4a87a;
-			--openai: #74aa82;
-			--groq: #a78bfa;
-			--alibaba: #ff6a3d;
-			--modelscope: #5b8def;
-			--r: 12px;
-			--r-sm: 8px;
-		}
-		*, *::before, *::after { box-sizing: border-box; }
-		html, body {
-			margin: 0; padding: 0;
-			background: var(--bg); color: var(--text);
-			font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-			min-height: 100vh;
-		}
-		a { color: inherit; text-decoration: none; }
-		button { font-family: inherit; cursor: pointer; border: 0; }
-
-		.page {
-			max-width: 1320px; margin: 0 auto;
-			padding: 28px 20px 80px;
-			display: flex; flex-direction: column; gap: 0;
-		}
-		.page-header {
-			display: flex; align-items: center; justify-content: space-between;
-			margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
-		}
-		.breadcrumb { font-size: 13px; color: var(--text3); }
-		.breadcrumb a { color: var(--text2); }
-		.breadcrumb a:hover { color: var(--text); }
-		.page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
-		.mode-tabs {
-			display: flex; background: var(--surface); border: 1px solid var(--border);
-			border-radius: var(--r-sm); padding: 3px; gap: 2px;
-		}
-		.mode-tab {
-			padding: 6px 18px; border-radius: 6px;
-			font-size: 13px; font-weight: 500; color: var(--text2);
-			background: transparent; transition: background 0.15s, color 0.15s;
-		}
-		.mode-tab.active { background: var(--surface2); color: var(--text); }
-		.mode-tab:hover:not(.active) { color: var(--text); }
-
-		/* Chat layout */
-		#chat-view { display: flex; gap: 16px; height: calc(100vh - 190px); min-height: 500px; }
-		#compare-view { display: none; }
-
-		/* Model sidebar */
-		.model-sidebar {
-			width: 220px; flex-shrink: 0;
-			display: flex; flex-direction: column; gap: 6px;
-			overflow-y: auto;
-		}
-		.sidebar-label {
-			font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
-			text-transform: uppercase; color: var(--text3);
-			padding: 0 4px; margin-bottom: 2px;
-		}
-		.model-card {
-			padding: 10px 12px; border-radius: var(--r-sm);
-			border: 1.5px solid var(--border);
-			background: var(--surface); cursor: pointer;
-			transition: border-color 0.15s, background 0.15s;
-		}
-		.model-card:hover { border-color: var(--border2); background: var(--surface2); }
-		.model-card.selected {
-			border-color: var(--accent);
-			background: rgba(61,193,255,0.06);
-		}
-		.model-card-name {
-			font-size: 13px; font-weight: 600; margin-bottom: 2px;
-			display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-		}
-		.model-badge {
-			font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
-			text-transform: uppercase; padding: 1px 5px; border-radius: 4px;
-		}
-		.badge-flagship  { background: rgba(212,168,122,0.15); color: var(--anthropic); }
-		.badge-balanced  { background: rgba(61,193,255,0.12); color: var(--accent); }
-		.badge-fast      { background: rgba(34,209,122,0.12); color: var(--ok); }
-		.badge-reasoning { background: rgba(167,139,250,0.15); color: var(--groq); }
-		.model-card.unavailable { opacity: 0.45; pointer-events: none; }
-		.model-card.unavailable .model-badge::after { content: ' · unavailable'; }
-		.model-net { font-size: 10.5px; color: var(--text3); margin-bottom: 4px; }
-		.model-desc { font-size: 11.5px; color: var(--text2); line-height: 1.4; }
-		.net-anthropic  { color: var(--anthropic); }
-		.net-openai     { color: var(--openai); }
-		.net-groq       { color: var(--groq); }
-		.net-alibaba    { color: var(--alibaba); }
-		.net-modelscope { color: var(--modelscope); }
-		.net-deepseek   { color: #60b8ff; }
-
-		/* Chat panel */
-		.chat-panel {
-			flex: 1; min-width: 0;
-			display: flex; flex-direction: column;
-			border: 1.5px solid var(--border); border-radius: var(--r);
-			overflow: hidden; background: var(--surface);
-		}
-		.chat-topbar {
-			display: flex; align-items: center; justify-content: space-between;
-			padding: 10px 16px; border-bottom: 1px solid var(--border);
-			background: var(--surface2); flex-shrink: 0;
-		}
-		.chat-model-label {
-			font-size: 13px; font-weight: 600; color: var(--text);
-			display: flex; align-items: center; gap: 8px;
-		}
-		.chat-model-dot {
-			width: 7px; height: 7px; border-radius: 50%; background: var(--ok);
-		}
-		.chat-topbar-actions { display: flex; gap: 6px; }
-		.icon-btn {
-			background: transparent; color: var(--text2); padding: 5px 8px;
-			border-radius: 6px; font-size: 12px; border: 1px solid transparent;
-			transition: background 0.12s, color 0.12s, border-color 0.12s;
-		}
-		.icon-btn:hover { background: var(--surface); color: var(--text); border-color: var(--border); }
-
-		/* Messages */
-		.messages {
-			flex: 1; overflow-y: auto; padding: 20px 20px 8px;
-			display: flex; flex-direction: column; gap: 18px;
-			scroll-behavior: smooth;
-		}
-		.messages::-webkit-scrollbar { width: 4px; }
-		.messages::-webkit-scrollbar-track { background: transparent; }
-		.messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
-		.msg { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
-		.msg-role {
-			font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em;
-			text-transform: uppercase; color: var(--text3);
-		}
-		.msg-role .model-tag { color: var(--accent); }
-		.msg-bubble {
-			padding: 12px 16px; border-radius: 10px;
-			font-size: 14px; line-height: 1.6;
-		}
-		.msg.user .msg-bubble {
-			background: var(--surface2); color: var(--text);
-			border: 1px solid var(--border);
-			align-self: flex-end; max-width: 82%;
-		}
-		.msg.assistant .msg-bubble {
-			background: transparent; color: var(--text);
-			border: 1px solid var(--border); max-width: 100%;
-		}
-		.msg.assistant .msg-bubble.streaming {
-			border-color: var(--border2);
-			background: rgba(61,193,255,0.03);
-		}
-		.msg-bubble p { margin: 0 0 10px; }
-		.msg-bubble p:last-child { margin: 0; }
-		.msg-bubble h1, .msg-bubble h2, .msg-bubble h3 {
-			font-size: 15px; font-weight: 600; margin: 14px 0 6px; letter-spacing: -0.01em;
-		}
-		.msg-bubble h1:first-child, .msg-bubble h2:first-child, .msg-bubble h3:first-child { margin-top: 0; }
-		.msg-bubble ul, .msg-bubble ol { margin: 6px 0; padding-left: 20px; }
-		.msg-bubble li { margin: 3px 0; }
-		.msg-bubble code {
-			font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
-			font-size: 12.5px; background: rgba(255,255,255,0.07);
-			padding: 1px 5px; border-radius: 4px; color: var(--accent);
-		}
-		.msg-bubble pre {
-			background: rgba(0,0,0,0.35); border: 1px solid var(--border2);
-			border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: 10px 0;
-		}
-		.msg-bubble pre code { background: transparent; padding: 0; color: var(--text); }
-		.msg-bubble blockquote {
-			border-left: 3px solid var(--border2); margin: 8px 0;
-			padding: 4px 12px; color: var(--text2);
-		}
-		.msg-bubble strong { color: var(--text); font-weight: 600; }
-		.msg-bubble a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
-		.msg-bubble table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 10px 0; }
-		.msg-bubble th, .msg-bubble td { border: 1px solid var(--border2); padding: 6px 10px; }
-		.msg-bubble th { background: var(--surface2); font-weight: 600; }
-		.msg-bubble hr { border: 0; border-top: 1px solid var(--border); margin: 12px 0; }
-		.msg-footer {
-			display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 0 2px;
-		}
-		.msg-metrics {
-			font-size: 10.5px; color: var(--text3);
-			font-family: "SF Mono", ui-monospace, monospace;
-			display: flex; gap: 10px; flex-wrap: wrap;
-		}
-		.m-first { color: var(--ok) !important; }
-		.m-val { color: var(--text2); }
-		.copy-btn {
-			font-size: 10.5px; padding: 3px 8px;
-			background: transparent; color: var(--text3);
-			border: 1px solid var(--border); border-radius: 5px;
-			transition: background 0.12s, color 0.12s, border-color 0.12s;
-			margin-left: auto;
-		}
-		.copy-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
-		.copy-btn.copied { color: var(--ok); border-color: rgba(34,209,122,0.3); }
-		.cursor {
-			display: inline-block; width: 2px; height: 1em;
-			background: var(--accent); border-radius: 1px;
-			vertical-align: text-bottom; margin-left: 1px;
-			animation: blink 0.9s step-end infinite;
-		}
-		@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-		.empty-state {
-			flex: 1; display: flex; flex-direction: column;
-			align-items: center; justify-content: center;
-			gap: 10px; text-align: center; color: var(--text3);
-			padding: 40px 20px;
-		}
-		.empty-icon { font-size: 32px; opacity: 0.35; }
-		.empty-state h3 { font-size: 15px; font-weight: 600; color: var(--text2); margin: 0; }
-		.empty-state p { font-size: 13px; max-width: 340px; line-height: 1.5; margin: 0; }
-		.suggestion-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
-		.chip {
-			background: var(--surface2); border: 1px solid var(--border);
-			color: var(--text2); padding: 6px 12px; border-radius: 99px;
-			font-size: 12.5px; cursor: pointer;
-			transition: border-color 0.12s, color 0.12s;
-		}
-		.chip:hover { border-color: var(--border2); color: var(--text); }
-
-		/* Input area */
-		.input-area {
-			flex-shrink: 0; padding: 12px 16px 16px;
-			border-top: 1px solid var(--border);
-		}
-		.sys-row { margin-bottom: 8px; }
-		.sys-toggle {
-			background: transparent; color: var(--text3); font-size: 12px;
-			padding: 3px 0; display: flex; align-items: center; gap: 4px;
-		}
-		.sys-toggle:hover { color: var(--text2); }
-		.sys-panel { margin-top: 8px; }
-		.sys-panel textarea {
-			width: 100%; resize: vertical; min-height: 64px;
-			background: var(--bg); border: 1px solid var(--border);
-			border-radius: var(--r-sm); color: var(--text);
-			font: inherit; font-size: 13px; padding: 9px 12px; line-height: 1.5;
-		}
-		.sys-panel textarea:focus { outline: none; border-color: var(--border2); }
-		.chat-form {
-			background: var(--surface2); border: 1.5px solid var(--border);
-			border-radius: var(--r-sm); overflow: hidden;
-			transition: border-color 0.15s;
-		}
-		.chat-form:focus-within { border-color: var(--border2); }
-		#chat-input {
-			width: 100%; background: transparent; border: 0; outline: none;
-			color: var(--text); font: inherit; font-size: 14px;
-			padding: 12px 14px 0; resize: none; min-height: 52px; max-height: 200px;
-			line-height: 1.5; display: block;
-		}
-		#chat-input::placeholder { color: var(--text3); }
-		.form-footer {
-			display: flex; align-items: center; padding: 6px 10px 8px 14px; gap: 8px;
-		}
-		.form-hint { font-size: 11px; color: var(--text3); flex: 1; }
-		.btn-clear {
-			background: transparent; color: var(--text2);
-			border: 1px solid var(--border); border-radius: 6px;
-			font-size: 12px; padding: 5px 10px;
-		}
-		.btn-clear:hover { border-color: var(--border2); color: var(--text); }
-		.btn-send {
-			background: var(--accent); color: #04090f;
-			border-radius: 6px; font-size: 13px; font-weight: 600;
-			padding: 6px 16px; display: flex; align-items: center; gap: 6px;
-		}
-		.btn-send:hover { opacity: 0.9; }
-		.btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
-		.btn-send .shortcut { font-size: 10px; opacity: 0.7; font-family: ui-monospace, monospace; }
-
-		/* Compare view */
-		.compare-layout { display: flex; flex-direction: column; gap: 16px; }
-		.compare-composer {
-			background: var(--surface); border: 1.5px solid var(--border);
-			border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 12px;
-		}
-		.compose-label {
-			font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
-			color: var(--text3); margin-bottom: 4px; display: block;
-		}
-		.compose-textarea {
-			width: 100%; resize: vertical; background: var(--bg);
-			border: 1px solid var(--border); border-radius: var(--r-sm);
-			color: var(--text); font: inherit; font-size: 14px;
-			padding: 10px 13px; line-height: 1.5;
-		}
-		.compose-textarea:focus { outline: none; border-color: var(--border2); }
-		.provider-grid {
-			display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 8px;
-		}
-		.provider-pill {
-			display: flex; align-items: center; gap: 9px;
-			padding: 9px 12px; background: var(--bg);
-			border: 1.5px solid var(--border); border-radius: var(--r-sm);
-			cursor: pointer; user-select: none; transition: border-color 0.15s;
-		}
-		.provider-pill:has(input:checked) { border-color: var(--accent); background: rgba(61,193,255,0.06); }
-		.provider-pill input { accent-color: var(--accent); }
-		.provider-pill-name { font-size: 12.5px; font-weight: 600; }
-		.provider-pill-net { font-size: 10.5px; color: var(--text3); }
-		.compare-controls {
-			display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-		}
-		.compare-controls label { font-size: 12px; color: var(--text2); white-space: nowrap; }
-		.compare-controls input[type="number"] {
-			background: var(--bg); border: 1px solid var(--border);
-			color: var(--text); padding: 6px 10px; border-radius: var(--r-sm);
-			font: inherit; font-size: 13px; width: 90px;
-		}
-		.spacer { flex: 1; }
-		.btn-secondary {
-			background: transparent; color: var(--text2);
-			border: 1px solid var(--border); border-radius: var(--r-sm);
-			padding: 8px 14px; font-size: 13px;
-		}
-		.btn-secondary:hover { border-color: var(--border2); color: var(--text); }
-		.btn-primary {
-			background: var(--accent); color: #04090f;
-			border-radius: var(--r-sm); font-size: 13px; font-weight: 600;
-			padding: 8px 20px;
-		}
-		.btn-primary:hover { opacity: 0.9; }
-		.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-		.compare-grid {
-			display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px;
-		}
-		.cmp-card {
-			background: var(--surface); border: 1.5px solid var(--border);
-			border-radius: var(--r); overflow: hidden; display: flex; flex-direction: column;
-		}
-		.cmp-card-head {
-			padding: 11px 14px; background: var(--surface2);
-			border-bottom: 1px solid var(--border);
-			display: flex; align-items: center; justify-content: space-between;
-		}
-		.cmp-card-title {
-			font-size: 13px; font-weight: 600;
-			display: flex; align-items: center; gap: 7px;
-		}
-		.cmp-card-net { font-size: 10.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
-		.cmp-dot {
-			width: 6px; height: 6px; border-radius: 50%;
-			background: var(--accent); animation: pulse-dot 1.2s ease-in-out infinite;
-		}
-		.cmp-dot.done { background: var(--ok); animation: none; }
-		.cmp-dot.errored { background: var(--err); animation: none; }
-		@keyframes pulse-dot { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-		.cmp-body {
-			flex: 1; padding: 14px; font-size: 13.5px; line-height: 1.6;
-			color: var(--text); min-height: 160px; max-height: 420px;
-			overflow-y: auto;
-		}
-		.cmp-body.empty { color: var(--text3); font-style: italic; white-space: normal; }
-		.cmp-body.errored { color: var(--err); white-space: pre-wrap; }
-		.cmp-body p { margin: 0 0 8px; }
-		.cmp-body p:last-child { margin: 0; }
-		.cmp-body code {
-			font-family: ui-monospace, monospace; font-size: 12px;
-			background: rgba(255,255,255,0.06); padding: 1px 4px; border-radius: 3px;
-		}
-		.cmp-body pre {
-			background: rgba(0,0,0,0.3); border: 1px solid var(--border2);
-			border-radius: 6px; padding: 10px 12px; overflow-x: auto; margin: 8px 0;
-		}
-		.cmp-body pre code { background: transparent; padding: 0; }
-		.cmp-body strong { font-weight: 600; }
-		.cmp-body ul, .cmp-body ol { margin: 4px 0; padding-left: 18px; }
-		.cmp-body li { margin: 2px 0; }
-		.cmp-footer {
-			padding: 8px 14px; border-top: 1px solid var(--border);
-			display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-		}
-		.cmp-metric {
-			font-size: 10.5px; color: var(--text3);
-			font-family: ui-monospace, monospace;
-		}
-		.cmp-metric strong { color: var(--accent); font-weight: 600; }
-		.cmp-metric .first { color: var(--ok); }
-		.notice {
-			padding: 10px 14px; border-radius: var(--r-sm);
-			background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.25);
-			color: var(--warn); font-size: 13px; margin-top: 10px;
-		}
-
-		@media (max-width: 860px) {
-			#chat-view { flex-direction: column; height: auto; min-height: auto; }
-			.model-sidebar {
-				width: 100%; flex-direction: row; overflow-x: auto;
-				gap: 8px; padding-bottom: 4px; flex-wrap: nowrap;
-			}
-			.model-card { min-width: 160px; flex-shrink: 0; }
-			.model-desc { display: none; }
-			.chat-panel { height: 62vh; min-height: 400px; }
-		}
-		@media (max-width: 540px) {
-			.page { padding: 16px 14px 60px; }
-			.page-header { flex-direction: column; align-items: flex-start; }
-		}
-	</style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Brain · three.ws</title>
+<meta name="description" content="Multi-model AI playground. Chat with Claude, GPT, Llama, Qwen, DeepSeek — switch models mid-conversation, compare side-by-side, track speed and token metrics."/>
+<link rel="canonical" href="https://three.ws/brain"/>
+<meta property="og:title" content="Brain · three.ws"/>
+<meta property="og:description" content="Multi-model AI playground. Chat, compare, and benchmark 10 models side-by-side with real streaming and token metrics."/>
+<meta property="og:url" content="https://three.ws/brain"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link rel="icon" href="/favicon.ico"/>
+<link rel="stylesheet" href="/style.css"/>
+<link rel="stylesheet" href="/nav.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark-dimmed.min.css"/>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#05060a;--s0:#0a0b11;--s1:#0e0f17;--s2:#13141e;--b0:#1a1b28;--b1:#24253a;--b2:#2e3050;--t0:#e8e9f0;--t1:#a0a2b4;--t2:#6e7088;--t3:#484a60;--accent:#3dc1ff;--accent-dim:rgba(61,193,255,0.1);--ok:#22d17a;--ok-dim:rgba(34,209,122,0.12);--warn:#f5a623;--err:#ff5a5a;--r:12px;--rs:8px;--sidebar-w:260px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--t0);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;height:100vh;overflow:hidden}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:0;background:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}::selection{background:rgba(61,193,255,0.2)}
+.brain{display:flex;height:calc(100vh - 49px);position:relative;overflow:hidden}
+.sidebar{width:var(--sidebar-w);flex-shrink:0;display:flex;flex-direction:column;background:var(--s0);border-right:1px solid var(--b0);transition:transform .2s ease,opacity .2s}
+.sidebar.collapsed{transform:translateX(calc(-1*var(--sidebar-w)));opacity:0;position:absolute;z-index:0}
+.sidebar-head{padding:14px 14px 10px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.new-chat-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:10px 14px;background:var(--s2);border:1px solid var(--b0);color:var(--t0);font-size:13px;font-weight:600;border-radius:var(--rs);transition:background .12s,border-color .12s}
+.new-chat-btn:hover{background:var(--b0);border-color:var(--b1)}
+.sessions{flex:1;overflow-y:auto;padding:0 8px 14px;display:flex;flex-direction:column;gap:2px}
+.sessions::-webkit-scrollbar{width:3px}.sessions::-webkit-scrollbar-thumb{background:var(--b1);border-radius:3px}
+.session-group{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);padding:12px 8px 4px}
+.session-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--t1);transition:background .1s,color .1s;position:relative}
+.session-item:hover{background:var(--s2);color:var(--t0)}.session-item.active{background:var(--s2);color:var(--t0)}
+.session-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.session-del{opacity:0;padding:2px 6px;border-radius:4px;font-size:11px;color:var(--t2);transition:opacity .1s,color .1s}
+.session-item:hover .session-del{opacity:1}.session-del:hover{color:var(--err)}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg)}
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 16px;flex-shrink:0;border-bottom:1px solid var(--b0);background:var(--s0)}
+.sidebar-btn{padding:6px 8px;border-radius:6px;color:var(--t2);font-size:16px;transition:color .12s,background .12s}
+.sidebar-btn:hover{color:var(--t0);background:var(--s2)}
+.model-picker{position:relative}
+.model-trigger{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:var(--rs);border:1px solid var(--b0);background:var(--s1);color:var(--t0);font-size:13px;font-weight:500;transition:border-color .12s,background .12s}
+.model-trigger:hover{border-color:var(--b1);background:var(--s2)}
+.model-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}.model-caret{font-size:9px;color:var(--t2);margin-left:2px}
+.model-dropdown{position:absolute;top:calc(100% + 6px);left:0;width:320px;max-height:480px;overflow-y:auto;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);box-shadow:0 12px 40px rgba(0,0,0,.5);z-index:100;display:none;padding:6px}
+.model-dropdown.open{display:block}.model-dropdown::-webkit-scrollbar{width:4px}.model-dropdown::-webkit-scrollbar-thumb{background:var(--b1);border-radius:4px}
+.md-group{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);padding:10px 10px 4px}
+.md-item{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border-radius:var(--rs);cursor:pointer;transition:background .1s}
+.md-item:hover{background:var(--s2)}.md-item.selected{background:var(--accent-dim)}.md-item.unavailable{opacity:.35;pointer-events:none}
+.md-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}.md-info{flex:1;min-width:0}
+.md-name{font-size:13px;font-weight:600;color:var(--t0);display:flex;align-items:center;gap:6px}
+.md-badge{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 5px;border-radius:4px}
+.badge-flagship{background:rgba(212,168,122,.15);color:#d4a87a}.badge-balanced{background:var(--accent-dim);color:var(--accent)}
+.badge-fast{background:var(--ok-dim);color:var(--ok)}.badge-reasoning{background:rgba(167,139,250,.15);color:#a78bfa}
+.md-desc{font-size:11.5px;color:var(--t2);margin-top:1px}
+.mode-tabs{display:flex;background:var(--s1);border:1px solid var(--b0);border-radius:7px;padding:2px;gap:1px}
+.mode-tab{padding:5px 16px;border-radius:5px;font-size:12.5px;font-weight:500;color:var(--t2);transition:background .12s,color .12s}
+.mode-tab.active{background:var(--s2);color:var(--t0)}.mode-tab:hover:not(.active){color:var(--t1)}
+.topbar-spacer{flex:1}.topbar-actions{display:flex;gap:4px}
+.topbar-btn{padding:6px 10px;border-radius:6px;font-size:12px;color:var(--t2);border:1px solid transparent;transition:color .12s,background .12s,border-color .12s}
+.topbar-btn:hover{color:var(--t0);background:var(--s2);border-color:var(--b0)}
+.content{flex:1;min-height:0;position:relative}.chat-view{height:100%;display:flex;flex-direction:column}.compare-view{height:100%;display:flex;flex-direction:column;overflow-y:auto}
+.messages{flex:1;overflow-y:auto;padding:0;scroll-behavior:smooth}.messages::-webkit-scrollbar{width:5px}.messages::-webkit-scrollbar-thumb{background:var(--b1);border-radius:4px}
+.msg-wrap{padding:20px 24px;border-bottom:1px solid rgba(26,27,40,.4);animation:msgFade .25s ease-out}.msg-wrap:last-child{border-bottom:0}
+@keyframes msgFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg-inner{max-width:780px;margin:0 auto}.msg-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.msg-avatar{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.msg-avatar.user{background:var(--s2);color:var(--t1);border:1px solid var(--b0)}.msg-avatar.assistant{border:1px solid var(--b0)}
+.msg-role{font-size:13px;font-weight:600;color:var(--t0)}.msg-model-tag{font-size:11px;color:var(--t2)}
+.msg-body{font-size:14.5px;line-height:1.7;color:var(--t0);overflow-wrap:break-word}
+.msg-body p{margin:0 0 12px}.msg-body p:last-child{margin:0}
+.msg-body h1,.msg-body h2,.msg-body h3{font-size:15px;font-weight:650;margin:18px 0 6px;letter-spacing:-.01em}
+.msg-body h1:first-child,.msg-body h2:first-child,.msg-body h3:first-child{margin-top:0}
+.msg-body ul,.msg-body ol{margin:6px 0 12px;padding-left:22px}.msg-body li{margin:3px 0}.msg-body li>p{margin:0}
+.msg-body code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:rgba(255,255,255,.07);padding:2px 6px;border-radius:4px;color:var(--accent)}
+.msg-body pre{background:#0d1117;border:1px solid var(--b0);border-radius:var(--rs);padding:14px 16px;overflow-x:auto;margin:12px 0;position:relative}
+.msg-body pre code{background:transparent;padding:0;color:inherit;font-size:12.5px;line-height:1.55}
+.pre-copy{position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--t2);font-size:10.5px;font-family:inherit;opacity:0;transition:opacity .15s}
+.msg-body pre:hover .pre-copy{opacity:1}.pre-copy:hover{background:rgba(255,255,255,.1);color:var(--t0)}.pre-copy.copied{color:var(--ok)}
+.msg-body blockquote{border-left:3px solid var(--b1);margin:10px 0;padding:2px 14px;color:var(--t1)}
+.msg-body strong{color:var(--t0);font-weight:650}.msg-body a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.msg-body table{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0}.msg-body th,.msg-body td{border:1px solid var(--b0);padding:7px 10px;text-align:left}
+.msg-body th{background:var(--s1);font-weight:600}.msg-body hr{border:0;border-top:1px solid var(--b0);margin:16px 0}
+.cursor-blink{display:inline-block;width:2px;height:1em;background:var(--accent);border-radius:1px;vertical-align:text-bottom;margin-left:2px;animation:curBlink .8s step-end infinite}
+@keyframes curBlink{0%,100%{opacity:1}50%{opacity:0}}
+.msg-footer{display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.msg-metrics{font-size:10.5px;color:var(--t3);font-family:"SF Mono",ui-monospace,monospace;display:flex;gap:8px}
+.msg-metrics .mv{color:var(--t2)}.msg-metrics .mf{color:var(--ok)}
+.msg-actions{display:flex;gap:2px;margin-left:auto;opacity:0;transition:opacity .15s}.msg-wrap:hover .msg-actions{opacity:1}
+.msg-act{padding:3px 8px;border-radius:5px;font-size:11px;color:var(--t2);transition:color .12s,background .12s}
+.msg-act:hover{color:var(--t0);background:var(--s2)}.msg-act.copied{color:var(--ok)}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
+.empty-orb{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--accent-dim),transparent 70%),radial-gradient(circle at 65% 65%,rgba(167,139,250,.08),transparent 70%),var(--s1);border:1px solid var(--b0);margin-bottom:18px;animation:orbPulse 4s ease-in-out infinite}
+@keyframes orbPulse{0%,100%{box-shadow:0 0 0 0 var(--accent-dim)}50%{box-shadow:0 0 30px 4px var(--accent-dim)}}
+.empty-title{font-size:18px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.empty-sub{font-size:13.5px;color:var(--t2);max-width:400px;line-height:1.6;margin-bottom:20px}
+.prompt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:480px;width:100%}
+.prompt-card{text-align:left;padding:12px 14px;background:var(--s1);border:1px solid var(--b0);border-radius:var(--rs);cursor:pointer;transition:border-color .12s,background .12s}
+.prompt-card:hover{border-color:var(--b1);background:var(--s2)}
+.prompt-card-title{font-size:12.5px;font-weight:600;color:var(--t0);margin-bottom:2px}.prompt-card-sub{font-size:11.5px;color:var(--t2)}
+.agent-banner{display:none;align-items:center;gap:10px;padding:8px 14px;margin:12px 24px 0;background:var(--accent-dim);border:1px solid rgba(61,193,255,.15);border-radius:var(--rs);font-size:12.5px;color:var(--accent);max-width:780px;margin-left:auto;margin-right:auto}
+.agent-banner.visible{display:flex}.agent-banner-name{font-weight:600}
+.agent-banner-dismiss{margin-left:auto;padding:2px 6px;border-radius:4px;color:var(--t2);font-size:11px}.agent-banner-dismiss:hover{color:var(--t0)}
+.input-area{flex-shrink:0;padding:12px 24px 18px;display:flex;flex-direction:column;align-items:center}
+.input-inner{width:100%;max-width:780px}.sys-row{margin-bottom:8px}
+.sys-toggle{background:transparent;color:var(--t3);font-size:12px;display:flex;align-items:center;gap:4px;padding:2px 0}.sys-toggle:hover{color:var(--t1)}
+.sys-panel{margin-top:6px}
+.sys-ta{width:100%;resize:vertical;min-height:56px;background:var(--s1);border:1px solid var(--b0);border-radius:var(--rs);color:var(--t0);font:inherit;font-size:13px;padding:9px 12px;line-height:1.5;outline:none;transition:border-color .12s}.sys-ta:focus{border-color:var(--b1)}
+.input-box{background:var(--s1);border:1.5px solid var(--b0);border-radius:var(--r);overflow:hidden;transition:border-color .15s}.input-box:focus-within{border-color:var(--b1)}
+.input-ta{width:100%;background:transparent;border:0;outline:none;color:var(--t0);font:inherit;font-size:14px;padding:14px 16px 0;resize:none;min-height:54px;max-height:200px;display:block;line-height:1.5}.input-ta::placeholder{color:var(--t3)}
+.input-footer{display:flex;align-items:center;padding:6px 12px 10px 16px;gap:8px}.input-hint{font-size:11px;color:var(--t3);flex:1}
+.btn-stop{display:none;align-items:center;gap:5px;background:var(--err);color:#fff;border-radius:7px;font-size:12.5px;font-weight:600;padding:6px 14px}.btn-stop.visible{display:flex}
+.btn-send{background:var(--accent);color:#04090f;border-radius:7px;font-size:13px;font-weight:600;padding:6px 16px;display:flex;align-items:center;gap:6px;transition:opacity .12s}
+.btn-send:hover{opacity:.9}.btn-send:disabled{opacity:.35;cursor:not-allowed}.btn-send .sc{font-size:10px;opacity:.6;font-family:ui-monospace,monospace}
+.input-sub{text-align:center;padding-top:6px;font-size:11px;color:var(--t3)}.input-sub a{color:var(--t2);text-decoration:underline;text-underline-offset:2px}
+.cmp-top{padding:16px 24px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--b0);flex-shrink:0}
+.cmp-providers{display:flex;flex-wrap:wrap;gap:6px}
+.cmp-pill{display:flex;align-items:center;gap:7px;padding:7px 12px;background:var(--s1);border:1.5px solid var(--b0);border-radius:var(--rs);cursor:pointer;user-select:none;transition:border-color .12s;font-size:12.5px}
+.cmp-pill:has(input:checked){border-color:var(--accent);background:var(--accent-dim)}.cmp-pill.unavailable{opacity:.35;pointer-events:none}
+.cmp-pill input{accent-color:var(--accent);width:13px;height:13px}.cmp-pill-name{font-weight:600}.cmp-pill-net{color:var(--t2);font-size:11px}
+.cmp-inputs{display:flex;gap:10px}
+.cmp-textarea{flex:1;resize:vertical;background:var(--s1);border:1px solid var(--b0);border-radius:var(--rs);color:var(--t0);font:inherit;font-size:13.5px;padding:10px 14px;line-height:1.5;outline:none;min-height:80px}.cmp-textarea:focus{border-color:var(--b1)}
+.cmp-sidebar-col{display:flex;flex-direction:column;gap:8px;min-width:220px}
+.cmp-label{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.cmp-sys-ta{width:100%;resize:vertical;min-height:60px;background:var(--s1);border:1px solid var(--b0);border-radius:var(--rs);color:var(--t0);font:inherit;font-size:12.5px;padding:8px 10px;outline:none}.cmp-sys-ta:focus{border-color:var(--b1)}
+.cmp-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.cmp-controls label{font-size:12px;color:var(--t2);white-space:nowrap}
+.cmp-controls input[type="number"]{background:var(--s1);border:1px solid var(--b0);color:var(--t0);padding:5px 10px;border-radius:var(--rs);font:inherit;font-size:12.5px;width:80px;outline:none}
+.cmp-spacer{flex:1}
+.cmp-btn-run{background:var(--accent);color:#04090f;border-radius:7px;font-size:13px;font-weight:600;padding:8px 20px}.cmp-btn-run:hover{opacity:.9}.cmp-btn-run:disabled{opacity:.35;cursor:not-allowed}
+.cmp-btn-clear{padding:7px 14px;border-radius:7px;font-size:12.5px;color:var(--t2);border:1px solid var(--b0)}.cmp-btn-clear:hover{border-color:var(--b1);color:var(--t0)}
+.cmp-grid{flex:1;overflow-y:auto;padding:16px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;align-content:start}
+.cmp-grid::-webkit-scrollbar{width:4px}.cmp-grid::-webkit-scrollbar-thumb{background:var(--b1);border-radius:4px}
+.cmp-card{background:var(--s0);border:1.5px solid var(--b0);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.cmp-card-head{padding:10px 14px;background:var(--s1);border-bottom:1px solid var(--b0);display:flex;align-items:center;justify-content:space-between}
+.cmp-card-label{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
+.cmp-status{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:statusPulse 1.2s ease-in-out infinite}
+.cmp-status.done{background:var(--ok);animation:none}.cmp-status.err{background:var(--err);animation:none}
+@keyframes statusPulse{0%,100%{opacity:.3}50%{opacity:1}}
+.cmp-card-net{font-size:10.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em}
+.cmp-card-body{flex:1;padding:14px;font-size:13.5px;line-height:1.65;min-height:120px;max-height:420px;overflow-y:auto}
+.cmp-card-body::-webkit-scrollbar{width:3px}.cmp-card-body::-webkit-scrollbar-thumb{background:var(--b1);border-radius:3px}
+.cmp-card-body.waiting{color:var(--t3);font-style:italic}.cmp-card-body.errored{color:var(--err)}
+.cmp-card-body p{margin:0 0 8px}.cmp-card-body p:last-child{margin:0}
+.cmp-card-body code{font-family:ui-monospace,monospace;font-size:12px;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px}
+.cmp-card-body pre{background:#0d1117;border:1px solid var(--b0);border-radius:6px;padding:10px 12px;overflow-x:auto;margin:8px 0}
+.cmp-card-body pre code{background:transparent;padding:0;font-size:12px}.cmp-card-body strong{font-weight:600}
+.cmp-card-body ul,.cmp-card-body ol{margin:4px 0;padding-left:18px}.cmp-card-body li{margin:2px 0}
+.cmp-card-foot{padding:8px 14px;border-top:1px solid var(--b0);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cmp-metric{font-size:10.5px;color:var(--t3);font-family:ui-monospace,monospace}.cmp-metric strong{font-weight:600}
+.cmp-metric .cmf{color:var(--ok)}.cmp-metric .cma{color:var(--accent)}
+.cmp-empty{padding:60px 24px;text-align:center;color:var(--t3);font-size:13.5px;grid-column:1/-1}
+@media(max-width:860px){
+.sidebar{position:absolute;left:0;top:0;bottom:0;z-index:50;box-shadow:4px 0 24px rgba(0,0,0,.4)}
+.sidebar.collapsed{transform:translateX(-100%)}
+.sidebar-backdrop{position:absolute;inset:0;z-index:49;background:rgba(0,0,0,.5);display:none}
+.sidebar-backdrop.visible{display:block}.prompt-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.topbar{padding:8px 12px;gap:6px}.mode-tab{padding:5px 10px;font-size:11.5px}.input-area{padding:10px 14px 14px}.msg-wrap{padding:16px 14px}.cmp-top{padding:12px 14px}.cmp-grid{padding:12px 14px;grid-template-columns:1fr}.cmp-inputs{flex-direction:column}.cmp-sidebar-col{min-width:0}}
+</style>
 </head>
 <body>
 <header><div id="nav-container"></div></header>
-
-<main class="page">
-	<div class="page-header">
-		<div>
-			<p class="breadcrumb"><a href="/">three.ws</a> · brain</p>
-			<h1 class="page-title">Brain</h1>
-		</div>
-		<div class="mode-tabs">
-			<button class="mode-tab active" data-mode="chat">Chat</button>
-			<button class="mode-tab" data-mode="compare">Compare</button>
-		</div>
-	</div>
-
-	<!-- CHAT VIEW -->
-	<div id="chat-view">
-		<aside class="model-sidebar" id="model-sidebar"></aside>
-
-		<div class="chat-panel">
-			<div class="chat-topbar">
-				<div class="chat-model-label">
-					<span class="chat-model-dot"></span>
-					<span id="active-model-label">Claude Sonnet 4.6</span>
-				</div>
-				<div class="chat-topbar-actions">
-					<button class="icon-btn" id="export-btn">&#8595; Export</button>
-					<button class="icon-btn" id="new-chat-btn">New chat</button>
-				</div>
-			</div>
-
-			<div class="messages" id="messages">
-				<div class="empty-state" id="empty-state">
-					<div class="empty-icon">&#9711;</div>
-					<h3>Start a conversation</h3>
-					<p>Multi-turn chat with real streaming, real token metrics, and persistent history.</p>
-					<div class="suggestion-chips">
-						<button class="chip" data-prompt="Explain HTTP 402 in two sentences.">Explain HTTP 402</button>
-						<button class="chip" data-prompt="Write a Python function to parse JWT claims without a library.">Parse JWT in Python</button>
-						<button class="chip" data-prompt="What's the difference between SSE and WebSockets?">SSE vs WebSockets</button>
-						<button class="chip" data-prompt="Give me a one-paragraph pitch for an AI agent marketplace.">Agent marketplace pitch</button>
-					</div>
-				</div>
-			</div>
-
-			<div class="input-area">
-				<div class="sys-row">
-					<button class="sys-toggle" id="sys-toggle">&#9658; System prompt</button>
-					<div class="sys-panel" id="sys-panel" hidden>
-						<textarea id="system-prompt" placeholder="You are a terse, expert assistant&#8230;" rows="3"></textarea>
-					</div>
-				</div>
-				<div class="chat-form">
-					<textarea id="chat-input" placeholder="Message&#8230; (&#8984;&#8629; to send)" rows="1"></textarea>
-					<div class="form-footer">
-						<span class="form-hint">&#8984;&#8629; send &middot; shift&#8629; newline</span>
-						<button class="btn-clear" id="clear-chat">Clear</button>
-						<button class="btn-send" id="send-btn" disabled>
-							Send <span class="shortcut">&#8984;&#8629;</span>
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- COMPARE VIEW -->
-	<div id="compare-view">
-		<div class="compare-layout">
-			<div class="compare-composer">
-				<div>
-					<label for="cmp-system" class="compose-label">System (optional)</label>
-					<textarea id="cmp-system" class="compose-textarea" rows="2" placeholder="You are a terse, helpful assistant&#8230;"></textarea>
-				</div>
-				<div>
-					<label for="cmp-prompt" class="compose-label">Prompt</label>
-					<textarea id="cmp-prompt" class="compose-textarea" rows="4" placeholder="Ask anything&#8230;">Explain HTTP 402 in two sentences. No filler.</textarea>
-				</div>
-				<div>
-					<label class="compose-label">Providers to compare</label>
-					<div class="provider-grid" id="provider-grid"></div>
-				</div>
-				<div class="compare-controls">
-					<label for="cmp-max-tokens">Max tokens</label>
-					<input type="number" id="cmp-max-tokens" value="512" min="32" max="4096" />
-					<div class="spacer"></div>
-					<button class="btn-secondary" id="cmp-clear">Clear</button>
-					<button class="btn-primary" id="cmp-run">Run all</button>
-				</div>
-			</div>
-
-			<div class="compare-grid" id="compare-grid"></div>
-			<div class="notice" id="compare-notice" hidden></div>
-		</div>
-	</div>
-</main>
-
+<div class="brain">
+<div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+<aside class="sidebar" id="sidebar"><div class="sidebar-head"><button class="new-chat-btn" id="new-chat-btn">+ New chat</button></div><div class="sessions" id="sessions"></div></aside>
+<div class="main">
+<div class="topbar">
+<button class="sidebar-btn" id="sidebar-btn" aria-label="Toggle sidebar">&#9776;</button>
+<div class="model-picker" id="model-picker"><button class="model-trigger" id="model-trigger"><span class="model-dot" id="trigger-dot"></span><span id="trigger-label">Claude Sonnet 4.6</span><span class="model-caret">&#9662;</span></button><div class="model-dropdown" id="model-dropdown"></div></div>
+<div class="mode-tabs"><button class="mode-tab active" data-mode="chat" id="tab-chat">Chat</button><button class="mode-tab" data-mode="compare" id="tab-compare">Compare</button></div>
+<div class="topbar-spacer"></div>
+<div class="topbar-actions"><button class="topbar-btn" id="export-btn" title="Export conversation">Export</button><button class="topbar-btn" id="clear-btn" title="Clear conversation">Clear</button></div>
+</div>
+<div class="content">
+<div class="chat-view" id="chat-view">
+<div id="agent-banner" class="agent-banner"><span>Chatting as</span><span class="agent-banner-name" id="agent-banner-name"></span><button class="agent-banner-dismiss" id="agent-banner-dismiss">Dismiss</button></div>
+<div class="messages" id="messages">
+<div class="empty-state" id="empty-state"><div class="empty-orb"></div><div class="empty-title">Brain</div><div class="empty-sub">Chat with any model. Switch mid-conversation, compare side-by-side, track speed and token metrics.</div><div class="prompt-grid" id="prompt-grid"></div></div>
+</div>
+<div class="input-area"><div class="input-inner">
+<div class="sys-row"><button class="sys-toggle" id="sys-toggle">&#9658; System prompt</button><div class="sys-panel" id="sys-panel" hidden><textarea class="sys-ta" id="system-ta" placeholder="You are a helpful assistant..." rows="3"></textarea></div></div>
+<div class="input-box"><textarea class="input-ta" id="input-ta" placeholder="Message... (Ctrl+Enter to send)" rows="1"></textarea><div class="input-footer"><span class="input-hint">ctrl+&#8629; send &middot; shift+&#8629; newline</span><button class="btn-stop" id="stop-btn">&#9724; Stop</button><button class="btn-send" id="send-btn" disabled>Send <span class="sc">&#8984;&#8629;</span></button></div></div>
+<div class="input-sub"><a href="/dashboard/library#tab=brain">Configure agent brains</a> &middot; Responses may be inaccurate</div>
+</div></div>
+</div>
+<div class="compare-view" id="compare-view" style="display:none">
+<div class="cmp-top">
+<div class="cmp-providers" id="cmp-providers"></div>
+<div class="cmp-inputs"><textarea class="cmp-textarea" id="cmp-prompt" rows="3" placeholder="Ask anything... (Ctrl+Enter to run)">Explain HTTP 402 in two sentences. No filler.</textarea><div class="cmp-sidebar-col"><label class="cmp-label">System (optional)</label><textarea class="cmp-sys-ta" id="cmp-system" rows="2" placeholder="You are a terse assistant..."></textarea></div></div>
+<div class="cmp-controls"><label for="cmp-tokens">Max tokens</label><input type="number" id="cmp-tokens" value="512" min="32" max="4096"/><span class="cmp-spacer"></span><button class="cmp-btn-clear" id="cmp-clear-btn">Clear</button><button class="cmp-btn-run" id="cmp-run-btn">Run all</button></div>
+</div>
+<div class="cmp-grid" id="cmp-grid"><div class="cmp-empty">Select models and run a prompt to compare responses side-by-side.</div></div>
+</div>
+</div>
+</div>
+</div>
 <script src="/nav.js"></script>
 <script type="module">
-const MODELS = [
-	{ key: 'claude-opus-4-7',    label: 'Claude Opus 4.7',    network: 'Anthropic',  netClass: 'net-anthropic',  tier: 'flagship',  desc: 'Most capable. Extended thinking, complex reasoning.',       compareDefault: false, chatDefault: false },
-	{ key: 'claude-sonnet-4-6',  label: 'Claude Sonnet 4.6',  network: 'Anthropic',  netClass: 'net-anthropic',  tier: 'balanced',  desc: 'Balanced speed and intelligence. Best for most tasks.',      compareDefault: true,  chatDefault: true  },
-	{ key: 'claude-haiku-4-5',   label: 'Claude Haiku 4.5',   network: 'Anthropic',  netClass: 'net-anthropic',  tier: 'fast',      desc: 'Fastest Claude. Low latency, high throughput.',              compareDefault: true,  chatDefault: false },
-	{ key: 'gpt-4o',             label: 'GPT-4o',             network: 'OpenAI',     netClass: 'net-openai',     tier: 'flagship',  desc: 'OpenAI flagship. Strong multimodal reasoning.',              compareDefault: false, chatDefault: false },
-	{ key: 'gpt-4o-mini',        label: 'GPT-4o-mini',        network: 'OpenAI',     netClass: 'net-openai',     tier: 'fast',      desc: 'Fast, affordable GPT. Great for simple tasks.',              compareDefault: true,  chatDefault: false },
-	{ key: 'o3-mini',            label: 'o3-mini',            network: 'OpenAI',     netClass: 'net-openai',     tier: 'reasoning', desc: 'Reasoning-optimized. Fast chain-of-thought.',                compareDefault: false, chatDefault: false },
-	{ key: 'groq-llama',         label: 'Llama 3.3 70B',      network: 'Groq',       netClass: 'net-groq',       tier: 'fast',      desc: 'Open-weight on Groq. Extremely fast inference.',             compareDefault: true,  chatDefault: false },
-	{ key: 'deepseek-r1',        label: 'DeepSeek R1',        network: 'DeepSeek',   netClass: 'net-deepseek',   tier: 'reasoning', desc: 'Open reasoning model. Strong at math and code.',             compareDefault: false, chatDefault: false },
-	{ key: 'qwen-plus',          label: 'Qwen Plus',          network: 'DashScope',  netClass: 'net-alibaba',    tier: 'balanced',  desc: 'Qwen Plus on DashScope. Strong multilingual.',               compareDefault: false, chatDefault: false },
-	{ key: 'modelscope-qwen',    label: 'Qwen3-Coder 480B',   network: 'ModelScope', netClass: 'net-modelscope', tier: 'flagship',  desc: 'Largest Qwen coder. Exceptional at code generation.',        compareDefault: false, chatDefault: false },
+const MODELS=[
+{key:'claude-opus-4-7',label:'Claude Opus 4.7',network:'Anthropic',tier:'flagship',color:'#d4a87a',desc:'Most capable. Extended thinking, complex reasoning.',cmpDefault:false},
+{key:'claude-sonnet-4-6',label:'Claude Sonnet 4.6',network:'Anthropic',tier:'balanced',color:'#c8a96e',desc:'Fast and smart. Best for most tasks.',cmpDefault:true},
+{key:'claude-haiku-4-5',label:'Claude Haiku 4.5',network:'Anthropic',tier:'fast',color:'#b89050',desc:'Fastest Claude. Low latency.',cmpDefault:true},
+{key:'gpt-4o',label:'GPT-4o',network:'OpenAI',tier:'flagship',color:'#74aa82',desc:'OpenAI flagship. Strong reasoning.',cmpDefault:false},
+{key:'gpt-4o-mini',label:'GPT-4o-mini',network:'OpenAI',tier:'fast',color:'#74c0fc',desc:'Fast, affordable GPT.',cmpDefault:true},
+{key:'o3-mini',label:'o3-mini',network:'OpenAI',tier:'reasoning',color:'#a0d8ff',desc:'Reasoning-optimized. Chain-of-thought.',cmpDefault:false},
+{key:'groq-llama',label:'Llama 3.3 70B',network:'Groq',tier:'fast',color:'#a78bfa',desc:'Open-weight. Extremely fast.',cmpDefault:true},
+{key:'deepseek-r1',label:'DeepSeek R1',network:'DeepSeek',tier:'reasoning',color:'#60b8ff',desc:'Open reasoning model. Math and code.',cmpDefault:false},
+{key:'qwen-plus',label:'Qwen Plus',network:'DashScope',tier:'balanced',color:'#ff6a3d',desc:'Qwen on DashScope. Strong multilingual.',cmpDefault:false},
+{key:'modelscope-qwen',label:'Qwen3-Coder 480B',network:'ModelScope',tier:'flagship',color:'#5b8def',desc:'Largest Qwen coder.',cmpDefault:false},
 ];
-const TIER_LABEL = { flagship: 'Flagship', balanced: 'Balanced', fast: 'Fast', reasoning: 'Reasoning' };
-const STORAGE_KEY = 'brain_v2';
-const MODEL_KEY = 'brain_chat_model_v2';
-
-marked.setOptions({ breaks: true, gfm: true });
-
-let activeModel = localStorage.getItem(MODEL_KEY) || 'claude-sonnet-4-6';
-let conversation = [];
-let isStreaming = false;
-
-try {
-	const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-	if (saved?.model && Array.isArray(saved.messages)) {
-		activeModel = saved.model;
-		conversation = saved.messages;
-	}
-} catch {}
-
-// ── DOM ──────────────────────────────────────────────────────────
-const modelSidebar = document.getElementById('model-sidebar');
-const messagesEl   = document.getElementById('messages');
-const emptyState   = document.getElementById('empty-state');
-const chatInput    = document.getElementById('chat-input');
-const systemPrompt = document.getElementById('system-prompt');
-const sendBtn      = document.getElementById('send-btn');
-const clearBtn     = document.getElementById('clear-chat');
-const newChatBtn   = document.getElementById('new-chat-btn');
-const exportBtn    = document.getElementById('export-btn');
-const sysToggle    = document.getElementById('sys-toggle');
-const sysPanel     = document.getElementById('sys-panel');
-const modelLabel   = document.getElementById('active-model-label');
-const chatView     = document.getElementById('chat-view');
-const compareView  = document.getElementById('compare-view');
-
-// ── Mode tabs ────────────────────────────────────────────────────
-document.querySelectorAll('.mode-tab').forEach(tab => {
-	tab.addEventListener('click', () => {
-		document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
-		tab.classList.add('active');
-		const isCmp = tab.dataset.mode === 'compare';
-		chatView.style.display    = isCmp ? 'none' : '';
-		compareView.style.display = isCmp ? '' : 'none';
-	});
-});
-
-// ── Model sidebar ────────────────────────────────────────────────
-function buildSidebar() {
-	modelSidebar.innerHTML = '<div class="sidebar-label">Model</div>';
-	for (const m of MODELS) {
-		const el = document.createElement('div');
-		el.className = 'model-card' + (m.key === activeModel ? ' selected' : '');
-		el.dataset.key = m.key;
-		el.tabIndex = 0;
-		el.innerHTML = `
-			<div class="model-card-name">
-				${m.label}
-				<span class="model-badge badge-${m.tier}">${TIER_LABEL[m.tier]}</span>
-			</div>
-			<div class="model-net ${m.netClass}">${m.network}</div>
-			<div class="model-desc">${m.desc}</div>`;
-		el.addEventListener('click', () => selectModel(m.key));
-		el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') selectModel(m.key); });
-		modelSidebar.appendChild(el);
-	}
-}
-
-function selectModel(key) {
-	activeModel = key;
-	localStorage.setItem(MODEL_KEY, key);
-	document.querySelectorAll('.model-card').forEach(c => c.classList.toggle('selected', c.dataset.key === key));
-	const m = MODELS.find(x => x.key === key);
-	if (m) modelLabel.textContent = m.label;
-}
-
-// ── Message rendering ────────────────────────────────────────────
-function makeMetricsHtml(metrics) {
-	if (!metrics) return '';
-	const parts = [];
-	if (metrics.firstTokenMs != null) parts.push(`first <span class="m-first">${metrics.firstTokenMs}ms</span>`);
-	if (metrics.elapsedMs != null)    parts.push(`total <span class="m-val">${metrics.elapsedMs}ms</span>`);
-	if (metrics.outputTokens != null) parts.push(`tokens <span class="m-val">${metrics.outputTokens}</span>`);
-	if (metrics.outputTokens != null && metrics.elapsedMs > 0) {
-		const tps = (metrics.outputTokens / (metrics.elapsedMs / 1000)).toFixed(1);
-		parts.push(`<span class="m-val">${tps}</span> tok/s`);
-	}
-	return `<div class="msg-metrics">${parts.join(' &middot; ')}</div>`;
-}
-
-function appendMsg(role, content, metrics) {
-	const m = MODELS.find(x => x.key === activeModel);
-	const div = document.createElement('div');
-	div.className = `msg ${role}`;
-
-	const roleSpan = role === 'user'
-		? 'You'
-		: `<span class="model-tag">${m?.label || 'Assistant'}</span>`;
-
-	const bubble = document.createElement('div');
-	bubble.className = 'msg-bubble';
-	if (role === 'assistant') {
-		bubble.innerHTML = marked.parse(content || '');
-	} else {
-		bubble.textContent = content;
-	}
-
-	div.innerHTML = `<div class="msg-role">${roleSpan}</div>`;
-	div.appendChild(bubble);
-
-	if (role === 'assistant') {
-		const footer = document.createElement('div');
-		footer.className = 'msg-footer';
-		footer.innerHTML = makeMetricsHtml(metrics);
-		const copyBtn = document.createElement('button');
-		copyBtn.className = 'copy-btn';
-		copyBtn.textContent = 'Copy';
-		copyBtn.addEventListener('click', async () => {
-			await navigator.clipboard.writeText(content).catch(() => {});
-			copyBtn.textContent = 'Copied!';
-			copyBtn.classList.add('copied');
-			setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1800);
-		});
-		footer.appendChild(copyBtn);
-		div.appendChild(footer);
-	}
-
-	messagesEl.appendChild(div);
-	return div;
-}
-
-function renderHistory() {
-	messagesEl.querySelectorAll('.msg').forEach(el => el.remove());
-	for (const msg of conversation) {
-		appendMsg(msg.role, msg.content, msg.metrics);
-	}
-	updateEmpty();
-	scrollBottom();
-}
-
-function updateEmpty() {
-	emptyState.style.display = conversation.length === 0 ? '' : 'none';
-}
-
-function scrollBottom() {
-	requestAnimationFrame(() => { messagesEl.scrollTop = messagesEl.scrollHeight; });
-}
-
-function saveState() {
-	try {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify({ model: activeModel, messages: conversation, ts: Date.now() }));
-	} catch {}
-}
-
-// ── Streaming send ───────────────────────────────────────────────
-async function sendMessage() {
-	const text = chatInput.value.trim();
-	if (!text || isStreaming) return;
-
-	conversation.push({ role: 'user', content: text });
-	appendMsg('user', text);
-	chatInput.value = '';
-	autoResize();
-	scrollBottom();
-	updateEmpty();
-	saveState();
-
-	isStreaming = true;
-	sendBtn.disabled = true;
-
-	// Placeholder assistant bubble
-	const m = MODELS.find(x => x.key === activeModel);
-	const assistantDiv = document.createElement('div');
-	assistantDiv.className = 'msg assistant';
-	assistantDiv.innerHTML = `<div class="msg-role"><span class="model-tag">${m?.label || 'Assistant'}</span></div>`;
-	const bubble = document.createElement('div');
-	bubble.className = 'msg-bubble streaming';
-	const cursor = document.createElement('span');
-	cursor.className = 'cursor';
-	bubble.appendChild(cursor);
-	assistantDiv.appendChild(bubble);
-	messagesEl.appendChild(assistantDiv);
-	scrollBottom();
-
-	const body = {
-		provider: activeModel,
-		messages: conversation.map(x => ({ role: x.role, content: x.content })),
-		system: systemPrompt.value.trim() || undefined,
-		maxTokens: 1024,
-	};
-
-	let accumulated = '';
-	const metrics = {};
-	let lastRender = 0;
-
-	try {
-		const res = await fetch('/api/brain/chat', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify(body),
-		});
-
-		if (!res.ok || !res.body) {
-			const txt = await res.text().catch(() => '');
-			bubble.classList.remove('streaming');
-			bubble.innerHTML = `<span style="color:var(--err)">Error ${res.status}: ${txt || res.statusText}</span>`;
-			isStreaming = false;
-			sendBtn.disabled = false;
-			return;
-		}
-
-		const reader = res.body.getReader();
-		const decoder = new TextDecoder();
-		let buf = '';
-
-		outer: for (;;) {
-			const { done, value } = await reader.read();
-			if (done) break;
-			buf += decoder.decode(value, { stream: true });
-			let idx;
-			while ((idx = buf.indexOf('\n\n')) !== -1) {
-				const raw = buf.slice(0, idx);
-				buf = buf.slice(idx + 2);
-				let evType = '', data = '';
-				for (const line of raw.split('\n')) {
-					if (line.startsWith('event:')) evType = line.slice(6).trim();
-					else if (line.startsWith('data:')) data += line.slice(5).trim();
-				}
-				if (!evType) evType = 'message';
-
-				if (evType === 'first') {
-					try { metrics.firstTokenMs = JSON.parse(data).firstTokenMs; } catch {}
-				} else if (evType === 'message') {
-					if (data === '[DONE]') break outer;
-					try {
-						accumulated += JSON.parse(data);
-						const now = Date.now();
-						if (now - lastRender > 40) {
-							bubble.innerHTML = marked.parse(accumulated);
-							const c = document.createElement('span'); c.className = 'cursor';
-							bubble.appendChild(c);
-							scrollBottom();
-							lastRender = now;
-						}
-					} catch {}
-				} else if (evType === 'done') {
-					try {
-						const info = JSON.parse(data);
-						metrics.elapsedMs = info.elapsedMs;
-						if (info.firstTokenMs) metrics.firstTokenMs = info.firstTokenMs;
-						if (info.usage) {
-							metrics.outputTokens = info.usage.outputTokens;
-							metrics.inputTokens  = info.usage.inputTokens;
-						}
-					} catch {}
-				} else if (evType === 'error') {
-					try {
-						const info = JSON.parse(data);
-						accumulated = accumulated ? accumulated + `\n\n[Error: ${info.message}]` : `Error: ${info.message}`;
-						metrics.elapsedMs = info.elapsedMs;
-					} catch {}
-				}
-			}
-		}
-	} catch (err) {
-		accumulated = `Network error: ${err.message}`;
-	}
-
-	// Finalize
-	bubble.classList.remove('streaming');
-	bubble.innerHTML = marked.parse(accumulated || '(empty response)');
-
-	const footer = document.createElement('div');
-	footer.className = 'msg-footer';
-	footer.innerHTML = makeMetricsHtml(metrics);
-	const copyBtn = document.createElement('button');
-	copyBtn.className = 'copy-btn';
-	copyBtn.textContent = 'Copy';
-	copyBtn.addEventListener('click', async () => {
-		await navigator.clipboard.writeText(accumulated).catch(() => {});
-		copyBtn.textContent = 'Copied!';
-		copyBtn.classList.add('copied');
-		setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1800);
-	});
-	footer.appendChild(copyBtn);
-	assistantDiv.appendChild(footer);
-
-	conversation.push({ role: 'assistant', content: accumulated, metrics });
-	saveState();
-	scrollBottom();
-	isStreaming = false;
-	sendBtn.disabled = chatInput.value.trim() === '';
-}
-
-// ── Input ────────────────────────────────────────────────────────
-function autoResize() {
-	chatInput.style.height = 'auto';
-	chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + 'px';
-}
-
-chatInput.addEventListener('input', () => {
-	autoResize();
-	sendBtn.disabled = chatInput.value.trim() === '' || isStreaming;
-});
-chatInput.addEventListener('keydown', e => {
-	if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-		e.preventDefault();
-		if (!sendBtn.disabled) sendMessage();
-	}
-});
-sendBtn.addEventListener('click', sendMessage);
-
-clearBtn.addEventListener('click', () => {
-	conversation = [];
-	messagesEl.querySelectorAll('.msg').forEach(el => el.remove());
-	updateEmpty();
-	saveState();
-});
-newChatBtn.addEventListener('click', () => {
-	conversation = [];
-	messagesEl.querySelectorAll('.msg').forEach(el => el.remove());
-	updateEmpty();
-	saveState();
-});
-
-exportBtn.addEventListener('click', () => {
-	if (!conversation.length) return;
-	const m = MODELS.find(x => x.key === activeModel);
-	const lines = [`# Brain — ${m?.label || activeModel}\n`];
-	for (const msg of conversation) {
-		lines.push(`## ${msg.role === 'user' ? 'You' : m?.label || 'Assistant'}\n\n${msg.content}\n`);
-	}
-	const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
-	const a = Object.assign(document.createElement('a'), {
-		href: URL.createObjectURL(blob),
-		download: `brain-${Date.now()}.md`,
-	});
-	a.click();
-	URL.revokeObjectURL(a.href);
-});
-
-sysToggle.addEventListener('click', () => {
-	const open = !sysPanel.hidden;
-	sysPanel.hidden = open;
-	sysToggle.innerHTML = (open ? '&#9658;' : '&#9660;') + ' System prompt';
-});
-
-document.querySelectorAll('.suggestion-chips .chip').forEach(chip => {
-	chip.addEventListener('click', () => {
-		chatInput.value = chip.dataset.prompt;
-		autoResize();
-		sendBtn.disabled = false;
-		chatInput.focus();
-	});
-});
-
-// ── Compare ──────────────────────────────────────────────────────
-const providerGrid  = document.getElementById('provider-grid');
-const compareGrid   = document.getElementById('compare-grid');
-const compareNotice = document.getElementById('compare-notice');
-const cmpPrompt     = document.getElementById('cmp-prompt');
-const cmpSystem     = document.getElementById('cmp-system');
-const cmpMaxTokens  = document.getElementById('cmp-max-tokens');
-const cmpRunBtn     = document.getElementById('cmp-run');
-const cmpClearBtn   = document.getElementById('cmp-clear');
-
-for (const m of MODELS) {
-	const pill = document.createElement('label');
-	pill.className = 'provider-pill';
-	pill.innerHTML = `
-		<input type="checkbox" data-key="${m.key}" ${m.compareDefault ? 'checked' : ''} />
-		<div>
-			<div class="provider-pill-name ${m.netClass}">${m.label}</div>
-			<div class="provider-pill-net">${m.network} &middot; ${TIER_LABEL[m.tier]}</div>
-		</div>`;
-	providerGrid.appendChild(pill);
-}
-
-function selectedForCompare() {
-	const keys = [...providerGrid.querySelectorAll('input:checked')].map(el => el.dataset.key);
-	return MODELS.filter(m => keys.includes(m.key));
-}
-
-function buildCompareCards(selected) {
-	compareGrid.innerHTML = '';
-	for (const m of selected) {
-		const card = document.createElement('div');
-		card.className = 'cmp-card';
-		card.dataset.key = m.key;
-		card.innerHTML = `
-			<div class="cmp-card-head">
-				<div class="cmp-card-title">
-					<span class="cmp-dot" data-dot></span>
-					<span class="${m.netClass}">${m.label}</span>
-				</div>
-				<span class="cmp-card-net">${m.network}</span>
-			</div>
-			<div class="cmp-body empty" data-body>Waiting&#8230;</div>
-			<div class="cmp-footer">
-				<span class="cmp-metric">first <strong class="first" data-first>&#8212;</strong>ms</span>
-				<span class="cmp-metric">total <strong data-elapsed>&#8212;</strong>ms</span>
-				<span class="cmp-metric">tokens <strong data-tokens>&#8212;</strong></span>
-				<span class="cmp-metric"><strong data-tps>&#8212;</strong> tok/s</span>
-			</div>`;
-		compareGrid.appendChild(card);
-	}
-}
-
-async function streamCompare(m, body, card) {
-	const bodyEl    = card.querySelector('[data-body]');
-	const dotEl     = card.querySelector('[data-dot]');
-	const firstEl   = card.querySelector('[data-first]');
-	const elapsedEl = card.querySelector('[data-elapsed]');
-	const tokensEl  = card.querySelector('[data-tokens]');
-	const tpsEl     = card.querySelector('[data-tps]');
-
-	bodyEl.textContent = '';
-	bodyEl.classList.remove('empty', 'errored');
-
-	const t0 = performance.now();
-	let accumulated = '';
-	let lastRender = 0;
-
-	let res;
-	try {
-		res = await fetch('/api/brain/chat', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ ...body, provider: m.key }),
-		});
-	} catch (err) {
-		bodyEl.classList.add('errored');
-		bodyEl.textContent = `Network error: ${err.message}`;
-		dotEl.classList.add('errored');
-		return;
-	}
-
-	if (!res.ok || !res.body) {
-		const txt = await res.text().catch(() => '');
-		bodyEl.classList.add('errored');
-		bodyEl.textContent = `HTTP ${res.status}: ${txt || res.statusText}`;
-		dotEl.classList.add('errored');
-		return;
-	}
-
-	const reader = res.body.getReader();
-	const decoder = new TextDecoder();
-	let buf = '';
-
-	try {
-		outer: for (;;) {
-			const { done, value } = await reader.read();
-			if (done) break;
-			buf += decoder.decode(value, { stream: true });
-			let idx;
-			while ((idx = buf.indexOf('\n\n')) !== -1) {
-				const raw = buf.slice(0, idx);
-				buf = buf.slice(idx + 2);
-				let evType = '', data = '';
-				for (const line of raw.split('\n')) {
-					if (line.startsWith('event:')) evType = line.slice(6).trim();
-					else if (line.startsWith('data:')) data += line.slice(5).trim();
-				}
-				if (!evType) evType = 'message';
-
-				if (evType === 'first') {
-					try { firstEl.textContent = JSON.parse(data).firstTokenMs; } catch {}
-				} else if (evType === 'message') {
-					if (data === '[DONE]') break outer;
-					try {
-						accumulated += JSON.parse(data);
-						const now = Date.now();
-						if (now - lastRender > 60) {
-							bodyEl.innerHTML = marked.parse(accumulated);
-							lastRender = now;
-						}
-					} catch {}
-				} else if (evType === 'done') {
-					try {
-						const info = JSON.parse(data);
-						elapsedEl.textContent = info.elapsedMs;
-						if (info.firstTokenMs) firstEl.textContent = info.firstTokenMs;
-						if (info.usage?.outputTokens) {
-							tokensEl.textContent = info.usage.outputTokens;
-							const sec = info.elapsedMs / 1000;
-							if (sec > 0) tpsEl.textContent = (info.usage.outputTokens / sec).toFixed(1);
-						}
-					} catch {}
-				} else if (evType === 'error') {
-					try {
-						const info = JSON.parse(data);
-						bodyEl.classList.add('errored');
-						bodyEl.innerHTML = marked.parse(accumulated ? accumulated + `\n\n*Error: ${info.message}*` : `Error: ${info.message}`);
-						elapsedEl.textContent = info.elapsedMs;
-						dotEl.classList.add('errored');
-					} catch {}
-				}
-			}
-		}
-	} finally {
-		if (accumulated) bodyEl.innerHTML = marked.parse(accumulated);
-		dotEl.classList.remove('cmp-dot');
-		dotEl.classList.add('done');
-		if (!elapsedEl.textContent || elapsedEl.textContent === '—') {
-			elapsedEl.textContent = Math.round(performance.now() - t0);
-		}
-	}
-}
-
-async function runCompare() {
-	const prompt = cmpPrompt.value.trim();
-	if (!prompt) {
-		compareNotice.hidden = false;
-		compareNotice.textContent = 'Enter a prompt first.';
-		return;
-	}
-	const selected = selectedForCompare();
-	if (!selected.length) {
-		compareNotice.hidden = false;
-		compareNotice.textContent = 'Select at least one provider.';
-		return;
-	}
-	compareNotice.hidden = true;
-	buildCompareCards(selected);
-	cmpRunBtn.disabled = true;
-
-	const body = {
-		messages: [{ role: 'user', content: prompt }],
-		system: cmpSystem.value.trim() || undefined,
-		maxTokens: Math.min(Math.max(Number(cmpMaxTokens.value) || 512, 32), 4096),
-	};
-	try {
-		await Promise.all(selected.map(m => streamCompare(m, body, compareGrid.querySelector(`[data-key="${m.key}"]`))));
-	} finally {
-		cmpRunBtn.disabled = false;
-	}
-}
-
-cmpRunBtn.addEventListener('click', runCompare);
-cmpClearBtn.addEventListener('click', () => { compareGrid.innerHTML = ''; compareNotice.hidden = true; });
-cmpPrompt.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runCompare(); });
-
-// ── Boot ─────────────────────────────────────────────────────────
-buildSidebar();
-selectModel(activeModel);
-renderHistory();
-
-// Fetch available providers and dim unavailable ones
-fetch('/api/brain/chat')
-	.then(r => r.json())
-	.then(({ providers }) => {
-		if (!Array.isArray(providers)) return;
-		const unavailable = new Set(providers.filter(p => !p.available).map(p => p.key));
-		document.querySelectorAll('.model-card').forEach(card => {
-			if (unavailable.has(card.dataset.key)) {
-				card.classList.add('unavailable');
-				if (card.classList.contains('selected')) {
-					const first = providers.find(p => p.available);
-					if (first) selectModel(first.key);
-				}
-			}
-		});
-		document.querySelectorAll('.provider-pill input').forEach(input => {
-			if (unavailable.has(input.dataset.key)) {
-				input.disabled = true;
-				input.checked = false;
-				input.closest('.provider-pill').style.opacity = '0.4';
-				input.closest('.provider-pill').title = 'Not configured on this deployment';
-			}
-		});
-	})
-	.catch(() => {});
+const MM=new Map(MODELS.map(m=>[m.key,m]));
+const TL={flagship:'Flagship',balanced:'Balanced',fast:'Fast',reasoning:'Reasoning'};
+const NETS=[...new Set(MODELS.map(m=>m.network))];
+const PROMPTS=[
+{title:'Explain HTTP 402',sub:'Payment Required — in two sentences',text:'Explain HTTP 402 in two sentences.'},
+{title:'Parse JWT in Python',sub:'Without any external library',text:'Write a Python function to parse JWT claims without a library.'},
+{title:'SSE vs WebSockets',sub:'When to use which and why',text:'What\'s the difference between SSE and WebSockets? When should I use each?'},
+{title:'Agent marketplace pitch',sub:'One paragraph, no filler',text:'Give me a one-paragraph pitch for an AI agent marketplace.'},
+];
+const SK={sessions:'brain_sessions_v3',active:'brain_active_v3',model:'brain_model_v3'};
+marked.setOptions({breaks:true,gfm:true});
+function renderMd(t){return t?marked.parse(t):'';}
+function highlightCode(el){
+el.querySelectorAll('pre code').forEach(b=>{if(!b.dataset.hl){hljs.highlightElement(b);b.dataset.hl='1';}});
+el.querySelectorAll('pre').forEach(pre=>{
+if(pre.querySelector('.pre-copy'))return;
+const btn=document.createElement('button');btn.className='pre-copy';btn.textContent='Copy';
+btn.addEventListener('click',()=>{const c=pre.querySelector('code')?.textContent||'';navigator.clipboard.writeText(c).catch(()=>{});btn.textContent='Copied';btn.classList.add('copied');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},1600);});
+pre.style.position='relative';pre.appendChild(btn);});}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+const unavail=new Set();
+let sessions=[],activeId=null,activeModel='claude-sonnet-4-6',mode='chat',streaming=false,abortCtrl=null,agentCtx=null;
+function loadState(){try{const s=JSON.parse(localStorage.getItem(SK.sessions)||'[]');if(Array.isArray(s))sessions=s;}catch{}activeId=localStorage.getItem(SK.active)||null;activeModel=localStorage.getItem(SK.model)||'claude-sonnet-4-6';if(!sessions.find(s=>s.id===activeId))activeId=sessions[0]?.id||null;}
+function saveState(){try{localStorage.setItem(SK.sessions,JSON.stringify(sessions.slice(0,100)));localStorage.setItem(SK.active,activeId||'');localStorage.setItem(SK.model,activeModel);}catch{}}
+function uuid(){return crypto.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+function getSession(){return sessions.find(s=>s.id===activeId)||null;}
+function newSession(activate=true){const s={id:uuid(),title:'New chat',model:activeModel,system:systemTa.value.trim(),messages:[],created:Date.now(),updated:Date.now()};sessions.unshift(s);if(activate){activeId=s.id;saveState();renderAll();inputTa.focus();}return s;}
+function deleteSession(id){sessions=sessions.filter(s=>s.id!==id);if(activeId===id)activeId=sessions[0]?.id||null;saveState();renderAll();}
+function switchSession(id){if(id===activeId)return;activeId=id;const s=getSession();if(s){activeModel=s.model||activeModel;systemTa.value=s.system||'';}saveState();updateModelUI();renderMessages();renderSidebar();}
+function autoTitle(session){if(!session.messages.length)return;const first=session.messages.find(m=>m.role==='user');if(!first)return;let t=first.content.slice(0,50).replace(/\n/g,' ');if(first.content.length>50)t=t.replace(/\s\S*$/,'')+'...';session.title=t||'New chat';}
+const sidebar=document.getElementById('sidebar'),sidebarBtn=document.getElementById('sidebar-btn'),backdrop=document.getElementById('sidebar-backdrop'),sessionsEl=document.getElementById('sessions'),newChatBtn=document.getElementById('new-chat-btn'),modelTrigger=document.getElementById('model-trigger'),triggerDot=document.getElementById('trigger-dot'),triggerLabel=document.getElementById('trigger-label'),modelDropdown=document.getElementById('model-dropdown'),messagesEl=document.getElementById('messages'),emptyState=document.getElementById('empty-state'),promptGrid=document.getElementById('prompt-grid'),inputTa=document.getElementById('input-ta'),systemTa=document.getElementById('system-ta'),sendBtn=document.getElementById('send-btn'),stopBtn=document.getElementById('stop-btn'),exportBtn=document.getElementById('export-btn'),clearBtn=document.getElementById('clear-btn'),sysToggle=document.getElementById('sys-toggle'),sysPanel=document.getElementById('sys-panel'),chatView=document.getElementById('chat-view'),compareView=document.getElementById('compare-view'),agentBanner=document.getElementById('agent-banner'),agentBannerName=document.getElementById('agent-banner-name');
+function buildModelDropdown(){let h='';for(const net of NETS){h+='<div class="md-group">'+esc(net)+'</div>';for(const m of MODELS.filter(x=>x.network===net)){const sel=m.key===activeModel?' selected':'',un=unavail.has(m.key)?' unavailable':'';h+='<div class="md-item'+sel+un+'" data-key="'+m.key+'"><span class="md-dot" style="background:'+m.color+'"></span><span class="md-info"><div class="md-name">'+esc(m.label)+' <span class="md-badge badge-'+m.tier+'">'+TL[m.tier]+'</span></div><div class="md-desc">'+esc(m.desc)+'</div></span></div>';}}modelDropdown.innerHTML=h;}
+function updateModelUI(){const m=MM.get(activeModel);if(m){triggerDot.style.background=m.color;triggerLabel.textContent=m.label;}modelDropdown.querySelectorAll('.md-item').forEach(el=>el.classList.toggle('selected',el.dataset.key===activeModel));}
+function selectModel(key){if(unavail.has(key))return;activeModel=key;const s=getSession();if(s)s.model=key;saveState();updateModelUI();closeDropdown();}
+function toggleDropdown(){modelDropdown.classList.toggle('open');}
+function closeDropdown(){modelDropdown.classList.remove('open');}
+modelTrigger.addEventListener('click',e=>{e.stopPropagation();toggleDropdown();});
+modelDropdown.addEventListener('click',e=>{const item=e.target.closest('.md-item');if(item&&!item.classList.contains('unavailable'))selectModel(item.dataset.key);});
+document.addEventListener('click',e=>{if(!e.target.closest('.model-picker'))closeDropdown();});
+function groupSessions(){const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime(),yesterday=today-864e5,week=today-7*864e5,month=today-30*864e5;const groups=[],labels=['Today','Yesterday','Previous 7 days','Previous 30 days','Older'],cuts=[today,yesterday,week,month,-Infinity];for(let i=0;i<labels.length;i++){const items=sessions.filter(s=>s.updated>=cuts[i]&&(i===0||s.updated<cuts[i-1]));if(items.length)groups.push({label:labels[i],items});}return groups;}
+function renderSidebar(){const groups=groupSessions();if(!groups.length){sessionsEl.innerHTML='<div style="padding:20px 10px;text-align:center;color:var(--t3);font-size:12.5px">No conversations yet</div>';return;}let h='';for(const g of groups){h+='<div class="session-group">'+g.label+'</div>';for(const s of g.items){h+='<div class="session-item'+(s.id===activeId?' active':'')+'" data-id="'+s.id+'"><span class="session-title">'+esc(s.title)+'</span><button class="session-del" data-del="'+s.id+'" title="Delete">&times;</button></div>';}}sessionsEl.innerHTML=h;}
+sessionsEl.addEventListener('click',e=>{const del=e.target.closest('[data-del]');if(del){e.stopPropagation();deleteSession(del.dataset.del);return;}const item=e.target.closest('.session-item');if(item)switchSession(item.dataset.id);});
+function toggleSidebar(){const c=sidebar.classList.toggle('collapsed');backdrop.classList.toggle('visible',!c);}
+sidebarBtn.addEventListener('click',toggleSidebar);backdrop.addEventListener('click',toggleSidebar);
+newChatBtn.addEventListener('click',()=>{newSession(true);if(window.innerWidth<=860)toggleSidebar();});
+function metricsHtml(m){if(!m)return'';const p=[];if(m.firstTokenMs!=null)p.push('first <span class="mf">'+m.firstTokenMs+'ms</span>');if(m.elapsedMs!=null)p.push('total <span class="mv">'+m.elapsedMs+'ms</span>');if(m.outputTokens!=null)p.push('tokens <span class="mv">'+m.outputTokens+'</span>');if(m.outputTokens&&m.elapsedMs>0)p.push('<span class="mv">'+(m.outputTokens/(m.elapsedMs/1000)).toFixed(1)+'</span> tok/s');return p.length?'<div class="msg-metrics">'+p.join(' &middot; ')+'</div>':'';}
+function renderMessages(){const s=getSession(),msgs=s?.messages||[];messagesEl.querySelectorAll('.msg-wrap').forEach(el=>el.remove());emptyState.style.display=msgs.length?'none':'';for(const msg of msgs)appendMessage(msg,false);scrollBottom();}
+function appendMessage(msg,animate=true){if(emptyState)emptyState.style.display='none';const wrap=document.createElement('div');wrap.className='msg-wrap';if(!animate)wrap.style.animation='none';const model=msg.model?MM.get(msg.model):null,isUser=msg.role==='user';const avatarColor=isUser?'':'background:'+((model?.color||'#666'))+'22;color:'+(model?.color||'#888');const avatarText=isUser?'Y':(model?.label?.[0]||'A');const roleName=isUser?'You':(model?.label||'Assistant');const modelTag=!isUser&&model?' <span class="msg-model-tag">'+esc(model.network)+'</span>':'';wrap.innerHTML='<div class="msg-inner"><div class="msg-head"><div class="msg-avatar '+msg.role+'" style="'+avatarColor+'">'+avatarText+'</div><span class="msg-role">'+esc(roleName)+'</span>'+modelTag+'</div><div class="msg-body"></div>'+(!isUser?'<div class="msg-footer">'+metricsHtml(msg.metrics)+'<div class="msg-actions"><button class="msg-act" data-action="copy">Copy</button><button class="msg-act" data-action="regen">Regenerate</button></div></div>':'')+'</div>';const body=wrap.querySelector('.msg-body');if(isUser)body.textContent=msg.content;else{body.innerHTML=renderMd(msg.content);highlightCode(body);}messagesEl.appendChild(wrap);return wrap;}
+function scrollBottom(){requestAnimationFrame(()=>{messagesEl.scrollTop=messagesEl.scrollHeight;});}
+async function streamChat(provider,messages,system,maxTokens,cb){const{onChunk,onFirst,onDone,onError,signal}=cb;let res;try{res=await fetch('/api/brain/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({provider,messages,system:system||undefined,maxTokens}),signal});}catch(err){if(err.name!=='AbortError')onError?.(err.message||'Network error');return;}if(!res.ok||!res.body){const txt=await res.text().catch(()=>'');onError?.('Error '+res.status+': '+(txt||res.statusText));return;}const reader=res.body.getReader(),decoder=new TextDecoder();let buf='';try{for(;;){const{done,value}=await reader.read();if(done)break;buf+=decoder.decode(value,{stream:true});let idx;while((idx=buf.indexOf('\n\n'))!==-1){const raw=buf.slice(0,idx);buf=buf.slice(idx+2);let evType='',data='';for(const line of raw.split('\n')){if(line.startsWith('event:'))evType=line.slice(6).trim();else if(line.startsWith('data:'))data+=line.slice(5).trim();}if(!evType)evType='message';if(evType==='first'){try{onFirst?.(JSON.parse(data));}catch{}}else if(evType==='message'){if(data==='[DONE]')return;try{onChunk?.(JSON.parse(data));}catch{}}else if(evType==='done'){try{onDone?.(JSON.parse(data));}catch{}}else if(evType==='error'){try{onError?.(JSON.parse(data).message||'Upstream error');}catch{}}}}}catch(err){if(err.name!=='AbortError')onError?.(err.message);}}
+async function sendMessage(text){if(!text?.trim()||streaming)return;text=text.trim();let session=getSession();if(!session)session=newSession(true);session.messages.push({role:'user',content:text});session.model=activeModel;session.system=systemTa.value.trim();session.updated=Date.now();autoTitle(session);saveState();renderSidebar();appendMessage({role:'user',content:text});inputTa.value='';autoResize();scrollBottom();await streamResponse(session);}
+async function streamResponse(session){streaming=true;sendBtn.disabled=true;sendBtn.style.display='none';stopBtn.classList.add('visible');abortCtrl=new AbortController();const m=MM.get(activeModel),color=m?.color||'#666';const wrap=document.createElement('div');wrap.className='msg-wrap';wrap.innerHTML='<div class="msg-inner"><div class="msg-head"><div class="msg-avatar assistant" style="background:'+color+'22;color:'+color+'">'+(m?.label?.[0]||'A')+'</div><span class="msg-role">'+esc(m?.label||'Assistant')+'</span><span class="msg-model-tag">'+esc(m?.network||'')+'</span></div><div class="msg-body"><span class="cursor-blink"></span></div><div class="msg-footer"></div></div>';messagesEl.appendChild(wrap);scrollBottom();const body=wrap.querySelector('.msg-body'),footer=wrap.querySelector('.msg-footer');let accumulated='';const metrics={};let lastRender=0;const apiMsgs=session.messages.filter(x=>x.role==='user'||x.role==='assistant').map(x=>({role:x.role,content:x.content}));
+await streamChat(activeModel,apiMsgs,session.system,4096,{signal:abortCtrl.signal,onFirst(d){metrics.firstTokenMs=d.firstTokenMs;},onChunk(delta){accumulated+=delta;const now=Date.now();if(now-lastRender>35){body.innerHTML=renderMd(accumulated)+'<span class="cursor-blink"></span>';scrollBottom();lastRender=now;}},onDone(d){if(d.elapsedMs)metrics.elapsedMs=d.elapsedMs;if(d.firstTokenMs)metrics.firstTokenMs=d.firstTokenMs;if(d.usage){metrics.outputTokens=d.usage.outputTokens;metrics.inputTokens=d.usage.inputTokens;}},onError(msg){accumulated=accumulated?accumulated+'\n\n*Error: '+msg+'*':'Error: '+msg;},});
+body.innerHTML=renderMd(accumulated||'(empty response)');highlightCode(body);footer.innerHTML=metricsHtml(metrics)+'<div class="msg-actions" style="opacity:1"><button class="msg-act" data-action="copy">Copy</button><button class="msg-act" data-action="regen">Regenerate</button></div>';session.messages.push({role:'assistant',content:accumulated,model:activeModel,metrics});session.updated=Date.now();saveState();renderSidebar();scrollBottom();streaming=false;abortCtrl=null;sendBtn.style.display='';sendBtn.disabled=inputTa.value.trim()==='';stopBtn.classList.remove('visible');}
+async function regenerate(){const session=getSession();if(!session||streaming)return;const msgs=session.messages;if(!msgs.length)return;if(msgs[msgs.length-1].role==='assistant')msgs.pop();messagesEl.querySelectorAll('.msg-wrap').forEach(el=>el.remove());for(const msg of msgs)appendMessage(msg,false);scrollBottom();await streamResponse(session);}
+function stopStreaming(){if(abortCtrl)abortCtrl.abort();}
+messagesEl.addEventListener('click',e=>{const act=e.target.closest('[data-action]');if(!act)return;const action=act.dataset.action,wrap=act.closest('.msg-wrap');const idx=[...messagesEl.querySelectorAll('.msg-wrap')].indexOf(wrap);const session=getSession(),msg=session?.messages?.[idx];if(action==='copy'&&msg){navigator.clipboard.writeText(msg.content).catch(()=>{});act.textContent='Copied';act.classList.add('copied');setTimeout(()=>{act.textContent='Copy';act.classList.remove('copied');},1600);}else if(action==='regen'){regenerate();}});
+function autoResize(){inputTa.style.height='auto';inputTa.style.height=Math.min(inputTa.scrollHeight,200)+'px';}
+inputTa.addEventListener('input',()=>{autoResize();sendBtn.disabled=inputTa.value.trim()===''||streaming;});
+inputTa.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(!sendBtn.disabled)sendMessage(inputTa.value);}});
+sendBtn.addEventListener('click',()=>sendMessage(inputTa.value));stopBtn.addEventListener('click',stopStreaming);
+clearBtn.addEventListener('click',()=>{const s=getSession();if(s){s.messages=[];s.title='New chat';s.updated=Date.now();saveState();renderAll();}});
+exportBtn.addEventListener('click',()=>{const session=getSession();if(!session?.messages.length)return;const m=MM.get(session.model),lines=['# Brain — '+(m?.label||session.model)+'\n'];for(const msg of session.messages){const label=msg.role==='user'?'You':(MM.get(msg.model)?.label||'Assistant');lines.push('## '+label+'\n\n'+msg.content+'\n');if(msg.metrics){const p=[];if(msg.metrics.elapsedMs)p.push(msg.metrics.elapsedMs+'ms');if(msg.metrics.outputTokens)p.push(msg.metrics.outputTokens+' tokens');if(p.length)lines.push('*'+p.join(' · ')+'*\n');}}const blob=new Blob([lines.join('\n')],{type:'text/markdown'});const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:'brain-'+session.title.replace(/[^a-z0-9]+/gi,'-').slice(0,40)+'-'+Date.now()+'.md'});a.click();URL.revokeObjectURL(a.href);});
+sysToggle.addEventListener('click',()=>{const open=!sysPanel.hidden;sysPanel.hidden=open;sysToggle.innerHTML=(open?'&#9658;':'&#9660;')+' System prompt';});
+document.querySelectorAll('.mode-tab').forEach(tab=>{tab.addEventListener('click',()=>{document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');mode=tab.dataset.mode;chatView.style.display=mode==='chat'?'':'none';compareView.style.display=mode==='compare'?'':'none';});});
+for(const p of PROMPTS){const card=document.createElement('button');card.className='prompt-card';card.innerHTML='<div class="prompt-card-title">'+esc(p.title)+'</div><div class="prompt-card-sub">'+esc(p.sub)+'</div>';card.addEventListener('click',()=>{inputTa.value=p.text;autoResize();sendBtn.disabled=false;inputTa.focus();});promptGrid.appendChild(card);}
+const cmpProviders=document.getElementById('cmp-providers'),cmpGrid=document.getElementById('cmp-grid'),cmpPrompt=document.getElementById('cmp-prompt'),cmpSystem=document.getElementById('cmp-system'),cmpTokens=document.getElementById('cmp-tokens'),cmpRunBtn=document.getElementById('cmp-run-btn'),cmpClearBtn=document.getElementById('cmp-clear-btn');
+function buildCmpProviders(){let h='';for(const m of MODELS){const un=unavail.has(m.key)?' unavailable':'';h+='<label class="cmp-pill'+un+'"><input type="checkbox" data-key="'+m.key+'" '+(m.cmpDefault?'checked ':' ')+(unavail.has(m.key)?'disabled ':'')+'/><span class="cmp-pill-name" style="color:'+m.color+'">'+esc(m.label)+'</span><span class="cmp-pill-net">'+esc(m.network)+'</span></label>';}cmpProviders.innerHTML=h;}
+function selectedCmp(){return[...cmpProviders.querySelectorAll('input:checked')].map(el=>MM.get(el.dataset.key)).filter(Boolean);}
+function buildCmpCards(selected){cmpGrid.innerHTML='';for(const m of selected){const card=document.createElement('div');card.className='cmp-card';card.dataset.key=m.key;card.innerHTML='<div class="cmp-card-head"><div class="cmp-card-label"><span class="cmp-status"></span><span style="color:'+m.color+'">'+esc(m.label)+'</span></div><span class="cmp-card-net">'+esc(m.network)+'</span></div><div class="cmp-card-body waiting">Waiting...</div><div class="cmp-card-foot"><span class="cmp-metric">first <strong class="cmf" data-first>&mdash;</strong>ms</span><span class="cmp-metric">total <strong class="cma" data-elapsed>&mdash;</strong>ms</span><span class="cmp-metric">tokens <strong data-tokens>&mdash;</strong></span><span class="cmp-metric"><strong data-tps>&mdash;</strong> tok/s</span></div>';cmpGrid.appendChild(card);}}
+async function streamCmpCard(m,body,card){const bodyEl=card.querySelector('.cmp-card-body'),dot=card.querySelector('.cmp-status'),firstEl=card.querySelector('[data-first]'),elapsedEl=card.querySelector('[data-elapsed]'),tokensEl=card.querySelector('[data-tokens]'),tpsEl=card.querySelector('[data-tps]');bodyEl.textContent='';bodyEl.classList.remove('waiting','errored');const t0=performance.now();let accumulated='',lastRender=0;await streamChat(m.key,body.messages,body.system,body.maxTokens,{signal:body.signal,onFirst(d){if(d.firstTokenMs)firstEl.textContent=d.firstTokenMs;},onChunk(delta){accumulated+=delta;const now=Date.now();if(now-lastRender>50){bodyEl.innerHTML=renderMd(accumulated);lastRender=now;}},onDone(d){if(d.elapsedMs)elapsedEl.textContent=d.elapsedMs;if(d.firstTokenMs)firstEl.textContent=d.firstTokenMs;if(d.usage?.outputTokens){tokensEl.textContent=d.usage.outputTokens;const sec=(d.elapsedMs||(performance.now()-t0))/1000;if(sec>0)tpsEl.textContent=(d.usage.outputTokens/sec).toFixed(1);}},onError(msg){bodyEl.classList.add('errored');bodyEl.innerHTML=renderMd(accumulated?accumulated+'\n\n*Error: '+msg+'*':'Error: '+msg);dot.classList.add('err');},});if(accumulated){bodyEl.innerHTML=renderMd(accumulated);highlightCode(bodyEl);}if(!dot.classList.contains('err'))dot.classList.add('done');if(!elapsedEl.textContent||elapsedEl.textContent==='—')elapsedEl.textContent=Math.round(performance.now()-t0);}
+let cmpAbort=null;
+async function runCompare(){const prompt=cmpPrompt.value.trim();if(!prompt)return;const selected=selectedCmp();if(!selected.length)return;cmpAbort=new AbortController();cmpRunBtn.disabled=true;buildCmpCards(selected);const body={messages:[{role:'user',content:prompt}],system:cmpSystem.value.trim()||undefined,maxTokens:Math.min(Math.max(Number(cmpTokens.value)||512,32),4096),signal:cmpAbort.signal};try{await Promise.all(selected.map(m=>streamCmpCard(m,body,cmpGrid.querySelector('[data-key="'+m.key+'"]'))));}finally{cmpRunBtn.disabled=false;cmpAbort=null;}}
+cmpRunBtn.addEventListener('click',runCompare);
+cmpClearBtn.addEventListener('click',()=>{cmpGrid.innerHTML='<div class="cmp-empty">Select models and run a prompt to compare responses side-by-side.</div>';if(cmpAbort)cmpAbort.abort();});
+cmpPrompt.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();runCompare();}});
+document.addEventListener('keydown',e=>{if(e.key==='n'&&(e.metaKey||e.ctrlKey)&&!e.shiftKey){e.preventDefault();newSession(true);}if(e.key==='Escape'){closeDropdown();if(streaming)stopStreaming();}});
+async function loadAgentContext(){const params=new URLSearchParams(location.search),agentId=params.get('agent');if(!agentId)return;try{const res=await fetch('/api/agents/'+encodeURIComponent(agentId),{credentials:'include'});if(!res.ok)return;const data=await res.json(),agent=data.agent;if(!agent)return;agentCtx=agent;agentBannerName.textContent=agent.name||agent.id;agentBanner.classList.add('visible');if(agent.system_prompt){systemTa.value=agent.system_prompt;sysPanel.hidden=false;sysToggle.innerHTML='&#9660; System prompt';}const bm=agent.meta?.brain?.model;if(bm){const mapped=MODELS.find(m=>m.key===bm||m.label.toLowerCase().includes(bm.toLowerCase()));if(mapped)selectModel(mapped.key);}const session=getSession()||newSession(true);session.system=agent.system_prompt||'';session.title='Chat with '+(agent.name||agent.id);saveState();renderSidebar();}catch{}}
+document.getElementById('agent-banner-dismiss').addEventListener('click',()=>{agentBanner.classList.remove('visible');agentCtx=null;});
+async function checkAvailability(){try{const res=await fetch('/api/brain/chat'),{providers}=await res.json();if(!Array.isArray(providers))return;for(const p of providers)if(!p.available)unavail.add(p.key);buildModelDropdown();buildCmpProviders();if(unavail.has(activeModel)){const first=MODELS.find(m=>!unavail.has(m.key));if(first)selectModel(first.key);}}catch{}}
+function renderAll(){renderSidebar();renderMessages();updateModelUI();}
+loadState();buildModelDropdown();buildCmpProviders();updateModelUI();
+if(!sessions.length)emptyState.style.display='';else renderAll();
+const s=getSession();if(s?.system)systemTa.value=s.system;
+checkAvailability();loadAgentContext();
+if(window.innerWidth<=860)sidebar.classList.add('collapsed');
 </script>
 </body>
 </html>

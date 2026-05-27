@@ -493,9 +493,15 @@ function renderQuickActions(host, { avatars = [], agents = [] } = {}) {
 		actions.push({ href: '/dashboard/agents', title: 'Create an agent', sub: 'On-chain identity with wallet and skills', icon: '⬡' });
 	}
 
+	const repHref = (firstAvatar?.owner_wallet || firstAvatar?.owner_address)
+		? `/reputation?address=${encodeURIComponent(firstAvatar.owner_wallet || firstAvatar.owner_address)}`
+		: '/reputation';
+
 	actions.push(
+		{ href: '/gallery-picker', title: 'Browse avatar gallery', sub: 'Explore public 3D avatars', icon: '▣' },
 		{ href: '/dashboard/widgets', title: 'Embed an agent', sub: 'Drop-in widget for any site', icon: '◧' },
 		{ href: '/voice', title: 'Voice Lab', sub: 'Clone your voice for avatars and agents', icon: '◉' },
+		{ href: repHref, title: 'Reputation', sub: 'On-chain reviews and attestations for your agent', icon: '★' },
 		{ href: '/dashboard/api', title: 'Open API keys', sub: 'REST + MCP for your agents', icon: '⌘' },
 		{ href: '/brain', title: 'Brain — Persona + Playground', sub: 'Build a persona, compare models, test your agent voice', icon: '◎' },
 	);

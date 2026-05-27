@@ -17,8 +17,14 @@
 // SOLANA_RPC_FALLBACK_URLS (comma-separated) enables the multi-endpoint
 // RpcFallback wrapper for read-side handlers that opt in via getRpcFallback().
 
+import { createRequire } from 'node:module';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
+
+const require = createRequire(import.meta.url);
+function loadPumpSwapSdk() {
+	return require('@pump-fun/pump-swap-sdk');
+}
 
 // @solana/web3.js calls console.error() on every 429 retry attempt. Those
 // retries succeed (callers see a resolved value, not a thrown error), but
@@ -138,14 +144,14 @@ export async function getPumpTradeClient({ network = 'mainnet' } = {}) {
 }
 
 export async function getPumpSwapSdk({ network = 'mainnet' } = {}) {
-	const [{ PumpAmmSdk, PumpAmmInternalSdk }, web3, BN] = await Promise.all([
+	const [{ PumpAmmSdk, PumpAmmAdminSdk }, web3, BN] = await Promise.all([
 		import('@pump-fun/pump-swap-sdk'),
 		import('@solana/web3.js'),
 		import('bn.js').then((m) => m.default || m),
 	]);
 	const connection = getConnection({ network });
 	const sdk = new PumpAmmSdk(connection);
-	const internalSdk = PumpAmmInternalSdk ? new PumpAmmInternalSdk(connection) : null;
+	const internalSdk = PumpAmmAdminSdk ? new PumpAmmAdminSdk(connection) : null;
 	return { sdk, internalSdk, connection, BN, web3 };
 }
 
