@@ -7,7 +7,8 @@
 	"author": "nirholas",
 	"license": "Apache-2.0",
 	"overrides": {
-		"serialize-javascript": ">=7.0.5"
+		"serialize-javascript": ">=7.0.5",
+		"@esbuild-plugins/node-globals-polyfill": "^0.2.0"
 	},
 	"engines": {
 		"node": "24.x"

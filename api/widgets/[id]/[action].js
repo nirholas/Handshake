@@ -18,7 +18,9 @@ import { decorate } from '../index.js';
 import { redactPii } from '../../_lib/pii.js';
 import { embed, cosine, embeddingsConfigured } from '../../_lib/embeddings.js';
 import { listTranscripts, getTranscript } from './_transcripts.js';
-import { listKnowledge, ingestKnowledge, deleteKnowledge, testRetrieval } from './_knowledge.js';
+// _knowledge.js is loaded on demand — its jsdom→html-encoding-sniffer→@exodus/bytes
+// transitive dep chain causes ERR_REQUIRE_ESM at import time on some Node versions,
+// which would crash the entire function and take down stats/transcripts as well.
 
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
@@ -714,10 +716,14 @@ function writeSse(res, event, data) {
 
 function chatIdFromReq(req) {
 	const fromQuery = req.query?.id;
-	if (typeof fromQuery === 'string' && fromQuery) return fromQuery;
+	if (typeof fromQuery === 'string' && fromQuery) {
+		return isValidWidgetId(fromQuery) ? fromQuery : null;
+	}
 	const path = new URL(req.url, 'http://x').pathname;
 	const m = path.match(/\/api\/widgets\/([^/]+)\/chat/);
-	return m ? decodeURIComponent(m[1]) : null;
+	if (!m) return null;
+	const id = decodeURIComponent(m[1]);
+	return isValidWidgetId(id) ? id : null;
 }
 
 function clampInt(n, min, max) {
@@ -770,10 +776,14 @@ function trim(s, max) {
 
 function duplicateIdFromReq(req) {
 	const fromQuery = req.query?.id;
-	if (typeof fromQuery === 'string' && fromQuery) return fromQuery;
+	if (typeof fromQuery === 'string' && fromQuery) {
+		return isValidWidgetId(fromQuery) ? fromQuery : null;
+	}
 	const path = new URL(req.url, 'http://x').pathname;
 	const m = path.match(/\/api\/widgets\/([^/]+)\/duplicate/);
-	return m ? decodeURIComponent(m[1]) : null;
+	if (!m) return null;
+	const id = decodeURIComponent(m[1]);
+	return isValidWidgetId(id) ? id : null;
 }
 
 async function resolveDuplicateAuth(req) {
@@ -1037,12 +1047,24 @@ function startOfUtcDay(d) {
 	return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
+// Widget IDs are prefixed with "wdgt_". Reject placeholder strings that the
+// frontend can accidentally emit before the real ID is resolved — prevents
+// 500s from the DB receiving values like "undefined" or "null".
+const WIDGET_ID_RE = /^wdgt_[A-Za-z0-9_-]{1,128}$/;
+function isValidWidgetId(id) {
+	return typeof id === 'string' && WIDGET_ID_RE.test(id);
+}
+
 function statsIdFromReq(req) {
 	const fromQuery = req.query?.id;
-	if (typeof fromQuery === 'string' && fromQuery) return fromQuery;
+	if (typeof fromQuery === 'string' && fromQuery) {
+		return isValidWidgetId(fromQuery) ? fromQuery : null;
+	}
 	const path = new URL(req.url, 'http://x').pathname;
 	const m = path.match(/\/api\/widgets\/([^/]+)\/stats/);
-	return m ? decodeURIComponent(m[1]) : null;
+	if (!m) return null;
+	const id = decodeURIComponent(m[1]);
+	return isValidWidgetId(id) ? id : null;
 }
 
 async function resolveStatsAuth(req) {
@@ -1184,6 +1206,15 @@ async function handleKnowledge(req, res) {
 	`;
 	if (!w) return error(res, 404, 'not_found', 'widget not found or not yours');
 
+	let knowledgeMod;
+	try {
+		knowledgeMod = await import('./_knowledge.js');
+	} catch (err) {
+		captureException(err, { route: 'widget/knowledge', stage: 'import' });
+		return error(res, 503, 'knowledge_unavailable', 'knowledge service is temporarily unavailable');
+	}
+	const { listKnowledge, ingestKnowledge, deleteKnowledge, testRetrieval } = knowledgeMod;
+
 	if (req.method === 'GET') {
 		const url = new URL(req.url, 'http://x');
 		// ?test=<query> — Inkeep-style retrieval debugger. Returns top-K
@@ -1254,11 +1285,15 @@ async function handleKnowledge(req, res) {
 
 function actionIdFromReq(req, action) {
 	const fromQuery = req.query?.id;
-	if (typeof fromQuery === 'string' && fromQuery) return fromQuery;
+	if (typeof fromQuery === 'string' && fromQuery) {
+		return isValidWidgetId(fromQuery) ? fromQuery : null;
+	}
 	const path = new URL(req.url, 'http://x').pathname;
 	const re = new RegExp(`/api/widgets/([^/]+)/${action}`);
 	const m = path.match(re);
-	return m ? decodeURIComponent(m[1]) : null;
+	if (!m) return null;
+	const id = decodeURIComponent(m[1]);
+	return isValidWidgetId(id) ? id : null;
 }
 
 async function resolveOwnerAuth(req, requiredScope) {

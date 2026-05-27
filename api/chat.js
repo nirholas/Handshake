@@ -436,6 +436,7 @@ function pickProvider(requested, model, userKeys = {}) {
 const FALLBACK_SIBLINGS = {
 	openrouter: [
 		'meta-llama/llama-3.3-70b-instruct:free',
+		'meta-llama/llama-3.2-3b-instruct:free',
 		'mistralai/mistral-7b-instruct:free',
 	],
 	groq: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],

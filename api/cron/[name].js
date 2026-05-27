@@ -2905,7 +2905,16 @@ async function setTriggerState(t, state) {
 
 async function loadAvatarFromAgent(agentId) {
 	if (!agentId) return null;
-	const r = await sql`select id, name, description, agent_id from avatars where id = ${agentId} or agent_id::text = ${agentId} limit 1`;
+	// avatars has no direct agent_id column — the link is agent_identities.avatar_id.
+	// Look up the avatar by joining through agent_identities, or fall back to the
+	// case where the caller passes an avatar id directly (legacy behavior).
+	const r = await sql`
+		select a.id, a.name, a.description, ai.id as agent_id
+		from avatars a
+		left join agent_identities ai on ai.avatar_id = a.id
+		where a.id::text = ${agentId} OR ai.id::text = ${agentId}
+		limit 1
+	`;
 	return r[0] || null;
 }
 
