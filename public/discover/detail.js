@@ -5,6 +5,8 @@ const LIB_CDN_URL = 'https://three.ws/agent-3d/latest/agent-3d.js';
 // Parse URL: /discover/a/{chainId}/{agentId}  or  /discover/avatar/{id}
 function parseRoute() {
 	const path = location.pathname;
+	const solana = path.match(/^\/discover\/a\/sol\/([A-Za-z0-9]+)/);
+	if (solana) return { kind: 'solana', id: solana[1] };
 	const onchain = path.match(/^\/discover\/a\/(\d+)\/(\d+)/);
 	if (onchain) return { kind: 'onchain', chainId: onchain[1], id: onchain[2] };
 	const avatar = path.match(/^\/discover\/avatar\/([^/]+)/);
@@ -87,9 +89,13 @@ function render(item) {
 		media.appendChild(ph);
 	}
 
-	// Badges
 	const badges = $('badges');
-	if (item.kind === 'onchain') {
+	if (item.kind === 'solana') {
+		badges.innerHTML = `
+			<span class="explore-badge explore-badge--solana">◎ Solana</span>
+			${item.has3d ? '<span class="explore-badge explore-badge--3d">3D</span>' : ''}
+		`;
+	} else if (item.kind === 'onchain') {
 		badges.innerHTML = `
 			<span class="explore-badge explore-badge--chain">${escapeHtml(item.chainName)}</span>
 			${item.has3d ? '<span class="explore-badge explore-badge--3d">3D</span>' : ''}
@@ -111,10 +117,13 @@ function render(item) {
 		descEl.hidden = false;
 	}
 
-	// Meta row
 	const metaRow = $('meta-row');
 	const metaItems = [];
-	if (item.kind === 'onchain') {
+	if (item.kind === 'solana') {
+		if (item.owner) metaItems.push(`<span class="detail-meta-item">Owner <a href="${escapeAttr(item.ownerExplorerUrl || '#')}" target="_blank" rel="noopener">${escapeHtml(item.ownerShort)}</a></span>`);
+		if (item.createdAt) metaItems.push(`<span class="detail-meta-item">Registered ${fmtDate(item.createdAt)}</span>`);
+		if (item.skills?.length) metaItems.push(`<span class="detail-meta-item">${item.skills.length} skill${item.skills.length === 1 ? '' : 's'}</span>`);
+	} else if (item.kind === 'onchain') {
 		metaItems.push(`<span class="detail-meta-item">Agent #${escapeHtml(String(item.agentId))}</span>`);
 		metaItems.push(`<span class="detail-meta-item">Owner <a href="${escapeAttr(item.ownerExplorerUrl || '#')}" target="_blank" rel="noopener">${escapeHtml(item.ownerShort)}</a></span>`);
 		if (item.registeredAt) metaItems.push(`<span class="detail-meta-item">Registered ${fmtDate(item.registeredAt)}</span>`);
@@ -130,9 +139,13 @@ function render(item) {
 	}
 	metaRow.innerHTML = metaItems.join('');
 
-	// Action buttons
 	const actions = $('actions');
-	if (item.kind === 'onchain') {
+	if (item.kind === 'solana') {
+		if (item.has3d && item.viewerUrl) {
+			actions.innerHTML += `<a class="detail-btn detail-btn--primary" href="${escapeAttr(item.viewerUrl)}">View 3D</a>`;
+		}
+		actions.innerHTML += `<a class="detail-btn detail-btn--ghost" href="${escapeAttr(item.explorerUrl || '#')}" target="_blank" rel="noopener">Solscan ↗</a>`;
+	} else if (item.kind === 'onchain') {
 		if (item.viewerUrl) {
 			actions.innerHTML += `<a class="detail-btn detail-btn--primary" href="${escapeAttr(item.viewerUrl)}">View 3D</a>`;
 		}
@@ -189,7 +202,24 @@ function render(item) {
 		$('tags').innerHTML = item.tags.map((t) => `<span class="detail-tag">${escapeHtml(t)}</span>`).join('');
 	}
 
-	// On-chain details panel
+	if (item.kind === 'solana') {
+		const panel = $('onchain-panel');
+		panel.hidden = false;
+		const dl = $('onchain-dl');
+		const rows = [
+			['Chain', 'Solana (mainnet)'],
+			['Mint', `<a href="${escapeAttr(item.explorerUrl || '#')}" target="_blank" rel="noopener">${escapeHtml(item.asset)}</a>`],
+			['Owner', `<a href="${escapeAttr(item.ownerExplorerUrl || '#')}" target="_blank" rel="noopener">${escapeHtml(item.owner)}</a>`],
+			['Registered', fmtDate(item.createdAt)],
+		];
+		if (item.skills?.length) {
+			rows.push(['Skills', item.skills.map((s) => escapeHtml(s)).join(', ')]);
+		}
+		dl.innerHTML = rows.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${v}</dd>`).join('');
+
+		fetchSolanaReputation(item.asset, panel, dl);
+	}
+
 	if (item.kind === 'onchain') {
 		const panel = $('onchain-panel');
 		panel.hidden = false;
@@ -241,7 +271,21 @@ function buildEmbedPanel(item, $) {
 	const origin = location.origin;
 	let snippets;
 
-	if (item.kind === 'onchain') {
+	if (item.kind === 'solana') {
+		const pageUrl = `${origin}/discover/a/sol/${item.asset}`;
+		const cardUrl = `${origin}/a/sol/${item.asset}/.well-known/agent-card.json`;
+		const name = item.name || 'Solana Agent';
+		snippets = [
+			{ label: 'Link', key: 'link', value: pageUrl, rows: 1 },
+			{ label: 'Agent card', key: 'card', value: cardUrl, rows: 1 },
+			{
+				label: 'Markdown',
+				key: 'md',
+				value: `[${name}](${pageUrl})`,
+				rows: 1,
+			},
+		];
+	} else if (item.kind === 'onchain') {
 		const pageUrl = `${origin}/a/${item.chainId}/${item.agentId}`;
 		const embedUrl = `${origin}/a/${item.chainId}/${item.agentId}/embed`;
 		const agentUri = `agent://${item.chainId}/${item.agentId}`;
@@ -335,6 +379,40 @@ function buildEmbedPanel(item, $) {
 			setTimeout(() => { btn.textContent = orig; }, 1800);
 		});
 	});
+}
+
+async function fetchSolanaReputation(asset, panel, dl) {
+	try {
+		const res = await fetch(`/api/agents/solana-reputation?asset=${encodeURIComponent(asset)}&network=mainnet`);
+		if (!res.ok) return;
+		const data = await res.json();
+		const rep = data.reputation;
+		if (!rep) return;
+
+		const extra = [];
+		if (rep.feedback?.total > 0) {
+			const avg = rep.feedback.score_avg != null ? Number(rep.feedback.score_avg).toFixed(1) : '—';
+			extra.push(['Feedback', `${avg} ★ · ${rep.feedback.total} review${rep.feedback.total === 1 ? '' : 's'} (${rep.feedback.unique_attesters} attester${rep.feedback.unique_attesters === 1 ? '' : 's'})`]);
+		}
+		if (rep.validation) {
+			const passed = (rep.validation.self_passed || 0) + (rep.validation.event_passed || 0);
+			const failed = (rep.validation.self_failed || 0) + (rep.validation.event_failed || 0);
+			if (passed + failed > 0) {
+				extra.push(['Validation', `${passed} passed · ${failed} failed`]);
+			}
+		}
+		if (rep.stake?.total_lamports > 0) {
+			const sol = (Number(rep.stake.total_lamports) / 1e9).toFixed(4);
+			extra.push(['Stake', `${sol} SOL from ${rep.stake.unique_stakers} staker${rep.stake.unique_stakers === 1 ? '' : 's'}`]);
+		}
+		if (rep.token_activity?.graduated) {
+			extra.push(['Token', `Graduated · ${rep.token_activity.trade_count || 0} trades`]);
+		}
+		if (extra.length) {
+			dl.innerHTML += '<dt style="grid-column:1/-1;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;margin-top:6px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#888">Reputation</dt><dd style="display:none"></dd>';
+			dl.innerHTML += extra.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+		}
+	} catch (_) {}
 }
 
 function showError(status) {

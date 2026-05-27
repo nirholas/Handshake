@@ -4653,6 +4653,92 @@ body[data-viewer-mode='explore'] #layout-switch {
 	border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* ── Thought Bubble — floats above avatar head ────────────────────────────── */
+
+.thought-bubble {
+	position: absolute;
+	z-index: 10;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.25s ease;
+	transform-origin: center bottom;
+	will-change: transform, left, top;
+}
+
+.thought-bubble--visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.thought-bubble__text {
+	background: rgba(12, 12, 18, 0.88);
+	color: rgba(255, 255, 255, 0.92);
+	padding: 10px 16px;
+	border-radius: 16px;
+	max-width: 280px;
+	min-width: 48px;
+	font-size: 13px;
+	line-height: 1.45;
+	font-family: 'Inter', sans-serif;
+	word-wrap: break-word;
+	text-align: center;
+	position: relative;
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	box-shadow:
+		0 4px 24px rgba(0, 0, 0, 0.45),
+		0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.thought-bubble__text::after {
+	content: '';
+	position: absolute;
+	bottom: -7px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 0;
+	height: 0;
+	border-left: 7px solid transparent;
+	border-right: 7px solid transparent;
+	border-top: 7px solid rgba(12, 12, 18, 0.88);
+}
+
+.thought-bubble__dots {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 6px;
+}
+
+.thought-bubble__dots span {
+	display: block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.55);
+	animation: thought-dot-bounce 1.4s ease-in-out infinite both;
+}
+
+.thought-bubble__dots span:nth-child(2) {
+	animation-delay: 0.16s;
+}
+
+.thought-bubble__dots span:nth-child(3) {
+	animation-delay: 0.32s;
+}
+
+@keyframes thought-dot-bounce {
+	0%, 80%, 100% {
+		transform: translateY(0);
+		opacity: 0.35;
+	}
+	40% {
+		transform: translateY(-5px);
+		opacity: 1;
+	}
+}
+
 /* ── Responsive — hide sidebar on narrow viewports ─────────────────────────── */
 
 @media screen and (max-width: 900px) {
@@ -7087,6 +7173,11 @@ textarea.erc8004-code {
 	background: rgba(255, 255, 255, 0.15);
 	color: #c4b5fd;
 	border-color: rgba(255, 255, 255, 0.4);
+}
+.explore-badge--solana {
+	background: rgba(153, 69, 255, 0.1);
+	color: #b88aff;
+	border-color: rgba(153, 69, 255, 0.3);
 }
 .explore-card-desc {
 	margin: 0;

@@ -7,7 +7,7 @@
  *   q=<text>       — name/description substring
  *   cursor=<iso>   — created_at/registered_at ISO string for pagination
  *   limit=<int>    — page size, default 24, max 60
- *   source=<all|onchain|avatar> — restrict feed to one source. Default 'all'.
+ *   source=<all|onchain|avatar|solana> — restrict feed to one source. Default 'all'.
  *   quality=<all|high> — avatar quality filter. 'high' (default) hides
  *                        autonamed/filename-like junk and surfaces named
  *                        community + curated avatars first.
@@ -53,8 +53,9 @@ export default wrap(async (req, res) => {
 	}
 
 	// Setting a chainId implicitly excludes avatars (they're off-chain).
-	const includeOnchain = sourceFilter !== 'avatar';
-	const includeAvatars = sourceFilter !== 'onchain' && !Number.isFinite(chainId);
+	const includeOnchain = sourceFilter === 'all' || sourceFilter === 'onchain';
+	const includeAvatars = (sourceFilter === 'all' || sourceFilter === 'avatar') && !Number.isFinite(chainId);
+	const includeSolana = sourceFilter === 'all' || sourceFilter === 'solana';
 
 	// Filter construction via template fragments kept inline because Neon's
 	// tagged-template driver doesn't compose them the way pg.Client does; a
@@ -107,6 +108,26 @@ export default wrap(async (req, res) => {
 	`
 		: [];
 
+	const solanaRows = includeSolana
+		? await sql`
+		SELECT ai.id, ai.name, ai.description, ai.wallet_address, ai.skills,
+		       ai.meta, ai.created_at,
+		       a.thumbnail_key AS avatar_thumb
+		FROM agent_identities ai
+		LEFT JOIN avatars a ON a.id = ai.avatar_id AND a.deleted_at IS NULL
+		WHERE ai.deleted_at IS NULL
+		  AND ai.meta->>'chain_type' = 'solana'
+		  AND ai.meta->>'network' = 'mainnet'
+		  AND (${q || null}::text IS NULL OR (
+		       coalesce(ai.name,'') ILIKE ${'%' + q + '%'}
+		    OR coalesce(ai.description,'') ILIKE ${'%' + q + '%'}
+		  ))
+		  AND (${cursorDate ? cursorDate.toISOString() : null}::timestamptz IS NULL OR ai.created_at < ${cursorDate ? cursorDate.toISOString() : null}::timestamptz)
+		ORDER BY ai.created_at DESC NULLS LAST
+		LIMIT ${limit + 1}
+	`
+		: [];
+
 	const onchainItems = onchainRows.map((r) => {
 		const chain = CHAIN_BY_ID[r.chain_id];
 		return {
@@ -133,6 +154,27 @@ export default wrap(async (req, res) => {
 				endpoint: s?.endpoint || null,
 				version: s?.version || null,
 			})),
+		};
+	});
+
+	const solanaItems = solanaRows.map((r) => {
+		const asset = r.meta?.sol_mint_address;
+		const thumb = r.avatar_thumb ? publicUrl(r.avatar_thumb) : null;
+		return {
+			kind: 'solana',
+			sortDate: r.created_at,
+			asset,
+			name: r.name || 'Solana Agent',
+			description: r.description || '',
+			image: thumb,
+			has3d: !!r.avatar_thumb,
+			skills: r.skills || [],
+			owner: r.wallet_address,
+			ownerShort: shortAddr(r.wallet_address),
+			createdAt: r.created_at,
+			explorerUrl: asset ? `https://solscan.io/token/${asset}` : null,
+			ownerExplorerUrl: r.wallet_address ? `https://solscan.io/account/${r.wallet_address}` : null,
+			network: r.meta?.network || 'mainnet',
 		};
 	});
 
@@ -202,7 +244,7 @@ export default wrap(async (req, res) => {
 		avatarItems.push(...matching);
 	}
 
-	const merged = [...onchainItems, ...avatarItems].sort(
+	const merged = [...onchainItems, ...solanaItems, ...avatarItems].sort(
 		(a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime(),
 	);
 
@@ -210,7 +252,6 @@ export default wrap(async (req, res) => {
 	const items = merged.slice(0, limit);
 	const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].sortDate : null;
 
-	// Totals (cheap counts; merged feed total = onchain + public avatars).
 	const [{ total: onchainTotal }] = await sql`
 		SELECT count(*)::text as total FROM erc8004_agents_index WHERE active = true
 	`;
@@ -220,8 +261,13 @@ export default wrap(async (req, res) => {
 	const [{ total: avatarTotal }] = await sql`
 		SELECT count(*)::text as total FROM avatars WHERE deleted_at IS NULL AND visibility = 'public'
 	`;
+	const [{ total: solanaTotal }] = await sql`
+		SELECT count(*)::text as total FROM agent_identities
+		WHERE deleted_at IS NULL AND meta->>'chain_type' = 'solana' AND meta->>'network' = 'mainnet'
+	`;
 	const avatarCount = Number(avatarTotal) + DEMO_AVATARS.length;
-	const allTotal = Number(onchainTotal) + avatarCount;
+	const solCount = Number(solanaTotal);
+	const allTotal = Number(onchainTotal) + solCount + avatarCount;
 	const threeDTotal = Number(onchain3d) + avatarCount;
 
 	return json(res, 200, {
@@ -231,6 +277,7 @@ export default wrap(async (req, res) => {
 			all: allTotal,
 			threeD: threeDTotal,
 			onchain: Number(onchainTotal),
+			solana: solCount,
 			avatars: avatarCount,
 		},
 	});

@@ -338,12 +338,17 @@ export class NichAgent {
 	// ── Chat API ─────────────────────────────────────────────────────────────
 
 	async _callChatAPI(message) {
+		const bubble = this.options.thoughtBubble;
 		const messagesEl = this.panel.querySelector('#agent-messages');
 		const streamEl = document.createElement('div');
 		streamEl.className = 'nich-message agent';
 		streamEl.textContent = '…';
-		messagesEl.appendChild(streamEl);
-		messagesEl.scrollTop = messagesEl.scrollHeight;
+		if (bubble) {
+			bubble.showThinking();
+		} else {
+			messagesEl.appendChild(streamEl);
+			messagesEl.scrollTop = messagesEl.scrollHeight;
+		}
 
 		const choice = MODEL_OPTIONS.find((o) => o.id === this._modelChoice);
 		try {
@@ -409,10 +414,14 @@ export class NichAgent {
 							streaming = true;
 						}
 						streamEl.textContent += evt.text;
-						messagesEl.scrollTop = messagesEl.scrollHeight;
+						if (bubble) {
+							bubble.showMessage(streamEl.textContent);
+						} else {
+							messagesEl.scrollTop = messagesEl.scrollHeight;
+						}
 					} else if (evt.type === 'done') {
-						if (!streaming) streamEl.remove();
-						return { ok: true, message, reply: evt.reply || '', actions: evt.actions || [], streamEl: streaming ? streamEl : null };
+						if (!streaming || bubble) streamEl.remove();
+						return { ok: true, message, reply: evt.reply || '', actions: evt.actions || [], streamEl: (streaming && !bubble) ? streamEl : null };
 					} else if (evt.type === 'error') {
 						streamEl.remove();
 						return { ok: false, reason: evt.code || 'upstream_error' };
@@ -584,6 +593,10 @@ export class NichAgent {
 	// ── Typing indicator ─────────────────────────────────────────────────────
 
 	_startTyping() {
+		if (this.options.thoughtBubble) {
+			this.options.thoughtBubble.showThinking();
+			return () => {};
+		}
 		const messagesEl = this.panel.querySelector('#agent-messages');
 		const el = document.createElement('div');
 		el.className = 'nich-message agent typing';
@@ -750,6 +763,10 @@ export class NichAgent {
 	_addMessage(role, text, type = '') {
 		if (role !== 'status') {
 			this.messages.push({ role, text });
+		}
+		if (role === 'agent' && type !== 'status' && this.options.thoughtBubble) {
+			this.options.thoughtBubble.showMessage(text);
+			return;
 		}
 		const messagesEl = this.panel.querySelector('#agent-messages');
 		const msgEl = document.createElement('div');

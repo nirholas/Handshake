@@ -9,6 +9,7 @@ import { Validator } from './validator.js';
 import { Footer } from './components/footer';
 import { startWidgetRpcServer } from './widget/rpc-server.js';
 import { NichAgent } from './nich-agent.js';
+import { ThoughtBubble } from './thought-bubble.js';
 import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
 import { saveRemoteGlbToAccount, getMe, readAuthHint } from './account.js';
@@ -1552,12 +1553,14 @@ class App {
 	}
 
 	_initNichAgent() {
+		const bubble = this.viewer ? new ThoughtBubble(this.viewer) : null;
 		const agent = new NichAgent(
 			document.body,
 			protocol,
 			this.skills,
 			this.identity,
 			this.runtime,
+			{ thoughtBubble: bubble },
 		);
 		window.VIEWER.agent = agent;
 		// Greet on first open

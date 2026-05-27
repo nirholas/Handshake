@@ -11,15 +11,15 @@
 		<meta name="apple-mobile-web-app-title" content="three.ws" />
 		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
 		<link rel="icon" href="/favicon.ico" />
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
 		<link rel="stylesheet" href="/wallet-connect.css" />
 		<link rel="stylesheet" href="/auth.css" />
 		<link rel="stylesheet" href="/mobile.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<script defer src="/footer-newsletter.js"></script>
-		<script
-			type="module"
-			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
-		></script>
 		<style>
 			:root {
 				color-scheme: dark;
@@ -206,6 +206,11 @@
 				background: radial-gradient(ellipse, rgba(220, 230, 255, 0.25), transparent 70%);
 				bottom: -2px;
 				filter: blur(6px);
+			}
+			#avatar-canvas {
+				position: fixed; inset: 0;
+				width: 100vw; height: 100vh;
+				pointer-events: none; z-index: 999;
 			}
 			a {
 				color: #c8d0e0;
@@ -563,28 +568,11 @@
 			</form>
 			<div class="panel">
 				<a href="/" class="panel-brand" aria-label="three.ws home">three.ws</a>
-				<div class="agent-avatar loading" id="login-avatar-wrap" aria-hidden="true">
-					<model-viewer
-						id="login-avatar"
-						src="/avatars/cz.glb"
-						alt=""
-						autoplay
-						animation-name="IdleV4.2(maya_head)"
-						disable-zoom
-						interaction-prompt="none"
-						shadow-intensity="0.6"
-						shadow-softness="1"
-						exposure="1.05"
-						tone-mapping="aces"
-						environment-image="neutral"
-						camera-orbit="0deg 88deg 4.8m"
-						field-of-view="32deg"
-						loading="eager"
-					></model-viewer>
-				</div>
+				<div class="agent-avatar loading" id="login-avatar-wrap" aria-hidden="true"></div>
 			</div>
 		</div>
 		</main>
+		<canvas id="avatar-canvas"></canvas>
 		<footer class="h-footer-horizon">
 			<div class="h-footer-glow-line" aria-hidden="true"></div>
 			<div class="h-footer-floor" aria-hidden="true"></div>
@@ -827,7 +815,7 @@
 						setFieldError(passwordInput, passwordErr, 'Enter your password.');
 						bad = true;
 					}
-					if (bad) return;
+					if (bad) { window.__avatarDisapprove?.(); return; }
 
 					btn.disabled = true;
 					btn.textContent = 'Signing in…';
@@ -859,59 +847,69 @@
 						} catch {
 							/* ignore */
 						}
-						location.href = next;
+						window.__avatarCelebrate?.();
+						setTimeout(() => { location.href = next; }, 2000);
 					} catch (e2) {
 						setFieldError(passwordInput, passwordErr, e2.message);
 						btn.disabled = false;
 						btn.textContent = 'Sign in';
+						window.__avatarDisapprove?.();
 					}
 				});
 
-				// ── Avatar look-around + parallax + skeleton ──
-				const viewer = document.getElementById('login-avatar');
-				const wrap = document.getElementById('login-avatar-wrap');
-				if (viewer) {
-					viewer.addEventListener('load', () => wrap?.classList.remove('loading'));
-					const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-					const BASE_AZ = 0;
-					const BASE_POL = 88;
-					const AZ_RANGE = 30;
-					const POL_RANGE = 14;
-					let targetAz = BASE_AZ, targetPol = BASE_POL;
-					let curAz = BASE_AZ, curPol = BASE_POL;
-					let targetTx = 0, targetTy = 0, curTx = 0, curTy = 0;
-					let nod = 0;
-					const lerp = (a, b, t) => a + (b - a) * t;
-					function tick() {
-						curAz = lerp(curAz, targetAz, 0.1);
-						curPol = lerp(curPol, targetPol + nod, 0.18);
-						curTx = lerp(curTx, targetTx, 0.08);
-						curTy = lerp(curTy, targetTy, 0.08);
-						nod *= 0.85;
-						viewer.setAttribute('camera-orbit', `${curAz}deg ${curPol}deg 4.8m`);
-						if (wrap) wrap.style.transform = `translate(${curTx.toFixed(2)}px, ${curTy.toFixed(2)}px)`;
-						requestAnimationFrame(tick);
-					}
-					if (!reducedMotion) {
-						requestAnimationFrame(tick);
-						window.addEventListener('mousemove', (e) => {
-							const nx = e.clientX / window.innerWidth - 0.5;
-							const ny = e.clientY / window.innerHeight - 0.5;
-							targetAz = BASE_AZ - nx * AZ_RANGE * 2;
-							targetPol = BASE_POL + ny * POL_RANGE * 2;
-							targetTx = -nx * 10;
-							targetTy = -ny * 8;
-						}, { passive: true });
-						document.querySelectorAll('#f input').forEach((el) => {
-							el.addEventListener('keydown', (ev) => {
-								if (ev.key && typeof ev.key === 'string' && (ev.key.length === 1 || ev.key === 'Backspace')) {
-									nod = (nod >= 0 ? -1 : 1) * 4;
-								}
-							});
-						});
-					}
-				}
 			})();
+		</script>
+		<script type="module">
+			import { createAgentUI } from '@three-ws/agent-ui';
+
+			const avatarWrap = document.getElementById('login-avatar-wrap');
+			const emailInput = document.getElementById('email');
+			const passwordInput = document.getElementById('password');
+
+			const agent = await createAgentUI({
+				canvas: document.getElementById('avatar-canvas'),
+				clips: ['idle', 'walk', 'lookdown', 'covereyes', 'reaction', 'silly', 'defeated', 'angry', 'facepalm'],
+				subclips: {
+					covereyes: { start: 0, end: 48, fps: 30 },
+				},
+			});
+
+			agent.standOn(avatarWrap, { anchor: 'bottom-center', offsetY: -50 });
+			avatarWrap?.classList.remove('loading');
+
+			window.addEventListener('resize', () => {
+				agent.standOn(avatarWrap, { anchor: 'bottom-center', offsetY: -50 });
+			});
+
+			emailInput.addEventListener('focus', () => {
+				agent.play('lookdown', { loop: true });
+			});
+			emailInput.addEventListener('blur', () => {
+				agent.play('idle', { loop: true });
+			});
+
+			passwordInput.addEventListener('focus', () => {
+				agent.play('covereyes', { loop: false, hold: true });
+				agent.faceFront();
+			});
+			passwordInput.addEventListener('blur', (e) => {
+				if (e.relatedTarget && e.relatedTarget.closest('.password-wrap')) return;
+				agent.play('idle', { loop: true });
+			});
+
+			const pickFail = agent.pickFrom(['reaction', 'defeated', 'angry', 'facepalm']);
+			window.__avatarDisapprove = function () {
+				const pick = pickFail();
+				agent.play(pick, { loop: false });
+				const dur = agent.clip(pick) * 1000;
+				setTimeout(() => {
+					if (agent.currentClip === pick) agent.play('idle', { loop: true });
+				}, dur - 150);
+			};
+
+			window.__avatarCelebrate = function () {
+				agent.play('silly', { loop: true });
+			};
 		</script>
 	</body>
 </html>

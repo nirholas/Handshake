@@ -15,6 +15,7 @@
 
 import { NichAgent } from '../nich-agent.js';
 import { ACTION_TYPES } from '../agent-protocol.js';
+import { ThoughtBubble } from '../thought-bubble.js';
 
 /**
  * @param {import('../viewer.js').Viewer} viewer
@@ -45,6 +46,8 @@ export async function mountTalkingAgent(viewer, config, container, ctx) {
 	//                conversation bucket the creator can browse independently
 	const ids = isPreview ? { visitorId: null, threadId: null } : ensureVisitorThread(widgetId);
 
+	const bubble = new ThoughtBubble(viewer);
+
 	const agent = new NichAgent(container, protocol, null, identity, null, {
 		layout: 'embedded',
 		position: config.chatPosition || 'right',
@@ -55,6 +58,7 @@ export async function mountTalkingAgent(viewer, config, container, ctx) {
 		voiceInput: config.voiceInput !== false,
 		voiceOutput: config.voiceOutput !== false,
 		skipDefaultListeners: true,
+		thoughtBubble: bubble,
 		onSend: async (text) => {
 			if (isPreview) {
 				return { reply: 'Preview mode — save your widget to enable live chat.' };
@@ -88,6 +92,7 @@ export async function mountTalkingAgent(viewer, config, container, ctx) {
 			if (destroyed) return;
 			destroyed = true;
 			try {
+				bubble.dispose();
 				agent.panel?.remove();
 				agent.toggleBtn?.remove();
 			} catch {}

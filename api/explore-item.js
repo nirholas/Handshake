@@ -1,9 +1,9 @@
 /**
  * GET /api/explore-item?kind=onchain&chain=<id>&id=<agentId>
  * GET /api/explore-item?kind=avatar&id=<avatarId>
+ * GET /api/explore-item?kind=solana&id=<asset_pubkey>
  *
- * Returns a single item (onchain agent or public avatar) in the same shape as
- * the /api/explore feed items.
+ * Returns a single item in the same shape as the /api/explore feed items.
  */
 
 import { sql } from './_lib/db.js';
@@ -132,7 +132,45 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { item });
 	}
 
-	return error(res, 400, 'validation_error', 'kind must be onchain or avatar');
+	if (kind === 'solana') {
+		const rows = await sql`
+			SELECT ai.id, ai.name, ai.description, ai.wallet_address, ai.skills,
+			       ai.meta, ai.created_at,
+			       a.thumbnail_key AS avatar_thumb
+			FROM agent_identities ai
+			LEFT JOIN avatars a ON a.id = ai.avatar_id AND a.deleted_at IS NULL
+			WHERE ai.deleted_at IS NULL
+			  AND ai.meta->>'chain_type' = 'solana'
+			  AND ai.meta->>'sol_mint_address' = ${id}
+			LIMIT 1
+		`;
+
+		if (!rows.length) return error(res, 404, 'not_found', 'solana agent not found');
+
+		const r = rows[0];
+		const asset = r.meta?.sol_mint_address;
+		const network = r.meta?.network || 'mainnet';
+		const thumb = r.avatar_thumb ? publicUrl(r.avatar_thumb) : null;
+		const item = {
+			kind: 'solana',
+			asset,
+			name: r.name || 'Solana Agent',
+			description: r.description || '',
+			image: thumb,
+			has3d: !!r.avatar_thumb,
+			skills: r.skills || [],
+			owner: r.wallet_address,
+			ownerShort: shortAddr(r.wallet_address),
+			createdAt: r.created_at,
+			network,
+			explorerUrl: asset ? `https://solscan.io/token/${asset}` : null,
+			ownerExplorerUrl: r.wallet_address ? `https://solscan.io/account/${r.wallet_address}` : null,
+		};
+
+		return json(res, 200, { item });
+	}
+
+	return error(res, 400, 'validation_error', 'kind must be onchain, avatar, or solana');
 });
 
 function shortAddr(a) {

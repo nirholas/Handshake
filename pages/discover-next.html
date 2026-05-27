@@ -155,6 +155,7 @@
 			backdrop-filter: blur(6px);
 		}
 		.card-badge.live { color: var(--ok); border-color: rgba(34,197,94,0.3); }
+		.card-badge.sol { color: #9945ff; border-color: rgba(153,69,255,0.35); }
 
 		/* ── LOAD MORE / STATUS ── */
 		.load-more-wrap { text-align: center; padding: 32px 0 0; }
@@ -220,13 +221,15 @@
 
 	<div class="stats-bar" id="stats-bar" style="display:none">
 		<span><strong id="stat-total">—</strong> agents</span>
+		<span><strong id="stat-solana">—</strong> on Solana</span>
 		<span><strong id="stat-3d">—</strong> with 3D avatars</span>
 	</div>
 
 	<div class="filter-bar" id="filter-bar">
 		<button class="filter-btn active" data-source="all">All</button>
+		<button class="filter-btn" data-source="solana">Solana</button>
 		<button class="filter-btn" data-source="avatar">3D avatars</button>
-		<button class="filter-btn" data-source="onchain">On-chain</button>
+		<button class="filter-btn" data-source="onchain">On-chain (EVM)</button>
 	</div>
 
 	<div class="grid-wrap">
@@ -282,12 +285,14 @@
 				loadMoreBtn.style.display = exhausted ? 'none' : '';
 				loadMoreBtn.disabled = false;
 
-				// Stats on first page
-				if (!params.get('cursor') && d.totalCount != null) {
+				if (!params.get('cursor') && d.totals) {
+					const t = d.totals;
 					const total = document.getElementById('stat-total');
 					const s3d = document.getElementById('stat-3d');
-					if (total) total.textContent = Number(d.totalCount).toLocaleString();
-					if (s3d && d.count3d != null) s3d.textContent = Number(d.count3d).toLocaleString();
+					const sSol = document.getElementById('stat-solana');
+					if (total) total.textContent = Number(t.all).toLocaleString();
+					if (s3d) s3d.textContent = Number(t.threeD).toLocaleString();
+					if (sSol) sSol.textContent = Number(t.solana).toLocaleString();
 					document.getElementById('stats-bar').style.display = '';
 				}
 			} catch (err) {
@@ -324,8 +329,20 @@
 				`;
 				const img = a.querySelector('img');
 				if (img) img.addEventListener('load', () => img.classList.remove('loading'));
+			} else if (item.kind === 'solana') {
+				a.href = `/discover/a/sol/${encodeURIComponent(item.asset)}`;
+				const imgSrc = item.image || '';
+				a.innerHTML = `
+					${imgSrc ? `<img src="${escHtml(imgSrc)}" alt="${escHtml(item.name)}" loading="lazy" class="loading" />` : ''}
+					<span class="card-badge sol">◎ Solana</span>
+					<div class="card-meta">
+						<div class="card-name">${escHtml(item.name || 'Solana Agent')}</div>
+						<div class="card-author">${escHtml(item.ownerShort || '')}</div>
+					</div>
+				`;
+				const img = a.querySelector('img');
+				if (img) img.addEventListener('load', () => img.classList.remove('loading'));
 			} else {
-				// On-chain ERC-8004 agent
 				const detailUrl = `/discover/a/${encodeURIComponent(item.chainId)}/${encodeURIComponent(item.agentId)}`;
 				a.href = detailUrl;
 				const imgSrc = item.image || '';

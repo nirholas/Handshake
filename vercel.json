@@ -1921,6 +1921,10 @@
 			"dest": "/api/discover-detail?kind=onchain&chain=$1&id=$2"
 		},
 		{
+			"src": "/discover/a/sol/([A-Za-z0-9]+)",
+			"dest": "/api/discover-detail?kind=solana&asset=$1"
+		},
+		{
 			"src": "/discover/avatar/([^/]+)",
 			"status": 301,
 			"headers": {

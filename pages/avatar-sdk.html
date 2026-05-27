@@ -31,812 +31,8 @@
 		<link rel="stylesheet" href="/footer.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/avatar-sdk.css" />
 		<script defer src="/footer-newsletter.js"></script>
-
-		<style>
-			:root {
-				--sdk-bg: #000000;
-				--sdk-surface: #0a0a0a;
-				--sdk-card: #111111;
-				--sdk-border: rgba(255, 255, 255, 0.08);
-				--sdk-border-hi: rgba(255, 255, 255, 0.15);
-				--sdk-accent: #ffffff;
-				--sdk-accent2: #ffffff;
-				--sdk-cyan: #ffffff;
-				--sdk-text: #e8e8e8;
-				--sdk-muted: #888888;
-				--sdk-dim: #555555;
-				--sdk-code-bg: #0a0a0a;
-				--sdk-pill-bg: rgba(255, 255, 255, 0.08);
-				--sdk-pill-border: rgba(255, 255, 255, 0.15);
-				--sdk-success: #e8e8e8;
-				--sdk-error: #f87171;
-				--sdk-radius: 14px;
-				--sdk-radius-sm: 8px;
-				--sdk-max: 1080px;
-			}
-
-			html, body {
-				margin: 0;
-				background: var(--sdk-bg);
-				color: var(--sdk-text);
-				-webkit-font-smoothing: antialiased;
-			}
-			body {
-				display: flex;
-				flex-direction: column;
-				min-height: 100vh;
-				font-family: 'Inter', system-ui, sans-serif;
-			}
-
-			/* ── Layout ─────────────────────────────────────────────────── */
-			.sdk-wrap {
-				max-width: var(--sdk-max);
-				margin: 0 auto;
-				padding: 0 24px;
-				width: 100%;
-				box-sizing: border-box;
-			}
-
-			/* ── Hero ───────────────────────────────────────────────────── */
-			.sdk-hero {
-				position: relative;
-				overflow: hidden;
-				padding: 100px 0 0;
-				min-height: 680px;
-				display: flex;
-				align-items: flex-start;
-			}
-			.sdk-hero-bg {
-				position: absolute;
-				inset: 0;
-				pointer-events: none;
-			}
-			.sdk-hero-bg-orb {
-				position: absolute;
-				border-radius: 50%;
-				filter: blur(90px);
-				opacity: 0.4;
-			}
-			.sdk-hero-bg-orb.a {
-				width: 560px; height: 560px;
-				top: -120px; left: -80px;
-				background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-			}
-			.sdk-hero-bg-orb.b {
-				width: 420px; height: 420px;
-				top: 60px; right: -60px;
-				background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-			}
-			.sdk-hero-bg-orb.c {
-				width: 300px; height: 300px;
-				bottom: 0; left: 40%;
-				background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
-			}
-			.sdk-hero-grid {
-				position: absolute;
-				inset: 0;
-				background-image:
-					linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-					linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-				background-size: 48px 48px;
-				mask-image: linear-gradient(to bottom, transparent 0%, #000 25%, #000 65%, transparent 100%);
-				-webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 25%, #000 65%, transparent 100%);
-			}
-
-			.sdk-hero-inner {
-				position: relative;
-				z-index: 1;
-				display: grid;
-				grid-template-columns: 1fr 480px;
-				gap: 48px;
-				align-items: center;
-				padding-bottom: 80px;
-				width: 100%;
-			}
-			.sdk-hero-copy {
-				padding-top: 16px;
-			}
-			.sdk-hero-badge {
-				display: inline-flex;
-				align-items: center;
-				gap: 6px;
-				background: var(--sdk-pill-bg);
-				border: 1px solid var(--sdk-pill-border);
-				border-radius: 100px;
-				padding: 5px 12px 5px 8px;
-				font-size: 12px;
-				font-weight: 600;
-				letter-spacing: 0.04em;
-				color: #e8e8e8;
-				text-transform: uppercase;
-				margin-bottom: 20px;
-			}
-			.sdk-hero-badge-dot {
-				width: 6px; height: 6px;
-				border-radius: 50%;
-				background: #ffffff;
-				box-shadow: 0 0 8px #ffffff;
-				animation: sdk-dot-pulse 2.4s ease-in-out infinite;
-			}
-			@keyframes sdk-dot-pulse {
-				0%,100% { box-shadow: 0 0 6px rgba(255,255,255,0.7); }
-				50% { box-shadow: 0 0 14px rgba(255,255,255,1); }
-			}
-			.sdk-hero-h1 {
-				font-family: 'Space Grotesk', 'Inter', sans-serif;
-				font-size: clamp(36px, 5vw, 58px);
-				font-weight: 700;
-				letter-spacing: -0.025em;
-				line-height: 1.08;
-				margin: 0 0 16px;
-				background: linear-gradient(135deg, #ffffff 0%, #cccccc 45%, #ffffff 100%);
-				-webkit-background-clip: text;
-				-webkit-text-fill-color: transparent;
-				background-clip: text;
-			}
-			.sdk-hero-sub {
-				font-size: 18px;
-				line-height: 1.6;
-				color: var(--sdk-muted);
-				max-width: 52ch;
-				margin: 0 0 32px;
-			}
-			.sdk-hero-sub strong { color: var(--sdk-text); font-weight: 500; }
-
-			/* Install command */
-			.sdk-install-row {
-				display: flex;
-				align-items: center;
-				gap: 10px;
-				flex-wrap: wrap;
-				margin-bottom: 32px;
-			}
-			.sdk-install-cmd {
-				display: flex;
-				align-items: center;
-				gap: 10px;
-				background: var(--sdk-code-bg);
-				border: 1px solid var(--sdk-border-hi);
-				border-radius: var(--sdk-radius-sm);
-				padding: 11px 16px;
-				font-family: 'JetBrains Mono', ui-monospace, monospace;
-				font-size: 14px;
-				color: #e8e8e8;
-				cursor: pointer;
-				transition: border-color 0.15s, box-shadow 0.15s;
-				flex: 1;
-				min-width: 0;
-			}
-			.sdk-install-cmd:hover {
-				border-color: rgba(255,255,255,0.3);
-				box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
-			}
-			.sdk-install-cmd .prompt { color: var(--sdk-dim); user-select: none; flex-shrink: 0; }
-			.sdk-install-cmd .cmd-text { color: #e2e8f0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-			.sdk-install-copy {
-				background: none;
-				border: none;
-				color: var(--sdk-dim);
-				cursor: pointer;
-				padding: 2px 4px;
-				font-family: inherit;
-				font-size: 11px;
-				transition: color 0.15s;
-				flex-shrink: 0;
-			}
-			.sdk-install-copy:hover { color: var(--sdk-text); }
-			.sdk-install-copy.copied { color: var(--sdk-success); }
-
-			.sdk-hero-ctas {
-				display: flex;
-				gap: 12px;
-				flex-wrap: wrap;
-			}
-			.sdk-btn-primary {
-				display: inline-flex;
-				align-items: center;
-				gap: 7px;
-				background: #ffffff;
-				color: #000000;
-				border: none;
-				border-radius: var(--sdk-radius-sm);
-				padding: 12px 22px;
-				font: 600 15px/1 'Inter', sans-serif;
-				cursor: pointer;
-				text-decoration: none;
-				transition: opacity 0.15s, transform 0.1s;
-				box-shadow: 0 4px 20px rgba(255,255,255,0.15);
-			}
-			.sdk-btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
-			.sdk-btn-ghost {
-				display: inline-flex;
-				align-items: center;
-				gap: 7px;
-				background: transparent;
-				color: var(--sdk-muted);
-				border: 1px solid rgba(255,255,255,0.12);
-				border-radius: var(--sdk-radius-sm);
-				padding: 12px 22px;
-				font: 600 15px/1 'Inter', sans-serif;
-				cursor: pointer;
-				text-decoration: none;
-				transition: color 0.15s, border-color 0.15s;
-			}
-			.sdk-btn-ghost:hover { color: #fff; border-color: rgba(255,255,255,0.28); }
-
-			/* Hero 3D viewer */
-			.sdk-hero-viewer {
-				position: relative;
-			}
-			.sdk-hero-viewer-frame {
-				position: relative;
-				border-radius: 20px;
-				overflow: hidden;
-				background: var(--sdk-card);
-				border: 1.5px solid var(--sdk-border-hi);
-				box-shadow:
-					0 0 0 1px rgba(255,255,255,0.04) inset,
-					0 24px 80px -24px rgba(0,0,0,0.8),
-					0 0 60px -10px rgba(255,255,255,0.05);
-				aspect-ratio: 9 / 10;
-				max-height: 500px;
-			}
-			.sdk-hero-viewer-frame three-ws-viewer {
-				display: block;
-				width: 100%;
-				height: 100%;
-			}
-			.sdk-viewer-badge {
-				position: absolute;
-				bottom: 14px;
-				left: 50%;
-				transform: translateX(-50%);
-				background: rgba(3,3,7,0.82);
-				backdrop-filter: blur(10px);
-				border: 1px solid var(--sdk-border);
-				border-radius: 100px;
-				padding: 5px 12px;
-				font-size: 11px;
-				color: var(--sdk-muted);
-				white-space: nowrap;
-				pointer-events: none;
-			}
-			.sdk-viewer-badge code {
-				color: #e8e8e8;
-				font-family: ui-monospace, monospace;
-				font-size: 11px;
-			}
-			.sdk-hero-viewer-glow {
-				position: absolute;
-				inset: -40px;
-				background: radial-gradient(ellipse at 50% 60%, rgba(255,255,255,0.05) 0%, transparent 65%);
-				pointer-events: none;
-				z-index: -1;
-			}
-
-			/* Scroll hint */
-			.sdk-hero-scroll {
-				position: absolute;
-				bottom: 20px;
-				left: 50%;
-				transform: translateX(-50%);
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				gap: 6px;
-				color: var(--sdk-dim);
-				font-size: 11px;
-				letter-spacing: 0.06em;
-				text-transform: uppercase;
-				z-index: 2;
-			}
-			.sdk-hero-scroll-line {
-				width: 1px;
-				height: 40px;
-				background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
-				animation: sdk-scroll-line 2s ease-in-out infinite;
-			}
-			@keyframes sdk-scroll-line {
-				0%,100% { opacity: 0.4; transform: scaleY(0.8); }
-				50% { opacity: 1; transform: scaleY(1); }
-			}
-
-			/* ── Section headings ───────────────────────────────────────── */
-			.sdk-section {
-				padding: 80px 0;
-				border-top: 1px solid rgba(255,255,255,0.05);
-			}
-			.sdk-section:first-of-type { border-top: none; }
-			.sdk-section-label {
-				display: inline-flex;
-				align-items: center;
-				gap: 8px;
-				font-size: 11px;
-				font-weight: 700;
-				letter-spacing: 0.1em;
-				text-transform: uppercase;
-				color: var(--sdk-accent);
-				margin-bottom: 12px;
-			}
-			.sdk-section-label::before {
-				content: '';
-				display: block;
-				width: 20px;
-				height: 1.5px;
-				background: var(--sdk-accent);
-			}
-			.sdk-h2 {
-				font-family: 'Space Grotesk', 'Inter', sans-serif;
-				font-size: clamp(24px, 3.5vw, 36px);
-				font-weight: 700;
-				letter-spacing: -0.02em;
-				margin: 0 0 12px;
-				color: var(--sdk-text);
-			}
-			.sdk-lead {
-				font-size: 17px;
-				line-height: 1.65;
-				color: var(--sdk-muted);
-				max-width: 58ch;
-				margin: 0 0 48px;
-			}
-
-			/* ── Feature grid ───────────────────────────────────────────── */
-			.sdk-feature-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-				gap: 16px;
-			}
-			.sdk-feat-card {
-				background: var(--sdk-card);
-				border: 1.5px solid var(--sdk-border);
-				border-radius: var(--sdk-radius);
-				padding: 24px;
-				transition: border-color 0.2s, box-shadow 0.2s;
-				position: relative;
-				overflow: hidden;
-			}
-			.sdk-feat-card::before {
-				content: '';
-				position: absolute;
-				top: 0; left: 0; right: 0;
-				height: 2px;
-				background: linear-gradient(90deg, transparent, var(--card-accent, #ffffff), transparent);
-				opacity: 0;
-				transition: opacity 0.25s;
-			}
-			.sdk-feat-card:hover {
-				border-color: var(--sdk-border-hi);
-				box-shadow: 0 8px 40px -12px rgba(0,0,0,0.6), 0 0 0 1px var(--sdk-border-hi);
-			}
-			.sdk-feat-card:hover::before { opacity: 1; }
-			.sdk-feat-icon {
-				width: 40px; height: 40px;
-				border-radius: 10px;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				margin-bottom: 16px;
-				font-size: 20px;
-				background: var(--icon-bg, rgba(255,255,255,0.15));
-				border: 1px solid var(--icon-border, rgba(255,255,255,0.25));
-			}
-			.sdk-feat-title {
-				font-family: 'Space Grotesk', sans-serif;
-				font-size: 16px;
-				font-weight: 600;
-				color: var(--sdk-text);
-				margin: 0 0 8px;
-			}
-			.sdk-feat-desc {
-				font-size: 13.5px;
-				line-height: 1.6;
-				color: var(--sdk-muted);
-				margin: 0;
-			}
-			.sdk-feat-tag {
-				display: inline-block;
-				margin-top: 12px;
-				background: rgba(255,255,255,0.05);
-				border: 1px solid rgba(255,255,255,0.08);
-				border-radius: 4px;
-				padding: 2px 7px;
-				font-family: ui-monospace, monospace;
-				font-size: 11px;
-				color: var(--sdk-muted);
-			}
-
-			/* ── Code blocks ────────────────────────────────────────────── */
-			.sdk-code-section {
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				gap: 40px;
-				align-items: start;
-			}
-			.sdk-code-section.full { grid-template-columns: 1fr; }
-			.sdk-code-section.reversed { direction: rtl; }
-			.sdk-code-section.reversed > * { direction: ltr; }
-
-			.sdk-code-copy {
-				position: relative;
-			}
-			.sdk-code-label {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				margin-bottom: 8px;
-			}
-			.sdk-code-filename {
-				font-size: 12px;
-				font-weight: 600;
-				color: var(--sdk-muted);
-				font-family: ui-monospace, monospace;
-				letter-spacing: 0.03em;
-			}
-			.sdk-copy-btn {
-				background: rgba(255,255,255,0.05);
-				border: 1px solid rgba(255,255,255,0.08);
-				border-radius: 5px;
-				color: var(--sdk-muted);
-				cursor: pointer;
-				font: 11px/1 'Inter', sans-serif;
-				padding: 4px 10px;
-				transition: color 0.15s, border-color 0.15s, background 0.15s;
-			}
-			.sdk-copy-btn:hover {
-				color: var(--sdk-text);
-				border-color: rgba(255,255,255,0.18);
-				background: rgba(255,255,255,0.08);
-			}
-			.sdk-copy-btn.copied {
-				color: var(--sdk-success);
-				border-color: rgba(255,255,255,0.3);
-			}
-			pre.sdk-pre {
-				margin: 0;
-				background: var(--sdk-code-bg);
-				border: 1px solid var(--sdk-border);
-				border-radius: var(--sdk-radius-sm);
-				padding: 18px 20px;
-				overflow-x: auto;
-				font-family: 'JetBrains Mono', ui-monospace, monospace;
-				font-size: 13px;
-				line-height: 1.75;
-				color: #e2e8f0;
-				tab-size: 2;
-			}
-			pre.sdk-pre .t-kw { color: #e8e8e8; }
-			pre.sdk-pre .t-str { color: #e8e8e8; }
-			pre.sdk-pre .t-tag { color: #ffffff; }
-			pre.sdk-pre .t-attr { color: #e8e8e8; }
-			pre.sdk-pre .t-cmt { color: #475569; font-style: italic; }
-			pre.sdk-pre .t-fn { color: #e8e8e8; }
-			pre.sdk-pre .t-num { color: #e8e8e8; }
-			pre.sdk-pre .t-op { color: #94a3b8; }
-
-			/* ── Tabs ───────────────────────────────────────────────────── */
-			.sdk-tabs { }
-			.sdk-tab-list {
-				display: flex;
-				gap: 2px;
-				margin-bottom: 0;
-				background: var(--sdk-code-bg);
-				border: 1px solid var(--sdk-border);
-				border-bottom: none;
-				border-radius: var(--sdk-radius-sm) var(--sdk-radius-sm) 0 0;
-				padding: 6px 6px 0;
-				overflow-x: auto;
-			}
-			.sdk-tab-btn {
-				background: none;
-				border: none;
-				color: var(--sdk-dim);
-				cursor: pointer;
-				font: 12px/1.4 'Inter', sans-serif;
-				padding: 7px 14px 9px;
-				border-radius: 5px 5px 0 0;
-				transition: color 0.15s, background 0.15s;
-				white-space: nowrap;
-				position: relative;
-			}
-			.sdk-tab-btn:hover { color: var(--sdk-muted); }
-			.sdk-tab-btn.active {
-				color: var(--sdk-text);
-				background: rgba(255,255,255,0.12);
-			}
-			.sdk-tab-btn.active::after {
-				content: '';
-				position: absolute;
-				bottom: -1px; left: 0; right: 0;
-				height: 2px;
-				background: var(--sdk-accent);
-				border-radius: 2px 2px 0 0;
-			}
-			.sdk-tab-panel pre.sdk-pre {
-				border-radius: 0 var(--sdk-radius-sm) var(--sdk-radius-sm) var(--sdk-radius-sm);
-			}
-			.sdk-tab-panel[hidden] { display: none; }
-
-			/* ── Copy row on tabs ───────────────────────────────────────── */
-			.sdk-tab-copy-row {
-				display: flex;
-				align-items: center;
-				justify-content: flex-end;
-				padding: 6px 12px 0;
-				background: var(--sdk-code-bg);
-				border-left: 1px solid var(--sdk-border);
-				border-right: 1px solid var(--sdk-border);
-			}
-
-			/* ── Quick-start steps ──────────────────────────────────────── */
-			.sdk-steps {
-				display: flex;
-				flex-direction: column;
-				gap: 40px;
-			}
-			.sdk-step {
-				display: grid;
-				grid-template-columns: 40px 1fr;
-				gap: 20px;
-			}
-			.sdk-step-num {
-				width: 40px; height: 40px;
-				border-radius: 50%;
-				background: var(--sdk-pill-bg);
-				border: 1.5px solid var(--sdk-pill-border);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				font-family: 'Space Grotesk', sans-serif;
-				font-size: 16px;
-				font-weight: 700;
-				color: #e8e8e8;
-				flex-shrink: 0;
-				margin-top: 2px;
-			}
-			.sdk-step-body {}
-			.sdk-step-title {
-				font-family: 'Space Grotesk', sans-serif;
-				font-size: 18px;
-				font-weight: 600;
-				color: var(--sdk-text);
-				margin: 0 0 6px;
-			}
-			.sdk-step-desc {
-				font-size: 14px;
-				line-height: 1.65;
-				color: var(--sdk-muted);
-				margin: 0 0 14px;
-			}
-			.sdk-step-desc a { color: #e8e8e8; text-decoration: none; }
-			.sdk-step-desc a:hover { text-decoration: underline; }
-
-			/* ── Creator live demo ──────────────────────────────────────── */
-			.sdk-creator-demo-card {
-				background: var(--sdk-card);
-				border: 1.5px solid var(--sdk-border);
-				border-radius: var(--sdk-radius);
-				padding: 32px;
-				display: flex;
-				flex-direction: column;
-				align-items: flex-start;
-				gap: 16px;
-			}
-			.sdk-creator-desc {
-				font-size: 14px;
-				line-height: 1.65;
-				color: var(--sdk-muted);
-				margin: 0;
-			}
-			.sdk-creator-status {
-				font-size: 13px;
-				font-family: ui-monospace, monospace;
-				padding: 8px 14px;
-				border-radius: 6px;
-				background: rgba(255,255,255,0.04);
-				color: var(--sdk-dim);
-				min-height: 34px;
-				width: 100%;
-				box-sizing: border-box;
-				display: none;
-			}
-			.sdk-creator-status.info { display: block; color: #ffffff; background: rgba(255,255,255,0.06); }
-			.sdk-creator-status.ok   { display: block; color: var(--sdk-success); background: rgba(255,255,255,0.07); }
-			.sdk-creator-status.err  { display: block; color: var(--sdk-error); background: rgba(248,113,113,0.07); }
-			.sdk-creator-status.muted { display: block; color: var(--sdk-dim); }
-
-			/* ── Comparison table ───────────────────────────────────────── */
-			.sdk-table-wrap {
-				overflow-x: auto;
-				border-radius: var(--sdk-radius);
-				border: 1.5px solid var(--sdk-border);
-			}
-			table.sdk-table {
-				width: 100%;
-				border-collapse: collapse;
-				background: var(--sdk-card);
-				font-size: 14px;
-			}
-			.sdk-table th {
-				background: rgba(255,255,255,0.08);
-				padding: 14px 18px;
-				text-align: left;
-				font-family: 'Space Grotesk', sans-serif;
-				font-size: 13px;
-				font-weight: 600;
-				color: var(--sdk-text);
-				letter-spacing: 0.01em;
-				border-bottom: 1px solid var(--sdk-border);
-			}
-			.sdk-table th:first-child { border-radius: var(--sdk-radius-sm) 0 0 0; }
-			.sdk-table th:last-child  { border-radius: 0 var(--sdk-radius-sm) 0 0; }
-			.sdk-table td {
-				padding: 13px 18px;
-				color: var(--sdk-muted);
-				border-bottom: 1px solid rgba(255,255,255,0.04);
-				vertical-align: top;
-			}
-			.sdk-table tr:last-child td { border-bottom: none; }
-			.sdk-table tr:hover td { background: rgba(255,255,255,0.04); }
-			.sdk-table td:first-child { color: var(--sdk-text); font-weight: 500; }
-			.sdk-table .check { color: var(--sdk-success); font-weight: 700; }
-			.sdk-table .cross { color: #f87171; }
-			.sdk-table .col-three { color: #e8e8e8; }
-
-			/* ── API reference cards ────────────────────────────────────── */
-			.sdk-api-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-				gap: 16px;
-			}
-			.sdk-api-card {
-				background: var(--sdk-card);
-				border: 1.5px solid var(--sdk-border);
-				border-radius: var(--sdk-radius);
-				overflow: hidden;
-			}
-			.sdk-api-card-head {
-				background: rgba(255,255,255,0.07);
-				border-bottom: 1px solid var(--sdk-border);
-				padding: 14px 18px;
-				display: flex;
-				align-items: center;
-				gap: 10px;
-			}
-			.sdk-api-export-badge {
-				font-size: 10px;
-				font-weight: 700;
-				letter-spacing: 0.06em;
-				text-transform: uppercase;
-				background: rgba(255,255,255,0.2);
-				border: 1px solid rgba(255,255,255,0.35);
-				color: #e8e8e8;
-				padding: 2px 7px;
-				border-radius: 4px;
-			}
-			.sdk-api-name {
-				font-family: ui-monospace, monospace;
-				font-size: 14px;
-				font-weight: 600;
-				color: var(--sdk-text);
-			}
-			.sdk-api-card-body {
-				padding: 16px 18px;
-			}
-			.sdk-api-desc {
-				font-size: 13.5px;
-				line-height: 1.6;
-				color: var(--sdk-muted);
-				margin: 0 0 14px;
-			}
-			.sdk-api-props {
-				list-style: none;
-				margin: 0;
-				padding: 0;
-				display: flex;
-				flex-direction: column;
-				gap: 8px;
-			}
-			.sdk-api-props li {
-				display: grid;
-				grid-template-columns: auto 1fr;
-				gap: 8px;
-				align-items: baseline;
-			}
-			.sdk-api-prop-name {
-				font-family: ui-monospace, monospace;
-				font-size: 12px;
-				color: #e8e8e8;
-				white-space: nowrap;
-			}
-			.sdk-api-prop-desc {
-				font-size: 12.5px;
-				color: var(--sdk-dim);
-				line-height: 1.5;
-			}
-
-			/* ── CTA banner ─────────────────────────────────────────────── */
-			.sdk-cta-banner {
-				border-radius: var(--sdk-radius);
-				background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%);
-				border: 1.5px solid rgba(255,255,255,0.3);
-				padding: 48px 40px;
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				gap: 32px;
-				position: relative;
-				overflow: hidden;
-			}
-			.sdk-cta-banner::before {
-				content: '';
-				position: absolute;
-				inset: 0;
-				background: radial-gradient(ellipse at 80% 50%, rgba(255,255,255,0.15) 0%, transparent 60%);
-				pointer-events: none;
-			}
-			.sdk-cta-banner-copy {}
-			.sdk-cta-banner h2 {
-				font-family: 'Space Grotesk', sans-serif;
-				font-size: 26px;
-				font-weight: 700;
-				letter-spacing: -0.02em;
-				margin: 0 0 8px;
-				color: var(--sdk-text);
-			}
-			.sdk-cta-banner p {
-				font-size: 15px;
-				color: var(--sdk-muted);
-				margin: 0;
-				max-width: 46ch;
-			}
-			.sdk-cta-banner-actions {
-				display: flex;
-				gap: 12px;
-				flex-shrink: 0;
-				flex-wrap: wrap;
-			}
-
-			/* ── Mobile ─────────────────────────────────────────────────── */
-			@media (max-width: 900px) {
-				.sdk-hero { padding: 72px 0 0; min-height: auto; }
-				.sdk-hero-inner {
-					grid-template-columns: 1fr;
-					gap: 32px;
-					padding-bottom: 48px;
-				}
-				.sdk-hero-viewer { order: -1; }
-				.sdk-hero-viewer-frame {
-					aspect-ratio: 16 / 9;
-					max-height: 280px;
-				}
-				.sdk-hero-scroll { display: none; }
-				.sdk-code-section {
-					grid-template-columns: 1fr;
-					gap: 24px;
-				}
-				.sdk-code-section.reversed { direction: ltr; }
-				.sdk-cta-banner {
-					flex-direction: column;
-					padding: 32px 24px;
-					text-align: center;
-				}
-				.sdk-cta-banner p { margin: 0 auto; }
-				.sdk-cta-banner-actions { justify-content: center; }
-			}
-			@media (max-width: 600px) {
-				.sdk-hero-h1 { font-size: 32px; }
-				.sdk-hero-sub { font-size: 16px; }
-				.sdk-section { padding: 56px 0; }
-				.sdk-h2 { font-size: 24px; }
-				.sdk-feature-grid { grid-template-columns: 1fr; }
-				.sdk-api-grid { grid-template-columns: 1fr; }
-				.sdk-step { grid-template-columns: 32px 1fr; gap: 14px; }
-				.sdk-step-num { width: 32px; height: 32px; font-size: 14px; }
-				pre.sdk-pre { font-size: 11.5px; padding: 14px; }
-			}
-		</style>
 	</head>
 	<body>
 		<header>
@@ -875,7 +71,7 @@
 							npm · @three-ws/avatar
 						</div>
 						<h1 class="sdk-hero-h1" id="sdk-hero-title">
-							The 3D Avatar SDK<br />your app deserves.
+							The 3D Avatar SDK<br />your app <em>deserves</em>.
 						</h1>
 						<p class="sdk-hero-sub">
 							Drop-in <strong>web component</strong>, React bindings, iframe creator, and cloud upload — the complete <strong>Ready Player Me replacement</strong>, open and self-hostable.
@@ -888,8 +84,6 @@
 								tabindex="0"
 								title="Click to copy"
 								aria-label="Copy install command"
-								onclick="this.querySelector('.sdk-install-copy').click()"
-								onkeydown="if(event.key==='Enter'||event.key===' ')this.querySelector('.sdk-install-copy').click()"
 							>
 								<span class="prompt" aria-hidden="true">$</span>
 								<span class="cmd-text" id="install-cmd">npm install @three-ws/avatar three</span>
@@ -902,10 +96,32 @@
 								Quick start
 								<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 							</a>
+							<a href="#playground" class="sdk-btn-ghost">
+								Try playground
+							</a>
 							<a href="https://github.com/nirholas/three.ws/tree/main/avatar-sdk" class="sdk-btn-ghost" target="_blank" rel="noopener">
 								<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
 								GitHub
 							</a>
+						</div>
+
+						<div class="sdk-stats sdk-reveal">
+							<div class="sdk-stat">
+								<span class="sdk-stat-value">&lt;50<span class="sdk-stat-unit">KB</span></span>
+								<span class="sdk-stat-label">Viewer gzipped</span>
+							</div>
+							<div class="sdk-stat">
+								<span class="sdk-stat-value">0<span class="sdk-stat-unit"> deps</span></span>
+								<span class="sdk-stat-label">Beyond Three.js</span>
+							</div>
+							<div class="sdk-stat">
+								<span class="sdk-stat-value">50+</span>
+								<span class="sdk-stat-label">Mixamo animations</span>
+							</div>
+							<div class="sdk-stat">
+								<span class="sdk-stat-value">2<span class="sdk-stat-unit"> lines</span></span>
+								<span class="sdk-stat-label">To render an avatar</span>
+							</div>
 						</div>
 					</div>
 
@@ -933,41 +149,41 @@
 			<!-- ── Features ──────────────────────────────────────────────── -->
 			<section class="sdk-section" aria-labelledby="sdk-feat-title">
 				<div class="sdk-wrap">
-					<div class="sdk-section-label" aria-hidden="true">Capabilities</div>
-					<h2 class="sdk-h2" id="sdk-feat-title">Everything in one package</h2>
-					<p class="sdk-lead">Four building blocks — use what you need, tree-shake the rest.</p>
+					<div class="sdk-section-label sdk-reveal" aria-hidden="true">Capabilities</div>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-feat-title">Everything in one package</h2>
+					<p class="sdk-lead sdk-reveal">Four building blocks — use what you need, tree-shake the rest.</p>
 
 					<div class="sdk-feature-grid">
-						<div class="sdk-feat-card" style="--card-accent:#ffffff">
-							<div class="sdk-feat-icon" style="--icon-bg:rgba(255,255,255,0.15);--icon-border:rgba(255,255,255,0.25)">
-								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2" y="2" width="16" height="16" rx="3" stroke="#e8e8e8" stroke-width="1.5"/><path d="M2 7h16" stroke="#e8e8e8" stroke-width="1.5"/><circle cx="5" cy="4.5" r="1" fill="#e8e8e8"/><circle cx="8" cy="4.5" r="1" fill="#e8e8e8"/></svg>
+						<div class="sdk-feat-card sdk-reveal sdk-reveal-delay-1" style="--card-accent:#a78bfa;--icon-bg:rgba(167,139,250,0.1);--icon-border:rgba(167,139,250,0.2)">
+							<div class="sdk-feat-icon">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2" y="2" width="16" height="16" rx="3" stroke="#a78bfa" stroke-width="1.5"/><path d="M2 7h16" stroke="#a78bfa" stroke-width="1.5"/><circle cx="5" cy="4.5" r="1" fill="#a78bfa"/><circle cx="8" cy="4.5" r="1" fill="#a78bfa"/></svg>
 							</div>
 							<p class="sdk-feat-title">Web Component</p>
 							<p class="sdk-feat-desc">Drop <code>&lt;agent-3d&gt;</code> or the lightweight <code>&lt;three-ws-viewer&gt;</code> into any HTML page or framework. Self-registers on import.</p>
 							<span class="sdk-feat-tag">framework-agnostic</span>
 						</div>
 
-						<div class="sdk-feat-card" style="--card-accent:#ffffff">
-							<div class="sdk-feat-icon" style="--icon-bg:rgba(255,255,255,0.15);--icon-border:rgba(255,255,255,0.25)">
-								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="3" stroke="#e8e8e8" stroke-width="1.5"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#e8e8e8" stroke-width="1.5" stroke-linecap="round"/><path d="M5.64 5.64l1.42 1.42M12.94 12.94l1.42 1.42M5.64 14.36l1.42-1.42M12.94 7.06l1.42-1.42" stroke="#e8e8e8" stroke-width="1.3" stroke-linecap="round"/></svg>
+						<div class="sdk-feat-card sdk-reveal sdk-reveal-delay-2" style="--card-accent:#818cf8;--icon-bg:rgba(129,140,248,0.1);--icon-border:rgba(129,140,248,0.2)">
+							<div class="sdk-feat-icon">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="3" stroke="#818cf8" stroke-width="1.5"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M5.64 5.64l1.42 1.42M12.94 12.94l1.42 1.42M5.64 14.36l1.42-1.42M12.94 7.06l1.42-1.42" stroke="#818cf8" stroke-width="1.3" stroke-linecap="round"/></svg>
 							</div>
 							<p class="sdk-feat-title">React Bindings</p>
 							<p class="sdk-feat-desc">First-class React 18+ components — <code>&lt;Avatar&gt;</code>, <code>&lt;AgentAvatar&gt;</code>, <code>&lt;AvatarCreator&gt;</code> and a <code>useAvatar(id)</code> hook.</p>
 							<span class="sdk-feat-tag">@three-ws/avatar/react</span>
 						</div>
 
-						<div class="sdk-feat-card" style="--card-accent:#ffffff">
-							<div class="sdk-feat-icon" style="--icon-bg:rgba(255,255,255,0.12);--icon-border:rgba(255,255,255,0.22)">
-								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2.5" stroke="#e8e8e8" stroke-width="1.5"/><path d="M8 3v14" stroke="#e8e8e8" stroke-width="1.3" stroke-dasharray="2 2"/><path d="M13 8l-3 4-2-2" stroke="#e8e8e8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+						<div class="sdk-feat-card sdk-reveal sdk-reveal-delay-3" style="--card-accent:#67e8f9;--icon-bg:rgba(103,232,249,0.1);--icon-border:rgba(103,232,249,0.2)">
+							<div class="sdk-feat-icon">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2.5" stroke="#67e8f9" stroke-width="1.5"/><path d="M8 3v14" stroke="#67e8f9" stroke-width="1.3" stroke-dasharray="2 2"/><path d="M13 8l-3 4-2-2" stroke="#67e8f9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 							</div>
 							<p class="sdk-feat-title">Creator Iframe</p>
 							<p class="sdk-feat-desc">Open the three.ws Avatar Studio or Avaturn in a modal. Resolves with a GLB Blob via postMessage — no polling, no storage tokens required.</p>
 							<span class="sdk-feat-tag">AvatarCreator class</span>
 						</div>
 
-						<div class="sdk-feat-card" style="--card-accent:#e8e8e8">
-							<div class="sdk-feat-icon" style="--icon-bg:rgba(255,255,255,0.12);--icon-border:rgba(255,255,255,0.22)">
-								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v10M10 3l-3 3M10 3l3 3" stroke="#e8e8e8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 13v3a1 1 0 001 1h10a1 1 0 001-1v-3" stroke="#e8e8e8" stroke-width="1.5" stroke-linecap="round"/></svg>
+						<div class="sdk-feat-card sdk-reveal sdk-reveal-delay-4" style="--card-accent:#4ade80;--icon-bg:rgba(74,222,128,0.1);--icon-border:rgba(74,222,128,0.2)">
+							<div class="sdk-feat-icon">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v10M10 3l-3 3M10 3l3 3" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 13v3a1 1 0 001 1h10a1 1 0 001-1v-3" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round"/></svg>
 							</div>
 							<p class="sdk-feat-title">Cloud Upload</p>
 							<p class="sdk-feat-desc">One-call <code>saveBlob()</code> presigns to R2, uploads, registers the avatar, auto-generates USDZ for iOS and a half-body variant for VR.</p>
@@ -977,16 +193,79 @@
 				</div>
 			</section>
 
+			<!-- ── Interactive Playground ─────────────────────────────────── -->
+			<section class="sdk-section" id="playground" aria-labelledby="sdk-pg-title">
+				<div class="sdk-wrap">
+					<div class="sdk-section-label sdk-reveal" aria-hidden="true">Playground</div>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-pg-title">Try it live</h2>
+					<p class="sdk-lead sdk-reveal">Configure the viewer, see the result in real time, copy the code.</p>
+
+					<div class="sdk-playground sdk-reveal" id="sdk-playground">
+						<div class="sdk-playground-layout">
+							<div class="sdk-playground-stage">
+								<span class="sdk-playground-stage-label">Preview</span>
+								<three-ws-viewer
+									id="pg-viewer"
+									src="/avatars/default.glb"
+									background="#09090b"
+									alt="Playground avatar preview"
+									style="width:100%;height:100%"
+								></three-ws-viewer>
+							</div>
+							<div class="sdk-playground-controls">
+								<div class="sdk-playground-header">
+									<span class="sdk-playground-header-title">Configuration</span>
+									<button class="sdk-copy-btn" id="pg-copy-btn">Copy code</button>
+								</div>
+								<div class="sdk-playground-config">
+									<div class="sdk-pg-field">
+										<label for="pg-avatar">Avatar</label>
+										<select id="pg-avatar">
+											<option value="/avatars/default.glb">Default avatar</option>
+											<option value="/avatars/cz.glb">CZ avatar</option>
+										</select>
+									</div>
+									<div class="sdk-pg-field">
+										<label for="pg-bg">Background</label>
+										<select id="pg-bg">
+											<option value="#09090b">Dark (#09090b)</option>
+											<option value="#1a1a2e">Navy (#1a1a2e)</option>
+											<option value="#0f172a">Slate (#0f172a)</option>
+											<option value="transparent">Transparent</option>
+											<option value="#ffffff">White (#ffffff)</option>
+										</select>
+									</div>
+									<div class="sdk-pg-field">
+										<label for="pg-component">Component</label>
+										<select id="pg-component">
+											<option value="three-ws-viewer">three-ws-viewer (lightweight)</option>
+											<option value="agent-3d">agent-3d (full runtime)</option>
+										</select>
+									</div>
+									<div class="sdk-pg-field sdk-pg-toggle-row">
+										<label>Auto-rotate</label>
+										<button class="sdk-pg-toggle" id="pg-rotate" aria-label="Toggle auto-rotate" role="switch" aria-checked="false"></button>
+									</div>
+								</div>
+								<div class="sdk-playground-code">
+									<pre class="sdk-pre" id="pg-code-output"></pre>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
 			<!-- ── Quick start ───────────────────────────────────────────── -->
 			<section class="sdk-section" id="quickstart" aria-labelledby="sdk-qs-title">
 				<div class="sdk-wrap">
-					<div class="sdk-section-label" aria-hidden="true">Quick start</div>
-					<h2 class="sdk-h2" id="sdk-qs-title">Up in 60 seconds</h2>
-					<p class="sdk-lead">Three steps from zero to a live 3D avatar in your page.</p>
+					<div class="sdk-section-label sdk-reveal" aria-hidden="true">Quick start</div>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-qs-title">Up in 60 seconds</h2>
+					<p class="sdk-lead sdk-reveal">Three steps from zero to a live 3D avatar in your page.</p>
 
 					<div class="sdk-steps">
 						<!-- Step 1 -->
-						<div class="sdk-step">
+						<div class="sdk-step sdk-reveal">
 							<div class="sdk-step-num" aria-hidden="true">1</div>
 							<div class="sdk-step-body">
 								<h3 class="sdk-step-title">Install</h3>
@@ -1002,7 +281,7 @@
 						</div>
 
 						<!-- Step 2 -->
-						<div class="sdk-step">
+						<div class="sdk-step sdk-reveal">
 							<div class="sdk-step-num" aria-hidden="true">2</div>
 							<div class="sdk-step-body">
 								<h3 class="sdk-step-title">Add the web component</h3>
@@ -1056,7 +335,7 @@ document.body.<span class="t-fn">appendChild</span>(el)<span class="t-op">;</spa
 						</div>
 
 						<!-- Step 3 -->
-						<div class="sdk-step">
+						<div class="sdk-step sdk-reveal">
 							<div class="sdk-step-num" aria-hidden="true">3</div>
 							<div class="sdk-step-body">
 								<h3 class="sdk-step-title">Let users build their avatar</h3>
@@ -1092,12 +371,12 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 				<div class="sdk-wrap">
 					<div class="sdk-code-section">
 						<div>
-							<div class="sdk-section-label" aria-hidden="true">Pure visual</div>
-							<h2 class="sdk-h2" id="sdk-viewer-title"><code>&lt;three-ws-viewer&gt;</code></h2>
-							<p class="sdk-lead" style="margin-bottom:24px">
+							<div class="sdk-section-label sdk-reveal" aria-hidden="true">Pure visual</div>
+							<h2 class="sdk-h2 sdk-reveal" id="sdk-viewer-title"><code>&lt;three-ws-viewer&gt;</code></h2>
+							<p class="sdk-lead sdk-reveal" style="margin-bottom:24px">
 								When you don't need the full agent runtime — chat, voice, lipsync — use the lightweight viewer. It only loads Three.js and OrbitControls. <strong>No WebSocket. No AI.</strong>
 							</p>
-							<div class="sdk-code-copy">
+							<div class="sdk-code-copy sdk-reveal">
 								<div class="sdk-code-label">
 									<span class="sdk-code-filename">pure-viewer.html</span>
 									<button class="sdk-copy-btn" data-target="code-viewer">Copy</button>
@@ -1114,11 +393,11 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 <span class="t-tag">&gt;&lt;/three-ws-viewer&gt;</span></pre>
 							</div>
 						</div>
-						<div style="display:flex;flex-direction:column;gap:16px">
+						<div class="sdk-reveal" style="display:flex;flex-direction:column;gap:16px">
 							<div style="background:var(--sdk-card);border:1.5px solid var(--sdk-border);border-radius:var(--sdk-radius);overflow:hidden;aspect-ratio:3/4;max-height:420px">
 								<three-ws-viewer
 									src="/avatars/default.glb"
-									background="#090912"
+									background="#060608"
 									alt="Lightweight viewer demo"
 									style="width:100%;height:100%"
 								></three-ws-viewer>
@@ -1136,12 +415,12 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 				<div class="sdk-wrap">
 					<div class="sdk-code-section reversed">
 						<div>
-							<div class="sdk-section-label" aria-hidden="true">Creator</div>
-							<h2 class="sdk-h2" id="sdk-creator-title">AvatarCreator</h2>
-							<p class="sdk-lead" style="margin-bottom:24px">
+							<div class="sdk-section-label sdk-reveal" aria-hidden="true">Creator</div>
+							<h2 class="sdk-h2 sdk-reveal" id="sdk-creator-title">AvatarCreator</h2>
+							<p class="sdk-lead sdk-reveal" style="margin-bottom:24px">
 								Opens the three.ws Avatar Studio in a fullscreen modal. The user builds their avatar and clicks Export — you receive a GLB <code>Blob</code> in the callback. No OAuth, no API keys needed for the modal itself.
 							</p>
-							<div class="sdk-creator-demo-card">
+							<div class="sdk-creator-demo-card sdk-reveal">
 								<p class="sdk-creator-desc">
 									Click the button to open the Avatar Studio right here. After you export an avatar the file size will appear below.
 								</p>
@@ -1152,7 +431,7 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 								<div id="sdk-creator-status" class="sdk-creator-status" role="status" aria-live="polite"></div>
 							</div>
 						</div>
-						<div>
+						<div class="sdk-reveal">
 							<div class="sdk-code-copy">
 								<div class="sdk-code-label">
 									<span class="sdk-code-filename">creator-minimal.js</span>
@@ -1189,11 +468,11 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 			<!-- ── React ─────────────────────────────────────────────────── -->
 			<section class="sdk-section" aria-labelledby="sdk-react-title">
 				<div class="sdk-wrap">
-					<div class="sdk-section-label" aria-hidden="true">React</div>
-					<h2 class="sdk-h2" id="sdk-react-title">React 18+ bindings</h2>
-					<p class="sdk-lead">All four exports are typed and tree-shakeable. Marked <code>'use client'</code> for Next.js App Router.</p>
+					<div class="sdk-section-label sdk-reveal" aria-hidden="true">React</div>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-react-title">React 18+ bindings</h2>
+					<p class="sdk-lead sdk-reveal">All four exports are typed and tree-shakeable. Marked <code>'use client'</code> for Next.js App Router.</p>
 
-					<div class="sdk-tabs">
+					<div class="sdk-tabs sdk-reveal">
 						<div class="sdk-tab-list" role="tablist" aria-label="React component examples">
 							<button class="sdk-tab-btn active" role="tab" aria-selected="true">&lt;Avatar&gt;</button>
 							<button class="sdk-tab-btn" role="tab" aria-selected="false">&lt;AgentAvatar&gt;</button>
@@ -1273,12 +552,12 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 			<!-- ── API Reference ─────────────────────────────────────────── -->
 			<section class="sdk-section" aria-labelledby="sdk-api-title">
 				<div class="sdk-wrap">
-					<div class="sdk-section-label" aria-hidden="true">API Reference</div>
-					<h2 class="sdk-h2" id="sdk-api-title">Exports</h2>
-					<p class="sdk-lead">Everything the package surfaces.</p>
+					<div class="sdk-section-label sdk-reveal" aria-hidden="true">API Reference</div>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-api-title">Exports</h2>
+					<p class="sdk-lead sdk-reveal">Everything the package surfaces.</p>
 
 					<div class="sdk-api-grid">
-						<div class="sdk-api-card">
+						<div class="sdk-api-card sdk-reveal sdk-reveal-delay-1">
 							<div class="sdk-api-card-head">
 								<span class="sdk-api-export-badge">element</span>
 								<span class="sdk-api-name">&lt;agent-3d&gt;</span>
@@ -1294,7 +573,7 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 							</div>
 						</div>
 
-						<div class="sdk-api-card">
+						<div class="sdk-api-card sdk-reveal sdk-reveal-delay-2">
 							<div class="sdk-api-card-head">
 								<span class="sdk-api-export-badge">element</span>
 								<span class="sdk-api-name">&lt;three-ws-viewer&gt;</span>
@@ -1310,7 +589,7 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 							</div>
 						</div>
 
-						<div class="sdk-api-card">
+						<div class="sdk-api-card sdk-reveal sdk-reveal-delay-3">
 							<div class="sdk-api-card-head">
 								<span class="sdk-api-export-badge">class</span>
 								<span class="sdk-api-name">AvatarCreator</span>
@@ -1326,7 +605,7 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 							</div>
 						</div>
 
-						<div class="sdk-api-card">
+						<div class="sdk-api-card sdk-reveal sdk-reveal-delay-4">
 							<div class="sdk-api-card-head">
 								<span class="sdk-api-export-badge">function</span>
 								<span class="sdk-api-name">saveBlob(blob, opts)</span>
@@ -1348,11 +627,11 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 			<!-- ── Comparison ────────────────────────────────────────────── -->
 			<section class="sdk-section" aria-labelledby="sdk-compare-title">
 				<div class="sdk-wrap">
-					<div class="sdk-section-label" aria-hidden="true">Comparison</div>
-					<h2 class="sdk-h2" id="sdk-compare-title">vs. Ready Player Me</h2>
-					<p class="sdk-lead">RPM was acquired and closed their free tier. Here's what you get when you migrate.</p>
+					<div class="sdk-section-label sdk-reveal" aria-hidden="true">Comparison</div>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-compare-title">vs. Ready Player Me</h2>
+					<p class="sdk-lead sdk-reveal">RPM was acquired and closed their free tier. Here's what you get when you migrate.</p>
 
-					<div class="sdk-table-wrap" role="region" aria-label="Comparison table" tabindex="0">
+					<div class="sdk-table-wrap sdk-reveal" role="region" aria-label="Comparison table" tabindex="0">
 						<table class="sdk-table">
 							<thead>
 								<tr>
@@ -1426,7 +705,7 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 			<!-- ── CTA ───────────────────────────────────────────────────── -->
 			<section class="sdk-section" aria-labelledby="sdk-cta-title">
 				<div class="sdk-wrap">
-					<div class="sdk-cta-banner">
+					<div class="sdk-cta-banner sdk-reveal">
 						<div class="sdk-cta-banner-copy">
 							<h2 id="sdk-cta-title">Ready to ship 3D avatars?</h2>
 							<p>Create your first avatar free. No credit card. Push to production in minutes.</p>

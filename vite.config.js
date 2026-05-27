@@ -47,6 +47,11 @@ function discoverDashboardNextInputs() {
 const appConfig = {
 	server: {
 		proxy: {
+			'/r2-proxy': {
+				target: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev',
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/r2-proxy/, ''),
+			},
 			'/ingest/static': {
 				target: 'https://us-assets.i.posthog.com',
 				changeOrigin: true,
@@ -920,6 +925,31 @@ const appConfig = {
 					return;
 				}
 				cpSync(src, resolve(__dirname, 'dist/avatar-studio'), { recursive: true });
+			},
+		},
+		{
+			// Rewrite R2 public-bucket URLs in proxied /api/avatars/* responses so
+			// the <agent-3d> component (loaded from CDN) always receives /r2-proxy/*
+			// URLs instead of raw r2.dev URLs that fail CORS in Codespaces / localhost.
+			name: 'r2-url-rewrite-api',
+			configureServer(server) {
+				const R2_PUBLIC_RE = /https?:\/\/pub-[a-f0-9]+\.r2\.dev\//g;
+				server.middlewares.use(async (req, res, next) => {
+					if (!req.url?.startsWith('/api/avatars/')) return next();
+					try {
+						const upstream = new URL(req.url, DEV_API_PROXY);
+						const resp = await fetch(upstream.href, {
+							headers: { accept: 'application/json' },
+						});
+						const text = await resp.text();
+						const rewritten = text.replace(R2_PUBLIC_RE, '/r2-proxy/');
+						res.statusCode = resp.status;
+						res.setHeader('content-type', resp.headers.get('content-type') || 'application/json');
+						res.end(rewritten);
+					} catch (err) {
+						next();
+					}
+				});
 			},
 		},
 		{

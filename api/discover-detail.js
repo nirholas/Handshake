@@ -75,6 +75,44 @@ export default wrap(async (req, res) => {
 			canonicalUrl = `${origin}/discover/a/${chainId}/${id}`;
 			ogImageUrl = `${origin}/api/a-og?chain=${chainId}&id=${encodeURIComponent(id)}`;
 		}
+	} else if (kind === 'solana') {
+		const asset = url.searchParams.get('asset');
+		if (!asset) return sendShell(res, origin, null, null, null);
+
+		const rows = await sql`
+			SELECT ai.id, ai.name, ai.description, ai.wallet_address, ai.skills,
+			       ai.meta, ai.created_at,
+			       a.thumbnail_key AS avatar_thumb
+			FROM agent_identities ai
+			LEFT JOIN avatars a ON a.id = ai.avatar_id AND a.deleted_at IS NULL
+			WHERE ai.deleted_at IS NULL
+			  AND ai.meta->>'chain_type' = 'solana'
+			  AND ai.meta->>'sol_mint_address' = ${asset}
+			LIMIT 1
+		`.catch(() => []);
+
+		if (rows.length) {
+			const r = rows[0];
+			const network = r.meta?.network || 'mainnet';
+			const thumb = r.avatar_thumb ? publicUrl(r.avatar_thumb) : null;
+			item = {
+				kind: 'solana',
+				asset,
+				name: r.name || 'Solana Agent',
+				description: r.description || '',
+				image: thumb,
+				has3d: !!r.avatar_thumb,
+				skills: r.skills || [],
+				owner: r.wallet_address,
+				ownerShort: shortAddr(r.wallet_address),
+				createdAt: r.created_at,
+				network,
+				explorerUrl: `https://solscan.io/token/${asset}`,
+				ownerExplorerUrl: r.wallet_address ? `https://solscan.io/account/${r.wallet_address}` : null,
+			};
+			canonicalUrl = `${origin}/discover/a/sol/${asset}`;
+			ogImageUrl = thumb || `${origin}/og-image.png`;
+		}
 	} else if (kind === 'avatar') {
 		if (!id) return sendShell(res, origin, null, null, null);
 

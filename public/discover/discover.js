@@ -81,7 +81,7 @@ const only3dParam = initialParams.get('only3d');
 const initialFilter = only3dParam === '0' ? 'all' : '3d';
 const initialChain = initialParams.get('chain') || '';
 const initialQuery = initialParams.get('q') || '';
-const initialSource = ['onchain', 'avatar'].includes(initialParams.get('source'))
+const initialSource = ['onchain', 'avatar', 'solana'].includes(initialParams.get('source'))
 	? initialParams.get('source')
 	: 'all';
 
@@ -388,6 +388,7 @@ function clearAllFilters() {
 
 function renderCard(item) {
 	if (item.kind === 'avatar') return renderAvatarCard(item);
+	if (item.kind === 'solana') return renderSolanaCard(item);
 	return renderOnchainCard(item);
 }
 
@@ -533,6 +534,54 @@ function renderAvatarCard(item) {
 						data-avatar-id="${escapeAttr(String(item.avatarId))}"
 						data-glb-url="${escapeAttr(item.glbUrl || '')}"
 						data-name="${escapeAttr(item.name || 'Avatar')}">Embed</button>
+				</div>
+			</div>
+		</div>
+	`;
+	return card;
+}
+
+function renderSolanaCard(item) {
+	const card = document.createElement('article');
+	card.className = 'explore-card' + (item.has3d ? ' explore-card--3d' : '');
+
+	const thumb = renderThumb({
+		image: item.image,
+		glbUrl: null,
+		has3d: item.has3d,
+		alt: item.name,
+	});
+
+	const badges = [
+		`<span class="explore-badge explore-badge--solana">◎ Solana</span>`,
+	];
+	if (item.has3d) badges.push(`<span class="explore-badge explore-badge--3d">3D</span>`);
+
+	const skillChips = (item.skills || [])
+		.slice(0, 3)
+		.map((s) => `<span class="explore-svc">${escapeHtml(s)}</span>`)
+		.join('');
+
+	const detailUrl = `/discover/a/sol/${encodeURIComponent(item.asset)}`;
+
+	card.innerHTML = `
+		<a class="explore-card-thumb" href="${escapeAttr(detailUrl)}">
+			${thumb}
+		</a>
+		<div class="explore-card-body">
+			<div class="explore-card-head">
+				<h3 class="explore-card-name"><a class="explore-card-name-link" href="${escapeAttr(detailUrl)}">${escapeHtml(item.name)}</a></h3>
+			</div>
+			<div class="explore-card-badges">${badges.join('')}</div>
+			${item.description ? `<p class="explore-card-desc">${escapeHtml(item.description)}</p>` : ''}
+			${skillChips ? `<div class="explore-card-svcs">${skillChips}</div>` : ''}
+			<div class="explore-card-foot">
+				<a class="explore-card-owner" href="${escapeAttr(item.ownerExplorerUrl || '#')}" target="_blank" rel="noopener" title="${escapeAttr(item.owner || '')}">
+					${escapeHtml(item.ownerShort || '')}
+				</a>
+				<div class="explore-card-actions">
+					<a class="explore-card-link" href="${escapeAttr(detailUrl)}">Details</a>
+					<a class="explore-card-link" href="${escapeAttr(item.explorerUrl || '#')}" target="_blank" rel="noopener">Solscan</a>
 				</div>
 			</div>
 		</div>
