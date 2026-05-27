@@ -1,15 +1,15 @@
 /* Agent Marketplace — LobeHub-style discovery + detail */
 
 :root {
-	--mk-bg: #0a0a0a;
-	--mk-panel: #111;
-	--mk-panel-2: #161616;
-	--mk-border: #1f1f1f;
+	--mk-bg: #000000;
+	--mk-panel: #0a0a0a;
+	--mk-panel-2: #111111;
+	--mk-border: #1a1a1a;
 	--mk-border-2: #2a2a2a;
-	--mk-text: #f4f4f5;
-	--mk-text-2: #a1a1aa;
-	--mk-text-3: #71717a;
-	--mk-accent: #fafafa;
+	--mk-text: #e8e8e8;
+	--mk-text-2: #888888;
+	--mk-text-3: #555555;
+	--mk-accent: #ffffff;
 	--mk-radius: 14px;
 }
 

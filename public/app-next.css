@@ -7,15 +7,15 @@
    ========================================================================== */
 
 :root {
-	--nxt-bg-0: #050505;
-	--nxt-bg-1: #0b0b0c;
-	--nxt-ink: #e8e8e6;
-	--nxt-ink-dim: #9a9a98;
-	--nxt-ink-fade: #6a6a68;
-	--nxt-accent: #c8c8c4;
-	--nxt-accent-soft: rgba(255, 255, 255, 0.08);
-	--nxt-glass: rgba(12, 12, 12, 0.55);
-	--nxt-glass-strong: rgba(12, 12, 12, 0.82);
+	--nxt-bg-0: #000000;
+	--nxt-bg-1: #0a0a0a;
+	--nxt-ink: #e8e8e8;
+	--nxt-ink-dim: #888888;
+	--nxt-ink-fade: #555555;
+	--nxt-accent: #ffffff;
+	--nxt-accent-soft: rgba(255, 255, 255, 0.10);
+	--nxt-glass: rgba(0, 0, 0, 0.55);
+	--nxt-glass-strong: rgba(0, 0, 0, 0.82);
 	--nxt-stroke: rgba(255, 255, 255, 0.07);
 	--nxt-stroke-strong: rgba(255, 255, 255, 0.13);
 	--nxt-radius: 14px;

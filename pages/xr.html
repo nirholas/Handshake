@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>XR · three.ws</title>
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+		/>
+		<meta name="description" content="See your 3D avatar in AR — full body or half body, on any real surface. WebXR immersive-ar, Android ARCore, and camera passthrough supported." />
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="XR · three.ws" />
+		<meta property="og:description" content="Your AI avatar in augmented reality — place it on any real surface." />
+		<meta property="og:url" content="https://three.ws/xr" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+
+		<style>
+			*, *::before, *::after { box-sizing: border-box; }
+
+			:root {
+				--bg: #04050a;
+				--surface: rgba(12, 13, 22, 0.82);
+				--surface-solid: #0c0d16;
+				--border: rgba(255,255,255,0.07);
+				--border-accent: rgba(61,193,255,0.28);
+				--text: #f0f1f5;
+				--text-2: #7a7d8c;
+				--accent: #3dc1ff;
+				--accent-dim: rgba(61,193,255,0.12);
+				--danger: #f87171;
+				--success: #4ade80;
+				--purple: #a78bfa;
+				--radius: 16px;
+			}
+
+			html, body {
+				margin: 0; padding: 0;
+				width: 100%; height: 100%;
+				overflow: hidden;
+				background: var(--bg);
+				color: var(--text);
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				-webkit-font-smoothing: antialiased;
+				touch-action: none;
+				overscroll-behavior: none;
+			}
+
+			/* ── Stage ── */
+			#xr-stage {
+				position: fixed; inset: 0;
+				background:
+					radial-gradient(ellipse 100% 80% at 50% 0%, #0d1a2e 0%, transparent 65%),
+					radial-gradient(ellipse 60% 40% at 80% 80%, #0a0818 0%, transparent 55%),
+					var(--bg);
+			}
+
+			#xr-canvas {
+				position: absolute; inset: 0;
+				width: 100%; height: 100%;
+				display: block;
+			}
+
+			#xr-camera-feed {
+				position: fixed; inset: 0;
+				width: 100vw; height: 100vh;
+				object-fit: cover;
+				z-index: 1;
+				display: none;
+				pointer-events: none;
+			}
+			#xr-stage.is-ar #xr-camera-feed { display: block; }
+			#xr-stage.is-ar #xr-canvas { position: relative; z-index: 2; background: transparent !important; }
+
+			/* ── Top bar ── */
+			#xr-topbar {
+				position: fixed; top: 0; left: 0; right: 0;
+				z-index: 20;
+				display: flex; align-items: center; gap: 12px;
+				padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 14px;
+				background: linear-gradient(to bottom, rgba(4,5,10,0.9) 0%, transparent 100%);
+				pointer-events: none;
+			}
+			#xr-topbar > * { pointer-events: auto; }
+
+			.xr-back {
+				display: flex; align-items: center; justify-content: center;
+				width: 36px; height: 36px;
+				background: var(--surface); border: 1px solid var(--border);
+				border-radius: 50%;
+				color: var(--text-2); text-decoration: none;
+				backdrop-filter: blur(12px);
+				transition: background 0.15s, color 0.15s;
+				flex-shrink: 0;
+			}
+			.xr-back:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+			.xr-back svg { display: block; }
+
+			.xr-wordmark {
+				flex: 1;
+				font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+				color: var(--text);
+			}
+			.xr-wordmark span { color: var(--accent); }
+
+			#xr-device-chip {
+				font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+				text-transform: uppercase; padding: 4px 10px; border-radius: 999px;
+				border: 1px solid; backdrop-filter: blur(12px);
+			}
+			.xr-chip--webxr  { background: rgba(61,193,255,0.1); color: #3dc1ff; border-color: rgba(61,193,255,0.3); }
+			.xr-chip--arcore { background: rgba(74,222,128,0.1); color: #4ade80; border-color: rgba(74,222,128,0.3); }
+			.xr-chip--ios    { background: rgba(167,139,250,0.1); color: #a78bfa; border-color: rgba(167,139,250,0.3); }
+			.xr-chip--camera { background: rgba(251,191,36,0.1); color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+			.xr-chip--none   { background: rgba(255,255,255,0.04); color: var(--text-2); border-color: var(--border); }
+
+			/* ── Loading overlay ── */
+			#xr-loading {
+				position: fixed; inset: 0; z-index: 30;
+				display: flex; flex-direction: column;
+				align-items: center; justify-content: center; gap: 14px;
+				background: var(--bg);
+			}
+			.xr-spinner {
+				width: 32px; height: 32px;
+				border: 2.5px solid rgba(61,193,255,0.15);
+				border-top-color: var(--accent);
+				border-radius: 50%;
+				animation: spin 0.8s linear infinite;
+			}
+			.xr-loading-text {
+				font-size: 14px; color: var(--text-2); font-weight: 500; letter-spacing: 0.01em;
+			}
+			@keyframes spin { to { transform: rotate(360deg); } }
+
+			/* ── Bottom panel ── */
+			#xr-panel {
+				position: fixed; bottom: 0; left: 0; right: 0;
+				z-index: 20;
+				padding: 18px 18px calc(env(safe-area-inset-bottom, 0px) + 18px);
+				background: linear-gradient(to top, rgba(4,5,10,0.96) 40%, transparent 100%);
+				display: flex; flex-direction: column; gap: 14px;
+			}
+
+			/* Avatar info row */
+			.xr-avatar-row {
+				display: flex; align-items: center; gap: 10px;
+			}
+			.xr-avatar-icon {
+				width: 34px; height: 34px;
+				background: linear-gradient(135deg, #1a2540, #110e28);
+				border: 1px solid var(--border-accent);
+				border-radius: 50%;
+				display: flex; align-items: center; justify-content: center;
+				flex-shrink: 0;
+			}
+			.xr-avatar-icon svg { display: block; }
+			#xr-avatar-label {
+				font-size: 14px; font-weight: 600; color: var(--text);
+				letter-spacing: -0.01em;
+			}
+			.xr-avatar-sub {
+				font-size: 12px; color: var(--text-2); margin-left: auto;
+			}
+
+			/* Body toggle */
+			.xr-toggle {
+				display: flex; gap: 6px;
+				background: rgba(255,255,255,0.04);
+				border: 1px solid var(--border);
+				border-radius: 12px; padding: 4px;
+			}
+			.xr-toggle-btn {
+				flex: 1;
+				padding: 9px 12px;
+				border: none; border-radius: 9px;
+				font: inherit; font-size: 13px; font-weight: 600;
+				cursor: pointer; transition: all 0.18s;
+				background: transparent; color: var(--text-2);
+				letter-spacing: -0.005em;
+			}
+			.xr-toggle-btn.active {
+				background: var(--surface-solid);
+				color: var(--text);
+				box-shadow: 0 1px 6px rgba(0,0,0,0.4);
+			}
+			.xr-toggle-btn.active.half {
+				color: var(--accent);
+				background: linear-gradient(135deg, #0e1928 0%, #090d1a 100%);
+				box-shadow: 0 0 0 1px var(--border-accent) inset, 0 1px 6px rgba(0,0,0,0.4);
+			}
+
+			/* Status bar */
+			.xr-status-row {
+				display: flex; align-items: center; gap: 8px;
+				min-height: 20px;
+			}
+			.xr-dot {
+				width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+				transition: background 0.2s;
+			}
+			.xr-dot--idle    { background: var(--text-2); }
+			.xr-dot--ready   { background: var(--success); box-shadow: 0 0 8px rgba(74,222,128,0.5); }
+			.xr-dot--loading { background: var(--accent); animation: pulse-dot 1.2s ease-in-out infinite; }
+			.xr-dot--ar      { background: var(--accent); box-shadow: 0 0 10px rgba(61,193,255,0.6); animation: pulse-dot 2s ease-in-out infinite; }
+			.xr-dot--error   { background: var(--danger); }
+
+			@keyframes pulse-dot {
+				0%, 100% { opacity: 1; }
+				50% { opacity: 0.35; }
+			}
+
+			#xr-status {
+				font-size: 12.5px; color: var(--text-2); flex: 1;
+				letter-spacing: 0.005em;
+			}
+
+			/* Enter AR button */
+			#xr-enter-ar {
+				width: 100%; padding: 16px;
+				border: none; border-radius: var(--radius);
+				font: inherit; font-size: 16px; font-weight: 700;
+				letter-spacing: -0.01em;
+				cursor: pointer;
+				background: linear-gradient(135deg, #1e8fff 0%, #0f6fd4 100%);
+				color: #fff;
+				box-shadow: 0 4px 20px rgba(61,193,255,0.25), 0 0 0 1px rgba(61,193,255,0.2);
+				transition: opacity 0.15s, box-shadow 0.15s, transform 0.12s;
+				position: relative; overflow: hidden;
+			}
+			#xr-enter-ar::before {
+				content: '';
+				position: absolute; inset: 0;
+				background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+				pointer-events: none;
+			}
+			#xr-enter-ar:hover:not(:disabled) {
+				box-shadow: 0 6px 28px rgba(61,193,255,0.35), 0 0 0 1px rgba(61,193,255,0.3);
+				transform: translateY(-1px);
+			}
+			#xr-enter-ar:active:not(:disabled) { transform: translateY(0); }
+			#xr-enter-ar:disabled { opacity: 0.38; cursor: not-allowed; transform: none; }
+			#xr-enter-ar.active {
+				background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+				box-shadow: 0 4px 20px rgba(248,113,113,0.25), 0 0 0 1px rgba(248,113,113,0.2);
+			}
+
+			/* ── Body mode badge (floating over 3D) ── */
+			#xr-mode-badge {
+				position: fixed;
+				top: calc(env(safe-area-inset-top, 0px) + 68px);
+				left: 50%; transform: translateX(-50%);
+				z-index: 15;
+				background: var(--surface); border: 1px solid var(--border);
+				backdrop-filter: blur(16px);
+				border-radius: 999px; padding: 5px 14px;
+				font-size: 12px; font-weight: 600; color: var(--text-2);
+				pointer-events: none;
+				opacity: 0; transition: opacity 0.25s;
+			}
+			#xr-mode-badge.show { opacity: 1; }
+			#xr-mode-badge.half { color: var(--accent); border-color: var(--border-accent); }
+
+			/* ── Half body info card ── */
+			.xr-info-card {
+				background: rgba(61,193,255,0.05); border: 1px solid rgba(61,193,255,0.14);
+				border-radius: 12px; padding: 12px 14px;
+				font-size: 12.5px; color: var(--text-2); line-height: 1.55;
+				display: none;
+			}
+			.xr-info-card.show { display: block; }
+			.xr-info-card strong { color: var(--text); }
+
+			/* ── Tap hint (shown in XR) ── */
+			#xr-tap-hint {
+				position: fixed; left: 50%; bottom: 200px;
+				transform: translateX(-50%);
+				z-index: 25;
+				background: var(--surface); border: 1px solid var(--border);
+				backdrop-filter: blur(12px);
+				border-radius: 999px; padding: 8px 18px;
+				font-size: 13px; font-weight: 600; color: var(--text);
+				pointer-events: none;
+				opacity: 0; transition: opacity 0.3s;
+				white-space: nowrap;
+			}
+			#xr-tap-hint.show { opacity: 1; }
+
+			/* ── Responsive ── */
+			@media (min-width: 480px) {
+				#xr-panel { padding-left: 24px; padding-right: 24px; }
+				#xr-enter-ar { font-size: 17px; }
+			}
+			@media (min-width: 720px) {
+				#xr-panel {
+					max-width: 420px;
+					right: 28px; left: auto;
+					bottom: 28px;
+					padding: 20px;
+					background: var(--surface);
+					border: 1px solid var(--border);
+					border-radius: 22px;
+					backdrop-filter: blur(20px);
+					box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+				}
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="xr-stage">
+			<video id="xr-camera-feed" autoplay muted playsinline></video>
+			<canvas id="xr-canvas"></canvas>
+		</div>
+
+		<!-- Top bar -->
+		<div id="xr-topbar">
+			<a href="/walk" class="xr-back" aria-label="Back">
+				<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+					<path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</a>
+			<div class="xr-wordmark">three<span>.ws</span> XR</div>
+			<div id="xr-device-chip" class="xr-chip xr-chip--none">Detecting…</div>
+		</div>
+
+		<!-- Floating mode badge -->
+		<div id="xr-mode-badge">Full body</div>
+
+		<!-- Tap hint (shown in XR) -->
+		<div id="xr-tap-hint">Tap the real floor to place your avatar</div>
+
+		<!-- Loading overlay -->
+		<div id="xr-loading">
+			<div class="xr-spinner"></div>
+			<div class="xr-loading-text">Loading avatar…</div>
+		</div>
+
+		<!-- Bottom panel -->
+		<div id="xr-panel">
+
+			<div class="xr-avatar-row">
+				<div class="xr-avatar-icon">
+					<svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+						<circle cx="9" cy="5.5" r="3" stroke="#3dc1ff" stroke-width="1.4"/>
+						<path d="M2 15.5c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke="#3dc1ff" stroke-width="1.4" stroke-linecap="round"/>
+					</svg>
+				</div>
+				<span id="xr-avatar-label">Your Avatar</span>
+				<span class="xr-avatar-sub">3D agent</span>
+			</div>
+
+			<div id="xr-body-toggle" class="xr-toggle">
+				<button id="xr-body-full" class="xr-toggle-btn" type="button">Full body</button>
+				<button id="xr-body-half" class="xr-toggle-btn half" type="button">Half body</button>
+			</div>
+
+			<div id="xr-half-info" class="xr-info-card">
+				<strong>Half-body mode</strong> — lower-body bones are collapsed to the hip.
+				Ideal for seated VR, desktop AR, and headset experiences where you don't want floating legs.
+			</div>
+
+			<div class="xr-status-row">
+				<div id="xr-status-dot" class="xr-dot xr-dot--loading"></div>
+				<div id="xr-status">Initialising…</div>
+			</div>
+
+			<button id="xr-enter-ar" type="button" disabled>Enter AR</button>
+		</div>
+
+		<script type="module" src="/src/xr.js"></script>
+		<script>
+			// Show half-body info card and update badge when toggle changes
+			(function () {
+				function update() {
+					const halfActive = document.getElementById('xr-body-half')?.classList.contains('active');
+					const card = document.getElementById('xr-half-info');
+					const badge = document.getElementById('xr-mode-badge');
+					if (card) card.classList.toggle('show', !!halfActive);
+					if (badge) {
+						badge.textContent = halfActive ? 'Half body' : 'Full body';
+						badge.classList.toggle('half', !!halfActive);
+						badge.classList.add('show');
+						clearTimeout(badge._t);
+						badge._t = setTimeout(() => badge.classList.remove('show'), 2200);
+					}
+				}
+				document.addEventListener('click', (e) => {
+					if (e.target?.closest('#xr-body-toggle')) {
+						requestAnimationFrame(update);
+					}
+				});
+			})();
+		</script>
+	</body>
+</html>

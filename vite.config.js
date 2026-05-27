@@ -123,6 +123,15 @@ const appConfig = {
 		// Three's module-scoped registry warns "Multiple instances of Three.js".
 		dedupe: ['three'],
 	},
+	optimizeDeps: {
+		include: [
+			'three',
+			'three/addons/loaders/GLTFLoader.js',
+			'three/addons/controls/OrbitControls.js',
+			'three/addons/environments/RoomEnvironment.js',
+			'three/addons/libs/meshopt_decoder.module.js',
+		],
+	},
 	build: {
 		chunkSizeWarningLimit: 1000,
 		// Skip computing gzip/brotli sizes during build — saves several seconds on
@@ -182,6 +191,7 @@ const appConfig = {
 				profile: resolve(__dirname, 'pages/profile.html'),
 				'threews-claim': resolve(__dirname, 'pages/threews-claim.html'),
 				'avatar-page': resolve(__dirname, 'pages/avatar-page.html'),
+				'avatar-sdk': resolve(__dirname, 'pages/avatar-sdk.html'),
 				'ar-page':     resolve(__dirname, 'pages/ar.html'),
 creating: resolve(__dirname, 'pages/creating.html'),
 				pricing: resolve(__dirname, 'pages/pricing.html'),
@@ -192,6 +202,7 @@ creating: resolve(__dirname, 'pages/creating.html'),
 				'agent-next': resolve(__dirname, 'pages/agent-next.html'),
 				'discover-next': resolve(__dirname, 'pages/discover-next.html'),
 				'avatar-studio-demo': resolve(__dirname, 'pages/avatar-studio-demo.html'),
+				xr: resolve(__dirname, 'pages/xr.html'),
 				walk: resolve(__dirname, 'pages/walk.html'),
 				'walk-embed': resolve(__dirname, 'pages/walk-embed.html'),
 				pose: resolve(__dirname, 'pages/pose.html'),

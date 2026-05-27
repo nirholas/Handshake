@@ -14,17 +14,15 @@
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const TRANSIENT_STATUSES = new Set([502, 503, 504]);
 
-// Single-use CSRF token, refetched after each mutation. The server enforces
-// one-shot consumption (api/_lib/csrf.js), so caching past a single use
-// guarantees the next mutation 403s with csrf_invalid.
-let _csrfToken = null;
-async function getCsrfToken() {
-	if (_csrfToken) return _csrfToken;
+// Fetch a fresh single-use CSRF token for every mutation. Tokens are burned
+// on first use (api/_lib/csrf.js), so caching is unsafe when concurrent
+// mutations share the module — two callers that read the same cached token
+// race: the first succeeds, the second gets 403 csrf_invalid.
+async function freshCsrfToken() {
 	const r = await fetch('/api/csrf-token', { credentials: 'include' });
 	if (!r.ok) return null;
 	const j = await r.json().catch(() => null);
-	_csrfToken = j?.data?.token || null;
-	return _csrfToken;
+	return j?.data?.token || null;
 }
 
 // Exposed for the rare caller that can't go through apiFetch — e.g. an XHR
@@ -32,9 +30,7 @@ async function getCsrfToken() {
 // x-csrf-token header yourself, and the server will accept it. Token is
 // single-use, so don't reuse the returned string for a second request.
 export async function consumeCsrfToken() {
-	const token = await getCsrfToken();
-	_csrfToken = null;
-	return token;
+	return freshCsrfToken();
 }
 
 function redirectToLogin() {
@@ -55,9 +51,8 @@ export async function apiFetch(path, options = {}) {
 	const headers = new Headers(init.headers || {});
 	const hasBearer = (headers.get('authorization') || '').startsWith('Bearer ');
 	if (!SAFE_METHODS.has(method) && !hasBearer) {
-		const token = await getCsrfToken();
+		const token = await freshCsrfToken();
 		if (token) headers.set('x-csrf-token', token);
-		_csrfToken = null;
 	}
 
 	const doFetch = () =>

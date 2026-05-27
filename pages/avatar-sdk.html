@@ -1,0 +1,1457 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Avatar SDK — @three-ws/avatar · three.ws</title>
+		<meta
+			name="description"
+			content="Drop-in 3D avatar SDK for the web. Web component, React bindings, iframe creator, GLB upload — the complete Ready Player Me replacement."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="@three-ws/avatar SDK" />
+		<meta
+			property="og:description"
+			content="Drop-in 3D avatar SDK for the web. &lt;agent-3d&gt; web component, React bindings, iframe creator, GLB upload — the Ready Player Me replacement."
+		/>
+		<meta property="og:url" content="https://three.ws/avatar-sdk" />
+		<meta property="og:image" content="https://three.ws/assets/og-image.png" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="@three-ws/avatar SDK · three.ws" />
+		<meta name="twitter:description" content="Drop-in 3D avatar SDK — web component, React, creator iframe, GLB upload." />
+
+		<link rel="canonical" href="https://three.ws/avatar-sdk" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<script defer src="/footer-newsletter.js"></script>
+
+		<style>
+			:root {
+				--sdk-bg: #030307;
+				--sdk-surface: #0b0b14;
+				--sdk-card: #0e0e1a;
+				--sdk-border: rgba(139, 92, 246, 0.14);
+				--sdk-border-hi: rgba(139, 92, 246, 0.34);
+				--sdk-accent: #8b5cf6;
+				--sdk-accent2: #6366f1;
+				--sdk-cyan: #22d3ee;
+				--sdk-text: #f0f0f8;
+				--sdk-muted: #9898b0;
+				--sdk-dim: #5a5a72;
+				--sdk-code-bg: #070710;
+				--sdk-pill-bg: rgba(139, 92, 246, 0.18);
+				--sdk-pill-border: rgba(139, 92, 246, 0.35);
+				--sdk-success: #34d399;
+				--sdk-error: #f87171;
+				--sdk-radius: 14px;
+				--sdk-radius-sm: 8px;
+				--sdk-max: 1080px;
+			}
+
+			html, body {
+				margin: 0;
+				background: var(--sdk-bg);
+				color: var(--sdk-text);
+				-webkit-font-smoothing: antialiased;
+			}
+			body {
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+				font-family: 'Inter', system-ui, sans-serif;
+			}
+
+			/* ── Layout ─────────────────────────────────────────────────── */
+			.sdk-wrap {
+				max-width: var(--sdk-max);
+				margin: 0 auto;
+				padding: 0 24px;
+				width: 100%;
+				box-sizing: border-box;
+			}
+
+			/* ── Hero ───────────────────────────────────────────────────── */
+			.sdk-hero {
+				position: relative;
+				overflow: hidden;
+				padding: 100px 0 0;
+				min-height: 680px;
+				display: flex;
+				align-items: flex-start;
+			}
+			.sdk-hero-bg {
+				position: absolute;
+				inset: 0;
+				pointer-events: none;
+			}
+			.sdk-hero-bg-orb {
+				position: absolute;
+				border-radius: 50%;
+				filter: blur(90px);
+				opacity: 0.4;
+			}
+			.sdk-hero-bg-orb.a {
+				width: 560px; height: 560px;
+				top: -120px; left: -80px;
+				background: radial-gradient(circle, rgba(99,102,241,0.55) 0%, transparent 70%);
+			}
+			.sdk-hero-bg-orb.b {
+				width: 420px; height: 420px;
+				top: 60px; right: -60px;
+				background: radial-gradient(circle, rgba(34,211,238,0.3) 0%, transparent 70%);
+			}
+			.sdk-hero-bg-orb.c {
+				width: 300px; height: 300px;
+				bottom: 0; left: 40%;
+				background: radial-gradient(circle, rgba(139,92,246,0.35) 0%, transparent 70%);
+			}
+			.sdk-hero-grid {
+				position: absolute;
+				inset: 0;
+				background-image:
+					linear-gradient(rgba(139,92,246,0.04) 1px, transparent 1px),
+					linear-gradient(90deg, rgba(139,92,246,0.04) 1px, transparent 1px);
+				background-size: 48px 48px;
+				mask-image: linear-gradient(to bottom, transparent 0%, #000 25%, #000 65%, transparent 100%);
+				-webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 25%, #000 65%, transparent 100%);
+			}
+
+			.sdk-hero-inner {
+				position: relative;
+				z-index: 1;
+				display: grid;
+				grid-template-columns: 1fr 480px;
+				gap: 48px;
+				align-items: center;
+				padding-bottom: 80px;
+				width: 100%;
+			}
+			.sdk-hero-copy {
+				padding-top: 16px;
+			}
+			.sdk-hero-badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				background: var(--sdk-pill-bg);
+				border: 1px solid var(--sdk-pill-border);
+				border-radius: 100px;
+				padding: 5px 12px 5px 8px;
+				font-size: 12px;
+				font-weight: 600;
+				letter-spacing: 0.04em;
+				color: #c4b5fd;
+				text-transform: uppercase;
+				margin-bottom: 20px;
+			}
+			.sdk-hero-badge-dot {
+				width: 6px; height: 6px;
+				border-radius: 50%;
+				background: #8b5cf6;
+				box-shadow: 0 0 8px #8b5cf6;
+				animation: sdk-dot-pulse 2.4s ease-in-out infinite;
+			}
+			@keyframes sdk-dot-pulse {
+				0%,100% { box-shadow: 0 0 6px rgba(139,92,246,0.7); }
+				50% { box-shadow: 0 0 14px rgba(139,92,246,1); }
+			}
+			.sdk-hero-h1 {
+				font-family: 'Space Grotesk', 'Inter', sans-serif;
+				font-size: clamp(36px, 5vw, 58px);
+				font-weight: 700;
+				letter-spacing: -0.025em;
+				line-height: 1.08;
+				margin: 0 0 16px;
+				background: linear-gradient(135deg, #fff 0%, #c4b5fd 45%, #22d3ee 100%);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+			}
+			.sdk-hero-sub {
+				font-size: 18px;
+				line-height: 1.6;
+				color: var(--sdk-muted);
+				max-width: 52ch;
+				margin: 0 0 32px;
+			}
+			.sdk-hero-sub strong { color: var(--sdk-text); font-weight: 500; }
+
+			/* Install command */
+			.sdk-install-row {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				flex-wrap: wrap;
+				margin-bottom: 32px;
+			}
+			.sdk-install-cmd {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				background: var(--sdk-code-bg);
+				border: 1px solid var(--sdk-border-hi);
+				border-radius: var(--sdk-radius-sm);
+				padding: 11px 16px;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 14px;
+				color: #c4b5fd;
+				cursor: pointer;
+				transition: border-color 0.15s, box-shadow 0.15s;
+				flex: 1;
+				min-width: 0;
+			}
+			.sdk-install-cmd:hover {
+				border-color: rgba(139,92,246,0.6);
+				box-shadow: 0 0 0 3px rgba(139,92,246,0.12);
+			}
+			.sdk-install-cmd .prompt { color: var(--sdk-dim); user-select: none; flex-shrink: 0; }
+			.sdk-install-cmd .cmd-text { color: #e2e8f0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+			.sdk-install-copy {
+				background: none;
+				border: none;
+				color: var(--sdk-dim);
+				cursor: pointer;
+				padding: 2px 4px;
+				font-family: inherit;
+				font-size: 11px;
+				transition: color 0.15s;
+				flex-shrink: 0;
+			}
+			.sdk-install-copy:hover { color: var(--sdk-text); }
+			.sdk-install-copy.copied { color: var(--sdk-success); }
+
+			.sdk-hero-ctas {
+				display: flex;
+				gap: 12px;
+				flex-wrap: wrap;
+			}
+			.sdk-btn-primary {
+				display: inline-flex;
+				align-items: center;
+				gap: 7px;
+				background: linear-gradient(135deg, #7c3aed, #4f46e5);
+				color: #fff;
+				border: none;
+				border-radius: var(--sdk-radius-sm);
+				padding: 12px 22px;
+				font: 600 15px/1 'Inter', sans-serif;
+				cursor: pointer;
+				text-decoration: none;
+				transition: opacity 0.15s, transform 0.1s;
+				box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+			}
+			.sdk-btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+			.sdk-btn-ghost {
+				display: inline-flex;
+				align-items: center;
+				gap: 7px;
+				background: transparent;
+				color: var(--sdk-muted);
+				border: 1px solid rgba(255,255,255,0.12);
+				border-radius: var(--sdk-radius-sm);
+				padding: 12px 22px;
+				font: 600 15px/1 'Inter', sans-serif;
+				cursor: pointer;
+				text-decoration: none;
+				transition: color 0.15s, border-color 0.15s;
+			}
+			.sdk-btn-ghost:hover { color: #fff; border-color: rgba(255,255,255,0.28); }
+
+			/* Hero 3D viewer */
+			.sdk-hero-viewer {
+				position: relative;
+			}
+			.sdk-hero-viewer-frame {
+				position: relative;
+				border-radius: 20px;
+				overflow: hidden;
+				background: var(--sdk-card);
+				border: 1.5px solid var(--sdk-border-hi);
+				box-shadow:
+					0 0 0 1px rgba(255,255,255,0.04) inset,
+					0 24px 80px -24px rgba(0,0,0,0.8),
+					0 0 60px -10px rgba(99,102,241,0.2);
+				aspect-ratio: 9 / 10;
+				max-height: 500px;
+			}
+			.sdk-hero-viewer-frame three-ws-viewer {
+				display: block;
+				width: 100%;
+				height: 100%;
+			}
+			.sdk-viewer-badge {
+				position: absolute;
+				bottom: 14px;
+				left: 50%;
+				transform: translateX(-50%);
+				background: rgba(3,3,7,0.82);
+				backdrop-filter: blur(10px);
+				border: 1px solid var(--sdk-border);
+				border-radius: 100px;
+				padding: 5px 12px;
+				font-size: 11px;
+				color: var(--sdk-muted);
+				white-space: nowrap;
+				pointer-events: none;
+			}
+			.sdk-viewer-badge code {
+				color: #c4b5fd;
+				font-family: ui-monospace, monospace;
+				font-size: 11px;
+			}
+			.sdk-hero-viewer-glow {
+				position: absolute;
+				inset: -40px;
+				background: radial-gradient(ellipse at 50% 60%, rgba(99,102,241,0.18) 0%, transparent 65%);
+				pointer-events: none;
+				z-index: -1;
+			}
+
+			/* Scroll hint */
+			.sdk-hero-scroll {
+				position: absolute;
+				bottom: 20px;
+				left: 50%;
+				transform: translateX(-50%);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 6px;
+				color: var(--sdk-dim);
+				font-size: 11px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				z-index: 2;
+			}
+			.sdk-hero-scroll-line {
+				width: 1px;
+				height: 40px;
+				background: linear-gradient(to bottom, rgba(139,92,246,0.6), transparent);
+				animation: sdk-scroll-line 2s ease-in-out infinite;
+			}
+			@keyframes sdk-scroll-line {
+				0%,100% { opacity: 0.4; transform: scaleY(0.8); }
+				50% { opacity: 1; transform: scaleY(1); }
+			}
+
+			/* ── Section headings ───────────────────────────────────────── */
+			.sdk-section {
+				padding: 80px 0;
+				border-top: 1px solid rgba(255,255,255,0.05);
+			}
+			.sdk-section:first-of-type { border-top: none; }
+			.sdk-section-label {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 11px;
+				font-weight: 700;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: var(--sdk-accent);
+				margin-bottom: 12px;
+			}
+			.sdk-section-label::before {
+				content: '';
+				display: block;
+				width: 20px;
+				height: 1.5px;
+				background: var(--sdk-accent);
+			}
+			.sdk-h2 {
+				font-family: 'Space Grotesk', 'Inter', sans-serif;
+				font-size: clamp(24px, 3.5vw, 36px);
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				margin: 0 0 12px;
+				color: var(--sdk-text);
+			}
+			.sdk-lead {
+				font-size: 17px;
+				line-height: 1.65;
+				color: var(--sdk-muted);
+				max-width: 58ch;
+				margin: 0 0 48px;
+			}
+
+			/* ── Feature grid ───────────────────────────────────────────── */
+			.sdk-feature-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+				gap: 16px;
+			}
+			.sdk-feat-card {
+				background: var(--sdk-card);
+				border: 1.5px solid var(--sdk-border);
+				border-radius: var(--sdk-radius);
+				padding: 24px;
+				transition: border-color 0.2s, box-shadow 0.2s;
+				position: relative;
+				overflow: hidden;
+			}
+			.sdk-feat-card::before {
+				content: '';
+				position: absolute;
+				top: 0; left: 0; right: 0;
+				height: 2px;
+				background: linear-gradient(90deg, transparent, var(--card-accent, #8b5cf6), transparent);
+				opacity: 0;
+				transition: opacity 0.25s;
+			}
+			.sdk-feat-card:hover {
+				border-color: var(--sdk-border-hi);
+				box-shadow: 0 8px 40px -12px rgba(0,0,0,0.6), 0 0 0 1px var(--sdk-border-hi);
+			}
+			.sdk-feat-card:hover::before { opacity: 1; }
+			.sdk-feat-icon {
+				width: 40px; height: 40px;
+				border-radius: 10px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin-bottom: 16px;
+				font-size: 20px;
+				background: var(--icon-bg, rgba(139,92,246,0.15));
+				border: 1px solid var(--icon-border, rgba(139,92,246,0.25));
+			}
+			.sdk-feat-title {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 16px;
+				font-weight: 600;
+				color: var(--sdk-text);
+				margin: 0 0 8px;
+			}
+			.sdk-feat-desc {
+				font-size: 13.5px;
+				line-height: 1.6;
+				color: var(--sdk-muted);
+				margin: 0;
+			}
+			.sdk-feat-tag {
+				display: inline-block;
+				margin-top: 12px;
+				background: rgba(255,255,255,0.05);
+				border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 4px;
+				padding: 2px 7px;
+				font-family: ui-monospace, monospace;
+				font-size: 11px;
+				color: var(--sdk-muted);
+			}
+
+			/* ── Code blocks ────────────────────────────────────────────── */
+			.sdk-code-section {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 40px;
+				align-items: start;
+			}
+			.sdk-code-section.full { grid-template-columns: 1fr; }
+			.sdk-code-section.reversed { direction: rtl; }
+			.sdk-code-section.reversed > * { direction: ltr; }
+
+			.sdk-code-copy {
+				position: relative;
+			}
+			.sdk-code-label {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 8px;
+			}
+			.sdk-code-filename {
+				font-size: 12px;
+				font-weight: 600;
+				color: var(--sdk-muted);
+				font-family: ui-monospace, monospace;
+				letter-spacing: 0.03em;
+			}
+			.sdk-copy-btn {
+				background: rgba(255,255,255,0.05);
+				border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 5px;
+				color: var(--sdk-muted);
+				cursor: pointer;
+				font: 11px/1 'Inter', sans-serif;
+				padding: 4px 10px;
+				transition: color 0.15s, border-color 0.15s, background 0.15s;
+			}
+			.sdk-copy-btn:hover {
+				color: var(--sdk-text);
+				border-color: rgba(255,255,255,0.18);
+				background: rgba(255,255,255,0.08);
+			}
+			.sdk-copy-btn.copied {
+				color: var(--sdk-success);
+				border-color: rgba(52,211,153,0.3);
+			}
+			pre.sdk-pre {
+				margin: 0;
+				background: var(--sdk-code-bg);
+				border: 1px solid var(--sdk-border);
+				border-radius: var(--sdk-radius-sm);
+				padding: 18px 20px;
+				overflow-x: auto;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 13px;
+				line-height: 1.75;
+				color: #e2e8f0;
+				tab-size: 2;
+			}
+			pre.sdk-pre .t-kw { color: #c4b5fd; }
+			pre.sdk-pre .t-str { color: #6ee7b7; }
+			pre.sdk-pre .t-tag { color: #7dd3fc; }
+			pre.sdk-pre .t-attr { color: #fda4af; }
+			pre.sdk-pre .t-cmt { color: #475569; font-style: italic; }
+			pre.sdk-pre .t-fn { color: #fbbf24; }
+			pre.sdk-pre .t-num { color: #f9a8d4; }
+			pre.sdk-pre .t-op { color: #94a3b8; }
+
+			/* ── Tabs ───────────────────────────────────────────────────── */
+			.sdk-tabs { }
+			.sdk-tab-list {
+				display: flex;
+				gap: 2px;
+				margin-bottom: 0;
+				background: var(--sdk-code-bg);
+				border: 1px solid var(--sdk-border);
+				border-bottom: none;
+				border-radius: var(--sdk-radius-sm) var(--sdk-radius-sm) 0 0;
+				padding: 6px 6px 0;
+				overflow-x: auto;
+			}
+			.sdk-tab-btn {
+				background: none;
+				border: none;
+				color: var(--sdk-dim);
+				cursor: pointer;
+				font: 12px/1.4 'Inter', sans-serif;
+				padding: 7px 14px 9px;
+				border-radius: 5px 5px 0 0;
+				transition: color 0.15s, background 0.15s;
+				white-space: nowrap;
+				position: relative;
+			}
+			.sdk-tab-btn:hover { color: var(--sdk-muted); }
+			.sdk-tab-btn.active {
+				color: var(--sdk-text);
+				background: rgba(139,92,246,0.12);
+			}
+			.sdk-tab-btn.active::after {
+				content: '';
+				position: absolute;
+				bottom: -1px; left: 0; right: 0;
+				height: 2px;
+				background: var(--sdk-accent);
+				border-radius: 2px 2px 0 0;
+			}
+			.sdk-tab-panel pre.sdk-pre {
+				border-radius: 0 var(--sdk-radius-sm) var(--sdk-radius-sm) var(--sdk-radius-sm);
+			}
+			.sdk-tab-panel[hidden] { display: none; }
+
+			/* ── Copy row on tabs ───────────────────────────────────────── */
+			.sdk-tab-copy-row {
+				display: flex;
+				align-items: center;
+				justify-content: flex-end;
+				padding: 6px 12px 0;
+				background: var(--sdk-code-bg);
+				border-left: 1px solid var(--sdk-border);
+				border-right: 1px solid var(--sdk-border);
+			}
+
+			/* ── Quick-start steps ──────────────────────────────────────── */
+			.sdk-steps {
+				display: flex;
+				flex-direction: column;
+				gap: 40px;
+			}
+			.sdk-step {
+				display: grid;
+				grid-template-columns: 40px 1fr;
+				gap: 20px;
+			}
+			.sdk-step-num {
+				width: 40px; height: 40px;
+				border-radius: 50%;
+				background: var(--sdk-pill-bg);
+				border: 1.5px solid var(--sdk-pill-border);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 16px;
+				font-weight: 700;
+				color: #c4b5fd;
+				flex-shrink: 0;
+				margin-top: 2px;
+			}
+			.sdk-step-body {}
+			.sdk-step-title {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 18px;
+				font-weight: 600;
+				color: var(--sdk-text);
+				margin: 0 0 6px;
+			}
+			.sdk-step-desc {
+				font-size: 14px;
+				line-height: 1.65;
+				color: var(--sdk-muted);
+				margin: 0 0 14px;
+			}
+			.sdk-step-desc a { color: #c4b5fd; text-decoration: none; }
+			.sdk-step-desc a:hover { text-decoration: underline; }
+
+			/* ── Creator live demo ──────────────────────────────────────── */
+			.sdk-creator-demo-card {
+				background: var(--sdk-card);
+				border: 1.5px solid var(--sdk-border);
+				border-radius: var(--sdk-radius);
+				padding: 32px;
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 16px;
+			}
+			.sdk-creator-desc {
+				font-size: 14px;
+				line-height: 1.65;
+				color: var(--sdk-muted);
+				margin: 0;
+			}
+			.sdk-creator-status {
+				font-size: 13px;
+				font-family: ui-monospace, monospace;
+				padding: 8px 14px;
+				border-radius: 6px;
+				background: rgba(255,255,255,0.04);
+				color: var(--sdk-dim);
+				min-height: 34px;
+				width: 100%;
+				box-sizing: border-box;
+				display: none;
+			}
+			.sdk-creator-status.info { display: block; color: #7dd3fc; background: rgba(34,211,238,0.06); }
+			.sdk-creator-status.ok   { display: block; color: var(--sdk-success); background: rgba(52,211,153,0.07); }
+			.sdk-creator-status.err  { display: block; color: var(--sdk-error); background: rgba(248,113,113,0.07); }
+			.sdk-creator-status.muted { display: block; color: var(--sdk-dim); }
+
+			/* ── Comparison table ───────────────────────────────────────── */
+			.sdk-table-wrap {
+				overflow-x: auto;
+				border-radius: var(--sdk-radius);
+				border: 1.5px solid var(--sdk-border);
+			}
+			table.sdk-table {
+				width: 100%;
+				border-collapse: collapse;
+				background: var(--sdk-card);
+				font-size: 14px;
+			}
+			.sdk-table th {
+				background: rgba(139,92,246,0.08);
+				padding: 14px 18px;
+				text-align: left;
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 13px;
+				font-weight: 600;
+				color: var(--sdk-text);
+				letter-spacing: 0.01em;
+				border-bottom: 1px solid var(--sdk-border);
+			}
+			.sdk-table th:first-child { border-radius: var(--sdk-radius-sm) 0 0 0; }
+			.sdk-table th:last-child  { border-radius: 0 var(--sdk-radius-sm) 0 0; }
+			.sdk-table td {
+				padding: 13px 18px;
+				color: var(--sdk-muted);
+				border-bottom: 1px solid rgba(255,255,255,0.04);
+				vertical-align: top;
+			}
+			.sdk-table tr:last-child td { border-bottom: none; }
+			.sdk-table tr:hover td { background: rgba(139,92,246,0.04); }
+			.sdk-table td:first-child { color: var(--sdk-text); font-weight: 500; }
+			.sdk-table .check { color: var(--sdk-success); font-weight: 700; }
+			.sdk-table .cross { color: #f87171; }
+			.sdk-table .col-three { color: #c4b5fd; }
+
+			/* ── API reference cards ────────────────────────────────────── */
+			.sdk-api-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+				gap: 16px;
+			}
+			.sdk-api-card {
+				background: var(--sdk-card);
+				border: 1.5px solid var(--sdk-border);
+				border-radius: var(--sdk-radius);
+				overflow: hidden;
+			}
+			.sdk-api-card-head {
+				background: rgba(139,92,246,0.07);
+				border-bottom: 1px solid var(--sdk-border);
+				padding: 14px 18px;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+			.sdk-api-export-badge {
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				background: rgba(139,92,246,0.2);
+				border: 1px solid rgba(139,92,246,0.35);
+				color: #c4b5fd;
+				padding: 2px 7px;
+				border-radius: 4px;
+			}
+			.sdk-api-name {
+				font-family: ui-monospace, monospace;
+				font-size: 14px;
+				font-weight: 600;
+				color: var(--sdk-text);
+			}
+			.sdk-api-card-body {
+				padding: 16px 18px;
+			}
+			.sdk-api-desc {
+				font-size: 13.5px;
+				line-height: 1.6;
+				color: var(--sdk-muted);
+				margin: 0 0 14px;
+			}
+			.sdk-api-props {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+			.sdk-api-props li {
+				display: grid;
+				grid-template-columns: auto 1fr;
+				gap: 8px;
+				align-items: baseline;
+			}
+			.sdk-api-prop-name {
+				font-family: ui-monospace, monospace;
+				font-size: 12px;
+				color: #fda4af;
+				white-space: nowrap;
+			}
+			.sdk-api-prop-desc {
+				font-size: 12.5px;
+				color: var(--sdk-dim);
+				line-height: 1.5;
+			}
+
+			/* ── CTA banner ─────────────────────────────────────────────── */
+			.sdk-cta-banner {
+				border-radius: var(--sdk-radius);
+				background: linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(34,211,238,0.08) 100%);
+				border: 1.5px solid rgba(139,92,246,0.3);
+				padding: 48px 40px;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 32px;
+				position: relative;
+				overflow: hidden;
+			}
+			.sdk-cta-banner::before {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background: radial-gradient(ellipse at 80% 50%, rgba(99,102,241,0.15) 0%, transparent 60%);
+				pointer-events: none;
+			}
+			.sdk-cta-banner-copy {}
+			.sdk-cta-banner h2 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 26px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				margin: 0 0 8px;
+				color: var(--sdk-text);
+			}
+			.sdk-cta-banner p {
+				font-size: 15px;
+				color: var(--sdk-muted);
+				margin: 0;
+				max-width: 46ch;
+			}
+			.sdk-cta-banner-actions {
+				display: flex;
+				gap: 12px;
+				flex-shrink: 0;
+				flex-wrap: wrap;
+			}
+
+			/* ── Mobile ─────────────────────────────────────────────────── */
+			@media (max-width: 900px) {
+				.sdk-hero { padding: 72px 0 0; min-height: auto; }
+				.sdk-hero-inner {
+					grid-template-columns: 1fr;
+					gap: 32px;
+					padding-bottom: 48px;
+				}
+				.sdk-hero-viewer { order: -1; }
+				.sdk-hero-viewer-frame {
+					aspect-ratio: 16 / 9;
+					max-height: 280px;
+				}
+				.sdk-hero-scroll { display: none; }
+				.sdk-code-section {
+					grid-template-columns: 1fr;
+					gap: 24px;
+				}
+				.sdk-code-section.reversed { direction: ltr; }
+				.sdk-cta-banner {
+					flex-direction: column;
+					padding: 32px 24px;
+					text-align: center;
+				}
+				.sdk-cta-banner p { margin: 0 auto; }
+				.sdk-cta-banner-actions { justify-content: center; }
+			}
+			@media (max-width: 600px) {
+				.sdk-hero-h1 { font-size: 32px; }
+				.sdk-hero-sub { font-size: 16px; }
+				.sdk-section { padding: 56px 0; }
+				.sdk-h2 { font-size: 24px; }
+				.sdk-feature-grid { grid-template-columns: 1fr; }
+				.sdk-api-grid { grid-template-columns: 1fr; }
+				.sdk-step { grid-template-columns: 32px 1fr; gap: 14px; }
+				.sdk-step-num { width: 32px; height: 32px; font-size: 14px; }
+				pre.sdk-pre { font-size: 11.5px; padding: 14px; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>
+				<a href="/" aria-label="three.ws home">
+					<svg class="wordmark-logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+						<rect width="32" height="32" rx="8" fill="url(#logo-grad)"/>
+						<path d="M8 11h16M8 16h10M8 21h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+						<defs>
+							<linearGradient id="logo-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+								<stop stop-color="#7c3aed"/>
+								<stop offset="1" stop-color="#4f46e5"/>
+							</linearGradient>
+						</defs>
+					</svg>
+					three.ws
+				</a>
+			</h1>
+			<div id="nav-container"></div>
+		</header>
+
+		<main>
+			<!-- ── Hero ──────────────────────────────────────────────────── -->
+			<section class="sdk-hero" aria-labelledby="sdk-hero-title">
+				<div class="sdk-hero-bg" aria-hidden="true">
+					<div class="sdk-hero-bg-orb a"></div>
+					<div class="sdk-hero-bg-orb b"></div>
+					<div class="sdk-hero-bg-orb c"></div>
+					<div class="sdk-hero-grid"></div>
+				</div>
+
+				<div class="sdk-wrap sdk-hero-inner">
+					<div class="sdk-hero-copy">
+						<div class="sdk-hero-badge" aria-label="Now available">
+							<span class="sdk-hero-badge-dot" aria-hidden="true"></span>
+							npm · @three-ws/avatar
+						</div>
+						<h1 class="sdk-hero-h1" id="sdk-hero-title">
+							The 3D Avatar SDK<br />your app deserves.
+						</h1>
+						<p class="sdk-hero-sub">
+							Drop-in <strong>web component</strong>, React bindings, iframe creator, and cloud upload — the complete <strong>Ready Player Me replacement</strong>, open and self-hostable.
+						</p>
+
+						<div class="sdk-install-row">
+							<div
+								class="sdk-install-cmd"
+								role="button"
+								tabindex="0"
+								title="Click to copy"
+								aria-label="Copy install command"
+								onclick="this.querySelector('.sdk-install-copy').click()"
+								onkeydown="if(event.key==='Enter'||event.key===' ')this.querySelector('.sdk-install-copy').click()"
+							>
+								<span class="prompt" aria-hidden="true">$</span>
+								<span class="cmd-text" id="install-cmd">npm install @three-ws/avatar three</span>
+								<button class="sdk-install-copy sdk-copy-btn" data-target="install-cmd" aria-label="Copy">Copy</button>
+							</div>
+						</div>
+
+						<div class="sdk-hero-ctas">
+							<a href="#quickstart" class="sdk-btn-primary">
+								Quick start
+								<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</a>
+							<a href="https://github.com/nirholas/three.ws/tree/main/avatar-sdk" class="sdk-btn-ghost" target="_blank" rel="noopener">
+								<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+								GitHub
+							</a>
+						</div>
+					</div>
+
+					<div class="sdk-hero-viewer" aria-label="Live 3D avatar demo">
+						<div class="sdk-hero-viewer-glow" aria-hidden="true"></div>
+						<div class="sdk-hero-viewer-frame sdk-hero-viewer">
+							<three-ws-viewer
+								src="/avatars/default.glb"
+								alt="Default three.ws avatar"
+								background="transparent"
+							></three-ws-viewer>
+						</div>
+						<div class="sdk-viewer-badge" aria-label="Web component tag">
+							<code>&lt;three-ws-viewer src=&quot;…&quot;&gt;</code>
+						</div>
+					</div>
+				</div>
+
+				<div class="sdk-hero-scroll" aria-hidden="true">
+					<div class="sdk-hero-scroll-line"></div>
+					<span>Scroll</span>
+				</div>
+			</section>
+
+			<!-- ── Features ──────────────────────────────────────────────── -->
+			<section class="sdk-section" aria-labelledby="sdk-feat-title">
+				<div class="sdk-wrap">
+					<div class="sdk-section-label" aria-hidden="true">Capabilities</div>
+					<h2 class="sdk-h2" id="sdk-feat-title">Everything in one package</h2>
+					<p class="sdk-lead">Four building blocks — use what you need, tree-shake the rest.</p>
+
+					<div class="sdk-feature-grid">
+						<div class="sdk-feat-card" style="--card-accent:#8b5cf6">
+							<div class="sdk-feat-icon" style="--icon-bg:rgba(139,92,246,0.15);--icon-border:rgba(139,92,246,0.25)">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2" y="2" width="16" height="16" rx="3" stroke="#c4b5fd" stroke-width="1.5"/><path d="M2 7h16" stroke="#c4b5fd" stroke-width="1.5"/><circle cx="5" cy="4.5" r="1" fill="#c4b5fd"/><circle cx="8" cy="4.5" r="1" fill="#c4b5fd"/></svg>
+							</div>
+							<p class="sdk-feat-title">Web Component</p>
+							<p class="sdk-feat-desc">Drop <code>&lt;agent-3d&gt;</code> or the lightweight <code>&lt;three-ws-viewer&gt;</code> into any HTML page or framework. Self-registers on import.</p>
+							<span class="sdk-feat-tag">framework-agnostic</span>
+						</div>
+
+						<div class="sdk-feat-card" style="--card-accent:#6366f1">
+							<div class="sdk-feat-icon" style="--icon-bg:rgba(99,102,241,0.15);--icon-border:rgba(99,102,241,0.25)">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="3" stroke="#a5b4fc" stroke-width="1.5"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#a5b4fc" stroke-width="1.5" stroke-linecap="round"/><path d="M5.64 5.64l1.42 1.42M12.94 12.94l1.42 1.42M5.64 14.36l1.42-1.42M12.94 7.06l1.42-1.42" stroke="#a5b4fc" stroke-width="1.3" stroke-linecap="round"/></svg>
+							</div>
+							<p class="sdk-feat-title">React Bindings</p>
+							<p class="sdk-feat-desc">First-class React 18+ components — <code>&lt;Avatar&gt;</code>, <code>&lt;AgentAvatar&gt;</code>, <code>&lt;AvatarCreator&gt;</code> and a <code>useAvatar(id)</code> hook.</p>
+							<span class="sdk-feat-tag">@three-ws/avatar/react</span>
+						</div>
+
+						<div class="sdk-feat-card" style="--card-accent:#22d3ee">
+							<div class="sdk-feat-icon" style="--icon-bg:rgba(34,211,238,0.12);--icon-border:rgba(34,211,238,0.22)">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2.5" stroke="#67e8f9" stroke-width="1.5"/><path d="M8 3v14" stroke="#67e8f9" stroke-width="1.3" stroke-dasharray="2 2"/><path d="M13 8l-3 4-2-2" stroke="#67e8f9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</div>
+							<p class="sdk-feat-title">Creator Iframe</p>
+							<p class="sdk-feat-desc">Open the three.ws Avatar Studio or Avaturn in a modal. Resolves with a GLB Blob via postMessage — no polling, no storage tokens required.</p>
+							<span class="sdk-feat-tag">AvatarCreator class</span>
+						</div>
+
+						<div class="sdk-feat-card" style="--card-accent:#34d399">
+							<div class="sdk-feat-icon" style="--icon-bg:rgba(52,211,153,0.12);--icon-border:rgba(52,211,153,0.22)">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v10M10 3l-3 3M10 3l3 3" stroke="#6ee7b7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 13v3a1 1 0 001 1h10a1 1 0 001-1v-3" stroke="#6ee7b7" stroke-width="1.5" stroke-linecap="round"/></svg>
+							</div>
+							<p class="sdk-feat-title">Cloud Upload</p>
+							<p class="sdk-feat-desc">One-call <code>saveBlob()</code> presigns to R2, uploads, registers the avatar, auto-generates USDZ for iOS and a half-body variant for VR.</p>
+							<span class="sdk-feat-tag">saveBlob() helper</span>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Quick start ───────────────────────────────────────────── -->
+			<section class="sdk-section" id="quickstart" aria-labelledby="sdk-qs-title">
+				<div class="sdk-wrap">
+					<div class="sdk-section-label" aria-hidden="true">Quick start</div>
+					<h2 class="sdk-h2" id="sdk-qs-title">Up in 60 seconds</h2>
+					<p class="sdk-lead">Three steps from zero to a live 3D avatar in your page.</p>
+
+					<div class="sdk-steps">
+						<!-- Step 1 -->
+						<div class="sdk-step">
+							<div class="sdk-step-num" aria-hidden="true">1</div>
+							<div class="sdk-step-body">
+								<h3 class="sdk-step-title">Install</h3>
+								<p class="sdk-step-desc">Install the package and its peer dependency from npm. React is optional.</p>
+								<div class="sdk-code-copy">
+									<div class="sdk-code-label">
+										<span class="sdk-code-filename">terminal</span>
+										<button class="sdk-copy-btn" data-target="code-install">Copy</button>
+									</div>
+									<pre class="sdk-pre" id="code-install"><span class="t-op">$</span> npm install @three-ws/avatar three</pre>
+								</div>
+							</div>
+						</div>
+
+						<!-- Step 2 -->
+						<div class="sdk-step">
+							<div class="sdk-step-num" aria-hidden="true">2</div>
+							<div class="sdk-step-body">
+								<h3 class="sdk-step-title">Add the web component</h3>
+								<p class="sdk-step-desc">Import once to register the element. Then use <code>&lt;agent-3d&gt;</code> anywhere in your HTML — it handles the avatar by UUID or direct GLB URL.</p>
+								<div class="sdk-tabs">
+									<div class="sdk-tab-list" role="tablist" aria-label="Framework examples">
+										<button class="sdk-tab-btn active" role="tab" aria-selected="true">HTML</button>
+										<button class="sdk-tab-btn" role="tab" aria-selected="false">React</button>
+										<button class="sdk-tab-btn" role="tab" aria-selected="false">Bundler (ESM)</button>
+									</div>
+									<div class="sdk-tab-copy-row">
+										<button class="sdk-copy-btn" data-target="code-tab-html">Copy</button>
+									</div>
+									<div class="sdk-tab-panel" role="tabpanel">
+										<pre class="sdk-pre" id="code-tab-html"><span class="t-cmt">&lt;!-- load once from CDN / your bundler --&gt;</span>
+<span class="t-tag">&lt;script</span> <span class="t-attr">type</span>=<span class="t-str">"module"</span> <span class="t-attr">src</span>=<span class="t-str">"/avatar-sdk/dist/index.mjs"</span><span class="t-tag">&gt;&lt;/script&gt;</span>
+
+<span class="t-cmt">&lt;!-- by avatar UUID (resolved on the three.ws CDN) --&gt;</span>
+<span class="t-tag">&lt;agent-3d</span> <span class="t-attr">avatar-id</span>=<span class="t-str">"YOUR_AVATAR_UUID"</span><span class="t-tag">&gt;&lt;/agent-3d&gt;</span>
+
+<span class="t-cmt">&lt;!-- or by direct GLB URL --&gt;</span>
+<span class="t-tag">&lt;agent-3d</span> <span class="t-attr">src</span>=<span class="t-str">"https://example.com/avatar.glb"</span><span class="t-tag">&gt;&lt;/agent-3d&gt;</span></pre>
+									</div>
+									<div class="sdk-tab-panel" role="tabpanel" hidden>
+										<pre class="sdk-pre" id="code-tab-react"><span class="t-kw">import</span> { AgentAvatar } <span class="t-kw">from</span> <span class="t-str">'@three-ws/avatar/react'</span><span class="t-op">;</span>
+
+<span class="t-kw">export function</span> <span class="t-fn">MyPage</span>() {
+  <span class="t-kw">return</span> (
+    <span class="t-tag">&lt;AgentAvatar</span>
+      <span class="t-attr">avatarId</span>=<span class="t-str">"YOUR_AVATAR_UUID"</span>
+      <span class="t-attr">style</span>=<span class="t-op">{{</span> width: <span class="t-str">'400px'</span>, height: <span class="t-str">'600px'</span> <span class="t-op">}}</span>
+    <span class="t-tag">/&gt;</span>
+  )<span class="t-op">;</span>
+}</pre>
+									</div>
+									<div class="sdk-tab-panel" role="tabpanel" hidden>
+										<pre class="sdk-pre" id="code-tab-esm"><span class="t-cmt">// Registers &lt;agent-3d&gt; as a side effect</span>
+<span class="t-kw">import</span> <span class="t-str">'@three-ws/avatar'</span><span class="t-op">;</span>
+
+<span class="t-cmt">// Or lazy-load only when you need it</span>
+<span class="t-kw">import</span> { ensureAgent3D } <span class="t-kw">from</span> <span class="t-str">'@three-ws/avatar/agent'</span><span class="t-op">;</span>
+<span class="t-kw">await</span> <span class="t-fn">ensureAgent3D</span>()<span class="t-op">;</span>
+
+<span class="t-cmt">// All set — create it programmatically</span>
+<span class="t-kw">const</span> el = document.<span class="t-fn">createElement</span>(<span class="t-str">'agent-3d'</span>)<span class="t-op">;</span>
+el.<span class="t-fn">setAttribute</span>(<span class="t-str">'avatar-id'</span>, <span class="t-str">'YOUR_AVATAR_UUID'</span>)<span class="t-op">;</span>
+document.body.<span class="t-fn">appendChild</span>(el)<span class="t-op">;</span></pre>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Step 3 -->
+						<div class="sdk-step">
+							<div class="sdk-step-num" aria-hidden="true">3</div>
+							<div class="sdk-step-body">
+								<h3 class="sdk-step-title">Let users build their avatar</h3>
+								<p class="sdk-step-desc">Open the Creator modal — it wraps the Character Studio iframe. The <code>onExport</code> callback receives a GLB <code>Blob</code> you can pass straight to <code>saveBlob()</code>.</p>
+								<div class="sdk-code-copy">
+									<div class="sdk-code-label">
+										<span class="sdk-code-filename">creator-flow.js</span>
+										<button class="sdk-copy-btn" data-target="code-creator">Copy</button>
+									</div>
+									<pre class="sdk-pre" id="code-creator"><span class="t-kw">import</span> { AvatarCreator, saveBlob } <span class="t-kw">from</span> <span class="t-str">'@three-ws/avatar/creator'</span><span class="t-op">;</span>
+
+<span class="t-kw">const</span> creator = <span class="t-kw">new</span> <span class="t-fn">AvatarCreator</span>({
+  <span class="t-fn">onExport</span>: <span class="t-kw">async</span> (glbBlob) =&gt; {
+    <span class="t-kw">const</span> avatar = <span class="t-kw">await</span> <span class="t-fn">saveBlob</span>(glbBlob, {
+      bearerToken: <span class="t-str">'YOUR_THREE_WS_TOKEN'</span>,
+      name:        <span class="t-str">'My Avatar'</span>,
+      visibility:  <span class="t-str">'public'</span>,
+    })<span class="t-op">;</span>
+    console.<span class="t-fn">log</span>(<span class="t-str">'Saved at'</span>, avatar.url)<span class="t-op">;</span>
+  },
+})<span class="t-op">;</span>
+
+creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Lightweight viewer ────────────────────────────────────── -->
+			<section class="sdk-section" aria-labelledby="sdk-viewer-title">
+				<div class="sdk-wrap">
+					<div class="sdk-code-section">
+						<div>
+							<div class="sdk-section-label" aria-hidden="true">Pure visual</div>
+							<h2 class="sdk-h2" id="sdk-viewer-title"><code>&lt;three-ws-viewer&gt;</code></h2>
+							<p class="sdk-lead" style="margin-bottom:24px">
+								When you don't need the full agent runtime — chat, voice, lipsync — use the lightweight viewer. It only loads Three.js and OrbitControls. <strong>No WebSocket. No AI.</strong>
+							</p>
+							<div class="sdk-code-copy">
+								<div class="sdk-code-label">
+									<span class="sdk-code-filename">pure-viewer.html</span>
+									<button class="sdk-copy-btn" data-target="code-viewer">Copy</button>
+								</div>
+								<pre class="sdk-pre" id="code-viewer"><span class="t-tag">&lt;script</span> <span class="t-attr">type</span>=<span class="t-str">"module"</span><span class="t-tag">&gt;</span>
+  <span class="t-kw">import</span> <span class="t-str">'@three-ws/avatar/viewer'</span><span class="t-op">;</span>
+<span class="t-tag">&lt;/script&gt;</span>
+
+<span class="t-tag">&lt;three-ws-viewer</span>
+  <span class="t-attr">src</span>=<span class="t-str">"/avatars/hero.glb"</span>
+  <span class="t-attr">background</span>=<span class="t-str">"#0d0d14"</span>
+  <span class="t-attr">alt</span>=<span class="t-str">"Hero avatar"</span>
+  <span class="t-attr">style</span>=<span class="t-str">"width:400px;height:560px"</span>
+<span class="t-tag">&gt;&lt;/three-ws-viewer&gt;</span></pre>
+							</div>
+						</div>
+						<div style="display:flex;flex-direction:column;gap:16px">
+							<div style="background:var(--sdk-card);border:1.5px solid var(--sdk-border);border-radius:var(--sdk-radius);overflow:hidden;aspect-ratio:3/4;max-height:420px">
+								<three-ws-viewer
+									src="/avatars/default.glb"
+									background="#090912"
+									alt="Lightweight viewer demo"
+									style="width:100%;height:100%"
+								></three-ws-viewer>
+							</div>
+							<p style="text-align:center;font-size:12px;color:var(--sdk-dim);margin:0">
+								Live — drag to orbit · scroll to zoom
+							</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Creator live demo ─────────────────────────────────────── -->
+			<section class="sdk-section" aria-labelledby="sdk-creator-title">
+				<div class="sdk-wrap">
+					<div class="sdk-code-section reversed">
+						<div>
+							<div class="sdk-section-label" aria-hidden="true">Creator</div>
+							<h2 class="sdk-h2" id="sdk-creator-title">AvatarCreator</h2>
+							<p class="sdk-lead" style="margin-bottom:24px">
+								Opens the three.ws Avatar Studio in a fullscreen modal. The user builds their avatar and clicks Export — you receive a GLB <code>Blob</code> in the callback. No OAuth, no API keys needed for the modal itself.
+							</p>
+							<div class="sdk-creator-demo-card">
+								<p class="sdk-creator-desc">
+									Click the button to open the Avatar Studio right here. After you export an avatar the file size will appear below.
+								</p>
+								<button class="sdk-btn-primary" id="sdk-creator-open">
+									<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+									Open Avatar Creator
+								</button>
+								<div id="sdk-creator-status" class="sdk-creator-status" role="status" aria-live="polite"></div>
+							</div>
+						</div>
+						<div>
+							<div class="sdk-code-copy">
+								<div class="sdk-code-label">
+									<span class="sdk-code-filename">creator-minimal.js</span>
+									<button class="sdk-copy-btn" data-target="code-creator-mini">Copy</button>
+								</div>
+								<pre class="sdk-pre" id="code-creator-mini"><span class="t-kw">import</span> { AvatarCreator } <span class="t-kw">from</span>
+  <span class="t-str">'@three-ws/avatar/creator'</span><span class="t-op">;</span>
+
+<span class="t-kw">const</span> creator = <span class="t-kw">new</span> <span class="t-fn">AvatarCreator</span>({
+  <span class="t-cmt">// Defaults to https://three.ws/avatar-studio/</span>
+  <span class="t-cmt">// Override to self-host.</span>
+  studioUrl: <span class="t-str">'https://three.ws/avatar-studio/'</span>,
+
+  <span class="t-fn">onExport</span>(glbBlob) {
+    <span class="t-cmt">// glbBlob is a Blob of type model/gltf-binary</span>
+    <span class="t-kw">const</span> url = URL.<span class="t-fn">createObjectURL</span>(glbBlob)<span class="t-op">;</span>
+    document
+      .<span class="t-fn">querySelector</span>(<span class="t-str">'agent-3d'</span>)
+      .<span class="t-fn">setAttribute</span>(<span class="t-str">'src'</span>, url)<span class="t-op">;</span>
+  },
+
+  <span class="t-fn">onClose</span>() {
+    console.<span class="t-fn">log</span>(<span class="t-str">'user dismissed'</span>)<span class="t-op">;</span>
+  },
+})<span class="t-op">;</span>
+
+<span class="t-kw">await</span> creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── React ─────────────────────────────────────────────────── -->
+			<section class="sdk-section" aria-labelledby="sdk-react-title">
+				<div class="sdk-wrap">
+					<div class="sdk-section-label" aria-hidden="true">React</div>
+					<h2 class="sdk-h2" id="sdk-react-title">React 18+ bindings</h2>
+					<p class="sdk-lead">All four exports are typed and tree-shakeable. Marked <code>'use client'</code> for Next.js App Router.</p>
+
+					<div class="sdk-tabs">
+						<div class="sdk-tab-list" role="tablist" aria-label="React component examples">
+							<button class="sdk-tab-btn active" role="tab" aria-selected="true">&lt;Avatar&gt;</button>
+							<button class="sdk-tab-btn" role="tab" aria-selected="false">&lt;AgentAvatar&gt;</button>
+							<button class="sdk-tab-btn" role="tab" aria-selected="false">&lt;AvatarCreator&gt;</button>
+							<button class="sdk-tab-btn" role="tab" aria-selected="false">useAvatar()</button>
+						</div>
+						<div class="sdk-tab-copy-row">
+							<button class="sdk-copy-btn" data-target="code-react-viewer">Copy</button>
+						</div>
+						<div class="sdk-tab-panel" role="tabpanel">
+							<pre class="sdk-pre" id="code-react-viewer"><span class="t-kw">import</span> { Avatar } <span class="t-kw">from</span> <span class="t-str">'@three-ws/avatar/react'</span><span class="t-op">;</span>
+
+<span class="t-cmt">// Pure visual — wraps &lt;three-ws-viewer&gt;, no AI</span>
+<span class="t-kw">export function</span> <span class="t-fn">ProfileCard</span>({ glbUrl }) {
+  <span class="t-kw">return</span> (
+    <span class="t-tag">&lt;Avatar</span>
+      <span class="t-attr">src</span>={glbUrl}
+      <span class="t-attr">alt</span>=<span class="t-str">"User avatar"</span>
+      <span class="t-attr">background</span>=<span class="t-str">"transparent"</span>
+      <span class="t-attr">style</span>=<span class="t-op">{{</span> width: <span class="t-str">'240px'</span>, height: <span class="t-str">'320px'</span> <span class="t-op">}}</span>
+      <span class="t-attr">onLoad</span>=<span class="t-op">{</span>({ url }) =&gt; console.<span class="t-fn">log</span>(<span class="t-str">'loaded'</span>, url)<span class="t-op">}</span>
+    <span class="t-tag">/&gt;</span>
+  )<span class="t-op">;</span>
+}</pre>
+						</div>
+						<div class="sdk-tab-panel" role="tabpanel" hidden>
+							<pre class="sdk-pre" id="code-react-agent"><span class="t-kw">import</span> { AgentAvatar } <span class="t-kw">from</span> <span class="t-str">'@three-ws/avatar/react'</span><span class="t-op">;</span>
+
+<span class="t-cmt">// Full runtime — chat, voice, lipsync, skills</span>
+<span class="t-kw">export function</span> <span class="t-fn">AgentWidget</span>({ avatarId }) {
+  <span class="t-kw">return</span> (
+    <span class="t-tag">&lt;AgentAvatar</span>
+      <span class="t-attr">avatarId</span>={avatarId}
+      <span class="t-attr">kiosk</span>          <span class="t-cmt">// hides debug UI</span>
+      <span class="t-attr">style</span>=<span class="t-op">{{</span> width: <span class="t-str">'100%'</span>, height: <span class="t-str">'600px'</span> <span class="t-op">}}</span>
+    <span class="t-tag">/&gt;</span>
+  )<span class="t-op">;</span>
+}</pre>
+						</div>
+						<div class="sdk-tab-panel" role="tabpanel" hidden>
+							<pre class="sdk-pre" id="code-react-creator"><span class="t-kw">import</span> { AvatarCreator } <span class="t-kw">from</span> <span class="t-str">'@three-ws/avatar/react'</span><span class="t-op">;</span>
+
+<span class="t-kw">export function</span> <span class="t-fn">OnboardingStep</span>() {
+  <span class="t-kw">const</span> [open, setOpen] = useState(<span class="t-kw">false</span>)<span class="t-op">;</span>
+
+  <span class="t-kw">return</span> (
+    &lt;&gt;
+      <span class="t-tag">&lt;button</span> <span class="t-attr">onClick</span>=<span class="t-op">{</span>() =&gt; <span class="t-fn">setOpen</span>(<span class="t-kw">true</span>)<span class="t-op">}&gt;</span>
+        Create my avatar
+      <span class="t-tag">&lt;/button&gt;</span>
+
+      <span class="t-tag">&lt;AvatarCreator</span>
+        <span class="t-attr">open</span>={open}
+        <span class="t-attr">onExport</span>=<span class="t-op">{</span>(blob) =&gt; <span class="t-fn">handleBlob</span>(blob)<span class="t-op">}</span>
+        <span class="t-attr">onClose</span>=<span class="t-op">{</span>() =&gt; <span class="t-fn">setOpen</span>(<span class="t-kw">false</span>)<span class="t-op">}</span>
+      <span class="t-tag">/&gt;</span>
+    &lt;/&gt;
+  )<span class="t-op">;</span>
+}</pre>
+						</div>
+						<div class="sdk-tab-panel" role="tabpanel" hidden>
+							<pre class="sdk-pre" id="code-react-hook"><span class="t-kw">import</span> { useAvatar } <span class="t-kw">from</span> <span class="t-str">'@three-ws/avatar/react'</span><span class="t-op">;</span>
+
+<span class="t-kw">export function</span> <span class="t-fn">AvatarCard</span>({ id }) {
+  <span class="t-kw">const</span> { avatar, loading, error } = <span class="t-fn">useAvatar</span>(id)<span class="t-op">;</span>
+
+  <span class="t-kw">if</span> (loading) <span class="t-kw">return</span> <span class="t-tag">&lt;Spinner /&gt;</span><span class="t-op">;</span>
+  <span class="t-kw">if</span> (error)   <span class="t-kw">return</span> <span class="t-tag">&lt;p&gt;</span>Error: {error.message}<span class="t-tag">&lt;/p&gt;</span><span class="t-op">;</span>
+
+  <span class="t-kw">return</span> <span class="t-tag">&lt;img</span> <span class="t-attr">src</span>={avatar.thumbnail_url} <span class="t-attr">alt</span>={avatar.name} <span class="t-tag">/&gt;</span><span class="t-op">;</span>
+}</pre>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── API Reference ─────────────────────────────────────────── -->
+			<section class="sdk-section" aria-labelledby="sdk-api-title">
+				<div class="sdk-wrap">
+					<div class="sdk-section-label" aria-hidden="true">API Reference</div>
+					<h2 class="sdk-h2" id="sdk-api-title">Exports</h2>
+					<p class="sdk-lead">Everything the package surfaces.</p>
+
+					<div class="sdk-api-grid">
+						<div class="sdk-api-card">
+							<div class="sdk-api-card-head">
+								<span class="sdk-api-export-badge">element</span>
+								<span class="sdk-api-name">&lt;agent-3d&gt;</span>
+							</div>
+							<div class="sdk-api-card-body">
+								<p class="sdk-api-desc">Full AI avatar runtime — chat loop, voice, lipsync, animation, skills. 3.5 MB bundle, lazy-loaded.</p>
+								<ul class="sdk-api-props">
+									<li><span class="sdk-api-prop-name">avatar-id</span><span class="sdk-api-prop-desc">three.ws avatar UUID — resolved via /api/avatars/:id</span></li>
+									<li><span class="sdk-api-prop-name">src</span><span class="sdk-api-prop-desc">Direct GLB URL</span></li>
+									<li><span class="sdk-api-prop-name">ios-src</span><span class="sdk-api-prop-desc">USDZ URL for iOS AR Quick Look</span></li>
+									<li><span class="sdk-api-prop-name">kiosk</span><span class="sdk-api-prop-desc">Boolean — hides the debug GUI</span></li>
+								</ul>
+							</div>
+						</div>
+
+						<div class="sdk-api-card">
+							<div class="sdk-api-card-head">
+								<span class="sdk-api-export-badge">element</span>
+								<span class="sdk-api-name">&lt;three-ws-viewer&gt;</span>
+							</div>
+							<div class="sdk-api-card-body">
+								<p class="sdk-api-desc">Lightweight pure-visual viewer. Three.js + OrbitControls only. No AI, no WebSocket.</p>
+								<ul class="sdk-api-props">
+									<li><span class="sdk-api-prop-name">src</span><span class="sdk-api-prop-desc">GLB/GLTF URL — reacts to attribute changes</span></li>
+									<li><span class="sdk-api-prop-name">background</span><span class="sdk-api-prop-desc">CSS color or "transparent"</span></li>
+									<li><span class="sdk-api-prop-name">alt</span><span class="sdk-api-prop-desc">Accessibility label + caption</span></li>
+									<li><span class="sdk-api-prop-name">load / error</span><span class="sdk-api-prop-desc">Custom events with detail.url</span></li>
+								</ul>
+							</div>
+						</div>
+
+						<div class="sdk-api-card">
+							<div class="sdk-api-card-head">
+								<span class="sdk-api-export-badge">class</span>
+								<span class="sdk-api-name">AvatarCreator</span>
+							</div>
+							<div class="sdk-api-card-body">
+								<p class="sdk-api-desc">Imperative iframe modal. Resolves with a GLB Blob via postMessage. Works with Character Studio and Avaturn.</p>
+								<ul class="sdk-api-props">
+									<li><span class="sdk-api-prop-name">studioUrl</span><span class="sdk-api-prop-desc">Override the iframe origin (default: three.ws)</span></li>
+									<li><span class="sdk-api-prop-name">onExport(blob)</span><span class="sdk-api-prop-desc">Called with the GLB Blob on export</span></li>
+									<li><span class="sdk-api-prop-name">onClose()</span><span class="sdk-api-prop-desc">Called on user dismiss without export</span></li>
+									<li><span class="sdk-api-prop-name">open() / close()</span><span class="sdk-api-prop-desc">Lifecycle methods</span></li>
+								</ul>
+							</div>
+						</div>
+
+						<div class="sdk-api-card">
+							<div class="sdk-api-card-head">
+								<span class="sdk-api-export-badge">function</span>
+								<span class="sdk-api-name">saveBlob(blob, opts)</span>
+							</div>
+							<div class="sdk-api-card-body">
+								<p class="sdk-api-desc">Presigns to R2, uploads the GLB, registers the avatar record. Returns <code>{ id, url, slug }</code>.</p>
+								<ul class="sdk-api-props">
+									<li><span class="sdk-api-prop-name">bearerToken</span><span class="sdk-api-prop-desc">Required — avatars:write scope</span></li>
+									<li><span class="sdk-api-prop-name">name</span><span class="sdk-api-prop-desc">Avatar display name</span></li>
+									<li><span class="sdk-api-prop-name">visibility</span><span class="sdk-api-prop-desc">"public" | "unlisted" | "private"</span></li>
+									<li><span class="sdk-api-prop-name">apiOrigin</span><span class="sdk-api-prop-desc">Override API host (for self-hosting)</span></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Comparison ────────────────────────────────────────────── -->
+			<section class="sdk-section" aria-labelledby="sdk-compare-title">
+				<div class="sdk-wrap">
+					<div class="sdk-section-label" aria-hidden="true">Comparison</div>
+					<h2 class="sdk-h2" id="sdk-compare-title">vs. Ready Player Me</h2>
+					<p class="sdk-lead">RPM was acquired and closed their free tier. Here's what you get when you migrate.</p>
+
+					<div class="sdk-table-wrap" role="region" aria-label="Comparison table" tabindex="0">
+						<table class="sdk-table">
+							<thead>
+								<tr>
+									<th scope="col">Feature</th>
+									<th scope="col">Ready Player Me</th>
+									<th scope="col" class="col-three">@three-ws/avatar</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Photo → 3D avatar</td>
+									<td><span class="cross">✕</span> Closed</td>
+									<td class="col-three"><span class="check">✓</span> Avaturn pipeline</td>
+								</tr>
+								<tr>
+									<td>In-browser avatar editor</td>
+									<td><span class="cross">✕</span> Closed to new apps</td>
+									<td class="col-three"><span class="check">✓</span> Character Studio</td>
+								</tr>
+								<tr>
+									<td>Hosted CDN storage</td>
+									<td>Paid only</td>
+									<td class="col-three"><span class="check">✓</span> three.ws R2 (free public tier)</td>
+								</tr>
+								<tr>
+									<td>ARKit viseme morphs</td>
+									<td><span class="check">✓</span></td>
+									<td class="col-three"><span class="check">✓</span> Loaded automatically</td>
+								</tr>
+								<tr>
+									<td>Mixamo-compatible rig</td>
+									<td><span class="check">✓</span></td>
+									<td class="col-three"><span class="check">✓</span> Same naming conventions</td>
+								</tr>
+								<tr>
+									<td>Animation library</td>
+									<td>~30 clips</td>
+									<td class="col-three"><span class="check">✓</span> 50+ Mixamo clips bundled</td>
+								</tr>
+								<tr>
+									<td>iOS Quick Look USDZ</td>
+									<td><span class="cross">✕</span></td>
+									<td class="col-three"><span class="check">✓</span> Auto-generated server-side</td>
+								</tr>
+								<tr>
+									<td>WebXR / VR</td>
+									<td><span class="cross">✕</span></td>
+									<td class="col-three"><span class="check">✓</span> Half-body auto-generated</td>
+								</tr>
+								<tr>
+									<td>Web component</td>
+									<td><span class="check">✓</span></td>
+									<td class="col-three"><span class="check">✓</span> <code>&lt;agent-3d&gt;</code></td>
+								</tr>
+								<tr>
+									<td>React bindings</td>
+									<td>Community only</td>
+									<td class="col-three"><span class="check">✓</span> Official, typed</td>
+								</tr>
+								<tr>
+									<td>Self-hostable</td>
+									<td><span class="cross">✕</span></td>
+									<td class="col-three"><span class="check">✓</span> Apache-2.0 open source</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── CTA ───────────────────────────────────────────────────── -->
+			<section class="sdk-section" aria-labelledby="sdk-cta-title">
+				<div class="sdk-wrap">
+					<div class="sdk-cta-banner">
+						<div class="sdk-cta-banner-copy">
+							<h2 id="sdk-cta-title">Ready to ship 3D avatars?</h2>
+							<p>Create your first avatar free. No credit card. Push to production in minutes.</p>
+						</div>
+						<div class="sdk-cta-banner-actions">
+							<a href="/create" class="sdk-btn-primary">
+								Create an avatar
+								<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</a>
+							<a href="https://github.com/nirholas/three.ws/tree/main/avatar-sdk" class="sdk-btn-ghost" target="_blank" rel="noopener">
+								Read the source
+							</a>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<footer class="h-footer-horizon" role="contentinfo" aria-label="Site footer">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div id="footer-content"></div>
+		</footer>
+
+		<script src="/nav.js" defer></script>
+		<script type="module" src="/src/avatar-sdk-page.js"></script>
+	</body>
+</html>

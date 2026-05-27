@@ -76,13 +76,13 @@
 			}
 			:root {
 				color-scheme: dark;
-				--accent: #d6ff3d;
-				--accent-ink: #0a0a0a;
-				--bg: #05060a;
-				--panel: #0f1018;
-				--border: #1e1f2b;
-				--text: #eee;
-				--muted: #8a8d98;
+				--accent: #ffffff;
+				--accent-ink: #000000;
+				--bg: #000000;
+				--panel: #0a0a0a;
+				--border: #1a1a1a;
+				--text: #e8e8e8;
+				--muted: #888888;
 			}
 			* {
 				box-sizing: border-box;
@@ -113,15 +113,10 @@
 				background:
 					radial-gradient(
 						800px 500px at 50% -100px,
-						rgba(106, 92, 255, 0.12) 0,
+						rgba(255, 255, 255, 0.03) 0,
 						transparent 70%
 					),
-					radial-gradient(
-						600px 400px at 50% 110%,
-						rgba(214, 255, 61, 0.05) 0,
-						transparent 70%
-					),
-					#05060a;
+					#000000;
 			}
 			main.stage {
 				max-width: 1100px;
@@ -183,17 +178,17 @@
 			}
 
 			.create-card.is-recommended {
-				border-color: rgba(214, 255, 61, 0.35);
+				border-color: rgba(255, 255, 255, 0.15);
 				background:
 					radial-gradient(
 						420px 240px at 50% -20px,
-						rgba(214, 255, 61, 0.08) 0,
+						rgba(255, 255, 255, 0.04) 0,
 						transparent 70%
 					),
 					var(--panel);
 			}
 			.create-card.is-recommended:hover {
-				border-color: rgba(214, 255, 61, 0.6);
+				border-color: rgba(255, 255, 255, 0.3);
 			}
 
 			.recommended-badge {
@@ -202,8 +197,8 @@
 				right: 14px;
 				padding: 3px 9px;
 				border-radius: 20px;
-				background: rgba(214, 255, 61, 0.12);
-				border: 1px solid rgba(214, 255, 61, 0.35);
+				background: rgba(255, 255, 255, 0.08);
+				border: 1px solid rgba(255, 255, 255, 0.15);
 				font-size: 10.5px;
 				font-weight: 600;
 				letter-spacing: 0.06em;
@@ -218,7 +213,7 @@
 				background:
 					radial-gradient(
 						circle at 50% 30%,
-						rgba(214, 255, 61, 0.08) 0,
+						rgba(255, 255, 255, 0.04) 0,
 						transparent 60%
 					),
 					rgba(255, 255, 255, 0.02);
@@ -370,7 +365,7 @@
 				background: #140a0a;
 			}
 			.status-toast.success {
-				border-color: rgba(214, 255, 61, 0.3);
+				border-color: rgba(255, 255, 255, 0.2);
 				color: var(--accent);
 			}
 

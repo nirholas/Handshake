@@ -500,19 +500,19 @@ function injectStyles() {
 	css.textContent = `
 		:root {
 			color-scheme: dark;
-			--bg: #050505;
+			--bg: #000000;
 			--bg-soft: #0a0a0a;
-			--panel: #111;
-			--panel-soft: #161616;
-			--border: #1e1e1e;
+			--panel: #0a0a0a;
+			--panel-soft: #111111;
+			--border: #1a1a1a;
 			--border-strong: #2a2a2a;
-			--text: #f0f0f0;
-			--text-soft: #888;
-			--muted: #555;
-			--ok: #22c55e;
-			--accent: #3b82f6;
-			--pump: #ffb454;
-			--danger: #ef4444;
+			--text: #e8e8e8;
+			--text-soft: #888888;
+			--muted: #555555;
+			--ok: #e8e8e8;
+			--accent: #ffffff;
+			--pump: #888888;
+			--danger: #f87171;
 			--font-sans: "Inter Tight", -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
 			--font-mono: ${MONO};
 		}

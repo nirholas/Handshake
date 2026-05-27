@@ -282,12 +282,20 @@
 			"dest": "/pump-dashboard.html"
 		},
 		{
+			"src": "/avatar-sdk/?",
+			"dest": "/avatar-sdk.html"
+		},
+		{
 			"src": "/avatar-artifact/?",
 			"dest": "/avatar-artifact.html"
 		},
 		{
 			"src": "/avatar-studio-demo/?",
 			"dest": "/avatar-studio-demo.html"
+		},
+		{
+			"src": "/xr/?",
+			"dest": "/xr.html"
 		},
 		{
 			"src": "/walk/?",
@@ -1428,10 +1436,6 @@
 				"permissions-policy": "xr-spatial-tracking=*, camera=(self), microphone=(self)"
 			},
 			"dest": "/pages/ar.html"
-		},
-		{
-			"src": "/avatars/([^/]+)/edit",
-			"dest": "/avatar-edit.html?id=$1"
 		},
 		{
 			"src": "/avatars/([^/]+)",
