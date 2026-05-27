@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Endpoint Shopper — three.ws</title>
+	<meta name="description" content="AI agent that discovers paid x402 endpoints, chains them together, and synthesizes a final answer for any task." />
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		:root {
+			color-scheme: dark;
+			--bg:        #050505;
+			--surface-0: #0b0b0b;
+			--surface-1: #111111;
+			--surface-2: #181818;
+			--surface-3: #1e1e1e;
+			--hairline:  #1c1c1c;
+			--hairline-strong: #2a2a2a;
+			--text:      #f6f6f6;
+			--text-2:    #a8a8a8;
+			--text-3:    #6a6a6a;
+			--text-4:    #4a4a4a;
+			--accent:    #ffffff;
+			--green:     #e8e8e8;
+			--font-display: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+			--font-body:    "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+			--font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+		body { font-size: 15.5px; line-height: 1.55; min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+		a { color: inherit; text-decoration: none; }
+		button { font-family: inherit; cursor: pointer; }
+		::selection { background: var(--text); color: var(--bg); }
+		.wrap { max-width: 1280px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
+		@media (max-width: 720px) { .wrap { padding-left: 20px; padding-right: 20px; } }
+
+		/* ── NAV ─────────────────────────────────────────────────── */
+		.nav {
+			position: sticky; top: 0; z-index: 100;
+			border-bottom: 1px solid var(--hairline);
+			background: rgba(5,5,5,0.88);
+			backdrop-filter: blur(20px) saturate(140%);
+		}
+		.nav-inner {
+			display: flex; align-items: center; gap: 32px;
+			padding: 16px 32px; max-width: 1440px; margin: 0 auto;
+		}
+		.brand {
+			display: flex; align-items: center; gap: 10px;
+			font-family: var(--font-display);
+			font-weight: 600; letter-spacing: -0.025em; font-size: 16.5px;
+			flex-shrink: 0;
+		}
+		.brand-mark {
+			width: 18px; height: 18px;
+			border: 1px solid var(--text); border-radius: 3px;
+			position: relative;
+		}
+		.brand-mark::after {
+			content: ""; position: absolute; inset: 4px;
+			background: var(--text);
+		}
+		.nav-main { display: flex; gap: 2px; margin-left: 12px; flex: 1; }
+		.nav-main a { padding: 7px 12px; font-size: 14px; font-weight: 450; color: var(--text-2); transition: color 0.12s; }
+		.nav-main a:hover { color: var(--text); }
+		.nav-main a.active { color: var(--text); }
+		.nav-end { display: flex; align-items: center; gap: 4px; }
+		.nav-end a { padding: 7px 12px; font-size: 14px; font-weight: 450; color: var(--text-2); }
+		.nav-end a:hover { color: var(--text); }
+		.nav-end .console {
+			color: var(--text); font-weight: 500;
+			border: 1px solid var(--hairline-strong);
+			padding: 7px 16px; border-radius: 7px; margin-left: 6px;
+			transition: border-color 0.15s, background 0.15s;
+		}
+		.nav-end .console:hover { border-color: var(--text); background: rgba(255,255,255,0.04); }
+		@media (max-width: 880px) {
+			.nav-main { display: none; }
+			.nav-inner { padding: 14px 20px; gap: 16px; }
+		}
+
+		/* ── BUTTONS ─────────────────────────────────────────────── */
+		.btn {
+			display: inline-flex; align-items: center; gap: 10px;
+			padding: 13px 22px; border-radius: 8px;
+			font-size: 14.5px; font-weight: 500;
+			border: 1px solid var(--hairline-strong);
+			background: transparent; color: var(--text);
+			transition: border-color 0.15s, background 0.15s;
+			cursor: pointer; font-family: inherit;
+		}
+		.btn:hover { border-color: var(--text); background: rgba(255,255,255,0.04); }
+		.btn.primary {
+			background: var(--text); color: var(--bg);
+			border-color: var(--text); font-weight: 550;
+		}
+		.btn.primary:hover { background: #fff; }
+		.btn:disabled {
+			opacity: 0.45; cursor: not-allowed;
+			pointer-events: none;
+		}
+
+		/* ── HERO ────────────────────────────────────────────────── */
+		.hero {
+			padding: 80px 0 60px;
+			border-bottom: 1px solid var(--hairline);
+		}
+		.eyebrow {
+			display: inline-flex; align-items: center; gap: 10px;
+			font-family: var(--font-mono); font-size: 11.5px;
+			text-transform: uppercase; letter-spacing: 0.18em;
+			color: var(--text-3); margin-bottom: 28px;
+		}
+		.eyebrow::before {
+			content: ""; width: 6px; height: 6px; border-radius: 50%;
+			background: var(--green); box-shadow: 0 0 6px var(--green);
+			animation: pulse 2.4s ease-in-out infinite;
+		}
+		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+		h1.hero-h {
+			font-family: var(--font-display);
+			font-size: clamp(40px, 5.5vw, 80px);
+			line-height: 0.93; letter-spacing: -0.042em;
+			font-weight: 600; margin: 0 0 24px; color: var(--text);
+		}
+		h1.hero-h em { font-style: normal; color: var(--text-3); font-weight: 500; }
+		.hero-sub {
+			font-size: 18px; color: var(--text-2);
+			max-width: 560px; margin: 0; line-height: 1.55; font-weight: 400;
+		}
+
+		/* ── MAIN LAYOUT ─────────────────────────────────────────── */
+		.main { padding: 64px 0 120px; }
+		.main-grid {
+			display: grid;
+			grid-template-columns: 1fr 1.1fr;
+			gap: 48px;
+			align-items: start;
+		}
+		@media (max-width: 960px) {
+			.main-grid { grid-template-columns: 1fr; gap: 40px; }
+		}
+
+		/* ── TASK FORM ───────────────────────────────────────────── */
+		.form-panel {
+			position: sticky; top: 88px;
+		}
+		.panel-label {
+			font-family: var(--font-mono); font-size: 11px;
+			letter-spacing: 0.18em; text-transform: uppercase;
+			color: var(--text-3); margin-bottom: 12px;
+		}
+		textarea.task-input {
+			width: 100%;
+			background: var(--surface-1);
+			border: 1px solid var(--hairline-strong);
+			border-radius: 10px;
+			color: var(--text);
+			font-family: var(--font-body);
+			font-size: 15.5px;
+			line-height: 1.5;
+			padding: 16px;
+			resize: vertical;
+			min-height: 128px;
+			transition: border-color 0.15s;
+			outline: none;
+		}
+		textarea.task-input::placeholder { color: var(--text-4); }
+		textarea.task-input:focus { border-color: var(--text-3); }
+
+		/* Example chips */
+		.chip-row {
+			display: flex; flex-wrap: wrap; gap: 8px;
+			margin: 12px 0 0;
+		}
+		.chip {
+			display: inline-flex; align-items: center;
+			padding: 6px 12px; border-radius: 20px;
+			font-size: 12.5px; font-weight: 450;
+			border: 1px solid var(--hairline-strong);
+			color: var(--text-3);
+			background: var(--surface-1);
+			cursor: pointer;
+			transition: border-color 0.12s, color 0.12s;
+			white-space: nowrap;
+		}
+		.chip:hover { border-color: var(--text-3); color: var(--text-2); }
+
+		/* Budget slider */
+		.budget-row {
+			display: flex; align-items: center; gap: 16px;
+			margin: 20px 0;
+		}
+		.budget-label {
+			font-size: 13.5px; color: var(--text-2); white-space: nowrap;
+		}
+		.budget-val {
+			font-family: var(--font-mono); font-size: 13.5px;
+			color: var(--text); font-weight: 500; min-width: 48px; text-align: right;
+		}
+		input[type="range"].slider {
+			flex: 1; -webkit-appearance: none; appearance: none;
+			height: 4px; border-radius: 2px;
+			background: var(--surface-3);
+			outline: none;
+			cursor: pointer;
+		}
+		input[type="range"].slider::-webkit-slider-thumb {
+			-webkit-appearance: none; appearance: none;
+			width: 16px; height: 16px;
+			border-radius: 50%;
+			background: var(--text);
+			cursor: pointer;
+		}
+		input[type="range"].slider::-moz-range-thumb {
+			width: 16px; height: 16px;
+			border-radius: 50%;
+			background: var(--text);
+			border: none;
+			cursor: pointer;
+		}
+
+		.run-btn-row { margin-top: 20px; }
+
+		/* ── EXECUTION PANEL ─────────────────────────────────────── */
+		.result-panel { min-height: 120px; }
+
+		/* Skeleton loader */
+		.skeleton-list { display: flex; flex-direction: column; gap: 12px; }
+		.skeleton-item {
+			background: var(--surface-1);
+			border: 1px solid var(--hairline);
+			border-radius: 10px;
+			height: 64px;
+			position: relative; overflow: hidden;
+		}
+		.skeleton-item::after {
+			content: "";
+			position: absolute; inset: 0;
+			background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+			animation: shimmer 1.5s infinite;
+		}
+		@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+		/* Timeline */
+		.timeline { display: flex; flex-direction: column; gap: 12px; }
+		.step-card {
+			background: var(--surface-1);
+			border: 1px solid var(--hairline);
+			border-radius: 10px;
+			padding: 14px 16px;
+			display: flex; gap: 14px; align-items: flex-start;
+			opacity: 0; transform: translateY(8px);
+			animation: step-in 0.32s ease forwards;
+		}
+		@keyframes step-in { to { opacity: 1; transform: translateY(0); } }
+		.step-icon {
+			width: 32px; height: 32px; border-radius: 8px;
+			background: var(--surface-3);
+			border: 1px solid var(--hairline-strong);
+			display: flex; align-items: center; justify-content: center;
+			flex-shrink: 0; font-size: 15px;
+		}
+		.step-body { flex: 1; min-width: 0; }
+		.step-meta {
+			display: flex; align-items: baseline; gap: 10px;
+			margin-bottom: 4px;
+		}
+		.step-num {
+			font-family: var(--font-mono); font-size: 10.5px;
+			letter-spacing: 0.15em; text-transform: uppercase;
+			color: var(--text-4);
+		}
+		.step-action {
+			font-family: var(--font-mono); font-size: 10.5px;
+			letter-spacing: 0.15em; text-transform: uppercase;
+			color: var(--text-3);
+		}
+		.step-cost {
+			margin-left: auto; flex-shrink: 0;
+			font-family: var(--font-mono); font-size: 11px;
+			color: var(--text-4);
+			padding: 2px 8px; border-radius: 4px;
+			background: var(--surface-3);
+			border: 1px solid var(--hairline);
+		}
+		.step-cost.nonzero { color: var(--text-2); background: rgba(255,255,255,0.04); }
+		.step-desc {
+			font-size: 14px; color: var(--text-2); line-height: 1.45;
+		}
+		.step-endpoint {
+			margin-top: 4px;
+			font-family: var(--font-mono); font-size: 11.5px;
+			color: var(--text-4); word-break: break-all;
+		}
+		.step-output {
+			margin-top: 8px;
+			background: var(--surface-2);
+			border: 1px solid var(--hairline);
+			border-radius: 6px;
+			padding: 10px 12px;
+			font-family: var(--font-mono); font-size: 11.5px;
+			color: var(--text-3);
+			max-height: 160px; overflow-y: auto;
+			white-space: pre-wrap; word-break: break-all;
+		}
+
+		/* Total cost row */
+		.total-row {
+			display: flex; align-items: center; justify-content: space-between;
+			padding: 12px 16px;
+			background: var(--surface-2);
+			border: 1px solid var(--hairline);
+			border-radius: 8px;
+			margin-top: 4px;
+		}
+		.total-lbl {
+			font-family: var(--font-mono); font-size: 11.5px;
+			letter-spacing: 0.15em; text-transform: uppercase;
+			color: var(--text-3);
+		}
+		.total-val {
+			font-family: var(--font-mono); font-size: 14px;
+			color: var(--text); font-weight: 500;
+		}
+
+		/* Answer card */
+		.answer-card {
+			margin-top: 16px;
+			background: var(--surface-1);
+			border: 1px solid var(--hairline-strong);
+			border-radius: 12px;
+			padding: 24px;
+		}
+		.answer-eyebrow {
+			font-family: var(--font-mono); font-size: 10.5px;
+			letter-spacing: 0.2em; text-transform: uppercase;
+			color: var(--text-3); margin-bottom: 12px;
+		}
+		.answer-text {
+			font-size: 17px; color: var(--text);
+			line-height: 1.55; font-weight: 400;
+		}
+
+		/* Error state */
+		.error-card {
+			background: var(--surface-1);
+			border: 1px solid #3a1a1a;
+			border-radius: 10px;
+			padding: 20px;
+		}
+		.error-card p {
+			font-size: 14px; color: #e07070;
+			margin: 0 0 14px;
+		}
+
+		/* Empty state */
+		.empty-state {
+			text-align: center;
+			padding: 60px 24px;
+			color: var(--text-4);
+			font-size: 14px;
+		}
+		.empty-state svg { opacity: 0.3; margin-bottom: 16px; }
+
+		/* 402 badge */
+		.badge-402 {
+			display: inline-flex; align-items: center; gap: 6px;
+			padding: 3px 8px; border-radius: 4px;
+			font-family: var(--font-mono); font-size: 10.5px;
+			background: rgba(255, 180, 0, 0.08);
+			border: 1px solid rgba(255, 180, 0, 0.25);
+			color: #e6a820;
+		}
+	</style>
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────────────── -->
+<nav class="nav">
+	<div class="nav-inner">
+		<a class="brand" href="/">
+			<span class="brand-mark"></span>
+			three.ws
+		</a>
+		<div class="nav-main">
+			<a href="/pages/home-next.html">Explore</a>
+			<a href="/pages/shopper.html" class="active">Endpoint Shopper</a>
+			<a href="/pages/marketplace.html">Marketplace</a>
+			<a href="/pages/fact-checker.html">Fact Checker</a>
+		</div>
+		<div class="nav-end">
+			<a href="/pages/app-next.html" class="console">Dashboard</a>
+		</div>
+	</div>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────────── -->
+<div class="hero">
+	<div class="wrap">
+		<div class="eyebrow">USE-36 — Agent Orchestration</div>
+		<h1 class="hero-h">Endpoint Shopper<br /><em>AI that chains paid APIs</em></h1>
+		<p class="hero-sub">Describe a task, set a budget. The agent discovers relevant x402 endpoints in the Bazaar, pays for each call, and synthesizes a final answer.</p>
+	</div>
+</div>
+
+<!-- ── MAIN ──────────────────────────────────────────────────── -->
+<div class="main">
+	<div class="wrap">
+		<div class="main-grid">
+
+			<!-- Left: form -->
+			<div class="form-panel">
+				<div class="panel-label">Task</div>
+				<textarea
+					id="task-input"
+					class="task-input"
+					placeholder="Describe what you want to know or do…"
+					rows="5"
+				></textarea>
+
+				<div class="chip-row" id="chip-row">
+					<span class="chip" data-task="What is Ethereum's current price?">ETH price</span>
+					<span class="chip" data-task="Check reputation of agent with address 0x1234">Agent reputation</span>
+					<span class="chip" data-task="Search for available x402 endpoints for weather data">Find weather APIs</span>
+					<span class="chip" data-task="List the top paid AI model endpoints in the Bazaar">AI model endpoints</span>
+					<span class="chip" data-task="What pump.fun tokens are trending right now?">Pump.fun trends</span>
+				</div>
+
+				<div class="budget-row">
+					<span class="budget-label">Max budget</span>
+					<input
+						id="budget-slider"
+						type="range"
+						class="slider"
+						min="0.10"
+						max="2.00"
+						step="0.05"
+						value="0.50"
+					/>
+					<span class="budget-val" id="budget-display">$0.50</span>
+				</div>
+
+				<div class="run-btn-row">
+					<button id="run-btn" class="btn primary">
+						<svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M3 2l9 5-9 5V2z" fill="currentColor"/></svg>
+						Run Task
+					</button>
+				</div>
+			</div>
+
+			<!-- Right: results -->
+			<div class="result-panel" id="result-panel">
+				<div class="empty-state" id="empty-state">
+					<svg width="40" height="40" fill="none" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="1.5"/><path d="M14 20h12M20 14v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+					<div>Enter a task and click <strong>Run Task</strong> to begin</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<script type="module" src="/src/shopper-app.js"></script>
+</body>
+</html>

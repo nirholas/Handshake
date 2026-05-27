@@ -491,15 +491,7 @@ function buildReviewForm(agentId, existing, onSuccess) {
 	let selectedRating = existing?.rating || 0;
 	let submitting = false;
 
-	const isLoggedIn = document.cookie.includes('session') || document.querySelector('[data-user-id]') != null;
 
-	if (!isLoggedIn && !existing) {
-		return el('div', { class: 'ad-reviews-signin-prompt' }, [
-			document.createTextNode(''),
-			el('a', { href: '/sign-in', text: 'Sign in' }),
-			document.createTextNode(' to leave a review'),
-		]);
-	}
 
 	const formTitle = el('div', { class: 'ad-review-form-title', text: existing ? 'Your Review' : 'Write a Review' });
 
@@ -574,8 +566,12 @@ function buildReviewForm(agentId, existing, onSuccess) {
 			});
 			const json = await r.json();
 			if (!r.ok) {
-				statusEl.textContent = json.error?.message || 'Save failed';
-				statusEl.style.color = '#ff8a80';
+				if (r.status === 401) {
+					statusEl.innerHTML = '<a href="/sign-in" style="color:var(--ad-violet)">Sign in</a> to leave a review';
+				} else {
+					statusEl.textContent = json.error?.message || 'Save failed';
+				}
+				statusEl.style.color = r.status === 401 ? 'var(--ad-muted)' : '#ff8a80';
 				submitBtn.disabled = false;
 				submitBtn.textContent = existing ? 'Update' : 'Submit';
 				submitting = false;

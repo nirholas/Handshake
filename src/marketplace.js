@@ -2813,6 +2813,7 @@ async function loadDetail(id) {
 		detailState = { agent, bookmarked: !!agent.bookmarked };
 		renderDetail(agent, !!agent.bookmarked);
 		loadReviews(id);
+		loadReputation(id);
 
 		// Versions + similar (best-effort).
 		Promise.all([
@@ -3292,6 +3293,333 @@ function renderSimilar(items) {
 	side.querySelectorAll('[data-id]').forEach((card) => {
 		card.addEventListener('click', () => navTo(`/marketplace/agents/${card.dataset.id}`));
 	});
+}
+
+// ── Reviews & Ratings ─────────────────────────────────────────────────────
+
+const reviewsState = {
+	agentId: null,
+	summary: null,
+	reviews: [],
+	myReview: null,
+	selectedRating: 0,
+	loading: false,
+	submitting: false,
+};
+
+async function loadReviews(agentId) {
+	reviewsState.agentId = agentId;
+	reviewsState.loading = true;
+	renderReviewsSkeleton();
+
+	try {
+		const r = await fetch(`${API}/marketplace/agents/${agentId}/reviews`, { credentials: 'include' });
+		if (!r.ok) throw new Error(`reviews fetch ${r.status}`);
+		const j = await r.json();
+		reviewsState.summary = j.data?.summary || { rating_avg: 0, rating_count: 0, breakdown: {} };
+		reviewsState.reviews = j.data?.reviews || [];
+		reviewsState.myReview = j.data?.my_review || null;
+		reviewsState.selectedRating = reviewsState.myReview?.rating || 0;
+		reviewsState.loading = false;
+		renderReviewsSummary();
+		renderReviewInput();
+		renderReviewsList();
+	} catch (err) {
+		console.error('[marketplace] reviews', err);
+		reviewsState.loading = false;
+		const msg = $('d-rating-msg');
+		if (msg) { msg.textContent = 'Could not load reviews.'; msg.classList.add('err'); }
+	}
+}
+
+function renderReviewsSkeleton() {
+	const summary = $('d-rating-summary');
+	if (summary) {
+		$('d-rating-avg').textContent = '—';
+		$('d-rating-stars').textContent = '☆☆☆☆☆';
+		$('d-rating-count').textContent = 'Loading…';
+	}
+	const list = $('d-reviews-list');
+	if (list) {
+		list.innerHTML = Array.from({ length: 3 }, () =>
+			`<div class="review-card skeleton"><div class="review-skeleton-line w60"></div><div class="review-skeleton-line w80"></div><div class="review-skeleton-line w40"></div></div>`
+		).join('');
+	}
+	const input = $('d-rating-input');
+	if (input) input.hidden = true;
+	const msg = $('d-rating-msg');
+	if (msg) { msg.textContent = ''; msg.classList.remove('err', 'ok'); }
+}
+
+function starsHtml(rating, max = 5) {
+	const full = Math.round(rating);
+	let s = '';
+	for (let i = 1; i <= max; i++) s += i <= full ? '★' : '☆';
+	return s;
+}
+
+function renderReviewsSummary() {
+	const s = reviewsState.summary;
+	if (!s) return;
+	$('d-rating-avg').textContent = s.rating_count > 0 ? Number(s.rating_avg).toFixed(1) : '—';
+	$('d-rating-stars').innerHTML = s.rating_count > 0
+		? `<span class="stars-filled">${starsHtml(s.rating_avg)}</span>`
+		: '☆☆☆☆☆';
+	$('d-rating-count').textContent = s.rating_count > 0
+		? `${s.rating_count} review${s.rating_count === 1 ? '' : 's'}`
+		: 'No reviews yet';
+
+	const widget = $('d-rating-widget');
+	if (!widget) return;
+	let breakdownEl = widget.querySelector('.d-rating-breakdown');
+	if (!breakdownEl) {
+		breakdownEl = document.createElement('div');
+		breakdownEl.className = 'd-rating-breakdown';
+		const summaryEl = $('d-rating-summary');
+		if (summaryEl) summaryEl.after(breakdownEl);
+	}
+
+	if (s.rating_count === 0) {
+		breakdownEl.innerHTML = '';
+		return;
+	}
+
+	const bd = s.breakdown || {};
+	breakdownEl.innerHTML = [5, 4, 3, 2, 1].map((star) => {
+		const count = bd[star] || 0;
+		const pct = s.rating_count > 0 ? (count / s.rating_count * 100) : 0;
+		return `<div class="breakdown-row">
+			<span class="breakdown-label">${star}★</span>
+			<div class="breakdown-track"><div class="breakdown-fill" style="width:${pct.toFixed(1)}%"></div></div>
+			<span class="breakdown-count">${count}</span>
+		</div>`;
+	}).join('');
+}
+
+function renderReviewInput() {
+	const input = $('d-rating-input');
+	if (!input) return;
+
+	if (!isLikelyAuthed()) {
+		input.hidden = false;
+		input.innerHTML = `<a href="/login?next=${encodeURIComponent(location.pathname)}" class="review-login-cta">Sign in to leave a review</a>`;
+		return;
+	}
+
+	const isOwner = detailState?.agent?.is_mine || detailState?.agent?.is_owner;
+	if (isOwner) {
+		input.hidden = true;
+		return;
+	}
+
+	input.hidden = false;
+
+	if (reviewsState.myReview) {
+		input.innerHTML = `
+			<div class="review-mine-notice">
+				<span>Your review: <strong>${starsHtml(reviewsState.myReview.rating)}</strong></span>
+				<div class="review-mine-actions">
+					<button type="button" class="review-edit-btn" id="d-review-edit">Edit</button>
+					<button type="button" class="review-delete-btn" id="d-review-delete">Delete</button>
+				</div>
+			</div>
+			<div class="review-edit-form" id="d-review-edit-form" hidden>
+				<span style="font-size:12px;color:var(--mk-text-2)">Update your rating:</span>
+				<span class="stars review-star-picker" id="d-rating-pick-edit" role="radiogroup" aria-label="Pick a rating">
+					${[1,2,3,4,5].map(i => `<button type="button" class="star-pick${i <= reviewsState.myReview.rating ? ' active' : ''}" data-rating="${i}" aria-label="${i} star${i>1?'s':''}">${i <= reviewsState.myReview.rating ? '★' : '☆'}</button>`).join('')}
+				</span>
+				<textarea id="d-review-body-edit" placeholder="Write a short review (optional)" maxlength="2000">${escapeHtml(reviewsState.myReview.body || '')}</textarea>
+				<div class="review-edit-actions">
+					<button type="button" class="submit-review" id="d-review-update">Update review</button>
+					<button type="button" class="review-cancel-btn" id="d-review-cancel">Cancel</button>
+				</div>
+			</div>`;
+
+		$('d-review-edit')?.addEventListener('click', () => {
+			$('d-review-edit-form').hidden = false;
+			$('d-review-edit').parentElement.parentElement.querySelector('.review-mine-notice')?.classList.add('editing');
+		});
+		$('d-review-cancel')?.addEventListener('click', () => {
+			$('d-review-edit-form').hidden = true;
+			document.querySelector('.review-mine-notice')?.classList.remove('editing');
+		});
+		$('d-review-delete')?.addEventListener('click', deleteReview);
+		$('d-review-update')?.addEventListener('click', () => {
+			const body = $('d-review-body-edit')?.value || '';
+			submitReview(reviewsState.selectedRating, body);
+		});
+		bindStarPicker($('d-rating-pick-edit'));
+	} else {
+		input.innerHTML = `
+			<span style="font-size:12px;color:var(--mk-text-2)">Your rating:</span>
+			<span class="stars review-star-picker" id="d-rating-pick" role="radiogroup" aria-label="Pick a rating">
+				${[1,2,3,4,5].map(i => `<button type="button" class="star-pick" data-rating="${i}" aria-label="${i} star${i>1?'s':''}">${i <= reviewsState.selectedRating ? '★' : '☆'}</button>`).join('')}
+			</span>
+			<textarea id="d-review-body" placeholder="Write a short review (optional)" maxlength="2000"></textarea>
+			<button type="button" class="submit-review" id="d-review-submit" disabled>Submit review</button>`;
+		$('d-review-submit')?.addEventListener('click', () => {
+			const body = $('d-review-body')?.value || '';
+			submitReview(reviewsState.selectedRating, body);
+		});
+		bindStarPicker($('d-rating-pick'));
+	}
+
+	const msg = $('d-rating-msg');
+	if (msg) { msg.textContent = ''; msg.classList.remove('err', 'ok'); }
+}
+
+function bindStarPicker(container) {
+	if (!container) return;
+	const buttons = container.querySelectorAll('.star-pick');
+	buttons.forEach((btn) => {
+		btn.addEventListener('mouseenter', () => {
+			const r = Number(btn.dataset.rating);
+			buttons.forEach((b) => {
+				const v = Number(b.dataset.rating);
+				b.textContent = v <= r ? '★' : '☆';
+				b.classList.toggle('hover', v <= r);
+			});
+		});
+		btn.addEventListener('click', () => {
+			const r = Number(btn.dataset.rating);
+			reviewsState.selectedRating = r;
+			buttons.forEach((b) => {
+				const v = Number(b.dataset.rating);
+				b.textContent = v <= r ? '★' : '☆';
+				b.classList.toggle('active', v <= r);
+			});
+			const submit = container.closest('.d-rating-input, .review-edit-form')?.querySelector('.submit-review');
+			if (submit) submit.disabled = false;
+		});
+	});
+	container.addEventListener('mouseleave', () => {
+		const current = reviewsState.selectedRating;
+		buttons.forEach((b) => {
+			const v = Number(b.dataset.rating);
+			b.textContent = v <= current ? '★' : '☆';
+			b.classList.remove('hover');
+			b.classList.toggle('active', v <= current);
+		});
+	});
+}
+
+async function submitReview(rating, body) {
+	if (!rating || rating < 1 || rating > 5) return;
+	if (!reviewsState.agentId) return;
+	if (reviewsState.submitting) return;
+	reviewsState.submitting = true;
+	const msg = $('d-rating-msg');
+	if (msg) { msg.textContent = 'Submitting…'; msg.classList.remove('err', 'ok'); }
+
+	try {
+		const r = await apiPostWithCsrf(
+			`${API}/marketplace/agents/${reviewsState.agentId}/reviews`,
+			{ rating, body: body?.trim() || null },
+		);
+		if (r.status === 401) {
+			location.href = `/login?next=${encodeURIComponent(location.pathname)}`;
+			return;
+		}
+		const j = await r.json();
+		if (!r.ok) throw new Error(j?.error_description || j?.error || 'Review submission failed');
+
+		if (msg) { msg.textContent = 'Review saved.'; msg.classList.add('ok'); }
+		setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
+		loadReviews(reviewsState.agentId);
+	} catch (err) {
+		console.error('[marketplace] submit review', err);
+		if (msg) { msg.textContent = err.message || 'Failed to save review.'; msg.classList.add('err'); }
+	} finally {
+		reviewsState.submitting = false;
+	}
+}
+
+async function deleteReview() {
+	if (!reviewsState.agentId) return;
+	if (reviewsState.submitting) return;
+	const msg = $('d-rating-msg');
+	if (msg) { msg.textContent = 'Deleting…'; msg.classList.remove('err', 'ok'); }
+	reviewsState.submitting = true;
+	try {
+		const token = await getCsrfToken();
+		_csrf = null;
+		const r = await fetch(`${API}/marketplace/agents/${reviewsState.agentId}/reviews`, {
+			method: 'DELETE',
+			headers: { 'X-CSRF-Token': token },
+			credentials: 'include',
+		});
+		if (!r.ok) {
+			const j = await r.json().catch(() => ({}));
+			throw new Error(j?.error_description || 'Delete failed');
+		}
+		reviewsState.myReview = null;
+		reviewsState.selectedRating = 0;
+		if (msg) { msg.textContent = 'Review deleted.'; msg.classList.add('ok'); }
+		setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
+		loadReviews(reviewsState.agentId);
+	} catch (err) {
+		console.error('[marketplace] delete review', err);
+		if (msg) { msg.textContent = err.message || 'Delete failed.'; msg.classList.add('err'); }
+	} finally {
+		reviewsState.submitting = false;
+	}
+}
+
+function renderReviewsList() {
+	const list = $('d-reviews-list');
+	if (!list) return;
+	const reviews = reviewsState.reviews || [];
+
+	if (!reviews.length) {
+		list.innerHTML = `<div class="reviews-empty">
+			<span class="reviews-empty-icon">☆</span>
+			<p>No reviews yet.</p>
+			<p class="reviews-empty-hint">Be the first to share your experience with this agent.</p>
+		</div>`;
+		return;
+	}
+
+	list.innerHTML = reviews.map((r) => {
+		const avatar = r.author_avatar
+			? `<div class="review-avatar" style="background-image:url('${escapeHtml(r.author_avatar)}')"></div>`
+			: `<div class="review-avatar">${escapeHtml(initial(r.author_name))}</div>`;
+		const dateStr = liveTime(r.updated_at || r.created_at);
+		const edited = r.updated_at && r.created_at && r.updated_at !== r.created_at;
+		const mine = r.is_mine ? ' mine' : '';
+		return `<div class="review-card${mine}">
+			<div class="review-header">
+				${avatar}
+				<div class="review-meta">
+					<span class="review-author">${escapeHtml(r.author_name)}</span>
+					<span class="review-date">${escapeHtml(dateStr)}${edited ? ' (edited)' : ''}</span>
+				</div>
+				<span class="review-stars">${starsHtml(r.rating)}</span>
+			</div>
+			${r.body ? `<p class="review-body">${escapeHtml(r.body)}</p>` : ''}
+		</div>`;
+	}).join('');
+}
+
+// ── On-chain Reputation ──────────────────────────────────────────────────
+
+async function loadReputation(agentId) {
+	const card = $('d-reputation-card');
+	if (!card) return;
+	try {
+		const r = await fetch(`${API}/agents/${agentId}/reputation`);
+		if (!r.ok) { card.hidden = true; return; }
+		const j = await r.json();
+		const rep = j?.data;
+		if (!rep || (!rep.average && !rep.count)) { card.hidden = true; return; }
+		card.hidden = false;
+		const avg = Number(rep.average || 0);
+		const count = Number(rep.count || 0);
+		$('d-rep-avg').textContent = avg.toFixed(1);
+		$('d-rep-count').textContent = `${count} on-chain vote${count === 1 ? '' : 's'}`;
+		$('d-rep-stars').innerHTML = `<span class="stars-filled">${starsHtml(avg)}</span>`;
+	} catch {
+		if (card) card.hidden = true;
+	}
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────

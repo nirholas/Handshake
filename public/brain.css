@@ -602,6 +602,16 @@ body {
 	transition: all 0.12s;
 }
 .br-pill.on { border-color: var(--pc); color: var(--pc); }
+.br-pill.unavailable {
+	opacity: 0.38;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+.br-pill-na {
+	font-size: 9px;
+	color: #ff4444;
+	margin-left: 2px;
+}
 .br-pill-dot {
 	width: 7px;
 	height: 7px;

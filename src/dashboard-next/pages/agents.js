@@ -169,6 +169,8 @@ function renderAgents(host, agents, avatars, root) {
 			}
 		});
 	});
+
+	loadInlineReviewStats(host, agents);
 }
 
 const BRAIN_LABELS = {
@@ -252,6 +254,34 @@ function agentCard(a, avatars) {
 			` : ''}
 		</div>
 	`;
+}
+
+async function loadInlineReviewStats(host, agents) {
+	const published = agents.filter((a) => a.is_published);
+	if (!published.length) return;
+	const results = await Promise.allSettled(
+		published.map((a) =>
+			fetch(`/api/marketplace/agents/${encodeURIComponent(a.id)}/reviews`, { credentials: 'include' })
+				.then((r) => r.ok ? r.json() : null)
+				.then((j) => ({ id: a.id, summary: j?.data?.summary }))
+		)
+	);
+	for (const r of results) {
+		if (r.status !== 'fulfilled' || !r.value?.summary) continue;
+		const { id, summary } = r.value;
+		const card = host.querySelector(`[data-agent-id="${id}"]`);
+		if (!card) continue;
+		const avg = Number(summary.rating_avg || 0);
+		const count = summary.rating_count || 0;
+		if (count === 0) continue;
+		const badge = document.createElement('span');
+		badge.className = 'dn-tag';
+		badge.style.cssText = 'font-size:11px;background:rgba(251,191,36,0.12);border-color:rgba(251,191,36,0.3);color:#fbbf24';
+		badge.textContent = `★ ${avg.toFixed(1)} (${count})`;
+		badge.title = `${avg.toFixed(2)} avg from ${count} review${count === 1 ? '' : 's'}`;
+		const nameRow = card.querySelector('div > div:nth-child(2) > div:first-child');
+		if (nameRow) nameRow.appendChild(badge);
+	}
 }
 
 function showReputationPanel(card, rep) {

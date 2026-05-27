@@ -665,6 +665,195 @@
 				background: #fff;
 				animation: walk-rec-pulse 0.9s infinite;
 			}
+			/* ── Avatar picker ──────────────────────────────────────────── */
+			.walk-avatar-picker {
+				position: fixed;
+				top: calc(env(safe-area-inset-top, 0) + 56px + 60px);
+				right: 16px;
+				z-index: 10;
+				width: 280px;
+				max-height: 360px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 14px;
+				backdrop-filter: blur(14px);
+				-webkit-backdrop-filter: blur(14px);
+				overflow: hidden;
+				display: flex;
+				flex-direction: column;
+			}
+			.walk-avatar-picker-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 10px 14px;
+				font-size: 13px;
+				font-weight: 600;
+				border-bottom: 1px solid var(--border);
+			}
+			.walk-avatar-picker-header button {
+				background: none;
+				border: none;
+				color: var(--text-2);
+				font-size: 18px;
+				cursor: pointer;
+				padding: 0 4px;
+			}
+			.walk-avatar-picker-list {
+				overflow-y: auto;
+				padding: 8px;
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+			}
+			.walk-avatar-picker-loading {
+				text-align: center;
+				padding: 20px;
+				color: var(--text-2);
+				font-size: 12px;
+			}
+			.walk-avatar-opt {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 8px 10px;
+				border-radius: 8px;
+				cursor: pointer;
+				border: none;
+				background: none;
+				color: var(--text);
+				font: inherit;
+				font-size: 13px;
+				text-align: left;
+				transition: background 0.12s;
+				width: 100%;
+			}
+			.walk-avatar-opt:hover { background: rgba(255,255,255,0.06); }
+			.walk-avatar-opt.is-active { background: rgba(255,255,255,0.1); }
+			.walk-avatar-opt-thumb {
+				width: 36px;
+				height: 36px;
+				border-radius: 8px;
+				object-fit: cover;
+				background: rgba(255,255,255,0.05);
+				flex-shrink: 0;
+			}
+			.walk-avatar-opt-name {
+				flex: 1;
+				min-width: 0;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+
+			/* ── Chat ──────────────────────────────────────────────────────── */
+			.walk-chat {
+				position: fixed;
+				bottom: calc(24px + env(safe-area-inset-bottom, 0));
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 8;
+				width: min(420px, calc(100vw - 200px));
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				pointer-events: none;
+			}
+			.walk-chat-messages {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				max-height: 180px;
+				overflow: hidden;
+				pointer-events: none;
+			}
+			.walk-chat-msg {
+				padding: 5px 10px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				backdrop-filter: blur(8px);
+				-webkit-backdrop-filter: blur(8px);
+				font-size: 12px;
+				line-height: 1.4;
+				color: var(--text);
+				animation: walk-chat-in 0.2s ease;
+				align-self: flex-start;
+				max-width: 90%;
+				word-break: break-word;
+			}
+			.walk-chat-msg-name {
+				font-weight: 600;
+				margin-right: 6px;
+			}
+			.walk-chat-msg.is-system {
+				color: var(--text-2);
+				font-style: italic;
+				border-color: transparent;
+				background: rgba(17,17,17,0.5);
+			}
+			@keyframes walk-chat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+			.walk-chat-form {
+				display: flex;
+				gap: 6px;
+				pointer-events: auto;
+			}
+			.walk-chat-input {
+				flex: 1;
+				padding: 8px 12px;
+				border: 1px solid var(--border);
+				border-radius: 999px;
+				background: var(--panel);
+				color: var(--text);
+				font: inherit;
+				font-size: 13px;
+				outline: none;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				transition: border-color 0.15s;
+			}
+			.walk-chat-input:focus { border-color: rgba(255,255,255,0.25); }
+			.walk-chat-input::placeholder { color: var(--text-2); }
+			.walk-chat-send {
+				width: 34px;
+				height: 34px;
+				border-radius: 50%;
+				border: 1px solid var(--border);
+				background: var(--panel);
+				color: var(--text);
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				transition: background 0.12s;
+				flex-shrink: 0;
+			}
+			.walk-chat-send:hover { background: rgba(255,255,255,0.12); }
+			@media (hover: none) {
+				.walk-chat { width: min(300px, calc(100vw - 200px)); bottom: calc(80px + env(safe-area-inset-bottom, 0)); }
+			}
+
+			/* ── Chat bubble above remote players ───────────────────────────── */
+			.walk-remote-bubble {
+				position: fixed;
+				z-index: 3;
+				pointer-events: none;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				backdrop-filter: blur(6px);
+				-webkit-backdrop-filter: blur(6px);
+				padding: 4px 10px;
+				font-size: 11px;
+				color: var(--text);
+				max-width: 200px;
+				word-break: break-word;
+				white-space: pre-wrap;
+				animation: walk-chat-in 0.2s ease;
+				transition: opacity 0.3s;
+			}
 		</style>
 		<link rel="stylesheet" href="/nav.css" />
 	</head>
@@ -701,6 +890,10 @@
 					<p>Drag to orbit. Joystick or <kbd>WASD</kbd> to move.</p>
 				</div>
 				<div class="walk-actions">
+					<button type="button" class="walk-btn" id="walk-avatar-btn" title="Change avatar">
+						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="5.5" r="3"/><path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>
+						<span data-label>Avatar</span>
+					</button>
 					<button type="button" id="walk-online" data-status="idle" title="Players online">
 						<span class="dot"></span>
 						<span data-label>solo</span>
@@ -720,6 +913,30 @@
 						<span>?</span>
 					</button>
 				</div>
+			</div>
+
+			<!-- Avatar picker panel -->
+			<div id="walk-avatar-picker" class="walk-avatar-picker" hidden>
+				<div class="walk-avatar-picker-header">
+					<span>Choose Avatar</span>
+					<button type="button" id="walk-avatar-picker-close" aria-label="Close">&times;</button>
+				</div>
+				<div id="walk-avatar-picker-list" class="walk-avatar-picker-list">
+					<div class="walk-avatar-picker-loading">Loading your avatars...</div>
+				</div>
+			</div>
+
+			<!-- Chat overlay -->
+			<div id="walk-chat" class="walk-chat">
+				<div id="walk-chat-messages" class="walk-chat-messages" aria-live="polite" role="log"></div>
+				<form id="walk-chat-form" class="walk-chat-form" autocomplete="off">
+					<input type="text" id="walk-chat-input" class="walk-chat-input"
+						placeholder="Press Enter to chat..." maxlength="200" autocomplete="off" spellcheck="false"
+						aria-label="Chat message" />
+					<button type="submit" class="walk-chat-send" aria-label="Send">
+						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2L7 9"/><path d="M14 2l-5 12-2-5-5-2z"/></svg>
+					</button>
+				</form>
 			</div>
 
 			<!-- Player list panel -->

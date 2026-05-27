@@ -47,6 +47,7 @@ const state = {
 	currentId: null,
 	streaming: false,
 	agents: [],
+	availableProviders: null, // set after API fetch; null = not yet loaded
 };
 
 // ── DOM helpers ──────────────────────────────────────────────────────────────
@@ -428,26 +429,67 @@ function renderSidebar() {
 }
 
 // ── Render: Playground toolbar ───────────────────────────────────────────────
+function isProviderAvailable(key) {
+	if (!state.availableProviders) return true; // optimistic before load
+	const found = state.availableProviders.find(p => p.key === key);
+	return found ? found.available : false;
+}
+
 function renderPlayControls() {
 	const ctrl = $('brPlayControls');
 	const label = $('brPlayLabel');
 	if (state.playMode === 'compare') {
 		label.textContent = 'Models';
 		ctrl.innerHTML = `<div class="br-provider-pills">${
-			PROVIDERS.map(p => `
-				<label class="br-pill${state.active.has(p.key) ? ' on' : ''}" style="--pc:${p.color}" data-key="${p.key}">
+			PROVIDERS.map(p => {
+				const avail = isProviderAvailable(p.key);
+				const cls = [
+					'br-pill',
+					state.active.has(p.key) ? 'on' : '',
+					!avail ? 'unavailable' : '',
+				].filter(Boolean).join(' ');
+				const title = avail ? '' : ` title="${p.label} — not configured on this deployment"`;
+				return `<label class="${cls}" style="--pc:${p.color}" data-key="${p.key}"${title}>
 					<span class="br-pill-dot"></span>
 					<span>${p.short}</span>
-				</label>
-			`).join('')
+					${!avail ? '<span class="br-pill-na" aria-hidden="true">✕</span>' : ''}
+				</label>`;
+			}).join('')
 		}</div>`;
 	} else {
 		label.textContent = 'Model';
 		ctrl.innerHTML = `<select class="br-focus-sel" id="brFocusSel">${
-			PROVIDERS.map(p => `<option value="${p.key}"${p.key === state.focusKey ? ' selected' : ''}>${p.label}</option>`).join('')
+			PROVIDERS.map(p => {
+				const avail = isProviderAvailable(p.key);
+				return `<option value="${p.key}"${p.key === state.focusKey ? ' selected' : ''}${!avail ? ' disabled' : ''}>${p.label}${avail ? '' : ' (unavailable)'}</option>`;
+			}).join('')
 		}</select>`;
 	}
 	bindPlayControlEvents();
+}
+
+async function fetchProviderAvailability() {
+	try {
+		const r = await fetch('/api/brain/chat', { method: 'GET' });
+		if (!r.ok) return;
+		const json = await r.json();
+		if (Array.isArray(json.providers)) {
+			state.availableProviders = json.providers;
+			// Remove unavailable providers from the active set
+			for (const key of [...state.active]) {
+				const found = json.providers.find(p => p.key === key);
+				if (found && !found.available) state.active.delete(key);
+			}
+			// Ensure at least one active provider
+			if (state.active.size === 0) {
+				const first = json.providers.find(p => p.available);
+				if (first) state.active.add(first.key);
+			}
+			renderPlayControls();
+		}
+	} catch {
+		// Non-fatal — providers just show as all-available
+	}
 }
 
 // ── Render: Compare canvas ───────────────────────────────────────────────────
@@ -972,6 +1014,7 @@ renderPlayControls();
 renderSidebar();
 renderCanvas();
 bindEvents();
+fetchProviderAvailability();
 
 if (state.persona) {
 	renderPersonaCard(state.persona);

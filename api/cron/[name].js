@@ -75,6 +75,7 @@ const HANDLERS = {
 	'run-coin-payouts': handleRunCoinPayouts,
 	'club-payouts': handleClubPayouts,
 	'siwx-gc': handleSiwxGc,
+	'unstoppable-tick': handleUnstoppableTick,
 };
 
 export default wrap(async (req, res) => {
@@ -3329,4 +3330,29 @@ async function handleClubPayouts(req, res) {
 
 	const summary = await runClubPayoutSweep();
 	return json(res, 200, { ok: true, ...summary });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// unstoppable-tick — autonomous agent lifecycle (sense → think → act → settle)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleUnstoppableTick(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
+
+	const auth = req.headers['authorization'] || '';
+	const expected = process.env.CRON_SECRET ? `Bearer ${process.env.CRON_SECRET}` : null;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && (!expected || auth !== expected)) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	try {
+		const { tick } = await import('../../agents/unstoppable/src/loop.js');
+		const result = await tick();
+		return json(res, 200, { ok: true, ...result });
+	} catch (err) {
+		console.error('[unstoppable-tick]', err?.message || err);
+		return json(res, 200, { ok: false, error: err?.message || 'tick failed' });
+	}
 }

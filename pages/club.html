@@ -156,6 +156,78 @@
 				color: var(--text-3);
 			}
 
+			/* ── Presence bar ─────────────────────────────────── */
+			.club-presence {
+				position: fixed;
+				top: 52px;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 30;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 6px 14px;
+				background: rgba(10, 6, 18, 0.75);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 999px;
+				backdrop-filter: blur(12px);
+				-webkit-backdrop-filter: blur(12px);
+				font-size: 12px;
+				color: rgba(255, 255, 255, 0.7);
+			}
+			.club-presence-dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #34d399;
+				box-shadow: 0 0 6px #34d399;
+				animation: club-dot-pulse 2s ease-in-out infinite;
+			}
+			@keyframes club-dot-pulse { 50% { opacity: 0.5; } }
+			.club-reactions {
+				display: flex;
+				gap: 4px;
+				margin-left: 8px;
+				border-left: 1px solid rgba(255,255,255,0.1);
+				padding-left: 10px;
+			}
+			.club-react-btn {
+				appearance: none;
+				border: none;
+				background: rgba(255,255,255,0.06);
+				border-radius: 8px;
+				padding: 3px 7px;
+				font-size: 16px;
+				cursor: pointer;
+				transition: transform 0.1s, background 0.12s;
+				line-height: 1;
+			}
+			.club-react-btn:hover { background: rgba(255,255,255,0.12); transform: scale(1.15); }
+			.club-react-btn:active { transform: scale(0.95); }
+
+			.club-reaction-canvas {
+				position: fixed;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				height: 60vh;
+				z-index: 25;
+				pointer-events: none;
+				overflow: hidden;
+			}
+			.club-float-emoji {
+				position: absolute;
+				bottom: 0;
+				font-size: 28px;
+				animation: club-float-up 2.5s ease-out forwards;
+				pointer-events: none;
+			}
+			@keyframes club-float-up {
+				0% { transform: translateY(0) scale(0.5); opacity: 1; }
+				60% { opacity: 1; }
+				100% { transform: translateY(-60vh) scale(1.2); opacity: 0; }
+			}
+
 			/* ── Stage (3D canvas) ─────────────────────────────── */
 			#club-stage {
 				grid-area: stage;
@@ -712,6 +784,19 @@
 				<div id="club-status" role="status" aria-live="polite" hidden>Loading…</div>
 			</main>
 
+			<!-- Viewer presence bar -->
+			<div id="club-presence" class="club-presence">
+				<span class="club-presence-dot"></span>
+				<span id="club-viewer-count">1</span> watching
+				<div class="club-reactions" id="club-reactions">
+					<button type="button" class="club-react-btn" data-react="fire" title="Fire">🔥</button>
+					<button type="button" class="club-react-btn" data-react="heart" title="Love">❤️</button>
+					<button type="button" class="club-react-btn" data-react="money" title="Money">💰</button>
+					<button type="button" class="club-react-btn" data-react="clap" title="Clap">👏</button>
+				</div>
+			</div>
+			<div id="club-reaction-canvas" class="club-reaction-canvas" aria-hidden="true"></div>
+
 			<!-- RIGHT PANEL -->
 			<aside id="club-right">
 				<button
@@ -773,5 +858,54 @@
 		<!-- x402 drop-in modal (Phantom/MetaMask wallet flow + 402 retry) -->
 		<script type="module" src="/x402.js"></script>
 		<script type="module" src="/src/club.js"></script>
+
+		<!-- Viewer presence + reactions -->
+		<script type="module">
+		{
+			const viewerEl = document.getElementById('club-viewer-count');
+			const reactCanvas = document.getElementById('club-reaction-canvas');
+			const EMOJIS = { fire: '\u{1F525}', heart: '\u{2764}️', money: '\u{1F4B0}', clap: '\u{1F44F}' };
+			let viewerCount = 1;
+			let viewerSessionId = Math.random().toString(36).slice(2, 10);
+
+			async function heartbeat() {
+				try {
+					const res = await fetch('/api/club/presence', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ session: viewerSessionId }),
+					});
+					if (res.ok) {
+						const data = await res.json();
+						viewerCount = data.count || 1;
+						if (viewerEl) viewerEl.textContent = String(viewerCount);
+					}
+				} catch {}
+			}
+
+			heartbeat();
+			setInterval(heartbeat, 15000);
+
+			if (reactCanvas) {
+				document.getElementById('club-reactions')?.addEventListener('click', (e) => {
+					const btn = e.target.closest('[data-react]');
+					if (!btn) return;
+					const key = btn.dataset.react;
+					const emoji = EMOJIS[key] || '\u{1F525}';
+
+					for (let i = 0; i < 3; i++) {
+						const el = document.createElement('div');
+						el.className = 'club-float-emoji';
+						el.textContent = emoji;
+						el.style.left = (30 + Math.random() * 40) + '%';
+						el.style.animationDuration = (2 + Math.random()) + 's';
+						el.style.animationDelay = (i * 0.15) + 's';
+						reactCanvas.appendChild(el);
+						el.addEventListener('animationend', () => el.remove());
+					}
+				});
+			}
+		}
+		</script>
 	</body>
 </html>

@@ -1438,3 +1438,143 @@ loadAvatar()
 		}
 		requestAnimationFrame(tick);
 	});
+
+// ── Avatar picker ────────────────────────────────────────────────────────
+{
+	const pickerPanel = document.getElementById('walk-avatar-picker');
+	const pickerList = document.getElementById('walk-avatar-picker-list');
+	const pickerBtn = document.getElementById('walk-avatar-btn');
+	const pickerClose = document.getElementById('walk-avatar-picker-close');
+	let pickerOpen = false;
+	let pickerLoaded = false;
+	let currentAvatarId = new URLSearchParams(location.search).get('avatar') || null;
+
+	function togglePicker() {
+		pickerOpen = !pickerOpen;
+		if (pickerPanel) pickerPanel.hidden = !pickerOpen;
+		if (pickerOpen && !pickerLoaded) loadAvatarList();
+	}
+
+	if (pickerBtn) pickerBtn.addEventListener('click', togglePicker);
+	if (pickerClose) pickerClose.addEventListener('click', () => { pickerOpen = false; if (pickerPanel) pickerPanel.hidden = true; });
+
+	async function loadAvatarList() {
+		pickerLoaded = true;
+		try {
+			const res = await fetch('/api/avatars?limit=20', { credentials: 'include' });
+			if (!res.ok) throw new Error('not signed in');
+			const data = await res.json();
+			const avatars = data?.avatars ?? [];
+			if (!avatars.length) {
+				pickerList.innerHTML = '<div class="walk-avatar-picker-loading">No avatars yet. <a href="/create" style="color:#fff;text-decoration:underline">Create one</a></div>';
+				return;
+			}
+			pickerList.innerHTML = `
+				<button class="walk-avatar-opt${!currentAvatarId ? ' is-active' : ''}" data-avatar-url="/avatars/default.glb" data-avatar-id="">
+					<div class="walk-avatar-opt-thumb" style="background:#333;display:flex;align-items:center;justify-content:center;font-size:16px">D</div>
+					<span class="walk-avatar-opt-name">Default avatar</span>
+				</button>
+				${avatars.map(a => {
+					const thumb = a.thumbnail_url || '';
+					const name = a.name || a.slug || 'Untitled';
+					const active = currentAvatarId === a.id;
+					return `<button class="walk-avatar-opt${active ? ' is-active' : ''}" data-avatar-url="${a.url || ''}" data-avatar-id="${a.id}">
+						${thumb ? `<img class="walk-avatar-opt-thumb" src="${thumb}" alt="" loading="lazy" />` : `<div class="walk-avatar-opt-thumb" style="display:flex;align-items:center;justify-content:center;font-size:14px;color:#999">${name[0]}</div>`}
+						<span class="walk-avatar-opt-name">${name.replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":"&#39;"})[c])}</span>
+					</button>`;
+				}).join('')}
+			`;
+		} catch {
+			pickerList.innerHTML = '<div class="walk-avatar-picker-loading"><a href="/login" style="color:#fff;text-decoration:underline">Sign in</a> to use your avatars</div>';
+		}
+	}
+
+	if (pickerList) pickerList.addEventListener('click', async (e) => {
+		const btn = e.target.closest('.walk-avatar-opt');
+		if (!btn) return;
+		const url = btn.dataset.avatarUrl;
+		if (!url) return;
+
+		pickerList.querySelectorAll('.walk-avatar-opt').forEach(b => b.classList.remove('is-active'));
+		btn.classList.add('is-active');
+		currentAvatarId = btn.dataset.avatarId || null;
+
+		setStatus('Switching avatar...');
+		try {
+			const loader = new GLTFLoader();
+			const gltf = await loader.loadAsync(url);
+			if (avatar) avatarRig.remove(avatar);
+			avatar = gltf.scene;
+			avatarTemplate = gltf.scene;
+			avatar.traverse(n => {
+				if (n.isMesh) { n.castShadow = true; n.receiveShadow = false; }
+			});
+			const box = new Box3().setFromObject(avatar);
+			avatar.position.y -= box.min.y;
+			avatarRig.add(avatar);
+			const height = Math.max(0.5, box.max.y - box.min.y);
+			CAM_OFFSET.set(0, height * 1.05, height * 1.95);
+			CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
+			animationManager.attach(avatar);
+			animationManager.crossfadeTo(motionToClipName(currentMotion), 0);
+			setStatus('Avatar switched');
+		} catch (err) {
+			setStatus('Failed to load avatar', { error: true });
+			console.error('[walk] avatar switch failed:', err);
+		}
+		togglePicker();
+	});
+}
+
+// ── Chat system ──────────────────────────────────────────────────────────
+{
+	const chatMessages = document.getElementById('walk-chat-messages');
+	const chatForm = document.getElementById('walk-chat-form');
+	const chatInput = document.getElementById('walk-chat-input');
+	const MAX_VISIBLE = 8;
+	const FADE_MS = 12000;
+
+	function addChatMessage(name, text, opts = {}) {
+		if (!chatMessages) return;
+		const msg = document.createElement('div');
+		msg.className = 'walk-chat-msg' + (opts.system ? ' is-system' : '');
+		if (opts.system) {
+			msg.textContent = text;
+		} else {
+			const colorHex = opts.color ? '#' + opts.color.toString(16).padStart(6, '0') : '#fff';
+			msg.innerHTML = `<span class="walk-chat-msg-name" style="color:${colorHex}">${esc(name)}</span>${esc(text)}`;
+		}
+		chatMessages.appendChild(msg);
+
+		while (chatMessages.children.length > MAX_VISIBLE) {
+			chatMessages.removeChild(chatMessages.firstChild);
+		}
+
+		setTimeout(() => {
+			msg.style.opacity = '0';
+			setTimeout(() => msg.remove(), 300);
+		}, FADE_MS);
+	}
+
+	if (chatForm) chatForm.addEventListener('submit', (e) => {
+		e.preventDefault();
+		const text = chatInput.value.trim();
+		if (!text) return;
+		chatInput.value = '';
+		const name = nameInput?.value?.trim() || 'you';
+		addChatMessage(name, text);
+		if (net?.room) {
+			net.room.send('chat', { text: text.slice(0, 200) });
+		}
+	});
+
+	window.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter' && !e.shiftKey && document.activeElement !== chatInput
+			&& document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+			e.preventDefault();
+			chatInput?.focus();
+		}
+	});
+
+	window._walkChat = { addChatMessage };
+}

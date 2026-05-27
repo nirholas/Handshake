@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-05-27T10:06:15.054Z",
+	"generated_at": "2026-05-27T10:47:28.743Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -365,6 +365,33 @@
 					"title": "GMGN Smart Money",
 					"description": "Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.",
 					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/fact-checker",
+					"title": "Fact Checker",
+					"description": "Pay $0.10 per claim. The agent searches across authoritative sources, pays per retrieval via x402, and returns a verdict with cited evidence and a signed attestation.",
+					"added": "2026-05-27",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/unstoppable",
+					"title": "Unstoppable Agent",
+					"description": "Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time.",
+					"added": "2026-05-27",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/shopper",
+					"title": "Endpoint Shopper",
+					"description": "Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.",
+					"added": "2026-05-27",
 					"auth": null,
 					"indexable": true,
 					"tags": []

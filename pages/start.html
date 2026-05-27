@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Get started · three.ws</title>
+	<meta name="description" content="Create your 3D AI agent in minutes. Give it a body, a brain, and a revenue stream." />
+	<meta name="robots" content="noindex" />
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+		:root {
+			--bg: #000;
+			--surface: #0a0a0a;
+			--surface-2: #111;
+			--border: #1c1c1c;
+			--border-2: #2a2a2a;
+			--text: #fafafa;
+			--text-2: #a1a1aa;
+			--text-3: #52525b;
+			--accent: #fff;
+			--accent-ink: #000;
+			--green: #4ade80;
+			--amber: #f59e0b;
+			--blue: #60a5fa;
+			--radius-sm: 8px;
+			--radius: 12px;
+			--radius-lg: 16px;
+			color-scheme: dark;
+		}
+
+		html, body {
+			height: 100%;
+			background: var(--bg);
+			color: var(--text);
+			font-family: -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif;
+			-webkit-font-smoothing: antialiased;
+			overflow: hidden;
+		}
+
+		/* ── Shell ─────────────────────────────────────────────────── */
+		#wizard {
+			height: 100%;
+			display: flex;
+			flex-direction: column;
+		}
+
+		/* ── Header ────────────────────────────────────────────────── */
+		.wz-header {
+			flex-shrink: 0;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 16px 24px;
+			border-bottom: 1px solid var(--border);
+		}
+		.wz-logo {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			text-decoration: none;
+			color: var(--text);
+		}
+		.wz-logo img { width: 24px; height: 24px; }
+		.wz-logo span {
+			font-family: 'Space Grotesk', 'Inter', sans-serif;
+			font-weight: 600;
+			font-size: 0.95rem;
+			color: var(--text);
+		}
+		.wz-progress {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+		.wz-dot {
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			background: var(--border-2);
+			transition: background 0.3s, transform 0.3s;
+		}
+		.wz-dot.active {
+			background: var(--text);
+			transform: scale(1.3);
+		}
+		.wz-dot.done { background: var(--green); }
+		.wz-skip {
+			font-size: 13px;
+			color: var(--text-3);
+			text-decoration: none;
+			transition: color 0.15s;
+		}
+		.wz-skip:hover { color: var(--text-2); }
+
+		/* ── Steps container ───────────────────────────────────────── */
+		.wz-body {
+			flex: 1;
+			overflow: hidden;
+			position: relative;
+		}
+		.wz-step {
+			position: absolute;
+			inset: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 32px 24px;
+			overflow-y: auto;
+			opacity: 0;
+			transform: translateX(40px);
+			pointer-events: none;
+			transition: opacity 0.35s ease, transform 0.35s ease;
+		}
+		.wz-step.active {
+			opacity: 1;
+			transform: translateX(0);
+			pointer-events: auto;
+		}
+		.wz-step.exit-left {
+			opacity: 0;
+			transform: translateX(-40px);
+		}
+		.wz-step-inner {
+			width: 100%;
+			max-width: 640px;
+		}
+
+		/* ── Typography ────────────────────────────────────────────── */
+		.wz-eyebrow {
+			font-size: 11px;
+			font-weight: 600;
+			letter-spacing: 0.12em;
+			text-transform: uppercase;
+			color: var(--text-3);
+			margin-bottom: 12px;
+		}
+		.wz-headline {
+			font-size: clamp(1.75rem, 5vw, 2.5rem);
+			font-weight: 700;
+			letter-spacing: -0.03em;
+			line-height: 1.15;
+			color: var(--text);
+			margin-bottom: 10px;
+		}
+		.wz-sub {
+			font-size: 15px;
+			color: var(--text-2);
+			line-height: 1.6;
+			margin-bottom: 32px;
+		}
+
+		/* ── Avatar cards ──────────────────────────────────────────── */
+		.wz-avatar-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 12px;
+			margin-bottom: 16px;
+		}
+		@media (max-width: 520px) {
+			.wz-avatar-grid { grid-template-columns: 1fr; }
+		}
+		.wz-avatar-card {
+			padding: 20px 16px 18px;
+			background: var(--surface);
+			border: 1.5px solid var(--border);
+			border-radius: var(--radius);
+			cursor: pointer;
+			text-align: center;
+			transition: border-color 0.18s, background 0.18s, transform 0.15s;
+			position: relative;
+			overflow: hidden;
+		}
+		.wz-avatar-card:hover {
+			border-color: var(--border-2);
+			background: var(--surface-2);
+			transform: translateY(-2px);
+		}
+		.wz-avatar-card.selected {
+			border-color: var(--text);
+			background: #0f0f0f;
+		}
+		.wz-avatar-card-icon {
+			font-size: 32px;
+			margin-bottom: 10px;
+			display: block;
+			line-height: 1;
+		}
+		.wz-avatar-card-label {
+			font-size: 13px;
+			font-weight: 600;
+			color: var(--text);
+			margin-bottom: 4px;
+		}
+		.wz-avatar-card-desc {
+			font-size: 11px;
+			color: var(--text-3);
+			line-height: 1.5;
+		}
+		.wz-avatar-card-badge {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			font-size: 10px;
+			font-weight: 600;
+			background: #18181b;
+			color: var(--text-2);
+			padding: 2px 7px;
+			border-radius: 20px;
+			border: 1px solid var(--border-2);
+		}
+		.wz-avatar-preview {
+			margin-bottom: 20px;
+			padding: 16px;
+			background: var(--surface);
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+			display: flex;
+			align-items: center;
+			gap: 14px;
+		}
+		.wz-avatar-preview-thumb {
+			width: 52px;
+			height: 52px;
+			border-radius: 50%;
+			background: #1a1a1a center/cover no-repeat;
+			flex-shrink: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 22px;
+		}
+		.wz-avatar-preview-info {
+			flex: 1;
+			min-width: 0;
+		}
+		.wz-avatar-preview-name {
+			font-size: 14px;
+			font-weight: 600;
+			color: var(--text);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.wz-avatar-preview-status {
+			font-size: 12px;
+			color: var(--green);
+			margin-top: 2px;
+			display: flex;
+			align-items: center;
+			gap: 4px;
+		}
+		.wz-avatar-preview-status::before {
+			content: '';
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			background: var(--green);
+			display: inline-block;
+		}
+
+		/* ── Form fields ───────────────────────────────────────────── */
+		.wz-field {
+			margin-bottom: 20px;
+		}
+		.wz-label {
+			display: block;
+			font-size: 12px;
+			font-weight: 600;
+			color: var(--text-2);
+			margin-bottom: 8px;
+			letter-spacing: 0.02em;
+		}
+		.wz-input,
+		.wz-textarea {
+			width: 100%;
+			padding: 12px 14px;
+			background: var(--surface);
+			border: 1.5px solid var(--border);
+			border-radius: var(--radius-sm);
+			color: var(--text);
+			font-size: 15px;
+			font-family: inherit;
+			outline: none;
+			transition: border-color 0.15s;
+		}
+		.wz-input:focus,
+		.wz-textarea:focus { border-color: #3f3f46; }
+		.wz-textarea { resize: vertical; min-height: 88px; line-height: 1.5; }
+
+		/* Personality chips */
+		.wz-chips {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-bottom: 20px;
+		}
+		.wz-chip {
+			padding: 6px 14px;
+			background: var(--surface);
+			border: 1.5px solid var(--border);
+			border-radius: 20px;
+			font-size: 12px;
+			font-weight: 500;
+			color: var(--text-2);
+			cursor: pointer;
+			transition: border-color 0.15s, color 0.15s, background 0.15s;
+		}
+		.wz-chip:hover { border-color: var(--border-2); color: var(--text); }
+		.wz-chip.active {
+			border-color: var(--text);
+			color: var(--text);
+			background: #111;
+		}
+
+		/* Model picker */
+		.wz-model-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 8px;
+			margin-bottom: 20px;
+		}
+		@media (max-width: 480px) {
+			.wz-model-grid { grid-template-columns: 1fr 1fr; }
+		}
+		.wz-model-card {
+			padding: 12px 10px;
+			background: var(--surface);
+			border: 1.5px solid var(--border);
+			border-radius: var(--radius-sm);
+			cursor: pointer;
+			text-align: center;
+			transition: border-color 0.15s, background 0.15s;
+		}
+		.wz-model-card:hover {
+			border-color: var(--border-2);
+			background: var(--surface-2);
+		}
+		.wz-model-card.active {
+			border-color: var(--text);
+			background: #0f0f0f;
+		}
+		.wz-model-name {
+			font-size: 12px;
+			font-weight: 600;
+			color: var(--text);
+			margin-bottom: 2px;
+		}
+		.wz-model-desc {
+			font-size: 10px;
+			color: var(--text-3);
+		}
+
+		/* ── Skills grid ───────────────────────────────────────────── */
+		.wz-skills-grid {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 10px;
+			margin-bottom: 16px;
+		}
+		@media (max-width: 420px) {
+			.wz-skills-grid { grid-template-columns: 1fr; }
+		}
+		.wz-skill-card {
+			display: flex;
+			align-items: flex-start;
+			gap: 12px;
+			padding: 14px;
+			background: var(--surface);
+			border: 1.5px solid var(--border);
+			border-radius: var(--radius-sm);
+			cursor: pointer;
+			transition: border-color 0.15s, background 0.15s;
+			user-select: none;
+		}
+		.wz-skill-card:hover {
+			border-color: var(--border-2);
+			background: var(--surface-2);
+		}
+		.wz-skill-card.active {
+			border-color: #3f3f46;
+			background: #0d0d10;
+		}
+		.wz-skill-check {
+			width: 18px;
+			height: 18px;
+			border-radius: 5px;
+			border: 1.5px solid var(--border-2);
+			flex-shrink: 0;
+			margin-top: 1px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 10px;
+			transition: background 0.15s, border-color 0.15s;
+		}
+		.wz-skill-card.active .wz-skill-check {
+			background: var(--text);
+			border-color: var(--text);
+			color: var(--bg);
+		}
+		.wz-skill-icon {
+			font-size: 18px;
+			flex-shrink: 0;
+			margin-top: 0;
+			line-height: 1.2;
+		}
+		.wz-skill-text { flex: 1; min-width: 0; }
+		.wz-skill-name {
+			font-size: 13px;
+			font-weight: 600;
+			color: var(--text);
+			margin-bottom: 2px;
+		}
+		.wz-skill-desc {
+			font-size: 11px;
+			color: var(--text-3);
+			line-height: 1.5;
+		}
+
+		/* ── Deploy step ───────────────────────────────────────────── */
+		.wz-deploy-status {
+			text-align: center;
+			padding: 32px 0 24px;
+		}
+		.wz-deploy-spinner {
+			width: 40px;
+			height: 40px;
+			border: 2px solid var(--border-2);
+			border-top-color: var(--text);
+			border-radius: 50%;
+			animation: spin 0.7s linear infinite;
+			margin: 0 auto 16px;
+		}
+		@keyframes spin { to { transform: rotate(360deg); } }
+		.wz-deploy-label {
+			font-size: 15px;
+			font-weight: 500;
+			color: var(--text-2);
+		}
+		.wz-deploy-success {
+			display: none;
+			flex-direction: column;
+			gap: 16px;
+		}
+		.wz-deploy-success.show { display: flex; }
+		.wz-success-icon {
+			font-size: 40px;
+			text-align: center;
+		}
+		.wz-success-title {
+			font-size: 20px;
+			font-weight: 700;
+			text-align: center;
+			letter-spacing: -0.02em;
+		}
+		.wz-code-block {
+			background: #060606;
+			border: 1px solid var(--border);
+			border-radius: var(--radius-sm);
+			padding: 14px;
+			font-family: 'SF Mono', 'Fira Code', monospace;
+			font-size: 12px;
+			color: #86efac;
+			word-break: break-all;
+			line-height: 1.6;
+			position: relative;
+		}
+		.wz-copy-btn {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			padding: 4px 10px;
+			background: #111;
+			border: 1px solid var(--border-2);
+			border-radius: 6px;
+			font-size: 11px;
+			color: var(--text-2);
+			cursor: pointer;
+			transition: color 0.15s, border-color 0.15s;
+		}
+		.wz-copy-btn:hover { color: var(--text); border-color: #3f3f46; }
+		.wz-code-label {
+			font-size: 11px;
+			font-weight: 600;
+			color: var(--text-3);
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			margin-bottom: 6px;
+		}
+		.wz-live-link {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 12px 16px;
+			background: var(--surface);
+			border: 1px solid var(--border);
+			border-radius: var(--radius-sm);
+			text-decoration: none;
+			color: var(--text);
+			font-size: 14px;
+			transition: border-color 0.15s;
+		}
+		.wz-live-link:hover { border-color: var(--border-2); }
+		.wz-live-link-icon { font-size: 16px; flex-shrink: 0; }
+		.wz-live-link-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.wz-live-link-arrow { color: var(--text-3); flex-shrink: 0; }
+
+		/* ── Earn step ─────────────────────────────────────────────── */
+		.wz-earn-rows {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			margin-bottom: 24px;
+		}
+		.wz-earn-row {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			padding: 16px;
+			background: var(--surface);
+			border: 1px solid var(--border);
+			border-radius: var(--radius-sm);
+		}
+		.wz-earn-icon {
+			font-size: 22px;
+			flex-shrink: 0;
+			width: 36px;
+			text-align: center;
+		}
+		.wz-earn-row-body { flex: 1; min-width: 0; }
+		.wz-earn-row-label {
+			font-size: 13px;
+			font-weight: 600;
+			color: var(--text);
+			margin-bottom: 2px;
+		}
+		.wz-earn-row-desc {
+			font-size: 11px;
+			color: var(--text-3);
+		}
+		.wz-earn-input-wrap {
+			display: flex;
+			align-items: center;
+			gap: 0;
+			background: var(--surface);
+			border: 1.5px solid var(--border);
+			border-radius: var(--radius-sm);
+			overflow: hidden;
+			transition: border-color 0.15s;
+		}
+		.wz-earn-input-wrap:focus-within { border-color: #3f3f46; }
+		.wz-earn-prefix {
+			padding: 10px 10px 10px 12px;
+			color: var(--text-3);
+			font-size: 13px;
+			background: #0a0a0a;
+			border-right: 1px solid var(--border);
+		}
+		.wz-earn-num {
+			flex: 1;
+			padding: 10px 12px;
+			background: transparent;
+			border: none;
+			color: var(--text);
+			font-size: 14px;
+			font-family: inherit;
+			outline: none;
+		}
+		.wz-earn-suffix {
+			padding: 10px 12px 10px 6px;
+			color: var(--text-3);
+			font-size: 11px;
+		}
+		.wz-wallet-input-wrap {
+			display: flex;
+			align-items: center;
+			gap: 0;
+			background: var(--surface);
+			border: 1.5px solid var(--border);
+			border-radius: var(--radius-sm);
+			overflow: hidden;
+			transition: border-color 0.15s;
+		}
+		.wz-wallet-input-wrap:focus-within { border-color: #3f3f46; }
+		.wz-wallet-input {
+			flex: 1;
+			padding: 10px 14px;
+			background: transparent;
+			border: none;
+			color: var(--text);
+			font-size: 13px;
+			font-family: 'SF Mono', monospace;
+			outline: none;
+		}
+		.wz-wallet-input::placeholder { color: var(--text-3); font-family: -apple-system, sans-serif; }
+		.wz-wallet-chain {
+			padding: 10px 12px;
+			background: #0a0a0a;
+			border-left: 1px solid var(--border);
+			font-size: 11px;
+			font-weight: 600;
+			color: var(--text-3);
+		}
+
+		/* ── Footer buttons ────────────────────────────────────────── */
+		.wz-footer {
+			flex-shrink: 0;
+			padding: 16px 24px;
+			border-top: 1px solid var(--border);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+		}
+		.wz-btn {
+			padding: 11px 22px;
+			border-radius: var(--radius-sm);
+			font-size: 14px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: opacity 0.15s, background 0.15s;
+			border: none;
+			font-family: inherit;
+		}
+		.wz-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+		.wz-btn-primary {
+			background: var(--accent);
+			color: var(--accent-ink);
+		}
+		.wz-btn-primary:hover:not(:disabled) { opacity: 0.88; }
+		.wz-btn-ghost {
+			background: transparent;
+			color: var(--text-2);
+			border: 1px solid var(--border-2);
+		}
+		.wz-btn-ghost:hover:not(:disabled) { color: var(--text); border-color: #3f3f46; }
+		.wz-btn-skip {
+			background: none;
+			border: none;
+			color: var(--text-3);
+			font-size: 13px;
+			padding: 11px 4px;
+			cursor: pointer;
+			font-family: inherit;
+			transition: color 0.15s;
+		}
+		.wz-btn-skip:hover { color: var(--text-2); }
+
+		/* ── Error toast ───────────────────────────────────────────── */
+		.wz-toast {
+			position: fixed;
+			bottom: 80px;
+			left: 50%;
+			transform: translateX(-50%) translateY(20px);
+			background: #1c0a0a;
+			border: 1px solid #7f1d1d;
+			color: #f87171;
+			padding: 10px 18px;
+			border-radius: 8px;
+			font-size: 13px;
+			z-index: 100;
+			opacity: 0;
+			transition: opacity 0.2s, transform 0.2s;
+			pointer-events: none;
+			white-space: nowrap;
+		}
+		.wz-toast.show {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
+		}
+
+		/* ── Divider ───────────────────────────────────────────────── */
+		.wz-divider {
+			height: 1px;
+			background: var(--border);
+			margin: 20px 0;
+		}
+	</style>
+</head>
+<body>
+<div id="wizard">
+	<!-- Header -->
+	<header class="wz-header">
+		<a href="/" class="wz-logo">
+			<img src="/three.svg" alt="" />
+			<span>three.ws</span>
+		</a>
+		<div class="wz-progress" id="wz-progress" role="progressbar" aria-label="Wizard progress" aria-valuenow="1" aria-valuemax="5">
+			<div class="wz-dot active" data-step="1"></div>
+			<div class="wz-dot" data-step="2"></div>
+			<div class="wz-dot" data-step="3"></div>
+			<div class="wz-dot" data-step="4"></div>
+			<div class="wz-dot" data-step="5"></div>
+		</div>
+		<a href="/dashboard" class="wz-skip" id="wz-header-skip">Skip setup</a>
+	</header>
+
+	<!-- Step body -->
+	<main class="wz-body" id="wz-body">
+
+		<!-- Step 1: Avatar -->
+		<section class="wz-step active" id="step-1" aria-label="Step 1: Create your avatar">
+			<div class="wz-step-inner">
+				<p class="wz-eyebrow">Step 1 of 5</p>
+				<h1 class="wz-headline">Give your agent a body</h1>
+				<p class="wz-sub">Start with a 3D avatar. Pick a creation method or skip and name your agent first.</p>
+
+				<div id="avatar-preview" hidden>
+					<div class="wz-avatar-preview">
+						<div class="wz-avatar-preview-thumb" id="ap-thumb">🤖</div>
+						<div class="wz-avatar-preview-info">
+							<div class="wz-avatar-preview-name" id="ap-name">Avatar ready</div>
+							<div class="wz-avatar-preview-status">Ready to use</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="wz-avatar-grid" id="avatar-method-grid">
+					<button class="wz-avatar-card" id="btn-selfie" type="button">
+						<span class="wz-avatar-card-badge">2 min</span>
+						<span class="wz-avatar-card-icon">🤳</span>
+						<div class="wz-avatar-card-label">Take a selfie</div>
+						<div class="wz-avatar-card-desc">One photo → rigged 3D avatar</div>
+					</button>
+					<button class="wz-avatar-card" id="btn-upload" type="button">
+						<span class="wz-avatar-card-icon">📦</span>
+						<div class="wz-avatar-card-label">Upload GLB</div>
+						<div class="wz-avatar-card-desc">Bring your own 3D model</div>
+					</button>
+					<button class="wz-avatar-card" id="btn-editor" type="button">
+						<span class="wz-avatar-card-icon">🎨</span>
+						<div class="wz-avatar-card-label">3D editor</div>
+						<div class="wz-avatar-card-desc">Build from scratch in-browser</div>
+					</button>
+				</div>
+
+				<input type="file" id="glb-file-input" accept=".glb,.gltf" hidden />
+			</div>
+		</section>
+
+		<!-- Step 2: Name & Brain -->
+		<section class="wz-step" id="step-2" aria-label="Step 2: Name your agent">
+			<div class="wz-step-inner">
+				<p class="wz-eyebrow">Step 2 of 5</p>
+				<h1 class="wz-headline">Name your agent</h1>
+				<p class="wz-sub">Give it a personality. You can change this any time.</p>
+
+				<div class="wz-field">
+					<label class="wz-label" for="agent-name">Agent name</label>
+					<input class="wz-input" id="agent-name" type="text" placeholder="e.g. Luna, Apex, Nova" maxlength="100" autocomplete="off" />
+				</div>
+
+				<div class="wz-field">
+					<label class="wz-label" for="agent-bio">Personality &amp; bio <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
+					<textarea class="wz-textarea" id="agent-bio" placeholder="e.g. A crypto-savvy assistant that tracks Solana token launches and helps users make informed trading decisions." maxlength="500"></textarea>
+				</div>
+
+				<p class="wz-label" style="margin-bottom:10px">Quick personality</p>
+				<div class="wz-chips" id="personality-chips">
+					<button type="button" class="wz-chip" data-preset="crypto">Crypto advisor</button>
+					<button type="button" class="wz-chip" data-preset="artist">Creative artist</button>
+					<button type="button" class="wz-chip" data-preset="community">Community manager</button>
+					<button type="button" class="wz-chip" data-preset="defi">DeFi expert</button>
+					<button type="button" class="wz-chip" data-preset="assistant">Helpful assistant</button>
+				</div>
+
+				<p class="wz-label" style="margin-bottom:10px">AI model</p>
+				<div class="wz-model-grid" id="model-grid">
+					<button type="button" class="wz-model-card active" data-model="claude-sonnet-4-5">
+						<div class="wz-model-name">Claude Sonnet</div>
+						<div class="wz-model-desc">Smart & fast</div>
+					</button>
+					<button type="button" class="wz-model-card" data-model="gpt-4o">
+						<div class="wz-model-name">GPT-4o</div>
+						<div class="wz-model-desc">OpenAI flagship</div>
+					</button>
+					<button type="button" class="wz-model-card" data-model="llama-3.3-70b">
+						<div class="wz-model-name">Llama 3.3</div>
+						<div class="wz-model-desc">Open source</div>
+					</button>
+				</div>
+			</div>
+		</section>
+
+		<!-- Step 3: Skills -->
+		<section class="wz-step" id="step-3" aria-label="Step 3: Choose skills">
+			<div class="wz-step-inner">
+				<p class="wz-eyebrow">Step 3 of 5</p>
+				<h1 class="wz-headline">Give it superpowers</h1>
+				<p class="wz-sub">Each skill extends what your agent can do. Enable any combination.</p>
+
+				<div class="wz-skills-grid" id="skills-grid">
+					<button type="button" class="wz-skill-card active" data-skill="memory" aria-pressed="true">
+						<div class="wz-skill-check">✓</div>
+						<div class="wz-skill-icon">🧠</div>
+						<div class="wz-skill-text">
+							<div class="wz-skill-name">Memory</div>
+							<div class="wz-skill-desc">Remember users & context across sessions</div>
+						</div>
+					</button>
+					<button type="button" class="wz-skill-card active" data-skill="think" aria-pressed="true">
+						<div class="wz-skill-check">✓</div>
+						<div class="wz-skill-icon">💭</div>
+						<div class="wz-skill-text">
+							<div class="wz-skill-name">Deep thinking</div>
+							<div class="wz-skill-desc">Reason step-by-step before answering</div>
+						</div>
+					</button>
+					<button type="button" class="wz-skill-card" data-skill="pumpfun" aria-pressed="false">
+						<div class="wz-skill-check"></div>
+						<div class="wz-skill-icon">🚀</div>
+						<div class="wz-skill-text">
+							<div class="wz-skill-name">pump.fun</div>
+							<div class="wz-skill-desc">Monitor Solana token launches & whale moves</div>
+						</div>
+					</button>
+					<button type="button" class="wz-skill-card" data-skill="solana" aria-pressed="false">
+						<div class="wz-skill-check"></div>
+						<div class="wz-skill-icon">◎</div>
+						<div class="wz-skill-text">
+							<div class="wz-skill-name">Solana wallet</div>
+							<div class="wz-skill-desc">Execute on-chain swaps & check balances</div>
+						</div>
+					</button>
+					<button type="button" class="wz-skill-card" data-skill="x402" aria-pressed="false">
+						<div class="wz-skill-check"></div>
+						<div class="wz-skill-icon">💳</div>
+						<div class="wz-skill-text">
+							<div class="wz-skill-name">x402 payments</div>
+							<div class="wz-skill-desc">Accept USDC micropayments per API call</div>
+						</div>
+					</button>
+					<button type="button" class="wz-skill-card" data-skill="web" aria-pressed="false">
+						<div class="wz-skill-check"></div>
+						<div class="wz-skill-icon">🌐</div>
+						<div class="wz-skill-text">
+							<div class="wz-skill-name">Web research</div>
+							<div class="wz-skill-desc">Browse URLs & extract live information</div>
+						</div>
+					</button>
+				</div>
+			</div>
+		</section>
+
+		<!-- Step 4: Deploy -->
+		<section class="wz-step" id="step-4" aria-label="Step 4: Deploy your agent">
+			<div class="wz-step-inner">
+				<p class="wz-eyebrow">Step 4 of 5</p>
+				<h1 class="wz-headline">Your agent is live</h1>
+				<p class="wz-sub">We created your agent and generated an embeddable widget.</p>
+
+				<div class="wz-deploy-status" id="deploy-status">
+					<div class="wz-deploy-spinner"></div>
+					<div class="wz-deploy-label" id="deploy-label">Creating your agent…</div>
+				</div>
+
+				<div class="wz-deploy-success" id="deploy-success">
+					<div class="wz-success-icon">🎉</div>
+					<div class="wz-success-title" id="deploy-agent-name">Your agent is live</div>
+
+					<div>
+						<p class="wz-code-label">Live page</p>
+						<a class="wz-live-link" id="deploy-live-link" href="#" target="_blank" rel="noopener">
+							<span class="wz-live-link-icon">🔗</span>
+							<span class="wz-live-link-text" id="deploy-live-url">…</span>
+							<span class="wz-live-link-arrow">↗</span>
+						</a>
+					</div>
+
+					<div>
+						<p class="wz-code-label">Embed snippet</p>
+						<div class="wz-code-block" id="embed-code-block">
+							<button class="wz-copy-btn" id="copy-embed" type="button">Copy</button>
+							<code id="embed-code"></code>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Step 5: Earn -->
+		<section class="wz-step" id="step-5" aria-label="Step 5: Start earning">
+			<div class="wz-step-inner">
+				<p class="wz-eyebrow">Step 5 of 5</p>
+				<h1 class="wz-headline">Start earning</h1>
+				<p class="wz-sub">Set a price for your agent's API and connect a wallet to receive payouts. Both are optional.</p>
+
+				<div class="wz-earn-rows">
+					<div class="wz-earn-row">
+						<div class="wz-earn-icon">💰</div>
+						<div class="wz-earn-row-body">
+							<div class="wz-earn-row-label">Price per API call</div>
+							<div class="wz-earn-row-desc">Others pay USDC every time they call your agent's API</div>
+						</div>
+						<div>
+							<div class="wz-earn-input-wrap">
+								<span class="wz-earn-prefix">$</span>
+								<input type="number" class="wz-earn-num" id="earn-price" min="0" max="100" step="0.001" placeholder="0.001" />
+								<span class="wz-earn-suffix">USDC</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="wz-earn-row">
+						<div class="wz-earn-icon">◎</div>
+						<div class="wz-earn-row-body">
+							<div class="wz-earn-row-label">Payout wallet</div>
+							<div class="wz-earn-row-desc">Solana or EVM address for withdrawals</div>
+						</div>
+					</div>
+					<div style="padding: 0 0 4px;">
+						<div class="wz-wallet-input-wrap">
+							<input type="text" class="wz-wallet-input" id="earn-wallet" placeholder="Enter Solana or EVM wallet address" />
+							<span class="wz-wallet-chain" id="earn-chain">SOL</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="wz-divider"></div>
+
+				<p style="font-size:12px;color:var(--text-3);text-align:center;margin-bottom:16px">
+					You can always update pricing and wallets from your dashboard.
+				</p>
+			</div>
+		</section>
+
+	</main>
+
+	<!-- Footer -->
+	<footer class="wz-footer" id="wz-footer">
+		<button type="button" class="wz-btn wz-btn-ghost" id="btn-back" hidden>Back</button>
+		<div style="flex:1"></div>
+		<button type="button" class="wz-btn-skip" id="btn-skip-step" hidden>Skip this step</button>
+		<button type="button" class="wz-btn wz-btn-primary" id="btn-next">Continue</button>
+	</footer>
+</div>
+
+<div class="wz-toast" id="wz-toast" role="alert" aria-live="assertive"></div>
+
+<script type="module" src="/src/start.js"></script>
+</body>
+</html>

@@ -298,10 +298,16 @@ export default wrap(async function handler(req, res) {
 		res.end();
 	} catch (err) {
 		const elapsedMs = Date.now() - t0;
-		res.write(`event: error\ndata: ${JSON.stringify({
-			message: err?.message || 'upstream error',
-			elapsedMs,
-		})}\n\n`);
-		res.end();
+		if (!res.writableEnded) {
+			try {
+				res.write(`event: error\ndata: ${JSON.stringify({
+					message: err?.message || 'upstream error',
+					elapsedMs,
+				})}\n\n`);
+				res.end();
+			} catch {
+				// connection already closed — swallow to prevent unhandled rejection
+			}
+		}
 	}
 });

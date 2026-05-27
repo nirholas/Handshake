@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Real-Time Fact Checker — three.ws</title>
+	<meta name="description" content="Pay per verification. Results cited. Attestation signed. Powered by live web search + LLM analysis on Base and Solana USDC." />
+	<meta property="og:title" content="Real-Time Fact Checker — three.ws" />
+	<meta property="og:description" content="Submit any claim. Get sourced verdict in seconds. $0.10–$1.00 per check. USDC. Base + Solana." />
+	<meta property="og:image" content="/og-image.png" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		:root {
+			color-scheme: dark;
+			--bg:        #050505;
+			--surface-0: #0b0b0b;
+			--surface-1: #111111;
+			--surface-2: #181818;
+			--surface-3: #1e1e1e;
+			--hairline:  #1c1c1c;
+			--hairline-strong: #2a2a2a;
+			--text:      #f6f6f6;
+			--text-2:    #a8a8a8;
+			--text-3:    #6a6a6a;
+			--text-4:    #4a4a4a;
+			--accent:    #ffffff;
+			--accent-2:  #ffffff;
+			--green:     #e8e8e8;
+			--verdict-supported:   #22c55e;
+			--verdict-contradicted:#ef4444;
+			--verdict-mixed:       #f59e0b;
+			--verdict-insufficient:#6b7280;
+			--stance-supports:   #22c55e;
+			--stance-contradicts:#ef4444;
+			--stance-neutral:    #6b7280;
+			--font-display: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+			--font-body:    "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+			--font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+		body {
+			font-size: 15.5px; line-height: 1.55;
+			min-height: 100vh; overflow-x: hidden;
+			-webkit-font-smoothing: antialiased;
+			text-rendering: optimizeLegibility;
+		}
+		a { color: inherit; text-decoration: none; }
+		button { font-family: inherit; cursor: pointer; }
+		::selection { background: var(--text); color: var(--bg); }
+		.wrap-1280 { max-width: 1280px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
+		@media (max-width: 720px) { .wrap-1280 { padding-left: 20px; padding-right: 20px; } }
+
+		/* ── NAV ──────────────────────────────────────────────────────────── */
+		.nav {
+			position: sticky; top: 0; z-index: 100;
+			border-bottom: 1px solid var(--hairline);
+			background: rgba(5,5,5,0.82);
+			backdrop-filter: blur(20px) saturate(140%);
+		}
+		.nav-inner {
+			display: flex; align-items: center; gap: 32px;
+			padding: 16px 32px; max-width: 1440px; margin: 0 auto;
+		}
+		.brand {
+			display: flex; align-items: center; gap: 10px;
+			font-family: var(--font-display);
+			font-weight: 600; letter-spacing: -0.025em; font-size: 16.5px;
+			flex-shrink: 0;
+		}
+		.brand-mark {
+			width: 18px; height: 18px;
+			border: 1px solid var(--text); border-radius: 3px;
+			position: relative;
+		}
+		.brand-mark::after {
+			content: ""; position: absolute; inset: 4px;
+			background: var(--text);
+		}
+		.nav-main { display: flex; gap: 2px; margin-left: 12px; flex: 1; }
+		.nav-main a {
+			padding: 7px 12px; font-size: 14px; font-weight: 450;
+			color: var(--text-2); transition: color 0.12s;
+		}
+		.nav-main a:hover { color: var(--text); }
+		.nav-main a.active { color: var(--text); font-weight: 500; }
+		.nav-end { display: flex; align-items: center; gap: 4px; }
+		.nav-end a { padding: 7px 12px; font-size: 14px; font-weight: 450; color: var(--text-2); }
+		.nav-end a:hover { color: var(--text); }
+		.nav-end .console {
+			color: var(--text); font-weight: 500;
+			border: 1px solid var(--hairline-strong);
+			padding: 7px 16px; border-radius: 7px; margin-left: 6px;
+			transition: border-color 0.15s, background 0.15s;
+		}
+		.nav-end .console:hover { border-color: var(--text); background: rgba(255,255,255,0.04); }
+		@media (max-width: 880px) {
+			.nav-main { display: none; }
+			.nav-inner { padding: 14px 20px; gap: 16px; }
+		}
+
+		/* ── BUTTONS ──────────────────────────────────────────────────────── */
+		.btn {
+			display: inline-flex; align-items: center; gap: 10px;
+			padding: 13px 22px; border-radius: 8px;
+			font-size: 14.5px; font-weight: 500;
+			border: 1px solid var(--hairline-strong);
+			background: transparent; color: var(--text);
+			transition: border-color 0.15s, background 0.15s;
+			cursor: pointer; text-decoration: none; font-family: inherit;
+		}
+		.btn:hover { border-color: var(--text); background: rgba(255,255,255,0.04); }
+		.btn.primary {
+			background: var(--text); color: var(--bg);
+			border-color: var(--text); font-weight: 550;
+		}
+		.btn.primary:hover { background: #fff; }
+		.btn:disabled {
+			opacity: 0.45; cursor: not-allowed;
+			pointer-events: none;
+		}
+		.btn.sm { padding: 9px 16px; font-size: 13.5px; }
+
+		/* ── HERO ─────────────────────────────────────────────────────────── */
+		.hero {
+			padding: 80px 0 56px;
+			border-bottom: 1px solid var(--hairline);
+			text-align: center;
+		}
+		.hero-eyebrow {
+			display: inline-flex; align-items: center; gap: 10px;
+			font-family: var(--font-mono); font-size: 11.5px;
+			text-transform: uppercase; letter-spacing: 0.18em;
+			color: var(--text-3); margin-bottom: 28px;
+		}
+		.hero-eyebrow::before {
+			content: ""; width: 6px; height: 6px; border-radius: 50%;
+			background: var(--green); box-shadow: 0 0 6px var(--green);
+			animation: pulse-green 2.4s ease-in-out infinite;
+		}
+		@keyframes pulse-green { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+		.hero h1 {
+			font-family: var(--font-display);
+			font-size: clamp(36px, 5vw, 64px);
+			line-height: 1.05; letter-spacing: -0.04em;
+			font-weight: 600; margin: 0 0 20px; color: var(--text);
+		}
+		.hero-sub {
+			font-size: 17px; color: var(--text-2);
+			max-width: 520px; margin: 0 auto 28px; line-height: 1.55; font-weight: 400;
+		}
+		.cost-badge {
+			display: inline-flex; align-items: center; gap: 8px;
+			border: 1px solid var(--hairline-strong);
+			background: var(--surface-1);
+			padding: 8px 18px; border-radius: 100px;
+			font-family: var(--font-mono); font-size: 12px;
+			color: var(--text-3); letter-spacing: 0.08em;
+		}
+		.cost-badge .dot {
+			width: 5px; height: 5px; border-radius: 50%;
+			background: var(--verdict-supported);
+		}
+
+		/* ── MAIN LAYOUT ──────────────────────────────────────────────────── */
+		.main { padding: 52px 0 80px; }
+
+		/* ── FORM ─────────────────────────────────────────────────────────── */
+		.form-card {
+			background: var(--surface-1);
+			border: 1px solid var(--hairline);
+			border-radius: 12px; padding: 28px;
+			margin-bottom: 32px;
+		}
+		.form-label {
+			display: block; font-size: 13px; font-weight: 500;
+			color: var(--text-2); margin-bottom: 10px;
+			text-transform: uppercase; letter-spacing: 0.1em;
+			font-family: var(--font-mono);
+		}
+		.claim-textarea {
+			width: 100%; min-height: 100px;
+			background: var(--surface-0);
+			border: 1px solid var(--hairline-strong);
+			border-radius: 8px; padding: 16px;
+			color: var(--text); font-family: var(--font-body);
+			font-size: 15.5px; line-height: 1.55;
+			resize: vertical; outline: none;
+			transition: border-color 0.15s;
+		}
+		.claim-textarea:focus { border-color: var(--text-3); }
+		.claim-textarea::placeholder { color: var(--text-4); }
+		.strictness-row {
+			display: flex; gap: 12px; margin: 20px 0 24px; flex-wrap: wrap;
+		}
+		.strictness-option { display: flex; align-items: center; gap: 0; }
+		.strictness-option input[type="radio"] { display: none; }
+		.strictness-option label {
+			display: inline-flex; align-items: center; gap: 6px;
+			padding: 8px 18px; border-radius: 7px;
+			border: 1px solid var(--hairline-strong);
+			background: var(--surface-0);
+			color: var(--text-2); font-size: 14px; font-weight: 450;
+			cursor: pointer; transition: all 0.12s;
+		}
+		.strictness-option input[type="radio"]:checked + label {
+			border-color: var(--text);
+			background: rgba(255,255,255,0.06);
+			color: var(--text); font-weight: 500;
+		}
+		.strictness-option label:hover { border-color: var(--text-3); color: var(--text); }
+		.form-actions {
+			display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+		}
+		.char-counter {
+			margin-left: auto; font-family: var(--font-mono);
+			font-size: 12px; color: var(--text-4);
+		}
+		.char-counter.warn { color: var(--verdict-mixed); }
+		.char-counter.over { color: var(--verdict-contradicted); }
+
+		/* ── EXAMPLE CLAIMS ──────────────────────────────────────────────── */
+		.empty-state { margin-bottom: 32px; }
+		.empty-label {
+			font-family: var(--font-mono); font-size: 11px;
+			text-transform: uppercase; letter-spacing: 0.15em;
+			color: var(--text-4); margin-bottom: 14px;
+		}
+		.example-claims { display: flex; gap: 10px; flex-wrap: wrap; }
+		.example-chip {
+			display: inline-block;
+			border: 1px solid var(--hairline);
+			background: var(--surface-1);
+			padding: 8px 16px; border-radius: 100px;
+			font-size: 13.5px; color: var(--text-2);
+			cursor: pointer; transition: all 0.12s;
+			font-family: inherit;
+		}
+		.example-chip:hover {
+			border-color: var(--hairline-strong);
+			color: var(--text); background: var(--surface-2);
+		}
+
+		/* ── SKELETON ─────────────────────────────────────────────────────── */
+		.skeleton { display: none; margin-bottom: 32px; }
+		.skeleton.active { display: block; }
+		@keyframes shimmer {
+			0% { background-position: -400px 0; }
+			100% { background-position: 400px 0; }
+		}
+		.skel-line {
+			background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+			background-size: 800px 100%;
+			animation: shimmer 1.4s infinite linear;
+			border-radius: 6px; height: 20px; margin-bottom: 12px;
+		}
+		.skel-verdict {
+			height: 56px; border-radius: 10px; margin-bottom: 24px;
+			background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+			background-size: 800px 100%;
+			animation: shimmer 1.4s infinite linear;
+		}
+		.skel-sources { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+		@media (max-width: 720px) { .skel-sources { grid-template-columns: 1fr; } }
+		.skel-card {
+			border: 1px solid var(--hairline);
+			border-radius: 10px; padding: 20px;
+			background: var(--surface-1);
+		}
+
+		/* ── RESULT ──────────────────────────────────────────────────────── */
+		.result-panel { display: none; }
+		.result-panel.active { display: block; }
+
+		/* Verdict badge */
+		.verdict-banner {
+			display: flex; align-items: center; gap: 20px;
+			padding: 24px 28px; border-radius: 12px;
+			border: 1px solid; margin-bottom: 28px;
+			flex-wrap: wrap;
+		}
+		.verdict-banner.supported  { border-color: var(--verdict-supported);  background: rgba(34,197,94,0.07); }
+		.verdict-banner.contradicted { border-color: var(--verdict-contradicted); background: rgba(239,68,68,0.07); }
+		.verdict-banner.mixed      { border-color: var(--verdict-mixed);       background: rgba(245,158,11,0.07); }
+		.verdict-banner.insufficient { border-color: var(--verdict-insufficient); background: rgba(107,114,128,0.07); }
+		.verdict-label {
+			font-family: var(--font-display);
+			font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
+		}
+		.verdict-banner.supported   .verdict-label { color: var(--verdict-supported); }
+		.verdict-banner.contradicted .verdict-label { color: var(--verdict-contradicted); }
+		.verdict-banner.mixed        .verdict-label { color: var(--verdict-mixed); }
+		.verdict-banner.insufficient .verdict-label { color: var(--verdict-insufficient); }
+		.verdict-confidence {
+			font-family: var(--font-mono); font-size: 13px;
+			color: var(--text-3);
+		}
+		.verdict-claim {
+			font-size: 14.5px; color: var(--text-2);
+			border-left: 2px solid var(--hairline-strong);
+			padding-left: 14px; font-style: italic;
+			flex: 1 1 100%;
+		}
+
+		/* Source cards */
+		.sources-section { margin-bottom: 28px; }
+		.section-title {
+			font-family: var(--font-mono); font-size: 11px;
+			text-transform: uppercase; letter-spacing: 0.15em;
+			color: var(--text-4); margin-bottom: 16px;
+		}
+		.sources-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+		@media (max-width: 720px) { .sources-grid { grid-template-columns: 1fr; } }
+		.source-card {
+			border: 1px solid var(--hairline);
+			border-radius: 10px; padding: 18px;
+			background: var(--surface-1);
+			transition: border-color 0.12s;
+		}
+		.source-card:hover { border-color: var(--hairline-strong); }
+		.source-header {
+			display: flex; align-items: flex-start; gap: 10px;
+			margin-bottom: 10px;
+		}
+		.source-favicon {
+			width: 16px; height: 16px; border-radius: 3px;
+			flex-shrink: 0; margin-top: 2px;
+			background: var(--surface-3);
+		}
+		.source-title {
+			font-size: 14px; font-weight: 500; color: var(--text);
+			flex: 1; line-height: 1.35;
+		}
+		.source-title a { color: inherit; text-decoration: none; }
+		.source-title a:hover { color: var(--text-2); }
+		.source-excerpt {
+			font-size: 13px; color: var(--text-3);
+			line-height: 1.5; margin-bottom: 12px;
+		}
+		.source-footer {
+			display: flex; align-items: center; gap: 10px;
+			flex-wrap: wrap;
+		}
+		.stance-pill {
+			display: inline-block;
+			padding: 3px 10px; border-radius: 100px;
+			font-family: var(--font-mono); font-size: 11px;
+			text-transform: uppercase; letter-spacing: 0.1em;
+			font-weight: 600;
+		}
+		.stance-pill.supports    { background: rgba(34,197,94,0.12);  color: var(--stance-supports); }
+		.stance-pill.contradicts { background: rgba(239,68,68,0.12);  color: var(--stance-contradicts); }
+		.stance-pill.neutral     { background: rgba(107,114,128,0.12); color: var(--stance-neutral); }
+		.source-authority {
+			font-family: var(--font-mono); font-size: 11px;
+			color: var(--text-4); margin-left: auto;
+		}
+
+		/* Cost breakdown */
+		.cost-section {
+			border: 1px solid var(--hairline);
+			border-radius: 10px; padding: 18px 20px;
+			background: var(--surface-1); margin-bottom: 16px;
+		}
+		.cost-grid {
+			display: flex; gap: 28px; flex-wrap: wrap;
+		}
+		.cost-item { display: flex; flex-direction: column; gap: 3px; }
+		.cost-key {
+			font-family: var(--font-mono); font-size: 10.5px;
+			text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-4);
+		}
+		.cost-val {
+			font-family: var(--font-mono); font-size: 15px;
+			color: var(--text); font-weight: 600;
+		}
+
+		/* Attestation */
+		.attestation-section { margin-bottom: 16px; }
+		.attestation-toggle {
+			display: flex; align-items: center; gap: 8px;
+			font-family: var(--font-mono); font-size: 11.5px;
+			color: var(--text-3); cursor: pointer;
+			user-select: none; background: none; border: none; padding: 0;
+		}
+		.attestation-toggle:hover { color: var(--text-2); }
+		.attestation-toggle .chevron { transition: transform 0.18s; }
+		.attestation-toggle[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+		.attestation-body {
+			display: none; margin-top: 10px;
+			background: var(--surface-0);
+			border: 1px solid var(--hairline);
+			border-radius: 8px; padding: 14px 16px;
+		}
+		.attestation-body.open { display: block; }
+		.attestation-hash {
+			font-family: var(--font-mono); font-size: 12px;
+			color: var(--text-3); word-break: break-all;
+			line-height: 1.5;
+		}
+		.attestation-desc {
+			font-size: 12px; color: var(--text-4); margin-top: 8px;
+		}
+
+		/* ── ERROR ───────────────────────────────────────────────────────── */
+		.error-panel { display: none; margin-bottom: 28px; }
+		.error-panel.active { display: block; }
+		.error-card {
+			border: 1px solid rgba(239,68,68,0.3);
+			border-radius: 10px; padding: 20px 22px;
+			background: rgba(239,68,68,0.06);
+		}
+		.error-title {
+			font-weight: 600; color: var(--verdict-contradicted);
+			margin-bottom: 6px; font-size: 15px;
+		}
+		.error-msg { color: var(--text-2); font-size: 14px; margin-bottom: 16px; }
+		.error-code {
+			font-family: var(--font-mono); font-size: 11.5px; color: var(--text-4);
+		}
+
+		/* ── PAYMENT REQUIRED ────────────────────────────────────────────── */
+		.payment-panel { display: none; margin-bottom: 28px; }
+		.payment-panel.active { display: block; }
+		.payment-card {
+			border: 1px solid var(--hairline-strong);
+			border-radius: 12px; padding: 24px 28px;
+			background: var(--surface-1);
+		}
+		.payment-title {
+			font-family: var(--font-display);
+			font-size: 18px; font-weight: 600; letter-spacing: -0.02em;
+			margin-bottom: 8px; color: var(--text);
+		}
+		.payment-desc { font-size: 14px; color: var(--text-2); margin-bottom: 20px; }
+		.payment-networks {
+			display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+		}
+		.network-badge {
+			display: inline-flex; align-items: center; gap: 6px;
+			border: 1px solid var(--hairline-strong);
+			background: var(--surface-2);
+			padding: 7px 14px; border-radius: 8px;
+			font-size: 13.5px; color: var(--text-2);
+		}
+		.network-badge strong { color: var(--text); font-weight: 600; }
+
+		/* ── LOADING STATE ──────────────────────────────────────────────── */
+		.loading-status {
+			font-family: var(--font-mono); font-size: 12.5px;
+			color: var(--text-3); margin-top: 12px;
+			display: none;
+			animation: pulse-text 1.5s ease-in-out infinite;
+		}
+		@keyframes pulse-text { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+		.loading-status.active { display: block; }
+	</style>
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────────────────────────── -->
+<header class="nav">
+	<div class="nav-inner">
+		<a class="brand" href="/">
+			<span class="brand-mark"></span>
+			<span>three.ws</span>
+		</a>
+		<nav class="nav-main" aria-label="Primary">
+			<a href="/discover">Discover</a>
+			<a href="/marketplace">Marketplace</a>
+			<a href="/walk">Walk</a>
+			<a href="/pages/fact-checker.html" class="active">Fact Checker</a>
+		</nav>
+		<div class="nav-end">
+			<a href="/login">Sign in</a>
+			<a class="console" href="/dashboard">Dashboard →</a>
+		</div>
+	</div>
+</header>
+
+<!-- ── HERO ────────────────────────────────────────────────────────────── -->
+<section class="hero">
+	<div class="wrap-1280">
+		<div class="hero-eyebrow">x402 paid endpoint · live</div>
+		<h1>Real-Time Fact Checker</h1>
+		<p class="hero-sub">Pay per verification. Results cited. Attestation signed.</p>
+		<div class="cost-badge">
+			<span class="dot"></span>
+			$0.10–$1.00 per check · USDC · Base + Solana
+		</div>
+	</div>
+</section>
+
+<!-- ── MAIN ─────────────────────────────────────────────────────────────── -->
+<main class="main">
+	<div class="wrap-1280">
+
+		<!-- Form -->
+		<div class="form-card">
+			<label class="form-label" for="claim-input">Claim to fact-check</label>
+			<textarea
+				id="claim-input"
+				class="claim-textarea"
+				placeholder="Enter a claim to fact-check..."
+				maxlength="1000"
+			></textarea>
+
+			<div>
+				<div class="form-label" style="margin-top:20px;">Strictness</div>
+				<div class="strictness-row">
+					<div class="strictness-option">
+						<input type="radio" id="s-low" name="strictness" value="low" />
+						<label for="s-low">Low</label>
+					</div>
+					<div class="strictness-option">
+						<input type="radio" id="s-medium" name="strictness" value="medium" checked />
+						<label for="s-medium">Medium</label>
+					</div>
+					<div class="strictness-option">
+						<input type="radio" id="s-high" name="strictness" value="high" />
+						<label for="s-high">High</label>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-actions">
+				<button id="check-btn" class="btn primary">Check This Fact</button>
+				<div id="loading-status" class="loading-status">Searching sources...</div>
+				<span id="char-counter" class="char-counter">0 / 1000</span>
+			</div>
+		</div>
+
+		<!-- Example claims (empty state) -->
+		<div id="empty-state" class="empty-state">
+			<div class="empty-label">Try an example</div>
+			<div class="example-claims">
+				<button class="example-chip" data-claim="The Eiffel Tower is 330 meters tall.">The Eiffel Tower is 330 meters tall.</button>
+				<button class="example-chip" data-claim="Bitcoin was invented in 2009.">Bitcoin was invented in 2009.</button>
+				<button class="example-chip" data-claim="The Great Wall of China is visible from space.">The Great Wall of China is visible from space.</button>
+				<button class="example-chip" data-claim="Humans use only 10% of their brain.">Humans use only 10% of their brain.</button>
+			</div>
+		</div>
+
+		<!-- Skeleton loading -->
+		<div id="skeleton" class="skeleton">
+			<div class="skel-verdict"></div>
+			<div class="skel-sources">
+				<div class="skel-card">
+					<div class="skel-line" style="width:60%;height:14px;"></div>
+					<div class="skel-line" style="width:90%;height:13px;margin-top:10px;"></div>
+					<div class="skel-line" style="width:70%;height:13px;"></div>
+				</div>
+				<div class="skel-card">
+					<div class="skel-line" style="width:55%;height:14px;"></div>
+					<div class="skel-line" style="width:85%;height:13px;margin-top:10px;"></div>
+					<div class="skel-line" style="width:65%;height:13px;"></div>
+				</div>
+				<div class="skel-card">
+					<div class="skel-line" style="width:65%;height:14px;"></div>
+					<div class="skel-line" style="width:80%;height:13px;margin-top:10px;"></div>
+					<div class="skel-line" style="width:75%;height:13px;"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Payment required -->
+		<div id="payment-panel" class="payment-panel">
+			<div class="payment-card">
+				<div class="payment-title">Payment Required</div>
+				<div class="payment-desc" id="payment-desc">
+					This endpoint costs $0.10 per check. Connect your wallet to pay with USDC on Base or Solana.
+				</div>
+				<div class="payment-networks" id="payment-networks">
+					<div class="network-badge">Base <strong>USDC</strong> — <strong id="payment-price-base">$0.10</strong></div>
+					<div class="network-badge">Solana <strong>USDC</strong> — <strong id="payment-price-sol">$0.10</strong></div>
+				</div>
+				<a href="/marketplace" class="btn sm">Connect wallet to pay →</a>
+			</div>
+		</div>
+
+		<!-- Error -->
+		<div id="error-panel" class="error-panel">
+			<div class="error-card">
+				<div class="error-title">Something went wrong</div>
+				<div class="error-msg" id="error-msg">An unexpected error occurred.</div>
+				<div class="error-code" id="error-code"></div>
+				<button class="btn sm" id="retry-btn" style="margin-top:16px;">Retry</button>
+			</div>
+		</div>
+
+		<!-- Result panel -->
+		<div id="result-panel" class="result-panel">
+
+			<!-- Verdict -->
+			<div id="verdict-banner" class="verdict-banner">
+				<span id="verdict-label" class="verdict-label"></span>
+				<span id="verdict-confidence" class="verdict-confidence"></span>
+				<p id="verdict-claim" class="verdict-claim"></p>
+			</div>
+
+			<!-- Sources -->
+			<div class="sources-section">
+				<div class="section-title">Sources</div>
+				<div id="sources-grid" class="sources-grid"></div>
+			</div>
+
+			<!-- Cost breakdown -->
+			<div class="cost-section">
+				<div class="section-title">Cost breakdown</div>
+				<div id="cost-grid" class="cost-grid"></div>
+			</div>
+
+			<!-- Attestation -->
+			<div class="attestation-section">
+				<button
+					id="attest-toggle"
+					class="attestation-toggle"
+					aria-expanded="false"
+				>
+					<svg class="chevron" width="14" height="14" viewBox="0 0 14 14" fill="none">
+						<path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+					</svg>
+					Attestation
+				</button>
+				<div id="attest-body" class="attestation-body">
+					<div id="attest-hash" class="attestation-hash"></div>
+					<div class="attestation-desc">
+						SHA-256 hash of verdict + confidence + claim + source URLs. Verifiable offline.
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+</main>
+
+<script type="module" src="/src/fact-checker-app.js"></script>
+</body>
+</html>

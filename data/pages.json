@@ -51,6 +51,13 @@
 					"changefreq": "daily"
 				},
 				{
+					"path": "/skills",
+					"title": "Skills Marketplace",
+					"description": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.",
+					"priority": 0.8,
+					"changefreq": "daily"
+				},
+				{
 					"path": "/community",
 					"title": "Community",
 					"description": "Featured creators, builds, and conversations from the three.ws community.",
@@ -307,6 +314,30 @@
 					"priority": 0.7,
 					"changefreq": "hourly",
 					"added": "2026-05-25"
+				},
+				{
+					"path": "/fact-checker",
+					"title": "Fact Checker",
+					"description": "Pay $0.10 per claim. The agent searches across authoritative sources, pays per retrieval via x402, and returns a verdict with cited evidence and a signed attestation.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-05-27"
+				},
+				{
+					"path": "/unstoppable",
+					"title": "Unstoppable Agent",
+					"description": "Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time.",
+					"priority": 0.9,
+					"changefreq": "realtime",
+					"added": "2026-05-27"
+				},
+				{
+					"path": "/shopper",
+					"title": "Endpoint Shopper",
+					"description": "Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-05-27"
 				}
 			]
 		},

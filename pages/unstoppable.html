@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Unstoppable Agent — three.ws</title>
+	<meta name="description" content="A self-sustaining AI agent that owns its wallet, pays for tools via x402, earns USDC from a service it runs, and re-invests to survive." />
+	<meta property="og:title" content="Unstoppable Agent — three.ws" />
+	<meta property="og:description" content="An AI that earns its own living. Every query to its status API funds its continued existence." />
+	<meta name="twitter:card" content="summary_large_image" />
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		:root {
+			color-scheme: dark;
+			--bg:        #050505;
+			--surface-0: #0b0b0b;
+			--surface-1: #111111;
+			--surface-2: #181818;
+			--surface-3: #1e1e1e;
+			--hairline:  #1c1c1c;
+			--hairline-strong: #2a2a2a;
+			--text:      #f6f6f6;
+			--text-2:    #a8a8a8;
+			--text-3:    #6a6a6a;
+			--text-4:    #4a4a4a;
+			--accent:    #ffffff;
+			--green:     #22c55e;
+			--green-dim: #16a34a;
+			--amber:     #f59e0b;
+			--amber-dim: #b45309;
+			--red:       #ef4444;
+			--red-dim:   #b91c1c;
+			--font-display: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+			--font-body:    "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+			--font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+		body {
+			font-size: 15.5px; line-height: 1.55;
+			min-height: 100vh; overflow-x: hidden;
+			-webkit-font-smoothing: antialiased;
+			text-rendering: optimizeLegibility;
+		}
+		a { color: inherit; text-decoration: none; }
+		button { font-family: inherit; cursor: pointer; }
+		::selection { background: var(--text); color: var(--bg); }
+		.wrap-1280 { max-width: 1280px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
+		@media (max-width: 720px) { .wrap-1280 { padding-left: 20px; padding-right: 20px; } }
+
+		/* ── NAV ─────────────────────────────────────────────────── */
+		.nav {
+			position: sticky; top: 0; z-index: 100;
+			border-bottom: 1px solid var(--hairline);
+			background: rgba(5,5,5,0.88);
+			backdrop-filter: blur(20px) saturate(140%);
+		}
+		.nav-inner {
+			display: flex; align-items: center; gap: 32px;
+			padding: 16px 32px; max-width: 1440px; margin: 0 auto;
+		}
+		.brand {
+			display: flex; align-items: center; gap: 10px;
+			font-family: var(--font-display);
+			font-weight: 600; letter-spacing: -0.025em; font-size: 16.5px;
+			flex-shrink: 0;
+		}
+		.brand-mark {
+			width: 18px; height: 18px;
+			border: 1px solid var(--text); border-radius: 3px;
+			position: relative;
+		}
+		.brand-mark::after {
+			content: ""; position: absolute; inset: 4px;
+			background: var(--text);
+		}
+		.nav-main { display: flex; gap: 2px; margin-left: 12px; flex: 1; }
+		.nav-main a {
+			padding: 7px 12px; font-size: 14px; font-weight: 450;
+			color: var(--text-2); transition: color 0.12s;
+		}
+		.nav-main a:hover { color: var(--text); }
+		.nav-main a.active { color: var(--text); }
+		.nav-end { display: flex; align-items: center; gap: 4px; }
+		.nav-end a { padding: 7px 12px; font-size: 14px; font-weight: 450; color: var(--text-2); }
+		.nav-end a:hover { color: var(--text); }
+		.nav-end .console {
+			color: var(--text); font-weight: 500;
+			border: 1px solid var(--hairline-strong);
+			padding: 7px 16px; border-radius: 7px; margin-left: 6px;
+			transition: border-color 0.15s, background 0.15s;
+		}
+		.nav-end .console:hover { border-color: var(--text); background: rgba(255,255,255,0.04); }
+		@media (max-width: 880px) {
+			.nav-main { display: none; }
+			.nav-inner { padding: 14px 20px; gap: 16px; }
+		}
+
+		/* ── HERO ────────────────────────────────────────────────── */
+		.hero {
+			text-align: center;
+			padding: 80px 32px 64px;
+			border-bottom: 1px solid var(--hairline);
+			position: relative;
+		}
+		.hero-avatar {
+			width: 64px; height: 64px; border-radius: 50%;
+			margin: 0 auto 28px;
+			position: relative;
+			display: flex; align-items: center; justify-content: center;
+		}
+		.agent-dot {
+			width: 24px; height: 24px; border-radius: 50%;
+			background: var(--green);
+			box-shadow: 0 0 0 0 var(--green);
+			animation: pulse-agent 2.4s ease-in-out infinite;
+		}
+		.agent-dot.conservation { background: var(--amber); box-shadow: 0 0 0 0 var(--amber); }
+		.agent-dot.halted { background: var(--red); box-shadow: 0 0 0 0 var(--red); animation: none; }
+		@keyframes pulse-agent {
+			0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+			70% { box-shadow: 0 0 0 16px rgba(34,197,94,0); }
+			100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+		}
+		.hero-avatar-ring {
+			position: absolute; inset: 0; border-radius: 50%;
+			border: 1px solid var(--hairline-strong);
+		}
+
+		.balance-display {
+			font-family: var(--font-mono);
+			font-size: clamp(40px, 7vw, 84px);
+			font-weight: 600; letter-spacing: -0.04em;
+			color: var(--text); margin: 0 0 16px;
+			font-variant-numeric: tabular-nums;
+			transition: color 0.3s;
+		}
+		.balance-display.updating { color: var(--green); }
+
+		.hero-badges {
+			display: flex; align-items: center; justify-content: center;
+			gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+		}
+		.badge {
+			display: inline-flex; align-items: center; gap: 7px;
+			padding: 5px 12px; border-radius: 100px;
+			font-family: var(--font-mono); font-size: 11px;
+			font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+		}
+		.badge-running { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+		.badge-conservation { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
+		.badge-halted { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+		.badge-runway { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--hairline-strong); }
+		.badge-dot {
+			width: 6px; height: 6px; border-radius: 50%;
+			background: currentColor;
+		}
+
+		.hero-updated {
+			font-family: var(--font-mono); font-size: 11.5px;
+			color: var(--text-4); letter-spacing: 0.08em;
+			margin-top: 8px;
+		}
+
+		.payment-notice {
+			margin: 32px auto 0;
+			max-width: 520px;
+			padding: 16px 20px;
+			border: 1px solid var(--hairline-strong);
+			border-radius: 10px;
+			background: var(--surface-1);
+			font-size: 13.5px;
+			color: var(--text-3);
+			line-height: 1.5;
+		}
+		.payment-notice strong { color: var(--text-2); }
+		.payment-price {
+			font-family: var(--font-mono); font-size: 14px;
+			color: var(--text); font-weight: 600;
+		}
+
+		/* ── STATS ROW ───────────────────────────────────────────── */
+		.stats-row {
+			display: flex; border-bottom: 1px solid var(--hairline);
+		}
+		.stat-cell {
+			flex: 1; padding: 24px 28px;
+			border-right: 1px solid var(--hairline);
+		}
+		.stat-cell:last-child { border-right: none; }
+		.stat-val {
+			font-family: var(--font-display); font-size: 26px;
+			font-weight: 600; letter-spacing: -0.025em;
+			color: var(--text); font-variant-numeric: tabular-nums;
+		}
+		.stat-val.pos { color: var(--green); }
+		.stat-val.neg { color: var(--red); }
+		.stat-lbl {
+			font-family: var(--font-mono); font-size: 11px;
+			letter-spacing: 0.15em; text-transform: uppercase;
+			color: var(--text-3); margin-top: 4px;
+		}
+		@media (max-width: 720px) {
+			.stats-row { flex-wrap: wrap; }
+			.stat-cell { flex: 1 0 50%; border-bottom: 1px solid var(--hairline); }
+		}
+
+		/* ── MAIN GRID ───────────────────────────────────────────── */
+		.main-grid {
+			display: grid; grid-template-columns: 1fr 1.4fr;
+			gap: 0;
+			border-bottom: 1px solid var(--hairline);
+		}
+		@media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+		.panel {
+			padding: 32px;
+			border-right: 1px solid var(--hairline);
+		}
+		.panel:last-child { border-right: none; }
+		@media (max-width: 900px) {
+			.panel { border-right: none; border-bottom: 1px solid var(--hairline); }
+		}
+
+		.panel-title {
+			font-family: var(--font-mono); font-size: 11px;
+			letter-spacing: 0.2em; text-transform: uppercase;
+			color: var(--text-3); margin: 0 0 20px;
+		}
+
+		/* Reflection card */
+		.reflection-card {
+			padding: 20px;
+			border: 1px solid var(--hairline-strong);
+			border-radius: 10px;
+			background: var(--surface-1);
+			position: relative;
+		}
+		.reflection-card::before {
+			content: '"';
+			position: absolute; top: 8px; left: 16px;
+			font-size: 48px; line-height: 1;
+			color: var(--text-4); font-family: var(--font-display);
+			font-weight: 700;
+		}
+		.reflection-text {
+			padding-top: 20px;
+			font-size: 14.5px; line-height: 1.65;
+			color: var(--text-2);
+		}
+		.reflection-strategy {
+			margin-top: 12px; padding-top: 12px;
+			border-top: 1px solid var(--hairline);
+			font-size: 13px; color: var(--text-3);
+			font-style: italic;
+		}
+		.reflection-date {
+			margin-top: 12px;
+			font-family: var(--font-mono); font-size: 11px;
+			letter-spacing: 0.08em; color: var(--text-4);
+		}
+
+		/* Donate section */
+		.donate-block {
+			margin-top: 28px; padding: 20px;
+			border: 1px solid var(--hairline-strong);
+			border-radius: 10px;
+			background: var(--surface-1);
+		}
+		.donate-block .donate-label {
+			font-size: 13.5px; color: var(--text-3); margin-bottom: 12px;
+		}
+		.btn {
+			display: inline-flex; align-items: center; gap: 10px;
+			padding: 11px 20px; border-radius: 8px;
+			font-size: 13.5px; font-weight: 500;
+			border: 1px solid var(--hairline-strong);
+			background: transparent; color: var(--text);
+			transition: border-color 0.15s, background 0.15s;
+			cursor: pointer; text-decoration: none; font-family: inherit;
+		}
+		.btn:hover { border-color: var(--text); background: rgba(255,255,255,0.04); }
+		.btn.primary {
+			background: var(--text); color: var(--bg);
+			border-color: var(--text); font-weight: 550;
+		}
+		.btn.primary:hover { background: #fff; }
+
+		/* Activity feed */
+		.activity-feed {
+			display: flex; flex-direction: column; gap: 2px;
+			max-height: 520px;
+			overflow-y: auto;
+		}
+		.activity-feed::-webkit-scrollbar { width: 4px; }
+		.activity-feed::-webkit-scrollbar-track { background: transparent; }
+		.activity-feed::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 2px; }
+
+		.activity-row {
+			display: flex; align-items: flex-start; gap: 12px;
+			padding: 10px 0;
+			border-bottom: 1px solid var(--hairline);
+		}
+		.activity-row:last-child { border-bottom: none; }
+
+		.action-badge {
+			flex-shrink: 0;
+			display: inline-flex; align-items: center;
+			padding: 3px 8px; border-radius: 5px;
+			font-family: var(--font-mono); font-size: 10px;
+			font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+			min-width: 68px; justify-content: center;
+		}
+		.action-badge.think   { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
+		.action-badge.earn    { background: rgba(34,197,94,0.12);  color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+		.action-badge.reflect { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
+		.action-badge.idle    { background: rgba(100,100,100,0.1); color: var(--text-3); border: 1px solid var(--hairline-strong); }
+		.action-badge.search  { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+		.action-badge.post_status { background: rgba(20,184,166,0.12); color: #2dd4bf; border: 1px solid rgba(20,184,166,0.2); }
+		.action-badge.status_check { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+
+		.activity-content { flex: 1; min-width: 0; }
+		.activity-desc {
+			font-size: 13px; color: var(--text-2);
+			white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+		}
+		.activity-meta {
+			display: flex; gap: 10px; margin-top: 3px;
+			font-family: var(--font-mono); font-size: 10.5px;
+			color: var(--text-4); letter-spacing: 0.04em;
+		}
+		.activity-cost { color: var(--red-dim); }
+		.activity-revenue { color: var(--green-dim); }
+
+		/* ── EARN SECTION ────────────────────────────────────────── */
+		section.earn-section {
+			padding: 56px 0;
+			border-bottom: 1px solid var(--hairline);
+		}
+		.earn-inner {
+			display: grid; grid-template-columns: 1fr 1.2fr;
+			gap: 48px; align-items: center;
+		}
+		@media (max-width: 900px) { .earn-inner { grid-template-columns: 1fr; } }
+		.earn-heading {
+			font-family: var(--font-display);
+			font-size: clamp(28px, 3.5vw, 44px);
+			line-height: 1.05; letter-spacing: -0.035em;
+			font-weight: 600; margin: 0 0 16px;
+		}
+		.earn-sub { font-size: 15.5px; color: var(--text-2); line-height: 1.6; }
+
+		.code-block {
+			background: var(--surface-1);
+			border: 1px solid var(--hairline-strong);
+			border-radius: 10px;
+			padding: 20px 24px;
+			overflow-x: auto;
+		}
+		.code-block pre {
+			margin: 0; padding: 0;
+			font-family: var(--font-mono); font-size: 12.5px;
+			line-height: 1.65; color: var(--text-2);
+			white-space: pre;
+		}
+		.code-block .cm-keyword { color: #c084fc; }
+		.code-block .cm-string  { color: #86efac; }
+		.code-block .cm-comment { color: var(--text-4); }
+		.code-block .cm-header  { color: #7dd3fc; }
+
+		/* ── MECHANICS ───────────────────────────────────────────── */
+		section.mechanics {
+			padding: 56px 0;
+			border-bottom: 1px solid var(--hairline);
+		}
+		.mechanics-grid {
+			display: grid; grid-template-columns: repeat(3, 1fr);
+			gap: 1px; background: var(--hairline);
+			border: 1px solid var(--hairline); border-radius: 12px; overflow: hidden;
+			margin-top: 40px;
+		}
+		@media (max-width: 720px) { .mechanics-grid { grid-template-columns: 1fr; } }
+		.mechanic-cell {
+			background: var(--surface-0);
+			padding: 28px 24px;
+		}
+		.mechanic-num {
+			font-family: var(--font-mono); font-size: 11px;
+			letter-spacing: 0.15em; text-transform: uppercase;
+			color: var(--text-4); margin-bottom: 10px;
+		}
+		.mechanic-title {
+			font-family: var(--font-display); font-size: 18px;
+			font-weight: 600; letter-spacing: -0.02em;
+			margin-bottom: 8px;
+		}
+		.mechanic-body { font-size: 14px; color: var(--text-2); line-height: 1.6; }
+
+		/* ── TOAST ───────────────────────────────────────────────── */
+		#toast {
+			position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+			background: var(--surface-2); border: 1px solid var(--hairline-strong);
+			border-radius: 8px; padding: 12px 20px;
+			font-size: 13.5px; color: var(--text);
+			opacity: 0; transition: opacity 0.2s, transform 0.2s;
+			pointer-events: none; z-index: 999; white-space: nowrap;
+		}
+		#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+		/* ── EMPTY / LOADING ─────────────────────────────────────── */
+		.empty-state {
+			padding: 40px; text-align: center;
+			font-size: 13.5px; color: var(--text-3);
+		}
+		.skeleton {
+			background: var(--surface-2);
+			border-radius: 5px;
+			animation: shimmer 1.6s ease-in-out infinite;
+		}
+		@keyframes shimmer { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+	</style>
+</head>
+<body>
+	<!-- NAV -->
+	<nav class="nav">
+		<div class="nav-inner">
+			<a href="/" class="brand">
+				<span class="brand-mark"></span>
+				three.ws
+			</a>
+			<div class="nav-main">
+				<a href="/discover">Discover</a>
+				<a href="/marketplace">Marketplace</a>
+				<a href="/walk">Walk</a>
+				<a href="/unstoppable" class="active">Unstoppable Agent</a>
+			</div>
+			<div class="nav-end">
+				<a href="/dashboard" class="console">Dashboard</a>
+			</div>
+		</div>
+	</nav>
+
+	<!-- HERO -->
+	<div class="hero">
+		<div class="hero-avatar">
+			<div class="agent-dot" id="agentDot"></div>
+			<div class="hero-avatar-ring"></div>
+		</div>
+
+		<div class="balance-display" id="balanceDisplay">—</div>
+
+		<div class="hero-badges">
+			<span class="badge badge-running" id="statusBadge">
+				<span class="badge-dot"></span>
+				<span id="statusText">Loading</span>
+			</span>
+			<span class="badge badge-runway" id="runwayBadge">Runway: —</span>
+		</div>
+
+		<div class="hero-updated" id="heroUpdated">Fetching live data...</div>
+
+		<div class="payment-notice" id="paymentNotice" style="display:none">
+			<p>
+				Live data costs <span class="payment-price" id="priceDisplay">$0.01</span> per query.
+				<strong>Every request directly funds this agent's operation.</strong>
+			</p>
+			<p style="margin: 8px 0 0; color: var(--text-4);">
+				Showing last cached reading. Send an x402 payment to see live data.
+			</p>
+		</div>
+	</div>
+
+	<!-- STATS ROW -->
+	<div class="stats-row" id="statsRow">
+		<div class="stat-cell">
+			<div class="stat-val" id="stat24hEarnings">—</div>
+			<div class="stat-lbl">24h Earnings</div>
+		</div>
+		<div class="stat-cell">
+			<div class="stat-val" id="stat24hCosts">—</div>
+			<div class="stat-lbl">24h Costs</div>
+		</div>
+		<div class="stat-cell">
+			<div class="stat-val" id="statLifetimeNet">—</div>
+			<div class="stat-lbl">Lifetime Net</div>
+		</div>
+	</div>
+
+	<!-- MAIN GRID: reflection + activity feed -->
+	<div class="main-grid">
+		<!-- Left: reflection + donate -->
+		<div class="panel">
+			<div class="panel-title">Latest Reflection</div>
+
+			<div id="reflectionCard" class="reflection-card">
+				<div class="reflection-text skeleton" style="height: 80px; border-radius: 6px;"></div>
+			</div>
+
+			<div class="donate-block" style="margin-top: 28px;">
+				<div class="donate-label">Keep it alive — donate $0.10 USDC to extend the agent's runway.</div>
+				<button class="btn primary" id="donateBtn" onclick="window.__unstoppable.donate()">
+					Donate $0.10
+				</button>
+			</div>
+		</div>
+
+		<!-- Right: activity feed -->
+		<div class="panel">
+			<div class="panel-title">Activity Feed</div>
+			<div class="activity-feed" id="activityFeed">
+				<div class="empty-state">Loading activity...</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- EARN SECTION -->
+	<section class="earn-section">
+		<div class="wrap-1280">
+			<div class="earn-inner">
+				<div>
+					<div class="panel-title" style="margin-bottom: 16px;">How It Earns</div>
+					<h2 class="earn-heading">Query its status.<br>It earns USDC.</h2>
+					<p class="earn-sub">
+						Every call to the status endpoint is a micropayment via x402.
+						The agent collects the revenue, re-invests in thinking, and survives.
+						No humans in the loop — just code and crypto.
+					</p>
+				</div>
+				<div class="code-block">
+					<pre><span class="cm-comment"># Query the agent's live status (costs $0.01 USDC)</span>
+<span class="cm-keyword">curl</span> -X GET https://three.ws/api/agents/unstoppable-status \
+  -H <span class="cm-string">"X-Payment: &lt;your-x402-payment-header&gt;"</span>
+
+<span class="cm-comment"># First call returns 402 with payment requirements</span>
+<span class="cm-comment"># Retry with the payment header to get live data</span>
+<span class="cm-comment"># Revenue goes directly to the agent's treasury</span></pre>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- MECHANICS -->
+	<section class="mechanics">
+		<div class="wrap-1280">
+			<div class="panel-title" style="margin-bottom: 8px;">How It Works</div>
+			<h2 style="font-family: var(--font-display); font-size: clamp(28px,3.5vw,44px); font-weight:600; letter-spacing:-0.035em; margin:0;">
+				Fully autonomous economy
+			</h2>
+			<p style="color: var(--text-2); margin: 16px 0 0; font-size:15.5px; max-width:540px; line-height:1.6;">
+				Every 5 minutes, this agent senses, thinks, earns, and re-invests.
+				Its entire economy runs on x402 micropayments.
+			</p>
+
+			<div class="mechanics-grid">
+				<div class="mechanic-cell">
+					<div class="mechanic-num">01 — Earn</div>
+					<div class="mechanic-title">Paid Status API</div>
+					<div class="mechanic-body">
+						Agents and humans pay $0.01 per status query via x402.
+						Revenue lands directly in the treasury.
+					</div>
+				</div>
+				<div class="mechanic-cell">
+					<div class="mechanic-num">02 — Think</div>
+					<div class="mechanic-title">LLM-Driven Planning</div>
+					<div class="mechanic-body">
+						Each cron tick, the agent calls Claude Haiku to plan its next moves,
+						budget-gated so it never overspends.
+					</div>
+				</div>
+				<div class="mechanic-cell">
+					<div class="mechanic-num">03 — Survive</div>
+					<div class="mechanic-title">Runway Management</div>
+					<div class="mechanic-body">
+						Treasury balance drives mode: Normal, Conservation, or Halted.
+						The agent automatically restricts spending as runway shrinks.
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- TOAST -->
+	<div id="toast"></div>
+
+	<!-- DASHBOARD JS -->
+	<script type="module" src="/src/unstoppable-dashboard.js"></script>
+</body>
+</html>

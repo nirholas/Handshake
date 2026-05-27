@@ -210,6 +210,7 @@ const appConfig = {
 				'walk-embed': resolve(__dirname, 'pages/walk-embed.html'),
 				pose: resolve(__dirname, 'pages/pose.html'),
 				club: resolve(__dirname, 'pages/club.html'),
+				skills: resolve(__dirname, 'pages/skills.html'),
 				'agenc-embodied': resolve(__dirname, 'pages/agenc/embodied.html'),
 				'agenc-room': resolve(__dirname, 'pages/agenc/room.html'),
 				studio: resolve(__dirname, 'public/studio/index.html'),

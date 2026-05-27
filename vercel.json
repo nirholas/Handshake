@@ -74,6 +74,10 @@
 			"dest": "/api/features"
 		},
 		{
+			"src": "/api/platform/stats",
+			"dest": "/api/platform/stats"
+		},
+		{
 			"src": "/changelog",
 			"dest": "/changelog/index.html"
 		},
@@ -652,6 +656,10 @@
 			"dest": "/dashboard-next/api.html"
 		},
 		{
+			"src": "/dashboard/analytics/?",
+			"dest": "/dashboard-next/analytics.html"
+		},
+		{
 			"src": "/dashboard/monetize/?",
 			"dest": "/dashboard-next/monetize.html"
 		},
@@ -851,6 +859,10 @@
 			"dest": "/api/agent-skills?agentId=$1&action=set-price"
 		},
 		{
+			"src": "/api/marketplace/agents/([^/]+)/reviews",
+			"dest": "/api/marketplace/reviews?agent_id=$1"
+		},
+		{
 			"src": "/api/marketplace/agents/([^/]+)",
 			"dest": "/api/marketplace/[action]?action=agents&id=$1"
 		},
@@ -877,6 +889,14 @@
 		{
 			"src": "/api/marketplace/buy-asset/([^/]+)",
 			"dest": "/api/marketplace/buy-asset?reference=$1"
+		},
+		{
+			"src": "/skills",
+			"dest": "/skills.html"
+		},
+		{
+			"src": "/skills/",
+			"dest": "/skills.html"
 		},
 		{
 			"src": "/marketplace",
@@ -2149,6 +2169,14 @@
 			"dest": "/create-review.html"
 		},
 		{
+			"src": "/start",
+			"dest": "/start.html"
+		},
+		{
+			"src": "/start/",
+			"dest": "/start.html"
+		},
+		{
 			"src": "/create",
 			"dest": "/create.html"
 		},
@@ -2279,6 +2307,50 @@
 			"dest": "/rider/$1"
 		},
 		{
+			"src": "/fact-checker",
+			"dest": "/pages/fact-checker.html"
+		},
+		{
+			"src": "/fact-checker/",
+			"dest": "/pages/fact-checker.html"
+		},
+		{
+			"src": "/unstoppable",
+			"dest": "/pages/unstoppable.html"
+		},
+		{
+			"src": "/unstoppable/",
+			"dest": "/pages/unstoppable.html"
+		},
+		{
+			"src": "/shopper",
+			"dest": "/pages/shopper.html"
+		},
+		{
+			"src": "/shopper/",
+			"dest": "/pages/shopper.html"
+		},
+		{
+			"src": "/paywall",
+			"dest": "/public/paywall.html"
+		},
+		{
+			"src": "/paywall/",
+			"dest": "/public/paywall.html"
+		},
+		{
+			"src": "/api/x402/fact-check",
+			"dest": "/api/x402/fact-check.js"
+		},
+		{
+			"src": "/api/agents/unstoppable-status",
+			"dest": "/api/agents/unstoppable-status.js"
+		},
+		{
+			"src": "/api/agents/endpoint-shopper-run",
+			"dest": "/api/agents/endpoint-shopper-run.js"
+		},
+		{
 			"src": "/(.*)",
 			"dest": "/$1"
 		}
@@ -2371,6 +2443,10 @@
 		{
 			"path": "/api/cron/siwx-gc",
 			"schedule": "23 * * * *"
+		},
+		{
+			"path": "/api/cron/unstoppable-tick",
+			"schedule": "*/5 * * * *"
 		}
 	]
 }

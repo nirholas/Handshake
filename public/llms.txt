@@ -63,6 +63,9 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [Pump Visualizer](https://three.ws/pump-visualizer): 3D visualizer of trending pump.fun tokens — live market data rendered as an interactive scene.
 - [x402 Bazaar](https://three.ws/bazaar): Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.
 - [GMGN Smart Money](https://three.ws/gmgn): Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.
+- [Fact Checker](https://three.ws/fact-checker): Pay $0.10 per claim. The agent searches across authoritative sources, pays per retrieval via x402, and returns a verdict with cited evidence and a signed attestation.
+- [Unstoppable Agent](https://three.ws/unstoppable): Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time.
+- [Endpoint Shopper](https://three.ws/shopper): Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.
 
 ## Agent Tools
 
