@@ -279,7 +279,7 @@ function renderSkillLegend(bySkill) {
 		return `<span style="color:var(--nxt-ink-fade)">Source breakdown unavailable — no payments yet for this range.</span>`;
 	}
 	const total = bySkill.reduce((s, r) => s + Number(r.net_total || 0), 0) || 1;
-	const swatches = ['var(--nxt-accent)', '#6dc1ff', '#4ec38a', '#ffb454', '#ff6b8a', '#9a7cff'];
+	const swatches = ['var(--nxt-accent)', '#dddfe4', '#c8cad0', '#a8adb5', '#969ba3', '#787d85'];
 	return bySkill
 		.slice(0, 6)
 		.map((r, i) => {

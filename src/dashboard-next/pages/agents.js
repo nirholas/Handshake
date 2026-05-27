@@ -183,7 +183,7 @@ function agentCard(a, avatars) {
 		<div class="dn-panel dn-agent-card" data-agent-id="${esc(a.id)}">
 			<div style="
 				width:56px;height:56px;border-radius:12px;overflow:hidden;
-				background:linear-gradient(135deg,rgba(154,124,255,0.3),rgba(109,193,255,0.2));
+				background:linear-gradient(135deg,rgba(140,143,150,0.3),rgba(100,103,110,0.2));
 				display:grid;place-items:center;flex-shrink:0;border:1px solid var(--nxt-stroke);
 			">
 				${avatarThumb

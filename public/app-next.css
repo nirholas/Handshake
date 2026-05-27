@@ -1487,3 +1487,450 @@ body.app-next-body.nxt-chat-active .nxt-chat-dock {
    panel that's intentionally not surfaced in this UX preview. Power users
    can re-enable via the explore menu (link routes to /app). */
 body.app-next-body .dg.ac { display: none !important; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Visitor Agent Card — floating read-only identity card for visitors
+   ══════════════════════════════════════════════════════════════════ */
+
+.nxt-visitor-card {
+	position: fixed;
+	top: 72px;
+	left: 20px;
+	z-index: 45;
+	width: 280px;
+	animation: nxt-visitor-card-in 0.4s ease-out;
+	pointer-events: none;
+}
+
+.nxt-visitor-card__inner {
+	pointer-events: auto;
+	background: linear-gradient(
+		168deg,
+		rgba(16, 16, 24, 0.92) 0%,
+		rgba(10, 10, 16, 0.95) 100%
+	);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 16px;
+	backdrop-filter: blur(22px) saturate(140%);
+	-webkit-backdrop-filter: blur(22px) saturate(140%);
+	box-shadow:
+		0 20px 60px rgba(0, 0, 0, 0.55),
+		inset 0 1px 0 rgba(255, 255, 255, 0.04);
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.nxt-visitor-card__head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.nxt-visitor-card__avatar {
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	flex-shrink: 0;
+	overflow: hidden;
+	border: 2px solid rgba(139, 92, 246, 0.4);
+	box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
+	position: relative;
+	background: rgba(255, 255, 255, 0.04);
+}
+
+.nxt-visitor-card__avatar-shimmer {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.06) 50%, transparent 70%);
+	background-size: 200% 100%;
+	animation: nxt-shimmer 1.8s ease-in-out infinite;
+}
+
+.nxt-visitor-card__avatar-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.nxt-visitor-card__info {
+	flex: 1;
+	min-width: 0;
+}
+
+.nxt-visitor-card__name {
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 16px;
+	font-weight: 600;
+	color: #f5f5f7;
+	letter-spacing: -0.01em;
+	margin: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.nxt-visitor-card__status {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.45);
+	margin-top: 2px;
+}
+
+.nxt-visitor-card__dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #4ade80;
+	box-shadow: 0 0 6px rgba(74, 222, 128, 0.55);
+	animation: nxt-dot-pulse 2.5s ease infinite;
+	flex-shrink: 0;
+}
+
+.nxt-visitor-card__desc {
+	font-size: 12.5px;
+	line-height: 1.5;
+	color: rgba(255, 255, 255, 0.55);
+	margin: 0;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.nxt-visitor-card__skills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.nxt-visitor-card__skill {
+	font-size: 10px;
+	padding: 3px 8px;
+	border-radius: 999px;
+	background: rgba(139, 92, 246, 0.12);
+	color: rgba(167, 139, 250, 0.85);
+	border: 1px solid rgba(139, 92, 246, 0.18);
+	white-space: nowrap;
+}
+
+.nxt-visitor-card__actions {
+	display: flex;
+	gap: 8px;
+	padding-top: 4px;
+}
+
+.nxt-visitor-card__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	padding: 8px 14px;
+	border-radius: 10px;
+	font-size: 12.5px;
+	font-weight: 500;
+	font-family: inherit;
+	text-decoration: none;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.04);
+	color: rgba(255, 255, 255, 0.8);
+	cursor: pointer;
+	transition: all 0.18s ease;
+}
+
+.nxt-visitor-card__btn:hover {
+	border-color: rgba(255, 255, 255, 0.22);
+	background: rgba(255, 255, 255, 0.08);
+	color: #fff;
+}
+
+.nxt-visitor-card__btn--primary {
+	flex: 1;
+	background: linear-gradient(180deg, rgba(139, 92, 246, 0.9), rgba(124, 58, 237, 0.9));
+	border-color: rgba(167, 139, 250, 0.6);
+	color: #fff;
+	box-shadow: 0 4px 16px rgba(139, 92, 246, 0.28);
+}
+
+.nxt-visitor-card__btn--primary:hover {
+	background: linear-gradient(180deg, rgba(151, 109, 255, 1), rgba(139, 92, 246, 1));
+	border-color: rgba(167, 139, 250, 0.85);
+	box-shadow: 0 6px 20px rgba(139, 92, 246, 0.38);
+}
+
+.nxt-visitor-card__btn--share {
+	padding: 8px 12px;
+}
+
+@keyframes nxt-visitor-card-in {
+	from {
+		opacity: 0;
+		transform: translateY(10px) translateX(-6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) translateX(0);
+	}
+}
+
+@keyframes nxt-dot-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.45; }
+}
+
+@keyframes nxt-shimmer {
+	0% { background-position: -200% 0; }
+	100% { background-position: 200% 0; }
+}
+
+/* Fade the visitor card when chrome auto-hides */
+.nxt-chrome-hidden .nxt-visitor-card {
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.35s ease;
+}
+.nxt-visitor-card {
+	transition: opacity 0.35s ease;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mobile Agent Strip — compact floating bar for agent context
+   ══════════════════════════════════════════════════════════════════ */
+
+.nxt-mobile-agent-strip {
+	display: none;
+}
+
+@media (max-width: 720px) {
+	.nxt-mobile-agent-strip {
+		display: flex;
+		position: fixed;
+		top: 52px;
+		left: 12px;
+		right: 12px;
+		z-index: 44;
+		align-items: center;
+		gap: 10px;
+		padding: 8px 10px 8px 8px;
+		background: linear-gradient(
+			180deg,
+			rgba(14, 14, 22, 0.92) 0%,
+			rgba(10, 10, 16, 0.95) 100%
+		);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		border-radius: 14px;
+		backdrop-filter: blur(20px) saturate(140%);
+		-webkit-backdrop-filter: blur(20px) saturate(140%);
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+		animation: nxt-strip-in 0.35s ease-out;
+	}
+
+	.nxt-mobile-agent-strip[hidden] {
+		display: none;
+	}
+
+	/* On mobile, hide the desktop visitor card */
+	.nxt-visitor-card {
+		display: none !important;
+	}
+}
+
+.nxt-mobile-agent-strip__avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	flex-shrink: 0;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1.5px solid rgba(139, 92, 246, 0.4);
+	position: relative;
+	overflow: hidden;
+}
+
+.nxt-mobile-agent-strip__dot {
+	position: absolute;
+	bottom: -1px;
+	right: -1px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #4ade80;
+	border: 2px solid rgba(10, 10, 16, 0.95);
+	box-shadow: 0 0 4px rgba(74, 222, 128, 0.5);
+}
+
+.nxt-mobile-agent-strip__info {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.nxt-mobile-agent-strip__name {
+	font-size: 13px;
+	font-weight: 600;
+	color: #f5f5f7;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	letter-spacing: -0.01em;
+}
+
+.nxt-mobile-agent-strip__desc {
+	font-size: 10.5px;
+	color: rgba(255, 255, 255, 0.4);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.nxt-mobile-agent-strip__share {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.04);
+	color: rgba(255, 255, 255, 0.55);
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.nxt-mobile-agent-strip__share:hover,
+.nxt-mobile-agent-strip__share:active {
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.25);
+	background: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes nxt-strip-in {
+	from {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Fade with chrome auto-hide */
+.nxt-chrome-hidden .nxt-mobile-agent-strip {
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.35s ease;
+}
+.nxt-mobile-agent-strip {
+	transition: opacity 0.35s ease;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Social Share Buttons
+   ══════════════════════════════════════════════════════════════════ */
+
+.nxt-share-social {
+	padding-top: 4px;
+}
+
+.nxt-share-social__row {
+	display: flex;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.nxt-share-social__btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.04);
+	color: rgba(255, 255, 255, 0.55);
+	cursor: pointer;
+	transition: all 0.18s ease;
+}
+
+.nxt-share-social__btn:hover {
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.22);
+	background: rgba(255, 255, 255, 0.08);
+	transform: translateY(-1px);
+}
+
+.nxt-share-social__btn:active {
+	transform: translateY(0);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Poster Skeleton — branded shimmer placeholder during GLB load
+   ══════════════════════════════════════════════════════════════════ */
+
+.nxt-poster-skeleton {
+	position: absolute;
+	inset: 0;
+	z-index: 4;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+	overflow: hidden;
+	transition: opacity 0.65s ease;
+}
+
+.nxt-poster-skeleton[hidden] {
+	display: none;
+}
+
+.nxt-poster-skeleton--fading {
+	opacity: 0;
+}
+
+.nxt-poster-skeleton__silhouette {
+	width: 140px;
+	height: 260px;
+	border-radius: 70px 70px 40px 40px;
+	background: linear-gradient(
+		180deg,
+		rgba(139, 92, 246, 0.06) 0%,
+		rgba(139, 92, 246, 0.03) 40%,
+		rgba(255, 255, 255, 0.02) 100%
+	);
+	border: 1px solid rgba(255, 255, 255, 0.03);
+	position: relative;
+}
+
+.nxt-poster-skeleton__shimmer {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		110deg,
+		transparent 25%,
+		rgba(139, 92, 246, 0.05) 37%,
+		rgba(167, 139, 250, 0.08) 50%,
+		rgba(139, 92, 246, 0.05) 63%,
+		transparent 75%
+	);
+	background-size: 250% 100%;
+	animation: nxt-shimmer 2.2s ease-in-out infinite;
+}
+
+/* Floor glow intensifies during skeleton state to suggest something is loading */
+.nxt-poster-skeleton:not([hidden]) ~ .nxt-stage-floor {
+	opacity: 0.7;
+}
+
+@media (max-width: 640px) {
+	.nxt-poster-skeleton__silhouette {
+		width: 100px;
+		height: 200px;
+	}
+}

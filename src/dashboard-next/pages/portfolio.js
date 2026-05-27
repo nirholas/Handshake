@@ -191,7 +191,7 @@ function renderNftAvatars(nftAvatars) {
 				<div style="border:1px solid var(--nxt-stroke);border-radius:10px;overflow:hidden;background:rgba(255,255,255,0.02)">
 					${av.thumbnail_url
 						? `<img src="${esc(av.thumbnail_url)}" alt="${esc(av.name || '')}" style="width:100%;aspect-ratio:1;object-fit:cover" loading="lazy" />`
-						: `<div style="width:100%;aspect-ratio:1;background:rgba(154,124,255,0.12);display:grid;place-items:center;color:var(--nxt-ink-fade);font-size:32px">🎭</div>`
+						: `<div style="width:100%;aspect-ratio:1;background:rgba(200,202,208,0.10);display:grid;place-items:center;color:var(--nxt-ink-fade);font-size:32px">🎭</div>`
 					}
 					<div style="padding:10px">
 						<div style="font-weight:600;font-size:13px;margin-bottom:4px">${esc(av.name || 'Untitled')}</div>

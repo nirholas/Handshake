@@ -1063,7 +1063,7 @@ function injectStyles() {
 		.dn-mcp-key-picker { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; }
 		.dn-mcp-key-picker select { background: rgba(255,255,255,0.04); border: 1px solid var(--nxt-stroke); color: var(--nxt-ink); padding: 6px 9px; border-radius: var(--nxt-radius-sm); font-size: 12.5px; }
 		.dn-mcp-panels { margin-bottom: 14px; }
-		.dn-mcp-hint { font-size: 12.5px; color: var(--nxt-ink-dim); background: rgba(154, 124, 255, 0.06); border: 1px solid var(--nxt-accent-soft); border-radius: var(--nxt-radius-sm); padding: 9px 12px; margin-bottom: 12px; }
+		.dn-mcp-hint { font-size: 12.5px; color: var(--nxt-ink-dim); background: rgba(200, 202, 208, 0.06); border: 1px solid var(--nxt-accent-soft); border-radius: var(--nxt-radius-sm); padding: 9px 12px; margin-bottom: 12px; }
 		.dn-mcp-hint code { color: var(--nxt-ink); background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; }
 		.dn-mcp-test { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 		.dn-mcp-result { display: inline-flex; align-items: center; }
@@ -1112,12 +1112,12 @@ function injectStyles() {
 		.dn-scope-label { font-size: 13px; color: var(--nxt-ink); }
 		.dn-scope-label code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; }
 		.dn-scope-note { font-size: 12px; color: var(--nxt-ink-fade); }
-		.dn-warn-banner { padding: 12px 14px; border-radius: var(--nxt-radius-sm); background: rgba(255,180,84,0.08); border: 1px solid rgba(255,180,84,0.25); color: var(--nxt-warn); font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
+		.dn-warn-banner { padding: 12px 14px; border-radius: var(--nxt-radius-sm); background: rgba(168,173,181,0.08); border: 1px solid rgba(168,173,181,0.25); color: var(--nxt-warn); font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
 		.dn-warn-banner strong { color: var(--nxt-ink); display: block; margin-bottom: 4px; }
-		.dn-error { padding: 10px 12px; border-radius: var(--nxt-radius-sm); background: rgba(255,107,138,0.1); border: 1px solid rgba(255,107,138,0.25); color: var(--nxt-danger); font-size: 13px; margin-bottom: 12px; }
+		.dn-error { padding: 10px 12px; border-radius: var(--nxt-radius-sm); background: rgba(150,155,163,0.1); border: 1px solid rgba(150,155,163,0.25); color: var(--nxt-danger); font-size: 13px; margin-bottom: 12px; }
 
 		/* Link button */
-		.dn-link { background: none; border: 0; color: var(--nxt-accent-strong, #9a7cff); cursor: pointer; padding: 0; font: inherit; text-decoration: underline; }
+		.dn-link { background: none; border: 0; color: var(--nxt-accent-strong, #c8cad0); cursor: pointer; padding: 0; font: inherit; text-decoration: underline; }
 		.dn-link:hover { color: var(--nxt-ink); }
 
 		/* Toasts */

@@ -7,11 +7,11 @@ import { mountShell } from '../shell.js';
 import { requireUser, get, post, patch, del, esc, relTime, initialsOf } from '../api.js';
 
 const CHAIN_STYLES = {
-	solana:   { label: 'Solana',   bg: 'rgba(154, 124, 255, 0.16)', border: 'rgba(154, 124, 255, 0.32)', ink: '#c7b6ff' },
-	base:     { label: 'Base',     bg: 'rgba(0, 82, 255, 0.16)',    border: 'rgba(0, 82, 255, 0.32)',    ink: '#7aa9ff' },
+	solana:   { label: 'Solana',   bg: 'rgba(200, 202, 208, 0.14)', border: 'rgba(200, 202, 208, 0.28)', ink: '#c5c7cc' },
+	base:     { label: 'Base',     bg: 'rgba(180, 184, 192, 0.14)', border: 'rgba(180, 184, 192, 0.28)', ink: '#b4b8c0' },
 	ethereum: { label: 'Ethereum', bg: 'rgba(150, 160, 175, 0.14)', border: 'rgba(150, 160, 175, 0.28)', ink: '#c5cbd5' },
-	polygon:  { label: 'Polygon',  bg: 'rgba(231, 41, 169, 0.14)',  border: 'rgba(231, 41, 169, 0.28)',  ink: '#ef8acf' },
-	optimism: { label: 'Optimism', bg: 'rgba(255, 4, 32, 0.14)',    border: 'rgba(255, 4, 32, 0.28)',    ink: '#ff8088' },
+	polygon:  { label: 'Polygon',  bg: 'rgba(170, 174, 182, 0.14)', border: 'rgba(170, 174, 182, 0.28)', ink: '#bbbfc6' },
+	optimism: { label: 'Optimism', bg: 'rgba(160, 164, 172, 0.14)', border: 'rgba(160, 164, 172, 0.28)', ink: '#b0b4bc' },
 	evm:      { label: 'EVM',      bg: 'rgba(150, 160, 175, 0.14)', border: 'rgba(150, 160, 175, 0.28)', ink: '#c5cbd5' },
 };
 
@@ -335,7 +335,7 @@ function renderProfile(host, me) {
 			<div style="
 				width:72px;height:72px;border-radius:50%;
 				display:grid;place-items:center;
-				background:linear-gradient(135deg, rgba(154,124,255,0.4), rgba(109,193,255,0.3));
+				background:linear-gradient(135deg, rgba(140,143,150,0.4), rgba(100,103,110,0.3));
 				color:#fff;font-size:24px;font-weight:600;letter-spacing:-0.01em;
 				border:1px solid rgba(255,255,255,0.12);
 				flex-shrink:0;
@@ -447,7 +447,7 @@ function renderWallets(host, wallets) {
 	const rows = wallets.map((w) => {
 		const isPrimary = !!w.is_primary;
 		const star = isPrimary
-			? `<svg width="13" height="13" viewBox="0 0 20 20" fill="#ffd479" stroke="#e8a934" stroke-width="1" style="margin-right:4px;flex-shrink:0"><path d="M10 2l2.4 5.4 5.9.6-4.4 4 1.3 5.9L10 14.7 4.8 17.9l1.3-5.9-4.4-4 5.9-.6L10 2z"/></svg>`
+			? `<svg width="13" height="13" viewBox="0 0 20 20" fill="#c8cad0" stroke="#9a9da4" stroke-width="1" style="margin-right:4px;flex-shrink:0"><path d="M10 2l2.4 5.4 5.9.6-4.4 4 1.3 5.9L10 14.7 4.8 17.9l1.3-5.9-4.4-4 5.9-.6L10 2z"/></svg>`
 			: '';
 		return `
 			<tr data-address="${esc(w.address)}">
@@ -463,7 +463,7 @@ function renderWallets(host, wallets) {
 				</td>
 				<td style="padding:11px 12px;color:var(--nxt-ink-dim);font-size:12.5px;white-space:nowrap">${esc(w.created_at ? relTime(w.created_at) : '—')}</td>
 				<td style="padding:11px 12px;color:var(--nxt-ink-dim);font-size:12.5px;white-space:nowrap">
-					${isPrimary ? '<span class="dn-tag" style="background:rgba(255,212,121,0.12);border-color:rgba(255,212,121,0.28);color:#ffd479">primary</span>' : ''}
+					${isPrimary ? '<span class="dn-tag" style="background:rgba(200,202,208,0.12);border-color:rgba(200,202,208,0.28);color:#c8cad0">primary</span>' : ''}
 				</td>
 				<td style="padding:11px 12px;text-align:right;white-space:nowrap">
 					<div style="display:inline-flex;gap:6px">

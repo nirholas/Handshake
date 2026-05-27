@@ -1078,6 +1078,148 @@ function anyPanelOpen() {
 	return false;
 }
 
+// ── Visitor card + mobile strip ──────────────────────────────────────
+
+function wireVisitorCard() {
+	const agentId = new URLSearchParams(location.search).get('agent');
+	if (!agentId) return;
+
+	fetchAgentPublic(agentId).then((agent) => {
+		if (!agent) return;
+		populateVisitorCard(agent);
+		populateMobileStrip(agent);
+		updatePageTitle(agent);
+	});
+}
+
+async function fetchAgentPublic(agentId) {
+	try {
+		const resp = await fetch(`/api/agents/${agentId}`);
+		if (!resp.ok) return null;
+		const data = await resp.json();
+		return data.agent || null;
+	} catch {
+		return null;
+	}
+}
+
+function populateVisitorCard(agent) {
+	const card = document.getElementById('nxt-visitor-card');
+	if (!card) return;
+
+	const nameEl = document.getElementById('nxt-visitor-name');
+	const descEl = document.getElementById('nxt-visitor-desc');
+	const skillsEl = document.getElementById('nxt-visitor-skills');
+	const avatarEl = document.getElementById('nxt-visitor-avatar');
+	const statusEl = document.getElementById('nxt-visitor-status');
+
+	if (nameEl) nameEl.textContent = agent.name || 'Agent';
+
+	if (descEl) {
+		descEl.textContent = agent.description || 'An embodied AI agent on three.ws';
+	}
+
+	if (agent.avatar_thumbnail_url && avatarEl) {
+		const img = document.createElement('img');
+		img.src = agent.avatar_thumbnail_url;
+		img.alt = agent.name || 'Agent avatar';
+		img.className = 'nxt-visitor-card__avatar-img';
+		img.loading = 'eager';
+		const shimmer = avatarEl.querySelector('.nxt-visitor-card__avatar-shimmer');
+		if (shimmer) shimmer.remove();
+		avatarEl.appendChild(img);
+	}
+
+	if (statusEl && agent.is_registered) {
+		statusEl.innerHTML = 'On-chain <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-1px"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+	}
+
+	const skills = agent.skills || [];
+	if (skills.length && skillsEl) {
+		skillsEl.hidden = false;
+		skillsEl.innerHTML = skills
+			.slice(0, 6)
+			.map((s) => `<span class="nxt-visitor-card__skill">${escHtml(s)}</span>`)
+			.join('');
+	}
+
+	const shareBtn = document.getElementById('nxt-visitor-share');
+	if (shareBtn) {
+		shareBtn.addEventListener('click', () => {
+			document.getElementById('nxt-share-btn')?.click();
+		});
+	}
+
+	card.hidden = false;
+
+	getMe().then((me) => {
+		if (me) card.hidden = true;
+	}).catch(() => {});
+}
+
+function populateMobileStrip(agent) {
+	const strip = document.getElementById('nxt-mobile-agent-strip');
+	if (!strip) return;
+
+	const nameEl = document.getElementById('nxt-mobile-name');
+	const descEl = document.getElementById('nxt-mobile-desc');
+	const avatarEl = document.getElementById('nxt-mobile-avatar');
+
+	if (nameEl) nameEl.textContent = agent.name || 'Agent';
+	if (descEl) descEl.textContent = agent.description || '';
+
+	if (agent.avatar_thumbnail_url && avatarEl) {
+		avatarEl.style.backgroundImage = `url(${agent.avatar_thumbnail_url})`;
+		avatarEl.style.backgroundSize = 'cover';
+		avatarEl.style.backgroundPosition = 'center top';
+	}
+
+	const shareBtn = document.getElementById('nxt-mobile-share');
+	if (shareBtn) {
+		shareBtn.addEventListener('click', () => {
+			if (navigator.share) {
+				navigator.share({
+					title: `${agent.name || 'Agent'} — three.ws`,
+					text: `Meet ${agent.name || 'this agent'} — an embodied AI agent on three.ws`,
+					url: location.href,
+				}).catch(() => {});
+			} else {
+				document.getElementById('nxt-share-btn')?.click();
+			}
+		});
+	}
+
+	strip.hidden = false;
+}
+
+function updatePageTitle(agent) {
+	if (!agent?.name) return;
+	document.title = `${agent.name} — three.ws`;
+	const metaDesc = document.querySelector('meta[name="description"]');
+	if (metaDesc && agent.description) {
+		metaDesc.setAttribute('content', agent.description);
+	}
+}
+
+// ── Poster skeleton ──────────────────────────────────────────────────
+
+function wirePosterSkeleton() {
+	const agentId = new URLSearchParams(location.search).get('agent');
+	if (!agentId) return;
+
+	const skeleton = document.getElementById('nxt-poster-skeleton');
+	if (!skeleton) return;
+
+	skeleton.hidden = false;
+
+	waitForViewer().then(() => {
+		skeleton.classList.add('nxt-poster-skeleton--fading');
+		setTimeout(() => {
+			skeleton.hidden = true;
+		}, 700);
+	});
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 function escHtml(s) {

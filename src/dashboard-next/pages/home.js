@@ -623,7 +623,7 @@ function injectStyles() {
 		.dnx-hero-card:hover {
 			transform: translateY(-4px);
 			border-color: var(--nxt-stroke-strong);
-			box-shadow: 0 14px 40px -20px rgba(154, 124, 255, 0.45);
+			box-shadow: 0 14px 40px -20px rgba(200, 202, 208, 0.25);
 		}
 		.dnx-hero-overlay {
 			position: absolute;
@@ -784,7 +784,7 @@ function injectStyles() {
 			font-size: 11px; font-weight: 600;
 			background: var(--nxt-accent-soft);
 			color: var(--nxt-accent-strong);
-			border: 1px solid rgba(154,124,255,0.2);
+			border: 1px solid rgba(200,202,208,0.2);
 		}
 		.dnx-ob-step.is-done .dnx-ob-num {
 			background: rgba(52,199,89,0.12);

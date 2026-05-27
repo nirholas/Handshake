@@ -779,8 +779,8 @@ function injectStyles() {
 			gap: 12px;
 			padding: 14px 16px;
 			margin-bottom: 14px;
-			border: 1px solid rgba(255,107,138,0.3);
-			background: rgba(255,107,138,0.08);
+			border: 1px solid rgba(150,155,163,0.3);
+			background: rgba(150,155,163,0.08);
 			border-radius: var(--nxt-radius-sm);
 			color: var(--nxt-ink);
 			font-size: 13px;
@@ -815,7 +815,7 @@ function injectStyles() {
 			border-radius: 10px;
 			overflow: hidden;
 			background:
-				radial-gradient(ellipse 60% 50% at 50% 100%, rgba(154,124,255,0.10) 0%, transparent 70%),
+				radial-gradient(ellipse 60% 50% at 50% 100%, rgba(200,202,208,0.06) 0%, transparent 70%),
 				linear-gradient(180deg, rgba(28, 29, 39, 0.5), rgba(14, 15, 22, 0.5));
 		}
 		.dn-av-thumb threews-avatar {
@@ -931,7 +931,7 @@ function injectStyles() {
 		.dn-av-menu-item:hover { background: var(--nxt-accent-soft); }
 		.dn-av-menu-item.active { color: var(--nxt-accent-strong); }
 		.dn-av-menu-item.danger { color: var(--nxt-danger); }
-		.dn-av-menu-item.danger:hover { background: rgba(255,107,138,0.12); }
+		.dn-av-menu-item.danger:hover { background: rgba(150,155,163,0.12); }
 
 		/* Load more */
 		.dn-av-loadmore {
@@ -991,7 +991,7 @@ function injectStyles() {
 			max-width: 320px;
 		}
 		.dn-av-toast.show { opacity: 1; transform: translateY(0); }
-		.dn-av-toast.err { border-color: rgba(255,107,138,0.4); }
+		.dn-av-toast.err { border-color: rgba(150,155,163,0.4); }
 
 		@media (max-width: 720px) {
 			.dn-av-head { flex-direction: column; align-items: stretch; }

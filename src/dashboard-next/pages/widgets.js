@@ -862,7 +862,7 @@ function emptyState() {
 function errorBanner(err) {
 	const msg = esc(err?.message || 'Unable to load widgets right now.');
 	return `
-		<div class="dn-panel" style="grid-column:1 / -1;border-color:rgba(255,107,138,0.35);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+		<div class="dn-panel" style="grid-column:1 / -1;border-color:rgba(150,155,163,0.35);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
 			<div>
 				<div class="dn-panel-title" style="color:var(--nxt-danger)">Couldn't load widgets</div>
 				<div class="dn-panel-sub" style="margin:0">${msg}</div>

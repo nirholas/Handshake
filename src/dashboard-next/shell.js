@@ -68,7 +68,7 @@ export async function mountShell() {
 	const here = shell.querySelector('.dn-rail-item[aria-current="page"]');
 	if (here) {
 		here.animate(
-			[{ background: 'rgba(154,124,255,0.32)' }, { background: 'rgba(154,124,255,0.18)' }],
+			[{ background: 'rgba(200,202,208,0.28)' }, { background: 'rgba(200,202,208,0.14)' }],
 			{ duration: 600, easing: 'ease-out' },
 		);
 	}

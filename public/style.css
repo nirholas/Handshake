@@ -1497,9 +1497,9 @@ footer .separator {
 }
 
 .nich-mic.active {
-	background: rgba(255, 80, 80, 0.15);
-	border-color: rgba(255, 80, 80, 0.3);
-	color: #ff5050;
+	background: rgba(255, 255, 255, 0.14);
+	border-color: rgba(255, 255, 255, 0.35);
+	color: #fff;
 }
 
 @media screen and (max-width: 700px) {
@@ -4568,7 +4568,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 }
 
 .nich-model-select:focus {
-	border-color: var(--nich-accent, rgba(120, 180, 255, 0.6));
+	border-color: rgba(255, 255, 255, 0.4);
 }
 
 .nich-model-select option {

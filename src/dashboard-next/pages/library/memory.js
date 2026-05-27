@@ -71,11 +71,11 @@ export async function renderMemory(host) {
 			.mem-card-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; font-size:12px; color:var(--nxt-ink-fade); }
 			.mem-card-body { font-size:13px; color:var(--nxt-ink); white-space:pre-wrap; word-break:break-word; line-height:1.5; }
 			.mem-card-body.collapsed { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-			.mem-card-expand { background:none; border:none; color:var(--nxt-accent, #9a7cff); cursor:pointer; padding:4px 0 0; font-size:12px; font:inherit; }
-			.mem-type-user      { color:#93c5fd; border-color:rgba(59,130,246,0.4) !important; }
-			.mem-type-feedback  { color:#d8b4fe; border-color:rgba(168,85,247,0.4) !important; }
-			.mem-type-project   { color:#86efac; border-color:rgba(34,197,94,0.4) !important;  }
-			.mem-type-reference { color:#fdba74; border-color:rgba(251,146,60,0.4) !important; }
+			.mem-card-expand { background:none; border:none; color:var(--nxt-accent, #c8cad0); cursor:pointer; padding:4px 0 0; font-size:12px; font:inherit; }
+			.mem-type-user      { color:#dddfe4; border-color:rgba(221,223,228,0.3) !important; }
+			.mem-type-feedback  { color:#c8cad0; border-color:rgba(200,202,208,0.3) !important; }
+			.mem-type-project   { color:#b8bcc4; border-color:rgba(184,188,196,0.3) !important; }
+			.mem-type-reference { color:#a8adb5; border-color:rgba(168,173,181,0.3) !important; }
 		</style>
 	`;
 

@@ -19,8 +19,8 @@ html, body {
 
 body {
 	background:
-		radial-gradient(ellipse 70% 50% at 12% 0%, rgba(154, 124, 255, 0.06) 0%, transparent 65%),
-		radial-gradient(ellipse 50% 40% at 100% 100%, rgba(109, 193, 255, 0.04) 0%, transparent 60%),
+		radial-gradient(ellipse 70% 50% at 12% 0%, rgba(255, 255, 255, 0.03) 0%, transparent 65%),
+		radial-gradient(ellipse 50% 40% at 100% 100%, rgba(255, 255, 255, 0.02) 0%, transparent 60%),
 		var(--nxt-bg-0);
 	min-height: 100vh;
 	overflow-x: hidden;
@@ -262,7 +262,7 @@ button { font: inherit; }
 	width: 26px;
 	height: 26px;
 	border-radius: 999px;
-	background: linear-gradient(135deg, var(--nxt-accent), #ff7ab8);
+	background: linear-gradient(135deg, #8a8d94, #5c5f66);
 	display: grid;
 	place-items: center;
 	color: #fff;
@@ -356,11 +356,11 @@ button { font: inherit; }
 .dn-btn.ghost { background: transparent; border-color: transparent; }
 .dn-btn.ghost:hover { background: rgba(255, 255, 255, 0.05); }
 .dn-btn.danger {
-	border-color: rgba(255, 107, 138, 0.25);
+	border-color: rgba(150, 155, 163, 0.25);
 	color: var(--nxt-danger);
-	background: rgba(255, 107, 138, 0.08);
+	background: rgba(150, 155, 163, 0.08);
 }
-.dn-btn.danger:hover { background: rgba(255, 107, 138, 0.16); }
+.dn-btn.danger:hover { background: rgba(150, 155, 163, 0.16); }
 
 .dn-tag {
 	display: inline-flex;
@@ -373,9 +373,9 @@ button { font: inherit; }
 	border: 1px solid var(--nxt-stroke);
 	color: var(--nxt-ink-dim);
 }
-.dn-tag.success { background: rgba(78, 195, 138, 0.12); color: var(--nxt-success); border-color: rgba(78, 195, 138, 0.2); }
-.dn-tag.warn    { background: rgba(255, 180, 84, 0.12); color: var(--nxt-warn); border-color: rgba(255, 180, 84, 0.2); }
-.dn-tag.danger  { background: rgba(255, 107, 138, 0.12); color: var(--nxt-danger); border-color: rgba(255, 107, 138, 0.2); }
+.dn-tag.success { background: rgba(184, 188, 196, 0.12); color: var(--nxt-success); border-color: rgba(184, 188, 196, 0.2); }
+.dn-tag.warn    { background: rgba(168, 173, 181, 0.12); color: var(--nxt-warn); border-color: rgba(168, 173, 181, 0.2); }
+.dn-tag.danger  { background: rgba(150, 155, 163, 0.12); color: var(--nxt-danger); border-color: rgba(150, 155, 163, 0.2); }
 
 .dn-skeleton {
 	background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 100%);
@@ -606,7 +606,7 @@ button { font: inherit; }
 .dn-panel:hover {
 	transform: translateY(-1px);
 	box-shadow:
-		0 8px 24px -10px rgba(154, 124, 255, 0.28),
+		0 8px 24px -10px rgba(200, 202, 208, 0.18),
 		0 2px 6px rgba(0, 0, 0, 0.2);
 	border-color: var(--nxt-stroke-strong);
 }
@@ -645,9 +645,9 @@ button { font: inherit; }
 	animation: dn-pulse 1.2s ease-out 2;
 }
 @keyframes dn-pulse {
-	0%   { box-shadow: 0 0 0 0 rgba(154, 124, 255, 0.45); }
-	60%  { box-shadow: 0 0 0 8px rgba(154, 124, 255, 0); }
-	100% { box-shadow: 0 0 0 0 rgba(154, 124, 255, 0); }
+	0%   { box-shadow: 0 0 0 0 rgba(200, 202, 208, 0.4); }
+	60%  { box-shadow: 0 0 0 8px rgba(200, 202, 208, 0); }
+	100% { box-shadow: 0 0 0 0 rgba(200, 202, 208, 0); }
 }
 
 /* ── Reduced motion: kill all of it ───────────────────────────────────── */
