@@ -47,10 +47,10 @@ export async function renderStrategy(host) {
 			.strat-textarea:focus { outline:none; border-color: rgba(200,202,208,0.55); }
 			.strat-bar { display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap; font-size:12px; color:var(--nxt-ink-fade); }
 			.strat-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:11px; border:1px solid rgba(255,255,255,0.10); }
-			.strat-chip.dirty { color:#fcd34d; border-color:rgba(252,211,77,0.4); }
-			.strat-chip.saving { color:#93c5fd; border-color:rgba(59,130,246,0.4); }
-			.strat-chip.saved { color:#86efac; border-color:rgba(34,197,94,0.4); }
-			.strat-chip.error { color:#fca5a5; border-color:rgba(239,68,68,0.5); }
+			.strat-chip.dirty { color:#c8cad0; border-color:rgba(200,202,208,0.4); }
+			.strat-chip.saving { color:#b8bcc4; border-color:rgba(184,188,196,0.4); }
+			.strat-chip.saved { color:#dddfe4; border-color:rgba(221,223,228,0.4); }
+			.strat-chip.error { color:#969ba3; border-color:rgba(150,155,163,0.5); }
 		</style>
 	`;
 

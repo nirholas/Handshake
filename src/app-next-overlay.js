@@ -775,8 +775,8 @@ function wirePrimaryCTA() {
 
 		const viewer = window.VIEWER?.viewer;
 		const app = window.VIEWER?.app;
-		const url = app?._currentModelUrl;
-		if (!viewer || !url) {
+		const source = app?._currentLocalFile || app?._currentModelUrl;
+		if (!viewer || !source) {
 			toast('Nothing to save yet — load a model first.');
 			return;
 		}
@@ -789,9 +789,16 @@ function wirePrimaryCTA() {
 		if (primaryLabel) primaryLabel.textContent = 'Saving…';
 		primary.disabled = true;
 		try {
-			const res = await saveRemoteGlbToAccount(url, {
+			const meta = {
 				name: app?._currentModelName || 'Avatar',
-			});
+			};
+			if (app?._currentLocalFile) {
+				meta.source = 'upload';
+				if (app._currentLocalFile.name) {
+					meta.source_meta = { original_filename: app._currentLocalFile.name };
+				}
+			}
+			const res = await saveRemoteGlbToAccount(source, meta);
 			if (res?.id) {
 				if (primaryLabel) primaryLabel.textContent = 'Saved ✓';
 				toast(`Saved to your account.`, `/avatars/${res.id}`);
@@ -801,7 +808,21 @@ function wirePrimaryCTA() {
 		} catch (err) {
 			console.warn('[nxt] save failed', err);
 			if (primaryLabel) primaryLabel.textContent = original;
-			toast('Save failed — try again.');
+			const code = err.data?.error || err.code || '';
+			const detail = err.data?.error_description || err.message || '';
+			if (code === 'plan_limit_count' || code === 'plan_limit_storage') {
+				toast('Avatar limit reached — delete old avatars or upgrade your plan.');
+			} else if (err.status === 401 || code === 'not_signed_in') {
+				toast('Session expired — please sign in again.');
+			} else if (err.status === 413 || code === 'plan_limit_size') {
+				toast('File too large for your plan.');
+			} else if (err.status === 429) {
+				toast('Too many uploads — wait a moment and try again.');
+			} else if (detail) {
+				toast(`Save failed — ${detail}`);
+			} else {
+				toast('Save failed — try again.');
+			}
 		} finally {
 			revertTimer = setTimeout(() => {
 				revertTimer = null;

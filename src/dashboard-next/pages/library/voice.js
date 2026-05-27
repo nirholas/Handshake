@@ -53,8 +53,8 @@ export async function renderVoice(host) {
 			}
 			.voice-preview audio { height:32px; max-width:280px; }
 			.voice-status { font-size:12px; color:var(--nxt-ink-fade); min-height:16px; flex-basis:100%; }
-			.voice-status.err { color:#ff9ab1; }
-			.voice-status.ok  { color:#86efac; }
+			.voice-status.err { color:#969ba3; }
+			.voice-status.ok  { color:#dddfe4; }
 		</style>
 	`;
 

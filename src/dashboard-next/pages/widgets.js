@@ -1087,7 +1087,7 @@ function injectStyles() {
 			z-index: 2000;
 		}
 		.dn-wx-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-		.dn-wx-toast.error { border-color: rgba(255,107,138,0.5); color: var(--nxt-danger); }
+		.dn-wx-toast.error { border-color: rgba(150,155,163,0.5); color: var(--nxt-danger); }
 
 		.dn-wx-modal-root {
 			position: fixed; inset: 0; z-index: 2500;

@@ -185,7 +185,7 @@ function renderTokenCard({ agent, mint, token, stats }) {
 		<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
 			${imageUrl
 				? `<img src="${esc(imageUrl)}" alt="${ticker}" style="width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0" loading="lazy" />`
-				: `<div style="width:52px;height:52px;border-radius:10px;background:rgba(255,180,84,0.15);display:grid;place-items:center;font-size:22px;flex-shrink:0">🪙</div>`
+				: `<div style="width:52px;height:52px;border-radius:10px;background:rgba(168,173,181,0.15);display:grid;place-items:center;font-size:22px;flex-shrink:0">🪙</div>`
 			}
 			<div style="flex:1;min-width:0">
 				<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">

@@ -777,6 +777,438 @@ export function openReputationModal(ctx = {}) {
 	});
 }
 
+// ── Voice Library modal ─────────────────────────────────────────────────────
+
+export function openVoiceLibraryModal() {
+	const voices = [
+		{ name: 'Aria', detail: 'American · Narrative' },
+		{ name: 'Roger', detail: 'British · Conversational' },
+		{ name: 'Sarah', detail: 'American · Soft' },
+		{ name: 'Charlie', detail: 'Australian · Casual' },
+		{ name: 'Jessica', detail: 'American · Expressive' },
+		{ name: 'Eric', detail: 'American · Friendly' },
+	];
+
+	const voiceCards = voices
+		.map(
+			(v) => `
+		<div class="fm-mini-card">
+			<div class="fm-mini-card-name">${escapeHtml(v.name)}</div>
+			<div class="fm-mini-card-desc">${escapeHtml(v.detail)}</div>
+		</div>
+	`,
+		)
+		.join('');
+
+	openFeatureModal({
+		icon: '🎙️',
+		title: 'Voice Library',
+		lede: 'Pick a voice from 100+ options or clone your own. Each agent gets its own voice identity, powered by ElevenLabs.',
+		body: `
+			<ul class="fm-bullets">
+				<li>ElevenLabs-powered library with accent, age, and style filters — narrative, conversational, character voices.</li>
+				<li>Clone your own voice from a 30-second recording. Your agent sounds like you, across every conversation.</li>
+				<li>Per-agent voice assignment — different agents, different voices, all managed from your dashboard.</li>
+			</ul>
+			<div class="fm-card-grid">${voiceCards}</div>
+			<p class="fm-note">Full voice library and cloning open in your dashboard after save. Preview your avatar's voice live with the Voice &amp; Persona tile.</p>
+		`,
+		actions: [{ label: 'Got it' }],
+	});
+}
+
+// ── Video generation modal ──────────────────────────────────────────────────
+
+export function openVideoModal() {
+	openFeatureModal({
+		icon: '🎬',
+		title: 'Video Generation',
+		lede: 'Turn your avatar into a talking-head video — upload audio or type a script, get a lip-synced MP4.',
+		body: `
+			<ul class="fm-bullets">
+				<li>Upload any audio clip or paste a script for TTS — the avatar lip-syncs and emotes automatically.</li>
+				<li>Renders as 1080p MP4 ready for social media, courses, product demos, and sales outreach.</li>
+				<li>Runs on GPU workers — typical turnaround is under two minutes for a 60-second clip.</li>
+			</ul>
+			<div class="fm-flow" aria-label="Video generation flow">
+				<div class="fm-flow-step">
+					<span class="fm-flow-step-icon">🎤</span>
+					<span class="fm-flow-step-label">Audio</span>
+					<span class="fm-flow-step-sub">Upload or TTS</span>
+				</div>
+				<span class="fm-flow-arrow">→</span>
+				<div class="fm-flow-step">
+					<span class="fm-flow-step-icon">🧍</span>
+					<span class="fm-flow-step-label">Avatar</span>
+					<span class="fm-flow-step-sub">Your 3D model</span>
+				</div>
+				<span class="fm-flow-arrow">→</span>
+				<div class="fm-flow-step">
+					<span class="fm-flow-step-icon">⚙️</span>
+					<span class="fm-flow-step-label">Render</span>
+					<span class="fm-flow-step-sub">GPU worker</span>
+				</div>
+				<span class="fm-flow-arrow">→</span>
+				<div class="fm-flow-step">
+					<span class="fm-flow-step-icon">🎬</span>
+					<span class="fm-flow-step-label">MP4</span>
+					<span class="fm-flow-step-sub">1080p output</span>
+				</div>
+			</div>
+			<p class="fm-note">Video generation is available from your dashboard after saving. Audio can be uploaded directly or generated from text via the agent's assigned voice.</p>
+		`,
+		actions: [{ label: 'Got it' }],
+	});
+}
+
+// ── Mocap & Streaming modal ─────────────────────────────────────────────────
+
+export function openMocapModal() {
+	openFeatureModal({
+		icon: '🎥',
+		title: 'Mocap & Streaming',
+		lede: 'Drive your avatar with your face, stream it on OBS, or pose it frame-by-frame.',
+		body: `
+			<div class="fm-sub-features">
+				<div class="fm-sub-feature">
+					<span class="fm-sub-feature-icon">📷</span>
+					<div class="fm-sub-feature-text">
+						<div class="fm-sub-feature-name">Face Capture</div>
+						<div class="fm-sub-feature-desc">Webcam feeds MediaPipe for real-time ARKit-52 blendshape tracking. Blink, jaw, brow, cheek — full expression mapping. Record clips and replay on any avatar.</div>
+					</div>
+				</div>
+				<div class="fm-sub-feature">
+					<span class="fm-sub-feature-icon">📡</span>
+					<div class="fm-sub-feature-text">
+						<div class="fm-sub-feature-name">OBS Overlay</div>
+						<div class="fm-sub-feature-desc">Stream-deck panel with emote hotkeys and mic-driven expressions. Transparent background — drop into OBS as a browser source for live streams.</div>
+					</div>
+				</div>
+				<div class="fm-sub-feature">
+					<span class="fm-sub-feature-icon">🦴</span>
+					<div class="fm-sub-feature-text">
+						<div class="fm-sub-feature-name">Pose Studio</div>
+						<div class="fm-sub-feature-desc">Click-to-pose 3D mannequin. Rotate individual bones, set expressions, export a poster-quality PNG screenshot.</div>
+					</div>
+				</div>
+			</div>
+			<p class="fm-note">All three tools are in the Labs section of your dashboard. Face capture runs in-browser via your webcam — no install required.</p>
+		`,
+		actions: [{ label: 'Got it' }],
+	});
+}
+
+// ── Token Launch modal ──────────────────────────────────────────────────────
+
+export function openTokenLaunchModal() {
+	openFeatureModal({
+		icon: '🪙',
+		title: 'Token Launch',
+		lede: 'Your agent can launch a pump.fun token in one click — bonding curve, live stats, trade panel, all wired in.',
+		body: `
+			<ul class="fm-bullets">
+				<li>One-click token launch on pump.fun, tied to your agent's on-chain identity and wallet.</li>
+				<li>Vanity mint grinding — pick a custom suffix for your token's Solana address.</li>
+				<li>Live dashboard with price, holders, volume, bonding curve progress, and full trade history.</li>
+				<li>Inline trade panel on your agent's page — visitors can buy and sell without leaving.</li>
+			</ul>
+			<div class="fm-kpi-row" aria-label="Sample token stats">
+				<div class="fm-kpi">
+					<span class="fm-kpi-value">$0.0042</span>
+					<span class="fm-kpi-label">Price</span>
+				</div>
+				<div class="fm-kpi">
+					<span class="fm-kpi-value">847</span>
+					<span class="fm-kpi-label">Holders</span>
+				</div>
+				<div class="fm-kpi">
+					<span class="fm-kpi-value">23.4%</span>
+					<span class="fm-kpi-label">Bonding</span>
+				</div>
+				<div class="fm-kpi">
+					<span class="fm-kpi-value">$12.8K</span>
+					<span class="fm-kpi-label">Volume</span>
+				</div>
+			</div>
+			<p class="fm-note">Token launch is available from your agent's dashboard after save. Stats update in real time. Numbers above are illustrative.</p>
+		`,
+		actions: [{ label: 'Got it' }],
+	});
+}
+
+// ── Analytics modal ─────────────────────────────────────────────────────────
+
+export function openAnalyticsModal() {
+	openFeatureModal({
+		icon: '📊',
+		title: 'Analytics',
+		lede: 'Revenue, engagement, and usage — tracked automatically from day one.',
+		body: `
+			<ul class="fm-bullets">
+				<li>Revenue dashboard: net earnings, payment count, top skills by revenue, withdrawal history.</li>
+				<li>Engagement metrics: widget views, transcript count, embed reach, and a real-time visitor activity feed.</li>
+				<li>Per-tool usage: MCP call volume, latency percentiles, success rate, and top callers.</li>
+			</ul>
+			<div class="fm-kpi-row" aria-label="Sample dashboard KPIs">
+				<div class="fm-kpi">
+					<span class="fm-kpi-value">$482</span>
+					<span class="fm-kpi-label">Revenue (30d)</span>
+				</div>
+				<div class="fm-kpi">
+					<span class="fm-kpi-value">3,291</span>
+					<span class="fm-kpi-label">Views</span>
+				</div>
+				<div class="fm-kpi">
+					<span class="fm-kpi-value">156</span>
+					<span class="fm-kpi-label">Transcripts</span>
+				</div>
+				<div class="fm-kpi">
+					<span class="fm-kpi-value">12</span>
+					<span class="fm-kpi-label">Widgets</span>
+				</div>
+			</div>
+			<div class="fm-activity-feed" aria-label="Sample activity feed">
+				<div class="fm-activity-item">
+					<span class="fm-activity-dot" style="background:#28c840"></span>
+					<span class="fm-activity-text">Paid API call from <code>9mR…vT8p</code> — $0.05 USDC</span>
+					<span class="fm-activity-time">2m ago</span>
+				</div>
+				<div class="fm-activity-item">
+					<span class="fm-activity-dot" style="background:#6a5cff"></span>
+					<span class="fm-activity-text">Widget embed loaded on <code>docs.example.com</code></span>
+					<span class="fm-activity-time">8m ago</span>
+				</div>
+				<div class="fm-activity-item">
+					<span class="fm-activity-dot" style="background:var(--accent)"></span>
+					<span class="fm-activity-text">Voice session completed — 4m 12s, 8 turns</span>
+					<span class="fm-activity-time">23m ago</span>
+				</div>
+			</div>
+			<p class="fm-note">Your dashboard populates the moment your agent goes live — every API call, widget load, and voice session is tracked. Sample data above is illustrative.</p>
+		`,
+		actions: [{ label: 'Got it' }],
+		dialogClass: 'fm-dialog--wide',
+	});
+}
+
+// ── Widgets modal ───────────────────────────────────────────────────────────
+
+export function openWidgetsModal() {
+	const widgets = [
+		{ icon: '🔄', name: 'Turntable', desc: '360° spin showcase — drag to orbit, auto-rotate' },
+		{ icon: '🎭', name: 'Animation Gallery', desc: 'Emote reel — browse and trigger animation clips' },
+		{ icon: '🗣️', name: 'Talking Agent', desc: 'Live voice conversation with your avatar' },
+		{ icon: '🪪', name: 'Passport', desc: 'Agent identity card — name, wallet, reputation' },
+		{ icon: '📍', name: 'Hotspot Tour', desc: 'Interactive 3D walkthrough with clickable points' },
+		{ icon: '📈', name: 'Pump.fun Feed', desc: 'Live token claims and graduations, narrated' },
+		{ icon: '👁️', name: 'KOL Trades', desc: 'Key opinion leader trade tracking and alerts' },
+		{ icon: '🖥️', name: 'Live Trades', desc: 'Real-time 3D trade visualization canvas' },
+	];
+
+	const widgetCards = widgets
+		.map(
+			(w) => `
+		<div class="fm-mini-card">
+			<span class="fm-mini-card-icon">${w.icon}</span>
+			<div class="fm-mini-card-name">${escapeHtml(w.name)}</div>
+			<div class="fm-mini-card-desc">${escapeHtml(w.desc)}</div>
+		</div>
+	`,
+		)
+		.join('');
+
+	openFeatureModal({
+		icon: '🧱',
+		title: 'Widgets',
+		lede: 'Eight ready-to-embed widget types — each configurable in the visual Widget Studio.',
+		body: `
+			<ul class="fm-bullets">
+				<li>Widget Studio: visual editor with live preview, custom colors, camera angle, and interaction behavior.</li>
+				<li>Each widget gets its own embed code — script tag, Web Component, React, or iframe.</li>
+				<li>Origin allowlist per widget so you control exactly where it can be loaded.</li>
+			</ul>
+			<div class="fm-card-grid">${widgetCards}</div>
+			<p class="fm-note">Widget Studio opens from your dashboard after save. Each type is fully configurable — colors, camera, content source, interaction mode.</p>
+		`,
+		actions: [{ label: 'Got it' }],
+		dialogClass: 'fm-dialog--wide',
+	});
+}
+
+// ── Developer API modal ─────────────────────────────────────────────────────
+
+export function openDeveloperModal() {
+	const tools = {
+		avatar: [
+			{ name: 'list_my_avatars', desc: 'List all avatars in your account' },
+			{ name: 'get_avatar', desc: 'Get avatar details by ID' },
+			{ name: 'search_public_avatars', desc: 'Search the public gallery' },
+			{ name: 'render_avatar', desc: 'Server-side render to PNG' },
+		],
+		model: [
+			{ name: 'inspect_model', desc: 'Mesh, material, skeleton analysis' },
+			{ name: 'validate_model', desc: 'Khronos glTF spec validation' },
+			{ name: 'optimize_model', desc: 'Draco compress, texture resize' },
+		],
+		solana: [
+			{ name: 'solana_agent_passport', desc: 'On-chain agent identity lookup' },
+			{ name: 'solana_agent_reputation', desc: 'Reputation score and reviews' },
+			{ name: 'solana_agent_attestations', desc: 'Capability attestations' },
+		],
+		pumpfun: [
+			{ name: 'pumpfun_token_intel', desc: 'Token stats, holders, bonding curve' },
+			{ name: 'pumpfun_creator_intel', desc: 'Creator history and track record' },
+		],
+	};
+
+	const snippets = {
+		claude: `{
+  "mcpServers": {
+    "three-ws": {
+      "command": "npx",
+      "args": ["-y", "@3d-agent/mcp-server"],
+      "env": {
+        "THREE_WS_API_KEY": "<your-key>"
+      }
+    }
+  }
+}`,
+		cursor: `{
+  "mcpServers": {
+    "three-ws": {
+      "command": "npx",
+      "args": ["-y", "@3d-agent/mcp-server"],
+      "env": {
+        "THREE_WS_API_KEY": "<your-key>"
+      }
+    }
+  }
+}`,
+		http: `POST https://three.ws/api/mcp
+Authorization: Bearer <your-key>
+Content-Type: application/json
+
+{ "method": "tools/list", "params": {} }`,
+	};
+
+	function renderTools(catTools) {
+		return catTools
+			.map(
+				(t) => `
+			<div class="fm-tool-item">
+				<code>${escapeHtml(t.name)}</code>
+				<span class="muted">${escapeHtml(t.desc)}</span>
+			</div>
+		`,
+			)
+			.join('');
+	}
+
+	const body = document.createElement('div');
+	body.innerHTML = `
+		<ul class="fm-bullets">
+			<li>15 MCP tools spanning avatar management, model analysis, Solana identity, and pump.fun intel.</li>
+			<li>API keys with scoped permissions: <code>avatars:read</code>, <code>avatars:write</code>, <code>profile</code>, and more.</li>
+			<li>Works with Claude Desktop, Cursor, VS Code, or any MCP-compatible client.</li>
+		</ul>
+
+		<div class="fm-tool-catalog">
+			<div class="fm-tool-cat">Avatar</div>
+			${renderTools(tools.avatar)}
+			<div class="fm-tool-cat">Model</div>
+			${renderTools(tools.model)}
+			<div class="fm-tool-cat">Solana</div>
+			${renderTools(tools.solana)}
+			<div class="fm-tool-cat">Pump.fun</div>
+			${renderTools(tools.pumpfun)}
+		</div>
+
+		<div class="fm-tabs" role="tablist" aria-label="MCP client setup">
+			<button class="fm-tab is-active" role="tab" data-tab="claude">Claude Desktop</button>
+			<button class="fm-tab" role="tab" data-tab="cursor">Cursor</button>
+			<button class="fm-tab" role="tab" data-tab="http">HTTP</button>
+		</div>
+		<div class="fm-code" data-copy-target>
+			<pre data-snippet></pre>
+			<button class="fm-copy" type="button">Copy</button>
+		</div>
+		<p class="fm-note">API keys are created in your dashboard after save. Each key can be scoped to specific permissions and rate-limited.</p>
+	`;
+
+	openFeatureModal({
+		icon: '🛠️',
+		title: 'Developer API',
+		lede: 'Full MCP tool server, scoped API keys, and HTTP endpoints — build on top of your agent programmatically.',
+		body,
+		actions: [{ label: 'Got it' }],
+		dialogClass: 'fm-dialog--wide',
+	});
+
+	const codeEl = body.querySelector('[data-copy-target]');
+	const snippetEl = body.querySelector('[data-snippet]');
+	function setTab(name) {
+		body.querySelectorAll('.fm-tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === name));
+		snippetEl.textContent = snippets[name];
+		codeEl.dataset.copy = snippets[name];
+	}
+	body.querySelectorAll('.fm-tab').forEach((t) => {
+		t.addEventListener('click', () => setTab(t.dataset.tab));
+	});
+	setTab('claude');
+}
+
+// ── Knowledge & Memory modal ────────────────────────────────────────────────
+
+export function openKnowledgeModal() {
+	const strategyExample = `{
+  "personality": "friendly, concise, technical",
+  "topics": ["web3", "3D avatars", "AI agents"],
+  "tone": "professional but warm",
+  "constraints": [
+    "never discuss competitors",
+    "always cite sources"
+  ]
+}`;
+
+	openFeatureModal({
+		icon: '🧠',
+		title: 'Knowledge & Memory',
+		lede: 'Persistent context, editable strategy, and structured memory that survives across every conversation.',
+		body: `
+			<ul class="fm-bullets">
+				<li>Persistent memory your agent recalls across conversations — facts, preferences, and domain context.</li>
+				<li>Strategy JSON: freeform instructions read at runtime — personality, constraints, behavioral rules.</li>
+				<li>Four memory categories: <code>user</code>, <code>feedback</code>, <code>project</code>, <code>reference</code> — structured and searchable.</li>
+			</ul>
+
+			<div class="fm-sub-features">
+				<div class="fm-sub-feature">
+					<span class="fm-sub-feature-icon">💾</span>
+					<div class="fm-sub-feature-text">
+						<div class="fm-sub-feature-name">Memory</div>
+						<div class="fm-sub-feature-desc">Add notes, facts, and context your agent should always know. Categorized, editable, and queryable at runtime via the agent protocol.</div>
+					</div>
+				</div>
+				<div class="fm-sub-feature">
+					<span class="fm-sub-feature-icon">🎯</span>
+					<div class="fm-sub-feature-text">
+						<div class="fm-sub-feature-name">Strategy</div>
+						<div class="fm-sub-feature-desc">JSON config your agent reads on every turn. Define personality, domain focus, constraints, and behavioral rules in one editable block.</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="fm-code" data-copy="${escapeHtml(strategyExample)}">
+				<pre>${escapeHtml(strategyExample)}</pre>
+				<button class="fm-copy" type="button">Copy</button>
+			</div>
+			<p class="fm-note">Memory and strategy are managed from your agent's dashboard after save. Both are read at the start of every session.</p>
+		`,
+		actions: [{ label: 'Got it' }],
+		dialogClass: 'fm-dialog--wide',
+	});
+}
+
 function escapeHtml(s) {
 	return String(s)
 		.replace(/&/g, '&amp;')

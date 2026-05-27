@@ -91,7 +91,7 @@ const STATE = {
 	const main = document.querySelector('.dn-main-inner') || document.body;
 	main.innerHTML = `
 		<h1 class="dn-h1">Overview</h1>
-		<div class="dn-panel" style="border-color:rgba(255,107,138,0.3)">
+		<div class="dn-panel" style="border-color:rgba(150,155,163,0.3)">
 			<div class="dn-panel-title" style="color:var(--nxt-danger)">Couldn't load this page</div>
 			<div class="dn-panel-sub">${(err && err.message ? err.message : 'unknown error').replace(/[<>&]/g, (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;' }[c]))}</div>
 			<button class="dn-btn" onclick="location.reload()">Reload</button>

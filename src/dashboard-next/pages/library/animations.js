@@ -85,7 +85,7 @@ export async function renderAnimations(host) {
 			}
 			.anim-field-row { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--nxt-ink-dim); }
 			.anim-up-status { font-size:12px; color:var(--nxt-ink-fade); min-height:16px; }
-			.anim-up-error  { font-size:12px; color:#ff9ab1; min-height:16px; }
+			.anim-up-error  { font-size:12px; color:#969ba3; min-height:16px; }
 			.anim-up-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:4px; }
 		</style>
 	`;

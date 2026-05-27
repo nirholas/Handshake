@@ -196,7 +196,7 @@ function agentCard(a, avatars) {
 				<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
 					<span style="font-size:15px;font-weight:600;color:var(--nxt-ink)">${name}</span>
 					${onchain ? `<span class="dn-tag success" style="font-size:11px">on-chain</span>` : `<span class="dn-tag" style="font-size:11px">off-chain</span>`}
-					${pumpMint ? `<span class="dn-tag" style="font-size:11px;background:rgba(255,180,84,0.12);border-color:rgba(255,180,84,0.28);color:#ffb454">pump.fun</span>` : ''}
+					${pumpMint ? `<span class="dn-tag" style="font-size:11px;background:rgba(168,173,181,0.12);border-color:rgba(168,173,181,0.28);color:#a8adb5">pump.fun</span>` : ''}
 				</div>
 				${wallet ? `<div style="font-family:${MONO};font-size:12px;color:var(--nxt-ink-fade);margin-bottom:6px">${esc(truncMid(wallet, 8, 6))}</div>` : ''}
 				<div style="font-size:12.5px;color:var(--nxt-ink-dim)">Created ${esc(created)}</div>
@@ -219,7 +219,7 @@ function agentCard(a, avatars) {
 			${onchain || pumpMint ? `
 				<div class="dn-agent-links">
 					${onchain ? `<a href="/onchain?agent=${encodeURIComponent(a.id)}" style="font-size:11.5px;color:var(--nxt-accent)">ERC-8004 registry ↗</a>` : ''}
-					${pumpMint ? `<a href="https://pump.fun/coin/${encodeURIComponent(pumpMint)}" target="_blank" rel="noopener" style="font-size:11.5px;color:#ffb454">View on Pump.fun ↗</a>` : ''}
+					${pumpMint ? `<a href="https://pump.fun/coin/${encodeURIComponent(pumpMint)}" target="_blank" rel="noopener" style="font-size:11.5px;color:#a8adb5">View on Pump.fun ↗</a>` : ''}
 				</div>
 			` : ''}
 		</div>

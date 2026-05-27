@@ -8,13 +8,22 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rows = await sql`
-		SELECT id, title, blurb, tag, starts_at, ends_at
-		FROM marketplace_themes
-		WHERE starts_at <= now() AND ends_at >= now()
-		ORDER BY created_at DESC
-		LIMIT 1
-	`;
+	let rows;
+	try {
+		rows = await sql`
+			SELECT id, title, blurb, tag, starts_at, ends_at
+			FROM marketplace_themes
+			WHERE starts_at <= now() AND ends_at >= now()
+			ORDER BY created_at DESC
+			LIMIT 1
+		`;
+	} catch (err) {
+		if (/relation.*does not exist|undefined_table/i.test(err.message || '')) {
+			rows = [];
+		} else {
+			throw err;
+		}
+	}
 
 	const theme = rows[0]
 		? {

@@ -1123,7 +1123,7 @@ function injectStyles() {
 		/* Toasts */
 		.dn-toasts { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 300; pointer-events: none; }
 		.dn-toast { background: rgba(20,21,28,0.95); border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); padding: 10px 14px; font-size: 13px; color: var(--nxt-ink); box-shadow: 0 8px 24px rgba(0,0,0,0.4); transition: opacity 0.25s ease; pointer-events: auto; }
-		.dn-toast-danger { border-color: rgba(255,107,138,0.4); color: var(--nxt-danger); }
+		.dn-toast-danger { border-color: rgba(150,155,163,0.4); color: var(--nxt-danger); }
 		.dn-toast-info { color: var(--nxt-ink); }
 	`;
 	document.head.appendChild(style);
