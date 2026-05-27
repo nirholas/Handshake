@@ -2695,6 +2695,7 @@ function renderCard(a) {
 	const buyers24h = a.buyers_24h ?? 0;
 	const paid = a.has_paid_skills || Object.keys(a.skill_prices || {}).length > 0;
 	const priceBadge = priceBadgeHtml(a.price);
+	const skillPriceBadge = skillPriceBadgeHtml(a.skill_prices);
 	const ratingAvg = Number(a.rating_avg || 0);
 	const ratingCount = Number(a.rating_count || 0);
 	const avatarBlock = a.thumbnail_url
@@ -2726,7 +2727,8 @@ function renderCard(a) {
 			${skillsCount ? `<span class="stat-pill">▤ ${skillsCount}</span>` : ''}
 			${ratingCount > 0 ? `<span class="rating" title="${ratingAvg.toFixed(2)} avg from ${ratingCount} review${ratingCount === 1 ? '' : 's'}">★ ${ratingAvg.toFixed(1)} <span class="count">(${fmtNumber(ratingCount)})</span></span>` : ''}
 			${buyers > 0 ? `<span class="stat-pill" title="${buyers} confirmed purchase${buyers === 1 ? '' : 's'}${buyers24h ? `, ${buyers24h} in last 24h` : ''}">$ ${fmtNumber(buyers)}${buyers24h > 0 ? ` <em>(+${buyers24h}/24h)</em>` : ''}</span>` : ''}
-			${paid ? `<span class="stat-pill paid-badge">$ Paid</span>` : ''}
+			${skillPriceBadge}
+			${!skillPriceBadge && paid ? `<span class="stat-pill paid-badge">$ Paid</span>` : ''}
 		</div>
 		<div class="footer">
 			<span>${date}</span>
@@ -4081,6 +4083,21 @@ function priceBadgeHtml(price) {
 
 function hasActivePrice(price) {
 	return !!(price && Number(price.amount) > 0);
+}
+
+/**
+ * Build a "From $X/call" badge when the agent has priced skills.
+ * Returns empty string when there are no skill prices.
+ */
+function skillPriceBadgeHtml(skillPrices) {
+	if (!skillPrices || typeof skillPrices !== 'object') return '';
+	const entries = Object.values(skillPrices).filter(p => p && Number(p.amount) > 0);
+	if (!entries.length) return '';
+	const minAmount = Math.min(...entries.map(p => Number(p.amount)));
+	const decimals = Number(entries[0]?.mint_decimals ?? 6);
+	const minUsd = minAmount / Math.pow(10, decimals);
+	const formatted = minUsd >= 1 ? minUsd.toFixed(2) : minUsd >= 0.01 ? minUsd.toFixed(3) : minUsd.toFixed(6).replace(/0+$/, '');
+	return `<span class="stat-pill skill-price-badge" title="Skill pricing starts at $${formatted}/call">From $${escapeHtml(formatted)}/call</span>`;
 }
 
 // ── Purchase Flow ─────────────────────────────────────────────────────────

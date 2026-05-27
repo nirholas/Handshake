@@ -846,6 +846,390 @@ curl -X POST -H "Content-Type: application/json" \\
 	root.appendChild(el);
 }
 
+// ── Usage Tab ──────────────────────────────────────────────────────────
+
+function renderUsageTab(root) {
+	const el = document.createElement('div');
+	el.className = 'dev-usage-tab';
+
+	const d = usageData || {};
+	const req = d.requests || {};
+	const keys = d.api_keys || {};
+	const wh = d.webhooks || {};
+	const x402 = d.x402 || {};
+	const timeseries = d.timeseries || [];
+	const topActions = d.top_actions || [];
+
+	const successRate = req.total > 0 ? (100 - (req.error_rate || 0)).toFixed(1) : '100.0';
+	const whSuccessRate = wh.total_deliveries > 0
+		? ((wh.succeeded / wh.total_deliveries) * 100).toFixed(1)
+		: '100.0';
+
+	el.innerHTML = `
+		<div class="dev-usage-header">
+			<div>
+				<h2 class="dev-section-title">Usage & Metrics</h2>
+				<p class="dev-section-desc">Platform activity, API usage, and delivery stats across your integrations.</p>
+			</div>
+			<div class="dev-usage-range">
+				${[7, 30, 90].map(n => `<button class="dev-usage-range-btn${n === usageDays ? ' is-active' : ''}" data-days="${n}">${n}d</button>`).join('')}
+			</div>
+		</div>
+
+		<div class="dev-usage-kpis">
+			<div class="dn-panel dev-usage-kpi">
+				<div class="dev-usage-kpi-icon" style="background:rgba(108,138,255,0.12);color:#6c8aff">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 17V7l4 3 3-6 4 4 3-3v12H3z"/></svg>
+				</div>
+				<div class="dev-usage-kpi-body">
+					<div class="dev-usage-kpi-value">${(req.total || 0).toLocaleString()}</div>
+					<div class="dev-usage-kpi-label">API Requests</div>
+				</div>
+			</div>
+			<div class="dn-panel dev-usage-kpi">
+				<div class="dev-usage-kpi-icon" style="background:rgba(52,211,153,0.12);color:#34d399">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 10l3 3 7-7"/></svg>
+				</div>
+				<div class="dev-usage-kpi-body">
+					<div class="dev-usage-kpi-value">${successRate}%</div>
+					<div class="dev-usage-kpi-label">Success Rate</div>
+				</div>
+			</div>
+			<div class="dn-panel dev-usage-kpi">
+				<div class="dev-usage-kpi-icon" style="background:rgba(167,139,250,0.12);color:#a78bfa">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="2" width="10" height="10" rx="2"/><circle cx="8" cy="6.5" r="1"/><circle cx="12" cy="6.5" r="1"/><path d="M3 14l2-2h10l2 2v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3z"/></svg>
+				</div>
+				<div class="dev-usage-kpi-body">
+					<div class="dev-usage-kpi-value">${keys.active_keys || 0}</div>
+					<div class="dev-usage-kpi-label">Active API Keys</div>
+				</div>
+			</div>
+			<div class="dn-panel dev-usage-kpi">
+				<div class="dev-usage-kpi-icon" style="background:rgba(251,191,36,0.12);color:#fbbf24">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="6.5"/><path d="M10 6v8M7.5 8h4a1.5 1.5 0 010 3H8.5a1.5 1.5 0 000 3h4"/></svg>
+				</div>
+				<div class="dev-usage-kpi-body">
+					<div class="dev-usage-kpi-value">${x402.payments || 0}</div>
+					<div class="dev-usage-kpi-label">x402 Payments</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="dn-panel dev-usage-chart-panel">
+			<div class="dev-panel-title">Request Volume</div>
+			<p class="dev-panel-desc">API requests per day over the last ${usageDays} days</p>
+			<div class="dev-usage-chart" id="usage-chart"></div>
+		</div>
+
+		<div class="dev-usage-two-col">
+			<div class="dn-panel dev-usage-actions-panel">
+				<div class="dev-panel-title">Top Actions</div>
+				<p class="dev-panel-desc">Most-called API actions this period</p>
+				<div id="usage-actions"></div>
+			</div>
+			<div class="dn-panel dev-usage-delivery-panel">
+				<div class="dev-panel-title">Webhook Health</div>
+				<p class="dev-panel-desc">Delivery success rate for your webhooks</p>
+				<div class="dev-usage-delivery-stats">
+					<div class="dev-usage-delivery-ring" id="delivery-ring"></div>
+					<div class="dev-usage-delivery-breakdown">
+						<div class="dev-usage-delivery-row">
+							<span class="dev-usage-dot" style="background:#34d399"></span>
+							<span>Succeeded</span>
+							<strong>${(wh.succeeded || 0).toLocaleString()}</strong>
+						</div>
+						<div class="dev-usage-delivery-row">
+							<span class="dev-usage-dot" style="background:#f87171"></span>
+							<span>Failed</span>
+							<strong>${(wh.failed || 0).toLocaleString()}</strong>
+						</div>
+						<div class="dev-usage-delivery-row">
+							<span class="dev-usage-dot" style="background:var(--nxt-ink-dim)"></span>
+							<span>Total</span>
+							<strong>${(wh.total_deliveries || 0).toLocaleString()}</strong>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	`;
+
+	root.appendChild(el);
+
+	renderUsageChart(el.querySelector('#usage-chart'), timeseries);
+	renderTopActions(el.querySelector('#usage-actions'), topActions);
+	renderDeliveryRing(el.querySelector('#delivery-ring'), wh);
+
+	el.querySelector('.dev-usage-range').addEventListener('click', async (e) => {
+		const btn = e.target.closest('.dev-usage-range-btn');
+		if (!btn) return;
+		usageDays = Number(btn.dataset.days);
+		el.querySelector('.dev-usage-range').querySelectorAll('.dev-usage-range-btn').forEach(b =>
+			b.classList.toggle('is-active', Number(b.dataset.days) === usageDays)
+		);
+		try {
+			usageData = await get(`/api/developer/usage?days=${usageDays}`);
+		} catch { /* keep stale data */ }
+		const content = document.querySelector('[data-slot="content"]');
+		renderActiveTab(content);
+	});
+}
+
+function renderUsageChart(container, timeseries) {
+	if (!timeseries.length) {
+		container.innerHTML = `<div class="dev-usage-chart-empty">
+			<svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.25"><path d="M3 17V7l4 3 3-6 4 4 3-3v12H3z"/></svg>
+			<span>No API activity in this period. <a href="/dashboard/api">Get your API key</a> to start building.</span>
+		</div>`;
+		return;
+	}
+
+	const data = timeseries.map(p => ({
+		label: new Date(p.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+		value: p.requests,
+	}));
+
+	const max = Math.max(1, ...data.map(d => d.value));
+	const W = 780, H = 180, pad = 48, barGap = 3;
+	const barW = Math.max(4, (W - pad * 2) / data.length - barGap);
+	const chartH = H - 20;
+
+	let bars = '';
+	let labels = '';
+	const showEvery = Math.max(1, Math.ceil(data.length / 10));
+
+	data.forEach((d, i) => {
+		const x = pad + i * (barW + barGap);
+		const h = Math.max(1, (d.value / max) * chartH);
+		const y = H - h;
+		bars += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="2" fill="var(--nxt-accent,#6c8aff)" opacity="0.75"><title>${d.label}: ${d.value.toLocaleString()} requests</title></rect>`;
+		if (i % showEvery === 0) {
+			labels += `<text x="${x + barW / 2}" y="${H + 14}" text-anchor="middle" font-size="10" fill="var(--nxt-ink-dim,#8b8d98)">${d.label}</text>`;
+		}
+	});
+
+	const gridLines = Array.from({ length: 5 }, (_, i) => {
+		const y = Math.round(H - (i / 4) * chartH);
+		const val = Math.round((i / 4) * max).toLocaleString();
+		return `<line x1="${pad}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--nxt-border,rgba(255,255,255,0.06))" stroke-width="0.5"/><text x="${pad - 6}" y="${y + 3}" text-anchor="end" font-size="10" fill="var(--nxt-ink-dim,#8b8d98)">${val}</text>`;
+	}).join('');
+
+	container.innerHTML = `<svg viewBox="0 0 ${W} ${H + 24}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto">${gridLines}${bars}${labels}</svg>`;
+}
+
+function renderTopActions(container, actions) {
+	if (!actions.length) {
+		container.innerHTML = `<div class="dev-usage-chart-empty" style="padding:24px 0"><span>No actions recorded yet</span></div>`;
+		return;
+	}
+
+	const max = Math.max(1, actions[0].count);
+	const colors = ['#6c8aff', '#34d399', '#fbbf24', '#f472b6', '#a78bfa', '#fb923c', '#22d3ee', '#94a3b8', '#818cf8', '#4ade80'];
+
+	container.innerHTML = `<div class="dev-usage-actions-list">
+		${actions.map((a, i) => {
+			const pct = Math.round((a.count / max) * 100);
+			const color = colors[i % colors.length];
+			return `<div class="dev-usage-action-row">
+				<div class="dev-usage-action-name">${esc(a.action)}</div>
+				<div class="dev-usage-action-bar-wrap">
+					<div class="dev-usage-action-bar" style="width:${pct}%;background:${color}"></div>
+				</div>
+				<div class="dev-usage-action-count">${a.count.toLocaleString()}</div>
+			</div>`;
+		}).join('')}
+	</div>`;
+}
+
+function renderDeliveryRing(container, wh) {
+	const total = wh.total_deliveries || 0;
+	const succeeded = wh.succeeded || 0;
+	const pct = total > 0 ? (succeeded / total) : 1;
+	const radius = 54;
+	const circ = 2 * Math.PI * radius;
+	const offset = circ * (1 - pct);
+
+	const color = pct >= 0.95 ? '#34d399' : pct >= 0.8 ? '#fbbf24' : '#f87171';
+	const label = total > 0 ? `${(pct * 100).toFixed(1)}%` : '—';
+
+	container.innerHTML = `
+		<svg width="130" height="130" viewBox="0 0 130 130">
+			<circle cx="65" cy="65" r="${radius}" fill="none" stroke="var(--nxt-bg-1,#111)" stroke-width="10"/>
+			<circle cx="65" cy="65" r="${radius}" fill="none" stroke="${color}" stroke-width="10"
+				stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
+				stroke-linecap="round" transform="rotate(-90 65 65)"
+				style="transition:stroke-dashoffset 0.6s ease"/>
+			<text x="65" y="62" text-anchor="middle" font-size="22" font-weight="700" fill="var(--nxt-ink,#e4e5ea)">${label}</text>
+			<text x="65" y="80" text-anchor="middle" font-size="11" fill="var(--nxt-ink-dim,#8b8d98)">success</text>
+		</svg>
+	`;
+}
+
+// ── Changelog Tab ──────────────────────────────────────────────────────────
+
+const CHANGELOG = [
+	{
+		date: '2026-05-27',
+		version: '1.5.1',
+		category: 'api',
+		title: 'Developer Hub & Webhook API',
+		description: 'New Developer Hub with interactive Render API playground, webhook management, delivery logs with retry tracking, and cross-platform SDK guides. Standard Webhooks signature format (HMAC-SHA256).',
+		tags: ['Render API', 'Webhooks', 'SDKs'],
+	},
+	{
+		date: '2026-05-25',
+		version: '1.5.0',
+		category: 'platform',
+		title: 'Avatar Render API',
+		description: 'Public API to render any avatar as PNG/JPEG/WebP with scene presets (full-body, upper-body, portrait, headshot), custom backgrounds, and CDN caching. Up to 2048px resolution.',
+		tags: ['API', 'Avatars', 'CDN'],
+	},
+	{
+		date: '2026-05-22',
+		version: '1.4.9',
+		category: 'dashboard',
+		title: 'Analytics & Conversion Funnel',
+		description: 'Revenue charts, per-agent performance tables, skill breakdown, and conversion funnel (views → conversations → payments) with configurable time ranges.',
+		tags: ['Analytics', 'Revenue', 'Dashboard'],
+	},
+	{
+		date: '2026-05-19',
+		version: '1.4.8',
+		category: 'platform',
+		title: 'x402 Payment Receipts & SKU Catalog',
+		description: 'Stripe-style checkout with x402 USDC micropayments. Receipt ledger, SKU catalog management, and pay-by-name resolution (@username, *.sol, base58).',
+		tags: ['x402', 'Payments', 'USDC'],
+	},
+	{
+		date: '2026-05-15',
+		version: '1.4.7',
+		category: 'sdk',
+		title: 'Web Component Embed Update',
+		description: 'Updated <agent-3d> web component with 5 widget variants: turntable, animation gallery, talking agent, ERC-8004 passport, and hotspot tour. Widget Studio for WYSIWYG configuration.',
+		tags: ['Web Component', 'Embed', 'Studio'],
+	},
+	{
+		date: '2026-05-10',
+		version: '1.4.6',
+		category: 'platform',
+		title: 'Agent Marketplace Enhancements',
+		description: 'Infinite scroll with intersection observers, category filtering, search, and rating-based sorting. IndexedDB poster caching for instant thumbnails on repeat visits.',
+		tags: ['Marketplace', 'Performance', 'UX'],
+	},
+	{
+		date: '2026-05-05',
+		version: '1.4.5',
+		category: 'infrastructure',
+		title: 'On-Chain Identity (ERC-8004)',
+		description: 'Multi-chain agent identity with IdentityRegistry, ReputationRegistry, and ValidationRegistry on Solana. EIP-712 delegated signer wallets, signed action history with cryptographic proof.',
+		tags: ['ERC-8004', 'Solana', 'Identity'],
+	},
+	{
+		date: '2026-04-28',
+		version: '1.4.4',
+		category: 'api',
+		title: 'Agent Runtime & Tool Loop',
+		description: 'Sophisticated tool-loop architecture with up to 8 iterations per turn, signal aborts, and structured streaming. Claude (Anthropic) integration with ElevenLabs TTS and Web Speech STT.',
+		tags: ['Agent Runtime', 'LLM', 'Voice'],
+	},
+	{
+		date: '2026-04-20',
+		version: '1.4.3',
+		category: 'dashboard',
+		title: 'Portfolio & Token Management',
+		description: 'Crypto portfolio with real-time balances, token launch via Pump.fun, and DCA strategy configuration. Live price feeds from Solana RPC.',
+		tags: ['Portfolio', 'Tokens', 'DeFi'],
+	},
+	{
+		date: '2026-04-12',
+		version: '1.4.2',
+		category: 'sdk',
+		title: 'Character Studio & Pose System',
+		description: 'In-browser 3D character builder (MIT fork of m3-org/CharacterStudio) with Pose Studio for authoring exportable avatar poses. GLB export with animations and morph targets.',
+		tags: ['Character Studio', 'Poses', 'GLB'],
+	},
+];
+
+const CATEGORY_META = {
+	api:            { label: 'API',            color: '#6c8aff' },
+	platform:       { label: 'Platform',       color: '#34d399' },
+	dashboard:      { label: 'Dashboard',      color: '#a78bfa' },
+	sdk:            { label: 'SDK',            color: '#fbbf24' },
+	infrastructure: { label: 'Infrastructure', color: '#f472b6' },
+};
+
+function renderChangelogTab(root) {
+	const el = document.createElement('div');
+	el.className = 'dev-changelog-tab';
+
+	el.innerHTML = `
+		<div class="dev-changelog-header">
+			<div>
+				<h2 class="dev-section-title">Changelog</h2>
+				<p class="dev-section-desc">Recent platform updates, API changes, and new features. Follow our development velocity.</p>
+			</div>
+			<div class="dev-changelog-filters" id="changelog-filters">
+				<button class="dev-changelog-filter is-active" data-filter="all">All</button>
+				${Object.entries(CATEGORY_META).map(([key, meta]) =>
+					`<button class="dev-changelog-filter" data-filter="${key}"><span class="dev-usage-dot" style="background:${meta.color}"></span>${meta.label}</button>`
+				).join('')}
+			</div>
+		</div>
+		<div class="dev-changelog-timeline" id="changelog-timeline"></div>
+	`;
+
+	root.appendChild(el);
+
+	let filter = 'all';
+	renderChangelogTimeline(el.querySelector('#changelog-timeline'), filter);
+
+	el.querySelector('#changelog-filters').addEventListener('click', (e) => {
+		const btn = e.target.closest('.dev-changelog-filter');
+		if (!btn) return;
+		filter = btn.dataset.filter;
+		el.querySelectorAll('.dev-changelog-filter').forEach(b => b.classList.toggle('is-active', b === btn));
+		renderChangelogTimeline(el.querySelector('#changelog-timeline'), filter);
+	});
+}
+
+function renderChangelogTimeline(container, filter) {
+	const entries = filter === 'all' ? CHANGELOG : CHANGELOG.filter(e => e.category === filter);
+
+	if (!entries.length) {
+		container.innerHTML = `<div class="dn-panel dev-changelog-empty">
+			<span>No updates in this category yet.</span>
+		</div>`;
+		return;
+	}
+
+	container.innerHTML = entries.map((entry, i) => {
+		const meta = CATEGORY_META[entry.category] || CATEGORY_META.platform;
+		const dateStr = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+		return `
+			<div class="dev-changelog-entry${i === 0 ? ' is-latest' : ''}" style="--entry-delay:${i * 40}ms">
+				<div class="dev-changelog-line">
+					<div class="dev-changelog-dot" style="background:${meta.color}"></div>
+				</div>
+				<div class="dn-panel dev-changelog-card">
+					<div class="dev-changelog-card-header">
+						<div class="dev-changelog-card-meta">
+							<span class="dn-tag" style="background:${meta.color}20;color:${meta.color};border-color:${meta.color}40">${meta.label}</span>
+							<span class="dev-changelog-version">v${esc(entry.version)}</span>
+							<span class="dev-changelog-date">${dateStr}</span>
+						</div>
+						${i === 0 ? '<span class="dn-tag success" style="font-size:10px">Latest</span>' : ''}
+					</div>
+					<h3 class="dev-changelog-title">${esc(entry.title)}</h3>
+					<p class="dev-changelog-desc">${esc(entry.description)}</p>
+					<div class="dev-changelog-tags">
+						${entry.tags.map(t => `<span class="dev-badge">${esc(t)}</span>`).join('')}
+					</div>
+				</div>
+			</div>
+		`;
+	}).join('');
+}
+
 // ── Utilities ───────────────────────────────────────────────────────────────
 
 function copyText(text, btn) {
@@ -1199,6 +1583,183 @@ function injectStyles() {
 }
 .dn-btn.ghost.danger:hover {
 	background:rgba(248,113,113,0.1);
+}
+
+/* ── Usage Tab ───────────────────────────────────────────── */
+.dev-usage-header {
+	display:flex; align-items:flex-start; justify-content:space-between;
+	gap:16px; flex-wrap:wrap; margin-bottom:20px;
+}
+.dev-usage-range {
+	display:flex; gap:4px; background:var(--nxt-bg-2); border-radius:8px; padding:3px;
+}
+.dev-usage-range-btn {
+	padding:6px 16px; border:none; background:none;
+	color:var(--nxt-ink-dim); font:inherit; font-size:12px; font-weight:600;
+	border-radius:6px; cursor:pointer; transition:all 0.15s;
+}
+.dev-usage-range-btn:hover { color:var(--nxt-ink); }
+.dev-usage-range-btn.is-active {
+	background:rgba(108,138,255,0.15); color:#6c8aff;
+}
+
+.dev-usage-kpis {
+	display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px;
+}
+@media (max-width:900px) { .dev-usage-kpis { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:500px) { .dev-usage-kpis { grid-template-columns:1fr; } }
+
+.dev-usage-kpi {
+	padding:20px; display:flex; align-items:center; gap:16px;
+}
+.dev-usage-kpi-icon {
+	width:44px; height:44px; border-radius:12px;
+	display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.dev-usage-kpi-value {
+	font-size:26px; font-weight:700; letter-spacing:-0.02em;
+}
+.dev-usage-kpi-label {
+	font-size:12px; color:var(--nxt-ink-dim); margin-top:2px;
+}
+
+.dev-usage-chart-panel { padding:24px; margin-bottom:20px; }
+.dev-usage-chart-empty {
+	display:flex; flex-direction:column; align-items:center; gap:12px;
+	padding:40px 20px; text-align:center; color:var(--nxt-ink-dim); font-size:13px;
+}
+.dev-usage-chart-empty a { color:#6c8aff; }
+
+.dev-usage-two-col {
+	display:grid; grid-template-columns:1fr 1fr; gap:14px;
+}
+@media (max-width:900px) { .dev-usage-two-col { grid-template-columns:1fr; } }
+
+.dev-usage-actions-panel { padding:20px; }
+.dev-usage-actions-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+.dev-usage-action-row {
+	display:grid; grid-template-columns:130px 1fr 60px; gap:10px;
+	align-items:center; font-size:13px;
+}
+.dev-usage-action-name {
+	font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+	font-family:ui-monospace,'SF Mono',monospace; font-size:12px;
+}
+.dev-usage-action-bar-wrap {
+	height:8px; background:var(--nxt-bg-2); border-radius:4px; overflow:hidden;
+}
+.dev-usage-action-bar { height:100%; border-radius:4px; transition:width 0.3s ease; }
+.dev-usage-action-count { text-align:right; font-weight:600; font-size:13px; }
+
+.dev-usage-delivery-panel { padding:20px; }
+.dev-usage-delivery-stats {
+	display:flex; align-items:center; gap:24px; margin-top:16px;
+}
+.dev-usage-delivery-breakdown { display:flex; flex-direction:column; gap:10px; }
+.dev-usage-delivery-row {
+	display:flex; align-items:center; gap:8px; font-size:13px;
+}
+.dev-usage-delivery-row strong { margin-left:auto; }
+.dev-usage-dot {
+	width:8px; height:8px; border-radius:50%; flex-shrink:0;
+}
+
+/* ── Webhook Delivery Drill-down ─────────────────────────── */
+.dev-wh-deliveries { margin-top:12px; }
+.dev-wh-view-btn {
+	font-size:12px; padding:4px 12px; border:1px solid var(--nxt-stroke);
+	background:none; color:var(--nxt-ink-dim); border-radius:6px;
+	cursor:pointer; transition:all 0.15s; font:inherit;
+}
+.dev-wh-view-btn:hover { color:var(--nxt-ink); border-color:var(--nxt-stroke-strong); }
+.dev-wh-delivery-list { margin-top:8px; }
+.dev-wh-delivery-item {
+	display:grid; grid-template-columns:80px 1fr 60px 100px; gap:10px;
+	padding:8px 12px; font-size:12px; align-items:center;
+	border-bottom:1px solid var(--nxt-border,rgba(255,255,255,0.04));
+}
+.dev-wh-delivery-item:first-child { border-top:1px solid var(--nxt-border,rgba(255,255,255,0.04)); }
+.dev-wh-delivery-event {
+	font-family:ui-monospace,'SF Mono',monospace; font-size:11px;
+	white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.dev-wh-delivery-status {
+	display:inline-flex; align-items:center; gap:4px; font-weight:600;
+}
+.dev-wh-delivery-status.ok { color:#34d399; }
+.dev-wh-delivery-status.fail { color:#f87171; }
+.dev-wh-delivery-status.pending { color:#fbbf24; }
+
+/* ── Changelog Tab ───────────────────────────────────────── */
+.dev-changelog-header {
+	display:flex; align-items:flex-start; justify-content:space-between;
+	gap:16px; flex-wrap:wrap; margin-bottom:24px;
+}
+.dev-changelog-filters {
+	display:flex; gap:4px; flex-wrap:wrap;
+}
+.dev-changelog-filter {
+	display:inline-flex; align-items:center; gap:6px;
+	padding:6px 14px; border:1px solid var(--nxt-border,rgba(255,255,255,0.07));
+	border-radius:8px; background:none; color:var(--nxt-ink-dim);
+	font:inherit; font-size:12px; font-weight:500; cursor:pointer;
+	transition:all 0.15s;
+}
+.dev-changelog-filter:hover { color:var(--nxt-ink); background:var(--nxt-bg-2); }
+.dev-changelog-filter.is-active {
+	background:rgba(108,138,255,0.12); color:#6c8aff;
+	border-color:rgba(108,138,255,0.3);
+}
+
+.dev-changelog-timeline { position:relative; }
+.dev-changelog-entry {
+	display:grid; grid-template-columns:20px 1fr; gap:16px;
+	animation:dev-fadeIn 0.3s ease backwards;
+	animation-delay:var(--entry-delay,0ms);
+}
+.dev-changelog-line {
+	display:flex; flex-direction:column; align-items:center; position:relative;
+}
+.dev-changelog-line::after {
+	content:''; position:absolute; top:16px; bottom:0;
+	width:2px; background:var(--nxt-border,rgba(255,255,255,0.07));
+}
+.dev-changelog-entry:last-child .dev-changelog-line::after { display:none; }
+.dev-changelog-dot {
+	width:12px; height:12px; border-radius:50%; flex-shrink:0;
+	margin-top:20px; z-index:1;
+	box-shadow:0 0 0 3px var(--nxt-bg-base,#0e0f14);
+}
+
+.dev-changelog-card {
+	padding:20px 24px; margin-bottom:16px;
+}
+.dev-changelog-card-header {
+	display:flex; align-items:center; justify-content:space-between; gap:8px;
+	margin-bottom:8px;
+}
+.dev-changelog-card-meta {
+	display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.dev-changelog-version {
+	font-size:12px; font-weight:600; color:var(--nxt-ink-dim);
+	font-family:ui-monospace,'SF Mono',monospace;
+}
+.dev-changelog-date {
+	font-size:12px; color:var(--nxt-ink-faint,#5a5c68);
+}
+.dev-changelog-title {
+	font-size:16px; font-weight:600; margin:0 0 6px; letter-spacing:-0.01em;
+}
+.dev-changelog-desc {
+	font-size:13px; color:var(--nxt-ink-dim); line-height:1.6; margin:0 0 12px;
+	max-width:640px;
+}
+.dev-changelog-tags { display:flex; flex-wrap:wrap; gap:6px; }
+
+.dev-changelog-empty {
+	display:flex; align-items:center; justify-content:center;
+	padding:40px; color:var(--nxt-ink-dim); font-size:13px;
 }
 	`;
 	document.head.appendChild(style);

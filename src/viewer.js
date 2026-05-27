@@ -909,6 +909,14 @@ export class Viewer {
 		object.rotation.y = Math.PI;
 		this.content = object;
 
+		// Build BVH acceleration structures for every mesh geometry so raycasting
+		// (hover / click interactions) is O(log n) instead of O(n) on triangle count.
+		object.traverse((node) => {
+			if (node.isMesh && node.geometry) {
+				node.geometry.computeBoundsTree();
+			}
+		});
+
 		this.state.punctualLights = true;
 		this.content.traverse((node) => {
 			if (node.isLight) {
@@ -1721,6 +1729,13 @@ export class Viewer {
 		this.annotationEls = [];
 
 		this.scene.remove(this.content);
+
+		// dispose BVH acceleration structures before geometry
+		this.content.traverse((node) => {
+			if (node.isMesh && node.geometry?.boundsTree) {
+				node.geometry.disposeBoundsTree();
+			}
+		});
 
 		// dispose geometry
 		this.content.traverse((node) => {

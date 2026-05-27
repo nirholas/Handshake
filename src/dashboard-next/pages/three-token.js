@@ -527,8 +527,8 @@ function renderActivityFeed(activityData) {
 
 	events.slice(0, 15).forEach((evt) => {
 		const row = document.createElement('div');
-		const srcColor = sourceColors[evt.type] || 'var(--nxt-ink-dim)';
-		const srcLabel = sourceLabels[evt.type] || evt.type || 'Payment';
+		const srcColor = sourceColors[evt.type] || '#4ade80';
+		const srcLabel = evt.type || 'payment';
 		row.style.cssText = `display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,0.015);transition:background .12s;`;
 		row.innerHTML = `
 			<div style="width:8px;height:8px;border-radius:50%;background:${srcColor};flex-shrink:0;opacity:0.8"></div>
@@ -540,7 +540,7 @@ function renderActivityFeed(activityData) {
 				</div>
 			</div>
 			<div style="font-size:13px;font-weight:600;font-family:${MONO};flex-shrink:0">
-				${evt.amount_cents ? fmtUsd(evt.amount_cents / 100) : '—'}
+				${evt.gross_usd != null ? fmtUsd(evt.gross_usd) : '—'}
 			</div>
 			<div style="font-size:11.5px;color:var(--nxt-ink-fade);flex-shrink:0;min-width:60px;text-align:right">
 				${evt.created_at ? relTime(evt.created_at) : ''}

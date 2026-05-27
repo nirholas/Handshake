@@ -330,10 +330,11 @@ let activeProfile = PROFILES[detectProfile()];
 if (typeof window !== 'undefined') window.__clubProfile = activeProfile;
 
 // ── Renderer / scene ──────────────────────────────────────────────────────
-const renderer = new WebGLRenderer({ canvas, antialias: activeProfile.tier !== 'low', alpha: false });
+const renderer = new WebGLRenderer({ canvas, antialias: false, alpha: false });
 renderer.setPixelRatio(activeProfile.pixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.outputColorSpace = SRGBColorSpace;
+renderer.toneMapping = NoToneMapping;
 renderer.shadowMap.enabled = activeProfile.shadows;
 
 const scene = new Scene();
@@ -356,6 +357,26 @@ scene.add(hemi);
 const camera = new PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.05, 80);
 camera.position.set(0, 1.8, 6.0);
 camera.lookAt(0, 1.4, -1.5);
+
+// ── Postprocessing pipeline ─────────────────────────────────────────────
+// pmndrs EffectComposer replaces direct renderer.render(). Bloom makes the
+// neon elements glow, tone mapping gives cinematic colour, vignette darkens
+// the edges, and SMAA handles anti-aliasing at the compositing stage (so
+// we disable the renderer's built-in MSAA above).
+const bloomEffect = new BloomEffect({
+	intensity: 1.2,
+	luminanceThreshold: 0.3,
+	luminanceSmoothing: 0.08,
+	mipmapBlur: true,
+});
+const toneMappingEffect = new ToneMappingEffect({ mode: ToneMappingMode.ACES_FILMIC });
+const vignetteEffect = new VignetteEffect({ darkness: 0.45, offset: 0.35 });
+const smaaEffect = new SMAAEffect();
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new EffectPass(camera, bloomEffect, toneMappingEffect, vignetteEffect));
+composer.addPass(new EffectPass(camera, smaaEffect));
 
 const clubCam = new ClubCamera(camera, {
 	onModeChange: (mode) => {
@@ -1121,6 +1142,8 @@ function ensureFreeCamChip() {
 function updateFreeCamChip(mode) {
 	const chip = ensureFreeCamChip();
 	chip.hidden = (mode === 'free');
+	if (mode === 'auto') chip.textContent = '↩ Free cam (auto-orbiting)';
+	else chip.textContent = '↩ Free cam';
 }
 
 // ── Auto-follow tips toggle (persisted) ──────────────────────────────────
@@ -1309,11 +1332,20 @@ function renderPoles() {
 }
 
 // ── Resize ────────────────────────────────────────────────────────────────
-window.addEventListener('resize', () => {
-	renderer.setSize(window.innerWidth, window.innerHeight, false);
-	camera.aspect = window.innerWidth / window.innerHeight;
+function handleResize() {
+	const w = window.innerWidth;
+	const h = window.innerHeight;
+	renderer.setSize(w, h, false);
+	composer.setSize(w, h);
+	camera.aspect = w / h;
 	camera.updateProjectionMatrix();
-});
+
+	// On mobile low-perf, cap pixel ratio to 1 to save GPU budget.
+	if (isMobileLayout() && activeProfile.tier === 'low') {
+		renderer.setPixelRatio(1);
+	}
+}
+window.addEventListener('resize', handleResize);
 
 // ── Keyboard shortcuts ───────────────────────────────────────────────────
 // 0     → overhead house cam
@@ -1406,7 +1438,11 @@ function animate() {
 	// Camera state machine — orbit / VIP / house / auto.
 	clubCam.tick(dt);
 
-	renderer.render(scene, camera);
+	// Audio-reactive bloom — pulse intensity with the beat.
+	const peak = audio.getPeak();
+	bloomEffect.intensity = 1.0 + peak * 1.5;
+
+	composer.render(dt);
 	rafId = requestAnimationFrame(animate);
 }
 

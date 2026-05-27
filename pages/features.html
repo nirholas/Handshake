@@ -160,6 +160,36 @@
 				</div>
 			</section>
 
+			<!-- ── Traction stats bar ── -->
+			<section class="h-traction" aria-label="Platform traction">
+				<div class="h-traction-inner">
+					<div class="h-traction-stat" data-traction-key="agents">
+						<span class="h-traction-val" data-traction-val="agents">—</span>
+						<span class="h-traction-label">Agents created</span>
+					</div>
+					<div class="h-traction-divider" aria-hidden="true"></div>
+					<div class="h-traction-stat" data-traction-key="views">
+						<span class="h-traction-val" data-traction-val="views">—</span>
+						<span class="h-traction-label">Widget views</span>
+					</div>
+					<div class="h-traction-divider" aria-hidden="true"></div>
+					<div class="h-traction-stat" data-traction-key="chats">
+						<span class="h-traction-val" data-traction-val="chats">—</span>
+						<span class="h-traction-label">Conversations</span>
+					</div>
+					<div class="h-traction-divider" aria-hidden="true"></div>
+					<div class="h-traction-stat" data-traction-key="countries">
+						<span class="h-traction-val" data-traction-val="countries">—</span>
+						<span class="h-traction-label">Countries reached</span>
+					</div>
+					<div class="h-traction-divider" aria-hidden="true"></div>
+					<div class="h-traction-stat" data-traction-key="chains">
+						<span class="h-traction-val" data-traction-val="chains">—</span>
+						<span class="h-traction-label">Chains supported</span>
+					</div>
+				</div>
+			</section>
+
 			<!-- ── Pillars transition band ── -->
 			<section class="h-pillars" aria-label="What you get">
 				<div class="h-pillars-inner">
@@ -1410,6 +1440,68 @@
 						ctx.fill();
 					}
 				}
+			})();
+		</script>
+
+		<script>
+			// Traction stats — fetch /api/platform/stats, animate counters on scroll into view.
+			(function () {
+				function fmtNum(n) {
+					if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+					if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+					return String(n);
+				}
+
+				function animateCount(el, target) {
+					const duration = 1200;
+					const start = performance.now();
+					function step(now) {
+						const t = Math.min((now - start) / duration, 1);
+						const ease = 1 - Math.pow(1 - t, 3);
+						const val = Math.round(target * ease);
+						el.textContent = fmtNum(val);
+						if (t < 1) requestAnimationFrame(step);
+					}
+					requestAnimationFrame(step);
+				}
+
+				const section = document.querySelector('.h-traction');
+				const vals = document.querySelectorAll('[data-traction-val]');
+				if (!section) return;
+				vals.forEach((el) => el.classList.add('is-loading'));
+
+				let statsData = null;
+				let animated = false;
+
+				function triggerAnimation() {
+					if (animated || !statsData) return;
+					animated = true;
+					vals.forEach((el) => {
+						const key = el.dataset.tractionVal;
+						const raw = statsData[key];
+						if (raw == null) return;
+						el.classList.remove('is-loading');
+						animateCount(el, Number(raw));
+					});
+				}
+
+				const io = new IntersectionObserver((entries) => {
+					if (entries[0].isIntersecting) {
+						io.disconnect();
+						triggerAnimation();
+					}
+				}, { threshold: 0.3 });
+				io.observe(section);
+
+				fetch('/api/platform/stats')
+					.then((r) => r.ok ? r.json() : Promise.reject(r.status))
+					.then((data) => {
+						statsData = data;
+						triggerAnimation();
+					})
+					.catch(() => {
+						section.hidden = true;
+					});
 			})();
 		</script>
 	</body>
