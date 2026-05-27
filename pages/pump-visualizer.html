@@ -13,10 +13,10 @@
 		:root {
 			--vz-bg: #05060a;
 			--vz-panel: rgba(12, 14, 22, 0.88);
-			--vz-border: rgba(139, 92, 246, 0.35);
-			--vz-text: #e6e7ee;
-			--vz-muted: #8a8fa6;
-			--vz-accent: #8b5cf6;
+			--vz-border: rgba(255, 255, 255, 0.10);
+			--vz-text: #e8e8e8;
+			--vz-muted: #888888;
+			--vz-accent: #ffffff;
 			--vz-green: #34d399;
 			--vz-red: #f87171;
 		}
@@ -178,7 +178,7 @@
 		}
 		.vz-mode button:hover { color: var(--vz-text); }
 		.vz-mode button.is-active {
-			background: rgba(139, 92, 246, 0.22);
+			background: rgba(255, 255, 255, 0.22);
 			color: var(--vz-text);
 			border-color: var(--vz-border);
 		}
@@ -238,7 +238,7 @@
 		}
 		.vz-sort button:hover { color: var(--vz-text); }
 		.vz-sort button.is-active {
-			background: rgba(139, 92, 246, 0.18);
+			background: rgba(255, 255, 255, 0.18);
 			border-color: var(--vz-border);
 			color: var(--vz-text);
 		}
@@ -373,7 +373,7 @@
 			border: 1px solid var(--vz-border);
 			color: var(--vz-text);
 			text-decoration: none;
-			background: rgba(139, 92, 246, 0.08);
+			background: rgba(255, 255, 255, 0.08);
 			transition: background 0.15s;
 		}
 		.vz-detail .links a:hover { background: var(--accent-soft); }
@@ -513,7 +513,7 @@
 			flex-direction: column;
 			align-items: center;
 			justify-content: center;
-			background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.08) 0%, var(--vz-bg) 70%);
+			background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08) 0%, var(--vz-bg) 70%);
 			pointer-events: none;
 			opacity: 1;
 			transition: opacity 0.6s ease 0.2s;
@@ -522,7 +522,7 @@
 		.vz-intro .ring {
 			width: 56px; height: 56px;
 			border-radius: 50%;
-			border: 2px solid rgba(139, 92, 246, 0.18);
+			border: 2px solid rgba(255, 255, 255, 0.18);
 			border-top-color: var(--vz-accent);
 			animation: vzSpin 1s linear infinite;
 		}

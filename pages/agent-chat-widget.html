@@ -8,7 +8,7 @@
 		<meta name="robots" content="noindex" />
 		<style>
 			:root {
-				--brand-color: #4a9eff;
+				--brand-color: #ffffff;
 				--dark-bg: #1a1a1a;
 				--light-bg: #ffffff;
 				--dark-text: #ffffff;
@@ -88,7 +88,7 @@
 			const params = new URL(location.href).searchParams;
 			const agentId = params.get('agentId') || 'default';
 			const avatarUrl = params.get('avatarUrl') || '/avatars/default.glb';
-			const brandColor = params.get('brandColor') || '#4a9eff';
+			const brandColor = params.get('brandColor') || '#ffffff';
 			const theme = params.get('theme') || 'dark';
 			const idleAnim = params.get('idleAnim') || '';
 

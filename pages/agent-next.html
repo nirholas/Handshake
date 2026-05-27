@@ -555,6 +555,7 @@
 					<button class="owner-btn" data-owner-act="embed" title="Copy embed snippet">Embed</button>
 					<button class="owner-btn" data-owner-act="skills" title="View skills">Skills</button>
 					<button class="owner-btn" data-owner-act="memory" title="View memory">Memory</button>
+					<button class="owner-btn" data-owner-act="selfie" title="Update avatar from selfie">Selfie</button>
 					<button class="owner-btn accent" data-owner-act="monetize" title="Monetize">Monetize</button>
 					<a class="owner-btn" href="/a/me" title="My Agents hub">My Agents</a>
 				</div>
@@ -567,6 +568,7 @@
 					<button class="act-btn" data-act="mocap"><span class="act-icon">●</span>Mocap</button>
 					<button class="act-btn" data-act="pose"><span class="act-icon">⊕</span>Pose</button>
 					<button class="act-btn" data-act="walk"><span class="act-icon">⇗</span>Walk</button>
+					<button class="act-btn" data-act="selfie"><span class="act-icon">📸</span>Selfie</button>
 					<button class="act-btn" data-act="ar"><span class="act-icon">◫</span>AR</button>
 					<button class="act-btn" data-act="tip"><span class="act-icon">$</span>Tip</button>
 					<button class="act-btn" data-act="remix"><span class="act-icon">⎘</span>Remix</button>
@@ -671,7 +673,9 @@
 	</section>
 
 
-	<script>
+	<script type="module">
+		import { openSelfieModal } from '/src/selfie-modal.js';
+
 		// ── Parse ?id= from URL (default: nich) ─────────────────────
 		const params = new URLSearchParams(location.search);
 		const avatarId = params.get('id') || 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
@@ -898,6 +902,14 @@
 				}
 				case 'memory': {
 					toggleOwnerPanel(panelsHost, 'memory');
+					break;
+				}
+				case 'selfie': {
+					const selfieResult = await openSelfieModal({ existingAvatarId: avatarId });
+					if (selfieResult?.avatarId) {
+						ownerToast('Avatar updated from selfie');
+						setTimeout(() => location.reload(), 1200);
+					}
 					break;
 				}
 				case 'monetize': {
@@ -1168,6 +1180,13 @@
 					} else {
 						appendMsg('user', 'I want to tip you!');
 						sendToAgent('I want to tip you!');
+					}
+					break;
+				}
+				case 'selfie': {
+					const result = await openSelfieModal({ existingAvatarId: avatarId });
+					if (result?.avatarId) {
+						location.reload();
 					}
 					break;
 				}

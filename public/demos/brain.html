@@ -107,16 +107,20 @@
 			font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
 			text-transform: uppercase; padding: 1px 5px; border-radius: 4px;
 		}
-		.badge-flagship { background: rgba(212,168,122,0.15); color: var(--anthropic); }
-		.badge-balanced { background: rgba(61,193,255,0.12); color: var(--accent); }
-		.badge-fast { background: rgba(34,209,122,0.12); color: var(--ok); }
+		.badge-flagship  { background: rgba(212,168,122,0.15); color: var(--anthropic); }
+		.badge-balanced  { background: rgba(61,193,255,0.12); color: var(--accent); }
+		.badge-fast      { background: rgba(34,209,122,0.12); color: var(--ok); }
+		.badge-reasoning { background: rgba(167,139,250,0.15); color: var(--groq); }
+		.model-card.unavailable { opacity: 0.45; pointer-events: none; }
+		.model-card.unavailable .model-badge::after { content: ' · unavailable'; }
 		.model-net { font-size: 10.5px; color: var(--text3); margin-bottom: 4px; }
 		.model-desc { font-size: 11.5px; color: var(--text2); line-height: 1.4; }
-		.net-anthropic { color: var(--anthropic); }
-		.net-openai { color: var(--openai); }
-		.net-groq { color: var(--groq); }
-		.net-alibaba { color: var(--alibaba); }
+		.net-anthropic  { color: var(--anthropic); }
+		.net-openai     { color: var(--openai); }
+		.net-groq       { color: var(--groq); }
+		.net-alibaba    { color: var(--alibaba); }
 		.net-modelscope { color: var(--modelscope); }
+		.net-deepseek   { color: #60b8ff; }
 
 		/* Chat panel */
 		.chat-panel {
@@ -530,14 +534,16 @@
 <script src="/nav.js"></script>
 <script type="module">
 const MODELS = [
-	{ key: 'claude-opus-4-7',    label: 'Claude Opus 4.7',    network: 'Anthropic',  netClass: 'net-anthropic',  tier: 'flagship', desc: 'Most capable. Extended thinking, complex reasoning.',      compareDefault: false, chatDefault: false },
-	{ key: 'claude-sonnet-4-6',  label: 'Claude Sonnet 4.6',  network: 'Anthropic',  netClass: 'net-anthropic',  tier: 'balanced', desc: 'Balanced speed and intelligence. Best for most tasks.',     compareDefault: true,  chatDefault: true  },
-	{ key: 'claude-haiku-4-5',   label: 'Claude Haiku 4.5',   network: 'Anthropic',  netClass: 'net-anthropic',  tier: 'fast',     desc: 'Fastest Claude. Low latency, high throughput.',             compareDefault: true,  chatDefault: false },
-	{ key: 'gpt-4o',             label: 'GPT-4o',             network: 'OpenAI',     netClass: 'net-openai',     tier: 'flagship', desc: 'OpenAI flagship. Strong multimodal reasoning.',             compareDefault: false, chatDefault: false },
-	{ key: 'gpt-4o-mini',        label: 'GPT-4o-mini',        network: 'OpenAI',     netClass: 'net-openai',     tier: 'fast',     desc: 'Fast, affordable GPT. Great for simple tasks.',             compareDefault: true,  chatDefault: false },
-	{ key: 'groq-llama',         label: 'Llama 3.3 70B',      network: 'Groq',       netClass: 'net-groq',       tier: 'fast',     desc: 'Open-weight on Groq. Extremely fast inference.',            compareDefault: true,  chatDefault: false },
-	{ key: 'qwen-plus',          label: 'Qwen Plus',          network: 'Alibaba',    netClass: 'net-alibaba',    tier: 'balanced', desc: 'Qwen Plus on Alibaba DashScope. Strong multilingual.',      compareDefault: false, chatDefault: false },
-	{ key: 'modelscope-qwen',    label: 'Qwen3-Coder-480B',   network: 'ModelScope', netClass: 'net-modelscope', tier: 'flagship', desc: 'Largest Qwen coder model. Exceptional at code generation.', compareDefault: false, chatDefault: false },
+	{ key: 'claude-opus-4-7',    label: 'Claude Opus 4.7',    network: 'Anthropic',  netClass: 'net-anthropic',  tier: 'flagship',  desc: 'Most capable. Extended thinking, complex reasoning.',       compareDefault: false, chatDefault: false },
+	{ key: 'claude-sonnet-4-6',  label: 'Claude Sonnet 4.6',  network: 'Anthropic',  netClass: 'net-anthropic',  tier: 'balanced',  desc: 'Balanced speed and intelligence. Best for most tasks.',      compareDefault: true,  chatDefault: true  },
+	{ key: 'claude-haiku-4-5',   label: 'Claude Haiku 4.5',   network: 'Anthropic',  netClass: 'net-anthropic',  tier: 'fast',      desc: 'Fastest Claude. Low latency, high throughput.',              compareDefault: true,  chatDefault: false },
+	{ key: 'gpt-4o',             label: 'GPT-4o',             network: 'OpenAI',     netClass: 'net-openai',     tier: 'flagship',  desc: 'OpenAI flagship. Strong multimodal reasoning.',              compareDefault: false, chatDefault: false },
+	{ key: 'gpt-4o-mini',        label: 'GPT-4o-mini',        network: 'OpenAI',     netClass: 'net-openai',     tier: 'fast',      desc: 'Fast, affordable GPT. Great for simple tasks.',              compareDefault: true,  chatDefault: false },
+	{ key: 'o3-mini',            label: 'o3-mini',            network: 'OpenAI',     netClass: 'net-openai',     tier: 'reasoning', desc: 'Reasoning-optimized. Fast chain-of-thought.',                compareDefault: false, chatDefault: false },
+	{ key: 'groq-llama',         label: 'Llama 3.3 70B',      network: 'Groq',       netClass: 'net-groq',       tier: 'fast',      desc: 'Open-weight on Groq. Extremely fast inference.',             compareDefault: true,  chatDefault: false },
+	{ key: 'deepseek-r1',        label: 'DeepSeek R1',        network: 'DeepSeek',   netClass: 'net-deepseek',   tier: 'reasoning', desc: 'Open reasoning model. Strong at math and code.',             compareDefault: false, chatDefault: false },
+	{ key: 'qwen-plus',          label: 'Qwen Plus',          network: 'DashScope',  netClass: 'net-alibaba',    tier: 'balanced',  desc: 'Qwen Plus on DashScope. Strong multilingual.',               compareDefault: false, chatDefault: false },
+	{ key: 'modelscope-qwen',    label: 'Qwen3-Coder 480B',   network: 'ModelScope', netClass: 'net-modelscope', tier: 'flagship',  desc: 'Largest Qwen coder. Exceptional at code generation.',        compareDefault: false, chatDefault: false },
 ];
 const TIER_LABEL = { flagship: 'Flagship', balanced: 'Balanced', fast: 'Fast' };
 const STORAGE_KEY = 'brain_v2';
@@ -1083,6 +1089,32 @@ cmpPrompt.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey
 buildSidebar();
 selectModel(activeModel);
 renderHistory();
+
+// Fetch available providers and dim unavailable ones
+fetch('/api/brain/chat')
+	.then(r => r.json())
+	.then(({ providers }) => {
+		if (!Array.isArray(providers)) return;
+		const unavailable = new Set(providers.filter(p => !p.available).map(p => p.key));
+		document.querySelectorAll('.model-card').forEach(card => {
+			if (unavailable.has(card.dataset.key)) {
+				card.classList.add('unavailable');
+				if (card.classList.contains('selected')) {
+					const first = providers.find(p => p.available);
+					if (first) selectModel(first.key);
+				}
+			}
+		});
+		document.querySelectorAll('.provider-pill input').forEach(input => {
+			if (unavailable.has(input.dataset.key)) {
+				input.disabled = true;
+				input.checked = false;
+				input.closest('.provider-pill').style.opacity = '0.4';
+				input.closest('.provider-pill').title = 'Not configured on this deployment';
+			}
+		});
+	})
+	.catch(() => {});
 </script>
 </body>
 </html>

@@ -7,6 +7,7 @@
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, patch, del, esc, relTime, ApiError } from '../api.js';
+import { openSelfieModal } from '../../selfie-modal.js';
 
 const PAGE_SIZE = 24;
 const VISIBILITIES = ['public', 'unlisted', 'private'];
@@ -39,7 +40,8 @@ const state = {
 			<div class="dn-av-new-wrap">
 				<button class="dn-btn primary" type="button" data-new>+ New avatar</button>
 				<div class="dn-av-new-pop" data-new-pop hidden role="menu">
-					<a href="/create/selfie" role="menuitem">From a selfie</a>
+					<button type="button" role="menuitem" data-new-selfie-quick>Snap a selfie</button>
+					<a href="/create/selfie" role="menuitem">Full selfie flow</a>
 					<a href="/create" role="menuitem">Upload a GLB</a>
 					<a href="/marketplace" role="menuitem">From an existing avatar</a>
 				</div>
@@ -166,6 +168,20 @@ function wireNewMenu(root) {
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape' && !pop.hidden) close();
 	});
+
+	const quickSelfie = pop.querySelector('[data-new-selfie-quick]');
+	if (quickSelfie) {
+		quickSelfie.addEventListener('click', async () => {
+			close();
+			const result = await openSelfieModal();
+			if (result?.avatarId) {
+				toast(root, 'Avatar created from selfie');
+				state.all = [];
+				state.nextCursor = null;
+				await loadInitial(root);
+			}
+		});
+	}
 }
 
 // ── Filtering / rendering ────────────────────────────────────────────────
@@ -365,6 +381,15 @@ function openMoreMenu(root, anchor, card, a) {
 	menu.setAttribute('role', 'menu');
 	const items = [
 		{ label: 'View live page', run: () => { window.open(`/agent-next?id=${encodeURIComponent(a.id)}`, '_blank'); } },
+		{ label: 'Update from selfie', run: async () => {
+			const result = await openSelfieModal({ existingAvatarId: a.id });
+			if (result?.avatarId) {
+				toast(root, 'Avatar updated from selfie');
+				state.all = [];
+				state.nextCursor = null;
+				await loadInitial(root);
+			}
+		}},
 		{ label: 'Rename', run: () => card.querySelector('[data-rename]')?.click() },
 		{ label: 'Change visibility', run: () => openVisibilitySubmenu(root, anchor, card, a) },
 		{ label: 'Copy embed snippet', run: () => copyEmbedSnippet(root, a) },
@@ -700,15 +725,23 @@ function injectStyles() {
 			z-index: 40;
 			backdrop-filter: blur(20px);
 		}
-		.dn-av-new-pop a {
+		.dn-av-new-pop a,
+		.dn-av-new-pop button {
 			display: block;
+			width: 100%;
+			text-align: left;
 			padding: 8px 12px;
 			border-radius: 7px;
 			font-size: 13px;
 			color: var(--nxt-ink);
+			background: transparent;
+			border: none;
+			cursor: pointer;
+			font-family: inherit;
 			transition: background 0.12s ease;
 		}
-		.dn-av-new-pop a:hover { background: rgba(255,255,255,0.06); }
+		.dn-av-new-pop a:hover,
+		.dn-av-new-pop button:hover { background: rgba(255,255,255,0.06); }
 
 		.dn-av-filters {
 			display: flex;

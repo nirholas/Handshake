@@ -506,7 +506,8 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 
 			<div data-slot="error" style="font-size:12.5px;color:var(--nxt-danger);min-height:18px;margin-bottom:12px"></div>
 
-			<div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:24px">
+			<div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:24px;flex-wrap:wrap">
+				<a href="/brain" target="_blank" class="dn-btn" style="text-decoration:none;font-size:12.5px;margin-right:auto">Build in Brain Studio</a>
 				<button class="dn-btn ghost" data-action="cancel">Cancel</button>
 				<button class="dn-btn primary" data-action="save-persona">Save persona</button>
 			</div>

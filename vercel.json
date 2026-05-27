@@ -361,8 +361,12 @@
 			"dest": "/api/agenc/[action]?action=link"
 		},
 		{
+			"src": "/voice/?",
+			"dest": "/voice.html"
+		},
+		{
 			"src": "/brain/?",
-			"dest": "/demos/brain.html"
+			"dest": "/brain.html"
 		},
 		{
 			"src": "/lipsync/mic/?",

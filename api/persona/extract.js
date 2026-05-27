@@ -23,13 +23,20 @@ async function resolveUser(req) {
 	return bearer.userId;
 }
 
-function validateAnswers(input) {
+const MAX_FREEFORM_CHARS = 8000;
+
+function validateInput(input) {
 	if (!input || typeof input !== 'object') {
 		throw Object.assign(new Error('body must be an object'), { status: 400 });
 	}
+
+	if (typeof input.freeform === 'string' && input.freeform.trim()) {
+		return { mode: 'freeform', text: input.freeform.trim().slice(0, MAX_FREEFORM_CHARS) };
+	}
+
 	const list = input.answers;
 	if (!Array.isArray(list) || list.length === 0) {
-		throw Object.assign(new Error('answers must be a non-empty array'), { status: 400 });
+		throw Object.assign(new Error('provide answers array or freeform text'), { status: 400 });
 	}
 	if (list.length > MAX_ANSWERS) {
 		throw Object.assign(new Error(`max ${MAX_ANSWERS} answers`), { status: 400 });
@@ -49,7 +56,7 @@ function validateAnswers(input) {
 			answer: a.slice(0, MAX_QA_CHARS),
 		});
 	}
-	return cleaned;
+	return { mode: 'interview', answers: cleaned };
 }
 
 const SYSTEM_PROMPT = `You are a persona-extraction analyst. You read a short interview between an onboarding system and a person, and you synthesize a compact persona profile that can later be used to shape an AI agent's voice on behalf of that person.
@@ -81,17 +88,21 @@ const handler = wrap(async (req, res) => {
 	}
 
 	const body = await readJson(req);
-	const answers = validateAnswers(body);
+	const input = validateInput(body);
 
 	if (!env.ANTHROPIC_API_KEY) {
 		return error(res, 503, 'config_missing', 'ANTHROPIC_API_KEY not configured');
 	}
 
-	const interview = answers
-		.map((row, i) => `Q${i + 1}: ${row.question}\nA${i + 1}: ${row.answer}`)
-		.join('\n\n');
-
-	const userMessage = `Here is the onboarding interview. Synthesize the persona JSON.\n\n${interview}`;
+	let userMessage;
+	if (input.mode === 'freeform') {
+		userMessage = `Analyze the following text and synthesize a persona JSON that captures the voice, personality, and communication patterns present in it.\n\n---\n${input.text}\n---`;
+	} else {
+		const interview = input.answers
+			.map((row, i) => `Q${i + 1}: ${row.question}\nA${i + 1}: ${row.answer}`)
+			.join('\n\n');
+		userMessage = `Here is the onboarding interview. Synthesize the persona JSON.\n\n${interview}`;
+	}
 
 	const t0 = Date.now();
 	const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
