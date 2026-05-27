@@ -653,7 +653,7 @@ const DIRECTORY = [
 		items: [
 			{ href: '/dashboard/monetize',   title: 'Monetize',      sub: 'Revenue, subscriptions, and withdrawals' },
 			{ href: '/dashboard/tokens',     title: 'Tokens',        sub: 'Launch tokens on Pump.fun with bonding curves' },
-			{ href: '/dashboard/portfolio',  title: 'Portfolio & NFTs', sub: 'Holdings, balances, and NFT collections' },
+			{ href: '/dashboard/portfolio',  title: 'Portfolio',          sub: 'Live balances, price charts, and market data' },
 			{ href: '/launchpad',            title: 'Launchpad',      sub: 'Token and project launchpad creator' },
 			{ href: '/pay',                  title: 'Payments (x402)', sub: 'Payment hub and hosted checkout' },
 			{ href: '/pricing',              title: 'Pricing',        sub: 'Platform plans and feature comparison' },

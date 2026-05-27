@@ -43,7 +43,7 @@ const CATEGORIES = [
 	'translation',
 ];
 
-const SORTS = new Set(['recommended', 'recent', 'popular']);
+const SORTS = new Set(['recommended', 'recent', 'popular', 'top_rated']);
 
 // Auto-named / stub agent names that should never appear in the public
 // marketplace. Sources: api/agents.js default ('Agent'), seed-default-agent.js
@@ -383,7 +383,9 @@ async function handleList(req, res, url) {
 			? sql`published_at DESC NULLS LAST, created_at DESC`
 			: sort === 'popular'
 				? sql`(forks_count + views_count) DESC, published_at DESC NULLS LAST`
-				: sql`(forks_count * 5 + views_count) DESC, published_at DESC NULLS LAST`;
+				: sort === 'top_rated'
+					? sql`rating_avg DESC NULLS LAST, rating_count DESC, published_at DESC NULLS LAST`
+					: sql`(forks_count * 5 + views_count) DESC, published_at DESC NULLS LAST`;
 
 	const cat = category && CATEGORIES.includes(category) ? category : null;
 	const qLike = q ? `%${q}%` : null;
@@ -432,7 +434,7 @@ async function handleList(req, res, url) {
 		`,
 		]);
 	} catch (err) {
-		if (err.code === '42P01') {
+		if (err.code === '42P01' || err.code === '42703') {
 			[, rows] = await sql.transaction([
 				sql`SET LOCAL statement_timeout = '8000'`,
 				sql`
