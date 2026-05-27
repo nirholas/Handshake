@@ -532,8 +532,36 @@ async function handleDetail(req, res, id) {
 			WHERE a.id = ${id} AND a.deleted_at IS NULL
 		`;
 	} catch (err) {
-		console.error('[marketplace/detail]', err?.message || err);
-		return error(res, 500, 'db_error', 'Failed to load agent');
+		if (err.code === '42P01') {
+			// agent_reviews table not yet created — fall back without review aggregates
+			[row] = await sql`
+				SELECT a.*, u.display_name AS author_name, u.avatar_url AS author_avatar,
+				       av.storage_key AS avatar_storage_key,
+				       av.thumbnail_key AS avatar_thumbnail_key,
+				       av.visibility AS avatar_visibility,
+				       a.meta->>'sol_mint_address' AS sol_mint_address,
+				       a.meta->>'pumpfun_network'  AS pumpfun_network,
+				       COALESCE((SELECT count(*)::int FROM skill_purchases sp
+				        WHERE sp.agent_id = a.id AND sp.status = 'confirmed'), 0) AS buyers_total,
+				       COALESCE((SELECT count(*)::int FROM skill_purchases sp
+				        WHERE sp.agent_id = a.id AND sp.status = 'confirmed'
+				          AND sp.created_at > now() - interval '24 hours'), 0) AS buyers_24h,
+				       0::numeric AS rating_avg, 0::int AS rating_count,
+				       ap.amount        AS asset_price_amount,
+				       ap.currency_mint AS asset_price_currency_mint,
+				       ap.chain         AS asset_price_chain,
+				       ap.mint_decimals AS asset_price_mint_decimals
+				FROM agent_identities a
+				LEFT JOIN users u ON u.id = a.user_id
+				LEFT JOIN avatars av ON av.id = a.avatar_id AND av.deleted_at IS NULL
+				LEFT JOIN asset_prices ap
+				       ON ap.item_type = 'agent' AND ap.item_id = a.id AND ap.is_active = true
+				WHERE a.id = ${id} AND a.deleted_at IS NULL
+			`;
+		} else {
+			console.error('[marketplace/detail]', err?.message || err);
+			return error(res, 500, 'db_error', 'Failed to load agent');
+		}
 	}
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 

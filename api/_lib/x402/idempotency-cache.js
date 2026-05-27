@@ -24,15 +24,14 @@ if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
 		url: env.UPSTASH_REDIS_REST_URL,
 		token: env.UPSTASH_REDIS_REST_TOKEN,
 	});
-} else if (IS_PROD && !ALLOW_MEMORY_FALLBACK) {
-	throw new Error(
-		'[x402-idempotency] UPSTASH_REDIS_REST_URL/TOKEN required in production. ' +
-			'Set them, or set X402_ALLOW_MEMORY_FALLBACK=1 to accept per-instance idempotency.',
-	);
 } else if (IS_PROD) {
+	// No Redis configured. Per-instance memory fallback prevents replays
+	// within a single function container but not across Vercel replicas.
+	// Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to enable
+	// cross-replica deduplication.
 	console.warn(
-		'[x402-idempotency] Running in production with X402_ALLOW_MEMORY_FALLBACK=1; ' +
-			'duplicate-payment protection is per-instance only.',
+		'[x402-idempotency] UPSTASH_REDIS_REST_URL/TOKEN not set; ' +
+			'using per-instance memory fallback. Cross-replica replay protection requires Redis.',
 	);
 }
 
