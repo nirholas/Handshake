@@ -1,0 +1,15 @@
+{
+  "extraKnownMarketplaces": {
+    "three-ws": {
+      "source": {
+        "source": "github",
+        "repo": "nirholas/three.ws"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "three-ws-core@three-ws": true,
+    "three-ws-developer@three-ws": true,
+    "three-ws-pump-fun@three-ws": true
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "three-ws-pump-fun",
+  "description": "Pump.fun on-chain trading skills — create coins, swap tokens, manage creator fees, tokenize agents, and drive live avatar reactions from the pump.fun feed.",
+  "version": "1.0.0",
+  "author": {
+    "name": "pump-fun"
+  },
+  "homepage": "https://pump.fun",
+  "license": "Apache-2.0",
+  "skills": "."
+}

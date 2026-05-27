@@ -1,0 +1,10 @@
+{
+  "name": "three-ws-core",
+  "description": "Core wallet and x402 payment skills — authenticate, fund, send tokens, trade, search the bazaar, pay for services, monetize APIs, and query onchain data.",
+  "version": "1.0.0",
+  "author": {
+    "name": "nirholas"
+  },
+  "homepage": "https://three.ws",
+  "license": "Apache-2.0"
+}

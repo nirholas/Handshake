@@ -1,0 +1,95 @@
+{
+  "name": "three-ws",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Official plugin marketplace for three.ws — wallet operations, x402 payments, MCP tools, pump.fun trading, and agent scaffolding.",
+  "version": "1.0.0",
+  "plugins": [
+    {
+      "name": "three-ws-core",
+      "source": "./.agents",
+      "displayName": "three.ws Core",
+      "description": "Core wallet and x402 payment skills — authenticate, fund, send tokens, trade, search the bazaar, pay for services, monetize APIs, and query onchain data.",
+      "version": "1.0.0",
+      "author": {
+        "name": "nirholas"
+      },
+      "homepage": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "license": "Apache-2.0",
+      "keywords": [
+        "wallet",
+        "x402",
+        "usdc",
+        "payments",
+        "trade",
+        "base",
+        "solana",
+        "polygon"
+      ],
+      "category": "payments",
+      "tags": [
+        "wallet",
+        "x402",
+        "defi",
+        "payments"
+      ]
+    },
+    {
+      "name": "three-ws-developer",
+      "source": "./marketplace/plugins/three-ws-developer",
+      "displayName": "three.ws Developer Tools",
+      "description": "Developer tools for three.ws — scaffold agents, configure MCP servers, and get runnable code examples for paid MCP tools.",
+      "version": "1.0.0",
+      "author": {
+        "name": "nirholas"
+      },
+      "homepage": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "license": "Apache-2.0",
+      "keywords": [
+        "developer",
+        "scaffold",
+        "mcp",
+        "tools",
+        "agent"
+      ],
+      "category": "developer-tools",
+      "tags": [
+        "developer",
+        "mcp",
+        "scaffold",
+        "agent-kit"
+      ]
+    },
+    {
+      "name": "three-ws-pump-fun",
+      "source": "./pump-fun-skills",
+      "displayName": "three.ws Pump.fun Trading",
+      "description": "Pump.fun on-chain trading skills — create coins, swap tokens, manage creator fees, tokenize agents, and drive live avatar reactions from the pump.fun feed.",
+      "version": "1.0.0",
+      "author": {
+        "name": "pump-fun"
+      },
+      "homepage": "https://pump.fun",
+      "repository": "https://github.com/nirholas/three.ws",
+      "license": "Apache-2.0",
+      "keywords": [
+        "pump.fun",
+        "solana",
+        "trading",
+        "defi",
+        "tokens",
+        "swap"
+      ],
+      "category": "trading",
+      "tags": [
+        "pump.fun",
+        "solana",
+        "defi",
+        "trading"
+      ]
+    }
+  ]
+}
