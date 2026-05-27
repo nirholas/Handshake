@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Brain · three.ws</title>
+		<meta name="description" content="Build your AI persona, compare models side-by-side, and test your agent's voice across Claude, GPT, Qwen, and Llama." />
+		<link rel="canonical" href="https://three.ws/brain" />
+		<meta property="og:title" content="Brain · three.ws" />
+		<meta property="og:description" content="Build a persona from scratch, compare AI models, and give your agent a voice." />
+		<meta property="og:url" content="https://three.ws/brain" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/brain.css" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<div class="br-root">
+			<aside class="br-side" id="brSide">
+				<div class="br-side-head">
+					<span class="br-side-title">Sessions</span>
+					<button class="br-side-new" id="brNewChat" title="New session">+ New</button>
+				</div>
+				<div class="br-sessions" id="brSessions"></div>
+				<div class="br-side-persona" id="brSidePersona">
+					<span class="br-side-persona-label">Active Persona</span>
+					<div class="br-persona-mini" id="brPersonaMini">
+						<div class="br-persona-mini-tone" id="brMiniTone"></div>
+						<div class="br-persona-mini-style" id="brMiniStyle"></div>
+						<button class="br-persona-mini-clear" id="brMiniClear">Clear persona</button>
+					</div>
+					<button class="br-btn br-btn-secondary br-btn-sm" id="brBuildPersonaBtn" style="width:100%">Build Persona</button>
+				</div>
+			</aside>
+
+			<div class="br-body">
+				<div class="br-topbar">
+					<button class="br-tab active" data-tab="persona">Persona<span class="br-tab-badge" id="brPersonaBadge"></span></button>
+					<button class="br-tab" data-tab="playground">Playground</button>
+					<div class="br-topbar-right">
+						<button class="br-topbar-btn" id="brExport">Export</button>
+						<a href="/dashboard/agents" class="br-topbar-btn">My Agents</a>
+					</div>
+				</div>
+
+				<!-- Persona panel -->
+				<div class="br-panel active" id="brPanelPersona">
+					<div class="br-persona">
+						<div class="br-persona-inner">
+							<div class="br-persona-hero">
+								<h1>Build Your Persona</h1>
+								<p>Define how your AI agent thinks, speaks, and behaves. Extract a structured persona and test it across models.</p>
+							</div>
+
+							<div class="br-method-tabs" id="brMethodTabs">
+								<div class="br-method-tab active" data-method="interview">
+									<span class="br-method-tab-icon">&#9998;</span>
+									<div class="br-method-tab-title">Guided Interview</div>
+									<div class="br-method-tab-desc">Answer targeted questions and let AI synthesize your voice</div>
+								</div>
+								<div class="br-method-tab" data-method="freeform">
+									<span class="br-method-tab-icon">&#9998;</span>
+									<div class="br-method-tab-title">Freeform</div>
+									<div class="br-method-tab-desc">Paste a bio, description, tweets, or anything that captures a voice</div>
+								</div>
+								<div class="br-method-tab" data-method="manual">
+									<span class="br-method-tab-icon">&#9881;</span>
+									<div class="br-method-tab-title">Manual Edit</div>
+									<div class="br-method-tab-desc">Set tone, vocabulary, interests, and style fields directly</div>
+								</div>
+							</div>
+
+							<!-- Interview method -->
+							<div class="br-interview active" id="brInterview">
+								<div id="brQuestions"></div>
+								<div class="br-actions">
+									<button class="br-btn br-btn-primary" id="brSynthesize" disabled>Synthesize Persona</button>
+									<button class="br-btn br-btn-ghost" id="brFillExample">Fill example</button>
+								</div>
+							</div>
+
+							<!-- Freeform method -->
+							<div class="br-freeform" id="brFreeform">
+								<textarea class="br-freeform-area" id="brFreeformText" placeholder="Paste a bio, a collection of tweets, a LinkedIn summary, a Reddit comment history, or just describe the personality you want in plain English...&#10;&#10;The more context you provide, the richer the extracted persona will be." rows="8"></textarea>
+								<div class="br-freeform-hint">Tip: paste real writing samples for the most authentic extraction</div>
+								<div class="br-actions">
+									<button class="br-btn br-btn-primary" id="brFreeformSynth" disabled>Synthesize Persona</button>
+								</div>
+							</div>
+
+							<!-- Manual edit method -->
+							<div class="br-freeform" id="brManual">
+								<div class="br-pc-edit-body" style="padding:0">
+									<div class="br-edit-row">
+										<label class="br-edit-label" for="brManTone">Tone</label>
+										<input class="br-edit-input" id="brManTone" placeholder="Warm but direct, slightly sardonic" />
+									</div>
+									<div class="br-edit-row">
+										<label class="br-edit-label" for="brManStyle">Communication Style</label>
+										<select class="br-agent-select" id="brManStyle" style="width:100%">
+											<option value="terse">Terse</option>
+											<option value="detailed">Detailed</option>
+											<option value="playful">Playful</option>
+											<option value="analytical">Analytical</option>
+											<option value="warm" selected>Warm</option>
+										</select>
+									</div>
+									<div class="br-edit-row">
+										<label class="br-edit-label" for="brManVocab">Vocabulary</label>
+										<input class="br-edit-input" id="brManVocab" placeholder="Comma-separated words or phrases" />
+										<span class="br-edit-hint">Words and phrases this persona uses often</span>
+									</div>
+									<div class="br-edit-row">
+										<label class="br-edit-label" for="brManInterests">Interests</label>
+										<input class="br-edit-input" id="brManInterests" placeholder="Comma-separated interests" />
+									</div>
+									<div class="br-edit-row">
+										<label class="br-edit-label" for="brManDont">Don't Say</label>
+										<input class="br-edit-input" id="brManDont" placeholder="Phrases to avoid, comma-separated" />
+									</div>
+									<div class="br-edit-row">
+										<label class="br-edit-label" for="brManGreet">Sample Greeting</label>
+										<textarea class="br-edit-textarea" id="brManGreet" placeholder="A greeting in the persona's voice" rows="2"></textarea>
+									</div>
+								</div>
+								<div class="br-actions">
+									<button class="br-btn br-btn-primary" id="brManualSave">Set Persona</button>
+								</div>
+							</div>
+
+							<!-- Loading -->
+							<div class="br-loading" id="brLoading">
+								<div class="br-loading-spinner"></div>
+								<span>Synthesizing persona...</span>
+							</div>
+
+							<!-- Persona Card (appears after synthesis) -->
+							<div class="br-persona-card" id="brPersonaCard">
+								<div class="br-pc-header">
+									<h3>Extracted Persona</h3>
+									<div class="br-pc-header-actions">
+										<button class="br-btn br-btn-ghost br-btn-sm" id="brEditPersona">Edit</button>
+										<button class="br-btn br-btn-ghost br-btn-sm" id="brToggleRaw">JSON</button>
+										<button class="br-btn br-btn-ghost br-btn-sm" id="brCopyJson">Copy</button>
+									</div>
+								</div>
+								<div class="br-pc-body" id="brPcBody">
+									<div class="br-pc-field">
+										<div class="br-pc-label">Tone</div>
+										<div class="br-pc-value" id="brPcTone"></div>
+									</div>
+									<div class="br-pc-field">
+										<div class="br-pc-label">Style</div>
+										<div class="br-pc-value"><span class="br-pc-badge" id="brPcStyle"></span></div>
+									</div>
+									<div class="br-pc-field">
+										<div class="br-pc-label">Vocabulary</div>
+										<div class="br-chips" id="brPcVocab"></div>
+									</div>
+									<div class="br-pc-field">
+										<div class="br-pc-label">Interests</div>
+										<div class="br-chips" id="brPcInterests"></div>
+									</div>
+									<div class="br-pc-field">
+										<div class="br-pc-label">Avoid</div>
+										<div class="br-chips" id="brPcDont"></div>
+									</div>
+									<div class="br-pc-field full">
+										<div class="br-pc-label">Sample Greeting</div>
+										<div class="br-pc-greeting" id="brPcGreet"></div>
+									</div>
+								</div>
+								<!-- Inline editor (hidden by default) -->
+								<div class="br-pc-edit-body" id="brPcEditBody" style="display:none">
+									<div class="br-edit-row">
+										<label class="br-edit-label">Tone</label>
+										<input class="br-edit-input" id="brEditTone" />
+									</div>
+									<div class="br-edit-row">
+										<label class="br-edit-label">Style</label>
+										<select class="br-agent-select" id="brEditStyle" style="width:100%">
+											<option value="terse">Terse</option>
+											<option value="detailed">Detailed</option>
+											<option value="playful">Playful</option>
+											<option value="analytical">Analytical</option>
+											<option value="warm">Warm</option>
+										</select>
+									</div>
+									<div class="br-edit-row">
+										<label class="br-edit-label">Vocabulary</label>
+										<input class="br-edit-input" id="brEditVocab" placeholder="Comma-separated" />
+									</div>
+									<div class="br-edit-row">
+										<label class="br-edit-label">Interests</label>
+										<input class="br-edit-input" id="brEditInterests" placeholder="Comma-separated" />
+									</div>
+									<div class="br-edit-row">
+										<label class="br-edit-label">Don't Say</label>
+										<input class="br-edit-input" id="brEditDont" placeholder="Comma-separated" />
+									</div>
+									<div class="br-edit-row">
+										<label class="br-edit-label">Greeting</label>
+										<textarea class="br-edit-textarea" id="brEditGreet" rows="2"></textarea>
+									</div>
+									<div class="br-actions" style="justify-content:flex-start">
+										<button class="br-btn br-btn-primary br-btn-sm" id="brSaveEdit">Save Changes</button>
+										<button class="br-btn br-btn-ghost br-btn-sm" id="brCancelEdit">Cancel</button>
+									</div>
+								</div>
+								<div class="br-raw-json" id="brRawJson"></div>
+								<div class="br-pc-footer">
+									<button class="br-btn br-btn-secondary br-btn-sm" id="brTestInPlayground">Test in Playground</button>
+									<button class="br-btn br-btn-ghost br-btn-sm" id="brResetPersona">Start Over</button>
+									<div class="br-pc-save-wrap">
+										<select class="br-agent-select" id="brAgentSelect">
+											<option value="">Select agent...</option>
+										</select>
+										<button class="br-btn br-btn-primary br-btn-sm" id="brSaveToAgent" disabled>Save to Agent</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Playground panel -->
+				<div class="br-panel" id="brPanelPlayground">
+					<div class="br-play">
+						<div class="br-play-bar" id="brPlayBar">
+							<div class="br-mode-toggle">
+								<button class="br-mode-btn active" data-mode="compare">Compare</button>
+								<button class="br-mode-btn" data-mode="chat">Chat</button>
+							</div>
+							<span class="br-play-label" id="brPlayLabel">Models</span>
+							<div id="brPlayControls"></div>
+						</div>
+						<div class="br-persona-banner" id="brPersonaBanner">
+							<span class="br-persona-banner-dot"></span>
+							Persona active: <strong id="brBannerTone"></strong>
+							<button class="br-persona-banner-dismiss" id="brBannerDismiss">Disable for session</button>
+						</div>
+						<div class="br-canvas" id="brCanvas"></div>
+						<div class="br-input-wrap">
+							<div class="br-notice" id="brNotice"></div>
+							<details class="br-sys-details" id="brSysDetails">
+								<summary>System prompt</summary>
+								<textarea class="br-sys-textarea" id="brSystem" placeholder="You are a helpful assistant..." rows="3"></textarea>
+							</details>
+							<div class="br-input-row">
+								<textarea class="br-prompt" id="brPrompt" placeholder="Send a message..." rows="1"></textarea>
+								<button class="br-send" id="brSend">Send</button>
+							</div>
+							<div class="br-hint">Ctrl+Enter to send</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="br-toast" id="brToast"></div>
+
+		<script src="/nav.js" defer></script>
+		<script type="module" src="/src/brain.js"></script>
+	</body>
+</html>

@@ -7,8 +7,10 @@ import { renderAnimations } from './library/animations.js';
 import { renderMemory }     from './library/memory.js';
 import { renderStrategy }   from './library/strategy.js';
 import { renderVoice }      from './library/voice.js';
+import { renderBrain }      from './library/brain.js';
 
 const TABS = [
+	{ key: 'brain',      label: 'Brain'      },
 	{ key: 'animations', label: 'Animations' },
 	{ key: 'memory',     label: 'Memory'     },
 	{ key: 'strategy',   label: 'Strategy'   },
@@ -16,6 +18,7 @@ const TABS = [
 ];
 
 const RENDERERS = {
+	brain:      renderBrain,
 	animations: renderAnimations,
 	memory:     renderMemory,
 	strategy:   renderStrategy,
@@ -25,7 +28,7 @@ const RENDERERS = {
 function readTab() {
 	const m = /(?:^|[#&])tab=([a-z]+)/.exec(location.hash || '');
 	const t = m?.[1];
-	return TABS.some((x) => x.key === t) ? t : 'animations';
+	return TABS.some((x) => x.key === t) ? t : 'brain';
 }
 
 function writeTab(tab) {
@@ -40,7 +43,7 @@ function writeTab(tab) {
 
 	main.innerHTML = `
 		<h1 class="dn-h1">Library</h1>
-		<p class="dn-h1-sub">Animations, memories, strategy notes, and voices your agents can draw on.</p>
+		<p class="dn-h1-sub">Brain, animations, memories, strategy, and voices your agents can draw on.</p>
 
 		<div class="lib-tabstrip" role="tablist" aria-label="Library sections">
 			${TABS.map((t) => `

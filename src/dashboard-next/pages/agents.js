@@ -170,6 +170,25 @@ function renderAgents(host, agents, avatars, root) {
 	});
 }
 
+const BRAIN_LABELS = {
+	'claude-sonnet-4-6':                                'Claude Sonnet 4.6',
+	'claude-haiku-4-5-20251001':                        'Claude Haiku 4.5',
+	'claude-opus-4-6':                                  'Claude Opus 4.6',
+	'claude-opus-4-7':                                  'Claude Opus 4.7',
+	'llama-3.3-70b-versatile':                          'Llama 3.3 70B · Groq',
+	'llama-3.1-8b-instant':                             'Llama 3.1 8B · Groq',
+	'meta-llama/llama-3.3-70b-instruct:free':           'Llama 3.3 70B · OpenRouter',
+	'meta-llama/llama-3.1-8b-instruct:free':            'Llama 3.1 8B · OpenRouter',
+	'openai/gpt-oss-120b:free':                         'GPT-OSS 120B · OpenRouter',
+	'nousresearch/hermes-3-llama-3.1-405b:free':        'Hermes 3 405B · OpenRouter',
+};
+
+function brainLabel(agent) {
+	const model = agent.meta?.brain?.model;
+	if (!model) return 'Llama 3.3 70B · OpenRouter'; // runtime default
+	return BRAIN_LABELS[model] || model.split('/').pop() || model;
+}
+
 function agentCard(a, avatars) {
 	const name = esc(a.name || a.display_name || 'Unnamed agent');
 	const wallet = a.wallet_address || a.solana_address || '';
@@ -178,6 +197,7 @@ function agentCard(a, avatars) {
 	const created = a.created_at ? relTime(a.created_at) : '—';
 	const onchain = a.onchain_id || a.erc8004_id || a.chain_id;
 	const pumpMint = a.meta?.pumpfun?.mint || a.meta?.token?.mint || a.meta?.token?.ca;
+	const brain = brainLabel(a);
 
 	return `
 		<div class="dn-panel dn-agent-card" data-agent-id="${esc(a.id)}">
@@ -199,7 +219,13 @@ function agentCard(a, avatars) {
 					${pumpMint ? `<span class="dn-tag" style="font-size:11px;background:rgba(168,173,181,0.12);border-color:rgba(168,173,181,0.28);color:#a8adb5">pump.fun</span>` : ''}
 				</div>
 				${wallet ? `<div style="font-family:${MONO};font-size:12px;color:var(--nxt-ink-fade);margin-bottom:6px">${esc(truncMid(wallet, 8, 6))}</div>` : ''}
-				<div style="font-size:12.5px;color:var(--nxt-ink-dim)">Created ${esc(created)}</div>
+				<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--nxt-ink-dim)">
+					<span>Created ${esc(created)}</span>
+					<span style="display:inline-flex;align-items:center;gap:4px">
+						<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.55"><circle cx="8" cy="8" r="5.5"/><path d="M5 8h6M8 5v6"/></svg>
+						<a href="/dashboard/library#tab=brain" style="color:inherit;text-decoration:none" title="Configure brain">${esc(brain)}</a>
+					</span>
+				</div>
 				${a.persona?.tagline || a.tagline ? `<div style="font-size:13px;color:var(--nxt-ink-dim);margin-top:6px;font-style:italic">${esc((a.persona?.tagline || a.tagline).slice(0, 120))}</div>` : ''}
 			</div>
 
@@ -211,6 +237,7 @@ function agentCard(a, avatars) {
 				<div class="dn-agent-actions-secondary">
 					<button class="dn-btn ghost" data-action="edit-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Edit</button>
 					<button class="dn-btn ghost" data-action="persona-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Persona</button>
+					<a class="dn-btn ghost" href="/dashboard/library#tab=brain" style="padding:5px 10px;font-size:12px;text-decoration:none">Brain</a>
 					<button class="dn-btn ghost" data-action="view-reputation" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Reputation</button>
 					<button class="dn-btn ghost danger" data-action="delete-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Delete</button>
 				</div>

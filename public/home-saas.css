@@ -5,17 +5,17 @@
    ─────────────────────────────────────────────────────────────────────────── */
 
 :root {
-	--saas-bg: #08070b;
-	--saas-bg-2: #0e0c12;
-	--saas-fg: #f5f1ea;
-	--saas-fg-soft: rgba(245, 241, 234, 0.66);
-	--saas-fg-mute: rgba(245, 241, 234, 0.45);
-	--saas-border: rgba(255, 255, 255, 0.08);
-	--saas-border-2: rgba(255, 255, 255, 0.14);
-	--saas-amber: #ffd76a;
-	--saas-amber-2: #ff8f4d;
-	--saas-mint: #6ee7b7;
-	--saas-violet: #b794f4;
+	--saas-bg: #000000;
+	--saas-bg-2: #0a0a0a;
+	--saas-fg: #e8e8e8;
+	--saas-fg-soft: rgba(232, 232, 232, 0.66);
+	--saas-fg-mute: rgba(232, 232, 232, 0.45);
+	--saas-border: rgba(255, 255, 255, 0.04);
+	--saas-border-2: rgba(255, 255, 255, 0.08);
+	--saas-amber: #ffffff;
+	--saas-amber-2: #e8e8e8;
+	--saas-mint: #e8e8e8;
+	--saas-violet: #ffffff;
 	--saas-radius: 14px;
 	--saas-radius-lg: 22px;
 	--saas-shadow:
@@ -66,7 +66,7 @@
 	height: 6px;
 	border-radius: 50%;
 	background: var(--saas-amber);
-	box-shadow: 0 0 10px rgba(255, 215, 106, 0.65);
+	box-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
 }
 
 /* ── 1. Announcement bar ── */
@@ -74,7 +74,7 @@
 .h-saas-bar {
 	position: relative;
 	background:
-		linear-gradient(90deg, rgba(255, 175, 60, 0.08), rgba(110, 231, 183, 0.08)),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03)),
 		var(--saas-bg-2);
 	border-bottom: 1px solid var(--saas-border);
 	padding: 0.62rem var(--saas-pad-x);
@@ -99,8 +99,8 @@
 	gap: 0.45rem;
 	padding: 0.18rem 0.55rem;
 	border-radius: 999px;
-	background: rgba(110, 231, 183, 0.14);
-	border: 1px solid rgba(110, 231, 183, 0.32);
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.16);
 	color: var(--saas-mint);
 	font-size: 0.7rem;
 	font-weight: 700;
@@ -113,16 +113,16 @@
 	height: 6px;
 	border-radius: 50%;
 	background: var(--saas-mint);
-	box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.5);
+	box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
 	animation: h-saas-pulse 2.2s ease-out infinite;
 }
 
 @keyframes h-saas-pulse {
 	0% {
-		box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.55);
+		box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
 	}
 	100% {
-		box-shadow: 0 0 0 9px rgba(110, 231, 183, 0);
+		box-shadow: 0 0 0 9px rgba(255, 255, 255, 0);
 	}
 }
 
@@ -130,7 +130,7 @@
 	color: var(--saas-fg);
 	font-weight: 600;
 	text-decoration: none;
-	border-bottom: 1px solid rgba(255, 215, 106, 0.4);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 	transition: border-color 0.15s ease;
 }
 
@@ -172,9 +172,9 @@
 	position: absolute;
 	inset: 0;
 	background:
-		radial-gradient(60% 50% at 20% 30%, rgba(255, 175, 60, 0.14), transparent 65%),
-		radial-gradient(50% 50% at 90% 20%, rgba(110, 231, 183, 0.1), transparent 60%),
-		radial-gradient(40% 40% at 70% 90%, rgba(183, 148, 244, 0.08), transparent 60%);
+		radial-gradient(60% 50% at 20% 30%, rgba(255, 255, 255, 0.06), transparent 65%),
+		radial-gradient(50% 50% at 90% 20%, rgba(255, 255, 255, 0.04), transparent 60%),
+		radial-gradient(40% 40% at 70% 90%, rgba(255, 255, 255, 0.03), transparent 60%);
 	pointer-events: none;
 }
 
@@ -259,14 +259,14 @@
 	background: linear-gradient(135deg, var(--saas-amber), var(--saas-amber-2));
 	color: #1a0f04;
 	box-shadow:
-		0 8px 24px -8px rgba(255, 143, 77, 0.55),
+		0 8px 24px -8px rgba(255, 255, 255, 0.2),
 		0 1px 0 rgba(255, 255, 255, 0.35) inset;
 }
 
 .h-saas-btn--primary:hover {
 	transform: translateY(-1px);
 	box-shadow:
-		0 14px 32px -10px rgba(255, 143, 77, 0.7),
+		0 14px 32px -10px rgba(255, 255, 255, 0.25),
 		0 1px 0 rgba(255, 255, 255, 0.4) inset;
 }
 
@@ -310,7 +310,7 @@
 	height: 30px;
 	border-radius: 50%;
 	border: 2px solid var(--saas-bg);
-	background: linear-gradient(135deg, #ffd76a, #b794f4);
+	background: linear-gradient(135deg, #555, #888);
 	margin-left: -8px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
@@ -320,19 +320,19 @@
 }
 
 .h-saas-avatars .av:nth-child(2) {
-	background: linear-gradient(135deg, #6ee7b7, #5c93ff);
+	background: linear-gradient(135deg, #666, #999);
 }
 
 .h-saas-avatars .av:nth-child(3) {
-	background: linear-gradient(135deg, #ff8f4d, #ff5ca8);
+	background: linear-gradient(135deg, #777, #aaa);
 }
 
 .h-saas-avatars .av:nth-child(4) {
-	background: linear-gradient(135deg, #b794f4, #ffd76a);
+	background: linear-gradient(135deg, #888, #bbb);
 }
 
 .h-saas-avatars .av:nth-child(5) {
-	background: linear-gradient(135deg, #5c93ff, #6ee7b7);
+	background: linear-gradient(135deg, #999, #ccc);
 	font-family: inherit;
 	font-size: 0.65rem;
 	color: #08070b;
@@ -354,8 +354,8 @@
 	border: 1px solid var(--saas-border-2);
 	border-radius: var(--saas-radius-lg);
 	background:
-		radial-gradient(120% 90% at 50% 0%, rgba(255, 175, 60, 0.16), transparent 60%),
-		linear-gradient(180deg, rgba(20, 17, 24, 0.95), rgba(8, 7, 11, 0.95));
+		radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 60%),
+		linear-gradient(180deg, rgba(17, 17, 17, 0.95), rgba(0, 0, 0, 0.95));
 	box-shadow: var(--saas-shadow);
 	overflow: hidden;
 	aspect-ratio: 4 / 3.2;
@@ -439,7 +439,7 @@
 	height: 6px;
 	border-radius: 50%;
 	background: var(--saas-mint);
-	box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.5);
+	box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
 	animation: h-saas-pulse 2s ease-out infinite;
 }
 
@@ -638,9 +638,9 @@
 }
 
 .h-saas-tab[aria-selected='true'] {
-	background: linear-gradient(135deg, rgba(255, 215, 106, 0.18), rgba(255, 143, 77, 0.18));
+	background: rgba(255, 255, 255, 0.1);
 	color: var(--saas-amber);
-	box-shadow: 0 0 0 1px rgba(255, 215, 106, 0.3) inset;
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 }
 
 .h-saas-tabwrap {
@@ -680,7 +680,7 @@
 .h-saas-case {
 	position: relative;
 	background:
-		radial-gradient(80% 50% at 50% 0%, rgba(255, 175, 60, 0.08), transparent 60%),
+		radial-gradient(80% 50% at 50% 0%, rgba(255, 255, 255, 0.03), transparent 60%),
 		var(--saas-bg-2);
 	border: 1px solid var(--saas-border-2);
 	border-radius: var(--saas-radius);
@@ -691,14 +691,14 @@
 }
 
 .h-saas-case:hover {
-	border-color: rgba(255, 215, 106, 0.4);
+	border-color: rgba(255, 255, 255, 0.25);
 	transform: translateY(-2px);
 }
 
 .h-saas-case-stage {
 	position: relative;
 	aspect-ratio: 4 / 3;
-	background: radial-gradient(60% 60% at 50% 50%, rgba(255, 175, 60, 0.1), transparent 70%);
+	background: radial-gradient(60% 60% at 50% 50%, rgba(255, 255, 255, 0.04), transparent 70%);
 }
 
 .h-saas-case-stage model-viewer {
@@ -760,7 +760,7 @@
 	margin: 0 auto;
 	border: 1px solid var(--saas-border-2);
 	border-radius: var(--saas-radius);
-	background: linear-gradient(180deg, #14101a, #0c0a10);
+	background: linear-gradient(180deg, #111111, #0a0a0a);
 	overflow: hidden;
 	box-shadow: var(--saas-shadow);
 }
@@ -809,8 +809,8 @@
 }
 
 .h-saas-copy[data-copied='true'] {
-	background: rgba(110, 231, 183, 0.14);
-	border-color: rgba(110, 231, 183, 0.45);
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.3);
 	color: var(--saas-mint);
 }
 
@@ -824,9 +824,9 @@
 	overflow-x: auto;
 }
 
-.h-saas-codecard .tag { color: #ff8f4d; }
-.h-saas-codecard .attr { color: #ffd76a; }
-.h-saas-codecard .val { color: #6ee7b7; }
+.h-saas-codecard .tag { color: #e8e8e8; }
+.h-saas-codecard .attr { color: #ffffff; }
+.h-saas-codecard .val { color: #888888; }
 .h-saas-codecard .c { color: rgba(255, 255, 255, 0.32); font-style: italic; }
 
 /* ── 9. Integration grid ── */
@@ -875,7 +875,7 @@
 	width: 32px;
 	height: 32px;
 	border-radius: 8px;
-	background: linear-gradient(135deg, rgba(255, 175, 60, 0.16), rgba(110, 231, 183, 0.1));
+	background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.04));
 	border: 1px solid var(--saas-border-2);
 	font-size: 0.86rem;
 	font-weight: 700;
@@ -946,9 +946,9 @@
 	height: 18px;
 	border-radius: 50%;
 	background:
-		radial-gradient(circle at 50% 50%, rgba(110, 231, 183, 0.7), rgba(110, 231, 183, 0) 60%),
-		rgba(110, 231, 183, 0.08);
-	border: 1px solid rgba(110, 231, 183, 0.45);
+		radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 60%),
+		rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.3);
 	margin-top: 0.18rem;
 	position: relative;
 }
@@ -956,7 +956,7 @@
 .h-saas-price-card {
 	position: relative;
 	background:
-		radial-gradient(120% 100% at 50% 0%, rgba(255, 175, 60, 0.16), transparent 60%),
+		radial-gradient(120% 100% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 60%),
 		var(--saas-bg-2);
 	border: 1px solid var(--saas-border-2);
 	border-radius: var(--saas-radius-lg);
@@ -1028,8 +1028,8 @@
 	padding: clamp(3.6rem, 8vh, 6rem) var(--saas-pad-x);
 	text-align: center;
 	background:
-		radial-gradient(60% 80% at 50% 50%, rgba(255, 175, 60, 0.16), transparent 70%),
-		linear-gradient(180deg, #0e0c12, #08070b);
+		radial-gradient(60% 80% at 50% 50%, rgba(255, 255, 255, 0.06), transparent 70%),
+		linear-gradient(180deg, #0a0a0a, #000000);
 	border-top: 1px solid var(--saas-border);
 	border-bottom: 1px solid var(--saas-border);
 	overflow: hidden;

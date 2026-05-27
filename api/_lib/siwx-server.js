@@ -14,13 +14,15 @@
 //      then writes the grant so step 2 works next time.
 
 import {
+	createSIWxResourceServerExtension,
 	declareSIWxExtension,
 	parseSIWxHeader,
-	siwxResourceServerExtension,
 	validateSIWxMessage,
 	verifySIWxSignature,
 	SIGN_IN_WITH_X,
 } from '@x402/extensions/sign-in-with-x';
+
+const siwxResourceServerExtension = createSIWxResourceServerExtension();
 import { createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
 

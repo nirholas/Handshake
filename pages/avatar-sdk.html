@@ -35,21 +35,21 @@
 
 		<style>
 			:root {
-				--sdk-bg: #030307;
-				--sdk-surface: #0b0b14;
-				--sdk-card: #0e0e1a;
-				--sdk-border: rgba(139, 92, 246, 0.14);
-				--sdk-border-hi: rgba(139, 92, 246, 0.34);
-				--sdk-accent: #8b5cf6;
-				--sdk-accent2: #6366f1;
-				--sdk-cyan: #22d3ee;
-				--sdk-text: #f0f0f8;
-				--sdk-muted: #9898b0;
-				--sdk-dim: #5a5a72;
-				--sdk-code-bg: #070710;
-				--sdk-pill-bg: rgba(139, 92, 246, 0.18);
-				--sdk-pill-border: rgba(139, 92, 246, 0.35);
-				--sdk-success: #34d399;
+				--sdk-bg: #000000;
+				--sdk-surface: #0a0a0a;
+				--sdk-card: #111111;
+				--sdk-border: rgba(255, 255, 255, 0.08);
+				--sdk-border-hi: rgba(255, 255, 255, 0.15);
+				--sdk-accent: #ffffff;
+				--sdk-accent2: #ffffff;
+				--sdk-cyan: #ffffff;
+				--sdk-text: #e8e8e8;
+				--sdk-muted: #888888;
+				--sdk-dim: #555555;
+				--sdk-code-bg: #0a0a0a;
+				--sdk-pill-bg: rgba(255, 255, 255, 0.08);
+				--sdk-pill-border: rgba(255, 255, 255, 0.15);
+				--sdk-success: #e8e8e8;
 				--sdk-error: #f87171;
 				--sdk-radius: 14px;
 				--sdk-radius-sm: 8px;
@@ -101,24 +101,24 @@
 			.sdk-hero-bg-orb.a {
 				width: 560px; height: 560px;
 				top: -120px; left: -80px;
-				background: radial-gradient(circle, rgba(99,102,241,0.55) 0%, transparent 70%);
+				background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
 			}
 			.sdk-hero-bg-orb.b {
 				width: 420px; height: 420px;
 				top: 60px; right: -60px;
-				background: radial-gradient(circle, rgba(34,211,238,0.3) 0%, transparent 70%);
+				background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
 			}
 			.sdk-hero-bg-orb.c {
 				width: 300px; height: 300px;
 				bottom: 0; left: 40%;
-				background: radial-gradient(circle, rgba(139,92,246,0.35) 0%, transparent 70%);
+				background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
 			}
 			.sdk-hero-grid {
 				position: absolute;
 				inset: 0;
 				background-image:
-					linear-gradient(rgba(139,92,246,0.04) 1px, transparent 1px),
-					linear-gradient(90deg, rgba(139,92,246,0.04) 1px, transparent 1px);
+					linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+					linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
 				background-size: 48px 48px;
 				mask-image: linear-gradient(to bottom, transparent 0%, #000 25%, #000 65%, transparent 100%);
 				-webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 25%, #000 65%, transparent 100%);
@@ -148,20 +148,20 @@
 				font-size: 12px;
 				font-weight: 600;
 				letter-spacing: 0.04em;
-				color: #c4b5fd;
+				color: #e8e8e8;
 				text-transform: uppercase;
 				margin-bottom: 20px;
 			}
 			.sdk-hero-badge-dot {
 				width: 6px; height: 6px;
 				border-radius: 50%;
-				background: #8b5cf6;
-				box-shadow: 0 0 8px #8b5cf6;
+				background: #ffffff;
+				box-shadow: 0 0 8px #ffffff;
 				animation: sdk-dot-pulse 2.4s ease-in-out infinite;
 			}
 			@keyframes sdk-dot-pulse {
-				0%,100% { box-shadow: 0 0 6px rgba(139,92,246,0.7); }
-				50% { box-shadow: 0 0 14px rgba(139,92,246,1); }
+				0%,100% { box-shadow: 0 0 6px rgba(255,255,255,0.7); }
+				50% { box-shadow: 0 0 14px rgba(255,255,255,1); }
 			}
 			.sdk-hero-h1 {
 				font-family: 'Space Grotesk', 'Inter', sans-serif;
@@ -170,7 +170,7 @@
 				letter-spacing: -0.025em;
 				line-height: 1.08;
 				margin: 0 0 16px;
-				background: linear-gradient(135deg, #fff 0%, #c4b5fd 45%, #22d3ee 100%);
+				background: linear-gradient(135deg, #ffffff 0%, #cccccc 45%, #ffffff 100%);
 				-webkit-background-clip: text;
 				-webkit-text-fill-color: transparent;
 				background-clip: text;
@@ -202,15 +202,15 @@
 				padding: 11px 16px;
 				font-family: 'JetBrains Mono', ui-monospace, monospace;
 				font-size: 14px;
-				color: #c4b5fd;
+				color: #e8e8e8;
 				cursor: pointer;
 				transition: border-color 0.15s, box-shadow 0.15s;
 				flex: 1;
 				min-width: 0;
 			}
 			.sdk-install-cmd:hover {
-				border-color: rgba(139,92,246,0.6);
-				box-shadow: 0 0 0 3px rgba(139,92,246,0.12);
+				border-color: rgba(255,255,255,0.3);
+				box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
 			}
 			.sdk-install-cmd .prompt { color: var(--sdk-dim); user-select: none; flex-shrink: 0; }
 			.sdk-install-cmd .cmd-text { color: #e2e8f0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -237,8 +237,8 @@
 				display: inline-flex;
 				align-items: center;
 				gap: 7px;
-				background: linear-gradient(135deg, #7c3aed, #4f46e5);
-				color: #fff;
+				background: #ffffff;
+				color: #000000;
 				border: none;
 				border-radius: var(--sdk-radius-sm);
 				padding: 12px 22px;
@@ -246,7 +246,7 @@
 				cursor: pointer;
 				text-decoration: none;
 				transition: opacity 0.15s, transform 0.1s;
-				box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+				box-shadow: 0 4px 20px rgba(255,255,255,0.15);
 			}
 			.sdk-btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
 			.sdk-btn-ghost {
@@ -278,7 +278,7 @@
 				box-shadow:
 					0 0 0 1px rgba(255,255,255,0.04) inset,
 					0 24px 80px -24px rgba(0,0,0,0.8),
-					0 0 60px -10px rgba(99,102,241,0.2);
+					0 0 60px -10px rgba(255,255,255,0.05);
 				aspect-ratio: 9 / 10;
 				max-height: 500px;
 			}
@@ -303,14 +303,14 @@
 				pointer-events: none;
 			}
 			.sdk-viewer-badge code {
-				color: #c4b5fd;
+				color: #e8e8e8;
 				font-family: ui-monospace, monospace;
 				font-size: 11px;
 			}
 			.sdk-hero-viewer-glow {
 				position: absolute;
 				inset: -40px;
-				background: radial-gradient(ellipse at 50% 60%, rgba(99,102,241,0.18) 0%, transparent 65%);
+				background: radial-gradient(ellipse at 50% 60%, rgba(255,255,255,0.05) 0%, transparent 65%);
 				pointer-events: none;
 				z-index: -1;
 			}
@@ -334,7 +334,7 @@
 			.sdk-hero-scroll-line {
 				width: 1px;
 				height: 40px;
-				background: linear-gradient(to bottom, rgba(139,92,246,0.6), transparent);
+				background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
 				animation: sdk-scroll-line 2s ease-in-out infinite;
 			}
 			@keyframes sdk-scroll-line {
@@ -402,7 +402,7 @@
 				position: absolute;
 				top: 0; left: 0; right: 0;
 				height: 2px;
-				background: linear-gradient(90deg, transparent, var(--card-accent, #8b5cf6), transparent);
+				background: linear-gradient(90deg, transparent, var(--card-accent, #ffffff), transparent);
 				opacity: 0;
 				transition: opacity 0.25s;
 			}
@@ -419,8 +419,8 @@
 				justify-content: center;
 				margin-bottom: 16px;
 				font-size: 20px;
-				background: var(--icon-bg, rgba(139,92,246,0.15));
-				border: 1px solid var(--icon-border, rgba(139,92,246,0.25));
+				background: var(--icon-bg, rgba(255,255,255,0.15));
+				border: 1px solid var(--icon-border, rgba(255,255,255,0.25));
 			}
 			.sdk-feat-title {
 				font-family: 'Space Grotesk', sans-serif;
@@ -506,13 +506,13 @@
 				color: #e2e8f0;
 				tab-size: 2;
 			}
-			pre.sdk-pre .t-kw { color: #c4b5fd; }
-			pre.sdk-pre .t-str { color: #6ee7b7; }
-			pre.sdk-pre .t-tag { color: #7dd3fc; }
-			pre.sdk-pre .t-attr { color: #fda4af; }
+			pre.sdk-pre .t-kw { color: #e8e8e8; }
+			pre.sdk-pre .t-str { color: #e8e8e8; }
+			pre.sdk-pre .t-tag { color: #ffffff; }
+			pre.sdk-pre .t-attr { color: #e8e8e8; }
 			pre.sdk-pre .t-cmt { color: #475569; font-style: italic; }
-			pre.sdk-pre .t-fn { color: #fbbf24; }
-			pre.sdk-pre .t-num { color: #f9a8d4; }
+			pre.sdk-pre .t-fn { color: #e8e8e8; }
+			pre.sdk-pre .t-num { color: #e8e8e8; }
 			pre.sdk-pre .t-op { color: #94a3b8; }
 
 			/* ── Tabs ───────────────────────────────────────────────────── */
@@ -543,7 +543,7 @@
 			.sdk-tab-btn:hover { color: var(--sdk-muted); }
 			.sdk-tab-btn.active {
 				color: var(--sdk-text);
-				background: rgba(139,92,246,0.12);
+				background: rgba(255,255,255,0.12);
 			}
 			.sdk-tab-btn.active::after {
 				content: '';
@@ -591,7 +591,7 @@
 				font-family: 'Space Grotesk', sans-serif;
 				font-size: 16px;
 				font-weight: 700;
-				color: #c4b5fd;
+				color: #e8e8e8;
 				flex-shrink: 0;
 				margin-top: 2px;
 			}
@@ -609,7 +609,7 @@
 				color: var(--sdk-muted);
 				margin: 0 0 14px;
 			}
-			.sdk-step-desc a { color: #c4b5fd; text-decoration: none; }
+			.sdk-step-desc a { color: #e8e8e8; text-decoration: none; }
 			.sdk-step-desc a:hover { text-decoration: underline; }
 
 			/* ── Creator live demo ──────────────────────────────────────── */
@@ -641,7 +641,7 @@
 				box-sizing: border-box;
 				display: none;
 			}
-			.sdk-creator-status.info { display: block; color: #7dd3fc; background: rgba(34,211,238,0.06); }
+			.sdk-creator-status.info { display: block; color: #ffffff; background: rgba(255,255,255,0.06); }
 			.sdk-creator-status.ok   { display: block; color: var(--sdk-success); background: rgba(52,211,153,0.07); }
 			.sdk-creator-status.err  { display: block; color: var(--sdk-error); background: rgba(248,113,113,0.07); }
 			.sdk-creator-status.muted { display: block; color: var(--sdk-dim); }
@@ -659,7 +659,7 @@
 				font-size: 14px;
 			}
 			.sdk-table th {
-				background: rgba(139,92,246,0.08);
+				background: rgba(255,255,255,0.08);
 				padding: 14px 18px;
 				text-align: left;
 				font-family: 'Space Grotesk', sans-serif;
@@ -678,11 +678,11 @@
 				vertical-align: top;
 			}
 			.sdk-table tr:last-child td { border-bottom: none; }
-			.sdk-table tr:hover td { background: rgba(139,92,246,0.04); }
+			.sdk-table tr:hover td { background: rgba(255,255,255,0.04); }
 			.sdk-table td:first-child { color: var(--sdk-text); font-weight: 500; }
 			.sdk-table .check { color: var(--sdk-success); font-weight: 700; }
 			.sdk-table .cross { color: #f87171; }
-			.sdk-table .col-three { color: #c4b5fd; }
+			.sdk-table .col-three { color: #e8e8e8; }
 
 			/* ── API reference cards ────────────────────────────────────── */
 			.sdk-api-grid {
@@ -697,7 +697,7 @@
 				overflow: hidden;
 			}
 			.sdk-api-card-head {
-				background: rgba(139,92,246,0.07);
+				background: rgba(255,255,255,0.07);
 				border-bottom: 1px solid var(--sdk-border);
 				padding: 14px 18px;
 				display: flex;
@@ -709,9 +709,9 @@
 				font-weight: 700;
 				letter-spacing: 0.06em;
 				text-transform: uppercase;
-				background: rgba(139,92,246,0.2);
-				border: 1px solid rgba(139,92,246,0.35);
-				color: #c4b5fd;
+				background: rgba(255,255,255,0.2);
+				border: 1px solid rgba(255,255,255,0.35);
+				color: #e8e8e8;
 				padding: 2px 7px;
 				border-radius: 4px;
 			}
@@ -747,7 +747,7 @@
 			.sdk-api-prop-name {
 				font-family: ui-monospace, monospace;
 				font-size: 12px;
-				color: #fda4af;
+				color: #e8e8e8;
 				white-space: nowrap;
 			}
 			.sdk-api-prop-desc {
@@ -759,8 +759,8 @@
 			/* ── CTA banner ─────────────────────────────────────────────── */
 			.sdk-cta-banner {
 				border-radius: var(--sdk-radius);
-				background: linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(34,211,238,0.08) 100%);
-				border: 1.5px solid rgba(139,92,246,0.3);
+				background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%);
+				border: 1.5px solid rgba(255,255,255,0.3);
 				padding: 48px 40px;
 				display: flex;
 				align-items: center;
@@ -773,7 +773,7 @@
 				content: '';
 				position: absolute;
 				inset: 0;
-				background: radial-gradient(ellipse at 80% 50%, rgba(99,102,241,0.15) 0%, transparent 60%);
+				background: radial-gradient(ellipse at 80% 50%, rgba(255,255,255,0.15) 0%, transparent 60%);
 				pointer-events: none;
 			}
 			.sdk-cta-banner-copy {}
@@ -847,8 +847,8 @@
 						<path d="M8 11h16M8 16h10M8 21h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
 						<defs>
 							<linearGradient id="logo-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-								<stop stop-color="#7c3aed"/>
-								<stop offset="1" stop-color="#4f46e5"/>
+								<stop stop-color="#ffffff"/>
+								<stop offset="1" stop-color="#ffffff"/>
 							</linearGradient>
 						</defs>
 					</svg>
@@ -938,27 +938,27 @@
 					<p class="sdk-lead">Four building blocks — use what you need, tree-shake the rest.</p>
 
 					<div class="sdk-feature-grid">
-						<div class="sdk-feat-card" style="--card-accent:#8b5cf6">
-							<div class="sdk-feat-icon" style="--icon-bg:rgba(139,92,246,0.15);--icon-border:rgba(139,92,246,0.25)">
-								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2" y="2" width="16" height="16" rx="3" stroke="#c4b5fd" stroke-width="1.5"/><path d="M2 7h16" stroke="#c4b5fd" stroke-width="1.5"/><circle cx="5" cy="4.5" r="1" fill="#c4b5fd"/><circle cx="8" cy="4.5" r="1" fill="#c4b5fd"/></svg>
+						<div class="sdk-feat-card" style="--card-accent:#ffffff">
+							<div class="sdk-feat-icon" style="--icon-bg:rgba(255,255,255,0.15);--icon-border:rgba(255,255,255,0.25)">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2" y="2" width="16" height="16" rx="3" stroke="#e8e8e8" stroke-width="1.5"/><path d="M2 7h16" stroke="#e8e8e8" stroke-width="1.5"/><circle cx="5" cy="4.5" r="1" fill="#e8e8e8"/><circle cx="8" cy="4.5" r="1" fill="#e8e8e8"/></svg>
 							</div>
 							<p class="sdk-feat-title">Web Component</p>
 							<p class="sdk-feat-desc">Drop <code>&lt;agent-3d&gt;</code> or the lightweight <code>&lt;three-ws-viewer&gt;</code> into any HTML page or framework. Self-registers on import.</p>
 							<span class="sdk-feat-tag">framework-agnostic</span>
 						</div>
 
-						<div class="sdk-feat-card" style="--card-accent:#6366f1">
-							<div class="sdk-feat-icon" style="--icon-bg:rgba(99,102,241,0.15);--icon-border:rgba(99,102,241,0.25)">
-								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="3" stroke="#a5b4fc" stroke-width="1.5"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#a5b4fc" stroke-width="1.5" stroke-linecap="round"/><path d="M5.64 5.64l1.42 1.42M12.94 12.94l1.42 1.42M5.64 14.36l1.42-1.42M12.94 7.06l1.42-1.42" stroke="#a5b4fc" stroke-width="1.3" stroke-linecap="round"/></svg>
+						<div class="sdk-feat-card" style="--card-accent:#ffffff">
+							<div class="sdk-feat-icon" style="--icon-bg:rgba(255,255,255,0.15);--icon-border:rgba(255,255,255,0.25)">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="3" stroke="#e8e8e8" stroke-width="1.5"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#e8e8e8" stroke-width="1.5" stroke-linecap="round"/><path d="M5.64 5.64l1.42 1.42M12.94 12.94l1.42 1.42M5.64 14.36l1.42-1.42M12.94 7.06l1.42-1.42" stroke="#e8e8e8" stroke-width="1.3" stroke-linecap="round"/></svg>
 							</div>
 							<p class="sdk-feat-title">React Bindings</p>
 							<p class="sdk-feat-desc">First-class React 18+ components — <code>&lt;Avatar&gt;</code>, <code>&lt;AgentAvatar&gt;</code>, <code>&lt;AvatarCreator&gt;</code> and a <code>useAvatar(id)</code> hook.</p>
 							<span class="sdk-feat-tag">@three-ws/avatar/react</span>
 						</div>
 
-						<div class="sdk-feat-card" style="--card-accent:#22d3ee">
-							<div class="sdk-feat-icon" style="--icon-bg:rgba(34,211,238,0.12);--icon-border:rgba(34,211,238,0.22)">
-								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2.5" stroke="#67e8f9" stroke-width="1.5"/><path d="M8 3v14" stroke="#67e8f9" stroke-width="1.3" stroke-dasharray="2 2"/><path d="M13 8l-3 4-2-2" stroke="#67e8f9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+						<div class="sdk-feat-card" style="--card-accent:#ffffff">
+							<div class="sdk-feat-icon" style="--icon-bg:rgba(255,255,255,0.12);--icon-border:rgba(255,255,255,0.22)">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2.5" stroke="#e8e8e8" stroke-width="1.5"/><path d="M8 3v14" stroke="#e8e8e8" stroke-width="1.3" stroke-dasharray="2 2"/><path d="M13 8l-3 4-2-2" stroke="#e8e8e8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 							</div>
 							<p class="sdk-feat-title">Creator Iframe</p>
 							<p class="sdk-feat-desc">Open the three.ws Avatar Studio or Avaturn in a modal. Resolves with a GLB Blob via postMessage — no polling, no storage tokens required.</p>
@@ -967,7 +967,7 @@
 
 						<div class="sdk-feat-card" style="--card-accent:#34d399">
 							<div class="sdk-feat-icon" style="--icon-bg:rgba(52,211,153,0.12);--icon-border:rgba(52,211,153,0.22)">
-								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v10M10 3l-3 3M10 3l3 3" stroke="#6ee7b7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 13v3a1 1 0 001 1h10a1 1 0 001-1v-3" stroke="#6ee7b7" stroke-width="1.5" stroke-linecap="round"/></svg>
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v10M10 3l-3 3M10 3l3 3" stroke="#e8e8e8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 13v3a1 1 0 001 1h10a1 1 0 001-1v-3" stroke="#e8e8e8" stroke-width="1.5" stroke-linecap="round"/></svg>
 							</div>
 							<p class="sdk-feat-title">Cloud Upload</p>
 							<p class="sdk-feat-desc">One-call <code>saveBlob()</code> presigns to R2, uploads, registers the avatar, auto-generates USDZ for iOS and a half-body variant for VR.</p>

@@ -495,6 +495,25 @@
 		.skeleton-bar.short { width: 60%; }
 		.skeleton-bar.xshort { width: 40%; height: 10px; margin-top: 6px; }
 		@keyframes shimmer { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+
+		/* Brain card */
+		.brain-card { cursor: default; }
+		.brain-card-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+		.brain-model-name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+		.brain-network { font-size: 11.5px; color: var(--text-soft); margin-top: 2px; }
+		.brain-badge {
+			font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+			padding: 2px 6px; border-radius: 4px;
+			background: rgba(61,193,255,0.12); color: #3dc1ff;
+		}
+		.brain-link {
+			display: block; text-align: center; padding: 8px 14px;
+			background: transparent; color: var(--text-soft);
+			border: 1px solid var(--border-strong); border-radius: 9px;
+			font-size: 13px; margin-top: 14px;
+			transition: background 0.12s, color 0.12s, border-color 0.12s;
+		}
+		.brain-link:hover { background: var(--panel-soft); color: var(--text); border-color: var(--text-soft); }
 	</style>
 	<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 </head>
@@ -615,6 +634,18 @@
 
 			<div id="owner-panels"></div>
 
+			<div class="card brain-card" id="brain-card">
+				<div class="card-label">AI Brain</div>
+				<div class="brain-card-row">
+					<div>
+						<div class="brain-model-name" id="brain-model-name">Claude Sonnet 4.6</div>
+						<div class="brain-network" id="brain-network">Anthropic</div>
+					</div>
+					<span class="brain-badge" id="brain-tier">Balanced</span>
+				</div>
+				<a class="brain-link" href="/brain" id="brain-chat-link">Chat with AI →</a>
+			</div>
+
 			<div class="card embed-card">
 				<div class="card-label">Embed this agent</div>
 <pre id="embed-snippet"><span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="str">"module"</span> <span class="attr">src</span>=<span class="str">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
@@ -709,6 +740,26 @@
 			pre.innerHTML =
 				`<span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="str">"module"</span> <span class="attr">src</span>=<span class="str">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>\n` +
 				`<span class="tag">&lt;agent-3d</span> <span class="attr">src</span>=<span class="str">"${escHtml(avatarUrl)}"</span><span class="tag">&gt;&lt;/agent-3d&gt;</span>`;
+
+			// Brain card — populate from agent manifest brain config
+			(function hydrateBrainCard() {
+				const MODEL_META = {
+					'claude-opus-4-7':       { label: 'Claude Opus 4.7',   network: 'Anthropic', tier: 'Flagship' },
+					'claude-opus-4-6':       { label: 'Claude Opus 4.6',   network: 'Anthropic', tier: 'Flagship' },
+					'claude-sonnet-4-6':     { label: 'Claude Sonnet 4.6', network: 'Anthropic', tier: 'Balanced' },
+					'claude-haiku-4-5':      { label: 'Claude Haiku 4.5',  network: 'Anthropic', tier: 'Fast'     },
+					'claude-haiku-4-5-20251001': { label: 'Claude Haiku 4.5', network: 'Anthropic', tier: 'Fast'  },
+					'gpt-4o':                { label: 'GPT-4o',            network: 'OpenAI',    tier: 'Flagship' },
+					'gpt-4o-mini':           { label: 'GPT-4o-mini',       network: 'OpenAI',    tier: 'Fast'     },
+					'llama-3.3-70b-versatile':{ label: 'Llama 3.3 70B',   network: 'Groq',      tier: 'Fast'     },
+				};
+				const brainModel = data.brain?.model || data.policy?.brain?.model || 'claude-sonnet-4-6';
+				const meta = MODEL_META[brainModel] || MODEL_META['claude-sonnet-4-6'];
+				document.getElementById('brain-model-name').textContent = meta.label;
+				document.getElementById('brain-network').textContent = meta.network;
+				document.getElementById('brain-tier').textContent = meta.tier;
+				document.getElementById('brain-chat-link').href = `/brain`;
+			})();
 
 			// Update identity pills based on actual data
 			const pills = document.getElementById('identity-pills');

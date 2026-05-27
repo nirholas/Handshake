@@ -1,8 +1,8 @@
 :root {
-	--border: #1f1f29;
-	--bg: #000;
-	--panel: #14141c;
-	--muted: #888;
+	--border: #1a1a1a;
+	--bg: #000000;
+	--panel: #111111;
+	--muted: #888888;
 }
 html, body {
 	margin: 0;
@@ -85,7 +85,7 @@ html, body {
 }
 #stage {
 	position: relative;
-	background: radial-gradient(ellipse at center, #1a1a26 0%, #0a0a12 70%);
+	background: radial-gradient(ellipse at center, #1a1a1a 0%, #0a0a0a 70%);
 }
 #agent {
 	width: 100%;

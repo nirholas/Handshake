@@ -181,7 +181,9 @@ async function handleTheme(req, res) {
 
 	const rows = await sql`
 		SELECT a.id, a.name, a.description, a.category, a.tags, a.skills,
-		       a.views_count, a.forks_count, a.rating_avg, a.rating_count,
+		       a.views_count, a.forks_count,
+		       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_avg,
+		       COALESCE((SELECT COUNT(*) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_count,
 		       a.published_at, a.created_at,
 		       v.storage_key AS avatar_storage_key, v.is_public AS avatar_public,
 		       v.thumbnail_key
@@ -189,7 +191,7 @@ async function handleTheme(req, res) {
 		LEFT JOIN avatars v ON v.id = a.avatar_id AND v.deleted_at IS NULL
 		WHERE a.is_published = true AND a.deleted_at IS NULL
 		  AND (${cat.slug === 'general'} OR a.category = ${cat.slug})
-		ORDER BY a.views_count DESC, a.rating_avg DESC
+		ORDER BY a.views_count DESC, rating_avg DESC
 		LIMIT 8
 	`;
 

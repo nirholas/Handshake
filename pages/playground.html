@@ -25,9 +25,9 @@
             --text: #fafafa;
             --text-2: #a1a1aa;
             --text-3: #52525b;
-            --accent: #a78bfa;
-            --accent-dim: rgba(167, 139, 250, 0.12);
-            --success: #34d399;
+            --accent: #ffffff;
+            --accent-dim: rgba(255, 255, 255, 0.10);
+            --success: #e8e8e8;
             --err: #f87171;
         }
 
@@ -96,12 +96,12 @@
             border-radius: 14px;
             overflow: hidden;
             border: 1px solid var(--border);
-            background: radial-gradient(ellipse at 50% 30%, rgba(167,139,250,0.06) 0%, transparent 65%), var(--panel);
+            background: radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.03) 0%, transparent 65%), var(--panel);
             min-height: 420px;
         }
         .pg-viewer-wrap.drag-over {
             border-color: var(--accent);
-            background: radial-gradient(ellipse at 50% 30%, rgba(167,139,250,0.15) 0%, transparent 65%), var(--panel);
+            background: radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.08) 0%, transparent 65%), var(--panel);
         }
         #viewer {
             width: 100%;
@@ -390,7 +390,7 @@
             color: #0a0a0a;
             font-weight: 600;
         }
-        .pg-btn.accent:hover { background: #8b6df0; border-color: #8b6df0; }
+        .pg-btn.accent:hover { background: #e0e0e0; border-color: #e0e0e0; }
         .btn-row {
             display: flex;
             gap: 0.4rem;
@@ -813,7 +813,7 @@
                 document.querySelectorAll('[data-bg]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 document.querySelector('.pg-viewer-wrap').style.background =
-                    `radial-gradient(ellipse at 50% 30%, rgba(167,139,250,0.06) 0%, transparent 65%), ${btn.dataset.bg}`;
+                    `radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.03) 0%, transparent 65%), ${btn.dataset.bg}`;
             });
         });
 

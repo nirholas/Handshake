@@ -8,45 +8,45 @@
 
 :root {
 	/* Surfaces */
-	--pd-bg: #06070b;
-	--pd-bg-elev: #0a0c12;
-	--pd-bg-card: rgba(255, 255, 255, 0.018);
-	--pd-bg-card-hover: rgba(255, 255, 255, 0.028);
-	--pd-bg-input: rgba(255, 255, 255, 0.03);
-	--pd-bg-input-focus: rgba(255, 255, 255, 0.06);
+	--pd-bg: #000000;
+	--pd-bg-elev: #0a0a0a;
+	--pd-bg-card: rgba(255, 255, 255, 0.02);
+	--pd-bg-card-hover: rgba(255, 255, 255, 0.04);
+	--pd-bg-input: rgba(255, 255, 255, 0.04);
+	--pd-bg-input-focus: rgba(255, 255, 255, 0.08);
 
 	/* Borders */
 	--pd-border: rgba(255, 255, 255, 0.07);
 	--pd-border-strong: rgba(255, 255, 255, 0.14);
-	--pd-border-focus: rgba(167, 139, 250, 0.45);
+	--pd-border-focus: rgba(255, 255, 255, 0.35);
 
 	/* Text */
-	--pd-text: rgba(224, 224, 224, 0.86);
+	--pd-text: rgba(232, 232, 232, 0.86);
 	--pd-text-bright: #fff;
 	--pd-text-muted: rgba(255, 255, 255, 0.5);
 	--pd-text-dim: rgba(255, 255, 255, 0.35);
 
 	/* Accents */
-	--pd-accent: #a78bfa;
-	--pd-accent-bright: #c4b5fd;
-	--pd-accent-soft: rgba(167, 139, 250, 0.16);
-	--pd-accent-border: rgba(167, 139, 250, 0.32);
+	--pd-accent: #ffffff;
+	--pd-accent-bright: #e8e8e8;
+	--pd-accent-soft: rgba(255, 255, 255, 0.1);
+	--pd-accent-border: rgba(255, 255, 255, 0.2);
 
 	--pd-warn: #fbbf24;
 	--pd-warn-soft: rgba(251, 191, 36, 0.14);
 	--pd-warn-border: rgba(251, 191, 36, 0.3);
 
-	--pd-success: #34d399;
-	--pd-success-soft: rgba(52, 211, 153, 0.14);
-	--pd-success-border: rgba(52, 211, 153, 0.3);
+	--pd-success: #4ade80;
+	--pd-success-soft: rgba(74, 222, 128, 0.14);
+	--pd-success-border: rgba(74, 222, 128, 0.3);
 
 	--pd-danger: #f87171;
 	--pd-danger-soft: rgba(248, 113, 113, 0.14);
 	--pd-danger-border: rgba(248, 113, 113, 0.32);
 
-	--pd-blue: #60a5fa;
-	--pd-blue-soft: rgba(96, 165, 250, 0.14);
-	--pd-blue-border: rgba(96, 165, 250, 0.32);
+	--pd-blue: #ffffff;
+	--pd-blue-soft: rgba(255, 255, 255, 0.1);
+	--pd-blue-border: rgba(255, 255, 255, 0.2);
 
 	/* Typography */
 	--pd-font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
@@ -92,7 +92,7 @@ html.pump-dashboard-page body {
 
 .pd-sidebar {
 	width: var(--pd-sidebar-w);
-	background: linear-gradient(180deg, rgba(13, 12, 19, 0.94) 0%, rgba(7, 6, 11, 0.94) 100%);
+	background: linear-gradient(180deg, rgba(10, 10, 10, 0.94) 0%, rgba(0, 0, 0, 0.94) 100%);
 	border-right: 1px solid var(--pd-border);
 	display: flex;
 	flex-direction: column;
@@ -341,7 +341,7 @@ html.pump-dashboard-page body {
 	height: 200px;
 	border-radius: var(--pd-radius-sm);
 	background:
-		radial-gradient(ellipse at center top, rgba(167, 139, 250, 0.18) 0%, transparent 70%),
+		radial-gradient(ellipse at center top, rgba(255, 255, 255, 0.08) 0%, transparent 70%),
 		var(--pd-bg-elev);
 	border: 1px solid var(--pd-border);
 	display: flex;
@@ -686,8 +686,8 @@ html.pump-dashboard-page body {
 }
 
 .pd-btn.is-primary:hover {
-	background: rgba(167, 139, 250, 0.26);
-	border-color: rgba(167, 139, 250, 0.55);
+	background: rgba(255, 255, 255, 0.14);
+	border-color: rgba(255, 255, 255, 0.35);
 }
 
 .pd-btn.is-danger {

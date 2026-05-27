@@ -13,17 +13,17 @@
  */
 
 :root {
-	--ho-cyan: #5ee7ff;
-	--ho-violet: #a78bfa;
-	--ho-magenta: #ff5ea0;
-	--ho-mint: #6ee7b7;
-	--ho-ink: #07070b;
+	--ho-cyan: #ffffff;
+	--ho-violet: #ffffff;
+	--ho-magenta: #ffffff;
+	--ho-mint: #e8e8e8;
+	--ho-ink: #000000;
 	--ho-glass: rgba(255, 255, 255, 0.04);
-	--ho-glass-strong: rgba(255, 255, 255, 0.07);
-	--ho-line: rgba(255, 255, 255, 0.09);
-	--ho-line-strong: rgba(255, 255, 255, 0.18);
-	--ho-text-dim: rgba(255, 255, 255, 0.62);
-	--ho-text-faint: rgba(255, 255, 255, 0.42);
+	--ho-glass-strong: rgba(255, 255, 255, 0.08);
+	--ho-line: rgba(255, 255, 255, 0.06);
+	--ho-line-strong: rgba(255, 255, 255, 0.14);
+	--ho-text-dim: rgba(255, 255, 255, 0.55);
+	--ho-text-faint: rgba(255, 255, 255, 0.35);
 }
 
 /* Deep, even background — replaces the amber-bias warm wash for the new
@@ -46,14 +46,14 @@ body.home-page {
 .home-page .h-hero-glow-a {
 	background: radial-gradient(
 		closest-side,
-		rgba(94, 231, 255, 0.18),
+		rgba(255, 255, 255, 0.08),
 		transparent 70%
 	);
 }
 .home-page .h-hero-glow-b {
 	background: radial-gradient(
 		closest-side,
-		rgba(167, 139, 250, 0.18),
+		rgba(255, 255, 255, 0.08),
 		transparent 70%
 	);
 }
@@ -67,8 +67,8 @@ body.home-page {
 	margin-bottom: 0.9rem;
 	background: linear-gradient(
 		135deg,
-		rgba(94, 231, 255, 0.1),
-		rgba(167, 139, 250, 0.1)
+		rgba(255, 255, 255, 0.04),
+		rgba(255, 255, 255, 0.04)
 	);
 	border: 1px solid var(--ho-line-strong);
 	border-radius: 999px;
@@ -84,7 +84,7 @@ body.home-page {
 
 .h-hero-pill:hover {
 	transform: translateY(-1px);
-	border-color: rgba(94, 231, 255, 0.55);
+	border-color: rgba(255, 255, 255, 0.35);
 }
 
 .h-hero-pill-tag {
@@ -127,10 +127,10 @@ body.home-page {
 .home-page .h-title em {
 	background: linear-gradient(
 		100deg,
-		#5ee7ff 0%,
-		#a78bfa 35%,
-		#ff5ea0 70%,
-		#ffd76a 100%
+		#ffffff 0%,
+		#e8e8e8 35%,
+		#cccccc 70%,
+		#ffffff 100%
 	);
 	background-size: 260% 100%;
 }
@@ -203,7 +203,7 @@ body.home-page {
 	padding: clamp(4rem, 8vh, 7rem) 0 clamp(3rem, 6vh, 5rem);
 	background: radial-gradient(
 			ellipse at top,
-			rgba(94, 231, 255, 0.08),
+			rgba(255, 255, 255, 0.04),
 			transparent 55%
 		),
 		var(--ho-ink);
@@ -238,19 +238,19 @@ body.home-page {
 	height: 7px;
 	border-radius: 50%;
 	background: var(--ho-cyan);
-	box-shadow: 0 0 0 0 rgba(94, 231, 255, 0.6);
+	box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
 	animation: hoLiveDot 1.8s ease-out infinite;
 }
 
 @keyframes hoLiveDot {
 	0% {
-		box-shadow: 0 0 0 0 rgba(94, 231, 255, 0.55);
+		box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
 	}
 	70% {
-		box-shadow: 0 0 0 10px rgba(94, 231, 255, 0);
+		box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
 	}
 	100% {
-		box-shadow: 0 0 0 0 rgba(94, 231, 255, 0);
+		box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
 	}
 }
 
@@ -352,10 +352,10 @@ body.home-page {
 
 .h-livewall-card:hover {
 	transform: translateY(-4px) scale(1.02);
-	border-color: rgba(94, 231, 255, 0.45);
+	border-color: rgba(255, 255, 255, 0.25);
 	box-shadow:
-		0 18px 40px -16px rgba(94, 231, 255, 0.35),
-		0 0 0 1px rgba(94, 231, 255, 0.25);
+		0 18px 40px -16px rgba(255, 255, 255, 0.15),
+		0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 .h-livewall-card-visual {
@@ -416,7 +416,7 @@ body.home-page {
 }
 
 .h-livewall-card-tag--featured {
-	color: #ffd76a;
+	color: #ffffff;
 }
 
 .h-livewall-card-body {
@@ -494,7 +494,7 @@ body.home-page {
 	background: linear-gradient(
 		180deg,
 		var(--ho-ink) 0%,
-		#0b0a14 50%,
+		#0a0a0a 50%,
 		var(--ho-ink) 100%
 	);
 	border-block: 1px solid var(--ho-line);
@@ -747,7 +747,7 @@ body.home-page {
 	background:
 		radial-gradient(
 			ellipse at top left,
-			rgba(167, 139, 250, 0.06),
+			rgba(255, 255, 255, 0.03),
 			transparent 60%
 		),
 		var(--ho-ink);
@@ -762,7 +762,7 @@ body.home-page {
 }
 
 .home-page .h-pillar:hover {
-	border-color: rgba(94, 231, 255, 0.35);
+	border-color: rgba(255, 255, 255, 0.2);
 	transform: translateY(-3px);
 	background: var(--ho-glass-strong);
 }
@@ -778,7 +778,7 @@ body.home-page {
 	background:
 		radial-gradient(
 			ellipse at bottom right,
-			rgba(94, 231, 255, 0.05),
+			rgba(255, 255, 255, 0.03),
 			transparent 60%
 		),
 		var(--ho-ink);
@@ -791,7 +791,7 @@ body.home-page {
 }
 
 .home-page .h-journey-card:hover {
-	border-color: rgba(167, 139, 250, 0.45);
+	border-color: rgba(255, 255, 255, 0.25);
 	background: var(--ho-glass-strong);
 }
 
@@ -821,7 +821,7 @@ body.home-page {
 	background:
 		radial-gradient(
 			ellipse at center top,
-			rgba(167, 139, 250, 0.05),
+			rgba(255, 255, 255, 0.03),
 			transparent 60%
 		),
 		var(--ho-ink);
@@ -834,7 +834,7 @@ body.home-page {
 
 .home-page .h-bento-card:hover {
 	transform: translateY(-3px);
-	border-color: rgba(94, 231, 255, 0.35);
+	border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* ── Final CTA polish ────────────────────────────────────────────────────── */
@@ -843,7 +843,7 @@ body.home-page {
 	background:
 		radial-gradient(
 			ellipse at center,
-			rgba(94, 231, 255, 0.08),
+			rgba(255, 255, 255, 0.04),
 			transparent 55%
 		),
 		var(--ho-ink);

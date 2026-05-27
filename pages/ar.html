@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="theme-color" content="#050810" />
+		<meta name="theme-color" content="#000000" />
 		<title>Avatar in AR · three.ws</title>
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
@@ -19,13 +19,13 @@
 
 		<style>
 			:root {
-				--bg:       #050810;
-				--bg2:      #0a0e1a;
-				--text:     #f0f4ff;
-				--text-2:   #8891aa;
-				--text-3:   #4b5268;
-				--accent:   #7dd3fc;
-				--accent-2: #a78bfa;
+				--bg:       #000000;
+				--bg2:      #0a0a0a;
+				--text:     #e8e8e8;
+				--text-2:   #888888;
+				--text-3:   #555555;
+				--accent:   #ffffff;
+				--accent-2: #ffffff;
 				--panel:    rgba(255,255,255,0.04);
 				--border:   rgba(255,255,255,0.08);
 				--radius:   14px;
@@ -55,9 +55,9 @@
 				position: absolute;
 				inset: 0;
 				background:
-					radial-gradient(ellipse 80% 60% at 50% 0%, rgba(125,211,252,0.07) 0%, transparent 65%),
-					radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06) 0%, transparent 60%),
-					radial-gradient(ellipse 50% 40% at 20% 70%, rgba(125,211,252,0.04) 0%, transparent 55%);
+					radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,255,255,0.03) 0%, transparent 65%),
+					radial-gradient(ellipse 60% 50% at 80% 80%, rgba(255,255,255,0.02) 0%, transparent 60%),
+					radial-gradient(ellipse 50% 40% at 20% 70%, rgba(255,255,255,0.02) 0%, transparent 55%);
 			}
 
 			/* ── Layout shell ────────────────────────────── */
@@ -85,7 +85,7 @@
 				padding-right: 16px;
 				padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
 				padding-bottom: 14px;
-				background: linear-gradient(to bottom, rgba(5,8,16,0.85) 0%, transparent 100%);
+				background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%);
 				backdrop-filter: blur(0px);
 			}
 			.ar-back {
@@ -118,8 +118,8 @@
 				letter-spacing: 0.08em;
 				text-transform: uppercase;
 				color: var(--accent);
-				background: rgba(125,211,252,0.08);
-				border: 1px solid rgba(125,211,252,0.2);
+				background: rgba(255,255,255,0.08);
+				border: 1px solid rgba(255,255,255,0.2);
 				border-radius: 999px;
 				padding: 4px 10px;
 			}
@@ -171,7 +171,7 @@
 				z-index: 10;
 				padding: 0 20px;
 				padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
-				background: linear-gradient(to top, rgba(5,8,16,0.92) 0%, rgba(5,8,16,0.6) 60%, transparent 100%);
+				background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 60%, transparent 100%);
 				display: flex;
 				flex-direction: column;
 				align-items: center;
@@ -212,7 +212,7 @@
 				width: 13px;
 				height: 13px;
 				border-radius: 50%;
-				border: 2px solid rgba(167,139,250,0.25);
+				border: 2px solid rgba(255,255,255,0.25);
 				border-top-color: var(--accent-2);
 				animation: ar-spin 0.7s linear infinite;
 				flex-shrink: 0;
@@ -223,8 +223,8 @@
 				width: 100%;
 				max-width: 380px;
 				height: 60px;
-				background: linear-gradient(135deg, #7dd3fc 0%, #a78bfa 100%);
-				color: #05080e;
+				background: #ffffff;
+				color: #000000;
 				border: 0;
 				border-radius: 18px;
 				font-family: 'Space Grotesk', system-ui, sans-serif;
@@ -237,7 +237,7 @@
 				justify-content: center;
 				gap: 10px;
 				transition: transform 0.12s, box-shadow 0.2s, opacity 0.15s;
-				box-shadow: 0 8px 32px -8px rgba(125,211,252,0.5), 0 0 0 1px rgba(255,255,255,0.08) inset;
+				box-shadow: 0 8px 32px -8px rgba(255,255,255,0.2), 0 0 0 1px rgba(255,255,255,0.08) inset;
 				position: relative;
 				overflow: hidden;
 			}
@@ -250,7 +250,7 @@
 			}
 			.ar-launch-btn:hover:not(:disabled) {
 				transform: translateY(-2px);
-				box-shadow: 0 14px 40px -8px rgba(167,139,250,0.55), 0 0 0 1px rgba(255,255,255,0.1) inset;
+				box-shadow: 0 14px 40px -8px rgba(255,255,255,0.25), 0 0 0 1px rgba(255,255,255,0.1) inset;
 			}
 			.ar-launch-btn:active:not(:disabled) { transform: translateY(0); }
 			.ar-launch-btn:disabled {

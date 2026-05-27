@@ -4,12 +4,12 @@
 
 :root {
 	color-scheme: dark;
-	--accent: #f0b429;
-	--border: #1e1e2a;
-	--bg: #080814;
-	--panel: #0f0f18;
-	--text: #e8e8ee;
-	--text-dim: #6b6b80;
+	--accent: #ffffff;
+	--border: #1a1a1a;
+	--bg: #000000;
+	--panel: #0a0a0a;
+	--text: #e8e8e8;
+	--text-dim: #555555;
 	--radius: 12px;
 }
 
@@ -66,7 +66,7 @@ main {
 
 .agent-wrap {
 	position: relative;
-	background: radial-gradient(ellipse 80% 70% at 50% 40%, #1a1630 0%, var(--bg) 75%);
+	background: radial-gradient(ellipse 80% 70% at 50% 40%, #1a1a1a 0%, var(--bg) 75%);
 }
 
 agent-3d {
@@ -176,7 +176,7 @@ pre {
 	border-radius: 8px;
 	font-size: 11px;
 	line-height: 1.5;
-	color: #9a8cff;
+	color: #cccccc;
 	overflow-x: auto;
 	white-space: pre-wrap;
 	word-break: break-all;
@@ -193,9 +193,9 @@ pre {
 	display: inline-block;
 	margin-top: 28px;
 	padding: 3px 10px;
-	background: rgba(240, 180, 41, 0.12);
+	background: rgba(255, 255, 255, 0.06);
 	color: var(--accent);
-	border: 1px solid rgba(240, 180, 41, 0.25);
+	border: 1px solid rgba(255, 255, 255, 0.15);
 	border-radius: 20px;
 	font-size: 11px;
 	font-weight: 600;

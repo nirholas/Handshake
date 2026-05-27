@@ -1,18 +1,18 @@
 /* ── Avatar Studio Demo ─────────────────────────────────────────────────── */
 
 :root {
-	--as-bg: #050505;
-	--as-panel-bg: #0c0c0c;
-	--as-panel-2: #141414;
-	--as-border: #1c1c1c;
-	--as-border-2: #282828;
-	--as-text: #f5f5f5;
-	--as-text-2: #a1a1aa;
-	--as-text-3: #71717a;
-	--as-accent: #7dd3fc;
-	--as-accent-hover: #bae6fd;
-	--as-success: #34d399;
-	--as-danger: #f43f5e;
+	--as-bg: #000000;
+	--as-panel-bg: #0a0a0a;
+	--as-panel-2: #111111;
+	--as-border: #1a1a1a;
+	--as-border-2: #2a2a2a;
+	--as-text: #e8e8e8;
+	--as-text-2: #888888;
+	--as-text-3: #555555;
+	--as-accent: #ffffff;
+	--as-accent-hover: #e8e8e8;
+	--as-success: #4ade80;
+	--as-danger: #f87171;
 	--as-radius: 12px;
 	--as-radius-sm: 8px;
 	--as-transition: 180ms ease;

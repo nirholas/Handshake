@@ -1,21 +1,20 @@
 /* Widget Studio — three-column layout. */
 
 :root {
-	--accent: #8b5cf6;
-	--accent-strong: #a78bfa;
-	--border: #2a2a36;
+	--accent: #ffffff;
+	--accent-strong: #e8e8e8;
+	--border: #2a2a2a;
 	--border-soft: rgba(255, 255, 255, 0.08);
-	--bg: #0a0a0f;
-	--panel: #14141c;
-	--panel-soft: #1b1b25;
-	--muted: #888;
-	--text: #eee;
+	--bg: #000000;
+	--panel: #111111;
+	--panel-soft: #1a1a1a;
+	--muted: #888888;
+	--text: #e8e8e8;
 	--danger: #f87171;
 	--header-h: 60px;
 	--radius-sm: 6px;
 	--radius-md: 10px;
 	--radius-lg: 14px;
-	/* monochrome neutrals — used in place of purple tints in non-interactive chrome */
 	--neutral-tint: rgba(255, 255, 255, 0.06);
 	--neutral-tint-strong: rgba(255, 255, 255, 0.1);
 	--neutral-icon-bg: rgba(255, 255, 255, 0.07);
@@ -509,8 +508,8 @@ a:hover {
 
 .avatar-card.selected {
 	border-color: var(--accent);
-	background: rgba(139, 92, 246, 0.1);
-	box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25) inset;
+	background: rgba(255, 255, 255, 0.06);
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15) inset;
 }
 
 /* checkmark badge on selected */
@@ -530,7 +529,7 @@ a:hover {
 	font-size: 0.58rem;
 	font-weight: 800;
 	line-height: 1;
-	box-shadow: 0 2px 6px rgba(139, 92, 246, 0.5);
+	box-shadow: 0 2px 6px rgba(255, 255, 255, 0.3);
 }
 
 .avatar-card .thumb {
@@ -673,8 +672,8 @@ a:hover {
 
 .type-card.selected {
 	border-color: var(--accent);
-	background: rgba(139, 92, 246, 0.1);
-	box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) inset;
+	background: rgba(255, 255, 255, 0.06);
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12) inset;
 }
 
 .type-card.selected .icon {
@@ -906,7 +905,7 @@ a:hover {
 .field textarea:focus {
 	outline: none;
 	border-color: var(--accent);
-	box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
 }
 
 .field input[type='color'] {
@@ -966,24 +965,24 @@ a:hover {
 	background: var(--accent);
 	color: #fff;
 	border-color: var(--accent);
-	box-shadow: 0 2px 12px rgba(139, 92, 246, 0.25);
+	box-shadow: 0 2px 12px rgba(255, 255, 255, 0.15);
 }
 
 .btn-primary:hover {
-	background: #7c3aed;
-	border-color: #7c3aed;
-	box-shadow: 0 4px 20px rgba(139, 92, 246, 0.45);
+	background: #e8e8e8;
+	border-color: #e8e8e8;
+	box-shadow: 0 4px 20px rgba(255, 255, 255, 0.25);
 	transform: translateY(-1px);
 }
 
 .btn-primary:active {
 	transform: translateY(0);
-	box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+	box-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
 }
 
 .btn-primary:disabled {
-	background: #4c3a78;
-	border-color: #4c3a78;
+	background: #555555;
+	border-color: #555555;
 	cursor: not-allowed;
 	opacity: 0.7;
 	box-shadow: none;
@@ -1683,8 +1682,8 @@ a:hover {
 	justify-content: center;
 	width: 20px;
 	height: 20px;
-	background: rgba(139, 92, 246, 0.15);
-	border: 1px solid rgba(139, 92, 246, 0.3);
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.2);
 	color: var(--accent-strong);
 	border-radius: 50%;
 	font-size: 0.65rem;
@@ -1741,7 +1740,7 @@ a:hover {
 .hotspot-pos-row input[type='number']:focus {
 	outline: none;
 	border-color: var(--accent);
-	box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
 }
 
 /* ── studio version badge ─────────────────────────────────────────────────── */

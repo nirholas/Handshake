@@ -7,11 +7,11 @@
 /* ── Design tokens (mirrored from dashboard) ─────────────────────────── */
 :root {
 	color-scheme: dark;
-	--d-accent: #6a5cff;
-	--d-accent2: #ff5ca8;
-	--d-border: #22222e;
-	--d-bg: #000;
-	--d-panel: #14141c;
+	--d-accent: #ffffff;
+	--d-accent2: #ffffff;
+	--d-border: #1a1a1a;
+	--d-bg: #000000;
+	--d-panel: #111111;
 }
 
 /* ── Reset ───────────────────────────────────────────────────────────── */
@@ -36,7 +36,7 @@ body {
 }
 
 a {
-	color: #9a8cff;
+	color: #cccccc;
 	text-decoration: none;
 }
 a:hover {
@@ -388,7 +388,7 @@ a:hover {
 /* ── Already-imported link ───────────────────────────────────────────── */
 .my-agents-card__agent-link {
 	font-size: 12px;
-	color: #9a8cff;
+	color: #cccccc;
 	display: block;
 	text-align: center;
 }
@@ -401,9 +401,9 @@ a:hover {
 	font-size: 11px;
 	padding: 2px 8px;
 	border-radius: 99px;
-	background: #1a1a2e;
-	color: #7a6fff;
-	border: 1px solid #2a2a4a;
+	background: #1a1a1a;
+	color: #cccccc;
+	border: 1px solid #2a2a2a;
 	white-space: nowrap;
 	flex-shrink: 0;
 }

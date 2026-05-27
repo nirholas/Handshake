@@ -21,8 +21,8 @@
 				--text: #fafafa;
 				--text-2: #a1a1aa;
 				--text-3: #71717a;
-				--accent: #7dd3fc;
-				--accent-2: #a78bfa;
+				--accent: #ffffff;
+				--accent-2: #ffffff;
 				--success: #34d399;
 				--danger: #f43f5e;
 				--radius: 14px;
@@ -104,8 +104,8 @@
 			.ae-stage {
 				border-right: 1px solid var(--border);
 				background:
-					radial-gradient(ellipse at 50% 35%, rgba(125, 211, 252, 0.06), transparent 60%),
-					radial-gradient(ellipse at 70% 80%, rgba(167, 139, 250, 0.04), transparent 50%),
+					radial-gradient(ellipse at 50% 35%, rgba(255, 255, 255, 0.03), transparent 60%),
+					radial-gradient(ellipse at 70% 80%, rgba(255, 255, 255, 0.02), transparent 50%),
 					var(--bg);
 				position: relative;
 				min-height: 500px;
@@ -251,15 +251,15 @@
 			.ae-tile:hover {
 				border-color: var(--accent);
 				transform: translateY(-1px);
-				background: rgba(125, 211, 252, 0.04);
+				background: rgba(255, 255, 255, 0.04);
 			}
 			.ae-tile.selected {
 				border-color: var(--accent);
-				background: rgba(125, 211, 252, 0.06);
+				background: rgba(255, 255, 255, 0.06);
 			}
 			.ae-tile.previewing {
 				border-color: var(--accent-2);
-				box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.35);
+				box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
 			}
 			.ae-tile-preview {
 				aspect-ratio: 1 / 1;
@@ -474,7 +474,7 @@
 				background: var(--accent);
 				margin-top: -5px;
 				border: 0;
-				box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.18);
+				box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
 				cursor: pointer;
 			}
 			.ae-sculpt-row input[type='range']::-moz-range-thumb {
@@ -509,7 +509,7 @@
 				border-radius: 50%;
 				background: radial-gradient(
 					circle at 50% 50%,
-					rgba(125, 211, 252, 0.04) 0%,
+					rgba(255, 255, 255, 0.04) 0%,
 					rgba(255, 255, 255, 0.015) 60%,
 					transparent 100%
 				);
@@ -556,14 +556,14 @@
 				height: 20px;
 				border-radius: 50%;
 				background: var(--accent, #7dd3fc);
-				box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.25), 0 2px 8px rgba(0,0,0,0.5);
+				box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25), 0 2px 8px rgba(0,0,0,0.5);
 				transform: translate(-50%, -50%);
 				cursor: grab;
 				touch-action: none;
 				z-index: 2;
 				transition: box-shadow 0.12s;
 			}
-			.ae-blend-puck:active { cursor: grabbing; box-shadow: 0 0 0 5px rgba(125, 211, 252, 0.35), 0 3px 12px rgba(0,0,0,0.6); }
+			.ae-blend-puck:active { cursor: grabbing; box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.35), 0 3px 12px rgba(0,0,0,0.6); }
 			.ae-blend-desc {
 				font-size: 11px;
 				color: var(--text-3);

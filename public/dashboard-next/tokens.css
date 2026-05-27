@@ -6,24 +6,24 @@
    ========================================================================== */
 
 :root {
-	/* Palette — mirrors app-next.css. Edit there first if it's a global change. */
-	--nxt-bg-0: #050608;
-	--nxt-bg-1: #0c0d12;
-	--nxt-bg-2: #14151c;
-	--nxt-bg-3: #1c1d27;
-	--nxt-ink: #e7e8ec;
-	--nxt-ink-dim: #9ca0aa;
-	--nxt-ink-fade: #6b6f78;
-	--nxt-accent: #c8cad0;
-	--nxt-accent-soft: rgba(200, 202, 208, 0.14);
-	--nxt-accent-strong: #dddfe4;
-	--nxt-glass: rgba(14, 15, 22, 0.55);
-	--nxt-glass-strong: rgba(14, 15, 22, 0.82);
+	/* Palette — monochrome */
+	--nxt-bg-0: #000000;
+	--nxt-bg-1: #0a0a0a;
+	--nxt-bg-2: #111111;
+	--nxt-bg-3: #1a1a1a;
+	--nxt-ink: #e8e8e8;
+	--nxt-ink-dim: #888888;
+	--nxt-ink-fade: #555555;
+	--nxt-accent: #ffffff;
+	--nxt-accent-soft: rgba(255, 255, 255, 0.08);
+	--nxt-accent-strong: #e8e8e8;
+	--nxt-glass: rgba(0, 0, 0, 0.55);
+	--nxt-glass-strong: rgba(0, 0, 0, 0.82);
 	--nxt-stroke: rgba(255, 255, 255, 0.08);
 	--nxt-stroke-strong: rgba(255, 255, 255, 0.14);
-	--nxt-success: #b8bcc4;
-	--nxt-warn: #a8adb5;
-	--nxt-danger: #969ba3;
+	--nxt-success: #4ade80;
+	--nxt-warn: #fbbf24;
+	--nxt-danger: #f87171;
 
 	--nxt-radius: 14px;
 	--nxt-radius-sm: 10px;

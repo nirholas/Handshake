@@ -1,11 +1,11 @@
 /* Shared shell styling for /dashboard sub-pages. Dark theme to match dashboard. */
 :root {
 	color-scheme: dark;
-	--accent: #6a5cff;
-	--accent2: #ff5ca8;
-	--border: #22222e;
-	--bg: #000;
-	--panel: #14141c;
+	--accent: #ffffff;
+	--accent2: #ffffff;
+	--border: #1a1a1a;
+	--bg: #000000;
+	--panel: #111111;
 }
 * { box-sizing: border-box; }
 body {
@@ -15,7 +15,7 @@ body {
 	background: var(--bg);
 	min-height: 100vh;
 }
-a { color: #9a8cff; text-decoration: none; }
+a { color: #cccccc; text-decoration: none; }
 a:hover { text-decoration: underline; }
 .dash-shell { max-width: 980px; margin: 0 auto; padding: 28px; }
 .dash-back { color: #888; font-size: 13px; margin-bottom: 10px; display: inline-block; }
@@ -37,7 +37,7 @@ h1.dash-title { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
 	color: #aaa;
 }
 .dash-btn {
-	background: #1f1f2c;
+	background: #1a1a1a;
 	color: #eee;
 	border: 1px solid var(--border);
 	border-radius: 8px;
@@ -45,14 +45,14 @@ h1.dash-title { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
 	font-size: 13px;
 	cursor: pointer;
 }
-.dash-btn:hover { background: #28283a; }
+.dash-btn:hover { background: #2a2a2a; }
 .dash-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .dash-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.dash-btn.primary:hover { background: #7d70ff; }
+.dash-btn.primary:hover { background: #e8e8e8; }
 .dash-btn.danger { color: #ff8a9c; border-color: #3a2530; }
 .dash-btn.danger:hover { background: #2a1820; }
 .dash-input, .dash-textarea, .dash-select {
-	background: #0f0f17;
+	background: #0a0a0a;
 	color: #eee;
 	border: 1px solid var(--border);
 	border-radius: 8px;
@@ -89,12 +89,12 @@ h1.dash-title { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
 }
 .dash-pill {
 	display: inline-block;
-	background: rgba(106, 92, 255, 0.12);
-	border: 1px solid rgba(106, 92, 255, 0.4);
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.2);
 	border-radius: 999px;
 	padding: 3px 10px;
 	font-size: 11px;
-	color: #cfc6ff;
+	color: #cccccc;
 }
 .dash-mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; color: #aaa; }
 .dash-list { list-style: none; padding: 0; margin: 0; }
