@@ -1482,5 +1482,50 @@
 				}
 			})();
 		</script>
+
+		<script>
+			// Traction stats — fetch /api/platform/stats and animate counters.
+			(function () {
+				function fmtNum(n) {
+					if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+					if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+					return String(n);
+				}
+
+				function animateCount(el, target) {
+					const duration = 900;
+					const start = performance.now();
+					const from = 0;
+					function step(now) {
+						const t = Math.min((now - start) / duration, 1);
+						const ease = 1 - Math.pow(1 - t, 3);
+						const val = Math.round(from + (target - from) * ease);
+						el.textContent = fmtNum(val);
+						if (t < 1) requestAnimationFrame(step);
+					}
+					requestAnimationFrame(step);
+				}
+
+				const vals = document.querySelectorAll('[data-traction-val]');
+				vals.forEach((el) => el.classList.add('is-loading'));
+
+				fetch('/api/platform/stats')
+					.then((r) => r.ok ? r.json() : Promise.reject(r.status))
+					.then((data) => {
+						vals.forEach((el) => {
+							const key = el.dataset.tractionVal;
+							const raw = data[key];
+							if (raw == null) return;
+							el.classList.remove('is-loading');
+							animateCount(el, Number(raw));
+						});
+					})
+					.catch(() => {
+						// On failure, just hide the section rather than show broken state.
+						const section = document.querySelector('.h-traction');
+						if (section) section.hidden = true;
+					});
+			})();
+		</script>
 	</body>
 </html>

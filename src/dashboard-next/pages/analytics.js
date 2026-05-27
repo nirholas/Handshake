@@ -70,8 +70,8 @@ async function loadAndRender(root) {
 		)
 	);
 
-	const totalViews = widgetStats.reduce((s, ws) => s + (ws?.stats?.total_views ?? 0), 0);
-	const totalChats = widgetStats.reduce((s, ws) => s + (ws?.stats?.total_chats ?? 0), 0);
+	const totalViews = widgetStats.reduce((s, ws) => s + (ws?.stats?.view_count ?? ws?.stats?.total_views ?? 0), 0);
+	const totalChats = widgetStats.reduce((s, ws) => s + (ws?.stats?.chat_count ?? ws?.stats?.total_chats ?? 0), 0);
 	const recentViews = widgetStats.reduce((s, ws) => {
 		const arr = ws?.stats?.recent_views_7d ?? [];
 		return s + arr.reduce((a, p) => a + (p.count ?? p.value ?? 0), 0);
@@ -241,12 +241,12 @@ function renderAgentTable(agents, widgets, widgetStats) {
 	widgets.forEach((w, i) => {
 		const stats = widgetStats[i];
 		if (!stats) return;
-		const key = w.avatar_id || w.agent_id;
+		const key = w.avatar_id;
 		if (key) {
 			const prev = widgetMap.get(key) || { views: 0, chats: 0 };
 			widgetMap.set(key, {
-				views: prev.views + (stats.stats?.total_views ?? 0),
-				chats: prev.chats + (stats.stats?.total_chats ?? 0),
+				views: prev.views + (stats.stats?.view_count ?? stats.stats?.total_views ?? 0),
+				chats: prev.chats + (stats.stats?.chat_count ?? stats.stats?.total_chats ?? 0),
 			});
 		}
 	});

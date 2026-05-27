@@ -189,6 +189,77 @@
 	font-size: 1.4rem;
 }
 
+/* ── Traction stats bar ─────────────────────────────────────────────────── */
+
+.h-traction {
+	position: relative;
+	z-index: 30;
+	background: rgba(8, 7, 11, 0.95);
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	padding: clamp(1.75rem, 4vh, 2.5rem) clamp(1.25rem, 4vw, 2rem);
+}
+
+.h-traction-inner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0;
+	max-width: 1100px;
+	margin: 0 auto;
+	flex-wrap: wrap;
+}
+
+.h-traction-stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.5rem clamp(1.5rem, 3vw, 3rem);
+	flex: 1 1 120px;
+}
+
+.h-traction-val {
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: clamp(1.6rem, 3vw, 2.2rem);
+	font-weight: 700;
+	color: #fff;
+	letter-spacing: -0.02em;
+	line-height: 1;
+	transition: opacity 0.3s;
+}
+
+.h-traction-val.is-loading {
+	opacity: 0.3;
+}
+
+.h-traction-label {
+	font-size: 0.78rem;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.45);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	white-space: nowrap;
+}
+
+.h-traction-divider {
+	width: 1px;
+	height: 2.5rem;
+	background: rgba(255, 255, 255, 0.1);
+	flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+	.h-traction-inner { gap: 0; row-gap: 0.5rem; }
+	.h-traction-divider { display: none; }
+	.h-traction-stat { flex: 1 1 45%; padding: 0.75rem 1rem; }
+	.h-traction-val { font-size: 1.5rem; }
+}
+
+@media (max-width: 400px) {
+	.h-traction-stat { flex: 1 1 100%; }
+}
+
 /* ── Pillars transition band (docs.pai.direct style) ───────────────────── */
 
 .h-pillars {
