@@ -23,7 +23,7 @@
 import { cors, error, json, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { publicUrl } from '../_lib/r2.js';
-import { requireSession } from '../_lib/zauth.js';
+import { getSessionUser } from '../_lib/auth.js';
 
 function workerUrl() {
 	const u = process.env.LONGCAT_WORKER_URL;
@@ -53,7 +53,8 @@ export default wrap(async (req, res) => {
 
 	let session;
 	try {
-		session = await requireSession(req);
+		session = await getSessionUser(req);
+		if (!session) throw new Error('no session');
 	} catch {
 		return error(res, 401, 'unauthorized', 'valid session required');
 	}
