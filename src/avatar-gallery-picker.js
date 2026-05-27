@@ -20,6 +20,16 @@ import './avatar-gallery-picker.css';
 
 const PAGE_SIZE = 24;
 
+let _mvLoaded = false;
+function ensureModelViewer() {
+	if (_mvLoaded || customElements.get('model-viewer')) return;
+	_mvLoaded = true;
+	const s = document.createElement('script');
+	s.type = 'module';
+	s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
+	document.head.appendChild(s);
+}
+
 function esc(s) {
 	return String(s ?? '')
 		.replace(/&/g, '&amp;')
@@ -84,6 +94,7 @@ export class AvatarGalleryPicker {
 
 	openModal() {
 		if (this._overlay) return;
+		ensureModelViewer();
 
 		this._overlay = document.createElement('div');
 		this._overlay.className = 'agp-overlay';
@@ -105,6 +116,7 @@ export class AvatarGalleryPicker {
 	}
 
 	mountInline(container) {
+		ensureModelViewer();
 		this._shell = this._buildShell();
 		this._shell.classList.add('agp-shell--inline');
 		const close = this._shell.querySelector('.agp-close');

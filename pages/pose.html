@@ -32,18 +32,18 @@
 
 		<style>
 			:root {
-				--bg: #07070b;
-				--panel: rgba(17, 17, 22, 0.78);
-				--panel-solid: #14141a;
+				--bg: #000000;
+				--panel: rgba(14, 14, 14, 0.78);
+				--panel-solid: #141414;
 				--border: rgba(255, 255, 255, 0.08);
 				--border-strong: rgba(255, 255, 255, 0.16);
 				--text: #fafafa;
 				--text-2: #a1a1aa;
 				--text-3: #71717a;
-				--accent: #a78bfa;
-				--accent-2: #ffffff;
+				--accent: #ffffff;
+				--accent-2: #cccccc;
 				--danger: #f87171;
-				--ok: #34d399;
+				--ok: #ffffff;
 			}
 			html, body {
 				margin: 0;
@@ -77,7 +77,7 @@
 				gap: 10px;
 				padding: 0 14px;
 				border-bottom: 1px solid var(--border);
-				background: rgba(7, 7, 11, 0.85);
+				background: rgba(0, 0, 0, 0.85);
 				backdrop-filter: blur(10px);
 				-webkit-backdrop-filter: blur(10px);
 				z-index: 10;
@@ -127,8 +127,8 @@
 			}
 			.mode-btn:hover { color: var(--text); }
 			.mode-btn[aria-pressed="true"] {
-				background: rgba(167, 139, 250, 0.18);
-				color: #e9d5ff;
+				background: rgba(255, 255, 255, 0.18);
+				color: #e8e8e8;
 			}
 			.spacer { flex: 1; }
 			.pose-btn {
@@ -152,11 +152,11 @@
 				border-color: var(--border-strong);
 			}
 			.pose-btn-primary {
-				background: rgba(167, 139, 250, 0.22);
-				border-color: rgba(167, 139, 250, 0.45);
-				color: #ede9fe;
+				background: rgba(255, 255, 255, 0.22);
+				border-color: rgba(255, 255, 255, 0.45);
+				color: #e8e8e8;
 			}
-			.pose-btn-primary:hover { background: rgba(167, 139, 250, 0.32); }
+			.pose-btn-primary:hover { background: rgba(255, 255, 255, 0.32); }
 			.pose-btn-ghost {
 				background: transparent;
 				border-style: dashed;
@@ -285,7 +285,7 @@
 				background: var(--accent);
 				border-radius: 50%;
 				cursor: pointer;
-				box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18);
+				box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
 			}
 			.pose-slider-row input[type="range"]::-moz-range-track {
 				height: 4px;
@@ -351,7 +351,7 @@
 				left: 50%;
 				bottom: 14px;
 				transform: translateX(-50%);
-				background: rgba(7, 7, 11, 0.86);
+				background: rgba(0, 0, 0, 0.86);
 				border: 1px solid var(--border);
 				border-radius: 999px;
 				padding: 6px 14px;
@@ -417,9 +417,9 @@
 			}
 			.pose-prop-btn:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
 			.pose-prop-btn[aria-pressed="true"] {
-				background: rgba(167, 139, 250, 0.18);
-				border-color: rgba(167, 139, 250, 0.45);
-				color: #ede9fe;
+				background: rgba(255, 255, 255, 0.18);
+				border-color: rgba(255, 255, 255, 0.45);
+				color: #e8e8e8;
 			}
 			.pose-prop-grid {
 				display: flex;

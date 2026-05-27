@@ -1010,7 +1010,7 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 	const tier = status.tier || 'free';
 	const tierBadge =
 		tier === 'pro'
-			? `<span style="background:rgba(106,92,255,0.15);color:#a78bfa;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;margin-left:6px">PRO</span>`
+			? `<span style="background:rgba(106,92,255,0.15);color:#ffffff;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;margin-left:6px">PRO</span>`
 			: `<a href="/pricing" style="background:rgba(255,184,77,0.15);color:#ffb84d;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;margin-left:6px;text-decoration:none">FREE · upgrade</a>`;
 	meterEl.innerHTML = `@${esc(status.username)} ${tierBadge} <span style="color:${remaining === 0 ? '#ffb3b3' : '#9a8cff'};margin-left:6px">${used}/${quota}</span>`;
 
@@ -3959,8 +3959,8 @@ async function renderWithdrawals(root) {
 // the dashboard is for managing what already exists.
 
 const WIDGET_TYPE_META = {
-	turntable: { label: 'Turntable', color: '#6a5cff' },
-	'animation-gallery': { label: 'Animations', color: '#ff5ca8' },
+	turntable: { label: 'Turntable', color: '#ffffff' },
+	'animation-gallery': { label: 'Animations', color: '#ffffff' },
 	'talking-agent': { label: 'Talking Agent', color: '#00e5a0' },
 	passport: { label: 'Passport', color: '#f0c14b' },
 	'hotspot-tour': { label: 'Hotspot Tour', color: '#5cc8ff' },
@@ -4728,7 +4728,7 @@ async function openThread(drawer, w, threadId) {
 
 function renderMessage(m) {
 	const isUser = m.role === 'user';
-	const bg = isUser ? '#1a1a26' : 'rgba(139, 92, 246, 0.12)';
+	const bg = isUser ? '#1a1a26' : 'rgba(255, 255, 255, 0.12)';
 	const label = isUser ? 'visitor' : m.provider ? `agent · ${esc(m.provider)}` : 'agent';
 	const flag = m.redacted
 		? ' <span class="muted" style="font-size:10px">(pii redacted)</span>'

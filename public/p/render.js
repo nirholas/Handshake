@@ -46,7 +46,7 @@ function renderError(root, headline, body) {
 
 function renderPage(root, payload) {
 	const { config, template, slug } = payload;
-	const brand = config?.identity?.brand || '#6366f1';
+	const brand = config?.identity?.brand || '#ffffff';
 	const theme = config?.identity?.theme === 'dark' ? 'dark' : 'light';
 	const headline = config?.copy?.headline || 'three.ws launchpad';
 	const tagline = config?.copy?.tagline || '';

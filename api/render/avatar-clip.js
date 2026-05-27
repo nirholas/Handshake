@@ -79,7 +79,7 @@ export default wrap(async function handler(req, res) {
 		}, { 'cache-control': 'public, max-age=86400' });
 	}
 
-	if (method(req, res, ['POST'])) return;
+	if (!method(req, res, ['POST'])) return;
 
 	const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress;
 	if (!rateCheck(ip)) {

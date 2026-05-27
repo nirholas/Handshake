@@ -15,10 +15,10 @@ const TYPE_COLORS = {
 	turntable: '#f59e0b',
 	'animation-gallery': '#3b82f6',
 	'talking-agent': '#10b981',
-	passport: '#a78bfa',
+	passport: '#ffffff',
 	'hotspot-tour': '#f97316',
 	'pumpfun-feed': '#ec4899',
-	'kol-trades': '#22d3ee',
+	'kol-trades': '#ffffff',
 	'live-trades-canvas': '#f43f5e',
 };
 

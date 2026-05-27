@@ -34,7 +34,7 @@
 .skip-link:focus,
 .skip-link:focus-visible {
 	top: 8px;
-	outline: 2px solid #ffd76a;
+	outline: 2px solid #ffffff;
 	outline-offset: 2px;
 }
 
@@ -42,7 +42,7 @@
 
 .features-page a:focus-visible,
 .features-page button:focus-visible {
-	outline: 2px solid #ffd76a;
+	outline: 2px solid #ffffff;
 	outline-offset: 2px;
 	border-radius: var(--radius-sm);
 }
@@ -270,7 +270,7 @@
 
 .hero-title em {
 	font-style: normal;
-	background: linear-gradient(100deg, #ffd76a 0%, #ffb347 35%, #7df9ff 75%, #9d8cff 100%);
+	background: linear-gradient(100deg, #ffffff 0%, #ffb347 35%, #7df9ff 75%, #9d8cff 100%);
 	background-size: 200% 100%;
 	-webkit-background-clip: text;
 	background-clip: text;

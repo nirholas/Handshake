@@ -44,7 +44,7 @@
 		@media (max-width: 600px) { .row2 { grid-template-columns: 1fr; } }
 
 		.preview { font-family: ui-monospace, monospace; font-size: .9rem; padding: .65rem .75rem; background: #1a1a1a; border-radius: 6px; margin-top: .55rem; word-break: break-all; min-height: 2.4em; line-height: 1.4; border: 1px solid var(--border); }
-		.preview .pfx, .preview .sfx { background: linear-gradient(90deg,#a78bfa,#6366f1); color: #fff; padding: 0 3px; border-radius: 3px; font-weight: 700; }
+		.preview .pfx, .preview .sfx { background: #ffffff; color: #fff; padding: 0 3px; border-radius: 3px; font-weight: 700; }
 		.preview .rest { color: #555; }
 
 		.row { display: flex; justify-content: space-between; align-items: center; margin-top: .55rem; font-size: .85rem; color: var(--muted); }
@@ -63,8 +63,8 @@
 		.result { margin-top: 1.25rem; padding: 1.1rem 1.25rem; background: rgba(167,139,250,0.06); border: 1px solid rgba(167,139,250,0.25); border-radius: 10px; }
 		.result h3 { margin: 0 0 .4rem; font-size: 1rem; color: #fff; }
 		.result .out-row { font-family: ui-monospace, monospace; font-size: .82rem; word-break: break-all; padding: .55rem .65rem; background: #111; border-radius: 6px; border: 1px solid rgba(167,139,250,0.15); margin-top: .5rem; }
-		.result .out-row .k { color: #a78bfa; display: inline-block; min-width: 5.5rem; }
-		.result .pfx, .result .sfx { background: linear-gradient(90deg,#a78bfa,#6366f1); color: #fff; padding: 0 3px; border-radius: 3px; font-weight: 700; }
+		.result .out-row .k { color: #ffffff; display: inline-block; min-width: 5.5rem; }
+		.result .pfx, .result .sfx { background: #ffffff; color: #fff; padding: 0 3px; border-radius: 3px; font-weight: 700; }
 		.result .meta { font-size: .8rem; color: var(--muted); margin: .65rem 0 0; }
 
 		.warn { background: var(--warn-bg); color: var(--warn-fg); padding: .65rem .85rem; border-radius: 6px; margin-top: 1rem; font-size: .8rem; border: 1px solid rgba(251,191,36,0.15); }
@@ -490,7 +490,7 @@
 						<div class="card" style="margin-top:1rem">
 							<h2>Assign to an agent</h2>
 							<p class="desc" style="margin:0">
-								<a href="/login.html?next=${encodeURIComponent(location.pathname)}" style="color:#a78bfa">Sign in</a>
+								<a href="/login.html?next=${encodeURIComponent(location.pathname)}" style="color:#ffffff">Sign in</a>
 								to assign this CREATE2 vanity to one of your agents — they'll display it on their profile and you can deploy it from the agent home page.
 							</p>
 						</div>`;
@@ -507,7 +507,7 @@
 				host.innerHTML = `
 					<div class="card" style="margin-top:1rem">
 						<h2>Assign to an agent</h2>
-						<p class="desc" style="margin:0">No agents yet. <a href="/create" style="color:#a78bfa">Create one</a> and come back to assign this address.</p>
+						<p class="desc" style="margin:0">No agents yet. <a href="/create" style="color:#ffffff">Create one</a> and come back to assign this address.</p>
 					</div>`;
 				return;
 			}
@@ -596,7 +596,7 @@
 						<div class="card" style="margin-top:1rem;background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.2)">
 							<h2 style="color:#4ade80">✓ Assigned to ${esc(agentName)}</h2>
 							<p class="desc" style="margin:0">
-								<a href="/agent/${esc(sel.value)}" style="color:#a78bfa">Open agent →</a> &nbsp;
+								<a href="/agent/${esc(sel.value)}" style="color:#ffffff">Open agent →</a> &nbsp;
 								The CREATE2 record is saved. Deploy it from the agent home page when you're ready.
 							</p>
 						</div>`;

@@ -13,7 +13,7 @@
  */
 
 const SOURCE_BADGE = {
-	kol: { label: 'KOL', color: '#a78bfa' },
+	kol: { label: 'KOL', color: '#ffffff' },
 	whale: { label: 'Whale', color: '#60a5fa' },
 	'smart-money': { label: 'Smart $', color: '#34d399' },
 };

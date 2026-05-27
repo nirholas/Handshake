@@ -109,7 +109,7 @@
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #ffd76a, #ff8f4d);
+	background: #ffffff;
 	box-shadow: 0 0 12px rgba(255, 143, 77, 0.6);
 }
 
@@ -168,7 +168,7 @@
 	font-family: 'Space Grotesk', 'Inter', sans-serif;
 	font-size: 1.4rem;
 	font-weight: 700;
-	background: linear-gradient(135deg, #ffd76a 0%, #ff8f4d 100%);
+	background: #ffffff;
 	-webkit-background-clip: text;
 	background-clip: text;
 	color: transparent;
@@ -1478,8 +1478,8 @@
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	background: var(--features-gold, #ffd76a);
-	box-shadow: 0 0 12px var(--features-gold, #ffd76a);
+	background: var(--features-gold, #ffffff);
+	box-shadow: 0 0 12px var(--features-gold, #ffffff);
 }
 
 .h-act-dot--mint {
@@ -1499,7 +1499,7 @@
 .h-act-title em {
 	font-style: italic;
 	font-weight: 500;
-	color: #ffd76a;
+	color: #ffffff;
 }
 
 .h-act-title--mint em {
@@ -1544,8 +1544,8 @@
 
 .h-av-opt[aria-pressed='true'] {
 	background: rgba(255, 215, 106, 0.16);
-	border-color: #ffd76a;
-	color: #ffd76a;
+	border-color: #ffffff;
+	color: #ffffff;
 }
 
 .h-av-opt:hover {
@@ -1581,8 +1581,8 @@
 .h-anim-chip:hover,
 .h-anim-chip[data-active='true'] {
 	background: rgba(255, 215, 106, 0.16);
-	border-color: #ffd76a;
-	color: #ffd76a;
+	border-color: #ffffff;
+	color: #ffffff;
 }
 
 .h-anim-chip[hidden] {
@@ -1708,7 +1708,7 @@
 
 .h-skip-link:focus {
 	transform: translateY(0);
-	outline: 2px solid #ffd76a;
+	outline: 2px solid #ffffff;
 	outline-offset: 2px;
 }
 
@@ -1721,7 +1721,7 @@
 .h-btn-ghost:focus-visible,
 .h-feature-link:focus-visible,
 .h-footer a:focus-visible {
-	outline: 2px solid #ffd76a;
+	outline: 2px solid #ffffff;
 	outline-offset: 3px;
 	border-radius: var(--radius-sm);
 }
@@ -1915,7 +1915,7 @@
 
 .h-title em {
 	font-style: normal;
-	background: linear-gradient(100deg, #ffd76a 0%, #ff8f4d 25%, #ff5ea0 55%, #b96bff 85%);
+	background: linear-gradient(100deg, #ffffff 0%, #ffffff 25%, #ff5ea0 55%, #b96bff 85%);
 	background-size: 220% 100%;
 	-webkit-background-clip: text;
 	background-clip: text;
@@ -1954,7 +1954,7 @@
 	align-items: center;
 	gap: 0.55em;
 	padding: 0.95rem 1.85rem;
-	background: linear-gradient(135deg, #ffd76a 0%, #ff8f4d 100%);
+	background: #ffffff;
 	color: #1a0f08;
 	font-size: 0.95rem;
 	font-weight: 600;
@@ -2333,7 +2333,7 @@
 }
 
 .h-feature-link:hover {
-	color: #ffd76a;
+	color: #ffffff;
 	gap: 0.7em;
 }
 

@@ -28,7 +28,7 @@
 				color: var(--text);
 				margin: 0; min-height: 100vh;
 			}
-			a { color: #9a8cff; text-decoration: none; }
+			a { color: #cccccc; text-decoration: none; }
 			header {
 				display: flex; align-items: center; justify-content: space-between;
 				padding: 16px 24px; border-bottom: 1px solid var(--border);
@@ -63,7 +63,7 @@
 				text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
 			}
 			.pill.sol { background: rgba(20,241,149,0.12); color: var(--ok); }
-			.pill.evm { background: rgba(106,92,255,0.16); color: #9a8cff; }
+			.pill.evm { background: rgba(255, 255, 255,0.16); color: #cccccc; }
 			.chip {
 				display: inline-flex; align-items: center; gap: 4px;
 				padding: 4px 9px; border-radius: 99px; font-size: 12px; font-weight: 600;
@@ -75,8 +75,8 @@
 
 			.hero {
 				background:
-					radial-gradient(900px 240px at 20% -40%, rgba(106,92,255,0.16), transparent 60%),
-					radial-gradient(600px 200px at 90% -20%, rgba(255,92,168,0.12), transparent 60%),
+					radial-gradient(900px 240px at 20% -40%, rgba(255, 255, 255,0.16), transparent 60%),
+					radial-gradient(600px 200px at 90% -20%, rgba(255, 255, 255,0.12), transparent 60%),
 					#06060a;
 				border: 1px solid var(--border-2);
 				border-radius: 18px;
@@ -182,7 +182,7 @@
 			.desc {
 				font-size: 13px; line-height: 1.6; color: #b8b8c4;
 			}
-			.desc a { color: #9a8cff; }
+			.desc a { color: #cccccc; }
 			.address {
 				display: flex; align-items: center; gap: 6px; margin-top: 10px;
 				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -544,13 +544,13 @@
 					handleScale: false,
 				});
 				const seriesOpts = {
-					lineColor: '#9a8cff',
+					lineColor: '#cccccc',
 					topColor: 'rgba(154,140,255,0.35)',
 					bottomColor: 'rgba(154,140,255,0)',
 					lineWidth: 2,
 					priceFormat: { type: 'price', precision: 6, minMove: 0.000001 },
 					crosshairMarkerRadius: 5,
-					crosshairMarkerBorderColor: '#9a8cff',
+					crosshairMarkerBorderColor: '#cccccc',
 					crosshairMarkerBackgroundColor: '#fff',
 				};
 				series = chart.addAreaSeries

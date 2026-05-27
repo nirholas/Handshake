@@ -36,7 +36,7 @@
 				display: flex;
 				flex-direction: column;
 			}
-			a { color: #9a8cff; text-decoration: none; }
+			a { color: #cccccc; text-decoration: none; }
 
 			/* ── Site header ───────────────────────────────────────────────── */
 			.site-header {
@@ -94,7 +94,7 @@
 				white-space: nowrap;
 			}
 			.site-nav a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-			.site-nav a.active { color: #fff; background: rgba(106,92,255,0.14); }
+			.site-nav a.active { color: #fff; background: rgba(255, 255, 255,0.14); }
 
 			.site-header-right {
 				display: flex;
@@ -154,11 +154,11 @@
 			.sidebar-link:hover { color: var(--text); background: rgba(255,255,255,0.04); }
 			.sidebar-link.active {
 				color: #fff;
-				background: rgba(106,92,255,0.14);
+				background: rgba(255, 255, 255,0.14);
 				box-shadow: inset 2px 0 0 var(--accent);
 			}
 			.sidebar-link svg { flex-shrink: 0; opacity: 0.65; }
-			.sidebar-link.active svg { opacity: 1; color: #9a8cff; }
+			.sidebar-link.active svg { opacity: 1; color: #cccccc; }
 
 			/* ── Main content ──────────────────────────────────────────────── */
 			.dash-main {
@@ -193,8 +193,8 @@
 			/* ── Hero card ─────────────────────────────────────────────────── */
 			.hero {
 				background:
-					radial-gradient(900px 280px at 10% -30%, rgba(106,92,255,0.15), transparent 60%),
-					radial-gradient(600px 200px at 90% -10%, rgba(255,92,168,0.1), transparent 60%),
+					radial-gradient(900px 280px at 10% -30%, rgba(255, 255, 255,0.15), transparent 60%),
+					radial-gradient(600px 200px at 90% -10%, rgba(255, 255, 255,0.1), transparent 60%),
 					var(--panel);
 				border: 1px solid var(--border-2);
 				border-radius: 16px;
@@ -264,7 +264,7 @@
 			}
 			.range-tab:hover { color: var(--muted-2); background: rgba(255,255,255,0.04); }
 			.range-tab[aria-pressed="true"] {
-				background: rgba(106,92,255,0.18); color: #c4bcff;
+				background: rgba(255, 255, 255,0.18); color: #cccccc;
 				border: 0;
 			}
 
@@ -279,13 +279,13 @@
 				position: relative; overflow: hidden;
 				transition: border-color 0.14s, box-shadow 0.14s;
 			}
-			.stat:hover { border-color: var(--border-2); box-shadow: 0 4px 18px -8px rgba(106,92,255,0.18); }
+			.stat:hover { border-color: var(--border-2); box-shadow: 0 4px 18px -8px rgba(255, 255, 255,0.18); }
 			.stat-icon {
 				width: 28px; height: 28px; border-radius: 8px;
 				display: grid; place-items: center;
 				margin-bottom: 10px; font-size: 14px;
 			}
-			.stat-icon.purple { background: rgba(106,92,255,0.14); }
+			.stat-icon.purple { background: rgba(255, 255, 255,0.14); }
 			.stat-icon.teal   { background: rgba(46,212,163,0.12); }
 			.stat-icon.green  { background: rgba(46,212,163,0.12); }
 			.stat-icon.red    { background: rgba(255,106,106,0.1); }
@@ -369,7 +369,7 @@
 				border: 1px solid var(--border);
 			}
 			.chain-pill.sol { background: rgba(20,241,149,0.1); color: var(--ok); border-color: rgba(20,241,149,0.15); }
-			.chain-pill.evm { background: rgba(106,92,255,0.12); color: #a99aff; border-color: rgba(106,92,255,0.2); }
+			.chain-pill.evm { background: rgba(255, 255, 255,0.12); color: #cccccc; border-color: rgba(255, 255, 255,0.2); }
 
 			/* ── Wallet cards ──────────────────────────────────────────────── */
 			.wallet-list { display: flex; flex-direction: column; gap: 10px; }
@@ -458,8 +458,8 @@
 				transition: border-color 0.13s, box-shadow 0.13s;
 			}
 			.modal input:focus, .modal select:focus {
-				outline: none; border-color: rgba(106,92,255,0.55);
-				box-shadow: 0 0 0 3px rgba(106,92,255,0.12);
+				outline: none; border-color: rgba(255, 255, 255,0.55);
+				box-shadow: 0 0 0 3px rgba(255, 255, 255,0.12);
 			}
 			.modal input[data-mono] { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; }
 			.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
@@ -649,7 +649,7 @@
 				<div class="stats-row">
 					<div class="stat">
 						<div class="stat-icon purple">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9a8cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9.354a4 4 0 1 0 0 5.292"/></svg>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cccccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9.354a4 4 0 1 0 0 5.292"/></svg>
 						</div>
 						<div class="stat-label">Assets</div>
 						<div class="stat-value" id="stat-assets">—</div>
@@ -1123,7 +1123,7 @@
 					lineWidth: 2,
 					priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
 					crosshairMarkerRadius: 5,
-					crosshairMarkerBorderColor: '#9a8cff',
+					crosshairMarkerBorderColor: '#cccccc',
 					crosshairMarkerBackgroundColor: '#fff',
 				};
 				series = chart.addAreaSeries

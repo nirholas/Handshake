@@ -483,7 +483,7 @@ const TALK_CSS = `
 	transition: color 0.2s;
 }
 .tws-talk-status[data-state="listening"] { color: #f43f5e; }
-.tws-talk-status[data-state="thinking"]  { color: #a78bfa; }
+.tws-talk-status[data-state="thinking"]  { color: #ffffff; }
 .tws-talk-status[data-state="speaking"]  { color: #34d399; }
 .tws-talk-error {
 	position: absolute; left: 50%; bottom: 100px;

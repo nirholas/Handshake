@@ -28,7 +28,7 @@ const FORMATS = {
 
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
-	if (method(req, res, ['POST'])) return;
+	if (!method(req, res, ['POST'])) return;
 
 	const key = env.OPENAI_API_KEY;
 	if (!key) return error(res, 503, 'not_configured', 'OPENAI_API_KEY not set');

@@ -152,7 +152,7 @@ const STYLE = `
 		width: 26px;
 		height: 26px;
 		border-radius: 7px;
-		background: linear-gradient(135deg, #a78bfa 0%, #22d3ee 100%);
+		background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
 		box-shadow: 0 0 24px rgba(167,139,250,0.5);
 	}
 	.placeholder-site .nav-links {
@@ -205,8 +205,8 @@ const STYLE = `
 		width: 6px;
 		height: 6px;
 		border-radius: 50%;
-		background: #22d3ee;
-		box-shadow: 0 0 10px #22d3ee;
+		background: #ffffff;
+		box-shadow: 0 0 10px #ffffff;
 	}
 	.placeholder-site h1 {
 		font: 700 58px/1.05 'Inter', system-ui;
@@ -373,7 +373,7 @@ const STYLE = `
 		transform: translateY(-1px);
 	}
 	.anim-chip[aria-pressed="true"] {
-		background: linear-gradient(135deg, #a78bfa 0%, #22d3ee 100%);
+		background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
 		color: #0a0c10;
 		font-weight: 600;
 		box-shadow: 0 0 24px rgba(139,92,246,0.45);
@@ -2261,11 +2261,11 @@ export function mountEmbedEditor(root, options = {}) {
 	html, body { margin: 0; padding: 0; min-height: 100vh; font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; color: #0f172a; background: #f8fafc; }
 	.nav { display: flex; align-items: center; justify-content: space-between; padding: 18px 48px; border-bottom: 1px solid #e5e7eb; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 1; }
 	.brand { display: flex; align-items: center; gap: 10px; font: 700 17px/1 system-ui; }
-	.logo { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #6366f1, #8b5cf6); box-shadow: 0 2px 8px rgba(99,102,241,0.4); }
+	.logo { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #ffffff, #ffffff); box-shadow: 0 2px 8px rgba(99,102,241,0.4); }
 	.hero { max-width: 960px; margin: 0 auto; padding: 80px 48px 48px; text-align: center; }
 	.pill { display: inline-block; padding: 6px 14px; border-radius: 999px; background: #ede9fe; color: #6d28d9; font: 600 12px system-ui; margin-bottom: 22px; }
 	h1 { font: 800 52px/1.1 system-ui; letter-spacing: -0.02em; margin: 0 0 18px; }
-	h1 .accent { background: linear-gradient(90deg, #6366f1, #ec4899); -webkit-background-clip: text; background-clip: text; color: transparent; }
+	h1 .accent { background: linear-gradient(90deg, #ffffff, #ec4899); -webkit-background-clip: text; background-clip: text; color: transparent; }
 	.lede { font-size: 18px; color: #475569; max-width: 640px; margin: 0 auto 28px; }
 	.cta { display: flex; gap: 12px; justify-content: center; }
 	.btn-primary { background: #0f172a; color: white; padding: 12px 22px; border-radius: 10px; font: 600 14px system-ui; }

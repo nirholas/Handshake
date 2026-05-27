@@ -10,11 +10,11 @@
 		<style>
 			:root {
 				color-scheme: dark;
-				--accent: #6a5cff;
-				--accent2: #ff5ca8;
-				--border: #22222e;
+				--accent: #ffffff;
+				--accent2: #cccccc;
+				--border: #222222;
 				--bg: #000;
-				--panel: #14141c;
+				--panel: #141414;
 			}
 			* { box-sizing: border-box; }
 			body {
@@ -24,7 +24,7 @@
 				background: var(--bg);
 				min-height: 100vh;
 			}
-			a { color: #9a8cff; text-decoration: none; }
+			a { color: #cccccc; text-decoration: none; }
 			header {
 				display: flex;
 				align-items: center;
@@ -33,7 +33,7 @@
 				border-bottom: 1px solid var(--border);
 				position: sticky;
 				top: 0;
-				background: rgba(11, 11, 16, 0.92);
+				background: rgba(0, 0, 0, 0.92);
 				backdrop-filter: blur(16px);
 				-webkit-backdrop-filter: blur(16px);
 				z-index: 5;
@@ -62,7 +62,7 @@
 				white-space: nowrap;
 			}
 			.dash-header-nav a:hover { color: #eee; background: rgba(255,255,255,0.05); }
-			.dash-header-nav a.active { color: #fff; background: rgba(106,92,255,0.12); }
+			.dash-header-nav a.active { color: #fff; background: rgba(255,255,255,0.06); }
 			.dash-header-user {
 				display: flex;
 				align-items: center;
@@ -98,7 +98,7 @@
 			aside a:hover { color: #eee; background: rgba(255,255,255,0.03); }
 			aside a.active {
 				color: #fff;
-				background: rgba(106,92,255,0.08);
+				background: rgba(255,255,255,0.05);
 				border-left-color: var(--accent);
 			}
 			main {
@@ -132,7 +132,7 @@
 				margin-top: 5px;
 			}
 			input, textarea, select {
-				background: #0f0f17;
+				background: #0f0f0f;
 				border: 1px solid var(--border);
 				color: #eee;
 				padding: 9px 11px;
@@ -166,10 +166,10 @@
 			.btn:hover { filter: brightness(1.1); }
 			.btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
 			.btn.sec {
-				background: #222230;
+				background: #222222;
 				color: #ddd;
 			}
-			.btn.sec:hover { background: #2a2a3a; filter: none; }
+			.btn.sec:hover { background: #2a2a2a; filter: none; }
 			.btn.danger { background: #cc4040; }
 			.divider {
 				border: none;
@@ -186,7 +186,7 @@
 				font-size: 11px;
 				padding: 2px 8px;
 				border-radius: 99px;
-				background: #20202c;
+				background: #202020;
 				color: #ccc;
 			}
 			.tag.green { background: rgba(74,222,128,0.12); color: #4ade80; }
@@ -229,8 +229,8 @@
 				font-size: 11px;
 				padding: 2px 7px;
 				border-radius: 99px;
-				background: rgba(106,92,255,0.15);
-				color: #a78bfa;
+				background: rgba(255,255,255,0.08);
+				color: #cccccc;
 				white-space: nowrap;
 			}
 			.link-row {
@@ -246,10 +246,10 @@
 			.link-row .val { color: #888; font-size: 13px; }
 			.link-row a.action {
 				font-size: 13px;
-				color: #9a8cff;
+				color: #cccccc;
 				font-weight: 500;
 			}
-			.link-row a.action:hover { color: #c4b8ff; }
+			.link-row a.action:hover { color: #dddddd; }
 			.social-card {
 				display: flex;
 				align-items: center;
@@ -264,7 +264,7 @@
 			.social-card .provider-info { display: flex; align-items: center; gap: 10px; }
 			.social-card .provider-icon {
 				width: 32px; height: 32px; border-radius: 8px;
-				background: #20202c; display: flex; align-items: center;
+				background: #202020; display: flex; align-items: center;
 				justify-content: center; font-size: 16px; flex-shrink: 0;
 			}
 			.social-card .provider-name { font-size: 14px; color: #ddd; font-weight: 500; }
@@ -352,7 +352,7 @@
 							<label for="inp-username">Username</label>
 							<div class="row" style="align-items:flex-start;flex-direction:column;gap:6px">
 								<input id="inp-username" type="text" placeholder="yourhandle" maxlength="30" autocomplete="off" pattern="[a-zA-Z0-9_\-]{3,30}" style="max-width:400px" />
-								<p class="hint" style="margin:0">Letters, numbers, _ and - only, 3–30 chars. Your profile URL: <span id="profile-url-preview" style="color:#9a8cff">three.ws/u/yourhandle</span></p>
+								<p class="hint" style="margin:0">Letters, numbers, _ and - only, 3–30 chars. Your profile URL: <span id="profile-url-preview" style="color:#cccccc">three.ws/u/yourhandle</span></p>
 							</div>
 						</div>
 						<div class="row">

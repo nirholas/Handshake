@@ -61,7 +61,7 @@ const STYLE = `
 .agent-eth-vanity label { display: block; font-size: .7rem; color: rgba(230,230,234,0.55); margin: .55rem 0 .15rem; }
 .agent-eth-vanity button { font: inherit; padding: .35rem .75rem; border-radius: 5px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #e6e6ea; cursor: pointer; font-size: .8rem; }
 .agent-eth-vanity button:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
-.agent-eth-vanity button.primary { background: linear-gradient(90deg,#a78bfa,#6366f1); color: #fff; border-color: transparent; font-weight: 600; }
+.agent-eth-vanity button.primary { background: linear-gradient(90deg,#ffffff,#ffffff); color: #fff; border-color: transparent; font-weight: 600; }
 .agent-eth-vanity button.primary:hover:not(:disabled) { filter: brightness(1.1); }
 .agent-eth-vanity button.danger { color: #ff8a80; }
 .agent-eth-vanity button:disabled { opacity: .45; cursor: not-allowed; }
@@ -72,9 +72,9 @@ const STYLE = `
 .agent-eth-vanity .err { color: #ff8a80; font-size: .72rem; margin-top: .4rem; }
 .agent-eth-vanity .ok { color: #4ade80; font-size: .72rem; margin-top: .4rem; }
 .agent-eth-vanity .addr { font-family: ui-monospace, monospace; font-size: .75rem; color: rgba(230,230,234,0.85); margin-top: .35rem; word-break: break-all; padding: .35rem .5rem; background: #0e0e10; border-radius: 5px; border: 1px solid rgba(255,255,255,0.06); }
-.agent-eth-vanity .addr .pfx, .agent-eth-vanity .addr .sfx { background: linear-gradient(90deg,#a78bfa,#6366f1); color: #fff; padding: 0 2px; border-radius: 2px; font-weight: 700; }
+.agent-eth-vanity .addr .pfx, .agent-eth-vanity .addr .sfx { background: linear-gradient(90deg,#ffffff,#ffffff); color: #fff; padding: 0 2px; border-radius: 2px; font-weight: 700; }
 .agent-eth-vanity .meta-line { font-size: .68rem; color: rgba(230,230,234,0.5); margin-top: .4rem; font-family: ui-monospace, monospace; }
-.agent-eth-vanity a { color: #a78bfa; text-decoration: none; }
+.agent-eth-vanity a { color: #ffffff; text-decoration: none; }
 .agent-eth-vanity a:hover { text-decoration: underline; }
 .agent-eth-vanity .chain-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: .35rem; margin-top: .5rem; }
 .agent-eth-vanity .chain-cell { display:flex; flex-direction:column; gap:.15rem; padding:.4rem .55rem; border:1px solid rgba(255,255,255,0.08); border-radius:6px; background:rgba(255,255,255,0.02); }

@@ -30,7 +30,7 @@ const STYLE = `
 }
 .pay-chip-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .pay-chip-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .06em; }
-.pay-chip-skill { font-size: 13px; color: #a78bfa; font-family: monospace; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pay-chip-skill { font-size: 13px; color: #ffffff; font-family: monospace; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pay-chip-price { font-size: 15px; color: #34d399; font-weight: 700; margin-bottom: 10px; }
 .pay-chip-actions { display: flex; gap: 8px; }
 .pay-chip-btn {
@@ -68,7 +68,7 @@ const STYLE = `
 }
 .skill-pay-close:hover { color: #fff; }
 .skill-pay-skill {
-	font-size: 15px; font-weight: 600; color: #a78bfa;
+	font-size: 15px; font-weight: 600; color: #ffffff;
 	background: rgba(167,139,250,.1); border-radius: 8px;
 	padding: 8px 12px; margin: 0 0 8px; font-family: monospace;
 	overflow: hidden; text-overflow: ellipsis; white-space: nowrap;

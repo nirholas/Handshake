@@ -218,7 +218,7 @@ export default wrap(async function handler(req, res) {
 		return;
 	}
 
-	if (method(req, res, ['POST'])) return;
+	if (!method(req, res, ['POST'])) return;
 
 	let body;
 	try {

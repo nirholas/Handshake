@@ -81,7 +81,7 @@ async function querySubgraph(subgraphUrl, variables) {
 
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
-	if (method(req, res, ['GET'])) return;
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
 	const chainId = Number(url.searchParams.get('chain') || 8453);

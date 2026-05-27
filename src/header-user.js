@@ -25,7 +25,7 @@ function injectStyles() {
 .hu-root { position: relative; display: inline-flex; }
 .hu-avatar {
 	width: 32px; height: 32px; border-radius: 50%;
-	background: linear-gradient(135deg, #6a5cff 0%, #9a8cff 100%);
+	background: linear-gradient(135deg, #ffffff 0%, #9a8cff 100%);
 	color: #fff; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
 	border: 1px solid rgba(255,255,255,0.08);
 	display: inline-flex; align-items: center; justify-content: center;
@@ -60,7 +60,7 @@ function injectStyles() {
 }
 .hu-identity-avatar {
 	width: 36px; height: 36px; border-radius: 50%;
-	background: linear-gradient(135deg, #6a5cff 0%, #9a8cff 100%);
+	background: linear-gradient(135deg, #ffffff 0%, #9a8cff 100%);
 	color: #fff; font-size: 14px; font-weight: 600;
 	display: inline-flex; align-items: center; justify-content: center;
 	flex-shrink: 0;
