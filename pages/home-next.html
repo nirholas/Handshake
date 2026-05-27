@@ -326,7 +326,7 @@
 		.copy-btn:hover { border-color: var(--text); }
 		.copy-btn.copied { background: var(--text); color: var(--bg); border-color: var(--text); }
 		.render-pane { position: relative; padding: 0; }
-		.render-pane agent-3d {
+		.render-pane agent-3d, .render-pane .live-agent-slot {
 			position: absolute; inset: 49px 0 0; display: block;
 			width: 100%; height: calc(100% - 49px);
 		}
@@ -739,18 +739,7 @@
 	</div>
 	<div class="hero-stage" id="hero-stage">
 		<span class="stage-marker">live</span>
-		<div class="hero-stage-inner" id="hero-stage-inner">
-			<agent-3d
-				class="live-agent"
-				mode="inline"
-				responsive
-				background="transparent"
-				name-plate="off"
-				avatar-chat="off"
-				kiosk
-				eager
-			></agent-3d>
-		</div>
+		<div class="hero-stage-inner" id="hero-stage-inner"></div>
 		<div class="stage-meta">
 			<span>nich</span>
 			<span>/api/avatars/bacff13e</span>
@@ -840,16 +829,7 @@
 					<span>↪ live render</span>
 					<span style="color: var(--text-3);">running</span>
 				</div>
-				<agent-3d
-					class="live-agent"
-					mode="inline"
-					responsive
-					background="transparent"
-					name-plate="off"
-					avatar-chat="off"
-					kiosk
-					eager
-				></agent-3d>
+				<div class="live-agent-slot"></div>
 			</div>
 		</div>
 	</div>
@@ -1506,15 +1486,38 @@
 <script>
 	// ── Boot live <agent-3d> instances ─────────────────────────────
 	const AVATAR_ID  = 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
-	const AVATAR_SRC = `${location.origin}/api/avatars/${AVATAR_ID}`;
-	document.querySelectorAll('agent-3d.live-agent').forEach((el) => {
-		el.setAttribute('src', AVATAR_SRC);
-	});
+	const AGENT_ATTRS = {
+		mode: 'inline', responsive: '', background: 'transparent',
+		'name-plate': 'off', 'avatar-chat': 'off', kiosk: '', eager: '',
+	};
+	function spawnAgent(glbUrl) {
+		const el = document.createElement('agent-3d');
+		el.classList.add('live-agent');
+		el.setAttribute('body', glbUrl);
+		for (const [k, v] of Object.entries(AGENT_ATTRS)) el.setAttribute(k, v);
+		return el;
+	}
+	(async () => {
+		try {
+			const r = await fetch(`${location.origin}/api/avatars/${AVATAR_ID}`);
+			const d = await r.json();
+			const glb = d.avatar?.model_url || d.avatar?.url;
+			if (!glb) return;
+			const heroInner = document.getElementById('hero-stage-inner');
+			if (heroInner) {
+				const heroEl = spawnAgent(glb);
+				heroInner.appendChild(heroEl);
+				initHeroWalk(heroEl);
+			}
+			const embedSlot = document.querySelector('.render-pane .live-agent-slot');
+			if (embedSlot) embedSlot.replaceWith(spawnAgent(glb));
+		} catch (e) {
+			console.warn('[home] avatar boot failed', e);
+		}
+	})();
 
 	// ── Hero walk cycle ─────────────────────────────────────────────
-	(function initHeroWalk() {
-		const heroAgent = document.querySelector('.hero agent-3d');
-		if (!heroAgent) return;
+	function initHeroWalk(heroAgent) {
 		const WALK_CLIP = 'av-walk-feminine';
 		const IDLE_CLIP = 'idle';
 		let active = true;
@@ -1537,7 +1540,7 @@
 			active = !document.hidden;
 			if (active) walkCycle();
 		});
-	})();
+	}
 
 	// ── Hero parallax tilt ──────────────────────────────────────────
 	const stage = document.getElementById('hero-stage');

@@ -172,14 +172,14 @@ describe('ClubCamera — auto mode', () => {
 		expect(cam.position.y).toBeLessThan(3.0);
 	});
 
-	it('applyZoom works in auto mode', () => {
+	it('applyZoom adjusts the orbit radius in auto mode', () => {
 		const c = new ClubCamera(makeStubCamera());
 		c.setAuto(pole2);
 		runFrames(c, 60);
-		// Zoom should not be a no-op.
-		const before = c.offset.length();
-		c.applyZoom(-200);
-		expect(c.offset.length()).not.toBe(before);
+		// Zoom in auto mode adjusts the internal orbit radius.
+		const before = c._autoOrbitRadius;
+		c.applyZoom(-200); // zoom in
+		expect(c._autoOrbitRadius).toBeLessThan(before);
 	});
 });
 

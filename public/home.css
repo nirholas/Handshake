@@ -860,7 +860,7 @@
 
 .h-footer-links {
 	display: grid;
-	grid-template-columns: repeat(2, auto);
+	grid-template-columns: repeat(4, auto);
 	gap: 0.6rem 2.5rem;
 }
 

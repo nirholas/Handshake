@@ -102,7 +102,7 @@ async function probeX402() {
 
 	// SIWX reachability (just check if the table exists)
 	try {
-		const rows = await (await import('./_lib/db.js')).sql`
+		await (await import('./_lib/db.js')).sql`
 			SELECT 1 FROM siwx_payments LIMIT 1
 		`;
 		result.siwx = 'reachable';

@@ -165,6 +165,7 @@ function readRoute() {
 	if (tab === 'skills') return { view: 'skills', tag };
 	if (tab === 'mine') return { view: 'mine', tag };
 	if (tab === 'purchases') return { view: 'purchases', tag };
+	if (tab === 'earn') return { view: 'earn', tag };
 	const filter = LIST_FILTER_TABS.has(tab) ? tab : 'all';
 	return { view: 'list', filter, tag, q, sort };
 }
@@ -4918,7 +4919,8 @@ function render() {
 			(nav === 'tools' && r.view === 'tools') ||
 			(nav === 'skills' && r.view === 'skills') ||
 			(nav === 'mine' && r.view === 'mine') ||
-			(nav === 'purchases' && r.view === 'purchases');
+			(nav === 'purchases' && r.view === 'purchases') ||
+			(nav === 'earn' && r.view === 'earn');
 		a.classList.toggle('active', active);
 	});
 
@@ -4965,6 +4967,7 @@ function render() {
 	const skillsSec = $('market-skills-section');
 	const mineSec = $('market-mine');
 	const purchasesSec = $('market-purchases');
+	const earnSec = $('market-earn');
 	const discovery = els.discovery;
 	const tools = els.tools;
 	const detail = els.detail;
@@ -4986,6 +4989,7 @@ function render() {
 		setHidden(skillsSec, true);
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
 		setHidden(avatarDetailSec, false);
 		avatarDetailSec?.scrollIntoView({ behavior: 'instant', block: 'start' });
 	} else if (r.view === 'detail') {
@@ -4995,6 +4999,7 @@ function render() {
 		setHidden(skillsSec, true);
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
 		setHidden(avatarDetailSec, true);
 		setHidden(detail, false);
 	} else if (r.view === 'tools') {
@@ -5003,6 +5008,7 @@ function render() {
 		setHidden(skillsSec, true);
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
 		setHidden(avatarDetailSec, true);
 		setHidden(tools, false);
 		if (!pluginState.loaded) loadPlugins(true);
@@ -5012,6 +5018,7 @@ function render() {
 		setHidden(tools, true);
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
 		setHidden(avatarDetailSec, true);
 		setHidden(skillsSec, false);
 		loadSkillsTab();
@@ -5021,6 +5028,7 @@ function render() {
 		setHidden(tools, true);
 		setHidden(skillsSec, true);
 		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
 		setHidden(avatarDetailSec, true);
 		setHidden(mineSec, false);
 		loadMine();
@@ -5031,8 +5039,19 @@ function render() {
 		setHidden(skillsSec, true);
 		setHidden(mineSec, true);
 		setHidden(avatarDetailSec, true);
+		setHidden(earnSec, true);
 		setHidden(purchasesSec, false);
 		loadPurchases();
+	} else if (r.view === 'earn') {
+		setHidden(detail, true);
+		setHidden(discovery, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
+		setHidden(avatarDetailSec, true);
+		setHidden(earnSec, false);
+		loadEarnTab();
 	} else {
 		setHidden(detail, true);
 		setHidden(avatarDetailSec, true);
@@ -5040,6 +5059,7 @@ function render() {
 		setHidden(skillsSec, true);
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
 		setHidden(discovery, false);
 		document.title = 'Agent Marketplace · three.ws';
 	}

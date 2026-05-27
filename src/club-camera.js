@@ -165,9 +165,13 @@ export class ClubCamera {
 		const factor = 1 + deltaY * 0.0015;
 
 		if (this.mode === 'auto') {
-			// In auto mode, adjust the orbit radius directly.
+			// In auto mode, adjust the orbit radius directly and update the
+			// offset vector so pending transitions stay in sync.
 			const nextRadius = Math.max(bounds.min, Math.min(bounds.max, this._autoOrbitRadius * factor));
 			this._autoOrbitRadius = nextRadius;
+			const current = this._pending ? this._pending.offset : this.offset;
+			const len = current.length();
+			if (len > 1e-4) current.multiplyScalar(nextRadius / (len > 1e-4 ? Math.hypot(current.x, current.z) || len : len));
 			return;
 		}
 
