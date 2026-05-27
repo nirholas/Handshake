@@ -10,6 +10,9 @@
 	<meta property="og:image" content="/og-image.png" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<link rel="icon" href="/favicon.ico" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;450;500;550;600&family=JetBrains+Mono:wght@400;500;700&display=swap" />
 	<style>
 		:root {
 			color-scheme: dark;
@@ -32,6 +35,7 @@
 			--font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 		}
 		* { box-sizing: border-box; }
+		html { scroll-behavior: smooth; }
 		html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
 		body {
 			font-size: 15.5px; line-height: 1.55;
@@ -685,9 +689,117 @@
 			letter-spacing: 0.04em;
 		}
 		.foot-links { display: flex; gap: 22px; flex-wrap: wrap; }
-		.foot-links a { color: var(--text-3); }
+		.foot-links a { color: var(--text-3); transition: color 0.15s; }
 		.foot-links a:hover { color: var(--text); }
+
+		/* ── MOBILE NAV ─────────────────────────────────────────── */
+		.nav-toggle {
+			display: none; align-items: center; justify-content: center;
+			width: 36px; height: 36px; padding: 0; margin-left: auto;
+			background: none; border: 1px solid var(--hairline-strong);
+			border-radius: 7px; color: var(--text); cursor: pointer;
+			transition: border-color 0.15s, background 0.15s;
+		}
+		.nav-toggle:hover { border-color: var(--text); background: rgba(255,255,255,0.04); }
+		.nav-toggle svg { width: 16px; height: 16px; }
+		.nav-toggle .close { display: none; }
+		.nav-toggle[aria-expanded="true"] .open { display: none; }
+		.nav-toggle[aria-expanded="true"] .close { display: block; }
+		.nav-drawer {
+			display: none; position: fixed; inset: 57px 0 0;
+			z-index: 99; background: rgba(5,5,5,0.96);
+			backdrop-filter: blur(24px) saturate(140%);
+			padding: 24px 24px 40px; flex-direction: column; gap: 4px;
+			opacity: 0; transform: translateY(-8px);
+			transition: opacity 0.25s ease, transform 0.25s ease;
+		}
+		.nav-drawer.open { display: flex; opacity: 1; transform: translateY(0); }
+		.nav-drawer a {
+			padding: 14px 16px; font-size: 16px; font-weight: 450;
+			color: var(--text-2); border-radius: 8px;
+			transition: background 0.12s, color 0.12s;
+		}
+		.nav-drawer a:hover { background: var(--surface-1); color: var(--text); }
+		.nav-drawer .sep { height: 1px; background: var(--hairline); margin: 12px 0; }
+		.nav-drawer .btn { margin-top: 8px; justify-content: center; }
+		@media (max-width: 880px) {
+			.nav-toggle { display: flex; }
+			.nav-end { display: none; }
+		}
+
+		/* ── HERO LOADING ───────────────────────────────────────── */
+		.hero-stage-shimmer {
+			position: absolute; inset: 0; z-index: 1;
+			display: flex; align-items: center; justify-content: center;
+			transition: opacity 0.6s ease;
+		}
+		.hero-stage-shimmer.hidden { opacity: 0; pointer-events: none; }
+		.hero-stage-shimmer::before {
+			content: ""; width: 120px; height: 120px; border-radius: 50%;
+			background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+			animation: hero-pulse 2.4s ease-in-out infinite;
+		}
+		@keyframes hero-pulse {
+			0%, 100% { transform: scale(1); opacity: 0.5; }
+			50% { transform: scale(1.3); opacity: 1; }
+		}
+		.hero-stage agent-3d {
+			position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+			opacity: 0; transition: opacity 0.8s cubic-bezier(.2,.7,.3,1);
+		}
+		.hero-stage agent-3d.loaded { opacity: 1; }
+
+		/* ── REVEAL ANIMATIONS ──────────────────────────────────── */
+		.reveal {
+			opacity: 0; transform: translateY(32px);
+			transition: opacity 0.7s cubic-bezier(.2,.7,.3,1), transform 0.7s cubic-bezier(.2,.7,.3,1);
+		}
+		.reveal.vis { opacity: 1; transform: translateY(0); }
+		.reveal-d1 { transition-delay: 0.08s; }
+		.reveal-d2 { transition-delay: 0.16s; }
+
+		/* ── HERO TEXT ENTRANCE ──────────────────────────────────── */
+		.hero-text > * {
+			opacity: 0; transform: translateY(24px);
+			transition: opacity 0.6s cubic-bezier(.2,.7,.3,1), transform 0.6s cubic-bezier(.2,.7,.3,1);
+		}
+		.hero-text.entered > * { opacity: 1; transform: translateY(0); }
+		.hero-text > *:nth-child(1) { transition-delay: 0.05s; }
+		.hero-text > *:nth-child(2) { transition-delay: 0.12s; }
+		.hero-text > *:nth-child(3) { transition-delay: 0.22s; }
+		.hero-text > *:nth-child(4) { transition-delay: 0.32s; }
+		.hero-text > *:nth-child(5) { transition-delay: 0.42s; }
+
+		/* ── BENTO GLOW ─────────────────────────────────────────── */
+		.bento-card { --bx: 50%; --by: 50%; }
+		.bento-card::before {
+			content: ""; position: absolute; inset: 0; pointer-events: none;
+			background: radial-gradient(600px circle at var(--bx) var(--by), rgba(255,255,255,0.04), transparent 40%);
+			opacity: 0; transition: opacity 0.3s;
+		}
+		.bento-card:hover::before { opacity: 1; }
+
+		/* ── ENHANCED INTERACTIVE STATES ─────────────────────────── */
+		.btn:focus-visible, .copy-btn:focus-visible, .nav-toggle:focus-visible {
+			outline: 2px solid rgba(255,255,255,0.5); outline-offset: 2px;
+		}
+		.btn:active:not(.primary) { background: rgba(255,255,255,0.06); }
+		.btn.primary:active { background: #e0e0e0; }
+		.door-screenshot img[src] { transition: transform 0.4s cubic-bezier(.2,.7,.3,1); }
+		.door:hover .door-screenshot img { transform: scale(1.03); }
+		.pricing-card { transition: background 0.15s, transform 0.2s; }
+		.pricing-card:hover { transform: translateY(-2px); }
+		@keyframes stat-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+		.stat-animated { animation: stat-in 0.5s cubic-bezier(.2,.7,.3,1) both; }
+
+		/* ── ACCESSIBILITY ──────────────────────────────────────── */
+		@media (prefers-reduced-motion: reduce) {
+			.reveal, .hero-text > * { opacity: 1 !important; transform: none !important; transition: none !important; }
+			.hero-stage agent-3d { opacity: 1 !important; transition: none !important; }
+			.hero-stage-shimmer { display: none !important; }
+		}
 	</style>
+	<noscript><style>.reveal{opacity:1!important;transform:none!important}.hero-text>*{opacity:1!important;transform:none!important}</style></noscript>
 	<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 </head>
 <body>
@@ -710,8 +822,22 @@
 			<a href="/login">Sign in</a>
 			<a class="console" href="/dashboard">Console →</a>
 		</div>
+		<button class="nav-toggle" aria-label="Menu" aria-expanded="false" id="nav-toggle">
+			<svg class="open" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/></svg>
+			<svg class="close" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>
+		</button>
 	</div>
 </header>
+<nav class="nav-drawer" id="nav-drawer" aria-label="Mobile" aria-hidden="true">
+	<a href="/create">Build</a>
+	<a href="#embed">Embed</a>
+	<a href="/discover">Discover</a>
+	<a href="/pricing">Pricing</a>
+	<a href="/docs">Docs</a>
+	<div class="sep"></div>
+	<a href="/login">Sign in</a>
+	<a class="btn primary" href="/dashboard" style="margin-top:4px;">Console →</a>
+</nav>
 
 <!-- ── HERO ─────────────────────────────────────────────────────── -->
 <section class="hero">
@@ -739,6 +865,7 @@
 	</div>
 	<div class="hero-stage" id="hero-stage">
 		<span class="stage-marker">live</span>
+		<div class="hero-stage-shimmer" id="hero-shimmer"></div>
 		<div class="hero-stage-inner" id="hero-stage-inner"></div>
 		<div class="stage-meta">
 			<span>nich</span>
@@ -793,7 +920,7 @@
 <!-- ── THE EMBED ─────────────────────────────────────────────────── -->
 <section class="block" id="embed">
 	<div class="wrap-1280">
-		<div class="block-head">
+		<div class="block-head reveal">
 			<p class="block-eyebrow"><span class="num">01</span>The embed</p>
 			<h2 class="block-h">Two lines. <em>Any HTML.</em></h2>
 			<p class="block-lede">
@@ -801,7 +928,7 @@
 				by the exact code on the left — no iframe, no SDK install, no build step required.
 			</p>
 		</div>
-		<div class="embed-grid">
+		<div class="embed-grid reveal reveal-d1">
 			<div class="pane code-pane">
 				<div class="pane-head">
 					<div class="tabs">
@@ -838,14 +965,14 @@
 <!-- ── THREE DOORS ───────────────────────────────────────────────── -->
 <section class="block">
 	<div class="wrap-1280">
-		<div class="block-head">
+		<div class="block-head reveal">
 			<p class="block-eyebrow"><span class="num">02</span>The platform</p>
 			<h2 class="block-h">Build, embed, <em>and earn.</em></h2>
 			<p class="block-lede">
 				A full-stack platform for 3D AI agents: from selfie to on-chain identity, from embed to monetization.
 			</p>
 		</div>
-		<div class="doors">
+		<div class="doors reveal reveal-d1">
 			<a class="door" href="/create">
 				<div class="door-num"><span>01</span><span class="lbl">Create</span></div>
 				<div class="door-screenshot">
@@ -880,14 +1007,14 @@
 <!-- ── FEATURE BENTO ─────────────────────────────────────────────── -->
 <section class="block">
 	<div class="wrap-1280">
-		<div class="block-head">
+		<div class="block-head reveal">
 			<p class="block-eyebrow"><span class="num">03</span>Capabilities</p>
 			<h2 class="block-h">Every feature your <em>agent needs.</em></h2>
 			<p class="block-lede">
 				A complete platform — not a widget. Voice, motion capture, multiplayer, on-chain identity, and crypto payments built into every agent.
 			</p>
 		</div>
-		<div class="bento">
+		<div class="bento reveal reveal-d1">
 			<!-- Avatar Studio -->
 			<div class="bento-card span2">
 				<div class="bento-icon">
@@ -1039,14 +1166,14 @@
 <!-- ── PUMP.FUN INTEGRATION ───────────────────────────────────────── -->
 <section class="block">
 	<div class="wrap-1280">
-		<div class="block-head">
+		<div class="block-head reveal">
 			<p class="block-eyebrow"><span class="num">04</span>Token economy</p>
 			<h2 class="block-h">Your agent can launch <em>its own token.</em></h2>
 			<p class="block-lede">
 				The first 3D agent platform with native Pump.fun integration. One click from your agent dashboard to a live token on Solana.
 			</p>
 		</div>
-		<div class="feat-split">
+		<div class="feat-split reveal">
 			<div class="feat-text">
 				<p class="feat-eyebrow">Pump.fun · Native integration</p>
 				<h3 class="feat-h">From character<br/>to <em>community token.</em></h3>
@@ -1117,7 +1244,7 @@
 <!-- ── x402 EARN ──────────────────────────────────────────────────── -->
 <section class="block">
 	<div class="wrap-1280">
-		<div class="feat-split rev">
+		<div class="feat-split rev reveal">
 			<div class="feat-text">
 				<p class="feat-eyebrow">x402 protocol · USDC payments</p>
 				<h3 class="feat-h">Charge per chat.<br/><em>Keep everything.</em></h3>
@@ -1188,7 +1315,7 @@
 <!-- ── WALK & MULTIPLAYER ─────────────────────────────────────────── -->
 <section class="block">
 	<div class="wrap-1280">
-		<div class="feat-split">
+		<div class="feat-split reveal">
 			<div class="feat-text">
 				<p class="feat-eyebrow">Walk mode · Multiplayer</p>
 				<h3 class="feat-h">Your visitors walk<br/><em>together.</em></h3>
@@ -1236,14 +1363,14 @@
 <!-- ── DEVELOPER PLATFORM ─────────────────────────────────────────── -->
 <section class="block">
 	<div class="wrap-1280">
-		<div class="block-head">
+		<div class="block-head reveal">
 			<p class="block-eyebrow"><span class="num">05</span>Developer platform</p>
 			<h2 class="block-h">Headless API. <em>Full power.</em></h2>
 			<p class="block-lede">
 				Everything available through a REST API, SDK, and MCP server. Build custom agents, automate workflows, and connect to any AI tool.
 			</p>
 		</div>
-		<div class="dev-grid">
+		<div class="dev-grid reveal reveal-d1">
 			<div class="dev-pane">
 				<div class="dev-pane-head">
 					<span>agent-sdk · Node.js</span>
@@ -1334,11 +1461,11 @@
 <!-- ── HOW IT WORKS ───────────────────────────────────────────────── -->
 <section class="block">
 	<div class="wrap-1280">
-		<div class="block-head">
+		<div class="block-head reveal">
 			<p class="block-eyebrow"><span class="num">06</span>How it works</p>
 			<h2 class="block-h">Three steps. <em>One living character.</em></h2>
 		</div>
-		<div class="steps">
+		<div class="steps reveal reveal-d1">
 			<div class="step">
 				<div class="step-num">01 · CREATE</div>
 				<div class="step-title">Make an agent</div>
@@ -1361,12 +1488,12 @@
 <!-- ── SHOWCASE ───────────────────────────────────────────────────── -->
 <section class="block">
 	<div class="wrap-1280">
-		<div class="block-head">
+		<div class="block-head reveal">
 			<p class="block-eyebrow"><span class="num">07</span>Discover</p>
 			<h2 class="block-h">Living agents, <em>right now.</em></h2>
 			<p class="block-lede">A taste of what's running across the web today. Click any agent to talk, remix, or grab their embed code.</p>
 		</div>
-		<div class="showcase">
+		<div class="showcase reveal reveal-d1">
 			<a class="shot" href="/agent-next?id=bacff13e-b64b-4ac0-860d-44f0168ad23b">
 				<div class="shot-fill">
 					<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/bacff13e-b64b-4ac0-860d-44f0168ad23b.png" alt="nich" loading="lazy" />
@@ -1402,12 +1529,12 @@
 <!-- ── PRICING ────────────────────────────────────────────────────── -->
 <section class="block">
 	<div class="wrap-1280">
-		<div class="block-head">
+		<div class="block-head reveal">
 			<p class="block-eyebrow"><span class="num">08</span>Pricing</p>
 			<h2 class="block-h">Free to start. <em>Scale when you do.</em></h2>
 			<p class="block-lede">Open beta is free with no limits. Pro and Enterprise plans unlock higher rate limits, custom domains, and dedicated support.</p>
 		</div>
-		<div class="pricing-grid">
+		<div class="pricing-grid reveal reveal-d1">
 			<div class="pricing-card">
 				<div class="pricing-tier">Beta</div>
 				<div class="pricing-price">$0<sub>/mo</sub></div>
@@ -1455,7 +1582,7 @@
 <!-- ── BOTTOM CTA ─────────────────────────────────────────────────── -->
 <section class="block" style="padding-bottom:72px;">
 	<div class="wrap-1280">
-		<div class="cta-card">
+		<div class="cta-card reveal">
 			<h2>Add a living 3D agent<br/>to your product today.</h2>
 			<p>Free during open beta. No credit card. Two lines of HTML.</p>
 			<div class="cta-row" style="justify-content:center;">

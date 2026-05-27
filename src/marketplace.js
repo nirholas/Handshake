@@ -2083,14 +2083,45 @@ async function downloadReceipt(purchaseId) {
 
 // ── Earn tab ─────────────────────────────────────────────────────────────
 
-const earnState = { loaded: false, loading: false, pending_usd: 0, settled_usd: 0, entries: [], wallet: null };
+const earnState = {
+	loaded: false, loading: false, authFailed: false, errorMsg: null,
+	pending_usd: 0, settled_usd: 0, entries: [], wallet: null,
+	revBySkill: [], revTimeseries: [], revLoading: false,
+	period: 30, txnVisible: 20,
+};
+
+function fmtUsd(n) {
+	if (n == null || isNaN(n)) return '$0.00';
+	if (n === 0) return '$0.00';
+	const abs = Math.abs(n);
+	if (abs < 0.01) return (n < 0 ? '-' : '') + '$' + abs.toFixed(4);
+	if (abs < 1) return (n < 0 ? '-' : '') + '$' + abs.toFixed(3);
+	return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function earnPeriodParams(days) {
+	const to = new Date();
+	if (days === 'all') return { from: new Date('2020-01-01'), to, granularity: 'month' };
+	const from = new Date(to.getTime() - days * 24 * 60 * 60 * 1000);
+	return { from, to, granularity: days <= 30 ? 'day' : 'week' };
+}
+
+function fmtChartDate(iso) {
+	if (!iso) return '';
+	const d = new Date(iso + (iso.length === 10 ? 'T00:00:00' : ''));
+	return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 async function loadEarnTab(force = false) {
 	if (earnState.loading) return;
-	if (earnState.loaded && !force) return renderEarnTab();
+	if (earnState.loaded && !force) { renderEarnTab(); return; }
 	earnState.loading = true;
-	const entriesEl = $('earn-entries');
-	if (entriesEl) entriesEl.innerHTML = '<div class="market-empty">Loading…</div>';
+	earnState.authFailed = false;
+	earnState.errorMsg = null;
+	earnState.txnVisible = 20;
+
+	const el = $('earn-content');
+	if (el) el.innerHTML = renderEarnSkeleton();
 
 	try {
 		const [earningsRes, walletsRes] = await Promise.all([
@@ -2098,11 +2129,20 @@ async function loadEarnTab(force = false) {
 			fetch(`${API}/billing/payout-wallets`, { credentials: 'include' }),
 		]);
 
+		if (earningsRes.status === 401) {
+			earnState.authFailed = true;
+			earnState.loading = false;
+			renderEarnTab();
+			return;
+		}
+
 		if (earningsRes.ok) {
 			const j = await earningsRes.json();
 			earnState.pending_usd = j.pending_usd || 0;
 			earnState.settled_usd = j.settled_usd || 0;
 			earnState.entries = j.entries || [];
+		} else {
+			earnState.errorMsg = `Failed to load earnings (HTTP ${earningsRes.status})`;
 		}
 
 		if (walletsRes.ok) {
@@ -2114,54 +2154,254 @@ async function loadEarnTab(force = false) {
 		earnState.loaded = true;
 	} catch (err) {
 		console.error('[marketplace] earn tab', err);
+		earnState.errorMsg = 'Network error — check your connection and try again.';
 	} finally {
 		earnState.loading = false;
-		renderEarnTab();
 	}
+	renderEarnTab();
+	loadEarnRevenue();
+}
+
+async function loadEarnRevenue() {
+	if (earnState.revLoading) return;
+	earnState.revLoading = true;
+	const { from, to, granularity } = earnPeriodParams(earnState.period);
+	try {
+		const r = await fetch(
+			`${API}/billing/revenue?granularity=${granularity}&from=${from.toISOString()}&to=${to.toISOString()}`,
+			{ credentials: 'include' },
+		);
+		if (r.ok) {
+			const j = await r.json();
+			earnState.revBySkill = j.by_skill || [];
+			earnState.revTimeseries = j.timeseries || [];
+		}
+	} catch (err) {
+		console.error('[marketplace] revenue chart', err);
+	} finally {
+		earnState.revLoading = false;
+	}
+	renderEarnChart();
+	renderEarnBreakdown();
+}
+
+function renderEarnSkeleton() {
+	const cards = Array.from({ length: 4 }, () =>
+		'<div class="earn-card earn-card-sk"><div class="earn-sk-line" style="width:60%;height:12px"></div><div class="earn-sk-line" style="width:40%;height:24px;margin-top:8px"></div></div>',
+	).join('');
+	const rows = Array.from({ length: 5 }, () =>
+		'<div class="earn-txn-sk-row"><div class="earn-sk-line" style="width:30%"></div><div class="earn-sk-line" style="width:20%"></div></div>',
+	).join('');
+	return `<div class="earn-skeleton">
+		<div class="earn-stats">${cards}</div>
+		<div class="earn-chart-sk"><div class="earn-sk-block"></div></div>
+		<div class="earn-txn-sk">${rows}</div>
+	</div>`;
 }
 
 function renderEarnTab() {
-	const pendingEl = $('earn-pending');
-	const settledEl = $('earn-settled');
-	const walletEl = $('earn-wallet-display');
-	const entriesEl = $('earn-entries');
+	const el = $('earn-content');
+	const sub = $('earn-subtitle');
+	if (!el) return;
 
-	if (pendingEl) pendingEl.textContent = `$${earnState.pending_usd.toFixed(2)}`;
-	if (settledEl) settledEl.textContent = `$${earnState.settled_usd.toFixed(2)}`;
-	if (walletEl) {
-		if (earnState.wallet) {
-			const addr = earnState.wallet.address;
-			walletEl.textContent = addr.length > 16 ? `${addr.slice(0, 8)}…${addr.slice(-6)}` : addr;
-			walletEl.title = addr;
-		} else {
-			walletEl.textContent = 'Not set';
-		}
-	}
-	const editBtn = $('earn-wallet-edit');
-	if (editBtn) editBtn.textContent = earnState.wallet ? 'Edit' : 'Set wallet';
-
-	if (!entriesEl) return;
-	if (!earnState.entries.length) {
-		entriesEl.innerHTML = '<div class="market-empty">No revenue yet. Publish agents or skills with prices to start earning.</div>';
+	if (earnState.authFailed) {
+		if (sub) sub.textContent = 'Sign in to track your revenue';
+		el.innerHTML = `<div class="earn-state-msg">
+			<div class="earn-state-icon">$</div>
+			<h3>Sign in to view earnings</h3>
+			<p>Track revenue from your published agents, skills, and avatar sales.</p>
+			<button class="market-mine-cta" data-action="earn-signin">Sign in</button>
+		</div>`;
 		return;
 	}
-	entriesEl.innerHTML = earnState.entries.map((e) => {
-		const date = e.created_at ? formatDate(e.created_at) : '';
-		const statusBadge = e.status === 'settled'
-			? `<span class="stat-pill" style="color:#86efac">settled</span>`
-			: `<span class="stat-pill" style="color:#fde047">pending</span>`;
-		return `<div class="earn-entry">
-			<div class="earn-entry-info">
-				<span class="earn-entry-skill">${escapeHtml(e.skill_name || e.skill || '—')}</span>
-				<span class="earn-entry-agent" style="color:#71717a;font-size:0.8rem">${escapeHtml(e.agent_name || '')}</span>
+
+	if (earnState.errorMsg) {
+		if (sub) sub.textContent = 'Something went wrong';
+		el.innerHTML = `<div class="earn-state-msg">
+			<div class="earn-state-icon earn-icon-error">!</div>
+			<h3>Something went wrong</h3>
+			<p>${escapeHtml(earnState.errorMsg)}</p>
+			<button class="market-mine-cta" data-action="earn-retry">Retry</button>
+		</div>`;
+		return;
+	}
+
+	if (earnState.loading) return;
+
+	const total = earnState.pending_usd + earnState.settled_usd;
+	const hasData = total > 0 || earnState.entries.length > 0;
+
+	if (!hasData) {
+		if (sub) sub.textContent = 'Get started by publishing a skill or agent';
+		el.innerHTML = `<div class="earn-state-msg">
+			<div class="earn-state-icon">$</div>
+			<h3>No revenue yet</h3>
+			<p>Publish agents or skills with prices to start earning. Revenue from purchases will appear here.</p>
+			<div class="earn-empty-actions">
+				<button class="market-mine-cta" data-action="earn-publish">Publish a Skill</button>
+				<button class="market-btn-sec" data-action="earn-browse">Browse Marketplace</button>
 			</div>
-			<div class="earn-entry-right">
-				<span class="earn-entry-amount">$${Number(e.price_usd || 0).toFixed(3)}</span>
-				${statusBadge}
-				<span style="color:#71717a;font-size:0.78rem">${escapeHtml(date)}</span>
+		</div>`;
+		return;
+	}
+
+	if (sub) sub.textContent = `${fmtUsd(total)} total earned`;
+
+	const walletAddr = earnState.wallet
+		? (() => { const a = earnState.wallet.address; return a.length > 16 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a; })()
+		: 'Not set';
+	const walletTitle = earnState.wallet?.address || '';
+	const walletBtnLabel = earnState.wallet ? 'Edit' : 'Set wallet';
+	const pendingCount = earnState.entries.filter(e => e.status === 'pending').length;
+	const settledCount = earnState.entries.filter(e => e.status === 'settled').length;
+
+	el.innerHTML = `<div class="earn-dashboard">
+		<div class="earn-stats">
+			<div class="earn-card earn-card-total">
+				<div class="earn-card-label">Total Earned</div>
+				<div class="earn-card-value">${fmtUsd(total)}</div>
+				<div class="earn-card-meta">${earnState.entries.length} transaction${earnState.entries.length !== 1 ? 's' : ''}</div>
+			</div>
+			<div class="earn-card">
+				<div class="earn-card-label">Pending</div>
+				<div class="earn-card-value earn-val-pending">${fmtUsd(earnState.pending_usd)}</div>
+				<div class="earn-card-meta">${pendingCount} awaiting settlement</div>
+			</div>
+			<div class="earn-card">
+				<div class="earn-card-label">Settled</div>
+				<div class="earn-card-value earn-val-settled">${fmtUsd(earnState.settled_usd)}</div>
+				<div class="earn-card-meta">${settledCount} completed</div>
+			</div>
+			<div class="earn-card earn-card-wallet">
+				<div class="earn-card-label">Payout Wallet</div>
+				<div class="earn-card-value earn-wallet-addr" title="${escapeHtml(walletTitle)}">${escapeHtml(walletAddr)}</div>
+				<button class="earn-wallet-btn" data-action="earn-wallet-edit" aria-label="Edit payout wallet">${walletBtnLabel}</button>
+			</div>
+		</div>
+		<div class="earn-chart-section">
+			<div class="earn-section-header">
+				<h3 class="earn-section-title">Revenue</h3>
+				<div class="earn-period-chips" role="tablist" aria-label="Revenue period">
+					<button class="earn-chip${earnState.period === 7 ? ' active' : ''}" data-period="7" role="tab" aria-selected="${earnState.period === 7}">7d</button>
+					<button class="earn-chip${earnState.period === 30 ? ' active' : ''}" data-period="30" role="tab" aria-selected="${earnState.period === 30}">30d</button>
+					<button class="earn-chip${earnState.period === 90 ? ' active' : ''}" data-period="90" role="tab" aria-selected="${earnState.period === 90}">90d</button>
+					<button class="earn-chip${earnState.period === 'all' ? ' active' : ''}" data-period="all" role="tab" aria-selected="${earnState.period === 'all'}">All</button>
+				</div>
+			</div>
+			<div class="earn-chart" id="earn-chart"><div class="earn-chart-loading">Loading revenue data…</div></div>
+		</div>
+		<div class="earn-breakdown-section" id="earn-breakdown-section" hidden>
+			<h3 class="earn-section-title">Top Earners</h3>
+			<div class="earn-breakdown" id="earn-breakdown"></div>
+		</div>
+		<div class="earn-txns-section">
+			<div class="earn-section-header">
+				<h3 class="earn-section-title">Recent Transactions</h3>
+				<span class="earn-txn-count">${earnState.entries.length} total</span>
+			</div>
+			<div class="earn-txns" id="earn-txns"></div>
+			${earnState.entries.length > earnState.txnVisible ? '<div class="earn-txns-more" id="earn-txns-more"><button class="earn-show-more" data-action="earn-more">Show more</button></div>' : ''}
+		</div>
+	</div>`;
+
+	renderEarnTransactions();
+}
+
+function renderEarnChart() {
+	const el = $('earn-chart');
+	if (!el) return;
+
+	if (earnState.revLoading) {
+		el.innerHTML = '<div class="earn-chart-loading">Loading revenue data…</div>';
+		return;
+	}
+
+	const ts = earnState.revTimeseries;
+	if (!ts || !ts.length) {
+		el.innerHTML = '<div class="earn-chart-empty">No revenue data for this period</div>';
+		return;
+	}
+
+	const USDC_DIV = 1_000_000;
+	const maxVal = Math.max(...ts.map(d => d.net_total), 1);
+	const labelEvery = ts.length <= 7 ? 1 : ts.length <= 14 ? 2 : ts.length <= 30 ? 5 : 7;
+
+	const bars = ts.map((d, i) => {
+		const pct = Math.max((d.net_total / maxVal) * 100, d.net_total > 0 ? 3 : 0);
+		const showLabel = i % labelEvery === 0 || i === ts.length - 1;
+		const dateLabel = fmtChartDate(d.period);
+		const usd = d.net_total / USDC_DIV;
+		return `<div class="earn-bar" style="--h:${pct.toFixed(1)}%" title="${dateLabel}: ${fmtUsd(usd)}">
+			<div class="earn-bar-col"></div>
+			${showLabel ? `<span class="earn-bar-date">${escapeHtml(dateLabel)}</span>` : '<span class="earn-bar-date"></span>'}
+		</div>`;
+	}).join('');
+
+	const periodTotal = ts.reduce((s, d) => s + d.net_total, 0) / USDC_DIV;
+	const periodCount = ts.reduce((s, d) => s + d.count, 0);
+
+	el.innerHTML = `<div class="earn-chart-meta">
+		<span class="earn-chart-total">${fmtUsd(periodTotal)}</span>
+		<span class="earn-chart-count">${periodCount} payment${periodCount !== 1 ? 's' : ''} this period</span>
+	</div>
+	<div class="earn-chart-bars">${bars}</div>`;
+}
+
+function renderEarnBreakdown() {
+	const el = $('earn-breakdown');
+	const section = $('earn-breakdown-section');
+	if (!el || !section) return;
+
+	const skills = earnState.revBySkill;
+	if (!skills || !skills.length) { section.hidden = true; return; }
+	section.hidden = false;
+
+	const USDC_DIV = 1_000_000;
+	const maxVal = Math.max(...skills.map(s => s.net_total), 1);
+
+	el.innerHTML = skills.slice(0, 6).map(s => {
+		const pct = (s.net_total / maxVal) * 100;
+		const usd = s.net_total / USDC_DIV;
+		return `<div class="earn-bk-row">
+			<span class="earn-bk-name" title="${escapeHtml(s.skill || '')}">${escapeHtml(s.skill || '—')}</span>
+			<div class="earn-bk-track"><div class="earn-bk-fill" style="width:${pct.toFixed(1)}%"></div></div>
+			<span class="earn-bk-amount">${fmtUsd(usd)}</span>
+			<span class="earn-bk-count">${s.count}×</span>
+		</div>`;
+	}).join('');
+}
+
+function renderEarnTransactions() {
+	const el = $('earn-txns');
+	if (!el) return;
+
+	const visible = earnState.entries.slice(0, earnState.txnVisible);
+	if (!visible.length) { el.innerHTML = ''; return; }
+
+	const kindIcons = { skill: '≡', avatar: '◉', agent: '▣' };
+	const kindColors = { skill: '#60a5fa', avatar: '#a78bfa', agent: '#34d399' };
+
+	el.innerHTML = visible.map(e => {
+		const icon = kindIcons[e.kind] || '·';
+		const color = kindColors[e.kind] || 'var(--mk-text-3)';
+		const statusCls = e.status === 'settled' ? 'earn-status-settled' : 'earn-status-pending';
+		const date = e.created_at ? formatDate(e.created_at) : '';
+		return `<div class="earn-txn">
+			<div class="earn-txn-icon" style="color:${color}" aria-hidden="true">${icon}</div>
+			<div class="earn-txn-info">
+				<span class="earn-txn-name">${escapeHtml(e.skill_name || e.skill || '—')}</span>
+				${e.agent_name ? `<span class="earn-txn-agent">${escapeHtml(e.agent_name)}</span>` : ''}
+			</div>
+			<div class="earn-txn-right">
+				<span class="earn-txn-amount">${fmtUsd(e.price_usd)}</span>
+				<span class="earn-txn-status ${statusCls}">${escapeHtml(e.status || '')}</span>
+				<span class="earn-txn-date">${escapeHtml(date)}</span>
 			</div>
 		</div>`;
 	}).join('');
+
+	const moreEl = $('earn-txns-more');
+	if (moreEl) moreEl.hidden = earnState.entries.length <= earnState.txnVisible;
 }
 
 function openPublishSkillModal() {
@@ -2201,11 +2441,35 @@ function closeWalletSetupModal() {
 }
 
 function bindEarnTab() {
-	// Publish skill from earn header
 	$('earn-publish-skill-btn')?.addEventListener('click', openPublishSkillModal);
 
-	// Wallet edit
-	$('earn-wallet-edit')?.addEventListener('click', openWalletSetupModal);
+	const earnContent = $('earn-content');
+	if (earnContent) {
+		earnContent.addEventListener('click', (e) => {
+			const chip = e.target.closest('[data-period]');
+			if (chip) {
+				const p = chip.dataset.period === 'all' ? 'all' : parseInt(chip.dataset.period, 10);
+				if (p === earnState.period) return;
+				earnState.period = p;
+				earnContent.querySelectorAll('.earn-chip').forEach(c => {
+					const on = c.dataset.period === String(p);
+					c.classList.toggle('active', on);
+					c.setAttribute('aria-selected', on);
+				});
+				loadEarnRevenue();
+				return;
+			}
+			const btn = e.target.closest('[data-action]');
+			if (!btn) return;
+			const act = btn.dataset.action;
+			if (act === 'earn-signin') location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+			else if (act === 'earn-retry') { earnState.loaded = false; loadEarnTab(true); }
+			else if (act === 'earn-publish') openPublishSkillModal();
+			else if (act === 'earn-browse') navTo('/marketplace');
+			else if (act === 'earn-wallet-edit') openWalletSetupModal();
+			else if (act === 'earn-more') { earnState.txnVisible += 20; renderEarnTransactions(); }
+		});
+	}
 
 	// Close wallet modal
 	$('wallet-setup-close')?.addEventListener('click', closeWalletSetupModal);

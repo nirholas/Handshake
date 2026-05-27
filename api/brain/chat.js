@@ -27,9 +27,9 @@ const PROVIDERS = {
 		maxOutput: 16384,
 		description: 'Most capable. Extended thinking, complex reasoning.',
 		build: () => {
-			const key = env.ANTHROPIC_API_KEY;
-			if (!key) return null;
-			return createAnthropic({ apiKey: key })('claude-opus-4-7');
+			if (env.ANTHROPIC_API_KEY) return createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })('claude-opus-4-7');
+			if (env.OPENROUTER_API_KEY) return openrouter()('anthropic/claude-opus-4');
+			return null;
 		},
 	},
 	'claude-sonnet-4-6': {
@@ -39,9 +39,9 @@ const PROVIDERS = {
 		maxOutput: 16384,
 		description: 'Balanced speed and intelligence. Best for most tasks.',
 		build: () => {
-			const key = env.ANTHROPIC_API_KEY;
-			if (!key) return null;
-			return createAnthropic({ apiKey: key })('claude-sonnet-4-6');
+			if (env.ANTHROPIC_API_KEY) return createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })('claude-sonnet-4-6');
+			if (env.OPENROUTER_API_KEY) return openrouter()('anthropic/claude-sonnet-4');
+			return null;
 		},
 	},
 	'claude-haiku-4-5': {
@@ -51,9 +51,9 @@ const PROVIDERS = {
 		maxOutput: 8192,
 		description: 'Fastest Claude. Low latency, high throughput.',
 		build: () => {
-			const key = env.ANTHROPIC_API_KEY;
-			if (!key) return null;
-			return createAnthropic({ apiKey: key })('claude-haiku-4-5-20251001');
+			if (env.ANTHROPIC_API_KEY) return createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })('claude-haiku-4-5-20251001');
+			if (env.OPENROUTER_API_KEY) return openrouter()('anthropic/claude-3.5-haiku');
+			return null;
 		},
 	},
 	'gpt-4o': {
@@ -63,9 +63,9 @@ const PROVIDERS = {
 		maxOutput: 16384,
 		description: 'OpenAI flagship. Strong multimodal reasoning.',
 		build: () => {
-			const key = env.OPENAI_API_KEY;
-			if (!key) return null;
-			return createOpenAI({ apiKey: key })('gpt-4o');
+			if (env.OPENAI_API_KEY) return createOpenAI({ apiKey: env.OPENAI_API_KEY })('gpt-4o');
+			if (env.OPENROUTER_API_KEY) return openrouter()('openai/gpt-4o');
+			return null;
 		},
 	},
 	'gpt-4o-mini': {
@@ -75,9 +75,9 @@ const PROVIDERS = {
 		maxOutput: 16384,
 		description: 'Fast, affordable GPT. Great for simple tasks.',
 		build: () => {
-			const key = env.OPENAI_API_KEY;
-			if (!key) return null;
-			return createOpenAI({ apiKey: key })('gpt-4o-mini');
+			if (env.OPENAI_API_KEY) return createOpenAI({ apiKey: env.OPENAI_API_KEY })('gpt-4o-mini');
+			if (env.OPENROUTER_API_KEY) return openrouter()('openai/gpt-4o-mini');
+			return null;
 		},
 	},
 	'o3-mini': {
@@ -87,9 +87,9 @@ const PROVIDERS = {
 		maxOutput: 16384,
 		description: 'Reasoning-optimized. Fast chain-of-thought.',
 		build: () => {
-			const key = env.OPENAI_API_KEY;
-			if (!key) return null;
-			return createOpenAI({ apiKey: key })('o3-mini');
+			if (env.OPENAI_API_KEY) return createOpenAI({ apiKey: env.OPENAI_API_KEY })('o3-mini');
+			if (env.OPENROUTER_API_KEY) return openrouter()('openai/o3-mini');
+			return null;
 		},
 	},
 	'groq-llama': {
@@ -99,12 +99,14 @@ const PROVIDERS = {
 		maxOutput: 8192,
 		description: 'Open-weight on Groq. Extremely fast inference.',
 		build: () => {
-			const key = env.GROQ_API_KEY;
-			if (!key) return null;
-			return createOpenAI({
-				apiKey: key,
-				baseURL: 'https://api.groq.com/openai/v1',
-			})('llama-3.3-70b-versatile');
+			if (env.GROQ_API_KEY) {
+				return createOpenAI({
+					apiKey: env.GROQ_API_KEY,
+					baseURL: 'https://api.groq.com/openai/v1',
+				})('llama-3.3-70b-versatile');
+			}
+			if (env.OPENROUTER_API_KEY) return openrouter()('meta-llama/llama-3.3-70b-instruct');
+			return null;
 		},
 	},
 	'qwen-plus': {
@@ -114,12 +116,8 @@ const PROVIDERS = {
 		maxOutput: 8192,
 		description: 'Qwen Plus on DashScope. Strong multilingual.',
 		build: () => {
-			if (env.DASHSCOPE_API_KEY) {
-				return createQwen({ apiKey: env.DASHSCOPE_API_KEY })('qwen-plus');
-			}
-			if (env.OPENROUTER_API_KEY) {
-				return openrouter()('qwen/qwen-2.5-72b-instruct');
-			}
+			if (env.DASHSCOPE_API_KEY) return createQwen({ apiKey: env.DASHSCOPE_API_KEY })('qwen-plus');
+			if (env.OPENROUTER_API_KEY) return openrouter()('qwen/qwen-2.5-72b-instruct');
 			return null;
 		},
 	},
@@ -136,9 +134,7 @@ const PROVIDERS = {
 					baseURL: 'https://api-inference.modelscope.cn/v1',
 				})('Qwen/Qwen3-Coder-480B-A35B-Instruct');
 			}
-			if (env.OPENROUTER_API_KEY) {
-				return openrouter()('qwen/qwen3-coder');
-			}
+			if (env.OPENROUTER_API_KEY) return openrouter()('qwen/qwen3-coder');
 			return null;
 		},
 	},
@@ -155,9 +151,7 @@ const PROVIDERS = {
 					baseURL: 'https://api.deepseek.com/v1',
 				})('deepseek-reasoner');
 			}
-			if (env.OPENROUTER_API_KEY) {
-				return openrouter()('deepseek/deepseek-r1');
-			}
+			if (env.OPENROUTER_API_KEY) return openrouter()('deepseek/deepseek-r1');
 			return null;
 		},
 	},
@@ -238,7 +232,7 @@ export default wrap(async function handler(req, res) {
 	const model = spec.build();
 	if (!model) {
 		return error(res, 503, 'provider_not_configured',
-			`${spec.network} key not configured on this deployment`);
+			`No API key for ${spec.label}. Add your own key in Account → AI Provider Keys to unlock this model.`);
 	}
 
 	let messages;
