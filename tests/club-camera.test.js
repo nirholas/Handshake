@@ -5,12 +5,13 @@
 // JS — no WebGL / DOM — so vitest exercises the math directly.
 
 import { describe, it, expect } from 'vitest';
-import { Vector3 } from 'three';
+import { Quaternion, Vector3 } from 'three';
 import { ClubCamera, CLUB_CAMERA_MODES } from '../src/club-camera.js';
 
 function makeStubCamera() {
 	const cam = {
 		position: new Vector3(),
+		quaternion: new Quaternion(),
 		_lookAt: new Vector3(),
 		lookAt(x, y, z) {
 			if (x?.isVector3) this._lookAt.copy(x);
@@ -28,7 +29,7 @@ function runFrames(clubCam, frames = 240, dt = 1 / 60) {
 
 describe('ClubCamera — vocabulary', () => {
 	it('exports the canonical mode list', () => {
-		expect(CLUB_CAMERA_MODES).toEqual(['free', 'vip', 'house']);
+		expect(CLUB_CAMERA_MODES).toEqual(['free', 'vip', 'house', 'auto']);
 	});
 
 	it('starts in free mode with sensible defaults', () => {
@@ -49,11 +50,12 @@ describe('ClubCamera — VIP convergence', () => {
 		runFrames(c, 240);
 
 		// Expected world position = pole target + offset (yaw + π flips behind dancer).
-		const expectedTarget = new Vector3(pole3.x, 1.6, pole3.z);
+		// VIP shot: front-and-low with target at y=1.4, offset at y=0.85, distance 2.4.
+		const expectedTarget = new Vector3(pole3.x, 1.4, pole3.z);
 		const expectedOffset = new Vector3(
-			Math.sin(pole3.yaw + Math.PI) * 2.6,
-			1.3,
-			Math.cos(pole3.yaw + Math.PI) * 2.6,
+			Math.sin(pole3.yaw + Math.PI) * 2.4,
+			0.85,
+			Math.cos(pole3.yaw + Math.PI) * 2.4,
 		);
 		const expectedPos = expectedTarget.clone().add(expectedOffset);
 
@@ -70,9 +72,10 @@ describe('ClubCamera — VIP convergence', () => {
 
 		runFrames(c, 360);
 
-		// House cam target = (0, 0.5, -1.5), offset = (0, 12, ~0) → camera high overhead.
-		expect(cam.position.y).toBeGreaterThan(11.5);
-		expect(Math.abs(cam.position.x)).toBeLessThan(0.1);
+		// House cam target = (0, 0.5, -1.5), offset = (0, 13, ~0) → camera high overhead.
+		// With gentle yaw rotation, the x position drifts slightly but stays near zero.
+		expect(cam.position.y).toBeGreaterThan(12.5);
+		expect(Math.abs(cam.position.x)).toBeLessThan(1.0);
 	});
 });
 
@@ -145,6 +148,41 @@ describe('ClubCamera — zoom', () => {
 	});
 });
 
+describe('ClubCamera — auto mode', () => {
+	const pole2 = { id: '2', x: 0.5, z: -3.0, yaw: 0.3 };
+
+	it('setAuto switches to auto mode and orbits the pole', () => {
+		const cam = makeStubCamera();
+		const c = new ClubCamera(cam);
+		c.setAuto(pole2);
+		expect(c.getMode()).toBe('auto');
+
+		// After running frames, the camera should be near the pole's position
+		// at the orbit radius.
+		runFrames(c, 120);
+		const distFromPole = Math.hypot(
+			cam.position.x - pole2.x,
+			cam.position.z - pole2.z,
+		);
+		// Should be roughly at the auto-orbit radius (~3.2).
+		expect(distFromPole).toBeGreaterThan(2.0);
+		expect(distFromPole).toBeLessThan(5.0);
+		// Camera height should be at auto-orbit height (~1.6).
+		expect(cam.position.y).toBeGreaterThan(1.0);
+		expect(cam.position.y).toBeLessThan(3.0);
+	});
+
+	it('applyZoom works in auto mode', () => {
+		const c = new ClubCamera(makeStubCamera());
+		c.setAuto(pole2);
+		runFrames(c, 60);
+		// Zoom should not be a no-op.
+		const before = c.offset.length();
+		c.applyZoom(-200);
+		expect(c.offset.length()).not.toBe(before);
+	});
+});
+
 describe('ClubCamera — mode change callback', () => {
 	it('fires onModeChange only on actual transitions', () => {
 		const calls = [];
@@ -155,7 +193,8 @@ describe('ClubCamera — mode change callback', () => {
 		c.setVip({ id: '1', x: 0, z: 0, yaw: 0 });
 		c.setVip({ id: '2', x: 1, z: 0, yaw: 0 }); // still vip → no callback
 		c.setHouse();
+		c.setAuto({ id: '3', x: 0, z: 0, yaw: 0 });
 		c.setFree();
-		expect(calls).toEqual(['vip', 'house', 'free']);
+		expect(calls).toEqual(['vip', 'house', 'auto', 'free']);
 	});
 });

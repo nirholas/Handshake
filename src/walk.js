@@ -165,11 +165,11 @@ if (nameInput) {
 // ── Help toggle ──────────────────────────────────────────────────────────
 const helpEl = document.getElementById('walk-help');
 let helpAutoHideTimer = null;
-if (helpToggleBtn && helpEl) {
+if (helpToggleBtn) {
 	helpToggleBtn.addEventListener('click', () => {
-		const show = helpEl.style.display === 'none';
-		helpEl.style.display = show ? '' : 'none';
-		if (helpAutoHideTimer) { clearTimeout(helpAutoHideTimer); helpAutoHideTimer = null; }
+		toggleHelp();
+		// Also hide the small hints if showing the full overlay
+		if (helpEl && helpAutoHideTimer) { clearTimeout(helpAutoHideTimer); helpAutoHideTimer = null; }
 	});
 }
 
@@ -651,6 +651,7 @@ let avatar = null;
 let avatarYaw = 0; // current facing (radians); we lerp this toward movement angle
 let avatarLean = 0; // current torso pitch (radians); lerps toward target lean
 let currentMotion = 'idle'; // 'idle' | 'walk' | 'run' — drives clip crossfades
+let avatarHeight = 1.8; // cached avatar height, updated on load/switch
 
 // Cached gltf scene + animation manifest defs, populated by loadAvatar — the
 // multiplayer layer reuses both to spawn remote-player avatars without
@@ -687,6 +688,7 @@ async function loadAvatar() {
 
 	// Frame the camera relative to the avatar's height.
 	const height = Math.max(0.5, box.max.y - box.min.y);
+	avatarHeight = height;
 	CAM_OFFSET.set(0, height * 1.05, height * 1.95);
 	CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
 	applyCameraImmediate();
@@ -1331,7 +1333,6 @@ function tick() {
 			}
 		}
 
-		const avatarHeight = avatar ? new Box3().setFromObject(avatar).max.y - new Box3().setFromObject(avatar).min.y : 1.8;
 		const desired = computeCameraForMode(cameraMode, avatarRig.position, avatarHeight);
 
 		// Camera mode transition (smooth lerp)
@@ -2506,8 +2507,11 @@ loadAvatar()
 			avatar.position.y -= box.min.y;
 			avatarRig.add(avatar);
 			const height = Math.max(0.5, box.max.y - box.min.y);
+			avatarHeight = height;
 			CAM_OFFSET.set(0, height * 1.05, height * 1.95);
 			CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
+			// Respect current camera mode visibility
+			if (cameraMode === 'firstperson') avatar.visible = false;
 			animationManager.attach(avatar);
 			animationManager.crossfadeTo(motionToClipName(currentMotion), 0);
 			setStatus('Avatar switched');

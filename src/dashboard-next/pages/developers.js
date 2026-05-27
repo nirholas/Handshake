@@ -577,6 +577,7 @@ function renderWebhookList(container) {
 					${wh.description ? `<div class="dev-wh-card-desc">${esc(wh.description)}</div>` : ''}
 				</div>
 				<div class="dev-wh-card-actions">
+					<button class="dev-wh-view-btn" data-id="${esc(wh.id)}">View Deliveries</button>
 					<button class="dn-btn ghost dev-wh-toggle" data-id="${esc(wh.id)}" data-active="${wh.active}">${wh.active ? 'Pause' : 'Resume'}</button>
 					<button class="dn-btn ghost danger dev-wh-delete" data-id="${esc(wh.id)}">Delete</button>
 				</div>
@@ -590,6 +591,7 @@ function renderWebhookList(container) {
 				${wh.stats_7d.failed > 0 ? `<span class="dev-wh-stat danger">${wh.stats_7d.failed} failed</span>` : ''}
 				${wh.stats_7d.last_delivery_at ? `<span class="dev-wh-stat">Last: ${relTime(wh.stats_7d.last_delivery_at)}</span>` : ''}
 			</div>` : ''}
+			<div class="dev-wh-deliveries" data-deliveries-for="${esc(wh.id)}"></div>
 		</div>
 	`).join('');
 
@@ -618,6 +620,60 @@ function renderWebhookList(container) {
 				renderWebhookList(container);
 			} catch (err) {
 				showToast(err?.message || 'Failed to delete webhook', 'danger');
+			}
+		});
+	});
+
+	container.querySelectorAll('.dev-wh-view-btn').forEach(btn => {
+		btn.addEventListener('click', async () => {
+			const id = btn.dataset.id;
+			const slot = container.querySelector(`[data-deliveries-for="${id}"]`);
+			if (!slot) return;
+
+			if (slot.dataset.loaded === 'true') {
+				slot.innerHTML = '';
+				slot.dataset.loaded = '';
+				btn.textContent = 'View Deliveries';
+				return;
+			}
+
+			btn.textContent = 'Loading...';
+			btn.disabled = true;
+
+			try {
+				const res = await get(`/api/developer/webhooks/${id}`);
+				const deliveries = res?.deliveries ?? [];
+				slot.dataset.loaded = 'true';
+				btn.textContent = 'Hide Deliveries';
+				btn.disabled = false;
+
+				if (!deliveries.length) {
+					slot.innerHTML = `<div class="dev-wh-delivery-list" style="padding:16px 0;color:var(--nxt-ink-dim);font-size:13px;text-align:center">No deliveries yet</div>`;
+					return;
+				}
+
+				slot.innerHTML = `<div class="dev-wh-delivery-list">
+					<div class="dev-wh-delivery-item" style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--nxt-ink-dim);border-bottom:1px solid var(--nxt-stroke)">
+						<span>Event</span><span>Event ID</span><span>Status</span><span>Time</span>
+					</div>
+					${deliveries.slice(0, 25).map(d => {
+						const ok = d.status_code && d.status_code >= 200 && d.status_code < 300;
+						const fail = d.status_code === null || d.status_code >= 400;
+						const statusClass = ok ? 'ok' : fail ? 'fail' : 'pending';
+						const statusText = d.status_code ? `${d.status_code}` : d.error ? 'Error' : 'Pending';
+						return `<div class="dev-wh-delivery-item">
+							<span class="dev-wh-delivery-event">${esc(d.event_type)}</span>
+							<span class="dev-wh-delivery-event" style="opacity:0.6">${esc((d.event_id || '').slice(0, 16))}</span>
+							<span class="dev-wh-delivery-status ${statusClass}">${statusText}</span>
+							<span style="color:var(--nxt-ink-dim)">${relTime(d.created_at)}</span>
+						</div>`;
+					}).join('')}
+					${deliveries.length > 25 ? `<div style="padding:8px 12px;font-size:12px;color:var(--nxt-ink-dim)">Showing 25 of ${deliveries.length} deliveries</div>` : ''}
+				</div>`;
+			} catch (err) {
+				btn.textContent = 'View Deliveries';
+				btn.disabled = false;
+				showToast(err?.message || 'Failed to load deliveries', 'danger');
 			}
 		});
 	});

@@ -57,6 +57,7 @@ export class ClubCamera {
 		this._onModeChange = opts.onModeChange || null;
 		this._houseYaw = 0;
 		this._autoYaw = 0;
+		this._autoOrbitRadius = AUTO_ORBIT_RADIUS;
 		this._autoLayout = null; // pole layout for auto-orbit
 		this._activeVipId = null;
 		// Slerp state for smooth rotation interpolation.
@@ -162,6 +163,14 @@ export class ClubCamera {
 		if (this.mode === 'house') return;
 		const bounds = ZOOM_BOUNDS[this.mode] || ZOOM_BOUNDS.free;
 		const factor = 1 + deltaY * 0.0015;
+
+		if (this.mode === 'auto') {
+			// In auto mode, adjust the orbit radius directly.
+			const nextRadius = Math.max(bounds.min, Math.min(bounds.max, this._autoOrbitRadius * factor));
+			this._autoOrbitRadius = nextRadius;
+			return;
+		}
+
 		const current = this._pending ? this._pending.offset : this.offset;
 		const len = current.length();
 		if (len < 1e-4) return;
@@ -207,9 +216,9 @@ export class ClubCamera {
 			// Slowly orbit the performing dancer's pole.
 			this._autoYaw += AUTO_ORBIT_SPEED * dt;
 			const orbitOffset = new Vector3(
-				Math.sin(this._autoYaw) * AUTO_ORBIT_RADIUS,
+				Math.sin(this._autoYaw) * this._autoOrbitRadius,
 				AUTO_ORBIT_HEIGHT,
-				Math.cos(this._autoYaw) * AUTO_ORBIT_RADIUS,
+				Math.cos(this._autoYaw) * this._autoOrbitRadius,
 			);
 			const autoTarget = new Vector3(
 				this._autoLayout.x,

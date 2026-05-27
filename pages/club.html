@@ -344,15 +344,6 @@
 				grid-template-columns: 1fr 1fr;
 				gap: 8px;
 			}
-			.club-pole-card {
-				border: 1px solid var(--border);
-				background: rgba(255, 59, 214, 0.04);
-				border-radius: 10px;
-				padding: 10px 11px;
-				display: flex;
-				flex-direction: column;
-				gap: 8px;
-			}
 			.club-pole-head {
 				display: flex;
 				justify-content: space-between;
@@ -409,30 +400,6 @@
 				outline: none;
 				border-color: var(--accent);
 			}
-			.club-tip-btn {
-				appearance: none;
-				border: none;
-				border-radius: 8px;
-				padding: 8px 10px;
-				font: inherit;
-				font-size: 12px;
-				font-weight: 700;
-				color: #fff;
-				cursor: pointer;
-				background: linear-gradient(135deg, var(--accent) 0%, #ff5fda 100%);
-				box-shadow:
-					0 4px 12px rgba(255, 59, 214, 0.32),
-					inset 0 1px 0 rgba(255, 255, 255, 0.2);
-				transition: transform 0.08s ease, filter 0.12s ease;
-			}
-			.club-tip-btn:hover { filter: brightness(1.08); }
-			.club-tip-btn:active { transform: translateY(1px); }
-			.club-tip-btn.is-pending {
-				background: linear-gradient(135deg, #5a3a78 0%, #6b4d8c 100%);
-				box-shadow: none;
-				cursor: progress;
-			}
-
 			.club-toggle {
 				display: flex;
 				align-items: center;
@@ -472,27 +439,6 @@
 				gap: 4px;
 				min-height: 32px;
 			}
-			.club-tip-row {
-				display: grid;
-				grid-template-columns: 70px 1fr auto;
-				gap: 8px;
-				align-items: center;
-				font-size: 11.5px;
-				padding: 6px 8px;
-				border-radius: 7px;
-				background: rgba(255, 255, 255, 0.02);
-				animation: tipIn 0.32s ease;
-			}
-			@keyframes tipIn {
-				from { transform: translateY(-6px); opacity: 0; }
-				to   { transform: none; opacity: 1; }
-			}
-			.club-tip-who {
-				color: var(--accent-2);
-				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-				font-size: 11px;
-			}
-			.club-tip-mid { color: var(--text); }
 			.club-tip-amt {
 				color: var(--text-3);
 				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -567,24 +513,8 @@
 				gap: 4px;
 				min-height: 32px;
 			}
-			.club-lb-row {
-				display: grid;
-				grid-template-columns: 22px 1fr auto auto;
-				gap: 8px;
-				align-items: center;
-				font-size: 12px;
-				padding: 7px 8px;
-				border-radius: 7px;
-				background: rgba(255, 255, 255, 0.02);
-			}
 			.club-lb-row.has-unpaid {
 				background: rgba(255, 59, 214, 0.06);
-			}
-			.club-lb-rank {
-				color: var(--text-3);
-				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-				font-size: 11px;
-				text-align: right;
 			}
 			.club-lb-name {
 				color: var(--text);

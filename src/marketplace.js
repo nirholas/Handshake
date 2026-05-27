@@ -1392,6 +1392,30 @@ function updateAvatarCardPriceInGrid(avatarId, price) {
 //
 // Renders inside the existing #agent-sale-panel container right under the
 // agent's name. Mirrors the avatar modal panel: owner sees price/payout
+// Renders a pricing summary strip on the detail page overview,
+// showing the number of paid skills and lowest price.
+function renderDetailPricingSummary(agent) {
+	const existing = document.getElementById('d-pricing-summary');
+	if (existing) existing.remove();
+	const skillPrices = agent.skill_prices || {};
+	const priced = Object.entries(skillPrices).filter(([, p]) => p && Number(p.amount) > 0);
+	if (!priced.length) return;
+	const overview = $('d-overview');
+	if (!overview) return;
+	const minAmount = Math.min(...priced.map(([, p]) => Number(p.amount)));
+	const decimals = Number(priced[0]?.[1]?.mint_decimals ?? 6);
+	const minUsd = minAmount / Math.pow(10, decimals);
+	const formatted = minUsd >= 1 ? minUsd.toFixed(2) : minUsd >= 0.01 ? minUsd.toFixed(3) : minUsd.toFixed(6).replace(/0+$/, '');
+	const strip = document.createElement('div');
+	strip.id = 'd-pricing-summary';
+	strip.className = 'd-pricing-summary';
+	strip.innerHTML = `
+		<span class="d-pricing-icon">$</span>
+		<span>${priced.length} paid skill${priced.length === 1 ? '' : 's'} · from <strong>$${escapeHtml(formatted)}/call</strong></span>
+	`;
+	overview.insertAdjacentElement('afterend', strip);
+}
+
 // editor, non-owner with active price sees a Buy button. Free agents for
 // non-owners get nothing.
 function renderAgentSalePanel(agent) {
@@ -3125,6 +3149,9 @@ function renderDetail(a, bookmarked) {
 	$('d-category').textContent = CATEGORY_LABELS[a.category] || a.category || 'General';
 	$('d-views').textContent = `⊙ ${fmtNumber(views)}`;
 	$('d-overview').textContent = a.description || '';
+
+	// Render pricing summary if agent has skill prices
+	renderDetailPricingSummary(a);
 
 	renderAgentSalePanel(a);
 	$('d-profile').textContent = a.system_prompt || a.prompt || '(No profile yet.)';

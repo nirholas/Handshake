@@ -3,8 +3,9 @@
 // Lightweight liveness/readiness endpoint. Returns 200 with uptime + a small
 // summary block compatible with the pump-dashboard's API status panel.
 //
-// Intentionally has no DB / RPC dependencies — this should stay green even
-// when downstream systems are degraded so it's safe to wire to uptime probes.
+// Core health is always green (no hard DB dependency). Optional sub-probes
+// (Resend, x402) are cached for 5 minutes and fail gracefully — a DB outage
+// degrades the `x402` block but never the top-level `status: 'ok'`.
 
 import { cors, json, method, wrap } from './_lib/http.js';
 import { countRecentPayments } from './_lib/x402/audit-log.js';

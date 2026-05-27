@@ -854,6 +854,20 @@
 				animation: walk-chat-in 0.2s ease;
 				transition: opacity 0.3s;
 			}
+
+			/* ── Walk HUD overflow scroll on small screens ──────────────── */
+			.walk-actions {
+				max-height: calc(100vh - 180px);
+				overflow-y: auto;
+				-ms-overflow-style: none;
+				scrollbar-width: none;
+			}
+			.walk-actions::-webkit-scrollbar { display: none; }
+
+			@media (max-height: 560px) {
+				.walk-actions .walk-btn { padding: 6px 10px; font-size: 12px; }
+				.walk-actions { gap: 5px; }
+			}
 		</style>
 		<link rel="stylesheet" href="/nav.css" />
 	</head>

@@ -855,6 +855,44 @@ body.market-page {
 	font-weight: 600;
 }
 
+.skill-price-badge {
+	background: rgba(74, 222, 128, 0.12);
+	color: #4ade80;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	border: 1px solid rgba(74, 222, 128, 0.2);
+}
+
+.d-pricing-summary {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 12px;
+	padding: 8px 14px;
+	background: rgba(74, 222, 128, 0.08);
+	border: 1px solid rgba(74, 222, 128, 0.18);
+	border-radius: 8px;
+	font-size: 13px;
+	color: #d1d5db;
+}
+.d-pricing-summary strong {
+	color: #4ade80;
+	font-weight: 600;
+}
+.d-pricing-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 6px;
+	background: rgba(74, 222, 128, 0.15);
+	color: #4ade80;
+	font-weight: 700;
+	font-size: 12px;
+	flex-shrink: 0;
+}
+
 .purchase-btn {
 	margin-left: 8px;
 	padding: 4px 10px;

@@ -28,7 +28,9 @@
 	function mountChapterRail(main) {
 		var chapters = [
 			{ id: 'h-hero-act', label: 'Intro', selector: '.h-hero-act' },
+			{ id: 'h-traction', label: 'Traction', selector: '.h-traction' },
 			{ id: 'h-pillars', label: 'Pillars', selector: '.h-pillars' },
+			{ id: 'h-journey', label: 'How it works', selector: '.h-journey' },
 			{ id: 'pick-animate', label: 'Animate', selector: '#pick-animate' },
 			{ id: 'deploy-act', label: 'Deploy', selector: '#deploy-act' },
 			{ id: 'h-bento-section', label: 'Features', selector: '.h-bento-section' },
