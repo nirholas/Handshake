@@ -328,6 +328,24 @@ body.market-page {
 	letter-spacing: -0.04em;
 }
 
+.market-card-agent .thumb model-viewer {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	--poster-color: transparent;
+	opacity: 0;
+	transition: opacity 0.4s ease;
+	z-index: 0;
+}
+.market-card-agent.mv-loaded .thumb model-viewer {
+	opacity: 1;
+}
+.market-card-agent.mv-loaded .thumb .mv-placeholder {
+	opacity: 0;
+}
+
 .market-card-agent:hover {
 	border-color: var(--mk-border-2);
 }

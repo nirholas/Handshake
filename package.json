@@ -49,7 +49,7 @@
 		]
 	},
 	"scripts": {
-		"postinstall": "npm run build --prefix agent-payments-sdk && node scripts/fix-pump-sdk-esm.mjs && node scripts/fix-x402-extensions-esm.mjs && node scripts/copy-three-decoders.mjs && node scripts/setup-claude-skills.mjs",
+		"postinstall": "npm run build --prefix agent-payments-sdk && (node scripts/fix-pump-sdk-esm.mjs & node scripts/fix-x402-extensions-esm.mjs & node scripts/copy-three-decoders.mjs & node scripts/setup-claude-skills.mjs & wait)",
 		"dev": "vite --port 3000",
 		"dev:multi": "npm run dev --prefix multiplayer",
 		"dev:walk-all": "node scripts/dev-walk-all.mjs",
@@ -76,7 +76,7 @@
 		"build:rider:full": "cd rider && npm ci --prefer-offline --no-audit --no-fund --ignore-engines && npm run build && cd .. && npm run build:rider",
 		"build:avatar-studio": "npm run build --prefix character-studio",
 		"build:fast": "npm run build",
-		"build:vercel": "(npm run build:avatar-studio & npm run build:lib & wait) && node avatar-sdk/build.mjs && NODE_OPTIONS=--max-old-space-size=4096 npm run build && (npm run build:rider & npm run build:chat & npm run publish:lib & wait) && npm run apply:r2-cors",
+		"build:vercel": "(npm run build:avatar-studio & (npm run build:lib && node avatar-sdk/build.mjs && NODE_OPTIONS=--max-old-space-size=4096 npm run build) & wait) && node scripts/copy-avatar-studio.mjs && (npm run build:rider & npm run build:chat & npm run publish:lib & wait) && npm run apply:r2-cors",
 		"apply:r2-cors": "node scripts/set-r2-cors.mjs || echo '[apply:r2-cors] skipped (missing creds or transient failure — see build log)'",
 		"build:all": "npm run build:chat && (npm run build & npm run build:lib & npm run build:rider & wait)",
 		"release:lib": "npm run build:lib && npm run publish:lib",

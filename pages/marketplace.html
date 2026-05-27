@@ -1656,6 +1656,437 @@
 				color: rgba(255, 255, 255, 0.7);
 				border-color: rgba(255, 255, 255, 0.18);
 			}
+
+			/* ── Card entry animations ────────────────────────────────────── */
+			@keyframes mk-card-in {
+				from { opacity: 0; transform: translateY(14px); }
+				to   { opacity: 1; transform: translateY(0); }
+			}
+			.mk-card-enter {
+				animation: mk-card-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+				animation-delay: var(--card-delay, 0s);
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.mk-card-enter { animation: none; }
+			}
+
+			/* ── Animations tab ───────────────────────────────────────────── */
+			.market-anim-grid {
+				grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+			}
+			.market-anim-card {
+				background: var(--mk-panel, #111);
+				border: 1px solid var(--mk-border, #1f1f1f);
+				border-radius: 14px;
+				padding: 16px;
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				cursor: pointer;
+				transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+			}
+			.market-anim-card:hover {
+				border-color: rgba(255, 255, 255, 0.18);
+				transform: translateY(-2px);
+				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+			}
+			.anim-card-icon {
+				font-size: 28px;
+				line-height: 1;
+				flex: 0 0 auto;
+				width: 44px;
+				height: 44px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 10px;
+			}
+			.anim-card-body {
+				min-width: 0;
+				flex: 1;
+			}
+			.anim-card-name {
+				font-size: 13px;
+				font-weight: 600;
+				color: #fafafa;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.anim-card-meta {
+				display: flex;
+				gap: 5px;
+				margin-top: 5px;
+				flex-wrap: wrap;
+			}
+			.anim-type-pill {
+				font-size: 10px;
+				font-weight: 700;
+				padding: 2px 7px;
+				border-radius: 999px;
+				letter-spacing: 0.04em;
+			}
+			.anim-type-pill.loop {
+				background: rgba(52, 211, 153, 0.12);
+				color: #34d399;
+				border: 1px solid rgba(52, 211, 153, 0.25);
+			}
+			.anim-type-pill.action {
+				background: rgba(251, 146, 60, 0.12);
+				color: #fb923c;
+				border: 1px solid rgba(251, 146, 60, 0.25);
+			}
+			.anim-cat-pill {
+				font-size: 10px;
+				font-weight: 500;
+				padding: 2px 7px;
+				border-radius: 999px;
+				background: rgba(255, 255, 255, 0.07);
+				color: #a1a1aa;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+			}
+			.anim-card-cta {
+				font-size: 11px;
+				color: #fafafa;
+				opacity: 0;
+				transition: opacity 0.15s ease;
+				flex: 0 0 auto;
+				font-weight: 500;
+			}
+			.market-anim-card:hover .anim-card-cta {
+				opacity: 0.7;
+			}
+
+			/* Animation preview overlay */
+			.anim-preview-overlay {
+				position: fixed;
+				inset: 0;
+				background: rgba(0, 0, 0, 0.82);
+				backdrop-filter: blur(8px);
+				z-index: 300;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 24px;
+				opacity: 0;
+				transition: opacity 0.2s ease;
+			}
+			.anim-preview-overlay.show { opacity: 1; }
+			.anim-preview-modal {
+				background: #0d0d0d;
+				border: 1px solid #1f1f1f;
+				border-radius: 18px;
+				width: min(720px, 100%);
+				max-height: 90vh;
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				overflow: hidden;
+				box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+			}
+			.anim-preview-stage {
+				background: radial-gradient(circle at 50% 60%, rgba(255,255,255,0.05), transparent 70%), linear-gradient(180deg, #050505, #0a0a0a);
+				min-height: 320px;
+				position: relative;
+			}
+			.anim-preview-stage model-viewer {
+				width: 100%;
+				height: 100%;
+				--poster-color: transparent;
+				background: transparent;
+			}
+			.anim-preview-info {
+				padding: 24px;
+				display: flex;
+				flex-direction: column;
+				gap: 14px;
+				overflow-y: auto;
+			}
+			.anim-preview-eyebrow {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 10px;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: #a1a1aa;
+				font-weight: 600;
+			}
+			.anim-preview-name {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 22px;
+				font-weight: 700;
+				color: #fafafa;
+				line-height: 1.2;
+			}
+			.anim-preview-meta {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+			}
+			.anim-preview-close {
+				position: absolute;
+				top: 12px;
+				right: 14px;
+				background: rgba(0, 0, 0, 0.5);
+				border: 1px solid #1f1f1f;
+				color: #fafafa;
+				width: 30px;
+				height: 30px;
+				border-radius: 50%;
+				cursor: pointer;
+				font-size: 18px;
+				z-index: 2;
+			}
+			.anim-preview-actions {
+				margin-top: auto;
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+			@media (max-width: 600px) {
+				.anim-preview-modal { grid-template-columns: 1fr; }
+				.anim-preview-stage { min-height: 240px; }
+			}
+
+			/* ── Memory tab ───────────────────────────────────────────────── */
+			.market-memory-body {
+				padding: 0 24px 48px;
+				display: flex;
+				flex-direction: column;
+				gap: 32px;
+			}
+			.market-memory-intro {
+				display: flex;
+				gap: 24px;
+				align-items: flex-start;
+				padding: 28px;
+				background: radial-gradient(ellipse at top right, rgba(168,85,247,0.08), transparent 60%), linear-gradient(180deg, #0e0e10, #0a0a0a);
+				border: 1px solid #1f1f1f;
+				border-radius: 18px;
+				margin-top: 4px;
+				flex-wrap: wrap;
+			}
+			.memory-intro-text { flex: 1; min-width: 280px; }
+			.memory-intro-title {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 24px;
+				font-weight: 700;
+				color: #fafafa;
+				margin: 0 0 10px;
+				line-height: 1.25;
+			}
+			.memory-intro-sub {
+				font-size: 14px;
+				color: #a1a1aa;
+				margin: 0;
+				line-height: 1.6;
+			}
+			.memory-intro-cta {
+				display: flex;
+				align-items: center;
+				flex-shrink: 0;
+			}
+			.market-memory-cta-btn {
+				background: #fafafa;
+				color: #000;
+				padding: 11px 18px;
+				border-radius: 10px;
+				font-weight: 600;
+				font-size: 13px;
+				text-decoration: none;
+				transition: transform 0.15s ease, box-shadow 0.15s ease;
+				white-space: nowrap;
+			}
+			.market-memory-cta-btn:hover {
+				transform: translateY(-1px);
+				box-shadow: 0 8px 20px rgba(255,255,255,0.08);
+			}
+			.market-memory-section-title {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 13px;
+				font-weight: 700;
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+				color: #a1a1aa;
+				margin: 0;
+			}
+			.market-memory-types {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+				gap: 14px;
+			}
+			.market-memory-type-card {
+				background: var(--mk-panel, #111);
+				border: 1px solid var(--mk-border, #1f1f1f);
+				border-radius: 16px;
+				padding: 20px;
+				display: flex;
+				gap: 14px;
+				transition: border-color 0.15s ease, transform 0.15s ease;
+			}
+			.market-memory-type-card:hover {
+				border-color: rgba(255,255,255,0.15);
+				transform: translateY(-2px);
+			}
+			.memory-type-icon {
+				font-size: 28px;
+				line-height: 1;
+				flex: 0 0 auto;
+				width: 48px;
+				height: 48px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: rgba(255,255,255,0.05);
+				border-radius: 12px;
+			}
+			.memory-type-body { min-width: 0; flex: 1; }
+			.memory-type-title {
+				font-size: 14px;
+				font-weight: 700;
+				color: #fafafa;
+				margin-bottom: 6px;
+			}
+			.memory-type-desc {
+				font-size: 12px;
+				color: #a1a1aa;
+				line-height: 1.5;
+				margin-bottom: 10px;
+			}
+			.memory-example-label {
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: #52525b;
+				display: block;
+				margin-bottom: 4px;
+			}
+			.memory-example-text {
+				font-size: 11px;
+				color: #71717a;
+				font-style: italic;
+				line-height: 1.4;
+				margin: 0;
+				padding: 8px 10px;
+				background: rgba(255,255,255,0.03);
+				border: 1px solid rgba(255,255,255,0.06);
+				border-radius: 8px;
+				border-left: 3px solid rgba(168,85,247,0.3);
+			}
+
+			/* Memory type accent colors */
+			.market-memory-type-card[data-memory-type="user"] .memory-type-icon { background: rgba(59,130,246,0.1); }
+			.market-memory-type-card[data-memory-type="feedback"] .memory-type-icon { background: rgba(234,179,8,0.1); }
+			.market-memory-type-card[data-memory-type="project"] .memory-type-icon { background: rgba(34,197,94,0.1); }
+			.market-memory-type-card[data-memory-type="reference"] .memory-type-icon { background: rgba(168,85,247,0.1); }
+
+			/* How memory works section */
+			.market-memory-how {
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+			}
+			.memory-how-steps {
+				display: flex;
+				flex-direction: column;
+				gap: 1px;
+				border: 1px solid #1f1f1f;
+				border-radius: 16px;
+				overflow: hidden;
+			}
+			.memory-step {
+				display: flex;
+				align-items: flex-start;
+				gap: 16px;
+				padding: 18px 20px;
+				background: var(--mk-panel, #111);
+				transition: background 0.15s ease;
+			}
+			.memory-step:hover { background: #141414; }
+			.memory-step-num {
+				width: 28px;
+				height: 28px;
+				border-radius: 50%;
+				background: rgba(255,255,255,0.08);
+				color: #a1a1aa;
+				font-family: 'Space Grotesk', sans-serif;
+				font-weight: 700;
+				font-size: 12px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+			}
+			.memory-step-text {
+				font-size: 13px;
+				color: #a1a1aa;
+				line-height: 1.55;
+				padding-top: 3px;
+			}
+			.memory-step-text strong { color: #fafafa; font-weight: 600; }
+
+			/* Memory live feed */
+			.market-memory-live {
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+			}
+			.memory-feed {
+				display: flex;
+				flex-direction: column;
+				gap: 1px;
+				border: 1px solid #1f1f1f;
+				border-radius: 14px;
+				overflow: hidden;
+			}
+			.memory-feed-item {
+				display: flex;
+				align-items: flex-start;
+				gap: 12px;
+				padding: 12px 16px;
+				background: var(--mk-panel, #111);
+			}
+			.memory-feed-icon {
+				width: 28px;
+				height: 28px;
+				border-radius: 8px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 14px;
+				flex-shrink: 0;
+			}
+			.memory-feed-body { min-width: 0; flex: 1; }
+			.memory-feed-type {
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: #52525b;
+				margin-bottom: 2px;
+			}
+			.memory-feed-content {
+				font-size: 12px;
+				color: #d4d4d8;
+				line-height: 1.45;
+			}
+			.memory-feed-empty {
+				padding: 32px;
+				text-align: center;
+				color: #52525b;
+				font-size: 13px;
+			}
+			.market-memory-live-cta {
+				background: rgba(255,255,255,0.04);
+				border: 1px solid #2a2a2a;
+				border-radius: 10px;
+				padding: 16px 20px;
+				text-align: center;
+				color: #a1a1aa;
+				font-size: 13px;
+			}
+			.market-memory-live-cta a { color: #ffffff; text-decoration: none; }
+			.market-memory-live-cta a:hover { text-decoration: underline; }
 		</style>
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content="Agent Marketplace · three.ws" />
@@ -1700,6 +2131,8 @@
 				<a href="/marketplace?tab=mine" data-nav="mine"><span class="ico">◱</span> <span>My Agents</span></a>
 				<a href="/marketplace?tab=purchases" data-nav="purchases"><span class="ico">✓</span> <span>My Purchases</span></a>
 				<a href="/marketplace?tab=earn" data-nav="earn"><span class="ico">$</span> <span>Earn</span></a>
+				<a href="/marketplace?tab=animations" data-nav="animations"><span class="ico">▶</span> <span>Animations</span></a>
+				<a href="/marketplace?tab=memory" data-nav="memory"><span class="ico">◎</span> <span>Memory</span></a>
 			</nav>
 			<button class="market-submit-btn market-sidebar-submit" id="market-submit-btn">+ Submit Agent</button>
 		</aside>
@@ -2161,6 +2594,41 @@
 					</div>
 				</div>
 			</section>
+			<!-- Animations tab -->
+			<section class="market-animations-section" id="market-animations-section" hidden>
+				<header class="market-topbar">
+					<div class="market-mine-head">
+						<h2 class="market-section-heading">Animations</h2>
+						<span class="market-mine-sub" id="animations-subtitle">Browse avatar animation clips</span>
+					</div>
+					<input id="animations-search" type="search" placeholder="Search animations…" autocomplete="off" style="flex:1;max-width:280px" />
+					<div class="market-filter-chips" role="group" aria-label="Animation type filter">
+						<button class="market-chip active" data-anim-filter="all">All</button>
+						<button class="market-chip" data-anim-filter="loop">Ambient</button>
+						<button class="market-chip" data-anim-filter="action">Actions</button>
+					</div>
+				</header>
+				<div class="market-skills-tab">
+					<div class="market-grid market-anim-grid" id="animations-grid">
+						<div class="market-empty">Loading animations…</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Memory tab -->
+			<section class="market-memory-section" id="market-memory-section" hidden>
+				<header class="market-topbar">
+					<div class="market-mine-head">
+						<h2 class="market-section-heading">Agent Memory</h2>
+						<span class="market-mine-sub" id="memory-subtitle">Persistent context that makes agents smarter</span>
+					</div>
+					<a href="/agent/new" class="market-submit-btn" style="text-decoration:none">+ Create Agent</a>
+				</header>
+				<div class="market-memory-body" id="market-memory-body">
+					<div class="market-empty">Loading…</div>
+				</div>
+			</section>
+
 		</main>
 
 		<!-- Submit Agent Modal -->

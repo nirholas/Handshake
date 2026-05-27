@@ -20,6 +20,7 @@
 		'The web was built for documents. Text, images, links — a flat canvas for static information. Then came video. Then interactivity. Then AI. But something fundamental was always missing: presence. Not a chatbot tucked into a corner. Not a popup demanding attention. A living digital being that inhabits your space, knows your visitors, and works while you sleep.',
 		'three.ws gives your AI a body. A 3D character generated from a single photograph, deployed with two lines of HTML, monetized through micropayments that settle instantly. Every agent remembers across sessions, moves through multiplayer worlds, and earns revenue via the x402 payment protocol.',
 		'This is not another widget. This is the layer where software has form, where interfaces have personality, where every website hosts a living intelligence that sees, hears, speaks, and transacts on your behalf. Two hundred animation clips. Real‑time voice. On‑chain identity. Cross‑device memory. Spatial multiplayer. All from one embed tag.',
+		'Mint your agent as an ERC‑8004 token — the emerging standard for on‑chain AI identity. Let other agents discover and call yours via A2A and MCP protocols. Gate skills behind x402 micropayments in USDC. The economics are simple: you build, visitors pay, funds settle instantly to your wallet. No intermediary.',
 		'The flat web had its moment. The living web starts now.'
 	];
 
@@ -251,8 +252,8 @@
 	function edInitPos() {
 		cW = area.clientWidth;
 		cH = 600;
-		ox = cW * (cW < 720 ? 0.7 : 0.65);
-		oy = 180;
+		ox = cW * (cW < 720 ? 0.5 : 0.35);
+		oy = 160;
 		edRender(edComputeLayout());
 	}
 

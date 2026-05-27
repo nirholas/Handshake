@@ -271,7 +271,7 @@ async function attachModelViewerBehavior(root = els.grid) {
 		// Cards use .market-card-avatar; hero uses .market-hero-slide; fall back
 		// to the model-viewer itself so the .mv-loaded class always lands somewhere.
 		const host =
-			mv.closest('.market-card-avatar, .market-hero-slide') || mv;
+			mv.closest('.market-card-avatar, .market-card-agent, .market-hero-slide') || mv;
 
 		const cached = await _posterGet(key);
 		if (cached) {
@@ -1127,7 +1127,6 @@ function openAvatarModal(avatar) {
 	const meta = $('avatar-modal-meta');
 	const pills = [];
 	if (avatar.featured) pills.push('<span class="stat-pill featured-badge">⭐ Featured</span>');
-	if (Number(avatar.viewCount) > 0) pills.push(`<span class="stat-pill">⊙ ${fmtNumber(avatar.viewCount)} views</span>`);
 	if (avatar.createdAt) pills.push(`<span class="stat-pill">${escapeHtml(liveTime(avatar.createdAt))}</span>`);
 	pills.push('<span class="stat-pill">3D · GLB</span>');
 	(avatar.tags || []).slice(0, 5).forEach((t) => {
@@ -2928,7 +2927,6 @@ function renderAvatarCard(a, spotlight = false) {
 	const isSpotlight = spotlight || a.featured;
 	const spotlightBadge = isSpotlight ? '<span class="card-featured-badge" title="Featured">⭐</span>' : '';
 	const bmActive = getAvatarBookmarks().has(a.avatarId || '');
-	const views = Number(a.viewCount) > 0 ? `<span class="stat-pill views" title="${a.viewCount} views">⊙ ${fmtNumber(a.viewCount)}</span>` : '';
 	const priceBadge = priceBadgeHtml(a.price);
 	const cardClasses = ['market-card-avatar', isSpotlight && 'market-card-avatar--featured'].filter(Boolean).join(' ');
 	return `<div class="${cardClasses}" data-avatar-id="${escapeHtml(a.avatarId || '')}">
@@ -2938,7 +2936,7 @@ function renderAvatarCard(a, spotlight = false) {
 				<div class="title">${name}</div>
 				<button type="button" class="card-heart${bmActive ? ' active' : ''}" data-bm-id="${escapeHtml(a.avatarId||'')}" aria-label="Bookmark" aria-pressed="${bmActive}">♥</button>
 			</div>
-			<div class="byline">${authorLine}${when ? `<span class="dot">·</span><span class="when">${escapeHtml(when)}</span>` : ''}${views ? `<span class="dot">·</span>${views}` : ''}</div>
+			<div class="byline">${authorLine}${when ? `<span class="dot">·</span><span class="when">${escapeHtml(when)}</span>` : ''}</div>
 			${desc ? `<div class="desc">${desc}</div>` : ''}
 			${tagPills}
 			<div class="footer">
@@ -2954,7 +2952,6 @@ function renderCard(a) {
 	const date = published ? formatDate(published) : '';
 	const skillsCount = (a.skills || []).length;
 	const author = a.author_name || a.author || 'Anonymous';
-	const views = a.views_count ?? a.views ?? 0;
 	const forks = a.forks_count ?? a.forks ?? 0;
 	const buyers = a.buyers_total ?? 0;
 	const buyers24h = a.buyers_24h ?? 0;
@@ -2966,12 +2963,27 @@ function renderCard(a) {
 	const avatarBlock = a.thumbnail_url
 		? `<div class="avatar avatar-img" style="background-image:url('${escapeHtml(a.thumbnail_url)}')"></div>`
 		: `<div class="avatar">${escapeHtml(initial(a.name))}</div>`;
-	// Lightweight preview strip at the top of the card: uses the linked
-	// avatar's thumbnail if there is one, otherwise a styled name-initial
-	// gradient so the card never looks visually empty.
-	const previewStrip = a.thumbnail_url
-		? `<div class="thumb" style="background:url('${escapeHtml(a.thumbnail_url)}') center/cover no-repeat #0a0a0d"></div>`
-		: `<div class="thumb">${placeholderHtml(a.name)}</div>`;
+	// Preview strip: 3D model-viewer when the agent has a linked public avatar
+	// GLB, static thumbnail when only an image is available, placeholder otherwise.
+	const previewStrip = a.avatar_glb_url
+		? `<div class="thumb">${placeholderHtml(a.name)}<model-viewer
+				data-src="${escapeHtml(a.avatar_glb_url)}"
+				alt="${escapeHtml(a.name || 'Agent')}"
+				${a.thumbnail_url ? `poster="${escapeHtml(a.thumbnail_url)}"` : ''}
+				autoplay
+				rotation-per-second="14deg"
+				interaction-prompt="none"
+				disable-zoom
+				disable-pan
+				disable-tap
+				exposure="1"
+				shadow-intensity="0.4"
+				tone-mapping="aces"
+				loading="lazy"
+			></model-viewer></div>`
+		: a.thumbnail_url
+			? `<div class="thumb" style="background:url('${escapeHtml(a.thumbnail_url)}') center/cover no-repeat #0a0a0d"></div>`
+			: `<div class="thumb">${placeholderHtml(a.name)}</div>`;
 	const bmOn = bookmarkedAgents.has(a.id);
 	const starBtn = `<button type="button" class="card-star${bmOn ? ' on' : ''}" data-agent-bm="${escapeHtml(a.id)}" aria-label="Bookmark agent" aria-pressed="${bmOn}" title="${bmOn ? 'Remove bookmark' : 'Bookmark agent'}">${bmOn ? '★' : '☆'}</button>`;
 	return `<div class="market-card-agent" data-id="${a.id}">
