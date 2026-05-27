@@ -2217,6 +2217,10 @@
 			}
 		},
 		{
+			"src": "/a/me/?",
+			"dest": "/pages/a-me.html"
+		},
+		{
 			"src": "/a/(\\d+)/(\\d+)/embed",
 			"headers": {
 				"content-security-policy": "frame-ancestors *",

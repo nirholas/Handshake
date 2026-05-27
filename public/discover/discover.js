@@ -38,9 +38,11 @@ const els = {
 	filters: document.querySelector('[data-role="filters"]'),
 	sources: document.querySelector('[data-role="sources"]'),
 	chain: document.querySelector('[data-role="chain"]'),
+	sort: document.querySelector('[data-role="sort"]'),
 	grid: document.querySelector('[data-role="grid"]'),
 	status: document.querySelector('[data-role="status"]'),
 	loadMore: document.querySelector('[data-role="load-more"]'),
+	sentinel: document.querySelector('[data-role="sentinel"]'),
 	statAll: document.querySelector('[data-role="stat-all"]'),
 	stat3d: document.querySelector('[data-role="stat-3d"]'),
 	myAgentsChip: document.querySelector('[data-role="my-agents-chip"]'),
@@ -86,10 +88,11 @@ const initialSource = ['onchain', 'avatar'].includes(initialParams.get('source')
 	: 'all';
 
 const state = {
-	filter: initialFilter, // 'all' | '3d'
+	filter: initialFilter, // 'all' | '3d' | 'x402'
 	source: initialSource, // 'all' | 'onchain' | 'avatar'
 	chainId: initialChain,
 	query: initialQuery,
+	sortBy: initialParams.get('sort') || 'newest', // 'newest' | 'x402' | 'alpha'
 	cursor: null,
 	loading: false,
 };

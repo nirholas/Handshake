@@ -488,7 +488,6 @@ async function loadPublicAvatars() {
 		state.publicAvatarsLoaded = true;
 		state.stats = j?.totals || state.stats;
 		renderGrid();
-		renderHeroStats();
 		updateOnchainChipCount();
 	} catch (err) {
 		console.error('[marketplace] public avatars', err);
@@ -767,19 +766,6 @@ function updateHeroMeta() {
 			startAgentFromAvatar();
 		};
 	}
-	renderHeroStats();
-}
-
-function renderHeroStats() {
-	const el = $('market-hero-stats');
-	if (!el) return;
-	const totals = state.stats;
-	if (!totals) return;
-	const items = [];
-	if (totals.avatars != null) items.push(`<span><strong>${fmtNumber(totals.avatars)}</strong> avatars</span>`);
-	if (totals.onchain != null) items.push(`<span><strong>${fmtNumber(totals.onchain)}</strong> onchain agents</span>`);
-	if (totals.threeD != null) items.push(`<span><strong>${fmtNumber(totals.threeD)}</strong> in 3D</span>`);
-	el.innerHTML = items.join('<span class="dot">·</span>');
 	updateNavCounts();
 }
 

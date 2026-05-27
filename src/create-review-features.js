@@ -830,29 +830,29 @@ export function openVideoModal() {
 				<li>Renders as 1080p MP4 ready for social media, courses, product demos, and sales outreach.</li>
 				<li>Runs on GPU workers — typical turnaround is under two minutes for a 60-second clip.</li>
 			</ul>
-			<div class="fm-flow" aria-label="Video generation flow">
-				<div class="fm-flow-step">
-					<span class="fm-flow-step-icon">🎤</span>
-					<span class="fm-flow-step-label">Audio</span>
-					<span class="fm-flow-step-sub">Upload or TTS</span>
+			<div class="fm-pipeline" aria-label="Video generation flow">
+				<div class="fm-pipeline-step">
+					<span class="fm-pipeline-icon">🎤</span>
+					<span class="fm-pipeline-label">Audio</span>
+					<span class="fm-pipeline-sub">Upload or TTS</span>
 				</div>
-				<span class="fm-flow-arrow">→</span>
-				<div class="fm-flow-step">
-					<span class="fm-flow-step-icon">🧍</span>
-					<span class="fm-flow-step-label">Avatar</span>
-					<span class="fm-flow-step-sub">Your 3D model</span>
+				<span class="fm-pipeline-arrow">→</span>
+				<div class="fm-pipeline-step">
+					<span class="fm-pipeline-icon">🧍</span>
+					<span class="fm-pipeline-label">Avatar</span>
+					<span class="fm-pipeline-sub">Your 3D model</span>
 				</div>
-				<span class="fm-flow-arrow">→</span>
-				<div class="fm-flow-step">
-					<span class="fm-flow-step-icon">⚙️</span>
-					<span class="fm-flow-step-label">Render</span>
-					<span class="fm-flow-step-sub">GPU worker</span>
+				<span class="fm-pipeline-arrow">→</span>
+				<div class="fm-pipeline-step">
+					<span class="fm-pipeline-icon">⚙️</span>
+					<span class="fm-pipeline-label">Render</span>
+					<span class="fm-pipeline-sub">GPU worker</span>
 				</div>
-				<span class="fm-flow-arrow">→</span>
-				<div class="fm-flow-step">
-					<span class="fm-flow-step-icon">🎬</span>
-					<span class="fm-flow-step-label">MP4</span>
-					<span class="fm-flow-step-sub">1080p output</span>
+				<span class="fm-pipeline-arrow">→</span>
+				<div class="fm-pipeline-step">
+					<span class="fm-pipeline-icon">🎬</span>
+					<span class="fm-pipeline-label">MP4</span>
+					<span class="fm-pipeline-sub">1080p output</span>
 				</div>
 			</div>
 			<p class="fm-note">Video generation is available from your dashboard after saving. Audio can be uploaded directly or generated from text via the agent's assigned voice.</p>

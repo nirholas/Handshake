@@ -1760,31 +1760,6 @@ body.market-page {
 	overflow: hidden;
 }
 
-.market-hero-stats {
-	display: flex;
-	gap: 18px;
-	flex-wrap: wrap;
-	margin-top: 4px;
-}
-.market-hero-stat {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-}
-.market-hero-stat .num {
-	font-family: 'Space Grotesk', sans-serif;
-	font-size: 22px;
-	font-weight: 700;
-	color: var(--mk-text);
-	line-height: 1;
-}
-.market-hero-stat .lbl {
-	font-size: 11px;
-	color: var(--mk-text-3);
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-}
-
 .market-hero-actions {
 	display: flex;
 	gap: 10px;

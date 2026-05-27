@@ -42,7 +42,8 @@ export function inspectGlb(buf) {
 	const view = bufToDataView(buf);
 	if (view.getUint32(0, true) !== GLB_MAGIC) return null;
 	if (view.getUint32(4, true) !== 2) return null;
-	if (view.getUint32(8, true) !== buf.length) return null;
+	const declaredLen = view.getUint32(8, true);
+	if (declaredLen > buf.length || declaredLen < 20) return null;
 
 	// First chunk header at byte 12.
 	const jsonChunkLen = view.getUint32(12, true);
@@ -113,7 +114,8 @@ export function isValidGlbHeader(buf) {
 	const view = bufToDataView(buf);
 	if (view.getUint32(0, true) !== GLB_MAGIC) return false;
 	if (view.getUint32(4, true) !== 2) return false;
-	if (view.getUint32(8, true) !== buf.length) return false;
+	const declaredLen = view.getUint32(8, true);
+	if (declaredLen > buf.length || declaredLen < 20) return false;
 	return true;
 }
 

@@ -49,8 +49,7 @@ export default wrap(async (req, res) => {
 		? publicUrl(agent.avatar_thumbnail_key)
 		: null;
 	const ogImage = thumbnailUrl
-		|| `${origin}/api/agent/${agentId}/og`
-		|| `${origin}/assets/og-image.png`;
+		|| `${origin}/api/agent/${agentId}/og`;
 
 	const skills = agent.skills || [];
 	const skillText = skills.length

@@ -18,12 +18,20 @@ import { load as loadGuest, clear as clearGuest } from './guest-avatar.js';
 import { TalkScene } from './voice/talk-scene.js';
 import { IdleAnimation } from './idle-animation.js';
 import {
+	openAnalyticsModal,
+	openDeveloperModal,
 	openDownloadModal,
 	openEmbedModal,
 	openIdentityModal,
+	openKnowledgeModal,
+	openMocapModal,
 	openPaidSkillsModal,
 	openReputationModal,
+	openTokenLaunchModal,
+	openVideoModal,
+	openVoiceLibraryModal,
 	openVoicePreview,
+	openWidgetsModal,
 	slugify,
 	toggleEmoteStrip,
 } from './create-review-features.js';
@@ -33,6 +41,8 @@ const $ = (sel) => document.querySelector(sel);
 
 function setPageState(state) {
 	document.getElementById('content').hidden = state !== 'content';
+	const caps = document.getElementById('capabilities');
+	if (caps) caps.hidden = state !== 'content';
 }
 
 let staged = /** @type {Awaited<ReturnType<typeof loadGuest>>} */ (null);
@@ -228,6 +238,30 @@ function handleFeatureClick(feature) {
 		case 'download':
 			if (!staged?.blob) return;
 			openDownloadModal({ blob: staged.blob, name });
+			return;
+		case 'voice-library':
+			openVoiceLibraryModal();
+			return;
+		case 'video':
+			openVideoModal();
+			return;
+		case 'mocap':
+			openMocapModal();
+			return;
+		case 'token-launch':
+			openTokenLaunchModal();
+			return;
+		case 'analytics':
+			openAnalyticsModal();
+			return;
+		case 'widgets':
+			openWidgetsModal();
+			return;
+		case 'developer':
+			openDeveloperModal();
+			return;
+		case 'knowledge':
+			openKnowledgeModal();
 			return;
 	}
 }

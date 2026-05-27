@@ -18,7 +18,10 @@ export default wrap(async (req, res) => {
 			LIMIT 1
 		`;
 	} catch (err) {
-		if (/relation.*does not exist|undefined_table/i.test(err.message || '')) {
+		if (
+			/relation.*does not exist|undefined_table/i.test(err.message || '') ||
+			/Missing required env var/i.test(err.message || '')
+		) {
 			rows = [];
 		} else {
 			throw err;

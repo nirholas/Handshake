@@ -111,23 +111,35 @@
 				<div class="explore-chips" data-role="filters">
 					<button class="explore-chip active" data-filter="all">All agents</button>
 					<button class="explore-chip" data-filter="3d">3D only</button>
+					<button class="explore-chip" data-filter="x402">x402</button>
 				</div>
 				<div class="explore-chips" data-role="sources">
 					<button class="explore-chip active" data-source="all">All sources</button>
 					<button class="explore-chip" data-source="onchain">Onchain</button>
 					<button class="explore-chip" data-source="avatar">Avatars</button>
 				</div>
-				<div class="explore-chain-select">
-					<label for="explore-chain">Chain:</label>
-					<select id="explore-chain" data-role="chain">
-						<option value="">All chains</option>
-					</select>
+				<div class="explore-controls-row">
+					<div class="explore-chain-select">
+						<label for="explore-chain">Chain:</label>
+						<select id="explore-chain" data-role="chain">
+							<option value="">All chains</option>
+						</select>
+					</div>
+					<div class="explore-sort-select">
+						<label for="explore-sort">Sort:</label>
+						<select id="explore-sort" data-role="sort">
+							<option value="newest">Newest</option>
+							<option value="x402">x402 first</option>
+							<option value="alpha">A → Z</option>
+						</select>
+					</div>
 				</div>
 			</section>
 
 			<section class="explore-grid-wrap">
 				<div class="explore-grid" data-role="grid"></div>
 				<div class="explore-status" data-role="status"></div>
+				<div class="explore-sentinel" data-role="sentinel" aria-hidden="true"></div>
 				<div class="explore-load-more-wrap">
 					<button class="explore-load-more" data-role="load-more" hidden>
 						Load more

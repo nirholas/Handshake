@@ -14,7 +14,7 @@
 		<style>
 			:root {
 				color-scheme: dark;
-				--accent: #d6ff3d;
+				--accent: #ffffff;
 				--accent-ink: #0a0a0a;
 				--bg: #05060a;
 				--panel: #0f1018;
@@ -40,8 +40,8 @@
 				z-index: -1;
 				pointer-events: none;
 				background:
-					radial-gradient(800px 500px at 50% -100px, rgba(106, 92, 255, 0.12) 0, transparent 70%),
-					radial-gradient(600px 400px at 50% 110%, rgba(214, 255, 61, 0.05) 0, transparent 70%),
+					radial-gradient(800px 500px at 50% -100px, rgba(255, 255, 255, 0.03) 0, transparent 70%),
+					radial-gradient(600px 400px at 50% 110%, rgba(255, 255, 255, 0.02) 0, transparent 70%),
 					#05060a;
 			}
 
@@ -118,7 +118,6 @@
 				.viewer { min-height: 360px; aspect-ratio: 3 / 4; }
 				.panel { padding: 16px; gap: 12px; }
 				.panel h2 { font-size: 17px; }
-				.unlocks { padding: 12px; gap: 8px; }
 				.feature-tile { padding: 9px; }
 				.feature-name { font-size: 12px; }
 				.feature-desc { font-size: 10px; }
@@ -368,33 +367,6 @@
 				100% { background: #07080d; border-color: var(--border); }
 			}
 
-			.unlocks {
-				display: flex;
-				flex-direction: column;
-				gap: 10px;
-				padding: 14px;
-				background: rgba(255, 255, 255, 0.02);
-				border: 1px solid var(--border);
-				border-radius: 12px;
-			}
-			.unlocks-title {
-				font-size: 11px;
-				color: var(--muted);
-				text-transform: uppercase;
-				letter-spacing: 0.06em;
-				margin: 0;
-				display: flex;
-				align-items: center;
-				gap: 6px;
-			}
-			.unlocks-title::before {
-				content: '';
-				width: 5px;
-				height: 5px;
-				border-radius: 50%;
-				background: var(--accent);
-				box-shadow: 0 0 8px rgba(214, 255, 61, 0.5);
-			}
 			.feature-grid {
 				list-style: none;
 				padding: 0;
@@ -1220,6 +1192,196 @@
 			.fm-download-status[data-tone='ok'] { color: var(--accent); }
 			.fm-download-status[data-tone='err'] { color: #ffb3b3; }
 
+			/* ── Card grid for modals (voices, widgets) ────────────────────── */
+			.fm-card-grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 8px;
+			}
+			.fm-mini-card {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				padding: 10px 12px;
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid var(--border);
+				border-radius: 9px;
+			}
+			.fm-mini-card-icon { font-size: 18px; line-height: 1; }
+			.fm-mini-card-name { font-weight: 600; font-size: 12.5px; color: var(--text); }
+			.fm-mini-card-desc { font-size: 10.5px; color: var(--muted); line-height: 1.35; }
+
+			/* ── KPI metrics row ────────────────────────────────────────────── */
+			.fm-kpi-row {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+				gap: 10px;
+				padding: 12px;
+				background: #07080d;
+				border: 1px solid var(--border);
+				border-radius: 10px;
+			}
+			.fm-kpi { display: flex; flex-direction: column; gap: 3px; }
+			.fm-kpi-value {
+				font-size: 20px;
+				font-weight: 600;
+				color: var(--text);
+				letter-spacing: -0.02em;
+			}
+			.fm-kpi-label {
+				font-size: 10.5px;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+			}
+
+			/* ── Pipeline flow strip (video modal) ─────────────────────────── */
+			.fm-pipeline {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 10px;
+				padding: 16px;
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+			}
+			.fm-pipeline-step {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 4px;
+				min-width: 64px;
+				text-align: center;
+			}
+			.fm-pipeline-icon { font-size: 24px; line-height: 1; }
+			.fm-pipeline-label { font-size: 11.5px; font-weight: 600; color: var(--text); }
+			.fm-pipeline-sub { font-size: 10px; color: var(--muted); }
+			.fm-pipeline-arrow { color: var(--muted); font-size: 16px; opacity: 0.5; flex-shrink: 0; }
+
+			/* ── Sub-feature cards (mocap, knowledge) ──────────────────────── */
+			.fm-sub-features {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+			.fm-sub-feature {
+				display: flex;
+				align-items: flex-start;
+				gap: 12px;
+				padding: 12px 14px;
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+			}
+			.fm-sub-feature-icon { font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 1px; }
+			.fm-sub-feature-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+			.fm-sub-feature-name { font-size: 13px; font-weight: 600; color: var(--text); }
+			.fm-sub-feature-desc { font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+			/* ── MCP tool catalog ───────────────────────────────────────────── */
+			.fm-tool-catalog {
+				display: flex;
+				flex-direction: column;
+				background: #07080d;
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 12px 14px;
+				max-height: 240px;
+				overflow-y: auto;
+			}
+			.fm-tool-cat {
+				font-size: 10.5px;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				padding: 8px 0 4px;
+				border-bottom: 1px solid var(--border);
+			}
+			.fm-tool-cat:first-child { padding-top: 0; }
+			.fm-tool-item {
+				display: flex;
+				align-items: baseline;
+				gap: 10px;
+				padding: 5px 0;
+				font-size: 12px;
+			}
+			.fm-tool-item code {
+				font-family: ui-monospace, 'SF Mono', monospace;
+				font-size: 11px;
+				color: var(--text);
+				white-space: nowrap;
+				flex-shrink: 0;
+			}
+			.fm-tool-item .muted { font-size: 11px; }
+
+			/* ── Activity feed (analytics modal) ───────────────────────────── */
+			.fm-activity-feed {
+				display: flex;
+				flex-direction: column;
+				background: #07080d;
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 4px 0;
+			}
+			.fm-activity-item {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 8px 14px;
+				font-size: 12px;
+				line-height: 1.4;
+			}
+			.fm-activity-item + .fm-activity-item { border-top: 1px solid var(--border); }
+			.fm-activity-dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				flex-shrink: 0;
+			}
+			.fm-activity-text { flex: 1; min-width: 0; color: var(--text); }
+			.fm-activity-time { color: var(--muted); font-size: 11px; flex-shrink: 0; }
+
+			/* ── Capabilities section (full-width below grid) ──────────────── */
+			.capabilities {
+				margin-top: 32px;
+			}
+			.capabilities-heading {
+				font-size: 11px;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				margin: 0 0 16px;
+				display: flex;
+				align-items: center;
+				gap: 6px;
+			}
+			.capabilities-heading::before {
+				content: '';
+				width: 5px;
+				height: 5px;
+				border-radius: 50%;
+				background: var(--accent);
+				box-shadow: 0 0 8px rgba(214, 255, 61, 0.5);
+			}
+			.capabilities .feature-grid {
+				grid-template-columns: 1fr 1fr 1fr;
+			}
+			.capabilities .feature-grid > li:last-child:nth-child(3n+1) {
+				grid-column: 1 / -1;
+			}
+			@media (max-width: 880px) {
+				.capabilities .feature-grid { grid-template-columns: 1fr 1fr; }
+				.capabilities .feature-grid > li:last-child:nth-child(3n+1) { grid-column: auto; }
+				.capabilities .feature-grid > li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+			}
+			@media (max-width: 560px) {
+				.capabilities { margin-top: 24px; }
+				.capabilities .feature-grid { grid-template-columns: 1fr 1fr; }
+				.fm-card-grid { grid-template-columns: 1fr; }
+				.fm-tool-catalog { max-height: 180px; }
+			}
+
 			/* ── Emote chip strip on viewer ────────────────────────────────── */
 			.emote-strip {
 				position: absolute;
@@ -1533,73 +1695,137 @@
 						Start over
 					</button>
 
-					<div class="unlocks" aria-label="What saving unlocks">
-						<p class="unlocks-title">Your avatar unlocks</p>
-						<ul class="feature-grid">
-							<li>
-								<button class="feature-tile" type="button" data-feature="body" aria-label="Try animations on your avatar">
-									<span class="feature-icon" aria-hidden="true">🧍</span>
-									<span class="feature-name">3D Body</span>
-									<span class="feature-desc">Animations, expressions, posable rig</span>
-									<span class="feature-try" aria-hidden="true">Try →</span>
-								</button>
-							</li>
-							<li>
-								<button class="feature-tile" type="button" data-feature="voice" aria-label="Try talking to your avatar">
-									<span class="feature-icon" aria-hidden="true">🗣️</span>
-									<span class="feature-name">Voice &amp; Persona</span>
-									<span class="feature-desc">Mic in, LiveKit voice out, pinned memory</span>
-									<span class="feature-try" aria-hidden="true">Try →</span>
-								</button>
-							</li>
-							<li>
-								<button class="feature-tile" type="button" data-feature="identity" aria-label="See on-chain identity details">
-									<span class="feature-icon" aria-hidden="true">🪪</span>
-									<span class="feature-name">On-Chain Identity</span>
-									<span class="feature-desc">Solana wallet, transferable asset</span>
-									<span class="feature-try" aria-hidden="true">See →</span>
-								</button>
-							</li>
-							<li>
-								<button class="feature-tile" type="button" data-feature="paid" aria-label="See paid-skills pricing example">
-									<span class="feature-icon" aria-hidden="true">💸</span>
-									<span class="feature-name">Paid Skills</span>
-									<span class="feature-desc">Earn USDC per call via x402</span>
-									<span class="feature-try" aria-hidden="true">See →</span>
-								</button>
-							</li>
-							<li>
-								<button class="feature-tile" type="button" data-feature="embed" aria-label="See embed snippet">
-									<span class="feature-icon" aria-hidden="true">🧩</span>
-									<span class="feature-name">Embed Anywhere</span>
-									<span class="feature-desc">One snippet, any site or app</span>
-									<span class="feature-try" aria-hidden="true">See →</span>
-								</button>
-							</li>
-							<li>
-								<button class="feature-tile" type="button" data-feature="reputation" aria-label="See reputation system">
-									<span class="feature-icon" aria-hidden="true">⭐</span>
-									<span class="feature-name">Reputation</span>
-									<span class="feature-desc">Reviews, history, and validation</span>
-									<span class="feature-try" aria-hidden="true">See →</span>
-								</button>
-							</li>
-							<li>
-								<button class="feature-tile" type="button" data-feature="download" aria-label="Download this avatar">
-									<span class="feature-icon" aria-hidden="true">📦</span>
-									<span class="feature-name">Download</span>
-									<span class="feature-desc">GLB · VRM · USDZ — use it anywhere</span>
-									<span class="feature-try" aria-hidden="true">Save →</span>
-								</button>
-							</li>
-						</ul>
-					</div>
-
 					<p class="guest-note" id="guest-note" hidden>
 						<strong>Not signed in.</strong> This preview lives in your browser
 						only — sign in to claim the handle and ship your agent.
 					</p>
 				</div>
+			</div>
+
+			<div class="capabilities" id="capabilities" hidden>
+				<p class="capabilities-heading">Your avatar unlocks</p>
+				<ul class="feature-grid">
+					<li>
+						<button class="feature-tile" type="button" data-feature="body" aria-label="Try animations on your avatar">
+							<span class="feature-icon" aria-hidden="true">🧍</span>
+							<span class="feature-name">3D Body</span>
+							<span class="feature-desc">Animations, expressions, posable rig</span>
+							<span class="feature-try" aria-hidden="true">Try →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="voice" aria-label="Try talking to your avatar">
+							<span class="feature-icon" aria-hidden="true">🗣️</span>
+							<span class="feature-name">Voice &amp; Persona</span>
+							<span class="feature-desc">Mic in, LiveKit voice out, pinned memory</span>
+							<span class="feature-try" aria-hidden="true">Try →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="voice-library" aria-label="Browse voice library">
+							<span class="feature-icon" aria-hidden="true">🎙️</span>
+							<span class="feature-name">Voice Library</span>
+							<span class="feature-desc">Clone or pick from 100+ voices</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="video" aria-label="See video generation">
+							<span class="feature-icon" aria-hidden="true">🎬</span>
+							<span class="feature-name">Video</span>
+							<span class="feature-desc">Talking-head clips from your avatar</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="mocap" aria-label="See face mocap and streaming">
+							<span class="feature-icon" aria-hidden="true">🎥</span>
+							<span class="feature-name">Mocap &amp; Streaming</span>
+							<span class="feature-desc">Face capture, OBS, pose studio</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="identity" aria-label="See on-chain identity details">
+							<span class="feature-icon" aria-hidden="true">🪪</span>
+							<span class="feature-name">On-Chain Identity</span>
+							<span class="feature-desc">Solana wallet, transferable asset</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="token-launch" aria-label="See token launch">
+							<span class="feature-icon" aria-hidden="true">🪙</span>
+							<span class="feature-name">Token Launch</span>
+							<span class="feature-desc">One-click pump.fun token</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="paid" aria-label="See paid-skills pricing example">
+							<span class="feature-icon" aria-hidden="true">💸</span>
+							<span class="feature-name">Paid Skills</span>
+							<span class="feature-desc">Earn USDC per call via x402</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="analytics" aria-label="See analytics dashboard">
+							<span class="feature-icon" aria-hidden="true">📊</span>
+							<span class="feature-name">Analytics</span>
+							<span class="feature-desc">Revenue, views, transcripts tracked</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="embed" aria-label="See embed snippet">
+							<span class="feature-icon" aria-hidden="true">🧩</span>
+							<span class="feature-name">Embed Anywhere</span>
+							<span class="feature-desc">One snippet, any site or app</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="widgets" aria-label="See widget types">
+							<span class="feature-icon" aria-hidden="true">🧱</span>
+							<span class="feature-name">Widgets</span>
+							<span class="feature-desc">8 types: turntable to live feed</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="developer" aria-label="See developer API">
+							<span class="feature-icon" aria-hidden="true">🛠️</span>
+							<span class="feature-name">Developer API</span>
+							<span class="feature-desc">MCP tools, API keys, scopes</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="knowledge" aria-label="See knowledge and memory">
+							<span class="feature-icon" aria-hidden="true">🧠</span>
+							<span class="feature-name">Knowledge &amp; Memory</span>
+							<span class="feature-desc">Persistent context and strategy</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="reputation" aria-label="See reputation system">
+							<span class="feature-icon" aria-hidden="true">⭐</span>
+							<span class="feature-name">Reputation</span>
+							<span class="feature-desc">Reviews, history, and validation</span>
+							<span class="feature-try" aria-hidden="true">See →</span>
+						</button>
+					</li>
+					<li>
+						<button class="feature-tile" type="button" data-feature="download" aria-label="Download this avatar">
+							<span class="feature-icon" aria-hidden="true">📦</span>
+							<span class="feature-name">Download</span>
+							<span class="feature-desc">GLB · VRM · USDZ — use it anywhere</span>
+							<span class="feature-try" aria-hidden="true">Save →</span>
+						</button>
+					</li>
+				</ul>
 			</div>
 		</main>
 

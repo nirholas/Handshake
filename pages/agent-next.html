@@ -409,6 +409,79 @@
 			.anim-dock { bottom: auto; top: 14px; left: 14px; }
 		}
 
+		/* ── OWNER TOOLBAR ───────────────────────────────────── */
+		.owner-bar {
+			position: absolute; top: 14px; right: 14px; z-index: 6;
+			display: none; align-items: center; gap: 4px;
+			background: rgba(5, 5, 5, 0.88);
+			backdrop-filter: blur(14px);
+			border: 1px solid var(--border-strong);
+			border-radius: 10px;
+			padding: 4px;
+		}
+		.owner-bar.visible { display: flex; }
+		.owner-btn {
+			display: flex; align-items: center; gap: 6px;
+			background: transparent; color: var(--text-soft);
+			border: 0; padding: 7px 11px;
+			border-radius: 7px;
+			font-size: 12px; font-weight: 500;
+			transition: background 0.12s, color 0.12s;
+			cursor: pointer; white-space: nowrap;
+		}
+		.owner-btn:hover { background: var(--panel-soft); color: var(--text); }
+		.owner-btn.accent { color: var(--ok); }
+		.owner-btn.accent:hover { background: rgba(34,197,94,0.1); }
+		@media (max-width: 720px) {
+			.owner-bar { top: auto; bottom: 140px; left: 12px; right: 12px; justify-content: center; flex-wrap: wrap; }
+		}
+
+		/* ── OWNER SIDE PANELS ───────────────────────────────── */
+		.owner-panel {
+			background: var(--panel); border: 1px solid var(--border);
+			border-radius: 14px; padding: 18px;
+			animation: ownerPanelIn 0.15s ease-out;
+		}
+		@keyframes ownerPanelIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+		.owner-panel-header {
+			font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+			color: var(--muted); margin-bottom: 10px;
+		}
+		.owner-panel-list { display: flex; flex-direction: column; gap: 5px; }
+		.owner-panel-item {
+			padding: 8px 10px; border-radius: 7px;
+			background: rgba(255,255,255,0.025);
+		}
+		.owner-panel-item-name { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+		.owner-panel-item-desc { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+		.owner-panel-empty { font-size: 13px; color: var(--muted); }
+		.owner-panel-footer { margin-top: 10px; font-size: 12px; }
+		.owner-panel-footer a { color: #3b82f6; text-decoration: underline; text-underline-offset: 2px; }
+		.owner-panel .owner-spinner {
+			width: 14px; height: 14px; border: 2px solid var(--border-strong);
+			border-top-color: var(--text-soft); border-radius: 50%;
+			animation: spin 0.8s linear infinite; display: inline-block; margin-right: 6px;
+		}
+		.memory-bar {
+			display: flex; height: 6px; border-radius: 3px;
+			overflow: hidden; margin-bottom: 10px; background: var(--border);
+		}
+		.memory-seg:nth-child(1) { background: #3b82f6; }
+		.memory-seg:nth-child(2) { background: var(--ok); }
+		.memory-seg:nth-child(3) { background: #ffb454; }
+		.memory-seg:nth-child(4) { background: #ef4444; }
+		.memory-seg:nth-child(n+5) { background: var(--muted); }
+
+		/* inline edit */
+		.identity-name[contenteditable="true"] {
+			outline: 1px dashed var(--border-strong); outline-offset: 4px;
+			border-radius: 4px; cursor: text;
+		}
+		.identity-desc[contenteditable="true"] {
+			outline: 1px dashed var(--border-strong); outline-offset: 4px;
+			border-radius: 4px; cursor: text;
+		}
+
 		/* ── RELATED CARD SKELETON ───────────────────────────── */
 		.related-card.skeleton {
 			background: var(--panel);
@@ -456,6 +529,16 @@
 		<div class="stage">
 			<div class="stage-canvas">
 				<span class="stage-tag">Live</span>
+
+				<div class="owner-bar" id="owner-bar" aria-label="Owner controls">
+					<button class="owner-btn" data-owner-act="edit" title="Edit name and description">Edit</button>
+					<button class="owner-btn" data-owner-act="share" title="Copy share link">Share</button>
+					<button class="owner-btn" data-owner-act="embed" title="Copy embed snippet">Embed</button>
+					<button class="owner-btn" data-owner-act="skills" title="View skills">Skills</button>
+					<button class="owner-btn" data-owner-act="memory" title="View memory">Memory</button>
+					<button class="owner-btn accent" data-owner-act="monetize" title="Monetize">Monetize</button>
+					<a class="owner-btn" href="/a/me" title="My Agents hub">My Agents</a>
+				</div>
 
 				<aside class="action-rail" aria-label="Actions">
 					<button class="act-btn primary" data-act="say-hi"><span class="act-icon">👋</span>Say hi</button>
@@ -529,6 +612,8 @@
 					<a class="btn-ghost" href="/discover" style="flex:1;text-align:center;display:block;padding:9px 14px;font-size:13px;border-radius:9px;">Browse</a>
 				</div>
 			</div>
+
+			<div id="owner-panels"></div>
 
 			<div class="card embed-card">
 				<div class="card-label">Embed this agent</div>
@@ -641,6 +726,226 @@
 		}
 
 		loadAvatar();
+
+		// ── Owner detection & controls ──────────────────────────────
+		let avatarData = null;
+		let linkedAgent = null;
+		let isOwner = false;
+
+		(async function detectOwner() {
+			try {
+				const meRes = await fetch('/api/auth/me', { credentials: 'include' });
+				if (!meRes.ok) return;
+				const meJson = await meRes.json();
+				const me = meJson?.user || meJson;
+				if (!me?.id) return;
+
+				const avRes = await fetch(avatarUrl, { credentials: 'include' });
+				if (!avRes.ok) return;
+				const avJson = await avRes.json();
+				avatarData = avJson.avatar || avJson.item || avJson;
+
+				if (avatarData.user_id === me.id || avatarData.owner_id === me.id) {
+					isOwner = true;
+				}
+
+				if (!isOwner) return;
+
+				document.getElementById('owner-bar').classList.add('visible');
+
+				// look up linked agent
+				try {
+					const agentsRes = await fetch('/api/agents', { credentials: 'include' });
+					if (agentsRes.ok) {
+						const agentsJson = await agentsRes.json();
+						const agents = agentsJson?.agents || [];
+						linkedAgent = agents.find(a => a.avatar_id === avatarId) || null;
+					}
+				} catch {}
+
+				// enable inline editing for name / desc
+				const nameEl = document.getElementById('identity-name');
+				const descEl = document.getElementById('identity-desc');
+				nameEl.setAttribute('contenteditable', 'true');
+				nameEl.setAttribute('spellcheck', 'false');
+				descEl.setAttribute('contenteditable', 'true');
+				descEl.setAttribute('spellcheck', 'false');
+
+				let saveTimer = null;
+				function autoSave() {
+					clearTimeout(saveTimer);
+					saveTimer = setTimeout(async () => {
+						const body = {};
+						const newName = nameEl.textContent.trim();
+						const newDesc = descEl.textContent.trim();
+						if (newName && newName !== avatarData.name) body.name = newName;
+						if (newDesc !== (avatarData.description || '')) body.description = newDesc;
+						if (!Object.keys(body).length) return;
+						try {
+							const csrf = await fetch('/api/csrf-token', { credentials: 'include' }).then(r => r.json()).catch(() => null);
+							await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
+								method: 'PATCH', credentials: 'include',
+								headers: { 'content-type': 'application/json', ...(csrf?.token ? { 'x-csrf-token': csrf.token } : {}) },
+								body: JSON.stringify(body),
+							});
+							ownerToast('Saved');
+						} catch {}
+					}, 800);
+				}
+				nameEl.addEventListener('input', autoSave);
+				descEl.addEventListener('input', autoSave);
+
+			} catch {}
+		})();
+
+		function ownerToast(msg) {
+			let el = document.getElementById('owner-toast');
+			if (!el) {
+				el = document.createElement('div');
+				el.id = 'owner-toast';
+				el.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:rgba(20,21,28,0.95);border:1px solid #2a2a2a;color:#f0f0f0;padding:9px 16px;border-radius:999px;font-size:13px;z-index:9999;opacity:0;transition:opacity .18s,transform .18s;backdrop-filter:blur(20px);pointer-events:none;';
+				document.body.appendChild(el);
+			}
+			el.textContent = msg;
+			requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateX(-50%) translateY(0)'; });
+			clearTimeout(el._t);
+			el._t = setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(20px)'; }, 1800);
+		}
+
+		// ── Owner action handlers ───────────────────────────────────
+		document.querySelectorAll('[data-owner-act]').forEach(btn => {
+			btn.addEventListener('click', () => ownerAction(btn.dataset.ownerAct));
+		});
+
+		async function ownerAction(act) {
+			const panelsHost = document.getElementById('owner-panels');
+
+			switch (act) {
+				case 'edit': {
+					document.getElementById('identity-name').focus();
+					ownerToast('Click name or description to edit');
+					break;
+				}
+				case 'share': {
+					const link = `${location.origin}/agent-next?id=${encodeURIComponent(avatarId)}`;
+					try {
+						await navigator.clipboard.writeText(link);
+						ownerToast('Share link copied');
+					} catch { prompt('Copy link:', link); }
+					break;
+				}
+				case 'embed': {
+					try {
+						await navigator.clipboard.writeText(window._embedSnippet || '');
+						ownerToast('Embed snippet copied');
+					} catch { prompt('Copy snippet:', window._embedSnippet || ''); }
+					break;
+				}
+				case 'skills': {
+					toggleOwnerPanel(panelsHost, 'skills');
+					break;
+				}
+				case 'memory': {
+					toggleOwnerPanel(panelsHost, 'memory');
+					break;
+				}
+				case 'monetize': {
+					window.open('/dashboard/monetize', '_blank');
+					break;
+				}
+			}
+		}
+
+		async function toggleOwnerPanel(host, type) {
+			const existing = host.querySelector(`[data-owner-panel="${type}"]`);
+			if (existing) { existing.remove(); return; }
+
+			const panel = document.createElement('div');
+			panel.className = 'card owner-panel';
+			panel.setAttribute('data-owner-panel', type);
+			panel.innerHTML = `<div style="font-size:13px;color:var(--text-soft);display:flex;align-items:center"><span class="owner-spinner"></span>Loading ${type}…</div>`;
+			host.appendChild(panel);
+
+			const agentId = linkedAgent?.id;
+			if (!agentId) {
+				panel.innerHTML = `
+					<div class="owner-panel-header">${escHtml(type)}</div>
+					<div class="owner-panel-empty">No agent linked to this avatar. <a href="/dashboard/agents">Link an agent</a></div>
+				`;
+				return;
+			}
+
+			try {
+				if (type === 'skills') {
+					const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}`, { credentials: 'include' });
+					const data = r.ok ? await r.json() : {};
+					const agent_ = data?.agent || data;
+					const skills = agent_.skills || agent_.persona?.skills || [];
+					const services = agent_.services || [];
+					const all = [...(Array.isArray(skills) ? skills : []), ...services];
+					if (!all.length) {
+						panel.innerHTML = `
+							<div class="owner-panel-header">Skills</div>
+							<div class="owner-panel-empty">No skills configured. <a href="/dashboard/agents">Add skills</a></div>
+						`;
+						return;
+					}
+					panel.innerHTML = `
+						<div class="owner-panel-header">Skills (${all.length})</div>
+						<div class="owner-panel-list">
+							${all.map(sk => {
+								const name = escHtml(sk.name || sk.skill_name || sk.type || 'Skill');
+								const desc = escHtml((sk.description || '').slice(0, 80));
+								const price = sk.price_usdc ? '$' + (Number(sk.price_usdc) / 1_000_000).toFixed(2) : '';
+								return `<div class="owner-panel-item"><div class="owner-panel-item-name">${name}${price ? ` <span class="pill" style="font-size:10px">${price}/call</span>` : ''}</div>${desc ? `<div class="owner-panel-item-desc">${desc}</div>` : ''}</div>`;
+							}).join('')}
+						</div>
+						<div class="owner-panel-footer"><a href="/dashboard/agents">Manage skills</a></div>
+					`;
+				} else if (type === 'memory') {
+					const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/memories`, { credentials: 'include' });
+					const data = r.ok ? await r.json() : {};
+					const memories = data?.memories || data?.items || [];
+					if (!memories.length) {
+						panel.innerHTML = `
+							<div class="owner-panel-header">Memory</div>
+							<div class="owner-panel-empty">No memory entries. <a href="/dashboard/agents">Seed memory</a></div>
+						`;
+						return;
+					}
+					const byType = {};
+					memories.forEach(m => {
+						const t = m.type || m.memory_type || 'general';
+						if (!byType[t]) byType[t] = [];
+						byType[t].push(m);
+					});
+					panel.innerHTML = `
+						<div class="owner-panel-header">Memory (${memories.length})</div>
+						<div class="memory-bar">
+							${Object.entries(byType).map(([, items]) => {
+								const pct = Math.max(8, Math.round((items.length / memories.length) * 100));
+								return `<div class="memory-seg" style="flex:${pct}"></div>`;
+							}).join('')}
+						</div>
+						<div class="owner-panel-list">
+							${memories.slice(0, 6).map(m => {
+								const key = escHtml(m.key || m.name || m.id || '');
+								const val = escHtml((m.value || m.content || '').slice(0, 100));
+								const mtype = escHtml(m.type || m.memory_type || '');
+								return `<div class="owner-panel-item"><div class="owner-panel-item-name">${key}${mtype ? ` <span class="pill" style="font-size:10px">${mtype}</span>` : ''}</div>${val ? `<div class="owner-panel-item-desc">${val}</div>` : ''}</div>`;
+							}).join('')}
+							${memories.length > 6 ? `<div class="owner-panel-item" style="font-size:12px;color:var(--muted)">+ ${memories.length - 6} more</div>` : ''}
+						</div>
+						<div class="owner-panel-footer"><a href="/dashboard/memory">View all memory</a></div>
+					`;
+				}
+			} catch {
+				panel.innerHTML = `
+					<div class="owner-panel-header">${escHtml(type)}</div>
+					<div class="owner-panel-empty">Could not load ${type}.</div>
+				`;
+			}
+		}
 
 		// ── Agent ready event ───────────────────────────────────────
 		agent.addEventListener('agent:ready', () => { agentReady = true; });

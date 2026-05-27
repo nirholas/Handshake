@@ -1171,11 +1171,13 @@ function populateVisitorCard(agent) {
 		});
 	}
 
-	card.hidden = false;
-
-	getMe().then((me) => {
-		if (me) card.hidden = true;
-	}).catch(() => {});
+	getMe()
+		.then((me) => {
+			if (!me) card.hidden = false;
+		})
+		.catch(() => {
+			card.hidden = false;
+		});
 }
 
 function populateMobileStrip(agent) {
