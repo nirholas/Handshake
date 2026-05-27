@@ -523,3 +523,52 @@
 	justify-content: center;
 	margin-top: clamp(40px, 5vw, 56px);
 }
+
+/* ── Traction stats scroll animation ───────────────────────────────────── */
+
+.h-traction {
+	background:
+		radial-gradient(ellipse at 50% 50%, rgba(255, 175, 60, 0.04) 0%, transparent 60%),
+		rgba(8, 7, 11, 0.95);
+}
+
+.h-traction-stat {
+	transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.h-traction-stat:hover {
+	transform: translateY(-2px);
+}
+
+.h-traction-val {
+	transition: opacity 0.4s, filter 0.4s, color 0.4s;
+}
+
+.h-traction-val:not(.is-loading) {
+	background: linear-gradient(135deg, #fff 0%, rgba(255, 175, 60, 0.9) 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+/* ── Footer link layout polish (4 columns) ─────────────────────────────── */
+
+.h-footer-links {
+	display: grid;
+	grid-template-columns: repeat(4, auto);
+	gap: 0.6rem 2.5rem;
+}
+
+@media (max-width: 720px) {
+	.h-footer-links {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1.25rem 1rem;
+	}
+}
+
+/* ── Footer bottom flex layout with badges ─────────────────────────────── */
+
+.h-footer-bottom {
+	flex-wrap: wrap;
+	row-gap: 0.75rem;
+}

@@ -116,7 +116,7 @@
 	position: relative;
 	z-index: 4;
 	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
+	grid-template-columns: 1fr 1fr;
 	gap: 3rem;
 	max-width: 1080px;
 	margin: 0 auto 3rem;

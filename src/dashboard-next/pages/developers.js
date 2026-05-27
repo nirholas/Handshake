@@ -18,6 +18,8 @@ let me = null;
 let avatars = [];
 let webhooks = [];
 let apiKeys = [];
+let usageData = null;
+let usageDays = 30;
 let activeTab = 'render';
 
 (async function boot() {
@@ -58,14 +60,16 @@ let activeTab = 'render';
 });
 
 async function loadData() {
-	const [avRes, whRes, keyRes] = await Promise.all([
+	const [avRes, whRes, keyRes, usageRes] = await Promise.all([
 		safe(() => get('/api/avatars?limit=50&visibility=public')),
 		safe(() => get('/api/developer/webhooks')),
 		safe(() => get('/api/api-keys')),
+		safe(() => get(`/api/developer/usage?days=${usageDays}`)),
 	]);
 	avatars = avRes?.avatars ?? [];
 	webhooks = whRes?.webhooks ?? [];
 	apiKeys = keyRes?.data ?? [];
+	usageData = usageRes;
 }
 
 function safe(fn) { return fn().catch(() => null); }
@@ -73,9 +77,11 @@ function safe(fn) { return fn().catch(() => null); }
 // ── Tabs ─────────────────────────────────────────────────────────────────────
 
 const TABS = [
-	{ id: 'render',   label: 'Render API',  icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="16" height="14" rx="2"/><circle cx="7" cy="8" r="1.5"/><path d="M2 14l4-4 3 3 4-5 5 6"/></svg>' },
-	{ id: 'webhooks', label: 'Webhooks',     icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4l6 6M10 4l-6 6"/><path d="M10 10v7"/><circle cx="10" cy="10" r="2"/></svg>' },
-	{ id: 'sdks',     label: 'SDKs',         icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="M7 7h6M7 10h4M7 13h5"/></svg>' },
+	{ id: 'render',    label: 'Render API',  icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="16" height="14" rx="2"/><circle cx="7" cy="8" r="1.5"/><path d="M2 14l4-4 3 3 4-5 5 6"/></svg>' },
+	{ id: 'webhooks',  label: 'Webhooks',    icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4l6 6M10 4l-6 6"/><path d="M10 10v7"/><circle cx="10" cy="10" r="2"/></svg>' },
+	{ id: 'usage',     label: 'Usage',       icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 17V7l4 3 3-6 4 4 3-3v12H3z"/><path d="M3 17h14"/></svg>' },
+	{ id: 'sdks',      label: 'SDKs',        icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="M7 7h6M7 10h4M7 13h5"/></svg>' },
+	{ id: 'changelog', label: 'Changelog',   icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h12M4 8h8M4 12h10M4 16h6"/></svg>' },
 ];
 
 function renderTabs(nav) {
@@ -108,9 +114,11 @@ function renderSkeletons(root) {
 function renderActiveTab(root) {
 	root.innerHTML = '';
 	switch (activeTab) {
-		case 'render':   renderRenderTab(root);   break;
-		case 'webhooks': renderWebhooksTab(root);  break;
-		case 'sdks':     renderSDKsTab(root);      break;
+		case 'render':    renderRenderTab(root);    break;
+		case 'webhooks':  renderWebhooksTab(root);  break;
+		case 'usage':     renderUsageTab(root);     break;
+		case 'sdks':      renderSDKsTab(root);      break;
+		case 'changelog': renderChangelogTab(root); break;
 	}
 }
 

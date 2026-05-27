@@ -899,17 +899,33 @@
 						<span data-label>solo</span>
 						<span class="count" id="walk-online-count">1</span>
 					</button>
+					<button type="button" class="walk-btn" id="walk-camera-mode-btn" title="Camera mode (C)">
+						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5"/><path d="M8 3v2M8 11v2M3 8h2M11 8h2"/></svg>
+						<span data-label>Camera</span>
+					</button>
+					<button type="button" class="walk-btn" id="walk-env-btn" title="Environment (V)">
+						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 14l4-6 3 4 2-3 5 5"/><circle cx="11" cy="4" r="2"/></svg>
+						<span data-label>Scene</span>
+					</button>
 					<button type="button" class="walk-btn" id="walk-ar-toggle"
 						aria-pressed="false" title="Put your avatar on your real floor">
 						<span class="dot"></span>
 						<span data-label>AR</span>
+					</button>
+					<button type="button" class="walk-btn" id="walk-screenshot-btn" title="Screenshot (P)">
+						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="12" height="9" rx="2"/><circle cx="8" cy="9" r="2.5"/><path d="M5.5 4L6.5 2h3l1 2"/></svg>
+						<span data-label>Photo</span>
 					</button>
 					<button type="button" class="walk-btn" id="walk-record-btn"
 						data-recording="false" title="Record a 6-second clip to share">
 						<span class="dot"></span>
 						<span data-label>Record</span>
 					</button>
-					<button type="button" class="walk-btn" id="walk-help-toggle" title="Show controls">
+					<button type="button" class="walk-btn" id="walk-minimap-btn" title="Minimap (M)">
+						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="1" width="14" height="14" rx="2"/><circle cx="8" cy="8" r="2"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3"/></svg>
+						<span data-label>Map</span>
+					</button>
+					<button type="button" class="walk-btn" id="walk-help-toggle" title="Show controls (H)">
 						<span>?</span>
 					</button>
 				</div>
@@ -968,8 +984,11 @@
 				<span class="walk-key"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
 				<span class="walk-key"><kbd>shift</kbd> run</span>
 				<span class="walk-key"><kbd>space</kbd> jump</span>
-				<span class="walk-key"><kbd>Q</kbd><kbd>E</kbd> snap turn</span>
-				<span class="walk-key"><kbd>drag</kbd> orbit camera</span>
+				<span class="walk-key"><kbd>C</kbd> camera</span>
+				<span class="walk-key"><kbd>G</kbd> gestures</span>
+				<span class="walk-key"><kbd>V</kbd> scene</span>
+				<span class="walk-key"><kbd>M</kbd> map</span>
+				<span class="walk-key"><kbd>H</kbd> help</span>
 			</div>
 
 			<div id="walk-status">loading avatar…</div>

@@ -660,6 +660,10 @@
 			"dest": "/dashboard-next/developers.html"
 		},
 		{
+			"src": "/dashboard/three-token/?",
+			"dest": "/dashboard-next/three-token.html"
+		},
+		{
 			"src": "/dashboard/analytics/?",
 			"dest": "/dashboard-next/analytics.html"
 		},
@@ -1867,6 +1871,10 @@
 		{
 			"src": "/api/billing/revenue",
 			"dest": "/api/billing/revenue"
+		},
+		{
+			"src": "/api/three-token/([^/]+)",
+			"dest": "/api/three-token/[action]?action=$1"
 		},
 		{
 			"src": "/api/developer/webhooks/([^/]+)",

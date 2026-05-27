@@ -769,6 +769,22 @@ export function paidEndpoint(spec) {
 		res.setHeader('content-type', contentType);
 		res.end(body);
 
+		logPaymentEvent({
+			eventType: 'payment_settled',
+			route,
+			resourceUrl,
+			payer: settled.payer || verified.payer || null,
+			network: settled.network || verified.requirement?.network || null,
+			amountAtomics: verified.requirement?.amount || null,
+			asset: verified.requirement?.asset || null,
+			txHash: settled.transaction || null,
+			settlementStatus: 'success',
+			facilitatorResponse: settled,
+			durationMs: Date.now() - requestStartTime,
+			ipAddress: clientIp(req),
+			userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+		});
+
 		if (paymentId) {
 			await storeResponse({
 				route,

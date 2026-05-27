@@ -62,6 +62,11 @@ function rateCheck(ip) {
 	}
 	arr.push(now);
 	rateMap.set(ip, arr);
+	if (rateMap.size > 10000) {
+		for (const [k, v] of rateMap) {
+			if (v.every((t) => now - t >= RATE_LIMIT_WINDOW_MS)) rateMap.delete(k);
+		}
+	}
 	return true;
 }
 
@@ -149,7 +154,7 @@ export default wrap(async function handler(req, res) {
 	if (q.get('expression')) {
 		try {
 			expression = JSON.parse(q.get('expression'));
-			if (typeof expression !== 'object' || expression === null) throw new Error();
+			if (typeof expression !== 'object' || expression === null || Array.isArray(expression)) throw new Error();
 		} catch {
 			return error(res, 400, 'invalid_expression', 'expression must be a JSON object of morph targets');
 		}
@@ -232,13 +237,6 @@ export default wrap(async function handler(req, res) {
 function clamp(v, min, max) {
 	return Math.max(min, Math.min(max, v));
 }
-
-// Extended renderer that supports scene presets with lookAt offset + distance
-// multiplier. Builds on the same puppeteer+three.js pipeline as render-clip.js
-// but with a custom frameCamera that handles scene framing.
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium-min';
-import { env } from '../_lib/env.js';
 
 const DEFAULT_CHROMIUM_PACK =
 	'https://github.com/Sparticuz/chromium/releases/download/v148.0.0/chromium-v148.0.0-pack.x64.tar';

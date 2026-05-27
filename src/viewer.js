@@ -2,12 +2,14 @@ import {
 	AudioListener,
 	AxesHelper,
 	Box3,
+	BufferGeometry,
 	Cache,
 	Color,
 	GridHelper,
 	LoaderUtils,
 	LoopOnce,
 	LoopRepeat,
+	Mesh,
 	PMREMGenerator,
 	PerspectiveCamera,
 	PointsMaterial,
@@ -45,6 +47,13 @@ import { takeScreenshot, captureScreenshot } from './viewer/screenshot.js';
 import { setClips, playAllClips } from './viewer/animation.js';
 import { LightProbeGrid } from './light-probe-grid.js';
 import { AnimationManager } from './animation-manager.js';
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
+
+// Install BVH-accelerated raycasting on Three.js prototypes. This must happen
+// before any geometry is created so every Mesh benefits transparently.
+BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+Mesh.prototype.raycast = acceleratedRaycast;
 
 Cache.enabled = true;
 

@@ -231,6 +231,8 @@
 
 .h-traction-val.is-loading {
 	opacity: 0.3;
+	filter: blur(4px);
+	transition: opacity 0.4s, filter 0.4s;
 }
 
 .h-traction-label {

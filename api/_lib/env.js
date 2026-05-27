@@ -94,6 +94,19 @@ export const env = {
 		return opt('CRON_SECRET');
 	},
 
+	// Platform fee basis points for agent monetization (100 bps = 1%).
+	// Read by api/_lib/fee.js on cold-start. Default 250 (2.5%).
+	get PLATFORM_FEE_BPS() {
+		return parseInt(opt('PLATFORM_FEE_BPS', '250'), 10);
+	},
+
+	// Platform treasury keypair for monetization withdrawals.
+	// Alias for TREASURY_KEYPAIR — either one is accepted by the
+	// process-withdrawals cron.
+	get PLATFORM_TREASURY_KEYPAIR() {
+		return opt('PLATFORM_TREASURY_KEYPAIR') || opt('TREASURY_KEYPAIR');
+	},
+
 	// Mainnet RPC URL for ENS resolution. Falls back to ethers public default provider.
 	// Recommended: set to an Alchemy / Infura URL for reliability.
 	get MAINNET_RPC_URL() {

@@ -2587,12 +2587,12 @@ async function handleProcessWithdrawals(req, res) {
 		return error(res, 401, 'unauthorized', 'cron secret required');
 	}
 
-	const treasuryKeypair = process.env.TREASURY_KEYPAIR;
+	const treasuryKeypair = process.env.TREASURY_KEYPAIR || process.env.PLATFORM_TREASURY_KEYPAIR;
 	const evmTreasuryKey = process.env.EVM_TREASURY_PRIVATE_KEY;
 	if (!treasuryKeypair && !evmTreasuryKey) {
 		return json(res, 200, {
 			skipped: true,
-			reason: 'No treasury key configured (set TREASURY_KEYPAIR for Solana, EVM_TREASURY_PRIVATE_KEY for EVM)',
+			reason: 'No treasury key configured (set TREASURY_KEYPAIR or PLATFORM_TREASURY_KEYPAIR for Solana, EVM_TREASURY_PRIVATE_KEY for EVM)',
 		});
 	}
 

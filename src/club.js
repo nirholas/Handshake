@@ -28,7 +28,18 @@ import {
 	SRGBColorSpace,
 	Vector3,
 	WebGLRenderer,
+	NoToneMapping,
 } from 'three';
+import {
+	EffectComposer,
+	RenderPass,
+	EffectPass,
+	BloomEffect,
+	ToneMappingEffect,
+	VignetteEffect,
+	SMAAEffect,
+	ToneMappingMode,
+} from 'postprocessing';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 
@@ -134,6 +145,14 @@ function rememberTicketId(id) {
 	return true;
 }
 
+function formatTimestamp(isoOrDate) {
+	try {
+		const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
+		if (isNaN(d.getTime())) return '';
+		return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+	} catch { return ''; }
+}
+
 // Render one tip into the feed. Accepts both the server row shape
 // (snake_case from /api/club/tips and SSE `tip` events) and the local
 // x402 ticket shape (camelCase from window.X402.pay).
@@ -142,29 +161,52 @@ function renderTipRow(rowLike, { live = false, prepend = true } = {}) {
 	const ticketId = rowLike.ticket_id ?? rowLike.ticketId ?? null;
 	if (ticketId && !rememberTicketId(ticketId)) return;
 
-	const dancer = rowLike.dancer ?? '?';
+	const dancerId = rowLike.dancer ?? '?';
+	const dancerIdx = parseInt(dancerId, 10) - 1;
+	const dancerName = DANCER_META[dancerIdx]?.name || `Dancer ${dancerId}`;
 	const label = rowLike.label ?? rowLike.dance ?? 'dance';
 	const payer = rowLike.payer ?? null;
 	const amountAtomics = rowLike.amount_atomics ?? rowLike.amountAtomics ?? null;
 	const network = rowLike.network ?? '';
+	const timestamp = rowLike.created_at ?? rowLike.startsAt ?? new Date().toISOString();
 
 	tipFeedEl.querySelector('.club-feed-empty')?.remove();
 	const row = document.createElement('div');
 	row.className = 'club-tip-row';
 	if (live) row.classList.add('is-live');
-	const who = payer ? `${payer.slice(0, 4)}…${payer.slice(-4)}` : 'someone';
+	const who = payer ? `${payer.slice(0, 4)}...${payer.slice(-4)}` : 'someone';
 	const safeLabel = String(label).replace(/[<>&]/g, '');
+	const time = formatTimestamp(timestamp);
 	row.innerHTML = `
-		<span class="club-tip-who">${who}</span>
-		<span class="club-tip-mid">tipped dancer ${dancer} → ${safeLabel}</span>
-		<span class="club-tip-amt">${fmtUsd(amountAtomics)} · ${network || ''}</span>
+		<span class="club-tip-time">${time}</span>
+		<span class="club-tip-mid"><span class="club-tip-who">${who}</span> tipped ${dancerName} &rarr; ${safeLabel}</span>
+		<span class="club-tip-amt">${fmtUsd(amountAtomics)}</span>
 	`;
 	if (prepend) {
 		tipFeedEl.prepend(row);
 	} else {
 		tipFeedEl.appendChild(row);
 	}
-	while (tipFeedEl.children.length > 20) tipFeedEl.lastChild.remove();
+
+	// Max 20 visible entries; oldest fade out.
+	while (tipFeedEl.children.length > 20) {
+		const oldest = tipFeedEl.lastElementChild;
+		if (oldest) {
+			oldest.classList.add('is-fading');
+			oldest.addEventListener('animationend', () => oldest.remove(), { once: true });
+		}
+	}
+
+	// If this tip is for the currently-viewed pole, flash its spotlight + card.
+	if (live) {
+		flashPoleCard(dancerId);
+		// Play tip sound via audio system.
+		try {
+			if (audio.ctx && !audio.muted) {
+				playTipSound(audio.ctx, audio.master);
+			}
+		} catch {}
+	}
 }
 
 function setFeedStatus(text, kind) {
@@ -698,6 +740,86 @@ for (let i = 0; i < discoCount; i++) {
 	disco.add(p);
 }
 
+// ── Tip sound effect (synthesized — no external file) ────────────────────
+// A short ascending chime when a new tip arrives. Uses oscillator nodes
+// to keep the bundle size zero.
+function playTipSound(ctx, destination) {
+	if (!ctx || !destination) return;
+	const now = ctx.currentTime;
+	const gain = ctx.createGain();
+	gain.gain.setValueAtTime(0.15, now);
+	gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+	gain.connect(destination);
+
+	const osc1 = ctx.createOscillator();
+	osc1.type = 'sine';
+	osc1.frequency.setValueAtTime(880, now);
+	osc1.frequency.exponentialRampToValueAtTime(1760, now + 0.12);
+	osc1.connect(gain);
+	osc1.start(now);
+	osc1.stop(now + 0.35);
+
+	const osc2 = ctx.createOscillator();
+	osc2.type = 'sine';
+	osc2.frequency.setValueAtTime(1320, now + 0.06);
+	osc2.frequency.exponentialRampToValueAtTime(2200, now + 0.18);
+	const gain2 = ctx.createGain();
+	gain2.gain.setValueAtTime(0.08, now + 0.06);
+	gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+	osc2.connect(gain2).connect(destination);
+	osc2.start(now + 0.06);
+	osc2.stop(now + 0.4);
+}
+
+// ── Ambient dust particles ──────────────────────────────────────────────
+// Subtle floating particles that drift slowly upward, adding atmosphere
+// to the venue. Uses Points geometry with a small count (~50).
+function createAmbientParticles(count = 50) {
+	const positions = new Float32Array(count * 3);
+	const velocities = [];
+	for (let i = 0; i < count; i++) {
+		positions[i * 3] = (Math.random() - 0.5) * 14;
+		positions[i * 3 + 1] = Math.random() * 6;
+		positions[i * 3 + 2] = (Math.random() - 0.5) * 14 - 2;
+		velocities.push({
+			x: (Math.random() - 0.5) * 0.08,
+			y: 0.02 + Math.random() * 0.04,
+			z: (Math.random() - 0.5) * 0.06,
+		});
+	}
+	const geo = new BufferGeometry();
+	geo.setAttribute('position', new BufferAttribute(positions, 3));
+	const mat = new PointsMaterial({
+		color: 0xffeedd,
+		size: 0.03,
+		transparent: true,
+		opacity: 0.35,
+		blending: AdditiveBlending,
+		depthWrite: false,
+	});
+	const points = new Points(geo, mat);
+	points.frustumCulled = false;
+
+	return {
+		mesh: points,
+		tick(dt) {
+			const posArr = geo.attributes.position.array;
+			for (let i = 0; i < count; i++) {
+				posArr[i * 3] += velocities[i].x * dt;
+				posArr[i * 3 + 1] += velocities[i].y * dt;
+				posArr[i * 3 + 2] += velocities[i].z * dt;
+				// Reset particle to bottom when it drifts above ceiling.
+				if (posArr[i * 3 + 1] > 6.5) {
+					posArr[i * 3] = (Math.random() - 0.5) * 14;
+					posArr[i * 3 + 1] = -0.5;
+					posArr[i * 3 + 2] = (Math.random() - 0.5) * 14 - 2;
+				}
+			}
+			geo.attributes.position.needsUpdate = true;
+		},
+	};
+}
+
 // ── Avatar template + manifest load ──────────────────────────────────────
 let animationDefs = null;
 
@@ -818,10 +940,25 @@ async function bootstrap() {
 		station.attachAvatar(template, animationDefs);
 	}
 
+	// Ambient dust particles — skip on low-perf devices.
+	if (activeProfile.tier !== 'low') {
+		const particleCount = activeProfile.tier === 'high' ? 50 : 30;
+		const particles = createAmbientParticles(particleCount);
+		scene.add(particles.mesh);
+		// Expose for the render loop to tick.
+		if (typeof window !== 'undefined') window.__clubParticles = particles;
+	}
+
 	// Backfill history + open the SSE channel so this tab sees other tabs'
 	// tips. Both run side-effect-only and don't block the stage being ready.
 	loadInitialTips();
 	subscribeTipStream();
+
+	// On mobile, default to VIP view of pole 1 for a focused experience.
+	if (isMobileLayout()) {
+		const firstPole = POLES[0];
+		if (firstPole) clubCam.setVip(firstPole);
+	}
 
 	setStatus('Tip a pole to make her dance.', { kind: 'ok' });
 }
@@ -1233,12 +1370,40 @@ function animate() {
 
 	watchdog.tick(dt);
 
-	for (const station of stations) station.tick(dt);
+	for (const station of stations) {
+		station.tick(dt);
+
+		// Spotlight pulse — gentle sinusoidal intensity variation.
+		// Only for idle poles; performing poles have their own intensity target.
+		if (!station.performing && station.spot) {
+			const pulse = Math.sin(t * 1.2 + station.idx * 1.5) * 0.15 + 1.0;
+			station.spot.intensity = station.spotIdleIntensity * pulse;
+		}
+
+		// Update progress bar for performing stations.
+		if (station.performing && station.activeUntil > 0) {
+			const total = (station.activeTicket?.durationSec || 12) * 1000;
+			const elapsed = total - (station.activeUntil - Date.now());
+			const pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
+			const cardEl = poleCardEls.get(station.id);
+			if (cardEl) {
+				const bar = cardEl.querySelector('.club-pole-progress-bar');
+				const progressEl = cardEl.querySelector('.club-pole-progress');
+				if (bar) bar.style.width = `${pct}%`;
+				if (progressEl) progressEl.setAttribute('aria-valuenow', String(Math.round(pct)));
+			}
+		}
+	}
 
 	// Disco light slow swirl.
 	disco.rotation.y = t * 0.25;
 
-	// Camera state machine — orbit / VIP / house.
+	// Ambient particles.
+	if (typeof window !== 'undefined' && window.__clubParticles) {
+		window.__clubParticles.tick(dt);
+	}
+
+	// Camera state machine — orbit / VIP / house / auto.
 	clubCam.tick(dt);
 
 	renderer.render(scene, camera);
@@ -1290,7 +1455,7 @@ async function fetchLeaderboard() {
 function renderLeaderboard(rows) {
 	if (!lbRowsEl) return;
 	if (!rows.length) {
-		lbRowsEl.innerHTML = '<div class="club-lb-empty">No dancers registered yet.</div>';
+		lbRowsEl.innerHTML = '<div class="club-lb-empty">No tips yet. Be the first to tip a dancer!</div>';
 		return;
 	}
 	const frag = document.createDocumentFragment();
@@ -1298,17 +1463,28 @@ function renderLeaderboard(rows) {
 		const total = Number(row.total_atomics || 0);
 		const unpaid = Number(row.unpaid_atomics || 0);
 		const div = document.createElement('div');
-		div.className = 'club-lb-row' + (unpaid > 0 ? ' has-unpaid' : '');
-		const dancer = String(row.dancer || '').replace(/[<>&]/g, '');
-		const name = String(row.display_name || `Dancer ${dancer}`).replace(/[<>&]/g, '');
+		div.className = 'club-lb-row is-entering' + (unpaid > 0 ? ' has-unpaid' : '');
+		div.style.animationDelay = `${i * 0.06}s`;
+		const dancerId = String(row.dancer || '').replace(/[<>&]/g, '');
+		const dancerIdx = parseInt(dancerId, 10) - 1;
+		const metaName = DANCER_META[dancerIdx]?.name || null;
+		const name = String(row.display_name || metaName || `Dancer ${dancerId}`).replace(/[<>&]/g, '');
+
+		// Rank badge: gold/silver/bronze for top 3.
+		let rankClass = '';
+		let rankLabel = String(i + 1);
+		if (i === 0) { rankClass = 'is-gold'; rankLabel = '1'; }
+		else if (i === 1) { rankClass = 'is-silver'; rankLabel = '2'; }
+		else if (i === 2) { rankClass = 'is-bronze'; rankLabel = '3'; }
+
 		const unpaidLabel = unpaid > 0
 			? `<small>${fmtUsd(unpaid)} unpaid</small>`
 			: '';
 		div.innerHTML = `
-			<span class="club-lb-rank">${i + 1}</span>
+			<span class="club-lb-rank ${rankClass}" aria-label="Rank ${i + 1}">${rankLabel}</span>
 			<span class="club-lb-name">${name}${unpaidLabel}</span>
-			<span class="club-lb-amt">${total > 0 ? fmtUsd(total) : '—'}</span>
-			<span class="club-lb-tips">${row.tip_count || 0}×</span>
+			<span class="club-lb-amt" aria-label="Total tipped: ${total > 0 ? fmtUsd(total) : 'none'}">${total > 0 ? fmtUsd(total) : '—'}</span>
+			<span class="club-lb-tips" aria-label="${row.tip_count || 0} tips">${row.tip_count || 0}×</span>
 		`;
 		frag.appendChild(div);
 	});
@@ -1320,7 +1496,17 @@ function setLeaderboardWindow(next) {
 	if (next === lbWindow) return;
 	lbWindow = next;
 	for (const tab of lbTabsEls) {
-		tab.classList.toggle('is-active', tab.dataset.window === next);
+		const isActive = tab.dataset.window === next;
+		tab.classList.toggle('is-active', isActive);
+		tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+	}
+	// Show loading skeleton while fetching.
+	if (lbRowsEl) {
+		lbRowsEl.innerHTML = `
+			<div class="club-lb-skeleton" aria-label="Loading leaderboard"></div>
+			<div class="club-lb-skeleton" style="opacity:0.7"></div>
+			<div class="club-lb-skeleton" style="opacity:0.4"></div>
+		`;
 	}
 	fetchLeaderboard();
 }
@@ -1364,6 +1550,54 @@ document.addEventListener('visibilitychange', () => {
 
 fetchLeaderboard();
 startLeaderboardPolling();
+
+// ── Status bar — clock + connection indicator ────────────────────────────
+{
+	const clockEl = document.getElementById('club-clock');
+	const connDot = document.getElementById('club-conn-dot');
+	const connLabel = document.getElementById('club-conn-label');
+	const viewerBarCount = document.getElementById('club-viewer-bar-count');
+
+	function updateClock() {
+		if (clockEl) {
+			clockEl.textContent = new Date().toLocaleTimeString([], {
+				hour: '2-digit',
+				minute: '2-digit',
+				second: '2-digit',
+			});
+		}
+	}
+	updateClock();
+	setInterval(updateClock, 1000);
+
+	// Mirror the viewer count from the presence bar into the status bar.
+	const viewerCountEl = document.getElementById('club-viewer-count');
+	if (viewerCountEl && viewerBarCount) {
+		const obs = new MutationObserver(() => {
+			viewerBarCount.textContent = `${viewerCountEl.textContent} watching`;
+		});
+		obs.observe(viewerCountEl, { characterData: true, childList: true, subtree: true });
+	}
+
+	// Connection status: watch online/offline events.
+	function setConnected(online) {
+		if (connDot) connDot.classList.toggle('is-disconnected', !online);
+		if (connLabel) connLabel.textContent = online ? 'Connected' : 'Offline';
+	}
+	window.addEventListener('online', () => setConnected(true));
+	window.addEventListener('offline', () => setConnected(false));
+	setConnected(navigator.onLine !== false);
+}
+
+// ── Entrance animation cleanup ──────────────────────────────────────────
+{
+	const entrance = document.getElementById('club-entrance');
+	if (entrance) {
+		entrance.addEventListener('animationend', () => {
+			entrance.remove();
+		});
+	}
+}
 
 bootstrap()
 	.catch((err) => {

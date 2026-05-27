@@ -54,21 +54,21 @@ async function fetchTokenOverview(apiKey) {
 async function fetchPlatformMetrics() {
 	const [agentCount, revenueData, paymentCount] = await Promise.all([
 		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`,
-		sql`SELECT coalesce(sum(amount_cents), 0)::bigint AS total_cents FROM agent_revenue_events WHERE status = 'confirmed'`.catch(() => [{ total_cents: 0 }]),
-		sql`SELECT count(*)::int AS total FROM agent_revenue_events WHERE status = 'confirmed'`.catch(() => [{ total: 0 }]),
+		sql`SELECT coalesce(sum(gross_amount), 0)::bigint AS total_gross, coalesce(sum(fee_amount), 0)::bigint AS total_fee FROM agent_revenue_events`.catch(() => [{ total_gross: 0, total_fee: 0 }]),
+		sql`SELECT count(*)::int AS total FROM agent_revenue_events`.catch(() => [{ total: 0 }]),
 	]);
 	return {
 		total_agents: agentCount[0]?.total ?? 0,
-		total_revenue_cents: Number(revenueData[0]?.total_cents ?? 0),
+		total_revenue_gross: Number(revenueData[0]?.total_gross ?? 0),
+		total_revenue_fee: Number(revenueData[0]?.total_fee ?? 0),
 		total_payments: paymentCount[0]?.total ?? 0,
 	};
 }
 
 async function fetchBurnEvents() {
 	const rows = await sql`
-		SELECT id, user_id, agent_id, amount_cents, source, created_at
+		SELECT id, agent_id, gross_amount, skill, created_at
 		FROM agent_revenue_events
-		WHERE status = 'confirmed'
 		ORDER BY created_at DESC
 		LIMIT 20
 	`.catch(() => []);
@@ -79,14 +79,14 @@ async function fetchRecentActivity() {
 	const rows = await sql`
 		SELECT
 			e.id,
-			e.source,
-			e.amount_cents,
+			e.skill,
+			e.gross_amount,
+			e.fee_amount,
 			e.created_at,
 			a.name AS agent_name,
 			a.display_name AS agent_display_name
 		FROM agent_revenue_events e
 		LEFT JOIN agent_identities a ON a.id = e.agent_id
-		WHERE e.status = 'confirmed'
 		ORDER BY e.created_at DESC
 		LIMIT 30
 	`.catch(() => []);
@@ -129,7 +129,7 @@ export default wrap(async (req, res) => {
 			},
 			protocol: {
 				total_agents: platform.total_agents,
-				total_revenue_usd: platform.total_revenue_cents / 100,
+				total_revenue_usd: platform.total_revenue_gross / 1_000_000,
 				total_payments: platform.total_payments,
 				revenue_share_pool_pct: 10,
 				agent_deploy_burn: 1000,
@@ -148,7 +148,7 @@ export default wrap(async (req, res) => {
 
 		const ov = tokenData.overview || {};
 		const totalSupply = ov.supply ?? 1_000_000_000;
-		const totalRevenue = platform.total_revenue_cents / 100;
+		const totalRevenue = platform.total_revenue_gross / 1_000_000;
 		const poolPct = 10;
 		const revenuePool = totalRevenue * (poolPct / 100);
 
@@ -169,8 +169,8 @@ export default wrap(async (req, res) => {
 		return json(res, 200, {
 			burns: events.map((e) => ({
 				id: e.id,
-				amount_cents: e.amount_cents,
-				source: e.source,
+				gross_amount: e.gross_amount,
+				skill: e.skill,
 				created_at: e.created_at,
 			})),
 			total_burned: 0,
@@ -183,8 +183,9 @@ export default wrap(async (req, res) => {
 		return json(res, 200, {
 			events: events.map((e) => ({
 				id: e.id,
-				type: e.source,
-				amount_cents: e.amount_cents,
+				type: e.skill || 'payment',
+				gross_usd: e.gross_amount ? Number(e.gross_amount) / 1_000_000 : null,
+				fee_usd: e.fee_amount ? Number(e.fee_amount) / 1_000_000 : null,
 				agent_name: e.agent_display_name || e.agent_name || 'Agent',
 				created_at: e.created_at,
 			})),

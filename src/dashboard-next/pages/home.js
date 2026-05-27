@@ -125,6 +125,12 @@ function renderSkeletons(main) {
 		<div class="dn-skeleton" style="height:28px;width:100px;margin-bottom:10px"></div>
 		<div class="dn-skeleton" style="height:36px;width:100%"></div></div>
 	`).join('');
+	main.querySelector('[data-slot="health"]').innerHTML = `
+		<div class="dn-panel dnx-health-panel">
+			<div class="dn-skeleton" style="height:14px;width:100px;margin-bottom:8px"></div>
+			<div class="dn-skeleton" style="height:11px;width:200px;margin-bottom:12px"></div>
+			${Array.from({ length: 3 }, () => `<div class="dn-skeleton" style="height:32px;width:100%;margin:4px 0"></div>`).join('')}
+		</div>`;
 	main.querySelector('[data-slot="quick"]').innerHTML = `
 		<div style="margin-bottom:12px"><div class="dn-skeleton" style="height:14px;width:90px;margin-bottom:6px"></div><div class="dn-skeleton" style="height:11px;width:200px"></div></div>
 		<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">${Array.from({ length: 6 }, () => `
@@ -283,6 +289,53 @@ function renderKpiCard(c) {
 		<div class="dn-panel dnx-kpi" data-kpi="${esc(c.key)}">
 			<div class="dnx-kpi-label">${esc(c.label)}</div>
 			${body}
+		</div>
+	`;
+}
+
+// ── Agent health ─────────────────────────────────────────────────────────
+
+function renderAgentHealth(host, agents, widgets) {
+	if (!agents.length) {
+		host.style.display = 'none';
+		return;
+	}
+
+	const widgetsByAvatar = new Map();
+	for (const w of widgets) {
+		const aid = w.avatar_id || w.avatar?.id;
+		if (aid) {
+			if (!widgetsByAvatar.has(aid)) widgetsByAvatar.set(aid, []);
+			widgetsByAvatar.get(aid).push(w);
+		}
+	}
+
+	const rows = agents.slice(0, 8).map((a) => {
+		const name = a.name || a.display_name || 'Unnamed agent';
+		const hasWidget = widgetsByAvatar.has(a.avatar_id);
+		const updatedAt = a.updated_at || a.created_at;
+		const lastActive = updatedAt ? new Date(updatedAt) : null;
+		const isRecent = lastActive && (Date.now() - lastActive.getTime()) < 24 * 3600_000;
+		const status = hasWidget ? (isRecent ? 'active' : 'idle') : 'no-widget';
+		const statusLabel = status === 'active' ? 'Active' : status === 'idle' ? 'Idle' : 'No widget';
+		const statusClass = status === 'active' ? 'success' : '';
+		const dotColor = status === 'active' ? 'var(--nxt-success)' : status === 'idle' ? 'var(--nxt-ink-fade)' : 'var(--nxt-ink-fade)';
+
+		return `
+			<a href="/dashboard/agents" class="dnx-health-row">
+				<span class="dnx-health-dot" style="background:${dotColor}" aria-hidden="true"></span>
+				<span class="dnx-health-name">${esc(name)}</span>
+				<span class="dn-tag ${statusClass}" style="font-size:10.5px">${statusLabel}</span>
+				${lastActive ? `<span class="dnx-health-time">${esc(relTime(updatedAt))}</span>` : ''}
+			</a>
+		`;
+	}).join('');
+
+	host.innerHTML = `
+		<div class="dn-panel dnx-health-panel">
+			<div class="dn-panel-title">Agent health</div>
+			<div class="dn-panel-sub">Status of your agents and their widget connections.</div>
+			<div class="dnx-health-list">${rows}</div>
 		</div>
 	`;
 }
@@ -1106,6 +1159,49 @@ function injectStyles() {
 		}
 		.dnx-kpi-spark { height: 38px; }
 		.dnx-kpi-empty { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+
+		/* ── Agent health ── */
+		.dnx-health-wrap { min-width: 0; }
+		.dnx-health-panel { padding: 16px 18px; }
+		.dnx-health-list {
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+		}
+		.dnx-health-row {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			padding: 8px 8px;
+			border-radius: 8px;
+			font-size: 13px;
+			color: var(--nxt-ink-dim);
+			transition: background 0.12s ease, color 0.12s ease;
+			cursor: pointer;
+		}
+		.dnx-health-row:hover { background: rgba(255,255,255,0.04); color: var(--nxt-ink); }
+		.dnx-health-row:focus-visible { outline: 2px solid var(--nxt-ink-dim); outline-offset: -2px; }
+		.dnx-health-dot {
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			flex-shrink: 0;
+		}
+		.dnx-health-name {
+			flex: 1;
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			font-weight: 500;
+			color: var(--nxt-ink);
+		}
+		.dnx-health-time {
+			font-size: 12px;
+			color: var(--nxt-ink-fade);
+			font-variant-numeric: tabular-nums;
+			white-space: nowrap;
+		}
 
 		/* ── Shortcuts ── */
 		.dnx-quick { display: flex; flex-direction: column; }

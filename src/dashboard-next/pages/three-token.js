@@ -488,20 +488,13 @@ function renderActivityFeed(activityData) {
 	const section = document.createElement('div');
 	section.className = 'dn-panel';
 
-	const sourceLabels = {
-		skill: 'Skill Purchase',
-		subscription: 'Subscription',
-		api: 'API Call',
-		tip: 'Tip',
-		x402: 'x402 Payment',
-	};
-
 	const sourceColors = {
-		skill: '#4ade80',
-		subscription: '#60a5fa',
-		api: '#a78bfa',
-		tip: '#fbbf24',
-		x402: '#f472b6',
+		payment: '#4ade80',
+		echo: '#60a5fa',
+		validate_model: '#a78bfa',
+		inspect_model: '#fbbf24',
+		optimize_model: '#f472b6',
+		search_public_avatars: '#818cf8',
 	};
 
 	if (!events.length) {

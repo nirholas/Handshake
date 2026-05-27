@@ -108,6 +108,10 @@ const playersListEl = document.getElementById('walk-players-list');
 const playersCloseBtn = document.getElementById('walk-players-close');
 const helpToggleBtn = document.getElementById('walk-help-toggle');
 const emoteTrayEl = document.getElementById('walk-emote-tray');
+const cameraModeBtn = document.getElementById('walk-camera-mode-btn');
+const envBtn = document.getElementById('walk-env-btn');
+const screenshotBtn = document.getElementById('walk-screenshot-btn');
+const minimapBtn = document.getElementById('walk-minimap-btn');
 
 const NAME_STORAGE_KEY = 'walk:player-name';
 
@@ -168,6 +172,12 @@ if (helpToggleBtn && helpEl) {
 		if (helpAutoHideTimer) { clearTimeout(helpAutoHideTimer); helpAutoHideTimer = null; }
 	});
 }
+
+// ── HUD button handlers for new features ─────────────────────────────────
+if (cameraModeBtn) cameraModeBtn.addEventListener('click', () => cycleCameraMode());
+if (envBtn) envBtn.addEventListener('click', () => cycleEnvironment());
+if (screenshotBtn) screenshotBtn.addEventListener('click', () => takeScreenshot());
+if (minimapBtn) minimapBtn.addEventListener('click', () => toggleMinimap());
 
 // ── Players panel ────────────────────────────────────────────────────────
 let playersPanelOpen = false;
@@ -1156,9 +1166,47 @@ function readMoveInput() {
 		// Joystick vector — y up is forward.
 		ix = input.joy.x;
 		iy = input.joy.y;
-	} else {
+		// User input cancels waypoint
+		if (waypointTarget) waypointTarget = null;
+	} else if (input.keys.forward || input.keys.back || input.keys.left || input.keys.right) {
 		ix = input.keys.right - input.keys.left;
 		iy = input.keys.forward - input.keys.back;
+		// User input cancels waypoint
+		if (waypointTarget) waypointTarget = null;
+	} else if (waypointTarget) {
+		// Auto-walk toward waypoint — compute direction in world space,
+		// then project to camera-relative input so the existing movement
+		// pipeline handles facing and animation correctly.
+		const dx = waypointTarget.x - avatarRig.position.x;
+		const dz = waypointTarget.z - avatarRig.position.z;
+		const dist = Math.hypot(dx, dz);
+		if (dist < WAYPOINT_ARRIVE_DIST) {
+			waypointTarget = null;
+			ix = 0;
+			iy = 0;
+		} else {
+			// World direction to waypoint
+			const worldDir = new Vector3(dx, 0, dz).normalize();
+			// Camera forward (XZ)
+			const camFwd = new Vector3();
+			camFwd.copy(camLookCurrent).sub(camera.position);
+			camFwd.y = 0;
+			if (camFwd.lengthSq() < 1e-6) camFwd.set(0, 0, -1);
+			else camFwd.normalize();
+			const camRight = new Vector3().crossVectors(camFwd, upY).normalize();
+			// Project world direction onto camera axes
+			ix = worldDir.dot(camRight);
+			iy = worldDir.dot(camFwd);
+			const m = Math.hypot(ix, iy);
+			if (m > 0.01) { ix /= m; iy /= m; }
+			// Slow down near target
+			const speed = Math.min(1, dist / 1.5);
+			ix *= speed * 0.7;
+			iy *= speed * 0.7;
+		}
+	} else {
+		ix = 0;
+		iy = 0;
 	}
 	return { ix, iy };
 }
