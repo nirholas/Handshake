@@ -2326,18 +2326,6 @@
 			"dest": "/dist-lib/$1"
 		},
 		{
-			"src": "/rider",
-			"dest": "/rider/index.html"
-		},
-		{
-			"src": "/rider/",
-			"dest": "/rider/index.html"
-		},
-		{
-			"src": "/rider/(.*)",
-			"dest": "/rider/$1"
-		},
-		{
 			"src": "/fact-checker",
 			"dest": "/pages/fact-checker.html"
 		},

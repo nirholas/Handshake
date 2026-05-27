@@ -699,19 +699,13 @@ const appConfig = {
 						const candidate = resolve(root, `pages/${slug}.html`);
 						if (existsSync(candidate)) filePath = candidate;
 					}
-					// Serve the rider webpack app as static files.
 					// /footer-bot.js — serve the Vite-processed src/footer-bot.js at a
 				// stable URL in dev so footer.js can load it without knowing the hash.
 				if (path === '/footer-bot.js') {
 					req.url = '/src/footer-bot.js';
 					return next();
 				}
-				if (path === '/rider' || path === '/rider/') {
-						const html = readFileSync(resolve(root, 'rider/index.html'), 'utf8');
-						res.setHeader('Content-Type', 'text/html; charset=utf-8');
-						return res.end(html);
-					}
-					// Avatar Studio (rebranded Character Studio fork) — serve the
+				// Avatar Studio (rebranded Character Studio fork) — serve the
 					// production build out of character-studio/build/ at /avatar-studio/*
 					// so the demo iframe works in dev. Run `npm run build --prefix
 					// character-studio` first to populate the build dir.
@@ -729,16 +723,6 @@ const appConfig = {
 						const mimes = { js: 'application/javascript', map: 'application/json', css: 'text/css', json: 'application/json', html: 'text/html', ogg: 'audio/ogg', mp3: 'audio/mpeg', wav: 'audio/wav', glb: 'model/gltf-binary', gltf: 'model/gltf+json', vrm: 'application/octet-stream', obj: 'text/plain', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', svg: 'image/svg+xml', ico: 'image/x-icon', woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf', otf: 'font/otf', wasm: 'application/wasm' };
 						const rel = path.slice('/avatar-studio/'.length);
 						const fileDisk = resolve(root, 'character-studio/build', rel);
-						if (existsSync(fileDisk) && statSync(fileDisk).isFile()) {
-							res.setHeader('Content-Type', mimes[ext] || 'application/octet-stream');
-							return createReadStream(fileDisk).pipe(res);
-						}
-						return next();
-					}
-					if (path.startsWith('/rider/')) {
-						const ext = path.split('.').pop().toLowerCase();
-						const mimes = { js: 'application/javascript', map: 'application/json', css: 'text/css', json: 'application/json', html: 'text/html', ogg: 'audio/ogg', mp3: 'audio/mpeg', wav: 'audio/wav', glb: 'model/gltf-binary', gltf: 'model/gltf+json', obj: 'text/plain', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', svg: 'image/svg+xml', woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf' };
-						const fileDisk = resolve(root, path.slice(1));
 						if (existsSync(fileDisk) && statSync(fileDisk).isFile()) {
 							res.setHeader('Content-Type', mimes[ext] || 'application/octet-stream');
 							return createReadStream(fileDisk).pipe(res);
@@ -900,15 +884,6 @@ const appConfig = {
 				cpSync(resolve(__dirname, 'pump-fun-skills'), resolve(__dirname, 'dist/pump-fun-skills'), {
 					recursive: true,
 				});
-			},
-		},
-		{
-			name: 'copy-rider',
-			closeBundle() {
-				const src = resolve(__dirname, 'rider');
-				if (existsSync(src)) {
-					cpSync(src, resolve(__dirname, 'dist/rider'), { recursive: true });
-				}
 			},
 		},
 		{
