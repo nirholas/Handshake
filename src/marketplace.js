@@ -2659,7 +2659,7 @@ function renderAvatarCard(a, spotlight = false) {
 					tone-mapping="aces"
 					loading="lazy"
 				></model-viewer>`
-			: `<div class="thumb-fallback">${escapeHtml(initial(a.name))}</div>`;
+			: `<div class="thumb-fallback"><span class="thumb-fallback-initial">${escapeHtml(initial(a.name))}</span></div>`;
 	const isSpotlight = spotlight || a.featured;
 	const spotlightBadge = isSpotlight ? '<span class="card-featured-badge" title="Featured">⭐</span>' : '';
 	const bmActive = getAvatarBookmarks().has(a.avatarId || '');
@@ -2761,7 +2761,7 @@ function renderOnchainCard(a) {
 					loading="lazy"
 					reveal="auto"
 				></model-viewer>`
-			: `<div class="thumb-fallback">${escapeHtml(initial(a.name))}</div>`;
+			: `<div class="thumb-fallback"><span class="thumb-fallback-initial">${escapeHtml(initial(a.name))}</span></div>`;
 	return `<div class="market-card-avatar onchain" data-onchain-href="${escapeHtml(href)}">
 		<div class="thumb">${preview}</div>
 		<div class="body">

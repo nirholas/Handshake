@@ -43,8 +43,6 @@ const els = {
 	status: document.querySelector('[data-role="status"]'),
 	loadMore: document.querySelector('[data-role="load-more"]'),
 	sentinel: document.querySelector('[data-role="sentinel"]'),
-	statAll: document.querySelector('[data-role="stat-all"]'),
-	stat3d: document.querySelector('[data-role="stat-3d"]'),
 	myAgentsChip: document.querySelector('[data-role="my-agents-chip"]'),
 	searchClear: document.querySelector('[data-role="search-clear"]'),
 };
@@ -119,14 +117,13 @@ if (els.sources && initialSource !== 'all') {
 /** Sync state into URL via replaceState (no history spam). */
 function syncUrl() {
 	const p = new URLSearchParams();
-	// 3D is the default — encode the opposite explicitly so /discover (no
-	// params) and /discover?only3d=1 both mean "3D only", while clicking
-	// "All agents" produces /discover?only3d=0 (sticky on reload).
 	if (state.filter === '3d') p.set('only3d', '1');
+	else if (state.filter === 'x402') { p.set('only3d', '0'); p.set('x402', '1'); }
 	else p.set('only3d', '0');
 	if (state.source !== 'all') p.set('source', state.source);
 	if (state.chainId) p.set('chain', state.chainId);
 	if (state.query) p.set('q', state.query);
+	if (state.sortBy !== 'newest') p.set('sort', state.sortBy);
 	const qs = p.toString();
 	const next = qs ? `${location.pathname}?${qs}` : location.pathname;
 	if (next !== location.pathname + location.search) {
@@ -183,6 +180,17 @@ els.searchClear?.addEventListener('click', () => {
 	els.search.focus();
 });
 
+els.sort?.addEventListener('change', () => {
+	state.sortBy = els.sort.value;
+	syncUrl();
+	resetAndLoad();
+});
+
+// Reflect initial sort in dropdown
+if (els.sort && state.sortBy !== 'newest') {
+	els.sort.value = state.sortBy;
+}
+
 // Initial visibility (covers ?q= deep links).
 updateSearchClearVisibility();
 
@@ -193,6 +201,38 @@ if (!hasAnyParam) {
 }
 
 els.loadMore.addEventListener('click', () => loadPage());
+
+// IntersectionObserver-based infinite scroll. Falls back to the manual button.
+let io;
+if ('IntersectionObserver' in window && els.sentinel) {
+	io = new IntersectionObserver(
+		(entries) => {
+			for (const entry of entries) {
+				if (entry.isIntersecting && state.cursor && !state.loading) loadPage();
+			}
+		},
+		{ rootMargin: '480px 0px' },
+	);
+	io.observe(els.sentinel);
+}
+
+// Delegated copy-URI click
+els.grid.addEventListener('click', (e) => {
+	const btn = e.target.closest('[data-role="card-copy-uri"]');
+	if (!btn) return;
+	e.preventDefault();
+	e.stopPropagation();
+	const uri = btn.dataset.uri;
+	const done = (ok) => {
+		btn.textContent = ok ? 'Copied!' : 'Failed';
+		setTimeout(() => (btn.textContent = 'URI'), 1400);
+	};
+	if (navigator.clipboard?.writeText) {
+		navigator.clipboard.writeText(uri).then(() => done(true), () => done(false));
+	} else {
+		done(false);
+	}
+});
 
 // Delegated embed-button click — cards can be re-rendered freely
 els.grid.addEventListener('click', (e) => {
@@ -215,9 +255,32 @@ els.grid.addEventListener('click', (e) => {
 	}
 });
 
+function renderSkeletons(n) {
+	const frag = document.createDocumentFragment();
+	for (let i = 0; i < n; i++) {
+		const card = document.createElement('article');
+		card.className = 'explore-card explore-card--skel';
+		card.innerHTML = `
+			<div class="explore-card-thumb"></div>
+			<div class="explore-card-body">
+				<div class="explore-card-skel-name">&nbsp;</div>
+				<div class="explore-card-skel-desc">&nbsp;</div>
+				<div class="explore-card-skel-badges">&nbsp;</div>
+			</div>
+		`;
+		frag.appendChild(card);
+	}
+	els.grid.appendChild(frag);
+}
+
+function clearSkeletons() {
+	for (const node of els.grid.querySelectorAll('.explore-card--skel')) node.remove();
+}
+
 function resetAndLoad() {
 	state.cursor = null;
 	els.grid.innerHTML = '';
+	renderSkeletons(12);
 	loadPage();
 }
 
@@ -225,15 +288,20 @@ async function loadPage() {
 	if (state.loading) return;
 	state.loading = true;
 	els.loadMore.hidden = true;
-	els.status.textContent = state.cursor ? 'Loading more…' : 'Loading agents…';
+	if (!state.cursor) {
+		els.status.textContent = '';
+	} else {
+		els.status.textContent = 'Loading more…';
+	}
 
 	const params = new URLSearchParams();
+	// x402 filter — fetch all then client-sort; 3d flag still goes to API
 	if (state.filter === '3d') params.set('only3d', '1');
 	if (state.source !== 'all') params.set('source', state.source);
 	if (state.chainId) params.set('chain', state.chainId);
 	if (state.query) params.set('q', state.query);
 	if (state.cursor) params.set('cursor', state.cursor);
-	params.set('limit', '24');
+	params.set('limit', '48');
 
 	const isFirstPage = !state.cursor;
 	try {
@@ -241,20 +309,36 @@ async function loadPage() {
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
 
-		// Totals reflect the unfiltered corpus and don't change between pages —
-		// only paint them once per filter cycle.
-		if (isFirstPage && data.totals) {
-			els.statAll.textContent = data.totals.all.toLocaleString();
-			els.stat3d.textContent = data.totals.threeD.toLocaleString();
+		clearSkeletons();
+
+		let items = data.items || [];
+
+		// Client-side x402 filter (API returns all; we narrow here)
+		if (state.filter === 'x402') {
+			items = items.filter((i) => i.x402Support || i.price != null);
 		}
 
-		for (const item of data.items) {
+		// Client-side sort overlay
+		if (state.sortBy === 'x402') {
+			items = [...items].sort((a, b) => {
+				const ax = a.x402Support || a.price != null ? 1 : 0;
+				const bx = b.x402Support || b.price != null ? 1 : 0;
+				return bx - ax;
+			});
+		} else if (state.sortBy === 'alpha') {
+			items = [...items].sort((a, b) =>
+				(a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }),
+			);
+		}
+
+		for (const item of items) {
 			els.grid.appendChild(renderCard(item));
 		}
 		state.cursor = data.nextCursor;
 		els.loadMore.hidden = !state.cursor;
 
-		if (els.grid.children.length === 0) {
+		const visibleCards = els.grid.querySelectorAll('.explore-card:not(.explore-card--skel)').length;
+		if (visibleCards === 0) {
 			const filtersActive = state.filter !== 'all' || !!state.chainId || !!state.query;
 			els.status.innerHTML = filtersActive
 				? `<div class="explore-empty">
@@ -266,6 +350,7 @@ async function loadPage() {
 			els.status.textContent = '';
 		}
 	} catch (err) {
+		clearSkeletons();
 		els.status.innerHTML = `<div class="explore-error">Failed to load: ${escapeHtml(err.message)}</div>`;
 	} finally {
 		state.loading = false;
@@ -284,8 +369,10 @@ function clearAllFilters() {
 	state.source = 'all';
 	state.chainId = '';
 	state.query = '';
+	state.sortBy = 'newest';
 	els.search.value = '';
 	els.chain.value = '';
+	if (els.sort) els.sort.value = 'newest';
 	updateSearchClearVisibility();
 	for (const b of els.filters.querySelectorAll('[data-filter]')) {
 		b.classList.toggle('active', b.dataset.filter === 'all');
@@ -385,6 +472,8 @@ function renderOnchainCard(item) {
 				<div class="explore-card-actions">
 					<a class="explore-card-link" href="${escapeAttr(detailUrl)}">Details</a>
 					${item.viewerUrl ? `<a class="explore-card-link" href="${escapeAttr(item.viewerUrl)}">View 3D</a>` : ''}
+					<button type="button" class="explore-card-link explore-card-link--ghost" data-role="card-copy-uri"
+						data-uri="${escapeAttr(`agent://${item.chainId}/${item.agentId}`)}" title="Copy agent:// URI">URI</button>
 					<button type="button" class="explore-card-link explore-card-link--ghost" data-role="card-embed"
 						data-kind="onchain"
 						data-chain-id="${escapeAttr(String(item.chainId))}"
@@ -434,7 +523,9 @@ function renderAvatarCard(item) {
 			${item.description ? `<p class="explore-card-desc">${escapeHtml(item.description)}</p>` : ''}
 			${tagChips ? `<div class="explore-card-svcs">${tagChips}</div>` : ''}
 			<div class="explore-card-foot">
-				<span class="explore-card-owner" title="Avatar made public by its creator">@${escapeHtml(item.slug || 'avatar')}</span>
+				<span class="explore-card-owner" title="Avatar made public by its creator">
+					${item.viewCount ? `<span class="explore-card-views">${escapeHtml(formatCompact(item.viewCount))} views</span>` : `@${escapeHtml(item.slug || 'avatar')}`}
+				</span>
 				<div class="explore-card-actions">
 					<a class="explore-card-link" href="${escapeAttr(detailUrl)}">View agent</a>
 					<button type="button" class="explore-card-link explore-card-link--ghost" data-role="card-embed"
@@ -447,6 +538,12 @@ function renderAvatarCard(item) {
 		</div>
 	`;
 	return card;
+}
+
+function formatCompact(n) {
+	if (n < 1000) return String(n);
+	if (n < 1_000_000) return (n / 1000).toFixed(n < 10_000 ? 1 : 0).replace(/\.0$/, '') + 'k';
+	return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
 }
 
 function escapeHtml(s) {

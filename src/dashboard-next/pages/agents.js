@@ -205,20 +205,20 @@ function agentCard(a, avatars) {
 
 			<div class="dn-agent-actions">
 				<div class="dn-agent-actions-primary">
-					${a.avatar_id ? `<a class="dn-btn primary" href="/agent-next?id=${encodeURIComponent(a.avatar_id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">Live page ↗</a>` : ''}
+					${a.avatar_id ? `<a class="dn-btn" href="/agent-next?id=${encodeURIComponent(a.avatar_id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">Live page ↗</a>` : ''}
 					<a class="dn-btn" href="/app?agent=${encodeURIComponent(a.id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">3D Studio ↗</a>
 				</div>
 				<div class="dn-agent-actions-secondary">
 					<button class="dn-btn ghost" data-action="edit-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Edit</button>
 					<button class="dn-btn ghost" data-action="persona-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Persona</button>
 					<button class="dn-btn ghost" data-action="view-reputation" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Reputation</button>
-					<button class="dn-btn danger" data-action="delete-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Delete</button>
+					<button class="dn-btn ghost danger" data-action="delete-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Delete</button>
 				</div>
 			</div>
 
 			${onchain || pumpMint ? `
 				<div class="dn-agent-links">
-					${onchain ? `<a href="/onchain?agent=${encodeURIComponent(a.id)}" style="font-size:11.5px;color:var(--nxt-accent)">ERC-8004 registry ↗</a>` : ''}
+					${onchain ? `<a href="/onchain?agent=${encodeURIComponent(a.id)}" style="font-size:11.5px;color:var(--nxt-ink-dim)">ERC-8004 registry ↗</a>` : ''}
 					${pumpMint ? `<a href="https://pump.fun/coin/${encodeURIComponent(pumpMint)}" target="_blank" rel="noopener" style="font-size:11.5px;color:#a8adb5">View on Pump.fun ↗</a>` : ''}
 				</div>
 			` : ''}
@@ -581,7 +581,7 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 				? { handle }
 				: { agent_id: agent.id, username: handle };
 			await post(endpoint, body);
-			seedStatus.style.color = 'var(--nxt-accent)';
+			seedStatus.style.color = 'var(--nxt-ink)';
 			seedStatus.textContent = `Memory seeded from ${action.replace('seed-', '')}.`;
 		} catch (err) {
 			seedStatus.style.color = 'var(--nxt-danger)';

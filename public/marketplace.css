@@ -306,16 +306,22 @@ body.market-page {
 	position: absolute;
 	inset: 0;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	gap: 8px;
 	pointer-events: none;
+	background:
+		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.1), transparent 65%),
+		radial-gradient(circle at 50% 95%, rgba(168, 85, 247, 0.06), transparent 70%),
+		linear-gradient(180deg, #0a0a0d, #050507);
 }
 .market-card-agent .thumb .mv-placeholder-initial {
 	font-family: 'Space Grotesk', sans-serif;
-	font-size: 48px;
+	font-size: 42px;
 	font-weight: 700;
 	line-height: 1;
-	background: linear-gradient(180deg, #f4f4f5, #71717a);
+	background: linear-gradient(180deg, rgba(244,244,245,0.45), rgba(113,113,122,0.3));
 	-webkit-background-clip: text;
 	background-clip: text;
 	color: transparent;
@@ -340,6 +346,12 @@ body.market-page {
 	display: grid;
 	place-items: center;
 	font-size: 18px;
+	flex-shrink: 0;
+	overflow: hidden;
+}
+.market-card-agent .avatar.avatar-img {
+	background-size: cover;
+	background-position: center;
 }
 
 .market-card-agent .title {
@@ -1883,11 +1895,38 @@ body.market-page {
 .market-card-avatar .thumb {
 	position: relative;
 	overflow: hidden;
-}
-.market-card-avatar .thumb {
-	position: relative;
-	overflow: hidden;
 	background: #0a0a0c;
+}
+
+.market-card-avatar .thumb .mv-placeholder {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	pointer-events: none;
+	z-index: 0;
+	background:
+		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.08), transparent 65%),
+		radial-gradient(circle at 50% 90%, rgba(168, 85, 247, 0.05), transparent 70%),
+		linear-gradient(180deg, #0b0b10, #050507);
+	transition: opacity 0.5s ease;
+}
+.market-card-avatar.mv-loaded .thumb .mv-placeholder {
+	opacity: 0;
+}
+.market-card-avatar .thumb .mv-placeholder-initial {
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 42px;
+	font-weight: 700;
+	line-height: 1;
+	background: linear-gradient(180deg, rgba(244,244,245,0.35), rgba(113,113,122,0.2));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	letter-spacing: -0.04em;
 }
 
 /* Shimmer that shows while the GLB streams in */
@@ -1930,18 +1969,23 @@ body.market-page {
 	opacity: 1;
 }
 
-/* Featured: first card spans 2 columns + 2 rows for a spotlight effect */
-.market-card-avatar--featured {
-	grid-column: span 2;
-	grid-row: span 2;
+/* Featured: first card spans 2 columns + 2 rows for a spotlight effect.
+   Only apply the span when the grid has enough columns (≥3) to avoid
+   a single featured card taking the entire row on narrow layouts. */
+@media (min-width: 760px) {
+	.market-card-avatar--featured {
+		grid-column: span 2;
+		grid-row: span 2;
+	}
+	.market-card-avatar--featured .thumb {
+		aspect-ratio: unset;
+		min-height: 320px;
+	}
 }
-.market-card-avatar--featured .thumb {
-	aspect-ratio: unset;
-	min-height: 320px;
-}
-@media (max-width: 600px) {
-	.market-card-avatar--featured { grid-column: span 1; grid-row: span 1; }
-	.market-card-avatar--featured .thumb { min-height: 0; }
+@media (max-width: 759px) {
+	.market-card-avatar--featured .thumb {
+		aspect-ratio: 4 / 3;
+	}
 }
 .market-card-avatar .thumb-badge {
 	position: absolute;
@@ -2172,7 +2216,8 @@ body.market-page {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-top: 4px;
+	margin-top: auto;
+	padding-top: 4px;
 }
 .market-card-avatar .footer .avatar-pill {
 	background: rgba(125, 211, 252, 0.1);
@@ -2200,9 +2245,52 @@ body.market-page {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 60px;
-	color: rgba(255, 255, 255, 0.18);
-	background: radial-gradient(circle at 50% 50%, rgba(125, 211, 252, 0.05), transparent 70%);
+	background:
+		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.06), transparent 65%),
+		radial-gradient(circle at 50% 90%, rgba(168, 85, 247, 0.04), transparent 70%),
+		linear-gradient(180deg, #0b0b10, #050507);
+}
+.market-card-avatar .thumb-fallback-initial {
+	font-size: 48px;
+	font-weight: 700;
+	font-family: 'Space Grotesk', sans-serif;
+	letter-spacing: -0.04em;
+	line-height: 1;
+	background: linear-gradient(180deg, rgba(244,244,245,0.3), rgba(113,113,122,0.18));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.market-card-avatar .card-img-fallback {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background:
+		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.06), transparent 65%),
+		linear-gradient(180deg, #0b0b10, #050507);
+}
+.market-card-avatar .card-img-fallback::after {
+	content: '◎';
+	font-size: 36px;
+	color: rgba(255, 255, 255, 0.1);
+}
+.market-card-agent .card-img-fallback {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background:
+		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.08), transparent 65%),
+		linear-gradient(180deg, #0a0a0d, #050507);
+}
+.market-card-agent .card-img-fallback::after {
+	content: '◎';
+	font-size: 32px;
+	color: rgba(255, 255, 255, 0.1);
 }
 
 /* ── Card skeletons (initial load) ───────────────────────────── */

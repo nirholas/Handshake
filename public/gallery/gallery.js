@@ -15,6 +15,7 @@
 const els = {
 	search: document.querySelector('[data-role="search"]'),
 	searchClear: document.querySelector('[data-role="search-clear"]'),
+	sort: document.querySelector('[data-role="sort"]'),
 	tagWrap: document.querySelector('[data-role="tag-wrap"]'),
 	tags: document.querySelector('[data-role="tags"]'),
 	grid: document.querySelector('[data-role="grid"]'),
@@ -31,6 +32,7 @@ const initialParams = new URLSearchParams(location.search);
 const state = {
 	query: initialParams.get('q') || '',
 	tag: initialParams.get('tag') || '',
+	sortBy: initialParams.get('sort') || 'newest',
 	cursor: null,
 	loading: false,
 	loadedTags: new Set(),
@@ -59,6 +61,7 @@ function syncUrl() {
 	const p = new URLSearchParams();
 	if (state.query) p.set('q', state.query);
 	if (state.tag) p.set('tag', state.tag);
+	if (state.sortBy !== 'newest') p.set('sort', state.sortBy);
 	const qs = p.toString();
 	const next = qs ? `${location.pathname}?${qs}` : location.pathname;
 	if (next !== location.pathname + location.search) {
@@ -86,6 +89,16 @@ els.searchClear.addEventListener('click', () => {
 	els.search.focus();
 });
 
+els.sort?.addEventListener('change', () => {
+	state.sortBy = els.sort.value;
+	syncUrl();
+	resetAndLoad();
+});
+
+if (els.sort && state.sortBy !== 'newest') {
+	els.sort.value = state.sortBy;
+}
+
 els.tags.addEventListener('click', (e) => {
 	const btn = e.target.closest('[data-tag]');
 	if (!btn) return;
@@ -100,6 +113,18 @@ els.loadMore.addEventListener('click', () => loadPage());
 
 els.status.addEventListener('click', (e) => {
 	if (e.target.closest('[data-role="clear-filters"]')) clearAllFilters();
+});
+
+els.grid.addEventListener('click', (e) => {
+	const btn = e.target.closest('[data-role="card-embed"]');
+	if (!btn) return;
+	e.preventDefault();
+	e.stopPropagation();
+	openAvatarEmbedModal({
+		avatarId: btn.dataset.avatarId,
+		glbUrl: btn.dataset.glbUrl,
+		name: btn.dataset.name,
+	});
 });
 
 // IntersectionObserver-based infinite scroll. Falls back to the manual
@@ -120,7 +145,9 @@ if ('IntersectionObserver' in window) {
 function clearAllFilters() {
 	state.query = '';
 	state.tag = '';
+	state.sortBy = 'newest';
 	els.search.value = '';
+	if (els.sort) els.sort.value = 'newest';
 	updateSearchClearVisibility();
 	renderTags();
 	syncUrl();
@@ -186,7 +213,17 @@ async function loadPage() {
 
 		clearSkeletons();
 
-		const avatars = Array.isArray(data.avatars) ? data.avatars : [];
+		let avatars = Array.isArray(data.avatars) ? data.avatars : [];
+
+		// Client-side sort
+		if (state.sortBy === 'popular') {
+			avatars = [...avatars].sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
+		} else if (state.sortBy === 'alpha') {
+			avatars = [...avatars].sort((a, b) =>
+				(a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }),
+			);
+		}
+
 		for (const a of avatars) {
 			els.grid.appendChild(renderCard(a));
 			state.totalLoaded += 1;

@@ -7,17 +7,17 @@
    ========================================================================== */
 
 :root {
-	--nxt-bg-0: #050608;
-	--nxt-bg-1: #0c0d12;
-	--nxt-ink: #e7e8ec;
-	--nxt-ink-dim: #9ca0aa;
-	--nxt-ink-fade: #6b6f78;
-	--nxt-accent: #9a7cff;
-	--nxt-accent-soft: rgba(154, 124, 255, 0.18);
-	--nxt-glass: rgba(14, 15, 22, 0.55);
-	--nxt-glass-strong: rgba(14, 15, 22, 0.82);
-	--nxt-stroke: rgba(255, 255, 255, 0.08);
-	--nxt-stroke-strong: rgba(255, 255, 255, 0.14);
+	--nxt-bg-0: #050505;
+	--nxt-bg-1: #0b0b0c;
+	--nxt-ink: #e8e8e6;
+	--nxt-ink-dim: #9a9a98;
+	--nxt-ink-fade: #6a6a68;
+	--nxt-accent: #c8c8c4;
+	--nxt-accent-soft: rgba(255, 255, 255, 0.08);
+	--nxt-glass: rgba(12, 12, 12, 0.55);
+	--nxt-glass-strong: rgba(12, 12, 12, 0.82);
+	--nxt-stroke: rgba(255, 255, 255, 0.07);
+	--nxt-stroke-strong: rgba(255, 255, 255, 0.13);
 	--nxt-radius: 14px;
 	--nxt-radius-sm: 10px;
 	--nxt-radius-pill: 999px;
@@ -34,12 +34,10 @@ body {
 body.app-next-body {
 	margin: 0;
 	background:
-		/* Soft purple lift behind the avatar's head */
-		radial-gradient(ellipse 50% 35% at 50% 38%, rgba(154, 124, 255, 0.10) 0%, transparent 70%),
-		/* Warm cyan accent low-left */
-		radial-gradient(ellipse 40% 30% at 25% 75%, rgba(109, 193, 255, 0.05) 0%, transparent 65%),
+		/* Soft luminous lift behind the avatar */
+		radial-gradient(ellipse 50% 35% at 50% 38%, rgba(255, 255, 255, 0.04) 0%, transparent 70%),
 		/* Base depth gradient */
-		radial-gradient(ellipse 90% 70% at 50% 60%, #11131c 0%, #08090e 55%, #020203 100%);
+		radial-gradient(ellipse 90% 70% at 50% 60%, #0e0e0e 0%, #080808 55%, #020202 100%);
 	color: var(--nxt-ink);
 	font-family: 'Inter', system-ui, -apple-system, sans-serif;
 	overflow: hidden;
@@ -139,8 +137,8 @@ body.app-next-body {
 	font-weight: 500;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	color: var(--nxt-accent);
-	background: var(--nxt-accent-soft);
+	color: var(--nxt-ink-dim);
+	background: rgba(255, 255, 255, 0.06);
 	padding: 3px 8px;
 	border-radius: var(--nxt-radius-pill);
 	margin-left: 4px;
@@ -273,8 +271,8 @@ body.app-next-body {
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, var(--nxt-accent), #6dc1ff);
-	box-shadow: 0 0 8px var(--nxt-accent);
+	background: var(--nxt-ink);
+	box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
 }
 
 .nxt-user-menu {
@@ -363,17 +361,17 @@ body.app-next-body {
 	height: 32vmin;
 	transform: translate(-50%, 18%);
 	background:
-		/* Inner hot core */
+		/* Inner soft light pool */
 		radial-gradient(
 			ellipse 40% 35% at center,
-			rgba(154, 124, 255, 0.55) 0%,
-			rgba(154, 124, 255, 0.18) 35%,
+			rgba(255, 255, 255, 0.22) 0%,
+			rgba(255, 255, 255, 0.06) 35%,
 			rgba(0, 0, 0, 0) 70%
 		),
-		/* Outer cyan halo for depth */
+		/* Outer ambient halo */
 		radial-gradient(
 			ellipse 90% 70% at center,
-			rgba(109, 193, 255, 0.12) 0%,
+			rgba(255, 255, 255, 0.04) 0%,
 			rgba(0, 0, 0, 0) 65%
 		);
 	pointer-events: none;
@@ -393,9 +391,9 @@ body.app-next-body {
 	border-radius: 50%;
 	background: radial-gradient(
 		circle at center,
-		rgba(154, 124, 255, 0.0) 30%,
-		rgba(154, 124, 255, 0.35) 55%,
-		rgba(154, 124, 255, 0.0) 70%
+		rgba(255, 255, 255, 0.0) 30%,
+		rgba(255, 255, 255, 0.12) 55%,
+		rgba(255, 255, 255, 0.0) 70%
 	);
 	filter: blur(0.5px);
 	opacity: 0.7;
@@ -478,14 +476,14 @@ body.app-next-body {
 }
 
 .nxt-action--primary {
-	background: linear-gradient(135deg, var(--nxt-accent) 0%, #7a5cff 100%);
-	color: white;
-	box-shadow: 0 6px 18px rgba(154, 124, 255, 0.4);
+	background: var(--nxt-ink);
+	color: #0a0a0a;
+	box-shadow: 0 6px 18px rgba(255, 255, 255, 0.12);
 }
 
 .nxt-action--primary:hover {
 	transform: translateY(-1px);
-	box-shadow: 0 10px 22px rgba(154, 124, 255, 0.5);
+	box-shadow: 0 10px 22px rgba(255, 255, 255, 0.18);
 }
 
 .nxt-action--primary kbd {
@@ -498,17 +496,17 @@ body.app-next-body {
 .nxt-action--deploy {
 	text-decoration: none;
 	color: var(--nxt-ink);
-	background: rgba(154, 124, 255, 0.10);
-	border: 1px solid rgba(154, 124, 255, 0.35);
-	box-shadow: 0 0 0 0 rgba(154, 124, 255, 0);
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	box-shadow: 0 0 0 0 transparent;
 	position: relative;
 }
 
 .nxt-action--deploy:hover {
-	background: rgba(154, 124, 255, 0.18);
-	border-color: rgba(154, 124, 255, 0.55);
+	background: rgba(255, 255, 255, 0.10);
+	border-color: rgba(255, 255, 255, 0.22);
 	transform: translateY(-1px);
-	box-shadow: 0 6px 16px rgba(154, 124, 255, 0.25);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .nxt-action--deploy::before {
@@ -519,28 +517,28 @@ body.app-next-body {
 	width: 6px;
 	height: 6px;
 	border-radius: 999px;
-	background: #c4b5fd;
-	box-shadow: 0 0 8px rgba(196, 181, 253, 0.9);
+	background: var(--nxt-ink-dim);
+	box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
 	transform: translateY(-50%);
 	opacity: 0;
 	pointer-events: none;
 }
 
 .nxt-action--deploy.is-deployed {
-	color: #d8ffe0;
-	background: rgba(34, 197, 94, 0.12);
-	border-color: rgba(34, 197, 94, 0.45);
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.20);
 }
 
 .nxt-action--deploy.is-deployed:hover {
-	background: rgba(34, 197, 94, 0.20);
-	border-color: rgba(34, 197, 94, 0.65);
-	box-shadow: 0 6px 16px rgba(34, 197, 94, 0.25);
+	background: rgba(255, 255, 255, 0.12);
+	border-color: rgba(255, 255, 255, 0.28);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .nxt-action--deploy.is-deployed::before {
-	background: #4ade80;
-	box-shadow: 0 0 8px rgba(74, 222, 128, 0.9);
+	background: var(--nxt-ink);
+	box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
 }
 
 .nxt-hidden-hosts { display: none !important; }
@@ -625,7 +623,7 @@ body.app-next-body {
 }
 
 .nxt-anim-search:focus {
-	border-color: var(--nxt-accent);
+	border-color: rgba(255, 255, 255, 0.22);
 	background: rgba(255, 255, 255, 0.08);
 }
 
@@ -673,8 +671,8 @@ body.app-next-body {
 }
 
 .nxt-anim-card[aria-pressed='true'] {
-	background: var(--nxt-accent-soft);
-	border-color: rgba(154, 124, 255, 0.5);
+	background: rgba(255, 255, 255, 0.10);
+	border-color: rgba(255, 255, 255, 0.22);
 	color: var(--nxt-ink);
 }
 
@@ -703,9 +701,9 @@ body.app-next-body.is-dragover::before {
 	font-size: 16px;
 	font-weight: 600;
 	letter-spacing: 0.02em;
-	color: var(--nxt-accent);
-	background: rgba(154, 124, 255, 0.06);
-	border: 2px dashed rgba(154, 124, 255, 0.5);
+	color: var(--nxt-ink);
+	background: rgba(255, 255, 255, 0.03);
+	border: 2px dashed rgba(255, 255, 255, 0.25);
 	border-radius: 16px;
 	z-index: 50;
 	pointer-events: none;
@@ -763,7 +761,7 @@ body.app-next-body.is-dragover::before {
 	margin: -18px 0 0 -18px;
 	border-radius: 50%;
 	border: 2.5px solid rgba(255, 255, 255, 0.08);
-	border-top-color: var(--nxt-accent);
+	border-top-color: var(--nxt-ink);
 	animation: nxt-spin 0.8s linear infinite;
 	z-index: 5;
 	pointer-events: none;
@@ -875,8 +873,8 @@ body.app-next-body.is-dragover::before {
 
 .nxt-chat-chip:hover {
 	color: var(--nxt-ink);
-	border-color: rgba(154, 124, 255, 0.35);
-	background: rgba(154, 124, 255, 0.10);
+	border-color: rgba(255, 255, 255, 0.16);
+	background: rgba(255, 255, 255, 0.06);
 	transform: translateY(-1px);
 }
 
@@ -900,8 +898,8 @@ body.app-next-body.is-dragover::before {
 }
 
 .nxt-chat-input-wrap:focus-within {
-	border-color: rgba(154, 124, 255, 0.5);
-	box-shadow: 0 0 0 3px rgba(154, 124, 255, 0.15), 0 28px 64px rgba(0, 0, 0, 0.55);
+	border-color: rgba(255, 255, 255, 0.20);
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06), 0 28px 64px rgba(0, 0, 0, 0.55);
 }
 
 .nxt-chat-input-icon {
@@ -951,25 +949,25 @@ body.app-next-body.is-dragover::before {
 }
 
 .nxt-chat-mic.is-recording {
-	background: #ff5470;
-	color: white;
+	background: var(--nxt-ink);
+	color: #0a0a0a;
 	animation: nxt-mic-pulse 1.2s ease-in-out infinite;
 }
 
 @keyframes nxt-mic-pulse {
-	0%, 100% { box-shadow: 0 0 0 0 rgba(255, 84, 112, 0.6); }
-	50% { box-shadow: 0 0 0 8px rgba(255, 84, 112, 0); }
+	0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3); }
+	50% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
 }
 
 .nxt-chat-send {
-	background: linear-gradient(135deg, var(--nxt-accent) 0%, #7a5cff 100%);
-	color: white;
-	box-shadow: 0 4px 12px rgba(154, 124, 255, 0.4);
+	background: var(--nxt-ink);
+	color: #0a0a0a;
+	box-shadow: 0 4px 12px rgba(255, 255, 255, 0.10);
 }
 
 .nxt-chat-send:hover {
 	transform: translateY(-1px);
-	box-shadow: 0 6px 16px rgba(154, 124, 255, 0.5);
+	box-shadow: 0 6px 16px rgba(255, 255, 255, 0.16);
 }
 
 .nxt-chat-send:disabled,
@@ -1017,7 +1015,7 @@ body.app-next-body.is-dragover::before {
 	gap: 10px;
 	padding: 12px 18px;
 	background: var(--nxt-glass-strong);
-	border: 1px solid rgba(154, 124, 255, 0.25);
+	border: 1px solid rgba(255, 255, 255, 0.10);
 	border-radius: 18px;
 	backdrop-filter: blur(20px);
 	-webkit-backdrop-filter: blur(20px);
@@ -1030,8 +1028,8 @@ body.app-next-body.is-dragover::before {
 	height: 8px;
 	margin-top: 6px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, var(--nxt-accent), #6dc1ff);
-	box-shadow: 0 0 10px var(--nxt-accent);
+	background: var(--nxt-ink);
+	box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
 .nxt-agent-bubble__text {
@@ -1140,13 +1138,13 @@ body.app-next-body.is-dragover::before {
 
 .nxt-share-copy input:focus,
 .nxt-share-copy textarea:focus {
-	border-color: var(--nxt-accent);
+	border-color: rgba(255, 255, 255, 0.22);
 }
 
 .nxt-share-copy button {
 	flex: none;
-	background: linear-gradient(135deg, var(--nxt-accent) 0%, #7a5cff 100%);
-	color: white;
+	background: var(--nxt-ink);
+	color: #0a0a0a;
 	border: 0;
 	border-radius: 8px;
 	padding: 8px 14px;
@@ -1165,11 +1163,12 @@ body.app-next-body.is-dragover::before {
 
 .nxt-share-copy button:hover {
 	transform: translateY(-1px);
-	box-shadow: 0 4px 10px rgba(154, 124, 255, 0.4);
+	box-shadow: 0 4px 10px rgba(255, 255, 255, 0.12);
 }
 
 .nxt-share-copy button.is-copied {
-	background: linear-gradient(135deg, #4ade80, #22c55e);
+	background: rgba(255, 255, 255, 0.18);
+	color: var(--nxt-ink);
 }
 
 .nxt-share-hint {
@@ -1195,14 +1194,14 @@ body.app-next-body.is-dragover::before {
 	border-radius: 12px;
 	text-decoration: none;
 	color: var(--nxt-ink);
-	background: rgba(154, 124, 255, 0.08);
-	border: 1px solid rgba(154, 124, 255, 0.30);
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.10);
 	transition: background 0.15s, border-color 0.15s, transform 0.15s;
 }
 
 .nxt-share-deploy:hover {
-	background: rgba(154, 124, 255, 0.16);
-	border-color: rgba(154, 124, 255, 0.55);
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.18);
 }
 
 .nxt-share-deploy__icon {
@@ -1212,23 +1211,23 @@ body.app-next-body.is-dragover::before {
 	display: grid;
 	place-items: center;
 	border-radius: 9px;
-	background: rgba(154, 124, 255, 0.18);
-	color: #c4b5fd;
+	background: rgba(255, 255, 255, 0.08);
+	color: var(--nxt-ink-dim);
 }
 
 .nxt-share-deploy.is-deployed .nxt-share-deploy__icon {
-	background: rgba(34, 197, 94, 0.20);
-	color: #86efac;
+	background: rgba(255, 255, 255, 0.12);
+	color: var(--nxt-ink);
 }
 
 .nxt-share-deploy.is-deployed {
-	background: rgba(34, 197, 94, 0.10);
-	border-color: rgba(34, 197, 94, 0.40);
+	background: rgba(255, 255, 255, 0.06);
+	border-color: rgba(255, 255, 255, 0.14);
 }
 
 .nxt-share-deploy.is-deployed:hover {
-	background: rgba(34, 197, 94, 0.18);
-	border-color: rgba(34, 197, 94, 0.60);
+	background: rgba(255, 255, 255, 0.10);
+	border-color: rgba(255, 255, 255, 0.22);
 }
 
 .nxt-share-deploy__copy {
@@ -1585,8 +1584,8 @@ body.app-next-body .dg.ac { display: none !important; }
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	background: #4ade80;
-	box-shadow: 0 0 6px rgba(74, 222, 128, 0.55);
+	background: var(--nxt-ink);
+	box-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
 	animation: nxt-dot-pulse 2.5s ease infinite;
 	flex-shrink: 0;
 }
@@ -1757,9 +1756,9 @@ body.app-next-body .dg.ac { display: none !important; }
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
-	background: #4ade80;
-	border: 2px solid rgba(10, 10, 16, 0.95);
-	box-shadow: 0 0 4px rgba(74, 222, 128, 0.5);
+	background: var(--nxt-ink);
+	border: 2px solid rgba(10, 10, 10, 0.95);
+	box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
 }
 
 .nxt-mobile-agent-strip__info {

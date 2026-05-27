@@ -2178,6 +2178,40 @@ body.deploy-page {
 	background: rgba(255, 255, 255, 0.02);
 	pointer-events: none;
 }
+.explore-card--skel .explore-card-thumb,
+.explore-card--skel .explore-card-skel-name,
+.explore-card--skel .explore-card-skel-desc,
+.explore-card--skel .explore-card-skel-badges {
+	background: linear-gradient(
+		90deg,
+		rgba(255, 255, 255, 0.04) 0%,
+		rgba(255, 255, 255, 0.08) 50%,
+		rgba(255, 255, 255, 0.04) 100%
+	);
+	background-size: 200% 100%;
+	animation: explore-shimmer 1.4s linear infinite;
+	color: transparent;
+	border-radius: 6px;
+}
+.explore-card--skel .explore-card-thumb {
+	aspect-ratio: 1 / 1;
+	border-radius: 0;
+}
+.explore-card--skel .explore-card-skel-name {
+	height: 14px;
+	width: 65%;
+	margin: 14px 16px 0;
+}
+.explore-card--skel .explore-card-skel-desc {
+	height: 28px;
+	width: 90%;
+	margin: 10px 16px 0;
+}
+.explore-card--skel .explore-card-skel-badges {
+	height: 18px;
+	width: 55%;
+	margin: 8px 16px 0;
+}
 .explore-skel-img {
 	aspect-ratio: 1 / 1;
 	background: linear-gradient(
@@ -6786,29 +6820,6 @@ textarea.erc8004-code {
 	box-shadow: 0 0 10px #3b82f6;
 }
 
-.explore-stats {
-	display: flex;
-	justify-content: center;
-	gap: var(--space-xl);
-	margin-top: var(--space-xl);
-	flex-wrap: wrap;
-}
-.explore-stat {
-	text-align: center;
-}
-.explore-stat-value {
-	font-family: 'Space Grotesk', system-ui, sans-serif;
-	font-size: 28px;
-	font-weight: 700;
-	color: #fff;
-}
-.explore-stat-label {
-	font-size: 11px;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	color: rgba(255, 255, 255, 0.45);
-	margin-top: 2px;
-}
 
 .explore-controls {
 	display: flex;
@@ -6911,6 +6922,34 @@ textarea.erc8004-code {
 	color: #fff;
 	font: inherit;
 	font-size: 13px;
+}
+
+.explore-sort-select {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: rgba(255, 255, 255, 0.55);
+	font-size: 13px;
+}
+.explore-sort-select select {
+	padding: 8px 10px;
+	background: rgba(0, 0, 0, 0.4);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: var(--radius-sm);
+	color: #fff;
+	font: inherit;
+	font-size: 13px;
+}
+
+.explore-sentinel {
+	height: 1px;
+	width: 100%;
+}
+
+.explore-card-views {
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.45);
+	font-variant-numeric: tabular-nums;
 }
 
 .explore-grid {

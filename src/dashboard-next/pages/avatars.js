@@ -245,6 +245,10 @@ function avatarCard(root, a) {
 	el.innerHTML = `
 		<div class="dn-av-thumb">
 			<threews-avatar avatar-id="${esc(a.id)}" hide-chrome bg="transparent"></threews-avatar>
+			<div class="dn-av-hover-actions">
+				<a class="dn-av-hover-btn" href="/agent-next?id=${encodeURIComponent(a.id)}" target="_blank" rel="noopener">Live page</a>
+				<a class="dn-av-hover-btn" href="/app#avatar=${encodeURIComponent(a.id)}">3D Studio</a>
+			</div>
 			<button type="button" class="dn-av-more" data-more aria-haspopup="menu" aria-label="More actions">
 				<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="8" cy="13" r="1.4"/></svg>
 			</button>
@@ -691,7 +695,7 @@ function injectStyles() {
 			background: linear-gradient(180deg, rgba(28, 29, 39, 0.96), rgba(20, 21, 28, 0.96));
 			border: 1px solid var(--nxt-stroke-strong);
 			border-radius: var(--nxt-radius-sm);
-			box-shadow: 0 12px 36px rgba(0,0,0,0.45), 0 0 0 1px var(--nxt-accent-soft);
+			box-shadow: 0 12px 36px rgba(0,0,0,0.45);
 			padding: 6px;
 			z-index: 40;
 			backdrop-filter: blur(20px);
@@ -704,7 +708,7 @@ function injectStyles() {
 			color: var(--nxt-ink);
 			transition: background 0.12s ease;
 		}
-		.dn-av-new-pop a:hover { background: var(--nxt-accent-soft); }
+		.dn-av-new-pop a:hover { background: rgba(255,255,255,0.06); }
 
 		.dn-av-filters {
 			display: flex;
@@ -726,7 +730,7 @@ function injectStyles() {
 			transition: border-color 0.12s ease, background 0.12s ease;
 		}
 		.dn-av-search:focus-within {
-			border-color: var(--nxt-accent);
+			border-color: var(--nxt-stroke-strong);
 			background: rgba(255,255,255,0.06);
 		}
 		.dn-av-search input {
@@ -753,8 +757,8 @@ function injectStyles() {
 		}
 		.dn-av-chip:hover { color: var(--nxt-ink); background: rgba(255,255,255,0.04); }
 		.dn-av-chip.active {
-			background: var(--nxt-accent-soft);
-			border-color: var(--nxt-accent);
+			background: rgba(255,255,255,0.08);
+			border-color: var(--nxt-stroke-strong);
 			color: var(--nxt-ink);
 		}
 
@@ -802,7 +806,7 @@ function injectStyles() {
 		}
 		.dn-avatar-card:hover {
 			transform: scale(1.015);
-			box-shadow: 0 0 0 1px var(--nxt-accent-soft), 0 8px 24px rgba(0,0,0,0.4);
+			box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 			border-color: var(--nxt-stroke-strong);
 		}
 		.dn-av-skeleton-card { padding: 10px; }
@@ -844,6 +848,44 @@ function injectStyles() {
 		.dn-av-more:focus-visible { opacity: 1; }
 		.dn-av-more:hover { background: var(--nxt-bg-3); border-color: var(--nxt-stroke-strong); }
 
+		.dn-av-hover-actions {
+			position: absolute;
+			left: 0; right: 0; bottom: 0;
+			display: flex;
+			gap: 6px;
+			justify-content: center;
+			padding: 10px 12px 12px;
+			background: linear-gradient(0deg, rgba(0,0,0,0.55) 0%, transparent 100%);
+			opacity: 0;
+			transform: translateY(4px);
+			transition: opacity 0.18s ease, transform 0.18s ease;
+			pointer-events: none;
+			z-index: 2;
+		}
+		.dn-avatar-card:hover .dn-av-hover-actions {
+			opacity: 1;
+			transform: translateY(0);
+			pointer-events: auto;
+		}
+		.dn-av-hover-btn {
+			padding: 5px 12px;
+			font-size: 12px;
+			font-weight: 500;
+			color: var(--nxt-ink);
+			background: rgba(14, 15, 22, 0.7);
+			border: 1px solid var(--nxt-stroke);
+			border-radius: 8px;
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+			cursor: pointer;
+			transition: background 0.12s ease, border-color 0.12s ease;
+			white-space: nowrap;
+		}
+		.dn-av-hover-btn:hover {
+			background: rgba(14, 15, 22, 0.9);
+			border-color: var(--nxt-stroke-strong);
+		}
+
 		.dn-av-body { padding: 10px 4px 4px; }
 		.dn-av-name-row {
 			display: flex;
@@ -862,7 +904,7 @@ function injectStyles() {
 			white-space: nowrap;
 			flex: 1;
 		}
-		.dn-av-name:hover { color: var(--nxt-accent-strong); }
+		.dn-av-name:hover { color: var(--nxt-ink); opacity: 0.85; }
 		.dn-av-pencil {
 			background: transparent;
 			border: 0;
@@ -878,7 +920,7 @@ function injectStyles() {
 		.dn-av-name-input {
 			flex: 1;
 			background: rgba(255,255,255,0.06);
-			border: 1px solid var(--nxt-accent);
+			border: 1px solid var(--nxt-stroke-strong);
 			color: var(--nxt-ink);
 			border-radius: 6px;
 			padding: 4px 8px;
@@ -904,7 +946,7 @@ function injectStyles() {
 			background: linear-gradient(180deg, rgba(28, 29, 39, 0.98), rgba(20, 21, 28, 0.98));
 			border: 1px solid var(--nxt-stroke-strong);
 			border-radius: var(--nxt-radius-sm);
-			box-shadow: 0 16px 40px rgba(0,0,0,0.55), 0 0 0 1px var(--nxt-accent-soft);
+			box-shadow: 0 16px 40px rgba(0,0,0,0.55);
 			padding: 5px;
 			z-index: 200;
 			opacity: 0;
@@ -928,8 +970,8 @@ function injectStyles() {
 			cursor: pointer;
 			gap: 8px;
 		}
-		.dn-av-menu-item:hover { background: var(--nxt-accent-soft); }
-		.dn-av-menu-item.active { color: var(--nxt-accent-strong); }
+		.dn-av-menu-item:hover { background: rgba(255,255,255,0.06); }
+		.dn-av-menu-item.active { color: var(--nxt-ink); font-weight: 500; }
 		.dn-av-menu-item.danger { color: var(--nxt-danger); }
 		.dn-av-menu-item.danger:hover { background: rgba(150,155,163,0.12); }
 
@@ -998,6 +1040,12 @@ function injectStyles() {
 			.dn-av-new-wrap { align-self: flex-start; }
 			.dn-av-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 			.dn-av-thumb { height: 220px; }
+			.dn-av-hover-actions {
+				opacity: 1;
+				transform: translateY(0);
+				pointer-events: auto;
+			}
+			.dn-av-hover-btn { font-size: 11px; padding: 4px 9px; }
 		}
 	`;
 	document.head.appendChild(css);

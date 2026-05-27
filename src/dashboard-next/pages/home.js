@@ -525,8 +525,8 @@ function sparkSvg(series) {
 	const area = `${pad},${h - pad} ${line} ${(w - pad).toFixed(2)},${h - pad}`;
 	return `
 		<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" width="100%" height="${h}">
-			<polygon points="${area}" fill="var(--nxt-accent)" fill-opacity="0.12"/>
-			<polyline points="${line}" fill="none" stroke="var(--nxt-accent)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+			<polygon points="${area}" fill="var(--nxt-ink-dim)" fill-opacity="0.10"/>
+			<polyline points="${line}" fill="none" stroke="var(--nxt-ink-dim)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
 		</svg>
 	`;
 }
@@ -660,11 +660,12 @@ function injectStyles() {
 			cursor: pointer;
 			transition: border-color 0.18s ease, background 0.18s ease;
 		}
-		.dnx-create-cta:hover { border-color: var(--nxt-accent); background: var(--nxt-accent-soft); }
+		.dnx-create-cta:hover { border-color: var(--nxt-stroke-strong); background: rgba(255,255,255,0.03); }
 		.dnx-create-icon {
 			width: 56px; height: 56px; border-radius: 14px;
-			background: var(--nxt-accent-soft);
-			color: var(--nxt-accent-strong);
+			background: rgba(255,255,255,0.05);
+			border: 1px solid var(--nxt-stroke);
+			color: var(--nxt-ink-dim);
 			display: grid; place-items: center;
 			font-size: 28px; font-weight: 500;
 			flex-shrink: 0;
@@ -714,11 +715,18 @@ function injectStyles() {
 		.dnx-quick-card:hover { border-color: var(--nxt-stroke-strong); transform: translateY(-2px); }
 		.dnx-quick-icon {
 			width: 40px; height: 40px; border-radius: 10px;
-			background: var(--nxt-accent-soft);
-			color: var(--nxt-accent-strong);
+			background: rgba(255,255,255,0.05);
+			border: 1px solid var(--nxt-stroke);
+			color: var(--nxt-ink-dim);
 			display: grid; place-items: center;
 			font-size: 18px; font-weight: 600;
 			flex-shrink: 0;
+			transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+		}
+		.dnx-quick-card:hover .dnx-quick-icon {
+			background: rgba(255,255,255,0.08);
+			border-color: var(--nxt-stroke-strong);
+			color: var(--nxt-ink);
 		}
 
 		.dnx-activity { min-width: 0; position: sticky; top: calc(var(--dn-topbar-h) + 16px); }
@@ -764,7 +772,7 @@ function injectStyles() {
 		}
 		.dnx-ob-fill {
 			height: 100%; border-radius: 4px;
-			background: var(--nxt-accent);
+			background: var(--nxt-ink-dim);
 			transition: width 0.4s ease;
 		}
 		.dnx-ob-steps {
@@ -782,14 +790,14 @@ function injectStyles() {
 			width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
 			display: grid; place-items: center;
 			font-size: 11px; font-weight: 600;
-			background: var(--nxt-accent-soft);
-			color: var(--nxt-accent-strong);
-			border: 1px solid rgba(200,202,208,0.2);
+			background: rgba(255,255,255,0.06);
+			color: var(--nxt-ink-dim);
+			border: 1px solid var(--nxt-stroke);
 		}
 		.dnx-ob-step.is-done .dnx-ob-num {
-			background: rgba(52,199,89,0.12);
-			color: #34c759;
-			border-color: rgba(52,199,89,0.25);
+			background: rgba(255,255,255,0.08);
+			color: var(--nxt-ink);
+			border-color: var(--nxt-stroke-strong);
 		}
 		.dnx-ob-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 		.dnx-ob-label { font-size: 13.5px; font-weight: 500; color: var(--nxt-ink); }

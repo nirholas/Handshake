@@ -969,12 +969,12 @@ export function openAnalyticsModal() {
 			</div>
 			<div class="fm-activity-feed" aria-label="Sample activity feed">
 				<div class="fm-activity-item">
-					<span class="fm-activity-dot" style="background:#28c840"></span>
+					<span class="fm-activity-dot" style="background:var(--text)"></span>
 					<span class="fm-activity-text">Paid API call from <code>9mR…vT8p</code> — $0.05 USDC</span>
 					<span class="fm-activity-time">2m ago</span>
 				</div>
 				<div class="fm-activity-item">
-					<span class="fm-activity-dot" style="background:#6a5cff"></span>
+					<span class="fm-activity-dot" style="background:var(--muted)"></span>
 					<span class="fm-activity-text">Widget embed loaded on <code>docs.example.com</code></span>
 					<span class="fm-activity-time">8m ago</span>
 				</div>

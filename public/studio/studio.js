@@ -35,7 +35,7 @@ const WIDGET_TYPES = {
 	},
 	'hotspot-tour': {
 		label: 'Hotspot Tour',
-		desc: 'Annotated 3D scene with clickable POIs.',
+		desc: 'Annotated 3D scene with clickable points of interest.',
 		status: 'ready',
 		icon: '⌖',
 	},
@@ -44,6 +44,18 @@ const WIDGET_TYPES = {
 		desc: 'Solana agent narrates live pump.fun claims and graduations.',
 		status: 'ready',
 		icon: '✦',
+	},
+	'kol-trades': {
+		label: 'Smart Money Feed',
+		desc: 'Live buy/sell activity from KOL and whale wallets for a token.',
+		status: 'ready',
+		icon: '◈',
+	},
+	'live-trades-canvas': {
+		label: 'Live Trades Canvas',
+		desc: 'Particle visualization of live pump.fun buy/sell trades for a token.',
+		status: 'ready',
+		icon: '⬡',
 	},
 };
 
@@ -65,6 +77,8 @@ const DEMO_WIDGET_IDS = Object.freeze({
 	passport: 'wdgt_demo_passprt',
 	'hotspot-tour': 'wdgt_demo_hotspot',
 	'pumpfun-feed': 'wdgt_demo_pumpfun',
+	'kol-trades': 'wdgt_demo_koltrad',
+	'live-trades-canvas': 'wdgt_demo_ltcnvs',
 });
 
 const BRAND_DEFAULTS = Object.freeze({
@@ -104,11 +118,19 @@ const TYPE_DEFAULTS = {
 		wallet: null,
 		showReputation: true,
 		showRecentFeedback: true,
+		showValidation: false,
+		showRegistrationJSON: true,
 		layout: 'portrait',
+		badgeSize: 'medium',
 		rotationSpeed: 0.6,
+		rpcURL: '',
+		refreshIntervalSec: 60,
+		showPoweredBy: true,
 	},
 	'hotspot-tour': { hotspots: [] },
 	'pumpfun-feed': { kind: 'all', minTier: '', autoNarrate: true, maxCards: 8 },
+	'kol-trades': { mint: '', limit: 20, refreshMs: 30000 },
+	'live-trades-canvas': { mint: '', chain: 'solana', bg: '#0a0a0a', minUsd: 0 },
 };
 
 function defaultConfig(type) {
@@ -526,8 +548,24 @@ function renderTypeFields() {
 			}),
 		);
 	}
+	if (state.type === 'animation-gallery') {
+		wrap.appendChild(
+			textField('defaultClip', 'Default clip name', state.config.defaultClip || '', {
+				max: 120,
+				placeholder: 'Leave blank to use the first available clip',
+			}),
+		);
+		wrap.appendChild(boolField('loopAll', 'Loop all clips continuously', state.config.loopAll === true));
+		wrap.appendChild(boolField('showClipPicker', 'Show clip picker UI', state.config.showClipPicker !== false));
+	}
 	if (state.type === 'talking-agent') {
 		mountTalkingAgentExtras(wrap);
+	}
+	if (state.type === 'passport') {
+		mountPassportExtras(wrap);
+	}
+	if (state.type === 'hotspot-tour') {
+		mountHotspotEditor(wrap);
 	}
 	if (state.type === 'pumpfun-feed') {
 		wrap.appendChild(
@@ -554,6 +592,39 @@ function renderTypeFields() {
 				max: 50,
 				step: 1,
 			}),
+		);
+	}
+	if (state.type === 'kol-trades') {
+		wrap.appendChild(
+			textField('mint', 'Token mint address', state.config.mint || '', {
+				max: 100,
+				placeholder: 'Solana mint address (base58)',
+			}),
+		);
+		wrap.appendChild(
+			numberField('limit', 'Max trades to show', state.config.limit ?? 20, { min: 1, max: 100, step: 1 }),
+		);
+		wrap.appendChild(
+			selectField('refreshMs', 'Refresh interval', String(state.config.refreshMs ?? 30000), [
+				['15000', '15 seconds'],
+				['30000', '30 seconds'],
+				['60000', '1 minute'],
+				['120000', '2 minutes'],
+			]),
+		);
+	}
+	if (state.type === 'live-trades-canvas') {
+		wrap.appendChild(
+			textField('mint', 'Token mint address', state.config.mint || '', {
+				max: 100,
+				placeholder: 'Solana mint address (base58)',
+			}),
+		);
+		wrap.appendChild(
+			colorField('bg', 'Canvas background', state.config.bg || '#0a0a0a'),
+		);
+		wrap.appendChild(
+			numberField('minUsd', 'Min trade size (USD)', state.config.minUsd ?? 0, { min: 0, max: 1000000, step: 1 }),
 		);
 	}
 }
@@ -585,14 +656,109 @@ function mountTalkingAgentExtras(wrap) {
 		}),
 	);
 	wrap.appendChild(
-		selectField('brainProvider', 'LLM provider', state.config.brainProvider || 'auto', [
-			['auto', 'Auto (first configured)'],
+		selectField('brainProvider', 'LLM provider', state.config.brainProvider || 'anthropic', [
 			['anthropic', 'Anthropic (Claude)'],
 			['openai', 'OpenAI'],
 			['groq', 'Groq'],
 			['openrouter', 'OpenRouter'],
+			['custom', 'Custom proxy URL'],
 		]),
 	);
+
+	// Custom proxy URL (shown only when brainProvider === 'custom')
+	const proxyWrap = document.createElement('div');
+	proxyWrap.id = 'ta-proxy-wrap';
+	proxyWrap.style.display = (state.config.brainProvider === 'custom') ? '' : 'none';
+	proxyWrap.appendChild(
+		textField('proxyURL', 'Proxy URL (https://…)', state.config.proxyURL || '', {
+			max: 300,
+			placeholder: 'https://your-proxy.example.com/v1/chat',
+		}),
+	);
+	wrap.appendChild(proxyWrap);
+
+	// Wire brainProvider → show/hide proxy
+	const provSelect = wrap.querySelector('select[name="brainProvider"]');
+	if (provSelect) {
+		provSelect.addEventListener('change', () => {
+			proxyWrap.style.display = provSelect.value === 'custom' ? '' : 'none';
+		});
+	}
+
+	// Avatar display
+	wrap.appendChild(
+		selectField('avatar', 'Avatar display', state.config.avatar || 'embedded', [
+			['embedded', 'Full 3D avatar'],
+			['chat-only', 'Chat only (no avatar)'],
+		]),
+	);
+
+	// Chat position
+	wrap.appendChild(
+		selectField('chatPosition', 'Chat panel position', state.config.chatPosition || 'right', [
+			['right', 'Right side'],
+			['bottom', 'Bottom bar'],
+			['overlay', 'Overlay (fullscreen)'],
+		]),
+	);
+
+	// Voice + history toggles
+	wrap.appendChild(fieldGroup('Interaction', [
+		boolField('voiceInput', 'Microphone / voice input', state.config.voiceInput !== false),
+		boolField('voiceOutput', 'Text-to-speech output', state.config.voiceOutput !== false),
+		boolField('showChatHistory', 'Show chat history', state.config.showChatHistory !== false),
+		boolField('poweredByBadge', 'Show "Powered by three.ws" badge', state.config.poweredByBadge !== false),
+	]));
+
+	// Skills
+	const skills = state.config.skills || {};
+	wrap.appendChild(fieldGroup('Agent skills', [
+		boolField('skill_speak',   'Speak (TTS narration)',      skills.speak    !== false),
+		boolField('skill_wave',    'Wave when greeted',          skills.wave     !== false),
+		boolField('skill_lookAt',  'Track visitor cursor',       skills.lookAt   !== false),
+		boolField('skill_playClip','Play animation clips',       skills.playClip !== false),
+		boolField('skill_remember','Remember visitor across sessions', !!skills.remember),
+	]));
+
+	// Wire skill checkboxes
+	for (const key of ['speak', 'wave', 'lookAt', 'playClip', 'remember']) {
+		const cb = wrap.querySelector(`input[name="skill_${key}"]`);
+		if (!cb) continue;
+		cb.addEventListener('change', () => {
+			if (!state.config.skills) state.config.skills = {};
+			state.config.skills[key] = cb.checked;
+			schedulePreview();
+		});
+	}
+
+	// Temperature + max turns
+	wrap.appendChild(
+		numberField('temperature', 'Temperature', state.config.temperature ?? 0.7, { min: 0, max: 1, step: 0.05 }),
+	);
+	wrap.appendChild(
+		numberField('maxTurns', 'Max turns per session', state.config.maxTurns ?? 20, { min: 1, max: 100, step: 1 }),
+	);
+
+	// Rate limits
+	const rl = state.config.visitorRateLimit || {};
+	wrap.appendChild(fieldGroup('Rate limits', [
+		numberField('rl_msgsPerMinute', 'Messages / minute', rl.msgsPerMinute ?? 8, { min: 1, max: 60, step: 1 }),
+		numberField('rl_msgsPerSession', 'Messages / session', rl.msgsPerSession ?? 50, { min: 1, max: 500, step: 1 }),
+	]));
+
+	// Wire rate limit inputs
+	for (const [name, key] of [['rl_msgsPerMinute', 'msgsPerMinute'], ['rl_msgsPerSession', 'msgsPerSession']]) {
+		const el = wrap.querySelector(`input[name="${name}"]`);
+		if (!el) continue;
+		el.addEventListener('input', () => {
+			const v = parseInt(el.value);
+			if (!isNaN(v)) {
+				if (!state.config.visitorRateLimit) state.config.visitorRateLimit = {};
+				state.config.visitorRateLimit[key] = v;
+				schedulePreview();
+			}
+		});
+	}
 
 	const knowledgeMount = document.createElement('div');
 	knowledgeMount.id = 'studio-knowledge';
@@ -614,21 +780,220 @@ function mountTalkingAgentExtras(wrap) {
 
 let _knowledgePanel = null;
 
+function mountPassportExtras(wrap) {
+	wrap.appendChild(
+		selectField('chain', 'Chain', state.config.chain || 'base-sepolia', [
+			['base', 'Base (mainnet)'],
+			['base-sepolia', 'Base Sepolia (testnet)'],
+			['ethereum', 'Ethereum'],
+			['polygon', 'Polygon'],
+			['optimism', 'Optimism'],
+			['arbitrum', 'Arbitrum'],
+		]),
+	);
+	wrap.appendChild(
+		textField('agentId', 'Agent ID (uint256)', state.config.agentId || '', {
+			max: 80,
+			placeholder: 'On-chain agent token ID',
+		}),
+	);
+	wrap.appendChild(
+		textField('wallet', 'Wallet address (0x…)', state.config.wallet || '', {
+			max: 42,
+			placeholder: '0x…',
+		}),
+	);
+	wrap.appendChild(
+		selectField('layout', 'Layout', state.config.layout || 'portrait', [
+			['portrait', 'Portrait'],
+			['landscape', 'Landscape'],
+			['badge', 'Badge'],
+		]),
+	);
+	wrap.appendChild(
+		selectField('badgeSize', 'Badge size', state.config.badgeSize || 'medium', [
+			['small', 'Small'],
+			['medium', 'Medium'],
+			['large', 'Large'],
+		]),
+	);
+	wrap.appendChild(
+		numberField('rotationSpeed', 'Rotation speed', state.config.rotationSpeed ?? 0.6, { min: 0, max: 10, step: 0.1 }),
+	);
+	wrap.appendChild(
+		numberField('refreshIntervalSec', 'Auto-refresh (seconds, 0 = off)', state.config.refreshIntervalSec ?? 60, { min: 0, max: 3600, step: 10 }),
+	);
+	wrap.appendChild(fieldGroup('Display options', [
+		boolField('showReputation',      'Show reputation score',       state.config.showReputation !== false),
+		boolField('showRecentFeedback',  'Show recent feedback',        state.config.showRecentFeedback !== false),
+		boolField('showValidation',      'Show on-chain validation',    !!state.config.showValidation),
+		boolField('showRegistrationJSON','Show registration JSON',      state.config.showRegistrationJSON !== false),
+		boolField('showPoweredBy',       'Show "Powered by" badge',     state.config.showPoweredBy !== false),
+	]));
+	wrap.appendChild(
+		textField('rpcURL', 'Custom RPC URL (optional)', state.config.rpcURL || '', {
+			max: 300,
+			placeholder: 'https://mainnet.base.org',
+		}),
+	);
+}
+
+function mountHotspotEditor(wrap) {
+	if (!Array.isArray(state.config.hotspots)) state.config.hotspots = [];
+
+	const container = document.createElement('div');
+	container.className = 'hotspot-editor';
+
+	function render() {
+		container.innerHTML = '';
+
+		const header = document.createElement('div');
+		header.className = 'hotspot-editor-header';
+		header.innerHTML = `<span class="hotspot-editor-title">Hotspots <span class="hotspot-count">${state.config.hotspots.length}</span></span>`;
+		const addBtn = document.createElement('button');
+		addBtn.type = 'button';
+		addBtn.className = 'btn-ghost btn-sm';
+		addBtn.textContent = '+ Add hotspot';
+		addBtn.addEventListener('click', () => {
+			state.config.hotspots.push({ id: `hs_${Date.now()}`, label: 'New hotspot', position: [0, 1, 0], body: '' });
+			schedulePreview();
+			render();
+		});
+		header.appendChild(addBtn);
+		container.appendChild(header);
+
+		if (state.config.hotspots.length === 0) {
+			const empty = document.createElement('div');
+			empty.className = 'hotspot-empty';
+			empty.textContent = 'No hotspots yet. Click + Add hotspot to place a point of interest on your 3D model.';
+			container.appendChild(empty);
+		}
+
+		for (let i = 0; i < state.config.hotspots.length; i++) {
+			const hs = state.config.hotspots[i];
+			const row = document.createElement('div');
+			row.className = 'hotspot-row';
+
+			const rowHeader = document.createElement('div');
+			rowHeader.className = 'hotspot-row-header';
+			rowHeader.innerHTML = `<span class="hotspot-num">${i + 1}</span>`;
+
+			const delBtn = document.createElement('button');
+			delBtn.type = 'button';
+			delBtn.className = 'hotspot-del';
+			delBtn.setAttribute('aria-label', 'Remove hotspot');
+			delBtn.textContent = '×';
+			delBtn.addEventListener('click', () => {
+				state.config.hotspots.splice(i, 1);
+				schedulePreview();
+				render();
+			});
+			rowHeader.appendChild(delBtn);
+			row.appendChild(rowHeader);
+
+			const labelF = document.createElement('label');
+			labelF.className = 'field';
+			labelF.innerHTML = `<span>Label</span><input type="text" maxlength="120" placeholder="e.g. Head module" value="${attr(hs.label || '')}">`;
+			labelF.querySelector('input').addEventListener('input', (e) => {
+				state.config.hotspots[i].label = e.target.value;
+				schedulePreview();
+			});
+			row.appendChild(labelF);
+
+			const bodyF = document.createElement('label');
+			bodyF.className = 'field';
+			bodyF.innerHTML = `<span>Description (optional)</span><textarea maxlength="2000" rows="2" placeholder="Details shown when visitor clicks this hotspot">${escapeHtml(hs.body || '')}</textarea>`;
+			bodyF.querySelector('textarea').addEventListener('input', (e) => {
+				state.config.hotspots[i].body = e.target.value;
+				schedulePreview();
+			});
+			row.appendChild(bodyF);
+
+			const posRow = document.createElement('div');
+			posRow.className = 'hotspot-pos-row';
+			posRow.innerHTML = '<span class="hotspot-pos-label">Position (X Y Z)</span>';
+			const pos = hs.position || [0, 1, 0];
+			for (let axis = 0; axis < 3; axis++) {
+				const axisLabel = ['X', 'Y', 'Z'][axis];
+				const inp = document.createElement('input');
+				inp.type = 'number';
+				inp.step = '0.01';
+				inp.value = String(pos[axis] ?? 0);
+				inp.placeholder = axisLabel;
+				inp.setAttribute('aria-label', axisLabel);
+				inp.addEventListener('input', () => {
+					const v = parseFloat(inp.value);
+					if (!isNaN(v)) {
+						state.config.hotspots[i].position[axis] = v;
+						schedulePreview();
+					}
+				});
+				posRow.appendChild(inp);
+			}
+			row.appendChild(posRow);
+			container.appendChild(row);
+		}
+	}
+
+	render();
+	wrap.appendChild(container);
+}
+
 function selectField(name, label, value, options) {
+	const valStr = String(value ?? '');
 	const f = document.createElement('label');
 	f.className = 'field';
 	const opts = options
 		.map(
 			([v, l]) =>
-				`<option value="${attr(v)}"${v === value ? ' selected' : ''}>${escapeHtml(l)}</option>`,
+				`<option value="${attr(v)}"${v === valStr ? ' selected' : ''}>${escapeHtml(l)}</option>`,
 		)
 		.join('');
 	f.innerHTML = `<span>${escapeHtml(label)}</span><select name="${attr(name)}">${opts}</select>`;
 	f.querySelector('select').addEventListener('change', (e) => {
-		state.config[name] = e.target.value;
+		// Preserve numeric values (e.g. refreshMs)
+		const raw = e.target.value;
+		const num = Number(raw);
+		state.config[name] = (raw !== '' && !isNaN(num) && String(num) === raw) ? num : raw;
 		schedulePreview();
 	});
 	return f;
+}
+
+function colorField(name, label, value) {
+	const f = document.createElement('label');
+	f.className = 'field field--color-row';
+	f.innerHTML = `<span>${escapeHtml(label)}</span>
+		<div class="color-row">
+			<input type="color" name="${attr(name)}" value="${attr(String(value || '#000000'))}">
+			<input type="text" class="color-hex" maxlength="7" value="${attr(String(value || '#000000'))}" placeholder="#000000">
+		</div>`;
+	const colorIn = f.querySelector('input[type="color"]');
+	const hexIn   = f.querySelector('.color-hex');
+	colorIn.addEventListener('input', () => {
+		hexIn.value = colorIn.value;
+		state.config[name] = colorIn.value;
+		schedulePreview();
+	});
+	hexIn.addEventListener('input', () => {
+		if (/^#[0-9a-fA-F]{6}$/.test(hexIn.value)) {
+			colorIn.value = hexIn.value;
+			state.config[name] = hexIn.value;
+			schedulePreview();
+		}
+	});
+	return f;
+}
+
+function fieldGroup(title, fields) {
+	const g = document.createElement('div');
+	g.className = 'field-group';
+	const h = document.createElement('div');
+	h.className = 'field-group-title';
+	h.textContent = title;
+	g.appendChild(h);
+	for (const f of fields) g.appendChild(f);
+	return g;
 }
 
 function boolField(name, label, checked) {
@@ -900,6 +1265,26 @@ function wireButtons() {
 	saveBtn.addEventListener('click', () => save({ generate: false }));
 	generateBtn.addEventListener('click', () => save({ generate: true }));
 
+	const deletBtn = $('#delete-widget-btn');
+	if (deletBtn) {
+		deletBtn.addEventListener('click', deleteWidget);
+	}
+
+	// Device frame switcher
+	for (const btn of document.querySelectorAll('.device-btn')) {
+		btn.addEventListener('click', () => {
+			for (const b of document.querySelectorAll('.device-btn')) {
+				b.setAttribute('aria-pressed', 'false');
+				b.classList.remove('active');
+			}
+			btn.setAttribute('aria-pressed', 'true');
+			btn.classList.add('active');
+			const previewFrame = $('#preview-frame');
+			previewFrame.classList.remove('device--mobile', 'device--tablet', 'device--desktop');
+			previewFrame.classList.add(`device--${btn.dataset.device}`);
+		});
+	}
+
 	$('#embed-modal-close').addEventListener('click', () => {
 		$('#embed-modal').hidden = true;
 	});
@@ -1125,6 +1510,7 @@ async function save({ generate }) {
 		// (it was disabled until the widget had a row to attach docs to).
 		if (wasNew && state.type === 'talking-agent') renderTypeFields();
 
+		updateSecondaryActions(widget.id);
 		if (generate) openEmbedModal(widget);
 		else toast('Saved', 'success');
 	} catch (err) {

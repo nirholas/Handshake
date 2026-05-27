@@ -158,7 +158,7 @@
 				.fm-flow-line {
 					width: 1.5px;
 					height: 100%;
-					background: linear-gradient(180deg, var(--border) 0%, rgba(214, 255, 61, 0.3) 50%, var(--border) 100%);
+					background: linear-gradient(180deg, var(--border) 0%, rgba(255, 255, 255, 0.15) 50%, var(--border) 100%);
 				}
 				.fm-flow-pulse {
 					animation: flowPulseMobile 2.4s ease-in-out infinite;
@@ -177,8 +177,8 @@
 
 			.viewer {
 				background:
-					radial-gradient(120% 60% at 50% 108%, rgba(214, 255, 61, 0.07) 0, transparent 55%),
-					radial-gradient(80% 80% at 50% 0%, rgba(106, 92, 255, 0.10) 0, transparent 60%),
+					radial-gradient(120% 60% at 50% 108%, rgba(255, 255, 255, 0.03) 0, transparent 55%),
+					radial-gradient(80% 80% at 50% 0%, rgba(255, 255, 255, 0.04) 0, transparent 60%),
 					var(--panel);
 				border: 1.5px solid var(--border);
 				border-radius: 14px;
@@ -248,7 +248,7 @@
 
 			.panel {
 				background:
-					linear-gradient(180deg, rgba(214, 255, 61, 0.04) 0, transparent 90px),
+					linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0, transparent 90px),
 					var(--panel);
 				border: 1.5px solid var(--border);
 				border-radius: 14px;
@@ -290,7 +290,7 @@
 				background: var(--accent);
 				opacity: 0.75;
 			}
-			.meta-tag.is-size::before { background: #6a5cff; }
+			.meta-tag.is-size::before { background: var(--muted); }
 			.label {
 				display: block;
 				font-size: 11px;
@@ -342,8 +342,8 @@
 				letter-spacing: 0.04em;
 			}
 			.handle-copy:disabled { opacity: 0.4; cursor: not-allowed; }
-			.handle-copy:not(:disabled):hover { color: var(--accent); border-color: rgba(214, 255, 61, 0.4); }
-			.handle-copy.is-copied { color: var(--accent); border-color: rgba(214, 255, 61, 0.5); }
+			.handle-copy:not(:disabled):hover { color: var(--text); border-color: rgba(255, 255, 255, 0.3); }
+			.handle-copy.is-copied { color: var(--text); border-color: rgba(255, 255, 255, 0.4); }
 			.handle-preview {
 				display: flex;
 				align-items: center;
@@ -363,7 +363,7 @@
 			.handle-preview.is-empty .handle-slug { color: #4a4d5a; font-style: italic; }
 			.handle-preview.is-flashing { animation: handleFlash 0.5s ease-out; }
 			@keyframes handleFlash {
-				0% { background: rgba(214, 255, 61, 0.12); border-color: rgba(214, 255, 61, 0.4); }
+				0% { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.3); }
 				100% { background: #07080d; border-color: var(--border); }
 			}
 
@@ -394,8 +394,8 @@
 				position: relative;
 			}
 			.feature-tile:hover, .feature-tile:focus-visible {
-				background: rgba(214, 255, 61, 0.06);
-				border-color: rgba(214, 255, 61, 0.28);
+				background: rgba(255, 255, 255, 0.05);
+				border-color: rgba(255, 255, 255, 0.2);
 				transform: translateY(-1px);
 				box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 				outline: none;
@@ -518,10 +518,10 @@
 				width: 6px;
 				height: 6px;
 				border-radius: 50%;
-				background: var(--accent);
+				background: var(--text);
 				margin-top: 7px;
 				flex-shrink: 0;
-				box-shadow: 0 0 6px rgba(214, 255, 61, 0.5);
+				box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
 			}
 			.fm-code {
 				background: #07080d;
@@ -549,8 +549,8 @@
 				font-family: inherit;
 				transition: color 0.15s, border-color 0.15s;
 			}
-			.fm-copy:hover { color: var(--accent); border-color: rgba(214, 255, 61, 0.4); }
-			.fm-copy.copied { color: var(--accent); }
+			.fm-copy:hover { color: var(--text); border-color: rgba(255, 255, 255, 0.3); }
+			.fm-copy.copied { color: var(--text); }
 			.fm-row {
 				display: flex;
 				justify-content: space-between;
@@ -651,15 +651,15 @@
 			}
 			.fm-tab:hover { color: var(--text); }
 			.fm-tab.is-active {
-				background: rgba(214, 255, 61, 0.14);
-				color: var(--accent);
+				background: rgba(255, 255, 255, 0.1);
+				color: var(--text);
 			}
 
 			/* ── Identity card ─────────────────────────────────────────────── */
 			.fm-id-card {
 				background:
-					linear-gradient(135deg, rgba(214, 255, 61, 0.05) 0%, rgba(106, 92, 255, 0.06) 100%),
-					rgba(255, 255, 255, 0.025);
+					linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.015) 100%),
+					rgba(255, 255, 255, 0.02);
 				border: 1px solid var(--border);
 				border-radius: 12px;
 				padding: 16px;
@@ -689,7 +689,7 @@
 				font-weight: 700;
 				color: var(--muted);
 				background:
-					linear-gradient(135deg, rgba(153, 69, 255, 0.15) 0%, rgba(214, 255, 61, 0.08) 100%),
+					linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%),
 					#0a0b12;
 			}
 			.fm-id-card-top-right {
@@ -719,14 +719,14 @@
 				width: 5px;
 				height: 5px;
 				border-radius: 50%;
-				background: #9945FF;
-				box-shadow: 0 0 6px rgba(153, 69, 255, 0.6);
+				background: var(--muted);
+				box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
 			}
 			.fm-id-pill {
 				font-size: 10px;
-				color: var(--accent);
-				background: rgba(214, 255, 61, 0.1);
-				border: 1px solid rgba(214, 255, 61, 0.3);
+				color: var(--text);
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.18);
 				border-radius: 999px;
 				padding: 2px 8px;
 				text-transform: uppercase;
@@ -761,10 +761,10 @@
 			}
 			.fm-id-addr-link:hover,
 			.fm-id-addr-link:focus-visible {
-				border-color: rgba(153, 69, 255, 0.5);
-				background: rgba(153, 69, 255, 0.06);
+				border-color: rgba(255, 255, 255, 0.25);
+				background: rgba(255, 255, 255, 0.04);
 			}
-			.fm-id-addr-link:focus-visible { outline: 2px solid rgba(153, 69, 255, 0.5); outline-offset: 2px; }
+			.fm-id-addr-link:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.3); outline-offset: 2px; }
 			.fm-id-addr {
 				font-family: ui-monospace, 'SF Mono', monospace;
 				font-size: 12px;
@@ -775,7 +775,7 @@
 			}
 			.fm-id-explorer-hint {
 				font-size: 11px;
-				color: #9945FF;
+				color: var(--muted);
 				white-space: nowrap;
 				flex-shrink: 0;
 				opacity: 0.7;
@@ -831,9 +831,9 @@
 				width: 26px;
 				height: 26px;
 				border-radius: 50%;
-				background: rgba(214, 255, 61, 0.12);
-				border: 1.5px solid rgba(214, 255, 61, 0.25);
-				color: var(--accent);
+				background: rgba(255, 255, 255, 0.06);
+				border: 1.5px solid rgba(255, 255, 255, 0.18);
+				color: var(--text);
 				font-size: 12px;
 				font-weight: 700;
 				display: inline-flex;
@@ -842,14 +842,14 @@
 				flex-shrink: 0;
 			}
 			.fm-flow-step--mid .fm-flow-num {
-				background: rgba(255, 190, 60, 0.12);
-				border-color: rgba(255, 190, 60, 0.3);
-				color: #ffbe3c;
+				background: rgba(255, 255, 255, 0.08);
+				border-color: rgba(255, 255, 255, 0.22);
+				color: var(--text);
 			}
 			.fm-flow-step--end .fm-flow-num {
-				background: rgba(40, 200, 64, 0.12);
-				border-color: rgba(40, 200, 64, 0.3);
-				color: #28c840;
+				background: rgba(255, 255, 255, 0.10);
+				border-color: rgba(255, 255, 255, 0.25);
+				color: var(--text);
 			}
 			.fm-flow-label {
 				font-size: 13px;
@@ -883,14 +883,14 @@
 				margin-top: auto;
 			}
 			.fm-flow-badge--warn {
-				color: #ffbe3c;
-				border-color: rgba(255, 190, 60, 0.35);
-				background: rgba(255, 190, 60, 0.08);
+				color: var(--muted);
+				border-color: rgba(255, 255, 255, 0.15);
+				background: rgba(255, 255, 255, 0.04);
 			}
 			.fm-flow-badge--ok {
-				color: #28c840;
-				border-color: rgba(40, 200, 64, 0.35);
-				background: rgba(40, 200, 64, 0.08);
+				color: var(--text);
+				border-color: rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.05);
 			}
 			.fm-flow-connector {
 				display: flex;
@@ -903,15 +903,15 @@
 			.fm-flow-line {
 				width: 100%;
 				height: 1.5px;
-				background: linear-gradient(90deg, var(--border) 0%, rgba(214, 255, 61, 0.3) 50%, var(--border) 100%);
+				background: linear-gradient(90deg, var(--border) 0%, rgba(255, 255, 255, 0.15) 50%, var(--border) 100%);
 			}
 			.fm-flow-pulse {
 				position: absolute;
 				width: 6px;
 				height: 6px;
 				border-radius: 50%;
-				background: var(--accent);
-				box-shadow: 0 0 8px rgba(214, 255, 61, 0.5);
+				background: var(--text);
+				box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 				animation: flowPulse 2.4s ease-in-out infinite;
 			}
 			@keyframes flowPulse {
@@ -924,7 +924,7 @@
 			/* ── Pricing preview card ─────────────────────────────────────── */
 			.fm-pricing-preview {
 				background:
-					linear-gradient(135deg, rgba(214, 255, 61, 0.04) 0%, rgba(106, 92, 255, 0.04) 100%),
+					linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%),
 					rgba(255, 255, 255, 0.02);
 				border: 1px solid var(--border);
 				border-radius: 12px;
@@ -992,8 +992,8 @@
 			/* ── Syntax highlighting (code blocks) ────────────────────────── */
 			.fm-code--highlighted pre { color: #cdd; }
 			.syn-comment { color: #6a6d82; font-style: italic; }
-			.syn-keyword { color: #c792ea; }
-			.syn-string { color: #c3e88d; }
+			.syn-keyword { color: #bbb; }
+			.syn-string { color: #999; }
 
 			/* ── Browser-chrome iframe preview ─────────────────────────────── */
 			.fm-browser {
@@ -1036,7 +1036,7 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				background: radial-gradient(60% 80% at 50% 20%, rgba(106, 92, 255, 0.08), transparent 70%);
+				background: radial-gradient(60% 80% at 50% 20%, rgba(255, 255, 255, 0.03), transparent 70%);
 			}
 			.fm-browser-shot {
 				width: 100%;
@@ -1069,9 +1069,9 @@
 			.rep-card-head .muted { font-size: 11.5px; }
 			.rep-sample-pill {
 				font-size: 10px;
-				background: rgba(106, 92, 255, 0.15);
-				color: #b9c0ff;
-				border: 1px solid rgba(106, 92, 255, 0.35);
+				background: rgba(255, 255, 255, 0.06);
+				color: var(--muted);
+				border: 1px solid rgba(255, 255, 255, 0.15);
 				border-radius: 999px;
 				padding: 2px 8px;
 				letter-spacing: 0.06em;
@@ -1090,7 +1090,7 @@
 			.rep-stats strong { font-weight: 600; font-size: 14px; }
 			.rep-stat-big { font-size: 18px !important; }
 			.rep-stats .muted { font-size: 10.5px; }
-			.rep-stars { color: #ffd24a; letter-spacing: 1px; font-size: 12px; }
+			.rep-stars { color: var(--text); letter-spacing: 1px; font-size: 12px; }
 			.rep-reviews {
 				display: flex;
 				flex-direction: column;
@@ -1153,8 +1153,8 @@
 				transition: background 0.15s, border-color 0.15s, transform 0.1s;
 			}
 			.fm-download-row:hover:not([data-busy='1']) {
-				background: rgba(214, 255, 61, 0.06);
-				border-color: rgba(214, 255, 61, 0.4);
+				background: rgba(255, 255, 255, 0.05);
+				border-color: rgba(255, 255, 255, 0.25);
 				transform: translateY(-1px);
 			}
 			.fm-download-row[data-busy='1'] {
@@ -1188,7 +1188,7 @@
 				min-height: 1em;
 				margin-top: 2px;
 			}
-			.fm-download-status[data-tone='busy'] { color: #b9c0ff; }
+			.fm-download-status[data-tone='busy'] { color: var(--text); }
 			.fm-download-status[data-tone='ok'] { color: var(--accent); }
 			.fm-download-status[data-tone='err'] { color: #ffb3b3; }
 
@@ -1361,8 +1361,8 @@
 				width: 5px;
 				height: 5px;
 				border-radius: 50%;
-				background: var(--accent);
-				box-shadow: 0 0 8px rgba(214, 255, 61, 0.5);
+				background: var(--text);
+				box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
 			}
 			.capabilities .feature-grid {
 				grid-template-columns: 1fr 1fr 1fr;
@@ -1426,8 +1426,8 @@
 				flex-shrink: 0;
 				transition: background 0.15s, border-color 0.15s, transform 0.15s;
 			}
-			.emote-chip:hover { background: rgba(214, 255, 61, 0.12); border-color: rgba(214, 255, 61, 0.4); transform: scale(1.05); }
-			.emote-chip.is-active { background: rgba(214, 255, 61, 0.2); border-color: var(--accent); }
+			.emote-chip:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
+			.emote-chip.is-active { background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.4); }
 			.emote-strip-close {
 				appearance: none;
 				background: transparent;
@@ -1590,7 +1590,7 @@
 				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 			}
 			.status-toast.error { border-color: rgba(255, 92, 92, 0.4); color: #ffb3b3; background: #140a0a; }
-			.status-toast.success { border-color: rgba(214, 255, 61, 0.3); color: var(--accent); }
+			.status-toast.success { border-color: rgba(255, 255, 255, 0.2); color: var(--text); }
 		</style>
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/footer.css" />

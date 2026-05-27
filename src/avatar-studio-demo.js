@@ -15,8 +15,6 @@ import {
 	applyMorphsToRoot,
 	renderSculptPanel,
 } from './avatar-sculpt.js';
-import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
-
 const BASE_GLB = '/avatars/default.glb';
 const PRESETS_URL = '/accessories/presets.json';
 
@@ -149,6 +147,7 @@ function wireExport() {
 		btn.disabled = true;
 
 		try {
+			const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
 			const exporter = new GLTFExporter();
 			const glb = await new Promise((resolve, reject) => {
 				exporter.parse(

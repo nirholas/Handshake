@@ -54,10 +54,17 @@ describe('glb-inspect', () => {
 			expect(isValidGlbHeader(Buffer.alloc(8))).toBe(false);
 		});
 
-		it('rejects a header that lies about total length', () => {
+		it('rejects a header that claims a length larger than the buffer', () => {
 			const buf = makeGlb({ asset: { version: '2.0' } });
 			buf.writeUInt32LE(99999, 8);
 			expect(isValidGlbHeader(buf)).toBe(false);
+		});
+
+		it('accepts trailing bytes beyond the declared GLB length', () => {
+			const glb = makeGlb({ asset: { version: '2.0' } });
+			const padded = Buffer.concat([glb, Buffer.alloc(1024)]);
+			padded.writeUInt32LE(glb.length, 8);
+			expect(isValidGlbHeader(padded)).toBe(true);
 		});
 
 		it('rejects glTF version 1', () => {

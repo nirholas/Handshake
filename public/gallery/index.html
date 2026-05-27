@@ -29,6 +29,7 @@
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 
 		<link rel="shortcut icon" href="/favicon.ico" />
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/gallery/gallery.css" />
@@ -63,11 +64,28 @@
 						the viewer, then embed it anywhere or remix into a new agent.
 					</p>
 
+					<div class="gallery-stats">
+						<div class="gallery-stat">
+							<div class="gallery-stat-value" data-role="stat-count">—</div>
+							<div class="gallery-stat-label">Avatars</div>
+						</div>
+						<div class="gallery-stat">
+							<div class="gallery-stat-value" data-role="stat-views">—</div>
+							<div class="gallery-stat-label">Total views</div>
+						</div>
+					</div>
+
+					<div class="gallery-hero-ctas">
+						<a class="gallery-hero-btn gallery-hero-btn--primary" href="/create/selfie">Create from selfie</a>
+						<a class="gallery-hero-btn" href="/dashboard/avatars">Upload avatar</a>
+					</div>
+
 				</div>
 			</section>
 
 			<section class="gallery-controls">
-				<div class="gallery-search">
+				<div class="gallery-controls-top">
+					<div class="gallery-search">
 					<svg
 						class="gallery-search-icon"
 						viewBox="0 0 20 20"
@@ -85,15 +103,24 @@
 						autocomplete="off"
 						spellcheck="false"
 					/>
-					<button
-						type="button"
-						class="gallery-search-clear"
-						data-role="search-clear"
-						aria-label="Clear search"
-						hidden
-					>
-						×
-					</button>
+						<button
+							type="button"
+							class="gallery-search-clear"
+							data-role="search-clear"
+							aria-label="Clear search"
+							hidden
+						>
+							×
+						</button>
+					</div>
+					<div class="gallery-sort-select">
+						<label for="gallery-sort">Sort:</label>
+						<select id="gallery-sort" data-role="sort">
+							<option value="newest">Newest</option>
+							<option value="popular">Most viewed</option>
+							<option value="alpha">A → Z</option>
+						</select>
+					</div>
 				</div>
 				<div class="gallery-tag-wrap" data-role="tag-wrap" hidden>
 					<div class="gallery-tag-label">Tags</div>
