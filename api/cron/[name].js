@@ -2829,13 +2829,31 @@ async function handleRunXTriggers(req, res) {
 	}
 
 	const started = Date.now();
-	const rows = await sql`
-		select id, user_id, agent_id, kind, config, auto_publish, last_fired_at, last_state
-		from x_triggers
-		where enabled = true
-		order by coalesce(last_fired_at, '1970-01-01'::timestamptz) asc
-		limit 200
-	`;
+	let rows;
+	try {
+		rows = await sql`
+			select id, user_id, agent_id, kind, config, auto_publish, last_fired_at, last_state
+			from x_triggers
+			where enabled = true
+			order by coalesce(last_fired_at, '1970-01-01'::timestamptz) asc
+			limit 200
+		`;
+	} catch (err) {
+		if (err.code === '42703') {
+			rows = await sql`
+				select id, user_id, null::uuid as agent_id, kind, config,
+				       coalesce(auto_publish, false) as auto_publish,
+				       last_fired_at,
+				       null::jsonb as last_state
+				from x_triggers
+				where enabled = true
+				order by coalesce(last_fired_at, '1970-01-01'::timestamptz) asc
+				limit 200
+			`;
+		} else {
+			throw err;
+		}
+	}
 
 	const report = { evaluated: 0, fired: 0, skipped: 0, errors: 0 };
 	for (const t of rows) {

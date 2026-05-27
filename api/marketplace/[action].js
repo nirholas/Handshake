@@ -179,21 +179,43 @@ async function handleTheme(req, res) {
 	const weekNum = Math.floor(Date.now() / (7 * 24 * 3600 * 1000));
 	const cat = THEME_CATEGORIES[weekNum % THEME_CATEGORIES.length];
 
-	const rows = await sql`
-		SELECT a.id, a.name, a.description, a.category, a.tags, a.skills,
-		       a.views_count, a.forks_count,
-		       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_avg,
-		       COALESCE((SELECT COUNT(*) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_count,
-		       a.published_at, a.created_at,
-		       v.storage_key AS avatar_storage_key, v.is_public AS avatar_public,
-		       v.thumbnail_key
-		FROM agent_identities a
-		LEFT JOIN avatars v ON v.id = a.avatar_id AND v.deleted_at IS NULL
-		WHERE a.is_published = true AND a.deleted_at IS NULL
-		  AND (${cat.slug === 'general'} OR a.category = ${cat.slug})
-		ORDER BY a.views_count DESC, rating_avg DESC
-		LIMIT 8
-	`;
+	let rows;
+	try {
+		rows = await sql`
+			SELECT a.id, a.name, a.description, a.category, a.tags, a.skills,
+			       a.views_count, a.forks_count,
+			       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_avg,
+			       COALESCE((SELECT COUNT(*) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_count,
+			       a.published_at, a.created_at,
+			       v.storage_key AS avatar_storage_key, v.is_public AS avatar_public,
+			       v.thumbnail_key
+			FROM agent_identities a
+			LEFT JOIN avatars v ON v.id = a.avatar_id AND v.deleted_at IS NULL
+			WHERE a.is_published = true AND a.deleted_at IS NULL
+			  AND (${cat.slug === 'general'} OR a.category = ${cat.slug})
+			ORDER BY a.views_count DESC, rating_avg DESC
+			LIMIT 8
+		`;
+	} catch (err) {
+		if (err.code === '42P01') {
+			rows = await sql`
+				SELECT a.id, a.name, a.description, a.category, a.tags, a.skills,
+				       a.views_count, a.forks_count,
+				       0::numeric AS rating_avg, 0::int AS rating_count,
+				       a.published_at, a.created_at,
+				       v.storage_key AS avatar_storage_key, v.is_public AS avatar_public,
+				       v.thumbnail_key
+				FROM agent_identities a
+				LEFT JOIN avatars v ON v.id = a.avatar_id AND v.deleted_at IS NULL
+				WHERE a.is_published = true AND a.deleted_at IS NULL
+				  AND (${cat.slug === 'general'} OR a.category = ${cat.slug})
+				ORDER BY a.views_count DESC
+				LIMIT 8
+			`;
+		} else {
+			throw err;
+		}
+	}
 
 	const agents = rows.map((row) => ({
 		id: row.id,
@@ -409,8 +431,52 @@ async function handleList(req, res, url) {
 		`,
 		]);
 	} catch (err) {
-		console.error('[marketplace/list]', err?.message || err);
-		return error(res, 500, 'db_error', 'Failed to load marketplace listing');
+		if (err.code === '42P01') {
+			[, rows] = await sql.transaction([
+				sql`SET LOCAL statement_timeout = '8000'`,
+				sql`
+					SELECT ai.id, ai.name, ai.description, ai.category, ai.tags, ai.avatar_id, ai.user_id,
+					       ai.forks_count, ai.views_count, ai.published_at, ai.created_at, ai.skills,
+					       av.thumbnail_key,
+					       u.display_name AS author_name,
+					       EXISTS (
+					         SELECT 1 FROM agent_skill_prices asp
+					         WHERE asp.agent_id = ai.id AND asp.is_active = true
+					       ) AS has_paid_skills,
+					       COALESCE((SELECT count(*)::int FROM skill_purchases sp
+					        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed'), 0) AS buyers_total,
+					       COALESCE((SELECT count(*)::int FROM skill_purchases sp
+					        WHERE sp.agent_id = ai.id AND sp.status = 'confirmed'
+					          AND sp.created_at > now() - interval '24 hours'), 0) AS buyers_24h,
+					       0::numeric AS rating_avg,
+					       0::int AS rating_count,
+					       ap.amount        AS asset_price_amount,
+					       ap.currency_mint AS asset_price_currency_mint,
+					       ap.chain         AS asset_price_chain,
+					       ap.mint_decimals AS asset_price_mint_decimals
+					FROM agent_identities ai
+					LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+					LEFT JOIN users u ON u.id = ai.user_id
+					LEFT JOIN asset_prices ap
+					       ON ap.item_type = 'agent' AND ap.item_id = ai.id AND ap.is_active = true
+					WHERE ai.is_published = true
+					  AND ai.deleted_at IS NULL
+					  AND ai.name !~* ${AGENT_AUTONAMED_RE_SQL}
+					  AND (${cat}::text IS NULL OR ai.category = ${cat})
+					  AND (
+					    ${qLike}::text IS NULL
+					    OR ai.name ILIKE ${qLike}
+					    OR ai.description ILIKE ${qLike}
+					    OR EXISTS (SELECT 1 FROM unnest(ai.tags) t WHERE t ILIKE ${qLike})
+					  )
+					ORDER BY ${orderBy}
+					LIMIT ${limit + 1}::int OFFSET ${offset}::int
+				`,
+			]);
+		} else {
+			console.error('[marketplace/list]', err?.message || err);
+			return error(res, 500, 'db_error', 'Failed to load marketplace listing');
+		}
 	}
 
 	const hasMore = rows.length > limit;

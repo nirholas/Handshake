@@ -144,7 +144,7 @@ export function wrap(handler) {
 				console.error('[api] unhandled', err);
 				captureException(err, { url: req.url, method: req.method });
 			}
-			if (!res.writableEnded) {
+			if (!res.headersSent && !res.writableEnded) {
 				if (err.code === 'validation_error' && Array.isArray(err.issues)) {
 					validationError(res, err);
 				} else {

@@ -766,7 +766,7 @@ const handleReconstruct = wrap(async (req, res) => {
 		insert into avatar_regen_jobs
 			(job_id, user_id, source_avatar_id, mode, params, status, provider, ext_job_id, created_at, updated_at)
 		values
-			(${jobId}, ${userId}, ${body.sourceAvatarId ?? jobId}, ${'reconstruct'}, ${JSON.stringify(params)}, 'queued', ${provider.name}, ${submission.extJobId ?? null}, now(), now())
+			(${jobId}, ${userId}, ${null}, ${'reconstruct'}, ${JSON.stringify(params)}, 'queued', ${provider.name}, ${submission.extJobId ?? null}, now(), now())
 	`;
 	return json(res, 202, {
 		ok: true,

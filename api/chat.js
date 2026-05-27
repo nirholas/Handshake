@@ -430,13 +430,12 @@ function pickProvider(requested, model, userKeys = {}) {
 // position 0 so the happy path is one entry.
 //
 // Why per-provider sibling models: OpenRouter's `:free` tier rate-limits per
-// model. Falling over from llama-3.3-70b:free → llama-3.1-8b:free → mistral-
-// 7b:free recovers from a single upstream burst without paying. Last resort
-// is paid Anthropic so the user still gets a response.
+// model. Falling over from llama-3.3-70b:free → mistral-7b:free recovers
+// from a single upstream burst without paying. Last resort is paid Anthropic
+// so the user still gets a response.
 const FALLBACK_SIBLINGS = {
 	openrouter: [
 		'meta-llama/llama-3.3-70b-instruct:free',
-		'meta-llama/llama-3.1-8b-instruct:free',
 		'mistralai/mistral-7b-instruct:free',
 	],
 	groq: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],

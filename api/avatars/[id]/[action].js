@@ -15,7 +15,7 @@ import {
 import { sql } from '../../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
-import { parse } from '../../_lib/validate.js';
+import { parse, isUuid } from '../../_lib/validate.js';
 import {
 	readStorageMode,
 	storageModeSchema,
@@ -443,6 +443,7 @@ async function handleVersions(req, res) {
 
 	const id = req.query?.id;
 	if (!id) return error(res, 400, 'invalid_request', 'id required');
+	if (!isUuid(id)) return error(res, 400, 'invalid_request', 'id must be a valid UUID');
 
 	const auth = await resolveVersionsAuth(req);
 
