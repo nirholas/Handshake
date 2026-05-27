@@ -357,6 +357,334 @@ async function loadExtraSections(agentId, rec) {
 	if (reputation && (reputation.count > 0 || reputation.average > 0))
 		renderReputation(reputation);
 	if (embedPolicy) renderEmbedPolicy(embedPolicy);
+
+	loadReviews(agentId, rec);
+}
+
+// ── Reviews ──────────────────────────────────────────────────────────────────
+
+function starsHtml(rating, size = 'sm') {
+	const full = Math.floor(rating);
+	const half = rating - full >= 0.5;
+	let html = '';
+	for (let i = 1; i <= 5; i++) {
+		if (i <= full) html += `<span class="ad-star filled" aria-hidden="true">★</span>`;
+		else if (i === full + 1 && half) html += `<span class="ad-star half" aria-hidden="true">★</span>`;
+		else html += `<span class="ad-star" aria-hidden="true">★</span>`;
+	}
+	return html;
+}
+
+function reviewAvatarEl(author) {
+	const initial = (author?.author_name || '?')[0].toUpperCase();
+	if (author?.author_avatar) {
+		const img = el('img', {
+			class: 'ad-review-avatar',
+			src: author.author_avatar,
+			alt: author.author_name || 'Reviewer',
+		});
+		img.onerror = () => {
+			const span = el('div', { class: 'ad-review-avatar', text: initial });
+			img.replaceWith(span);
+		};
+		return img;
+	}
+	return el('div', { class: 'ad-review-avatar', text: initial });
+}
+
+async function getCsrfToken() {
+	try {
+		const r = await fetch('/api/csrf-token', { credentials: 'include' });
+		if (!r.ok) return null;
+		const d = await r.json();
+		return d.token || null;
+	} catch {
+		return null;
+	}
+}
+
+async function loadReviews(agentId, agentRec) {
+	const card = document.getElementById('ad-reviews-card');
+	const body = document.getElementById('ad-reviews-body');
+	const countPill = document.getElementById('ad-reviews-count');
+	if (!card || !body) return;
+
+	const isOwner = !!agentRec?.user_id;
+
+	let data;
+	try {
+		const r = await fetch(`/api/marketplace/agents/${encodeURIComponent(agentId)}/reviews`, {
+			credentials: 'include',
+		});
+		if (!r.ok) throw new Error(`${r.status}`);
+		const json = await r.json();
+		data = json.data;
+	} catch (e) {
+		body.innerHTML = `<div class="ad-reviews-error">Could not load reviews. Try refreshing.</div>`;
+		return;
+	}
+
+	const { summary, reviews, my_review } = data;
+
+	if (countPill) {
+		countPill.textContent = summary.rating_count > 0 ? String(summary.rating_count) : '';
+	}
+
+	body.innerHTML = '';
+
+	// Summary bar
+	if (summary.rating_count > 0) {
+		const total = summary.rating_count || 1;
+		const avgDisplay = Number(summary.rating_avg).toFixed(1);
+		const summaryEl = el('div', { class: 'ad-reviews-summary' }, [
+			el('div', { class: 'ad-reviews-score' }, [
+				el('div', { class: 'ad-reviews-avg', text: avgDisplay }),
+				el('div', {
+					class: 'ad-reviews-stars',
+					'aria-label': `${avgDisplay} out of 5 stars`,
+				}),
+				el('div', { class: 'ad-reviews-total', text: `${summary.rating_count} review${summary.rating_count !== 1 ? 's' : ''}` }),
+			]),
+			el('div', { class: 'ad-reviews-bars' },
+				[5, 4, 3, 2, 1].map((star) => {
+					const count = summary.breakdown?.[star] || 0;
+					const pct = Math.round((count / total) * 100);
+					return el('div', { class: 'ad-reviews-bar-row' }, [
+						el('span', { class: 'ad-reviews-bar-label', text: String(star) }),
+						el('span', { class: 'ad-star filled', 'aria-hidden': 'true', text: '★' }),
+						el('div', { class: 'ad-reviews-bar-track' }, [
+							el('div', { class: 'ad-reviews-bar-fill', style: `width:${pct}%` }),
+						]),
+						el('span', { class: 'ad-reviews-bar-count', text: String(count) }),
+					]);
+				}),
+			),
+		]);
+		summaryEl.querySelector('.ad-reviews-stars').innerHTML = starsHtml(summary.rating_avg);
+		body.appendChild(summaryEl);
+	}
+
+	// Write / edit form (skip if owner)
+	if (!isOwner) {
+		body.appendChild(buildReviewForm(agentId, my_review, (updated) => loadReviews(agentId, agentRec)));
+	}
+
+	// Reviews list
+	if (reviews.length === 0 && !my_review) {
+		body.appendChild(
+			el('div', { class: 'ad-reviews-empty' }, [
+				el('strong', { text: 'No reviews yet' }),
+				el('span', { text: isOwner ? 'Reviews from users will appear here.' : 'Be the first to review this agent.' }),
+			]),
+		);
+		return;
+	}
+
+	const list = el('div', { class: 'ad-reviews-list' });
+	for (const r of reviews) {
+		list.appendChild(buildReviewItem(r, agentId, () => loadReviews(agentId, agentRec)));
+	}
+	body.appendChild(list);
+}
+
+function buildReviewForm(agentId, existing, onSuccess) {
+	let selectedRating = existing?.rating || 0;
+	let submitting = false;
+
+	const isLoggedIn = document.cookie.includes('session') || document.querySelector('[data-user-id]') != null;
+
+	if (!isLoggedIn && !existing) {
+		return el('div', { class: 'ad-reviews-signin-prompt' }, [
+			document.createTextNode(''),
+			el('a', { href: '/sign-in', text: 'Sign in' }),
+			document.createTextNode(' to leave a review'),
+		]);
+	}
+
+	const formTitle = el('div', { class: 'ad-review-form-title', text: existing ? 'Your Review' : 'Write a Review' });
+
+	const starPicker = el('div', {
+		class: 'ad-review-star-picker',
+		role: 'radiogroup',
+		'aria-label': 'Rating',
+	});
+	const starEls = [1, 2, 3, 4, 5].map((n) => {
+		const s = el('span', {
+			class: `ad-star${n <= selectedRating ? ' filled' : ''}`,
+			role: 'radio',
+			'aria-label': `${n} star${n !== 1 ? 's' : ''}`,
+			'aria-checked': String(n === selectedRating),
+			tabindex: '0',
+			text: '★',
+		});
+		s.addEventListener('click', () => setRating(n));
+		s.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setRating(n); } });
+		starPicker.appendChild(s);
+		return s;
+	});
+
+	function setRating(n) {
+		selectedRating = n;
+		starEls.forEach((s, i) => {
+			s.classList.toggle('filled', i < n);
+			s.setAttribute('aria-checked', String(i + 1 === n));
+		});
+		submitBtn.disabled = false;
+	}
+
+	const textarea = el('textarea', {
+		class: 'ad-review-textarea',
+		placeholder: 'Share your experience with this agent… (optional)',
+		maxlength: '2000',
+		'aria-label': 'Review text',
+	});
+	textarea.value = existing?.body || '';
+
+	const charCount = el('span', { class: 'ad-review-char-count', text: `${textarea.value.length}/2000` });
+	textarea.addEventListener('input', () => {
+		charCount.textContent = `${textarea.value.length}/2000`;
+	});
+
+	const statusEl = el('span', { class: 'ad-review-char-count', style: 'color:var(--ad-muted)' });
+
+	const submitBtn = el('button', {
+		class: 'ad-review-submit',
+		type: 'button',
+		text: existing ? 'Update' : 'Submit',
+		disabled: !existing && selectedRating === 0,
+	});
+
+	submitBtn.addEventListener('click', async () => {
+		if (submitting || selectedRating === 0) return;
+		submitting = true;
+		submitBtn.disabled = true;
+		submitBtn.textContent = 'Saving…';
+		statusEl.textContent = '';
+
+		try {
+			const csrf = await getCsrfToken();
+			const headers = { 'content-type': 'application/json' };
+			if (csrf) headers['x-csrf-token'] = csrf;
+
+			const r = await fetch(`/api/marketplace/agents/${encodeURIComponent(agentId)}/reviews`, {
+				method: 'POST',
+				credentials: 'include',
+				headers,
+				body: JSON.stringify({ rating: selectedRating, body: textarea.value.trim() || null }),
+			});
+			const json = await r.json();
+			if (!r.ok) {
+				statusEl.textContent = json.error?.message || 'Save failed';
+				statusEl.style.color = '#ff8a80';
+				submitBtn.disabled = false;
+				submitBtn.textContent = existing ? 'Update' : 'Submit';
+				submitting = false;
+				return;
+			}
+			onSuccess(json.data);
+		} catch (e) {
+			statusEl.textContent = 'Network error';
+			statusEl.style.color = '#ff8a80';
+			submitBtn.disabled = false;
+			submitBtn.textContent = existing ? 'Update' : 'Submit';
+			submitting = false;
+		}
+	});
+
+	const actions = el('div', { class: 'ad-review-form-actions' });
+	if (existing) {
+		const deleteBtn = el('button', { class: 'ad-review-delete', type: 'button', text: 'Delete' });
+		deleteBtn.addEventListener('click', async () => {
+			if (submitting) return;
+			submitting = true;
+			deleteBtn.disabled = true;
+			deleteBtn.textContent = 'Deleting…';
+			try {
+				const csrf = await getCsrfToken();
+				const headers = {};
+				if (csrf) headers['x-csrf-token'] = csrf;
+				await fetch(`/api/marketplace/agents/${encodeURIComponent(agentId)}/reviews`, {
+					method: 'DELETE',
+					credentials: 'include',
+					headers,
+				});
+				onSuccess(null);
+			} catch {
+				deleteBtn.disabled = false;
+				deleteBtn.textContent = 'Delete';
+				submitting = false;
+			}
+		});
+		actions.appendChild(deleteBtn);
+	}
+	actions.appendChild(submitBtn);
+
+	return el('div', { class: 'ad-review-form' }, [
+		formTitle,
+		starPicker,
+		textarea,
+		el('div', { class: 'ad-review-form-footer' }, [
+			el('div', { style: 'display:flex;gap:12px;align-items:center' }, [charCount, statusEl]),
+			actions,
+		]),
+	]);
+}
+
+function buildReviewItem(r, agentId, onRefresh) {
+	const avatar = reviewAvatarEl(r);
+	const dateStr = fmtRelTime(r.created_at);
+
+	const starsEl = el('div', {
+		class: 'ad-review-item-stars',
+		'aria-label': `${r.rating} out of 5 stars`,
+	});
+	starsEl.innerHTML = starsHtml(r.rating);
+
+	const head = el('div', { class: 'ad-review-item-head' }, [
+		avatar,
+		el('div', { class: 'ad-review-meta' }, [
+			el('div', { class: 'ad-review-author', text: r.author_name || 'Anonymous' }),
+			el('div', { class: 'ad-review-date', text: dateStr }),
+		]),
+		starsEl,
+	]);
+
+	const children = [head];
+
+	if (r.body) {
+		children.push(el('div', { class: 'ad-review-body', text: r.body }));
+	}
+
+	if (r.is_mine) {
+		const editBtn = el('button', { class: 'ad-review-mine-btn', type: 'button', text: 'Edit' });
+		editBtn.addEventListener('click', () => {
+			const form = buildReviewForm(agentId, r, onRefresh);
+			item.replaceWith(form);
+		});
+		const delBtn = el('button', { class: 'ad-review-mine-btn danger', type: 'button', text: 'Delete' });
+		delBtn.addEventListener('click', async () => {
+			delBtn.disabled = true;
+			delBtn.textContent = 'Deleting…';
+			try {
+				const csrf = await getCsrfToken();
+				const headers = {};
+				if (csrf) headers['x-csrf-token'] = csrf;
+				await fetch(`/api/marketplace/agents/${encodeURIComponent(agentId)}/reviews`, {
+					method: 'DELETE',
+					credentials: 'include',
+					headers,
+				});
+				onRefresh(null);
+			} catch {
+				delBtn.disabled = false;
+				delBtn.textContent = 'Delete';
+			}
+		});
+		children.push(el('div', { class: 'ad-review-mine-actions' }, [editBtn, delBtn]));
+	}
+
+	const item = el('div', { class: 'ad-review-item', role: 'article' }, children);
+	return item;
 }
 
 function escapeText(s) {
