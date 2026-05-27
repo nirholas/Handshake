@@ -5,6 +5,25 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 	<title>Agent · three.ws</title>
 	<meta name="description" content="A living 3D AI agent on three.ws — talk, animate, embed, remix." />
+	<meta name="theme-color" content="#050505" />
+
+	<!-- Open Graph -->
+	<meta property="og:type" content="website" />
+	<meta property="og:title" id="og-title" content="Agent · three.ws" />
+	<meta property="og:description" id="og-desc" content="A living 3D AI agent on three.ws — talk, animate, embed, remix." />
+	<meta property="og:url" id="og-url" content="https://three.ws/agent-next" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:image" id="og-image" content="https://three.ws/assets/og-image.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+
+	<!-- Twitter / X -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" id="tw-title" content="Agent · three.ws" />
+	<meta name="twitter:description" id="tw-desc" content="A living 3D AI agent on three.ws — talk, animate, embed, remix." />
+	<meta name="twitter:creator" content="@nichxbt" />
+	<meta name="twitter:image" id="tw-image" content="https://three.ws/assets/og-image.png" />
+
 	<link rel="icon" href="/favicon.ico" />
 	<style>
 		:root {
@@ -307,13 +326,102 @@
 		}
 		@keyframes spin { to { transform: rotate(360deg); } }
 
-		.demo-tag {
-			position: fixed; bottom: 16px; right: 16px; z-index: 1000;
-			background: var(--panel); color: var(--muted);
-			border: 1px solid var(--border);
-			padding: 6px 12px; border-radius: 99px;
-			font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+		/* ── CHAT MESSAGES ─────────────────────────────────────── */
+		.chat-messages {
+			position: absolute; bottom: 0; left: 0; right: 0;
+			max-height: 220px; overflow-y: auto;
+			padding: 12px 16px 8px;
+			display: flex; flex-direction: column; gap: 6px;
+			pointer-events: none;
+			mask-image: linear-gradient(transparent 0%, black 30%);
+			-webkit-mask-image: linear-gradient(transparent 0%, black 30%);
+			z-index: 4;
 		}
+		.chat-msg {
+			padding: 8px 14px; border-radius: 12px;
+			font-size: 13.5px; line-height: 1.45;
+			max-width: 80%; animation: msgIn 0.2s ease-out;
+			pointer-events: auto;
+		}
+		.chat-msg.user {
+			align-self: flex-end;
+			background: var(--text); color: var(--bg);
+			border-bottom-right-radius: 4px;
+		}
+		.chat-msg.agent {
+			align-self: flex-start;
+			background: var(--panel); color: var(--text-soft);
+			border: 1px solid var(--border);
+			border-bottom-left-radius: 4px;
+		}
+		.chat-msg.agent.streaming::after {
+			content: "▊"; animation: blink 0.6s infinite;
+		}
+		@keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+		@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+		/* ── VOICE RECORDING STATE ────────────────────────────── */
+		.chat-mic.recording {
+			background: rgba(239, 68, 68, 0.15);
+			color: #ef4444;
+			border-color: rgba(239, 68, 68, 0.4);
+			animation: micPulse 1.2s ease-in-out infinite;
+		}
+		@keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); } 50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } }
+
+		/* ── ANIMATION DOCK ───────────────────────────────────── */
+		.anim-dock {
+			position: absolute; bottom: 14px; left: 14px; z-index: 5;
+			display: none; align-items: center; gap: 6px;
+			background: rgba(5, 5, 5, 0.82);
+			backdrop-filter: blur(14px);
+			border: 1px solid var(--border);
+			border-radius: 10px;
+			padding: 5px 10px;
+			font-size: 12px; color: var(--text-soft);
+		}
+		.anim-dock.visible { display: flex; }
+		.anim-dock__name {
+			max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+			font-weight: 500; color: var(--text);
+		}
+		.anim-dock__btn {
+			background: var(--panel-soft); border: 1px solid var(--border);
+			color: var(--text-soft); border-radius: 6px;
+			width: 28px; height: 28px;
+			display: flex; align-items: center; justify-content: center;
+			cursor: pointer; font-size: 12px;
+			transition: background 0.12s, color 0.12s;
+		}
+		.anim-dock__btn:hover { background: var(--border-strong); color: var(--text); }
+		.anim-dock__scrub {
+			width: 80px; height: 3px;
+			-webkit-appearance: none; appearance: none;
+			background: var(--border-strong); border-radius: 2px;
+			outline: none; cursor: pointer;
+		}
+		.anim-dock__scrub::-webkit-slider-thumb {
+			-webkit-appearance: none; width: 10px; height: 10px;
+			border-radius: 50%; background: var(--text);
+			cursor: pointer;
+		}
+		@media (max-width: 720px) {
+			.anim-dock { bottom: auto; top: 14px; left: 14px; }
+		}
+
+		/* ── RELATED CARD SKELETON ───────────────────────────── */
+		.related-card.skeleton {
+			background: var(--panel);
+		}
+		.related-card.skeleton .meta { background: none; }
+		.skeleton-bar {
+			height: 12px; border-radius: 4px;
+			background: var(--border-strong);
+			animation: shimmer 1.4s ease-in-out infinite;
+		}
+		.skeleton-bar.short { width: 60%; }
+		.skeleton-bar.xshort { width: 40%; height: 10px; margin-top: 6px; }
+		@keyframes shimmer { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
 	</style>
 	<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 </head>
@@ -373,6 +481,14 @@
 					eager
 					style="width:100%;height:100%;display:block"
 				></agent-3d>
+
+				<div class="chat-messages" id="chat-messages"></div>
+
+				<div class="anim-dock" id="anim-dock">
+					<button class="anim-dock__btn" id="anim-play" type="button" title="Play / Pause">▶</button>
+					<span class="anim-dock__name" id="anim-name">—</span>
+					<input class="anim-dock__scrub" id="anim-scrub" type="range" min="0" max="1000" value="0" />
+				</div>
 			</div>
 
 			<div class="chat-dock">
@@ -431,29 +547,25 @@
 		<div class="section-eyebrow">More agents</div>
 		<h2>Other agents you can embed.</h2>
 		<div class="related-grid" id="related-grid">
-			<a class="related-card" href="/agent-next?id=bacff13e-b64b-4ac0-860d-44f0168ad23b">
-				<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/bacff13e-b64b-4ac0-860d-44f0168ad23b.png" alt="nich" loading="lazy" />
-				<div class="meta"><div class="name">nich</div><div class="author">@nirholas</div></div>
-			</a>
-			<a class="related-card" href="/discover">
-				<div class="meta"><div class="name">Browse all →</div><div class="author">Public agents</div></div>
-			</a>
-			<a class="related-card" href="/create">
-				<div class="meta"><div class="name">+ Make your own</div><div class="author">Selfie → agent in 60s</div></div>
-			</a>
-			<a class="related-card" href="/discover?filter=onchain">
-				<div class="meta"><div class="name">On-chain agents</div><div class="author">ERC-8004 directory</div></div>
-			</a>
+			<div class="related-card skeleton"><div class="meta"><div class="skeleton-bar short"></div><div class="skeleton-bar xshort"></div></div></div>
+			<div class="related-card skeleton"><div class="meta"><div class="skeleton-bar short"></div><div class="skeleton-bar xshort"></div></div></div>
+			<div class="related-card skeleton"><div class="meta"><div class="skeleton-bar short"></div><div class="skeleton-bar xshort"></div></div></div>
+			<div class="related-card skeleton"><div class="meta"><div class="skeleton-bar short"></div><div class="skeleton-bar xshort"></div></div></div>
 		</div>
 	</section>
 
-	<a class="demo-tag" href="/home-next" title="Redesign demo">DEMO · /agent-next</a>
 
 	<script>
 		// ── Parse ?id= from URL (default: nich) ─────────────────────
 		const params = new URLSearchParams(location.search);
 		const avatarId = params.get('id') || 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
 		const avatarUrl = `${location.origin}/api/avatars/${avatarId}`;
+		const agent = document.getElementById('agent');
+		const chatForm = document.getElementById('chat-form');
+		const chatInput = document.getElementById('chat-input');
+		const chatMessages = document.getElementById('chat-messages');
+		const micBtn = document.getElementById('chat-mic');
+		let agentReady = false;
 
 		// ── Load avatar metadata ────────────────────────────────────
 		async function loadAvatar() {
@@ -468,27 +580,61 @@
 			}
 		}
 
-		function hydrate(data) {
-			document.getElementById('identity-name').textContent = data.name || 'Untitled agent';
-			document.getElementById('identity-desc').textContent =
-				data.description || 'A living 3D AI agent on three.ws — talk to it, animate it, embed it on your site, or remix it into your own.';
+		function escHtml(s) {
+			const d = document.createElement('div');
+			d.textContent = s;
+			return d.innerHTML;
+		}
 
+		function hydrate(data) {
+			const name = data.name || 'Untitled agent';
+			const desc = data.description || 'A living 3D AI agent on three.ws — talk to it, animate it, embed it on your site, or remix it into your own.';
 			const author = data.author || data.owner_username || (data.source_meta && data.source_meta.provider);
+			const displayAuthor = author === 'three-ws-selfie' ? 'three.ws' : (author ? '@' + author : 'community');
+			const thumbUrl = data.thumbnail_url || `https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/${avatarId}.png`;
+			const pageUrl = `https://three.ws/agent-next?id=${encodeURIComponent(avatarId)}`;
+
+			document.getElementById('identity-name').textContent = name;
+			document.getElementById('identity-desc').textContent = desc;
 			if (author) {
 				document.getElementById('identity-author').innerHTML =
-					`by <a href="/discover">${author === 'three-ws-selfie' ? 'three.ws' : '@' + author}</a>`;
+					`by <a href="/discover">${escHtml(displayAuthor)}</a>`;
 			}
 
-			document.title = `${data.name || 'Agent'} · three.ws`;
+			document.title = `${name} · three.ws`;
 			document.getElementById('remix-link').href = `/create?fork=${encodeURIComponent(avatarId)}`;
 
-			// Mount the agent-3d component now that we know the src
-			const el = document.getElementById('agent');
-			el.setAttribute('src', avatarUrl);
+			// Dynamic OG / Twitter meta
+			const setMeta = (id, attr, val) => { const el = document.getElementById(id); if (el) el.setAttribute(attr, val); };
+			setMeta('og-title', 'content', `${name} · three.ws`);
+			setMeta('og-desc', 'content', desc);
+			setMeta('og-url', 'content', pageUrl);
+			setMeta('og-image', 'content', thumbUrl);
+			setMeta('tw-title', 'content', `${name} · three.ws`);
+			setMeta('tw-desc', 'content', desc);
+			setMeta('tw-image', 'content', thumbUrl);
 
-			// Update embed snippet
+			// Mount the agent-3d component
+			agent.setAttribute('src', avatarUrl);
+
+			// Update embed snippet — both the stored string and the visible <pre>
 			const snippet = `<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"><\/script>\n<agent-3d src="${avatarUrl}"><\/agent-3d>`;
 			window._embedSnippet = snippet;
+			const pre = document.getElementById('embed-snippet');
+			pre.innerHTML =
+				`<span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="str">"module"</span> <span class="attr">src</span>=<span class="str">"https://three.ws/agent-3d/latest/agent-3d.js"</span><span class="tag">&gt;&lt;/script&gt;</span>\n` +
+				`<span class="tag">&lt;agent-3d</span> <span class="attr">src</span>=<span class="str">"${escHtml(avatarUrl)}"</span><span class="tag">&gt;&lt;/agent-3d&gt;</span>`;
+
+			// Update identity pills based on actual data
+			const pills = document.getElementById('identity-pills');
+			const tags = data.tags || [];
+			let pillsHtml = '<span class="pill live">● Live</span><span class="pill">glTF · GLB</span>';
+			if (tags.includes('animated') || data.source === 'avatar-pipeline') pillsHtml += '<span class="pill">Animated</span>';
+			if (data.agent_id) pillsHtml += '<span class="pill">On-chain</span>';
+			tags.filter(t => !['animated'].includes(t)).slice(0, 3).forEach(t => {
+				pillsHtml += `<span class="pill">${escHtml(t)}</span>`;
+			});
+			pills.innerHTML = pillsHtml;
 
 			// Hide loading
 			setTimeout(() => document.getElementById('loading').classList.add('hidden'), 200);
@@ -496,23 +642,59 @@
 
 		loadAvatar();
 
-		// ── Chat form → agent.say() ─────────────────────────────────
-		const chatForm = document.getElementById('chat-form');
-		const chatInput = document.getElementById('chat-input');
-		const agent = document.getElementById('agent');
+		// ── Agent ready event ───────────────────────────────────────
+		agent.addEventListener('agent:ready', () => { agentReady = true; });
 
+		// ── Chat messages display ───────────────────────────────────
+		function appendMsg(role, text) {
+			const el = document.createElement('div');
+			el.className = `chat-msg ${role}`;
+			el.textContent = text;
+			chatMessages.appendChild(el);
+			chatMessages.scrollTop = chatMessages.scrollHeight;
+			return el;
+		}
+
+		let streamEl = null;
+		agent.addEventListener('brain:message', (e) => {
+			const d = e.detail;
+			if (d.role === 'assistant' && d.content) {
+				if (streamEl) {
+					streamEl.textContent = d.content;
+					streamEl.classList.remove('streaming');
+					streamEl = null;
+				} else {
+					appendMsg('agent', d.content);
+				}
+			}
+		});
+
+		agent.addEventListener('brain:stream', (e) => {
+			if (!streamEl) {
+				streamEl = appendMsg('agent', '');
+				streamEl.classList.add('streaming');
+			}
+			streamEl.textContent += e.detail.chunk || '';
+			chatMessages.scrollTop = chatMessages.scrollHeight;
+		});
+
+		// ── Chat form → agent.ask() ─────────────────────────────────
 		chatForm.addEventListener('submit', (e) => {
 			e.preventDefault();
 			const text = chatInput.value.trim();
 			if (!text) return;
-			tellAgent(text);
+			appendMsg('user', text);
+			sendToAgent(text);
 			chatInput.value = '';
 		});
 
-		function tellAgent(text) {
+		async function sendToAgent(text) {
 			try {
-				if (agent.ask) agent.ask(text);
-				else if (agent.say) agent.say(text);
+				if (agent.ask) {
+					await agent.ask(text);
+				} else if (agent.say) {
+					agent.say(text);
+				}
 			} catch (e) { console.warn('Agent send failed:', e); }
 		}
 
@@ -523,24 +705,92 @@
 			});
 		});
 
+		// ── Voice input via Web Speech API ──────────────────────────
+		let recognition = null;
+		let recognizing = false;
+
+		if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+			const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+			recognition = new SpeechRecognition();
+			recognition.continuous = false;
+			recognition.interimResults = true;
+			recognition.lang = 'en-US';
+
+			recognition.onstart = () => {
+				recognizing = true;
+				micBtn.classList.add('recording');
+				micBtn.setAttribute('aria-label', 'Stop recording');
+			};
+
+			recognition.onend = () => {
+				recognizing = false;
+				micBtn.classList.remove('recording');
+				micBtn.setAttribute('aria-label', 'Voice input');
+			};
+
+			recognition.onerror = (e) => {
+				recognizing = false;
+				micBtn.classList.remove('recording');
+				if (e.error !== 'no-speech' && e.error !== 'aborted') {
+					console.warn('Speech recognition error:', e.error);
+				}
+			};
+
+			recognition.onresult = (e) => {
+				let transcript = '';
+				for (let i = e.resultIndex; i < e.results.length; i++) {
+					transcript += e.results[i][0].transcript;
+				}
+				chatInput.value = transcript;
+				if (e.results[e.results.length - 1].isFinal) {
+					chatForm.requestSubmit();
+				}
+			};
+		}
+
+		micBtn.addEventListener('click', () => {
+			if (!recognition) {
+				chatInput.focus();
+				return;
+			}
+			if (recognizing) {
+				recognition.stop();
+			} else {
+				recognition.start();
+			}
+		});
+
 		// ── Action rail handlers ─────────────────────────────────────
 		document.querySelectorAll('.act-btn[data-act]').forEach((b) => {
 			b.addEventListener('click', () => handleAction(b.dataset.act));
 		});
 
-		function handleAction(act) {
+		async function handleAction(act) {
 			switch (act) {
 				case 'say-hi':
-					tellAgent('Say hi and wave!');
+					appendMsg('user', 'Say hi and wave!');
+					if (agent.wave) agent.wave();
+					sendToAgent('Say hi and wave!');
 					break;
 				case 'wave':
-					try { agent.wave?.(); } catch (e) { tellAgent('*wave*'); }
+					if (agent.wave) {
+						agent.wave();
+					} else {
+						appendMsg('user', '*wave*');
+						sendToAgent('*wave*');
+					}
 					break;
 				case 'cheer':
-					try { agent.playEmote?.('cheer', 1); } catch (e) { tellAgent('*cheer*'); }
+					if (agent.playEmote) {
+						agent.playEmote('cheer', 1);
+					} else {
+						appendMsg('user', '*cheer*');
+						sendToAgent('*cheer*');
+					}
 					break;
 				case 'animate':
-					tellAgent('Show me one of your animations');
+					appendMsg('user', 'Show me one of your animations');
+					sendToAgent('Show me one of your animations');
 					break;
 				case 'mocap':
 					location.href = `/mocap-studio?avatar=${encodeURIComponent(avatarId)}`;
@@ -552,20 +802,24 @@
 					location.href = `/walk?avatar=${encodeURIComponent(avatarId)}`;
 					break;
 				case 'ar':
-					tellAgent('Switch to AR mode');
+					appendMsg('user', 'Switch to AR mode');
+					sendToAgent('Switch to AR mode');
 					break;
-				case 'tip':
-					window.location.href = `/tip?avatar=${encodeURIComponent(avatarId)}`;
+				case 'tip': {
+					const walletAddr = agent.manifest?.wallet || agent.manifest?.solana_wallet;
+					if (walletAddr) {
+						location.href = `/send?to=${encodeURIComponent(walletAddr)}&label=${encodeURIComponent(document.getElementById('identity-name').textContent)}`;
+					} else {
+						appendMsg('user', 'I want to tip you!');
+						sendToAgent('I want to tip you!');
+					}
 					break;
+				}
 				case 'remix':
 					location.href = `/create?fork=${encodeURIComponent(avatarId)}`;
 					break;
 			}
 		}
-
-		document.getElementById('chat-mic').addEventListener('click', () => {
-			chatInput.focus();
-		});
 
 		// ── Copy embed ───────────────────────────────────────────────
 		document.getElementById('copy-embed').addEventListener('click', async (e) => {
@@ -577,11 +831,106 @@
 					e.target.classList.remove('copied');
 					e.target.textContent = 'Copy snippet';
 				}, 1800);
-			} catch (err) { /* clipboard blocked */ }
+			} catch (err) {
+				const ta = document.createElement('textarea');
+				ta.value = window._embedSnippet || '';
+				ta.style.cssText = 'position:fixed;opacity:0';
+				document.body.appendChild(ta);
+				ta.select();
+				document.execCommand('copy');
+				ta.remove();
+				e.target.classList.add('copied');
+				e.target.textContent = '✓ Copied';
+				setTimeout(() => { e.target.classList.remove('copied'); e.target.textContent = 'Copy snippet'; }, 1800);
+			}
 		});
 
 		document.getElementById('open-docs').addEventListener('click', () => {
 			window.open('/docs#embed', '_blank');
+		});
+
+		// ── Related agents — fetch from /api/explore ─────────────────
+		async function loadRelated() {
+			const grid = document.getElementById('related-grid');
+			try {
+				const r = await fetch(`/api/explore?source=avatar&quality=high&limit=7&only3d=1`);
+				if (!r.ok) throw new Error('explore fetch failed');
+				const json = await r.json();
+				const items = (json.items || []).filter(it => it.avatarId !== avatarId).slice(0, 4);
+
+				if (items.length === 0) {
+					grid.innerHTML = buildFallbackCards();
+					return;
+				}
+
+				let html = '';
+				items.forEach(it => {
+					const href = `/agent-next?id=${encodeURIComponent(it.avatarId || it.id)}`;
+					const img = it.image || `https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/${it.avatarId}.png`;
+					const name = escHtml(it.name || 'Untitled');
+					const author = escHtml(it.author?.handle ? '@' + it.author.handle : 'community');
+					html += `<a class="related-card" href="${href}">` +
+						`<img src="${escHtml(img)}" alt="${name}" loading="lazy" />` +
+						`<div class="meta"><div class="name">${name}</div><div class="author">${author}</div></div>` +
+						`</a>`;
+				});
+
+				if (items.length < 4) {
+					html += `<a class="related-card" href="/create"><div class="meta"><div class="name">+ Make your own</div><div class="author">Selfie → agent in 60s</div></div></a>`;
+				}
+
+				grid.innerHTML = html;
+			} catch (e) {
+				console.warn('Related agents fetch failed:', e);
+				grid.innerHTML = buildFallbackCards();
+			}
+		}
+
+		function buildFallbackCards() {
+			return `<a class="related-card" href="/discover"><div class="meta"><div class="name">Browse all →</div><div class="author">Public agents</div></div></a>` +
+				`<a class="related-card" href="/create"><div class="meta"><div class="name">+ Make your own</div><div class="author">Selfie → agent in 60s</div></div></a>` +
+				`<a class="related-card" href="/discover?filter=onchain"><div class="meta"><div class="name">On-chain agents</div><div class="author">ERC-8004 directory</div></div></a>`;
+		}
+
+		loadRelated();
+
+		// ── Animation dock — basic playback controls ─────────────────
+		const animDock = document.getElementById('anim-dock');
+		const animPlayBtn = document.getElementById('anim-play');
+		const animName = document.getElementById('anim-name');
+		const animScrub = document.getElementById('anim-scrub');
+		let animPlaying = false;
+
+		agent.addEventListener('agent:ready', () => {
+			const clips = agent._viewer?.clips || agent._scene?.clips;
+			if (clips && clips.length > 0) {
+				animDock.classList.add('visible');
+				animName.textContent = clips[0].name || 'Clip 1';
+				animPlaying = true;
+				animPlayBtn.textContent = '⏸';
+			}
+		});
+
+		animPlayBtn.addEventListener('click', () => {
+			const mixer = agent._viewer?.mixer || agent._scene?.mixer;
+			if (!mixer) return;
+			animPlaying = !animPlaying;
+			animPlayBtn.textContent = animPlaying ? '⏸' : '▶';
+			if (animPlaying) {
+				mixer.timeScale = 1;
+			} else {
+				mixer.timeScale = 0;
+			}
+		});
+
+		animScrub.addEventListener('input', () => {
+			const mixer = agent._viewer?.mixer || agent._scene?.mixer;
+			if (!mixer) return;
+			const action = mixer._actions?.[0];
+			if (!action) return;
+			const clip = action.getClip();
+			action.time = (animScrub.value / 1000) * clip.duration;
+			if (!animPlaying) mixer.update(0);
 		});
 	</script>
 </body>

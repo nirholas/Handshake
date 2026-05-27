@@ -1,29 +1,34 @@
 /**
- * Selfie pipeline — bridges the capture UI on /create/selfie to the native
+ * Selfie pipeline -- bridges the capture UI on /create/selfie to the native
  * avatar reconstruction backend.
  *
  * Flow:
- *   [selfie:submit] → downscale photos (frontal required, sides optional)
- *     → dispatches selfie:preview { dataUrl } so the build view can show the
+ *   [selfie:submit] -> downscale photos (frontal required, sides optional)
+ *     -> dispatches selfie:preview { dataUrl } so the build view can show the
  *       user's own photo on a placeholder body while the real GLB renders
- *     → POST /api/avatars/reconstruct
- *     → dispatches selfie:building { jobId }
- *     → poll /api/avatars/regenerate-status?jobId=…
- *     → dispatches selfie:progress { label } on each poll tick
- *     → on { status: 'done', resultAvatarId } → dispatches selfie:done { avatarId }
- *     → on { status: 'failed' } or timeout → dispatches selfie:build-error
+ *     -> POST /api/avatars/reconstruct
+ *     -> dispatches selfie:building { jobId }
+ *     -> poll /api/avatars/regenerate-status?jobId=...
+ *     -> dispatches selfie:progress { label } on each poll tick
+ *     -> on { status: 'done', resultAvatarId } -> dispatches selfie:done { avatarId }
+ *     -> on { status: 'failed' } or timeout -> dispatches selfie:build-error
  *         { message, slot? } where slot is the photo that likely caused the failure
  */
+
+import { detectFaceIdentity } from './avatar-face-capture.js';
 
 const SUBMIT_ENDPOINT = '/api/avatars/reconstruct';
 const STATUS_ENDPOINT = '/api/avatars/regenerate-status';
 const MAX_DIM = 1024;
 const JPEG_QUALITY = 0.88;
 const POLL_INTERVAL_MS = 3000;
-const POLL_TIMEOUT_MS = 5 * 60 * 1000;
+const POLL_TIMEOUT_MS = 8 * 60 * 1000;
+const RATE_LIMIT_COOLDOWN_MS = 60_000;
 
 let _building = false;
 let _lastSlotsSent = /** @type {string[]} */ ([]);
+let _jobStartTime = 0;
+let _rateLimitedUntil = 0;
 
 document.addEventListener('selfie:submit', (event) => {
 	const ev = /** @type {CustomEvent} */ (event);
@@ -43,10 +48,39 @@ document.addEventListener('selfie:submit', (event) => {
 			}));
 		} else {
 			setStatus(err.userMessage || 'Something went wrong. Try again.', { error: true });
-			resetSubmit();
+			if (err.slot) highlightSlotError(err.slot);
+			if (err.rateLimited) {
+				startRateLimitCooldown();
+			} else {
+				resetSubmit();
+			}
 		}
 	});
 });
+
+// Resume polling if we have a pending job from a previous page load.
+(function resumePendingJob() {
+	try {
+		const pending = sessionStorage.getItem('selfie:pendingJobId');
+		if (!pending) return;
+		sessionStorage.removeItem('selfie:pendingJobId');
+		_building = true;
+		_jobStartTime = Date.now();
+		document.dispatchEvent(new CustomEvent('selfie:building', { detail: { jobId: pending } }));
+		pollUntilDone(pending).then((finalJob) => {
+			if (finalJob.resultAvatarId) {
+				document.dispatchEvent(new CustomEvent('selfie:done', {
+					detail: { avatarId: finalJob.resultAvatarId },
+				}));
+			}
+		}).catch((err) => {
+			console.error('[selfie-pipeline] resume failed:', err);
+			document.dispatchEvent(new CustomEvent('selfie:build-error', {
+				detail: { message: err.userMessage || 'Could not resume. Try again.', slot: null },
+			}));
+		});
+	} catch (_) {}
+})();
 
 /**
  * @param {{
@@ -62,24 +96,48 @@ async function run(detail) {
 		throw withMessage(new Error('missing frontal'), 'Add a front-facing photo to start.', 'frontal');
 	}
 
-	setStatus('Preparing photos…');
+	if (Date.now() < _rateLimitedUntil) {
+		const secsLeft = Math.ceil((_rateLimitedUntil - Date.now()) / 1000);
+		const e = withMessage(
+			new Error('rate_limited'),
+			`Too many attempts -- wait ${secsLeft}s and try again.`,
+		);
+		/** @type {any} */ (e).rateLimited = true;
+		throw e;
+	}
+
+	setStatus('Preparing photos...');
 	const slots = /** @type {const} */ (['frontal', 'left', 'right']);
 	_lastSlotsSent = [];
 	const photos = [];
 	for (const slot of slots) {
 		const file = detail.files[slot];
 		if (!file) continue;
-		photos.push(await fileToDataUrl(file));
+		const dataUrl = await fileToDataUrl(file);
+		if (!dataUrl || dataUrl.length < 500) {
+			throw withMessage(new Error('invalid image data'), 'One of your photos could not be processed. Try a different file.', slot);
+		}
+		photos.push(dataUrl);
 		_lastSlotsSent.push(slot);
 	}
 
-	// Emit the frontal photo immediately for the build view's fast preview —
-	// a real image, mapped to the placeholder body until the engine returns.
+	setStatus('Checking face...');
+	const failedSlot = await checkFacesLocal(detail.files);
+	if (failedSlot) {
+		throw withMessage(
+			new Error('client face check failed'),
+			failedSlot === 'frontal'
+				? "We couldn't detect a face in your photo. Make sure your face is clearly visible, well-lit, and not obscured by sunglasses or a mask."
+				: `We couldn't detect a face in your ${failedSlot} angle photo. Try a clearer shot or remove it.`,
+			failedSlot,
+		);
+	}
+
 	document.dispatchEvent(new CustomEvent('selfie:preview', {
 		detail: { dataUrl: photos[0] },
 	}));
 
-	setStatus('Submitting to avatar engine…');
+	setStatus('Submitting to avatar engine...');
 	const submitRes = await fetch(SUBMIT_ENDPOINT, {
 		method: 'POST',
 		credentials: 'include',
@@ -103,9 +161,12 @@ async function run(detail) {
 	}
 
 	_building = true;
+	_jobStartTime = Date.now();
+	try { sessionStorage.setItem('selfie:pendingJobId', submitData.jobId); } catch (_) {}
 	document.dispatchEvent(new CustomEvent('selfie:building', { detail: { jobId: submitData.jobId } }));
 
 	const finalJob = await pollUntilDone(submitData.jobId);
+	try { sessionStorage.removeItem('selfie:pendingJobId'); } catch (_) {}
 
 	if (!finalJob.resultAvatarId) {
 		throw withMessage(
@@ -120,6 +181,41 @@ async function run(detail) {
 }
 
 /**
+ * Check all submitted photos for faces. Returns the first failing slot name,
+ * or null if all pass. Frontal is required; sides are optional.
+ * @param {Record<string, File | null>} files
+ * @returns {Promise<string | null>}
+ */
+async function checkFacesLocal(files) {
+	const slots = ['frontal', 'left', 'right'];
+	for (const slot of slots) {
+		const file = files[slot];
+		if (!file) continue;
+		const ok = await checkFaceLocal(file);
+		if (!ok) return slot;
+	}
+	return null;
+}
+
+/**
+ * Quick client-side face check via MediaPipe. Returns true if a face is
+ * found, false otherwise. Never blocks submission on load failure -- if
+ * MediaPipe can't load, we skip and let the server decide.
+ * @param {File} file
+ * @returns {Promise<boolean>}
+ */
+async function checkFaceLocal(file) {
+	try {
+		const img = await loadBitmap(file);
+		const result = await detectFaceIdentity(img);
+		if (img.close) img.close();
+		return result !== null;
+	} catch (_) {
+		return true;
+	}
+}
+
+/**
  * Poll the status endpoint until the job reaches a terminal state, throwing
  * with a user-facing message on failure or timeout.
  * @param {string} jobId
@@ -127,17 +223,27 @@ async function run(detail) {
 async function pollUntilDone(jobId) {
 	const deadline = Date.now() + POLL_TIMEOUT_MS;
 	let attempt = 0;
+	let consecutiveErrors = 0;
 	const url = `${STATUS_ENDPOINT}?jobId=${encodeURIComponent(jobId)}`;
 
 	while (Date.now() < deadline) {
-		await sleep(attempt === 0 ? 1500 : POLL_INTERVAL_MS);
+		const interval = attempt === 0 ? 1500 : backoffInterval(consecutiveErrors);
+		await sleep(interval);
 		attempt += 1;
 
 		let res;
 		try {
 			res = await fetch(url, { credentials: 'include' });
+			consecutiveErrors = 0;
 		} catch (err) {
-			console.warn('[selfie-pipeline] poll fetch failed:', err);
+			consecutiveErrors += 1;
+			console.warn('[selfie-pipeline] poll fetch failed (%d):', consecutiveErrors, err);
+			if (consecutiveErrors >= 5) {
+				throw withMessage(
+					new Error('poll network failure'),
+					'Lost connection to the avatar engine. Check your internet and try again.',
+				);
+			}
 			continue;
 		}
 
@@ -145,13 +251,15 @@ async function pollUntilDone(jobId) {
 			if (res.status === 404) {
 				throw withMessage(new Error('job vanished'), 'Job disappeared. Try again.');
 			}
-			// transient — keep polling
+			consecutiveErrors += 1;
 			continue;
 		}
 
 		const job = await res.json().catch(() => ({}));
+		const elapsed = Date.now() - _jobStartTime;
+
 		document.dispatchEvent(new CustomEvent('selfie:progress', {
-			detail: { label: statusLabel(job.status, attempt), attempt },
+			detail: { label: statusLabel(job.status, attempt, elapsed), attempt },
 		}));
 
 		if (job.status === 'done') return job;
@@ -162,6 +270,13 @@ async function pollUntilDone(jobId) {
 				inferFailingSlot(job.error),
 			);
 		}
+
+		if (elapsed > 10 * 60 * 1000 && job.status === 'running') {
+			throw withMessage(
+				new Error('stalled job'),
+				'This is taking unusually long. Your avatar may still be processing -- check your dashboard in a few minutes.',
+			);
+		}
 	}
 
 	throw withMessage(
@@ -170,47 +285,59 @@ async function pollUntilDone(jobId) {
 	);
 }
 
+/** @param {number} errors */
+function backoffInterval(errors) {
+	if (errors <= 0) return POLL_INTERVAL_MS;
+	return Math.min(POLL_INTERVAL_MS * Math.pow(1.5, errors), 30_000);
+}
+
 /**
  * @param {'queued'|'running'|'done'|'failed'|undefined} status
  * @param {number} attempt
+ * @param {number} elapsedMs
  */
-function statusLabel(status, attempt) {
-	if (status === 'queued') return 'Queued — waiting for a reconstruction slot…';
+function statusLabel(status, attempt, elapsedMs) {
+	if (status === 'queued') return 'Queued -- waiting for a reconstruction slot...';
 	if (status === 'running') {
-		if (attempt <= 6) return 'Analyzing face geometry…';
-		if (attempt <= 14) return 'Building mesh…';
-		return 'Finishing rig…';
+		if (attempt <= 4) return 'Generating 3D mesh from your photo...';
+		if (attempt <= 12) return 'Building geometry and textures...';
+		if (attempt <= 25) return 'Auto-rigging skeleton and skinning...';
+		if (attempt <= 35) return 'Finishing avatar...';
+		if (elapsedMs > 5 * 60 * 1000) return 'Still working -- this one is taking a bit longer...';
+		return 'Almost there -- finalizing...';
 	}
 	if (status === 'done') return 'Done!';
-	return `Processing… (${attempt}s)`;
+	return 'Processing...';
 }
 
 /** @param {string | null | undefined} raw */
 function friendlyJobError(raw) {
 	if (!raw) return 'Avatar reconstruction failed. Try clearer photos in better light.';
 	const lower = raw.toLowerCase();
+
 	if (lower.includes('face') && lower.includes('detect'))
 		return 'We could not find a face in your front photo. Try a clearer, well-lit shot.';
-	if (lower.includes('nsfw')) return 'Your photo was flagged by content safety. Try a different shot.';
-	if (lower.includes('blur')) return 'Your photo looks blurry. Try again with a sharper shot in better light.';
-	if (lower.includes('timeout')) return 'The engine took too long. Try again in a moment.';
+	if (lower.includes('nsfw'))
+		return 'Your photo was flagged by content safety. Try a different shot.';
+	if (lower.includes('blur'))
+		return 'Your photo looks blurry. Try again with a sharper shot in better light.';
+
+	if (lower.includes('unreachable') || lower.includes('service') || lower.includes('502') || lower.includes('503'))
+		return 'The avatar engine is temporarily unavailable. Please try again in a few minutes.';
+	if (lower.includes('timeout') || lower.includes('timed out'))
+		return 'The engine took too long. Try again in a moment.';
+	if (lower.includes('oom') || lower.includes('memory'))
+		return 'The engine ran out of resources. Try again with a simpler photo.';
+
 	return 'Avatar reconstruction failed. Try again with a clearer photo.';
 }
 
 /**
- * Server errors don't always tell us which photo caused the failure. Use the
- * order we submitted (frontal first) plus error-text hints to guess so the UI
- * can flag the right slot for retake. Returns null when there's nothing useful
- * to infer.
  * @param {string | null | undefined} raw
  */
 function inferFailingSlot(raw) {
 	if (!_lastSlotsSent.length) return null;
-	if (!raw) {
-		// No detail — frontal is the most likely culprit and the one the user
-		// definitely supplied.
-		return _lastSlotsSent[0];
-	}
+	if (!raw) return _lastSlotsSent[0];
 	const lower = raw.toLowerCase();
 	if (lower.includes('left')) return _lastSlotsSent.includes('left') ? 'left' : null;
 	if (lower.includes('right')) return _lastSlotsSent.includes('right') ? 'right' : null;
@@ -225,8 +352,6 @@ function defaultAvatarName() {
 }
 
 /**
- * Reads a File, paints it into a canvas clamped to MAX_DIM × MAX_DIM, returns
- * a JPEG data URL. Keeps upload payloads predictable across phone camera sizes.
  * @param {File} file
  */
 async function fileToDataUrl(file) {
@@ -238,11 +363,7 @@ async function fileToDataUrl(file) {
 	const ctx = canvas.getContext('2d');
 	if (!ctx) throw new Error('2d canvas unsupported');
 	ctx.drawImage(bitmap, 0, 0, width, height);
-	try {
-		bitmap.close?.();
-	} catch (_) {
-		// ImageBitmap.close is optional on older browsers
-	}
+	try { bitmap.close?.(); } catch (_) {}
 	return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
 }
 
@@ -251,9 +372,7 @@ async function loadBitmap(file) {
 	if (typeof createImageBitmap === 'function') {
 		try {
 			return await createImageBitmap(file);
-		} catch (_) {
-			// fall through to <img> fallback
-		}
+		} catch (_) {}
 	}
 	return new Promise((resolve, reject) => {
 		const img = new Image();
@@ -296,11 +415,14 @@ function mapApiError(status, payload) {
 		);
 	if (status === 413)
 		return withMessage(new Error(code || 'too_large'), 'Photos are too large. Try again.');
-	if (status === 429)
-		return withMessage(
+	if (status === 429) {
+		const e = withMessage(
 			new Error(code || 'rate_limited'),
-			'Too many attempts — wait a minute and try again.',
+			'Too many attempts -- wait a minute and try again.',
 		);
+		/** @type {any} */ (e).rateLimited = true;
+		return e;
+	}
 	if (status === 501)
 		return withMessage(
 			new Error(code || 'not_configured'),
@@ -333,9 +455,10 @@ function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// ── UI helpers ─────────────────────────────────────────────────────────────
+// ── UI helpers ────────────────────────────────────────────────────────────
 const submitBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('submit-btn'));
 let errorBanner = /** @type {HTMLElement | null} */ (null);
+let _cooldownTimer = 0;
 
 /** @param {string} text @param {{ error?: boolean }} [opts] */
 function setStatus(text, opts = {}) {
@@ -372,4 +495,34 @@ function resetSubmit() {
 	const labelEl = submitBtn.querySelector('.label');
 	if (labelEl) labelEl.textContent = 'Build my avatar';
 	else submitBtn.textContent = 'Build my avatar';
+}
+
+/** @param {string} slot */
+function highlightSlotError(slot) {
+	const frame = document.querySelector(
+		slot === 'frontal'
+			? '.hero-slot[data-slot="frontal"]'
+			: `.slot-frame[data-slot="${slot}"]`,
+	);
+	frame?.classList.add('error');
+	if (slot !== 'frontal') {
+		const fid = /** @type {HTMLDetailsElement|null} */ (document.getElementById('fidelity-boost'));
+		if (fid) fid.open = true;
+	}
+}
+
+function startRateLimitCooldown() {
+	_rateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS;
+	if (_cooldownTimer) clearInterval(_cooldownTimer);
+	_cooldownTimer = window.setInterval(() => {
+		const remaining = Math.ceil((_rateLimitedUntil - Date.now()) / 1000);
+		if (remaining <= 0) {
+			clearInterval(_cooldownTimer);
+			_cooldownTimer = 0;
+			_rateLimitedUntil = 0;
+			resetSubmit();
+			return;
+		}
+		setStatus(`Rate limited -- try again in ${remaining}s`, { error: true });
+	}, 1000);
 }

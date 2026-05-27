@@ -204,7 +204,8 @@ function agentCard(a, avatars) {
 
 			<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:flex-end">
 				<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-					<a class="dn-btn ghost" href="/app?agent=${encodeURIComponent(a.id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">View ↗</a>
+					${a.avatar_id ? `<a class="dn-btn primary" href="/agent-next?id=${encodeURIComponent(a.avatar_id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">Live page ↗</a>` : ''}
+					<a class="dn-btn ghost" href="/app?agent=${encodeURIComponent(a.id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">3D Studio ↗</a>
 					<button class="dn-btn" data-action="edit-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Edit</button>
 					<button class="dn-btn" data-action="persona-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Persona</button>
 					<button class="dn-btn" data-action="view-reputation" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Reputation</button>

@@ -8,8 +8,11 @@
 // GMGN_COOKIE env var containing a valid cf_clearance value.
 
 const GMGN_BASE = 'https://gmgn.ai/defi/quotation/v1';
+const DEXSCREENER_BASE = 'https://api.dexscreener.com';
 const POLL_MS = 30_000;
 const FETCH_TIMEOUT_MS = 10_000;
+
+const CHAIN_TO_DEXSCREENER = { sol: 'solana', eth: 'ethereum', base: 'base', bsc: 'bsc', tron: 'tron' };
 
 function gmgnHeaders() {
 	const h = {
@@ -33,6 +36,63 @@ async function fetchRank({ chain = 'sol', interval = '1h' } = {}) {
 		if (!r.ok) return { ok: false, status: r.status };
 		const d = await r.json();
 		return { ok: true, rank: d?.data?.rank ?? [] };
+	} catch (err) {
+		return { ok: false, error: err?.message };
+	} finally {
+		clearTimeout(tid);
+	}
+}
+
+async function fetchDexScreener({ chain = 'sol' } = {}) {
+	const dexChain = CHAIN_TO_DEXSCREENER[chain] || 'solana';
+	const ctrl = new AbortController();
+	const tid = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+	try {
+		const boostsRes = await fetch(`${DEXSCREENER_BASE}/token-boosts/top/v1`, {
+			headers: { accept: 'application/json' },
+			signal: ctrl.signal,
+		});
+		if (!boostsRes.ok) return { ok: false, status: boostsRes.status };
+		const boosts = await boostsRes.json();
+		const chainTokens = boosts.filter((t) => t.chainId === dexChain).slice(0, 20);
+		if (!chainTokens.length) return { ok: true, rank: [], source: 'dexscreener' };
+
+		const addresses = chainTokens.map((t) => t.tokenAddress).join(',');
+		const pairsRes = await fetch(`${DEXSCREENER_BASE}/tokens/v1/${dexChain}/${addresses}`, {
+			headers: { accept: 'application/json' },
+			signal: ctrl.signal,
+		});
+		if (!pairsRes.ok) return { ok: false, status: pairsRes.status };
+		const pairs = await pairsRes.json();
+
+		const boostMap = new Map(chainTokens.map((t) => [t.tokenAddress, t]));
+		const seen = new Set();
+		const rank = [];
+		for (const pair of pairs) {
+			const addr = pair.baseToken?.address;
+			if (!addr || seen.has(addr)) continue;
+			seen.add(addr);
+			const boost = boostMap.get(addr);
+			rank.push({
+				address: addr,
+				symbol: pair.baseToken?.symbol || '???',
+				name: pair.baseToken?.name || pair.baseToken?.symbol || 'Unknown',
+				price: pair.priceUsd != null ? Number(pair.priceUsd) : null,
+				market_cap: pair.marketCap != null ? Number(pair.marketCap) : null,
+				volume: pair.volume?.h24 != null ? Number(pair.volume.h24) : null,
+				holder_count: null,
+				smart_buy_24h: boost?.totalAmount ?? pair.boosts?.active ?? 0,
+				smart_sell_24h: 0,
+				price_change_1h: pair.priceChange?.h1 != null ? Number(pair.priceChange.h1) : null,
+				price_change_24h: pair.priceChange?.h24 != null ? Number(pair.priceChange.h24) : null,
+				liquidity: pair.liquidity?.usd != null ? Number(pair.liquidity.usd) : null,
+				txns_h1_buys: pair.txns?.h1?.buys ?? null,
+				txns_h1_sells: pair.txns?.h1?.sells ?? null,
+			});
+		}
+
+		rank.sort((a, b) => (b.smart_buy_24h || 0) - (a.smart_buy_24h || 0));
+		return { ok: true, rank, source: 'dexscreener' };
 	} catch (err) {
 		return { ok: false, error: err?.message };
 	} finally {
@@ -70,6 +130,7 @@ export function connectGmgnFeed({ onEvent, signal, chain = 'sol', interval = '1h
 	const id = ++_pollerId;
 	let active = true;
 	let timer = null;
+	let _gmgnBlocked = false;
 
 	function stop() {
 		active = false;
@@ -82,7 +143,20 @@ export function connectGmgnFeed({ onEvent, signal, chain = 'sol', interval = '1h
 	async function poll() {
 		if (!active) return;
 
-		const result = await fetchRank({ chain, interval });
+		let result;
+		if (!_gmgnBlocked) {
+			result = await fetchRank({ chain, interval });
+			if (result.ok) {
+				result.source = 'gmgn';
+			} else if (result.status === 403) {
+				_gmgnBlocked = true;
+			}
+		}
+
+		if (_gmgnBlocked) {
+			result = await fetchDexScreener({ chain });
+		}
+
 		if (!active) return;
 
 		if (!result.ok) {
@@ -103,9 +177,10 @@ export function connectGmgnFeed({ onEvent, signal, chain = 'sol', interval = '1h
 				const prevCount = prevItem ? Number(prevItem.smart_buy_24h ?? prevItem.smart_buy ?? 0) : 0;
 
 				if (!prevItem || smartCount > prevCount) {
+					const source = result.source || 'gmgn';
 					const ev = {
 						kind: 'smart_entry',
-						data: normalize(item, smartCount, prevCount, chain, interval),
+						data: normalize(item, smartCount, prevCount, chain, interval, source),
 					};
 					pushBuffer(ev);
 					if (active) onEvent(ev);
@@ -113,7 +188,8 @@ export function connectGmgnFeed({ onEvent, signal, chain = 'sol', interval = '1h
 			}
 
 			_snapshots.set(id, next);
-			onEvent({ kind: 'status', data: { state: 'live', polled_at: Date.now(), count: next.size } });
+			const source = result.source || 'gmgn';
+			onEvent({ kind: 'status', data: { state: 'live', polled_at: Date.now(), count: next.size, source } });
 		}
 
 		if (active) timer = setTimeout(poll, POLL_MS);
@@ -123,7 +199,7 @@ export function connectGmgnFeed({ onEvent, signal, chain = 'sol', interval = '1h
 	return stop;
 }
 
-function normalize(item, smartCount, prevCount, chain, interval) {
+function normalize(item, smartCount, prevCount, chain, interval, source = 'gmgn') {
 	const mc = item.market_cap != null ? Number(item.market_cap) : null;
 	const price = item.price != null ? Number(item.price) : null;
 	return {
@@ -143,6 +219,9 @@ function normalize(item, smartCount, prevCount, chain, interval) {
 		is_new: prevCount === 0,
 		chain,
 		interval,
+		source,
+		txns_h1_buys: item.txns_h1_buys ?? null,
+		txns_h1_sells: item.txns_h1_sells ?? null,
 		open_timestamp: item.open_timestamp ?? null,
 		timestamp: Math.floor(Date.now() / 1000),
 	};

@@ -47,6 +47,16 @@ function discoverDashboardNextInputs() {
 const appConfig = {
 	server: {
 		proxy: {
+			'/ingest/static': {
+				target: 'https://us-assets.i.posthog.com',
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/ingest/, ''),
+			},
+			'/ingest': {
+				target: 'https://us.i.posthog.com',
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/ingest/, ''),
+			},
 			'/chat': {
 				target: 'http://localhost:5174',
 				changeOrigin: true,
@@ -176,6 +186,7 @@ creating: resolve(__dirname, 'pages/creating.html'),
 				'x-pricing': resolve(__dirname, 'pages/x-pricing.html'),
 				'home-next': resolve(__dirname, 'pages/home-next.html'),
 				'home-v3': resolve(__dirname, 'pages/home-v3.html'),
+				'home-v4': resolve(__dirname, 'pages/home-v4.html'),
 				'agent-next': resolve(__dirname, 'pages/agent-next.html'),
 				'discover-next': resolve(__dirname, 'pages/discover-next.html'),
 				walk: resolve(__dirname, 'pages/walk.html'),
@@ -454,6 +465,8 @@ creating: resolve(__dirname, 'pages/creating.html'),
 					'/home-classic/': resolve(root, 'pages/home.html'),
 					'/home-v3': resolve(root, 'pages/home-v3.html'),
 					'/home-v3/': resolve(root, 'pages/home-v3.html'),
+					'/home-v4': resolve(root, 'pages/home-v4.html'),
+					'/home-v4/': resolve(root, 'pages/home-v4.html'),
 					'/features': resolve(root, 'pages/features.html'),
 					'/features/': resolve(root, 'pages/features.html'),
 					'/agent': resolve(root, 'pages/agent-home.html'),
@@ -729,7 +742,7 @@ creating: resolve(__dirname, 'pages/creating.html'),
 					]);
 					const filename = (ctx.filename || ctx.path || '').replace(/\\/g, '/').split('/').pop();
 					if (EMBED_FILES.has(filename)) return [];
-					const SNIPPET = `!function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias set_config reset opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_distinct_id get_session_id get_session_replay_url register register_once unregister on onFeatureFlags reloadFeatureFlags getFeatureFlag getFeatureFlagPayload isFeatureEnabled addExceptionStep captureException".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);posthog.init('phc_kvi8nrXqrNkLNy2NhaiwkbGyj77XpSJo54P5k2ZHYo9n',{api_host:'https://us.i.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'})`;
+					const SNIPPET = `!function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){window.__posthog_blocked=!0},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias set_config reset opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_distinct_id get_session_id get_session_replay_url register register_once unregister on onFeatureFlags reloadFeatureFlags getFeatureFlag getFeatureFlagPayload isFeatureEnabled addExceptionStep captureException".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);posthog.init('phc_kvi8nrXqrNkLNy2NhaiwkbGyj77XpSJo54P5k2ZHYo9n',{api_host:'/ingest',ui_host:'https://us.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'})`;
 					return [{ tag: 'script', children: SNIPPET, injectTo: 'head' }];
 				},
 			},

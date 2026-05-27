@@ -528,6 +528,10 @@
 			"dest": "/home-v3.html"
 		},
 		{
+			"src": "/home-v4/?",
+			"dest": "/home-v4.html"
+		},
+		{
 			"src": "/agent-next/?",
 			"dest": "/agent-next.html"
 		},
@@ -1903,6 +1907,14 @@
 		{
 			"src": "/api/(.*)",
 			"dest": "/api/$1"
+		},
+		{
+			"src": "/ingest/static/(.*)",
+			"dest": "https://us-assets.i.posthog.com/static/$1"
+		},
+		{
+			"src": "/ingest/(.*)",
+			"dest": "https://us.i.posthog.com/$1"
 		},
 		{
 			"src": "/agent-3d/([0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?)/(.*)",

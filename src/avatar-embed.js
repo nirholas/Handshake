@@ -129,7 +129,9 @@ async function main() {
 		return;
 	}
 
-	const namePlate = !overlayMode && params.get('name') !== '0';
+	const hideChrome = params.get('hide-chrome') === '1';
+
+	const namePlate = !overlayMode && !hideChrome && params.get('name') !== '0';
 	if (namePlate && resolved.name) {
 		document.getElementById('name-plate').textContent = resolved.name;
 	}
@@ -167,8 +169,6 @@ async function main() {
 	if (startAnim) {
 		animMgr.crossfadeTo(startAnim, 0.3).catch(() => {});
 	}
-
-	const hideChrome = params.get('hide-chrome') === '1';
 
 	const pickerEnabled = params.get('animPicker') !== '0' && !overlayMode && !hideChrome;
 	if (pickerEnabled && animDefs.length > 0) {

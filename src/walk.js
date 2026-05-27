@@ -200,6 +200,10 @@ let arFrozenCamLook = null;
 const PITCH_MIN = -0.6;
 const PITCH_MAX = 0.7;
 
+const CAM_ZOOM_MIN = 0.6;
+const CAM_ZOOM_MAX = 3.2;
+let camZoom = 1.0;
+
 // Place the camera at its starting pose immediately so frame 0 isn't blank.
 function applyCameraImmediate() {
 	const offset = CAM_OFFSET.clone().multiplyScalar(camZoom);
@@ -280,10 +284,6 @@ function triggerJump() {
 const SNAP_TURN_RAD = Math.PI / 4; // 45°
 
 // ── Scroll-wheel zoom ────────────────────────────────────────────────────
-const CAM_ZOOM_MIN = 0.6;
-const CAM_ZOOM_MAX = 3.2;
-let camZoom = 1.0; // multiplier on CAM_OFFSET distance
-
 canvas.addEventListener('wheel', (e) => {
 	e.preventDefault();
 	camZoom = Math.max(CAM_ZOOM_MIN, Math.min(CAM_ZOOM_MAX, camZoom + e.deltaY * 0.001));

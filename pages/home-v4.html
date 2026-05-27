@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws — Give Your AI a Body</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="The 3D identity layer for AI agents. Create, animate, and deploy embodied agents — owned on Solana."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="three.ws" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="three.ws — Give Your AI a Body" />
+		<meta
+			property="og:description"
+			content="The 3D identity layer for AI agents. Create, animate, and deploy embodied agents — owned on Solana."
+		/>
+		<meta property="og:url" content="https://three.ws/" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="three.ws — Give Your AI a Body" />
+		<meta
+			name="twitter:description"
+			content="The 3D identity layer for AI agents. Create, animate, and deploy embodied agents — owned on Solana."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+
+		<link rel="canonical" href="https://three.ws/" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/home-v4.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/footer.css" media="print" onload="this.media='all'" />
+		<script defer src="/footer-newsletter.js"></script>
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
+		<script type="module" src="/src/home-v4-hero.js"></script>
+		<script type="module" src="/src/home-act2-viewer.js"></script>
+		<script type="module" src="/src/home-v4-scroll.js"></script>
+	</head>
+	<body class="home-page v4-page">
+		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+		<header>
+			<h1>
+				<a href="/" aria-label="three.ws home"
+					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span
+						class="wordmark-dot"
+						aria-hidden="true"
+					></span
+					>three.ws</a
+				>
+			</h1>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main id="main-content">
+
+			<!-- ═══════════════════════════════════════════════════════════
+			     SECTION 1: THE STAGE  (hero — full viewport)
+			     ═══════════════════════════════════════════════════════════ -->
+			<section class="v4-hero" id="stage">
+				<div class="v4-hero-grid" aria-hidden="true"></div>
+				<canvas class="v4-hero-canvas" id="v4-hero-canvas"></canvas>
+				<div class="v4-hero-vignette" aria-hidden="true"></div>
+
+				<div class="v4-hero-text">
+					<div class="v4-eyebrow v4-reveal">
+						<span class="v4-eyebrow-dot"></span>
+						<span>The 3D layer for onchain AI agents</span>
+					</div>
+					<h2 class="v4-title v4-reveal">Give your AI<br />a <em>body</em>.</h2>
+					<p class="v4-subtitle v4-reveal">
+						Create a 3D avatar from a selfie. Animate it with 70+ moves.
+						Give it an AI brain. Mint it on Solana. Embed it anywhere with one tag.
+					</p>
+					<div class="v4-cta-row v4-reveal">
+						<a href="/create" class="v4-btn-primary">
+							<span>Build your agent</span>
+							<span class="arrow">→</span>
+						</a>
+						<a href="#experience" class="v4-btn-ghost">Try it live</a>
+					</div>
+					<ul class="v4-standards v4-reveal" aria-label="Supported standards">
+						<li>glTF 2.0</li>
+						<li>GLB</li>
+						<li>Solana</li>
+						<li>Metaplex Core</li>
+						<li>A2A</li>
+						<li>MCP</li>
+					</ul>
+				</div>
+
+				<div class="v4-scroll-hint" aria-hidden="true">
+					<span>scroll</span>
+					<span class="v4-scroll-line"></span>
+				</div>
+			</section>
+
+			<!-- ═══════════════════════════════════════════════════════════
+			     SECTION 2: THE EXPERIENCE  (interactive demo)
+			     ═══════════════════════════════════════════════════════════ -->
+			<section class="v4-experience" id="experience">
+				<div class="v4-exp-bg" aria-hidden="true"></div>
+				<div class="v4-exp-content">
+					<div class="v4-exp-stage">
+						<canvas class="v4-exp-canvas" id="v4-exp-canvas"></canvas>
+					</div>
+					<div class="v4-exp-sidebar">
+						<div class="v4-exp-header">
+							<div class="v4-eyebrow">
+								<span class="v4-eyebrow-dot"></span>
+								<span>Pick &amp; animate</span>
+							</div>
+							<h2 class="v4-section-title">Your agent.<br /><em>Any move.</em></h2>
+							<p class="v4-section-lede">
+								Choose a model, click any animation. 70+ moves from dance to combat — all retargeted to any skeleton in real time.
+							</p>
+						</div>
+						<div class="v4-exp-models">
+							<button class="v4-model-btn active" data-model="/avatars/cz.glb" data-label="CZ">CZ</button>
+							<button class="v4-model-btn" data-model="/animations/robotexpressive.glb" data-label="Robot">Robot</button>
+							<button class="v4-model-btn" data-model="/animations/soldier.glb" data-label="Soldier">Soldier</button>
+						</div>
+						<div class="v4-exp-chips" id="v4-anim-chips"></div>
+						<div class="v4-exp-stats" id="v4-stats">
+							<div class="v4-stat">
+								<span class="v4-stat-value" data-stat="agents">—</span>
+								<span class="v4-stat-label">agents live</span>
+							</div>
+							<div class="v4-stat">
+								<span class="v4-stat-value" data-stat="animations">70+</span>
+								<span class="v4-stat-label">animations</span>
+							</div>
+							<div class="v4-stat">
+								<span class="v4-stat-value" data-stat="onchain">—</span>
+								<span class="v4-stat-label">on-chain</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ═══════════════════════════════════════════════════════════
+			     SECTION 3: THE CREATION  (how it works)
+			     ═══════════════════════════════════════════════════════════ -->
+			<section class="v4-creation" id="creation">
+				<div class="v4-creation-inner">
+					<div class="v4-creation-header v4-reveal">
+						<p class="v4-section-label">How it works</p>
+						<h2 class="v4-section-title">From selfie to<br /><em>earning agent</em> in four steps.</h2>
+					</div>
+					<ol class="v4-steps">
+						<li class="v4-step v4-reveal">
+							<a href="/create" class="v4-step-card">
+								<div class="v4-step-num">01</div>
+								<div class="v4-step-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+										<circle cx="12" cy="8" r="4"/>
+										<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+									</svg>
+								</div>
+								<div class="v4-step-body">
+									<h3>Create your avatar</h3>
+									<p>Snap a selfie or upload a GLB. three.ws renders a full-body 3D agent in the browser.</p>
+								</div>
+								<span class="v4-step-cta">Start creating →</span>
+							</a>
+						</li>
+						<li class="v4-step v4-reveal">
+							<a href="/dashboard/agents" class="v4-step-card">
+								<div class="v4-step-num">02</div>
+								<div class="v4-step-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+										<rect x="5" y="2" width="14" height="14" rx="3"/>
+										<circle cx="9" cy="8" r="1.2"/>
+										<circle cx="15" cy="8" r="1.2"/>
+										<path d="M9 11.5h6M2 19l3-3h14l3 3v2a1 1 0 01-1 1H3a1 1 0 01-1-1v-2z"/>
+									</svg>
+								</div>
+								<div class="v4-step-body">
+									<h3>Build your agent</h3>
+									<p>Give it a name, on-chain identity, and AI brain. Connect Claude, GPT, or your own model over MCP.</p>
+								</div>
+								<span class="v4-step-cta">Configure agent →</span>
+							</a>
+						</li>
+						<li class="v4-step v4-reveal">
+							<a href="/dashboard/widgets" class="v4-step-card">
+								<div class="v4-step-num">03</div>
+								<div class="v4-step-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+										<rect x="2" y="3" width="9" height="9" rx="1.5"/>
+										<rect x="13" y="3" width="9" height="9" rx="1.5"/>
+										<rect x="2" y="14" width="9" height="9" rx="1.5"/>
+										<rect x="13" y="14" width="9" height="9" rx="1.5"/>
+									</svg>
+								</div>
+								<div class="v4-step-body">
+									<h3>Embed anywhere</h3>
+									<p>Drop a single <code>&lt;agent-3d&gt;</code> tag on any site. Chat widget, floating button, full-screen — one line of HTML.</p>
+								</div>
+								<span class="v4-step-cta">Create widget →</span>
+							</a>
+						</li>
+						<li class="v4-step v4-reveal">
+							<a href="/dashboard/monetize" class="v4-step-card">
+								<div class="v4-step-num">04</div>
+								<div class="v4-step-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+										<circle cx="12" cy="12" r="8.5"/>
+										<path d="M12 7v10M9 9.5h4.5a2.5 2.5 0 010 5H10a2.5 2.5 0 000 5H14"/>
+									</svg>
+								</div>
+								<div class="v4-step-body">
+									<h3>Start earning</h3>
+									<p>Charge per message, set a subscription, or accept tips in USDC. Withdrawals land in your Solana wallet.</p>
+								</div>
+								<span class="v4-step-cta">Set up monetization →</span>
+							</a>
+						</li>
+					</ol>
+					<div class="v4-creation-footer v4-reveal">
+						<a href="/create" class="v4-btn-primary">
+							<span>Build your agent now</span>
+							<span class="arrow">→</span>
+						</a>
+					</div>
+				</div>
+			</section>
+
+			<!-- ═══════════════════════════════════════════════════════════
+			     SECTION 4: THE ECOSYSTEM  (bento feature grid)
+			     ═══════════════════════════════════════════════════════════ -->
+			<section class="v4-ecosystem" id="ecosystem">
+				<div class="v4-eco-inner">
+					<div class="v4-eco-header v4-reveal">
+						<p class="v4-section-label">The platform</p>
+						<h2 class="v4-section-title">Everything your agent needs.<br /><em>Nothing it doesn't.</em></h2>
+					</div>
+					<div class="v4-bento">
+						<article class="v4-bento-card v4-bento-lg v4-reveal">
+							<div class="v4-bento-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+									<rect x="2" y="3" width="20" height="14" rx="2"/>
+									<path d="M8 21h8M12 17v4"/>
+								</svg>
+							</div>
+							<h3>Embed anywhere</h3>
+							<p>One <code>&lt;agent-3d&gt;</code> tag. Any site. Inline, floating, full-screen, section — five widget modes, zero config.</p>
+							<div class="v4-bento-code">
+								<code>&lt;agent-3d body="/avatar.glb" brain="claude"&gt;&lt;/agent-3d&gt;</code>
+							</div>
+						</article>
+						<article class="v4-bento-card v4-reveal">
+							<div class="v4-bento-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M12 2L2 7l10 5 10-5-10-5z"/>
+									<path d="M2 17l10 5 10-5"/>
+									<path d="M2 12l10 5 10-5"/>
+								</svg>
+							</div>
+							<h3>On-chain identity</h3>
+							<p>Mint a Metaplex Core asset on Solana. Verifiable, portable, discoverable by any A2A or MCP client.</p>
+						</article>
+						<article class="v4-bento-card v4-reveal">
+							<div class="v4-bento-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M12 2a4 4 0 014 4v2a4 4 0 01-8 0V6a4 4 0 014-4z"/>
+									<path d="M6 10v1a6 6 0 0012 0v-1M12 17v4M8 21h8"/>
+								</svg>
+							</div>
+							<h3>Voice &amp; chat</h3>
+							<p>Real-time speech with lip-sync, text chat with streaming responses. Push-to-talk or always-on.</p>
+						</article>
+						<article class="v4-bento-card v4-reveal">
+							<div class="v4-bento-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+									<circle cx="12" cy="12" r="3"/>
+									<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+								</svg>
+							</div>
+							<h3>AI brain</h3>
+							<p>Connect Claude, GPT, Gemini, or your own model. MCP tools, skills, memory — all pluggable.</p>
+						</article>
+						<article class="v4-bento-card v4-reveal">
+							<div class="v4-bento-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+									<rect x="3" y="3" width="7" height="7" rx="1"/>
+									<rect x="14" y="3" width="7" height="7" rx="1"/>
+									<rect x="3" y="14" width="7" height="7" rx="1"/>
+									<rect x="14" y="14" width="7" height="7" rx="1"/>
+								</svg>
+							</div>
+							<h3>Marketplace</h3>
+							<p>Browse avatars, agents, skills, and widgets built by the community. Install with a click.</p>
+						</article>
+						<article class="v4-bento-card v4-reveal">
+							<div class="v4-bento-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+									<polyline points="16 18 22 12 16 6"/>
+									<polyline points="8 6 2 12 8 18"/>
+								</svg>
+							</div>
+							<h3>SDK &amp; docs</h3>
+							<p>JavaScript, Python, Rust. Full API reference, tutorials, and ready-to-fork examples.</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<!-- ═══════════════════════════════════════════════════════════
+			     SECTION 5: THE CLOSE  (CTA + footer)
+			     ═══════════════════════════════════════════════════════════ -->
+			<section class="v4-close" id="close">
+				<div class="v4-close-bg" aria-hidden="true"></div>
+				<div class="v4-close-inner">
+					<canvas class="v4-close-canvas" id="v4-close-canvas"></canvas>
+					<div class="v4-close-text v4-reveal">
+						<h2 class="v4-close-title">Your AI deserves<br />a <em>body</em>.</h2>
+						<div class="v4-cta-row">
+							<a href="/create" class="v4-btn-primary">
+								<span>Build your agent</span>
+								<span class="arrow">→</span>
+							</a>
+							<a href="/docs" class="v4-btn-ghost">Read the docs</a>
+						</div>
+					</div>
+					<div class="v4-close-snippet v4-reveal">
+						<div class="v4-snippet-label">Add to any site</div>
+						<pre class="v4-snippet-code"><code>&lt;script src="https://three.ws/agent-3d/latest/agent-3d.js"&gt;&lt;/script&gt;
+&lt;agent-3d body="/your-avatar.glb" brain="claude"&gt;&lt;/agent-3d&gt;</code></pre>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Footer (reuse existing horizon style) ── -->
+			<footer class="h-footer h-footer-horizon">
+				<div class="h-footer-glow-line" aria-hidden="true"></div>
+				<div class="h-footer-floor" aria-hidden="true"></div>
+				<div class="h-footer-haze" aria-hidden="true"></div>
+				<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+				<div class="h-footer-avatar" aria-hidden="true">
+					<model-viewer
+						src="/animations/robotexpressive.glb"
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="20deg"
+						interaction-prompt="none"
+						camera-controls="false"
+						disable-zoom
+						shadow-intensity="0"
+						exposure="0.7"
+						environment-image="neutral"
+						camera-orbit="0deg 80deg 9m"
+						field-of-view="45deg"
+						loading="lazy"
+					></model-viewer>
+				</div>
+
+				<div class="h-footer-cta">
+					<div class="h-footer-newsletter">
+						<h3>Stay in the loop</h3>
+						<p>Get updates on new features, agent tooling, and protocol changes.</p>
+						<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+							<input
+								type="email"
+								class="h-footer-newsletter-input"
+								name="email"
+								placeholder="Enter your email"
+								aria-label="Email address"
+								autocomplete="email"
+								required
+							/>
+							<button
+								type="submit"
+								class="h-footer-newsletter-btn"
+								aria-label="Subscribe"
+							>
+								<svg viewBox="0 0 16 16" aria-hidden="true">
+									<path
+										fill="none"
+										stroke="currentColor"
+										stroke-width="1.6"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M2 8h11m0 0L9 4m4 4l-4 4"
+									/>
+								</svg>
+							</button>
+						</form>
+						<p
+							class="h-footer-newsletter-msg"
+							data-newsletter-msg
+							aria-live="polite"
+						></p>
+					</div>
+					<div class="h-footer-community">
+						<h3>Join the community</h3>
+						<p>Follow along for builds, demos, and conversations with the team.</p>
+						<a
+							class="h-footer-community-btn"
+							href="https://x.com/trythreews"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path
+									fill="currentColor"
+									d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+								/>
+							</svg>
+							Follow on X
+						</a>
+					</div>
+				</div>
+				<div class="h-footer-inner">
+					<div class="h-footer-brand-col">
+						<div class="h-footer-brand">
+							<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+							<span class="wordmark-dot" aria-hidden="true"></span>
+							<span>three.ws</span>
+						</div>
+						<p class="h-footer-tagline">Give your AI a body.</p>
+						<div class="h-footer-socials">
+							<a
+								class="h-footer-social"
+								href="https://x.com/trythreews"
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label="three.ws on X"
+							>
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path
+										fill="currentColor"
+										d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+									/>
+								</svg>
+							</a>
+							<a
+								class="h-footer-social"
+								href="https://github.com/nirholas/three.ws"
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label="three.ws on GitHub"
+							>
+								<svg viewBox="0 0 16 16" aria-hidden="true">
+									<path
+										fill="currentColor"
+										d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+									/>
+								</svg>
+							</a>
+						</div>
+					</div>
+					<nav class="h-footer-links" aria-label="Footer">
+						<div class="h-footer-link-col">
+							<h4 class="h-footer-link-heading">Product</h4>
+							<a href="/create">Create</a>
+							<a href="/studio">Studio</a>
+							<a href="/widgets">Widgets</a>
+							<a href="/discover">Discover</a>
+						</div>
+						<div class="h-footer-link-col">
+							<h4 class="h-footer-link-heading">Developers</h4>
+							<a href="/docs">Docs</a>
+							<a
+								href="https://github.com/nirholas/three.ws"
+								target="_blank"
+								rel="noopener noreferrer"
+								>GitHub</a
+							>
+							<a
+								href="https://developers.metaplex.com/core"
+								target="_blank"
+								rel="noopener noreferrer"
+								>Metaplex Core</a
+							>
+						</div>
+						<div class="h-footer-link-col">
+							<h4 class="h-footer-link-heading">Resources</h4>
+							<a href="/blog">Blog</a>
+							<a href="/dashboard">Dashboard</a>
+						</div>
+					</nav>
+				</div>
+				<div class="h-footer-bottom">
+					<p class="h-footer-legal">&copy; 2026 three.ws — All rights reserved.</p>
+					<div class="h-footer-legal-links">
+						<a href="/legal/privacy">Privacy Policy</a>
+						<a href="/legal/tos">Terms of Use</a>
+					</div>
+				</div>
+			</footer>
+		</main>
+	</body>
+</html>

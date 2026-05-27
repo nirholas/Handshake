@@ -79,7 +79,7 @@ export class NichAgent {
 			this.protocol.on(ACTION_TYPES.SPEAK, (action) => {
 				const text = action.payload?.text;
 				if (text) {
-					this._addMessage('agent', text);
+					if (!action.payload._rendered) this._addMessage('agent', text);
 					this._speak(text);
 				}
 			});
@@ -262,15 +262,16 @@ export class NichAgent {
 				const result = await this.options.onSend(text);
 				if (result?.reply) {
 					this._addMessage('agent', result.reply);
-					this._speak(result.reply);
 					this._pushHistory('user', text);
 					this._pushHistory('assistant', result.reply);
 					if (this.protocol) {
 						this.protocol.emit({
 							type: ACTION_TYPES.SPEAK,
-							payload: { text: result.reply, sentiment: 0 },
+							payload: { text: result.reply, sentiment: 0, _rendered: true },
 							agentId: this.identity?.id || 'default',
 						});
+					} else {
+						this._speak(result.reply);
 					}
 				} else if (result?.error) {
 					this._addMessage('agent', result.error, 'status');
@@ -322,14 +323,15 @@ export class NichAgent {
 		// Final fallback: offline pattern match so the agent still responds.
 		const response = this._generateResponse(text);
 		this._addMessage('agent', response);
-		this._speak(response);
 
 		if (this.protocol) {
 			this.protocol.emit({
 				type: ACTION_TYPES.SPEAK,
-				payload: { text: response, sentiment: 0 },
+				payload: { text: response, sentiment: 0, _rendered: true },
 				agentId: this.identity?.id || 'default',
 			});
+		} else {
+			this._speak(response);
 		}
 	}
 
@@ -432,14 +434,15 @@ export class NichAgent {
 
 		if (reply) {
 			if (!streamEl) this._addMessage('agent', reply);
-			this._speak(reply);
 			this._pushHistory('assistant', reply);
 			if (this.protocol) {
 				this.protocol.emit({
 					type: ACTION_TYPES.SPEAK,
-					payload: { text: reply, sentiment: 0 },
+					payload: { text: reply, sentiment: 0, _rendered: true },
 					agentId: this.identity?.id || 'default',
 				});
+			} else {
+				this._speak(reply);
 			}
 		}
 

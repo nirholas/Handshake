@@ -2,43 +2,165 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>three.ws — Community</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Community — three.ws</title>
+		<meta name="description" content="Join the three.ws community — follow builds, share agents, and connect with creators building the 3D agent layer of the internet." />
+		<meta name="theme-color" content="#0b0b10" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Community — three.ws" />
+		<meta property="og:description" content="Follow builds, share agents, and connect with creators building the 3D agent layer of the internet." />
+		<meta property="og:url" content="https://three.ws/community" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+
+		<link rel="canonical" href="https://three.ws/community" />
 		<link rel="stylesheet" href="/style.css" />
-		<link rel="stylesheet" href="/features.css" />
-		<link rel="stylesheet" href="/community.css" />
-			<link rel="stylesheet" href="/nav.css" />
-			<link rel="stylesheet" href="/footer.css" />
-			<link rel="stylesheet" href="/mobile.css" />
-			<script defer src="/footer-newsletter.js"></script>
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #0b0b10;
+				--panel: #14141c;
+				--border: #22222e;
+				--text: #e8e8f0;
+				--muted: #8a8aa0;
+				--accent: #6a5cff;
+			}
+			* { box-sizing: border-box; }
+			body {
+				font: 15px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+				color: var(--text);
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			.wrap { max-width: 860px; margin: 0 auto; padding: 64px 24px 96px; }
+			.eyebrow {
+				font-size: 12px;
+				letter-spacing: 0.14em;
+				text-transform: uppercase;
+				color: var(--accent);
+				font-weight: 600;
+				margin-bottom: 14px;
+			}
+			h1 {
+				font-size: clamp(32px, 5vw, 48px);
+				margin: 0 0 14px;
+				letter-spacing: -0.025em;
+				line-height: 1.1;
+				font-weight: 600;
+			}
+			.sub { color: var(--muted); font-size: 17px; margin: 0 0 48px; max-width: 620px; line-height: 1.55; }
+			.grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 18px;
+				margin-bottom: 48px;
+			}
+			@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+			.card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				padding: 28px 24px;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+				transition: border-color 0.15s;
+			}
+			.card:hover { border-color: #33334a; }
+			.card h2 { margin: 0; font-size: 18px; font-weight: 600; }
+			.card p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
+			.card .icon { font-size: 28px; }
+			.card-link {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				color: var(--accent);
+				text-decoration: none;
+				font-size: 14px;
+				font-weight: 600;
+				margin-top: auto;
+			}
+			.card-link:hover { text-decoration: underline; }
+
+			.section { margin-bottom: 48px; }
+			.section h2 { font-size: 22px; margin: 0 0 16px; font-weight: 600; }
+			.section p { color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 620px; }
+			.section ul { margin: 12px 0 0; padding-left: 20px; }
+			.section li { color: var(--muted); font-size: 14.5px; margin-bottom: 8px; line-height: 1.5; }
+			.section li strong { color: var(--text); }
+			a { color: var(--accent); }
+		</style>
 	</head>
-	<body class="features-page">
-		<header class="site-header">
-			<h1 class="site-header-brand">
-				<a href="/" aria-label="three.ws home"><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a>
+	<body>
+		<header class="site-header" style="display:flex;align-items:center;padding:0 32px;height:56px;position:sticky;top:0;z-index:100;">
+			<h1 style="margin:0;font-size:inherit;font-weight:inherit;line-height:inherit;">
+				<a href="/" style="color:inherit;text-decoration:none;" aria-label="three.ws home">
+					<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws
+				</a>
 			</h1>
 			<div id="nav-container"></div>
 		</header>
 		<script src="/nav.js"></script>
 
-		<div class="page-background">
-			<div class="page-background-grid"></div>
-			<div class="page-background-mesh"></div>
+		<div class="wrap">
+			<div class="eyebrow">Community</div>
+			<h1>Build with us.</h1>
+			<p class="sub">three.ws is built in the open. Follow along, share what you're building, and help shape the 3D agent layer of the internet.</p>
+
+			<div class="grid">
+				<div class="card">
+					<span class="icon">&#x1D54F;</span>
+					<h2>Follow on X</h2>
+					<p>Live builds, demos, release notes, and conversations with the team. Most day-to-day updates happen here.</p>
+					<a class="card-link" href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer">@trythreews →</a>
+				</div>
+				<div class="card">
+					<span class="icon">&#128736;</span>
+					<h2>GitHub</h2>
+					<p>The codebase is public. File issues, read the source, or submit a PR. SDKs, examples, and the embed runtime all live here.</p>
+					<a class="card-link" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer">nirholas/three.ws →</a>
+				</div>
+				<div class="card">
+					<span class="icon">&#128218;</span>
+					<h2>Docs</h2>
+					<p>API reference, embed guides, SDK quickstarts, and the Solana agent-kit. Start here if you're integrating.</p>
+					<a class="card-link" href="/docs">Read the docs →</a>
+				</div>
+				<div class="card">
+					<span class="icon">&#127891;</span>
+					<h2>Tutorials</h2>
+					<p>Step-by-step guides for creating your first agent, embedding on your site, minting on Solana, and adding paid skills.</p>
+					<a class="card-link" href="/tutorials">Browse tutorials →</a>
+				</div>
+			</div>
+
+			<div class="section">
+				<h2>Ways to get involved</h2>
+				<ul>
+					<li><strong>Ship an agent.</strong> Create one at <a href="/create">/create</a>, embed it on your site, and share it on X with #threews.</li>
+					<li><strong>Report bugs.</strong> Open an issue on <a href="https://github.com/nirholas/three.ws/issues" target="_blank" rel="noopener noreferrer">GitHub</a> — we triage daily.</li>
+					<li><strong>Contribute code.</strong> PRs are welcome. Check the repo for open issues labeled <code>good first issue</code>.</li>
+					<li><strong>Build an integration.</strong> The MCP server, A2A protocol, and x402 payment layer are all open for third-party tools.</li>
+					<li><strong>Share feedback.</strong> Tweet at us, open a discussion on GitHub, or email <a href="mailto:hello@three.ws">hello@three.ws</a>.</li>
+				</ul>
+			</div>
+
+			<div class="section">
+				<h2>Newsletter</h2>
+				<p>Weekly updates on features, protocol changes, and community highlights. No spam — unsubscribe anytime.</p>
+			</div>
 		</div>
 
-		<main class="features-main">
-			<section class="hero">
-				<div class="hero-content scroll-reveal">
-					<h1 class="hero-title">Join the <em>Community</em></h1>
-					<p class="hero-subtitle">
-						Connect with other creators, share your work, and get help from the community.
-					</p>
-				</div>
-			</section>
-		</main>
-	
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-</body>
+	</body>
 </html>

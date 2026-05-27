@@ -562,6 +562,18 @@ URL: https://three.ws/news/
 
 Product launches, integrations, and announcements from three.ws.
 
+### three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement
+
+URL: https://three.ws/news/live-on-aws-marketplace
+
+three.ws is now live on AWS Marketplace as a SaaS subscription. Every AWS customer can subscribe directly, billing rolls onto their AWS invoice, AWS Activate credits apply, and the spend counts toward Enterprise Discount Program commitments. The first fully on-chain 3D AI agent platform listed on the AWS catalog.
+
+### three.ws Joins the AWS Partner Network
+
+URL: https://three.ws/news/joined-aws-partner-network
+
+three.ws is now an official AWS Partner, enrolled in the AWS Partner Network (APN) Software Path as a Technology Partner. The open-source platform for 3D AI agents on-chain is the first fully Web3-native ISV to join APN with a Solana / EVM on-chain identity stack. AWS Marketplace SaaS listing shipping next.
+
 ### three.ws Partners with HackerNoon
 
 URL: https://three.ws/news/partnered-with-hackernoon

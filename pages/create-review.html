@@ -45,13 +45,29 @@
 					#05060a;
 			}
 
-			.crumb {
-				padding: 14px 22px;
-				font-size: 13px;
-				color: var(--muted);
+			.topbar {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				margin-bottom: 20px;
 			}
-			.crumb a { color: var(--muted); text-decoration: none; }
-			.crumb a:hover { color: var(--accent); }
+			.back-link {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				color: var(--muted);
+				padding: 8px 14px 8px 10px;
+				border-radius: 9px;
+				font-size: 13px;
+				font-weight: 500;
+				text-decoration: none;
+				cursor: pointer;
+				transition: border-color 120ms, color 120ms;
+			}
+			.back-link:hover { border-color: var(--border-strong, #2a2c3a); color: var(--text); }
+			.back-link svg { flex-shrink: 0; }
 
 			main.stage {
 				flex: 1;
@@ -1191,13 +1207,17 @@
 		</header>
 		<script src="/nav.js"></script>
 
-		<nav class="crumb">
-			<a href="/">three.ws</a> &middot;
-			<a href="/create">Create</a> &middot;
-			<span>Preview</span>
-		</nav>
-
 		<main class="stage" id="main">
+			<div class="topbar">
+				<a href="/create/selfie" class="back-link" id="back-link" aria-label="Back to create">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<line x1="19" y1="12" x2="5" y2="12" />
+						<polyline points="12 19 5 12 12 5" />
+					</svg>
+					Back to create
+				</a>
+			</div>
+
 			<h1 id="heading">Meet your avatar</h1>
 			<p class="sub" id="subhead">
 				Try every capability before you save. Talk to it, drop it on any site,

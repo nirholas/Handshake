@@ -219,7 +219,7 @@
 		<div class="stat-item"><span class="lbl">Smart entries seen</span><span class="val gmgn" id="stat-entries">0</span></div>
 		<div class="stat-item"><span class="lbl">Tokens tracked</span><span class="val" id="stat-tracked">—</span></div>
 		<div class="stat-item"><span class="lbl">Last poll</span><span class="val" id="stat-polled">—</span></div>
-		<div class="stat-item"><span class="lbl">Source</span><span class="val">GMGN.ai</span></div>
+		<div class="stat-item"><span class="lbl">Source</span><span class="val" id="stat-source"><a href="https://gmgn.ai" target="_blank" rel="noopener" style="color:var(--gmgn);text-decoration:none">GMGN.ai</a></span></div>
 		<div class="stat-item" style="margin-left:auto">
 			<span class="lbl">$THREE on GMGN</span>
 			<span class="val" id="three-gmgn-status" style="display:inline-flex;align-items:center;gap:6px">
@@ -278,13 +278,13 @@
 		</div>
 		<aside id="side">
 			<div class="side-header" id="side-header">
-				<span class="side-title">Smart Money Feed</span>
+				<span class="side-title" id="side-title">Smart Money Feed</span>
 				<button class="side-control-btn" id="side-minimize" title="Minimize">_</button>
 			</div>
 			<div id="side-content">
-				<h2>Live smart money entries</h2>
+				<h2 id="feed-heading">Live entries</h2>
 				<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite">↑ <span id="feed-jump-count">0</span> new</button>
-				<div id="feed"><div class="empty">Waiting for smart money events…</div></div>
+				<div id="feed"><div class="empty">Waiting for events…</div></div>
 			</div>
 		</aside>
 	</main>
@@ -428,18 +428,32 @@
 			const mc = ev.market_cap ? formatMc(ev.market_cap) : null;
 			const total = ev.smart_buy_24h ?? 0;
 			const delta = ev.smart_buy_delta ?? 0;
+			const isDex = (ev.source || activeSource) === 'dexscreener';
 
 			let text;
-			if (delta >= 5) {
-				text = `Alert! ${sym} exploding on smart money radar! ${delta} new wallets just entered.`;
-			} else if (ev.is_new) {
-				text = mc
-					? `New smart money entry. ${total} wallets loading ${sym}. Market cap ${mc}.`
-					: `New smart money entry. ${sym} just hit the radar with ${total} wallets.`;
-			} else if (delta > 0) {
-				text = `${delta} more smart wallet${delta > 1 ? 's' : ''} entered ${sym}. Total ${total} in.`;
+			if (isDex) {
+				const buys = ev.txns_h1_buys ?? 0;
+				if (ev.is_new) {
+					text = mc
+						? `Trending token detected. ${sym} with ${total} boosts. Market cap ${mc}. ${buys} buys in the last hour.`
+						: `New on the radar. ${sym} trending with ${total} boosts.`;
+				} else if (delta > 0) {
+					text = `${sym} gaining momentum. ${delta} new boosts, ${buys} hourly buys.`;
+				} else {
+					text = `${sym} holding strong with ${total} boosts.`;
+				}
 			} else {
-				text = `Smart money holding ${sym}. ${total} wallets tracked.`;
+				if (delta >= 5) {
+					text = `Alert! ${sym} exploding on smart money radar! ${delta} new wallets just entered.`;
+				} else if (ev.is_new) {
+					text = mc
+						? `New smart money entry. ${total} wallets loading ${sym}. Market cap ${mc}.`
+						: `New smart money entry. ${sym} just hit the radar with ${total} wallets.`;
+				} else if (delta > 0) {
+					text = `${delta} more smart wallet${delta > 1 ? 's' : ''} entered ${sym}. Total ${total} in.`;
+				} else {
+					text = `Smart money holding ${sym}. ${total} wallets tracked.`;
+				}
 			}
 
 			$('stage-title').textContent = sym;
@@ -473,6 +487,20 @@
 			const pct24h = ev.price_change_24h != null ? ev.price_change_24h.toFixed(1) : null;
 			const addr = ev.address;
 			const chain = ev.chain || 'sol';
+			const src = ev.source || activeSource;
+			const isDex = src === 'dexscreener';
+			const dexChains = { sol: 'solana', eth: 'ethereum', base: 'base', bsc: 'bsc' };
+
+			const badgeIcon = isDex ? '🚀' : '🧠';
+			const badgeLabel = isDex ? ev.smart_buy_24h : ev.smart_buy_24h;
+			const linkBase = isDex
+				? `https://dexscreener.com/${dexChains[chain] || 'solana'}/${escHtml(addr)}`
+				: `https://gmgn.ai/${chain}/token/${escHtml(addr)}`;
+			const linkLabel = isDex ? 'DexScreener' : 'GMGN';
+
+			const txnHtml = isDex && ev.txns_h1_buys != null
+				? `<div class="ev-stat"><span class="lbl">Buys 1h</span><span class="val up">${ev.txns_h1_buys}</span></div><div class="ev-stat"><span class="lbl">Sells 1h</span><span class="val dn">${ev.txns_h1_sells ?? 0}</span></div>`
+				: '';
 
 			const div = document.createElement('div');
 			div.className = `ev-card${replay ? ' replay' : ''}${isNew ? ' is-new' : ''}${isAlert ? ' is-alert' : ''}`;
@@ -482,21 +510,19 @@
 					${isNew ? '<span class="ev-tag-new">NEW</span>' : ''}
 					<span class="ev-name">${escHtml(ev.name)}</span>
 					<span class="ev-badge${isAlert ? ' alert' : ''}">
-						🧠 ${ev.smart_buy_24h}${delta > 0 ? `<span class="ev-delta">+${delta}</span>` : ''}
+						${badgeIcon} ${badgeLabel}${delta > 0 ? `<span class="ev-delta">+${delta}</span>` : ''}
 					</span>
 				</div>
 				<div class="ev-stats">
 					<div class="ev-stat"><span class="lbl">Market cap</span><span class="val">${escHtml(mc)}</span></div>
 					<div class="ev-stat"><span class="lbl">Volume</span><span class="val">${escHtml(vol)}</span></div>
+					${txnHtml}
 					${pct1h != null ? `<div class="ev-stat"><span class="lbl">1h</span><span class="val ${Number(pct1h) >= 0 ? 'up' : 'dn'}">${Number(pct1h) >= 0 ? '+' : ''}${pct1h}%</span></div>` : ''}
 					${pct24h != null ? `<div class="ev-stat"><span class="lbl">24h</span><span class="val ${Number(pct24h) >= 0 ? 'up' : 'dn'}">${Number(pct24h) >= 0 ? '+' : ''}${pct24h}%</span></div>` : ''}
 				</div>
 				<div class="ev-time">
 					${new Date(ev.timestamp * 1000).toLocaleTimeString()} ·
-					${chain === 'sol' && addr ? `<a class="ev-link" href="https://gmgn.ai/sol/token/${escHtml(addr)}" target="_blank" rel="noopener">View on GMGN ↗</a>` : ''}
-					${chain === 'eth' && addr ? `<a class="ev-link" href="https://gmgn.ai/eth/token/${escHtml(addr)}" target="_blank" rel="noopener">View on GMGN ↗</a>` : ''}
-					${chain === 'base' && addr ? `<a class="ev-link" href="https://gmgn.ai/base/token/${escHtml(addr)}" target="_blank" rel="noopener">View on GMGN ↗</a>` : ''}
-					${chain === 'bsc' && addr ? `<a class="ev-link" href="https://gmgn.ai/bsc/token/${escHtml(addr)}" target="_blank" rel="noopener">View on GMGN ↗</a>` : ''}
+					${addr ? `<a class="ev-link" href="${linkBase}" target="_blank" rel="noopener">View on ${linkLabel} ↗</a>` : ''}
 				</div>`;
 			return div;
 		}
@@ -536,6 +562,23 @@
 		let es = null;
 		const dot = $('status-dot');
 		const statusText = $('status-text');
+		let activeSource = 'gmgn';
+
+		function setSource(src) {
+			activeSource = src || 'gmgn';
+			const srcEl = $('stat-source');
+			const sideTitle = $('side-title');
+			const feedHeading = $('feed-heading');
+			if (src === 'dexscreener') {
+				srcEl.innerHTML = '<a href="https://dexscreener.com" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">DexScreener</a>';
+				if (sideTitle) sideTitle.textContent = 'Trending Feed';
+				if (feedHeading) feedHeading.textContent = 'Live trending tokens';
+			} else {
+				srcEl.innerHTML = '<a href="https://gmgn.ai" target="_blank" rel="noopener" style="color:var(--gmgn);text-decoration:none">GMGN.ai</a>';
+				if (sideTitle) sideTitle.textContent = 'Smart Money Feed';
+				if (feedHeading) feedHeading.textContent = 'Live smart money entries';
+			}
+		}
 
 		function setStatus(state, text) {
 			dot.className = `dot ${state}`;
@@ -544,7 +587,7 @@
 
 		let _reconnectTimer = null;
 		function scheduleReconnect(ms) {
-			if (_reconnectTimer) return; // already scheduled — don't double-fire
+			if (_reconnectTimer) return;
 			_reconnectTimer = setTimeout(() => { _reconnectTimer = null; connect(); }, ms);
 		}
 
@@ -566,6 +609,7 @@
 
 			es.addEventListener('smart_entry', (msg) => {
 				const ev = JSON.parse(msg.data);
+				if (ev.source) setSource(ev.source);
 				handleEvent(ev, ev.replay || false);
 				if ($('ctl-chain').value === 'sol') checkThreeToken(ev);
 			});
@@ -573,19 +617,19 @@
 			es.addEventListener('status', (msg) => {
 				const d = JSON.parse(msg.data);
 				if (d.state === 'live') {
-					setStatus('live', `Live · polled ${new Date(d.polled_at).toLocaleTimeString()}`);
+					if (d.source) setSource(d.source);
+					const srcLabel = activeSource === 'dexscreener' ? 'DexScreener' : 'GMGN';
+					setStatus('live', `Live · ${srcLabel} · polled ${new Date(d.polled_at).toLocaleTimeString()}`);
 					$('stat-tracked').textContent = d.count ?? '—';
 					$('stat-polled').textContent = new Date(d.polled_at).toLocaleTimeString();
 				} else if (d.state === 'error') {
-					setStatus('down', `GMGN API error ${d.status || ''}`);
+					setStatus('down', `API error ${d.status || ''} — retrying…`);
 				}
 			});
 
 			es.addEventListener('ping', () => {});
 
 			es.addEventListener('close', () => {
-				// Server sends event: close then closes stream. onerror will also fire
-				// immediately after — scheduleReconnect deduplicates both.
 				setStatus('down', 'Session ended — reconnecting…');
 				es = null;
 				scheduleReconnect(4000);

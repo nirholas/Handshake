@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-05-26T22:41:57.487Z",
+	"generated_at": "2026-05-27T05:45:53.957Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -809,6 +809,24 @@
 					"path": "/news/",
 					"title": "News & Announcements",
 					"description": "Product launches, integrations, and announcements from three.ws.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/live-on-aws-marketplace",
+					"title": "three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement",
+					"description": "three.ws is now live on AWS Marketplace as a SaaS subscription. Every AWS customer can subscribe directly, billing rolls onto their AWS invoice, AWS Activate credits apply, and the spend counts toward Enterprise Discount Program commitments. The first fully on-chain 3D AI agent platform listed on the AWS catalog.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/news/joined-aws-partner-network",
+					"title": "three.ws Joins the AWS Partner Network",
+					"description": "three.ws is now an official AWS Partner, enrolled in the AWS Partner Network (APN) Software Path as a Technology Partner. The open-source platform for 3D AI agents on-chain is the first fully Web3-native ISV to join APN with a Solana / EVM on-chain identity stack. AWS Marketplace SaaS listing shipping next.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

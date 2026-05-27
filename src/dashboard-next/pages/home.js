@@ -53,8 +53,6 @@ const STATE = {
 		activity: main.querySelector('[data-slot="activity"]'),
 	};
 
-	renderQuickActions(slots.quick);
-
 	const [avatarsRes, widgetsRes, agentsRes] = await Promise.allSettled([
 		get('/api/avatars?limit=50'),
 		get('/api/widgets'),
@@ -66,6 +64,7 @@ const STATE = {
 	const agents  = agentsRes.status === 'fulfilled'  ? (agentsRes.value?.agents  ?? []) : [];
 
 	renderHero(slots.hero, avatars, avatarsRes.status === 'rejected' ? avatarsRes.reason : null);
+	renderQuickActions(slots.quick, { avatars, agents });
 
 	if (slots.onboarding) {
 		renderOnboarding(slots.onboarding, { avatars, agents, widgets });
@@ -149,12 +148,11 @@ function renderHero(host, avatars, err) {
 
 	host.innerHTML = top.map((a) => {
 		const name = a.name || a.slug || 'Untitled avatar';
-		const slug = a.slug || a.id;
 		return `
 			<article class="dnx-hero-card">
 				<threews-avatar avatar-id="${esc(a.id)}" bg="transparent" hide-chrome></threews-avatar>
 				<div class="dnx-hero-overlay">
-					<a class="dn-btn" href="/a/${esc(slug)}">Open</a>
+					<a class="dn-btn" href="/agent-next?id=${encodeURIComponent(a.id)}">Live page</a>
 					<a class="dn-btn" href="/dashboard/widgets?avatar=${encodeURIComponent(a.id)}">Embed</a>
 					<a class="dn-btn" href="/dashboard/avatars?edit=${encodeURIComponent(a.id)}">Edit</a>
 				</div>
@@ -458,13 +456,39 @@ function renderOnboarding(host, { avatars, agents, widgets }) {
 
 // ── Quick actions ─────────────────────────────────────────────────────────
 
-function renderQuickActions(host) {
-	const actions = [
-		{ href: '/create',                  title: 'Create avatar from selfie', sub: 'Snap → 3D agent in 60s',     icon: '+' },
-		{ href: '/dashboard/widgets',  title: 'Embed an agent',            sub: 'Drop-in widget for any site', icon: '◧' },
-		{ href: '/dashboard/monetize', title: 'View revenue',              sub: 'Earnings, payouts, plans',    icon: '$' },
-		{ href: '/dashboard/api',      title: 'Open API keys',             sub: 'REST + MCP for your agents',  icon: '⌘' },
-	];
+function renderQuickActions(host, { avatars = [], agents = [] } = {}) {
+	const firstAvatar = avatars[0];
+	const firstAgent = agents[0];
+
+	const actions = [];
+
+	if (firstAvatar) {
+		actions.push({
+			href: `/agent-next?id=${encodeURIComponent(firstAvatar.id)}`,
+			title: 'View live agent page',
+			sub: 'See how visitors experience your agent',
+			icon: '▶',
+		});
+	} else {
+		actions.push({ href: '/create', title: 'Create avatar from selfie', sub: 'Snap → 3D agent in 60s', icon: '+' });
+	}
+
+	if (firstAgent) {
+		actions.push({
+			href: `/app?agent=${encodeURIComponent(firstAgent.id)}`,
+			title: 'Open 3D studio',
+			sub: 'Edit, animate, and customize in 3D',
+			icon: '◇',
+		});
+	} else {
+		actions.push({ href: '/dashboard/agents', title: 'Create an agent', sub: 'On-chain identity with wallet and skills', icon: '⬡' });
+	}
+
+	actions.push(
+		{ href: '/dashboard/widgets', title: 'Embed an agent', sub: 'Drop-in widget for any site', icon: '◧' },
+		{ href: '/dashboard/api', title: 'Open API keys', sub: 'REST + MCP for your agents', icon: '⌘' },
+	);
+
 	host.innerHTML = actions.map((a) => `
 		<a class="dn-panel dnx-quick-card" href="${a.href}">
 			<div class="dnx-quick-icon">${a.icon}</div>

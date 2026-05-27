@@ -14,8 +14,8 @@ const REQUIRED_SLOT = 'frontal';
 const OPTIONAL_SLOTS = /** @type {const} */ (['left', 'right']);
 const ALL_SLOTS = /** @type {const} */ ([REQUIRED_SLOT, ...OPTIONAL_SLOTS]);
 
-const ETA_FAST_SEC = 45;
-const ETA_HIGH_SEC = 75;
+const ETA_FAST_SEC = 90;
+const ETA_HIGH_SEC = 120;
 
 const state = {
 	bodyType: /** @type {'male' | 'female'} */ ('male'),
@@ -290,6 +290,13 @@ function renderSlot(slot) {
 		clearSlot(slot);
 	});
 	frame.appendChild(retake);
+
+	frame.addEventListener('keydown', (e) => {
+		if ((e.key === 'Delete' || e.key === 'Backspace') && state.files[slot]) {
+			e.preventDefault();
+			clearSlot(slot);
+		}
+	});
 }
 
 function updateSubmit() {
@@ -378,8 +385,13 @@ async function openCamera(slot) {
 		camVideo.srcObject = cam.stream;
 	} catch (err) {
 		console.warn('[selfie] camera error:', err);
-		showCamError('Could not access camera. Check permissions and try again.');
-		setShutterEnabled(true);
+		const denied = err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError';
+		showCamError(
+			denied
+				? 'Camera access was denied. Grant permission in your browser settings, or use Upload instead.'
+				: 'Could not access camera. Check permissions and try again.',
+		);
+		closeCamera();
 		return;
 	}
 
@@ -531,7 +543,7 @@ camOverlay?.addEventListener('click', (e) => {
 });
 
 function startCountdown() {
-	if (camShutter?.hasAttribute('disabled')) return;
+	if (!camShutter || camShutter.hasAttribute('disabled')) return;
 	if (cam.countdownTimers.length) return;
 	setShutterEnabled(false);
 	camOval?.setAttribute('hidden', '');
@@ -605,6 +617,8 @@ function confirmCamShot() {
 	if (!cam.pendingFile || !cam.slot) return;
 	const slot = cam.slot;
 	const file = cam.pendingFile;
+	cam.pendingFile = null;
+	cam.pendingUrl = null;
 	closeCamera();
 	setSlot(slot, file);
 }

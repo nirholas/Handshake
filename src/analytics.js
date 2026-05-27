@@ -11,6 +11,7 @@
 
 function ph() {
 	if (typeof window === 'undefined') return null;
+	if (window.__posthog_blocked) return null;
 	const p = window.posthog;
 	if (!p || typeof p.identify !== 'function') return null;
 	return p;

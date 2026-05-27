@@ -139,15 +139,6 @@
 						<path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>
 				</button>
-				<div class="nxt-more-menu" id="nxt-more-menu" role="menu" hidden>
-					<a href="/discover" role="menuitem">Discover agents</a>
-					<a href="/create" role="menuitem">Create an avatar</a>
-					<a href="/marketplace" role="menuitem">Marketplace</a>
-					<a href="/studio" role="menuitem">Studio</a>
-					<a href="/docs" role="menuitem">Docs</a>
-					<div class="nxt-more-sep" role="separator"></div>
-					<a href="/app-classic" role="menuitem">Classic viewer</a>
-				</div>
 
 				<!-- Auth surface — single pill, swaps to user chip when signed in -->
 				<div class="nxt-auth">
@@ -472,5 +463,17 @@
 
 		<!-- Live toast region -->
 		<div class="nxt-toast" id="nxt-toast" role="status" aria-live="polite" hidden></div>
+
+		<!-- Explore dropdown — lives outside <header> so backdrop-filter
+		     does not clip the menu below the header's bottom edge. -->
+		<div class="nxt-more-menu" id="nxt-more-menu" role="menu" hidden>
+			<a href="/discover" role="menuitem">Discover agents</a>
+			<a href="/create" role="menuitem">Create an avatar</a>
+			<a href="/marketplace" role="menuitem">Marketplace</a>
+			<a href="/studio" role="menuitem">Studio</a>
+			<a href="/docs" role="menuitem">Docs</a>
+			<div class="nxt-more-sep" role="separator"></div>
+			<a href="/app-classic" role="menuitem">Classic viewer</a>
+		</div>
 	</body>
 </html>

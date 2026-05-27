@@ -616,6 +616,12 @@ function wireExploreMenu() {
 	const menu = document.getElementById('nxt-more-menu');
 	if (!btn || !menu) return;
 
+	const positionMenu = () => {
+		const r = btn.getBoundingClientRect();
+		menu.style.top = `${r.bottom + 6}px`;
+		menu.style.right = `${window.innerWidth - r.right}px`;
+	};
+
 	const close = () => {
 		menu.hidden = true;
 		btn.setAttribute('aria-expanded', 'false');
@@ -624,6 +630,7 @@ function wireExploreMenu() {
 	btn.addEventListener('click', (e) => {
 		e.stopPropagation();
 		if (menu.hidden) {
+			positionMenu();
 			menu.hidden = false;
 			btn.setAttribute('aria-expanded', 'true');
 		} else {

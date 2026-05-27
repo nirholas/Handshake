@@ -360,10 +360,11 @@ function openMoreMenu(root, anchor, card, a) {
 	menu.dataset.for = a.id;
 	menu.setAttribute('role', 'menu');
 	const items = [
+		{ label: 'View live page', run: () => { window.open(`/agent-next?id=${encodeURIComponent(a.id)}`, '_blank'); } },
 		{ label: 'Rename', run: () => card.querySelector('[data-rename]')?.click() },
 		{ label: 'Change visibility', run: () => openVisibilitySubmenu(root, anchor, card, a) },
 		{ label: 'Copy embed snippet', run: () => copyEmbedSnippet(root, a) },
-		{ label: 'Open in viewer', run: () => { location.href = `/app#avatar=${encodeURIComponent(a.id)}`; } },
+		{ label: 'Open in 3D studio', run: () => { location.href = `/app#avatar=${encodeURIComponent(a.id)}`; } },
 		{ label: 'Download GLB', run: () => downloadGlb(root, a) },
 		{ label: 'Delete', danger: true, run: () => confirmDelete(root, card, a) },
 	];
@@ -486,7 +487,7 @@ async function copyEmbedSnippet(root, a) {
 	}
 	const u = new URL('/a-embed.html', location.origin);
 	u.searchParams.set('avatar', a.id);
-	const snippet = `<iframe src="${u.toString()}" width="360" height="540" style="border:0;border-radius:12px;max-width:100%" allow="xr-spatial-tracking" title="${safeName}" loading="lazy"></iframe>`;
+	const snippet = `<iframe src="${u.toString()}" width="360" height="540" style="border:0;border-radius:12px;max-width:100%" allow="xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${safeName}" loading="lazy"></iframe>`;
 	try {
 		await navigator.clipboard.writeText(snippet);
 		toast(root, 'Embed snippet copied');

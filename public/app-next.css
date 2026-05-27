@@ -182,9 +182,9 @@ body.app-next-body {
 }
 
 .nxt-more-menu {
-	position: absolute;
-	top: calc(var(--nxt-header-h) - 4px);
-	right: 72px;
+	position: fixed;
+	top: var(--nxt-header-h);
+	right: 0;
 	min-width: 200px;
 	padding: 6px;
 	background: var(--nxt-glass-strong);
@@ -1417,18 +1417,28 @@ body.app-next-body.nxt-chrome-hidden .nxt-chat-dock .nxt-chat-chips {
 
 /* ── NichAgent panel positioning override ─────────────────────────────── */
 
-/* When we trigger the panel from our chat input, position it above the input
-   so the conversation reads top-down with the input at the bottom (chat-like). */
+/* Dock the chat panel to the right so the avatar stays visible. The panel
+   sits directly above the chat dock, which also slides right when active. */
 body.app-next-body .nich-panel {
 	position: fixed;
-	left: 50%;
+	right: 16px;
 	bottom: 168px;
-	right: auto;
+	left: auto;
 	top: auto;
-	transform: translateX(-50%);
-	width: min(640px, calc(100vw - 32px));
-	max-height: min(60vh, 540px);
+	transform: none;
+	width: min(380px, calc(100vw - 32px));
+	max-height: min(50vh, 480px);
 	z-index: 24;
+}
+
+/* When chat is active, slide the input dock to the right to align with the
+   conversation panel — keeps input + thread as one unified column.
+   Uses translate instead of left/right so the transition animates cleanly. */
+body.app-next-body.nxt-chat-active .nxt-chat-dock {
+	left: auto;
+	right: 16px;
+	transform: none;
+	width: min(380px, calc(100vw - 32px));
 }
 
 /* ── Mobile ────────────────────────────────────────────────────────────── */
@@ -1442,7 +1452,6 @@ body.app-next-body .nich-panel {
 @media (max-width: 640px) {
 	.nxt-brand-tag { display: none; }
 	.nxt-more { padding: 7px 8px; }
-	.nxt-more-menu { right: 12px; }
 	.nxt-action kbd { display: none; }
 	.nxt-action { padding: 7px 10px; font-size: 12px; }
 	.nxt-action span { display: none; }
@@ -1456,8 +1465,18 @@ body.app-next-body .nich-panel {
 	.nxt-icon-btn { width: 28px; height: 28px; }
 	.nxt-help__grid { grid-template-columns: 80px 1fr; font-size: 12px; }
 	body.app-next-body .nich-panel {
+		left: 50%;
+		right: auto;
+		transform: translateX(-50%);
+		width: min(640px, calc(100vw - 32px));
 		bottom: 142px;
-		max-height: 50vh;
+		max-height: 45vh;
+	}
+	body.app-next-body.nxt-chat-active .nxt-chat-dock {
+		left: 50%;
+		right: auto;
+		transform: translateX(-50%);
+		width: min(640px, calc(100vw - 32px));
 	}
 }
 

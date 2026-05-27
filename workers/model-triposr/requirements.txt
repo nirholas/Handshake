@@ -1,0 +1,18 @@
+# ── TripoSR (VAST-AI / Stability AI) ──────────────────────────────────────────
+tsr @ git+https://github.com/VAST-AI-Research/TripoSR.git@main
+
+torch>=2.3.0
+trimesh>=4.4.0
+Pillow>=10.3.0
+
+# Background removal (TripoSR works best with isolated subject).
+rembg[gpu]==2.0.56
+
+# ── Server ────────────────────────────────────────────────────────────────────
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic>=2.0.0
+httpx>=0.27.0
+
+# ── GCP ───────────────────────────────────────────────────────────────────────
+google-cloud-storage==2.18.0

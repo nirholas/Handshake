@@ -4,13 +4,18 @@
 //   submit(request)  → { extJobId, eta }
 //   status(extJobId) → { status, resultGlbUrl?, error? }
 //
-// The Cloud Run service (workers/avatar-reconstruction/) exposes:
+// The Cloud Run service can be either:
+//   - workers/avatar-pipeline-controller/ (v2 — real 3D mesh generation via
+//     Hunyuan3D / TRELLIS / TripoSR + UniRig auto-rigging)
+//   - workers/avatar-reconstruction/ (v1 — face texture transfer only)
+//
+// Both expose the same API:
 //   POST /reconstruct  → { job_id, status }
 //   GET  /jobs/:id     → { status, glb_url?, error? }
 //
 // Required env vars:
 //   GCP_RECONSTRUCTION_URL  — Cloud Run service URL
-//                             e.g. https://avatar-reconstruction-xxx-uc.a.run.app
+//                             e.g. https://avatar-pipeline-controller-xxx-uc.a.run.app
 //   GCP_RECONSTRUCTION_KEY  — bearer secret matching the service's API_KEY
 
 function readEnv(name) {
@@ -91,8 +96,9 @@ export function createRegenProvider() {
 
 			return {
 				extJobId: data.job_id,
-				// Face texture pipeline: rembg + MediaPipe + TPS + GLB ops ≈ 15–30 s.
-				eta: 30,
+				// v2 pipeline: mesh generation (30–120s) + UniRig rigging (15–30s).
+				// v1 fallback: face texture transfer (15–30s).
+				eta: 120,
 			};
 		},
 
