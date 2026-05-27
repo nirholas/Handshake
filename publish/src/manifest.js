@@ -89,6 +89,14 @@ async function fetchManifestJSON(url) {
 // Convert either a full AGENT_MANIFEST or a bare ERC-8004 registration JSON
 // into a uniform manifest object the runtime consumes.
 export function normalize(json, { baseURI = '' } = {}) {
+	// Backend wrappers — `/api/avatars/:id` returns `{ avatar: {...} }`, list
+	// endpoints sometimes return `{ item: {...} }`. Unwrap once before the
+	// shape-detection branches below run on the empty outer object.
+	if (json && typeof json === 'object' && !json.spec && !json.type) {
+		if (json.avatar && typeof json.avatar === 'object') json = json.avatar;
+		else if (json.item && typeof json.item === 'object') json = json.item;
+	}
+
 	// Full manifest — spec: "agent-manifest/0.1"
 	if (json.spec && json.spec.startsWith('agent-manifest/')) {
 		const m = { ...json, _baseURI: baseURI };
@@ -125,15 +133,27 @@ export function normalize(json, { baseURI = '' } = {}) {
 		};
 	}
 
-	// Unknown / partial — best effort
+	// Unknown / partial — best effort. Includes the avatar-detail shape
+	// (`model_url` / `url` / `base_model_url` + `thumbnail_url`) returned by
+	// `/api/avatars/:id`, which is the documented embed source.
+	const bodyURI =
+		json.body?.uri ||
+		json.model_url ||
+		json.url ||
+		json.base_model_url ||
+		json.image ||
+		json.model ||
+		'';
 	return {
 		spec: 'agent-manifest/0.1',
 		_baseURI: baseURI,
+		id: json.id ? { agentId: String(json.id) } : undefined,
 		name: json.name || 'Unnamed agent',
 		description: json.description || '',
+		image: json.thumbnail_url || json.image || null,
 		body: {
-			uri: json.body?.uri || json.image || json.model || '',
-			format: json.body?.format || 'gltf-binary',
+			uri: bodyURI,
+			format: json.body?.format || json.content_type || 'gltf-binary',
 		},
 		brain: json.brain || { provider: 'none' },
 		voice: json.voice || { tts: { provider: 'browser' }, stt: { provider: 'browser' } },

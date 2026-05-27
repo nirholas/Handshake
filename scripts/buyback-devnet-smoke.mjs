@@ -3,7 +3,7 @@
 //
 // Bypasses the HTTP cron entrypoint and the postgres lookup — drives the same
 // builder + signer path the cron uses, against whatever mint the operator
-// points at. Use after applying migrations/2026-05-20-pump-buyback-fullswap.sql
+// points at. Use after applying api/_lib/migrations/2026-05-20-pump-buyback-fullswap.sql
 // in prod; this script is for one-off devnet verification.
 //
 // Env:

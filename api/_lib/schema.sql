@@ -1129,7 +1129,7 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 -- ── pumpfun_graduations — persisted pump.fun → AMM migration events ──────────
--- See migrations/2026-05-04-pumpfun-graduations.sql for the full schema.
+-- See api/_lib/migrations/2026-05-04-pumpfun-graduations.sql for the full schema.
 create table if not exists pumpfun_graduations (
     tx_signature        text        primary key,
     mint                text        not null,

@@ -347,6 +347,7 @@ three.ws is available on major cloud marketplaces and open to infrastructure par
 
 | Cloud             | Status                                                                                                                                                                                                |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AWS**           | **AWS Partner** (APN Software Path). AWS Marketplace SaaS listing in review — see [docs/aws-marketplace.md](docs/aws-marketplace.md) and the public partner page at [three.ws/aws](https://three.ws/aws). Production runs on AWS `us-east-1`, registered in AWS MyApplications under account `155407237916`. |
 | **Alibaba Cloud** | Live: [product listing →](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [storefront →](https://marketplace.alibabacloud.com/store/3247293.html)                       |
 | **Google Cloud**  | three.ws runs on WebGL, Vercel edge, EVM (15+ chains), and Solana (Metaplex Core) — a natural fit for GCP's AI infrastructure, Vertex AI, and global CDN. Open to co-listing, credits, and joint GTM. |
 

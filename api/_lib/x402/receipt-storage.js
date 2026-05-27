@@ -7,7 +7,7 @@
 //   3. Reputation systems can pull on demand instead of having to capture
 //      every receipt at issue time.
 //
-// Backed by Postgres (Neon) — see migrations/2026-05-24-x402-receipts.sql.
+// Backed by Postgres (Neon) — see api/_lib/migrations/2026-05-24-x402-receipts.sql.
 // Writes are fire-and-forget from the paid-endpoint hot path: a Neon hiccup
 // must not surface as a 5xx on a paid response that already settled on-chain.
 

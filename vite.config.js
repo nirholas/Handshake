@@ -237,6 +237,7 @@ creating: resolve(__dirname, 'pages/creating.html'),
 				'agents-gemini-live':      resolve(__dirname, 'public/demos/agents/gemini-live.html'),
 				'agents-auto-rig':         resolve(__dirname, 'public/demos/agents/auto-rig.html'),
 				'aws-marketplace-welcome': resolve(__dirname, 'pages/aws-marketplace/welcome.html'),
+				'aws':                     resolve(__dirname, 'pages/aws/index.html'),
 				// dashboard-next prototype — sub-pages auto-discovered so the parallel
 				// agents that land new pages/dashboard-next/*.html files don't have to
 				// touch this config to register them as Rollup inputs.
@@ -415,6 +416,8 @@ creating: resolve(__dirname, 'pages/creating.html'),
 					'/aws-marketplace/welcome/': resolve(root, 'pages/aws-marketplace/welcome.html'),
 					'/aws-marketplace/error': resolve(root, 'pages/aws-marketplace/welcome.html'),
 					'/aws-marketplace/error/': resolve(root, 'pages/aws-marketplace/welcome.html'),
+					'/aws': resolve(root, 'pages/aws/index.html'),
+					'/aws/': resolve(root, 'pages/aws/index.html'),
 					'/brain': resolve(root, 'public/demos/brain.html'),
 					'/brain/': resolve(root, 'public/demos/brain.html'),
 					'/lipsync': resolve(root, 'public/demos/lipsync-tts.html'),

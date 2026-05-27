@@ -50,6 +50,14 @@
 			"dest": "/aws-marketplace/welcome.html"
 		},
 		{
+			"src": "/aws",
+			"dest": "/aws/index.html"
+		},
+		{
+			"src": "/aws/",
+			"dest": "/aws/index.html"
+		},
+		{
 			"src": "/rss/announcements\\.xml",
 			"dest": "/api/rss/announcements"
 		},

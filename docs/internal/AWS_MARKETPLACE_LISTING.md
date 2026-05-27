@@ -173,3 +173,39 @@ Before clicking "Submit for review" in AMMP:
 5. On approval, public seller profile page goes live automatically
 
 Once live, the seller profile URL is `https://aws.amazon.com/marketplace/seller-profile?id=<seller-id>` — that's your public sellers page.
+
+## Announcement posts
+
+### Partnership announcement (post now)
+
+> three.ws is now an AWS Partner.
+>
+> Give your AI a body. Open-source 3D agent platform — WebGL viewer, Claude-driven runtime, embed anywhere with one tag, on-chain identity on EVM and Solana.
+>
+> AWS Marketplace listing next.
+
+**Reply 1:**
+> Try it: https://three.ws
+> Source: https://github.com/nirholas/three.ws
+> Docs: https://three.ws/docs
+> Partner page: https://three.ws/aws
+
+**Image:** AWS Partner badge from Partner Central → Marketing Central → Brand Assets. Pair with `public/screenshots/viewer.png` if compositing.
+
+### Listing-live announcement (post when public listing is approved)
+
+> three.ws is live on AWS Marketplace.
+>
+> Subscribe with AWS credits, bill to your AWS invoice, count toward EDP. Open-source 3D AI agent platform, now inside your AWS account.
+>
+> [AWS Marketplace listing URL]
+
+**Reply 1 (quote-tweet of original partnership post):**
+> Following up on the AWS Partner announcement — the Marketplace listing is now public. AWS customers can subscribe directly.
+
+**Reply 2 (link bundle):**
+> Listing: [AWS Marketplace URL]
+> Seller profile: [aws.amazon.com/marketplace/seller-profile URL]
+> Docs: https://three.ws/aws
+
+**Image:** Screenshot of the live AWS Marketplace product page (after publication). High-credibility artifact since it's AWS-hosted UI.

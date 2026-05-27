@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>three.ws on AWS — 3D AI Agent Platform · AWS Partner</title>
+	<meta name="description" content="three.ws is an AWS Partner. Open-source 3D AI agent platform — WebGL-native viewer, LLM-driven runtime, on-chain identity. AWS Marketplace listing coming soon." />
+	<link rel="canonical" href="https://three.ws/aws" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="three.ws on AWS — 3D AI Agent Platform" />
+	<meta property="og:description" content="Open-source 3D AI agent platform. AWS Partner. Marketplace listing coming soon — subscribe with AWS credits, bill to your AWS invoice." />
+	<meta property="og:url" content="https://three.ws/aws" />
+	<meta property="og:image" content="https://three.ws/screenshots/viewer.png" />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="three.ws on AWS" />
+	<meta name="twitter:description" content="Open-source 3D AI agent platform. AWS Partner. Marketplace listing coming soon." />
+	<meta name="twitter:image" content="https://three.ws/screenshots/viewer.png" />
+
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		:root { color-scheme: dark; --accent:#6a5cff; --accent2:#ff5ca8; --border:#22222e; --bg:#0b0b10; --panel:#14141c; --panel2:#1a1a24; --text:#e8e8f0; --muted:#8a8aa0; --green:#22c55e; --aws:#ff9900; }
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		body { font: 16px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); min-height: 100vh; }
+
+		header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; max-width: 1100px; margin: 0 auto; }
+		header a.home { color: var(--text); text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+		header nav { display: flex; gap: 22px; align-items: center; }
+		header nav a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.15s; }
+		header nav a:hover { color: var(--text); }
+
+		main { max-width: 880px; margin: 0 auto; padding: 80px 24px 120px; }
+
+		.partner-badge { display: inline-flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 99px; padding: 7px 16px 7px 12px; font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+		.partner-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--aws); box-shadow: 0 0 12px var(--aws); }
+		.partner-badge strong { color: var(--text); font-weight: 500; }
+
+		h1 { font-size: clamp(36px, 6vw, 56px); letter-spacing: -0.03em; line-height: 1.05; font-weight: 600; margin-bottom: 20px; }
+		h1 .gradient { background: linear-gradient(110deg, var(--accent) 30%, var(--accent2) 70%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+		.lede { font-size: clamp(17px, 2vw, 19px); color: var(--muted); line-height: 1.55; max-width: 640px; margin-bottom: 40px; }
+		.lede strong { color: var(--text); font-weight: 500; }
+
+		.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 80px; }
+		.btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 11px; border: 0; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: filter 0.15s, transform 0.15s; }
+		.btn-primary { background: var(--accent); color: #fff; }
+		.btn-primary:hover { filter: brightness(1.12); }
+		.btn-sec { background: var(--panel); border: 1px solid var(--border); color: var(--text); }
+		.btn-sec:hover { background: var(--panel2); }
+		.btn svg { width: 16px; height: 16px; }
+
+		section { margin-bottom: 80px; }
+		section h2 { font-size: clamp(24px, 3.5vw, 32px); letter-spacing: -0.02em; line-height: 1.15; font-weight: 600; margin-bottom: 16px; }
+		section .sub { color: var(--muted); font-size: 16px; margin-bottom: 32px; max-width: 620px; }
+
+		.benefit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+		.benefit { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+		.benefit .icon { width: 36px; height: 36px; border-radius: 9px; background: rgba(106,92,255,0.12); border: 1px solid rgba(106,92,255,0.25); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+		.benefit h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.01em; }
+		.benefit p { font-size: 14px; color: var(--muted); line-height: 1.55; }
+
+		.platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+		.platform { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; }
+		.platform .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+		.platform .name { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+		.platform .desc { font-size: 13px; color: var(--muted); }
+
+		.arch { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 28px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.7; color: var(--text); overflow-x: auto; }
+		.arch .c { color: var(--muted); }
+		.arch .k { color: var(--accent); }
+		.arch .v { color: var(--accent2); }
+
+		.endpoints { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+		.endpoint { padding: 16px 22px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: baseline; }
+		.endpoint:last-child { border-bottom: none; }
+		.endpoint code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; color: var(--accent); }
+		.endpoint .desc { font-size: 14px; color: var(--muted); }
+
+		.note { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; font-size: 14px; color: var(--muted); margin-top: 12px; }
+		.note strong { color: var(--text); }
+
+		.footer { text-align: center; color: var(--muted); font-size: 13px; padding: 40px 24px 60px; border-top: 1px solid var(--border); }
+		.footer a { color: var(--muted); text-decoration: none; }
+		.footer a:hover { color: var(--text); }
+
+		.disclaimer { font-size: 12px; color: var(--muted); margin-top: 60px; line-height: 1.55; max-width: 700px; }
+
+		@media (max-width: 720px) {
+			.platform-grid { grid-template-columns: 1fr; }
+			main { padding: 56px 20px 96px; }
+			.endpoint { grid-template-columns: 1fr; gap: 4px; }
+		}
+	</style>
+</head>
+<body>
+	<header>
+		<a href="/" class="home">three.ws</a>
+		<nav>
+			<a href="/discover">Discover</a>
+			<a href="/docs">Docs</a>
+			<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+		</nav>
+	</header>
+
+	<main>
+		<div class="partner-badge">
+			<span class="dot"></span>
+			<strong>AWS Partner</strong>
+			<span>·</span>
+			<span>Software Path</span>
+		</div>
+
+		<h1>three.ws on <span class="gradient">AWS</span>.</h1>
+		<p class="lede">
+			three.ws is an open-source 3D AI agent platform — WebGL viewer, Claude-driven runtime, on-chain identity, embed anywhere with one tag. <strong>Now an AWS Partner.</strong> Marketplace listing coming soon — subscribe with AWS credits, bill to your AWS invoice, count toward EDP commitments.
+		</p>
+
+		<div class="cta-row">
+			<a href="https://three.ws" class="btn btn-primary">
+				Try three.ws
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+			</a>
+			<a href="https://github.com/nirholas/three.ws" class="btn btn-sec" target="_blank" rel="noopener">
+				<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3C5.4.3 0 5.7 0 12.3c0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.1c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1.1 1.8 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2 1-.3 2-.4 3-.4s2 .1 3 .4c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.8-1.6 8.2-6.1 8.2-11.4C24 5.7 18.6.3 12 .3z"/></svg>
+				View source
+			</a>
+			<a href="/docs" class="btn btn-sec">
+				Documentation
+			</a>
+		</div>
+
+		<section>
+			<h2>Built for AWS customers.</h2>
+			<p class="sub">When the Marketplace listing goes live, three.ws integrates with the procurement and billing tools you already use.</p>
+
+			<div class="benefit-grid">
+				<div class="benefit">
+					<div class="icon">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a99eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
+					</div>
+					<h3>AWS credits eligible</h3>
+					<p>Use existing AWS credits and Activate funding against three.ws subscriptions.</p>
+				</div>
+				<div class="benefit">
+					<div class="icon">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a99eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20M6 16h4"/></svg>
+					</div>
+					<h3>Consolidated billing</h3>
+					<p>Usage rolls onto your AWS invoice under AWS Marketplace Software — no new vendor in procurement.</p>
+				</div>
+				<div class="benefit">
+					<div class="icon">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a99eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+					</div>
+					<h3>EDP commit toward</h3>
+					<p>Marketplace spend counts toward your Enterprise Discount Program commitments.</p>
+				</div>
+				<div class="benefit">
+					<div class="icon">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a99eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+					</div>
+					<h3>Free trial included</h3>
+					<p>Try three.ws Community Edition with no commitment. Subscription activates only after the trial ends.</p>
+				</div>
+				<div class="benefit">
+					<div class="icon">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a99eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6v6H9z"/></svg>
+					</div>
+					<h3>Runs on us-east-1</h3>
+					<p>three.ws production deploys to AWS us-east-1, registered in AWS MyApplications for unified cost monitoring.</p>
+				</div>
+				<div class="benefit">
+					<div class="icon">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a99eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+					</div>
+					<h3>Standard Contract</h3>
+					<p>three.ws subscribes under the AWS Standard Contract for Marketplace. Procurement-ready out of the box.</p>
+				</div>
+			</div>
+		</section>
+
+		<section>
+			<h2>What you get.</h2>
+			<p class="sub">Everything in three.ws — open source, production-ready, runs in any modern browser.</p>
+
+			<div class="platform-grid">
+				<div class="platform">
+					<div class="label">Viewer</div>
+					<div class="name">WebGL 3D Engine</div>
+					<div class="desc">three.js r176, glTF 2.0 / GLB with Draco + KTX2, PBR materials, animations, morph targets.</div>
+				</div>
+				<div class="platform">
+					<div class="label">Runtime</div>
+					<div class="name">LLM Agent Brain</div>
+					<div class="desc">Claude-driven tool-loop with built-in gestures, emotion blending, skill system, voice and lip-sync.</div>
+				</div>
+				<div class="platform">
+					<div class="label">Identity</div>
+					<div class="name">On-Chain Registration</div>
+					<div class="desc">ERC-8004 tokens on EVM chains and Metaplex Core assets on Solana. Signed action history, reputation scores.</div>
+				</div>
+				<div class="platform">
+					<div class="label">Distribution</div>
+					<div class="name">&lt;agent-3d&gt; Web Component</div>
+					<div class="desc">One element, no framework dependency. Drop into any page. Five widget variants out of the box.</div>
+				</div>
+				<div class="platform">
+					<div class="label">Protocols</div>
+					<div class="name">MCP + OAuth 2.1 + x402</div>
+					<div class="desc">Native Model Context Protocol endpoint, full OAuth 2.1 authorization server, x402 paid endpoints on Base + Solana.</div>
+				</div>
+				<div class="platform">
+					<div class="label">License</div>
+					<div class="name">Apache 2.0</div>
+					<div class="desc">Entire stack — viewer, runtime, contracts, backend, web component — open source. No lock-in.</div>
+				</div>
+			</div>
+		</section>
+
+		<section>
+			<h2>The integration.</h2>
+			<p class="sub">three.ws implements the full AWS Marketplace SaaS contract — registration, metering, entitlements, and signed SNS subscription lifecycle webhooks.</p>
+
+			<div class="endpoints">
+				<div class="endpoint">
+					<code>POST /api/aws-marketplace/register</code>
+					<div class="desc">Fulfillment URL. Exchanges <code>x-amzn-marketplace-token</code> for a stable customer identifier via ResolveCustomer.</div>
+				</div>
+				<div class="endpoint">
+					<code>POST /api/aws-marketplace/subscription</code>
+					<div class="desc">SNS notification webhook. Verifies AWS signature against the signing cert and processes subscribe / unsubscribe lifecycle events.</div>
+				</div>
+				<div class="endpoint">
+					<code>POST /api/aws-marketplace/link</code>
+					<div class="desc">Links an AWS Marketplace subscription to an authenticated three.ws account after the post-subscribe redirect.</div>
+				</div>
+				<div class="endpoint">
+					<code>BatchMeterUsage + GetEntitlements</code>
+					<div class="desc">Daily metering and contract entitlement checks via the AWS Marketplace Metering and Entitlement Service SDKs.</div>
+				</div>
+			</div>
+
+			<div class="note">
+				<strong>Open source.</strong> The integration lives in <a href="https://github.com/nirholas/three.ws/tree/main/api/aws-marketplace" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">api/aws-marketplace/</a> and <a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/aws-marketplace.js" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">api/_lib/aws-marketplace.js</a>. Review the code, fork it, run your own deployment.
+			</div>
+		</section>
+
+		<section>
+			<h2>Get notified when the listing goes live.</h2>
+			<p class="sub">The AWS Marketplace listing is in review. Until it publishes, you can:</p>
+
+			<div class="cta-row">
+				<a href="https://three.ws" class="btn btn-primary">
+					Use three.ws now
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+				</a>
+				<a href="https://github.com/nirholas/three.ws" class="btn btn-sec" target="_blank" rel="noopener">Star on GitHub</a>
+				<a href="mailto:support@three.ws?subject=AWS%20Marketplace%20interest" class="btn btn-sec">Contact sales</a>
+			</div>
+		</section>
+
+		<p class="disclaimer">
+			three.ws is an independent AWS Partner enrolled in the AWS Partner Network Software Path. This page describes how AWS customers will procure three.ws when the AWS Marketplace listing is publicly available. AWS, AWS Marketplace, AWS Partner Network, and AWS Activate are trademarks of Amazon.com, Inc. or its affiliates.
+		</p>
+	</main>
+
+	<div class="footer">
+		<a href="/">three.ws</a> · <a href="/docs">Docs</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/tos">Terms</a>
+	</div>
+</body>
+</html>
