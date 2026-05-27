@@ -1,178 +1,143 @@
 /**
- * Puppeteer test: stages a dummy avatar in IndexedDB, opens /create-review,
- * clicks the On-Chain Identity tile, and screenshots the modal at desktop
- * and mobile viewports.
+ * Renders the identity modal HTML+CSS in isolation and screenshots it at
+ * desktop and mobile viewports. Avoids the full app bootstrap (WebGL, IDB,
+ * Solana SDK) that can't run in headless Chrome.
  */
 import puppeteer from 'puppeteer';
+import { readFileSync } from 'fs';
 
 const BASE = process.env.BASE_URL || 'http://localhost:5555';
 
-async function stageGuestAvatar(page) {
-	await page.evaluate(() => {
-		return new Promise((resolve, reject) => {
-			const DB_NAME = 'three-ws-guest';
-			const STORE = 'avatars';
-			const KEY = 'pending';
-			const META_KEY = '3dagent:guest-avatar-meta';
+function extractIdentityCSS() {
+	const html = readFileSync('/workspaces/three.ws/pages/create-review.html', 'utf-8');
+	const styleMatch = html.match(/<style>([\s\S]*?)<\/style>/);
+	return styleMatch?.[1] || '';
+}
 
-			const req = indexedDB.open(DB_NAME, 1);
-			req.onupgradeneeded = () => {
-				const db = req.result;
-				if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
-			};
-			req.onsuccess = () => {
-				const db = req.result;
-				// Minimal valid GLB (empty glTF 2.0 binary container)
-				const header = new ArrayBuffer(12 + 8 + 17);
-				const view = new DataView(header);
-				// GLB magic
-				view.setUint32(0, 0x46546C67, true);
-				view.setUint32(4, 2, true); // version 2
-				view.setUint32(8, header.byteLength, true); // total length
-				// JSON chunk
-				view.setUint32(12, 17, true); // chunk length
-				view.setUint32(16, 0x4E4F534A, true); // JSON type
-				const json = '{"asset":{"version":"2.0"}}';
-				// We need exactly 17 bytes of JSON padded. Let's redo this properly.
-				const jsonStr = '{"asset":{"version":"2.0"}}';
-				const jsonBytes = new TextEncoder().encode(jsonStr);
-				const jsonPadded = jsonBytes.byteLength + ((4 - jsonBytes.byteLength % 4) % 4);
-				const totalLen = 12 + 8 + jsonPadded;
-				const buf = new ArrayBuffer(totalLen);
-				const dv = new DataView(buf);
-				dv.setUint32(0, 0x46546C67, true);
-				dv.setUint32(4, 2, true);
-				dv.setUint32(8, totalLen, true);
-				dv.setUint32(12, jsonPadded, true);
-				dv.setUint32(16, 0x4E4F534A, true);
-				const arr = new Uint8Array(buf);
-				arr.set(jsonBytes, 20);
-				// Pad with spaces (0x20)
-				for (let i = 20 + jsonBytes.byteLength; i < 20 + jsonPadded; i++) arr[i] = 0x20;
-
-				const blob = new Blob([buf], { type: 'model/gltf-binary' });
-				const id = 'test-' + Math.random().toString(36).slice(2, 8);
-				const record = {
-					blob,
-					meta: { source: 'three-ws-selfie', name: 'Test Avatar' },
-					id,
-					name: 'Test Avatar',
-					size: blob.size,
-					createdAt: Date.now(),
-				};
-
-				const tx = db.transaction(STORE, 'readwrite');
-				const store = tx.objectStore(STORE);
-				store.put(record, KEY);
-				tx.oncomplete = () => {
-					localStorage.setItem(META_KEY, JSON.stringify({
-						id, name: 'Test Avatar', size: blob.size,
-						createdAt: Date.now(), source: 'three-ws-selfie',
-					}));
-					db.close();
-					resolve();
-				};
-				tx.onerror = () => reject(tx.error);
-			};
-			req.onerror = () => reject(req.error);
-		});
-	});
+function buildTestPage(css) {
+	const sampleAddr = 'DuH8HS9Vxh4Y1vHeoXAwV3qiRmM57tYyJAwrTieY8Gww';
+	return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+${css}
+/* Override any hidden states for the test */
+body { background: var(--bg); color: var(--text); margin: 0; }
+.fm-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0,0,0,0.7); }
+.fm-dialog { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px 22px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.fm-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+.fm-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+.fm-head-text { flex: 1; min-width: 0; }
+.fm-head h3 { margin: 0; font-size: 19px; font-weight: 600; }
+.fm-head p { margin: 4px 0 0; font-size: 13px; color: var(--muted); line-height: 1.45; }
+.fm-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px 8px; }
+.fm-body { display: flex; flex-direction: column; gap: 14px; }
+.fm-bullets { margin: 0; padding: 0 0 0 18px; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+.fm-bullets li { margin-bottom: 4px; }
+.fm-bullets li::marker { color: var(--accent); }
+.fm-actions { margin-top: 16px; display: flex; gap: 10px; }
+.fm-cta { display: inline-flex; align-items: center; justify-content: center; padding: 10px 22px; border-radius: 9px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; }
+@media (max-width: 560px) {
+	.fm-backdrop { padding: 0; align-items: flex-end; }
+	.fm-dialog { max-width: 100%; max-height: 88vh; border-radius: 18px 18px 0 0; padding: 22px 20px 26px; }
+	.fm-head h3 { font-size: 17px; }
+	.fm-head p { font-size: 12.5px; }
+}
+</style>
+</head>
+<body>
+<div class="fm-backdrop" role="dialog" aria-modal="true">
+	<div class="fm-dialog" tabindex="-1" style="position: relative;">
+		<div class="fm-head">
+			<div class="fm-icon" aria-hidden="true">🪪</div>
+			<div class="fm-head-text">
+				<h3>On-Chain Identity</h3>
+				<p>Your agent becomes a Metaplex Core asset on Solana the moment you save — transferable, composable, browsable in any wallet.</p>
+			</div>
+			<button class="fm-close" type="button" aria-label="Close">✕</button>
+		</div>
+		<div class="fm-body">
+			<ul class="fm-bullets">
+				<li>Owned by your wallet, not by three.ws — transfer or sell at any time.</li>
+				<li>Metadata (avatar URL, persona, voice) is mutable by you, signed on-chain.</li>
+				<li>Discoverable in the agent registry by capability, price, and reputation.</li>
+			</ul>
+			<div class="fm-id-card" data-state="ready">
+				<div class="fm-id-card-top">
+					<div class="fm-id-avatar fm-id-avatar--fallback">L</div>
+					<div class="fm-id-card-top-right">
+						<div class="fm-id-head">
+							<span class="fm-id-chain">Solana mainnet</span>
+							<span class="fm-id-pill">preview</span>
+						</div>
+						<div class="fm-id-meta">
+							<div><span class="muted">Name</span><strong>Luna</strong></div>
+							<div><span class="muted">Asset standard</span><strong>Metaplex Core</strong></div>
+						</div>
+					</div>
+				</div>
+				<a class="fm-id-addr-link" href="https://solscan.io/account/${sampleAddr}" target="_blank" rel="noopener noreferrer" title="Open in Solscan (sample address)">
+					<span class="fm-id-addr">${sampleAddr}</span>
+					<span class="fm-id-explorer-hint">View on Solscan</span>
+				</a>
+				<p class="fm-id-sample-note">Sample keypair — your real address is created on save</p>
+			</div>
+		</div>
+		<div class="fm-actions">
+			<button class="fm-cta" type="button">Got it</button>
+		</div>
+	</div>
+</div>
+</body>
+</html>`;
 }
 
 async function run() {
+	const css = extractIdentityCSS();
+	const html = buildTestPage(css);
+
 	const browser = await puppeteer.launch({
 		headless: true,
-		args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+		args: ['--no-sandbox', '--disable-setuid-sandbox'],
 	});
 
 	try {
 		const page = await browser.newPage();
 
-		page.on('pageerror', (err) => console.error('PAGE ERROR:', err.message));
-
-		// Warm Vite's dep optimizer by hitting the homepage first
-		await page.goto(BASE, { waitUntil: 'networkidle2', timeout: 20000 });
-		// Let Vite finish any dependency re-optimization (triggers 504 + reload)
-		await new Promise(r => setTimeout(r, 5000));
-
-		// Stage the avatar
-		await stageGuestAvatar(page);
-		console.log('Staged dummy avatar in IndexedDB');
-
-		// ── Desktop viewport ──
+		// ── Desktop ──
 		await page.setViewport({ width: 1280, height: 900 });
-		// Navigate with retry — Vite may force a reload
-		for (let attempt = 0; attempt < 3; attempt++) {
-			try {
-				await page.goto(BASE + '/create-review', { waitUntil: 'networkidle2', timeout: 15000 });
-				break;
-			} catch (e) {
-				console.log(`Navigation attempt ${attempt + 1} failed, retrying...`);
-				await new Promise(r => setTimeout(r, 2000));
-			}
-		}
-		// Wait for page JS to run (3D viewer will fail in headless — that's fine)
-		await new Promise(r => setTimeout(r, 3000));
-
-		// Click the identity tile via JS (avoids visibility/scroll issues)
-		const found = await page.evaluate(() => {
-			const tile = document.querySelector('.feature-tile[data-feature="identity"]');
-			if (!tile) return false;
-			tile.click();
-			return true;
-		});
-		if (!found) {
-			console.error('Could not find identity tile');
-			await page.screenshot({ path: '/tmp/identity-debug.png', fullPage: true });
-			console.log('Debug screenshot saved to /tmp/identity-debug.png');
-			return;
-		}
-		await new Promise(r => setTimeout(r, 3000));
-
+		await page.setContent(html, { waitUntil: 'networkidle0' });
+		await new Promise(r => setTimeout(r, 500));
 		await page.screenshot({ path: '/tmp/identity-desktop.png', fullPage: false });
-		console.log('Desktop screenshot: /tmp/identity-desktop.png');
+		console.log('Desktop screenshot saved: /tmp/identity-desktop.png');
 
-		// Check for console errors
-		page.on('pageerror', (err) => console.error('PAGE ERROR:', err.message));
-
-		// Close modal
-		const closeBtn = await page.$('.fm-close');
-		if (closeBtn) await closeBtn.click();
-		await new Promise(r => setTimeout(r, 300));
-
-		// ── Mobile viewport ──
+		// ── Mobile ──
 		await page.setViewport({ width: 390, height: 844 });
-		for (let attempt = 0; attempt < 3; attempt++) {
-			try {
-				await page.goto(BASE + '/create-review', { waitUntil: 'networkidle2', timeout: 15000 });
-				break;
-			} catch (e) {
-				console.log(`Mobile nav attempt ${attempt + 1} failed, retrying...`);
-				await new Promise(r => setTimeout(r, 2000));
-			}
-		}
-		await new Promise(r => setTimeout(r, 3000));
-
-		await page.evaluate(() => {
-			const tile = document.querySelector('.feature-tile[data-feature="identity"]');
-			if (tile) tile.click();
-		});
-		await new Promise(r => setTimeout(r, 3000));
+		await page.setContent(html, { waitUntil: 'networkidle0' });
+		await new Promise(r => setTimeout(r, 500));
 		await page.screenshot({ path: '/tmp/identity-mobile.png', fullPage: false });
-		console.log('Mobile screenshot: /tmp/identity-mobile.png');
+		console.log('Mobile screenshot saved: /tmp/identity-mobile.png');
 
-		// Grab any JS errors from the console
-		const logs = [];
-		page.on('console', (msg) => {
-			if (msg.type() === 'error') logs.push(msg.text());
-		});
+		// ── Loading state ──
+		const loadingHtml = html
+			.replace('data-state="ready"', 'data-state="loading"')
+			.replace('>preview<', '>generating…<')
+			.replace(`>${sampleAddr}<`, '>—<');
+		await page.setViewport({ width: 1280, height: 900 });
+		await page.setContent(loadingHtml, { waitUntil: 'networkidle0' });
+		await new Promise(r => setTimeout(r, 500));
+		await page.screenshot({ path: '/tmp/identity-loading.png', fullPage: false });
+		console.log('Loading state screenshot saved: /tmp/identity-loading.png');
 
-		console.log('Done. Check /tmp/identity-desktop.png and /tmp/identity-mobile.png');
+		console.log('Done — all screenshots captured.');
 	} finally {
 		await browser.close();
 	}
 }
 
+const sampleAddr = 'DuH8HS9Vxh4Y1vHeoXAwV3qiRmM57tYyJAwrTieY8Gww';
 run().catch((err) => {
 	console.error(err);
 	process.exit(1);

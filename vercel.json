@@ -1423,6 +1423,17 @@
 			"dest": "/avatars/$1"
 		},
 		{
+			"src": "/avatars/([^/]+)/ar/?",
+			"headers": {
+				"permissions-policy": "xr-spatial-tracking=*, camera=(self), microphone=(self)"
+			},
+			"dest": "/pages/ar.html"
+		},
+		{
+			"src": "/avatars/([^/]+)/edit",
+			"dest": "/avatar-edit.html?id=$1"
+		},
+		{
 			"src": "/avatars/([^/]+)",
 			"status": 301,
 			"headers": { "Location": "/agent-next?id=$1" }

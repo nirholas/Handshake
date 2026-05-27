@@ -2400,6 +2400,34 @@ body.market-page {
 .card-heart:hover { color: #f87171; transform: scale(1.15); }
 .card-heart.active { color: #f87171; }
 
+.card-star {
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	z-index: 3;
+	background: rgba(0,0,0,0.5);
+	backdrop-filter: blur(4px);
+	border: 1px solid rgba(255,255,255,0.1);
+	color: rgba(255,255,255,0.5);
+	font-size: 16px;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	transition: color 0.15s, transform 0.1s, background 0.15s;
+	opacity: 0;
+}
+.market-card-agent:hover .card-star { opacity: 1; }
+.card-star.on {
+	color: #fde047;
+	opacity: 1;
+}
+.card-star:hover { color: #fde047; transform: scale(1.1); background: rgba(0,0,0,0.7); }
+
 /* ── Featured badge on cards ────────────────────────────────────── */
 
 .card-featured-badge {

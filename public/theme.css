@@ -1,0 +1,53 @@
+/*
+ * Monochrome design tokens — three.ws
+ *
+ * Single source of truth for the site palette. Every page imports this file
+ * FIRST; page-specific overrides (if any) cascade after it. To retheme the
+ * entire site, edit the values below.
+ *
+ * Naming convention:
+ *   --t-*   global tokens (backgrounds, text, borders, accent)
+ *   Pages may alias these to local names (--bg, --panel, etc.) in their own
+ *   :root block for backwards-compat, but new code should use --t-* directly.
+ */
+
+:root {
+	/* ── Backgrounds ─────────────────────────────────────────────── */
+	--t-bg-0: #000000;
+	--t-bg-1: #0a0a0a;
+	--t-bg-2: #111111;
+	--t-bg-3: #1a1a1a;
+
+	/* ── Text ────────────────────────────────────────────────────── */
+	--t-ink: #e8e8e8;
+	--t-ink-dim: #888888;
+	--t-ink-faint: #555555;
+
+	/* ── Borders / strokes ───────────────────────────────────────── */
+	--t-stroke: #1a1a1a;
+	--t-stroke-strong: #2a2a2a;
+
+	/* ── Accent (white for monochrome) ───────────────────────────── */
+	--t-accent: #ffffff;
+	--t-accent-soft: rgba(255, 255, 255, 0.10);
+	--t-accent-ink: #000000;
+
+	/* ── Glass / translucent surfaces ────────────────────────────── */
+	--t-glass: rgba(255, 255, 255, 0.04);
+	--t-glass-strong: rgba(255, 255, 255, 0.08);
+
+	/* ── Semantic (kept for usability — errors need color) ────────── */
+	--t-success: #4ade80;
+	--t-danger: #f87171;
+	--t-warn: #fbbf24;
+
+	/* ── Legacy aliases ──────────────────────────────────────────── */
+	--accent: var(--t-accent);
+	--accent-ink: var(--t-accent-ink);
+	--accent-soft: var(--t-accent-soft);
+	--bg: var(--t-bg-0);
+	--panel: var(--t-bg-1);
+	--border: var(--t-stroke);
+	--text: var(--t-ink);
+	--muted: var(--t-ink-dim);
+}

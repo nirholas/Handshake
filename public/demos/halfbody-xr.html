@@ -25,7 +25,7 @@
 			.viewer-label {
 				position: absolute; top: 12px; left: 12px;
 				background: rgba(0,0,0,0.55); padding: 4px 10px; border-radius: 999px;
-				font-size: 12px; color: #3dc1ff; font-weight: 600;
+				font-size: 12px; color: #3dc1ff; font-weight: 600; z-index: 1;
 			}
 			.controls {
 				margin-top: 24px;
@@ -36,9 +36,11 @@
 			button {
 				background: #3dc1ff; color: #0a0a0a; border: 0; border-radius: 9px;
 				padding: 10px 14px; font-weight: 600; cursor: pointer; font: inherit;
+				transition: opacity 0.15s;
 			}
 			button.secondary { background: rgba(255,255,255,0.06); color: #eee; }
 			button:disabled { opacity: 0.4; cursor: not-allowed; }
+			button.active { background: #ff6b6b; color: #fff; }
 			.log {
 				margin-top: 16px;
 				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
@@ -48,6 +50,16 @@
 			.log .ok { color: #3dc1ff; }
 			.log .err { color: #ff6b6b; }
 			.log .info { color: #66d9ef; }
+			.xr-link {
+				display: inline-flex; align-items: center; gap: 6px;
+				background: linear-gradient(135deg, #1a1b2e, #12132a);
+				border: 1.5px solid rgba(61,193,255,0.3); border-radius: 12px;
+				padding: 14px 20px; text-decoration: none; color: #3dc1ff;
+				font-weight: 600; font-size: 14px; margin-top: 4px;
+				transition: border-color 0.15s, box-shadow 0.15s;
+			}
+			.xr-link:hover { border-color: rgba(61,193,255,0.6); box-shadow: 0 0 20px rgba(61,193,255,0.12); }
+			.xr-link svg { flex-shrink: 0; }
 		</style>
 	</head>
 	<body>
@@ -75,11 +87,20 @@
 			</div>
 
 			<div class="controls">
-				<button id="enter-xr-full" class="secondary">Enter WebXR · full body</button>
-				<button id="enter-xr-half">Enter WebXR · half body</button>
+				<button id="enter-xr-full" class="secondary" disabled>Enter WebXR · full body</button>
+				<button id="enter-xr-half" disabled>Enter WebXR · half body</button>
 				<button id="reload" class="secondary">Reload models</button>
 			</div>
 			<div class="log" id="log">ready.</div>
+
+			<a href="/xr" class="xr-link" style="margin-top:24px;display:inline-flex">
+				<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+					<path d="M1 5.5C1 4.12 2.12 3 3.5 3h9C13.88 3 15 4.12 15 5.5v5c0 1.38-1.12 2.5-2.5 2.5h-9C2.12 13 1 11.88 1 10.5v-5Z" stroke="#3dc1ff" stroke-width="1.3"/>
+					<circle cx="5.5" cy="8" r="1.5" fill="#3dc1ff"/>
+					<circle cx="10.5" cy="8" r="1.5" fill="#3dc1ff"/>
+				</svg>
+				Open full XR experience →
+			</a>
 		</main>
 
 		<script src="/nav.js" defer></script>
@@ -87,6 +108,9 @@
 			import * as THREE from 'three';
 			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+			import { AnimationManager } from '/src/animation-manager.js';
+			import { WebXRSession } from '/src/ar/webxr.js';
 
 			const $ = (id) => document.getElementById(id);
 			const log = $('log');
@@ -98,38 +122,70 @@
 
 			const LOWER_BODY_FRAGMENTS = ['upleg','leg','thigh','knee','shin','calf','foot','toe','ankle'];
 			const normalizeBone = (n) => String(n||'').toLowerCase()
-				.replace(/^mixamorig:?_?/,'')
-				.replace(/^cc_base_/,'')
-				.replace(/^armature[:_|]/,'')
-				.replace(/^rig[:_]/,'');
+				.replace(/^mixamorig:?_?/,'').replace(/^cc_base_/,'').replace(/^armature[:_|]/,'').replace(/^rig[:_]/,'');
 			const isLowerBody = (n) => LOWER_BODY_FRAGMENTS.some((f) => normalizeBone(n).includes(f));
 
-			function buildPreview(container) {
-				const w = container.clientWidth, h = container.clientHeight;
+			// Build a full viewer shim compatible with WebXRSession
+			function buildViewer(container) {
+				const w = container.clientWidth, h = Math.max(container.clientHeight, 420);
 				const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 				renderer.setSize(w, h);
 				renderer.outputColorSpace = THREE.SRGBColorSpace;
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 				container.appendChild(renderer.domElement);
 
 				const scene = new THREE.Scene();
+				const pmrem = new THREE.PMREMGenerator(renderer);
+				scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
 				const camera = new THREE.PerspectiveCamera(35, w/h, 0.01, 100);
 				camera.position.set(0, 1.4, 2.6);
 				const controls = new OrbitControls(camera, renderer.domElement);
 				controls.target.set(0, 1, 0);
 				controls.enableDamping = true;
 
-				scene.add(new THREE.HemisphereLight(0xffffff, 0x404060, 1.0));
-				const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+				scene.add(new THREE.HemisphereLight(0xbcd6ff, 0x202830, 0.7));
+				const dir = new THREE.DirectionalLight(0xffffff, 1.4);
 				dir.position.set(2, 4, 3);
+				dir.castShadow = true;
+				dir.shadow.mapSize.set(512, 512);
 				scene.add(dir);
 
-				function tick() {
-					requestAnimationFrame(tick);
+				const animMgr = new AnimationManager();
+
+				// Viewer shim that WebXRSession expects
+				const viewer = {
+					renderer, scene, camera, controls,
+					content: null,
+					mixer: null,
+					animationManager: animMgr,
+					_afterAnimateHooks: [],
+					_rafId: null,
+					prevTime: null,
+					activeCamera: camera,
+					_needsRender: true,
+					_updateRenderLoop() { startTick(viewer); },
+				};
+
+				function tick(time) {
+					viewer._rafId = requestAnimationFrame(tick);
+					const dt = viewer.prevTime ? (time - viewer.prevTime) / 1000 : 0.016;
+					viewer.prevTime = time;
+					if (viewer.mixer) viewer.mixer.update(dt);
+					viewer.animationManager.update(dt);
+					for (const hook of viewer._afterAnimateHooks) hook(dt);
 					controls.update();
 					renderer.render(scene, camera);
 				}
-				tick();
+
+				function startTick(v) {
+					if (v._rafId !== null) return;
+					v._rafId = requestAnimationFrame(tick);
+				}
+
+				startTick(viewer);
 
 				window.addEventListener('resize', () => {
 					const w2 = container.clientWidth, h2 = container.clientHeight;
@@ -138,18 +194,26 @@
 					camera.updateProjectionMatrix();
 				});
 
-				return { scene, renderer, camera, controls };
+				return viewer;
 			}
 
-			const fullView = buildPreview($('viewer-full'));
-			const halfView = buildPreview($('viewer-half'));
+			const fullViewer = buildViewer($('viewer-full'));
+			const halfViewer = buildViewer($('viewer-half'));
 
-			async function loadInto(view, applyHalfBody) {
+			async function loadInto(viewer, applyHalfBody) {
 				const loader = new GLTFLoader();
-				logLine(`loading /avatars/default.glb into ${applyHalfBody ? 'half-body' : 'full-body'} viewer…`, 'info');
+				logLine(`loading avatar into ${applyHalfBody ? 'half-body' : 'full-body'} viewer…`, 'info');
 				const gltf = await loader.loadAsync('/avatars/default.glb');
 				const root = gltf.scene;
-				view.scene.add(root);
+				viewer.scene.add(root);
+				viewer.content = root;
+
+				// Attach animations
+				await viewer.animationManager.loadAll();
+				viewer.animationManager.attach(root);
+				viewer.mixer = viewer.animationManager.mixer;
+				viewer.animationManager.play('idle');
+
 				if (applyHalfBody) {
 					let hidden = 0;
 					root.traverse((obj) => {
@@ -170,40 +234,74 @@
 				}
 			}
 
+			// Detect XR support and enable buttons
+			async function detectXRSupport() {
+				const supported = !!(navigator.xr && await navigator.xr.isSessionSupported('immersive-ar').catch(() => false));
+				if (supported) {
+					logLine('WebXR immersive-ar supported on this device', 'ok');
+					$('enter-xr-full').disabled = false;
+					$('enter-xr-half').disabled = false;
+				} else {
+					logLine('WebXR immersive-ar not available — try this on a Quest or Android Chrome', 'info');
+					$('enter-xr-full').disabled = true;
+					$('enter-xr-full').title = 'WebXR not available on this device';
+					$('enter-xr-half').disabled = true;
+					$('enter-xr-half').title = 'WebXR not available on this device';
+				}
+			}
+
+			// XR session state
+			let xrSessionFull = null;
+			let xrSessionHalf = null;
+
+			async function toggleXR(viewer, halfBody, btn, sessionRef, setSession) {
+				if (sessionRef) {
+					await sessionRef.end();
+					setSession(null);
+					btn.classList.remove('active');
+					btn.textContent = halfBody ? 'Enter WebXR · half body' : 'Enter WebXR · full body';
+					return;
+				}
+				btn.disabled = true;
+				btn.textContent = 'Starting…';
+				try {
+					const session = new WebXRSession(viewer, {
+						halfBody,
+						onEnd: () => {
+							setSession(null);
+							btn.classList.remove('active');
+							btn.textContent = halfBody ? 'Enter WebXR · half body' : 'Enter WebXR · full body';
+							btn.disabled = false;
+						},
+					});
+					await session.start();
+					setSession(session);
+					btn.classList.add('active');
+					btn.textContent = halfBody ? 'Exit XR · half body' : 'Exit XR · full body';
+					logLine(`XR session started · ${halfBody ? 'half body' : 'full body'}`, 'ok');
+				} catch (err) {
+					logLine('XR request failed: ' + err.message, 'err');
+				}
+				btn.disabled = false;
+			}
+
+			$('enter-xr-full').addEventListener('click', () =>
+				toggleXR(fullViewer, false, $('enter-xr-full'), xrSessionFull,
+					(s) => { xrSessionFull = s; }));
+
+			$('enter-xr-half').addEventListener('click', () =>
+				toggleXR(halfViewer, true, $('enter-xr-half'), xrSessionHalf,
+					(s) => { xrSessionHalf = s; }));
+
 			$('reload').addEventListener('click', () => location.reload());
-
-			$('enter-xr-full').addEventListener('click', async () => {
-				if (!navigator.xr) return logLine('WebXR unavailable in this browser', 'err');
-				const supported = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
-				if (!supported) return logLine('immersive-ar not supported on this device', 'err');
-				logLine('starting full-body XR — open this URL on a Quest browser or Android Chrome to enter the headset', 'info');
-				try {
-					const session = await navigator.xr.requestSession('immersive-ar');
-					logLine('XR session started · full body', 'ok');
-					session.addEventListener('end', () => logLine('XR session ended', 'info'));
-				} catch (err) {
-					logLine('XR request failed: ' + err.message, 'err');
-				}
-			});
-
-			$('enter-xr-half').addEventListener('click', async () => {
-				if (!navigator.xr) return logLine('WebXR unavailable in this browser', 'err');
-				const supported = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
-				if (!supported) return logLine('immersive-ar not supported on this device', 'err');
-				logLine('starting half-body XR — lower-body bones will be collapsed for the duration of the session', 'info');
-				try {
-					const session = await navigator.xr.requestSession('immersive-ar');
-					logLine('XR session started · half body', 'ok');
-					session.addEventListener('end', () => logLine('XR session ended', 'info'));
-				} catch (err) {
-					logLine('XR request failed: ' + err.message, 'err');
-				}
-			});
 
 			(async () => {
 				try {
-					await loadInto(fullView, false);
-					await loadInto(halfView, true);
+					await Promise.all([
+						loadInto(fullViewer, false),
+						loadInto(halfViewer, true),
+					]);
+					await detectXRSupport();
 				} catch (err) {
 					logLine('load failed: ' + err.message, 'err');
 				}

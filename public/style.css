@@ -22,7 +22,7 @@
 	z-index: 9999;
 }
 .save-toast a {
-	color: #9a8cff;
+	color: rgba(255, 255, 255, 0.7);
 }
 
 :root {
@@ -66,8 +66,8 @@
 	--font-mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
 
 	/* Accent */
-	--accent: #8b5cf6;
-	--accent-soft: rgba(139, 92, 246, 0.18);
+	--accent: #ffffff;
+	--accent-soft: rgba(255, 255, 255, 0.10);
 }
 
 html {

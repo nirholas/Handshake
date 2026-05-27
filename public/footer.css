@@ -501,7 +501,7 @@
 }
 
 .h-footer-horizon a:focus-visible {
-	outline: 2px solid #ffd76a;
+	outline: 2px solid rgba(255, 255, 255, 0.5);
 	outline-offset: 3px;
 	border-radius: 4px;
 }

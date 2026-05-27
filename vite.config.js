@@ -182,6 +182,7 @@ const appConfig = {
 				profile: resolve(__dirname, 'pages/profile.html'),
 				'threews-claim': resolve(__dirname, 'pages/threews-claim.html'),
 				'avatar-page': resolve(__dirname, 'pages/avatar-page.html'),
+				'ar-page':     resolve(__dirname, 'pages/ar.html'),
 creating: resolve(__dirname, 'pages/creating.html'),
 				pricing: resolve(__dirname, 'pages/pricing.html'),
 				'x-pricing': resolve(__dirname, 'pages/x-pricing.html'),

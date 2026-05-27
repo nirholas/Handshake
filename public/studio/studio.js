@@ -192,6 +192,9 @@ if (preModel) state.preselectedModel = preModel;
 	else if (state.preselectedModel) selectByModelUrl(state.preselectedModel);
 	else if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
 
+	// Show live-link + delete if we loaded an existing widget
+	if (state.editingId) updateSecondaryActions(state.editingId);
+
 	// Re-send config after every iframe navigation so brand settings apply on load.
 	previewIfr.addEventListener('load', postConfigToPreview);
 
@@ -1518,6 +1521,41 @@ async function save({ generate }) {
 	} finally {
 		saveBtn.disabled = false;
 		generateBtn.disabled = false;
+	}
+}
+
+function updateSecondaryActions(widgetId) {
+	const bar = $('#action-secondary');
+	const viewLink = $('#view-live-btn');
+	const delBtn = $('#delete-widget-btn');
+	if (!bar) return;
+	if (widgetId) {
+		if (viewLink) viewLink.href = `/w/${widgetId}`;
+		bar.hidden = false;
+		if (delBtn) delBtn.hidden = false;
+	} else {
+		bar.hidden = true;
+	}
+}
+
+async function deleteWidget() {
+	if (!state.editingId) return;
+	if (!confirm('Delete this widget permanently? This cannot be undone.')) return;
+	try {
+		const res = await fetch(`/api/widgets/${encodeURIComponent(state.editingId)}`, {
+			method: 'DELETE',
+			credentials: 'include',
+		});
+		if (!res.ok) {
+			const data = await res.json().catch(() => ({}));
+			throw new Error(data.error_description || `delete failed: ${res.status}`);
+		}
+		toast('Widget deleted', 'success');
+		setTimeout(() => {
+			location.href = '/dashboard/widgets';
+		}, 900);
+	} catch (err) {
+		toast(err.message, 'error');
 	}
 }
 

@@ -2704,7 +2704,7 @@ function renderCard(a) {
 	// avatar's thumbnail if there is one, otherwise a styled name-initial
 	// gradient so the card never looks visually empty.
 	const previewStrip = a.thumbnail_url
-		? `<div class="thumb" style="background-image:url('${escapeHtml(a.thumbnail_url)}')"></div>`
+		? `<div class="thumb" style="background:url('${escapeHtml(a.thumbnail_url)}') center/cover no-repeat #0a0a0d"></div>`
 		: `<div class="thumb">${placeholderHtml(a.name)}</div>`;
 	const bmOn = bookmarkedAgents.has(a.id);
 	const starBtn = `<button type="button" class="card-star${bmOn ? ' on' : ''}" data-agent-bm="${escapeHtml(a.id)}" aria-label="Bookmark agent" aria-pressed="${bmOn}" title="${bmOn ? 'Remove bookmark' : 'Bookmark agent'}">${bmOn ? '★' : '☆'}</button>`;

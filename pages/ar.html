@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#050810" />
+		<title>Avatar in AR · three.ws</title>
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta name="og:image" content="https://three.ws/assets/og-image.png" />
+
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+		></script>
+		<script type="module" src="/src/ar-page.js"></script>
+
+		<style>
+			:root {
+				--bg:       #050810;
+				--bg2:      #0a0e1a;
+				--text:     #f0f4ff;
+				--text-2:   #8891aa;
+				--text-3:   #4b5268;
+				--accent:   #7dd3fc;
+				--accent-2: #a78bfa;
+				--panel:    rgba(255,255,255,0.04);
+				--border:   rgba(255,255,255,0.08);
+				--radius:   14px;
+			}
+
+			*, *::before, *::after { box-sizing: border-box; }
+
+			html, body {
+				margin: 0; padding: 0;
+				width: 100%; height: 100%;
+				overflow: hidden;
+				background: var(--bg);
+				color: var(--text);
+				font-family: 'Inter', system-ui, sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			/* ── Background glow ─────────────────────────── */
+			.ar-bg {
+				position: fixed;
+				inset: 0;
+				pointer-events: none;
+				z-index: 0;
+			}
+			.ar-bg::before {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background:
+					radial-gradient(ellipse 80% 60% at 50% 0%, rgba(125,211,252,0.07) 0%, transparent 65%),
+					radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06) 0%, transparent 60%),
+					radial-gradient(ellipse 50% 40% at 20% 70%, rgba(125,211,252,0.04) 0%, transparent 55%);
+			}
+
+			/* ── Layout shell ────────────────────────────── */
+			#ar-shell {
+				position: relative;
+				width: 100%;
+				height: 100%;
+				z-index: 1;
+				display: flex;
+				flex-direction: column;
+			}
+
+			/* ── Top bar ─────────────────────────────────── */
+			.ar-topbar {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				z-index: 10;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: env(safe-area-inset-top, 0) 0 0;
+				padding-left: 16px;
+				padding-right: 16px;
+				padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
+				padding-bottom: 14px;
+				background: linear-gradient(to bottom, rgba(5,8,16,0.85) 0%, transparent 100%);
+				backdrop-filter: blur(0px);
+			}
+			.ar-back {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				color: var(--text-2);
+				text-decoration: none;
+				font-size: 14px;
+				font-weight: 500;
+				transition: color 0.15s;
+				padding: 6px 0;
+			}
+			.ar-back:hover { color: var(--text); }
+			.ar-back svg { flex-shrink: 0; }
+
+			.ar-topbar-center {
+				position: absolute;
+				left: 50%;
+				transform: translateX(-50%);
+				text-align: center;
+				pointer-events: none;
+			}
+			.ar-badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				font-size: 11px;
+				font-weight: 600;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--accent);
+				background: rgba(125,211,252,0.08);
+				border: 1px solid rgba(125,211,252,0.2);
+				border-radius: 999px;
+				padding: 4px 10px;
+			}
+			.ar-badge-dot {
+				width: 5px;
+				height: 5px;
+				border-radius: 50%;
+				background: var(--accent);
+				animation: ar-pulse 2s ease-in-out infinite;
+			}
+			@keyframes ar-pulse {
+				0%, 100% { opacity: 1; transform: scale(1); }
+				50%       { opacity: 0.5; transform: scale(0.75); }
+			}
+
+			.ar-share-btn {
+				background: transparent;
+				border: 1px solid var(--border);
+				border-radius: 999px;
+				color: var(--text-2);
+				font-size: 13px;
+				font-weight: 500;
+				font-family: inherit;
+				cursor: pointer;
+				padding: 6px 14px;
+				transition: border-color 0.15s, color 0.15s;
+			}
+			.ar-share-btn:hover { border-color: var(--text-3); color: var(--text); }
+
+			/* ── Model viewer ────────────────────────────── */
+			model-viewer {
+				position: absolute;
+				inset: 0;
+				width: 100%;
+				height: 100%;
+				--poster-color: transparent;
+				background: transparent;
+			}
+			model-viewer::part(default-ar-button) {
+				display: none; /* we use our own button */
+			}
+
+			/* ── Bottom panel ────────────────────────────── */
+			.ar-bottom {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				z-index: 10;
+				padding: 0 20px;
+				padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+				background: linear-gradient(to top, rgba(5,8,16,0.92) 0%, rgba(5,8,16,0.6) 60%, transparent 100%);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 10px;
+				pointer-events: none;
+			}
+			.ar-bottom > * { pointer-events: auto; }
+
+			.ar-avatar-name {
+				font-size: 22px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				color: var(--text);
+				text-align: center;
+				margin: 0;
+				line-height: 1.2;
+				font-family: 'Space Grotesk', system-ui, sans-serif;
+			}
+
+			.ar-subtitle {
+				font-size: 13px;
+				color: var(--text-2);
+				text-align: center;
+				margin: 0;
+			}
+
+			.ar-status {
+				font-size: 12.5px;
+				color: var(--accent-2);
+				text-align: center;
+				height: 18px;
+				display: flex;
+				align-items: center;
+				gap: 6px;
+			}
+			.ar-status.is-error { color: #f87171; }
+			.ar-status-spinner {
+				width: 13px;
+				height: 13px;
+				border-radius: 50%;
+				border: 2px solid rgba(167,139,250,0.25);
+				border-top-color: var(--accent-2);
+				animation: ar-spin 0.7s linear infinite;
+				flex-shrink: 0;
+			}
+			@keyframes ar-spin { to { transform: rotate(360deg); } }
+
+			.ar-launch-btn {
+				width: 100%;
+				max-width: 380px;
+				height: 60px;
+				background: linear-gradient(135deg, #7dd3fc 0%, #a78bfa 100%);
+				color: #05080e;
+				border: 0;
+				border-radius: 18px;
+				font-family: 'Space Grotesk', system-ui, sans-serif;
+				font-size: 17px;
+				font-weight: 700;
+				letter-spacing: -0.01em;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 10px;
+				transition: transform 0.12s, box-shadow 0.2s, opacity 0.15s;
+				box-shadow: 0 8px 32px -8px rgba(125,211,252,0.5), 0 0 0 1px rgba(255,255,255,0.08) inset;
+				position: relative;
+				overflow: hidden;
+			}
+			.ar-launch-btn::after {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background: linear-gradient(to bottom, rgba(255,255,255,0.12) 0%, transparent 50%);
+				pointer-events: none;
+			}
+			.ar-launch-btn:hover:not(:disabled) {
+				transform: translateY(-2px);
+				box-shadow: 0 14px 40px -8px rgba(167,139,250,0.55), 0 0 0 1px rgba(255,255,255,0.1) inset;
+			}
+			.ar-launch-btn:active:not(:disabled) { transform: translateY(0); }
+			.ar-launch-btn:disabled {
+				opacity: 0.45;
+				cursor: not-allowed;
+			}
+			.ar-launch-btn svg { flex-shrink: 0; }
+
+			/* ── Loading / error fallback ─────────────────── */
+			.ar-error {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				height: 100%;
+				color: var(--text-2);
+				font-size: 15px;
+				text-align: center;
+				padding: 2rem;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="ar-bg" aria-hidden="true"></div>
+
+		<div id="ar-shell">
+			<model-viewer
+				id="ar-viewer"
+				alt="Avatar"
+				camera-controls
+				auto-rotate
+				rotation-per-second="12deg"
+				interaction-prompt="none"
+				exposure="1.1"
+				shadow-intensity="0.8"
+				shadow-softness="0.9"
+				environment-image="neutral"
+				tone-mapping="aces"
+				ar
+				ar-modes="webxr scene-viewer quick-look"
+				ar-scale="auto"
+				reveal="auto"
+			></model-viewer>
+
+			<header class="ar-topbar">
+				<a class="ar-back" id="ar-back-link" href="/marketplace">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+					Back
+				</a>
+				<div class="ar-topbar-center">
+					<span class="ar-badge">
+						<span class="ar-badge-dot"></span>
+						AR Ready
+					</span>
+				</div>
+				<button class="ar-share-btn" id="ar-share-btn" type="button" aria-label="Share">Share</button>
+			</header>
+
+			<footer class="ar-bottom">
+				<h1 class="ar-avatar-name" id="ar-avatar-name">Loading…</h1>
+				<p class="ar-subtitle">Point your device at a flat surface to place</p>
+				<p class="ar-status" id="ar-status" hidden>
+					<span class="ar-status-spinner" aria-hidden="true"></span>
+					<span id="ar-status-text"></span>
+				</p>
+				<button class="ar-launch-btn" id="ar-launch-btn" type="button" disabled aria-busy="true">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+					</svg>
+					Place in your space
+				</button>
+			</footer>
+		</div>
+	</body>
+</html>

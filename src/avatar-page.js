@@ -186,6 +186,7 @@ function renderShell(glbUrl) {
 				<model-viewer
 					id="av-viewer"
 					src="${esc(glbUrl)}"
+					${avatar.usdz_url ? `ios-src="${esc(avatar.usdz_url)}"` : ''}
 					alt="${esc(avatar.name)}"
 					camera-controls
 					auto-rotate
@@ -197,6 +198,9 @@ function renderShell(glbUrl) {
 					tone-mapping="aces"
 					environment-image="neutral"
 					reveal="auto"
+					ar
+					ar-modes="webxr scene-viewer quick-look"
+					ar-scale="auto"
 				></model-viewer>
 			</div>
 			<div class="av-meta-strip" id="av-meta-strip">
@@ -235,6 +239,12 @@ function renderShell(glbUrl) {
 				<button class="av-cta" id="av-use">Start an agent</button>
 				<a class="av-cta-sec" href="/studio?avatar=${encodeURIComponent(avatar.id || avatarId)}" title="Use this avatar in Widget Studio">Open in Studio</a>
 				<button class="av-cta-sec" id="av-download" type="button">Download ▾</button>
+			</div>
+			<div class="av-ar-row">
+				<a class="av-ar-btn" href="/avatars/${encodeURIComponent(avatar.id || avatarId)}/ar" id="av-ar-link">
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+					View in AR
+				</a>
 			</div>
 			${avatar.owner_id ? `
 			<div class="av-owner-row" id="av-owner-row">

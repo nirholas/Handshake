@@ -311,20 +311,41 @@ function renderCard(a) {
 	const studioUrl = `/studio?avatar=${encodeURIComponent(a.id)}`;
 
 	const thumbSrc = a.thumbnail_url || `/api/avatars/${encodeURIComponent(a.id)}/og`;
-	const thumb = `<img src="${escapeAttr(thumbSrc)}" alt="${escapeAttr(a.name || 'Avatar')}" loading="lazy" decoding="async" />`;
+	const views = a.view_count != null ? Number(a.view_count) : 0;
+	const created = formatRelative(a.created_at);
+
+	// Use model-viewer for 3D inline preview if GLB is available, else static thumbnail
+	const thumbContent = glbUrl
+		? `<model-viewer
+				src="${escapeAttr(glbUrl)}"
+				alt="${escapeAttr(a.name || 'Avatar')}"
+				class="gallery-card-mv"
+				reveal="auto"
+				loading="lazy"
+				disable-zoom
+				disable-pan
+				disable-tap
+				interaction-prompt="none"
+				camera-controls="false"
+				auto-rotate
+				rotation-per-second="18deg"
+				environment-image="neutral"
+				shadow-intensity="0"
+				exposure="1"
+				poster="${escapeAttr(thumbSrc)}"
+			></model-viewer>`
+		: `<img src="${escapeAttr(thumbSrc)}" alt="${escapeAttr(a.name || 'Avatar')}" loading="lazy" decoding="async" />`;
 
 	const tagChips = (a.tags || [])
 		.slice(0, 3)
-		.map(
-			(t) => `<span class="gallery-card-tag">${escapeHtml(t)}</span>`,
-		)
+		.map((t) => `<span class="gallery-card-tag">${escapeHtml(t)}</span>`)
 		.join('');
 
-	const created = formatRelative(a.created_at);
+	const viewsLabel = views >= 1 ? `${formatCompact(views)} view${views === 1 ? '' : 's'}` : '';
 
 	card.innerHTML = `
-		<a class="gallery-card-thumb" href="${escapeAttr(detailUrl)}" aria-label="${escapeAttr(a.name || 'Avatar')} details">
-			${thumb}
+		<a class="gallery-card-thumb" href="${escapeAttr(viewerUrl)}" aria-label="View ${escapeAttr(a.name || 'Avatar')} in 3D viewer">
+			${thumbContent}
 			<span class="gallery-card-3dpill">3D</span>
 			<span class="gallery-card-play" aria-hidden="true">▶</span>
 		</a>
@@ -334,10 +355,14 @@ function renderCard(a) {
 			${tagChips ? `<div class="gallery-card-tags">${tagChips}</div>` : ''}
 			<div class="gallery-card-foot">
 				<span class="gallery-card-meta">
+					${viewsLabel ? `<span class="gallery-card-views">${escapeHtml(viewsLabel)}</span>` : ''}
 					<span title="${escapeAttr(new Date(a.created_at || Date.now()).toLocaleString())}">${escapeHtml(created)}</span>
 				</span>
 				<div class="gallery-card-actions">
-					<a class="gallery-card-btn" href="${escapeAttr(viewerUrl)}" title="Open in viewer">View 3D</a>
+					<button type="button" class="gallery-card-btn gallery-card-btn--ghost" data-role="card-embed"
+						data-avatar-id="${escapeAttr(String(a.id))}"
+						data-glb-url="${escapeAttr(glbUrl)}"
+						data-name="${escapeAttr(a.name || 'Avatar')}">Embed</button>
 					<a class="gallery-card-btn gallery-card-btn--primary" href="${escapeAttr(studioUrl)}" title="Use in Widget Studio">Use</a>
 				</div>
 			</div>
@@ -376,6 +401,119 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) {
 	return escapeHtml(s).replace(/'/g, '&#39;');
+}
+
+// ─── Embed modal ──────────────────────────────────────────────────────────
+const LIB_CDN_URL = 'https://three.ws/agent-3d/latest/agent-3d.js';
+
+function openAvatarEmbedModal({ avatarId, glbUrl, name }) {
+	document.querySelector('.gallery-embed-modal')?.remove();
+	const origin = location.origin;
+	const viewerUrl = glbUrl ? `${origin}/app#model=${encodeURIComponent(glbUrl)}` : `${origin}/avatars/${avatarId}`;
+	const apiUrl = `${origin}/api/avatars/${avatarId}`;
+	const displayName = name || 'Avatar';
+
+	const snippets = {
+		webComponent: `<script type="module" src="${LIB_CDN_URL}"><\/script>\n<agent-3d src="${apiUrl}" mode="inline" width="480px" responsive></agent-3d>`,
+		iframe: `<iframe src="${viewerUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${displayName}"></iframe>`,
+		link: viewerUrl,
+		markdown: `[${displayName}](${viewerUrl})`,
+	};
+
+	const modal = document.createElement('div');
+	modal.className = 'gallery-embed-modal embed-modal';
+	modal.setAttribute('role', 'dialog');
+	modal.setAttribute('aria-modal', 'true');
+	modal.innerHTML = `
+		<div class="embed-modal__backdrop" data-role="close"></div>
+		<div class="embed-modal__panel" role="document">
+			<header class="embed-modal__head">
+				<div>
+					<h2 class="embed-modal__title">Embed ${escapeHtml(displayName)}</h2>
+					<p class="embed-modal__sub">Public avatar — drop it in any page or doc.</p>
+				</div>
+				<button type="button" class="embed-modal__close" data-role="close" aria-label="Close">×</button>
+			</header>
+			<div class="embed-modal__tabs" role="tablist">
+				<button type="button" class="embed-tab is-active" data-tab="webComponent" role="tab" aria-selected="true">Web component</button>
+				<button type="button" class="embed-tab" data-tab="iframe" role="tab" aria-selected="false">iframe</button>
+				<button type="button" class="embed-tab" data-tab="link" role="tab" aria-selected="false">Link</button>
+				<button type="button" class="embed-tab" data-tab="markdown" role="tab" aria-selected="false">Markdown</button>
+			</div>
+			<div class="embed-modal__body">
+				<div class="embed-pane is-active" data-pane="webComponent">
+					<p class="embed-pane__hint">Full fidelity via the &lt;agent-3d&gt; web component.</p>
+					<textarea class="embed-snippet" readonly rows="3">${escapeHtml(snippets.webComponent)}</textarea>
+					<button type="button" class="embed-copy-btn" data-role="copy" data-key="webComponent">Copy</button>
+				</div>
+				<div class="embed-pane" data-pane="iframe">
+					<p class="embed-pane__hint">Works in Notion, Substack, Ghost, blogs.</p>
+					<textarea class="embed-snippet" readonly rows="3">${escapeHtml(snippets.iframe)}</textarea>
+					<button type="button" class="embed-copy-btn" data-role="copy" data-key="iframe">Copy</button>
+				</div>
+				<div class="embed-pane" data-pane="link">
+					<p class="embed-pane__hint">Direct link to the viewer.</p>
+					<input class="embed-snippet embed-snippet--input" readonly value="${escapeAttr(snippets.link)}" />
+					<button type="button" class="embed-copy-btn" data-role="copy" data-key="link">Copy</button>
+				</div>
+				<div class="embed-pane" data-pane="markdown">
+					<p class="embed-pane__hint">For READMEs and Markdown blogs.</p>
+					<textarea class="embed-snippet" readonly rows="2">${escapeHtml(snippets.markdown)}</textarea>
+					<button type="button" class="embed-copy-btn" data-role="copy" data-key="markdown">Copy</button>
+				</div>
+			</div>
+			<footer class="embed-modal__foot">
+				<a href="${escapeAttr(viewerUrl)}" target="_blank" rel="noopener" class="embed-foot-link">Open viewer ↗</a>
+				<a href="${escapeAttr(`${origin}/avatars/${avatarId}`)}" target="_blank" rel="noopener" class="embed-foot-link">Avatar details ↗</a>
+			</footer>
+		</div>
+	`;
+	document.body.appendChild(modal);
+
+	const close = () => {
+		modal.remove();
+		document.removeEventListener('keydown', onEsc);
+	};
+	const onEsc = (e) => { if (e.key === 'Escape') close(); };
+	document.addEventListener('keydown', onEsc);
+	modal.querySelectorAll('[data-role="close"]').forEach((el) => el.addEventListener('click', close));
+
+	modal.querySelectorAll('.embed-tab').forEach((tab) => {
+		tab.addEventListener('click', () => {
+			modal.querySelectorAll('.embed-tab').forEach((t) => {
+				t.classList.toggle('is-active', t === tab);
+				t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+			});
+			modal.querySelectorAll('.embed-pane').forEach((p) => {
+				p.classList.toggle('is-active', p.dataset.pane === tab.dataset.tab);
+			});
+		});
+	});
+
+	modal.querySelectorAll('[data-role="copy"]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const key = btn.dataset.key;
+			const text = snippets[key];
+			if (!text) return;
+			const done = (ok) => {
+				btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
+				setTimeout(() => (btn.textContent = 'Copy'), 1400);
+			};
+			if (navigator.clipboard?.writeText) {
+				navigator.clipboard.writeText(text).then(() => done(true), () => done(false));
+			} else {
+				const ta = modal.querySelector(`[data-pane="${key}"] .embed-snippet`);
+				ta?.select();
+				try { document.execCommand('copy'); done(true); } catch { done(false); }
+			}
+		});
+	});
+
+	setTimeout(() => {
+		const first = modal.querySelector('.embed-pane.is-active .embed-snippet');
+		first?.focus();
+		first?.select?.();
+	}, 50);
 }
 
 resetAndLoad();

@@ -17,6 +17,7 @@ import { attachAvatarToAgent } from './attach-avatar-to-agent.js';
 import { load as loadGuest, clear as clearGuest } from './guest-avatar.js';
 import { TalkScene } from './voice/talk-scene.js';
 import { IdleAnimation } from './idle-animation.js';
+import { glbBlobToUsdzBlob } from './usdz-pipeline.js';
 import {
 	openAnalyticsModal,
 	openDeveloperModal,
@@ -341,12 +342,15 @@ async function onSave({ auto = false } = {}) {
 		const agent = await attachAvatarToAgent(avatar.id, name);
 		updateSaveOverlay('Opening your avatar…', '');
 		await clearGuest();
-		// Capture and upload a thumbnail from the rendered canvas before leaving
-		// so the user's first visit to /app shows a poster rather than a blank
-		// canvas during the GLB stream. Times out after 4 s to never block.
+		// Capture thumbnail and generate USDZ for iOS AR in parallel.
+		// Both are best-effort — the save already succeeded. 8 s cap so USDZ
+		// conversion (CPU-intensive) gets a fair shot before we navigate away.
 		await Promise.race([
-			captureAndUploadThumbnail(avatar.id).catch(() => {}),
-			new Promise((r) => setTimeout(r, 4000)),
+			Promise.all([
+				captureAndUploadThumbnail(avatar.id).catch(() => {}),
+				generateAndUploadUsdz(avatar.id, staged.blob).catch(() => {}),
+			]),
+			new Promise((r) => setTimeout(r, 8000)),
 		]);
 		releaseObjectUrl();
 		// If the user backgrounded the tab, ping a Notification so they know to
@@ -529,6 +533,37 @@ function humanizeSaveError(err, auto) {
 	}
 	if (auto) return "Save couldn't finish automatically — try the button again.";
 	return 'Save failed. Try again, or refresh the page if it keeps happening.';
+}
+
+// Convert the staged GLB to USDZ in-browser and upload it to R2, then PATCH
+// the avatar row so iOS Quick Look is wired up for all future visits.
+// Fire-and-forget — any failure is swallowed so the save flow is never blocked.
+async function generateAndUploadUsdz(avatarId, glbBlob) {
+	try {
+		const usdzBlob = await glbBlobToUsdzBlob(glbBlob);
+		const presignRes = await fetch('/api/avatars/presign-usdz', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ avatar_id: avatarId, size_bytes: usdzBlob.size }),
+		});
+		if (!presignRes.ok) return;
+		const { usdz_key, upload_url } = await presignRes.json();
+		const put = await fetch(upload_url, {
+			method: 'PUT',
+			headers: { 'content-type': 'model/vnd.usdz+zip' },
+			body: usdzBlob,
+		});
+		if (!put.ok) return;
+		await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
+			method: 'PATCH',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ usdz_key }),
+		});
+	} catch {
+		// non-critical — user can still use the avatar; AR will generate on-demand
+	}
 }
 
 // Capture the current TalkScene canvas, resize to 512², and POST to the
