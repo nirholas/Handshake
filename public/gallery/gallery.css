@@ -139,12 +139,12 @@ body.gallery-page {
 	color: #fff;
 }
 .gallery-hero-btn--primary {
-	background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+	background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
 	border-color: transparent;
-	color: #fff;
+	color: #000000;
 }
 .gallery-hero-btn--primary:hover {
-	background: linear-gradient(135deg, #7c7ff5 0%, #9f7af2 100%);
+	background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
 	color: #fff;
 }
 
@@ -543,12 +543,12 @@ body.gallery-page {
 	color: #fff;
 }
 .gallery-card-btn--primary {
-	background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+	background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
 	border-color: transparent;
-	color: #fff;
+	color: #000000;
 }
 .gallery-card-btn--primary:hover {
-	background: linear-gradient(135deg, #7c7ff5 0%, #9f7af2 100%);
+	background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
 	color: #fff;
 }
 
@@ -652,8 +652,8 @@ body.gallery-page {
 	padding: 8px 14px;
 	border-radius: 10px;
 	border: 0;
-	background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-	color: #fff;
+	background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+	color: #000000;
 	font-size: 13px;
 	font-weight: 600;
 	text-decoration: none;

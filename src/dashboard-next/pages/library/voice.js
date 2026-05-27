@@ -18,7 +18,7 @@ export async function renderVoice(host) {
 				<h2 class="dn-panel-title" style="font-size:17px;margin:0 0 4px">Agent voices</h2>
 				<div class="dn-panel-sub" style="margin:0">Pick from the ElevenLabs library, preview against your own text, or clone a fresh voice from a recording.</div>
 			</div>
-			<a class="dn-btn ghost" href="/dashboard/voice">Clone a new voice →</a>
+			<a class="dn-btn ghost" href="/voice">Clone a new voice →</a>
 		</div>
 
 		<div id="voice-list"></div>

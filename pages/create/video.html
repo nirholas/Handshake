@@ -13,8 +13,8 @@
 		<style>
 			:root {
 				color-scheme: dark;
-				--accent: #d6ff3d;
-				--accent-ink: #0a0a0a;
+				--accent: #ffffff;
+				--accent-ink: #000000;
 				--bg: #05060a;
 				--panel: #0f1018;
 				--panel2: #13141f;
@@ -39,7 +39,7 @@
 				pointer-events: none;
 				background:
 					radial-gradient(800px 500px at 50% -100px, rgba(106,92,255,.1) 0, transparent 70%),
-					radial-gradient(600px 400px at 50% 110%, rgba(214,255,61,.04) 0, transparent 70%),
+					radial-gradient(600px 400px at 50% 110%, rgba(255,255,255,.04) 0, transparent 70%),
 					#05060a;
 			}
 
@@ -67,7 +67,7 @@
 				display:flex; align-items:center; gap:var(--space-xs); line-height:var(--header-h);
 			}
 			header.site-header h1>a { color:inherit; font-size:inherit; text-decoration:none; display:flex; align-items:center; gap:.5rem; }
-			.wordmark-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#a78bfa,#6366f1); box-shadow:0 0 10px rgba(139,92,246,.6); display:inline-block; }
+			.wordmark-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#a78bfa,#6366f1); box-shadow:0 0 10px rgba(255,255,255,.6); display:inline-block; }
 			.nav-logo-img { width:28px; height:28px; object-fit:contain; border-radius:6px; }
 			.features-nav { margin-left:auto; display:flex; gap:var(--space-md); align-items:center; }
 			.features-nav a { color:rgba(255,255,255,.5); text-decoration:none; font-size:var(--text-sm); font-weight:500; padding:.35rem .7rem; border-radius:var(--radius-md); transition:color .18s,background .18s; }
@@ -129,7 +129,7 @@
 			.avatar-preview-wrap {
 				position: relative;
 				aspect-ratio: 4/5;
-				background: radial-gradient(circle at 50% 30%, rgba(214,255,61,.05) 0, transparent 60%), rgba(255,255,255,.015);
+				background: radial-gradient(circle at 50% 30%, rgba(255,255,255,.05) 0, transparent 60%), rgba(255,255,255,.015);
 			}
 			model-viewer {
 				width: 100%;
@@ -209,8 +209,8 @@
 				position: relative;
 			}
 			.audio-drop:hover, .audio-drop.is-dragover {
-				border-color: rgba(214,255,61,.4);
-				background: rgba(214,255,61,.03);
+				border-color: rgba(255,255,255,.4);
+				background: rgba(255,255,255,.03);
 				color: var(--text);
 			}
 			.audio-drop svg { width: 28px; height: 28px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
@@ -263,7 +263,7 @@
 				transition: border-color .15s;
 				outline: none;
 			}
-			.prompt-input:focus { border-color: rgba(214,255,61,.35); }
+			.prompt-input:focus { border-color: rgba(255,255,255,.35); }
 			.prompt-input::placeholder { color: var(--muted); }
 
 			/* Generate button */

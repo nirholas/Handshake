@@ -14,6 +14,7 @@
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, put, del, esc, relTime, ApiError } from '../api.js';
+import { openAvatarPicker } from '../../avatar-gallery-picker.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 
@@ -295,15 +296,26 @@ function openCreateModal(host, agents, avatars) {
 					background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13.5px" />
 			</label>
 
-			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+			<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
 				<span style="font-size:12.5px;color:var(--nxt-ink-dim)">Avatar (optional)</span>
-				<select data-slot="avatar"
-					style="padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);
-					background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px">
-					<option value="">— No avatar yet —</option>
-					${avatars.map((av) => `<option value="${esc(av.id)}">${esc(av.name || av.id)}</option>`).join('')}
-				</select>
-			</label>
+				<input type="hidden" data-slot="avatar" value="" />
+				<button type="button" data-action="pick-avatar" class="dn-btn" style="
+					display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;
+					border:1px solid var(--nxt-stroke);background:rgba(255,255,255,0.04);
+					color:var(--nxt-ink);font:inherit;font-size:13px;text-align:left;cursor:pointer;
+					width:100%;transition:border-color 120ms ease,background 120ms ease;
+				">
+					<span data-slot="avatar-thumb" style="
+						width:36px;height:36px;border-radius:8px;overflow:hidden;flex-shrink:0;
+						background:linear-gradient(135deg,rgba(140,143,150,0.2),rgba(100,103,110,0.1));
+						display:grid;place-items:center;border:1px solid var(--nxt-stroke);
+					">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--nxt-ink-dim)"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 4.5-7 8-7s6.5 2.5 8 7"/></svg>
+					</span>
+					<span data-slot="avatar-label" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Choose an avatar...</span>
+					<span style="font-size:11px;color:var(--nxt-ink-fade);flex-shrink:0">Browse</span>
+				</button>
+			</div>
 
 			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px">
 				<span style="font-size:12.5px;color:var(--nxt-ink-dim)">Tagline (optional)</span>
@@ -328,6 +340,25 @@ function openCreateModal(host, agents, avatars) {
 	const errorEl = overlay.querySelector('[data-slot="error"]');
 	const submitBtn = overlay.querySelector('[data-action="submit"]');
 	nameEl.focus();
+
+	overlay.querySelector('[data-action="pick-avatar"]').addEventListener('click', async () => {
+		const picked = await openAvatarPicker({
+			source: 'both',
+			title: 'Choose an avatar for this agent',
+			selectedId: avatarEl.value,
+			showModes: false,
+			ctaLabel: 'Use this avatar',
+		});
+		if (picked) {
+			avatarEl.value = picked.id;
+			const thumbEl = overlay.querySelector('[data-slot="avatar-thumb"]');
+			const labelEl = overlay.querySelector('[data-slot="avatar-label"]');
+			if (picked.thumbnail_url) {
+				thumbEl.innerHTML = `<img src="${esc(picked.thumbnail_url)}" style="width:100%;height:100%;object-fit:cover" />`;
+			}
+			labelEl.textContent = picked.name || picked.id;
+		}
+	});
 
 	const close = () => overlay.remove();
 	overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);
@@ -385,15 +416,31 @@ function openEditModal(host, agent, avatars, allAgents) {
 					background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13.5px" />
 			</label>
 
-			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+			<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
 				<span style="font-size:12.5px;color:var(--nxt-ink-dim)">Avatar</span>
-				<select data-slot="avatar"
-					style="padding:9px 12px;border-radius:8px;border:1px solid var(--nxt-stroke);
-					background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px">
-					<option value="">— No avatar —</option>
-					${avatars.map((av) => `<option value="${esc(av.id)}"${av.id === currentAvatarId ? ' selected' : ''}>${esc(av.name || av.id)}</option>`).join('')}
-				</select>
-			</label>
+				<input type="hidden" data-slot="avatar" value="${esc(currentAvatarId)}" />
+				<button type="button" data-action="pick-avatar" class="dn-btn" style="
+					display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;
+					border:1px solid var(--nxt-stroke);background:rgba(255,255,255,0.04);
+					color:var(--nxt-ink);font:inherit;font-size:13px;text-align:left;cursor:pointer;
+					width:100%;transition:border-color 120ms ease,background 120ms ease;
+				">
+					<span data-slot="avatar-thumb" style="
+						width:36px;height:36px;border-radius:8px;overflow:hidden;flex-shrink:0;
+						background:linear-gradient(135deg,rgba(140,143,150,0.2),rgba(100,103,110,0.1));
+						display:grid;place-items:center;border:1px solid var(--nxt-stroke);
+					">
+						${(() => {
+							const av = avatars.find((x) => x.id === currentAvatarId);
+							return av?.thumbnail_url
+								? `<img src="${esc(av.thumbnail_url)}" style="width:100%;height:100%;object-fit:cover" />`
+								: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--nxt-ink-dim)"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 4.5-7 8-7s6.5 2.5 8 7"/></svg>`;
+						})()}
+					</span>
+					<span data-slot="avatar-label" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${currentAvatarId ? esc(avatars.find((x) => x.id === currentAvatarId)?.name || currentAvatarId) : 'Choose an avatar...'}</span>
+					<span style="font-size:11px;color:var(--nxt-ink-fade);flex-shrink:0">Browse</span>
+				</button>
+			</div>
 
 			<label style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
 				<span style="font-size:12.5px;color:var(--nxt-ink-dim)">Tagline</span>
@@ -424,6 +471,25 @@ function openEditModal(host, agent, avatars, allAgents) {
 	const errorEl = overlay.querySelector('[data-slot="error"]');
 	const submitBtn = overlay.querySelector('[data-action="submit"]');
 	nameEl.focus();
+
+	overlay.querySelector('[data-action="pick-avatar"]').addEventListener('click', async () => {
+		const picked = await openAvatarPicker({
+			source: 'both',
+			title: 'Choose an avatar for this agent',
+			selectedId: avatarEl.value,
+			showModes: false,
+			ctaLabel: 'Use this avatar',
+		});
+		if (picked) {
+			avatarEl.value = picked.id;
+			const thumbEl = overlay.querySelector('[data-slot="avatar-thumb"]');
+			const labelEl = overlay.querySelector('[data-slot="avatar-label"]');
+			if (picked.thumbnail_url) {
+				thumbEl.innerHTML = `<img src="${esc(picked.thumbnail_url)}" style="width:100%;height:100%;object-fit:cover" />`;
+			}
+			labelEl.textContent = picked.name || picked.id;
+		}
+	});
 
 	const close = () => overlay.remove();
 	overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);

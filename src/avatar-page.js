@@ -238,6 +238,7 @@ function renderShell(glbUrl) {
 			<div class="av-cta-row">
 				<button class="av-cta" id="av-use">Start an agent</button>
 				<a class="av-cta-sec" href="/brain" title="Build a persona and test with AI models">Brain</a>
+				<a class="av-cta-sec" href="/voice" title="Clone your voice for this avatar">Voice Lab</a>
 				<a class="av-cta-sec" href="/studio?avatar=${encodeURIComponent(avatar.id || avatarId)}" title="Use this avatar in Widget Studio">Open in Studio</a>
 				<button class="av-cta-sec" id="av-download" type="button">Download ▾</button>
 			</div>

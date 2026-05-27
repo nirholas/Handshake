@@ -320,6 +320,7 @@ function renderAvatarCards(host, avatars, agents) {
 					</div>
 					<div class="ame-avatar-footer-right">
 						<a class="ame-btn ghost tiny" href="/agent-next?id=${encodeURIComponent(av.id)}" title="View">View</a>
+						<button class="ame-btn ghost tiny" data-action="selfie" data-avatar-id="${esc(av.id)}" title="Update from selfie">Selfie</button>
 						<button class="ame-btn ghost tiny" data-action="share" data-avatar-id="${esc(av.id)}" data-name="${name}" title="Share">Share</button>
 						<a class="ame-btn ghost tiny" href="/walk?avatar=${encodeURIComponent(av.id)}" title="Walk">Walk</a>
 					</div>
@@ -328,10 +329,18 @@ function renderAvatarCards(host, avatars, agents) {
 		`;
 	}).join('');
 
-	host.addEventListener('click', e => {
+	host.addEventListener('click', async (e) => {
 		const btn = e.target.closest('[data-action]');
 		if (!btn) return;
 		if (btn.dataset.action === 'share') handleShare(btn.dataset.avatarId, btn.dataset.name);
+		if (btn.dataset.action === 'selfie') {
+			const { openSelfieModal } = await import('./selfie-modal.js');
+			const result = await openSelfieModal({ existingAvatarId: btn.dataset.avatarId });
+			if (result?.avatarId) {
+				toast('Avatar updated from selfie');
+				setTimeout(() => location.reload(), 1200);
+			}
+		}
 	});
 }
 

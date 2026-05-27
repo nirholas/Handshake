@@ -17,8 +17,8 @@
 			:root { color-scheme: dark; }
 			*, *::before, *::after { box-sizing: border-box; }
 			body {
-				background: #05060a;
-				color: #e8eaf0;
+				background: #000000;
+				color: #e8e8e8;
 				font: 14px/1.5 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
 				margin: 0;
 				min-height: 100vh;
@@ -39,10 +39,7 @@
 				font-weight: 700;
 				letter-spacing: -0.02em;
 				margin: 0 0 8px;
-				background: linear-gradient(135deg, #e8eaf0 30%, #3dc1ff 70%, #a78bfa);
-				-webkit-background-clip: text;
-				-webkit-text-fill-color: transparent;
-				background-clip: text;
+				color: #ffffff;
 			}
 			.vl-header p {
 				color: #8a8d9b;
@@ -54,8 +51,8 @@
 
 			/* ── Card base ──────────────────────────────── */
 			.vl-card {
-				background: #0a0b12;
-				border: 1px solid #1a1c28;
+				background: #0a0a0a;
+				border: 1px solid #1a1a1a;
 				border-radius: 16px;
 				overflow: hidden;
 			}
@@ -64,7 +61,7 @@
 				align-items: center;
 				justify-content: space-between;
 				padding: 16px 20px 14px;
-				border-bottom: 1px solid #1a1c28;
+				border-bottom: 1px solid #1a1a1a;
 			}
 			.vl-card-title {
 				font-family: 'Space Grotesk', system-ui, sans-serif;
@@ -85,8 +82,8 @@
 			.vl-wave-wrap {
 				position: relative;
 				height: 200px;
-				background: #07080e;
-				border-bottom: 1px solid #1a1c28;
+				background: #070707;
+				border-bottom: 1px solid #1a1a1a;
 				overflow: hidden;
 			}
 			.vl-wave-wrap canvas {
@@ -114,7 +111,7 @@
 			.vl-recorder[data-state="recording"] .vl-timer { opacity: 1; }
 			.vl-timer-sub {
 				font-size: 12px;
-				color: #565870;
+				color: #666666;
 				margin-top: 4px;
 				opacity: 0;
 				transition: opacity 0.2s;
@@ -127,7 +124,7 @@
 				bottom: 0;
 				left: 0;
 				height: 3px;
-				background: linear-gradient(90deg, #3dc1ff, #a78bfa);
+				background: linear-gradient(90deg, #ffffff, #a78bfa);
 				width: 0%;
 				transition: width 0.3s linear;
 				z-index: 2;
@@ -186,7 +183,7 @@
 			.vl-level-bar {
 				width: 3px;
 				border-radius: 1.5px;
-				background: #3dc1ff;
+				background: #ffffff;
 				transition: height 0.08s ease-out;
 				min-height: 3px;
 			}
@@ -198,7 +195,7 @@
 				justify-content: center;
 				gap: 12px;
 				padding: 20px;
-				border-bottom: 1px solid #1a1c28;
+				border-bottom: 1px solid #1a1a1a;
 			}
 			.vl-btn {
 				display: inline-flex;
@@ -253,7 +250,7 @@
 			}
 
 			.vl-btn-primary {
-				background: #3dc1ff;
+				background: #ffffff;
 				color: #05060a;
 				padding: 12px 22px;
 			}
@@ -287,7 +284,7 @@
 			/* ── Script prompts ─────────────────────────── */
 			.vl-scripts {
 				padding: 16px 20px;
-				border-bottom: 1px solid #1a1c28;
+				border-bottom: 1px solid #1a1a1a;
 				display: none;
 			}
 			.vl-recorder[data-state="recording"] .vl-scripts,
@@ -297,7 +294,7 @@
 				font-weight: 600;
 				text-transform: uppercase;
 				letter-spacing: 0.08em;
-				color: #565870;
+				color: #666666;
 				margin-bottom: 8px;
 			}
 			.vl-script-text {
@@ -325,12 +322,12 @@
 				transition: background 0.2s;
 			}
 			.vl-script-dot.active {
-				background: #3dc1ff;
+				background: #ffffff;
 			}
 			.vl-script-next {
 				background: none;
 				border: none;
-				color: #565870;
+				color: #666666;
 				font: 600 12px system-ui, sans-serif;
 				cursor: pointer;
 				padding: 4px 8px;
@@ -370,13 +367,13 @@
 				font-weight: 600;
 				text-transform: uppercase;
 				letter-spacing: 0.06em;
-				color: #565870;
+				color: #666666;
 				margin-bottom: 6px;
 			}
 			.vl-review-field input {
 				width: 100%;
 				padding: 10px 12px;
-				background: #07080e;
+				background: #070707;
 				border: 1px solid #1e2035;
 				border-radius: 9px;
 				color: #e8eaf0;
@@ -385,7 +382,7 @@
 				outline: none;
 				transition: border-color 0.15s;
 			}
-			.vl-review-field input:focus { border-color: #3dc1ff; }
+			.vl-review-field input:focus { border-color: #ffffff; }
 			.vl-review-actions {
 				display: flex;
 				gap: 8px;
@@ -410,7 +407,7 @@
 				height: 18px;
 				border-radius: 50%;
 				border: 2.5px solid rgba(61,193,255,0.2);
-				border-top-color: #3dc1ff;
+				border-top-color: #ffffff;
 				animation: vl-spin 0.8s linear infinite;
 				flex-shrink: 0;
 			}
@@ -439,7 +436,7 @@
 			.vl-done-check {
 				width: 22px;
 				height: 22px;
-				background: #34d399;
+				background: #ffffff;
 				border-radius: 50%;
 				display: flex;
 				align-items: center;
@@ -451,7 +448,7 @@
 			}
 			.vl-done-text {
 				font-size: 14px;
-				color: #34d399;
+				color: #ffffff;
 				font-weight: 500;
 			}
 			.vl-done-actions {
@@ -464,13 +461,13 @@
 			.vl-status {
 				padding: 10px 20px;
 				font-size: 12px;
-				color: #565870;
+				color: #666666;
 				display: flex;
 				align-items: center;
 				gap: 8px;
 				min-height: 38px;
 			}
-			.vl-status.ok { color: #34d399; }
+			.vl-status.ok { color: #ffffff; }
 			.vl-status.err { color: #f87171; }
 			.vl-status.warn { color: #fbbf24; }
 
@@ -498,8 +495,8 @@
 				gap: 12px;
 			}
 			.vl-voice-card {
-				background: #0a0b12;
-				border: 1px solid #1a1c28;
+				background: #0a0a0a;
+				border: 1px solid #1a1a1a;
 				border-radius: 12px;
 				padding: 16px;
 				display: flex;
@@ -507,7 +504,7 @@
 				gap: 10px;
 				transition: border-color 0.15s;
 			}
-			.vl-voice-card:hover { border-color: #252840; }
+			.vl-voice-card:hover { border-color: #252525; }
 			.vl-voice-name {
 				font-weight: 600;
 				font-size: 14px;
@@ -515,7 +512,7 @@
 			}
 			.vl-voice-meta {
 				font-size: 11.5px;
-				color: #565870;
+				color: #666666;
 				display: flex;
 				align-items: center;
 				gap: 8px;
@@ -523,7 +520,7 @@
 			.vl-voice-id {
 				font-family: ui-monospace, monospace;
 				font-size: 11px;
-				color: #3dc1ff;
+				color: #ffffff;
 				background: rgba(61,193,255,0.08);
 				padding: 2px 8px;
 				border-radius: 4px;
@@ -537,9 +534,9 @@
 			.vl-empty {
 				text-align: center;
 				padding: 32px 20px;
-				color: #565870;
+				color: #666666;
 				font-size: 14px;
-				border: 1px dashed #1a1c28;
+				border: 1px dashed #1a1a1a;
 				border-radius: 12px;
 			}
 			.vl-empty-title {
@@ -566,13 +563,13 @@
 				font-weight: 600;
 				text-transform: uppercase;
 				letter-spacing: 0.06em;
-				color: #565870;
+				color: #666666;
 				margin-bottom: 6px;
 			}
 			.vl-pg-field select {
 				width: 100%;
 				padding: 10px 12px;
-				background: #07080e;
+				background: #070707;
 				border: 1px solid #1e2035;
 				border-radius: 9px;
 				color: #e8eaf0;
@@ -581,12 +578,12 @@
 				cursor: pointer;
 				outline: none;
 			}
-			.vl-pg-field select:focus { border-color: #3dc1ff; }
+			.vl-pg-field select:focus { border-color: #ffffff; }
 			.vl-pg-textarea {
 				width: 100%;
 				min-height: 100px;
 				padding: 12px 14px;
-				background: #07080e;
+				background: #070707;
 				border: 1px solid #1e2035;
 				border-radius: 10px;
 				color: #e8eaf0;
@@ -597,7 +594,7 @@
 				outline: none;
 				transition: border-color 0.15s;
 			}
-			.vl-pg-textarea:focus { border-color: #3dc1ff; }
+			.vl-pg-textarea:focus { border-color: #ffffff; }
 			.vl-pg-samples {
 				display: flex;
 				gap: 6px;
@@ -606,7 +603,7 @@
 			}
 			.vl-pg-sample {
 				background: rgba(255,255,255,0.04);
-				border: 1px solid #1a1c28;
+				border: 1px solid #1a1a1a;
 				color: #8a8d9b;
 				padding: 6px 12px;
 				border-radius: 999px;
@@ -617,7 +614,7 @@
 			.vl-pg-sample:hover {
 				background: rgba(61,193,255,0.08);
 				border-color: rgba(61,193,255,0.3);
-				color: #3dc1ff;
+				color: #ffffff;
 			}
 			.vl-pg-output {
 				margin-top: 16px;
@@ -761,7 +758,7 @@
 						</div>
 						<div class="vl-pg-actions">
 							<button class="vl-btn vl-btn-primary" id="pgSpeak" disabled>Speak</button>
-							<span class="vl-pg-hint" id="pgHint" style="font-size:12px;color:#565870;"></span>
+							<span class="vl-pg-hint" id="pgHint" style="font-size:12px;color:#666666;"></span>
 						</div>
 						<div class="vl-pg-output" id="pgOutput">
 							<audio id="pgAudio" controls></audio>

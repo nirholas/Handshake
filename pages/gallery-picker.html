@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Avatar Gallery — three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://three.ws/gallery-picker" />
+		<meta property="og:title" content="Avatar Gallery — three.ws" />
+		<meta property="og:description" content="Browse, preview, and grab any public 3D avatar on three.ws." />
+		<meta property="og:image" content="https://three.ws/assets/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:image" content="https://three.ws/assets/og-image.png" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/theme.css" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"
+		></script>
+		<style>
+			body {
+				overflow: auto;
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
+			.gp-wrap {
+				flex: 1;
+				max-width: 1200px;
+				width: 100%;
+				margin: 0 auto;
+				padding: 0 24px 80px;
+			}
+			.gp-hero {
+				padding: 48px 0 28px;
+			}
+			.gp-crumb {
+				font-size: 13px;
+				margin: 0 0 12px;
+			}
+			.gp-crumb a {
+				color: var(--t-ink-dim, #888);
+				text-decoration: none;
+			}
+			.gp-crumb a:hover {
+				color: var(--t-ink, #e8e8e8);
+			}
+			.gp-title {
+				font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				color: var(--t-ink, #e8e8e8);
+				margin: 0 0 8px;
+				line-height: 1.15;
+			}
+			.gp-sub {
+				color: var(--t-ink-dim, #888);
+				font-size: 15px;
+				max-width: 60ch;
+				margin: 0;
+				line-height: 1.5;
+			}
+			.gp-picker-host {
+				width: 100%;
+			}
+			/* Override shell borders in inline mode since we have our own page chrome */
+			.gp-picker-host .agp-shell--inline {
+				border: 1px solid var(--t-stroke, #1a1a1a);
+			}
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="gp-wrap">
+			<div class="gp-hero">
+				<p class="gp-crumb"><a href="/">Home</a> / <a href="/gallery">Gallery</a></p>
+				<h1 class="gp-title">Avatar Gallery</h1>
+				<p class="gp-sub">
+					Browse every public 3D avatar on three.ws. Preview live in 3D, copy share links, GLB URLs, or embed snippets.
+				</p>
+			</div>
+
+			<div class="gp-picker-host" id="picker-host"></div>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script type="module">
+			import { AvatarGalleryPicker } from '/src/avatar-gallery-picker.js';
+
+			const host = document.getElementById('picker-host');
+			const params = new URLSearchParams(location.search);
+
+			const picker = new AvatarGalleryPicker({
+				source: 'public',
+				title: 'Public avatars',
+				selectedId: params.get('id') || '',
+				showModes: true,
+				ctaLabel: 'Copy to clipboard',
+			});
+
+			picker.mountInline(host);
+		</script>
+	</body>
+</html>

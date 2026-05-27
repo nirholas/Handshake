@@ -80,7 +80,7 @@ scripts/pump-usdc-race.mjs
 wallets/
 .wallets/
 x402-test-wallets/
-3dagent-log-export-2026-05-09T23-08-55.csv
+3dagent-log-export-*
 pump-sdk-case-study.html
 .claude/scheduled_tasks.lock
 threews-launch-week-case-study.html

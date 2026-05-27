@@ -293,8 +293,8 @@ body.market-page {
 	margin: -16px -16px 4px;
 	aspect-ratio: 16 / 9;
 	background:
-		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.12), transparent 65%),
-		radial-gradient(circle at 50% 95%, rgba(168, 85, 247, 0.08), transparent 70%),
+		radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.12), transparent 65%),
+		radial-gradient(circle at 50% 95%, rgba(255, 255, 255, 0.08), transparent 70%),
 		linear-gradient(180deg, #0a0a0d, #050507) center/cover no-repeat;
 	border-bottom: 1px solid var(--mk-border);
 	border-top-left-radius: var(--mk-radius);
@@ -312,8 +312,8 @@ body.market-page {
 	gap: 8px;
 	pointer-events: none;
 	background:
-		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.1), transparent 65%),
-		radial-gradient(circle at 50% 95%, rgba(168, 85, 247, 0.06), transparent 70%),
+		radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.1), transparent 65%),
+		radial-gradient(circle at 50% 95%, rgba(255, 255, 255, 0.06), transparent 70%),
 		linear-gradient(180deg, #0a0a0d, #050507);
 }
 .market-card-agent .thumb .mv-placeholder-initial {
@@ -986,7 +986,7 @@ body.market-page {
 
 .market-fork {
 	background: #fafafa;
-	color: #0a0a0a;
+	color: #000000;
 	border: 0;
 	padding: 14px;
 	border-radius: 12px;
@@ -1252,7 +1252,7 @@ body.market-page {
 
 .plugin-install-btn {
 	background: var(--mk-accent);
-	color: #0a0a0a;
+	color: #000000;
 	border: 0;
 	border-radius: 8px;
 	padding: 7px 14px;
@@ -1432,7 +1432,7 @@ body.market-page {
 
 .plugin-modal-btn-primary {
 	background: var(--mk-accent);
-	color: #0a0a0a;
+	color: #000000;
 	border: 0;
 	font-weight: 600;
 }
@@ -1553,7 +1553,7 @@ body.market-page {
 
 .market-btn-pri {
 	background: var(--mk-accent);
-	color: #0a0a0a;
+	color: #000000;
 	border: 0;
 	border-radius: 8px;
 	padding: 10px 20px;
@@ -1574,7 +1574,7 @@ body.market-page {
 
 .market-submit-btn {
 	background: var(--mk-accent);
-	color: #0a0a0a;
+	color: #000000;
 	border: 0;
 	border-radius: 8px;
 	padding: 8px 16px;
@@ -1698,7 +1698,7 @@ body.market-page {
 	padding: 32px 28px;
 	border-bottom: 1px solid var(--mk-border);
 	background:
-		radial-gradient(ellipse at top right, rgba(125, 211, 252, 0.04), transparent 60%),
+		radial-gradient(ellipse at top right, rgba(255, 255, 255, 0.04), transparent 60%),
 		radial-gradient(ellipse at bottom left, rgba(253, 224, 71, 0.03), transparent 50%),
 		var(--mk-bg);
 	min-height: 360px;
@@ -1746,7 +1746,7 @@ body.market-page {
 	font-size: 11px;
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
-	color: #7dd3fc;
+	color: #ffffff;
 	font-weight: 600;
 }
 
@@ -1909,8 +1909,8 @@ body.market-page {
 	pointer-events: none;
 	z-index: 0;
 	background:
-		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.08), transparent 65%),
-		radial-gradient(circle at 50% 90%, rgba(168, 85, 247, 0.05), transparent 70%),
+		radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.08), transparent 65%),
+		radial-gradient(circle at 50% 90%, rgba(255, 255, 255, 0.05), transparent 70%),
 		linear-gradient(180deg, #0b0b10, #050507);
 	transition: opacity 0.5s ease;
 }
@@ -2016,7 +2016,7 @@ body.market-page {
 	gap: 12px;
 	padding: 10px 24px;
 	border-bottom: 1px solid var(--mk-border);
-	background: rgba(125, 211, 252, 0.04);
+	background: rgba(255, 255, 255, 0.04);
 	font-size: 12px;
 	color: var(--mk-text-2);
 }
@@ -2030,9 +2030,9 @@ body.market-page {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
-	background: rgba(125, 211, 252, 0.12);
-	border: 1px solid rgba(125, 211, 252, 0.3);
-	color: #7dd3fc;
+	background: rgba(255, 255, 255, 0.12);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	color: #ffffff;
 	padding: 4px 10px;
 	border-radius: 999px;
 	font-size: 12px;
@@ -2041,7 +2041,7 @@ body.market-page {
 .market-tag-banner-clear {
 	background: transparent;
 	border: 0;
-	color: rgba(125, 211, 252, 0.7);
+	color: rgba(255, 255, 255, 0.7);
 	cursor: pointer;
 	font-size: 12px;
 	padding: 0 2px;
@@ -2187,7 +2187,7 @@ body.market-page {
 .market-card-avatar .byline .dot { color: var(--mk-text-3); opacity: 0.6; }
 .market-card-avatar .byline .when { color: var(--mk-text-3); }
 .card-author {
-	color: #7dd3fc;
+	color: #ffffff;
 	font-weight: 500;
 	text-decoration: none;
 	white-space: nowrap;
@@ -2207,8 +2207,8 @@ body.market-page {
 .market-card-avatar .card-tags .tag-pill {
 	font-size: 10px;
 	padding: 2px 7px;
-	background: rgba(125, 211, 252, 0.07);
-	color: rgba(125, 211, 252, 0.85);
+	background: rgba(255, 255, 255, 0.07);
+	color: rgba(255, 255, 255, 0.85);
 	border-radius: 999px;
 }
 
@@ -2220,8 +2220,8 @@ body.market-page {
 	padding-top: 4px;
 }
 .market-card-avatar .footer .avatar-pill {
-	background: rgba(125, 211, 252, 0.1);
-	color: #7dd3fc;
+	background: rgba(255, 255, 255, 0.1);
+	color: #ffffff;
 	padding: 2px 8px;
 	border-radius: 999px;
 	font-size: 10px;
@@ -2246,8 +2246,8 @@ body.market-page {
 	align-items: center;
 	justify-content: center;
 	background:
-		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.06), transparent 65%),
-		radial-gradient(circle at 50% 90%, rgba(168, 85, 247, 0.04), transparent 70%),
+		radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.06), transparent 65%),
+		radial-gradient(circle at 50% 90%, rgba(255, 255, 255, 0.04), transparent 70%),
 		linear-gradient(180deg, #0b0b10, #050507);
 }
 .market-card-avatar .thumb-fallback-initial {
@@ -2269,7 +2269,7 @@ body.market-page {
 	align-items: center;
 	justify-content: center;
 	background:
-		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.06), transparent 65%),
+		radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.06), transparent 65%),
 		linear-gradient(180deg, #0b0b10, #050507);
 }
 .market-card-avatar .card-img-fallback::after {
@@ -2284,7 +2284,7 @@ body.market-page {
 	align-items: center;
 	justify-content: center;
 	background:
-		radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.08), transparent 65%),
+		radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.08), transparent 65%),
 		linear-gradient(180deg, #0a0a0d, #050507);
 }
 .market-card-agent .card-img-fallback::after {
@@ -2343,8 +2343,8 @@ body.market-page {
 	text-align: center;
 }
 .market-nav .nav-count.hot {
-	color: #7dd3fc;
-	background: rgba(125, 211, 252, 0.12);
+	color: #ffffff;
+	background: rgba(255, 255, 255, 0.12);
 }
 .market-nav a {
 	display: flex;
@@ -2355,9 +2355,9 @@ body.market-page {
 /* ── Submit Avatar CTA in topbar ──────────────────────────────── */
 
 .market-submit-avatar-btn {
-	background: rgba(125, 211, 252, 0.1);
-	color: #7dd3fc;
-	border: 1px solid rgba(125, 211, 252, 0.25);
+	background: rgba(255, 255, 255, 0.1);
+	color: #ffffff;
+	border: 1px solid rgba(255, 255, 255, 0.25);
 	border-radius: 8px;
 	padding: 7px 12px;
 	font-size: 13px;
@@ -2368,8 +2368,8 @@ body.market-page {
 	transition: background 0.15s, border-color 0.15s;
 }
 .market-submit-avatar-btn:hover {
-	background: rgba(125, 211, 252, 0.18);
-	border-color: rgba(125, 211, 252, 0.4);
+	background: rgba(255, 255, 255, 0.18);
+	border-color: rgba(255, 255, 255, 0.4);
 }
 
 /* ── Heart bookmark button on avatar cards ───────────────────────── */
@@ -2477,7 +2477,7 @@ body.market-page {
 .modal-load-bar {
 	height: 100%;
 	width: 0%;
-	background: #7dd3fc;
+	background: #ffffff;
 	border-radius: 2px;
 	transition: width 0.2s linear;
 }
@@ -2496,7 +2496,7 @@ body.market-page {
 	margin: 0;
 }
 .avatar-modal-author a {
-	color: #7dd3fc;
+	color: #ffffff;
 	text-decoration: none;
 }
 .avatar-modal-author a:hover { text-decoration: underline; }
