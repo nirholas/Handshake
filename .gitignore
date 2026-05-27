@@ -101,3 +101,6 @@ scratch/screenshots/
 # Playwright run artifacts
 test-results/
 .env*
+docs/internal/COINMARKETCAP_PARTNERSHIP_ARTICLE.md
+docs/internal/COINMARKETCAP_ARTICLE.md
+docs/internal/PRESS_RELEASE_SHORT.md
