@@ -67,7 +67,7 @@ describe('normalize — ERC-8004 registration JSON', () => {
 		expect(m.id.agentId).toBe('42');
 		expect(m.brain.provider).toBe('none');
 		expect(m.memory.mode).toBe('local');
-		expect(m.tools).toEqual(['wave', 'lookAt', 'play_clip', 'setExpression']);
+		expect(m.tools).toEqual(['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember']);
 		expect(m.services).toEqual([{ name: 'something', uri: 'x' }]);
 	});
 
@@ -165,7 +165,7 @@ describe('normalize — unknown / partial JSON (best effort)', () => {
 		expect(m.body.format).toBe('gltf-binary');
 		expect(m.brain).toEqual({ provider: 'none' });
 		expect(m.memory).toEqual({ mode: 'local' });
-		expect(m.tools).toEqual(['wave', 'lookAt', 'play_clip', 'setExpression']);
+		expect(m.tools).toEqual(['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember']);
 		expect(m.version).toBe('0.1.0');
 	});
 

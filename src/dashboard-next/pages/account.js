@@ -111,7 +111,7 @@ async function copyToClipboard(text) {
 			<section class="dn-panel" data-section="provider-keys">
 				<div style="margin-bottom:14px">
 					<div class="dn-panel-title">AI Provider Keys</div>
-					<div class="dn-panel-sub" style="margin:0">Bring your own API key to use Claude or GPT-4. OpenRouter and Groq are provided free by the platform.</div>
+					<div class="dn-panel-sub" style="margin:0">Bring your own API key to unlock AI models. Your keys are encrypted and never shared.</div>
 				</div>
 				<div data-slot="provider-keys"><div class="dn-skeleton" style="height:80px"></div></div>
 			</section>

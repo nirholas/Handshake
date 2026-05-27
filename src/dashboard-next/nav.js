@@ -21,7 +21,7 @@ export const NAV = [
 	{ path: '/dashboard/agents',      label: 'Agents',          icon: 'agent',     group: 'Create',     tags: ['bot', 'ai', 'identity', 'erc-8004', 'persona', 'reputation'] },
 	{ path: '/dashboard/library',     label: 'Library',         icon: 'library',   group: 'Create',     tags: ['animations', 'memory', 'voice', 'strategy', 'clips', 'strategy-lab'] },
 	{ path: '/voice',                 label: 'Voice Lab',       icon: 'voice',     group: 'Create',     tags: ['clone', 'tts', 'speech', 'recording', 'elevenlabs'], external: true },
-	{ path: '/brain',                 label: 'Brain',           icon: 'brain',     group: 'Create',     tags: ['persona', 'playground', 'compare', 'models', 'test'], external: true },
+	{ path: '/dashboard/brain',       label: 'Brain',           icon: 'brain',     group: 'Create',     tags: ['persona', 'playground', 'compare', 'models', 'test', 'llm', 'ai'] },
 
 	// ── Distribute ──────────────────────────────────────────────────────
 	{ path: '/dashboard/widgets',     label: 'Widgets',         icon: 'widget',    group: 'Distribute', tags: ['embed', 'iframe', '<threews-avatar>', 'transcripts', 'knowledge'] },

@@ -75,12 +75,18 @@ export const env = {
 		return trimSlash(opt('AVATURN_API_URL', 'https://api.avaturn.me'));
 	},
 
-	// Anthropic API key — required by persona / memory-seeding endpoints
-	// and used by the we-pay LLM proxy (/api/llm/anthropic) when an agent
-	// selects a Claude model. Free OpenRouter/Groq models routed through
-	// the same proxy use OPENROUTER_API_KEY / GROQ_API_KEY instead.
+	// Anthropic API key — used by persona / memory-seeding endpoints and
+	// the we-pay LLM proxy (/api/llm/anthropic) when an agent selects a
+	// Claude model. Optional: when unset, brain/persona endpoints fall back
+	// to OpenRouter or Groq so user-facing features work without it.
 	get ANTHROPIC_API_KEY() {
-		return req('ANTHROPIC_API_KEY');
+		return opt('ANTHROPIC_API_KEY');
+	},
+
+	// Groq API key — fast open-weight inference (Llama, etc.).
+	// Used by brain/chat, viewer chat, and as a fallback for persona extraction.
+	get GROQ_API_KEY() {
+		return opt('GROQ_API_KEY');
 	},
 
 	// Etherscan V2 — unified multichain explorer API (one key, all chains).

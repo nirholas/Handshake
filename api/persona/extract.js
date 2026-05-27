@@ -1,22 +1,99 @@
 // POST /api/persona/extract
 // Synthesizes a structured persona JSON from a short onboarding interview.
-// Calls Claude Haiku 4.5 via the canonical Anthropic API pattern used in
-// api/avatars/_actions.js (handleAutoTag).
+// Prefers Anthropic direct, falls back to OpenRouter then Groq so the
+// feature works regardless of which API keys are configured.
 
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
-import { env } from '../_lib/env.js';
 
-const MODEL = 'claude-haiku-4-5-20251001';
 const MAX_ANSWERS = 12;
 const MAX_QA_CHARS = 1200;
+
+function resolveProvider() {
+	const anthropicKey = process.env.ANTHROPIC_API_KEY;
+	if (anthropicKey) {
+		return {
+			name: 'anthropic',
+			model: 'claude-haiku-4-5-20251001',
+			url: 'https://api.anthropic.com/v1/messages',
+			headers: {
+				'content-type': 'application/json',
+				'x-api-key': anthropicKey,
+				'anthropic-version': '2023-06-01',
+			},
+			buildBody: (system, userMessage) => ({
+				model: 'claude-haiku-4-5-20251001',
+				max_tokens: 800,
+				system,
+				messages: [{ role: 'user', content: userMessage }],
+			}),
+			extractText: (r) => r.content?.[0]?.text || '',
+			extractUsage: (r) => ({
+				input: r.usage?.input_tokens ?? 0,
+				output: r.usage?.output_tokens ?? 0,
+			}),
+		};
+	}
+	const orKey = process.env.OPENROUTER_API_KEY;
+	if (orKey) {
+		return {
+			name: 'openrouter',
+			model: 'anthropic/claude-3.5-haiku',
+			url: 'https://openrouter.ai/api/v1/chat/completions',
+			headers: {
+				'content-type': 'application/json',
+				authorization: `Bearer ${orKey}`,
+				'HTTP-Referer': 'https://three.ws',
+				'X-Title': 'three.ws persona',
+			},
+			buildBody: (system, userMessage) => ({
+				model: 'anthropic/claude-3.5-haiku',
+				max_tokens: 800,
+				messages: [
+					{ role: 'system', content: system },
+					{ role: 'user', content: userMessage },
+				],
+			}),
+			extractText: (r) => r.choices?.[0]?.message?.content || '',
+			extractUsage: (r) => ({
+				input: r.usage?.prompt_tokens ?? 0,
+				output: r.usage?.completion_tokens ?? 0,
+			}),
+		};
+	}
+	const groqKey = process.env.GROQ_API_KEY;
+	if (groqKey) {
+		return {
+			name: 'groq',
+			model: 'llama-3.3-70b-versatile',
+			url: 'https://api.groq.com/openai/v1/chat/completions',
+			headers: {
+				'content-type': 'application/json',
+				authorization: `Bearer ${groqKey}`,
+			},
+			buildBody: (system, userMessage) => ({
+				model: 'llama-3.3-70b-versatile',
+				max_tokens: 800,
+				messages: [
+					{ role: 'system', content: system },
+					{ role: 'user', content: userMessage },
+				],
+			}),
+			extractText: (r) => r.choices?.[0]?.message?.content || '',
+			extractUsage: (r) => ({
+				input: r.usage?.prompt_tokens ?? 0,
+				output: r.usage?.completion_tokens ?? 0,
+			}),
+		};
+	}
+	return null;
+}
 
 async function resolveUser(req) {
 	const session = await getSessionUser(req);
 	if (session) return session.id;
 	const bearer = await authenticateBearer(extractBearer(req), { audience: undefined });
 	if (!bearer) return null;
-	// Read scope is sufficient — persona extraction reads user-supplied text.
 	if (!hasScope(bearer.scope, 'avatars:read') && !hasScope(bearer.scope, 'avatars:write')) {
 		return null;
 	}
@@ -84,14 +161,20 @@ const handler = wrap(async (req, res) => {
 
 	const userId = await resolveUser(req);
 	if (!userId) {
-		return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
+		return error(res, 401, 'unauthorized', 'Sign in to build your persona.');
 	}
 
 	const body = await readJson(req);
 	const input = validateInput(body);
 
-	if (!env.ANTHROPIC_API_KEY) {
-		return error(res, 503, 'config_missing', 'ANTHROPIC_API_KEY not configured');
+	const provider = resolveProvider();
+	if (!provider) {
+		return error(
+			res,
+			503,
+			'config_missing',
+			'Persona extraction is not available right now. Please try again later.',
+		);
 	}
 
 	let userMessage;
@@ -105,32 +188,22 @@ const handler = wrap(async (req, res) => {
 	}
 
 	const t0 = Date.now();
-	const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+	const llmRes = await fetch(provider.url, {
 		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'x-api-key': env.ANTHROPIC_API_KEY,
-			'anthropic-version': '2023-06-01',
-		},
-		body: JSON.stringify({
-			model: MODEL,
-			max_tokens: 800,
-			system: SYSTEM_PROMPT,
-			messages: [{ role: 'user', content: userMessage }],
-		}),
+		headers: provider.headers,
+		body: JSON.stringify(provider.buildBody(SYSTEM_PROMPT, userMessage)),
 	});
 
-	if (!anthropicRes.ok) {
-		const detail = await anthropicRes.text();
-		console.error('[persona/extract] anthropic error', anthropicRes.status, detail);
-		return error(res, 502, 'upstream_error', `Claude API ${anthropicRes.status}`);
+	if (!llmRes.ok) {
+		const detail = await llmRes.text();
+		console.error(`[persona/extract] ${provider.name} error`, llmRes.status, detail);
+		return error(res, 502, 'upstream_error', `${provider.name} API ${llmRes.status}`);
 	}
 
-	const result = await anthropicRes.json();
-	const raw = result.content?.[0]?.text || '';
+	const result = await llmRes.json();
+	const raw = provider.extractText(result);
 	let persona;
 	try {
-		// Be lenient: strip optional ```json fences if the model added them.
 		const stripped = raw
 			.trim()
 			.replace(/^```(?:json)?\s*/i, '')
@@ -142,7 +215,6 @@ const handler = wrap(async (req, res) => {
 		return error(res, 502, 'parse_error', 'model returned non-JSON');
 	}
 
-	// Defensive shape normalization — guarantee the contract the demo expects.
 	const allowedStyles = ['terse', 'detailed', 'playful', 'analytical', 'warm'];
 	const normalized = {
 		tone: typeof persona.tone === 'string' ? persona.tone.trim().slice(0, 240) : '',
@@ -173,15 +245,14 @@ const handler = wrap(async (req, res) => {
 				: '',
 	};
 
-	const tokensIn = result.usage?.input_tokens ?? 0;
-	const tokensOut = result.usage?.output_tokens ?? 0;
+	const usage = provider.extractUsage(result);
 
 	return json(res, 200, {
 		persona: normalized,
-		model: MODEL,
-		tokens_used: tokensIn + tokensOut,
-		tokens_in: tokensIn,
-		tokens_out: tokensOut,
+		model: provider.model,
+		tokens_used: usage.input + usage.output,
+		tokens_in: usage.input,
+		tokens_out: usage.output,
 		latency_ms: Date.now() - t0,
 	});
 });

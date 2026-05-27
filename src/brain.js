@@ -33,16 +33,26 @@ const EXAMPLES = [
 	'"Per my last email." or anything that sounds like a LinkedIn post.',
 ];
 
+// ── Auth hint ────────────────────────────────────────────────────────────────
+function isAuthedHint() {
+	try {
+		const raw = localStorage.getItem('3dagent:auth-hint');
+		if (!raw) return false;
+		return JSON.parse(raw).authed === true;
+	} catch { return false; }
+}
+
 // ── State ────────────────────────────────────────────────────────────────────
 const state = {
 	activeTab: 'persona',
 	method: 'interview',
 	persona: null,
 	personaEnabled: true,
+	authed: isAuthedHint(),
 
 	playMode: 'compare',
-	focusKey: 'claude-sonnet-4-6',
-	active: new Set(['claude-sonnet-4-6', 'gpt-4o-mini', 'groq-llama', 'deepseek-r1']),
+	focusKey: 'groq-llama',
+	active: new Set(['groq-llama', 'claude-sonnet-4-6', 'gpt-4o-mini', 'deepseek-r1']),
 	sessions: [],
 	currentId: null,
 	streaming: false,
@@ -204,7 +214,33 @@ function collectAnswers() {
 
 function updateSynthButton() {
 	const allFilled = collectAnswers().every(a => a.answer.length > 0);
-	$('brSynthesize').disabled = !allFilled;
+	$('brSynthesize').disabled = !allFilled || !state.authed;
+	const freeBtn = $('brFreeformSynth');
+	if (freeBtn) freeBtn.disabled = !$('brFreeformText')?.value.trim() || !state.authed;
+}
+
+function showAuthGate() {
+	let gate = $('brAuthGate');
+	if (gate) { gate.style.display = ''; return; }
+	gate = document.createElement('div');
+	gate.id = 'brAuthGate';
+	gate.className = 'br-auth-gate';
+	gate.innerHTML = `
+		<div class="br-auth-gate-inner">
+			<span class="br-auth-gate-icon">&#128274;</span>
+			<strong>Sign in to build your persona</strong>
+			<p>Your answers stay in your browser. Sign in so we can generate the persona on the server.</p>
+			<a href="/login?redirect=/brain" class="br-btn br-btn-primary">Sign in</a>
+		</div>
+	`;
+	const hero = document.querySelector('.br-persona-hero');
+	if (hero) hero.after(gate);
+	else document.querySelector('.br-persona-inner')?.prepend(gate);
+}
+
+function hideAuthGate() {
+	const gate = $('brAuthGate');
+	if (gate) gate.style.display = 'none';
 }
 
 // ── Render: Persona card ─────────────────────────────────────────────────────
@@ -273,24 +309,28 @@ async function runExtraction(payload) {
 	$('brPersonaCard').classList.remove('show');
 
 	try {
-		let body, endpoint;
-		if (payload.answers) {
-			endpoint = '/api/persona/extract';
-			body = JSON.stringify({ answers: payload.answers });
-		} else {
-			endpoint = '/api/persona/extract';
-			body = JSON.stringify({ freeform: payload.freeform });
-		}
+		const body = payload.answers
+			? JSON.stringify({ answers: payload.answers })
+			: JSON.stringify({ freeform: payload.freeform });
 
-		const res = await fetch(endpoint, {
+		const res = await fetch('/api/persona/extract', {
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
 			body,
 		});
+
+		if (res.status === 401) {
+			state.authed = false;
+			showAuthGate();
+			toast('Sign in to synthesize your persona.');
+			return;
+		}
+
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error_description || data.error || `HTTP ${res.status}`);
 
+		state.authed = true;
 		state.persona = data.persona;
 		persistPersona();
 		renderPersonaCard(state.persona);
@@ -472,18 +512,21 @@ async function fetchProviderAvailability() {
 	try {
 		const r = await fetch('/api/brain/chat', { method: 'GET' });
 		if (!r.ok) return;
-		const json = await r.json();
-		if (Array.isArray(json.providers)) {
-			state.availableProviders = json.providers;
-			// Remove unavailable providers from the active set
+		const data = await r.json();
+		if (Array.isArray(data.providers)) {
+			state.availableProviders = data.providers;
 			for (const key of [...state.active]) {
-				const found = json.providers.find(p => p.key === key);
+				const found = data.providers.find(p => p.key === key);
 				if (found && !found.available) state.active.delete(key);
 			}
-			// Ensure at least one active provider
 			if (state.active.size === 0) {
-				const first = json.providers.find(p => p.available);
+				const first = data.providers.find(p => p.available);
 				if (first) state.active.add(first.key);
+			}
+			const focusAvail = data.providers.find(p => p.key === state.focusKey);
+			if (!focusAvail || !focusAvail.available) {
+				const first = data.providers.find(p => p.available);
+				if (first) state.focusKey = first.key;
 			}
 			renderPlayControls();
 		}
@@ -1015,6 +1058,8 @@ renderSidebar();
 renderCanvas();
 bindEvents();
 fetchProviderAvailability();
+
+if (!state.authed) showAuthGate();
 
 if (state.persona) {
 	renderPersonaCard(state.persona);
