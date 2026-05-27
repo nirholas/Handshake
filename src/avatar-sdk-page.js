@@ -1,8 +1,11 @@
-import { ThreeWsViewerElement } from '../avatar-sdk/src/viewer.js';
-
-if (typeof customElements !== 'undefined' && !customElements.get('three-ws-viewer')) {
-	customElements.define('three-ws-viewer', ThreeWsViewerElement);
-}
+(async () => {
+	try {
+		const { ThreeWsViewerElement } = await import('../avatar-sdk/src/viewer.js');
+		if (typeof customElements !== 'undefined' && !customElements.get('three-ws-viewer')) {
+			customElements.define('three-ws-viewer', ThreeWsViewerElement);
+		}
+	} catch {}
+})();
 
 document.addEventListener('DOMContentLoaded', () => {
 	// ── Scroll reveal ────────────────────────────────────────────────────────

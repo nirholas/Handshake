@@ -201,7 +201,13 @@ function renderShell(glbUrl) {
 					ar
 					ar-modes="webxr scene-viewer quick-look"
 					ar-scale="auto"
-				></model-viewer>
+				>
+					<div slot="hotspot-thought" data-position="0 1.9 0.08" data-normal="0 0 1" id="av-hotspot-thought">
+						<div class="av-thought-bubble" id="av-thought-bubble">
+							<div class="av-thought-content" id="av-thought-content"></div>
+						</div>
+					</div>
+				</model-viewer>
 			</div>
 			<div class="av-meta-strip" id="av-meta-strip">
 				<div class="av-meta-item"><span class="av-meta-key">Format</span><span class="av-meta-val">glTF 2.0</span></div>
@@ -324,6 +330,7 @@ function renderShell(glbUrl) {
 	const viewer = $('av-viewer');
 	viewer?.addEventListener('load', () => {
 		$('av-stage-loading')?.remove();
+		positionThoughtHotspot(viewer);
 	});
 	viewer?.addEventListener('error', () => {
 		const ld = $('av-stage-loading');
@@ -890,6 +897,49 @@ function saveAttached() {
 	}
 }
 
+// ── Thought bubble (above avatar) ────────────────────────────────────
+
+function positionThoughtHotspot(viewer) {
+	const hotspot = $('av-hotspot-thought');
+	if (!hotspot || !viewer) return;
+	try {
+		const dims = viewer.getDimensions();
+		if (dims && dims.y > 0) {
+			const topY = (dims.y + 0.12).toFixed(3);
+			hotspot.setAttribute('data-position', `0 ${topY} 0.08`);
+		}
+	} catch {}
+}
+
+function showThoughtThinking() {
+	const bubble = $('av-thought-bubble');
+	const content = $('av-thought-content');
+	if (!bubble || !content) return;
+	content.innerHTML = '<div class="av-thinking-dots"><span></span><span></span><span></span></div>';
+	bubble.classList.remove('overflow');
+	bubble.classList.add('visible');
+}
+
+function streamThoughtText(text) {
+	const bubble = $('av-thought-bubble');
+	const content = $('av-thought-content');
+	if (!bubble || !content) return;
+	content.textContent = text;
+	const cursor = document.createElement('span');
+	cursor.className = 'av-thought-cursor';
+	content.appendChild(cursor);
+	bubble.classList.toggle('overflow', content.scrollHeight > 150);
+	if (!bubble.classList.contains('visible')) bubble.classList.add('visible');
+}
+
+function finalizeThought(text) {
+	const bubble = $('av-thought-bubble');
+	const content = $('av-thought-content');
+	if (!bubble || !content) return;
+	content.textContent = text;
+	bubble.classList.toggle('overflow', content.scrollHeight > 150);
+}
+
 // ── Chat panel ────────────────────────────────────────────────────────
 
 function bindChat() {
@@ -1054,6 +1104,7 @@ async function sendChatMessage(text) {
 	cursor.className = 'av-chat-cursor';
 	assistantNode.appendChild(cursor);
 
+	showThoughtThinking();
 	send.disabled = true;
 	let acc = '';
 	try {
@@ -1098,6 +1149,7 @@ async function sendChatMessage(text) {
 					acc += evt.text;
 					assistantNode.textContent = acc;
 					log.scrollTop = log.scrollHeight;
+					streamThoughtText(acc);
 				} else if (evt.type === 'error') {
 					throw new Error(evt.message || evt.error || 'Stream error');
 				}
@@ -1105,10 +1157,11 @@ async function sendChatMessage(text) {
 		}
 		chatHistory.push({ role: 'assistant', content: acc });
 		persistChatHistory();
-		// Speak the assistant's full reply (TTS skill).
+		finalizeThought(acc);
 		if (acc) speakReply(acc);
 	} catch (err) {
 		assistantNode.textContent = acc || `⚠ ${err.message}`;
+		finalizeThought(acc || err.message);
 		console.error('[avatar] chat', err);
 	} finally {
 		cursor.remove();

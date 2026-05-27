@@ -902,6 +902,9 @@
 
 		/* ── FOOTER ──────────────────────────────────────────────── */
 		footer { border-top: 1px solid var(--hairline); padding: 40px 0 56px; }
+	.version-switch { display:inline-flex; align-items:center; gap:6px; margin-top:16px; padding:6px 14px; border-radius:100px; border:1px solid var(--hairline-strong); color:var(--text-3); font-size:12px; text-decoration:none; transition:color .2s, border-color .2s; }
+	.version-switch:hover { color:var(--text-2); border-color:var(--text-3); }
+	.version-switch svg { width:14px; height:14px; }
 		.foot-inner {
 			display: flex; justify-content: space-between; align-items: center;
 			gap: 24px; flex-wrap: wrap;
@@ -1368,6 +1371,171 @@
 			.stack-card, .stack-3d-scene { transition: none !important; }
 			.stack-3d .stack-card { opacity: 1 !important; transform: none !important; }
 		}
+
+		/* ── WHAT YOU GET ────────────────────────────────────────────── */
+		.wyg-head {
+			text-align: center; margin-bottom: 64px;
+		}
+		.wyg-eyebrow {
+			font-family: var(--font-mono); font-size: 11.5px;
+			letter-spacing: 0.22em; text-transform: uppercase;
+			color: var(--text-3); margin: 0 0 20px;
+		}
+		.wyg-title {
+			font-family: var(--font-display);
+			font-size: clamp(36px, 4.8vw, 64px);
+			line-height: 1.0; letter-spacing: -0.04em;
+			font-weight: 600; margin: 0; color: var(--text);
+		}
+		.wyg-grid {
+			display: grid;
+			grid-template-columns: 1.15fr 0.85fr;
+			gap: 1px;
+			background: var(--hairline);
+			border: 1px solid var(--hairline);
+			border-radius: 16px;
+			overflow: hidden;
+		}
+		@media (max-width: 1080px) { .wyg-grid { grid-template-columns: 1fr; } }
+
+		.wyg-viewer {
+			background: var(--surface-0);
+			position: relative;
+			min-height: 640px;
+			display: flex; flex-direction: column;
+		}
+		@media (max-width: 1080px) { .wyg-viewer { min-height: 480px; } }
+		@media (max-width: 600px) { .wyg-viewer { min-height: 380px; } }
+		.wyg-viewer agent-3d {
+			position: absolute; inset: 0; width: 100%; height: 100%;
+			display: block;
+			opacity: 0; transition: opacity 0.6s ease;
+		}
+		.wyg-viewer agent-3d.loaded { opacity: 1; }
+		.wyg-viewer-skel {
+			position: absolute; inset: 0;
+			display: flex; align-items: center; justify-content: center;
+		}
+		.wyg-viewer-skel-ring {
+			width: 32px; height: 32px;
+			border: 2px solid rgba(255,255,255,0.08);
+			border-top-color: rgba(255,255,255,0.25);
+			border-radius: 50%;
+			animation: showcase-spin 0.9s linear infinite;
+		}
+		.wyg-anim-bar {
+			position: absolute; bottom: 0; left: 0; right: 0;
+			z-index: 10;
+			display: flex; flex-direction: column; gap: 8px;
+			padding: 24px 20px 16px;
+			background: linear-gradient(0deg, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.5) 60%, transparent 100%);
+		}
+		.wyg-anim-head {
+			display: flex; align-items: center; justify-content: space-between;
+		}
+		.wyg-anim-label {
+			font-family: var(--font-mono); font-size: 10px;
+			letter-spacing: 0.22em; text-transform: uppercase;
+			color: var(--text-4);
+		}
+		.wyg-anim-stop {
+			width: 14px; height: 14px;
+			background: var(--text-3); border-radius: 2px;
+			border: none; cursor: pointer;
+			opacity: 0.5; transition: opacity 0.15s;
+		}
+		.wyg-anim-stop:hover { opacity: 1; }
+		.wyg-anim-scroll {
+			display: flex; gap: 6px;
+			overflow-x: auto; overflow-y: hidden;
+			-webkit-overflow-scrolling: touch;
+			scrollbar-width: none;
+			padding-bottom: 4px;
+		}
+		.wyg-anim-scroll::-webkit-scrollbar { display: none; }
+		.wyg-anim-chip {
+			display: inline-flex; flex-direction: column;
+			align-items: center; gap: 4px;
+			padding: 8px 10px 6px;
+			border-radius: 10px;
+			background: rgba(255,255,255,0.06);
+			border: 1px solid var(--hairline-strong);
+			color: var(--text-3);
+			font: 500 10.5px/1 var(--font-body);
+			cursor: pointer; user-select: none;
+			transition: border-color 0.15s, color 0.15s, background 0.15s;
+			white-space: nowrap; flex-shrink: 0;
+			min-width: 64px;
+		}
+		.wyg-anim-chip:hover {
+			border-color: rgba(255,255,255,0.3);
+			color: var(--text);
+			background: rgba(255,255,255,0.1);
+		}
+		.wyg-anim-chip[data-active="true"] {
+			border-color: rgba(255,255,255,0.5);
+			color: var(--text);
+			background: rgba(255,255,255,0.12);
+		}
+		.wyg-anim-chip-icon { font-size: 18px; line-height: 1; }
+
+		.wyg-cards {
+			display: flex; flex-direction: column;
+			background: var(--hairline); gap: 1px;
+		}
+		.wyg-card {
+			background: var(--surface-0);
+			padding: 28px 28px 24px;
+			display: flex; flex-direction: column; gap: 8px;
+			transition: background 0.15s;
+		}
+		.wyg-card:hover { background: var(--surface-1); }
+		.wyg-card-eyebrow {
+			font-family: var(--font-mono); font-size: 10.5px;
+			letter-spacing: 0.2em; text-transform: uppercase;
+			margin: 0;
+		}
+		.wyg-card-eyebrow.clr-gold { color: #c9a94e; }
+		.wyg-card-eyebrow.clr-teal { color: #5eadad; }
+		.wyg-card-eyebrow.clr-purple { color: #a78bfa; }
+		.wyg-card-eyebrow.clr-rose { color: #e879a0; }
+		.wyg-card-eyebrow.clr-sky { color: #7ab8e0; }
+		.wyg-card-eyebrow.clr-amber { color: #d4a04a; }
+		.wyg-card-title {
+			font-family: var(--font-display); font-size: 20px;
+			font-weight: 600; letter-spacing: -0.02em; margin: 0;
+		}
+		.wyg-card-body {
+			font-size: 14px; color: var(--text-2);
+			line-height: 1.5; margin: 0;
+		}
+		.wyg-card-code {
+			font-family: var(--font-mono); font-size: 12px;
+			background: var(--surface-2); border: 1px solid var(--hairline-strong);
+			border-radius: 8px; padding: 12px 14px;
+			color: var(--text-2); line-height: 1.6; margin-top: 4px;
+		}
+		.wyg-card-pills {
+			display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
+		}
+		.wyg-card-pill {
+			display: inline-flex; align-items: center; gap: 6px;
+			font-family: var(--font-mono); font-size: 11px;
+			letter-spacing: 0.08em;
+			color: var(--text-2);
+			border: 1px solid var(--hairline-strong);
+			padding: 4px 10px; border-radius: 99px;
+		}
+		.wyg-card-pill .dot {
+			width: 7px; height: 7px; border-radius: 50%;
+		}
+		.wyg-card-link {
+			font-size: 13.5px; font-weight: 500; color: var(--text);
+			display: inline-flex; align-items: center; gap: 7px;
+			margin-top: 4px; transition: gap 0.15s;
+		}
+		.wyg-card:hover .wyg-card-link { gap: 10px; }
+		.wyg-card-link::after { content: "\2192"; }
 
 		/* ── V4-STYLE IMMERSIVE CLOSE ────────────────────────────────── */
 		.vclose {
@@ -2090,6 +2258,21 @@
 		.analytics-spark .spark-fill{fill:url(#spark-grad);stroke:none;opacity:.15}
 		.analytics-spark .spark-dot{fill:var(--text);r:2.5;animation:spark-pulse 2s ease-in-out infinite}
 		@keyframes spark-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+		/* ── EDITORIAL (Pretext-inspired reflow) ─────────────────── */
+		.editorial-text-area{position:relative;min-height:480px;user-select:text;overflow:visible}
+		.ed-line{position:absolute;white-space:nowrap;font-family:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,serif;font-size:17px;line-height:28px;color:var(--text-2)}
+		.ed-drop{position:absolute;font-family:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,serif;font-weight:700;color:var(--text);line-height:.85;pointer-events:none}
+		.editorial-orb{position:absolute;z-index:10;cursor:grab;will-change:transform;border-radius:50%;touch-action:none}
+		.editorial-orb:active{cursor:grabbing}
+		.editorial-orb-glow{position:absolute;inset:-24px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.10),transparent 70%);box-shadow:0 0 60px 15px rgba(255,255,255,.05),0 0 120px 40px rgba(255,255,255,.02);pointer-events:none;animation:ed-orb-glow 6s ease-in-out infinite}
+		@keyframes ed-orb-glow{0%,100%{opacity:.7}50%{opacity:1}}
+		.editorial-orb-avatar{width:100%;height:100%;border-radius:50%;overflow:hidden;border:1px solid rgba(255,255,255,.12);background:var(--surface-2)}
+		.editorial-orb-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;pointer-events:none;animation:ed-avatar-breathe 4s ease-in-out infinite}
+		@keyframes ed-avatar-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+		.editorial-hint{text-align:center;margin-top:32px;font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-4)}
+		@media(max-width:720px){.editorial-hint{display:none}}
+		@media(prefers-reduced-motion:reduce){.editorial-orb-glow{animation:none!important}.editorial-orb-avatar img{animation:none!important}}
 	</style>
 	<noscript><style>.reveal{opacity:1!important;transform:none!important}.hero-text>*{opacity:1!important;transform:none!important}</style></noscript>
 	<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
@@ -2320,60 +2503,20 @@
 	</div>
 </section>
 
-<!-- ── MANIFESTO ────────────────────────────────────────────────── -->
+<!-- ── EDITORIAL (Pretext-inspired reflow) ──────────────────────── -->
 <section class="block" id="editorial">
 	<div class="wrap-1280">
-		<div class="manifesto">
-
-			<div class="manifesto-beat reveal">
-				<h2 class="manifesto-statement manifesto-statement--dim">The web was built<br>for documents.</h2>
-				<p class="manifesto-aside">Text, images, links &mdash; a flat canvas for static information.</p>
-			</div>
-
-			<div class="manifesto-beat reveal">
-				<div class="manifesto-steps">
-					<span class="manifesto-step">Then came video.</span>
-					<span class="manifesto-step">Then interactivity.</span>
-					<span class="manifesto-step">Then AI.</span>
-				</div>
-			</div>
-
-			<div class="manifesto-beat reveal">
-				<p class="manifesto-lead">But something fundamental was always missing &mdash;</p>
-				<h2 class="manifesto-keyword">presence.</h2>
-			</div>
-
-			<div class="manifesto-beat reveal">
-				<div class="manifesto-negations">
-					<p class="manifesto-neg">Not a chatbot tucked into a corner.</p>
-					<p class="manifesto-neg">Not a popup demanding attention.</p>
-				</div>
-				<p class="manifesto-affirmation">A living digital being that inhabits your space, knows your visitors, and works while you sleep.</p>
-			</div>
-
-			<div class="manifesto-beat reveal">
-				<h2 class="manifesto-statement">three.ws gives your AI <em>a body.</em></h2>
-				<p class="manifesto-body">A 3D character generated from a single photograph, deployed with two lines of HTML, monetized through micropayments that settle instantly. Every agent remembers across sessions, moves through multiplayer worlds, and earns revenue via the x402 payment protocol.</p>
-			</div>
-
-			<div class="manifesto-beat reveal">
-				<div class="manifesto-caps">
-					<span class="manifesto-cap">200+ animations</span>
-					<span class="manifesto-cap">Real-time voice</span>
-					<span class="manifesto-cap">On-chain identity</span>
-					<span class="manifesto-cap">Cross-device memory</span>
-					<span class="manifesto-cap">Spatial multiplayer</span>
-					<span class="manifesto-cap">x402 payments</span>
-				</div>
-				<p class="manifesto-embed">All from one embed tag: <code>&lt;agent-3d&gt;</code></p>
-			</div>
-
-			<div class="manifesto-beat reveal">
-				<p class="manifesto-close-dim">The flat web had its moment.</p>
-				<h2 class="manifesto-close">The living web starts now.</h2>
-			</div>
-
+		<div class="block-head reveal">
+			<p class="block-eyebrow"><span class="num">&bull;</span>The vision</p>
+			<h2 class="block-h">The web wasn't built<br/>for <em>presence.</em></h2>
 		</div>
+		<div class="editorial-text-area reveal reveal-d1" id="editorial-text-area">
+			<div class="editorial-orb" id="editorial-orb">
+				<div class="editorial-orb-glow"></div>
+				<div class="editorial-orb-avatar" id="editorial-orb-avatar"></div>
+			</div>
+		</div>
+		<p class="editorial-hint reveal reveal-d2">drag the avatar through the text</p>
 	</div>
 </section>
 
@@ -3248,6 +3391,10 @@
 				<a href="https://github.com/nirholas/three.ws">GitHub</a>
 				<a href="mailto:hello@three.ws">Contact</a>
 			</div>
+			<a href="/home-classic" class="version-switch" aria-label="Switch to classic homepage">
+				<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8h11M6.5 4L2.5 8l4 4"/></svg>
+				Classic homepage
+			</a>
 		</div>
 	</div>
 </footer>
@@ -4319,6 +4466,7 @@
 	})();
 </script>
 <script src="/src/api-playground.js"></script>
+<script src="/src/editorial-pretext.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';

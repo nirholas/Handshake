@@ -65,7 +65,13 @@
 	var edLastT = 0, edInView = false, edSelecting = false;
 	var edReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-	// Avatar thumbnail is loaded by the inline boot script into #editorial-orb-avatar
+	// Load avatar thumbnail into orb
+	var AVATAR_ID = window.AVATAR_ID || 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
+	var orbImg = document.createElement('img');
+	orbImg.alt = 'Agent avatar';
+	orbImg.draggable = false;
+	orbImg.src = 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/' + AVATAR_ID + '.png';
+	orbAvatarSlot.appendChild(orbImg);
 
 	// Span pool — reuse DOM elements across frames
 	var linePool = [];

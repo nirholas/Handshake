@@ -128,7 +128,6 @@ const state = {
 	theme: null,
 };
 
-const WIP_DISMISS_KEY = 'marketplace_wip_dismissed_v1';
 
 const $ = (id) => document.getElementById(id);
 const els = {
@@ -669,6 +668,7 @@ function renderHero() {
 						src="${escapeHtml(a.glbUrl)}"
 						alt="${escapeHtml(a.name || 'Avatar')}"
 						auto-rotate
+						autoplay
 						rotation-per-second="20deg"
 						camera-controls
 						interaction-prompt="none"
@@ -826,32 +826,6 @@ function startHeroAutoplay() {
 function stopHeroAutoplay() {
 	if (state.heroTimer) clearInterval(state.heroTimer);
 	state.heroTimer = null;
-}
-
-// ── WIP banner dismiss ───────────────────────────────────────────────────
-
-function initWipBanner() {
-	const banner = $('market-wip-banner');
-	const dismiss = $('market-wip-dismiss');
-	if (!banner) return;
-	const dismissed = (() => {
-		try {
-			return localStorage.getItem(WIP_DISMISS_KEY) === '1';
-		} catch {
-			return false;
-		}
-	})();
-	banner.hidden = dismissed;
-	if (dismiss) {
-		dismiss.addEventListener('click', () => {
-			banner.hidden = true;
-			try {
-				localStorage.setItem(WIP_DISMISS_KEY, '1');
-			} catch {
-				// localStorage unavailable — banner stays dismissed only for the session
-			}
-		});
-	}
 }
 
 // ── Filter chips (All / Agents / Avatars / Onchain) ──────────────────────
@@ -1118,6 +1092,7 @@ function openAvatarModal(avatar) {
 	mv.setAttribute('rotation-per-second', '18deg');
 	mv.setAttribute('camera-controls', '');
 	mv.setAttribute('interaction-prompt', 'none');
+	mv.setAttribute('autoplay', '');
 	mv.setAttribute('exposure', '1.05');
 	mv.setAttribute('shadow-intensity', '0.7');
 	mv.setAttribute('tone-mapping', 'aces');
@@ -2938,6 +2913,7 @@ function renderAvatarCard(a, spotlight = false) {
 			? `${placeholderHtml(a.name)}<model-viewer
 					data-src="${escapeHtml(a.glbUrl)}"
 					alt="${name}"
+					autoplay
 					rotation-per-second="14deg"
 					interaction-prompt="none"
 					disable-zoom
@@ -3035,12 +3011,14 @@ function renderOnchainCard(a) {
 	const ownerShort = a.ownerShort || '';
 	const x402 = a.x402Support ? `<span class="onchain-x402" title="Accepts x402 micropayments">x402</span>` : '';
 	const href = a.viewerUrl || a.tokenExplorerUrl || '#';
+	const priceBadge = priceBadgeHtml(a.price);
 	const preview = a.image
 		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'card-img-fallback'}))" />`
 		: a.glbUrl
 			? `${placeholderHtml(a.name)}<model-viewer
 					data-src="${escapeHtml(a.glbUrl)}"
 					alt="${name}"
+					autoplay
 					rotation-per-second="14deg"
 					interaction-prompt="none"
 					disable-zoom
@@ -3054,7 +3032,7 @@ function renderOnchainCard(a) {
 				></model-viewer>`
 			: `<div class="thumb-fallback"><span class="thumb-fallback-initial">${escapeHtml(initial(a.name))}</span></div>`;
 	return `<div class="market-card-avatar onchain" data-onchain-href="${escapeHtml(href)}">
-		<div class="thumb">${preview}</div>
+		<div class="thumb">${priceBadge}${preview}</div>
 		<div class="body">
 			<div class="title">${name}</div>
 			<div class="byline">
@@ -3322,6 +3300,7 @@ async function loadAvatarDetail(id) {
 		mv.setAttribute('rotation-per-second', '12deg');
 		mv.setAttribute('camera-controls', '');
 		mv.setAttribute('interaction-prompt', 'when-focused');
+		mv.setAttribute('autoplay', '');
 		mv.setAttribute('exposure', '1.05');
 		mv.setAttribute('shadow-intensity', '0.7');
 		mv.setAttribute('tone-mapping', 'aces');
@@ -4054,7 +4033,6 @@ function bindEvents() {
 	bindTabs();
 	bindSubmit();
 	bindFilterChips();
-	initWipBanner();
 
 	// 3D Lobby: open from the hero button, close on overlay button or Escape.
 	$('market-hero-lobby')?.addEventListener('click', openLobby);
