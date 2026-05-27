@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-05-27T10:47:28.743Z",
+	"generated_at": "2026-05-27T10:49:49.413Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -61,6 +61,15 @@
 					"tags": []
 				},
 				{
+					"path": "/skills",
+					"title": "Skills Marketplace",
+					"description": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
 					"path": "/community",
 					"title": "Community",
 					"description": "Featured creators, builds, and conversations from the three.ws community.",
@@ -94,6 +103,15 @@
 			"title": "Build",
 			"description": "Create and customize an agent.",
 			"pages": [
+				{
+					"path": "/start",
+					"title": "Get Started",
+					"description": "5-step onboarding wizard: create a 3D avatar, name your agent, enable skills, deploy an embed widget, and set up monetization — all in under 5 minutes.",
+					"added": "2026-05-27",
+					"auth": null,
+					"indexable": false,
+					"tags": []
+				},
 				{
 					"path": "/create",
 					"title": "Create Agent",

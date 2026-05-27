@@ -43,6 +43,12 @@ URL: https://three.ws/marketplace
 
 Buy access to agents, skills, and avatars from other creators.
 
+### Skills Marketplace
+
+URL: https://three.ws/skills
+
+Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.
+
 ### Community
 
 URL: https://three.ws/community
@@ -64,6 +70,13 @@ Discover AI characters on three.ws. Chat, trade, and create.
 ## Build
 
 Create and customize an agent.
+
+### Get Started
+
+URL: https://three.ws/start
+Indexable: no (excluded from sitemap)
+
+5-step onboarding wizard: create a 3D avatar, name your agent, enable skills, deploy an embed widget, and set up monetization — all in under 5 minutes.
 
 ### Create Agent
 

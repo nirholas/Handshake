@@ -87,6 +87,16 @@
 			"description": "Create and customize an agent.",
 			"pages": [
 				{
+					"path": "/start",
+					"title": "Get Started",
+					"description": "5-step onboarding wizard: create a 3D avatar, name your agent, enable skills, deploy an embed widget, and set up monetization — all in under 5 minutes.",
+					"priority": 1.0,
+					"changefreq": "monthly",
+					"auth": null,
+					"indexable": false,
+					"added": "2026-05-27"
+				},
+				{
 					"path": "/create",
 					"title": "Create Agent",
 					"description": "Wizard for building a new agent: avatar, brain (LLM + prompt), skills, and on-chain identity.",
