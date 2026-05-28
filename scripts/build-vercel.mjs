@@ -73,7 +73,7 @@ async function buildLib() {
 
 async function buildApp() {
 	await run('build:app', 'npx vite build && node scripts/strip-sw-from-embeds.mjs', {
-		env: { NODE_OPTIONS: '--max-old-space-size=4096' },
+		env: { NODE_OPTIONS: '--max-old-space-size=6144' },
 	});
 }
 
