@@ -165,10 +165,10 @@ The CDN bundle is served from Vercel. The URL includes the version so you can pi
 
 ```html
 <!-- Pinned to 1.5.1 — safe for production; won't break when 2.0.0 releases -->
-<script type="module" src="https://cdn.three.wsagent-3d@1.5.1.js"></script>
+<script type="module" src="https://three.ws/agent-3d/1.5.1/agent-3d.js"></script>
 
 <!-- Always latest stable — convenient for development, risky for production -->
-<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 ```
 
 The CDN also maintains rolling channel aliases:
@@ -185,7 +185,7 @@ The CDN also maintains rolling channel aliases:
 Each versioned bundle ships with a `integrity.json` sidecar for [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) verification:
 
 ```
-https://cdn.three.wsagent-3d@1.5.1/integrity.json
+https://three.ws/agent-3d/1.5.1/integrity.json
 ```
 
 ---
@@ -311,4 +311,4 @@ cd sdk && npm publish
 
 - **GitHub Releases** — Watch the repository and select "Releases only" to get an email for each new release.
 - **npm outdated** — Add `npm outdated @nirholas/agent-kit` to your CI pipeline to detect available upgrades automatically.
-- **`versions.json`** — The CDN publishes a machine-readable index at `https://cdn.three.wsagent-3d/versions.json` listing all available versions, channel aliases, and SRI hashes.
+- **`versions.json`** — The CDN publishes a machine-readable index at `https://three.ws/agent-3d/versions.json` listing all available versions, channel aliases, and SRI hashes.

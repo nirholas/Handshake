@@ -257,7 +257,7 @@ Here is the full page. Replace the placeholder values in brackets and swap in yo
   </div>
 
   <div class="agent-panel">
-    <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+    <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
     <agent-3d
       id="maya"
       body="https://yourname.com/avatars/maya.glb"

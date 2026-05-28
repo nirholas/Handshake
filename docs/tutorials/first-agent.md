@@ -81,7 +81,7 @@ Create a new folder somewhere on your computer. Inside it, create a file called 
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+  <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 
   <agent-3d
     body="https://cdn.three.wsmodels/sample-avatar.glb"
@@ -429,7 +429,7 @@ Here's the complete `index.html` all in one place:
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+  <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 
   <agent-3d
     manifest="./agent.json"

@@ -17,7 +17,7 @@ This guide covers the two main approaches — a **shared stage** (one WebGL cont
 The `<agent-stage>` element is a shared scene host. All `<agent-3d>` children render inside a single WebGL canvas — one renderer, one context, positioned automatically in a named formation.
 
 ```html
-<script type="module" src="https://cdn.three.ws/agent-3d.js"></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 
 <agent-stage id="stage" formation="row" style="width:100%;height:540px">
   <agent-3d

@@ -38,7 +38,7 @@ The absolute simplest setup: one script tag, one custom element.
     ></agent-3d>
   </main>
 
-  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+  <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 </body>
 </html>
 ```
@@ -81,7 +81,7 @@ A pinned chatbot bubble that stays fixed in the viewport corner — like a suppo
     brain="claude-opus-4-6"
   ></agent-3d>
 
-  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+  <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 </body>
 </html>
 ```
@@ -157,7 +157,7 @@ A full AI-powered agent with a text input. The agent reads your messages, reason
   </div>
 
   <script type="module">
-    import 'https://cdn.three.wsagent-3d.js';
+    import 'https://three.ws/agent-3d/latest/agent-3d.js';
 
     const aria = document.getElementById('aria');
     const input = document.getElementById('input');
@@ -238,7 +238,7 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
   <div class="log" id="log"></div>
 
   <script type="module">
-    import 'https://cdn.three.wsagent-3d.js';
+    import 'https://three.ws/agent-3d/latest/agent-3d.js';
 
     const log = document.getElementById('log');
     const stage = document.getElementById('stage');
@@ -306,7 +306,7 @@ A reusable React component that wraps `<agent-3d>` and surfaces the `agent:ready
 import { useEffect, useRef, useState } from 'react';
 
 // Load the web component once at module level
-import 'https://cdn.three.wsagent-3d.js';
+import 'https://three.ws/agent-3d/latest/agent-3d.js';
 
 export function AgentViewer({ body, name, instructions, brain = 'claude-opus-4-6', mode = 'inline', onMessage, style }) {
   const ref = useRef(null);
@@ -384,7 +384,7 @@ Listen to the agent's event stream to drive a custom transcript UI — no built-
 ></div>
 
 <script type="module">
-  import 'https://cdn.three.wsagent-3d.js';
+  import 'https://three.ws/agent-3d/latest/agent-3d.js';
 
   const agent = document.getElementById('agent');
   const transcript = document.getElementById('transcript');
@@ -453,7 +453,7 @@ Load different GLB models at runtime by calling `say()` or by swapping the `body
 </div>
 
 <script type="module">
-  import 'https://cdn.three.wsagent-3d.js';
+  import 'https://three.ws/agent-3d/latest/agent-3d.js';
 
   window.load = (url) => {
     // Setting the body attribute triggers a re-boot with the new model.
@@ -485,7 +485,7 @@ Take a PNG snapshot of the current viewer state. The viewer renders a fresh fram
 <button id="capture" style="margin-top:12px">Download Screenshot</button>
 
 <script type="module">
-  import 'https://cdn.three.wsagent-3d.js';
+  import 'https://three.ws/agent-3d/latest/agent-3d.js';
 
   document.getElementById('capture').addEventListener('click', () => {
     // window.VIEWER is a debug global exposed by the runtime.
@@ -679,7 +679,7 @@ genuinely invested in the user's progress.
   style="display:block;width:400px;height:500px"
 ></agent-3d>
 
-<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 ```
 
 ### Design decisions
