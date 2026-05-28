@@ -7,7 +7,18 @@
  * standalone three.js viewer + offers download / save-to-account.
  */
 
-import * as THREE from 'three';
+import {
+	Scene,
+	Color,
+	PerspectiveCamera,
+	WebGLRenderer,
+	SRGBColorSpace,
+	HemisphereLight,
+	DirectionalLight,
+	GridHelper,
+	Box3,
+	Vector3,
+} from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -106,8 +117,8 @@ async function renderPreview(blob) {
 		gltf.scene.userData.kind = 'avatar';
 		scene.add(gltf.scene);
 		fitToObject(previewState, gltf.scene);
-		const box = new THREE.Box3().setFromObject(gltf.scene);
-		const size = new THREE.Vector3();
+		const box = new Box3().setFromObject(gltf.scene);
+		const size = new Vector3();
 		box.getSize(size);
 		previewBadge.textContent = `GLB · ${size.x.toFixed(2)}×${size.y.toFixed(2)}×${size.z.toFixed(2)}m`;
 		setStatus(
@@ -125,23 +136,23 @@ async function renderPreview(blob) {
 function initViewer(host) {
 	const width = host.clientWidth;
 	const height = host.clientHeight || 360;
-	const scene = new THREE.Scene();
-	scene.background = new THREE.Color(0x050505);
-	const camera = new THREE.PerspectiveCamera(35, width / height, 0.01, 100);
+	const scene = new Scene();
+	scene.background = new Color(0x050505);
+	const camera = new PerspectiveCamera(35, width / height, 0.01, 100);
 	camera.position.set(0, 1.4, 2.4);
 
-	const renderer = new THREE.WebGLRenderer({ antialias: true });
+	const renderer = new WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(width, height);
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
+	renderer.outputColorSpace = SRGBColorSpace;
 	host.appendChild(renderer.domElement);
 
-	scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
-	const dir = new THREE.DirectionalLight(0xffffff, 1.5);
+	scene.add(new HemisphereLight(0xffffff, 0x444444, 1.2));
+	const dir = new DirectionalLight(0xffffff, 1.5);
 	dir.position.set(2, 4, 3);
 	scene.add(dir);
 
-	const grid = new THREE.GridHelper(4, 8, 0x222222, 0x111111);
+	const grid = new GridHelper(4, 8, 0x222222, 0x111111);
 	scene.add(grid);
 
 	const controls = new OrbitControls(camera, renderer.domElement);
@@ -168,9 +179,9 @@ function initViewer(host) {
 }
 
 function fitToObject({ camera, controls }, obj) {
-	const box = new THREE.Box3().setFromObject(obj);
-	const size = new THREE.Vector3();
-	const center = new THREE.Vector3();
+	const box = new Box3().setFromObject(obj);
+	const size = new Vector3();
+	const center = new Vector3();
 	box.getSize(size);
 	box.getCenter(center);
 	const maxDim = Math.max(size.x, size.y, size.z);

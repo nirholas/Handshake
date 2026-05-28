@@ -15,7 +15,19 @@
  *   scene.unmount();
  */
 
-import * as THREE from 'three';
+import {
+	Clock,
+	WebGLRenderer,
+	SRGBColorSpace,
+	ACESFilmicToneMapping,
+	Scene,
+	PMREMGenerator,
+	AmbientLight,
+	DirectionalLight,
+	PerspectiveCamera,
+	AnimationMixer,
+	Box3,
+} from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -35,7 +47,7 @@ export class TalkScene {
 		this.mixer = null;
 		this._clips = [];
 		this._currentAction = null;
-		this._clock = new THREE.Clock();
+		this._clock = new Clock();
 		this._rafId = 0;
 		this._running = false;
 		this._resizeObserver = null;
@@ -72,14 +84,14 @@ export class TalkScene {
 		// `canvas.toBlob` — required for the snapshot pipeline (see
 		// avatar-snapshot.js) to capture a valid JPEG after a render. The perf
 		// cost is small for avatar-scale scenes; large at fullscreen-game scale.
-		this.renderer = new THREE.WebGLRenderer({
+		this.renderer = new WebGLRenderer({
 			antialias: true,
 			alpha: true,
 			preserveDrawingBuffer: true,
 		});
 		this.renderer.setPixelRatio(window.devicePixelRatio);
-		this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-		this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+		this.renderer.outputColorSpace = SRGBColorSpace;
+		this.renderer.toneMapping = ACESFilmicToneMapping;
 		this.renderer.toneMappingExposure = 1.0;
 
 		const { width, height } = sizeOf(container);
@@ -87,24 +99,24 @@ export class TalkScene {
 		this.renderer.domElement.style.cssText = 'width:100%;height:100%;display:block;';
 		container.appendChild(this.renderer.domElement);
 
-		this.scene = new THREE.Scene();
+		this.scene = new Scene();
 		this.scene.background = null; // transparent so the page bg shows through
 
 		// Image-based lighting via RoomEnvironment — same look-and-feel choice
 		// model-viewer uses when no environment-image is set.
-		const pmrem = new THREE.PMREMGenerator(this.renderer);
+		const pmrem = new PMREMGenerator(this.renderer);
 		this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 		// Fill + key + rim for visual depth.
-		this.scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-		const key = new THREE.DirectionalLight(0xffffff, 1.4);
+		this.scene.add(new AmbientLight(0xffffff, 0.4));
+		const key = new DirectionalLight(0xffffff, 1.4);
 		key.position.set(2, 4, 3);
 		this.scene.add(key);
-		const rim = new THREE.DirectionalLight(0x90a0ff, 0.6);
+		const rim = new DirectionalLight(0x90a0ff, 0.6);
 		rim.position.set(-3, 2, -2);
 		this.scene.add(rim);
 
-		this.camera = new THREE.PerspectiveCamera(35, width / height, 0.05, 100);
+		this.camera = new PerspectiveCamera(35, width / height, 0.05, 100);
 		this.camera.position.set(0, 1.55, 2.0);
 
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -148,7 +160,7 @@ export class TalkScene {
 		// If the GLB ships any animations, set up a mixer and remember the
 		// clips so the caller can request one (e.g. 'Idle' for a base loop).
 		if (gltf.animations?.length) {
-			this.mixer = new THREE.AnimationMixer(this.root);
+			this.mixer = new AnimationMixer(this.root);
 			this._clips = gltf.animations;
 			// Auto-play an idle if one is present.
 			const idle = gltf.animations.find((c) => /idle|breath/i.test(c.name));
@@ -277,7 +289,7 @@ export class TalkScene {
 
 	_frameAvatar() {
 		if (!this.root || !this.camera || !this.controls) return;
-		const b = new THREE.Box3().setFromObject(this.root);
+		const b = new Box3().setFromObject(this.root);
 		const aspect = this.camera.aspect || 1;
 		const framing = computeFraming({
 			box: { min: { x: b.min.x, y: b.min.y, z: b.min.z }, max: { x: b.max.x, y: b.max.y, z: b.max.z } },

@@ -3,7 +3,15 @@
  * ----------------------------
  * Skills for creating and manipulating objects in the Three.js scene.
  */
-import * as THREE from 'three';
+import {
+	SphereGeometry,
+	ConeGeometry,
+	CylinderGeometry,
+	BoxGeometry,
+	MeshStandardMaterial,
+	Color,
+	Mesh,
+} from 'three';
 
 // Store a reference to the viewer instance
 let viewer;
@@ -40,22 +48,22 @@ export function registerSceneSkills(skills) {
 			let geometry;
 			switch (shape) {
 				case 'sphere':
-					geometry = new THREE.SphereGeometry(0.5, 32, 32);
+					geometry = new SphereGeometry(0.5, 32, 32);
 					break;
 				case 'cone':
-					geometry = new THREE.ConeGeometry(0.5, 1, 32);
+					geometry = new ConeGeometry(0.5, 1, 32);
 					break;
 				case 'cylinder':
-					geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+					geometry = new CylinderGeometry(0.5, 0.5, 1, 32);
 					break;
 				case 'box':
 				default:
-					geometry = new THREE.BoxGeometry(1, 1, 1);
+					geometry = new BoxGeometry(1, 1, 1);
 					break;
 			}
 
-			const material = new THREE.MeshStandardMaterial({ color: new THREE.Color(color) });
-			const mesh = new THREE.Mesh(geometry, material);
+			const material = new MeshStandardMaterial({ color: new Color(color) });
+			const mesh = new Mesh(geometry, material);
 			mesh.position.set(position.x, position.y, position.z);
 			mesh.scale.set(scale.x, scale.y, scale.z);
 			mesh.name = `${shape}_${Date.now()}`;
@@ -117,7 +125,7 @@ export function registerSceneSkills(skills) {
 			}
 
 			if (color && object.material) {
-				object.material.color.set(new THREE.Color(color));
+				object.material.color.set(new Color(color));
 			}
 			if (position) {
 				object.position.set(position.x, position.y, position.z);

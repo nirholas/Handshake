@@ -1,4 +1,18 @@
-import * as THREE from 'three';
+import {
+	WebGLRenderer,
+	SRGBColorSpace,
+	ACESFilmicToneMapping,
+	Scene,
+	OrthographicCamera,
+	Vector3,
+	AmbientLight,
+	DirectionalLight,
+	Clock,
+	AnimationMixer,
+	AnimationClip,
+	LoopRepeat,
+	LoopOnce,
+} from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export function initAvatarDrop(sectionEl) {
@@ -7,16 +21,16 @@ export function initAvatarDrop(sectionEl) {
 	const ctaBtn  = sectionEl.querySelector('#drop-cta-btn');
 	if (!canvas || !sitLine || !ctaBtn) return;
 
-	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+	const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
 	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
-	renderer.toneMapping = THREE.ACESFilmicToneMapping;
+	renderer.outputColorSpace = SRGBColorSpace;
+	renderer.toneMapping = ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.1;
 
-	const scene = new THREE.Scene();
+	const scene = new Scene();
 
 	let PX_PER_UNIT = 120;
-	const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+	const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
 	camera.position.z = 10;
 
 	function updateFrustum() {
@@ -29,7 +43,7 @@ export function initAvatarDrop(sectionEl) {
 		camera.updateProjectionMatrix();
 	}
 
-	const _v3 = new THREE.Vector3();
+	const _v3 = new Vector3();
 	function domToWorld(screenX, screenY) {
 		const rect = sectionEl.getBoundingClientRect();
 		_v3.set(
@@ -80,14 +94,14 @@ export function initAvatarDrop(sectionEl) {
 	sitLineRO.observe(sitLine);
 
 	// Lights — neutral/warm to match the monochrome theme
-	scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-	const key = new THREE.DirectionalLight(0xfff8f0, 1.9);
+	scene.add(new AmbientLight(0xffffff, 0.65));
+	const key = new DirectionalLight(0xfff8f0, 1.9);
 	key.position.set(3, 6, 5);
 	scene.add(key);
-	const rim = new THREE.DirectionalLight(0xc0c8e0, 0.5);
+	const rim = new DirectionalLight(0xc0c8e0, 0.5);
 	rim.position.set(-4, 3, -2);
 	scene.add(rim);
-	const fill = new THREE.DirectionalLight(0xffeedd, 0.35);
+	const fill = new DirectionalLight(0xffeedd, 0.35);
 	fill.position.set(0, 2, 7);
 	scene.add(fill);
 
@@ -290,7 +304,7 @@ export function initAvatarDrop(sectionEl) {
 	});
 
 	// Proximity text shadow
-	const _proj = new THREE.Vector3();
+	const _proj = new Vector3();
 	function updateProximityShadow() {
 		if (!avatar) return;
 		const sRect = sectionEl.getBoundingClientRect();
@@ -341,7 +355,7 @@ export function initAvatarDrop(sectionEl) {
 				});
 				avatar.rotation.y = 0;
 				scene.add(avatar);
-				mixer = new THREE.AnimationMixer(avatar);
+				mixer = new AnimationMixer(avatar);
 
 				const fetchClip = f => fetch(f).then(r => r.json());
 				Promise.all([
@@ -349,15 +363,15 @@ export function initAvatarDrop(sectionEl) {
 					fetchClip('/animations/clips/standup.json'),
 					fetchClip('/animations/clips/jumpdown.json'),
 				]).then(([sitJson, standJson, jumpJson]) => {
-					sitAction = mixer.clipAction(THREE.AnimationClip.parse(sitJson));
-					sitAction.setLoop(THREE.LoopRepeat, Infinity);
+					sitAction = mixer.clipAction(AnimationClip.parse(sitJson));
+					sitAction.setLoop(LoopRepeat, Infinity);
 
-					standupAction = mixer.clipAction(THREE.AnimationClip.parse(standJson));
-					standupAction.setLoop(THREE.LoopOnce, 1);
+					standupAction = mixer.clipAction(AnimationClip.parse(standJson));
+					standupAction.setLoop(LoopOnce, 1);
 					standupAction.clampWhenFinished = true;
 
-					fallAction = mixer.clipAction(THREE.AnimationClip.parse(jumpJson));
-					fallAction.setLoop(THREE.LoopOnce, 1);
+					fallAction = mixer.clipAction(AnimationClip.parse(jumpJson));
+					fallAction.setLoop(LoopOnce, 1);
 					fallAction.clampWhenFinished = true;
 					fallAction.timeScale = JUMP_RATE;
 
@@ -386,7 +400,7 @@ export function initAvatarDrop(sectionEl) {
 		.catch(e => console.warn('[avatar-drop] boot failed', e));
 
 	// Render loop with visibility pause
-	const clock = new THREE.Clock();
+	const clock = new Clock();
 	let running = true;
 
 	function tick() {

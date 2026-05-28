@@ -7,7 +7,24 @@
  * of the body's bounding box. The whole scene exports as one GLB.
  */
 
-import * as THREE from 'three';
+import {
+	Box3,
+	Vector3,
+	BufferGeometry,
+	BufferAttribute,
+	CanvasTexture,
+	SRGBColorSpace,
+	MeshStandardMaterial,
+	DoubleSide,
+	Mesh,
+	Scene,
+	Color,
+	PerspectiveCamera,
+	WebGLRenderer,
+	HemisphereLight,
+	DirectionalLight,
+	GridHelper,
+} from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
@@ -204,8 +221,8 @@ btnBuild.addEventListener('click', async () => {
 			mesh.position.set(0, 0.1, 0.1);
 		} else {
 			// No head bone: position at top of body bbox.
-			const box = new THREE.Box3().setFromObject(bodyRoot);
-			const center = new THREE.Vector3();
+			const box = new Box3().setFromObject(bodyRoot);
+			const center = new Vector3();
 			box.getCenter(center);
 			mesh.position.set(center.x, box.max.y - 0.12, center.z + 0.08);
 			bodyRoot.add(mesh);
@@ -232,7 +249,7 @@ btnBuild.addEventListener('click', async () => {
 });
 
 function buildFaceMesh(landmarks, photoImg) {
-	const geom = new THREE.BufferGeometry();
+	const geom = new BufferGeometry();
 	const aspect = photoImg.naturalWidth / photoImg.naturalHeight;
 	const scale = 0.2;
 	const positions = new Float32Array(landmarks.length * 3);
@@ -245,8 +262,8 @@ function buildFaceMesh(landmarks, photoImg) {
 		uvs[i * 2 + 0] = p.x;
 		uvs[i * 2 + 1] = 1 - p.y;
 	}
-	geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-	geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+	geom.setAttribute('position', new BufferAttribute(positions, 3));
+	geom.setAttribute('uv', new BufferAttribute(uvs, 2));
 	geom.setIndex(TRIANGULATION);
 	geom.computeVertexNormals();
 
@@ -254,17 +271,17 @@ function buildFaceMesh(landmarks, photoImg) {
 	canvas.width = photoImg.naturalWidth;
 	canvas.height = photoImg.naturalHeight;
 	canvas.getContext('2d').drawImage(photoImg, 0, 0);
-	const texture = new THREE.CanvasTexture(canvas);
-	texture.colorSpace = THREE.SRGBColorSpace;
+	const texture = new CanvasTexture(canvas);
+	texture.colorSpace = SRGBColorSpace;
 	texture.flipY = false;
 
-	const material = new THREE.MeshStandardMaterial({
+	const material = new MeshStandardMaterial({
 		map: texture,
-		side: THREE.DoubleSide,
+		side: DoubleSide,
 		roughness: 0.85,
 		metalness: 0,
 	});
-	const mesh = new THREE.Mesh(geom, material);
+	const mesh = new Mesh(geom, material);
 	mesh.name = 'os-face-mesh';
 	return mesh;
 }
@@ -276,23 +293,23 @@ function ensureViewer() {
 	const width = viewerHost.clientWidth;
 	const height = viewerHost.clientHeight || 600;
 
-	const scene = new THREE.Scene();
-	scene.background = new THREE.Color(0x050505);
-	const camera = new THREE.PerspectiveCamera(35, width / height, 0.01, 100);
+	const scene = new Scene();
+	scene.background = new Color(0x050505);
+	const camera = new PerspectiveCamera(35, width / height, 0.01, 100);
 	camera.position.set(0, 1.4, 2.4);
 
-	const renderer = new THREE.WebGLRenderer({ antialias: true });
+	const renderer = new WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(width, height);
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
+	renderer.outputColorSpace = SRGBColorSpace;
 	viewerHost.appendChild(renderer.domElement);
 
-	scene.add(new THREE.HemisphereLight(0xffffff, 0x333333, 1.2));
-	const dir = new THREE.DirectionalLight(0xffffff, 1.5);
+	scene.add(new HemisphereLight(0xffffff, 0x333333, 1.2));
+	const dir = new DirectionalLight(0xffffff, 1.5);
 	dir.position.set(2, 4, 3);
 	scene.add(dir);
 
-	const grid = new THREE.GridHelper(4, 8, 0x222222, 0x111111);
+	const grid = new GridHelper(4, 8, 0x222222, 0x111111);
 	scene.add(grid);
 
 	const controls = new OrbitControls(camera, renderer.domElement);
@@ -320,9 +337,9 @@ function ensureViewer() {
 }
 
 function fitToObject({ camera, controls }, obj) {
-	const box = new THREE.Box3().setFromObject(obj);
-	const size = new THREE.Vector3();
-	const center = new THREE.Vector3();
+	const box = new Box3().setFromObject(obj);
+	const size = new Vector3();
+	const center = new Vector3();
 	box.getSize(size);
 	box.getCenter(center);
 	const maxDim = Math.max(size.x, size.y, size.z);

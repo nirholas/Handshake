@@ -1,4 +1,15 @@
-import * as THREE from 'three';
+import {
+	WebGLRenderer,
+	ACESFilmicToneMapping,
+	SRGBColorSpace,
+	Scene,
+	PerspectiveCamera,
+	MathUtils,
+	AmbientLight,
+	DirectionalLight,
+	Clock,
+	AnimationMixer,
+} from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const canvas = document.getElementById('footer-bot-canvas');
@@ -8,45 +19,45 @@ const parent = canvas.parentElement;
 const w = parent?.clientWidth || 300;
 const h = parent?.clientHeight || 400;
 
-const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true });
 renderer.setSize(w, h);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMapping = ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.7;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.outputColorSpace = SRGBColorSpace;
 
-const scene = new THREE.Scene();
+const scene = new Scene();
 
 // Match model-viewer camera-orbit="0deg 80deg 9m" field-of-view="35deg"
-const camera = new THREE.PerspectiveCamera(35, w / h, 0.1, 100);
-const phi = THREE.MathUtils.degToRad(80);
+const camera = new PerspectiveCamera(35, w / h, 0.1, 100);
+const phi = MathUtils.degToRad(80);
 camera.position.set(0, 9 * Math.cos(phi), 9 * Math.sin(phi));
 camera.lookAt(0, 0, 0);
 
 // Neutral environment (exposure 0.7, no shadows)
-scene.add(new THREE.AmbientLight(0xffffff, 1.5));
-const sun = new THREE.DirectionalLight(0xffffff, 2.0);
+scene.add(new AmbientLight(0xffffff, 1.5));
+const sun = new DirectionalLight(0xffffff, 2.0);
 sun.position.set(1, 2, 3);
 scene.add(sun);
-const fill = new THREE.DirectionalLight(0xffffff, 0.5);
+const fill = new DirectionalLight(0xffffff, 0.5);
 fill.position.set(-1, 1, -2);
 scene.add(fill);
 
 let mixer = null;
-const clock = new THREE.Clock();
+const clock = new Clock();
 let robot = null;
 
 new GLTFLoader().load('/animations/robotexpressive.glb', (gltf) => {
 	robot = gltf.scene;
 	scene.add(robot);
 	if (gltf.animations.length > 0) {
-		mixer = new THREE.AnimationMixer(robot);
+		mixer = new AnimationMixer(robot);
 		mixer.clipAction(gltf.animations[0]).play();
 	}
 });
 
 // 20deg/sec auto-rotate, matching model-viewer rotation-per-second="20deg"
-const rotSpeed = THREE.MathUtils.degToRad(20);
+const rotSpeed = MathUtils.degToRad(20);
 
 (function animate() {
 	requestAnimationFrame(animate);

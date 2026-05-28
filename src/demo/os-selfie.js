@@ -13,7 +13,24 @@
  * No server calls for inference. WASM + model fetch from Google's CDN at init.
  */
 
-import * as THREE from 'three';
+import {
+	BufferGeometry,
+	BufferAttribute,
+	CanvasTexture,
+	SRGBColorSpace,
+	MeshStandardMaterial,
+	DoubleSide,
+	Mesh,
+	Scene,
+	Color,
+	PerspectiveCamera,
+	WebGLRenderer,
+	HemisphereLight,
+	DirectionalLight,
+	GridHelper,
+	Box3,
+	Vector3,
+} from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision';
@@ -231,7 +248,7 @@ btnBuild.addEventListener('click', async () => {
 });
 
 function buildFaceMesh(landmarks, photoImg) {
-	const geom = new THREE.BufferGeometry();
+	const geom = new BufferGeometry();
 
 	// Landmarks: { x, y, z } with x,y in [0,1] image coords, y=down, z=depth (negative into screen)
 	// Convert into a centered, world-up mesh. Scale so the face is roughly 0.2m tall.
@@ -247,8 +264,8 @@ function buildFaceMesh(landmarks, photoImg) {
 		uvs[i * 2 + 0] = p.x;
 		uvs[i * 2 + 1] = 1 - p.y;
 	}
-	geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-	geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+	geom.setAttribute('position', new BufferAttribute(positions, 3));
+	geom.setAttribute('uv', new BufferAttribute(uvs, 2));
 	geom.setIndex(TRIANGULATION);
 	geom.computeVertexNormals();
 
@@ -257,17 +274,17 @@ function buildFaceMesh(landmarks, photoImg) {
 	canvas.width = photoImg.naturalWidth;
 	canvas.height = photoImg.naturalHeight;
 	canvas.getContext('2d').drawImage(photoImg, 0, 0);
-	const texture = new THREE.CanvasTexture(canvas);
-	texture.colorSpace = THREE.SRGBColorSpace;
+	const texture = new CanvasTexture(canvas);
+	texture.colorSpace = SRGBColorSpace;
 	texture.flipY = false; // we already flipped V
 
-	const material = new THREE.MeshStandardMaterial({
+	const material = new MeshStandardMaterial({
 		map: texture,
-		side: THREE.DoubleSide,
+		side: DoubleSide,
 		roughness: 0.85,
 		metalness: 0,
 	});
-	const mesh = new THREE.Mesh(geom, material);
+	const mesh = new Mesh(geom, material);
 	mesh.name = 'os-face-mesh';
 	return mesh;
 }
@@ -279,27 +296,27 @@ function ensureViewer() {
 	const width = viewerHost.clientWidth;
 	const height = viewerHost.clientHeight || 480;
 
-	const scene = new THREE.Scene();
-	scene.background = new THREE.Color(0x050505);
+	const scene = new Scene();
+	scene.background = new Color(0x050505);
 
-	const camera = new THREE.PerspectiveCamera(35, width / height, 0.001, 10);
+	const camera = new PerspectiveCamera(35, width / height, 0.001, 10);
 	camera.position.set(0, 0, 0.6);
 
-	const renderer = new THREE.WebGLRenderer({ antialias: true });
+	const renderer = new WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(width, height);
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
+	renderer.outputColorSpace = SRGBColorSpace;
 	viewerHost.appendChild(renderer.domElement);
 
-	scene.add(new THREE.HemisphereLight(0xffffff, 0x333333, 1.2));
-	const dir = new THREE.DirectionalLight(0xffffff, 1.4);
+	scene.add(new HemisphereLight(0xffffff, 0x333333, 1.2));
+	const dir = new DirectionalLight(0xffffff, 1.4);
 	dir.position.set(1, 2, 3);
 	scene.add(dir);
-	const dir2 = new THREE.DirectionalLight(0xffffff, 0.6);
+	const dir2 = new DirectionalLight(0xffffff, 0.6);
 	dir2.position.set(-2, 1, -1);
 	scene.add(dir2);
 
-	const grid = new THREE.GridHelper(1, 10, 0x222222, 0x111111);
+	const grid = new GridHelper(1, 10, 0x222222, 0x111111);
 	grid.position.y = -0.2;
 	scene.add(grid);
 
@@ -328,9 +345,9 @@ function ensureViewer() {
 }
 
 function fitToObject({ camera, controls }, obj) {
-	const box = new THREE.Box3().setFromObject(obj);
-	const size = new THREE.Vector3();
-	const center = new THREE.Vector3();
+	const box = new Box3().setFromObject(obj);
+	const size = new Vector3();
+	const center = new Vector3();
 	box.getSize(size);
 	box.getCenter(center);
 	const maxDim = Math.max(size.x, size.y, size.z);

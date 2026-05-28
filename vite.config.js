@@ -146,8 +146,13 @@ const appConfig = {
 			external: ['/studio/launch-panel.js'],
 			output: {
 				manualChunks(id) {
-					if (id.includes('node_modules/three/')) return 'three';
+					if (id.includes('node_modules/three/')) {
+						if (id.includes('three/examples/') || id.includes('three/addons/')) return 'three-addons';
+						return 'three-core';
+					}
 					if (id.includes('node_modules/ethers/')) return 'ethers';
+					if (id.includes('node_modules/@solana/') || id.includes('node_modules/@coral-xyz/')) return 'solana';
+					if (id.includes('node_modules/@mediapipe/')) return 'mediapipe';
 				},
 				// footer-bot.js needs a stable, unhashed filename so footer.js can
 				// load it by a predictable URL without knowing the build hash.

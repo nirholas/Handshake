@@ -49,7 +49,7 @@
 		]
 	},
 	"scripts": {
-		"postinstall": "npm run build --prefix agent-payments-sdk && (node scripts/fix-pump-sdk-esm.mjs & node scripts/fix-x402-extensions-esm.mjs & node scripts/copy-three-decoders.mjs & node scripts/setup-claude-skills.mjs & wait)",
+		"postinstall": "(node scripts/build-cache.mjs check agent-payments-sdk agent-payments-sdk/src agent-payments-sdk/package.json || (npm run build --prefix agent-payments-sdk && node scripts/build-cache.mjs stamp agent-payments-sdk agent-payments-sdk/src agent-payments-sdk/package.json)) && (node scripts/fix-pump-sdk-esm.mjs & node scripts/fix-x402-extensions-esm.mjs & node scripts/copy-three-decoders.mjs & node scripts/setup-claude-skills.mjs & wait)",
 		"dev": "vite --port 3000",
 		"dev:multi": "npm run dev --prefix multiplayer",
 		"dev:walk-all": "node scripts/dev-walk-all.mjs",
@@ -57,7 +57,7 @@
 		"build:pages": "node scripts/build-page-index.mjs",
 		"audit:pages": "node scripts/audit-page-index.mjs",
 		"build:news": "node scripts/build-news.mjs",
-		"prebuild": "(node scripts/build-news.mjs & node scripts/build-skill-metadata.mjs & node scripts/build-local-skill-packs.mjs & npm run build:club-assets & wait) && node scripts/build-page-index.mjs && node scripts/audit-page-index.mjs",
+		"prebuild": "(node scripts/build-news.mjs & node scripts/build-skill-metadata.mjs & node scripts/build-local-skill-packs.mjs & npm run build:club-assets & wait) && (node scripts/build-page-index.mjs && node scripts/audit-page-index.mjs)",
 		"build": "vite build && node scripts/strip-sw-from-embeds.mjs",
 		"build:wasm": "PATH=\"$HOME/.cargo/bin:$PATH\" RUSTFLAGS='-C target-feature=+simd128' wasm-pack build crates/vanity-grinder --target web --release --out-dir ../../src/solana/vanity/wasm && printf '%s\\n' '# wasm-pack writes a default `*` gitignore that excludes everything.' '# Override it: the generated files in this directory ARE checked in so the' '# app builds without requiring a Rust toolchain at install time. Run' '# `npm run build:wasm` after editing /crates/vanity-grinder/src/lib.rs to' '# refresh these artifacts.' '!*' > src/solana/vanity/wasm/.gitignore",
 		"build:animations": "node scripts/build-animations.mjs",
@@ -74,7 +74,7 @@
 		"build:chat": "cd chat && node scripts/ensure-deps.mjs && npm run build && cd .. && mkdir -p dist/chat && cp -rf public/chat/. dist/chat/",
 		"build:avatar-studio": "npm run build --prefix character-studio",
 		"build:fast": "npm run build",
-		"build:vercel": "(npm run build:avatar-studio & npm run build:chat & (npm run build:lib && node avatar-sdk/build.mjs && NODE_OPTIONS=--max-old-space-size=4096 npm run build) & node scripts/bundle-api.mjs & wait) && node scripts/copy-avatar-studio.mjs && npm run publish:lib && npm run apply:r2-cors",
+		"build:vercel": "node scripts/build-vercel.mjs",
 		"apply:r2-cors": "node scripts/set-r2-cors.mjs || echo '[apply:r2-cors] skipped (missing creds or transient failure — see build log)'",
 		"build:all": "npm run build:chat && (npm run build & npm run build:lib & wait)",
 		"release:lib": "npm run build:lib && npm run publish:lib",
