@@ -24,7 +24,10 @@ import {
 	lookupSubscription,
 } from './api-keys.js';
 import { clientIp } from '../rate-limit.js';
-import { meterAwsSubscriptionUsage } from '../aws-marketplace-bridge.js';
+import {
+	isAwsCustomerInactive,
+	meterAwsSubscriptionUsage,
+} from '../aws-marketplace-bridge.js';
 
 const API_KEY_HEADER = 'x-api-key';
 
@@ -125,6 +128,20 @@ export function installAccessControl({ requiredScope, resolveCaller } = {}) {
 					meta,
 				});
 				return { abort: true, status: 403, reason: 'Subscription expired' };
+			}
+			// Defense-in-depth for AWS Marketplace: when AWS has cancelled the
+			// customer's subscription but the unsubscribe-success SNS notification
+			// hasn't yet revoked the x402 row, abort here. Without this, a few
+			// minutes of zombie bypass would slip through during the SNS lag.
+			if (await isAwsCustomerInactive(sub)) {
+				logAccess({
+					callerId: `abort:aws_inactive:${sub.id}`,
+					route,
+					reason: 'AWS Marketplace subscription inactive',
+					granted: false,
+					meta,
+				});
+				return { abort: true, status: 403, reason: 'AWS Marketplace subscription inactive' };
 			}
 			const rl = await checkRateLimit(sub, route);
 			if (!rl.allowed) {

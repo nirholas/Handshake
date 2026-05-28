@@ -38,6 +38,28 @@ import {
 
 const AWS_META_KEY = 'aws_customer_identifier';
 
+/**
+ * Returns true when an x402 subscription belongs to an AWS Marketplace
+ * customer whose AWS-side subscription_status is no longer active. The
+ * access-control hook calls this so cancellations are enforced even before
+ * the SNS unsubscribe-success notification revokes the x402 row (delivery
+ * can lag by minutes). Returns false when the subscription isn't AWS-issued.
+ */
+export async function isAwsCustomerInactive(subscription) {
+	if (!subscription) return false;
+	if (subscription.meta?.source !== 'aws-marketplace') return false;
+	const customerId = subscription.meta?.[AWS_META_KEY];
+	if (!customerId) return false;
+	const [row] = await sql`
+		select subscription_status
+		from aws_marketplace_customers
+		where customer_identifier = ${customerId}
+		limit 1
+	`;
+	if (!row) return true;
+	return row.subscription_status === 'cancelled' || row.subscription_status === 'expired';
+}
+
 function rateLimitForCustomer(customer) {
 	// Per-offer rate-limit overrides via env. Pattern: AWS_MP_RATE_LIMIT_<OFFER_ID>.
 	// Falls back to the default. Useful when a single product code has multiple
