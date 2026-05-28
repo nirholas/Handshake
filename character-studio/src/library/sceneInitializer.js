@@ -72,17 +72,6 @@ export function sceneInitializer(canvasId) {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const clock = new THREE.Clock();
-    const animate = () => {
-        requestAnimationFrame(animate);
-        const delta = clock.getDelta();
-        controls.target.clamp(minPan, maxPan);
-        controls?.update();
-        characterManager.update(delta);
-        renderer.render(scene, camera);
-    };
-
-
-    animate();
 
     const handleMouseClick = (event) => {
         const isCtrlPressed = event.ctrlKey;
@@ -107,12 +96,34 @@ export function sceneInitializer(canvasId) {
     
     canvasRef.addEventListener("click", handleMouseClick);
 
+    let animating = true;
+    const animateLoop = () => {
+        if (!animating) return;
+        requestAnimationFrame(animateLoop);
+        const delta = clock.getDelta();
+        controls.target.clamp(minPan, maxPan);
+        controls?.update();
+        characterManager.update(delta);
+        renderer.render(scene, camera);
+    };
+    animateLoop();
+
+    function destroy() {
+        animating = false;
+        window.removeEventListener('resize', handleResize);
+        canvasRef.removeEventListener('click', handleMouseClick);
+        controls.dispose();
+        renderer.dispose();
+        renderer.forceContextLoss?.();
+    }
+
     return {
         scene,
         camera,
         controls,
         characterManager,
         sceneElements,
-        clock
+        clock,
+        destroy,
     };
 }

@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>forever — etch a message into Bitcoin</title>
+<meta name="description" content="Inscribe a message onto the Bitcoin blockchain. It stays there. Forever." />
+<meta name="theme-color" content="#000000" />
+<meta property="og:title" content="forever — etch a message into Bitcoin" />
+<meta property="og:description" content="Inscribe a message onto the Bitcoin blockchain. It stays there. Forever." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://three.ws/forever-og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="forever — etch a message into Bitcoin" />
+<meta name="twitter:description" content="Your words on the most secure chain in history. One inscription. Permanent." />
+<link rel="canonical" href="https://three.ws/forever" />
+<link rel="preconnect" href="https://api.ordinalsbot.com" />
+<style>
+	:root {
+		--bg: #000000;
+		--bg-2: #07070a;
+		--ink: #ffffff;
+		--ink-2: #c5c8d4;
+		--ink-3: #7a7e8e;
+		--ink-4: #4a4d5a;
+		--line: #1a1a22;
+		--line-strong: #2a2a36;
+		--btc: #f7931a;
+		--btc-glow: rgba(247, 147, 26, 0.35);
+		--ok: #4ade80;
+		--err: #f87171;
+		--mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+		--sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	}
+	* { box-sizing: border-box; }
+	html, body {
+		margin: 0;
+		padding: 0;
+		background: var(--bg);
+		color: var(--ink);
+		min-height: 100vh;
+	}
+	body {
+		font-family: var(--sans);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		line-height: 1.5;
+		overflow-x: hidden;
+	}
+	::selection { background: var(--btc); color: #000; }
+	a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line-strong); }
+	a:hover { border-color: var(--btc); }
+	button { font-family: inherit; }
+
+	/* ── animated grain + glow backdrop ───────────────────────── */
+	.backdrop {
+		position: fixed; inset: 0;
+		z-index: 0;
+		pointer-events: none;
+		background:
+			radial-gradient(ellipse 80% 50% at 50% 0%, rgba(247, 147, 26, 0.08), transparent 60%),
+			radial-gradient(ellipse 60% 40% at 50% 100%, rgba(247, 147, 26, 0.04), transparent 70%);
+	}
+	.backdrop::before {
+		content: "";
+		position: absolute; inset: 0;
+		background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+		opacity: 0.6;
+		mix-blend-mode: screen;
+	}
+	.backdrop::after {
+		content: "";
+		position: absolute; inset: 0;
+		background: repeating-linear-gradient(
+			0deg,
+			transparent 0,
+			transparent 2px,
+			rgba(255,255,255,0.012) 2px,
+			rgba(255,255,255,0.012) 3px
+		);
+	}
+
+	/* ── header ───────────────────────────────────────────────── */
+	.shell {
+		position: relative;
+		z-index: 1;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
+	header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 22px 32px;
+		border-bottom: 1px solid var(--line);
+	}
+	.logo {
+		font-family: var(--mono);
+		font-size: 13px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--ink-2);
+		border: none;
+	}
+	.logo b { color: var(--btc); font-weight: 600; }
+	.nav {
+		display: flex;
+		gap: 22px;
+		font-family: var(--mono);
+		font-size: 12px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.nav a { color: inherit; border: none; }
+	.nav a:hover { color: var(--ink); }
+
+	/* ── hero ─────────────────────────────────────────────────── */
+	main {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 60px 24px 80px;
+		text-align: center;
+	}
+	.eyebrow {
+		font-family: var(--mono);
+		font-size: 11px;
+		letter-spacing: 0.32em;
+		text-transform: uppercase;
+		color: var(--btc);
+		margin-bottom: 28px;
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.eyebrow .dot {
+		width: 6px; height: 6px;
+		background: var(--btc);
+		border-radius: 50%;
+		box-shadow: 0 0 12px var(--btc-glow);
+		animation: pulse 2s ease-in-out infinite;
+	}
+	@keyframes pulse {
+		0%, 100% { opacity: 1; transform: scale(1); }
+		50% { opacity: 0.4; transform: scale(0.7); }
+	}
+
+	h1 {
+		font-family: var(--sans);
+		font-size: clamp(48px, 9vw, 128px);
+		line-height: 0.95;
+		letter-spacing: -0.04em;
+		font-weight: 600;
+		margin: 0 0 18px;
+		max-width: 14ch;
+		text-wrap: balance;
+	}
+	h1 em {
+		font-style: normal;
+		background: linear-gradient(180deg, var(--btc) 0%, #ffb957 100%);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+	}
+	.tag {
+		font-size: clamp(15px, 1.6vw, 19px);
+		color: var(--ink-2);
+		max-width: 52ch;
+		margin: 0 auto 56px;
+		text-wrap: balance;
+	}
+
+	/* ── composer ────────────────────────────────────────────── */
+	.composer {
+		width: 100%;
+		max-width: 720px;
+		margin: 0 auto;
+		text-align: left;
+	}
+	.composer-frame {
+		position: relative;
+		background: var(--bg-2);
+		border: 1px solid var(--line-strong);
+		border-radius: 18px;
+		padding: 28px 28px 22px;
+		transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+	}
+	.composer-frame:focus-within {
+		border-color: var(--btc);
+		box-shadow: 0 0 0 1px var(--btc), 0 20px 80px -20px var(--btc-glow);
+	}
+	#message {
+		width: 100%;
+		min-height: 140px;
+		max-height: 360px;
+		background: transparent;
+		border: 0;
+		outline: 0;
+		resize: none;
+		color: var(--ink);
+		font-family: var(--mono);
+		font-size: 18px;
+		line-height: 1.55;
+		padding: 0;
+	}
+	#message::placeholder { color: var(--ink-4); }
+	.composer-meta {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 20px;
+		padding-top: 18px;
+		border-top: 1px solid var(--line);
+		font-family: var(--mono);
+		font-size: 12px;
+		color: var(--ink-3);
+		letter-spacing: 0.04em;
+	}
+	.composer-meta .left { display: flex; gap: 18px; flex-wrap: wrap; }
+	.composer-meta .right { display: flex; gap: 14px; align-items: center; }
+	.kv b { color: var(--ink-2); font-weight: 500; }
+	.kv.warn b { color: var(--err); }
+
+	.options {
+		margin-top: 14px;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 12px;
+	}
+	.options label {
+		display: block;
+		font-family: var(--mono);
+		font-size: 11px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+		margin-bottom: 6px;
+	}
+	.options input, .options select {
+		width: 100%;
+		background: var(--bg-2);
+		border: 1px solid var(--line-strong);
+		border-radius: 10px;
+		padding: 12px 14px;
+		color: var(--ink);
+		font-family: var(--mono);
+		font-size: 13px;
+		outline: 0;
+		transition: border-color 200ms ease;
+	}
+	.options input:focus, .options select:focus { border-color: var(--btc); }
+	.options input::placeholder { color: var(--ink-4); }
+	.options .hint {
+		margin-top: 6px;
+		font-family: var(--mono);
+		font-size: 11px;
+		color: var(--ink-4);
+	}
+	@media (max-width: 560px) {
+		.options { grid-template-columns: 1fr; }
+	}
+
+	.cta-row {
+		margin-top: 28px;
+		display: flex;
+		gap: 12px;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	.cta {
+		flex: 1;
+		min-width: 240px;
+		display: inline-flex;
+		justify-content: center;
+		align-items: center;
+		gap: 12px;
+		background: var(--btc);
+		color: #000;
+		font-family: var(--sans);
+		font-weight: 600;
+		font-size: 16px;
+		letter-spacing: -0.005em;
+		padding: 18px 28px;
+		border-radius: 12px;
+		border: 0;
+		cursor: pointer;
+		transition: transform 140ms ease, box-shadow 220ms ease, background 140ms ease;
+		box-shadow: 0 12px 40px -12px var(--btc-glow);
+	}
+	.cta:hover { transform: translateY(-1px); box-shadow: 0 18px 60px -10px var(--btc-glow); background: #ffa84d; }
+	.cta:active { transform: translateY(0); }
+	.cta:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+	.cta svg { width: 18px; height: 18px; }
+	.subnote {
+		font-family: var(--mono);
+		font-size: 11px;
+		color: var(--ink-3);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.error-banner {
+		margin-top: 16px;
+		padding: 14px 16px;
+		border: 1px solid var(--err);
+		border-radius: 10px;
+		background: rgba(248, 113, 113, 0.06);
+		color: var(--err);
+		font-family: var(--mono);
+		font-size: 13px;
+		display: none;
+	}
+	.error-banner.show { display: block; }
+
+	/* ── payment view ────────────────────────────────────────── */
+	.pay {
+		display: none;
+		width: 100%;
+		max-width: 720px;
+		margin: 0 auto;
+		text-align: left;
+		background: var(--bg-2);
+		border: 1px solid var(--line-strong);
+		border-radius: 18px;
+		padding: 32px;
+	}
+	.pay.show { display: block; }
+	.pay-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 16px;
+		margin-bottom: 24px;
+	}
+	.pay-title {
+		font-size: 22px;
+		font-weight: 600;
+		letter-spacing: -0.015em;
+		margin: 0 0 4px;
+	}
+	.pay-sub {
+		font-family: var(--mono);
+		font-size: 12px;
+		color: var(--ink-3);
+		letter-spacing: 0.04em;
+	}
+	.state-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 6px 12px;
+		border-radius: 999px;
+		border: 1px solid var(--line-strong);
+		font-family: var(--mono);
+		font-size: 11px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--ink-2);
+	}
+	.state-pill .dot {
+		width: 6px; height: 6px; border-radius: 50%;
+		background: var(--btc);
+		animation: pulse 1.6s ease-in-out infinite;
+	}
+	.state-pill.ok { color: var(--ok); border-color: rgba(74, 222, 128, 0.35); }
+	.state-pill.ok .dot { background: var(--ok); animation: none; }
+	.state-pill.err { color: var(--err); border-color: rgba(248, 113, 113, 0.4); }
+	.state-pill.err .dot { background: var(--err); animation: none; }
+
+	.pay-grid {
+		display: grid;
+		grid-template-columns: 220px 1fr;
+		gap: 28px;
+		align-items: start;
+	}
+	@media (max-width: 640px) {
+		.pay-grid { grid-template-columns: 1fr; }
+	}
+	.qr-box {
+		background: #fff;
+		border-radius: 14px;
+		padding: 16px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		aspect-ratio: 1 / 1;
+	}
+	.qr-box img { width: 100%; height: 100%; image-rendering: pixelated; }
+
+	.pay-detail-row {
+		display: flex;
+		justify-content: space-between;
+		gap: 14px;
+		padding: 12px 0;
+		border-bottom: 1px solid var(--line);
+		font-family: var(--mono);
+		font-size: 13px;
+	}
+	.pay-detail-row:last-of-type { border-bottom: 0; }
+	.pay-detail-row .k { color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; }
+	.pay-detail-row .v {
+		color: var(--ink);
+		text-align: right;
+		word-break: break-all;
+		max-width: 60%;
+	}
+	.pay-detail-row .v .copy {
+		margin-left: 8px;
+		font-size: 11px;
+		color: var(--ink-3);
+		cursor: pointer;
+		border: 0;
+		background: transparent;
+		padding: 0;
+	}
+	.pay-detail-row .v .copy:hover { color: var(--btc); }
+	.amount-big {
+		font-family: var(--mono);
+		font-size: 28px;
+		letter-spacing: -0.01em;
+		color: var(--ink);
+		margin-bottom: 6px;
+	}
+	.amount-big .sat { color: var(--ink-3); font-size: 14px; margin-left: 6px; }
+	.amount-usd {
+		font-family: var(--mono);
+		font-size: 12px;
+		color: var(--ink-3);
+		margin-bottom: 18px;
+	}
+	.pay-actions {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		margin-top: 20px;
+	}
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 11px 16px;
+		border-radius: 10px;
+		border: 1px solid var(--line-strong);
+		background: transparent;
+		color: var(--ink-2);
+		font-family: var(--mono);
+		font-size: 12px;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		cursor: pointer;
+		transition: border-color 160ms ease, color 160ms ease;
+	}
+	.btn:hover { border-color: var(--btc); color: var(--ink); }
+	.btn.primary {
+		background: var(--btc); color: #000; border-color: var(--btc);
+		text-transform: none; letter-spacing: -0.005em;
+		font-family: var(--sans); font-weight: 600; font-size: 14px;
+	}
+	.btn.primary:hover { background: #ffa84d; }
+
+	.message-preview {
+		margin-top: 18px;
+		padding: 16px 18px;
+		background: rgba(255,255,255,0.02);
+		border: 1px solid var(--line);
+		border-radius: 12px;
+		font-family: var(--mono);
+		font-size: 13px;
+		color: var(--ink-2);
+		white-space: pre-wrap;
+		word-break: break-word;
+		max-height: 160px;
+		overflow: auto;
+	}
+
+	/* ── success view ────────────────────────────────────────── */
+	.win {
+		display: none;
+		width: 100%;
+		max-width: 720px;
+		margin: 0 auto;
+		text-align: center;
+	}
+	.win.show { display: block; }
+	.win-burst {
+		font-family: var(--mono);
+		font-size: 11px;
+		letter-spacing: 0.32em;
+		text-transform: uppercase;
+		color: var(--ok);
+		margin-bottom: 20px;
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.win-burst .dot { width: 6px; height: 6px; background: var(--ok); border-radius: 50%; }
+	.win h2 {
+		font-size: clamp(40px, 7vw, 88px);
+		line-height: 0.95;
+		letter-spacing: -0.04em;
+		margin: 0 0 24px;
+		font-weight: 600;
+	}
+	.win-card {
+		text-align: left;
+		background: var(--bg-2);
+		border: 1px solid var(--line-strong);
+		border-radius: 16px;
+		padding: 24px 28px;
+		margin: 0 auto 28px;
+	}
+	.win-card .row {
+		display: flex;
+		justify-content: space-between;
+		gap: 14px;
+		padding: 10px 0;
+		border-bottom: 1px solid var(--line);
+		font-family: var(--mono);
+		font-size: 13px;
+	}
+	.win-card .row:last-child { border-bottom: 0; }
+	.win-card .row .k { color: var(--ink-3); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+	.win-card .row .v { color: var(--ink); word-break: break-all; text-align: right; max-width: 60%; }
+	.win-card .row .v a { color: var(--ink); border-bottom: 1px solid var(--line-strong); }
+	.win-card .row .v a:hover { border-color: var(--btc); }
+	.win-message {
+		font-family: var(--mono);
+		font-size: 16px;
+		line-height: 1.55;
+		color: var(--ink);
+		background: rgba(247, 147, 26, 0.06);
+		border: 1px solid rgba(247, 147, 26, 0.3);
+		border-radius: 14px;
+		padding: 22px 24px;
+		margin: 0 auto 28px;
+		max-width: 640px;
+		text-align: left;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+	.share-row {
+		display: flex;
+		gap: 12px;
+		justify-content: center;
+		flex-wrap: wrap;
+	}
+	.share-x {
+		background: #000;
+		color: #fff;
+		border: 1px solid var(--line-strong);
+		padding: 14px 22px;
+		border-radius: 12px;
+		font-weight: 600;
+		font-size: 15px;
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		cursor: pointer;
+		transition: border-color 160ms ease, transform 140ms ease;
+	}
+	.share-x:hover { border-color: #fff; transform: translateY(-1px); }
+	.share-x svg { width: 16px; height: 16px; }
+
+	/* ── footer ──────────────────────────────────────────────── */
+	footer {
+		padding: 28px 32px;
+		border-top: 1px solid var(--line);
+		display: flex;
+		justify-content: space-between;
+		gap: 18px;
+		font-family: var(--mono);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--ink-4);
+		flex-wrap: wrap;
+	}
+	footer a { color: var(--ink-3); border: none; }
+	footer a:hover { color: var(--btc); }
+
+	.fade-in { animation: fadeIn 360ms ease forwards; }
+	@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="backdrop"></div>
+<div class="shell">
+
+<header>
+	<a class="logo" href="/"><b>three.ws</b> · forever</a>
+	<nav class="nav">
+		<a href="https://ordinals.com" target="_blank" rel="noopener">Ordinals</a>
+		<a href="https://mempool.space" target="_blank" rel="noopener">Mempool</a>
+		<a href="/bazaar">Bazaar</a>
+	</nav>
+</header>
+
+<main>
+
+<!-- ── compose view ──────────────────────────────────────────── -->
+<section id="view-compose" class="view fade-in">
+	<div class="eyebrow"><span class="dot"></span>Etch onto Bitcoin · permanent · public</div>
+	<h1>Say something. <em>Forever.</em></h1>
+	<p class="tag">Your words inscribed onto a single Bitcoin satoshi. Anyone in the world can read it. No one can ever delete it. Not in 100 years. Not in 1000.</p>
+
+	<div class="composer">
+		<div class="composer-frame">
+			<textarea id="message" placeholder="Type the message you want to live on the most secure chain in history…" maxlength="1500" autocomplete="off" spellcheck="true"></textarea>
+			<div class="composer-meta">
+				<div class="left">
+					<span class="kv" id="charCount"><b>0</b> chars</span>
+					<span class="kv" id="byteCount"><b>0</b> bytes</span>
+				</div>
+				<div class="right">
+					<span class="kv">max <b>1500</b> bytes</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="options">
+			<div>
+				<label for="receiveAddress">Bitcoin receive address <span style="color:var(--ink-4)">(optional)</span></label>
+				<input id="receiveAddress" placeholder="bc1p…" autocomplete="off" spellcheck="false" />
+				<div class="hint">Taproot only. Leave blank to let the platform vault hold the inscription — your message still lives on chain forever.</div>
+			</div>
+			<div>
+				<label for="feeRate">Fee rate (sats/vB)</label>
+				<select id="feeRate">
+					<option value="3">3 — economy (~12 hrs)</option>
+					<option value="8" selected>8 — standard (~1 hr)</option>
+					<option value="20">20 — fast (~10 min)</option>
+					<option value="50">50 — priority (next block)</option>
+				</select>
+				<div class="hint">Higher fees confirm faster. The inscription is permanent either way.</div>
+			</div>
+		</div>
+
+		<div class="cta-row">
+			<button id="inscribeBtn" class="cta" type="button">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+				Inscribe forever
+			</button>
+			<span class="subnote">paid in BTC · settled in ~1 block</span>
+		</div>
+
+		<div id="errorBanner" class="error-banner"></div>
+	</div>
+</section>
+
+<!-- ── payment view ──────────────────────────────────────────── -->
+<section id="view-pay" class="view pay">
+	<div class="pay-header">
+		<div>
+			<h2 class="pay-title">Send Bitcoin to inscribe</h2>
+			<div class="pay-sub">Once the mempool sees your payment, we broadcast the inscription. Stay on this page.</div>
+		</div>
+		<div id="statePill" class="state-pill"><span class="dot"></span><span class="label">waiting for payment</span></div>
+	</div>
+
+	<div class="pay-grid">
+		<div>
+			<div id="qrBox" class="qr-box"></div>
+		</div>
+		<div>
+			<div class="amount-big"><span id="amountBtc">—</span> BTC<span class="sat" id="amountSats">— sats</span></div>
+			<div class="amount-usd" id="amountUsd">≈ $—</div>
+
+			<div class="pay-detail-row">
+				<span class="k">Pay to</span>
+				<span class="v"><span id="payAddress">—</span><button class="copy" data-copy="payAddress">copy</button></span>
+			</div>
+			<div class="pay-detail-row" id="lnRow" style="display:none">
+				<span class="k">Lightning</span>
+				<span class="v"><span id="lnInvoice">—</span><button class="copy" data-copy="lnInvoice">copy</button></span>
+			</div>
+			<div class="pay-detail-row">
+				<span class="k">Receive to</span>
+				<span class="v" id="receiveAddrPay">—</span>
+			</div>
+			<div class="pay-detail-row">
+				<span class="k">Order</span>
+				<span class="v" id="orderIdPay">—</span>
+			</div>
+
+			<div class="pay-actions">
+				<a id="openWallet" class="btn primary" href="#">Open in wallet</a>
+				<a id="mempoolLink" class="btn" target="_blank" rel="noopener" href="#">View on mempool ↗</a>
+				<button id="cancelPay" class="btn" type="button">Cancel</button>
+			</div>
+		</div>
+	</div>
+
+	<div class="message-preview" id="messagePreview"></div>
+</section>
+
+<!-- ── success view ──────────────────────────────────────────── -->
+<section id="view-win" class="view win">
+	<div class="win-burst"><span class="dot"></span>Inscribed on Bitcoin · block confirmed</div>
+	<h2>It's forever now.</h2>
+	<div class="win-message" id="winMessage">—</div>
+	<div class="win-card">
+		<div class="row"><span class="k">Inscription</span><span class="v"><a id="winInscriptionLink" href="#" target="_blank" rel="noopener">—</a></span></div>
+		<div class="row"><span class="k">Reveal tx</span><span class="v"><a id="winTxLink" href="#" target="_blank" rel="noopener">—</a></span></div>
+		<div class="row"><span class="k">Receive</span><span class="v" id="winReceive">—</span></div>
+		<div class="row"><span class="k">Network</span><span class="v">Bitcoin mainnet</span></div>
+	</div>
+	<div class="share-row">
+		<button id="shareX" class="share-x" type="button">
+			<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2H21l-6.55 7.486L22 22h-6.844l-4.79-6.243L4.8 22H2.04l7.014-8.018L2 2h6.918l4.342 5.74L18.244 2Zm-1.2 18h1.708L7.05 4H5.24l11.804 16Z"/></svg>
+			Share on X
+		</button>
+		<button id="copyLink" class="btn">Copy permalink</button>
+		<button id="inscribeAnother" class="btn">Inscribe another</button>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div>three.ws · forever</div>
+	<div>
+		<a href="https://docs.ordinals.com/inscriptions.html" target="_blank" rel="noopener">What is an inscription?</a>
+		&nbsp;·&nbsp;
+		<a href="https://mempool.space" target="_blank" rel="noopener">Explore Bitcoin</a>
+	</div>
+</footer>
+
+</div>
+
+<script type="module" src="/forever.js"></script>
+</body>
+</html>

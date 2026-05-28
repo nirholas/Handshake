@@ -1,6 +1,6 @@
 # Skills System
 
-Skills are the extension mechanism for three.wss — modular, portable capability bundles that tell an agent *what it can do* and *how to do it*. A skill packages together the LLM instructions, the tool schema, and the JavaScript handler that runs when the tool is called. Because a skill is just a directory of files served from any URL, the same wave skill can be installed in every agent you build without copying any code.
+Skills are the extension mechanism for three.ws — modular, portable capability bundles that tell an agent *what it can do* and *how to do it*. A skill packages together the LLM instructions, the tool schema, and the JavaScript handler that runs when the tool is called. Because a skill is just a directory of files served from any URL, the same wave skill can be installed in every agent you build without copying any code.
 
 This document covers how to install skills, how to write them, the full context API available to handlers, the security model, and the lifecycle events that let host pages observe skill execution.
 
@@ -70,7 +70,7 @@ Reference skills by URI in the agent's `manifest.json`. The runtime fetches and 
 ```json
 {
   "skills": [
-    { "uri": "https://cdn.three.wsskills/wave/", "version": "0.1.0" },
+    { "uri": "https://cdn.three.ws/skills/wave/", "version": "0.1.0" },
     { "uri": "ipfs://bafy.../validate-model/", "version": "^1.0.0" }
   ]
 }
@@ -85,7 +85,7 @@ Pass a JSON array to the `skills` attribute:
 ```html
 <agent-3d
   agent-id="my-agent"
-  skills='[{"uri":"https://cdn.three.wsskills/wave/","version":"0.1.0"}]'
+  skills='[{"uri":"https://cdn.three.ws/skills/wave/","version":"0.1.0"}]'
 ></agent-3d>
 ```
 
@@ -121,7 +121,7 @@ await el.agent.skills.install({ uri: 'https://example.com/skills/weather/' });
 
   // Skill dependencies — installed recursively before this skill
   "dependencies": {
-    "https://cdn.three.wsskills/gesture-base/": "^1.0.0"
+    "https://cdn.three.ws/skills/gesture-base/": "^1.0.0"
   },
 
   // What this skill adds to the agent
@@ -396,8 +396,8 @@ Skills can depend on other skills. The registry installs dependencies recursivel
   "name": "full-coaching-kit",
   "version": "1.0.0",
   "dependencies": {
-    "https://cdn.three.wsskills/wave/": "^0.1.0",
-    "https://cdn.three.wsskills/validate-model/": "^1.0.0"
+    "https://cdn.three.ws/skills/wave/": "^0.1.0",
+    "https://cdn.three.ws/skills/validate-model/": "^1.0.0"
   },
   "provides": { "tools": [] }
 }
@@ -632,7 +632,7 @@ The handler tries to load a style-specific GLB clip from the bundle (e.g. `clips
   },
   "brain": {
     "provider": "anthropic",
-    "model": "claude-opus-4-6",
+    "model": "claude-opus-4-7",
     "instructions": "instructions.md",
     "temperature": 0.8,
     "maxTokens": 2048

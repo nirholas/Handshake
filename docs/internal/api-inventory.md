@@ -115,7 +115,7 @@ Generated reference of every HTTP endpoint under `/api/`. Paths reflect the exte
 | `/api/erc8004/import`  | POST    | session               | Import on-chain agent into local `agent_identities`        | `{chainId,agentId}`            | `{agent}`                |
 | `/api/erc8004/pin`     | POST    | session               | Pin raw GLB/JSON/image bytes (IPFS + R2 fallback)          | raw body                       | `{cid,url}`              |
 | `/api/explore`         | GET     | public                | Paginated indexed ERC-8004 directory                       | `?only3d&chain&q&cursor&limit` | `{agents[],next_cursor}` |
-| `/api/showcase`        | GET     | public (rate-limited) | Public directory, three.wss only, keyset pagination        | `?chainIds&sort&limit&cursor`  | `{agents[],next_cursor}` |
+| `/api/showcase`        | GET     | public (rate-limited) | Public directory, three.ws only, keyset pagination        | `?chainIds&sort&limit&cursor`  | `{agents[],next_cursor}` |
 
 ## Permissions (ERC-7710 delegations)
 

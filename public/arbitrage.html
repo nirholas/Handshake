@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>x402 Arbitrage — same capability, different price</title>
+<meta name="description" content="Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability." />
+<meta name="theme-color" content="#0a0b10" />
+<meta property="og:title" content="x402 Arbitrage — same capability, different price" />
+<meta property="og:description" content="Live cross-provider price disparities from the merged x402 catalog." />
+<meta property="og:type" content="website" />
+<style>
+	:root {
+		--bg: #0a0b10;
+		--bg-2: #0f1119;
+		--panel: #14161f;
+		--panel-2: #1a1d29;
+		--border: #232636;
+		--border-strong: #2e3447;
+		--text: #f0f2f8;
+		--muted: #8a90a8;
+		--muted-2: #6b7088;
+		--accent-blue: #60a5fa;
+		--accent-green: #4ade80;
+		--accent-red: #f87171;
+		--accent-amber: #f59e0b;
+		--accent-purple: #c084fc;
+		--mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, monospace;
+	}
+	* { box-sizing: border-box; }
+	html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+		-webkit-font-smoothing: antialiased;
+		line-height: 1.5;
+		min-height: 100vh;
+	}
+	a { color: var(--accent-blue); text-decoration: none; }
+	a:hover { color: #93c5fd; }
+
+	.wrap { max-width: 1280px; margin: 0 auto; padding: 0 28px; }
+	@media (max-width: 720px) { .wrap { padding: 0 16px; } }
+
+	nav {
+		padding: 22px 0;
+		display: flex; align-items: center; justify-content: space-between;
+		border-bottom: 1px solid var(--border);
+		flex-wrap: wrap;
+		gap: 12px;
+	}
+	nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+	nav .brand .dot {
+		width: 22px; height: 22px;
+		background: conic-gradient(from 200deg, #ffffff, #60a5fa, #ffffff);
+		border-radius: 6px;
+	}
+	nav .links { display: flex; gap: 18px; font-size: 13.5px; color: var(--muted); flex-wrap: wrap; }
+	nav .links a { color: var(--muted); }
+	nav .links a:hover { color: var(--text); }
+	nav .links a.active { color: var(--text); }
+
+	header.hero {
+		padding: 38px 0 8px;
+		display: flex; align-items: flex-start; justify-content: space-between;
+		gap: 24px; flex-wrap: wrap;
+	}
+	header.hero .left { max-width: 720px; }
+	.eyebrow {
+		display: inline-flex; align-items: center; gap: 8px;
+		font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+		color: var(--accent-amber); margin-bottom: 10px;
+		font-weight: 600;
+	}
+	.eyebrow .pulse {
+		width: 7px; height: 7px; border-radius: 50%;
+		background: var(--accent-amber);
+		box-shadow: 0 0 0 0 rgba(245,158,11,0.6);
+		animation: pulse 2s infinite;
+	}
+	@keyframes pulse {
+		0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.6); }
+		50% { box-shadow: 0 0 0 6px rgba(245,158,11,0); }
+	}
+	header.hero h1 { font-size: 32px; line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.02em; }
+	header.hero p { color: var(--muted); margin: 0; font-size: 15px; }
+	.updated {
+		font-family: var(--mono); font-size: 11px; color: var(--muted-2);
+		letter-spacing: 0.04em;
+		text-align: right;
+	}
+	.updated strong { color: var(--text); font-weight: 600; }
+
+	.toolbar {
+		margin: 24px 0 18px;
+		display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+	}
+	.chip {
+		background: var(--panel);
+		border: 1px solid var(--border-strong);
+		color: var(--muted);
+		padding: 7px 13px;
+		font-size: 13px;
+		border-radius: 999px;
+		cursor: pointer;
+	}
+	.chip:hover { color: var(--text); border-color: var(--accent-blue); }
+	.chip.active { background: var(--panel-2); color: var(--text); border-color: var(--accent-blue); }
+	.toolbar input[type=search] {
+		flex: 1 1 220px;
+		min-width: 180px;
+		background: var(--panel);
+		border: 1px solid var(--border-strong);
+		color: var(--text);
+		padding: 8px 14px;
+		font-size: 13.5px;
+		border-radius: 999px;
+		outline: none;
+	}
+	.toolbar input[type=search]:focus { border-color: var(--accent-blue); }
+	.toolbar .count { color: var(--muted); font-size: 13px; margin-left: auto; }
+	.toolbar .count strong { color: var(--text); font-weight: 600; }
+
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+		gap: 14px;
+		padding-bottom: 56px;
+	}
+	.arb {
+		background: var(--panel);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 16px;
+		display: flex; flex-direction: column; gap: 12px;
+		transition: border-color 0.15s ease;
+	}
+	.arb:hover { border-color: var(--border-strong); }
+	.arb .top {
+		display: flex; align-items: center; justify-content: space-between;
+		gap: 10px; font-size: 11px;
+	}
+	.type-pill {
+		display: inline-flex; align-items: center; gap: 5px;
+		background: rgba(96,165,250,0.1);
+		color: var(--accent-blue);
+		border: 1px solid rgba(96,165,250,0.25);
+		padding: 3px 9px;
+		border-radius: 999px;
+		font-family: var(--mono);
+		font-size: 10.5px;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		font-weight: 600;
+	}
+	.type-pill.mcp { background: rgba(192,132,252,0.1); color: var(--accent-purple); border-color: rgba(192,132,252,0.25); }
+	.spread-pill {
+		font-family: var(--mono);
+		font-size: 11px;
+		color: var(--accent-amber);
+		font-weight: 600;
+		letter-spacing: 0.02em;
+	}
+
+	.arb .title {
+		font-weight: 600;
+		font-size: 15px;
+		line-height: 1.3;
+		display: flex; gap: 10px; align-items: flex-start;
+	}
+	.arb .title .icon {
+		width: 30px; height: 30px;
+		border-radius: 8px;
+		background: var(--panel-2);
+		border: 1px solid var(--border);
+		flex-shrink: 0;
+		display: flex; align-items: center; justify-content: center;
+		font-size: 13px; color: var(--muted);
+		overflow: hidden;
+	}
+	.arb .title .icon img { width: 100%; height: 100%; object-fit: cover; }
+	.arb .title .t {
+		flex: 1; min-width: 0;
+		word-break: break-word;
+	}
+	.arb .title .sub {
+		color: var(--muted);
+		font-weight: 400;
+		font-size: 11.5px;
+		font-family: var(--mono);
+		margin-top: 2px;
+		word-break: break-all;
+	}
+
+	.stats {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 0;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		overflow: hidden;
+	}
+	.stats > div {
+		padding: 9px 10px;
+		border-right: 1px solid var(--border);
+		background: var(--bg-2);
+	}
+	.stats > div:last-child { border-right: none; }
+	.stats .k {
+		font-size: 9.5px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--muted-2);
+		margin-bottom: 3px;
+	}
+	.stats .v {
+		font-family: var(--mono);
+		font-size: 13px;
+		color: var(--text);
+		font-weight: 600;
+	}
+	.stats .v.amber { color: var(--accent-amber); }
+
+	.providers { display: flex; flex-direction: column; gap: 6px; }
+	.provider {
+		display: flex; align-items: center; gap: 10px;
+		padding: 8px 10px;
+		background: var(--panel-2);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		font-size: 12.5px;
+		transition: border-color 0.15s ease;
+	}
+	.provider:hover { border-color: var(--border-strong); }
+	.provider.cheapest { border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.05); }
+	.provider .dot {
+		width: 8px; height: 8px; border-radius: 50%;
+		background: var(--muted);
+		flex-shrink: 0;
+	}
+	.provider.cheapest .dot { background: var(--accent-green); }
+	.provider .host {
+		flex: 1; min-width: 0;
+		color: var(--text);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		font-family: var(--mono);
+		font-size: 11.5px;
+	}
+	.provider .price {
+		font-family: var(--mono);
+		font-size: 12px;
+		color: var(--text);
+		font-weight: 600;
+	}
+	.provider.cheapest .price { color: var(--accent-green); }
+	.provider .fac {
+		font-family: var(--mono);
+		font-size: 10px;
+		color: var(--muted-2);
+	}
+
+	.arb .actions {
+		display: flex; gap: 8px;
+		padding-top: 4px;
+		border-top: 1px solid var(--border);
+		margin-top: auto;
+	}
+	.arb .actions button, .arb .actions a {
+		flex: 1;
+		padding: 8px 10px;
+		font-size: 12px;
+		border-radius: 8px;
+		text-align: center;
+		cursor: pointer;
+		font-weight: 600;
+		font-family: inherit;
+	}
+	.btn-best {
+		background: rgba(74,222,128,0.12);
+		color: var(--accent-green);
+		border: 1px solid rgba(74,222,128,0.3);
+	}
+	.btn-best:hover { background: rgba(74,222,128,0.18); }
+	.btn-worst {
+		background: rgba(248,113,113,0.08);
+		color: var(--accent-red);
+		border: 1px solid rgba(248,113,113,0.25);
+	}
+	.btn-worst:hover { background: rgba(248,113,113,0.15); }
+
+	.empty, .err {
+		padding: 60px 20px;
+		text-align: center;
+		color: var(--muted);
+		border: 1px dashed var(--border-strong);
+		border-radius: 12px;
+		margin-bottom: 56px;
+	}
+	.err { color: #fecaca; border-color: rgba(248,113,113,0.3); }
+
+	.spinner {
+		display: inline-block;
+		width: 14px; height: 14px;
+		border: 2px solid var(--border-strong);
+		border-top-color: var(--accent-blue);
+		border-radius: 50%;
+		animation: spin 0.7s linear infinite;
+		vertical-align: -2px;
+	}
+	@keyframes spin { to { transform: rotate(360deg); } }
+
+	.skeleton {
+		background: linear-gradient(90deg, var(--panel) 25%, var(--panel-2) 50%, var(--panel) 75%);
+		background-size: 200% 100%;
+		animation: shimmer 1.4s ease-in-out infinite;
+		border-radius: 8px;
+	}
+	@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+	.sk-card { height: 240px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<nav>
+		<div class="brand"><span class="dot"></span><span>x402 bazaar</span></div>
+		<div class="links">
+			<a href="/bazaar">Catalog</a>
+			<a href="/arbitrage" class="active">Arbitrage</a>
+			<a href="/providers">Providers</a>
+			<a href="https://www.x402.org/docs/extensions/bazaar" target="_blank" rel="noopener">Spec</a>
+		</div>
+	</nav>
+	<header class="hero">
+		<div class="left">
+			<div class="eyebrow"><span class="pulse"></span>Cross-provider arbitrage</div>
+			<h1>Spot the same capability priced differently.</h1>
+			<p>Live opportunities surfaced from the merged x402 facilitator catalog. Same tool, same intent — different price.</p>
+		</div>
+		<div class="updated">
+			Updated: <strong id="updated">…</strong>
+		</div>
+	</header>
+
+	<div class="toolbar">
+		<button type="button" class="chip active" data-filter="all">All</button>
+		<button type="button" class="chip" data-filter="http">HTTP</button>
+		<button type="button" class="chip" data-filter="mcp">MCP</button>
+		<input type="search" id="q" placeholder="Filter by capability or provider…" />
+		<div class="count"><strong id="count">…</strong> opportunities</div>
+	</div>
+
+	<div id="grid" class="grid"></div>
+	<div id="empty" class="empty" hidden></div>
+</div>
+
+<script type="module" src="/arbitrage.js"></script>
+</body>
+</html>

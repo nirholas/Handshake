@@ -512,6 +512,12 @@ const appConfig = {
 					'/docs/': resolve(root, 'docs/index.html'),
 					'/bazaar': resolve(root, 'public/bazaar.html'),
 					'/bazaar/': resolve(root, 'public/bazaar.html'),
+					'/forever': resolve(root, 'public/forever.html'),
+					'/forever/': resolve(root, 'public/forever.html'),
+					'/arbitrage': resolve(root, 'public/arbitrage.html'),
+					'/arbitrage/': resolve(root, 'public/arbitrage.html'),
+					'/providers': resolve(root, 'public/providers.html'),
+					'/providers/': resolve(root, 'public/providers.html'),
 				};
 				// Routes that resolve to public/<dir>/index.html — these need a
 				// trailing slash so relative imports (./foo.js) inside the HTML

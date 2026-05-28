@@ -54,6 +54,94 @@
 	nav .links { display: flex; gap: 18px; font-size: 13.5px; color: var(--muted); }
 	nav .links a { color: var(--muted); }
 	nav .links a:hover { color: var(--text); }
+	nav .links a.active { color: var(--text); }
+
+	.ctx {
+		background: var(--bg-2);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 14px 16px;
+		margin-bottom: 14px;
+	}
+	.ctx .head {
+		display: flex; align-items: center; gap: 8px;
+		font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+		color: var(--muted-2); font-weight: 600;
+		margin-bottom: 8px;
+	}
+	.ctx .head .dot {
+		width: 7px; height: 7px; border-radius: 50%;
+		background: var(--accent-blue);
+	}
+	.ctx .head .pill {
+		margin-left: auto;
+		font-family: var(--mono); font-size: 10px;
+		padding: 2px 7px; border-radius: 999px;
+		letter-spacing: 0;
+		text-transform: none;
+	}
+	.ctx .head .pill.up { background: rgba(74,222,128,0.12); color: var(--accent-green); border: 1px solid rgba(74,222,128,0.3); }
+	.ctx .head .pill.down { background: rgba(248,113,113,0.12); color: var(--accent-red); border: 1px solid rgba(248,113,113,0.3); }
+	.ctx .head .pill.neutral { background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
+	.ctx .body { font-size: 13.5px; line-height: 1.55; color: var(--text); }
+	.ctx .body .cite {
+		display: inline-flex; align-items: center; justify-content: center;
+		min-width: 18px; height: 18px;
+		background: var(--panel-2); color: var(--accent-blue);
+		border: 1px solid rgba(96,165,250,0.3);
+		border-radius: 5px;
+		font-family: var(--mono); font-size: 10.5px;
+		padding: 0 4px;
+		margin: 0 2px;
+		vertical-align: 1px;
+		text-decoration: none;
+	}
+	.ctx .body .cite:hover { background: rgba(96,165,250,0.15); }
+	.ctx .citations {
+		margin-top: 10px;
+		padding-top: 10px;
+		border-top: 1px solid var(--border);
+		display: flex; flex-direction: column; gap: 4px;
+	}
+	.ctx .citations a {
+		font-size: 11.5px;
+		color: var(--muted);
+		font-family: var(--mono);
+	}
+	.ctx .citations a:hover { color: var(--text); }
+	.ctx .citations a strong { color: var(--accent-blue); margin-right: 6px; font-weight: 600; }
+	.ctx .stat-row {
+		display: flex; gap: 14px;
+		margin-top: 8px;
+		font-size: 11.5px;
+		color: var(--muted);
+		font-family: var(--mono);
+		flex-wrap: wrap;
+	}
+	.ctx .stat-row strong { color: var(--text); font-weight: 600; }
+	.ctx.loading .body { color: var(--muted); font-style: italic; }
+	.ctx.err { border-color: rgba(248,113,113,0.3); }
+	.ctx.err .body { color: #fecaca; }
+
+	.peer-hint {
+		display: inline-flex; align-items: center; gap: 5px;
+		background: rgba(245,158,11,0.08);
+		border: 1px solid rgba(245,158,11,0.25);
+		color: #f59e0b;
+		padding: 3px 8px;
+		border-radius: 999px;
+		font-family: var(--mono);
+		font-size: 11px;
+		text-decoration: none;
+	}
+	.peer-hint:hover { background: rgba(245,158,11,0.14); }
+
+	.tag.host {
+		color: var(--accent-blue);
+		border-color: rgba(96,165,250,0.3);
+		text-decoration: none;
+	}
+	.tag.host:hover { background: rgba(96,165,250,0.1); }
 
 	header.hero { padding: 44px 0 18px; }
 	header.hero h1 { font-size: 36px; line-height: 1.1; margin: 0 0 8px; letter-spacing: -0.02em; }
@@ -315,7 +403,9 @@
 	<nav>
 		<div class="brand"><span class="dot"></span><span>x402 bazaar</span></div>
 		<div class="links">
-			<a href="/">Home</a>
+			<a href="/bazaar" class="active">Catalog</a>
+			<a href="/arbitrage">Arbitrage</a>
+			<a href="/providers">Providers</a>
 			<a href="https://www.x402.org/docs/extensions/bazaar" target="_blank" rel="noopener">Spec</a>
 			<a href="/.well-known/x402.json">Our listing</a>
 		</div>

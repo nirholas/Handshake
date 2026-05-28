@@ -12,10 +12,10 @@ Cloud marketplaces are the procurement flow enterprises use to acquire software 
 
 | Cloud | Status | Links |
 |---|---|---|
+| **AWS** Marketplace | Live | three.ws is an AWS Partner. Subscribe via AWS Marketplace to consolidate billing on your AWS account; subscriptions auto-issue an x402 API key via the marketplace entitlement service. See [aws-marketplace.md](./aws-marketplace.md). |
 | **Alibaba Cloud** International Marketplace | Live | [Product listing](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [Storefront](https://marketplace.alibabacloud.com/store/3247293.html) · [Announcement](/blog/three-ws-on-alibaba-cloud-marketplace.html) |
 | **Google Cloud** Marketplace | Open to partnership | three.ws runs on WebGL, Vercel edge, and EVM — a natural fit for Vertex AI and GCP's global CDN. Reach out for co-listing, credits, and joint GTM. |
-| **AWS** Marketplace | On roadmap | Targeted for the cross-marketplace expansion phase described in the [Alibaba launch post](/blog/three-ws-on-alibaba-cloud-marketplace.html). |
-| **Microsoft Azure** Marketplace | On roadmap | Targeted alongside AWS. |
+| **Microsoft Azure** Marketplace | On roadmap | Targeted alongside the AWS/Alibaba rollout. |
 
 ---
 

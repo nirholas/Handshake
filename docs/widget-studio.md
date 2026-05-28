@@ -2,7 +2,7 @@
 
 Widget Studio is the no-code builder for creating embeddable 3D widgets. Pick an avatar, choose a widget type, configure your brand settings, and get a one-line embed snippet — no code required.
 
-**Access Widget Studio:** [three.wsstudio](https://three.ws/studio)
+**Access Widget Studio:** [three.ws/studio](https://three.ws/studio)
 
 ---
 
@@ -34,7 +34,7 @@ Widget Studio requires an account. When you open the Studio without signing in, 
 
 ### Create a new widget from scratch
 
-1. Go to [three.wsstudio](https://three.ws/studio)
+1. Go to [three.ws/studio](https://three.ws/studio)
 2. Sign in if prompted
 3. The Studio opens with the default type (Turntable Showcase) pre-selected
 4. Follow the three steps described below
@@ -162,7 +162,7 @@ The oEmbed protocol handles the conversion automatically — no plugin needed.
 
 ## Managing your widgets
 
-Go to [three.wsdashboard](https://three.ws/dashboard) and click the **Widgets** tab.
+Go to [three.ws/dashboard](https://three.ws/dashboard) and click the **Widgets** tab.
 
 From the dashboard you can:
 
@@ -188,7 +188,7 @@ Chat message content from Talking Agent widgets is never logged.
 
 ## Widget gallery
 
-Public widgets are listed at [three.wswidgets](https://three.ws/widgets). Browse the gallery to find inspiration, discover what other creators have built, and copy embed snippets for any listed widget.
+Public widgets are listed at [three.ws/widgets](https://three.ws/widgets). Browse the gallery to find inspiration, discover what other creators have built, and copy embed snippets for any listed widget.
 
 Filter by widget type, search by name, or sort by popularity or recency.
 

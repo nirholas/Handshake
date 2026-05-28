@@ -33,7 +33,105 @@ const state = {
 	loading: false,
 	lastQuery: '',
 	items: [],
+	peers: new Map(),
 };
+
+const STOP_WORDS = new Set([
+	'api', 'apis', 'service', 'endpoint', 'endpoints', 'paid', 'free',
+	'the', 'a', 'an', 'and', 'or', 'of', 'for', 'to', 'on', 'in', 'by',
+	'tool', 'tools', 'mcp', 'http',
+]);
+
+function tokenize(s) {
+	return String(s || '')
+		.toLowerCase()
+		.split(/[^a-z0-9]+/g)
+		.map((w) => w.trim())
+		.filter((w) => w && !STOP_WORDS.has(w) && w.length >= 2);
+}
+
+function tailFromUrl(url) {
+	try {
+		const u = new URL(url);
+		const tail = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean).pop() || '';
+		return tail.replace(/-[a-z0-9]{4,12}$/i, '');
+	} catch {
+		return '';
+	}
+}
+
+function capabilityKey(it) {
+	if (it.type === 'mcp' && it.toolName) {
+		const k = tokenize(it.toolName).join('');
+		return k ? `mcp:${k}` : null;
+	}
+	const nameTokens = tokenize(it.serviceName).slice(0, 3);
+	if (nameTokens.length && nameTokens.join('-').length >= 3) return `http:${nameTokens.join('-')}`;
+	const urlTokens = tokenize(tailFromUrl(it.resource)).slice(0, 3);
+	if (urlTokens.length >= 2 && urlTokens.join('-').length >= 6) return `http:${urlTokens.join('-')}`;
+	return null;
+}
+
+function minUsdcAtomic(item) {
+	const accepts = (item.accepts || []).filter((a) => {
+		const sym = String(a?.assetInfo?.symbol || '').toUpperCase();
+		return sym === 'USDC' || sym === '';
+	});
+	if (accepts.length === 0) return null;
+	let min = null;
+	for (const a of accepts) {
+		const n = Number(a.amountAtomic);
+		if (Number.isFinite(n) && n > 0 && (min == null || n < min)) min = n;
+	}
+	return min;
+}
+
+function priceLabel(atomic) {
+	if (atomic == null) return '—';
+	const n = atomic / 1_000_000;
+	if (n === 0) return '0 USDC';
+	if (n < 0.01) return `${n.toFixed(6).replace(/0+$/, '').replace(/\.$/, '')} USDC`;
+	if (n < 1) return `${n.toFixed(4).replace(/0+$/, '').replace(/\.$/, '')} USDC`;
+	return `${n.toFixed(2)} USDC`;
+}
+
+function recomputePeers(items) {
+	const groups = new Map();
+	for (const it of items) {
+		const k = capabilityKey(it);
+		if (!k) continue;
+		if (!groups.has(k)) groups.set(k, []);
+		groups.get(k).push(it);
+	}
+	state.peers = groups;
+}
+
+function computePeerHint(it) {
+	const k = capabilityKey(it);
+	if (!k) return null;
+	const peers = state.peers.get(k);
+	if (!peers || peers.length < 2) return null;
+	const prices = peers.map(minUsdcAtomic).filter((n) => n != null);
+	if (prices.length < 2) return null;
+	const min = Math.min(...prices);
+	const max = Math.max(...prices);
+	const other = peers.length - 1;
+	if (max === min) {
+		return {
+			count: other,
+			label: `${other} peer${other === 1 ? '' : 's'} at same price`,
+			minLabel: priceLabel(min),
+			maxLabel: priceLabel(max),
+		};
+	}
+	const spreadPct = ((max - min) / min) * 100;
+	return {
+		count: other,
+		label: `${other} peer${other === 1 ? '' : 's'} · +${spreadPct.toFixed(0)}% spread`,
+		minLabel: priceLabel(min),
+		maxLabel: priceLabel(max),
+	};
+}
 
 function readFilters() {
 	return {
@@ -77,6 +175,7 @@ async function load() {
 		const data = await r.json();
 		if (!r.ok) throw new Error(data?.error_description || data?.error || `HTTP ${r.status}`);
 		state.items = data.resources || data.items || [];
+		recomputePeers(state.items);
 		renderResults(state.items, query, data.sources || [], data.errors || []);
 	} catch (e) {
 		renderError(e);
@@ -179,6 +278,26 @@ function card(it) {
 	for (const ext of it.extensions || []) {
 		if (ext === 'bazaar') continue; // implied
 		meta.appendChild(tag('ext', ext));
+	}
+
+	const host = safeHost(it.resource);
+	if (host) {
+		const hostPill = document.createElement('a');
+		hostPill.className = 'tag host';
+		hostPill.href = `/providers?host=${encodeURIComponent(host)}`;
+		hostPill.textContent = host;
+		hostPill.title = `View ${host} profile`;
+		meta.appendChild(hostPill);
+	}
+
+	const peerHint = computePeerHint(it);
+	if (peerHint) {
+		const a = document.createElement('a');
+		a.className = 'peer-hint';
+		a.href = `/arbitrage?focus=${encodeURIComponent(it.serviceName || it.toolName || '')}`;
+		a.title = `${peerHint.count} similar listings, ${peerHint.minLabel}–${peerHint.maxLabel}`;
+		a.textContent = peerHint.label;
+		meta.appendChild(a);
 	}
 
 	const actions = document.createElement('div');
@@ -322,15 +441,78 @@ function openDetails(it) {
 	summary.style.marginBottom = '12px';
 	summary.style.fontSize = '13px';
 	summary.style.color = 'var(--muted)';
+	const host = safeHost(it.resource);
 	summary.innerHTML = `
 		<div><strong style="color:var(--text)">${escape(it.resource)}</strong></div>
 		<div>type: ${escape(it.type)}${it.toolName ? ' · tool: ' + escape(it.toolName) : ''} · method: ${escape(it.method || '')}</div>
 		<div>networks: ${(it.networks || []).map(escape).join(', ')}</div>
 		<div>price: ${escape(it.minPriceLabel || '—')}</div>
-		<div>facilitator: ${escape(safeHost(it.facilitator))}</div>
+		<div>provider: <a href="/providers?host=${encodeURIComponent(host)}">${escape(host)}</a> · facilitator: ${escape(safeHost(it.facilitator))}</div>
 	`;
-	els.modalBody.replaceChildren(summary, pre);
+
+	const ctx = document.createElement('div');
+	ctx.className = 'ctx loading';
+	ctx.innerHTML = `
+		<div class="head">
+			<span class="dot"></span>
+			<span>What's the context?</span>
+		</div>
+		<div class="body">Reading the catalog…</div>
+	`;
+	els.modalBody.replaceChildren(summary, ctx, pre);
 	if (typeof els.modal.showModal === 'function') els.modal.showModal();
+	fetchContext(it, ctx);
+}
+
+async function fetchContext(it, ctxEl) {
+	const params = new URLSearchParams({ resource: it.resource });
+	if (it.toolName) params.set('toolName', it.toolName);
+	try {
+		const r = await fetch(`/api/bazaar/context?${params.toString()}`);
+		const data = await r.json();
+		if (!r.ok) throw new Error(data?.error_description || data?.error || `HTTP ${r.status}`);
+		renderContext(ctxEl, data);
+	} catch (e) {
+		ctxEl.className = 'ctx err';
+		ctxEl.querySelector('.body').textContent = `Couldn't load context: ${e?.message || e}`;
+	}
+}
+
+function renderContext(ctxEl, data) {
+	const sentiment = ['up', 'down'].includes(data.sentiment) ? data.sentiment : 'neutral';
+	const cits = Array.isArray(data.citations) ? data.citations : [];
+	const summaryHtml = renderCitedText(data.summary || '', cits);
+	const stats = data.stats || {};
+	const statBits = [];
+	if (typeof stats.peerCount === 'number') statBits.push(`<strong>${stats.peerCount}</strong> peer${stats.peerCount === 1 ? '' : 's'}`);
+	if (typeof stats.providerSiblingsCount === 'number') statBits.push(`<strong>${stats.providerSiblingsCount}</strong> sibling${stats.providerSiblingsCount === 1 ? '' : 's'}`);
+	if (typeof stats.pricePercentile === 'number') statBits.push(`<strong>P${stats.pricePercentile}</strong> by price`);
+
+	ctxEl.className = 'ctx';
+	ctxEl.innerHTML = `
+		<div class="head">
+			<span class="dot"></span>
+			<span>What's the context?</span>
+			<span class="pill ${sentiment}">${sentiment}</span>
+		</div>
+		<div class="body">${summaryHtml}</div>
+		${statBits.length ? `<div class="stat-row">${statBits.join('<span>·</span>')}</div>` : ''}
+		${cits.length ? `<div class="citations">${cits.map((c, i) => {
+			const ext = c.external ? ' target="_blank" rel="noopener"' : '';
+			return `<a href="${escape(c.url)}"${ext}><strong>[${i + 1}]</strong>${escape(c.label)}</a>`;
+		}).join('')}</div>` : ''}
+	`;
+}
+
+function renderCitedText(text, citations) {
+	const safe = escape(text);
+	return safe.replace(/\[(\d+)\]/g, (_, n) => {
+		const idx = Number(n) - 1;
+		const cit = citations[idx];
+		if (!cit) return `<span class="cite">${n}</span>`;
+		const ext = cit.external ? ' target="_blank" rel="noopener"' : '';
+		return `<a class="cite" href="${escape(cit.url)}"${ext} title="${escape(cit.label)}">${n}</a>`;
+	});
 }
 
 els.modalClose.addEventListener('click', () => els.modal.close());

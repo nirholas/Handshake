@@ -1,6 +1,6 @@
 # Embedding Guide
 
-> **Audience:** Developers and no-code builders who want to add a three.ws to a website, app, or platform.
+> **Audience:** Developers and no-code builders who want to add a three.ws agent to a website, app, or platform.
 
 ---
 

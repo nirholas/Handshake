@@ -262,7 +262,7 @@ Here is the full page. Replace the placeholder values in brackets and swap in yo
       id="maya"
       body="https://yourname.com/avatars/maya.glb"
       agent-id="your-agent-id"
-      brain="claude-opus-4-6"
+      brain="claude-opus-4-7"
       style="height: calc(100% - 130px); display: block"
     ></agent-3d>
 

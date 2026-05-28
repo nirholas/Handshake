@@ -406,7 +406,7 @@ The `config` object is validated against the type's schema (see [widget-types.js
 
 **Widget share URL:** Every widget has a canonical share URL at `https://three.ws/w/<id>`. This URL is server-rendered with Open Graph metadata and a 1200×630 preview image, making it safe to post in Slack, Discord, X, or any link-preview-aware surface.
 
-For the full API reference including request/response shapes, error codes, and pagination, see [API.md](../docs/API.md).
+For the full API reference including request/response shapes, error codes, and pagination, see [api-reference.md](./api-reference.md).
 
 ---
 

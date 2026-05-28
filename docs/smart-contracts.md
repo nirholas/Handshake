@@ -39,7 +39,7 @@ Chains: BSC Testnet (97), Ethereum Sepolia (11155111), Base Sepolia (84532), Arb
 Always read addresses from the SDK rather than hardcoding them:
 
 ```js
-import { REGISTRY_DEPLOYMENTS } from '@3dagent/sdk/erc8004';
+import { REGISTRY_DEPLOYMENTS } from '@three-ws/sdk/erc8004';
 
 const { identityRegistry, reputationRegistry, validationRegistry } =
   REGISTRY_DEPLOYMENTS[chainId];

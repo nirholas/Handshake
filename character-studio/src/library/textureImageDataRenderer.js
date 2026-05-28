@@ -155,6 +155,7 @@ export default class TextureImageDataRenderer {
     this.materials.length = 0
     this.quads.length = 0
     this.renderer?.dispose()
+    this.renderer?.forceContextLoss?.()
     this.renderer = null
     this.rtTexture = null
   }

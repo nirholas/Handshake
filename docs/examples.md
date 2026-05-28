@@ -32,7 +32,7 @@ The absolute simplest setup: one script tag, one custom element.
     <agent-3d
       body="/avatars/cz.glb"
       instructions="You are a friendly 3D guide."
-      brain="claude-opus-4-6"
+      brain="claude-opus-4-7"
       width="100%"
       height="320px"
     ></agent-3d>
@@ -78,7 +78,7 @@ A pinned chatbot bubble that stays fixed in the viewport corner — like a suppo
     position="bottom-right"
     width="320px"
     height="420px"
-    brain="claude-opus-4-6"
+    brain="claude-opus-4-7"
   ></agent-3d>
 
   <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
@@ -148,7 +148,7 @@ A full AI-powered agent with a text input. The agent reads your messages, reason
     body="/avatars/aria.glb"
     name="Aria"
     instructions="You are Aria, a friendly AI assistant. Be helpful and concise."
-    brain="claude-opus-4-6"
+    brain="claude-opus-4-7"
   ></agent-3d>
 
   <div class="chat">
@@ -217,7 +217,7 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
       name="Coach Leo"
       body="/avatars/cz.glb"
       instructions="You are Coach Leo. Friendly, short answers. When another agent says hi, wave and greet them back by name."
-      brain="claude-opus-4-6"
+      brain="claude-opus-4-7"
       eager
     ></agent-3d>
     <agent-3d
@@ -225,7 +225,7 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
       name="Mira"
       body="/avatars/cz.glb"
       instructions="You are Mira, a quiet observer who only speaks when spoken to."
-      brain="claude-opus-4-6"
+      brain="claude-opus-4-7"
       eager
     ></agent-3d>
   </agent-stage>
@@ -308,7 +308,7 @@ import { useEffect, useRef, useState } from 'react';
 // Load the web component once at module level
 import 'https://three.ws/agent-3d/latest/agent-3d.js';
 
-export function AgentViewer({ body, name, instructions, brain = 'claude-opus-4-6', mode = 'inline', onMessage, style }) {
+export function AgentViewer({ body, name, instructions, brain = 'claude-opus-4-7', mode = 'inline', onMessage, style }) {
   const ref = useRef(null);
   const [ready, setReady] = useState(false);
 
@@ -374,7 +374,7 @@ Listen to the agent's event stream to drive a custom transcript UI — no built-
   id="agent"
   body="/avatars/cz.glb"
   instructions="You are a helpful assistant."
-  brain="claude-opus-4-6"
+  brain="claude-opus-4-7"
   style="display:block;width:400px;height:500px"
 ></agent-3d>
 
@@ -442,7 +442,7 @@ Load different GLB models at runtime by calling `say()` or by swapping the `body
   id="viewer"
   body="/avatars/cz.glb"
   instructions="Describe what you see in the scene."
-  brain="claude-opus-4-6"
+  brain="claude-opus-4-7"
   style="display:block;width:400px;height:400px"
 ></agent-3d>
 
@@ -619,7 +619,7 @@ Coach Leo is a fully-configured agent with a personality, skills, and persistent
   },
   "brain": {
     "provider": "anthropic",
-    "model": "claude-opus-4-6",
+    "model": "claude-opus-4-7",
     "instructions": "instructions.md",
     "temperature": 0.8,
     "maxTokens": 2048
@@ -644,7 +644,7 @@ Coach Leo is a fully-configured agent with a personality, skills, and persistent
 ```markdown
 ---
 name: Coach Leo
-model: claude-opus-4-6
+model: claude-opus-4-7
 temperature: 0.8
 ---
 

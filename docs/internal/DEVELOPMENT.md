@@ -22,14 +22,14 @@ Everything you need to know to work on three.ws locally.
 ## Setup
 
 ```bash
-git clone https://github.com/nirholas/3d-agent.git
+git clone https://github.com/nirholas/three.ws.git
 cd 3D-Agent
 npm install
 ```
 
 **Requirements:**
 
-- Node.js ≥ 18
+- Node.js 24.x
 - A browser with WebGL 2.0 support (Chrome, Firefox, Edge)
 
 ---

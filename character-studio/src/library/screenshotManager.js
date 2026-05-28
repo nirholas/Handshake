@@ -62,6 +62,11 @@ class PixelRenderer{
   render(){
     this.composer.render();
   }
+  destroy(){
+    this.composer.dispose?.();
+    this.renderer.dispose();
+    this.renderer.forceContextLoss?.();
+  }
 }
 
 export class ScreenshotManager {
@@ -317,6 +322,14 @@ export class ScreenshotManager {
       const win = window.open(strData, "_blank");
       win.document.write("<title>" + filename + "</title><img src='" + strData + "'/>");
     }
+  }
+
+  destroy() {
+    this.pixelRenderer?.destroy();
+    this.pixelRenderer = null;
+    this.renderer.dispose();
+    this.renderer.forceContextLoss?.();
+    this.renderer = null;
   }
 
 }

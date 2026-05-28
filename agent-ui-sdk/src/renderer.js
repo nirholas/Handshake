@@ -101,6 +101,7 @@ export function createRenderer({
 		window.removeEventListener('resize', resize);
 		if (mouseMoveHandler) window.removeEventListener('mousemove', mouseMoveHandler);
 		renderer.dispose();
+		renderer.forceContextLoss?.();
 		if (ownsCanvas) canvas.remove();
 	}
 

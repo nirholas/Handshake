@@ -45,7 +45,7 @@ A full reputation dashboard â€” showing aggregate stats and all recent reviews â
 ### Via the SDK
 
 ```js
-import { submitReputation } from '@3dagent/sdk/erc8004';
+import { submitReputation } from '@three-ws/sdk/erc8004';
 
 const txHash = await submitReputation({
   chainId: 8453,          // Base mainnet
@@ -84,7 +84,7 @@ The `ReputationDashboard` class ([src/reputation-ui.js](../../src/reputation-ui.
 ### Via the SDK
 
 ```js
-import { getReputation, getRecentReviews } from '@3dagent/sdk/erc8004';
+import { getReputation, getRecentReviews } from '@three-ws/sdk/erc8004';
 
 // Aggregate stats
 const { total, count, average } = await getReputation({

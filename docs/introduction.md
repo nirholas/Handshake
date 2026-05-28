@@ -9,11 +9,13 @@ The result is an agent that doesn't just respond in a chat box. It occupies a th
 **Key facts:**
 
 - **License:** Apache-2.0 — use it, fork it, self-host it
-- **Hosted platform:** [https://three.ws/](https://three.ws/)
-- **CDN library:** `https://three.ws/agent-3d/latest/agent-3d.js`
+- **Hosted platform:** [https://three.ws](https://three.ws)
+- **CDN bundle:** `https://three.ws/agent-3d/latest/agent-3d.js` (also pinnable to a version, e.g. `/agent-3d/1.5.1/agent-3d.js`)
+- **npm packages:** [`@three-ws/sdk`](https://www.npmjs.com/package/@three-ws/sdk), [`@three-ws/agent-ui`](https://www.npmjs.com/package/@three-ws/agent-ui), [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar), [`@three-ws/solana-agent`](https://www.npmjs.com/package/@three-ws/solana-agent), [`@3d-agent/mcp-server`](https://www.npmjs.com/package/@3d-agent/mcp-server)
 - **No server required** for basic use — the viewer, agent runtime, and skill system all run in the browser via WebGL 2.0
 - **glTF 2.0 / GLB** with Draco, KTX2, and Meshopt decompression supported out of the box
-- **AWS Partner** — three.ws is a verified AWS Partner and available on [AWS Marketplace](https://aws.amazon.com/marketplace) as a SaaS product
+- **AWS Partner** — available on [AWS Marketplace](https://aws.amazon.com/marketplace) as a SaaS product, billable through your AWS account
+- **x402 payments** — every paid endpoint discoverable at [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json); MCP server at [`/api/mcp`](https://three.ws/api/mcp)
 
 ---
 
@@ -210,7 +212,8 @@ Once you have the basics working, the following guides go deeper:
 - **[Embedding Guide](./embedding.md)** — all attributes, modes, events, and the JS API
 - **[Widget Types](./widgets.md)** — Turntable, Animation Gallery, Talking Agent, Passport, Hotspot Tour
 - **[Agent System Overview](./agent-system.md)** — runtime, skill registry, memory, emotion system
-- **[Manifest Reference](../specs/AGENT_MANIFEST.md)** — full JSON schema with examples
-- **[API Reference](./api-reference.md)** — complete JS API for `Agent3DElement`
+- **[Manifest Reference](./agent-manifest.md)** — full JSON schema with examples
+- **[REST API](./api-reference.md)** and **[JavaScript API](./js-api.md)** — backend and in-browser surfaces
+- **[Agents vs. avatars](./agents-vs-avatars.md)** — the difference, and when to care
 
-If you want to look at what's already in the hosted platform — browsing agents, using Widget Studio, or registering on-chain — visit [https://three.ws/](https://three.ws/).
+If you want to look at what's already in the hosted platform — browsing agents, using Widget Studio, or registering on-chain — visit [https://three.ws](https://three.ws).

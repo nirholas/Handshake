@@ -1808,12 +1808,56 @@
 			"dest": "/bazaar.html"
 		},
 		{
+			"src": "/arbitrage",
+			"dest": "/arbitrage.html"
+		},
+		{
+			"src": "/arbitrage/",
+			"dest": "/arbitrage.html"
+		},
+		{
+			"src": "/providers",
+			"dest": "/providers.html"
+		},
+		{
+			"src": "/providers/",
+			"dest": "/providers.html"
+		},
+		{
+			"src": "/forever",
+			"dest": "/forever.html"
+		},
+		{
+			"src": "/forever/",
+			"dest": "/forever.html"
+		},
+		{
+			"src": "/api/forever/inscribe",
+			"dest": "/api/forever/inscribe.js"
+		},
+		{
+			"src": "/api/forever/status",
+			"dest": "/api/forever/status.js"
+		},
+		{
 			"src": "/api/bazaar/list",
 			"dest": "/api/bazaar/list.js"
 		},
 		{
 			"src": "/api/bazaar/search",
 			"dest": "/api/bazaar/search.js"
+		},
+		{
+			"src": "/api/bazaar/arbitrage",
+			"dest": "/api/bazaar/arbitrage.js"
+		},
+		{
+			"src": "/api/bazaar/providers",
+			"dest": "/api/bazaar/providers.js"
+		},
+		{
+			"src": "/api/bazaar/context",
+			"dest": "/api/bazaar/context.js"
 		},
 		{
 			"src": "/settings",

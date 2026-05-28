@@ -1,6 +1,10 @@
-# API Reference
+# REST API Reference
 
 Base URL: `https://three.ws/api`
+
+> For the in-browser JavaScript API (the `<agent-3d>` element, `Viewer`, `Runtime`, `SceneController`, skills, memory), see [js-api.md](./js-api.md) and [web-component.md](./web-component.md). For the high-level npm SDK, see [sdk.md](./sdk.md).
+
+The full machine-readable schema lives at [`https://three.ws/.well-known/openapi.yaml`](https://three.ws/.well-known/openapi.yaml). x402 paid endpoints are listed at [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json) and the MCP endpoint is at [`/api/mcp`](https://three.ws/api/mcp).
 
 ---
 
@@ -558,28 +562,60 @@ Usage events (token counts, latency, triggered actions) are recorded after each 
 
 ---
 
-### Anthropic LLM proxy
+### Brain proxy (multi-provider LLM)
+
+```
+POST /api/brain/chat
+```
+
+Server-Sent Events stream from a unified multi-provider LLM gateway. Used by the `<agent-3d>` element when `brain="…"` is set without a custom `key-proxy`. The "we-pay" mode deducts from the agent's monthly token budget and enforces the agent's embed policy (allowed origins, allowed surfaces).
+
+**Request body**
+
+```json
+{
+  "provider": "claude-sonnet-4-6",
+  "messages": [{ "role": "user", "content": "Hello" }],
+  "system": "You are a friendly product guide.",
+  "maxTokens": 1024
+}
+```
+
+**Supported `provider` IDs**
+
+| Provider | Network | Tier |
+|---|---|---|
+| `claude-opus-4-7` | Anthropic | flagship |
+| `claude-sonnet-4-6` | Anthropic | balanced |
+| `claude-haiku-4-5` | Anthropic | fast |
+| `gpt-4o` | OpenAI | flagship |
+| `gpt-4o-mini` | OpenAI | fast |
+| `qwen-*` | Qwen / Alibaba | varies |
+| `openrouter:*` | OpenRouter (any) | varies |
+
+Call `GET /api/brain/chat` for the live list of providers actually available on the current deployment (depends on which provider keys are configured).
+
+**Response (SSE)**
+
+| Event | Payload |
+|---|---|
+| `meta` | `{ provider, label, network, model, tier }` |
+| `first` | `{ firstTokenMs }` |
+| (data) | JSON-encoded text chunk |
+| `done` | `{ elapsedMs, firstTokenMs, usage }` |
+| `error` | `{ message, elapsedMs }` |
+
+**Rate limits:** Per-IP and per-agent limits apply in addition to the standard platform limits. Failed upstream calls automatically fall back to OpenRouter where possible.
+
+---
+
+### Direct Anthropic proxy (legacy)
 
 ```
 POST /api/llm/anthropic?agent=<agent_id>
 ```
 
-"We-pay" proxy to the Anthropic Messages API. Enforces the agent's embed policy (allowed origins, allowed surfaces, brain mode) and deducts from the agent's monthly token budget.
-
-Requires that the calling origin is listed in the agent's declared `origins`. Wildcard patterns are supported.
-
-**Supported models**
-
-| Model ID | Notes |
-|----------|-------|
-| `claude-opus-4-6` | |
-| `claude-opus-4-7` | |
-| `claude-sonnet-4-6` | |
-| `claude-haiku-4-5` | |
-
-Request and response format match the [Anthropic Messages API](https://docs.anthropic.com/en/api/messages) exactly. Upstream errors are sanitized before being returned to the client.
-
-**Rate limits:** Per-IP and per-agent limits apply in addition to the standard platform limits.
+Older single-provider proxy. Request/response shape matches the [Anthropic Messages API](https://docs.anthropic.com/en/api/messages) exactly. New integrations should use `/api/brain/chat` instead — it supports more providers and emits richer events.
 
 ---
 
@@ -975,7 +1011,7 @@ Responses always include `total`, `limit`, and `offset`.
 Use the official SDK instead of raw HTTP calls:
 
 ```js
-import { AgentAPI } from '@3dagent/sdk';
+import { AgentAPI } from '@three-ws/sdk';
 
 const api = new AgentAPI({ apiKey: 'sk_live_xxxxx' });
 

@@ -588,5 +588,5 @@ The web component is the most robust integration point the platform offers. Buil
 ## Next steps
 
 - [Drive the agent with the JavaScript API](/tutorials/js-api-events) — methods and events covered in depth
-- [Embed a three.ws on your website](/tutorials/embed-on-website) — the no-framework paths (Webflow, WordPress, Squarespace) for completeness
+- [Embed a three.ws agent on your website](./embed-on-website.md) — the no-framework paths (Webflow, WordPress, Squarespace) for completeness
 - [Trigger the agent from page events](/tutorials/trigger-from-page-events) — once it's mounted, make it react to the user journey

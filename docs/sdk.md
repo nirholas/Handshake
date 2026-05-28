@@ -5,7 +5,7 @@ This document covers programmatic use of three.ws beyond simple embedding. There
 | Artifact | Package | Use case |
 |---|---|---|
 | **Web component bundle** | `agent-3d.js` (CDN or `TARGET=lib` build) | Drop-in `<agent-3d>` element + programmatic viewer/runtime APIs |
-| **AgentKit SDK** | `@nirholas/agent-kit` | Ship an ERC-8004 agent: chat panel, on-chain registration, `.well-known` manifests |
+| **AgentKit SDK** | `@three-ws/sdk` | Ship an ERC-8004 agent: chat panel, on-chain registration, `.well-known` manifests |
 
 Both are Apache-2.0 licensed. Neither requires the other.
 
@@ -32,7 +32,7 @@ Both are Apache-2.0 licensed. Neither requires the other.
 
 ```bash
 # The main repo — build TARGET=lib yourself, or import src/lib.js directly
-git clone https://github.com/3dagent/3dagent
+git clone https://github.com/nirholas/three.ws
 npm install
 npm run build:lib   # → dist-lib/agent-3d.js + dist-lib/agent-3d.umd.cjs
 ```
@@ -135,14 +135,14 @@ const json = await res.json();
 
 ---
 
-## @nirholas/agent-kit SDK
+## @three-ws/sdk
 
 A separate package for shipping ERC-8004 agents. It does not depend on the viewer — it's backend-friendly and works in any JS environment (Node, browser, edge functions).
 
 ### Installation
 
 ```bash
-npm install @nirholas/agent-kit
+npm install @three-ws/sdk
 ```
 
 `ethers@^6` is a peer dependency — only needed for on-chain operations (`register`, `connectWallet`).
@@ -150,8 +150,8 @@ npm install @nirholas/agent-kit
 ### Quick start
 
 ```js
-import { AgentKit } from '@nirholas/agent-kit';
-import '@nirholas/agent-kit/styles';
+import { AgentKit } from '@three-ws/sdk';
+import '@three-ws/sdk/styles';
 
 const agent = new AgentKit({
   name: 'Aria',
@@ -245,7 +245,7 @@ import {
   IDENTITY_REGISTRY_ABI,
   REGISTRY_DEPLOYMENTS,
   agentRegistryId,
-} from '@nirholas/agent-kit';
+} from '@three-ws/sdk';
 ```
 
 **Connect a wallet:**
@@ -280,7 +280,7 @@ const { agentId, registrationCID, txHash } = await registerAgent({
 Grant, verify, and revoke scoped spending delegations:
 
 ```js
-import { PermissionsClient } from '@nirholas/agent-kit/permissions';
+import { PermissionsClient } from '@three-ws/sdk/permissions';
 
 const client = new PermissionsClient({ baseUrl: 'https://three.ws/' });
 
@@ -315,7 +315,7 @@ For tree-shaking and direct toolkit access:
 import {
   encodeScopedDelegation,
   isDelegationValid,
-} from '@nirholas/agent-kit/permissions/advanced';
+} from '@three-ws/sdk/permissions/advanced';
 ```
 
 ### TypeScript support
@@ -336,7 +336,7 @@ import type {
   PermissionsClient,
   DelegationScope,
   ScopePreset,
-} from '@nirholas/agent-kit';
+} from '@three-ws/sdk';
 
 const options: AgentKitOptions = {
   name: 'Aria',
@@ -353,7 +353,7 @@ const result: RegistrationResult = await agent.register();
 ## Building from source
 
 ```bash
-git clone https://github.com/3dagent/3dagent
+git clone https://github.com/nirholas/three.ws
 npm install
 
 # Build the web component library (agent-3d.js + agent-3d.umd.cjs)

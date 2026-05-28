@@ -1,6 +1,8 @@
-# API Reference
+# JavaScript API Reference
 
-Complete reference for all public classes, methods, and properties in three.ws.
+Complete reference for all public classes, methods, and properties exported by the three.ws web component bundle (`agent-3d.js`).
+
+> For the HTTP/REST surface, see [api-reference.md](./api-reference.md). For the high-level npm SDK, see [sdk.md](./sdk.md). For the `<agent-3d>` element attributes, see [web-component.md](./web-component.md).
 
 ---
 
@@ -322,7 +324,7 @@ Creates the mini axes viewport:
 
 Builds the entire dat.gui panel. On mobile (≤ 700 px), uses 220 px width and starts closed; on desktop, 260 px width and starts open.
 
-See [Architecture: GUI Structure](ARCHITECTURE.md#gui-structure-datgui) for the full folder tree.
+See [Architecture overview](./architecture.md) for the full folder tree.
 
 #### `updateGUI()`
 
