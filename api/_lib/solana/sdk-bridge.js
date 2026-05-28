@@ -8,8 +8,9 @@
 import { PublicKey } from '@solana/web3.js';
 
 let _sdkPromise = null;
+const _pumpSdkId = '@nirholas/pump-sdk';
 async function loadSdk() {
-	if (!_sdkPromise) _sdkPromise = import('@nirholas/pump-sdk');
+	if (!_sdkPromise) _sdkPromise = import(_pumpSdkId);
 	return _sdkPromise;
 }
 
