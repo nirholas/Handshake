@@ -17,6 +17,7 @@
 import { json, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { verifySnsMessage } from '../_lib/aws-marketplace.js';
+import { revokeSubscriptionForCustomer } from '../_lib/aws-marketplace-bridge.js';
 import { env } from '../_lib/env.js';
 
 async function readRawBody(req) {
@@ -98,9 +99,23 @@ export default wrap(async (req, res) => {
 				is_free_trial       = EXCLUDED.is_free_trial,
 				offer_id            = COALESCE(EXCLUDED.offer_id, aws_marketplace_customers.offer_id),
 				subscribed_at       = COALESCE(aws_marketplace_customers.subscribed_at, now()),
+				cancelled_at        = NULL,
 				updated_at          = now()
 		`;
 	} else if (action === 'unsubscribe-success') {
+		// Revoke the x402 bypass key BEFORE flipping status — if the revoke
+		// fails we leave the row 'active' so we can retry from the dead-letter
+		// queue rather than ending up with a cancelled customer who still has
+		// a working key.
+		try {
+			await revokeSubscriptionForCustomer(customerId);
+		} catch (err) {
+			console.error('[aws-marketplace/subscription] revoke failed', {
+				customerId,
+				error: err?.message,
+			});
+			return json(res, 500, { error: 'revoke_failed' });
+		}
 		await sql`
 			UPDATE aws_marketplace_customers
 			SET subscription_status = 'cancelled',
@@ -109,6 +124,14 @@ export default wrap(async (req, res) => {
 			WHERE customer_identifier = ${customerId}
 		`;
 	} else if (action === 'subscribe-fail') {
+		try {
+			await revokeSubscriptionForCustomer(customerId);
+		} catch (err) {
+			console.error('[aws-marketplace/subscription] revoke on fail failed', {
+				customerId,
+				error: err?.message,
+			});
+		}
 		await sql`
 			UPDATE aws_marketplace_customers
 			SET subscription_status = 'expired',
@@ -116,9 +139,16 @@ export default wrap(async (req, res) => {
 			WHERE customer_identifier = ${customerId}
 		`;
 	} else if (action === 'entitlement-updated') {
+		// Contract products use entitlements; usage products ignore this beat.
+		// For both, we touch updated_at so audit queries reflect the event.
+		// If a tier change implies a different rate-limit, the partner will
+		// see it on next /api/x402/* call: lookupSubscription reads the live
+		// rate_limit_per_minute from the row, so a follow-up admin update
+		// (or future per-tier auto-tune) takes effect without a re-issue.
 		await sql`
 			UPDATE aws_marketplace_customers
-			SET updated_at = now()
+			SET offer_id   = COALESCE(${offerId ?? null}, offer_id),
+			    updated_at = now()
 			WHERE customer_identifier = ${customerId}
 		`;
 	}

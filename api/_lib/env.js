@@ -337,6 +337,18 @@ export const env = {
 	get AWS_MP_SNS_TOPIC_ARN() {
 		return opt('AWS_MP_SNS_TOPIC_ARN');
 	},
+	// Rate limit applied to the auto-issued x402 subscription minted when an
+	// AWS Marketplace customer links their account. Tune per-tier by reading
+	// from offer-identifier in subscription.js if you split listings.
+	get AWS_MP_DEFAULT_RATE_LIMIT_PER_MINUTE() {
+		return Number(opt('AWS_MP_DEFAULT_RATE_LIMIT_PER_MINUTE', '600'));
+	},
+	// When set, every successful paid-endpoint call by an AWS Marketplace
+	// subscription fires MeterUsage on this dimension with quantity=1. Leave
+	// blank for Contract products (flat-rate entitlement; no usage metering).
+	get AWS_MP_METERING_DIMENSION() {
+		return opt('AWS_MP_METERING_DIMENSION');
+	},
 
 	// Optional operator EOA private key for scripts/erc8004-mint-bsc.mjs.
 	// Used to register marketplace agents on the BSC IdentityRegistry. Never

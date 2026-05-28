@@ -24,6 +24,7 @@ import {
 	lookupSubscription,
 } from './api-keys.js';
 import { clientIp } from '../rate-limit.js';
+import { meterAwsSubscriptionUsage } from '../aws-marketplace-bridge.js';
 
 const API_KEY_HEADER = 'x-api-key';
 
@@ -153,6 +154,12 @@ export function installAccessControl({ requiredScope, resolveCaller } = {}) {
 				granted: true,
 				meta: { ...meta, remaining: rl.remaining, limit: rl.limit },
 			});
+			// AWS Marketplace customers carry source=aws-marketplace in meta;
+			// when configured for a Usage product, meter the call to AWS so
+			// they're billed for this entitled access.
+			if (sub.meta?.source === 'aws-marketplace') {
+				meterAwsSubscriptionUsage({ subscriptionId: sub.id, route });
+			}
 			return {
 				grantAccess: true,
 				reason: `subscription:${sub.id}`,

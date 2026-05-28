@@ -49,23 +49,89 @@ async function linkSubscription() {
 	if (!resp.ok) throw new Error('link_failed');
 }
 
-function showSuccess() {
+async function issueApiKey() {
+	const resp = await fetch('/api/aws-marketplace/issue-key', {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ customer: customerId }),
+	});
+	if (!resp.ok) return null;
+	const data = await resp.json().catch(() => ({}));
+	return data.subscription || null;
+}
+
+async function linkAndIssue() {
+	await linkSubscription();
+	// Surface the API key alongside success. Failures here are recoverable —
+	// the user can rotate from /api-keys — but log so we notice patterns.
+	try {
+		return await issueApiKey();
+	} catch (err) {
+		console.error('[aws-marketplace/welcome] issueApiKey failed', err);
+		return null;
+	}
+}
+
+function renderApiKey(subscription) {
+	const note = document.getElementById('already-issued-note');
+	// issueApiKey returned null (network/parse error after a successful link):
+	// the customer is fully activated but we couldn't surface the plaintext.
+	// Direct them to the dashboard where they can mint or rotate a key.
+	if (!subscription) {
+		note.style.display = '';
+		return;
+	}
+	const panel = document.getElementById('key-panel');
+
+	if (subscription.token) {
+		document.getElementById('key-value').textContent = subscription.token;
+		panel.style.display = '';
+		const btn = document.getElementById('btn-copy-key');
+		btn.addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(subscription.token);
+				btn.textContent = 'Copied';
+				btn.classList.add('copied');
+				setTimeout(() => {
+					btn.textContent = 'Copy';
+					btn.classList.remove('copied');
+				}, 1800);
+			} catch {
+				// Clipboard API may be blocked — fall back to text selection.
+				const range = document.createRange();
+				range.selectNodeContents(document.getElementById('key-value'));
+				const sel = window.getSelection();
+				sel.removeAllRanges();
+				sel.addRange(range);
+			}
+		});
+	} else if (subscription.alreadyIssued) {
+		note.style.display = '';
+	}
+}
+
+function showSuccess(subscription) {
 	const sub = document.getElementById('linked-sub');
 	if (isTrial) {
-		sub.textContent = 'Your free trial is now active. Usage is metered and billed through AWS once the trial period ends.';
+		sub.textContent = 'Your free trial is active. Use the API key below to call any x402 endpoint. Billing through AWS begins automatically when the trial ends.';
 	}
+	renderApiKey(subscription);
 	show('state-linked');
 }
 
 async function init() {
-	if (!customerId) {
-		showErrorPage('default');
-		return;
-	}
-
+	// register.js redirects to /aws-marketplace/error?reason=... with NO
+	// customer param on token-exchange failures, so the reason check must
+	// come before the missing-customer check.
 	const reason = p.get('reason');
 	if (reason) {
 		showErrorPage(reason);
+		return;
+	}
+
+	if (!customerId) {
+		showErrorPage('default');
 		return;
 	}
 
@@ -92,8 +158,8 @@ async function init() {
 			btn.textContent = 'Linking…';
 			clearErr('err-link');
 			try {
-				await linkSubscription();
-				showSuccess();
+				const sub = await linkAndIssue();
+				showSuccess(sub);
 			} catch {
 				btn.disabled = false;
 				btn.textContent = 'Confirm & activate';
@@ -149,8 +215,8 @@ async function handleSignup(e) {
 		});
 		const data = await resp.json().catch(() => ({}));
 		if (!resp.ok) throw new Error(data.error || data.message || 'Registration failed');
-		await linkSubscription();
-		showSuccess();
+		const sub = await linkAndIssue();
+		showSuccess(sub);
 	} catch (err) {
 		btn.disabled = false;
 		btn.textContent = 'Create account & activate';
@@ -177,8 +243,8 @@ async function handleSignin(e) {
 		});
 		const data = await resp.json().catch(() => ({}));
 		if (!resp.ok) throw new Error(data.error || data.message || 'Sign in failed');
-		await linkSubscription();
-		showSuccess();
+		const sub = await linkAndIssue();
+		showSuccess(sub);
 	} catch (err) {
 		btn.disabled = false;
 		btn.textContent = 'Sign in & activate';

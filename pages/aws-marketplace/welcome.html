@@ -64,6 +64,23 @@
 		#state-linked .sub { margin-bottom: 28px; }
 		#state-linked .btn { max-width: 260px; margin: 0 auto; display: block; }
 
+		/* ── API key reveal ── */
+		.key-panel { text-align: left; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin: 0 0 24px; }
+		.key-panel-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+		.key-panel-label span { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+		.key-panel-label .copy { background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 12px; padding: 5px 10px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+		.key-panel-label .copy:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.3); }
+		.key-panel-label .copy.copied { color: var(--green); border-color: rgba(34,197,94,0.5); }
+		.key-value { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; font-size: 13px; color: var(--text); background: #0a0a0a; border: 1px solid #1c1c1c; border-radius: 8px; padding: 11px 13px; word-break: break-all; user-select: all; }
+		.key-note { font-size: 12px; color: var(--yellow); margin-top: 10px; line-height: 1.5; }
+		.usage { text-align: left; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin: 0 0 24px; }
+		.usage h3 { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+		.usage pre { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; font-size: 12px; color: #cfcfdc; background: #0a0a0a; border: 1px solid #1c1c1c; border-radius: 8px; padding: 11px 13px; overflow-x: auto; line-height: 1.55; }
+		.usage a { color: var(--text); text-decoration: underline; }
+		.linked-actions { display: flex; gap: 10px; max-width: 420px; margin: 0 auto; }
+		.linked-actions .btn { margin: 0; flex: 1; }
+		.already-issued { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 11px 13px; font-size: 13px; color: #fbbf24; margin-bottom: 16px; text-align: left; line-height: 1.5; }
+
 		/* ── error state ── */
 		#state-error { text-align: center; }
 		#state-error .icon { font-size: 40px; margin-bottom: 16px; }
@@ -164,8 +181,31 @@
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</div>
 			<h1>Subscription activated.</h1>
-			<p class="sub" id="linked-sub">Your AWS Marketplace subscription is now linked to your three.ws account. Usage will be metered and billed through AWS.</p>
-			<a href="/dashboard" class="btn">Go to dashboard</a>
+			<p class="sub" id="linked-sub">Your AWS Marketplace subscription is linked to your three.ws account. Use the API key below to call any x402 endpoint — no on-chain payment required.</p>
+
+			<div id="already-issued-note" class="already-issued" style="display:none">
+				Your API key was issued during a previous activation. For security we don't store the plaintext — manage and rotate it from <a href="/api-keys" style="color:inherit;text-decoration:underline">API keys</a>.
+			</div>
+
+			<div id="key-panel" class="key-panel" style="display:none">
+				<div class="key-panel-label">
+					<span>Your API key</span>
+					<button type="button" class="copy" id="btn-copy-key">Copy</button>
+				</div>
+				<div class="key-value" id="key-value"></div>
+				<div class="key-note">Store this somewhere safe — it's shown once and grants every paid call on your AWS subscription. You can rotate it any time from <a href="/api-keys" style="color:inherit;text-decoration:underline">API keys</a>.</div>
+			</div>
+
+			<div class="usage">
+				<h3>Use it</h3>
+<pre>curl https://three.ws/api/x402/agent-reputation?agent_id=&lt;uuid&gt; \
+  -H "x-api-key: x402_live_…"</pre>
+			</div>
+
+			<div class="linked-actions">
+				<a href="/api-keys" class="btn btn-sec">Manage keys</a>
+				<a href="/dashboard" class="btn">Dashboard</a>
+			</div>
 		</div>
 
 		<!-- error -->
