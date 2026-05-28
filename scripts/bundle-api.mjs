@@ -21,6 +21,24 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const API_DIR = resolve(ROOT, 'api');
 
+// The bundler writes output to --outdir=api with --allow-overwrite, i.e. it
+// overwrites every api/*.js source file in place. On Vercel that's fine — the
+// checkout is ephemeral and the bundled output is what gets deployed. Locally
+// it destroys your route sources, and if those get committed the repo balloons
+// by millions of lines (see commits c94190b3 and dabd5884, both reverted).
+// Refuse to run unless we're actually on a CI builder, or the operator opts in.
+const isCiBuild =
+	process.env.VERCEL === '1' ||
+	process.env.NOW_BUILDER === '1' ||
+	process.env.CI === 'true' ||
+	process.env.CI === '1';
+if (!isCiBuild && process.env.FORCE_BUNDLE_API !== '1') {
+	console.log(
+		'[bundle-api] Skipping — not on Vercel/CI. This script overwrites api/*.js in place; running it locally destroys route sources. Set FORCE_BUNDLE_API=1 to override (preferably in a throwaway worktree).'
+	);
+	process.exit(0);
+}
+
 async function collectRouteFiles(dir, out = []) {
 	if (!existsSync(dir)) return out;
 	const entries = await readdir(dir, { withFileTypes: true });
