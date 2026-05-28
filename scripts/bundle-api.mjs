@@ -36,6 +36,14 @@ async function collectRouteFiles(dir, out = []) {
 	return out;
 }
 
+// Externals are NOT inlined into the bundle. esbuild leaves the import
+// statement intact and Vercel's NFT resolves it from node_modules. Mark heavy
+// or lazy-loaded deps as external so:
+//   1. The bundle stays small (faster Vercel function packaging).
+//   2. Dynamic imports stay dynamic at runtime instead of being inlined.
+//      @sentry/node is the biggest offender — sentry.js uses `await import(...)`
+//      to defer the ~15 MB OpenTelemetry instrumentation tree, but esbuild's
+//      --bundle inlines dynamic imports unless the target is external.
 const EXTERNALS = [
 	'sharp', 'canvas', 'fsevents',
 	'@ipshipyard/node-datachannel',
@@ -45,6 +53,12 @@ const EXTERNALS = [
 	'@metaplex-foundation/*',
 	'@bonfida/*',
 	'@pump-fun/*',
+	'@aws-sdk/*',
+	'@sentry/*',
+	'@opentelemetry/*',
+	'@asamuzakjp/*',
+	'@csstools/*',
+	'jsdom',
 	'ethers',
 ];
 
