@@ -8,17 +8,17 @@ Your agent's 3D avatar is what makes it feel real. It is the face people see, th
 
 | Path | Time | Skill required | Best for |
 |------|------|----------------|----------|
-| Photo → Avaturn AI | 3–5 min | None | A realistic avatar that looks like you |
-| Character Studio | 10–20 min | None | A stylized avatar with full creative control |
+| Photo → AI avatar | 3–5 min | None | A realistic avatar that looks like you |
+| Avatar builder | 10–20 min | None | A stylized avatar with full creative control |
 | Upload your own GLB | 1 min | 3D modeling | An existing model from Blender, Mixamo, or any 3D tool |
 
 Pick one and follow its section below. All three paths produce a GLB file that gets saved to your account.
 
 ---
 
-## Path 1: Photo-to-avatar (Avaturn)
+## Path 1: Photo-to-avatar
 
-The fastest way to get a personalized 3D avatar is to take a set of photos and let Avaturn's AI generate a realistic model from them.
+The fastest way to get a personalized 3D avatar is to take a set of photos and let the three.ws AI generate a realistic model from them.
 
 ### What you need
 
@@ -37,7 +37,7 @@ Good lighting and a plain background give the best results. Photos can be JPEG o
 4. Select your preferred **body type** and **avatar style** (v1 = photorealistic, v2 = stylized)
 5. Click **Submit**
 
-The photos are prepared and sent to the Avaturn pipeline. After a brief processing step, an Avaturn editor opens in a modal where you can adjust clothing, accessories, and other details before exporting.
+The photos are prepared and sent to the photo avatar pipeline. After a brief processing step, an avatar editor opens in a modal where you can adjust clothing, accessories, and other details before exporting.
 
 When you click export, the GLB is fetched and saved to your three.ws account automatically.
 
@@ -52,15 +52,15 @@ For developers who want to understand what happens under the hood:
 1. [selfie-capture.js](../src/selfie-capture.js) manages the two-step UI: method choice (camera vs upload) and the three photo slots. It dispatches a `selfie:submit` CustomEvent when all three slots are filled.
 2. [selfie-pipeline.js](../src/selfie-pipeline.js) handles that event: downscales each photo to a max of 1024px, converts to base64 JPEG, then POSTs to `/api/onboarding/avaturn-session` with the photos and body/style preferences.
 3. The API responds with a `session_url`. The page redirects to `/#avatarSession=<encoded url>`.
-4. The main app reads the hash and opens `AvatarCreator` ([src/avatar-creator.js](../src/avatar-creator.js)) with the session URL, which initialises the Avaturn SDK into a modal iframe.
-5. The Avaturn iframe fires a `avatar.exported` postMessage when the user exports. The SDK catches this, fetches the GLB bytes, and calls `onExport(blob)`.
+4. The main app reads the hash and opens `AvatarCreator` ([src/avatar-creator.js](../src/avatar-creator.js)) with the session URL, which initialises the photo avatar SDK into a modal iframe.
+5. The avatar editor iframe fires a `avatar.exported` postMessage when the user exports. The SDK catches this, fetches the GLB bytes, and calls `onExport(blob)`.
 6. [account.js](../src/account.js) → `saveRemoteGlbToAccount()` presigns an upload URL, pushes the GLB to R2 storage, and creates the avatar record.
 
 ---
 
-## Path 2: Character Studio
+## Path 2: Avatar builder
 
-Character Studio is a browser-based avatar builder for full creative control, no photo required.
+The three.ws avatar builder is a browser-based tool for full creative control, no photo required.
 
 ### Access
 
@@ -89,7 +89,7 @@ Character Studio communicates with the parent app via `postMessage`. The message
 
 [avatar-creator.js](../src/avatar-creator.js) listens for this, wraps the `ArrayBuffer` in a `Blob`, and passes it to `saveRemoteGlbToAccount()`.
 
-The Character Studio URL defaults to `http://localhost:5173` for local development. Production deployments configure it via the `VITE_CHARACTER_STUDIO_URL` environment variable.
+The avatar builder URL defaults to `http://localhost:5173` for local development. Production deployments configure it via the `VITE_CHARACTER_STUDIO_URL` environment variable.
 
 ---
 
@@ -113,7 +113,7 @@ The three.ws viewer accepts any valid glTF 2.0 binary (`.glb`) file. If your mod
 | FBX | Blender: File → Import → FBX, then File → Export → glTF 2.0 (.glb) |
 | OBJ | Blender: File → Import → Wavefront, rig if needed, export as glTF |
 | VRM | VRM files are glTF 2.0 under the hood — rename `.vrm` to `.glb` and it loads |
-| Other avatar platforms | Most humanoid avatar tools export GLB and are compatible out of the box |
+| Other avatar platforms | Most humanoid avatar tools (Mixamo, VRoid Hub, etc.) export GLB and are compatible out of the box |
 | FBX via script | `/scripts/convert-fbx-to-glb.py` is available for batch conversion |
 
 ---
@@ -133,24 +133,33 @@ The viewer works with any GLB. The table below shows what each feature needs:
 
 ### Morph target names
 
-The Empathy Layer maps emotions to these exact morph target names. Include them in your model if you want facial animation:
+three.ws follows the **ARKit-52** facial blendshape standard ([Apple ARKit reference](https://developer.apple.com/documentation/arkit/arfaceanchor/blendshapelocation)). Conformant avatars work end-to-end with the Empathy Layer, lip-sync, and any future face-tracking driver. The full canonical name list and runtime resolver live in [src/runtime/arkit52.js](../src/runtime/arkit52.js).
+
+**The Empathy Layer drives this subset:**
 
 | Morph target | Driven by |
 |---|---|
-| `mouthSmile` | Celebration (happiness) |
-| `mouthOpen` | Celebration + talking |
-| `mouthFrown` | Concern |
+| `mouthSmileLeft` / `mouthSmileRight` | Celebration (happiness) |
+| `jawOpen` | Celebration + talking |
+| `mouthFrownLeft` / `mouthFrownRight` | Concern |
+| `mouthPressLeft` / `mouthPressRight` | Uncertain / hedged |
 | `browInnerUp` | Concern + empathy |
-| `browOuterUpLeft` | Curiosity |
-| `browOuterUpRight` | Curiosity (subtler) |
-| `eyeSquintLeft` | Empathy |
-| `eyeSquintRight` | Empathy |
-| `eyesClosed` | Patience (subtle, not full close) |
+| `browOuterUpLeft` / `browOuterUpRight` | Curiosity |
+| `eyeSquintLeft` / `eyeSquintRight` | Empathy |
+| `eyeBlinkLeft` / `eyeBlinkRight` | Patience (subtle) |
 | `cheekPuff` | Celebration |
-| `noseSneerLeft` | Concern |
-| `noseSneerRight` | Concern |
+| `noseSneerLeft` / `noseSneerRight` | Concern |
 
-All influences are lerped smoothly every frame (speed ~4.0). Missing targets are silently skipped — you don't need all of them.
+Visemes (`viseme_aa`, `viseme_E`, `viseme_O`, `viseme_PP` …) drive lip-sync — see [src/runtime/lipsync.js](../src/runtime/lipsync.js).
+
+**Alias resolution.** The runtime accepts these common alternatives and maps them to the canonical name automatically — no need to rename morphs in your DCC:
+
+- `snake_case`: `mouth_smile_left`, `brow_inner_up`, `jaw_open` …
+- `_L` / `_R` suffixes: `mouthSmile_L`, `eyeBlink_R`, `browOuterUp_L` …
+- Combined shapes: a single `mouthSmile` morph fans out to both `mouthSmileLeft` and `mouthSmileRight` slots when the canonical pair is absent.
+- Older shorthand: `mouthOpen` → `jawOpen`, `eyesClosed` → `eyeBlinkLeft` (mirrored).
+
+All influences are lerped smoothly every frame (speed ~4.0). Missing targets are silently skipped — you don't need all 52 to ship an avatar, but the more you implement the richer the expression. Use `conformanceReport()` in [src/runtime/arkit52.js](../src/runtime/arkit52.js) to audit a model.
 
 ### Skeleton naming
 
@@ -294,14 +303,14 @@ window.parent.postMessage({
 }, parentOrigin);
 ```
 
-If your tool uses the Avaturn SDK path, fire the `export` event with `{ url, urlType }` via the Avaturn postMessage protocol. See [avaturn-docs.md](../docs/avaturn-docs.md) for the full Avaturn iframe event reference.
+If your tool uses the photo avatar SDK path, fire the `export` event with `{ url, urlType }` via the photo pipeline postMessage protocol.
 
 ---
 
 ## Troubleshooting
 
 **My avatar loads but has no facial expressions**
-The model is missing morph targets. Export from Blender with "Shape Keys" enabled, or use Character Studio / Avaturn which include blend shapes by default.
+The model is missing morph targets. Export from Blender with "Shape Keys" enabled, or use the three.ws avatar builder or photo pipeline — both include blend shapes by default.
 
 **Head movement doesn't work**
 The skeleton doesn't have a bone named `Head` or `Neck` (or a supported variant). Rename the bone in Blender or your DCC, or check for prefix issues (`mixamorigHead` is fine; `armature_root_Head` is not matched).

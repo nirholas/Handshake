@@ -44,7 +44,7 @@ The `<agent-3d>` element accepts several source forms. Priority when multiple at
 <agent-3d manifest="https://cdn.acme.com/aria/manifest.json"></agent-3d>
 
 <!-- Backend agent ID (platform-hosted) -->
-<agent-three.ws-id="aria-guide"></agent-3d>
+<agent-3d agent-id="aria-guide"></agent-3d>
 
 <!-- Bare GLB — no manifest, viewer mode only -->
 <agent-3d body="./product.glb"></agent-3d>
@@ -97,7 +97,7 @@ const manifest = await loadManifest('https://cdn.acme.com/aria/manifest.json');
 
   "brain": {
     "provider": "anthropic",
-    "model": "claude-opus-4-6",
+    "model": "claude-opus-4-7",
     "instructions": "instructions.md",
     "temperature": 0.7,
     "maxTokens": 4096,
@@ -251,7 +251,7 @@ LLM runtime configuration. When omitted, the agent is reactive-only (skills and 
 | Field          | Type   | Required | Default | Description |
 |----------------|--------|----------|---------|-------------|
 | `provider`     | string | Yes      | `"none"` | `"anthropic"`, `"openai"`, `"local"`, or `"none"`. Use `"none"` for a purely reactive avatar. |
-| `model`        | string | No       | —       | Model ID, e.g. `"claude-opus-4-6"`. |
+| `model`        | string | No       | —       | Model ID, e.g. `"claude-opus-4-7"`. |
 | `instructions` | string | No       | —       | Relative path to a Markdown file (`instructions.md`) that contains the system prompt. Frontmatter in the file can override any `brain.*` field. |
 | `temperature`  | number | No       | 0.7     | LLM sampling temperature (0–1). |
 | `maxTokens`    | number | No       | 4096    | Max tokens per response. |
@@ -262,7 +262,7 @@ LLM runtime configuration. When omitted, the agent is reactive-only (skills and 
 ```markdown
 ---
 name: Coach Leo
-model: claude-opus-4-6
+model: claude-opus-4-7
 temperature: 0.8
 ---
 
@@ -558,7 +558,7 @@ Load it:
   },
   "brain": {
     "provider": "anthropic",
-    "model": "claude-opus-4-6",
+    "model": "claude-opus-4-7",
     "instructions": "instructions.md",
     "temperature": 0.8,
     "maxTokens": 2048
@@ -598,7 +598,7 @@ Load it:
   },
   "brain": {
     "provider": "anthropic",
-    "model": "claude-opus-4-6",
+    "model": "claude-opus-4-7",
     "instructions": "instructions.md"
   },
   "voice": {

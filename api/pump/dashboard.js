@@ -51,6 +51,10 @@ export default wrap(async (req, res) => {
 	const tokenMint = agent.meta?.token?.mint;
 	if (!tokenMint) return error(res, 404, 'token not launched for this agent');
 
+	if (!BIRDEYE_API_KEY) {
+		return error(res, 503, 'not_configured', 'On-chain data provider is not configured');
+	}
+
 	const headers = { 'X-API-KEY': BIRDEYE_API_KEY };
 
 	try {
@@ -61,7 +65,7 @@ export default wrap(async (req, res) => {
 
 		return json(res, 200, {
 			price: price.data,
-			history: history.data.items,
+			history: history?.data?.items ?? [],
 		});
 
 	} catch (e) {

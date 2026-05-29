@@ -192,7 +192,7 @@ Scopes are checked on every request via `hasScope(bearer.scope, 'required:scope'
 
 ## On-chain identity security
 
-The ERC-8004 identity, reputation, and validation registries introduce a distinct security surface. Key threats and mitigations from the [threat model](https://github.com/3dagent/3dagent):
+The ERC-8004 identity, reputation, and validation registries introduce a distinct security surface. Key threats and mitigations from the [threat model](https://github.com/nirholas/three.ws):
 
 ### Model integrity (V2)
 

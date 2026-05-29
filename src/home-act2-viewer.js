@@ -76,6 +76,7 @@ export class Act2Viewer {
 		const ro = new ResizeObserver(() => this._resize());
 		ro.observe(canvas);
 
+		this._disposed = false;
 		this._tick = this._tick.bind(this);
 		requestAnimationFrame(this._tick);
 	}
@@ -92,6 +93,7 @@ export class Act2Viewer {
 	}
 
 	_tick() {
+		if (this._disposed) return;
 		const dt = this._clock.getDelta();
 		if (this.mixer) this.mixer.update(dt);
 		if (this.model && !this._externalOrbit) {
@@ -100,6 +102,13 @@ export class Act2Viewer {
 		}
 		this.renderer.render(this.scene, this.camera);
 		requestAnimationFrame(this._tick);
+	}
+
+	dispose() {
+		this._disposed = true;
+		if (this.mixer) { this.mixer.stopAllAction(); this.mixer = null; }
+		if (this.model) { this.scene.remove(this.model); this.model = null; }
+		this.renderer.dispose();
 	}
 
 	async _loadManifest() {

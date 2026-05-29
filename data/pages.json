@@ -318,6 +318,22 @@
 					"added": "2026-05-25"
 				},
 				{
+					"path": "/arbitrage",
+					"title": "x402 Arbitrage",
+					"description": "Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-05-29"
+				},
+				{
+					"path": "/providers",
+					"title": "x402 Providers",
+					"description": "Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-05-29"
+				},
+				{
 					"path": "/gmgn",
 					"title": "GMGN Smart Money",
 					"description": "Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.",
@@ -348,6 +364,14 @@
 					"priority": 0.8,
 					"changefreq": "weekly",
 					"added": "2026-05-27"
+				},
+				{
+					"path": "/forever",
+					"title": "Forever — etch a message into Bitcoin",
+					"description": "Inscribe a message onto the Bitcoin blockchain. It stays there. Forever.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-05-29"
 				}
 			]
 		},

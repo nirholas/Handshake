@@ -39,7 +39,7 @@ Chains: BSC Testnet (97), Ethereum Sepolia (11155111), Base Sepolia (84532), Arb
 Always read addresses from the SDK rather than hardcoding them:
 
 ```js
-import { REGISTRY_DEPLOYMENTS } from '@3dagent/sdk/erc8004';
+import { REGISTRY_DEPLOYMENTS } from '@three-ws/sdk/erc8004';
 
 const { identityRegistry, reputationRegistry, validationRegistry } =
   REGISTRY_DEPLOYMENTS[chainId];
@@ -52,6 +52,8 @@ Vanity-prefixed CREATE2 deployer used to obtain matching addresses across chains
 | Chain | Address | Deployer EOA |
 |---|---|---|
 | BSC (56) | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` |
+| Base (8453) | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` |
+| Arbitrum One (42161) | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` |
 
 The 8-byte zero prefix (`0x00000000…`) saves calldata gas on every call. Source is `ThreeWSFactory.sol` (solc 0.8.35, optimizer 200 runs, MIT, verified on BscScan).
 

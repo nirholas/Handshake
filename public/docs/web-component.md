@@ -52,7 +52,7 @@ Using `body` with no manifest creates an ad-hoc agent. Its name, instructions, a
   body="/avatars/guide.glb"
   name="Guide"
   instructions="You are a friendly 3D guide."
-  brain="claude-opus-4-6"
+  brain="claude-opus-4-7"
 ></agent-3d>
 ```
 
@@ -74,7 +74,7 @@ Using `body` with no manifest creates an ad-hoc agent. Its name, instructions, a
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `brain` | model ID | from manifest | LLM model to use, e.g. `claude-opus-4-6`. Set to `none` to disable the brain entirely. |
+| `brain` | model ID | from manifest | LLM model to use, e.g. `claude-opus-4-7`. Set to `none` to disable the brain entirely. |
 | `instructions` | URL or inline text | from manifest | System prompt. Can be a URL ending in `.md` or an inline string. Overrides `manifest.brain.instructions`. |
 | `api-key` | string | — | API key injected directly. **Development use only.** Prefer `key-proxy` for any page that will be public. |
 | `key-proxy` | URL | — | URL of your backend that injects API keys into outbound LLM requests. |
@@ -699,7 +699,7 @@ declare namespace JSX {
 }
 
 // Usage
-import '@3dagent/sdk';
+import '@three-ws/sdk';
 
 function AgentCard() {
   return (
@@ -766,7 +766,7 @@ export default defineConfig({
 </template>
 
 <script setup>
-import '@3dagent/sdk';
+import '@three-ws/sdk';
 
 function onReady(e) {
   console.log('ready', e.detail.manifest.name);
@@ -780,7 +780,7 @@ Svelte handles custom elements natively. No configuration needed.
 
 ```svelte
 <script>
-  import '@3dagent/sdk';
+  import '@three-ws/sdk';
   let el;
 
   function onReady(e) {

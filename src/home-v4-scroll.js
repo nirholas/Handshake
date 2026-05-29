@@ -36,7 +36,8 @@ const LOW_MEMORY = typeof navigator.deviceMemory === 'number' && navigator.devic
 		const agentEl = document.querySelector('[data-stat="agents"]');
 		const onchainEl = document.querySelector('[data-stat="onchain"]');
 		if (agentEl && data.agents != null) agentEl.textContent = formatNum(data.agents);
-		if (onchainEl && data.onchain != null) onchainEl.textContent = formatNum(data.onchain);
+		const onchainVal = data.onchain_agents ?? data.onchain;
+		if (onchainEl && onchainVal != null) onchainEl.textContent = formatNum(onchainVal);
 	} catch { /* stats are non-critical enhancement */ }
 })();
 
@@ -53,7 +54,7 @@ function observeViewerVisibility(canvas, viewer) {
 
 	const observer = new IntersectionObserver(
 		(entries) => {
-			visible = entries[0].isIntersecting;
+			visible = entries.at(-1).isIntersecting;
 			if (visible && paused) {
 				paused = false;
 				viewer._clock.start();
@@ -85,7 +86,7 @@ function observeViewerVisibility(canvas, viewer) {
 
 	const observer = new IntersectionObserver(
 		(entries) => {
-			if (entries[0].isIntersecting && !viewer) {
+			if (entries.at(-1).isIntersecting && !viewer) {
 				observer.disconnect();
 				boot();
 			}
@@ -146,7 +147,7 @@ function observeViewerVisibility(canvas, viewer) {
 
 	const observer = new IntersectionObserver(
 		(entries) => {
-			if (entries[0].isIntersecting) {
+			if (entries.at(-1).isIntersecting) {
 				observer.disconnect();
 				boot();
 			}

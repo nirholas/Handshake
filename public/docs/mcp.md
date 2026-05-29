@@ -104,7 +104,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "3dagent": {
       "command": "npx",
-      "args": ["-y", "@3dagent/mcp-server", "--url", "https://three.ws/"]
+      "args": ["-y", "@3d-agent/mcp-server", "--url", "https://three.ws/"]
     }
   }
 }
@@ -349,7 +349,7 @@ Here is a realistic conversation showing how Claude uses the MCP tools end-to-en
 
 1. `get_avatar({ slug: "storm-mage" })` — resolves the UUID and model URL.
 
-2. `validate_model({ url: "https://cdn.three.wsu/…/storm-mage.glb" })` — runs the Khronos validator.
+2. `validate_model({ url: "https://cdn.three.ws/u/…/storm-mage.glb" })` — runs the Khronos validator.
 
    Response:
    ```
@@ -358,7 +358,7 @@ Here is a realistic conversation showing how Claude uses the MCP tools end-to-en
      [WRN] NODE_EMPTY: node "Armature" has no mesh and no children
    ```
 
-3. `inspect_model({ url: "https://cdn.three.wsu/…/storm-mage.glb" })` — structural overview.
+3. `inspect_model({ url: "https://cdn.three.ws/u/…/storm-mage.glb" })` — structural overview.
 
    Response:
    ```
@@ -417,7 +417,7 @@ Tool execution errors (avatar not found, fetch failure, validation library crash
 Clone the repo and start the dev server:
 
 ```bash
-git clone https://github.com/3dagent/3dagent
+git clone https://github.com/nirholas/three.ws
 npm install
 npm run dev
 # MCP endpoint: http://localhost:5173/api/mcp

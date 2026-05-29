@@ -8,7 +8,7 @@ Get a live three.ws on your page in under 10 minutes.
 
 - **Browser:** Chrome 90+, Firefox 89+, or Safari 15+ (WebGL 2.0 required)
 - **A 3D model:** GLB/glTF file. No model yet? Use the sample avatar below.
-- **Node.js 18+:** Only needed if you're running the dev server or building from source.
+- **Node.js 24.x:** Only needed if you're running the dev server or building from source.
 
 ---
 
@@ -27,8 +27,8 @@ The fastest path. No npm, no bundler, no build step.
   </style>
 </head>
 <body>
-  <script type="module" src="https://cdn.three.wsagent-3d.js"></script>
-  <agent-3d body="https://cdn.three.wsmodels/sample-avatar.glb"></agent-3d>
+  <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+  <agent-3d body="https://cdn.three.ws/models/sample-avatar.glb"></agent-3d>
 </body>
 </html>
 ```
@@ -49,16 +49,16 @@ The fastest path. No npm, no bundler, no build step.
 
 ## Option B — npm Install
 
-For projects that have a build step (Vite, Webpack, Create React App, etc.):
+For projects that have a build step (Vite, Webpack, Create React App, Next.js, etc.):
 
 ```bash
-npm install @3dagent/sdk
+npm install @three-ws/sdk
 ```
 
 ### Plain JS / Vite
 
 ```js
-import '@3dagent/sdk'; // registers <agent-3d> as a side effect
+import '@three-ws/sdk'; // registers <agent-3d> as a side effect
 
 // The custom element is now available in HTML, or create it programmatically:
 const agent = document.createElement('agent-3d');
@@ -67,10 +67,10 @@ agent.style.cssText = 'width:400px;height:500px;display:block';
 document.body.appendChild(agent);
 ```
 
-### React
+### React / Next.js
 
 ```jsx
-import '@3dagent/sdk';
+import '@three-ws/sdk';
 
 export function AgentWidget() {
   return (
@@ -82,7 +82,14 @@ export function AgentWidget() {
 }
 ```
 
-React passes unknown attributes to native elements as-is, so all `<agent-3d>` attributes work without wrappers.
+React passes unknown attributes to native elements as-is, so all `<agent-3d>` attributes work without wrappers. In Next.js App Router, mark the importing module as a client component (`'use client'`).
+
+> Other published SDKs you may want alongside `@three-ws/sdk`:
+>
+> - `@three-ws/agent-ui` — pre-built chat panel, voice button, accessory dock
+> - `@three-ws/avatar` — programmatic avatar loader and animator (Node + browser)
+> - `@three-ws/solana-agent` — Solana identity + Metaplex Core helpers
+> - `@3d-agent/mcp-server` — MCP server you point Claude Desktop, Cursor, or Claude Code at
 
 ---
 
@@ -115,7 +122,7 @@ See the [CORS gotcha](#cors) below if your GLB is on a different domain.
 
 ## Adding an AI Brain
 
-The `brain` attribute turns the 3D viewer into a conversational agent. Pass a Claude model ID:
+The `brain` attribute turns the 3D viewer into a conversational agent:
 
 ```html
 <agent-3d
@@ -130,7 +137,7 @@ The `brain` attribute turns the 3D viewer into a conversational agent. Pass a Cl
 
 | Attribute | What it does |
 |-----------|--------------|
-| `brain` | Claude model ID to use for the LLM brain (`claude-sonnet-4-6`, `claude-opus-4-7`, `claude-haiku-4-5-20251001`). Omit for a viewer-only display with no AI. |
+| `brain` | LLM model ID. Anthropic: `claude-sonnet-4-6`, `claude-opus-4-7`, `claude-haiku-4-5`. OpenAI: `gpt-4o`, `gpt-4o-mini`. Omit for a viewer-only display with no AI. |
 | `instructions` | System prompt for the agent's personality and role. |
 | `mode` | Layout mode: `inline` (flows with page content), `floating` (fixed bubble in a corner), `fullscreen`, or `section`. Default: `inline`. |
 
@@ -141,7 +148,7 @@ The chat input and microphone button appear automatically when `brain` is set. T
 If you've registered an agent on the platform, load it by its UUID instead:
 
 ```html
-<agent-three.ws-id="a1b2c3d4-e5f6-7890-abcd-ef1234567890"></agent-3d>
+<agent-3d agent-id="a1b2c3d4-e5f6-7890-abcd-ef1234567890"></agent-3d>
 ```
 
 The element fetches the agent manifest — which includes the model URL, instructions, skills, and memory configuration — from the API. No other attributes needed.
@@ -154,7 +161,7 @@ The fastest path to an embeddable 3D experience is an iframe widget. Build one i
 
 ```html
 <iframe
-  src="https://three.ws/widget#widget=wdgt_YOUR_ID&kiosk=true"
+  src="https://three.ws/app#widget=wdgt_YOUR_ID&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"
@@ -173,7 +180,7 @@ The fastest path to an embeddable 3D experience is an iframe widget. Build one i
 | `passport` | On-chain identity card backed by ERC-8004. |
 | `hotspot-tour` | Annotated 3D scenes with clickable points of interest. |
 
-For the full widget API including `postMessage` events, see the [Widget docs](../WIDGETS.md).
+For the full widget API including `postMessage` events, see the [Widget docs](./widgets.md).
 
 ---
 
@@ -182,8 +189,8 @@ For the full widget API including `postMessage` events, see the [Widget docs](..
 For contributors or self-hosters:
 
 ```bash
-git clone https://github.com/nirholas/3d-agent.git
-cd 3d-agent
+git clone https://github.com/nirholas/three.ws.git
+cd three.ws
 npm install
 cp .env.example .env        # fill in your API keys (see below)
 npm run dev
@@ -256,7 +263,8 @@ The browser's `getUserMedia` API (microphone access for push-to-talk) requires H
 If your page has a strict `Content-Security-Policy`, the script embed needs:
 
 ```
-script-src 'self' https://cdn.three.ws;
+script-src 'self' https://three.ws;
+connect-src 'self' https://three.ws https://cdn.three.ws;
 ```
 
 If you're embedding inside a sandboxed iframe, make sure the parent grants `allow-scripts allow-same-origin`. For sandboxed environments where the script embed won't work, use the iframe widget instead — it runs in its own browsing context and is unaffected by the parent CSP.
@@ -271,7 +279,8 @@ If you're embedding inside a sandboxed iframe, make sure the parent grants `allo
 
 ## Next Steps
 
-- [Embed Guide](../how-it-works.md) — deep dive on attributes, events, and the JS API
-- [Widget Types](../WIDGETS.md) — full reference for iframe embeds and postMessage
-- [Agent System](../ARCHITECTURE.md) — how the brain, memory, and skills layer work
-- [API Reference](../API.md) — backend endpoints for uploading models and managing agents
+- [Embedding Guide](./embedding.md) — deep dive on attributes, events, and the JS API
+- [Widget Types](./widgets.md) — full reference for iframe embeds and postMessage
+- [Agent System](./agent-system.md) — how the brain, memory, and skills layers work
+- [REST API](./api-reference.md) and [JavaScript API](./js-api.md) — backend and in-browser surfaces
+- [SDK Reference](./sdk.md) — `@three-ws/sdk`, `@three-ws/agent-ui`, `@three-ws/avatar`, `@three-ws/solana-agent`

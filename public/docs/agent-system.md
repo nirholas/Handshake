@@ -369,7 +369,7 @@ The minimum manifest to run an agent:
   },
   "brain": {
     "provider": "anthropic",
-    "model": "claude-opus-4-6",
+    "model": "claude-opus-4-7",
     "instructions": "You are Aria, a friendly guide. Be concise and helpful."
   },
   "voice": {
@@ -400,7 +400,7 @@ A manifest with an on-chain identity, external skills, and ElevenLabs voice:
   },
   "brain": {
     "provider": "anthropic",
-    "model": "claude-opus-4-6",
+    "model": "claude-opus-4-7",
     "instructions": "instructions.md",
     "temperature": 0.8
   },

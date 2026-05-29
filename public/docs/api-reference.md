@@ -1,6 +1,10 @@
-# API Reference
+# REST API Reference
 
 Base URL: `https://three.ws/api`
+
+> For the in-browser JavaScript API (the `<agent-3d>` element, `Viewer`, `Runtime`, `SceneController`, skills, memory), see [js-api.md](./js-api.md) and [web-component.md](./web-component.md). For the high-level npm SDK, see [sdk.md](./sdk.md).
+
+The full machine-readable schema lives at [`https://three.ws/.well-known/openapi.yaml`](https://three.ws/.well-known/openapi.yaml). x402 paid endpoints are listed at [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json) and the MCP endpoint is at [`/api/mcp`](https://three.ws/api/mcp).
 
 ---
 
@@ -558,33 +562,60 @@ Usage events (token counts, latency, triggered actions) are recorded after each 
 
 ---
 
-### We-pay LLM proxy
+### Brain proxy (multi-provider LLM)
+
+```
+POST /api/brain/chat
+```
+
+Server-Sent Events stream from a unified multi-provider LLM gateway. Used by the `<agent-3d>` element when `brain="…"` is set without a custom `key-proxy`. The "we-pay" mode deducts from the agent's monthly token budget and enforces the agent's embed policy (allowed origins, allowed surfaces).
+
+**Request body**
+
+```json
+{
+  "provider": "claude-sonnet-4-6",
+  "messages": [{ "role": "user", "content": "Hello" }],
+  "system": "You are a friendly product guide.",
+  "maxTokens": 1024
+}
+```
+
+**Supported `provider` IDs**
+
+| Provider | Network | Tier |
+|---|---|---|
+| `claude-opus-4-7` | Anthropic | flagship |
+| `claude-sonnet-4-6` | Anthropic | balanced |
+| `claude-haiku-4-5` | Anthropic | fast |
+| `gpt-4o` | OpenAI | flagship |
+| `gpt-4o-mini` | OpenAI | fast |
+| `qwen-*` | Qwen / Alibaba | varies |
+| `openrouter:*` | OpenRouter (any) | varies |
+
+Call `GET /api/brain/chat` for the live list of providers actually available on the current deployment (depends on which provider keys are configured).
+
+**Response (SSE)**
+
+| Event | Payload |
+|---|---|
+| `meta` | `{ provider, label, network, model, tier }` |
+| `first` | `{ firstTokenMs }` |
+| (data) | JSON-encoded text chunk |
+| `done` | `{ elapsedMs, firstTokenMs, usage }` |
+| `error` | `{ message, elapsedMs }` |
+
+**Rate limits:** Per-IP and per-agent limits apply in addition to the standard platform limits. Failed upstream calls automatically fall back to OpenRouter where possible.
+
+---
+
+### Direct Anthropic proxy (legacy)
 
 ```
 POST /api/llm/anthropic?agent=<agent_id>
 ```
 
-"We-pay" proxy. Enforces the agent's embed policy (allowed origins, allowed surfaces, brain mode) and deducts from the agent's monthly token budget. The request body is always Anthropic-shape; the server inspects `model` and routes to Anthropic, Groq, or OpenRouter, translating wire formats both ways so the response stream is also Anthropic-shape.
-
-Requires that the calling origin is listed in the agent's declared `origins`. Wildcard patterns are supported.
-
-**Supported models**
-
-| Model ID | Upstream | Cost |
-|----------|----------|------|
-| `meta-llama/llama-3.3-70b-instruct:free` | OpenRouter | free (default) |
-| `openai/gpt-oss-120b:free` | OpenRouter | free |
-| `nousresearch/hermes-3-llama-3.1-405b:free` | OpenRouter | free |
-| `llama-3.3-70b-versatile` | Groq | free, sub-second |
-| `llama-3.1-8b-instant` | Groq | free, fastest |
-| `claude-haiku-4-5-20251001` | Anthropic | paid |
-| `claude-sonnet-4-6` | Anthropic | paid |
-| `claude-opus-4-6` | Anthropic | paid |
-| `claude-opus-4-7` | Anthropic | paid |
-
-Request and response format match the [Anthropic Messages API](https://docs.anthropic.com/en/api/messages) exactly. Free-model routes are translated server-side. Upstream errors are sanitized before being returned to the client.
-
-**Rate limits:** Per-IP and per-agent limits apply in addition to the standard platform limits.
+Older single-provider proxy. Request/response shape matches the [Anthropic Messages API](https://docs.anthropic.com/en/api/messages) exactly. New integrations should use `/api/brain/chat` instead — it supports more providers and emits richer events.
 
 ---
 
@@ -870,6 +901,59 @@ See MCP documentation for full tool schemas and response shapes.
 
 ---
 
+## x402 Paid Endpoints — Sign-In-With-X (SIWX)
+
+Every paid endpoint under `/api/x402/*` is built on the shared `paidEndpoint()` helper. Endpoints can opt into **Sign-In-With-X** (SIWX, CAIP-122) so a wallet that has already paid for a resource can re-access it by signing a message — no second on-chain payment.
+
+### How it works
+
+1. **First call.** The client has no payment header. The server returns a `402 Payment Required` whose body declares both the `accepts[]` payment requirements and a `sign-in-with-x` extension (chain list, signing statement, fresh nonce, `expirationTime`).
+2. **Settle.** The client retries with `X-PAYMENT: <base64>`. The facilitator verifies and settles the USDC transfer. The server records a row in `siwx_payments` keyed by `(resource, address)`.
+3. **Re-access.** Later, the same wallet sends the `SIGN-IN-WITH-X: <base64>` header instead of `X-PAYMENT`. The server parses the CAIP-122 payload, verifies the signature (EIP-191/EIP-1271/EIP-6492 for EVM via viem's `publicClient.verifyMessage`, ed25519 for Solana), checks the nonce against `siwx_nonces` for replay protection, and looks up the grant in `siwx_payments`. On match, the handler runs and the response carries `x-siwx-address: <recovered wallet>` (no `x-payment-response`).
+
+### Opt-in for a new endpoint
+
+Add a single `siwx:` block to `paidEndpoint(spec)`:
+
+```js
+paidEndpoint({
+  route: '/api/x402/my-endpoint',
+  // …other fields…
+  siwx: {
+    statement: 'Sign in to refresh the catalog without re-paying.',
+    ttlSeconds: 24 * 3600,    // grant lifetime; null = permanent
+    expirationSeconds: 300,    // SIWX message validity window
+  },
+});
+```
+
+That single declaration adds the `sign-in-with-x` extension to every 402 body, accepts the `SIGN-IN-WITH-X` header on incoming requests, and records a grant when a fresh settlement completes.
+
+### Canonical example: `/api/x402/asset-download`
+
+The marquee SIWX endpoint. The catalog lives in the Neon `paid_assets` table — each row carries `slug`, `r2_key`, `price_atomics`, `mime_type`, and optional per-creator payout overrides (`creator_payto_base`, `creator_payto_solana`, `creator_payto_bsc`). Buyers pay once per slug; subsequent re-downloads from the same wallet only require a signature. The response is JSON containing a short-lived presigned R2 URL — large GLBs stream directly from R2 instead of through the function.
+
+Each asset has its own SIWX grant key: the endpoint passes a `resourceUrlBuilder` to `paidEndpoint()` that embeds the slug in the resource URI, so paying for one asset does not unlock the others.
+
+### Operator status
+
+`GET /api/x402-status` reports SIWX wiring under `.siwx`:
+
+```json
+{
+  "siwx": {
+    "configured": true,
+    "paymentsRowCount": 42,
+    "noncesRowCount": 17,
+    "evmVerifierConfigured": true
+  }
+}
+```
+
+`evmVerifierConfigured: true` means `BASE_RPC_URL` is set and smart-contract wallet signatures (Coinbase Smart Wallet, Safe) will verify. Without it, only EOA signatures are accepted.
+
+---
+
 ## Config API
 
 ```
@@ -927,7 +1011,7 @@ Responses always include `total`, `limit`, and `offset`.
 Use the official SDK instead of raw HTTP calls:
 
 ```js
-import { AgentAPI } from '@3dagent/sdk';
+import { AgentAPI } from '@three-ws/sdk';
 
 const api = new AgentAPI({ apiKey: 'sk_live_xxxxx' });
 

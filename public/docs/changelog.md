@@ -15,7 +15,7 @@ three.ws follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`
 | **Patch** | Bug fixes with no API changes | `1.5.1` |
 
 **Current platform version:** `1.5.1`  
-**Current SDK version (`@nirholas/agent-kit`):** `0.1.0`
+**Current SDK version (`@three-ws/sdk`):** `0.1.0`
 
 The SDK is versioned independently from the platform. A platform patch release does not necessarily bump the SDK version if no public API changed.
 
@@ -34,7 +34,7 @@ What counts as a breaking change:
 - Removing or renaming a web component attribute or property
 - Changing the agent manifest schema in a non-backwards-compatible way (field removal or rename)
 - Changing an API endpoint path, method, or response shape
-- Removing a public export from `@nirholas/agent-kit`
+- Removing a public export from `@three-ws/sdk`
 
 Adding new optional fields to manifests, new optional API response properties, or new SDK exports is **not** a breaking change.
 
@@ -138,7 +138,7 @@ Entries are organized by release. Categories follow [Keep a Changelog](https://k
 
 ---
 
-## SDK Changelog (`@nirholas/agent-kit`)
+## SDK Changelog (`@three-ws/sdk`)
 
 The SDK is published separately. Its changelog lives at [sdk/CHANGELOG.md](../../sdk/CHANGELOG.md).
 
@@ -165,10 +165,10 @@ The CDN bundle is served from Vercel. The URL includes the version so you can pi
 
 ```html
 <!-- Pinned to 1.5.1 — safe for production; won't break when 2.0.0 releases -->
-<script type="module" src="https://cdn.three.wsagent-3d@1.5.1.js"></script>
+<script type="module" src="https://three.ws/agent-3d/1.5.1/agent-3d.js"></script>
 
 <!-- Always latest stable — convenient for development, risky for production -->
-<script type="module" src="https://cdn.three.wsagent-3d.js"></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 ```
 
 The CDN also maintains rolling channel aliases:
@@ -185,7 +185,7 @@ The CDN also maintains rolling channel aliases:
 Each versioned bundle ships with a `integrity.json` sidecar for [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) verification:
 
 ```
-https://cdn.three.wsagent-3d@1.5.1/integrity.json
+https://three.ws/agent-3d/1.5.1/integrity.json
 ```
 
 ---
@@ -210,7 +210,7 @@ ERC-8004 contracts are immutable after deployment. This is a property of the blo
 
 ```js
 // All deployed contract addresses, by chain ID
-import { REGISTRY_DEPLOYMENTS } from '@nirholas/agent-kit';
+import { REGISTRY_DEPLOYMENTS } from '@three-ws/sdk';
 
 // Base Mainnet
 console.log(REGISTRY_DEPLOYMENTS[8453].identityRegistry);
@@ -250,10 +250,10 @@ Agent manifests carry a `$schema` field that identifies the format version:
 
 ```bash
 # Upgrade to latest
-npm update @nirholas/agent-kit
+npm update @three-ws/sdk
 
 # Pin to a specific version
-npm install @nirholas/agent-kit@0.1.0
+npm install @three-ws/sdk@0.1.0
 ```
 
 ### CDN embed
@@ -264,7 +264,7 @@ Change the version number in the `src` attribute of your script tag. Before upgr
 
 ```js
 // From the SDK
-import { version } from '@nirholas/agent-kit';
+import { version } from '@three-ws/sdk';
 console.log(version); // "0.1.0"
 
 // From the platform API
@@ -299,7 +299,7 @@ For contributors and maintainers. A release follows these steps:
 7. `npm run publish-lib` copies the CDN bundle into `dist/agent-3d/{version}/`, generates an `integrity.json` sidecar with SHA-384 hashes, updates the rolling channel aliases (`1.5`, `1`, `latest`), and writes a `versions.json` manifest.
 8. Vercel auto-deploys from `main` and serves the updated `dist/` directory on the CDN.
 
-The SDK (`@nirholas/agent-kit`) is published to npm separately:
+The SDK (`@three-ws/sdk`) is published to npm separately:
 
 ```bash
 cd sdk && npm publish
@@ -310,5 +310,5 @@ cd sdk && npm publish
 ## Staying Up to Date
 
 - **GitHub Releases** — Watch the repository and select "Releases only" to get an email for each new release.
-- **npm outdated** — Add `npm outdated @nirholas/agent-kit` to your CI pipeline to detect available upgrades automatically.
-- **`versions.json`** — The CDN publishes a machine-readable index at `https://cdn.three.wsagent-3d/versions.json` listing all available versions, channel aliases, and SRI hashes.
+- **npm outdated** — Add `npm outdated @three-ws/sdk` to your CI pipeline to detect available upgrades automatically.
+- **`versions.json`** — The CDN publishes a machine-readable index at `https://three.ws/agent-3d/versions.json` listing all available versions, channel aliases, and SRI hashes.

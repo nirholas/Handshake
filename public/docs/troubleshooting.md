@@ -113,7 +113,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 
 1. Check the `brain` attribute. The agent only activates LLM mode when `brain` is set to a model name:
    ```html
-   <agent-3d brain="claude-opus-4-6" ...></agent-3d>
+   <agent-3d brain="claude-opus-4-7" ...></agent-3d>
    ```
    Without this attribute, `brain.provider` defaults to `none` and the agent uses `NullProvider`, which returns empty responses silently.
 2. Open DevTools → Network. Filter for `/api/chat` or `/api/llm`. Look at the response:

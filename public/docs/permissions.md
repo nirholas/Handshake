@@ -62,11 +62,11 @@ When a skill or agent action requires a delegation that doesn't yet exist, the g
 
 ### Programmatically
 
-Use `encodeScopedDelegation` and `signDelegation` from `@3dagent/sdk/permissions` (or directly from [src/permissions/toolkit.js](../../src/permissions/toolkit.js)):
+Use `encodeScopedDelegation` and `signDelegation` from `@three-ws/sdk/permissions` (or directly from [src/permissions/toolkit.js](../../src/permissions/toolkit.js)):
 
 ```js
-import { encodeScopedDelegation, signDelegation } from '@3dagent/sdk/permissions';
-import { CAVEAT_ENFORCERS } from '@3dagent/sdk/erc7710';
+import { encodeScopedDelegation, signDelegation } from '@three-ws/sdk/permissions';
+import { CAVEAT_ENFORCERS } from '@three-ws/sdk/erc7710';
 import { AbiCoder } from 'ethers';
 
 const CHAIN_ID = 84532; // Base Sepolia
@@ -129,7 +129,7 @@ const res = await fetch('/api/permissions/grant', {
 Skills call `redeemFromSkill` from [src/runtime/delegation-redeem.js](../../src/runtime/delegation-redeem.js). This is the main entrypoint for any on-chain action a skill needs to take:
 
 ```js
-import { redeemFromSkill } from '@3dagent/sdk/runtime';
+import { redeemFromSkill } from '@three-ws/sdk/runtime';
 
 // Inside a skill handler:
 export async function execute_swap({ tokenIn, tokenOut, amount }, ctx) {
@@ -164,7 +164,7 @@ export async function execute_swap({ tokenIn, tokenOut, amount }, ctx) {
 To monitor redemption events:
 
 ```js
-import { subscribeRedeemEvents } from '@3dagent/sdk/runtime';
+import { subscribeRedeemEvents } from '@three-ws/sdk/runtime';
 
 const unsubscribe = subscribeRedeemEvents((event) => {
   console.log(event.type, event.payload);
@@ -181,7 +181,7 @@ const unsubscribe = subscribeRedeemEvents((event) => {
 Mount the panel for an agent:
 
 ```js
-import { mountManagePanel } from '@3dagent/sdk/permissions';
+import { mountManagePanel } from '@three-ws/sdk/permissions';
 
 const { unmount } = mountManagePanel({
   container: document.getElementById('permissions-container'),
@@ -197,7 +197,7 @@ Revoking has two parts: the on-chain transaction and the server-side mirror.
 
 ```js
 import { Contract, BrowserProvider } from 'ethers';
-import { DELEGATION_MANAGER_DEPLOYMENTS, DELEGATION_MANAGER_ABI } from '@3dagent/sdk/erc7710';
+import { DELEGATION_MANAGER_DEPLOYMENTS, DELEGATION_MANAGER_ABI } from '@three-ws/sdk/erc7710';
 
 // 1. Submit disableDelegation on-chain
 const provider = new BrowserProvider(window.ethereum);

@@ -1,6 +1,6 @@
 # Embedding Guide
 
-> **Audience:** Developers and no-code builders who want to add a three.ws to a website, app, or platform.
+> **Audience:** Developers and no-code builders who want to add a three.ws agent to a website, app, or platform.
 
 ---
 
@@ -23,6 +23,18 @@ The `<agent-3d>` custom element is the recommended approach for any page where y
 
 ### Basic setup
 
+Install from npm:
+
+```bash
+npm install three.ws
+```
+
+```js
+import 'three.ws';
+```
+
+Or load via CDN:
+
 ```html
 <!-- 1. Load the library (pinned version + SRI) -->
 <script
@@ -31,6 +43,9 @@ The `<agent-3d>` custom element is the recommended approach for any page where y
   integrity="sha384-…"
   crossorigin="anonymous"
 ></script>
+
+<!-- or via unpkg -->
+<script type="module" src="https://unpkg.com/three.ws"></script>
 
 <!-- 2. Place the element -->
 <agent-3d
@@ -264,7 +279,7 @@ The `allow` attribute controls browser feature access:
 |---------|-----|
 | Backend agent | `/agent/{agent-id}/embed` or `/agent-embed.html?id={agent-id}` |
 | On-chain agent | `/a/{chainId}/{agentId}/embed` |
-| Widget (kiosk) | `/widget#widget={widget-id}&kiosk=true` (slim shell, recommended) or `/app#widget={widget-id}&kiosk=true` (legacy) |
+| Widget (kiosk) | `/app#widget={widget-id}&kiosk=true` |
 | Model viewer only | `/#model={glb-url}` |
 
 ### postMessage protocol

@@ -1,6 +1,6 @@
 # Memory System
 
-Agent memory lets a three.ws remember things between sessions. Without it, every conversation starts fresh — the agent has no idea who you are, what you talked about last time, or what preferences you've stated. With memory, the agent builds up a persistent model of the user and context that it draws on automatically at the start of each conversation.
+Agent memory lets an agent remember things between sessions. Without it, every conversation starts fresh — the agent has no idea who you are, what you talked about last time, or what preferences you've stated. With memory, the agent builds up a persistent model of the user and context that it draws on automatically at the start of each conversation.
 
 This document covers how agent memory works, how to configure storage modes, and how to read and write memories from code.
 

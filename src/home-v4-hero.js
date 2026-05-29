@@ -117,7 +117,7 @@ export class HeroScene {
 
 		this._visibilityObserver = new IntersectionObserver(
 			(entries) => {
-				this._visible = entries[0].isIntersecting;
+				this._visible = entries.at(-1).isIntersecting;
 				if (this._visible && !this._raf) {
 					this._clock.start();
 					this._raf = requestAnimationFrame(this._tick);

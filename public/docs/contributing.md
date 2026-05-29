@@ -31,15 +31,15 @@ You don't have to write code to make an impact. Contributions take many forms:
 
 ### Requirements
 
-- Node.js ≥ 18
-- A browser with WebGL 2.0 (Chrome, Firefox, or Edge)
+- Node.js 24.x (the repo's `engines.node` pins to this)
+- A browser with WebGL 2.0 (Chrome, Firefox, Safari 15+, or Edge)
 
 ### Steps
 
 ```bash
 # 1. Fork the repo on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/3dagent.git
-cd 3dagent
+git clone https://github.com/YOUR_USERNAME/three.ws.git
+cd three.ws
 
 # 2. Install dependencies
 npm install
@@ -262,7 +262,7 @@ The avatar asset library welcomes clothing, hair, accessories, and other charact
 
 ## Reporting Bugs
 
-Open a [GitHub issue](https://github.com/nirholas/3d-agent/issues/new) and include:
+Open a [GitHub issue](https://github.com/nirholas/three.ws/issues/new) and include:
 
 - Browser and OS version
 - Steps to reproduce (numbered, specific)
@@ -271,7 +271,7 @@ Open a [GitHub issue](https://github.com/nirholas/3d-agent/issues/new) and inclu
 - Console errors — screenshot or paste the full message
 - A link to a GLB file that triggers the issue, if relevant
 
-Check [existing issues](https://github.com/nirholas/3d-agent/issues) before opening a new one to avoid duplicates.
+Check [existing issues](https://github.com/nirholas/three.ws/issues) before opening a new one to avoid duplicates.
 
 **Security vulnerabilities:** Do NOT open a public issue. Follow the responsible disclosure process described in the [Security documentation](./security.md). Public disclosure of an unpatched vulnerability puts all users at risk.
 
@@ -279,8 +279,8 @@ Check [existing issues](https://github.com/nirholas/3d-agent/issues) before open
 
 ## Getting Help
 
-- **[GitHub Discussions](https://github.com/nirholas/3d-agent/discussions)** — design questions, architecture ideas, general "how does X work"
-- **[GitHub Issues](https://github.com/nirholas/3d-agent/issues)** — bug reports and concrete feature requests
+- **[GitHub Discussions](https://github.com/nirholas/three.ws/discussions)** — design questions, architecture ideas, general "how does X work"
+- **[GitHub Issues](https://github.com/nirholas/three.ws/issues)** — bug reports and concrete feature requests
 - **Discord** — real-time chat (link in the README)
 
 Core team response times: typically 2–3 business days on GitHub, faster in Discord. If a PR has been open for a week with no review, a polite ping in Discord is welcome.
