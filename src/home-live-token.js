@@ -1,23 +1,21 @@
 /**
  * Live token card (homepage) — real pump.fun token + live buy/sell flow.
  *
- * Picks an actively-trading bonding-curve coin from pump.fun's trending feed,
- * renders it in the token card, then streams its real trades over SSE
- * (/api/pump/trades-stream). Buys render green, sells red. No sample data:
- * every row is a real on-chain trade. Loading, empty, and error states are all
- * designed.
+ * Features a real trending pump.fun coin in the token card, then polls its
+ * recent on-chain trades (/api/pump/coin-trades, proxied from pump.fun's swap
+ * API) and renders them as a live feed: buys green, sells red. No sample data —
+ * every row is a real trade. Loading, empty, and error states are all designed.
  *
- * Graduated coins trade on Raydium, not the bonding curve, so PumpPortal emits
- * no trade events for them — we filter them out and pick a live curve coin.
+ * Polling (not SSE) because pump.fun's per-mint trade websocket no longer
+ * delivers reliably; the REST trades endpoint covers both bonding-curve and
+ * migrated (AMM) trades and is rock-solid.
  */
 
-const TRENDING_URL =
-	'/api/pump/trending?sort=last_trade_timestamp&order=DESC&limit=40';
-const TRENDING_FALLBACK_URL = '/api/pump/trending?limit=40';
-const STREAM_URL = (mint) =>
-	`/api/pump/trades-stream?mint=${encodeURIComponent(mint)}`;
+const TRENDING_URL = '/api/pump/trending?limit=24';
+const TRADES_URL = (mint, limit = 30) =>
+	`/api/pump/coin-trades?mint=${encodeURIComponent(mint)}&limit=${limit}`;
 const MAX_ROWS = 6;
-const RECONNECT_DELAY_MS = 2500;
+const POLL_MS = 4000;
 
 function esc(s) {
 	return String(s ?? '').replace(
@@ -49,7 +47,8 @@ function usdFmt(n) {
 	if (!isFinite(v) || v <= 0) return null;
 	if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
 	if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}K`;
-	return `$${v.toFixed(0)}`;
+	if (v >= 1) return `$${v.toFixed(0)}`;
+	return `$${v.toFixed(2)}`;
 }
 
 function relTime(tsMs) {
@@ -58,32 +57,35 @@ function relTime(tsMs) {
 	if (secs < 60) return `${secs}s ago`;
 	const mins = Math.round(secs / 60);
 	if (mins < 60) return `${mins}m ago`;
-	return `${Math.round(mins / 60)}h ago`;
+	const hrs = Math.round(mins / 60);
+	if (hrs < 24) return `${hrs}h ago`;
+	return `${Math.round(hrs / 24)}d ago`;
 }
 
 class HomeLiveToken {
 	constructor(root) {
 		this.root = root;
+		// The label sits just outside the card container; resolve by id so it
+		// updates too. The rest live inside the card.
+		const q = (id) => root.querySelector(`#${id}`) || document.getElementById(id);
 		this.el = {
-			label: root.querySelector('#hlt-label'),
-			avatar: root.querySelector('#hlt-avatar'),
-			name: root.querySelector('#hlt-name'),
-			ticker: root.querySelector('#hlt-ticker'),
-			price: root.querySelector('#hlt-price'),
-			rows: root.querySelector('#hlt-rows'),
-			link: root.querySelector('#hlt-pump-link'),
+			label: q('hlt-label'),
+			avatar: q('hlt-avatar'),
+			name: q('hlt-name'),
+			ticker: q('hlt-ticker'),
+			price: q('hlt-price'),
+			rows: q('hlt-rows'),
+			link: q('hlt-pump-link'),
 		};
 		this.coin = null;
-		this.es = null;
-		this.trades = []; // { isBuy, sol, usd, trader, ts, sig }
-		this.firstMc = null;
-		this.lastMc = null;
-		this.reconnectTimer = null;
+		this.trades = []; // { isBuy, sol, usd, price, trader, ts, tx }
+		this.seen = new Set();
+		this.pollTimer = null;
 		this.tickTimer = null;
+		this.failCount = 0;
 		this.visible = false;
 		this.destroyed = false;
 		this.started = false;
-		this.idleTimer = null;
 	}
 
 	async start() {
@@ -100,7 +102,7 @@ class HomeLiveToken {
 			this.coin = coin;
 			this._renderHeader(coin);
 			this._armIdleState();
-			this._connect();
+			this._poll();
 			this.tickTimer = setInterval(() => this._refreshTimes(), 4000);
 		} catch {
 			if (!this.destroyed) this._renderError('Could not reach the live feed.');
@@ -108,101 +110,89 @@ class HomeLiveToken {
 	}
 
 	async _pickCoin() {
-		const pick = (arr) => {
-			const list = Array.isArray(arr) ? arr : arr?.coins || [];
-			const live = list.filter(
-				(c) => c && c.mint && c.symbol && !c.complete && !c.raydium_pool,
-			);
-			live.sort(
-				(a, b) =>
-					(b.last_trade_timestamp || 0) - (a.last_trade_timestamp || 0),
-			);
-			return live[0] || list.find((c) => c && c.mint && c.symbol) || null;
-		};
-		const r1 = await fetch(TRENDING_URL, { headers: { accept: 'application/json' } });
-		if (r1.ok) {
-			const got = pick(await r1.json());
-			if (got && !got.complete) return got;
-			// Older proxy ignores the sort param and returns graduated whales.
-			// Retry the plain list and keep whichever has a live bonding curve.
-			const r2 = await fetch(TRENDING_FALLBACK_URL, {
-				headers: { accept: 'application/json' },
+		let r;
+		try {
+			r = await fetch(TRENDING_URL, { headers: { accept: 'application/json' } });
+		} catch {
+			return null;
+		}
+		if (!r.ok) return null;
+		const data = await r.json();
+		const list = Array.isArray(data) ? data : data?.coins || [];
+		// Prefer a coin with an image and a real market cap; fall back to any with
+		// a mint + symbol so the card is never empty.
+		const usable = list.filter((c) => c && c.mint && c.symbol);
+		const withImg = usable.filter((c) => c.image_uri);
+		return withImg[0] || usable[0] || null;
+	}
+
+	// ── Polling ─────────────────────────────────────────────────────────────────
+
+	_poll() {
+		if (this.destroyed || !this.coin) return;
+		clearTimeout(this.pollTimer);
+		this._fetchTrades().finally(() => {
+			if (this.destroyed || !this.visible) return;
+			this.pollTimer = setTimeout(() => this._poll(), POLL_MS);
+		});
+	}
+
+	async _fetchTrades() {
+		let resp;
+		try {
+			resp = await fetch(TRADES_URL(this.coin.mint), { headers: { accept: 'application/json' } });
+		} catch {
+			this._onPollFail();
+			return;
+		}
+		if (!resp.ok) {
+			this._onPollFail();
+			return;
+		}
+		let data;
+		try {
+			data = await resp.json();
+		} catch {
+			this._onPollFail();
+			return;
+		}
+		const incoming = Array.isArray(data?.trades) ? data.trades : [];
+		this.failCount = 0;
+		this._ingest(incoming);
+	}
+
+	_onPollFail() {
+		this.failCount += 1;
+		// Only surface an error once we've truly failed repeatedly and have nothing
+		// to show — a single blip shouldn't wipe a populated feed.
+		if (this.failCount >= 3 && !this.trades.length) {
+			this._renderError('Live trades are momentarily unavailable.');
+		}
+	}
+
+	_ingest(incoming) {
+		// Upstream returns newest-first. Add any unseen trades, keep newest MAX_ROWS.
+		const fresh = [];
+		for (const t of incoming) {
+			if (!t.tx || this.seen.has(t.tx)) continue;
+			this.seen.add(t.tx);
+			fresh.push({
+				isBuy: t.is_buy === true,
+				sol: Number(t.sol_amount) || 0,
+				usd: t.usd_amount != null ? Number(t.usd_amount) : null,
+				price: t.price_usd != null ? Number(t.price_usd) : null,
+				trader: t.user || '',
+				ts: t.timestamp ? Date.parse(t.timestamp) : Date.now(),
+				tx: t.tx,
 			});
-			if (r2.ok) {
-				const alt = pick(await r2.json());
-				if (alt) return alt;
-			}
-			return got;
 		}
-		return null;
-	}
-
-	// ── Connection ────────────────────────────────────────────────────────────
-
-	_connect() {
-		if (this.destroyed || !this.coin || !this.visible) return;
-		this._teardownStream();
-		const es = new EventSource(STREAM_URL(this.coin.mint));
-		this.es = es;
-		es.addEventListener('trade', (e) => {
-			try {
-				this._onTrade(JSON.parse(e.data));
-			} catch {
-				/* malformed frame — skip */
-			}
-		});
-		es.addEventListener('close', () => this._scheduleReconnect());
-		es.onerror = () => {
-			// EventSource auto-retries, but the server caps stream duration; force a
-			// clean reconnect so we don't sit on a dead socket.
-			this._scheduleReconnect();
-		};
-	}
-
-	_scheduleReconnect() {
-		this._teardownStream();
-		if (this.destroyed || !this.visible) return;
-		clearTimeout(this.reconnectTimer);
-		this.reconnectTimer = setTimeout(() => this._connect(), RECONNECT_DELAY_MS);
-	}
-
-	_teardownStream() {
-		if (this.es) {
-			try {
-				this.es.close();
-			} catch {
-				/* already closed */
-			}
-			this.es = null;
-		}
-		clearTimeout(this.reconnectTimer);
-	}
-
-	_onTrade(d) {
-		if (this.destroyed) return;
-		const sol =
-			typeof d.sol_amount === 'number'
-				? d.sol_amount
-				: typeof d.solAmount === 'number'
-					? d.solAmount
-					: 0;
-		if (sol <= 0) return;
-		const isBuy = d.is_buy === true || d.txType === 'buy' || d.tx_type === 'buy';
-		const mc = typeof d.market_cap_usd === 'number' ? d.market_cap_usd : null;
-		if (mc) {
-			if (this.firstMc == null) this.firstMc = mc;
-			this.lastMc = mc;
-		}
-		this.trades.unshift({
-			isBuy,
-			sol,
-			usd: typeof d.sol_value_usd === 'number' ? d.sol_value_usd : null,
-			trader: d.trader || d.traderPublicKey || '',
-			ts: Date.now(),
-			sig: d.signature || d.tx_signature || '',
-		});
-		if (this.trades.length > MAX_ROWS) this.trades.length = MAX_ROWS;
-		clearTimeout(this.idleTimer);
+		if (!fresh.length && this.trades.length) return;
+		// Merge, sort newest-first, cap.
+		this.trades = [...fresh, ...this.trades]
+			.sort((a, b) => b.ts - a.ts)
+			.slice(0, MAX_ROWS);
+		// Keep the seen-set from growing unbounded.
+		if (this.seen.size > 400) this.seen = new Set(this.trades.map((t) => t.tx));
 		this._renderRows();
 		this._renderPrice();
 	}
@@ -238,8 +228,7 @@ class HomeLiveToken {
 		if (this.el.avatar) {
 			const img = coin.image_uri;
 			if (img) {
-				this.el.avatar.innerHTML = '';
-				this.el.avatar.style.background = '#111';
+				this.el.avatar.textContent = '';
 				const im = new Image();
 				im.src = img;
 				im.alt = name;
@@ -264,17 +253,24 @@ class HomeLiveToken {
 	_renderPrice() {
 		const p = this.el.price;
 		if (!p) return;
-		if (this.firstMc != null && this.lastMc != null && this.firstMc > 0) {
-			const pct = ((this.lastMc - this.firstMc) / this.firstMc) * 100;
-			const up = pct >= 0;
-			p.textContent = `${up ? '+' : ''}${pct.toFixed(1)}%`;
-			p.className = `token-price ${up ? 'up' : 'down'}`;
-			p.title = 'Change since this card started streaming';
-		} else {
-			const mc = usdFmt(this.coin?.usd_market_cap);
-			p.textContent = mc ? `${mc} MC` : 'Live';
-			p.className = 'token-price';
+		// Recent price change from the trades we're showing (newest vs oldest in
+		// the live window). Real, derived from on-chain prices.
+		const priced = this.trades.filter((t) => t.price > 0);
+		if (priced.length >= 2) {
+			const newest = priced[0].price;
+			const oldest = priced[priced.length - 1].price;
+			if (oldest > 0) {
+				const pct = ((newest - oldest) / oldest) * 100;
+				const up = pct >= 0;
+				p.textContent = `${up ? '+' : ''}${pct.toFixed(1)}%`;
+				p.className = `token-price ${up ? 'up' : 'down'}`;
+				p.title = 'Price change across the latest trades';
+				return;
+			}
 		}
+		const mc = usdFmt(this.coin?.usd_market_cap);
+		p.textContent = mc ? `${mc} MC` : 'Live';
+		p.className = 'token-price';
 	}
 
 	_renderRows() {
@@ -341,17 +337,16 @@ class HomeLiveToken {
 		this.visible = v;
 		if (v) {
 			if (!this.started) this.start();
-			else if (!this.es) this._connect();
+			else this._poll();
 		} else {
-			this._teardownStream();
+			clearTimeout(this.pollTimer);
 		}
 	}
 
 	destroy() {
 		this.destroyed = true;
-		this._teardownStream();
+		clearTimeout(this.pollTimer);
 		clearInterval(this.tickTimer);
-		clearTimeout(this.idleTimer);
 	}
 }
 
