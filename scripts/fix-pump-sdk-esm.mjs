@@ -90,8 +90,11 @@ if (existsSync(pumpSwapPkgPath)) {
 		writeFileSync(pumpSwapPkgPath, JSON.stringify(pkg, null, 2) + '\n');
 		pumpSwapPatched = true;
 		patched++;
-	} else if (pkg.type !== 'module' && (head.includes('export ') || head.includes('import '))) {
-		// Old layout: ESM main entry needs the module flag.
+	} else if (pkg.type !== 'module' && !importTargetHasMarker && /(^|\n)\s*(export|import)[\s{*]/.test(head)) {
+		// Old layout: the single ESM main entry needs the module flag. Guarded by
+		// !importTargetHasMarker so this never fires on the new layout (which keeps
+		// its ESM entry under a marked dist/esm/) — otherwise removing the root
+		// "type":"module" above and re-adding it here would flip-flop every run.
 		pkg.type = 'module';
 		writeFileSync(pumpSwapPkgPath, JSON.stringify(pkg, null, 2) + '\n');
 		pumpSwapPatched = true;

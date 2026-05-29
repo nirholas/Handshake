@@ -127,6 +127,14 @@ function esbuildArgs(files) {
 		'--platform=node',
 		'--target=node20',
 		'--format=esm',
+		// Some bundled CJS deps call `require("url")` (and other Node built-ins)
+		// internally. esbuild inlines those into the ESM output behind a
+		// `__require` shim that THROWS "Dynamic require of \"url\" is not
+		// supported" because bare ESM has no `require` in scope. Marking the
+		// offending packages external is whack-a-mole (the call sites live deep
+		// in transitive CJS deps, not just @x402). Inject a real CommonJS
+		// `require` via createRequire so the shim resolves built-ins natively.
+		`--banner:js=import { createRequire as __createRequireForBundle } from 'node:module'; const require = __createRequireForBundle(import.meta.url);`,
 		`--outdir=${API_DIR}`,
 		`--outbase=${API_DIR}`,
 		'--allow-overwrite',

@@ -59,7 +59,19 @@ function clampTemp(n, fallback = 0.7) {
 // ── Claude leg ────────────────────────────────────────────────────────────────
 
 async function callClaude({ prompt, max_tokens, temperature }) {
-	const key = env.ANTHROPIC_API_KEY; // throws if unset — caller wraps
+	// ANTHROPIC_API_KEY is optional (env.opt) — skip the doomed request and
+	// report the missing-key state so the comparison still shows the Livepeer leg.
+	const key = env.ANTHROPIC_API_KEY;
+	if (!key) {
+		return {
+			ok: false,
+			network: 'Anthropic',
+			model: CLAUDE_MODEL,
+			latency_ms: 0,
+			error: 'missing_api_key',
+			upstream_body: 'ANTHROPIC_API_KEY is not configured',
+		};
+	}
 	const t0 = Date.now();
 	const upstream = await fetch('https://api.anthropic.com/v1/messages', {
 		method: 'POST',

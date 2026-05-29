@@ -340,17 +340,17 @@ export default wrap(async (req, res) => {
 
 		// OpenRouter (and some OpenAI-compatible endpoints) reject tool-augmented
 		// requests for models whose backing provider has no function-calling
-		// support, with a 404 "No endpoints found that support tool use". Retry
-		// once on the same route without the action tools so the chat still
-		// answers — it just can't drive 3D viewer actions for that model.
-		if (upstream.status === 404 && includeTools && route.style === 'openai') {
+		// support, with a 404 "No endpoints found that support tool use".
+		// Strategy: (1) first retry same route without tools; (2) if that also
+		// 404s — or if tools weren't the issue — fall over to the next provider.
+		if (upstream.status === 404 && route.style === 'openai') {
 			const text = await upstream.text().catch(() => '');
-			if (/tool[\s-]?use|support tools|require_parameters/i.test(text)) {
+			if (includeTools && /tool[\s-]?use|support tools|require_parameters/i.test(text)) {
 				console.warn(`[chat:${route.name}] ${route.model} has no tool-capable endpoint — retrying without action tools`);
 				includeTools = false;
 				continue;
 			}
-			// Not a tool-use rejection: try the next provider, else surface it.
+			// Already tried without tools, or non-tool-use 404 — fall over to next provider.
 			if (routeIdx + 1 < fallbackRoutes.length) {
 				console.warn(`[chat:${route.name}] 404 — falling over to ${fallbackRoutes[routeIdx + 1].name}/${fallbackRoutes[routeIdx + 1].model}: ${text.slice(0, 120)}`);
 				routeIdx++;
