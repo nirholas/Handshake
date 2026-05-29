@@ -81,6 +81,7 @@ const EXTERNALS = [
 	'@csstools/*',
 	'@neynar/*',
 	'@upstash/*',
+	'@sparticuz/*',
 	'jsdom',
 	'ethers',
 	'elevenlabs',

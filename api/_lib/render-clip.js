@@ -14,8 +14,9 @@
 // MCP tool, the OG card, and any future video renderer share lighting +
 // framing.
 
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium-min';
+// puppeteer-core + @sparticuz/chromium-min are loaded lazily inside getBrowser()
+// so Vercel's NFT doesn't statically trace the chromium tree for every route
+// that transitively imports this module — that trace caused 45-min build hangs.
 import { env } from './env.js';
 import { PRESETS } from '../../src/pose-presets.js';
 
@@ -28,6 +29,10 @@ let _browserPromise = null;
 async function getBrowser() {
 	if (_browserPromise) return _browserPromise;
 	_browserPromise = (async () => {
+		const [{ default: puppeteer }, { default: chromium }] = await Promise.all([
+			import('puppeteer-core'),
+			import('@sparticuz/chromium-min'),
+		]);
 		const executablePath = await chromium.executablePath(CHROMIUM_PACK);
 		return puppeteer.launch({
 			args: chromium.args,

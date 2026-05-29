@@ -25,6 +25,11 @@ agent-voice-chat
 agent-protocol-sdk
 vendor
 
+infra
+crates
+experiments
+scratch
+
 dist-lib
 dist-artifact
 

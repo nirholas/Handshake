@@ -22,8 +22,9 @@
 //   to the avatar (appearance, GLB, etc.) automatically bust the cache.
 
 import { createHash } from 'node:crypto';
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium-min';
+// puppeteer-core + @sparticuz/chromium-min are loaded lazily inside getBrowser()
+// so Vercel's NFT does not statically trace the chromium binary tree on every
+// route in this function package — that trace was the 45-min build timeout.
 import { cors, error, json, wrap } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { getAvatar } from '../_lib/avatars.js';
@@ -247,6 +248,10 @@ let _browserPromise = null;
 async function getBrowser() {
 	if (_browserPromise) return _browserPromise;
 	_browserPromise = (async () => {
+		const [{ default: puppeteer }, { default: chromium }] = await Promise.all([
+			import('puppeteer-core'),
+			import('@sparticuz/chromium-min'),
+		]);
 		const executablePath = await chromium.executablePath(CHROMIUM_PACK);
 		return puppeteer.launch({
 			args: chromium.args,
