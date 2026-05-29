@@ -11,11 +11,12 @@
  * JS file BEFORE Vercel sees them. The bundled files have all deps inlined;
  * nft finds nothing external to trace — drops from ~45 min to under 3 min.
  */
-import { readdir, stat } from 'fs/promises';
+import { readdir, stat, readFile } from 'fs/promises';
 import { resolve, join, dirname, relative } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import { execFileSync } from 'child_process';
+import { createHash } from 'crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -71,25 +72,43 @@ const EXTERNALS = [
 	'@metaplex-foundation/*',
 	'@bonfida/*',
 	'@pump-fun/*',
+	'@nirholas/*',
+	'@coral-xyz/*',
 	'@aws-sdk/*',
 	'@sentry/*',
 	'@opentelemetry/*',
 	'@asamuzakjp/*',
 	'@csstools/*',
+	'@neynar/*',
+	'@upstash/*',
 	'jsdom',
 	'ethers',
+	'elevenlabs',
+	'playwright',
+	'playwright-core',
+	'puppeteer',
+	'puppeteer-core',
+	'puppeteer-extra',
+	'puppeteer-extra-plugin-stealth',
+	'puppeteer-extra-plugin-*',
 ];
 
-const start = Date.now();
-const routeFiles = await collectRouteFiles(API_DIR);
-const BATCH_SIZE = 20;
-const totalBatches = Math.ceil(routeFiles.length / BATCH_SIZE);
-console.log(`[bundle-api] Bundling ${routeFiles.length} route files in ${totalBatches} batches...`);
+// Hash every source file BEFORE bundling. After bundling, any file whose
+// content still matches its pre-bundle hash was untouched by esbuild — Vercel's
+// NFT would then trace it against the full ~2 GB node_modules tree, blowing the
+// 45 min build timeout. Fail the build instead so the next deploy points at the
+// real cause within minutes instead of after a 45-minute hang.
+async function hashFile(path) {
+	try {
+		const buf = await readFile(path);
+		return createHash('sha256').update(buf).digest('hex');
+	} catch {
+		return null;
+	}
+}
 
-let errors = 0;
-for (let i = 0; i < routeFiles.length; i += BATCH_SIZE) {
-	const batch = routeFiles.slice(i, i + BATCH_SIZE);
-	const args = [
+function esbuildArgs(files) {
+	return [
 		'--bundle',
 		'--platform=node',
 		'--target=node20',
@@ -104,29 +123,95 @@ for (let i = 0; i < routeFiles.length; i += BATCH_SIZE) {
 		'--log-override:duplicate-object-key=silent',
 		'--log-override:equals-negative-zero=silent',
 		...EXTERNALS.map((e) => `--external:${e}`),
-		...batch,
+		...files,
 	];
+}
+
+function runEsbuild(files, timeoutMs) {
+	execFileSync(resolve(ROOT, 'node_modules/.bin/esbuild'), esbuildArgs(files), {
+		cwd: ROOT,
+		stdio: ['ignore', 'pipe', 'pipe'],
+		timeout: timeoutMs,
+		maxBuffer: 10 * 1024 * 1024,
+	});
+}
+
+const start = Date.now();
+const routeFiles = await collectRouteFiles(API_DIR);
+const BATCH_SIZE = 20;
+const totalBatches = Math.ceil(routeFiles.length / BATCH_SIZE);
+console.log(`[bundle-api] Bundling ${routeFiles.length} route files in ${totalBatches} batches...`);
+
+const preHashes = new Map();
+await Promise.all(routeFiles.map(async (f) => preHashes.set(f, await hashFile(f))));
+
+let batchErrors = 0;
+let individualRetries = 0;
+const individualFailures = [];
+
+for (let i = 0; i < routeFiles.length; i += BATCH_SIZE) {
+	const batch = routeFiles.slice(i, i + BATCH_SIZE);
+	const batchIdx = Math.floor(i / BATCH_SIZE) + 1;
 	try {
-		execFileSync(resolve(ROOT, 'node_modules/.bin/esbuild'), args, {
-			cwd: ROOT,
-			stdio: ['ignore', 'pipe', 'pipe'],
-			timeout: 60_000,
-			maxBuffer: 10 * 1024 * 1024,
-		});
+		runEsbuild(batch, 90_000);
 		process.stdout.write('.');
 	} catch (err) {
 		process.stdout.write('!');
-		errors++;
-		const stderr = err.stderr?.toString().trim();
-		const short = stderr
-			? stderr.split('\n').filter((l) => l.includes('ERROR')).slice(0, 3).join('\n  ') || stderr.slice(0, 200)
-			: err.message;
-		console.error(`\n[bundle-api] Batch ${i}–${i + BATCH_SIZE} failed:\n  ${short}`);
+		batchErrors++;
+		const stderr = err.stderr?.toString().trim() || err.message || '';
+		const short = stderr.split('\n').filter((l) => l.includes('ERROR')).slice(0, 5).join('\n  ') || stderr.slice(0, 400);
+		console.error(`\n[bundle-api] Batch ${batchIdx}/${totalBatches} failed — retrying individually:\n  ${short}`);
+		// Retry each file in the failed batch on its own so one bad file
+		// doesn't poison the other 19. Anything still failing is definitively
+		// unbundled and will block the build below.
+		for (const file of batch) {
+			individualRetries++;
+			try {
+				runEsbuild([file], 30_000);
+			} catch (singleErr) {
+				const ss = singleErr.stderr?.toString().trim() || singleErr.message || '';
+				const sshort = ss.split('\n').filter((l) => l.includes('ERROR')).slice(0, 3).join('\n    ') || ss.slice(0, 300);
+				individualFailures.push({ file: relative(ROOT, file), error: sshort });
+			}
+		}
+	}
+}
+
+const stillRaw = [];
+for (const f of routeFiles) {
+	const before = preHashes.get(f);
+	const after = await hashFile(f);
+	if (before && after && before === after) {
+		stillRaw.push(relative(ROOT, f));
 	}
 }
 
 const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 const sizes = await Promise.all(routeFiles.map(async (f) => (await stat(f)).size));
 const totalKB = (sizes.reduce((s, n) => s + n, 0) / 1024).toFixed(0);
-console.log(`\n[bundle-api] Done in ${elapsed}s — ${routeFiles.length} files, ${totalKB} KB total${errors ? ` (${errors}/${totalBatches} batch errors — unbundled files traced by NFT normally)` : ''}`);
-if (errors > totalBatches / 2) process.exit(1);
+console.log(
+	`\n[bundle-api] Done in ${elapsed}s — ${routeFiles.length} files, ${totalKB} KB` +
+		(batchErrors ? `, ${batchErrors}/${totalBatches} batch errors (${individualRetries} individual retries)` : '') +
+		(individualFailures.length ? `, ${individualFailures.length} routes still failing` : '') +
+		(stillRaw.length ? `, ${stillRaw.length} routes left as raw source` : '')
+);
+
+if (individualFailures.length) {
+	console.error(`\n[bundle-api] FAILED — ${individualFailures.length} routes could not be bundled:`);
+	for (const { file, error } of individualFailures.slice(0, 25)) {
+		console.error(`  ${file}\n    ${error}`);
+	}
+	if (individualFailures.length > 25) console.error(`  …and ${individualFailures.length - 25} more`);
+}
+
+if (stillRaw.length) {
+	console.error(`\n[bundle-api] FAILED — ${stillRaw.length} routes left as raw source (NFT would scan full node_modules):`);
+	for (const f of stillRaw.slice(0, 25)) console.error(`  ${f}`);
+	if (stillRaw.length > 25) console.error(`  …and ${stillRaw.length - 25} more`);
+}
+
+// Fail fast on the build container instead of letting Vercel time out at 45 min
+// trying to NFT-trace raw route files against the 2 GB node_modules tree.
+if (individualFailures.length > 0 || stillRaw.length > 0) {
+	process.exit(1);
+}

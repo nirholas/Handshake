@@ -15,8 +15,22 @@ import { isCached, writeStamp } from './build-cache.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
+const running = new Set();
+
+// Heartbeat: every 30s, print which sub-builds are still in flight. If Vercel's
+// build hangs, the log makes it obvious which stage is stuck instead of leaving
+// us to guess from a silent 45-minute timeout.
+const heartbeat = setInterval(() => {
+	if (running.size === 0) return;
+	const labels = [...running].map(([l, t]) => `${l} (${((Date.now() - t) / 1000).toFixed(0)}s)`).join(', ');
+	console.log(`\n[build:vercel] still running: ${labels}`);
+}, 30_000);
+heartbeat.unref();
+
 function run(label, cmd, opts = {}) {
 	const start = Date.now();
+	const entry = [label, start];
+	running.add(entry);
 	return new Promise((res, rej) => {
 		console.log(`\n[${label}] starting: ${cmd}`);
 		const child = spawn('sh', ['-c', cmd], {
@@ -25,6 +39,7 @@ function run(label, cmd, opts = {}) {
 			env: { ...process.env, ...opts.env },
 		});
 		child.on('close', (code) => {
+			running.delete(entry);
 			const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 			if (code === 0) {
 				console.log(`[${label}] done in ${elapsed}s`);
@@ -92,12 +107,10 @@ async function postBuild() {
 }
 
 const totalStart = Date.now();
+const phase = (n, label) => console.log(`\n=== build:vercel phase ${n}: ${label} (t+${((Date.now() - totalStart) / 1000).toFixed(1)}s) ===`);
 
 try {
-	// Phase 1: prebuild + build:lib + independent sub-builds — all in parallel
-	// prebuild generates data files the app vite build reads (pages.json, skill metadata, news)
-	// build:lib is independent of prebuild — produces dist-lib/agent-3d.js
-	// avatar-studio, chat, bundle-api are fully independent
+	phase(1, 'prebuild + lib + avatar-studio + chat + bundle-api (parallel)');
 	await Promise.all([
 		prebuild(),
 		buildLib(),
@@ -106,15 +119,22 @@ try {
 		bundleApi(),
 	]);
 
-	// Phase 2: app vite build (needs prebuild outputs + same node_modules)
+	phase(2, 'app vite build');
 	await buildApp();
 
-	// Phase 3: post-build steps (depend on Phase 1+2 outputs)
+	phase(3, 'post-build (copy-avatar-studio + publish-lib + r2-cors)');
 	await postBuild();
 
+	clearInterval(heartbeat);
 	const totalElapsed = ((Date.now() - totalStart) / 1000).toFixed(1);
 	console.log(`\n✓ build:vercel complete in ${totalElapsed}s`);
 } catch (err) {
-	console.error(`\n✗ build:vercel failed: ${err.message}`);
+	clearInterval(heartbeat);
+	const totalElapsed = ((Date.now() - totalStart) / 1000).toFixed(1);
+	console.error(`\n✗ build:vercel failed after ${totalElapsed}s: ${err.message}`);
+	if (running.size > 0) {
+		const labels = [...running].map(([l, t]) => `${l} (${((Date.now() - t) / 1000).toFixed(0)}s)`).join(', ');
+		console.error(`  still running when build failed: ${labels}`);
+	}
 	process.exit(1);
 }
