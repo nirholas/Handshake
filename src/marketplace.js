@@ -602,7 +602,7 @@ function renderTheme() {
 	if (titleEl) titleEl.textContent = state.theme.title;
 	if (blurbEl) blurbEl.textContent = state.theme.blurb || '';
 	const cta = $('market-theme-cta');
-	if (state.theme.tag) {
+	if (cta && state.theme.tag) {
 		cta.hidden = false;
 		cta.textContent = `Browse #${state.theme.tag} →`;
 		cta.onclick = () => {
@@ -611,7 +611,7 @@ function renderTheme() {
 			loadList(true);
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		};
-	} else {
+	} else if (cta) {
 		cta.hidden = true;
 	}
 	strip.hidden = false;

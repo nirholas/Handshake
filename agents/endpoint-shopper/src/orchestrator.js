@@ -7,6 +7,7 @@
 
 import { discoverEndpoints } from './discover.js';
 import { planSteps } from './planner.js';
+import { llmComplete } from '../../../api/_lib/llm.js';
 
 const BASE = process.env.PUBLIC_APP_ORIGIN || process.env.APP_ORIGIN || 'https://three.ws';
 
@@ -174,24 +175,13 @@ async function synthesize({ task, results, catalog, plan }) {
 		`2-4 sentences maximum.`;
 
 	try {
-		const r = await fetch('https://api.anthropic.com/v1/messages', {
-			method: 'POST',
-			headers: {
-				'content-type': 'application/json',
-				'x-api-key': process.env.ANTHROPIC_API_KEY,
-				'anthropic-version': '2023-06-01',
-			},
-			body: JSON.stringify({
-				model: 'claude-haiku-4-5-20251001',
-				max_tokens: 256,
-				messages: [{ role: 'user', content: prompt }],
-			}),
-			signal: AbortSignal.timeout(15_000),
+		const { text } = await llmComplete({
+			user: prompt,
+			maxTokens: 256,
+			anthropicKey: process.env.ANTHROPIC_API_KEY,
+			timeoutMs: 15_000,
 		});
-
-		if (!r.ok) return 'Unable to synthesize answer — LLM API returned an error.';
-		const d = await r.json();
-		return d.content?.[0]?.text || 'Unable to synthesize answer.';
+		return text || 'Unable to synthesize answer.';
 	} catch {
 		return 'Unable to synthesize answer — request timed out or failed.';
 	}

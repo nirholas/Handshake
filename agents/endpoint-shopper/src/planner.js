@@ -1,8 +1,11 @@
 // LLM-based task decomposition for the Endpoint Shopper agent.
 //
 // Given a task string and a Bazaar catalog summary, generates a structured
-// step plan that the orchestrator can execute. Uses claude-haiku for fast,
-// cheap planning — the heavy work is in the endpoint calls themselves.
+// step plan that the orchestrator can execute. Planning is fast/cheap work, so
+// it runs on the platform's funded free providers (Groq/OpenRouter) by default,
+// using Anthropic only when the operator supplies their own key.
+
+import { llmComplete } from '../../../api/_lib/llm.js';
 
 const SYSTEM_PROMPT =
 	'You are a task planner for an AI agent. Given a task and a catalog of available paid API endpoints, ' +
@@ -39,32 +42,14 @@ export async function planSteps({ task, catalog, maxSteps = 5 }) {
 		`Create a plan of at most ${maxSteps} steps to complete the task. ` +
 		`Respond with a JSON array only — no markdown, no explanation.`;
 
-	const response = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'x-api-key': process.env.ANTHROPIC_API_KEY,
-			'anthropic-version': '2023-06-01',
-		},
-		body: JSON.stringify({
-			model: 'claude-haiku-4-5-20251001',
-			max_tokens: 512,
-			system: SYSTEM_PROMPT,
-			messages: [{ role: 'user', content: prompt }],
-		}),
-		signal: AbortSignal.timeout(15_000),
+	const { text } = await llmComplete({
+		system: SYSTEM_PROMPT,
+		user: prompt,
+		maxTokens: 512,
+		anthropicKey: process.env.ANTHROPIC_API_KEY,
+		timeoutMs: 15_000,
 	});
-
-	if (!response.ok) {
-		const text = await response.text().catch(() => '');
-		throw Object.assign(new Error(`Anthropic API error ${response.status}: ${text}`), {
-			status: 502,
-			code: 'planner_api_error',
-		});
-	}
-
-	const data = await response.json();
-	const raw = data.content?.[0]?.text || '[]';
+	const raw = text || '[]';
 
 	// Strip possible markdown code fence wrapping
 	const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();

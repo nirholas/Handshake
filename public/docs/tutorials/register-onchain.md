@@ -40,7 +40,7 @@ Skip this step if you already have an agent saved to your account.
 
 **Option A — Generate from a photo:**
 
-1. Go to [three.wscreate](https://three.ws/create)
+1. Go to [three.ws/create](https://three.ws/create)
 2. Take a selfie or upload a photo
 3. Your avatar generates in about 30 seconds
 4. Give it a name and description
@@ -48,13 +48,13 @@ Skip this step if you already have an agent saved to your account.
 
 **Option B — Upload an existing GLB:**
 
-1. Go to [three.wsapp](https://three.ws/app)
+1. Go to [three.ws/app](https://three.ws/app)
 2. Drag your `.glb` file into the viewer
 3. Open the **Manifest** tab in the editor panel
 4. Fill in the name and description fields
 5. Click **Save to Account**
 
-Either way, you should end up with an agent visible in your dashboard at [three.wsdashboard](https://three.ws/dashboard).
+Either way, you should end up with an agent visible in your dashboard at [three.ws/dashboard](https://three.ws/dashboard).
 
 ---
 
@@ -101,7 +101,7 @@ If you already have ETH on Base, skip ahead to Step 3.
 
 ## Step 4: Open your agent for editing
 
-1. Go to [three.wsdashboard](https://three.ws/dashboard)
+1. Go to [three.ws/dashboard](https://three.ws/dashboard)
 2. Find the agent you want to register
 3. Click **Edit** — the editor opens with your avatar loaded
 

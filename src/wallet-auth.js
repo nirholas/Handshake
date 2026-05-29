@@ -147,7 +147,7 @@ function _wireClickHandler(buttonEl) {
 		if (!window.ethereum) {
 			statusEl.style.display = 'inline';
 			statusEl.textContent =
-				'No wallet detected — install MetaMask or use a wallet-enabled browser.';
+				'No wallet detected — install a wallet extension (MetaMask, Coinbase Wallet, etc.) and refresh.';
 			return;
 		}
 

@@ -1,6 +1,6 @@
-# Embed a three.ws on Your Website
+# Embed a three.ws agent on Your Website
 
-This tutorial walks you through every path for adding a three.ws to your site — from a no-code copy-paste to a full React integration. Pick the path that matches how you build.
+This tutorial walks you through every path for adding a three.ws agent to your site — from a no-code copy-paste to a full React integration. Pick the path that matches how you build.
 
 **What you'll learn:**
 - Get an embed snippet from the Studio (no coding required)
@@ -13,7 +13,7 @@ This tutorial walks you through every path for adding a three.ws to your site �
 
 ## Before you start
 
-You need an agent ID. Go to [three.wsstudio](https://three.ws/studio), select or create an agent, and note its ID — it looks like `a_abc123` or is a number paired with a chain ID like `42` on Base.
+You need an agent ID. Go to [three.ws/studio](https://three.ws/studio), select or create an agent, and note its ID — it looks like `a_abc123` or is a number paired with a chain ID like `42` on Base.
 
 ---
 
@@ -21,7 +21,7 @@ You need an agent ID. Go to [three.wsstudio](https://three.ws/studio), select or
 
 If you don't want to write code, the Studio generates the snippet for you.
 
-1. Go to [three.wsstudio](https://three.ws/studio)
+1. Go to [three.ws/studio](https://three.ws/studio)
 2. Select an agent (or create one — the Talking Agent widget is the most popular starting point)
 3. Click **Get Embed Code** in the top-right corner
 4. Choose your widget type and placement
@@ -51,7 +51,7 @@ The Studio offers two snippet formats. Here's what each one looks like and when 
 ></script>
 
 <!-- Where you want the agent -->
-<agent-three.ws-id="42" chain-id="8453" mode="floating"></agent-3d>
+<agent-3d agent-id="42" chain-id="8453" mode="floating"></agent-3d>
 ```
 
 The iframe is the safer default for platforms where you can't control the `<head>` (Notion, Substack, Medium). The web component is the right choice anywhere you control the full page — it gives you CSS theming, JS events, and better performance.
@@ -117,7 +117,7 @@ For an inline embed with explicit dimensions:
 
 **Lazy loading is on by default.** The agent won't boot until it scrolls into the viewport (powered by `IntersectionObserver`). Add `eager` to load immediately regardless:
 ```html
-<agent-three.ws-id="42" chain-id="8453" eager></agent-3d>
+<agent-3d agent-id="42" chain-id="8453" eager></agent-3d>
 ```
 
 ---
@@ -127,7 +127,7 @@ For an inline embed with explicit dimensions:
 ### Install
 
 ```bash
-npm install @3dagent/sdk
+npm install @three-ws/sdk
 ```
 
 ### Create a wrapper component
@@ -137,7 +137,7 @@ npm install @3dagent/sdk
 'use client'; // Required for Next.js App Router
 
 import { useEffect, useRef } from 'react';
-import '@3dagent/sdk'; // registers <agent-3d> as a custom element
+import '@three-ws/sdk'; // registers <agent-3d> as a custom element
 
 export default function Agent3D({ agentId, chainId = '8453', mode = 'floating' }) {
   const ref = useRef();
@@ -185,7 +185,7 @@ export default function Page() {
   return (
     <main>
       <h1>Welcome</h1>
-      <Agentthree.wsId="42" mode="floating" />
+      <Agent3D agentId="42" mode="floating" />
     </main>
   );
 }
@@ -314,7 +314,7 @@ add_action('wp_head', 'add_3dagent_script');
 
 Then add a **Custom HTML** block in the Gutenberg editor wherever you want the agent:
 ```html
-<agent-three.ws-id="42" chain-id="8453"></agent-3d>
+<agent-3d agent-id="42" chain-id="8453"></agent-3d>
 ```
 
 ---
@@ -431,13 +431,13 @@ Set a background color with the `background` attribute:
 
 ```html
 <!-- Transparent (default) — composites over your page -->
-<agent-three.ws-id="42" background="transparent"></agent-3d>
+<agent-3d agent-id="42" background="transparent"></agent-3d>
 
 <!-- Dark scene background -->
-<agent-three.ws-id="42" background="dark"></agent-3d>
+<agent-3d agent-id="42" background="dark"></agent-3d>
 
 <!-- Light scene background -->
-<agent-three.ws-id="42" background="light"></agent-3d>
+<agent-3d agent-id="42" background="light"></agent-3d>
 ```
 
 ---
@@ -460,7 +460,7 @@ Or if the parent truly needs to stack above the agent, wrap the `<agent-3d>` in 
 **Agent is too small / too large**
 Set explicit `width` and `height` attributes (CSS length values):
 ```html
-<agent-three.ws-id="42" width="480px" height="640px"></agent-3d>
+<agent-3d agent-id="42" width="480px" height="640px"></agent-3d>
 ```
 
 **Next.js hydration error**
