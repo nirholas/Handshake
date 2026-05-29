@@ -269,7 +269,21 @@ export function initWalkPreview(container) {
 		blobShadow.material.opacity = 0.6;
 
 		animationManager.attach(model);
-		await animationManager.loadAll(ANIMATIONS_MANIFEST_URL);
+
+		// Fetch the clip manifest, register only the clips this preview plays
+		// (idle + walk), then load them. loadAll() iterates the registered defs —
+		// it does NOT take a manifest URL, so the defs must be set first or no
+		// animation ever loads and the avatar renders frozen in its bind pose.
+		const manifest = await fetch(ANIMATIONS_MANIFEST_URL, { cache: 'force-cache' })
+			.then((r) => {
+				if (!r.ok) throw new Error(`HTTP ${r.status} fetching animation manifest`);
+				return r.json();
+			});
+		const needed = manifest.filter((d) => d.name === CLIP_IDLE || d.name === CLIP_WALK);
+		if (needed.length === 0) throw new Error('Animation manifest missing idle/walk clips');
+		animationManager.setAnimationDefs(needed);
+		await animationManager.loadAll();
+
 		animationManager.play(CLIP_IDLE);
 		applyCameraImmediate();
 

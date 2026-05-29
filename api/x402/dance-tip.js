@@ -1,9 +1,9 @@
 // GET /api/x402/dance-tip?dancer=<id>&dance=<style>
 //
 // Paid endpoint cataloged by the CDP x402 Bazaar. For $0.001 USDC the caller
-// books one dance performance on the three.ws Pole Club stage. The /club page
+// books one dance performance on the three.ws club stage. The /club page
 // uses this from the browser via window.X402.pay — when the payment settles,
-// the named dancer steps onto the pole and performs the requested style for
+// the named dancer steps onto the stage and performs the requested style for
 // a fixed duration. Agents can also call it programmatically with @x402/fetch
 // to drive scripted performances.
 //
@@ -25,7 +25,7 @@ import { priceFor } from '../_lib/x402-prices.js';
 const ROUTE = '/api/x402/dance-tip';
 
 const DESCRIPTION =
-	'three.ws Pole Club — tip a dancer to perform one routine on the 3D pole ' +
+	'three.ws club stage — tip a dancer to perform one routine on the 3D ' +
 	'stage. Pay $0.001 USDC per performance. Pick a dancer slot (1-4) and a ' +
 	'dance style (free-floor: rumba, silly, thriller, capoeira, hiphop; ' +
 	'pole choreography: spin, climb, combo). The settled call returns a ' +
@@ -91,7 +91,7 @@ const INPUT_SCHEMA = {
 		dancer: {
 			type: 'string',
 			enum: ['1', '2', '3', '4'],
-			description: 'Stage slot 1-4 — which dancer should take the pole.',
+			description: 'Stage slot 1-4 — which dancer takes the stage.',
 		},
 		dance: {
 			type: 'string',
@@ -263,7 +263,7 @@ export default paidEndpoint({
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({
-		serviceName: 'three.ws Pole Club',
+		serviceName: 'three.ws Club Stage',
 		tags: ['3d', 'dance', 'club', 'tip', 'entertainment'],
 	}),
 	requiredScope: 'x402:bypass',

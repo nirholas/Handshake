@@ -68,13 +68,10 @@
 			flex-shrink: 0;
 		}
 		.brand-mark {
-			width: 18px; height: 18px;
-			border: 1px solid var(--text); border-radius: 3px;
-			position: relative;
-		}
-		.brand-mark::after {
-			content: ""; position: absolute; inset: 4px;
-			background: var(--text);
+			width: 24px; height: 24px;
+			border-radius: 5px;
+			display: block;
+			flex-shrink: 0;
 		}
 		.nav-main { display: flex; gap: 2px; margin-left: 12px; flex: 1; }
 		.nav-main a {
@@ -572,18 +569,36 @@
 			.walk-preview-joystick { display: block; }
 		}
 
+		/* Buy/sell semantic colors — the one place on the page we go full color.
+		   Everything else is monochrome; trading flow earns real green/red. */
+		:root { --buy: #2ecc71; --sell: #ff5c5c; }
+
 		/* Pump.fun earn rows */
 		.earn-rows { display: flex; flex-direction: column; gap: 1px; }
 		.earn-row {
 			background: var(--surface-1); padding: 14px 18px;
 			display: flex; justify-content: space-between; align-items: center;
 			border-bottom: 1px solid var(--hairline);
+			animation: earn-row-in 0.32s cubic-bezier(.22,.68,0,.98);
 		}
+		@keyframes earn-row-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 		.earn-row:last-child { border-bottom: none; }
-		.earn-row-left { display: flex; flex-direction: column; gap: 2px; }
+		.earn-row-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 		.earn-row-name { font-size: 14px; font-weight: 500; color: var(--text); }
 		.earn-row-time { font-family: var(--font-mono); font-size: 11px; color: var(--text-4); }
-		.earn-row-amount { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--green); }
+		.earn-row-amount { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--green); display: flex; align-items: baseline; gap: 7px; }
+		.earn-row-amount.buy { color: var(--buy); }
+		.earn-row-amount.sell { color: var(--sell); }
+		.hlt-usd { font-family: var(--font-mono); font-size: 10px; font-weight: 500; color: var(--text-4); }
+		.hlt-side { font-weight: 700; }
+		.hlt-side.buy { color: var(--buy); }
+		.hlt-side.sell { color: var(--sell); }
+		.hlt-live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--buy); box-shadow: 0 0 6px var(--buy); margin-right: 7px; vertical-align: middle; animation: hlt-pulse 1.4s ease-in-out infinite; }
+		@keyframes hlt-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+		.hlt-idle .earn-row-name { color: var(--text-3); font-weight: 500; }
+		.hlt-skel { pointer-events: none; }
+		.hlt-skel-bar { height: 12px; border-radius: 4px; background: linear-gradient(90deg, var(--surface-2, #1a1a1a) 25%, rgba(255,255,255,0.06) 50%, var(--surface-2, #1a1a1a) 75%); background-size: 200% 100%; animation: hlt-shimmer 1.3s linear infinite; }
+		@keyframes hlt-shimmer { to { background-position: -200% 0; } }
 
 		/* Token card */
 		.token-card {
@@ -591,15 +606,19 @@
 			border-radius: 10px; padding: 18px; display: flex; gap: 14px; align-items: center;
 		}
 		.token-avatar {
-			width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
-			background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+			width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+			background: linear-gradient(135deg, #2a2a3a 0%, #15151f 100%);
 			display: flex; align-items: center; justify-content: center;
 			font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: #fff;
 		}
-		.token-info { flex: 1; }
-		.token-name { font-size: 14px; font-weight: 600; color: var(--text); }
+		.token-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+		.token-info { flex: 1; min-width: 0; }
+		.token-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.token-ticker { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
-		.token-price { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--green); }
+		.token-price { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--green); white-space: nowrap; transition: color .25s; }
+		.token-price.up { color: var(--buy); }
+		.token-price.down { color: var(--sell); }
+		a.token-price { text-decoration: none; }
 
 		/* ── STEPS ───────────────────────────────────────────────── */
 		.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 64px; }
@@ -824,6 +843,16 @@
 		}
 		.pg-status.ok { color: #4ade80; }
 		.pg-status.err { color: #f87171; }
+		.pg-status.warn { color: #fbbf24; }
+		.pg-status.err::before { background: #f87171; box-shadow: 0 0 5px #f87171; }
+		.pg-status.warn::before { background: #fbbf24; box-shadow: 0 0 5px #fbbf24; }
+		.pg-key-field { margin-bottom: 16px; }
+		.pg-key-hint {
+			float: right; text-transform: none; letter-spacing: 0;
+			color: var(--text-3); text-decoration: none; font-size: 10.5px;
+			transition: color 0.15s;
+		}
+		.pg-key-hint:hover { color: var(--text); }
 		.pg-response {
 			background: var(--surface-1); border: 1px solid var(--hairline);
 			border-radius: 8px; overflow: hidden;
@@ -2268,21 +2297,45 @@
 		.mint-card-inner{display:flex;align-items:center;justify-content:space-between;gap:10px}
 		.mint-card-info{display:flex;flex-direction:column;gap:2px}
 		.mint-card-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-4);transition:color .3s}
-		.mint-card-name{font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--text)}
-		.mint-card-chain{font-family:var(--font-mono);font-size:10px;color:var(--text-3);display:none}
-		.mint-card.minted .mint-card-chain{display:block}
+		.mint-card-name{font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--text);background:transparent;border:none;border-bottom:1px dashed transparent;padding:0 1px 1px;margin:0;width:auto;max-width:170px;outline:none;transition:border-color .15s}
+		.mint-card-name:hover:not(:disabled),.mint-card-name:focus{border-bottom-color:var(--text-4)}
+		.mint-card-name::placeholder{color:var(--text-4)}
+		.mint-card-name:disabled{opacity:.65;cursor:default}
+		.mint-card.error{border-color:rgba(248,113,113,.45)}
+		.mint-card-name.shake{animation:mint-shake .4s cubic-bezier(.36,.07,.19,.97)}
+		@keyframes mint-shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+		.mint-card-chain{font-family:var(--font-mono);font-size:10px;color:var(--text-3);display:block}
+		.mint-card-chain a{color:#4ade80;text-decoration:none;border-bottom:1px solid rgba(74,222,128,.3)}
+		.mint-card-chain a:hover{border-bottom-color:#4ade80}
 		.mint-card.minted .mint-card-label{color:#4ade80}
+		.mint-status{margin:11px 0 0;font-family:var(--font-mono);font-size:10.5px;line-height:1.4;color:var(--text-3)}
+		.mint-status.err{color:#f87171}
+		.mint-status.ok{color:#4ade80}
+		.mint-status a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 		.mint-progress{width:28px;height:28px;position:relative;display:none}
 		.mint-progress.active{display:block}
 		.mint-progress svg{width:100%;height:100%;transform:rotate(-90deg)}
+		.mint-progress.active:not(.done) svg{animation:mint-spin .9s linear infinite}
+		@keyframes mint-spin{from{transform:rotate(-90deg)}to{transform:rotate(270deg)}}
 		.mint-progress circle{fill:none;stroke-width:3;stroke:var(--text-2);stroke-linecap:round;stroke-dasharray:78.5;stroke-dashoffset:78.5;transition:stroke-dashoffset 1.2s cubic-bezier(.2,.7,.3,1)}
-		.mint-progress.done circle{stroke-dashoffset:0;stroke:#4ade80}
+		.mint-progress.active:not(.done) circle{stroke-dashoffset:55}
+		.mint-progress.done circle{stroke-dashoffset:0;stroke:#4ade80;transition:stroke-dashoffset .5s cubic-bezier(.2,.7,.3,1)}
 		.skill-demo{display:flex;flex-direction:column;gap:8px}
 		.skill-result{background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:7px;padding:10px 14px;font-family:var(--font-mono);font-size:11px;color:var(--text-2);line-height:1.6;max-height:100px;overflow-y:auto;transition:border-color .3s}
 		.skill-result.fresh{border-color:rgba(255,255,255,.2)}
 		.skill-result .json-key{color:#60a5fa}
 		.skill-result .json-str{color:#4ade80}
 		.skill-result .json-num{color:#fbbf24}
+		.skill-result .json-dim{color:var(--text-3)}
+		.skill-result.loading{color:var(--text-3)}
+		.skill-result.err{border-color:rgba(248,113,113,.4)}
+		.skill-loading .json-key{color:#60a5fa}
+		.skill-err{color:#f87171}
+		.skill-cursor{color:var(--text-3);animation:skillBlink 1s steps(2,end) infinite}
+		.skill-dots::after{content:'';animation:skillDots 1.4s steps(4,end) infinite}
+		@keyframes skillDots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+		@keyframes skillBlink{50%{opacity:0}}
+		.bento-pill-btn[aria-busy="true"]{opacity:.6;cursor:progress}
 		.memory-demo{display:flex;flex-direction:column;gap:8px}
 		.memory-input-row{display:flex;gap:6px}
 		.memory-input{flex:1;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:6px;padding:7px 10px;font-family:var(--font-mono);font-size:11.5px;color:var(--text);outline:none;transition:border-color .15s}
@@ -2316,15 +2369,16 @@
 		.mktplace-item-name{position:absolute;bottom:0;left:0;right:0;padding:2px 4px;font-family:var(--font-mono);font-size:7px;color:var(--text);background:rgba(0,0,0,.7);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 		.mktplace-more{flex-shrink:0;width:52px;height:52px;border-radius:10px;border:1px dashed var(--hairline-strong);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:18px;color:var(--text-4);cursor:pointer;transition:border-color .15s,color .15s;text-decoration:none}
 		.mktplace-more:hover{border-color:var(--text-3);color:var(--text-2)}
-		.analytics-demo{display:flex;flex-direction:column;gap:10px}
+		.analytics-demo{display:flex;flex-direction:column;gap:10px;--spark:#34d399;--spark-deep:#10b981}
 		.analytics-counters{display:flex;gap:16px}
 		.analytics-counter{display:flex;flex-direction:column;gap:1px}
 		.analytics-val{font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+		.analytics-val#an-revenue{color:var(--spark)}
 		.analytics-lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-4)}
 		.analytics-spark{width:100%;height:40px;display:block}
-		.analytics-spark path{fill:none;stroke:var(--text-2);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-		.analytics-spark .spark-fill{fill:url(#spark-grad);stroke:none;opacity:.15}
-		.analytics-spark .spark-dot{fill:var(--text);r:2.5;animation:spark-pulse 2s ease-in-out infinite}
+		.analytics-spark path{fill:none;stroke:var(--spark);stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--spark) 55%,transparent))}
+		.analytics-spark .spark-fill{fill:url(#spark-grad);stroke:none;opacity:1;filter:none}
+		.analytics-spark .spark-dot{fill:var(--spark);r:2.5;filter:drop-shadow(0 0 4px var(--spark));animation:spark-pulse 2s ease-in-out infinite}
 		@keyframes spark-pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 		/* ── DRAGON VISION SECTION ───────────────────────────────── */
@@ -2345,7 +2399,7 @@
 <header class="nav">
 	<div class="nav-inner">
 		<a class="brand" href="/">
-			<span class="brand-mark"></span>
+			<img class="brand-mark" src="/pwa-icon.svg" alt="three.ws" width="24" height="24" />
 			<span>three.ws</span>
 		</a>
 		<nav class="nav-main" aria-label="Primary">
@@ -3004,27 +3058,28 @@
 					<span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-3)">On-chain Identity</span>
 				</div>
 				<p class="bento-title">ERC-8004 agent standard</p>
-				<p class="bento-desc">Mint your agent as an ERC-8004 token — the emerging on-chain standard for AI agents. Own it, trade it, and let other agents discover and call it autonomously via A2A.</p>
+				<p class="bento-desc">Mint your agent as an ERC-8004 identity on Solana — a Metaplex Core asset minted in one transaction for sub-cent fees. Own it, trade it, and let other agents discover and call it autonomously via A2A.</p>
 				<div class="bento-interact mint-demo">
 					<div class="mint-card" id="mint-card">
 						<div class="mint-card-inner">
 							<div class="mint-card-info">
-								<span class="mint-card-label" id="mint-label">ERC-8004</span>
-								<span class="mint-card-name">nich.agent</span>
-								<span class="mint-card-chain" id="mint-chain">Base · Block 18,291,042</span>
+								<span class="mint-card-label" id="mint-label">ERC-8004 · Solana</span>
+								<input class="mint-card-name" id="mint-name" type="text" value="my-agent" maxlength="32" spellcheck="false" autocomplete="off" aria-label="Agent name to deploy" />
+								<span class="mint-card-chain" id="mint-chain">Metaplex Core · mainnet</span>
 							</div>
 							<div class="mint-progress" id="mint-progress">
 								<svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="12.5"/></svg>
 							</div>
-							<button class="bento-action-btn sm" id="mint-btn">Mint</button>
+							<button class="bento-action-btn sm" id="mint-btn">Deploy</button>
 						</div>
+						<p class="mint-status" id="mint-status" role="status" aria-live="polite" hidden></p>
 					</div>
 				</div>
 				<div class="bento-pills">
 					<span class="bento-pill">ERC-8004</span>
-					<span class="bento-pill">EVM</span>
+					<span class="bento-pill">Solana</span>
+					<span class="bento-pill">Metaplex Core</span>
 					<span class="bento-pill">A2A</span>
-					<span class="bento-pill">MCP</span>
 				</div>
 			</div>
 
@@ -3109,7 +3164,7 @@
 			<!-- Analytics -->
 			<div class="bento-card">
 				<div class="bento-icon">
-					<span class="dot" style="background:#e8e8e8;box-shadow:0 0 8px #e8e8e855"></span>
+					<span class="dot" style="background:#34d399;box-shadow:0 0 8px #34d39988"></span>
 					<span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-3)">Analytics</span>
 				</div>
 				<p class="bento-title">Track everything</p>
@@ -3121,7 +3176,7 @@
 						<div class="analytics-counter"><span class="analytics-val" id="an-retention">0%</span><span class="analytics-lbl">retention</span></div>
 					</div>
 					<svg class="analytics-spark" id="analytics-spark" viewBox="0 0 200 40" preserveAspectRatio="none">
-						<defs><linearGradient id="spark-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--text-2)"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs>
+						<defs><linearGradient id="spark-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#34d399" stop-opacity="0.35"/><stop offset="100%" stop-color="#34d399" stop-opacity="0"/></linearGradient></defs>
 					</svg>
 				</div>
 			</div>
@@ -3158,49 +3213,20 @@
 				</div>
 			</div>
 			<div class="feat-visual">
-				<div class="feat-visual-label">Live token · $NICH / SOL</div>
-				<div class="feat-visual-inner">
-					<div class="token-card">
-						<div class="token-avatar">NICH</div>
+				<div class="feat-visual-label" id="hlt-label">Live token · Pump.fun</div>
+				<div class="feat-visual-inner" id="hlt-card">
+					<a class="token-card" id="hlt-pump-link" href="https://pump.fun" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit;">
+						<div class="token-avatar" id="hlt-avatar">—</div>
 						<div class="token-info">
-							<div class="token-name">NICH Agent Token</div>
-							<div class="token-ticker">$NICH · Pump.fun</div>
+							<div class="token-name" id="hlt-name">Loading live token…</div>
+							<div class="token-ticker" id="hlt-ticker">Streaming from pump.fun</div>
 						</div>
-						<div class="token-price">+24.6%</div>
-					</div>
-					<div class="earn-rows" style="border:1px solid var(--hairline);border-radius:8px;overflow:hidden;">
-						<div class="earn-row">
-							<div class="earn-row-left">
-								<div class="earn-row-name">Buy · 0x7f3a…</div>
-								<div class="earn-row-time">3s ago</div>
-							</div>
-							<div class="earn-row-amount">+0.5 SOL</div>
-						</div>
-						<div class="earn-row">
-							<div class="earn-row-left">
-								<div class="earn-row-name">Buy · 0x2e1b…</div>
-								<div class="earn-row-time">12s ago</div>
-							</div>
-							<div class="earn-row-amount">+2.0 SOL</div>
-						</div>
-						<div class="earn-row">
-							<div class="earn-row-left">
-								<div class="earn-row-name">Tip · @alice</div>
-								<div class="earn-row-time">1m ago</div>
-							</div>
-							<div class="earn-row-amount">+$4.20</div>
-						</div>
-						<div class="earn-row">
-							<div class="earn-row-left">
-								<div class="earn-row-name">Buy · 0x9c4f…</div>
-								<div class="earn-row-time">2m ago</div>
-							</div>
-							<div class="earn-row-amount">+1.2 SOL</div>
-						</div>
-					</div>
+						<div class="token-price" id="hlt-price">Live</div>
+					</a>
+					<div class="earn-rows" id="hlt-rows" style="border:1px solid var(--hairline);border-radius:8px;overflow:hidden;"></div>
 					<div style="display:flex;gap:10px;">
 						<a class="btn sm" href="/pumpfun-trending" style="flex:1;justify-content:center;">Trending tokens</a>
-						<a class="btn sm primary" href="/create" style="flex:1;justify-content:center;">Launch yours</a>
+						<button class="btn sm primary" id="hlt-launch" type="button" style="flex:1;justify-content:center;">Launch yours</button>
 					</div>
 				</div>
 			</div>
@@ -3353,6 +3379,10 @@
 					</div>
 					<div id="pg-builder" style="display:none;">
 						<div class="pg-request">
+							<div class="pg-field pg-key-field">
+								<label class="pg-field-label" for="pg-key">API key<a class="pg-key-hint" href="/dashboard/api" target="_blank" rel="noopener">Get a key &#8599;</a></label>
+								<input class="pg-input" id="pg-key" type="password" autocomplete="off" spellcheck="false" placeholder="Bearer token — required for /agents and /chat" />
+							</div>
 							<div class="pg-url-bar">
 								<div class="pg-url-method" id="pg-method">GET</div>
 								<input class="pg-url-path" id="pg-path" readonly />
@@ -3707,6 +3737,15 @@
 	import { initWalkPreview } from '/src/walk-embed-preview.js';
 	const walkContainer = document.getElementById('walk-preview-container');
 	if (walkContainer) initWalkPreview(walkContainer);
+</script>
+
+<script type="module">
+	// Live pump.fun token card + real "Launch yours" flow.
+	import { initHomeLiveToken } from '/src/home-live-token.js';
+	import { initHomepageLauncher } from '/src/pump/homepage-launcher.js';
+	const hltCard = document.getElementById('hlt-card');
+	if (hltCard) initHomeLiveToken(hltCard);
+	initHomepageLauncher(document.getElementById('hlt-launch'));
 </script>
 
 <script>
@@ -5466,54 +5505,27 @@ if (canvas && tiers.length && window.matchMedia('(min-width: 861px)').matches) {
 		});
 	})();
 
-	// ── 5. On-chain Identity: mint animation ────────────────────────
-	(function() {
-		var mintBtn = document.getElementById('mint-btn');
-		var card = document.getElementById('mint-card');
-		var progress = document.getElementById('mint-progress');
-		var label = document.getElementById('mint-label');
-		if (!mintBtn) return;
+	// ── 5. On-chain Identity: real Solana deploy lives in the module
+	//        script near the end of <body> (needs ES-module imports). ─────
 
-		mintBtn.addEventListener('click', function() {
-			mintBtn.style.display = 'none';
-			progress.classList.add('active');
-
-			setTimeout(function() {
-				progress.classList.add('done');
-			}, 100);
-
-			setTimeout(function() {
-				card.classList.add('minted');
-				label.textContent = 'MINTED';
-
-				setTimeout(function() {
-					card.classList.remove('minted');
-					label.textContent = 'ERC-8004';
-					progress.classList.remove('active', 'done');
-					progress.querySelector('circle').style.strokeDashoffset = '78.5';
-					void progress.querySelector('circle').offsetWidth;
-					mintBtn.style.display = '';
-				}, 3000);
-			}, 1400);
-		});
-	})();
-
-	// ── 6. Skills: tool call demo ───────────────────────────────────
+	// ── 6. Skills: live tool-call demo ──────────────────────────────
+	// Every pill fires a REAL call: Jupiter's public quote API, our Solana
+	// RPC proxy, the live pump.fun launch feed (SSE), and an A2A agent ask
+	// streamed through /api/chat. No canned responses.
 	(function() {
 		var tools = document.getElementById('skill-tools');
 		var result = document.getElementById('skill-result');
 		if (!tools || !result) return;
 
-		var responses = {
-			jupiter: { tool: 'jupiter_swap', input: { from: 'USDC', to: 'SOL', amount: '10.00' }, output: { received: '0.0847 SOL', rate: '118.07', slippage: '0.12%' } },
-			pump: { tool: 'pump_launch', input: { name: 'NICH', ticker: '$NICH' }, output: { status: 'launched', ca: '7xKX...m3Qp', mcap: '$4,200', holders: 12 } },
-			rpc: { tool: 'solana_rpc', method: 'getBalance', params: ['7xKXp...m3Qp'], result: { value: 2410000000, lamports: true, sol: '2.41' } },
-			a2a: { protocol: 'a2a', target: 'claude.agent', action: 'ask', input: 'What is ERC-8004?', response: 'ERC-8004 is the on-chain standard for AI agent identity...' }
-		};
+		var USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+		var WSOL = 'So11111111111111111111111111111111111111112';
+		var seq = 0;            // monotonic token — only the latest click renders
+		var pending = null;     // open EventSource to tear down on tool switch
 
 		function colorJson(obj, indent) {
 			indent = indent || 0;
 			var pad = '  '.repeat(indent);
+			if (obj === null || obj === undefined) return '<span class="json-dim">null</span>';
 			if (typeof obj === 'string') return '<span class="json-str">"' + obj + '"</span>';
 			if (typeof obj === 'number') return '<span class="json-num">' + obj + '</span>';
 			if (typeof obj === 'boolean') return '<span class="json-num">' + obj + '</span>';
@@ -5522,7 +5534,7 @@ if (canvas && tiers.length && window.matchMedia('(min-width: 861px)').matches) {
 				var items = obj.map(function(v) { return pad + '  ' + colorJson(v, indent + 1); });
 				return '[\n' + items.join(',\n') + '\n' + pad + ']';
 			}
-			var keys = Object.keys(obj);
+			var keys = Object.keys(obj).filter(function(k) { return obj[k] !== null && obj[k] !== undefined; });
 			if (keys.length === 0) return '{}';
 			var lines = keys.map(function(k) {
 				return pad + '  <span class="json-key">"' + k + '"</span>: ' + colorJson(obj[k], indent + 1);
@@ -5530,12 +5542,177 @@ if (canvas && tiers.length && window.matchMedia('(min-width: 861px)').matches) {
 			return '{\n' + lines.join(',\n') + '\n' + pad + '}';
 		}
 
-		function showTool(name) {
-			var data = responses[name];
-			if (!data) return;
-			result.innerHTML = colorJson(data, 0);
-			result.classList.add('fresh');
-			setTimeout(function() { result.classList.remove('fresh'); }, 600);
+		function setLoading(label) {
+			result.classList.remove('err', 'fresh');
+			result.classList.add('loading');
+			result.innerHTML = '<span class="skill-loading">▸ calling <span class="json-key">' + label + '</span><span class="skill-dots"></span></span>';
+		}
+		function setError(label, msg) {
+			result.classList.remove('loading', 'fresh');
+			result.classList.add('err');
+			result.innerHTML = '<span class="skill-err">✕ ' + label + ' — ' + msg + '</span>';
+		}
+		function render(obj, streamingHtml) {
+			result.classList.remove('loading', 'err');
+			result.innerHTML = streamingHtml || colorJson(obj, 0);
+			if (!streamingHtml) {
+				result.classList.add('fresh');
+				setTimeout(function() { result.classList.remove('fresh'); }, 600);
+			}
+		}
+		function teardown() {
+			if (pending) { try { pending.close(); } catch (_) {} pending = null; }
+		}
+
+		var runners = {
+			jupiter: function(my) {
+				setLoading('jupiter_swap');
+				return fetch('https://lite-api.jup.ag/swap/v1/quote?inputMint=' + USDC + '&outputMint=' + WSOL + '&amount=10000000&slippageBps=50')
+					.then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+					.then(function(q) {
+						if (my !== seq) return;
+						var sol = Number(q.outAmount) / 1e9;
+						var route = (q.routePlan || []).map(function(p) { return p.swapInfo && p.swapInfo.label; }).filter(Boolean);
+						render({
+							tool: 'jupiter_swap',
+							input: { from: 'USDC', to: 'SOL', amount: '10.00' },
+							output: {
+								received: sol.toFixed(4) + ' SOL',
+								rate: (sol > 0 ? (10 / sol) : 0).toFixed(2) + ' USDC/SOL',
+								price_impact: (Number(q.priceImpactPct || 0) * 100).toFixed(3) + '%',
+								slippage: ((q.slippageBps || 50) / 100).toFixed(2) + '%',
+								route: route.length ? route.join(' → ') : 'direct'
+							}
+						});
+					})
+					.catch(function(e) { if (my === seq) setError('jupiter_swap', e.message); });
+			},
+
+			rpc: function(my) {
+				setLoading('solana_rpc');
+				return fetch('/api/solana-rpc', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getEpochInfo' })
+				})
+					.then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+					.then(function(j) {
+						if (my !== seq) return;
+						var v = j.result || {};
+						render({
+							tool: 'solana_rpc',
+							method: 'getEpochInfo',
+							network: 'mainnet-beta',
+							result: {
+								epoch: v.epoch,
+								absolute_slot: v.absoluteSlot,
+								block_height: v.blockHeight,
+								slot_index: v.slotIndex + ' / ' + v.slotsInEpoch,
+								tx_count: v.transactionCount
+							}
+						});
+					})
+					.catch(function(e) { if (my === seq) setError('solana_rpc', e.message); });
+			},
+
+			pump: function(my) {
+				setLoading('pump_live_feed');
+				return new Promise(function(resolve) {
+					var es, settled = false, to;
+					function finish(fn) {
+						if (settled) return;
+						settled = true;
+						clearTimeout(to);
+						if (es) { try { es.close(); } catch (_) {} }
+						if (pending === es) pending = null;
+						fn();
+						resolve();
+					}
+					try { es = new EventSource('/api/pump/live-stream?kind=mint'); }
+					catch (e) { if (my === seq) setError('pump_live_feed', 'feed unavailable'); return resolve(); }
+					pending = es;
+					to = setTimeout(function() {
+						finish(function() { if (my === seq) setError('pump_live_feed', 'no launches in the last 20s — try again'); });
+					}, 20000);
+					es.addEventListener('mint', function(ev) {
+						var d;
+						try { d = JSON.parse(ev.data); } catch (_) { return; }
+						finish(function() {
+							if (my !== seq) return;
+							render({
+								tool: 'pump_live_feed',
+								event: 'new_mint',
+								source: 'pump.fun · mainnet',
+								data: {
+									name: d.name || '(unnamed)',
+									symbol: d.symbol ? ('$' + String(d.symbol).replace(/^\$/, '')) : null,
+									mint: d.mint ? (d.mint.slice(0, 4) + '…' + d.mint.slice(-4)) : null,
+									market_cap_usd: (d.market_cap_usd != null) ? '$' + Math.round(d.market_cap_usd).toLocaleString() : null,
+									initial_buy_sol: (d.initial_buy_sol != null) ? Number(d.initial_buy_sol).toFixed(3) + ' SOL' : null
+								}
+							});
+						});
+					});
+					es.onerror = function() {
+						finish(function() { if (my === seq) setError('pump_live_feed', 'feed disconnected'); });
+					};
+				});
+			},
+
+			a2a: function(my) {
+				setLoading('a2a · agent.ask');
+				var question = 'In one sentence, what can I build on three.ws?';
+				var base = { protocol: 'a2a', target: 'claude.agent', action: 'ask', input: question };
+				function paint(text, streaming) {
+					if (my !== seq) return;
+					result.classList.remove('loading', 'err');
+					var json = colorJson(Object.assign({}, base, { response: text || '' }), 0);
+					result.innerHTML = streaming ? json.replace(/<\/span>(\n\})$/, '<span class="skill-cursor">▍</span></span>$1') : json;
+				}
+				return fetch('/api/chat', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						message: question,
+						system_prompt: 'You are the three.ws platform agent. Answer in ONE concise, confident sentence, no preamble.',
+						history: [],
+						context: {}
+					})
+				})
+					.then(function(r) { if (!r.ok || !r.body) throw new Error('HTTP ' + r.status); return r.body.getReader(); })
+					.then(function(reader) {
+						var dec = new TextDecoder(), buf = '', text = '';
+						function step(res) {
+							if (my !== seq) { try { reader.cancel(); } catch (_) {} return; }
+							if (res.done) {
+								if (my === seq) { paint(text || '(no response)', false); result.classList.add('fresh'); setTimeout(function() { result.classList.remove('fresh'); }, 600); }
+								return;
+							}
+							buf += dec.decode(res.value, { stream: true });
+							var lines = buf.split('\n');
+							buf = lines.pop();
+							lines.forEach(function(line) {
+								if (line.indexOf('data: ') !== 0) return;
+								var data = line.slice(6).trim();
+								if (!data || data === '[DONE]') return;
+								try {
+									var parsed = JSON.parse(data);
+									if (parsed.type === 'chunk' && parsed.text) text += parsed.text;
+								} catch (_) {}
+							});
+							paint(text, true);
+							return reader.read().then(step);
+						}
+						return reader.read().then(step);
+					})
+					.catch(function(e) { if (my === seq) setError('a2a · agent.ask', e.message); });
+			}
+		};
+
+		function run(name) {
+			teardown();
+			var my = ++seq;
+			(runners[name] || runners.jupiter)(my);
 		}
 
 		tools.addEventListener('click', function(e) {
@@ -5543,10 +5720,21 @@ if (canvas && tiers.length && window.matchMedia('(min-width: 861px)').matches) {
 			if (!btn) return;
 			tools.querySelectorAll('.bento-pill-btn').forEach(function(b) { b.classList.remove('active'); });
 			btn.classList.add('active');
-			showTool(btn.dataset.tool);
+			run(btn.dataset.tool);
 		});
 
-		showTool('jupiter');
+		// Fire the first real call only when the card scrolls into view.
+		var fired = false;
+		if ('IntersectionObserver' in window) {
+			var io = new IntersectionObserver(function(entries) {
+				entries.forEach(function(en) {
+					if (en.isIntersecting && !fired) { fired = true; run('jupiter'); io.disconnect(); }
+				});
+			}, { threshold: 0.3 });
+			io.observe(result);
+		} else {
+			run('jupiter');
+		}
 	})();
 
 	// ── 7. Memory: store/recall demo ────────────────────────────────
@@ -5727,6 +5915,155 @@ if (canvas && tiers.length && window.matchMedia('(min-width: 861px)').matches) {
 		io.observe(demo);
 	})();
 
+})();
+</script>
+
+<!-- On-chain Identity: real Solana (Metaplex Core) deploy. Module scope so we
+     can dynamically import the deploy flow only when the user clicks Deploy,
+     keeping the rest of the homepage lean. -->
+<script type="module">
+(function () {
+	const btn = document.getElementById('mint-btn');
+	const card = document.getElementById('mint-card');
+	const progress = document.getElementById('mint-progress');
+	const label = document.getElementById('mint-label');
+	const nameInput = document.getElementById('mint-name');
+	const chainEl = document.getElementById('mint-chain');
+	const statusEl = document.getElementById('mint-status');
+	if (!btn || !card || !nameInput) return;
+
+	const NETWORK = 'mainnet';
+	const DEFAULT_CHAIN = 'Metaplex Core · mainnet';
+	let deploying = false;
+
+	const short = (a) => (a ? a.slice(0, 4) + '…' + a.slice(-4) : '');
+
+	function extLink(href, text) {
+		const a = document.createElement('a');
+		a.href = href;
+		a.textContent = text;
+		a.target = '_blank';
+		a.rel = 'noopener';
+		return a;
+	}
+	function navLink(href, text) {
+		const a = document.createElement('a');
+		a.href = href;
+		a.textContent = text;
+		return a;
+	}
+
+	function setStatus(parts, kind) {
+		if (!parts) {
+			statusEl.hidden = true;
+			statusEl.textContent = '';
+			statusEl.className = 'mint-status';
+			return;
+		}
+		statusEl.hidden = false;
+		statusEl.className = 'mint-status' + (kind ? ' ' + kind : '');
+		statusEl.textContent = '';
+		statusEl.append(...(Array.isArray(parts) ? parts : [parts]));
+	}
+
+	function resetRing() {
+		progress.classList.remove('active', 'done');
+		const c = progress.querySelector('circle');
+		if (c) {
+			c.style.strokeDashoffset = '';
+			void c.offsetWidth;
+		}
+	}
+
+	function showError(err) {
+		card.classList.add('error');
+		const code = err && err.code;
+		const httpStatus = err && err.status;
+		if (code === 'NO_WALLET') {
+			setStatus(['No Solana wallet detected — ', extLink('https://phantom.app/', 'install Phantom ↗'), ' to deploy.'], 'err');
+			return;
+		}
+		if (httpStatus === 401) {
+			setStatus(['Sign in to mint your agent — ', navLink('/deploy', 'open the deploy console ↗')], 'err');
+			return;
+		}
+		if (code === 'forbidden' || httpStatus === 403) {
+			setStatus(['Link this Solana wallet to your account first — ', navLink('/deploy', 'finish in the deploy console ↗')], 'err');
+			return;
+		}
+		const msg = (err && err.message) || 'Deploy failed — try again.';
+		if (/reject|denied|cancel|user.*declin/i.test(msg)) {
+			setStatus('Transaction cancelled in wallet.', 'err');
+			return;
+		}
+		setStatus(msg.length > 96 ? msg.slice(0, 96) + '…' : msg, 'err');
+	}
+
+	async function deploy() {
+		if (deploying) return;
+		const name = (nameInput.value || '').trim();
+		if (!name) {
+			nameInput.classList.remove('shake');
+			void nameInput.offsetWidth;
+			nameInput.classList.add('shake');
+			nameInput.focus();
+			setStatus('Name your agent first.', 'err');
+			card.classList.add('error');
+			return;
+		}
+
+		deploying = true;
+		card.classList.remove('error', 'minted');
+		label.textContent = 'ERC-8004 · Solana';
+		chainEl.textContent = DEFAULT_CHAIN;
+		nameInput.disabled = true;
+		btn.disabled = true;
+		btn.textContent = 'Deploying…';
+		resetRing();
+		progress.classList.add('active');
+		setStatus('Connecting your Solana wallet…');
+
+		try {
+			const { runSolanaDeploy, solanaTxExplorerUrl } = await import('/src/erc8004/solana-deploy.js');
+			setStatus('Approve the mint in your wallet, then waiting for confirmation…');
+			const res = await runSolanaDeploy({ agent: { name }, network: NETWORK });
+
+			progress.classList.add('done');
+			card.classList.add('minted');
+			label.textContent = 'MINTED';
+			chainEl.textContent = 'Metaplex Core · ';
+			chainEl.append(extLink('https://solscan.io/token/' + res.assetPubkey, short(res.assetPubkey)));
+			setStatus(['Live on Solana ✓ ', extLink(solanaTxExplorerUrl(res.network, res.txSignature), 'view tx ↗')], 'ok');
+			btn.textContent = 'Deployed ✓';
+			setTimeout(() => {
+				btn.disabled = false;
+				btn.textContent = 'Deploy another';
+				nameInput.disabled = false;
+				deploying = false;
+			}, 1400);
+		} catch (err) {
+			resetRing();
+			showError(err);
+			nameInput.disabled = false;
+			btn.disabled = false;
+			btn.textContent = 'Deploy';
+			deploying = false;
+		}
+	}
+
+	btn.addEventListener('click', deploy);
+	nameInput.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			deploy();
+		}
+	});
+	nameInput.addEventListener('input', () => {
+		if (card.classList.contains('error')) {
+			card.classList.remove('error');
+			setStatus(null);
+		}
+	});
 })();
 </script>
 </body>

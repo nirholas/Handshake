@@ -31,12 +31,14 @@ export default wrap(async (req, res) => {
 			servers: [{ url: origin }],
 			components: {
 				securitySchemes: {
-					siwx: {
-						type: 'apiKey',
-						in: 'header',
-						name: 'Authorization',
+					bearerAuth: {
+						type: 'http',
+						scheme: 'bearer',
 						description:
-							'Bearer token from OAuth 2.1 or API key. Wallet-based SIWX authentication is supported via SIWE.',
+							'Bearer token in the Authorization header. Obtain one via OAuth 2.1 at ' +
+							origin +
+							'/oauth/authorize, use an API key from the dashboard, or exchange a ' +
+							'wallet SIWX (CAIP-122) session for an access token.',
 					},
 				},
 			},
@@ -47,6 +49,7 @@ export default wrap(async (req, res) => {
 						summary: 'MCP tool call',
 						description:
 							'JSON-RPC 2.0 request to the MCP server. Supports tools for 3D avatar management, model validation, inspection, and optimization.',
+						security: [{ bearerAuth: [] }],
 						requestBody: {
 							required: true,
 							content: {
@@ -109,7 +112,7 @@ export default wrap(async (req, res) => {
 					get: {
 						operationId: 'list_avatars',
 						summary: 'List my avatars',
-						security: [{ siwx: [] }],
+						security: [{ bearerAuth: [] }],
 						responses: {
 							200: { description: 'Array of avatar objects' },
 							401: { description: 'Unauthorized' },
@@ -118,7 +121,7 @@ export default wrap(async (req, res) => {
 					post: {
 						operationId: 'create_avatar',
 						summary: 'Register an uploaded avatar',
-						security: [{ siwx: [] }],
+						security: [{ bearerAuth: [] }],
 						requestBody: {
 							required: true,
 							content: {
@@ -176,7 +179,7 @@ export default wrap(async (req, res) => {
 					get: {
 						operationId: 'list_agents',
 						summary: 'List my agents',
-						security: [{ siwx: [] }],
+						security: [{ bearerAuth: [] }],
 						responses: {
 							200: { description: 'Array of agent identity objects' },
 							401: { description: 'Unauthorized' },
@@ -386,7 +389,7 @@ export default wrap(async (req, res) => {
 								name: 'mint',
 								in: 'query',
 								required: true,
-								schema: { type: 'string', minLength: 32, maxLength: 64 },
+								schema: { type: 'string', minLength: 32, maxLength: 44 },
 								description: 'Base58 SPL mint address on Solana mainnet.',
 							},
 						],
@@ -400,7 +403,7 @@ export default wrap(async (req, res) => {
 				},
 				'/api/insights/revenue-vision': {
 					get: {
-						operationId: 'x402_revenue_vision',
+						operationId: 'insights_revenue_vision',
 						summary: 'Paid: Claude-powered next-best-move for a mission brief',
 						description:
 							'Pay $0.001 USDC to receive a single prioritized next-best move, a data-grounded insight, and an honestly-calibrated confidence rating for the supplied mission brief.',
@@ -410,6 +413,8 @@ export default wrap(async (req, res) => {
 								name: 'power_request',
 								in: 'query',
 								required: true,
+								description:
+									'Analysis mode. Currently only "revenue-vision" is available; the parameter is required so additional modes can be added without a breaking change.',
 								schema: { type: 'string', enum: ['revenue-vision'] },
 							},
 							{
@@ -443,16 +448,19 @@ export default wrap(async (req, res) => {
 				'/api/x402/dance-tip': {
 					get: {
 						operationId: 'x402_dance_tip',
-						summary: 'Paid: Tip a 3D dancer to perform on the pole stage',
+						summary: 'Paid: Tip a 3D dancer to perform a routine on the club stage',
 						description:
-							'Pay $0.001 USDC to tip a dancer to perform one routine on the three.ws Pole Club 3D stage. Returns a performance ticket the /club page consumes to spawn the dancer.',
+							'Pay $0.001 USDC to tip a dancer to perform one routine on the three.ws 3D club stage. ' +
+							'Pick a stage slot (1–4) and a style: free-floor (rumba, silly, thriller, capoeira, hiphop) ' +
+							'or pole choreography (spin, climb, combo). Returns a performance ticket the /club page ' +
+							'consumes to spawn the dancer and play the routine.',
 						parameters: [
 							{
 								name: 'dancer',
 								in: 'query',
 								required: true,
 								schema: { type: 'string', enum: ['1', '2', '3', '4'] },
-								description: 'Stage slot 1-4.',
+								description: 'Stage slot — which of the four dancers performs.',
 							},
 							{
 								name: 'dance',
@@ -460,9 +468,19 @@ export default wrap(async (req, res) => {
 								required: true,
 								schema: {
 									type: 'string',
-									enum: ['rumba', 'silly', 'thriller', 'capoeira', 'hiphop'],
+									enum: [
+										'rumba',
+										'silly',
+										'thriller',
+										'capoeira',
+										'hiphop',
+										'spin',
+										'climb',
+										'combo',
+									],
 								},
-								description: 'Performance style — a clip in /animations/manifest.json.',
+								description:
+									'Performance style. Free-floor styles (rumba, silly, thriller, capoeira, hiphop) play a single looped clip; pole-choreography styles (spin, climb, combo) chain a sequence of clips.',
 							},
 						],
 						responses: {

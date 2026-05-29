@@ -2424,33 +2424,49 @@ async function handleChannelFeed(req, res) {
 // ── trending / search (proxies for the CORS-protected pump.fun frontend API) ──
 
 const PUMP_FRONTEND_BASE = 'https://frontend-api-v3.pump.fun';
-const TRENDING_CACHE = { at: 0, body: null };
+// Cache keyed by sort+order+limit so the market_cap view and the
+// last_trade_timestamp view (used by the homepage live feed to find an
+// actively-trading bonding-curve coin) don't clobber each other.
+const TRENDING_CACHE = new Map();
 const TRENDING_TTL_MS = 15_000;
+const TRENDING_SORTS = new Set([
+	'market_cap',
+	'last_trade_timestamp',
+	'created_timestamp',
+	'currently_live',
+]);
 
 async function handleTrending(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 	const rl = await limits.mcpIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
-	const now = Date.now();
-	if (TRENDING_CACHE.body && now - TRENDING_CACHE.at < TRENDING_TTL_MS) {
-		res.setHeader('cache-control', 'public, max-age=15');
-		return json(res, 200, TRENDING_CACHE.body);
-	}
 	const url = new URL(req.url, `http://${req.headers.host}`);
 	const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit') || 50)), 100);
+	const sortParam = String(url.searchParams.get('sort') || 'market_cap');
+	const sort = TRENDING_SORTS.has(sortParam) ? sortParam : 'market_cap';
+	const order = url.searchParams.get('order') === 'ASC' ? 'ASC' : 'DESC';
+	const cacheKey = `${sort}:${order}:${limit}`;
+
+	const now = Date.now();
+	const cached = TRENDING_CACHE.get(cacheKey);
+	if (cached && now - cached.at < TRENDING_TTL_MS) {
+		res.setHeader('cache-control', 'public, max-age=15');
+		return json(res, 200, cached.body);
+	}
+
 	const upstream = new URL('/coins', PUMP_FRONTEND_BASE);
 	upstream.searchParams.set('offset', '0');
 	upstream.searchParams.set('limit', String(limit));
-	upstream.searchParams.set('sort', 'market_cap');
-	upstream.searchParams.set('order', 'DESC');
+	upstream.searchParams.set('sort', sort);
+	upstream.searchParams.set('order', order);
 	upstream.searchParams.set('includeNsfw', 'false');
 	const resp = await fetch(upstream, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
 	if (!resp.ok) return error(res, 502, 'upstream_failed', `pump.fun returned ${resp.status}`);
 	const body = await resp.json();
 	const arr = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : [];
-	TRENDING_CACHE.at = now;
-	TRENDING_CACHE.body = arr;
+	TRENDING_CACHE.set(cacheKey, { at: now, body: arr });
+	if (TRENDING_CACHE.size > 16) TRENDING_CACHE.delete(TRENDING_CACHE.keys().next().value);
 	res.setHeader('cache-control', 'public, max-age=15');
 	return json(res, 200, arr);
 }

@@ -85,11 +85,15 @@ async function capture(page, src) {
 			mv.addEventListener('load', () => { clearTimeout(t); res(); }, { once: true });
 			mv.addEventListener('error', () => { clearTimeout(t); rej(new Error('load error')); }, { once: true });
 		});
-		// Re-apply framing AFTER load: auto radius only fits correctly once the
-		// geometry is present. Setting it pre-load frames against an empty scene.
-		mv.fieldOfView = 'auto';
+		// Frame deterministically from the model's real bounding box so every
+		// model — regardless of its native scale — fills the swatch the same way.
+		const FOV = 26; // degrees
+		const dims = mv.getDimensions(); // metres, post-load bounding box
+		const maxDim = Math.max(dims.x, dims.y, dims.z);
+		const radius = (maxDim / 2) / Math.tan((FOV / 2) * Math.PI / 180) * 1.12;
+		mv.fieldOfView = `${FOV}deg`;
 		mv.cameraTarget = 'auto auto auto';
-		mv.cameraOrbit = '0deg 82deg auto';
+		mv.cameraOrbit = `0deg 82deg ${radius}m`;
 		await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 		await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 	}, src);

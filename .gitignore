@@ -78,6 +78,8 @@ scripts/pump-usdc-race.mjs
 .fresh-pump-wallet.json
 .coin-keypair-*.json
 .coin-metadata-*.json
+.x402-test-wallet.json
+scripts/x402-test-endpoints.mjs
 wallets/
 .wallets/
 x402-test-wallets/

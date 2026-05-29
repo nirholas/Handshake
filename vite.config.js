@@ -373,13 +373,20 @@ const appConfig = {
 				},
 			},
 		},
-		// Polyfill the Node `buffer` and `process` globals so @solana/web3.js
-		// (and any other dep that does `import { Buffer } from 'buffer'`) works
-		// in the browser without the "Module 'buffer' has been externalized"
-		// console warning. Scoped to these two — we don't blanket-polyfill all
-		// Node builtins because most pages don't need them.
+		// Polyfill the Node `process` global so @solana/web3.js (and any other dep
+		// that touches `process`) works in the browser without the "Module has
+		// been externalized" console warning. Scoped narrowly — we don't blanket-
+		// polyfill all Node builtins because most pages don't need them.
+		//
+		// `buffer` is intentionally NOT in `include`: the plugin would alias it to
+		// an ESM shim with named exports only, but Vite's dep-optimizer rewrites
+		// named buffer imports into a CJS-interop *default* import, which then
+		// fails to link ("buffer.js does not provide an export named 'default'").
+		// Instead resolve.alias points `buffer` at the real CJS package (which
+		// prebundles with both default and named) and `globals.Buffer` still
+		// injects the global from it.
 		nodePolyfills({
-			include: ['buffer', 'process'],
+			include: ['process'],
 			globals: { Buffer: true, process: true, global: true },
 			protocolImports: true,
 		}),

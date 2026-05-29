@@ -73,7 +73,7 @@ const DISCOVERY_INPUT_SCHEMA = {
 		mint: {
 			type: 'string',
 			minLength: 32,
-			maxLength: 64,
+			maxLength: 44,
 			description: 'Base58 SPL mint address on Solana mainnet.',
 		},
 	},
