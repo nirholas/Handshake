@@ -70,14 +70,23 @@ async function fetchMeta(uri) {
 
 /**
  * Connect to the PumpPortal WebSocket and stream pump.fun events.
- * @param {{ onEvent: Function, signal?: AbortSignal, kind?: string }} opts
+ *
+ * @param {object} opts
+ * @param {(ev: { kind: 'mint'|'graduation'|'trade', data: object }) => void} opts.onEvent
+ * @param {AbortSignal} [opts.signal] — abort to tear down the connection.
+ * @param {'all'|'mint'|'graduation'|'trades'} [opts.kind='all'] — which event
+ *   classes to subscribe to. `trades` requires `mints` (PumpPortal's
+ *   subscribeTokenTrade is per-mint; there is no firehose for all trades).
+ * @param {string[]} [opts.mints=[]] — token mints to stream buy/sell trades for.
  * @returns {Function} stop
  */
-export function connectPumpFunFeed({ onEvent, signal, kind = 'all' }) {
+export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [] }) {
 	let active = true;
 	let ws = null;
 	let reconnects = 0;
 	let reconnectTimer = null;
+	const tradeMints = Array.isArray(mints) ? mints.filter(Boolean) : [];
+	const wantsTrades = (kind === 'all' || kind === 'trades') && tradeMints.length > 0;
 
 	function stop() {
 		active = false;
@@ -98,6 +107,9 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all' }) {
 			}
 			if (kind === 'all' || kind === 'graduation') {
 				ws.send(JSON.stringify({ method: 'subscribeMigration' }));
+			}
+			if (wantsTrades) {
+				ws.send(JSON.stringify({ method: 'subscribeTokenTrade', keys: tradeMints }));
 			}
 		});
 
@@ -131,6 +143,13 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all' }) {
 					persistGraduation(data);
 					if (active) onEvent({ kind: 'graduation', data });
 				});
+			} else if ((msg.txType === 'buy' || msg.txType === 'sell') && wantsTrades) {
+				if (!markSeen(msg.signature)) return;
+				// Trades are high-frequency; enrich only with the cached SOL price
+				// (no per-trade metadata fetch) so we never block the message loop.
+				getSolPrice()
+					.then((solPrice) => { if (active) onEvent({ kind: 'trade', data: normalizeTrade(msg, solPrice) }); })
+					.catch(() => { if (active) onEvent({ kind: 'trade', data: normalizeTrade(msg, 0) }); });
 			}
 		});
 
@@ -240,6 +259,36 @@ function normalizeGrad(d) {
 		name: d.name,
 		symbol: d.symbol,
 		pool: d.pool,
+		timestamp: Math.floor(Date.now() / 1000),
+		...quote,
+	};
+}
+
+function normalizeTrade(d, solPrice = 0) {
+	const quote = classifyQuote(d.quoteMint || d.quote_mint);
+	const solAmount = typeof d.solAmount === 'number' ? d.solAmount : null;
+	const mcSol = typeof d.marketCapSol === 'number' ? d.marketCapSol : null;
+	const isBuy = d.txType === 'buy';
+	return {
+		signature: d.signature,
+		tx_signature: d.signature,
+		mint: d.mint,
+		trader: d.traderPublicKey || null,
+		// Preserve raw txType so consumers can branch on 'buy'/'sell' directly.
+		txType: d.txType,
+		tx_type: d.txType,
+		is_buy: isBuy,
+		token_amount: typeof d.tokenAmount === 'number' ? d.tokenAmount : null,
+		// Both camelCase passthrough and snake_case so the avatar reaction buffer
+		// (which reads solAmount ?? sol_amount ?? amount) and the dashboard agree.
+		solAmount,
+		sol_amount: solAmount,
+		sol_value_usd: solAmount != null && solPrice > 0 ? solAmount * solPrice : null,
+		market_cap_sol: mcSol,
+		market_cap_usd: mcSol != null && solPrice > 0 ? mcSol * solPrice : null,
+		sol_price: solPrice > 0 ? solPrice : null,
+		pool: d.pool || null,
+		bonding_curve: d.bondingCurveKey || null,
 		timestamp: Math.floor(Date.now() / 1000),
 		...quote,
 	};

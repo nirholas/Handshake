@@ -1,9 +1,8 @@
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { json, error, wrap } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 
-const BIRDEYE_API_KEY = env.BIRDEYE_API_KEY;
+const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
 
 // Process-local Birdeye response cache. Keeps the function instance from
 // hammering Birdeye when many tabs poll the same mint within a few seconds.
@@ -20,14 +19,17 @@ async function fetchWithCache(url, options, ttlMs = 60_000) {
 	const resp = await fetch(url, options);
 	if (!resp.ok) {
 		const text = await resp.text();
-		throw new Error(`API error (${resp.status}): ${text}`);
+		throw new Error(`API error (${resp.status}): ${text.slice(0, 200)}`);
 	}
 	const value = await resp.json();
-	_birdeyeCache.set(key, { value, expires: now + ttlMs });
-	// Bound the map so it can't grow without bound under pathological keying.
-	if (_birdeyeCache.size > 256) {
-		const oldest = _birdeyeCache.keys().next().value;
-		_birdeyeCache.delete(oldest);
+	// Only cache successful non-null responses so an empty/error body from
+	// Birdeye doesn't poison the cache for 60s.
+	if (value?.data != null) {
+		_birdeyeCache.set(key, { value, expires: now + ttlMs });
+		if (_birdeyeCache.size > 256) {
+			const oldest = _birdeyeCache.keys().next().value;
+			_birdeyeCache.delete(oldest);
+		}
 	}
 	return value;
 }

@@ -100,6 +100,7 @@ async function handleFeed(req, res) {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many feed connections');
 	const url = new URL(req.url, 'http://x');
 	const kind = url.searchParams.get('kind') || 'all';
+	const mintParam = url.searchParams.get('mint');
 	const minTierParam = url.searchParams.get('minTier');
 	const minTier = TIER_RANK[minTierParam] || 0;
 	const mcMin = Number(url.searchParams.get('mcMin')) || 0;
@@ -113,7 +114,7 @@ async function handleFeed(req, res) {
 		if (mcMax && mc != null && mc > mcMax) return false;
 		const initBuy = ev?.initial_buy_sol ?? null;
 		if (minBuy && initBuy != null && initBuy < minBuy) return false;
-		const tradeSol = ev?.initial_buy_sol ?? ev?.amount_sol ?? null;
+		const tradeSol = ev?.initial_buy_sol ?? ev?.amount_sol ?? ev?.sol_amount ?? null;
 		if (whale && tradeSol != null && tradeSol < whale) return false;
 		return true;
 	}
@@ -130,7 +131,10 @@ async function handleFeed(req, res) {
 	req.on('close', () => wsAbort.abort());
 	const queue = [];
 	const wsKind = kind === 'claims' ? 'graduation' : kind;
-	const stopWs = connectPumpFunFeed({ kind: wsKind, signal: wsAbort.signal, onEvent: ({ kind: evKind, data }) => { if (active) queue.push({ evKind, data }); } });
+	// `trades` is per-mint on PumpPortal — require a mint and stream that token's
+	// buy/sell flow. Other kinds (mint/graduation/all) ignore the mint param.
+	const tradeMints = wsKind === 'trades' && mintParam ? [mintParam] : [];
+	const stopWs = connectPumpFunFeed({ kind: wsKind, mints: tradeMints, signal: wsAbort.signal, onEvent: ({ kind: evKind, data }) => { if (active) queue.push({ evKind, data }); } });
 	_writeSse(res, 'open', { kind, minTier: minTierParam || null, source: 'websocket' });
 	// Replay the most recent buffered events so a freshly-opened feed is never
 	// blank. Newest first so the UI's `prepend` results in chronological order.

@@ -131,7 +131,8 @@ export default async function dispatcher(req, res) {
 	if (req.query?.action === 'strategy-run') return handleStrategyRun(req, res);
 	if (req.query?.action === 'vanity-keygen') return handleVanityKeygen(req, res);
 	if (req.query?.action === 'live-stream') return handleLiveStream(req, res);
-	if (req.query?.action === 'trades-stream') return handleTradesStream(req, res);
+	// `trades-stream` is served by the dedicated api/pump/trades-stream.js file
+	// (static routes win over [action]); no dispatch needed here.
 	return wrapped(req, res);
 }
 

@@ -468,7 +468,7 @@ The viewer targets every browser that ships WebGL 2.0 on a desktop or modern mob
 **Capabilities and graceful degradation**
 
 - **WebGL 2.0** is required; the viewer refuses to boot without it and shows a fallback message.
-- **WebAssembly** is required for the Draco / KTX2 / Meshopt decoders that ship under [`public/draco/`](public/draco/) and `node_modules/three/examples/jsm/libs/`.
+- **WebAssembly** is required for the Draco / KTX2 / Meshopt decoders that ship under [`public/three/draco/`](public/three/draco/), [`public/three/basis/`](public/three/basis/), and `node_modules/three/examples/jsm/libs/`.
 - **`getUserMedia` (microphone)** requires HTTPS — see [Common gotchas](#common-gotchas). Without it the agent falls back to text input.
 - **`speechSynthesis`** is detected at runtime; agents fall back to silent text replies when TTS is unavailable.
 - **WebGPU** is not required and is not used yet — Phase 4 reserves it for client-side inference experiments.
@@ -489,8 +489,8 @@ The viewer targets every browser that ships WebGL 2.0 on a desktop or modern mob
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/nirholas/3D-Agent.git
-    cd 3D-Agent
+    git clone https://github.com/nirholas/three.ws.git
+    cd three.ws
     ```
 2.  **Install dependencies**:
     ```bash
@@ -745,7 +745,7 @@ For the absolute simplest way to embed an agent, use this snippet. It requires n
 	data-nameplate="true"
 	style="width: 400px; height: 500px;"
 ></div>
-<script src="https://3d-agent.vercel.app/dist/widget.js" defer></script>
+<script src="https://three.ws/dist/widget.js" defer></script>
 ```
 
 You can find your agent ID in the agent's settings page. This method is great for quick integrations on platforms like WordPress, Ghost, or any static HTML site. Customize the appearance with `data-background` and `data-nameplate`.

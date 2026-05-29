@@ -24,7 +24,7 @@ bottom.
 | Avatar service backend | [api/](api) + [workers/](workers) | In-repo | Vercel functions + Cloudflare workers |
 | On-chain identity | [contracts/](contracts) | In-repo | Foundry-based on-chain agent identity, ERC-8004 |
 | Cross-chain SDKs | [sdk/](sdk), [solana-agent-sdk/](solana-agent-sdk), [agent-payments-sdk/](agent-payments-sdk), [agent-protocol-sdk/](agent-protocol-sdk) | Published | Cross-chain agent SDKs |
-| MCP integration | [mcp-server/](mcp-server), [mcp-bridge/](mcp-bridge) | Published as `@three-ws/mcp-server` | Model Context Protocol surface |
+| MCP integration | [mcp-server/](mcp-server), [mcp-bridge/](mcp-bridge) | Published as `@3d-agent/mcp-server` | Model Context Protocol surface |
 | SNS naming + pay-by-name | [api/sns.js](api/sns.js), [api/sns-subdomain.js](api/sns-subdomain.js), [api/threews/subdomain.js](api/threews/subdomain.js), [api/x402/pay-by-name.js](api/x402/pay-by-name.js), [src/solana/sns-subdomain.js](src/solana/sns-subdomain.js), [pages/threews-claim.html](pages/threews-claim.html) | In-repo | `*.threews.sol` subdomain mint, x402 payments addressed by name. Env: `THREEWS_SOL_PARENT_SECRET_BASE58`. See [SNS_PARTNERSHIP_PROPOSAL.md](docs/internal/SNS_PARTNERSHIP_PROPOSAL.md) |
 
 ## npm workspaces
@@ -32,14 +32,25 @@ bottom.
 Declared in [package.json](package.json):
 
 ```
-agent-payments-sdk/    → @three-ws/agent-payments
-avatar-sdk/            → @three-ws/avatar
-character-studio/      → @m3-org/characterstudio (fork)
-mcp-bridge/            → @three-ws/mcp-bridge
-mcp-server/            → @three-ws/mcp-server
-multiplayer/           → @three-ws/multiplayer
-packages/*             → @three-ws/* (new — for clean publishable spec/schema packages)
+agent-payments-sdk/      → @pump-fun/agent-payments-sdk
+agent-ui-sdk/            → @three-ws/agent-ui
+avatar-sdk/              → @three-ws/avatar
+character-studio/        → @m3-org/characterstudio (fork)
+mcp-bridge/              → @3d-agent/mcp-bridge
+mcp-server/              → @3d-agent/mcp-server
+multiplayer/             → @three.ws/multiplayer
+packages/avatar-schema/  → @three-ws/avatar-schema
+packages/avatar-cli/     → @three-ws/avatar-cli
+packages/viewer-presets/ → @three-ws/viewer-presets
 ```
+
+`packages/*` is the home for clean, publishable spec/schema/preset packages
+with no runtime dependency on the main app.
+
+Cross-chain SDKs that ship on their own (`sdk/` → `@three-ws/sdk`,
+`solana-agent-sdk/` → `@three-ws/solana-agent`,
+`agent-protocol-sdk/` → `@3d-agent/agent-protocol-sdk`) live at the top level
+but are **not** npm workspaces.
 
 `packages/` is reserved for spec/schema/protocol packages with no runtime
 dependencies on the main app — things that need to be installable by external
@@ -96,5 +107,5 @@ gain.
 
 - [README.md](README.md) — product overview, quickstart, full feature list
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to propose changes
-- [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) — attribution for derived code and assets
+- Attribution for derived code and assets — [character-studio/LICENSE](character-studio/LICENSE) (fork of M3-org/CharacterStudio), [public/animations/LICENSES.md](public/animations/LICENSES.md), and the per-asset `LICENSES.md` files under [public/club/](public/club)
 - [CLAUDE.md](CLAUDE.md) — operating rules for AI agents working in this repo

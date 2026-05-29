@@ -7,8 +7,8 @@ Thanks for your interest in contributing! This guide covers everything you need 
 ## Quick Start
 
 ```bash
-git clone https://github.com/nirholas/3d-agent.git
-cd 3D
+git clone https://github.com/nirholas/three.ws.git
+cd three.ws
 npm install
 npm run dev
 ```
@@ -21,8 +21,8 @@ Open [http://localhost:3000](http://localhost:3000) and verify the default model
 
 ### Report a Bug
 
-1. Check [existing issues](https://github.com/nirholas/3d-agent/issues) to avoid duplicates
-2. Open a [new issue](https://github.com/nirholas/3d-agent/issues/new) with:
+1. Check [existing issues](https://github.com/nirholas/three.ws/issues) to avoid duplicates
+2. Open a [new issue](https://github.com/nirholas/three.ws/issues/new) with:
     - Browser and OS
     - Steps to reproduce
     - Expected vs. actual behavior
@@ -96,7 +96,7 @@ src/
 └── components/      # vhtml JSX components (string-based, no virtual DOM)
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for a deep dive.
+See [docs/architecture.md](docs/architecture.md) for a deep dive.
 
 ---
 
@@ -134,7 +134,7 @@ Use the [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample
 
 Looking for something to work on? Here are areas that welcome contributions:
 
-- **Bug fixes** — check the [issues page](https://github.com/nirholas/3d-agent/issues)
+- **Bug fixes** — check the [issues page](https://github.com/nirholas/three.ws/issues)
 - **New environment maps** — add more HDR options
 - **Accessibility** — improve keyboard navigation and screen reader support
 - **Performance** — reduce re-renders, optimize disposal, add lazy loading
