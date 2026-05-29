@@ -22,12 +22,13 @@ import {
 	SIGN_IN_WITH_X,
 } from '@x402/extensions/sign-in-with-x';
 
-const siwxResourceServerExtension = createSIWxResourceServerExtension();
 import { createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
 
 import { env } from './env.js';
 import { siwxStorage, normalizeAddress } from './siwx-storage.js';
+
+const siwxResourceServerExtension = createSIWxResourceServerExtension({ storage: siwxStorage });
 
 export { SIGN_IN_WITH_X };
 

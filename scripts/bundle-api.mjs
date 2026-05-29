@@ -82,6 +82,19 @@ const EXTERNALS = [
 	'@neynar/*',
 	'@upstash/*',
 	'@sparticuz/*',
+	// @x402/extensions v2.13.0 maps both `import` and `require` conditions to
+	// its CJS build (./dist/cjs/index.js). When esbuild bundles that CJS into
+	// an ESM output it wraps require() calls with a __require shim, but
+	// require('url') (a Node.js built-in) throws "Dynamic require of 'url' is
+	// not supported" at runtime — crashing every function that imports x402-spec.js.
+	// Marking @x402/* and @coinbase/* as external lets Node.js ESM loader
+	// handle the CJS→ESM boundary natively (ESM can always import CJS).
+	'@x402/*',
+	'@coinbase/*',
+	// gltf-validator ships only a CJS build (gltf_validator.dart.js) that uses
+	// require('url') — same ESM-bundling incompatibility as @x402/extensions.
+	// Marking it external lets Node.js load it natively as CJS.
+	'gltf-validator',
 	'jsdom',
 	'ethers',
 	'elevenlabs',
