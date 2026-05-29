@@ -6,6 +6,7 @@ dist-artifact
 .vercel
 .DS_Store
 npm-debug.log*
+api/errors-*.md
 .env
 .env.local
 .env.*.local
