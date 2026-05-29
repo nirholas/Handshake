@@ -35,12 +35,24 @@
 			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
 			"maxDuration": 120
 		},
+		"api/x402/vanity.js": {
+			"includeFiles": "src/solana/vanity/wasm/**,examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
+			"maxDuration": 60
+		},
 		"api/**/*.js": {
 			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
 			"maxDuration": 30
 		}
 	},
 	"routes": [
+		{
+			"src": "/(login|register|forgot-password|reset-password|account|settings|wallet|pay|paywall|vanity-wallet|eth-vanity|dashboard|dashboard-next|dashboard-classic)(/.*)?$",
+			"headers": {
+				"content-security-policy": "frame-ancestors 'self'",
+				"x-frame-options": "SAMEORIGIN"
+			},
+			"continue": true
+		},
 		{
 			"src": "/aws-marketplace/welcome",
 			"dest": "/aws-marketplace/welcome.html"
