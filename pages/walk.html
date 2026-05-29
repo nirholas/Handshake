@@ -203,15 +203,23 @@
 				box-shadow: 0 0 8px var(--accent);
 			}
 
-			#walk-joystick {
+			#walk-joystick,
+			#walk-look-joystick {
 				position: fixed;
 				z-index: 5;
-				left: 24px;
 				bottom: calc(28px + env(safe-area-inset-bottom, 0));
 				width: 140px;
 				height: 140px;
 				touch-action: none;
 				pointer-events: auto;
+			}
+			#walk-joystick { left: 24px; }
+			/* Right-hand look stick — only on touch / narrow viewports, where the
+			   desktop WASD + mouse-look hints (#walk-help) are hidden, so the two
+			   never fight for the bottom-right corner. */
+			#walk-look-joystick { right: 24px; display: none; }
+			@media (hover: none), (max-width: 640px) {
+				#walk-look-joystick { display: block; }
 			}
 
 			#walk-status {
@@ -1057,6 +1065,7 @@
 			</div>
 
 			<div id="walk-joystick" aria-label="Movement joystick"></div>
+			<div id="walk-look-joystick" aria-label="Look joystick"></div>
 
 			<div id="walk-help" aria-hidden="true">
 				<span class="walk-key"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>

@@ -158,12 +158,15 @@ export function initWalkPreview(container) {
 		color: 'rgba(255,255,255,0.85)',
 		restOpacity: 0.6,
 	});
-	joystick.on('move', (_evt, data) => {
+	joystick.on('move', (evt) => {
+		// nipplejs v1 passes a single { type, target, data } event object.
+		const data = evt?.data;
 		if (data?.vector) {
-			const mag = Math.min(1, data.distance / 45);
-			input.joy.x = data.vector.x * mag;
-			input.joy.y = data.vector.y * mag;
-			input.joy.active = mag > 0.05;
+			// data.vector is the proportional stick displacement, already in
+			// [-1, 1] per axis (magnitude ≤ 1); y positive = pushed up = forward.
+			input.joy.x = data.vector.x;
+			input.joy.y = data.vector.y;
+			input.joy.active = Math.hypot(data.vector.x, data.vector.y) > 0.05;
 		}
 	});
 	joystick.on('end', () => {

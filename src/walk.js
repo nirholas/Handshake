@@ -86,12 +86,18 @@ const LEAN_LERP = 0.12;
 const CAM_OFFSET = new Vector3(0, 1.85, 3.6); // behind-and-above, relative to avatar yaw
 const CAM_LOOK_OFFSET = new Vector3(0, 1.1, 0);
 const GROUND_RADIUS = 12;
+// Right-hand "look" stick — radians/sec the camera rotates at full deflection.
+// Signs mirror the canvas drag-orbit handler so push-right turns right and
+// push-up tilts the view up.
+const LOOK_YAW_SPEED = 2.6;
+const LOOK_PITCH_SPEED = 1.9;
 
 // ── DOM ───────────────────────────────────────────────────────────────────
 const stage = document.getElementById('walk-stage');
 const canvas = document.getElementById('walk-canvas');
 const video = document.getElementById('walk-camera-feed');
 const joystickEl = document.getElementById('walk-joystick');
+const lookJoystickEl = document.getElementById('walk-look-joystick');
 const arBtn = document.getElementById('walk-ar-toggle');
 const arCta = document.getElementById('walk-ar-cta');
 const recordBtn = document.getElementById('walk-record-btn');
@@ -489,12 +495,13 @@ applyCameraImmediate();
 		// On some mobile browsers the canvas (being full-screen) can receive
 		// a pointerdown before nipplejs does, and setPointerCapture would
 		// redirect all subsequent pointermove events here — breaking movement.
-		const jRect = joystickEl.getBoundingClientRect();
-		const overJoystick = (
-			e.clientX >= jRect.left && e.clientX <= jRect.right &&
-			e.clientY >= jRect.top  && e.clientY <= jRect.bottom
-		);
-		if (overJoystick) return;
+		const inRect = (el) => {
+			if (!el) return false;
+			const r = el.getBoundingClientRect();
+			return e.clientX >= r.left && e.clientX <= r.right &&
+			       e.clientY >= r.top  && e.clientY <= r.bottom;
+		};
+		if (inRect(joystickEl) || inRect(lookJoystickEl)) return;
 
 		dragging = true;
 		downId = e.pointerId;
@@ -526,6 +533,7 @@ applyCameraImmediate();
 const input = {
 	keys: { forward: 0, back: 0, left: 0, right: 0, run: false },
 	joy: { x: 0, y: 0, active: false },
+	look: { x: 0, y: 0, active: false },
 };
 
 // ── Jump state ────────────────────────────────────────────────────────────
@@ -572,6 +580,13 @@ const helpOverlay = (() => {
 	const el = document.createElement('div');
 	el.id = 'walk-help-overlay';
 	el.setAttribute('aria-hidden', 'true');
+	// The overlay is pointer-events:none at ALL times, including while shown.
+	// It's a read-only info panel with no interactive controls, and on tall /
+	// portrait viewports its card overlaps the bottom joysticks — a capturing
+	// overlay (even at opacity:0) silently eats every joystick / canvas touch
+	// and makes the controls feel dead. Dismissal is handled entirely by the
+	// window-level pointerdown listener below plus H / Esc, so the panel never
+	// needs to capture and the sticks underneath always stay live.
 	el.style.cssText = [
 		'position:fixed', 'inset:0', 'z-index:9999',
 		'display:flex', 'align-items:center', 'justify-content:center',
@@ -598,6 +613,7 @@ const helpOverlay = (() => {
 				<tr><td style="color:#aaa;padding-right:16px">M</td><td>Toggle minimap</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Z</td><td>Hide UI (scene + joystick only)</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">H / ?</td><td>Toggle this overlay</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Left / right stick</td><td>Move &middot; look (touch)</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Mouse drag</td><td>Orbit camera</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Scroll wheel</td><td>Zoom in / out</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Esc</td><td>Close overlay / release pointer</td></tr>
@@ -612,12 +628,15 @@ let helpVisible = false;
 function toggleHelp() {
 	helpVisible = !helpVisible;
 	helpOverlay.style.opacity = helpVisible ? '1' : '0';
-	helpOverlay.style.pointerEvents = helpVisible ? 'auto' : 'none';
 	helpOverlay.setAttribute('aria-hidden', String(!helpVisible));
 }
-helpOverlay.addEventListener('click', (e) => {
-	if (e.target === helpOverlay) toggleHelp();
-});
+// Any pointer interaction dismisses the overlay. Capture phase + a
+// non-blocking backdrop means the SAME tap that closes the panel also reaches
+// the joystick underneath — so the first-visit help never costs the user a
+// stalled touch.
+window.addEventListener('pointerdown', () => {
+	if (helpVisible) toggleHelp();
+}, true);
 
 window.addEventListener('keydown', (e) => {
 	if (e.target?.tagName === 'INPUT' || e.target?.tagName === 'TEXTAREA') return;
@@ -680,14 +699,17 @@ const joystick = nipplejs.create({
 	color: 'rgba(255,255,255,0.85)',
 	restOpacity: 0.6,
 });
-joystick.on('move', (_evt, data) => {
+joystick.on('move', (evt) => {
+	// nipplejs v1 calls handlers with a single { type, target, data } event
+	// object — the move payload lives on evt.data, not a second argument.
+	const data = evt?.data;
 	if (data?.vector) {
-		// nipple's vector y is positive when stick is pushed UP — that's our
-		// forward direction. Vector magnitude is already in [0, 1].
-		const mag = Math.min(1, data.distance / 50);
-		input.joy.x = data.vector.x * mag;
-		input.joy.y = data.vector.y * mag;
-		input.joy.active = mag > 0.05;
+		// data.vector is the proportional stick displacement within the radius,
+		// already in [-1, 1] per axis (magnitude ≤ 1). y is positive when the
+		// stick is pushed UP — our forward direction.
+		input.joy.x = data.vector.x;
+		input.joy.y = data.vector.y;
+		input.joy.active = Math.hypot(data.vector.x, data.vector.y) > 0.05;
 	}
 });
 joystick.on('end', () => {
@@ -695,6 +717,40 @@ joystick.on('end', () => {
 	input.joy.y = 0;
 	input.joy.active = false;
 });
+
+// Right-hand "look" stick — drives the follow-camera yaw/pitch so touch users
+// can turn the view with a thumb instead of fighting the avatar for the
+// canvas. Only mounted where the desktop mouse-look affordances are hidden
+// (touch / narrow viewports); on a wide pointer-fine screen the WASD + mouse
+// controls own the camera and a second stick would just overlap the hints.
+const wantsTouchControls = (() => {
+	if (typeof matchMedia !== 'function') return false;
+	return matchMedia('(hover: none)').matches || matchMedia('(max-width: 640px)').matches;
+})();
+if (lookJoystickEl && wantsTouchControls) {
+	const lookJoystick = nipplejs.create({
+		zone: lookJoystickEl,
+		mode: 'static',
+		position: { left: '50%', top: '50%' },
+		size: 110,
+		color: 'rgba(255,255,255,0.85)',
+		restOpacity: 0.6,
+	});
+	lookJoystick.on('move', (evt) => {
+		// nipplejs v1 passes a single { type, target, data } event object.
+		const data = evt?.data;
+		if (!data?.vector) return;
+		// data.vector already carries direction + magnitude in [-1, 1] per axis.
+		input.look.x = data.vector.x;
+		input.look.y = data.vector.y;
+		input.look.active = Math.hypot(data.vector.x, data.vector.y) > 0.05;
+	});
+	lookJoystick.on('end', () => {
+		input.look.x = 0;
+		input.look.y = 0;
+		input.look.active = false;
+	});
+}
 
 // ── Avatar loading + animations ──────────────────────────────────────────
 const animationManager = new AnimationManager();
@@ -1270,6 +1326,14 @@ function readMoveInput() {
 
 function tick() {
 	const dt = Math.min(clock.getDelta(), 0.05); // clamp huge frames after a tab switch
+
+	// Right-stick look — rotate the follow-camera while the stick is held.
+	// Signs match the drag-orbit handler: push right turns right, push up
+	// tilts the view upward, clamped to the same pitch limits.
+	if (input.look.active) {
+		cameraYaw -= input.look.x * LOOK_YAW_SPEED * dt;
+		cameraPitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, cameraPitch + input.look.y * LOOK_PITCH_SPEED * dt));
+	}
 
 	// Jump physics — simple parabola in Y, lands back at GROUND_Y.
 	if (jumpActive && avatar) {
