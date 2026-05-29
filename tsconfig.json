@@ -30,6 +30,7 @@
     "chat",
     "chat-plugin",
     "examples",
+    "infra",
     "mcp-bridge",
     "mcp-server",
     "multiplayer",

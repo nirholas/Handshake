@@ -3,6 +3,7 @@
 	"outputDirectory": "dist",
 	"public": true,
 	"installCommand": "npm install --prefer-offline --no-audit --no-fund",
+	"nodeVersion": "22.x",
 	"env": {
 		"NODE_OPTIONS": "--no-deprecation"
 	},

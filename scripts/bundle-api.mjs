@@ -138,7 +138,10 @@ function runEsbuild(files, timeoutMs) {
 
 const start = Date.now();
 const routeFiles = await collectRouteFiles(API_DIR);
-const BATCH_SIZE = 20;
+// BATCH_SIZE drives esbuild's native (Go) heap per invocation. On Vercel's
+// ~8 GB build container, 20 caused std::bad_alloc/SIGABRT when bundle-api ran
+// in parallel with the other Phase 1 native builds. Keep at 10.
+const BATCH_SIZE = 10;
 const totalBatches = Math.ceil(routeFiles.length / BATCH_SIZE);
 console.log(`[bundle-api] Bundling ${routeFiles.length} route files in ${totalBatches} batches...`);
 

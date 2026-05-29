@@ -58,7 +58,9 @@ async function buildAvatarStudio() {
 	if (isCached('avatar-studio', inputs) && existsSync(resolve(ROOT, 'character-studio/build'))) {
 		return;
 	}
-	await run('avatar-studio', 'npm run build --prefix character-studio');
+	await run('avatar-studio', 'npm run build --prefix character-studio', {
+		env: { NODE_OPTIONS: '--no-deprecation --max-old-space-size=4096' },
+	});
 	writeStamp('avatar-studio', inputs);
 }
 
@@ -110,19 +112,27 @@ const totalStart = Date.now();
 const phase = (n, label) => console.log(`\n=== build:vercel phase ${n}: ${label} (t+${((Date.now() - totalStart) / 1000).toFixed(1)}s) ===`);
 
 try {
-	phase(1, 'prebuild + lib + avatar-studio + chat + bundle-api (parallel)');
+	// Phase 1a: light tasks only — no Vite processes yet
+	phase(1, 'prebuild + bundle-api (parallel, light)');
 	await Promise.all([
 		prebuild(),
-		buildLib(),
-		buildAvatarStudio(),
-		buildChat(),
 		bundleApi(),
 	]);
 
-	phase(2, 'app vite build');
+	// Phase 1b: heavy Vite builds — run concurrently but isolated from Phase 1a
+	// to prevent 3+ Vite processes competing for RAM simultaneously.
+	// buildLib is quick (~30s) so we can sneak it in here too.
+	phase(2, 'lib + avatar-studio + chat (parallel, heavy Vite)');
+	await Promise.all([
+		buildLib(),
+		buildAvatarStudio(),
+		buildChat(),
+	]);
+
+	phase(3, 'app vite build');
 	await buildApp();
 
-	phase(3, 'post-build (copy-avatar-studio + publish-lib + r2-cors)');
+	phase(4, 'post-build (copy-avatar-studio + publish-lib + r2-cors)');
 	await postBuild();
 
 	clearInterval(heartbeat);
