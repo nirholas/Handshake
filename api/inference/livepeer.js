@@ -23,12 +23,13 @@
 // eslint-disable-next-line no-unused-vars -- pinned for version parity with the SDK call shape
 import { Livepeer } from 'livepeer';
 import { env } from '../_lib/env.js';
+import { llmComplete } from '../_lib/llm.js';
 import { cors, method, readJson, error, json, wrap } from '../_lib/http.js';
 
 export const maxDuration = 60;
 
 const DEFAULT_LIVEPEER_MODEL = 'meta-llama/Meta-Llama-3.1-8B-Instruct';
-const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
+const PROVIDER_NETWORK = { anthropic: 'Anthropic', groq: 'Groq', openrouter: 'OpenRouter' };
 
 // Models known to be available on the Livepeer public/studio gateway as of
 // late 2025. Surfaced to the client via the GET handler so the demo's
@@ -56,63 +57,41 @@ function clampTemp(n, fallback = 0.7) {
 	return Math.min(Math.max(v, 0), 2);
 }
 
-// ── Claude leg ────────────────────────────────────────────────────────────────
+// ── Platform LLM leg ────────────────────────────────────────────────────────
+//
+// The non-Livepeer side of the comparison runs on the platform's funded free
+// providers (Groq/OpenRouter) by default, and upgrades to Anthropic when the
+// operator supplies their own key — matching the platform-wide BYOK policy.
+// `network`/`model` always report whichever provider actually answered.
 
-async function callClaude({ prompt, max_tokens, temperature }) {
-	// ANTHROPIC_API_KEY is optional (env.opt) — skip the doomed request and
-	// report the missing-key state so the comparison still shows the Livepeer leg.
-	const key = env.ANTHROPIC_API_KEY;
-	if (!key) {
-		return {
-			ok: false,
-			network: 'Anthropic',
-			model: CLAUDE_MODEL,
-			latency_ms: 0,
-			error: 'missing_api_key',
-			upstream_body: 'ANTHROPIC_API_KEY is not configured',
-		};
-	}
+async function callPlatformLlm({ prompt, max_tokens }) {
 	const t0 = Date.now();
-	const upstream = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'x-api-key': key,
-			'anthropic-version': '2023-06-01',
-		},
-		body: JSON.stringify({
-			model: CLAUDE_MODEL,
-			max_tokens,
-			temperature,
-			messages: [{ role: 'user', content: prompt }],
-		}),
-	});
-	const latency_ms = Date.now() - t0;
-
-	if (!upstream.ok) {
-		const body = await upstream.text().catch(() => '');
+	let result;
+	try {
+		result = await llmComplete({
+			user: prompt,
+			maxTokens: max_tokens,
+			anthropicKey: env.ANTHROPIC_API_KEY,
+			timeoutMs: 45_000,
+		});
+	} catch (e) {
 		return {
 			ok: false,
-			network: 'Anthropic',
-			model: CLAUDE_MODEL,
-			latency_ms,
-			error: 'upstream_error',
-			upstream_status: upstream.status,
-			upstream_body: body.slice(0, 1000),
+			network: PROVIDER_NETWORK.anthropic,
+			model: null,
+			latency_ms: Date.now() - t0,
+			error: e.code === 'llm_unavailable' ? 'no_provider_configured' : 'upstream_error',
+			upstream_body: String(e?.message || e).slice(0, 1000),
 		};
 	}
-
-	const data = await upstream.json();
-	const reply = (data.content || []).map((c) => c?.text || '').join('').trim();
 	return {
 		ok: true,
-		network: 'Anthropic',
-		model: CLAUDE_MODEL,
-		latency_ms,
-		reply,
-		prompt_tokens: data?.usage?.input_tokens ?? null,
-		completion_tokens: data?.usage?.output_tokens ?? null,
-		stop_reason: data?.stop_reason ?? null,
+		network: PROVIDER_NETWORK[result.provider] || result.provider,
+		model: result.model,
+		latency_ms: Date.now() - t0,
+		reply: (result.text || '').trim(),
+		prompt_tokens: result.usage?.input ?? null,
+		completion_tokens: result.usage?.output ?? null,
 	};
 }
 
@@ -265,7 +244,7 @@ export default wrap(async function handler(req, res) {
 	const temperature = clampTemp(body.temperature, 0.7);
 
 	const [claudeRes, livepeerRes] = await Promise.allSettled([
-		callClaude({ prompt, max_tokens, temperature }),
+		callPlatformLlm({ prompt, max_tokens }),
 		callLivepeer({ prompt, model, max_tokens, temperature }),
 	]);
 
@@ -273,8 +252,8 @@ export default wrap(async function handler(req, res) {
 		? claudeRes.value
 		: {
 				ok: false,
-				network: 'Anthropic',
-				model: CLAUDE_MODEL,
+				network: PROVIDER_NETWORK.anthropic,
+				model: null,
 				error: 'leg_failed',
 				error_message: String(claudeRes.reason?.message || claudeRes.reason || 'unknown'),
 			};

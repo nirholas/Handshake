@@ -2329,6 +2329,30 @@
 	<a href="/login">Sign in</a>
 	<a class="btn primary" href="/dashboard" style="margin-top:4px;">Console →</a>
 </nav>
+<script>
+	(function () {
+		var toggle = document.getElementById('nav-toggle');
+		var drawer = document.getElementById('nav-drawer');
+		if (!toggle || !drawer) return;
+		function isOpen() { return drawer.classList.contains('open'); }
+		function setOpen(open) {
+			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+			drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+			document.body.style.overflow = open ? 'hidden' : '';
+			drawer.classList.toggle('open', open);
+		}
+		toggle.addEventListener('click', function () { setOpen(!isOpen()); });
+		drawer.addEventListener('click', function (e) {
+			if (e.target.closest('a')) setOpen(false);
+		});
+		document.addEventListener('keydown', function (e) {
+			if (e.key === 'Escape' && isOpen()) { setOpen(false); toggle.focus(); }
+		});
+		window.addEventListener('resize', function () {
+			if (window.innerWidth > 880 && isOpen()) setOpen(false);
+		});
+	})();
+</script>
 
 <!-- ── HERO ─────────────────────────────────────────────────────── -->
 <section class="hero">

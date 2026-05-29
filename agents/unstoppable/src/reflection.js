@@ -2,12 +2,13 @@
 //
 // Once per calendar day the agent introspects on its activity, earnings,
 // and costs, then writes a 2-3 sentence reflection + strategy note for
-// the next day. Reflection uses the same Anthropic API as inference.js.
+// the next day. Reflection uses the same shared LLM helper as inference.js —
+// funded free providers (Groq/OpenRouter) by default, Anthropic only as BYOK.
 
 import { sql } from '../../../api/_lib/db.js';
 import { getEarnings24h, getCosts24h, getRecentActivity } from './earnings.js';
+import { llmComplete, llmConfigured } from '../../../api/_lib/llm.js';
 
-const MODEL = 'claude-haiku-4-5-20251001';
 const MAX_TOKENS = 512;
 const TIMEOUT_MS = 20_000;
 
@@ -36,12 +37,11 @@ async function todayReflectionExists() {
 
 // Calls the LLM to generate a reflection summary.
 async function generateReflection({ earnings24h, costs24h, actionsCount, recentActivity }) {
-	const apiKey = process.env.ANTHROPIC_API_KEY;
-	if (!apiKey) {
+	if (!llmConfigured({ anthropicKey: process.env.ANTHROPIC_API_KEY })) {
 		const net = earnings24h - costs24h;
 		return {
 			summary: `Today the agent processed ${actionsCount} actions and earned $${formatAtomics(earnings24h)} USDC against $${formatAtomics(costs24h)} in costs, for a net of $${formatAtomics(net)} USDC.`,
-			strategy_notes: 'No API key configured — using statistical summary only.',
+			strategy_notes: 'No LLM provider configured — using statistical summary only.',
 		};
 	}
 
@@ -69,50 +69,23 @@ Write a daily reflection as JSON with exactly two fields:
 
 Respond with JSON only. No prose, no markdown fences.`;
 
-	let response;
+	let result;
 	try {
-		response = await fetch('https://api.anthropic.com/v1/messages', {
-			method: 'POST',
-			headers: {
-				'content-type': 'application/json',
-				'x-api-key': apiKey,
-				'anthropic-version': '2023-06-01',
-			},
-			body: JSON.stringify({
-				model: MODEL,
-				max_tokens: MAX_TOKENS,
-				messages: [{ role: 'user', content: prompt }],
-			}),
-			signal: AbortSignal.timeout(TIMEOUT_MS),
+		result = await llmComplete({
+			user: prompt,
+			maxTokens: MAX_TOKENS,
+			anthropicKey: process.env.ANTHROPIC_API_KEY,
+			timeoutMs: TIMEOUT_MS,
 		});
 	} catch (err) {
-		console.error('[reflection] fetch failed:', err.message);
+		console.error('[reflection] LLM call failed:', err.message);
 		return {
-			summary: `API unreachable during reflection. Today: ${actionsCount} actions, $${formatAtomics(earnings24h)} earned, $${formatAtomics(costs24h)} spent.`,
-			strategy_notes: 'Network error prevented strategic analysis.',
+			summary: `LLM unreachable during reflection. Today: ${actionsCount} actions, $${formatAtomics(earnings24h)} earned, $${formatAtomics(costs24h)} spent.`,
+			strategy_notes: 'Provider error prevented strategic analysis.',
 		};
 	}
 
-	if (!response.ok) {
-		console.error('[reflection] Anthropic error:', response.status);
-		return {
-			summary: `Anthropic API error ${response.status}. ${actionsCount} actions today, net $${formatAtomics(earnings24h - costs24h)}.`,
-			strategy_notes: 'API error prevented reflection generation.',
-		};
-	}
-
-	let data;
-	try {
-		data = await response.json();
-	} catch (err) {
-		console.error('[reflection] parse error:', err.message);
-		return {
-			summary: `Parse error during reflection. ${actionsCount} actions, $${formatAtomics(earnings24h)} earned.`,
-			strategy_notes: null,
-		};
-	}
-
-	const rawContent = data.content?.[0]?.text || '';
+	const rawContent = result.text || '';
 	try {
 		const clean = rawContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
 		const parsed = JSON.parse(clean);

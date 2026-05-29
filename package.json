@@ -56,6 +56,7 @@
 		"dev:lib": "TARGET=lib vite",
 		"build:pages": "node scripts/build-page-index.mjs",
 		"audit:pages": "node scripts/audit-page-index.mjs",
+		"audit:crawl": "node scripts/crawl-audit.mjs",
 		"build:news": "node scripts/build-news.mjs",
 		"prebuild": "(node scripts/build-news.mjs & node scripts/build-skill-metadata.mjs & node scripts/build-local-skill-packs.mjs & npm run build:club-assets & wait) && (node scripts/build-page-index.mjs && node scripts/audit-page-index.mjs)",
 		"build": "vite build && node scripts/strip-sw-from-embeds.mjs",

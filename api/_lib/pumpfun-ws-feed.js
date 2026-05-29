@@ -105,7 +105,9 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [] }
 			if (kind === 'all' || kind === 'mint') {
 				ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
 			}
-			if (kind === 'all' || kind === 'graduation') {
+			// Trade subscribers also watch migrations so a tracked token's
+			// graduation surfaces alongside its trades (filtered to the mint below).
+			if (kind === 'all' || kind === 'graduation' || wantsTrades) {
 				ws.send(JSON.stringify({ method: 'subscribeMigration' }));
 			}
 			if (wantsTrades) {
@@ -130,7 +132,12 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [] }
 					pushBuffer('mint', data);
 					if (active) onEvent({ kind: 'mint', data });
 				});
-			} else if ((msg.txType === 'migrate' || msg.txType === 'migration') && (kind === 'all' || kind === 'graduation')) {
+			} else if (msg.txType === 'migrate' || msg.txType === 'migration') {
+				const wantGrad = kind === 'all' || kind === 'graduation';
+				// In trades-only mode, only the tracked mint's graduation is relevant —
+				// filter before the (expensive) enrichment so we don't enrich the
+				// whole firehose for one watched token.
+				if (!wantGrad && !(wantsTrades && tradeMints.includes(msg.mint))) return;
 				if (!markSeen(msg.signature)) return;
 				enrichGrad(msg).then((data) => {
 					pushBuffer('graduation', data);

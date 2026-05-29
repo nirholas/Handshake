@@ -1,9 +1,12 @@
-// Inference — calls Claude Haiku to "think" about what to do next.
+// Inference — asks the LLM to "think" about what to do next.
 //
 // The agent reasons over its current financial state and recent activity,
 // then returns a JSON plan with thoughts and a list of actions to execute.
+// Runs on the platform's funded free providers (Groq/OpenRouter) by default;
+// Anthropic is used only when the operator supplies their own key.
 
-const MODEL = 'claude-haiku-4-5-20251001';
+import { llmComplete, llmConfigured } from '../../../api/_lib/llm.js';
+
 const MAX_TOKENS = 512;
 const TIMEOUT_MS = 20_000;
 
@@ -58,12 +61,11 @@ Prioritise earning over spending. Keep thoughts concise.`;
 // Think about what to do next.
 // Returns { thoughts: string, actions: Array<{type, description}>, tokensUsed: number }
 export async function think({ treasury, recentActivity, earnings24h = 0, costs24h = 0, availableBudgetAtomics }) {
-	const apiKey = process.env.ANTHROPIC_API_KEY;
-	if (!apiKey) {
-		console.warn('[inference] ANTHROPIC_API_KEY not set — returning idle plan');
+	if (!llmConfigured({ anthropicKey: process.env.ANTHROPIC_API_KEY })) {
+		console.warn('[inference] no LLM provider configured — returning idle plan');
 		return {
-			thoughts: 'API key not configured. Idling until environment is ready.',
-			actions: [{ type: 'idle', description: 'Waiting for API key configuration.' }],
+			thoughts: 'No LLM provider configured. Idling until environment is ready.',
+			actions: [{ type: 'idle', description: 'Waiting for LLM provider configuration.' }],
 			tokensUsed: 0,
 		};
 	}
@@ -78,56 +80,26 @@ export async function think({ treasury, recentActivity, earnings24h = 0, costs24
 
 	const userMessage = 'What should I do this tick? Respond with JSON only.';
 
-	let response;
+	let result;
 	try {
-		response = await fetch('https://api.anthropic.com/v1/messages', {
-			method: 'POST',
-			headers: {
-				'content-type': 'application/json',
-				'x-api-key': apiKey,
-				'anthropic-version': '2023-06-01',
-			},
-			body: JSON.stringify({
-				model: MODEL,
-				max_tokens: MAX_TOKENS,
-				system: systemPrompt,
-				messages: [{ role: 'user', content: userMessage }],
-			}),
-			signal: AbortSignal.timeout(TIMEOUT_MS),
+		result = await llmComplete({
+			system: systemPrompt,
+			user: userMessage,
+			maxTokens: MAX_TOKENS,
+			anthropicKey: process.env.ANTHROPIC_API_KEY,
+			timeoutMs: TIMEOUT_MS,
 		});
 	} catch (err) {
-		console.error('[inference] fetch failed:', err.message);
+		console.error('[inference] LLM call failed:', err.message);
 		return {
-			thoughts: 'Network error reaching Anthropic. Conserving resources.',
-			actions: [{ type: 'idle', description: 'Skipped think due to network error.' }],
+			thoughts: 'Error reaching LLM provider. Conserving resources.',
+			actions: [{ type: 'idle', description: 'Skipped think due to provider error.' }],
 			tokensUsed: 0,
 		};
 	}
 
-	if (!response.ok) {
-		const text = await response.text().catch(() => '');
-		console.error('[inference] Anthropic API error:', response.status, text);
-		return {
-			thoughts: `Anthropic API returned ${response.status}. Conserving.`,
-			actions: [{ type: 'idle', description: `API error ${response.status}.` }],
-			tokensUsed: 0,
-		};
-	}
-
-	let data;
-	try {
-		data = await response.json();
-	} catch (err) {
-		console.error('[inference] JSON parse failed:', err.message);
-		return {
-			thoughts: 'Could not parse LLM response. Idling.',
-			actions: [{ type: 'idle', description: 'JSON parse error.' }],
-			tokensUsed: 0,
-		};
-	}
-
-	const tokensUsed = data.usage?.input_tokens + data.usage?.output_tokens || 0;
-	const rawContent = data.content?.[0]?.text || '';
+	const tokensUsed = (result.usage?.input || 0) + (result.usage?.output || 0);
+	const rawContent = result.text || '';
 
 	let parsed;
 	try {
