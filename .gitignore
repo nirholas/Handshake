@@ -64,6 +64,7 @@ forks/*/
 
 # Solana keypair files — NEVER commit
 *-vanity.json
+*vanity*.json
 *-mint.json
 test-mint.json
 www-vanity.json
@@ -79,6 +80,13 @@ scripts/pump-usdc-race.mjs
 .coin-keypair-*.json
 .coin-metadata-*.json
 .x402-test-wallet.json
+# Generic keypair / secret-key / throwaway wallet files (Solana CLI format etc.)
+*keypair*.json
+*-secret.json
+*secret-key*
+*throwaway*
+.solana-*.json
+id.json
 scripts/x402-test-endpoints.mjs
 wallets/
 .wallets/
