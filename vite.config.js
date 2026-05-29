@@ -127,15 +127,24 @@ const appConfig = {
 		// etc.) must share the same `three` module as the app, otherwise
 		// Three's module-scoped registry warns "Multiple instances of Three.js".
 		dedupe: ['three'],
+		alias: {
+			// Resolve `buffer` to the real (CommonJS) npm package instead of the
+			// ESM shim vite-plugin-node-polyfills would otherwise alias it to. The
+			// shim exposes only named exports, but Vite's dep-optimizer rewrites
+			// `import { Buffer } from 'buffer'` into a CJS-interop *default* import
+			// (`import m from 'buffer'; m.Buffer`). With the named-only shim that
+			// default is missing and the module fails to link in dev with
+			// "buffer.js does not provide an export named 'default'" (hit on /cz,
+			// whose lib.js pulls Solana/Anchor deps served as source). The CJS
+			// package, once prebundled by esbuild, exposes both default and named.
+			buffer: resolve(__dirname, 'node_modules/buffer/index.js'),
+		},
 	},
 	optimizeDeps: {
 		include: [
-			// Force-prebundle `buffer` so esbuild's CJS interop synthesizes a
-			// `default` export. Without this, deps that do `import Buffer from
-			// 'buffer'` (eth/solana transitive deps reached from /cz's lib.js)
-			// hit the node-polyfills shim, which only exposes the named export,
-			// and the module fails to link in dev with "does not provide an
-			// export named 'default'".
+			// Prebundle the real `buffer` package (see resolve.alias above) so
+			// esbuild's CJS interop synthesizes the `default` export Vite's
+			// dep-optimizer expects when rewriting named buffer imports.
 			'buffer',
 			'three',
 			'three/addons/loaders/GLTFLoader.js',

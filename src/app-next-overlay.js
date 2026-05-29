@@ -606,8 +606,8 @@ function wireShare() {
 		const app = window.VIEWER?.app;
 		const name = app?.identity?.name;
 		return name
-			? `Meet ${name} — an embodied AI agent on @three_ws`
-			: 'Check out this embodied AI agent on @three_ws';
+			? `Meet ${name} — an embodied AI agent on @trythreews`
+			: 'Check out this embodied AI agent on @trythreews';
 	};
 
 	const shareUrl = () => urlEl?.value || location.href;

@@ -309,8 +309,43 @@ async function poll() {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-function donate() {
-	showToast('Wallet connect coming soon — donate via /wallet');
+// Donating funds the agent for real: a paid x402 call to the status endpoint
+// credits the treasury (recordRevenue) and returns the live state the donor
+// just paid for. The x402 checkout modal (window.X402, loaded from /x402.js)
+// handles wallet connect, SIWX, and settlement on Base or Solana.
+async function donate() {
+	const X402 = window.X402;
+	if (!X402 || typeof X402.pay !== 'function') {
+		showToast('Payment module still loading — please try again in a moment.');
+		return;
+	}
+
+	const btn = document.getElementById('donateBtn');
+	try {
+		if (btn) btn.disabled = true;
+		const out = await X402.pay({
+			endpoint: STATUS_ENDPOINT,
+			method: 'GET',
+			action: "Fund the Unstoppable Agent's runway",
+		});
+		if (!out?.ok) return;
+
+		showToast('Donation confirmed — thank you for keeping the agent alive.');
+		// The paid response is the live status the donor unlocked.
+		if (out.result && typeof out.result === 'object') {
+			renderFull(out.result);
+			saveToCache(out.result);
+			const notice = document.getElementById('paymentNotice');
+			if (notice) notice.style.display = 'none';
+		} else {
+			poll();
+		}
+	} catch (err) {
+		if (err?.code === 'cancelled') return; // donor dismissed the checkout
+		showToast('Payment failed: ' + String(err?.message || 'unknown error').slice(0, 80));
+	} finally {
+		if (btn) btn.disabled = false;
+	}
 }
 
 export function init() {

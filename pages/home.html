@@ -1926,6 +1926,52 @@
 			font-family: var(--font-mono); font-size: 9px;
 			letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-3);
 		}
+		.door-earn-viz {
+			position: absolute; inset: 0; overflow: hidden;
+			transition: transform 0.4s cubic-bezier(.2,.7,.3,1);
+		}
+		.door:hover .door-earn-viz { transform: scale(1.03); }
+		.door-earn-spark { position: absolute; inset: 0; width: 100%; height: 100%; }
+		.door-earn-area { opacity: 0; transition: opacity 1.1s ease 0.35s; }
+		.door-earn-line {
+			fill: none; stroke: var(--green); stroke-width: 2;
+			stroke-linejoin: round; stroke-linecap: round;
+			vector-effect: non-scaling-stroke;
+			stroke-dasharray: 1000; stroke-dashoffset: 1000;
+		}
+		.door-earn-viz.is-live .door-earn-area { opacity: 1; }
+		.door-earn-viz.is-live .door-earn-line {
+			transition: stroke-dashoffset 1.7s cubic-bezier(.4,0,.2,1);
+			stroke-dashoffset: 0;
+		}
+		.door-earn-stream {
+			position: absolute; top: 12px; left: 12px; right: 12px;
+			display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
+			pointer-events: none;
+		}
+		.earn-tick {
+			display: inline-flex; align-items: center; gap: 6px;
+			padding: 4px 9px; border-radius: 6px; white-space: nowrap;
+			background: rgba(5,5,5,0.7); backdrop-filter: blur(8px);
+			border: 1px solid var(--hairline-strong);
+			font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.03em;
+			color: var(--text-3);
+			animation: earnTickIn 0.5s cubic-bezier(.2,.7,.3,1) both;
+		}
+		.earn-tick b { color: var(--green); font-weight: 600; }
+		.earn-tick.out { animation: earnTickOut 0.42s ease forwards; }
+		@keyframes earnTickIn {
+			from { opacity: 0; transform: translateY(-7px); }
+			to   { opacity: 1; transform: translateY(0); }
+		}
+		@keyframes earnTickOut {
+			to { opacity: 0; transform: translateY(-9px); }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.door-earn-line { transition: none; stroke-dashoffset: 0; }
+			.door-earn-area { transition: none; opacity: 1; }
+			.earn-tick { animation: none; }
+		}
 		.bento-screenshot { position: relative; }
 		.bento-agent { position: absolute; inset: 0; }
 		.bento-agent agent-3d { width: 100%; height: 100%; display: block; }
@@ -2540,8 +2586,8 @@
 					<span class="pg-control-label">BG</span>
 					<div class="pg-chips" id="pg-bg-chips">
 						<button class="pg-chip active" data-val="transparent">none</button>
-						<button class="pg-chip" data-val="#0b0b0b">dark</button>
-						<button class="pg-chip" data-val="#ffffff">light</button>
+						<button class="pg-chip" data-val="dark">dark</button>
+						<button class="pg-chip" data-val="light">light</button>
 					</div>
 					<button class="pg-color-trigger" id="pg-color-trigger" aria-label="Pick a custom background color" title="Custom color"></button>
 					<div class="pg-color-popover" id="pg-color-popover">
@@ -2634,7 +2680,19 @@
 			<a class="door" href="/dashboard/monetize">
 				<div class="door-num"><span>03</span><span class="lbl">Earn</span></div>
 				<div class="door-screenshot">
-					<div class="door-agent" id="door-earn"></div>
+					<div class="door-earn-viz" id="door-earn-viz">
+							<svg class="door-earn-spark" viewBox="0 0 320 180" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+								<defs>
+									<linearGradient id="earnFill" x1="0" y1="0" x2="0" y2="1">
+										<stop offset="0" stop-color="rgba(232,232,232,0.16)"/>
+										<stop offset="1" stop-color="rgba(232,232,232,0)"/>
+									</linearGradient>
+								</defs>
+								<path class="door-earn-area" d="M0,158 L32,150 L64,140 L96,134 L128,120 L160,112 L192,92 L224,86 L256,66 L288,50 L320,38 L320,180 L0,180 Z" fill="url(#earnFill)"/>
+								<path class="door-earn-line" d="M0,158 L32,150 L64,140 L96,134 L128,120 L160,112 L192,92 L224,86 L256,66 L288,50 L320,38"/>
+							</svg>
+							<div class="door-earn-stream" id="door-earn-stream" aria-hidden="true"></div>
+						</div>
 					<div class="door-earn-overlay">
 						<div class="door-earn-val" id="door-earn-val">$0.00</div>
 						<div class="door-earn-lbl">USDC earned</div>
@@ -3670,15 +3728,17 @@
 	// Fetch a pool of unique community avatar GLBs from /api/explore, cached for the page lifetime.
 	// pool[0]=WYG, pool[1]=vclose, pool[2..]=LIVE_SPOTS null entries
 	var _avatarPoolP = null;
+	// Only renderable full-body avatars belong here. The idle_*.glb clips are
+	// animation-only (0 meshes) and render as an empty box — never use them as a body.
 	var POOL_FALLBACKS = [
+		'/avatars/default.glb',
 		'/avatars/cz.glb',
-		'/animations/idle_female_jan25.glb',
-		'/animations/idle_male_jan25.glb',
 		'/animations/robotexpressive.glb',
 		'/animations/soldier.glb',
-		'/animations/idle_anim.glb',
-		'/animations/idle_male_jan25.glb',
-		'/animations/idle_female_jan25.glb',
+		'/avatars/default.glb',
+		'/avatars/cz.glb',
+		'/animations/robotexpressive.glb',
+		'/animations/soldier.glb',
 	];
 	function getAvatarPool() {
 		if (!_avatarPoolP) {
@@ -4142,6 +4202,17 @@
 			highlight.innerHTML = hl(code);
 		}
 
+		// The live agent paints its own canvas, but it may not fill the preview
+		// frame (responsive width / aspect). Match the surrounding area to the
+		// chosen background so the preview reads as one surface. 'transparent'
+		// returns '' so the default stage backdrop shows through behind the avatar.
+		function resolvePreviewBg(bg) {
+			if (bg === 'transparent') return '';
+			if (bg === 'dark') return '#0b0d10';
+			if (bg === 'light') return '#f5f5f5';
+			return bg;
+		}
+
 		function updatePreview() {
 			if (!state.glbUrl) return;
 			if (!liveAgent) {
@@ -4157,7 +4228,7 @@
 				if (v && v !== 'off') liveAgent.setAttribute(k, typeof v === 'string' ? v : '');
 				else liveAgent.removeAttribute(k);
 			}
-			preview.style.backgroundColor = state.background === '#ffffff' ? '#ffffff' : '';
+			preview.style.backgroundColor = resolvePreviewBg(state.background);
 		}
 
 		function fetchGlb(id) {
@@ -4756,7 +4827,6 @@
 		var LIVE_SPOTS = [
 			{ id: 'door-create', anim: 'idle', loop: true, glb: null },
 			{ id: 'door-embed', anim: 'wave', loop: false, glb: O + '/avatars/cz.glb' },
-			{ id: 'door-earn', anim: 'dance', loop: true, glb: O + '/animations/soldier.glb' },
 			{ id: 'bento-studio', anim: 'idle', loop: true, glb: null },
 			{ id: 'bento-anim', anim: 'idle', loop: true, glb: null }
 		];
@@ -4820,25 +4890,55 @@
 
 		// Earn door ticker
 		var earnVal = document.getElementById('door-earn-val');
+		var earnViz = document.getElementById('door-earn-viz');
+		var earnStream = document.getElementById('door-earn-stream');
 		if (earnVal) {
 			var started = false;
 			var earnObs = new IntersectionObserver(function(entries) {
-				if (entries[0].isIntersecting && !started) {
-					started = true; earnObs.disconnect();
-					var val = 0, target = 847.5;
-					(function tick() {
-						val += (target - val) * 0.025;
-						if (val >= target - 0.01) val = target;
-						earnVal.textContent = '$' + val.toFixed(2);
-						if (val < target) requestAnimationFrame(tick);
-					})();
+				if (!entries[0].isIntersecting || started) return;
+				started = true; earnObs.disconnect();
+				if (earnViz) earnViz.classList.add('is-live');
+
+				var val = 0, target = 847.5;
+				(function tick() {
+					val += (target - val) * 0.025;
+					if (val >= target - 0.01) val = target;
+					earnVal.textContent = '$' + val.toFixed(2);
+					if (val < target) requestAnimationFrame(tick);
+				})();
+
+				var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+				if (earnStream && !reduceMotion) {
+					var EARN_EVENTS = [
+						{ label: 'chat',   amt: 0.05 },
+						{ label: 'voice',  amt: 0.12 },
+						{ label: 'skill',  amt: 0.25 },
+						{ label: 'chat',   amt: 0.05 },
+						{ label: 'memory', amt: 0.08 }
+					];
+					var ei = 0;
+					function pushEarnTick() {
+						var ev = EARN_EVENTS[ei++ % EARN_EVENTS.length];
+						var row = document.createElement('div');
+						row.className = 'earn-tick';
+						row.innerHTML = '+&nbsp;<b>$' + ev.amt.toFixed(2) + '</b>&nbsp;&middot;&nbsp;' + ev.label;
+						earnStream.prepend(row);
+						var live = earnStream.querySelectorAll('.earn-tick:not(.out)');
+						if (live.length > 3) {
+							var oldest = live[live.length - 1];
+							oldest.classList.add('out');
+							oldest.addEventListener('animationend', function() { oldest.remove(); }, { once: true });
+						}
+					}
+					pushEarnTick();
+					setInterval(pushEarnTick, 2200);
 				}
-			});
+			}, { threshold: 0.35 });
 			earnObs.observe(earnVal);
 		}
 	})();
 </script>
-<script src="/src/api-playground.js"></script>
+<script type="module" src="/src/api-playground.js"></script>
 <script type="module" src="/dragon-section.js"></script>
 <script type="module">
 import * as THREE from 'three';

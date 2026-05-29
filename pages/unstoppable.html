@@ -497,9 +497,9 @@
 			</div>
 
 			<div class="donate-block" style="margin-top: 28px;">
-				<div class="donate-label">Keep it alive — donate $0.10 USDC to extend the agent's runway.</div>
+				<div class="donate-label">Keep it alive — donate $0.01 USDC to extend the agent's runway and unlock the live view.</div>
 				<button class="btn primary" id="donateBtn" onclick="window.__unstoppable.donate()">
-					Donate $0.10
+					Donate $0.01
 				</button>
 			</div>
 		</div>
@@ -583,6 +583,8 @@
 	<!-- TOAST -->
 	<div id="toast"></div>
 
+	<!-- x402 checkout (provides window.X402 for the donate flow) -->
+	<script type="module" src="/x402.js"></script>
 	<!-- DASHBOARD JS -->
 	<script type="module" src="/src/unstoppable-dashboard.js"></script>
 </body>

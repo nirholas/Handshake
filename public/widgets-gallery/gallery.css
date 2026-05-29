@@ -188,12 +188,12 @@ body.gallery-body {
 
 .btn-primary {
 	background: var(--blue);
-	color: #fff;
+	color: #0a0a0a;
 }
 
 .btn-primary:hover {
 	transform: translateY(-1px);
-	background: #2563eb;
+	background: #e8e8e8;
 }
 
 .btn-ghost {
