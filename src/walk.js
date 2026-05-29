@@ -2511,6 +2511,11 @@ function updateMinimapFrame() {
 // ── Help overlay first-visit auto-show ───────────────────────────────────
 const HELP_FIRST_VISIT_KEY = 'walk:help-shown';
 function showHelpOnFirstVisit() {
+	// The overlay is a keyboard cheat-sheet (WASD/Shift/Space) and its card is
+	// tall enough to cover the joystick on a phone. Both are wrong on touch, so
+	// skip the auto-popup there — the on-screen sticks are self-explanatory and
+	// the help button still opens it on demand.
+	if (IS_TOUCH) return;
 	try {
 		if (localStorage.getItem(HELP_FIRST_VISIT_KEY) === '1') return;
 		localStorage.setItem(HELP_FIRST_VISIT_KEY, '1');

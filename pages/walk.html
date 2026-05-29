@@ -206,7 +206,11 @@
 			#walk-joystick,
 			#walk-look-joystick {
 				position: fixed;
-				z-index: 5;
+				/* Above the bottom HUD (chat z8, status/record z6, emote z5) so a
+				   touch inside a stick's 140px square always reaches nipplejs
+				   instead of the chat input or status pill stacked over it. Stays
+				   below real modals (avatar picker z10, zen z11, palettes z9998+). */
+				z-index: 9;
 				bottom: calc(28px + env(safe-area-inset-bottom, 0));
 				width: 140px;
 				height: 140px;
@@ -840,7 +844,11 @@
 			}
 			.walk-chat-send:hover { background: rgba(255,255,255,0.12); }
 			@media (hover: none) {
-				.walk-chat { width: min(300px, calc(100vw - 200px)); bottom: calc(80px + env(safe-area-inset-bottom, 0)); }
+				/* Lift the chat clear of the move/look sticks, which now own both
+				   bottom corners up to ~168px. Sitting it above that band keeps the
+				   input tappable instead of buried under a joystick. */
+				.walk-chat { width: min(340px, calc(100vw - 32px)); bottom: calc(184px + env(safe-area-inset-bottom, 0)); }
+				.walk-chat-messages { max-height: 120px; }
 			}
 
 			/* ── Chat bubble above remote players ───────────────────────────── */

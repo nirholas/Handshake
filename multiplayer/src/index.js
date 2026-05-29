@@ -11,6 +11,7 @@ import { WebSocketTransport } from '@colyseus/ws-transport';
 import { monitor } from '@colyseus/monitor';
 
 import { WalkRoom } from './rooms/WalkRoom.js';
+import { GameRoom } from './rooms/GameRoom.js';
 
 const PORT = Number(process.env.PORT || 2567);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -86,6 +87,7 @@ const transport = new WebSocketTransport({
 
 const gameServer = new Server({ transport });
 gameServer.define('walk_world', WalkRoom);
+gameServer.define('game_mainland', GameRoom);
 
 gameServer
 	.listen(PORT, HOST)
