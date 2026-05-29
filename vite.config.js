@@ -136,6 +136,7 @@ const appConfig = {
 			'three/addons/environments/RoomEnvironment.js',
 			'three/addons/libs/meshopt_decoder.module.js',
 		],
+		exclude: ['@pump-fun/agent-payments-sdk'],
 	},
 	build: {
 		chunkSizeWarningLimit: 1000,
@@ -143,7 +144,7 @@ const appConfig = {
 		// large bundles (Three.js, ethers) without affecting the output.
 		reportCompressedSize: false,
 		rollupOptions: {
-			external: ['/studio/launch-panel.js'],
+			external: ['/studio/launch-panel.js', /^@pump-fun\/agent-payments-sdk(\/.*)?$/],
 			output: {
 				manualChunks(id) {
 					if (id.includes('node_modules/three/')) {
