@@ -73,6 +73,19 @@ async function buildChat() {
 	writeStamp('chat', inputs);
 }
 
+// Guard: agent-payments-sdk/dist/ is gitignored. Vercel caches node_modules/
+// across deploys and skips npm install (and therefore postinstall) when
+// package-lock.json is unchanged. If the dist is missing the Vite app build
+// fails trying to resolve the package entry. Rebuild here if needed.
+async function ensureSDKDist() {
+	const distIndex = resolve(ROOT, 'agent-payments-sdk/dist/index.js');
+	if (existsSync(distIndex)) return;
+	console.log('[sdk-dist] agent-payments-sdk/dist/index.js missing — rebuilding');
+	await run('sdk-dist', 'npm run build --prefix agent-payments-sdk', {
+		env: { NODE_OPTIONS: '--no-deprecation' },
+	});
+}
+
 async function prebuild() {
 	await Promise.all([
 		run('build:news', 'node scripts/build-news.mjs'),
@@ -113,10 +126,11 @@ const phase = (n, label) => console.log(`\n=== build:vercel phase ${n}: ${label}
 
 try {
 	// Phase 1a: light tasks only — no Vite processes yet
-	phase(1, 'prebuild + bundle-api (parallel, light)');
+	phase(1, 'prebuild + bundle-api + sdk-dist (parallel, light)');
 	await Promise.all([
 		prebuild(),
 		bundleApi(),
+		ensureSDKDist(),
 	]);
 
 	// Phase 2: buildLib alone. avatar-sdk depends on dist-lib/agent-3d.js, and
