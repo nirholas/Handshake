@@ -32,36 +32,43 @@ export default wrap(async (req, res) => {
 	const cursorIso = cursorDate ? cursorDate.toISOString() : null;
 	const sortByChats = sort === 'chats';
 
+	// The CASE-based sort references the derived `chat_count`. Postgres only
+	// resolves a bare output alias as a standalone ORDER BY key — used inside a
+	// CASE expression it looks for a real column and 42703s. A CTE makes
+	// chat_count a real column of the outer query, so the conditional sort works.
 	const rows = await sql`
-		SELECT
-			i.id,
-			i.name,
-			i.description,
-			i.meta,
-			i.created_at,
-			i.avatar_id,
-			u.display_name  AS author_name,
-			u.username      AS author_username,
-			u.avatar_url    AS author_avatar,
-			a.thumbnail_key AS avatar_thumbnail_key,
-			a.visibility    AS avatar_visibility,
-			COALESCE((
-				SELECT COUNT(*)::int
-				FROM usage_events ue
-				WHERE ue.agent_id = i.id AND ue.kind = 'llm'
-			), 0) AS chat_count
-		FROM agent_identities i
-		LEFT JOIN users u   ON i.user_id = u.id
-		LEFT JOIN avatars a ON a.id = i.avatar_id AND a.deleted_at IS NULL
-		WHERE i.deleted_at IS NULL
-		  AND i.is_published = true
-		  AND i.description IS NOT NULL
-		  AND length(trim(i.name)) > 0
-		  AND (${qLike}::text IS NULL OR (i.name ILIKE ${qLike} OR i.description ILIKE ${qLike}))
-		  AND (${cursorIso}::timestamptz IS NULL OR i.created_at < ${cursorIso}::timestamptz)
+		WITH feed AS (
+			SELECT
+				i.id,
+				i.name,
+				i.description,
+				i.meta,
+				i.created_at,
+				i.avatar_id,
+				u.display_name  AS author_name,
+				u.username      AS author_username,
+				u.avatar_url    AS author_avatar,
+				a.thumbnail_key AS avatar_thumbnail_key,
+				a.visibility    AS avatar_visibility,
+				COALESCE((
+					SELECT COUNT(*)::int
+					FROM usage_events ue
+					WHERE ue.agent_id = i.id AND ue.kind = 'llm'
+				), 0) AS chat_count
+			FROM agent_identities i
+			LEFT JOIN users u   ON i.user_id = u.id
+			LEFT JOIN avatars a ON a.id = i.avatar_id AND a.deleted_at IS NULL
+			WHERE i.deleted_at IS NULL
+			  AND i.is_published = true
+			  AND i.description IS NOT NULL
+			  AND length(trim(i.name)) > 0
+			  AND (${qLike}::text IS NULL OR (i.name ILIKE ${qLike} OR i.description ILIKE ${qLike}))
+			  AND (${cursorIso}::timestamptz IS NULL OR i.created_at < ${cursorIso}::timestamptz)
+		)
+		SELECT * FROM feed
 		ORDER BY
 			CASE WHEN ${sortByChats}::boolean THEN chat_count ELSE 0 END DESC,
-			i.created_at DESC
+			created_at DESC
 		LIMIT ${limit + 1}
 	`;
 

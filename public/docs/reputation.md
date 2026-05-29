@@ -64,7 +64,7 @@ const txHash = await submitReputation({
 
 ### Reputation panel (embedded UI)
 
-The `ReputationPanel` class ([src/erc8004/reputation-panel.js](../../src/erc8004/reputation-panel.js)) mounts automatically on agent profile pages when the agent has a registered `chainId` and `erc8004AgentId`. It shows:
+The `ReputationPanel` class ([src/erc8004/reputation-panel.js](../src/erc8004/reputation-panel.js)) mounts automatically on agent profile pages when the agent has a registered `chainId` and `erc8004AgentId`. It shows:
 
 - Average score (formatted as `X.X / 5` or `X / 100` depending on scale)
 - Total vouch count
@@ -74,7 +74,7 @@ Recent vouches are loaded by querying `FeedbackSubmitted` event logs for the las
 
 ### Full reputation dashboard
 
-The `ReputationDashboard` class ([src/reputation-ui.js](../../src/reputation-ui.js)) is used on the standalone `/public/reputation/` page. It shows:
+The `ReputationDashboard` class ([src/reputation-ui.js](../src/reputation-ui.js)) is used on the standalone `/public/reputation/` page. It shows:
 
 - Review count, average rating, time since last review
 - Up to 10 recent reviews with inline transaction links
@@ -122,7 +122,7 @@ reviews.forEach(r => {
 
 ## Smart contract reference
 
-The `ReputationRegistry` contract ([contracts/src/ReputationRegistry.sol](../../contracts/src/ReputationRegistry.sol)) exposes the following interface:
+The `ReputationRegistry` contract ([contracts/src/ReputationRegistry.sol](../contracts/src/ReputationRegistry.sol)) exposes the following interface:
 
 ### Write
 
@@ -163,7 +163,7 @@ Useful for checking in advance whether a given wallet has already reviewed an ag
 
 ### Deployed addresses
 
-Contract addresses are the same on every supported EVM chain (CREATE2 deterministic deployment). They are listed in [src/erc8004/abi.js](../../src/erc8004/abi.js) under `REGISTRY_DEPLOYMENTS`.
+Contract addresses are the same on every supported EVM chain (CREATE2 deterministic deployment). They are listed in [src/erc8004/abi.js](../src/erc8004/abi.js) under `REGISTRY_DEPLOYMENTS`.
 
 | Network | ReputationRegistry |
 |---|---|

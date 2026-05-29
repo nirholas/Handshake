@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-05-29T10:07:50.954Z",
+	"generated_at": "2026-05-29T10:59:02.237Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -410,6 +410,15 @@
 					"title": "Fact Checker",
 					"description": "Pay $0.10 per claim. The agent searches across authoritative sources, pays per retrieval via x402, and returns a verdict with cited evidence and a signed attestation.",
 					"added": "2026-05-27",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/tutor",
+					"title": "Pay-As-You-Learn Tutor",
+					"description": "Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.",
+					"added": "2026-05-29",
 					"auth": null,
 					"indexable": true,
 					"tags": []

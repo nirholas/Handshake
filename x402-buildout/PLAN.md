@@ -192,4 +192,4 @@ Track progress by editing the checkboxes in each prompt's **Acceptance** section
 | 4 Transports | **done** — MCP server in mcp-server/, a2a via auth-hints |
 | 5 Extensions | **done** — bazaar discovery, payment identifiers, sign-in-with-x, offer-receipt, gas-sponsoring, builder-code, auth-hints |
 | 6 Hooks & Ops | **done** — spending limits, access control/api-key bypass, audit logging, idempotency cache, paywall UI in public/x402.js |
-| 7 Productized agents | **partial** — fact-checker and pump-agent-audit exist; remaining agents not started |
+| 7 Productized agents | **partial** — fact-checker, pump-agent-audit, and tutor (USE-33, per-call settlement) exist; wealth-manager, prediction-oracle, kyc-checker, bounty-hunter, consultant-booking, crypto-shopper, bounty-poster, weather-donations not started |

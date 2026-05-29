@@ -278,6 +278,12 @@ URL: https://three.ws/fact-checker
 
 Pay $0.10 per claim. The agent searches across authoritative sources, pays per retrieval via x402, and returns a verdict with cited evidence and a signed attestation.
 
+### Pay-As-You-Learn Tutor
+
+URL: https://three.ws/tutor
+
+Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.
+
 ### Unstoppable Agent
 
 URL: https://three.ws/unstoppable

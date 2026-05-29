@@ -462,6 +462,8 @@ function wireAnimationSheet() {
 				grid.querySelectorAll('.nxt-anim-card').forEach((c) => {
 					c.setAttribute('aria-pressed', c.dataset.name === def.name ? 'true' : 'false');
 				});
+				// Dismiss the sheet so the user can actually watch the clip play.
+				close();
 			});
 			grid.appendChild(card);
 		}
@@ -604,8 +606,8 @@ function wireShare() {
 		const app = window.VIEWER?.app;
 		const name = app?.identity?.name;
 		return name
-			? `Meet ${name} — an embodied AI agent on @threews_`
-			: 'Check out this embodied AI agent on @threews_';
+			? `Meet ${name} — an embodied AI agent on @three_ws`
+			: 'Check out this embodied AI agent on @three_ws';
 	};
 
 	const shareUrl = () => urlEl?.value || location.href;
@@ -730,10 +732,14 @@ async function refreshAuthState() {
 	const primary = document.getElementById('nxt-primary');
 	const primaryLabel = document.getElementById('nxt-primary-label');
 
-	// Hint paints synchronously; getMe() then confirms.
+	// Optimistic first paint from the boolean hint so returning users don't
+	// see a "Sign in" flash before getMe() resolves. getMe() then confirms.
 	const hint = readAuthHint?.();
-	if (hint?.username && userLabel) {
-		userLabel.textContent = hint.username;
+	if (hint === 'true') {
+		if (signinEl) signinEl.hidden = true;
+		if (userWrap) userWrap.hidden = false;
+		if (primaryLabel) primaryLabel.textContent = 'Save to account';
+		if (primary) primary.dataset.mode = 'save';
 	}
 
 	let me = null;
@@ -743,11 +749,25 @@ async function refreshAuthState() {
 		me = null;
 	}
 
-	if (me?.username) {
+	// A session resolves to a user whether or not they've claimed a `username`
+	// (most accounts only have a `display_name` until they set a handle). Gate
+	// on the user record itself, not on the optional username.
+	if (me?.id) {
+		const label = me.username || me.display_name || me.email?.split('@')[0] || 'Account';
 		if (signinEl) signinEl.hidden = true;
 		if (userWrap) userWrap.hidden = false;
-		if (userLabel) userLabel.textContent = me.username;
-		if (profileLink) profileLink.href = `/profile/${encodeURIComponent(me.username)}`;
+		if (userLabel) userLabel.textContent = label;
+		// The public profile route is keyed by handle, so only link it once the
+		// user has a username — otherwise it would resolve to a dead page.
+		if (profileLink) {
+			if (me.username) {
+				profileLink.href = `/profile/${encodeURIComponent(me.username)}`;
+				profileLink.hidden = false;
+			} else {
+				profileLink.href = '/settings';
+				profileLink.hidden = true;
+			}
+		}
 		if (primaryLabel) primaryLabel.textContent = 'Save to account';
 		if (primary) primary.dataset.mode = 'save';
 	} else {

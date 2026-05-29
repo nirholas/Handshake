@@ -1816,6 +1816,14 @@
 			"dest": "/arbitrage.html"
 		},
 		{
+			"src": "/tutor",
+			"dest": "/tutor.html"
+		},
+		{
+			"src": "/tutor/",
+			"dest": "/tutor.html"
+		},
+		{
 			"src": "/providers",
 			"dest": "/providers.html"
 		},
@@ -2404,6 +2412,14 @@
 		{
 			"src": "/api/x402/fact-check",
 			"dest": "/api/x402/fact-check.js"
+		},
+		{
+			"src": "/api/x402/tutor",
+			"dest": "/api/x402/tutor.js"
+		},
+		{
+			"src": "/api/tutor/session",
+			"dest": "/api/tutor/session.js"
 		},
 		{
 			"src": "/api/agents/unstoppable-status",

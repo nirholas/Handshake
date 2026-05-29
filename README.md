@@ -1959,7 +1959,7 @@ Full design and configuration in [docs/solana-pumpfun.md](docs/solana-pumpfun.md
 Beyond the Solana reputation signals described above, the platform also ships consumer-facing pump.fun tooling:
 
 - **Token Launcher** — UI for creating and launching new tokens, at [public/pumpfun.html](public/pumpfun.html).
-- **Live Dashboard** — real-time tracker for new tokens, at [pump-live.html](pump-live.html).
+- **Live Dashboard** — real-time tracker for new tokens, at [pages/pump-live.html](pages/pump-live.html).
 - **Skills** — the [pump-fun-skills/](pump-fun-skills/) directory contains agent skills for reading and acting on pump.fun.
 
 ### Token launcher (USDC v2)
