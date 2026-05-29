@@ -165,6 +165,8 @@ function readRoute() {
 	if (tab === 'mine') return { view: 'mine', tag };
 	if (tab === 'purchases') return { view: 'purchases', tag };
 	if (tab === 'earn') return { view: 'earn', tag };
+	if (tab === 'animations') return { view: 'animations', tag };
+	if (tab === 'memory') return { view: 'memory', tag };
 	const filter = LIST_FILTER_TABS.has(tab) ? tab : 'all';
 	return { view: 'list', filter, tag, q, sort };
 }
@@ -2099,7 +2101,7 @@ async function loadEarnTab(force = false) {
 
 	try {
 		const [earningsRes, walletsRes] = await Promise.all([
-			fetch(`${API}/users/earnings`, { credentials: 'include' }),
+			fetch(`${API}/users/me/earnings`, { credentials: 'include' }),
 			fetch(`${API}/billing/payout-wallets`, { credentials: 'include' }),
 		]);
 
@@ -2684,6 +2686,308 @@ function bindAgentPricingModal() {
 	});
 }
 
+// ── Animations tab ───────────────────────────────────────────────────────
+
+const animState = { loaded: false, loading: false, items: [], filter: 'all', q: '' };
+
+async function loadAnimationsTab(force = false) {
+	if (animState.loading) return;
+	if (animState.loaded && !force) { renderAnimationsGrid(); return; }
+	animState.loading = true;
+	const grid = $('animations-grid');
+	if (grid) grid.innerHTML = renderSkeletons(8);
+	try {
+		const r = await fetch('/animations/manifest.json');
+		if (!r.ok) throw new Error(`manifest ${r.status}`);
+		const raw = await r.json();
+		const arr = Array.isArray(raw) ? raw : (raw.animations || []);
+		animState.items = arr;
+		animState.loaded = true;
+	} catch (err) {
+		console.error('[marketplace] animations', err);
+		if (grid) grid.innerHTML = `<div class="market-empty">Could not load animations.</div>`;
+	} finally {
+		animState.loading = false;
+	}
+	renderAnimationsGrid();
+	bindAnimationsEvents();
+}
+
+function renderAnimationsGrid() {
+	const grid = $('animations-grid');
+	if (!grid) return;
+	const q = animState.q.toLowerCase();
+	const filtered = animState.items.filter((a) => {
+		if (animState.filter === 'loop' && a.loop !== true) return false;
+		if (animState.filter === 'action' && a.loop !== false) return false;
+		if (q && !(a.label || a.name || '').toLowerCase().includes(q)) return false;
+		return true;
+	});
+	const sub = $('animations-subtitle');
+	if (sub) sub.textContent = `${filtered.length} clip${filtered.length !== 1 ? 's' : ''}`;
+	if (!filtered.length) {
+		grid.innerHTML = `<div class="market-empty">No animations match your filter.</div>`;
+		return;
+	}
+	grid.innerHTML = filtered.map((a) => {
+		const name = a.label || a.name || 'Untitled';
+		const isLoop = a.loop !== false;
+		const typeLabel = isLoop ? 'Ambient' : 'Action';
+		const typeClass = isLoop ? 'loop' : 'action';
+		const icon = a.icon || (isLoop ? '↺' : '▶');
+		return `<div class="market-anim-card" data-anim-name="${escapeHtml(a.name || '')}">
+			<div class="anim-card-icon">${escapeHtml(icon)}</div>
+			<div class="anim-card-body">
+				<div class="anim-card-name">${escapeHtml(name)}</div>
+				<div class="anim-card-meta">
+					<span class="anim-type-pill ${typeClass}">${typeLabel}</span>
+				</div>
+			</div>
+			<div class="anim-card-cta">Preview →</div>
+		</div>`;
+	}).join('');
+
+	grid.querySelectorAll('.market-anim-card').forEach((card) => {
+		const animName = card.dataset.animName;
+		const anim = animState.items.find((a) => a.name === animName);
+		if (anim) card.addEventListener('click', () => openAnimPreview(anim));
+	});
+}
+
+let _animEventsBound = false;
+function bindAnimationsEvents() {
+	if (_animEventsBound) return;
+	_animEventsBound = true;
+	const search = $('animations-search');
+	if (search) {
+		search.addEventListener('input', () => {
+			animState.q = search.value.trim();
+			renderAnimationsGrid();
+		});
+	}
+	document.querySelectorAll('[data-anim-filter]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			animState.filter = btn.dataset.animFilter;
+			document.querySelectorAll('[data-anim-filter]').forEach((b) => b.classList.toggle('active', b === btn));
+			renderAnimationsGrid();
+		});
+	});
+}
+
+// ── Animation preview modal ───────────────────────────────────────────────
+
+const PREVIEW_AVATAR_GLB = '/animations/idle_female_jan25.glb';
+
+function openAnimPreview(anim) {
+	let overlay = $('anim-preview-overlay');
+	if (!overlay) {
+		overlay = document.createElement('div');
+		overlay.id = 'anim-preview-overlay';
+		overlay.className = 'anim-preview-overlay';
+		overlay.setAttribute('role', 'dialog');
+		overlay.setAttribute('aria-modal', 'true');
+		overlay.setAttribute('aria-label', 'Animation preview');
+		overlay.innerHTML = `
+			<div class="anim-preview-modal">
+				<div class="anim-preview-stage" id="anim-preview-stage">
+					<button class="anim-preview-close" id="anim-preview-close" aria-label="Close preview">×</button>
+				</div>
+				<div class="anim-preview-info">
+					<div class="anim-preview-eyebrow">Animation clip</div>
+					<div class="anim-preview-name" id="anim-preview-name"></div>
+					<div class="anim-preview-meta" id="anim-preview-meta"></div>
+					<p id="anim-preview-clip" style="font-family:var(--font-mono);font-size:11px;color:#a1a1aa;margin:0;word-break:break-all;"></p>
+					<div class="anim-preview-actions">
+						<button class="sale-save" id="anim-preview-copy" type="button">Copy clip name</button>
+					</div>
+				</div>
+			</div>`;
+		document.body.appendChild(overlay);
+		$('anim-preview-close').addEventListener('click', closeAnimPreview);
+		overlay.addEventListener('click', (e) => { if (e.target === overlay) closeAnimPreview(); });
+		document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAnimPreview(); }, { once: false });
+	}
+
+	// Populate info panel
+	$('anim-preview-name').textContent = anim.label || anim.name || 'Animation';
+	const isLoop = anim.loop !== false;
+	const typeClass = isLoop ? 'loop' : 'action';
+	const typeLabel = isLoop ? 'Ambient' : 'Action';
+	$('anim-preview-meta').innerHTML = `<span class="anim-type-pill ${typeClass}">${typeLabel}</span>`;
+	const clipEl = $('anim-preview-clip');
+	if (clipEl) clipEl.textContent = anim.name || '';
+
+	const copyBtn = $('anim-preview-copy');
+	if (copyBtn) {
+		copyBtn.onclick = () => {
+			navigator.clipboard?.writeText(anim.name || '').then(() => {
+				copyBtn.textContent = 'Copied!';
+				setTimeout(() => { copyBtn.textContent = 'Copy clip name'; }, 1500);
+			});
+		};
+	}
+
+	// Build or rebuild the 3D stage
+	const stage = $('anim-preview-stage');
+	const closeBtn = stage.querySelector('.anim-preview-close');
+	stage.innerHTML = '';
+	if (closeBtn) stage.appendChild(closeBtn);
+
+	const agentEl = document.createElement('agent-3d');
+	agentEl.setAttribute('src', PREVIEW_AVATAR_GLB);
+	agentEl.setAttribute('eager', '');
+	agentEl.style.cssText = 'width:100%;height:100%;display:block;';
+	stage.appendChild(agentEl);
+
+	agentEl.addEventListener('agent:ready', () => {
+		agentEl.play?.(anim.name, { loop: isLoop, fade_ms: 300 });
+	}, { once: true });
+
+	// Show overlay
+	requestAnimationFrame(() => overlay.classList.add('show'));
+}
+
+function closeAnimPreview() {
+	const overlay = $('anim-preview-overlay');
+	if (!overlay) return;
+	overlay.classList.remove('show');
+	setTimeout(() => {
+		const stage = $('anim-preview-stage');
+		const closeBtn = stage?.querySelector('.anim-preview-close');
+		if (stage) { stage.innerHTML = ''; if (closeBtn) stage.appendChild(closeBtn); }
+	}, 200);
+}
+
+// ── Memory tab ───────────────────────────────────────────────────────────
+
+const memoryState = { loaded: false, loading: false, agents: [], entries: [] };
+
+const MEMORY_TYPE_META = {
+	user: { icon: '◉', label: 'User', desc: 'Who the user is, their role, preferences, and expertise.', example: '"I\'m a senior backend engineer focused on distributed systems."' },
+	feedback: { icon: '◈', label: 'Feedback', desc: 'Corrections and confirmations that shape future behaviour.', example: '"Don\'t mock the database in tests — we got burned by mock/prod divergence."' },
+	project: { icon: '◧', label: 'Project', desc: 'Ongoing work context, goals, and deadlines.', example: '"Merge freeze starts 2026-03-05 for the mobile release cut."' },
+	reference: { icon: '◎', label: 'Reference', desc: 'Pointers to where information lives in external systems.', example: '"Pipeline bugs are tracked in Linear project INGEST."' },
+};
+
+async function loadMemoryTab(force = false) {
+	if (memoryState.loading) return;
+	if (memoryState.loaded && !force) { renderMemoryTab(); return; }
+	memoryState.loading = true;
+	const body = $('market-memory-body');
+	if (body) body.innerHTML = `<div class="market-empty">Loading…</div>`;
+	try {
+		const agentsRes = await fetch(`${API}/marketplace/agents/mine`, { credentials: 'include' });
+		if (agentsRes.status === 401) {
+			memoryState.loading = false;
+			if (body) body.innerHTML = `<div class="market-empty-cta">
+				<h3>Sign in to see agent memory</h3>
+				<p>Your agents' persistent memory will appear here once you sign in.</p>
+				<button id="memory-signin">Sign in</button>
+			</div>`;
+			$('memory-signin')?.addEventListener('click', () => {
+				location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+			});
+			return;
+		}
+		const j = await agentsRes.json().catch(() => ({}));
+		memoryState.agents = Array.isArray(j) ? j : (j?.data?.items ?? []);
+
+		// Fetch memories for all agents in parallel (up to 10)
+		const slice = memoryState.agents.slice(0, 10);
+		const memorySets = await Promise.all(
+			slice.map((ag) =>
+				fetch(`${API}/agent-memory?agentId=${ag.id}&limit=20`, { credentials: 'include' })
+					.then((r) => (r.ok ? r.json() : { entries: [] }))
+					.then((d) => (d.entries || []).map((e) => ({ ...e, agentName: ag.name || ag.title || 'Agent' })))
+					.catch(() => [])
+			)
+		);
+		memoryState.entries = memorySets.flat().sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
+		memoryState.loaded = true;
+	} catch (err) {
+		console.error('[marketplace] memory', err);
+	} finally {
+		memoryState.loading = false;
+	}
+	renderMemoryTab();
+}
+
+function renderMemoryTab() {
+	const body = $('market-memory-body');
+	if (!body) return;
+
+	const sub = $('memory-subtitle');
+	if (sub) sub.textContent = memoryState.entries.length
+		? `${memoryState.entries.length} entr${memoryState.entries.length !== 1 ? 'ies' : 'y'} across ${memoryState.agents.length} agent${memoryState.agents.length !== 1 ? 's' : ''}`
+		: 'Persistent context that makes agents smarter';
+
+	const typeCards = Object.entries(MEMORY_TYPE_META).map(([type, m]) => `
+		<div class="market-memory-type-card" data-memory-type="${type}">
+			<div class="memory-type-icon">${m.icon}</div>
+			<div class="memory-type-body">
+				<div class="memory-type-title">${m.label}</div>
+				<div class="memory-type-desc">${m.desc}</div>
+				<span class="memory-example-label">Example</span>
+				<p class="memory-example-text">${m.example}</p>
+			</div>
+		</div>`).join('');
+
+	const feedItems = memoryState.entries.length
+		? memoryState.entries.slice(0, 20).map((e) => {
+			const meta = MEMORY_TYPE_META[e.type] || { icon: '◇', label: e.type || 'general' };
+			return `<div class="memory-feed-item">
+				<div class="memory-feed-icon" style="${_memoryIconBg(e.type)}">${meta.icon}</div>
+				<div class="memory-feed-body">
+					<div class="memory-feed-type">${escapeHtml(meta.label)} · ${escapeHtml(e.agentName || '')}</div>
+					<div class="memory-feed-content">${escapeHtml(e.content || '')}</div>
+				</div>
+			</div>`;
+		}).join('')
+		: `<div class="memory-feed-empty">${
+			memoryState.agents.length
+				? 'No memory entries yet. Chat with your agents to build up context.'
+				: 'Create an agent first to start building memory.'
+		}</div>`;
+
+	body.innerHTML = `
+		<div class="market-memory-intro">
+			<div class="memory-intro-text">
+				<h3 class="memory-intro-title">Agent Memory</h3>
+				<p class="memory-intro-sub">Agents accumulate four types of memory as they interact — user context, feedback, project state, and references. This persistent layer makes every conversation smarter than the last.</p>
+			</div>
+			<div class="memory-intro-cta">
+				<a href="/agent/new" class="market-memory-cta-btn">+ New Agent</a>
+			</div>
+		</div>
+
+		<div>
+			<p class="market-memory-section-title" style="margin-bottom:14px">Memory Types</p>
+			<div class="market-memory-types">${typeCards}</div>
+		</div>
+
+		<div class="market-memory-how">
+			<p class="market-memory-section-title">How Memory Works</p>
+			<div class="memory-how-steps">
+				<div class="memory-step"><div class="memory-step-num">1</div><div class="memory-step-text"><strong>Agents observe.</strong> During every conversation, agents detect facts about the user, their goals, and the project context.</div></div>
+				<div class="memory-step"><div class="memory-step-num">2</div><div class="memory-step-text"><strong>Memories are classified.</strong> Each entry is typed — user, feedback, project, or reference — so the agent knows when to surface it.</div></div>
+				<div class="memory-step"><div class="memory-step-num">3</div><div class="memory-step-text"><strong>Context is injected.</strong> On every new conversation, relevant memories are retrieved by recency and semantic similarity and injected into the agent's context.</div></div>
+				<div class="memory-step"><div class="memory-step-num">4</div><div class="memory-step-text"><strong>You stay in control.</strong> Review, edit, or delete any memory entry from the agent dashboard at any time.</div></div>
+			</div>
+		</div>
+
+		<div class="market-memory-live">
+			<p class="market-memory-section-title">Recent Memories</p>
+			<div class="memory-feed">${feedItems}</div>
+			${memoryState.entries.length > 20 ? `<div class="market-memory-live-cta">Showing 20 most recent. <a href="/dashboard/agents">View all in dashboard →</a></div>` : ''}
+		</div>
+	`;
+}
+
+function _memoryIconBg(type) {
+	const map = { user: 'background:rgba(59,130,246,0.15)', feedback: 'background:rgba(234,179,8,0.15)', project: 'background:rgba(34,197,94,0.15)', reference: 'background:rgba(168,85,247,0.15)' };
+	return map[type] || 'background:rgba(255,255,255,0.06)';
+}
+
 // ── My Agents tab ────────────────────────────────────────────────────────
 
 const mineState = { loaded: false, loading: false, items: [] };
@@ -2952,6 +3256,7 @@ function renderCard(a) {
 	const date = published ? formatDate(published) : '';
 	const skillsCount = (a.skills || []).length;
 	const author = a.author_name || a.author || 'Anonymous';
+	const views = a.views_count ?? a.views ?? 0;
 	const forks = a.forks_count ?? a.forks ?? 0;
 	const buyers = a.buyers_total ?? 0;
 	const buyers24h = a.buyers_24h ?? 0;
@@ -5174,7 +5479,9 @@ function render() {
 			(nav === 'skills' && r.view === 'skills') ||
 			(nav === 'mine' && r.view === 'mine') ||
 			(nav === 'purchases' && r.view === 'purchases') ||
-			(nav === 'earn' && r.view === 'earn');
+			(nav === 'earn' && r.view === 'earn') ||
+		(nav === 'animations' && r.view === 'animations') ||
+		(nav === 'memory' && r.view === 'memory');
 		a.classList.toggle('active', active);
 	});
 
@@ -5222,6 +5529,8 @@ function render() {
 	const mineSec = $('market-mine');
 	const purchasesSec = $('market-purchases');
 	const earnSec = $('market-earn');
+	const animSec = $('market-animations-section');
+	const memorySec = $('market-memory-section');
 	const discovery = els.discovery;
 	const tools = els.tools;
 	const detail = els.detail;
@@ -5244,6 +5553,8 @@ function render() {
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
 		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
 		setHidden(avatarDetailSec, false);
 		avatarDetailSec?.scrollIntoView({ behavior: 'instant', block: 'start' });
 	} else if (r.view === 'detail') {
@@ -5254,6 +5565,8 @@ function render() {
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
 		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
 		setHidden(avatarDetailSec, true);
 		setHidden(detail, false);
 	} else if (r.view === 'tools') {
@@ -5263,6 +5576,8 @@ function render() {
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
 		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
 		setHidden(avatarDetailSec, true);
 		setHidden(tools, false);
 		if (!pluginState.loaded) loadPlugins(true);
@@ -5273,6 +5588,8 @@ function render() {
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
 		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
 		setHidden(avatarDetailSec, true);
 		setHidden(skillsSec, false);
 		loadSkillsTab();
@@ -5283,6 +5600,8 @@ function render() {
 		setHidden(skillsSec, true);
 		setHidden(purchasesSec, true);
 		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
 		setHidden(avatarDetailSec, true);
 		setHidden(mineSec, false);
 		loadMine();
@@ -5294,6 +5613,8 @@ function render() {
 		setHidden(mineSec, true);
 		setHidden(avatarDetailSec, true);
 		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
 		setHidden(purchasesSec, false);
 		loadPurchases();
 	} else if (r.view === 'earn') {
@@ -5304,8 +5625,34 @@ function render() {
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
 		setHidden(avatarDetailSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
 		setHidden(earnSec, false);
 		loadEarnTab();
+	} else if (r.view === 'animations') {
+		setHidden(detail, true);
+		setHidden(discovery, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
+		setHidden(memorySec, true);
+		setHidden(avatarDetailSec, true);
+		setHidden(animSec, false);
+		loadAnimationsTab();
+	} else if (r.view === 'memory') {
+		setHidden(detail, true);
+		setHidden(discovery, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(avatarDetailSec, true);
+		setHidden(memorySec, false);
+		loadMemoryTab();
 	} else {
 		setHidden(detail, true);
 		setHidden(avatarDetailSec, true);
@@ -5314,6 +5661,8 @@ function render() {
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
 		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
 		setHidden(discovery, false);
 		document.title = 'Agent Marketplace · three.ws';
 	}

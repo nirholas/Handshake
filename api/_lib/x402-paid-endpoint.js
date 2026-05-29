@@ -367,14 +367,21 @@ export function paidEndpoint(spec) {
 		// `requirements[].network` lists every CAIP-2 chain we'll accept a
 		// signature for — the upstream helper turns it into supportedChains
 		// and enriches the info block (domain/uri/nonce/issuedAt) per request.
-		const siwxExtensions = siwx
-			? await declareSiwxExtensionFor({
+		// Wrapped in try-catch: a failure here must never surface as 500 — the
+		// 402 challenge is still valid without the SIWX extension.
+		let siwxExtensions = null;
+		if (siwx) {
+			try {
+				siwxExtensions = await declareSiwxExtensionFor({
 					networks: requirements.map((r) => r.network),
 					resourceUrl,
 					statement: siwx.statement,
 					expirationSeconds: siwx.expirationSeconds,
-				})
-			: null;
+				});
+			} catch (err) {
+				console.error('[paidEndpoint] declareSiwxExtensionFor failed', err?.message || err);
+			}
+		}
 
 		const extraExtensions = {
 			[PAYMENT_IDENTIFIER]: pidExtension,
@@ -388,12 +395,16 @@ export function paidEndpoint(spec) {
 		// null — we never want a missing signing key to break the 402 dance,
 		// since the protocol stays valid without the extension.
 		if (offerReceipt !== false) {
-			const offersFragment = await buildOffersExtension(
-				resourceUrl,
-				requirements,
-				offerReceipt || {},
-			);
-			if (offersFragment) Object.assign(extraExtensions, offersFragment);
+			try {
+				const offersFragment = await buildOffersExtension(
+					resourceUrl,
+					requirements,
+					offerReceipt || {},
+				);
+				if (offersFragment) Object.assign(extraExtensions, offersFragment);
+			} catch (err) {
+				console.error('[paidEndpoint] buildOffersExtension failed', err?.message || err);
+			}
 		}
 
 		const challenge = {

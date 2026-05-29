@@ -922,6 +922,9 @@ const appConfig = {
 				const R2_PUBLIC_RE = /https?:\/\/pub-[a-f0-9]+\.r2\.dev\//g;
 				server.middlewares.use(async (req, res, next) => {
 					if (!req.url?.startsWith('/api/avatars/')) return next();
+					// Only rewrite GET/HEAD responses — POSTs and mutations must flow
+					// through the normal proxy with their original method and body intact.
+					if (req.method !== 'GET' && req.method !== 'HEAD') return next();
 					try {
 						const upstream = new URL(req.url, DEV_API_PROXY);
 						const resp = await fetch(upstream.href, {

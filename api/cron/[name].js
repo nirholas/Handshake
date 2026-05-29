@@ -149,7 +149,7 @@ async function erc8004CrawlChain(chain) {
 		SELECT last_block FROM erc8004_crawl_cursor WHERE chain_id = ${chain.id}
 	`;
 
-	const latestHex = await erc8004RpcCall(chain.rpcUrl, 'eth_blockNumber', []);
+	const latestHex = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_blockNumber', []);
 	const latestBlock = Number.parseInt(latestHex, 16);
 
 	const fromBlock = cursor
@@ -162,7 +162,7 @@ async function erc8004CrawlChain(chain) {
 
 	const toBlock = Math.min(fromBlock + ERC8004_BLOCK_CHUNK - 1, latestBlock);
 
-	const logs = await erc8004RpcCall(chain.rpcUrl, 'eth_getLogs', [
+	const logs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
 		{
 			address: chain.registry,
 			topics: [REGISTERED_TOPIC],
@@ -178,7 +178,7 @@ async function erc8004CrawlChain(chain) {
 		await Promise.all(
 			uniqueBlockHexes.map(async (bn) => {
 				try {
-					const block = await erc8004RpcCall(chain.rpcUrl, 'eth_getBlockByNumber', [bn, false]);
+					const block = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getBlockByNumber', [bn, false]);
 					blockTimes[bn] = block ? Number.parseInt(block.timestamp, 16) : null;
 				} catch {
 					// registered_at will be null for this block
@@ -291,23 +291,30 @@ async function erc8004EnrichMetadata(limit) {
 	return done;
 }
 
-async function erc8004RpcCall(url, method, params) {
-	const ac = new AbortController();
-	const t = setTimeout(() => ac.abort(), ERC8004_FETCH_TIMEOUT_MS);
-	try {
-		const res = await fetch(url, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-			signal: ac.signal,
-		});
-		if (!res.ok) throw new Error(`HTTP ${res.status}`);
-		const data = await res.json();
-		if (data.error) throw new Error(`RPC ${data.error.code}: ${data.error.message}`);
-		return data.result;
-	} finally {
-		clearTimeout(t);
+async function erc8004RpcCall(urls, method, params) {
+	const urlList = Array.isArray(urls) ? urls : [urls];
+	let lastErr;
+	for (const url of urlList) {
+		const ac = new AbortController();
+		const t = setTimeout(() => ac.abort(), ERC8004_FETCH_TIMEOUT_MS);
+		try {
+			const res = await fetch(url, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+				signal: ac.signal,
+			});
+			if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
+			const data = await res.json();
+			if (data.error) throw new Error(`RPC ${data.error.code}: ${data.error.message}`);
+			return data.result;
+		} catch (err) {
+			lastErr = err;
+		} finally {
+			clearTimeout(t);
+		}
 	}
+	throw lastErr;
 }
 
 async function erc8004FetchAgentMetadata(uri) {

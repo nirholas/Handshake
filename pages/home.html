@@ -216,38 +216,65 @@
 		}
 
 		/* ── STATS BAR ───────────────────────────────────────────── */
-		.stats-bar {
-			background: var(--surface-0);
+		/* ── CAPABILITY STRIP ──────────────────────────────────── */
+		.capability-strip {
+			position: relative;
+			overflow: hidden;
 			border-top: 1px solid var(--hairline);
 			border-bottom: 1px solid var(--hairline);
-			padding: 0;
-			overflow: hidden;
+			background: var(--surface-0);
+			padding: 13px 0;
+			cursor: default;
+			user-select: none;
 		}
-		.stats-bar-inner {
-			display: flex; align-items: stretch;
-			max-width: 1440px; margin: 0 auto;
+		.capability-strip:hover .cap-track { animation-play-state: paused; }
+		.cap-track {
+			display: flex;
+			width: max-content;
+			animation: cap-scroll 55s linear infinite;
+			will-change: transform;
 		}
-		.stat-cell {
-			flex: 1; padding: 20px 28px;
-			border-right: 1px solid var(--hairline);
-			display: flex; flex-direction: column; gap: 4px;
+		.cap-inner {
+			display: flex;
+			align-items: center;
+			flex-shrink: 0;
 		}
-		.stat-cell:last-child { border-right: none; }
-		.stat-val {
-			font-family: var(--font-display); font-size: 24px;
-			font-weight: 600; letter-spacing: -0.025em;
-			color: var(--text); font-variant-numeric: tabular-nums;
-		}
-		.stat-lbl {
-			font-family: var(--font-mono); font-size: 11px;
-			letter-spacing: 0.15em; text-transform: uppercase;
+		.cap-item {
+			font-family: var(--font-mono);
+			font-size: 11.5px;
+			letter-spacing: 0.04em;
 			color: var(--text-3);
+			white-space: nowrap;
+			padding: 0 2px;
+			transition: color 0.15s;
 		}
-		@media (max-width: 860px) {
-			.stats-bar-inner { flex-wrap: wrap; }
-			.stat-cell { flex: 1 0 50%; border-bottom: 1px solid var(--hairline); }
+		.cap-item:hover { color: var(--text-2); }
+		.cap-sep {
+			font-size: 10px;
+			color: var(--text-4);
+			padding: 0 16px;
+			flex-shrink: 0;
+			pointer-events: none;
 		}
-		@media (max-width: 560px) { .stat-cell { flex: 1 0 100%; } }
+		@keyframes cap-scroll {
+			from { transform: translateX(0); }
+			to   { transform: translateX(-50%); }
+		}
+		.cap-fade {
+			position: absolute;
+			top: 0; bottom: 0;
+			width: 120px;
+			z-index: 2;
+			pointer-events: none;
+		}
+		.cap-fade--l {
+			left: 0;
+			background: linear-gradient(to right, var(--surface-0) 30%, transparent);
+		}
+		.cap-fade--r {
+			right: 0;
+			background: linear-gradient(to left, var(--surface-0) 30%, transparent);
+		}
 
 		/* ── LOGO STRIP ──────────────────────────────────────────── */
 		.logo-strip {
@@ -1064,12 +1091,6 @@
 		.hero-chat-send:active { transform: scale(0.92); }
 		.hero-chat-send:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 		.hero-chat-send svg { width: 14px; height: 14px; }
-		.hero-chat-hint {
-			text-align: center; margin-top: 8px;
-			font-family: var(--font-mono); font-size: 10px;
-			letter-spacing: 0.12em; text-transform: uppercase;
-			color: var(--text-4); opacity: 0.6;
-		}
 		@media (max-width: 980px) {
 			.hero-chat-bar { bottom: 20px; }
 			.hero-thought { top: 4%; }
@@ -2259,20 +2280,14 @@
 		.analytics-spark .spark-dot{fill:var(--text);r:2.5;animation:spark-pulse 2s ease-in-out infinite}
 		@keyframes spark-pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-		/* ── EDITORIAL (Pretext-inspired reflow) ─────────────────── */
-		.editorial-text-area{position:relative;min-height:480px;user-select:text;overflow:visible}
-		.ed-line{position:absolute;white-space:nowrap;font-family:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,serif;font-size:17px;line-height:28px;color:var(--text-2)}
-		.ed-drop{position:absolute;font-family:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,serif;font-weight:700;color:var(--text);line-height:.85;pointer-events:none}
-		.editorial-orb{position:absolute;z-index:10;cursor:grab;will-change:transform;border-radius:50%;touch-action:none}
-		.editorial-orb:active{cursor:grabbing}
-		.editorial-orb-glow{position:absolute;inset:-24px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.10),transparent 70%);box-shadow:0 0 60px 15px rgba(255,255,255,.05),0 0 120px 40px rgba(255,255,255,.02);pointer-events:none;animation:ed-orb-glow 6s ease-in-out infinite}
-		@keyframes ed-orb-glow{0%,100%{opacity:.7}50%{opacity:1}}
-		.editorial-orb-avatar{width:100%;height:100%;border-radius:50%;overflow:hidden;border:1px solid rgba(255,255,255,.12);background:var(--surface-2)}
-		.editorial-orb-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;pointer-events:none;animation:ed-avatar-breathe 4s ease-in-out infinite}
-		@keyframes ed-avatar-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
-		.editorial-hint{text-align:center;margin-top:32px;font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-4)}
-		@media(max-width:720px){.editorial-hint{display:none}}
-		@media(prefers-reduced-motion:reduce){.editorial-orb-glow{animation:none!important}.editorial-orb-avatar img{animation:none!important}}
+		/* ── DRAGON VISION SECTION ───────────────────────────────── */
+		.vision-block{padding-bottom:0}
+		.vision-block .block-eyebrow{margin-bottom:24px}
+		.dragon-wrap{position:relative;height:76vh;min-height:420px;max-height:880px;overflow:hidden;background:#050505;cursor:crosshair;border-top:1px solid var(--hairline)}
+		.dragon-hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.18);font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;pointer-events:none;transition:opacity 1.5s ease;white-space:nowrap;z-index:5}
+		.dragon-hint.fade{opacity:0}
+		@media(max-width:720px){.dragon-wrap{height:55vh;min-height:300px}}
+		@media(prefers-reduced-motion:reduce){.dragon-wrap canvas{display:none}}
 	</style>
 	<noscript><style>.reveal{opacity:1!important;transform:none!important}.hero-text>*{opacity:1!important;transform:none!important}</style></noscript>
 	<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
@@ -2348,7 +2363,6 @@
 					<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2L7 9"/><path d="M14 2L9.5 14L7 9L2 6.5L14 2Z"/></svg>
 				</button>
 			</form>
-			<div class="hero-chat-hint">press enter to chat</div>
 		</div>
 		<div class="stage-meta">
 			<span>nich</span>
@@ -2356,7 +2370,7 @@
 		</div>
 		<div class="hero-chips-wrap" id="hero-chips-wrap">
 			<div class="hero-chips-label">
-				<span>click to animate · <strong class="hero-chips-counter" id="hero-chips-counter">0 moves</strong></span>
+				<strong class="hero-chips-counter" id="hero-chips-counter"></strong>
 			</div>
 			<div class="hero-chips" id="hero-chips" role="group" aria-label="Trigger an animation on the hero avatar">
 				<button type="button" class="hero-chip hero-chip--rand" data-anim="__random">🎲 Random</button>
@@ -2371,30 +2385,80 @@
 	</div>
 </section>
 
-<!-- ── STATS BAR ─────────────────────────────────────────────────── -->
-<div class="stats-bar" id="stats-bar">
-	<div class="stats-bar-inner">
-		<div class="stat-cell">
-			<div class="stat-val" id="sb-agents">—</div>
-			<div class="stat-lbl">Agents live</div>
+<!-- ── CAPABILITY STRIP ───────────────────────────────────────────── -->
+<div class="capability-strip" id="capability-strip" aria-hidden="true">
+	<div class="cap-fade cap-fade--l"></div>
+	<div class="cap-track">
+		<div class="cap-inner">
+			<span class="cap-item">200+ animation clips</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">1-line embed</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">GLB &amp; VRM support</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">AI agent SDK</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">On-chain payments via x402</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Solana native</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">ERC-8004 standard</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">TypeScript SDK</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Real-time sync</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">WebGL rendering</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Agent marketplace</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Pump.fun native</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Custom avatars</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Widget builder</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Sub-10ms load</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">REST + WebSockets</span>
+			<span class="cap-sep">·</span>
 		</div>
-		<div class="stat-cell">
-			<div class="stat-val" id="sb-widgets">—</div>
-			<div class="stat-lbl">Widgets deployed</div>
-		</div>
-		<div class="stat-cell">
-			<div class="stat-val" id="sb-onchain">—</div>
-			<div class="stat-lbl">On-chain agents</div>
-		</div>
-		<div class="stat-cell">
-			<div class="stat-val">200+</div>
-			<div class="stat-lbl">Animation clips</div>
-		</div>
-		<div class="stat-cell">
-			<div class="stat-val">&lt;2 lines</div>
-			<div class="stat-lbl">To embed</div>
+		<div class="cap-inner" aria-hidden="true">
+			<span class="cap-item">200+ animation clips</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">1-line embed</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">GLB &amp; VRM support</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">AI agent SDK</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">On-chain payments via x402</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Solana native</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">ERC-8004 standard</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">TypeScript SDK</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Real-time sync</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">WebGL rendering</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Agent marketplace</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Pump.fun native</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Custom avatars</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Widget builder</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">Sub-10ms load</span>
+			<span class="cap-sep">·</span>
+			<span class="cap-item">REST + WebSockets</span>
+			<span class="cap-sep">·</span>
 		</div>
 	</div>
+	<div class="cap-fade cap-fade--r"></div>
 </div>
 
 <!-- ── LOGO STRIP ────────────────────────────────────────────────── -->
@@ -2503,20 +2567,13 @@
 	</div>
 </section>
 
-<!-- ── EDITORIAL (Pretext-inspired reflow) ──────────────────────── -->
-<section class="block" id="editorial">
+<!-- ── DRAGON VISION ──────────────────────────────────────────────── -->
+<section class="block vision-block" id="vision-section">
 	<div class="wrap-1280">
-		<div class="block-head reveal">
-			<p class="block-eyebrow"><span class="num">&bull;</span>The vision</p>
-			<h2 class="block-h">The web wasn't built<br/>for <em>presence.</em></h2>
-		</div>
-		<div class="editorial-text-area reveal reveal-d1" id="editorial-text-area">
-			<div class="editorial-orb" id="editorial-orb">
-				<div class="editorial-orb-glow"></div>
-				<div class="editorial-orb-avatar" id="editorial-orb-avatar"></div>
-			</div>
-		</div>
-		<p class="editorial-hint reveal reveal-d2">drag the avatar through the text</p>
+		<p class="block-eyebrow reveal"><span class="num">&bull;</span>The vision</p>
+	</div>
+	<div class="dragon-wrap" id="dragon-canvas-wrap">
+		<div class="dragon-hint">move cursor &nbsp;&middot;&nbsp; hold to breathe fire</div>
 	</div>
 </section>
 
@@ -2709,7 +2766,7 @@
 					<p class="wyg-card-eyebrow clr-amber">SNS &middot; pay-by-name</p>
 					<h3 class="wyg-card-title">Get paid by name.</h3>
 					<p class="wyg-card-body">Claim yourname.threews.sol as a Solana Name Service subdomain. Brave routes it straight to your showcase; agents pay you in USDC by name, not address. We absorb the gas.</p>
-					<a href="/handle" class="wyg-card-link">Claim your subdomain</a>
+					<a href="/dashboard/account" class="wyg-card-link">Claim your subdomain</a>
 				</div>
 			</div>
 		</div>
@@ -3584,6 +3641,43 @@
 		}
 		return url;
 	}
+
+	// Fetch a pool of unique community avatar GLBs from /api/explore, cached for the page lifetime.
+	// pool[0]=WYG, pool[1]=vclose, pool[2..]=LIVE_SPOTS null entries
+	var _avatarPoolP = null;
+	var POOL_FALLBACKS = [
+		'/avatars/cz.glb',
+		'/animations/idle_female_jan25.glb',
+		'/animations/idle_male_jan25.glb',
+		'/animations/robotexpressive.glb',
+		'/animations/soldier.glb',
+		'/animations/idle_anim.glb',
+		'/animations/idle_male_jan25.glb',
+		'/animations/idle_female_jan25.glb',
+	];
+	function getAvatarPool() {
+		if (!_avatarPoolP) {
+			_avatarPoolP = fetch(location.origin + '/api/explore?source=all&limit=16&quality=high')
+				.then(function(r) { return r.json(); })
+				.then(function(d) {
+					var items = (d.items || []);
+					var pool = items
+						.filter(function(it) { return it.glbUrl && it.avatarId !== AVATAR_ID; })
+						.map(function(it) { return devProxyGlb(it.glbUrl); })
+						.filter(Boolean);
+					var fi = 0;
+					while (pool.length < 8) {
+						pool.push(location.origin + POOL_FALLBACKS[fi++ % POOL_FALLBACKS.length]);
+					}
+					return pool;
+				})
+				.catch(function() {
+					return POOL_FALLBACKS.map(function(p) { return location.origin + p; });
+				});
+		}
+		return _avatarPoolP;
+	}
+
 	function spawnAgent(glbUrl) {
 		const el = document.createElement('agent-3d');
 		el.classList.add('live-agent');
@@ -3628,14 +3722,13 @@
 			if (!entries[0].isIntersecting) return;
 			wygObs.disconnect();
 			bootWyg();
-		}, { rootMargin: '300px' });
+		}, { rootMargin: '150px' });
 		wygObs.observe(viewer);
 
 		function bootWyg() {
-			fetch(location.origin + '/api/avatars/' + AVATAR_ID)
-				.then(function(r) { return r.json(); })
-				.then(function(d) {
-					var glb = devProxyGlb(d.avatar?.model_url || d.avatar?.url);
+			getAvatarPool()
+				.then(function(pool) {
+					var glb = pool[0];
 					if (!glb) return;
 					var el = spawnAgent(glb);
 					viewer.insertBefore(el, viewer.firstChild);
@@ -3643,7 +3736,7 @@
 					el.addEventListener('agent:ready', function() {
 						el.classList.add('loaded');
 						if (skelEl) skelEl.style.display = 'none';
-						el.playClipByName?.('idle', { loop: true, fade_ms: 400 });
+						el.play?.('idle', { loop: true, fade_ms: 400 });
 						var firstChip = scroll.querySelector('[data-anim="idle"]');
 						if (firstChip) firstChip.dataset.active = 'true';
 						activeChip = firstChip;
@@ -3660,13 +3753,13 @@
 			if (activeChip) delete activeChip.dataset.active;
 			btn.dataset.active = 'true';
 			activeChip = btn;
-			wygAgent.playClipByName?.(clip, { loop: loopAnims.has(clip), fade_ms: 400 });
+			wygAgent.play?.(clip, { loop: loopAnims.has(clip), fade_ms: 400 });
 		});
 
 		if (stopBtn) {
 			stopBtn.addEventListener('click', function() {
 				if (!wygAgent) return;
-				wygAgent.playClipByName?.('idle', { loop: true, fade_ms: 400 });
+				wygAgent.play?.('idle', { loop: true, fade_ms: 400 });
 				if (activeChip) delete activeChip.dataset.active;
 				var idleChip = scroll.querySelector('[data-anim="idle"]');
 				if (idleChip) idleChip.dataset.active = 'true';
@@ -3686,10 +3779,10 @@
 		async function walkCycle() {
 			await new Promise(r => setTimeout(r, 2000));
 			if (!active || _heroChipActive) return;
-			heroAgent.playClipByName?.(WALK_CLIP, { loop: true, fade_ms: 400 });
+			heroAgent.play?.(WALK_CLIP, { loop: true, fade_ms: 400 });
 			await new Promise(r => setTimeout(r, 5000));
 			if (!active || _heroChipActive) return;
-			heroAgent.playClipByName?.(IDLE_CLIP, { loop: true, fade_ms: 600 });
+			heroAgent.play?.(IDLE_CLIP, { loop: true, fade_ms: 600 });
 			await new Promise(r => setTimeout(r, 3000));
 			walkCycle();
 		}
@@ -3730,7 +3823,7 @@
 			btn.dataset.active = 'true';
 
 			_heroChipActive = true;
-			heroAgent.playClipByName?.(clip, { loop: false, fade_ms: 400 });
+			heroAgent.play?.(clip, { loop: false, fade_ms: 400 });
 
 			moveCount += 1;
 			if (counter) counter.innerHTML = `<strong>${moveCount}</strong> ${moveCount === 1 ? 'move' : 'moves'}`;
@@ -3745,6 +3838,27 @@
 
 
 	// ── Hero thought-bubble chat ────────────────────────────────────
+	var HERO_SYSTEM_PROMPT = [
+		'You are the three.ws demo avatar — a live AI agent embedded on the three.ws homepage.',
+		'three.ws lets anyone build a 3D AI agent from a selfie in 60 seconds, embed it on any website with two lines of HTML, and earn USDC per chat using x402 micropayments.',
+		'',
+		'Platform knowledge:',
+		'- Create: Upload a selfie → photorealistic 3D avatar in ~60 seconds.',
+		'- Embed: <agent-3d id="..."> works on any site — React, Vue, plain HTML — zero config needed.',
+		'- Earn: x402 micropayments let your agent charge per chat in USDC on Base.',
+		'- Discover: Browse and chat with live agents at three.ws/agents.',
+		'- Console: Manage your agents, voice, memory, and payments at three.ws/console.',
+		'- Voice, memory, tool use, animations, and payments are all built-in to every agent.',
+		'- Pricing: Free to start; Pro unlocks voice, analytics, and higher limits.',
+		'',
+		'You control your own animations. When the user asks you to dance, wave, jump, celebrate, etc — call playAnimation immediately AND mention what you are doing in your reply.',
+		'Available animations: wave, dance, capoeira, jump, thriller, pray, idle, celebrate, rumba, falling, kiss, taunt.',
+		'When asked to change the background color, call setBgColor with a CSS hex value.',
+		'When asked to change lighting or environment, call setEnvironment.',
+		'',
+		'Keep replies short: 2–3 sentences. Be warm, enthusiastic, and helpful. Answer accurately about the three.ws platform.',
+	].join('\n');
+
 	(function initHeroChat() {
 		const form     = document.getElementById('hero-chat-form');
 		const input    = document.getElementById('hero-chat-input');
@@ -3766,7 +3880,6 @@
 			new ResizeObserver(sizeBubble).observe(stageEl);
 		}
 
-		const AVATAR_CHAT_ID = 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
 		let history = [];
 		let busy = false;
 		let hideTimer = null;
@@ -3803,8 +3916,31 @@
 		}
 
 		function triggerAnim(heroAgent) {
-			if (heroAgent && heroAgent.playClipByName) {
-				heroAgent.playClipByName('wave', { loop: false, fade_ms: 400 });
+			if (heroAgent && heroAgent.play) {
+				heroAgent.play('wave', { loop: false, fade_ms: 400 });
+			}
+		}
+
+		var LOOP_ANIMS = new Set(['dance', 'capoeira', 'thriller', 'idle', 'walk', 'rumba']);
+
+		function executeHeroAction(action) {
+			if (!action || !action.type) return;
+			if (action.type === 'playAnimation' && action.name) {
+				var ag = document.querySelector('#hero-stage-inner agent-3d');
+				if (ag && ag.play) {
+					var loop = typeof action.loop === 'boolean' ? action.loop : LOOP_ANIMS.has(action.name);
+					ag.play(action.name, { loop: loop, fade_ms: 400 });
+				}
+			} else if (action.type === 'setBgColor' && action.value) {
+				var heroInner = document.getElementById('hero-stage-inner');
+				if (heroInner) heroInner.style.background = action.value;
+				var heroStage = document.getElementById('hero-stage');
+				if (heroStage) heroStage.style.background = action.value;
+			} else if (action.type === 'setEnvironment' && action.value) {
+				var ag2 = document.querySelector('#hero-stage-inner agent-3d');
+				if (ag2) {
+					try { ag2._scene && ag2._scene.viewer && ag2._scene.viewer.setEnvironment(action.value); } catch (_) {}
+				}
 			}
 		}
 
@@ -3830,7 +3966,7 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					message: msg,
-					agentId: AVATAR_CHAT_ID,
+					system_prompt: HERO_SYSTEM_PROMPT,
 					history: history.slice(0, -1),
 					context: {}
 				})
@@ -3864,6 +4000,10 @@
 								fullText += parsed.text;
 								appendText(parsed.text);
 								showBubble();
+							} else if (parsed.type === 'done') {
+								if (Array.isArray(parsed.actions)) {
+									parsed.actions.forEach(executeHeroAction);
+								}
 							} else if (parsed.type === 'error') {
 								showText('Hmm, something went wrong. Try again?');
 							}
@@ -3981,6 +4121,7 @@
 			if (!state.glbUrl) return;
 			if (!liveAgent) {
 				liveAgent = document.createElement('agent-3d');
+				liveAgent.setAttribute('kiosk', '');
 				preview.appendChild(liveAgent);
 			}
 			liveAgent.setAttribute('body', state.glbUrl);
@@ -4047,11 +4188,10 @@
 		function loadAvatars() {
 			var O = location.origin;
 			var defaults = [
-				{ id: AVATAR_ID, name: 'nich', thumb: THUMB_CDN + '/' + AVATAR_ID + '.png' },
 				{ id: 'avatar_demo_disk_cz', name: 'CZ', glb: O + '/avatars/cz.glb' },
-				{ id: 'avatar_demo_disk_boss', name: 'Boss', glb: O + '/animations/soldier.glb' },
-				{ id: 'avatar_demo_disk_saga', name: 'Saga', glb: O + '/animations/robotexpressive.glb' },
 				{ id: 'avatar_demo_disk_ansem', name: 'Ansem', glb: O + '/avatars/default.glb' },
+				{ id: 'avatar_demo_disk_boss_vernington', name: 'Boss Vernington', glb: O + '/animations/soldier.glb' },
+				{ id: 'avatar_demo_disk_goblin', name: 'Goblin', glb: O + '/animations/robotexpressive.glb' },
 				{ id: 'avatar_demo_disk_claude', name: 'Claude', glb: O + '/avatars/default.glb' },
 				{ id: 'avatar_demo_disk_agent', name: 'Agent', glb: O + '/animations/soldier.glb' },
 				{ id: 'avatar_demo_disk_ai', name: 'AI', glb: O + '/animations/robotexpressive.glb' },
@@ -4143,6 +4283,8 @@
 			var left = rect.left + rect.width / 2 - pw / 2;
 			if (left < 8) left = 8;
 			if (left + pw > window.innerWidth - 8) left = window.innerWidth - 8 - pw;
+			colorPopover.style.position = 'fixed';
+			colorPopover.style.transform = 'none';
 			colorPopover.style.top = (rect.bottom + 8) + 'px';
 			colorPopover.style.left = left + 'px';
 		}
@@ -4265,7 +4407,7 @@
 			var btn = e.target.closest('.pg-anim');
 			if (!btn || !liveAgent) return;
 			var clip = btn.dataset.anim;
-			if (liveAgent.playClipByName) liveAgent.playClipByName(clip, { loop: clip === 'idle', fade_ms: 400 });
+			if (liveAgent.play) liveAgent.play(clip, { loop: clip === 'idle', fade_ms: 400 });
 			animsEl.querySelectorAll('.pg-anim').forEach(function(c) { c.classList.remove('active'); });
 			btn.classList.add('active');
 			if (clip !== 'idle') {
@@ -4288,10 +4430,10 @@
 		const SHOWCASE_TAGS = ['3D', 'animated', 'rigged', 'ERC-8004', 'x402', 'community'];
 		const EXPLORE_SHOWCASE_URL = '/api/explore?source=all&limit=6&quality=high';
 		const FALLBACK_AGENTS = [
-			{ name: 'nich', description: '@nirholas', glbUrl: '/avatars/default.glb', viewerUrl: '/agent-next?id=bacff13e-b64b-4ac0-860d-44f0168ad23b', kind: 'avatar' },
 			{ name: 'CZ', description: 'Stylized humanoid', glbUrl: '/avatars/cz.glb', viewerUrl: '/avatars/avatar_demo_disk_cz', kind: 'avatar' },
-			{ name: 'Boss', description: 'Soldier rig', glbUrl: '/animations/soldier.glb', viewerUrl: '/avatars/avatar_demo_disk_boss', kind: 'avatar' },
-			{ name: 'Saga', description: 'Expressive robot', glbUrl: '/animations/robotexpressive.glb', viewerUrl: '/avatars/avatar_demo_disk_saga', kind: 'avatar' },
+			{ name: 'Ansem', description: 'CT legend', glbUrl: '/avatars/default.glb', viewerUrl: '/avatars/avatar_demo_disk_ansem', kind: 'avatar' },
+			{ name: 'Boss Vernington', description: 'Degen sovereign', glbUrl: '/animations/soldier.glb', viewerUrl: '/avatars/avatar_demo_disk_boss_vernington', kind: 'avatar' },
+			{ name: 'Goblin', description: 'Anon deployer', glbUrl: '/animations/robotexpressive.glb', viewerUrl: '/avatars/avatar_demo_disk_goblin', kind: 'avatar' },
 			{ name: 'Agent', description: 'Autonomous operative', glbUrl: '/animations/soldier.glb', viewerUrl: '/avatars/avatar_demo_disk_agent', kind: 'avatar' },
 			{ name: 'Claude', description: 'AI persona', glbUrl: '/avatars/default.glb', viewerUrl: '/avatars/avatar_demo_disk_claude', kind: 'avatar' },
 		];
@@ -4383,7 +4525,7 @@
 				if (skel && skel.parentNode) skel.remove();
 				var anim = SHOWCASE_ANIMS[idx % SHOWCASE_ANIMS.length];
 				if (anim !== 'idle') {
-					el.playClipByName?.(anim, { loop: true, fade_ms: 600 });
+					el.play?.(anim, { loop: true, fade_ms: 600 });
 				}
 			}, { once: true });
 		}
@@ -4435,9 +4577,8 @@
 		// ── Vclose section ──────────────────────────────────────────────
 	(async () => {
 		try {
-			const r = await fetch(`${location.origin}/api/avatars/${AVATAR_ID}`);
-			const d = await r.json();
-			const glb = devProxyGlb(d.avatar?.model_url || d.avatar?.url);
+			const pool = await getAvatarPool();
+			const glb = pool[1];
 			if (!glb) return;
 
 			const slot = document.getElementById('vclose-agent-slot');
@@ -4462,7 +4603,7 @@
 				if (vcloseInited) return;
 				vcloseInited = true;
 				vcloseEl.classList.add('loaded');
-				vcloseEl.playClipByName?.('idle', { loop: true, fade_ms: 400 });
+				vcloseEl.play?.('idle', { loop: true, fade_ms: 400 });
 			}
 			vcloseEl.addEventListener('agent:ready', vcloseReady, { once: true });
 
@@ -4479,7 +4620,7 @@
 					vcloseLast = clip;
 					vcloseChips.querySelectorAll('.hero-chip').forEach(c => delete c.dataset.active);
 					btn.dataset.active = 'true';
-					vcloseEl.playClipByName?.(clip, { loop: false, fade_ms: 400 });
+					vcloseEl.play?.(clip, { loop: false, fade_ms: 400 });
 					clearTimeout(vcloseChips._timer);
 					vcloseChips._timer = setTimeout(() => delete btn.dataset.active, 6000);
 				});
@@ -4583,20 +4724,6 @@
 		}
 	}
 
-	// ── Live marketing stats ────────────────────────────────────────
-	(async () => {
-		try {
-			const r = await fetch('/api/home-stats');
-			const d = await r.json();
-			const fmt = (n) => Number(n).toLocaleString('en-US');
-
-			if (d.agents) {
-				document.getElementById('sb-agents').textContent  = fmt(d.agents);
-				document.getElementById('sb-widgets').textContent  = fmt(d.widgets);
-				document.getElementById('sb-onchain').textContent = fmt(d.onchain_agents);
-			}
-		} catch (_) {}
-	})();
 
 	// ── Live feature agents ─────────────────────────────────────────
 	(function initLiveFeatures() {
@@ -4621,25 +4748,30 @@
 			el.setAttribute('eager', '');
 			container.appendChild(el);
 			el.addEventListener('agent:ready', function() {
-				if (el.playClipByName) el.playClipByName(opts.anim, { loop: opts.loop !== false, fade_ms: 400 });
+				if (el.play) el.play(opts.anim, { loop: opts.loop !== false, fade_ms: 400 });
 			}, { once: true });
 			return el;
 		}
 
-		fetch(location.origin + '/api/avatars/' + AVATAR_ID)
-			.then(function(r) { return r.json(); })
-			.then(function(d) {
-				var apiGlb = devProxyGlb(d.avatar && (d.avatar.model_url || d.avatar.url));
-				if (!apiGlb) return;
+		// Assign unique pool avatars to spots that don't have a hardcoded local GLB.
+		// pool[0] and pool[1] are reserved for WYG and vclose; null spots start at pool[2].
+		getAvatarPool()
+			.then(function(pool) {
+				var nullIdx = 2;
+				LIVE_SPOTS.forEach(function(spot) {
+					if (!spot.glb) {
+						spot.glb = pool[nullIdx++ % pool.length];
+					}
+				});
 				var io = new IntersectionObserver(function(entries) {
 					entries.forEach(function(entry) {
 						if (!entry.isIntersecting) return;
 						var spot = LIVE_SPOTS.find(function(s) { return s.id === entry.target.id; });
 						if (!spot || entry.target.querySelector('agent-3d')) return;
 						io.unobserve(entry.target);
-						spawnMini(entry.target, spot.glb || apiGlb, spot);
+						spawnMini(entry.target, spot.glb, spot);
 					});
-				}, { rootMargin: '300px' });
+				}, { rootMargin: '150px' });
 				LIVE_SPOTS.forEach(function(spot) {
 					var el = document.getElementById(spot.id);
 					if (el) io.observe(el);
@@ -4655,7 +4787,7 @@
 				e.preventDefault(); e.stopPropagation();
 				var clip = btn.dataset.anim;
 				var agent = document.querySelector('#bento-anim agent-3d');
-				if (agent && agent.playClipByName) agent.playClipByName(clip, { loop: clip === 'idle', fade_ms: 400 });
+				if (agent && agent.play) agent.play(clip, { loop: clip === 'idle', fade_ms: 400 });
 				animPills.querySelectorAll('.bento-pill-btn').forEach(function(p) { p.classList.remove('active'); });
 				btn.classList.add('active');
 			});
@@ -4682,7 +4814,7 @@
 	})();
 </script>
 <script src="/src/api-playground.js"></script>
-<script src="/src/editorial-pretext.js"></script>
+<script src="/src/dragon-section.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';

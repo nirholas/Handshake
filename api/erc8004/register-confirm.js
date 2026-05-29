@@ -30,7 +30,7 @@ export default wrap(async (req, res) => {
 	const body = parse(bodySchema, await readJson(req));
 	const chain = CHAIN_BY_ID[body.chainId];
 	if (!chain) return error(res, 400, 'bad_request', `unsupported chain ${body.chainId}`);
-	const receipt = await rpcCall(chain.rpcUrl, 'eth_getTransactionReceipt', [body.txHash]);
+	const receipt = await rpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getTransactionReceipt', [body.txHash]);
 	if (!receipt) return error(res, 422, 'tx_not_mined', 'transaction not yet mined');
 	if (receipt.status === '0x0') return error(res, 422, 'tx_failed', 'transaction reverted');
 	const log = (receipt.logs ?? []).find(
@@ -54,23 +54,30 @@ export default wrap(async (req, res) => {
 	return json(res, 200, { success: true, agentId: onChainId, chainId: body.chainId });
 });
 
-async function rpcCall(url, m, params) {
-	const ac = new AbortController();
-	const t = setTimeout(() => ac.abort(), TIMEOUT_MS);
-	try {
-		const r = await fetch(url, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: m, params }),
-			signal: ac.signal,
-		});
-		if (!r.ok) throw new Error(`HTTP ${r.status}`);
-		const d = await r.json();
-		if (d.error) throw new Error(`RPC ${d.error.code}: ${d.error.message}`);
-		return d.result;
-	} finally {
-		clearTimeout(t);
+async function rpcCall(urls, m, params) {
+	const urlList = Array.isArray(urls) ? urls : [urls];
+	let lastErr;
+	for (const url of urlList) {
+		const ac = new AbortController();
+		const t = setTimeout(() => ac.abort(), TIMEOUT_MS);
+		try {
+			const r = await fetch(url, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: m, params }),
+				signal: ac.signal,
+			});
+			if (!r.ok) throw new Error(`HTTP ${r.status} from ${url}`);
+			const d = await r.json();
+			if (d.error) throw new Error(`RPC ${d.error.code}: ${d.error.message}`);
+			return d.result;
+		} catch (err) {
+			lastErr = err;
+		} finally {
+			clearTimeout(t);
+		}
 	}
+	throw lastErr;
 }
 
 function resolveGateway(uri) {

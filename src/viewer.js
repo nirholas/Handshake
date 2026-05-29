@@ -144,6 +144,15 @@ export class Viewer {
 		this.scene.add(this.defaultCamera);
 
 		this.audioListener = new AudioListener();
+		// Patch: Chrome throws TypeError("non-finite") from AudioParam when the
+		// listener's world matrix contains NaN (e.g. first frame before the scene
+		// graph is fully initialized). Swallow silently — position corrects next frame.
+		const _alUpdate = this.audioListener.updateMatrixWorld.bind(this.audioListener);
+		this.audioListener.updateMatrixWorld = (force) => {
+			try { _alUpdate(force); } catch (e) {
+				if (!(e instanceof TypeError)) throw e;
+			}
+		};
 		this.defaultCamera.add(this.audioListener);
 
 		this.renderer = window.renderer = new WebGLRenderer({ antialias: true, alpha: true });
@@ -893,14 +902,19 @@ export class Viewer {
 
 		this.controls.reset();
 
-		object.position.x -= center.x;
-		object.position.y -= center.y;
-		object.position.z -= center.z;
+		// Guard: empty bounding box (no geometry / all-invisible meshes) yields
+		// Infinity center → NaN after subtraction, which corrupts world matrices
+		// and causes AudioParam "non-finite" throws in PositionalAudio.updateMatrixWorld.
+		if (isFinite(center.x) && isFinite(center.y) && isFinite(center.z)) {
+			object.position.x -= center.x;
+			object.position.y -= center.y;
+			object.position.z -= center.z;
+		}
 
-		this.controls.maxDistance = size * 10;
+		this.controls.maxDistance = isFinite(size) && size > 0 ? size * 10 : 10;
 
-		this.defaultCamera.near = size / 100;
-		this.defaultCamera.far = size * 100;
+		this.defaultCamera.near = isFinite(size) && size > 0 ? size / 100 : 0.01;
+		this.defaultCamera.far = isFinite(size) && size > 0 ? size * 100 : 1000;
 		this.defaultCamera.updateProjectionMatrix();
 
 		// Add content and build the animation panel BEFORE computing the camera

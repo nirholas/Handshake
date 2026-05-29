@@ -17,15 +17,8 @@ export default wrap(async (req, res) => {
 			ORDER BY created_at DESC
 			LIMIT 1
 		`;
-	} catch (err) {
-		if (
-			/relation.*does not exist|undefined_table/i.test(err.message || '') ||
-			/Missing required env var/i.test(err.message || '')
-		) {
-			rows = [];
-		} else {
-			throw err;
-		}
+	} catch {
+		rows = [];
 	}
 
 	const theme = rows[0]

@@ -1770,9 +1770,10 @@
 				justify-content: center;
 				padding: 24px;
 				opacity: 0;
+				pointer-events: none;
 				transition: opacity 0.2s ease;
 			}
-			.anim-preview-overlay.show { opacity: 1; }
+			.anim-preview-overlay.show { opacity: 1; pointer-events: auto; }
 			.anim-preview-modal {
 				background: #0d0d0d;
 				border: 1px solid #1f1f1f;
@@ -2102,6 +2103,7 @@
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 
 		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+		<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 			<link rel="stylesheet" href="/nav.css" />
 			<link rel="stylesheet" href="/footer.css" />
 			<link rel="stylesheet" href="/mobile.css" />

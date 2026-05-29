@@ -21,7 +21,13 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://basescan.org',
-		rpcUrl: 'https://mainnet.base.org',
+		rpcUrls: [
+			'https://mainnet.base.org',
+			'https://base.llamarpc.com',
+			'https://rpc.ankr.com/base',
+			'https://base.publicnode.com',
+			'https://1rpc.io/base',
+		],
 	},
 	{
 		id: 42161,
@@ -29,7 +35,12 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://arbiscan.io',
-		rpcUrl: 'https://arb1.arbitrum.io/rpc',
+		rpcUrls: [
+			'https://arb1.arbitrum.io/rpc',
+			'https://arbitrum.llamarpc.com',
+			'https://rpc.ankr.com/arbitrum',
+			'https://arbitrum.publicnode.com',
+		],
 	},
 	{
 		id: 56,
@@ -37,7 +48,12 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://bscscan.com',
-		rpcUrl: 'https://bsc-dataseed1.binance.org',
+		rpcUrls: [
+			'https://bsc-dataseed1.binance.org',
+			'https://bsc-dataseed2.binance.org',
+			'https://rpc.ankr.com/bsc',
+			'https://bsc.publicnode.com',
+		],
 	},
 	{
 		id: 1,
@@ -45,7 +61,13 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://etherscan.io',
-		rpcUrl: 'https://eth.llamarpc.com',
+		rpcUrls: [
+			'https://eth.llamarpc.com',
+			'https://cloudflare-eth.com',
+			'https://rpc.ankr.com/eth',
+			'https://ethereum.publicnode.com',
+			'https://1rpc.io/eth',
+		],
 	},
 	{
 		id: 10,
@@ -53,7 +75,12 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://optimistic.etherscan.io',
-		rpcUrl: 'https://mainnet.optimism.io',
+		rpcUrls: [
+			'https://mainnet.optimism.io',
+			'https://optimism.llamarpc.com',
+			'https://rpc.ankr.com/optimism',
+			'https://optimism.publicnode.com',
+		],
 	},
 	{
 		id: 137,
@@ -61,7 +88,12 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://polygonscan.com',
-		rpcUrl: 'https://polygon-rpc.com',
+		rpcUrls: [
+			'https://polygon-rpc.com',
+			'https://polygon.llamarpc.com',
+			'https://rpc.ankr.com/polygon',
+			'https://polygon.publicnode.com',
+		],
 	},
 	{
 		id: 43114,
@@ -69,7 +101,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://snowtrace.io',
-		rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
+		rpcUrls: ['https://api.avax.network/ext/bc/C/rpc', 'https://rpc.ankr.com/avalanche'],
 	},
 	{
 		id: 100,
@@ -77,7 +109,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://gnosisscan.io',
-		rpcUrl: 'https://rpc.gnosischain.com',
+		rpcUrls: ['https://rpc.gnosischain.com', 'https://rpc.ankr.com/gnosis'],
 	},
 	{
 		id: 250,
@@ -85,7 +117,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://ftmscan.com',
-		rpcUrl: 'https://rpc.ankr.com/fantom',
+		rpcUrls: ['https://rpc.ankr.com/fantom', 'https://rpcapi.fantom.network'],
 	},
 	{
 		id: 42220,
@@ -93,7 +125,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://celoscan.io',
-		rpcUrl: 'https://forno.celo.org',
+		rpcUrls: ['https://forno.celo.org', 'https://rpc.ankr.com/celo'],
 	},
 	{
 		id: 59144,
@@ -101,7 +133,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://lineascan.build',
-		rpcUrl: 'https://rpc.linea.build',
+		rpcUrls: ['https://rpc.linea.build', 'https://linea.drpc.org'],
 	},
 	{
 		id: 534352,
@@ -109,7 +141,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://scrollscan.com',
-		rpcUrl: 'https://rpc.scroll.io',
+		rpcUrls: ['https://rpc.scroll.io', 'https://rpc.ankr.com/scroll'],
 	},
 	{
 		id: 5000,
@@ -117,7 +149,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://explorer.mantle.xyz',
-		rpcUrl: 'https://rpc.mantle.xyz',
+		rpcUrls: ['https://rpc.mantle.xyz', 'https://mantle.drpc.org'],
 	},
 	{
 		id: 324,
@@ -125,7 +157,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://explorer.zksync.io',
-		rpcUrl: 'https://mainnet.era.zksync.io',
+		rpcUrls: ['https://mainnet.era.zksync.io', 'https://zksync.drpc.org'],
 	},
 	{
 		id: 1284,
@@ -133,7 +165,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://moonbeam.moonscan.io',
-		rpcUrl: 'https://rpc.api.moonbeam.network',
+		rpcUrls: ['https://rpc.api.moonbeam.network', 'https://rpc.ankr.com/moonbeam'],
 	},
 	{
 		id: 97,
@@ -141,7 +173,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://testnet.bscscan.com',
-		rpcUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+		rpcUrls: ['https://data-seed-prebsc-1-s1.bnbchain.org:8545', 'https://data-seed-prebsc-2-s1.bnbchain.org:8545'],
 	},
 	{
 		id: 84532,
@@ -149,7 +181,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://sepolia.basescan.org',
-		rpcUrl: 'https://sepolia.base.org',
+		rpcUrls: ['https://sepolia.base.org', 'https://base-sepolia-rpc.publicnode.com', 'https://rpc.ankr.com/base_sepolia'],
 	},
 	{
 		id: 421614,
@@ -157,7 +189,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://sepolia.arbiscan.io',
-		rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
+		rpcUrls: ['https://sepolia-rollup.arbitrum.io/rpc', 'https://arbitrum-sepolia.publicnode.com'],
 	},
 	{
 		id: 11155111,
@@ -165,7 +197,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://sepolia.etherscan.io',
-		rpcUrl: 'https://rpc2.sepolia.org',
+		rpcUrls: ['https://rpc2.sepolia.org', 'https://ethereum-sepolia-rpc.publicnode.com', 'https://rpc.ankr.com/eth_sepolia'],
 	},
 	{
 		id: 11155420,
@@ -173,7 +205,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://sepolia-optimism.etherscan.io',
-		rpcUrl: 'https://sepolia.optimism.io',
+		rpcUrls: ['https://sepolia.optimism.io', 'https://optimism-sepolia.publicnode.com'],
 	},
 	{
 		id: 80002,
@@ -181,7 +213,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://amoy.polygonscan.com',
-		rpcUrl: 'https://rpc-amoy.polygon.technology',
+		rpcUrls: ['https://rpc-amoy.polygon.technology', 'https://polygon-amoy.drpc.org'],
 	},
 	{
 		id: 43113,
@@ -189,7 +221,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://testnet.snowtrace.io',
-		rpcUrl: 'https://api.avax-test.network/ext/bc/C/rpc',
+		rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc', 'https://rpc.ankr.com/avalanche_fuji'],
 	},
 ];
 

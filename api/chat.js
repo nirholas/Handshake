@@ -24,9 +24,9 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { loadUserProviderKeys } from './_lib/provider-keys.js';
 import { z } from 'zod';
 
-// Providers anonymous (unauthenticated) callers may use. Groq's free tier is
-// the only one we expose without sign-in — paid keys stay gated behind auth.
-const ANON_PROVIDERS = new Set(['groq']);
+// Providers anonymous (unauthenticated) callers may use. Groq and OpenRouter
+// free-tier models are exposed without sign-in — paid keys stay gated behind auth.
+const ANON_PROVIDERS = new Set(['groq', 'openrouter']);
 
 export const maxDuration = 60;
 
@@ -214,6 +214,25 @@ const ACTION_TOOLS = [
 		description: 'Get the latest trades from pump.fun and show them in the 3D scene.',
 		input_schema: { type: 'object', properties: {} },
 	},
+	{
+		name: 'playAnimation',
+		description:
+			'Play a named animation on the avatar. Use when the user asks to dance, wave, jump, celebrate, etc. Available clips: wave, dance, capoeira, jump, thriller, pray, idle, celebrate, rumba, falling, kiss, taunt.',
+		input_schema: {
+			type: 'object',
+			properties: {
+				name: {
+					type: 'string',
+					description: 'Animation clip name, e.g. "dance", "wave", "jump", "thriller".',
+				},
+				loop: {
+					type: 'boolean',
+					description: 'Whether to loop the animation. Dance-style clips should loop.',
+				},
+			},
+			required: ['name'],
+		},
+	},
 ];
 
 const ACTION_NAMES = new Set(ACTION_TOOLS.map((t) => t.name));
@@ -264,7 +283,7 @@ export default wrap(async (req, res) => {
 	if (!route) {
 		return error(res, 503, 'chat_unavailable', 'no chat provider is configured');
 	}
-	if (anonymous && route.name !== 'groq') {
+	if (anonymous && !ANON_PROVIDERS.has(route.name)) {
 		return error(res, 401, 'unauthorized', 'sign in to chat with the agent');
 	}
 
@@ -665,12 +684,22 @@ function buildSystemPrompt(ctx = {}, personaPrompt = null) {
 	const lines = [];
 	if (personaPrompt) lines.push(personaPrompt, '');
 	lines.push(
-		'You are the three.ws — an embodied AI assistant embedded inside a browser-native glTF/GLB viewer at three.ws.',
-		'Your job is to help the user inspect, understand, and modify the 3D scene. You have deep glTF 2.0, PBR materials, and three.js expertise.',
+		'You are an embodied AI assistant rendered as a 3D avatar at three.ws — the platform for building, embedding, and monetising 3D AI agents.',
+		'',
+		'three.ws platform knowledge:',
+		'- Create: Upload a selfie → photorealistic 3D avatar generated in ~60 seconds.',
+		'- Embed: <agent-3d id="..."> works on any website (React, Vue, plain HTML) with zero config.',
+		'- Earn: x402 micropayments let agents charge per chat in USDC on Base.',
+		'- Discover: Browse and chat with live agents at three.ws/agents.',
+		'- Console: Manage agents at three.ws/console.',
+		'- Voice, memory, tool use, animations, and payments are all built-in.',
+		'',
+		'You can control animations and the scene. When the user asks you to dance, wave, jump, celebrate, etc — call the playAnimation tool IMMEDIATELY. When asked to change the background, call setBgColor with a CSS hex. When asked to change lighting, call setEnvironment.',
+		'Available animations: wave, dance, capoeira, jump, thriller, pray, idle, celebrate, rumba, falling, kiss, taunt.',
 		'You can also show the latest trades from pump.fun by calling the getPumpFunTrades tool.',
-		'When the user asks you to change the viewer ("enable wireframe", "make the background dark blue", "turn on auto rotate", "load this model"), CALL the matching tool — do not just describe what would happen. Examples: user "wireframe on" → call setWireframe({value:true}). user "rotate it" → call setAutoRotate({value:true}). user "dark blue bg" → call setBgColor({value:"#0a1f44"}).',
+		'When the user asks to change the viewer ("enable wireframe", "make the background dark blue", "turn on auto rotate", "load this model"), CALL the matching tool — do not just describe what would happen.',
 		'When asked about the loaded model, use the context below as ground truth. Do not invent stats.',
-		'Keep replies tight: 1–3 sentences. Plain text, no markdown headers, no emoji.',
+		'Keep replies tight: 2–3 sentences. Plain text, no markdown headers, no emoji.',
 		'',
 		loaded,
 		validation,

@@ -20,7 +20,7 @@ const handle = (() => {
 })();
 
 if (!handle) {
-	renderNotFound('No handle in the URL.');
+	renderClaimLanding();
 } else {
 	render(handle).catch((err) => {
 		console.error('[handle] render failed', err);
@@ -179,6 +179,31 @@ GET ${escapeHtml(avatar.model_url)}</pre>
 			}
 		});
 	});
+}
+
+function renderClaimLanding() {
+	document.title = 'Claim your handle — three.ws';
+	main.innerHTML = `
+		<div class="not-found" style="grid-column: 1 / -1; max-width: 520px; margin: 0 auto; text-align: center; padding: 80px 24px;">
+			<div style="font-size: 40px; margin-bottom: 20px;">⬡</div>
+			<h1 style="font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 12px;">Claim your handle</h1>
+			<p style="color: rgba(232,236,242,0.6); font-size: 15px; line-height: 1.6; margin: 0 0 32px;">
+				Reserve <strong>yourname.threews.sol</strong> as a Solana Name Service subdomain.
+				Agents pay you by name, not address. We absorb the gas.
+			</p>
+			<a href="/dashboard/account" style="
+				display: inline-flex; align-items: center; gap: 8px;
+				background: #fff; color: #0a0c10; font-weight: 600; font-size: 15px;
+				padding: 12px 28px; border-radius: 8px; text-decoration: none;
+				transition: opacity 0.15s;
+			" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+				Get started →
+			</a>
+			<p style="margin: 24px 0 0; font-size: 13px; color: rgba(232,236,242,0.4);">
+				Already have a handle? Visit <a href="/explore" style="color: rgba(232,236,242,0.6);">three.ws/explore</a> to find profiles.
+			</p>
+		</div>
+	`;
 }
 
 function renderNotFound(reason) {
