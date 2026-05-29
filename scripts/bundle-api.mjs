@@ -95,6 +95,11 @@ const EXTERNALS = [
 	// require('url') — same ESM-bundling incompatibility as @x402/extensions.
 	// Marking it external lets Node.js load it natively as CJS.
 	'gltf-validator',
+	// @vercel/og reads its bundled fonts from a path relative to its own package
+	// dir. Inlining it rewrites that path to the route's output location, so the
+	// font read ENOENTs at load. External keeps the package (and its font assets)
+	// resolvable from node_modules at runtime.
+	'@vercel/og',
 	'jsdom',
 	'ethers',
 	'@elevenlabs/elevenlabs-js',
@@ -134,7 +139,16 @@ function esbuildArgs(files) {
 		// offending packages external is whack-a-mole (the call sites live deep
 		// in transitive CJS deps, not just @x402). Inject a real CommonJS
 		// `require` via createRequire so the shim resolves built-ins natively.
-		`--banner:js=import { createRequire as __createRequireForBundle } from 'node:module'; const require = __createRequireForBundle(import.meta.url);`,
+		//
+		// The banner must survive being inlined TWICE into one output: a route file
+		// that imports a sibling route file (e.g. pump-fun-mcp.js → ./pump/[action].js)
+		// pulls in the sibling's already-bundled copy, which carries this same banner.
+		// A top-level `import { … as X }` binding can't be redeclared, so two copies
+		// were a SyntaxError ("Identifier '__createRequireForBundle' has already been
+		// declared") that crashed the function at load (FUNCTION_INVOCATION_FAILED).
+		// `var require` redeclares legally and a dynamic `await import()` has no import
+		// binding to collide, so duplication is harmless.
+		`--banner:js=var require = (await import('node:module')).createRequire(import.meta.url);`,
 		`--outdir=${API_DIR}`,
 		`--outbase=${API_DIR}`,
 		'--allow-overwrite',

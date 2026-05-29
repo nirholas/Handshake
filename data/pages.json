@@ -342,6 +342,14 @@
 					"added": "2026-05-25"
 				},
 				{
+					"path": "/three-live",
+					"title": "$THREE Live · Protocol Pulse",
+					"description": "The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.",
+					"priority": 0.8,
+					"changefreq": "always",
+					"added": "2026-05-29"
+				},
+				{
 					"path": "/fact-checker",
 					"title": "Fact Checker",
 					"description": "Pay $0.10 per claim. The agent searches across authoritative sources, pays per retrieval via x402, and returns a verdict with cited evidence and a signed attestation.",

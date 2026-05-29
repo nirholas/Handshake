@@ -25,9 +25,28 @@ import {
 } from 'sas-lib';
 import { BorshSchema } from 'borsher';
 
+// Resolve sas-config.json in a bundle-safe way. scripts/bundle-api.mjs inlines
+// this module into each API entry with esbuild, which rewrites import.meta.url
+// to the OUTPUT file's location — so an import.meta-relative `../../sdk/src/...`
+// resolves to a bogus api/sdk/src/... path and ENOENTs at load. process.cwd() is
+// /var/task on Vercel (the file ships via vercel.json includeFiles) and the repo
+// root in dev; the import.meta path stays as a fallback for unbundled callers.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CONFIG_PATH = path.join(__dirname, '..', '..', 'sdk', 'src', 'sas-config.json');
-const CONFIG = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+const CONFIG_CANDIDATES = [
+	path.join(process.cwd(), 'sdk', 'src', 'sas-config.json'),
+	path.join(__dirname, '..', '..', 'sdk', 'src', 'sas-config.json'),
+];
+const CONFIG = (() => {
+	let lastErr;
+	for (const candidate of CONFIG_CANDIDATES) {
+		try {
+			return JSON.parse(fs.readFileSync(candidate, 'utf8'));
+		} catch (err) {
+			lastErr = err;
+		}
+	}
+	throw lastErr;
+})();
 
 const RPC = {
 	mainnet: process.env.SOLANA_RPC_URL        || 'https://api.mainnet-beta.solana.com',

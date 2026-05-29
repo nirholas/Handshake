@@ -73,25 +73,47 @@ async function buildChat() {
 	writeStamp('chat', inputs);
 }
 
-// Guard: agent-payments-sdk/dist/ is gitignored. Vercel caches node_modules/
+// Guard: these SDKs' dist/ dirs are gitignored. Vercel caches node_modules/
 // across deploys and skips npm install (and therefore postinstall) when
 // package-lock.json is unchanged. Two failure modes follow:
 //   1. The dist is missing entirely → the Vite app build can't resolve the
-//      package entry and fails.
+//      package entry and fails, or — for SDKs marked external in bundle-api —
+//      the deployed function FUNCTION_INVOCATION_FAILEDs at load (the bundle
+//      leaves the import to be resolved against node_modules at runtime, and
+//      `@three-ws/solana-agent/dist/index.js` simply isn't there).
 //   2. A stale or corrupt dist survives in the cache → e.g. a malformed ESM
 //      entry crashed every cron that imports the SDK at runtime with a
 //      SyntaxError ("export{…} = pkg" failing ModuleJob._instantiate).
 // `existsSync` alone misses case 2. Validate that every published entry parses
 // as a real module; rebuild from source if any is missing or syntactically bad.
-const SDK_ENTRIES = [
-	'agent-payments-sdk/dist/index.js',
-	'agent-payments-sdk/dist/solana/index.js',
-	'agent-payments-sdk/dist/x402/index.js',
-	'agent-payments-sdk/dist/evm/index.js',
+const SDKS = [
+	{
+		name: 'agent-payments-sdk',
+		dir: 'agent-payments-sdk',
+		entries: [
+			'agent-payments-sdk/dist/index.js',
+			'agent-payments-sdk/dist/solana/index.js',
+			'agent-payments-sdk/dist/x402/index.js',
+			'agent-payments-sdk/dist/evm/index.js',
+		],
+	},
+	{
+		// @three-ws/solana-agent — imported by api/agenc/[action].js and marked
+		// external in scripts/bundle-api.mjs, so its dist must exist in the
+		// deployed node_modules at runtime.
+		name: '@three-ws/solana-agent',
+		dir: 'solana-agent-sdk',
+		entries: [
+			'solana-agent-sdk/dist/index.js',
+			'solana-agent-sdk/dist/wallet/index.js',
+			'solana-agent-sdk/dist/x402-exact/index.js',
+			'solana-agent-sdk/dist/solana-agent-kit/index.js',
+		],
+	},
 ];
 
-function sdkDistIsValid() {
-	for (const rel of SDK_ENTRIES) {
+function sdkDistIsValid(entries) {
+	for (const rel of entries) {
 		const abs = resolve(ROOT, rel);
 		if (!existsSync(abs)) {
 			console.log(`[sdk-dist] ${rel} missing`);
@@ -112,14 +134,16 @@ function sdkDistIsValid() {
 }
 
 async function ensureSDKDist() {
-	if (sdkDistIsValid()) return;
-	console.log('[sdk-dist] agent-payments-sdk dist missing or invalid — rebuilding from source');
-	execSync('rm -rf dist', { cwd: resolve(ROOT, 'agent-payments-sdk'), stdio: 'inherit' });
-	await run('sdk-dist', 'npm run build --prefix agent-payments-sdk', {
-		env: { NODE_OPTIONS: '--no-deprecation' },
-	});
-	if (!sdkDistIsValid()) {
-		throw new Error('[sdk-dist] rebuild produced an invalid dist — aborting');
+	for (const sdk of SDKS) {
+		if (sdkDistIsValid(sdk.entries)) continue;
+		console.log(`[sdk-dist] ${sdk.name} dist missing or invalid — rebuilding from source`);
+		execSync('rm -rf dist', { cwd: resolve(ROOT, sdk.dir), stdio: 'inherit' });
+		await run(`sdk-dist:${sdk.dir}`, `npm run build --prefix ${sdk.dir}`, {
+			env: { NODE_OPTIONS: '--no-deprecation' },
+		});
+		if (!sdkDistIsValid(sdk.entries)) {
+			throw new Error(`[sdk-dist] ${sdk.name} rebuild produced an invalid dist — aborting`);
+		}
 	}
 }
 

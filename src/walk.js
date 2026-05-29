@@ -428,6 +428,26 @@ function applyCameraImmediate() {
 	camLookCurrent.copy(camLookTarget);
 	camera.lookAt(camLookCurrent);
 }
+
+// Recompute the follow offset so the full avatar plus headroom fits the
+// current viewport. Distance is derived from the camera's vertical FOV, and
+// portrait/narrow viewports (phones) get pulled back further so the head
+// isn't cropped. Safe to call before an avatar loads — uses the cached height.
+// On a resize we update the offset only and let the follow loop lerp to it;
+// on first load we snap so frame 0 is already framed.
+function frameAvatarCamera({ snap = true } = {}) {
+	const height = avatarHeight || 1.8;
+	const aspect = camera.aspect || window.innerWidth / window.innerHeight;
+	// 1.5× the avatar height as the vertical span gives ~25% headroom top and
+	// bottom; narrower-than-square viewports get up to ~1.6× for clear headroom.
+	const portraitBoost = aspect < 1 ? 1 + (1 - aspect) * 0.6 : 1;
+	const coverage = height * 1.5 * portraitBoost;
+	const vFovRad = (camera.fov * Math.PI) / 180;
+	const fitDist = coverage / (2 * Math.tan(vFovRad / 2));
+	CAM_OFFSET.set(0, height * 0.62, fitDist);
+	CAM_LOOK_OFFSET.set(0, height * 0.5, 0);
+	if (snap) applyCameraImmediate();
+}
 applyCameraImmediate();
 
 // ── Drag-to-orbit on the canvas (one-finger drag rotates the camera yaw) ──
@@ -689,9 +709,7 @@ async function loadAvatar() {
 	// Frame the camera relative to the avatar's height.
 	const height = Math.max(0.5, box.max.y - box.min.y);
 	avatarHeight = height;
-	CAM_OFFSET.set(0, height * 1.05, height * 1.95);
-	CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
-	applyCameraImmediate();
+	frameAvatarCamera();
 
 	animationManager.attach(avatar);
 
@@ -717,6 +735,9 @@ async function loadAvatar() {
 	currentMotion = 'idle';
 
 	dismissLoading();
+	// Clear the sticky "loading avatar…" pill that #walk-status ships with —
+	// setStatus auto-hides this confirmation after a couple of seconds.
+	setStatus('Ready — drag to look around');
 	buildEmoteTray();
 
 	// Auto-hide help hints after 5 seconds.
@@ -1148,6 +1169,9 @@ function resize() {
 	renderer.setSize(w, h, false);
 	camera.aspect = w / h;
 	camera.updateProjectionMatrix();
+	// Re-fit the follow framing for the new aspect (e.g. phone rotation) so the
+	// avatar's head stays in frame. Update the offset only; the loop lerps to it.
+	frameAvatarCamera({ snap: false });
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', resize);
@@ -2423,10 +2447,13 @@ loadAvatar()
 	})
 	.catch((err) => {
 		console.error('[walk] failed to load avatar:', err);
+		// Tear down the full-screen loading overlay so the error is readable and
+		// the scene (default ground/lighting) is visible behind the message.
+		dismissLoading();
 		const hasParam = new URLSearchParams(location.search).has('avatar');
 		const suffix = hasParam ? ' — <a href="/walk">try the default avatar</a>' : '';
-		if (statusEl) statusEl.innerHTML = `failed to load avatar: ${err?.message ?? err}${suffix}`;
 		if (statusEl) {
+			statusEl.innerHTML = `failed to load avatar: ${err?.message ?? err}${suffix}`;
 			statusEl.classList.add('is-error');
 			statusEl.classList.remove('is-hidden');
 		}

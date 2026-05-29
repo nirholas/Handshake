@@ -163,8 +163,15 @@
 		.act-btn.primary { color: var(--text); }
 		.act-btn.primary .act-icon { background: var(--panel-soft); }
 		@media (max-width: 720px) {
-			.action-rail { left: 12px; right: 12px; top: auto; bottom: 80px; transform: none; flex-direction: row; overflow-x: auto; border-radius: 10px; }
-			.act-btn { min-width: auto; padding: 8px 10px; }
+			/* Emote rail → thin horizontal strip pinned to the bottom of the canvas,
+			   above the owner bar. Keeps the avatar's face/upper body unobstructed. */
+			.action-rail {
+				left: 10px; right: 10px; top: auto; bottom: 10px; transform: none;
+				flex-direction: row; overflow-x: auto; -webkit-overflow-scrolling: touch;
+				border-radius: 10px; scrollbar-width: none;
+			}
+			.action-rail::-webkit-scrollbar { display: none; }
+			.act-btn { min-width: auto; padding: 8px 10px; white-space: nowrap; }
 			.act-btn .act-icon { display: none; }
 		}
 
@@ -434,7 +441,16 @@
 		.owner-btn.accent { color: var(--ok); }
 		.owner-btn.accent:hover { background: rgba(34,197,94,0.1); }
 		@media (max-width: 720px) {
-			.owner-bar { top: auto; bottom: 140px; left: 12px; right: 12px; justify-content: center; flex-wrap: wrap; }
+			/* Owner tabs → single-row scrollable strip just above the emote rail,
+			   instead of a wrapping block that covered the avatar's torso. */
+			.owner-bar {
+				top: auto; bottom: 58px; left: 10px; right: 10px;
+				justify-content: flex-start; flex-wrap: nowrap;
+				overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+			}
+			.owner-bar::-webkit-scrollbar { display: none; }
+			/* Float the in-canvas message log above both bottom strips. */
+			.chat-messages { bottom: 100px; max-height: 160px; }
 		}
 
 		/* ── OWNER SIDE PANELS ───────────────────────────────── */

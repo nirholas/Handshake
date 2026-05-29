@@ -8,35 +8,35 @@
 	},
 	"functions": {
 		"api/club/tips-stream.js": {
-			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**",
+			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
 			"maxDuration": 300
 		},
 		"api/avatars/[id].js": {
-			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**",
+			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
 			"maxDuration": 300
 		},
 		"api/tts/speak.js": {
-			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**",
+			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
 			"maxDuration": 60
 		},
 		"api/widgets/[id]/knowledge-process.js": {
-			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**",
+			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
 			"maxDuration": 300
 		},
 		"api/agents/pumpfun.js": {
-			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**",
+			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
 			"maxDuration": 120
 		},
 		"api/cron/[name].js": {
-			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**",
+			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
 			"maxDuration": 300
 		},
 		"api/agents/gmgn.js": {
-			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**",
+			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
 			"maxDuration": 120
 		},
 		"api/**/*.js": {
-			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**",
+			"includeFiles": "examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json",
 			"maxDuration": 30
 		}
 	},
@@ -276,6 +276,10 @@
 		{
 			"src": "/pump-visualizer/?",
 			"dest": "/pump-visualizer.html"
+		},
+		{
+			"src": "/three-live/?",
+			"dest": "/three-live.html"
 		},
 		{
 			"src": "/pump-live/?",

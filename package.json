@@ -146,7 +146,7 @@
 		"@solana-mobile/mobile-wallet-adapter-protocol-web3js": "^2.2.8",
 		"@solana/actions": "^0.0.2",
 		"@solana/kit": "^6.9.0",
-		"@solana/pay": "^1.0.16",
+		"@solana/pay": "^0.2.6",
 		"@solana/spl-token": "^0.4.14",
 		"@solana/wallet-adapter-base": "^0.9.23",
 		"@solana/wallet-adapter-phantom": "^0.9.24",

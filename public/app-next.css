@@ -1431,6 +1431,15 @@ body.app-next-body .nich-panel {
 	z-index: 24;
 }
 
+/* The chat dock is the single composer on /app-next — it writes through to the
+   panel's hidden .nich-input and clicks .nich-mic programmatically. Hide the
+   panel's own input + mic row so we don't render two stacked composers; the
+   panel stays a pure conversation thread (header + messages). */
+body.app-next-body .nich-panel .nich-controls,
+body.app-next-body .nich-panel .nich-mic-row {
+	display: none !important;
+}
+
 /* When chat is active, slide the input dock to the right to align with the
    conversation panel — keeps input + thread as one unified column.
    Uses translate instead of left/right so the transition animates cleanly. */

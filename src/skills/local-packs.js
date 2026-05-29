@@ -13,15 +13,34 @@
 // the agent reads it and follows the embedded instructions.
 
 import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// Resolve in a bundle-safe way. scripts/bundle-api.mjs inlines this module into
+// each API entry with esbuild, which rewrites `import.meta.url` to the OUTPUT
+// file's location (e.g. /var/task/api/chat-skills.js). A `../../`-relative URL
+// is correct from this source path (src/skills/) but resolves two levels too
+// high from the bundled entry (→ /var/data/...), so the read used to ENOENT in
+// production. process.cwd() is /var/task on Vercel and the repo root in dev, and
+// the JSON is force-shipped via vercel.json includeFiles (data/_generated/**),
+// so the cwd path is correct in both. The original URL path stays as a fallback
+// for any caller that runs unbundled from an unexpected cwd.
+const REL = 'data/_generated/local-skill-packs.json';
+const CANDIDATES = [
+	join(process.cwd(), REL),
+	new URL('../../' + REL, import.meta.url),
+];
 
 let _cached = null;
 export function loadLocalSkillPacks() {
 	if (_cached) return _cached;
-	_cached = JSON.parse(
-		readFileSync(
-			new URL('../../data/_generated/local-skill-packs.json', import.meta.url),
-			'utf8',
-		),
-	);
-	return _cached;
+	let lastErr;
+	for (const candidate of CANDIDATES) {
+		try {
+			_cached = JSON.parse(readFileSync(candidate, 'utf8'));
+			return _cached;
+		} catch (err) {
+			lastErr = err;
+		}
+	}
+	throw lastErr;
 }
