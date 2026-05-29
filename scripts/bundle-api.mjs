@@ -82,7 +82,7 @@ const EXTERNALS = [
 
 const start = Date.now();
 const routeFiles = await collectRouteFiles(API_DIR);
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 20;
 const totalBatches = Math.ceil(routeFiles.length / BATCH_SIZE);
 console.log(`[bundle-api] Bundling ${routeFiles.length} route files in ${totalBatches} batches...`);
 

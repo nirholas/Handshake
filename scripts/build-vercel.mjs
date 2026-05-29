@@ -61,7 +61,9 @@ async function prebuild() {
 		run('build:news', 'node scripts/build-news.mjs'),
 		run('build:skill-metadata', 'node scripts/build-skill-metadata.mjs'),
 		run('build:local-skill-packs', 'node scripts/build-local-skill-packs.mjs'),
-		run('build:club-assets', '(node scripts/build-club-props.mjs & node scripts/build-club-venue.mjs & node scripts/build-club-hdri.mjs & wait)'),
+		run('build:club-props', 'node scripts/build-club-props.mjs'),
+		run('build:club-venue', 'node scripts/build-club-venue.mjs'),
+		run('build:club-hdri', 'node scripts/build-club-hdri.mjs'),
 	]);
 	await run('build:page-index', 'node scripts/build-page-index.mjs && node scripts/audit-page-index.mjs');
 }
@@ -73,7 +75,7 @@ async function buildLib() {
 
 async function buildApp() {
 	await run('build:app', 'npx vite build && node scripts/strip-sw-from-embeds.mjs', {
-		env: { NODE_OPTIONS: '--max-old-space-size=6144' },
+		env: { NODE_OPTIONS: '--no-deprecation --max-old-space-size=6144' },
 	});
 }
 
@@ -82,9 +84,8 @@ async function bundleApi() {
 }
 
 async function postBuild() {
-	await run('copy-avatar-studio', 'node scripts/copy-avatar-studio.mjs');
-
 	await Promise.all([
+		run('copy-avatar-studio', 'node scripts/copy-avatar-studio.mjs'),
 		run('publish:lib', 'node scripts/publish-lib.mjs'),
 		run('apply:r2-cors', "node scripts/set-r2-cors.mjs || echo '[apply:r2-cors] skipped'"),
 	]);
