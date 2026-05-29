@@ -56,6 +56,8 @@ export class GamePlayer extends Schema {
 		this.woodcutting = 1;
 		this.mining = 1;
 		this.fishing = 1;
+		this.cooking = 1;
+		this.cosmetic = ''; // equipped cosmetic id ('' = default)
 
 		// 24-slot backpack + 6 hotbar slots. Fixed length so indices are stable
 		// references the client can drag between.
@@ -83,6 +85,8 @@ defineTypes(GamePlayer, {
 	woodcutting: 'uint16',
 	mining: 'uint16',
 	fishing: 'uint16',
+	cooking: 'uint16',
+	cosmetic: 'string',
 	inv: [Slot],
 	hotbar: [Slot],
 	activeSlot: 'int8',
@@ -115,7 +119,7 @@ defineTypes(ResourceNode, {
 	respawnAt: 'float64',
 });
 
-// A combat target (training dummy for the slice; same shape extends to mobs).
+// A combat target — training dummy (static) or a roaming/aggressive mob.
 export class Mob extends Schema {
 	constructor() {
 		super();
@@ -128,6 +132,7 @@ export class Mob extends Schema {
 		this.dead = false;
 		this.respawnAt = 0;
 		this.hitTs = 0; // epoch ms of last hit, for client flash
+		this.aggroId = ''; // session id of the player this mob is chasing ('' = none)
 	}
 }
 defineTypes(Mob, {
@@ -140,6 +145,32 @@ defineTypes(Mob, {
 	dead: 'boolean',
 	respawnAt: 'float64',
 	hitTs: 'float64',
+	aggroId: 'string',
+});
+
+// A death-drop bag left where a player died in a danger realm. Holds the items
+// that fell out of the inventory; the owner (and, after a grace window, anyone)
+// can recover them before it expires.
+export class Tombstone extends Schema {
+	constructor() {
+		super();
+		this.id = '';
+		this.owner = '';
+		this.ownerName = '';
+		this.tx = 0;
+		this.ty = 0;
+		this.items = new ArraySchema();
+		this.expiresAt = 0;
+	}
+}
+defineTypes(Tombstone, {
+	id: 'string',
+	owner: 'string',
+	ownerName: 'string',
+	tx: 'int16',
+	ty: 'int16',
+	items: [Slot],
+	expiresAt: 'float64',
 });
 
 // ---------------------------------------------------------------------------
@@ -153,6 +184,7 @@ export class GameState extends Schema {
 		this.players = new MapSchema();
 		this.nodes = new MapSchema();
 		this.mobs = new MapSchema();
+		this.tombstones = new MapSchema();
 	}
 }
 defineTypes(GameState, {
@@ -160,4 +192,5 @@ defineTypes(GameState, {
 	players: { map: GamePlayer },
 	nodes: { map: ResourceNode },
 	mobs: { map: Mob },
+	tombstones: { map: Tombstone },
 });

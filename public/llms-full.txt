@@ -272,6 +272,12 @@ URL: https://three.ws/gmgn
 
 Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.
 
+### $THREE Live · Protocol Pulse
+
+URL: https://three.ws/three-live
+
+The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.
+
 ### Fact Checker
 
 URL: https://three.ws/fact-checker

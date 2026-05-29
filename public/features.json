@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-05-29T10:59:02.237Z",
+	"generated_at": "2026-05-29T21:17:01.683Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -401,6 +401,15 @@
 					"title": "GMGN Smart Money",
 					"description": "Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.",
 					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/three-live",
+					"title": "$THREE Live · Protocol Pulse",
+					"description": "The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.",
+					"added": "2026-05-29",
 					"auth": null,
 					"indexable": true,
 					"tags": []

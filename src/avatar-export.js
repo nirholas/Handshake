@@ -234,7 +234,7 @@ const VRM_BONE_TARGETS = [
 	'rightLittleProximal', 'rightLittleIntermediate', 'rightLittleDistal',
 ];
 
-function normalizeBoneName(raw) {
+export function normalizeBoneName(raw) {
 	return String(raw || '')
 		.toLowerCase()
 		.replace(/^mixamorig:?_?/, '')

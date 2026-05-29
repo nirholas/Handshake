@@ -318,8 +318,16 @@
 			"dest": "/xr.html"
 		},
 		{
+			"src": "/play/?",
+			"dest": "/play.html"
+		},
+		{
 			"src": "/walk/?",
 			"dest": "/walk.html"
+		},
+		{
+			"src": "/communities/?",
+			"dest": "/communities.html"
 		},
 		{
 			"src": "/wk/([A-Za-z0-9_-]+)",
@@ -2258,6 +2266,18 @@
 		{
 			"src": "/create/selfie/",
 			"dest": "/create-selfie.html"
+		},
+		{
+			"src": "/scan",
+			"dest": "/scan.html"
+		},
+		{
+			"src": "/scan/",
+			"dest": "/scan.html"
+		},
+		{
+			"src": "/worlds/?",
+			"dest": "/worlds.html"
 		},
 		{
 			"src": "/create-review",

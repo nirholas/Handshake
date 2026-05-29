@@ -113,8 +113,11 @@
 				height: 100vh;
 				z-index: 2;
 				display: block;
-				/* Joystick / buttons sit on the UI layer above this. The canvas
-				   accepts pointer events for the camera-orbit drag handler. */
+				/* Own every touch: orbit/pinch are handled in JS, so suppress the
+				   browser's native pan + double-tap/pinch page zoom. touch-action
+				   doesn't inherit, so the body rule above doesn't cover the canvas.
+				   Joystick / buttons sit on the UI layer above this. */
+				touch-action: none;
 			}
 
 			#walk-hud {
@@ -224,7 +227,61 @@
 			#walk-look-joystick { right: 24px; display: none; }
 			@media (hover: none), (max-width: 640px) {
 				#walk-look-joystick { display: block; }
+				/* Floating movement stick — the zone spans the lower-left so the
+				   thumb summons the pad wherever it lands (nipplejs dynamic mode).
+				   Sits BELOW the chat (z8) so the centre chat input stays tappable
+				   where the two overlap; still above the canvas + emote bar. */
+				#walk-joystick {
+					left: 0;
+					bottom: 0;
+					width: min(50vw, 240px);
+					height: min(55vh, 380px);
+					z-index: 7;
+				}
 			}
+
+			/* On-screen action cluster — stacked on the right edge above the look
+			   stick. Touch only; on desktop these actions live on keys + the HUD. */
+			#walk-touch-actions {
+				position: fixed;
+				z-index: 9;
+				right: calc(20px + env(safe-area-inset-right, 0));
+				bottom: calc(184px + env(safe-area-inset-bottom, 0));
+				display: none;
+				flex-direction: column;
+				gap: 12px;
+				align-items: center;
+				pointer-events: auto;
+			}
+			@media (hover: none), (max-width: 640px) {
+				#walk-touch-actions { display: flex; }
+			}
+			.walk-touch-btn {
+				appearance: none;
+				border: 1px solid var(--border);
+				background: var(--panel);
+				color: var(--text);
+				border-radius: 50%;
+				width: 52px;
+				height: 52px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				touch-action: manipulation;
+				-webkit-tap-highlight-color: transparent;
+				transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+			}
+			.walk-touch-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.12); }
+			.walk-touch-btn.is-jump {
+				width: 72px;
+				height: 72px;
+				border-color: var(--accent);
+				background: color-mix(in srgb, var(--accent) 22%, var(--panel));
+				color: #fff;
+			}
+			.walk-touch-btn.is-jump:active { background: color-mix(in srgb, var(--accent) 38%, var(--panel)); }
 
 			#walk-status {
 				position: fixed;
@@ -1075,6 +1132,18 @@
 			<div id="walk-joystick" aria-label="Movement joystick"></div>
 			<div id="walk-look-joystick" aria-label="Look joystick"></div>
 
+			<div id="walk-touch-actions" aria-label="Action buttons">
+				<button type="button" class="walk-touch-btn" id="walk-touch-camera" aria-label="Switch camera">
+					<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><path d="M5 3.5h6l1 1.5h1.5a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H1.5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1H3z"/></svg>
+				</button>
+				<button type="button" class="walk-touch-btn" id="walk-touch-gesture" aria-label="Gestures">
+					<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8V3.2a1.2 1.2 0 0 1 2.4 0V7m0-.5a1.2 1.2 0 0 1 2.4 0V8m0-.8a1.2 1.2 0 0 1 2.4 0v3.2c0 2-1.6 3.6-3.6 3.6H8.4c-1.2 0-2-.5-2.7-1.4L3.3 11a1.2 1.2 0 0 1 1.8-1.5L6 10.4"/></svg>
+				</button>
+				<button type="button" class="walk-touch-btn is-jump" id="walk-touch-jump" aria-label="Jump">
+					<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l5 6h-3v6h-4v-6H7z"/></svg>
+				</button>
+			</div>
+
 			<div id="walk-help" aria-hidden="true">
 				<span class="walk-key"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
 				<span class="walk-key"><kbd>shift</kbd> run</span>
@@ -1091,5 +1160,9 @@
 		</div>
 
 		<script type="module" src="/src/walk.js"></script>
+		<!-- Coin-world social layer: lobby (no ?coin=) or Town (live community
+		     feed + realtime bubbles) bound to the current coin. Self-contained;
+		     the 3D scene above is walk.js's, the multiplayer join is walk-net's. -->
+		<script type="module" src="/src/community/coin-world-boot.js"></script>
 	</body>
 </html>

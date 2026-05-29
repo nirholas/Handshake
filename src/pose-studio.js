@@ -1,11 +1,12 @@
-// /pose — 3D pose-reference studio inspired by setpose.com. Builds a
-// Three.js scene with an articulated Mannequin, orbit camera, ground +
-// grid, and a control panel that lets the user pick presets, drag joints
-// to pose them, tweak sliders for fine control, swap body type, add floor
-// props, change lighting and FOV, and export a PNG screenshot.
+// /pose — the three.ws Animation Studio. A Three.js scene with a posable rig
+// (the built-in primitive mannequin OR a loaded rigged GLB avatar — including
+// the user's own three.ws avatars), orbit camera, ground + grid, and a control
+// panel for posing (FK gizmos + sliders and drag-IK), presets, lighting, props,
+// and PNG export. Task 2 layers a keyframe timeline on top of this foundation.
 
 import {
 	AmbientLight,
+	Box3,
 	BoxGeometry,
 	CircleGeometry,
 	Color,
@@ -15,9 +16,12 @@ import {
 	Group,
 	HemisphereLight,
 	Mesh,
+	MeshBasicMaterial,
 	MeshStandardMaterial,
 	PCFSoftShadowMap,
 	PerspectiveCamera,
+	Plane,
+	Quaternion,
 	Raycaster,
 	Scene,
 	ShadowMaterial,
@@ -27,9 +31,18 @@ import {
 	WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-import { JOINT_AXIS_LABELS, JOINT_LABELS, Mannequin } from './pose-mannequin.js';
+import { getDecoders } from './viewer/internal.js';
+import {
+	CANONICAL_LABELS,
+	MannequinRig,
+	makeGltfRig,
+	poseFromMannequinPreset,
+} from './pose-rig.js';
 import { PRESETS, getPresetsByGroup, getPresetById } from './pose-presets.js';
+import { AvatarGalleryPicker } from './avatar-gallery-picker.js';
 
 // ─── DOM helpers ────────────────────────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
@@ -49,9 +62,6 @@ const el = (tag, attrs = {}, children = []) => {
 };
 
 // ─── Floor props ────────────────────────────────────────────────────────
-// Simple primitive-based props the user can drop into the scene as drawing
-// references. Each prop is a function that returns a Group positioned so
-// its base sits on y = 0.
 const FLOOR_PROPS = {
 	none: { label: 'None', build: null },
 	chair: {
@@ -142,6 +152,10 @@ const FLOOR_PROPS = {
 	},
 };
 
+// Shared IK target-handle assets (cloned per handle for per-instance opacity).
+const handleGeom = new SphereGeometry(0.045, 16, 12);
+const handleMat = new MeshBasicMaterial({ color: '#22d3ee', transparent: true, opacity: 0.9, depthTest: false });
+
 // ─── Scene setup ────────────────────────────────────────────────────────
 function setupScene(canvas, hudStatus) {
 	const scene = new Scene();
@@ -153,7 +167,7 @@ function setupScene(canvas, hudStatus) {
 	const renderer = new WebGLRenderer({
 		canvas,
 		antialias: true,
-		preserveDrawingBuffer: true, // needed for toDataURL screenshots
+		preserveDrawingBuffer: true, // needed for toDataURL screenshots / thumbnails
 	});
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 	renderer.shadowMap.enabled = true;
@@ -167,8 +181,20 @@ function setupScene(canvas, hudStatus) {
 	controls.maxPolarAngle = Math.PI * 0.96;
 	controls.target.set(0, 0.95, 0);
 
-	// Lighting — a hemisphere + key directional light produces the soft
-	// silhouette/shadow look that pose references need.
+	// Rotation gizmo for the selected bone (FK posing). Newer three exposes the
+	// visual via getHelper(); the control instance carries the interaction.
+	const gizmo = new TransformControls(camera, canvas);
+	gizmo.setMode('rotate');
+	gizmo.setSpace('local');
+	gizmo.setSize(0.8);
+	gizmo.visible = false;
+	gizmo.enabled = false;
+	scene.add(gizmo.getHelper());
+	// Suspend orbit while a gizmo drag is in progress.
+	gizmo.addEventListener('dragging-changed', (e) => {
+		controls.enabled = !e.value;
+	});
+
 	const hemi = new HemisphereLight('#f1f5f9', '#0a0a0f', 0.55);
 	scene.add(hemi);
 	const ambient = new AmbientLight('#ffffff', 0.18);
@@ -191,7 +217,6 @@ function setupScene(canvas, hudStatus) {
 	fill.position.set(-2.5, 2, -2);
 	scene.add(fill);
 
-	// Ground — invisible shadow catcher + grid for reference.
 	const ground = new Mesh(new CircleGeometry(12, 64), new ShadowMaterial({ opacity: 0.35 }));
 	ground.rotation.x = -Math.PI / 2;
 	ground.position.y = 0;
@@ -204,6 +229,11 @@ function setupScene(canvas, hudStatus) {
 
 	const propLayer = new Group();
 	scene.add(propLayer);
+
+	// Layer that holds draggable IK target handles (kept out of the rig so it
+	// survives a rig swap and never exports into a GLB).
+	const ikLayer = new Group();
+	scene.add(ikLayer);
 
 	function resize() {
 		const w = canvas.clientWidth;
@@ -221,20 +251,34 @@ function setupScene(canvas, hudStatus) {
 		hudStatus.dataset.kind = kind;
 	}
 
-	return { scene, camera, renderer, controls, key, hemi, ambient, propLayer, setStatus };
+	return { scene, camera, renderer, controls, gizmo, key, hemi, ambient, propLayer, ikLayer, setStatus };
 }
 
 // ─── State ──────────────────────────────────────────────────────────────
 const state = {
-	selectedJoint: null,
-	dragMode: 'bend', // 'bend' | 'tilt' | 'twist' | 'move'
-	dragging: null,    // { joint, startX, startY, startRot }
+	rig: null,            // current Rig (MannequinRig | GltfRig)
+	selectedBone: null,   // canonical bone key
+	poseMode: 'fk',       // 'fk' (gizmo + sliders) | 'ik' (drag end-effectors)
+	avatar: null,         // { id, name } when a GLB is loaded, else null
+	loadingAvatar: false,
 	prop: 'none',
 	propGroup: null,
 	keyLight: null,
-	keyAzimuth: 0.9,    // radians around Y
-	keyElevation: 0.95, // radians from +Y down
+	keyAzimuth: 0.9,
+	keyElevation: 0.95,
 	keyDistance: 5.8,
+	ikHandles: new Map(), // effectorKey → Mesh
+	draggingIK: null,     // { effectorKey, plane }
+};
+
+// Studio handle exposed for later tasks (timeline/save) to share the rig +
+// scene without re-importing internals.
+export const studio = {
+	get rig() { return state.rig; },
+	get scene() { return state.ctx?.scene || null; },
+	get camera() { return state.ctx?.camera || null; },
+	get renderer() { return state.ctx?.renderer || null; },
+	get avatar() { return state.avatar; },
 };
 
 // ─── App boot ───────────────────────────────────────────────────────────
@@ -247,123 +291,269 @@ function boot() {
 	}
 
 	const ctx = setupScene(canvas, hudStatus);
-	const { scene, camera, renderer, controls, key, propLayer, setStatus } = ctx;
+	state.ctx = ctx;
+	const { scene, camera, renderer, controls, gizmo, key, propLayer, ikLayer, setStatus } = ctx;
 	state.keyLight = key;
 
-	const mannequin = new Mannequin({ build: 'male', color: '#d4d4d8' });
-	scene.add(mannequin.root);
+	// Panel DOM refs (resolved up-front: mountRig() renders into them on boot).
+	const sliderHost = $('#pose-controls-host');
+	const selectionLabel = $('#pose-selection-label');
+	const boneListHost = $('#pose-joint-picker');
+	const boneSearch = $('#pose-bone-search');
+
+	// ── Rig lifecycle ────────────────────────────────────────────────────
+	function mountRig(rig) {
+		// Tear down the previous rig.
+		if (state.rig) {
+			gizmo.detach();
+			scene.remove(state.rig.root);
+			state.rig.dispose?.();
+		}
+		state.rig = rig;
+		scene.add(rig.root);
+		state.selectedBone = null;
+		clearIKHandles();
+		buildIKHandles();
+		applyPoseMode();
+		renderControlsPanel();
+		renderBoneList();
+		updateSelectionLabel();
+	}
+
+	const mannequinRig = new MannequinRig({ build: 'male', color: '#d4d4d8' });
+	mountRig(mannequinRig);
+	state.avatar = null;
 
 	// Pick a reasonable starting pose so the figure looks alive on load.
 	const intro = getPresetById('contrapposto');
-	if (intro) mannequin.applyPose(intro.pose);
+	if (intro) state.rig.applyPose(poseFromMannequinPreset(intro.pose));
 
-	// Render loop.
+	// ── Render loop ──────────────────────────────────────────────────────
 	function tick() {
 		requestAnimationFrame(tick);
 		controls.update();
+		if (state.poseMode === 'ik' && !state.draggingIK) syncIKHandles();
 		renderer.render(scene, camera);
 	}
 	tick();
 
-	// ── Raycast selection + drag-to-rotate ──────────────────────────────
+	// ── Camera framing ───────────────────────────────────────────────────
+	function frameObject(object) {
+		object.updateMatrixWorld(true);
+		const box = new Box3().setFromObject(object);
+		if (box.isEmpty()) return;
+		const size = box.getSize(new Vector3());
+		const center = box.getCenter(new Vector3());
+		// Drop the rig so its feet rest on the ground plane.
+		object.position.y -= box.min.y;
+		const height = Math.max(0.5, size.y);
+		controls.target.set(0, height * 0.55, 0);
+		const dist = height * 2.2;
+		camera.position.set(dist * 0.6, height * 0.8, dist);
+		controls.minDistance = height * 0.4;
+		controls.maxDistance = height * 8;
+		controls.update();
+	}
+
+	// ── Raycast selection (FK) ─────────────────────────────────────────────
 	const raycaster = new Raycaster();
 	const ndc = new Vector2();
+	const _v = new Vector3();
 
-	function pickJointAt(clientX, clientY) {
+	function toNDC(clientX, clientY) {
 		const rect = canvas.getBoundingClientRect();
 		ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
 		ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-		raycaster.setFromCamera(ndc, camera);
-		const hits = raycaster.intersectObjects(mannequin.selectableMeshes, false);
-		if (!hits.length) return null;
-		return mannequin.jointFromHit(hits[0].object);
+		return ndc;
 	}
 
-	function selectJoint(name) {
-		state.selectedJoint = name;
+	// Pick a bone from a screen position. Mannequin: raycast tagged meshes. GLB:
+	// raycast the skinned mesh to confirm the click is on the figure, then pick
+	// the posable bone whose projected position is nearest the cursor.
+	function pickBoneAt(clientX, clientY) {
+		const rig = state.rig;
+		raycaster.setFromCamera(toNDC(clientX, clientY), camera);
+		if (rig.kind === 'mannequin') {
+			const hits = raycaster.intersectObjects(rig.getSelectableMeshes(), false);
+			if (!hits.length) return null;
+			return rig.boneFromHit(hits[0].object);
+		}
+		// GLB: require a hit on the mesh so empty-space clicks deselect.
+		const meshes = rig.skinnedMeshes?.length ? rig.skinnedMeshes : rig.getSelectableMeshes();
+		const hits = raycaster.intersectObjects(meshes, true);
+		if (!hits.length) return null;
+		const rect = canvas.getBoundingClientRect();
+		const px = clientX - rect.left;
+		const py = clientY - rect.top;
+		let best = null;
+		let bestDist = Infinity;
+		for (const { key, node } of rig.getBones()) {
+			node.getWorldPosition(_v).project(camera);
+			const sx = (_v.x * 0.5 + 0.5) * rect.width;
+			const sy = (-_v.y * 0.5 + 0.5) * rect.height;
+			const d = Math.hypot(sx - px, sy - py);
+			if (d < bestDist) { bestDist = d; best = key; }
+		}
+		return bestDist < 80 ? best : null;
+	}
+
+	function selectBone(key) {
+		state.selectedBone = key;
+		if (state.poseMode === 'fk') attachGizmo();
 		renderControlsPanel();
+		renderBoneList();
 		updateSelectionLabel();
 	}
 
 	canvas.addEventListener('pointerdown', (ev) => {
-		// Left button only — right/middle stay with OrbitControls.
 		if (ev.button !== 0) return;
-		const joint = pickJointAt(ev.clientX, ev.clientY);
-		if (!joint) return;
-		selectJoint(joint);
-		if (state.dragMode === 'move') return;
-		controls.enabled = false;
-		const rot = mannequin.getJointRotation(joint);
-		state.dragging = {
-			joint,
-			startX: ev.clientX,
-			startY: ev.clientY,
-			startRot: { ...rot },
-		};
-		canvas.setPointerCapture(ev.pointerId);
-		ev.preventDefault();
+		if (gizmo.dragging) return; // gizmo owns this drag
+		if (state.poseMode === 'ik' && tryStartIKDrag(ev)) {
+			ev.preventDefault();
+			return;
+		}
+		const bone = pickBoneAt(ev.clientX, ev.clientY);
+		if (bone) selectBone(bone);
 	});
 
 	canvas.addEventListener('pointermove', (ev) => {
-		const d = state.dragging;
-		if (!d) return;
-		const dx = (ev.clientX - d.startX) / 140;
-		const dy = (ev.clientY - d.startY) / 140;
-		const r = { ...d.startRot };
-		if (state.dragMode === 'bend') {
-			r.x = d.startRot.x + dy;
-			r.z = d.startRot.z + dx;
-		} else if (state.dragMode === 'tilt') {
-			r.z = d.startRot.z + dx;
-			r.x = d.startRot.x + dy * 0.3;
-		} else if (state.dragMode === 'twist') {
-			r.y = d.startRot.y + dx;
-		}
-		mannequin.setJointRotation(d.joint, 'x', r.x);
-		mannequin.setJointRotation(d.joint, 'y', r.y);
-		mannequin.setJointRotation(d.joint, 'z', r.z);
-		// Re-read so constraint clamping is reflected in the sliders.
-		if (state.selectedJoint === d.joint) renderControlsPanel();
+		if (!state.draggingIK) return;
+		const hit = intersectDragPlane(ev.clientX, ev.clientY, state.draggingIK.plane);
+		if (!hit) return;
+		state.rig.solveIK(state.draggingIK.effectorKey, hit);
+		const handle = state.ikHandles.get(state.draggingIK.effectorKey);
+		if (handle) handle.position.copy(hit);
+		if (state.selectedBone) renderControlsPanel();
 	});
 
-	function endDrag(ev) {
-		if (!state.dragging) return;
+	function endIKDrag(ev) {
+		if (!state.draggingIK) return;
 		try { canvas.releasePointerCapture(ev.pointerId); } catch {}
-		state.dragging = null;
+		state.draggingIK = null;
 		controls.enabled = true;
+		syncIKHandles();
 	}
-	canvas.addEventListener('pointerup', endDrag);
-	canvas.addEventListener('pointercancel', endDrag);
+	canvas.addEventListener('pointerup', endIKDrag);
+	canvas.addEventListener('pointercancel', endIKDrag);
 
-	// ── Controls panel rendering ────────────────────────────────────────
-	const sliderHost = $('#pose-controls-host');
-	const selectionLabel = $('#pose-selection-label');
+	// Gizmo rotations should refresh the slider readout live.
+	gizmo.addEventListener('objectChange', () => {
+		if (state.selectedBone) renderControlsPanel();
+	});
 
+	// ── FK gizmo ───────────────────────────────────────────────────────────
+	function attachGizmo() {
+		const key = state.selectedBone;
+		const node = key && state.rig.getNode(key);
+		if (state.poseMode !== 'fk' || !node) {
+			gizmo.detach();
+			gizmo.enabled = false;
+			gizmo.visible = false;
+			return;
+		}
+		gizmo.attach(node);
+		gizmo.enabled = true;
+		gizmo.visible = true;
+	}
+
+	// ── IK target handles ──────────────────────────────────────────────────
+	function buildIKHandles() {
+		for (const chain of state.rig.getIKChains()) {
+			const m = new Mesh(handleGeom, handleMat.clone());
+			m.renderOrder = 999;
+			m.userData.effectorKey = chain.effectorKey;
+			m.visible = false;
+			ikLayer.add(m);
+			state.ikHandles.set(chain.effectorKey, m);
+		}
+		syncIKHandles();
+	}
+	function clearIKHandles() {
+		for (const m of state.ikHandles.values()) ikLayer.remove(m);
+		state.ikHandles.clear();
+	}
+	function syncIKHandles() {
+		for (const [effKey, m] of state.ikHandles) {
+			const node = state.rig.getNode(effKey);
+			if (node) node.getWorldPosition(m.position);
+		}
+	}
+
+	function tryStartIKDrag(ev) {
+		raycaster.setFromCamera(toNDC(ev.clientX, ev.clientY), camera);
+		const handles = [...state.ikHandles.values()].filter((m) => m.visible);
+		const hits = raycaster.intersectObjects(handles, false);
+		if (!hits.length) return false;
+		const handle = hits[0].object;
+		const effectorKey = handle.userData.effectorKey;
+		// Drag plane: faces the camera, passes through the handle.
+		const normal = camera.getWorldDirection(new Vector3()).negate();
+		const plane = new Plane().setFromNormalAndCoplanarPoint(normal, handle.position.clone());
+		state.draggingIK = { effectorKey, plane };
+		controls.enabled = false;
+		canvas.setPointerCapture(ev.pointerId);
+		selectBone(effectorKey);
+		return true;
+	}
+
+	function intersectDragPlane(clientX, clientY, plane) {
+		raycaster.setFromCamera(toNDC(clientX, clientY), camera);
+		const pt = new Vector3();
+		return raycaster.ray.intersectPlane(plane, pt) ? pt : null;
+	}
+
+	function applyPoseMode() {
+		const ik = state.poseMode === 'ik';
+		for (const m of state.ikHandles.values()) m.visible = ik;
+		if (ik) {
+			gizmo.detach();
+			gizmo.enabled = false;
+			gizmo.visible = false;
+			syncIKHandles();
+		} else {
+			attachGizmo();
+		}
+		document.querySelectorAll('[data-posemode]').forEach((b) => {
+			b.setAttribute('aria-pressed', String(b.dataset.posemode === state.poseMode));
+		});
+		const hasIK = state.rig.getIKChains().length > 0;
+		const ikBtn = document.querySelector('[data-posemode="ik"]');
+		if (ikBtn) {
+			ikBtn.disabled = !hasIK;
+			ikBtn.title = hasIK
+				? 'IK — drag a hand or foot and the limb solves'
+				: 'IK unavailable — this rig has no recognizable limb chains';
+		}
+	}
+
+	// ── Controls panel (FK sliders for the selected bone) ───────────────────
 	function updateSelectionLabel() {
 		if (!selectionLabel) return;
-		selectionLabel.textContent = state.selectedJoint
-			? JOINT_LABELS[state.selectedJoint] || state.selectedJoint
+		selectionLabel.textContent = state.selectedBone
+			? CANONICAL_LABELS[state.selectedBone] || state.selectedBone
 			: 'Click a body part';
 	}
 
 	function renderControlsPanel() {
 		if (!sliderHost) return;
 		sliderHost.innerHTML = '';
-		const joint = state.selectedJoint;
-		if (!joint) {
+		const key = state.selectedBone;
+		if (!key || !state.rig.hasBone(key)) {
 			sliderHost.appendChild(
 				el('p', { class: 'pose-hint' }, [
-					'Click any body part in the scene, or pick a preset on the right, to start posing.',
+					state.poseMode === 'ik'
+						? 'Drag a glowing hand or foot handle to pose the limb with inverse kinematics.'
+						: 'Click any body part in the scene, search a bone on the left, or pick a preset to start posing.',
 				]),
 			);
 			return;
 		}
-		const rot = mannequin.getJointRotation(joint);
-		const axisLabels = JOINT_AXIS_LABELS[joint] || JOINT_AXIS_LABELS.default;
-		for (const axis of ['x', 'y', 'z']) {
+		const rot = state.rig.getBoneEuler(key);
+		const AXES = [['x', 'Bend / Pitch'], ['y', 'Twist / Yaw'], ['z', 'Tilt / Roll']];
+		for (const [axis, label] of AXES) {
 			const value = rot[axis];
 			const row = el('div', { class: 'pose-slider-row' }, [
-				el('label', {}, [`${axisLabels[axis]} (${axis.toUpperCase()})`]),
+				el('label', {}, [`${label} (${axis.toUpperCase()})`]),
 				el('div', { class: 'pose-slider-value', 'data-axis': axis }, [
 					`${((value * 180) / Math.PI).toFixed(0)}°`,
 				]),
@@ -374,61 +564,55 @@ function boot() {
 				max: '3.14159',
 				step: '0.01',
 				value: String(value),
+				'aria-label': `${CANONICAL_LABELS[key] || key} ${label}`,
 			});
 			slider.addEventListener('input', () => {
-				const v = parseFloat(slider.value);
-				mannequin.setJointRotation(joint, axis, v);
-				const next = mannequin.getJointRotation(joint);
+				const cur = state.rig.getBoneEuler(key);
+				cur[axis] = parseFloat(slider.value);
+				state.rig.setBoneEuler(key, cur);
+				const next = state.rig.getBoneEuler(key);
 				row.querySelector(`.pose-slider-value[data-axis="${axis}"]`).textContent =
 					`${((next[axis] * 180) / Math.PI).toFixed(0)}°`;
-				// If constraint clamped the value, snap the slider back.
 				slider.value = String(next[axis]);
 			});
 			row.appendChild(slider);
 			sliderHost.appendChild(row);
 		}
-		// Reset-this-joint button.
-		const resetBtn = el('button', {
-			class: 'pose-btn pose-btn-ghost',
-			type: 'button',
-		}, ['Reset this joint']);
+		const resetBtn = el('button', { class: 'pose-btn pose-btn-ghost', type: 'button' }, ['Reset this bone']);
 		resetBtn.addEventListener('click', () => {
-			mannequin.setJointRotation(joint, 'x', 0);
-			mannequin.setJointRotation(joint, 'y', 0);
-			mannequin.setJointRotation(joint, 'z', 0);
+			state.rig.setBoneEuler(key, { x: 0, y: 0, z: 0 });
 			renderControlsPanel();
 		});
 		sliderHost.appendChild(resetBtn);
 	}
-	renderControlsPanel();
-	updateSelectionLabel();
 
-	// ── Joint-list quick picker (left panel) ────────────────────────────
-	const jointPicker = $('#pose-joint-picker');
-	if (jointPicker) {
-		const order = [
-			['Head', ['head', 'neck']],
-			['Torso', ['chest', 'spine', 'pelvis']],
-			['Arms', ['shoulderL', 'elbowL', 'wristL', 'shoulderR', 'elbowR', 'wristR']],
-			['Legs', ['hipL', 'kneeL', 'ankleL', 'hipR', 'kneeR', 'ankleR']],
-		];
-		for (const [group, names] of order) {
-			jointPicker.appendChild(el('div', { class: 'pose-joint-group' }, [group]));
-			const row = el('div', { class: 'pose-joint-row' }, []);
-			for (const name of names) {
-				const btn = el('button', {
-					class: 'pose-joint-btn',
-					type: 'button',
-					'data-joint': name,
-				}, [JOINT_LABELS[name] || name]);
-				btn.addEventListener('click', () => selectJoint(name));
-				row.appendChild(btn);
-			}
-			jointPicker.appendChild(row);
+	// ── Bone list (searchable) ───────────────────────────────────────────────
+	function renderBoneList() {
+		if (!boneListHost) return;
+		const q = (boneSearch?.value || '').trim().toLowerCase();
+		boneListHost.innerHTML = '';
+		const bones = state.rig.getBones().filter(({ key, label }) =>
+			!q || key.toLowerCase().includes(q) || label.toLowerCase().includes(q));
+		if (!bones.length) {
+			boneListHost.appendChild(el('p', { class: 'pose-hint' }, ['No bones match your search.']));
+			return;
 		}
+		const row = el('div', { class: 'pose-joint-row' }, []);
+		for (const { key, label } of bones) {
+			const btn = el('button', {
+				class: 'pose-joint-btn',
+				type: 'button',
+				'data-bone': key,
+				'aria-pressed': String(state.selectedBone === key),
+			}, [label]);
+			btn.addEventListener('click', () => selectBone(key));
+			row.appendChild(btn);
+		}
+		boneListHost.appendChild(row);
 	}
+	boneSearch?.addEventListener('input', renderBoneList);
 
-	// ── Preset picker (right panel) ─────────────────────────────────────
+	// ── Preset picker ──────────────────────────────────────────────────────
 	const presetHost = $('#pose-presets-host');
 	if (presetHost) {
 		const grouped = getPresetsByGroup();
@@ -437,14 +621,11 @@ function boot() {
 			presetHost.appendChild(el('div', { class: 'pose-preset-group' }, [groupName]));
 			const wrap = el('div', { class: 'pose-preset-grid' }, []);
 			for (const preset of presets) {
-				const btn = el('button', {
-					class: 'pose-preset-btn',
-					type: 'button',
-					'data-preset': preset.id,
-				}, [preset.label]);
+				const btn = el('button', { class: 'pose-preset-btn', type: 'button', 'data-preset': preset.id }, [preset.label]);
 				btn.addEventListener('click', () => {
-					mannequin.applyPose(preset.pose);
-					selectJoint(state.selectedJoint); // re-render sliders
+					state.rig.applyPose(poseFromMannequinPreset(preset.pose));
+					if (state.poseMode === 'fk') attachGizmo();
+					renderControlsPanel();
 					setStatus(`Applied preset: ${preset.label}`);
 				});
 				wrap.appendChild(btn);
@@ -453,26 +634,133 @@ function boot() {
 		}
 	}
 
-	// ── Top toolbar wiring ──────────────────────────────────────────────
-	const modeButtons = document.querySelectorAll('[data-mode]');
-	modeButtons.forEach((btn) => {
+	// ── Avatar loading ───────────────────────────────────────────────────────
+	const gltfLoader = new GLTFLoader();
+	let decodersReady = null;
+	async function ensureDecoders() {
+		if (!decodersReady) {
+			decodersReady = getDecoders().then(({ dracoLoader, ktx2Loader, meshoptDecoder }) => {
+				gltfLoader
+					.setDRACOLoader(dracoLoader)
+					.setKTX2Loader(ktx2Loader.detectSupport(renderer))
+					.setMeshoptDecoder(meshoptDecoder);
+			});
+		}
+		return decodersReady;
+	}
+
+	async function loadAvatarFromUrl(modelUrl, meta = {}) {
+		if (!modelUrl) throw new Error('No model URL for this avatar.');
+		await ensureDecoders();
+		setStatus(`Loading ${meta.name || 'avatar'}…`);
+		state.loadingAvatar = true;
+		const gltf = await new Promise((resolve, reject) => {
+			gltfLoader.load(
+				modelUrl,
+				resolve,
+				(xhr) => {
+					if (xhr.total) {
+						const pct = Math.round((xhr.loaded / xhr.total) * 100);
+						setStatus(`Loading ${meta.name || 'avatar'}… ${pct}%`);
+					}
+				},
+				reject,
+			);
+		});
+		state.loadingAvatar = false;
+		const scn = gltf.scene || gltf.scenes?.[0];
+		const rig = scn && makeGltfRig(scn);
+		if (!rig) {
+			throw new Error('That model has no recognizable humanoid skeleton — pick a rigged avatar.');
+		}
+		mountRig(rig);
+		state.avatar = { id: meta.id || null, name: meta.name || 'Avatar', model_url: modelUrl };
+		frameObject(rig.root);
+		setMannequinControlsEnabled(false);
+		setStatus(`Loaded ${state.avatar.name}. Select a bone to pose, or switch to IK.`);
+	}
+
+	async function loadAvatarById(id) {
+		setStatus('Resolving avatar…');
+		const res = await fetch(`/api/avatars/${encodeURIComponent(id)}`, { credentials: 'include' });
+		if (!res.ok) throw new Error(`Couldn't load avatar (${res.status}). It may be private or removed.`);
+		const { avatar } = await res.json();
+		const url = avatar?.model_url || avatar?.url;
+		if (!url) throw new Error('That avatar has no downloadable model.');
+		await loadAvatarFromUrl(url, { id: avatar.id, name: avatar.name });
+	}
+
+	function switchToMannequin() {
+		gizmo.detach();
+		mountRig(mannequinRig);
+		state.avatar = null;
+		controls.target.set(0, 0.95, 0);
+		camera.position.set(2.2, 1.65, 3.0);
+		controls.update();
+		setMannequinControlsEnabled(true);
+		updateUrlAvatar(null);
+		setStatus('Switched to mannequin.');
+	}
+
+	function updateUrlAvatar(id) {
+		const url = new URL(window.location.href);
+		if (id) url.searchParams.set('avatar', id);
+		else url.searchParams.delete('avatar');
+		window.history.replaceState({}, '', url);
+	}
+
+	function setMannequinControlsEnabled(on) {
+		for (const sel of ['#pose-build', '#pose-skin', '#pose-constraints']) {
+			const node = $(sel);
+			if (node) {
+				node.disabled = !on;
+				node.closest('.pose-form-row')?.classList.toggle('pose-disabled', !on);
+			}
+		}
+	}
+
+	// Load avatar / mannequin toolbar buttons.
+	$('#pose-load-avatar')?.addEventListener('click', () => {
+		const signedIn = document.cookie.includes('session') || false;
+		const picker = new AvatarGalleryPicker({
+			source: signedIn ? 'both' : 'public',
+			title: 'Load an avatar to animate',
+			ctaLabel: 'Pose this avatar',
+			showModes: false,
+			onSelect: async (avatar) => {
+				picker.close();
+				try {
+					await loadAvatarFromUrl(avatar.model_url, { id: avatar.id, name: avatar.name });
+					updateUrlAvatar(avatar.id);
+				} catch (err) {
+					setStatus(err.message, 'error');
+				}
+			},
+		});
+		picker.openModal();
+	});
+	$('#pose-use-mannequin')?.addEventListener('click', switchToMannequin);
+
+	// ── Posing-mode toggle (FK / IK) ────────────────────────────────────────
+	document.querySelectorAll('[data-posemode]').forEach((btn) => {
 		btn.addEventListener('click', () => {
-			state.dragMode = btn.dataset.mode;
-			modeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+			if (btn.disabled) return;
+			state.poseMode = btn.dataset.posemode;
+			applyPoseMode();
+			renderControlsPanel();
 		});
 	});
-	const initialMode = document.querySelector(`[data-mode="${state.dragMode}"]`);
-	if (initialMode) initialMode.setAttribute('aria-pressed', 'true');
 
+	// ── Top toolbar ──────────────────────────────────────────────────────────
 	$('#pose-reset')?.addEventListener('click', () => {
-		mannequin.resetPose();
+		state.rig.resetPose();
+		if (state.poseMode === 'fk') attachGizmo();
+		else syncIKHandles();
 		setStatus('Pose reset.');
 		renderControlsPanel();
 	});
 
-	$('#pose-screenshot')?.addEventListener('click', async () => {
-		// Force one synchronous render so the WebGL backbuffer is fresh
-		// before we grab a data URL (preserveDrawingBuffer keeps it valid).
+	$('#pose-screenshot')?.addEventListener('click', () => {
 		renderer.render(scene, camera);
 		const url = canvas.toDataURL('image/png');
 		const a = document.createElement('a');
@@ -485,7 +773,7 @@ function boot() {
 	});
 
 	$('#pose-export-json')?.addEventListener('click', () => {
-		const pose = mannequin.getPose();
+		const pose = state.rig.getPose();
 		const blob = new Blob([JSON.stringify(pose, null, 2)], { type: 'application/json' });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
@@ -505,7 +793,8 @@ function boot() {
 		reader.onload = () => {
 			try {
 				const pose = JSON.parse(String(reader.result));
-				mannequin.applyPose(pose);
+				state.rig.applyPose(pose);
+				if (state.poseMode === 'fk') attachGizmo();
 				renderControlsPanel();
 				setStatus(`Imported pose from ${file.name}.`);
 			} catch (err) {
@@ -516,90 +805,80 @@ function boot() {
 		ev.target.value = '';
 	});
 
-	// ── Settings panel ──────────────────────────────────────────────────
+	// ── Settings panel (mannequin-only model controls) ───────────────────────
 	$('#pose-build')?.addEventListener('change', (ev) => {
-		mannequin.setBuild(ev.target.value);
+		if (state.rig.kind !== 'mannequin') return;
+		state.rig.setBuild(ev.target.value);
+		buildIKHandles();
+		applyPoseMode();
 	});
-
 	$('#pose-skin')?.addEventListener('input', (ev) => {
-		mannequin.setColor(ev.target.value);
+		if (state.rig.kind === 'mannequin') state.rig.setColor(ev.target.value);
 	});
-
-	$('#pose-bg')?.addEventListener('input', (ev) => {
-		scene.background = new Color(ev.target.value);
-	});
-
 	$('#pose-constraints')?.addEventListener('change', (ev) => {
-		mannequin.setConstraintsEnabled(ev.target.checked);
+		if (state.rig.kind !== 'mannequin') return;
+		state.rig.setConstraintsEnabled(ev.target.checked);
 		setStatus(ev.target.checked ? 'Biological constraints on.' : 'Constraints off — full rotation allowed.');
 	});
 
+	$('#pose-bg')?.addEventListener('input', (ev) => { scene.background = new Color(ev.target.value); });
 	$('#pose-fov')?.addEventListener('input', (ev) => {
 		camera.fov = parseFloat(ev.target.value);
 		camera.updateProjectionMatrix();
 	});
-
 	$('#pose-grid')?.addEventListener('change', (ev) => {
-		ctx.scene.traverse((o) => {
-			if (o.isGridHelper) o.visible = ev.target.checked;
-		});
+		scene.traverse((o) => { if (o.isGridHelper) o.visible = ev.target.checked; });
 	});
 
-	// Light direction — azimuth (around Y) and elevation. Distance fixed
-	// to the value set in state.keyDistance. Updating these moves the key
-	// light around the figure to change shadow direction.
 	function syncKeyLight() {
 		const r = state.keyDistance;
-		const az = state.keyAzimuth;
-		const el = state.keyElevation; // angle from horizon
-		const x = r * Math.cos(el) * Math.sin(az);
-		const z = r * Math.cos(el) * Math.cos(az);
-		const y = r * Math.sin(el);
+		const x = r * Math.cos(state.keyElevation) * Math.sin(state.keyAzimuth);
+		const z = r * Math.cos(state.keyElevation) * Math.cos(state.keyAzimuth);
+		const y = r * Math.sin(state.keyElevation);
 		state.keyLight.position.set(x, y, z);
 		state.keyLight.target.position.set(0, 0.9, 0);
 		state.keyLight.target.updateMatrixWorld();
 	}
 	syncKeyLight();
+	$('#pose-light-azimuth')?.addEventListener('input', (ev) => { state.keyAzimuth = (parseFloat(ev.target.value) / 180) * Math.PI; syncKeyLight(); });
+	$('#pose-light-elevation')?.addEventListener('input', (ev) => { state.keyElevation = (parseFloat(ev.target.value) / 180) * Math.PI; syncKeyLight(); });
+	$('#pose-light-intensity')?.addEventListener('input', (ev) => { state.keyLight.intensity = parseFloat(ev.target.value); });
 
-	$('#pose-light-azimuth')?.addEventListener('input', (ev) => {
-		state.keyAzimuth = (parseFloat(ev.target.value) / 180) * Math.PI;
-		syncKeyLight();
-	});
-	$('#pose-light-elevation')?.addEventListener('input', (ev) => {
-		state.keyElevation = (parseFloat(ev.target.value) / 180) * Math.PI;
-		syncKeyLight();
-	});
-	$('#pose-light-intensity')?.addEventListener('input', (ev) => {
-		state.keyLight.intensity = parseFloat(ev.target.value);
-	});
-
-	// ── Floor props ─────────────────────────────────────────────────────
+	// ── Floor props ────────────────────────────────────────────────────────
 	const propHost = $('#pose-prop-host');
 	if (propHost) {
 		for (const [id, def] of Object.entries(FLOOR_PROPS)) {
-			const btn = el('button', {
-				class: 'pose-prop-btn',
-				type: 'button',
-				'data-prop': id,
-				'aria-pressed': String(state.prop === id),
-			}, [def.label]);
+			const btn = el('button', { class: 'pose-prop-btn', type: 'button', 'data-prop': id, 'aria-pressed': String(state.prop === id) }, [def.label]);
 			btn.addEventListener('click', () => {
 				state.prop = id;
 				propLayer.clear();
-				if (def.build) {
-					const g = def.build();
-					propLayer.add(g);
-					state.propGroup = g;
-				}
-				document.querySelectorAll('[data-prop]').forEach((b) => {
-					b.setAttribute('aria-pressed', String(b.dataset.prop === id));
-				});
+				if (def.build) { const g = def.build(); propLayer.add(g); state.propGroup = g; }
+				document.querySelectorAll('[data-prop]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.prop === id)));
 			});
 			propHost.appendChild(btn);
 		}
 	}
 
-	setStatus('Ready. Click a body part to pose.');
+	// ── Keyboard shortcuts ───────────────────────────────────────────────────
+	window.addEventListener('keydown', (ev) => {
+		if (ev.target.matches('input, textarea, select')) return;
+		const k = ev.key.toLowerCase();
+		if (k === 'f') { state.poseMode = 'fk'; applyPoseMode(); renderControlsPanel(); }
+		else if (k === 'i') { const b = document.querySelector('[data-posemode="ik"]'); if (b && !b.disabled) { state.poseMode = 'ik'; applyPoseMode(); renderControlsPanel(); } }
+		else if (k === 'r' && state.selectedBone) { state.rig.setBoneEuler(state.selectedBone, { x: 0, y: 0, z: 0 }); renderControlsPanel(); }
+		else if (k === 'escape') { state.selectedBone = null; gizmo.detach(); renderControlsPanel(); renderBoneList(); updateSelectionLabel(); }
+	});
+
+	// ── Boot: honor ?avatar= ─────────────────────────────────────────────────
+	const requestedAvatar = new URL(window.location.href).searchParams.get('avatar');
+	if (requestedAvatar) {
+		loadAvatarById(requestedAvatar).catch((err) => {
+			setStatus(`${err.message} Showing the mannequin instead.`, 'error');
+			switchToMannequin();
+		});
+	} else {
+		setStatus('Ready. Click a body part to pose, or load an avatar.');
+	}
 }
 
 document.addEventListener('DOMContentLoaded', boot);

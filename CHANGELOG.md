@@ -6,6 +6,7 @@ Public feature history for [three.ws](https://three.ws), newest first. Feature d
 
 ## 2026-05-29
 
+- **$THREE Live · Protocol Pulse** (`/three-live`) — The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.
 - **Forever — etch a message into Bitcoin** (`/forever`) — Inscribe a message onto the Bitcoin blockchain. It stays there. Forever.
 - **Pay-As-You-Learn Tutor** (`/tutor`) — Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.
 - **x402 Arbitrage** (`/arbitrage`) — Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability.

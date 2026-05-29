@@ -1,7 +1,0 @@
-{
-  "name": "three-ws-pump-snapshot",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "description": "Zero-dependency Lambda: real-time pump.fun / Solana token snapshot API + demo page"
-}

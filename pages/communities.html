@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Coin Communities · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta name="description" content="Pick a coin, drop in an avatar, and walk around its world with everyone else holding it. Each coin is its own live 3D community on three.ws." />
+		<meta name="theme-color" content="#0b0b12" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Coin Communities · three.ws" />
+		<meta property="og:description" content="Each coin is its own live 3D world. Drop in your avatar and hang out with the community." />
+		<meta property="og:url" content="https://three.ws/communities" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<style>
+			* { margin: 0; padding: 0; box-sizing: border-box; }
+			:root {
+				--bg: #0b0b12;
+				--panel: rgba(255,255,255,0.04);
+				--panel-border: rgba(255,255,255,0.09);
+				--text: #f4f4f8;
+				--muted: rgba(244,244,248,0.55);
+				--muted-2: rgba(244,244,248,0.38);
+				--accent: #7c5cff;
+				--accent-soft: rgba(124,92,255,0.16);
+				--radius: 16px;
+			}
+			html, body { background: var(--bg); color: var(--text); }
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+				-webkit-font-smoothing: antialiased;
+				min-height: 100vh;
+				background:
+					radial-gradient(1200px 600px at 80% -10%, rgba(124,92,255,0.18), transparent 60%),
+					radial-gradient(900px 500px at 0% 10%, rgba(52,211,153,0.10), transparent 55%),
+					var(--bg);
+				padding: 0 0 80px;
+			}
+			a { color: inherit; }
+
+			/* Top bar */
+			.topbar {
+				display: flex; align-items: center; justify-content: space-between;
+				padding: 18px clamp(16px, 4vw, 40px);
+				position: sticky; top: 0; z-index: 5;
+				backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+				background: linear-gradient(180deg, rgba(11,11,18,0.85), rgba(11,11,18,0));
+			}
+			.brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -0.4px; font-size: 16px; text-decoration: none; }
+			.brand .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 16px var(--accent); }
+			.topbar nav { display: flex; gap: 6px; }
+			.topbar nav a {
+				font-size: 13px; color: var(--muted); text-decoration: none;
+				padding: 7px 13px; border-radius: 999px; transition: background .15s, color .15s;
+			}
+			.topbar nav a:hover { color: var(--text); background: var(--panel); }
+
+			/* Hero */
+			.hero { padding: clamp(20px, 5vw, 48px) clamp(16px, 4vw, 40px) 8px; max-width: 1180px; margin: 0 auto; }
+			.hero h1 {
+				font-size: clamp(30px, 5.5vw, 52px); line-height: 1.02; letter-spacing: -1.4px; font-weight: 760;
+				background: linear-gradient(180deg, #fff, rgba(255,255,255,0.72));
+				-webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+			}
+			.hero p { margin-top: 14px; font-size: clamp(15px, 2vw, 18px); color: var(--muted); max-width: 620px; }
+			.hero .steps { margin-top: 14px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--muted-2); }
+			.hero .steps b { color: var(--accent); font-weight: 700; }
+
+			/* Layout */
+			.wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px); }
+			.section { margin-top: 30px; }
+			.section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+			.section-head h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+			.section-head .hint { font-size: 12px; color: var(--muted-2); }
+
+			.panel { background: var(--panel); border: 1px solid var(--panel-border); border-radius: var(--radius); padding: 18px; }
+
+			/* Identity */
+			.identity { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 18px; align-items: start; }
+			@media (max-width: 680px) { .identity { grid-template-columns: 1fr; } }
+			.field-label { font-size: 12px; color: var(--muted); margin-bottom: 7px; display: block; }
+			.name-field input, .url-field input {
+				width: 100%; padding: 11px 13px; border-radius: 11px;
+				background: rgba(0,0,0,0.28); border: 1px solid var(--panel-border); color: var(--text);
+				font: inherit; font-size: 14px; transition: border-color .15s, box-shadow .15s;
+			}
+			.name-field input:focus, .url-field input:focus {
+				outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+			}
+			.url-field input.is-error { border-color: #f87171; }
+			.url-field { margin-top: 14px; }
+
+			.avatar-row { display: flex; gap: 10px; flex-wrap: wrap; }
+			.avatar-chip {
+				display: flex; flex-direction: column; align-items: center; gap: 6px;
+				width: 78px; padding: 10px 6px; border-radius: 13px; cursor: pointer;
+				background: rgba(0,0,0,0.22); border: 1px solid var(--panel-border); color: var(--text);
+				font: inherit; text-decoration: none; transition: border-color .15s, background .15s, transform .12s;
+			}
+			.avatar-chip:hover { transform: translateY(-2px); background: rgba(255,255,255,0.06); }
+			.avatar-chip.is-selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }
+			.avatar-thumb {
+				width: 48px; height: 48px; border-radius: 50%; overflow: hidden;
+				display: flex; align-items: center; justify-content: center;
+				background: linear-gradient(135deg, rgba(124,92,255,0.4), rgba(0,0,0,0.4));
+			}
+			.avatar-thumb img { width: 100%; height: 100%; object-fit: cover; }
+			.avatar-glyph { font-size: 22px; opacity: 0.85; }
+			.avatar-name { font-size: 11px; color: var(--muted); max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.avatar-create { border-style: dashed; }
+
+			/* Coins */
+			.coin-toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+			.coin-search-wrap { position: relative; flex: 1; min-width: 220px; }
+			.coin-search-wrap svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); opacity: 0.4; }
+			#coin-search {
+				width: 100%; padding: 12px 14px 12px 40px; border-radius: 12px;
+				background: rgba(0,0,0,0.28); border: 1px solid var(--panel-border); color: var(--text);
+				font: inherit; font-size: 14px; transition: border-color .15s, box-shadow .15s;
+			}
+			#coin-search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+			.coin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+
+			.coin-card {
+				display: flex; flex-direction: column; gap: 10px; padding: 14px;
+				border-radius: 14px; cursor: pointer; text-align: left;
+				background: var(--panel); border: 1px solid var(--panel-border); color: var(--text);
+				font: inherit; position: relative; overflow: hidden;
+				transition: border-color .15s, transform .12s, box-shadow .15s;
+			}
+			.coin-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+			.coin-card:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+			.coin-thumb {
+				width: 46px; height: 46px; border-radius: 50%; position: relative; overflow: hidden;
+				background: linear-gradient(135deg, rgba(124,92,255,0.45), rgba(0,0,0,0.45));
+				display: flex; align-items: center; justify-content: center;
+			}
+			.coin-thumb img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
+			.coin-thumb-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; z-index: 0; }
+			.coin-thumb.no-img img { display: none; }
+			.coin-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+			.coin-symbol { font-weight: 700; font-size: 15px; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+			.coin-name { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+			.coin-mcap { font-size: 12px; color: #34d399; font-weight: 600; font-variant-numeric: tabular-nums; }
+			.coin-enter {
+				font-size: 12px; font-weight: 600; color: var(--accent);
+				opacity: 0; transform: translateX(-4px); transition: opacity .15s, transform .15s; margin-top: auto;
+			}
+			.coin-card:hover .coin-enter { opacity: 1; transform: translateX(0); }
+
+			/* Mainland card */
+			.mainland-card {
+				display: flex; align-items: center; gap: 14px; padding: 16px 18px; width: 100%;
+				border-radius: 14px; cursor: pointer; text-align: left; margin-bottom: 16px;
+				background: linear-gradient(110deg, var(--accent-soft), rgba(255,255,255,0.03));
+				border: 1px solid var(--panel-border); color: var(--text); font: inherit;
+				transition: border-color .15s, transform .12s;
+			}
+			.mainland-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+			.mainland-card .ml-icon { font-size: 26px; }
+			.mainland-card .ml-text b { display: block; font-size: 15px; }
+			.mainland-card .ml-text span { font-size: 12px; color: var(--muted); }
+			.mainland-card .ml-go { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--accent); }
+
+			/* Mint row */
+			.mint-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+			#mint-input {
+				flex: 1; min-width: 240px; padding: 11px 13px; border-radius: 11px;
+				background: rgba(0,0,0,0.28); border: 1px solid var(--panel-border); color: var(--text);
+				font: inherit; font-size: 13px; font-family: ui-monospace, monospace; transition: border-color .15s, box-shadow .15s;
+			}
+			#mint-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+			#mint-input.is-error { border-color: #f87171; }
+			.mint-error { color: #f87171; font-size: 12px; min-height: 16px; margin-top: 6px; }
+
+			.primary-btn {
+				padding: 11px 20px; border-radius: 11px; border: none; cursor: pointer;
+				background: var(--accent); color: #fff; font: inherit; font-weight: 600; font-size: 14px;
+				transition: filter .15s, transform .12s;
+			}
+			.primary-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+			.ghost-btn {
+				padding: 9px 16px; border-radius: 10px; cursor: pointer; font: inherit; font-size: 13px;
+				background: var(--panel); border: 1px solid var(--panel-border); color: var(--text); transition: border-color .15s;
+			}
+			.ghost-btn:hover { border-color: var(--accent); }
+
+			/* States */
+			.coin-empty { grid-column: 1/-1; padding: 36px 20px; text-align: center; color: var(--muted); }
+			.coin-empty p { margin: 0 0 10px; }
+			.coin-empty-sub { font-size: 12px; color: var(--muted-2); margin-top: 12px; }
+			.coin-card.is-skeleton { pointer-events: none; }
+			.coin-card.is-skeleton .coin-thumb { animation: pulse 1.3s ease-in-out infinite; }
+			.coin-card .sk { height: 10px; border-radius: 5px; background: rgba(255,255,255,0.08); animation: pulse 1.3s ease-in-out infinite; }
+			.coin-card .sk-a { width: 60%; } .coin-card .sk-b { width: 85%; }
+			@keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.85; } }
+		</style>
+	</head>
+	<body>
+		<header class="topbar">
+			<a class="brand" href="/"><span class="dot"></span>three.ws</a>
+			<nav>
+				<a href="/walk">Mainland</a>
+				<a href="/create">Create avatar</a>
+			</nav>
+		</header>
+
+		<section class="hero">
+			<h1>Every coin, its own world.</h1>
+			<p>Drop in an avatar and walk around with everyone else who holds the same coin — live, in 3D, right in your browser.</p>
+			<div class="steps"><span><b>1.</b> Pick your avatar</span><span><b>2.</b> Choose a coin</span><span><b>3.</b> You're in.</span></div>
+		</section>
+
+		<main class="wrap">
+			<section class="section">
+				<div class="section-head"><h2>Your identity</h2><span class="hint">Used in the world. Default works instantly.</span></div>
+				<div class="panel identity">
+					<div>
+						<div class="name-field">
+							<label class="field-label" for="name-input">Display name</label>
+							<input id="name-input" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="your name" />
+						</div>
+						<div class="url-field">
+							<label class="field-label" for="avatar-url-input">…or paste a GLB / Ready Player Me URL</label>
+							<input id="avatar-url-input" type="url" autocomplete="off" spellcheck="false" placeholder="https://…/model.glb" />
+						</div>
+					</div>
+					<div>
+						<label class="field-label">Avatar</label>
+						<div id="avatar-row" class="avatar-row"></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="section">
+				<div class="section-head"><h2>Choose a community</h2><span class="hint">Live from pump.fun · sorted by market cap</span></div>
+
+				<button type="button" id="enter-mainland" class="mainland-card">
+					<span class="ml-icon">🌐</span>
+					<span class="ml-text"><b>Mainland</b><span>The shared world — everyone, no coin required</span></span>
+					<span class="ml-go">Enter →</span>
+				</button>
+
+				<div class="coin-toolbar">
+					<div class="coin-search-wrap">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+						<input id="coin-search" type="search" autocomplete="off" placeholder="Search coins by name or ticker…" />
+					</div>
+				</div>
+
+				<div id="coin-grid" class="coin-grid"></div>
+
+				<div class="mint-row">
+					<input id="mint-input" type="text" autocomplete="off" spellcheck="false" placeholder="Or paste any Solana mint address to enter its world" />
+					<button type="button" id="mint-enter" class="primary-btn">Enter world</button>
+				</div>
+				<div id="mint-error" class="mint-error" role="alert"></div>
+			</section>
+		</main>
+
+		<script type="module" src="/src/communities.js"></script>
+	</body>
+</html>

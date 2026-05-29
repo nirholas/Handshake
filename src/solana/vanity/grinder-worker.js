@@ -13,7 +13,6 @@
  */
 
 import init, { grind } from './wasm/vanity_grinder.js';
-import wasmUrl from './wasm/vanity_grinder_bg.wasm?url';
 
 // Keep batches small enough that one WASM call returns within ~200 ms even
 // on slow CPUs — abort latency is bounded by one batch.
@@ -25,7 +24,13 @@ let wasmReady = null;
 
 function ensureWasm() {
 	if (!wasmReady) {
-		wasmReady = init({ module_or_path: wasmUrl });
+		// No explicit path: the wasm-bindgen glue resolves the binary via
+		// `new URL('vanity_grinder_bg.wasm', import.meta.url)`, the asset
+		// pattern Vite rewrites in both dev and build. Importing the `.wasm`
+		// with `?url` does NOT work here — Vite's built-in wasm handling
+		// serves it as `application/wasm`, so a module worker rejects it on
+		// the strict MIME check instead of instantiating it.
+		wasmReady = init();
 	}
 	return wasmReady;
 }

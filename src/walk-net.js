@@ -45,10 +45,24 @@ export class WalkNet {
 	 * @param {object} opts
 	 * @param {string} [opts.name] Display name (1–24 chars after server clean)
 	 * @param {string} [opts.url] Override server URL (otherwise resolved from meta)
+	 * @param {string} [opts.avatar] Loadable GLB URL for this player's avatar / 3D agent
+	 * @param {string} [opts.agent] three.ws agent id this player embodies (cross-links)
+	 * @param {string} [opts.coin] Coin mint — joins that coin's community world ('' = mainland)
+	 * @param {string} [opts.coinName] Coin display name (seeds room identity on create)
+	 * @param {string} [opts.coinSymbol] Coin ticker
+	 * @param {string} [opts.coinImage] Coin image URL
 	 */
 	constructor(opts = {}) {
 		this.name = opts.name || 'guest';
 		this.url = opts.url || defaultServerUrl();
+		this.avatar = opts.avatar || '';
+		this.agent = opts.agent || '';
+		// Coin community this client is entering. `coin` (the mint) doubles as the
+		// matchmaking key so everyone in the same coin lands in one room instance.
+		this.coin = opts.coin || '';
+		this.coinName = opts.coinName || '';
+		this.coinSymbol = opts.coinSymbol || '';
+		this.coinImage = opts.coinImage || '';
 		this.client = null;
 		this.room = null;
 		this.status = 'idle'; // 'idle' | 'connecting' | 'online' | 'offline' | 'failed'
@@ -59,6 +73,7 @@ export class WalkNet {
 			add: new Set(),     // (player, sessionId)
 			remove: new Set(),  // (sessionId)
 			change: new Set(),  // (player, sessionId)
+			chat: new Set(),    // ({ id, name, text, ts })
 		};
 		this._lastSent = null; // { x, y, z, yaw, motion } we last broadcast
 		this._lastSentAt = 0;
@@ -90,7 +105,19 @@ export class WalkNet {
 		this._setStatus('connecting');
 		try {
 			this.client = new Client(this.url);
-			this.room = await this.client.joinOrCreate(ROOM_NAME, { name: this.name });
+			// `token` is the server's filterBy key (matchmaking): clients with the
+			// same coin mint join one room instance. `coin`/`coinName`/… seed that
+			// room's identity the first time it's created. Empty coin → mainland.
+			this.room = await this.client.joinOrCreate(ROOM_NAME, {
+				name: this.name,
+				avatar: this.avatar,
+				agent: this.agent,
+				token: this.coin,
+				coin: this.coin,
+				coinName: this.coinName,
+				coinSymbol: this.coinSymbol,
+				coinImage: this.coinImage,
+			});
 			this.mySessionId = this.room.sessionId;
 
 			// Colyseus 0.16 moved schema callbacks behind getStateCallbacks(room)
@@ -104,6 +131,11 @@ export class WalkNet {
 			$(this.room.state).players.onRemove((_player, sessionId) => {
 				this._emit('remove', sessionId);
 			});
+
+			// Chat is broadcast (not schema state) so it arrives as a room message.
+			// We relay it through our own event API; walk.js renders the bubble +
+			// log line and routes it to the right remote player.
+			this.room.onMessage('chat', (msg) => this._emit('chat', msg));
 
 			this.room.onLeave((code) => {
 				this._setStatus('offline');
@@ -175,6 +207,18 @@ export class WalkNet {
 
 	sendEmote(name) {
 		this.room?.send('emote', { name });
+	}
+
+	sendChat(text) {
+		const t = String(text || '').trim().slice(0, 200);
+		if (t) this.room?.send('chat', { text: t });
+	}
+
+	/** Swap this player's avatar mid-session (after picking a new one). */
+	sendAvatar(avatar, agent) {
+		this.avatar = avatar || this.avatar;
+		if (agent != null) this.agent = agent;
+		this.room?.send('avatar', { avatar: this.avatar, agent: this.agent });
 	}
 
 	/** Force a reconnect (e.g. after the user clicks the offline pill). */

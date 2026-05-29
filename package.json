@@ -115,6 +115,7 @@
 		"@aws-sdk/s3-request-presigner": "^3.1030.0",
 		"@bonfida/spl-name-service": "0.1.67",
 		"@chenglou/pretext": "^0.0.7",
+		"@coin-communities/sdk": "^1.0.2",
 		"@coinbase/x402": "^2.1.0",
 		"@coral-xyz/anchor": "^0.32.1",
 		"@dimforge/rapier3d-compat": "^0.19.3",

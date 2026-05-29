@@ -148,7 +148,7 @@ async function boot() {
 		}
 		if (!requireAuthForSelfie()) return;
 		if (await isAtAvatarLimit()) return;
-		window.location.href = '/create/selfie';
+		window.location.href = '/scan';
 	});
 	wireCard('card-video-avatar', () => {
 		if (!_videoAvatarReady) {

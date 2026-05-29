@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+	<title>3D Scanner · Scan yourself into 3D · three.ws</title>
+	<link rel="icon" href="/favicon.ico" />
+	<meta name="description" content="Point your camera, hold still, and walk away with a rigged 3D model of yourself — in about a minute. Free, in your browser." />
+	<meta name="robots" content="index, follow" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:url" content="https://three.ws/scan" />
+	<meta property="og:title" content="3D Scanner · Scan yourself into 3D" />
+	<meta property="og:description" content="Point your camera, hold still, walk away with a rigged 3D model of yourself. Free, in your browser." />
+	<meta property="og:image" content="https://three.ws/assets/og-image.png" />
+	<meta name="twitter:card" content="summary_large_image" />
+
+	<style>
+		:root {
+			color-scheme: dark;
+			--bg: #000000;
+			--panel: #0a0a0a;
+			--panel-elev: #111111;
+			--border: #1a1a1a;
+			--border-strong: #2a2a2a;
+			--text: #e8e8e8;
+			--muted: #888888;
+			--accent: #ffffff;
+			--accent-ink: #000000;
+			--scan: #6ee7ff;
+			--scan-dim: rgba(110, 231, 255, 0.12);
+			--danger: #f87171;
+			--danger-dim: #4a1a1a;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; }
+		body {
+			font: 15px/1.55 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			color: var(--text);
+			background: var(--bg);
+			min-height: 100vh;
+			overflow-x: hidden;
+		}
+		body::before {
+			content: '';
+			position: fixed;
+			inset: 0;
+			z-index: -1;
+			pointer-events: none;
+			background:
+				radial-gradient(800px 500px at 50% -80px, rgba(110, 231, 255, 0.06) 0, transparent 70%),
+				radial-gradient(600px 400px at 50% 110%, rgba(110, 231, 255, 0.05) 0, transparent 70%),
+				#000000;
+		}
+		main.stage { max-width: 720px; margin: 0 auto; padding: 28px 20px 96px; }
+		.topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+		.topbar button.back {
+			background: var(--panel); border: 1px solid var(--border); color: var(--text);
+			width: 36px; height: 36px; border-radius: 9px; font: inherit; cursor: pointer;
+			display: inline-flex; align-items: center; justify-content: center;
+		}
+		.topbar button.back:hover { border-color: var(--border-strong); }
+		.topbar .label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+		.topbar .label strong { color: var(--text); font-weight: 600; }
+		.topbar .badge {
+			margin-left: auto; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em;
+			text-transform: uppercase; color: var(--scan); border: 1px solid var(--scan-dim);
+			background: var(--scan-dim); border-radius: 999px; padding: 4px 10px;
+		}
+		h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.02em; }
+		h1 .hl { color: var(--scan); }
+		.sub { color: var(--muted); margin: 0 0 24px; line-height: 1.55; }
+
+		.step { display: none; opacity: 0; }
+		.step.active { display: block; animation: step-in 400ms ease forwards; }
+		@keyframes step-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+		.unsupported {
+			display: none; padding: 12px 14px; background: rgba(239, 77, 77, 0.08);
+			border: 1px solid var(--danger-dim); border-radius: 9px; color: #f4b5b5;
+			font-size: 13.5px; margin: 0 0 20px;
+		}
+		.unsupported.show { display: block; }
+
+		/* ── Scanner hero ─────────────────────────────────────────────────── */
+		.hero-slot-wrap { margin: 8px 0 18px; }
+		.hero-slot {
+			aspect-ratio: 3 / 4; max-width: 380px; margin: 0 auto;
+			background:
+				linear-gradient(rgba(110,231,255,0.04), rgba(110,231,255,0.04)),
+				var(--panel);
+			border: 1.5px dashed var(--border-strong); border-radius: 18px;
+			position: relative; overflow: hidden; cursor: pointer;
+			display: flex; flex-direction: column; align-items: center; justify-content: center;
+			gap: 10px; color: var(--muted); transition: border-color 120ms, background 120ms;
+		}
+		.hero-slot::before {
+			content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+			background-image:
+				linear-gradient(var(--scan-dim) 1px, transparent 1px),
+				linear-gradient(90deg, var(--scan-dim) 1px, transparent 1px);
+			background-size: 28px 28px; mask-image: radial-gradient(circle at 50% 45%, #000 0, transparent 72%);
+			-webkit-mask-image: radial-gradient(circle at 50% 45%, #000 0, transparent 72%);
+		}
+		.hero-slot:hover, .hero-slot:focus-visible { border-color: var(--scan); color: var(--text); outline: none; }
+		.hero-slot.drag { border-color: var(--scan); background: rgba(110,231,255,0.06); cursor: copy; }
+		.hero-slot.filled { border-style: solid; border-color: var(--border); padding: 0; cursor: default; }
+		.hero-slot.error { border-color: var(--danger); }
+		.hero-slot .hero-icon {
+			width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
+			border: 1.5px solid var(--scan); color: var(--scan); position: relative; z-index: 1;
+			box-shadow: 0 0 0 6px var(--scan-dim);
+		}
+		.hero-slot .hero-title { font-size: 16px; color: var(--text); font-weight: 600; position: relative; z-index: 1; }
+		.hero-slot .hero-sub { font-size: 13px; color: var(--muted); max-width: 260px; text-align: center; line-height: 1.45; position: relative; z-index: 1; }
+		.hero-slot img.preview { width: 100%; height: 100%; object-fit: cover; display: block; }
+		.hero-slot .retake-btn {
+			position: absolute; top: 12px; right: 12px; background: rgba(0, 0, 0, 0.65);
+			backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+			border: 1px solid rgba(255, 255, 255, 0.15); color: var(--text); border-radius: 9px;
+			padding: 8px 12px; font: 600 12px/1 inherit; cursor: pointer;
+			display: inline-flex; align-items: center; gap: 6px; transition: background 120ms; z-index: 2;
+		}
+		.hero-slot .retake-btn:hover { background: rgba(0, 0, 0, 0.85); }
+		.hero-actions { display: flex; justify-content: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+		.hero-pill {
+			background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+			border-radius: 999px; padding: 8px 16px; font: 500 12.5px/1 inherit; cursor: pointer;
+			transition: color 120ms, border-color 120ms; display: inline-flex; align-items: center; gap: 7px;
+		}
+		.hero-pill:hover { color: var(--text); border-color: var(--border-strong); }
+		.hero-pill[data-action="open-camera"] { border-color: var(--scan-dim); color: var(--scan); }
+		.hero-pill[data-action="open-camera"]:hover { border-color: var(--scan); }
+		.hero-pill[hidden] { display: none; }
+		.hero-pill svg { display: block; }
+
+		.fidelity { margin: 0 0 22px; border: 1px solid var(--border); background: var(--panel); border-radius: 12px; overflow: hidden; }
+		.fidelity summary {
+			list-style: none; padding: 14px 16px; cursor: pointer; display: flex;
+			align-items: center; justify-content: space-between; gap: 12px; color: var(--text);
+		}
+		.fidelity summary::-webkit-details-marker { display: none; }
+		.fidelity .fid-label { font-size: 14px; font-weight: 600; }
+		.fidelity .fid-note { color: var(--muted); font-size: 12.5px; font-weight: 400; }
+		.fidelity .fid-chev { color: var(--muted); transition: transform 200ms; }
+		.fidelity[open] .fid-chev { transform: rotate(180deg); }
+		.fidelity .fid-body { padding: 4px 16px 18px; }
+		.slots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+		.slot-frame {
+			aspect-ratio: 3 / 4; background: var(--panel-elev); border: 1.5px dashed var(--border-strong);
+			border-radius: 11px; position: relative; overflow: hidden; cursor: pointer;
+			display: flex; flex-direction: column; align-items: center; justify-content: center;
+			gap: 6px; color: var(--muted); transition: border-color 120ms, background 120ms;
+		}
+		.slot-frame:hover, .slot-frame:focus-visible { border-color: var(--scan); color: var(--text); outline: none; }
+		.slot-frame.drag { border-color: var(--scan); background: rgba(110,231,255,0.06); cursor: copy; }
+		.slot-frame.filled { border-style: solid; border-color: var(--border); padding: 0; }
+		.slot-frame.error { border-color: var(--danger); }
+		.slot-frame .slot-label { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+		.slot-frame .slot-hint { font-size: 13px; color: var(--text); font-weight: 500; }
+		.slot-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+		.slot-frame .retake-btn {
+			position: absolute; top: 8px; right: 8px; background: rgba(0, 0, 0, 0.7);
+			border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text); border-radius: 7px;
+			padding: 4px 9px; font: 600 11px/1 inherit; cursor: pointer;
+		}
+
+		.opts { margin: 0 0 22px; display: flex; flex-direction: column; gap: 18px; }
+		.opt-group .opt-label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+		.toggle { display: inline-flex; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 3px; gap: 2px; }
+		.toggle button { background: transparent; border: none; color: var(--muted); font: 600 13px/1 inherit; padding: 8px 14px; border-radius: 7px; cursor: pointer; }
+		.toggle button[aria-pressed="true"] { background: var(--panel-elev); color: var(--text); }
+		.toggle button:hover { color: var(--text); }
+		.style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+		.style-card {
+			background: var(--panel); border: 1.5px solid var(--border); border-radius: 11px; padding: 12px;
+			cursor: pointer; text-align: left; color: var(--text); font: inherit; display: flex; gap: 12px;
+			align-items: center; transition: border-color 120ms, transform 120ms;
+		}
+		.style-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+		.style-card[aria-pressed="true"] { border-color: var(--scan); background: rgba(110,231,255,0.05); }
+		.style-swatch { width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0; background-size: cover; background-position: center; border: 1px solid var(--border); }
+		.style-swatch.photoreal { background: radial-gradient(circle at 35% 30%, #f6c79b 0%, #c98c61 45%, #4a2e1d 95%); }
+		.style-swatch.stylized { background: radial-gradient(circle at 35% 30%, #ffd5e8 0%, #c4a3ff 45%, #5a3aa3 95%); }
+		.style-card .style-title { font-size: 14px; font-weight: 600; line-height: 1.2; margin: 0 0 2px; }
+		.style-card .style-desc { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+		.steps-strip { display: flex; gap: 8px; margin: 0 0 22px; flex-wrap: wrap; }
+		.steps-strip .chip {
+			font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px;
+			padding: 6px 12px; display: inline-flex; align-items: center; gap: 7px; background: var(--panel);
+		}
+		.steps-strip .chip b { color: var(--scan); font-weight: 700; }
+
+		/* ── Building ─────────────────────────────────────────────────────── */
+		.build-progress { display: flex; flex-direction: column; gap: 0; margin: 0 0 28px; }
+		.build-step { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; position: relative; transition: opacity 200ms; }
+		.build-step:not(:last-child)::after { content: ''; position: absolute; left: 9px; top: 30px; bottom: -10px; width: 2px; background: var(--border); }
+		.build-step.completed::after { background: rgba(110, 231, 255, 0.4); }
+		.bstep-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-strong); background: var(--panel); flex-shrink: 0; margin-top: 1px; position: relative; z-index: 1; }
+		.build-step.completed .bstep-dot { background: var(--scan); border-color: var(--scan); }
+		.build-step.completed .bstep-dot::after { content: ''; display: block; width: 5px; height: 9px; border: 2px solid var(--accent-ink); border-top: none; border-left: none; transform: rotate(45deg) translate(-1px, -1px); position: absolute; top: 2px; left: 5px; }
+		.build-step.active .bstep-dot { border-color: var(--scan); animation: bstep-pulse 1.4s ease-in-out infinite; }
+		@keyframes bstep-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(110, 231, 255, 0.4); } 50% { box-shadow: 0 0 0 6px rgba(110, 231, 255, 0); } }
+		.bstep-label { font-size: 14px; color: var(--muted); line-height: 1.4; padding-top: 1px; }
+		.build-step.active .bstep-label { color: var(--text); font-weight: 500; }
+		.build-step.completed { opacity: 0.65; }
+		.build-step.failed .bstep-dot { background: var(--danger); border-color: var(--danger); animation: none; }
+		.build-step.failed .bstep-dot::after { content: '×'; display: block; color: #fff; font: 700 14px/1 sans-serif; text-align: center; position: absolute; top: -1px; left: 2px; }
+		.build-step.failed .bstep-label { color: var(--danger); font-weight: 500; }
+		.build-step.failed::after { background: var(--danger-dim); }
+
+		.build-viewer { position: relative; width: 100%; max-width: 320px; margin: 0 auto 24px; aspect-ratio: 3 / 4; border-radius: 16px; overflow: hidden; background: var(--panel); border: 1px solid var(--border); }
+		.build-viewer model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
+		.build-preview { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 2px solid var(--scan); box-shadow: 0 8px 24px -4px rgba(0,0,0,0.6), 0 0 0 4px rgba(110,231,255,0.18); background: var(--panel); opacity: 0; transition: opacity 320ms ease; animation: preview-breathe 2.4s ease-in-out infinite; }
+		.build-preview.show { opacity: 1; }
+		@keyframes preview-breathe { 0%, 100% { box-shadow: 0 8px 24px -4px rgba(0,0,0,0.6), 0 0 0 4px rgba(110,231,255,0.18); } 50% { box-shadow: 0 8px 24px -4px rgba(0,0,0,0.6), 0 0 0 9px rgba(110,231,255,0.08); } }
+		.build-veil { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 18px; background: linear-gradient(to bottom, rgba(5,6,10,0.05), rgba(5,6,10,0.45) 65%); pointer-events: none; }
+		.build-ring { width: 36px; height: 36px; border-radius: 50%; border: 2.5px solid rgba(110, 231, 255, 0.15); border-top-color: var(--scan); animation: build-spin 1s linear infinite; }
+		@keyframes build-spin { to { transform: rotate(360deg); } }
+		.build-error { display: none; padding: 12px 14px; background: rgba(239, 77, 77, 0.08); border: 1px solid var(--danger-dim); border-radius: 9px; color: #f4b5b5; font-size: 13.5px; margin: 0 0 16px; }
+		.build-error.show { display: block; }
+		.build-retry { width: 100%; max-width: 320px; margin: 0 auto; display: none; padding: 12px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font: 600 14px/1 inherit; cursor: pointer; text-align: center; }
+		.build-retry.show { display: block; }
+		.build-retry:hover { border-color: var(--border-strong); }
+
+		/* ── Done ─────────────────────────────────────────────────────────── */
+		[data-step="done"] h1 { text-align: center; }
+		[data-step="done"] .sub { text-align: center; }
+		.done-viewer { position: relative; width: 100%; max-width: 340px; margin: 0 auto 22px; aspect-ratio: 3 / 4; border-radius: 16px; overflow: hidden; background: var(--panel); border: 1px solid var(--border); }
+		.done-viewer::after { content: ''; position: absolute; inset: -2px; border-radius: 18px; background: conic-gradient(from 0deg, var(--scan), rgba(136, 136, 136, 0.3), var(--scan), rgba(136, 136, 136, 0.3)); z-index: -1; animation: done-glow 6s linear infinite; opacity: 0.45; }
+		@keyframes done-glow { to { transform: rotate(360deg); } }
+		.done-viewer model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
+		.name-row { margin: 0 0 18px; }
+		.name-input { width: 100%; padding: 12px 14px; background: var(--panel); border: 1px solid var(--border-strong); border-radius: 10px; color: var(--text); font: 15px/1 inherit; outline: none; transition: border-color 120ms; }
+		.name-input:focus { border-color: var(--scan); }
+		.name-input::placeholder { color: var(--muted); }
+
+		.export-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 14px; }
+		.export-btn {
+			padding: 12px 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+			color: var(--text); font: 600 13px/1.2 inherit; cursor: pointer; transition: border-color 120ms, color 120ms;
+			display: flex; flex-direction: column; align-items: center; gap: 6px;
+		}
+		.export-btn:hover:not(:disabled) { border-color: var(--scan); }
+		.export-btn:disabled { opacity: 0.5; cursor: progress; }
+		.export-btn svg { display: block; color: var(--scan); }
+		.export-btn .ext { font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: 0.04em; }
+
+		.done-actions { display: flex; flex-direction: column; gap: 10px; }
+		.btn-save { width: 100%; padding: 14px 18px; background: var(--scan); color: var(--accent-ink); border: none; border-radius: 10px; font: 700 15px/1 inherit; cursor: pointer; transition: filter 120ms; }
+		.btn-save:hover { filter: brightness(1.06); }
+		.btn-save:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
+		.btn-share { width: 100%; padding: 13px 18px; background: transparent; color: var(--text); border: 1px solid var(--scan); border-radius: 10px; font: 600 14px/1 inherit; cursor: pointer; transition: background 120ms; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+		.btn-share:hover { background: var(--scan-dim); }
+		.btn-share svg { color: var(--scan); }
+		.btn-ghost { width: 100%; padding: 12px 18px; background: var(--panel); color: var(--muted); border: 1px solid var(--border); border-radius: 10px; font: 500 14px/1 inherit; cursor: pointer; transition: color 120ms, border-color 120ms; }
+		.btn-ghost:hover { color: var(--text); border-color: var(--border-strong); }
+		.share-toast { text-align: center; font-size: 12.5px; color: var(--scan); min-height: 18px; margin: 6px 0 0; opacity: 0; transition: opacity 200ms; }
+		.share-toast.show { opacity: 1; }
+		.portability-note { margin-top: 22px; padding: 14px 16px; background: rgba(110, 231, 255, 0.04); border: 1px solid rgba(110, 231, 255, 0.14); border-radius: 10px; font-size: 13px; color: var(--muted); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+		.portability-note a { color: var(--scan); text-decoration: none; white-space: nowrap; font-weight: 500; }
+		.portability-note a:hover { text-decoration: underline; }
+
+		.submit-bar { margin-top: 6px; position: sticky; bottom: 16px; z-index: 2; }
+		.submit-bar[hidden] { display: none; }
+		#submit-btn { width: 100%; padding: 16px 18px; background: var(--panel); color: var(--muted); border: 1px solid var(--border); border-radius: 12px; font: 700 15px/1.2 inherit; cursor: not-allowed; transition: background 120ms, color 120ms, border-color 120ms; display: flex; align-items: center; justify-content: center; gap: 10px; }
+		#submit-btn .meta { font: 500 12px/1 inherit; color: var(--muted); opacity: 0.85; }
+		#submit-btn.ready { background: var(--scan); color: var(--accent-ink); border-color: var(--scan); cursor: pointer; box-shadow: 0 10px 30px -10px rgba(110, 231, 255, 0.4); animation: btn-ready 300ms ease; }
+		@keyframes btn-ready { from { transform: scale(0.97); opacity: 0.8; } to { transform: scale(1); opacity: 1; } }
+		#submit-btn.ready .meta { color: rgba(10, 10, 10, 0.7); }
+		#submit-btn.ready:hover { filter: brightness(0.94); }
+
+		/* ── Camera overlay (driven by selfie-capture.js) ─────────────────── */
+		#cam-overlay { position: fixed; inset: 0; background: #000; z-index: 1000; display: none; flex-direction: column; }
+		#cam-overlay.open { display: flex; }
+		#cam-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+		#cam-stage video, #cam-stage img.preview { width: 100%; height: 100%; object-fit: cover; }
+		#cam-stage video { transform: scaleX(-1); }
+		#cam-mesh-overlay { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); pointer-events: none; z-index: 1; }
+		.cam-badges { position: absolute; top: env(safe-area-inset-top, 12px); left: 12px; right: 12px; display: flex; gap: 5px; flex-wrap: wrap; z-index: 3; padding-top: 50px; }
+		.cam-badge-chip { font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.03em; text-transform: uppercase; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(6px); }
+		.cam-badge-chip.ok { color: var(--scan); border-color: rgba(110, 231, 255, 0.35); background: rgba(110, 231, 255, 0.12); }
+		.cam-badge-chip.bad { color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3); background: rgba(255, 107, 107, 0.08); }
+		.cam-prompt { position: absolute; top: env(safe-area-inset-top, 18px); left: 0; right: 0; text-align: center; color: rgba(255, 255, 255, 0.92); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; padding: 16px 18px; background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent); pointer-events: none; }
+		.cam-prompt strong { font-weight: 600; color: var(--scan); }
+		.cam-oval { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+		.cam-oval svg { width: min(70vw, 60vh); height: auto; max-height: 75vh; }
+		.cam-oval ellipse { fill: none; stroke: rgba(110, 231, 255, 0.5); stroke-width: 3; stroke-dasharray: 12 8; transition: stroke 200ms; }
+		.cam-oval.detected ellipse { stroke: var(--scan); stroke-dasharray: 0; filter: drop-shadow(0 0 8px rgba(110, 231, 255, 0.5)); }
+		.cam-hint { position: absolute; bottom: 100px; left: 0; right: 0; text-align: center; color: rgba(255, 255, 255, 0.85); font-size: 13px; padding: 8px 18px; pointer-events: none; transition: opacity 200ms; }
+		.cam-hint.ok { color: var(--scan); }
+		#cam-error { position: absolute; top: 60px; left: 16px; right: 16px; padding: 10px 14px; background: rgba(239, 77, 77, 0.92); color: white; border-radius: 9px; font-size: 13.5px; text-align: center; }
+		.cam-bar { padding: 16px 22px calc(env(safe-area-inset-bottom, 18px) + 18px); background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+		.cam-bar button { background: rgba(255, 255, 255, 0.08); color: var(--text); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 9px; padding: 10px 16px; font: 600 14px/1 inherit; cursor: pointer; min-width: 88px; }
+		.cam-bar button.shutter { width: 72px; height: 72px; border-radius: 50%; background: var(--scan); color: var(--accent-ink); border: none; padding: 0; min-width: 72px; }
+		.cam-bar button.shutter::before { content: ''; display: block; width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--accent-ink); margin: 0 auto; }
+		.cam-bar button.shutter:disabled { opacity: 0.35; cursor: not-allowed; filter: grayscale(0.6); transition: opacity 200ms, filter 200ms; }
+		.cam-bar .spacer { flex: 1; }
+		.cam-countdown { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; pointer-events: none; z-index: 4; }
+		.cam-countdown.show { display: flex; }
+		.cam-countdown .count-num { font: 700 96px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--scan); text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), 0 0 24px rgba(110, 231, 255, 0.5); animation: cd-pop 1s ease-out forwards; }
+		@keyframes cd-pop { 0% { transform: scale(0.5); opacity: 0; } 20% { transform: scale(1.15); opacity: 1; } 80% { transform: scale(1); opacity: 1; } 100% { transform: scale(0.8); opacity: 0; } }
+
+		.photo-tips { margin: 16px 0 0; padding: 12px 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 13px; color: var(--muted); }
+		.photo-tips .tips-title { margin: 0 0 6px; font-weight: 600; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); opacity: 0.7; }
+		.photo-tips ul { margin: 0; padding-left: 18px; list-style: disc; }
+		.photo-tips li { margin-bottom: 2px; line-height: 1.45; }
+		.photo-tips li:last-child { margin-bottom: 0; }
+	</style>
+	<link rel="stylesheet" href="/mobile.css" />
+	<script
+		type="module"
+		src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+	></script>
+</head>
+<body>
+	<main class="stage">
+		<div class="topbar">
+			<button class="back" id="back-btn" aria-label="Back" type="button">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<line x1="19" y1="12" x2="5" y2="12" />
+					<polyline points="12 19 5 12 12 5" />
+				</svg>
+			</button>
+			<div class="label"><strong>three.ws</strong> · 3D Scanner</div>
+			<span class="badge">Beta</span>
+		</div>
+
+		<p id="unsupported-msg" class="unsupported">
+			Your browser can't open the camera here — use Upload instead, or open this page in Safari / Chrome on a device with a camera.
+		</p>
+
+		<!-- Step 1: capture -->
+		<section class="step active" data-step="capture">
+			<h1>Scan yourself into <span class="hl">3D</span>.</h1>
+			<p class="sub">Point your camera and hold still. In about a minute you get a rigged 3D model of yourself that drops into any app, game, or stream. Photos are downscaled in your browser — nothing is stored on disk.</p>
+
+			<div class="steps-strip" aria-hidden="true">
+				<span class="chip"><b>1</b> Scan</span>
+				<span class="chip"><b>2</b> Build</span>
+				<span class="chip"><b>3</b> Download &amp; share</span>
+			</div>
+
+			<div class="hero-slot-wrap">
+				<div class="hero-slot" data-slot="frontal" role="button" tabindex="0" aria-label="Start the scan with your camera or a photo">
+					<span class="hero-icon" aria-hidden="true">
+						<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+					</span>
+					<span class="hero-title">Tap to start scanning</span>
+					<span class="hero-sub">Live face tracking guides the shot. Or drop in a photo — works on phone or desktop.</span>
+				</div>
+				<div class="hero-actions">
+					<button type="button" class="hero-pill" data-action="open-camera" id="hero-camera-btn">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+						Scan with camera
+					</button>
+					<button type="button" class="hero-pill" data-action="open-upload">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+						Upload photo
+					</button>
+				</div>
+			</div>
+
+			<input type="file" data-slot-input="frontal" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden />
+
+			<div class="photo-tips" id="photo-tips">
+				<p class="tips-title">For the sharpest scan</p>
+				<ul>
+					<li>Face the camera directly — no extreme angles</li>
+					<li>Good, even lighting — avoid harsh shadows or backlighting</li>
+					<li>Remove sunglasses, masks, or anything covering your face</li>
+					<li>Keep hair away from your forehead and jawline if possible</li>
+				</ul>
+			</div>
+
+			<details class="fidelity" id="fidelity-boost">
+				<summary>
+					<div>
+						<div class="fid-label">Add side angles <span class="fid-note">(optional — adds ~30s, sharper geometry)</span></div>
+					</div>
+					<svg class="fid-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+				</summary>
+				<div class="fid-body">
+					<div class="slots">
+						<div class="slot-frame" data-slot="left" role="button" tabindex="0" aria-label="Left side photo slot">
+							<span class="slot-label">Left</span>
+							<span class="slot-hint">Turn ~45° left</span>
+						</div>
+						<div class="slot-frame" data-slot="right" role="button" tabindex="0" aria-label="Right side photo slot">
+							<span class="slot-label">Right</span>
+							<span class="slot-hint">Turn ~45° right</span>
+						</div>
+					</div>
+					<input type="file" data-slot-input="left" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden />
+					<input type="file" data-slot-input="right" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden />
+				</div>
+			</details>
+
+			<div class="opts">
+				<div class="opt-group">
+					<p class="opt-label">Look</p>
+					<div class="style-grid" role="group" aria-label="Avatar style">
+						<button type="button" class="style-card" data-type="v1" aria-pressed="true">
+							<span class="style-swatch photoreal" aria-hidden="true"></span>
+							<span>
+								<span class="style-title">Photoreal</span>
+								<span class="style-desc">Likeness-first. Closest to how you actually look.</span>
+							</span>
+						</button>
+						<button type="button" class="style-card" data-type="v2" aria-pressed="false">
+							<span class="style-swatch stylized" aria-hidden="true"></span>
+							<span>
+								<span class="style-title">Stylized</span>
+								<span class="style-desc">Cleaner, cartoon-leaning. Good for streaming + games.</span>
+							</span>
+						</button>
+					</div>
+				</div>
+				<div class="opt-group">
+					<p class="opt-label">Body</p>
+					<div class="toggle" role="group" aria-label="Body type">
+						<button type="button" data-body="male" aria-pressed="true">Masc</button>
+						<button type="button" data-body="female" aria-pressed="false">Femme</button>
+					</div>
+				</div>
+			</div>
+
+			<div id="submit-bar" class="submit-bar">
+				<button id="submit-btn" type="button" disabled>
+					<span class="label">Start scanning to continue</span>
+				</button>
+			</div>
+		</section>
+
+		<!-- Step 2: Building -->
+		<section class="step" data-step="building">
+			<h1>Reconstructing you…</h1>
+			<p class="sub">This usually takes 1–2 minutes. Keep this tab open — we'll ping you when it's done.</p>
+
+			<div class="build-progress" role="list" aria-label="Scan progress">
+				<div class="build-step completed" data-bstep="upload" role="listitem">
+					<span class="bstep-dot" aria-hidden="true"></span>
+					<span class="bstep-label">Scan captured</span>
+				</div>
+				<div class="build-step active" data-bstep="process" role="listitem">
+					<span class="bstep-dot" aria-hidden="true"></span>
+					<span class="bstep-label" id="build-status-text" aria-live="polite">Building 3D mesh from your scan…</span>
+				</div>
+				<div class="build-step" data-bstep="finish" role="listitem">
+					<span class="bstep-dot" aria-hidden="true"></span>
+					<span class="bstep-label">Auto-rigging skeleton</span>
+				</div>
+			</div>
+
+			<div class="build-viewer" aria-hidden="true">
+				<model-viewer
+					src="/avatars/default.glb"
+					auto-rotate
+					rotation-per-second="12deg"
+					interaction-prompt="none"
+					disable-zoom
+					disable-pan
+					shadow-intensity="0.5"
+					environment-image="neutral"
+					exposure="0.9"
+					camera-orbit="0deg 78deg auto"
+					loading="eager"
+				></model-viewer>
+				<img id="build-preview" class="build-preview" alt="" />
+				<div class="build-veil">
+					<div class="build-ring"></div>
+				</div>
+			</div>
+
+			<p id="build-error-msg" class="build-error" role="alert"></p>
+			<button id="build-retry-btn" class="build-retry" type="button">← Scan again</button>
+		</section>
+
+		<!-- Step 3: Done -->
+		<section class="step" data-step="done">
+			<h1>You're in 3D.</h1>
+			<p class="sub">Drag to spin it. Download the model, share the scan, or open it in your workspace.</p>
+
+			<div class="done-viewer">
+				<model-viewer
+					id="done-model"
+					auto-rotate
+					rotation-per-second="14deg"
+					interaction-prompt="none"
+					camera-controls
+					shadow-intensity="0.7"
+					shadow-softness="0.8"
+					environment-image="neutral"
+					exposure="0.95"
+					camera-orbit="0deg 78deg auto"
+					loading="eager"
+					alt="Your 3D scan"
+				></model-viewer>
+			</div>
+
+			<div class="name-row">
+				<input
+					type="text"
+					id="done-name"
+					class="name-input"
+					placeholder="Name your scan"
+					maxlength="60"
+					autocomplete="off"
+					aria-label="Scan name"
+				/>
+			</div>
+
+			<div class="export-row">
+				<button class="export-btn" id="dl-glb" type="button" data-format="glb">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+					Download
+					<span class="ext">.GLB</span>
+				</button>
+				<button class="export-btn" id="dl-usdz" type="button" data-format="usdz">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+					iOS AR
+					<span class="ext">.USDZ</span>
+				</button>
+				<button class="export-btn" id="dl-vrm" type="button" data-format="vrm">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
+					VTube
+					<span class="ext">.VRM</span>
+				</button>
+			</div>
+
+			<div class="done-actions">
+				<button id="share-btn" class="btn-share" type="button">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+					Share my scan
+				</button>
+				<button id="done-save-btn" class="btn-save" type="button">Open in my workspace →</button>
+				<button id="done-editor-btn" class="btn-ghost" type="button">Customize in editor</button>
+				<button id="done-regen-btn" class="btn-ghost" type="button">Not quite right — scan again</button>
+			</div>
+			<p id="share-toast" class="share-toast" role="status" aria-live="polite"></p>
+
+			<div class="portability-note">
+				<span>This scan works in any three.ws-powered app, game, or stream.</span>
+				<a href="/docs/embed" target="_blank" rel="noopener">Learn how to embed →</a>
+			</div>
+		</section>
+	</main>
+
+	<!-- Step "unavailable" — shown when the reconstruction backend isn't wired. -->
+	<section class="step" data-step="unavailable" hidden style="text-align:center;max-width:520px;margin:0 auto;padding:48px 24px;">
+		<h1 style="margin:0 0 12px;">The scanner is warming up</h1>
+		<p class="sub" style="margin:0 0 24px;color:#9aa3b2;">
+			The photo-to-3D engine is being provisioned for this environment.
+			In the meantime, you can build an avatar in the studio — same outputs,
+			fully ready today.
+		</p>
+		<div class="done-actions" style="justify-content:center;">
+			<a href="/create" class="btn-save" style="text-decoration:none;display:inline-block;">Open the avatar studio →</a>
+			<a href="/app" class="btn-ghost" style="text-decoration:none;display:inline-block;">Back to my workspace</a>
+		</div>
+	</section>
+
+	<!-- Camera overlay (driven by selfie-capture.js) -->
+	<div id="cam-overlay" role="dialog" aria-modal="true" aria-label="Camera capture">
+		<div id="cam-stage">
+			<video id="cam-video" autoplay playsinline muted></video>
+			<canvas id="cam-mesh-overlay" aria-hidden="true"></canvas>
+			<div class="cam-oval" id="cam-oval" aria-hidden="true">
+				<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">
+					<ellipse cx="150" cy="180" rx="115" ry="155" />
+				</svg>
+			</div>
+			<div class="cam-badges" id="cam-badges" aria-hidden="true"></div>
+			<div class="cam-hint" id="cam-hint">Center your face in the oval</div>
+			<div class="cam-countdown" id="cam-countdown" aria-hidden="true">
+				<span class="count-num" id="cam-count-num">3</span>
+			</div>
+		</div>
+		<div class="cam-prompt">
+			Scanning your <strong id="cam-slot-name">selfie</strong>
+		</div>
+		<div id="cam-error" hidden></div>
+		<div class="cam-bar">
+			<div id="cam-actions-live" style="display: contents;">
+				<button type="button" data-cam-action="cancel">Cancel</button>
+				<button type="button" class="shutter" data-cam-action="shoot" aria-label="Capture scan" id="cam-shutter"></button>
+				<div class="spacer"></div>
+			</div>
+			<div id="cam-actions-review" hidden style="display: contents;">
+				<button type="button" data-cam-action="retake">Retake</button>
+				<button type="button" data-cam-action="use">Use this</button>
+			</div>
+		</div>
+	</div>
+
+	<script type="module">
+		function showStep(name) {
+			document.querySelectorAll('.step[data-step]').forEach((s) => {
+				s.classList.toggle('active', s.dataset.step === name);
+				if (name === 'unavailable') s.hidden = s.dataset.step !== 'unavailable';
+			});
+			window.scrollTo({ top: 0, behavior: 'auto' });
+		}
+
+		// Capability probe — reconstruct returns 501 unless an ML backend is wired.
+		const reconstructReady = await fetch('/api/config', { credentials: 'omit' })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((j) => j?.features?.avatarReconstruct !== false)
+			.catch(() => true);
+
+		if (!reconstructReady) {
+			document.querySelectorAll('.step[data-step]').forEach((s) => {
+				s.classList.remove('active');
+				s.hidden = s.dataset.step !== 'unavailable';
+			});
+			const u = document.querySelector('.step[data-step="unavailable"]');
+			if (u) { u.hidden = false; u.classList.add('active'); }
+			const sb = document.getElementById('submit-bar');
+			if (sb) sb.hidden = true;
+		} else {
+			await import('/src/selfie-capture.js');
+			await import('/src/selfie-pipeline.js');
+		}
+
+		let _avatarId = null;
+		let _modelUrl = null;
+		let _avatarName = '3d-scan';
+		let _docTitleBase = document.title;
+		let _notifyPermission = (typeof Notification !== 'undefined') ? Notification.permission : 'denied';
+
+		document.addEventListener('selfie:preview', (e) => {
+			const dataUrl = e.detail?.dataUrl;
+			if (!dataUrl) return;
+			const img = document.getElementById('build-preview');
+			if (!img) return;
+			img.src = dataUrl;
+			requestAnimationFrame(() => img.classList.add('show'));
+		});
+
+		document.addEventListener('selfie:building', () => {
+			showStep('building');
+			if (typeof Notification !== 'undefined' && _notifyPermission === 'default') {
+				Notification.requestPermission().then((p) => { _notifyPermission = p; }).catch(() => {});
+			}
+		});
+
+		document.addEventListener('selfie:progress', (e) => {
+			const label = e.detail?.label;
+			if (!label) return;
+			const el = document.getElementById('build-status-text');
+			if (el) el.textContent = label;
+			const processStep = document.querySelector('.build-step[data-bstep="process"]');
+			const finishStep = document.querySelector('.build-step[data-bstep="finish"]');
+			if (label.toLowerCase().includes('finish') || label.toLowerCase().includes('rig')) {
+				processStep?.classList.replace('active', 'completed');
+				finishStep?.classList.add('active');
+			}
+		});
+
+		document.addEventListener('selfie:done', async (e) => {
+			_avatarId = e.detail?.avatarId;
+			if (!_avatarId) return;
+			document.querySelectorAll('.build-step').forEach((s) => { s.className = 'build-step completed'; });
+
+			try {
+				const res = await fetch(`/api/avatars/${encodeURIComponent(_avatarId)}`, { credentials: 'include' });
+				if (res.ok) {
+					const avatar = await res.json();
+					_modelUrl = avatar.model_url || null;
+					_avatarName = avatar.name || _avatarName;
+					const modelEl = document.getElementById('done-model');
+					if (modelEl && _modelUrl) modelEl.setAttribute('src', _modelUrl);
+					const nameEl = document.getElementById('done-name');
+					if (nameEl && avatar.name) nameEl.value = avatar.name;
+				}
+			} catch (_) {}
+
+			notifyDone();
+			showStep('done');
+		});
+
+		function notifyDone() {
+			if (!document.hidden) return;
+			let on = true;
+			const tick = window.setInterval(() => {
+				document.title = on ? '✓ Scan ready — three.ws' : _docTitleBase;
+				on = !on;
+			}, 900);
+			const restore = () => {
+				clearInterval(tick);
+				document.title = _docTitleBase;
+				document.removeEventListener('visibilitychange', restore);
+			};
+			document.addEventListener('visibilitychange', restore);
+			if (_notifyPermission === 'granted' && typeof Notification !== 'undefined') {
+				try {
+					const n = new Notification('Your 3D scan is ready', { body: 'Tap to open it on three.ws.', icon: '/favicon.ico', tag: 'scan-ready' });
+					n.onclick = () => { window.focus(); n.close(); };
+				} catch (_) {}
+			}
+		}
+
+		document.addEventListener('selfie:build-error', (e) => {
+			const detail = e.detail || {};
+			const msg = detail.message || 'Something went wrong. Try again.';
+			const errEl = document.getElementById('build-error-msg');
+			const retryBtn = document.getElementById('build-retry-btn');
+			if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
+			if (retryBtn) retryBtn.classList.add('show');
+			const ring = document.querySelector('.build-ring');
+			if (ring) ring.style.display = 'none';
+			const veil = document.querySelector('.build-veil');
+			if (veil) veil.style.display = 'none';
+			const activeStep = document.querySelector('.build-step.active');
+			if (activeStep) {
+				activeStep.classList.remove('active');
+				activeStep.classList.add('failed');
+				const label = activeStep.querySelector('.bstep-label');
+				if (label) label.textContent = 'Failed';
+			}
+			const heading = document.querySelector('[data-step="building"] h1');
+			if (heading) heading.textContent = "Couldn't finish the scan";
+			const sub = document.querySelector('[data-step="building"] .sub');
+			if (sub) sub.textContent = 'Check the tips and scan again with a clearer shot.';
+			if (detail.slot) {
+				const slotFrame = document.querySelector(
+					detail.slot === 'frontal' ? `.hero-slot[data-slot="${detail.slot}"]` : `.slot-frame[data-slot="${detail.slot}"]`,
+				);
+				slotFrame?.classList.add('error');
+				if (detail.slot !== 'frontal') {
+					const fid = document.getElementById('fidelity-boost');
+					if (fid) fid.open = true;
+				}
+			}
+		});
+
+		document.getElementById('build-retry-btn')?.addEventListener('click', () => {
+			document.getElementById('build-error-msg')?.classList.remove('show');
+			document.getElementById('build-retry-btn')?.classList.remove('show');
+			const ring = document.querySelector('.build-ring');
+			if (ring) ring.style.display = '';
+			const veil = document.querySelector('.build-veil');
+			if (veil) veil.style.display = '';
+			const heading = document.querySelector('[data-step="building"] h1');
+			if (heading) heading.textContent = 'Reconstructing you…';
+			const sub = document.querySelector('[data-step="building"] .sub');
+			if (sub) sub.textContent = "This usually takes 1–2 minutes. Keep this tab open — we'll ping you when it's done.";
+			document.querySelectorAll('.build-step').forEach((s) => { s.classList.remove('completed', 'active', 'failed'); });
+			document.querySelector('.build-step[data-bstep="upload"]')?.classList.add('completed');
+			document.querySelector('.build-step[data-bstep="process"]')?.classList.add('active');
+			const statusText = document.getElementById('build-status-text');
+			if (statusText) statusText.textContent = 'Building 3D mesh from your scan…';
+			showStep('capture');
+		});
+
+		// ── Share / export loop ─────────────────────────────────────────────
+		function toast(msg) {
+			const el = document.getElementById('share-toast');
+			if (!el) return;
+			el.textContent = msg;
+			el.classList.add('show');
+			window.clearTimeout(toast._t);
+			toast._t = window.setTimeout(() => el.classList.remove('show'), 2600);
+		}
+
+		// Persist any name edit before leaving / exporting so downloads + the
+		// workspace stay consistent with what the user typed.
+		async function persistName() {
+			const nameEl = document.getElementById('done-name');
+			const name = nameEl?.value?.trim();
+			if (!_avatarId || !name || name === _avatarName) return;
+			_avatarName = name;
+			try {
+				await fetch(`/api/avatars/${encodeURIComponent(_avatarId)}`, {
+					method: 'PATCH', credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ name }),
+				});
+			} catch (_) {}
+		}
+
+		document.querySelectorAll('.export-btn').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				if (!_modelUrl) { toast('Scan still finalizing — try again in a moment.'); return; }
+				const format = btn.getAttribute('data-format');
+				const labelNodes = [...btn.childNodes];
+				btn.disabled = true;
+				try {
+					const { downloadAvatar } = await import('/src/avatar-export.js');
+					await persistName();
+					const { size } = await downloadAvatar(_modelUrl, {
+						format,
+						filename: _avatarName || '3d-scan',
+						meta: { name: _avatarName },
+					});
+					toast(`Downloaded ${format.toUpperCase()} · ${(size / 1024 / 1024).toFixed(1)} MB`);
+				} catch (err) {
+					console.error('[scan] export failed', err);
+					toast(`Couldn't export ${format.toUpperCase()}. Try GLB.`);
+				} finally {
+					btn.disabled = false;
+				}
+			});
+		});
+
+		document.getElementById('share-btn')?.addEventListener('click', async () => {
+			if (!_avatarId) return;
+			await persistName();
+			const shareUrl = `${location.origin}/avatars/${encodeURIComponent(_avatarId)}`;
+			const shareData = {
+				title: `${_avatarName} · 3D scan on three.ws`,
+				text: 'I just scanned myself into 3D on three.ws — spin it 👇',
+				url: shareUrl,
+			};
+			if (navigator.share) {
+				try { await navigator.share(shareData); return; }
+				catch (err) { if (err?.name === 'AbortError') return; }
+			}
+			try {
+				await navigator.clipboard.writeText(shareUrl);
+				toast('Link copied — paste it anywhere.');
+			} catch (_) {
+				window.open(shareUrl, '_blank', 'noopener');
+			}
+		});
+
+		document.getElementById('done-save-btn')?.addEventListener('click', async () => {
+			if (!_avatarId) return;
+			const btn = document.getElementById('done-save-btn');
+			btn.disabled = true;
+			btn.textContent = 'Opening…';
+			await persistName();
+			window.location.assign(`/avatars/${encodeURIComponent(_avatarId)}`);
+		});
+
+		document.getElementById('done-editor-btn')?.addEventListener('click', async () => {
+			if (!_avatarId) return;
+			await persistName();
+			window.location.assign(`/avatars/${encodeURIComponent(_avatarId)}/edit`);
+		});
+
+		document.getElementById('done-regen-btn')?.addEventListener('click', () => {
+			_avatarId = null;
+			_modelUrl = null;
+			const preview = document.getElementById('build-preview');
+			if (preview) { preview.removeAttribute('src'); preview.classList.remove('show'); }
+			document.dispatchEvent(new CustomEvent('selfie:reset'));
+			showStep('capture');
+		});
+	</script>
+</body>
+</html>

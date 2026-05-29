@@ -2,10 +2,19 @@
 //
 // This is a standalone Colyseus process — Vercel can't host long-lived
 // WebSocket servers, so this runs separately (Fly.io, Railway, Render, or a
-// $5 VPS — see ../README.md). The Vite app at three.ws/walk connects to it
-// over WebSocket and exchanges player state via the WalkRoom defined below.
+// $5 VPS — see ../README.md). The Vite app at three.ws/walk and three.ws/play
+// connect to it over WebSocket and exchange state via the rooms defined below.
+//
+// We mount an Express app as the HTTP request handler. Colyseus 0.16 detects
+// an existing Express app on the underlying http.Server and composes with it:
+// matchmaking + seat-reservation routes go to Colyseus's own router, and
+// everything else (/health, /colyseus monitor) falls through to Express. This
+// is the supported way to expose custom HTTP routes alongside Colyseus on one
+// port — a hand-rolled raw request listener double-responds and throws
+// ERR_HTTP_HEADERS_SENT against the matchmaker's prepended listener.
 
 import http from 'node:http';
+import express from 'express';
 import { Server } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { monitor } from '@colyseus/monitor';
@@ -26,43 +35,18 @@ const ALLOWED_ORIGINS = (
 	.map((s) => s.trim())
 	.filter(Boolean);
 
-// Use a plain http.Server so we can mount /health for platform health checks
-// and /colyseus for the admin monitor UI on the same port. WebSocketTransport
-// hooks the upgrade event and ignores anything that isn't a Colyseus WS
-// upgrade, so /health and /colyseus stay reachable as normal HTTP routes.
-const httpServer = http.createServer((req, res) => {
-	if (req.url === '/health' || req.url === '/healthz') {
-		res.writeHead(200, { 'content-type': 'application/json' });
-		res.end(JSON.stringify({ ok: true, name: 'three.ws-multiplayer' }));
-		return;
-	}
-	if (req.url === '/' || req.url === '') {
-		res.writeHead(200, { 'content-type': 'text/plain' });
-		res.end('three.ws multiplayer · Colyseus\n');
-		return;
-	}
-	if (req.url.startsWith('/colyseus')) {
-		// Mount the admin monitor lazily — `monitor()` returns an Express-style
-		// middleware that we adapt to the node http stack via a tiny shim.
-		return monitorMiddleware(req, res);
-	}
-	res.writeHead(404);
-	res.end();
+const app = express();
+
+// Liveness probes for the host platform (Fly/Railway/Render).
+app.get(['/health', '/healthz'], (_req, res) => {
+	res.json({ ok: true, name: 'three.ws-multiplayer' });
 });
 
-// Lazy monitor adapter — `@colyseus/monitor` ships an Express router. We mount
-// it through a one-shot Express instance so we don't take a hard dep on
-// express here at the top level.
-let _monitorHandler = null;
-async function monitorMiddleware(req, res) {
-	if (!_monitorHandler) {
-		const { default: express } = await import('express');
-		const app = express();
-		app.use('/colyseus', monitor());
-		_monitorHandler = app;
-	}
-	_monitorHandler(req, res);
-}
+// Admin monitor UI. Protect this behind a reverse proxy or basic auth in prod
+// (see @colyseus/monitor docs) — it exposes live room/client state.
+app.use('/colyseus', monitor());
+
+const httpServer = http.createServer(app);
 
 const transport = new WebSocketTransport({
 	server: httpServer,
@@ -86,13 +70,18 @@ const transport = new WebSocketTransport({
 });
 
 const gameServer = new Server({ transport });
-gameServer.define('walk_world', WalkRoom);
+// Each coin is its own world: filterBy(['coin']) makes joinOrCreate match only
+// rooms sharing the same community coin (mint), so players of the same coin land
+// together while different coins stay isolated. A missing coin resolves to the
+// shared mainland world (see WalkRoom.onCreate / schemas.js).
+gameServer.define('walk_world', WalkRoom).filterBy(['coin']);
 gameServer.define('game_mainland', GameRoom);
 
 gameServer
 	.listen(PORT, HOST)
 	.then(() => {
 		console.log(`[multiplayer] listening on ws://${HOST}:${PORT}`);
+		console.log(`[multiplayer] rooms: walk_world, game_mainland`);
 		console.log(`[multiplayer] allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
 	})
 	.catch((err) => {

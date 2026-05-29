@@ -222,11 +222,6 @@
 				margin-bottom: 6px;
 			}
 			.pose-joint-group:first-child { margin-top: 0; }
-			.pose-joint-row {
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				gap: 6px;
-			}
 			.pose-joint-btn {
 				appearance: none;
 				border: 1px solid var(--border);
@@ -246,6 +241,60 @@
 				border-color: var(--border-strong);
 			}
 
+			.pose-search {
+				width: 100%;
+				box-sizing: border-box;
+				background: rgba(255, 255, 255, 0.04);
+				color: var(--text);
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 7px 10px;
+				font: inherit;
+				font-size: 12.5px;
+				margin-bottom: 10px;
+				transition: border-color 0.12s ease, background 0.12s ease;
+			}
+			.pose-search::placeholder { color: var(--text-3); }
+			.pose-search:focus {
+				outline: none;
+				border-color: var(--border-strong);
+				background: rgba(255, 255, 255, 0.07);
+			}
+			.pose-joint-btn[aria-pressed="true"] {
+				background: rgba(255, 255, 255, 0.18);
+				border-color: rgba(255, 255, 255, 0.4);
+				color: #e8e8e8;
+			}
+			.pose-joint-row {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 6px;
+				max-height: 240px;
+				overflow-y: auto;
+			}
+			.pose-shortcuts {
+				font-size: 10.5px;
+				color: var(--text-3);
+				margin: 10px 0 0;
+				line-height: 1.7;
+			}
+			.pose-shortcuts kbd {
+				background: rgba(255, 255, 255, 0.08);
+				border: 1px solid var(--border);
+				border-radius: 4px;
+				padding: 1px 5px;
+				font-family: ui-monospace, monospace;
+				font-size: 10px;
+				color: var(--text-2);
+			}
+			.pose-disabled {
+				opacity: 0.4;
+				pointer-events: none;
+			}
+			.mode-btn:disabled {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
 			.pose-slider-row {
 				display: grid;
 				grid-template-columns: 1fr auto;
@@ -462,16 +511,19 @@
 				</div>
 				<span class="sep"></span>
 
-				<div class="mode-group" role="group" aria-label="Drag mode">
-					<button type="button" class="mode-btn" data-mode="bend" aria-pressed="true" title="Bend — drag to flex forwards/back">Bend</button>
-					<button type="button" class="mode-btn" data-mode="tilt" aria-pressed="false" title="Tilt — drag to swing sideways">Tilt</button>
-					<button type="button" class="mode-btn" data-mode="twist" aria-pressed="false" title="Twist — drag to rotate around the limb axis">Twist</button>
-					<button type="button" class="mode-btn" data-mode="move" aria-pressed="false" title="Move — disables drag-to-rotate so you can orbit the camera">Camera</button>
+				<div class="mode-group" role="group" aria-label="Posing mode">
+					<button type="button" class="mode-btn" data-posemode="fk" aria-pressed="true" title="FK — select a bone and rotate it with the gizmo or sliders (F)">FK</button>
+					<button type="button" class="mode-btn" data-posemode="ik" aria-pressed="false" title="IK — drag a hand or foot and the limb solves (I)">IK</button>
 				</div>
+
+				<span class="sep"></span>
+
+				<button type="button" id="pose-load-avatar" class="pose-btn" title="Load a rigged avatar to animate">Load avatar</button>
+				<button type="button" id="pose-use-mannequin" class="pose-btn" title="Return to the built-in mannequin">Mannequin</button>
 
 				<span class="spacer"></span>
 
-				<button type="button" id="pose-reset" class="pose-btn" title="Reset the pose to standing">Reset pose</button>
+				<button type="button" id="pose-reset" class="pose-btn" title="Reset the pose to rest">Reset pose</button>
 
 				<label class="pose-btn file-label" title="Load a pose from JSON">
 					Import
@@ -490,8 +542,19 @@
 				</section>
 
 				<section class="pose-section">
-					<h2>Joints</h2>
+					<h2>Bones</h2>
+					<input
+						type="search"
+						id="pose-bone-search"
+						class="pose-search"
+						placeholder="Search bones…"
+						aria-label="Search bones"
+						autocomplete="off"
+					/>
 					<div id="pose-joint-picker"></div>
+					<p class="pose-shortcuts">
+						<kbd>F</kbd> FK · <kbd>I</kbd> IK · <kbd>R</kbd> reset bone · <kbd>Esc</kbd> deselect
+					</p>
 				</section>
 
 				<section class="pose-section">

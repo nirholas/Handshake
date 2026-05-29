@@ -46,35 +46,31 @@ export class ThreeWsStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
-    // ── Pump.fun Token Snapshot API ──────────────────────────────────────────
-    // Zero-dependency Node Lambda serving a live demo page (/) and a real-time
-    // token snapshot JSON API (/api/snapshot). Exposed publicly via a Lambda
-    // Function URL — no API Gateway needed. Source: infra/lambda/pump-snapshot.
-    const snapshotLogGroup = new logs.LogGroup(this, 'PumpSnapshotLogGroup', {
-      logGroupName: '/aws/lambda/three-ws-pump-snapshot',
+    // ── three.ws Forge — generative 3D sculptures + AR sharing ───────────────
+    // Zero-dependency Node Lambda. Serves per-seed share pages with real AR
+    // (iOS AR Quick Look / Android Scene Viewer via <model-viewer>) and Open
+    // Graph / Twitter Card meta, a binary-GLB API, and a hand-rendered PNG
+    // preview (software rasterizer) for link unfurls. Exposed via a Lambda
+    // Function URL — no API Gateway needed. Source: infra/lambda/forge.
+    const forgeLogGroup = new logs.LogGroup(this, 'ForgeLogGroup', {
+      logGroupName: '/aws/lambda/three-ws-forge',
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    const snapshotFn = new lambda.Function(this, 'PumpSnapshotFn', {
-      functionName: 'three-ws-pump-snapshot',
+    const forgeFn = new lambda.Function(this, 'ForgeFn', {
+      functionName: 'three-ws-forge',
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda', 'pump-snapshot')),
-      memorySize: 256,
-      timeout: cdk.Duration.seconds(15),
+      code: lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda', 'forge')),
+      memorySize: 1536, // headroom for mesh synthesis + software rasterizer
+      timeout: cdk.Duration.seconds(20),
       architecture: lambda.Architecture.ARM_64,
-      description: 'three.ws — real-time pump.fun / Solana token snapshot API',
-      environment: {
-        // Public mainnet RPC by default; set a dedicated RPC for production load.
-        SOLANA_RPC_URL: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
-        // Optional: enables Helius DAS holder/supply enrichment when present.
-        HELIUS_API_KEY: process.env.HELIUS_API_KEY || '',
-      },
-      logGroup: snapshotLogGroup,
+      description: 'three.ws Forge — generative 3D sculptures, GLB + AR + social cards',
+      logGroup: forgeLogGroup,
     });
 
-    const snapshotUrl = snapshotFn.addFunctionUrl({
+    const forgeUrl = forgeFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
         allowedOrigins: ['*'],
@@ -84,9 +80,9 @@ export class ThreeWsStack extends cdk.Stack {
       },
     });
 
-    new cdk.CfnOutput(this, 'PumpSnapshotUrl', {
-      value: snapshotUrl.url,
-      description: 'Public URL for the pump.fun token snapshot API + demo page',
+    new cdk.CfnOutput(this, 'ForgeUrl', {
+      value: forgeUrl.url,
+      description: 'Public URL for three.ws Forge — share pages, GLB API, AR, social cards',
     });
 
     // Associate this CloudFormation stack with the three.ws MyApplications entry.

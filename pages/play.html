@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Play · Coin Communities — three.ws</title>
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+		/>
+		<meta
+			name="description"
+			content="Coin Communities — a browser isometric MMO on three.ws. Join coin communities, gather, fight, trade, and explore a shared world. Sign in with your wallet and play."
+		/>
+		<meta name="theme-color" content="#1a2740" />
+
+		<!--
+			Multiplayer server URL. Empty in dev — the page falls back to
+			ws://<host>:2567 so `npm run dev:walk-all` works out of the box.
+			In production, set this to the deployed Colyseus host:
+				<meta name="game-server" content="wss://three-ws-multiplayer.fly.dev">
+		-->
+		<meta name="game-server" content="" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Play · Coin Communities" />
+		<meta property="og:description" content="A browser isometric MMO on three.ws — join coin communities, gather, fight, trade, explore." />
+		<meta property="og:url" content="https://three.ws/play" />
+
+		<link rel="stylesheet" href="/src/game/coincommunities.css" />
+	</head>
+	<body>
+		<div id="kx-loading">
+			<div class="kx-loading-card">
+				<div class="kx-loading-mark">COIN COMMUNITIES</div>
+				<div class="kx-loading-sub">Joining the community…</div>
+				<div class="kx-spinner" role="status" aria-label="Loading"></div>
+			</div>
+		</div>
+
+		<canvas id="kx-canvas"></canvas>
+
+		<script type="module" src="/src/game/coincommunities.js"></script>
+	</body>
+</html>

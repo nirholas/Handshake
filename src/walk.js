@@ -50,16 +50,45 @@ import { WalkNet } from './walk-net.js';
 
 const AVATAR_URL_DEFAULT = '/avatars/default.glb';
 
+// The GLB URL the local avatar actually loaded from. Captured by resolveAvatarUrl
+// so we can (a) broadcast it to the room — other clients render us as our real
+// avatar — and (b) short-circuit remote avatar loads that match ours.
+let resolvedAvatarUrl = AVATAR_URL_DEFAULT;
+
 async function resolveAvatarUrl() {
 	const params = new URLSearchParams(location.search);
+	// A direct GLB/VRM URL wins — this is what the /communities lobby passes when
+	// a guest drops in with a pasted model or a Ready Player Me link.
+	const direct = params.get('avatarUrl');
+	if (direct) { resolvedAvatarUrl = direct; return direct; }
 	const id = params.get('avatar');
-	if (!id) return AVATAR_URL_DEFAULT;
+	if (!id) { resolvedAvatarUrl = AVATAR_URL_DEFAULT; return AVATAR_URL_DEFAULT; }
 	const res = await fetch(`/api/avatars/${encodeURIComponent(id)}`);
 	if (!res.ok) throw new Error(`avatar ${id} not found (HTTP ${res.status})`);
 	const { avatar } = await res.json();
 	if (!avatar?.url) throw new Error(`avatar ${id} has no GLB URL`);
+	resolvedAvatarUrl = avatar.url;
 	return avatar.url;
 }
+
+// ── Coin community context ────────────────────────────────────────────────
+// /walk doubles as the renderer for coin community worlds. When the lobby
+// hands off with ?coin=<mint>&coinName=…&coinSymbol=…&coinImage=…, every player
+// who entered the same coin shares one room instance (matchmaking key on the
+// server) and the world is themed with the coin's identity (HUD + 3D totem).
+const COIN_PARAMS = (() => {
+	const p = new URLSearchParams(location.search);
+	const mint = (p.get('coin') || '').trim();
+	const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+	if (!MINT_RE.test(mint)) return { coin: '', name: '', symbol: '', image: '', agent: (p.get('agent') || '').trim() };
+	return {
+		coin: mint,
+		name: (p.get('coinName') || '').slice(0, 48),
+		symbol: (p.get('coinSymbol') || '').slice(0, 16),
+		image: (p.get('coinImage') || '').slice(0, 1024),
+		agent: (p.get('agent') || '').trim(),
+	};
+})();
 
 const ANIMATIONS_MANIFEST_URL = '/animations/manifest.json';
 const CLIP_IDLE = 'idle';
@@ -212,6 +241,17 @@ if (cameraModeBtn) cameraModeBtn.addEventListener('click', () => cycleCameraMode
 if (envBtn) envBtn.addEventListener('click', () => cycleEnvironment());
 if (screenshotBtn) screenshotBtn.addEventListener('click', () => takeScreenshot());
 if (minimapBtn) minimapBtn.addEventListener('click', () => toggleMinimap());
+
+// ── On-screen touch action cluster (mobile) ──────────────────────────────
+// jump / camera flip / gestures for thumbs — keyboardless devices can't reach
+// Space, C, or G. The underlying actions already fire haptics; the gesture
+// button opens the palette (no emote until one is picked) so it taps its own.
+document.getElementById('walk-touch-jump')?.addEventListener('click', () => triggerJump());
+document.getElementById('walk-touch-camera')?.addEventListener('click', () => cycleCameraMode());
+document.getElementById('walk-touch-gesture')?.addEventListener('click', () => {
+	haptics.buzz(5);
+	toggleGesturePalette();
+});
 
 // ── Players panel ────────────────────────────────────────────────────────
 let playersPanelOpen = false;
@@ -386,6 +426,7 @@ function cycleCameraMode() {
 	const idx = CAMERA_MODES.indexOf(cameraMode);
 	setCameraMode(CAMERA_MODES[(idx + 1) % CAMERA_MODES.length]);
 	setStatus(`Camera: ${CAMERA_MODE_LABELS[cameraMode]}`);
+	haptics.buzz(5);
 }
 
 // Camera mode indicator UI element
@@ -484,46 +525,73 @@ function frameAvatarCamera({ snap = true } = {}) {
 }
 applyCameraImmediate();
 
-// ── Drag-to-orbit on the canvas (one-finger drag rotates the camera yaw) ──
+// ── Canvas camera control — one-finger drag orbits, two-finger pinch zooms ──
+// Multi-touch aware via a live pointer map: the joystick(s) and the camera can
+// be driven at the same time because pointers that land inside a stick zone are
+// never tracked here. A single tracked pointer orbits; a second promotes the
+// gesture to pinch-zoom; lifting back to one resumes orbit seamlessly.
 {
-	let dragging = false;
-	let lastX = 0, lastY = 0;
-	let downId = -1;
+	const pointers = new Map(); // pointerId → { x, y }
+	let orbitId = -1;
+	let pinchDist = 0;
+
+	const inRect = (el, x, y) => {
+		if (!el) return false;
+		const r = el.getBoundingClientRect();
+		return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+	};
+	const pinchDistance = () => {
+		const [a, b] = [...pointers.values()];
+		return Math.hypot(a.x - b.x, a.y - b.y);
+	};
 
 	canvas.addEventListener('pointerdown', (e) => {
-		// Don't steal pointer events that belong to the joystick zone.
-		// On some mobile browsers the canvas (being full-screen) can receive
-		// a pointerdown before nipplejs does, and setPointerCapture would
-		// redirect all subsequent pointermove events here — breaking movement.
-		const inRect = (el) => {
-			if (!el) return false;
-			const r = el.getBoundingClientRect();
-			return e.clientX >= r.left && e.clientX <= r.right &&
-			       e.clientY >= r.top  && e.clientY <= r.bottom;
-		};
-		if (inRect(joystickEl) || inRect(lookJoystickEl)) return;
+		// Pointers belonging to a stick zone are owned by nipplejs — capturing
+		// them here would redirect its move stream and break movement.
+		if (inRect(joystickEl, e.clientX, e.clientY) || inRect(lookJoystickEl, e.clientX, e.clientY)) return;
 
-		dragging = true;
-		downId = e.pointerId;
-		lastX = e.clientX;
-		lastY = e.clientY;
-		canvas.setPointerCapture?.(e.pointerId);
+		pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+		try { canvas.setPointerCapture?.(e.pointerId); } catch {}
+
+		if (pointers.size === 1) {
+			orbitId = e.pointerId;
+		} else if (pointers.size === 2) {
+			orbitId = -1; // suspend orbit while pinching
+			pinchDist = pinchDistance();
+		}
 	});
+
 	const onMove = (e) => {
-		if (!dragging || e.pointerId !== downId) return;
-		const dx = e.clientX - lastX;
-		const dy = e.clientY - lastY;
-		lastX = e.clientX;
-		lastY = e.clientY;
-		cameraYaw -= dx * 0.005;
-		cameraPitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, cameraPitch - dy * 0.0035));
+		const p = pointers.get(e.pointerId);
+		if (!p) return;
+		const dx = e.clientX - p.x;
+		const dy = e.clientY - p.y;
+		p.x = e.clientX;
+		p.y = e.clientY;
+
+		if (pointers.size >= 2) {
+			// Pinch: spreading fingers (distance grows) zooms in (camZoom down).
+			const dist = pinchDistance();
+			camZoom = Math.max(CAM_ZOOM_MIN, Math.min(CAM_ZOOM_MAX, camZoom - (dist - pinchDist) * 0.005));
+			pinchDist = dist;
+		} else if (e.pointerId === orbitId) {
+			cameraYaw -= dx * 0.005;
+			cameraPitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, cameraPitch - dy * 0.0035));
+		}
 	};
+
 	const onUp = (e) => {
-		if (e.pointerId !== downId) return;
-		dragging = false;
-		downId = -1;
+		if (!pointers.has(e.pointerId)) return;
+		pointers.delete(e.pointerId);
 		try { canvas.releasePointerCapture?.(e.pointerId); } catch {}
+		// Dropping from pinch back to a single finger resumes orbit with it.
+		if (pointers.size === 1) {
+			orbitId = [...pointers.keys()][0];
+		} else if (pointers.size === 0) {
+			orbitId = -1;
+		}
 	};
+
 	canvas.addEventListener('pointermove', onMove);
 	canvas.addEventListener('pointerup', onUp);
 	canvas.addEventListener('pointercancel', onUp);
@@ -536,6 +604,29 @@ const input = {
 	look: { x: 0, y: 0, active: false },
 };
 
+// ── Haptics ─────────────────────────────────────────────────────────────
+// Tactile feedback on touch actions. Default on, persisted, and silently a
+// no-op where the Vibration API is absent (every desktop, iOS Safari) so call
+// sites never have to guard. Toggleable from the controls overlay.
+const haptics = (() => {
+	const KEY = 'walk:haptics';
+	const supported = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
+	let enabled = true;
+	try { enabled = localStorage.getItem(KEY) !== '0'; } catch {}
+	return {
+		get supported() { return supported; },
+		get enabled() { return enabled; },
+		set(on) {
+			enabled = !!on;
+			try { localStorage.setItem(KEY, enabled ? '1' : '0'); } catch {}
+		},
+		buzz(ms) {
+			if (!enabled || !supported) return;
+			try { navigator.vibrate(ms); } catch {}
+		},
+	};
+})();
+
 // ── Jump state ────────────────────────────────────────────────────────────
 let jumpVelocity = 0;
 let jumpActive = false;
@@ -547,6 +638,7 @@ function triggerJump() {
 	if (jumpActive) return;
 	jumpActive = true;
 	jumpVelocity = JUMP_FORCE;
+	haptics.buzz(10);
 }
 
 // ── Snap-turn (Q / E) ────────────────────────────────────────────────────
@@ -615,14 +707,36 @@ const helpOverlay = (() => {
 				<tr><td style="color:#aaa;padding-right:16px">H / ?</td><td>Toggle this overlay</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Left / right stick</td><td>Move &middot; look (touch)</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Mouse drag</td><td>Orbit camera</td></tr>
-				<tr><td style="color:#aaa;padding-right:16px">Scroll wheel</td><td>Zoom in / out</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Scroll / pinch</td><td>Zoom in / out</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Esc</td><td>Close overlay / release pointer</td></tr>
 			</table>
+			${haptics.supported ? `
+			<div style="margin:18px 0 0;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:space-between" data-help-keep>
+				<span style="font-size:14px">Haptics</span>
+				<button type="button" id="walk-haptics-toggle" role="switch" data-help-keep
+					aria-checked="${haptics.enabled}"
+					style="appearance:none;border:1px solid rgba(255,255,255,0.2);background:${haptics.enabled ? 'var(--accent,#7c5cff)' : 'rgba(255,255,255,0.08)'};color:#fff;border-radius:999px;padding:5px 14px;font:inherit;font-size:13px;cursor:pointer">
+					${haptics.enabled ? 'On' : 'Off'}
+				</button>
+			</div>` : ''}
 			<p style="margin:20px 0 0;font-size:12px;color:#666">Click the canvas to lock the mouse for first-person look.</p>
 		</div>`;
 	document.body.appendChild(el);
 	return el;
 })();
+
+// Haptics on/off switch lives in the controls overlay — keep its tap from
+// bubbling up to the dismiss-on-any-pointer handler below.
+const hapticsToggle = helpOverlay.querySelector('#walk-haptics-toggle');
+if (hapticsToggle) {
+	hapticsToggle.addEventListener('click', () => {
+		haptics.set(!haptics.enabled);
+		hapticsToggle.setAttribute('aria-checked', String(haptics.enabled));
+		hapticsToggle.textContent = haptics.enabled ? 'On' : 'Off';
+		hapticsToggle.style.background = haptics.enabled ? 'var(--accent,#7c5cff)' : 'rgba(255,255,255,0.08)';
+		haptics.buzz(8); // confirm the new setting with a tick
+	});
+}
 
 let helpVisible = false;
 function toggleHelp() {
@@ -633,9 +747,10 @@ function toggleHelp() {
 // Any pointer interaction dismisses the overlay. Capture phase + a
 // non-blocking backdrop means the SAME tap that closes the panel also reaches
 // the joystick underneath — so the first-visit help never costs the user a
-// stalled touch.
-window.addEventListener('pointerdown', () => {
-	if (helpVisible) toggleHelp();
+// stalled touch. Controls tagged data-help-keep (the haptics switch) are
+// exempt so toggling a setting doesn't slam the panel shut.
+window.addEventListener('pointerdown', (e) => {
+	if (helpVisible && !e.target?.closest?.('[data-help-keep]')) toggleHelp();
 }, true);
 
 window.addEventListener('keydown', (e) => {
@@ -691,9 +806,32 @@ window.addEventListener('keyup', (e) => {
 	}
 });
 
+// Touch devices and narrow viewports get the on-screen sticks + action
+// cluster; wide pointer-fine screens drive everything from WASD + mouse-look.
+const wantsTouchControls = (() => {
+	if (typeof matchMedia !== 'function') return false;
+	return matchMedia('(hover: none)').matches || matchMedia('(max-width: 640px)').matches;
+})();
+
+// Radial dead zone — nipplejs reports a vector the instant a thumb grazes the
+// ring, which reads as drift. We swallow the inner `dead` fraction and remap
+// the remainder to the full [0, 1] range so the stick still reaches max speed
+// at the rim while staying dead-still for tiny touches.
+const JOY_DEADZONE = 0.12;
+function applyDeadzone(x, y, dead = JOY_DEADZONE) {
+	const m = Math.hypot(x, y);
+	if (m < dead) return { x: 0, y: 0, active: false };
+	const scaled = (m - dead) / (1 - dead);
+	const k = scaled / m;
+	return { x: x * k, y: y * k, active: true };
+}
+
 const joystick = nipplejs.create({
 	zone: joystickEl,
-	mode: 'static',
+	// Floating on touch — the stick materializes wherever the left thumb lands
+	// inside the zone (which spans the lower-left of the screen) and follows it,
+	// so the user never has to look for a fixed pad. Static elsewhere.
+	mode: wantsTouchControls ? 'dynamic' : 'static',
 	position: { left: '50%', top: '50%' },
 	size: 110,
 	color: 'rgba(255,255,255,0.85)',
@@ -707,9 +845,10 @@ joystick.on('move', (evt) => {
 		// data.vector is the proportional stick displacement within the radius,
 		// already in [-1, 1] per axis (magnitude ≤ 1). y is positive when the
 		// stick is pushed UP — our forward direction.
-		input.joy.x = data.vector.x;
-		input.joy.y = data.vector.y;
-		input.joy.active = Math.hypot(data.vector.x, data.vector.y) > 0.05;
+		const d = applyDeadzone(data.vector.x, data.vector.y);
+		input.joy.x = d.x;
+		input.joy.y = d.y;
+		input.joy.active = d.active;
 	}
 });
 joystick.on('end', () => {
@@ -723,10 +862,6 @@ joystick.on('end', () => {
 // canvas. Only mounted where the desktop mouse-look affordances are hidden
 // (touch / narrow viewports); on a wide pointer-fine screen the WASD + mouse
 // controls own the camera and a second stick would just overlap the hints.
-const wantsTouchControls = (() => {
-	if (typeof matchMedia !== 'function') return false;
-	return matchMedia('(hover: none)').matches || matchMedia('(max-width: 640px)').matches;
-})();
 if (lookJoystickEl && wantsTouchControls) {
 	const lookJoystick = nipplejs.create({
 		zone: lookJoystickEl,
@@ -741,9 +876,10 @@ if (lookJoystickEl && wantsTouchControls) {
 		const data = evt?.data;
 		if (!data?.vector) return;
 		// data.vector already carries direction + magnitude in [-1, 1] per axis.
-		input.look.x = data.vector.x;
-		input.look.y = data.vector.y;
-		input.look.active = Math.hypot(data.vector.x, data.vector.y) > 0.05;
+		const d = applyDeadzone(data.vector.x, data.vector.y);
+		input.look.x = d.x;
+		input.look.y = d.y;
+		input.look.active = d.active;
 	});
 	lookJoystick.on('end', () => {
 		input.look.x = 0;
@@ -1504,6 +1640,9 @@ function tick() {
 	}
 	updateRemotePlayers(dt);
 
+	// 4b. Animate the coin totem (billboard + bob + ring spin) when present.
+	if (coinTotem) coinTotem.update(dt);
+
 	// 5. Update speech bubbles (3D -> 2D projection)
 	updateSpeechBubbles();
 
@@ -1535,6 +1674,32 @@ const remotePlayers = new Map();
 
 let net = null;
 let netConnected = false;
+let coinTotem = null; // CoinTotem instance when in a coin community world
+
+// Remote-avatar template cache. Each distinct GLB URL is fetched once and
+// reused (via SkeletonUtils.clone) for every player wearing it, so a room full
+// of the same avatar costs a single download. Keyed by URL → Promise<scene>.
+const _remoteAvatarTemplates = new Map();
+function loadRemoteAvatarTemplate(url) {
+	if (url === resolvedAvatarUrl && avatarTemplate) return Promise.resolve(avatarTemplate);
+	if (_remoteAvatarTemplates.has(url)) return _remoteAvatarTemplates.get(url);
+	const p = new GLTFLoader().loadAsync(url).then((gltf) => {
+		gltf.scene.traverse((n) => {
+			if (n.isMesh) {
+				n.castShadow = true;
+				n.receiveShadow = false;
+				if (n.material && 'envMapIntensity' in n.material) n.material.envMapIntensity = 0.85;
+			}
+		});
+		return gltf.scene;
+	});
+	_remoteAvatarTemplates.set(url, p);
+	return p;
+}
+function isLoadableAvatarUrl(url) {
+	return typeof url === 'string' && url.length > 0 &&
+		(url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://'));
+}
 
 class RemotePlayer {
 	constructor(sessionId, initial) {
@@ -1563,6 +1728,9 @@ class RemotePlayer {
 		this._color = initial?.color ?? 0xffffff;
 		this._lastEmoteTs = 0;
 		this._emoting = false;
+		this._avatarUrl = initial?.avatar || '';
+		this._avatarLoadToken = 0;
+		this._root = root;
 
 		this.rig = new Group();
 		this.rig.add(root);
@@ -1576,6 +1744,13 @@ class RemotePlayer {
 		this.anim.loadAll().then(() => {
 			this.anim.crossfadeTo(motionToClipName(this.motion), 0.0);
 		});
+
+		// If this player brought their own avatar / 3D agent, swap the stand-in
+		// template for their real model once it loads. The default-template body
+		// above keeps them visible meanwhile so nobody pops in late.
+		if (isLoadableAvatarUrl(this._avatarUrl) && this._avatarUrl !== resolvedAvatarUrl) {
+			this._swapAvatar(this._avatarUrl);
+		}
 
 		// Floating name tag — rendered as a CSS-styled DOM sprite that we
 		// project onto the avatar's head each frame.
@@ -1613,6 +1788,48 @@ class RemotePlayer {
 			this._lastEmoteTs = player.emoteTs;
 			this._playRemoteEmote(player.emote);
 		}
+		// Live avatar swap — a player picked a new avatar without rejoining.
+		if (player.avatar !== this._avatarUrl && isLoadableAvatarUrl(player.avatar)) {
+			this._avatarUrl = player.avatar;
+			this._swapAvatar(player.avatar);
+		}
+	}
+
+	// Replace the visible body with the player's own avatar GLB. Loads (cached)
+	// off the main thread; a load token guards against an out-of-order resolve
+	// when avatars are swapped faster than the network fetches them.
+	async _swapAvatar(url) {
+		const token = ++this._avatarLoadToken;
+		let templateScene;
+		try {
+			templateScene = await loadRemoteAvatarTemplate(url);
+		} catch (err) {
+			console.warn('[walk] remote avatar load failed, keeping stand-in:', url, err?.message ?? err);
+			return;
+		}
+		if (token !== this._avatarLoadToken || !this.rig) return; // superseded or disposed
+
+		const root = cloneSkinnedScene(templateScene);
+		root.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = false; } });
+		// Center feet on the rig origin so y=0 is the ground, matching loadAvatar().
+		const box = new Box3().setFromObject(root);
+		root.position.y -= box.min.y;
+
+		// Tear down the old body + its mixer, then attach a fresh one bound to the
+		// new skeleton with the same shared clips.
+		try { this.anim.dispose(); } catch {}
+		if (this._root) this.rig.remove(this._root);
+		this._root = root;
+		this.rig.add(root);
+
+		this.anim = new AnimationManager();
+		this.anim.attach(root);
+		this.anim.setAnimationDefs(animationDefs);
+		try {
+			await this.anim.loadAll();
+			if (token !== this._avatarLoadToken) return;
+			this.anim.crossfadeTo(motionToClipName(this.motion), 0.0);
+		} catch {}
 	}
 
 	async _playRemoteEmote(name) {
@@ -1666,7 +1883,9 @@ class RemotePlayer {
 	}
 
 	dispose() {
+		this._avatarLoadToken++; // cancel any in-flight avatar swap
 		scene.remove(this.rig);
+		this.rig = null;
 		this.anim.dispose();
 		this.label.remove();
 	}
@@ -1726,7 +1945,15 @@ function startNet() {
 	const stored = getStoredName();
 	const name = (stored || `guest-${Math.random().toString(36).slice(2, 6)}`).slice(0, 24);
 	if (nameInput && !nameInput.value) nameInput.value = name;
-	net = new WalkNet({ name });
+	net = new WalkNet({
+		name,
+		avatar: resolvedAvatarUrl,
+		agent: COIN_PARAMS.agent,
+		coin: COIN_PARAMS.coin,
+		coinName: COIN_PARAMS.name,
+		coinSymbol: COIN_PARAMS.symbol,
+		coinImage: COIN_PARAMS.image,
+	});
 
 	net.on('status', ({ status }) => {
 		netConnected = status === 'online';
@@ -1739,6 +1966,7 @@ function startNet() {
 		remotePlayers.set(sessionId, new RemotePlayer(sessionId, {
 			x: player.x, y: player.y, z: player.z, yaw: player.yaw,
 			motion: player.motion, name: player.name, color: player.color,
+			avatar: player.avatar, agent: player.agent,
 		}));
 		renderOnlineCount();
 	});
@@ -1757,6 +1985,14 @@ function startNet() {
 			remotePlayers.delete(sessionId);
 			renderOnlineCount();
 		}
+	});
+	net.on('chat', (msg) => {
+		// Our own messages are rendered optimistically on send — skip the echo.
+		if (!msg || msg.id === net.mySessionId) return;
+		const rp = remotePlayers.get(msg.id);
+		const color = rp?._color;
+		window._walkChat?.addChatMessage(msg.name || 'guest', msg.text, { color });
+		showSpeechBubbleFor(msg.id, msg.text);
 	});
 
 	setupOnlinePill();
@@ -1861,6 +2097,7 @@ function triggerQuickGesture(index) {
 	const emote = EMOTE_CLIPS[index];
 	playEmote(emote.name);
 	setStatus(`Gesture: ${emote.label}`);
+	haptics.buzz(5);
 }
 
 // Close gesture palette on click outside
@@ -2641,6 +2878,11 @@ loadAvatar()
 			if (cameraMode === 'firstperson') avatar.visible = false;
 			animationManager.attach(avatar);
 			animationManager.crossfadeTo(motionToClipName(currentMotion), 0);
+			// Broadcast the new avatar so everyone else in the room re-renders us
+			// as our real avatar live, without a rejoin. Keep resolvedAvatarUrl in
+			// sync so remote-template caching stays correct.
+			resolvedAvatarUrl = url;
+			net?.sendAvatar(url, currentAvatarId || '');
 			setStatus('Avatar switched');
 		} catch (err) {
 			setStatus('Failed to load avatar', { error: true });
@@ -2690,9 +2932,7 @@ loadAvatar()
 		addChatMessage(name, text);
 		// Show speech bubble above local avatar
 		showSpeechBubbleFor('local', text);
-		if (net?.room) {
-			net.room.send('chat', { text: text.slice(0, 200) });
-		}
+		net?.sendChat(text);
 	});
 
 	window.addEventListener('keydown', (e) => {
@@ -2704,6 +2944,259 @@ loadAvatar()
 	});
 
 	window._walkChat = { addChatMessage };
+}
+
+// ── Coin community theming (HUD + 3D totem) ──────────────────────────────
+// When /walk is entered as a coin community (?coin=<mint>&…), we theme the
+// world: a top-center HUD carrying the coin's identity + live trade flow, and
+// a 3D totem at world center — a billboarded medallion of the coin over a
+// glowing ground ring — so each coin's space looks unmistakably its own.
+{
+	const COIN_FRONTEND = 'https://pump.fun/coin/';
+	const TRADE_POLL_MS = 7000;
+
+	// Per-coin accent hue keeps every community visually distinct without us
+	// having to assign palettes by hand.
+	function coinAccent(seed) {
+		let h = 0;
+		for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+		const hue = h % 360;
+		return { css: `hsl(${hue} 85% 62%)`, three: new Color().setHSL(hue / 360, 0.78, 0.6) };
+	}
+
+	function initials(symbol, name) {
+		const s = (symbol || name || '?').replace(/[^A-Za-z0-9]/g, '');
+		return (s.slice(0, 3) || '?').toUpperCase();
+	}
+
+	// Circular coin medallion drawn to a canvas → CanvasTexture. Falls back to a
+	// tinted disc with the ticker initials when there's no image or it taints
+	// the canvas (cross-origin). Returns { texture, paint(img) } so the async
+	// image load can repaint once it arrives.
+	function makeMedallionTexture(accent) {
+		const size = 320;
+		const cv = document.createElement('canvas');
+		cv.width = cv.height = size;
+		const ctx = cv.getContext('2d');
+		const tex = new CanvasTexture(cv);
+		tex.anisotropy = 4;
+
+		const drawFallback = () => {
+			ctx.clearRect(0, 0, size, size);
+			const grad = ctx.createLinearGradient(0, 0, size, size);
+			grad.addColorStop(0, accent.css);
+			grad.addColorStop(1, 'rgba(10,10,18,0.95)');
+			ctx.fillStyle = grad;
+			ctx.beginPath();
+			ctx.arc(size / 2, size / 2, size / 2 - 8, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = 'rgba(255,255,255,0.95)';
+			ctx.font = `700 ${size * 0.32}px system-ui, sans-serif`;
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(initials(COIN_PARAMS.symbol, COIN_PARAMS.name), size / 2, size / 2 + 4);
+		};
+
+		const ring = () => {
+			ctx.lineWidth = 14;
+			ctx.strokeStyle = accent.css;
+			ctx.shadowColor = accent.css;
+			ctx.shadowBlur = 22;
+			ctx.beginPath();
+			ctx.arc(size / 2, size / 2, size / 2 - 9, 0, Math.PI * 2);
+			ctx.stroke();
+			ctx.shadowBlur = 0;
+		};
+
+		drawFallback();
+		ring();
+		tex.needsUpdate = true;
+
+		if (COIN_PARAMS.image) {
+			const img = new Image();
+			img.crossOrigin = 'anonymous';
+			img.referrerPolicy = 'no-referrer';
+			img.onload = () => {
+				try {
+					ctx.clearRect(0, 0, size, size);
+					ctx.save();
+					ctx.beginPath();
+					ctx.arc(size / 2, size / 2, size / 2 - 12, 0, Math.PI * 2);
+					ctx.clip();
+					// cover-fit the image into the circle
+					const s = Math.max(size / img.width, size / img.height);
+					const w = img.width * s, h = img.height * s;
+					ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+					ctx.restore();
+					ring();
+					tex.needsUpdate = true;
+				} catch {
+					drawFallback(); ring(); tex.needsUpdate = true;
+				}
+			};
+			img.src = COIN_PARAMS.image;
+		}
+		return tex;
+	}
+
+	// Flat glowing ring laid on the ground around spawn.
+	function makeGroundRingTexture(accent) {
+		const size = 512;
+		const cv = document.createElement('canvas');
+		cv.width = cv.height = size;
+		const ctx = cv.getContext('2d');
+		const c = size / 2;
+		for (const [r, a, w] of [[c - 18, 0.85, 10], [c - 60, 0.35, 6], [c - 150, 0.18, 3]]) {
+			ctx.beginPath();
+			ctx.arc(c, c, r, 0, Math.PI * 2);
+			ctx.strokeStyle = accent.css;
+			ctx.globalAlpha = a;
+			ctx.lineWidth = w;
+			ctx.shadowColor = accent.css;
+			ctx.shadowBlur = 24;
+			ctx.stroke();
+		}
+		ctx.globalAlpha = 1;
+		const tex = new CanvasTexture(cv);
+		tex.anisotropy = 4;
+		return tex;
+	}
+
+	class CoinTotem {
+		constructor() {
+			const accent = coinAccent(COIN_PARAMS.coin);
+			this.group = new Group();
+
+			// Ground ring — flat, additive, slowly spinning.
+			this.ringMesh = new Mesh(
+				new CircleGeometry(2.6, 64),
+				new MeshBasicMaterial({
+					map: makeGroundRingTexture(accent),
+					transparent: true, depthWrite: false, opacity: 0.9,
+				}),
+			);
+			this.ringMesh.rotation.x = -Math.PI / 2;
+			this.ringMesh.position.y = 0.02;
+			this.group.add(this.ringMesh);
+
+			// Faint light beam from the ring up to the medallion.
+			this.beam = new Mesh(
+				new CylinderGeometry(0.04, 0.22, 3.0, 16, 1, true),
+				new MeshBasicMaterial({ color: accent.three, transparent: true, opacity: 0.12, depthWrite: false, side: DoubleSide }),
+			);
+			this.beam.position.y = 1.5;
+			this.group.add(this.beam);
+
+			// Billboarded medallion.
+			this.medallion = new Mesh(
+				new PlaneGeometry(1.5, 1.5),
+				new MeshBasicMaterial({ map: makeMedallionTexture(accent), transparent: true, depthWrite: false }),
+			);
+			this.medallion.position.y = 3.4;
+			this.group.add(this.medallion);
+
+			// Stand the totem ahead of the spawn point (players spawn facing it) so
+			// it reads as a monument to gather around. The medallion rides high
+			// enough to clear the avatar's head in the default follow framing.
+			this.group.position.set(0, 0, -7);
+			scene.add(this.group);
+			this._t = 0;
+		}
+
+		update(dt) {
+			this._t += dt;
+			this.ringMesh.rotation.z += dt * 0.15;
+			// Bob the medallion gently and keep it facing the camera.
+			this.medallion.position.y = 3.4 + Math.sin(this._t * 1.4) * 0.08;
+			this.medallion.quaternion.copy(camera.quaternion);
+		}
+	}
+
+	if (COIN_PARAMS.coin) {
+		coinTotem = new CoinTotem();
+		document.title = `${COIN_PARAMS.symbol ? '$' + COIN_PARAMS.symbol : 'Coin'} · three.ws`;
+		buildCoinHud();
+	}
+
+	// ── Coin HUD (top-center) ───────────────────────────────────────────────
+	function buildCoinHud() {
+		const accent = coinAccent(COIN_PARAMS.coin);
+		const hud = document.createElement('div');
+		hud.id = 'walk-coin-hud';
+		hud.style.cssText = [
+			'position:fixed', 'z-index:7',
+			'left:50%', 'top:calc(env(safe-area-inset-top, 0) + 56px)',
+			'transform:translateX(-50%)',
+			'display:flex', 'align-items:center', 'gap:10px',
+			'background:rgba(14,14,22,0.74)', `border:1px solid ${accent.css}`,
+			'border-radius:999px', 'padding:6px 14px 6px 7px',
+			'backdrop-filter:blur(12px)', '-webkit-backdrop-filter:blur(12px)',
+			'font-family:system-ui,sans-serif', 'color:#fff',
+			'box-shadow:0 6px 24px rgba(0,0,0,0.35)',
+			'max-width:min(92vw, 460px)',
+		].join(';');
+
+		const imgHtml = COIN_PARAMS.image
+			? `<img src="${escAttr(COIN_PARAMS.image)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${escAttr(initials(COIN_PARAMS.symbol, COIN_PARAMS.name))}',className:'coin-fallback'}))" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid ${accent.css};flex:0 0 34px;background:#0e0e16" />`
+			: `<span class="coin-fallback">${esc(initials(COIN_PARAMS.symbol, COIN_PARAMS.name))}</span>`;
+
+		const title = COIN_PARAMS.symbol ? `$${esc(COIN_PARAMS.symbol)}` : 'Coin';
+		const sub = COIN_PARAMS.name ? esc(COIN_PARAMS.name) : `${COIN_PARAMS.coin.slice(0, 4)}…${COIN_PARAMS.coin.slice(-4)}`;
+
+		hud.innerHTML = `
+			<style>
+				#walk-coin-hud .coin-fallback{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;background:${accent.css};color:#0b0b12;flex:0 0 34px}
+				#walk-coin-hud a{color:rgba(255,255,255,0.85);text-decoration:none}
+				#walk-coin-hud a:hover{color:#fff}
+				#walk-coin-hud .coin-meta{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+				#walk-coin-hud .coin-title{font-weight:700;font-size:14px;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+				#walk-coin-hud .coin-sub{font-size:11px;color:rgba(255,255,255,0.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+				#walk-coin-hud .coin-trade{font-size:11px;font-variant-numeric:tabular-nums;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,0.06);white-space:nowrap;opacity:0;transition:opacity .25s}
+				#walk-coin-hud .coin-trade.is-live{opacity:1}
+				#walk-coin-hud .coin-trade.buy{color:#34d399}
+				#walk-coin-hud .coin-trade.sell{color:#f87171}
+				#walk-coin-hud .coin-actions{display:flex;gap:8px;align-items:center;margin-left:2px;border-left:1px solid rgba(255,255,255,0.12);padding-left:10px}
+				#walk-coin-hud .coin-actions a{font-size:11px;font-weight:600}
+				body.is-zen #walk-coin-hud{opacity:0;pointer-events:none}
+			</style>
+			${imgHtml}
+			<a class="coin-meta" href="${COIN_FRONTEND}${escAttr(COIN_PARAMS.coin)}" target="_blank" rel="noopener" title="Open on pump.fun">
+				<span class="coin-title">${title}</span>
+				<span class="coin-sub">${sub}</span>
+			</a>
+			<span class="coin-trade" data-trade></span>
+			<span class="coin-actions">
+				<a href="/communities" title="Switch community">↩ coins</a>
+			</span>`;
+		document.body.appendChild(hud);
+
+		// Live trade flow — last on-chain trade for this mint, refreshed on an
+		// interval. Real data only: on any failure we leave the chip hidden.
+		const tradeEl = hud.querySelector('[data-trade]');
+		const url = `/api/pump/coin-trades?mint=${encodeURIComponent(COIN_PARAMS.coin)}&limit=1`;
+		let stopped = false;
+		async function pollTrade() {
+			if (stopped) return;
+			try {
+				const r = await fetch(url, { headers: { accept: 'application/json' } });
+				if (r.ok) {
+					const data = await r.json();
+					const t = data?.trades?.[0];
+					if (t && Number.isFinite(t.sol_amount)) {
+						const sol = t.sol_amount >= 1 ? t.sol_amount.toFixed(2) : t.sol_amount.toFixed(3);
+						tradeEl.textContent = `${t.is_buy ? '▲' : '▼'} ${sol} SOL`;
+						tradeEl.className = `coin-trade is-live ${t.is_buy ? 'buy' : 'sell'}`;
+						tradeEl.title = 'Most recent on-chain trade';
+					}
+				}
+			} catch { /* offline / rate-limited — keep last value */ }
+			if (!stopped) setTimeout(pollTrade, TRADE_POLL_MS);
+		}
+		pollTrade();
+		window.addEventListener('beforeunload', () => { stopped = true; });
+	}
+
+	function escAttr(s) { return String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]); }
 }
 
 // ── Restore zen preference ───────────────────────────────────────────────
