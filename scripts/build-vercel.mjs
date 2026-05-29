@@ -119,20 +119,25 @@ try {
 		bundleApi(),
 	]);
 
-	// Phase 1b: heavy Vite builds — run concurrently but isolated from Phase 1a
-	// to prevent 3+ Vite processes competing for RAM simultaneously.
-	// buildLib is quick (~30s) so we can sneak it in here too.
-	phase(2, 'lib + avatar-studio + chat (parallel, heavy Vite)');
+	// Phase 2: buildLib alone. avatar-sdk depends on dist-lib/agent-3d.js, and
+	// running this Vite build in isolation keeps peak RAM well under the 8 GB
+	// Vercel container ceiling before the next pair starts.
+	phase(2, 'lib + avatar-sdk (sequential)');
+	await buildLib();
+
+	// Phase 3: the remaining heavy Vite builds. Cap at two concurrent Vite
+	// processes — three (the previous shape) tipped the container into
+	// std::bad_alloc/SIGABRT during minification.
+	phase(3, 'avatar-studio + chat (parallel, capped at 2)');
 	await Promise.all([
-		buildLib(),
 		buildAvatarStudio(),
 		buildChat(),
 	]);
 
-	phase(3, 'app vite build');
+	phase(4, 'app vite build');
 	await buildApp();
 
-	phase(4, 'post-build (copy-avatar-studio + publish-lib + r2-cors)');
+	phase(5, 'post-build (copy-avatar-studio + publish-lib + r2-cors)');
 	await postBuild();
 
 	clearInterval(heartbeat);
