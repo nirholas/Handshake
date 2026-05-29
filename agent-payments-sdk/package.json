@@ -68,7 +68,6 @@
     "@ethereum-attestation-service/eas-sdk": "0.29.1",
     "@metaplex-foundation/js": "^0.20.1",
     "@pump-fun/pump-sdk": "^1.36.0",
-    "@pump-fun/pump-swap-sdk": "1.0.0",
     "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.98.0",
     "agent0-sdk": "^1.7.1",

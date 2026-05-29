@@ -75,15 +75,52 @@ async function buildChat() {
 
 // Guard: agent-payments-sdk/dist/ is gitignored. Vercel caches node_modules/
 // across deploys and skips npm install (and therefore postinstall) when
-// package-lock.json is unchanged. If the dist is missing the Vite app build
-// fails trying to resolve the package entry. Rebuild here if needed.
+// package-lock.json is unchanged. Two failure modes follow:
+//   1. The dist is missing entirely → the Vite app build can't resolve the
+//      package entry and fails.
+//   2. A stale or corrupt dist survives in the cache → e.g. a malformed ESM
+//      entry crashed every cron that imports the SDK at runtime with a
+//      SyntaxError ("export{…} = pkg" failing ModuleJob._instantiate).
+// `existsSync` alone misses case 2. Validate that every published entry parses
+// as a real module; rebuild from source if any is missing or syntactically bad.
+const SDK_ENTRIES = [
+	'agent-payments-sdk/dist/index.js',
+	'agent-payments-sdk/dist/solana/index.js',
+	'agent-payments-sdk/dist/x402/index.js',
+	'agent-payments-sdk/dist/evm/index.js',
+];
+
+function sdkDistIsValid() {
+	for (const rel of SDK_ENTRIES) {
+		const abs = resolve(ROOT, rel);
+		if (!existsSync(abs)) {
+			console.log(`[sdk-dist] ${rel} missing`);
+			return false;
+		}
+		try {
+			// `node --check` parses + statically links-checks the ESM without
+			// executing it. Catches the corrupt-dist case the old existsSync guard
+			// let through.
+			execSync(`node --check ${JSON.stringify(abs)}`, { stdio: 'pipe' });
+		} catch (err) {
+			const msg = (err.stderr?.toString() || err.message || '').split('\n')[0];
+			console.log(`[sdk-dist] ${rel} failed parse check: ${msg}`);
+			return false;
+		}
+	}
+	return true;
+}
+
 async function ensureSDKDist() {
-	const distIndex = resolve(ROOT, 'agent-payments-sdk/dist/index.js');
-	if (existsSync(distIndex)) return;
-	console.log('[sdk-dist] agent-payments-sdk/dist/index.js missing — rebuilding');
+	if (sdkDistIsValid()) return;
+	console.log('[sdk-dist] agent-payments-sdk dist missing or invalid — rebuilding from source');
+	execSync('rm -rf dist', { cwd: resolve(ROOT, 'agent-payments-sdk'), stdio: 'inherit' });
 	await run('sdk-dist', 'npm run build --prefix agent-payments-sdk', {
 		env: { NODE_OPTIONS: '--no-deprecation' },
 	});
+	if (!sdkDistIsValid()) {
+		throw new Error('[sdk-dist] rebuild produced an invalid dist — aborting');
+	}
 }
 
 async function prebuild() {

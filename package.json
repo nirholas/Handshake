@@ -135,7 +135,7 @@
 		"@pixiv/three-vrm": "^3.5.3",
 		"@pump-fun/agent-payments-sdk": "^3.1.0",
 		"@pump-fun/pump-sdk": "^1.36.0",
-		"@pump-fun/pump-swap-sdk": "^1.0.0",
+		"@pump-fun/pump-swap-sdk": "^1.16.0",
 		"@pythnetwork/hermes-client": "^3.1.0",
 		"@recast-navigation/core": "^0.43.1",
 		"@recast-navigation/three": "^0.43.1",

@@ -17,14 +17,8 @@
 // SOLANA_RPC_FALLBACK_URLS (comma-separated) enables the multi-endpoint
 // RpcFallback wrapper for read-side handlers that opt in via getRpcFallback().
 
-import { createRequire } from 'node:module';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
-
-const require = createRequire(import.meta.url);
-function loadPumpSwapSdk() {
-	return require('@pump-fun/pump-swap-sdk');
-}
 
 // @solana/web3.js calls console.error() on every 429 retry attempt. Those
 // retries succeed (callers see a resolved value, not a thrown error), but
@@ -219,15 +213,15 @@ export async function verifySignature({ network, signature }) {
 }
 
 // Resolve the canonical pump.fun AMM pool for `mint` (post-graduation). Pass
-// `quoteMint` for USDC-paired coins — uses canonicalPumpPoolPdaWithQuote instead
-// of the default WSOL PDA. Omit (or pass null) for SOL-paired coins.
+// `quoteMint` for USDC-paired coins — derives the PDA with the explicit quote
+// mint instead of the default WSOL PDA. Omit (or pass null) for SOL-paired coins.
 // return everything `buyQuoteInput` / `sellBaseInput` need to price a swap.
 // Quote currency is WSOL on the canonical pool.
 //
 // Throws { status: 404, code: 'pool_not_found' } if no pool exists yet.
 export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = null } = {}) {
 	if (!mint) throw Object.assign(new Error('mint required'), { status: 400 });
-	const [{ canonicalPumpPoolPda, canonicalPumpPoolPdaWithQuote, OnlinePumpAmmSdk, PumpAmmSdk }, web3, BN, spl] =
+	const [{ canonicalPumpPoolPda, OnlinePumpAmmSdk, PumpAmmSdk }, web3, BN, spl] =
 		await Promise.all([
 			import('@pump-fun/pump-swap-sdk'),
 			import('@solana/web3.js'),
@@ -238,7 +232,7 @@ export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = n
 	const mintPk = mint instanceof PublicKey ? mint : new PublicKey(mint);
 	const quoteMintPk = quoteMint instanceof PublicKey ? quoteMint : (quoteMint ? new PublicKey(quoteMint) : null);
 	const poolKey = quoteMintPk
-		? canonicalPumpPoolPdaWithQuote(mintPk, quoteMintPk)
+		? canonicalPumpPoolPda(mintPk, quoteMintPk)
 		: canonicalPumpPoolPda(mintPk);
 
 	const online = new OnlinePumpAmmSdk(connection);

@@ -2951,7 +2951,7 @@ const DRAFT_SYSTEM = `You write tweets for AI agents on three.ws. Tweets must be
 - Avoid em-dashes.
 Output ONLY the tweet text, nothing else.`;
 
-async function llmDraft({ system, user, max = 200 }) {
+async function anthropicDraft({ system, user, max }) {
 	const r = await fetch('https://api.anthropic.com/v1/messages', {
 		method: 'POST',
 		headers: {
@@ -2966,9 +2966,55 @@ async function llmDraft({ system, user, max = 200 }) {
 			messages: [{ role: 'user', content: user }],
 		}),
 	});
-	if (!r.ok) throw new Error(`llm failed: ${await r.text()}`);
+	if (!r.ok) throw new Error(`anthropic ${r.status}: ${(await r.text()).slice(0, 200)}`);
 	const data = await r.json();
-	let text = (data.content?.[0]?.text || '').trim();
+	return data.content?.[0]?.text || '';
+}
+
+async function openaiCompatDraft({ url, key, model, system, user, max, extraHeaders = {} }) {
+	const r = await fetch(url, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', authorization: `Bearer ${key}`, ...extraHeaders },
+		body: JSON.stringify({
+			model,
+			max_tokens: max,
+			messages: [
+				{ role: 'system', content: system },
+				{ role: 'user', content: user },
+			],
+		}),
+	});
+	if (!r.ok) throw new Error(`${model} ${r.status}: ${(await r.text()).slice(0, 200)}`);
+	const data = await r.json();
+	return data.choices?.[0]?.message?.content || '';
+}
+
+// Draft short post text. Mirrors the documented env.js fallback order: prefer
+// Anthropic, then Groq, then OpenRouter — so persona/digest triggers keep working
+// whenever ANY LLM key is configured rather than hard-depending on ANTHROPIC_API_KEY.
+async function llmDraft({ system, user, max = 200 }) {
+	let text;
+	if (env.ANTHROPIC_API_KEY) {
+		text = await anthropicDraft({ system, user, max });
+	} else if (env.GROQ_API_KEY) {
+		text = await openaiCompatDraft({
+			url: 'https://api.groq.com/openai/v1/chat/completions',
+			key: env.GROQ_API_KEY,
+			model: 'llama-3.3-70b-versatile',
+			system, user, max,
+		});
+	} else if (env.OPENROUTER_API_KEY) {
+		text = await openaiCompatDraft({
+			url: 'https://openrouter.ai/api/v1/chat/completions',
+			key: env.OPENROUTER_API_KEY,
+			model: 'meta-llama/llama-3.3-70b-instruct',
+			system, user, max,
+			extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws agent' },
+		});
+	} else {
+		throw new Error('no LLM provider configured (set ANTHROPIC_API_KEY, GROQ_API_KEY, or OPENROUTER_API_KEY)');
+	}
+	text = (text || '').trim();
 	if (text.startsWith('"') && text.endsWith('"')) text = text.slice(1, -1).trim();
 	if (text.length > 280) text = text.slice(0, 279) + '…';
 	return text;

@@ -2,11 +2,12 @@
 // resolved by esbuild during Vercel API bundling.
 //
 // 1. @pump-fun/pump-sdk / @pump-fun/pump-swap-sdk:
-//    Both ship `dist/esm/index.js` containing ES `import` statements, but
-//    neither the package root nor the `dist/esm/` directory declares
-//    `"type": "module"`. Node loads those files as CommonJS and throws
+//    Both ship ES `import` statements in their dist files, but neither package
+//    declares `"type": "module"`. Node loads those files as CommonJS and throws
 //    "Cannot use import statement outside a module" on first dynamic import.
-//    Fix: drop a `{"type":"module"}` package.json into each `dist/esm/` folder.
+//    For packages with `dist/esm/`: drop `{"type":"module"}` into that folder.
+//    For packages where `dist/index.js` IS the ESM build (no dist/esm/ subdir):
+//    patch `"type": "module"` into the root package.json directly.
 //
 // 2. @nirholas/pump-sdk:
 //    v1.30.0's package.json `module` and `exports.import` point at
@@ -51,6 +52,53 @@ for (const rel of esmTypeTargets) {
 	}
 	writeFileSync(pkgPath, JSON.stringify(desired, null, 2) + '\n');
 	patched++;
+}
+
+// @pump-fun/pump-swap-sdk's layout flipped across versions and needs the inverse
+// fix depending on which it ships:
+//
+//   • Old (≤1.0.x): dist/index.js is ESM and root has no "type", so Node loads it
+//     as CommonJS and the `import`/`export` syntax throws. Fix: add type:module.
+//
+//   • New (1.17.0): root declares "type":"module" AND exports the CJS bundle via
+//     the `require` condition (exports["."].require → ./dist/index.js, which is
+//     `"use strict"; …require(…)`). Because the root is type:module, a
+//     `require('@pump-fun/pump-swap-sdk')` (api/_lib/pump.js uses createRequire)
+//     parses that CJS file as ESM and dies with "require is not defined in ES
+//     module scope". The ESM entry lives at dist/esm/index.js and already carries
+//     its own dist/esm/package.json {"type":"module"} marker (written above), so
+//     dropping the root "type":"module" lets BOTH conditions resolve correctly:
+//     require→dist/index.js as CJS, import→dist/esm/index.js as ESM.
+const pumpSwapPkgPath = join(repo, 'node_modules/@pump-fun/pump-swap-sdk/package.json');
+let pumpSwapPatched = false;
+if (existsSync(pumpSwapPkgPath)) {
+	const pkg = JSON.parse(readFileSync(pumpSwapPkgPath, 'utf8'));
+	const exp = pkg.exports?.['.'] || {};
+	const requireTargetRel = exp.require || pkg.main || 'dist/index.js';
+	const requireTarget = join(repo, 'node_modules/@pump-fun/pump-swap-sdk', requireTargetRel);
+	const importTargetRel = exp.import || pkg.module;
+	const head = existsSync(requireTarget) ? readFileSync(requireTarget, 'utf8').slice(0, 512) : '';
+	const requireTargetIsCjs = /^\s*["']use strict["']/.test(head) || (head.includes('require(') && !/(^|\n)\s*(export|import)\s/.test(head));
+	const importTargetAbs = importTargetRel ? join(repo, 'node_modules/@pump-fun/pump-swap-sdk', importTargetRel) : null;
+	const importTargetHasMarker =
+		importTargetAbs && existsSync(join(dirname(importTargetAbs), 'package.json')) &&
+		JSON.parse(readFileSync(join(dirname(importTargetAbs), 'package.json'), 'utf8')).type === 'module';
+
+	if (pkg.type === 'module' && requireTargetIsCjs && importTargetHasMarker) {
+		// New layout: root type:module collides with the CJS require target.
+		delete pkg.type;
+		writeFileSync(pumpSwapPkgPath, JSON.stringify(pkg, null, 2) + '\n');
+		pumpSwapPatched = true;
+		patched++;
+	} else if (pkg.type !== 'module' && (head.includes('export ') || head.includes('import '))) {
+		// Old layout: ESM main entry needs the module flag.
+		pkg.type = 'module';
+		writeFileSync(pumpSwapPkgPath, JSON.stringify(pkg, null, 2) + '\n');
+		pumpSwapPatched = true;
+		patched++;
+	} else {
+		skipped++;
+	}
 }
 
 // Rewrite @nirholas/pump-sdk's exports/module to point at the real .mjs file.

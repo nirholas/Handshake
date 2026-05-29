@@ -187,7 +187,8 @@ async function handleTheme(req, res) {
 			       COALESCE((SELECT AVG(rating)::numeric(3,2) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_avg,
 			       COALESCE((SELECT COUNT(*) FROM agent_reviews r WHERE r.agent_id = a.id), 0) AS rating_count,
 			       a.published_at, a.created_at,
-			       v.storage_key AS avatar_storage_key, v.is_public AS avatar_public,
+			       v.storage_key AS avatar_storage_key,
+			       (v.visibility IS NULL OR v.visibility IN ('public', 'unlisted')) AS avatar_public,
 			       v.thumbnail_key
 			FROM agent_identities a
 			LEFT JOIN avatars v ON v.id = a.avatar_id AND v.deleted_at IS NULL
@@ -204,7 +205,8 @@ async function handleTheme(req, res) {
 				       a.views_count, a.forks_count,
 				       0::numeric AS rating_avg, 0::int AS rating_count,
 				       a.published_at, a.created_at,
-				       v.storage_key AS avatar_storage_key, v.is_public AS avatar_public,
+				       v.storage_key AS avatar_storage_key,
+				       (v.visibility IS NULL OR v.visibility IN ('public', 'unlisted')) AS avatar_public,
 				       v.thumbnail_key
 				FROM agent_identities a
 				LEFT JOIN avatars v ON v.id = a.avatar_id AND v.deleted_at IS NULL

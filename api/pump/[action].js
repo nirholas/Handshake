@@ -2876,7 +2876,7 @@ async function handleCreateFeeSharingPrep(req, res) {
 	if (!mintPk || !creatorPk || !payerPk) return error(res, 400, 'validation_error', 'invalid pubkeys');
 
 	try {
-		const { canonicalPumpPoolPda, canonicalPumpPoolPdaWithQuote } = await import('@pump-fun/pump-swap-sdk');
+		const { canonicalPumpPoolPda } = await import('@pump-fun/pump-swap-sdk');
 		const { bondingCurvePda } = await import('@pump-fun/pump-sdk');
 		const { isLegacyQuoteMint } = await getPumpSdkV2({ network: body.network });
 		const { sdk, connection } = await getPumpSdk({ network: body.network });
@@ -2887,7 +2887,7 @@ async function handleCreateFeeSharingPrep(req, res) {
 		
 		let poolPk;
 		if (bc && bc.quoteMint && !isLegacyQuoteMint(bc.quoteMint)) {
-			poolPk = canonicalPumpPoolPdaWithQuote(mintPk, bc.quoteMint);
+			poolPk = canonicalPumpPoolPda(mintPk, bc.quoteMint);
 		} else {
 			poolPk = canonicalPumpPoolPda(mintPk);
 		}

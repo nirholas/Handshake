@@ -315,12 +315,15 @@ export default wrap(async (req, res) => {
 
 	let upstream;
 	let routeIdx = 0;
+	// Tool support varies by model/provider. We always ask with the action tools
+	// first; if a route rejects them we retry that same route without tools.
+	let includeTools = true;
 	while (true) {
 		try {
 			upstream = await fetch(route.url, {
 				method: 'POST',
 				headers: route.headers,
-				body: JSON.stringify(route.buildPayload({ systemPrompt, history, maxTokens })),
+				body: JSON.stringify(route.buildPayload({ systemPrompt, history, maxTokens, includeTools })),
 			});
 		} catch (err) {
 			captureException(err, { route: 'chat', stage: 'fetch', provider: route.name });
@@ -329,9 +332,35 @@ export default wrap(async (req, res) => {
 			routeIdx++;
 			if (routeIdx < fallbackRoutes.length) {
 				route = fallbackRoutes[routeIdx];
+				includeTools = true;
 				continue;
 			}
 			return error(res, 502, 'upstream_unavailable', 'chat backend unreachable');
+		}
+
+		// OpenRouter (and some OpenAI-compatible endpoints) reject tool-augmented
+		// requests for models whose backing provider has no function-calling
+		// support, with a 404 "No endpoints found that support tool use". Retry
+		// once on the same route without the action tools so the chat still
+		// answers — it just can't drive 3D viewer actions for that model.
+		if (upstream.status === 404 && includeTools && route.style === 'openai') {
+			const text = await upstream.text().catch(() => '');
+			if (/tool[\s-]?use|support tools|require_parameters/i.test(text)) {
+				console.warn(`[chat:${route.name}] ${route.model} has no tool-capable endpoint — retrying without action tools`);
+				includeTools = false;
+				continue;
+			}
+			// Not a tool-use rejection: try the next provider, else surface it.
+			if (routeIdx + 1 < fallbackRoutes.length) {
+				console.warn(`[chat:${route.name}] 404 — falling over to ${fallbackRoutes[routeIdx + 1].name}/${fallbackRoutes[routeIdx + 1].model}: ${text.slice(0, 120)}`);
+				routeIdx++;
+				route = fallbackRoutes[routeIdx];
+				includeTools = true;
+				continue;
+			}
+			captureException(new Error(`${route.name} upstream 404`), { route: 'chat', provider: route.name, status: 404, body: text.slice(0, 400) });
+			console.error(`[chat:${route.name}]`, 404, text.slice(0, 400));
+			return error(res, 502, 'chat_failed', 'chat backend returned an error');
 		}
 
 		// Fall over on rate-limit (429) and transient gateway errors (502/503/504).
@@ -342,6 +371,7 @@ export default wrap(async (req, res) => {
 			console.warn(`[chat:${route.name}] ${upstream.status} — falling over to ${fallbackRoutes[routeIdx + 1].name}/${fallbackRoutes[routeIdx + 1].model}: ${text.slice(0, 120)}`);
 			routeIdx++;
 			route = fallbackRoutes[routeIdx];
+			includeTools = true;
 			continue;
 		}
 		break;
@@ -506,12 +536,12 @@ function makeRoute(name, cfg, apiKey, model) {
 				'anthropic-version': '2023-06-01',
 				'content-type': 'application/json',
 			},
-			buildPayload: ({ systemPrompt, history, maxTokens }) => ({
+			buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true }) => ({
 				model,
 				max_tokens: maxTokens,
 				system: systemPrompt,
 				messages: history,
-				tools: ACTION_TOOLS,
+				...(includeTools ? { tools: ACTION_TOOLS } : {}),
 				stream: true,
 			}),
 		};
@@ -526,12 +556,11 @@ function makeRoute(name, cfg, apiKey, model) {
 			'Content-Type': 'application/json',
 			...(cfg.extraHeaders || {}),
 		},
-		buildPayload: ({ systemPrompt, history, maxTokens }) => ({
+		buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true }) => ({
 			model,
 			max_tokens: maxTokens,
 			messages: [{ role: 'system', content: systemPrompt }, ...history],
-			tools: OPENAI_TOOLS,
-			tool_choice: 'auto',
+			...(includeTools ? { tools: OPENAI_TOOLS, tool_choice: 'auto' } : {}),
 			stream: true,
 		}),
 	};
