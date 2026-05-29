@@ -176,7 +176,7 @@ The hash stored on-chain is `keccak256(JSON.stringify(report))`. Anyone can reco
 2. `hashReport(report)` → produces the same hash if the input is identical.
 3. Query `ValidationRegistry.getLatestByKind(agentId, 'glb-schema')` → compare hashes.
 
-Only **allow-listed validator addresses** may call `recordValidation`. The allow-list is maintained in [`public/.well-known/validators.json`](../../public/.well-known/validators.json) and mirrored on-chain. See [`specs/VALIDATORS.md`](../../specs/VALIDATORS.md) for how to apply to become a validator.
+Only **allow-listed validator addresses** may call `recordValidation`. The allow-list is maintained in [`public/.well-known/validators.json`](../public/.well-known/validators.json) and mirrored on-chain. See [`specs/VALIDATORS.md`](../specs/VALIDATORS.md) for how to apply to become a validator.
 
 The minimum check suite for a `pass` verdict includes:
 

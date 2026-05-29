@@ -8,7 +8,7 @@ Get a live three.ws on your page in under 10 minutes.
 
 - **Browser:** Chrome 90+, Firefox 89+, or Safari 15+ (WebGL 2.0 required)
 - **A 3D model:** GLB/glTF file. No model yet? Use the sample avatar below.
-- **Node.js 24.x:** Only needed if you're running the dev server or building from source.
+- **Node.js 22.x:** Only needed if you're running the dev server or building from source.
 
 ---
 

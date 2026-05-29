@@ -66,7 +66,7 @@ npm run dev
 
 Most features work without the optional services. The app degrades gracefully, so basic 3D viewer work, skill development, and UI changes don't require any backend credentials.
 
-For full backend setup including R2 storage and Vercel deployment, see the [Backend Setup](../docs/setup.md) guide.
+For full backend setup including R2 storage and Vercel deployment, see the [Backend Setup](internal/SETUP.md) guide.
 
 ---
 

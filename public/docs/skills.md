@@ -619,7 +619,7 @@ The handler tries to load a style-specific GLB clip from the bundle (e.g. `clips
 
 ## Worked example: Coach Leo
 
-`examples/coach-leo/` shows a complete agent manifest that references the wave skill. Key sections of [examples/coach-leo/manifest.json](../../examples/coach-leo/manifest.json):
+`examples/coach-leo/` shows a complete agent manifest that references the wave skill. Key sections of [examples/coach-leo/manifest.json](../examples/coach-leo/manifest.json):
 
 ```json
 {

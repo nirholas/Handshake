@@ -22,14 +22,14 @@ This document covers what was added, how it composes with what was already there
                           │
         ┌─────────────────┼─────────────────────────────────┐
         ▼                 ▼                                 ▼
- api/agents/pumpfun.js   api/agents/pumpfun-feed.js   api/cron/pumpfun-signals.js
-   (read-only proxy)        (SSE: claims+graduations)    (15-min crawler)
+ api/agents/pumpfun.js   api/agents/pumpfun.js?_handler=feed   api/cron/[name].js
+   (read-only proxy)        (SSE: claims+graduations)    (name=pumpfun-signals)
         │                 │                                 │
         │                 │  EventSource                    │  pumpfun_signals
         ▼                 ▼                                 ▼
-  src/agent-skills-pumpfun-watch.js                 solana-reputation.js
-       protocol.emit ──► Empathy Layer (avatar)            +
-                                                    solana-card.js (passport block)
+  src/agent-skills-pumpfun-watch.js          api/agents/solana/[action].js
+       protocol.emit ──► Empathy Layer (avatar)     reputation + card actions
+                                                    (passport block)
                           ▲
                           │
               src/widgets/pumpfun-feed.js (DOM overlay v1)
@@ -43,14 +43,14 @@ This document covers what was added, how it composes with what was already there
 |---|---|---|
 | MCP client | [api/_lib/pumpfun-mcp.js](../api/_lib/pumpfun-mcp.js) | Cached JSON-RPC client to upstream bot |
 | Read API | [api/agents/pumpfun.js](../api/agents/pumpfun.js) | `?op=claims|graduations|token|creator` |
-| SSE feed | [api/agents/pumpfun-feed.js](../api/agents/pumpfun-feed.js) | Live event stream, 90s window, auto-reconnects |
-| Cron crawler | [api/cron/pumpfun-signals.js](../api/cron/pumpfun-signals.js) | 15-min sweep → `pumpfun_signals` |
+| SSE feed | [api/agents/pumpfun.js](../api/agents/pumpfun.js) (`?_handler=feed`) | Live event stream, 90s window, auto-reconnects |
+| Cron crawler | [api/cron/\[name\].js](../api/cron/%5Bname%5D.js) (`name=pumpfun-signals`) | 15-min sweep → `pumpfun_signals` |
 | Schema | [api/_lib/schema.sql](../api/_lib/schema.sql) | New `pumpfun_signals` table |
 | Skills | [src/agent-skills-pumpfun-watch.js](../src/agent-skills-pumpfun-watch.js) | 4 skills: recent-claims, token-intel, watch-start, watch-stop |
 | Widget | [src/widgets/pumpfun-feed.js](../src/widgets/pumpfun-feed.js) | DOM overlay v1 |
 | Widget type | [src/widget-types.js](../src/widget-types.js) | `pumpfun-feed` registered |
-| Reputation | [api/agents/solana-reputation.js](../api/agents/solana-reputation.js) | `pumpfun_signals` block in response |
-| Passport | [api/agents/solana-card.js](../api/agents/solana-card.js) | `pumpfun` block on the agent card |
+| Reputation | [api/agents/solana/\[action\].js](../api/agents/solana/%5Baction%5D.js) (`action=reputation`) | `pumpfun_signals` block in response |
+| Passport | [api/agents/solana/\[action\].js](../api/agents/solana/%5Baction%5D.js) (`action=card`) | `pumpfun` block on the agent card |
 | Cron schedule | [vercel.json](../vercel.json) | `*/15 * * * *` |
 
 ---
@@ -91,7 +91,7 @@ All registered through `registerPumpFunWatchSkills` in [src/agent-skills.js](../
 | `tier ∈ {influencer, mega}` | `curiosity` 0.5 | +0.2 |
 | `graduation` | gesture: `wave` (1.5s) | +0.6 |
 
-These are continuous-blend stimuli, not discrete states — they decay according to the per-second rates in [src/CLAUDE.md](../src/CLAUDE.md#decay-per-second).
+These are continuous-blend stimuli, not discrete states — they decay according to the per-second rates in [agent-system.md](agent-system.md#5-the-avatar-emotion-system-empathy-layer).
 
 ---
 

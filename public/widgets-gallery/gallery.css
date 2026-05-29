@@ -1056,3 +1056,29 @@ body.gallery-body {
 		animation: none;
 	}
 }
+
+/* ── Mobile overflow hardening ─────────────────────────────────────────────
+ * body is a flex column (style.css); a flex item with the default
+ * min-width:auto refuses to shrink below its content's min-size, which let
+ * the gallery stretch wider than the viewport on phones. min-width:0 on the
+ * flex chain restores correct shrinking so content fits any width. */
+@media (max-width: 768px) {
+	html,
+	body.gallery-body {
+		overflow-x: clip;
+	}
+	.gallery-main {
+		min-width: 0;
+		max-width: 100%;
+		width: 100%;
+		padding-left: var(--space-md);
+		padding-right: var(--space-md);
+	}
+	.gallery-main > *,
+	.gallery-hero,
+	.gallery-grid,
+	.gallery-cta {
+		min-width: 0;
+		max-width: 100%;
+	}
+}

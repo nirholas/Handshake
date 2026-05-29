@@ -217,6 +217,6 @@ One-click options: Railway, Render (see buttons in [`xspace-agent/README.md`](..
 
 - [Architecture overview](../xspace-agent/docs/architecture-overview.md)
 - [All environment variables](../xspace-agent/docs/env-vars-reference.md)
-- [Multi-Space support](../xspace-agent/docs/multi-space-support.md)
-- [Agent memory & RAG](../xspace-agent/docs/agent-memory-rag.md)
+- [Multi-Space support](../xspace-agent/docs/internal/multi-space-support.md)
+- [Agent memory & RAG](../xspace-agent/docs/internal/agent-memory-rag.md)
 - [Examples](../xspace-agent/examples/)

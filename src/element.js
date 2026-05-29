@@ -904,10 +904,14 @@ class Agent3DElement extends HTMLElement {
 	/**
 	 * Apply the `background` attribute. Mirrors the iframe embed semantics so
 	 * the snippet builder's options translate cleanly: 'transparent' → renderer
-	 * clears with alpha=0 and the scene background is unset; 'dark' / 'light' →
-	 * scene background is painted in the corresponding color so the agent
-	 * composites over it. The host element's CSS background is driven by the
-	 * `:host([background="..."])` rules in BASE_STYLE.
+	 * clears with alpha=0 and the scene background is unset; 'dark' / 'light'
+	 * are keyword shortcuts for canonical colors; any other value is treated as
+	 * a literal CSS color (e.g. a hex from a custom color picker) so the scene
+	 * composites over it. Painting goes through the viewer's public
+	 * setBackgroundColor()/updateBackground() so clear-color, environment, and
+	 * the cached THREE.Color stay in sync — the host element's CSS background is
+	 * also set inline for the keyword-less case (the `:host([background="..."])`
+	 * rules in BASE_STYLE only cover the keywords).
 	 *
 	 * Safe to call before the viewer exists — it no-ops in that case and is
 	 * re-run automatically once `_boot()` constructs the viewer.
@@ -918,16 +922,12 @@ class Agent3DElement extends HTMLElement {
 		const mode = this.getAttribute('background') || 'transparent';
 		if (mode === 'transparent') {
 			if (v.state) v.state.transparentBg = true;
-			v.renderer?.setClearAlpha?.(0);
-			if (v.scene) v.scene.background = null;
-		} else if (mode === 'dark') {
-			if (v.state) v.state.transparentBg = false;
-			v.renderer?.setClearAlpha?.(1);
-			if (v.scene?.background?.set) v.scene.background.set('#0b0d10');
-		} else if (mode === 'light') {
-			if (v.state) v.state.transparentBg = false;
-			v.renderer?.setClearAlpha?.(1);
-			if (v.scene?.background?.set) v.scene.background.set('#f5f5f5');
+			v.updateBackground?.();
+			this.style.removeProperty('background-color');
+		} else {
+			const color = mode === 'dark' ? '#0b0d10' : mode === 'light' ? '#f5f5f5' : mode;
+			v.setBackgroundColor?.(color);
+			this.style.backgroundColor = color;
 		}
 	}
 

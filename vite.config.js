@@ -130,6 +130,13 @@ const appConfig = {
 	},
 	optimizeDeps: {
 		include: [
+			// Force-prebundle `buffer` so esbuild's CJS interop synthesizes a
+			// `default` export. Without this, deps that do `import Buffer from
+			// 'buffer'` (eth/solana transitive deps reached from /cz's lib.js)
+			// hit the node-polyfills shim, which only exposes the named export,
+			// and the module fails to link in dev with "does not provide an
+			// export named 'default'".
+			'buffer',
 			'three',
 			'three/addons/loaders/GLTFLoader.js',
 			'three/addons/controls/OrbitControls.js',

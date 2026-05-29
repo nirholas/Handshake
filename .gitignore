@@ -82,10 +82,6 @@ wallets/
 .wallets/
 x402-test-wallets/
 3dagent-log-export-*
-
-# Site crawler (scripts/crawl-audit.mjs) — saved session + generated report
-.crawl-auth.json
-crawl-report.json
 pump-sdk-case-study.html
 .claude/scheduled_tasks.lock
 threews-launch-week-case-study.html
@@ -105,6 +101,10 @@ scratch/screenshots/
 
 # Playwright run artifacts
 test-results/
+
+# page-audit harness (scripts/page-audit.mjs)
+reports/
+.auth/
 .env*
 docs/internal/COINMARKETCAP_PARTNERSHIP_ARTICLE.md
 docs/internal/COINMARKETCAP_ARTICLE.md

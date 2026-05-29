@@ -38,7 +38,7 @@ That's it. You'll have a live instance at `https://your-project.vercel.app`.
 
 ## Required environment variables
 
-Copy [`.env.example`](.env.example) to `.env.local` for local work, and add the same variables to your Vercel project under **Settings → Environment Variables** (both Preview and Production environments).
+Copy [`.env.example`](../.env.example) to `.env.local` for local work, and add the same variables to your Vercel project under **Settings → Environment Variables** (both Preview and Production environments).
 
 ```bash
 cp .env.example .env.local

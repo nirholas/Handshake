@@ -350,6 +350,14 @@
 					"added": "2026-05-27"
 				},
 				{
+					"path": "/tutor",
+					"title": "Pay-As-You-Learn Tutor",
+					"description": "Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-05-29"
+				},
+				{
 					"path": "/unstoppable",
 					"title": "Unstoppable Agent",
 					"description": "Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time.",

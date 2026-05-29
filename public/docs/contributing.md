@@ -66,7 +66,7 @@ npm run dev
 
 Most features work without the optional services. The app degrades gracefully, so basic 3D viewer work, skill development, and UI changes don't require any backend credentials.
 
-For full backend setup including R2 storage and Vercel deployment, see the [Backend Setup](../docs/setup.md) guide.
+For full backend setup including R2 storage and Vercel deployment, see the [Backend Setup](internal/SETUP.md) guide.
 
 ---
 
@@ -102,7 +102,7 @@ See the [Architecture Overview](./introduction.md) for a deeper understanding of
 
 ## Coding Guidelines
 
-The project follows the rules in [CLAUDE.md](../../CLAUDE.md). These are enforced in code review, so read them before writing a line. The short version:
+The project follows the rules in [CLAUDE.md](../CLAUDE.md). These are enforced in code review, so read them before writing a line. The short version:
 
 **Simplicity first.** Write the minimum code that solves the problem. No abstractions for single-use code. No "configurability" that wasn't requested. If your change is 200 lines and it could be 50, rewrite it before opening the PR.
 
@@ -289,4 +289,4 @@ Core team response times: typically 2–3 business days on GitHub, faster in Dis
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [Apache License 2.0](../../LICENSE).
+By contributing, you agree that your contributions will be licensed under the [Apache License 2.0](../LICENSE).

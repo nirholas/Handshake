@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Pay-As-You-Learn Tutor — three.ws</title>
+	<meta name="description" content="Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor settled in USDC over x402 on Base or Solana." />
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		:root {
+			--bg: #0b0d14;
+			--surface: #11141f;
+			--surface-2: #161a28;
+			--border: #232838;
+			--text: #e7e9f2;
+			--text-dim: #99a0b8;
+			--text-faint: #6a7088;
+			--accent: #7c5cff;
+			--accent-2: #38e0c8;
+			--user: #1f2740;
+			--ok: #38d39f;
+			--radius: 14px;
+			--shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+			--font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif;
+			--mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		}
+		* { box-sizing: border-box; }
+		html, body { height: 100%; }
+		body {
+			margin: 0;
+			font-family: var(--font);
+			background: radial-gradient(1200px 600px at 80% -10%, rgba(124, 92, 255, 0.12), transparent 60%), var(--bg);
+			color: var(--text);
+			-webkit-font-smoothing: antialiased;
+			display: flex;
+			flex-direction: column;
+			min-height: 100vh;
+		}
+		a { color: var(--accent-2); }
+
+		header.top {
+			display: flex; align-items: center; gap: 14px;
+			padding: 16px 22px; border-bottom: 1px solid var(--border);
+			position: sticky; top: 0; backdrop-filter: blur(8px);
+			background: rgba(11, 13, 20, 0.7); z-index: 10;
+		}
+		.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; }
+		.brand .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 0 12px var(--accent); }
+		.brand small { color: var(--text-faint); font-weight: 500; }
+		.spacer { flex: 1; }
+
+		.tab {
+			display: flex; align-items: center; gap: 10px;
+			background: var(--surface-2); border: 1px solid var(--border);
+			border-radius: 999px; padding: 7px 14px; font-size: 13px;
+		}
+		.tab .label { color: var(--text-dim); }
+		.tab .amount { font-family: var(--mono); font-weight: 700; color: var(--accent-2); }
+		.tab .count { color: var(--text-faint); }
+
+		.btn {
+			border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+			border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 600;
+			cursor: pointer; transition: border-color .15s, background .15s, transform .05s;
+		}
+		.btn:hover:not(:disabled) { border-color: var(--accent); }
+		.btn:active:not(:disabled) { transform: translateY(1px); }
+		.btn:disabled { opacity: .45; cursor: not-allowed; }
+		.btn.primary { background: linear-gradient(135deg, var(--accent), #6a4cff); border-color: transparent; }
+		.btn.ghost { background: transparent; }
+
+		main {
+			flex: 1; width: 100%; max-width: 820px; margin: 0 auto;
+			display: flex; flex-direction: column; padding: 0 18px;
+		}
+		.thread { flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 26px 0 18px; }
+
+		.empty {
+			margin: auto; text-align: center; max-width: 520px; padding: 40px 0;
+		}
+		.empty h1 { font-size: 30px; letter-spacing: -0.02em; margin: 0 0 10px; }
+		.empty p { color: var(--text-dim); line-height: 1.6; margin: 0 0 26px; }
+		.suggestions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+		.suggestion {
+			text-align: left; background: var(--surface); border: 1px solid var(--border);
+			border-radius: 12px; padding: 14px 16px; cursor: pointer; color: var(--text-dim);
+			font-size: 13.5px; line-height: 1.45; transition: border-color .15s, color .15s, transform .05s;
+		}
+		.suggestion:hover { border-color: var(--accent); color: var(--text); }
+		.suggestion:active { transform: translateY(1px); }
+
+		.msg { display: flex; flex-direction: column; gap: 6px; animation: rise .25s ease both; }
+		@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+		.msg .who { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint); }
+		.bubble {
+			border-radius: var(--radius); padding: 14px 16px; line-height: 1.6; font-size: 15px;
+			border: 1px solid var(--border); white-space: pre-wrap; word-wrap: break-word;
+		}
+		.msg.user { align-items: flex-end; }
+		.msg.user .bubble { background: var(--user); border-color: #2c3654; max-width: 86%; }
+		.msg.tutor .bubble { background: var(--surface); }
+		.msg.error .bubble { background: #2a1620; border-color: #5a2a3a; color: #ffb4c4; }
+
+		.kp { margin: 12px 0 0; padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
+		.kp h4 { margin: 0 0 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
+		.kp ul { margin: 0; padding-left: 18px; color: var(--text-dim); }
+		.kp li { margin: 3px 0; }
+		.ex { margin-top: 12px; }
+		.ex pre {
+			margin: 0; background: #0a0c13; border: 1px solid var(--border); border-radius: 10px;
+			padding: 13px 14px; overflow-x: auto; font-family: var(--mono); font-size: 13px; color: #cdd3e6;
+		}
+		.followup { margin-top: 10px; font-size: 13px; color: var(--text-faint); }
+		.followup button {
+			background: none; border: none; color: var(--accent-2); cursor: pointer; padding: 0; font: inherit;
+			text-decoration: underline; text-underline-offset: 2px;
+		}
+		.meta { display: flex; gap: 12px; align-items: center; font-size: 11.5px; color: var(--text-faint); }
+		.meta .cost { font-family: var(--mono); color: var(--accent-2); }
+		.pill { padding: 2px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); }
+
+		form.composer {
+			position: sticky; bottom: 0; padding: 14px 0 22px;
+			background: linear-gradient(transparent, var(--bg) 22%);
+		}
+		.composer-inner {
+			display: flex; gap: 10px; align-items: flex-end;
+			background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+			padding: 10px 10px 10px 14px; box-shadow: var(--shadow);
+		}
+		.composer-inner:focus-within { border-color: var(--accent); }
+		textarea#q {
+			flex: 1; resize: none; border: none; outline: none; background: transparent; color: var(--text);
+			font: inherit; font-size: 15px; line-height: 1.5; max-height: 180px; padding: 6px 0;
+		}
+		.controls { display: flex; align-items: center; gap: 8px; }
+		select#level {
+			background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border);
+			border-radius: 9px; padding: 8px 10px; font-size: 12.5px; outline: none;
+		}
+		.send { width: 42px; height: 42px; padding: 0; display: grid; place-items: center; border-radius: 10px; }
+		.send svg { width: 18px; height: 18px; }
+		.price-note { text-align: center; font-size: 11.5px; color: var(--text-faint); margin: 9px 0 0; }
+		.spin { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.25); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+		@keyframes spin { to { transform: rotate(360deg); } }
+
+		/* Invoice modal */
+		.scrim { position: fixed; inset: 0; background: rgba(4, 5, 9, .66); display: none; place-items: center; padding: 20px; z-index: 50; backdrop-filter: blur(3px); }
+		.scrim.open { display: grid; }
+		.invoice { width: 100%; max-width: 520px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+		.invoice header { display: flex; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--border); }
+		.invoice header h3 { margin: 0; font-size: 16px; }
+		.invoice .body { padding: 6px 20px 16px; max-height: 50vh; overflow-y: auto; }
+		.line { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+		.line .n { color: var(--text-faint); width: 22px; flex: none; }
+		.line .q { flex: 1; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; }
+		.line .c { font-family: var(--mono); color: var(--accent-2); flex: none; }
+		.invoice .total { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid var(--border); font-weight: 700; }
+		.invoice .total .amt { font-family: var(--mono); color: var(--accent-2); font-size: 18px; }
+		.attest { font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); word-break: break-all; padding: 0 20px 16px; }
+
+		@media (max-width: 560px) {
+			.suggestions { grid-template-columns: 1fr; }
+			.tab .label { display: none; }
+			header.top { padding: 14px 16px; }
+		}
+	</style>
+</head>
+<body>
+	<header class="top">
+		<div class="brand"><span class="dot"></span> three.ws <small>· Tutor</small></div>
+		<div class="spacer"></div>
+		<div class="tab" title="Running session total">
+			<span class="label">Session</span>
+			<span class="amount" id="tab-amount">$0.00</span>
+			<span class="count" id="tab-count">0 answers</span>
+		</div>
+		<button class="btn ghost" id="end-btn" disabled>End &amp; invoice</button>
+	</header>
+
+	<main>
+		<div class="thread" id="thread">
+			<div class="empty" id="empty">
+				<h1>Pay-as-you-learn.</h1>
+				<p>Ask anything — code, concepts, math, history. Each answer costs <strong>one cent</strong>, settled in USDC over x402 on Base or Solana. No subscription, no signup. You only pay for what you learn.</p>
+				<div class="suggestions" id="suggestions">
+					<button class="suggestion">Explain how a JWT is verified, step by step.</button>
+					<button class="suggestion">Why does my recursive function overflow the stack?</button>
+					<button class="suggestion">What is the difference between TCP and UDP?</button>
+					<button class="suggestion">Walk me through how a transformer attention head works.</button>
+				</div>
+			</div>
+		</div>
+
+		<form class="composer" id="composer" autocomplete="off">
+			<div class="composer-inner">
+				<textarea id="q" rows="1" placeholder="Ask your question…" aria-label="Your question"></textarea>
+				<div class="controls">
+					<select id="level" aria-label="Expertise level" title="Target expertise level">
+						<option value="beginner">Beginner</option>
+						<option value="intermediate" selected>Intermediate</option>
+						<option value="expert">Expert</option>
+					</select>
+					<button class="btn primary send" id="send" type="submit" aria-label="Send (pay $0.01)" title="Send · $0.01">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+					</button>
+				</div>
+			</div>
+			<p class="price-note">$0.01 per answer · paid in USDC via x402 · <span id="conn-note">connect a wallet when you send your first question</span></p>
+		</form>
+	</main>
+
+	<div class="scrim" id="scrim">
+		<div class="invoice" role="dialog" aria-modal="true" aria-label="Session invoice">
+			<header><h3>Session invoice</h3><div class="spacer" style="flex:1"></div><button class="btn ghost" id="invoice-close">Close</button></header>
+			<div class="body" id="invoice-lines"></div>
+			<div class="total"><span>Total</span><span class="amt" id="invoice-total">$0.00</span></div>
+			<div class="attest" id="invoice-attest"></div>
+		</div>
+	</div>
+
+	<script src="/x402.js"></script>
+	<script type="module" src="/tutor.js"></script>
+</body>
+</html>

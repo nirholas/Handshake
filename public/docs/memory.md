@@ -10,9 +10,9 @@ This document covers how agent memory works, how to configure storage modes, and
 
 Memory in the three.ws runtime has two distinct layers:
 
-**In-memory store** ([agent-memory.js](../../src/agent-memory.js)) — A fast, typed, salience-ranked store that lives in the JavaScript runtime. Loaded on boot, queried during conversations, written as things happen. Persists to `localStorage` immediately and optionally syncs to a backend API.
+**In-memory store** ([agent-memory.js](../src/agent-memory.js)) — A fast, typed, salience-ranked store that lives in the JavaScript runtime. Loaded on boot, queried during conversations, written as things happen. Persists to `localStorage` immediately and optionally syncs to a backend API.
 
-**File-based persistence** ([memory/index.js](../../src/memory/index.js)) — A structured collection of Markdown files with YAML frontmatter, one file per memory topic. Human-readable, portable across environments, and the same format used by Claude Code's own memory system. Serialized to `localStorage` in local mode, or pinned to IPFS in distributed modes.
+**File-based persistence** ([memory/index.js](../src/memory/index.js)) — A structured collection of Markdown files with YAML frontmatter, one file per memory topic. Human-readable, portable across environments, and the same format used by Claude Code's own memory system. Serialized to `localStorage` in local mode, or pinned to IPFS in distributed modes.
 
 Both layers are active at the same time. The file-based layer is what gets injected into the LLM's system prompt. The in-memory store provides a fast queryable index and handles salience ranking and decay.
 

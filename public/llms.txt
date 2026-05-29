@@ -67,6 +67,7 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [x402 Providers](https://three.ws/providers): Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings.
 - [GMGN Smart Money](https://three.ws/gmgn): Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.
 - [Fact Checker](https://three.ws/fact-checker): Pay $0.10 per claim. The agent searches across authoritative sources, pays per retrieval via x402, and returns a verdict with cited evidence and a signed attestation.
+- [Pay-As-You-Learn Tutor](https://three.ws/tutor): Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.
 - [Unstoppable Agent](https://three.ws/unstoppable): Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time.
 - [Endpoint Shopper](https://three.ws/shopper): Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.
 - [Forever — etch a message into Bitcoin](https://three.ws/forever): Inscribe a message onto the Bitcoin blockchain. It stays there. Forever.

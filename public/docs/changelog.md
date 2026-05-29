@@ -140,7 +140,7 @@ Entries are organized by release. Categories follow [Keep a Changelog](https://k
 
 ## SDK Changelog (`@three-ws/sdk`)
 
-The SDK is published separately. Its changelog lives at [sdk/CHANGELOG.md](../../sdk/CHANGELOG.md).
+The SDK is published separately. Its changelog lives at [sdk/CHANGELOG.md](../sdk/CHANGELOG.md).
 
 ### [0.1.0] — 2026-04-14
 
