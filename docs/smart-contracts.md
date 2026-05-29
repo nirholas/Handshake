@@ -8,7 +8,7 @@ Three Solidity contracts make up the ERC-8004 registry system for three.ws ident
 | `ReputationRegistry` | `contracts/src/ReputationRegistry.sol` | Submit and aggregate signed feedback scores for agents |
 | `ValidationRegistry` | `contracts/src/ValidationRegistry.sol` | Record immutable attestations of off-chain validation results (glTF schema, behavioral tests, etc.) |
 
-All contracts are Solidity `^0.8.24`, compiled with the optimizer at 200 runs, and built on OpenZeppelin. Source is in [`contracts/src/`](../../contracts/src/). ABIs and deployed addresses are in [`src/erc8004/abi.js`](../../src/erc8004/abi.js).
+All contracts are Solidity `^0.8.24`, compiled with the optimizer at 200 runs, and built on OpenZeppelin. Source is in [`contracts/src/`](../contracts/src/). ABIs and deployed addresses are in [`src/erc8004/abi.js`](../src/erc8004/abi.js).
 
 ---
 

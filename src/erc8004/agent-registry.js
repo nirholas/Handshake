@@ -171,7 +171,7 @@ export async function eagerConnectWallet() {
  */
 export async function connectWallet() {
 	if (!window.ethereum) {
-		throw new Error('No wallet detected. Install MetaMask or use a wallet-enabled browser.');
+		throw new Error('No wallet detected. Install a wallet extension (MetaMask, Coinbase Wallet, etc.) or use a wallet-enabled browser.');
 	}
 
 	_provider = new BrowserProvider(window.ethereum);

@@ -43,7 +43,7 @@ The CSRF token is mandatory on the verify call. The nonce endpoint sets a `__Hos
 
 ### Using the built-in controller
 
-The `ConnectWalletController` class in [src/wallet/connect-button.js](../../src/wallet/connect-button.js) handles the full SIWE flow including chain switching:
+The `ConnectWalletController` class in [src/wallet/connect-button.js](../src/wallet/connect-button.js) handles the full SIWE flow including chain switching:
 
 ```js
 import { createConnectWalletButton } from '/src/wallet/connect-button.js';
@@ -77,7 +77,7 @@ await ctrl.connect();      // request accounts
 await ctrl.signAndVerify(); // sign message + post to backend
 ```
 
-The state machine states (from [src/wallet/state.js](../../src/wallet/state.js)) are: `idle` → `detecting` → `requesting_accounts` → `connected` → `signing` → `verifying` → `success` (or `error` / `wrong_chain` at any point).
+The state machine states (from [src/wallet/state.js](../src/wallet/state.js)) are: `idle` → `detecting` → `requesting_accounts` → `connected` → `signing` → `verifying` → `success` (or `error` / `wrong_chain` at any point).
 
 ### WalletConnect (mobile wallets)
 

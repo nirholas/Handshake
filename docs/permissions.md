@@ -46,7 +46,7 @@ Each scope field maps to a deployed caveat enforcer contract:
 - **TimestampEnforcer** — enforces `expiry` (`block.timestamp <= expiry`, else reverts)
 - **LimitedCallsEnforcer** — caps total number of redemptions
 
-Enforcer addresses are deterministic (CREATE2, from `@metamask/delegation-deployments v1.2.0`) and available in [src/erc7710/abi.js](../../src/erc7710/abi.js) as `CAVEAT_ENFORCERS`.
+Enforcer addresses are deterministic (CREATE2, from `@metamask/delegation-deployments v1.2.0`) and available in [src/erc7710/abi.js](../src/erc7710/abi.js) as `CAVEAT_ENFORCERS`.
 
 ---
 
@@ -62,7 +62,7 @@ When a skill or agent action requires a delegation that doesn't yet exist, the g
 
 ### Programmatically
 
-Use `encodeScopedDelegation` and `signDelegation` from `@three-ws/sdk/permissions` (or directly from [src/permissions/toolkit.js](../../src/permissions/toolkit.js)):
+Use `encodeScopedDelegation` and `signDelegation` from `@three-ws/sdk/permissions` (or directly from [src/permissions/toolkit.js](../src/permissions/toolkit.js)):
 
 ```js
 import { encodeScopedDelegation, signDelegation } from '@three-ws/sdk/permissions';
@@ -126,7 +126,7 @@ const res = await fetch('/api/permissions/grant', {
 
 ## Redeeming a delegation (inside a skill)
 
-Skills call `redeemFromSkill` from [src/runtime/delegation-redeem.js](../../src/runtime/delegation-redeem.js). This is the main entrypoint for any on-chain action a skill needs to take:
+Skills call `redeemFromSkill` from [src/runtime/delegation-redeem.js](../src/runtime/delegation-redeem.js). This is the main entrypoint for any on-chain action a skill needs to take:
 
 ```js
 import { redeemFromSkill } from '@three-ws/sdk/runtime';
@@ -265,7 +265,7 @@ function disableDelegation(Delegation _delegation) external;
 function disabledDelegations(bytes32 delegationHash) external view returns (bool);
 ```
 
-ABIs and all caveat enforcer addresses are in [src/erc7710/abi.js](../../src/erc7710/abi.js).
+ABIs and all caveat enforcer addresses are in [src/erc7710/abi.js](../src/erc7710/abi.js).
 
 ---
 
@@ -348,7 +348,7 @@ The delegator (owner) wallet key is never held server-side. The agent's smart ac
 
 ## Smoke testing
 
-The smoke test script at [scripts/smoke-permissions.js](../../scripts/smoke-permissions.js) exercises the full delegation lifecycle against a deployed environment: encoding, EIP-712 signing, grant API, list API, verify API, on-chain revocation, and negative cases. Run it against a staging deployment before releasing permission-related changes:
+The smoke test script at [scripts/smoke-permissions.js](../scripts/smoke-permissions.js) exercises the full delegation lifecycle against a deployed environment: encoding, EIP-712 signing, grant API, list API, verify API, on-chain revocation, and negative cases. Run it against a staging deployment before releasing permission-related changes:
 
 ```sh
 SMOKE_BASE_URL=https://your-app.vercel.app \

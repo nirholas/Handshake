@@ -326,6 +326,20 @@ function printReport(results) {
 		for (const [msg, n] of recurring.slice(0, 15)) console.log(`  ${String(n).padStart(3)}×  ${msg}`);
 	}
 
+	// On local dev, Vite serves files directly and does NOT apply vercel.json
+	// rewrites (clean URLs, redirects). Page-level 404s here usually mean "route
+	// only exists via a Vercel rewrite", not a real bug — they resolve on prod.
+	if (!isHttps) {
+		const navsmissing = results.filter((r) => r.navStatus === 404).length;
+		if (navsmissing) {
+			console.log(
+				`\nℹ ${navsmissing} page(s) 404'd at the route level. On local dev this usually means the\n` +
+					`  clean-URL is a vercel.json rewrite Vite doesn't apply — re-run against production\n` +
+					`  (--base=https://three.ws) to confirm. Auth-gated 401s likewise need --auth.`
+			);
+		}
+	}
+
 	console.log('\n' + '═'.repeat(72));
 	console.log(`Full structured report → ${OUT}`);
 }

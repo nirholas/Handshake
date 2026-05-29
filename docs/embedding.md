@@ -666,5 +666,5 @@ The platform records anonymous embed impressions (country, referrer hostname) vi
 - [Agent System Overview](agent-system.md)
 - [Web Component reference](web-component.md) — full attribute list
 - [Widgets](widgets.md) — Widget Studio and widget types
-- [specs/EMBED_SPEC.md](../../specs/EMBED_SPEC.md) — authoritative web component spec
-- [specs/EMBED_HOST_PROTOCOL.md](../../specs/EMBED_HOST_PROTOCOL.md) — versioned postMessage protocol
+- [specs/EMBED_SPEC.md](../specs/EMBED_SPEC.md) — authoritative web component spec
+- [specs/EMBED_HOST_PROTOCOL.md](../specs/EMBED_HOST_PROTOCOL.md) — versioned postMessage protocol

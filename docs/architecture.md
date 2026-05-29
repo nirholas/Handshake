@@ -98,7 +98,7 @@ There is no rate limiter on `protocol.emit()` — a runaway skill can flood the 
 
 ## 3. The LLM tool-loop
 
-The runtime ([src/runtime/index.js](../../src/runtime/index.js)) is the agent's brain. The loop is straightforward but worth tracing once.
+The runtime ([src/runtime/index.js](../src/runtime/index.js)) is the agent's brain. The loop is straightforward but worth tracing once.
 
 1. A user message arrives — either typed text or an STT transcript from `runtime.listen()`.
 2. The runtime appends `{ role: 'user', content: text }` to its message history and notes it in memory.
