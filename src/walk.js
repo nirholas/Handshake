@@ -107,6 +107,8 @@ const playersPanelEl = document.getElementById('walk-players-panel');
 const playersListEl = document.getElementById('walk-players-list');
 const playersCloseBtn = document.getElementById('walk-players-close');
 const helpToggleBtn = document.getElementById('walk-help-toggle');
+const zenBtn = document.getElementById('walk-zen-btn');
+const zenExitBtn = document.getElementById('walk-zen-exit');
 const emoteTrayEl = document.getElementById('walk-emote-tray');
 const cameraModeBtn = document.getElementById('walk-camera-mode-btn');
 const envBtn = document.getElementById('walk-env-btn');
@@ -172,6 +174,32 @@ if (helpToggleBtn) {
 		if (helpEl && helpAutoHideTimer) { clearTimeout(helpAutoHideTimer); helpAutoHideTimer = null; }
 	});
 }
+
+// ── Zen mode (hide all UI) ───────────────────────────────────────────────
+// Strips every overlay so the scene is just the 3D background and the
+// movement joystick. Preference persists across sessions and can be set
+// from a shared link with ?ui=hidden.
+const ZEN_STORAGE_KEY = 'walk:zen';
+let zenActive = false;
+function setZen(on) {
+	zenActive = on;
+	document.body.classList.toggle('is-zen', on);
+	if (on) {
+		// Defer the reveal class one frame so the restore pill fades in.
+		requestAnimationFrame(() => document.body.classList.add('zen-revealed'));
+		// Close any open panels so they don't pop back when chrome returns.
+		// DOM-based checks keep this safe to call during module init.
+		if (playersPanelEl && !playersPanelEl.hidden) togglePlayersPanel();
+		if (gesturePaletteVisible) hideGesturePalette();
+	} else {
+		document.body.classList.remove('zen-revealed');
+	}
+	if (zenBtn) zenBtn.setAttribute('aria-pressed', String(on));
+	try { localStorage.setItem(ZEN_STORAGE_KEY, on ? '1' : '0'); } catch {}
+}
+function toggleZen() { setZen(!zenActive); }
+if (zenBtn) zenBtn.addEventListener('click', toggleZen);
+if (zenExitBtn) zenExitBtn.addEventListener('click', () => setZen(false));
 
 // ── HUD button handlers for new features ─────────────────────────────────
 if (cameraModeBtn) cameraModeBtn.addEventListener('click', () => cycleCameraMode());
@@ -568,6 +596,7 @@ const helpOverlay = (() => {
 				<tr><td style="color:#aaa;padding-right:16px">P</td><td>Screenshot</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">R</td><td>Toggle GIF recording</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">M</td><td>Toggle minimap</td></tr>
+				<tr><td style="color:#aaa;padding-right:16px">Z</td><td>Hide UI (scene + joystick only)</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">H / ?</td><td>Toggle this overlay</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Mouse drag</td><td>Orbit camera</td></tr>
 				<tr><td style="color:#aaa;padding-right:16px">Scroll wheel</td><td>Zoom in / out</td></tr>
@@ -610,6 +639,7 @@ window.addEventListener('keydown', (e) => {
 		case 'KeyP': e.preventDefault(); takeScreenshot(); break;
 		case 'KeyR': e.preventDefault(); toggleGifRecording(); break;
 		case 'KeyM': e.preventDefault(); toggleMinimap(); break;
+		case 'KeyZ': e.preventDefault(); toggleZen(); break;
 		case 'KeyH': e.preventDefault(); toggleHelp(); break;
 		case 'Slash':
 			if (e.shiftKey) { e.preventDefault(); toggleHelp(); }
@@ -617,6 +647,7 @@ window.addEventListener('keydown', (e) => {
 		case 'Escape':
 			if (helpVisible) { toggleHelp(); break; }
 			if (gesturePaletteVisible) { hideGesturePalette(); break; }
+			if (zenActive) { setZen(false); break; }
 			break;
 		// Number keys 1-9 for quick gestures
 		case 'Digit1': e.preventDefault(); triggerQuickGesture(0); break;
@@ -2605,3 +2636,12 @@ loadAvatar()
 
 	window._walkChat = { addChatMessage };
 }
+
+// ── Restore zen preference ───────────────────────────────────────────────
+// Runs after all UI state is declared. URL param wins, then stored choice.
+(() => {
+	const param = new URLSearchParams(location.search).get('ui');
+	if (param === 'hidden' || param === 'off') { setZen(true); return; }
+	if (param === 'on' || param === 'shown') return;
+	try { if (localStorage.getItem(ZEN_STORAGE_KEY) === '1') setZen(true); } catch {}
+})();

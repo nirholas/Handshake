@@ -868,6 +868,60 @@
 				.walk-actions .walk-btn { padding: 6px 10px; font-size: 12px; }
 				.walk-actions { gap: 5px; }
 			}
+
+			/* ── Zen mode (hide all UI) ─────────────────────────────────────
+			   Strips every overlay — controls, animated cards, chat — so the
+			   scene is just the 3D background and the movement joystick. A
+			   single subtle pill remains to restore the chrome. The joystick
+			   stays interactive; keyboard/touch movement is unaffected. */
+			body.is-zen .walk-site-header,
+			body.is-zen #walk-hud,
+			body.is-zen #walk-help,
+			body.is-zen #walk-status,
+			body.is-zen #walk-chat,
+			body.is-zen #walk-emote-tray,
+			body.is-zen #walk-players-panel,
+			body.is-zen #walk-avatar-picker,
+			body.is-zen #walk-ar-cta,
+			body.is-zen #walk-record-status,
+			body.is-zen #walk-help-overlay,
+			body.is-zen #walk-gesture-palette,
+			body.is-zen #walk-env-indicator,
+			body.is-zen #walk-camera-mode,
+			body.is-zen #walk-minimap,
+			body.is-zen .walk-remote-label,
+			body.is-zen .walk-remote-bubble,
+			body.is-zen .walk-speech-bubble {
+				display: none !important;
+			}
+
+			#walk-zen-exit {
+				position: fixed;
+				z-index: 11;
+				top: calc(env(safe-area-inset-top, 0) + 14px);
+				right: 16px;
+				display: none;
+				align-items: center;
+				gap: 7px;
+				appearance: none;
+				border: 1px solid var(--border);
+				background: rgba(10, 10, 10, 0.5);
+				color: var(--text-2);
+				font: inherit;
+				font-size: 12px;
+				font-weight: 500;
+				padding: 7px 12px;
+				border-radius: 999px;
+				cursor: pointer;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				opacity: 0;
+				transition: opacity 0.3s ease, color 0.15s ease, background 0.15s ease;
+			}
+			body.is-zen #walk-zen-exit { display: inline-flex; }
+			body.is-zen.zen-revealed #walk-zen-exit { opacity: 0.85; }
+			#walk-zen-exit:hover { color: var(--text); background: rgba(34, 34, 34, 0.7); }
+			#walk-zen-exit svg { display: block; }
 		</style>
 		<link rel="stylesheet" href="/nav.css" />
 	</head>
@@ -939,11 +993,21 @@
 						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="1" width="14" height="14" rx="2"/><circle cx="8" cy="8" r="2"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3"/></svg>
 						<span data-label>Map</span>
 					</button>
+					<button type="button" class="walk-btn" id="walk-zen-btn" title="Hide all controls — just the scene and joystick (Z)">
+						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8S3.8 3.5 8 3.5 14.5 8 14.5 8 12.2 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/><path d="M2 14L14 2"/></svg>
+						<span data-label>Hide UI</span>
+					</button>
 					<button type="button" class="walk-btn" id="walk-help-toggle" title="Show controls (H)">
 						<span>?</span>
 					</button>
 				</div>
 			</div>
+
+			<!-- Restore-chrome pill (only shown in zen mode) -->
+			<button type="button" id="walk-zen-exit" title="Show controls (Z)" aria-label="Show controls">
+				<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8S3.8 3.5 8 3.5 14.5 8 14.5 8 12.2 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>
+				<span>Show UI</span>
+			</button>
 
 			<!-- Avatar picker panel -->
 			<div id="walk-avatar-picker" class="walk-avatar-picker" hidden>
@@ -1002,6 +1066,7 @@
 				<span class="walk-key"><kbd>G</kbd> gestures</span>
 				<span class="walk-key"><kbd>V</kbd> scene</span>
 				<span class="walk-key"><kbd>M</kbd> map</span>
+				<span class="walk-key"><kbd>Z</kbd> hide UI</span>
 				<span class="walk-key"><kbd>H</kbd> help</span>
 			</div>
 
