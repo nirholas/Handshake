@@ -679,8 +679,14 @@ export function mountPumpFunCard({ panel, identity, skills, memory, protocol }) 
 		unsubProtocol = () => protocol.off?.(ACTION_TYPES.SKILL_DONE, handler);
 	}
 
+	let _refreshing = false;
 	refresh();
-	refreshTimer = setInterval(() => state.mint && !state.tradeOpen && refresh(), REFRESH_MS);
+	refreshTimer = setInterval(() => {
+		if (state.mint && !state.tradeOpen && !_refreshing) {
+			_refreshing = true;
+			refresh().finally(() => { _refreshing = false; });
+		}
+	}, REFRESH_MS);
 
 	return {
 		destroy() {

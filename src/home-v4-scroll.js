@@ -99,6 +99,7 @@ function observeViewerVisibility(canvas, viewer) {
 		if (!window.Act2Viewer) return;
 		viewer = new window.Act2Viewer(canvas, { fov: 14 });
 		observeViewerVisibility(canvas, viewer);
+		window.addEventListener('pagehide', () => viewer?.dispose(), { once: true });
 
 		viewer.onClipsReady = (clips) => {
 			buildChips(clips);
@@ -160,6 +161,7 @@ function observeViewerVisibility(canvas, viewer) {
 		if (!window.Act2Viewer) return;
 		const viewer = new window.Act2Viewer(canvas, { fov: 14 });
 		observeViewerVisibility(canvas, viewer);
+		window.addEventListener('pagehide', () => viewer?.dispose(), { once: true });
 		await viewer.loadModel('/avatars/cz.glb', { autoPlay: false });
 		const waveClip = viewer.listAvailableClips().find(c => /wave|waving/i.test(c.name));
 		if (waveClip) {

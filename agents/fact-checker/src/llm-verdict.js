@@ -1,57 +1,22 @@
-// LLM helpers for the fact-checker using direct Anthropic API calls.
-// Model: claude-haiku-4-5-20251001 (cheap + fast for structured extraction).
+// LLM helpers for the fact-checker.
+//
+// Routes through the platform's shared provider policy (api/_lib/llm.js):
+// Groq and OpenRouter are the funded free defaults; Anthropic is used only when
+// the operator brings their own ANTHROPIC_API_KEY. Structured extraction below
+// only needs a fast, cheap model, which all three providers satisfy.
 
-const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
-const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+import { llmComplete } from '../../../api/_lib/llm.js';
+
 const TIMEOUT_MS = 30_000;
 
-function withTimeout(promise, ms) {
-	return Promise.race([
-		promise,
-		new Promise((_, reject) =>
-			setTimeout(() => reject(new Error(`LLM call timed out after ${ms}ms`)), ms),
-		),
-	]);
-}
-
-async function callAnthropic(prompt, maxTokens = 1024) {
-	const apiKey = process.env.ANTHROPIC_API_KEY;
-	if (!apiKey) {
-		const err = new Error('ANTHROPIC_API_KEY is not configured');
-		err.status = 503;
-		err.code = 'llm_unavailable';
-		throw err;
-	}
-
-	const res = await withTimeout(
-		fetch(ANTHROPIC_API, {
-			method: 'POST',
-			headers: {
-				'content-type': 'application/json',
-				'x-api-key': apiKey,
-				'anthropic-version': '2023-06-01',
-			},
-			body: JSON.stringify({
-				model: ANTHROPIC_MODEL,
-				max_tokens: maxTokens,
-				messages: [{ role: 'user', content: prompt }],
-			}),
-		}),
-		TIMEOUT_MS,
-	);
-
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		const err = new Error(`Anthropic API HTTP ${res.status}: ${body.slice(0, 200)}`);
-		err.status = 502;
-		err.code = 'llm_error';
-		throw err;
-	}
-
-	const data = await res.json();
-	const text = data?.content?.[0]?.text || '';
-	const usage = data?.usage || {};
-	return { text, inputTokens: usage.input_tokens || 0, outputTokens: usage.output_tokens || 0 };
+async function callLlm(prompt, maxTokens = 1024) {
+	const { text, usage } = await llmComplete({
+		user: prompt,
+		maxTokens,
+		anthropicKey: process.env.ANTHROPIC_API_KEY,
+		timeoutMs: TIMEOUT_MS,
+	});
+	return { text, inputTokens: usage?.input || 0, outputTokens: usage?.output || 0 };
 }
 
 /**
@@ -71,7 +36,7 @@ Rules:
 
 Example output: ["query one", "query two", "query three"]`;
 
-	const { text, inputTokens, outputTokens } = await callAnthropic(prompt, 256);
+	const { text, inputTokens, outputTokens } = await callLlm(prompt, 256);
 
 	let queries;
 	try {
@@ -134,7 +99,7 @@ No markdown, no explanation, just the JSON array.
 
 Example (for 2 results): [{"excerpt":"The tower stands at 330m","stance":"supports"},{"excerpt":"Some unrelated content","stance":"neutral"}]`;
 
-	const { text, inputTokens, outputTokens } = await callAnthropic(prompt, 1024);
+	const { text, inputTokens, outputTokens } = await callLlm(prompt, 1024);
 
 	let analyses;
 	try {

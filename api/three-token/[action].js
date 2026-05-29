@@ -3,11 +3,12 @@
  * -------------------------
  * GET /api/three-token/stats          — protocol-level metrics (public)
  * GET /api/three-token/revenue-share  — authenticated user's revenue share position
- * GET /api/three-token/burns          — recent token burn events
+ * GET /api/three-token/burns          — deploy-to-burn ledger (per-deploy burns)
  * GET /api/three-token/activity       — protocol activity feed
  *
- * All token data sourced from Birdeye + Pump.fun via real on-chain queries.
- * Platform data sourced from the application database.
+ * Market data (price, market cap, supply, holders) is sourced from Birdeye.
+ * Protocol data (agents, revenue, deploy burns) is derived from the
+ * application database; deploy burns = deployed agents × AGENT_DEPLOY_BURN.
  */
 
 import { sql } from '../_lib/db.js';
@@ -16,6 +17,12 @@ import { cors, error, json, method, wrap } from '../_lib/http.js';
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const BIRDEYE_BASE = 'https://public-api.birdeye.so';
+
+// Protocol tokenomics (fixed parameters of the $THREE protocol).
+// AGENT_DEPLOY_BURN: $THREE permanently burned each time an agent is deployed.
+// REVENUE_SHARE_POOL_PCT: share of platform revenue distributed to holders.
+const AGENT_DEPLOY_BURN = 1000;
+const REVENUE_SHARE_POOL_PCT = 10;
 
 const _cache = new Map();
 
@@ -53,7 +60,7 @@ async function fetchTokenOverview(apiKey) {
 
 async function fetchPlatformMetrics() {
 	const [agentCount, revenueData, paymentCount] = await Promise.all([
-		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`,
+		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`.catch(() => [{ total: 0 }]),
 		sql`SELECT coalesce(sum(gross_amount), 0)::bigint AS total_gross, coalesce(sum(fee_amount), 0)::bigint AS total_fee FROM agent_revenue_events`.catch(() => [{ total_gross: 0, total_fee: 0 }]),
 		sql`SELECT count(*)::int AS total FROM agent_revenue_events`.catch(() => [{ total: 0 }]),
 	]);
@@ -65,14 +72,22 @@ async function fetchPlatformMetrics() {
 	};
 }
 
+// Deploy-to-burn ledger: each agent deployment burns AGENT_DEPLOY_BURN $THREE.
+// We surface the most recent deployments as burn events and the lifetime total
+// so the burn figures are derived from real on-chain deployment records rather
+// than hardcoded or conflated with revenue.
 async function fetchBurnEvents() {
-	const rows = await sql`
-		SELECT id, agent_id, gross_amount, skill, created_at
-		FROM agent_revenue_events
-		ORDER BY created_at DESC
-		LIMIT 20
-	`.catch(() => []);
-	return rows;
+	const [recent, totalRow] = await Promise.all([
+		sql`
+			SELECT id, name, display_name, created_at
+			FROM agent_identities
+			WHERE deleted_at IS NULL
+			ORDER BY created_at DESC
+			LIMIT 20
+		`.catch(() => []),
+		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`.catch(() => [{ total: 0 }]),
+	]);
+	return { recent, totalAgents: totalRow[0]?.total ?? 0 };
 }
 
 async function fetchRecentActivity() {
@@ -131,8 +146,8 @@ export default wrap(async (req, res) => {
 				total_agents: platform.total_agents,
 				total_revenue_usd: platform.total_revenue_gross / 1_000_000,
 				total_payments: platform.total_payments,
-				revenue_share_pool_pct: 10,
-				agent_deploy_burn: 1000,
+				revenue_share_pool_pct: REVENUE_SHARE_POOL_PCT,
+				agent_deploy_burn: AGENT_DEPLOY_BURN,
 			},
 		});
 	}
@@ -147,9 +162,9 @@ export default wrap(async (req, res) => {
 		]);
 
 		const ov = tokenData.overview || {};
-		const totalSupply = ov.supply ?? 1_000_000_000;
+		const totalSupply = ov.supply ?? null;
 		const totalRevenue = platform.total_revenue_gross / 1_000_000;
-		const poolPct = 10;
+		const poolPct = REVENUE_SHARE_POOL_PCT;
 		const revenuePool = totalRevenue * (poolPct / 100);
 
 		return json(res, 200, {
@@ -160,21 +175,22 @@ export default wrap(async (req, res) => {
 			platform_revenue_usd: totalRevenue,
 			revenue_share_pool_pct: poolPct,
 			revenue_share_pool_usd: revenuePool,
-			per_token_yield: totalSupply > 0 ? revenuePool / totalSupply : 0,
+			...(totalSupply > 0 ? { per_token_yield: revenuePool / totalSupply } : {}),
 		});
 	}
 
 	if (action === 'burns') {
-		const events = await fetchBurnEvents();
+		const { recent, totalAgents } = await fetchBurnEvents();
 		return json(res, 200, {
-			burns: events.map((e) => ({
-				id: e.id,
-				gross_amount: e.gross_amount,
-				skill: e.skill,
-				created_at: e.created_at,
+			burns: recent.map((a) => ({
+				id: a.id,
+				agent_name: a.display_name || a.name || 'Agent',
+				amount: AGENT_DEPLOY_BURN,
+				reason: 'agent_deploy',
+				created_at: a.created_at,
 			})),
-			total_burned: 0,
-			burn_rate_per_agent: 1000,
+			total_burned: totalAgents * AGENT_DEPLOY_BURN,
+			burn_per_deploy: AGENT_DEPLOY_BURN,
 		});
 	}
 

@@ -48,12 +48,19 @@ const IGNORE = new Set([
 	'/demos', // internal demo index
 	'/x402', // authenticated x402 checkout, not a discovery page
 	'/cz', // internal alias
+	'/app-classic', // legacy build of /app, superseded by the current viewer
+	'/create/studio', // editor shell reached in-flow from /create, not a landing
+	'/next/index.html', // internal next-gen SPA shell
+	'/aws', // AWS Marketplace entitlement landing, reached via marketplace redirect
+	'/paywall', // transactional gate, reached in-flow when access is required
 ]);
 
 // Whole prefixes that are internal/auth-gated/embed and never belong in the
 // public discovery index.
 const IGNORE_PREFIXES = [
 	'/dashboard/', // authenticated sub-pages
+	'/dashboard-classic/', // legacy authenticated dashboard, superseded by /dashboard
+	'/aws-marketplace/', // AWS Marketplace post-subscribe transactional pages
 	'/demo/', // demos
 	'/lobehub/', // partner embed iframes
 ];

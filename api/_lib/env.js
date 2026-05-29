@@ -424,13 +424,6 @@ export const env = {
 		return match ? match[1] : '';
 	},
 
-	// Birdeye API key — used by pump/dashboard and three-token to read live
-	// price / market / trade data. Optional: handlers degrade to an explicit
-	// "data unavailable" response when it's absent rather than crashing.
-	get BIRDEYE_API_KEY() {
-		return opt('BIRDEYE_API_KEY', '');
-	},
-
 	// Solana devnet RPC URL. Falls back to the public devnet endpoint.
 	get SOLANA_RPC_URL_DEVNET() {
 		return opt('SOLANA_RPC_URL_DEVNET', 'https://api.devnet.solana.com');

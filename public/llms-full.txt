@@ -254,6 +254,18 @@ URL: https://three.ws/bazaar
 
 Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.
 
+### x402 Arbitrage
+
+URL: https://three.ws/arbitrage
+
+Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability.
+
+### x402 Providers
+
+URL: https://three.ws/providers
+
+Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings.
+
 ### GMGN Smart Money
 
 URL: https://three.ws/gmgn
@@ -277,6 +289,12 @@ Live dashboard for an autonomous agent that funds itself via x402 micropayments.
 URL: https://three.ws/shopper
 
 Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.
+
+### Forever — etch a message into Bitcoin
+
+URL: https://three.ws/forever
+
+Inscribe a message onto the Bitcoin blockchain. It stays there. Forever.
 
 ## Agent Tools
 

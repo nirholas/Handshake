@@ -105,10 +105,14 @@ export function llmConfigured(opts = {}) {
 // Run a single-shot system+user completion against the first available
 // provider, falling over to the next on transport or non-2xx errors.
 //
+// `timeoutMs` bounds each provider attempt (the next provider is tried if one
+// times out), so a hung upstream can't stall a serverless function or agent
+// tick indefinitely.
+//
 // Returns { text, provider, model, usage:{input,output}, raw }.
 // Throws LlmUnavailableError when no provider is configured, or the last
 // upstream error (with .status = 502) when every provider failed.
-export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null }) {
+export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, timeoutMs = 30_000 }) {
 	const chain = providerChain({ anthropicKey, anthropicModel });
 	if (!chain.length) throw new LlmUnavailableError();
 
@@ -120,6 +124,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 				method: 'POST',
 				headers: p.headers,
 				body: JSON.stringify(p.buildBody(system, user, maxTokens)),
+				signal: AbortSignal.timeout(timeoutMs),
 			});
 		} catch (e) {
 			lastErr = Object.assign(new Error(`${p.name} unreachable: ${e.message}`), { status: 502, code: 'upstream_unreachable' });

@@ -427,6 +427,7 @@ async function loadList(reset = false) {
 		if (state.sort) url.searchParams.set('sort', state.sort);
 		if (state.cursor) url.searchParams.set('cursor', state.cursor);
 		const r = await fetch(url);
+		if (!r.ok) throw new Error(`HTTP ${r.status}`);
 		const j = await r.json();
 		// Real endpoint wraps as { data: { items, next_cursor } }; legacy mock returns a bare array.
 		const rawItems = Array.isArray(j) ? j : (j?.data?.items ?? []);
@@ -596,8 +597,10 @@ async function loadTheme() {
 function renderTheme() {
 	const strip = $('market-theme-strip');
 	if (!strip || !state.theme) return;
-	$('market-theme-title').textContent = state.theme.title;
-	$('market-theme-blurb').textContent = state.theme.blurb || '';
+	const titleEl = $('market-theme-title');
+	const blurbEl = $('market-theme-blurb');
+	if (titleEl) titleEl.textContent = state.theme.title;
+	if (blurbEl) blurbEl.textContent = state.theme.blurb || '';
 	const cta = $('market-theme-cta');
 	if (state.theme.tag) {
 		cta.hidden = false;
@@ -1110,6 +1113,16 @@ function openAvatarModal(avatar) {
 		if (bar) bar.style.width = Math.round((e.detail?.totalProgress || 0) * 100) + '%';
 	});
 	mv.addEventListener('load', () => { progressEl.remove(); mv.style.opacity = '1'; }, { once: true });
+	const loadTimeout = setTimeout(() => {
+		const label = progressEl.querySelector('.modal-load-label');
+		if (label) label.textContent = 'Failed to load 3D — try refreshing.';
+	}, 15_000);
+	mv.addEventListener('error', () => {
+		clearTimeout(loadTimeout);
+		const label = progressEl.querySelector('.modal-load-label');
+		if (label) label.textContent = 'Failed to load 3D model.';
+	}, { once: true });
+	mv.addEventListener('load', () => clearTimeout(loadTimeout), { once: true });
 
 	$('avatar-modal-title').textContent = avatar.name || 'Untitled avatar';
 	$('avatar-modal-desc').textContent =

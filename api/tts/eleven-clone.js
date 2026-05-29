@@ -6,18 +6,18 @@
  *   - name:        string (voice label, 1..64 chars).
  *   - description: string (optional, ≤500 chars).
  *
- * Forwards to the ElevenLabs SDK (`client.voices.add(…)`) using the
+ * Forwards to the ElevenLabs SDK (`client.voices.ivc.create(…)`) using the
  * server-side ELEVENLABS_API_KEY. Returns `{ voice_id, name, status }`.
  *
  * Auth: same shape as /api/tts/eleven — a browser session OR a bearer token.
  *
  * Heads-up on quota: Instant Voice Cloning is a paid-tier ElevenLabs feature
- * (Starter+). The free tier returns 401 from voices.add with
+ * (Starter+). The free tier returns 401 from voices.ivc.create with
  * `can_not_use_instant_voice_cloning`. We pass that error through as a 502
  * with the upstream body included so the demo log surfaces it verbatim.
  */
 
-import { ElevenLabsClient } from 'elevenlabs';
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, method, wrap, error, json } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
@@ -94,7 +94,7 @@ export default wrap(async (req, res) => {
 
 	let result;
 	try {
-		result = await client.voices.add({
+		result = await client.voices.ivc.create({
 			name,
 			description,
 			files: [audioFile],
@@ -105,7 +105,7 @@ export default wrap(async (req, res) => {
 			(err?.body && typeof err.body === 'object' ? JSON.stringify(err.body) : err?.body) ||
 			err?.message ||
 			'upstream error';
-		console.error('[tts/eleven-clone] ElevenLabs voices.add failed', status, body);
+		console.error('[tts/eleven-clone] ElevenLabs voices.ivc.create failed', status, body);
 		// Pass the upstream body through so the demo surface can show the exact
 		// quota / verification message — IVC is a paid-tier feature.
 		return json(res, 502, {

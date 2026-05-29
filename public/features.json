@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-05-29T09:12:05.698Z",
+	"generated_at": "2026-05-29T10:07:50.954Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -379,6 +379,24 @@
 					"tags": []
 				},
 				{
+					"path": "/arbitrage",
+					"title": "x402 Arbitrage",
+					"description": "Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability.",
+					"added": "2026-05-29",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/providers",
+					"title": "x402 Providers",
+					"description": "Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings.",
+					"added": "2026-05-29",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
 					"path": "/gmgn",
 					"title": "GMGN Smart Money",
 					"description": "Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.",
@@ -410,6 +428,15 @@
 					"title": "Endpoint Shopper",
 					"description": "Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.",
 					"added": "2026-05-27",
+					"auth": null,
+					"indexable": true,
+					"tags": []
+				},
+				{
+					"path": "/forever",
+					"title": "Forever — etch a message into Bitcoin",
+					"description": "Inscribe a message onto the Bitcoin blockchain. It stays there. Forever.",
+					"added": "2026-05-29",
 					"auth": null,
 					"indexable": true,
 					"tags": []

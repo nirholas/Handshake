@@ -495,7 +495,7 @@ export class AgentHome {
 	_renderMemoryBar() {
 		if (!this.identity.memory) return '';
 		const stats = this.identity.memory.stats;
-		if (!stats.total) return '<span class="agent-mem-empty">no memories yet</span>';
+		if (!stats || !stats.total) return '<span class="agent-mem-empty">no memories yet</span>';
 
 		return (
 			Object.entries(stats)
@@ -567,6 +567,7 @@ export class AgentHome {
 		this._emotionInterval = setInterval(() => {
 			if (!this.avatar) return;
 			const state = this.avatar.emotionState;
+			if (!state) return;
 			const dominant = Object.entries(state).reduce(
 				(a, b) => (b[1] > a[1] ? b : a),
 				['neutral', 0],

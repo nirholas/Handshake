@@ -97,7 +97,7 @@ const EXTERNALS = [
 	'gltf-validator',
 	'jsdom',
 	'ethers',
-	'elevenlabs',
+	'@elevenlabs/elevenlabs-js',
 	'playwright',
 	'playwright-core',
 	'puppeteer',

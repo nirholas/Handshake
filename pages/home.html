@@ -1060,9 +1060,8 @@
 
 		/* ── HERO CHAT INPUT ────────────────────────────────────── */
 		.hero-chat-bar {
-			position: absolute; bottom: 72px; left: 50%;
-			transform: translateX(-50%); z-index: 20;
 			width: min(380px, calc(100% - 40px));
+			margin-bottom: 6px;
 		}
 		.hero-chat-form {
 			display: flex; align-items: center; gap: 0;
@@ -1092,7 +1091,6 @@
 		.hero-chat-send:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 		.hero-chat-send svg { width: 14px; height: 14px; }
 		@media (max-width: 980px) {
-			.hero-chat-bar { bottom: 20px; }
 			.hero-thought { top: 4%; }
 		}
 
@@ -1240,7 +1238,10 @@
 			color: var(--text-4);
 		}
 		.hero-chips-counter strong { color: var(--text-3); font-weight: 600; }
-		@media (max-width: 980px) { .hero-chips-wrap { display: none; } }
+		@media (max-width: 980px) {
+			.hero-chips-label, .hero-chips { display: none; }
+			.hero-chips-wrap { padding: 20px; background: linear-gradient(0deg, rgba(5,5,5,0.7) 0%, transparent 100%); }
+		}
 		@media (prefers-reduced-motion: reduce) {
 			.hero-chips-label::before { animation: none !important; }
 		}
@@ -2356,19 +2357,19 @@
 			<div class="hero-thought-inner" id="hero-thought-text"></div>
 			<div class="hero-thought-tail"></div>
 		</div>
-		<div class="hero-chat-bar" id="hero-chat-bar">
-			<form class="hero-chat-form" id="hero-chat-form" autocomplete="off">
-				<input class="hero-chat-input" id="hero-chat-input" type="text" placeholder="Ask the avatar anything..." aria-label="Chat with the avatar" />
-				<button class="hero-chat-send" id="hero-chat-send" type="submit" aria-label="Send message">
-					<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2L7 9"/><path d="M14 2L9.5 14L7 9L2 6.5L14 2Z"/></svg>
-				</button>
-			</form>
-		</div>
 		<div class="stage-meta">
 			<span>nich</span>
 			<span>/api/avatars/bacff13e</span>
 		</div>
 		<div class="hero-chips-wrap" id="hero-chips-wrap">
+			<div class="hero-chat-bar" id="hero-chat-bar">
+				<form class="hero-chat-form" id="hero-chat-form" autocomplete="off">
+					<input class="hero-chat-input" id="hero-chat-input" type="text" placeholder="Ask the avatar anything..." aria-label="Chat with the avatar" />
+					<button class="hero-chat-send" id="hero-chat-send" type="submit" aria-label="Send message">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2L7 9"/><path d="M14 2L9.5 14L7 9L2 6.5L14 2Z"/></svg>
+					</button>
+				</form>
+			</div>
 			<div class="hero-chips-label">
 				<strong class="hero-chips-counter" id="hero-chips-counter"></strong>
 			</div>

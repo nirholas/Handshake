@@ -30,6 +30,14 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const CROSSFADE = 0.35;
 
+/** Dispose a material and any texture maps it references. */
+function disposeMaterial(mat) {
+	for (const value of Object.values(mat)) {
+		if (value && value.isTexture) value.dispose();
+	}
+	mat.dispose?.();
+}
+
 export class Act2Viewer {
 	constructor(canvas, { fov = 14 } = {}) {
 		this.canvas = canvas;
@@ -73,12 +81,13 @@ export class Act2Viewer {
 		this.onClipsReady = null;
 
 		this._resize();
-		const ro = new ResizeObserver(() => this._resize());
-		ro.observe(canvas);
+		this._ro = new ResizeObserver(() => this._resize());
+		this._ro.observe(canvas);
 
 		this._disposed = false;
+		this._raf = null;
 		this._tick = this._tick.bind(this);
-		requestAnimationFrame(this._tick);
+		this._raf = requestAnimationFrame(this._tick);
 	}
 
 	_resize() {
@@ -101,14 +110,33 @@ export class Act2Viewer {
 			this.model.rotation.y = this._modelYaw;
 		}
 		this.renderer.render(this.scene, this.camera);
-		requestAnimationFrame(this._tick);
+		this._raf = requestAnimationFrame(this._tick);
 	}
 
+	/**
+	 * Tear down the renderer so leaving the home section frees the WebGL
+	 * context instead of leaking a running raf loop + GPU buffers. Idempotent.
+	 */
 	dispose() {
+		if (this._disposed) return;
 		this._disposed = true;
+		if (this._raf) cancelAnimationFrame(this._raf);
+		this._raf = null;
+		this._ro?.disconnect();
 		if (this.mixer) { this.mixer.stopAllAction(); this.mixer = null; }
 		if (this.model) { this.scene.remove(this.model); this.model = null; }
+		// Release GPU-side geometry/material/texture handles before the context.
+		this.scene?.traverse((obj) => {
+			obj.geometry?.dispose?.();
+			const mat = obj.material;
+			if (Array.isArray(mat)) mat.forEach(disposeMaterial);
+			else if (mat) disposeMaterial(mat);
+		});
+		this.scene?.environment?.dispose?.();
+		this.clips.clear();
+		this.currentAction = null;
 		this.renderer.dispose();
+		this.renderer.forceContextLoss?.();
 	}
 
 	async _loadManifest() {
