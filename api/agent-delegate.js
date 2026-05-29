@@ -3,7 +3,7 @@ import { authenticateBearer, extractBearer, getSessionUser } from './_lib/auth.j
 import { cors, json, method, wrap, error, readJson } from './_lib/http.js';
 import { limits } from './_lib/rate-limit.js';
 import { normalizeLegacyPolicy } from './_lib/embed-policy.js';
-import { env } from './_lib/env.js';
+import { llmComplete, LlmUnavailableError } from './_lib/llm.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
@@ -43,26 +43,15 @@ export default wrap(async (req, res) => {
 		agent.meta?.brain?.instructions ||
 		`You are ${agent.name}. ${agent.description || ''}`.trim();
 
-	const upstream = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'anthropic-version': '2023-06-01',
-			'x-api-key': env.ANTHROPIC_API_KEY,
-		},
-		body: JSON.stringify({
-			model,
-			max_tokens: 1024,
-			system: systemPrompt,
-			messages: [{ role: 'user', content: message }],
-		}),
-	});
+	let result;
+	try {
+		result = await llmComplete({ system: systemPrompt, user: message, maxTokens: 1024, anthropicModel: model });
+	} catch (err) {
+		if (err instanceof LlmUnavailableError) {
+			return error(res, 503, 'llm_unavailable', 'agent delegation is not available right now');
+		}
+		return error(res, 502, 'upstream_error', `LLM call failed: ${err.message}`);
+	}
 
-	if (!upstream.ok)
-		return error(res, 502, 'upstream_error', `LLM call failed: ${upstream.status}`);
-
-	const data = await upstream.json();
-	const response = data?.content?.[0]?.text || '';
-
-	return json(res, 200, { response, agentId: toAgentId });
+	return json(res, 200, { response: result.text, agentId: toAgentId, model: result.model });
 });

@@ -13,6 +13,7 @@ import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
 import { cors, json, method, error } from '../../_lib/http.js';
 import { env } from '../../_lib/env.js';
+import { llmComplete } from '../../_lib/llm.js';
 import { limits } from '../../_lib/rate-limit.js';
 
 const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
@@ -100,42 +101,20 @@ async function distillFacts(xData) {
 			? `\n\nRecent original tweets (highest-engagement first):\n${xData.tweets.map((t, i) => `${i + 1}. ${t}`).join('\n')}`
 			: '';
 
-	const res = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'x-api-key': env.ANTHROPIC_API_KEY,
-			'anthropic-version': '2023-06-01',
-			'content-type': 'application/json',
-		},
-		body: JSON.stringify({
-			model: 'claude-haiku-4-5-20251001',
-			max_tokens: 1024,
-			system:
-				'You distill a person\'s X (Twitter) profile and posts into concise memory facts ' +
-				'for an AI agent that will represent this person. Each fact is a single ' +
-				'self-contained sentence about the person — their interests, expertise, communication ' +
-				'style, values, typical topics, or notable beliefs. Infer voice/tone from the tweet ' +
-				'style. Skip promotional content. Focus on authentic personality signals. ' +
-				'Output ONLY a JSON array of strings, no other text.',
-			messages: [
-				{
-					role: 'user',
-					content:
-						`Extract up to 15 memory facts from this X profile:\n` +
-						JSON.stringify(xData.profile, null, 2) +
-						tweetBlock,
-				},
-			],
-		}),
+	const { text: raw } = await llmComplete({
+		maxTokens: 1024,
+		system:
+			'You distill a person\'s X (Twitter) profile and posts into concise memory facts ' +
+			'for an AI agent that will represent this person. Each fact is a single ' +
+			'self-contained sentence about the person — their interests, expertise, communication ' +
+			'style, values, typical topics, or notable beliefs. Infer voice/tone from the tweet ' +
+			'style. Skip promotional content. Focus on authentic personality signals. ' +
+			'Output ONLY a JSON array of strings, no other text.',
+		user:
+			`Extract up to 15 memory facts from this X profile:\n` +
+			JSON.stringify(xData.profile, null, 2) +
+			tweetBlock,
 	});
-
-	if (!res.ok) {
-		const text = await res.text().catch(() => '');
-		throw new Error(`Claude API error ${res.status}: ${text.slice(0, 200)}`);
-	}
-
-	const data = await res.json();
-	const raw = data.content?.[0]?.text || '[]';
 	try {
 		const facts = JSON.parse(raw);
 		return Array.isArray(facts) ? facts.filter((f) => typeof f === 'string').slice(0, 15) : [];

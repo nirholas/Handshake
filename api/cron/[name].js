@@ -2989,14 +2989,11 @@ async function openaiCompatDraft({ url, key, model, system, user, max, extraHead
 	return data.choices?.[0]?.message?.content || '';
 }
 
-// Draft short post text. Mirrors the documented env.js fallback order: prefer
-// Anthropic, then Groq, then OpenRouter — so persona/digest triggers keep working
-// whenever ANY LLM key is configured rather than hard-depending on ANTHROPIC_API_KEY.
+// Draft short post text. Groq and OpenRouter are free platform keys; Anthropic
+// is BYOK and only used if the operator has explicitly set it server-side.
 async function llmDraft({ system, user, max = 200 }) {
 	let text;
-	if (env.ANTHROPIC_API_KEY) {
-		text = await anthropicDraft({ system, user, max });
-	} else if (env.GROQ_API_KEY) {
+	if (env.GROQ_API_KEY) {
 		text = await openaiCompatDraft({
 			url: 'https://api.groq.com/openai/v1/chat/completions',
 			key: env.GROQ_API_KEY,
@@ -3011,8 +3008,10 @@ async function llmDraft({ system, user, max = 200 }) {
 			system, user, max,
 			extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws agent' },
 		});
+	} else if (env.ANTHROPIC_API_KEY) {
+		text = await anthropicDraft({ system, user, max });
 	} else {
-		throw new Error('no LLM provider configured (set ANTHROPIC_API_KEY, GROQ_API_KEY, or OPENROUTER_API_KEY)');
+		throw new Error('no LLM provider configured (set GROQ_API_KEY or OPENROUTER_API_KEY)');
 	}
 	text = (text || '').trim();
 	if (text.startsWith('"') && text.endsWith('"')) text = text.slice(1, -1).trim();

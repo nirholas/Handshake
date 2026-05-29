@@ -608,6 +608,67 @@ Given a screenshot of a 3D avatar, respond with ONLY a JSON object:
 }
 Respond with nothing else — no markdown, no explanation.`;
 
+// Classify an avatar thumbnail with a vision-capable model. Free OpenRouter
+// vision is preferred (platform-funded); Anthropic is used only as a BYOK
+// fallback when a server-side key is present. Throws { code: 'not_configured' }
+// when no vision provider is available so the caller can skip silently.
+async function classifyAvatarImage({ thumbUrl, prompt, env }) {
+	if (env.OPENROUTER_API_KEY) {
+		const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+				authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+				'HTTP-Referer': 'https://three.ws',
+				'X-Title': 'three.ws avatar auto-tag',
+			},
+			body: JSON.stringify({
+				model: 'meta-llama/llama-3.2-11b-vision-instruct',
+				max_tokens: 256,
+				messages: [
+					{
+						role: 'user',
+						content: [
+							{ type: 'text', text: prompt },
+							{ type: 'image_url', image_url: { url: thumbUrl } },
+						],
+					},
+				],
+			}),
+		});
+		if (!r.ok) throw Object.assign(new Error(`openrouter vision ${r.status}`), { code: 'vision_api_error' });
+		const d = await r.json();
+		return d.choices?.[0]?.message?.content || '';
+	}
+	if (env.ANTHROPIC_API_KEY) {
+		const r = await fetch('https://api.anthropic.com/v1/messages', {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+				'x-api-key': env.ANTHROPIC_API_KEY,
+				'anthropic-version': '2023-06-01',
+			},
+			body: JSON.stringify({
+				model: 'claude-haiku-4-5-20251001',
+				max_tokens: 256,
+				messages: [
+					{
+						role: 'user',
+						content: [
+							{ type: 'image', source: { type: 'url', url: thumbUrl } },
+							{ type: 'text', text: prompt },
+						],
+					},
+				],
+			}),
+		});
+		if (!r.ok) throw Object.assign(new Error(`anthropic vision ${r.status}`), { code: 'vision_api_error' });
+		const d = await r.json();
+		return d.content?.[0]?.text || '';
+	}
+	throw Object.assign(new Error('no vision provider configured'), { code: 'not_configured' });
+}
+
 const handleAutoTag = wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
@@ -630,39 +691,22 @@ const handleAutoTag = wrap(async (req, res) => {
 	const { env } = await import('../_lib/env.js');
 	const thumbUrl = publicUrl(body.thumb_key);
 
-	// Call Claude Haiku — cheapest, sufficient for image classification.
-	const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'x-api-key': env.ANTHROPIC_API_KEY,
-			'anthropic-version': '2023-06-01',
-		},
-		body: JSON.stringify({
-			model: 'claude-haiku-4-5-20251001',
-			max_tokens: 256,
-			messages: [
-				{
-					role: 'user',
-					content: [
-						{ type: 'image', source: { type: 'url', url: thumbUrl } },
-						{ type: 'text', text: AVATAR_TAG_PROMPT },
-					],
-				},
-			],
-		}),
-	});
-
-	if (!anthropicRes.ok) {
-		console.error('[auto-tag] anthropic error', await anthropicRes.text());
-		return json(res, 200, { ok: false, reason: 'vision_api_error' });
+	// Image classification needs a vision-capable model. Per platform policy
+	// the free providers come first (OpenRouter hosts open vision models);
+	// Anthropic is BYOK and only used when a server-side key is present. When
+	// no vision provider is configured we skip auto-tagging rather than fail —
+	// it is an enhancement, not a required step.
+	let visionText;
+	try {
+		visionText = await classifyAvatarImage({ thumbUrl, prompt: AVATAR_TAG_PROMPT, env });
+	} catch (err) {
+		console.error('[auto-tag] vision error', err.message);
+		return json(res, 200, { ok: false, reason: err.code || 'vision_api_error' });
 	}
 
-	const result = await anthropicRes.json();
 	let parsed;
 	try {
-		const raw = result.content?.[0]?.text || '{}';
-		parsed = JSON.parse(raw.trim());
+		parsed = JSON.parse((visionText || '{}').trim());
 	} catch {
 		return json(res, 200, { ok: false, reason: 'parse_error' });
 	}

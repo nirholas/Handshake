@@ -5,10 +5,10 @@
 //
 // Provider routing (in order):
 //   1. Body.provider when present and the matching key is configured.
-//   2. ANTHROPIC_API_KEY → Anthropic (default).
+//   2. GROQ_API_KEY → Groq (free platform key — default).
 //   3. OPENROUTER_API_KEY → OpenRouter free tier.
-//   4. GROQ_API_KEY → Groq.
-//   5. OPENAI_API_KEY → OpenAI.
+//   4. OPENAI_API_KEY → OpenAI.
+//   5. ANTHROPIC_API_KEY → Anthropic (BYOK only — never set as a server key).
 // Anthropic and the OpenAI-compatible providers (OpenRouter / Groq / OpenAI)
 // use different request shapes, tool-call wire formats, and SSE event names —
 // this file translates both directions so the client only sees the same
@@ -460,7 +460,7 @@ export default wrap(async (req, res) => {
 function pickProvider(requested, model, userKeys = {}) {
 	const order = requested
 		? [requested, ...Object.keys(PROVIDERS).filter((p) => p !== requested)]
-		: ['anthropic', 'openrouter', 'groq', 'openai'];
+		: ['groq', 'openrouter', 'openai', 'anthropic'];
 
 	for (const name of order) {
 		const cfg = PROVIDERS[name];

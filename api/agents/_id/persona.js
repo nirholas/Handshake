@@ -7,10 +7,9 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/au
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
+import { llmComplete, LlmUnavailableError } from '../../_lib/llm.js';
 import { parse } from '../../_lib/validate.js';
 import { z } from 'zod';
-
-const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
 const extractBody = z.object({
 	answers: z
@@ -25,32 +24,6 @@ async function resolveAuth(req) {
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }
-
-const PERSONA_TOOL = {
-	name: 'extract_persona',
-	description: 'Extract a persona system prompt from interview answers',
-	input_schema: {
-		type: 'object',
-		required: ['system_prompt', 'tone_tags', 'vocabulary_samples'],
-		properties: {
-			system_prompt: {
-				type: 'string',
-				description:
-					'A 150-300 word first-person system prompt that captures the persona. Start with "You are ...".',
-			},
-			tone_tags: {
-				type: 'array',
-				items: { type: 'string' },
-				description: 'Up to 8 single-word tone descriptors (e.g. witty, direct, empathetic).',
-			},
-			vocabulary_samples: {
-				type: 'array',
-				items: { type: 'string' },
-				description: 'Up to 10 short phrases or expressions characteristic of this persona.',
-			},
-		},
-	},
-};
 
 export const handlePersona = wrap(async (req, res, id, action) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
@@ -88,53 +61,47 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 		const body = parse(extractBody, await readJson(req));
 		const { answers } = body;
 
-		const apiKey = env.ANTHROPIC_API_KEY;
-
-		let upstream;
+		let raw;
 		try {
-			upstream = await fetch(ANTHROPIC_URL, {
-				method: 'POST',
-				headers: {
-					'x-api-key': apiKey,
-					'anthropic-version': '2023-06-01',
-					'content-type': 'application/json',
-				},
-				body: JSON.stringify({
-					model: 'claude-sonnet-4-6',
-					max_tokens: 1024,
-					system:
-						'You are a persona architect. Given a person\'s interview answers, extract their communication style, tone, and voice. Produce a concise first-person system prompt that an LLM can use to impersonate this person faithfully. Be specific. Avoid clichés.',
-					messages: [
-						{
-							role: 'user',
-							content: `Interview answers:\n1. ${answers[0]}\n2. ${answers[1]}\n3. ${answers[2]}\n4. ${answers[3]}\n5. ${answers[4]}`,
-						},
-					],
-					tools: [PERSONA_TOOL],
-					tool_choice: { type: 'tool', name: 'extract_persona' },
-				}),
-			});
+			({ text: raw } = await llmComplete({
+				maxTokens: 1024,
+				system:
+					'You are a persona architect. Given a person\'s interview answers, extract their communication style, tone, and voice. Produce a concise first-person system prompt that an LLM can use to impersonate this person faithfully. Be specific. Avoid clichés.\n\n' +
+					'Output ONLY a single JSON object (no markdown fences, no prose) with EXACTLY these fields:\n' +
+					'{\n' +
+					'  "system_prompt": string,        // 150-300 word first-person system prompt, starting with "You are ..."\n' +
+					'  "tone_tags": string[],          // up to 8 single-word tone descriptors\n' +
+					'  "vocabulary_samples": string[]  // up to 10 short phrases characteristic of this persona\n' +
+					'}',
+				user: `Interview answers:\n1. ${answers[0]}\n2. ${answers[1]}\n3. ${answers[2]}\n4. ${answers[3]}\n5. ${answers[4]}`,
+			}));
 		} catch (err) {
-			console.error('[persona/extract] anthropic fetch failed', err);
-			return error(res, 502, 'upstream_error', 'persona extraction service unreachable');
+			if (err instanceof LlmUnavailableError) {
+				return error(res, 503, 'llm_unavailable', 'persona extraction is not available right now');
+			}
+			console.error('[persona/extract] LLM error', err.status || '', err.message);
+			return error(res, 502, 'upstream_error', 'persona extraction failed');
 		}
 
-		if (!upstream.ok) {
-			const text = await upstream.text().catch(() => '');
-			console.error('[persona/extract] anthropic error', upstream.status, text.slice(0, 400));
-			return error(res, 502, 'upstream_error', `persona extraction failed (${upstream.status})`);
-		}
-
-		const data = await upstream.json();
-		const toolUse = data.content?.find(
-			(b) => b.type === 'tool_use' && b.name === 'extract_persona',
-		);
-		if (!toolUse?.input) {
-			console.error('[persona/extract] no tool_use block', JSON.stringify(data).slice(0, 400));
+		let extracted;
+		try {
+			const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+			extracted = JSON.parse(stripped);
+		} catch {
+			console.error('[persona/extract] non-JSON model output', raw.slice(0, 400));
 			return error(res, 502, 'upstream_error', 'unexpected response from persona extraction');
 		}
 
-		const { system_prompt, tone_tags, vocabulary_samples } = toolUse.input;
+		const system_prompt = typeof extracted.system_prompt === 'string' ? extracted.system_prompt.trim() : '';
+		const tone_tags = Array.isArray(extracted.tone_tags)
+			? extracted.tone_tags.filter((t) => typeof t === 'string' && t.trim()).map((t) => t.trim().slice(0, 40)).slice(0, 8)
+			: [];
+		const vocabulary_samples = Array.isArray(extracted.vocabulary_samples)
+			? extracted.vocabulary_samples.filter((v) => typeof v === 'string' && v.trim()).map((v) => v.trim().slice(0, 120)).slice(0, 10)
+			: [];
+		if (!system_prompt) {
+			return error(res, 502, 'upstream_error', 'unexpected response from persona extraction');
+		}
 
 		const hash = createHash('sha256').update(system_prompt).digest('hex');
 		const sig = createHmac('sha256', env.JWT_SECRET).update(hash).digest('hex');

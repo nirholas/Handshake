@@ -8,6 +8,7 @@ import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
 import { cors, json, method, error } from '../../_lib/http.js';
 import { env } from '../../_lib/env.js';
+import { llmComplete } from '../../_lib/llm.js';
 import { limits } from '../../_lib/rate-limit.js';
 
 const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
@@ -97,39 +98,17 @@ async function fetchGitHubData(accessToken, login) {
 // ── Claude Haiku distillation ─────────────────────────────────────────────────
 
 async function distillFacts(githubData) {
-	const res = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'x-api-key': env.ANTHROPIC_API_KEY,
-			'anthropic-version': '2023-06-01',
-			'content-type': 'application/json',
-		},
-		body: JSON.stringify({
-			model: 'claude-haiku-4-5-20251001',
-			max_tokens: 1024,
-			system:
-				'You distill GitHub activity into concise memory facts for an AI agent. ' +
-				'Each fact is a single self-contained sentence about the developer — tech stack, ' +
-				'project types, commit style, interests, or notable contributions. ' +
-				'Output ONLY a JSON array of strings, no other text.',
-			messages: [
-				{
-					role: 'user',
-					content:
-						`Extract up to 15 memory facts from this GitHub profile data:\n` +
-						JSON.stringify(githubData, null, 2),
-				},
-			],
-		}),
+	const { text: raw } = await llmComplete({
+		maxTokens: 1024,
+		system:
+			'You distill GitHub activity into concise memory facts for an AI agent. ' +
+			'Each fact is a single self-contained sentence about the developer — tech stack, ' +
+			'project types, commit style, interests, or notable contributions. ' +
+			'Output ONLY a JSON array of strings, no other text.',
+		user:
+			`Extract up to 15 memory facts from this GitHub profile data:\n` +
+			JSON.stringify(githubData, null, 2),
 	});
-
-	if (!res.ok) {
-		const text = await res.text().catch(() => '');
-		throw new Error(`Claude API error ${res.status}: ${text.slice(0, 200)}`);
-	}
-
-	const data = await res.json();
-	const raw = data.content?.[0]?.text || '[]';
 	try {
 		const facts = JSON.parse(raw);
 		return Array.isArray(facts) ? facts.filter((f) => typeof f === 'string').slice(0, 15) : [];

@@ -20,7 +20,7 @@ import { sql } from '../_lib/db.js';
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { normalizeLegacyPolicy } from '../_lib/embed-policy.js';
-import { env } from '../_lib/env.js';
+import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
 
 const ALLOWED_MODELS = new Set([
 	'claude-haiku-4-5-20251001',
@@ -78,45 +78,24 @@ export default wrap(async (req, res) => {
 		agent.meta?.brain?.instructions ||
 		`You are ${agent.name}. ${agent.description || ''}`.trim();
 
-	if (!env.ANTHROPIC_API_KEY) {
-		return error(res, 503, 'not_configured', 'agent delegation is unavailable: ANTHROPIC_API_KEY not configured');
-	}
-
 	const started = Date.now();
-	let upstream;
+	let result;
 	try {
-		upstream = await fetch('https://api.anthropic.com/v1/messages', {
-			method: 'POST',
-			headers: {
-				'content-type': 'application/json',
-				'anthropic-version': '2023-06-01',
-				'x-api-key': env.ANTHROPIC_API_KEY,
-				'x-delegate-depth': '1',
-			},
-			body: JSON.stringify({
-				model,
-				max_tokens: 1024,
-				system: systemPrompt,
-				messages: [{ role: 'user', content: message }],
-			}),
-		});
+		result = await llmComplete({ system: systemPrompt, user: message, maxTokens: 1024, anthropicModel: model });
 	} catch (err) {
-		return error(res, 502, 'upstream_unreachable', err?.message || 'anthropic fetch failed');
+		if (err instanceof LlmUnavailableError) {
+			return error(res, 503, 'llm_unavailable', 'agent delegation is not available right now');
+		}
+		return error(res, 502, 'upstream_error', `LLM call failed: ${err.message}`);
 	}
-	if (!upstream.ok) {
-		const msg = await upstream.text().catch(() => '');
-		return error(res, 502, 'upstream_error', `LLM call failed: ${upstream.status} ${msg.slice(0, 200)}`);
-	}
-	const data = await upstream.json().catch(() => ({}));
-	const response = data?.content?.[0]?.text || '';
 
 	return json(res, 200, {
 		ok: true,
 		agentId: agent.id,
 		agentName: agent.name,
-		response,
-		model,
-		usage: data?.usage || null,
+		response: result.text,
+		model: result.model,
+		usage: result.usage,
 		durationMs: Date.now() - started,
 		fetchedAt: new Date().toISOString(),
 	});

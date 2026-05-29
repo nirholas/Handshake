@@ -2,15 +2,16 @@
 //
 // Produces a Hunch-style "What's the context?" panel for a single x402
 // service. We pull the merged catalog, locate the item, gather peers (same
-// capability and same provider), then ask Claude to write 2–3 sentences
-// grounded in inline [n] citations that the UI renders as chips.
+// capability and same provider), then ask an LLM to write 2–3 sentences
+// grounded in inline [n] citations that the UI renders as chips. Generation
+// runs on the free platform providers (Groq/OpenRouter); Anthropic is BYOK.
 //
-// Falls back to a deterministic, citation-only summary if no
-// ANTHROPIC_API_KEY is configured or the upstream call fails — the panel
-// should always render something useful.
+// Falls back to a deterministic, citation-only summary if no LLM provider is
+// available or the upstream call fails — the panel should always render
+// something useful.
 
 import { cors, json, error, wrap } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { llmComplete } from '../_lib/llm.js';
 import { Bazaar } from '../_lib/x402/bazaar-client.js';
 
 const STOP_WORDS = new Set([
@@ -218,37 +219,21 @@ ${citationLines}
 
 Respond with only the JSON object.`;
 
-	const apiKey = env.ANTHROPIC_API_KEY;
-	if (!apiKey) throw new Error('no_anthropic_key');
-
-	const upstream = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'anthropic-version': '2023-06-01',
-			'x-api-key': apiKey,
-		},
-		body: JSON.stringify({
-			model: 'claude-haiku-4-5-20251001',
-			max_tokens: 400,
-			temperature: 0.2,
-			messages: [{ role: 'user', content: prompt }],
-		}),
+	// Free platform providers (Groq/OpenRouter) handle this; Anthropic is BYOK.
+	// If no provider is available llmComplete throws, and the caller falls back
+	// to the deterministic summary — so the panel still renders.
+	const { text, provider } = await llmComplete({
+		system: 'You summarize x402 bazaar services. Respond with only the JSON object the prompt requests.',
+		user: prompt,
+		maxTokens: 400,
 	});
-
-	if (!upstream.ok) {
-		const body = await upstream.text().catch(() => '');
-		throw new Error(`anthropic ${upstream.status}: ${body.slice(0, 200)}`);
-	}
-	const data = await upstream.json();
-	const text = data?.content?.[0]?.text || '';
 	const match = text.match(/\{[\s\S]*\}/);
 	if (!match) throw new Error('no JSON in LLM response');
 	const parsed = JSON.parse(match[0]);
 	const summary = String(parsed.summary || '').trim();
 	if (!summary) throw new Error('empty summary');
 	const sentiment = ['up', 'down', 'neutral'].includes(parsed.sentiment) ? parsed.sentiment : 'neutral';
-	return { summary, sentiment, citations, source: 'claude' };
+	return { summary, sentiment, citations, source: provider };
 }
 
 async function handler(req, res) {

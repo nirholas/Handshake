@@ -5,7 +5,7 @@
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { cors, method, wrap, error, readJson, json } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
 
 const MAX_TWEET_LEN = 280;
 
@@ -40,29 +40,18 @@ Output ONLY the tweet text, nothing else.`;
 		prompt ? `What to post about: ${prompt}` : 'Write something engaging about being an autonomous AI agent.',
 	].filter(Boolean).join('\n\n');
 
-	const upstream = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'anthropic-version': '2023-06-01',
-			'x-api-key': env.ANTHROPIC_API_KEY,
-		},
-		body: JSON.stringify({
-			model: 'claude-haiku-4-5-20251001',
-			max_tokens: 200,
-			system,
-			messages: [{ role: 'user', content: userPrompt }],
-		}),
-	});
-
-	if (!upstream.ok) {
-		const detail = await upstream.text();
-		console.error('[x-draft] LLM failed', upstream.status, detail);
+	let result;
+	try {
+		result = await llmComplete({ system, user: userPrompt, maxTokens: 200 });
+	} catch (err) {
+		if (err instanceof LlmUnavailableError) {
+			return error(res, 503, 'llm_unavailable', 'draft generation is not available right now');
+		}
+		console.error('[x-draft] LLM failed', err.status || '', err.message);
 		return error(res, 502, 'llm_failed', 'draft generation failed');
 	}
 
-	const data = await upstream.json();
-	let text = (data.content?.[0]?.text || '').trim();
+	let text = result.text;
 	if (text.startsWith('"') && text.endsWith('"')) text = text.slice(1, -1).trim();
 	if (text.length > MAX_TWEET_LEN) text = text.slice(0, MAX_TWEET_LEN - 1) + '…';
 

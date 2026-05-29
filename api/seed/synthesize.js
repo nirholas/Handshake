@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
-import { env } from '../_lib/env.js';
+import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
 const bodySchema = z
@@ -126,39 +126,22 @@ export default wrap(async (req, res) => {
 		`${sourcesUsed.length === 1 ? 'account' : 'accounts'}:\n\n` +
 		JSON.stringify(sources, null, 2);
 
-	const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'x-api-key': env.ANTHROPIC_API_KEY,
-			'anthropic-version': '2023-06-01',
-		},
-		body: JSON.stringify({
-			model: 'claude-haiku-4-5-20251001',
-			max_tokens: 1024,
-			system: SYSTEM_PROMPT,
-			messages: [{ role: 'user', content: userMessage }],
-		}),
-	});
-
-	if (!anthropicRes.ok) {
-		const detail = await anthropicRes.text().catch(() => '');
-		console.error('[seed/synthesize] anthropic error', anthropicRes.status, detail.slice(0, 400));
-		return error(res, 502, 'upstream_error', `synthesis failed (${anthropicRes.status})`);
+	let result;
+	try {
+		result = await llmComplete({ system: SYSTEM_PROMPT, user: userMessage, maxTokens: 1024 });
+	} catch (err) {
+		if (err instanceof LlmUnavailableError) {
+			return error(res, 503, 'llm_unavailable', 'synthesis is not available right now');
+		}
+		console.error('[seed/synthesize] LLM error', err.status || '', err.message);
+		return error(res, 502, 'upstream_error', 'synthesis failed');
 	}
 
-	const result = await anthropicRes.json();
-	const memorySeed = (result.content || [])
-		.filter((b) => b.type === 'text')
-		.map((b) => b.text)
-		.join('\n')
-		.trim();
-
+	const memorySeed = result.text;
 	if (!memorySeed)
 		return error(res, 502, 'empty_synthesis', 'model returned no text content');
 
-	const usage = result.usage || {};
-	const tokensUsed = (usage.input_tokens || 0) + (usage.output_tokens || 0);
+	const tokensUsed = result.usage.input + result.usage.output;
 
 	return json(res, 200, {
 		ok: true,
@@ -166,9 +149,9 @@ export default wrap(async (req, res) => {
 		sources_used: sourcesUsed,
 		tokens_used: tokensUsed,
 		usage: {
-			input_tokens: usage.input_tokens || 0,
-			output_tokens: usage.output_tokens || 0,
+			input_tokens: result.usage.input,
+			output_tokens: result.usage.output,
 		},
-		model: result.model || 'claude-haiku-4-5-20251001',
+		model: result.model,
 	});
 });

@@ -8,6 +8,7 @@ import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
 import { env } from '../../_lib/env.js';
+import { llmComplete } from '../../_lib/llm.js';
 
 const bodySchema = z
 	.object({
@@ -43,52 +44,22 @@ async function distillFacts(profile, casts, apiKey) {
 	const followers = profile.follower_count ?? 0;
 	const userLine = `Display name: ${displayName}, Bio: ${bio || '(none)'}, Followers: ${followers}`;
 
-	const resp = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'anthropic-version': '2023-06-01',
-			'x-api-key': env.ANTHROPIC_API_KEY,
-		},
-		body: JSON.stringify({
-			model: 'claude-haiku-4-5-20251001',
-			max_tokens: 1024,
-			tools: [
-				{
-					name: 'extract_memory_facts',
-					description:
-						'Extract concise memory facts from a Farcaster profile and recent casts for an AI agent.',
-					input_schema: {
-						type: 'object',
-						properties: {
-							facts: {
-								type: 'array',
-								items: { type: 'string' },
-								maxItems: 15,
-								description: 'Up to 15 single-sentence facts about the user',
-							},
-						},
-						required: ['facts'],
-					},
-				},
-			],
-			tool_choice: { type: 'tool', name: 'extract_memory_facts' },
-			system: 'You distill Farcaster casts into concise memory facts for an AI agent. Focus on: recurring topics, opinions, projects, communication style, community ties.',
-			messages: [
-				{
-					role: 'user',
-					content: `Profile: ${userLine}\n\nRecent casts (newest first):\n${castTexts}`,
-				},
-			],
-		}),
+	const { text: raw } = await llmComplete({
+		maxTokens: 1024,
+		system:
+			'You distill Farcaster casts into concise memory facts for an AI agent. ' +
+			'Focus on: recurring topics, opinions, projects, communication style, community ties. ' +
+			'Output ONLY a JSON array of up to 15 single-sentence strings, no other text.',
+		user: `Profile: ${userLine}\n\nRecent casts (newest first):\n${castTexts}`,
 	});
 
-	if (!resp.ok) throw new Error(`Claude error ${resp.status}`);
-
-	const data = await resp.json();
-	const toolUse = data.content?.find((b) => b.type === 'tool_use');
-	const facts = toolUse?.input?.facts;
-	return Array.isArray(facts) ? facts.slice(0, 15) : [];
+	try {
+		const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+		const facts = JSON.parse(stripped);
+		return Array.isArray(facts) ? facts.filter((f) => typeof f === 'string').slice(0, 15) : [];
+	} catch {
+		return [];
+	}
 }
 
 export default wrap(async (req, res) => {

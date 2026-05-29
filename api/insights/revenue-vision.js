@@ -24,6 +24,7 @@ import {
 	resolveResourceUrl,
 } from '../_lib/x402-spec.js';
 import { env } from '../_lib/env.js';
+import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
 import {
 	PAYMENT_IDENTIFIER,
 	checkCache,
@@ -150,36 +151,12 @@ const SYSTEM_PROMPT =
 	'Calibrate confidence honestly: "high" only when you can defend the claim, otherwise "medium" or "low". ' +
 	'No prose, no markdown, no preamble.';
 
-async function callClaude(missionBrief, agentCodename) {
-	const upstream = await fetch('https://api.anthropic.com/v1/messages', {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'anthropic-version': '2023-06-01',
-			'x-api-key': env.ANTHROPIC_API_KEY,
-		},
-		body: JSON.stringify({
-			model: 'claude-sonnet-4-6',
-			max_tokens: 800,
-			system: SYSTEM_PROMPT,
-			messages: [
-				{
-					role: 'user',
-					content: `Caller agent: ${agentCodename}\nMission brief: ${missionBrief}\n\nReturn the JSON object only.`,
-				},
-			],
-		}),
-		signal: AbortSignal.timeout(20_000),
+async function callLlm(missionBrief, agentCodename) {
+	const { text } = await llmComplete({
+		system: SYSTEM_PROMPT,
+		user: `Caller agent: ${agentCodename}\nMission brief: ${missionBrief}\n\nReturn the JSON object only.`,
+		maxTokens: 800,
 	});
-	if (!upstream.ok) {
-		const errText = await upstream.text();
-		const e = new Error(`Claude returned ${upstream.status}: ${errText.slice(0, 300)}`);
-		e.status = 502;
-		e.code = 'upstream_error';
-		throw e;
-	}
-	const data = await upstream.json();
-	const text = data?.content?.find?.((b) => b.type === 'text')?.text || '';
 	const match = text.match(/\{[\s\S]*\}/);
 	const parsed = JSON.parse(match ? match[0] : text);
 	const allowedConfidence = new Set(['high', 'medium', 'low']);
@@ -258,8 +235,11 @@ export default wrap(async (req, res) => {
 
 	let result;
 	try {
-		result = await callClaude(missionBrief, agentCodename);
+		result = await callLlm(missionBrief, agentCodename);
 	} catch (err) {
+		if (err instanceof LlmUnavailableError) {
+			return error(res, 503, 'llm_unavailable', 'revenue vision is not available right now');
+		}
 		return error(res, err.status || 502, err.code || 'upstream_error', err.message);
 	}
 
