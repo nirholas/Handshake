@@ -258,36 +258,38 @@ export class CoinCommunities {
 	}
 
 	_initScene() {
+		// Monochrome world: a near-black void, graphite plaza, light drawn only as
+		// white. Keeps the avatars (full colour) reading as the focal subjects.
 		const scene = new Scene();
-		scene.background = new Color(0x0e1630);
-		scene.fog = new Fog(0x0e1630, 60, 130);
+		scene.background = new Color(0x060607);
+		scene.fog = new Fog(0x060607, 55, 125);
 		this.scene = scene;
 
 		this.camera = new PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
 
-		scene.add(new HemisphereLight(0xbcd4ff, 0x2a3350, 0.9));
-		scene.add(new AmbientLight(0xffffff, 0.2));
-		const sun = new DirectionalLight(0xfff1d6, 1.1);
-		sun.position.set(30, 50, 20); sun.castShadow = true;
+		scene.add(new HemisphereLight(0xffffff, 0x141416, 0.85));
+		scene.add(new AmbientLight(0xffffff, 0.22));
+		const sun = new DirectionalLight(0xffffff, 1.15);
+		sun.position.set(30, 52, 20); sun.castShadow = true;
 		sun.shadow.mapSize.set(2048, 2048);
 		const s = sun.shadow.camera; s.left = -70; s.right = 70; s.top = 70; s.bottom = -70; s.near = 1; s.far = 200;
 		sun.shadow.bias = -0.0004;
 		scene.add(sun, sun.target);
 
-		// Plaza floor.
+		// Plaza floor — graphite.
 		const floor = new Mesh(new CircleGeometry(WORLD_RADIUS + 2, 64),
-			new MeshStandardMaterial({ color: 0x223056, roughness: 0.95 }));
+			new MeshStandardMaterial({ color: 0x121214, roughness: 0.92, metalness: 0.0 }));
 		floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
 		scene.add(floor);
-		// Glowing boundary ring.
-		const ring = new Mesh(new RingGeometry(WORLD_RADIUS, WORLD_RADIUS + 1.2, 80),
-			new MeshBasicMaterial({ color: 0x5fa1cf, side: DoubleSide, transparent: true, opacity: 0.5 }));
+		// Crisp white boundary ring — the only "glow" in the scene.
+		const ring = new Mesh(new RingGeometry(WORLD_RADIUS, WORLD_RADIUS + 0.6, 96),
+			new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide, transparent: true, opacity: 0.7 }));
 		ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02;
 		scene.add(ring);
-		// Concentric guide circles for depth.
+		// Concentric guide circles for depth — faint white hairlines.
 		for (const rad of [14, 28, 42]) {
-			const g = new Mesh(new RingGeometry(rad, rad + 0.12, 64),
-				new MeshBasicMaterial({ color: 0x35508a, side: DoubleSide, transparent: true, opacity: 0.5 }));
+			const g = new Mesh(new RingGeometry(rad, rad + 0.06, 96),
+				new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide, transparent: true, opacity: 0.12 }));
 			g.rotation.x = -Math.PI / 2; g.position.y = 0.015; scene.add(g);
 		}
 
@@ -299,12 +301,12 @@ export class CoinCommunities {
 	_buildTotem(coin) {
 		const g = new Group();
 		const pillar = new Mesh(new CylinderGeometry(1.1, 1.4, 6, 24),
-			new MeshStandardMaterial({ color: 0x2a3a66, roughness: 0.6, metalness: 0.2 }));
+			new MeshStandardMaterial({ color: 0x1b1b1e, roughness: 0.5, metalness: 0.4 }));
 		pillar.position.y = 3; pillar.castShadow = true; pillar.receiveShadow = true;
 		g.add(pillar);
-		// Floating coin disc with the token image.
+		// Floating coin disc with the token image — brushed silver.
 		const disc = new Mesh(new CylinderGeometry(2.2, 2.2, 0.3, 40),
-			new MeshStandardMaterial({ color: 0xffce5c, roughness: 0.35, metalness: 0.7, emissive: 0x3a2e00, emissiveIntensity: 0.3 }));
+			new MeshStandardMaterial({ color: 0xd6d6da, roughness: 0.3, metalness: 0.85, emissive: 0x222226, emissiveIntensity: 0.3 }));
 		disc.rotation.x = Math.PI / 2; disc.position.y = 7.5; disc.castShadow = true;
 		g.add(disc);
 		this._totemDisc = disc;
@@ -331,9 +333,9 @@ export class CoinCommunities {
 		const x = c.getContext('2d');
 		x.fillStyle = 'rgba(11,16,32,0.0)'; x.fillRect(0, 0, 512, 128);
 		x.textAlign = 'center'; x.fillStyle = '#fff';
-		x.font = 'bold 52px system-ui, sans-serif';
-		x.fillText(name.slice(0, 18), 256, 56);
-		x.font = 'bold 34px system-ui, sans-serif'; x.fillStyle = '#5fa1cf';
+		x.font = '800 50px Inter, system-ui, sans-serif';
+		x.fillText(name.slice(0, 18).toUpperCase(), 256, 56);
+		x.font = 'bold 32px Inter, system-ui, sans-serif'; x.fillStyle = 'rgba(255,255,255,0.6)';
 		x.fillText(sym, 256, 100);
 		const tex = new CanvasTexture(c); tex.colorSpace = SRGBColorSpace;
 		const m = new Mesh(new PlaneGeometry(6, 1.5), new MeshBasicMaterial({ map: tex, transparent: true, side: DoubleSide }));
@@ -464,7 +466,7 @@ export class CoinCommunities {
 		if (!zone || this._nipple) return;
 		// Touch only — keep desktop on WASD.
 		if (!matchMedia('(pointer: coarse)').matches) { zone.style.display = 'none'; return; }
-		this._nipple = nipplejs.create({ zone, mode: 'static', position: { left: '60px', bottom: '60px' }, color: '#5fa1cf', size: 110 });
+		this._nipple = nipplejs.create({ zone, mode: 'static', position: { left: '60px', bottom: '60px' }, color: '#ffffff', size: 110 });
 		this._nipple.on('move', (_e, d) => {
 			const f = Math.min(1, d.force);
 			this._joy = { x: Math.cos(d.angle.radian) * f, z: -Math.sin(d.angle.radian) * f };
