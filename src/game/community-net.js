@@ -12,6 +12,9 @@
 import { Client, getStateCallbacks } from 'colyseus.js';
 
 const ROOM_NAME = 'walk_world';
+const RECONNECT_BASE_MS = 3000;
+const RECONNECT_MAX_MS = 60_000;
+const MAX_RECONNECT_ATTEMPTS = 6;
 const SEND_HZ = 15;
 const SEND_INTERVAL_MS = 1000 / SEND_HZ;
 const POSITION_EPSILON = 0.01;
@@ -65,6 +68,7 @@ export class CommunityNet {
 		this._lastSent = null;
 		this._lastSentAt = 0;
 		this._reconnectTimer = null;
+		this._reconnectAttempts = 0;
 		this._destroyed = false;
 	}
 
@@ -119,6 +123,7 @@ export class CommunityNet {
 			});
 			this.room.onError((code, message) => console.warn('[community-net] room.onError', code, message));
 
+			this._reconnectAttempts = 0;
 			this._setStatus('online');
 			this._emit('ready', {
 				mint: this.room.state.coin,
@@ -133,9 +138,20 @@ export class CommunityNet {
 		}
 	}
 
+	// Exponential backoff with a hard ceiling. When the game server isn't
+	// reachable at all (e.g. not deployed), every attempt costs an 8s+ XHR
+	// timeout — retrying forever at a fixed 3s floods the console and the
+	// network tab. After MAX_RECONNECT_ATTEMPTS we stop and stay 'offline';
+	// the UI can offer manual reconnect via retry().
 	_scheduleReconnect() {
 		if (this._reconnectTimer || this._destroyed) return;
-		const delay = 3000 + Math.random() * 1500;
+		if (this._reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+			this._setStatus('offline', 'multiplayer unreachable — single-player only');
+			return;
+		}
+		const attempt = this._reconnectAttempts++;
+		const backoff = Math.min(RECONNECT_BASE_MS * 2 ** attempt, RECONNECT_MAX_MS);
+		const delay = backoff + Math.random() * 1000;
 		this._reconnectTimer = setTimeout(() => {
 			this._reconnectTimer = null;
 			if (!this._destroyed) this.connect();
@@ -165,6 +181,7 @@ export class CommunityNet {
 
 	retry() {
 		if (this._reconnectTimer) { clearTimeout(this._reconnectTimer); this._reconnectTimer = null; }
+		this._reconnectAttempts = 0;
 		this.connect();
 	}
 	destroy() {

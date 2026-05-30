@@ -14,6 +14,7 @@
 //                                      designed locked state, reads still work.
 
 import { configureApi, api } from '@coin-communities/sdk/node';
+import { normalizeGatewayURL } from '../../src/ipfs.js';
 
 // Solana mint addresses — base58, 32–44 chars. Communities are keyed by these.
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -154,7 +155,7 @@ export function toWorldCard(c) {
 	return {
 		token: c.tokenAddress,
 		symbol: c.tokenSymbol || null,
-		image: c.tokenHighResImageUrl || c.tokenImageUrl || null,
+		image: normalizeGatewayURL(c.tokenHighResImageUrl || c.tokenImageUrl || '') || null,
 		chainId: c.chainId ?? null,
 		members: c.memberCount ?? 0,
 		posts: c.postCount ?? 0,

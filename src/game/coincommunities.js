@@ -23,6 +23,7 @@ import nipplejs from 'nipplejs';
 import { AnimationManager } from '../animation-manager.js';
 import { CommunityNet } from './community-net.js';
 import { CommunityUI } from './coincommunities-ui.js';
+import { normalizeGatewayURL } from '../ipfs.js';
 
 const AVATAR_DEFAULT = '/avatars/default.glb';
 const MANIFEST_URL = '/animations/manifest.json';
@@ -214,7 +215,7 @@ export class CoinCommunities {
 		const p = new URLSearchParams(location.search);
 		const mint = p.get('coin');
 		if (mint) {
-			this.enter({ mint, name: p.get('name') || '', symbol: p.get('symbol') || '', image: p.get('image') || '' });
+			this.enter({ mint, name: p.get('name') || '', symbol: p.get('symbol') || '', image: normalizeGatewayURL(p.get('image') || '') });
 		}
 	}
 
@@ -233,7 +234,7 @@ export class CoinCommunities {
 				mint: c.mint || c.address,
 				name: (c.name || '').trim() || 'Unnamed coin',
 				symbol: (c.symbol || '').trim(),
-				image: c.image_uri || c.image || c.imageUri || '',
+				image: normalizeGatewayURL(c.image_uri || c.image || c.imageUri || ''),
 				marketCap: c.usd_market_cap || c.market_cap_usd || c.marketCap || 0,
 			})).filter((c) => c.mint);
 			this.ui.setCoins(list);
@@ -436,6 +437,7 @@ export class CoinCommunities {
 	_bindInput() {
 		window.addEventListener('keydown', (e) => {
 			if (this.ui.chatFocused) return;
+			if (e.key === 'Enter' && this.phase === 'world') { e.preventDefault(); this.ui.focusChat(); return; }
 			this.keys.add(e.key.toLowerCase());
 		});
 		window.addEventListener('keyup', (e) => this.keys.delete(e.key.toLowerCase()));

@@ -103,7 +103,7 @@ export function toPublicUrl(ref, { embed = false, origin } = {}) {
 const IPFS_GATEWAYS = [
 	'https://ipfs.io/ipfs/',
 	'https://dweb.link/ipfs/',
-	'https://cloudflare-ipfs.com/ipfs/',
+	'https://flk-ipfs.xyz/ipfs/',
 	'https://gateway.pinata.cloud/ipfs/',
 ];
 const AR_GATEWAY = 'https://arweave.net/';

@@ -13,7 +13,7 @@ import { getIdentityRegistry } from './agent-registry.js';
 
 const IPFS_GATEWAYS = [
 	(cid) => `https://ipfs.io/ipfs/${cid}`,
-	(cid) => `https://cloudflare-ipfs.com/ipfs/${cid}`,
+	(cid) => `https://flk-ipfs.xyz/ipfs/${cid}`,
 	(cid) => `https://dweb.link/ipfs/${cid}`,
 ];
 

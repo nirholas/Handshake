@@ -5,7 +5,7 @@ import { limits, clientIp } from '../../../_lib/rate-limit.js';
 
 const IPFS_GATEWAYS = [
 	'https://dweb.link/ipfs/',
-	'https://cloudflare-ipfs.com/ipfs/',
+	'https://flk-ipfs.xyz/ipfs/',
 	'https://ipfs.io/ipfs/',
 ];
 

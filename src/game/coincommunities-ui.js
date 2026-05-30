@@ -201,12 +201,34 @@ export class CommunityUI {
 		this.chatLog = el('div', { class: 'cc-chat-log' });
 		this.chatInput = el('input', {
 			type: 'text', maxlength: '200', placeholder: 'Say something…',
-			onkeydown: (e) => { if (e.key === 'Enter') this._sendChat(); e.stopPropagation(); },
+			onkeydown: (e) => {
+				if (e.key === 'Enter') this._sendChat();
+				else if (e.key === 'Escape') this.chatInput.blur();
+				e.stopPropagation();
+			},
 		});
-		const chat = el('div', { id: 'cc-chat' }, [
-			this.chatLog,
-			el('div', { class: 'cc-chat-input' }, [this.chatInput, el('button', { text: 'Send', onclick: () => this._sendChat() })]),
+		this.chatUnread = el('span', { class: 'cc-chat-unread', hidden: true });
+		this.chatChevron = el('span', { class: 'cc-chat-chevron', text: '▾' });
+		const head = el('div', {
+			class: 'cc-chat-head', role: 'button', tabindex: '0', 'aria-label': 'Toggle chat',
+			onclick: () => this.toggleChat(),
+			onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.toggleChat(); } },
+		}, [
+			el('span', { class: 'cc-chat-title' }, [el('span', { class: 'cc-chat-ico', text: '💬' }), document.createTextNode('Chat')]),
+			this.chatUnread,
+			this.chatChevron,
 		]);
+		this.chatBody = el('div', { class: 'cc-chat-body' }, [
+			this.chatLog,
+			el('div', { class: 'cc-chat-input' }, [this.chatInput, el('button', { class: 'cc-chat-send', text: 'Send', onclick: () => this._sendChat() })]),
+		]);
+		this.chat = el('div', { id: 'cc-chat' }, [head, this.chatBody]);
+		// Default: collapsed on touch (small screens), open on desktop — unless the
+		// user has expressed a preference before.
+		const stored = localStorage.getItem('cc-chat-min');
+		this._unread = 0;
+		this.toggleChat(stored != null ? stored === '1' : matchMedia('(pointer: coarse)').matches);
+		const chat = this.chat;
 
 		this.emoteTray = el('div', { id: 'cc-emotes' });
 
@@ -244,6 +266,8 @@ export class CommunityUI {
 		if (coin.image) { this.coinImg.src = coin.image; this.coinImg.style.display = ''; }
 		else this.coinImg.style.display = 'none';
 		this.chatLog.textContent = '';
+		this._unread = 0;
+		this.chatUnread.hidden = true;
 	}
 
 	showLobby() {
@@ -261,12 +285,46 @@ export class CommunityUI {
 	setOnline(n) { this.onlineCount.textContent = `${n} online`; }
 
 	addChat({ name, text, mine }) {
+		const t = new Date();
+		const stamp = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+		// Stick to bottom only if the user is already near it, so reading scrollback
+		// isn't yanked away when a new message lands.
+		const nearBottom = this.chatLog.scrollHeight - this.chatLog.scrollTop - this.chatLog.clientHeight < 60;
 		const row = el('div', { class: 'cc-chat-msg' + (mine ? ' cc-mine' : '') }, [
-			el('b', { text: name + ':' }), document.createTextNode(text),
+			el('span', { class: 'cc-chat-meta' }, [
+				el('b', { text: name }),
+				el('time', { text: stamp }),
+			]),
+			el('span', { class: 'cc-chat-text', text }),
 		]);
 		this.chatLog.appendChild(row);
-		while (this.chatLog.children.length > 60) this.chatLog.removeChild(this.chatLog.firstChild);
-		this.chatLog.scrollTop = this.chatLog.scrollHeight;
+		while (this.chatLog.children.length > 200) this.chatLog.removeChild(this.chatLog.firstChild);
+		if (nearBottom || mine) this.chatLog.scrollTop = this.chatLog.scrollHeight;
+		if (this._chatMin && !mine) {
+			this._unread += 1;
+			this.chatUnread.textContent = this._unread > 99 ? '99+' : String(this._unread);
+			this.chatUnread.hidden = false;
+		}
+	}
+
+	/** Collapse/expand the chat sidebar. Pass a boolean to force a state. */
+	toggleChat(force) {
+		this._chatMin = typeof force === 'boolean' ? force : !this._chatMin;
+		this.chat.classList.toggle('cc-min', this._chatMin);
+		this.chatChevron.textContent = this._chatMin ? '▴' : '▾';
+		this.chat.setAttribute('aria-expanded', String(!this._chatMin));
+		localStorage.setItem('cc-chat-min', this._chatMin ? '1' : '0');
+		if (!this._chatMin) {
+			this._unread = 0;
+			this.chatUnread.hidden = true;
+			this.chatLog.scrollTop = this.chatLog.scrollHeight;
+		}
+	}
+
+	/** Open the sidebar (if collapsed) and put the cursor in the input. */
+	focusChat() {
+		if (this._chatMin) this.toggleChat(false);
+		this.chatInput.focus();
 	}
 
 	get chatFocused() { return document.activeElement === this.chatInput; }

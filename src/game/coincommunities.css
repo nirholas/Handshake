@@ -192,30 +192,72 @@ html, body {
 #cc-status[data-state="offline"], #cc-status[data-state="failed"] { cursor: pointer; }
 @keyframes cc-pulse { 50% { opacity: 0.35; } }
 
-/* chat */
-#cc-chat { position: fixed; left: 14px; bottom: 14px; width: min(340px, 80vw); z-index: 21; }
+/* chat sidebar — dockable, minimizable, persistent log */
+#cc-chat {
+	position: fixed; left: 14px; bottom: 14px; width: min(340px, 82vw);
+	max-height: min(60vh, 520px); z-index: 21;
+	display: flex; flex-direction: column; overflow: hidden;
+	background: var(--cc-panel); border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
+	backdrop-filter: blur(8px); transition: max-height 0.22s ease;
+}
+.cc-chat-head {
+	display: flex; align-items: center; gap: 8px; flex: none;
+	padding: 9px 12px; cursor: pointer; user-select: none;
+	border-bottom: 1px solid var(--cc-edge);
+}
+.cc-chat-head:hover { background: rgba(95, 161, 207, 0.08); }
+.cc-chat-head:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: -2px; }
+.cc-chat-title { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; color: var(--cc-text); }
+.cc-chat-ico { font-size: 14px; }
+.cc-chat-unread {
+	margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px;
+	display: inline-flex; align-items: center; justify-content: center;
+	background: var(--cc-accent2); color: #fff; font-size: 11px; font-weight: 700;
+	border-radius: 999px; box-shadow: 0 0 8px rgba(124, 92, 255, 0.6);
+}
+.cc-chat-unread[hidden] { display: none; }
+.cc-chat-chevron { margin-left: auto; color: var(--cc-dim); font-size: 12px; transition: color 0.12s ease; }
+.cc-chat-unread:not([hidden]) + .cc-chat-chevron { margin-left: 8px; }
+.cc-chat-head:hover .cc-chat-chevron { color: var(--cc-text); }
+.cc-chat-body { display: flex; flex-direction: column; min-height: 0; padding: 10px; gap: 8px; }
+#cc-chat.cc-min { max-height: 39px; }
+#cc-chat.cc-min .cc-chat-head { border-bottom: none; }
+#cc-chat.cc-min .cc-chat-body { display: none; }
+
 .cc-chat-log {
-	display: flex; flex-direction: column; gap: 5px; max-height: 34vh; overflow-y: auto;
-	margin-bottom: 8px; padding-right: 4px; mask-image: linear-gradient(180deg, transparent, #000 22%);
+	display: flex; flex-direction: column; gap: 6px; overflow-y: auto;
+	flex: 1; min-height: 0; padding-right: 2px;
+}
+.cc-chat-log::-webkit-scrollbar { width: 6px; }
+.cc-chat-log::-webkit-scrollbar-thumb { background: var(--cc-edge); border-radius: 3px; }
+.cc-chat-log:empty::before {
+	content: "No messages yet — say hi 👋"; color: var(--cc-dim); font-size: 12px;
+	margin: auto; padding: 18px 0; text-align: center;
 }
 .cc-chat-msg {
-	background: var(--cc-panel); border: 1px solid var(--cc-edge); border-radius: 11px;
-	padding: 6px 11px; font-size: 13px; align-self: flex-start; max-width: 100%;
-	animation: cc-msg-in 0.18s ease; word-break: break-word;
+	background: rgba(255, 255, 255, 0.04); border: 1px solid var(--cc-edge); border-radius: 10px;
+	padding: 5px 10px; font-size: 13px; align-self: flex-start; max-width: 100%;
+	animation: cc-msg-in 0.18s ease; word-break: break-word; line-height: 1.35;
 }
-.cc-chat-msg b { color: var(--cc-accent); margin-right: 5px; }
-.cc-chat-msg.cc-mine b { color: var(--cc-green); }
+.cc-chat-meta { display: flex; align-items: baseline; gap: 6px; margin-bottom: 1px; }
+.cc-chat-meta b { color: var(--cc-accent); font-size: 12px; }
+.cc-chat-meta time { color: var(--cc-dim); font-size: 10px; font-variant-numeric: tabular-nums; }
+.cc-chat-msg.cc-mine { align-self: flex-end; background: rgba(95, 161, 207, 0.14); }
+.cc-chat-msg.cc-mine .cc-chat-meta b { color: var(--cc-green); }
+.cc-chat-text { display: block; color: var(--cc-text); }
 @keyframes cc-msg-in { from { opacity: 0; transform: translateY(6px); } }
 .cc-chat-input {
-	display: flex; gap: 7px; background: var(--cc-panel); border: 1px solid var(--cc-edge);
-	border-radius: 11px; padding: 7px 9px;
+	display: flex; gap: 7px; flex: none; background: rgba(0, 0, 0, 0.22);
+	border: 1px solid var(--cc-edge); border-radius: 10px; padding: 6px 8px;
 }
-.cc-chat-input input { flex: 1; background: none; border: none; color: var(--cc-text); font-size: 13px; outline: none; }
+.cc-chat-input input { flex: 1; min-width: 0; background: none; border: none; color: var(--cc-text); font-size: 13px; outline: none; }
 .cc-chat-input input::placeholder { color: var(--cc-dim); }
-.cc-chat-input button {
+.cc-chat-send {
 	background: var(--cc-accent); border: none; color: #04223a; font-weight: 700;
-	border-radius: 8px; padding: 0 12px; cursor: pointer; font-size: 13px;
+	border-radius: 8px; padding: 0 12px; cursor: pointer; font-size: 13px; transition: filter 0.12s ease;
 }
+.cc-chat-send:hover { filter: brightness(1.08); }
 
 /* emote tray */
 #cc-emotes {
@@ -240,14 +282,18 @@ html, body {
 	text-shadow: 0 1px 3px rgba(0,0,0,0.85); padding: 1px 6px;
 }
 .cc-bubble {
-	background: #fff; color: #11203a; font-size: 13px; font-weight: 600;
-	padding: 5px 10px; border-radius: 12px; max-width: 220px; white-space: normal;
-	box-shadow: 0 4px 14px rgba(0,0,0,0.4); animation: cc-msg-in 0.18s ease;
+	background: #fff; color: #11203a; font-size: 13px; font-weight: 600; text-align: center;
+	padding: 7px 12px; border-radius: 16px; max-width: 220px; white-space: normal;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); animation: cc-bubble-in 0.2s ease;
 }
-.cc-bubble::after {
-	content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%);
-	border: 6px solid transparent; border-top-color: #fff; border-bottom: 0;
+/* thought-bubble tail: two shrinking puffs trailing down toward the avatar */
+.cc-bubble::before, .cc-bubble::after {
+	content: ""; position: absolute; left: 50%; background: #fff; border-radius: 50%;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
+.cc-bubble::before { width: 12px; height: 12px; bottom: -8px; transform: translateX(-135%); }
+.cc-bubble::after { width: 7px; height: 7px; bottom: -18px; transform: translateX(-45%); }
+@keyframes cc-bubble-in { from { opacity: 0; } }
 
 #cc-hint {
 	position: fixed; right: 14px; bottom: 14px; z-index: 19;

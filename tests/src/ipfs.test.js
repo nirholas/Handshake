@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isDecentralizedURI, resolveURI } from '../../src/ipfs.js';
+import { isDecentralizedURI, resolveURI, normalizeGatewayURL } from '../../src/ipfs.js';
 
 describe('isDecentralizedURI', () => {
 	it('matches ipfs:// URIs', () => {
@@ -74,5 +74,35 @@ describe('resolveURI', () => {
 	it('is case-insensitive on the scheme', () => {
 		expect(resolveURI('IPFS://QmCID')).toMatch(/\/ipfs\/QmCID$/);
 		expect(resolveURI('AR://tx')).toBe('https://arweave.net/tx');
+	});
+
+	it('repairs retired cf-ipfs.com gateway URLs', () => {
+		const out = resolveURI('https://cf-ipfs.com/ipfs/QmTestCID');
+		expect(out).not.toContain('cf-ipfs.com');
+		expect(out).toMatch(/^https:\/\/.+\/ipfs\/QmTestCID$/);
+	});
+});
+
+describe('normalizeGatewayURL', () => {
+	it('rewrites cf-ipfs.com onto a working gateway, preserving the path', () => {
+		const out = normalizeGatewayURL('https://cf-ipfs.com/ipfs/QmCID/img.png');
+		expect(out).not.toContain('cf-ipfs.com');
+		expect(out).toMatch(/\/ipfs\/QmCID\/img\.png$/);
+	});
+
+	it('rewrites cloudflare-ipfs.com too', () => {
+		const out = normalizeGatewayURL('https://cloudflare-ipfs.com/ipfs/QmCID');
+		expect(out).not.toContain('cloudflare-ipfs.com');
+		expect(out).toMatch(/\/ipfs\/QmCID$/);
+	});
+
+	it('leaves live gateways and arbitrary URLs untouched', () => {
+		expect(normalizeGatewayURL('https://ipfs.io/ipfs/QmCID')).toBe('https://ipfs.io/ipfs/QmCID');
+		expect(normalizeGatewayURL('https://example.com/x.png')).toBe('https://example.com/x.png');
+	});
+
+	it('returns falsy input unchanged', () => {
+		expect(normalizeGatewayURL('')).toBe('');
+		expect(normalizeGatewayURL(null)).toBe(null);
 	});
 });

@@ -46,6 +46,7 @@ import { env } from '../_lib/env.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
 import { randomToken } from '../_lib/crypto.js';
+import { normalizeGatewayURL } from '../../src/ipfs.js';
 import {
 	getConnection,
 	getPumpSdk,
@@ -2428,6 +2429,20 @@ const PUMP_FRONTEND_BASE = 'https://frontend-api-v3.pump.fun';
 const TRENDING_CACHE = { at: 0, body: null };
 const TRENDING_TTL_MS = 15_000;
 
+// pump.fun hands back image URLs on the retired cf-ipfs.com gateway, which no
+// longer resolves in the browser. Repair the image fields onto a working
+// gateway before the feed reaches any client (play lobby, home card, etc.).
+function repairCoinImages(coins) {
+	if (!Array.isArray(coins)) return coins;
+	for (const c of coins) {
+		if (!c || typeof c !== 'object') continue;
+		if (c.image_uri) c.image_uri = normalizeGatewayURL(c.image_uri);
+		if (c.image) c.image = normalizeGatewayURL(c.image);
+		if (c.metadata_uri) c.metadata_uri = normalizeGatewayURL(c.metadata_uri);
+	}
+	return coins;
+}
+
 async function handleTrending(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -2449,7 +2464,7 @@ async function handleTrending(req, res) {
 	const resp = await fetch(upstream, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
 	if (!resp.ok) return error(res, 502, 'upstream_failed', `pump.fun returned ${resp.status}`);
 	const body = await resp.json();
-	const arr = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : [];
+	const arr = repairCoinImages(Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : []);
 	TRENDING_CACHE.at = now;
 	TRENDING_CACHE.body = arr;
 	res.setHeader('cache-control', 'public, max-age=15');
@@ -2519,7 +2534,7 @@ async function handleSearch(req, res) {
 	const resp = await fetch(upstream, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
 	if (!resp.ok) return error(res, 502, 'upstream_failed', `pump.fun returned ${resp.status}`);
 	const body = await resp.json();
-	const arr = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : [];
+	const arr = repairCoinImages(Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : []);
 	return json(res, 200, arr);
 }
 

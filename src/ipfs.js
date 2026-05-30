@@ -9,13 +9,21 @@
  *   ar://txId               → https://arweave.net/txId
  */
 
+// Cloudflare retired both cf-ipfs.com and cloudflare-ipfs.com (Aug 2024);
+// requests to either now fail DNS (ERR_NAME_NOT_RESOLVED). pump.fun metadata
+// still hands out cf-ipfs.com image URLs, so we keep this list dead-host-free
+// and rewrite any lingering dead-gateway URL via normalizeGatewayURL().
 const IPFS_GATEWAYS = [
-	'https://dweb.link/ipfs/',
-	'https://cloudflare-ipfs.com/ipfs/',
 	'https://ipfs.io/ipfs/',
+	'https://dweb.link/ipfs/',
+	'https://flk-ipfs.xyz/ipfs/',
 ];
 
 const AR_GATEWAY = 'https://arweave.net/';
+
+// Hosts that no longer resolve. Any HTTPS gateway URL using one of these is
+// rewritten onto the primary working gateway (preserving the /ipfs/<cid>/path).
+const DEAD_GATEWAY_HOST_RE = /^https?:\/\/(?:cf-ipfs\.com|cloudflare-ipfs\.com)\/ipfs\/(.+)$/i;
 
 /**
  * Returns true when the URL uses a decentralised storage scheme.
@@ -27,8 +35,27 @@ export function isDecentralizedURI(url) {
 }
 
 /**
+ * Repair full HTTPS gateway URLs that point at a retired gateway host.
+ * Leaves every other URL (including live gateways) untouched.
+ *
+ * @param {string} url
+ * @param {number} [gatewayIndex=0]  Which working gateway to route to.
+ * @returns {string}
+ */
+export function normalizeGatewayURL(url, gatewayIndex = 0) {
+	if (!url) return url;
+	const dead = url.match(DEAD_GATEWAY_HOST_RE);
+	if (dead) {
+		const gw = IPFS_GATEWAYS[gatewayIndex % IPFS_GATEWAYS.length];
+		return gw + dead[1];
+	}
+	return url;
+}
+
+/**
  * Resolve an ipfs:// or ar:// URI to an HTTPS gateway URL.
- * For regular URLs the input is returned unchanged.
+ * For regular URLs the input is returned unchanged, except that URLs pointing
+ * at a retired gateway host are rewritten onto a working gateway.
  *
  * @param {string} uri
  * @param {number} [gatewayIndex=0]  Which IPFS gateway to use (for fallback).
@@ -50,7 +77,7 @@ export function resolveURI(uri, gatewayIndex = 0) {
 		return AR_GATEWAY + arMatch[1];
 	}
 
-	return uri;
+	return normalizeGatewayURL(uri, gatewayIndex);
 }
 
 /**

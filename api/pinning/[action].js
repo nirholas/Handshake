@@ -221,7 +221,7 @@ export default wrap(async (req, res) => {
 			provider: activeProviders[0] || null,
 			gatewayUrls: [
 				`https://ipfs.io/ipfs/${cid}`,
-				`https://cloudflare-ipfs.com/ipfs/${cid}`,
+				`https://flk-ipfs.xyz/ipfs/${cid}`,
 				`https://dweb.link/ipfs/${cid}`,
 			],
 		});

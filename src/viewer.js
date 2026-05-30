@@ -29,7 +29,7 @@ import { GUI } from 'dat.gui';
 
 import { environments } from './environments.js';
 import { createModelInfo } from './model-info.js';
-import { isDecentralizedURI, resolveURI } from './ipfs.js';
+import { isDecentralizedURI, resolveURI, normalizeGatewayURL } from './ipfs.js';
 import { canUseQuickLook, openQuickLook } from './ar/quick-look.js';
 import { canUseSceneViewer, openSceneViewer } from './ar/scene-viewer.js';
 import { WebXRSession } from './ar/webxr.js';
@@ -806,12 +806,9 @@ export class Viewer {
 		return new Promise((resolve, reject) => {
 			// Intercept and override relative URLs.
 			MANAGER.setURLModifier((url, path) => {
-				let finalUrl = url;
-
-				// Fix for broken IPFS gateway domain.
-				if (finalUrl.includes('//cf-ipfs.com')) {
-					finalUrl = finalUrl.replace('//cf-ipfs.com', '//cloudflare-ipfs.com');
-				}
+				// Repair retired IPFS gateway hosts (cf-ipfs.com /
+				// cloudflare-ipfs.com) and resolve ipfs://, ar:// schemes.
+				let finalUrl = normalizeGatewayURL(url);
 
 				if (isDecentralizedURI(finalUrl)) {
 					return resolveURI(finalUrl);
