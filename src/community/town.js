@@ -10,7 +10,8 @@
 // Self-contained: styles are injected once, nothing here depends on the build
 // pipeline's CSS handling, and it appends to <body> without touching walk.js.
 
-import { fetchCapabilities, fetchMessages, connectRealtime, postMessage } from './town-client.js';
+import { fetchCapabilities, fetchMessages, connectRealtime } from './town-client.js';
+import { getSession, signInWithX, ensureSolanaWallet, postAsUser, logout } from './town-auth.js';
 
 const MAX_BUBBLES = 4;
 const BUBBLE_TTL_MS = 7000;
@@ -258,8 +259,8 @@ export class Town {
 	_buildComposer() {
 		this.composer.innerHTML = '';
 		if (!this.caps?.canPost) {
-			// Designed locked state — explains why and what unlocks it, never a
-			// dead input. Reads/realtime above are fully live regardless.
+			// Designed locked state — only when the deployment has no CoinCommunities
+			// credentials at all. The live feed above stays open regardless.
 			const lock = el('div', 'town__locked');
 			lock.appendChild(el('span', 'town__lock-icon', '🔒'));
 			const t = el('div', 'town__lock-text');
@@ -268,13 +269,14 @@ export class Town {
 				el(
 					'span',
 					null,
-					'Connect this world to start posting. The live feed stays open to everyone.',
+					'This world isn’t connected for posting yet. The live feed stays open to everyone.',
 				),
 			);
 			lock.appendChild(t);
 			this.composer.appendChild(lock);
 			return;
 		}
+
 		const form = el('form', 'town__form');
 		const ta = el('textarea', 'town__input');
 		ta.placeholder = `Say something in $${this.meta.symbol || 'this world'}…`;
@@ -285,8 +287,15 @@ export class Town {
 			ta.style.height = 'auto';
 			ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`;
 		});
+		ta.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+				e.preventDefault();
+				this._submit(ta, this.sendBtn);
+			}
+		});
 		const send = el('button', 'town__send', 'Post');
 		send.type = 'submit';
+		this.sendBtn = send;
 		form.appendChild(ta);
 		form.appendChild(send);
 		form.addEventListener('submit', (e) => {
@@ -294,35 +303,96 @@ export class Town {
 			this._submit(ta, send);
 		});
 		this.composer.appendChild(form);
+
+		// Identity row — sign-in CTA when signed out, user chip when signed in.
+		this.authRow = el('div', 'town__auth');
+		this.composer.appendChild(this.authRow);
+		this._renderAuthRow();
+	}
+
+	_renderAuthRow() {
+		if (!this.authRow) return;
+		this.authRow.innerHTML = '';
+		const user = this.session?.user;
+		if (user) {
+			const chip = el('span', 'town__userchip');
+			if (user.avatar) {
+				const img = el('img');
+				img.src = user.avatar;
+				img.alt = '';
+				chip.appendChild(img);
+			}
+			chip.appendChild(el('span', 'town__uname', `@${user.username}`));
+			this.authRow.appendChild(el('span', 'town__authnote', 'posting as'));
+			this.authRow.appendChild(chip);
+			const out = el('button', 'town__signout', 'sign out');
+			out.type = 'button';
+			out.addEventListener('click', async () => {
+				await logout();
+				this.session = { user: null };
+				this._renderAuthRow();
+			});
+			this.authRow.appendChild(out);
+		} else {
+			this.authRow.appendChild(el('span', 'town__authnote', 'Sign in to post —'));
+			const btn = el('button', 'town__xbtn', 'Sign in with 𝕏');
+			btn.type = 'button';
+			btn.addEventListener('click', () => this._ensureSignedIn(btn));
+			this.authRow.appendChild(btn);
+		}
+	}
+
+	async _ensureSignedIn(trigger) {
+		if (this.session?.user) return this.session;
+		const label = trigger?.textContent;
+		if (trigger) {
+			trigger.disabled = true;
+			trigger.textContent = 'Opening 𝕏…';
+		}
+		try {
+			await signInWithX();
+			this.session = await getSession();
+			this._renderAuthRow();
+			return this.session;
+		} catch (err) {
+			this._composerError(err.message || 'Sign-in failed.');
+			throw err;
+		} finally {
+			if (trigger) {
+				trigger.disabled = false;
+				trigger.textContent = label;
+			}
+		}
 	}
 
 	async _submit(ta, send) {
 		const content = ta.value.trim();
 		if (!content) return;
-		// Posting identity (wallet + linked X id) comes from the platform's
-		// auth layer. Until that's wired through, surface the precise blocker
-		// rather than silently failing.
-		const identity = window.__townIdentity;
-		if (!identity?.walletAddress || !identity?.twitterId) {
-			this._composerError('Connect your wallet and X account to post.');
-			return;
-		}
 		send.disabled = true;
 		ta.disabled = true;
+		const restore = () => {
+			send.disabled = false;
+			ta.disabled = false;
+		};
 		try {
-			const posted = await postMessage(this.token, {
-				content,
-				walletAddress: identity.walletAddress,
-				twitterId: identity.twitterId,
-			});
+			// 1. Signed in with X?
+			let session = this.session;
+			if (!session?.user) session = await this._ensureSignedIn();
+			// 2. Linked Solana wallet? (connects Phantom + links on first post)
+			send.textContent = 'Linking wallet…';
+			const walletAddress = await ensureSolanaWallet(session);
+			this.session = { ...session, solWallet: walletAddress };
+			// 3. Post.
+			send.textContent = 'Posting…';
+			const posted = await postAsUser(this.token, content, walletAddress);
 			ta.value = '';
 			ta.style.height = 'auto';
-			if (posted) this._prepend(posted); // realtime will dedupe by id
+			if (posted) this._prepend(posted); // realtime dedupes by id
 		} catch (err) {
 			this._composerError(err.message || 'Could not post.');
 		} finally {
-			send.disabled = false;
-			ta.disabled = false;
+			restore();
+			send.textContent = 'Post';
 		}
 	}
 
@@ -408,13 +478,16 @@ export class Town {
 	// ── Lifecycle ──────────────────────────────────────────────────────────
 	async _load() {
 		this._setStatus('connecting');
-		// Capabilities + first page of messages in parallel.
-		const [caps, msgs] = await Promise.allSettled([
+		// Capabilities, first page of messages, and any existing session — all in
+		// parallel so the composer renders the right identity state immediately.
+		const [caps, msgs, sess] = await Promise.allSettled([
 			fetchCapabilities(),
 			fetchMessages(this.token, { limit: 50 }),
+			getSession(),
 		]);
 
 		this.caps = caps.status === 'fulfilled' ? caps.value : null;
+		this.session = sess.status === 'fulfilled' ? sess.value : { user: null };
 		this._buildComposer();
 
 		if (msgs.status === 'rejected') {
@@ -603,6 +676,17 @@ const STYLES = `
 .town__lock-text{display:flex;flex-direction:column;gap:2px;font-size:12px;color:#9fb0d4}
 .town__lock-text strong{color:#dde6fb;font-size:12.5px}
 .town__cerr{margin-top:8px;font-size:12px;color:#ffb4ad}
+.town__auth{display:flex;align-items:center;gap:7px;margin-top:9px;font-size:12px;color:#8093ba;flex-wrap:wrap}
+.town__authnote{opacity:.85}
+.town__xbtn{padding:6px 12px;border-radius:9px;border:1px solid rgba(120,150,220,.28);
+ background:rgba(255,255,255,.06);color:#eaf0ff;cursor:pointer;font-weight:650;font-size:12px;transition:background .2s}
+.town__xbtn:hover{background:rgba(255,255,255,.13)}.town__xbtn:disabled{opacity:.6;cursor:default}
+.town__userchip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 3px;border-radius:999px;
+ background:rgba(91,140,255,.16);border:1px solid rgba(120,150,220,.25);color:#cfe0ff;font-weight:650}
+.town__userchip img{width:18px;height:18px;border-radius:50%;object-fit:cover}
+.town__uname{font-size:12px}
+.town__signout{background:none;border:0;color:#7f8db0;cursor:pointer;font-size:11.5px;text-decoration:underline;padding:0;margin-left:2px}
+.town__signout:hover{color:#aab8db}
 .town-bubbles{position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:35;
  display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(560px,92vw)}
 .town-bubble{display:flex;gap:9px;align-items:center;max-width:100%;padding:8px 14px 8px 8px;border-radius:999px;

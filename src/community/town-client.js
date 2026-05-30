@@ -46,23 +46,6 @@ export async function fetchMessages(token, { limit = 50, before } = {}) {
 }
 
 /**
- * Post a message. Only succeeds where server-side attribution is configured
- * (capabilities.canPost) and a linked posting identity is supplied. Throws with
- * a `posting_locked` code otherwise so the composer can render its locked state.
- */
-export async function postMessage(
-	token,
-	{ content, walletAddress, twitterId, chainId = 'solana' },
-) {
-	const data = await call(`/messages?token=${encodeURIComponent(token)}`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ content, walletAddress, twitterId, chainId }),
-	});
-	return data?.message ?? null;
-}
-
-/**
  * Subscribe to a coin community's realtime stream. Returns a disposer.
  * The realtime module is dynamically imported so it's a separate chunk.
  *

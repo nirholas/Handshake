@@ -1,10 +1,12 @@
 // /api/community/messages?token=<mint>
 //   GET  — recent messages for a coin's community (public read).
-//   POST — post a message, attributed server-side via the server key-pair.
-//          Available only when CC_SERVER_KEY/SECRET are set AND the caller
-//          supplies the posting user's twitterId + linked wallet. Otherwise
-//          returns 403 posting_locked, which the composer renders as its
-//          designed locked state — not a broken submit.
+//   POST — post a message. Two real paths, preferred in this order:
+//          1. User-scoped: a signed-in CoinCommunities user (session cookie)
+//             posts as themselves from their linked wallet (api.postMessage).
+//          2. Server attribution: when the server key-pair is configured and a
+//             twitterId is supplied (api.postMessageServer).
+//          Neither available → 403 posting_locked, which the composer renders
+//          as its designed locked state rather than a broken submit.
 import { z } from 'zod';
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
@@ -13,17 +15,18 @@ import {
 	canPostServer,
 	isValidToken,
 	serverHeaders,
+	userAuthHeaders,
 	toTownMessage,
 	UnconfiguredError,
 } from '../_lib/coin-communities.js';
 
 const CHAINS = ['solana', 'ethereum', 'base', 'bsc'];
 
-const postSchema = z.object({
+const baseSchema = z.object({
 	content: z.string().trim().min(1).max(2000),
 	walletAddress: z.string().trim().min(1).max(120),
-	twitterId: z.string().trim().min(1).max(64),
 	chainId: z.enum(CHAINS).default('solana'),
+	twitterId: z.string().trim().min(1).max(64).optional(),
 });
 
 function getApi(res) {
@@ -66,17 +69,12 @@ async function handlePost(req, res, token) {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	if (!canPostServer()) {
-		return error(
-			res,
-			403,
-			'posting_locked',
-			'server posting is not configured for this deployment',
-		);
+	const userHeaders = userAuthHeaders(req);
+	if (!userHeaders && !canPostServer()) {
+		return error(res, 403, 'posting_locked', 'sign in with X to post in this world');
 	}
 
-	const body = await readJson(req).catch(() => null);
-	const parsed = postSchema.safeParse(body);
+	const parsed = baseSchema.safeParse(await readJson(req).catch(() => null));
 	if (!parsed.success) {
 		return error(
 			res,
@@ -89,26 +87,41 @@ async function handlePost(req, res, token) {
 	const api = getApi(res);
 	if (!api) return;
 
-	const { content, walletAddress, twitterId, chainId } = parsed.data;
-	const { data, error: apiErr } = await api.postMessageServer({
-		path: { token_address: token },
-		body: { content, walletAddress, twitterId, chainId },
-		headers: serverHeaders(),
-	});
-	if (apiErr) {
-		// 403 from upstream means the wallet isn't linked / lacks token balance —
-		// surface it verbatim so the composer can tell the user exactly why.
-		const status = apiErr.statusCode === 403 ? 403 : 502;
-		return error(res, status, 'post_failed', apiErr.message || 'failed to post message');
+	const { content, walletAddress, chainId, twitterId } = parsed.data;
+
+	let result;
+	if (userHeaders) {
+		// Post as the signed-in user from their linked wallet.
+		result = await api.postMessage({
+			path: { token_address: token },
+			body: { content, walletAddress, chainId },
+			headers: userHeaders,
+		});
+	} else {
+		// Server attribution requires the user's twitterId.
+		if (!twitterId) {
+			return error(res, 400, 'validation_error', 'twitterId required for server posting');
+		}
+		result = await api.postMessageServer({
+			path: { token_address: token },
+			body: { content, walletAddress, twitterId, chainId },
+			headers: serverHeaders(),
+		});
 	}
 
-	return json(res, 200, {
-		data: { message: data?.message ? toTownMessage(data.message) : null },
-	});
+	if (result.error) {
+		// 403 → wallet not linked / insufficient token balance. Surface verbatim
+		// so the composer can tell the user exactly what to fix.
+		const status = result.error.statusCode === 403 ? 403 : 502;
+		return error(res, status, 'post_failed', result.error.message || 'failed to post message');
+	}
+
+	const msg = result.data?.message;
+	return json(res, 200, { data: { message: msg ? toTownMessage(msg) : null } });
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
 	const token = new URL(req.url, 'http://x').searchParams.get('token');
