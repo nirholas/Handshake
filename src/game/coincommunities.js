@@ -108,6 +108,7 @@ class RemotePlayer {
 
 		this.bubble = null;
 		this._bubbleTimer = null;
+		this.height = 1.7; // avatar head height; updated once the GLB measures
 
 		this.setAvatar(player.avatar);
 	}
@@ -117,7 +118,8 @@ class RemotePlayer {
 		// rebuild model
 		this.rig.clear();
 		this.anim = new AnimationManager();
-		resolveAvatarUrl(url).then((u) => buildAvatar(this.rig, u, this.anim).then(() => {
+		resolveAvatarUrl(url).then((u) => buildAvatar(this.rig, u, this.anim).then(({ height }) => {
+			this.height = height;
 			this.anim.crossfadeTo(this.motion === 'walk' || this.motion === 'run' ? CLIP_WALK : CLIP_IDLE, 0);
 		}));
 	}
@@ -364,7 +366,8 @@ export class CoinCommunities {
 		this.localAnim = new AnimationManager();
 		const avatarInput = this.ui.getAvatar();
 		const url = await resolveAvatarUrl(avatarInput);
-		await buildAvatar(this.localRig, url, this.localAnim);
+		const { height: localHeight } = await buildAvatar(this.localRig, url, this.localAnim);
+		this.localHeight = localHeight;
 
 		// Connect to this coin's room.
 		const name = localStorage.getItem('cc-name') || ('guest-' + Math.random().toString(36).slice(2, 6));
@@ -533,11 +536,13 @@ export class CoinCommunities {
 			node.style.display = '';
 			node.style.transform = `translate(-50%, -100%) translate(${(v.x * 0.5 + 0.5) * w}px, ${(-v.y * 0.5 + 0.5) * h}px)`;
 		};
+		// Anchor name + bubble to each avatar's real head height so they sit just
+		// above the head regardless of how tall/short the GLB is.
 		for (const [, r] of this.remotes) {
-			place(r.label, r.rig.position, 2.0);
-			if (r.bubble) place(r.bubble, r.rig.position, 2.5);
+			place(r.label, r.rig.position, r.height + 0.2);
+			if (r.bubble) place(r.bubble, r.rig.position, r.height + 0.7);
 		}
-		if (this._localBubble && this.localRig) place(this._localBubble, this.localPos, 2.5);
+		if (this._localBubble && this.localRig) place(this._localBubble, this.localPos, (this.localHeight || 1.7) + 0.7);
 	}
 
 	_onResize() {

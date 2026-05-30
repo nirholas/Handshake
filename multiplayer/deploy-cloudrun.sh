@@ -38,8 +38,15 @@ echo "Deploying '${SERVICE}' to Cloud Run (project=${PROJECT}, region=${REGION})
 #   --session-affinity  : best-effort sticky sessions for WS reconnects.
 #   --timeout 3600      : Cloud Run's max WS lifetime (60 min); client reconnects.
 #   --port 2567         : container listens here (matches Dockerfile/fly.toml).
+# A fresh project's default compute service account can take minutes to appear
+# (and some org policies block its auto-creation), so builds use a dedicated SA.
+BUILD_SA="${BUILD_SA:-projects/${PROJECT}/serviceAccounts/three-ws-build@${PROJECT}.iam.gserviceaccount.com}"
+
 gcloud run deploy "${SERVICE}" \
 	--source . \
+	--quiet \
+	--build-service-account "${BUILD_SA}" \
+	--service-account "three-ws-build@${PROJECT}.iam.gserviceaccount.com" \
 	--region "${REGION}" \
 	--platform managed \
 	--allow-unauthenticated \
@@ -51,7 +58,7 @@ gcloud run deploy "${SERVICE}" \
 	--cpu 1 \
 	--timeout 3600 \
 	--session-affinity \
-	--set-env-vars "NODE_ENV=production,ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
+	--set-env-vars "^@^NODE_ENV=production@ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
 
 URL="$(gcloud run services describe "${SERVICE}" --region "${REGION}" --format 'value(status.url)')"
 WSS="${URL/https:/wss:}"
