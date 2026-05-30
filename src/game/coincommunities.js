@@ -33,6 +33,7 @@ import {
 } from './avatar-rig.js';
 import { GUEST_SENTINEL, uploadPendingGuestAvatar } from './play-handoff.js';
 import { HOME_TOWN, isHomeTown } from './home-town.js';
+import { VoiceChat, voiceSupported } from './voice-chat.js';
 
 const WORLD_RADIUS = 58; // a touch inside the server's 60m clamp
 const MOVE_SPEED = 4.2;
@@ -88,6 +89,8 @@ class RemotePlayer {
 		this._bubbleTimer = null;
 		this.height = 1.7; // avatar head height; updated once the GLB measures
 
+		this.voice = !!player.voice;
+		this.label.classList.toggle('cc-invoice', this.voice);
 		this.setAvatar(player.avatar);
 	}
 	setAvatar(url) {
@@ -104,6 +107,11 @@ class RemotePlayer {
 	apply(player) {
 		this.targetX = player.x; this.targetY = player.y; this.targetZ = player.z; this.targetYaw = player.yaw;
 		if (player.name) this.label.textContent = player.name;
+		if (player.voice !== undefined && !!player.voice !== this.voice) {
+			this.voice = !!player.voice;
+			this.label.classList.toggle('cc-invoice', this.voice);
+			if (!this.voice) this.setSpeaking(false);
+		}
 		if (player.avatar !== this._avatarUrl) this.setAvatar(player.avatar);
 		if (player.motion !== this.motion) {
 			this.motion = player.motion;
@@ -122,6 +130,13 @@ class RemotePlayer {
 		document.body.appendChild(this.bubble);
 		clearTimeout(this._bubbleTimer);
 		this._bubbleTimer = setTimeout(() => { this.bubble?.remove(); this.bubble = null; }, 5000);
+	}
+	// Pulse this peer's nameplate while they're talking, so you can see who's
+	// speaking in a crowd, not just hear them.
+	setSpeaking(on) {
+		if (on === this._speaking) return;
+		this._speaking = on;
+		this.label.classList.toggle('cc-speaking', on);
 	}
 	tick(dt) {
 		this.rig.position.x += (this.targetX - this.rig.position.x) * REMOTE_LERP;
@@ -182,6 +197,7 @@ export class CoinCommunities {
 			},
 			onRename: (name) => this._rename(name),
 			onBuy: () => this._openBuy(),
+			onVoiceToggle: () => this._toggleVoice(),
 		});
 
 		// Collaborative building HUD (hotbar + place/break toggle). Hidden until the
@@ -609,6 +625,13 @@ export class CoinCommunities {
 			this._updateOnline();
 			// Only offer building while there's a live link to build into.
 			this.buildHud.setEnabled(status === 'online', 'Building needs a live connection');
+			// A reconnect reissues every sessionId, stranding the voice mesh — refresh
+			// our id, drop the stale peers, and re-announce so it re-forms.
+			if (status === 'online' && this.voice?.joined && this.net.sessionId !== this.voice.selfId) {
+				this.voice.setSelfId(this.net.sessionId);
+				this.voice.resetPeers();
+				this.net.setVoiceActive(true);
+			}
 		});
 		this.net.on('add', (p, id) => this._onAdd(p, id));
 		this.net.on('change', (p, id) => this._onChange(p, id));
@@ -620,11 +643,51 @@ export class CoinCommunities {
 		this.net.on('blockRemove', (key) => { const [x, y, z] = parseKey(key); this.voxels?.removeBlock(x, y, z); });
 		this.buildHud.root.hidden = false;
 		await this.net.connect();
+		this._initVoice();
 		this.phase = 'world';
 		this._initJoystick();
 	}
 
+	// Stand up spatial voice for this community. Voice starts OFF (no mic access
+	// until the player opts in); the mic button drives join/mute through here.
+	_initVoice() {
+		if (this.voice) { this.voice.dispose(); this.voice = null; }
+		if (!voiceSupported()) { this.ui.setVoiceState('unsupported'); return; }
+		this.voice = new VoiceChat({
+			selfId: this.net.sessionId,
+			sendSignal: (to, data) => this.net?.sendVoiceSignal(to, data),
+			onStateChange: (s) => {
+				this.ui.setVoiceState(s);
+				this.net?.setVoiceActive(s === 'on' || s === 'muted');
+			},
+			onPeerSpeaking: (id, sp) => this.remotes.get(id)?.setSpeaking(sp),
+			onLocalSpeaking: (sp) => this.ui.setMicSpeaking(sp),
+		});
+		// Relay signals from peers into the voice engine.
+		this.net.on('voiceSignal', (msg) => this.voice?.onSignal(msg));
+		this.ui.setVoiceState('off');
+	}
+
+	// Mic button: first tap joins voice (asks for the mic); later taps mute/unmute.
+	async _toggleVoice() {
+		if (!this.voice) return;
+		if (this.voice.state === 'off') {
+			this.ui.setVoiceState('connecting');
+			try {
+				await this.voice.join();
+			} catch (err) {
+				console.warn('[coincommunities] voice join failed:', err?.name, err?.message);
+				this.ui.setVoiceState(err?.name === 'NotAllowedError' ? 'denied' : 'error');
+			}
+		} else {
+			this.voice.toggleMute();
+		}
+	}
+
 	leave() {
+		// Tear voice down before the socket so our final "left voice" flag still
+		// sends, and peers' connections close cleanly.
+		if (this.voice) { this.voice.dispose(); this.voice = null; }
 		if (this.net) { this.net.destroy(); this.net = null; }
 		for (const [, r] of this.remotes) r.dispose();
 		this.remotes.clear();
@@ -668,6 +731,7 @@ export class CoinCommunities {
 	_onRemove(id) {
 		const r = this.remotes.get(id);
 		if (r) { r.dispose(); this.remotes.delete(id); this._updateOnline(); }
+		this.voice?.removePeer(id);
 	}
 	_onChat(m) {
 		const mine = m.id === this.net.sessionId;
@@ -931,6 +995,7 @@ export class CoinCommunities {
 			this.localAnim?.update(dt);
 			for (const [, r] of this.remotes) r.tick(dt);
 			this._updateLabels();
+			this._updateVoice();
 			if (this.net) this.net.sendMove({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z, yaw: this.localYaw, motion: this.motion });
 		}
 		this._tickEnv(dt);
@@ -990,6 +1055,21 @@ export class CoinCommunities {
 			this.localAnim.setSpeed(this.motion === 'run' ? RUN_TIMESCALE : 1);
 		}
 		if (this.localRig) { this.localRig.position.copy(this.localPos); this.localRig.rotation.y = this.localYaw; }
+	}
+
+	// Feed the voice engine each frame: where the listener is (local avatar),
+	// which way they're facing (camera forward, so left/right panning matches the
+	// view), and every peer's live position + voice state.
+	_updateVoice() {
+		if (!this.voice) return;
+		const peers = [];
+		for (const [id, r] of this.remotes) {
+			peers.push({ id, x: r.rig.position.x, y: r.rig.position.y, z: r.rig.position.z, voice: r.voice });
+		}
+		// Camera forward on the ground plane is (sin camYaw, cos camYaw) — see
+		// _updateCamera, where the camera sits opposite this vector from the target.
+		const forward = { x: Math.sin(this.camYaw), z: Math.cos(this.camYaw) };
+		this.voice.update({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z }, peers, forward);
 	}
 
 	_updateCamera() {

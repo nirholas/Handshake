@@ -71,6 +71,7 @@ export class CommunityNet {
 			remove: new Set(), // (id)
 			chat: new Set(),   // ({id, name, text, ts})
 			interact: new Set(), // ({from, fromName, action, ts}) — a peer interacted with us
+			voiceSignal: new Set(), // ({from, data}) — relayed WebRTC SDP/ICE from a peer
 			ping: new Set(),   // (ms) — smoothed round-trip latency to the server
 			blockAdd: new Set(),    // (key, type) — a voxel appeared (placed or restored)
 			blockChange: new Set(), // (key, type) — a voxel was repainted
@@ -123,6 +124,7 @@ export class CommunityNet {
 
 			this.room.onMessage('chat', (msg) => this._emit('chat', msg));
 			this.room.onMessage('interact', (msg) => this._emit('interact', msg));
+			this.room.onMessage('voice-signal', (msg) => this._emit('voiceSignal', msg));
 
 			const $ = getStateCallbacks(this.room);
 			$(this.room.state).players.onAdd((player, id) => {
@@ -220,6 +222,10 @@ export class CommunityNet {
 	sendPlace(x, y, z, t) { this.room?.send('place', { x, y, z, t }); }
 	sendRemove(x, y, z) { this.room?.send('remove', { x, y, z }); }
 	sendInteract(to, action) { this.room?.send('interact', { to, action }); }
+	// Spatial voice: relay a WebRTC offer/answer/ICE candidate to one peer, and
+	// flag ourselves in/out of voice so peers know whether to connect to us.
+	sendVoiceSignal(to, data) { this.room?.send('voice-signal', { to, data }); }
+	setVoiceActive(on) { this.room?.send('voice-state', { on: !!on }); }
 	rename(name) { this.name = name; this.room?.send('rename', { name }); }
 	setAvatar(avatar, agent) { this.avatar = avatar; this.room?.send('avatar', { avatar, agent }); }
 

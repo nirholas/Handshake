@@ -25,6 +25,9 @@ export class Player extends Schema {
 		this.avatar = '';
 		// Optional three.ws agent id this player is embodying (for cross-links).
 		this.agent = '';
+		// True while this player is in spatial voice chat, so peers know to open a
+		// WebRTC connection to them and the UI can mark their nameplate.
+		this.voice = false;
 		this.tsServer = 0;     // server-side last-update epoch ms (for interpolation)
 	}
 }
@@ -41,6 +44,7 @@ defineTypes(Player, {
 	emoteTs: 'float64',
 	avatar: 'string',
 	agent: 'string',
+	voice: 'boolean',
 	tsServer: 'float64',
 });
 

@@ -265,6 +265,139 @@ html, body {
 .cc-gallery-ico { font-size: 13px; line-height: 1; }
 .cc-gallery-btn.cc-busy { pointer-events: none; opacity: 0.65; }
 
+/* create-avatar — the headline action in the bar. Filled white so it reads as
+   the primary path; spans the bar so it never competes with the equal-weight
+   secondary actions (gallery / upload / paste) below it. */
+.cc-create-btn {
+	display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
+	background: #fff; color: var(--cc-ink); border: 1px solid #fff; border-radius: var(--cc-radius);
+	padding: 13px 16px; margin: 2px 0 4px; font: inherit;
+	box-shadow: var(--cc-glow);
+	transition: transform 0.1s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+.cc-create-btn:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px #fff, 0 0 22px rgba(255, 255, 255, 0.5); }
+.cc-create-btn:active { transform: translateY(0); }
+.cc-create-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--cc-bg), 0 0 0 4px #fff; }
+.cc-create-ico {
+	flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+	background: var(--cc-ink); color: #fff; font-size: 15px; line-height: 1;
+}
+.cc-create-copy { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; letter-spacing: 0.01em; }
+.cc-create-copy small { display: block; color: rgba(6, 6, 7, 0.62); font-weight: 500; font-size: 12px; margin-top: 2px; letter-spacing: 0; }
+.cc-create-arrow { flex: none; font-size: 16px; opacity: 0.55; transition: transform 0.16s ease, opacity 0.16s ease; }
+.cc-create-btn:hover .cc-create-arrow { transform: translateX(3px); opacity: 1; }
+.cc-create-btn.cc-busy { pointer-events: none; opacity: 0.7; }
+.cc-create-btn.cc-busy .cc-create-ico { animation: cc-upload-pulse 0.9s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+	.cc-create-btn:hover { transform: none; }
+	.cc-create-btn.cc-busy .cc-create-ico { animation: none; }
+}
+
+/* freshly-created avatar chip — selected ring matches the other adopted chips */
+.cc-avatar-chip.cc-avatar-created.cc-on { border-color: #fff; }
+
+/* create-avatar method chooser — a focused modal over the lobby */
+.cc-create-overlay {
+	position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px;
+	background: rgba(4, 4, 5, 0.78); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+	opacity: 0; transition: opacity 0.2s ease;
+}
+.cc-create-overlay.cc-on { opacity: 1; }
+.cc-create-modal {
+	width: min(560px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto;
+	background: var(--cc-panel-solid); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow); padding: 22px;
+	transform: translateY(10px) scale(0.99); transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.cc-create-overlay.cc-on .cc-create-modal { transform: none; }
+.cc-create-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.cc-create-title { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: 0.01em; }
+.cc-create-sub { margin: 5px 0 0; color: var(--cc-dim); font-size: 13px; line-height: 1.45; max-width: 42ch; }
+.cc-create-close {
+	flex: none; width: 32px; height: 32px; border-radius: var(--cc-radius-sm); cursor: pointer;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge); color: var(--cc-dim);
+	font-size: 20px; line-height: 1; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.cc-create-close:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
+.cc-create-close:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
+.cc-create-methods { display: flex; flex-direction: column; gap: 10px; }
+.cc-create-card {
+	display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer; font: inherit;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	padding: 14px 16px; color: var(--cc-text);
+	transition: border-color 0.14s ease, background 0.14s ease, transform 0.1s ease;
+}
+.cc-create-card:hover { border-color: var(--cc-edge-hi); background: var(--cc-bg3); transform: translateY(-1px); }
+.cc-create-card:active { transform: translateY(0); }
+.cc-create-card:focus-visible { outline: none; border-color: #fff; box-shadow: 0 0 0 1px #fff; }
+.cc-create-card-ico {
+	flex: none; width: 40px; height: 40px; border-radius: var(--cc-radius-sm); display: grid; place-items: center;
+	background: var(--cc-bg3); border: 1px solid var(--cc-edge); font-size: 19px; line-height: 1;
+}
+.cc-create-card:hover .cc-create-card-ico { border-color: var(--cc-edge-hi); }
+.cc-create-card-body { flex: 1; min-width: 0; }
+.cc-create-card-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+.cc-create-card-badge {
+	font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+	color: var(--cc-ink); background: #fff; border-radius: 999px; padding: 2px 8px;
+}
+.cc-create-card-desc { display: block; margin-top: 3px; color: var(--cc-dim); font-size: 12.5px; line-height: 1.45; font-weight: 400; }
+.cc-create-card-arrow { flex: none; font-size: 16px; color: var(--cc-faint); transition: transform 0.16s ease, color 0.16s ease; }
+.cc-create-card:hover .cc-create-card-arrow { transform: translateX(3px); color: var(--cc-text); }
+@media (prefers-reduced-motion: reduce) {
+	.cc-create-overlay, .cc-create-modal { transition: none; }
+	.cc-create-card:hover, .cc-create-btn:hover { transform: none; }
+}
+@media (max-width: 560px) {
+	.cc-create-modal { padding: 18px; }
+	.cc-create-card { padding: 12px 13px; gap: 11px; }
+	.cc-create-card-ico { width: 36px; height: 36px; font-size: 17px; }
+}
+
+/* In-app avatar creator iframe modal (AvatarCreator). Self-contained here so the
+   builder/photo editor renders correctly on /play without the main-site stylesheet. */
+.avatar-creator-overlay {
+	position: fixed; inset: 0; z-index: 95; display: flex; align-items: center; justify-content: center;
+	background: rgba(4, 4, 5, 0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+	animation: cc-create-fadein 0.22s ease;
+}
+@keyframes cc-create-fadein { from { opacity: 0; } to { opacity: 1; } }
+.avatar-creator-modal {
+	width: 95vw; height: 90vh; max-width: 1200px; display: flex; flex-direction: column;
+	background: var(--cc-panel-solid); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	overflow: hidden; box-shadow: var(--cc-shadow);
+}
+.avatar-creator-header {
+	display: flex; align-items: center; justify-content: space-between; flex: none;
+	padding: 12px 18px; border-bottom: 1px solid var(--cc-edge-soft);
+}
+.avatar-creator-title { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; color: var(--cc-text); }
+.avatar-creator-close {
+	background: none; border: none; color: var(--cc-dim); font-size: 26px; line-height: 1; cursor: pointer;
+	padding: 0 4px; transition: color 0.18s ease;
+}
+.avatar-creator-close:hover { color: var(--cc-text); }
+.avatar-creator-body { flex: 1; position: relative; min-height: 0; }
+.avatar-creator-container { position: absolute; inset: 0; width: 100%; height: 100%; }
+.avatar-creator-iframe { width: 100%; height: 100%; border: none; }
+.avatar-creator-loading {
+	position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+	gap: 14px; color: var(--cc-dim); font-size: 13px; pointer-events: none;
+}
+.avatar-creator-loading .spinner {
+	width: 30px; height: 30px; border-radius: 50%;
+	border: 2px solid var(--cc-edge); border-top-color: #fff; animation: cc-spin 0.8s linear infinite;
+}
+@keyframes cc-spin { to { transform: rotate(360deg); } }
+.avatar-creator-error { color: #ff6b6b; font-size: 13px; }
+@media (max-width: 700px) {
+	.avatar-creator-modal { width: 100vw; height: 100dvh; max-width: none; border-radius: 0; border: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.avatar-creator-overlay { animation: none; }
+	.avatar-creator-loading .spinner { animation: none; }
+}
+
 /* coin grid */
 .cc-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cc-faint); margin: 10px 2px 14px; }
 .cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(224px, 1fr)); gap: 14px; }
@@ -408,6 +541,45 @@ html, body {
 #cc-status[data-state="offline"], #cc-status[data-state="failed"] { cursor: pointer; }
 @keyframes cc-pulse { 50% { opacity: 0.3; } }
 
+/* spatial voice toggle — top-right, tucked under the status pill */
+.cc-voice {
+	position: fixed; top: 96px; right: 14px; z-index: 22;
+	display: inline-flex; align-items: center; gap: 8px;
+	background: var(--cc-panel); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	padding: 8px 13px 8px 11px; color: var(--cc-dim); cursor: pointer;
+	font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+	box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
+	transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+.cc-voice:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.05); }
+.cc-voice:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
+.cc-voice:disabled { opacity: 0.45; cursor: not-allowed; }
+.cc-voice-ico { display: inline-flex; }
+.cc-voice-ico svg { width: 16px; height: 16px; display: block; }
+.cc-voice-cap { fill: transparent; transition: fill 0.12s ease; }
+.cc-voice-slash { display: none; opacity: 0.85; }
+.cc-voice-label { line-height: 1; }
+/* live (unmuted): white icon + brighter frame */
+.cc-voice[data-state="on"] { color: #fff; border-color: var(--cc-edge-hi); }
+.cc-voice[data-state="on"] .cc-voice-cap { fill: rgba(255, 255, 255, 0.16); }
+/* connecting: pulse the icon while we ask for the mic */
+.cc-voice[data-state="connecting"] .cc-voice-ico { animation: cc-pulse 1s infinite; }
+/* muted: dim with the mute slash */
+.cc-voice[data-state="muted"] { color: var(--cc-dim); }
+.cc-voice[data-state="muted"] .cc-voice-slash { display: block; }
+/* blocked / error: faint, slashed */
+.cc-voice[data-state="denied"], .cc-voice[data-state="error"] { color: var(--cc-faint); }
+.cc-voice[data-state="denied"] .cc-voice-slash { display: block; }
+/* speaking: animated halo while the local player talks */
+.cc-voice.cc-voice-speaking { border-color: #fff; box-shadow: 0 0 0 1px #fff, 0 0 18px rgba(255, 255, 255, 0.4); }
+.cc-voice.cc-voice-speaking .cc-voice-ico { animation: cc-voice-pulse 0.7s ease-in-out infinite; }
+@keyframes cc-voice-pulse { 50% { transform: scale(1.16); } }
+@media (prefers-reduced-motion: reduce) {
+	.cc-voice.cc-voice-speaking .cc-voice-ico,
+	.cc-voice[data-state="connecting"] .cc-voice-ico,
+	.cc-label.cc-speaking::before { animation: none; }
+}
+
 /* chat sidebar — dockable, minimizable, persistent log */
 #cc-chat {
 	position: fixed; right: 14px; bottom: 14px; width: min(340px, 82vw);
@@ -500,6 +672,15 @@ html, body {
 	font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #fff;
 	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9); padding: 1px 6px; text-transform: uppercase;
 }
+/* in-voice peers wear a small mic dot on their nameplate; it lights up and
+   pulses while they're actually speaking, so you can spot the talker in a crowd. */
+.cc-label.cc-invoice { display: inline-flex; align-items: center; gap: 5px; }
+.cc-label.cc-invoice::before {
+	content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%;
+	background: rgba(255, 255, 255, 0.6); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.cc-label.cc-speaking { color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(255, 255, 255, 0.5); }
+.cc-label.cc-speaking::before { background: #fff; box-shadow: 0 0 10px rgba(255, 255, 255, 0.9); animation: cc-voice-pulse 0.7s ease-in-out infinite; }
 .cc-bubble {
 	background: #fff; color: var(--cc-ink); font-size: 13px; font-weight: 600; text-align: center;
 	padding: 7px 12px; border-radius: var(--cc-radius); max-width: 220px; white-space: normal;

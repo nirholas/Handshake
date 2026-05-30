@@ -12,6 +12,7 @@
 import { renderAvatarThumb } from './avatar-thumb.js';
 import { resolveAvatarUrl } from './avatar-rig.js';
 import { validateGlb, uploadGlb } from './avatar-upload.js';
+import { GUEST_SENTINEL, playAs } from './play-handoff.js';
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -99,6 +100,20 @@ export class CommunityUI {
 			el('span', { class: 'cc-gallery-ico', text: '🖼' }),
 			el('span', { class: 'cc-gallery-text', text: 'Browse gallery' }),
 		]);
+		// Create a brand-new avatar without leaving the lobby — the headline action.
+		// Opens the in-app creator (design from scratch or from a photo); the exported
+		// GLB is staged locally and adopted instantly, then the world uploads it so
+		// peers see it too. Lazy-loaded so the avatar SDK never bloats the lobby boot.
+		this.createBtn = el('button', {
+			type: 'button', class: 'cc-create-btn',
+			title: 'Create a brand-new 3D avatar — design it or build it from a photo',
+			onclick: () => this._openCreate(),
+		}, [
+			el('span', { class: 'cc-create-ico', 'aria-hidden': 'true', text: '✦' }),
+			el('span', { class: 'cc-create-copy', html: 'Create your avatar<small>Design from scratch or from a photo — drop straight in</small>' }),
+			el('span', { class: 'cc-create-arrow', 'aria-hidden': 'true', text: '→' }),
+		]);
+
 		this.uploadStatus = el('div', { class: 'cc-upload-status', role: 'status', 'aria-live': 'polite', hidden: true });
 
 		this.lobby = el('div', { id: 'cc-lobby' }, [
@@ -122,7 +137,8 @@ export class CommunityUI {
 						el('label', { class: 'cc-name-label', for: 'cc-name-input', text: 'Your name' }),
 						this.nameInput,
 					]),
-					el('div', { class: 'cc-avatar-label', html: 'Your avatar<small>Pick one, browse the gallery, paste a URL, or drop your own .glb</small>' }),
+					el('div', { class: 'cc-avatar-label', html: 'Your avatar<small>Create your own, pick a preset, browse the gallery, paste a URL, or drop your own .glb</small>' }),
+					this.createBtn,
 					this.presetRow,
 					el('div', { class: 'cc-avatar-custom' }, [this.customInput, this.galleryBtn, this.uploadBtn]),
 						this.uploadStatus,
@@ -201,6 +217,143 @@ export class CommunityUI {
 		this.presetRow.insertBefore(chip, this.presetRow.firstChild);
 		this._renderChipPreview(chip, { url, label: name || 'Your avatar' });
 		this._setAvatar(url, false);
+	}
+
+	// ---------------------------------------------------------- create avatar
+	// The complete in-lobby creation workflow. A method chooser opens over the
+	// lobby; each method ends with a real GLB the player can drop in with:
+	//   • Create     → the in-app avatar creator (design from scratch / from a
+	//                  photo). Anonymous, exports a GLB Blob we adopt instantly.
+	//   • Upload     → reuse the bar's validated .glb upload.
+	//   • Studio     → the full sculpt/outfit builder at /create/studio (richer,
+	//                  saves to your three.ws account). Opens in a new tab.
+	_openCreate() {
+		if (this._createModal) return;
+
+		const card = (icon, title, desc, badge, onActivate) => {
+			const c = el('button', {
+				type: 'button', class: 'cc-create-card',
+				onclick: () => onActivate(),
+			}, [
+				el('span', { class: 'cc-create-card-ico', 'aria-hidden': 'true', text: icon }),
+				el('span', { class: 'cc-create-card-body' }, [
+					el('span', { class: 'cc-create-card-title' }, [
+						document.createTextNode(title),
+						badge ? el('span', { class: 'cc-create-card-badge', text: badge }) : null,
+					]),
+					el('span', { class: 'cc-create-card-desc', text: desc }),
+				]),
+				el('span', { class: 'cc-create-card-arrow', 'aria-hidden': 'true', text: '→' }),
+			]);
+			return c;
+		};
+
+		const cards = el('div', { class: 'cc-create-methods' }, [
+			card('✦', 'Design your avatar', 'Build a 3D character from scratch or from a selfie, then drop straight into the world. No sign-in needed.', 'Recommended', () => this._launchEditor()),
+			card('⬆', 'Upload a .glb', 'Already have a model from Blender, Mixamo, VRoid, or Ready Player Me? Bring it in.', '', () => { this._closeCreate(); this.uploadFile.click(); }),
+			card('✨', 'Advanced studio', 'Sculpt face & body, layer outfits and accessories, and save it to your three.ws account.', 'Opens in a new tab', () => { window.open('/create/studio', '_blank', 'noopener'); this._closeCreate(); }),
+		]);
+
+		const closeBtn = el('button', { type: 'button', class: 'cc-create-close', 'aria-label': 'Close', text: '×', onclick: () => this._closeCreate() });
+		const modal = el('div', {
+			class: 'cc-create-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'cc-create-title',
+		}, [
+			el('div', { class: 'cc-create-head' }, [
+				el('div', {}, [
+					el('h2', { id: 'cc-create-title', class: 'cc-create-title', text: 'Create your avatar' }),
+					el('p', { class: 'cc-create-sub', text: 'However you make it, your avatar is ready to play the moment it’s done.' }),
+				]),
+				closeBtn,
+			]),
+			cards,
+		]);
+		const overlay = el('div', { class: 'cc-create-overlay', onclick: (e) => { if (e.target === overlay) this._closeCreate(); } }, [modal]);
+
+		this._createModal = overlay;
+		this._createKeyHandler = (e) => {
+			if (e.key === 'Escape') { e.stopPropagation(); this._closeCreate(); }
+		};
+		document.addEventListener('keydown', this._createKeyHandler, true);
+		document.body.appendChild(overlay);
+		// Animate in on the next frame and move focus into the dialog.
+		requestAnimationFrame(() => {
+			overlay.classList.add('cc-on');
+			cards.querySelector('.cc-create-card')?.focus();
+		});
+	}
+
+	_closeCreate() {
+		const overlay = this._createModal;
+		if (!overlay) return;
+		this._createModal = null;
+		if (this._createKeyHandler) {
+			document.removeEventListener('keydown', this._createKeyHandler, true);
+			this._createKeyHandler = null;
+		}
+		overlay.classList.remove('cc-on');
+		const done = () => overlay.remove();
+		overlay.addEventListener('transitionend', done, { once: true });
+		setTimeout(done, 260); // fallback if transitionend never fires
+		this.createBtn.focus();
+	}
+
+	// Open the in-app avatar creator (Studio builder + photo editor) in a modal.
+	// On export it hands us a GLB Blob, which we adopt as the active avatar.
+	async _launchEditor() {
+		this._closeCreate();
+		this.createBtn.classList.add('cc-busy');
+		try {
+			const { AvatarCreator } = await import('../avatar-creator.js');
+			this._creator?.dispose?.();
+			this._creator = new AvatarCreator(document.body, (blob, meta = {}) => {
+				this._adoptCreatedAvatar(blob, meta);
+			});
+			await this._creator.openDefaultEditor();
+		} catch (err) {
+			console.warn('[coincommunities] avatar creator failed to open:', err?.message);
+			this.toast('Couldn’t open the avatar creator. Try uploading a .glb instead.', 'warn');
+		} finally {
+			this.createBtn.classList.remove('cc-busy');
+		}
+	}
+
+	// Stage a freshly-created GLB locally (instant self-preview), surface it as the
+	// selected chip, and make the guest sentinel the active avatar. The world reads
+	// the sentinel, shows it to the creator immediately from the local blob, and
+	// uploads it in the background so peers can load it too (see play-handoff.js).
+	async _adoptCreatedAvatar(blob, meta = {}) {
+		this._setUploadState('working', 'Saving your new avatar…');
+		try {
+			// Pass the player's chosen name only if they set one — playAs persists it as
+			// the display name, and we don't want a placeholder shadowing the guest-id
+			// fallback the world assigns to unnamed players.
+			const name = this.getName();
+			await playAs({ blob, name, source: meta.provider || 'three-ws-create', dest: null });
+			this._addCreatedChip(name || 'My avatar');
+			this._setUploadState('done', 'Your avatar is ready — pick a community to drop in.');
+			this.toast('Your avatar is ready — pick a community below to drop in.', 'info');
+		} catch (err) {
+			console.warn('[coincommunities] could not adopt created avatar:', err?.message);
+			this._setUploadState('error', 'Couldn’t save your new avatar. Please try again.');
+		}
+	}
+
+	// Surface the just-created avatar as its own selected chip (replacing any prior
+	// one) and make the guest sentinel the active avatar. The chip starts with a
+	// loading shimmer, then renders a real portrait of the new model — the sentinel
+	// resolves to the locally-staged blob, so no upload round-trip is needed.
+	_addCreatedChip(name) {
+		if (this._createdChip?.isConnected) this._createdChip.remove();
+		const chip = el('button', {
+			class: 'cc-avatar-chip cc-avatar-loading cc-avatar-created',
+			title: name || 'Your new avatar', 'aria-label': name || 'Your new avatar',
+			onclick: () => this._setAvatar(GUEST_SENTINEL, false),
+		}, [el('span', { class: 'cc-avatar-glyph', text: '✦' })]);
+		chip._url = GUEST_SENTINEL;
+		this._createdChip = chip;
+		this.presetRow.insertBefore(chip, this.presetRow.firstChild);
+		this._renderChipPreview(chip, { url: GUEST_SENTINEL, label: name || 'Your avatar' });
+		this._setAvatar(GUEST_SENTINEL, false);
 	}
 
 	// Open the platform avatar gallery (your own avatars + the public gallery)
@@ -504,14 +657,56 @@ export class CommunityUI {
 
 		this.emoteTray = el('div', { id: 'cc-emotes' });
 
+		// Spatial voice toggle. Off by default (no mic until the player opts in);
+		// the icon + label reflect every state (connecting / live / muted / blocked).
+		// The SVG carries its own mute slash, shown via the button's data-state.
+		this.voiceLabel = el('span', { class: 'cc-voice-label', text: 'Voice' });
+		this.voiceBtn = el('button', {
+			class: 'cc-voice', type: 'button', 'data-state': 'off',
+			'aria-label': 'Voice chat', title: 'Join voice — talk to people near you',
+			onclick: () => this.h.onVoiceToggle?.(),
+		}, [
+			el('span', { class: 'cc-voice-ico', html:
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+				+ '<rect class="cc-voice-cap" x="9" y="2.5" width="6" height="11" rx="3"/>'
+				+ '<path class="cc-voice-stand" d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/>'
+				+ '<line class="cc-voice-slash" x1="4" y1="3.4" x2="20" y2="20.6"/>'
+				+ '</svg>' }),
+			this.voiceLabel,
+		]);
+
 		const hint = el('div', { id: 'cc-hint', html:
 			'<kbd>W A S D</kbd> / drag-joystick to move · <kbd>drag</kbd> to look · scroll zoom · <kbd>Enter</kbd> chat' });
 
 		this.joystick = el('div', { id: 'cc-joystick' });
 
-		this.hud = el('div', { id: 'cc-hud', hidden: true }, [banner, leave, this.statusPill, chat, this.emoteTray, hint, this.joystick]);
+		this.hud = el('div', { id: 'cc-hud', hidden: true }, [banner, leave, this.statusPill, this.voiceBtn, chat, this.emoteTray, hint, this.joystick]);
 		document.body.appendChild(this.hud);
 	}
+
+	// Reflect the voice engine's state on the mic button: label, tooltip, and the
+	// data-state hook the CSS uses to colour the icon / show the mute slash.
+	setVoiceState(state) {
+		if (!this.voiceBtn) return;
+		const map = {
+			off:        ['Voice',        'Join voice — talk to people near you'],
+			connecting: ['Connecting…',  'Requesting microphone access…'],
+			on:         ['Mic on',       'You’re live — click to mute'],
+			muted:      ['Muted',        'Muted — click to unmute (you can still hear everyone)'],
+			denied:     ['Mic blocked',  'Microphone blocked — allow it in your browser settings'],
+			error:      ['Voice error',  'Couldn’t start voice — check your mic and try again'],
+			unsupported:['No voice',     'Voice chat isn’t supported in this browser'],
+		};
+		const [label, title] = map[state] || map.off;
+		this.voiceBtn.setAttribute('data-state', state);
+		this.voiceLabel.textContent = label;
+		this.voiceBtn.title = title;
+		this.voiceBtn.disabled = state === 'unsupported';
+		if (state !== 'on') this.voiceBtn.classList.remove('cc-voice-speaking');
+	}
+
+	// Pulse the mic button while the local player is actually speaking.
+	setMicSpeaking(on) { this.voiceBtn?.classList.toggle('cc-voice-speaking', !!on); }
 
 	setEmotes(list) {
 		this.emoteTray.textContent = '';
