@@ -574,6 +574,7 @@ export class Viewer {
 	render() {
 		this.renderer.render(this.scene, this.activeCamera);
 		if (this.state.grid) {
+			this._ensureAxesRenderer();
 			this.axesCamera.position.copy(this.defaultCamera.position);
 			this.axesCamera.lookAt(this.axesScene.position);
 			this.axesRenderer.render(this.axesScene, this.axesCamera);
@@ -786,7 +787,7 @@ export class Viewer {
 
 		this.axesCamera.aspect = this.axesDiv.clientWidth / this.axesDiv.clientHeight;
 		this.axesCamera.updateProjectionMatrix();
-		this.axesRenderer.setSize(this.axesDiv.clientWidth, this.axesDiv.clientHeight);
+		this.axesRenderer?.setSize(this.axesDiv.clientWidth, this.axesDiv.clientHeight);
 
 		// Re-frame so the full avatar stays visible after the canvas changes
 		// shape — the initial framing uses the aspect at load time, which is
@@ -1145,6 +1146,7 @@ export class Viewer {
 
 		if (this.state.grid !== Boolean(this.gridHelper)) {
 			if (this.state.grid) {
+				this._ensureAxesRenderer();
 				this.gridHelper = new GridHelper();
 				this.axesHelper = new AxesHelper();
 				this.axesHelper.renderOrder = 999;
@@ -1156,7 +1158,7 @@ export class Viewer {
 				this.scene.remove(this.axesHelper);
 				this.gridHelper = null;
 				this.axesHelper = null;
-				this.axesRenderer.clear();
+				this.axesRenderer?.clear();
 			}
 		}
 
@@ -1265,15 +1267,26 @@ export class Viewer {
 		this.axesCamera = new PerspectiveCamera(50, clientWidth / clientHeight, 0.1, 10);
 		this.axesScene.add(this.axesCamera);
 
-		this.axesRenderer = new WebGLRenderer({ alpha: true });
-		this.axesRenderer.setPixelRatio(window.devicePixelRatio);
-		this.axesRenderer.setSize(this.axesDiv.clientWidth, this.axesDiv.clientHeight);
+		// The axes gizmo is a debug helper, shown only when the "grid" display
+		// toggle is on (off by default, and the GUI is closed entirely in kiosk/
+		// embed mode). Its WebGLRenderer is a whole second GL context, so we
+		// create it lazily — otherwise every <agent-3d> on a page would burn two
+		// contexts and exhaust the browser's ~16-context budget twice as fast.
+		this.axesRenderer = null;
 
 		this.axesCamera.up = this.defaultCamera.up;
 
 		this.axesCorner = new AxesHelper(5);
 		this.axesScene.add(this.axesCorner);
+	}
+
+	_ensureAxesRenderer() {
+		if (this.axesRenderer || !this.axesDiv) return this.axesRenderer;
+		this.axesRenderer = new WebGLRenderer({ alpha: true });
+		this.axesRenderer.setPixelRatio(window.devicePixelRatio);
+		this.axesRenderer.setSize(this.axesDiv.clientWidth, this.axesDiv.clientHeight);
 		this.axesDiv.appendChild(this.axesRenderer.domElement);
+		return this.axesRenderer;
 	}
 
 	addGUI() {

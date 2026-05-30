@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>agent-3d WebGL context budget check</title>
+	<style>
+		body { margin: 0; background: #000; }
+		.row { height: 600px; display: block; }
+		agent-3d { width: 320px; height: 560px; display: block; }
+	</style>
+</head>
+<body>
+	<!-- Imports the LOCAL (patched) source through the Vite dev server. -->
+	<script type="module" src="/src/element.js"></script>
+	<script type="module">
+		// Stack 14 avatars (> the budget of 8). With the LRU context budget,
+		// offscreen viewers release their contexts, so the browser should never
+		// log "Too many active WebGL contexts".
+		const N = 14;
+		for (let i = 0; i < N; i++) {
+			const row = document.createElement('div');
+			row.className = 'row';
+			const el = document.createElement('agent-3d');
+			el.setAttribute('body', '/avatars/cz.glb');
+			el.setAttribute('mode', 'inline');
+			el.setAttribute('responsive', '');
+			el.setAttribute('background', 'transparent');
+			el.setAttribute('name-plate', 'off');
+			el.setAttribute('avatar-chat', 'off');
+			el.setAttribute('kiosk', '');
+			row.appendChild(el);
+			document.body.appendChild(row);
+		}
+		window.__AGENT_COUNT__ = N;
+	</script>
+</body>
+</html>

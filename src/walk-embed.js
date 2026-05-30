@@ -133,7 +133,10 @@ function postToHost(payload) {
 const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
-renderer.setClearColor(0x000000, BG_PARAM && BG_PARAM !== 'transparent' ? 1 : 0);
+const HAS_SOLID_BG = !!(BG_PARAM && BG_PARAM !== 'transparent');
+// Paint the actual bg color (not opaque black) so ?bg=#101820 renders the
+// requested color. Transparent embeds keep alpha 0 so the host shows through.
+renderer.setClearColor(HAS_SOLID_BG ? new Color(BG_PARAM) : 0x000000, HAS_SOLID_BG ? 1 : 0);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = PCFSoftShadowMap;
 
@@ -178,6 +181,31 @@ groundShadowCatcher.rotation.x = -Math.PI / 2;
 groundShadowCatcher.receiveShadow = true;
 groundShadowCatcher.visible = !SHOW_GROUND;
 scene.add(groundShadowCatcher);
+
+// Apply the requested environment preset. studio/void keep the canvas
+// transparent (avatar floats on the host page); scenic presets paint a sky +
+// matching fog and tint the ground. An explicit ?bg color always wins as the
+// clear color, so bg + env compose predictably.
+function applyEmbedEnvironment(envId) {
+	const env = WALK_ENVIRONMENTS[envId] || WALK_ENVIRONMENTS.studio;
+
+	if (env.ground != null && groundOpaque.material) {
+		groundOpaque.material.color.setHex(env.ground);
+	}
+
+	if (env.sky == null) {
+		if (!HAS_SOLID_BG) { scene.background = null; scene.fog = null; }
+		return;
+	}
+
+	scene.fog = new Fog(env.fog, 18, 55);
+	hemi.color.setHex(env.sky);
+	if (!HAS_SOLID_BG) {
+		scene.background = new Color(env.sky);
+		renderer.setClearColor(env.sky, 1);
+	}
+}
+applyEmbedEnvironment(ENV_PARAM);
 
 // Apply a scene preset. An explicit ?bg= wins over the preset background so
 // transparent/custom embeds keep working; otherwise the preset paints the

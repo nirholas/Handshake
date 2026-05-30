@@ -334,6 +334,10 @@
 			"dest": "/communities.html"
 		},
 		{
+			"src": "/town/?",
+			"dest": "/communities.html"
+		},
+		{
 			"src": "/wk/([A-Za-z0-9_-]+)",
 			"dest": "/walk?avatar=$1",
 			"status": 302
@@ -1334,6 +1338,10 @@
 		{
 			"src": "/api/pump/recent-graduations",
 			"dest": "/api/pump/[action]?action=recent-graduations"
+		},
+		{
+			"src": "/api/pump/coin-trades",
+			"dest": "/api/pump/[action]?action=coin-trades"
 		},
 		{
 			"src": "/api/demo/coin/state",

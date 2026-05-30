@@ -686,6 +686,9 @@ const appConfig = {
 					// /avatars/:id  → avatar studio page (mirrors vercel.json rewrite)
 					else if (!filePath && /^\/avatars\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/avatar-page.html');
+					// /town  → communities (alias; mirrors vercel.json rewrite)
+					else if (!filePath && /^\/town\/?$/.test(path))
+						filePath = resolve(root, 'pages/communities.html');
 					// /@<handle>  → public live profile page
 					else if (!filePath && /^\/@[a-z0-9_-]{3,30}\/?$/i.test(path))
 						filePath = resolve(root, 'pages/handle.html');

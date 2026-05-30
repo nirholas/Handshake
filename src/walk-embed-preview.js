@@ -28,6 +28,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import nipplejs from 'nipplejs';
 import { AnimationManager } from './animation-manager.js';
+import { reserveWebGLContext } from './webgl-budget.js';
 
 const AVATAR_URL = '/avatars/default.glb';
 const ANIMATIONS_MANIFEST_URL = '/animations/manifest.json';
@@ -65,6 +66,9 @@ export function initWalkPreview(container) {
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = PCFSoftShadowMap;
+	// Count this context against the shared budget so <agent-3d> grids on the
+	// same page leave room for it (see webgl-budget.js / element.js).
+	reserveWebGLContext();
 
 	const scene = new Scene();
 	const pmrem = new PMREMGenerator(renderer);
@@ -317,7 +321,7 @@ export function initWalkPreview(container) {
 	const moveForward = new Vector3();
 	const moveRight = new Vector3();
 	const upY = new Vector3(0, 1, 0);
-	let running = true;
+	let running = false;
 
 	function tick() {
 		if (!running) return;
@@ -436,30 +440,35 @@ export function initWalkPreview(container) {
 
 	// ── Lazy init — only start when visible ─────────────────────────
 	let started = false;
+	let onScreen = true;
+
+	// Start/stop the loop based on both viewport visibility and tab visibility.
+	function syncRunning() {
+		if (!started) return;
+		const next = onScreen && document.visibilityState !== 'hidden';
+		if (next === running) return;
+		running = next;
+		if (running) { clock.start(); tick(); }
+		else clock.stop();
+	}
+
 	const observer = new IntersectionObserver((entries) => {
 		for (const entry of entries) {
 			if (entry.isIntersecting && !started) {
 				started = true;
 				loadAvatar().catch((err) => console.warn('[walk-preview] load failed', err));
-				tick();
+				syncRunning();
 				observer.disconnect();
 			}
 		}
 	}, { threshold: 0.1 });
 	observer.observe(container);
 
-	// Pause rendering when off-screen
+	// Pause rendering when off-screen or when the tab is hidden.
 	const visObserver = new IntersectionObserver((entries) => {
-		for (const entry of entries) {
-			if (!entry.isIntersecting && running) {
-				running = false;
-				clock.stop();
-			} else if (entry.isIntersecting && !running && started) {
-				running = true;
-				clock.start();
-				tick();
-			}
-		}
+		onScreen = entries[0].isIntersecting;
+		syncRunning();
 	}, { threshold: 0 });
 	visObserver.observe(container);
+	document.addEventListener('visibilitychange', syncRunning);
 }

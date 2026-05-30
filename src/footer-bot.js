@@ -11,6 +11,7 @@ import {
 	AnimationMixer,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { reserveWebGLContext } from './webgl-budget.js';
 
 const canvas = document.getElementById('footer-bot-canvas');
 if (!canvas) throw new Error('[footer-bot] canvas not found');
@@ -25,6 +26,9 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.toneMapping = ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.7;
 renderer.outputColorSpace = SRGBColorSpace;
+// Count this context against the shared budget so <agent-3d> grids on the same
+// page leave room for it (see webgl-budget.js / element.js).
+reserveWebGLContext();
 
 const scene = new Scene();
 
@@ -59,13 +63,38 @@ new GLTFLoader().load('/animations/robotexpressive.glb', (gltf) => {
 // 20deg/sec auto-rotate, matching model-viewer rotation-per-second="20deg"
 const rotSpeed = MathUtils.degToRad(20);
 
-(function animate() {
+// The footer sits at the bottom of long pages, so it is offscreen most of the
+// time. Only render while it is actually visible and the tab is focused —
+// otherwise it burns a GPU context and a RAF loop for nothing.
+let running = false;
+let onScreen = true;
+
+function animate() {
+	if (!running) return;
 	requestAnimationFrame(animate);
 	const dt = clock.getDelta();
 	if (mixer) mixer.update(dt);
 	if (robot) robot.rotation.y += rotSpeed * dt;
 	renderer.render(scene, camera);
-})();
+}
+
+function syncRunning() {
+	const next = onScreen && document.visibilityState !== 'hidden';
+	if (next === running) return;
+	running = next;
+	if (running) { clock.getDelta(); animate(); }
+}
+
+if (typeof IntersectionObserver !== 'undefined') {
+	new IntersectionObserver((entries) => {
+		onScreen = entries[0].isIntersecting;
+		syncRunning();
+	}, { threshold: 0 }).observe(canvas);
+} else {
+	onScreen = true;
+}
+document.addEventListener('visibilitychange', syncRunning);
+syncRunning();
 
 if (typeof ResizeObserver !== 'undefined' && parent) {
 	new ResizeObserver(() => {

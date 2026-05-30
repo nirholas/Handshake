@@ -14,6 +14,7 @@ import {
 	LoopOnce,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { reserveWebGLContext } from './webgl-budget.js';
 
 export function initAvatarDrop(sectionEl) {
 	const canvas  = sectionEl.querySelector('#drop-canvas');
@@ -26,6 +27,9 @@ export function initAvatarDrop(sectionEl) {
 	renderer.outputColorSpace = SRGBColorSpace;
 	renderer.toneMapping = ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.1;
+	// Count this context against the shared budget so <agent-3d> grids on the
+	// same page leave room for it (see webgl-budget.js / element.js).
+	reserveWebGLContext();
 
 	const scene = new Scene();
 
@@ -399,9 +403,10 @@ export function initAvatarDrop(sectionEl) {
 		})
 		.catch(e => console.warn('[avatar-drop] boot failed', e));
 
-	// Render loop with visibility pause
+	// Render loop — paused when the section is offscreen or the tab is hidden.
 	const clock = new Clock();
-	let running = true;
+	let running = false;
+	let onScreen = true;
 
 	function tick() {
 		if (!running) return;
@@ -414,12 +419,19 @@ export function initAvatarDrop(sectionEl) {
 			renderer.render(scene, camera);
 		} catch (_) {}
 	}
-	tick();
+
+	function syncRunning() {
+		const next = onScreen && document.visibilityState !== 'hidden';
+		if (next === running) return;
+		running = next;
+		if (running) { clock.getDelta(); tick(); }
+	}
 
 	const visObs = new IntersectionObserver(entries => {
-		const vis = entries[0].isIntersecting;
-		if (vis && !running) { running = true; clock.getDelta(); tick(); }
-		else if (!vis && running) { running = false; }
+		onScreen = entries[0].isIntersecting;
+		syncRunning();
 	}, { threshold: 0 });
 	visObs.observe(sectionEl);
+	document.addEventListener('visibilitychange', syncRunning);
+	syncRunning();
 }

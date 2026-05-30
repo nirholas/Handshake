@@ -27,6 +27,86 @@ import { AgentNotifier } from './agent-notifier.js';
 
 const MODES = ['inline', 'floating', 'section', 'fullscreen'];
 
+// ── WebGL context budget ────────────────────────────────────────────────
+// Browsers cap the number of simultaneous WebGL contexts (~16 in Chrome).
+// Each booted <agent-3d> holds one (two when axes are shown) for its whole
+// lifetime, so a page with many avatars — a showcase grid, a marketplace, a
+// long landing page — silently exhausts the budget. The browser then evicts
+// the *oldest* context ("Too many active WebGL contexts. Oldest context will
+// be lost.") and that avatar freezes or turns blank, with no way to recover
+// while every other context stays alive.
+//
+// We cap the number of *live* viewers instead. When a new one boots over
+// budget, the least-recently-visible offscreen viewer releases its context
+// (full teardown → forceContextLoss) and re-arms its viewport observer, so it
+// re-boots automatically the moment it scrolls back into view. Whatever the
+// user is actually looking at is never evicted.
+const MAX_LIVE_VIEWERS = (() => {
+	try {
+		const n = Number(
+			typeof window !== 'undefined' ? window.AGENT3D_MAX_LIVE_VIEWERS : 0,
+		);
+		if (Number.isFinite(n) && n > 0) return Math.floor(n);
+	} catch {}
+	return 8;
+})();
+const _liveViewers = new Set();
+const _nowMs = () =>
+	typeof performance !== 'undefined' && performance.now
+		? performance.now()
+		: Date.now();
+
+function _trackLiveViewer(el) {
+	_liveViewers.add(el);
+	_enforceViewerBudget(el);
+}
+
+function _untrackLiveViewer(el) {
+	_liveViewers.delete(el);
+}
+
+// Standalone renderers elsewhere on the page (homepage avatar-drop, walk
+// preview, footer bot, …) reserve slots via window.__agent3dReservedContexts
+// (see webgl-budget.js). Subtract them so the page-wide total stays under the
+// browser's ~16-context cap, never below one live viewer.
+function _effectiveViewerBudget() {
+	let reserved = 0;
+	try {
+		const n = Number(
+			typeof window !== 'undefined' ? window.__agent3dReservedContexts : 0,
+		);
+		if (Number.isFinite(n) && n > 0) reserved = Math.floor(n);
+	} catch {}
+	return Math.max(1, MAX_LIVE_VIEWERS - reserved);
+}
+
+function _enforceViewerBudget(justBooted) {
+	const budget = _effectiveViewerBudget();
+	if (_liveViewers.size <= budget) return;
+	const evictable = [];
+	for (const v of _liveViewers) {
+		if (v !== justBooted && v._isEvictable && v._isEvictable()) evictable.push(v);
+	}
+	// Least-recently-visible first.
+	evictable.sort((a, b) => (a._lastVisibleAt || 0) - (b._lastVisibleAt || 0));
+	let over = _liveViewers.size - budget;
+	for (const v of evictable) {
+		if (over <= 0) break;
+		v._releaseForBudget();
+		over--;
+	}
+}
+
+// Let standalone renderers trigger an eviction the moment they reserve a slot,
+// instead of waiting for the next viewer to boot.
+if (typeof window !== 'undefined') {
+	window.__agent3dEnforceBudget = () => {
+		try {
+			_enforceViewerBudget(null);
+		} catch {}
+	};
+}
+
 function _parsePx(val) {
 	const n = parseFloat(val);
 	return n > 0 && typeof val === 'string' && val.trim().endsWith('px') ? n : 0;
@@ -581,6 +661,9 @@ class Agent3DElement extends HTMLElement {
 		this._streamingChatRafPending = false;
 		this._chatAutoScroll = true;
 		this._pendingSay = null;
+		// WebGL context budget bookkeeping.
+		this._inViewport = false;
+		this._lastVisibleAt = 0;
 	}
 
 	connectedCallback() {
@@ -1179,18 +1262,65 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_observeViewport() {
-		if (this.hasAttribute('eager')) return;
+		if (this.hasAttribute('eager')) {
+			// Eager viewers boot immediately and are never released by the budget;
+			// treat them as permanently in-viewport so they sort to the top.
+			this._inViewport = true;
+			this._lastVisibleAt = _nowMs();
+			return;
+		}
 		if (typeof IntersectionObserver === 'undefined') {
+			this._inViewport = true;
 			this._boot();
 			return;
 		}
-		this._io = new IntersectionObserver((entries) => {
-			if (entries.some((e) => e.isIntersecting)) {
-				this._io.disconnect();
-				this._boot();
-			}
-		});
+		if (this._io) return;
+		// Persistent observer (not disconnected after first boot): it both lazily
+		// boots the viewer and tracks visibility so the context budget can evict
+		// the least-recently-visible offscreen viewer and re-boot it on return.
+		// The 300px margin gives lead time to boot before the avatar is on screen
+		// and damps thrash at the viewport edge.
+		this._io = new IntersectionObserver(
+			(entries) => {
+				const isVis = entries.some((e) => e.isIntersecting);
+				this._inViewport = isVis;
+				if (isVis) {
+					this._lastVisibleAt = _nowMs();
+					if (!this._mounted && !this._booting) this._boot();
+				}
+			},
+			{ rootMargin: '300px 0px' },
+		);
 		this._io.observe(this);
+	}
+
+	// Eligible for budget eviction only when offscreen and not holding live
+	// state a user would lose (voice, an open chat pill, an eager/keep-alive
+	// pin). Whatever is on screen or mid-conversation is always spared.
+	_isEvictable() {
+		return (
+			this._mounted &&
+			!this._inViewport &&
+			!this.hasAttribute('eager') &&
+			!this.hasAttribute('keep-alive') &&
+			!this._hasActiveSession()
+		);
+	}
+
+	_hasActiveSession() {
+		return !!(
+			this._livekitVoice ||
+			this._voiceClient ||
+			this._listening ||
+			this._pillActive
+		);
+	}
+
+	_releaseForBudget() {
+		if (!this._mounted) return;
+		this._teardown(); // disposes the viewer → frees the WebGL context(s)
+		this._io = null; // _teardown disconnected it; re-arm a fresh observer
+		this._observeViewport(); // re-boots automatically when scrolled back in
 	}
 
 	async _boot() {
@@ -1554,6 +1684,10 @@ class Agent3DElement extends HTMLElement {
 			}
 
 			this._mounted = true;
+			// Join the live-viewer set and evict an offscreen viewer if this boot
+			// pushed us over the WebGL context budget.
+			this._lastVisibleAt = _nowMs();
+			_trackLiveViewer(this);
 
 			// ── Skill payment ─────────────────────────────────────────────────
 			// When a paid skill is invoked, render an inline payment chip inside
@@ -2326,9 +2460,11 @@ class Agent3DElement extends HTMLElement {
 			}
 			this._autoResolvedManifest = false;
 		}
+		_untrackLiveViewer(this);
 		try {
 			this._io?.disconnect();
 		} catch {}
+		this._io = null;
 		try {
 			this._ro?.disconnect();
 		} catch {}

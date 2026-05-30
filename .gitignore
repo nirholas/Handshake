@@ -124,3 +124,6 @@ scripts/load-test-fleet.sh
 
 # CDK synth output (build artifact)
 infra/cdk.out
+
+# SoundCloud backup — local only, never commit
+sc/

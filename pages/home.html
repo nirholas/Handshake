@@ -4982,16 +4982,42 @@
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { reserveWebGLContext } from '/src/webgl-budget.js';
 
 const canvas = document.getElementById('pricing-canvas');
 const tiers = [...document.querySelectorAll('#pricing-stage .pricing-card')];
 
 if (canvas && tiers.length && window.matchMedia('(min-width: 861px)').matches) {
-	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
-	renderer.toneMapping = THREE.ACESFilmicToneMapping;
-	renderer.toneMappingExposure = 1.1;
+	// The renderer is created lazily, only when the pricing section nears the
+	// viewport. Creating it at page load would make it one of the oldest WebGL
+	// contexts on a page full of <agent-3d> avatars, so the browser's "oldest
+	// context wins" eviction would kill the pricing avatar first. Deferring it
+	// keeps it young; the webglcontextlost/restored handlers let it recover if
+	// it is ever evicted anyway.
+	let renderer = null;
+	let contextLost = false;
+	let sectionVisible = false;
+	function ensureRenderer() {
+		if (renderer) return renderer;
+		renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+		renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+		renderer.outputColorSpace = THREE.SRGBColorSpace;
+		renderer.toneMapping = THREE.ACESFilmicToneMapping;
+		renderer.toneMappingExposure = 1.1;
+		// Count this context against the shared budget so <agent-3d> grids on the
+		// same page leave room for it (see /src/webgl-budget.js).
+		reserveWebGLContext();
+		canvas.addEventListener('webglcontextlost', (e) => {
+			e.preventDefault();
+			contextLost = true;
+		}, false);
+		canvas.addEventListener('webglcontextrestored', () => {
+			contextLost = false;
+			resize();
+		}, false);
+		resize();
+		return renderer;
+	}
 
 	const scene = new THREE.Scene();
 	const PX_PER_UNIT = 120;
@@ -5027,7 +5053,7 @@ if (canvas && tiers.length && window.matchMedia('(min-width: 861px)').matches) {
 	function resize() {
 		const r = canvas.getBoundingClientRect();
 		if (!r.width || !r.height) return;
-		renderer.setSize(r.width, r.height, false);
+		if (renderer) renderer.setSize(r.width, r.height, false);
 		updateFrustum();
 		if (avatar && activeTier && phase === 'idle') {
 			const t = standOnTopOf(activeTier);
@@ -5183,6 +5209,7 @@ if (canvas && tiers.length && window.matchMedia('(min-width: 861px)').matches) {
 		if (!entries[0].isIntersecting || loaded) return;
 		loaded = true;
 		io.disconnect();
+		ensureRenderer();
 		resize();
 
 		new GLTFLoader().load('/avatars/cz.glb', gltf => {
@@ -5218,6 +5245,13 @@ if (canvas && tiers.length && window.matchMedia('(min-width: 861px)').matches) {
 	}, { threshold: 0, rootMargin: '400px' });
 	io.observe(document.getElementById('pricing-stage'));
 
+	// Only draw while the section is actually on screen — saves GPU/CPU and
+	// avoids rendering onto a context the browser may have evicted.
+	const visObs = new IntersectionObserver(entries => {
+		sectionVisible = entries.some(e => e.isIntersecting);
+	});
+	visObs.observe(document.getElementById('pricing-stage'));
+
 	const clock = new THREE.Clock();
 	(function tick() {
 		requestAnimationFrame(tick);
@@ -5245,7 +5279,7 @@ if (canvas && tiers.length && window.matchMedia('(min-width: 861px)').matches) {
 			camera.position.x += (targetCamX - camera.position.x) * 0.04;
 			camera.position.y += (targetCamY - camera.position.y) * 0.04;
 
-			renderer.render(scene, camera);
+			if (renderer && !contextLost && sectionVisible) renderer.render(scene, camera);
 		} catch (_) {}
 	})();
 }
