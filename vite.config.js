@@ -241,6 +241,7 @@ const appConfig = {
 				communities: resolve(__dirname, 'pages/communities.html'),
 				'walk-embed': resolve(__dirname, 'pages/walk-embed.html'),
 				play: resolve(__dirname, 'pages/play.html'),
+				game: resolve(__dirname, 'pages/game.html'),
 				pose: resolve(__dirname, 'pages/pose.html'),
 				club: resolve(__dirname, 'pages/club.html'),
 				skills: resolve(__dirname, 'pages/skills.html'),

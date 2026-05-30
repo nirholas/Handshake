@@ -326,6 +326,10 @@
 			"dest": "/play.html"
 		},
 		{
+			"src": "/game/?",
+			"dest": "/game.html"
+		},
+		{
 			"src": "/walk/?",
 			"dest": "/walk.html"
 		},

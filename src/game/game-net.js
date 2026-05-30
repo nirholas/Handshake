@@ -11,13 +11,22 @@
 import { Client, getStateCallbacks } from 'colyseus.js';
 
 const ROOM_NAME = 'game_mainland';
+const RECONNECT_BASE_MS = 3000;
+const RECONNECT_MAX_MS = 60_000;
+const MAX_RECONNECT_ATTEMPTS = 6;
 
 function defaultServerUrl() {
-	// Resolution priority mirrors walk-net:
+	// Resolution priority mirrors community-net / walk-net:
 	//   1. window.GAME_SERVER_URL  (test override)
-	//   2. <meta name="game-server"> then <meta name="walk-server"> (shared host)
-	//   3. Same host on :2567 (dev convenience)
+	//   2. local dev → ws://<host>:2567, ignoring the production <meta> baked
+	//      into the static page (so `npm run dev:walk-all` works out of the box)
+	//   3. <meta name="game-server"> then <meta name="walk-server"> (prod host)
+	//   4. Same host on :2567
 	if (typeof window !== 'undefined' && window.GAME_SERVER_URL) return window.GAME_SERVER_URL;
+	const host = typeof location !== 'undefined' ? location.hostname : '';
+	if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') {
+		return `ws://${host}:2567`;
+	}
 	if (typeof document !== 'undefined') {
 		for (const sel of ['meta[name="game-server"]', 'meta[name="walk-server"]']) {
 			const v = document.querySelector(sel)?.getAttribute('content')?.trim();
@@ -56,6 +65,7 @@ export class GameNet {
 			mobRemove: new Set(),
 		};
 		this._reconnectTimer = null;
+		this._reconnectAttempts = 0;
 		this._destroyed = false;
 	}
 
@@ -108,6 +118,7 @@ export class GameNet {
 			});
 			this.room.onError((code, message) => console.warn('[game-net] room.onError', code, message));
 
+			this._reconnectAttempts = 0;
 			this._setStatus('online');
 		} catch (err) {
 			console.warn('[game-net] connect failed:', err?.message ?? err);
@@ -116,9 +127,19 @@ export class GameNet {
 		}
 	}
 
+	// Exponential backoff with a hard ceiling. When the server is unreachable
+	// (e.g. not deployed), each attempt costs a connection timeout — retrying
+	// forever at a fixed interval floods the console. After MAX_RECONNECT_ATTEMPTS
+	// we stop and stay 'offline'; the UI offers a manual reconnect via retry().
 	_scheduleReconnect() {
 		if (this._reconnectTimer || this._destroyed) return;
-		const delay = 3000 + Math.random() * 1500;
+		if (this._reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+			this._setStatus('offline', 'game server unreachable');
+			return;
+		}
+		const attempt = this._reconnectAttempts++;
+		const backoff = Math.min(RECONNECT_BASE_MS * 2 ** attempt, RECONNECT_MAX_MS);
+		const delay = backoff + Math.random() * 1000;
 		this._reconnectTimer = setTimeout(() => {
 			this._reconnectTimer = null;
 			if (!this._destroyed) this.connect();
@@ -140,6 +161,7 @@ export class GameNet {
 
 	retry() {
 		if (this._reconnectTimer) { clearTimeout(this._reconnectTimer); this._reconnectTimer = null; }
+		this._reconnectAttempts = 0;
 		this.connect();
 	}
 

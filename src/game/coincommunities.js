@@ -11,84 +11,27 @@
 // Colyseus), reused here so a coin community is a first-class 3D space.
 
 import {
-	Scene, Color, Fog, WebGLRenderer, PerspectiveCamera, Group, Vector3, Box3,
+	Scene, Color, Fog, WebGLRenderer, PerspectiveCamera, Group, Vector3,
 	HemisphereLight, DirectionalLight, AmbientLight, PCFSoftShadowMap, SRGBColorSpace,
 	Mesh, MeshStandardMaterial, MeshBasicMaterial, CircleGeometry, RingGeometry,
-	CylinderGeometry, CapsuleGeometry, SphereGeometry, PlaneGeometry,
+	CylinderGeometry, PlaneGeometry,
 	CanvasTexture, TextureLoader, DoubleSide,
 } from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import nipplejs from 'nipplejs';
 
 import { AnimationManager } from '../animation-manager.js';
 import { CommunityNet } from './community-net.js';
 import { CommunityUI } from './coincommunities-ui.js';
 import { normalizeGatewayURL } from '../ipfs.js';
+import {
+	loadManifest, getEmoteDefs, resolveAvatarUrl, buildAvatar, playEmoteClip,
+	CLIP_IDLE, CLIP_WALK,
+} from './avatar-rig.js';
 
-const AVATAR_DEFAULT = '/avatars/default.glb';
-const MANIFEST_URL = '/animations/manifest.json';
-const CLIP_IDLE = 'idle';
-const CLIP_WALK = 'av-walk-feminine';
 const WORLD_RADIUS = 58; // a touch inside the server's 60m clamp
 const MOVE_SPEED = 4.2;
 const REMOTE_LERP = 0.18;
+const JOY_DEADZONE = 0.12; // swallow tiny stick grazes so the avatar doesn't drift
 const TRENDING_URL = '/api/pump/trending?limit=30';
-
-const _gltf = new GLTFLoader();
-let _animDefs = null; // cached manifest defs (locomotion + emotes)
-let _emoteDefs = null;
-
-async function loadManifest() {
-	if (_animDefs) return;
-	let manifest = [];
-	try {
-		const r = await fetch(MANIFEST_URL, { cache: 'force-cache' });
-		if (r.ok) manifest = await r.json();
-	} catch { /* fall through to locomotion-only */ }
-	const byName = (n) => manifest.find((d) => d.name === n);
-	const loco = [byName(CLIP_IDLE), byName(CLIP_WALK)].filter(Boolean);
-	const emotes = manifest.filter((d) => d.name !== CLIP_IDLE && d.name !== CLIP_WALK).slice(0, 6);
-	_emoteDefs = emotes;
-	_animDefs = [...loco, ...emotes];
-}
-
-// Resolve an avatar input (GLB/VRM URL, site path, or three.ws avatar id) to a
-// loadable model URL. Falls back to the default avatar on anything unresolved.
-async function resolveAvatarUrl(input) {
-	const v = (input || '').trim();
-	if (!v) return AVATAR_DEFAULT;
-	if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
-	try {
-		const r = await fetch(`/api/avatars/${encodeURIComponent(v)}`, { headers: { accept: 'application/json' } });
-		if (r.ok) { const { avatar } = await r.json(); if (avatar?.url) return avatar.url; }
-	} catch { /* ignore */ }
-	return AVATAR_DEFAULT;
-}
-
-// Load a GLB avatar into a rig + wire an AnimationManager (idle/walk/emotes).
-// Returns { height }. On failure, drops in a capsule stand-in so the player is
-// never invisible.
-async function buildAvatar(rig, url, anim) {
-	try {
-		const gltf = await _gltf.loadAsync(url);
-		const model = gltf.scene;
-		model.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = false; } });
-		const box = new Box3().setFromObject(model);
-		model.position.y -= box.min.y;
-		rig.add(model);
-		anim.attach(model);
-		if (_animDefs?.length) { anim.setAnimationDefs(_animDefs); await anim.loadAll(); await anim.crossfadeTo(CLIP_IDLE, 0); }
-		return { height: Math.max(0.5, box.max.y - box.min.y) };
-	} catch (err) {
-		console.warn('[coincommunities] avatar load failed, using stand-in:', url, err?.message);
-		const body = new Mesh(new CapsuleGeometry(0.32, 0.7, 4, 10), new MeshStandardMaterial({ color: 0x8aa6d8 }));
-		body.position.y = 0.85; body.castShadow = true;
-		const head = new Mesh(new SphereGeometry(0.28, 14, 10), new MeshStandardMaterial({ color: 0xf1c9a5 }));
-		head.position.y = 1.55; head.castShadow = true;
-		rig.add(body, head);
-		return { height: 1.7 };
-	}
-}
 
 // A networked peer: their own avatar rig + animation + name label + chat bubble.
 class RemotePlayer {
@@ -162,17 +105,6 @@ class RemotePlayer {
 		this.bubble?.remove();
 		clearTimeout(this._bubbleTimer);
 	}
-}
-
-// Play a one-shot emote clip then return to the locomotion clip.
-async function playEmoteClip(anim, name, motion) {
-	const def = _emoteDefs?.find((d) => d.name === name);
-	if (!def) return;
-	try {
-		if (!anim.clips?.has?.(name)) await anim.loadAnimation(name, def.url, { loop: false });
-		await anim.crossfadeTo(name, 0.15);
-		setTimeout(() => anim.crossfadeTo(motion === 'walk' || motion === 'run' ? CLIP_WALK : CLIP_IDLE, 0.2), 2400);
-	} catch { /* clip missing — ignore */ }
 }
 
 export class CoinCommunities {
@@ -358,7 +290,7 @@ export class CoinCommunities {
 			history.replaceState(null, '', location.pathname + '?' + q.toString());
 		} catch { /* non-fatal */ }
 		await loadManifest();
-		this.ui.setEmotes((_emoteDefs || []).map((d) => ({ name: d.name, icon: d.icon || '🙂', label: d.label })));
+		this.ui.setEmotes(getEmoteDefs().map((d) => ({ name: d.name, icon: d.icon || '🙂', label: d.label })));
 
 		// Build the coin's world + local avatar.
 		this._buildTotem(coin);
@@ -463,15 +395,60 @@ export class CoinCommunities {
 
 	_initJoystick() {
 		const zone = document.getElementById('cc-joystick');
-		if (!zone || this._nipple) return;
-		// Touch only — keep desktop on WASD.
-		if (!matchMedia('(pointer: coarse)').matches) { zone.style.display = 'none'; return; }
-		this._nipple = nipplejs.create({ zone, mode: 'static', position: { left: '60px', bottom: '60px' }, color: '#ffffff', size: 110 });
-		this._nipple.on('move', (_e, d) => {
-			const f = Math.min(1, d.force);
-			this._joy = { x: Math.cos(d.angle.radian) * f, z: -Math.sin(d.angle.radian) * f };
+		if (!zone || this._joyInit) return;
+		this._joyInit = true;
+		// Self-contained pointer-events joystick — no external lib, so the input
+		// contract can never drift. Responds to BOTH touch and mouse-drag, so the
+		// world is playable without a keyboard and verifiable on desktop. Desktop
+		// also keeps WASD; the two intents simply sum in _stepLocal.
+		const base = document.createElement('div');
+		base.className = 'cc-joy-base';
+		const thumb = document.createElement('div');
+		thumb.className = 'cc-joy-thumb';
+		base.appendChild(thumb);
+		zone.appendChild(base);
+
+		const RADIUS = 48; // px the thumb can travel from center before clamping
+		let activeId = null;
+
+		const setFromPointer = (clientX, clientY) => {
+			const r = base.getBoundingClientRect();
+			const cx = r.left + r.width / 2;
+			const cy = r.top + r.height / 2;
+			let dx = (clientX - cx) / RADIUS;
+			let dy = (clientY - cy) / RADIUS;
+			const m = Math.hypot(dx, dy);
+			if (m > 1) { dx /= m; dy /= m; } // clamp to the unit circle
+			thumb.style.transform = `translate(${dx * RADIUS}px, ${dy * RADIUS}px)`;
+			const mag = Math.min(1, m);
+			if (mag < JOY_DEADZONE) { this._joy = null; return; } // swallow drift
+			const k = (mag - JOY_DEADZONE) / (1 - JOY_DEADZONE) / mag; // remap past deadzone
+			// Screen-down (+dy) is "toward camera" = backward, so z = +dy.
+			this._joy = { x: dx * k, z: dy * k };
+		};
+		const release = () => {
+			activeId = null;
+			this._joy = null;
+			thumb.style.transform = 'translate(0px, 0px)';
+			zone.classList.remove('cc-joy-active');
+		};
+
+		zone.addEventListener('pointerdown', (e) => {
+			activeId = e.pointerId;
+			zone.setPointerCapture(e.pointerId);
+			zone.classList.add('cc-joy-active');
+			setFromPointer(e.clientX, e.clientY);
+			e.preventDefault();
 		});
-		this._nipple.on('end', () => { this._joy = null; });
+		zone.addEventListener('pointermove', (e) => {
+			if (e.pointerId !== activeId) return;
+			setFromPointer(e.clientX, e.clientY);
+			e.preventDefault();
+		});
+		const onUp = (e) => { if (e.pointerId === activeId) release(); };
+		zone.addEventListener('pointerup', onUp);
+		zone.addEventListener('pointercancel', onUp);
+		zone.addEventListener('lostpointercapture', onUp);
 	}
 
 	// ---------------------------------------------------------------- loop

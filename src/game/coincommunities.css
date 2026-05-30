@@ -233,7 +233,7 @@ html, body {
 
 /* chat sidebar — dockable, minimizable, persistent log */
 #cc-chat {
-	position: fixed; left: 14px; bottom: 14px; width: min(340px, 82vw);
+	position: fixed; right: 14px; bottom: 14px; width: min(340px, 82vw);
 	max-height: min(60vh, 520px); z-index: 21;
 	display: flex; flex-direction: column; overflow: hidden;
 	background: var(--cc-panel); border: 1px solid var(--cc-edge);
@@ -337,21 +337,61 @@ html, body {
 .cc-bubble::after { width: 7px; height: 7px; bottom: -18px; transform: translateX(-45%); }
 @keyframes cc-bubble-in { from { opacity: 0; } }
 
+/* control hint — tucked under the coin banner (top-left), clear of every corner */
 #cc-hint {
-	position: fixed; right: 14px; bottom: 14px; z-index: 19;
+	position: fixed; left: 14px; top: 82px; z-index: 19;
 	color: var(--cc-dim); font-size: 11px; line-height: 1.7; letter-spacing: 0.02em;
-	background: var(--cc-panel); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius); padding: 9px 12px;
-	backdrop-filter: blur(10px);
+	background: var(--cc-panel); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius); padding: 8px 12px;
+	backdrop-filter: blur(10px); max-width: min(420px, 60vw);
 }
 #cc-hint kbd {
 	background: rgba(255, 255, 255, 0.06); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
 	padding: 1px 5px; font-size: 10px; font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--cc-text);
 }
 
-#cc-joystick { position: fixed; left: 22px; bottom: 90px; width: 120px; height: 120px; z-index: 21; touch-action: none; }
+/* movement stick — bottom-left, always on (touch + mouse). Subtle on desktop,
+   full strength on touch. Sits opposite the chat (bottom-right) so they never overlap. */
+#cc-joystick {
+	position: fixed; left: 22px; bottom: 90px; width: 120px; height: 120px; z-index: 22; touch-action: none;
+	opacity: 0.5; transition: opacity 0.2s ease;
+}
+#cc-joystick:hover { opacity: 1; }
+@media (pointer: coarse) { #cc-joystick { opacity: 1; } }
+#cc-joystick.cc-joy-active { opacity: 1; }
+.cc-joy-base {
+	position: absolute; inset: 0; border-radius: 50%;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1.5px solid rgba(255, 255, 255, 0.35);
+	box-shadow: inset 0 0 24px rgba(255, 255, 255, 0.05);
+	display: grid; place-items: center;
+}
+.cc-joy-thumb {
+	width: 46px; height: 46px; border-radius: 50%;
+	background: rgba(255, 255, 255, 0.85);
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+	transition: transform 0.05s linear;
+	will-change: transform; pointer-events: none;
+}
+#cc-joystick.cc-joy-active .cc-joy-thumb { transition: none; }
 
 @media (max-width: 640px) {
 	#cc-hint { display: none; }
 	.cc-coin-banner { max-width: 60vw; }
 	#cc-chat { width: 72vw; }
 }
+
+/* Adventure-mode link — entry from the social lobby into the isometric MMO (/game). */
+.cc-adventure {
+	display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
+	padding: 8px 14px; border-radius: 12px; color: #e8edf6;
+	background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14);
+	transition: background 0.15s, border-color 0.15s, transform 0.08s;
+	white-space: nowrap;
+}
+.cc-adventure:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3); }
+.cc-adventure:active { transform: translateY(1px); }
+.cc-adventure:focus-visible { outline: 2px solid #cdd6e6; outline-offset: 2px; }
+.cc-adventure-ico { font-size: 18px; line-height: 1; }
+.cc-adventure span { display: flex; flex-direction: column; font-weight: 700; font-size: 13px; line-height: 1.2; }
+.cc-adventure small { font-weight: 500; font-size: 11px; opacity: 0.6; }
+@media (max-width: 640px) { .cc-adventure small { display: none; } }

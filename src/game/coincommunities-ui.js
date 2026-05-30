@@ -68,6 +68,10 @@ export class CommunityUI {
 						]),
 					]),
 					el('div', { class: 'cc-search' }, [el('span', { text: '🔎' }), this.searchInput]),
+					el('a', { class: 'cc-adventure', href: '/game', title: 'Isometric MMO — gather, fight, level up' }, [
+						el('span', { class: 'cc-adventure-ico', text: '⚔️' }),
+						el('span', { html: 'Adventure mode<small>Gather · fight · level up</small>' }),
+					]),
 				]),
 				el('div', { class: 'cc-avatar-bar' }, [
 					el('div', { class: 'cc-avatar-label', html: 'Your avatar<small>Pick one, or bring your own / your agent</small>' }),

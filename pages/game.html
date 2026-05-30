@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Adventure · three.ws</title>
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+		/>
+		<meta
+			name="description"
+			content="Adventure mode on three.ws — an isometric MMO. Gather wood and ore, fight, level up your skills, bank your loot, and explore a shared world with players worldwide."
+		/>
+		<meta name="theme-color" content="#0d1420" />
+
+		<!--
+			Multiplayer server URL — the deployed Colyseus host (Cloud Run).
+			Local dev ignores this and uses ws://localhost:2567 automatically
+			(see defaultServerUrl in src/game/game-net.js), so
+			`npm run dev:walk-all` works out of the box.
+		-->
+		<meta name="game-server" content="wss://three-ws-multiplayer-93741856042.us-central1.run.app" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Adventure · three.ws" />
+		<meta property="og:description" content="An isometric MMO on three.ws — gather, fight, level up, and explore a shared world." />
+		<meta property="og:url" content="https://three.ws/game" />
+
+		<link rel="stylesheet" href="/src/game/iso-game.css" />
+	</head>
+	<body>
+		<canvas id="kg-canvas"></canvas>
+
+		<!-- Projected nameplates layer -->
+		<div id="kg-labels"></div>
+
+		<!-- In-world HUD -->
+		<header id="kg-topbar" hidden>
+			<span id="kg-realm">Mainland</span>
+			<span class="kg-stat">online <b id="kg-online">0</b></span>
+			<span id="kg-status" data-status="connecting">connecting</span>
+		</header>
+
+		<div id="kg-toasts"></div>
+		<div id="kg-joystick"></div>
+
+		<div id="kg-hint" hidden>
+			<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · drag to rotate · scroll to zoom
+		</div>
+
+		<!-- Start overlay -->
+		<div id="kg-start" class="kg-overlay" hidden>
+			<div class="kg-card">
+				<div class="kg-eyebrow">three.ws · adventure</div>
+				<h1 class="kg-title">Enter the world</h1>
+				<p class="kg-sub">Gather, fight, and level up across a shared isometric realm. Pick a name and drop in.</p>
+				<label class="kg-field">
+					<input id="kg-name" type="text" maxlength="24" autocomplete="off" aria-label="Display name" placeholder="guest" />
+				</label>
+				<button id="kg-start-btn" class="kg-btn" type="button">Enter world</button>
+				<div class="kg-feats">
+					<span class="kg-feat">Woodcutting</span>
+					<span class="kg-feat">Mining</span>
+					<span class="kg-feat">Combat</span>
+					<span class="kg-feat">Banking</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Offline overlay -->
+		<div id="kg-offline" class="kg-overlay" hidden>
+			<div class="kg-card">
+				<div class="kg-eyebrow">three.ws · adventure</div>
+				<h1 class="kg-title">Disconnected</h1>
+				<p class="kg-sub" id="kg-offline-msg">Couldn’t reach the game server.</p>
+				<button id="kg-retry" class="kg-btn" type="button">Reconnect</button>
+			</div>
+		</div>
+
+		<script type="module" src="/src/game/iso-game.js"></script>
+	</body>
+</html>
