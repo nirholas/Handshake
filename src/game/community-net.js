@@ -22,6 +22,12 @@ const YAW_EPSILON = 0.01;
 
 function defaultServerUrl() {
 	if (typeof window !== 'undefined' && window.GAME_SERVER_URL) return window.GAME_SERVER_URL;
+	// Local dev always talks to the local Colyseus server (`npm run dev:walk-all`),
+	// ignoring the production <meta game-server> baked into the static page.
+	const host = typeof location !== 'undefined' ? location.hostname : '';
+	if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') {
+		return `ws://${host}:2567`;
+	}
 	if (typeof document !== 'undefined') {
 		for (const sel of ['meta[name="game-server"]', 'meta[name="walk-server"]']) {
 			const v = document.querySelector(sel)?.getAttribute('content')?.trim();

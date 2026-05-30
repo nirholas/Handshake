@@ -14,12 +14,12 @@
 		<meta name="theme-color" content="#1a2740" />
 
 		<!--
-			Multiplayer server URL. Empty in dev — the page falls back to
-			ws://<host>:2567 so `npm run dev:walk-all` works out of the box.
-			In production, set this to the deployed Colyseus host:
-				<meta name="game-server" content="wss://three-ws-multiplayer.fly.dev">
+			Multiplayer server URL — the deployed Colyseus host (Cloud Run).
+			Local dev ignores this and uses ws://localhost:2567 automatically
+			(see defaultServerUrl in src/game/community-net.js), so
+			`npm run dev:walk-all` still works out of the box.
 		-->
-		<meta name="game-server" content="" />
+		<meta name="game-server" content="wss://three-ws-multiplayer-93741856042.us-central1.run.app" />
 
 		<link rel="shortcut icon" href="/favicon.ico" />
 

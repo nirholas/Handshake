@@ -10,8 +10,12 @@
 
 FROM node:22-slim AS deps
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install --omit=dev --no-audit --no-fund
+COPY package.json package-lock.json ./
+# npm ci installs the exact, pre-resolved versions from package-lock.json.
+# The lock pins Colyseus to a set that uses @colyseus/ws-transport and never
+# pulls uWebSockets.js (an optional transport that resolves to a git ssh ref
+# the slim image can't fetch). --omit=optional keeps that guarantee.
+RUN npm ci --omit=dev --omit=optional --no-audit --no-fund
 
 FROM node:22-slim AS runtime
 WORKDIR /app

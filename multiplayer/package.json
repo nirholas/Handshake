@@ -24,7 +24,6 @@
 		"@solana/actions": "0.0.2",
 		"@solana/pay": "1.0.16",
 		"agent0-sdk": "^1.7.1",
-		"colyseus": "^0.16.5",
 		"ethers": "^6.16.0",
 		"express": "^4.21.2",
 		"livepeer": "3.2.4",
