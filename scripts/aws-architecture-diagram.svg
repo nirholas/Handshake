@@ -1,0 +1,209 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="945" viewBox="0 0 1680 945" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#5b6472"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#d97706"/>
+    </marker>
+    <style>
+      .title { font-size: 30px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 15px; fill: #475569; }
+      .zone { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+      .comp { font-size: 15px; font-weight: 600; fill: #0f172a; }
+      .desc { font-size: 12px; fill: #475569; }
+      .chip { font-size: 10px; font-weight: 700; letter-spacing: .5px; }
+      .leg { font-size: 12.5px; fill: #334155; }
+    </style>
+  </defs>
+
+  <rect width="1680" height="945" fill="#f6f8fb"/>
+
+  <!-- Header -->
+  <text x="48" y="50" class="title">three.ws — Application Architecture</text>
+  <text x="48" y="76" class="subtitle">SaaS hosting pattern: application &amp; control planes run on Vercel; AWS hosts the Forge plane, object storage, and Marketplace metering. LLMs &amp; chain RPC are third-party.</text>
+
+  <!-- Legend -->
+  <g transform="translate(1090,30)">
+    <rect width="542" height="58" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <rect x="16" y="14" width="16" height="16" rx="3" fill="#fff3e0" stroke="#d97706"/>
+    <text x="40" y="27" class="leg">AWS (seller account)</text>
+    <rect x="200" y="14" width="16" height="16" rx="3" fill="#f1f5f9" stroke="#0f172a"/>
+    <text x="224" y="27" class="leg">Vercel</text>
+    <rect x="300" y="14" width="16" height="16" rx="3" fill="#eef2ff" stroke="#6366f1"/>
+    <text x="324" y="27" class="leg">Third-party SaaS</text>
+    <text x="16" y="48" class="chip" fill="#0369a1">APP = application plane</text>
+    <text x="200" y="48" class="chip" fill="#9333ea">CTRL = control plane</text>
+  </g>
+
+  <!-- ================= BUYER ================= -->
+  <g transform="translate(48,108)">
+    <rect width="300" height="300" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-dasharray="6 4"/>
+    <text x="20" y="30" class="zone" fill="#64748b">BUYER AWS ACCOUNT</text>
+    <text x="20" y="50" class="desc">Subscription &amp; billing only — no compute or data storage</text>
+
+    <rect x="20" y="70" width="260" height="64" rx="8" fill="#fff3e0" stroke="#d97706"/>
+    <text x="34" y="98" class="comp">AWS Marketplace</text>
+    <text x="34" y="118" class="desc">Subscribe, EULA accept, consolidated billing</text>
+
+    <rect x="20" y="150" width="260" height="60" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+    <text x="34" y="176" class="comp">Buyer / End user</text>
+    <text x="34" y="194" class="desc">Browser — loads SPA, uses agents</text>
+
+    <rect x="20" y="226" width="260" height="58" rx="8" fill="#fff3e0" stroke="#d97706"/>
+    <text x="34" y="251" class="comp">Customer entitlement</text>
+    <text x="34" y="269" class="desc">ResolveCustomer → product code</text>
+  </g>
+
+  <!-- ================= SELLER WRAPPER ================= -->
+  <g transform="translate(388,108)">
+    <rect width="1244" height="800" rx="14" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="24" y="32" class="zone" fill="#334155">SELLER-OPERATED INFRASTRUCTURE</text>
+
+    <!-- Vercel zone -->
+    <g transform="translate(24,52)">
+      <rect width="560" height="236" rx="10" fill="#f1f5f9" stroke="#0f172a"/>
+      <text x="18" y="28" class="zone" fill="#0f172a">VERCEL  ·  not on AWS</text>
+
+      <rect x="18" y="44" width="252" height="78" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+      <rect x="18" y="44" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="27" y="57" class="chip" fill="#0369a1">APP</text>
+      <text x="32" y="92" class="comp">Frontend SPA</text>
+      <text x="32" y="110" class="desc">Vite + Three.js, static edge</text>
+
+      <rect x="290" y="44" width="252" height="78" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+      <rect x="290" y="44" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="299" y="57" class="chip" fill="#0369a1">APP</text>
+      <rect x="344" y="44" width="56" height="18" rx="9" fill="#f3e8ff"/>
+      <text x="353" y="57" class="chip" fill="#9333ea">CTRL</text>
+      <text x="304" y="92" class="comp">API Functions /api/*</text>
+      <text x="304" y="110" class="desc">chat · agents · x402 · auth · cron</text>
+
+      <rect x="18" y="134" width="252" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+      <rect x="18" y="134" width="56" height="18" rx="9" fill="#f3e8ff"/>
+      <text x="27" y="147" class="chip" fill="#9333ea">CTRL</text>
+      <text x="32" y="178" class="comp">Auth &amp; sessions</text>
+      <text x="32" y="196" class="desc">JWT · X OAuth · Privy · wallet keys</text>
+
+      <rect x="290" y="134" width="252" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+      <rect x="290" y="134" width="56" height="18" rx="9" fill="#f3e8ff"/>
+      <text x="299" y="147" class="chip" fill="#9333ea">CTRL</text>
+      <text x="304" y="178" class="comp">Marketplace metering</text>
+      <text x="304" y="196" class="desc">MeterUsage · entitlements · rate limit</text>
+    </g>
+
+    <!-- Seller AWS zone -->
+    <g transform="translate(608,52)">
+      <rect width="612" height="236" rx="10" fill="#fffaf3" stroke="#d97706"/>
+      <text x="18" y="28" class="zone" fill="#b45309">SELLER AWS ACCOUNT</text>
+
+      <rect x="18" y="44" width="282" height="78" rx="8" fill="#fff3e0" stroke="#d97706"/>
+      <rect x="18" y="44" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="27" y="57" class="chip" fill="#0369a1">APP</text>
+      <text x="32" y="92" class="comp">Forge — AWS Lambda</text>
+      <text x="32" y="110" class="desc">Function URL · GLB / OG / AR · Node 22 ARM</text>
+
+      <rect x="312" y="44" width="282" height="78" rx="8" fill="#fff3e0" stroke="#d97706"/>
+      <rect x="312" y="44" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="321" y="57" class="chip" fill="#0369a1">APP</text>
+      <text x="326" y="92" class="comp">Amazon S3</text>
+      <text x="326" y="110" class="desc">3d-agent-avatars · EULA · presigned</text>
+
+      <rect x="18" y="134" width="282" height="80" rx="8" fill="#fff3e0" stroke="#d97706"/>
+      <rect x="18" y="134" width="56" height="18" rx="9" fill="#f3e8ff"/>
+      <text x="27" y="147" class="chip" fill="#9333ea">CTRL</text>
+      <text x="32" y="178" class="comp">SNS + IAM (Marketplace)</text>
+      <text x="32" y="196" class="desc">subscription topic · scoped metering user</text>
+
+      <rect x="312" y="134" width="282" height="80" rx="8" fill="#fff3e0" stroke="#d97706"/>
+      <rect x="312" y="134" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="321" y="147" class="chip" fill="#0369a1">APP</text>
+      <text x="326" y="178" class="comp">CloudWatch Logs</text>
+      <text x="326" y="196" class="desc">/aws/lambda/three-ws-forge</text>
+    </g>
+
+    <!-- Third-party SaaS zone -->
+    <g transform="translate(24,308)">
+      <rect width="1196" height="146" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+      <text x="18" y="28" class="zone" fill="#4338ca">THIRD-PARTY SAAS  ·  not on AWS</text>
+
+      <rect x="18" y="44" width="276" height="84" rx="8" fill="#ffffff" stroke="#c7d2fe"/>
+      <rect x="18" y="44" width="56" height="18" rx="9" fill="#f3e8ff"/>
+      <text x="27" y="57" class="chip" fill="#9333ea">CTRL</text>
+      <text x="32" y="86" class="comp">Neon Postgres</text>
+      <text x="32" y="104" class="desc">users · agents · subscriptions · tokens</text>
+
+      <rect x="306" y="44" width="276" height="84" rx="8" fill="#ffffff" stroke="#c7d2fe"/>
+      <rect x="306" y="44" width="56" height="18" rx="9" fill="#f3e8ff"/>
+      <text x="315" y="57" class="chip" fill="#9333ea">CTRL</text>
+      <text x="320" y="86" class="comp">Upstash Redis + QStash</text>
+      <text x="320" y="104" class="desc">x402 idempotency · spend caps · queue</text>
+
+      <rect x="594" y="44" width="276" height="84" rx="8" fill="#ffffff" stroke="#c7d2fe"/>
+      <rect x="594" y="44" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="603" y="57" class="chip" fill="#0369a1">APP</text>
+      <text x="608" y="86" class="comp">Cloudflare Worker</text>
+      <text x="608" y="104" class="desc">pump-fun-mcp · MCP bridge</text>
+
+      <rect x="882" y="44" width="296" height="84" rx="8" fill="#ffffff" stroke="#c7d2fe"/>
+      <rect x="882" y="44" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="891" y="57" class="chip" fill="#0369a1">APP</text>
+      <text x="896" y="86" class="comp">Avaturn · Replicate</text>
+      <text x="896" y="104" class="desc">photo→avatar · 3D regeneration</text>
+    </g>
+
+    <!-- External APIs zone -->
+    <g transform="translate(24,474)">
+      <rect width="1196" height="146" rx="10" fill="#f8fafc" stroke="#94a3b8"/>
+      <text x="18" y="28" class="zone" fill="#475569">EXTERNAL APIS  ·  not on AWS</text>
+
+      <rect x="18" y="44" width="276" height="84" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+      <rect x="18" y="44" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="27" y="57" class="chip" fill="#0369a1">APP</text>
+      <text x="32" y="86" class="comp">LLM providers</text>
+      <text x="32" y="104" class="desc">Anthropic · OpenAI · Groq · OpenRouter</text>
+
+      <rect x="306" y="44" width="276" height="84" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+      <rect x="306" y="44" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="315" y="57" class="chip" fill="#0369a1">APP</text>
+      <text x="320" y="86" class="comp">Solana RPC · Helius</text>
+      <text x="320" y="104" class="desc">wallets · Pump.fun launches · DAS</text>
+
+      <rect x="594" y="44" width="276" height="84" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+      <rect x="594" y="44" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="603" y="57" class="chip" fill="#0369a1">APP</text>
+      <text x="608" y="86" class="comp">x402 facilitator</text>
+      <text x="608" y="104" class="desc">Coinbase CDP · PayAI settlement</text>
+
+      <rect x="882" y="44" width="296" height="84" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+      <rect x="882" y="44" width="50" height="18" rx="9" fill="#e0f2fe"/>
+      <text x="891" y="57" class="chip" fill="#0369a1">APP</text>
+      <text x="896" y="86" class="comp">CoinCommunities</text>
+      <text x="896" y="104" class="desc">social layer · X OAuth proxy</text>
+    </g>
+
+    <!-- internal connectors: API Functions hub -->
+    <!-- API Functions (approx center x=388+24+290+126=... ) compute global coords -->
+  </g>
+
+  <!-- ===== Cross-zone arrows (global coords) ===== -->
+  <!-- Buyer Marketplace -> Seller SNS -->
+  <path d="M348,196 C470,196 470,250 632,250" fill="none" stroke="#d97706" stroke-width="2" marker-end="url(#arrowOrange)"/>
+  <text x="470" y="186" class="desc" fill="#b45309">subscribe / SNS event</text>
+
+  <!-- Buyer user -> Frontend SPA -->
+  <path d="M348,278 C400,278 380,210 424,210" fill="none" stroke="#5b6472" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="356" y="246" class="desc">HTTPS</text>
+
+  <!-- Frontend SPA -> API Functions (within vercel, short) -->
+  <path d="M682,200 L702,200" fill="none" stroke="#5b6472" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- API Functions -> Seller AWS (Lambda/S3) -->
+  <path d="M954,200 C990,200 990,200 1020,200" fill="none" stroke="#5b6472" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- API Functions -> backing services (down into SaaS + External rows) -->
+  <path d="M828,338 L828,406" fill="none" stroke="#5b6472" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="838" y="372" class="desc">data · cache · LLM · chain · pay</text>
+
+  <text x="48" y="924" class="desc" fill="#94a3b8">Generated for AWS Marketplace architecture review · planes labeled APP / CTRL · account boundaries shown · three.ws</text>
+</svg>
