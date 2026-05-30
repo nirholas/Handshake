@@ -24,11 +24,15 @@ import { CommunityNet } from './community-net.js';
 import { CommunityUI } from './coincommunities-ui.js';
 import { createWorldEnvironment } from './world-env.js';
 import { createChartScreen } from './chart-screen.js';
+import { MarketReactor } from './market-reactor.js';
+import { VoxelWorld, createBuildHud, parseKey } from './build-voxels.js';
 import { normalizeGatewayURL } from '../ipfs.js';
 import {
 	loadManifest, getEmoteDefs, resolveAvatarUrl, buildAvatar, playEmoteClip,
 	CLIP_IDLE, CLIP_WALK,
 } from './avatar-rig.js';
+import { GUEST_SENTINEL, uploadPendingGuestAvatar } from './play-handoff.js';
+import { HOME_TOWN, isHomeTown } from './home-town.js';
 
 const WORLD_RADIUS = 58; // a touch inside the server's 60m clamp
 const MOVE_SPEED = 4.2;
@@ -40,6 +44,7 @@ const REMOTE_LERP = 0.18;
 const JOY_DEADZONE = 0.12; // swallow tiny stick grazes so the avatar doesn't drift
 const TRENDING_URL = '/api/pump/trending?limit=30';
 const SEARCH_URL = '/api/pump/search';
+const COIN_URL = '/api/pump/coin';
 
 // Normalize a raw pump.fun coin (trending feed or search results — both share
 // the same upstream shape) into the compact record the lobby/world consume.
@@ -168,10 +173,30 @@ export class CoinCommunities {
 			onEmote: (n) => this._emote(n),
 			onSearch: (q) => this._searchCoins(q),
 			onRetry: () => this.net?.retry(),
-			onAvatarChange: (url) => { this.net?.setAvatar(url); },
+			// Resolve the picked value (avatar id, gallery pick, URL) to a loadable,
+			// host-whitelisted URL before broadcasting, so a mid-session avatar swap
+			// actually reaches peers (the server rejects bare ids / blob: URLs).
+			onAvatarChange: (val) => {
+				if (!this.net || val === GUEST_SENTINEL) return;
+				resolveAvatarUrl(val).then((u) => this.net?.setAvatar(u));
+			},
+			onRename: (name) => this._rename(name),
+			onBuy: () => this._openBuy(),
 		});
 
+		// Collaborative building HUD (hotbar + place/break toggle). Hidden until the
+		// player is in a world and connected — there's nowhere to build otherwise.
+		this.buildType = 0;
+		this.buildHud = createBuildHud({
+			onToggle: (on) => this._onBuildToggle(on),
+			onPick: (i) => { this.buildType = i; },
+			onModeChange: () => this._refreshGhost(),
+		});
+		this.buildHud.root.hidden = true;
+		this.buildHud.setEnabled(false);
+
 		this._hideBootLoader();
+		this._loadHomeTown();
 		this._loadCoins();
 		this._bindInput();
 
@@ -210,6 +235,23 @@ export class CoinCommunities {
 		} catch (err) {
 			console.warn('[coincommunities] coin load failed:', err?.message);
 			this.ui.setCoinsError(() => this._loadCoins());
+		}
+	}
+
+	// The flagship $THREE town is always pinned to the top of the lobby, even when
+	// it isn't trending — it's the platform's front door. Show the static identity
+	// instantly so the card never flashes empty, then refresh name/art/market-cap
+	// live from pump.fun so the pin is real, not a hardcoded snapshot.
+	async _loadHomeTown() {
+		this.ui.setFeatured({ ...HOME_TOWN, official: true });
+		try {
+			const r = await fetch(`${COIN_URL}?mint=${HOME_TOWN.mint}`, { headers: { accept: 'application/json' } });
+			if (!r.ok) throw new Error('HTTP ' + r.status);
+			const [coin] = mapCoins([await r.json()]);
+			if (coin?.mint) this.ui.setFeatured({ ...HOME_TOWN, ...coin, official: true });
+		} catch (err) {
+			// Non-fatal: the static pin from above stands in until next load.
+			console.warn('[coincommunities] home town refresh failed:', err?.message);
 		}
 	}
 
@@ -268,21 +310,21 @@ export class CoinCommunities {
 			this._screenPulse.material.opacity = 0.35 + 0.35 * (0.5 + 0.5 * Math.sin(this._screenT * 2.4));
 		}
 		this._chartScreen?.update(dt);
+		this._reactor?.update(dt);
 	}
 
 	// Central coin totem — the community's banner in 3D.
 	_buildTotem(coin) {
 		const g = new Group();
 		const pillar = new Mesh(new CylinderGeometry(1.1, 1.4, 6, 24),
-			new MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.7, metalness: 0.1 }));
+			new MeshStandardMaterial({ color: 0x3a4a72, roughness: 0.6, metalness: 0.2 }));
 		pillar.position.y = 3; pillar.castShadow = true; pillar.receiveShadow = true;
 		g.add(pillar);
-		// Floating coin disc with the token image — polished chrome that catches the
-		// moonlight key, slowly turning. Monochrome: the only colour is the light it
-		// reflects (and the token art on its faces).
+		// Floating coin disc with the token image — a warm gold coin that catches the
+		// sun key, slowly turning. The token art rides on its faces.
 		const spin = new Group(); spin.position.y = 7.5;
 		const disc = new Mesh(new CylinderGeometry(2.2, 2.2, 0.3, 40),
-			new MeshStandardMaterial({ color: 0xd8d8de, roughness: 0.22, metalness: 0.95, emissive: 0x202024, emissiveIntensity: 0.25 }));
+			new MeshStandardMaterial({ color: 0xffce5c, roughness: 0.35, metalness: 0.7, emissive: 0x3a2e00, emissiveIntensity: 0.3 }));
 		disc.rotation.x = Math.PI / 2; disc.castShadow = true;
 		spin.add(disc);
 		this._totemDisc = disc;
@@ -313,7 +355,7 @@ export class CoinCommunities {
 		x.textAlign = 'center'; x.fillStyle = '#fff';
 		x.font = '800 50px Inter, system-ui, sans-serif';
 		x.fillText(name.slice(0, 18).toUpperCase(), 256, 56);
-		x.font = 'bold 32px Inter, system-ui, sans-serif'; x.fillStyle = 'rgba(255,255,255,0.6)';
+		x.font = 'bold 32px Inter, system-ui, sans-serif'; x.fillStyle = '#5fc8ff';
 		x.fillText(sym, 256, 100);
 		const tex = new CanvasTexture(c); tex.colorSpace = SRGBColorSpace;
 		const m = new Mesh(new PlaneGeometry(6, 1.5), new MeshBasicMaterial({ map: tex, transparent: true, side: DoubleSide }));
@@ -460,6 +502,18 @@ export class CoinCommunities {
 	async enter(coin) {
 		if (this.phase !== 'lobby') return;
 		this.phase = 'loading';
+		// A bare deep link (/play?coin=<home mint>) carries no name/art; backfill the
+		// flagship town's identity so its totem, jumbotron, and HUD are never blank.
+		if (isHomeTown(coin.mint)) {
+			coin = {
+				...coin,
+				name: coin.name || HOME_TOWN.name,
+				symbol: coin.symbol || HOME_TOWN.symbol,
+				image: coin.image || HOME_TOWN.image,
+				biome: HOME_TOWN.biome,
+				official: true,
+			};
+		}
 		this.coin = coin;
 		this.ui.enterWorld(coin);
 		// Reflect the community in the URL so it can be shared / refreshed into.
@@ -473,35 +527,98 @@ export class CoinCommunities {
 		await loadManifest();
 		this.ui.setEmotes(getEmoteDefs().map((d) => ({ name: d.name, icon: d.icon || '🙂', label: d.label })));
 
+		// Re-theme the environment for this specific community: a distinct biome,
+		// palette, and flora derived deterministically from the coin's mint, so
+		// every community has its own recognisable world.
+		this.env?.dispose();
+		// The flagship town pins its signature biome; every other coin draws its
+		// look from the mint seed.
+		const biomeOverride = isHomeTown(coin.mint) ? (coin.biome || HOME_TOWN.biome) : undefined;
+		this.env = createWorldEnvironment(this.scene, this.renderer, WORLD_RADIUS, { mint: coin.mint, biome: biomeOverride });
+		this.ui.toast(`${coin.symbol ? '$' + coin.symbol : coin.name || 'Community'} — ${this.env.biome.label}`, 'info');
+
 		// Build the coin's world + local avatar.
 		this._buildTotem(coin);
 		this._buildScreen(coin);
+		// The market reactor turns the live trade tape into world behaviour: buys
+		// ripple green and kick the boundary ring, sells ripple red, volume spins
+		// the totem, the rolling % drives the weather, and whales detonate a beam
+		// of light with a shower of coins. It's fed by the chart screen's onTrades.
+		this._reactor = new MarketReactor({
+			scene: this.scene,
+			env: this.env,
+			totem: this._coinSpin,
+			totemPos: [0, 0, -12],
+			onWhale: (tr) => {
+				const usd = formatUsd(tr.usd);
+				const who = tr.isBuy ? 'bought' : 'sold';
+				this.ui.toast(`🐋 Whale ${who}${usd ? ' ' + usd : ''} of ${coin.symbol ? '$' + coin.symbol : coin.name || 'this coin'}`, 'info');
+			},
+		});
 		// Live trading terminal facing the spawn from past the totem: the coin's
 		// price chart, % change, volume, buy/sell flow, and a ticker of real
 		// on-chain trades — a second screen players can walk up to and tap to open
-		// the coin on pump.fun. Identity jumbotron behind, market chart ahead.
-		this._chartScreen = createChartScreen(this.scene, coin, { position: [0, 0, -30], width: 18 });
+		// the coin on pump.fun. Identity jumbotron behind, market chart ahead. Its
+		// freshly-landed trades feed the reactor so the world reacts to the tape.
+		this._chartScreen = createChartScreen(this.scene, coin, {
+			position: [0, 0, -30], width: 18,
+			onTrades: (trades, metrics) => this._reactor?.ingestTrades(trades, metrics),
+		});
 		this.localRig = new Group();
 		this.localRig.position.copy(this.localPos);
 		this.scene.add(this.localRig);
 		this.localAnim = new AnimationManager();
 		const avatarInput = this.ui.getAvatar();
 		const url = await resolveAvatarUrl(avatarInput);
-		const { height: localHeight } = await buildAvatar(this.localRig, url, this.localAnim);
+		const { height: localHeight, fallback: avatarFallback } = await buildAvatar(this.localRig, url, this.localAnim);
 		this.localHeight = localHeight;
+		// Don't silently swap a broken model for the stand-in — tell the player so
+		// they know to pick another avatar.
+		if (avatarFallback && avatarInput !== GUEST_SENTINEL) {
+			this.ui.toast('Couldn’t load that avatar — using a stand-in. Try another in the lobby.', 'warn');
+		}
 
-		// Connect to this coin's room.
-		const name = localStorage.getItem('cc-name') || ('guest-' + Math.random().toString(36).slice(2, 6));
+		// Connect to this coin's room. A locally-staged guest avatar (just created,
+		// not yet uploaded) can't be loaded by peers, so we join without one and
+		// upload in the background — then broadcast the public URL so everyone sees
+		// it. Otherwise broadcast a loadable URL/path directly.
+		const isGuest = avatarInput === GUEST_SENTINEL;
+		const netAvatar = isGuest
+			? ''
+			: (/^https?:\/\//i.test(avatarInput) || avatarInput.startsWith('/') ? avatarInput : url);
+		// Prefer the name the player typed in the lobby; only mint a guest id when
+		// they left it blank, and reflect that id back into the field so it's theirs.
+		let name = this.ui.getName();
+		if (!name) {
+			name = localStorage.getItem('cc-name') || ('guest-' + Math.random().toString(36).slice(2, 6));
+			this.ui.setName(name);
+		}
 		localStorage.setItem('cc-name', name);
+		// Fresh voxel build layer for this coin. The server is authoritative: it
+		// streams the persisted build in on join and every live edit after, so the
+		// geometry is driven entirely by these block events (local clicks only send).
+		this.voxels = new VoxelWorld(this.scene);
+
 		this.net = new CommunityNet({
-			name, avatar: /^https?:\/\//i.test(avatarInput) || avatarInput.startsWith('/') ? avatarInput : url,
+			name, avatar: netAvatar,
 			coin: { mint: coin.mint, name: coin.name, symbol: coin.symbol, image: coin.image },
 		});
-		this.net.on('status', ({ status }) => { this.ui.setStatus(status); this._updateOnline(); });
+		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
+		this.net.on('status', ({ status }) => {
+			this.ui.setStatus(status);
+			this._updateOnline();
+			// Only offer building while there's a live link to build into.
+			this.buildHud.setEnabled(status === 'online', 'Building needs a live connection');
+		});
 		this.net.on('add', (p, id) => this._onAdd(p, id));
 		this.net.on('change', (p, id) => this._onChange(p, id));
 		this.net.on('remove', (id) => this._onRemove(id));
 		this.net.on('chat', (m) => this._onChat(m));
+		this.net.on('ping', (ms) => this.ui.setPing(ms));
+		this.net.on('blockAdd', (key, t) => { const [x, y, z] = parseKey(key); this.voxels?.setBlock(x, y, z, t); });
+		this.net.on('blockChange', (key, t) => { const [x, y, z] = parseKey(key); this.voxels?.setBlock(x, y, z, t); });
+		this.net.on('blockRemove', (key) => { const [x, y, z] = parseKey(key); this.voxels?.removeBlock(x, y, z); });
+		this.buildHud.root.hidden = false;
 		await this.net.connect();
 		this.phase = 'world';
 		this._initJoystick();
@@ -519,6 +636,11 @@ export class CoinCommunities {
 			this._screenArt = null; this._screenPulse = null;
 		}
 		if (this._chartScreen) { this._chartScreen.dispose(); this._chartScreen = null; }
+		if (this._reactor) { this._reactor.dispose(); this._reactor = null; }
+		if (this.voxels) { this.voxels.dispose(); this.voxels = null; }
+		this.buildHud.setActive(false);
+		this.buildHud.setEnabled(false);
+		this.buildHud.root.hidden = true;
 		if (this.localRig) { this.scene.remove(this.localRig); this.localRig = null; }
 		if (this._nipple) { this._nipple.destroy(); this._nipple = null; }
 		this.phase = 'lobby';
@@ -551,10 +673,49 @@ export class CoinCommunities {
 		const mine = m.id === this.net.sessionId;
 		this.ui.addChat({ name: m.name, text: m.text, mine });
 		if (mine) this._sayLocal(m.text);
-		else this.remotes.get(m.id)?.say(m.text);
+		else { this.remotes.get(m.id)?.say(m.text); this._bumpTabUnread(); }
 	}
 	_sendChat(text) { this.net?.sendChat(text); }
 	_emote(name) { this.net?.sendEmote(name); playEmoteClip(this.localAnim, name, this.motion); }
+
+	// Surface unread chat in the tab title when the page is backgrounded, so a
+	// new message pulls the user back. Cleared the moment they refocus the tab.
+	_bumpTabUnread() {
+		if (!document.hidden) return;
+		this._tabUnread = (this._tabUnread || 0) + 1;
+		if (!this._baseTitle) this._baseTitle = document.title;
+		document.title = `(${this._tabUnread}) ${this._baseTitle}`;
+		if (!this._tabFocusBound) {
+			this._tabFocusBound = true;
+			const clear = () => {
+				if (document.hidden) return;
+				this._tabUnread = 0;
+				if (this._baseTitle) document.title = this._baseTitle;
+			};
+			document.addEventListener('visibilitychange', clear);
+			window.addEventListener('focus', clear);
+		}
+	}
+
+	// Live rename: persist and broadcast so peers' nameplates update instantly.
+	_rename(name) {
+		const clean = (name || '').trim().slice(0, 24);
+		if (clean) localStorage.setItem('cc-name', clean);
+		if (this.net && clean) this.net.rename(clean);
+	}
+
+	// Open the native on-chain buy for the current coin. Lazy-loaded so the
+	// Solana/pump SDKs never weigh down the main /play bundle.
+	async _openBuy() {
+		if (!this.coin?.mint) return;
+		try {
+			const { openBuyModal } = await import('./coin-buy.js');
+			openBuyModal(this.coin);
+		} catch (err) {
+			console.warn('[coincommunities] buy modal failed to load:', err?.message);
+			this.ui.toast('Couldn’t open the buy panel. Trade on pump.fun instead.', 'warn');
+		}
+	}
 
 	_sayLocal(text) {
 		if (this._localBubble) this._localBubble.remove();
@@ -572,28 +733,54 @@ export class CoinCommunities {
 			if (this.ui.chatFocused) return;
 			if (e.key === 'Enter' && this.phase === 'world') { e.preventDefault(); this.ui.focusChat(); return; }
 			if (e.code === 'Space') { e.preventDefault(); this._jump(); return; } // don't scroll the page
-			this.keys.add(e.key.toLowerCase());
+			const k = e.key.toLowerCase();
+			if (this.phase === 'world') {
+				// B toggles build mode; while it's on, 1–0 pick the active block.
+				if (k === 'b') {
+					e.preventDefault();
+					if (this.net?.status === 'online' || this.buildHud.active) this.buildHud.setActive(!this.buildHud.active);
+					return;
+				}
+				if (this.buildHud.active && k.length === 1 && k >= '0' && k <= '9') {
+					e.preventDefault();
+					this.buildHud.select(k === '0' ? 9 : Number(k) - 1);
+					return;
+				}
+			}
+			this.keys.add(k);
 		});
 		window.addEventListener('keyup', (e) => this.keys.delete(e.key.toLowerCase()));
 		this.canvas.addEventListener('pointerdown', (e) => {
 			this._dragging = true; this._lastPtr = { x: e.clientX, y: e.clientY };
 			this._downPtr = { x: e.clientX, y: e.clientY };
+			// Touch has no hover, so seed the ghost on press so the first tap aims true.
+			if (this.phase === 'world' && this.buildHud.active && e.button !== 2) this._updateGhost(e.clientX, e.clientY);
 		});
 		window.addEventListener('pointerup', () => { this._dragging = false; });
-		// A tap (negligible drag) on the live chart screen opens the coin on pump.fun.
+		// A tap (negligible drag) builds in build mode, otherwise opens the coin on
+		// pump.fun when it lands on the live chart screen.
 		this.canvas.addEventListener('pointerup', (e) => {
 			if (!this._downPtr) return;
 			const moved = Math.hypot(e.clientX - this._downPtr.x, e.clientY - this._downPtr.y);
 			this._downPtr = null;
-			if (moved < 6 && this._raycastScreen(e.clientX, e.clientY)) this._chartScreen.openExternal();
+			if (moved >= 6 || e.button === 2) return; // a look-drag, or a right-click (handled by contextmenu)
+			if (this.phase === 'world' && this.buildHud.active) { this._buildAt(e.clientX, e.clientY, false); return; }
+			if (this._raycastScreen(e.clientX, e.clientY)) this._chartScreen.openExternal();
+		});
+		// Right-click always breaks the targeted block while building.
+		this.canvas.addEventListener('contextmenu', (e) => {
+			if (this.phase === 'world' && this.buildHud.active) { e.preventDefault(); this._buildAt(e.clientX, e.clientY, true); }
 		});
 		window.addEventListener('pointermove', (e) => {
 			if (!this._dragging) {
-				// Hover cursor over the clickable screen (throttled).
+				// Throttled hover: drive the build ghost while building, else the
+				// pointer cursor over the clickable chart screen.
 				const now = performance.now();
-				if (this.phase === 'world' && this._chartScreen && now - (this._hoverAt || 0) > 80) {
+				if (this.phase === 'world' && now - (this._hoverAt || 0) > 40) {
 					this._hoverAt = now;
-					this.canvas.style.cursor = this._raycastScreen(e.clientX, e.clientY) ? 'pointer' : '';
+					this._lastHover = { x: e.clientX, y: e.clientY };
+					if (this.buildHud.active) this._updateGhost(e.clientX, e.clientY);
+					else if (this._chartScreen) this.canvas.style.cursor = this._raycastScreen(e.clientX, e.clientY) ? 'pointer' : '';
 				}
 				return;
 			}
@@ -608,10 +795,9 @@ export class CoinCommunities {
 		}, { passive: false });
 	}
 
-	// Cast a ray from a screen-space point into the world and report whether it
-	// hits the live chart screen's face — powers tap-to-open and the hover cursor.
-	_raycastScreen(clientX, clientY) {
-		if (!this._chartScreen?.mesh) return false;
+	// Build a camera ray through a screen-space point (shared by the chart-screen
+	// hit test and the voxel targeting).
+	_pointerRay(clientX, clientY) {
 		this._raycaster = this._raycaster || new Raycaster();
 		this._ndc = this._ndc || new Vector2();
 		const rect = this.canvas.getBoundingClientRect();
@@ -620,7 +806,59 @@ export class CoinCommunities {
 			-((clientY - rect.top) / rect.height) * 2 + 1,
 		);
 		this._raycaster.setFromCamera(this._ndc, this.camera);
-		return this._raycaster.intersectObject(this._chartScreen.mesh, false).length > 0;
+		return this._raycaster;
+	}
+
+	// Cast a ray from a screen-space point into the world and report whether it
+	// hits the live chart screen's face — powers tap-to-open and the hover cursor.
+	_raycastScreen(clientX, clientY) {
+		if (!this._chartScreen?.mesh) return false;
+		return this._pointerRay(clientX, clientY).intersectObject(this._chartScreen.mesh, false).length > 0;
+	}
+
+	// ---------------------------------------------------------------- building
+	// Place or break a block under the pointer. Server-authoritative: we only send
+	// the intent, and the block appears/disappears when the server echoes its
+	// blocks state back (see the blockAdd/blockRemove wiring in enter()).
+	_buildAt(clientX, clientY, forceRemove) {
+		if (!this.voxels || this.net?.status !== 'online') return;
+		const target = this.voxels.raycast(this._pointerRay(clientX, clientY));
+		if (!target) return;
+		if (forceRemove || this.buildHud.mode === 'remove') {
+			if (target.hit === 'block' && target.cell) this.net.sendRemove(target.cell[0], target.cell[1], target.cell[2]);
+		} else if (target.placeValid) {
+			this.net.sendPlace(target.placeCell[0], target.placeCell[1], target.placeCell[2], this.buildType);
+		} else if (target.placeCell) {
+			// Aimed somewhere illegal (out of bounds / occupied) — flash the cursor.
+			this.voxels.showGhost(target.placeCell, 'blocked');
+			return;
+		}
+		this._updateGhost(clientX, clientY);
+	}
+
+	// Move the ghost cursor to whatever the pointer aims at, tinted by intent
+	// (green place / red break / amber blocked).
+	_updateGhost(clientX, clientY) {
+		if (!this.voxels) return;
+		const target = this.voxels.raycast(this._pointerRay(clientX, clientY));
+		if (!target) { this.voxels.hideGhost(); return; }
+		if (this.buildHud.mode === 'remove') {
+			if (target.hit === 'block') this.voxels.showGhost(target.cell, 'remove');
+			else this.voxels.hideGhost();
+		} else {
+			this.voxels.showGhost(target.placeCell, target.placeValid ? 'place' : 'blocked');
+		}
+	}
+
+	// Re-evaluate the ghost after a mode flip, without waiting for pointer motion.
+	_refreshGhost() {
+		if (this.buildHud.active && this._lastHover) this._updateGhost(this._lastHover.x, this._lastHover.y);
+	}
+
+	_onBuildToggle(on) {
+		if (!on) { this.voxels?.hideGhost(); this.canvas.style.cursor = ''; return; }
+		this.ui.toast('Build mode — tap to place, right-click to break, 1–0 pick a block', 'info');
+		if (this._lastHover) this._updateGhost(this._lastHover.x, this._lastHover.y);
 	}
 
 	_initJoystick() {

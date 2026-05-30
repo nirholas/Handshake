@@ -171,6 +171,7 @@ export function createChartScreen(scene, coin, opts = {}) {
 	let points = [];          // [{ ts, price }] ascending by ts
 	let recent = [];          // newest-first trades for the ticker/flow
 	let status = 'loading';   // loading | live | empty | error
+	let firstFill = true;     // suppress the reactor on the initial backlog poll
 	let lastErr = 0;
 	let pollTimer = null;
 	let destroyed = false;
@@ -178,24 +179,25 @@ export function createChartScreen(scene, coin, opts = {}) {
 	let t = 0;                // elapsed seconds (ticker scroll + pulse)
 
 	function ingest(trades) {
-		let added = 0;
+		const fresh = []; // trades new this batch — emitted so the world can react
 		for (const tr of trades) {
 			if (!tr.tx || seen.has(tr.tx)) continue;
 			seen.add(tr.tx);
-			added++;
 			const ts = tr.timestamp ? Date.parse(tr.timestamp) : Date.now();
 			const price = tr.price_usd != null ? Number(tr.price_usd) : null;
 			if (price > 0 && isFinite(price)) points.push({ ts, price });
-			recent.push({
+			const rec = {
 				tx: tr.tx,
 				ts,
 				isBuy: tr.is_buy === true,
 				sol: Number(tr.sol_amount) || 0,
 				usd: tr.usd_amount != null ? Number(tr.usd_amount) : null,
 				trader: tr.user || '',
-			});
+			};
+			recent.push(rec);
+			fresh.push(rec);
 		}
-		if (!added) return;
+		if (!fresh.length) return;
 		points.sort((a, b) => a.ts - b.ts);
 		if (points.length > MAX_POINTS) points = points.slice(-MAX_POINTS);
 		recent.sort((a, b) => b.ts - a.ts);
@@ -205,6 +207,15 @@ export function createChartScreen(scene, coin, opts = {}) {
 		// we need to keep recognising.
 		if (seen.size > 800) seen = new Set(recent.map((r) => r.tx));
 		status = points.length ? 'live' : (recent.length ? 'live' : 'empty');
+		// Hand the freshly-landed trades (newest first) + derived metrics to whoever
+		// wants to drive the world off the live tape. The first poll is the backlog
+		// the feed already holds, not live activity — emitting it would set off
+		// fireworks for a 100-trade history dump the instant a player walks in, so we
+		// swallow that initial burst and only react to trades that land while here.
+		if (opts.onTrades && !firstFill) {
+			const batch = fresh.slice().sort((a, b) => b.ts - a.ts);
+			try { opts.onTrades(batch, metrics()); } catch { /* reactor is non-critical */ }
+		}
 	}
 
 	async function fetchTrades() {
@@ -214,6 +225,11 @@ export function createChartScreen(scene, coin, opts = {}) {
 			const data = await r.json();
 			const trades = Array.isArray(data?.trades) ? data.trades : [];
 			ingest(trades);
+			// After the first successful poll, everything it carried is treated as
+			// backlog; from here on, trades are live and drive the world. Cleared
+			// here (not in ingest) so an empty-on-entry coin still reacts to its
+			// genuine first trade on a later poll.
+			firstFill = false;
 			if (status === 'loading') status = trades.length ? 'live' : 'empty';
 		} catch {
 			lastErr = Date.now();
@@ -479,6 +495,7 @@ export function createChartScreen(scene, coin, opts = {}) {
 		group,
 		mesh: panel,
 		mint: coin.mint,
+		getMetrics: metrics,
 		update(dt) {
 			if (destroyed) return;
 			t += dt;

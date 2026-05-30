@@ -71,7 +71,13 @@ export class CommunityNet {
 			remove: new Set(), // (id)
 			chat: new Set(),   // ({id, name, text, ts})
 			interact: new Set(), // ({from, fromName, action, ts}) — a peer interacted with us
+			ping: new Set(),   // (ms) — smoothed round-trip latency to the server
+			blockAdd: new Set(),    // (key, type) — a voxel appeared (placed or restored)
+			blockChange: new Set(), // (key, type) — a voxel was repainted
+			blockRemove: new Set(), // (key) — a voxel was broken
 		};
+		this.ping = null;        // smoothed RTT in ms, null until the first echo
+		this._pingSentAt = 0;    // perf-clock stamp of the last move awaiting an echo
 		this._lastSent = null;
 		this._lastSentAt = 0;
 		this._reconnectTimer = null;
@@ -121,9 +127,32 @@ export class CommunityNet {
 			const $ = getStateCallbacks(this.room);
 			$(this.room.state).players.onAdd((player, id) => {
 				this._emit('add', player, id);
-				$(player).onChange(() => this._emit('change', player, id));
+				$(player).onChange(() => {
+					// The server echoes our own authoritative state back after each
+					// move; the gap from send → echo is a real network+server RTT.
+					if (id === this.sessionId && this._pingSentAt) {
+						const rtt = performance.now() - this._pingSentAt;
+						this._pingSentAt = 0;
+						if (rtt > 0 && rtt < 5000) {
+							this.ping = this.ping == null ? rtt : this.ping * 0.7 + rtt * 0.3;
+							this._emit('ping', Math.round(this.ping));
+						}
+					}
+					this._emit('change', player, id);
+				});
 			});
 			$(this.room.state).players.onRemove((_p, id) => this._emit('remove', id));
+
+			// Voxel builds: the server is authoritative for every block, so the
+			// world's geometry is driven entirely by these state callbacks — local
+			// place/break clicks only *send*; the block appears when the server
+			// echoes it back, keeping every client's build identical. onAdd fires
+			// for the full persisted build at join time and for each new placement.
+			$(this.room.state).blocks.onAdd((block, key) => {
+				this._emit('blockAdd', key, block.t);
+				$(block).onChange(() => this._emit('blockChange', key, block.t));
+			});
+			$(this.room.state).blocks.onRemove((_b, key) => this._emit('blockRemove', key));
 
 			this.room.onLeave((code) => {
 				this._setStatus('offline');
@@ -178,10 +207,18 @@ export class CommunityNet {
 		this.room.send('move', { x: state.x, y: state.y, z: state.z, yaw: state.yaw, motion: state.motion });
 		this._lastSent = { ...state };
 		this._lastSentAt = now;
+		// Stamp this move for RTT measurement unless one is already awaiting its
+		// echo, so each sample pairs a single send with its first state echo.
+		if (!this._pingSentAt) this._pingSentAt = now;
 	}
 
 	sendEmote(name) { this.room?.send('emote', { name }); }
 	sendChat(text) { this.room?.send('chat', { text }); }
+	// Place/break a voxel at an integer grid cell. Server-authoritative: these only
+	// request the edit; the block is added/removed locally when the server patches
+	// state.blocks (see the onAdd/onRemove wiring above).
+	sendPlace(x, y, z, t) { this.room?.send('place', { x, y, z, t }); }
+	sendRemove(x, y, z) { this.room?.send('remove', { x, y, z }); }
 	sendInteract(to, action) { this.room?.send('interact', { to, action }); }
 	rename(name) { this.name = name; this.room?.send('rename', { name }); }
 	setAvatar(avatar, agent) { this.avatar = avatar; this.room?.send('avatar', { avatar, agent }); }

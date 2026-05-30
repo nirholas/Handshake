@@ -117,6 +117,7 @@ const wrapped = wrap(async (req, res) => {
 		case 'first-claims':            return handleFirstClaims(req, res);
 		case 'recent-graduations':            return handleRecentGraduations(req, res);
 		case 'trending':                      return handleTrending(req, res);
+		case 'coin':                          return handleCoin(req, res);
 		case 'coin-trades':                   return handleCoinTrades(req, res);
 		case 'search':                        return handleSearch(req, res);
 		case 'collect-creator-fee-prep':      return handleCollectCreatorFeePrep(req, res);
@@ -2469,6 +2470,47 @@ async function handleTrending(req, res) {
 	TRENDING_CACHE.body = arr;
 	res.setHeader('cache-control', 'public, max-age=15');
 	return json(res, 200, arr);
+}
+
+// ── coin ─────────────────────────────────────────────────────────────────────
+// Live metadata for a single mint, proxied from pump.fun's frontend API
+// (CORS-protected from the browser). Powers the /play lobby's pinned flagship
+// town so its name/symbol/art/market-cap are always real and current, even when
+// the coin isn't in the trending 30. Short-cached per mint to spare the upstream.
+
+const COIN_CACHE = new Map(); // mint → { at, body }
+const COIN_TTL_MS = 30_000;
+
+async function handleCoin(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const mint = (url.searchParams.get('mint') || '').trim();
+	if (!MINT_RE.test(mint)) return error(res, 400, 'invalid_mint', 'mint must be a base58 address');
+
+	const now = Date.now();
+	const hit = COIN_CACHE.get(mint);
+	if (hit && now - hit.at < COIN_TTL_MS) {
+		res.setHeader('cache-control', 'public, max-age=15');
+		return json(res, 200, hit.body);
+	}
+
+	let resp;
+	try {
+		resp = await fetch(new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE), {
+			headers: { accept: 'application/json' },
+			signal: AbortSignal.timeout(8000),
+		});
+	} catch {
+		return error(res, 504, 'upstream_timeout', 'pump.fun did not respond');
+	}
+	if (!resp.ok) return error(res, 502, 'upstream_failed', `pump.fun returned ${resp.status}`);
+	const [body] = repairCoinImages([await resp.json()]);
+	COIN_CACHE.set(mint, { at: now, body });
+	res.setHeader('cache-control', 'public, max-age=15');
+	return json(res, 200, body);
 }
 
 // ── coin-trades ────────────────────────────────────────────────────────────

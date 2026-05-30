@@ -43,6 +43,7 @@ export class CommunityUI {
 	constructor(h) {
 		this.h = h;
 		this.coins = [];
+		this.featured = null;      // pinned official town (e.g. the $THREE flagship)
 		this.searchResults = [];   // live pump.fun search hits beyond the trending grid
 		this.searching = false;
 		this._searchSeq = 0;       // guards against out-of-order async search responses
@@ -56,6 +57,16 @@ export class CommunityUI {
 	_buildLobby() {
 		this.searchInput = el('input', { type: 'text', placeholder: 'Search any pump.fun coin…', oninput: () => this._onSearchInput() });
 		this.grid = el('div', { class: 'cc-grid' });
+
+		// Your display name — the label peers see above your avatar and in chat.
+		// Persisted so it sticks across sessions; broadcast live if changed in-world.
+		this.nameInput = el('input', {
+			type: 'text', maxlength: '24', class: 'cc-name-input', id: 'cc-name-input',
+			placeholder: 'Pick a name', 'aria-label': 'Your display name',
+			value: localStorage.getItem('cc-name') || '',
+			onchange: () => this._commitName(),
+			onkeydown: (e) => { if (e.key === 'Enter') { this._commitName(); this.nameInput.blur(); } e.stopPropagation(); },
+		});
 
 		this.presetRow = el('div', { class: 'cc-avatar-presets' });
 		this.customInput = el('input', {
@@ -76,6 +87,18 @@ export class CommunityUI {
 			el('span', { class: 'cc-upload-text', text: 'Upload .glb' }),
 			this.uploadFile,
 		]);
+
+		// Browse the full avatar library (your own + the public gallery) with live
+		// 3D previews, instead of pasting a URL. Reuses the platform-wide
+		// AvatarGalleryPicker, lazy-loaded so the lobby bundle stays lean.
+		this.galleryBtn = el('button', {
+			type: 'button', class: 'cc-gallery-btn',
+			title: 'Browse your avatars and the public gallery',
+			onclick: () => this._openGallery(),
+		}, [
+			el('span', { class: 'cc-gallery-ico', text: '🖼' }),
+			el('span', { class: 'cc-gallery-text', text: 'Browse gallery' }),
+		]);
 		this.uploadStatus = el('div', { class: 'cc-upload-status', role: 'status', 'aria-live': 'polite', hidden: true });
 
 		this.lobby = el('div', { id: 'cc-lobby' }, [
@@ -95,9 +118,13 @@ export class CommunityUI {
 					]),
 				]),
 				this.avatarBar = el('div', { class: 'cc-avatar-bar' }, [
-					el('div', { class: 'cc-avatar-label', html: 'Your avatar<small>Pick one, paste a URL, or drop your own .glb</small>' }),
+					el('div', { class: 'cc-name-row' }, [
+						el('label', { class: 'cc-name-label', for: 'cc-name-input', text: 'Your name' }),
+						this.nameInput,
+					]),
+					el('div', { class: 'cc-avatar-label', html: 'Your avatar<small>Pick one, browse the gallery, paste a URL, or drop your own .glb</small>' }),
 					this.presetRow,
-					el('div', { class: 'cc-avatar-custom' }, [this.customInput, this.uploadBtn]),
+					el('div', { class: 'cc-avatar-custom' }, [this.customInput, this.galleryBtn, this.uploadBtn]),
 						this.uploadStatus,
 						el('div', { class: 'cc-avatar-dropmsg', text: 'Drop .glb to use as your avatar' }),
 				]),
@@ -176,6 +203,53 @@ export class CommunityUI {
 		this._setAvatar(url, false);
 	}
 
+	// Open the platform avatar gallery (your own avatars + the public gallery)
+	// with live 3D previews, and adopt the chosen one. Lazy-loaded so the picker
+	// and its model-viewer dependency aren't in the lobby's critical bundle.
+	async _openGallery() {
+		this.galleryBtn.classList.add('cc-busy');
+		try {
+			const { openAvatarPicker } = await import('../avatar-gallery-picker.js');
+			const selected = await openAvatarPicker({
+				source: 'both',
+				showModes: false,
+				title: 'Choose your avatar',
+				ctaLabel: 'Use this avatar',
+				selectedId: this._galleryChip?._avatarId || '',
+			});
+			if (selected) this._adoptGalleryAvatar(selected);
+		} catch (err) {
+			console.warn('[coincommunities] gallery picker failed:', err?.message);
+		} finally {
+			this.galleryBtn.classList.remove('cc-busy');
+		}
+	}
+
+	// Surface a gallery pick as its own selected chip and make it the active
+	// avatar. Stores the canonical avatar id when available (so the picker can
+	// pre-select it next time); the scene resolves it to a loadable URL before
+	// broadcasting to peers.
+	_adoptGalleryAvatar(a) {
+		const value = a.id || a.model_url;
+		if (!value) return;
+		if (this._galleryChip?.isConnected) this._galleryChip.remove();
+		const chip = el('button', {
+			class: 'cc-avatar-chip cc-avatar-loading cc-avatar-gallery',
+			title: a.name || 'Your avatar', 'aria-label': a.name || 'Your avatar',
+			onclick: () => this._setAvatar(value, false),
+		}, [
+			a.thumbnail_url
+				? el('img', { src: a.thumbnail_url, alt: a.name || 'Avatar', loading: 'lazy' })
+				: el('span', { class: 'cc-avatar-glyph', text: '🧑' }),
+		]);
+		chip._url = value;
+		chip._avatarId = a.id || '';
+		this._galleryChip = chip;
+		this.presetRow.insertBefore(chip, this.presetRow.firstChild);
+		this._renderChipPreview(chip, { url: a.model_url || value, label: a.name || 'Your avatar' });
+		this._setAvatar(value, false);
+	}
+
 	async _renderPresets() {
 		// Default + a few real three.ws community avatars (best-effort fetch).
 		const presets = [{ label: 'Default', url: DEFAULT_AVATAR, icon: '🧍' }];
@@ -236,6 +310,9 @@ export class CommunityUI {
 
 	setCoinsLoading() {
 		this.grid.textContent = '';
+		// Keep the pinned official town visible while the live grid loads, so the
+		// flagship never blinks out behind the skeletons.
+		if (this.featured) this.grid.appendChild(this._coinCard(this.featured, true));
 		for (let i = 0; i < 8; i++) {
 			this.grid.appendChild(el('div', { class: 'cc-card cc-skeleton' }, [
 				el('div', { class: 'cc-card-img' }),
@@ -245,6 +322,9 @@ export class CommunityUI {
 	}
 
 	setCoins(list) { this.coins = list || []; this._renderGrid(); }
+
+	/** Pin an official town (e.g. the $THREE flagship) to the top of the lobby. */
+	setFeatured(coin) { this.featured = coin && coin.mint ? coin : null; this._renderGrid(); }
 
 	setCoinsError(retry) {
 		this.grid.textContent = '';
@@ -293,15 +373,19 @@ export class CommunityUI {
 		const q = this.searchInput.value.trim().toLowerCase();
 		const matches = (c) =>
 			!q || (c.name || '').toLowerCase().includes(q) || (c.symbol || '').toLowerCase().includes(q) || (c.mint || '').toLowerCase().includes(q);
+		// The pinned official town leads the grid when it matches the current query,
+		// and is excluded from the regular list so it never appears twice.
+		const featured = this.featured && matches(this.featured) ? this.featured : null;
 		// Trending matches first, then live search hits not already on screen —
 		// deduped by mint so a coin never appears twice.
-		const list = this.coins.filter(matches);
+		const list = this.coins.filter((c) => matches(c) && c.mint !== this.featured?.mint);
 		const seen = new Set(list.map((c) => c.mint));
+		if (this.featured) seen.add(this.featured.mint);
 		for (const c of this.searchResults) {
 			if (c.mint && !seen.has(c.mint)) { seen.add(c.mint); list.push(c); }
 		}
 		this.grid.textContent = '';
-		if (!list.length) {
+		if (!featured && !list.length) {
 			if (this.searching) { this._renderSearching(); return; }
 			this.grid.appendChild(el('div', { class: 'cc-state' }, [
 				el('span', { class: 'cc-state-ico', text: '🪙' }),
@@ -309,27 +393,38 @@ export class CommunityUI {
 			]));
 			return;
 		}
-		for (const c of list) {
-			const mc = fmtMc(c.marketCap);
-			const card = el('div', { class: 'cc-card', onclick: () => this.h.onEnter(c) }, [
-				el('div', { class: 'cc-card-img', style: c.image ? `background-image:url("${c.image}")` : '' }, [
-					el('span', { class: 'cc-card-live' }, [el('span', { class: 'cc-dot' }), document.createTextNode('LIVE')]),
-				]),
-				el('div', { class: 'cc-card-body' }, [
-					el('div', { class: 'cc-card-name', text: c.name || 'Unnamed coin' }),
-					el('div', { class: 'cc-card-meta' }, [
-						el('span', { class: 'cc-card-sym', text: c.symbol ? '$' + c.symbol : '' }),
-						mc ? el('span', { text: mc + ' mcap' }) : null,
-					]),
-					el('div', { class: 'cc-card-cta', text: 'Enter community →' }),
-				]),
-			]);
-			this.grid.appendChild(card);
-		}
+		if (featured) this.grid.appendChild(this._coinCard(featured, true));
+		for (const c of list) this.grid.appendChild(this._coinCard(c, false));
 		// Searching beyond the trending grid while results are already showing.
 		if (this.searching) this.grid.appendChild(el('div', { class: 'cc-search-more' }, [
 			el('span', { class: 'cc-spinner' }), document.createTextNode('Searching all of pump.fun…'),
 		]));
+	}
+
+	// Build one lobby card. The featured (official) town gets a distinct frame, an
+	// OFFICIAL badge, and a "home town" call to action so it reads as the flagship.
+	_coinCard(c, featured) {
+		const mc = fmtMc(c.marketCap);
+		const liveBadge = featured
+			? el('span', { class: 'cc-card-official', title: 'Official three.ws town' }, [
+				el('span', { class: 'cc-card-official-ico', text: '◇' }),
+				document.createTextNode('OFFICIAL'),
+			])
+			: el('span', { class: 'cc-card-live' }, [el('span', { class: 'cc-dot' }), document.createTextNode('LIVE')]);
+		return el('div', {
+			class: 'cc-card' + (featured ? ' cc-card-featured' : ''),
+			onclick: () => this.h.onEnter(c),
+		}, [
+			el('div', { class: 'cc-card-img', style: c.image ? `background-image:url("${c.image}")` : '' }, [liveBadge]),
+			el('div', { class: 'cc-card-body' }, [
+				el('div', { class: 'cc-card-name', text: c.name || 'Unnamed coin' }),
+				el('div', { class: 'cc-card-meta' }, [
+					el('span', { class: 'cc-card-sym', text: c.symbol ? '$' + c.symbol : '' }),
+					mc ? el('span', { text: mc + ' mcap' }) : null,
+				]),
+				el('div', { class: 'cc-card-cta', text: featured ? 'Enter home town →' : 'Enter community →' }),
+			]),
+		]);
 	}
 
 	_renderSearching() {
@@ -345,6 +440,13 @@ export class CommunityUI {
 		this.coinName = el('div', { class: 'cc-coin-name', text: '' });
 		this.coinSym = el('span', { class: 'cc-coin-sym', text: '' });
 		this.onlineCount = el('span', { text: '1 online' });
+		// Buy this coin from inside its own world — the most natural action in a
+		// pump.fun community. Opens the native on-chain buy modal (lazy chunk).
+		this.buyBtnLabel = el('span', { class: 'cc-buy-btn-text', text: 'Buy' });
+		this.buyBtn = el('button', {
+			class: 'cc-buy-btn', type: 'button', title: 'Buy this coin',
+			onclick: () => this.h.onBuy?.(),
+		}, [el('span', { class: 'cc-buy-btn-ico', text: '⚡' }), this.buyBtnLabel]);
 		const banner = el('div', { class: 'cc-coin-banner' }, [
 			this.coinImg,
 			el('div', { class: 'cc-coin-info' }, [
@@ -354,6 +456,7 @@ export class CommunityUI {
 					el('span', { class: 'cc-online' }, [el('span', { class: 'cc-dot' }), this.onlineCount]),
 				]),
 			]),
+			this.buyBtn,
 		]);
 
 		const leave = el('button', { class: 'cc-leave', onclick: () => this.h.onLeave() }, [
@@ -361,10 +464,11 @@ export class CommunityUI {
 		]);
 
 		this.statusText = el('span', { text: 'connecting…' });
+		this.pingText = el('span', { class: 'cc-ping', hidden: true });
 		this.statusPill = el('div', {
 			id: 'cc-status', 'data-state': 'connecting',
 			onclick: () => { if (['offline', 'failed'].includes(this.statusPill.getAttribute('data-state'))) this.h.onRetry?.(); },
-		}, [el('span', { class: 'cc-dot' }), this.statusText]);
+		}, [el('span', { class: 'cc-dot' }), this.statusText, this.pingText]);
 
 		this.chatLog = el('div', { class: 'cc-chat-log' });
 		this.chatInput = el('input', {
@@ -431,11 +535,13 @@ export class CommunityUI {
 		this.hud.hidden = false;
 		this.coinName.textContent = coin.name || 'Community';
 		this.coinSym.textContent = coin.symbol ? '$' + coin.symbol : '';
+		this.buyBtnLabel.textContent = coin.symbol ? 'Buy $' + coin.symbol.toUpperCase() : 'Buy';
 		if (coin.image) { this.coinImg.src = coin.image; this.coinImg.style.display = ''; }
 		else this.coinImg.style.display = 'none';
 		this.chatLog.textContent = '';
 		this._unread = 0;
 		this.chatUnread.hidden = true;
+		this.pingText.hidden = true;
 	}
 
 	showLobby() {
@@ -448,9 +554,47 @@ export class CommunityUI {
 		const labels = { connecting: 'connecting…', online: 'connected', offline: 'reconnecting…', failed: 'offline — retry', idle: 'idle' };
 		this.statusPill.setAttribute('data-state', state);
 		this.statusText.textContent = labels[state] || state;
+		// The latency readout is only meaningful while the link is live.
+		if (state !== 'online') this.pingText.hidden = true;
+	}
+
+	// Show the live round-trip latency next to the status dot. Colour-coded so a
+	// glance reads as healthy (green), okay (amber), or laggy (red).
+	setPing(ms) {
+		if (this.statusPill.getAttribute('data-state') !== 'online') return;
+		this.pingText.hidden = false;
+		this.pingText.textContent = `${ms}ms`;
+		this.pingText.setAttribute('data-grade', ms < 90 ? 'good' : ms < 200 ? 'ok' : 'bad');
 	}
 
 	setOnline(n) { this.onlineCount.textContent = `${n} online`; }
+
+	/** Persist the typed display name and, if connected, broadcast it live. */
+	_commitName() {
+		const name = this.nameInput.value.trim().slice(0, 24);
+		if (name) localStorage.setItem('cc-name', name);
+		this.h.onRename?.(name);
+	}
+
+	/** The chosen display name, or '' to let the caller fall back to a guest id. */
+	getName() { return this.nameInput.value.trim().slice(0, 24); }
+
+	/** Reflect a name assigned elsewhere (e.g. a generated guest id) in the field. */
+	setName(name) { if (name) this.nameInput.value = name; }
+
+	// Transient bottom-center toast for one-off notices (avatar fell back to a
+	// stand-in, etc.). Self-dismisses; a new toast replaces the previous one.
+	toast(msg, kind = '') {
+		if (!this._toast) {
+			this._toast = el('div', { id: 'cc-toast', role: 'status', 'aria-live': 'polite' });
+			document.body.appendChild(this._toast);
+		}
+		clearTimeout(this._toastTimer);
+		this._toast.textContent = msg;
+		this._toast.setAttribute('data-kind', kind);
+		this._toast.classList.add('cc-on');
+		this._toastTimer = setTimeout(() => this._toast.classList.remove('cc-on'), 4200);
+	}
 
 	addChat({ name, text, mine }) {
 		const t = new Date();

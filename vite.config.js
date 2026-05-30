@@ -105,6 +105,16 @@ const appConfig = {
 						// (ECONNREFUSED on a transient blip) bubbles up as an
 						// uncaught exception and kills the dev server.
 						if (!res || res.headersSent || res.writableEnded) return;
+						// With ws:true, a failed WebSocket upgrade passes the raw
+						// net.Socket here instead of an http ServerResponse. A socket
+						// has no setHeader/statusCode, so calling them would itself
+						// throw an uncaught exception and crash the dev server — which
+						// is exactly the failure this handler exists to prevent. Just
+						// close the socket and bail.
+						if (typeof res.setHeader !== 'function') {
+							res.destroy?.();
+							return;
+						}
 						res.statusCode = 502;
 						res.setHeader('content-type', 'application/json');
 						res.end(JSON.stringify({

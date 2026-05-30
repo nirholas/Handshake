@@ -31,6 +31,7 @@ import { GameNet } from './game-net.js';
 import {
 	loadManifest, resolveAvatarUrl, buildAvatar, newAnim, CLIP_IDLE, CLIP_WALK,
 } from './avatar-rig.js';
+import { GUEST_SENTINEL, uploadPendingGuestAvatar } from './play-handoff.js';
 
 const TILE = 1.0;            // world units per tile
 const STEP_INTERVAL_MS = 165; // walk cadence — one authoritative step per tile
@@ -118,6 +119,9 @@ class GamePlayerView {
 			this.motion = player.motion;
 			this.anim.crossfadeTo(this.motion === 'walk' ? CLIP_WALK : CLIP_IDLE, 0.16);
 		}
+		// Peers' avatars are server-authoritative (the local player owns its own
+		// look). setAvatar self-guards, so this is a no-op until a peer changes.
+		if (!this.isLocal) this.setAvatar(player.cosmetic || '');
 		// Mark when the server says we moved so the loop can settle us to idle on
 		// arrival without waiting for a separate motion patch.
 		if (moved) this._movedAt = performance.now();
@@ -340,13 +344,22 @@ export class IsoGame {
 		if (this.phase === 'world' || this.phase === 'connecting') return;
 		this.phase = 'connecting';
 		this._setHudPhase('connecting');
-		// Reuse the avatar the player already picked on /play (persisted there).
-		// Cross-player avatar sync needs a networked field on GamePlayer; until
-		// then this at least keeps your own look consistent across both scenes.
+		// Reuse the avatar the player picked on /play (persisted in cc-avatar) and
+		// network it through GamePlayer.cosmetic so peers render it too — both
+		// scenes now share one look. A locally-staged guest avatar resolves to a
+		// blob for our own view and uploads in the background; once it has a public
+		// URL we broadcast it.
 		this.avatarPref = localStorage.getItem('cc-avatar') || '';
+		const isGuest = this.avatarPref === GUEST_SENTINEL;
+		this.localAvatarUrl = await resolveAvatarUrl(this.avatarPref);
+		const netAvatar = isGuest
+			? ''
+			: (/^https?:\/\//i.test(this.avatarPref) || this.avatarPref.startsWith('/')
+				? this.avatarPref : this.localAvatarUrl);
 		await loadManifest();
 
-		this.net = new GameNet({ name });
+		this.net = new GameNet({ name, avatar: netAvatar });
+		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
 		this.net.on('status', ({ status, error }) => this._onStatus(status, error));
 		this.net.on('realm', (layout) => this._buildRealm(layout));
 		this.net.on('notice', (n) => this._toast(n));
@@ -386,7 +399,9 @@ export class IsoGame {
 		if (this.players.has(id)) { this.players.get(id).apply(p); return; }
 		const isLocal = id === this.myId;
 		const view = new GamePlayerView(this.scene, (tx, ty) => this._tileToWorld(tx, ty), p, isLocal);
-		if (isLocal && this.avatarPref) view.setAvatar(this.avatarPref);
+		// The local player renders its own resolved avatar immediately (covers a
+		// guest blob the server hasn't received the public URL for yet).
+		if (isLocal && this.localAvatarUrl) view.setAvatar(this.localAvatarUrl);
 		this.players.set(id, view);
 		this._updateOnline();
 	}

@@ -23,6 +23,7 @@ import { AccessoryManager } from './agent-accessories.js';
 import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
 import { IdleAnimation } from './idle-animation.js';
 import { renderSculptPanel } from './avatar-sculpt.js';
+import { playAs } from './game/play-handoff.js';
 
 // ── Routing ────────────────────────────────────────────────────────────
 
@@ -124,6 +125,9 @@ async function init() {
 
 	$('ae-title').textContent = `Customize · ${avatar.name}`;
 	$('ae-back').href = `/avatars/${encodeURIComponent(avatar.id)}`;
+	// This avatar already has a baked GLB, so it's playable right now — light up
+	// the handoff into /play.
+	$('ae-play').disabled = false;
 
 	currentAppearance = normalizeAppearance(avatar.appearance);
 	workingAppearance = clone(currentAppearance);
@@ -624,6 +628,26 @@ async function applyAccessory(tab, presetId) {
 // ── Header / status ────────────────────────────────────────────────────
 
 function bindHeader() {
+	// Jump into /play as this avatar. If there are unsaved appearance edits, bake
+	// them first so the world shows the look the user actually sees here, then hand
+	// off the canonical avatar id (peers resolve it to the freshly-baked GLB).
+	$('ae-play').addEventListener('click', async () => {
+		$('ae-play').disabled = true;
+		try {
+			if (!$('ae-save').disabled) {
+				setStatus('spin', 'Saving your look before you play…');
+				await saveAppearance();
+				renderChips();
+				renderActivePanel();
+				updateDirtyState();
+			}
+			setStatus('spin', 'Entering /play…');
+			await playAs({ id: avatar.id, name: avatar.name, dest: '/play' });
+		} catch (err) {
+			setStatus('err', err.message);
+			$('ae-play').disabled = false;
+		}
+	});
 	$('ae-save').addEventListener('click', async () => {
 		$('ae-save').disabled = true;
 		$('ae-reset').disabled = true;

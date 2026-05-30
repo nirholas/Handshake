@@ -43,6 +43,7 @@ function defaultServerUrl() {
 export class GameNet {
 	constructor(opts = {}) {
 		this.name = opts.name || 'guest';
+		this.avatar = opts.avatar || ''; // loadable GLB/VRM URL or path; '' = default
 		this.url = opts.url || defaultServerUrl();
 		this.client = null;
 		this.room = null;
@@ -93,7 +94,7 @@ export class GameNet {
 		this._setStatus('connecting');
 		try {
 			this.client = new Client(this.url);
-			this.room = await this.client.joinOrCreate(ROOM_NAME, { name: this.name });
+			this.room = await this.client.joinOrCreate(ROOM_NAME, { name: this.name, avatar: this.avatar });
 			this.sessionId = this.room.sessionId;
 
 			this.room.onMessage('realm', (layout) => this._emit('realm', layout));
@@ -149,6 +150,7 @@ export class GameNet {
 	// ----- intents ---------------------------------------------------------
 
 	step(tx, ty, yaw) { this.room?.send('step', { tx, ty, yaw }); }
+	setAvatar(url) { this.avatar = url; this.room?.send('setAvatar', { avatar: url }); }
 	gather(id) { this.room?.send('gather', { id }); }
 	attack(id) { this.room?.send('attack', { id }); }
 	invMove(from, to) { this.room?.send('invMove', { from, to }); }

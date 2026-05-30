@@ -42,9 +42,30 @@ app.get(['/health', '/healthz'], (_req, res) => {
 	res.json({ ok: true, name: 'three.ws-multiplayer' });
 });
 
-// Admin monitor UI. Protect this behind a reverse proxy or basic auth in prod
-// (see @colyseus/monitor docs) — it exposes live room/client state.
-app.use('/colyseus', monitor());
+// Admin monitor UI — exposes live room/client state, so it must NOT be open to
+// the world in production. Mount it only when protected by basic-auth creds
+// (MONITOR_USER + MONITOR_PASS), or, outside production, openly for local dev.
+const MONITOR_USER = process.env.MONITOR_USER;
+const MONITOR_PASS = process.env.MONITOR_PASS;
+const IS_PROD = process.env.NODE_ENV === 'production';
+function monitorBasicAuth(req, res, next) {
+	const hdr = req.headers.authorization || '';
+	const [scheme, encoded] = hdr.split(' ');
+	if (scheme === 'Basic' && encoded) {
+		const [user, pass] = Buffer.from(encoded, 'base64').toString().split(':');
+		if (user === MONITOR_USER && pass === MONITOR_PASS) return next();
+	}
+	res.set('WWW-Authenticate', 'Basic realm="colyseus-monitor"').status(401).send('auth required');
+}
+if (MONITOR_USER && MONITOR_PASS) {
+	app.use('/colyseus', monitorBasicAuth, monitor());
+	console.log('[multiplayer] monitor mounted at /colyseus (basic auth)');
+} else if (!IS_PROD) {
+	app.use('/colyseus', monitor());
+	console.log('[multiplayer] monitor mounted at /colyseus (open — dev only)');
+} else {
+	console.log('[multiplayer] monitor disabled (set MONITOR_USER/MONITOR_PASS to enable in prod)');
+}
 
 const httpServer = http.createServer(app);
 
@@ -69,7 +90,32 @@ const transport = new WebSocketTransport({
 	},
 });
 
-const gameServer = new Server({ transport });
+// Horizontal scaling across Cloud Run instances. Colyseus rooms live in one
+// process, so to run more than one instance the room registry (driver) and
+// pub/sub (presence) must be shared — otherwise matchmaking on instance A can't
+// see a room hosted on instance B and players for the same coin split apart.
+// Setting REDIS_URI (e.g. a Memorystore instance) wires both; without it the
+// server runs single-instance exactly as before (zero new behaviour, the deps
+// are only imported when REDIS_URI is present).
+const REDIS_URI = process.env.REDIS_URI || process.env.REDIS_URL;
+let driver, presence;
+if (REDIS_URI) {
+	try {
+		const [{ RedisDriver }, { RedisPresence }] = await Promise.all([
+			import('@colyseus/redis-driver'),
+			import('@colyseus/redis-presence'),
+		]);
+		driver = new RedisDriver(REDIS_URI);
+		presence = new RedisPresence(REDIS_URI);
+		console.log('[multiplayer] horizontal scaling ENABLED (Redis driver + presence)');
+	} catch (err) {
+		console.error('[multiplayer] REDIS_URI set but Redis deps unavailable — staying single-instance:', err?.message);
+	}
+} else {
+	console.log('[multiplayer] single-instance mode (set REDIS_URI to scale horizontally)');
+}
+
+const gameServer = new Server({ transport, ...(driver && { driver }), ...(presence && { presence }) });
 // Each coin is its own world: filterBy(['coin']) makes joinOrCreate match only
 // rooms sharing the same community coin (mint), so players of the same coin land
 // together while different coins stay isolated. A missing coin resolves to the

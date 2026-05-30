@@ -179,16 +179,15 @@ html, body {
 	width: 50px; height: 50px; border-radius: var(--cc-radius); overflow: hidden;
 	border: 1px solid var(--cc-edge); background: var(--cc-bg2);
 	cursor: pointer; padding: 0; display: grid; place-items: center; font-size: 22px;
-	filter: grayscale(1) contrast(1.05);
-	transition: border-color 0.12s ease, transform 0.08s ease, filter 0.15s ease;
+	transition: border-color 0.12s ease, transform 0.08s ease;
 }
 .cc-avatar-chip img { width: 100%; height: 100%; object-fit: cover; }
 /* Rendered avatar portraits frame head-to-chest, so contain + anchor to top and
    sit on the panel surface rather than being cropped like a photo thumbnail. */
 .cc-avatar-chip img.cc-avatar-render { object-fit: contain; object-position: center top; background: var(--cc-bg2); }
 .cc-avatar-glyph { font-size: 22px; line-height: 1; }
-.cc-avatar-chip:hover { transform: translateY(-2px); border-color: var(--cc-edge-hi); filter: grayscale(0.4) contrast(1.05); }
-.cc-avatar-chip.cc-on { border-color: #fff; box-shadow: 0 0 0 1px #fff, var(--cc-glow); filter: grayscale(0); }
+.cc-avatar-chip:hover { transform: translateY(-2px); border-color: var(--cc-edge-hi); }
+.cc-avatar-chip.cc-on { border-color: #fff; box-shadow: 0 0 0 1px #fff, var(--cc-glow); }
 /* Loading shimmer while the model renders to a portrait. */
 .cc-avatar-chip.cc-avatar-loading { position: relative; }
 .cc-avatar-chip.cc-avatar-loading::after {
@@ -249,7 +248,22 @@ html, body {
 @keyframes cc-status-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 @media (prefers-reduced-motion: reduce) { .cc-upload-status[data-state="working"]::before { animation: none; } }
 
-.cc-avatar-chip.cc-avatar-upload.cc-on { border-color: #fff; }
+.cc-avatar-chip.cc-avatar-upload.cc-on,
+.cc-avatar-chip.cc-avatar-gallery.cc-on { border-color: #fff; }
+
+/* browse-gallery button — mirrors the upload button so the avatar bar reads as
+   one set of equal-weight actions */
+.cc-gallery-btn {
+	display: inline-flex; align-items: center; gap: 7px; flex: none; cursor: pointer; user-select: none;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
+	padding: 9px 14px; color: var(--cc-text); font-size: 13px; font-weight: 600; white-space: nowrap;
+	transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
+.cc-gallery-btn:hover { border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
+.cc-gallery-btn:active { transform: translateY(1px); }
+.cc-gallery-btn:focus-visible { border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); outline: none; }
+.cc-gallery-ico { font-size: 13px; line-height: 1; }
+.cc-gallery-btn.cc-busy { pointer-events: none; opacity: 0.65; }
 
 /* coin grid */
 .cc-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cc-faint); margin: 10px 2px 14px; }
@@ -261,8 +275,8 @@ html, body {
 	display: flex; flex-direction: column;
 }
 .cc-card:hover { transform: translateY(-3px); border-color: var(--cc-edge-hi); box-shadow: var(--cc-shadow); }
-.cc-card-img { aspect-ratio: 16/10; background: var(--cc-bg2) center/cover no-repeat; position: relative; filter: grayscale(1) contrast(1.05); transition: filter 0.25s ease; }
-.cc-card:hover .cc-card-img { filter: grayscale(0.15) contrast(1.05); }
+.cc-card-img { aspect-ratio: 16/10; background: var(--cc-bg2) center/cover no-repeat; position: relative; filter: saturate(0.96) contrast(1.03); transition: filter 0.25s ease; }
+.cc-card:hover .cc-card-img { filter: saturate(1.12) contrast(1.05); }
 .cc-card-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(6, 6, 7, 0.92)); }
 .cc-card-live {
 	position: absolute; top: 9px; left: 9px; z-index: 1;
@@ -284,6 +298,42 @@ html, body {
 }
 .cc-card:hover .cc-card-cta { opacity: 1; transform: translateY(0); }
 .cc-card-cta:hover { filter: brightness(0.92); }
+
+/* Featured / official town — the pinned flagship. Spans the full first row as a
+   hero: art on the left, identity on the right, with a bright persistent frame
+   so it reads as the front door rather than just another card. */
+.cc-card-featured {
+	grid-column: 1 / -1;
+	flex-direction: row;
+	border-color: var(--cc-edge-hi);
+	box-shadow: 0 0 0 1px var(--cc-edge-hi), var(--cc-shadow), 0 0 30px rgba(255, 255, 255, 0.06);
+}
+.cc-card-featured::before {
+	content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+	border-radius: inherit;
+	background: linear-gradient(115deg, rgba(255, 255, 255, 0.06), transparent 38%);
+}
+.cc-card-featured .cc-card-img { aspect-ratio: auto; flex: 0 0 38%; min-height: 168px; }
+.cc-card-featured .cc-card-img::after { background: linear-gradient(90deg, transparent 55%, rgba(6, 6, 7, 0.92)); }
+.cc-card-featured .cc-card-body { flex: 1; justify-content: center; padding: 20px 22px; gap: 6px; }
+.cc-card-featured .cc-card-name { font-size: 22px; white-space: normal; }
+.cc-card-featured .cc-card-meta { font-size: 13px; }
+.cc-card-featured .cc-card-cta { opacity: 1; transform: none; align-self: flex-start; padding: 10px 22px; margin-top: 16px; }
+.cc-card-official {
+	position: absolute; top: 9px; left: 9px; z-index: 1;
+	display: inline-flex; align-items: center; gap: 6px;
+	background: #fff; color: var(--cc-ink); border-radius: var(--cc-radius-sm);
+	padding: 3px 9px; font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+	box-shadow: var(--cc-glow);
+}
+.cc-card-official-ico { font-size: 11px; line-height: 1; }
+@media (max-width: 560px) {
+	.cc-card-featured { flex-direction: column; }
+	.cc-card-featured .cc-card-img { flex-basis: auto; aspect-ratio: 16/10; width: 100%; }
+	.cc-card-featured .cc-card-img::after { background: linear-gradient(180deg, transparent 45%, rgba(6, 6, 7, 0.92)); }
+	.cc-card-featured .cc-card-name { font-size: 19px; }
+}
+
 .cc-skeleton { pointer-events: none; }
 .cc-skeleton .cc-card-img, .cc-skeleton .cc-card-name, .cc-skeleton .cc-card-meta {
 	background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
@@ -325,7 +375,7 @@ html, body {
 	border-radius: var(--cc-radius); padding: 10px 16px 10px 11px; box-shadow: var(--cc-shadow);
 	backdrop-filter: blur(10px); max-width: 70vw;
 }
-.cc-coin-img { width: 40px; height: 40px; border-radius: var(--cc-radius-sm); object-fit: cover; background: var(--cc-bg2); flex: none; filter: grayscale(1) contrast(1.05); }
+.cc-coin-img { width: 40px; height: 40px; border-radius: var(--cc-radius-sm); object-fit: cover; background: var(--cc-bg2); flex: none; filter: saturate(1.04) contrast(1.03); }
 .cc-coin-info { min-width: 0; }
 .cc-coin-name { font-weight: 800; font-size: 15px; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cc-coin-sub { display: flex; align-items: center; gap: 9px; color: var(--cc-dim); font-size: 12px; margin-top: 2px; font-variant-numeric: tabular-nums; }
@@ -544,3 +594,386 @@ html, body {
 .cc-adventure span { display: flex; flex-direction: column; font-weight: 700; font-size: 13px; line-height: 1.2; letter-spacing: 0.02em; }
 .cc-adventure small { font-weight: 500; font-size: 11px; color: var(--cc-dim); }
 @media (max-width: 640px) { .cc-adventure small { display: none; } }
+
+/* ── Buy this coin ──────────────────────────────────────────────────────────
+   The native on-chain buy. In a pump.fun world the loudest action is "ape it",
+   so the CTA is the only solid-white element on screen. */
+
+.cc-buy-btn {
+	flex: none; display: inline-flex; align-items: center; gap: 7px;
+	margin-left: 4px; padding: 9px 15px;
+	background: var(--cc-accent); color: var(--cc-ink);
+	border: 1px solid var(--cc-accent); border-radius: var(--cc-radius);
+	font-weight: 800; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
+	cursor: pointer; box-shadow: var(--cc-glow);
+	transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+.cc-buy-btn:hover { transform: translateY(-1px); box-shadow: 0 0 22px rgba(255, 255, 255, 0.55); }
+.cc-buy-btn:active { transform: translateY(1px); }
+.cc-buy-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-buy-btn-ico { font-size: 13px; line-height: 1; }
+.cc-buy-btn-text { white-space: nowrap; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
+
+/* Live latency readout in the status pill. */
+.cc-ping {
+	font-variant-numeric: tabular-nums; padding-left: 8px; margin-left: 2px;
+	border-left: 1px solid var(--cc-edge); color: var(--cc-dim);
+}
+.cc-ping[data-grade="good"] { color: var(--cc-text); }
+.cc-ping[data-grade="ok"]   { color: #d8c08a; }
+.cc-ping[data-grade="bad"]  { color: #d88a8a; }
+
+/* Name field in the lobby avatar bar. */
+.cc-name-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.cc-name-label {
+	color: var(--cc-dim); font-size: 12px; letter-spacing: 0.18em;
+	text-transform: uppercase; flex: none;
+}
+.cc-name-input {
+	flex: 1; min-width: 0; max-width: 280px;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius); padding: 10px 13px;
+	color: var(--cc-text); font-size: 14px; font-weight: 600; outline: none;
+	transition: border-color 0.12s ease;
+}
+.cc-name-input::placeholder { color: var(--cc-dim); font-weight: 400; }
+.cc-name-input:focus { border-color: var(--cc-edge-hi); }
+
+/* Transient toast (avatar fell back, buy panel unavailable, …). */
+#cc-toast {
+	position: fixed; left: 50%; bottom: 96px; transform: translate(-50%, 12px);
+	max-width: min(440px, 86vw); padding: 11px 16px;
+	background: var(--cc-panel-solid); border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius); box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
+	color: var(--cc-text); font-size: 13px; line-height: 1.4; text-align: center;
+	opacity: 0; pointer-events: none; z-index: 60;
+	transition: opacity 0.18s ease, transform 0.18s ease;
+}
+#cc-toast.cc-on { opacity: 1; transform: translate(-50%, 0); }
+#cc-toast[data-kind="warn"] { border-color: rgba(216, 192, 138, 0.5); }
+
+/* ── Native buy modal ───────────────────────────────────────────────────── */
+.cc-buy-overlay {
+	position: fixed; inset: 0; z-index: 80;
+	display: flex; align-items: center; justify-content: center; padding: 20px;
+	background: rgba(4, 4, 6, 0.66); backdrop-filter: blur(6px);
+	opacity: 0; transition: opacity 0.18s ease;
+}
+.cc-buy-overlay.cc-on { opacity: 1; }
+.cc-buy-card {
+	width: 100%; max-width: 380px;
+	background: var(--cc-panel-solid); border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
+	padding: 18px; transform: translateY(10px) scale(0.99);
+	transition: transform 0.18s ease;
+}
+.cc-buy-overlay.cc-on .cc-buy-card { transform: translateY(0) scale(1); }
+.cc-buy-head { display: flex; align-items: center; gap: 11px; margin-bottom: 16px; }
+.cc-buy-img {
+	width: 40px; height: 40px; border-radius: var(--cc-radius-sm); object-fit: cover;
+	background: var(--cc-bg2); flex: none;
+}
+.cc-buy-img-ph { display: flex; align-items: center; justify-content: center; color: var(--cc-faint); font-size: 22px; }
+.cc-buy-titles { flex: 1; min-width: 0; }
+.cc-buy-name { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-buy-sym { color: var(--cc-dim); font-size: 12px; margin-top: 2px; }
+.cc-buy-x {
+	flex: none; width: 28px; height: 28px; border-radius: var(--cc-radius-sm);
+	background: none; border: 1px solid var(--cc-edge); color: var(--cc-dim);
+	cursor: pointer; font-size: 13px; line-height: 1; transition: border-color 0.12s ease, color 0.12s ease;
+}
+.cc-buy-x:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); }
+
+.cc-buy-field { display: block; }
+.cc-buy-field-label { display: block; color: var(--cc-dim); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 7px; }
+.cc-buy-amount-wrap {
+	display: flex; align-items: center; gap: 8px;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	padding: 12px 14px; transition: border-color 0.12s ease;
+}
+.cc-buy-amount-wrap:focus-within { border-color: var(--cc-edge-hi); }
+.cc-buy-amount {
+	flex: 1; min-width: 0; background: none; border: none; outline: none;
+	color: var(--cc-text); font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.cc-buy-amount::-webkit-outer-spin-button, .cc-buy-amount::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.cc-buy-amount { -moz-appearance: textfield; }
+.cc-buy-unit { color: var(--cc-dim); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+
+.cc-buy-presets { display: flex; gap: 7px; margin-top: 9px; }
+.cc-buy-preset {
+	flex: 1; padding: 8px 0; background: var(--cc-bg2); border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius); color: var(--cc-dim); font-size: 12px; font-weight: 700;
+	cursor: pointer; transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+.cc-buy-preset:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); }
+.cc-buy-preset.cc-on { background: rgba(255, 255, 255, 0.08); border-color: var(--cc-edge-hi); color: var(--cc-text); }
+
+.cc-buy-quote {
+	margin-top: 13px; min-height: 18px; font-size: 13px; color: var(--cc-text);
+	font-variant-numeric: tabular-nums; line-height: 1.4;
+}
+.cc-buy-quote-out { font-weight: 700; }
+.cc-buy-quote-impact { color: var(--cc-dim); }
+.cc-buy-quote-warn { color: #d8c08a; }
+.cc-buy-quote.cc-buy-quote-warn { font-size: 12px; }
+
+.cc-buy-slip { display: flex; align-items: center; gap: 7px; margin-top: 14px; }
+.cc-buy-slip-label { color: var(--cc-dim); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-right: auto; }
+.cc-buy-slip-btn {
+	padding: 5px 10px; background: var(--cc-bg2); border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius-sm); color: var(--cc-dim); font-size: 12px; font-weight: 600;
+	font-variant-numeric: tabular-nums; cursor: pointer; transition: border-color 0.12s ease, color 0.12s ease;
+}
+.cc-buy-slip-btn:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); }
+.cc-buy-slip-btn.cc-on { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.06); }
+
+.cc-buy-wallet {
+	display: flex; align-items: center; gap: 7px; margin-top: 15px;
+	color: var(--cc-dim); font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.cc-buy-wallet-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cc-live); box-shadow: var(--cc-glow); flex: none; }
+.cc-buy-wallet-off { color: var(--cc-faint); }
+
+.cc-buy-cta {
+	width: 100%; margin-top: 14px; padding: 14px;
+	background: var(--cc-accent); color: var(--cc-ink);
+	border: 1px solid var(--cc-accent); border-radius: var(--cc-radius);
+	font-weight: 800; font-size: 14px; letter-spacing: 0.03em; cursor: pointer;
+	box-shadow: var(--cc-glow); transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+.cc-buy-cta:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 22px rgba(255, 255, 255, 0.55); }
+.cc-buy-cta:active:not(:disabled) { transform: translateY(1px); }
+.cc-buy-cta:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+.cc-buy-cta:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.cc-buy-status {
+	margin-top: 12px; font-size: 12.5px; line-height: 1.45; text-align: center;
+	color: var(--cc-dim); word-break: break-word;
+}
+.cc-buy-status[data-kind="ok"] { color: var(--cc-text); }
+.cc-buy-status[data-kind="err"] { color: #d88a8a; }
+.cc-buy-status a { color: inherit; text-decoration: underline; }
+.cc-buy-link { background: none; border: none; padding: 0; color: var(--cc-text); text-decoration: underline; cursor: pointer; font: inherit; }
+
+.cc-buy-pumplink {
+	display: block; margin-top: 14px; text-align: center;
+	color: var(--cc-dim); font-size: 12px; text-decoration: none;
+	transition: color 0.12s ease;
+}
+.cc-buy-pumplink:hover { color: var(--cc-text); }
+
+@media (max-width: 640px) {
+	.cc-buy-btn-text { display: none; }
+	.cc-buy-btn { padding: 9px 12px; }
+	.cc-name-input { max-width: none; }
+}
+
+/* ───────────────────────── Build mode (voxel) ───────────────────────── */
+/* The collaborative building HUD is its own <body> child (outside #cc-hud),
+   so it carries its own layering. A top-centre cluster: a toggle pill, and a
+   panel (mode switch + palette hotbar + hint) that drops in when build is on.
+   Top-centre keeps it clear of the joystick (bottom-left), emotes/hint
+   (bottom-centre), chat (right), and the banner/status (top corners). */
+#cc-build {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+    font: 13px/1.3 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: #fff;
+}
+#cc-build button {
+    pointer-events: auto;
+}
+
+.cc-build-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(12, 14, 20, 0.72);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #e9eaee;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition:
+        background 0.15s,
+        border-color 0.15s,
+        color 0.15s,
+        transform 0.1s,
+        opacity 0.15s;
+}
+.cc-build-toggle:hover {
+    background: rgba(22, 25, 33, 0.85);
+    border-color: rgba(255, 255, 255, 0.26);
+}
+.cc-build-toggle:active {
+    transform: translateY(1px);
+}
+.cc-build-toggle:focus-visible {
+    outline: 2px solid #66ff8c;
+    outline-offset: 2px;
+}
+.cc-build-toggle.cc-on {
+    background: #f4f5f7;
+    color: #0c0e14;
+    border-color: #f4f5f7;
+}
+.cc-build-toggle:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.cc-build-toggle-ico {
+    font-size: 15px;
+    line-height: 1;
+}
+
+.cc-build-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(10, 12, 18, 0.74);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    animation: cc-build-in 0.16s ease;
+}
+.cc-build-panel[hidden] {
+    display: none;
+}
+@keyframes cc-build-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.cc-build-hotbar {
+    display: flex;
+    gap: 6px;
+}
+.cc-build-slot {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    overflow: hidden;
+    transition:
+        border-color 0.12s,
+        transform 0.1s,
+        box-shadow 0.12s;
+}
+.cc-build-slot:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+}
+.cc-build-slot:focus-visible {
+    outline: 2px solid #66ff8c;
+    outline-offset: 2px;
+}
+.cc-build-slot.cc-on {
+    border-color: #ffffff;
+    box-shadow:
+        0 0 0 2px rgba(255, 255, 255, 0.5),
+        0 4px 14px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
+}
+.cc-build-swatch {
+    position: absolute;
+    inset: 5px;
+    border-radius: 6px;
+    box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+        inset 0 6px 10px rgba(255, 255, 255, 0.18);
+}
+.cc-build-key {
+    position: absolute;
+    right: 3px;
+    bottom: 2px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+    pointer-events: none;
+}
+
+.cc-build-mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(102, 255, 140, 0.14);
+    color: #c9ffd8;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.14s,
+        color 0.14s,
+        border-color 0.14s;
+}
+.cc-build-mode:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+.cc-build-mode:focus-visible {
+    outline: 2px solid #66ff8c;
+    outline-offset: 2px;
+}
+.cc-build-mode.cc-removing {
+    background: rgba(255, 90, 90, 0.16);
+    color: #ffd2d2;
+}
+.cc-build-mode-ico {
+    font-size: 13px;
+}
+
+.cc-build-hint {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    text-align: center;
+    letter-spacing: 0.01em;
+}
+
+@media (pointer: coarse) {
+    .cc-build-hint {
+        display: none;
+    }
+    .cc-build-slot {
+        width: 40px;
+        height: 40px;
+    }
+}
+@media (max-width: 560px) {
+    #cc-build {
+        top: 8px;
+    }
+    .cc-build-hotbar {
+        flex-wrap: wrap;
+        max-width: 264px;
+        justify-content: center;
+    }
+}

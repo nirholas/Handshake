@@ -44,6 +44,20 @@ defineTypes(Player, {
 	tsServer: 'float64',
 });
 
+// A single placed voxel in a coin's world. Keyed in the blocks MapSchema by its
+// packed grid coordinate ("gx,gy,gz"), so the position never has to ride on the
+// wire — only the block type does. Delta encoding then makes a place/break a
+// one-entry patch. `t` is the palette index (see build-voxels.js BLOCK_TYPES).
+export class Block extends Schema {
+	constructor() {
+		super();
+		this.t = 0;
+	}
+}
+defineTypes(Block, {
+	t: 'uint8',
+});
+
 export class WalkState extends Schema {
 	constructor() {
 		super();
@@ -55,6 +69,10 @@ export class WalkState extends Schema {
 		this.coinName = '';
 		this.coinSymbol = '';
 		this.coinImage = '';
+		// Collaborative voxel builds for this coin's world. Keyed by packed grid
+		// coordinate; the value carries only the block type. Persisted per coin so
+		// a community's build survives the room emptying and the server restarting.
+		this.blocks = new MapSchema();
 	}
 }
 defineTypes(WalkState, {
@@ -63,4 +81,5 @@ defineTypes(WalkState, {
 	coinName: 'string',
 	coinSymbol: 'string',
 	coinImage: 'string',
+	blocks: { map: Block },
 });

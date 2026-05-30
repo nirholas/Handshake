@@ -23,7 +23,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { AnimationManager } from '../animation-manager.js';
 import {
 	AVATAR_DEFAULT, loadManifest, getLocomotionDefs, CLIP_IDLE,
+	resolveAvatarUrl, dracoLoader,
 } from './avatar-rig.js';
+import { getPlayAvatar } from './play-handoff.js';
 
 const REDUCED_MOTION = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const TURN_SPEED = 0.5; // radians/sec — a slow, premium turntable
@@ -62,7 +64,16 @@ function boot() {
 
 	window.addEventListener('resize', sizeToBox, { passive: true });
 
-	new GLTFLoader().loadAsync(AVATAR_DEFAULT).then(async (gltf) => {
+	// Preview the avatar the player has actually chosen (persisted in cc-avatar by
+	// the lobby / a create→play handoff), not a generic default — so the first
+	// character they see while the scene loads is *theirs*. DRACO is wired in
+	// because most avatar GLBs are compressed. Falls back to the default on any
+	// resolve/load failure so a broken pick never wedges the loader.
+	const loader = new GLTFLoader();
+	loader.setDRACOLoader(dracoLoader);
+	resolveAvatarUrl(getPlayAvatar())
+		.then((chosen) => loader.loadAsync(chosen).catch(() => loader.loadAsync(AVATAR_DEFAULT)))
+		.then(async (gltf) => {
 		if (!alive) return;
 		model = gltf.scene;
 		model.traverse((n) => { if (n.isMesh) { n.frustumCulled = false; n.castShadow = false; } });

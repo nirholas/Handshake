@@ -14,6 +14,7 @@ import {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { AnimationManager } from '../animation-manager.js';
+import { GUEST_SENTINEL, resolveGuestAvatar } from './play-handoff.js';
 
 export const AVATAR_DEFAULT = '/avatars/default.glb';
 export const MANIFEST_URL = '/animations/manifest.json';
@@ -66,6 +67,10 @@ export function getLocomotionDefs() {
 export async function resolveAvatarUrl(input) {
 	const v = (input || '').trim();
 	if (!v) return AVATAR_DEFAULT;
+	// A just-created avatar staged locally (create → play handoff). Resolves to a
+	// blob: URL for instant self-preview; the scene uploads it in the background
+	// and swaps in a public URL so peers can load it too.
+	if (v === GUEST_SENTINEL) return (await resolveGuestAvatar()) || AVATAR_DEFAULT;
 	if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
 	try {
 		const r = await fetch(`/api/avatars/${encodeURIComponent(v)}`, { headers: { accept: 'application/json' } });
@@ -74,9 +79,30 @@ export async function resolveAvatarUrl(input) {
 	return AVATAR_DEFAULT;
 }
 
+// Plausible human heights in metres. Name labels and chat bubbles anchor to
+// this value, so it must stay near the *visible* top of the avatar.
+const MIN_AVATAR_HEIGHT_M = 0.5;
+const MAX_AVATAR_HEIGHT_M = 2.4;
+const FALLBACK_AVATAR_HEIGHT_M = 1.7;
+
+// Derive the head-anchor height from a model's bounding box. Box3.setFromObject
+// reads each skinned mesh's *rest-pose* geometry AABB — which for many rigged
+// GLBs/VRMs bears no relation to the posed, visible silhouette (stray helper
+// geometry, a scaled skeleton root, or bind-pose vertices flung far from origin
+// can report tens of metres while the avatar renders at normal size). An
+// unbounded height pushes the chat bubble past the camera's far plane, so the
+// frustum cull in _updateLabels hides it and the bubble never appears above the
+// head. Clamp to a human range so a mis-measured model still anchors sanely.
+function headAnchorHeight(box) {
+	const raw = box.max.y - box.min.y;
+	if (!Number.isFinite(raw)) return FALLBACK_AVATAR_HEIGHT_M;
+	return Math.min(MAX_AVATAR_HEIGHT_M, Math.max(MIN_AVATAR_HEIGHT_M, raw));
+}
+
 // Load a GLB avatar into a rig + wire an AnimationManager (idle/walk/emotes).
-// Returns { height }. On failure, drops in a capsule stand-in so the player is
-// never invisible.
+// Returns { height, fallback }. On failure, drops in a capsule stand-in so the
+// player is never invisible, and flags `fallback: true` so callers can tell the
+// user their model didn't load instead of silently swapping it.
 export async function buildAvatar(rig, url, anim) {
 	try {
 		const gltf = await _gltf.loadAsync(url);
@@ -87,7 +113,7 @@ export async function buildAvatar(rig, url, anim) {
 		rig.add(model);
 		anim.attach(model);
 		if (_animDefs?.length) { anim.setAnimationDefs(_animDefs); await anim.loadAll(); await anim.crossfadeTo(CLIP_IDLE, 0); }
-		return { height: Math.max(0.5, box.max.y - box.min.y) };
+		return { height: headAnchorHeight(box), fallback: false };
 	} catch (err) {
 		console.warn('[avatar-rig] avatar load failed, using stand-in:', url, err?.message);
 		const body = new Mesh(new CapsuleGeometry(0.32, 0.7, 4, 10), new MeshStandardMaterial({ color: 0x8aa6d8 }));
@@ -95,7 +121,7 @@ export async function buildAvatar(rig, url, anim) {
 		const head = new Mesh(new SphereGeometry(0.28, 14, 10), new MeshStandardMaterial({ color: 0xf1c9a5 }));
 		head.position.y = 1.55; head.castShadow = true;
 		rig.add(body, head);
-		return { height: 1.7 };
+		return { height: 1.7, fallback: true };
 	}
 }
 
