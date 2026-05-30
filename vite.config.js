@@ -148,6 +148,7 @@ const appConfig = {
 			'buffer',
 			'three',
 			'three/addons/loaders/GLTFLoader.js',
+			'three/addons/loaders/DRACOLoader.js',
 			'three/addons/controls/OrbitControls.js',
 			'three/addons/environments/RoomEnvironment.js',
 			'three/addons/libs/meshopt_decoder.module.js',

@@ -34,14 +34,21 @@
 	<body>
 		<div id="kx-loading">
 			<div class="kx-loading-card">
+				<img class="kx-loading-logo" src="/three.svg" alt="three.ws" width="38" height="38" />
 				<div class="kx-loading-mark">COIN COMMUNITIES</div>
+				<div class="kx-boot-stage">
+					<canvas id="kx-boot-avatar" aria-hidden="true"></canvas>
+					<div class="kx-boot-fallback" aria-hidden="true"></div>
+				</div>
 				<div class="kx-loading-sub">Joining the community…</div>
-				<div class="kx-spinner" role="status" aria-label="Loading"></div>
+				<div class="kx-boot-bar" role="status" aria-label="Loading"><span></span></div>
 			</div>
 		</div>
 
 		<canvas id="kx-canvas"></canvas>
 
+		<script type="module" src="/src/game/boot-avatar.js"></script>
 		<script type="module" src="/src/game/coincommunities.js"></script>
+		<script type="module" src="/src/game/ambient-crowd.js"></script>
 	</body>
 </html>

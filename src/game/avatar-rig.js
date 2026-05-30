@@ -12,6 +12,7 @@ import {
 	Group, Box3, Mesh, MeshStandardMaterial, CapsuleGeometry, SphereGeometry,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { AnimationManager } from '../animation-manager.js';
 
 export const AVATAR_DEFAULT = '/avatars/default.glb';
@@ -19,7 +20,16 @@ export const MANIFEST_URL = '/animations/manifest.json';
 export const CLIP_IDLE = 'idle';
 export const CLIP_WALK = 'av-walk-feminine';
 
+// A shared GLTF loader with Draco decompression wired in — many avatar GLBs
+// (and most Sketchfab/pump.fun exports) are Draco-compressed, and without this
+// they fail with "No DRACOLoader instance provided". Decoders are vendored at
+// /three/draco/gltf/ (see scripts/copy-three-decoders.mjs).
+const _draco = new DRACOLoader();
+_draco.setDecoderPath('/three/draco/gltf/');
 const _gltf = new GLTFLoader();
+_gltf.setDRACOLoader(_draco);
+// Exported so other loaders (avatar-thumb) share one decoder module + cache.
+export const dracoLoader = _draco;
 let _animDefs = null; // cached manifest defs (locomotion + emotes)
 let _emoteDefs = null;
 
@@ -42,6 +52,13 @@ export async function loadManifest() {
 // The emote clip defs loaded by loadManifest() (empty until it resolves).
 export function getEmoteDefs() {
 	return _emoteDefs || [];
+}
+
+// The locomotion clip defs (idle + walk) loaded by loadManifest(). Lets other
+// modules (e.g. the thumbnail renderer) pose an avatar into idle instead of its
+// raw T-pose bind pose without re-parsing the manifest.
+export function getLocomotionDefs() {
+	return (_animDefs || []).filter((d) => d.name === CLIP_IDLE || d.name === CLIP_WALK);
 }
 
 // Resolve an avatar input (GLB/VRM URL, site path, or three.ws avatar id) to a

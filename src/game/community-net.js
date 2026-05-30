@@ -70,6 +70,7 @@ export class CommunityNet {
 			change: new Set(), // (player, id)
 			remove: new Set(), // (id)
 			chat: new Set(),   // ({id, name, text, ts})
+			interact: new Set(), // ({from, fromName, action, ts}) — a peer interacted with us
 		};
 		this._lastSent = null;
 		this._lastSentAt = 0;
@@ -115,6 +116,7 @@ export class CommunityNet {
 			this.sessionId = this.room.sessionId;
 
 			this.room.onMessage('chat', (msg) => this._emit('chat', msg));
+			this.room.onMessage('interact', (msg) => this._emit('interact', msg));
 
 			const $ = getStateCallbacks(this.room);
 			$(this.room.state).players.onAdd((player, id) => {
@@ -180,6 +182,7 @@ export class CommunityNet {
 
 	sendEmote(name) { this.room?.send('emote', { name }); }
 	sendChat(text) { this.room?.send('chat', { text }); }
+	sendInteract(to, action) { this.room?.send('interact', { to, action }); }
 	rename(name) { this.name = name; this.room?.send('rename', { name }); }
 	setAvatar(avatar, agent) { this.avatar = avatar; this.room?.send('avatar', { avatar, agent }); }
 

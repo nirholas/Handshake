@@ -11,16 +11,19 @@
 // Colyseus), reused here so a coin community is a first-class 3D space.
 
 import {
-	Scene, Color, Fog, WebGLRenderer, PerspectiveCamera, Group, Vector3,
-	HemisphereLight, DirectionalLight, AmbientLight, PCFSoftShadowMap, SRGBColorSpace,
-	Mesh, MeshStandardMaterial, MeshBasicMaterial, CircleGeometry, RingGeometry,
+	Scene, WebGLRenderer, PerspectiveCamera, Group, Vector3, PCFSoftShadowMap, SRGBColorSpace,
+	ACESFilmicToneMapping,
+	Mesh, MeshStandardMaterial, MeshBasicMaterial, CircleGeometry,
 	CylinderGeometry, PlaneGeometry,
 	CanvasTexture, TextureLoader, DoubleSide,
+	Raycaster, Vector2,
 } from 'three';
 
 import { AnimationManager } from '../animation-manager.js';
 import { CommunityNet } from './community-net.js';
 import { CommunityUI } from './coincommunities-ui.js';
+import { createWorldEnvironment } from './world-env.js';
+import { createChartScreen } from './chart-screen.js';
 import { normalizeGatewayURL } from '../ipfs.js';
 import {
 	loadManifest, getEmoteDefs, resolveAvatarUrl, buildAvatar, playEmoteClip,
@@ -29,9 +32,36 @@ import {
 
 const WORLD_RADIUS = 58; // a touch inside the server's 60m clamp
 const MOVE_SPEED = 4.2;
+const RUN_SPEED = 8.0; // hold Shift to sprint
+const RUN_TIMESCALE = 1.7; // speed the walk cycle up so a sprint reads as a run
+const JUMP_VELOCITY = 5.5; // m/s upward kick on Space; ~1m apex under GRAVITY
+const GRAVITY = 15; // m/s^2 pulling the jumper back down
 const REMOTE_LERP = 0.18;
 const JOY_DEADZONE = 0.12; // swallow tiny stick grazes so the avatar doesn't drift
 const TRENDING_URL = '/api/pump/trending?limit=30';
+const SEARCH_URL = '/api/pump/search';
+
+// Normalize a raw pump.fun coin (trending feed or search results — both share
+// the same upstream shape) into the compact record the lobby/world consume.
+function mapCoins(raw) {
+	return (Array.isArray(raw) ? raw : raw.coins || raw.items || []).map((c) => ({
+		mint: c.mint || c.address,
+		name: (c.name || '').trim() || 'Unnamed coin',
+		symbol: (c.symbol || '').trim(),
+		image: normalizeGatewayURL(c.image_uri || c.image || c.imageUri || ''),
+		marketCap: c.usd_market_cap || c.market_cap_usd || c.marketCap || 0,
+	})).filter((c) => c.mint);
+}
+
+// Compact USD for the jumbotron's market-cap readout: $1.2B / $940M / $12K.
+function formatUsd(n) {
+	const v = Number(n) || 0;
+	if (v <= 0) return '';
+	if (v >= 1e9) return '$' + (v / 1e9).toFixed(v >= 1e10 ? 0 : 1) + 'B';
+	if (v >= 1e6) return '$' + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + 'M';
+	if (v >= 1e3) return '$' + Math.round(v / 1e3) + 'K';
+	return '$' + Math.round(v);
+}
 
 // A networked peer: their own avatar rig + animation + name label + chat bubble.
 class RemotePlayer {
@@ -97,6 +127,7 @@ class RemotePlayer {
 		while (d < -Math.PI) d += Math.PI * 2;
 		this.curYaw += d * 0.2;
 		this.rig.rotation.y = this.curYaw;
+		if (this.anim.currentName === CLIP_WALK) this.anim.setSpeed(this.motion === 'run' ? RUN_TIMESCALE : 1);
 		this.anim.update(dt);
 	}
 	dispose() {
@@ -122,6 +153,8 @@ export class CoinCommunities {
 		this.localPos = new Vector3(Math.cos(a) * rad, 0, Math.sin(a) * rad);
 		this.localYaw = Math.PI;
 		this.motion = 'idle';
+		this.vy = 0;            // vertical velocity for jumps
+		this.grounded = true;   // false while airborne
 		this._dragging = false; this._lastPtr = null;
 		this._last = performance.now();
 
@@ -133,6 +166,7 @@ export class CoinCommunities {
 			onLeave: () => this.leave(),
 			onChat: (t) => this._sendChat(t),
 			onEmote: (n) => this._emote(n),
+			onSearch: (q) => this._searchCoins(q),
 			onRetry: () => this.net?.retry(),
 			onAvatarChange: (url) => { this.net?.setAvatar(url); },
 		});
@@ -153,9 +187,17 @@ export class CoinCommunities {
 		}
 	}
 
-	_hideBootLoader() {
+	async _hideBootLoader() {
 		const l = document.getElementById('kx-loading');
-		if (l) { l.classList.add('kx-hidden'); setTimeout(() => l.remove(), 600); }
+		if (!l) return;
+		// Hold the loader until the boot avatar's first frame has rendered so the
+		// character is actually seen, not flashed away. `ready` always resolves
+		// (even on WebGL/asset failure) and carries its own 6s safety timeout, so
+		// this can never wedge the loader open.
+		const boot = window.__ccBootAvatar;
+		try { await boot?.ready; } catch { /* proceed regardless */ }
+		l.classList.add('kx-hidden');
+		setTimeout(() => { boot?.dispose?.(); l.remove(); }, 600);
 	}
 
 	async _loadCoins() {
@@ -164,18 +206,22 @@ export class CoinCommunities {
 			const r = await fetch(TRENDING_URL, { headers: { accept: 'application/json' } });
 			if (!r.ok) throw new Error('HTTP ' + r.status);
 			const raw = await r.json();
-			const list = (Array.isArray(raw) ? raw : raw.coins || raw.items || []).map((c) => ({
-				mint: c.mint || c.address,
-				name: (c.name || '').trim() || 'Unnamed coin',
-				symbol: (c.symbol || '').trim(),
-				image: normalizeGatewayURL(c.image_uri || c.image || c.imageUri || ''),
-				marketCap: c.usd_market_cap || c.market_cap_usd || c.marketCap || 0,
-			})).filter((c) => c.mint);
-			this.ui.setCoins(list);
+			this.ui.setCoins(mapCoins(raw));
 		} catch (err) {
 			console.warn('[coincommunities] coin load failed:', err?.message);
 			this.ui.setCoinsError(() => this._loadCoins());
 		}
+	}
+
+	// Live search across ALL of pump.fun (not just the trending grid) so any
+	// coin can be turned into a world. Returns mapped coins; throws on failure
+	// so the UI can distinguish "no matches" from "search unavailable".
+	async _searchCoins(query) {
+		const q = (query || '').trim();
+		if (!q) return [];
+		const r = await fetch(`${SEARCH_URL}?q=${encodeURIComponent(q)}`, { headers: { accept: 'application/json' } });
+		if (!r.ok) throw new Error('HTTP ' + r.status);
+		return mapCoins(await r.json());
 	}
 
 	// ---------------------------------------------------------------- render
@@ -185,72 +231,72 @@ export class CoinCommunities {
 		r.setSize(window.innerWidth, window.innerHeight);
 		r.shadowMap.enabled = true; r.shadowMap.type = PCFSoftShadowMap;
 		r.outputColorSpace = SRGBColorSpace;
+		// ACES keeps the cool moonlight key and the bright avatars from clipping;
+		// exposure is tuned for the dark monochrome arena (the LDR gradient backdrop
+		// doesn't need the heavy pull the old HDR daylight sky did).
+		r.toneMapping = ACESFilmicToneMapping;
+		r.toneMappingExposure = 1.0;
 		this.renderer = r;
 		window.addEventListener('resize', () => this._onResize());
 	}
 
 	_initScene() {
-		// Monochrome world: a near-black void, graphite plaza, light drawn only as
-		// white. Keeps the avatars (full colour) reading as the focal subjects.
+		// Nocturnal monochrome arena that flows out of the lobby: near-black ground
+		// with a technical hairline grid, a glowing boundary ring, a silhouette
+		// treeline melting into fog, under a single cool moonlight key. The whole
+		// environment lives in world-env.js so this file stays focused on players,
+		// the coin totem, and netcode.
 		const scene = new Scene();
-		scene.background = new Color(0x060607);
-		scene.fog = new Fog(0x060607, 55, 125);
 		this.scene = scene;
 
-		this.camera = new PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
+		// Far plane reaches the sky dome; near stays tight for close avatars.
+		this.camera = new PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 9000);
 
-		scene.add(new HemisphereLight(0xffffff, 0x141416, 0.85));
-		scene.add(new AmbientLight(0xffffff, 0.22));
-		const sun = new DirectionalLight(0xffffff, 1.15);
-		sun.position.set(30, 52, 20); sun.castShadow = true;
-		sun.shadow.mapSize.set(2048, 2048);
-		const s = sun.shadow.camera; s.left = -70; s.right = 70; s.top = 70; s.bottom = -70; s.near = 1; s.far = 200;
-		sun.shadow.bias = -0.0004;
-		scene.add(sun, sun.target);
-
-		// Plaza floor — graphite.
-		const floor = new Mesh(new CircleGeometry(WORLD_RADIUS + 2, 64),
-			new MeshStandardMaterial({ color: 0x121214, roughness: 0.92, metalness: 0.0 }));
-		floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
-		scene.add(floor);
-		// Crisp white boundary ring — the only "glow" in the scene.
-		const ring = new Mesh(new RingGeometry(WORLD_RADIUS, WORLD_RADIUS + 0.6, 96),
-			new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide, transparent: true, opacity: 0.7 }));
-		ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02;
-		scene.add(ring);
-		// Concentric guide circles for depth — faint white hairlines.
-		for (const rad of [14, 28, 42]) {
-			const g = new Mesh(new RingGeometry(rad, rad + 0.06, 96),
-				new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide, transparent: true, opacity: 0.12 }));
-			g.rotation.x = -Math.PI / 2; g.position.y = 0.015; scene.add(g);
-		}
+		this.env = createWorldEnvironment(scene, this.renderer, WORLD_RADIUS);
 
 		this.world = new Group();
 		scene.add(this.world);
+	}
+
+	// Animate the world each frame: drifting clouds (owned by the environment)
+	// and the slowly turning coin totem.
+	_tickEnv(dt) {
+		this.env?.update(dt);
+		if (this._coinSpin) this._coinSpin.rotation.y += dt * 0.5;
+		if (this._screenPulse) {
+			this._screenT = (this._screenT || 0) + dt;
+			this._screenPulse.material.opacity = 0.35 + 0.35 * (0.5 + 0.5 * Math.sin(this._screenT * 2.4));
+		}
+		this._chartScreen?.update(dt);
 	}
 
 	// Central coin totem — the community's banner in 3D.
 	_buildTotem(coin) {
 		const g = new Group();
 		const pillar = new Mesh(new CylinderGeometry(1.1, 1.4, 6, 24),
-			new MeshStandardMaterial({ color: 0x1b1b1e, roughness: 0.5, metalness: 0.4 }));
+			new MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.7, metalness: 0.1 }));
 		pillar.position.y = 3; pillar.castShadow = true; pillar.receiveShadow = true;
 		g.add(pillar);
-		// Floating coin disc with the token image — brushed silver.
+		// Floating coin disc with the token image — polished chrome that catches the
+		// moonlight key, slowly turning. Monochrome: the only colour is the light it
+		// reflects (and the token art on its faces).
+		const spin = new Group(); spin.position.y = 7.5;
 		const disc = new Mesh(new CylinderGeometry(2.2, 2.2, 0.3, 40),
-			new MeshStandardMaterial({ color: 0xd6d6da, roughness: 0.3, metalness: 0.85, emissive: 0x222226, emissiveIntensity: 0.3 }));
-		disc.rotation.x = Math.PI / 2; disc.position.y = 7.5; disc.castShadow = true;
-		g.add(disc);
+			new MeshStandardMaterial({ color: 0xd8d8de, roughness: 0.22, metalness: 0.95, emissive: 0x202024, emissiveIntensity: 0.25 }));
+		disc.rotation.x = Math.PI / 2; disc.castShadow = true;
+		spin.add(disc);
 		this._totemDisc = disc;
 		if (coin.image) {
 			new TextureLoader().load(coin.image, (tex) => {
 				tex.colorSpace = SRGBColorSpace;
 				const face = new Mesh(new CircleGeometry(1.9, 40), new MeshBasicMaterial({ map: tex }));
-				face.position.set(0, 7.5, 0.18); g.add(face);
+				face.position.set(0, 0, 0.18); spin.add(face);
 				const back = new Mesh(new CircleGeometry(1.9, 40), new MeshBasicMaterial({ map: tex }));
-				back.position.set(0, 7.5, -0.18); back.rotation.y = Math.PI; g.add(back);
+				back.position.set(0, 0, -0.18); back.rotation.y = Math.PI; spin.add(back);
 			}, undefined, () => { /* image blocked — totem still shows */ });
 		}
+		g.add(spin);
+		this._coinSpin = spin;
 		// Name banner texture.
 		g.add(this._textBanner(coin.name || 'Community', coin.symbol ? '$' + coin.symbol : ''));
 		// Place the totem as a landmark away from the spawn point so players don't
@@ -275,6 +321,141 @@ export class CoinCommunities {
 		return m;
 	}
 
+	// Stadium-style jumbotron — the coin's giant LED screen, towering over the
+	// plaza so it's the first thing players see on entry. It shows the coin art,
+	// name, market cap, and a LIVE readout of how many are in the community right
+	// now (redrawn from _updateOnline as people join and leave). Built as a dark
+	// panel on two posts at the far edge of the plaza, angled to face the spawn.
+	_buildScreen(coin) {
+		const W = 24, H = 13.5; // 16:9 panel, in metres
+		const g = new Group();
+
+		// Dark bezel behind the lit panel so the screen reads as a framed display.
+		const bezel = new Mesh(new PlaneGeometry(W + 0.7, H + 0.7),
+			new MeshStandardMaterial({ color: 0x070708, roughness: 0.6, metalness: 0.3 }));
+		bezel.position.set(0, 11, -0.06); g.add(bezel);
+
+		// The lit panel: a canvas texture (name / market cap / live count) drawn by
+		// _drawScreen. Unlit material so it glows like an LED wall at any distance.
+		const canvas = document.createElement('canvas');
+		canvas.width = 1600; canvas.height = 900;
+		const tex = new CanvasTexture(canvas); tex.colorSpace = SRGBColorSpace;
+		const panel = new Mesh(new PlaneGeometry(W, H), new MeshBasicMaterial({ map: tex }));
+		panel.position.set(0, 11, 0); g.add(panel);
+		this._screenCanvas = canvas; this._screenTex = tex;
+
+		// Coin artwork as its own textured plane (loaded the same CORS-safe way as
+		// the totem) overlaid on the panel's left third, so compositing the image
+		// into the canvas can never taint it.
+		if (coin.image) {
+			new TextureLoader().load(coin.image, (imgTex) => {
+				imgTex.colorSpace = SRGBColorSpace;
+				const art = new Mesh(new PlaneGeometry(8.4, 8.4), new MeshBasicMaterial({ map: imgTex }));
+				art.position.set(-6.7, 11, 0.04); g.add(art);
+				this._screenArt = art;
+			}, undefined, () => { /* image blocked — panel still shows text */ });
+		}
+
+		// A LIVE bar that pulses along the panel's base (animated in _tickEnv) — the
+		// cheap, always-moving signal that the room is live without redrawing canvas.
+		const pulse = new Mesh(new PlaneGeometry(W - 1.2, 0.16),
+			new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 }));
+		pulse.position.set(0, 11 - H / 2 + 0.5, 0.05); g.add(pulse);
+		this._screenPulse = pulse;
+
+		// Two posts carrying the panel down to the ground.
+		const postMat = new MeshStandardMaterial({ color: 0x131316, roughness: 0.5, metalness: 0.5 });
+		const postH = 11 - H / 2;
+		for (const sx of [-1, 1]) {
+			const post = new Mesh(new CylinderGeometry(0.32, 0.42, postH, 18), postMat);
+			post.position.set(sx * (W / 2 - 1.4), postH / 2, -0.1);
+			post.castShadow = true; g.add(post);
+		}
+
+		// Far edge of the plaza, facing back toward the spawn/camera (+Z view).
+		g.position.set(0, 0, 34);
+		g.rotation.y = Math.PI;
+		this.world.add(g);
+		this._screen = g;
+		this._drawScreen();
+	}
+
+	// Render the jumbotron's text layer: coin name, symbol, market cap, and the
+	// live community count. Cheap and event-driven — only called on build and when
+	// the online count changes, never per-frame.
+	_drawScreen() {
+		const canvas = this._screenCanvas;
+		if (!canvas) return;
+		const coin = this.coin || {};
+		const x = canvas.getContext('2d');
+		x.clearRect(0, 0, 1600, 900);
+
+		// Panel background + inner frame.
+		const bg = x.createLinearGradient(0, 0, 0, 900);
+		bg.addColorStop(0, '#101013'); bg.addColorStop(1, '#050506');
+		x.fillStyle = bg; x.fillRect(0, 0, 1600, 900);
+		x.strokeStyle = 'rgba(255,255,255,0.10)'; x.lineWidth = 3;
+		x.strokeRect(14, 14, 1572, 872);
+
+		// Art well on the left (the coin-image plane sits over this region).
+		x.beginPath(); x.roundRect(96, 210, 600, 600, 20);
+		x.fillStyle = 'rgba(255,255,255,0.04)';
+		x.fill(); x.strokeStyle = 'rgba(255,255,255,0.12)'; x.lineWidth = 2; x.stroke();
+		if (!coin.image) {
+			x.fillStyle = 'rgba(255,255,255,0.28)';
+			x.font = '300 200px Inter, system-ui, sans-serif';
+			x.textAlign = 'center'; x.textBaseline = 'middle';
+			x.fillText('◎', 396, 500);
+		}
+
+		const colX = 770; // right text column
+		x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+
+		// Coin name — shrink the font until it fits the column width.
+		const name = (coin.name || 'Community').toUpperCase();
+		let nameSize = 116;
+		x.fillStyle = '#f5f5f6';
+		do { x.font = `800 ${nameSize}px Inter, system-ui, sans-serif`; nameSize -= 4; }
+		while (x.measureText(name).width > 740 && nameSize > 48);
+		x.fillText(name, colX, 300);
+
+		// $SYMBOL.
+		if (coin.symbol) {
+			x.fillStyle = '#8c8c92';
+			x.font = '600 52px Inter, system-ui, sans-serif';
+			x.fillText('$' + coin.symbol.toUpperCase(), colX, 372);
+		}
+
+		// Divider.
+		x.strokeStyle = 'rgba(255,255,255,0.10)'; x.lineWidth = 2;
+		x.beginPath(); x.moveTo(colX, 430); x.lineTo(1500, 430); x.stroke();
+
+		// Market cap (only when we have it).
+		const mcap = formatUsd(coin.marketCap);
+		if (mcap) {
+			x.fillStyle = '#5a5a60';
+			x.font = '600 34px Inter, system-ui, sans-serif';
+			x.fillText('MARKET CAP', colX, 500);
+			x.fillStyle = '#f5f5f6';
+			x.font = '800 92px Inter, system-ui, sans-serif';
+			x.fillText(mcap, colX, 588);
+		}
+
+		// LIVE — N in this community.
+		const n = this._online || 1;
+		const baseY = 740;
+		x.fillStyle = '#ffffff';
+		x.beginPath(); x.arc(colX + 11, baseY - 13, 11, 0, Math.PI * 2); x.fill();
+		x.font = '800 38px Inter, system-ui, sans-serif';
+		x.fillText('LIVE', colX + 38, baseY);
+		x.fillStyle = '#8c8c92';
+		x.font = '500 38px Inter, system-ui, sans-serif';
+		const label = n === 1 ? '1 in this community' : `${n} in this community`;
+		x.fillText(label, colX + 150, baseY);
+
+		this._screenTex.needsUpdate = true;
+	}
+
 	// ---------------------------------------------------------------- enter/leave
 	async enter(coin) {
 		if (this.phase !== 'lobby') return;
@@ -294,6 +475,12 @@ export class CoinCommunities {
 
 		// Build the coin's world + local avatar.
 		this._buildTotem(coin);
+		this._buildScreen(coin);
+		// Live trading terminal facing the spawn from past the totem: the coin's
+		// price chart, % change, volume, buy/sell flow, and a ticker of real
+		// on-chain trades — a second screen players can walk up to and tap to open
+		// the coin on pump.fun. Identity jumbotron behind, market chart ahead.
+		this._chartScreen = createChartScreen(this.scene, coin, { position: [0, 0, -30], width: 18 });
 		this.localRig = new Group();
 		this.localRig.position.copy(this.localPos);
 		this.scene.add(this.localRig);
@@ -324,7 +511,14 @@ export class CoinCommunities {
 		if (this.net) { this.net.destroy(); this.net = null; }
 		for (const [, r] of this.remotes) r.dispose();
 		this.remotes.clear();
-		if (this._totem) { this.world.remove(this._totem); this._totem = null; }
+		if (this._totem) { this.world.remove(this._totem); this._totem = null; this._coinSpin = null; }
+		if (this._screen) {
+			this.world.remove(this._screen);
+			this._screenTex?.dispose();
+			this._screen = null; this._screenCanvas = null; this._screenTex = null;
+			this._screenArt = null; this._screenPulse = null;
+		}
+		if (this._chartScreen) { this._chartScreen.dispose(); this._chartScreen = null; }
 		if (this.localRig) { this.scene.remove(this.localRig); this.localRig = null; }
 		if (this._nipple) { this._nipple.destroy(); this._nipple = null; }
 		this.phase = 'lobby';
@@ -334,7 +528,9 @@ export class CoinCommunities {
 
 	_updateOnline() {
 		const n = (this.remotes.size + (this.net?.status === 'online' ? 1 : 0)) || 1;
+		this._online = n;
 		this.ui.setOnline(n);
+		this._drawScreen(); // keep the jumbotron's LIVE count in sync
 	}
 
 	// ---------------------------------------------------------------- net events
@@ -375,13 +571,32 @@ export class CoinCommunities {
 		window.addEventListener('keydown', (e) => {
 			if (this.ui.chatFocused) return;
 			if (e.key === 'Enter' && this.phase === 'world') { e.preventDefault(); this.ui.focusChat(); return; }
+			if (e.code === 'Space') { e.preventDefault(); this._jump(); return; } // don't scroll the page
 			this.keys.add(e.key.toLowerCase());
 		});
 		window.addEventListener('keyup', (e) => this.keys.delete(e.key.toLowerCase()));
-		this.canvas.addEventListener('pointerdown', (e) => { this._dragging = true; this._lastPtr = { x: e.clientX, y: e.clientY }; });
+		this.canvas.addEventListener('pointerdown', (e) => {
+			this._dragging = true; this._lastPtr = { x: e.clientX, y: e.clientY };
+			this._downPtr = { x: e.clientX, y: e.clientY };
+		});
 		window.addEventListener('pointerup', () => { this._dragging = false; });
+		// A tap (negligible drag) on the live chart screen opens the coin on pump.fun.
+		this.canvas.addEventListener('pointerup', (e) => {
+			if (!this._downPtr) return;
+			const moved = Math.hypot(e.clientX - this._downPtr.x, e.clientY - this._downPtr.y);
+			this._downPtr = null;
+			if (moved < 6 && this._raycastScreen(e.clientX, e.clientY)) this._chartScreen.openExternal();
+		});
 		window.addEventListener('pointermove', (e) => {
-			if (!this._dragging) return;
+			if (!this._dragging) {
+				// Hover cursor over the clickable screen (throttled).
+				const now = performance.now();
+				if (this.phase === 'world' && this._chartScreen && now - (this._hoverAt || 0) > 80) {
+					this._hoverAt = now;
+					this.canvas.style.cursor = this._raycastScreen(e.clientX, e.clientY) ? 'pointer' : '';
+				}
+				return;
+			}
 			const dx = e.clientX - this._lastPtr.x, dy = e.clientY - this._lastPtr.y;
 			this._lastPtr = { x: e.clientX, y: e.clientY };
 			this.camYaw -= dx * 0.005;
@@ -391,6 +606,21 @@ export class CoinCommunities {
 			e.preventDefault();
 			this.camDist = Math.max(4, Math.min(20, this.camDist * (e.deltaY > 0 ? 1.1 : 0.9)));
 		}, { passive: false });
+	}
+
+	// Cast a ray from a screen-space point into the world and report whether it
+	// hits the live chart screen's face — powers tap-to-open and the hover cursor.
+	_raycastScreen(clientX, clientY) {
+		if (!this._chartScreen?.mesh) return false;
+		this._raycaster = this._raycaster || new Raycaster();
+		this._ndc = this._ndc || new Vector2();
+		const rect = this.canvas.getBoundingClientRect();
+		this._ndc.set(
+			((clientX - rect.left) / rect.width) * 2 - 1,
+			-((clientY - rect.top) / rect.height) * 2 + 1,
+		);
+		this._raycaster.setFromCamera(this._ndc, this.camera);
+		return this._raycaster.intersectObject(this._chartScreen.mesh, false).length > 0;
 	}
 
 	_initJoystick() {
@@ -463,13 +693,29 @@ export class CoinCommunities {
 			this.localAnim?.update(dt);
 			for (const [, r] of this.remotes) r.tick(dt);
 			this._updateLabels();
-			if (this.net) this.net.sendMove({ x: this.localPos.x, y: 0, z: this.localPos.z, yaw: this.localYaw, motion: this.motion });
+			if (this.net) this.net.sendMove({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z, yaw: this.localYaw, motion: this.motion });
 		}
+		this._tickEnv(dt);
 		this._updateCamera();
 		this.renderer.render(this.scene, this.camera);
 	}
 
+	// Kick the avatar into the air. Ignored while already airborne so a held key
+	// can't pogo. Replicated to peers via the y we stream in _loop's sendMove.
+	_jump() {
+		if (this.phase !== 'world' || !this.grounded) return;
+		this.vy = JUMP_VELOCITY;
+		this.grounded = false;
+	}
+
 	_stepLocal(dt) {
+		// Vertical integration first so a jump arcs even while standing still.
+		if (!this.grounded) {
+			this.vy -= GRAVITY * dt;
+			this.localPos.y += this.vy * dt;
+			if (this.localPos.y <= 0) { this.localPos.y = 0; this.vy = 0; this.grounded = true; }
+		}
+
 		// Build intent from keys + joystick, relative to camera yaw.
 		let ix = 0, iz = 0;
 		if (this.keys.has('w') || this.keys.has('arrowup')) iz -= 1;
@@ -477,28 +723,43 @@ export class CoinCommunities {
 		if (this.keys.has('a') || this.keys.has('arrowleft')) ix -= 1;
 		if (this.keys.has('d') || this.keys.has('arrowright')) ix += 1;
 		if (this._joy) { ix += this._joy.x; iz += this._joy.z; }
+		const running = this.keys.has('shift');
 		const mag = Math.hypot(ix, iz);
 		if (mag > 0.05) {
 			ix /= Math.max(1, mag); iz /= Math.max(1, mag);
-			// rotate intent by camera yaw so W is "away from camera"
+			// Map intent into world space using the camera's own basis so the
+			// keys read screen-relative: forward (W/up) goes straight away from
+			// the camera, D/right tracks screen-right. Camera forward is
+			// (sinYaw, cosYaw) and camera-right is (cosYaw, -sinYaw) — see
+			// _updateCamera. world = ix*right + (-iz)*forward.
 			const sin = Math.sin(this.camYaw), cos = Math.cos(this.camYaw);
 			const wx = ix * cos - iz * sin;
-			const wz = ix * sin + iz * cos;
-			this.localPos.x += wx * MOVE_SPEED * dt;
-			this.localPos.z += wz * MOVE_SPEED * dt;
+			const wz = -ix * sin - iz * cos;
+			const speed = running ? RUN_SPEED : MOVE_SPEED;
+			this.localPos.x += wx * speed * dt;
+			this.localPos.z += wz * speed * dt;
 			// clamp to plaza
 			const r = Math.hypot(this.localPos.x, this.localPos.z);
 			if (r > WORLD_RADIUS) { this.localPos.x *= WORLD_RADIUS / r; this.localPos.z *= WORLD_RADIUS / r; }
 			this.localYaw = Math.atan2(wx, wz);
-			if (this.motion !== 'walk') { this.motion = 'walk'; this.localAnim?.crossfadeTo(CLIP_WALK, 0.18); }
+			const want = running ? 'run' : 'walk';
+			if (this.motion !== want) { this.motion = want; this.localAnim?.crossfadeTo(CLIP_WALK, 0.18); }
 		} else if (this.motion !== 'idle') {
 			this.motion = 'idle'; this.localAnim?.crossfadeTo(CLIP_IDLE, 0.2);
+		}
+		// Drive the walk cycle faster while sprinting so it reads as a run.
+		if (this.localAnim?.currentName === CLIP_WALK) {
+			this.localAnim.setSpeed(this.motion === 'run' ? RUN_TIMESCALE : 1);
 		}
 		if (this.localRig) { this.localRig.position.copy(this.localPos); this.localRig.rotation.y = this.localYaw; }
 	}
 
 	_updateCamera() {
-		const target = this.phase === 'world' && this.localRig ? this.localPos : new Vector3(0, 2, 0);
+		// Track the avatar on the ground plane only — ignore jump height so the
+		// camera stays planted while the character hops.
+		const target = this.phase === 'world' && this.localRig
+			? new Vector3(this.localPos.x, 0, this.localPos.z)
+			: new Vector3(0, 2, 0);
 		const cp = Math.cos(this.camPitch), sp = Math.sin(this.camPitch);
 		const ox = Math.sin(this.camYaw) * cp * this.camDist;
 		const oz = Math.cos(this.camYaw) * cp * this.camDist;

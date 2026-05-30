@@ -235,6 +235,15 @@ export class AnimationManager {
 		try { this.onChange?.(name); } catch (e) { console.warn('[AnimationManager] onChange threw:', e); }
 	}
 
+	/**
+	 * Scale playback speed of the active clip. 1 = normal; >1 plays faster
+	 * (used to make a walk cycle read as a run).
+	 * @param {number} scale
+	 */
+	setSpeed(scale) {
+		this.currentAction?.setEffectiveTimeScale(scale);
+	}
+
 	/** Stop all animations. */
 	stopAll() {
 		this.mixer?.stopAllAction();
