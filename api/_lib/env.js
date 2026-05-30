@@ -461,6 +461,16 @@ export const env = {
 	// Alternative: store the base64 in coin_launches.metadata.creator_secret_b64
 	// at register time (less secure than env; v2 should move to a KMS).
 
+	// ── x402 pay-per-call pump.fun launcher (api/x402/pump-launch.js) ─────
+	// Base64-encoded 64-byte Solana secret for the server keypair that PAYS
+	// the SOL deploy cost (~0.022 SOL) and signs the create-coin tx on behalf
+	// of anonymous x402 buyers. The buyer pays USDC via the 402 challenge; this
+	// keypair fronts the SOL. Keep it funded. When unset, /api/x402/pump-launch
+	// returns 503 not_configured. NEVER log this value.
+	get PUMP_X402_LAUNCHER_SECRET_KEY_B64() {
+		return opt('PUMP_X402_LAUNCHER_SECRET_KEY_B64');
+	},
+
 	// ── Pole Club tip sweep (api/_lib/club/*) ─────────────────────────────
 	// Solana treasury keypair (base64-encoded 64-byte secret) that holds the
 	// USDC received from /api/x402/dance-tip on Solana. Used by the

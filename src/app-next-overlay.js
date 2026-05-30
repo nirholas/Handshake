@@ -58,6 +58,7 @@ function boot() {
 	wirePrimaryCTA();
 	wireAnimationSheet();
 	wireChatDock();
+	wireChatPanelDock();
 	wireShare();
 	wireFullscreen();
 	wireCameraPresets();
@@ -302,6 +303,57 @@ function wireChatDock() {
 			triggerMicToggle(mic);
 		});
 	}
+}
+
+// ── Unified chat — dock the thread panel flush onto the composer ──────────
+//
+// The NichAgent panel (conversation thread) and the chat dock (chips + input)
+// are two separate DOM trees. Left alone they render as two detached glass
+// surfaces with a gap, which reads as "two chats". This pins the thread panel's
+// bottom edge directly onto the dock's top edge and flags `nxt-chat-merged` so
+// the CSS fuses them into a single card whenever the thread is open.
+
+function wireChatPanelDock() {
+	const dock = document.getElementById('nxt-chat-dock');
+	if (!dock) return;
+
+	waitForAgent().then((agent) => {
+		const panel = agent?.panel;
+		if (!panel) return;
+
+		const syncBottom = () => {
+			if (panel.style.display === 'none') return;
+			const dockTop = dock.getBoundingClientRect().top;
+			// Flush: panel bottom edge meets dock top edge (0px gap → one card).
+			panel.style.bottom = `${Math.max(0, Math.round(window.innerHeight - dockTop))}px`;
+		};
+
+		let lastOpen = null;
+		const reflectOpenState = () => {
+			const open = panel.style.display !== 'none';
+			if (open === lastOpen) return; // ignore our own inline `bottom` writes
+			lastOpen = open;
+			document.body.classList.toggle('nxt-chat-merged', open);
+			if (open) requestAnimationFrame(syncBottom);
+		};
+
+		new MutationObserver(reflectOpenState).observe(panel, {
+			attributes: true,
+			attributeFilter: ['style'],
+		});
+
+		// Keep the seam tight as the layout shifts underneath the thread.
+		window.addEventListener('resize', () => requestAnimationFrame(syncBottom));
+		dock.addEventListener('transitionend', () => requestAnimationFrame(syncBottom));
+		const chips = document.getElementById('nxt-chat-chips');
+		if (chips) {
+			new MutationObserver(() => requestAnimationFrame(syncBottom)).observe(chips, {
+				childList: true,
+			});
+		}
+
+		reflectOpenState();
+	});
 }
 
 async function triggerMicToggle(micEl) {

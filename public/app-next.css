@@ -1446,8 +1446,52 @@ body.app-next-body .nich-panel .nich-mic-row {
 body.app-next-body.nxt-chat-active .nxt-chat-dock {
 	left: auto;
 	right: 16px;
+	/* The entrance animation uses fill-mode `both`, which otherwise pins the
+	   dock's transform to translateX(-50%) and defeats this right-alignment.
+	   The rise has long since played by the time chat is active, so drop it. */
+	animation: none;
 	transform: none;
 	width: min(380px, calc(100vw - 32px));
+}
+
+/* ── Unified chat card ─────────────────────────────────────────────────────
+   While the thread is open, the panel (above) and dock (below) are fused into
+   one glass card so they read as a single chat — not two stacked widgets. JS
+   pins the panel's bottom edge flush onto the dock's top edge; the rules below
+   square the seam, continue the glass down through the composer, and quiet the
+   input pill into an inset row of the same card. */
+body.app-next-body.nxt-chat-merged .nich-panel {
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	/* Faint divider between thread and composer; drop the downward shadow so the
+	   card looks continuous instead of like a box hovering over another box. */
+	border-bottom-color: rgba(255, 255, 255, 0.06);
+	box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.5);
+}
+
+body.app-next-body.nxt-chat-merged .nxt-chat-dock {
+	gap: 0;
+	padding: 10px 12px 12px;
+	background: rgba(14, 15, 22, 0.92);
+	backdrop-filter: blur(22px) saturate(140%);
+	-webkit-backdrop-filter: blur(22px) saturate(140%);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-top: none; /* the panel's border-bottom is the only seam line */
+	border-bottom-left-radius: 18px;
+	border-bottom-right-radius: 18px;
+	box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6);
+}
+
+body.app-next-body.nxt-chat-merged .nxt-chat-chips {
+	justify-content: flex-start;
+	padding: 2px 2px 10px;
+}
+
+/* Inside the card the composer is just a row — strip its standalone pill chrome. */
+body.app-next-body.nxt-chat-merged .nxt-chat-input-wrap {
+	background: rgba(255, 255, 255, 0.04);
+	border-color: rgba(255, 255, 255, 0.1);
+	box-shadow: none;
 }
 
 /* ── Mobile ────────────────────────────────────────────────────────────── */

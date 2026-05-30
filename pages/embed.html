@@ -4,6 +4,7 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>Embed editor — three.ws</title>
+		<meta name="description" content="Embed a live 3D avatar on any website — static, idle, walking, or chat. Configure, preview, and copy the snippet." />
 		<style>
 			html,
 			body {
@@ -15,7 +16,7 @@
 				font-family: system-ui, sans-serif;
 			}
 			#root {
-				height: 100vh;
+				min-height: 100vh;
 			}
 		</style>
 	</head>
@@ -23,14 +24,16 @@
 		<div id="root"></div>
 		<script type="module">
 			import { mountEmbedEditor } from '/src/editor/embed-editor.js';
-			const url = new URL(location.href);
+			const q = new URL(location.href).searchParams;
 			mountEmbedEditor(document.getElementById('root'), {
-				widgetId: url.searchParams.get('id') || '',
-				src: url.searchParams.get('src') || '',
-				mode: url.searchParams.get('mode') || 'floating',
-				position: url.searchParams.get('position') || 'bottom-right',
-				width: url.searchParams.get('width') || '320px',
-				height: url.searchParams.get('height') || '420px',
+				mode: q.get('mode') || '',
+				avatar: q.get('avatar') || q.get('id') || '',
+				controls: q.get('controls') || '',
+				env: q.get('env') || '',
+				bg: q.get('bg') || '',
+				width: q.get('width') || '',
+				height: q.get('height') || '',
+				autoplay: q.get('autoplay'),
 			});
 		</script>
 	</body>

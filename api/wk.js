@@ -476,6 +476,10 @@ function handleX402Discovery(req, res) {
 			serviceName: 'three.ws Pump Audit',
 			tags: ['pump.fun', 'audit', 'agent', 'risk', 'solana'],
 		}),
+		pumpLaunch: withService({
+			serviceName: 'three.ws Pump Launcher',
+			tags: ['pump.fun', 'launch', 'deploy', 'token', 'solana', 'mint'],
+		}),
 		skillMarket: withService({
 			serviceName: 'three.ws Skill Market',
 			tags: ['marketplace', 'agent', 'skills', 'pricing', 'discovery'],
@@ -738,6 +742,46 @@ function handleX402Discovery(req, res) {
 								type: 'object',
 								required: ['mint'],
 								properties: { mint: { type: 'string', minLength: 32, maxLength: 44 } },
+							},
+						}),
+					};
+				})(),
+				(() => {
+					const url = `${origin}/api/x402/pump-launch`;
+					const accepts = acceptsForPrice('5000000', url);
+					return {
+						path: '/api/x402/pump-launch',
+						url,
+						method: 'POST',
+						description:
+							'Pump Launcher — deploy a brand-new pump.fun token in one paid call. Supply name + symbol and either a pre-pinned metadataUri or an imageUrl (we pin the image + descriptor to pump.fun IPFS). The server fronts the SOL deploy cost and signs the create-coin tx, so the buyer needs no SOL and no account. Creator rewards accrue to any Solana wallet you nominate; optional vanity prefix/suffix grinds a custom mint address. Returns mint + tx signature + pump.fun URL.',
+						mimeType: 'application/json',
+						serviceName: routeMeta.pumpLaunch.serviceName,
+						tags: routeMeta.pumpLaunch.tags,
+						iconUrl: routeMeta.pumpLaunch.iconUrl,
+						accepts,
+						extensions: extensionsForAccepts(accepts, {
+							method: 'POST',
+							discoverable: true,
+							input: {
+								name: 'Helios',
+								symbol: 'HELIO',
+								imageUrl: 'https://example.com/helios.png',
+								creator: 'wwwPqsM4N7T9J69tB82nLyzxqsH159j4orftLTQfUGV',
+							},
+							inputSchema: {
+								type: 'object',
+								required: ['name', 'symbol'],
+								properties: {
+									name: { type: 'string', maxLength: 32 },
+									symbol: { type: 'string', maxLength: 10 },
+									metadataUri: { type: 'string', maxLength: 2048 },
+									imageUrl: { type: 'string', maxLength: 2048 },
+									description: { type: 'string', maxLength: 2000 },
+									creator: { type: 'string', minLength: 32, maxLength: 44 },
+									vanityPrefix: { type: 'string', maxLength: 5 },
+									vanitySuffix: { type: 'string', maxLength: 5 },
+								},
 							},
 						}),
 					};

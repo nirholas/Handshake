@@ -23,8 +23,7 @@ import {
 	VersionedTransaction,
 	LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
-import { AnchorProvider, Wallet } from '@coral-xyz/anchor';
-import { PumpSdk, getBuyTokenAmountFromSolAmount } from '@pump-fun/pump-sdk';
+import { PumpSdk, OnlinePumpSdk, getBuyTokenAmountFromSolAmount } from '@pump-fun/pump-sdk';
 import BN from 'bn.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -86,11 +85,23 @@ async function cmdBalance() {
 }
 
 async function cmdLaunch(name, symbol, uri, opts) {
-	if (!name || !symbol || !uri) {
+	// name/symbol may be intentionally empty (a "no name / no ticker" coin), so we
+	// only require the metadata URI here.
+	if (name === undefined || symbol === undefined || !uri) {
 		throw new Error('Usage: launch <name> <symbol> <metadataUrl> [--buy <sol>]');
 	}
 	const buySol = opts.buy ? parseFloat(opts.buy) : 0;
 	if (Number.isNaN(buySol) || buySol < 0) throw new Error('Invalid --buy value');
+
+	// Tokenized-agent launch with creator-fee buyback. --buyback-bps 10000 = 100%.
+	const buyBackBps = opts['buyback-bps'] !== undefined ? parseInt(opts['buyback-bps'], 10) : 0;
+	if (Number.isNaN(buyBackBps) || buyBackBps < 0 || buyBackBps > 10000) {
+		throw new Error('Invalid --buyback-bps (0..10000)');
+	}
+	const isTokenizedAgent = buyBackBps > 0;
+	if (isTokenizedAgent && buySol <= 0) {
+		throw new Error('A tokenized-agent launch (--buyback-bps) requires a dev buy: pass --buy <sol>');
+	}
 
 	const kp = loadKeypair();
 	const conn = new Connection(RPC_URL, 'confirmed');
@@ -111,21 +122,27 @@ async function cmdLaunch(name, symbol, uri, opts) {
 	console.log('Symbol:   ', symbol);
 	console.log('Metadata: ', uri);
 	console.log('Buy-in:   ', buySol, 'SOL');
+	console.log('Agent:    ', isTokenizedAgent ? `tokenized, buyback ${buyBackBps} bps (${buyBackBps / 100}%)` : 'no');
 	console.log('');
 
-	// Build pump SDK against this RPC.
-	const wallet = new Wallet(kp);
-	const provider = new AnchorProvider(conn, wallet, { commitment: 'confirmed' });
-	const sdk = new PumpSdk(provider);
+	// Offline SDK builds instructions; online SDK reads on-chain global state.
+	const offline = new PumpSdk();
+	const online = new OnlinePumpSdk(conn);
 
 	const instructions = [];
 	if (buySol > 0) {
 		console.log('→ fetchGlobal...');
-		const global = await sdk.fetchGlobal();
+		const global = await online.fetchGlobal();
 		const solAmount = new BN(Math.floor(buySol * LAMPORTS_PER_SOL));
-		const tokenAmount = getBuyTokenAmountFromSolAmount(global, null, solAmount);
+		const tokenAmount = getBuyTokenAmountFromSolAmount({
+			global,
+			feeConfig: null,
+			mintSupply: null,
+			bondingCurve: null,
+			amount: solAmount,
+		});
 		console.log('→ createAndBuyInstructions...');
-		const ixs = await sdk.createAndBuyInstructions({
+		const ixs = await offline.createAndBuyInstructions({
 			global,
 			mint: mintKp.publicKey,
 			name, symbol, uri,
@@ -133,47 +150,64 @@ async function cmdLaunch(name, symbol, uri, opts) {
 			user: kp.publicKey,
 			solAmount,
 			amount: tokenAmount,
+			isTokenizedAgent,
+			buyBackBps,
 		});
 		instructions.push(...(Array.isArray(ixs) ? ixs : [ixs]));
 	} else {
 		console.log('→ createInstruction...');
-		const ix = await sdk.createInstruction({
+		const ix = await offline.createInstruction({
 			mint: mintKp.publicKey,
 			name, symbol, uri,
 			creator: kp.publicKey,
 			user: kp.publicKey,
 		});
-		instructions.push(ix);
+		instructions.push(...(Array.isArray(ix) ? ix : [ix]));
 	}
 	console.log('Instructions built:', instructions.length);
 
-	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
-	const msg = new TransactionMessage({
-		payerKey: kp.publicKey,
-		recentBlockhash: blockhash,
-		instructions,
-	}).compileToV0Message();
-	const tx = new VersionedTransaction(msg);
-	tx.sign([kp, mintKp]);
-
-	console.log('→ simulate...');
-	const sim = await conn.simulateTransaction(tx, { sigVerify: false });
-	if (sim.value.err) {
-		console.error('Simulation failed:', JSON.stringify(sim.value.err));
-		console.error('Logs:');
-		for (const l of sim.value.logs || []) console.error('  ', l);
-		throw new Error('aborting before send (simulation failed)');
+	// Send one v0 transaction, simulate-then-send-then-confirm. Returns the sig.
+	async function sendTx(ixs, signers, { simulate = true } = {}) {
+		const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+		const msg = new TransactionMessage({
+			payerKey: kp.publicKey,
+			recentBlockhash: blockhash,
+			instructions: ixs,
+		}).compileToV0Message();
+		const tx = new VersionedTransaction(msg);
+		tx.sign(signers);
+		if (simulate) {
+			const sim = await conn.simulateTransaction(tx, { sigVerify: false });
+			if (sim.value.err) {
+				console.error('Simulation failed:', JSON.stringify(sim.value.err));
+				for (const l of sim.value.logs || []) console.error('  ', l);
+				throw new Error('aborting before send (simulation failed)');
+			}
+			console.log('  sim OK, CU:', sim.value.unitsConsumed);
+		}
+		const sig = await conn.sendRawTransaction(tx.serialize(), { skipPreflight: false, maxRetries: 3 });
+		console.log('  sig:', sig);
+		const conf = await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
+		if (conf.value.err) throw new Error('Confirmation error: ' + JSON.stringify(conf.value.err));
+		return sig;
 	}
-	console.log('Simulation OK. Compute units used:', sim.value.unitsConsumed);
 
-	console.log('→ sendRawTransaction...');
-	const sig = await conn.sendRawTransaction(tx.serialize(), { skipPreflight: false, maxRetries: 3 });
-	console.log('Signature:', sig);
-	console.log('Solscan:   https://solscan.io/tx/' + sig);
-
-	console.log('→ confirm...');
-	const conf = await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
-	if (conf.value.err) throw new Error('Confirmation error: ' + JSON.stringify(conf.value.err));
+	// A tokenized-agent launch is 4 instructions — too big for one tx. Split:
+	// tx1 creates the mint + dev buy, tx2 initializes the agent (after the mint
+	// exists on-chain). The agent-init is the last instruction in the array.
+	if (isTokenizedAgent && instructions.length > 3) {
+		const agentIx = instructions.pop();
+		console.log('→ tx1: create + buy...');
+		const sig1 = await sendTx(instructions, [kp, mintKp]);
+		console.log('  Solscan:', 'https://solscan.io/tx/' + sig1);
+		console.log('→ tx2: initialize tokenized agent (buyback ' + buyBackBps / 100 + '%)...');
+		const sig2 = await sendTx([agentIx], [kp], { simulate: false });
+		console.log('  Solscan:', 'https://solscan.io/tx/' + sig2);
+	} else {
+		console.log('→ submit...');
+		const sig = await sendTx(instructions, [kp, mintKp]);
+		console.log('  Solscan:', 'https://solscan.io/tx/' + sig);
+	}
 
 	console.log('');
 	console.log('LAUNCHED.');

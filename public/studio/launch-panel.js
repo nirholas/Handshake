@@ -938,7 +938,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			s.phase = 'building'; s.phaseLabel = 'Uploading metadata…'; render();
 
 			const nameTrim = s.name.trim().slice(0, 32);
-			const symTrim  = s.symbol.trim().slice(0, 10);
+			// Preserve the symbol exactly as entered (whitespace/emoji/special chars), cap at 10 codepoints.
+			const symTrim  = [...s.symbol].slice(0, 10).join('');
 			const descTrim = s.description.trim().slice(0, 500);
 			const metaKey = `${nameTrim}|${symTrim}|${descTrim}|${!!s.imageFile}`;
 
@@ -1144,7 +1145,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const buy = Math.max(0, parseFloat(s.initialBuy) || 0);
 		return PUMP_BASE_COST + (s.coinType === 'usdc' ? 0 : buy);
 	};
-	const formValid     = () => s.name.trim() && s.symbol.trim() && s.description.trim();
+	// Symbol accepts any raw value (whitespace, emoji, special chars) — only name & description require real text.
+	const formValid     = () => s.name.trim() && s.symbol.length > 0 && s.description.trim();
 
 	// ── Render ─────────────────────────────────────────────────────────────
 
@@ -1520,9 +1522,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 					<input class="lp-iname" id="lp-name" type="text" maxlength="32"
 						placeholder="Token name" value="${esc(s.name)}" ${dis}
 						title="Shown on pump.fun. Up to 32 chars." />
-					<input class="lp-isymbol" id="lp-sym" type="text" maxlength="10"
+					<input class="lp-isymbol" id="lp-sym" type="text" maxlength="80"
 						placeholder="SYMBOL" value="${esc(s.symbol)}" ${dis}
-						title="Ticker symbol (the $ in $CZ). Letters and numbers only, up to 10 chars." />
+						title="Ticker symbol (the $ in $CZ). Any characters — emoji and symbols allowed, up to 10." />
 					<div class="lp-img-hint">Click image to replace · drag &amp; drop</div>
 					${getPreviewViewer ? `<button type="button" class="lp-cap-btn" id="lp-capture" ${dis} title="Snapshot the current 3D preview and use it as the token image.">📸 Use 3D view</button>` : ''}
 				</div>
@@ -1637,7 +1639,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			}
 		});
 		q('#lp-sym')?.addEventListener('input', (e) => {
-			const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+			// Permissive: allow any characters (emoji, lowercase, symbols), cap at 10 codepoints.
+			const raw = [...e.target.value].slice(0, 10).join('');
 			e.target.value = raw; s.symbol = raw; s._symbolEdited = true;
 		});
 		q('#lp-desc')?.addEventListener('input', (e) => { s.description = e.target.value; });

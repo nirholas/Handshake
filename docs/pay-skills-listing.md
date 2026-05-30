@@ -34,6 +34,7 @@ are the source of truth and match what the 402 challenges advertise; verify with
 | `/api/x402/agent-reputation` | GET | $0.01 | Reputation snapshot for a three.ws agent: USDC paid in, distinct payers, deployed mints, distribution success rate, attestation count |
 | `/api/x402/pump-agent-audit` | GET | $0.02 | Full operational audit of a pump.fun agent-payments token: USDC in, distribute/buyback history, latest error reasons, risk flags |
 | `/api/x402/mint-to-mesh-batch` | POST | $0.05 | Resolve 1–10 Solana SPL mints to themed GLB cubes in one call; per-mint failures report individually |
+| `/api/x402/pump-launch` | POST | $5.00 | Deploy a brand-new pump.fun token in one paid call. Supply name + symbol + (metadataUri or imageUrl); the server fronts the SOL deploy cost and signs the create-coin tx. Creator rewards accrue to any Solana wallet you nominate; optional vanity mint address. Returns mint + tx signature + pump.fun URL |
 
 All prices are in USDC with 6 decimals. `$0.001` = 1000 atomics.
 

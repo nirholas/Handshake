@@ -5,7 +5,8 @@
 //           data-avatar="<uuid>"
 //           data-position="bottom-right"
 //           data-width="220"
-//           data-height="320"></script>
+//           data-height="320"
+//           data-env="studio"></script>
 //
 // The script:
 //   1. Reads `data-*` attributes off its own <script> tag.
@@ -75,6 +76,7 @@
 		width: parseInt(attr('data-width', '220'), 10) || 220,
 		height: parseInt(attr('data-height', '320'), 10) || 320,
 		controls: attr('data-controls', 'none'),
+		env: attr('data-env', 'studio'),
 		autoplay: attrBool('data-autoplay', true),
 		ground: attrBool('data-ground', false),
 		orbit: attrBool('data-orbit', false),
@@ -104,6 +106,7 @@
 		if (opts.ground === false) p.set('ground', 'false');
 		if (opts.orbit === false) p.set('orbit', 'false');
 		if (opts.bg && opts.bg !== 'transparent') p.set('bg', opts.bg);
+		if (opts.env && opts.env !== 'studio') p.set('env', opts.env);
 		return EMBED_ORIGIN + '/walk-embed?' + p.toString();
 	}
 
@@ -222,6 +225,10 @@
 		},
 		resetPose: function () {
 			postToFrame({ type: 'walk:resetPose' });
+		},
+		setEnv: function (env) {
+			state.options.env = env || 'studio';
+			postToFrame({ type: 'walk:setEnv', env: env });
 		},
 		on: function (name, cb) {
 			(state.listeners[name] = state.listeners[name] || []).push(cb);

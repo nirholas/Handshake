@@ -5,7 +5,7 @@
 //   • No multiplayer (WalkNet) — embeds don't connect strangers to a room.
 //   • No AR camera passthrough — embed hosts can't grant getUserMedia.
 //   • No HUD card, no help text, no online pill.
-//   • Reads ?bg, ?controls, ?autoplay query params.
+//   • Reads ?bg, ?controls, ?autoplay, ?env, ?ground, ?orbit query params.
 //   • postMessage's `walk:ready` on load and `walk:position` each tick.
 //
 // If you find yourself fixing the same bug here and in walk.js, consider
@@ -19,6 +19,7 @@ import {
 	Clock,
 	Color,
 	DirectionalLight,
+	Fog,
 	Group,
 	HemisphereLight,
 	Mesh,
@@ -26,7 +27,6 @@ import {
 	PCFSoftShadowMap,
 	PerspectiveCamera,
 	PMREMGenerator,
-	Quaternion,
 	Scene,
 	ShadowMaterial,
 	Vector3,
@@ -47,6 +47,20 @@ const CONTROLS = (params.get('controls') || 'joystick').toLowerCase(); // 'joyst
 const AUTOPLAY = params.get('autoplay') === 'true' || params.get('autoplay') === '1';
 const SHOW_GROUND = params.get('ground') !== 'false';
 const ORBIT_ENABLED = params.get('orbit') !== 'false';
+const ENV_PARAM = (params.get('env') || 'studio').toLowerCase();
+
+// Real, self-contained scene presets. Each preset retints the clear color,
+// fog, ground disc, and the hemisphere/sun lights — no external HDRIs to
+// fetch, so the embed stays a single iframe with no extra requests. An
+// explicit ?bg= always overrides the preset's background (see applyEnvironment).
+const ENVIRONMENTS = {
+	studio: { bg: null,     ground: 0x202833, hemiSky: 0xbcd6ff, hemiGround: 0x202830, hemiInt: 0.6,  sun: 0xffffff, sunInt: 1.4, fog: null },
+	void:   { bg: 0x08090b, ground: 0x101218, hemiSky: 0x3a4250, hemiGround: 0x0a0c0f, hemiInt: 0.5,  sun: 0xcdd6ff, sunInt: 1.1, fog: null },
+	beach:  { bg: 0x86c5ff, ground: 0xe2c98a, hemiSky: 0xcfeaff, hemiGround: 0xb89968, hemiInt: 0.9,  sun: 0xfff2d6, sunInt: 1.7, fog: [0x86c5ff, 16, 44] },
+	sunset: { bg: 0xff9d6e, ground: 0x4a3340, hemiSky: 0xffc59e, hemiGround: 0x2a1f33, hemiInt: 0.8,  sun: 0xffcaa0, sunInt: 1.6, fog: [0xff9d6e, 14, 42] },
+	night:  { bg: 0x0a1020, ground: 0x141a28, hemiSky: 0x2a3a66, hemiGround: 0x05070d, hemiInt: 0.45, sun: 0x9fb4ff, sunInt: 0.8, fog: [0x0a1020, 16, 46] },
+	grid:   { bg: 0x0d0f12, ground: 0x1a1f2a, hemiSky: 0x4a5a80, hemiGround: 0x0d0f12, hemiInt: 0.7,  sun: 0xffffff, sunInt: 1.3, fog: null },
+};
 
 function resolveAvatarUrl() {
 	const id = params.get('avatar');
@@ -165,11 +179,33 @@ groundShadowCatcher.receiveShadow = true;
 groundShadowCatcher.visible = !SHOW_GROUND;
 scene.add(groundShadowCatcher);
 
+// Apply a scene preset. An explicit ?bg= wins over the preset background so
+// transparent/custom embeds keep working; otherwise the preset paints the
+// clear color and matching fog. Live-swappable via the `walk:setEnv` message.
+function applyEnvironment(id) {
+	const env = ENVIRONMENTS[id] || ENVIRONMENTS.studio;
+	if (BG_PARAM && BG_PARAM !== 'transparent') {
+		renderer.setClearColor(new Color(BG_PARAM), 1);
+	} else if (env.bg == null) {
+		renderer.setClearColor(0x000000, 0); // transparent — host page shows through
+	} else {
+		renderer.setClearColor(new Color(env.bg), 1);
+		document.body.style.background = `#${env.bg.toString(16).padStart(6, '0')}`;
+	}
+	scene.fog = env.fog ? new Fog(env.fog[0], env.fog[1], env.fog[2]) : null;
+	groundOpaque.material.color.setHex(env.ground);
+	hemi.color.setHex(env.hemiSky);
+	hemi.groundColor.setHex(env.hemiGround);
+	hemi.intensity = env.hemiInt;
+	sun.color.setHex(env.sun);
+	sun.intensity = env.sunInt;
+}
+applyEnvironment(ENV_PARAM);
+
 const camera = new PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.05, 200);
 const avatarRig = new Group();
 scene.add(avatarRig);
 
-const camTarget = new Vector3();
 const camDesired = new Vector3();
 const camLookTarget = new Vector3();
 const camLookCurrent = new Vector3();
@@ -545,6 +581,8 @@ window.addEventListener('message', async (e) => {
 			// Walk speed multiplier — applied to input magnitude each frame
 			input._speedMultiplier = Math.max(0.3, Math.min(3, msg.speed));
 		}
+	} else if (msg.type === 'walk:setEnv' && typeof msg.env === 'string') {
+		applyEnvironment(msg.env.toLowerCase());
 	}
 });
 
