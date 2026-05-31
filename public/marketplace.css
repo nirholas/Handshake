@@ -2110,6 +2110,556 @@ body.market-page {
 	font-size: 14px;
 }
 
+/* ── Earn dashboard ──────────────────────────────────────────────────── */
+
+.earn-body {
+	padding: 24px;
+}
+
+.earn-dashboard {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+	animation: earn-fade-in 0.3s ease;
+}
+
+@keyframes earn-fade-in {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+/* Stat cards */
+.earn-stats {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 14px;
+}
+
+.earn-card {
+	position: relative;
+	background: var(--mk-panel);
+	border: 1px solid var(--mk-border);
+	border-radius: var(--mk-radius);
+	padding: 18px 20px;
+	transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.earn-card:hover {
+	border-color: var(--mk-border-2);
+}
+
+.earn-card-total {
+	background: linear-gradient(160deg, var(--mk-panel-2), var(--mk-panel));
+	border-color: var(--mk-border-2);
+}
+
+.earn-card-label {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--mk-text-3);
+}
+
+.earn-card-value {
+	margin-top: 10px;
+	font-size: 26px;
+	font-weight: 700;
+	color: var(--mk-text);
+	line-height: 1.1;
+	font-variant-numeric: tabular-nums;
+}
+
+.earn-card-meta {
+	margin-top: 6px;
+	font-size: 12px;
+	color: var(--mk-text-2);
+}
+
+.earn-val-pending {
+	color: #fbbf24;
+}
+
+.earn-val-settled {
+	color: #34d399;
+}
+
+/* Wallet card */
+.earn-card-wallet {
+	display: flex;
+	flex-direction: column;
+}
+
+.earn-wallet-addr {
+	font-family: ui-monospace, "SF Mono", Menlo, monospace;
+	font-size: 16px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.earn-wallet-btn {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	background: var(--mk-panel-2);
+	border: 1px solid var(--mk-border-2);
+	color: var(--mk-text-2);
+	border-radius: 7px;
+	padding: 5px 12px;
+	font-size: 12px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.earn-wallet-btn:hover {
+	color: var(--mk-text);
+	border-color: var(--mk-text-3);
+}
+
+.earn-wallet-btn:focus-visible {
+	outline: 2px solid var(--mk-accent);
+	outline-offset: 2px;
+}
+
+/* Section headers */
+.earn-section-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 16px;
+}
+
+.earn-section-title {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--mk-text);
+	margin: 0;
+}
+
+/* Period chips */
+.earn-period-chips {
+	display: inline-flex;
+	gap: 4px;
+	background: var(--mk-panel);
+	border: 1px solid var(--mk-border);
+	border-radius: 9px;
+	padding: 3px;
+}
+
+.earn-chip {
+	background: transparent;
+	border: 0;
+	color: var(--mk-text-2);
+	border-radius: 7px;
+	padding: 5px 12px;
+	font-size: 12px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.2s ease, color 0.2s ease;
+}
+
+.earn-chip:hover {
+	color: var(--mk-text);
+}
+
+.earn-chip.active {
+	background: var(--mk-panel-2);
+	color: var(--mk-text);
+}
+
+.earn-chip:focus-visible {
+	outline: 2px solid var(--mk-accent);
+	outline-offset: 1px;
+}
+
+/* Chart */
+.earn-chart {
+	background: var(--mk-panel);
+	border: 1px solid var(--mk-border);
+	border-radius: var(--mk-radius);
+	padding: 20px;
+	min-height: 220px;
+}
+
+.earn-chart-loading,
+.earn-chart-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 180px;
+	color: var(--mk-text-3);
+	font-size: 13px;
+}
+
+.earn-chart-loading {
+	animation: earn-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes earn-pulse {
+	0%, 100% { opacity: 0.5; }
+	50% { opacity: 1; }
+}
+
+.earn-chart-meta {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	margin-bottom: 18px;
+}
+
+.earn-chart-total {
+	font-size: 22px;
+	font-weight: 700;
+	color: var(--mk-text);
+	font-variant-numeric: tabular-nums;
+}
+
+.earn-chart-count {
+	font-size: 12px;
+	color: var(--mk-text-2);
+}
+
+.earn-chart-bars {
+	display: flex;
+	align-items: flex-end;
+	gap: 3px;
+	height: 140px;
+}
+
+.earn-bar {
+	flex: 1 1 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+	height: 100%;
+	min-width: 0;
+}
+
+.earn-bar-col {
+	width: 100%;
+	max-width: 28px;
+	height: var(--h, 0%);
+	min-height: 2px;
+	background: linear-gradient(180deg, #60a5fa, #3b82f6);
+	border-radius: 4px 4px 0 0;
+	transition: height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.15s ease;
+}
+
+.earn-bar:hover .earn-bar-col {
+	filter: brightness(1.25);
+}
+
+.earn-bar-date {
+	margin-top: 8px;
+	font-size: 10px;
+	color: var(--mk-text-3);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+	min-height: 12px;
+}
+
+/* Breakdown */
+.earn-breakdown {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.earn-bk-row {
+	display: grid;
+	grid-template-columns: 140px 1fr auto auto;
+	align-items: center;
+	gap: 12px;
+}
+
+.earn-bk-name {
+	font-size: 13px;
+	color: var(--mk-text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.earn-bk-track {
+	height: 8px;
+	background: var(--mk-panel-2);
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.earn-bk-fill {
+	height: 100%;
+	background: linear-gradient(90deg, #a78bfa, #8b5cf6);
+	border-radius: 4px;
+	transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.earn-bk-amount {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--mk-text);
+	font-variant-numeric: tabular-nums;
+}
+
+.earn-bk-count {
+	font-size: 12px;
+	color: var(--mk-text-3);
+	min-width: 32px;
+	text-align: right;
+}
+
+/* Transactions */
+.earn-txn-count {
+	font-size: 12px;
+	color: var(--mk-text-3);
+}
+
+.earn-txns {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--mk-border);
+	border-radius: var(--mk-radius);
+	overflow: hidden;
+}
+
+.earn-txn {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 14px 18px;
+	border-bottom: 1px solid var(--mk-border);
+	transition: background 0.15s ease;
+}
+
+.earn-txn:last-child {
+	border-bottom: 0;
+}
+
+.earn-txn:hover {
+	background: var(--mk-panel);
+}
+
+.earn-txn-icon {
+	flex: 0 0 auto;
+	width: 34px;
+	height: 34px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--mk-panel-2);
+	border-radius: 9px;
+	font-size: 15px;
+}
+
+.earn-txn-info {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.earn-txn-name {
+	font-size: 14px;
+	color: var(--mk-text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.earn-txn-agent {
+	font-size: 12px;
+	color: var(--mk-text-3);
+}
+
+.earn-txn-right {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex: 0 0 auto;
+}
+
+.earn-txn-amount {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--mk-text);
+	font-variant-numeric: tabular-nums;
+}
+
+.earn-txn-status {
+	font-size: 11px;
+	font-weight: 500;
+	text-transform: capitalize;
+	padding: 3px 9px;
+	border-radius: 20px;
+}
+
+.earn-status-settled {
+	color: #34d399;
+	background: rgba(52, 211, 153, 0.12);
+}
+
+.earn-status-pending {
+	color: #fbbf24;
+	background: rgba(251, 191, 36, 0.12);
+}
+
+.earn-txn-date {
+	font-size: 12px;
+	color: var(--mk-text-3);
+	min-width: 56px;
+	text-align: right;
+}
+
+.earn-txns-more {
+	margin-top: 14px;
+	text-align: center;
+}
+
+.earn-show-more {
+	background: var(--mk-panel);
+	border: 1px solid var(--mk-border);
+	color: var(--mk-text-2);
+	border-radius: 8px;
+	padding: 8px 20px;
+	font-size: 13px;
+	cursor: pointer;
+	transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.earn-show-more:hover {
+	color: var(--mk-text);
+	border-color: var(--mk-border-2);
+}
+
+/* State messages (auth / error / empty) */
+.earn-state-msg {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	padding: 72px 24px;
+	max-width: 440px;
+	margin: 0 auto;
+}
+
+.earn-state-icon {
+	width: 52px;
+	height: 52px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--mk-panel-2);
+	border: 1px solid var(--mk-border-2);
+	border-radius: 14px;
+	font-size: 22px;
+	font-weight: 700;
+	color: var(--mk-text-2);
+	margin-bottom: 18px;
+}
+
+.earn-icon-error {
+	color: #f87171;
+	border-color: rgba(248, 113, 113, 0.3);
+	background: rgba(248, 113, 113, 0.08);
+}
+
+.earn-state-msg h3 {
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--mk-text);
+	margin: 0 0 8px;
+}
+
+.earn-state-msg p {
+	font-size: 14px;
+	color: var(--mk-text-2);
+	line-height: 1.5;
+	margin: 0 0 6px;
+}
+
+.earn-empty-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 12px;
+}
+
+/* Skeleton */
+.earn-skeleton {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+}
+
+.earn-card-sk {
+	min-height: 92px;
+}
+
+.earn-sk-line,
+.earn-sk-block {
+	background: linear-gradient(90deg, var(--mk-panel) 25%, var(--mk-panel-2) 50%, var(--mk-panel) 75%);
+	background-size: 200% 100%;
+	animation: earn-shimmer 1.4s ease-in-out infinite;
+	border-radius: 6px;
+}
+
+.earn-sk-line {
+	height: 12px;
+}
+
+.earn-chart-sk {
+	background: var(--mk-panel);
+	border: 1px solid var(--mk-border);
+	border-radius: var(--mk-radius);
+	padding: 20px;
+}
+
+.earn-sk-block {
+	height: 180px;
+	border-radius: 10px;
+}
+
+.earn-txn-sk {
+	border: 1px solid var(--mk-border);
+	border-radius: var(--mk-radius);
+	overflow: hidden;
+}
+
+.earn-txn-sk-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	padding: 16px 18px;
+	border-bottom: 1px solid var(--mk-border);
+}
+
+.earn-txn-sk-row:last-child {
+	border-bottom: 0;
+}
+
+@keyframes earn-shimmer {
+	0% { background-position: 200% 0; }
+	100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.earn-dashboard,
+	.earn-bar-col,
+	.earn-bk-fill,
+	.earn-sk-line,
+	.earn-sk-block,
+	.earn-chart-loading {
+		animation: none;
+		transition: none;
+	}
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────── */
 
 @media (max-width: 980px) {
@@ -2140,6 +2690,34 @@ body.market-page {
 
 	.market-detail-side {
 		position: static;
+	}
+
+	.earn-stats {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 560px) {
+	.earn-body {
+		padding: 16px;
+	}
+
+	.earn-stats {
+		grid-template-columns: 1fr;
+	}
+
+	.earn-bk-row {
+		grid-template-columns: 1fr auto;
+		row-gap: 4px;
+	}
+
+	.earn-bk-track {
+		grid-column: 1 / -1;
+		order: 3;
+	}
+
+	.earn-txn-agent {
+		display: none;
 	}
 }
 

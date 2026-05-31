@@ -694,22 +694,18 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 			<div style="border-top:1px solid var(--nxt-stroke);padding-top:18px;margin-top:4px">
 				<div style="font-size:13px;font-weight:600;color:var(--nxt-ink);margin-bottom:4px">Memory seeding</div>
 				<div style="font-size:12.5px;color:var(--nxt-ink-dim);margin-bottom:14px">
-					Seed this agent's long-term memory from public profiles. Each source is fetched and summarised into the agent's memory store.
+					Seed this agent's long-term memory from your activity. Each source is fetched, distilled into facts, and written to the agent's memory store.
 				</div>
-				<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px">
-					<input data-slot="seed-twitter" type="text" maxlength="50" placeholder="Twitter / X handle (without @)"
-						style="padding:8px 11px;border-radius:8px;border:1px solid var(--nxt-stroke);
-						background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
+				<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+					<div style="flex:1;min-width:0;font-size:12.5px;color:var(--nxt-ink-dim)">Distil your recent posts. Uses your connected <strong style="color:var(--nxt-ink)">X</strong> account.</div>
 					<button class="dn-btn" data-action="seed-twitter" type="button" style="flex-shrink:0">Seed from X</button>
 				</div>
-				<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px">
-					<input data-slot="seed-github" type="text" maxlength="60" placeholder="GitHub username"
-						style="padding:8px 11px;border-radius:8px;border:1px solid var(--nxt-stroke);
-						background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
+				<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+					<div style="flex:1;min-width:0;font-size:12.5px;color:var(--nxt-ink-dim)">Distil your repos and commits. Uses your connected <strong style="color:var(--nxt-ink)">GitHub</strong> account.</div>
 					<button class="dn-btn" data-action="seed-github" type="button" style="flex-shrink:0">Seed from GitHub</button>
 				</div>
 				<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:0">
-					<input data-slot="seed-farcaster" type="text" maxlength="50" placeholder="Farcaster username (FID or handle)"
+					<input data-slot="seed-farcaster" type="text" maxlength="50" placeholder="Farcaster username or FID"
 						style="padding:8px 11px;border-radius:8px;border:1px solid var(--nxt-stroke);
 						background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
 					<button class="dn-btn" data-action="seed-farcaster" type="button" style="flex-shrink:0">Seed from Farcaster</button>
@@ -763,40 +759,59 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 		}
 	});
 
+	const aid = encodeURIComponent(agent.id);
+	const SEED_LABELS = { 'seed-twitter': 'Seed from X', 'seed-github': 'Seed from GitHub', 'seed-farcaster': 'Seed from Farcaster' };
+	const SOURCE_NAMES = { 'seed-twitter': 'X', 'seed-github': 'GitHub', 'seed-farcaster': 'Farcaster' };
+
 	const seedAction = async (action) => {
-		const SEED_ENDPOINTS = {
-			'seed-twitter': `/api/agents/${encodeURIComponent(agent.id)}/memory-seed-x`,
-			'seed-github': `/api/seed/github`,
-			'seed-farcaster': `/api/seed/farcaster`,
-		};
-		const SEED_SLOTS = {
-			'seed-twitter': 'seed-twitter',
-			'seed-github': 'seed-github',
-			'seed-farcaster': 'seed-farcaster',
-		};
-		const endpoint = SEED_ENDPOINTS[action];
-		const handle = overlay.querySelector(`[data-slot="${SEED_SLOTS[action]}"]`).value.trim();
-		if (!handle) { seedStatus.textContent = 'Enter a handle first.'; return; }
+		seedStatus.innerHTML = '';
+
+		// X and GitHub seed from the user's connected OAuth account (no handle).
+		// Farcaster is public, so it takes a username or FID.
+		let endpoint;
+		let body;
+		if (action === 'seed-twitter') {
+			endpoint = `/api/agents/${aid}/memory-seed-x`;
+		} else if (action === 'seed-github') {
+			endpoint = `/api/agents/${aid}/memory-seed`;
+		} else {
+			const handle = overlay.querySelector('[data-slot="seed-farcaster"]').value.trim().replace(/^@/, '');
+			if (!handle) { seedStatus.style.color = 'var(--nxt-danger)'; seedStatus.textContent = 'Enter a Farcaster username or FID first.'; return; }
+			endpoint = `/api/agents/${aid}/memory/seed/farcaster`;
+			body = /^\d+$/.test(handle) ? { fid: Number(handle) } : { fname: handle };
+		}
 
 		const btn = overlay.querySelector(`[data-action="${action}"]`);
 		btn.disabled = true;
 		btn.textContent = 'Seeding…';
-		seedStatus.textContent = 'Fetching and seeding memory…';
+		seedStatus.style.color = 'var(--nxt-ink-dim)';
+		seedStatus.textContent = 'Fetching and distilling memory…';
 
 		try {
-			const body = action === 'seed-twitter'
-				? { handle }
-				: { agent_id: agent.id, username: handle };
-			await post(endpoint, body);
+			const r = await post(endpoint, body);
+			const count = r?.seeded ?? 0;
 			seedStatus.style.color = 'var(--nxt-ink)';
-			seedStatus.textContent = `Memory seeded from ${action.replace('seed-', '')}.`;
+			seedStatus.textContent = count > 0
+				? `Seeded ${count} ${count === 1 ? 'fact' : 'facts'} from ${SOURCE_NAMES[action]}.`
+				: `No new facts found from ${SOURCE_NAMES[action]}.`;
 		} catch (err) {
 			seedStatus.style.color = 'var(--nxt-danger)';
-			seedStatus.textContent = err?.body?.error || err?.message || 'Seeding failed.';
+			// The X/GitHub endpoints require a connected account; guide the user there.
+			if (err?.code === 'not_connected' || err?.status === 412) {
+				seedStatus.innerHTML = `Connect ${esc(SOURCE_NAMES[action])} to seed from it. `;
+				const link = document.createElement('a');
+				link.href = '/settings#connected-accounts';
+				link.textContent = 'Connect now';
+				link.style.color = 'var(--nxt-accent, #6ea8fe)';
+				seedStatus.appendChild(link);
+			} else if (err?.status === 429) {
+				seedStatus.textContent = err?.message || 'Seeding is rate-limited. Try again later.';
+			} else {
+				seedStatus.textContent = err?.message || err?.body?.error || 'Seeding failed.';
+			}
 		} finally {
 			btn.disabled = false;
-			const labels = { 'seed-twitter': 'Seed from X', 'seed-github': 'Seed from GitHub', 'seed-farcaster': 'Seed from Farcaster' };
-			btn.textContent = labels[action];
+			btn.textContent = SEED_LABELS[action];
 		}
 	};
 

@@ -32,11 +32,43 @@
 		</header>
 
 		<main class="my-agents-main" id="my-agents-main">
-			<h1 class="my-agents-title">My Agents</h1>
-			<p class="my-agents-subtitle">
-				All your agents — three.ws agents and on-chain (ERC-8004) agents from your linked wallets.
-				New users get a starter agent with a default avatar automatically.
-			</p>
+			<div class="my-agents-head">
+				<div class="my-agents-head__text">
+					<h1 class="my-agents-title">My Agents</h1>
+					<p class="my-agents-subtitle">
+						Every agent you own — three.ws agents and on-chain (ERC-8004) agents from
+						your linked wallets. New users get a starter agent automatically.
+					</p>
+				</div>
+				<a class="my-agents-new" href="/create" id="my-agents-new-top" hidden>
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+					New agent
+				</a>
+			</div>
+
+			<div id="my-agents-stats" class="my-agents-stats" hidden aria-label="Agent summary"></div>
+
+			<div id="my-agents-toolbar" class="my-agents-toolbar" hidden>
+				<div class="my-agents-search">
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+					<input
+						id="my-agents-search-input"
+						type="search"
+						placeholder="Search agents…"
+						aria-label="Search your agents by name"
+						autocomplete="off"
+					/>
+				</div>
+				<label class="my-agents-sort">
+					<span class="my-agents-sort__label">Sort</span>
+					<select id="my-agents-sort-select" aria-label="Sort agents">
+						<option value="recent">Newest first</option>
+						<option value="oldest">Oldest first</option>
+						<option value="name">Name (A–Z)</option>
+						<option value="chats">Most chats</option>
+					</select>
+				</label>
+			</div>
 
 			<div
 				id="my-agents-error"

@@ -4407,6 +4407,9 @@ function bindEvents() {
 	// Avatar detail back button.
 	const avatarDetailBack = $('avatar-detail-back');
 	if (avatarDetailBack) avatarDetailBack.addEventListener('click', () => { _avatarDetailId = null; navTo('/marketplace'); });
+	// Plugin detail back button → return to the tools tab.
+	const toolDetailBack = $('tool-detail-back');
+	if (toolDetailBack) toolDetailBack.addEventListener('click', () => { _toolDetailId = null; navTo('/marketplace?tab=tools'); });
 	$('d-fork').addEventListener('click', fork);
 	$('d-bookmark').addEventListener('click', toggleBookmark);
 	$('d-export-json')?.addEventListener('click', exportAgentJson);
@@ -5974,7 +5977,12 @@ function renderPluginCard(p, installed) {
 	const toolCount = Array.isArray(manifest?.api) ? manifest.api.length : 0;
 	const isInstalled = installed.has(p.identifier);
 	const cat = escapeHtml(p.category || manifest?.meta?.category || 'general');
-	const icon = (p.name || p.identifier || '?')[0].toUpperCase();
+	// Prefer a manifest emoji/glyph avatar; image URLs and missing avatars fall
+	// back to the name's first letter so the grid stays visually uniform.
+	const av = manifest?.meta?.avatar;
+	const icon = av && !/^(https?:\/\/|\/)/.test(av)
+		? escapeHtml(av)
+		: (p.name || p.identifier || '?')[0].toUpperCase();
 	const priceBadge = priceBadgeHtml(p.price);
 	// Whole card deep-links to the plugin detail page when it has a DB id.
 	const linkAttrs = p.id
@@ -6002,6 +6010,281 @@ function renderPluginCard(p, installed) {
 				${isInstalled ? 'Installed ✓' : hasActivePrice(p.price) ? `Buy ${escapeHtml(formatAssetPrice(p.price))}` : 'Add to Agent'}
 			</button>
 		</div>
+	</div>`;
+}
+
+// ── Plugin detail page ──────────────────────────────────────────────────────
+// Rich, deep-linkable page for a single plugin at /marketplace/tools/:id.
+// Lists every tool the plugin exposes with its parameters, plus the system
+// role, author, pricing and an install / buy action.
+
+let _toolDetailId = null;
+
+function _setToolDetailState({ skeleton = false, empty = false, body = false }) {
+	const skel = $('tool-detail-skeleton');
+	const emptyEl = $('tool-detail-empty');
+	const bodyEl = $('tool-detail-body');
+	if (skel) skel.hidden = !skeleton;
+	if (emptyEl) emptyEl.hidden = !empty;
+	if (bodyEl) bodyEl.hidden = !body;
+}
+
+function _renderToolDetailEmpty() {
+	_setToolDetailState({ empty: true });
+	setSocialMeta({
+		title: 'Plugin not found · three.ws',
+		description: 'This plugin may have been removed or the link is wrong.',
+		url: location.origin + location.pathname,
+		image: _socialMetaDefaults.image,
+	});
+}
+
+async function loadToolDetail(id) {
+	if (_toolDetailId === id) return; // already rendered for this id
+
+	_setToolDetailState({ skeleton: true });
+
+	// Try the in-memory list first (instant if the user browsed there), then
+	// fetch the canonical record. Don't cache the id until a successful render
+	// so a transient failure leaves the page retryable.
+	let plugin = pluginState.items.find((p) => p.id === id || p.identifier === id);
+	if (!plugin) {
+		try {
+			const r = await fetch(`${PLUGIN_API}/${encodeURIComponent(id)}`);
+			if (r.ok) {
+				const j = await r.json();
+				plugin = j?.data?.plugin || null;
+			}
+		} catch (err) {
+			console.error('[marketplace] tool detail fetch', err);
+		}
+	}
+
+	// Re-check the route — the user may have navigated away during the fetch.
+	if (readRoute().view !== 'tool-detail') return;
+
+	if (!plugin) {
+		_renderToolDetailEmpty();
+		return;
+	}
+
+	renderToolDetail(plugin);
+	_toolDetailId = id;
+}
+
+function renderToolDetail(p) {
+	const manifest = p.manifest_json ?? p;
+	const title = p.name || manifest?.meta?.title || p.identifier || 'Untitled plugin';
+	const desc = p.description || manifest?.meta?.description || '';
+	const category = p.category || manifest?.meta?.category || 'general';
+	const tags = p.tags || manifest?.meta?.tags || [];
+	const tools = Array.isArray(manifest?.api) ? manifest.api : [];
+	const version = manifest?.version || null;
+	const homepage = manifest?.homepage || null;
+	const manifestUrl = p.manifest_url || manifest?._manifest_url || null;
+	const systemRole = manifest?.systemRole || '';
+	const avatarUrl = manifest?.meta?.avatar || null;
+	const rating = Number(p.avg_rating) || 0;
+
+	// Icon — manifest avatar may be an image URL or an emoji/glyph. Anything
+	// that looks like a URL renders as an <img>; everything else (emoji, short
+	// glyph) renders as text, falling back to the title's first letter.
+	const iconEl = $('tool-detail-icon');
+	if (iconEl) {
+		const isUrl = avatarUrl && /^(https?:\/\/|\/)/.test(avatarUrl);
+		if (isUrl) {
+			iconEl.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="" loading="lazy" />`;
+		} else {
+			iconEl.textContent = avatarUrl || (title || '?')[0].toUpperCase();
+		}
+	}
+
+	$('tool-detail-name').textContent = title;
+	$('tool-detail-id').textContent = p.identifier || '';
+
+	const authorEl = $('tool-detail-author');
+	const authorName = p.author?.display_name || (typeof manifest?.author === 'string' ? manifest.author : null);
+	if (authorEl) {
+		if (authorName) {
+			authorEl.hidden = false;
+			authorEl.textContent = `by ${authorName}`;
+		} else {
+			authorEl.hidden = true;
+			authorEl.textContent = '';
+		}
+	}
+
+	// Price badge (reuses the listing pill).
+	const priceEl = $('tool-detail-price');
+	if (priceEl) priceEl.innerHTML = priceBadgeHtml(p.price);
+
+	// Pills — category, tool count, installs, rating, version, then tags.
+	const pillsEl = $('tool-detail-pills');
+	if (pillsEl) {
+		const pills = [];
+		pills.push(`<span class="stat-pill">${escapeHtml(category)}</span>`);
+		pills.push(`<span class="stat-pill">${tools.length} tool${tools.length !== 1 ? 's' : ''}</span>`);
+		pills.push(`<span class="stat-pill">↓ ${fmtNumber(p.install_count || 0)} installs</span>`);
+		if (rating > 0) pills.push(`<span class="stat-pill">★ ${rating.toFixed(1)}</span>`);
+		if (version) pills.push(`<span class="stat-pill">v${escapeHtml(String(version))}</span>`);
+		tags.forEach((t) => {
+			pills.push(`<button type="button" class="tag-pill" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</button>`);
+		});
+		pillsEl.innerHTML = pills.join('');
+		pillsEl.querySelectorAll('[data-tag]').forEach((btn) => {
+			btn.addEventListener('click', () => navTo(`/marketplace?tab=tools&tag=${encodeURIComponent(btn.dataset.tag)}`));
+		});
+	}
+
+	const descEl = $('tool-detail-desc');
+	if (descEl) {
+		descEl.textContent = desc;
+		descEl.hidden = !desc;
+	}
+
+	// Install / buy CTA.
+	const installBtn = $('tool-detail-install');
+	if (installBtn) {
+		const refreshCta = () => {
+			const installed = getInstalledIds().has(p.identifier);
+			const paid = hasActivePrice(p.price);
+			installBtn.classList.toggle('installed', installed);
+			installBtn.textContent = installed
+				? 'Installed ✓ — Remove'
+				: paid
+					? `Buy ${formatAssetPrice(p.price)}`
+					: 'Add to Agent';
+		};
+		refreshCta();
+		installBtn.onclick = () => {
+			const installed = getInstalledIds().has(p.identifier);
+			const paid = hasActivePrice(p.price);
+			if (paid && p.id && !installed) {
+				openAssetPurchaseFlow({
+					item_type: 'plugin',
+					item_id: p.id,
+					label: title,
+					price: p.price,
+				});
+				return;
+			}
+			togglePluginInstall(manifest);
+			refreshCta();
+		};
+	}
+
+	// Share.
+	const shareBtn = $('tool-detail-share');
+	if (shareBtn) {
+		shareBtn.onclick = async () => {
+			const shareUrl = location.href;
+			const shareTitle = `${title} — three.ws plugin`;
+			const shareText = desc || 'Check out this agent plugin on three.ws';
+			if (navigator.share) {
+				try { await navigator.share({ title: shareTitle, text: shareText, url: shareUrl }); return; }
+				catch { /* cancelled — fall through to copy */ }
+			}
+			try {
+				await navigator.clipboard.writeText(shareUrl);
+				const original = shareBtn.textContent;
+				shareBtn.textContent = 'Link copied ✓';
+				shareBtn.classList.add('copied');
+				setTimeout(() => { shareBtn.textContent = original; shareBtn.classList.remove('copied'); }, 1800);
+			} catch (err) {
+				console.error('[marketplace] tool share copy', err);
+			}
+		};
+	}
+
+	// External links.
+	const homeBtn = $('tool-detail-homepage');
+	if (homeBtn) {
+		if (homepage) { homeBtn.hidden = false; homeBtn.href = homepage; }
+		else homeBtn.hidden = true;
+	}
+	const manifestBtn = $('tool-detail-manifest');
+	if (manifestBtn) {
+		if (manifestUrl) { manifestBtn.hidden = false; manifestBtn.href = manifestUrl; }
+		else manifestBtn.hidden = true;
+	}
+
+	// System role.
+	const sysWrap = $('tool-detail-systemrole-wrap');
+	const sysEl = $('tool-detail-systemrole');
+	if (sysWrap && sysEl) {
+		if (systemRole) { sysWrap.hidden = false; sysEl.textContent = systemRole; }
+		else sysWrap.hidden = true;
+	}
+
+	// Tools list — the heart of the detail page.
+	const toolsWrap = $('tool-detail-tools-wrap');
+	const toolsEl = $('tool-detail-tools');
+	const toolsCount = $('tool-detail-tools-count');
+	if (toolsCount) toolsCount.textContent = tools.length ? `${tools.length}` : '';
+	if (toolsWrap && toolsEl) {
+		if (!tools.length) {
+			toolsWrap.hidden = true;
+		} else {
+			toolsWrap.hidden = false;
+			toolsEl.innerHTML = tools.map(renderToolCard).join('');
+		}
+	}
+
+	// Social meta for link unfurls.
+	setSocialMeta({
+		title: `${title} — three.ws plugin`,
+		description: desc || `An agent plugin exposing ${tools.length} tool${tools.length !== 1 ? 's' : ''} on three.ws.`,
+		url: location.origin + location.pathname,
+		image: avatarUrl || _socialMetaDefaults.image,
+	});
+	document.title = `${title} · three.ws`;
+
+	_setToolDetailState({ body: true });
+}
+
+function renderToolCard(tool) {
+	const name = escapeHtml(tool?.name || 'tool');
+	const description = escapeHtml(tool?.description || '');
+	const endpoint = tool?.url ? `<span class="tool-card-endpoint">${escapeHtml(tool.url)}</span>` : '';
+	const params = tool?.parameters;
+	const props = params && typeof params.properties === 'object' ? params.properties : null;
+	const required = new Set(Array.isArray(params?.required) ? params.required : []);
+
+	let paramsHtml = '';
+	if (props && Object.keys(props).length) {
+		const rows = Object.entries(props).map(([key, schema]) => {
+			const type = schema?.type ? escapeHtml(String(schema.type)) : 'any';
+			const pdesc = schema?.description ? `<div class="tool-param-desc">${escapeHtml(schema.description)}</div>` : '';
+			const isReq = required.has(key);
+			const enumVals = Array.isArray(schema?.enum) ? schema.enum : null;
+			const enumHtml = enumVals
+				? `<div class="tool-param-enum">${enumVals.map((v) => `<code>${escapeHtml(String(v))}</code>`).join('')}</div>`
+				: '';
+			return `<div class="tool-param">
+				<div class="tool-param-row">
+					<span class="tool-param-name">${escapeHtml(key)}</span>
+					<span class="tool-param-type">${type}</span>
+					${isReq ? '<span class="tool-param-req">required</span>' : ''}
+				</div>
+				${pdesc}
+				${enumHtml}
+			</div>`;
+		}).join('');
+		paramsHtml = `<div class="tool-card-params">
+			<div class="tool-card-params-label">Parameters</div>
+			${rows}
+		</div>`;
+	} else {
+		paramsHtml = '<p class="tool-card-noparams">No parameters.</p>';
+	}
+
+	return `<div class="tool-card">
+		<div class="tool-card-head">
+			<span class="tool-card-name">${name}</span>
+			${endpoint}
+		</div>
+		${description ? `<p class="tool-card-desc">${description}</p>` : ''}
+		${paramsHtml}
 	</div>`;
 }
 
