@@ -14,7 +14,11 @@
 //   • Deep-linkable: every control reflects into the URL query so a
 //     configured embed can be shared and re-opened (e.g. /embed?avatar=x).
 
+import { openAvatarPicker } from '../avatar-gallery-picker.js';
+
 const ORIGIN = 'https://three.ws';
+
+const GALLERY_SVG = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`;
 
 const MODES = [
 	{ id: 'static',  label: 'Static',  hint: 'Avatar stands in an idle pose. No controls.' },
@@ -42,6 +46,7 @@ const SIZE_PRESETS = {
 const DEFAULTS = {
 	mode: 'walking',
 	avatar: '',
+	avatarMeta: null, // { name, thumbnail_url } — resolved for the picker chip, not serialized
 	controls: 'joystick',
 	bg: 'transparent',
 	env: 'studio',
@@ -106,10 +111,80 @@ function mountEmbedEditor(root, opts = {}) {
 	const modeHint = el('p', { className: 'ee-hint' });
 	panel.append(field('Mode', modeRow), modeHint);
 
-	// Avatar id (shared by all modes)
-	const avatarInput = el('input', { type: 'text', placeholder: 'agent / avatar id (e.g. agt_abc123)', value: cfg.avatar });
-	avatarInput.addEventListener('input', () => { cfg.avatar = avatarInput.value.trim(); sync(); });
-	const avatarField = field('Avatar ID', avatarInput);
+	// Avatar (shared by all modes) — primary action is the gallery picker so
+	// visitors never have to know or type an ID. A collapsible "paste an ID"
+	// fallback stays available for power users and deep links.
+	const avatarTrigger = el('button', { type: 'button', className: 'ee-picker', 'aria-haspopup': 'dialog' });
+	avatarTrigger.addEventListener('click', openPicker);
+
+	const avatarInput = el('input', { type: 'text', className: 'ee-idinput', placeholder: 'or paste an avatar / agent id', value: cfg.avatar });
+	avatarInput.addEventListener('input', () => {
+		cfg.avatar = avatarInput.value.trim();
+		cfg.avatarMeta = null;
+		renderTrigger();
+		sync();
+		if (cfg.avatar) resolveAvatarMeta(cfg.avatar);
+	});
+
+	const avatarField = field('Avatar', el('div', { className: 'ee-pickerwrap' }, [avatarTrigger, avatarInput]));
+
+	function renderTrigger() {
+		avatarTrigger.innerHTML = '';
+		if (cfg.avatar) {
+			const meta = cfg.avatarMeta;
+			const thumb = meta?.thumbnail_url
+				? el('img', { className: 'ee-picker-thumb', src: meta.thumbnail_url, alt: '', loading: 'lazy', decoding: 'async' })
+				: el('span', { className: 'ee-picker-thumb ee-picker-thumb--ph' });
+			avatarTrigger.append(
+				thumb,
+				el('span', { className: 'ee-picker-name', textContent: meta?.name || cfg.avatar }),
+				el('span', { className: 'ee-picker-action', textContent: 'Change' }),
+			);
+			avatarTrigger.classList.add('is-selected');
+			avatarTrigger.setAttribute('aria-label', `Selected avatar: ${meta?.name || cfg.avatar}. Click to change.`);
+		} else {
+			avatarTrigger.append(
+				el('span', { className: 'ee-picker-icon', innerHTML: GALLERY_SVG }),
+				el('span', { className: 'ee-picker-name', textContent: cfg.mode === 'chat' ? 'Browse agents' : 'Browse avatars' }),
+				el('span', { className: 'ee-picker-action', textContent: 'Open' }),
+			);
+			avatarTrigger.classList.remove('is-selected');
+			avatarTrigger.setAttribute('aria-label', 'Browse avatars');
+		}
+	}
+
+	async function openPicker() {
+		const avatar = await openAvatarPicker({
+			source: 'both',
+			selectedId: cfg.avatar,
+			showModes: false,
+			title: cfg.mode === 'chat' ? 'Choose an agent' : 'Choose an avatar',
+			ctaLabel: 'Use this avatar',
+		});
+		if (!avatar) return;
+		cfg.avatar = avatar.id;
+		cfg.avatarMeta = { name: avatar.name, thumbnail_url: avatar.thumbnail_url };
+		avatarInput.value = avatar.id;
+		renderTrigger();
+		sync();
+	}
+
+	// Resolve name + thumbnail for a deep-linked or pasted ID so the trigger
+	// shows a real chip instead of a bare UUID. Token guards against races.
+	let _metaToken = 0;
+	async function resolveAvatarMeta(id) {
+		const token = ++_metaToken;
+		try {
+			const res = await fetch(`/api/avatars/${encodeURIComponent(id)}`, { credentials: 'include' });
+			if (!res.ok) return;
+			const { avatar } = await res.json();
+			if (token !== _metaToken || cfg.avatar !== id || !avatar) return;
+			cfg.avatarMeta = { name: avatar.name, thumbnail_url: avatar.thumbnail_url };
+			renderTrigger();
+		} catch {
+			// Non-fatal: the chip just falls back to showing the raw ID.
+		}
+	}
 
 	// Controls (walking only)
 	const controlsSelect = el('select', {}, CONTROL_OPTIONS.map((c) =>
@@ -257,6 +332,7 @@ function mountEmbedEditor(root, opts = {}) {
 
 		reflectUrl();
 
+		renderTrigger();
 		snippetBox.value = buildSnippet(cfg);
 		renderPreview();
 	}
@@ -312,6 +388,7 @@ function mountEmbedEditor(root, opts = {}) {
 		history.replaceState(null, '', url);
 	}
 
+	if (cfg.avatar) resolveAvatarMeta(cfg.avatar);
 	sync();
 }
 
@@ -425,6 +502,25 @@ function injectStyles() {
 			transition:border-color .15s ease;
 		}
 		.embed-editor input:focus, .embed-editor select:focus { border-color:#6366f1; }
+		.ee-pickerwrap { display:flex; flex-direction:column; gap:8px; }
+		.ee-picker {
+			display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px; min-height:48px;
+			background:#15181d; border:1px solid #2a2f37; border-radius:10px; color:#fff;
+			font-family:inherit; font-size:13px; cursor:pointer; text-align:left;
+			transition:border-color .15s ease, background .15s ease;
+		}
+		.ee-picker:hover { border-color:#3a4250; background:#181c22; }
+		.ee-picker:focus-visible { outline:2px solid #6366f1; outline-offset:2px; }
+		.ee-picker.is-selected { border-color:#2f3845; }
+		.ee-picker-icon { display:flex; align-items:center; justify-content:center; width:32px; height:32px; flex:0 0 auto; border-radius:8px; background:#1f242c; color:#818cf8; }
+		.ee-picker-thumb { width:32px; height:32px; flex:0 0 auto; border-radius:8px; object-fit:cover; background:#1f242c; }
+		.ee-picker-thumb--ph { background:linear-gradient(135deg,#1f242c,#2a3340); }
+		.ee-picker-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+		.ee-picker.is-selected .ee-picker-name { color:#e4e4e7; font-weight:600; }
+		.ee-picker:not(.is-selected) .ee-picker-name { color:#a1a1aa; font-weight:500; }
+		.ee-picker-action { flex:0 0 auto; font-size:11px; font-weight:600; color:#818cf8; padding:3px 9px; border-radius:6px; background:#1f242c; }
+		.ee-picker:hover .ee-picker-action { color:#a5b4fc; }
+		.ee-idinput { font-size:12px !important; padding:7px 11px !important; }
 		.ee-segment { display:flex; gap:6px; background:#121519; border:1px solid #21262e; border-radius:10px; padding:4px; }
 		.ee-segment-sm { gap:4px; }
 		.ee-seg-btn {

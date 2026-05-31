@@ -182,31 +182,6 @@ groundShadowCatcher.receiveShadow = true;
 groundShadowCatcher.visible = !SHOW_GROUND;
 scene.add(groundShadowCatcher);
 
-// Apply the requested environment preset. studio/void keep the canvas
-// transparent (avatar floats on the host page); scenic presets paint a sky +
-// matching fog and tint the ground. An explicit ?bg color always wins as the
-// clear color, so bg + env compose predictably.
-function applyEmbedEnvironment(envId) {
-	const env = WALK_ENVIRONMENTS[envId] || WALK_ENVIRONMENTS.studio;
-
-	if (env.ground != null && groundOpaque.material) {
-		groundOpaque.material.color.setHex(env.ground);
-	}
-
-	if (env.sky == null) {
-		if (!HAS_SOLID_BG) { scene.background = null; scene.fog = null; }
-		return;
-	}
-
-	scene.fog = new Fog(env.fog, 18, 55);
-	hemi.color.setHex(env.sky);
-	if (!HAS_SOLID_BG) {
-		scene.background = new Color(env.sky);
-		renderer.setClearColor(env.sky, 1);
-	}
-}
-applyEmbedEnvironment(ENV_PARAM);
-
 // Apply a scene preset. An explicit ?bg= wins over the preset background so
 // transparent/custom embeds keep working; otherwise the preset paints the
 // clear color and matching fog. Live-swappable via the `walk:setEnv` message.
