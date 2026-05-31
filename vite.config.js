@@ -1273,10 +1273,14 @@ const appConfig = {
 							cacheableResponse: { statuses: [0, 200] },
 						},
 					},
-					{
-						urlPattern: /^https:\/\/three\.ws\/api\/.*/i,
-						handler: 'NetworkOnly',
-					},
+					// NOTE: /api/* is intentionally NOT registered as a runtime
+					// route. No route → the SW never calls respondWith for API
+					// requests, so the browser fetches them natively (still
+					// network-only, never cached). A NetworkOnly rule here would
+					// be behaviourally identical on success but re-wraps any
+					// transient fetch rejection as an uncaught `no-response`
+					// WorkboxError, spamming the console. Let the page's own
+					// fetch().catch own those failures instead.
 				],
 			},
 		}),
