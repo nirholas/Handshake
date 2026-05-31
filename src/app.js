@@ -736,6 +736,31 @@ class App {
 				btn.dataset.avatarPrefilled = '1';
 			}
 
+			// Solana-first: three.ws prioritizes Solana over any EVM registration.
+			// A Metaplex Core identity (sol_mint_address) or a Solana wallet
+			// (solana_address) means this agent lives on Solana — surface that
+			// even when a legacy ERC-8004 chain_id is also present on the record.
+			const meta = agent.meta || {};
+			const solRef = meta.sol_mint_address || meta.solana_address || null;
+			if (solRef) {
+				const onDevnet = meta.network === 'devnet';
+				const path = meta.sol_mint_address ? 'token' : 'account';
+				const url = onDevnet
+					? `https://explorer.solana.com/address/${solRef}?cluster=devnet`
+					: `https://solscan.io/${path}/${solRef}`;
+				btn.classList.add('is-deployed');
+				btn.href = url;
+				btn.target = '_blank';
+				btn.rel = 'noopener';
+				if (label) label.textContent = 'Deployed ✓ Solana';
+				btn.setAttribute(
+					'aria-label',
+					'This agent is on Solana. Open the explorer in a new tab.',
+				);
+				btn.setAttribute('title', 'On-chain on Solana — view on explorer');
+				return;
+			}
+
 			const isDeployed = agent.erc8004_agent_id && agent.chain_id;
 			if (!isDeployed) return;
 

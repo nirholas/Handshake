@@ -910,7 +910,7 @@ function wirePrimaryCTA() {
 // ── Deploy on-chain mirror ────────────────────────────────────────────────
 //
 // /src/app.js owns the canonical deploy CTA via #deploy-onchain-btn — it sets
-// .href, .hidden, and the inner [data-state-label] (e.g. "Deployed ✓ base").
+// .href, .hidden, and the inner [data-state-label] (e.g. "Deployed ✓ Solana").
 // We mirror that state into two visible Next surfaces:
 //
 //   • #nxt-deploy-btn        — pill in the secondary action bar
