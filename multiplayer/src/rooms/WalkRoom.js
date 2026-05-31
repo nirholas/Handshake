@@ -124,8 +124,11 @@ export class WalkRoom extends Room {
 		const tier = cleanTier(options?.tier);
 		if (tier !== 'holders') return true; // open General world
 
+		// A holder world must name a real coin. Throw (rather than return false) so
+		// every holder-gate refusal reaches the client as a `holder_pass`-prefixed
+		// error its gate UI routes on — a uniform denial contract.
 		const coin = cleanCoin(options?.coin);
-		if (!coin) return false; // a holder world must name a real coin
+		if (!coin) throw new Error('holder_pass_required');
 
 		const pass = verifyHolderPass(options?.holderPass);
 		if (!pass) {
@@ -136,9 +139,10 @@ export class WalkRoom extends Room {
 		if (pass.mint !== coin || pass.tier !== 'holders') {
 			throw new Error('holder_pass_mismatch');
 		}
-		// Carry the priced holding through to onJoin so the player's verified value
-		// can drive in-world affordances without a second lookup.
-		client.userData = { holderUsd: pass.usd, holderWallet: pass.wallet };
+		// Carry the verified holding + signed floor through to onJoin/onCreate so
+		// in-world affordances and the displayed requirement come from the pass,
+		// never from unsigned client options.
+		client.userData = { holderUsd: pass.usd, holderWallet: pass.wallet, holderMinUsd: pass.minUsd };
 		return true;
 	}
 
@@ -166,8 +170,15 @@ export class WalkRoom extends Room {
 		// world leaves both blank/zero.
 		this.state.tier = cleanTier(options?.tier);
 		if (this.state.tier === 'holders') {
-			const min = Number(options?.holderMinUsd);
-			this.state.holderMinUsd = Number.isFinite(min) && min > 0 ? min : 8;
+			// The displayed floor comes from the signed pass (the issuer's real
+			// HOLDER_MIN_USD), not the client's unsigned `holderMinUsd` option which a
+			// malicious first-joiner could otherwise use to misstate the requirement
+			// for everyone in the room. Fall back to the server's own env, then 8.
+			const signed = verifyHolderPass(options?.holderPass)?.minUsd;
+			const envMin = Number(process.env.HOLDER_MIN_USD);
+			this.state.holderMinUsd = Number.isFinite(signed) && signed > 0
+				? signed
+				: (Number.isFinite(envMin) && envMin > 0 ? envMin : 8);
 		}
 		// Persisted-build key. General and Holders are separate worlds for the same
 		// coin, so their voxel builds must persist independently — otherwise the two
@@ -242,10 +253,16 @@ export class WalkRoom extends Room {
 		);
 	}
 
-	onDispose() {
+	async onDispose() {
 		// Persist the final build so the community's creation survives the room
-		// being torn down when the last player leaves.
-		blockStore.flush(this.worldKey).catch(() => {});
+		// being torn down when the last player leaves. Awaited (Colyseus waits on
+		// the returned promise) so the Redis write lands before the room is gone —
+		// fire-and-forget here would race the process exiting on a redeploy.
+		try {
+			await blockStore.flush(this.worldKey);
+		} catch (err) {
+			console.warn(`[walk_world ${this.roomId}] final flush failed:`, err?.message);
+		}
 		console.log(`[walk_world ${this.roomId}] disposed`);
 	}
 

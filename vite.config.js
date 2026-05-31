@@ -223,6 +223,7 @@ const appConfig = {
 				handle: resolve(__dirname, 'pages/handle.html'),
 				'a-embed': resolve(__dirname, 'pages/a-embed.html'),
 				'a-edit': resolve(__dirname, 'pages/a-edit.html'),
+				'a-me': resolve(__dirname, 'pages/a-me.html'),
 				'pump-live': resolve(__dirname, 'pages/pump-live.html'),
 				'pump-dashboard': resolve(__dirname, 'pages/pump-dashboard.html'),
 				'pump-visualizer': resolve(__dirname, 'pages/pump-visualizer.html'),

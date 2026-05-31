@@ -4448,9 +4448,17 @@ function bindEvents() {
 	$('skills-search')?.addEventListener('input', (e) => {
 		clearTimeout(skillsSearchTimer);
 		skillsSearchTimer = setTimeout(() => {
-			skillsState.q = e.target.value.trim();
-			renderSkillsGrid();
-		}, 150);
+			const next = e.target.value.trim();
+			if (next === skillsState.q) return;
+			skillsState.q = next;
+			loadSkillsTab(true);
+		}, 250);
+	});
+	$('skills-sort')?.addEventListener('change', (e) => {
+		const next = e.target.value;
+		if (next === skillsState.sort) return;
+		skillsState.sort = next;
+		loadSkillsTab(true);
 	});
 	document.querySelectorAll('[data-skill-filter]').forEach((chip) => {
 		chip.addEventListener('click', () => {

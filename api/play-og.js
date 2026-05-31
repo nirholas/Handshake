@@ -69,8 +69,13 @@ export default async function handler(req) {
 
   const ticker = coin?.symbol ? `$${String(coin.symbol).replace(/^\$/, '')}` : null;
   const name = coin?.name || (mint ? 'this coin' : 'any coin');
-  const mcap = formatMarketCap(coin?.marketCap);
-  const image = coin?.image || null;
+  // /api/pump/coin returns the raw pump.fun body — match the same field
+  // fallbacks the in-world client uses (coincommunities.js) so the share card
+  // actually populates instead of always rendering the blank/zero state.
+  const mcap = formatMarketCap(
+    coin?.usd_market_cap || coin?.market_cap_usd || coin?.market_cap || coin?.marketCap || 0,
+  );
+  const image = coin?.image_uri || coin?.image || coin?.imageUri || null;
 
   const heading = ticker ? `Walk into ${ticker}` : 'Walk into any coin';
 

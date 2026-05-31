@@ -21,6 +21,7 @@ import { monitor } from '@colyseus/monitor';
 
 import { WalkRoom } from './rooms/WalkRoom.js';
 import { GameRoom } from './rooms/GameRoom.js';
+import { blockStore } from './block-store.js';
 
 const PORT = Number(process.env.PORT || 2567);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -34,6 +35,17 @@ const ALLOWED_ORIGINS = (
 	.split(',')
 	.map((s) => s.trim())
 	.filter(Boolean);
+
+// Fail fast on an insecure production config. Without a real shared secret the
+// holder gate is forgeable by anyone (both this process and the Vercel signer
+// fall back to a public dev secret otherwise), so refuse to boot prod without it
+// rather than silently shipping a bypassable gate.
+if (process.env.NODE_ENV === 'production' && !process.env.HOLDER_PASS_SECRET) {
+	console.error(
+		'[multiplayer] FATAL: HOLDER_PASS_SECRET is required in production — the holder gate would be forgeable. Refusing to start.',
+	);
+	process.exit(1);
+}
 
 const app = express();
 
@@ -137,6 +149,19 @@ gameServer
 		process.exit(1);
 	});
 
+// Keep the single instance alive through an isolated fault. A throw inside one
+// onMessage handler, or an unawaited rejection deep in a dependency, would
+// otherwise take down the whole process (min=1/max=1) and every connected
+// player with it. We log loudly and keep serving — the offending message/room
+// is lost, the server is not. (A crash-loop on a corrupt state would still be
+// caught by the host's health check.)
+process.on('uncaughtException', (err) => {
+	console.error('[multiplayer] uncaughtException (kept alive):', err);
+});
+process.on('unhandledRejection', (reason) => {
+	console.error('[multiplayer] unhandledRejection (kept alive):', reason);
+});
+
 // Clean shutdown on SIGTERM/SIGINT so deploys don't drop sessions abruptly.
 const shutdown = async (signal) => {
 	console.log(`[multiplayer] ${signal} received — shutting down`);
@@ -144,6 +169,13 @@ const shutdown = async (signal) => {
 		await gameServer.gracefullyShutdown(true);
 	} catch (err) {
 		console.error('[multiplayer] shutdown error:', err);
+	}
+	// Belt-and-suspenders: persist any world whose debounced save hadn't fired
+	// before the room disposed, so a redeploy never drops the last few edits.
+	try {
+		await blockStore.flushAll();
+	} catch (err) {
+		console.error('[multiplayer] final block flush error:', err);
 	}
 	process.exit(0);
 };

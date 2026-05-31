@@ -156,6 +156,14 @@ class BlockStore {
 			}
 		}
 	}
+
+	// Flush every world that still holds in-memory state. Called on process
+	// shutdown (SIGTERM on redeploy) so builds whose debounce timer hasn't fired
+	// yet aren't lost between the last edit and the instance going away.
+	async flushAll() {
+		if (!this._redisReady) return;
+		await Promise.allSettled([...this._mem.keys()].map((coin) => this.flush(coin)));
+	}
 }
 
 // One store shared by every WalkRoom instance in the process — that shared

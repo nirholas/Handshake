@@ -34,6 +34,14 @@ let _warned = false;
 function secret() {
 	const s = process.env.HOLDER_PASS_SECRET;
 	if (s) return s;
+	// Fail closed in production: minting passes with a publicly-known secret would
+	// let anyone forge entry into a coin's holder world. The endpoint returns 500
+	// instead (wrap() catches this), which is the correct fail-closed behaviour.
+	if (process.env.NODE_ENV === 'production') {
+		throw new Error(
+			'[holder-pass] HOLDER_PASS_SECRET is required in production — refusing to mint passes with the dev secret.',
+		);
+	}
 	if (!_warned) {
 		_warned = true;
 		console.warn(
@@ -63,6 +71,9 @@ export function signHolderPass({ mint, wallet, usd }) {
 		mint,
 		wallet,
 		usd: Math.round((Number(usd) || 0) * 100) / 100,
+		// The floor this pass was gated on, signed so the game server can display
+		// the real requirement without trusting a client-supplied value.
+		minUsd: HOLDER_MIN_USD,
 		tier: 'holders',
 		iat: now,
 		exp: now + PASS_TTL_S,
