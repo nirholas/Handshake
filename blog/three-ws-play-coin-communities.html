@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>We turned every memecoin into a live 3D world you can walk into</title>
+<meta name="description" content="How we built /play: isolated multiplayer worlds keyed to a token's mint, driven by live on-chain trades, with proximity voice chat, an in-world buy flow, and worlds generated deterministically from the mint address.">
+<meta name="keywords" content="three.ws, /play, Coin Communities, pump.fun, 3D worlds, multiplayer, Colyseus, WebRTC, spatial voice, Three.js, Solana, memecoin">
+<link rel="canonical" href="https://three.ws/blog/three-ws-play-coin-communities.html">
+<meta property="og:title" content="We turned every memecoin into a live 3D world you can walk into">
+<meta property="og:description" content="How we built /play: every coin becomes a shared 3D world that reacts to its own on-chain trades, with proximity voice and an in-world buy flow.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://three.ws/blog/three-ws-play-coin-communities.html">
+<meta property="og:image" content="https://three.ws/play-og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="We turned every memecoin into a live 3D world you can walk into">
+<meta name="twitter:description" content="Every coin becomes a shared 3D world that reacts to its own on-chain trades. Live at three.ws/play.">
+<meta name="twitter:image" content="https://three.ws/play-og.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;-webkit-font-smoothing:antialiased}
+.container{max-width:720px;margin:0 auto;padding:64px 24px}
+header{margin-bottom:48px;padding-bottom:32px;border-bottom:1px solid #eaeaea}
+.eyebrow{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#ff9900;margin-bottom:16px}
+h1{font-size:40px;font-weight:700;letter-spacing:-0.02em;line-height:1.15;margin-bottom:20px}
+h2{font-size:24px;font-weight:700;letter-spacing:-0.01em;margin:40px 0 16px}
+p{margin-bottom:20px;font-size:17px;color:#333}
+a{color:#0066cc;text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:"SF Mono",Monaco,Menlo,monospace;font-size:14px;background:#f5f5f5;padding:2px 6px;border-radius:4px;color:#d63384}
+ul{margin:0 0 20px 24px}
+li{margin-bottom:8px;font-size:17px;color:#333}
+.cta{margin:40px 0;padding:24px;background:#fafafa;border:1px solid #eaeaea;border-radius:12px}
+.cta p{margin-bottom:16px;font-weight:600}
+.cta a{display:inline-block;background:#000;color:#fff;padding:12px 24px;border-radius:8px;font-weight:600}
+.cta a:hover{background:#1a1a1a}
+footer{margin-top:56px;padding-top:32px;border-top:1px solid #eaeaea;font-size:14px;color:#888}
+footer a{color:#888}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<p class="eyebrow">Coin Communities &middot; /play</p>
+<h1>We turned every memecoin into a live 3D world you can walk into</h1>
+<p style="font-size:15px;color:#888;margin-top:8px"><time datetime="2026-05-30">May 30, 2026</time> &middot; three.ws</p>
+</header>
+
+<p style="font-size:20px;line-height:1.6;color:#444;margin-bottom:32px">A memecoin's real asset is its crowd, not its chart. Yet that crowd lives in two flat tabs: a group chat and a candlestick. We wanted to give a community an actual place. So we built /play: every coin becomes a shared, walk-around 3D world where holders show up as avatars, talk by voice, and watch the coin's on-chain activity move the environment around them in real time.</p>
+
+<p>It is live in the browser at <a href="https://three.ws/play">three.ws/play</a>. No install. Pick a coin, you are standing in it. This is a walk through what we built and how it works.</p>
+
+<h2>The model: one coin, one room</h2>
+<p>Every coin is a room, keyed to its mint address. Open the lobby, pick a trending token or search any pump.fun token, and you drop in as a 3D avatar on a plaza with a slowly turning coin totem stamped in that token's art and a jumbotron showing live market cap and the live headcount.</p>
+<p>The isolation is enforced server-side. Our authoritative multiplayer server matches players into the same room instance only when their mint matches, so two communities never bleed into each other. A community becomes a shareable URL (<code>three.ws/play?coin=&lt;mint&gt;</code>): send it, and someone lands directly in that coin's world.</p>
+
+<h2>The world reacts to the chain</h2>
+<p>This is the part people stop and stare at. Each world streams that coin's real on-chain swap tape and pipes it straight into the environment:</p>
+<ul>
+<li>Every buy ripples green across the plaza, every sell ripples red.</li>
+<li>Sustained volume spins the totem faster: the room visibly speeds up when the tape heats up.</li>
+<li>The rolling percent change becomes the weather. Green opens the fog and flares the sun, red closes it in and dims the light. It drifts like a tide, so it reads as atmosphere, not a strobe.</li>
+<li>A whale trade detonates: a column of light fires over the totem, a shockwave rolls out, and a toast names the trade.</li>
+</ul>
+<p>Nobody narrates the action in chat. The world is the action. A quiet coin is a calm world; a coin getting aped is a thunderstorm of green light.</p>
+
+<h2>A trading terminal you can walk up to</h2>
+<p>Past the totem stands a live in-world terminal for the coin. It polls the same swap feed and paints, in real time: the price with sub-decimal memecoin notation, a live session chart, market cap, volume, trade count, buy/sell pressure, and a scrolling ticker of the latest real trades.</p>
+<p>It is not a redirect dressed up as a feature. /play ships a native buy flow: click Buy, our server builds the unsigned pump.fun transaction (handling both the bonding curve and the post-graduation AMM), your wallet signs it, it broadcasts. You can ape the coin while standing inside its world, next to the people who already did.</p>
+
+<h2>Spatial voice, the way your ears work</h2>
+<p>A crowd you cannot talk to is wallpaper. /play has proximity voice chat: walk up to someone and you hear them, drift away and they fade, and their voice comes from their direction. It is peer-to-peer WebRTC with HRTF spatial panning and distance falloff. The server only brokers the connection handshake and never touches the audio, and connections open only to the people near enough to hear, so the voice layer stays light no matter how busy the plaza gets. Voice is opt-in, and a speaker's nameplate pulses so you can pick them out of a crowd.</p>
+
+<h2>A thousand coins, a thousand worlds</h2>
+<p>Each world is generated deterministically from the mint address. We hash the mint into a seed, the seed picks a biome (Verdant Meadow, Dune Sea, Frostfields, Ashen Caldera, Neon Expanse, Lagoon Shore), then nudges that biome's palette and scatters its flora from the same seed. A given coin always renders the same world, and a thousand coins render a thousand recognizably different ones. The world becomes a fingerprint of the mint.</p>
+
+<h2>Build it together, and it stays</h2>
+<p>The world is not read-only. /play includes collaborative voxel building on a shared grid in the plaza. It is server-authoritative, so every block is validated and synced through the room everyone is in, and builds persist: a world's creation is saved per coin and rehydrated when the room spins back up. Come back tomorrow and what your community built is still standing. That is the difference between a chat log and a place: a chat scrolls away, a place accumulates.</p>
+
+<h2>How it actually works</h2>
+<p>For the builders reading: the load-bearing pieces are all real, nothing mocked.</p>
+<ul>
+<li><strong>Authoritative multiplayer.</strong> Worlds run on a Colyseus server. Clients send movement about 15 times a second; the server validates every update (anti-teleport step clamp, world bounds, name and message rate limits), holds authoritative state, and broadcasts only deltas via a binary protocol.</li>
+<li><strong>Live on-chain data.</strong> Chart, ticker, market cap, and the green/red reactor are all driven by live pump.fun trending, search, coin, and swap-tape feeds. An empty coin honestly says "no recent trades yet."</li>
+<li><strong>Avatars.</strong> Players load real GLB/VRM models: a preset, your own upload, a URL, or the 3D agent you built on three.ws. Draco-compressed exports work out of the box.</li>
+<li><strong>Voice.</strong> P2P WebRTC with spatial HRTF audio, proximity-gated.</li>
+<li><strong>Buys.</strong> A native pump.fun transaction built server-side and signed by the user's own wallet.</li>
+</ul>
+<p>The whole platform is open source under Apache 2.0.</p>
+
+<div class="cta">
+<p>Pick a coin and walk into it.</p>
+<a href="https://three.ws/play">Open /play</a>
+</div>
+
+<p>Or open the front door: the pinned <strong>$THREE town</strong> at the top of the lobby, our own coin's world.</p>
+
+<footer>
+<p>three.ws is an open-source platform for 3D AI agents and on-chain communities, an AWS Partner and available on <a href="https://three.ws/blog/three-ws-on-aws-marketplace.html">AWS Marketplace</a>. &middot; <a href="https://three.ws">three.ws</a> &middot; <a href="https://github.com/nirholas/three.ws">github.com/nirholas/three.ws</a></p>
+</footer>
+</div>
+</body>
+</html>
