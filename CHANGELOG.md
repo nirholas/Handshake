@@ -25,7 +25,7 @@ Public feature history for [three.ws](https://three.ws), newest first. Feature d
 - **Claim threews.sol Subdomain** (`/threews/claim`) — Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal showcase page.
 - **Dashboard** (`/dashboard`) — Your account dashboard: agents, avatars, payments, keys, MCP servers, monetization, billing.
 - **GMGN Smart Money** (`/gmgn`) — Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.
-- **Import Ready Player Me** (`/import/rpm`) — Import your Ready Player Me avatar into three.ws and give it an agent brain.
+- **Import an avatar URL** (`/import/rpm`) — Import any GLB or glTF avatar into three.ws and give it an agent brain.
 - **New Agent** (`/agent/new`) — Create a new agent from scratch — avatar, brain, skills, and on-chain identity.
 - **Playground** (`/playground`) — Sandbox for experimenting with agents, prompts, and 3D scenes.
 - **Rider (VR)** (`/rider`) — A free, open-source VR music visualization — surf the musical road among the stars, moon, and lights.

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-05-30T22:23:53.531Z",
+	"generated_at": "2026-05-31T04:29:19.743Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -204,8 +204,8 @@
 				},
 				{
 					"path": "/import/rpm",
-					"title": "Import Ready Player Me",
-					"description": "Import your Ready Player Me avatar into three.ws and give it an agent brain.",
+					"title": "Import an avatar URL",
+					"description": "Import any GLB or glTF avatar into three.ws and give it an agent brain.",
 					"added": "2026-05-25",
 					"auth": null,
 					"indexable": true,

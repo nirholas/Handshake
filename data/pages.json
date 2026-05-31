@@ -172,8 +172,8 @@
 				},
 				{
 					"path": "/import/rpm",
-					"title": "Import Ready Player Me",
-					"description": "Import your Ready Player Me avatar into three.ws and give it an agent brain.",
+					"title": "Import an avatar URL",
+					"description": "Import any GLB or glTF avatar into three.ws and give it an agent brain.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-05-25"
