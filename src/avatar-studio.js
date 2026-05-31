@@ -41,7 +41,7 @@ let idle = null;
 let presets = [];
 let presetsById = new Map();
 
-let workingAppearance = { accessories: [], morphs: {}, colors: {} };
+let workingAppearance = { accessories: [], morphs: {}, colors: {}, hidden: [] };
 let previewedId = null;
 let previewToken = 0;
 let opQueue = Promise.resolve();
@@ -95,6 +95,23 @@ const COLOR_SLOTS = [
 const COLOR_SLOT_BY_ID = new Map(COLOR_SLOTS.map((s) => [s.id, s]));
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 const BODY_TYPE = 'feminine'; // the single shipped base mesh is feminine-presenting
+
+// ── Garment layers (show/hide) ───────────────────────────────────────
+// The base avatar ships its garments as separate skinned meshes, so we can
+// strip it back toward the base body and build the look up again. Hiding a
+// layer toggles its meshes' `visible`; the hidden slot ids persist in
+// appearance.hidden, bake out server-side (api/_lib/bake.js applyHidden), and
+// re-apply on the editor via AccessoryManager.applyLayers. `strip` marks the
+// layers the "Start minimal" shortcut removes — hair is kept.
+const LAYER_SLOTS = [
+	{ id: 'outfit', label: 'Outfit', materials: ['Wolf3D_Outfit_Top', 'Wolf3D_Outfit_Bottom', 'Wolf3D_Outfit_Footwear'], strip: true },
+	{ id: 'glasses', label: 'Glasses', materials: ['Wolf3D_Glasses'], strip: true },
+	{ id: 'hair', label: 'Hair', materials: ['Wolf3D_Hair'], strip: false },
+];
+const EYE_ON =
+	'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF =
+	'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 
 // ── Init ─────────────────────────────────────────────────────────────
 

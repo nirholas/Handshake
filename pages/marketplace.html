@@ -2224,6 +2224,19 @@
 			<!-- Detail view -->
 			<section class="market-detail" id="market-detail" hidden>
 				<button class="market-back" id="market-back" aria-label="Back">←</button>
+
+				<!-- Loading / not-found / error state, overlaid on the detail content.
+				     Shown when a deep-linked agent is missing, unpublished, private,
+				     or fails to load. Replaces the old dead-end "Agent not found". -->
+				<div class="market-detail-state" id="d-state" role="alert" aria-live="polite" hidden>
+					<div class="market-detail-state-inner">
+						<div class="md-state-icon" id="d-state-icon" aria-hidden="true">◍</div>
+						<h2 class="md-state-title" id="d-state-title">Loading agent…</h2>
+						<p class="md-state-body" id="d-state-body"></p>
+						<div class="md-state-actions" id="d-state-actions"></div>
+					</div>
+				</div>
+
 				<div class="market-detail-head">
 					<div class="market-detail-avatar" id="d-avatar"><span class="d-avatar-fallback">▣</span></div>
 					<div class="market-detail-meta">

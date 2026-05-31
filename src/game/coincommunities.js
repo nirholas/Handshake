@@ -102,10 +102,16 @@ class RemotePlayer {
 		// rebuild model
 		this.rig.clear();
 		this.anim = new AnimationManager();
-		resolveAvatarUrl(url).then((u) => buildAvatar(this.rig, u, this.anim).then(({ height }) => {
+		// Tag this load so a slower in-flight GLB can't attach to the rig after the
+		// peer disposed or swapped avatars again — otherwise the resolved model
+		// lands on a cleared/removed rig (orphaned mesh, or two models at once).
+		const token = (this._avatarToken = (this._avatarToken || 0) + 1);
+		const anim = this.anim;
+		resolveAvatarUrl(url).then((u) => buildAvatar(this.rig, u, anim).then(({ height }) => {
+			if (this._disposed || token !== this._avatarToken) return;
 			this.height = height;
-			this.anim.crossfadeTo(this.motion === 'walk' || this.motion === 'run' ? CLIP_WALK : CLIP_IDLE, 0);
-		}));
+			anim.crossfadeTo(this.motion === 'walk' || this.motion === 'run' ? CLIP_WALK : CLIP_IDLE, 0);
+		})).catch(() => {});
 	}
 	apply(player) {
 		this.targetX = player.x; this.targetY = player.y; this.targetZ = player.z; this.targetYaw = player.yaw;
@@ -154,6 +160,7 @@ class RemotePlayer {
 		this.anim.update(dt);
 	}
 	dispose() {
+		this._disposed = true;
 		this.scene.remove(this.rig);
 		this.label.remove();
 		this.bubble?.remove();
@@ -525,6 +532,12 @@ export class CoinCommunities {
 	async enter(coin, opts = {}) {
 		if (this.phase !== 'lobby') return;
 		const tier = opts.tier === 'holders' ? 'holders' : 'general';
+		// Entry does several awaits (gate, manifest, avatar GLB, room connect) and
+		// the Leave button goes live the moment the HUD shows — well before connect
+		// resolves. Stamp this attempt so a continuation that resumes after the
+		// player has backed out (leave() bumps the epoch) bails instead of
+		// resurrecting a torn-down world on a null `this.net`.
+		const epoch = (this._enterEpoch = (this._enterEpoch || 0) + 1);
 
 		// Holder worlds are gated: prove the player holds ≥ the floor of this coin
 		// before we build anything. The gate runs entirely in the lobby so a refusal

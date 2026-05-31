@@ -190,6 +190,10 @@
 			"dest": "/api/agents/[id]/unlocked-skills?id=$1"
 		},
 		{
+			"src": "/api/agents/([^/]+)/skill-access",
+			"dest": "/api/agents/[id]/skill-access?id=$1"
+		},
+		{
 			"src": "/api/billing/receipts",
 			"dest": "/api/billing/receipts"
 		},

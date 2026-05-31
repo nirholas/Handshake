@@ -1530,12 +1530,11 @@ class Agent3DElement extends HTMLElement {
 				try {
 					const detailBase = _scriptOrigin || window.location.origin;
 					const r = await fetch(
-						`${detailBase}/api/marketplace/agents/${_backendId}`,
+						`${detailBase}/api/agents/${_backendId}/skill-access`,
 						{ credentials: 'include' },
 					);
 					if (r.ok) {
-						const j = await r.json();
-						const a = j?.data?.agent;
+						const a = (await r.json())?.data;
 						if (a && (a.skill_prices || a.purchased_skills)) {
 							_skillAccess = skillAccessFromAgentDetail(a);
 						}
@@ -1752,13 +1751,13 @@ class Agent3DElement extends HTMLElement {
 						try {
 							const base = _scriptOrigin || window.location.origin;
 							const r = await fetch(
-								`${base}/api/marketplace/agents/${_backendId}`,
+								`${base}/api/agents/${_backendId}/skill-access`,
 								{ credentials: 'include' },
 							);
 							if (r.ok) {
-								const j = await r.json();
-								if (j?.data?.agent) {
-									this._runtime.skillAccess = skillAccessFromAgentDetail(j.data.agent);
+								const a = (await r.json())?.data;
+								if (a) {
+									this._runtime.skillAccess = skillAccessFromAgentDetail(a);
 								}
 							}
 						} catch {}

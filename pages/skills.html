@@ -3,18 +3,22 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Skills Marketplace · three.ws</title>
+		<title>Skills · three.ws</title>
 		<meta name="description" content="Browse, discover, and install agent skills — tool packs, knowledge bases, and capabilities that make your AI agents smarter." />
-		<meta property="og:title" content="Skills Marketplace · three.ws" />
-		<meta property="og:description" content="Browse agent skills — tool packs, knowledge bases, and capabilities for AI agents." />
-		<meta property="og:type" content="website" />
-		<link rel="icon" href="/favicon.ico" />
-		<link rel="stylesheet" href="/fonts/fonts.css" />
-		<link rel="stylesheet" href="/style.css" />
-		<link rel="stylesheet" href="/nav.css" />
+		<meta name="robots" content="noindex" />
+		<link rel="canonical" href="/marketplace?tab=skills" />
+		<script>
+			// Skills now live inside the marketplace. Forward any old /skills links
+			// (and their query) to the marketplace Skills tab, preserving search.
+			(function () {
+				var src = new URLSearchParams(location.search);
+				var out = new URLSearchParams();
+				out.set('tab', 'skills');
+				if (src.get('q')) out.set('q', src.get('q'));
+				if (src.get('category')) out.set('category', src.get('category'));
+				location.replace('/marketplace?' + out.toString());
+			})();
+		</script>
 	</head>
-	<body>
-		<script src="/embed.js"></script>
-		<script type="module" src="/src/skills.js"></script>
-	</body>
+	<body></body>
 </html>
