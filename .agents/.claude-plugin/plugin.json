@@ -6,5 +6,6 @@
     "name": "nirholas"
   },
   "homepage": "https://three.ws",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "repository": "https://github.com/nirholas/three.ws"
 }

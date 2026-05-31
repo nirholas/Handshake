@@ -10,11 +10,15 @@
   "mcpServers": {
     "3d-agent": {
       "command": "npx",
-      "args": ["-y", "@3d-agent/mcp-server"],
+      "args": [
+        "-y",
+        "@3d-agent/mcp-server"
+      ],
       "env": {
         "MCP_EVM_PAYMENT_ADDRESS": "${MCP_EVM_PAYMENT_ADDRESS}",
         "MCP_SVM_PAYMENT_ADDRESS": "${MCP_SVM_PAYMENT_ADDRESS}"
       }
     }
-  }
+  },
+  "repository": "https://github.com/nirholas/three.ws"
 }
