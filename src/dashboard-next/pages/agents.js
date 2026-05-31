@@ -15,6 +15,7 @@
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, put, del, esc, relTime, ApiError } from '../api.js';
 import { openAvatarPicker } from '../../avatar-gallery-picker.js';
+import { openLaunchTokenModal } from '../../pump/launch-token-modal.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 
