@@ -954,7 +954,7 @@
 			"dest": "/marketplace.html"
 		},
 		{
-			"src": "/marketplace/tools/([^/]+)",
+			"src": "/marketplace/(tools|skills|animations|onchain)/([^/]+)",
 			"dest": "/marketplace.html"
 		},
 		{

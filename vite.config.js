@@ -44,15 +44,43 @@ function discoverDashboardNextInputs() {
 	return entries;
 }
 
+// In a GitHub Codespace the browser reaches the dev server through the
+// forwarded HTTPS domain (`<name>-3000.app.github.dev`) on port 443, not
+// localhost:3000. Vite's HMR client otherwise tries to open a websocket to
+// the raw host:port and both attempts fail ("[vite] failed to connect to
+// websocket"), killing live-reload. Point the HMR client at the forwarded
+// domain over wss/443 when those env vars are present; no-op locally.
+const CODESPACE_HMR =
+	process.env.CODESPACE_NAME && process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN
+		? {
+			host: `${process.env.CODESPACE_NAME}-3000.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}`,
+			protocol: 'wss',
+			clientPort: 443,
+		}
+		: undefined;
+
 const appConfig = {
 	server: {
+		// Bind to 0.0.0.0 so the Codespace port-forwarder can reach the server.
+		host: true,
+		...(CODESPACE_HMR ? { hmr: CODESPACE_HMR } : {}),
 		proxy: {
 			'/r2-proxy': {
 				target: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev',
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/r2-proxy/, ''),
 			},
+			// PostHog serves its loader bundle and remote config from the assets
+			// host under both /static/* and /array/* — route BOTH there. Without
+			// the /array rule, `/ingest/array/<token>/config.js` falls through to
+			// us.i.posthog.com (which doesn't serve it) and the browser refuses
+			// the empty-MIME response: "not executable".
 			'/ingest/static': {
+				target: 'https://us-assets.i.posthog.com',
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/ingest/, ''),
+			},
+			'/ingest/array': {
 				target: 'https://us-assets.i.posthog.com',
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/ingest/, ''),
@@ -677,7 +705,7 @@ const appConfig = {
 						filePath = resolve(root, 'pages/marketplace.html');
 					else if (!filePath && /^\/marketplace\/avatars\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/marketplace.html');
-					else if (!filePath && /^\/marketplace\/tools\/[^/]+\/?$/.test(path))
+					else if (!filePath && /^\/marketplace\/(tools|skills|animations|onchain)\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/marketplace.html');
 					// /agents/:id  → rich detail page (UUID expected, validated client-side)
 					else if (!filePath && /^\/agents\/[^/]+\/?$/.test(path))
