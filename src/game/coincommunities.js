@@ -25,7 +25,7 @@ import { CommunityUI } from './coincommunities-ui.js';
 import { createWorldEnvironment } from './world-env.js';
 import { createChartScreen } from './chart-screen.js';
 import { MarketReactor } from './market-reactor.js';
-import { VoxelWorld, createBuildHud, parseKey } from './build-voxels.js';
+import { VoxelWorld, createBuildHud, parseKey, MAX_BLOCKS } from './build-voxels.js';
 import { normalizeGatewayURL } from '../ipfs.js';
 import {
 	loadManifest, getEmoteDefs, resolveAvatarUrl, buildAvatar, playEmoteClip,
@@ -649,8 +649,15 @@ export class CoinCommunities {
 		this.net.on('status', ({ status }) => {
 			this.ui.setStatus(status);
 			this._updateOnline();
-			// Only offer building while there's a live link to build into.
-			this.buildHud.setEnabled(status === 'online', 'Building needs a live connection');
+			// Every (re)connect re-streams the server's authoritative build, so wipe
+			// the local layer first. On a manual retry out of single-player this also
+			// hands authority back: the solo build gives way to the shared world's.
+			if (status === 'connecting') this.voxels?.clear();
+			// Building is available with a live server (synced + persisted for
+			// everyone) and in solo single-player mode (local-only) once multiplayer
+			// has been given up. The connecting window is the only time it's off, so
+			// the toggle never becomes a dead, silent button.
+			this.buildHud.setEnabled(this._buildableConnection(), 'Connecting to the world…');
 			// A reconnect reissues every sessionId, stranding the voice mesh — refresh
 			// our id, drop the stale peers, and re-announce so it re-forms.
 			if (status === 'online' && this.voice?.joined && this.net.sessionId !== this.voice.selfId) {
@@ -902,7 +909,7 @@ export class CoinCommunities {
 				// B toggles build mode; while it's on, 1–0 pick the active block.
 				if (k === 'b') {
 					e.preventDefault();
-					if (this.net?.status === 'online' || this.buildHud.active) this.buildHud.setActive(!this.buildHud.active);
+					if (this._buildableConnection() || this.buildHud.active) this.buildHud.setActive(!this.buildHud.active);
 					return;
 				}
 				if (this.buildHud.active && k.length === 1 && k >= '0' && k <= '9') {
@@ -981,17 +988,38 @@ export class CoinCommunities {
 	}
 
 	// ---------------------------------------------------------------- building
-	// Place or break a block under the pointer. Server-authoritative: we only send
-	// the intent, and the block appears/disappears when the server echoes its
-	// blocks state back (see the blockAdd/blockRemove wiring in enter()).
+	// A live server lets everyone build the same persistent world; with no server
+	// reachable we still let a solo player build their own local copy. Either way
+	// the connecting window (nothing to build into yet) is the only time off.
+	_buildableConnection() {
+		const s = this.net?.status;
+		return s === 'online' || s === 'offline';
+	}
+
+	// Place or break a block under the pointer. Online is server-authoritative: we
+	// only send the intent, and the block appears/disappears when the server echoes
+	// its blocks state back (see the blockAdd/blockRemove wiring in enter()). In
+	// single-player (no server) we apply the edit straight to the local voxel layer
+	// — same result on screen, just not synced or persisted.
 	_buildAt(clientX, clientY, forceRemove) {
-		if (!this.voxels || this.net?.status !== 'online') return;
+		if (!this.voxels || this.phase !== 'world' || !this._buildableConnection()) return;
+		const online = this.net?.status === 'online';
 		const target = this.voxels.raycast(this._pointerRay(clientX, clientY));
 		if (!target) return;
 		if (forceRemove || this.buildHud.mode === 'remove') {
-			if (target.hit === 'block' && target.cell) this.net.sendRemove(target.cell[0], target.cell[1], target.cell[2]);
+			if (target.hit === 'block' && target.cell) {
+				if (online) this.net.sendRemove(target.cell[0], target.cell[1], target.cell[2]);
+				else this.voxels.removeBlock(target.cell[0], target.cell[1], target.cell[2]);
+			}
 		} else if (target.placeValid) {
-			this.net.sendPlace(target.placeCell[0], target.placeCell[1], target.placeCell[2], this.buildType);
+			// The server enforces the build's block cap online; honour it locally too
+			// so a solo build can't outgrow what a shared one is allowed to be.
+			if (!online && this.voxels.count >= MAX_BLOCKS) {
+				this.ui.toast(`Build limit reached (${MAX_BLOCKS} blocks).`, 'warn');
+				return;
+			}
+			if (online) this.net.sendPlace(target.placeCell[0], target.placeCell[1], target.placeCell[2], this.buildType);
+			else this.voxels.setBlock(target.placeCell[0], target.placeCell[1], target.placeCell[2], this.buildType);
 		} else if (target.placeCell) {
 			// Aimed somewhere illegal (out of bounds / occupied) — flash the cursor.
 			this.voxels.showGhost(target.placeCell, 'blocked');
@@ -1021,7 +1049,13 @@ export class CoinCommunities {
 
 	_onBuildToggle(on) {
 		if (!on) { this.voxels?.hideGhost(); this.canvas.style.cursor = ''; return; }
-		this.ui.toast('Build mode — tap to place, right-click to break, 1–0 pick a block', 'info');
+		const solo = this.net?.status !== 'online';
+		this.ui.toast(
+			solo
+				? 'Build mode (single-player) — tap to place, right-click to break, 1–0 pick a block'
+				: 'Build mode — tap to place, right-click to break, 1–0 pick a block',
+			'info',
+		);
 		if (this._lastHover) this._updateGhost(this._lastHover.x, this._lastHover.y);
 	}
 
