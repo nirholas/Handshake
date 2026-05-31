@@ -1,5 +1,5 @@
 ---
-description: Scaffold a new three.ws AI agent in the current project — creates an entry file wired to the three.ws SDK, MCP tools, and x402 payments. Pass a name: /scaffold-agent MyAgent
+description: "Scaffold a new three.ws AI agent in the current project — creates an entry file wired to the three.ws SDK, MCP tools, and x402 payments. Pass a name: /scaffold-agent MyAgent"
 ---
 
 You are scaffolding a new three.ws agent into the user's project. The argument `$ARGUMENTS` is the agent name (default: `MyAgent` if blank).

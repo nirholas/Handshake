@@ -1,5 +1,5 @@
 ---
-description: Show ready-to-run code for calling any of the four @3d-agent/mcp-server paid tools. Pass a tool name: /use-tools pump_snapshot
+description: "Show ready-to-run code for calling any of the four @3d-agent/mcp-server paid tools. Pass a tool name: /use-tools pump_snapshot"
 ---
 
 You are producing a working code example for a specific three.ws MCP tool. `$ARGUMENTS` is the tool name the user wants to use. If blank, show a menu of all four tools.
