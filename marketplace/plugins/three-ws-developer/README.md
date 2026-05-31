@@ -23,7 +23,18 @@ Run `/reload-plugins` (or restart Claude Code) afterward.
 
 ## Bundled MCP server
 
-Installing this plugin registers the `3d-agent` MCP server (`npx -y @3d-agent/mcp-server`), exposing four paid tools: `pump_snapshot`, `token_data`, `bazaar_search`, and `x402_fetch`.
+Installing this plugin registers the `3d-agent` MCP server (`npx -y @3d-agent/mcp-server`), exposing four paid tools settled in USDC via x402:
+
+| Tool | Price | What it does |
+| :--- | :---- | :----------- |
+| `get_pose_seed` | $0.001 | Deterministic pose map for a three.ws avatar |
+| `pump_snapshot` | $0.005 | Live pump.fun token snapshot — price, volume, holders |
+| `agent_reputation` | $0.01 | ERC-8004 reputation lookup on any EVM chain |
+| `vanity_grinder` | up to $0.50 | Mine a Solana keypair with a custom address prefix |
+
+Run `/three-ws-developer:use-tools <tool>` for runnable code for any of them.
+
+> **Note:** the MCP server runs via `npx -y @3d-agent/mcp-server`, so the `@3d-agent/mcp-server` package must be published to npm for the server to start on a user's machine. The skills and commands in this plugin work regardless.
 
 ## Configuration
 
