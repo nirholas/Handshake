@@ -33,6 +33,7 @@ import {
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 import { getDecoders } from './viewer/internal.js';
 import {
@@ -43,6 +44,18 @@ import {
 } from './pose-rig.js';
 import { PRESETS, getPresetsByGroup, getPresetById } from './pose-presets.js';
 import { AvatarGalleryPicker } from './avatar-gallery-picker.js';
+import {
+	createDocument,
+	upsertKeyframe,
+	removeKeyframe,
+	moveKeyframe,
+	setKeyframeEasing,
+	clampKeyframesToDuration,
+	sampleAtTime,
+	bakeClip,
+	serializeClip,
+	DEFAULT_EASING,
+} from './pose-animation.js';
 
 // ─── DOM helpers ────────────────────────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
@@ -269,16 +282,25 @@ const state = {
 	keyDistance: 5.8,
 	ikHandles: new Map(), // effectorKey → Mesh
 	draggingIK: null,     // { effectorKey, plane }
+	anim: null,           // timeline controller handle (set on boot)
 };
 
-// Studio handle exposed for later tasks (timeline/save) to share the rig +
-// scene without re-importing internals.
+// Studio handle exposed for later tasks (save/library/monetize) to share the
+// rig, scene, and the current animation document without re-importing internals.
 export const studio = {
 	get rig() { return state.rig; },
 	get scene() { return state.ctx?.scene || null; },
 	get camera() { return state.ctx?.camera || null; },
 	get renderer() { return state.ctx?.renderer || null; },
 	get avatar() { return state.avatar; },
+	// ── Animation handoff API (Task 4/5/6) ───────────────────────────────────
+	get document() { return state.anim?.doc || null; },
+	/** Bake the current document to a THREE.AnimationClip (canonical bone names). */
+	bake() { return state.anim ? state.anim.bake() : null; },
+	/** The documented clip-JSON ({ name, duration, tracks }). */
+	serializeClip() { return state.anim ? state.anim.serialize() : null; },
+	/** PNG data URL of the current viewport (reuses the screenshot pipeline). */
+	captureThumbnail() { return state.anim ? state.anim.captureThumbnail() : null; },
 };
 
 // ─── App boot ───────────────────────────────────────────────────────────
@@ -294,6 +316,11 @@ function boot() {
 	state.ctx = ctx;
 	const { scene, camera, renderer, controls, gizmo, key, propLayer, ikLayer, setStatus } = ctx;
 	state.keyLight = key;
+
+	// Timeline controller — assigned near the end of boot once its DOM refs
+	// exist. Declared here so mountRig() (called during boot, before the
+	// assignment) can safely reference it via optional chaining.
+	let timeline = null;
 
 	// Panel DOM refs (resolved up-front: mountRig() renders into them on boot).
 	const sliderHost = $('#pose-controls-host');
@@ -318,6 +345,7 @@ function boot() {
 		renderControlsPanel();
 		renderBoneList();
 		updateSelectionLabel();
+		timeline?.onRigChanged();
 	}
 
 	const mannequinRig = new MannequinRig({ build: 'male', color: '#d4d4d8' });
@@ -329,9 +357,14 @@ function boot() {
 	if (intro) state.rig.applyPose(poseFromMannequinPreset(intro.pose));
 
 	// ── Render loop ──────────────────────────────────────────────────────
+	let lastFrameMs = performance.now();
 	function tick() {
 		requestAnimationFrame(tick);
+		const now = performance.now();
+		const dt = Math.min((now - lastFrameMs) / 1000, 0.1); // cap to avoid tab-switch jumps
+		lastFrameMs = now;
 		controls.update();
+		timeline?.update(dt);
 		if (state.poseMode === 'ik' && !state.draggingIK) syncIKHandles();
 		renderer.render(scene, camera);
 	}
@@ -868,6 +901,342 @@ function boot() {
 		else if (k === 'r' && state.selectedBone) { state.rig.setBoneEuler(state.selectedBone, { x: 0, y: 0, z: 0 }); renderControlsPanel(); }
 		else if (k === 'escape') { state.selectedBone = null; gizmo.detach(); renderControlsPanel(); renderBoneList(); updateSelectionLabel(); }
 	});
+
+	// ── Animation timeline ───────────────────────────────────────────────────
+	// Keyframe recorder: set a pose → drop a keyframe → advance the playhead →
+	// re-pose → drop another. The render loop interpolates (slerp) between
+	// keyframes and plays the result; export bakes a THREE.AnimationClip.
+	timeline = setupTimeline();
+
+	function setupTimeline() {
+		const doc = createDocument();
+		const anim = { doc, playing: false, playhead: 0, selectedId: null };
+		state.anim = anim;
+
+		const tl = {
+			track: $('#tl-track'), lane: $('#tl-lane'), ruler: $('#tl-ruler'),
+			playhead: $('#tl-playhead'), empty: $('#tl-empty'), time: $('#tl-time'),
+			play: $('#tl-play'), stop: $('#tl-stop'), start: $('#tl-start'), end: $('#tl-end'),
+			loop: $('#tl-loop'), add: $('#tl-add-key'), del: $('#tl-del-key'),
+			easing: $('#tl-easing'), name: $('#tl-name'), duration: $('#tl-duration'), fps: $('#tl-fps'),
+			exportJson: $('#tl-export-json'), exportGlb: $('#tl-export-glb'),
+		};
+		if (!tl.track) return null; // page without the timeline markup — no-op
+
+		const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+		const NICE_STEPS = [0.1, 0.2, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60];
+		const pct = (t) => (doc.duration > 0 ? (t / doc.duration) * 100 : 0);
+		const xToTime = (clientX) => {
+			const rect = tl.track.getBoundingClientRect();
+			return clamp((clientX - rect.left) / rect.width, 0, 1) * doc.duration;
+		};
+		const safeName = () =>
+			(doc.name || 'animation').replace(/[^a-z0-9._-]+/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'animation';
+
+		// Sync the static control values from the document defaults.
+		tl.name.value = doc.name;
+		tl.duration.value = String(doc.duration);
+		tl.fps.value = String(doc.fps);
+		tl.loop.setAttribute('aria-pressed', String(doc.loop));
+		tl.track.setAttribute('aria-valuemax', String(doc.duration));
+
+		// ── Preview ────────────────────────────────────────────────────────────
+		function applyPreview() {
+			if (!doc.keyframes.length || !state.rig) return;
+			const pose = sampleAtTime(doc, anim.playhead);
+			if (pose) {
+				state.rig.applyPose(pose);
+				if (state.poseMode === 'ik') syncIKHandles();
+			}
+		}
+
+		function setPlayhead(t, { render = false } = {}) {
+			anim.playhead = clamp(t, 0, doc.duration);
+			tl.playhead.style.left = `${pct(anim.playhead)}%`;
+			tl.time.innerHTML = `<b>${anim.playhead.toFixed(2)}</b> / ${doc.duration.toFixed(2)}s`;
+			tl.track.setAttribute('aria-valuenow', anim.playhead.toFixed(2));
+			applyPreview();
+			if (render && state.selectedBone) renderControlsPanel();
+		}
+
+		// ── Transport ────────────────────────────────────────────────────────────
+		function play() {
+			if (!doc.keyframes.length) { setStatus('Add a keyframe first, then play.', 'error'); return; }
+			if (!doc.loop && anim.playhead >= doc.duration - 1e-3) anim.playhead = 0;
+			anim.playing = true;
+			tl.play.textContent = '⏸';
+			tl.play.setAttribute('aria-pressed', 'true');
+		}
+		function pause() {
+			anim.playing = false;
+			tl.play.textContent = '▶';
+			tl.play.setAttribute('aria-pressed', 'false');
+		}
+		function toggle() { anim.playing ? pause() : play(); }
+		function stop() { pause(); setPlayhead(0, { render: true }); }
+
+		function advance(dt) {
+			if (!anim.playing) return;
+			let t = anim.playhead + dt;
+			if (t >= doc.duration) {
+				if (doc.loop) t = doc.duration > 0 ? t % doc.duration : 0;
+				else { setPlayhead(doc.duration); pause(); return; }
+			}
+			setPlayhead(t);
+		}
+
+		// ── Ruler + keyframes render ─────────────────────────────────────────────
+		function niceStep(raw) {
+			for (const s of NICE_STEPS) if (s >= raw) return s;
+			return NICE_STEPS[NICE_STEPS.length - 1];
+		}
+		function renderRuler() {
+			tl.ruler.innerHTML = '';
+			const step = niceStep(doc.duration / 8);
+			for (let t = 0; t <= doc.duration + 1e-6; t += step) {
+				const left = pct(t);
+				tl.ruler.appendChild(el('div', { class: 'tl-tick', style: `left:${left}%` }));
+				tl.ruler.appendChild(el('div', { class: 'tl-tick-label', style: `left:${left}%` }, [`${(+t.toFixed(3))}s`]));
+			}
+		}
+
+		function refreshExportEnabled() {
+			const has = doc.keyframes.length > 0;
+			tl.exportJson.disabled = !has;
+			tl.exportGlb.disabled = !has;
+		}
+
+		function updateSelectionUI() {
+			const kf = doc.keyframes.find((k) => k.id === anim.selectedId);
+			tl.easing.disabled = !kf;
+			tl.del.disabled = !kf;
+			if (kf) tl.easing.value = kf.easing;
+			tl.lane.querySelectorAll('.tl-key').forEach((d) => {
+				d.setAttribute('aria-selected', String(d.dataset.id === anim.selectedId));
+			});
+		}
+
+		function renderKeyframes() {
+			tl.lane.innerHTML = '';
+			tl.empty.style.display = doc.keyframes.length ? 'none' : 'flex';
+			for (const kf of doc.keyframes) {
+				const diamond = el('div', {
+					class: 'tl-key',
+					'data-id': kf.id,
+					tabindex: '0',
+					role: 'button',
+					'aria-selected': String(kf.id === anim.selectedId),
+					'aria-label': `Keyframe at ${kf.time.toFixed(2)} seconds, ${kf.easing}`,
+					title: `${kf.time.toFixed(2)}s · ${kf.easing}`,
+					style: `left:${pct(kf.time)}%`,
+				});
+				diamond.addEventListener('pointerdown', (ev) => startKeyDrag(ev, kf, diamond));
+				diamond.addEventListener('keydown', (ev) => {
+					if (ev.key === 'Delete' || ev.key === 'Backspace') { ev.preventDefault(); select(kf.id); deleteSelected(); }
+					else if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select(kf.id); }
+				});
+				tl.lane.appendChild(diamond);
+			}
+			refreshExportEnabled();
+			updateSelectionUI();
+		}
+
+		// ── Keyframe ops ──────────────────────────────────────────────────────────
+		function select(id) {
+			anim.selectedId = id;
+			const kf = doc.keyframes.find((k) => k.id === id);
+			updateSelectionUI();
+			if (kf) setPlayhead(kf.time, { render: true });
+		}
+
+		function captureKeyframe() {
+			if (!state.rig) return;
+			const existed = doc.keyframes.some((k) => Math.abs(k.time - anim.playhead) <= 1e-3);
+			const kf = upsertKeyframe(doc, anim.playhead, state.rig.getPose(), DEFAULT_EASING);
+			anim.selectedId = kf.id;
+			renderKeyframes();
+			setStatus(existed
+				? `Keyframe updated at ${kf.time.toFixed(2)}s.`
+				: `Keyframe added at ${kf.time.toFixed(2)}s · ${doc.keyframes.length} total.`);
+		}
+
+		function deleteSelected() {
+			if (!anim.selectedId) return;
+			removeKeyframe(doc, anim.selectedId);
+			anim.selectedId = null;
+			renderKeyframes();
+			applyPreview();
+			setStatus('Keyframe deleted.');
+		}
+
+		// Drag a keyframe diamond to retime it (and scrub the playhead with it).
+		function startKeyDrag(ev, kf, diamond) {
+			ev.stopPropagation();
+			ev.preventDefault();
+			pause();
+			select(kf.id);
+			diamond.setPointerCapture(ev.pointerId);
+			const onMove = (e) => {
+				// moveKeyframe re-sorts the list, so live preview (sampleAtTime,
+				// which assumes sorted keyframes) stays correct mid-drag.
+				moveKeyframe(doc, kf.id, xToTime(e.clientX));
+				diamond.style.left = `${pct(kf.time)}%`;
+				diamond.title = `${kf.time.toFixed(2)}s · ${kf.easing}`;
+				setPlayhead(kf.time);
+			};
+			const onUp = (e) => {
+				diamond.removeEventListener('pointermove', onMove);
+				diamond.removeEventListener('pointerup', onUp);
+				diamond.removeEventListener('pointercancel', onUp);
+				try { diamond.releasePointerCapture(e.pointerId); } catch {}
+				renderKeyframes();
+				if (state.selectedBone) renderControlsPanel();
+			};
+			diamond.addEventListener('pointermove', onMove);
+			diamond.addEventListener('pointerup', onUp);
+			diamond.addEventListener('pointercancel', onUp);
+		}
+
+		// ── Track scrubbing ────────────────────────────────────────────────────────
+		let scrubbing = false;
+		tl.track.addEventListener('pointerdown', (ev) => {
+			if (ev.target.closest('.tl-key')) return; // diamond handles its own drag
+			pause();
+			scrubbing = true;
+			tl.track.setPointerCapture(ev.pointerId);
+			setPlayhead(xToTime(ev.clientX), { render: true });
+		});
+		tl.track.addEventListener('pointermove', (ev) => {
+			if (scrubbing) setPlayhead(xToTime(ev.clientX));
+		});
+		const endScrub = (ev) => {
+			if (!scrubbing) return;
+			scrubbing = false;
+			try { tl.track.releasePointerCapture(ev.pointerId); } catch {}
+			if (state.selectedBone) renderControlsPanel();
+		};
+		tl.track.addEventListener('pointerup', endScrub);
+		tl.track.addEventListener('pointercancel', endScrub);
+		tl.track.addEventListener('keydown', (ev) => {
+			const stepDt = 1 / clamp(doc.fps || 30, 1, 120);
+			if (ev.key === 'ArrowLeft') { ev.preventDefault(); pause(); setPlayhead(anim.playhead - stepDt, { render: true }); }
+			else if (ev.key === 'ArrowRight') { ev.preventDefault(); pause(); setPlayhead(anim.playhead + stepDt, { render: true }); }
+			else if (ev.key === 'Home') { ev.preventDefault(); setPlayhead(0, { render: true }); }
+			else if (ev.key === 'End') { ev.preventDefault(); setPlayhead(doc.duration, { render: true }); }
+		});
+
+		// ── Controls ────────────────────────────────────────────────────────────────
+		tl.play.addEventListener('click', toggle);
+		tl.stop.addEventListener('click', stop);
+		tl.start.addEventListener('click', () => { pause(); setPlayhead(0, { render: true }); });
+		tl.end.addEventListener('click', () => { pause(); setPlayhead(doc.duration, { render: true }); });
+		tl.loop.addEventListener('click', () => {
+			doc.loop = !doc.loop;
+			tl.loop.setAttribute('aria-pressed', String(doc.loop));
+			setStatus(`Loop ${doc.loop ? 'on' : 'off'}.`);
+		});
+		tl.add.addEventListener('click', captureKeyframe);
+		tl.del.addEventListener('click', deleteSelected);
+		tl.easing.addEventListener('change', () => {
+			if (!anim.selectedId) return;
+			setKeyframeEasing(doc, anim.selectedId, tl.easing.value);
+			applyPreview();
+			setStatus(`Easing set to ${tl.easing.value}.`);
+		});
+		tl.name.addEventListener('input', () => { doc.name = tl.name.value.trim() || 'animation'; });
+		tl.duration.addEventListener('change', () => {
+			doc.duration = clamp(parseFloat(tl.duration.value) || 4, 0.25, 120);
+			tl.duration.value = String(doc.duration);
+			tl.track.setAttribute('aria-valuemax', String(doc.duration));
+			clampKeyframesToDuration(doc);
+			renderRuler();
+			renderKeyframes();
+			setPlayhead(Math.min(anim.playhead, doc.duration), { render: true });
+		});
+		tl.fps.addEventListener('change', () => {
+			doc.fps = Math.round(clamp(parseFloat(tl.fps.value) || 30, 1, 120));
+			tl.fps.value = String(doc.fps);
+		});
+
+		// ── Export ────────────────────────────────────────────────────────────────
+		function downloadBlob(data, filename, mime) {
+			const blob = data instanceof Blob ? data : new Blob([data], { type: mime });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			setTimeout(() => URL.revokeObjectURL(url), 1500);
+		}
+		async function withBusy(btn, label, fn) {
+			const original = btn.textContent;
+			btn.classList.remove('is-ok', 'is-err');
+			btn.classList.add('is-busy');
+			btn.textContent = 'Working…';
+			try {
+				await fn();
+				btn.classList.replace('is-busy', 'is-ok');
+				btn.textContent = 'Saved ✓';
+				setStatus(`${label} downloaded.`);
+			} catch (err) {
+				btn.classList.replace('is-busy', 'is-err');
+				btn.textContent = 'Failed';
+				setStatus(`${label} failed: ${err.message}`, 'error');
+			} finally {
+				setTimeout(() => { btn.classList.remove('is-ok', 'is-err'); btn.textContent = original; }, 2200);
+			}
+		}
+
+		tl.exportJson.addEventListener('click', () => {
+			pause();
+			withBusy(tl.exportJson, 'Clip JSON', async () => {
+				const json = serializeClip(doc, { resolveBoneName: (k) => k, rootName: 'Hips' });
+				downloadBlob(JSON.stringify(json, null, 2), `${safeName()}.json`, 'application/json');
+			});
+		});
+		tl.exportGlb.addEventListener('click', () => {
+			pause();
+			withBusy(tl.exportGlb, 'Animated GLB', async () => {
+				const rig = state.rig;
+				const clip = bakeClip(doc, {
+					resolveBoneName: (k) => rig.getNode(k)?.name || null,
+					rootName: rig.root?.name || '',
+				});
+				const exporter = new GLTFExporter();
+				const buffer = await exporter.parseAsync(rig.root, {
+					binary: true,
+					animations: [clip],
+					embedImages: true,
+				});
+				downloadBlob(buffer, `${safeName()}.glb`, 'model/gltf-binary');
+			});
+		});
+
+		// ── Keyboard (timeline) ──────────────────────────────────────────────────────
+		window.addEventListener('keydown', (ev) => {
+			if (ev.target.matches('input, textarea, select') || ev.target.closest('.tl-key')) return;
+			if (ev.key === ' ') { ev.preventDefault(); toggle(); }
+			else if (ev.key === 'k' || ev.key === 'K') { captureKeyframe(); }
+			else if ((ev.key === 'Delete' || ev.key === 'Backspace') && anim.selectedId) { ev.preventDefault(); deleteSelected(); }
+			else if (ev.key === 'Home') { setPlayhead(0, { render: true }); }
+			else if (ev.key === 'End') { setPlayhead(doc.duration, { render: true }); }
+		});
+
+		// ── Init ────────────────────────────────────────────────────────────────────
+		renderRuler();
+		renderKeyframes();
+		setPlayhead(0);
+
+		return {
+			update: advance,
+			onRigChanged: () => { if (doc.keyframes.length) applyPreview(); },
+			bake: () => bakeClip(doc, { resolveBoneName: (k) => k, rootName: 'Hips' }),
+			serialize: () => serializeClip(doc, { resolveBoneName: (k) => k, rootName: 'Hips' }),
+			captureThumbnail: () => { renderer.render(scene, camera); return renderer.domElement.toDataURL('image/png'); },
+		};
+	}
 
 	// ── Boot: honor ?avatar= ─────────────────────────────────────────────────
 	const requestedAvatar = new URL(window.location.href).searchParams.get('avatar');
