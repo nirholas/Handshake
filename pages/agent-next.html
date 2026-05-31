@@ -834,6 +834,9 @@
 		const chatMessages = document.getElementById('chat-messages');
 		const micBtn = document.getElementById('chat-mic');
 		let agentReady = false;
+		// True once ?id= resolves to a real avatar. Gates the <agent-3d> mount
+		// so an unresolvable id never boots a 404 manifest.
+		let avatarResolvedOk = false;
 
 		// ── Load avatar metadata ────────────────────────────────────
 		async function loadAvatar() {
@@ -841,6 +844,7 @@
 				const r = await resolveAvatar();
 				if (!r.ok) throw new Error('avatar not found');
 				const json = await r.json();
+				avatarResolvedOk = true;
 				hydrate(json.avatar || json.item || json);
 			} catch (e) {
 				console.error('Avatar load failed:', e);
@@ -882,8 +886,9 @@
 			setMeta('tw-desc', 'content', desc);
 			setMeta('tw-image', 'content', thumbUrl);
 
-			// Mount the agent-3d component
-			agent.setAttribute('src', avatarUrl);
+			// Mount the agent-3d component — only when ?id= resolved to a real
+			// avatar. Mounting an unresolvable id would boot a 404 manifest.
+			if (avatarResolvedOk) agent.setAttribute('src', avatarUrl);
 
 			// Update embed snippet — both the stored string and the visible <pre>
 			const snippet = `<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"><\/script>\n<agent-3d src="${avatarUrl}"><\/agent-3d>`;

@@ -47,15 +47,34 @@ if [[ -z "${PROJECT}" || "${PROJECT}" == "(unset)" ]]; then
 	exit 1
 fi
 
+# Durable build storage (Upstash Redis REST). This is SEPARATE from REDIS_URI
+# above: REDIS_URI is Colyseus's room-registry/presence Redis for horizontal
+# scaling; these two power block-store.js so each coin world's voxel build
+# survives a redeploy/restart. They must be set on THIS Cloud Run service — the
+# same vars on Vercel only reach the Vercel API functions, never this process.
+# Pass them through when present in the deploy shell (export them, or source an
+# env file, before running this script). For the token, Secret Manager via
+# --set-secrets is preferable to plaintext env in a hardened setup.
+UPSTASH_REDIS_REST_URL="${UPSTASH_REDIS_REST_URL:-}"
+UPSTASH_REDIS_REST_TOKEN="${UPSTASH_REDIS_REST_TOKEN:-}"
+
 # Assemble env vars (@-delimited so values containing commas are safe). Redis +
 # monitor creds are only passed when provided.
 ENV_VARS="NODE_ENV=production@ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
 [[ -n "${REDIS_URI}" ]] && ENV_VARS="${ENV_VARS}@REDIS_URI=${REDIS_URI}"
+[[ -n "${UPSTASH_REDIS_REST_URL}" ]] && ENV_VARS="${ENV_VARS}@UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}"
+[[ -n "${UPSTASH_REDIS_REST_TOKEN}" ]] && ENV_VARS="${ENV_VARS}@UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}"
 [[ -n "${MONITOR_USER:-}" ]] && ENV_VARS="${ENV_VARS}@MONITOR_USER=${MONITOR_USER}"
 [[ -n "${MONITOR_PASS:-}" ]] && ENV_VARS="${ENV_VARS}@MONITOR_PASS=${MONITOR_PASS}"
 
+# Warn loudly if durable build storage isn't configured — without it, every coin
+# world's build is memory-only and a redeploy wipes it.
+if [[ -z "${UPSTASH_REDIS_REST_URL}" || -z "${UPSTASH_REDIS_REST_TOKEN}" ]]; then
+	echo "  ⚠ UPSTASH_REDIS_REST_URL/_TOKEN not set — builds will be MEMORY-ONLY (lost on redeploy)." >&2
+fi
+
 echo "Deploying '${SERVICE}' to Cloud Run (project=${PROJECT}, region=${REGION})..."
-echo "  cpu=${CPU} memory=${MEMORY} concurrency=${CONCURRENCY} instances=${MIN_INSTANCES}..${MAX_INSTANCES} redis=$([[ -n "${REDIS_URI}" ]] && echo on || echo off)"
+echo "  cpu=${CPU} memory=${MEMORY} concurrency=${CONCURRENCY} instances=${MIN_INSTANCES}..${MAX_INSTANCES} redis=$([[ -n "${REDIS_URI}" ]] && echo on || echo off) builds=$([[ -n "${UPSTASH_REDIS_REST_URL}" && -n "${UPSTASH_REDIS_REST_TOKEN}" ]] && echo durable || echo memory-only)"
 
 # Flags that matter for a long-lived Colyseus game server on Cloud Run:
 #   --no-cpu-throttling : keep CPU allocated between requests so the room

@@ -2,6 +2,10 @@
 #
 # After `fly launch --no-deploy` reads this file once, run:
 #   fly secrets set ALLOWED_ORIGINS=https://three.ws,https://www.three.ws
+#   # Durable voxel-build storage (block-store.js). Without these, each coin
+#   # world's build is memory-only and a redeploy wipes it. Same Upstash creds
+#   # as the Vercel API, but they must be set HERE too — the server runs apart.
+#   fly secrets set UPSTASH_REDIS_REST_URL=... UPSTASH_REDIS_REST_TOKEN=...
 #   fly deploy
 #
 # To scale rooms across machines, bump `min_machines_running` and use

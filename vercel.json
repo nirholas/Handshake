@@ -186,10 +186,6 @@
 			"dest": "/api/agent-skill-price.js?agentId=$1"
 		},
 		{
-			"src": "/api/agents/([^/]+)/unlocked-skills",
-			"dest": "/api/agents/[id]/unlocked-skills?id=$1"
-		},
-		{
 			"src": "/api/agents/([^/]+)/skill-access",
 			"dest": "/api/agents/[id]/skill-access?id=$1"
 		},
@@ -855,15 +851,11 @@
 		},
 		{
 			"src": "/avatar-studio",
-			"dest": "/avatar-studio/index.html"
+			"dest": "/avatar-studio.html"
 		},
 		{
 			"src": "/avatar-studio/",
-			"dest": "/avatar-studio/index.html"
-		},
-		{
-			"src": "/avatar-studio/(.*)",
-			"dest": "/avatar-studio/$1"
+			"dest": "/avatar-studio.html"
 		},
 		{
 			"src": "/demos",
@@ -1014,26 +1006,6 @@
 		{
 			"src": "/api/agents/([^/]+)/pumpfun/([^/]+)",
 			"dest": "/api/agents/pumpfun/[action]?id=$1&action=$2"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/agents",
-			"dest": "/api/avatars/[id]/agents?id=$1"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/coins",
-			"dest": "/api/avatars/[id]/coins?id=$1"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/storage-mode",
-			"dest": "/api/avatars/[id]/storage-mode?id=$1"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/pin-ipfs",
-			"dest": "/api/avatars/[id]/pin-ipfs?id=$1"
-		},
-		{
-			"src": "/api/avatars/([^/]+)/thumbnail",
-			"dest": "/api/avatars/[id]/thumbnail?id=$1"
 		},
 		{
 			"src": "/dashboard/storage",
@@ -1526,7 +1498,7 @@
 			"headers": {
 				"permissions-policy": "xr-spatial-tracking=*, camera=(self), microphone=(self)"
 			},
-			"dest": "/pages/ar.html"
+			"dest": "/ar.html"
 		},
 		{
 			"src": "/avatars/([^/]+)",
@@ -2443,27 +2415,27 @@
 		},
 		{
 			"src": "/fact-checker",
-			"dest": "/pages/fact-checker.html"
+			"dest": "/fact-checker.html"
 		},
 		{
 			"src": "/fact-checker/",
-			"dest": "/pages/fact-checker.html"
+			"dest": "/fact-checker.html"
 		},
 		{
 			"src": "/unstoppable",
-			"dest": "/pages/unstoppable.html"
+			"dest": "/unstoppable.html"
 		},
 		{
 			"src": "/unstoppable/",
-			"dest": "/pages/unstoppable.html"
+			"dest": "/unstoppable.html"
 		},
 		{
 			"src": "/shopper",
-			"dest": "/pages/shopper.html"
+			"dest": "/shopper.html"
 		},
 		{
 			"src": "/shopper/",
-			"dest": "/pages/shopper.html"
+			"dest": "/shopper.html"
 		},
 		{
 			"src": "/paywall",

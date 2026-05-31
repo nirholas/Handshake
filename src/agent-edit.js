@@ -34,11 +34,7 @@ let availableAvatars = null;
 
 async function loadAgent() {
   if (!agentId) {
-    if (initAvatarId || initAvatarGlb) {
-      await createAgentFromAvatar();
-    } else {
-      showError('No agent ID provided.');
-    }
+    await createDraftAgent();
     return;
   }
   try {
@@ -61,10 +57,11 @@ async function loadAgent() {
   }
 }
 
-async function createAgentFromAvatar() {
-  showLoading('Creating agent…');
+async function createDraftAgent() {
+  const fromAvatar = !!(initAvatarId || initAvatarGlb);
+  showLoading(fromAvatar ? 'Creating agent…' : 'Creating a new agent…');
   try {
-    const name = initAvatarName ? `${initAvatarName} Agent` : 'My Agent';
+    const name = initAvatarName ? `${initAvatarName} Agent` : 'Untitled Agent';
     const createRes = await apiFetch(`${API_BASE}/agents`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -103,7 +100,13 @@ async function createAgentFromAvatar() {
         `You are ${initAvatarName}, a 3D avatar agent. Be helpful and engaging.`;
     }
     render();
-    showBanner(`Agent created from "${initAvatarName || 'avatar'}" — fill in the details below.`);
+    if (fromAvatar) {
+      showBanner(`Agent created from "${initAvatarName || 'avatar'}" — fill in the details below.`);
+    } else {
+      showBanner('Draft agent created — give it a name and description to get started.');
+      const nameField = $('f-name');
+      if (nameField) { nameField.focus(); nameField.select(); }
+    }
   } catch (err) {
     showError(err.message);
   }
@@ -280,7 +283,11 @@ function renderLaunchTokenState() {
 
 async function ensureAgent3DLib() {
   if (customElements.get('agent-3d')) return true;
-  const candidates = ['/agent-3d/latest/agent-3d.js', '/dist-lib/agent-3d.js'];
+  const candidates = [
+    'https://three.ws/agent-3d/latest/agent-3d.js',
+    '/agent-3d/latest/agent-3d.js',
+    '/dist-lib/agent-3d.js',
+  ];
   for (const url of candidates) {
     try {
       await import(/* @vite-ignore */ url);
@@ -296,6 +303,10 @@ async function ensureOutfitTab() {
   if (outfitMounted) return;
   outfitMounted = true;
 
+  // Show animation graph skeleton immediately so the section isn't a blank
+  // void while the library loads. It'll be repopulated by renderAnimationsPicker.
+  renderAnimGraphSkeleton();
+
   await ensureAgent3DLib();
   const preview = $('outfit-preview');
   const a3d = document.createElement('agent-3d');
@@ -305,8 +316,7 @@ async function ensureOutfitTab() {
   preview.innerHTML = '';
   preview.appendChild(a3d);
 
-  await renderAvatarList();
-  await renderAnimationsPicker();
+  await Promise.all([renderAvatarList(), renderAnimationsPicker()]);
 }
 
 async function renderAvatarList() {
@@ -582,6 +592,23 @@ async function renderAnimationsPicker() {
   updateAnimSaveButton();
 
   renderAnimGraphPicker();
+}
+
+function renderAnimGraphSkeleton() {
+  const rows = $('anim-graph-rows');
+  if (!rows) return;
+  rows.innerHTML = ANIM_STATES.map((state) => {
+    const def = ANIM_STATE_DEFAULT_CLIP[state];
+    return `
+      <div class="anim-graph-row" data-state="${state}">
+        <span class="anim-graph-row-label">${state}</span>
+        <select aria-label="Clip for ${state} state" disabled>
+          <option>— loading —</option>
+        </select>
+        <span class="anim-graph-row-meta">default: ${def}</span>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderAnimGraphPicker() {

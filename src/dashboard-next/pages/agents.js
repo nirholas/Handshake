@@ -176,8 +176,11 @@ function truncMid(s, head = 6, tail = 4) {
 })();
 
 async function safeGet(url) {
-	try { return await get(url); }
-	catch { return null; }
+	try {
+		return await get(url);
+	} catch {
+		return null;
+	}
 }
 
 // ── Render agent list ──────────────────────────────────────────────────────
@@ -274,27 +277,32 @@ function renderAgents(host, agents, avatars, root) {
 }
 
 // ── Deploy on-chain (Metaplex Core / ERC-8004) ─────────────────────────────
-// Reuses the <onchain-deploy-button> custom element, which drives the full
-// prep → sign → confirm pipeline from src/onchain/deploy.js and persists the
-// result through /api/agents/onchain/confirm. On success we patch the in-memory
-// agent with the confirmed record and re-render so the card flips to on-chain.
+// Reuses OnchainDeployButton, which drives the full prep → sign → confirm
+// pipeline from src/onchain/deploy.js and persists the result server-side via
+// /api/agents/onchain/confirm. The button mutates the agent object it's given
+// (sets agent.onchain) and renders its own success chip. We watch for that
+// mutation, then re-fetch the agents list so every card reflects persisted
+// state, matching how Delete refreshes the list after a server mutation.
 
 async function openDeployOnchainModal(host, agent, avatars, allAgents) {
-	await import('../../onchain/deploy-button.js');
+	const [{ OnchainDeployButton }] = await Promise.all([
+		import('../../onchain/deploy-button.js'),
+		import('../../erc8004/deploy-button.css'),
+	]);
+
 	const overlay = makeOverlay();
 	overlay.innerHTML = `
 		<div role="dialog" aria-modal="true" aria-label="Deploy agent on-chain" style="
-			width:min(440px,100%);
+			width:min(460px,100%);
 			background:linear-gradient(180deg,rgba(22,24,32,0.97),rgba(16,17,24,0.97));
 			border:1px solid var(--nxt-stroke-strong);border-radius:14px;padding:24px;
 			box-shadow:0 20px 60px rgba(0,0,0,0.6);
 		">
 			<div style="font-size:17px;font-weight:600;margin-bottom:6px">Deploy on-chain</div>
 			<div style="font-size:12.5px;color:var(--nxt-ink-dim);margin-bottom:18px">
-				Mint a Metaplex Core asset for <strong style="color:var(--nxt-ink)">${esc(agent.name || agent.display_name || 'this agent')}</strong>. That asset becomes the agent's permanent on-chain identity. You'll sign one transaction in your Solana wallet (~0.003 SOL rent + network fees).
+				Register <strong style="color:var(--nxt-ink)">${esc(agent.name || agent.display_name || 'this agent')}</strong> on-chain. Pick a chain, then sign one transaction in your wallet. The asset becomes the agent's permanent on-chain identity.
 			</div>
 			<div data-slot="deploy-host" style="display:flex;justify-content:center;margin-bottom:18px"></div>
-			<div data-slot="error" style="font-size:12.5px;color:var(--nxt-danger);min-height:18px;margin-bottom:12px"></div>
 			<div style="display:flex;gap:8px;justify-content:flex-end">
 				<button class="dn-btn ghost" data-action="cancel">Close</button>
 			</div>
@@ -302,40 +310,65 @@ async function openDeployOnchainModal(host, agent, avatars, allAgents) {
 	`;
 	document.body.appendChild(overlay);
 
-	const errorEl = overlay.querySelector('[data-slot="error"]');
 	const deployHost = overlay.querySelector('[data-slot="deploy-host"]');
-
-	const btnEl = document.createElement('onchain-deploy-button');
-	btnEl.setAttribute('agent-id', agent.id);
-	btnEl.setAttribute('chain', 'solana:mainnet');
-	btnEl.setAttribute('label', 'Deploy on Solana →');
-	btnEl.agent = {
+	// Pass a thin agent shape the deploy pipeline understands. The button writes
+	// `deployAgentObj.onchain` on success — that's our completion signal.
+	const deployAgentObj = {
 		id: agent.id,
 		name: agent.name || agent.display_name || 'Agent',
 		description: agent.description || agent.persona?.tagline || agent.tagline || '',
 		avatar_id: agent.avatar_id || null,
 		skills: Array.isArray(agent.skills) && agent.skills.length ? agent.skills : undefined,
+		onchain: agent.onchain || null,
 	};
-	deployHost.appendChild(btnEl);
+	const deployBtn = new OnchainDeployButton({ agent: deployAgentObj, container: deployHost });
+	deployBtn.mount();
 
-	btnEl.addEventListener('onchain:deployed', (e) => {
-		const updated = e.detail?.agent || {};
+	let deployed = false;
+	const finish = async () => {
+		if (!deployed) return;
 		toast('Agent deployed on-chain');
-		const idx = allAgents.findIndex((a) => a.id === agent.id);
-		if (idx >= 0) allAgents[idx] = { ...allAgents[idx], ...updated };
-		close();
-		renderAgents(host, allAgents, avatars, null);
-	});
-	btnEl.addEventListener('onchain:error', (e) => {
-		errorEl.textContent = e.detail?.error?.message || 'Deploy failed. Please try again.';
-	});
+		// Re-fetch so the card reflects the record persisted by the confirm endpoint.
+		const fresh = (await safeGet('/api/agents'))?.agents;
+		const next =
+			Array.isArray(fresh) && fresh.length
+				? fresh
+				: allAgents.map((a) =>
+						a.id === agent.id ? { ...a, onchain: deployAgentObj.onchain } : a,
+					);
+		renderAgents(host, next, avatars, null);
+	};
 
-	const close = () => overlay.remove();
-	overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);
-	overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-	document.addEventListener('keydown', function onKey(e) {
-		if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+	const close = async () => {
+		deployBtn.unmount();
+		overlay.remove();
+		document.removeEventListener('keydown', onKey);
+		await finish();
+	};
+	function onKey(e) {
+		if (e.key === 'Escape') close();
+	}
+
+	// The button has no success event, so observe its internal success chip:
+	// it sets `deployAgentObj.onchain` and swaps in `.deploy-chip--success`.
+	const observer = new MutationObserver(() => {
+		if (deployAgentObj.onchain && deployHost.querySelector('.deploy-chip--success')) {
+			deployed = true;
+		}
 	});
+	observer.observe(deployHost, { childList: true, subtree: true });
+
+	overlay.querySelector('[data-action="cancel"]').addEventListener('click', () => {
+		observer.disconnect();
+		close();
+	});
+	overlay.addEventListener('click', (e) => {
+		if (e.target === overlay) {
+			observer.disconnect();
+			close();
+		}
+	});
+	document.addEventListener('keydown', onKey);
 }
 
 // ── Deploy Pump.fun token ──────────────────────────────────────────────────
@@ -359,23 +392,26 @@ function openDeployPumpModal(agent, avatars) {
 					name: agent.name || agent.display_name || 'Agent',
 					description: agent.description || agent.persona?.tagline || agent.tagline || '',
 					avatar_id: agent.avatar_id || null,
-					skills: Array.isArray(agent.skills) && agent.skills.length ? agent.skills : undefined,
+					skills:
+						Array.isArray(agent.skills) && agent.skills.length
+							? agent.skills
+							: undefined,
 				}
 			: null,
 	});
 }
 
 const BRAIN_LABELS = {
-	'claude-sonnet-4-6':                                'Claude Sonnet 4.6',
-	'claude-haiku-4-5-20251001':                        'Claude Haiku 4.5',
-	'claude-opus-4-6':                                  'Claude Opus 4.6',
-	'claude-opus-4-7':                                  'Claude Opus 4.7',
-	'llama-3.3-70b-versatile':                          'Llama 3.3 70B · Groq',
-	'llama-3.1-8b-instant':                             'Llama 3.1 8B · Groq',
-	'meta-llama/llama-3.3-70b-instruct:free':           'Llama 3.3 70B · OpenRouter',
-	'meta-llama/llama-3.1-8b-instruct:free':            'Llama 3.1 8B · OpenRouter',
-	'openai/gpt-oss-120b:free':                         'GPT-OSS 120B · OpenRouter',
-	'nousresearch/hermes-3-llama-3.1-405b:free':        'Hermes 3 405B · OpenRouter',
+	'claude-sonnet-4-6': 'Claude Sonnet 4.6',
+	'claude-haiku-4-5-20251001': 'Claude Haiku 4.5',
+	'claude-opus-4-6': 'Claude Opus 4.6',
+	'claude-opus-4-7': 'Claude Opus 4.7',
+	'llama-3.3-70b-versatile': 'Llama 3.3 70B · Groq',
+	'llama-3.1-8b-instant': 'Llama 3.1 8B · Groq',
+	'meta-llama/llama-3.3-70b-instruct:free': 'Llama 3.3 70B · OpenRouter',
+	'meta-llama/llama-3.1-8b-instruct:free': 'Llama 3.1 8B · OpenRouter',
+	'openai/gpt-oss-120b:free': 'GPT-OSS 120B · OpenRouter',
+	'nousresearch/hermes-3-llama-3.1-405b:free': 'Hermes 3 405B · OpenRouter',
 };
 
 function brainLabel(agent) {
@@ -401,9 +437,10 @@ function agentCard(a, avatars) {
 				background:linear-gradient(135deg,rgba(140,143,150,0.3),rgba(100,103,110,0.2));
 				display:grid;place-items:center;flex-shrink:0;border:1px solid var(--nxt-stroke);
 			">
-				${avatarThumb
-					? `<img src="${esc(avatarThumb)}" alt="${name}" style="width:100%;height:100%;object-fit:cover" loading="lazy" />`
-					: `<svg width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--nxt-ink-dim)"><rect x="5" y="2" width="10" height="10" rx="2"/><circle cx="8" cy="6.5" r="1"/><circle cx="12" cy="6.5" r="1"/><path d="M8 9h4M3 14l2-2h10l2 2v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3z"/></svg>`
+				${
+					avatarThumb
+						? `<img src="${esc(avatarThumb)}" alt="${name}" style="width:100%;height:100%;object-fit:cover" loading="lazy" />`
+						: `<svg width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--nxt-ink-dim)"><rect x="5" y="2" width="10" height="10" rx="2"/><circle cx="8" cy="6.5" r="1"/><circle cx="12" cy="6.5" r="1"/><path d="M8 9h4M3 14l2-2h10l2 2v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3z"/></svg>`
 				}
 			</div>
 
@@ -440,12 +477,16 @@ function agentCard(a, avatars) {
 				</div>
 			</div>
 
-			${onchain || pumpMint ? `
+			${
+				onchain || pumpMint
+					? `
 				<div class="dn-agent-links">
 					${onchain ? `<a href="/onchain?agent=${encodeURIComponent(a.id)}" style="font-size:11.5px;color:var(--nxt-ink-dim)">ERC-8004 registry ↗</a>` : ''}
 					${pumpMint ? `<a href="https://pump.fun/coin/${encodeURIComponent(pumpMint)}" target="_blank" rel="noopener" style="font-size:11.5px;color:#a8adb5">View on Pump.fun ↗</a>` : ''}
 				</div>
-			` : ''}
+			`
+					: ''
+			}
 		</div>
 	`;
 }
@@ -455,10 +496,12 @@ async function loadInlineReviewStats(host, agents) {
 	if (!published.length) return;
 	const results = await Promise.allSettled(
 		published.map((a) =>
-			fetch(`/api/marketplace/agents/${encodeURIComponent(a.id)}/reviews`, { credentials: 'include' })
-				.then((r) => r.ok ? r.json() : null)
-				.then((j) => ({ id: a.id, summary: j?.data?.summary }))
-		)
+			fetch(`/api/marketplace/agents/${encodeURIComponent(a.id)}/reviews`, {
+				credentials: 'include',
+			})
+				.then((r) => (r.ok ? r.json() : null))
+				.then((j) => ({ id: a.id, summary: j?.data?.summary })),
+		),
 	);
 	for (const r of results) {
 		if (r.status !== 'fulfilled' || !r.value?.summary) continue;
@@ -470,7 +513,8 @@ async function loadInlineReviewStats(host, agents) {
 		if (count === 0) continue;
 		const badge = document.createElement('span');
 		badge.className = 'dn-tag';
-		badge.style.cssText = 'font-size:11px;background:rgba(251,191,36,0.12);border-color:rgba(251,191,36,0.3);color:#fbbf24';
+		badge.style.cssText =
+			'font-size:11px;background:rgba(251,191,36,0.12);border-color:rgba(251,191,36,0.3);color:#fbbf24';
 		badge.textContent = `★ ${avg.toFixed(1)} (${count})`;
 		badge.title = `${avg.toFixed(2)} avg from ${count} review${count === 1 ? '' : 's'}`;
 		const nameRow = card.querySelector('div > div:nth-child(2) > div:first-child');
@@ -480,7 +524,10 @@ async function loadInlineReviewStats(host, agents) {
 
 function showReputationPanel(card, rep) {
 	const existing = card.querySelector('[data-reputation-panel]');
-	if (existing) { existing.remove(); return; }
+	if (existing) {
+		existing.remove();
+		return;
+	}
 	const score = rep?.score ?? rep?.rating ?? null;
 	const count = rep?.reviews_count ?? rep?.count ?? 0;
 	const panel = document.createElement('div');
@@ -488,12 +535,13 @@ function showReputationPanel(card, rep) {
 	panel.style.cssText = 'margin-top:14px;padding-top:14px;border-top:1px solid var(--nxt-stroke)';
 	panel.innerHTML = `
 		<div style="font-size:12.5px;font-weight:600;color:var(--nxt-ink-fade);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">Reputation</div>
-		${score !== null
-			? `<div style="display:flex;align-items:baseline;gap:8px">
+		${
+			score !== null
+				? `<div style="display:flex;align-items:baseline;gap:8px">
 				<span style="font-size:32px;font-weight:700;color:var(--nxt-ink)">${Number(score).toFixed(1)}</span>
 				<span style="font-size:13px;color:var(--nxt-ink-dim)">/ 5.0 · ${count} review${count === 1 ? '' : 's'}</span>
 			</div>`
-			: `<div style="color:var(--nxt-ink-dim);font-size:13px">No reviews yet.</div>`
+				: `<div style="color:var(--nxt-ink-dim);font-size:13px">No reviews yet.</div>`
 		}
 		${rep?.tags?.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${rep.tags.map((t) => `<span class="dn-tag">${esc(t)}</span>`).join('')}</div>` : ''}
 	`;
@@ -586,14 +634,22 @@ function openCreateModal(host, agents, avatars) {
 
 	const close = () => overlay.remove();
 	overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);
-	overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+	overlay.addEventListener('click', (e) => {
+		if (e.target === overlay) close();
+	});
 	document.addEventListener('keydown', function onKey(e) {
-		if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+		if (e.key === 'Escape') {
+			close();
+			document.removeEventListener('keydown', onKey);
+		}
 	});
 
 	submitBtn.addEventListener('click', async () => {
 		const name = nameEl.value.trim();
-		if (!name) { errorEl.textContent = 'Agent name is required.'; return; }
+		if (!name) {
+			errorEl.textContent = 'Agent name is required.';
+			return;
+		}
 		errorEl.textContent = '';
 		submitBtn.disabled = true;
 		submitBtn.textContent = 'Creating…';
@@ -717,14 +773,22 @@ function openEditModal(host, agent, avatars, allAgents) {
 
 	const close = () => overlay.remove();
 	overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);
-	overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+	overlay.addEventListener('click', (e) => {
+		if (e.target === overlay) close();
+	});
 	document.addEventListener('keydown', function onKey(e) {
-		if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+		if (e.key === 'Escape') {
+			close();
+			document.removeEventListener('keydown', onKey);
+		}
 	});
 
 	submitBtn.addEventListener('click', async () => {
 		const name = nameEl.value.trim();
-		if (!name) { errorEl.textContent = 'Agent name is required.'; return; }
+		if (!name) {
+			errorEl.textContent = 'Agent name is required.';
+			return;
+		}
 		errorEl.textContent = '';
 		submitBtn.disabled = true;
 		submitBtn.textContent = 'Saving…';
@@ -754,7 +818,7 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 	const persona = agent.persona || {};
 	const systemPrompt = persona.system_prompt || agent.system_prompt || '';
 	const tone = persona.tone || agent.tone || '';
-	const traits = Array.isArray(persona.traits) ? persona.traits.join(', ') : (persona.traits || '');
+	const traits = Array.isArray(persona.traits) ? persona.traits.join(', ') : persona.traits || '';
 
 	overlay.innerHTML = `
 		<div role="dialog" aria-modal="true" aria-label="Agent persona" style="
@@ -833,17 +897,25 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 
 	const close = () => overlay.remove();
 	overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);
-	overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+	overlay.addEventListener('click', (e) => {
+		if (e.target === overlay) close();
+	});
 	document.addEventListener('keydown', function onKey(e) {
-		if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+		if (e.key === 'Escape') {
+			close();
+			document.removeEventListener('keydown', onKey);
+		}
 	});
 
 	overlay.querySelector('[data-action="save-persona"]').addEventListener('click', async () => {
 		errorEl.textContent = '';
 		const systemPromptVal = overlay.querySelector('[data-slot="system-prompt"]').value.trim();
 		const toneVal = overlay.querySelector('[data-slot="tone"]').value.trim();
-		const traitsVal = overlay.querySelector('[data-slot="traits"]').value
-			.split(',').map((t) => t.trim()).filter(Boolean);
+		const traitsVal = overlay
+			.querySelector('[data-slot="traits"]')
+			.value.split(',')
+			.map((t) => t.trim())
+			.filter(Boolean);
 
 		const saveBtn = overlay.querySelector('[data-action="save-persona"]');
 		saveBtn.disabled = true;
@@ -871,8 +943,16 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 	});
 
 	const aid = encodeURIComponent(agent.id);
-	const SEED_LABELS = { 'seed-twitter': 'Seed from X', 'seed-github': 'Seed from GitHub', 'seed-farcaster': 'Seed from Farcaster' };
-	const SOURCE_NAMES = { 'seed-twitter': 'X', 'seed-github': 'GitHub', 'seed-farcaster': 'Farcaster' };
+	const SEED_LABELS = {
+		'seed-twitter': 'Seed from X',
+		'seed-github': 'Seed from GitHub',
+		'seed-farcaster': 'Seed from Farcaster',
+	};
+	const SOURCE_NAMES = {
+		'seed-twitter': 'X',
+		'seed-github': 'GitHub',
+		'seed-farcaster': 'Farcaster',
+	};
 
 	const seedAction = async (action) => {
 		seedStatus.innerHTML = '';
@@ -886,8 +966,15 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 		} else if (action === 'seed-github') {
 			endpoint = `/api/agents/${aid}/memory-seed`;
 		} else {
-			const handle = overlay.querySelector('[data-slot="seed-farcaster"]').value.trim().replace(/^@/, '');
-			if (!handle) { seedStatus.style.color = 'var(--nxt-danger)'; seedStatus.textContent = 'Enter a Farcaster username or FID first.'; return; }
+			const handle = overlay
+				.querySelector('[data-slot="seed-farcaster"]')
+				.value.trim()
+				.replace(/^@/, '');
+			if (!handle) {
+				seedStatus.style.color = 'var(--nxt-danger)';
+				seedStatus.textContent = 'Enter a Farcaster username or FID first.';
+				return;
+			}
 			endpoint = `/api/agents/${aid}/memory/seed/farcaster`;
 			body = /^\d+$/.test(handle) ? { fid: Number(handle) } : { fname: handle };
 		}
@@ -902,9 +989,10 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 			const r = await post(endpoint, body);
 			const count = r?.seeded ?? 0;
 			seedStatus.style.color = 'var(--nxt-ink)';
-			seedStatus.textContent = count > 0
-				? `Seeded ${count} ${count === 1 ? 'fact' : 'facts'} from ${SOURCE_NAMES[action]}.`
-				: `No new facts found from ${SOURCE_NAMES[action]}.`;
+			seedStatus.textContent =
+				count > 0
+					? `Seeded ${count} ${count === 1 ? 'fact' : 'facts'} from ${SOURCE_NAMES[action]}.`
+					: `No new facts found from ${SOURCE_NAMES[action]}.`;
 		} catch (err) {
 			seedStatus.style.color = 'var(--nxt-danger)';
 			// The X/GitHub endpoints require a connected account; guide the user there.
@@ -916,7 +1004,8 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 				link.style.color = 'var(--nxt-accent, #6ea8fe)';
 				seedStatus.appendChild(link);
 			} else if (err?.status === 429) {
-				seedStatus.textContent = err?.message || 'Seeding is rate-limited. Try again later.';
+				seedStatus.textContent =
+					err?.message || 'Seeding is rate-limited. Try again later.';
 			} else {
 				seedStatus.textContent = err?.message || err?.body?.error || 'Seeding failed.';
 			}
@@ -926,9 +1015,15 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 		}
 	};
 
-	overlay.querySelector('[data-action="seed-twitter"]').addEventListener('click', () => seedAction('seed-twitter'));
-	overlay.querySelector('[data-action="seed-github"]').addEventListener('click', () => seedAction('seed-github'));
-	overlay.querySelector('[data-action="seed-farcaster"]').addEventListener('click', () => seedAction('seed-farcaster'));
+	overlay
+		.querySelector('[data-action="seed-twitter"]')
+		.addEventListener('click', () => seedAction('seed-twitter'));
+	overlay
+		.querySelector('[data-action="seed-github"]')
+		.addEventListener('click', () => seedAction('seed-github'));
+	overlay
+		.querySelector('[data-action="seed-farcaster"]')
+		.addEventListener('click', () => seedAction('seed-farcaster'));
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
