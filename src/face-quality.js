@@ -21,11 +21,11 @@
  */
 
 const TASKS_VISION_URL =
-	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm';
+	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm';
 const WASM_ROOT =
-	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm';
+	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm';
 const MODEL_URL =
-	'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker.task';
+	'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
 
 const BLUR_MIN = 3.5;
 const LUMA_MIN = 40;

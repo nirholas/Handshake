@@ -186,6 +186,16 @@
 			display: flex; gap: 8px; align-items: center;
 			background: var(--panel); border: 1px solid var(--border-strong);
 			border-radius: 12px; padding: 5px 5px 5px 16px;
+			transition: border-color .2s ease, box-shadow .2s ease;
+		}
+		.chat-form--pulse {
+			border-color: var(--text);
+			animation: chat-form-pulse .9s ease;
+		}
+		@keyframes chat-form-pulse {
+			0%   { box-shadow: 0 0 0 0 rgba(232,232,232,0); }
+			30%  { box-shadow: 0 0 0 4px rgba(232,232,232,0.18); }
+			100% { box-shadow: 0 0 0 0 rgba(232,232,232,0); }
 		}
 		.chat-input {
 			flex: 1; background: transparent; border: 0; outline: none;
@@ -734,7 +744,7 @@
 					</div>
 					<span class="brain-badge" id="brain-tier">Balanced</span>
 				</div>
-				<a class="brain-link" href="/brain" id="brain-chat-link">Chat with AI →</a>
+				<a class="brain-link" href="#chat-form" id="brain-chat-link">Chat with AI →</a>
 			</div>
 
 			<div class="card brain-card">
@@ -862,7 +872,6 @@
 				document.getElementById('brain-model-name').textContent = meta.label;
 				document.getElementById('brain-network').textContent = meta.network;
 				document.getElementById('brain-tier').textContent = meta.tier;
-				document.getElementById('brain-chat-link').href = `/brain`;
 			})();
 
 			// Update identity pills based on actual data
@@ -1164,6 +1173,18 @@
 					agent.say(text);
 				}
 			} catch (e) { console.warn('Agent send failed:', e); }
+		}
+
+		// ── "Chat with AI →" focuses the live on-page chat ─────────
+		const brainChatLink = document.getElementById('brain-chat-link');
+		if (brainChatLink) {
+			brainChatLink.addEventListener('click', (e) => {
+				e.preventDefault();
+				chatForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				chatInput.focus({ preventScroll: true });
+				chatForm.classList.add('chat-form--pulse');
+				setTimeout(() => chatForm.classList.remove('chat-form--pulse'), 900);
+			});
 		}
 
 		document.querySelectorAll('.chip[data-say]').forEach((c) => {

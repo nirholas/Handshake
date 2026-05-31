@@ -1023,7 +1023,27 @@
 		@media (max-width: 720px) { .cta-card { padding: 48px 24px; } }
 
 		/* ── FOOTER ──────────────────────────────────────────────── */
-		footer { border-top: 1px solid var(--hairline); padding: 40px 0 56px; }
+		footer { border-top: 1px solid var(--hairline); padding: 56px 0; }
+		.foot-cols {
+			display: grid;
+			grid-template-columns: repeat(5, 1fr);
+			gap: 32px; margin-bottom: 48px;
+			padding-bottom: 40px; border-bottom: 1px solid var(--hairline);
+		}
+		.foot-col { display: flex; flex-direction: column; gap: 10px; }
+		.foot-col-h {
+			font-family: var(--font-mono); font-size: 11px;
+			text-transform: uppercase; letter-spacing: 0.16em;
+			color: var(--text-4); margin-bottom: 4px;
+		}
+		.foot-col a { color: var(--text-3); font-size: 13.5px; transition: color 0.15s; }
+		.foot-col a:hover { color: var(--text); }
+		@media (max-width: 880px) {
+			.foot-cols { grid-template-columns: repeat(2, 1fr); gap: 28px 24px; }
+		}
+		@media (max-width: 460px) {
+			.foot-cols { grid-template-columns: 1fr 1fr; }
+		}
 	.version-switch { display:inline-flex; align-items:center; gap:6px; margin-top:16px; padding:6px 14px; border-radius:100px; border:1px solid var(--hairline-strong); color:var(--text-3); font-size:12px; text-decoration:none; transition:color .2s, border-color .2s; }
 	.version-switch:hover { color:var(--text-2); border-color:var(--text-3); }
 	.version-switch svg { width:14px; height:14px; }
@@ -1033,9 +1053,6 @@
 			color: var(--text-4); font-size: 13px; font-family: var(--font-mono);
 			letter-spacing: 0.04em;
 		}
-		.foot-links { display: flex; gap: 22px; flex-wrap: wrap; }
-		.foot-links a { color: var(--text-3); transition: color 0.15s; }
-		.foot-links a:hover { color: var(--text); }
 
 		/* ── MOBILE NAV ─────────────────────────────────────────── */
 		.nav-toggle {
@@ -2494,6 +2511,8 @@
 				<div class="nav-pop" role="menu" aria-label="Discover">
 					<a class="nav-mi" href="/features" role="menuitem"><span class="nav-mi-t">Features</span><span class="nav-mi-d">Everything an agent gets — interactive tour</span></a>
 					<a class="nav-mi" href="/discover" role="menuitem"><span class="nav-mi-t">ERC-8004 Agents</span><span class="nav-mi-d">On-chain agent directory</span></a>
+					<a class="nav-mi" href="/agents" role="menuitem"><span class="nav-mi-t">Agents Index</span><span class="nav-mi-d">Browse every registered agent</span></a>
+					<a class="nav-mi" href="/reputation" role="menuitem"><span class="nav-mi-t">Reputation Explorer</span><span class="nav-mi-d">On-chain scores &amp; attestations</span></a>
 					<a class="nav-mi" href="/marketplace" role="menuitem"><span class="nav-mi-t">Marketplace</span><span class="nav-mi-d">Buy, sell &amp; remix agents</span></a>
 					<a class="nav-mi" href="/gallery" role="menuitem"><span class="nav-mi-t">Avatar Gallery</span><span class="nav-mi-d">Every public 3D avatar</span></a>
 					<a class="nav-mi" href="/skills" role="menuitem"><span class="nav-mi-t">Skills <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Browse agent tool packs &amp; capabilities</span></a>
@@ -2542,6 +2561,14 @@
 					<a class="nav-mi" href="/three-live" role="menuitem"><span class="nav-mi-t">$THREE Live <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Protocol pulse — live trades in 3D</span></a>
 					<a class="nav-mi" href="/strategy-lab" role="menuitem"><span class="nav-mi-t">Strategy Lab</span><span class="nav-mi-d">DCA + subscriptions</span></a>
 					<a class="nav-mi" href="/club" role="menuitem"><span class="nav-mi-t">Pole Club <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">x402 micro-tip demo — $0.001 / dance</span></a>
+					<a class="nav-mi" href="/shopper" role="menuitem"><span class="nav-mi-t">Endpoint Shopper <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">AI chains x402 endpoints to answer a task</span></a>
+					<a class="nav-mi" href="/tutor" role="menuitem"><span class="nav-mi-t">Pay-As-You-Learn Tutor <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">$0.01 per answer in USDC over x402</span></a>
+					<a class="nav-mi" href="/fact-checker" role="menuitem"><span class="nav-mi-t">Fact Checker <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">$0.10 per claim — cited verdict + attestation</span></a>
+					<a class="nav-mi" href="/arbitrage" role="menuitem"><span class="nav-mi-t">x402 Arbitrage <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Cheapest endpoint per capability, live</span></a>
+					<a class="nav-mi" href="/providers" role="menuitem"><span class="nav-mi-t">x402 Providers <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Operator profiles for the paid API catalog</span></a>
+					<a class="nav-mi" href="/unstoppable" role="menuitem"><span class="nav-mi-t">Unstoppable Agent <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Self-funding agent dashboard, live</span></a>
+					<a class="nav-mi" href="/rider" role="menuitem"><span class="nav-mi-t">Rider (VR)</span><span class="nav-mi-d">Open-source VR music visualization</span></a>
+					<a class="nav-mi" href="/forever" role="menuitem"><span class="nav-mi-t">Forever</span><span class="nav-mi-d">Etch a message into Bitcoin — forever</span></a>
 					<a class="nav-mi" href="/eth-vanity" role="menuitem"><span class="nav-mi-t">ETH vanity (CREATE2)</span><span class="nav-mi-d">Grind a smart-contract address</span></a>
 					<a class="nav-mi" href="/vanity-wallet" role="menuitem"><span class="nav-mi-t">Vanity wallet</span><span class="nav-mi-d">Grind a Solana address</span></a>
 				</div>
@@ -2569,6 +2596,8 @@
 	<div class="dr-h">Discover</div>
 	<a href="/features">Features</a>
 	<a href="/discover">ERC-8004 Agents</a>
+	<a href="/agents">Agents Index</a>
+	<a href="/reputation">Reputation Explorer</a>
 	<a href="/marketplace">Marketplace</a>
 	<a href="/gallery">Avatar Gallery</a>
 	<a href="/skills">Skills</a>
@@ -2596,6 +2625,14 @@
 	<a href="/pumpfun">Pump.fun stream</a>
 	<a href="/three-live">$THREE Live</a>
 	<a href="/club">Pole Club</a>
+	<a href="/shopper">Endpoint Shopper</a>
+	<a href="/tutor">Pay-As-You-Learn Tutor</a>
+	<a href="/fact-checker">Fact Checker</a>
+	<a href="/arbitrage">x402 Arbitrage</a>
+	<a href="/providers">x402 Providers</a>
+	<a href="/unstoppable">Unstoppable Agent</a>
+	<a href="/rider">Rider (VR)</a>
+	<a href="/forever">Forever</a>
 	<div class="dr-h">More</div>
 	<a href="/pricing">Pricing</a>
 	<div class="sep"></div>
@@ -3938,16 +3975,46 @@
 <!-- ── FOOTER ─────────────────────────────────────────────────────── -->
 <footer>
 	<div class="wrap-1280">
-		<div class="foot-inner">
-			<div>© 2026 · three.ws · the 3D agent layer of the internet</div>
-			<div class="foot-links">
-				<a href="/docs">Docs</a>
-				<a href="/pricing">Pricing</a>
+		<nav class="foot-cols" aria-label="Footer">
+			<div class="foot-col">
+				<div class="foot-col-h">Product</div>
+				<a href="/create">Build an agent</a>
+				<a href="/marketplace">Marketplace</a>
 				<a href="/discover">Discover</a>
+				<a href="/pricing">Pricing</a>
+				<a href="/dashboard">Console</a>
+			</div>
+			<div class="foot-col">
+				<div class="foot-col-h">Explore</div>
+				<a href="/agents">Agents Index</a>
+				<a href="/reputation">Reputation</a>
+				<a href="/characters">Characters</a>
+				<a href="/gallery">Avatar Gallery</a>
+				<a href="/bazaar">x402 Bazaar</a>
+			</div>
+			<div class="foot-col">
+				<div class="foot-col-h">Developers</div>
+				<a href="/docs">Docs</a>
+				<a href="/avatar-sdk">Avatar SDK</a>
 				<a href="/dashboard/api">API</a>
+				<a href="/artifact">Artifact Viewer</a>
+				<a href="/sitemap">Sitemap</a>
+			</div>
+			<div class="foot-col">
+				<div class="foot-col-h">Company</div>
+				<a href="/blog">Blog</a>
+				<a href="/community">Community</a>
 				<a href="https://github.com/nirholas/three.ws">GitHub</a>
 				<a href="mailto:hello@three.ws">Contact</a>
 			</div>
+			<div class="foot-col">
+				<div class="foot-col-h">Legal</div>
+				<a href="/legal/privacy">Privacy</a>
+				<a href="/legal/tos">Terms</a>
+			</div>
+		</nav>
+		<div class="foot-inner">
+			<div>© 2026 · three.ws · the 3D agent layer of the internet</div>
 			<a href="/home-classic" class="version-switch" aria-label="Switch to classic homepage">
 				<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8h11M6.5 4L2.5 8l4 4"/></svg>
 				Classic homepage

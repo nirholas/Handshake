@@ -143,45 +143,92 @@
 				min-height: 0;
 			}
 
-			/* ── Body type selector ───────────────────────────────── */
-			.as-body-type {
+			/* ── Color customization panel ────────────────────────── */
+			.as-color-group { margin-bottom: 22px; }
+			.as-color-head {
 				display: flex;
-				align-items: center;
-				gap: 10px;
-				padding: 12px 16px;
-				border-bottom: 1px solid var(--border);
-				background: var(--panel);
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 8px;
+				margin: 0 0 10px;
 			}
-			.as-body-label {
-				font-size: 11px;
-				text-transform: uppercase;
-				letter-spacing: 0.06em;
-				color: var(--text-3);
+			.as-color-title {
+				font-size: 13px;
 				font-weight: 600;
-			}
-			.as-body-toggle {
-				display: inline-flex;
-				background: var(--panel-2);
-				border: 1px solid var(--border-2);
-				border-radius: 8px;
-				padding: 2px;
-				gap: 2px;
-			}
-			.as-body-toggle button {
-				background: transparent;
-				border: none;
-				color: var(--text-3);
-				font: 600 12px/1 inherit;
-				padding: 7px 14px;
-				border-radius: 6px;
-				cursor: pointer;
-				transition: color 0.12s, background 0.12s;
-			}
-			.as-body-toggle button[aria-pressed="true"] {
-				background: rgba(255, 255, 255, 0.12);
 				color: var(--text);
 			}
-			.as-body-toggle button:hover { color: var(--text); }
+			.as-color-current {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 11px;
+				color: var(--text-3);
+				font-variant-numeric: tabular-nums;
+			}
+			.as-color-current .dot {
+				width: 12px; height: 12px;
+				border-radius: 50%;
+				border: 1px solid rgba(255, 255, 255, 0.25);
+			}
+			.as-swatches {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+				gap: 8px;
+			}
+			.as-swatch {
+				position: relative;
+				aspect-ratio: 1 / 1;
+				border-radius: 9px;
+				border: 1px solid var(--border-2);
+				cursor: pointer;
+				padding: 0;
+				transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+				outline: none;
+			}
+			.as-swatch:hover { transform: translateY(-1px); border-color: var(--text-3); }
+			.as-swatch:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+			.as-swatch[aria-pressed="true"] {
+				border-color: var(--accent);
+				box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px rgba(0, 0, 0, 0.6);
+			}
+			.as-swatch[aria-pressed="true"]::after {
+				content: '';
+				position: absolute;
+				inset: 0;
+				margin: auto;
+				width: 7px; height: 7px;
+				border-radius: 50%;
+				background: rgba(255, 255, 255, 0.9);
+				box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+			}
+			.as-swatch-default {
+				background:
+					linear-gradient(135deg, transparent 46%, var(--danger) 46%, var(--danger) 54%, transparent 54%),
+					var(--panel-2);
+			}
+			.as-swatch-custom {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				background:
+					conic-gradient(from 0deg, #f43f5e, #f59e0b, #eab308, #22c55e, #3b82f6, #8b5cf6, #f43f5e);
+				color: #fff;
+				overflow: hidden;
+			}
+			.as-swatch-custom input[type='color'] {
+				position: absolute;
+				inset: 0;
+				width: 100%; height: 100%;
+				opacity: 0;
+				cursor: pointer;
+				border: 0;
+				padding: 0;
+			}
+			.as-swatch-custom svg {
+				width: 14px; height: 14px;
+				filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+				pointer-events: none;
+			}
 
 			/* ── Name input ───────────────────────────────────────── */
 			.as-name-row {
@@ -266,6 +313,12 @@
 				font-size: 10px;
 				text-transform: uppercase;
 				letter-spacing: 0.06em;
+			}
+			.as-chip .as-chip-dot {
+				width: 11px; height: 11px;
+				border-radius: 50%;
+				border: 1px solid rgba(255, 255, 255, 0.3);
+				flex-shrink: 0;
 			}
 			.as-chip button {
 				background: transparent;
@@ -794,16 +847,9 @@
 				<div class="as-name-row">
 					<input class="as-name-input" id="as-name" type="text" placeholder="Name your avatar" maxlength="60" autocomplete="off" aria-label="Avatar name" />
 				</div>
-				<div class="as-body-type">
-					<span class="as-body-label">Body</span>
-					<div class="as-body-toggle" role="group" aria-label="Body type">
-						<button type="button" data-body="male" aria-pressed="true">Masculine</button>
-						<button type="button" data-body="female" aria-pressed="false">Feminine</button>
-					</div>
-				</div>
 				<nav class="as-tabs" id="as-tabs" role="tablist"></nav>
-				<div class="as-chips" id="as-chips" aria-label="Current outfit"></div>
-				<div class="as-panel" id="as-panel"></div>
+				<div class="as-chips" id="as-chips" aria-label="Selected items"></div>
+				<div class="as-panel" id="as-panel" role="tabpanel" tabindex="0"></div>
 				<div class="as-status" id="as-status">Choose a style below to get started.</div>
 				<a href="/pricing" class="upgrade-banner" style="margin:12px 16px;text-decoration:none;">
 					<div class="upgrade-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>

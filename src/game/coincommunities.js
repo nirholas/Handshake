@@ -44,6 +44,8 @@ const JUMP_VELOCITY = 5.5; // m/s upward kick on Space; ~1m apex under GRAVITY
 const GRAVITY = 15; // m/s^2 pulling the jumper back down
 const REMOTE_LERP = 0.18;
 const JOY_DEADZONE = 0.12; // swallow tiny stick grazes so the avatar doesn't drift
+const UNDO_LIMIT = 50; // how many build actions Ctrl/Cmd+Z can walk back
+const LONG_PRESS_MS = 420; // hold-to-break threshold for touch (no right-click there)
 const TRENDING_URL = '/api/pump/trending?limit=30';
 const SEARCH_URL = '/api/pump/search';
 const COIN_URL = '/api/pump/coin';
@@ -652,12 +654,17 @@ export class CoinCommunities {
 			// Every (re)connect re-streams the server's authoritative build, so wipe
 			// the local layer first. On a manual retry out of single-player this also
 			// hands authority back: the solo build gives way to the shared world's.
-			if (status === 'connecting') this.voxels?.clear();
+			if (status === 'connecting') { this.voxels?.clear(); this._undoStack = []; this._syncBudget(); }
 			// Building is available with a live server (synced + persisted for
 			// everyone) and in solo single-player mode (local-only) once multiplayer
 			// has been given up. The connecting window is the only time it's off, so
 			// the toggle never becomes a dead, silent button.
 			this.buildHud.setEnabled(this._buildableConnection(), 'Connecting to the world…');
+			// Durability badge: online reflects the server's persistent flag; solo
+			// single-player isn't saved at all, so hide it (null) to avoid a false
+			// promise. Re-sync the budget meter against whatever layer is now live.
+			this.buildHud.setPersistent(status === 'online' ? this.net?.persistent : (status === 'offline' ? false : null));
+			this._syncBudget();
 			// A reconnect reissues every sessionId, stranding the voice mesh — refresh
 			// our id, drop the stale peers, and re-announce so it re-forms.
 			if (status === 'online' && this.voice?.joined && this.net.sessionId !== this.voice.selfId) {
@@ -678,14 +685,32 @@ export class CoinCommunities {
 		this.net.on('remove', (id) => this._onRemove(id));
 		this.net.on('chat', (m) => this._onChat(m));
 		this.net.on('ping', (ms) => this.ui.setPing(ms));
-		this.net.on('blockAdd', (key, t) => { const [x, y, z] = parseKey(key); this.voxels?.setBlock(x, y, z, t); });
+		this.net.on('blockAdd', (key, t) => { const [x, y, z] = parseKey(key); this.voxels?.setBlock(x, y, z, t); this._syncBudget(); });
 		this.net.on('blockChange', (key, t) => { const [x, y, z] = parseKey(key); this.voxels?.setBlock(x, y, z, t); });
-		this.net.on('blockRemove', (key) => { const [x, y, z] = parseKey(key); this.voxels?.removeBlock(x, y, z); });
+		this.net.on('blockRemove', (key) => { const [x, y, z] = parseKey(key); this.voxels?.removeBlock(x, y, z); this._syncBudget(); });
+		this.net.on('editReject', ({ reason }) => this._onEditReject(reason));
+		// Durability flag for this world's build — drives the HUD "Saved" badge.
+		this.net.on('persistent', (durable) => { if (this.net?.status === 'online') this.buildHud.setPersistent(durable); });
 		this.buildHud.root.hidden = false;
 		await this.net.connect();
 		this._initVoice();
 		this.phase = 'world';
 		this._initJoystick();
+		this._onboardBuild();
+	}
+
+	// First-run nudge so players discover building exists — the HUD's ⛏ toggle is
+	// easy to miss. Shown once ever, a few seconds after the world settles so it
+	// doesn't collide with the entry toast.
+	_onboardBuild() {
+		try { if (localStorage.getItem('cc-build-onboarded')) return; } catch { return; }
+		clearTimeout(this._onboardTimer);
+		this._onboardTimer = setTimeout(() => {
+			if (this.phase !== 'world') return;
+			const touch = typeof matchMedia === 'function' && matchMedia('(hover: none), (pointer: coarse)').matches;
+			this.ui.toast(touch ? 'Tip: tap ⛏ to build this world together.' : 'Tip: press B (or tap ⛏) to build this world together.', 'info');
+			try { localStorage.setItem('cc-build-onboarded', '1'); } catch {}
+		}, 4200);
 	}
 
 	// Run the holder gate for a coin's Holders world. Drives the overlay through
@@ -808,8 +833,12 @@ export class CoinCommunities {
 		if (this._chartScreen) { this._chartScreen.dispose(); this._chartScreen = null; }
 		if (this._reactor) { this._reactor.dispose(); this._reactor = null; }
 		if (this.voxels) { this.voxels.dispose(); this.voxels = null; }
+		this._cancelLongPress();
+		clearTimeout(this._onboardTimer);
+		this._undoStack = []; // history is per-world; don't carry edits across coins
 		this.buildHud.setActive(false);
 		this.buildHud.setEnabled(false);
+		this.buildHud.setPersistent(null);
 		this.buildHud.root.hidden = true;
 		if (this.localRig) { this.scene.remove(this.localRig); this.localRig = null; }
 		if (this._nipple) { this._nipple.destroy(); this._nipple = null; }
@@ -912,6 +941,12 @@ export class CoinCommunities {
 					if (this._buildableConnection() || this.buildHud.active) this.buildHud.setActive(!this.buildHud.active);
 					return;
 				}
+				// Ctrl/Cmd+Z walks back the player's own recent build edits.
+				if (k === 'z' && (e.ctrlKey || e.metaKey) && this.buildHud.active) {
+					e.preventDefault();
+					this._undo();
+					return;
+				}
 				if (this.buildHud.active && k.length === 1 && k >= '0' && k <= '9') {
 					e.preventDefault();
 					this.buildHud.select(k === '0' ? 9 : Number(k) - 1);
@@ -924,16 +959,26 @@ export class CoinCommunities {
 		this.canvas.addEventListener('pointerdown', (e) => {
 			this._dragging = true; this._lastPtr = { x: e.clientX, y: e.clientY };
 			this._downPtr = { x: e.clientX, y: e.clientY };
+			this._longPressFired = false;
 			// Touch has no hover, so seed the ghost on press so the first tap aims true.
-			if (this.phase === 'world' && this.buildHud.active && e.button !== 2) this._updateGhost(e.clientX, e.clientY);
+			if (this.phase === 'world' && this.buildHud.active && e.button !== 2) {
+				this._updateGhost(e.clientX, e.clientY);
+				// Touch has no right-click; a hold breaks the targeted block. Mouse keeps
+				// right-click / the mode toggle, but the hold works there too.
+				if (e.button !== 2) this._armLongPressBreak(e.clientX, e.clientY);
+			}
 		});
-		window.addEventListener('pointerup', () => { this._dragging = false; });
+		window.addEventListener('pointerup', () => { this._dragging = false; this._cancelLongPress(); });
 		// A tap (negligible drag) builds in build mode, otherwise opens the coin on
 		// pump.fun when it lands on the live chart screen.
 		this.canvas.addEventListener('pointerup', (e) => {
+			this._cancelLongPress();
+			const consumed = this._longPressFired;
+			this._longPressFired = false;
 			if (!this._downPtr) return;
 			const moved = Math.hypot(e.clientX - this._downPtr.x, e.clientY - this._downPtr.y);
 			this._downPtr = null;
+			if (consumed) return; // a hold already broke a block — don't also place
 			if (moved >= 6 || e.button === 2) return; // a look-drag, or a right-click (handled by contextmenu)
 			if (this.phase === 'world' && this.buildHud.active) { this._buildAt(e.clientX, e.clientY, false); return; }
 			if (this._raycastScreen(e.clientX, e.clientY)) this._chartScreen.openExternal();
@@ -957,6 +1002,9 @@ export class CoinCommunities {
 			}
 			const dx = e.clientX - this._lastPtr.x, dy = e.clientY - this._lastPtr.y;
 			this._lastPtr = { x: e.clientX, y: e.clientY };
+			// A real drag is a look, not a hold — cancel the pending break so panning
+			// the camera in build mode never destroys a block.
+			if (this._downPtr && Math.hypot(e.clientX - this._downPtr.x, e.clientY - this._downPtr.y) >= 8) this._cancelLongPress();
 			this.camYaw -= dx * 0.005;
 			this.camPitch = Math.max(0.1, Math.min(1.2, this.camPitch + dy * 0.004));
 		});
@@ -1003,29 +1051,110 @@ export class CoinCommunities {
 	// — same result on screen, just not synced or persisted.
 	_buildAt(clientX, clientY, forceRemove) {
 		if (!this.voxels || this.phase !== 'world' || !this._buildableConnection()) return;
-		const online = this.net?.status === 'online';
 		const target = this.voxels.raycast(this._pointerRay(clientX, clientY));
 		if (!target) return;
 		if (forceRemove || this.buildHud.mode === 'remove') {
 			if (target.hit === 'block' && target.cell) {
-				if (online) this.net.sendRemove(target.cell[0], target.cell[1], target.cell[2]);
-				else this.voxels.removeBlock(target.cell[0], target.cell[1], target.cell[2]);
+				// Capture the type before it's gone so undo can put it back exactly.
+				const prevType = this.voxels.typeAt(...target.cell);
+				if (this._applyEdit('remove', target.cell) && prevType >= 0) {
+					this._pushUndo({ kind: 'place', cell: target.cell.slice(), type: prevType });
+				}
 			}
 		} else if (target.placeValid) {
 			// The server enforces the build's block cap online; honour it locally too
 			// so a solo build can't outgrow what a shared one is allowed to be.
-			if (!online && this.voxels.count >= MAX_BLOCKS) {
+			if (this.net?.status !== 'online' && this.voxels.count >= MAX_BLOCKS) {
 				this.ui.toast(`Build limit reached (${MAX_BLOCKS} blocks).`, 'warn');
 				return;
 			}
-			if (online) this.net.sendPlace(target.placeCell[0], target.placeCell[1], target.placeCell[2], this.buildType);
-			else this.voxels.setBlock(target.placeCell[0], target.placeCell[1], target.placeCell[2], this.buildType);
+			if (this._applyEdit('place', target.placeCell, this.buildType)) {
+				this._pushUndo({ kind: 'remove', cell: target.placeCell.slice() });
+			}
 		} else if (target.placeCell) {
 			// Aimed somewhere illegal (out of bounds / occupied) — flash the cursor.
 			this.voxels.showGhost(target.placeCell, 'blocked');
 			return;
 		}
 		this._updateGhost(clientX, clientY);
+	}
+
+	// Arm a hold-to-break timer for the current press. If the player keeps the
+	// pointer down and still (no drag) past LONG_PRESS_MS, break the targeted block
+	// — the touch-native equivalent of a right-click. Cancelled by movement or release.
+	_armLongPressBreak(clientX, clientY) {
+		this._cancelLongPress();
+		if (this.phase !== 'world' || !this.buildHud.active || !this._buildableConnection()) return;
+		this._longPressTimer = setTimeout(() => {
+			this._longPressTimer = null;
+			if (!this._downPtr) return;
+			this._longPressFired = true;
+			this._buildAt(clientX, clientY, true);
+			// A short haptic tick confirms the break on devices that support it.
+			if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(28);
+		}, LONG_PRESS_MS);
+	}
+
+	_cancelLongPress() {
+		if (this._longPressTimer) { clearTimeout(this._longPressTimer); this._longPressTimer = null; }
+	}
+
+	// Apply one edit to whichever layer is authoritative: online sends the intent
+	// (the block lands when the server echoes it); solo mutates the local layer
+	// directly. Returns true if the edit was issued, so undo history only records
+	// edits that actually happened.
+	_applyEdit(kind, cell, type) {
+		const online = this.net?.status === 'online';
+		if (kind === 'remove') {
+			if (online) this.net.sendRemove(cell[0], cell[1], cell[2]);
+			else { this.voxels.removeBlock(cell[0], cell[1], cell[2]); this._syncBudget(); }
+		} else {
+			if (online) this.net.sendPlace(cell[0], cell[1], cell[2], type);
+			else { this.voxels.setBlock(cell[0], cell[1], cell[2], type); this._syncBudget(); }
+		}
+		return true;
+	}
+
+	// Push an inverse action onto the bounded undo stack. Each entry is the edit
+	// that *reverses* what the player just did, so Ctrl/Cmd+Z replays it.
+	_pushUndo(action) {
+		(this._undoStack ||= []).push(action);
+		if (this._undoStack.length > UNDO_LIMIT) this._undoStack.shift();
+	}
+
+	// Reverse the player's most recent build action. Best-effort in a shared world:
+	// if a peer has since changed that cell, the inverse simply overrides or no-ops,
+	// which is the least-surprising outcome for a collaborative undo.
+	_undo() {
+		if (this.phase !== 'world' || !this.buildHud.active || !this._buildableConnection()) return;
+		const action = this._undoStack?.pop();
+		if (!action) { this.ui.toast('Nothing to undo.', 'info'); return; }
+		if (action.kind === 'place') this._applyEdit('place', action.cell, action.type);
+		else this._applyEdit('remove', action.cell);
+		this._refreshGhost();
+	}
+
+	// Keep the HUD's block-budget meter in step with the live build. voxels.count
+	// mirrors the server's authoritative block count (every block streams in), so
+	// this is accurate online and solo alike.
+	_syncBudget() {
+		this.buildHud?.setBudget(this.voxels?.count ?? 0, MAX_BLOCKS);
+	}
+
+	// Explain a server-refused edit so a block that never appeared isn't a mystery.
+	// Throttled to one toast per reason per window — a flood reply can't spam.
+	_onEditReject(reason) {
+		const now = performance.now();
+		this._rejectToastAt ||= {};
+		if (now - (this._rejectToastAt[reason] || 0) < 4000) return;
+		this._rejectToastAt[reason] = now;
+		const msg = {
+			budget: `Build limit reached (${MAX_BLOCKS} blocks) — break something to make room.`,
+			rate: 'Building too fast — slow down a moment.',
+			bounds: 'Can’t build there — outside the build area.',
+			type: 'That block type isn’t available.',
+		}[reason] || 'That edit couldn’t be applied.';
+		this.ui.toast(msg, 'warn');
 	}
 
 	// Move the ghost cursor to whatever the pointer aims at, tinted by intent
@@ -1049,13 +1178,13 @@ export class CoinCommunities {
 
 	_onBuildToggle(on) {
 		if (!on) { this.voxels?.hideGhost(); this.canvas.style.cursor = ''; return; }
+		const touch = typeof matchMedia === 'function' && matchMedia('(hover: none), (pointer: coarse)').matches;
 		const solo = this.net?.status !== 'online';
-		this.ui.toast(
-			solo
-				? 'Build mode (single-player) — tap to place, right-click to break, 1–0 pick a block'
-				: 'Build mode — tap to place, right-click to break, 1–0 pick a block',
-			'info',
-		);
+		const how = touch
+			? 'tap to place, hold to break, pick a block, ⌘/Ctrl+Z to undo'
+			: 'click to place, right-click to break, 1–0 pick a block, ⌘/Ctrl+Z to undo';
+		this.ui.toast(`Build mode${solo ? ' (single-player)' : ''} — ${how}`, 'info');
+		this._syncBudget();
 		if (this._lastHover) this._updateGhost(this._lastHover.x, this._lastHover.y);
 	}
 

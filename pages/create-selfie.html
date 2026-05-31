@@ -558,6 +558,32 @@
 			height: 100%;
 			--poster-color: transparent;
 		}
+		/* Skeleton shimmer while the GLB streams in. */
+		.done-viewer.loading::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+			background: linear-gradient(100deg, var(--panel) 30%, rgba(255, 255, 255, 0.06) 50%, var(--panel) 70%);
+			background-size: 200% 100%;
+			animation: done-shimmer 1.4s ease-in-out infinite;
+		}
+		@keyframes done-shimmer { to { background-position: -200% 0; } }
+		/* GLB failed to load — show a recoverable message, never a black void. */
+		.done-viewer.failed::before {
+			content: 'Preview unavailable — open your avatar to view it.';
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			padding: 24px;
+			color: var(--muted);
+			font-size: 13px;
+			line-height: 1.5;
+		}
 		.name-row {
 			margin: 0 0 20px;
 		}
@@ -1081,7 +1107,6 @@
 				camera-controls
 				shadow-intensity="0.7"
 				shadow-softness="0.8"
-				loading="lazy"
 				environment-image="neutral"
 				exposure="0.95"
 				camera-orbit="0deg 78deg auto"
@@ -1242,18 +1267,41 @@
 				s.className = 'build-step completed';
 			});
 
+			const viewer = document.querySelector('.done-viewer');
+			viewer?.classList.add('loading');
+			viewer?.classList.remove('failed');
+
 			try {
 				const res = await fetch(`/api/avatars/${encodeURIComponent(_avatarId)}`, {
 					credentials: 'include',
 				});
 				if (res.ok) {
-					const avatar = await res.json();
+					// The API wraps the record: { avatar: { model_url, name, ... } }.
+					const { avatar } = await res.json();
 					const modelEl = document.getElementById('done-model');
-					if (modelEl && avatar.model_url) modelEl.setAttribute('src', avatar.model_url);
+					const modelUrl = avatar?.model_url || avatar?.url;
+					if (modelEl && modelUrl) {
+						modelEl.addEventListener('load', () => viewer?.classList.remove('loading'), { once: true });
+						modelEl.addEventListener('error', () => {
+							viewer?.classList.remove('loading');
+							viewer?.classList.add('failed');
+						}, { once: true });
+						modelEl.setAttribute('src', modelUrl);
+					} else {
+						// Materialized but no GLB URL — don't leave a silent black void.
+						viewer?.classList.remove('loading');
+						viewer?.classList.add('failed');
+					}
 					const nameEl = /** @type {HTMLInputElement|null} */ (document.getElementById('done-name'));
-					if (nameEl && avatar.name) nameEl.value = avatar.name;
+					if (nameEl && avatar?.name) nameEl.value = avatar.name;
+				} else {
+					viewer?.classList.remove('loading');
+					viewer?.classList.add('failed');
 				}
-			} catch (_) {}
+			} catch (_) {
+				viewer?.classList.remove('loading');
+				viewer?.classList.add('failed');
+			}
 
 			notifyDone();
 			showStep('done');

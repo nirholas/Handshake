@@ -19,6 +19,12 @@ export function isValidPresetId(id) {
 	return PRESET_IDS.has(id);
 }
 
+// Tintable color slots — mirror COLOR_SLOTS in src/avatar-studio.js and
+// SLOT_MATERIALS in api/_lib/bake.js. Each maps to one or more named GLB
+// materials whose baseColorFactor the baker multiplies.
+const COLOR_SLOT_IDS = new Set(['skin', 'hair', 'outfit']);
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+
 export function validateAppearance(appearance) {
 	if (!appearance) return null;
 
@@ -47,6 +53,22 @@ export function validateAppearance(appearance) {
 		for (const [k, v] of entries) {
 			if (typeof v !== 'number' || v < 0 || v > 1) {
 				return `appearance.morphs["${k}"] must be a number 0..1`;
+			}
+		}
+	}
+
+	if (appearance.colors !== undefined && appearance.colors !== null) {
+		if (typeof appearance.colors !== 'object' || Array.isArray(appearance.colors)) {
+			return 'appearance.colors must be an object';
+		}
+		const entries = Object.entries(appearance.colors);
+		if (entries.length > COLOR_SLOT_IDS.size) {
+			return `appearance.colors max ${COLOR_SLOT_IDS.size} keys`;
+		}
+		for (const [slot, hex] of entries) {
+			if (!COLOR_SLOT_IDS.has(slot)) return `unknown color slot: ${slot}`;
+			if (typeof hex !== 'string' || !HEX_RE.test(hex)) {
+				return `appearance.colors["${slot}"] must be a #rrggbb hex string`;
 			}
 		}
 	}

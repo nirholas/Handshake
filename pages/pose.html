@@ -682,6 +682,136 @@
 			.tl-export.is-ok { border-color: rgba(120, 255, 170, 0.5); color: #b6ffce; }
 			.tl-export.is-err { border-color: rgba(248, 113, 113, 0.6); color: var(--danger); }
 
+			/* ── Library: overlays, dialogs, drawer, cards ───────────── */
+			.pl-overlay {
+				position: fixed;
+				inset: 0;
+				z-index: 1000;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: rgba(0, 0, 0, 0.6);
+				backdrop-filter: blur(4px);
+				-webkit-backdrop-filter: blur(4px);
+				padding: 20px;
+				animation: pl-fade 0.14s ease;
+			}
+			@keyframes pl-fade { from { opacity: 0; } to { opacity: 1; } }
+			.pl-dialog {
+				width: min(440px, 100%);
+				max-height: 88vh;
+				overflow-y: auto;
+				background: var(--panel-solid);
+				border: 1px solid var(--border-strong);
+				border-radius: 16px;
+				padding: 22px;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+				box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+			}
+			.pl-dialog-title { margin: 0; font-size: 17px; font-weight: 600; color: var(--text); }
+			.pl-dialog-sub { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text-2); }
+			.pl-field { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-2); }
+			.pl-field > span { font-weight: 500; }
+			.pl-input {
+				width: 100%;
+				box-sizing: border-box;
+				background: rgba(255, 255, 255, 0.04);
+				color: var(--text);
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 8px 10px;
+				font: inherit;
+				font-size: 13px;
+			}
+			.pl-input:focus { outline: none; border-color: var(--border-strong); background: rgba(255, 255, 255, 0.07); }
+			.pl-textarea { resize: vertical; min-height: 38px; }
+			.pl-link-note { margin: 0; font-size: 11.5px; color: var(--text-3); }
+			.pl-dialog-err {
+				font-size: 12px;
+				color: var(--danger);
+				background: rgba(248, 113, 113, 0.1);
+				border: 1px solid rgba(248, 113, 113, 0.3);
+				border-radius: 8px;
+				padding: 7px 10px;
+			}
+			.pl-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+			.pl-danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.4); }
+			.pl-danger:hover { background: rgba(248, 113, 113, 0.12); }
+
+			/* Drawer */
+			.pl-drawer-overlay { justify-content: flex-end; align-items: stretch; padding: 0; }
+			.pl-drawer {
+				width: min(720px, 100%);
+				background: var(--panel-solid);
+				border-left: 1px solid var(--border-strong);
+				display: flex;
+				flex-direction: column;
+				transform: translateX(24px);
+				opacity: 0;
+				transition: transform 0.2s ease, opacity 0.2s ease;
+			}
+			.pl-drawer.pl-open { transform: translateX(0); opacity: 1; }
+			.pl-drawer-head {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 14px 18px;
+				border-bottom: 1px solid var(--border);
+			}
+			.pl-tabs { display: flex; gap: 4px; padding: 3px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); border-radius: 999px; }
+			.pl-tab {
+				appearance: none; border: none; background: transparent; color: var(--text-2);
+				font: inherit; font-size: 12.5px; padding: 6px 14px; border-radius: 999px; cursor: pointer;
+				transition: background 0.12s ease, color 0.12s ease;
+			}
+			.pl-tab:hover { color: var(--text); }
+			.pl-tab[aria-selected="true"] { background: rgba(255, 255, 255, 0.18); color: #e8e8e8; }
+			.pl-close {
+				appearance: none; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.04);
+				color: var(--text-2); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 13px;
+			}
+			.pl-close:hover { color: var(--text); border-color: var(--border-strong); }
+			.pl-grid {
+				flex: 1;
+				overflow-y: auto;
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+				gap: 14px;
+				padding: 18px;
+				align-content: start;
+			}
+			.pl-card {
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				overflow: hidden;
+				background: rgba(255, 255, 255, 0.02);
+				display: flex;
+				flex-direction: column;
+				transition: border-color 0.12s ease, transform 0.12s ease;
+			}
+			.pl-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+			.pl-card-thumb { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; background: #0b0b10; display: block; }
+			.pl-card-thumb-empty { display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--text-3); }
+			.pl-card-badges { display: flex; gap: 5px; flex-wrap: wrap; padding: 8px 10px 0; }
+			.pl-badge { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-3); }
+			.pl-badge-public { color: #b6ffce; border-color: rgba(120, 255, 170, 0.4); }
+			.pl-badge-unlisted { color: #ffe6a3; border-color: rgba(255, 210, 100, 0.4); }
+			.pl-badge-price { color: #a3d8ff; border-color: rgba(120, 180, 255, 0.4); }
+			.pl-card-name { padding: 6px 10px 0; font-size: 13.5px; font-weight: 600; color: var(--text); }
+			.pl-card-meta { padding: 2px 10px 0; font-size: 11px; color: var(--text-3); }
+			.pl-card-tags { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px 0; }
+			.pl-tag { font-size: 10px; color: var(--text-2); background: rgba(255, 255, 255, 0.05); border-radius: 4px; padding: 1px 6px; }
+			.pl-card-actions { display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; margin-top: auto; }
+			.pl-card-actions .pose-btn { font-size: 11.5px; padding: 5px 9px; }
+			.pl-skeleton { min-height: 240px; background: linear-gradient(110deg, rgba(255,255,255,0.03) 30%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 70%); background-size: 200% 100%; animation: pl-shimmer 1.3s ease infinite; }
+			@keyframes pl-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+			.pl-empty { grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: var(--text-2); }
+			.pl-empty-icon { font-size: 38px; margin-bottom: 8px; }
+			.pl-empty h3 { margin: 0 0 6px; font-size: 16px; color: var(--text); }
+			.pl-empty p { margin: 0 auto 14px; font-size: 13px; max-width: 320px; line-height: 1.5; }
+
 			/* ── Responsive ─────────────────────────────────────── */
 			@media (max-width: 1100px) {
 				#pose-app {
@@ -730,6 +860,10 @@
 				<button type="button" id="pose-use-mannequin" class="pose-btn" title="Return to the built-in mannequin">Mannequin</button>
 
 				<span class="spacer"></span>
+
+				<button type="button" id="pose-library" class="pose-btn" title="Your saved animations">My animations</button>
+				<button type="button" id="pose-save" class="pose-btn pose-btn-primary" title="Save this animation to your account (Ctrl/Cmd+S)">Save</button>
+				<span class="sep"></span>
 
 				<button type="button" id="pose-reset" class="pose-btn" title="Reset the pose to rest">Reset pose</button>
 

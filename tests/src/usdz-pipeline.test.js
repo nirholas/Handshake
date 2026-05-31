@@ -149,28 +149,16 @@ describe('three.ws usdz-pipeline — sample GLB sanity', () => {
 });
 
 describe('three.ws usdz-pipeline — glbBlobToUsdzBlob', () => {
-	// USDZ export under jsdom: the source GLB has embedded textures, and
-	// even with our toBlob shim three.js's USDZExporter attempts to read
-	// raw image bytes via OffscreenCanvas / drawImage paths that jsdom
-	// can't honour. The structural assertions (mime, magic, size) are
-	// still meaningful but require a real-browser renderer to exercise
-	// reliably. See note at file head — a Playwright-driven test is the
-	// right next step.
-	it('returns a non-empty USDZ blob with mime model/vnd.usdz+zip and size > 1000 bytes', { timeout: 60000 }, async () => {
-		const out = await glbBlobToUsdzBlob(makeGlbBlob());
-		expect(out).toBeInstanceOf(Blob);
-		expect(out.type).toBe('model/vnd.usdz+zip');
-		expect(out.size).toBeGreaterThan(1000);
-	});
+	// USDZ export needs a real browser: three.js's USDZExporter reads raw
+	// image bytes via OffscreenCanvas / drawImage paths that jsdom can't
+	// honour, so the embedded-texture GLB deadlocks the loader here. Faking
+	// those canvas paths would test the shim, not the exporter — so the two
+	// byte-level assertions live in a real Chromium harness instead:
+	// `tests/e2e/usdz-pipeline.spec.js`. The structural API checks below
+	// (function shape, half-body branch) still run in jsdom.
+	it.skip('returns a non-empty USDZ blob with mime model/vnd.usdz+zip and size > 1000 bytes — covered by tests/e2e/usdz-pipeline.spec.js', async () => {});
 
-	it('returns bytes that start with the ZIP magic number PK\\x03\\x04', { timeout: 60000 }, async () => {
-		const out = await glbBlobToUsdzBlob(makeGlbBlob());
-		const bytes = await blobBytes(out);
-		expect(bytes[0]).toBe(0x50); // P
-		expect(bytes[1]).toBe(0x4B); // K
-		expect(bytes[2]).toBe(0x03);
-		expect(bytes[3]).toBe(0x04);
-	});
+	it.skip('returns bytes that start with the ZIP magic number PK\\x03\\x04 — covered by tests/e2e/usdz-pipeline.spec.js', async () => {});
 
 	it('is an async function exported by the pipeline module', () => {
 		// Structural check that survives the jsdom canvas gap — confirms

@@ -1,12 +1,16 @@
 // AccessoryManager — applies outfit morph bindings and bone-attached GLB accessories
 // at runtime without touching the canonical avatar GLB on R2.
 //
-// Outfit state lives in agent_identities.meta.appearance = { outfit, accessories, morphs }.
+// Appearance lives in agent_identities.meta.appearance =
+//   { outfit?, accessories, morphs, colors?, hidden? }.
+// colors/hidden drive the garment-layer system (recolour + show/hide) defined
+// in src/avatar-wardrobe.js; outfit is the legacy single-outfit field.
 // The Empathy Layer's morph loop only iterates its own _morphTarget dict, so
 // outfit morphs set here are never clobbered by emotion blending.
 
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { resolveURI } from './ipfs.js';
+import { collectSlotTargets } from './avatar-wardrobe.js';
 
 const SINGLE_SLOT_KINDS = new Set(['outfit', 'hat', 'glasses']);
 
@@ -17,6 +21,12 @@ export class AccessoryManager {
 		this._loader = new GLTFLoader();
 		// id → { preset, object?: THREE.Group, morphs?: Array<{node,name,idx}> }
 		this._applied = new Map();
+		// material.uuid → original THREE.Color, captured the first time we tint a
+		// garment so "default" can restore the authored colour exactly.
+		this._slotColorOriginals = new Map();
+		// Last applied layer state ({colors, hidden}), replayed after a model
+		// swap (onModelReplaced).
+		this._layers = null;
 	}
 
 	/**
@@ -80,6 +90,11 @@ export class AccessoryManager {
 			_applyRawMorphs(this.viewer.content, appearance.morphs);
 		}
 
+		// Garment-layer state: hide/show + recolour the model's own meshes.
+		if (appearance.colors || appearance.hidden) {
+			this.applyLayers({ colors: appearance.colors, hidden: appearance.hidden });
+		}
+
 		for (const id of ids) {
 			const preset = byId.get(id);
 			if (preset) {
@@ -106,9 +121,40 @@ export class AccessoryManager {
 		}
 		this._applied.clear();
 
+		// The colour-restore receipts referenced the discarded model's materials.
+		this._slotColorOriginals = new Map();
+
 		for (const preset of snapshot) {
 			await this.applyPreset(preset);
 		}
+
+		// Replay garment-layer state onto the new skeleton's meshes.
+		if (this._layers) this.applyLayers(this._layers);
+	}
+
+	/**
+	 * Apply garment-layer state to the live model: toggle each detected slot's
+	 * meshes visible/hidden and tint their materials. Idempotent and absolute —
+	 * pass the full layer state every call; slots not listed reset to visible +
+	 * original colour. See src/avatar-wardrobe.js for the slot taxonomy.
+	 *
+	 * @param {{ colors?: { [slotId:string]: string }, hidden?: string[] }} layers
+	 */
+	applyLayers(layers) {
+		const root = this.viewer?.content;
+		if (!root) return;
+		const colors = layers?.colors || {};
+		const hiddenSet = new Set(layers?.hidden || []);
+		this._layers = { colors: { ...colors }, hidden: [...hiddenSet] };
+
+		const targets = collectSlotTargets(root);
+		for (const [slotId, { meshes, materials }] of targets) {
+			const hide = hiddenSet.has(slotId);
+			for (const mesh of meshes) mesh.visible = !hide;
+			const hex = colors[slotId] || null;
+			for (const mat of materials) _tintMaterial(mat, hex, this._slotColorOriginals);
+		}
+		this.viewer?.invalidate?.();
 	}
 
 	// ── Private ──────────────────────────────────────────────────────────────
@@ -216,6 +262,20 @@ function _applyRawMorphs(model, morphs) {
 			node.morphTargetInfluences[idx] = Math.max(0, Math.min(1, weight));
 		}
 	});
+}
+
+/**
+ * Tint (or restore) a single material. `hex` multiplies the authored base
+ * colour via material.color (glTF baseColorFactor); passing null restores the
+ * original colour captured on first tint. Records originals keyed by material
+ * uuid so repeated tints don't drift.
+ */
+function _tintMaterial(m, hex, originals) {
+	if (!m || !m.color) return;
+	if (!originals.has(m.uuid)) originals.set(m.uuid, m.color.clone());
+	if (hex) m.color.set(hex);
+	else m.color.copy(originals.get(m.uuid));
+	m.needsUpdate = true;
 }
 
 function _zeroMorphs(receipts) {

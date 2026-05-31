@@ -29,13 +29,13 @@
 // avoids breaking changes from auto-upgraded CDN aliases; jsDelivr's `+esm`
 // suffix returns the ESM build.
 const TASKS_VISION_URL =
-	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm';
+	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm';
 
 // Hosted by Google. They publish exactly one official URL per model — these
 // are the standard locations used in every MediaPipe sample, public CORS,
 // no auth.
 const WASM_ROOT =
-	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm';
+	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm';
 const MODEL_URL =
 	'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
 

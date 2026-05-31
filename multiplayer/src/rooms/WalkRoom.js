@@ -202,6 +202,11 @@ export class WalkRoom extends Room {
 		} catch (err) {
 			console.warn(`[walk_world ${this.roomId}] block restore failed:`, err?.message);
 		}
+		// Tell builders, honestly, whether this world survives a server restart.
+		// load() above already awaited the store's readiness probe, so durability
+		// is settled by now.
+		await blockStore.ready();
+		this.state.persistent = blockStore.durable;
 	}
 
 	onJoin(client, options) {
@@ -390,17 +395,24 @@ export class WalkRoom extends Room {
 		return `${x},${y},${z}`;
 	}
 
+	// Tell one client an edit didn't land, and why, so the build HUD can explain a
+	// block that never appeared instead of leaving the player guessing. The client
+	// throttles these into a single toast, so a flood reply is harmless.
+	_rejectEdit(client, reason) {
+		client.send('edit-reject', { reason });
+	}
+
 	_handlePlace(client, payload) {
 		if (!this.state.players.has(client.sessionId)) return;
-		if (!this._editOk(client.sessionId)) return;
+		if (!this._editOk(client.sessionId)) { this._rejectEdit(client, 'rate'); return; }
 		const key = this._cellKey(payload);
-		if (key === null) return;
+		if (key === null) { this._rejectEdit(client, 'bounds'); return; }
 		const t = payload.t;
-		if (!Number.isInteger(t) || t < 0 || t >= BLOCK_TYPE_COUNT) return;
+		if (!Number.isInteger(t) || t < 0 || t >= BLOCK_TYPE_COUNT) { this._rejectEdit(client, 'type'); return; }
 		const existing = this.state.blocks.get(key);
 		// New cell — enforce the per-world budget. Re-painting an existing cell
 		// (changing its type) is always allowed since it doesn't grow the world.
-		if (!existing && this.state.blocks.size >= MAX_BLOCKS) return;
+		if (!existing && this.state.blocks.size >= MAX_BLOCKS) { this._rejectEdit(client, 'budget'); return; }
 		if (existing) {
 			if (existing.t === t) return; // no-op
 			existing.t = t;
@@ -414,9 +426,9 @@ export class WalkRoom extends Room {
 
 	_handleRemove(client, payload) {
 		if (!this.state.players.has(client.sessionId)) return;
-		if (!this._editOk(client.sessionId)) return;
+		if (!this._editOk(client.sessionId)) { this._rejectEdit(client, 'rate'); return; }
 		const key = this._cellKey(payload);
-		if (key === null) return;
+		if (key === null) { this._rejectEdit(client, 'bounds'); return; }
 		if (!this.state.blocks.has(key)) return;
 		this.state.blocks.delete(key);
 		blockStore.delete(this.worldKey, key);

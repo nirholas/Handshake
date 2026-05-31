@@ -117,6 +117,7 @@ export class CommunityUI {
 		this.uploadStatus = el('div', { class: 'cc-upload-status', role: 'status', 'aria-live': 'polite', hidden: true });
 
 		this.lobby = el('div', { id: 'cc-lobby' }, [
+			this._buildSiteNav(),
 			el('div', { class: 'cc-lobby-inner' }, [
 				el('div', { class: 'cc-lobby-head' }, [
 					el('div', { class: 'cc-brand' }, [
@@ -147,12 +148,183 @@ export class CommunityUI {
 				el('p', { class: 'cc-section-title', text: 'Live communities' }),
 				this.grid,
 			]),
+			this._buildSiteFooter(),
 		]);
 		document.body.appendChild(this.lobby);
 
+		this._wireNav();
 		this._wireGlbDrop();
 		this._renderPresets();
 		this.setCoinsLoading();
+	}
+
+	// ---------------------------------------------------------- site chrome
+	// The platform-wide top nav + footer, so the lobby sits inside three.ws
+	// instead of feeling like an island. Mirrors the home page's navigation
+	// (Build / Discover / Embed / Learn / Labs) so links and ordering stay
+	// consistent across the site; styled with the lobby's own dark tokens.
+	_buildSiteNav() {
+		const THREE_MARK = '<svg viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M11.013 1.011a16 16 0 0 0-3.96 1.39C2.79 4.531.213 8.757.012 13.564c-.16 3.933 1.31 7.62 4.117 10.357l.736.715-.16.46c-.084.249-.13.504-.138.761 0 1.358 1.448 2.218 2.638 1.567.535-.292.879-.748 1.043-1.384.084-.331.092-.462.07-.882-.02-.43-.04-.535-.18-.83-.246-.52-.567-.86-1.087-1.153l-.297-.167.106-.32c.18-.543.79-1.717 1.181-2.276 1.91-2.729 5.066-4.395 8.4-4.434l.43-.005.012-1.19c.006-.654.024-1.19.04-1.19s.252.197.526.438c.71.624 2.296 1.95 2.785 2.328.23.178.41.34.4.36-.01.02-.214.156-.453.303-.926.57-2.265 1.65-3.13 2.524l-.27.273.012 1.064.013 1.064.32.027c1.327.114 2.598.685 3.578 1.607.21.198.39.343.4.323.04-.073.276-1.327.346-1.84.296-2.169-.094-4.317-1.129-6.16l-.19-.34.246-.45c.811-1.485 1.291-3.063 1.456-4.776.04-.42.046-.488.111-.488.111 0 1.327.715 1.94 1.143 2.953 2.057 4.96 5.241 5.579 8.856.21 1.22.234 1.585.234 3.063 0 1.485-.024 1.844-.234 3.064-.811 4.736-4.06 8.732-8.51 10.474-1.04.407-2.504.78-3.578.91l-.32.04v2.395l.41-.046c2.014-.226 4.222-.93 5.98-1.91 4.84-2.688 8.058-7.464 8.696-12.897.105-.892.105-3.063 0-3.956-.638-5.433-3.856-10.21-8.697-12.898C24.083.99 21.875.285 19.86.06 19.322 0 19.27 0 15.752.006c-3.346.006-4.234.02-4.74.105Z"/></svg>';
+
+		// [href, title, description, badge?] per menu item.
+		const GROUPS = [
+			['Build', [
+				['/create', 'Create agent', 'Avatar + brain wizard'],
+				['/create/selfie', 'Selfie to avatar', 'One photo → rigged 3D avatar', 'New'],
+				['/worlds', 'Worlds', 'Every coin is a 3D world — drop in & hang out', 'New'],
+				['/app', 'Viewer', 'Drag-and-drop GLB'],
+				['/playground', 'Playground', 'Viewer + environment + embed code'],
+				['/voice', 'Voice Lab', 'Clone your voice · TTS playground', 'New'],
+			]],
+			['Discover', [
+				['/features', 'Features', 'Everything an agent gets — interactive tour'],
+				['/discover', 'ERC-8004 Agents', 'On-chain agent directory'],
+				['/marketplace', 'Marketplace', 'Buy, sell & remix agents'],
+				['/gallery', 'Avatar Gallery', 'Every public 3D avatar'],
+				['/skills', 'Skills', 'Browse agent tool packs & capabilities', 'New'],
+				['/bazaar', 'x402 Bazaar', 'Browse paid APIs and MCP tools'],
+				['/community', 'Community', 'X, GitHub, and ways to get involved'],
+			]],
+			['Embed', [
+				['/widgets', 'Widgets', 'Browse + customize embeddable widgets'],
+				['/studio', 'Widget Studio', 'Pick avatar → copy snippet'],
+				['/embed.html', 'Embed editor', 'Tune mode, size, position'],
+				['/avatar-sdk', 'Avatar SDK', 'npm · web component · React · GLB upload', 'New'],
+				['/docs#embedding', 'Embed docs', 'iframe + oEmbed'],
+			]],
+			['Learn', [
+				['/docs', 'Docs', 'SDKs + API reference'],
+				['/tutorials', 'Tutorials', 'Step-by-step guides'],
+				['/brain', 'Brain', 'Claude · GPT · DeepSeek · Qwen · Llama', 'New'],
+				['/chat', 'Chat', 'Talk to your agent'],
+				['/pay', 'Pay', 'Agent payments — x402 + USDC', 'New'],
+			]],
+			['Labs', [
+				['/launchpad', 'Launchpad Studio', 'Build a 3D launchpad · token · concierge', 'New'],
+				['/mocap-studio', 'Mocap Studio', 'Record face → save clip → replay', 'New'],
+				['/pose', 'Pose Studio', 'Click-to-pose mannequin + export PNG'],
+				['/walk', 'Walk', 'Walk your avatar — multiplayer + AR', 'New'],
+				['/xr', 'XR', 'Place your avatar in the real world', 'New'],
+				['/three-live', '$THREE Live', 'Protocol pulse — live trades in 3D', 'New'],
+				['/pump-visualizer', 'Pump Visualizer', '3D view of trending tokens'],
+				['/club', 'Pole Club', 'x402 micro-tip demo — $0.001 / dance', 'New'],
+			], true],
+		];
+
+		const item = ([href, title, desc, badge]) => el('a', { class: 'cc-nav-mi', href, role: 'menuitem' }, [
+			el('span', { class: 'cc-nav-mi-t' }, [title, badge ? el('span', { class: 'cc-nav-pill', text: badge }) : null]),
+			el('span', { class: 'cc-nav-mi-d', text: desc }),
+		]);
+
+		const group = ([label, items, wide]) => el('div', { class: 'cc-nav-grp' }, [
+			el('button', { type: 'button', class: 'cc-nav-trigger', 'aria-haspopup': 'true', 'aria-expanded': 'false' }, [
+				label,
+				el('span', { class: 'cc-nav-caret', 'aria-hidden': 'true', text: '▾' }),
+			]),
+			el('div', { class: 'cc-nav-pop' + (wide ? ' cc-nav-wide' : ''), role: 'menu', 'aria-label': label }, items.map(item)),
+		]);
+
+		// Mobile drawer mirrors the same destinations as a flat list.
+		const drawerSections = GROUPS.map(([label, items]) => [
+			el('div', { class: 'cc-dr-h', text: label }),
+			...items.map(([href, title]) => el('a', { href, text: title })),
+		]).flat();
+
+		this.navDrawer = el('nav', { class: 'cc-nav-drawer', id: 'cc-nav-drawer', 'aria-label': 'Mobile', 'aria-hidden': 'true' }, [
+			...drawerSections,
+			el('div', { class: 'cc-dr-h', text: 'More' }),
+			el('a', { href: '/pricing', text: 'Pricing' }),
+			el('div', { class: 'cc-dr-sep' }),
+			el('a', { href: '/login', text: 'Sign in' }),
+			el('a', { class: 'cc-dr-console', href: '/dashboard', text: 'Console →' }),
+		]);
+
+		this.navToggle = el('button', { class: 'cc-nav-toggle', id: 'cc-nav-toggle', 'aria-label': 'Menu', 'aria-expanded': 'false' }, [
+			el('span', { class: 'cc-nav-burger', 'aria-hidden': 'true', html: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/></svg>' }),
+			el('span', { class: 'cc-nav-x', 'aria-hidden': 'true', html: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>' }),
+		]);
+
+		return el('header', { class: 'cc-nav' }, [
+			el('div', { class: 'cc-nav-inner' }, [
+				el('a', { class: 'cc-nav-brand', href: '/', 'aria-label': 'three.ws home', html: THREE_MARK + '<span>three.ws</span>' }),
+				el('nav', { class: 'cc-nav-main', 'aria-label': 'Primary' }, [
+					...GROUPS.map(group),
+					el('a', { class: 'cc-nav-flat', href: '/pricing', text: 'Pricing' }),
+				]),
+				el('div', { class: 'cc-nav-end' }, [
+					el('a', { class: 'cc-nav-signin', href: '/login', text: 'Sign in' }),
+					el('a', { class: 'cc-nav-console', href: '/dashboard', text: 'Console →' }),
+				]),
+				this.navToggle,
+			]),
+			this.navDrawer,
+		]);
+	}
+
+	_buildSiteFooter() {
+		const link = (href, text) => el('a', { href, text, ...(href.startsWith('http') ? { target: '_blank', rel: 'noopener' } : {}) });
+		return el('footer', { class: 'cc-foot' }, [
+			el('div', { class: 'cc-foot-inner' }, [
+				el('div', { class: 'cc-foot-copy', text: '© 2026 · three.ws · the 3D agent layer of the internet' }),
+				el('div', { class: 'cc-foot-links' }, [
+					link('/docs', 'Docs'),
+					link('/pricing', 'Pricing'),
+					link('/discover', 'Discover'),
+					link('/dashboard/api', 'API'),
+					link('https://github.com/nirholas/three.ws', 'GitHub'),
+					link('mailto:hello@three.ws', 'Contact'),
+				]),
+			]),
+		]);
+	}
+
+	// Hover-to-open desktop dropdowns (click/keyboard for touch + a11y) plus the
+	// mobile drawer toggle. Mirrors the home page's nav behavior.
+	_wireNav() {
+		const groups = [...this.lobby.querySelectorAll('.cc-nav-main .cc-nav-grp')];
+		const hoverCapable = window.matchMedia('(hover: hover)').matches;
+		const setOpen = (grp, on) => {
+			grp.classList.toggle('cc-open', on);
+			grp.querySelector('.cc-nav-trigger')?.setAttribute('aria-expanded', on ? 'true' : 'false');
+		};
+		const closeAll = (except) => groups.forEach((g) => { if (g !== except) setOpen(g, false); });
+
+		groups.forEach((grp) => {
+			const trigger = grp.querySelector('.cc-nav-trigger');
+			if (!trigger) return;
+			let closeTimer;
+			trigger.addEventListener('click', (e) => {
+				e.stopPropagation();
+				if (hoverCapable) { closeAll(grp); setOpen(grp, true); return; }
+				const willOpen = !grp.classList.contains('cc-open');
+				closeAll(grp);
+				setOpen(grp, willOpen);
+			});
+			if (hoverCapable) {
+				grp.addEventListener('mouseenter', () => { clearTimeout(closeTimer); closeAll(grp); setOpen(grp, true); });
+				grp.addEventListener('mouseleave', () => { closeTimer = setTimeout(() => setOpen(grp, false), 120); });
+			}
+			grp.querySelectorAll('.cc-nav-mi').forEach((a) => a.addEventListener('click', () => setOpen(grp, false)));
+		});
+		document.addEventListener('click', (e) => { if (!e.target.closest('.cc-nav-main .cc-nav-grp')) closeAll(); });
+		document.addEventListener('keydown', (e) => {
+			if (e.key !== 'Escape') return;
+			const openGrp = this.lobby.querySelector('.cc-nav-main .cc-nav-grp.cc-open');
+			if (openGrp) { setOpen(openGrp, false); openGrp.querySelector('.cc-nav-trigger')?.focus(); }
+		});
+
+		// Mobile drawer
+		const toggle = this.navToggle, drawer = this.navDrawer;
+		const isOpen = () => drawer.classList.contains('cc-open');
+		const setDrawer = (open) => {
+			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+			drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+			drawer.classList.toggle('cc-open', open);
+		};
+		toggle.addEventListener('click', () => setDrawer(!isOpen()));
+		drawer.addEventListener('click', (e) => { if (e.target.closest('a')) setDrawer(false); });
+		document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) { setDrawer(false); toggle.focus(); } });
+		window.addEventListener('resize', () => { if (window.innerWidth > 880 && isOpen()) setDrawer(false); });
 	}
 
 	// Make the avatar bar a drop target for a local .glb. Only reacts to file

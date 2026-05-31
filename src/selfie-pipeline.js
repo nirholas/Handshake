@@ -75,6 +75,10 @@ document.addEventListener('selfie:submit', (event) => {
 			}
 		}).catch((err) => {
 			console.error('[selfie-pipeline] resume failed:', err);
+			if (err?.redirect) {
+				window.location.assign(err.redirect);
+				return;
+			}
 			document.dispatchEvent(new CustomEvent('selfie:build-error', {
 				detail: { message: err.userMessage || 'Could not resume. Try again.', slot: null },
 			}));
@@ -250,6 +254,13 @@ async function pollUntilDone(jobId) {
 		if (!res.ok) {
 			if (res.status === 404) {
 				throw withMessage(new Error('job vanished'), 'Job disappeared. Try again.');
+			}
+			if (res.status === 401 || res.status === 403) {
+				// Session expired (or never authenticated) mid-build. Bounce to
+				// login and resume this job on return — don't spin for 8 minutes
+				// on a status that retrying can never recover from.
+				try { sessionStorage.setItem('selfie:pendingJobId', jobId); } catch (_) {}
+				throw mapApiError(res.status, await res.json().catch(() => ({})));
 			}
 			consecutiveErrors += 1;
 			continue;

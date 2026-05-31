@@ -510,6 +510,10 @@
 			"dest": "/api/mocap/[id]?id=$1"
 		},
 		{
+			"src": "/api/animations/clips/([0-9a-f-]+)",
+			"dest": "/api/animations/[id]?id=$1"
+		},
+		{
 			"src": "/widget",
 			"headers": {
 				"content-security-policy": "frame-ancestors *",

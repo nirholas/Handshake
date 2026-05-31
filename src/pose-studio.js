@@ -54,8 +54,10 @@ import {
 	sampleAtTime,
 	bakeClip,
 	serializeClip,
+	EASINGS,
 	DEFAULT_EASING,
 } from './pose-animation.js';
+import { PoseLibrary } from './pose-library.js';
 
 // ─── DOM helpers ────────────────────────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
@@ -1229,14 +1231,83 @@ function boot() {
 		renderKeyframes();
 		setPlayhead(0);
 
+		// Snapshot the editing document (deep clone) for saving.
+		function getDocument() {
+			return {
+				name: doc.name,
+				duration: doc.duration,
+				fps: doc.fps,
+				loop: doc.loop,
+				keyframes: doc.keyframes.map((k) => ({
+					id: k.id,
+					time: k.time,
+					easing: k.easing,
+					pose: {
+						bones: { ...k.pose.bones },
+						rootPosition: { ...(k.pose.rootPosition || { x: 0, y: 0, z: 0 }) },
+					},
+				})),
+			};
+		}
+
+		// Replace the editing document (reopening a saved clip). Rebuilds the
+		// timeline and applies the first frame so the rig reflects the animation.
+		function loadDocument(nd) {
+			if (!nd) return;
+			pause();
+			doc.name = nd.name || 'animation';
+			doc.duration = clamp(Number(nd.duration) || 4, 0.25, 120);
+			doc.fps = Math.round(clamp(Number(nd.fps) || 30, 1, 240));
+			doc.loop = nd.loop !== false;
+			doc.keyframes = (nd.keyframes || [])
+				.map((k, i) => ({
+					id: typeof k.id === 'string' && k.id ? k.id : `kf_load_${i}`,
+					time: clamp(Number(k.time) || 0, 0, doc.duration),
+					easing: EASINGS[k.easing] ? k.easing : DEFAULT_EASING,
+					pose:
+						k.pose && k.pose.bones
+							? { bones: { ...k.pose.bones }, rootPosition: k.pose.rootPosition || { x: 0, y: 0, z: 0 } }
+							: { bones: {} },
+				}))
+				.sort((a, b) => a.time - b.time);
+			anim.selectedId = null;
+			tl.name.value = doc.name;
+			tl.duration.value = String(doc.duration);
+			tl.fps.value = String(doc.fps);
+			tl.loop.setAttribute('aria-pressed', String(doc.loop));
+			tl.track.setAttribute('aria-valuemax', String(doc.duration));
+			renderRuler();
+			renderKeyframes();
+			setPlayhead(0, { render: true });
+		}
+
 		return {
 			update: advance,
 			onRigChanged: () => { if (doc.keyframes.length) applyPreview(); },
 			bake: () => bakeClip(doc, { resolveBoneName: (k) => k, rootName: 'Hips' }),
 			serialize: () => serializeClip(doc, { resolveBoneName: (k) => k, rootName: 'Hips' }),
 			captureThumbnail: () => { renderer.render(scene, camera); return renderer.domElement.toDataURL('image/png'); },
+			getDocument,
+			loadDocument,
+			keyframeCount: () => doc.keyframes.length,
 		};
 	}
+
+	// ── Account: save + "My animations" library ──────────────────────────────
+	const library = new PoseLibrary({
+		getDocument: () => timeline.getDocument(),
+		loadDocument: (d) => timeline.loadDocument(d),
+		serializeClip: () => timeline.serialize(),
+		captureThumbnail: () => timeline.captureThumbnail(),
+		keyframeCount: () => timeline.keyframeCount(),
+		currentAvatarId: () => state.avatar?.id || null,
+		currentAvatarName: () => state.avatar?.name || null,
+		loadAvatarById: (id) => loadAvatarById(id),
+		switchToMannequin: () => switchToMannequin(),
+		setStatus: (m, k) => setStatus(m, k),
+	});
+	state.library = library;
+	library.mount();
 
 	// ── Boot: honor ?avatar= ─────────────────────────────────────────────────
 	const requestedAvatar = new URL(window.location.href).searchParams.get('avatar');

@@ -33,16 +33,42 @@ class BlockStore {
 		this._saveTimers = new Map(); // coin → timeout handle
 		this._redis = null;
 		this._redisReady = null;
+		// True only once a real round-trip to Redis has succeeded. We don't trust
+		// "the client constructed" as proof of durability — bad credentials or a
+		// network partition surface only on the first request, so a startup PING
+		// confirms it. `durable` gates the WalkState.persistent flag the client
+		// reads, so we never tell a builder their work is saved when it isn't.
+		this._durable = false;
+		// Count consecutive write failures so a Redis outage mid-session escalates
+		// from a quiet warning to a loud one (and flips durability off) instead of
+		// scrolling identical warnings forever.
+		this._writeFailures = 0;
 		if (REDIS_URL && REDIS_TOKEN) {
 			// Lazy dynamic import so the dependency is only touched when configured.
 			this._redisReady = import('@upstash/redis')
-				.then(({ Redis }) => { this._redis = new Redis({ url: REDIS_URL, token: REDIS_TOKEN }); })
-				.catch((err) => { console.warn('[block-store] Redis init failed, memory-only:', err?.message); });
-			console.log('[block-store] persistence: memory + Upstash Redis');
+				.then(async ({ Redis }) => {
+					this._redis = new Redis({ url: REDIS_URL, token: REDIS_TOKEN });
+					// Confirm the credentials actually work before we advertise durability.
+					await this._redis.ping();
+					this._durable = true;
+					console.log('[block-store] persistence: memory + Upstash Redis (verified)');
+				})
+				.catch((err) => {
+					this._redis = null;
+					console.error('[block-store] Redis unreachable — builds are MEMORY-ONLY and will not survive a restart:', err?.message);
+				});
 		} else {
 			console.log('[block-store] persistence: memory-only (set UPSTASH_REDIS_REST_URL/_TOKEN for cross-restart durability)');
 		}
 	}
+
+	// Has a real Redis round-trip succeeded? Drives WalkState.persistent so the
+	// build HUD can honestly say whether a creation survives a server restart.
+	get durable() { return this._durable; }
+
+	// Resolves once the Redis readiness probe has settled (success or failure), so
+	// callers can read `durable` with a definite answer. No-op when memory-only.
+	async ready() { if (this._redisReady) await this._redisReady; }
 
 	// Return the live Map for a coin, loading it from memory or Redis on first
 	// access. Subsequent edits mutate this same Map in place.
@@ -112,8 +138,22 @@ class BlockStore {
 			} else {
 				await this._redis.set(redisKey(coin), JSON.stringify(Object.fromEntries(map)));
 			}
+			// A successful write proves durability is back; reset the failure streak.
+			if (this._writeFailures > 0) {
+				console.log(`[block-store] Redis writes recovered after ${this._writeFailures} failure(s)`);
+				this._writeFailures = 0;
+			}
+			this._durable = true;
 		} catch (err) {
-			console.warn(`[block-store] save failed for ${coin || 'mainland'}:`, err?.message);
+			this._writeFailures++;
+			// First failure: a clear error. After a few, the outage is sustained —
+			// flip durability off so new rooms report memory-only to their builders.
+			if (this._writeFailures >= 3) {
+				this._durable = false;
+				console.error(`[block-store] Redis save failing (${this._writeFailures}×) for ${coin || 'mainland'} — durability DEGRADED, builds at risk:`, err?.message);
+			} else {
+				console.warn(`[block-store] save failed for ${coin || 'mainland'}:`, err?.message);
+			}
 		}
 	}
 }

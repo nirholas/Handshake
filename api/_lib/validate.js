@@ -24,6 +24,10 @@ export const avatarAppearance = z
 		outfit: z.string().min(1).max(64).nullable().optional(),
 		accessories: z.array(z.string().min(1).max(64)).max(8).optional(),
 		morphs: z.record(z.number().min(0).max(1)).optional(),
+		// Garment layers: per-slot recolour (hex) + hidden slot ids. Slot-id and
+		// hex validity is enforced in validateAppearance() (accessories.js).
+		colors: z.record(z.string().regex(/^#[0-9a-fA-F]{6}$/)).optional(),
+		hidden: z.array(z.string().min(1).max(32)).max(8).optional(),
 	})
 	.strict()
 	.superRefine((val, ctx) => {

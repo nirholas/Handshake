@@ -128,6 +128,50 @@ create index if not exists mocap_clips_public_idx on mocap_clips(visibility, cre
 create index if not exists mocap_clips_kind_idx on mocap_clips(kind, created_at desc) where deleted_at is null;
 create index if not exists mocap_clips_tags_idx on mocap_clips using gin(tags);
 
+-- ── animation_clips (keyframe animations authored in the Animation Studio) ──
+-- See api/_lib/migrations/2026-05-31-animation-clips.sql for the full schema +
+-- rationale. Mirrored here so a clean schema.sql apply provisions the table.
+create table if not exists animation_clips (
+    id              uuid primary key default gen_random_uuid(),
+    owner_id        uuid not null references users(id) on delete cascade,
+    avatar_id       uuid references avatars(id) on delete set null,
+    slug            text not null,
+    name            text not null,
+    description     text,
+    kind            text not null default 'animation' check (kind in ('animation','loop','sequence')),
+    format          text not null default 'three.ws.animation.v1',
+    duration_ms     int not null default 0,
+    frame_count     int not null default 0,
+    fps             int,
+    loop            boolean not null default true,
+    clip            jsonb,
+    storage_key     text,
+    editor_doc      jsonb,
+    thumbnail_key   text,
+    tags            text[] not null default '{}',
+    visibility      text not null default 'private' check (visibility in ('private','unlisted','public')),
+    price_amount    numeric(30,9),
+    price_currency  text,
+    artifact_key        text,
+    artifact_bytes      bigint,
+    artifact_mime       text,
+    creator_payto_base  text,
+    creator_payto_solana text,
+    creator_payto_bsc   text,
+    listed          boolean not null default false,
+    play_count      bigint not null default 0,
+    purchase_count  bigint not null default 0,
+    created_at      timestamptz not null default now(),
+    updated_at      timestamptz not null default now(),
+    deleted_at      timestamptz,
+    unique (owner_id, slug)
+);
+create index if not exists animation_clips_owner_idx on animation_clips(owner_id, created_at desc) where deleted_at is null;
+create index if not exists animation_clips_public_idx on animation_clips(visibility, created_at desc) where visibility = 'public' and deleted_at is null;
+create index if not exists animation_clips_kind_idx on animation_clips(kind, created_at desc) where deleted_at is null;
+create index if not exists animation_clips_listed_idx on animation_clips(listed, created_at desc) where listed = true and deleted_at is null;
+create index if not exists animation_clips_tags_idx on animation_clips using gin(tags);
+
 -- ── OAuth 2.1 clients (for MCP & third-party apps) ──────────────────────────
 -- Supports RFC 7591 dynamic client registration.
 create table if not exists oauth_clients (

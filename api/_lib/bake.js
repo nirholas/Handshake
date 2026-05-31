@@ -55,6 +55,8 @@ export function isBakeable(appearance) {
 	if (appearance.outfit) return true;
 	if (Array.isArray(appearance.accessories) && appearance.accessories.length > 0) return true;
 	if (appearance.morphs && Object.keys(appearance.morphs).length > 0) return true;
+	if (appearance.colors && Object.keys(appearance.colors).length > 0) return true;
+	if (Array.isArray(appearance.hidden) && appearance.hidden.length > 0) return true;
 	return false;
 }
 
@@ -98,6 +100,18 @@ export async function bakeAppearance(baseGlbBytes, appearance) {
 	}
 	if (appearance?.morphs) Object.assign(morphMap, appearance.morphs);
 	if (Object.keys(morphMap).length > 0) applyMorphs(doc, morphMap);
+
+	// 1b) Material tints: multiply each slot's baseColorFactor by the chosen color.
+	if (appearance?.colors && Object.keys(appearance.colors).length > 0) {
+		applyColors(doc, appearance.colors);
+	}
+
+	// 1c) Hidden garment layers: drop the meshes so the bake exposes the base
+	//     body (the "start minimal" wardrobe state). prune() in the compression
+	//     pass reclaims the now-unreferenced meshes/materials/textures.
+	if (Array.isArray(appearance?.hidden) && appearance.hidden.length > 0) {
+		applyHidden(doc, appearance.hidden);
+	}
 
 	// 2) Bone-mounted accessory GLBs.
 	for (let i = 0; i < presetIds.length; i++) {
@@ -338,6 +352,84 @@ function applyMorphs(doc, binding) {
 		}
 		if (changed) node.setWeights(weights);
 	}
+}
+
+// Garment slots → GLB material names. Mirrors COLOR_SLOTS in src/avatar-studio.js,
+// WARDROBE_SLOTS in src/avatar-wardrobe.js, and the slot-id allowlists in
+// api/_lib/accessories.js. Tints key skin/hair/outfit; hide keys
+// hair/outfit/glasses (skin is never hidden).
+const SLOT_MATERIALS = {
+	skin: ['Wolf3D_Skin', 'Wolf3D_Body'],
+	hair: ['Wolf3D_Hair'],
+	outfit: ['Wolf3D_Outfit_Top', 'Wolf3D_Outfit_Bottom', 'Wolf3D_Outfit_Footwear'],
+	glasses: ['Wolf3D_Glasses'],
+};
+
+/**
+ * Set the baseColorFactor RGB of each slot's materials to the chosen color,
+ * preserving the existing alpha. This mirrors the studio live preview, which
+ * replaces `material.color` (the shader then multiplies factor × baseColorTexture
+ * at render, so texture detail is retained in both places).
+ *
+ * Colors arrive as sRGB hex (matching the browser <input type=color> and the
+ * three.js color pipeline); glTF baseColorFactor is linear, so convert per
+ * channel to keep the baked GLB identical to what the user saw in the studio.
+ */
+function applyColors(doc, colors) {
+	const nameToFactor = new Map();
+	for (const [slot, hex] of Object.entries(colors)) {
+		const mats = SLOT_MATERIALS[slot];
+		const rgb = hexToLinearRgb(hex);
+		if (!mats || !rgb) continue;
+		for (const name of mats) nameToFactor.set(name, rgb);
+	}
+	if (nameToFactor.size === 0) return;
+
+	for (const material of doc.getRoot().listMaterials()) {
+		const factor = nameToFactor.get(material.getName());
+		if (!factor) continue;
+		const prevAlpha = material.getBaseColorFactor()?.[3] ?? 1;
+		material.setBaseColorFactor([factor[0], factor[1], factor[2], prevAlpha]);
+	}
+}
+
+/**
+ * Remove the meshes belonging to each hidden slot. A node is dropped when any
+ * of its mesh primitives uses one of the slot's named materials; disposing the
+ * node orphans the mesh, which prune() then reclaims. Skeleton joints are never
+ * touched (they carry no mesh), so the rig stays intact for the base body and
+ * any still-visible garments.
+ */
+function applyHidden(doc, hidden) {
+	const names = new Set();
+	for (const slot of hidden) {
+		const mats = SLOT_MATERIALS[slot];
+		if (mats) for (const m of mats) names.add(m);
+	}
+	if (names.size === 0) return;
+
+	for (const node of doc.getRoot().listNodes()) {
+		const mesh = node.getMesh();
+		if (!mesh) continue;
+		const hit = mesh
+			.listPrimitives()
+			.some((p) => names.has(p.getMaterial()?.getName()));
+		if (hit) node.dispose();
+	}
+}
+
+function hexToLinearRgb(hex) {
+	if (typeof hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(hex)) return null;
+	const n = parseInt(hex.slice(1), 16);
+	return [
+		srgbToLinear(((n >> 16) & 0xff) / 255),
+		srgbToLinear(((n >> 8) & 0xff) / 255),
+		srgbToLinear((n & 0xff) / 255),
+	];
+}
+
+function srgbToLinear(c) {
+	return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 }
 
 function collectTargetNames(mesh) {

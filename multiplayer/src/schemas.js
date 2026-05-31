@@ -83,6 +83,11 @@ export class WalkState extends Schema {
 		// coordinate; the value carries only the block type. Persisted per coin so
 		// a community's build survives the room emptying and the server restarting.
 		this.blocks = new MapSchema();
+		// True when this world's build is backed by durable cross-restart storage
+		// (Upstash Redis). False = memory-only: the build survives the room emptying
+		// but not a full server restart. The client surfaces this so builders know
+		// whether their creation is saved for keeps.
+		this.persistent = false;
 	}
 }
 defineTypes(WalkState, {
@@ -94,4 +99,5 @@ defineTypes(WalkState, {
 	tier: 'string',
 	holderMinUsd: 'float32',
 	blocks: { map: Block },
+	persistent: 'boolean',
 });

@@ -176,6 +176,10 @@ export class VoxelWorld {
 
 	hasBlock(key) { return this.index.has(key); }
 
+	// Palette type at a cell, or -1 if empty. Lets a break record what it removed
+	// so undo can restore the exact block.
+	typeAt(gx, gy, gz) { const e = this.index.get(keyOf(gx, gy, gz)); return e ? e.type : -1; }
+
 	// Add or repaint a block. Idempotent for an unchanged (key,type).
 	setBlock(gx, gy, gz, type) {
 		if (type < 0 || type >= this.batches.length) return;
@@ -343,9 +347,31 @@ export function createBuildHud({ onToggle, onPick, onModeChange }) {
 		onclick: () => setMode(mode === 'place' ? 'remove' : 'place'),
 	}, [el('span', { class: 'cc-build-mode-ico', text: '▦' }), el('span', { class: 'cc-build-mode-text', text: 'Place' })]);
 
-	const hint = el('div', { class: 'cc-build-hint', text: 'Tap to place · right-click to break · 1–0 pick block' });
+	// Touch has no right-click; long-press breaks, and the mode toggle is the
+	// explicit path. Tailor the hint so phone players aren't told to "right-click".
+	const touch = typeof matchMedia === 'function' && matchMedia('(hover: none), (pointer: coarse)').matches;
+	const hint = el('div', {
+		class: 'cc-build-hint',
+		text: touch
+			? 'Tap to place · long-press to break · pick a block above'
+			: 'Click to place · right-click to break · 1–0 pick block',
+	});
 
-	const panel = el('div', { class: 'cc-build-panel', hidden: true }, [modeBtn, hotbar, hint]);
+	// Live block-budget meter. The build is hard-capped per world (MAX_BLOCKS);
+	// without this the cap is a silent wall — a builder hits 6000 and blocks just
+	// stop appearing. The fill bar warms to amber, then red, as the world fills.
+	const budgetFill = el('span', { class: 'cc-build-budget-fill' });
+	const budgetText = el('span', { class: 'cc-build-budget-text', text: `0 / ${MAX_BLOCKS}` });
+	const budget = el('div', {
+		class: 'cc-build-budget', role: 'status', 'aria-label': 'Blocks used',
+		title: `Blocks placed in this world (max ${MAX_BLOCKS})`,
+	}, [el('span', { class: 'cc-build-budget-bar' }, [budgetFill]), budgetText]);
+
+	// Durability badge: tells builders, honestly, whether this world's creation is
+	// saved for keeps (Redis) or only for the life of the server process.
+	const durBadge = el('div', { class: 'cc-build-durability', role: 'status', hidden: true });
+
+	const panel = el('div', { class: 'cc-build-panel', hidden: true }, [modeBtn, hotbar, budget, durBadge, hint]);
 	const root = el('div', { id: 'cc-build', class: 'cc-build' }, [toggleBtn, panel]);
 	document.body.appendChild(root);
 
@@ -381,6 +407,29 @@ export function createBuildHud({ onToggle, onPick, onModeChange }) {
 			toggleBtn.disabled = !enabled;
 			toggleBtn.title = enabled ? 'Build mode (B)' : (reason || 'Building needs a live connection');
 			if (!enabled && active) setActive(false);
+		},
+		// Reflect how full the world's block budget is. Warms the bar (amber ≥80%,
+		// red when full) and flags the panel so place actions can read "full".
+		setBudget(used, max = MAX_BLOCKS) {
+			const u = Math.max(0, Math.min(used | 0, max));
+			const pct = max > 0 ? u / max : 0;
+			budgetFill.style.transform = `scaleX(${pct})`;
+			budgetText.textContent = `${u.toLocaleString()} / ${max.toLocaleString()}`;
+			const full = u >= max;
+			budget.classList.toggle('cc-warn', pct >= 0.8 && !full);
+			budget.classList.toggle('cc-full', full);
+			root.classList.toggle('cc-build-full', full);
+		},
+		// Show whether this world's build survives a server restart. Online only —
+		// solo single-player builds aren't persisted at all (passing null hides it).
+		setPersistent(durable) {
+			if (durable == null) { durBadge.hidden = true; return; }
+			durBadge.hidden = false;
+			durBadge.classList.toggle('cc-durable', !!durable);
+			durBadge.textContent = durable ? '✓ Saved for everyone' : '⚠ This session only';
+			durBadge.title = durable
+				? 'This world is saved to durable storage — your build is here when you return.'
+				: 'Durable storage is unavailable — this build lives only until the server restarts.';
 		},
 		dispose() { root.remove(); },
 	};

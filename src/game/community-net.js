@@ -68,6 +68,7 @@ export class CommunityNet {
 		this.status = 'idle';
 		this.error = null;
 		this.sessionId = null;
+		this.persistent = false; // set true once the server says this world is Redis-backed
 
 		this._handlers = {
 			status: new Set(),
@@ -83,6 +84,8 @@ export class CommunityNet {
 			blockAdd: new Set(),    // (key, type) — a voxel appeared (placed or restored)
 			blockChange: new Set(), // (key, type) — a voxel was repainted
 			blockRemove: new Set(), // (key) — a voxel was broken
+			editReject: new Set(),  // ({reason}) — the server refused one of our edits
+			persistent: new Set(),  // (bool) — whether this world's build is durably saved
 		};
 		this.ping = null;        // smoothed RTT in ms, null until the first echo
 		this._pingSentAt = 0;    // perf-clock stamp of the last move awaiting an echo
@@ -140,6 +143,9 @@ export class CommunityNet {
 			this.room.onMessage('chat', (msg) => this._emit('chat', msg));
 			this.room.onMessage('interact', (msg) => this._emit('interact', msg));
 			this.room.onMessage('voice-signal', (msg) => this._emit('voiceSignal', msg));
+			// The server replies here when it refuses one of our place/break edits
+			// (budget full, rate limited, …) so the HUD can explain the no-op.
+			this.room.onMessage('edit-reject', (msg) => this._emit('editReject', msg || {}));
 
 			const $ = getStateCallbacks(this.room);
 			$(this.room.state).players.onAdd((player, id) => {
@@ -170,6 +176,12 @@ export class CommunityNet {
 				$(block).onChange(() => this._emit('blockChange', key, block.t));
 			});
 			$(this.room.state).blocks.onRemove((_b, key) => this._emit('blockRemove', key));
+
+			// Durability flag for this world's build (Redis-backed vs memory-only).
+			// Set once at room creation; listen so the HUD reflects it as soon as the
+			// first state patch lands and if it ever degrades mid-session.
+			this.persistent = !!this.room.state.persistent;
+			$(this.room.state).listen('persistent', (v) => { this.persistent = !!v; this._emit('persistent', !!v); });
 
 			this.room.onLeave((code) => {
 				this._setStatus('offline');

@@ -41,12 +41,11 @@ let idle = null;
 let presets = [];
 let presetsById = new Map();
 
-let workingAppearance = { outfit: null, accessories: [], morphs: {} };
+let workingAppearance = { accessories: [], morphs: {}, colors: {} };
 let previewedId = null;
 let previewToken = 0;
 let opQueue = Promise.resolve();
 let searchQuery = '';
-let bodyType = 'male';
 
 function queueOp(fn) {
 	const next = opQueue.then(fn).catch((err) => {
@@ -57,15 +56,45 @@ function queueOp(fn) {
 }
 
 const TABS = [
-	{ id: 'outfit', label: 'Outfits', kinds: ['outfit'], emoji: '👕', single: true },
+	{ id: 'color', label: 'Color', kinds: [], color: true },
 	{ id: 'hat', label: 'Hats', kinds: ['hat'], emoji: '🎩', single: true },
 	{ id: 'glasses', label: 'Glasses', kinds: ['glasses'], emoji: '🕶️', single: true },
 	{ id: 'earrings', label: 'Earrings', kinds: ['earrings'], emoji: '💎', single: false },
-	{ id: 'sculpt', label: 'Sculpt', kinds: [], emoji: '✨', single: true, sculpt: true },
+	{ id: 'sculpt', label: 'Face', kinds: [], emoji: '✨', single: true, sculpt: true },
 ];
-const KIND_EMOJI = { outfit: '👕', hat: '🎩', glasses: '🕶️', earrings: '💎' };
-const KIND_LABEL = { outfit: 'Outfit', hat: 'Hat', glasses: 'Glasses', earrings: 'Earrings' };
-let activeTab = 'outfit';
+const KIND_EMOJI = { hat: '🎩', glasses: '🕶️', earrings: '💎' };
+const KIND_LABEL = { hat: 'Hat', glasses: 'Glasses', earrings: 'Earrings' };
+let activeTab = 'color';
+
+// ── Color customization ──────────────────────────────────────────────
+// The base avatar is a ReadyPlayerMe (Wolf3D) mesh with named, texture-backed
+// materials. We tint a slot by multiplying every material in that slot by a
+// chosen color (white = original texture, untinted). The same slot→material
+// map and tint semantics are mirrored server-side in api/_lib/bake.js so the
+// saved/baked GLB looks identical to the live preview.
+const COLOR_SLOTS = [
+	{
+		id: 'skin',
+		label: 'Skin tone',
+		materials: ['Wolf3D_Skin', 'Wolf3D_Body'],
+		swatches: ['#ffe9d6', '#f3c1a3', '#e0a878', '#c08552', '#9c6b44', '#6f4a32', '#4a2f20'],
+	},
+	{
+		id: 'hair',
+		label: 'Hair',
+		materials: ['Wolf3D_Hair'],
+		swatches: ['#0e0e0e', '#3b2417', '#6b4423', '#9a6a3a', '#c89b5a', '#d8b34a', '#b8b8b8', '#e2604a', '#9b5cc0', '#4a86d6'],
+	},
+	{
+		id: 'outfit',
+		label: 'Outfit',
+		materials: ['Wolf3D_Outfit_Top', 'Wolf3D_Outfit_Bottom', 'Wolf3D_Outfit_Footwear'],
+		swatches: ['#222831', '#f2f2f2', '#1e3a5f', '#7a1f2b', '#1f6b3a', '#c08a1e', '#6b3fa0', '#d4577e', '#3b6ea5', '#101010'],
+	},
+];
+const COLOR_SLOT_BY_ID = new Map(COLOR_SLOTS.map((s) => [s.id, s]));
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+const BODY_TYPE = 'feminine'; // the single shipped base mesh is feminine-presenting
 
 // ── Init ─────────────────────────────────────────────────────────────
 
@@ -84,9 +113,11 @@ async function init() {
 	renderChips();
 	renderActivePanel();
 	bindHeader();
-	bindBodyType();
 
 	await scenePromise;
+	// Re-render once the mesh is live so the active panel (sculpt morphs, color
+	// preview) reflects the loaded avatar instead of the "waiting" placeholder.
+	renderActivePanel();
 }
 
 async function bootScene() {
@@ -127,19 +158,46 @@ async function fetchPresets() {
 
 function renderTabs() {
 	const el = $('as-tabs');
-	el.innerHTML = TABS.map(
-		(t) => `
-			<button class="as-tab${t.id === activeTab ? ' active' : ''}" data-tab="${t.id}" role="tab">
+	el.innerHTML = TABS.map((t) => {
+		const active = t.id === activeTab;
+		return `
+			<button class="as-tab${active ? ' active' : ''}" data-tab="${t.id}" role="tab"
+			        id="as-tab-${t.id}" aria-selected="${active ? 'true' : 'false'}"
+			        aria-controls="as-panel" tabindex="${active ? '0' : '-1'}">
 				${t.label}
-			</button>
-		`,
-	).join('');
-	el.querySelectorAll('.as-tab').forEach((btn) => {
-		btn.addEventListener('click', () => {
-			activeTab = btn.dataset.tab;
-			searchQuery = '';
-			el.querySelectorAll('.as-tab').forEach((b) => b.classList.toggle('active', b === btn));
-			renderActivePanel();
+			</button>`;
+	}).join('');
+
+	const tabs = [...el.querySelectorAll('.as-tab')];
+	const selectTab = (btn, { focus = false } = {}) => {
+		if (!btn || btn.dataset.tab === activeTab) {
+			if (focus) btn?.focus();
+			return;
+		}
+		activeTab = btn.dataset.tab;
+		searchQuery = '';
+		tabs.forEach((b) => {
+			const on = b === btn;
+			b.classList.toggle('active', on);
+			b.setAttribute('aria-selected', on ? 'true' : 'false');
+			b.tabIndex = on ? 0 : -1;
+		});
+		if (focus) btn.focus();
+		renderActivePanel();
+	};
+
+	tabs.forEach((btn, i) => {
+		btn.addEventListener('click', () => selectTab(btn));
+		// Roving-tabindex keyboard nav per WAI-ARIA tablist pattern.
+		btn.addEventListener('keydown', (e) => {
+			let target = null;
+			if (e.key === 'ArrowRight' || e.key === 'ArrowDown') target = tabs[(i + 1) % tabs.length];
+			else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') target = tabs[(i - 1 + tabs.length) % tabs.length];
+			else if (e.key === 'Home') target = tabs[0];
+			else if (e.key === 'End') target = tabs[tabs.length - 1];
+			else return;
+			e.preventDefault();
+			selectTab(target, { focus: true });
 		});
 	});
 }
@@ -147,6 +205,12 @@ function renderTabs() {
 function renderActivePanel() {
 	const tab = TABS.find((t) => t.id === activeTab);
 	const panel = $('as-panel');
+	panel.setAttribute('aria-labelledby', `as-tab-${activeTab}`);
+
+	if (tab.color) {
+		renderColorPanel(panel);
+		return;
+	}
 
 	if (tab.sculpt) {
 		if (!scene?.root) {
@@ -224,6 +288,119 @@ function tilePreviewMarkup(preset) {
 	`;
 }
 
+// ── Color panel ──────────────────────────────────────────────────────
+
+function renderColorPanel(panel) {
+	const ready = !!scene?.root;
+	const groups = COLOR_SLOTS.map((slot) => {
+		const current = workingAppearance.colors[slot.id] || null;
+		const presetMatch = current && slot.swatches.some((h) => h.toLowerCase() === current);
+		const swatches = slot.swatches
+			.map((hex) => {
+				const pressed = current === hex.toLowerCase();
+				return `<button class="as-swatch" type="button" role="radio"
+					aria-checked="${pressed ? 'true' : 'false'}" aria-pressed="${pressed ? 'true' : 'false'}"
+					aria-label="${esc(slot.label)} ${esc(hex)}" data-slot="${slot.id}" data-hex="${esc(hex)}"
+					style="background:${esc(hex)}"></button>`;
+			})
+			.join('');
+		const noneSel = !current;
+		// A custom (non-palette) color counts as the custom swatch being active.
+		const customSel = current && !presetMatch;
+		return `
+			<div class="as-color-group" data-group="${slot.id}">
+				<div class="as-color-head">
+					<span class="as-color-title">${esc(slot.label)}</span>
+					<span class="as-color-current">
+						<span class="dot" data-current-dot style="background:${esc(current || '#ffffff')}"></span>
+						<span data-current-label>${current ? esc(current.toUpperCase()) : 'Default'}</span>
+					</span>
+				</div>
+				<div class="as-swatches" role="radiogroup" aria-label="${esc(slot.label)} color">
+					<button class="as-swatch as-swatch-default" type="button" role="radio"
+						aria-checked="${noneSel ? 'true' : 'false'}" aria-pressed="${noneSel ? 'true' : 'false'}"
+						aria-label="${esc(slot.label)} default" data-slot="${slot.id}" data-hex=""
+						title="Default"></button>
+					${swatches}
+					<label class="as-swatch as-swatch-custom${customSel ? '' : ''}"
+						aria-label="${esc(slot.label)} custom color" title="Custom color"
+						${customSel ? 'style="border-color:var(--accent);box-shadow:0 0 0 2px var(--accent),0 0 0 4px rgba(0,0,0,0.6)"' : ''}>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+						<input type="color" data-slot="${slot.id}" value="${esc(current || '#ffffff')}" />
+					</label>
+				</div>
+			</div>`;
+	}).join('');
+
+	panel.innerHTML = `
+		<p class="ae-sculpt-note" style="margin-top:2px;">Tint skin, hair and outfit. Colors bake into your saved avatar.</p>
+		${groups}
+		${ready ? '' : '<div class="as-empty" style="padding-top:8px;">Waiting for avatar to load…</div>'}`;
+
+	bindColorPanel(panel);
+}
+
+function bindColorPanel(panel) {
+	panel.querySelectorAll('.as-swatch[data-slot]').forEach((btn) => {
+		btn.addEventListener('click', () => setSlotColor(btn.dataset.slot, btn.dataset.hex || null));
+	});
+	panel.querySelectorAll('input[type="color"][data-slot]').forEach((input) => {
+		const slot = input.dataset.slot;
+		input.addEventListener('input', () => liveSlotColor(slot, input.value));
+		input.addEventListener('change', () => setSlotColor(slot, input.value));
+	});
+}
+
+function setSlotColor(slotId, hex) {
+	const slot = COLOR_SLOT_BY_ID.get(slotId);
+	if (!slot) return;
+	if (hex && HEX_RE.test(hex)) {
+		workingAppearance.colors[slotId] = hex.toLowerCase();
+	} else {
+		delete workingAppearance.colors[slotId];
+	}
+	applySlotColor(slot, workingAppearance.colors[slotId] || null);
+	if (activeTab === 'color') renderActivePanel();
+	renderChips();
+	const c = workingAppearance.colors[slotId];
+	setStatus('', c ? `${slot.label} → ${c.toUpperCase()}` : `${slot.label} reset to default.`);
+}
+
+// Live (uncommitted) preview while dragging the native color picker — applies
+// to the mesh and updates the slot's readout without a full re-render so the
+// picker stays open.
+function liveSlotColor(slotId, hex) {
+	const slot = COLOR_SLOT_BY_ID.get(slotId);
+	if (!slot || !HEX_RE.test(hex)) return;
+	applySlotColor(slot, hex);
+	const group = document.querySelector(`.as-color-group[data-group="${cssEscape(slotId)}"]`);
+	if (!group) return;
+	const dot = group.querySelector('[data-current-dot]');
+	const label = group.querySelector('[data-current-label]');
+	if (dot) dot.style.background = hex;
+	if (label) label.textContent = hex.toUpperCase();
+}
+
+// Multiply every material in the slot by `hex` (null → white = original texture).
+function applySlotColor(slot, hex) {
+	if (!scene?.root) return;
+	const color = hex || '#ffffff';
+	const names = new Set(slot.materials);
+	scene.root.traverse((obj) => {
+		if (!obj.isMesh) return;
+		const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+		for (const m of mats) {
+			if (m && m.color && names.has(m.name)) m.color.set(color);
+		}
+	});
+}
+
+function applyAllColors() {
+	for (const slot of COLOR_SLOTS) {
+		applySlotColor(slot, workingAppearance.colors[slot.id] || null);
+	}
+}
+
 function bindSearch() {
 	const input = $('as-search');
 	if (!input) return;
@@ -252,37 +429,41 @@ function bindTiles(panel, tab) {
 
 function renderChips() {
 	const el = $('as-chips');
-	const picks = [];
-	if (workingAppearance.outfit) picks.push(workingAppearance.outfit);
-	for (const id of workingAppearance.accessories) picks.push(id);
+	const parts = [];
 
-	el.innerHTML = picks
-		.map((id) => {
-			const p = presetsById.get(id);
-			if (!p) return '';
-			return `
-				<span class="as-chip" data-id="${esc(id)}">
-					<span class="as-chip-kind">${esc(KIND_LABEL[p.kind] || p.kind)}</span>
-					<span>${esc(p.name)}</span>
-					<button type="button" aria-label="Remove ${esc(p.name)}" data-remove="${esc(id)}">×</button>
-				</span>
-			`;
-		})
-		.join('');
+	for (const id of workingAppearance.accessories) {
+		const p = presetsById.get(id);
+		if (!p) continue;
+		parts.push(`
+			<span class="as-chip" data-id="${esc(id)}">
+				<span class="as-chip-kind">${esc(KIND_LABEL[p.kind] || p.kind)}</span>
+				<span>${esc(p.name)}</span>
+				<button type="button" aria-label="Remove ${esc(p.name)}" data-remove="${esc(id)}">×</button>
+			</span>`);
+	}
+
+	for (const slot of COLOR_SLOTS) {
+		const hex = workingAppearance.colors[slot.id];
+		if (!hex) continue;
+		parts.push(`
+			<span class="as-chip" data-color="${slot.id}">
+				<span class="as-chip-dot" style="background:${esc(hex)}"></span>
+				<span class="as-chip-kind">${esc(slot.label)}</span>
+				<button type="button" aria-label="Reset ${esc(slot.label)}" data-reset-color="${slot.id}">×</button>
+			</span>`);
+	}
+
+	el.innerHTML = parts.join('');
 
 	el.querySelectorAll('button[data-remove]').forEach((btn) => {
-		btn.addEventListener('click', async () => {
-			await removeCommitted(btn.dataset.remove);
-		});
+		btn.addEventListener('click', () => removeCommitted(btn.dataset.remove));
+	});
+	el.querySelectorAll('button[data-reset-color]').forEach((btn) => {
+		btn.addEventListener('click', () => setSlotColor(btn.dataset.resetColor, null));
 	});
 }
 
 function tileSelected(tab, presetId) {
-	if (tab.kinds.includes('outfit')) {
-		return presetId
-			? workingAppearance.outfit === presetId
-			: !workingAppearance.outfit;
-	}
 	const matching = workingAppearance.accessories.filter((id) => {
 		const preset = presetsById.get(id);
 		return preset && tab.kinds.includes(preset.kind);
@@ -369,14 +550,10 @@ function cssEscape(s) {
 
 function isCommitted(presetId) {
 	if (!presetId) return false;
-	return (
-		workingAppearance.outfit === presetId ||
-		workingAppearance.accessories.includes(presetId)
-	);
+	return workingAppearance.accessories.includes(presetId);
 }
 
 function committedIdForKind(kind) {
-	if (kind === 'outfit') return workingAppearance.outfit || null;
 	for (const id of workingAppearance.accessories) {
 		const p = presetsById.get(id);
 		if (p && p.kind === kind) return id;
@@ -391,11 +568,7 @@ async function onTileClick(tab, presetId) {
 	previewToken++;
 
 	await queueOp(async () => {
-		if (tab.kinds.includes('outfit')) {
-			await applyOutfit(presetId || null);
-		} else {
-			await applyAccessory(tab, presetId || null);
-		}
+		await applyAccessory(tab, presetId || null);
 	});
 	renderActivePanel();
 	renderChips();
@@ -409,25 +582,9 @@ async function removeCommitted(id) {
 	await queueOp(async () => {
 		accessoryManager?.removePreset(id);
 	});
-	if (workingAppearance.outfit === id) {
-		workingAppearance.outfit = null;
-	} else {
-		workingAppearance.accessories = workingAppearance.accessories.filter((a) => a !== id);
-	}
+	workingAppearance.accessories = workingAppearance.accessories.filter((a) => a !== id);
 	renderActivePanel();
 	renderChips();
-}
-
-async function applyOutfit(presetId) {
-	if (!presetId) {
-		if (workingAppearance.outfit) accessoryManager?.removePreset(workingAppearance.outfit);
-		workingAppearance.outfit = null;
-		return;
-	}
-	const preset = presetsById.get(presetId);
-	if (!preset) return;
-	if (accessoryManager) await accessoryManager.applyPreset(preset);
-	workingAppearance.outfit = presetId;
 }
 
 async function applyAccessory(tab, presetId) {
@@ -477,30 +634,18 @@ function bindHeader() {
 	$('as-reset').addEventListener('click', () => resetAll());
 }
 
-function bindBodyType() {
-	const btns = document.querySelectorAll('.as-body-toggle button[data-body]');
-	btns.forEach((btn) => {
-		btn.addEventListener('click', () => {
-			bodyType = btn.dataset.body;
-			btns.forEach((b) => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
-		});
-	});
-}
-
 async function resetAll() {
 	previewedId = null;
 	previewToken++;
 	await queueOp(async () => {
-		const wasIds = [
-			workingAppearance.outfit,
-			...workingAppearance.accessories,
-		].filter(Boolean);
+		const wasIds = [...workingAppearance.accessories].filter(Boolean);
 		if (accessoryManager) {
 			for (const id of wasIds) accessoryManager.removePreset(id);
 		}
-		workingAppearance = { outfit: null, accessories: [], morphs: {} };
+		workingAppearance = { accessories: [], morphs: {}, colors: {} };
 		if (scene?.root) {
 			applyMorphsToRoot(scene.root, {});
+			applyAllColors();
 		}
 		if (accessoryManager) await accessoryManager.hydrateFromAppearance(workingAppearance);
 	});
@@ -523,9 +668,9 @@ function setStatus(kind, text) {
 
 function collapseAppearance(a) {
 	const out = {};
-	if (a.outfit) out.outfit = a.outfit;
 	if (a.accessories?.length) out.accessories = [...a.accessories];
 	if (a.morphs && Object.keys(a.morphs).length) out.morphs = { ...a.morphs };
+	if (a.colors && Object.keys(a.colors).length) out.colors = { ...a.colors };
 	return Object.keys(out).length ? out : null;
 }
 
@@ -584,7 +729,7 @@ async function saveAvatar() {
 			{
 				name,
 				source: 'studio',
-				source_meta: { generator: 'avatar-studio', body_type: bodyType },
+				source_meta: { generator: 'avatar-studio', body_type: BODY_TYPE },
 				visibility: 'public',
 			},
 			{
