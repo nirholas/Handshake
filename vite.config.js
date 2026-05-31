@@ -736,6 +736,9 @@ const appConfig = {
 					// /town  → communities (alias; mirrors vercel.json rewrite)
 					else if (!filePath && /^\/town\/?$/.test(path))
 						filePath = resolve(root, 'pages/communities.html');
+					// /communities/:mint  → coin profile deep link
+					else if (!filePath && /^\/communities\/[1-9A-HJ-NP-Za-km-z]{32,44}\/?$/.test(path))
+						filePath = resolve(root, 'pages/communities.html');
 					// /@<handle>  → public live profile page
 					else if (!filePath && /^\/@[a-z0-9_-]{3,30}\/?$/i.test(path))
 						filePath = resolve(root, 'pages/handle.html');

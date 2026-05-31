@@ -195,6 +195,52 @@
 			.coin-card .sk { height: 10px; border-radius: 5px; background: rgba(255,255,255,0.08); animation: pulse 1.3s ease-in-out infinite; }
 			.coin-card .sk-a { width: 60%; } .coin-card .sk-b { width: 85%; }
 			@keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.85; } }
+			/* Coin profile */
+			.coin-profile { padding-top: 8px; }
+			.coin-profile-back { margin-bottom: 18px; }
+			.cp-head { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+			.cp-avatar { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; flex-shrink: 0; position: relative; background: linear-gradient(135deg, rgba(124,92,255,0.45), rgba(0,0,0,0.45)); display: flex; align-items: center; justify-content: center; }
+			.cp-avatar img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
+			.cp-avatar-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; color: #fff; }
+			.cp-head-text { flex: 1; min-width: 0; }
+			.cp-symbol { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.3px; }
+			.cp-name { font-size: clamp(24px, 4vw, 36px); line-height: 1.05; letter-spacing: -0.8px; font-weight: 760; margin: 2px 0 6px; word-break: break-word; }
+			.cp-mint { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); background: rgba(0,0,0,0.28); border: 1px solid var(--panel-border); border-radius: 8px; padding: 4px 10px; cursor: pointer; transition: border-color .15s, color .15s; }
+			.cp-mint:hover { border-color: var(--accent); color: var(--text); }
+			.cp-mint.copied { color: #34d399; border-color: rgba(52,211,153,0.4); }
+			.cp-graduation { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-left: auto; }
+			.cp-grad-ring { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; background: conic-gradient(var(--accent) var(--pct, 0%), rgba(255,255,255,0.08) 0); position: relative; }
+			.cp-grad-ring::after { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: var(--bg); }
+			.cp-grad-ring span { position: relative; z-index: 1; }
+			.cp-grad-label { font-size: 10px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.5px; }
+			.cp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 22px; }
+			.cp-stat { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px 16px; }
+			.cp-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+			.cp-stat-value { font-size: 20px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
+			.cp-stat-value.up { color: #34d399; }
+			.cp-desc { margin-top: 20px; color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 680px; }
+			.cp-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; align-items: center; }
+			.cp-actions .ghost-btn { text-decoration: none; display: inline-flex; align-items: center; }
+			.cp-socials { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+			.cp-social { font-size: 12px; color: var(--muted); text-decoration: none; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 999px; padding: 6px 13px; transition: border-color .15s, color .15s; }
+			.cp-social:hover { border-color: var(--accent); color: var(--text); }
+			.cp-section { margin-top: 34px; }
+			.cp-trades { display: flex; flex-direction: column; border: 1px solid var(--panel-border); border-radius: 12px; overflow: hidden; }
+			.cp-trade { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 12px; padding: 10px 14px; font-size: 13px; background: var(--panel); }
+			.cp-trade + .cp-trade { border-top: 1px solid var(--panel-border); }
+			.cp-trade-side { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 8px; border-radius: 6px; }
+			.cp-trade-side.buy { color: #34d399; background: rgba(52,211,153,0.12); }
+			.cp-trade-side.sell { color: #f87171; background: rgba(248,113,113,0.12); }
+			.cp-trade-user { font-family: ui-monospace, monospace; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.cp-trade-amt { font-variant-numeric: tabular-nums; font-weight: 600; }
+			.cp-trade-time { color: var(--muted-2); font-size: 11px; font-variant-numeric: tabular-nums; }
+			.cp-skel-head { display: flex; gap: 18px; align-items: center; }
+			.cp-skel-avatar { width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,0.06); animation: pulse 1.3s ease-in-out infinite; }
+			.cp-skel-lines { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+			.cp-skel-line { height: 14px; border-radius: 6px; background: rgba(255,255,255,0.06); animation: pulse 1.3s ease-in-out infinite; }
+			.cp-skel-line.w50 { width: 50%; } .cp-skel-line.w30 { width: 30%; }
+			.cp-skel-stats { height: 80px; border-radius: 12px; background: rgba(255,255,255,0.05); margin-top: 22px; animation: pulse 1.3s ease-in-out infinite; }
+			.coin-profile-empty { padding: 60px 20px; text-align: center; color: var(--muted); }
 		</style>
 	</head>
 	<body>
@@ -258,6 +304,53 @@
 				<div id="mint-error" class="mint-error" role="alert"></div>
 			</section>
 		</main>
+
+			<!-- Coin profile (deep-linkable at /communities/:mint) -->
+			<main class="wrap coin-profile" id="coin-profile" hidden>
+				<button type="button" class="ghost-btn coin-profile-back" id="coin-profile-back">← All communities</button>
+
+				<div class="coin-profile-skeleton" id="coin-profile-skeleton">
+					<div class="cp-skel-head"><div class="cp-skel-avatar"></div><div class="cp-skel-lines"><div class="cp-skel-line w50"></div><div class="cp-skel-line w30"></div></div></div>
+					<div class="cp-skel-stats"></div>
+				</div>
+
+				<div class="coin-profile-empty" id="coin-profile-empty" hidden>
+					<p>That coin couldn't be found on pump.fun.</p>
+					<p class="coin-empty-sub" id="coin-profile-empty-mint"></p>
+				</div>
+
+				<div class="coin-profile-body" id="coin-profile-body" hidden>
+					<header class="cp-head">
+						<span class="cp-avatar" id="cp-avatar"><span class="cp-avatar-fallback" id="cp-avatar-fallback"></span></span>
+						<div class="cp-head-text">
+							<div class="cp-symbol" id="cp-symbol">$—</div>
+							<h1 class="cp-name" id="cp-name">—</h1>
+							<button type="button" class="cp-mint" id="cp-mint" title="Copy mint address"></button>
+						</div>
+						<div class="cp-graduation" id="cp-graduation" hidden>
+							<div class="cp-grad-ring" id="cp-grad-ring"><span id="cp-grad-pct">0%</span></div>
+							<span class="cp-grad-label">to graduation</span>
+						</div>
+					</header>
+
+					<div class="cp-stats" id="cp-stats"></div>
+
+					<p class="cp-desc" id="cp-desc" hidden></p>
+
+					<div class="cp-actions">
+						<button type="button" class="primary-btn" id="cp-enter">Enter 3D world →</button>
+						<a class="ghost-btn" id="cp-pumpfun" href="#" target="_blank" rel="noopener">Trade on pump.fun ↗</a>
+						<button type="button" class="ghost-btn" id="cp-share">Share</button>
+					</div>
+
+					<div class="cp-socials" id="cp-socials"></div>
+
+					<section class="cp-section" id="cp-trades-wrap" hidden>
+						<div class="section-head"><h2>Recent trades</h2><span class="hint" id="cp-trades-hint"></span></div>
+						<div class="cp-trades" id="cp-trades"></div>
+					</section>
+				</div>
+			</main>
 
 		<script type="module" src="/src/communities.js"></script>
 	</body>

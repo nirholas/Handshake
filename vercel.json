@@ -338,6 +338,10 @@
 			"dest": "/communities.html"
 		},
 		{
+			"src": "/communities/([1-9A-HJ-NP-Za-km-z]{32,44})/?",
+			"dest": "/communities.html"
+		},
+		{
 			"src": "/town/?",
 			"dest": "/communities.html"
 		},

@@ -112,8 +112,25 @@ export class CommunityNet {
 		this._emit('status', { status, error });
 	}
 
+	// Detach and close the current room without triggering a reconnect. Every
+	// (re)connect replaces this.room; if the previous room were left live its
+	// socket would keep firing onMessage('chat') alongside the new one, so a
+	// single broadcast got appended once per leftover connection — the duplicate
+	// chat bug. State-based events (move/avatar/blocks) hid it by being
+	// idempotent; chat appends a row on every delivery, so it showed.
+	_closeRoom() {
+		const room = this.room;
+		if (!room) return;
+		this.room = null;
+		// Drop onLeave/onError/onMessage first so leaving doesn't schedule a
+		// reconnect or surface a spurious error.
+		try { room.removeAllListeners(); } catch {}
+		try { room.leave(); } catch {}
+	}
+
 	async connect() {
 		if (this._destroyed) return;
+		this._closeRoom();
 		this._setStatus('connecting');
 		try {
 			this.client = new Client(this.url);
@@ -276,7 +293,7 @@ export class CommunityNet {
 	destroy() {
 		this._destroyed = true;
 		if (this._reconnectTimer) { clearTimeout(this._reconnectTimer); this._reconnectTimer = null; }
-		try { this.room?.leave(); } catch {}
-		this.room = null; this.client = null;
+		this._closeRoom();
+		this.client = null;
 	}
 }

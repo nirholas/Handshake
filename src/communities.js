@@ -174,8 +174,9 @@ function coinCard(coin) {
 			<span class="coin-name">${esc(name)}</span>
 		</span>
 		${mcap ? `<span class="coin-mcap">${mcap}</span>` : ''}
-		<span class="coin-enter">Enter →</span>`;
-	card.addEventListener('click', () => enterWorld({ mint, name, symbol, image }));
+		<span class="coin-enter">View →</span>`;
+	// Cards open the coin's profile; the profile has the "Enter 3D world" CTA.
+	card.addEventListener('click', () => navTo(`/communities/${mint}`));
 	return card;
 }
 
@@ -266,6 +267,248 @@ if (mintInput) mintInput.addEventListener('keydown', (e) => { if (e.key === 'Ent
 // Mainland card (shared world, no coin).
 $('enter-mainland')?.addEventListener('click', () => enterWorld(null));
 
+// ── Coin profile (deep-linkable at /communities/:mint) ─────────────────────
+// Card clicks land here instead of jumping straight into the world. The
+// profile pulls real pump.fun data — coin meta, live price + graduation, and
+// recent trades — and offers the "Enter 3D world" hand-off as the primary CTA.
+
+const heroEl = document.querySelector('.hero');
+const browseEl = document.querySelector('main.wrap:not(.coin-profile)');
+const profileEl = $('coin-profile');
+
+let _coinProfileMint = null;
+
+function navTo(path, replace = false) {
+	const url = new URL(path, location.origin);
+	if (replace) history.replaceState({}, '', url);
+	else history.pushState({}, '', url);
+	routeView();
+}
+
+function routeView() {
+	const m = location.pathname.match(/^\/communities\/([1-9A-HJ-NP-Za-km-z]{32,44})/);
+	const showProfile = !!m;
+	if (heroEl) heroEl.hidden = showProfile;
+	if (browseEl) browseEl.hidden = showProfile;
+	if (profileEl) profileEl.hidden = !showProfile;
+	if (showProfile) {
+		window.scrollTo(0, 0);
+		loadCoinProfile(m[1]);
+	} else {
+		_coinProfileMint = null;
+	}
+}
+window.addEventListener('popstate', routeView);
+
+function fmtPrice(v) {
+	const n = Number(v);
+	if (!Number.isFinite(n) || n <= 0) return '';
+	if (n >= 1) return `$${n.toFixed(2)}`;
+	if (n >= 0.01) return `$${n.toFixed(4)}`;
+	return `$${n.toExponential(2)}`;
+}
+
+function fmtAge(ts) {
+	// pump.fun returns unix seconds (created_timestamp) or ISO strings (trades).
+	let ms;
+	if (typeof ts === 'number' || /^\d+$/.test(String(ts))) {
+		const t = Number(ts);
+		if (!Number.isFinite(t) || t <= 0) return '';
+		ms = t < 1e12 ? t * 1000 : t;
+	} else {
+		ms = new Date(ts).getTime();
+		if (!Number.isFinite(ms)) return '';
+	}
+	const sec = (Date.now() - ms) / 1000;
+	if (sec < 60) return 'just now';
+	if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+	if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+	return `${Math.floor(sec / 86400)}d ago`;
+}
+
+function shortAddr(a) { return a ? `${a.slice(0, 4)}…${a.slice(-4)}` : ''; }
+
+async function loadCoinProfile(mint) {
+	if (_coinProfileMint === mint) return;
+	_coinProfileMint = mint;
+
+	$('coin-profile-skeleton').hidden = false;
+	$('coin-profile-body').hidden = true;
+	$('coin-profile-empty').hidden = true;
+
+	let coin = null;
+	try {
+		const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}`, { headers: { accept: 'application/json' } });
+		if (r.ok) coin = await r.json();
+	} catch (err) {
+		console.warn('[communities] coin profile', err?.message ?? err);
+	}
+
+	// User may have navigated away during the fetch.
+	if (_coinProfileMint !== mint) return;
+
+	if (!coin || !coin.mint) {
+		$('coin-profile-skeleton').hidden = true;
+		$('coin-profile-empty').hidden = false;
+		$('coin-profile-empty-mint').textContent = mint;
+		document.title = 'Coin not found · three.ws';
+		return;
+	}
+
+	renderCoinProfile(coin);
+	// Live market data + trades enrich the page once the core render is up.
+	loadCoinMarket(mint);
+	loadCoinTrades(mint);
+}
+
+function renderCoinProfile(coin) {
+	const symbol = coin.symbol || '';
+	const name = coin.name || symbol || `${coin.mint.slice(0, 4)}…`;
+	const image = coin.image_uri || coin.image || '';
+
+	const avatarEl = $('cp-avatar');
+	const fallback = $('cp-avatar-fallback');
+	avatarEl.querySelectorAll('img').forEach((el) => el.remove());
+	if (image) {
+		const img = document.createElement('img');
+		img.src = image; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
+		img.onerror = () => img.remove();
+		avatarEl.appendChild(img);
+	}
+	fallback.textContent = (symbol || name).slice(0, 3).toUpperCase();
+
+	$('cp-symbol').textContent = `$${symbol || '—'}`;
+	$('cp-name').textContent = name;
+
+	const mintBtn = $('cp-mint');
+	mintBtn.textContent = shortAddr(coin.mint);
+	mintBtn.onclick = () => {
+		navigator.clipboard?.writeText(coin.mint).then(() => {
+			mintBtn.textContent = 'Copied ✓';
+			mintBtn.classList.add('copied');
+			setTimeout(() => { mintBtn.textContent = shortAddr(coin.mint); mintBtn.classList.remove('copied'); }, 1500);
+		});
+	};
+
+	// Core stats from the coin record; price/graduation arrive via loadCoinMarket.
+	const mcap = fmtMcap(coin.usd_market_cap ?? coin.market_cap);
+	$('cp-stats').innerHTML = [
+		mcap ? statHtml('Market cap', mcap, true) : '',
+		statHtml('Price', '—', false, 'cp-stat-price'),
+		statHtml('Created', fmtAge(coin.created_timestamp) || '—'),
+		coin.reply_count != null ? statHtml('Replies', String(coin.reply_count)) : '',
+	].filter(Boolean).join('');
+
+	const descEl = $('cp-desc');
+	if (coin.description) { descEl.hidden = false; descEl.textContent = coin.description; }
+	else descEl.hidden = true;
+
+	// Actions.
+	$('cp-enter').onclick = () => enterWorld({ mint: coin.mint, name, symbol, image });
+	$('cp-pumpfun').href = `https://pump.fun/${coin.mint}`;
+	const shareBtn = $('cp-share');
+	shareBtn.onclick = async () => {
+		const url = location.href;
+		const title = `$${symbol || name} on three.ws`;
+		const text = `Join the ${name} community in 3D on three.ws`;
+		if (navigator.share) { try { await navigator.share({ title, text, url }); return; } catch {} }
+		try {
+			await navigator.clipboard.writeText(url);
+			const orig = shareBtn.textContent;
+			shareBtn.textContent = 'Link copied ✓';
+			setTimeout(() => { shareBtn.textContent = orig; }, 1500);
+		} catch {}
+	};
+
+	// Social links when pump.fun provides them.
+	const socials = [];
+	if (coin.twitter) socials.push(['Twitter', coin.twitter]);
+	if (coin.telegram) socials.push(['Telegram', coin.telegram]);
+	if (coin.website) socials.push(['Website', coin.website]);
+	$('cp-socials').innerHTML = socials
+		.map(([label, href]) => `<a class="cp-social" href="${escAttr(href)}" target="_blank" rel="noopener">${esc(label)} ↗</a>`)
+		.join('');
+
+	$('coin-profile-skeleton').hidden = true;
+	$('coin-profile-body').hidden = false;
+
+	document.title = `$${symbol || name} · Coin Communities · three.ws`;
+}
+
+function statHtml(label, value, up = false, id = '') {
+	return `<div class="cp-stat">
+		<div class="cp-stat-label">${esc(label)}</div>
+		<div class="cp-stat-value${up ? ' up' : ''}"${id ? ` id="${id}"` : ''}>${esc(value)}</div>
+	</div>`;
+}
+
+async function loadCoinMarket(mint) {
+	try {
+		const r = await fetch(`/api/pump/curve?mint=${encodeURIComponent(mint)}`, { headers: { accept: 'application/json' } });
+		if (!r.ok) return;
+		const data = await r.json();
+		if (_coinProfileMint !== mint) return;
+
+		const usd = data?.price?.usdPrice;
+		const priceEl = $('cp-stat-price');
+		if (priceEl && usd) priceEl.textContent = fmtPrice(usd) || priceEl.textContent;
+
+		// Graduation comes as progressBps (0–10000) + isGraduated.
+		const g = data?.graduation || {};
+		const bps = Number(g.progressBps);
+		const gradWrap = $('cp-graduation');
+		if (gradWrap && Number.isFinite(bps)) {
+			const pct = Math.max(0, Math.min(100, bps / 100));
+			gradWrap.hidden = false;
+			$('cp-grad-ring').style.setProperty('--pct', `${pct.toFixed(0)}%`);
+			$('cp-grad-pct').textContent = g.isGraduated ? '✓' : `${pct.toFixed(0)}%`;
+			const lbl = gradWrap.querySelector('.cp-grad-label');
+			if (lbl) lbl.textContent = g.isGraduated ? 'graduated' : 'to graduation';
+		}
+	} catch (err) {
+		console.warn('[communities] coin market', err?.message ?? err);
+	}
+}
+
+async function loadCoinTrades(mint) {
+	const wrap = $('cp-trades-wrap');
+	const list = $('cp-trades');
+	try {
+		const r = await fetch(`/api/pump/coin-trades?mint=${encodeURIComponent(mint)}&limit=20`, { headers: { accept: 'application/json' } });
+		if (!r.ok) return;
+		const data = await r.json();
+		if (_coinProfileMint !== mint) return;
+		const trades = Array.isArray(data?.trades) ? data.trades : [];
+		if (!trades.length) return;
+
+		// Price fallback: graduated coins have no bonding-curve price, so use the
+		// most recent trade's USD price if loadCoinMarket left the stat empty.
+		const priceEl = $('cp-stat-price');
+		if (priceEl && (!priceEl.textContent || priceEl.textContent === '…' || priceEl.textContent === '—')) {
+			const last = trades.find((t) => Number(t.price_usd) > 0);
+			if (last) priceEl.textContent = fmtPrice(last.price_usd) || '—';
+		}
+
+		list.innerHTML = trades.map((t) => {
+			const buy = !!t.is_buy;
+			const usd = Number(t.usd_amount);
+			const amt = Number.isFinite(usd) && usd > 0 ? fmtMcap(usd) : `${Number(t.sol_amount || 0).toFixed(3)} SOL`;
+			return `<div class="cp-trade">
+				<span class="cp-trade-side ${buy ? 'buy' : 'sell'}">${buy ? 'Buy' : 'Sell'}</span>
+				<span class="cp-trade-user">${esc(shortAddr(t.user || ''))}</span>
+				<span class="cp-trade-amt">${esc(amt)}</span>
+				<span class="cp-trade-time">${esc(fmtAge(t.timestamp))}</span>
+			</div>`;
+		}).join('');
+		$('cp-trades-hint').textContent = `Last ${trades.length}`;
+		wrap.hidden = false;
+	} catch (err) {
+		console.warn('[communities] coin trades', err?.message ?? err);
+	}
+}
+
+$('coin-profile-back')?.addEventListener('click', () => navTo('/communities'));
+
 // ── helpers ────────────────────────────────────────────────────────────────
 function esc(s) { return String(s).replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c])); }
 function escAttr(s) { return String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c])); }
@@ -273,3 +516,4 @@ function escAttr(s) { return String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;',
 // ── boot ───────────────────────────────────────────────────────────────────
 initAvatars();
 loadTrending();
+routeView();
