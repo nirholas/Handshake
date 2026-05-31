@@ -2412,7 +2412,7 @@
 		},
 		{
 			"src": "/a/me/?",
-			"dest": "/pages/a-me.html"
+			"dest": "/a-me.html"
 		},
 		{
 			"src": "/a/(\\d+)/(\\d+)/embed",

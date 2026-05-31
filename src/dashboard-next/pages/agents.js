@@ -254,7 +254,115 @@ function renderAgents(host, agents, avatars, root) {
 		});
 	});
 
+	host.querySelectorAll('[data-action="deploy-onchain"]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const id = btn.dataset.id;
+			const agent = agents.find((a) => a.id === id);
+			if (agent) openDeployOnchainModal(host, agent, avatars, agents);
+		});
+	});
+
+	host.querySelectorAll('[data-action="deploy-pump"]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const id = btn.dataset.id;
+			const agent = agents.find((a) => a.id === id);
+			if (agent) openDeployPumpModal(agent, avatars);
+		});
+	});
+
 	loadInlineReviewStats(host, agents);
+}
+
+// ── Deploy on-chain (Metaplex Core / ERC-8004) ─────────────────────────────
+// Reuses the <onchain-deploy-button> custom element, which drives the full
+// prep → sign → confirm pipeline from src/onchain/deploy.js and persists the
+// result through /api/agents/onchain/confirm. On success we patch the in-memory
+// agent with the confirmed record and re-render so the card flips to on-chain.
+
+async function openDeployOnchainModal(host, agent, avatars, allAgents) {
+	await import('../../onchain/deploy-button.js');
+	const overlay = makeOverlay();
+	overlay.innerHTML = `
+		<div role="dialog" aria-modal="true" aria-label="Deploy agent on-chain" style="
+			width:min(440px,100%);
+			background:linear-gradient(180deg,rgba(22,24,32,0.97),rgba(16,17,24,0.97));
+			border:1px solid var(--nxt-stroke-strong);border-radius:14px;padding:24px;
+			box-shadow:0 20px 60px rgba(0,0,0,0.6);
+		">
+			<div style="font-size:17px;font-weight:600;margin-bottom:6px">Deploy on-chain</div>
+			<div style="font-size:12.5px;color:var(--nxt-ink-dim);margin-bottom:18px">
+				Mint a Metaplex Core asset for <strong style="color:var(--nxt-ink)">${esc(agent.name || agent.display_name || 'this agent')}</strong>. That asset becomes the agent's permanent on-chain identity. You'll sign one transaction in your Solana wallet (~0.003 SOL rent + network fees).
+			</div>
+			<div data-slot="deploy-host" style="display:flex;justify-content:center;margin-bottom:18px"></div>
+			<div data-slot="error" style="font-size:12.5px;color:var(--nxt-danger);min-height:18px;margin-bottom:12px"></div>
+			<div style="display:flex;gap:8px;justify-content:flex-end">
+				<button class="dn-btn ghost" data-action="cancel">Close</button>
+			</div>
+		</div>
+	`;
+	document.body.appendChild(overlay);
+
+	const errorEl = overlay.querySelector('[data-slot="error"]');
+	const deployHost = overlay.querySelector('[data-slot="deploy-host"]');
+
+	const btnEl = document.createElement('onchain-deploy-button');
+	btnEl.setAttribute('agent-id', agent.id);
+	btnEl.setAttribute('chain', 'solana:mainnet');
+	btnEl.setAttribute('label', 'Deploy on Solana →');
+	btnEl.agent = {
+		id: agent.id,
+		name: agent.name || agent.display_name || 'Agent',
+		description: agent.description || agent.persona?.tagline || agent.tagline || '',
+		avatar_id: agent.avatar_id || null,
+		skills: Array.isArray(agent.skills) && agent.skills.length ? agent.skills : undefined,
+	};
+	deployHost.appendChild(btnEl);
+
+	btnEl.addEventListener('onchain:deployed', (e) => {
+		const updated = e.detail?.agent || {};
+		toast('Agent deployed on-chain');
+		const idx = allAgents.findIndex((a) => a.id === agent.id);
+		if (idx >= 0) allAgents[idx] = { ...allAgents[idx], ...updated };
+		close();
+		renderAgents(host, allAgents, avatars, null);
+	});
+	btnEl.addEventListener('onchain:error', (e) => {
+		errorEl.textContent = e.detail?.error?.message || 'Deploy failed. Please try again.';
+	});
+
+	const close = () => overlay.remove();
+	overlay.querySelector('[data-action="cancel"]').addEventListener('click', close);
+	overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+	document.addEventListener('keydown', function onKey(e) {
+		if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+	});
+}
+
+// ── Deploy Pump.fun token ──────────────────────────────────────────────────
+// Reuses the existing launch-token-modal. If the agent isn't on Solana yet the
+// modal runs its deploy step first (needsDeploy), then launches the token. The
+// modal persists via /api/agents/tokens/launch-confirm and reloads on success.
+
+function openDeployPumpModal(agent, avatars) {
+	const avatar = avatars.find((av) => av.id === agent.avatar_id);
+	const imageUrl = avatar?.thumbnail_url || avatar?.url || agent.meta?.thumbnail_url || '';
+	const onchain = agent.onchain || agent.meta?.onchain || null;
+	const needsDeploy = !onchain || onchain.family !== 'solana';
+	openLaunchTokenModal({
+		agentId: agent.id,
+		agentName: agent.name || agent.display_name || 'Agent',
+		imageUrl,
+		needsDeploy,
+		agentForDeploy: needsDeploy
+			? {
+					id: agent.id,
+					name: agent.name || agent.display_name || 'Agent',
+					description: agent.description || agent.persona?.tagline || agent.tagline || '',
+					avatar_id: agent.avatar_id || null,
+					skills: Array.isArray(agent.skills) && agent.skills.length ? agent.skills : undefined,
+				}
+			: null,
+	});
 }
 
 const BRAIN_LABELS = {
@@ -326,6 +434,8 @@ function agentCard(a, avatars) {
 					<button class="dn-btn ghost" data-action="persona-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Persona</button>
 					<a class="dn-btn ghost" href="/dashboard/library#tab=brain" style="padding:5px 10px;font-size:12px;text-decoration:none">Brain</a>
 					<button class="dn-btn ghost" data-action="view-reputation" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Reputation</button>
+					${onchain ? '' : `<button class="dn-btn ghost" data-action="deploy-onchain" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Deploy onchain</button>`}
+					${pumpMint ? '' : `<button class="dn-btn ghost" data-action="deploy-pump" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Deploy Pump.fun</button>`}
 					<button class="dn-btn ghost danger" data-action="delete-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Delete</button>
 				</div>
 			</div>
