@@ -6,7 +6,7 @@
 		<title>Avatar SDK — @three-ws/avatar · three.ws</title>
 		<meta
 			name="description"
-			content="Drop-in 3D avatar SDK for the web. Web component, React bindings, iframe creator, GLB upload — the complete Ready Player Me replacement."
+			content="Drop-in 3D avatar SDK for the web. Web component, React bindings, iframe creator, GLB upload — a complete, open replacement for legacy avatar SDKs."
 		/>
 		<meta name="theme-color" content="#000000" />
 
@@ -15,7 +15,7 @@
 		<meta property="og:title" content="@three-ws/avatar SDK" />
 		<meta
 			property="og:description"
-			content="Drop-in 3D avatar SDK for the web. &lt;agent-3d&gt; web component, React bindings, iframe creator, GLB upload — the Ready Player Me replacement."
+			content="Drop-in 3D avatar SDK for the web. &lt;agent-3d&gt; web component, React bindings, iframe creator, GLB upload — an open replacement for legacy avatar SDKs."
 		/>
 		<meta property="og:url" content="https://three.ws/avatar-sdk" />
 		<meta property="og:image" content="https://three.ws/assets/og-image.png" />
@@ -74,7 +74,7 @@
 							The 3D Avatar SDK<br />your app <em>deserves</em>.
 						</h1>
 						<p class="sdk-hero-sub">
-							Drop-in <strong>web component</strong>, React bindings, iframe creator, and cloud upload — the complete <strong>Ready Player Me replacement</strong>, open and self-hostable.
+							Drop-in <strong>web component</strong>, React bindings, iframe creator, and cloud upload — a complete <strong>open avatar SDK</strong>, self-hostable, with no vendor lock-in.
 						</p>
 
 						<div class="sdk-install-row">
@@ -177,7 +177,7 @@
 								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2.5" stroke="#67e8f9" stroke-width="1.5"/><path d="M8 3v14" stroke="#67e8f9" stroke-width="1.3" stroke-dasharray="2 2"/><path d="M13 8l-3 4-2-2" stroke="#67e8f9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 							</div>
 							<p class="sdk-feat-title">Creator Iframe</p>
-							<p class="sdk-feat-desc">Open the three.ws Avatar Studio or Avaturn in a modal. Resolves with a GLB Blob via postMessage — no polling, no storage tokens required.</p>
+							<p class="sdk-feat-desc">Open the three.ws Avatar Studio or Selfie Studio in a modal. Resolves with a GLB Blob via postMessage — no polling, no storage tokens required.</p>
 							<span class="sdk-feat-tag">AvatarCreator class</span>
 						</div>
 
@@ -339,7 +339,7 @@ document.body.<span class="t-fn">appendChild</span>(el)<span class="t-op">;</spa
 							<div class="sdk-step-num" aria-hidden="true">3</div>
 							<div class="sdk-step-body">
 								<h3 class="sdk-step-title">Let users build their avatar</h3>
-								<p class="sdk-step-desc">Open the Creator modal — it wraps the Character Studio iframe. The <code>onExport</code> callback receives a GLB <code>Blob</code> you can pass straight to <code>saveBlob()</code>.</p>
+								<p class="sdk-step-desc">Open the Creator modal — it wraps the Character Builder iframe. The <code>onExport</code> callback receives a GLB <code>Blob</code> you can pass straight to <code>saveBlob()</code>.</p>
 								<div class="sdk-code-copy">
 									<div class="sdk-code-label">
 										<span class="sdk-code-filename">creator-flow.js</span>
@@ -595,7 +595,7 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 								<span class="sdk-api-name">AvatarCreator</span>
 							</div>
 							<div class="sdk-api-card-body">
-								<p class="sdk-api-desc">Imperative iframe modal. Resolves with a GLB Blob via postMessage. Works with Character Studio and Avaturn.</p>
+								<p class="sdk-api-desc">Imperative iframe modal. Resolves with a GLB Blob via postMessage. Works with Character Builder and Selfie Studio.</p>
 								<ul class="sdk-api-props">
 									<li><span class="sdk-api-prop-name">studioUrl</span><span class="sdk-api-prop-desc">Override the iframe origin (default: three.ws)</span></li>
 									<li><span class="sdk-api-prop-name">onExport(blob)</span><span class="sdk-api-prop-desc">Called with the GLB Blob on export</span></li>
@@ -628,15 +628,15 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 			<section class="sdk-section" aria-labelledby="sdk-compare-title">
 				<div class="sdk-wrap">
 					<div class="sdk-section-label sdk-reveal" aria-hidden="true">Comparison</div>
-					<h2 class="sdk-h2 sdk-reveal" id="sdk-compare-title">vs. Ready Player Me</h2>
-					<p class="sdk-lead sdk-reveal">RPM was acquired and closed their free tier. Here's what you get when you migrate.</p>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-compare-title">vs. legacy avatar SDKs</h2>
+					<p class="sdk-lead sdk-reveal">Legacy avatar SDKs got acquired and closed their free tiers. Here's what you get when you migrate.</p>
 
 					<div class="sdk-table-wrap sdk-reveal" role="region" aria-label="Comparison table" tabindex="0">
 						<table class="sdk-table">
 							<thead>
 								<tr>
 									<th scope="col">Feature</th>
-									<th scope="col">Ready Player Me</th>
+									<th scope="col">Legacy SDKs</th>
 									<th scope="col" class="col-three">@three-ws/avatar</th>
 								</tr>
 							</thead>
@@ -644,12 +644,12 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 								<tr>
 									<td>Photo → 3D avatar</td>
 									<td><span class="cross">✕</span> Closed</td>
-									<td class="col-three"><span class="check">✓</span> Avaturn pipeline</td>
+									<td class="col-three"><span class="check">✓</span> Selfie pipeline</td>
 								</tr>
 								<tr>
 									<td>In-browser avatar editor</td>
 									<td><span class="cross">✕</span> Closed to new apps</td>
-									<td class="col-three"><span class="check">✓</span> Character Studio</td>
+									<td class="col-three"><span class="check">✓</span> Character Builder</td>
 								</tr>
 								<tr>
 									<td>Hosted CDN storage</td>

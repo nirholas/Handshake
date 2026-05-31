@@ -1,7 +1,7 @@
 // <agent-3d> — the web component that ships the whole framework in one tag.
 // See specs/EMBED_SPEC.md
 
-import { Box3 } from 'three';
+import { Box3, Color } from 'three';
 import { Viewer } from './viewer.js';
 import { Runtime, skillAccessFromAgentDetail } from './runtime/index.js';
 import { SkillPaymentModal, PaymentChip } from './payment-modal.js';
@@ -1003,15 +1003,31 @@ class Agent3DElement extends HTMLElement {
 		const v = this._viewer;
 		if (!v) return;
 		const mode = this.getAttribute('background') || 'transparent';
+		if (!v.scene) return;
 		if (mode === 'transparent') {
 			if (v.state) v.state.transparentBg = true;
-			v.updateBackground?.();
+			v.scene.background = null;
+			v.renderer?.setClearAlpha?.(0);
 			this.style.removeProperty('background-color');
 		} else {
-			const color = mode === 'dark' ? '#0b0d10' : mode === 'light' ? '#f5f5f5' : mode;
-			v.setBackgroundColor?.(color);
-			this.style.backgroundColor = color;
+			if (v.state) v.state.transparentBg = false;
+			v.renderer?.setClearAlpha?.(1);
+			// scene.background may be null (was transparent) — ensure a Color to mutate.
+			if (!v.scene.background || typeof v.scene.background.set !== 'function') {
+				v.scene.background = v.backgroundColor || new Color();
+			}
+			if (mode === 'dark') {
+				v.scene.background.set('#0b0d10');
+				this.style.backgroundColor = '#0b0d10';
+			} else if (mode === 'light') {
+				v.scene.background.set('#f5f5f5');
+				this.style.backgroundColor = '#f5f5f5';
+			} else {
+				v.scene.background.set(mode);
+				this.style.backgroundColor = mode;
+			}
 		}
+		v.invalidate?.();
 	}
 
 	/**

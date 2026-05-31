@@ -93,8 +93,8 @@ The brain proxy at [`/api/brain/chat`](./api-reference.md) supports Anthropic, O
 
 Three production paths. Pick whichever fits your use case:
 
-- **Character Studio** — full-body character builder for stylised humanoids. Pick a base mesh, swap clothing/accessories/hairstyles, save. The output is a rigged GLB. See [character-studio.md](./character-studio.md).
-- **Selfie (Avaturn)** — upload a photo, get a rigged 3D version of yourself in ~60 seconds. See [avatar-creation.md](./avatar-creation.md).
+- **Character Builder** — full-body character builder for stylised humanoids. Pick a base mesh, swap clothing/accessories/hairstyles, save. The output is a rigged GLB. See [character-studio.md](./character-studio.md).
+- **Selfie capture** — upload a photo, get a rigged 3D version of yourself in ~60 seconds. See [avatar-creation.md](./avatar-creation.md).
 - **Upload your own** — any glTF 2.0 / GLB with a humanoid rig works. Drop the file into the editor at [three.ws/create](https://three.ws/create) or POST to `/api/avatars`.
 
 Every avatar ends up as a `cdn.three.ws/u/<owner>/…glb` URL plus a database record. When you wire one into an agent, the agent's manifest references it under `body.uri`.

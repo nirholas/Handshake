@@ -14,8 +14,8 @@
 // still hands out cf-ipfs.com image URLs, so we keep this list dead-host-free
 // and rewrite any lingering dead-gateway URL via normalizeGatewayURL().
 const IPFS_GATEWAYS = [
-	'https://ipfs.io/ipfs/',
 	'https://dweb.link/ipfs/',
+	'https://ipfs.io/ipfs/',
 	'https://flk-ipfs.xyz/ipfs/',
 ];
 

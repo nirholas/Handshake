@@ -130,7 +130,7 @@ export function normalize(json, { baseURI = '' } = {}) {
 			voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
 			skills: [],
 			memory: { mode: 'local' },
-			tools: ['wave', 'lookAt', 'play_clip', 'setExpression'],
+			tools: ['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember'],
 			version: '0.1.0',
 			services: Array.isArray(json.services) ? json.services : [],
 			x402Support: !!json.x402Support,

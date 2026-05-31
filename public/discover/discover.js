@@ -40,6 +40,7 @@ const els = {
 	chain: document.querySelector('[data-role="chain"]'),
 	sort: document.querySelector('[data-role="sort"]'),
 	grid: document.querySelector('[data-role="grid"]'),
+	stats: document.querySelector('[data-role="stats"]'),
 	status: document.querySelector('[data-role="status"]'),
 	loadMore: document.querySelector('[data-role="load-more"]'),
 	sentinel: document.querySelector('[data-role="sentinel"]'),
@@ -337,6 +338,11 @@ async function loadPage() {
 		state.cursor = data.nextCursor;
 		els.loadMore.hidden = !state.cursor;
 
+		// Directory totals are a snapshot of the whole index, not the current
+		// page — render them once on the first page so they don't double-count or
+		// flicker as more cards stream in on paginated loads.
+		if (isFirstPage && data.totals) renderStats(data.totals);
+
 		const visibleCards = els.grid.querySelectorAll('.explore-card:not(.explore-card--skel)').length;
 		if (visibleCards === 0) {
 			const filtersActive = state.filter !== 'all' || !!state.chainId || !!state.query;
@@ -384,6 +390,17 @@ function clearAllFilters() {
 	}
 	syncUrl();
 	resetAndLoad();
+}
+
+function renderStats(totals) {
+	if (!els.stats) return;
+	const fmt = (n) => Number(n || 0).toLocaleString();
+	const parts = [`${fmt(totals.all)} agents`];
+	if (totals.threeD) parts.push(`${fmt(totals.threeD)} with 3D avatars`);
+	if (totals.onchain) parts.push(`${fmt(totals.onchain)} on EVM chains`);
+	if (totals.solana) parts.push(`${fmt(totals.solana)} on Solana`);
+	els.stats.textContent = parts.join(' · ');
+	els.stats.hidden = false;
 }
 
 function renderCard(item) {

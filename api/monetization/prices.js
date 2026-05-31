@@ -91,7 +91,9 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'PUT') {
 		const body = parse(putBody, await readJson(req));
-		const { agent_id, skill_name, price_usdc, currency_mint, chain } = body;
+		// API field is `skill_name`; the DB column is `skill`. Bind to a local
+		// named `skill` so the SQL reads `${skill}` against the real column.
+		const { agent_id, skill_name: skill, price_usdc, currency_mint, chain } = body;
 
 		// Convert price_usdc (float like 0.001) to atomic units (bigint-safe integer)
 		const amountAtomic = Math.round(price_usdc * 1_000_000);
@@ -106,14 +108,14 @@ export default wrap(async (req, res) => {
 		}
 
 		const [existing] = await sql`
-			SELECT id FROM agent_skill_prices WHERE agent_id = ${agent_id} AND skill = ${skill_name}
+			SELECT id FROM agent_skill_prices WHERE agent_id = ${agent_id} AND skill = ${skill}
 		`;
 
 		await sql`
 			INSERT INTO agent_skill_prices
 				(agent_id, skill, amount, currency_mint, chain, is_active, updated_at)
 			VALUES
-				(${agent_id}, ${skill_name}, ${amountAtomic}, ${currency_mint}, ${chain}, true, now())
+				(${agent_id}, ${skill}, ${amountAtomic}, ${currency_mint}, ${chain}, true, now())
 			ON CONFLICT (agent_id, skill) DO UPDATE SET
 				amount        = EXCLUDED.amount,
 				currency_mint = EXCLUDED.currency_mint,
@@ -125,7 +127,7 @@ export default wrap(async (req, res) => {
 		const [row] = await sql`
 			SELECT id, skill, currency_mint, chain, amount, is_active, created_at, updated_at
 			FROM agent_skill_prices
-			WHERE agent_id = ${agent_id} AND skill = ${skill_name}
+			WHERE agent_id = ${agent_id} AND skill = ${skill}
 		`;
 
 		return json(res, existing ? 200 : 201, { price: formatPrice(row) });
@@ -133,7 +135,7 @@ export default wrap(async (req, res) => {
 
 	// DELETE
 	const body = parse(deleteBody, await readJson(req));
-	const { agent_id, skill_name, hard } = body;
+	const { agent_id, skill_name: skill, hard } = body;
 
 	const ownership = await verifyAgentOwnership(agent_id, userId);
 	if (ownership.error) {
@@ -144,7 +146,7 @@ export default wrap(async (req, res) => {
 	if (hard) {
 		const [deleted] = await sql`
 			DELETE FROM agent_skill_prices
-			WHERE agent_id = ${agent_id} AND skill = ${skill_name}
+			WHERE agent_id = ${agent_id} AND skill = ${skill}
 			RETURNING id
 		`;
 		if (!deleted) return error(res, 404, 'not_found', 'Price not found for this skill');
@@ -152,13 +154,13 @@ export default wrap(async (req, res) => {
 		const [updated] = await sql`
 			UPDATE agent_skill_prices
 			SET is_active = false, updated_at = now()
-			WHERE agent_id = ${agent_id} AND skill = ${skill_name}
+			WHERE agent_id = ${agent_id} AND skill = ${skill}
 			RETURNING id
 		`;
 		if (!updated) return error(res, 404, 'not_found', 'Price not found for this skill');
 	}
 
-	return json(res, 200, { deleted: true, agent_id, skill_name });
+	return json(res, 200, { deleted: true, agent_id, skill_name: skill });
 });
 
 function formatPrice(row) {
