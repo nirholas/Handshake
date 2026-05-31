@@ -656,6 +656,107 @@ body.market-page {
 .market-detail {
 	padding: 16px 24px 80px;
 	max-width: 1400px;
+	position: relative;
+}
+
+/* ── Detail loading / not-found / error state ─────────────────────────── */
+
+.market-detail-state {
+	position: absolute;
+	inset: 0;
+	z-index: 5;
+	display: grid;
+	place-items: center;
+	padding: 48px 24px;
+	background: var(--mk-bg);
+}
+.market-detail-state[hidden] {
+	display: none;
+}
+.market-detail-state-inner {
+	max-width: 420px;
+	text-align: center;
+	animation: md-state-in 0.32s ease both;
+}
+@keyframes md-state-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+.md-state-icon {
+	font-size: 44px;
+	line-height: 1;
+	color: var(--mk-text-3);
+	margin-bottom: 18px;
+}
+.market-detail-state.is-loading .md-state-icon {
+	animation: md-state-pulse 1.1s ease-in-out infinite;
+}
+@keyframes md-state-pulse {
+	0%,
+	100% {
+		opacity: 0.35;
+	}
+	50% {
+		opacity: 0.9;
+	}
+}
+.md-state-title {
+	margin: 0 0 8px;
+	font-size: 20px;
+	font-weight: 700;
+	color: var(--mk-text);
+}
+.md-state-body {
+	margin: 0 0 24px;
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--mk-text-2);
+}
+.md-state-actions {
+	display: flex;
+	gap: 10px;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+.md-state-btn {
+	background: transparent;
+	border: 1px solid var(--mk-border-2);
+	color: var(--mk-text);
+	padding: 9px 18px;
+	border-radius: 10px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	transition:
+		border-color 0.15s,
+		background 0.15s,
+		transform 0.1s;
+}
+.md-state-btn:hover {
+	border-color: var(--mk-text-2);
+	background: var(--mk-panel-2);
+}
+.md-state-btn:active {
+	transform: translateY(1px);
+}
+.md-state-btn:focus-visible {
+	outline: 2px solid var(--mk-accent);
+	outline-offset: 2px;
+}
+.md-state-btn.primary {
+	background: var(--mk-accent);
+	border-color: var(--mk-accent);
+	color: #000;
+}
+.md-state-btn.primary:hover {
+	opacity: 0.9;
+	background: var(--mk-accent);
 }
 
 .market-back {

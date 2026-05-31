@@ -1643,6 +1643,7 @@ function renderSkillCategoryChips() {
 
 async function loadSkillsTab(force = false, append = false) {
 	if (skillsState.loading || skillsState.loadingMore) return;
+	if (!skillsState.categories.length) loadSkillCategories();
 	if (skillsState.loaded && !force && !append) {
 		renderSkillsGrid();
 		return;
@@ -3394,19 +3395,19 @@ async function loadDetail(id) {
 		detailState = { agent: cached, bookmarked: false };
 		renderDetail(cached, false);
 	} else {
-		renderDetailError('Loading…');
+		showDetailState('loading');
 	}
 
 	try {
 		const r = await fetch(`${API}/marketplace/agents/${id}`, { credentials: 'include' });
 		if (!r.ok) {
-			if (!cached) renderDetailError('Agent not found');
+			if (!cached) showDetailState(r.status === 404 ? 'notfound' : 'error', { id });
 			return;
 		}
 		const j = await r.json();
 		const agent = j?.data?.agent;
 		if (!agent) {
-			if (!cached) renderDetailError('Agent not found');
+			if (!cached) showDetailState('notfound', { id });
 			return;
 		}
 		detailState = { agent, bookmarked: !!agent.bookmarked };
@@ -3426,7 +3427,7 @@ async function loadDetail(id) {
 		}).catch(() => { /* best-effort — main detail already rendered */ });
 	} catch (err) {
 		console.error('[marketplace] detail load', err);
-		if (!cached) renderDetailError('Failed to load agent.');
+		if (!cached) showDetailState('error', { id });
 	}
 }
 
@@ -3689,16 +3690,63 @@ async function loadAvatarDetail(id) {
 	}
 }
 
-function renderDetailError(msg) {
-	$('d-name').textContent = msg;
-	$('d-author').textContent = '';
-	$('d-published').textContent = '';
-	$('d-overview').textContent = '';
-	const thread = $('d-preview-thread');
-	if (thread) thread.innerHTML = '';
+/**
+ * Show a designed, recoverable state over the detail view.
+ * @param {'loading'|'notfound'|'error'} kind
+ * @param {{ id?: string }} [opts] — `id` enables the Retry action for errors.
+ */
+function showDetailState(kind, opts = {}) {
+	const overlay = $('d-state');
+	if (!overlay) {
+		// Defensive fallback if the markup is ever absent.
+		$('d-name').textContent =
+			kind === 'notfound' ? 'Agent not found' : kind === 'error' ? 'Failed to load agent.' : 'Loading…';
+		return;
+	}
+
+	const icon = $('d-state-icon');
+	const title = $('d-state-title');
+	const body = $('d-state-body');
+	const actions = $('d-state-actions');
+
+	overlay.classList.toggle('is-loading', kind === 'loading');
+
+	if (kind === 'loading') {
+		icon.textContent = '◍';
+		title.textContent = 'Loading agent…';
+		body.textContent = '';
+		actions.innerHTML = '';
+	} else if (kind === 'error') {
+		icon.textContent = '⚠';
+		title.textContent = "Couldn't load this agent";
+		body.textContent = 'Something went wrong while loading. Check your connection and try again.';
+		actions.innerHTML =
+			'<button type="button" class="md-state-btn primary" data-act="retry">Retry</button>' +
+			'<button type="button" class="md-state-btn" data-act="browse">Browse marketplace</button>';
+	} else {
+		icon.textContent = '∅';
+		title.textContent = "This agent isn't available";
+		body.textContent = 'It may have been removed, unpublished, or set to private by its creator.';
+		actions.innerHTML =
+			'<button type="button" class="md-state-btn primary" data-act="browse">Browse marketplace</button>';
+	}
+
+	actions.querySelector('[data-act="browse"]')?.addEventListener('click', () => navTo('/marketplace'));
+	actions
+		.querySelector('[data-act="retry"]')
+		?.addEventListener('click', () => { if (opts.id) loadDetail(opts.id); });
+
+	overlay.hidden = false;
+	if (kind !== 'loading') actions.querySelector('button')?.focus();
+}
+
+function hideDetailState() {
+	const overlay = $('d-state');
+	if (overlay) overlay.hidden = true;
 }
 
 function renderDetail(a, bookmarked) {
+	hideDetailState();
 	const author = a.author_name || a.author || 'Anonymous';
 	const published = a.published_at || a.published || a.created_at;
 	const views = a.views_count ?? a.views ?? 0;

@@ -522,9 +522,11 @@ export class Town {
 					const m = normalizeRealtime(evt, this.token);
 					if (!m) return;
 					this._prepend(m);
-					if (!this.collapsed || matchMedia('(max-width: 768px)').matches)
-						this._bubble(m);
-					else this._bubble(m);
+					// Floating bubble only when the panel is collapsed — the user
+					// can't see the docked feed, so surface new activity ambiently.
+					// When it's open the message is already in the list, so a bubble
+					// would just be noise.
+					if (this.collapsed) this._bubble(m);
 				},
 				onLike: (evt) => this._applyLike(evt),
 			});

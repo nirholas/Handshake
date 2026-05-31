@@ -133,7 +133,12 @@ async function init() {
 
 	await scenePromise;
 	// Re-render once the mesh is live so the active panel (sculpt morphs, color
-	// preview) reflects the loaded avatar instead of the "waiting" placeholder.
+	// preview) reflects the loaded avatar instead of the "waiting" placeholder,
+	// and replay any colours/hidden layers chosen before the GLB finished loading.
+	if (scene?.root) {
+		applyAllColors();
+		applyAllLayers();
+	}
 	renderActivePanel();
 }
 
@@ -349,12 +354,123 @@ function renderColorPanel(panel) {
 			</div>`;
 	}).join('');
 
+	ensureLayerCss();
 	panel.innerHTML = `
-		<p class="ae-sculpt-note" style="margin-top:2px;">Tint skin, hair and outfit. Colors bake into your saved avatar.</p>
+		${layersBlockHtml()}
+		<p class="ae-sculpt-note" style="margin-top:16px;">Tint skin, hair and outfit. Colors bake into your saved avatar.</p>
 		${groups}
 		${ready ? '' : '<div class="as-empty" style="padding-top:8px;">Waiting for avatar to load…</div>'}`;
 
 	bindColorPanel(panel);
+	bindLayersBlock(panel);
+}
+
+// ── Layers (show/hide) ───────────────────────────────────────────────
+
+function layersBlockHtml() {
+	const anyStripVisible = LAYER_SLOTS.some((s) => s.strip && !workingAppearance.hidden.includes(s.id));
+	const anyHidden = LAYER_SLOTS.some((s) => workingAppearance.hidden.includes(s.id));
+	const toggles = LAYER_SLOTS.map((slot) => {
+		const hidden = workingAppearance.hidden.includes(slot.id);
+		return `<button class="as-layer${hidden ? ' off' : ''}" type="button" role="switch"
+			aria-checked="${hidden ? 'false' : 'true'}" data-layer="${slot.id}"
+			aria-label="${esc(slot.label)} ${hidden ? 'hidden — click to show' : 'visible — click to hide'}">
+			<span class="as-layer-eye" aria-hidden="true">${hidden ? EYE_OFF : EYE_ON}</span>${esc(slot.label)}</button>`;
+	}).join('');
+	return `
+		<div class="as-layers">
+			<div class="as-layers-head">
+				<span class="as-color-title">Layers</span>
+				<div class="as-layers-bulk">
+					<button class="as-layers-btn" type="button" id="as-strip" ${anyStripVisible ? '' : 'disabled'}>Start minimal</button>
+					<button class="as-layers-btn" type="button" id="as-dress" ${anyHidden ? '' : 'disabled'}>Dress fully</button>
+				</div>
+			</div>
+			<p class="as-layers-note">Hide a layer to strip back to the base body, then build the look up.</p>
+			<div class="as-layer-row">${toggles}</div>
+		</div>`;
+}
+
+function bindLayersBlock(panel) {
+	panel.querySelectorAll('.as-layer[data-layer]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const nowHidden = btn.getAttribute('aria-checked') === 'true'; // visible → hide
+			setLayerHidden(btn.dataset.layer, nowHidden);
+		});
+	});
+	panel.querySelector('#as-strip')?.addEventListener('click', stripToBase);
+	panel.querySelector('#as-dress')?.addEventListener('click', dressFully);
+}
+
+function setLayerHidden(slotId, hidden) {
+	const slot = LAYER_SLOTS.find((s) => s.id === slotId);
+	if (!slot) return;
+	const i = workingAppearance.hidden.indexOf(slotId);
+	if (hidden && i < 0) workingAppearance.hidden.push(slotId);
+	else if (!hidden && i >= 0) workingAppearance.hidden.splice(i, 1);
+	applyLayerVisibility(slot, hidden);
+	if (activeTab === 'color') renderActivePanel();
+	renderChips();
+	setStatus('', `${slot.label} ${hidden ? 'hidden' : 'shown'}.`);
+}
+
+function stripToBase() {
+	for (const slot of LAYER_SLOTS) {
+		if (!slot.strip) continue;
+		if (!workingAppearance.hidden.includes(slot.id)) workingAppearance.hidden.push(slot.id);
+		applyLayerVisibility(slot, true);
+	}
+	if (activeTab === 'color') renderActivePanel();
+	renderChips();
+	setStatus('', 'Stripped to the base body. Add layers back to dress it up.');
+}
+
+function dressFully() {
+	for (const slot of LAYER_SLOTS) applyLayerVisibility(slot, false);
+	workingAppearance.hidden = [];
+	if (activeTab === 'color') renderActivePanel();
+	renderChips();
+	setStatus('', 'All layers shown.');
+}
+
+// Toggle visibility of every mesh whose material belongs to the slot.
+function applyLayerVisibility(slot, hidden) {
+	if (!scene?.root) return;
+	const names = new Set(slot.materials);
+	scene.root.traverse((obj) => {
+		if (!obj.isMesh) return;
+		const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+		if (mats.some((m) => m && names.has(m.name))) obj.visible = !hidden;
+	});
+}
+
+function applyAllLayers() {
+	for (const slot of LAYER_SLOTS) {
+		applyLayerVisibility(slot, workingAppearance.hidden.includes(slot.id));
+	}
+}
+
+let _layerCssInjected = false;
+function ensureLayerCss() {
+	if (_layerCssInjected) return;
+	_layerCssInjected = true;
+	const style = document.createElement('style');
+	style.textContent = `
+		.as-layers { border: 1px solid var(--border, #1f1f1f); border-radius: 12px; background: var(--panel, #111); padding: 12px 14px; }
+		.as-layers-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+		.as-layers-bulk { display: flex; gap: 6px; }
+		.as-layers-btn { background: var(--panel-2, #161616); border: 1px solid var(--border-2, #2a2a2a); color: var(--text-2, #a1a1aa); font: 600 11px/1 inherit; padding: 6px 10px; border-radius: 7px; cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+		.as-layers-btn:hover:not([disabled]) { color: var(--text, #fafafa); border-color: var(--text-3, #71717a); background: rgba(255,255,255,.03); }
+		.as-layers-btn[disabled] { opacity: .4; cursor: default; pointer-events: none; }
+		.as-layers-note { font-size: 11px; color: var(--text-3, #71717a); line-height: 1.5; margin: 8px 0 12px; }
+		.as-layer-row { display: flex; flex-wrap: wrap; gap: 8px; }
+		.as-layer { display: inline-flex; align-items: center; gap: 7px; background: var(--panel-2, #161616); border: 1px solid var(--border-2, #2a2a2a); color: var(--text, #fafafa); font: 500 12px/1 inherit; padding: 8px 12px; border-radius: 999px; cursor: pointer; transition: color .15s, border-color .15s, opacity .15s; }
+		.as-layer:hover { border-color: var(--text-3, #71717a); }
+		.as-layer .as-layer-eye { display: inline-flex; color: var(--text-2, #a1a1aa); }
+		.as-layer.off { color: var(--text-3, #71717a); border-style: dashed; }
+		.as-layer.off .as-layer-eye { color: var(--text-3, #555); }
+	`;
+	document.head.appendChild(style);
 }
 
 function bindColorPanel(panel) {
@@ -470,6 +586,16 @@ function renderChips() {
 			</span>`);
 	}
 
+	for (const slot of LAYER_SLOTS) {
+		if (!workingAppearance.hidden.includes(slot.id)) continue;
+		parts.push(`
+			<span class="as-chip" data-hidden="${slot.id}">
+				<span class="as-chip-kind">${esc(slot.label)}</span>
+				<span>hidden</span>
+				<button type="button" aria-label="Show ${esc(slot.label)}" data-show-layer="${slot.id}">×</button>
+			</span>`);
+	}
+
 	el.innerHTML = parts.join('');
 
 	el.querySelectorAll('button[data-remove]').forEach((btn) => {
@@ -477,6 +603,9 @@ function renderChips() {
 	});
 	el.querySelectorAll('button[data-reset-color]').forEach((btn) => {
 		btn.addEventListener('click', () => setSlotColor(btn.dataset.resetColor, null));
+	});
+	el.querySelectorAll('button[data-show-layer]').forEach((btn) => {
+		btn.addEventListener('click', () => setLayerHidden(btn.dataset.showLayer, false));
 	});
 }
 
@@ -659,10 +788,11 @@ async function resetAll() {
 		if (accessoryManager) {
 			for (const id of wasIds) accessoryManager.removePreset(id);
 		}
-		workingAppearance = { accessories: [], morphs: {}, colors: {} };
+		workingAppearance = { accessories: [], morphs: {}, colors: {}, hidden: [] };
 		if (scene?.root) {
 			applyMorphsToRoot(scene.root, {});
 			applyAllColors();
+			applyAllLayers();
 		}
 		if (accessoryManager) await accessoryManager.hydrateFromAppearance(workingAppearance);
 	});
@@ -688,6 +818,7 @@ function collapseAppearance(a) {
 	if (a.accessories?.length) out.accessories = [...a.accessories];
 	if (a.morphs && Object.keys(a.morphs).length) out.morphs = { ...a.morphs };
 	if (a.colors && Object.keys(a.colors).length) out.colors = { ...a.colors };
+	if (a.hidden?.length) out.hidden = [...a.hidden];
 	return Object.keys(out).length ? out : null;
 }
 

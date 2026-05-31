@@ -23,6 +23,9 @@ export function isValidPresetId(id) {
 // SLOT_MATERIALS in api/_lib/bake.js. Each maps to one or more named GLB
 // materials whose baseColorFactor the baker multiplies.
 const COLOR_SLOT_IDS = new Set(['skin', 'hair', 'outfit']);
+// Removable garment layers (skin is never hidden). Mirror LAYER_SLOTS in
+// src/avatar-studio.js and SLOT_MATERIALS in api/_lib/bake.js.
+const HIDEABLE_SLOT_IDS = new Set(['hair', 'outfit', 'glasses']);
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 
 export function validateAppearance(appearance) {
@@ -70,6 +73,17 @@ export function validateAppearance(appearance) {
 			if (typeof hex !== 'string' || !HEX_RE.test(hex)) {
 				return `appearance.colors["${slot}"] must be a #rrggbb hex string`;
 			}
+		}
+	}
+
+	if (appearance.hidden !== undefined && appearance.hidden !== null) {
+		if (!Array.isArray(appearance.hidden)) return 'appearance.hidden must be an array';
+		if (appearance.hidden.length > HIDEABLE_SLOT_IDS.size) {
+			return `appearance.hidden max ${HIDEABLE_SLOT_IDS.size} entries`;
+		}
+		for (const slot of appearance.hidden) {
+			if (typeof slot !== 'string') return 'appearance.hidden entries must be strings';
+			if (!HIDEABLE_SLOT_IDS.has(slot)) return `unknown hidden slot: ${slot}`;
 		}
 	}
 

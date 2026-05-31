@@ -626,6 +626,8 @@ export class CoinCommunities {
 		const avatarInput = this.ui.getAvatar();
 		const url = await resolveAvatarUrl(avatarInput);
 		const { height: localHeight, fallback: avatarFallback } = await buildAvatar(this.localRig, url, this.localAnim);
+		// Backed out while the avatar GLB was loading — stop before we open a room.
+		if (epoch !== this._enterEpoch) return;
 		this.localHeight = localHeight;
 		// Don't silently swap a broken model for the stand-in — tell the player so
 		// they know to pick another avatar.
@@ -706,6 +708,9 @@ export class CoinCommunities {
 		this.net.on('persistent', (durable) => { if (this.net?.status === 'online') this.buildHud.setPersistent(durable); });
 		this.buildHud.root.hidden = false;
 		await this.net.connect();
+		// Player backed out mid-connect: leave() already tore everything down and
+		// nulled this.net. Bail rather than dereference it / re-enter 'world'.
+		if (epoch !== this._enterEpoch || !this.net) return;
 		this._initVoice();
 		this.phase = 'world';
 		this._initJoystick();
@@ -830,6 +835,9 @@ export class CoinCommunities {
 	}
 
 	leave() {
+		// Invalidate any in-flight enter() so a connect/avatar continuation that
+		// resolves after this teardown bails instead of rebuilding the world.
+		this._enterEpoch = (this._enterEpoch || 0) + 1;
 		// Tear voice down before the socket so our final "left voice" flag still
 		// sends, and peers' connections close cleanly.
 		if (this.voice) { this.voice.dispose(); this.voice = null; }

@@ -23,7 +23,9 @@ const centralMean = async (pngBuf) => {
 	return [r / n, g / n, b / n];
 };
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({
+	args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const errors = [];
 page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
@@ -33,7 +35,18 @@ try {
 	await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
 	// Avatar load: #as-loading is removed on success.
-	await page.waitForSelector('#as-loading', { state: 'detached', timeout: 30000 });
+	try {
+		await page.waitForSelector('#as-loading', { state: 'detached', timeout: 30000 });
+	} catch {
+		const txt = await page.locator('#as-loading').textContent().catch(() => '(gone)');
+		const hasCanvas = await page.locator('#as-stage canvas').count();
+		const webgl = await page.evaluate(() => {
+			try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
+		});
+		fail(`avatar not loaded. loadingText="${(txt || '').trim()}" canvas=${hasCanvas} webgl2=${webgl}`);
+		console.log('console errors:\n  ' + (errors.join('\n  ') || '(none)'));
+		throw new Error('avatar load timeout');
+	}
 	ok('avatar loaded (loading indicator gone)');
 	await page.waitForSelector('#as-stage canvas', { timeout: 5000 });
 	await page.waitForTimeout(1200); // settle idle animation + first frames
