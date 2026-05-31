@@ -48,6 +48,9 @@ export class CommunityNet {
 	 * @param {string} [opts.avatar] GLB/VRM URL for this player's avatar
 	 * @param {string} [opts.agent]  optional three.ws agent id
 	 * @param {object} [opts.coin]   { mint, name, symbol, image } — '' mint = lobby
+	 * @param {string} [opts.tier]   '' (open General world) | 'holders' (gated)
+	 * @param {string} [opts.holderPass] signed pass required to join a holder world
+	 * @param {number} [opts.holderMinUsd] USD floor the holder world gated on (HUD)
 	 * @param {string} [opts.url]    server override
 	 */
 	constructor(opts = {}) {
@@ -55,6 +58,9 @@ export class CommunityNet {
 		this.avatar = opts.avatar || '';
 		this.agent = opts.agent || '';
 		this.coin = opts.coin || { mint: '', name: '', symbol: '', image: '' };
+		this.tier = opts.tier === 'holders' ? 'holders' : '';
+		this.holderPass = opts.holderPass || '';
+		this.holderMinUsd = Number(opts.holderMinUsd) || 0;
 		this.url = opts.url || defaultServerUrl();
 
 		this.client = null;
@@ -71,6 +77,7 @@ export class CommunityNet {
 			remove: new Set(), // (id)
 			chat: new Set(),   // ({id, name, text, ts})
 			interact: new Set(), // ({from, fromName, action, ts}) — a peer interacted with us
+			denied: new Set(),  // (reason) — server refused the join (e.g. holder gate); no retry
 			voiceSignal: new Set(), // ({from, data}) — relayed WebRTC SDP/ICE from a peer
 			ping: new Set(),   // (ms) — smoothed round-trip latency to the server
 			blockAdd: new Set(),    // (key, type) — a voxel appeared (placed or restored)
@@ -109,9 +116,11 @@ export class CommunityNet {
 			this.client = new Client(this.url);
 			const mint = this.coin.mint || '';
 			const options = {
-				// filterBy('coin') isolates each coin into its own instance; the
+				// filterBy('coin','tier') isolates each coin into its own instance and
+				// splits the open General world from the gated Holders world; the
 				// coin-less lobby ('') groups all lobby players into one world.
 				coin: mint,
+				tier: this.tier,
 				coinName: this.coin.name || '',
 				coinSymbol: this.coin.symbol || '',
 				coinImage: this.coin.image || '',
@@ -119,6 +128,12 @@ export class CommunityNet {
 				avatar: this.avatar,
 				agent: this.agent,
 			};
+			// Holder worlds require a signed pass the server verifies in onAuth; carry
+			// it (and the floor it gated on, for the seed room's HUD) only for holders.
+			if (this.tier === 'holders') {
+				options.holderPass = this.holderPass;
+				options.holderMinUsd = this.holderMinUsd;
+			}
 			this.room = await this.client.joinOrCreate(ROOM_NAME, options);
 			this.sessionId = this.room.sessionId;
 
@@ -171,8 +186,18 @@ export class CommunityNet {
 				image: this.room.state.coinImage,
 			});
 		} catch (err) {
-			console.warn('[community-net] connect failed:', err?.message ?? err);
-			this._setStatus('failed', err?.message ?? String(err));
+			const msg = err?.message ?? String(err);
+			// A holder-gate refusal (onAuth threw) is terminal, not a flaky link —
+			// retrying with the same expired/invalid pass just loops. Surface it so
+			// the scene can route the player back to the gate, and stop here.
+			if (/holder_pass/i.test(msg)) {
+				console.warn('[community-net] holder gate denied join:', msg);
+				this._setStatus('denied', msg);
+				this._emit('denied', msg);
+				return;
+			}
+			console.warn('[community-net] connect failed:', msg);
+			this._setStatus('failed', msg);
 			this._scheduleReconnect();
 		}
 	}

@@ -73,6 +73,12 @@ export class WalkState extends Schema {
 		this.coinName = '';
 		this.coinSymbol = '';
 		this.coinImage = '';
+		// Access tier for this instance. '' = the open General world anyone can
+		// enter; 'holders' = a gated world only wallets holding ≥ holderMinUsd of
+		// `coin` can join (enforced in WalkRoom.onAuth). The same coin therefore has
+		// two isolated rooms — General and Holders — kept apart by filterBy.
+		this.tier = '';
+		this.holderMinUsd = 0; // USD floor for the holder world (0 in General)
 		// Collaborative voxel builds for this coin's world. Keyed by packed grid
 		// coordinate; the value carries only the block type. Persisted per coin so
 		// a community's build survives the room emptying and the server restarting.
@@ -85,5 +91,7 @@ defineTypes(WalkState, {
 	coinName: 'string',
 	coinSymbol: 'string',
 	coinImage: 'string',
+	tier: 'string',
+	holderMinUsd: 'float32',
 	blocks: { map: Block },
 });

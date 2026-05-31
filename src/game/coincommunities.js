@@ -34,6 +34,7 @@ import {
 import { GUEST_SENTINEL, uploadPendingGuestAvatar } from './play-handoff.js';
 import { HOME_TOWN, isHomeTown } from './home-town.js';
 import { VoiceChat, voiceSupported } from './voice-chat.js';
+import { requestHolderPass, signInWithX, ensureSolanaWallet, getSession } from '../community/town-auth.js';
 
 const WORLD_RADIUS = 58; // a touch inside the server's 60m clamp
 const MOVE_SPEED = 4.2;
@@ -182,7 +183,10 @@ export class CoinCommunities {
 		this._initScene();
 
 		this.ui = new CommunityUI({
-			onEnter: (coin) => this.enter(coin),
+			onEnter: (coin, tier) => this.enter(coin, { tier }),
+			// Holder gate overlay → the scene's gate state machine resolves on each
+			// action (sign in, link wallet, buy, recheck, cancel).
+			onHolderAction: (action) => { const r = this._holderGateResolve; this._holderGateResolve = null; r?.(action); },
 			onLeave: () => this.leave(),
 			onChat: (t) => this._sendChat(t),
 			onEmote: (n) => this._emote(n),
@@ -224,7 +228,8 @@ export class CoinCommunities {
 		const p = new URLSearchParams(location.search);
 		const mint = p.get('coin');
 		if (mint) {
-			this.enter({ mint, name: p.get('name') || '', symbol: p.get('symbol') || '', image: normalizeGatewayURL(p.get('image') || '') });
+			const tier = p.get('tier') === 'holders' ? 'holders' : 'general';
+			this.enter({ mint, name: p.get('name') || '', symbol: p.get('symbol') || '', image: normalizeGatewayURL(p.get('image') || '') }, { tier });
 		}
 	}
 
@@ -515,8 +520,23 @@ export class CoinCommunities {
 	}
 
 	// ---------------------------------------------------------------- enter/leave
-	async enter(coin) {
+	async enter(coin, opts = {}) {
 		if (this.phase !== 'lobby') return;
+		const tier = opts.tier === 'holders' ? 'holders' : 'general';
+
+		// Holder worlds are gated: prove the player holds ≥ the floor of this coin
+		// before we build anything. The gate runs entirely in the lobby so a refusal
+		// leaves them exactly where they were, free to enter the General world
+		// instead. A null result means they cancelled — stay put.
+		let holderPass = '';
+		let holderMinUsd = 0;
+		if (tier === 'holders') {
+			const pass = await this._passHolderGate(coin);
+			if (!pass) return;
+			holderPass = pass.holderPass;
+			holderMinUsd = pass.minUsd;
+		}
+
 		this.phase = 'loading';
 		// A bare deep link (/play?coin=<home mint>) carries no name/art; backfill the
 		// flagship town's identity so its totem, jumbotron, and HUD are never blank.
@@ -530,14 +550,18 @@ export class CoinCommunities {
 				official: true,
 			};
 		}
+		coin = { ...coin, tier, holderMinUsd };
 		this.coin = coin;
 		this.ui.enterWorld(coin);
-		// Reflect the community in the URL so it can be shared / refreshed into.
+		document.body.classList.toggle('cc-holders', tier === 'holders');
+		// Reflect the community in the URL so it can be shared / refreshed into. A
+		// holder-world link carries &tier=holders so refreshing re-runs the gate.
 		try {
 			const q = new URLSearchParams({ coin: coin.mint });
 			if (coin.name) q.set('name', coin.name);
 			if (coin.symbol) q.set('symbol', coin.symbol);
 			if (coin.image) q.set('image', coin.image);
+			if (tier === 'holders') q.set('tier', 'holders');
 			history.replaceState(null, '', location.pathname + '?' + q.toString());
 		} catch { /* non-fatal */ }
 		await loadManifest();
@@ -618,6 +642,8 @@ export class CoinCommunities {
 		this.net = new CommunityNet({
 			name, avatar: netAvatar,
 			coin: { mint: coin.mint, name: coin.name, symbol: coin.symbol, image: coin.image },
+			tier: tier === 'holders' ? 'holders' : '',
+			holderPass, holderMinUsd,
 		});
 		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
 		this.net.on('status', ({ status }) => {
@@ -633,6 +659,13 @@ export class CoinCommunities {
 				this.net.setVoiceActive(true);
 			}
 		});
+		// A holder pass can expire (10 min) between minting and a mid-session
+		// reconnect; if the server then refuses the join, drop the player back to
+		// the lobby with a clear reason rather than looping on a dead pass.
+		this.net.on('denied', () => {
+			this.ui.toast('Your holder pass expired — re-enter to verify your holdings.', 'warn');
+			this.leave();
+		});
 		this.net.on('add', (p, id) => this._onAdd(p, id));
 		this.net.on('change', (p, id) => this._onChange(p, id));
 		this.net.on('remove', (id) => this._onRemove(id));
@@ -646,6 +679,73 @@ export class CoinCommunities {
 		this._initVoice();
 		this.phase = 'world';
 		this._initJoystick();
+	}
+
+	// Run the holder gate for a coin's Holders world. Drives the overlay through
+	// its states and resolves to the verified pass data ({ holderPass, minUsd, … })
+	// once the player clears the floor, or null if they back out. All the on-chain
+	// truth is computed server-side (api/community/holder-pass); here we only
+	// orchestrate the sign-in / wallet-link / buy steps a player may need first.
+	async _passHolderGate(coin) {
+		const symbol = coin.symbol || '';
+		this.ui.openHolderGate(coin);
+		let skipCheck = false;     // set after 'buy' so we re-show the shortfall, not recheck
+		let carryError = '';       // surfaces a failed sign-in/link on the next state
+		let state = 'checking';
+		let data = { symbol };
+		try {
+			for (;;) {
+				if (!skipCheck) {
+					this.ui.setHolderGate('checking', { symbol });
+					try {
+						const res = await requestHolderPass(coin.mint);
+						if (res?.eligible && res.holderPass) {
+							this.ui.setHolderGate('granted', { symbol, usd: res.usd, minUsd: res.minUsd });
+							// Let the "verified" state land for a beat before the world builds.
+							await new Promise((r) => setTimeout(r, 650));
+							this.ui.closeHolderGate();
+							return res;
+						}
+						state = 'short';
+						data = { symbol, usd: res?.usd ?? 0, amount: res?.amount ?? 0, minUsd: res?.minUsd ?? 8 };
+					} catch (err) {
+						if (err?.code === 'auth_required') { state = 'auth'; data = { symbol, error: carryError }; }
+						else if (err?.code === 'wallet_required') { state = 'wallet'; data = { symbol, error: carryError }; }
+						else { state = 'error'; data = { symbol, error: err?.message || 'Could not verify your holdings.' }; }
+						carryError = '';
+					}
+				}
+				skipCheck = false;
+
+				const action = await this._holderGateWait(state, data);
+				if (action === 'cancel') return null;
+				if (action === 'signin') {
+					this.ui.setHolderGate('working', { symbol, msg: 'Opening X sign-in…' });
+					try { await signInWithX(); } catch (e) { carryError = e?.message || 'Sign-in was cancelled.'; }
+					continue;
+				}
+				if (action === 'wallet') {
+					this.ui.setHolderGate('working', { symbol, msg: 'Connecting your wallet…' });
+					try {
+						const session = await getSession();
+						await ensureSolanaWallet(session);
+					} catch (e) { carryError = e?.message || 'Could not link a wallet.'; }
+					continue;
+				}
+				if (action === 'buy') { this._openBuy(coin); skipCheck = true; continue; }
+				// 'recheck' (or any other) → loop and re-run the on-chain check.
+			}
+		} finally {
+			// Guarantee the overlay never lingers if we bailed via return.
+			if (this.phase === 'lobby') this.ui.closeHolderGate();
+		}
+	}
+
+	// Park the gate on a state and resolve when the player picks an action. The UI
+	// buttons fire onHolderAction → resolves this promise.
+	_holderGateWait(state, data) {
+		this.ui.setHolderGate(state, data);
+		return new Promise((resolve) => { this._holderGateResolve = resolve; });
 	}
 
 	// Stand up spatial voice for this community. Voice starts OFF (no mic access
@@ -770,11 +870,11 @@ export class CoinCommunities {
 
 	// Open the native on-chain buy for the current coin. Lazy-loaded so the
 	// Solana/pump SDKs never weigh down the main /play bundle.
-	async _openBuy() {
-		if (!this.coin?.mint) return;
+	async _openBuy(coin = this.coin) {
+		if (!coin?.mint) return;
 		try {
 			const { openBuyModal } = await import('./coin-buy.js');
-			openBuyModal(this.coin);
+			openBuyModal(coin);
 		} catch (err) {
 			console.warn('[coincommunities] buy modal failed to load:', err?.message);
 			this.ui.toast('Couldn’t open the buy panel. Trade on pump.fun instead.', 'warn');

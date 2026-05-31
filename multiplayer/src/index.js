@@ -116,11 +116,13 @@ if (REDIS_URI) {
 }
 
 const gameServer = new Server({ transport, ...(driver && { driver }), ...(presence && { presence }) });
-// Each coin is its own world: filterBy(['coin']) makes joinOrCreate match only
-// rooms sharing the same community coin (mint), so players of the same coin land
-// together while different coins stay isolated. A missing coin resolves to the
-// shared mainland world (see WalkRoom.onCreate / schemas.js).
-gameServer.define('walk_world', WalkRoom).filterBy(['coin']);
+// Each coin is its own world, split by access tier: filterBy(['coin','tier'])
+// makes joinOrCreate match only rooms sharing the same community coin (mint) AND
+// the same tier, so a coin's open General world and its gated Holders world are
+// separate instances, and different coins stay isolated. A missing coin resolves
+// to the shared mainland world; a missing tier is the open General world (see
+// WalkRoom.onCreate / onAuth / schemas.js).
+gameServer.define('walk_world', WalkRoom).filterBy(['coin', 'tier']);
 gameServer.define('game_mainland', GameRoom);
 
 gameServer

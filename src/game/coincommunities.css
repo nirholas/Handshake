@@ -354,6 +354,83 @@ html, body {
 	.cc-create-card-ico { width: 36px; height: 36px; font-size: 17px; }
 }
 
+/* Holders world entry — a persistent badge on each coin card, top-right opposite
+   the LIVE/OFFICIAL badge. Always visible so the gated room is discoverable on
+   touch (where the hover CTA never appears). */
+.cc-card-holders {
+	position: absolute; top: 9px; right: 9px; z-index: 2; cursor: pointer; font: inherit;
+	display: inline-flex; align-items: center; gap: 5px;
+	background: rgba(0, 0, 0, 0.6); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
+	padding: 3px 9px; color: var(--cc-text);
+	font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+	transition: border-color 0.14s ease, background 0.14s ease, color 0.14s ease;
+}
+.cc-card-holders:hover { border-color: var(--cc-edge-hi); background: #fff; color: var(--cc-ink); }
+.cc-card-holders:focus-visible { outline: none; border-color: #fff; box-shadow: 0 0 0 1px #fff; }
+.cc-card-holders-ico { font-size: 10px; line-height: 1; }
+.cc-card-featured .cc-card-holders { top: 12px; right: 12px; }
+
+/* In-world tier badge in the coin banner — present only in the Holders world. */
+.cc-tier-badge {
+	display: inline-flex; align-items: center; gap: 5px;
+	background: #fff; color: var(--cc-ink); border-radius: var(--cc-radius-sm);
+	padding: 2px 8px; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+	white-space: nowrap; box-shadow: var(--cc-glow);
+}
+
+/* Holder gate overlay — mirrors the create modal's chrome + motion. The scene
+   drives its states (checking / working / granted / short / auth / wallet / error)
+   via setHolderGate(); buttons report back through onHolderAction(). */
+.cc-gate-overlay {
+	position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 20px;
+	background: rgba(4, 4, 5, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+	opacity: 0; transition: opacity 0.2s ease;
+}
+.cc-gate-overlay.cc-on { opacity: 1; }
+.cc-gate-modal {
+	width: min(420px, 100%); background: var(--cc-panel-solid);
+	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
+	padding: 18px 22px 22px;
+	transform: translateY(10px) scale(0.99); transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.cc-gate-overlay.cc-on .cc-gate-modal { transform: none; }
+.cc-gate-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.cc-gate-tag { font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cc-dim); }
+.cc-gate-x {
+	flex: none; width: 30px; height: 30px; border-radius: var(--cc-radius-sm); cursor: pointer;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge); color: var(--cc-dim); font-size: 19px; line-height: 1;
+	transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.cc-gate-x:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
+.cc-gate-x:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
+.cc-gate-body { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 10px 0 2px; }
+.cc-gate-spin { padding: 12px 0 6px; }
+.cc-gate-check, .cc-gate-lock {
+	width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
+	font-size: 22px; line-height: 1; border: 1px solid var(--cc-edge); background: var(--cc-bg2);
+}
+.cc-gate-check { background: #fff; color: var(--cc-ink); border-color: #fff; box-shadow: var(--cc-glow); }
+.cc-gate-title { margin: 4px 0 0; font-size: 18px; font-weight: 700; letter-spacing: 0.01em; }
+.cc-gate-msg { margin: 0; color: var(--cc-dim); font-size: 13px; line-height: 1.5; max-width: 34ch; }
+.cc-gate-err { margin: 2px 0 0; color: var(--cc-text); font-size: 12px; line-height: 1.45; max-width: 34ch; opacity: 0.85; }
+.cc-gate-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 16px; }
+.cc-gate-btn {
+	width: 100%; padding: 11px 14px; border-radius: var(--cc-radius-sm); cursor: pointer; font: inherit;
+	font-weight: 700; font-size: 13px; letter-spacing: 0.03em;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge); color: var(--cc-text);
+	transition: border-color 0.14s ease, background 0.14s ease, filter 0.12s ease, transform 0.1s ease;
+}
+.cc-gate-btn:hover { border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
+.cc-gate-btn:active { transform: translateY(1px); }
+.cc-gate-btn:focus-visible { outline: none; border-color: #fff; box-shadow: 0 0 0 1px #fff; }
+.cc-gate-primary { background: #fff; color: var(--cc-ink); border-color: #fff; }
+.cc-gate-primary:hover { background: #fff; filter: brightness(0.92); }
+.cc-gate-ghost { background: none; border-color: transparent; color: var(--cc-dim); font-weight: 600; }
+.cc-gate-ghost:hover { background: var(--cc-bg2); color: var(--cc-text); border-color: var(--cc-edge); }
+@media (prefers-reduced-motion: reduce) {
+	.cc-gate-overlay, .cc-gate-modal { transition: none; }
+}
+
 /* In-app avatar creator iframe modal (AvatarCreator). Self-contained here so the
    builder/photo editor renders correctly on /play without the main-site stylesheet. */
 .avatar-creator-overlay {

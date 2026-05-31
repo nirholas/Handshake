@@ -120,6 +120,19 @@ export async function ensureSolanaWallet(session) {
 	return linked?.address || address;
 }
 
+/**
+ * Ask the server whether the signed-in user holds enough of `mint` to enter its
+ * Holders world, and if so mint a holder pass for the game server.
+ *
+ * Resolves to { eligible, usd, amount, minUsd, wallet, holderPass? } — the pass
+ * is present only when eligible. Rejects with a coded error when the user can't
+ * be checked yet: `auth_required` (not signed in) or `wallet_required` (no
+ * linked Solana wallet) — the gate UI routes on err.code to recover.
+ */
+export function requestHolderPass(mint) {
+	return json(`/holder-pass?token=${encodeURIComponent(mint)}`, { method: 'POST' });
+}
+
 /** Post content to a coin world as the signed-in user from their linked wallet. */
 export function postAsUser(token, content, walletAddress) {
 	return json(`/messages?token=${encodeURIComponent(token)}`, {

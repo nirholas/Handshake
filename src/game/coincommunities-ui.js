@@ -558,17 +558,27 @@ export class CommunityUI {
 	// OFFICIAL badge, and a "home town" call to action so it reads as the flagship.
 	_coinCard(c, featured) {
 		const mc = fmtMc(c.marketCap);
+		const sym = c.symbol ? '$' + c.symbol.toUpperCase().replace(/^\$/, '') : 'this coin';
 		const liveBadge = featured
 			? el('span', { class: 'cc-card-official', title: 'Official three.ws town' }, [
 				el('span', { class: 'cc-card-official-ico', text: '◇' }),
 				document.createTextNode('OFFICIAL'),
 			])
 			: el('span', { class: 'cc-card-live' }, [el('span', { class: 'cc-dot' }), document.createTextNode('LIVE')]);
+		// Every coin has two worlds: the open General room (the card body) and a
+		// gated Holders room. The badge is always visible so the holders' world is
+		// discoverable on touch too; clicking it routes the player through the gate.
+		const holdersBadge = el('button', {
+			type: 'button', class: 'cc-card-holders',
+			title: `Holders only — hold $8+ of ${sym} to enter this coin’s gated world`,
+			'aria-label': `Enter the ${sym} holders-only world`,
+			onclick: (e) => { e.stopPropagation(); this.h.onEnter(c, 'holders'); },
+		}, [el('span', { class: 'cc-card-holders-ico', 'aria-hidden': 'true', text: '🔒' }), document.createTextNode('Holders')]);
 		return el('div', {
 			class: 'cc-card' + (featured ? ' cc-card-featured' : ''),
-			onclick: () => this.h.onEnter(c),
+			onclick: () => this.h.onEnter(c, ''),
 		}, [
-			el('div', { class: 'cc-card-img', style: c.image ? `background-image:url("${c.image}")` : '' }, [liveBadge]),
+			el('div', { class: 'cc-card-img', style: c.image ? `background-image:url("${c.image}")` : '' }, [liveBadge, holdersBadge]),
 			el('div', { class: 'cc-card-body' }, [
 				el('div', { class: 'cc-card-name', text: c.name || 'Unnamed coin' }),
 				el('div', { class: 'cc-card-meta' }, [
@@ -587,12 +597,133 @@ export class CommunityUI {
 		]));
 	}
 
+	// ---------------------------------------------------------------- holder gate
+	// A coin's Holders world is gated: the player must prove they hold ≥ the floor
+	// (default $8) of the coin. This overlay is a thin view over the scene's gate
+	// state machine (coincommunities.js _passHolderGate) — the scene drives us
+	// through setHolderGate(state, data) and we report the player's choice back via
+	// onHolderAction(action): 'signin' | 'wallet' | 'buy' | 'recheck' | 'cancel'.
+	openHolderGate(coin) {
+		if (this._gate) return; // already open — the scene re-uses it across states
+		this._gateBody = el('div', { class: 'cc-gate-body' });
+		const modal = el('div', {
+			class: 'cc-gate-modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Holder verification',
+		}, [
+			el('div', { class: 'cc-gate-head' }, [
+				el('span', { class: 'cc-gate-tag', text: '🔒 Holders only' }),
+				el('button', {
+					type: 'button', class: 'cc-gate-x', 'aria-label': 'Cancel', text: '×',
+					onclick: () => this.h.onHolderAction?.('cancel'),
+				}),
+			]),
+			this._gateBody,
+		]);
+		// Backdrop click and Escape both read as "I don't want in" → cancel, which
+		// drops the player back to the lobby (free to enter the open world instead).
+		const overlay = el('div', {
+			class: 'cc-gate-overlay',
+			onclick: (e) => { if (e.target === overlay) this.h.onHolderAction?.('cancel'); },
+		}, [modal]);
+		this._gate = overlay;
+		this._gateKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.h.onHolderAction?.('cancel'); } };
+		document.addEventListener('keydown', this._gateKey, true);
+		document.body.appendChild(overlay);
+		requestAnimationFrame(() => overlay.classList.add('cc-on'));
+	}
+
+	closeHolderGate() {
+		const o = this._gate;
+		if (!o) return;
+		this._gate = null;
+		this._gateBody = null;
+		if (this._gateKey) { document.removeEventListener('keydown', this._gateKey, true); this._gateKey = null; }
+		o.classList.remove('cc-on');
+		const done = () => o.remove();
+		o.addEventListener('transitionend', done, { once: true });
+		setTimeout(done, 280); // fallback if transitionend never fires
+	}
+
+	setHolderGate(state, data = {}) {
+		if (!this._gate) this.openHolderGate(data);
+		const body = this._gateBody;
+		if (!body) return;
+		const sym = data.symbol ? '$' + String(data.symbol).replace(/^\$/, '').toUpperCase() : 'this coin';
+		const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+		const min = '$' + (data.minUsd ? round2(data.minUsd) : 8);
+		const usd = '$' + round2(data.usd);
+		const btn = (label, action, variant = '') => el('button', {
+			type: 'button', class: 'cc-gate-btn' + (variant ? ' ' + variant : ''),
+			onclick: () => this.h.onHolderAction?.(action),
+		}, [label]);
+		const spin = () => el('div', { class: 'cc-gate-spin' }, [el('span', { class: 'cc-spinner cc-spinner-lg' })]);
+		const title = (t) => el('h3', { class: 'cc-gate-title', text: t });
+		const msg = (t) => el('p', { class: 'cc-gate-msg', text: t });
+		const errLine = data.error ? el('p', { class: 'cc-gate-err', text: data.error }) : null;
+		const actions = (...kids) => el('div', { class: 'cc-gate-actions' }, kids.filter(Boolean));
+
+		let nodes;
+		switch (state) {
+			case 'checking':
+				nodes = [spin(), title('Checking your holdings'), msg(`Pricing your ${sym} balance on-chain…`)];
+				break;
+			case 'working':
+				nodes = [spin(), title('One moment'), msg(data.msg || 'Working…')];
+				break;
+			case 'granted':
+				nodes = [el('div', { class: 'cc-gate-check', text: '✓' }), title('You’re in'), msg(`Verified ${usd} of ${sym}. Welcome to the holders’ world.`)];
+				break;
+			case 'short':
+				nodes = [
+					el('div', { class: 'cc-gate-lock', text: '🔒' }),
+					title('Holders only'),
+					msg(`You hold ${usd} of ${sym}. This world is for holders of ${min} or more.`),
+					actions(
+						btn(`Buy ${sym}`, 'buy', 'cc-gate-primary'),
+						btn('I bought — re-check', 'recheck'),
+						btn('Enter the open world instead', 'cancel', 'cc-gate-ghost'),
+					),
+				];
+				break;
+			case 'auth':
+				nodes = [
+					el('div', { class: 'cc-gate-lock', text: '𝕏' }),
+					title('Verify you’re a holder'),
+					msg(`Sign in with X so we can check the wallet you hold ${sym} in. Your wallet is read server-side and never shared.`),
+					errLine,
+					actions(btn('Sign in with X', 'signin', 'cc-gate-primary'), btn('Cancel', 'cancel', 'cc-gate-ghost')),
+				];
+				break;
+			case 'wallet':
+				nodes = [
+					el('div', { class: 'cc-gate-lock', text: '◎' }),
+					title('Link your Solana wallet'),
+					msg(`Connect the wallet that holds ${sym} and sign a message to link it. No transaction, no fee.`),
+					errLine,
+					actions(btn('Connect wallet', 'wallet', 'cc-gate-primary'), btn('Cancel', 'cancel', 'cc-gate-ghost')),
+				];
+				break;
+			case 'error':
+			default:
+				nodes = [
+					el('div', { class: 'cc-gate-lock', text: '!' }),
+					title('Couldn’t verify'),
+					msg(data.error || 'Something went wrong checking your holdings.'),
+					actions(btn('Try again', 'recheck', 'cc-gate-primary'), btn('Cancel', 'cancel', 'cc-gate-ghost')),
+				];
+				break;
+		}
+		body.replaceChildren(...nodes.filter(Boolean));
+	}
+
 	// ---------------------------------------------------------------- HUD
 	_buildHud() {
 		this.coinImg = el('img', { class: 'cc-coin-img', alt: '' });
 		this.coinName = el('div', { class: 'cc-coin-name', text: '' });
 		this.coinSym = el('span', { class: 'cc-coin-sym', text: '' });
 		this.onlineCount = el('span', { text: '1 online' });
+		// Marks the gated Holders world so the player always knows which room they're
+		// in and the floor they cleared. Hidden in the open General world.
+		this.tierBadge = el('span', { class: 'cc-tier-badge', hidden: true });
 		// Buy this coin from inside its own world — the most natural action in a
 		// pump.fun community. Opens the native on-chain buy modal (lazy chunk).
 		this.buyBtnLabel = el('span', { class: 'cc-buy-btn-text', text: 'Buy' });
@@ -607,6 +738,7 @@ export class CommunityUI {
 				el('div', { class: 'cc-coin-sub' }, [
 					this.coinSym,
 					el('span', { class: 'cc-online' }, [el('span', { class: 'cc-dot' }), this.onlineCount]),
+					this.tierBadge,
 				]),
 			]),
 			this.buyBtn,
@@ -733,6 +865,9 @@ export class CommunityUI {
 		this.buyBtnLabel.textContent = coin.symbol ? 'Buy $' + coin.symbol.toUpperCase() : 'Buy';
 		if (coin.image) { this.coinImg.src = coin.image; this.coinImg.style.display = ''; }
 		else this.coinImg.style.display = 'none';
+		const holders = coin.tier === 'holders';
+		this.tierBadge.hidden = !holders;
+		this.tierBadge.textContent = holders ? `🔒 Holders · $${coin.holderMinUsd ? Math.round(coin.holderMinUsd * 100) / 100 : 8}+` : '';
 		this.chatLog.textContent = '';
 		this._unread = 0;
 		this.chatUnread.hidden = true;
