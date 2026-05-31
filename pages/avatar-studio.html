@@ -46,7 +46,12 @@
 			body {
 				display: flex;
 				flex-direction: column;
-				min-height: 100vh;
+				/* Lock the app shell to the viewport so the 3D stage stays put
+				   and only the controls panel scrolls (set per-axis to avoid
+				   clipping fixed-position modals/overlays). */
+				height: 100vh;
+				height: 100dvh;
+				overflow-y: hidden;
 			}
 
 			/* ── Top bar ──────────────────────────────────────────── */
@@ -411,8 +416,21 @@
 			}
 
 			@media (max-width: 980px) {
+				/* Stacked layout: let the document scroll, but keep the avatar
+				   pinned below the top bar so it stays visible while the user
+				   scrolls through the controls beneath it. */
+				body { height: auto; overflow-y: visible; }
 				.as-shell { grid-template-columns: 1fr; }
-				.as-stage { border-right: 0; border-bottom: 1px solid var(--border); min-height: 380px; }
+				.as-stage {
+					border-right: 0;
+					border-bottom: 1px solid var(--border);
+					height: 42vh;
+					min-height: 300px;
+					position: sticky;
+					top: 49px;
+					z-index: 10;
+				}
+				.as-panel { overflow-y: visible; }
 			}
 
 			/* ── Reuse avatar-edit sculpt styles ─────────────────── */
