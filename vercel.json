@@ -962,6 +962,10 @@
 			"dest": "/marketplace.html"
 		},
 		{
+			"src": "/marketplace/tools/([^/]+)",
+			"dest": "/marketplace.html"
+		},
+		{
 			"src": "/marketplace/agents/([^/]+)",
 			"status": 301,
 			"headers": { "Location": "/agent-next?id=$1" }

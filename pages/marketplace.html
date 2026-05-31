@@ -2431,25 +2431,7 @@
 					<button class="market-submit-btn" id="earn-publish-skill-btn">+ Publish Skill</button>
 				</header>
 				<div class="earn-body">
-					<div class="earn-summary" id="earn-summary">
-						<div class="earn-stat-card">
-							<div class="earn-stat-label">Pending</div>
-							<div class="earn-stat-value" id="earn-pending">—</div>
-						</div>
-						<div class="earn-stat-card">
-							<div class="earn-stat-label">Settled</div>
-							<div class="earn-stat-value" id="earn-settled">—</div>
-						</div>
-						<div class="earn-stat-card earn-stat-wallet">
-							<div class="earn-stat-label">Payout Wallet</div>
-							<div class="earn-stat-value earn-wallet-addr" id="earn-wallet-display">Not set</div>
-							<button class="earn-wallet-btn" id="earn-wallet-edit">Edit</button>
-						</div>
-					</div>
-					<div class="earn-section-title">Recent Revenue</div>
-					<div class="earn-entries" id="earn-entries">
-						<div class="market-empty">Loading…</div>
-					</div>
+					<div id="earn-content"></div>
 				</div>
 			</section>
 
@@ -2606,6 +2588,75 @@
 					<div class="market-avatar-detail-similar" id="avatar-detail-similar-wrap" hidden>
 						<h2 class="market-section-heading">Similar avatars</h2>
 						<div class="market-grid" id="avatar-detail-similar-grid"></div>
+					</div>
+				</div>
+			</section>
+			<!-- Tool/plugin deep-link detail page — mirrors avatar detail for plugins -->
+			<section class="market-tool-detail" id="market-tool-detail" hidden aria-label="Plugin detail">
+				<div class="market-tool-detail-inner">
+					<button class="market-back" id="tool-detail-back" aria-label="Back to plugins">←</button>
+
+					<!-- Loading skeleton -->
+					<div class="tool-detail-skeleton" id="tool-detail-skeleton">
+						<div class="tool-skel-head">
+							<div class="tool-skel-icon"></div>
+							<div class="tool-skel-lines">
+								<div class="tool-skel-line w60"></div>
+								<div class="tool-skel-line w30"></div>
+							</div>
+						</div>
+						<div class="tool-skel-line w90"></div>
+						<div class="tool-skel-line w80"></div>
+						<div class="tool-skel-card"></div>
+						<div class="tool-skel-card"></div>
+					</div>
+
+					<!-- Not found -->
+					<div class="tool-detail-empty" id="tool-detail-empty" hidden>
+						<span class="tool-detail-empty-glyph" aria-hidden="true">◌</span>
+						<h2 class="tool-detail-empty-title">Plugin not found</h2>
+						<p class="tool-detail-empty-msg">This plugin may have been removed or the link is wrong.</p>
+						<a class="btn-secondary tool-detail-empty-cta" href="/marketplace?tab=tools">Browse plugins</a>
+					</div>
+
+					<!-- Loaded content -->
+					<div class="tool-detail-body" id="tool-detail-body" hidden>
+						<header class="tool-detail-hero">
+							<div class="tool-detail-icon" id="tool-detail-icon" aria-hidden="true">?</div>
+							<div class="tool-detail-hero-text">
+								<div class="market-detail-eyebrow" id="tool-detail-eyebrow">Plugin</div>
+								<h1 class="tool-detail-name" id="tool-detail-name">—</h1>
+								<p class="tool-detail-id" id="tool-detail-id"></p>
+								<p class="tool-detail-author" id="tool-detail-author" hidden></p>
+							</div>
+							<div class="tool-detail-price" id="tool-detail-price"></div>
+						</header>
+
+						<div class="tool-detail-pills" id="tool-detail-pills"></div>
+
+						<p class="tool-detail-desc" id="tool-detail-desc"></p>
+
+						<div class="tool-detail-actions" id="tool-detail-actions">
+							<button class="btn-primary tool-detail-cta" id="tool-detail-install">Add to Agent</button>
+							<button type="button" class="btn-secondary" id="tool-detail-share">Share</button>
+							<a class="btn-secondary" id="tool-detail-homepage" href="#" target="_blank" rel="noopener" hidden>Homepage ↗</a>
+							<a class="btn-secondary" id="tool-detail-manifest" href="#" target="_blank" rel="noopener" hidden>View manifest ↗</a>
+						</div>
+
+						<!-- System role / instructions -->
+						<section class="tool-detail-block" id="tool-detail-systemrole-wrap" hidden>
+							<h2 class="tool-detail-block-title">How the agent uses it</h2>
+							<p class="tool-detail-systemrole" id="tool-detail-systemrole"></p>
+						</section>
+
+						<!-- Tools / capabilities -->
+						<section class="tool-detail-block" id="tool-detail-tools-wrap">
+							<div class="tool-detail-block-head">
+								<h2 class="tool-detail-block-title">Tools</h2>
+								<span class="tool-detail-block-count" id="tool-detail-tools-count"></span>
+							</div>
+							<div class="tool-detail-tools" id="tool-detail-tools"></div>
+						</section>
 					</div>
 				</div>
 			</section>

@@ -472,6 +472,7 @@ const appConfig = {
 					'/gallery-picker/': resolve(root, 'pages/gallery-picker.html'),
 					'/marketplace': resolve(root, 'pages/marketplace.html'),
 					'/marketplace/': resolve(root, 'pages/marketplace.html'),
+					'/marketplace/tools': resolve(root, 'pages/marketplace.html'),
 					'/pay': resolve(root, 'public/pay/index.html'),
 					'/pay/': resolve(root, 'public/pay/index.html'),
 					'/pay/calls': resolve(root, 'public/pay/calls/index.html'),
@@ -672,6 +673,8 @@ const appConfig = {
 					else if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/marketplace.html');
 					else if (!filePath && /^\/marketplace\/avatars\/[^/]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/marketplace.html');
+					else if (!filePath && /^\/marketplace\/tools\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/marketplace.html');
 					// /agents/:id  → rich detail page (UUID expected, validated client-side)
 					else if (!filePath && /^\/agents\/[^/]+\/?$/.test(path))

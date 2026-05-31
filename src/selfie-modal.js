@@ -559,6 +559,13 @@ class SelfieModal {
 			const r = await fetch(`${STATUS_ENDPOINT}?jobId=${encodeURIComponent(jobId)}`, {
 				credentials: 'include',
 			});
+			if (r.status === 401 || r.status === 403) {
+				// Session expired mid-build — bounce to login instead of spinning
+				// for 8 minutes on a status retrying can never recover.
+				const next = encodeURIComponent(location.pathname + location.search);
+				window.location.assign(`/login?next=${next}`);
+				throw new Error('Please sign in to finish building your avatar.');
+			}
 			if (!r.ok) continue;
 			const job = await r.json();
 			if (job.status === 'done' && job.resultAvatarId) return job.resultAvatarId;

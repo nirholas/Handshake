@@ -5,16 +5,20 @@
 //
 // Stays small on purpose. The page modules import this for their CRUD calls.
 
-let csrfPromise = null;
-
+// Fetch a fresh single-use CSRF token for every mutation. The server burns the
+// token on first use (api/_lib/csrf.js) and returns it as { data: { token } },
+// so we must read j.data.token and must NOT cache it — a cached token yields
+// csrf_invalid on the second mutation, and reading the wrong field yields
+// csrf_missing because no header gets attached at all.
 async function getCsrf() {
-	if (!csrfPromise) {
-		csrfPromise = fetch('/api/csrf-token', { credentials: 'include' })
-			.then((r) => (r.ok ? r.json() : null))
-			.then((j) => j?.token || null)
-			.catch(() => null);
+	try {
+		const r = await fetch('/api/csrf-token', { credentials: 'include' });
+		if (!r.ok) return null;
+		const j = await r.json().catch(() => null);
+		return j?.data?.token || null;
+	} catch {
+		return null;
 	}
-	return csrfPromise;
 }
 
 export class ApiError extends Error {

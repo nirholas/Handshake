@@ -155,6 +155,8 @@ function readRoute() {
 	if (m) return { view: 'detail', id: m[1] };
 	const av = location.pathname.match(/^\/marketplace\/avatars\/([^/]+)/);
 	if (av) return { view: 'avatar-detail', id: av[1] };
+	const tl = location.pathname.match(/^\/marketplace\/tools\/([^/]+)/);
+	if (tl) return { view: 'tool-detail', id: decodeURIComponent(tl[1]) };
 	const params = new URLSearchParams(location.search);
 	const tab = params.get('tab');
 	const tag = (params.get('tag') || '').trim().toLowerCase().slice(0, 40) || null;
@@ -4508,6 +4510,9 @@ function bindEvents() {
 		skillsState.sort = next;
 		loadSkillsTab(true);
 	});
+	$('skills-loadmore')?.addEventListener('click', () => {
+		if (skillsState.cursor) loadSkillsTab(false, true);
+	});
 	document.querySelectorAll('[data-skill-filter]').forEach((chip) => {
 		chip.addEventListener('click', () => {
 			document.querySelectorAll('[data-skill-filter]').forEach((c) => c.classList.remove('active'));
@@ -5606,6 +5611,16 @@ function render() {
 
 	const setHidden = (el, hidden) => { if (el) el.hidden = hidden; };
 
+	// The tool-detail section is not touched by the other view branches, so
+	// hide it by default and let only its own branch reveal it. This keeps
+	// navigation away from a plugin page (e.g. back to the tools grid) clean.
+	const toolDetailSec = $('market-tool-detail');
+	setHidden(toolDetailSec, r.view !== 'tool-detail');
+	if (r.view !== 'tool-detail' && _toolDetailId !== null) {
+		_toolDetailId = null;
+		resetSocialMeta();
+	}
+
 	const avatarDetailSec = $('market-avatar-detail');
 	// Leaving the avatar-detail view: clear the cached id so re-entry reloads
 	// cleanly, and restore the page's default social meta.
@@ -5626,6 +5641,19 @@ function render() {
 		setHidden(memorySec, true);
 		setHidden(avatarDetailSec, false);
 		avatarDetailSec?.scrollIntoView({ behavior: 'instant', block: 'start' });
+	} else if (r.view === 'tool-detail') {
+		setHidden(discovery, true);
+		setHidden(detail, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
+		setHidden(avatarDetailSec, true);
+		loadToolDetail(r.id);
+		toolDetailSec?.scrollIntoView({ behavior: 'instant', block: 'start' });
 	} else if (r.view === 'detail') {
 		loadDetail(r.id);
 		setHidden(discovery, true);
@@ -5900,8 +5928,21 @@ function renderPluginGrid() {
 		return;
 	}
 	grid.innerHTML = pluginState.items.map((p) => renderPluginCard(p, installed)).join('');
+	// Whole-card navigation to the rich detail page. The install/buy button
+	// inside stops propagation so it keeps its own behaviour.
+	grid.querySelectorAll('[data-tool-id]').forEach((card) => {
+		const go = () => navTo(`/marketplace/tools/${encodeURIComponent(card.dataset.toolId)}`);
+		card.addEventListener('click', (e) => {
+			if (e.target.closest('[data-plugin-id]')) return;
+			go();
+		});
+		card.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+		});
+	});
 	grid.querySelectorAll('[data-plugin-id]').forEach((btn) => {
-		btn.addEventListener('click', () => {
+		btn.addEventListener('click', (e) => {
+			e.stopPropagation();
 			const id = btn.dataset.pluginId;
 			const pluginUuid = btn.dataset.pluginUuid || null;
 			const isPaid = btn.dataset.pluginPaid === '1';
@@ -5935,7 +5976,11 @@ function renderPluginCard(p, installed) {
 	const cat = escapeHtml(p.category || manifest?.meta?.category || 'general');
 	const icon = (p.name || p.identifier || '?')[0].toUpperCase();
 	const priceBadge = priceBadgeHtml(p.price);
-	return `<div class="plugin-card" style="position:relative">
+	// Whole card deep-links to the plugin detail page when it has a DB id.
+	const linkAttrs = p.id
+		? `class="plugin-card plugin-card-clickable" data-tool-id="${escapeHtml(p.id)}" role="link" tabindex="0" aria-label="View ${title} details"`
+		: 'class="plugin-card"';
+	return `<div ${linkAttrs} style="position:relative">
 		${priceBadge}
 		<div class="head">
 			<div class="avatar">${icon}</div>

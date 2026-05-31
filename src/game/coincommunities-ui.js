@@ -399,6 +399,25 @@ export class CommunityUI {
 	//   • Upload     → reuse the bar's validated .glb upload.
 	//   • Studio     → the full sculpt/outfit builder at /create/studio (richer,
 	//                  saves to your three.ws account). Opens in a new tab.
+	// Confine Tab/Shift+Tab focus to an open modal so keyboard focus can't walk
+	// out to the obscured lobby behind an aria-modal dialog. Returns a release
+	// function the close path calls; pair with restoring focus to the opener.
+	_trapFocus(container) {
+		const SEL = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+		const handler = (e) => {
+			if (e.key !== 'Tab') return;
+			const items = [...container.querySelectorAll(SEL)].filter((n) => n.offsetParent !== null);
+			if (!items.length) return;
+			const first = items[0];
+			const last = items[items.length - 1];
+			const active = document.activeElement;
+			if (e.shiftKey && (active === first || !container.contains(active))) { e.preventDefault(); last.focus(); }
+			else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+		};
+		container.addEventListener('keydown', handler);
+		return () => container.removeEventListener('keydown', handler);
+	}
+
 	_openCreate() {
 		if (this._createModal) return;
 
@@ -422,7 +441,7 @@ export class CommunityUI {
 
 		const cards = el('div', { class: 'cc-create-methods' }, [
 			card('✦', 'Design your avatar', 'Build a 3D character from scratch or from a selfie, then drop straight into the world. No sign-in needed.', 'Recommended', () => this._launchEditor()),
-			card('⬆', 'Upload a .glb', 'Already have a model from Blender, Mixamo, VRoid, or Ready Player Me? Bring it in.', '', () => { this._closeCreate(); this.uploadFile.click(); }),
+			card('⬆', 'Upload a .glb', 'Already have a model from Blender, Mixamo, VRoid, or any avatar tool? Bring it in.', '', () => { this._closeCreate(); this.uploadFile.click(); }),
 			card('✨', 'Advanced studio', 'Sculpt face & body, layer outfits and accessories, and save it to your three.ws account.', 'Opens in a new tab', () => { window.open('/create/studio', '_blank', 'noopener'); this._closeCreate(); }),
 		]);
 
@@ -447,6 +466,7 @@ export class CommunityUI {
 		};
 		document.addEventListener('keydown', this._createKeyHandler, true);
 		document.body.appendChild(overlay);
+		this._createTrapRelease = this._trapFocus(overlay);
 		// Animate in on the next frame and move focus into the dialog.
 		requestAnimationFrame(() => {
 			overlay.classList.add('cc-on');
@@ -462,6 +482,7 @@ export class CommunityUI {
 			document.removeEventListener('keydown', this._createKeyHandler, true);
 			this._createKeyHandler = null;
 		}
+		if (this._createTrapRelease) { this._createTrapRelease(); this._createTrapRelease = null; }
 		overlay.classList.remove('cc-on');
 		const done = () => overlay.remove();
 		overlay.addEventListener('transitionend', done, { once: true });
@@ -799,8 +820,14 @@ export class CommunityUI {
 		this._gate = overlay;
 		this._gateKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.h.onHolderAction?.('cancel'); } };
 		document.addEventListener('keydown', this._gateKey, true);
+		// Remember who opened the gate so focus returns there when it closes.
+		this._gateOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 		document.body.appendChild(overlay);
-		requestAnimationFrame(() => overlay.classList.add('cc-on'));
+		this._gateTrapRelease = this._trapFocus(overlay);
+		requestAnimationFrame(() => {
+			overlay.classList.add('cc-on');
+			(modal.querySelector('.cc-gate-x') || modal).focus?.();
+		});
 	}
 
 	closeHolderGate() {
@@ -809,6 +836,9 @@ export class CommunityUI {
 		this._gate = null;
 		this._gateBody = null;
 		if (this._gateKey) { document.removeEventListener('keydown', this._gateKey, true); this._gateKey = null; }
+		if (this._gateTrapRelease) { this._gateTrapRelease(); this._gateTrapRelease = null; }
+		if (this._gateOpener?.isConnected) this._gateOpener.focus();
+		this._gateOpener = null;
 		o.classList.remove('cc-on');
 		const done = () => o.remove();
 		o.addEventListener('transitionend', done, { once: true });
@@ -922,9 +952,17 @@ export class CommunityUI {
 
 		this.statusText = el('span', { text: 'connecting…' });
 		this.pingText = el('span', { class: 'cc-ping', hidden: true });
+		const tryRetry = () => {
+			if (['offline', 'failed'].includes(this.statusPill.getAttribute('data-state'))) this.h.onRetry?.();
+		};
 		this.statusPill = el('div', {
 			id: 'cc-status', 'data-state': 'connecting',
-			onclick: () => { if (['offline', 'failed'].includes(this.statusPill.getAttribute('data-state'))) this.h.onRetry?.(); },
+			// Live region so screen readers announce connect/disconnect; becomes a
+			// real keyboard-operable button only while a retry is possible (see
+			// setStatus, which toggles tabindex + aria-label).
+			role: 'status', 'aria-live': 'polite',
+			onclick: tryRetry,
+			onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tryRetry(); } },
 		}, [el('span', { class: 'cc-dot' }), this.statusText, this.pingText]);
 
 		this.chatLog = el('div', { class: 'cc-chat-log' });
@@ -959,7 +997,7 @@ export class CommunityUI {
 		this.toggleChat(stored != null ? stored === '1' : matchMedia('(pointer: coarse)').matches);
 		const chat = this.chat;
 
-		this.emoteTray = el('div', { id: 'cc-emotes' });
+		this.emoteTray = el('div', { id: 'cc-emotes', role: 'toolbar', 'aria-label': 'Emotes' });
 
 		// Spatial voice toggle. Off by default (no mic until the player opts in);
 		// the icon + label reflect every state (connecting / live / muted / blocked).
@@ -1016,7 +1054,10 @@ export class CommunityUI {
 		this.emoteTray.textContent = '';
 		for (const e of list) {
 			this.emoteTray.appendChild(el('button', {
-				class: 'cc-emote', title: e.label || e.name, text: e.icon || '🙂',
+				// The visible text is an emoji, so give SR users the emote's real
+				// name as the accessible label rather than the raw glyph.
+				class: 'cc-emote', type: 'button', title: e.label || e.name,
+				'aria-label': e.label || e.name, text: e.icon || '🙂',
 				onclick: () => this.h.onEmote(e.name),
 			}));
 		}
@@ -1058,6 +1099,20 @@ export class CommunityUI {
 		this.statusText.textContent = labels[state] || state;
 		// The latency readout is only meaningful while the link is live.
 		if (state !== 'online') this.pingText.hidden = true;
+		// Only expose the pill to the keyboard / label it as actionable while a
+		// retry actually does something — otherwise it's a passive status readout.
+		const retryable = state === 'offline' || state === 'failed';
+		if (retryable) {
+			this.statusPill.setAttribute('tabindex', '0');
+			this.statusPill.setAttribute('role', 'button');
+			this.statusPill.setAttribute('aria-label', `Connection ${labels[state]} — activate to reconnect`);
+			this.statusPill.title = 'Reconnect';
+		} else {
+			this.statusPill.removeAttribute('tabindex');
+			this.statusPill.setAttribute('role', 'status');
+			this.statusPill.removeAttribute('aria-label');
+			this.statusPill.removeAttribute('title');
+		}
 	}
 
 	// Show the live round-trip latency next to the status dot. Colour-coded so a

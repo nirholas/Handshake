@@ -24,7 +24,8 @@ function defaultServerUrl() {
 	// Resolution priority:
 	//   1. window.WALK_SERVER_URL  (test override)
 	//   2. <meta name="walk-server" content="...">
-	//   3. Same host on :2567 (dev convenience)
+	//   3. Codespaces / Gitpod port-subdomain forwarding (-3000 → -2567)
+	//   4. Same host on :2567 (dev convenience)
 	if (typeof window !== 'undefined' && window.WALK_SERVER_URL) {
 		return window.WALK_SERVER_URL;
 	}
@@ -35,7 +36,13 @@ function defaultServerUrl() {
 	}
 	if (typeof location !== 'undefined') {
 		const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-		return `${proto}//${location.hostname}:2567`;
+		const host = location.hostname;
+		// Cloud dev environments expose each forwarded port as its own
+		// subdomain (<name>-<port>.app.github.dev), NOT host:port. The app runs
+		// on -3000; the walk server is the same name on -2567.
+		const fwd = host.match(/^(.*)-(\d+)\.(app\.github\.dev|githubpreview\.dev|gitpod\.io)$/);
+		if (fwd) return `${proto}//${fwd[1]}-2567.${fwd[3]}`;
+		return `${proto}//${host}:2567`;
 	}
 	return 'ws://localhost:2567';
 }

@@ -96,6 +96,9 @@ const transport = new WebSocketTransport({
 			if (host.endsWith('.vercel.app') || host.endsWith('.three.ws')) {
 				return next(true);
 			}
+				if (!IS_PROD && (host.endsWith('.app.github.dev') || host.endsWith('.githubpreview.dev') || host.endsWith('.gitpod.io'))) {
+					return next(true);
+				}
 		} catch {}
 		console.warn(`[multiplayer] rejecting origin ${origin}`);
 		return next(false, 403, 'origin not allowed');

@@ -141,6 +141,10 @@ describe('isBakeable', () => {
 		expect(isBakeable({ outfit: 'outfit-casual' })).toBe(true);
 		expect(isBakeable({ accessories: ['hat-baseball'] })).toBe(true);
 		expect(isBakeable({ morphs: { Smile: 0.5 } })).toBe(true);
+		expect(isBakeable({ colors: { outfit: '#ff0000' } })).toBe(true);
+		expect(isBakeable({ hidden: ['outfit'] })).toBe(true);
+		expect(isBakeable({ colors: {} })).toBe(false);
+		expect(isBakeable({ hidden: [] })).toBe(false);
 	});
 });
 
@@ -201,6 +205,72 @@ describe('bakeAppearance — morph weights', () => {
 		const weights = bodyNode.getWeights();
 		expect(weights[0]).toBeCloseTo(0.25, 3);
 		expect(weights[1]).toBeCloseTo(0.75, 3);
+	});
+});
+
+// Builds a GLB with two separate meshes carrying named Wolf3D materials, so we
+// can verify colour tints land on the right material and hidden layers drop the
+// right node — the garment-layer (wardrobe) bake path.
+async function buildLayeredGlb() {
+	const doc = new Document();
+	doc.createBuffer();
+	const positions = () =>
+		doc.createAccessor().setType('VEC3').setArray(new Float32Array([0, 0, 0, 1, 0, 0, 0.5, 1, 0]));
+	const normals = () =>
+		doc.createAccessor().setType('VEC3').setArray(new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1]));
+	const indices = () => doc.createAccessor().setType('SCALAR').setArray(new Uint16Array([0, 1, 2]));
+
+	const meshNode = (name, materialName) => {
+		const prim = doc
+			.createPrimitive()
+			.setAttribute('POSITION', positions())
+			.setAttribute('NORMAL', normals())
+			.setIndices(indices())
+			.setMaterial(doc.createMaterial(materialName).setBaseColorFactor([1, 1, 1, 1]));
+		const mesh = doc.createMesh(name).addPrimitive(prim);
+		return doc.createNode(name).setMesh(mesh);
+	};
+
+	const top = meshNode('OutfitTopNode', 'Wolf3D_Outfit_Top');
+	const skin = meshNode('SkinNode', 'Wolf3D_Skin');
+	const scene = doc.createScene('root').addChild(top).addChild(skin);
+	doc.getRoot().setDefaultScene(scene);
+	return new NodeIO().writeBinary(doc);
+}
+
+function findMaterial(doc, name) {
+	return doc.getRoot().listMaterials().find((m) => m.getName() === name) || null;
+}
+
+describe('bakeAppearance — garment layers (colors + hidden)', () => {
+	it('tints the slot material baseColorFactor and leaves other slots untouched', async () => {
+		const base = await buildLayeredGlb();
+		const baked = await bakeAppearance(base, { colors: { outfit: '#ff0000' } });
+		const doc = await inspect(baked);
+
+		const top = findMaterial(doc, 'Wolf3D_Outfit_Top');
+		expect(top).toBeTruthy();
+		const [r, g, b] = top.getBaseColorFactor();
+		// #ff0000 sRGB → linear ≈ [1, 0, 0].
+		expect(r).toBeCloseTo(1.0, 2);
+		expect(g).toBeCloseTo(0.0, 2);
+		expect(b).toBeCloseTo(0.0, 2);
+
+		// Skin was not in the colors map — its factor stays white.
+		const skin = findMaterial(doc, 'Wolf3D_Skin');
+		expect(skin.getBaseColorFactor().slice(0, 3)).toEqual([1, 1, 1]);
+	});
+
+	it('drops the meshes of a hidden slot but keeps the rest of the body', async () => {
+		const base = await buildLayeredGlb();
+		const baked = await bakeAppearance(base, { hidden: ['outfit'] });
+		const doc = await inspect(baked);
+
+		// The outfit node (and its now-orphaned material) are pruned away.
+		expect(findNode(doc, 'OutfitTopNode')).toBeNull();
+		expect(findMaterial(doc, 'Wolf3D_Outfit_Top')).toBeNull();
+		// The base body remains.
+		expect(findNode(doc, 'SkinNode')).toBeTruthy();
 	});
 });
 

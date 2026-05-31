@@ -23,6 +23,7 @@ import { AccessoryManager } from './agent-accessories.js';
 import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
 import { IdleAnimation } from './idle-animation.js';
 import { renderSculptPanel } from './avatar-sculpt.js';
+import { renderWardrobePanel } from './avatar-wardrobe.js';
 import { playAs } from './game/play-handoff.js';
 
 // ── Routing ────────────────────────────────────────────────────────────
@@ -55,7 +56,7 @@ let idleDispose = null;
 // the UI has committed (locally) and will save. We're dirty when they differ.
 // `previewedId` is what's *temporarily* applied on hover, never persisted.
 let currentAppearance = null;
-let workingAppearance = { outfit: null, accessories: [], morphs: {} };
+let workingAppearance = { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [] };
 let previewedId = null;
 
 // Monotonic token guards async preset loads from out-of-order arrivals when
@@ -80,7 +81,7 @@ let searchQuery = '';
 
 // Tab definitions: which preset kind goes on which tab.
 const TABS = [
-	{ id: 'outfit', label: 'Outfits', kinds: ['outfit'], emoji: '👕', single: true },
+	{ id: 'wardrobe', label: 'Wardrobe', kinds: [], wardrobe: true },
 	{ id: 'hat', label: 'Hats', kinds: ['hat'], emoji: '🎩', single: true },
 	{ id: 'glasses', label: 'Glasses', kinds: ['glasses'], emoji: '🕶️', single: true },
 	{ id: 'earrings', label: 'Earrings', kinds: ['earrings'], emoji: '💎', single: false },
@@ -98,7 +99,7 @@ const KIND_LABEL = {
 	glasses: 'Glasses',
 	earrings: 'Earrings',
 };
-let activeTab = 'outfit';
+let activeTab = 'wardrobe';
 
 // ── Init ───────────────────────────────────────────────────────────────
 
@@ -262,6 +263,23 @@ function renderTabs() {
 function renderActivePanel() {
 	const tab = TABS.find((t) => t.id === activeTab);
 	const panel = $('ae-panel');
+
+	// Wardrobe tab: recolour + show/hide the avatar's own garment layers. Shares
+	// the studio's layer engine (src/avatar-wardrobe.js); changes apply live via
+	// the AccessoryManager and persist in appearance.colors / appearance.hidden.
+	if (tab.wardrobe) {
+		renderWardrobePanel({
+			container: panel,
+			root: scene?.root || null,
+			working: workingAppearance,
+			applyLayers: (layers) => accessoryManager?.applyLayers(layers),
+			onDirty: () => {
+				renderChips();
+				updateDirtyState();
+			},
+		});
+		return;
+	}
 
 	// Sculpt tab gets its own UI — morph sliders, not a tile grid. The face-
 	// capture modal lives inside that module, so the avatar-edit shell doesn't
@@ -708,11 +726,16 @@ function setStatus(kind, text) {
 // ── Helpers ────────────────────────────────────────────────────────────
 
 function normalizeAppearance(a) {
-	if (!a) return { outfit: null, accessories: [], morphs: {} };
+	if (!a) return { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [] };
 	return {
 		outfit: a.outfit || null,
 		accessories: Array.isArray(a.accessories) ? [...a.accessories] : [],
 		morphs: a.morphs && typeof a.morphs === 'object' ? { ...a.morphs } : {},
+		// Garment-layer state (recolour + show/hide) is owned by the studio but
+		// must survive an edit here — hydrate re-applies it and collapse re-sends
+		// it, so editing accessories never silently strips a studio look.
+		colors: a.colors && typeof a.colors === 'object' ? { ...a.colors } : {},
+		hidden: Array.isArray(a.hidden) ? [...a.hidden] : [],
 	};
 }
 
@@ -723,6 +746,8 @@ function collapseAppearance(a) {
 	if (a.outfit) out.outfit = a.outfit;
 	if (a.accessories?.length) out.accessories = [...a.accessories];
 	if (a.morphs && Object.keys(a.morphs).length) out.morphs = { ...a.morphs };
+	if (a.colors && Object.keys(a.colors).length) out.colors = { ...a.colors };
+	if (a.hidden?.length) out.hidden = [...a.hidden];
 	return Object.keys(out).length ? out : null;
 }
 
@@ -740,5 +765,13 @@ function appearanceEquals(a, b) {
 	const kb = Object.keys(b?.morphs || {});
 	if (ka.length !== kb.length) return false;
 	for (const k of ka) if ((a.morphs[k] || 0) !== (b?.morphs?.[k] || 0)) return false;
+	const ca = Object.keys(a?.colors || {});
+	const cb = Object.keys(b?.colors || {});
+	if (ca.length !== cb.length) return false;
+	for (const k of ca) if ((a.colors[k] || null) !== (b?.colors?.[k] || null)) return false;
+	const ha = new Set(a?.hidden || []);
+	const hb = new Set(b?.hidden || []);
+	if (ha.size !== hb.size) return false;
+	for (const v of ha) if (!hb.has(v)) return false;
 	return true;
 }

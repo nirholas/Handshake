@@ -787,10 +787,48 @@
 		import { openSelfieModal } from '/src/selfie-modal.js';
 
 		// ── Parse ?id= from URL (default: nich) ─────────────────────
+		// The id can be either an avatar id or an agent id — dashboard and
+		// discover links use both. We resolve agent ids to their backing avatar
+		// once, up front, so every downstream feature (owner panels, mocap,
+		// pose, fork, embed) operates on the canonical avatar id.
 		const params = new URLSearchParams(location.search);
-		const avatarId = params.get('id') || 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
-		const avatarUrl = `${location.origin}/api/avatars/${avatarId}`;
+		let avatarId = params.get('id') || 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
+		let avatarUrl = `${location.origin}/api/avatars/${avatarId}`;
 		const agent = document.getElementById('agent');
+
+		// Map an agent id to its backing avatar id (null if not an agent or no body).
+		async function agentToAvatarId(id) {
+			try {
+				const r = await fetch(`${location.origin}/api/agents/${encodeURIComponent(id)}`);
+				if (!r.ok) return null;
+				const j = await r.json();
+				return (j.agent || j)?.avatar_id || null;
+			} catch {
+				return null;
+			}
+		}
+
+		// Resolve ?id= to a real avatar exactly once. Returns the avatar fetch
+		// Response; only loadAvatar() reads its body, other callers just await
+		// to pick up the canonical avatarId. On a 404 we retry once after
+		// mapping an agent id to its avatar.
+		let _resolved = null;
+		function resolveAvatar() {
+			if (_resolved) return _resolved;
+			_resolved = (async () => {
+				let r = await fetch(avatarUrl);
+				if (r.status === 404) {
+					const mapped = await agentToAvatarId(avatarId);
+					if (mapped && mapped !== avatarId) {
+						avatarId = mapped;
+						avatarUrl = `${location.origin}/api/avatars/${avatarId}`;
+						r = await fetch(avatarUrl);
+					}
+				}
+				return r;
+			})();
+			return _resolved;
+		}
 		const chatForm = document.getElementById('chat-form');
 		const chatInput = document.getElementById('chat-input');
 		const chatMessages = document.getElementById('chat-messages');
@@ -800,7 +838,7 @@
 		// ── Load avatar metadata ────────────────────────────────────
 		async function loadAvatar() {
 			try {
-				const r = await fetch(avatarUrl);
+				const r = await resolveAvatar();
 				if (!r.ok) throw new Error('avatar not found');
 				const json = await r.json();
 				hydrate(json.avatar || json.item || json);
@@ -898,6 +936,10 @@
 
 		(async function detectOwner() {
 			try {
+				// Wait for ?id= resolution so avatarUrl points at the real avatar
+				// (an agent id has already been mapped to its avatar by now).
+				await resolveAvatar();
+
 				const meRes = await fetch('/api/auth/me', { credentials: 'include' });
 				if (!meRes.ok) return;
 				const meJson = await meRes.json();
@@ -1349,6 +1391,7 @@
 		async function loadRelated() {
 			const grid = document.getElementById('related-grid');
 			try {
+				await resolveAvatar();
 				const r = await fetch(`/api/explore?source=avatar&quality=high&limit=7&only3d=1`);
 				if (!r.ok) throw new Error('explore fetch failed');
 				const json = await r.json();

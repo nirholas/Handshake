@@ -666,6 +666,14 @@ export class CoinCommunities {
 		this.net.on('status', ({ status }) => {
 			this.ui.setStatus(status);
 			this._updateOnline();
+			// Reconnect exhausted: the player is now alone in a local-only world.
+			// The small status pill alone is easy to miss, so explain the drop once —
+			// other players, chat and shared building are off, and how to recover.
+			if (status === 'failed' && !this._failedNotified) {
+				this._failedNotified = true;
+				this.ui.toast('Lost the connection — you’re in single-player. Builds here won’t be saved or seen by others. Tap the status pill to reconnect.', 'warn');
+			}
+			if (status === 'online') this._failedNotified = false;
 			// Every (re)connect re-streams the server's authoritative build, so wipe
 			// the local layer first. On a manual retry out of single-player this also
 			// hands authority back: the solo build gives way to the shared world's.
