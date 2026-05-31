@@ -94,6 +94,72 @@
 			.nav-inner { padding: 14px 20px; gap: 16px; }
 		}
 
+		/* ── NAV DROPDOWNS ───────────────────────────────────────── */
+		.nav-grp { position: relative; display: flex; }
+		.nav-trigger {
+			display: inline-flex; align-items: center; gap: 5px;
+			padding: 7px 12px; font-size: 14px; font-weight: 450;
+			color: var(--text-2); background: none; border: 0;
+			border-radius: 7px; font-family: inherit; cursor: pointer;
+			transition: color 0.12s, background 0.12s;
+		}
+		.nav-trigger:hover,
+		.nav-grp.open .nav-trigger { color: var(--text); }
+		.nav-grp.open .nav-trigger { background: rgba(255,255,255,0.04); }
+		.nav-caret { font-size: 9px; opacity: 0.55; transition: transform 0.2s ease; }
+		.nav-grp.open .nav-caret { transform: rotate(180deg); }
+		.nav-pop {
+			position: absolute; top: calc(100% + 9px); left: 0;
+			min-width: 272px; padding: 7px;
+			background: rgba(11,11,11,0.97);
+			backdrop-filter: blur(24px) saturate(140%);
+			-webkit-backdrop-filter: blur(24px) saturate(140%);
+			border: 1px solid var(--hairline-strong);
+			border-radius: 13px;
+			box-shadow: 0 20px 54px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4);
+			display: grid; gap: 1px;
+			opacity: 0; transform: translateY(-6px) scale(0.985);
+			transform-origin: top left; pointer-events: none;
+			transition: opacity 0.16s ease, transform 0.16s ease;
+			z-index: 200;
+		}
+		/* invisible hover bridge so the menu doesn't close in the gap */
+		.nav-pop::before {
+			content: ""; position: absolute; top: -10px; left: 0; right: 0; height: 12px;
+		}
+		.nav-grp.open .nav-pop {
+			opacity: 1; transform: translateY(0) scale(1); pointer-events: auto;
+		}
+		.nav-pop.wide { grid-template-columns: 1fr 1fr; min-width: 540px; }
+		.nav-mi {
+			display: block; padding: 9px 12px; border-radius: 9px;
+			transition: background 0.12s;
+		}
+		.nav-mi:hover { background: var(--surface-2); }
+		.nav-mi-t {
+			display: flex; align-items: center; gap: 6px;
+			font-size: 13.5px; font-weight: 500; color: var(--text);
+			letter-spacing: -0.01em;
+		}
+		.nav-mi-d {
+			display: block; font-size: 12px; color: var(--text-3);
+			margin-top: 1px; line-height: 1.4;
+		}
+		.nav-pill-sm {
+			display: inline-block; padding: 1px 5px;
+			font-family: var(--font-mono); font-size: 8.5px; font-weight: 600;
+			letter-spacing: 0.08em; line-height: 1.5; border-radius: 4px;
+			background: rgba(255,255,255,0.1); color: var(--text);
+			text-transform: uppercase;
+		}
+		.nav-pop-note {
+			padding: 6px 12px 8px; font-size: 11px; color: var(--text-4);
+			line-height: 1.45; grid-column: 1 / -1;
+			border-bottom: 1px solid var(--hairline); margin-bottom: 2px;
+		}
+		.nav-main > a { display: inline-flex; align-items: center; }
+		.nav-link-pill { display: inline-flex; align-items: center; gap: 6px; }
+
 		/* ── BUTTONS ─────────────────────────────────────────────── */
 		.btn {
 			display: inline-flex; align-items: center; gap: 10px;
@@ -988,13 +1054,21 @@
 			display: none; position: fixed; inset: 57px 0 0;
 			z-index: 99; background: rgba(5,5,5,0.96);
 			backdrop-filter: blur(24px) saturate(140%);
-			padding: 24px 24px 40px; flex-direction: column; gap: 4px;
+			padding: 20px 24px 40px; flex-direction: column; gap: 2px;
+			overflow-y: auto; -webkit-overflow-scrolling: touch;
+			overscroll-behavior: contain;
 			opacity: 0; transform: translateY(-8px);
 			transition: opacity 0.25s ease, transform 0.25s ease;
 		}
 		.nav-drawer.open { display: flex; opacity: 1; transform: translateY(0); }
+		.nav-drawer .dr-h {
+			font-family: var(--font-mono); font-size: 11px;
+			text-transform: uppercase; letter-spacing: 0.16em;
+			color: var(--text-4); padding: 18px 16px 6px;
+		}
+		.nav-drawer .dr-h:first-child { padding-top: 4px; }
 		.nav-drawer a {
-			padding: 14px 16px; font-size: 16px; font-weight: 450;
+			padding: 11px 16px; font-size: 15.5px; font-weight: 450;
 			color: var(--text-2); border-radius: 8px;
 			transition: background 0.12s, color 0.12s;
 		}
@@ -2403,11 +2477,76 @@
 			<span>three.ws</span>
 		</a>
 		<nav class="nav-main" aria-label="Primary">
-			<a href="/create">Build</a>
-			<a href="#embed">Embed</a>
-			<a href="/discover">Discover</a>
+			<div class="nav-grp">
+				<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false">Build<span class="nav-caret" aria-hidden="true">▾</span></button>
+				<div class="nav-pop" role="menu" aria-label="Build">
+					<a class="nav-mi" href="/create" role="menuitem"><span class="nav-mi-t">Create agent</span><span class="nav-mi-d">Avatar + brain wizard</span></a>
+					<a class="nav-mi" href="/create/selfie" role="menuitem"><span class="nav-mi-t">Selfie to avatar <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">One photo → rigged 3D avatar</span></a>
+					<a class="nav-mi" href="/worlds" role="menuitem"><span class="nav-mi-t">Worlds <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Every coin is a 3D world — drop in &amp; hang out</span></a>
+					<a class="nav-mi" href="/app" role="menuitem"><span class="nav-mi-t">Viewer</span><span class="nav-mi-d">Drag-and-drop GLB</span></a>
+					<a class="nav-mi" href="/playground" role="menuitem"><span class="nav-mi-t">Playground</span><span class="nav-mi-d">Viewer + environment + embed code</span></a>
+					<a class="nav-mi" href="/validation" role="menuitem"><span class="nav-mi-t">glTF Validator</span><span class="nav-mi-d">Khronos spec check</span></a>
+					<a class="nav-mi" href="/voice" role="menuitem"><span class="nav-mi-t">Voice Lab <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Clone your voice · TTS playground</span></a>
+				</div>
+			</div>
+			<div class="nav-grp">
+				<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false">Discover<span class="nav-caret" aria-hidden="true">▾</span></button>
+				<div class="nav-pop" role="menu" aria-label="Discover">
+					<a class="nav-mi" href="/features" role="menuitem"><span class="nav-mi-t">Features</span><span class="nav-mi-d">Everything an agent gets — interactive tour</span></a>
+					<a class="nav-mi" href="/discover" role="menuitem"><span class="nav-mi-t">ERC-8004 Agents</span><span class="nav-mi-d">On-chain agent directory</span></a>
+					<a class="nav-mi" href="/marketplace" role="menuitem"><span class="nav-mi-t">Marketplace</span><span class="nav-mi-d">Buy, sell &amp; remix agents</span></a>
+					<a class="nav-mi" href="/gallery" role="menuitem"><span class="nav-mi-t">Avatar Gallery</span><span class="nav-mi-d">Every public 3D avatar</span></a>
+					<a class="nav-mi" href="/skills" role="menuitem"><span class="nav-mi-t">Skills <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Browse agent tool packs &amp; capabilities</span></a>
+					<a class="nav-mi" href="/bazaar" role="menuitem"><span class="nav-mi-t">x402 Bazaar</span><span class="nav-mi-d">Browse paid APIs and MCP tools</span></a>
+					<a class="nav-mi" href="/community" role="menuitem"><span class="nav-mi-t">Community</span><span class="nav-mi-d">X, GitHub, and ways to get involved</span></a>
+				</div>
+			</div>
+			<div class="nav-grp">
+				<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false">Embed<span class="nav-caret" aria-hidden="true">▾</span></button>
+				<div class="nav-pop" role="menu" aria-label="Embed">
+					<a class="nav-mi" href="/widgets" role="menuitem"><span class="nav-mi-t">Widgets</span><span class="nav-mi-d">Browse + customize embeddable widgets</span></a>
+					<a class="nav-mi" href="/studio" role="menuitem"><span class="nav-mi-t">Widget Studio</span><span class="nav-mi-d">Pick avatar → copy snippet</span></a>
+					<a class="nav-mi" href="/embed.html" role="menuitem"><span class="nav-mi-t">Embed editor</span><span class="nav-mi-d">Tune mode, size, position</span></a>
+					<a class="nav-mi" href="/avatar-sdk" role="menuitem"><span class="nav-mi-t">Avatar SDK <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">npm · web component · React · GLB upload</span></a>
+					<a class="nav-mi" href="/docs#embedding" role="menuitem"><span class="nav-mi-t">Embed docs</span><span class="nav-mi-d">iframe + oEmbed</span></a>
+					<a class="nav-mi" href="/docs#web-component" role="menuitem"><span class="nav-mi-t">&lt;agent-3d&gt;</span><span class="nav-mi-d">Web component reference</span></a>
+				</div>
+			</div>
+			<div class="nav-grp">
+				<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false">Learn<span class="nav-caret" aria-hidden="true">▾</span></button>
+				<div class="nav-pop" role="menu" aria-label="Learn">
+					<a class="nav-mi" href="/docs" role="menuitem"><span class="nav-mi-t">Docs</span><span class="nav-mi-d">SDKs + API reference</span></a>
+					<a class="nav-mi" href="/tutorials" role="menuitem"><span class="nav-mi-t">Tutorials</span><span class="nav-mi-d">Step-by-step guides</span></a>
+					<a class="nav-mi" href="/brain" role="menuitem"><span class="nav-mi-t">Brain <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Claude · GPT · DeepSeek · Qwen · Llama</span></a>
+					<a class="nav-mi" href="/chat" role="menuitem"><span class="nav-mi-t">Chat</span><span class="nav-mi-d">Talk to your agent</span></a>
+					<a class="nav-mi" href="/pay" role="menuitem"><span class="nav-mi-t">Pay <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Agent payments — x402 + USDC</span></a>
+					<a class="nav-mi" href="/docs#solana" role="menuitem"><span class="nav-mi-t">Solana SDK</span><span class="nav-mi-d">Attestations + agent-kit</span></a>
+				</div>
+			</div>
+			<div class="nav-grp">
+				<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false">Labs<span class="nav-pill-sm" aria-hidden="true">Beta</span><span class="nav-caret" aria-hidden="true">▾</span></button>
+				<div class="nav-pop wide" role="menu" aria-label="Labs">
+					<div class="nav-pop-note">Experimental features — actively iterating. Expect rough edges.</div>
+					<a class="nav-mi" href="/launchpad" role="menuitem"><span class="nav-mi-t">Launchpad Studio <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Build a 3D launchpad · token · concierge</span></a>
+					<a class="nav-mi" href="/lipsync" role="menuitem"><span class="nav-mi-t">Lipsync <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">TTS or mic → in-browser viseme → mouth</span></a>
+					<a class="nav-mi" href="/mocap-studio" role="menuitem"><span class="nav-mi-t">Mocap Studio <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Record face → save clip → replay</span></a>
+					<a class="nav-mi" href="/pose" role="menuitem"><span class="nav-mi-t">Pose Studio</span><span class="nav-mi-d">Click-to-pose mannequin + export PNG</span></a>
+					<a class="nav-mi" href="/overlay-control" role="menuitem"><span class="nav-mi-t">OBS Overlay</span><span class="nav-mi-d">Stream deck — emote hotkeys, mic</span></a>
+					<a class="nav-mi" href="/walk" role="menuitem"><span class="nav-mi-t">Walk <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Walk your avatar — multiplayer + AR</span></a>
+					<a class="nav-mi" href="/xr" role="menuitem"><span class="nav-mi-t">XR <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Place your avatar in the real world</span></a>
+					<a class="nav-mi" href="/gmgn" role="menuitem"><span class="nav-mi-t">GMGN Smart Money <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Agent narrates smart wallet signals</span></a>
+					<a class="nav-mi" href="/pumpfun" role="menuitem"><span class="nav-mi-t">Pump.fun stream</span><span class="nav-mi-d">Mint agent tokens</span></a>
+					<a class="nav-mi" href="/pump-live" role="menuitem"><span class="nav-mi-t">Live launches</span><span class="nav-mi-d">Real-time mint feed</span></a>
+					<a class="nav-mi" href="/pump-dashboard" role="menuitem"><span class="nav-mi-t">Pump Dashboard</span><span class="nav-mi-d">Watches · scanner · quotes</span></a>
+					<a class="nav-mi" href="/pump-visualizer" role="menuitem"><span class="nav-mi-t">Pump Visualizer</span><span class="nav-mi-d">3D view of trending tokens</span></a>
+					<a class="nav-mi" href="/three-live" role="menuitem"><span class="nav-mi-t">$THREE Live <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">Protocol pulse — live trades in 3D</span></a>
+					<a class="nav-mi" href="/strategy-lab" role="menuitem"><span class="nav-mi-t">Strategy Lab</span><span class="nav-mi-d">DCA + subscriptions</span></a>
+					<a class="nav-mi" href="/club" role="menuitem"><span class="nav-mi-t">Pole Club <span class="nav-pill-sm">New</span></span><span class="nav-mi-d">x402 micro-tip demo — $0.001 / dance</span></a>
+					<a class="nav-mi" href="/eth-vanity" role="menuitem"><span class="nav-mi-t">ETH vanity (CREATE2)</span><span class="nav-mi-d">Grind a smart-contract address</span></a>
+					<a class="nav-mi" href="/vanity-wallet" role="menuitem"><span class="nav-mi-t">Vanity wallet</span><span class="nav-mi-d">Grind a Solana address</span></a>
+				</div>
+			</div>
 			<a href="/pricing">Pricing</a>
-			<a href="/docs">Docs</a>
 		</nav>
 		<div class="nav-end">
 			<a href="/login">Sign in</a>
@@ -2420,11 +2559,45 @@
 	</div>
 </header>
 <nav class="nav-drawer" id="nav-drawer" aria-label="Mobile" aria-hidden="true">
-	<a href="/create">Build</a>
-	<a href="#embed">Embed</a>
-	<a href="/discover">Discover</a>
-	<a href="/pricing">Pricing</a>
+	<div class="dr-h">Build</div>
+	<a href="/create">Create agent</a>
+	<a href="/create/selfie">Selfie to avatar</a>
+	<a href="/worlds">Worlds</a>
+	<a href="/app">Viewer</a>
+	<a href="/playground">Playground</a>
+	<a href="/voice">Voice Lab</a>
+	<div class="dr-h">Discover</div>
+	<a href="/features">Features</a>
+	<a href="/discover">ERC-8004 Agents</a>
+	<a href="/marketplace">Marketplace</a>
+	<a href="/gallery">Avatar Gallery</a>
+	<a href="/skills">Skills</a>
+	<a href="/bazaar">x402 Bazaar</a>
+	<a href="/community">Community</a>
+	<div class="dr-h">Embed</div>
+	<a href="/widgets">Widgets</a>
+	<a href="/studio">Widget Studio</a>
+	<a href="/embed.html">Embed editor</a>
+	<a href="/avatar-sdk">Avatar SDK</a>
+	<div class="dr-h">Learn</div>
 	<a href="/docs">Docs</a>
+	<a href="/tutorials">Tutorials</a>
+	<a href="/brain">Brain</a>
+	<a href="/chat">Chat</a>
+	<a href="/pay">Pay</a>
+	<div class="dr-h">Labs · Beta</div>
+	<a href="/launchpad">Launchpad Studio</a>
+	<a href="/lipsync">Lipsync</a>
+	<a href="/mocap-studio">Mocap Studio</a>
+	<a href="/pose">Pose Studio</a>
+	<a href="/walk">Walk</a>
+	<a href="/xr">XR</a>
+	<a href="/gmgn">GMGN Smart Money</a>
+	<a href="/pumpfun">Pump.fun stream</a>
+	<a href="/three-live">$THREE Live</a>
+	<a href="/club">Pole Club</a>
+	<div class="dr-h">More</div>
+	<a href="/pricing">Pricing</a>
 	<div class="sep"></div>
 	<a href="/login">Sign in</a>
 	<a class="btn primary" href="/dashboard" style="margin-top:4px;">Console →</a>
@@ -2452,6 +2625,70 @@
 			if (window.innerWidth > 880 && isOpen()) setOpen(false);
 		});
 	})();
+
+		// Desktop nav dropdowns — hover to open, click/keyboard for touch + a11y
+		(function () {
+			var groups = Array.prototype.slice.call(document.querySelectorAll('.nav-main .nav-grp'));
+			if (!groups.length) return;
+			var hoverCapable = window.matchMedia('(hover: hover)').matches;
+
+			function setOpen(grp, on) {
+				grp.classList.toggle('open', on);
+				var t = grp.querySelector('.nav-trigger');
+				if (t) t.setAttribute('aria-expanded', on ? 'true' : 'false');
+			}
+			function closeAll(except) {
+				groups.forEach(function (g) { if (g !== except) setOpen(g, false); });
+			}
+
+			groups.forEach(function (grp) {
+				var trigger = grp.querySelector('.nav-trigger');
+				var closeTimer;
+				if (!trigger) return;
+
+				trigger.addEventListener('click', function (e) {
+					e.stopPropagation();
+					if (hoverCapable) {
+						// hover already opens it; a click just pins it open
+						closeAll(grp);
+						setOpen(grp, true);
+						return;
+					}
+					var willOpen = !grp.classList.contains('open');
+					closeAll(grp);
+					setOpen(grp, willOpen);
+				});
+
+				if (hoverCapable) {
+					grp.addEventListener('mouseenter', function () {
+						clearTimeout(closeTimer);
+						closeAll(grp);
+						setOpen(grp, true);
+					});
+					grp.addEventListener('mouseleave', function () {
+						closeTimer = setTimeout(function () { setOpen(grp, false); }, 120);
+					});
+				}
+
+				grp.querySelectorAll('.nav-mi').forEach(function (a) {
+					a.addEventListener('click', function () { setOpen(grp, false); });
+				});
+			});
+
+			document.addEventListener('click', function (e) {
+				if (!e.target.closest('.nav-main .nav-grp')) closeAll();
+			});
+			document.addEventListener('keydown', function (e) {
+				if (e.key === 'Escape') {
+					var openGrp = document.querySelector('.nav-main .nav-grp.open');
+					if (openGrp) {
+						setOpen(openGrp, false);
+						var t = openGrp.querySelector('.nav-trigger');
+						if (t) t.focus();
+					}
+				}
+			});
+		})();
 </script>
 
 <!-- ── HERO ─────────────────────────────────────────────────────── -->
