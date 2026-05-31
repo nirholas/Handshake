@@ -107,15 +107,19 @@ downloadBtn.addEventListener('click', () => downloadClip());
 
 // ── Functions ──────────────────────────────────────────────────────────────
 
-async function detectAuth() {
+async function fetchMe() {
 	try {
-		const r = await fetch('/api/auth/profile', { credentials: 'include' });
-		if (!r.ok) return false;
+		const r = await fetch('/api/auth/me', { credentials: 'include' });
+		if (!r.ok) return null;
 		const data = await r.json().catch(() => null);
-		return !!(data && (data.user || data.id));
+		return data?.user || null;
 	} catch {
-		return false;
+		return null;
 	}
+}
+
+async function detectAuth() {
+	return !!(await fetchMe());
 }
 
 async function bootAvatar() {
@@ -123,21 +127,57 @@ async function bootAvatar() {
 	const handle = params.get('handle') || params.get('h');
 	if (handle) {
 		handleInput.value = handle.replace(/^@/, '');
-		return loadByHandle();
+		try {
+			await loadByHandle();
+			if (state.avatar) return;
+		} catch {}
+		return loadDefaultAvatar();
 	}
-	// Try the signed-in user's username.
+	// Try the signed-in user's username — auto-load their public avatar.
+	const user = await fetchMe();
+	if (user?.username) {
+		handleInput.value = user.username;
+		try {
+			await loadByHandle();
+			if (state.avatar) return;
+		} catch {}
+	}
+	// Nothing to resolve (signed out, or no public avatar): drop in the
+	// platform's default avatar so the camera + mocap pipeline is usable now.
+	return loadDefaultAvatar();
+}
+
+// Bring a freshly loaded model into the scene and (re)wire idle + mocap to its
+// skeleton. Shared by handle-resolved loads and the default-avatar fallback.
+async function applyLoadedAvatar(modelUrl, meta) {
+	await viewer.load(modelUrl, '', new Map());
+	state.avatar = meta;
+	if (state.idle) state.idle.dispose();
+	if (!viewer._afterAnimateHooks) viewer._afterAnimateHooks = [];
+	if (state._idleHook) {
+		const idx = viewer._afterAnimateHooks.indexOf(state._idleHook);
+		if (idx !== -1) viewer._afterAnimateHooks.splice(idx, 1);
+	}
+	state.idle = new IdleAnimation({ getRoot: () => viewer.content, seed: meta.id });
+	state._idleHook = (dt) => state.idle?.update(dt);
+	viewer._afterAnimateHooks.push(state._idleHook);
+	if (state.mocap) reattachMocap();
+	else startCamBtn.disabled = false;
+}
+
+async function loadDefaultAvatar() {
+	avatarInfo.textContent = 'Loading default avatar…';
 	try {
-		const r = await fetch('/api/auth/profile', { credentials: 'include' });
-		if (r.ok) {
-			const data = await r.json();
-			const user = data.user || data;
-			if (user?.username) {
-				handleInput.value = user.username;
-				return loadByHandle();
-			}
-		}
-	} catch {}
-	avatarInfo.textContent = 'No avatar loaded — enter a handle above to load one.';
+		await applyLoadedAvatar('/avatars/default.glb', {
+			id: 'default',
+			modelUrl: '/avatars/default.glb',
+			name: 'Default avatar',
+			handle: null,
+		});
+		avatarInfo.textContent = 'Default avatar · enter a handle above to load your own';
+	} catch (err) {
+		avatarInfo.textContent = err?.message || 'Failed to load the default avatar.';
+	}
 }
 
 async function loadByHandle() {
@@ -152,26 +192,15 @@ async function loadByHandle() {
 		if (!r.ok) throw new Error(`@${raw} has no public avatar`);
 		const data = await r.json();
 		const avatar = data.avatar;
-		state.avatar = {
+		await applyLoadedAvatar(avatar.model_url, {
 			id: avatar.id,
 			modelUrl: avatar.model_url,
 			name: data.user.display_name || data.user.username,
 			handle: data.user.username,
-		};
-		await viewer.load(avatar.model_url, '', new Map());
-		// Re-attach idle + face mocap to the freshly loaded root.
-		if (state.idle) state.idle.dispose();
-		if (!viewer._afterAnimateHooks) viewer._afterAnimateHooks = [];
-		if (state._idleHook) {
-			const idx = viewer._afterAnimateHooks.indexOf(state._idleHook);
-			if (idx !== -1) viewer._afterAnimateHooks.splice(idx, 1);
-		}
-		state.idle = new IdleAnimation({ getRoot: () => viewer.content, seed: state.avatar.id });
-		state._idleHook = (dt) => state.idle?.update(dt);
-		viewer._afterAnimateHooks.push(state._idleHook);
-		if (state.mocap) reattachMocap();
+		});
 		avatarInfo.textContent = `${state.avatar.name} · @${state.avatar.handle}`;
 	} catch (err) {
+		state.avatar = null;
 		avatarInfo.textContent = err?.message || 'Failed to load.';
 	}
 }

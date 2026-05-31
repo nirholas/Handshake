@@ -166,6 +166,32 @@
 				justify-content: center;
 				margin-top: 8px;
 			}
+			.pose-btn:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+
+			/* Top-bar buttons read as a calm toolbar: quiet until hover,
+			   so the single primary (Save) is the only thing that pops. */
+			#pose-top .pose-btn {
+				background: transparent;
+				border-color: transparent;
+				color: var(--text-2);
+			}
+			#pose-top .pose-btn:hover {
+				background: rgba(255, 255, 255, 0.07);
+				border-color: transparent;
+				color: var(--text);
+			}
+			#pose-top .pose-btn-primary {
+				background: rgba(255, 255, 255, 0.20);
+				border-color: rgba(255, 255, 255, 0.40);
+				color: #e8e8e8;
+			}
+			#pose-top .pose-btn-primary:hover {
+				background: rgba(255, 255, 255, 0.30);
+				color: #ffffff;
+			}
 
 			.file-label {
 				cursor: pointer;
@@ -872,7 +898,7 @@
 					<input type="file" id="pose-import-json" accept="application/json,.json" />
 				</label>
 				<button type="button" id="pose-export-json" class="pose-btn" title="Save pose as JSON">Export JSON</button>
-				<button type="button" id="pose-screenshot" class="pose-btn pose-btn-primary" title="Download a PNG of the current view">PNG screenshot</button>
+				<button type="button" id="pose-screenshot" class="pose-btn" title="Download a PNG of the current view">PNG screenshot</button>
 			</header>
 
 			<!-- LEFT PANEL -->

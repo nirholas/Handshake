@@ -484,9 +484,17 @@ function handleX402Discovery(req, res) {
 			serviceName: 'three.ws Skill Market',
 			tags: ['marketplace', 'agent', 'skills', 'pricing', 'discovery'],
 		}),
+		skillCall: withService({
+			serviceName: 'three.ws Skill Call',
+			tags: ['skill', 'agent', 'tool', 'pay-per-call'],
+		}),
 		symbolCheck: withService({
 			serviceName: 'three.ws Symbol Check',
 			tags: ['ticker', 'pump.fun', 'collision', 'launch', 'solana'],
+		}),
+		vanity: withService({
+			serviceName: 'three.ws Vanity Grinder',
+			tags: ['solana', 'vanity', 'keypair', 'wallet', 'address'],
 		}),
 		permit2Demo: withService({
 			serviceName: 'three.ws Permit2 Demo',
@@ -844,6 +852,53 @@ function handleX402Discovery(req, res) {
 					};
 				})(),
 				(() => {
+					// Vanity grind is difficulty-tiered ($0.01–$0.25); the catalog
+					// advertises the 1-char entry tier ('10000' = $0.01) while the live
+					// 402 quotes the exact price for the requested pattern length.
+					const url = `${origin}/api/x402/vanity`;
+					const accepts = acceptsForPrice('10000', url);
+					return {
+						path: '/api/x402/vanity',
+						url,
+						method: 'GET',
+						description:
+							'Vanity Grinder — generate a brand-new Solana keypair whose Base58 address starts with a chosen prefix and/or ends with a chosen suffix. Returns the public address and its secret key (Base58 + 64-byte array) so it imports into any Solana wallet. Ground fresh per request in a Rust/WASM ed25519 engine and never stored. Difficulty-tiered price ($0.01 for 1 char, $0.05 for 2, $0.25 for 3); combined pattern capped at 3 Base58 characters. Settlement runs only after a successful grind, so an exhausted budget costs nothing.',
+						mimeType: 'application/json',
+						serviceName: routeMeta.vanity.serviceName,
+						tags: routeMeta.vanity.tags,
+						iconUrl: routeMeta.vanity.iconUrl,
+						accepts,
+						extensions: extensionsForAccepts(accepts, {
+							method: 'GET',
+							discoverable: true,
+							input: { prefix: 'So', suffix: '', ignoreCase: '0' },
+							inputSchema: {
+								type: 'object',
+								anyOf: [{ required: ['prefix'] }, { required: ['suffix'] }],
+								properties: {
+									prefix: {
+										type: 'string',
+										maxLength: 3,
+										description:
+											'Base58 characters the address must start with (excludes 0, O, I, l). Combined with suffix, max 3.',
+									},
+									suffix: {
+										type: 'string',
+										maxLength: 3,
+										description:
+											'Base58 characters the address must end with. Combined with prefix, max 3.',
+									},
+									ignoreCase: {
+										type: 'string',
+										enum: ['0', '1', 'true', 'false'],
+										description: 'When 1/true, match case-insensitively (faster, less specific).',
+									},
+								},
+							},
+						}),
+					};
+				})(),
+				(() => {
 					// Permit2-only demo: skip the EIP-3009 entry that acceptsForPrice
 					// would push first, so SDK clients are forced through the gasless
 					// EIP-2612 → settleWithPermit path the endpoint is meant to prove.
@@ -1001,6 +1056,41 @@ function handleX402Discovery(req, res) {
 										minLength: 1,
 										maxLength: 128,
 										description: 'Unique asset slug from the paid_assets catalog.',
+									},
+								},
+							},
+						}),
+					};
+				})(),
+				(() => {
+					const url = `${origin}/api/x402/skill-call`;
+					// Per-call price is set per skill from marketplace_skills; advertise
+					// a representative $0.01 so facilitators can index the route.
+					const accepts = acceptsForPrice('10000', url);
+					return {
+						path: '/api/x402/skill-call',
+						url,
+						method: 'GET',
+						description:
+							"three.ws Skill Call — pay the per-call price of a marketplace skill in USDC (Base or Solana) and receive its executable payload: the tool schema and content the calling agent runs. Payment settles straight to the skill author's wallet. Per-call pricing — every invocation is a fresh payment.",
+						mimeType: 'application/json',
+						serviceName: routeMeta.skillCall.serviceName,
+						tags: routeMeta.skillCall.tags,
+						iconUrl: routeMeta.skillCall.iconUrl,
+						accepts,
+						extensions: extensionsForAccepts(accepts, {
+							method: 'GET',
+							discoverable: true,
+							input: { skill: 'wallet-balance' },
+							inputSchema: {
+								type: 'object',
+								required: ['skill'],
+								properties: {
+									skill: {
+										type: 'string',
+										minLength: 1,
+										maxLength: 128,
+										description: 'Unique skill slug from the marketplace_skills catalog.',
 									},
 								},
 							},

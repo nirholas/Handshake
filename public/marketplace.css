@@ -939,6 +939,85 @@ body.market-page {
 	.tool-detail-name { font-size: 24px; }
 }
 
+/* Skill detail: full instructions block */
+.skill-detail-content {
+	font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+	font-size: 12.5px;
+	line-height: 1.6;
+	color: var(--mk-text-2);
+	background: var(--mk-panel);
+	border: 1px solid var(--mk-border);
+	border-radius: 12px;
+	padding: 16px 18px;
+	margin: 0;
+	max-height: 480px;
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+.market-skill-detail .market-price-pill {
+	display: inline-block;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 4px 10px;
+	border-radius: 8px;
+	background: var(--mk-panel-2);
+	color: var(--mk-text-2);
+	border: 1px solid var(--mk-border-2);
+}
+.market-skill-detail .market-price-pill.paid { color: #fde047; border-color: rgba(253,224,71,0.3); }
+
+/* Onchain agent detail */
+.onchain-detail-stage {
+	position: relative;
+	background: linear-gradient(180deg, #0a0a0c 0%, #0d0d10 100%);
+	border: 1px solid var(--mk-border);
+	border-radius: 18px;
+	min-height: 380px;
+	overflow: hidden;
+	margin: 8px 0 4px;
+}
+.onchain-detail-stage model-viewer { width: 100%; height: 100%; position: absolute; inset: 0; --poster-color: transparent; }
+.onchain-detail-stage img { width: 100%; height: 100%; object-fit: contain; }
+.onchain-detail-facts {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1px;
+	background: var(--mk-border);
+	border: 1px solid var(--mk-border);
+	border-radius: 12px;
+	overflow: hidden;
+}
+.onchain-fact {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 11px 16px;
+	background: var(--mk-panel);
+	font-size: 13px;
+}
+.onchain-fact-label { color: var(--mk-text-3); }
+.onchain-fact-value { color: var(--mk-text); font-family: ui-monospace, 'SF Mono', Menlo, monospace; word-break: break-all; text-align: right; }
+.onchain-fact-value a { color: #79c0ff; text-decoration: none; }
+.onchain-fact-value a:hover { text-decoration: underline; }
+.market-onchain-detail .onchain-x402 {
+	font-size: 11px;
+	font-weight: 600;
+	padding: 3px 8px;
+	border-radius: 6px;
+	color: #34d399;
+	background: rgba(52,211,153,0.12);
+	border: 1px solid rgba(52,211,153,0.25);
+}
+.market-onchain-detail .avatar-pill.onchain {
+	font-size: 11px;
+	padding: 3px 8px;
+	border-radius: 6px;
+	background: var(--mk-panel-2);
+	color: var(--mk-text-2);
+	border: 1px solid var(--mk-border-2);
+}
+
 /* ── Detail ──────────────────────────────────────────────────────────── */
 
 .market-detail {

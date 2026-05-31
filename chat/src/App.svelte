@@ -510,6 +510,82 @@
 		talkingHead?.think(false);
 	}
 
+	// Built-in scene/avatar tools. These are declared server-side in api/chat.js
+	// (ACTION_TOOLS) and offered to the model on every request, so the model can
+	// drive the embedded <agent-3d> viewer. They have no remote endpoint; they
+	// run against the live scene in this page. Mirrors src/nich-agent.js's
+	// _executeAction, retargeted onto agentEl._scene.viewer.
+	const BUILTIN_ACTION_TOOLS = new Set([
+		'setWireframe', 'setSkeleton', 'setGrid', 'setAutoRotate', 'setBgColor',
+		'setTransparentBg', 'setEnvironment', 'takeScreenshot', 'loadModel',
+		'runValidation', 'showMaterialEditor', 'setCameraTarget', 'getPumpFunTrades',
+		'playAnimation',
+	]);
+
+	async function runBuiltinActionTool(name, args = {}) {
+		// Animations route through the element's clip player, not the viewer.
+		if (name === 'playAnimation') {
+			if (typeof args.name !== 'string' || !args.name) {
+				return { error: 'playAnimation requires a clip name.' };
+			}
+			if (!agentEl?.play) return { error: 'The 3D avatar is not ready yet, try again in a moment.' };
+			try {
+				await agentEl.play(args.name, { loop: !!args.loop });
+			} catch (err) {
+				return { error: `Could not play "${args.name}": ${err?.message || err}` };
+			}
+			return { ok: true, playing: args.name };
+		}
+
+		const viewer = agentEl?._scene?.viewer;
+		if (!viewer) return { error: 'The 3D scene is not ready yet, try again in a moment.' };
+
+		switch (name) {
+			case 'setWireframe':
+				viewer.state.wireframe = !!args.value; viewer.updateDisplay();
+				return { ok: true, wireframe: viewer.state.wireframe };
+			case 'setSkeleton':
+				viewer.state.skeleton = !!args.value; viewer.updateDisplay();
+				return { ok: true, skeleton: viewer.state.skeleton };
+			case 'setGrid':
+				viewer.state.grid = !!args.value; viewer.updateDisplay();
+				return { ok: true, grid: viewer.state.grid };
+			case 'setAutoRotate':
+				viewer.state.autoRotate = !!args.value; viewer.updateDisplay();
+				return { ok: true, autoRotate: viewer.state.autoRotate };
+			case 'setBgColor':
+				if (typeof args.value !== 'string') return { error: 'setBgColor requires a CSS hex string.' };
+				viewer.setBackgroundColor(args.value);
+				return { ok: true, bgColor: viewer.state.bgColor };
+			case 'setTransparentBg':
+				viewer.state.transparentBg = !!args.value; viewer.updateBackground();
+				return { ok: true, transparentBg: viewer.state.transparentBg };
+			case 'setEnvironment':
+				if (typeof args.value !== 'string') return { error: 'setEnvironment requires an environment name.' };
+				viewer.setEnvironment(args.value);
+				return { ok: true, environment: viewer.state.environment };
+			case 'takeScreenshot':
+				viewer.takeScreenshot();
+				return { ok: true };
+			case 'loadModel':
+				if (typeof args.url !== 'string') return { error: 'loadModel requires a url.' };
+				await viewer.load(args.url, '', new Map());
+				return { ok: true, loaded: args.url };
+			case 'setCameraTarget':
+				if (typeof args.boneName !== 'string') return { error: 'setCameraTarget requires a boneName.' };
+				viewer.setCameraTarget(args.boneName);
+				return { ok: true, target: args.boneName };
+			case 'getPumpFunTrades':
+				viewer.showPumpFunTrades();
+				return { ok: true };
+			case 'runValidation':
+			case 'showMaterialEditor':
+				return { error: `${name} is only available in the full editor, not in chat.` };
+			default:
+				return { error: `Unknown action: ${name}` };
+		}
+	}
+
 	async function submitCompletion(insertUnclosed = true) {
 		window.speechSynthesis?.cancel();
 		if (!convo.models?.[0]?.provider) {
@@ -756,8 +832,17 @@
 							);
 							const promise = clientFn(toolcall.arguments, choose);
 							toolPromises.push(promise);
-						} else {
-							// Otherwise, call server-side tool
+						} else if (BUILTIN_ACTION_TOOLS.has(toolcall.name)) {
+							// Built-in scene/avatar action: run against the live <agent-3d>.
+							const promise = (async () => {
+								const result = await runBuiltinActionTool(toolcall.name, toolcall.arguments);
+								convo.messages[i].toolcalls[ti].finished = true;
+								saveMessage(convo.messages[i]);
+								return result;
+							})();
+							toolPromises.push(promise);
+						} else if ($remoteServer.address) {
+							// Otherwise, call the user's configured local tool server.
 							const promise = (async () => {
 								try {
 									const resp = await fetch(`${$remoteServer.address}/tool`, {
@@ -785,6 +870,17 @@
 								}
 							})();
 
+							toolPromises.push(promise);
+						} else {
+							// No client handler and no tool server configured. Return a
+							// clear result instead of POSTing to a nonexistent endpoint.
+							const promise = (async () => {
+								convo.messages[i].toolcalls[ti].finished = true;
+								saveMessage(convo.messages[i]);
+								return {
+									error: `No handler for tool "${toolcall.name}". Connect a tool server in settings to run server-side tools.`,
+								};
+							})();
 							toolPromises.push(promise);
 						}
 					}

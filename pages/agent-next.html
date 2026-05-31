@@ -823,6 +823,14 @@
 						avatarId = mapped;
 						avatarUrl = `${location.origin}/api/avatars/${avatarId}`;
 						r = await fetch(avatarUrl);
+						// Canonicalize the address bar to the avatar id so reloads,
+						// shares, and bookmarks hit the fast path directly instead of
+						// repeating the agent → avatar lookup.
+						if (r.ok) {
+							const u = new URL(location.href);
+							u.searchParams.set('id', avatarId);
+							history.replaceState(null, '', u);
+						}
 					}
 				}
 				return r;

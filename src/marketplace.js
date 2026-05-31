@@ -157,6 +157,12 @@ function readRoute() {
 	if (av) return { view: 'avatar-detail', id: av[1] };
 	const tl = location.pathname.match(/^\/marketplace\/tools\/([^/]+)/);
 	if (tl) return { view: 'tool-detail', id: decodeURIComponent(tl[1]) };
+	const sk = location.pathname.match(/^\/marketplace\/skills\/([^/]+)/);
+	if (sk) return { view: 'skill-detail', id: decodeURIComponent(sk[1]) };
+	const an = location.pathname.match(/^\/marketplace\/animations\/([^/]+)/);
+	if (an) return { view: 'anim-detail', id: decodeURIComponent(an[1]) };
+	const oc = location.pathname.match(/^\/marketplace\/onchain\/([^/]+)/);
+	if (oc) return { view: 'onchain-detail', id: decodeURIComponent(oc[1]) };
 	const params = new URLSearchParams(location.search);
 	const tab = params.get('tab');
 	const tag = (params.get('tag') || '').trim().toLowerCase().slice(0, 40) || null;
@@ -1003,11 +1009,18 @@ function renderGrid() {
 			if (id) navTo(`/marketplace/avatars/${encodeURIComponent(id)}`);
 		});
 	});
-	els.grid.querySelectorAll('[data-onchain-href]').forEach((card) => {
-		card.addEventListener('click', (e) => {
-			if (e.target.closest('a')) return;
-			const href = card.dataset.onchainHref;
-			if (href) location.href = href;
+	els.grid.querySelectorAll('[data-onchain-id]').forEach((card) => {
+		const oid = card.dataset.onchainId;
+		// Prefer the internal rich detail page; fall back to the external link
+		// only when we lack the chain/agent ids needed to route internally.
+		const go = (e) => {
+			if (e && e.target.closest('a')) return;
+			if (oid) navTo(`/marketplace/onchain/${encodeURIComponent(oid)}`);
+			else if (card.dataset.onchainHref) location.href = card.dataset.onchainHref;
+		};
+		card.addEventListener('click', go);
+		card.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
 		});
 	});
 
@@ -1746,9 +1759,12 @@ function renderSkillsGrid() {
 
 	grid.innerHTML = filtered.map(renderSkillCard).join('');
 	grid.querySelectorAll('[data-skill-id]').forEach((card) => {
-		card.addEventListener('click', () => {
-			const id = card.dataset.skillId;
-			if (id) openSkillModal(id);
+		card.setAttribute('role', 'link');
+		card.setAttribute('tabindex', '0');
+		const go = () => { const id = card.dataset.skillId; if (id) navTo(`/marketplace/skills/${encodeURIComponent(id)}`); };
+		card.addEventListener('click', go);
+		card.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
 		});
 	});
 }
@@ -1781,6 +1797,7 @@ function renderSkillCard(s) {
 		<div class="skill-desc">${desc || '<em style="color:#52525b">No description.</em>'}</div>
 		<div class="skill-meta">
 			<span class="cat-pill">${escapeHtml(category)}</span>
+			${paid ? '<span class="skill-x402-badge" title="Callable per-call via x402 USDC">x402</span>' : ''}
 			${installsDisplay}
 			${toolsDisplay}
 			${ratingDisplay}
@@ -1792,123 +1809,261 @@ function renderSkillCard(s) {
 	</div>`;
 }
 
-// ── Skill detail modal ──────────────────────────────────────────────────
+// ── Skill detail page ─────────────────────────────────────────────────────
+// Rich, deep-linkable page for a single skill at /marketplace/skills/:id.
+// Shows the skill's tools, full instructions, interactive rating, a fully
+// wired install/remove action, and related skills in the same category.
 
-async function openSkillModal(id) {
-	const overlay = $('skill-modal-overlay');
-	if (!overlay) return;
-	skillsState.detailId = id;
-	overlay.hidden = false;
-	$('skill-modal-title').textContent = 'Loading…';
-	$('skill-modal-desc').textContent = '';
-	$('skill-modal-meta').innerHTML = '';
-	$('skill-modal-tools').hidden = true;
-	$('skill-modal-content').hidden = true;
-	$('skill-modal-rating').hidden = true;
-	$('skill-modal-install').disabled = true;
+let _skillDetailId = null;
+let _skillDetailData = null;
 
+function _setSkillDetailState({ skeleton = false, empty = false, body = false }) {
+	const skel = $('skill-detail-skeleton');
+	const emptyEl = $('skill-detail-empty');
+	const bodyEl = $('skill-detail-body');
+	if (skel) skel.hidden = !skeleton;
+	if (emptyEl) emptyEl.hidden = !empty;
+	if (bodyEl) bodyEl.hidden = !body;
+}
+
+async function loadSkillDetail(id) {
+	if (_skillDetailId === id && _skillDetailData) return;
+	_setSkillDetailState({ skeleton: true });
+
+	let skill = null;
 	try {
 		const r = await fetch(`${API}/skills/${encodeURIComponent(id)}`, { credentials: 'include' });
-		if (!r.ok) throw new Error(`HTTP ${r.status}`);
-		const j = await r.json();
-		renderSkillModal(j.skill);
+		if (r.ok) {
+			const j = await r.json();
+			skill = j?.skill || null;
+		}
 	} catch (err) {
 		console.error('[marketplace] skill detail', err);
-		$('skill-modal-title').textContent = 'Failed to load skill';
-		$('skill-modal-desc').textContent = err.message;
 	}
+
+	if (readRoute().view !== 'skill-detail') return;
+
+	if (!skill) {
+		_setSkillDetailState({ empty: true });
+		setSocialMeta({
+			title: 'Skill not found · three.ws',
+			description: 'This skill may have been removed or the link is wrong.',
+			url: location.origin + location.pathname,
+			image: _socialMetaDefaults.image,
+		});
+		return;
+	}
+
+	_skillDetailData = skill;
+	renderSkillDetail(skill);
+	_skillDetailId = id;
 }
 
-function closeSkillModal() {
-	const overlay = $('skill-modal-overlay');
-	if (overlay) overlay.hidden = true;
-	skillsState.detailId = null;
-}
-
-function renderSkillModal(skill) {
-	if (!skill) return;
-	skillsState.detailId = skill.id;
+function renderSkillDetail(skill) {
 	const paid = isPaidSkill(skill);
-	$('skill-modal-title').textContent = skill.name;
-	$('skill-modal-desc').textContent = skill.description || '';
-	$('skill-modal-eyebrow').textContent = paid ? 'Paid skill' : 'Free skill';
-
-	const meta = $('skill-modal-meta');
-	const installs = Number(skill.install_count) || 0;
 	const rating = Number(skill.avg_rating) || 0;
-	const tools = Array.isArray(skill.schema_json) ? skill.schema_json.length : 0;
+	const installs = Number(skill.install_count) || 0;
+	const tools = Array.isArray(skill.schema_json) ? skill.schema_json : [];
 	const author = skill.author?.display_name || 'System';
-	meta.innerHTML = `
-		<span class="stat-pill" style="text-transform:capitalize">${escapeHtml(skill.category || 'general')}</span>
-		<span class="stat-pill">By ${escapeHtml(author)}</span>
-		${installs > 0 ? `<span class="stat-pill">${fmtNumber(installs)} installs</span>` : ''}
-		${skill.rating_count > 0 ? `<span class="stat-pill">★ ${rating.toFixed(1)} · ${skill.rating_count}</span>` : ''}
-		${tools > 0 ? `<span class="stat-pill">${tools} tool${tools === 1 ? '' : 's'}</span>` : ''}
-		${paid ? `<span class="stat-pill" style="color:#fde047;border-color:rgba(253,224,71,0.3)">$${Number(skill.price_per_call_usd).toFixed(3)}/call</span>` : `<span class="stat-pill" style="color:#34d399;border-color:rgba(52,211,153,0.3)">Free</span>`}
-	`;
 
-	const toolsEl = $('skill-modal-tools');
-	if (Array.isArray(skill.schema_json) && skill.schema_json.length) {
-		toolsEl.hidden = false;
-		toolsEl.innerHTML = `<h4>Tools provided</h4><ul>${skill.schema_json.map((g) => {
-			const name = escapeHtml(g?.function?.name || g?.clientDefinition?.name || '?');
-			const desc = escapeHtml(g?.function?.description || g?.clientDefinition?.description || '');
-			return `<li>${name}${desc ? `<small>${desc}</small>` : ''}</li>`;
-		}).join('')}</ul>`;
-	} else {
-		toolsEl.hidden = true;
+	const iconEl = $('skill-detail-icon');
+	if (iconEl) iconEl.textContent = (skill.name || '?')[0].toUpperCase();
+
+	$('skill-detail-eyebrow').textContent = paid ? 'Paid skill' : 'Free skill';
+	$('skill-detail-name').textContent = skill.name || 'Untitled skill';
+
+	const authorEl = $('skill-detail-author');
+	if (authorEl) {
+		authorEl.hidden = false;
+		authorEl.textContent = `by ${author}`;
 	}
 
-	const contentEl = $('skill-modal-content');
-	if (skill.content) {
-		contentEl.hidden = false;
-		contentEl.textContent = skill.content.length > 4000 ? skill.content.slice(0, 4000) + '\n\n…' : skill.content;
-	} else {
-		contentEl.hidden = true;
+	const priceEl = $('skill-detail-price');
+	if (priceEl) {
+		priceEl.innerHTML = paid
+			? `<span class="market-price-pill paid">$${Number(skill.price_per_call_usd).toFixed(3)}/call</span>`
+			: `<span class="market-price-pill">Free</span>`;
 	}
 
-	const ratingEl = $('skill-modal-rating');
-	if (ratingEl) {
-		ratingEl.hidden = false;
-		const userRating = Math.round(rating);
-		const stars = [1, 2, 3, 4, 5].map((n) => {
-			const active = n <= userRating ? 'active' : '';
-			return `<button class="${active}" data-rating="${n}" aria-label="Rate ${n} star${n === 1 ? '' : 's'}">★</button>`;
-		}).join('');
-		ratingEl.innerHTML = `${stars}<span class="rating-count">${skill.rating_count || 0} rating${skill.rating_count === 1 ? '' : 's'}</span>`;
-		ratingEl.querySelectorAll('[data-rating]').forEach((btn) => {
-			btn.addEventListener('click', async () => {
-				const n = Number(btn.dataset.rating);
-				await rateSkill(skill.id, n);
-			});
+	const pillsEl = $('skill-detail-pills');
+	if (pillsEl) {
+		const pills = [`<span class="stat-pill" style="text-transform:capitalize">${escapeHtml(skill.category || 'general')}</span>`];
+		if (tools.length) pills.push(`<span class="stat-pill">${tools.length} tool${tools.length === 1 ? '' : 's'}</span>`);
+		if (installs > 0) pills.push(`<span class="stat-pill">↓ ${fmtNumber(installs)} installs</span>`);
+		if (skill.rating_count > 0) pills.push(`<span class="stat-pill">★ ${rating.toFixed(1)} · ${skill.rating_count}</span>`);
+		(skill.tags || []).forEach((t) => {
+			pills.push(`<button type="button" class="tag-pill" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</button>`);
+		});
+		pillsEl.innerHTML = pills.join('');
+		pillsEl.querySelectorAll('[data-tag]').forEach((btn) => {
+			btn.addEventListener('click', () => navTo(`/marketplace?tab=skills&tag=${encodeURIComponent(btn.dataset.tag)}`));
 		});
 	}
 
-	const installBtn = $('skill-modal-install');
-	installBtn.disabled = false;
-	installBtn.textContent = skill.installed ? '✓ Installed (click to remove)' : 'Install';
-	installBtn.dataset.skillId = skill.id;
-	installBtn.dataset.installed = skill.installed ? '1' : '0';
-
-	const authorBtn = $('skill-modal-author');
-	if (skill.author?.id) {
-		authorBtn.hidden = false;
-		authorBtn.textContent = `View ${author}'s skills →`;
-		authorBtn.onclick = () => {
-			closeSkillModal();
-			openCreatorModal(skill.author.id);
-		};
-	} else {
-		authorBtn.hidden = true;
+	const descEl = $('skill-detail-desc');
+	if (descEl) {
+		descEl.textContent = skill.description || '';
+		descEl.hidden = !skill.description;
 	}
+
+	// Install / remove — fully wired (the old modal button was a dead path).
+	const installBtn = $('skill-detail-install');
+	if (installBtn) {
+		const sync = () => {
+			installBtn.classList.toggle('installed', !!skill.installed);
+			installBtn.textContent = skill.installed ? 'Installed ✓ — Remove' : paid ? 'Add skill' : 'Install';
+		};
+		sync();
+		installBtn.disabled = false;
+		installBtn.onclick = () => toggleSkillInstall(skill.id);
+	}
+
+	// Share.
+	const shareBtn = $('skill-detail-share');
+	if (shareBtn) shareBtn.onclick = () => shareCurrentPage(shareBtn, `${skill.name} — three.ws skill`, skill.description || 'Check out this agent skill on three.ws');
+
+	// Author → creator modal.
+	const authorBtn = $('skill-detail-author-btn');
+	if (authorBtn) {
+		if (skill.author?.id) {
+			authorBtn.hidden = false;
+			authorBtn.textContent = `View ${author}'s skills →`;
+			authorBtn.onclick = () => openCreatorModal(skill.author.id);
+		} else {
+			authorBtn.hidden = true;
+		}
+	}
+
+	// Interactive rating.
+	const ratingWrap = $('skill-detail-rating-wrap');
+	const ratingEl = $('skill-detail-rating');
+	if (ratingWrap && ratingEl) {
+		ratingWrap.hidden = false;
+		const userRating = Math.round(rating);
+		const stars = [1, 2, 3, 4, 5].map((n) =>
+			`<button class="${n <= userRating ? 'active' : ''}" data-rating="${n}" aria-label="Rate ${n} star${n === 1 ? '' : 's'}">★</button>`,
+		).join('');
+		ratingEl.innerHTML = `${stars}<span class="rating-count">${skill.rating_count || 0} rating${skill.rating_count === 1 ? '' : 's'}</span>`;
+		ratingEl.querySelectorAll('[data-rating]').forEach((btn) => {
+			btn.addEventListener('click', () => rateSkill(skill.id, Number(btn.dataset.rating)));
+		});
+	}
+
+	// Tools provided — reuses the tool-card layout from the plugin detail page.
+	const toolsWrap = $('skill-detail-tools-wrap');
+	const toolsEl = $('skill-detail-tools');
+	const toolsCount = $('skill-detail-tools-count');
+	if (toolsCount) toolsCount.textContent = tools.length ? `${tools.length}` : '';
+	if (toolsWrap && toolsEl) {
+		if (!tools.length) {
+			toolsWrap.hidden = true;
+		} else {
+			toolsWrap.hidden = false;
+			toolsEl.innerHTML = tools.map((g) => {
+				const fn = g?.function || g?.clientDefinition || {};
+				return renderToolCard({ name: fn.name, description: fn.description, parameters: fn.parameters });
+			}).join('');
+		}
+	}
+
+	// Instructions / content.
+	const contentWrap = $('skill-detail-content-wrap');
+	const contentEl = $('skill-detail-content');
+	if (contentWrap && contentEl) {
+		if (skill.content) {
+			contentWrap.hidden = false;
+			contentEl.textContent = skill.content.length > 8000 ? skill.content.slice(0, 8000) + '\n\n…' : skill.content;
+		} else {
+			contentWrap.hidden = true;
+		}
+	}
+
+	// Per-call x402 gate — only shown for priced skills. Lets any x402 wallet
+	// pay the skill's per-call price in USDC and receive its payload; payment
+	// settles to the author. Backed by /api/x402/skill-call.
+	renderSkillX402(skill, paid);
+
+	// Related skills in the same category (excludes this one).
+	const relWrap = $('skill-detail-related-wrap');
+	const relEl = $('skill-detail-related');
+	if (relWrap && relEl) {
+		const related = skillsState.skills.filter((s) => s.id !== skill.id && s.category === skill.category).slice(0, 6);
+		if (related.length) {
+			relWrap.hidden = false;
+			relEl.innerHTML = related.map(renderSkillCard).join('');
+			relEl.querySelectorAll('[data-skill-id]').forEach((card) => {
+				card.addEventListener('click', () => navTo(`/marketplace/skills/${encodeURIComponent(card.dataset.skillId)}`));
+			});
+		} else {
+			relWrap.hidden = true;
+		}
+	}
+
+	setSocialMeta({
+		title: `${skill.name} — three.ws skill`,
+		description: skill.description || `An agent skill on three.ws providing ${tools.length} tool${tools.length === 1 ? '' : 's'}.`,
+		url: location.origin + location.pathname,
+		image: _socialMetaDefaults.image,
+	});
+	document.title = `${skill.name} · three.ws`;
+
+	_setSkillDetailState({ body: true });
 }
 
-async function toggleSkillInstall() {
-	const btn = $('skill-modal-install');
+// Copy text to the clipboard and flash the trigger button's label so the user
+// gets confirmation. Restores the original label after a beat.
+function copyToClipboard(text, btn) {
+	if (!navigator.clipboard) return;
+	navigator.clipboard.writeText(text).then(() => {
+		if (!btn) return;
+		const original = btn.textContent;
+		btn.textContent = 'Copied!';
+		btn.classList.add('copied');
+		setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1500);
+	}).catch((err) => console.error('[marketplace] clipboard', err));
+}
+
+// Render the per-call x402 panel. Free skills hide it entirely — there's
+// nothing to pay for. Paid skills get a live endpoint URL + a copy-pasteable
+// x402-fetch snippet priced at their per-call rate.
+function renderSkillX402(skill, paid) {
+	const wrap = $('skill-detail-x402-wrap');
+	if (!wrap) return;
+	if (!paid || !skill?.slug) {
+		wrap.hidden = true;
+		return;
+	}
+	wrap.hidden = false;
+
+	const price = Number(skill.price_per_call_usd) || 0;
+	const priceEl = $('skill-detail-x402-price');
+	if (priceEl) priceEl.textContent = `$${price.toFixed(3)} / call`;
+
+	const url = `${location.origin}/api/x402/skill-call?skill=${encodeURIComponent(skill.slug)}`;
+	const urlEl = $('skill-detail-x402-url');
+	if (urlEl) urlEl.textContent = url;
+
+	const codeEl = $('skill-detail-x402-code');
+	if (codeEl) {
+		codeEl.textContent =
+			`import { wrapFetchWithPayment } from 'x402-fetch';\n\n` +
+			`// wallet = a viem/ethers account funded with USDC on Base or Solana\n` +
+			`const fetchWithPay = wrapFetchWithPayment(fetch, wallet);\n` +
+			`const res = await fetchWithPay('${url}');\n` +
+			`const { skill, tools, content } = await res.json();\n` +
+			`// paid $${price.toFixed(3)} USDC → received ${skill.name}'s tool schema + instructions`;
+	}
+
+	const copyUrlBtn = $('skill-detail-x402-copy-url');
+	if (copyUrlBtn) copyUrlBtn.onclick = () => copyToClipboard(url, copyUrlBtn);
+	const copyCodeBtn = $('skill-detail-x402-copy-code');
+	if (copyCodeBtn) copyCodeBtn.onclick = () => copyToClipboard(codeEl?.textContent || '', copyCodeBtn);
+}
+
+async function toggleSkillInstall(id) {
+	const btn = $('skill-detail-install');
 	if (!btn || btn.disabled) return;
-	const id = btn.dataset.skillId;
-	if (!id) return;
-	const wasInstalled = btn.dataset.installed === '1';
+	const wasInstalled = !!_skillDetailData?.installed;
 	btn.disabled = true;
 	btn.textContent = wasInstalled ? 'Removing…' : 'Installing…';
 	try {
@@ -1921,13 +2076,15 @@ async function toggleSkillInstall() {
 			return;
 		}
 		if (!r.ok) throw new Error(`HTTP ${r.status}`);
-		await openSkillModal(id);
+		// Refresh the page data and the underlying grid so install state stays in sync.
+		_skillDetailId = null;
 		skillsState.loaded = false;
+		await loadSkillDetail(id);
 		loadSkillsTab(true);
 	} catch (err) {
 		console.error('[marketplace] skill install', err);
 		btn.disabled = false;
-		btn.textContent = wasInstalled ? '✓ Installed (click to remove)' : 'Install';
+		btn.textContent = wasInstalled ? 'Installed ✓ — Remove' : 'Install';
 	}
 }
 
@@ -1944,9 +2101,28 @@ async function rateSkill(id, rating) {
 			return;
 		}
 		if (!r.ok) throw new Error(`HTTP ${r.status}`);
-		await openSkillModal(id);
+		_skillDetailId = null;
+		await loadSkillDetail(id);
 	} catch (err) {
 		console.error('[marketplace] skill rate', err);
+	}
+}
+
+// Shared share helper: native share with clipboard fallback + button feedback.
+async function shareCurrentPage(btn, title, text) {
+	const url = location.href;
+	if (navigator.share) {
+		try { await navigator.share({ title, text, url }); return; }
+		catch { /* cancelled — fall through to copy */ }
+	}
+	try {
+		await navigator.clipboard.writeText(url);
+		const original = btn.textContent;
+		btn.textContent = 'Link copied ✓';
+		btn.classList.add('copied');
+		setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1800);
+	} catch (err) {
+		console.error('[marketplace] share copy', err);
 	}
 }
 
@@ -2765,8 +2941,13 @@ function renderAnimationsGrid() {
 
 	grid.querySelectorAll('.market-anim-card').forEach((card) => {
 		const animName = card.dataset.animName;
-		const anim = animState.items.find((a) => a.name === animName);
-		if (anim) card.addEventListener('click', () => openAnimPreview(anim));
+		card.setAttribute('role', 'link');
+		card.setAttribute('tabindex', '0');
+		const go = () => { if (animName) navTo(`/marketplace/animations/${encodeURIComponent(animName)}`); };
+		card.addEventListener('click', go);
+		card.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+		});
 	});
 }
 
@@ -2790,88 +2971,341 @@ function bindAnimationsEvents() {
 	});
 }
 
-// ── Animation preview modal ───────────────────────────────────────────────
+// ── Animation detail page ─────────────────────────────────────────────────
+// Rich, deep-linkable page at /marketplace/animations/:name. Plays the clip
+// live on a preview avatar, shows clip metadata, and lists more animations.
 
 const PREVIEW_AVATAR_GLB = '/animations/idle_female_jan25.glb';
 
-function openAnimPreview(anim) {
-	let overlay = $('anim-preview-overlay');
-	if (!overlay) {
-		overlay = document.createElement('div');
-		overlay.id = 'anim-preview-overlay';
-		overlay.className = 'anim-preview-overlay';
-		overlay.setAttribute('role', 'dialog');
-		overlay.setAttribute('aria-modal', 'true');
-		overlay.setAttribute('aria-label', 'Animation preview');
-		overlay.innerHTML = `
-			<div class="anim-preview-modal">
-				<div class="anim-preview-stage" id="anim-preview-stage">
-					<button class="anim-preview-close" id="anim-preview-close" aria-label="Close preview">×</button>
-				</div>
-				<div class="anim-preview-info">
-					<div class="anim-preview-eyebrow">Animation clip</div>
-					<div class="anim-preview-name" id="anim-preview-name"></div>
-					<div class="anim-preview-meta" id="anim-preview-meta"></div>
-					<p id="anim-preview-clip" style="font-family:var(--font-mono);font-size:11px;color:#a1a1aa;margin:0;word-break:break-all;"></p>
-					<div class="anim-preview-actions">
-						<button class="sale-save" id="anim-preview-copy" type="button">Copy clip name</button>
-					</div>
-				</div>
-			</div>`;
-		document.body.appendChild(overlay);
-		$('anim-preview-close').addEventListener('click', closeAnimPreview);
-		overlay.addEventListener('click', (e) => { if (e.target === overlay) closeAnimPreview(); });
-		document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAnimPreview(); }, { once: false });
+let _animDetailId = null;
+let _animDetailEl = null;
+
+function teardownAnimDetailStage() {
+	if (_animDetailEl) {
+		try { _animDetailEl.remove(); } catch {}
+		_animDetailEl = null;
+	}
+}
+
+async function loadAnimDetail(name) {
+	if (_animDetailId === name) return;
+
+	// Ensure the manifest is loaded (deep links land with an empty animState).
+	if (!animState.items.length) {
+		try {
+			const r = await fetch('/animations/manifest.json');
+			if (r.ok) {
+				const raw = await r.json();
+				animState.items = Array.isArray(raw) ? raw : (raw.animations || []);
+				animState.loaded = true;
+			}
+		} catch (err) {
+			console.error('[marketplace] anim manifest', err);
+		}
 	}
 
-	// Populate info panel
-	$('anim-preview-name').textContent = anim.label || anim.name || 'Animation';
+	if (readRoute().view !== 'anim-detail') return;
+
+	const anim = animState.items.find((a) => a.name === name);
+	if (!anim) {
+		teardownAnimDetailStage();
+		$('anim-detail-body').hidden = true;
+		$('anim-detail-empty').hidden = false;
+		setSocialMeta({
+			title: 'Animation not found · three.ws',
+			description: 'This clip may have been renamed or removed.',
+			url: location.origin + location.pathname,
+			image: _socialMetaDefaults.image,
+		});
+		return;
+	}
+
+	renderAnimDetail(anim);
+	_animDetailId = name;
+}
+
+function playAnimOnStage(anim) {
+	const stage = $('anim-detail-stage');
+	if (!stage) return;
+	teardownAnimDetailStage();
+	const load = $('anim-detail-stage-load');
+	stage.querySelectorAll('agent-3d').forEach((el) => el.remove());
+	if (load) load.hidden = false;
+
 	const isLoop = anim.loop !== false;
-	const typeClass = isLoop ? 'loop' : 'action';
-	const typeLabel = isLoop ? 'Ambient' : 'Action';
-	$('anim-preview-meta').innerHTML = `<span class="anim-type-pill ${typeClass}">${typeLabel}</span>`;
-	const clipEl = $('anim-preview-clip');
-	if (clipEl) clipEl.textContent = anim.name || '';
-
-	const copyBtn = $('anim-preview-copy');
-	if (copyBtn) {
-		copyBtn.onclick = () => {
-			navigator.clipboard?.writeText(anim.name || '').then(() => {
-				copyBtn.textContent = 'Copied!';
-				setTimeout(() => { copyBtn.textContent = 'Copy clip name'; }, 1500);
-			});
-		};
-	}
-
-	// Build or rebuild the 3D stage
-	const stage = $('anim-preview-stage');
-	const closeBtn = stage.querySelector('.anim-preview-close');
-	stage.innerHTML = '';
-	if (closeBtn) stage.appendChild(closeBtn);
-
 	const agentEl = document.createElement('agent-3d');
 	agentEl.setAttribute('src', PREVIEW_AVATAR_GLB);
 	agentEl.setAttribute('eager', '');
 	agentEl.style.cssText = 'width:100%;height:100%;display:block;';
-	stage.appendChild(agentEl);
-
 	agentEl.addEventListener('agent:ready', () => {
+		if (load) load.hidden = true;
 		agentEl.play?.(anim.name, { loop: isLoop, fade_ms: 300 });
 	}, { once: true });
-
-	// Show overlay
-	requestAnimationFrame(() => overlay.classList.add('show'));
+	stage.appendChild(agentEl);
+	_animDetailEl = agentEl;
 }
 
-function closeAnimPreview() {
-	const overlay = $('anim-preview-overlay');
-	if (!overlay) return;
-	overlay.classList.remove('show');
-	setTimeout(() => {
-		const stage = $('anim-preview-stage');
-		const closeBtn = stage?.querySelector('.anim-preview-close');
-		if (stage) { stage.innerHTML = ''; if (closeBtn) stage.appendChild(closeBtn); }
-	}, 200);
+function renderAnimDetail(anim) {
+	$('anim-detail-empty').hidden = true;
+	$('anim-detail-body').hidden = false;
+
+	const name = anim.label || anim.name || 'Animation';
+	const isLoop = anim.loop !== false;
+	const typeLabel = isLoop ? 'Ambient' : 'Action';
+
+	$('anim-detail-icon').textContent = anim.icon || (isLoop ? '↺' : '▶');
+	$('anim-detail-name').textContent = name;
+	$('anim-detail-clip').textContent = anim.name || '';
+
+	$('anim-detail-pills').innerHTML = [
+		`<span class="anim-type-pill ${isLoop ? 'loop' : 'action'}">${typeLabel}</span>`,
+		`<span class="stat-pill">${isLoop ? 'Loops' : 'Plays once'}</span>`,
+	].join('');
+
+	const replayBtn = $('anim-detail-replay');
+	if (replayBtn) replayBtn.onclick = () => playAnimOnStage(anim);
+
+	const copyBtn = $('anim-detail-copy');
+	if (copyBtn) {
+		copyBtn.onclick = () => {
+			navigator.clipboard?.writeText(anim.name || '').then(() => {
+				const original = copyBtn.textContent;
+				copyBtn.textContent = 'Copied ✓';
+				copyBtn.classList.add('copied');
+				setTimeout(() => { copyBtn.textContent = original; copyBtn.classList.remove('copied'); }, 1500);
+			});
+		};
+	}
+
+	const shareBtn = $('anim-detail-share');
+	if (shareBtn) shareBtn.onclick = () => shareCurrentPage(shareBtn, `${name} — three.ws animation`, `The "${name}" animation clip on three.ws`);
+
+	const rawBtn = $('anim-detail-raw');
+	if (rawBtn) {
+		if (anim.url) { rawBtn.hidden = false; rawBtn.href = anim.url; }
+		else rawBtn.hidden = true;
+	}
+
+	// More animations of the same type.
+	const relWrap = $('anim-detail-related-wrap');
+	const relEl = $('anim-detail-related');
+	if (relWrap && relEl) {
+		const related = animState.items
+			.filter((a) => a.name !== anim.name && (a.loop !== false) === isLoop)
+			.slice(0, 8);
+		if (related.length) {
+			relWrap.hidden = false;
+			relEl.innerHTML = related.map((a) => {
+				const rl = a.loop !== false;
+				return `<div class="market-anim-card" role="link" tabindex="0" data-anim-name="${escapeHtml(a.name || '')}">
+					<div class="anim-card-icon">${escapeHtml(a.icon || (rl ? '↺' : '▶'))}</div>
+					<div class="anim-card-body">
+						<div class="anim-card-name">${escapeHtml(a.label || a.name || 'Untitled')}</div>
+						<div class="anim-card-meta"><span class="anim-type-pill ${rl ? 'loop' : 'action'}">${rl ? 'Ambient' : 'Action'}</span></div>
+					</div>
+					<div class="anim-card-cta">View →</div>
+				</div>`;
+			}).join('');
+			relEl.querySelectorAll('[data-anim-name]').forEach((card) => {
+				card.addEventListener('click', () => navTo(`/marketplace/animations/${encodeURIComponent(card.dataset.animName)}`));
+			});
+		} else {
+			relWrap.hidden = true;
+		}
+	}
+
+	playAnimOnStage(anim);
+
+	setSocialMeta({
+		title: `${name} — three.ws animation`,
+		description: `The "${name}" ${typeLabel.toLowerCase()} animation clip, playable on any three.ws avatar.`,
+		url: location.origin + location.pathname,
+		image: _socialMetaDefaults.image,
+	});
+	document.title = `${name} · three.ws`;
+}
+
+// ── Onchain (ERC-8004) agent detail page ──────────────────────────────────
+// Rich, deep-linkable page at /marketplace/onchain/:chainId-:agentId. Replaces
+// the old behaviour of bouncing the user straight out to a block explorer.
+
+let _onchainDetailId = null;
+
+function _setOnchainDetailState({ skeleton = false, empty = false, body = false }) {
+	const skel = $('onchain-detail-skeleton');
+	const emptyEl = $('onchain-detail-empty');
+	const bodyEl = $('onchain-detail-body');
+	if (skel) skel.hidden = !skeleton;
+	if (emptyEl) emptyEl.hidden = !empty;
+	if (bodyEl) bodyEl.hidden = !body;
+}
+
+async function loadOnchainDetail(composite) {
+	if (_onchainDetailId === composite) return;
+	_setOnchainDetailState({ skeleton: true });
+
+	// Route id is "<chainId>-<agentId>"; agentId may itself contain no hyphen
+	// (it's a uint256 decimal), so split on the first hyphen only.
+	const dash = composite.indexOf('-');
+	const chainId = dash >= 0 ? composite.slice(0, dash) : '';
+	const agentId = dash >= 0 ? composite.slice(dash + 1) : '';
+
+	let item = state.onchainItems.find((a) => `${a.chainId}-${a.agentId}` === composite);
+	if (!item && chainId && agentId) {
+		try {
+			const url = new URL(`${API}/explore-item`, location.origin);
+			url.searchParams.set('kind', 'onchain');
+			url.searchParams.set('chain', chainId);
+			url.searchParams.set('id', agentId);
+			const r = await fetch(url);
+			if (r.ok) {
+				const j = await r.json();
+				item = j?.item || null;
+			}
+		} catch (err) {
+			console.error('[marketplace] onchain detail', err);
+		}
+	}
+
+	if (readRoute().view !== 'onchain-detail') return;
+
+	if (!item) {
+		_setOnchainDetailState({ empty: true });
+		setSocialMeta({
+			title: 'Agent not found · three.ws',
+			description: 'This onchain agent is no longer indexed, or the link is wrong.',
+			url: location.origin + location.pathname,
+			image: _socialMetaDefaults.image,
+		});
+		return;
+	}
+
+	renderOnchainDetail(item);
+	_onchainDetailId = composite;
+}
+
+function renderOnchainDetail(a) {
+	const name = a.name || `Agent #${a.agentId}`;
+	const chain = a.chainShortName || a.chainName || `Chain ${a.chainId}`;
+
+	// 3D / image stage.
+	const stage = $('onchain-detail-stage');
+	if (stage) {
+		stage.querySelectorAll('model-viewer, img').forEach((el) => el.remove());
+		if (a.glbUrl) {
+			stage.hidden = false;
+			const mv = document.createElement('model-viewer');
+			mv.setAttribute('src', a.glbUrl);
+			mv.setAttribute('alt', name);
+			mv.setAttribute('auto-rotate', '');
+			mv.setAttribute('rotation-per-second', '14deg');
+			mv.setAttribute('camera-controls', '');
+			mv.setAttribute('interaction-prompt', 'when-focused');
+			mv.setAttribute('autoplay', '');
+			mv.setAttribute('exposure', '1');
+			mv.setAttribute('shadow-intensity', '0.5');
+			mv.setAttribute('tone-mapping', 'aces');
+			if (a.image) mv.setAttribute('poster', a.image);
+			stage.appendChild(mv);
+		} else if (a.image) {
+			stage.hidden = false;
+			const img = document.createElement('img');
+			img.src = a.image;
+			img.alt = name;
+			img.loading = 'lazy';
+			stage.appendChild(img);
+		} else {
+			stage.hidden = true;
+		}
+	}
+
+	const iconEl = $('onchain-detail-icon');
+	if (iconEl) iconEl.textContent = initial(name);
+
+	$('onchain-detail-name').textContent = name;
+	const ownerEl = $('onchain-detail-owner');
+	if (ownerEl) ownerEl.textContent = a.ownerShort ? `Owner ${a.ownerShort}` : '';
+
+	const pills = [
+		'<span class="avatar-pill onchain">ERC-8004</span>',
+		`<span class="stat-pill">${escapeHtml(chain)}</span>`,
+	];
+	if (a.x402Support) pills.push('<span class="onchain-x402" title="Accepts x402 micropayments">x402</span>');
+	if (a.has3d) pills.push('<span class="stat-pill">3D</span>');
+	if (a.registeredAt) pills.push(`<span class="stat-pill">registered ${escapeHtml(liveTime(a.registeredAt))}</span>`);
+	$('onchain-detail-pills').innerHTML = pills.join('');
+
+	const descEl = $('onchain-detail-desc');
+	if (descEl) { descEl.textContent = a.description || ''; descEl.hidden = !a.description; }
+
+	// Actions.
+	const viewBtn = $('onchain-detail-view');
+	if (viewBtn) {
+		if (a.viewerUrl) { viewBtn.hidden = false; viewBtn.href = a.viewerUrl; }
+		else viewBtn.hidden = true;
+	}
+	const tokenBtn = $('onchain-detail-token');
+	if (tokenBtn) {
+		if (a.tokenExplorerUrl) { tokenBtn.hidden = false; tokenBtn.href = a.tokenExplorerUrl; }
+		else tokenBtn.hidden = true;
+	}
+	const ownerBtn = $('onchain-detail-owner-link');
+	if (ownerBtn) {
+		if (a.ownerExplorerUrl) { ownerBtn.hidden = false; ownerBtn.href = a.ownerExplorerUrl; }
+		else ownerBtn.hidden = true;
+	}
+	const shareBtn = $('onchain-detail-share');
+	if (shareBtn) shareBtn.onclick = () => shareCurrentPage(shareBtn, `${name} — ERC-8004 agent`, a.description || `An onchain ERC-8004 agent on ${chain}`);
+
+	// Services (x402 / advertised endpoints).
+	const svcWrap = $('onchain-detail-services-wrap');
+	const svcEl = $('onchain-detail-services');
+	const svcCount = $('onchain-detail-services-count');
+	const services = (a.services || []).filter((s) => s && (s.name || s.endpoint));
+	if (svcCount) svcCount.textContent = services.length ? `${services.length}` : '';
+	if (svcWrap && svcEl) {
+		if (!services.length) {
+			svcWrap.hidden = true;
+		} else {
+			svcWrap.hidden = false;
+			svcEl.innerHTML = services.map((s) => `<div class="tool-card">
+				<div class="tool-card-head">
+					<span class="tool-card-name">${escapeHtml(s.name || 'service')}</span>
+					${s.version ? `<span class="tool-param-type">v${escapeHtml(String(s.version))}</span>` : ''}
+				</div>
+				${s.endpoint ? `<p class="tool-card-desc"><span class="tool-card-endpoint">${escapeHtml(s.endpoint)}</span></p>` : ''}
+			</div>`).join('');
+		}
+	}
+
+	// Onchain identity facts.
+	const factsEl = $('onchain-detail-facts');
+	if (factsEl) {
+		const fact = (label, value, link) => {
+			if (!value) return '';
+			const v = link
+				? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener">${escapeHtml(value)}</a>`
+				: escapeHtml(value);
+			return `<div class="onchain-fact"><span class="onchain-fact-label">${escapeHtml(label)}</span><span class="onchain-fact-value">${v}</span></div>`;
+		};
+		factsEl.innerHTML = [
+			fact('Chain', chain),
+			fact('Agent ID', String(a.agentId)),
+			fact('Owner', a.owner || a.ownerShort, a.ownerExplorerUrl),
+			fact('Registered', a.registeredAt ? formatDate(a.registeredAt) : null),
+			a.registeredTx && a.tokenExplorerUrl ? fact('Token', `#${a.agentId}`, a.tokenExplorerUrl) : '',
+		].filter(Boolean).join('');
+	}
+
+	setSocialMeta({
+		title: `${name} — ERC-8004 agent · three.ws`,
+		description: a.description || `An onchain ERC-8004 agent on ${chain}.`,
+		url: location.origin + location.pathname,
+		image: a.image || _socialMetaDefaults.image,
+	});
+	document.title = `${name} · three.ws`;
+
+	_setOnchainDetailState({ body: true });
 }
 
 // ── Memory tab ───────────────────────────────────────────────────────────
@@ -3364,7 +3798,8 @@ function renderOnchainCard(a) {
 					reveal="auto"
 				></model-viewer>`
 			: `<div class="thumb-fallback"><span class="thumb-fallback-initial">${escapeHtml(initial(a.name))}</span></div>`;
-	return `<div class="market-card-avatar onchain" data-onchain-href="${escapeHtml(href)}">
+	const onchainId = a.chainId != null && a.agentId != null ? `${a.chainId}-${a.agentId}` : '';
+	return `<div class="market-card-avatar onchain" role="link" tabindex="0" data-onchain-id="${escapeHtml(onchainId)}" data-onchain-href="${escapeHtml(href)}">
 		<div class="thumb">${priceBadge}${preview}</div>
 		<div class="body">
 			<div class="title">${name}</div>
@@ -4410,6 +4845,12 @@ function bindEvents() {
 	// Plugin detail back button → return to the tools tab.
 	const toolDetailBack = $('tool-detail-back');
 	if (toolDetailBack) toolDetailBack.addEventListener('click', () => { _toolDetailId = null; navTo('/marketplace?tab=tools'); });
+	const skillDetailBack = $('skill-detail-back');
+	if (skillDetailBack) skillDetailBack.addEventListener('click', () => { _skillDetailId = null; navTo('/marketplace?tab=skills'); });
+	const animDetailBack = $('anim-detail-back');
+	if (animDetailBack) animDetailBack.addEventListener('click', () => { _animDetailId = null; teardownAnimDetailStage(); navTo('/marketplace?tab=animations'); });
+	const onchainDetailBack = $('onchain-detail-back');
+	if (onchainDetailBack) onchainDetailBack.addEventListener('click', () => { _onchainDetailId = null; navTo('/marketplace?tab=onchain'); });
 	$('d-fork').addEventListener('click', fork);
 	$('d-bookmark').addEventListener('click', toggleBookmark);
 	$('d-export-json')?.addEventListener('click', exportAgentJson);
@@ -5624,6 +6065,28 @@ function render() {
 		resetSocialMeta();
 	}
 
+	const skillDetailSec = $('market-skill-detail');
+	setHidden(skillDetailSec, r.view !== 'skill-detail');
+	if (r.view !== 'skill-detail' && _skillDetailId !== null) {
+		_skillDetailId = null;
+		resetSocialMeta();
+	}
+
+	const animDetailSec = $('market-anim-detail');
+	setHidden(animDetailSec, r.view !== 'anim-detail');
+	if (r.view !== 'anim-detail' && _animDetailId !== null) {
+		_animDetailId = null;
+		teardownAnimDetailStage();
+		resetSocialMeta();
+	}
+
+	const onchainDetailSec = $('market-onchain-detail');
+	setHidden(onchainDetailSec, r.view !== 'onchain-detail');
+	if (r.view !== 'onchain-detail' && _onchainDetailId !== null) {
+		_onchainDetailId = null;
+		resetSocialMeta();
+	}
+
 	const avatarDetailSec = $('market-avatar-detail');
 	// Leaving the avatar-detail view: clear the cached id so re-entry reloads
 	// cleanly, and restore the page's default social meta.
@@ -5657,6 +6120,45 @@ function render() {
 		setHidden(avatarDetailSec, true);
 		loadToolDetail(r.id);
 		toolDetailSec?.scrollIntoView({ behavior: 'instant', block: 'start' });
+	} else if (r.view === 'skill-detail') {
+		setHidden(discovery, true);
+		setHidden(detail, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
+		setHidden(avatarDetailSec, true);
+		loadSkillDetail(r.id);
+		skillDetailSec?.scrollIntoView({ behavior: 'instant', block: 'start' });
+	} else if (r.view === 'anim-detail') {
+		setHidden(discovery, true);
+		setHidden(detail, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
+		setHidden(avatarDetailSec, true);
+		loadAnimDetail(r.id);
+		animDetailSec?.scrollIntoView({ behavior: 'instant', block: 'start' });
+	} else if (r.view === 'onchain-detail') {
+		setHidden(discovery, true);
+		setHidden(detail, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
+		setHidden(earnSec, true);
+		setHidden(animSec, true);
+		setHidden(memorySec, true);
+		setHidden(avatarDetailSec, true);
+		loadOnchainDetail(r.id);
+		onchainDetailSec?.scrollIntoView({ behavior: 'instant', block: 'start' });
 	} else if (r.view === 'detail') {
 		loadDetail(r.id);
 		setHidden(discovery, true);

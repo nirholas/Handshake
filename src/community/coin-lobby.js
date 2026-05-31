@@ -84,6 +84,18 @@ export class CoinLobby {
 		search.addEventListener('input', () => this._filter(search.value));
 		this.search = search;
 		head.appendChild(search);
+
+		// Always-present escape hatch: the lobby renders over the live walk
+		// scene (walk.js boots independently behind it), so dismissing it drops
+		// the visitor straight into the default world to walk solo — no coin
+		// required. Without this the lobby traps anyone who lands on bare /walk,
+		// and entirely blocks the page when the worlds API is unavailable.
+		const skip = el('button', 'clobby__skip', 'Walk solo →');
+		skip.type = 'button';
+		skip.title = 'Skip the lobby and walk the default world';
+		skip.addEventListener('click', () => this._skip());
+		head.appendChild(skip);
+
 		inner.appendChild(head);
 
 		this.grid = el('div', 'clobby__grid');
@@ -233,6 +245,14 @@ export class CoinLobby {
 		for (const w of this.worlds) this.grid.appendChild(this._card(w));
 	}
 
+	_skip() {
+		// The walk scene (walk.js) is already live behind this overlay, so
+		// removing the lobby drops the visitor straight into the default world
+		// to walk solo. This is the escape hatch when no coin is chosen or the
+		// worlds API is unavailable.
+		this.destroy();
+	}
+
 	destroy() {
 		this.root?.remove();
 	}
@@ -254,6 +274,12 @@ const STYLES = `
 .clobby__sub{margin:0;color:#93a4cc;max-width:560px}
 .clobby__search{flex:0 0 auto;width:min(260px,100%);padding:11px 15px;border-radius:12px;
  background:rgba(255,255,255,.05);border:1px solid rgba(120,150,220,.22);color:#eaf0ff;font:inherit;transition:border-color .2s}
+.clobby__skip{flex:0 0 auto;margin-left:10px;padding:11px 16px;border-radius:12px;cursor:pointer;
+ background:rgba(123,150,255,.16);border:1px solid rgba(123,150,255,.35);color:#cfe0ff;font:inherit;font-weight:650;
+ transition:background .18s,border-color .18s,transform .12s}
+.clobby__skip:hover{background:rgba(123,150,255,.28);border-color:rgba(123,150,255,.6)}
+.clobby__skip:active{transform:scale(.97)}
+.clobby__skip:focus-visible{outline:2px solid #5b8cff;outline-offset:2px}
 .clobby__search:focus{outline:none;border-color:#5b8cff;background:rgba(255,255,255,.08)}
 .clobby__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
 .cw{position:relative;display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:18px;cursor:pointer;

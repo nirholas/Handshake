@@ -1155,6 +1155,86 @@
 				border-color: rgba(255, 255, 255, 0.35);
 				box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 			}
+			.skill-x402-badge {
+				display: inline-flex;
+				align-items: center;
+				padding: 2px 7px;
+				border-radius: 999px;
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.04em;
+				color: #6ee7b7;
+				background: rgba(52, 211, 153, 0.12);
+				border: 1px solid rgba(52, 211, 153, 0.3);
+			}
+			/* Per-call x402 panel on the skill detail page */
+			.skill-x402-block .skill-x402-price {
+				margin-left: auto;
+				font-family: 'Space Grotesk', sans-serif;
+				font-weight: 700;
+				font-size: 13px;
+				color: #6ee7b7;
+			}
+			.skill-x402-lead {
+				color: rgba(255, 255, 255, 0.6);
+				font-size: 13px;
+				line-height: 1.5;
+				margin: 8px 0 14px;
+			}
+			.skill-x402-endpoint {
+				display: flex;
+				align-items: stretch;
+				gap: 8px;
+				margin-bottom: 14px;
+			}
+			.skill-x402-endpoint code {
+				flex: 1;
+				min-width: 0;
+				overflow-x: auto;
+				white-space: nowrap;
+				padding: 9px 12px;
+				border-radius: 8px;
+				background: rgba(0, 0, 0, 0.35);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 12px;
+				color: #e4e4e7;
+			}
+			.skill-x402-copy {
+				flex-shrink: 0;
+				white-space: nowrap;
+			}
+			.skill-x402-copy.copied {
+				color: #6ee7b7;
+				border-color: rgba(52, 211, 153, 0.4);
+			}
+			.skill-x402-snippet {
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 10px;
+				overflow: hidden;
+				background: rgba(0, 0, 0, 0.3);
+			}
+			.skill-x402-snippet-head {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 8px;
+				padding: 8px 12px;
+				background: rgba(255, 255, 255, 0.03);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+				font-size: 12px;
+				color: rgba(255, 255, 255, 0.55);
+			}
+			.skill-x402-snippet pre {
+				margin: 0;
+				padding: 14px;
+				overflow-x: auto;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 12px;
+				line-height: 1.6;
+				color: #d4d4d8;
+			}
 			.market-skill-card .skill-installed-tag {
 				display: inline-flex;
 				align-items: center;
@@ -1758,95 +1838,19 @@
 				opacity: 0.7;
 			}
 
-			/* Animation preview overlay */
-			.anim-preview-overlay {
-				position: fixed;
-				inset: 0;
-				background: rgba(0, 0, 0, 0.82);
-				backdrop-filter: blur(8px);
-				z-index: 300;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				padding: 24px;
-				opacity: 0;
-				pointer-events: none;
-				transition: opacity 0.2s ease;
-			}
-			.anim-preview-overlay.show { opacity: 1; pointer-events: auto; }
-			.anim-preview-modal {
-				background: #0d0d0d;
-				border: 1px solid #1f1f1f;
-				border-radius: 18px;
-				width: min(720px, 100%);
-				max-height: 90vh;
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				overflow: hidden;
-				box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
-			}
-			.anim-preview-stage {
-				background: radial-gradient(circle at 50% 60%, rgba(255,255,255,0.05), transparent 70%), linear-gradient(180deg, #050505, #0a0a0a);
-				min-height: 320px;
+			/* Animation detail page stage */
+			.anim-detail-stage {
 				position: relative;
+				background: radial-gradient(circle at 50% 60%, rgba(255,255,255,0.05), transparent 70%), linear-gradient(180deg, #050505, #0a0a0a);
+				border: 1px solid var(--mk-border);
+				border-radius: 18px;
+				min-height: 420px;
+				overflow: hidden;
+				margin: 8px 0 4px;
 			}
-			.anim-preview-stage model-viewer {
-				width: 100%;
-				height: 100%;
-				--poster-color: transparent;
-				background: transparent;
-			}
-			.anim-preview-info {
-				padding: 24px;
-				display: flex;
-				flex-direction: column;
-				gap: 14px;
-				overflow-y: auto;
-			}
-			.anim-preview-eyebrow {
-				font-family: 'Space Grotesk', sans-serif;
-				font-size: 10px;
-				letter-spacing: 0.18em;
-				text-transform: uppercase;
-				color: #a1a1aa;
-				font-weight: 600;
-			}
-			.anim-preview-name {
-				font-family: 'Space Grotesk', sans-serif;
-				font-size: 22px;
-				font-weight: 700;
-				color: #fafafa;
-				line-height: 1.2;
-			}
-			.anim-preview-meta {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 6px;
-			}
-			.anim-preview-close {
-				position: absolute;
-				top: 12px;
-				right: 14px;
-				background: rgba(0, 0, 0, 0.5);
-				border: 1px solid #1f1f1f;
-				color: #fafafa;
-				width: 30px;
-				height: 30px;
-				border-radius: 50%;
-				cursor: pointer;
-				font-size: 18px;
-				z-index: 2;
-			}
-			.anim-preview-actions {
-				margin-top: auto;
-				display: flex;
-				flex-direction: column;
-				gap: 8px;
-			}
-			@media (max-width: 600px) {
-				.anim-preview-modal { grid-template-columns: 1fr; }
-				.anim-preview-stage { min-height: 240px; }
-			}
+			.anim-detail-stage agent-3d { width: 100%; height: 100%; display: block; }
+			.anim-detail-stage-load { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+			@media (max-width: 600px) { .anim-detail-stage { min-height: 300px; } }
 
 			/* ── Memory tab ───────────────────────────────────────────────── */
 			.market-memory-body {
@@ -2129,7 +2133,7 @@
 				<a href="/marketplace?tab=avatars" data-nav="avatars"><span class="ico">◉</span> <span>Avatars</span><span class="nav-count hot" id="nav-count-avatar" hidden></span></a>
 				<a href="/marketplace?tab=tools" data-nav="tools"><span class="ico">⚙</span> <span>Tools</span></a>
 				<a href="/marketplace?tab=skills" data-nav="skills"><span class="ico">≡</span> <span>Skills</span></a>
-				<a href="/dashboard" data-nav="model"><span class="ico">◉</span> <span>Model</span></a>
+				<a href="/create/studio" data-nav="studio"><span class="ico">◆</span> <span>Studio</span></a>
 				<a href="/marketplace?tab=mine" data-nav="mine"><span class="ico">◱</span> <span>My Agents</span></a>
 				<a href="/marketplace?tab=purchases" data-nav="purchases"><span class="ico">✓</span> <span>My Purchases</span></a>
 				<a href="/marketplace?tab=earn" data-nav="earn"><span class="ico">$</span> <span>Earn</span></a>
@@ -2471,26 +2475,6 @@
 				</div>
 			</section>
 
-			<!-- Skill detail modal -->
-			<div class="avatar-modal-overlay" id="skill-modal-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="skill-modal-title">
-				<div class="avatar-modal" role="document" style="grid-template-columns: 1fr;">
-					<button class="avatar-modal-close" id="skill-modal-close" aria-label="Close">×</button>
-					<div class="avatar-modal-side">
-						<div class="avatar-modal-eyebrow" id="skill-modal-eyebrow">Skill</div>
-						<h2 class="avatar-modal-title" id="skill-modal-title">—</h2>
-						<p class="avatar-modal-desc" id="skill-modal-desc"></p>
-						<div class="avatar-modal-meta" id="skill-modal-meta"></div>
-						<div id="skill-modal-rating" class="market-skill-rating" hidden></div>
-						<div id="skill-modal-tools" class="market-skill-tools" hidden></div>
-						<div id="skill-modal-content" class="market-skill-content" hidden></div>
-						<div class="avatar-modal-actions">
-							<button class="btn-primary" id="skill-modal-install">Install</button>
-							<button class="btn-secondary" id="skill-modal-author" hidden></button>
-						</div>
-					</div>
-				</div>
-			</div>
-
 			<!-- Plugins tab -->
 			<section class="market-tools" id="market-tools" hidden>
 				<header class="market-topbar plugins-topbar">
@@ -2656,6 +2640,164 @@
 								<span class="tool-detail-block-count" id="tool-detail-tools-count"></span>
 							</div>
 							<div class="tool-detail-tools" id="tool-detail-tools"></div>
+						</section>
+					</div>
+				</div>
+			</section>
+			<!-- Skill deep-link detail page -->
+			<section class="market-tool-detail market-skill-detail" id="market-skill-detail" hidden aria-label="Skill detail">
+				<div class="market-tool-detail-inner">
+					<button class="market-back" id="skill-detail-back" aria-label="Back to skills">←</button>
+					<div class="tool-detail-skeleton" id="skill-detail-skeleton">
+						<div class="tool-skel-head">
+							<div class="tool-skel-icon"></div>
+							<div class="tool-skel-lines"><div class="tool-skel-line w60"></div><div class="tool-skel-line w30"></div></div>
+						</div>
+						<div class="tool-skel-line w90"></div>
+						<div class="tool-skel-line w80"></div>
+						<div class="tool-skel-card"></div>
+					</div>
+					<div class="tool-detail-empty" id="skill-detail-empty" hidden>
+						<span class="tool-detail-empty-glyph" aria-hidden="true">◌</span>
+						<h2 class="tool-detail-empty-title">Skill not found</h2>
+						<p class="tool-detail-empty-msg">This skill may have been removed or the link is wrong.</p>
+						<a class="btn-secondary tool-detail-empty-cta" href="/marketplace?tab=skills">Browse skills</a>
+					</div>
+					<div class="tool-detail-body" id="skill-detail-body" hidden>
+						<header class="tool-detail-hero">
+							<div class="tool-detail-icon" id="skill-detail-icon" aria-hidden="true">?</div>
+							<div class="tool-detail-hero-text">
+								<div class="market-detail-eyebrow" id="skill-detail-eyebrow">Skill</div>
+								<h1 class="tool-detail-name" id="skill-detail-name">—</h1>
+								<p class="tool-detail-author" id="skill-detail-author" hidden></p>
+							</div>
+							<div class="tool-detail-price" id="skill-detail-price"></div>
+						</header>
+						<div class="tool-detail-pills" id="skill-detail-pills"></div>
+						<p class="tool-detail-desc" id="skill-detail-desc"></p>
+						<div class="tool-detail-actions" id="skill-detail-actions">
+							<button class="btn-primary tool-detail-cta" id="skill-detail-install">Install</button>
+							<button type="button" class="btn-secondary" id="skill-detail-share">Share</button>
+							<button type="button" class="btn-secondary" id="skill-detail-author-btn" hidden></button>
+						</div>
+						<section class="tool-detail-block" id="skill-detail-rating-wrap" hidden>
+							<h2 class="tool-detail-block-title">Rate this skill</h2>
+							<div id="skill-detail-rating" class="market-skill-rating"></div>
+						</section>
+						<section class="tool-detail-block" id="skill-detail-tools-wrap" hidden>
+							<div class="tool-detail-block-head">
+								<h2 class="tool-detail-block-title">Tools provided</h2>
+								<span class="tool-detail-block-count" id="skill-detail-tools-count"></span>
+							</div>
+							<div class="tool-detail-tools" id="skill-detail-tools"></div>
+						</section>
+						<section class="tool-detail-block" id="skill-detail-content-wrap" hidden>
+							<h2 class="tool-detail-block-title">Instructions</h2>
+							<pre class="skill-detail-content" id="skill-detail-content"></pre>
+						</section>
+						<section class="tool-detail-block skill-x402-block" id="skill-detail-x402-wrap" hidden>
+							<div class="tool-detail-block-head">
+								<h2 class="tool-detail-block-title">Call this skill · x402</h2>
+								<span class="skill-x402-price" id="skill-detail-x402-price"></span>
+							</div>
+							<p class="skill-x402-lead">Pay per call in USDC (Base or Solana) and get the skill's tool schema and instructions back. Settlement routes straight to the author — no account needed, just an x402 wallet.</p>
+							<div class="skill-x402-endpoint">
+								<code id="skill-detail-x402-url"></code>
+								<button type="button" class="btn-secondary skill-x402-copy" id="skill-detail-x402-copy-url" aria-label="Copy endpoint URL">Copy</button>
+							</div>
+							<div class="skill-x402-snippet">
+								<div class="skill-x402-snippet-head">
+									<span>Call with x402-fetch</span>
+									<button type="button" class="btn-secondary skill-x402-copy" id="skill-detail-x402-copy-code" aria-label="Copy code snippet">Copy code</button>
+								</div>
+								<pre id="skill-detail-x402-code"></pre>
+							</div>
+						</section>
+						<section class="tool-detail-block" id="skill-detail-related-wrap" hidden>
+							<h2 class="tool-detail-block-title">Related skills</h2>
+							<div class="market-grid" id="skill-detail-related"></div>
+						</section>
+					</div>
+				</div>
+			</section>
+			<!-- Animation deep-link detail page -->
+			<section class="market-tool-detail market-anim-detail" id="market-anim-detail" hidden aria-label="Animation detail">
+				<div class="market-tool-detail-inner">
+					<button class="market-back" id="anim-detail-back" aria-label="Back to animations">←</button>
+					<div class="tool-detail-empty" id="anim-detail-empty" hidden>
+						<span class="tool-detail-empty-glyph" aria-hidden="true">◌</span>
+						<h2 class="tool-detail-empty-title">Animation not found</h2>
+						<p class="tool-detail-empty-msg">This clip may have been renamed or removed.</p>
+						<a class="btn-secondary tool-detail-empty-cta" href="/marketplace?tab=animations">Browse animations</a>
+					</div>
+					<div class="tool-detail-body" id="anim-detail-body" hidden>
+						<div class="anim-detail-stage" id="anim-detail-stage">
+							<div class="anim-detail-stage-load" id="anim-detail-stage-load"><span class="avatar-detail-load-label">Loading preview…</span></div>
+						</div>
+						<header class="tool-detail-hero">
+							<div class="tool-detail-icon" id="anim-detail-icon" aria-hidden="true">▶</div>
+							<div class="tool-detail-hero-text">
+								<div class="market-detail-eyebrow">Animation clip</div>
+								<h1 class="tool-detail-name" id="anim-detail-name">—</h1>
+								<p class="tool-detail-id" id="anim-detail-clip"></p>
+							</div>
+						</header>
+						<div class="tool-detail-pills" id="anim-detail-pills"></div>
+						<div class="tool-detail-actions" id="anim-detail-actions">
+							<button class="btn-primary tool-detail-cta" id="anim-detail-replay">Replay</button>
+							<button type="button" class="btn-secondary" id="anim-detail-copy">Copy clip name</button>
+							<button type="button" class="btn-secondary" id="anim-detail-share">Share</button>
+							<a class="btn-secondary" id="anim-detail-raw" href="#" target="_blank" rel="noopener">View clip JSON ↗</a>
+						</div>
+						<section class="tool-detail-block" id="anim-detail-related-wrap" hidden>
+							<h2 class="tool-detail-block-title">More animations</h2>
+							<div class="market-grid market-anim-grid" id="anim-detail-related"></div>
+						</section>
+					</div>
+				</div>
+			</section>
+			<!-- Onchain (ERC-8004) agent deep-link detail page -->
+			<section class="market-tool-detail market-onchain-detail" id="market-onchain-detail" hidden aria-label="Onchain agent detail">
+				<div class="market-tool-detail-inner">
+					<button class="market-back" id="onchain-detail-back" aria-label="Back to onchain agents">←</button>
+					<div class="tool-detail-skeleton" id="onchain-detail-skeleton">
+						<div class="tool-skel-card" style="height:320px"></div>
+						<div class="tool-skel-head"><div class="tool-skel-icon"></div><div class="tool-skel-lines"><div class="tool-skel-line w60"></div><div class="tool-skel-line w30"></div></div></div>
+					</div>
+					<div class="tool-detail-empty" id="onchain-detail-empty" hidden>
+						<span class="tool-detail-empty-glyph" aria-hidden="true">◌</span>
+						<h2 class="tool-detail-empty-title">Agent not found</h2>
+						<p class="tool-detail-empty-msg">This onchain agent is no longer indexed, or the link is wrong.</p>
+						<a class="btn-secondary tool-detail-empty-cta" href="/marketplace?tab=onchain">Browse onchain agents</a>
+					</div>
+					<div class="tool-detail-body" id="onchain-detail-body" hidden>
+						<div class="onchain-detail-stage" id="onchain-detail-stage" hidden></div>
+						<header class="tool-detail-hero">
+							<div class="tool-detail-icon" id="onchain-detail-icon" aria-hidden="true">?</div>
+							<div class="tool-detail-hero-text">
+								<div class="market-detail-eyebrow">ERC-8004 onchain agent</div>
+								<h1 class="tool-detail-name" id="onchain-detail-name">—</h1>
+								<p class="tool-detail-id" id="onchain-detail-owner"></p>
+							</div>
+						</header>
+						<div class="tool-detail-pills" id="onchain-detail-pills"></div>
+						<p class="tool-detail-desc" id="onchain-detail-desc"></p>
+						<div class="tool-detail-actions" id="onchain-detail-actions">
+							<a class="btn-primary tool-detail-cta" id="onchain-detail-view" href="#">Open in 3D viewer ↗</a>
+							<a class="btn-secondary" id="onchain-detail-token" href="#" target="_blank" rel="noopener">View token on explorer ↗</a>
+							<a class="btn-secondary" id="onchain-detail-owner-link" href="#" target="_blank" rel="noopener">View owner ↗</a>
+							<button type="button" class="btn-secondary" id="onchain-detail-share">Share</button>
+						</div>
+						<section class="tool-detail-block" id="onchain-detail-services-wrap" hidden>
+							<div class="tool-detail-block-head">
+								<h2 class="tool-detail-block-title">Services</h2>
+								<span class="tool-detail-block-count" id="onchain-detail-services-count"></span>
+							</div>
+							<div class="tool-detail-tools" id="onchain-detail-services"></div>
+						</section>
+						<section class="tool-detail-block">
+							<h2 class="tool-detail-block-title">Onchain identity</h2>
+							<div class="onchain-detail-facts" id="onchain-detail-facts"></div>
 						</section>
 					</div>
 				</div>
