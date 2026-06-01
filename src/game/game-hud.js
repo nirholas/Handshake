@@ -47,6 +47,10 @@ const PROP_ICON = {
 	'glasses-shades': '🕶️',
 };
 
+// Cosmetics at or above this price ask for a second confirming click before the
+// gold is spent, so a stray tap never burns a big purchase.
+const CONFIRM_PRICE = 400;
+
 const SKILL_LABEL = { combat: 'Combat', woodcutting: 'Woodcutting', mining: 'Mining', fishing: 'Fishing', cooking: 'Cooking' };
 
 function fmtCountdown(ms) {
@@ -95,6 +99,10 @@ export class GameHud {
 		// Wardrobe try-before-equip: the id currently previewed on the local
 		// avatar (null = none). Local-only; cleared when the shop closes.
 		this._previewId = null;
+		// Two-step buy confirmation for pricier cosmetics: the id awaiting a second
+		// click (null = none) and the timer that resets it if the player hesitates.
+		this._confirmBuyId = null;
+		this._confirmTimer = null;
 		// Marketplace (Task 20): the latest board (active listings + your own), the
 		// token-payment capability flags, the open flag + active tab, per-listing
 		// "busy" labels driven by the controller during an on-chain buy, an error
@@ -192,6 +200,7 @@ export class GameHud {
 					<div class="kq-shop-tabs" role="tablist">
 						<button class="kq-shop-tab kq-shop-tab--on" id="kq-shop-tab-shop" type="button" role="tab" aria-selected="true">Shop</button>
 						<button class="kq-shop-tab" id="kq-shop-tab-wardrobe" type="button" role="tab" aria-selected="false">Wardrobe</button>
+						<button class="kq-shop-tab" id="kq-shop-tab-collection" type="button" role="tab" aria-selected="false">Collection</button>
 					</div>
 					<p class="kq-shop-note">Cosmetics are purely cosmetic — they change how you look, never how you play.</p>
 					<div class="kq-shop-body" id="kq-shop-body"></div>
@@ -244,6 +253,7 @@ export class GameHud {
 		this.elShopGold = root.querySelector('#kq-shop-gold');
 		this.elShopTabShop = root.querySelector('#kq-shop-tab-shop');
 		this.elShopTabWardrobe = root.querySelector('#kq-shop-tab-wardrobe');
+		this.elShopTabCollection = root.querySelector('#kq-shop-tab-collection');
 
 		this.elQuestBtn.addEventListener('click', () => this.toggleQuests());
 		root.querySelector('#kq-quests-x').addEventListener('click', () => this.closeQuests());
@@ -262,6 +272,7 @@ export class GameHud {
 		this.elShop.addEventListener('click', (e) => { if (e.target === this.elShop) this.closeShop(); });
 		this.elShopTabShop.addEventListener('click', () => this._setShopTab('shop'));
 		this.elShopTabWardrobe.addEventListener('click', () => this._setShopTab('wardrobe'));
+		this.elShopTabCollection.addEventListener('click', () => this._setShopTab('collection'));
 
 		// Marketplace (Task 20).
 		this.elMarketBtn = root.querySelector('#kq-market-btn');
@@ -630,20 +641,31 @@ export class GameHud {
 	}
 
 	_setShopTab(tab) {
-		this._shopTab = tab === 'wardrobe' ? 'wardrobe' : 'shop';
-		const onShop = this._shopTab === 'shop';
-		this.elShopTabShop.classList.toggle('kq-shop-tab--on', onShop);
-		this.elShopTabWardrobe.classList.toggle('kq-shop-tab--on', !onShop);
-		this.elShopTabShop.setAttribute('aria-selected', String(onShop));
-		this.elShopTabWardrobe.setAttribute('aria-selected', String(!onShop));
+		this._shopTab = ['shop', 'wardrobe', 'collection'].includes(tab) ? tab : 'shop';
+		this._clearConfirm();
+		const tabs = { shop: this.elShopTabShop, wardrobe: this.elShopTabWardrobe, collection: this.elShopTabCollection };
+		for (const [name, btn] of Object.entries(tabs)) {
+			const on = name === this._shopTab;
+			btn.classList.toggle('kq-shop-tab--on', on);
+			btn.setAttribute('aria-selected', String(on));
+		}
 		this._renderShop();
+	}
+
+	// Reset any pending two-step buy confirmation (tab switch, close, board refresh).
+	_clearConfirm() {
+		if (this._confirmTimer) { clearTimeout(this._confirmTimer); this._confirmTimer = null; }
+		this._confirmBuyId = null;
 	}
 
 	_renderShop() {
 		if (!this._shopOpen) return;
 		const body = this.elShopBody;
 		if (!this.cosmetics.size) { body.replaceChildren(el('p', 'kq-empty', 'Loading the shop…')); return; }
-		body.replaceChildren(this._shopTab === 'wardrobe' ? this._renderWardrobe() : this._renderShopCatalog());
+		const view = this._shopTab === 'wardrobe' ? this._renderWardrobe()
+			: this._shopTab === 'collection' ? this._renderCollection()
+			: this._renderShopCatalog();
+		body.replaceChildren(view);
 	}
 
 	// Buy tab: the rotating board grouped by bucket, each rotating group headed by a
@@ -680,8 +702,11 @@ export class GameHud {
 	}
 
 	_shopCard(c, owned) {
+		const equipped = this.shop?.equipped || '';
 		const affordable = this.gold >= c.price;
-		const card = el('div', `kq-cos-card kq-cos--${c.rarity}${owned ? ' kq-cos--owned' : affordable ? '' : ' kq-cos--short'}`);
+		const card = el('div', `kq-cos-card kq-cos--${c.rarity}`
+			+ (owned ? ' kq-cos--owned' : affordable ? '' : ' kq-cos--short')
+			+ (equipped === c.id ? ' kq-cos--equipped' : ''));
 		card.style.setProperty('--cos-accent', this._rarityColor(c.rarity));
 		card.appendChild(this._cosSwatch(c));
 		const meta = el('div', 'kq-cos-meta');
@@ -690,17 +715,45 @@ export class GameHud {
 		card.appendChild(meta);
 		const foot = el('div', 'kq-cos-foot');
 		if (owned) {
-			foot.appendChild(el('span', 'kq-cos-owned', '✓ Owned'));
+			// Already bought — equip straight from the shop (no trip to the wardrobe).
+			if (equipped === c.id) {
+				foot.appendChild(el('span', 'kq-cos-equipped', '✓ Equipped'));
+			} else {
+				const b = el('button', 'kq-btn kq-cos-equip', 'Equip');
+				b.type = 'button';
+				b.addEventListener('click', () => this._commitCosmetic(c.id));
+				foot.appendChild(b);
+			}
 		} else {
 			foot.appendChild(el('span', 'kq-cos-price' + (affordable ? '' : ' kq-cos-price--short'), `🪙 ${c.price.toLocaleString('en-US')}`));
-			const btn = el('button', 'kq-btn kq-cos-buy' + (affordable ? '' : ' kq-btn-disabled'), affordable ? 'Buy' : `Need ${(c.price - this.gold).toLocaleString('en-US')}`);
+			const confirming = this._confirmBuyId === c.id;
+			const label = !affordable ? `Need ${(c.price - this.gold).toLocaleString('en-US')}` : confirming ? 'Confirm?' : 'Buy';
+			const btn = el('button', 'kq-btn kq-cos-buy' + (affordable ? '' : ' kq-btn-disabled') + (confirming ? ' kq-cos-buy--confirm' : ''), label);
 			btn.type = 'button';
 			btn.disabled = !affordable;
-			if (affordable) btn.addEventListener('click', () => this.opts.onBuyCosmetic?.(c.id));
+			if (affordable) btn.addEventListener('click', () => this._buyClicked(c));
 			foot.appendChild(btn);
 		}
 		card.appendChild(foot);
 		return card;
+	}
+
+	// Buy with a one-tap confirm for pricier cosmetics: cheap looks buy on the first
+	// click; anything >= CONFIRM_PRICE arms a "Confirm?" state that the next click
+	// (within a few seconds) commits, so a misclick never spends a big sum.
+	_buyClicked(c) {
+		if (c.price < CONFIRM_PRICE || this._confirmBuyId === c.id) {
+			this._clearConfirm();
+			this.opts.onBuyCosmetic?.(c.id);
+			return;
+		}
+		this._clearConfirm();
+		this._confirmBuyId = c.id;
+		this._confirmTimer = setTimeout(() => {
+			this._confirmBuyId = null;
+			if (this._shopOpen && this._shopTab === 'shop') this._renderShop();
+		}, 4000);
+		this._renderShop();
 	}
 
 	// Wardrobe tab: a "Default look" tile (unequip) plus every owned cosmetic, with

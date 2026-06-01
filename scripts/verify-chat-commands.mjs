@@ -117,9 +117,7 @@ check(await page.locator('#kg-chat-hint').isHidden(), 'mouse pick completes + cl
 // Seed the history directly via the game instance (net is offline so chat() is a no-op).
 await page.evaluate(() => {
 	const g = window.__ISO__;
-	if (!g._chatHistory) g._chatHistory = [];
-	g._chatHistory.push('hello realm');
-	g._chatHistory.push('/who');
+	g._chatHistory = ['hello realm', '/who']; // reset to a known state
 	g._chatHistoryCursor = -1;
 	g._chatHistoryDraft = '';
 });

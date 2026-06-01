@@ -82,7 +82,16 @@ export default wrap(async (req, res) => {
 });
 
 async function graphWithPresence(me) {
-	const graph = await listGraph(me);
+	let graph;
+	try {
+		graph = await listGraph(me);
+	} catch (err) {
+		// Friends tables may not be migrated yet — return an empty graph rather than 500.
+		if (err?.message?.includes('relation') || err?.message?.includes('does not exist')) {
+			return { friends: [], incoming: [], outgoing: [] };
+		}
+		throw err;
+	}
 	const ids = [
 		...graph.friends.map((f) => f.id),
 		...graph.incoming.map((f) => f.id),

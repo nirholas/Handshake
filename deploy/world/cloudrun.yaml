@@ -59,6 +59,11 @@ spec:
               value: /world/assets
             - name: ASSETS_BASE_URL
               value: https://world.three.ws/assets
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hyperfy-jwt-secret
+                  key: latest
           resources:
             limits:
               cpu: "2"

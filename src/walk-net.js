@@ -163,14 +163,17 @@ export class WalkNet {
 			// Colyseus 0.16 moved schema callbacks behind getStateCallbacks(room)
 			// — the legacy `state.players.onAdd(fn)` form no longer exists.
 			const $ = getStateCallbacks(this.room);
-			$(this.room.state).players.onAdd((player, sessionId) => {
-				this._emit('add', player, sessionId);
-				// Per-instance onChange fires on every field delta.
-				$(player).onChange(() => this._emit('change', player, sessionId));
-			});
-			$(this.room.state).players.onRemove((_player, sessionId) => {
-				this._emit('remove', sessionId);
-			});
+			const $players = $(this.room.state)?.players;
+			if ($players) {
+				$players.onAdd((player, sessionId) => {
+					this._emit('add', player, sessionId);
+					// Per-instance onChange fires on every field delta.
+					$(player).onChange(() => this._emit('change', player, sessionId));
+				});
+				$players.onRemove((_player, sessionId) => {
+					this._emit('remove', sessionId);
+				});
+			}
 
 			// Chat is broadcast (not schema state) so it arrives as a room message.
 			// We relay it through our own event API; walk.js renders the bubble +

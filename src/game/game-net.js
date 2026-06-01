@@ -9,6 +9,7 @@
 // all of it.
 
 import { Client, getStateCallbacks } from 'colyseus.js';
+import { GameState } from '../../multiplayer/src/schemas/game.js';
 
 const REALMS = ['mainland', 'wilderness', 'whisperwood', 'pond', 'mine', 'wilderness_north', 'wilderness_cave', 'wilderness_east', 'arena'];
 const DEFAULT_REALM = 'mainland';
@@ -185,7 +186,7 @@ export class GameNet {
 		try {
 			this.client = new Client(this.url);
 			const presence = this.getPresence ? await this.getPresence().catch(() => null) : null;
-			this.room = await this.client.joinOrCreate(this.roomName, { name: this.name, avatar: this.avatar, pid: this.pid, server: this.server, ...(presence ? { presence } : {}) });
+			this.room = await this.client.joinOrCreate(this.roomName, { name: this.name, avatar: this.avatar, pid: this.pid, server: this.server, ...(presence ? { presence } : {}) }, GameState);
 			this.sessionId = this.room.sessionId;
 			this._bindRoom();
 			this._announcePresence();
@@ -289,7 +290,7 @@ export class GameNet {
 			// Fade out first, then do the room swap — so the player never sees a
 			// half-rebuilt world flash.
 			if (this.onBeforeHandoff) await this.onBeforeHandoff();
-			const next = await this.client.consumeSeatReservation(reservation);
+			const next = await this.client.consumeSeatReservation(reservation, GameState);
 			this.room = next;
 			this.sessionId = next.sessionId;
 			this.realm = REALMS.includes(to) ? to : this.realm;

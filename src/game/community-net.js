@@ -187,40 +187,52 @@ export class CommunityNet {
 			this.room.onMessage('edit-reject', (msg) => this._emit('editReject', msg || {}));
 
 			const $ = getStateCallbacks(this.room);
-			$(this.room.state).players.onAdd((player, id) => {
-				this._emit('add', player, id);
-				$(player).onChange(() => {
-					// The server echoes our own authoritative state back after each
-					// move; the gap from send → echo is a real network+server RTT.
-					if (id === this.sessionId && this._pingSentAt) {
-						const rtt = performance.now() - this._pingSentAt;
-						this._pingSentAt = 0;
-						if (rtt > 0 && rtt < 5000) {
-							this.ping = this.ping == null ? rtt : this.ping * 0.7 + rtt * 0.3;
-							this._emit('ping', Math.round(this.ping));
+			const $state = $(this.room.state);
+
+			// Guard each collection: if the server is running an older schema that
+			// doesn't include a field yet, the proxy returns undefined for that key
+			// and calling .onAdd() on undefined throws — breaking the connect loop.
+			const $players = $state?.players;
+			if ($players) {
+				$players.onAdd((player, id) => {
+					this._emit('add', player, id);
+					$(player).onChange(() => {
+						// The server echoes our own authoritative state back after each
+						// move; the gap from send → echo is a real network+server RTT.
+						if (id === this.sessionId && this._pingSentAt) {
+							const rtt = performance.now() - this._pingSentAt;
+							this._pingSentAt = 0;
+							if (rtt > 0 && rtt < 5000) {
+								this.ping = this.ping == null ? rtt : this.ping * 0.7 + rtt * 0.3;
+								this._emit('ping', Math.round(this.ping));
+							}
 						}
-					}
-					this._emit('change', player, id);
+						this._emit('change', player, id);
+					});
 				});
-			});
-			$(this.room.state).players.onRemove((_p, id) => this._emit('remove', id));
+				$players.onRemove((_p, id) => this._emit('remove', id));
+			}
 
 			// Voxel builds: the server is authoritative for every block, so the
 			// world's geometry is driven entirely by these state callbacks — local
 			// place/break clicks only *send*; the block appears when the server
 			// echoes it back, keeping every client's build identical. onAdd fires
 			// for the full persisted build at join time and for each new placement.
-			$(this.room.state).blocks.onAdd((block, key) => {
-				this._emit('blockAdd', key, block.t);
-				$(block).onChange(() => this._emit('blockChange', key, block.t));
-			});
-			$(this.room.state).blocks.onRemove((_b, key) => this._emit('blockRemove', key));
+			// blocks field is optional (servers pre-dating voxel builds omit it).
+			const $blocks = $state?.blocks;
+			if ($blocks) {
+				$blocks.onAdd((block, key) => {
+					this._emit('blockAdd', key, block.t);
+					$(block).onChange(() => this._emit('blockChange', key, block.t));
+				});
+				$blocks.onRemove((_b, key) => this._emit('blockRemove', key));
+			}
 
 			// Durability flag for this world's build (Redis-backed vs memory-only).
 			// Set once at room creation; listen so the HUD reflects it as soon as the
 			// first state patch lands and if it ever degrades mid-session.
 			this.persistent = !!this.room.state.persistent;
-			$(this.room.state).listen('persistent', (v) => { this.persistent = !!v; this._emit('persistent', !!v); });
+			$state?.listen?.('persistent', (v) => { this.persistent = !!v; this._emit('persistent', !!v); });
 
 			this.room.onLeave((code) => {
 				this._setStatus('offline');

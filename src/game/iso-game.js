@@ -3106,7 +3106,10 @@ export class IsoGame {
 						this._chatHistoryCursor = next;
 						input.value = next === -1 ? (this._chatHistoryDraft || '') : hist[hist.length - 1 - next];
 						this._updateChatCounter();
-						this._refreshCmdHint();
+						// Hide the hint while scrolling history — it would open for any '/…'
+						// entry and steal subsequent ArrowUp/Down from the history path.
+						// When the user stops navigating and edits manually the hint reopens.
+						this._hideCmdHint();
 						return;
 					}
 				}

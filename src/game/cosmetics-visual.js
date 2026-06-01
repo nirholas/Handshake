@@ -4,10 +4,10 @@
 // here reads or writes any gameplay value.
 //
 // Three visual primitives, any of which a cosmetic may combine:
-//   tint  — recolour the avatar's body materials (a dye). Multiplies into each
-//           material's colour so textured models shift hue instead of going flat.
-//   prop  — a GLB worn on the head (hats), auto-fitted to the avatar's height so
-//           one asset sits correctly on any model.
+//   tint  — recolour the avatar's body materials (a dye). Blends toward the tint
+//           while keeping some original lightness, so shading/detail survive.
+//   prop  — a GLB worn on the head (hats) or face (glasses), auto-fitted and
+//           anchored to the head bone so one asset sits right on any model.
 //   aura  — a glowing, slowly-spinning ring at the avatar's feet.
 //
 // applyCosmetic() returns a handle: tick(dt) animates the aura, dispose() fully
@@ -15,7 +15,7 @@
 // re-applies after every avatar (re)load, since loading clears the rig.
 
 import {
-	Group, Mesh, MeshBasicMaterial, RingGeometry, Box3, Vector3,
+	Group, Mesh, MeshBasicMaterial, RingGeometry, Box3, Vector3, Color,
 	AdditiveBlending, DoubleSide,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -38,10 +38,15 @@ function loadProp(url) {
 	return _propCache.get(url);
 }
 
-// Recolour every body material, remembering each material's original colour so
-// dispose() can restore it exactly. Dedupes by material (a model often shares
-// one across meshes) so we store/restore each once.
+// Recolour every body material as a *dye*: blend each material's colour most of
+// the way toward the tint while keeping a fraction of the original, so the
+// model's light/dark shading and detail survive instead of going flat (a hard
+// `color.set(hex)` washes untextured meshes into a single block). Dedupes by
+// material (a model often shares one across meshes) and remembers each original
+// so dispose() restores it exactly.
+const TINT_STRENGTH = 0.72; // how far toward the dye; the rest preserves detail
 function applyTint(rig, hex) {
+	const tint = new Color(hex);
 	const restore = new Map(); // material -> original hex
 	rig.traverse((n) => {
 		if (!n.isMesh) return;
@@ -49,7 +54,7 @@ function applyTint(rig, hex) {
 		for (const m of mats) {
 			if (!m || !m.color || restore.has(m)) continue;
 			restore.set(m, m.color.getHex());
-			m.color.set(hex);
+			m.color.lerp(tint, TINT_STRENGTH);
 		}
 	});
 	return () => { for (const [m, orig] of restore) m.color?.setHex(orig); };
