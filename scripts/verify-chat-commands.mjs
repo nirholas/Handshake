@@ -33,9 +33,9 @@ const check = (cond, msg) => (cond ? ok : fail).push(msg);
 const browser = await chromium.launch();
 const page = await browser.newContext({ viewport: { width: 1280, height: 800 } }).then((c) => c.newPage());
 const consoleErrors = [];
-// The colyseus + vite-HMR sockets fail without a running server / behind the
-// github.dev proxy; those are environmental, not feature errors, so filter them.
-const ENV_NOISE = /WebSocket|game-net|ERR_CONNECTION|vite|websocket/i;
+// Filter environmental noise: colyseus/vite-HMR sockets fail without a running
+// server, and auth/API endpoints require credentials not present in this test env.
+const ENV_NOISE = /WebSocket|game-net|ERR_CONNECTION|vite|websocket|401|403|api\//i;
 page.on('console', (m) => { if (m.type() === 'error' && !ENV_NOISE.test(m.text())) consoleErrors.push(m.text()); });
 page.on('pageerror', (e) => { if (!ENV_NOISE.test(e.message)) consoleErrors.push('pageerror: ' + e.message); });
 
@@ -112,6 +112,53 @@ await page.locator('#kg-chat-hint .kg-chat-hint-item').first().click();
 await page.waitForTimeout(60);
 // After a pick the field is cleared by _sendChat; assert the hint closed cleanly.
 check(await page.locator('#kg-chat-hint').isHidden(), 'mouse pick completes + closes the hint');
+
+// Chat history: send a message, then use ↑ to recall it.
+// Seed the history directly via the game instance (net is offline so chat() is a no-op).
+await page.evaluate(() => {
+	const g = window.__ISO__;
+	if (!g._chatHistory) g._chatHistory = [];
+	g._chatHistory.push('hello realm');
+	g._chatHistory.push('/who');
+	g._chatHistoryCursor = -1;
+	g._chatHistoryDraft = '';
+});
+await input.fill('');
+await input.press('ArrowUp'); // → most recent: /who
+await page.waitForTimeout(60);
+check((await input.inputValue()) === '/who', `ArrowUp recalls most recent message (got "${await input.inputValue()}")`);
+await input.press('ArrowUp'); // → older: hello realm
+await page.waitForTimeout(60);
+check((await input.inputValue()) === 'hello realm', `ArrowUp again recalls older message (got "${await input.inputValue()}")`);
+await input.press('ArrowUp'); // at oldest → stays
+await page.waitForTimeout(60);
+check((await input.inputValue()) === 'hello realm', `ArrowUp at oldest clamps (got "${await input.inputValue()}")`);
+await input.press('ArrowDown'); // → /who
+await page.waitForTimeout(60);
+check((await input.inputValue()) === '/who', `ArrowDown moves to newer (got "${await input.inputValue()}")`);
+await input.press('ArrowDown'); // → back to draft (empty)
+await page.waitForTimeout(60);
+check((await input.inputValue()) === '', `ArrowDown to draft restores empty field (got "${await input.inputValue()}")`);
+
+// Editing while in history recall resets cursor so next ↑ starts fresh from most recent.
+await input.press('ArrowUp'); // enter history
+await input.type('x'); // edit → cursor resets
+await page.waitForTimeout(60);
+await input.fill(''); await input.press('ArrowUp'); // fresh recall from most recent
+await page.waitForTimeout(60);
+check((await input.inputValue()) === '/who', `editing breaks recall; fresh ArrowUp starts from most recent (got "${await input.inputValue()}")`);
+
+// /help reply has kg-chat-line--help CSS class applied.
+// /who reply has kg-chat-line--who CSS class applied.
+// Drive a local sysLine to confirm (it goes through _appendChatLine).
+await page.evaluate(() => { window.__ISO__._sysLine('Commands\n  /help', 'help'); });
+await page.waitForTimeout(60);
+const hasHelpClass = await page.$eval('.kg-chat-line--help', () => true).catch(() => false);
+check(hasHelpClass, '/help system line gets kg-chat-line--help class');
+await page.evaluate(() => { window.__ISO__._sysLine('1 player in Mainland\n  • Verifier (you)', 'who'); });
+await page.waitForTimeout(60);
+const hasWhoClass = await page.$eval('.kg-chat-line--who', () => true).catch(() => false);
+check(hasWhoClass, '/who system line gets kg-chat-line--who class');
 
 check(consoleErrors.length === 0, `no unexpected console errors (${consoleErrors.length}): ${consoleErrors.slice(0, 3).join(' | ')}`);
 
