@@ -61,6 +61,11 @@ function parseWindowMs(w) {
 export const limits = {
 	authIp: (ip) => getLimiter('auth:ip', { limit: 30, window: '10 m' }).limit(ip),
 	registerIp: (ip) => getLimiter('register:ip', { limit: 5, window: '1 h' }).limit(ip),
+	// pump.fun coin metadata upload (name/symbol/image → R2 JSON). Cheap and
+	// idempotent, so it gets its own bucket instead of draining the strict
+	// `authIp` budget shared by on-chain buy/sell/launch actions. Iterating in
+	// the launch wizard would otherwise lock the user out of trading for 10 min.
+	pumpMetaIp: (ip) => getLimiter('pump:meta:ip', { limit: 60, window: '10 m' }).limit(ip),
 	oauthRegisterIp: (ip) =>
 		getLimiter('oauth:register:ip', { limit: 10, window: '1 h' }).limit(ip),
 	mcpUser: (userId) => getLimiter('mcp:user', { limit: 1200, window: '1 m' }).limit(userId),
