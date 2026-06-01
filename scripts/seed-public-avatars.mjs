@@ -157,6 +157,74 @@ const CATALOG = [
 		url: KHRONOS('AntiqueCamera', 'AntiqueCamera.glb'), license: 'CC0',
 	},
 
+	// ── Khronos glTF Sample Assets — extended ───────────────────────────────
+	{
+		source: 'khronos', name: 'Duck', slug: 'duck',
+		description: 'Classic rubber duck — one of the original glTF reference models.',
+		tags: ['prop', 'animal', 'cc0'],
+		url: KHRONOS('Duck', 'Duck.glb'), license: 'CC-BY 2.0',
+	},
+{
+		source: 'khronos', name: 'Toy Car', slug: 'toy-car',
+		description: 'Colourful toy car with clearcoat and iridescent paint.',
+		tags: ['prop', 'vehicle', 'pbr'],
+		url: KHRONOS('ToyCar', 'ToyCar.glb'), license: 'CC0',
+	},
+{
+		source: 'khronos', name: 'Barramundi Fish', slug: 'barramundi-fish',
+		description: 'Photorealistic barramundi fish with subsurface scattering.',
+		tags: ['animal', 'pbr', 'cc0'],
+		url: KHRONOS('BarramundiFish', 'BarramundiFish.glb'), license: 'CC0',
+	},
+	{
+		source: 'khronos', name: 'Corset', slug: 'corset',
+		description: 'Ornate Victorian corset — detailed fabric and lace textures.',
+		tags: ['prop', 'fashion', 'pbr'],
+		url: KHRONOS('Corset', 'Corset.glb'), license: 'CC0',
+	},
+	{
+		source: 'khronos', name: 'Iridescent Dish', slug: 'iridescent-dish',
+		description: 'Dish of olives with iridescent glaze showcasing material extensions.',
+		tags: ['prop', 'food', 'pbr'],
+		url: KHRONOS('IridescentDishWithOlives', 'IridescentDishWithOlives.glb'), license: 'CC0',
+	},
+	{
+		source: 'khronos', name: 'Materials Variants Shoe', slug: 'variants-shoe',
+		description: 'Sneaker demonstrating KHR_materials_variants for colour switching.',
+		tags: ['prop', 'fashion', 'pbr'],
+		url: KHRONOS('MaterialsVariantsShoe', 'MaterialsVariantsShoe.glb'), license: 'CC0',
+	},
+	{
+		source: 'khronos', name: 'Glam Velvet Sofa', slug: 'glam-velvet-sofa',
+		description: 'Tufted velvet sofa showcasing sheen and specular materials.',
+		tags: ['prop', 'furniture', 'pbr'],
+		url: KHRONOS('GlamVelvetSofa', 'GlamVelvetSofa.glb'), license: 'CC0',
+	},
+	{
+		source: 'khronos', name: 'Metal Rough Spheres', slug: 'metal-rough-spheres',
+		description: 'PBR reference grid of metallic/roughness sphere samples.',
+		tags: ['reference', 'pbr'],
+		url: KHRONOS('MetalRoughSpheres', 'MetalRoughSpheres.glb'), license: 'CC0',
+	},
+	{
+		source: 'khronos', name: 'Rigged Figure', slug: 'rigged-figure',
+		description: 'Animated humanoid reference rig. CC0.',
+		tags: ['humanoid', 'rigged', 'reference', 'cc0'],
+		url: KHRONOS('RiggedFigure', 'RiggedFigure.glb'), license: 'CC0',
+	},
+{
+		source: 'khronos', name: 'Cesium Milk Truck', slug: 'cesium-milk-truck',
+		description: 'Animated milk delivery truck. CC-BY 4.0.',
+		tags: ['vehicle', 'rigged', 'prop'],
+		url: KHRONOS('CesiumMilkTruck', 'CesiumMilkTruck.glb'), license: 'CC-BY 4.0',
+	},
+{
+		source: 'khronos', name: 'Animated Morph Cube', slug: 'animated-morph-cube',
+		description: 'Cube with morph target animations. Reference asset.',
+		tags: ['reference', 'animated'],
+		url: KHRONOS('AnimatedMorphCube', 'AnimatedMorphCube.glb'), license: 'CC0',
+	},
+
 	// ── three.js example models ─────────────────────────────────────────────
 	{
 		source: 'threejs', name: 'Michelle', slug: 'michelle',
@@ -205,6 +273,24 @@ const CATALOG = [
 		description: 'Iconic animated diorama by Glen Fox.',
 		tags: ['scene', 'diorama'],
 		url: THREE_GLTF('LittlestTokyo.glb'), license: 'CC-BY 4.0',
+	},
+	{
+		source: 'threejs', name: 'Lee Perry Smith', slug: 'lee-perry-smith',
+		description: 'High-resolution photogrammetry scan of a human face.',
+		tags: ['humanoid', 'photogrammetry', 'pbr'],
+		url: THREE_GLTF('LeePerrySmith/LeePerrySmith.glb'), license: 'CC-BY 3.0',
+	},
+	{
+		source: 'threejs', name: 'Nefertiti', slug: 'nefertiti',
+		description: 'Detailed scan of the Nefertiti bust — public domain.',
+		tags: ['character', 'scan', 'historical'],
+		url: THREE_GLTF('Nefertiti/Nefertiti.glb'), license: 'CC0',
+	},
+	{
+		source: 'threejs', name: 'Primary Ion Drive', slug: 'primary-ion-drive',
+		description: 'Animated sci-fi ion thruster engine.',
+		tags: ['prop', 'sci-fi', 'animated'],
+		url: THREE_GLTF('PrimaryIonDrive.glb'), license: 'CC-BY 4.0',
 	},
 ];
 

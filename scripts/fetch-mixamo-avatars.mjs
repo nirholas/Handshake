@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 // Bulk-download Mixamo character avatars as FBX (With Skin).
+// Streams: each character is queued for download as its page is fetched —
+// no waiting for a full catalog before starting.
 // Resumable: re-run to pick up where it left off.
 //
 // Usage:
@@ -7,7 +9,7 @@
 //   # or put MIXAMO_TOKEN=... in .env.local
 //
 // Optional flags:
-//   --concurrency=N    parallel export jobs (default 2)
+//   --concurrency=N    parallel export jobs (default 3)
 //   --limit=N          stop after N successful downloads (default: all)
 //   --format=fbx7|fbx6 output format (default fbx7)
 //
@@ -31,7 +33,7 @@ const args = Object.fromEntries(
 	}),
 );
 
-const CONCURRENCY = Number(args.concurrency) || 2;
+const CONCURRENCY = Number(args.concurrency) || 3;
 const MAX_DOWNLOADS = args.limit ? Number(args.limit) : Infinity;
 const FORMAT = args.format || 'fbx7';
 
@@ -51,8 +53,9 @@ function loadEnvVar(key) {
 }
 
 const TOKEN = loadEnvVar('MIXAMO_TOKEN');
-if (!TOKEN) {
+if (!TOKEN || TOKEN.startsWith('eyJ...')) {
 	console.error('MIXAMO_TOKEN not set. Run: node scripts/get-mixamo-token.mjs');
+	console.error('Or manually copy the Bearer token from mixamo.com DevTools -> Network -> any api/v1 request');
 	process.exit(1);
 }
 
@@ -152,104 +155,144 @@ async function rlFetch(url, init = {}, attempt = 0) {
 	return res;
 }
 
+async function apiRaw(path, init = {}) {
+	return rlFetch(`${API}${path}`, { ...init, headers: { ...headers, ...init.headers } });
+}
+
 async function api(path, init = {}) {
-	const res = await rlFetch(`${API}${path}`, { ...init, headers: { ...headers, ...init.headers } });
+	const res = await apiRaw(path, init);
 	if (!res.ok) {
 		const body = await res.text().catch(() => '');
-		throw new Error(`HTTP ${res.status} ${path} ${body.slice(0, 200)}`);
+		throw new Error(`HTTP ${res.status} ${path} ${body.slice(0, 300)}`);
 	}
 	return res.json();
 }
 
-// ── Step 1: list all Character products ──────────────────────────────────
-async function listAllCharacters() {
-	const all = [];
-	let page = 1;
-	while (true) {
-		process.stdout.write(`\rListing characters: page ${page} (${all.length} so far)...   `);
-		const data = await api(
-			`/products?page=${page}&limit=${PAGE_LIMIT}&type=Character&order=relevance`,
-		);
-		const results = data.results || [];
-		all.push(...results);
-		const totalPages =
-			data.pagination?.num_pages ?? Math.ceil((data.pagination?.num_results ?? 0) / PAGE_LIMIT);
-		if (!totalPages || page >= totalPages || results.length === 0) break;
-		page += 1;
-		await sleep(200);
+// ── Character page fetcher — tries multiple endpoint patterns ─────────────
+// Mixamo's internal API has changed over time; we probe the right one.
+async function fetchCharacterPage(page) {
+	// Try 1: products endpoint with type=Character (standard)
+	const r1 = await apiRaw(`/products?page=${page}&limit=${PAGE_LIMIT}&type=Character&order=relevance`);
+	if (r1.ok) {
+		const d = await r1.json();
+		return { results: d.results || [], pagination: d.pagination };
 	}
-	process.stdout.write('\n');
-	return all;
+
+	// Try 2: characters endpoint (some API versions)
+	const r2 = await apiRaw(`/characters?page=${page}&limit=${PAGE_LIMIT}&order=relevance`);
+	if (r2.ok) {
+		const d = await r2.json();
+		return { results: d.results || d.characters || [], pagination: d.pagination };
+	}
+
+	// Try 3: products without type (all products — filter client-side)
+	const r3 = await apiRaw(`/products?page=${page}&limit=${PAGE_LIMIT}&order=relevance`);
+	if (r3.ok) {
+		const d = await r3.json();
+		const results = (d.results || []).filter(
+			(p) => p.type === 'Character' || p.product_type === 'Character' || p.category === 'Character',
+		);
+		return { results, pagination: d.pagination, _usedFallback: true };
+	}
+
+	const body = await r3.text().catch(() => '');
+	throw new Error(`All character list endpoints failed. Last: HTTP ${r3.status} — ${body.slice(0, 200)}`);
 }
 
-// ── Step 2: export + poll + download a single character ─────────────────
-async function downloadOne(product) {
-	const slug = slugify(product.description || product.name || product.id);
+// ── Download a single character ───────────────────────────────────────────
+async function downloadOne(product, index, total) {
+	const name = product.description || product.name || product.id;
+	const slug = slugify(name);
 	const r2Key = `avatars/mixamo/${slug}.fbx`;
 	const localPath = join(OUT_DIR, `${slug}.fbx`);
+	const label = `[${index}/${total}]`;
 	const existing = catalog.avatars[product.id];
 
 	if (existing?.status === 'completed') {
 		const alreadyExists = USE_R2 ? await existsInR2(r2Key) : existsSync(localPath);
-		if (alreadyExists) return { skipped: true, slug, reason: 'already-downloaded' };
+		if (alreadyExists) {
+			console.log(`${label} skip  ${slug} (already downloaded)`);
+			return { skipped: true };
+		}
 	}
 	if (existing?.status === 'permanent_fail') {
-		return { skipped: true, slug, reason: 'permanent-fail' };
+		console.log(`${label} skip  ${slug} (permanent fail)`);
+		return { skipped: true };
 	}
 
-	// Fetch product details to get gms_hash
-	const productDetails = await api(`/products/${product.id}`);
-	const gmsHash = productDetails?.details?.gms_hash;
-	if (!gmsHash) {
-		catalog.avatars[product.id] = {
-			id: product.id,
-			name: product.description || product.name,
-			status: 'permanent_fail',
-			reason: 'no_gms_hash',
-			failed_at: new Date().toISOString(),
-		};
-		saveCatalog();
-		throw new Error('no gms_hash');
+	// Get product details for gms_hash
+	let gmsHash;
+	try {
+		const details = await api(`/products/${product.id}`);
+		gmsHash = details?.details?.gms_hash;
+	} catch (err) {
+		// Some characters expose details at /characters/:id
+		try {
+			const details = await api(`/characters/${product.id}`);
+			gmsHash = details?.details?.gms_hash;
+		} catch {
+			// gms_hash not required for all export flows — continue without it
+		}
 	}
 
-	const exportRes = await rlFetch(`${API}/characters/export`, {
+	// POST export — try /characters/export first, fall back to /animations/export
+	let exportRes;
+	const exportBody = {
+		product_id: product.id,
+		product_name: name,
+		type: 'Character',
+		preferences: { format: FORMAT, skin: 'true', fps: '30', reducekf: '0' },
+		...(gmsHash ? { gms_hash: [gmsHash] } : {}),
+	};
+
+	exportRes = await rlFetch(`${API}/characters/export`, {
 		method: 'POST',
 		headers,
-		body: JSON.stringify({
-			product_id: product.id,
-			product_name: product.description || product.name,
-			type: 'Character',
-			gms_hash: [gmsHash],
-			preferences: { format: FORMAT, skin: 'true', fps: '30', reducekf: '0' },
-		}),
+		body: JSON.stringify(exportBody),
 	});
+
+	if (!exportRes.ok) {
+		// Fall back to animations/export endpoint (some Mixamo versions use this for all types)
+		exportRes = await rlFetch(`${API}/animations/export`, {
+			method: 'POST',
+			headers,
+			body: JSON.stringify(exportBody),
+		});
+	}
 
 	if (!exportRes.ok) {
 		const status = exportRes.status;
 		if (status === 400 || status === 404) {
 			catalog.avatars[product.id] = {
-				id: product.id,
-				name: product.description || product.name,
-				status: 'permanent_fail',
-				http: status,
-				failed_at: new Date().toISOString(),
+				id: product.id, name, status: 'permanent_fail',
+				http: status, failed_at: new Date().toISOString(),
 			};
 			saveCatalog();
 		}
 		throw new Error(`export ${status}`);
 	}
 
+	// Poll for completion
 	let downloadUrl = null;
 	for (let i = 0; i < POLL_MAX_ATTEMPTS; i++) {
 		await sleep(POLL_INTERVAL_MS);
-		const status = await api(`/characters/export/${product.id}`);
+		// Try both poll endpoints
+		let status;
+		try {
+			status = await api(`/characters/export/${product.id}`);
+		} catch {
+			status = await api(`/animations/export/${product.id}`).catch(() => null);
+		}
+		if (!status) continue;
 		if (status.status === 'completed' && status.result?.url) {
 			downloadUrl = status.result.url;
 			break;
 		}
-		if (status.status === 'failed') throw new Error('export failed');
+		if (status.status === 'failed') throw new Error('export failed server-side');
+		process.stdout.write(`\r${label} waiting... (${i + 1}/${POLL_MAX_ATTEMPTS})   `);
 	}
-	if (!downloadUrl) throw new Error('poll timeout');
+	if (!downloadUrl) throw new Error('poll timeout — no download URL');
+	process.stdout.write('\r');
 
 	const fileRes = await rlFetch(downloadUrl);
 	if (!fileRes.ok) throw new Error(`download ${fileRes.status}`);
@@ -262,8 +305,7 @@ async function downloadOne(product) {
 	}
 
 	catalog.avatars[product.id] = {
-		id: product.id,
-		name: product.description || product.name,
+		id: product.id, name,
 		file: USE_R2 ? r2Key : `${slug}.fbx`,
 		bytes: buf.length,
 		downloaded_at: new Date().toISOString(),
@@ -272,77 +314,113 @@ async function downloadOne(product) {
 	};
 	saveCatalog();
 
+	console.log(`${label} done  ${slug} (${(buf.length / 1024).toFixed(0)} KB)`);
 	return { slug, bytes: buf.length };
 }
 
-// ── Step 3: concurrency-limited worker pool ─────────────────────────────
-async function runPool(products) {
-	let cursor = 0;
+// ── Main: stream pages, download as they arrive ───────────────────────────
+(async () => {
+	console.log(`Mixamo avatar fetcher (streaming)`);
+	console.log(`   Format:      ${FORMAT} (with skin)`);
+	console.log(`   Storage:     ${USE_R2 ? `R2 -> ${R2_BUCKET}/avatars/mixamo/` : OUT_DIR}`);
+	console.log(`   Concurrency: ${CONCURRENCY}\n`);
+
+	// Queue + worker pool that runs concurrently
+	const queue = [];
+	let queueDone = false;
+	let totalKnown = '?';
+	let fetched = 0;
 	let ok = 0;
 	let fail = 0;
 	let skipped = 0;
+	let activeWorkers = 0;
 
 	async function worker() {
-		while (cursor < products.length && ok + fail < MAX_DOWNLOADS) {
-			const i = cursor++;
-			const product = products[i];
-			const label = `[${i + 1}/${products.length}]`;
+		activeWorkers++;
+		while (true) {
+			if (queue.length === 0) {
+				if (queueDone) break;
+				await sleep(200);
+				continue;
+			}
+			if (ok + fail >= MAX_DOWNLOADS) break;
+			const item = queue.shift();
 			try {
-				const result = await downloadOne(product);
-				if (result.skipped) {
-					skipped++;
-					console.log(`${label} skip  ${result.slug} (${result.reason})`);
-				} else {
-					ok++;
-					console.log(`${label} done  ${result.slug} (${(result.bytes / 1024).toFixed(0)} KB)`);
-					await sleep(500);
-				}
+				const result = await downloadOne(item.product, item.index, totalKnown);
+				if (result.skipped) skipped++;
+				else ok++;
 			} catch (err) {
 				fail++;
-				console.warn(`${label} fail  ${product.description}: ${err.message}`);
+				console.warn(`[${item.index}/${totalKnown}] fail  ${item.product.description || item.product.id}: ${err.message}`);
 				if (err.message.includes('HTTP 401') || err.message.includes('HTTP 403')) {
 					console.error('Auth failure — token expired. Refresh MIXAMO_TOKEN and re-run.');
 					process.exit(2);
 				}
 			}
+			await sleep(300);
 		}
+		activeWorkers--;
 	}
 
+	// Start worker pool
 	const workers = Array.from({ length: CONCURRENCY }, () => worker());
-	await Promise.all(workers);
-	return { ok, fail, skipped };
-}
 
-// ── Main ──────────────────────────────────────────────────────────────────
-(async () => {
-	console.log(`Mixamo avatar fetcher`);
-	console.log(`   Format:      ${FORMAT} (with skin)`);
-	console.log(`   Storage:     ${USE_R2 ? `R2 -> ${R2_BUCKET}/avatars/mixamo/` : OUT_DIR}`);
-	console.log(`   Concurrency: ${CONCURRENCY}\n`);
+	// Page fetcher — enqueues products as they arrive
+	let page = 1;
+	let usedFallback = false;
+	while (true) {
+		process.stdout.write(`\rFetching page ${page}... (${fetched} characters found so far)   `);
+		let pageData;
+		try {
+			pageData = await fetchCharacterPage(page);
+		} catch (err) {
+			process.stdout.write('\n');
+			console.error(`Failed to list characters: ${err.message}`);
+			console.error('Possible causes:');
+			console.error('  - Token expired: re-run get-mixamo-token.mjs');
+			console.error('  - Mixamo changed their API (check network tab at mixamo.com for the correct endpoint)');
+			break;
+		}
 
-	const products = await listAllCharacters();
-	console.log(`Catalog: ${products.length} characters\n`);
+		if (pageData._usedFallback && !usedFallback) {
+			usedFallback = true;
+			console.log('\n  Note: using fallback products endpoint — filtering by type=Character client-side');
+		}
 
-	if (products.length === 0) {
-		console.log('No characters found. Token may be expired.');
-		console.log('Re-run: node scripts/get-mixamo-token.mjs');
-		process.exit(1);
+		const results = pageData.results || [];
+		const pagination = pageData.pagination;
+
+		if (results.length === 0) break;
+
+		for (const product of results) {
+			fetched++;
+			queue.push({ product, index: fetched });
+		}
+
+		const numPages = pagination?.num_pages ?? Math.ceil((pagination?.num_results ?? 0) / PAGE_LIMIT);
+		if (numPages) totalKnown = (numPages * PAGE_LIMIT).toString() + '+';
+
+		if (!numPages || page >= numPages) break;
+		page++;
+		await sleep(200);
 	}
 
-	const t0 = Date.now();
-	const { ok, fail, skipped } = await runPool(products);
-	const mins = ((Date.now() - t0) / 60000).toFixed(1);
+	process.stdout.write('\n');
+	totalKnown = fetched;
+	console.log(`Found ${fetched} characters. Downloading...\n`);
+	queueDone = true;
+
+	await Promise.all(workers);
 
 	console.log(`\n${'='.repeat(43)}`);
 	console.log(`Downloaded: ${ok}`);
 	console.log(`Skipped:    ${skipped}`);
 	console.log(`Failed:     ${fail}`);
-	console.log(`Time:       ${mins} min`);
 	console.log(`Output:     ${USE_R2 ? `R2:${R2_BUCKET}/avatars/mixamo/` : OUT_DIR}`);
-	console.log(`\nConvert FBX -> GLB with fbx2gltf:`);
-	console.log(`   for f in ${OUT_DIR}/*.fbx; do`);
-	console.log(`     fbx2gltf -i "$f" -o "\${f%.fbx}.glb"`);
-	console.log(`   done`);
+	if (!USE_R2) {
+		console.log(`\nConvert FBX -> GLB:`);
+		console.log(`   for f in ${OUT_DIR}/*.fbx; do fbx2gltf -i "$f" -o "\${f%.fbx}.glb"; done`);
+	}
 })().catch((err) => {
 	console.error(err);
 	process.exit(1);
