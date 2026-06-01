@@ -64,7 +64,7 @@
     "three": "^0.184.0",
     "three-mesh-bvh": "^0.9.10",
     "use-sound": "^5.0.0",
-    "vite-plugin-mkcert": "^1.17.10",
+    "vite-plugin-mkcert": "^2.0.0",
     "vite-react-jsx": "1.1.2",
     "wrangler": "^4.94.0",
     "zustand": "^3.5.10"
