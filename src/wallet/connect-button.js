@@ -307,9 +307,13 @@ const LABEL_DEFAULTS = {
  * @returns {ConnectWalletController}
  */
 export function createConnectWalletButton(mountEl, opts = {}) {
+	// Dispose any previous controller on this mount point (handles HMR remounts).
+	mountEl._cwbCtrl?.dispose();
+
 	const labels = { ...LABEL_DEFAULTS, ...(opts.labels || {}) };
 	const allowedChainIds = opts.allowedChainIds || DEFAULT_CHAIN_IDS;
 	const ctrl = new ConnectWalletController({ ...opts, allowedChainIds });
+	mountEl._cwbCtrl = ctrl;
 
 	const btn = document.createElement('button');
 	btn.type = 'button';
