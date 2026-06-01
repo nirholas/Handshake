@@ -59,6 +59,7 @@ export class AgentIdentity {
 		this._record = null;
 		this._loaded = false;
 		this._backendConfirmed = false; // true only when backend returned a valid agent
+		this._owned = false; // true only when the signed-in session OWNS this agent
 		this._loadPromise = null; // re-entrancy guard
 		this.memory = null;
 
@@ -186,6 +187,7 @@ export class AgentIdentity {
 	 */
 	recordAction(action) {
 		if (!this._backendConfirmed) return; // no session — skip to avoid 401 noise
+		if (!this._owned) return; // viewing someone else's agent — backend would 403
 		fetch('/api/agent-actions', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
@@ -205,6 +207,7 @@ export class AgentIdentity {
 	 * @returns {Promise<Object[]>}
 	 */
 	async getActionHistory({ limit = 50, cursor } = {}) {
+		if (!this._owned) return []; // action log is owner-only — backend returns 403 otherwise
 		try {
 			const params = new URLSearchParams({ agent_id: this.id, limit: String(limit) });
 			if (cursor) params.set('cursor', cursor);
@@ -246,6 +249,7 @@ export class AgentIdentity {
 
 	async __doLoad() {
 		this._backendConfirmed = false;
+		this._owned = false;
 
 		// 1. Try localStorage first (instant) — backendSync disabled until confirmed
 		const local = this._readLocal();
@@ -274,6 +278,10 @@ export class AgentIdentity {
 					this._agentId = this._record.id;
 					this._loaded = true;
 					this._backendConfirmed = true;
+					// `/api/agents/:id` is a public read — it confirms the agent
+					// EXISTS, not that we own it. Owner-only fields (is_owner) tell
+					// us whether the signed-in session may write to its action log.
+					this._owned = agent.is_owner === true;
 					this._persist();
 					if (!this.memory) {
 						this.memory = new AgentMemory(this._record.id, { backendSync: true, embedFn: _makeEmbedFn(this._record.id) });
