@@ -1,19 +1,19 @@
 import * as THREE from 'three';
 import { Sky } from 'three/addons/objects/Sky.js';
-import { buildCity, buildMinimapStatic, CITY_HALF } from './city-map.js';
+import { fetchOSMData, buildCity, buildMinimapStatic, CITY_HALF } from './city-map.js';
 import { CityPlayer } from './city-player.js';
 import { CityCamera } from './city-camera.js';
 
-// ── DOM refs ─────────────────────────────────────────────────────────────────
+// ── DOM refs ──────────────────────────────────────────────────────────────────
 
-const canvas     = document.getElementById('city-canvas');
-const loadingEl  = document.getElementById('city-loading');
-const subEl      = document.getElementById('city-loading-sub');
-const barEl      = document.getElementById('city-boot-bar-fill');
-const hudEl      = document.getElementById('city-hud');
-const coordsEl   = document.getElementById('city-hud-coords');
-const mmCanvas   = document.getElementById('city-minimap-canvas');
-const mmCtx      = mmCanvas.getContext('2d');
+const canvas    = document.getElementById('city-canvas');
+const loadingEl = document.getElementById('city-loading');
+const subEl     = document.getElementById('city-loading-sub');
+const barEl     = document.getElementById('city-boot-bar-fill');
+const hudEl     = document.getElementById('city-hud');
+const coordsEl  = document.getElementById('city-hud-coords');
+const mmCanvas  = document.getElementById('city-minimap-canvas');
+const mmCtx     = mmCanvas.getContext('2d');
 
 function progress(pct, label) {
 	if (barEl) barEl.style.width = pct + '%';
@@ -23,116 +23,106 @@ function progress(pct, label) {
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-	progress(8, 'Setting up renderer…');
+	progress(5, 'Setting up renderer…');
 
-	// Renderer
-	const renderer = new THREE.WebGLRenderer({
-		canvas,
-		antialias: true,
-		powerPreference: 'high-performance',
-	});
+	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type   = THREE.PCFSoftShadowMap;
-	renderer.toneMapping      = THREE.ACESFilmicToneMapping;
-	renderer.toneMappingExposure = 0.92;
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
+	renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+	renderer.toneMapping       = THREE.ACESFilmicToneMapping;
+	renderer.toneMappingExposure = 0.88;
+	renderer.outputColorSpace  = THREE.SRGBColorSpace;
 
-	// Scene
 	const scene = new THREE.Scene();
-	scene.fog = new THREE.Fog(0x9aafbf, 110, 500);
+	scene.fog = new THREE.Fog(0x9aafbf, 200, 900);
 
-	// Camera
-	const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 600);
-	camera.position.set(0, 12, 20);
+	const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 1200);
+	camera.position.set(0, 14, 24);
 
-	progress(18, 'Adding lights…');
+	progress(12, 'Adding lights…');
 
-	// Ambient — generous so shadowed areas stay readable
-	scene.add(new THREE.AmbientLight(0xc0d4e8, 1.4));
+	scene.add(new THREE.AmbientLight(0xc0d4e8, 1.5));
 
-	// Sun — warm afternoon angle, less overpowering than midday
-	const sun = new THREE.DirectionalLight(0xffe8c0, 2.0);
-	sun.position.set(60, 80, -50); // slightly behind camera = front-lit scene
+	const sun = new THREE.DirectionalLight(0xffe8c0, 2.2);
+	sun.position.set(80, 100, -60);
 	sun.castShadow = true;
-	sun.shadow.mapSize.set(2048, 2048);
-	sun.shadow.camera.near = 1;
-	sun.shadow.camera.far  = 500;
-	sun.shadow.camera.left   = -160;
-	sun.shadow.camera.right  =  160;
-	sun.shadow.camera.top    =  160;
-	sun.shadow.camera.bottom = -160;
-	sun.shadow.bias = -0.0008;
+	sun.shadow.mapSize.set(4096, 4096);
+	sun.shadow.camera.near   = 1;
+	sun.shadow.camera.far    = 1200;
+	sun.shadow.camera.left   = -300;
+	sun.shadow.camera.right  =  300;
+	sun.shadow.camera.top    =  300;
+	sun.shadow.camera.bottom = -300;
+	sun.shadow.bias = -0.0006;
 	scene.add(sun);
 
-	// Secondary fill from the opposite side — kills pitch-black shadows
-	const fill = new THREE.DirectionalLight(0x90b8e0, 0.7);
-	fill.position.set(-60, 50, 60);
+	const fill = new THREE.DirectionalLight(0x90b8e0, 0.75);
+	fill.position.set(-80, 60, 80);
 	scene.add(fill);
 
-	// Hemisphere (sky/ground colour fill)
-	scene.add(new THREE.HemisphereLight(0x90b8d8, 0x4a6040, 0.6));
+	scene.add(new THREE.HemisphereLight(0x92bada, 0x4a5e40, 0.65));
 
-	progress(28, 'Building sky…');
+	progress(22, 'Building sky…');
 
-	// Sky dome
 	const sky = new Sky();
-	sky.scale.setScalar(5000);
+	sky.scale.setScalar(8000);
 	scene.add(sky);
 	const su = sky.material.uniforms;
-	su.turbidity.value        = 4.0;
-	su.rayleigh.value         = 2.2;
-	su.mieCoefficient.value   = 0.006;
-	su.mieDirectionalG.value  = 0.9;
-	su.sunPosition.value.set(0.4, 0.35, -0.85).normalize();
+	su.turbidity.value       = 3.5;
+	su.rayleigh.value        = 2.5;
+	su.mieCoefficient.value  = 0.005;
+	su.mieDirectionalG.value = 0.92;
+	su.sunPosition.value.set(0.45, 0.38, -0.80).normalize();
 
-	progress(40, 'Building city…');
+	// ── Fetch real-world Manhattan OSM data ───────────────────────────────────
+	let osmData;
+	try {
+		osmData = await fetchOSMData((frac, label) => {
+			progress(22 + frac * 30, label);
+		});
+	} catch (err) {
+		console.error('OSM fetch failed — loading empty world:', err);
+		osmData = { elements: [] };
+	}
 
-	const { buildingBoxes } = buildCity(scene);
+	progress(55, 'Building city geometry…');
+	const { buildingBoxes } = buildCity(scene, osmData);
 
-	progress(62, 'Building minimap…');
-
+	progress(75, 'Building minimap…');
 	const minimap = buildMinimapStatic(buildingBoxes);
 
-	progress(72, 'Loading avatar…');
+	progress(82, 'Loading avatar…');
 
-	// Player — pick avatar from URL param or localStorage
 	const avatarInput = new URLSearchParams(location.search).get('avatar')
 		|| localStorage.getItem('kx-avatar')
 		|| '';
 
 	const player = new CityPlayer(scene);
 	await player.load(avatarInput);
-	player.position.set(0, 0, 0);
+	player.position.set(0, 0, 10);
 
-	progress(92, 'Entering world…');
+	progress(96, 'Entering city…');
 
-	// Camera controller (attach after player exists)
 	const cityCamera = new CityCamera(camera, canvas);
+	canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-	// Block right-click context menu so RMB can orbit
-	canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-
-	// Resize handler
 	window.addEventListener('resize', () => {
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
 	});
 
-	// Focus canvas so keyboard input works immediately
 	canvas.focus();
 
-	// ── Reveal ──────────────────────────────────────────────────────────────────
 	progress(100, 'Ready');
-	await delay(180);
+	await delay(150);
 	loadingEl.classList.add('hidden');
-	await delay(480);
+	await delay(420);
 	loadingEl.style.display = 'none';
 	hudEl.style.display = '';
 
-	// ── Game loop ────────────────────────────────────────────────────────────────
+	// ── Game loop ─────────────────────────────────────────────────────────────
 	const clock = new THREE.Clock();
 
 	(function tick() {
@@ -154,31 +144,22 @@ async function main() {
 function drawMinimap(ctx, playerPos, minimap) {
 	const W = 120, H = 120;
 	const { canvas: src, scale } = minimap;
-
-	// Player's position in the static minimap image
 	const px = (playerPos.x + CITY_HALF) * scale;
 	const pz = (playerPos.z + CITY_HALF) * scale;
 
 	ctx.clearRect(0, 0, W, H);
-
-	// Clip to circle
 	ctx.save();
 	ctx.beginPath();
 	ctx.arc(W / 2, H / 2, W / 2, 0, Math.PI * 2);
 	ctx.clip();
-
-	// Blit 120×120 region of the static image centred on player
 	ctx.drawImage(src, px - W / 2, pz - H / 2, W, H, 0, 0, W, H);
-
 	ctx.restore();
 
-	// Player dot
 	ctx.fillStyle = 'rgba(255,255,255,0.95)';
 	ctx.beginPath();
 	ctx.arc(W / 2, H / 2, 3, 0, Math.PI * 2);
 	ctx.fill();
 
-	// Heading tick (points up = north on the map)
 	ctx.strokeStyle = 'rgba(255,255,255,0.35)';
 	ctx.lineWidth = 1.5;
 	ctx.beginPath();
@@ -187,15 +168,20 @@ function drawMinimap(ctx, playerPos, minimap) {
 	ctx.stroke();
 }
 
-// ── Coordinate HUD ────────────────────────────────────────────────────────────
+// ── Coordinate HUD ─────────────────────────────────────────────────────────────
+// Convert local XZ back to approximate real-world lat/lon for display
 
 function updateCoords(pos) {
 	if (!coordsEl) return;
-	coordsEl.textContent = `${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}`;
+	const R = 6_371_000;
+	const cosC = Math.cos(40.7580 * Math.PI / 180);
+	const lat = 40.7580 - (pos.z / R) * (180 / Math.PI);
+	const lon = -73.9855 + (pos.x / (R * cosC)) * (180 / Math.PI);
+	coordsEl.textContent = `${lat.toFixed(5)}°N  ${Math.abs(lon).toFixed(5)}°W`;
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
 
-function delay(ms) { return new Promise((r) => setTimeout(r, ms)); }
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 main().catch(console.error);

@@ -127,3 +127,6 @@ infra/cdk.out
 
 # SoundCloud backup — local only, never commit
 sc/
+
+# Debug screenshots from scripts — scratch output, never commit
+scripts/debug-*.png

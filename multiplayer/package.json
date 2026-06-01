@@ -18,7 +18,7 @@
 		"@colyseus/monitor": "^0.16.7",
 		"@colyseus/redis-driver": "^0.16.0",
 		"@colyseus/redis-presence": "^0.16.0",
-		"@colyseus/schema": "^3.0.0",
+		"@colyseus/schema": "3.0.76",
 		"@colyseus/ws-transport": "^0.16.5",
 		"@ethereum-attestation-service/eas-sdk": "0.29.1",
 		"@metaplex-foundation/js": "^0.20.1",
