@@ -283,6 +283,7 @@ const appConfig = {
 				walk: resolve(__dirname, 'pages/walk.html'),
 				communities: resolve(__dirname, 'pages/communities.html'),
 				'walk-embed': resolve(__dirname, 'pages/walk-embed.html'),
+				city: resolve(__dirname, 'pages/city.html'),
 				play: resolve(__dirname, 'pages/play.html'),
 				game: resolve(__dirname, 'pages/game.html'),
 				pose: resolve(__dirname, 'pages/pose.html'),

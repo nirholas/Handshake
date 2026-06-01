@@ -71,6 +71,8 @@ export class ConnectWalletController extends EventTarget {
 	#activeProvider = null;
 	/** WalletConnect provider instance, kept separately for listener cleanup. */
 	#wcProvider = null;
+	/** 'browser' | 'walletconnect' | null — set on successful connect, used for error retry. */
+	#lastConnectMethod = null;
 
 	/**
 	 * @param {{
@@ -138,14 +140,45 @@ export class ConnectWalletController extends EventTarget {
 			return;
 		}
 		const eager = await eagerConnectWallet();
-		if (!eager) return;
-		this.#dispatch({
-			type: 'ACCOUNTS_RESOLVED',
-			address: eager.address,
-			chainId: eager.chainId,
-		});
-		if (!this.#opts.allowedChainIds.includes(eager.chainId)) {
-			this.#dispatch({ type: 'WRONG_CHAIN' });
+		if (eager) {
+			this.#dispatch({
+				type: 'ACCOUNTS_RESOLVED',
+				address: eager.address,
+				chainId: eager.chainId,
+			});
+			if (!this.#opts.allowedChainIds.includes(eager.chainId)) {
+				this.#dispatch({ type: 'WRONG_CHAIN' });
+			}
+			return;
+		}
+
+		// Restore an existing WalletConnect session without opening the modal.
+		if (this.#opts.wcProjectId) {
+			try {
+				const { initWCProvider } = await import('./wc-provider.js');
+				const wc = await initWCProvider({
+					projectId: this.#opts.wcProjectId,
+					chains: this.#opts.allowedChainIds.filter((id) => id > 0).slice(0, 1),
+					optionalChains: this.#opts.allowedChainIds.filter((id) => id > 0).slice(1),
+				});
+				if (wc.accounts?.length) {
+					wc.on('accountsChanged', this.#onAccountsChanged);
+					wc.on('chainChanged', this.#onChainChanged);
+					this.#wcProvider = wc;
+					this.#activeProvider = wc;
+					this.#lastConnectMethod = 'walletconnect';
+					this.#dispatch({
+						type: 'ACCOUNTS_RESOLVED',
+						address: wc.accounts[0],
+						chainId: wc.chainId,
+					});
+					if (!this.#opts.allowedChainIds.includes(wc.chainId)) {
+						this.#dispatch({ type: 'WRONG_CHAIN' });
+					}
+				}
+			} catch {
+				// No stored WC session — nothing to restore.
+			}
 		}
 	}
 
@@ -160,6 +193,9 @@ export class ConnectWalletController extends EventTarget {
 	}
 	get error() {
 		return this.#s.error;
+	}
+	get lastConnectMethod() {
+		return this.#lastConnectMethod;
 	}
 
 	/** @param {{ type: string, [k: string]: any }} action */
@@ -189,6 +225,7 @@ export class ConnectWalletController extends EventTarget {
 			const network = await provider.getNetwork();
 			const chainId = Number(network.chainId);
 			this.#activeProvider = window.ethereum;
+			this.#lastConnectMethod = 'browser';
 			this.#dispatch({ type: 'ACCOUNTS_RESOLVED', address, chainId });
 
 			if (!this.#opts.allowedChainIds.includes(chainId)) {
@@ -219,6 +256,7 @@ export class ConnectWalletController extends EventTarget {
 			wc.on('chainChanged', this.#onChainChanged);
 			this.#wcProvider = wc;
 			this.#activeProvider = wc;
+			this.#lastConnectMethod = 'walletconnect';
 
 			await wc.connect();
 			const provider = new BrowserProvider(wc);
@@ -505,7 +543,11 @@ export function createConnectWalletButton(mountEl, opts = {}) {
 		} else if (status === STATES.ERROR) {
 			btn.onclick = () => {
 				ctrl.reset();
-				ctrl.connect();
+				if (ctrl.lastConnectMethod === 'walletconnect') {
+					ctrl.connectWalletConnect();
+				} else {
+					ctrl.connect();
+				}
 			};
 		} else if (status === STATES.IDLE) {
 			if (wcProjectId) {

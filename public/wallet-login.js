@@ -33,10 +33,13 @@ function onSuccess(data) {
 
 // ─── EVM wallet button ────────────────────────────────────────────────────────
 
+const wcProjectId = document.querySelector('meta[name="wc-project-id"]')?.content || null;
+
 const evmMount = document.getElementById('wallet-mount');
 if (evmMount) {
 	const evmCtrl = createConnectWalletButton(evmMount, {
 		verifyUrl: '/api/auth/siwe/verify',
+		wcProjectId,
 		onSuccess,
 	});
 	evmCtrl.addEventListener('change', (e) => {

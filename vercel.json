@@ -322,6 +322,10 @@
 			"dest": "/xr.html"
 		},
 		{
+			"src": "/city/?",
+			"dest": "/city.html"
+		},
+		{
 			"src": "/play/?",
 			"dest": "/play.html"
 		},

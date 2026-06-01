@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>City · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+		<meta name="description" content="City — an open world on three.ws. Walk, explore, drive." />
+		<meta name="theme-color" content="#060607" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/src/city/city.css" />
+	</head>
+	<body>
+		<div id="city-loading">
+			<div class="city-loading-card">
+				<img src="/three.svg" alt="three.ws" width="38" height="38" />
+				<div class="city-loading-title">CITY</div>
+				<div class="city-loading-sub" id="city-loading-sub">Loading world…</div>
+				<div class="city-boot-bar" role="status" aria-label="Loading">
+					<span id="city-boot-bar-fill"></span>
+				</div>
+			</div>
+		</div>
+
+		<canvas id="city-canvas" tabindex="0"></canvas>
+
+		<div id="city-hud" aria-hidden="true">
+			<div id="city-hud-tl">
+				<img src="/three.svg" alt="three.ws" width="22" height="22" />
+				<span>CITY</span>
+			</div>
+
+			<div id="city-minimap">
+				<canvas id="city-minimap-canvas" width="120" height="120"></canvas>
+				<div id="city-minimap-north">N</div>
+			</div>
+
+			<div id="city-hud-coords" aria-live="off"></div>
+
+			<div id="city-controls-hint">
+				<kbd>WASD</kbd> move &nbsp;
+				<kbd>Shift</kbd> sprint &nbsp;
+				<kbd>Space</kbd> jump &nbsp;
+				<kbd>Drag</kbd> orbit
+			</div>
+		</div>
+
+		<script type="module" src="/src/city/city-world.js"></script>
+	</body>
+</html>
