@@ -97,6 +97,7 @@ export class GameNet {
 			chat: new Set(), // ({id, name, text, ts}) player msg | ({system, kind, text, ts}) system/command reply
 			bank: new Set(), // ({slots})
 			skills: new Set(), // ({cap, skills, total, average}) — requester's own XP detail
+			xpgain: new Set(), // ({skill, amount, xp, level, levelXp, nextXp}) — every XP earn, earner only
 			levelup: new Set(), // ({skill, level}) — a skill the local player just raised
 			died: new Set(), // ({realm, danger, respawnAt, dropped, byName}) — local death
 			cooked: new Set(), // ({cooked, burned, level}) — result of a cook action at the Roast Pit
@@ -211,6 +212,7 @@ export class GameNet {
 		room.onMessage('chat', (m) => this._emit('chat', m));
 		room.onMessage('bank', (b) => this._emit('bank', b));
 		room.onMessage('skills', (s) => this._emit('skills', s));
+		room.onMessage('xpgain', (g) => this._emit('xpgain', g));
 		room.onMessage('levelup', (l) => this._emit('levelup', l));
 		room.onMessage('died', (d) => this._emit('died', d));
 		room.onMessage('cooked', (c) => this._emit('cooked', c));

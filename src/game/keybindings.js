@@ -24,6 +24,7 @@ export const ACTIONS = [
 	{ id: 'hotbar6', label: 'Hotbar slot 6', group: 'Hotbar', def: '6' },
 	{ id: 'hotbarClear', label: 'Clear hotbar selection', group: 'Hotbar', def: '0' },
 	{ id: 'inventory', label: 'Inventory', group: 'Panels', def: 'i' },
+	{ id: 'quests', label: 'Quests', group: 'Panels', def: 'q' },
 	{ id: 'map', label: 'Map', group: 'Panels', def: 'm' },
 	{ id: 'build', label: 'Build', group: 'Panels', def: 'b' },
 	{ id: 'chat', label: 'Chat', group: 'Panels', def: 'c' },

@@ -31,14 +31,7 @@ const INV = 24;
 
 // Designed placeholders for panels whose owning task hasn't landed yet. The key
 // is never dead: it opens this surface, and the owning task fills the body.
-const PLACEHOLDERS = {
-	build: {
-		title: 'Build',
-		glyph: '🛠️',
-		blurb: 'Place a firepit and raise a shack to claim a corner of the world.',
-		note: 'Building arrives with Task 07.',
-	},
-};
+const PLACEHOLDERS = {};
 
 // Tiny DOM helper (mirrors the el() convention used elsewhere in src/game).
 function el(tag, attrs = {}, kids = []) {
@@ -303,11 +296,16 @@ export class IsoControls {
 			case 'inventory':
 				this._toggle('inv');
 				break;
+			case 'quests':
+				this.game.q?.toggleQuests();
+				break;
 			case 'map':
 				this._toggle('map');
 				break;
 			case 'build':
-				this._toggle('build');
+				// Delegate to the renderer's build-menu toggle (Task 07) so B opens the
+				// real game-hud build panel, not a placeholder surface here.
+				this.game._toggleBuildMenu?.();
 				break;
 			case 'friends':
 				this._toggle('friends');
@@ -793,7 +791,8 @@ export class IsoControls {
 		const kl = (id) => keyLabel(this.kb.get(id));
 		hint.innerHTML =
 			`<kbd>WASD</kbd> move · <kbd>${kl('hotbar1')}</kbd>–<kbd>${kl('hotbar6')}</kbd> hotbar · ` +
-			`<kbd>${kl('inventory')}</kbd> bag · <kbd>${kl('map')}</kbd> map · ` +
+			`<kbd>${kl('inventory')}</kbd> bag · <kbd>${kl('quests')}</kbd> quests · ` +
+			`<kbd>${kl('map')}</kbd> map · <kbd>${kl('build')}</kbd> build · ` +
 			`<kbd>${kl('skills')}</kbd> skills · <kbd>${kl('chat')}</kbd> chat · <kbd>⚙</kbd> controls`;
 	}
 

@@ -42,11 +42,13 @@ export const COSMETICS = [
 	{ id: 'tint-emerald', name: 'Emerald Dye', rarity: 'uncommon', price: 140, rotation: 'daily', visual: { tint: '#1abc9c' } },
 	{ id: 'tint-violet', name: 'Violet Dye', rarity: 'uncommon', price: 140, rotation: 'daily', visual: { tint: '#8e44ad' } },
 	{ id: 'hat-baseball', name: 'Field Cap', rarity: 'uncommon', price: 200, rotation: 'daily', visual: { prop: '/accessories/hat-baseball.glb', anchor: 'head' } },
+	{ id: 'glasses-round', name: 'Round Specs', rarity: 'uncommon', price: 180, rotation: 'daily', visual: { prop: '/accessories/glasses-round.glb', anchor: 'face' } },
 	{ id: 'tint-gold', name: 'Gilded Sheen', rarity: 'rare', price: 360, rotation: 'daily', visual: { tint: '#f1c40f' } },
 	{ id: 'aura-ember', name: 'Ember Aura', rarity: 'rare', price: 420, rotation: 'daily', visual: { aura: '#ff6b35' } },
 
 	// ---- Weekly rotation pool (WEEKLY_OFFER_COUNT offered each week) -------
 	{ id: 'hat-cowboy', name: "Ranger's Hat", rarity: 'rare', price: 480, rotation: 'weekly', visual: { prop: '/accessories/hat-cowboy.glb', anchor: 'head' } },
+	{ id: 'glasses-shades', name: 'Shades', rarity: 'rare', price: 520, rotation: 'weekly', visual: { prop: '/accessories/glasses-shades.glb', anchor: 'face' } },
 	{ id: 'aura-frost', name: 'Frost Aura', rarity: 'epic', price: 700, rotation: 'weekly', visual: { aura: '#6bd3ff' } },
 	{ id: 'aura-radiant', name: 'Radiant Aura', rarity: 'epic', price: 760, rotation: 'weekly', visual: { aura: '#ffe27a', tint: '#fff4cf' } },
 	{ id: 'aura-void', name: 'Void Aura', rarity: 'legendary', price: 1400, rotation: 'weekly', visual: { aura: '#9b59b6', tint: '#2c2c54' } },
@@ -155,6 +157,26 @@ export function isOffered(id, now) {
 	if (c.rotation === 'always') return true;
 	const offers = currentOffers(now);
 	return c.rotation === 'daily' ? offers.daily.includes(id) : offers.weekly.includes(id);
+}
+
+// Pure purchase rule — the single source of truth for whether a buy is allowed,
+// shared by the server buy handler and its tests. Returns the resolved cosmetic
+// plus an outcome code so the caller can phrase the notice (and compute the gold
+// shortfall) without re-deriving the rules:
+//   'unknown'     — no such cosmetic id
+//   'owned'       — the player already owns it
+//   'not-offered' — exists but isn't in the current rotation
+//   'poor'        — offered + unowned, but the player can't afford it
+//   'ok'          — buyable now
+// `owned` may be a Set or an array of ids; `gold` is the player's purse.
+export function evaluatePurchase(gold, owned, id, now) {
+	const cosmetic = cosmeticById(id);
+	if (!cosmetic) return { ok: false, reason: 'unknown', cosmetic: null };
+	const has = owned instanceof Set ? owned.has(id) : Array.isArray(owned) && owned.includes(id);
+	if (has) return { ok: false, reason: 'owned', cosmetic };
+	if (!isOffered(id, now)) return { ok: false, reason: 'not-offered', cosmetic };
+	if ((gold | 0) < cosmetic.price) return { ok: false, reason: 'poor', cosmetic };
+	return { ok: true, reason: 'ok', cosmetic };
 }
 
 // The catalog as sent to the client: every cosmetic's id, name, rarity, price,

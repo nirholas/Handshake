@@ -9,8 +9,23 @@
 // error, empty graph, empty thread.
 
 import { friendsClient } from '../friends.js';
+import panelCssUrl from '../friends-panel.css?url';
 
 const HOTKEY_NOTE = 'Press F to toggle this panel.';
+
+// Inject the standalone friends-panel CSS once per document (harmless in /play
+// where iso-game.css already covers the .kg-fr-* rules — duplicate selectors
+// are idempotent). In /walk the --kg-* vars are absent so the .wf-friends scope
+// defined in friends-panel.css provides fallbacks.
+let _cssInjected = false;
+function ensureCss() {
+	if (_cssInjected || typeof document === 'undefined') return;
+	_cssInjected = true;
+	const link = document.createElement('link');
+	link.rel = 'stylesheet';
+	link.href = panelCssUrl;
+	document.head.appendChild(link);
+}
 
 function el(tag, attrs = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -56,9 +71,11 @@ function realmLabel(realm) {
 }
 
 export class FriendsPanel {
-	constructor(container) {
+	constructor(container, { walkMode = false } = {}) {
 		this.root = container;
+		this.walkMode = walkMode;
 		this.client = friendsClient();
+		ensureCss();
 		this.tab = 'friends'; // 'friends' | 'requests' | 'add'
 		this._searchResults = [];
 		this._searchTerm = '';
@@ -110,6 +127,8 @@ export class FriendsPanel {
 		if (!this._mounted) return;
 		this.root.innerHTML = '';
 		this.root.classList.add('kg-fr');
+		// Add token-fallback scope when running outside /play.
+		if (this.walkMode) this.root.classList.add('wf-friends');
 
 		const c = this.client;
 		if (!c.loaded) {

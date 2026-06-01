@@ -16,6 +16,14 @@
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
 
 const NETWORK = 'mainnet';
+const SPIN_DECIMALS = 6; // $THREE uses 6 decimals (same as pump.fun mints)
+
+// Convert an atomics string to a human-readable token amount, e.g. "12345678" → "12.35".
+function fmtAtomics(atomics) {
+	const n = Number(BigInt(atomics || '0')) / 10 ** SPIN_DECIMALS;
+	if (!Number.isFinite(n) || n <= 0) return null;
+	return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
 const SEG_COLORS = {
 	gold: { fill: '#f5c542', edge: '#caa033', text: '#3a2c00' },
 	wood: { fill: '#8a5a32', edge: '#6e4626', text: '#fbe9d4' },
@@ -135,6 +143,11 @@ class SpinWheel {
 	_onPrep(m) {
 		if (this.phase !== 'paying') return; // a stale prep from a cancelled flow
 		this._prep = m;
+		// Update the paid subline with the live quoted token amount so the player
+		// sees exactly what they'll sign before the wallet prompt appears.
+		const tkn = fmtAtomics(m.tokenAmount);
+		const sym = m.symbol || this.info?.symbol || '$THREE';
+		if (tkn && this.paidSub) this.paidSub.textContent = `${tkn} ${sym} · 50% burned, 50% treasury`;
 		this._runWalletPayment(m).catch((err) => this._payError(err));
 	}
 
@@ -153,7 +166,10 @@ class SpinWheel {
 		// beat. Retry the settle a few times before giving up so a confirmed payment
 		// is never lost to a timing race. The signature is consumed only on success.
 		if (m?.mode === 'paid' && m.reason === 'not_found' && this._prep && this._sig && (this._settleAttempts || 0) < 5) {
-			this._status('Waiting for the payment to confirm…', '');
+			// The payment is confirmed on our end but the server's RPC node hasn't
+			// indexed it yet. Retry; the signature is already reserved so no double-roll
+			// is possible regardless of how many times this fires.
+			this._status(`Payment confirmed — waiting for server to see it… (attempt ${this._settleAttempts}/5)`, '');
 			setTimeout(() => { if (!this._closed && this.phase === 'spinning') this._settle(); }, 2500);
 			return;
 		}
@@ -218,7 +234,10 @@ class SpinWheel {
 	async _runWalletPayment(prep) {
 		const wallet = detectSolanaWallet();
 		if (!wallet) throw Object.assign(new Error('No Solana wallet found.'), { friendly: true });
-		this._status('Approve the $3 spin in your wallet…', '');
+		const tkn = fmtAtomics(prep.tokenAmount);
+		const sym = prep.symbol || '$THREE';
+		const label = tkn ? `${tkn} ${sym} (~$${prep.costUsd ?? 3})` : `$${prep.costUsd ?? 3} in ${sym}`;
+		this._status(`Approve ${label} in your wallet…`, '');
 		const { Transaction, Connection } = await import('@solana/web3.js');
 		const bytes = Uint8Array.from(atob(prep.tx), (c) => c.charCodeAt(0));
 		const tx = Transaction.from(bytes);

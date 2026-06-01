@@ -876,7 +876,7 @@ async function saveAvatar() {
 			glbBlob,
 			{
 				name,
-				source: 'studio',
+				source: 'direct-upload',
 				source_meta: { generator: 'avatar-studio', body_type: BODY_TYPE },
 				visibility: 'public',
 			},

@@ -67,6 +67,10 @@ export class ConnectWalletController extends EventTarget {
 	#opts;
 	#onAccountsChanged;
 	#onChainChanged;
+	/** Active raw EIP-1193 provider (window.ethereum or WalletConnect). */
+	#activeProvider = null;
+	/** WalletConnect provider instance, kept separately for listener cleanup. */
+	#wcProvider = null;
 
 	/**
 	 * @param {{
@@ -77,6 +81,7 @@ export class ConnectWalletController extends EventTarget {
 	 *   onSuccess?: Function,
 	 *   autoDetect?: boolean,
 	 *   labels?: Record<string, string>,
+	 *   wcProjectId?: string,
 	 * }} [opts]
 	 */
 	constructor(opts = {}) {
@@ -89,6 +94,7 @@ export class ConnectWalletController extends EventTarget {
 			onSuccess: null,
 			autoDetect: false,
 			labels: {},
+			wcProjectId: null,
 			...opts,
 		};
 		this.#s = initialState();
@@ -182,6 +188,44 @@ export class ConnectWalletController extends EventTarget {
 			const address = await signer.getAddress();
 			const network = await provider.getNetwork();
 			const chainId = Number(network.chainId);
+			this.#activeProvider = window.ethereum;
+			this.#dispatch({ type: 'ACCOUNTS_RESOLVED', address, chainId });
+
+			if (!this.#opts.allowedChainIds.includes(chainId)) {
+				this.#dispatch({ type: 'WRONG_CHAIN' });
+				await this.#trySwitchChain(provider);
+			}
+		} catch (e) {
+			this.#dispatch({ type: 'ERROR', error: e instanceof Error ? e : new Error(String(e)) });
+		}
+	}
+
+	/** Initiate connect via WalletConnect (opens QR modal). */
+	async connectWalletConnect() {
+		if (this.#s.status !== STATES.IDLE) return;
+		if (!this.#opts.wcProjectId) return;
+		this.#dispatch({ type: 'CONNECT' });
+		this.#dispatch({ type: 'HAS_PROVIDER' });
+
+		try {
+			const { initWCProvider } = await import('./wc-provider.js');
+			const wc = await initWCProvider({
+				projectId: this.#opts.wcProjectId,
+				chains: this.#opts.allowedChainIds.filter((id) => id > 0).slice(0, 1),
+				optionalChains: this.#opts.allowedChainIds.filter((id) => id > 0).slice(1),
+			});
+
+			wc.on('accountsChanged', this.#onAccountsChanged);
+			wc.on('chainChanged', this.#onChainChanged);
+			this.#wcProvider = wc;
+			this.#activeProvider = wc;
+
+			await wc.connect();
+			const provider = new BrowserProvider(wc);
+			const signer = await provider.getSigner();
+			const address = await signer.getAddress();
+			const network = await provider.getNetwork();
+			const chainId = Number(network.chainId);
 			this.#dispatch({ type: 'ACCOUNTS_RESOLVED', address, chainId });
 
 			if (!this.#opts.allowedChainIds.includes(chainId)) {
@@ -224,7 +268,7 @@ export class ConnectWalletController extends EventTarget {
 		this.#dispatch({ type: 'SIGN' });
 
 		try {
-			const provider = new BrowserProvider(window.ethereum);
+			const provider = new BrowserProvider(this.#activeProvider || window.ethereum);
 			const signer = await provider.getSigner();
 			const address = await signer.getAddress();
 
@@ -277,7 +321,109 @@ export class ConnectWalletController extends EventTarget {
 			window.ethereum.removeListener('accountsChanged', this.#onAccountsChanged);
 			window.ethereum.removeListener('chainChanged', this.#onChainChanged);
 		}
+		if (this.#wcProvider) {
+			this.#wcProvider.removeListener('accountsChanged', this.#onAccountsChanged);
+			this.#wcProvider.removeListener('chainChanged', this.#onChainChanged);
+			this.#wcProvider = null;
+		}
+		this.#activeProvider = null;
 	}
+}
+
+let _pickerStylesInjected = false;
+
+function ensurePickerStyles() {
+	if (_pickerStylesInjected) return;
+	_pickerStylesInjected = true;
+	const s = document.createElement('style');
+	s.textContent = `
+		.cwb-picker {
+			position: fixed;
+			background: #18181b;
+			border: 1px solid #2d2d32;
+			border-radius: 10px;
+			box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+			overflow: hidden;
+			min-width: 200px;
+			z-index: 9999;
+		}
+		.cwb-pick-item {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			width: 100%;
+			padding: 13px 16px;
+			background: none;
+			border: none;
+			color: #f4f4f5;
+			font-size: 14px;
+			font-family: inherit;
+			cursor: pointer;
+			text-align: left;
+			transition: background 0.12s;
+			white-space: nowrap;
+		}
+		.cwb-pick-item:hover { background: rgba(255,255,255,0.07); }
+		.cwb-pick-item + .cwb-pick-item { border-top: 1px solid #2d2d32; }
+		.cwb-pick-icon {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 24px;
+			height: 24px;
+			border-radius: 6px;
+			flex-shrink: 0;
+		}
+	`;
+	document.head.appendChild(s);
+}
+
+function showWalletPicker(anchorEl, onBrowser, onWC) {
+	document.querySelector('.cwb-picker')?.remove();
+	ensurePickerStyles();
+
+	const picker = document.createElement('div');
+	picker.className = 'cwb-picker';
+
+	const mmBtn = document.createElement('button');
+	mmBtn.type = 'button';
+	mmBtn.className = 'cwb-pick-item';
+	mmBtn.innerHTML = `
+		<svg class="cwb-pick-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<rect width="24" height="24" rx="6" fill="#E8831D"/>
+			<path d="M20 4L13.3 8.9l1.24-2.93L20 4z" fill="#E2761B" stroke="#E2761B" stroke-width=".1"/>
+			<path d="M4 4l6.64 5-1.18-3L4 4z" fill="#E4761B" stroke="#E4761B" stroke-width=".1"/>
+		</svg>
+		Browser wallet`;
+
+	const wcBtn = document.createElement('button');
+	wcBtn.type = 'button';
+	wcBtn.className = 'cwb-pick-item';
+	wcBtn.innerHTML = `
+		<svg class="cwb-pick-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<rect width="24" height="24" rx="6" fill="#3B99FC"/>
+			<path d="M7.5 9.5c2.5-2.5 6.5-2.5 9 0l.3.3a.3.3 0 010 .42l-1.03 1.03a.15.15 0 01-.21 0l-.41-.42c-1.74-1.74-4.56-1.74-6.3 0l-.44.44a.15.15 0 01-.21 0L7.17 10.24a.3.3 0 010-.42L7.5 9.5zm11.13 2.12l.92.92a.3.3 0 010 .42l-4.14 4.14a.3.3 0 01-.42 0l-2.94-2.94a.08.08 0 00-.1 0l-2.94 2.94a.3.3 0 01-.42 0L5.45 13a.3.3 0 010-.42l.92-.92a.3.3 0 01.42 0l2.94 2.94c.03.03.08.03.1 0l2.94-2.94a.3.3 0 01.42 0l2.94 2.94c.03.03.08.03.1 0l2.94-2.94a.3.3 0 01.42 0z" fill="white"/>
+		</svg>
+		WalletConnect`;
+
+	picker.appendChild(mmBtn);
+	picker.appendChild(wcBtn);
+	document.body.appendChild(picker);
+
+	const rect = anchorEl.getBoundingClientRect();
+	picker.style.top = `${rect.bottom + 6}px`;
+	picker.style.left = `${rect.left}px`;
+
+	mmBtn.onclick = (e) => { e.stopPropagation(); picker.remove(); onBrowser(); };
+	wcBtn.onclick = (e) => { e.stopPropagation(); picker.remove(); onWC(); };
+
+	const close = (e) => {
+		if (!picker.contains(e.target) && e.target !== anchorEl) {
+			picker.remove();
+			document.removeEventListener('click', close);
+		}
+	};
+	setTimeout(() => document.addEventListener('click', close), 0);
 }
 
 const LABEL_DEFAULTS = {
@@ -303,6 +449,7 @@ const LABEL_DEFAULTS = {
  *   messageBuilder?: Function,
  *   onSuccess?: Function,
  *   labels?: Record<string, string>,
+ *   wcProjectId?: string,
  * }} [opts]
  * @returns {ConnectWalletController}
  */
@@ -312,7 +459,8 @@ export function createConnectWalletButton(mountEl, opts = {}) {
 
 	const labels = { ...LABEL_DEFAULTS, ...(opts.labels || {}) };
 	const allowedChainIds = opts.allowedChainIds || DEFAULT_CHAIN_IDS;
-	const ctrl = new ConnectWalletController({ ...opts, allowedChainIds });
+	const wcProjectId = opts.wcProjectId || import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID || null;
+	const ctrl = new ConnectWalletController({ ...opts, allowedChainIds, wcProjectId });
 	mountEl._cwbCtrl = ctrl;
 
 	const btn = document.createElement('button');
@@ -335,6 +483,8 @@ export function createConnectWalletButton(mountEl, opts = {}) {
 					: `${short} · ${chainName}`;
 		} else if (s === STATES.ERROR) {
 			btn.textContent = labels.error;
+		} else if (s === STATES.NO_PROVIDER && wcProjectId) {
+			btn.textContent = labels.idle || 'Connect wallet';
 		} else {
 			btn.textContent = labels[s] || s;
 		}
@@ -343,7 +493,11 @@ export function createConnectWalletButton(mountEl, opts = {}) {
 	function updateClickHandler(status) {
 		btn.onclick = null;
 		if (status === STATES.NO_PROVIDER) {
-			btn.onclick = () => window.open('https://metamask.io', '_blank', 'noopener');
+			if (wcProjectId) {
+				btn.onclick = () => ctrl.connectWalletConnect();
+			} else {
+				btn.onclick = () => window.open('https://metamask.io', '_blank', 'noopener');
+			}
 		} else if (status === STATES.CONNECTED) {
 			btn.onclick = () => ctrl.signAndVerify();
 		} else if (status === STATES.WRONG_CHAIN) {
@@ -354,7 +508,13 @@ export function createConnectWalletButton(mountEl, opts = {}) {
 				ctrl.connect();
 			};
 		} else if (status === STATES.IDLE) {
-			btn.onclick = () => ctrl.connect();
+			if (wcProjectId) {
+				btn.onclick = window.ethereum
+					? () => showWalletPicker(btn, () => ctrl.connect(), () => ctrl.connectWalletConnect())
+					: () => ctrl.connectWalletConnect();
+			} else {
+				btn.onclick = () => ctrl.connect();
+			}
 		}
 	}
 

@@ -812,6 +812,25 @@ body.kg-loading-cursor {
 	color: #ff9c9c;
 	font-style: normal;
 }
+.kg-chat-line--help {
+	background: rgba(20, 28, 44, 0.7);
+	border-left: 2px solid var(--kg-accent);
+	padding-left: 10px;
+}
+.kg-chat-line--help .kg-chat-text {
+	font-family: monospace;
+	font-size: 12px;
+	font-style: normal;
+	color: var(--kg-text);
+	opacity: 0.9;
+}
+.kg-chat-line--who {
+	border-left: 2px solid #5dd9c1;
+}
+.kg-chat-line--who .kg-chat-text {
+	color: #a8eee4;
+	font-style: normal;
+}
 
 .kg-chat-form {
 	display: flex;
@@ -2248,6 +2267,12 @@ body.kg-loading-cursor {
 .kq-slot:focus-visible { outline: 2px solid var(--kg-accent); outline-offset: 2px; }
 .kq-slot--active { border-color: #ffce5c; background: rgba(255, 206, 92, 0.14); box-shadow: 0 0 0 1px rgba(255,206,92,0.5) inset; }
 .kq-slot--empty { opacity: 0.55; }
+/* Tutorial step hint: pulse-glow the relevant hotbar slot */
+.kq-slot--hint { border-color: #6ee787; background: rgba(110,231,135,0.12); animation: kq-slot-hint 1.4s ease-in-out infinite; }
+@keyframes kq-slot-hint {
+	0%,100% { box-shadow: 0 0 0 0 rgba(110,231,135,0); }
+	50%      { box-shadow: 0 0 0 4px rgba(110,231,135,0.5), 0 0 14px rgba(110,231,135,0.35); }
+}
 .kq-slot .kq-key { position: absolute; top: 3px; left: 5px; font-size: 9px; font-weight: 700; color: var(--kg-dim); }
 .kq-slot .kq-ic { font-size: 24px; line-height: 1; }
 .kq-slot .kq-qty { position: absolute; bottom: 3px; right: 5px; font-size: 10px; font-weight: 700; color: var(--kg-text); text-shadow: 0 1px 2px #000; }
@@ -2279,6 +2304,18 @@ body.kg-loading-cursor {
 
 .kq-card-q { padding: 12px 14px; margin-bottom: 10px; border-radius: 12px; background: rgba(255,255,255,0.035); border: 1px solid var(--kg-line); transition: border-color .2s, opacity .2s; }
 .kq-card-tut { border-color: rgba(255, 206, 92, 0.4); background: rgba(255, 206, 92, 0.07); }
+.kq-card-tut .kq-progress i { background: linear-gradient(90deg, #ffce5c, #ffe999); }
+/* Tutorial pip progress + slot chip */
+.kq-tut-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.kq-tut-head .kq-h3 { margin: 0; }
+.kq-tut-overall { display: flex; align-items: center; gap: 6px; }
+.kq-tut-pips { display: flex; gap: 4px; align-items: center; }
+.kq-tut-pip { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); transition: background .2s; flex-shrink: 0; }
+.kq-tut-pip--done { background: #6ee787; border-color: #6ee787; }
+.kq-tut-pip--active { background: #ffce5c; border-color: #ffce5c; box-shadow: 0 0 6px rgba(255,206,92,0.7); animation: kq-pip-pulse 1.2s ease-in-out infinite; }
+@keyframes kq-pip-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+.kq-tut-frac { font-size: 10px; font-weight: 700; color: var(--kg-dim); font-variant-numeric: tabular-nums; }
+.kq-tut-slot-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #6ee787; background: rgba(110,231,135,0.12); border: 1px solid rgba(110,231,135,0.35); border-radius: 999px; padding: 3px 10px; margin-bottom: 8px; }
 .kq-card-q.kq-ready { border-color: rgba(110, 231, 135, 0.5); background: rgba(110, 231, 135, 0.07); }
 .kq-card-q.kq-claimed { opacity: 0.55; }
 .kq-q-title { font-size: 14px; font-weight: 700; color: var(--kg-text); }

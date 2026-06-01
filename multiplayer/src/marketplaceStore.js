@@ -215,3 +215,8 @@ class MarketplaceStore {
 // One store shared by every GameRoom in the process — that shared memory is
 // exactly what lets a listing outlive its seller's session and its room.
 export const marketplaceStore = new MarketplaceStore();
+
+// Periodically retire long-closed (sold/cancelled) listings so neither the store
+// nor the Buy snapshot grows without bound over a long-lived process. Active
+// listings are never touched. Unref'd so it never keeps the process alive.
+setInterval(() => marketplaceStore.prune(), 1000 * 60 * 60).unref?.();

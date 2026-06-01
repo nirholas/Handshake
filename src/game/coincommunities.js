@@ -36,7 +36,7 @@ import { HOME_TOWN, isHomeTown } from './home-town.js';
 import { VoiceChat, voiceSupported } from './voice-chat.js';
 import { requestHolderPass, signInWithX, ensureSolanaWallet, getSession } from '../community/town-auth.js';
 import { ensurePlayAccess } from './play-gate.js';
-import { clearStoredPass } from './play-auth.js';
+import { clearStoredPass, fetchPlayConfig, signInToPlay, loadStoredPass, storePass } from './play-auth.js';
 
 const WORLD_RADIUS = 58; // a touch inside the server's 60m clamp
 const MOVE_SPEED = 4.2;
@@ -755,6 +755,12 @@ export class CoinCommunities {
 		this.phase = 'world';
 		this._initJoystick();
 		this._onboardBuild();
+		// Start the silent pass-refresh cycle. The play pass has a 10-min server
+		// TTL; the server sweeps expired passes every minute. We refresh 2 min early
+		// so a player in a long session is never evicted mid-build. The refresh
+		// re-reads the chain (via /api/play/verify) so a wallet that offloaded its
+		// tokens is refused rather than silently let through on a stale pass.
+		this._schedulePassRefresh();
 	}
 
 	// First-run nudge so players discover building exists — the HUD's ⛏ toggle is
@@ -769,6 +775,48 @@ export class CoinCommunities {
 			this.ui.toast(touch ? 'Tip: tap ⛏ to build this world together.' : 'Tip: press B (or tap ⛏) to build this world together.', 'info');
 			try { localStorage.setItem('cc-build-onboarded', '1'); } catch {}
 		}, 4200);
+	}
+
+	// Silent mid-session pass refresh. Runs once the player is in a world; wakes
+	// up 2 min before the pass expires, re-runs the sign+verify flow silently (no
+	// UI), and updates this.playPass so the next reconnect uses the fresh token.
+	// Re-checks the chain, so a wallet that offloaded its tokens gets evicted here
+	// rather than on the next reconnect. Cancels automatically when leave() tears
+	// the net down.
+	_schedulePassRefresh() {
+		clearTimeout(this._passRefreshTimer);
+		if (!this.playPass || !this.account) return; // gate was off when we entered
+		const cached = loadStoredPass();
+		if (!cached?.expiresAt) return;
+		const msLeft = new Date(cached.expiresAt).getTime() - Date.now();
+		const delay = Math.max(0, msLeft - 2 * 60 * 1000); // 2 min before expiry
+		this._passRefreshTimer = setTimeout(() => this._doPassRefresh(), delay);
+	}
+
+	async _doPassRefresh() {
+		if (this.phase !== 'world' || !this.account) return;
+		try {
+			const cfg = await fetchPlayConfig();
+			if (!cfg.required) return; // gate turned off — nothing to refresh
+			const res = await signInToPlay({ nonce: cfg.nonce });
+			if (res.ok && res.playPass) {
+				this.playPass = res.playPass;
+				storePass(res);
+				this.net?.updatePlayPass?.(res.playPass);
+				this._schedulePassRefresh();
+			} else {
+				// Below the floor mid-session: clear state and surface the gate.
+				clearStoredPass();
+				this.playPass = '';
+				this.ui.toast('Your token balance dropped — sign in again to keep playing.', 'warn');
+				this.leave();
+				this._playReady = this._ensurePlayAccess();
+			}
+		} catch {
+			// Network hiccup — try again in 30 s rather than breaking the session.
+			clearTimeout(this._passRefreshTimer);
+			this._passRefreshTimer = setTimeout(() => this._doPassRefresh(), 30_000);
+		}
 	}
 
 	// Wallet-first platform gate. Shows the sign-in screen (connect → sign nonce →
@@ -899,6 +947,8 @@ export class CoinCommunities {
 		this._enterEpoch = (this._enterEpoch || 0) + 1;
 		// Tear voice down before the socket so our final "left voice" flag still
 		// sends, and peers' connections close cleanly.
+		clearTimeout(this._passRefreshTimer);
+		this._passRefreshTimer = null;
 		if (this.voice) { this.voice.dispose(); this.voice = null; }
 		if (this.net) { this.net.destroy(); this.net = null; }
 		for (const [, r] of this.remotes) r.dispose();

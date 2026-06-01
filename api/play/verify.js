@@ -24,6 +24,7 @@ import { z } from 'zod';
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { getBalances } from '../_lib/balances.js';
+import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { verifyNonce, signPlayPass, PLAY_GATE_MINT, PLAY_GATE_MIN } from '../_lib/play-pass.js';
 
 const bs58 = bs58mod.default || bs58mod;
@@ -67,9 +68,19 @@ export default wrap(async (req, res) => {
 
 	// 1) The nonce must be one we issued and still live — defeats replaying a
 	//    signature captured from an old session.
-	if (!verifyNonce(nonce)) {
+	const nv = verifyNonce(nonce);
+	if (!nv) {
 		return error(res, 400, 'nonce_invalid', 'sign-in expired — please try again');
 	}
+	// Single-use: burn the nonce so the same signed message can't be redeemed
+	// twice within its TTL window. Backed by Upstash when configured (shared across
+	// instances), in-memory otherwise — the HMAC + short TTL remain the floor.
+	const burnKey = `playnonce:${nv.r}`;
+	if (await cacheGet(burnKey)) {
+		return error(res, 400, 'nonce_invalid', 'this sign-in was already used — please try again');
+	}
+	const ttl = Math.max(1, Math.ceil(nv.exp - Date.now() / 1000));
+	await cacheSet(burnKey, 1, ttl);
 
 	// 2) The signature must verify against the address over our exact message.
 	let pubkey, sigBytes;

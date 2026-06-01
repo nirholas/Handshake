@@ -20,7 +20,7 @@
 
 import {
 	Scene, Color, Fog, WebGLRenderer, PerspectiveCamera, Group, Vector3,
-	HemisphereLight, DirectionalLight, AmbientLight, PCFSoftShadowMap, SRGBColorSpace,
+	HemisphereLight, DirectionalLight, AmbientLight, PointLight, PCFSoftShadowMap, SRGBColorSpace,
 	Mesh, MeshStandardMaterial, MeshBasicMaterial, PlaneGeometry, BoxGeometry,
 	CylinderGeometry, ConeGeometry, DodecahedronGeometry, IcosahedronGeometry,
 	CircleGeometry, CanvasTexture, RepeatWrapping, DoubleSide,
@@ -496,8 +496,12 @@ export class IsoGame {
 		this.camera = new PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 400);
 		this.camera.position.set(12, 16, 12);
 
-		scene.add(new HemisphereLight(0xdcebff, 0x49603a, 1.0));
-		scene.add(new AmbientLight(0xffffff, 0.28));
+		const hemi = new HemisphereLight(0xdcebff, 0x49603a, 1.0);
+		scene.add(hemi);
+		this._hemi = hemi;
+		const ambient = new AmbientLight(0xffffff, 0.28);
+		scene.add(ambient);
+		this._ambient = ambient;
 		const sun = new DirectionalLight(0xfff0d4, 1.25);
 		sun.position.set(24, 40, 18); sun.castShadow = true;
 		sun.shadow.mapSize.set(2048, 2048);
@@ -505,6 +509,9 @@ export class IsoGame {
 		sun.shadow.bias = -0.0004;
 		scene.add(sun, sun.target);
 		this._sun = sun;
+		// Cave torches: warm PointLights added/removed alongside the mine geometry.
+		// Stored so _buildRealm can repopulate them on every handoff without leaking.
+		this._caveLights = [];
 
 		// Static realm geometry (ground, buildings, fountain, tile paint) lives in
 		// its own group so a realm (re)build is a single clear + rebuild WITHOUT
@@ -1045,6 +1052,7 @@ export class IsoGame {
 		this.net.on('chat', (m) => this._onChat(m));
 		this.net.on('bank', (b) => this._onBank(b));
 		this.net.on('skills', (s) => this._onSkills(s));
+		this.net.on('xpgain', (g) => this._onXpGain(g));
 		this.net.on('levelup', (l) => this._onLevelup(l));
 		this.net.on('playerAdd', (p, id) => this._playerAdd(p, id));
 		this.net.on('playerChange', (p, id) => this._playerChange(p, id));
@@ -2501,27 +2509,18 @@ export class IsoGame {
 		window.addEventListener('keydown', (e) => {
 			if (this._typing()) return;
 			const k = e.key.toLowerCase();
-			// Skills panel: K toggles, Escape closes it. Handled as discrete actions
-			// (not movement keys) so they don't leak into the held-key set.
-			if (k === 'k') { e.preventDefault(); this._toggleSkills(); return; }
+			// iso-controls (capture-phase) owns all discrete actions: hotbar 1-6/0,
+			// I, Q, M, B, C, F, K, R. This listener only handles keys it passes through.
+			//
+			// Skills drawer: Escape closes it. iso-controls intercepts Escape only for
+			// its own surfaces; the skills drawer lives here in iso-game.
 			if (k === 'escape' && this._skillsOpen) { e.preventDefault(); this._toggleSkills(false); return; }
-			// Quests panel: Q toggles, Escape closes any open quest/bank/NPC surface.
-			if (k === 'q' && this.phase === 'world') { e.preventDefault(); this.q?.toggleQuests(); return; }
-			// Build menu (Task 07): B opens it / cancels an in-progress placement.
-			if (k === 'b' && this.phase === 'world') { e.preventDefault(); this._toggleBuildMenu(); return; }
-			// Marketplace (Task 20): M opens/closes the cart from anywhere in-world.
-			if (k === 'm' && this.phase === 'world') { e.preventDefault(); this.q?.toggleMarket(); return; }
-			// Escape also cancels build mode before any other surface.
+			// Escape cancels an in-progress build placement before closing panels.
 			if (k === 'escape' && this._buildMode) { e.preventDefault(); this._exitBuildMode(); return; }
-			// Hotbar number keys 1–6: select that slot (and ride a mount on it).
-			if (this.phase === 'world' && k >= '1' && k <= '6') { e.preventDefault(); this._equipOrRide(+k - 1); return; }
+			// Escape closes game-hud panels (quests/bank/NPC/build/shop/market).
 			if (k === 'escape') { this.q?.closeQuests(); this.q?.closeBank(); this.q?.closeNpc(); this.q?.closeBuild?.(); this.q?.closeShop?.(); this.q?.closeMarket?.(); }
-			// Hotbar 1–6: equip that slot (server validates + patches activeSlot back).
-			if (this.phase === 'world' && k >= '1' && k <= '6') { e.preventDefault(); this.net?.equip(parseInt(k, 10) - 1); return; }
-			// Chat focus: C (or Enter) opens the chat input once in the world. The
-			// _typing() guard above means held movement keys never leak into chat,
-			// and opening clears the held set so the avatar doesn't walk while typing.
-			if (this.phase === 'world' && (k === 'c' || k === 'enter')) { e.preventDefault(); this._openChat(); return; }
+			// Enter opens chat. iso-controls passes Enter through when no surface is open.
+			if (this.phase === 'world' && k === 'enter') { e.preventDefault(); this._openChat(); return; }
 			this.keys.add(k);
 		});
 		window.addEventListener('keyup', (e) => this.keys.delete(e.key.toLowerCase()));
@@ -2905,7 +2904,12 @@ export class IsoGame {
 			if (!this.hud.chatInput.value.trim()) this._closeChat();
 		});
 		// Slash-command autocomplete + character counter: refresh on every edit.
-		this.hud.chatInput?.addEventListener('input', () => { this._refreshCmdHint(); this._updateChatCounter(); });
+		// Also reset the history cursor so a manual edit breaks out of recall mode.
+		this.hud.chatInput?.addEventListener('input', () => {
+			this._chatHistoryCursor = -1;
+			this._refreshCmdHint();
+			this._updateChatCounter();
+		});
 		this.hud.chatInput?.addEventListener('keydown', (e) => {
 			// Esc: first dismiss an open command hint, otherwise clear + close chat.
 			if (e.key === 'Escape') {
@@ -2926,6 +2930,29 @@ export class IsoGame {
 					const c = this._cmdHint.items[this._cmdHint.active];
 					if (c) this.hud.chatInput.value = '/' + c.name;
 					this._hideCmdHint();
+					this._updateChatCounter();
+				}
+			} else {
+				// History navigation: ↑/↓ when the hint is closed steps through the
+				// last 50 sent messages. ↑ at the top of history is a no-op; ↓ at the
+				// bottom restores the in-progress draft.
+				if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+					const hist = this._chatHistory;
+					if (hist?.length) {
+						e.preventDefault();
+						e.stopPropagation();
+						const input = this.hud.chatInput;
+						if (this._chatHistoryCursor === -1) this._chatHistoryDraft = input.value;
+						const max = hist.length - 1;
+						let next = this._chatHistoryCursor === -1
+							? (e.key === 'ArrowUp' ? max : -1)
+							: Math.max(-1, Math.min(max, this._chatHistoryCursor + (e.key === 'ArrowUp' ? -1 : 1)));
+						this._chatHistoryCursor = next;
+						input.value = next === -1 ? (this._chatHistoryDraft || '') : hist[hist.length - 1 - next];
+						this._updateChatCounter();
+						this._refreshCmdHint();
+						return;
+					}
 				}
 			}
 			// Everything else stays in the field (the global keydown bails on
@@ -3076,6 +3103,14 @@ export class IsoGame {
 		this._hideCmdHint();
 		this._updateChatCounter();
 		if (!text) { this._closeChat(); return; }
+		// Push into history (max 50), deduplicate adjacent identical entries.
+		if (!this._chatHistory) this._chatHistory = [];
+		if (this._chatHistory[this._chatHistory.length - 1] !== text) {
+			this._chatHistory.push(text);
+			if (this._chatHistory.length > 50) this._chatHistory.shift();
+		}
+		this._chatHistoryCursor = -1; // reset to "live" position after send
+		this._chatHistoryDraft = '';
 		// Server is authoritative: it sanitizes, rate-limits, routes `/commands`, and
 		// echoes accepted messages back to everyone (us included) as 'chat' events.
 		this.net?.chat(text);
@@ -3128,6 +3163,8 @@ export class IsoGame {
 		if (msg.system) {
 			line.classList.add('kg-chat-line--system');
 			if (msg.kind === 'error') line.classList.add('kg-chat-line--error');
+			if (msg.kind === 'help') line.classList.add('kg-chat-line--help');
+			if (msg.kind === 'who') line.classList.add('kg-chat-line--who');
 			const t = document.createElement('span');
 			t.className = 'kg-chat-text';
 			t.textContent = msg.text;

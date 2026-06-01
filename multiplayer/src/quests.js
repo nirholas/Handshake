@@ -26,6 +26,7 @@ export const BADGES = {
 	forager: { id: 'forager', label: 'Forager', icon: '🧺', desc: 'Cleared a gathering daily quest.' },
 	fisher: { id: 'fisher', label: 'Fisher', icon: '🎣', desc: 'Cleared a fishing daily quest.' },
 	pitcook: { id: 'pitcook', label: 'Pit Cook', icon: '🔥', desc: 'Cleared a cooking daily quest.' },
+	builder: { id: 'builder', label: 'Builder', icon: '🔨', desc: 'Placed a firepit in the wild.' },
 	devoted: { id: 'devoted', label: 'Devoted', icon: '🌟', desc: 'Cleared every daily quest in one day.' },
 };
 
@@ -66,6 +67,12 @@ export const TUTORIAL_STEPS = [
 		guide: 'Different tools for different jobs. Switch to your pickaxe — slot 2 — and chip at the rocks to the northeast.',
 	},
 	{
+		id: 'fish', kind: 'fish', item: 'fish', count: 1, slot: 2,
+		title: 'Cast a line',
+		desc: 'Equip your fishing rod (hotbar slot 3) and stand beside the millpond to cast.',
+		guide: "Next skill: fishing. Your rod's in slot 3. Walk to the millpond in the southeast and cast — click the water.",
+	},
+	{
 		id: 'fight', kind: 'combat', count: 1, slot: 3,
 		title: 'Train your blade',
 		desc: 'Equip your sword (hotbar slot 4) and click a training dummy to defeat it.',
@@ -89,7 +96,7 @@ export const TUTORIAL_STEPS = [
 // pointing the player at the daily board afterward).
 export const GUIDE_DONE = "Training complete. Check the daily board — fresh bounties every day, and they pay. Safe travels.";
 
-export const TUTORIAL_REWARD = { gold: 150, xp: { combat: 60, woodcutting: 60, mining: 60 }, badge: 'newcomer' };
+export const TUTORIAL_REWARD = { gold: 150, xp: { combat: 60, woodcutting: 60, mining: 60, fishing: 60 }, badge: 'newcomer' };
 
 // ---------------------------------------------------------------------------
 // Daily quests — the pool three are drawn from each day. Every entry is
@@ -106,6 +113,7 @@ export const DAILY_POOL = [
 	{ id: 'd_fish', type: 'fish', item: 'fish', count: 5, title: 'Catch of the Day', desc: 'Catch 5 fish at the Pond.', reward: { gold: 130, xp: { fishing: 150 }, badge: 'fisher' } },
 	{ id: 'd_haul_fish', type: 'fish', item: 'fish', count: 10, title: 'Haul It In', desc: 'Catch 10 fish.', reward: { gold: 220, xp: { fishing: 260 } } },
 	{ id: 'd_cook', type: 'cook', item: 'cookedFish', count: 5, title: 'Camp Cook', desc: 'Cook 5 fish at the Roast Pit.', reward: { gold: 140, xp: { cooking: 180 }, badge: 'pitcook' } },
+	{ id: 'd_build', type: 'build', count: 1, title: 'Light a Fire', desc: 'Build a firepit anywhere it is allowed.', reward: { gold: 160, xp: { woodcutting: 80, mining: 80 }, badge: 'builder' } },
 ];
 
 export const DAILY_COUNT = 3;

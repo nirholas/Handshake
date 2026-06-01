@@ -32,7 +32,7 @@ import {
 	buildSpinPayment, verifySpinPayment,
 } from '../game-token.js';
 import {
-	rollSpin, spinSegments, isSpinSettled, markSpinSettled,
+	rollSpin, spinSegments, reserveSpin, commitSpin, releaseSpin,
 	FREE_SPIN_COOLDOWN_MS, SPIN_MIN_AVG_LEVEL, PAID_SPIN_USD,
 } from '../spin-wheel.js';
 import {
@@ -79,7 +79,7 @@ const LEVEL_CAP = 99;
 // floods. Movement is the hot path so it gets the most headroom. Chat sits low:
 // a few lines a second is plenty for conversation and turns a scripted flood into
 // dropped messages (with feedback — see _handleChat).
-const RATE_LIMITS = { step: 20, gather: 6, attack: 6, fish: 6, cook: 6, consume: 6, ui: 30, chat: 4, mkt: 4, spin: 4 };
+const RATE_LIMITS = { step: 20, gather: 6, attack: 6, fish: 6, cook: 6, consume: 6, ui: 30, chat: 4, mkt: 4, spin: 2 };
 
 // World chat: hard cap on a single message. Longer messages are rejected (not
 // silently truncated) so the sender knows their line didn't go through whole.
@@ -454,24 +454,29 @@ export class GameRoom extends Room {
 		// live instead of waiting for the next login. Subscribed per-session and torn
 		// down on leave alongside the eviction subscription.
 		const payChan = payoutChannel(playerId);
-		const payHandler = () => this._drainMarketPayouts(client.sessionId);
+		const payHandler = (msg) => {
+			this._drainMarketPayouts(client.sessionId);
+			// A cross-room sale notice piggybacks on the payout nudge (token sales pay
+			// the seller on-chain so there's no payout to drain, but they still deserve
+			// a toast). Send it directly if the message carries one.
+			if (msg?.notice) {
+				const c = this._clientFor(client.sessionId);
+				if (c) try { c.send('notice', { kind: 'market', text: msg.notice }); } catch {}
+			}
+		};
 		await this.presence.subscribe(payChan, payHandler);
 		this._payoutSubs.set(client.sessionId, { channel: payChan, handler: payHandler });
-		await this.presence.hset(
-			PRESENCE_HASH,
-			playerId,
-			JSON.stringify({ server: this.server, realm: this.realm.name, name, sid: client.sessionId, ts: now }),
-		);
-
-		// Account-level friends presence (Task 15). The PRESENCE_HASH above is keyed
-		// by playerId and powers seat eviction/takeover; the friends graph keys off
-		// the three.ws account id (users.id), which a presence ticket carries in
-		// verified, spoof-proof form. Register it with the social hub so friends see
-		// "online · <realm>" via the friends API and can DM this player live.
+		// Account-level friends presence (Task 15 + 23). The friends graph keys off
+		// the three.ws account id (users.id), carried in verified, spoof-proof form by
+		// a presence ticket — never a raw client field. The social hub publishes the
+		// account's online status plus which world instance + realm it's on (TTL'd in
+		// Redis, refreshed on a heartbeat) so the friends API can show "online ·
+		// Server 2 · Mainland" and DM this player live. This is the single presence
+		// path — there is no parallel by-playerId registry to scrape or leave stale.
 		const accountUid = verifyPresenceTicket(options?.presence);
 		if (accountUid) {
 			client.userData = { ...(client.userData || {}), accountUid };
-			socialHub.register(accountUid, client, this.realm.name);
+			socialHub.register(accountUid, client, this.realm.name, this.server);
 		}
 
 		// Claim any proceeds owed while this account was offline (gold from sales of
@@ -1408,6 +1413,8 @@ export class GameRoom extends Room {
 		this.state.structures.set(s.id, s);
 		p.tsServer = now;
 		client.send('notice', { kind: 'build', text: `Built a ${kind}.` });
+		// Quest progress: placing any structure counts toward the build daily.
+		this._questProgress(client, { kind: 'build', item: kind, n: 1 });
 	}
 
 	// A tile is buildable when it's walkable (bounds + not blocked + no node/mob/
@@ -1752,7 +1759,7 @@ export class GameRoom extends Room {
 		}
 
 		// --- dailies: every matching un-claimed quest advances together ---
-		if (ev.kind === 'gather' || ev.kind === 'combat' || ev.kind === 'fish' || ev.kind === 'cook') {
+		if (ev.kind === 'gather' || ev.kind === 'combat' || ev.kind === 'fish' || ev.kind === 'cook' || ev.kind === 'build') {
 			for (const q of qs.daily.quests) {
 				if (q.claimed) continue;
 				const def = dailyDef(q.id);
@@ -2217,6 +2224,8 @@ export class GameRoom extends Room {
 		p.tsServer = Date.now();
 		this._persistPlayer(client.sessionId);
 		client.send('notice', { kind: 'market', text: `Bought ${l.qty}× ${itemLabel(l.item)} for ${l.priceGold} gold.` });
+		// Notify the seller immediately if they're online in ANY realm.
+		this._notifySellerSold(l.seller, `${p.name} bought your ${l.qty}× ${itemLabel(l.item)} for ${l.priceGold} gold.`);
 		this._broadcastMarketDirty();
 		this._sendMarket(client);
 	}
@@ -2328,6 +2337,8 @@ export class GameRoom extends Room {
 		this._persistPlayer(client.sessionId);
 		client.send('marketSettled', { id: l.id, goldAmount: l.goldAmount, txSig });
 		client.send('notice', { kind: 'market', text: `Paid — received ${l.goldAmount} gold.` });
+		// Notify the seller that their listing sold and they were paid on-chain.
+		this._notifySellerSold(l.seller, `Your ${l.goldAmount} gold listing sold to ${p.name} — ${TOKEN_SYMBOL} paid to your wallet.`);
 		this._broadcastMarketDirty();
 		this._sendMarket(client);
 	}
@@ -2496,10 +2507,20 @@ export class GameRoom extends Room {
 		const buyerWallet = priv.playerId;
 		const txSig = typeof payload?.txSig === 'string' ? payload.txSig.trim() : '';
 		if (!txSig) { client.send('spinDenied', { mode: 'paid', reason: 'no_signature' }); return; }
-		if (isSpinSettled(txSig)) { client.send('spinDenied', { mode: 'paid', reason: 'already_settled' }); return; }
+		// Atomically claim this signature before the async RPC round-trip. If two
+		// concurrent settles of the same sig both reached here, only one gets true —
+		// the other sees a reservation in flight and is rejected immediately, closing
+		// the TOCTOU window that existed with a plain is-settled check + later mark.
+		if (!reserveSpin(txSig)) {
+			client.send('spinDenied', { mode: 'paid', reason: 'already_settled' });
+			return;
+		}
 
 		const verify = await verifySpinPayment({ quoteToken: payload?.quote, txSig, buyerWallet });
 		if (!verify.ok) {
+			// Release the reservation so an honest retry (e.g. tx not yet confirmed)
+			// can claim it later — the payment hasn't been spent and no prize was rolled.
+			releaseSpin(txSig);
 			const why = verify.reason === 'not_found' ? 'not_found'
 				: verify.reason?.includes('underpaid') ? 'underpaid'
 				: verify.reason === 'bad_quote' ? 'quote_expired'
@@ -2507,9 +2528,9 @@ export class GameRoom extends Room {
 			client.send('spinDenied', { mode: 'paid', reason: why });
 			return;
 		}
-		// Consume the signature BEFORE awarding so a concurrent/duplicate settle of
-		// the same payment can never roll a second prize.
-		markSpinSettled(txSig);
+		// Verification passed — permanently commit so this sig can never roll again,
+		// then award. Order matters: commit first, award second, persist third.
+		commitSpin(txSig);
 		const result = this._rollAndAward(client, p);
 		this._persistPlayer(client.sessionId);
 		client.send('spinResult', { mode: 'paid', ...result, txSig, nextFreeSpinAt: priv.spin.nextFreeSpinAt || 0, now: Date.now() });
@@ -2573,6 +2594,29 @@ export class GameRoom extends Room {
 	// keeps same-room browsers live as listings appear and sell.
 	_broadcastMarketDirty() {
 		this.broadcast('marketDirty', {});
+	}
+
+	// Notify a seller that one of their listings sold. If they're in THIS room, send
+	// the notice directly and push a fresh market board so "My Listings" updates live.
+	// If they're in a different room, the pub/sub payout nudge already woke them up;
+	// we additionally send a presence-channel notice so any realm can reach them.
+	_notifySellerSold(sellerId, text) {
+		if (!sellerId) return;
+		// Try the fast path: seller is in this very room.
+		for (const [sid, pr] of this.priv) {
+			if (pr.playerId !== sellerId) continue;
+			const c = this._clientFor(sid);
+			if (c) {
+				c.send('notice', { kind: 'market', text });
+				this._sendMarket(c);
+			}
+			return;
+		}
+		// Seller is online in another realm — publish a cross-room notification.
+		// The channel name mirrors evictChannel; the other room's payout subscriber
+		// already wakes them for gold delivery. For token sales (no payout queue)
+		// we publish on the payout channel anyway so they receive a notice toast.
+		try { this.presence.publish(payoutChannel(sellerId), { ts: Date.now(), notice: text }); } catch {}
 	}
 
 	// ----- marketplace item helpers ----------------------------------------
@@ -2772,10 +2816,21 @@ export class GameRoom extends Room {
 		const priv = this.priv.get(client.sessionId);
 		if (!priv) return;
 		priv.xp[skill] = (priv.xp[skill] || 0) + amount;
-		const lvl = levelForXp(priv.xp[skill]);
-		// XP only accumulates, so a changed level is always a level-up. Broadcast
-		// only the integer level on the schema; tell the earner privately so its
-		// UI can both refresh the XP bar (via a 'skills' fetch) and celebrate.
+		const xp = priv.xp[skill];
+		const lvl = levelForXp(xp);
+		// Tell the earner immediately: how much they got, their new cumulative XP,
+		// and the current level boundaries so the client can delta-patch its bar
+		// without a round-trip 'skills' request. Raw XP stays private (never in schema).
+		const maxed = lvl >= LEVEL_CAP;
+		client.send('xpgain', {
+			skill,
+			amount,
+			xp,
+			level: lvl,
+			levelXp: xpForLevel(lvl),
+			nextXp: maxed ? null : xpForLevel(lvl + 1),
+		});
+		// XP only accumulates, so a changed level is always a level-up.
 		if (lvl > p[skill]) {
 			p[skill] = lvl;
 			client.send('levelup', { skill, level: lvl });

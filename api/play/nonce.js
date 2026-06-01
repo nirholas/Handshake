@@ -7,7 +7,7 @@
 // pinned a game token yet.
 import { cors, error, json, method, wrap } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
-import { issueNonce, PLAY_GATE_MINT, PLAY_GATE_MIN } from '../_lib/play-pass.js';
+import { issueNonce, PLAY_GATE_MINT, PLAY_GATE_MIN, PLAY_GATE_SYMBOL } from '../_lib/play-pass.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -27,6 +27,7 @@ export default wrap(async (req, res) => {
 			required: !!PLAY_GATE_MINT,
 			mint: PLAY_GATE_MINT,
 			minBalance: PLAY_GATE_MIN,
+			symbol: PLAY_GATE_SYMBOL,
 		},
 	});
 });

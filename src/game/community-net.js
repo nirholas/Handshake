@@ -309,6 +309,10 @@ export class CommunityNet {
 	setVoiceActive(on) { this.room?.send('voice-state', { on: !!on }); }
 	rename(name) { this.name = name; this.room?.send('rename', { name }); }
 	setAvatar(avatar, agent) { this.avatar = avatar; this.room?.send('avatar', { avatar, agent }); }
+	// Update the stored play pass so the next reconnect (after a drop) uses the
+	// refreshed credential. Does not affect the live session — the server already
+	// authenticated this connection; the new pass is only needed for re-joins.
+	updatePlayPass(pass) { this.playPass = pass || ''; }
 
 	get state() { return this.room?.state ?? null; }
 

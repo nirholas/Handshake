@@ -73,6 +73,7 @@ export class GameHud {
 		this.bank = [];             // bank contents
 		this.hotbarSlots = [];
 		this.activeSlot = -1;
+		this._tutHintSlot = -1; // hotbar index the active tutorial step is teaching (-1 = none)
 		this._questOpen = false;
 		this._bankOpen = false;
 		this._npcOpen = false;
@@ -291,7 +292,8 @@ export class GameHud {
 		for (let i = 0; i < this.hotbarSlots.length; i++) {
 			const s = this.hotbarSlots[i] || { item: '', qty: 0 };
 			const active = i === this.activeSlot;
-			const slot = el('button', 'kq-slot' + (active ? ' kq-slot--active' : '') + (s.item ? '' : ' kq-slot--empty'));
+			const hint = i === this._tutHintSlot && !active; // pulse only when not already selected
+			const slot = el('button', 'kq-slot' + (active ? ' kq-slot--active' : '') + (hint ? ' kq-slot--hint' : '') + (s.item ? '' : ' kq-slot--empty'));
 			slot.type = 'button';
 			slot.setAttribute('aria-label', s.item ? `${itemMeta(s.item).label} (slot ${i + 1})` : `Empty slot ${i + 1}`);
 			slot.setAttribute('aria-pressed', String(active));
@@ -309,6 +311,15 @@ export class GameHud {
 	setQuests(snapshot) {
 		this.snapshot = snapshot || null;
 		this._resetAt = snapshot?.daily?.resetAt || 0;
+		// Extract the hotbar slot the current tutorial step is teaching so the
+		// hotbar can pulse it as a visual hint. -1 when there is none.
+		const newHint = snapshot?.tutorial?.done === false && snapshot.tutorial.step
+			? (snapshot.tutorial.step.slot ?? -1)
+			: -1;
+		if (newHint !== this._tutHintSlot) {
+			this._tutHintSlot = newHint;
+			this._renderHotbar(); // re-render so the hint class applies/removes
+		}
 		this._renderQuestDot();
 		if (this._questOpen) this._renderQuests();
 		if (this._npcOpen) this._renderNpc();
@@ -353,11 +364,26 @@ export class GameHud {
 			tutWrap.appendChild(el('h3', 'kq-h3', 'Tutorial'));
 			tutWrap.appendChild(el('div', 'kq-tut-done', '🎓 Training complete — you know the ropes.'));
 		} else if (tut.step) {
-			tutWrap.appendChild(el('h3', 'kq-h3', `Tutorial · step ${tut.stepIndex + 1} of ${tut.total}`));
+			const stepHead = el('div', 'kq-tut-head');
+			stepHead.appendChild(el('h3', 'kq-h3', 'Tutorial'));
+			// Overall tutorial progress pill (steps done out of total).
+			const overallBar = el('div', 'kq-tut-overall');
+			const pctDone = tut.total > 0 ? (tut.stepIndex / tut.total) * 100 : 0;
+			overallBar.innerHTML = `<span class="kq-tut-pips">${Array.from({ length: tut.total }, (_, i) => `<span class="kq-tut-pip${i < tut.stepIndex ? ' kq-tut-pip--done' : i === tut.stepIndex ? ' kq-tut-pip--active' : ''}"></span>`).join('')}</span><span class="kq-tut-frac">${tut.stepIndex + 1} / ${tut.total}</span>`;
+			stepHead.appendChild(overallBar);
+			tutWrap.appendChild(stepHead);
+
 			const card = el('div', 'kq-card-q kq-card-tut');
+			// Slot hint chip — "Equip slot 3" — when the step targets a hotbar slot.
+			if (typeof tut.step.slot === 'number' && tut.step.slot >= 0) {
+				const chip = el('div', 'kq-tut-slot-chip', `Equip slot <b>${tut.step.slot + 1}</b>`);
+				chip.title = `Press ${tut.step.slot + 1} to equip`;
+				card.appendChild(chip);
+			}
 			card.appendChild(el('div', 'kq-q-title', tut.step.title));
 			card.appendChild(el('div', 'kq-q-desc', tut.step.desc));
-			if (tut.step.count > 1) card.appendChild(this._bar(tut.progress, tut.step.count));
+			// Always show a progress bar — for count=1 it acts as a completion indicator.
+			card.appendChild(this._bar(tut.progress, tut.step.count));
 			tutWrap.appendChild(card);
 		}
 		frag.appendChild(tutWrap);
@@ -1046,7 +1072,7 @@ export class GameHud {
 		const pane = el('div', 'kq-market-sellform');
 		// Aggregate backpack stacks by item so the picker shows one tile per item.
 		const totals = new Map();
-		for (const s of this.inv) if (s && s.item) totals.set(s.item, (totals.get(s.item) || 0) + s.qty);
+		for (const s of this.inv) if (s && s.item && s.qty > 0) totals.set(s.item, (totals.get(s.item) || 0) + s.qty);
 		if (!totals.size) {
 			pane.appendChild(el('p', 'kq-market-hint', 'Your backpack is empty — gather or loot something to sell.'));
 			return pane;
@@ -1077,7 +1103,7 @@ export class GameHud {
 		const qtyWrap = el('label', 'kq-market-field');
 		qtyWrap.appendChild(el('span', 'kq-market-field-lbl', `Quantity (max ${held})`));
 		const qtyInput = el('input', 'kq-market-input');
-		qtyInput.type = 'number'; qtyInput.min = '1'; qtyInput.max = String(held); qtyInput.value = String(Math.min(1, held) || 1); qtyInput.step = '1';
+		qtyInput.type = 'number'; qtyInput.min = '1'; qtyInput.max = String(held); qtyInput.value = String(held); qtyInput.step = '1';
 		qtyWrap.appendChild(qtyInput);
 
 		const priceWrap = el('label', 'kq-market-field');

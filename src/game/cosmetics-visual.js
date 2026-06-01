@@ -55,39 +55,84 @@ function applyTint(rig, hex) {
 	return () => { for (const [m, orig] of restore) m.color?.setHex(orig); };
 }
 
-// A worn prop (hat). The GLB is auto-scaled so its width matches a head-ish
-// target and seated near the top of the avatar, so a single asset fits models
-// of any height without per-asset tuning.
+// Find the rig's head bone so a worn prop can ride the actual skull through the
+// idle/walk animation instead of floating at a fixed height. Prefers a real Bone
+// named like a head joint (Mixamo `mixamorigHead`, VRM `Head`/`J_Bip_C_Head`,
+// or plain `head`), skipping the `HeadTop_End`/`*_end` leaf joints. Returns null
+// for rigs without a recognisable head (the fallback capsule, abstract avatars),
+// where the prop falls back to a height-anchored position.
+function findHeadBone(rig) {
+	let bone = null;
+	rig.traverse((o) => {
+		if (bone || !o.isBone) return;
+		const n = (o.name || '').toLowerCase();
+		if (n.includes('head') && !n.includes('end') && !n.includes('top')) bone = o;
+	});
+	return bone;
+}
+
+// A worn prop (hat / glasses). The GLB is auto-fitted to a head-ish width so one
+// asset fits models of any height, anchored to the head bone when present (so it
+// tracks head movement) and to a height fraction otherwise. `anchor` is 'head'
+// (hats rest on the crown) or 'face' (glasses sit at eye level).
 const PROP_TARGET_WIDTH_M = 0.34; // ~ a human head's width
-function mountProp(rig, height, url) {
+function mountProp(rig, height, url, anchor) {
 	const holder = new Group();
 	rig.add(holder);
+	const face = anchor === 'face';
+	const headBone = findHeadBone(rig);
+	const upOffset = (face ? 0.02 : 0.05) * height;   // above the bone origin
+	const fwdOffset = face ? 0.05 : 0;                // nudge glasses off the face
+	const fallbackY = height * (face ? 0.82 : 0.86);  // no-bone height anchor
+	const tmp = new Vector3();
+	let model = null;
 	let cancelled = false;
+
+	const place = () => {
+		if (!model) return;
+		if (headBone) {
+			// Bone world position → rig-local (holder is a child of rig at unit scale),
+			// so the prop glues to the head every frame, riding the animation.
+			headBone.getWorldPosition(tmp);
+			rig.worldToLocal(tmp);
+			holder.position.set(tmp.x, tmp.y + upOffset, tmp.z + fwdOffset);
+		} else {
+			holder.position.set(0, fallbackY, fwdOffset);
+		}
+	};
+
 	loadProp(url).then((scene) => {
 		if (cancelled || !scene) return;
-		const model = scene.clone(true);
+		model = scene.clone(true);
 		model.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = false; } });
-		// Fit width to the target, then rest the prop on top of the head.
+		// Fit width to the target, then anchor the prop's reference point at the
+		// holder origin: a hat rests on its base (sits on the crown); glasses centre
+		// on the eye line.
 		const box = new Box3().setFromObject(model);
 		const size = box.getSize(new Vector3());
 		const span = Math.max(size.x, size.z) || 1;
-		const scale = PROP_TARGET_WIDTH_M / span;
-		model.scale.setScalar(scale);
+		model.scale.setScalar(PROP_TARGET_WIDTH_M / span);
 		const fitted = new Box3().setFromObject(model);
-		const center = fitted.getCenter(new Vector3());
-		// Seat the prop's base around the crown of the head (≈0.86 of total height).
-		model.position.x -= center.x;
-		model.position.z -= center.z;
-		model.position.y += height * 0.86 - fitted.min.y;
+		const c = fitted.getCenter(new Vector3());
+		model.position.x -= c.x;
+		model.position.z -= c.z;
+		model.position.y -= face ? c.y : fitted.min.y;
 		holder.add(model);
+		place();
 	});
-	// Dispose = detach the holder only. The clone shares the cached source's
-	// geometry + materials (Object3D.clone(true) copies them by reference), so
-	// those GPU resources live once in _propCache and are reused by every wearer —
-	// disposing them here would corrupt the cache and other players' props. The
-	// cache holds one parsed scene per prop URL (a handful total), so it's bounded,
-	// not a leak; the clone's wrapper objects are freed for GC when the holder goes.
-	return () => { cancelled = true; rig.remove(holder); };
+
+	return {
+		// Re-glue to the head each frame (cheap: one world-matrix read). No-op until
+		// the GLB has loaded, or static when the rig has no head bone.
+		tick: () => { if (headBone) place(); },
+		// Dispose = detach the holder only. The clone shares the cached source's
+		// geometry + materials (Object3D.clone(true) copies them by reference), so
+		// those GPU resources live once in _propCache and are reused by every wearer —
+		// disposing them here would corrupt the cache and other players' props. The
+		// cache holds one parsed scene per prop URL (a handful total), so it's bounded,
+		// not a leak; the clone's wrapper objects are freed for GC when the holder goes.
+		dispose: () => { cancelled = true; rig.remove(holder); },
+	};
 }
 
 // A glowing ground aura: a bright inner ring plus a softer outer halo, laid flat
@@ -132,12 +177,18 @@ function mountAura(rig, hex) {
 export function applyCosmetic(rig, height, visual) {
 	if (!visual) return { tick() {}, dispose() {} };
 	const undo = [];
+	const tickers = [];
 	if (visual.tint) undo.push(applyTint(rig, visual.tint));
-	if (visual.prop) undo.push(mountProp(rig, height, visual.prop));
-	let aura = null;
-	if (visual.aura) { aura = mountAura(rig, visual.aura); undo.push(aura.dispose); }
+	if (visual.prop) {
+		const prop = mountProp(rig, height, visual.prop, visual.anchor);
+		tickers.push(prop.tick); undo.push(prop.dispose);
+	}
+	if (visual.aura) {
+		const aura = mountAura(rig, visual.aura);
+		tickers.push(aura.tick); undo.push(aura.dispose);
+	}
 	return {
-		tick: (dt) => aura?.tick(dt),
+		tick: (dt) => { for (const t of tickers) t(dt); },
 		dispose: () => { for (const fn of undo) { try { fn(); } catch {} } },
 	};
 }

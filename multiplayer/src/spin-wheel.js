@@ -112,21 +112,48 @@ export const PAID_SPIN_USD = 3;
 // are swept after a TTL well beyond the 90s quote window so it never grows
 // unbounded. (Horizontal scale would back this with the same Redis the
 // presence/profile layers use; the interface stays identical.)
-const _settledSigs = new Map(); // txSig -> settledAt(ms)
+// A signature is 'reserved' the instant a settle begins and 'settled' once it
+// awards. Because settlement awaits an RPC round-trip, two concurrent settles of
+// the same signature must not BOTH pass a check-then-act guard and double-roll
+// one payment — so reserveSpin() is the atomic claim taken synchronously before
+// the await. A failed verification releases the claim (so an honest retry of a
+// not-yet-confirmed tx can proceed); a successful one commits it permanently.
+const _spinSigs = new Map(); // txSig -> { state:'reserved'|'settled', at }
 const SETTLED_TTL_MS = 60 * 60 * 1000;
 
-export function isSpinSettled(txSig) {
-	const at = _settledSigs.get(txSig);
-	if (at == null) return false;
-	if (Date.now() - at > SETTLED_TTL_MS) { _settledSigs.delete(txSig); return false; }
+function _live(txSig) {
+	const e = _spinSigs.get(txSig);
+	if (!e) return null;
+	if (Date.now() - e.at > SETTLED_TTL_MS) { _spinSigs.delete(txSig); return null; }
+	return e;
+}
+
+// Atomically claim a signature for settlement. Returns false if it is already
+// reserved (a settle in flight) or settled (already rolled). Synchronous — no
+// await between the read and the write — so it is a true mutual-exclusion gate.
+export function reserveSpin(txSig) {
+	if (_live(txSig)) return false;
+	_spinSigs.set(txSig, { state: 'reserved', at: Date.now() });
 	return true;
 }
 
-export function markSpinSettled(txSig) {
-	_settledSigs.set(txSig, Date.now());
+// Promote a reservation to settled (the prize was awarded). Permanent within TTL.
+export function commitSpin(txSig) {
+	_spinSigs.set(txSig, { state: 'settled', at: Date.now() });
+}
+
+// Drop a reservation that didn't settle (verification failed) so an honest retry
+// of the same — now-confirmed — transaction can claim it. A no-op once settled.
+export function releaseSpin(txSig) {
+	const e = _spinSigs.get(txSig);
+	if (e && e.state === 'reserved') _spinSigs.delete(txSig);
+}
+
+export function isSpinSettled(txSig) {
+	return _live(txSig)?.state === 'settled';
 }
 
 setInterval(() => {
 	const now = Date.now();
-	for (const [sig, at] of _settledSigs) if (now - at > SETTLED_TTL_MS) _settledSigs.delete(sig);
+	for (const [sig, e] of _spinSigs) if (now - e.at > SETTLED_TTL_MS) _spinSigs.delete(sig);
 }, 10 * 60 * 1000).unref?.();
