@@ -50,11 +50,12 @@ const ROUTE = '/api/x402/model-check';
 const MAX_FETCH_BYTES = 16 * 1024 * 1024;
 
 const ROUTE_DESCRIPTION =
-	'three.ws Model Check — fetch a glTF/GLB model from a URL, run the canonical ' +
-	'glTF-Transform inspector, and return structural stats (vertices, triangles, ' +
+	'three.ws — agent-first 3D platform: drag-and-drop glTF/GLB preview plus model ' +
+	'validation, inspection, and optimization, with Solana agent data, all reachable ' +
+	'as MCP tools or pay-per-call x402 endpoints. This Model Check route fetches a ' +
+	'glTF/GLB model from a URL and returns structural stats (vertices, triangles, ' +
 	'materials, textures, animations, extensions) plus a prioritized list of ' +
-	'optimization recommendations. Useful for any agent vetting a 3D asset before ' +
-	'minting, embedding, or paying for it. Pay-per-call in USDC on Base mainnet.';
+	'optimization recommendations. Pay-per-call in USDC on Solana mainnet.';
 
 const DISCOVERY_INPUT_EXAMPLE = {
 	url: 'https://three.ws/avatar/character-studio/sample.glb',
