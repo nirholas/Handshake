@@ -8,8 +8,12 @@
 import { sql } from './db.js';
 
 // Columns safe to expose for any account other than the caller. Never leak
-// email, wallet, plan, or admin flags through the social graph.
-const PUBLIC_USER_COLS = sql`u.id, u.display_name, u.username, u.avatar_url`;
+// email, wallet, plan, or admin flags through the social graph. Built lazily so
+// importing this module never instantiates the Neon client — endpoints that load
+// the friends graph stay importable (and cold-start cheaply) without DATABASE_URL.
+let _publicUserCols;
+const publicUserCols = () =>
+	(_publicUserCols ??= sql`u.id, u.display_name, u.username, u.avatar_url`);
 
 function toProfile(row) {
 	if (!row) return null;
@@ -30,7 +34,7 @@ export async function searchUsers(meId, q, limit = 12) {
 	if (term.length < 2) return [];
 	const like = `%${term.replace(/[%_]/g, (m) => `\\${m}`)}%`;
 	const rows = await sql`
-		select ${PUBLIC_USER_COLS}
+		select ${publicUserCols()}
 		from users u
 		where u.deleted_at is null
 		  and u.id <> ${meId}
@@ -104,7 +108,7 @@ export async function acceptRequest(meId, otherId) {
 		returning id
 	`;
 	if (!row) throw Object.assign(new Error('No pending request from that user.'), { status: 404, code: 'no_request' });
-	const [u] = await sql`select ${PUBLIC_USER_COLS} from users u where u.id = ${otherId}`;
+	const [u] = await sql`select ${publicUserCols()} from users u where u.id = ${otherId}`;
 	return { friendshipId: row.id, friend: toProfile(u) };
 }
 
@@ -149,7 +153,7 @@ export async function areFriends(meId, otherId) {
 export async function listGraph(meId) {
 	const rows = await sql`
 		select f.id as friendship_id, f.status, f.requester_id, f.created_at, f.responded_at,
-		       ${PUBLIC_USER_COLS}
+		       ${publicUserCols()}
 		from friendships f
 		join users u on u.id = (case when f.requester_id = ${meId} then f.addressee_id else f.requester_id end)
 		where (f.requester_id = ${meId} or f.addressee_id = ${meId})

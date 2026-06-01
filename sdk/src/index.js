@@ -38,6 +38,9 @@ export {
 export { IDENTITY_REGISTRY_ABI, REPUTATION_REGISTRY_ABI, VALIDATION_REGISTRY_ABI, REGISTRY_DEPLOYMENTS, agentRegistryId } from './erc8004/abi.js';
 export { PermissionsClient, PermissionError } from './permissions.js';
 
+// ─── x402 paid-skill client (programmatic agent-to-agent payments) ───────────
+export { AgentClient, PaymentRequiredError } from './agent-client.js';
+
 // ─── Solana (SIWS auth, Metaplex identity, Solana Pay) ───────────────────────
 export {
 	detectSolanaProvider,

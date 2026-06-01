@@ -122,3 +122,66 @@ export declare class AgentKit {
 		aiPlugin: object;
 	};
 }
+
+// ─── x402 paid-skill client ──────────────────────────────────────────────────
+
+export interface SkillPrice {
+	skill: string;
+	amount: string;
+	currency_mint?: string;
+	currency?: string;
+	chain?: string;
+	is_active?: boolean;
+}
+
+export interface X402Manifest {
+	version: string | number;
+	kind: 'agent-skill';
+	agent_id: string;
+	skill: string;
+	amount: string;
+	currency: string;
+	recipient: string;
+	recipient_name?: string;
+	valid_until: number;
+	intent_url: string;
+	verify_url: string;
+	retry_with_header: string;
+}
+
+export declare class PaymentRequiredError extends Error {
+	constructor(manifest: X402Manifest);
+	manifest: X402Manifest;
+}
+
+/** Settles a 402 payment manifest on-chain and resolves to the paid intent id. */
+export type PayIntentFn = (manifest: X402Manifest) => Promise<{ intentId: string } | string>;
+
+export interface PaymentSigner {
+	payIntent: PayIntentFn;
+}
+
+export interface AgentClientOptions {
+	baseUrl?: string;
+	apiKey?: string;
+	fetch?: typeof fetch;
+}
+
+export interface InvokeSkillOptions {
+	signer?: PaymentSigner;
+	payIntent?: PayIntentFn;
+}
+
+export declare class AgentClient {
+	constructor(opts?: AgentClientOptions);
+	baseUrl: string;
+	apiKey: string;
+	getSkillPrices(agentId: string): Promise<SkillPrice[]>;
+	getManifest(agentId: string, skill: string): Promise<X402Manifest | null>;
+	invokeSkill(
+		agentId: string,
+		skill: string,
+		args?: Record<string, unknown>,
+		options?: InvokeSkillOptions,
+	): Promise<unknown>;
+}

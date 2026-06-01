@@ -76,7 +76,8 @@ a:hover { color: var(--accent-2); text-decoration: underline; }
 \tbackground: rgba(10,10,12,0.85); backdrop-filter: blur(12px);
 \tposition: sticky; top: 0; z-index: 10;
 }
-.topbar a.brand { color: var(--fg); font-weight: 600; letter-spacing: -0.01em; }
+.topbar a.brand { display: inline-flex; align-items: center; gap: 9px; color: var(--fg); font-weight: 600; letter-spacing: -0.01em; }
+.topbar a.brand img.brand-mark { width: 22px; height: 22px; border-radius: 5px; }
 .topbar nav { display: flex; gap: 22px; font-size: 15px; }
 .topbar nav a { color: var(--fg-dim); }
 .topbar nav a:hover { color: var(--accent); text-decoration: none; }
@@ -180,7 +181,7 @@ article em { color: var(--fg-dim); }
 
 function topbarHtml() {
 	return `<header class="topbar">
-\t<a class="brand" href="/">three.ws</a>
+\t<a class="brand" href="/"><img class="brand-mark" src="/three.svg" alt="three.ws" width="24" height="24" />three.ws</a>
 \t<nav>
 \t\t<a href="/news">News</a>
 \t\t<a href="/discover">Discover</a>

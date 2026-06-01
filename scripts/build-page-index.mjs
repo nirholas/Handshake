@@ -213,10 +213,17 @@ ${items}
 \t.sm-badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 \t.sm-badge-auth { background: rgba(255, 200, 80, .15); color: #ffcf66; }
 \t.sm-badge-internal { background: rgba(120,200,255,.12); color: #9ad4ff; }
+\t.sm-topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1080px; margin: 0 auto; padding: 16px 24px; }
+\t.sm-brand { display: inline-flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-weight: 600; font-size: 16px; letter-spacing: -0.02em; }
+\t.sm-brand img { width: 24px; height: 24px; border-radius: 5px; }
+\t.sm-brand:hover { text-decoration: none; }
 </style>
 </head>
 <body>
-\t<div id="nav-container"></div>
+\t<header class="sm-topbar">
+\t\t<a class="sm-brand" href="/" aria-label="three.ws home"><img class="brand-mark" src="/three.svg" alt="three.ws" width="24" height="24" /><span>three.ws</span></a>
+\t\t<div id="nav-container"></div>
+\t</header>
 \t<main class="sm-wrap">
 \t\t<div class="sm-hero">
 \t\t\t<h1>Sitemap</h1>

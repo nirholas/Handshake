@@ -1,0 +1,15 @@
+import puppeteer from 'puppeteer';
+const BASE='http://localhost:3000';
+const isDevNoise=(t)=>/\[vite\]/i.test(t)||/websocket/i.test(t)||/app\.github\.dev/i.test(t)||/Failed to load resource/i.test(t);
+const b=await puppeteer.launch({headless:'new',args:['--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox']});
+const p=await b.newPage();
+const errs=[];
+p.on('console',m=>{if(m.type()==='error'&&!isDevNoise(m.text()))errs.push(m.text());});
+p.on('pageerror',e=>{if(!isDevNoise(e.message))errs.push('pageerror: '+e.message);});
+await p.goto(BASE+'/features',{waitUntil:'networkidle2',timeout:60000}).catch(()=>{});
+await new Promise(r=>setTimeout(r,6000));
+console.log('companion present with OFF:', !!(await p.$('.walk-companion-canvas')));
+console.log('meshopt errors on BASELINE /features (companion OFF):', errs.filter(e=>/setMeshoptDecoder/i.test(e)).length);
+console.log('total non-noise errors:', errs.length);
+errs.slice(0,6).forEach(e=>console.log('  -',e.slice(0,90)));
+await b.close();

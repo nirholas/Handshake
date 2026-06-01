@@ -11,14 +11,38 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
 
 const VALID_INTERVALS = new Set([
-	'1m', '3m', '5m', '15m', '30m', '1H', '2H', '4H', '6H', '8H', '12H', '1D', '3D', '1W', '1M',
+	'1m',
+	'3m',
+	'5m',
+	'15m',
+	'30m',
+	'1H',
+	'2H',
+	'4H',
+	'6H',
+	'8H',
+	'12H',
+	'1D',
+	'3D',
+	'1W',
+	'1M',
 ]);
 
 // Birdeye uses uppercase hour/day codes (1H, 1D). Accept the common lowercase
 // forms from the client and normalize so callers don't have to care.
 function normalizeInterval(raw) {
 	if (!raw) return '15m';
-	const map = { '1h': '1H', '2h': '2H', '4h': '4H', '6h': '6H', '8h': '8H', '12h': '12H', '1d': '1D', '3d': '3D', '1w': '1W' };
+	const map = {
+		'1h': '1H',
+		'2h': '2H',
+		'4h': '4H',
+		'6h': '6H',
+		'8h': '8H',
+		'12h': '12H',
+		'1d': '1D',
+		'3d': '3D',
+		'1w': '1W',
+	};
 	const v = map[raw] || raw;
 	return VALID_INTERVALS.has(v) ? v : '15m';
 }
@@ -60,7 +84,12 @@ export default wrap(async (req, res) => {
 	const now = Date.now();
 	const hit = _cache.get(key);
 	if (hit && hit.expiresAt > now) {
-		return json(res, 200, { data: hit.value }, { 'cache-control': 'public, max-age=15, s-maxage=30' });
+		return json(
+			res,
+			200,
+			{ data: hit.value },
+			{ 'cache-control': 'public, max-age=15, s-maxage=30' },
+		);
 	}
 
 	const url =
@@ -70,7 +99,11 @@ export default wrap(async (req, res) => {
 	let upstream;
 	try {
 		upstream = await fetch(url, {
-			headers: { 'X-API-KEY': BIRDEYE_API_KEY, 'x-chain': 'solana', accept: 'application/json' },
+			headers: {
+				'X-API-KEY': BIRDEYE_API_KEY,
+				'x-chain': 'solana',
+				accept: 'application/json',
+			},
 			signal: AbortSignal.timeout(10_000),
 		});
 	} catch (e) {
@@ -79,7 +112,12 @@ export default wrap(async (req, res) => {
 
 	if (!upstream.ok) {
 		const body = await upstream.text().catch(() => '');
-		return error(res, 502, 'upstream_error', `Birdeye ${upstream.status}: ${body.slice(0, 200)}`);
+		return error(
+			res,
+			502,
+			'upstream_error',
+			`Birdeye ${upstream.status}: ${body.slice(0, 200)}`,
+		);
 	}
 
 	const payload = await upstream.json().catch(() => null);

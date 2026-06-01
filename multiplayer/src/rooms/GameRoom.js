@@ -120,6 +120,20 @@ const TOMBSTONE_GRACE_MS = 45000; // last 45s: open to anyone adjacent
 const FOUNTAIN_HEAL_PER_TICK = 6; // hp restored per sim tick near the fountain
 const REGEN_PER_TICK = 1; // passive hp regen out of combat
 
+// Mob AI (Task 03): roam, aggro, chase, contact damage. Scans run on the sim
+// tick (SIM_TICK_MS), never the patch rate, so the per-mob player scan stays
+// cheap. Roamers wander near home; `aggro` mobs notice, chase, and hit nearby
+// players, feeding the death/tombstone system. Dummies (roam/aggro both false)
+// stay inert.
+const MOB_AGGRO_RADIUS = 6; // tiles (Chebyshev) within which a hostile mob notices a player
+const MOB_LEASH_RADIUS = 11; // tiles from its home tile a mob will chase before giving up
+const MOB_ROAM_RADIUS = 4; // tiles from home a roamer will wander when idle
+const MOB_MOVE_MS = 600; // minimum wall-clock between a mob's steps (roam + chase)
+const MOB_ROAM_CHANCE = 0.4; // probability an idle roamer takes a step on an eligible tick
+const MOB_ATTACK_COOLDOWN_MS = 1000; // minimum wall-clock between a mob's contact hits
+const MOB_REGEN_PER_TICK = 1; // hp a disengaged, hurt mob recovers per sim tick
+const MOB_BASE_DAMAGE = { goblin: 5, ogre: 9, dummy: 0 }; // contact-damage floor by kind (+0..3 variance)
+
 // Arena rollers (Task 22): how often a moving-floor strip shoves a standing
 // player one tile. Slower than the sim tick so the push reads as a deliberate
 // nudge to learn, not a blur — ~two pushes a second.
@@ -303,6 +317,9 @@ export class GameRoom extends Room {
 			node.ty = n.ty;
 			this.state.nodes.set(n.id, node);
 		}
+		// Per-mob behaviour + leash anchor, kept off-schema: clients only need the
+		// position/hp/aggro that the Mob schema already syncs.
+		this._mobAI = new Map();
 		for (const m of this.realm.mobs) {
 			const mob = new Mob();
 			mob.id = m.id;
@@ -311,6 +328,14 @@ export class GameRoom extends Room {
 			mob.ty = m.ty;
 			mob.hp = mob.maxHp = m.hp;
 			this.state.mobs.set(m.id, mob);
+			this._mobAI.set(m.id, {
+				roam: !!m.roam,
+				aggro: !!m.aggro,
+				homeTx: m.tx,
+				homeTy: m.ty,
+				nextMoveAt: 0,
+				attackReadyAt: 0,
+			});
 		}
 	}
 
@@ -2942,6 +2967,11 @@ export class GameRoom extends Room {
 				m.dead = false;
 				m.hp = m.maxHp;
 				m.respawnAt = 0;
+				// Respawn back at the home tile, disengaged — never re-materialize
+				// mid-chase wherever it happened to fall.
+				const ai = this._mobAI?.get(m.id);
+				if (ai) { m.tx = ai.homeTx; m.ty = ai.homeTy; ai.nextMoveAt = 0; ai.attackReadyAt = 0; }
+				m.aggroId = '';
 			}
 		}
 
@@ -2983,6 +3013,10 @@ export class GameRoom extends Room {
 			}
 		}
 
+		// Mob AI: roamers wander, hostiles acquire/chase/hit nearby players. Runs on
+		// the sim tick so the player scan never touches the patch rate.
+		this._mobTick(now);
+
 		// Moving floor (Arena rollers): on its own slower cadence, shove every living
 		// player who is standing on a roller one tile in the strip's direction. The
 		// push is server-authoritative and respects walkability — it never moves a
@@ -3012,6 +3046,147 @@ export class GameRoom extends Room {
 			p.ty = ny;
 			p.motion = 'walk';
 			p.tsServer = now;
+		}
+	}
+
+	// ----- mob AI (Task 03) ------------------------------------------------
+
+	// Chebyshev (king-move) tile distance — matches 8-way movement.
+	_cheb(a, b) { return Math.max(Math.abs(a.tx - b.tx), Math.abs(a.ty - b.ty)); }
+
+	// Contact damage a mob deals, by kind, with a little variance.
+	_mobDamage(kind) {
+		const base = MOB_BASE_DAMAGE[kind] ?? 4;
+		return base <= 0 ? 0 : base + Math.floor(Math.random() * 4);
+	}
+
+	// Can a mob legally stand on (tx, ty)? Same walkability as players (bounds,
+	// blocked, nodes, living mobs, structures, npcs) plus: never inside a safe
+	// camp / seating, never on a portal tile, never on top of a living player
+	// (mobs attack from an adjacent tile).
+	_mobCanStand(tx, ty) {
+		if (!this._isWalkable(tx, ty)) return false;
+		if (inNoPvpZone(this.realm, tx, ty)) return false;
+		if (portalAt(this.realm, tx, ty)) return false;
+		for (const [, pl] of this.state.players) {
+			if (!pl.dead && pl.tx === tx && pl.ty === ty) return false;
+		}
+		return true;
+	}
+
+	// One greedy 8-way step toward (gx, gy), routing around obstacles and never
+	// stepping beyond the leash radius from home. Returns true if the mob moved.
+	_stepMobToward(mob, gx, gy, ai) {
+		const dx = Math.sign(gx - mob.tx);
+		const dy = Math.sign(gy - mob.ty);
+		if (!dx && !dy) return false;
+		// Candidate steps, best-first: straight toward, then single-axis, then the
+		// two perpendicular slides that round a corner.
+		const cands = [];
+		if (dx && dy) cands.push([dx, dy]);
+		if (dx) cands.push([dx, 0]);
+		if (dy) cands.push([0, dy]);
+		if (dx && dy) { cands.push([dx, -dy]); cands.push([-dx, dy]); }
+		else if (dx) { cands.push([dx, 1]); cands.push([dx, -1]); }
+		else { cands.push([1, dy]); cands.push([-1, dy]); }
+		const home = { tx: ai.homeTx, ty: ai.homeTy };
+		for (const [sx, sy] of cands) {
+			const nx = mob.tx + sx, ny = mob.ty + sy;
+			if (this._cheb({ tx: nx, ty: ny }, home) > MOB_LEASH_RADIUS) continue;
+			// No diagonal corner-cut between two blocked tiles (mirrors the player rule).
+			if (sx !== 0 && sy !== 0 && !this._isWalkable(mob.tx + sx, mob.ty) && !this._isWalkable(mob.tx, mob.ty + sy)) continue;
+			if (!this._mobCanStand(nx, ny)) continue;
+			mob.tx = nx; mob.ty = ny;
+			return true;
+		}
+		return false;
+	}
+
+	// One random step to an adjacent walkable tile within the roam radius of home.
+	_stepMobRandom(mob, ai) {
+		const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+		const home = { tx: ai.homeTx, ty: ai.homeTy };
+		const start = Math.floor(Math.random() * dirs.length);
+		for (let i = 0; i < dirs.length; i++) {
+			const [sx, sy] = dirs[(start + i) % dirs.length];
+			const nx = mob.tx + sx, ny = mob.ty + sy;
+			if (this._cheb({ tx: nx, ty: ny }, home) > MOB_ROAM_RADIUS) continue;
+			if (sx !== 0 && sy !== 0 && !this._isWalkable(mob.tx + sx, mob.ty) && !this._isWalkable(mob.tx, mob.ty + sy)) continue;
+			if (!this._mobCanStand(nx, ny)) continue;
+			mob.tx = nx; mob.ty = ny;
+			return true;
+		}
+		return false;
+	}
+
+	// Server-authoritative mob simulation. Acquisition/validation runs every sim
+	// tick; movement + attacks are gated to MOB_MOVE_MS / MOB_ATTACK_COOLDOWN_MS so
+	// the motion reads deliberately and CPU stays bounded.
+	_mobTick(now) {
+		if (!this._mobAI || this._mobAI.size === 0) return;
+		const home = (ai) => ({ tx: ai.homeTx, ty: ai.homeTy });
+		for (const [, mob] of this.state.mobs) {
+			if (mob.dead) continue;
+			const ai = this._mobAI.get(mob.id);
+			if (!ai || (!ai.roam && !ai.aggro)) continue; // inert dummies never move
+
+			// Slow regen while disengaged so a mob you fled from recovers.
+			if (!mob.aggroId && mob.hp < mob.maxHp) {
+				mob.hp = Math.min(mob.maxHp, mob.hp + MOB_REGEN_PER_TICK);
+			}
+
+			// Validate the current target; drop it if it died, left, reached a safe
+			// zone, or pulled the mob past its leash.
+			let target = mob.aggroId ? this.state.players.get(mob.aggroId) : null;
+			if (target) {
+				const drop =
+					target.dead ||
+					this.priv.get(mob.aggroId)?.transferring ||
+					inNoPvpZone(this.realm, target.tx, target.ty) ||
+					this._cheb(mob, home(ai)) > MOB_LEASH_RADIUS ||
+					this._cheb(mob, target) > MOB_AGGRO_RADIUS + 3;
+				if (drop) { target = null; mob.aggroId = ''; }
+			}
+
+			// Acquire the nearest eligible player when idle and still near home.
+			if (!target && ai.aggro && this._cheb(mob, home(ai)) <= MOB_LEASH_RADIUS) {
+				let bestSid = '', bestDist = Infinity;
+				for (const [sid, p] of this.state.players) {
+					if (p.dead) continue;
+					if (this.priv.get(sid)?.transferring) continue;
+					if (inNoPvpZone(this.realm, p.tx, p.ty)) continue;
+					const d = this._cheb(mob, p);
+					if (d <= MOB_AGGRO_RADIUS && d < bestDist) { bestDist = d; bestSid = sid; }
+				}
+				if (bestSid) { mob.aggroId = bestSid; target = this.state.players.get(bestSid); }
+			}
+
+			if (now < ai.nextMoveAt) continue; // pace movement/attacks
+
+			if (target) {
+				if (this._adjacent(mob, target)) {
+					if (now >= ai.attackReadyAt) {
+						ai.attackReadyAt = now + MOB_ATTACK_COOLDOWN_MS;
+						const dmg = this._mobDamage(mob.kind);
+						const fatal = this._damagePlayer(target, dmg, { by: mob.id, byName: mob.kind });
+						// Tell the victim's client so it can flash + float a damage number.
+						const c = this._clientFor(mob.aggroId);
+						if (c) { try { c.send('hit', { byKind: mob.kind, dmg, hp: target.hp, fatal }); } catch {} }
+					}
+				} else {
+					this._stepMobToward(mob, target.tx, target.ty, ai);
+				}
+				ai.nextMoveAt = now + MOB_MOVE_MS;
+				continue;
+			}
+
+			// No target: walk home if displaced, otherwise wander (roamers only).
+			if (this._cheb(mob, home(ai)) > 1) {
+				this._stepMobToward(mob, ai.homeTx, ai.homeTy, ai);
+			} else if (ai.roam && Math.random() < MOB_ROAM_CHANCE) {
+				this._stepMobRandom(mob, ai);
+			}
+			ai.nextMoveAt = now + MOB_MOVE_MS;
 		}
 	}
 }

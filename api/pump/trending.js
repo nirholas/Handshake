@@ -32,9 +32,14 @@ export default wrap(async (req, res) => {
 
 	const now = Date.now();
 	if (_cache.value && _cache.limit >= limit && _cache.expiresAt > now) {
-		return json(res, 200, { data: _cache.value.slice(0, limit) }, {
-			'cache-control': 'public, max-age=15, s-maxage=30',
-		});
+		return json(
+			res,
+			200,
+			{ data: _cache.value.slice(0, limit) },
+			{
+				'cache-control': 'public, max-age=15, s-maxage=30',
+			},
+		);
 	}
 
 	const url =
@@ -44,7 +49,11 @@ export default wrap(async (req, res) => {
 	let upstream;
 	try {
 		upstream = await fetch(url, {
-			headers: { 'X-API-KEY': BIRDEYE_API_KEY, 'x-chain': 'solana', accept: 'application/json' },
+			headers: {
+				'X-API-KEY': BIRDEYE_API_KEY,
+				'x-chain': 'solana',
+				accept: 'application/json',
+			},
 			signal: AbortSignal.timeout(8000),
 		});
 	} catch (e) {
@@ -53,7 +62,12 @@ export default wrap(async (req, res) => {
 
 	if (!upstream.ok) {
 		const body = await upstream.text().catch(() => '');
-		return error(res, 502, 'upstream_error', `Birdeye ${upstream.status}: ${body.slice(0, 200)}`);
+		return error(
+			res,
+			502,
+			'upstream_error',
+			`Birdeye ${upstream.status}: ${body.slice(0, 200)}`,
+		);
 	}
 
 	const payload = await upstream.json().catch(() => null);

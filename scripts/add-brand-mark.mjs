@@ -48,6 +48,10 @@ const EXCLUDE_PATH = new RegExp(
 	'i'
 );
 const EXCLUDE_SHELL_DASHBOARD = /^pages\/dashboard(-next)?\//;
+// Generator-owned / separately-built output — branded at its own source so a
+// rebuild keeps it (news + sitemap via scripts/build-*.mjs; chat is the Svelte
+// sub-app under chat/ that builds into public/chat/).
+const EXCLUDE_GENERATED = /(^|\/)(news|sitemap|chat)\//;
 
 function walk(dir, out = []) {
 	for (const entry of readdirSync(dir)) {
@@ -78,6 +82,10 @@ for (const file of files) {
 	}
 	if (EXCLUDE_SHELL_DASHBOARD.test(rel)) {
 		skipped.push([rel, 'JS-shell dashboard (own rail)']);
+		continue;
+	}
+	if (EXCLUDE_GENERATED.test(rel)) {
+		skipped.push([rel, 'generated (branded at template source)']);
 		continue;
 	}
 	if (html.includes('/brand.js')) {

@@ -56,8 +56,7 @@ export default wrap(async (req, res) => {
 	// Prefer an explicitly-set avatar/profile image, then the linked avatar's
 	// public thumbnail. Never substitute a stock placeholder — the client renders
 	// initials when avatar_url is null.
-	const avatarPublic =
-		row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted';
+	const avatarPublic = row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted';
 	const avatar_url =
 		row.avatar_url ||
 		row.profile_image_url ||

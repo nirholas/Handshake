@@ -1,8 +1,24 @@
 // GET /openapi.json — x402 OpenAPI discovery document
-// Preferred over /.well-known/x402 by x402scan.
+// Preferred over /.well-known/x402 by x402scan and AgentCash (agentcash.dev).
+//
+// AgentCash's @agentcash/discovery validator reads payable operations from
+// here. For an operation's `x-payment-info` to parse, BOTH `price` and
+// `protocols` must be present (StructuredPaymentInfoSchema requires the pair) —
+// a structured `price` object with no sibling `protocols` is silently dropped,
+// reported as PRICE_MISSING_ON_PAID + PROTOCOLS_MISSING_ON_PAID. We advertise
+// only x402 because that is the rail this server actually settles (Base /
+// Arbitrum / Solana / BSC USDC via the facilitators in api/_lib/x402-spec.js).
+// MPP (Stripe/Tempo) is not implemented, so it is intentionally not advertised
+// — discovery must never point agents at a payment rail we cannot honor.
 
 import { env } from './_lib/env.js';
 import { cors, json, method, wrap } from './_lib/http.js';
+
+// Single source of truth for the protocol list on every paid operation. Each
+// entry is one supported payment protocol; per-network payment lanes (Base /
+// Solana / Arbitrum / BSC USDC) are advertised at runtime in the 402 challenge
+// `accepts[]` array — see api/_lib/x402-spec.js `paymentRequirements()`.
+const X402_PROTOCOLS = [{ x402: {} }];
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -26,7 +42,9 @@ export default wrap(async (req, res) => {
 					origin +
 					'/oauth/authorize, or use a Bearer API key from the dashboard. ' +
 					'Available MCP tools: list_my_avatars, get_avatar, search_public_avatars, ' +
-					'render_avatar, delete_avatar, validate_model, inspect_model, optimize_model.',
+					'render_avatar, delete_avatar, validate_model, inspect_model, optimize_model. ' +
+					'Paid REST endpoints under /api/x402/* and /api/insights/* settle in USDC over ' +
+					'x402 (HTTP 402); pay programmatically with @x402/fetch — no API key required.',
 			},
 			servers: [{ url: origin }],
 			components: {
@@ -40,6 +58,20 @@ export default wrap(async (req, res) => {
 							'/oauth/authorize, use an API key from the dashboard, or exchange a ' +
 							'wallet SIWX (CAIP-122) session for an access token.',
 					},
+					// Dashboard-issued API key, sent as `Authorization: Bearer <key>`.
+					// Declared as an apiKey scheme (in addition to bearerAuth) so agent
+					// tooling — which classifies an operation's auth mode from the
+					// security scheme `type` — recognizes these routes as key-protected
+					// rather than reporting "no auth mode". Functionally equivalent to a
+					// bearer token for programmatic callers that prefer a static key.
+					apiKeyAuth: {
+						type: 'apiKey',
+						in: 'header',
+						name: 'Authorization',
+						description:
+							'Dashboard API key sent as `Authorization: Bearer <key>`. Equivalent ' +
+							'to the OAuth bearer token; intended for programmatic agents.',
+					},
 				},
 			},
 			paths: {
@@ -49,7 +81,7 @@ export default wrap(async (req, res) => {
 						summary: 'MCP tool call',
 						description:
 							'JSON-RPC 2.0 request to the MCP server. Supports tools for 3D avatar management, model validation, inspection, and optimization.',
-						security: [{ bearerAuth: [] }],
+						security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
 						requestBody: {
 							required: true,
 							content: {
@@ -91,20 +123,7 @@ export default wrap(async (req, res) => {
 								currency: 'USD',
 								amount: '0.001',
 							},
-							// Per spec, protocols lists protocol *support* (one entry per
-							// protocol). Per-network payment lanes are advertised at runtime
-							// in the 402 challenge `accepts[]` array — see api/_lib/x402-spec.js
-							// `paymentRequirements()` which emits Solana USDC + Base USDC.
-							protocols: [
-								{ x402: {} },
-								{
-									mpp: {
-										method: 'solana-pay',
-										intent: 'purchase',
-										currency: 'USDC',
-									},
-								},
-							],
+							protocols: X402_PROTOCOLS,
 						},
 					},
 				},
@@ -112,7 +131,7 @@ export default wrap(async (req, res) => {
 					get: {
 						operationId: 'list_avatars',
 						summary: 'List my avatars',
-						security: [{ bearerAuth: [] }],
+						security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
 						responses: {
 							200: { description: 'Array of avatar objects' },
 							401: { description: 'Unauthorized' },
@@ -121,7 +140,7 @@ export default wrap(async (req, res) => {
 					post: {
 						operationId: 'create_avatar',
 						summary: 'Register an uploaded avatar',
-						security: [{ bearerAuth: [] }],
+						security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
 						requestBody: {
 							required: true,
 							content: {
@@ -179,7 +198,7 @@ export default wrap(async (req, res) => {
 					get: {
 						operationId: 'list_agents',
 						summary: 'List my agents',
-						security: [{ bearerAuth: [] }],
+						security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
 						responses: {
 							200: { description: 'Array of agent identity objects' },
 							401: { description: 'Unauthorized' },
@@ -191,6 +210,7 @@ export default wrap(async (req, res) => {
 						operationId: 'healthz',
 						summary: 'Service liveness',
 						description: 'Lightweight liveness probe with uptime + service version. No auth.',
+						security: [],
 						responses: {
 							200: { description: 'Health summary JSON' },
 						},
@@ -202,6 +222,7 @@ export default wrap(async (req, res) => {
 						summary: 'Pump.fun bonding-curve snapshot',
 						description:
 							'Returns raw bonding-curve state, current spot price + market cap, and graduation progress for a Pump.fun token. Public, edge-cached for 10s.',
+						security: [],
 						parameters: [
 							{ name: 'mint', in: 'query', required: true, schema: { type: 'string' }, description: 'Base58 SPL mint address' },
 							{ name: 'network', in: 'query', schema: { type: 'string', enum: ['mainnet', 'devnet'] } },
@@ -219,6 +240,7 @@ export default wrap(async (req, res) => {
 						summary: 'Pump.fun buy/sell quote (SDK-precise)',
 						description:
 							'Deterministic buy or sell quote computed via @nirholas/pump-sdk on the live bonding curve. Returns output amount, price impact %, and a market context block.',
+						security: [],
 						parameters: [
 							{ name: 'mint', in: 'query', required: true, schema: { type: 'string' } },
 							{ name: 'side', in: 'query', required: true, schema: { type: 'string', enum: ['buy', 'sell'] } },
@@ -247,7 +269,7 @@ export default wrap(async (req, res) => {
 							402: { description: 'Payment Required (x402)' },
 							404: { description: 'agent_id not found' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.01' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.01' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/x402/onchain-identity-verify': {
@@ -266,7 +288,7 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid parameters' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.005' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.005' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/x402/pump-agent-audit': {
@@ -284,7 +306,7 @@ export default wrap(async (req, res) => {
 							402: { description: 'Payment Required (x402)' },
 							404: { description: 'Mint not indexed' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.02' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.02' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/x402/skill-marketplace': {
@@ -301,7 +323,7 @@ export default wrap(async (req, res) => {
 							200: { description: 'Marketplace listings JSON' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/x402/symbol-availability': {
@@ -319,7 +341,7 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid ticker' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/x402/mint-to-mesh-batch': {
@@ -352,7 +374,7 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid body' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.05' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.05' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/x402/model-check': {
@@ -375,7 +397,7 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid url' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/x402/mint-to-mesh': {
@@ -398,7 +420,7 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid mint' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/insights/revenue-vision': {
@@ -429,7 +451,7 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid parameters' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/x402/permit2-paid-demo': {
@@ -442,7 +464,7 @@ export default wrap(async (req, res) => {
 							200: { description: 'Settlement summary with tx hash' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/x402/dance-tip': {
@@ -488,7 +510,7 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid parameters' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
 					},
 				},
 				'/api/x402/asset-download': {
@@ -513,8 +535,119 @@ export default wrap(async (req, res) => {
 							404: { description: 'Asset not found' },
 						},
 						'x-payment-info': {
-							price: { mode: 'variable', currency: 'USD' },
+							// Per-asset pricing: the live 402 challenge reflects the exact
+							// USDC price of the requested asset's paid_assets row. Declared
+							// `dynamic` (the only non-fixed price mode discovery accepts —
+							// `variable` is not a recognized mode); bounds span the catalog.
+							price: { mode: 'dynamic', currency: 'USD', min: '0.01', max: '100.00' },
+							protocols: X402_PROTOCOLS,
 							note: 'Each asset declares its own USDC price; the live 402 challenge reflects the per-asset row.',
+						},
+					},
+				},
+				'/api/x402/pump-launch': {
+					post: {
+						operationId: 'x402_pump_launch',
+						summary: 'Paid: Deploy a new pump.fun token in one call',
+						description:
+							'Pay $5.00 USDC to deploy a brand-new pump.fun token. Supply name + symbol and either a pre-pinned metadataUri or an imageUrl (the server pins the image + descriptor to pump.fun IPFS). The server fronts the SOL deploy cost and signs the create-coin tx, so the buyer needs no SOL and no account. Creator rewards accrue to any Solana wallet you nominate; an optional vanity prefix/suffix grinds a custom mint address. Returns mint + tx signature + pump.fun URL.',
+						requestBody: {
+							required: true,
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['name', 'symbol'],
+										properties: {
+											name: { type: 'string', maxLength: 32 },
+											symbol: { type: 'string', maxLength: 10 },
+											metadataUri: { type: 'string', maxLength: 2048, description: 'Pre-pinned metadata URI. Provide this or imageUrl.' },
+											imageUrl: { type: 'string', maxLength: 2048, description: 'Image URL to pin to pump.fun IPFS. Provide this or metadataUri.' },
+											description: { type: 'string', maxLength: 2000 },
+											creator: { type: 'string', minLength: 32, maxLength: 44, description: 'Solana wallet that receives creator rewards.' },
+											vanityPrefix: { type: 'string', maxLength: 5 },
+											vanitySuffix: { type: 'string', maxLength: 5 },
+										},
+									},
+								},
+							},
+						},
+						responses: {
+							200: { description: 'Deploy result: mint, tx signature, pump.fun URL' },
+							400: { description: 'Missing or invalid body' },
+							402: { description: 'Payment Required (x402)' },
+							503: { description: 'Launcher not configured' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '5.00' }, protocols: X402_PROTOCOLS },
+					},
+				},
+				'/api/x402/vanity': {
+					get: {
+						operationId: 'x402_vanity',
+						summary: 'Paid: Grind a vanity Solana keypair',
+						description:
+							'Pay to generate a brand-new Solana keypair whose Base58 address starts with a chosen prefix and/or ends with a chosen suffix. Returns the public address and its secret key (Base58 + 64-byte array) so it imports into any Solana wallet. Ground fresh per request in a Rust/WASM ed25519 engine and never stored. Difficulty-tiered price ($0.01 for 1 char, $0.05 for 2, $0.25 for 3); combined pattern capped at 3 Base58 characters. Settlement runs only after a successful grind, so an exhausted budget costs nothing.',
+						parameters: [
+							{
+								name: 'prefix',
+								in: 'query',
+								schema: { type: 'string', maxLength: 3 },
+								description: 'Base58 characters the address must start with (excludes 0, O, I, l). Combined with suffix, max 3. Provide prefix and/or suffix.',
+							},
+							{
+								name: 'suffix',
+								in: 'query',
+								schema: { type: 'string', maxLength: 3 },
+								description: 'Base58 characters the address must end with. Combined with prefix, max 3.',
+							},
+							{
+								name: 'ignoreCase',
+								in: 'query',
+								schema: { type: 'string', enum: ['0', '1', 'true', 'false'] },
+								description: 'When 1/true, match case-insensitively (faster, less specific).',
+							},
+						],
+						responses: {
+							200: { description: 'Keypair JSON: address + secret key' },
+							400: { description: 'Missing prefix/suffix or pattern too long' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': {
+							// Difficulty-tiered: $0.01 (1 char) → $0.25 (3 chars). The live
+							// 402 quotes the exact price for the requested pattern length.
+							price: { mode: 'dynamic', currency: 'USD', min: '0.01', max: '0.25' },
+							protocols: X402_PROTOCOLS,
+						},
+					},
+				},
+				'/api/x402/skill-call': {
+					get: {
+						operationId: 'x402_skill_call',
+						summary: 'Paid: Invoke a marketplace skill (pay-per-call)',
+						description:
+							'Pay the per-call price of a marketplace skill in USDC (Base or Solana) and receive its executable payload: the tool schema and content the calling agent runs. Payment settles straight to the skill author\'s wallet. Per-call pricing — every invocation is a fresh payment.',
+						parameters: [
+							{
+								name: 'skill',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', minLength: 1, maxLength: 128 },
+								description: 'Unique skill slug from the marketplace_skills catalog.',
+							},
+						],
+						responses: {
+							200: { description: 'Skill payload: tool schema + content' },
+							400: { description: 'Missing or invalid skill slug' },
+							402: { description: 'Payment Required (x402)' },
+							404: { description: 'Skill not found' },
+							409: { description: 'Skill not currently purchasable' },
+						},
+						'x-payment-info': {
+							// Per-skill pricing from marketplace_skills; the live 402
+							// challenge reflects the exact price of the requested skill.
+							price: { mode: 'dynamic', currency: 'USD' },
+							protocols: X402_PROTOCOLS,
+							note: 'Per-call price is set per skill; the live 402 challenge reflects the exact skill price.',
 						},
 					},
 				},

@@ -22,6 +22,7 @@ import {
 	encodePaymentResponseHeader,
 	permit2VariantOf,
 	resolveResourceUrl,
+	buildBazaarSchema,
 } from '../_lib/x402-spec.js';
 import { env } from '../_lib/env.js';
 import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
@@ -112,7 +113,18 @@ const ROUTE_BAZAAR = {
 		},
 		output: { type: 'json', example: DISCOVERY_OUTPUT_EXAMPLE },
 	},
-	schema: DISCOVERY_OUTPUT_SCHEMA,
+	// Bazaar meta-schema describing the {input, output} envelope (NOT the raw
+	// response body). buildBazaarSchema nests DISCOVERY_OUTPUT_SCHEMA under
+	// schema.properties.output.properties.example, which is exactly where the
+	// AgentCash / x402scan discovery validators read it from. Setting `schema`
+	// to the raw output schema instead makes those validators report the input
+	// and output schemas as missing (extensions.bazaar.schema.properties.input
+	// and .output absent), so this must mirror the other paid routes.
+	schema: buildBazaarSchema({
+		method: 'GET',
+		queryParamsSchema: DISCOVERY_INPUT_SCHEMA,
+		outputSchema: DISCOVERY_OUTPUT_SCHEMA,
+	}),
 };
 
 function buildRequirements(resourceUrl) {

@@ -113,6 +113,7 @@
 			import { AgentAvatar } from '/src/agent-avatar.js';
 			import { protocol } from '/src/agent-protocol.js';
 			import { EmbedActionBridge } from '/src/embed-action-bridge.js';
+			import { createTTS } from '/src/runtime/speech.js';
 
 			const BRIDGE_VERSION = '1';
 			const CAPABILITIES = ['speak', 'gesture', 'look-at', 'emote', 'present-model'];
@@ -238,6 +239,11 @@
 			let identityName = null;
 			const pendingHellos = [];
 
+			// Real TTS context — populated in main() once the avatar + voice resolve.
+			// speak/speak:stop actions drive ElevenLabs audio (via the server proxy)
+			// and the avatar's lip-sync, and report a result back to the host.
+			const ttsCtx = { tts: null, avatar: null, viewer: null };
+
 			// Parent origin is locked to the first valid host message we receive
 			// (ev.origin), or seeded from document.referrer as a best-effort
 			// fallback so an unsolicited postReady() doesn't have to use '*'.
@@ -275,9 +281,44 @@
 				postToParent({ type: 'agent:resize', agentId, height });
 			}
 
+			function postActionResult(type, ok, errorMsg) {
+				postToParent({ type: 'agent:action:result', agentId, action: { type }, ok, error: errorMsg || undefined });
+			}
+
 			function handleAction(action) {
 				if (!action || typeof action !== 'object') return;
+				if (action.type === 'speak') { handleSpeak(action); return; }
+				if (action.type === 'speak:stop') { handleSpeakStop(); return; }
 				protocol.emit(action);
+			}
+
+			async function handleSpeak(action) {
+				const text = (action.text || action.payload?.text || '').toString().trim();
+				if (!text) { postActionResult('speak', false, 'no text to speak'); return; }
+				if (!ttsCtx.tts) { postActionResult('speak', false, 'agent has no voice configured'); return; }
+				// Drive the talk/mouth animation hint via the protocol bus.
+				protocol.emit({ type: 'speak', payload: { text } });
+				try {
+					await ttsCtx.tts.speak(text, {
+						scene: ttsCtx.viewer?.content,
+						onStart: () => {
+							if (ttsCtx.tts.analyserNode) ttsCtx.avatar?.connectLipSync(ttsCtx.tts.analyserNode);
+						},
+					});
+					ttsCtx.avatar?.disconnectLipSync();
+					postToParent({ type: 'agent:action', agentId, action: { type: 'speak:end' } });
+					postActionResult('speak', true);
+				} catch (err) {
+					ttsCtx.avatar?.disconnectLipSync();
+					postActionResult('speak', false, err?.message || 'speech failed');
+				}
+			}
+
+			function handleSpeakStop() {
+				try { ttsCtx.tts?.cancel(protocol); } catch {}
+				ttsCtx.avatar?.disconnectLipSync();
+				postToParent({ type: 'agent:action', agentId, action: { type: 'speak:end' } });
+				postActionResult('speak:stop', true);
 			}
 
 			window.addEventListener('message', (ev) => {
@@ -459,6 +500,25 @@
 
 				const avatarCtl = new AgentAvatar(viewer, protocol, identity);
 				avatarCtl.attach();
+
+				// Bind real TTS so `speak` actions produce ElevenLabs audio + lip-sync.
+				// Voice id comes from the agent record — no silent fallback to a default
+				// voice; speak reports "agent has no voice configured" when unset.
+				ttsCtx.viewer = viewer;
+				ttsCtx.avatar = avatarCtl;
+				try {
+					const ar = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
+					if (ar.ok) {
+						const { agent } = await ar.json();
+						const voiceId = agent?.voice_id || null;
+						if (voiceId) {
+							ttsCtx.tts = createTTS({ provider: 'elevenlabs', voiceId, proxyURL: '/api/tts/eleven' });
+							avatarCtl.setTTS(ttsCtx.tts);
+						}
+					}
+				} catch (err) {
+					console.warn('[agent-embed] voice resolve failed:', err.message);
+				}
 
 				// Echo every protocol action onto the legacy bridge so hosts can mirror
 				// state (chat UIs, telemetry, host-side animation triggers).
