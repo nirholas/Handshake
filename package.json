@@ -191,7 +191,7 @@
 		"node-fetch": "^3.3.2",
 		"puppeteer-core": "^25.0.4",
 		"qrcode": "^1.5.4",
-		"query-string": "^8.1.0",
+		"query-string": "^9.4.0",
 		"qwen-ai-provider": "^0.1.1",
 		"resend": "^6.12.3",
 		"sas-lib": "^1.0.10",
