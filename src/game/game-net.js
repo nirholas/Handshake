@@ -277,11 +277,18 @@ export class GameNet {
 	// leaving the old means the old room's onLeave sees `room !== this.room` and
 	// stays quiet, so the UI never flickers offline mid-portal. On failure we keep
 	// the old room rather than stranding the player.
+	//
+	// onBeforeHandoff / onAfterHandoff are optional callbacks the scene injects for
+	// the portal fade overlay — they are awaited so the blackout is solid before
+	// the geometry swap and the fade-in starts only after the scene is rebuilt.
 	async _handlePortal(to, reservation) {
 		if (this._destroyed || this._transferring || !this.client) return;
 		this._transferring = true;
 		const old = this.room;
 		try {
+			// Fade out first, then do the room swap — so the player never sees a
+			// half-rebuilt world flash.
+			if (this.onBeforeHandoff) await this.onBeforeHandoff();
 			const next = await this.client.consumeSeatReservation(reservation);
 			this.room = next;
 			this.sessionId = next.sessionId;
@@ -298,6 +305,7 @@ export class GameNet {
 		} catch (err) {
 			console.warn('[game-net] portal handoff failed:', err?.message ?? err);
 			this.room = old; // never left it — stay put
+			if (this.onAfterHandoff) this.onAfterHandoff(); // always lift the fade
 		} finally {
 			this._transferring = false;
 		}

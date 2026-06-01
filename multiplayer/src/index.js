@@ -26,7 +26,6 @@ import { blockStore } from './block-store.js';
 import { flushAllPlayers } from './playerStore.js';
 import { marketplaceStore } from './marketplaceStore.js';
 import { SERVERS } from './servers.js';
-import { PRESENCE_HASH } from './presence-keys.js';
 import { socialHub } from './social-hub.js';
 import { verifyNotifySignature } from './presence-token.js';
 
@@ -194,14 +193,15 @@ for (const realm of Object.keys(REALMS)) {
 	gameServer.define(`game_${realm}`, GameRoom, { realm }).filterBy(['server']);
 }
 
-// --- Multi-server discovery + presence (Task 23) ---------------------------
-// Read-only JSON the /play login picker and a friends panel consume from the
-// (different-origin) static site, so they carry permissive CORS. Both read live
-// truth — never cached or faked numbers.
+// --- Multi-server discovery (Task 23) --------------------------------------
+// Read-only population the /play login picker consumes from the (different-origin)
+// static site, so it carries permissive CORS. Always live truth — never cached or
+// faked. (Friends presence — "which server+realm a friend is on" — is published by
+// the social hub under the verified account id and read by the authenticated
+// friends API, NOT here; there is no anonymous by-id lookup to scrape.)
 
-// CORS for the public read-only endpoints. The population counts and presence
-// flags are not sensitive, so we allow any origin to GET them; no credentials
-// are involved. OPTIONS preflights short-circuit here.
+// CORS for the public population endpoint. The counts aren't sensitive, so any
+// origin may GET them; no credentials are involved. OPTIONS preflights short-circuit.
 function publicJsonCors(_req, res, next) {
 	res.set('Access-Control-Allow-Origin', '*');
 	res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -211,12 +211,34 @@ function publicJsonCors(_req, res, next) {
 	next();
 }
 
+// Lightweight per-IP rate limit for the public endpoint — a fixed window that
+// clears legitimate picker polling (one every ~10s) with wide headroom but caps a
+// scripted flood. In-process (per instance), which is plenty for a read-only GET.
+const RATE_WINDOW_MS = 10_000;
+const RATE_MAX = 30;
+const _rateBuckets = new Map(); // ip -> { windowStart, count }
+function rateLimit(req, res, next) {
+	const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+	const now = Date.now();
+	let b = _rateBuckets.get(ip);
+	if (!b || now - b.windowStart > RATE_WINDOW_MS) { b = { windowStart: now, count: 0 }; _rateBuckets.set(ip, b); }
+	b.count++;
+	if (b.count > RATE_MAX) return res.status(429).json({ error: 'rate_limited' });
+	next();
+}
+// Bound the bucket map so a churn of distinct IPs can't grow it without limit.
+setInterval(() => {
+	const now = Date.now();
+	for (const [ip, b] of _rateBuckets) if (now - b.windowStart > RATE_WINDOW_MS) _rateBuckets.delete(ip);
+}, RATE_WINDOW_MS * 6).unref?.();
+
 // GET /servers — the world-instance roster with REAL live population. Population
 // is the sum of connected clients across every game_* room whose metadata names
 // that server, queried through the matchmaker (so it's correct across all
-// horizontally-scaled instances, not just this process). The least-full server
-// is recommended so the picker can nudge balancing without ever faking a count.
-app.get('/servers', publicJsonCors, async (_req, res) => {
+// horizontally-scaled instances, not just this process). The most-populated server
+// that isn't near capacity is recommended, so newcomers land where the world feels
+// alive rather than fragmenting into an empty instance — without ever faking a count.
+app.get('/servers', publicJsonCors, rateLimit, async (_req, res) => {
 	const counts = Object.fromEntries(SERVERS.map((s) => [s.id, 0]));
 	try {
 		const rooms = await matchMaker.query({});
@@ -229,12 +251,18 @@ app.get('/servers', publicJsonCors, async (_req, res) => {
 		console.warn('[multiplayer] /servers query failed:', err?.message);
 		return res.status(503).json({ error: 'population_unavailable' });
 	}
-	// Recommend exactly one server — the least-full — preferring the first in
-	// roster order on a tie so the suggestion is stable between polls.
+	// Recommend the fullest server that still has comfortable headroom, so worlds
+	// stay lively instead of every newcomer being sent to the emptiest one. Falls
+	// back to the least-full server only when all are near capacity. Stable on ties
+	// (first in roster order wins) so the suggestion doesn't flicker between polls.
+	const SOFT_CAP = 40; // leave room under the 50/room ceiling before steering elsewhere
 	let recommended = SERVERS[0]?.id || null;
-	let min = Infinity;
+	let bestLive = -1;   // fullest below the soft cap
+	let leastFull = Infinity; // fallback when everyone is busy
 	for (const s of SERVERS) {
-		if (counts[s.id] < min) { min = counts[s.id]; recommended = s.id; }
+		const n = counts[s.id];
+		if (n < SOFT_CAP && n > bestLive) { bestLive = n; recommended = s.id; }
+		if (bestLive < 0 && n < leastFull) { leastFull = n; recommended = s.id; }
 	}
 	res.json({
 		servers: SERVERS.map((s) => ({
@@ -247,45 +275,13 @@ app.get('/servers', publicJsonCors, async (_req, res) => {
 	});
 });
 
-// GET /presence?ids=a,b,c — for a friends panel (Task 15): resolve which
-// server+realm each named account is currently on, or that they're offline.
-// Reads the shared presence hash GameRoom maintains on join/leave. Capped at a
-// sane batch size so a single request can't sweep the whole registry.
-app.get('/presence', publicJsonCors, async (req, res) => {
-	const ids = String(req.query.ids || '')
-		.split(',')
-		.map((s) => s.trim())
-		.filter(Boolean)
-		.slice(0, 100);
-	if (!ids.length) return res.json({ presence: {} });
-	let all = {};
-	try {
-		all = (await gameServer.presence.hgetall(PRESENCE_HASH)) || {};
-	} catch (err) {
-		console.warn('[multiplayer] /presence read failed:', err?.message);
-		return res.status(503).json({ error: 'presence_unavailable' });
-	}
-	const presence = {};
-	for (const id of ids) {
-		const raw = all[id];
-		if (!raw) { presence[id] = { online: false }; continue; }
-		try {
-			const e = JSON.parse(raw);
-			presence[id] = { online: true, server: e.server || '', realm: e.realm || '', name: e.name || '' };
-		} catch {
-			presence[id] = { online: false };
-		}
-	}
-	res.json({ presence });
-});
-
 gameServer
 	.listen(PORT, HOST)
 	.then(() => {
 		console.log(`[multiplayer] listening on ws://${HOST}:${PORT}`);
 		console.log(`[multiplayer] rooms: walk_world, game_{${Object.keys(REALMS).join(',')}}`);
 		console.log(`[multiplayer] world instances: ${SERVERS.map((s) => `${s.id} (${s.name})`).join(', ')}`);
-		console.log(`[multiplayer] discovery: GET /servers, GET /presence?ids=`);
+		console.log(`[multiplayer] discovery: GET /servers`);
 		console.log(`[multiplayer] allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
 	})
 	.catch((err) => {

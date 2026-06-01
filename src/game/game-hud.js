@@ -43,6 +43,8 @@ const PROP_ICON = {
 	'hat-beanie': '🧢',
 	'hat-baseball': '🧢',
 	'hat-cowboy': '🤠',
+	'glasses-round': '👓',
+	'glasses-shades': '🕶️',
 };
 
 const SKILL_LABEL = { combat: 'Combat', woodcutting: 'Woodcutting', mining: 'Mining', fishing: 'Fishing', cooking: 'Cooking' };
@@ -90,6 +92,9 @@ export class GameHud {
 		this._shopTab = 'shop';
 		this._dailyResetAt = 0;
 		this._weeklyResetAt = 0;
+		// Wardrobe try-before-equip: the id currently previewed on the local
+		// avatar (null = none). Local-only; cleared when the shop closes.
+		this._previewId = null;
 		// Marketplace (Task 20): the latest board (active listings + your own), the
 		// token-payment capability flags, the open flag + active tab, per-listing
 		// "busy" labels driven by the controller during an on-chain buy, an error
@@ -619,6 +624,9 @@ export class GameHud {
 		this._shopOpen = false;
 		this.elShop.hidden = true;
 		this.elShopBtn.setAttribute('aria-expanded', 'false');
+		// Drop any uncommitted wardrobe preview — revert the avatar to the
+		// server-authoritative equipped look.
+		if (this._previewId !== null) { this._previewId = null; this.opts.onStopPreview?.(); }
 	}
 
 	_setShopTab(tab) {
@@ -701,62 +709,77 @@ export class GameHud {
 		const frag = document.createDocumentFragment();
 		const ownedIds = (this.shop?.owned || []).filter((id) => this.cosmetics.has(id));
 		const equipped = this.shop?.equipped || '';
-		frag.appendChild(el('p', 'kq-shop-sub', 'Equip an owned look — it shows on your avatar instantly, for you and everyone around you.'));
+		frag.appendChild(el('p', 'kq-shop-sub', 'Tap a look to preview it live on your avatar; press Equip to keep it. Everyone around you sees what you equip.'));
 		const grid = el('div', 'kq-cos-grid');
 
-		// Default (no cosmetic) tile.
-		const def = el('div', 'kq-cos-card kq-cos--default' + (equipped ? '' : ' kq-cos--equipped'));
-		def.appendChild(el('span', 'kq-cos-swatch kq-cos-swatch--default', '🙂'));
-		const dmeta = el('div', 'kq-cos-meta');
-		dmeta.appendChild(el('div', 'kq-cos-name', 'Default look'));
-		dmeta.appendChild(el('div', 'kq-cos-rarity', 'No cosmetic'));
-		def.appendChild(dmeta);
-		const dfoot = el('div', 'kq-cos-foot');
-		if (equipped) {
-			const b = el('button', 'kq-btn kq-cos-equip', 'Equip');
-			b.type = 'button';
-			b.addEventListener('click', () => this.opts.onUnequipCosmetic?.());
-			dfoot.appendChild(b);
-		} else {
-			dfoot.appendChild(el('span', 'kq-cos-equipped', '✓ Equipped'));
-		}
-		def.appendChild(dfoot);
-		grid.appendChild(def);
-
-		for (const id of ownedIds) {
-			const c = this.cosmetics.get(id);
+		// Build one wardrobe tile. `id` is '' for the Default-look tile. A click on the
+		// tile body previews the look locally (no server round-trip); Equip commits it.
+		const tile = (id) => {
+			const c = id ? this.cosmetics.get(id) : null;
 			const isEq = id === equipped;
-			const card = el('div', `kq-cos-card kq-cos--${c.rarity}${isEq ? ' kq-cos--equipped' : ''}`);
-			card.style.setProperty('--cos-accent', this._rarityColor(c.rarity));
-			card.appendChild(this._cosSwatch(c));
+			const isPreview = this._previewId === id && !isEq;
+			const rarityCls = c ? ` kq-cos--${c.rarity}` : ' kq-cos--default';
+			// A div (not a button) so the real Equip button can nest inside it without
+			// invalid button-in-button markup; role+tabindex+keydown keep it keyboard-usable.
+			const card = el('div', 'kq-cos-card kq-cos-card--pick' + rarityCls
+				+ (isEq ? ' kq-cos--equipped' : '') + (isPreview ? ' kq-cos--preview' : ''));
+			if (c) card.style.setProperty('--cos-accent', this._rarityColor(c.rarity));
+			card.setAttribute('role', 'button');
+			card.tabIndex = 0;
+			card.setAttribute('aria-pressed', String(isEq));
+			card.setAttribute('aria-label', `Preview ${c ? c.name : 'default look'}`);
+			card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._previewCosmetic(id); } });
+			if (c) card.appendChild(this._cosSwatch(c));
+			else card.appendChild(el('span', 'kq-cos-swatch kq-cos-swatch--default', '🙂'));
 			const meta = el('div', 'kq-cos-meta');
-			meta.appendChild(el('div', 'kq-cos-name', c.name));
-			meta.appendChild(el('div', 'kq-cos-rarity', this._rarityLabel(c.rarity)));
+			meta.appendChild(el('div', 'kq-cos-name', c ? c.name : 'Default look'));
+			meta.appendChild(el('div', 'kq-cos-rarity', c ? this._rarityLabel(c.rarity) : 'No cosmetic'));
 			card.appendChild(meta);
 			const foot = el('div', 'kq-cos-foot');
 			if (isEq) {
 				foot.appendChild(el('span', 'kq-cos-equipped', '✓ Equipped'));
 			} else {
-				const b = el('button', 'kq-btn kq-cos-equip', 'Equip');
+				const b = el('button', 'kq-btn kq-cos-equip', isPreview ? 'Equip ✓' : 'Equip');
 				b.type = 'button';
-				b.addEventListener('click', () => this.opts.onEquipCosmetic?.(id));
+				b.addEventListener('click', (e) => { e.stopPropagation(); this._commitCosmetic(id); });
 				foot.appendChild(b);
 			}
 			card.appendChild(foot);
-			grid.appendChild(card);
-		}
+			card.addEventListener('click', () => this._previewCosmetic(id));
+			return card;
+		};
+
+		grid.appendChild(tile(''));
+		for (const id of ownedIds) grid.appendChild(tile(id));
 		frag.appendChild(grid);
 
 		if (!ownedIds.length) {
 			const empty = el('div', 'kq-empty kq-shop-empty');
-			empty.innerHTML = 'You don’t own any cosmetics yet.';
-			const go = el('button', 'kq-btn kq-btn-ghost', 'Browse the shop →');
+			empty.innerHTML = 'You don\u2019t own any cosmetics yet.';
+			const go = el('button', 'kq-btn kq-btn-ghost', 'Browse the shop \u2192');
 			go.type = 'button';
 			go.addEventListener('click', () => this._setShopTab('shop'));
 			empty.appendChild(go);
 			frag.appendChild(empty);
 		}
 		return frag;
+	}
+
+	// Preview a wardrobe look on the local avatar (no server round-trip). Re-renders
+	// so the previewed tile reads as selected.
+	_previewCosmetic(id) {
+		if (this._previewId === id) return;
+		this._previewId = id;
+		this.opts.onPreviewCosmetic?.(id);
+		if (this._shopOpen && this._shopTab === 'wardrobe') this._renderShop();
+	}
+
+	// Commit the previewed look to the server (equip an id, or unequip for '').
+	_commitCosmetic(id) {
+		this._previewId = id;
+		this.opts.onPreviewCosmetic?.(id); // keep the avatar showing it through the round-trip
+		if (id) this.opts.onEquipCosmetic?.(id);
+		else this.opts.onUnequipCosmetic?.();
 	}
 
 	// A small visual chip for a cosmetic: auras glow, tints fill, props show their
@@ -1030,19 +1053,19 @@ export class GameHud {
 			const b = el('span', 'kq-market-busy'); b.innerHTML = `<span class="kq-spin"></span>${busy}`;
 			right.appendChild(b);
 		} else if (l.type === 'gold') {
-			const buy = el('button', 'kq-btn kq-btn-primary kq-market-buy', 'Buy');
-			buy.type = 'button';
 			const afford = this.gold >= l.priceGold;
-			if (!afford) { buy.disabled = true; buy.classList.add('kq-btn-disabled'); buy.title = 'Not enough gold'; }
+			const buy = el('button', 'kq-btn kq-market-buy' + (afford ? '' : ' kq-btn-disabled'), 'Buy');
+			buy.type = 'button';
+			buy.disabled = !afford;
+			if (!afford) buy.title = `Need ${this._fmtGold(l.priceGold - this.gold)} more gold`;
 			buy.addEventListener('click', () => this.opts.onMarketBuyGold?.(l.id));
 			right.appendChild(buy);
 		} else {
 			// Token listing.
 			if (!this.market.canToken) {
-				const note = el('span', 'kq-market-note', 'Connect a wallet to buy');
-				right.appendChild(note);
+				right.appendChild(el('span', 'kq-market-note', 'Connect a wallet to buy'));
 			} else {
-				const buy = el('button', 'kq-btn kq-btn-primary kq-market-buy', `Buy with ${this.market.token.symbol}`);
+				const buy = el('button', 'kq-btn kq-market-buy', `Buy with ${this.market.token.symbol}`);
 				buy.type = 'button';
 				buy.addEventListener('click', () => this.opts.onMarketBuyToken?.(l.id));
 				right.appendChild(buy);
@@ -1114,14 +1137,17 @@ export class GameHud {
 		row.append(qtyWrap, priceWrap);
 		pane.appendChild(row);
 
-		const btn = el('button', 'kq-btn kq-btn-primary kq-market-listbtn', `List ${m.label} for gold`);
+		const btn = el('button', 'kq-btn kq-market-listbtn', `List ${m.label} for gold`);
 		btn.type = 'button';
 		btn.addEventListener('click', () => {
 			const qty = Math.max(1, Math.min(held, qtyInput.value | 0));
 			const price = priceInput.value | 0;
 			if (!(price >= 1)) { priceInput.focus(); priceInput.classList.add('kq-input-bad'); return; }
+			if (!(qty >= 1)) { qtyInput.focus(); qtyInput.classList.add('kq-input-bad'); return; }
 			this.opts.onMarketListGold?.(this._sellItem, qty, price);
 			this._sellItem = '';
+			// Switch to My Listings so they see the new listing immediately.
+			this._setMarketTab('mine');
 		});
 		pane.appendChild(btn);
 		pane.appendChild(el('p', 'kq-market-fineprint', 'Gold sales have no fee — you receive the full price.'));
@@ -1158,7 +1184,7 @@ export class GameHud {
 		row.append(goldWrap, usdWrap);
 		pane.appendChild(row);
 
-		const btn = el('button', 'kq-btn kq-btn-primary kq-market-listbtn', `List gold for ${this.market.token.symbol}`);
+		const btn = el('button', 'kq-btn kq-market-listbtn', `List gold for ${this.market.token.symbol}`);
 		btn.type = 'button';
 		btn.addEventListener('click', () => {
 			const goldAmount = Math.max(1, Math.min(this.gold, goldInput.value | 0));
@@ -1166,6 +1192,8 @@ export class GameHud {
 			if (!(goldAmount >= 1)) { goldInput.focus(); goldInput.classList.add('kq-input-bad'); return; }
 			if (!(usd >= 0.01)) { usdInput.focus(); usdInput.classList.add('kq-input-bad'); return; }
 			this.opts.onMarketListToken?.(goldAmount, usd);
+			// Switch to My Listings so they see the new listing immediately.
+			this._setMarketTab('mine');
 		});
 		pane.appendChild(btn);
 		pane.appendChild(el('p', 'kq-market-fineprint', `Buyers pay in ${this.market.token.symbol}. You receive ${100 - Number(feePct)}% to your wallet; ${feePct}% goes to the treasury.`));

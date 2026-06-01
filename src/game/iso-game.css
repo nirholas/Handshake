@@ -41,6 +41,25 @@ body.kg-loading-cursor {
 	cursor: progress;
 }
 
+/* Portal fade-to-black overlay — covers the full viewport during realm handoffs
+   so the geometry swap is invisible and the transition reads as intentional travel.
+   Fades in on portal trigger (opacity 0→1), stays opaque while the new room loads,
+   then fades out once _onHandoff fires (opacity 1→0). pointer-events auto blocks
+   accidental clicks during the swap. */
+#kg-portal-fade {
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	background: #000;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.35s ease;
+}
+#kg-portal-fade.kg-fading-out {
+	opacity: 1;
+	pointer-events: auto;
+}
+
 /* DOM layer for projected nameplates (pointer-transparent). */
 #kg-labels {
 	position: fixed;
@@ -256,6 +275,9 @@ body.kg-loading-cursor {
 }
 .kg-toast--fish {
 	border-color: rgba(92, 182, 230, 0.5);
+}
+.kg-toast--market {
+	border-color: rgba(110, 231, 176, 0.5);
 }
 
 /* Contextual action bar (cook at a Roast Pit, eat to heal). Buttons reveal only
@@ -1435,12 +1457,54 @@ body.kg-loading-cursor {
 	font-weight: 800;
 }
 
+/* XP drop chips — "+N XP" floaters that rise and fade on each XP earn.
+   Anchored just below the topbar so they don't obscure the level-up cards. */
+#kg-xpdrops {
+	position: fixed;
+	top: 54px;
+	right: 20px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 4px;
+	pointer-events: none;
+	z-index: 320;
+}
+
+.kg-xpdrop {
+	padding: 3px 9px;
+	border-radius: 20px;
+	background: color-mix(in srgb, var(--kg-hue, #cdd6e6) 18%, rgba(13, 20, 32, 0.88));
+	border: 1px solid color-mix(in srgb, var(--kg-hue, #cdd6e6) 35%, transparent);
+	color: var(--kg-hue, #cdd6e6);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+	opacity: 0;
+	transform: translateY(6px);
+	transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.kg-xpdrop--in {
+	opacity: 1;
+	transform: translateY(0);
+	animation: kg-xpdrop-rise 1.2s ease forwards;
+}
+
+@keyframes kg-xpdrop-rise {
+	0%   { opacity: 1; transform: translateY(0); }
+	70%  { opacity: 1; transform: translateY(-14px); }
+	100% { opacity: 0; transform: translateY(-20px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.kg-skills,
 	.kg-skill,
 	.kg-skill-bar i,
 	.kg-levelup,
-	.kg-levelup-ico {
+	.kg-levelup-ico,
+	.kg-xpdrop {
 		transition: none;
 		animation: none;
 	}
@@ -2341,6 +2405,7 @@ body.kg-loading-cursor {
 .kq-btn-disabled, .kq-btn:disabled { background: rgba(255,255,255,0.08); color: var(--kg-dim); cursor: not-allowed; }
 .kq-btn-ghost { background: transparent; color: var(--kg-text); border: 1px solid var(--kg-line); margin-top: 12px; width: 100%; padding: 9px; }
 .kq-btn-ghost:hover { border-color: var(--kg-accent); opacity: 1; }
+.kq-btn-primary { /* alias — .kq-btn already uses the primary fill */ }
 
 .kq-empty { font-size: 12px; color: var(--kg-dim); line-height: 1.5; padding: 8px 2px; }
 .kq-empty-good { color: var(--kg-text); background: rgba(110, 231, 135, 0.08); border: 1px solid rgba(110,231,135,0.3); border-radius: 10px; padding: 12px 14px; text-align: center; }
@@ -2492,6 +2557,10 @@ body.kg-loading-cursor {
 	transition: border-color .15s, transform .08s, background .15s;
 }
 .kq-cos-card.kq-cos--equipped { background: rgba(110,231,135,0.08); border-color: rgba(110,231,135,0.5); }
+.kq-cos-card--pick { cursor: pointer; font: inherit; color: inherit; text-align: center; -webkit-appearance: none; appearance: none; }
+.kq-cos-card--pick:hover { border-color: var(--cos-accent); transform: translateY(-1px); }
+.kq-cos-card--pick:focus-visible { outline: 2px solid var(--kg-accent); outline-offset: 2px; }
+.kq-cos-card.kq-cos--preview { border-color: var(--cos-accent); box-shadow: 0 0 0 1px var(--cos-accent) inset, 0 0 16px -4px var(--cos-accent); }
 .kq-cos-card.kq-cos--short { opacity: 0.78; }
 .kq-cos-swatch {
 	width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center;

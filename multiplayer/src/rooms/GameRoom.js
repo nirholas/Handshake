@@ -21,10 +21,10 @@ import { STACKABLE_ITEMS, isEdible, healValue, scaledHeal, isMount, mountStepMs,
 import { cleanAvatarUrl } from '../avatar-url.js';
 import { loadPlayer, savePlayer, hydratePlayer, flushPlayer } from '../playerStore.js';
 import { cleanServer } from '../servers.js';
-import { PRESENCE_HASH, evictChannel, payoutChannel, TAKEOVER_CLOSE_CODE } from '../presence-keys.js';
+import { evictChannel, payoutChannel, TAKEOVER_CLOSE_CODE } from '../presence-keys.js';
 import { socialHub } from '../social-hub.js';
 import { verifyPresenceTicket } from '../presence-token.js';
-import { cosmeticById, isOffered, currentOffers, clientCatalog } from '../cosmetics.js';
+import { cosmeticById, evaluatePurchase, currentOffers, clientCatalog } from '../cosmetics.js';
 import { marketplaceStore } from '../marketplaceStore.js';
 import {
 	TOKEN_SYMBOL, TOKEN_DECIMALS, tokenConfigured, isWalletAddress,
@@ -244,7 +244,7 @@ export class GameRoom extends Room {
 			const uid = verifyPresenceTicket(ticket);
 			if (!uid) return;
 			c.userData = { ...(c.userData || {}), accountUid: uid };
-			socialHub.register(uid, c, this.realm.name);
+			socialHub.register(uid, c, this.realm.name, this.server);
 		});
 		// Cosmetics shop (Task 21): request the live shop board, buy a cosmetic from
 		// the current rotation, and equip/unequip an owned (purchased) cosmetic. All
@@ -517,6 +517,10 @@ export class GameRoom extends Room {
 	async onLeave(client) {
 		const sid = client.sessionId;
 		const priv = this.priv.get(sid);
+		// A portal handoff reserved a seat in the destination room and sent the client
+		// the token. If the client disconnects before consuming it, clear the flag so
+		// the slot can't be stuck. (The destination seat expires on its own TTL.)
+		if (priv) priv.transferring = false;
 		// An evicted session already persisted itself synchronously inside _onEvict;
 		// persisting again here would write a now-stale snapshot over whatever the
 		// new session has since done, so skip it. A normal leave persists as usual.
@@ -544,13 +548,9 @@ export class GameRoom extends Room {
 			try { this.presence.unsubscribe(paySub.channel, paySub.handler); } catch {}
 			this._payoutSubs.delete(sid);
 		}
-		if (priv?.playerId) {
-			try {
-				const raw = await this.presence.hget(PRESENCE_HASH, priv.playerId);
-				if (raw && JSON.parse(raw).sid === sid) await this.presence.hdel(PRESENCE_HASH, priv.playerId);
-			} catch {}
-		}
 
+		// Clear account-level friends presence when this account's last socket here
+		// leaves; the social hub keeps it online if another tab/realm is still open.
 		if (client.userData?.accountUid) socialHub.unregister(client.userData.accountUid, client);
 
 		this.state.players.delete(sid);
@@ -1989,18 +1989,15 @@ export class GameRoom extends Room {
 		if (!p || !priv || !priv.cosmetics) return;
 		if (!this._rateOk(client.sessionId, 'ui')) return;
 		const id = String(payload?.id ?? '');
-		const cosmetic = cosmeticById(id);
-		if (!cosmetic) { client.send('notice', { kind: 'shop', text: 'That cosmetic doesn’t exist.' }); return; }
-		if (priv.cosmetics.owned.has(id)) {
-			client.send('notice', { kind: 'shop', text: `You already own the ${cosmetic.name}.` });
-			return;
-		}
-		if (!isOffered(id, Date.now())) {
-			client.send('notice', { kind: 'shop', text: `The ${cosmetic.name} isn’t on sale right now.` });
-			return;
-		}
-		if (p.gold < cosmetic.price) {
-			client.send('notice', { kind: 'shop', text: `Need ${cosmetic.price - p.gold} more gold for the ${cosmetic.name}.` });
+		// Single source of truth for the buy rules (shared with cosmetics.test.js).
+		const { ok, reason, cosmetic } = evaluatePurchase(p.gold, priv.cosmetics.owned, id, Date.now());
+		if (!ok) {
+			const name = cosmetic?.name || 'cosmetic';
+			const text = reason === 'unknown' ? 'That cosmetic doesn’t exist.'
+				: reason === 'owned' ? `You already own the ${name}.`
+				: reason === 'not-offered' ? `The ${name} isn’t on sale right now.`
+				: `Need ${cosmetic.price - p.gold} more gold for the ${name}.`;
+			client.send('notice', { kind: 'shop', text });
 			return;
 		}
 		p.gold -= cosmetic.price;
@@ -2662,6 +2659,7 @@ export class GameRoom extends Room {
 	_handleInvMove(client, payload) {
 		const p = this.state.players.get(client.sessionId);
 		if (!p) return;
+		if (this.priv.get(client.sessionId)?.transferring) return;
 		if (!this._rateOk(client.sessionId, 'ui')) return;
 		const from = this._resolveSlot(p, payload?.from);
 		const to = this._resolveSlot(p, payload?.to);
@@ -2687,6 +2685,7 @@ export class GameRoom extends Room {
 	_handleEquip(client, payload) {
 		const p = this.state.players.get(client.sessionId);
 		if (!p) return;
+		if (this.priv.get(client.sessionId)?.transferring) return;
 		if (!this._rateOk(client.sessionId, 'ui')) return;
 		const i = payload?.slot | 0;
 		if (i < -1 || i >= HOTBAR_SIZE) return;
@@ -2708,6 +2707,7 @@ export class GameRoom extends Room {
 	_handleBank(client, payload, dir) {
 		const p = this.state.players.get(client.sessionId);
 		if (!p) return;
+		if (this.priv.get(client.sessionId)?.transferring) return;
 		if (!this._rateOk(client.sessionId, 'ui')) return;
 		// Must be standing on a bank-counter tile.
 		if (!this.realm.bankZone.some((t) => t.tx === p.tx && t.ty === p.ty)) {

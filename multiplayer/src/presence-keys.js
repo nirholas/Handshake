@@ -1,15 +1,9 @@
-// Shared presence keys for the multi-server account registry (Task 23).
+// Shared presence pub/sub keys for the multi-server account system (Tasks 16/20/23).
 //
-// Both GameRoom (writer) and index.js (the /presence + /servers HTTP readers)
-// reference these, so they live in one place to stay in lock-step. The store is
-// the Colyseus `presence` instance — a process-local map in single-instance
-// mode, or Redis when REDIS_URI is set — so the same keys work whether the host
-// runs one process or many.
-
-// Hash of currently-online accounts: field = account id (playerId), value =
-// JSON { server, realm, name, sid, ts }. Lets a friends panel (or /presence)
-// resolve which server+realm any account is on without joining its room.
-export const PRESENCE_HASH = 'kg:presence';
+// These name Colyseus `presence` channels — a process-local emitter in
+// single-instance mode, or Redis when REDIS_URI is set — so they work whether the
+// host runs one process or many. (Account-level *friends* presence lives in the
+// social hub, keyed by verified account id; it is not stored here.)
 
 // Pub/sub channel a room subscribes to per online account, so a fresh login of
 // the same account anywhere on the cluster can evict the stale session and

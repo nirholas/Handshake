@@ -460,6 +460,10 @@ export class IsoGame {
 			onBuyCosmetic: (id) => this.net?.buyCosmetic(id),
 			onEquipCosmetic: (id) => this.net?.equipCosmetic(id),
 			onUnequipCosmetic: () => this.net?.unequipCosmetic(),
+			// Wardrobe try-before-equip: preview a look on the local avatar with no
+			// server round-trip; null reverts to the server-authoritative equipped look.
+			onPreviewCosmetic: (id) => this._previewLocalCosmetic(id),
+			onStopPreview: () => this._previewLocalCosmetic(null),
 			// Marketplace (Task 20): open fetches the live board; list/cancel/buy-gold
 			// route straight to the authoritative server. A token buy is a multi-step
 			// on-chain flow the controller drives (_buyTokenListing): quote → wallet
@@ -551,6 +555,35 @@ export class IsoGame {
 		this.scene.fog.near = isCave ? 16 : 48;
 		this.scene.fog.far = isCave ? 70 : 120;
 
+		// Scene lighting: underground the sun doesn't reach. Dim the directional
+		// and hemi lights to near-zero, deepen the ambient, and scatter warm torch
+		// PointLights around the cave so dark corners read as firelit rather than
+		// just black. Restoring surface values on exit means the Mainland always
+		// looks like open daylight again, never the cave's warmth.
+		this._sun.intensity = isCave ? 0.0 : 1.25;
+		this._hemi.intensity = isCave ? 0.06 : 1.0;
+		this._ambient.intensity = isCave ? 0.18 : 0.28;
+		this._ambient.color.set(isCave ? 0x4a3020 : 0xffffff);
+		// Remove previous cave lights before adding new ones (handles realm→realm hop).
+		for (const l of this._caveLights) this.scene.remove(l);
+		this._caveLights = [];
+		if (isCave) {
+			// Torch positions: corners of each chamber + one near the entrance.
+			// Colours alternate between deep orange and warm amber for visual variety.
+			const torchTiles = [
+				[4, 3, 0xff6a1a], [27, 3, 0xffaa30], [4, 9, 0xffaa30], [27, 9, 0xff6a1a],
+				[4, 18, 0xff6a1a], [27, 18, 0xffaa30], [5, 27, 0xffaa30], [27, 27, 0xff6a1a],
+				[16, 28, 0xffcc55], // entrance torch — brightest, marks the way out
+			];
+			for (const [tx, ty, color] of torchTiles) {
+				const pt = new PointLight(color, 2.8, 8.0, 1.4);
+				const wp = this._tileToWorld(tx, ty);
+				pt.position.set(wp.x, 1.6, wp.z);
+				this.scene.add(pt);
+				this._caveLights.push(pt);
+			}
+		}
+
 		// Ground plane with a subtle tile grid so movement is legible. The cave
 		// uses a dark rock floor instead of grass.
 		const ground = new Mesh(
@@ -617,12 +650,16 @@ export class IsoGame {
 		// Fishing + cooking spots, if the realm has them.
 		this._paintTiles(layout.fishing, 0x3aa0d0, 0.6);
 		this._paintTiles(layout.cooking, 0xff7a3a, 0.6);
-		// Portals. An open portal glows violet; a combat-gated one (e.g. the northern
-		// cave) is barred with a red archway so its locked state reads before you step on.
+		// Portals. An open portal glows violet; a combat-gated one is barred with a
+		// red archway. The mine entrance on the Mainland gets a cave-mouth arch so
+		// it reads as a tunnel opening rather than a plain glowing tile.
 		for (const p of layout.portals || []) {
 			const tiles = this._rectTiles(p);
 			if (p.gate) { this._paintTiles(tiles, 0xd0455a, 0.75); this._buildGateArch(p); }
-			else this._paintTiles(tiles, 0xae7bff, 0.7);
+			else {
+				this._paintTiles(tiles, 0xae7bff, 0.7);
+				if (p.to === 'mine') this._buildMineEntrance(p);
+			}
 		}
 		// Arena fittings: spectator stands (no-PvP), the practice boxing ring, and the
 		// moving floor rollers — drawn with directional chevrons so the flow is legible.
@@ -885,6 +922,38 @@ export class IsoGame {
 		this.staticGroup.add(g);
 	}
 
+	// A jagged cave-mouth arch over the Mainland mine entrance so the portal reads
+	// as a tunnel opening rather than a plain glowing tile. Rock-textured posts,
+	// rough lintel, and a warm torch glow at the apex.
+	_buildMineEntrance(p) {
+		const cx = (p.x0 + p.x1) / 2, cy = (p.y0 + p.y1) / 2;
+		const c = this._tileToWorld(cx, cy);
+		const g = new Group();
+		const rockMat = new MeshStandardMaterial({ map: this._rockTexture(), color: 0x5a4f40, roughness: 1 });
+		const w = (p.x1 - p.x0 + 1) * TILE;
+		// Posts — flanking pillars, slightly wider than a gate arch for a tunnel feel.
+		const postGeo = new CylinderGeometry(0.22, 0.3, 2.6, 7);
+		const left = new Mesh(postGeo, rockMat); left.position.set(-w / 2 - 0.1, 1.3, 0);
+		const right = new Mesh(postGeo, rockMat); right.position.set(w / 2 + 0.1, 1.3, 0);
+		// Keystone lintel — a chunky rock span across the top.
+		const lintel = new Mesh(new BoxGeometry(w + 0.9, 0.55, 0.6), rockMat);
+		lintel.position.set(0, 2.7, 0);
+		// Rough cap stones on each post.
+		const capGeo = new DodecahedronGeometry(0.32, 0);
+		const capL = new Mesh(capGeo, rockMat); capL.position.set(-w / 2 - 0.1, 2.7, 0);
+		const capR = new Mesh(capGeo, rockMat); capR.position.set(w / 2 + 0.1, 2.7, 0);
+		for (const m of [left, right, lintel, capL, capR]) { m.castShadow = true; m.receiveShadow = true; }
+		g.add(left, right, lintel, capL, capR);
+		g.position.set(c.x, 0, c.z);
+		this.staticGroup.add(g);
+		// A warm torch-point at the keystone so the entrance glow reads even at
+		// a distance — the mine is dark; this is the last light before you go in.
+		const torch = new PointLight(0xff8c30, 2.2, 6.5, 1.6);
+		torch.position.set(c.x, 3.1, c.z);
+		this.scene.add(torch);
+		this._caveLights.push(torch); // reuse the cave-lights list so it's cleaned on next _buildRealm
+	}
+
 	// Spectator stands: a cool slate tint over the walkable seating tiles plus a corner
 	// post at each end, so the stands read as off-floor (and the server keeps them PvP-free).
 	_buildSeating(rects) {
@@ -1043,6 +1112,31 @@ export class IsoGame {
 		const server = this._resolveServerChoice();
 		this.net = new GameNet({ name, avatar: netAvatar, realm, server, pid: this._playerId(), getPresence: getPresenceTicket });
 		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
+
+		// Fade-to-black during portal room swaps so the geometry rebuild is hidden.
+		// onBeforeHandoff is awaited by _handlePortal, so the overlay is fully opaque
+		// before the old room tears down. onAfterHandoff is called once _onHandoff
+		// has cleared the dynamic views and the new realm is on its way in.
+		this._portalFadeEl = document.getElementById('kg-portal-fade');
+		this.net.onBeforeHandoff = () => new Promise((resolve) => {
+			const el = this._portalFadeEl;
+			if (!el) { resolve(); return; }
+			el.classList.add('kg-fading-out');
+			const done = () => { el.removeEventListener('transitionend', done); resolve(); };
+			el.addEventListener('transitionend', done, { once: true });
+			// Safety: resolve after transition duration + slack even if event misfires.
+			setTimeout(resolve, 500);
+		});
+		this.net.onAfterHandoff = () => {
+			// Brief pause so the scene has one frame to finish the geometry rebuild
+			// before we reveal it, avoiding a half-populated flash.
+			setTimeout(() => {
+				const el = this._portalFadeEl;
+				if (!el) return;
+				el.classList.remove('kg-fading-out');
+			}, 80);
+		};
+
 		this.net.on('status', ({ status, error }) => this._onStatus(status, error));
 		this.net.on('realm', (layout) => this._buildRealm(layout));
 		this.net.on('items', (r) => this._onItems(r));
@@ -1293,6 +1387,9 @@ export class IsoGame {
 		this._lootTombId = null;
 		this.myId = sessionId || this.net?.sessionId || this.myId;
 		this._updateOnline();
+		// Lift the blackout overlay once views are cleared — the new realm layout
+		// arrives via the 'realm' message moments later and rebuilds the geometry.
+		if (this.net?.onAfterHandoff) this.net.onAfterHandoff();
 	}
 
 	// ---------------------------------------------------------------- players
@@ -1387,6 +1484,13 @@ export class IsoGame {
 	// through to the HUD's shop surface.
 	_onShop(snapshot) {
 		this.q?.setShop(snapshot || null);
+	}
+
+	// Preview a cosmetic on the local avatar (wardrobe try-before-equip). `id` is
+	// a cosmetic id or '' (default look); null clears the preview. Local-only —
+	// peers see nothing until the player actually equips (server-authoritative).
+	_previewLocalCosmetic(id) {
+		this.players.get(this.myId)?.previewCosmetic(id);
 	}
 
 	// ---------------------------------------------------------------- marketplace (Task 20)
@@ -2396,12 +2500,65 @@ export class IsoGame {
 		if (this._skillsOpen) this._renderSkills();
 	}
 
-	// A real server 'levelup' event: refresh the panel snapshot (so its bar/level
-	// jump immediately) and fire a celebratory toast with the skill's icon.
+	// Server pushes xpgain after every XP grant. Delta-patch the cached snapshot so
+	// the panel stays live without a round-trip, then show a "+N XP" float chip.
+	_onXpGain({ skill, amount, xp, level, levelXp, nextXp } = {}) {
+		const meta = SKILL_META[skill];
+		if (!meta || !Number.isFinite(amount)) return;
+		if (this._skills?.skills?.[skill]) {
+			const s = this._skills.skills[skill];
+			s.xp = xp; s.level = level; s.levelXp = levelXp; s.nextXp = nextXp ?? null;
+		} else if (!this._skills) {
+			// Seed a minimal snapshot so the panel paints immediately on first open.
+			this._skills = {
+				cap: 99, total: null, average: null,
+				skills: Object.fromEntries(SKILL_ORDER.map((sk) => [
+					sk, { level: 1, xp: 0, levelXp: 0, nextXp: null },
+				])),
+			};
+			this._skills.skills[skill] = { xp, level, levelXp, nextXp: nextXp ?? null };
+		}
+		if (this._skillsOpen) this._renderSkills();
+		this._showXpDrop(meta, amount);
+	}
+
+	// Float a "+N XP" chip near the Skills button. Rapid same-skill hits within 400ms
+	// merge into the live chip instead of spawning a new one.
+	_showXpDrop(meta, amount) {
+		if (!this.hud.xpdrops) return;
+		if (!this._xpDropQueue) this._xpDropQueue = new Map();
+		const key = meta.label;
+		const now = Date.now();
+		const pending = this._xpDropQueue.get(key);
+		if (pending && now - pending.ts < 400) {
+			pending.amount += amount;
+			pending.ts = now;
+			if (pending.el) pending.el.textContent = `+${fmtXp(pending.amount)} XP`;
+			return;
+		}
+		const el = document.createElement('div');
+		el.className = 'kg-xpdrop';
+		el.style.setProperty('--kg-hue', meta.hue);
+		el.textContent = `+${fmtXp(amount)} XP`;
+		this.hud.xpdrops.appendChild(el);
+		const entry = { amount, ts: now, el };
+		this._xpDropQueue.set(key, entry);
+		requestAnimationFrame(() => el.classList.add('kg-xpdrop--in'));
+		setTimeout(() => {
+			this._xpDropQueue?.delete(key);
+			entry.el = null;
+			el.classList.remove('kg-xpdrop--in');
+			setTimeout(() => el.remove(), 350);
+		}, 1200);
+	}
+
+	// A real server 'levelup' event: patch the cached snapshot level and celebrate.
+	// No longer needs a round-trip skills() request — xpgain keeps bars current.
 	_onLevelup({ skill, level } = {}) {
 		const meta = SKILL_META[skill];
 		if (!meta || !Number.isFinite(level)) return;
-		this.net?.skills(); // pull fresh XP so an open panel reflects the new level
+		if (this._skills?.skills?.[skill]) this._skills.skills[skill].level = level;
+		if (this._skillsOpen) this._renderSkills();
 
 		const cap = this._skills?.cap || 99;
 		const maxed = level >= cap;
@@ -2419,13 +2576,11 @@ export class IsoGame {
 		setTimeout(() => { el.classList.remove('kg-levelup--in'); setTimeout(() => el.remove(), 420); }, 3400);
 	}
 
-	// Open/close the skills drawer. `force` (true/false) sets an explicit state;
-	// omitting it toggles. On open we pull a fresh snapshot and start a light poll
-	// so XP bars fill in real time as the player gathers/fights.
+	// Open/close the skills drawer. Panel is event-driven via xpgain — one snapshot
+	// request on open seeds it; no poll needed.
 	_toggleSkills(force) {
 		const next = force === undefined ? !this._skillsOpen : !!force;
 		if (next === this._skillsOpen) return;
-		// Only meaningful in the world; ignore opens from the start/offline screens.
 		if (next && this.phase !== 'world') return;
 		this._skillsOpen = next;
 
@@ -2435,19 +2590,14 @@ export class IsoGame {
 
 		if (next) {
 			panel.hidden = false;
-			void panel.offsetWidth; // reflow so the slide-in transition runs
+			void panel.offsetWidth;
 			panel.classList.add('kg-skills--open');
-			this._renderSkills();             // paint cached data (or the loading row)
-			this.net?.skills();               // and request the freshest snapshot
-			clearInterval(this._skillsTimer);
-			this._skillsTimer = setInterval(() => this.net?.skills(), 1500);
+			this._renderSkills();
+			this.net?.skills();
 			this.hud.skillsClose?.focus();
 		} else {
 			panel.classList.remove('kg-skills--open');
-			clearInterval(this._skillsTimer);
-			this._skillsTimer = null;
 			if (document.activeElement && panel.contains(document.activeElement)) this.hud.skillsBtn?.focus();
-			// Hide after the slide-out so it isn't focusable mid-transition.
 			setTimeout(() => { if (!this._skillsOpen) panel.hidden = true; }, 220);
 		}
 	}
@@ -2764,6 +2914,7 @@ export class IsoGame {
 			skillsAvg: document.getElementById('kg-skills-avg'),
 			skillsCap: document.getElementById('kg-skills-cap'),
 			levelups: document.getElementById('kg-levelups'),
+			xpdrops: document.getElementById('kg-xpdrops'),
 			actions: document.getElementById('kg-actions'),
 			cookBtn: document.getElementById('kg-cook'),
 			eatBtn: document.getElementById('kg-eat'),
