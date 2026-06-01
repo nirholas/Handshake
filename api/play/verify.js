@@ -130,16 +130,14 @@ export default wrap(async (req, res) => {
 			data: { ok: true, wallet: address, balance, mint: PLAY_GATE_MINT, symbol, decimals, playPass, expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString() },
 		});
 	}
+	// Acquire URL: for the native SOL mint, a DEX swap (SOL→SOL) is nonsensical —
+	// link to a fiat on-ramp instead. For every other token, Jupiter is the right
+	// default so the player can swap SOL→token in one click.
+	const acquireUrl = PLAY_GATE_MINT === SOL_MINT
+		? 'https://jup.ag/onramp'
+		: `https://jup.ag/swap/SOL-${PLAY_GATE_MINT}`;
+
 	return json(res, 200, {
-		data: {
-			ok: false,
-			reason: 'balance_too_low',
-			wallet: address,
-			balance,
-			mint: PLAY_GATE_MINT,
-			symbol,
-			minBalance,
-			acquireUrl: `https://jup.ag/swap/SOL-${PLAY_GATE_MINT}`,
-		},
+		data: { ok: false, reason: 'balance_too_low', wallet: address, balance, mint: PLAY_GATE_MINT, symbol, minBalance, acquireUrl },
 	});
 });

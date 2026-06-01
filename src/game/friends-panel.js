@@ -9,22 +9,20 @@
 // error, empty graph, empty thread.
 
 import { friendsClient } from '../friends.js';
-import panelCssUrl from '../friends-panel.css?url';
+import panelCss from '../friends-panel.css?inline';
 
 const HOTKEY_NOTE = 'Press F to toggle this panel.';
 
-// Inject the standalone friends-panel CSS once per document (harmless in /play
-// where iso-game.css already covers the .kg-fr-* rules — duplicate selectors
-// are idempotent). In /walk the --kg-* vars are absent so the .wf-friends scope
-// defined in friends-panel.css provides fallbacks.
+// Inject the standalone friends-panel CSS once per document. Harmless in /play
+// where iso-game.css already covers the .kg-fr-* rules (duplicate selectors are
+// idempotent). In /walk the --kg-* vars are absent so .wf-friends provides them.
 let _cssInjected = false;
 function ensureCss() {
 	if (_cssInjected || typeof document === 'undefined') return;
 	_cssInjected = true;
-	const link = document.createElement('link');
-	link.rel = 'stylesheet';
-	link.href = panelCssUrl;
-	document.head.appendChild(link);
+	const style = document.createElement('style');
+	style.textContent = panelCss;
+	document.head.appendChild(style);
 }
 
 function el(tag, attrs = {}, kids = []) {
@@ -65,9 +63,16 @@ function relTime(ts) {
 	return `${Math.round(s / 86400)} d ago`;
 }
 
-function realmLabel(realm) {
+function realmLabel(realm, server) {
 	if (!realm) return '';
-	return String(realm).replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+	const r = String(realm).replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+	return server ? `${r} · ${server}` : r;
+}
+
+function presenceText(f) {
+	if (!f.online) return 'Offline';
+	if (f.realm) return realmLabel(f.realm, f.server);
+	return 'Online';
 }
 
 export class FriendsPanel {
@@ -215,7 +220,7 @@ export class FriendsPanel {
 
 	_friendRow(f) {
 		const presence = f.online
-			? el('span', { class: 'kg-fr-status kg-fr-status--on' }, f.realm ? realmLabel(f.realm) : 'Online')
+			? el('span', { class: 'kg-fr-status kg-fr-status--on' }, presenceText(f))
 			: el('span', { class: 'kg-fr-status kg-fr-status--off' }, 'Offline');
 		const open = () => this.client.openThread(f.id);
 		return el('li', { class: 'kg-fr-row' }, [
@@ -429,7 +434,7 @@ export class FriendsPanel {
 			f ? this._avatar(f) : null,
 			el('span', { class: 'kg-fr-meta' }, [
 				el('span', { class: 'kg-fr-name' }, f ? f.name : 'Conversation'),
-				el('span', { class: 'kg-fr-status' }, f ? (f.online ? (f.realm ? `Online · ${realmLabel(f.realm)}` : 'Online') : 'Offline') : ''),
+				el('span', { class: 'kg-fr-status' }, f ? presenceText(f) : ''),
 			]),
 		]);
 

@@ -42,8 +42,8 @@ function defaultServerUrl() {
 }
 
 // Derive the HTTP(S) origin of the multiplayer host from its ws(s):// URL, so the
-// login picker can hit the server's plain-HTTP discovery endpoints (/servers,
-// /presence) on the same host without a second config value.
+// login picker can hit the server's plain-HTTP discovery endpoint (/servers) on
+// the same host without a second config value.
 export function gameHttpBase(url) {
 	const u = (url || defaultServerUrl()).replace(/^ws(s?):\/\//i, 'http$1://');
 	return u.replace(/\/+$/, '');

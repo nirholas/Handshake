@@ -37,7 +37,7 @@ function redis() {
 export async function readPresence(userIds) {
 	const ids = [...new Set((userIds || []).filter(Boolean))];
 	const out = {};
-	for (const id of ids) out[id] = { online: false, realm: null };
+	for (const id of ids) out[id] = { online: false, realm: null, server: null };
 	if (!ids.length) return out;
 	const r = redis();
 	if (!r) return out;
@@ -49,7 +49,10 @@ export async function readPresence(userIds) {
 			if (!v) return;
 			const rec = typeof v === 'string' ? safeParse(v) : v;
 			if (rec && typeof rec === 'object') {
-				out[id] = { online: true, realm: rec.realm || null };
+				// `server` is the world-instance id (Task 23); null for the /walk world
+				// or presence written before servers existed. Surfaced so the friends UI
+				// can show "online · Server 2 · Mainland".
+				out[id] = { online: true, realm: rec.realm || null, server: rec.server || null };
 			}
 		});
 	} catch (err) {

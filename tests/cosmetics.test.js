@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import {
 	COSMETICS, RARITIES, DAILY_OFFER_COUNT, WEEKLY_OFFER_COUNT,
-	cosmeticById, currentOffers, isOffered, clientCatalog,
+	cosmeticById, currentOffers, isOffered, evaluatePurchase, clientCatalog,
 	dailyKey, weekKey, nextDailyReset, nextWeeklyReset,
 } from '../multiplayer/src/cosmetics.js';
 
@@ -150,5 +150,65 @@ describe('clientCatalog — what the client renders from', () => {
 			expect(c).toHaveProperty('rotation');
 			expect(c).toHaveProperty('visual');
 		}
+	});
+});
+
+
+describe('evaluatePurchase — the shared buy rule', () => {
+	const always = COSMETICS.find((c) => c.rotation === 'always');
+	const benched = (() => {
+		const o = currentOffers(T);
+		const live = new Set([...o.daily, ...o.weekly]);
+		return COSMETICS.find((c) => c.rotation !== 'always' && !live.has(c.id));
+	})();
+
+	it('rejects an unknown id', () => {
+		const r = evaluatePurchase(99999, new Set(), 'nope', T);
+		expect(r.ok).toBe(false);
+		expect(r.reason).toBe('unknown');
+		expect(r.cosmetic).toBeNull();
+	});
+
+	it('rejects a cosmetic the player already owns', () => {
+		const r = evaluatePurchase(99999, new Set([always.id]), always.id, T);
+		expect(r).toMatchObject({ ok: false, reason: 'owned' });
+		expect(r.cosmetic.id).toBe(always.id);
+	});
+
+	it('rejects a cosmetic not in the current rotation', () => {
+		if (!benched) return; // all rotating cosmetics happened to be offered
+		const r = evaluatePurchase(99999, new Set(), benched.id, T);
+		expect(r).toMatchObject({ ok: false, reason: 'not-offered' });
+	});
+
+	it('rejects when the purse is short', () => {
+		const r = evaluatePurchase(always.price - 1, new Set(), always.id, T);
+		expect(r).toMatchObject({ ok: false, reason: 'poor' });
+	});
+
+	it('allows an offered, unowned, affordable cosmetic', () => {
+		const r = evaluatePurchase(always.price, new Set(), always.id, T);
+		expect(r).toMatchObject({ ok: true, reason: 'ok' });
+		expect(r.cosmetic.id).toBe(always.id);
+	});
+
+	it('accepts owned as either a Set or an array', () => {
+		expect(evaluatePurchase(99999, [always.id], always.id, T).reason).toBe('owned');
+		expect(evaluatePurchase(99999, new Set([always.id]), always.id, T).reason).toBe('owned');
+	});
+});
+
+describe('worn props are bone-anchorable (hats + glasses)', () => {
+	it('every prop cosmetic declares a head or face anchor', () => {
+		for (const c of COSMETICS) {
+			if (!c.visual.prop) continue;
+			expect(['head', 'face']).toContain(c.visual.anchor);
+		}
+	});
+
+	it('includes face-anchored glasses', () => {
+		const glasses = COSMETICS.filter((c) => c.visual.prop && c.visual.anchor === 'face');
+		expect(glasses.length).toBeGreaterThan(0);
+		for (const g of glasses) expect(g.visual.prop).toMatch(/glasses/);
 	});
 });

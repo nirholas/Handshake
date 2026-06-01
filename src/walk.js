@@ -48,6 +48,7 @@ import nipplejs from 'nipplejs';
 import { AnimationManager } from './animation-manager.js';
 import { WalkNet } from './walk-net.js';
 import { getPresenceTicket, friendsClient } from './friends.js';
+import { FriendsPanel } from './game/friends-panel.js';
 
 const AVATAR_URL_DEFAULT = '/avatars/default.glb';
 
@@ -226,6 +227,7 @@ function setZen(on) {
 		// Close any open panels so they don't pop back when chrome returns.
 		// DOM-based checks keep this safe to call during module init.
 		if (playersPanelEl && !playersPanelEl.hidden) togglePlayersPanel();
+		if (friendsPanelOpen) closeFriendsPanel();
 		if (gesturePaletteVisible) hideGesturePalette();
 	} else {
 		document.body.classList.remove('zen-revealed');
@@ -253,6 +255,72 @@ document.getElementById('walk-touch-gesture')?.addEventListener('click', () => {
 	haptics.buzz(5);
 	toggleGesturePalette();
 });
+
+// ── Friends panel (Task 15) ───────────────────────────────────────────────
+const friendsOverlay = document.getElementById('walk-friends-overlay');
+const friendsBody    = document.getElementById('walk-friends-body');
+const friendsCloseBtn = document.getElementById('walk-friends-close');
+const friendsHudBtn  = document.getElementById('walk-friends-btn');
+const friendsBadgeEl = document.getElementById('walk-friends-badge');
+
+let _friendsPanel = null;
+let friendsPanelOpen = false;
+
+function openFriendsPanel() {
+	if (friendsPanelOpen) return;
+	friendsPanelOpen = true;
+	if (friendsOverlay) {
+		friendsOverlay.removeAttribute('hidden');
+		// Trigger animation on next frame so the CSS transition fires.
+		requestAnimationFrame(() => friendsOverlay.classList.add('is-open'));
+	}
+	if (friendsHudBtn) friendsHudBtn.setAttribute('aria-pressed', 'true');
+	// Lazy-init the panel instance.
+	if (!_friendsPanel && friendsBody) {
+		_friendsPanel = new FriendsPanel(friendsBody, { walkMode: true });
+	}
+	_friendsPanel?.mount();
+}
+
+function closeFriendsPanel() {
+	if (!friendsPanelOpen) return;
+	friendsPanelOpen = false;
+	if (friendsOverlay) {
+		friendsOverlay.classList.remove('is-open');
+		// Hide after transition so aria-hidden doesn't cut off the close anim.
+		const onEnd = () => { friendsOverlay.setAttribute('hidden', ''); friendsOverlay.removeEventListener('transitionend', onEnd); };
+		friendsOverlay.addEventListener('transitionend', onEnd);
+	}
+	if (friendsHudBtn) friendsHudBtn.setAttribute('aria-pressed', 'false');
+	_friendsPanel?.unmount();
+}
+
+function toggleFriendsPanel() {
+	if (friendsPanelOpen) closeFriendsPanel(); else openFriendsPanel();
+}
+
+if (friendsHudBtn) friendsHudBtn.addEventListener('click', toggleFriendsPanel);
+if (friendsCloseBtn) friendsCloseBtn.addEventListener('click', closeFriendsPanel);
+
+// Close on backdrop click.
+if (friendsOverlay) {
+	friendsOverlay.addEventListener('pointerdown', (e) => {
+		if (e.target === friendsOverlay) closeFriendsPanel();
+	});
+}
+
+// Keep HUD unread badge live — start a background load immediately so the
+// badge appears before the user opens the panel for the first time.
+const _fc = friendsClient();
+_fc.subscribe(() => {
+	const n = _fc.totalUnread;
+	if (friendsBadgeEl) {
+		friendsBadgeEl.textContent = n > 9 ? '9+' : String(n);
+		friendsBadgeEl.hidden = n <= 0;
+	}
+	if (friendsHudBtn) friendsHudBtn.classList.toggle('walk-friends-btn--alert', n > 0);
+});
+_fc.refresh(); // seed unread counts without blocking the page
 
 // ── Players panel ────────────────────────────────────────────────────────
 let playersPanelOpen = false;
@@ -775,11 +843,13 @@ window.addEventListener('keydown', (e) => {
 		case 'KeyR': e.preventDefault(); toggleGifRecording(); break;
 		case 'KeyM': e.preventDefault(); toggleMinimap(); break;
 		case 'KeyZ': e.preventDefault(); toggleZen(); break;
+		case 'KeyF': e.preventDefault(); toggleFriendsPanel(); break;
 		case 'KeyH': e.preventDefault(); toggleHelp(); break;
 		case 'Slash':
 			if (e.shiftKey) { e.preventDefault(); toggleHelp(); }
 			break;
 		case 'Escape':
+			if (friendsPanelOpen) { closeFriendsPanel(); break; }
 			if (helpVisible) { toggleHelp(); break; }
 			if (gesturePaletteVisible) { hideGesturePalette(); break; }
 			if (zenActive) { setZen(false); break; }

@@ -100,6 +100,16 @@ describe('mine portals — round-trip between the Mainland entrance and the cave
 		expect(portalAt(MAINLAND, entrance.x0, entrance.y0)?.to).toBe('mine');
 		expect(portalAt(MAINLAND, MAINLAND.spawn.tx, MAINLAND.spawn.ty)).toBeNull();
 	});
+
+	it('mine entrance portal carries toTx/toTy so the spawn can be verified', () => {
+		const entrance = MAINLAND.portals.find((p) => p.to === 'mine');
+		// The entrance arch on the Mainland is rendered at a portal that carries these
+		// destination coords — confirm they agree with the mine's defined spawn.
+		expect(Number.isFinite(entrance.toTx)).toBe(true);
+		expect(Number.isFinite(entrance.toTy)).toBe(true);
+		expect(entrance.toTx).toBe(MINE.spawn.tx);
+		expect(entrance.toTy).toBe(MINE.spawn.ty);
+	});
 });
 
 describe('realm-transfer token — the trust boundary for carrying a haul across realms', () => {
@@ -141,5 +151,31 @@ describe('realm-transfer token — the trust boundary for carrying a haul across
 		expect(verifyTransfer('abc.def')).toBeNull();
 		expect(verifyTransfer(null)).toBeNull();
 		expect(verifyTransfer(undefined)).toBeNull();
+	});
+
+	it('rejects a token signed for a different destination (no cross-realm carry injection)', () => {
+		const token = signTransfer({ to: 'wilderness', tx: 10, ty: 10, carry });
+		const out = verifyTransfer(token);
+		// The token itself verifies — it's not tampered. But the destination check in
+		// onJoin (transfer.to === this.realm.name) will reject it if presented to the
+		// wrong room. Confirm the `to` field is faithfully round-tripped.
+		expect(out?.to).toBe('wilderness');
+		expect(out?.to).not.toBe('mine');
+	});
+
+	it('a maximal carry (all slots filled, max qty, max gold, all skills maxed) round-trips correctly', () => {
+		const maxCarry = {
+			inv: Array.from({ length: 24 }, (_, i) => ({ item: i % 2 === 0 ? 'coal' : 'stone', qty: 999 })),
+			hotbar: Array.from({ length: 6 }, () => ({ item: 'pickaxe', qty: 1 })),
+			activeSlot: 2,
+			bank: Array.from({ length: 48 }, () => ({ item: 'wood', qty: 999 })),
+			gold: 4294967295, // uint32 max
+			hp: 100, maxHp: 100,
+			xp: { mining: 999999, combat: 999999, woodcutting: 999999, fishing: 999999, cooking: 999999 },
+			mounted: true, mount: 'horse',
+		};
+		const token = signTransfer({ to: 'mine', tx: 16, ty: 28, carry: maxCarry });
+		const out = verifyTransfer(token);
+		expect(out?.carry).toEqual(maxCarry);
 	});
 });

@@ -89,7 +89,7 @@ async function graphWithPresence(me) {
 		...graph.outgoing.map((f) => f.id),
 	];
 	const presence = await readPresence(ids);
-	const annotate = (u) => ({ ...u, ...(presence[u.id] || { online: false, realm: null }) });
+	const annotate = (u) => ({ ...u, ...(presence[u.id] || { online: false, realm: null, server: null }) });
 	return {
 		friends: graph.friends.map(annotate),
 		incoming: graph.incoming.map(annotate),

@@ -3094,10 +3094,15 @@ export class IsoGame {
 						e.stopPropagation();
 						const input = this.hud.chatInput;
 						if (this._chatHistoryCursor === -1) this._chatHistoryDraft = input.value;
+						// cursor=0 → most recent (hist[hist.length-1]); cursor=max → oldest.
+						// ArrowUp moves toward older (increases cursor); ArrowDown toward newer.
 						const max = hist.length - 1;
-						let next = this._chatHistoryCursor === -1
-							? (e.key === 'ArrowUp' ? max : -1)
-							: Math.max(-1, Math.min(max, this._chatHistoryCursor + (e.key === 'ArrowUp' ? -1 : 1)));
+						let next;
+						if (e.key === 'ArrowUp') {
+							next = this._chatHistoryCursor === -1 ? 0 : Math.min(max, this._chatHistoryCursor + 1);
+						} else {
+							next = this._chatHistoryCursor <= 0 ? -1 : this._chatHistoryCursor - 1;
+						}
 						this._chatHistoryCursor = next;
 						input.value = next === -1 ? (this._chatHistoryDraft || '') : hist[hist.length - 1 - next];
 						this._updateChatCounter();

@@ -40,6 +40,9 @@
 	<body>
 		<canvas id="kg-canvas"></canvas>
 
+		<!-- Portal fade overlay — covers the screen during realm handoffs -->
+		<div id="kg-portal-fade" aria-hidden="true"></div>
+
 		<!-- Projected nameplates layer -->
 		<div id="kg-labels"></div>
 
@@ -108,6 +111,9 @@
 
 		<!-- Level-up celebrations (real server 'levelup' events) -->
 		<div id="kg-levelups" aria-live="polite"></div>
+
+		<!-- XP drop chips — "+N XP" floaters on every gain, earner only -->
+		<div id="kg-xpdrops" aria-hidden="true"></div>
 
 		<!-- World chat — per-realm. Focus with C (or Enter); send with Enter; Esc to
 		     close. Collapsed by default so it never blocks the world; clicking a

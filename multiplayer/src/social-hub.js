@@ -49,15 +49,17 @@ class SocialHub {
 	}
 
 	// A realm room calls this on join once it has verified the presence ticket.
-	register(uid, client, realm) {
+	// `server` is the world-instance id (Task 23) — '' / undefined for the /walk
+	// social world, which has no server dimension.
+	register(uid, client, realm, server) {
 		if (!uid || !client) return;
 		let clients = this._byUid.get(uid);
 		if (!clients) {
 			clients = new Map();
 			this._byUid.set(uid, clients);
 		}
-		clients.set(client, realm || null);
-		this._writePresence(uid, realm);
+		clients.set(client, { realm: realm || null, server: server || null });
+		this._writePresence(uid, realm, server);
 	}
 
 	// Realm room calls this on leave. Presence clears only when the account has
@@ -70,9 +72,9 @@ class SocialHub {
 			this._byUid.delete(uid);
 			this._clearPresence(uid);
 		} else {
-			// Still online elsewhere — keep presence on a realm that's still live.
-			const realm = [...clients.values()].pop();
-			this._writePresence(uid, realm);
+			// Still online elsewhere — keep presence on a location that's still live.
+			const where = [...clients.values()].pop();
+			this._writePresence(uid, where?.realm, where?.server);
 		}
 	}
 
@@ -98,14 +100,14 @@ class SocialHub {
 		return !!(clients && clients.size > 0);
 	}
 
-	async _writePresence(uid, realm) {
+	async _writePresence(uid, realm, server) {
 		if (!this._redisReady) return;
 		try {
 			await this._redisReady;
 			if (!this._redis) return;
 			await this._redis.set(
 				PRESENCE_PREFIX + uid,
-				JSON.stringify({ realm: realm || null, ts: Date.now() }),
+				JSON.stringify({ realm: realm || null, server: server || null, ts: Date.now() }),
 				{ ex: PRESENCE_TTL_SEC },
 			);
 		} catch (err) {
@@ -129,8 +131,8 @@ class SocialHub {
 	_refreshAll() {
 		if (!this._byUid.size) return;
 		for (const [uid, clients] of this._byUid) {
-			const realm = [...clients.values()].pop();
-			this._writePresence(uid, realm);
+			const where = [...clients.values()].pop();
+			this._writePresence(uid, where?.realm, where?.server);
 		}
 	}
 }
