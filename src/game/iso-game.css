@@ -2561,6 +2561,11 @@ body.kg-loading-cursor {
 .kq-cos-card--pick:hover { border-color: var(--cos-accent); transform: translateY(-1px); }
 .kq-cos-card--pick:focus-visible { outline: 2px solid var(--kg-accent); outline-offset: 2px; }
 .kq-cos-card.kq-cos--preview { border-color: var(--cos-accent); box-shadow: 0 0 0 1px var(--cos-accent) inset, 0 0 16px -4px var(--cos-accent); }
+.kq-cos-thumb { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+.kq-cos-card.kq-cos--locked { opacity: 0.62; }
+.kq-cos-card.kq-cos--locked:hover { opacity: 1; }
+.kq-cos-src { font-size: 10px; font-weight: 700; color: var(--kg-dim); }
+.kq-cos-buy--confirm { background: #ffce5c; color: #2a1c00; animation: kq-pulse 1s ease-in-out infinite; }
 .kq-cos-card.kq-cos--short { opacity: 0.78; }
 .kq-cos-swatch {
 	width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center;

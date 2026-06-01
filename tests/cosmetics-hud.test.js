@@ -11,7 +11,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 globalThis.self = globalThis;
 
 import { GameHud } from '../src/game/game-hud.js';
-import { clientCatalog, currentOffers } from '../multiplayer/src/cosmetics.js';
+import { clientCatalog, currentOffers, cosmeticById } from '../multiplayer/src/cosmetics.js';
 
 const CAT = clientCatalog();
 const T = Date.UTC(2026, 5, 1, 12, 0, 0);
@@ -21,12 +21,14 @@ let calls;
 afterEach(() => { hud?.destroy(); hud = null; document.body.innerHTML = ''; });
 
 function mount() {
-	calls = { buy: [], equip: [], unequip: 0, shopOpen: 0 };
+	calls = { buy: [], equip: [], unequip: 0, shopOpen: 0, preview: [], stop: 0 };
 	hud = new GameHud({
 		onShopOpen: () => calls.shopOpen++,
 		onBuyCosmetic: (id) => calls.buy.push(id),
 		onEquipCosmetic: (id) => calls.equip.push(id),
 		onUnequipCosmetic: () => calls.unequip++,
+		onPreviewCosmetic: (id) => calls.preview.push(id),
+		onStopPreview: () => calls.stop++,
 	});
 	hud.setCosmeticCatalog(CAT.cosmetics, CAT.rarities);
 	return hud;
@@ -35,6 +37,12 @@ function mount() {
 // A shop board for instant T with a given purse / owned / equipped.
 function board({ gold = 1000, owned = [], equipped = '' } = {}) {
 	return { offers: currentOffers(T), owned, equipped, gold };
+}
+
+// Every id currently on the board (all three buckets).
+function offeredIds() {
+	const o = currentOffers(T);
+	return [...o.daily, ...o.weekly, ...o.always];
 }
 
 describe('gold readout', () => {
@@ -63,15 +71,28 @@ describe('shop tab — buy board', () => {
 		expect(document.querySelectorAll('#kq-shop-body .kq-cos-card').length).toBe(total);
 	});
 
-	it('a buy click on an affordable card routes the cosmetic id to the server', () => {
+	it('a cheap affordable card buys on the first click', () => {
 		mount();
 		hud.openShop();
 		hud.setShop(board({ gold: 100000 }));
-		const buy = document.querySelector('#kq-shop-body .kq-cos-buy');
-		expect(buy).toBeTruthy();
-		buy.click();
-		expect(calls.buy.length).toBe(1);
-		expect(typeof calls.buy[0]).toBe('string');
+		const cheap = offeredIds().find((id) => cosmeticById(id).price < 400);
+		expect(cheap).toBeTruthy();
+		document.querySelector(`#kq-shop-body [data-cos-id="${cheap}"] .kq-cos-buy`).click();
+		expect(calls.buy).toEqual([cheap]);
+	});
+
+	it('a pricey card needs a confirming second click before it buys', () => {
+		mount();
+		hud.openShop();
+		hud.setShop(board({ gold: 100000 }));
+		const pricey = offeredIds().find((id) => cosmeticById(id).price >= 400);
+		expect(pricey).toBeTruthy();
+		const sel = `#kq-shop-body [data-cos-id="${pricey}"] .kq-cos-buy`;
+		document.querySelector(sel).click();            // first click arms "Confirm?"
+		expect(calls.buy.length).toBe(0);
+		expect(document.querySelector(sel).textContent).toMatch(/confirm/i);
+		document.querySelector(sel).click();            // second click commits
+		expect(calls.buy).toEqual([pricey]);
 	});
 
 	it('disables buying when the purse is short and shows the shortfall', () => {
@@ -86,13 +107,18 @@ describe('shop tab — buy board', () => {
 		expect(calls.buy.length).toBe(0); // a disabled button never fires
 	});
 
-	it('marks an owned cosmetic as Owned instead of offering a buy button', () => {
+	it('lets you equip an owned cosmetic straight from the shop tab', () => {
 		mount();
 		hud.openShop();
 		const ownedId = currentOffers(T).always[0];
 		hud.setShop(board({ gold: 5000, owned: [ownedId] }));
-		const ownedTag = [...document.querySelectorAll('#kq-shop-body .kq-cos-owned')];
-		expect(ownedTag.length).toBeGreaterThan(0);
+		const card = document.querySelector(`#kq-shop-body [data-cos-id="${ownedId}"]`);
+		expect(card).toBeTruthy();
+		expect(card.querySelector('.kq-cos-buy')).toBeNull(); // owned → no buy button
+		const equip = card.querySelector('.kq-cos-equip');
+		expect(equip).toBeTruthy();
+		equip.click();
+		expect(calls.equip).toEqual([ownedId]);
 	});
 });
 
@@ -132,5 +158,25 @@ describe('wardrobe tab — equip / unequip', () => {
 		expect(defaultCard).toBeTruthy();
 		defaultCard.querySelector('.kq-cos-equip').click();
 		expect(calls.unequip).toBe(1);
+	});
+});
+
+
+describe('collection tab', () => {
+	it('lists the whole catalogue with a completion count and previews on click', () => {
+		mount();
+		hud.openShop();
+		const ownedId = currentOffers(T).always[0];
+		hud.setShop(board({ owned: [ownedId] }));
+		hud._setShopTab('collection');
+		const cards = document.querySelectorAll('#kq-shop-body .kq-cos-card');
+		expect(cards.length).toBe(CAT.cosmetics.length);
+		expect(document.querySelector('#kq-shop-body .kq-shop-sub').textContent).toMatch(/^1 \/ /);
+		// The owned one reads as owned; a locked one shows price + source.
+		expect(document.querySelector(`#kq-shop-body [data-cos-id="${ownedId}"] .kq-cos-owned`)).toBeTruthy();
+		expect(document.querySelector('#kq-shop-body .kq-cos-src')).toBeTruthy();
+		// Tapping any card previews it on the local avatar.
+		document.querySelector(`#kq-shop-body [data-cos-id="${ownedId}"]`).click();
+		expect(calls.preview).toEqual([ownedId]);
 	});
 });

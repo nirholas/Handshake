@@ -614,6 +614,7 @@ export class GameHud {
 	// The live shop board (offers + rotation deadlines + owned ids + equipped + gold).
 	setShop(snapshot) {
 		this.shop = snapshot || null;
+		this._clearConfirm();
 		if (snapshot) {
 			this._dailyResetAt = snapshot.offers?.dailyResetAt || 0;
 			this._weeklyResetAt = snapshot.offers?.weeklyResetAt || 0;
@@ -638,6 +639,7 @@ export class GameHud {
 		// Drop any uncommitted wardrobe preview — revert the avatar to the
 		// server-authoritative equipped look.
 		if (this._previewId !== null) { this._previewId = null; this.opts.onStopPreview?.(); }
+		this._clearConfirm();
 	}
 
 	_setShopTab(tab) {
@@ -701,6 +703,52 @@ export class GameHud {
 		return frag;
 	}
 
+	// Collection tab: the entire catalogue at a glance — owned looks (tappable to
+	// preview, even here) and locked ones with their price + how they're obtained.
+	// A completion count gives players something to chase.
+	_renderCollection() {
+		const frag = document.createDocumentFragment();
+		const all = [...this.cosmetics.values()];
+		if (!all.length) { frag.appendChild(el('p', 'kq-empty', 'Loading…')); return frag; }
+		const owned = new Set(this.shop?.owned || []);
+		const order = Object.keys(this.rarities);
+		const rank = (r) => { const i = order.indexOf(r); return i < 0 ? 99 : i; };
+		all.sort((a, b) => rank(a.rarity) - rank(b.rarity) || a.price - b.price);
+		const ownedN = all.filter((c) => owned.has(c.id)).length;
+		frag.appendChild(el('p', 'kq-shop-sub', `${ownedN} / ${all.length} collected. Tap any look to preview it on your avatar.`));
+		const grid = el('div', 'kq-cos-grid');
+		const SRC = { always: 'Always in shop', daily: 'Daily rotation', weekly: 'Weekly rotation' };
+		for (const c of all) {
+			const have = owned.has(c.id);
+			const isPreview = this._previewId === c.id;
+			const card = el('div', `kq-cos-card kq-cos-card--pick kq-cos--${c.rarity}`
+				+ (have ? '' : ' kq-cos--locked') + (isPreview ? ' kq-cos--preview' : ''));
+			card.style.setProperty('--cos-accent', this._rarityColor(c.rarity));
+			card.dataset.cosId = c.id;
+			card.setAttribute('role', 'button');
+			card.tabIndex = 0;
+			card.setAttribute('aria-label', `Preview ${c.name}`);
+			card.addEventListener('click', () => this._previewCosmetic(c.id));
+			card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._previewCosmetic(c.id); } });
+			card.appendChild(this._cosSwatch(c));
+			const meta = el('div', 'kq-cos-meta');
+			meta.appendChild(el('div', 'kq-cos-name', c.name));
+			meta.appendChild(el('div', 'kq-cos-rarity', this._rarityLabel(c.rarity)));
+			card.appendChild(meta);
+			const foot = el('div', 'kq-cos-foot');
+			if (have) {
+				foot.appendChild(el('span', 'kq-cos-owned', '✓ Owned'));
+			} else {
+				foot.appendChild(el('span', 'kq-cos-price', `🪙 ${c.price.toLocaleString('en-US')}`));
+				foot.appendChild(el('span', 'kq-cos-src', SRC[c.rotation] || ''));
+			}
+			card.appendChild(foot);
+			grid.appendChild(card);
+		}
+		frag.appendChild(grid);
+		return frag;
+	}
+
 	_shopCard(c, owned) {
 		const equipped = this.shop?.equipped || '';
 		const affordable = this.gold >= c.price;
@@ -708,6 +756,7 @@ export class GameHud {
 			+ (owned ? ' kq-cos--owned' : affordable ? '' : ' kq-cos--short')
 			+ (equipped === c.id ? ' kq-cos--equipped' : ''));
 		card.style.setProperty('--cos-accent', this._rarityColor(c.rarity));
+		card.dataset.cosId = c.id;
 		card.appendChild(this._cosSwatch(c));
 		const meta = el('div', 'kq-cos-meta');
 		meta.appendChild(el('div', 'kq-cos-name', c.name));
@@ -777,6 +826,7 @@ export class GameHud {
 			const card = el('div', 'kq-cos-card kq-cos-card--pick' + rarityCls
 				+ (isEq ? ' kq-cos--equipped' : '') + (isPreview ? ' kq-cos--preview' : ''));
 			if (c) card.style.setProperty('--cos-accent', this._rarityColor(c.rarity));
+			if (id) card.dataset.cosId = id;
 			card.setAttribute('role', 'button');
 			card.tabIndex = 0;
 			card.setAttribute('aria-pressed', String(isEq));
@@ -846,7 +896,17 @@ export class GameHud {
 		} else if (v.tint) {
 			sw.style.background = `linear-gradient(150deg, ${v.tint}, rgba(255,255,255,0.18))`;
 		}
-		if (v.prop) sw.textContent = PROP_ICON[c.id] || '🎩';
+		if (v.prop) {
+			// Real rendered thumbnail of the worn prop, falling back to the emoji glyph
+			// if the image is missing so a card never renders blank.
+			const base = v.prop.split('/').pop().replace(/\.[^.]+$/, '');
+			const img = el('img', 'kq-cos-thumb');
+			img.src = `/accessories/thumbs/${base}.png`;
+			img.alt = '';
+			img.loading = 'lazy';
+			img.addEventListener('error', () => { img.remove(); sw.textContent = PROP_ICON[c.id] || '🎩'; });
+			sw.appendChild(img);
+		}
 		return sw;
 	}
 
