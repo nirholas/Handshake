@@ -23,6 +23,7 @@ describe('WIDGET_TYPES', () => {
 				'pumpfun-feed',
 				'kol-trades',
 				'live-trades-canvas',
+				'bonding-curve',
 			].sort(),
 		);
 	});

@@ -48,6 +48,7 @@ import { setClips, playAllClips } from './viewer/animation.js';
 import { LightProbeGrid } from './light-probe-grid.js';
 import { AnimationManager } from './animation-manager.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
+import { EffectComposer, RenderPass, BloomEffect, VignetteEffect, EffectPass } from 'postprocessing';
 
 // Install BVH-accelerated raycasting on Three.js prototypes. This must happen
 // before any geometry is created so every Mesh benefits transparently.
@@ -175,6 +176,25 @@ export class Viewer {
 		this.controls.addEventListener('change', this._onControlsChange);
 
 		this.el.appendChild(this.renderer.domElement);
+
+		// Post-processing: a single merged fullscreen pass (postprocessing lib)
+		// gives a subtle vignette that focuses attention on the avatar, plus mild
+		// bloom on bright specular highlights. The luminance threshold keeps normal
+		// surfaces from blooming. Screenshot capture bypasses this — see screenshot.js.
+		this._composer = new EffectComposer(this.renderer);
+		this._renderPass = new RenderPass(this.scene, this.activeCamera);
+		this._composer.addPass(this._renderPass);
+		const vignetteEffect = new VignetteEffect({ offset: 0.35, darkness: 0.4 });
+		const bloomEffect = new BloomEffect({
+			intensity: 0.6,
+			luminanceThreshold: 0.8,
+			luminanceSmoothing: 0.05,
+			mipmapBlur: true,
+		});
+		this._effectPass = new EffectPass(this.activeCamera, bloomEffect, vignetteEffect);
+		this._effectPass.renderToScreen = true;
+		this._composer.addPass(this._effectPass);
+		this._composer.setSize(el.clientWidth, el.clientHeight);
 
 		this.cameraCtrl = null;
 		this.cameraFolder = null;
@@ -572,7 +592,7 @@ export class Viewer {
 	}
 
 	render() {
-		this.renderer.render(this.scene, this.activeCamera);
+		this._composer.render();
 		if (this.state.grid) {
 			this._ensureAxesRenderer();
 			this.axesCamera.position.copy(this.defaultCamera.position);
@@ -784,6 +804,7 @@ export class Viewer {
 		this.defaultCamera.aspect = nextAspect;
 		this.defaultCamera.updateProjectionMatrix();
 		this.renderer.setSize(clientWidth, clientHeight);
+		this._composer?.setSize(clientWidth, clientHeight);
 
 		this.axesCamera.aspect = this.axesDiv.clientWidth / this.axesDiv.clientHeight;
 		this.axesCamera.updateProjectionMatrix();
@@ -1058,6 +1079,9 @@ export class Viewer {
 				}
 			});
 		}
+		// Keep the post-processing passes pointed at the live camera.
+		if (this._renderPass) this._renderPass.mainCamera = this.activeCamera;
+		if (this._effectPass) this._effectPass.mainCamera = this.activeCamera;
 		this.invalidate();
 	}
 
@@ -1931,6 +1955,13 @@ export class Viewer {
 		}
 		this.axesScene = null;
 		this.axesCamera = null;
+
+		if (this._composer) {
+			this._composer.dispose();
+			this._composer = null;
+			this._renderPass = null;
+			this._effectPass = null;
+		}
 
 		if (this.renderer) {
 			this.renderer.dispose();

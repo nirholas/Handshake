@@ -80,11 +80,17 @@ export async function signInWithX() {
 	});
 }
 
-/** Connect Phantom (or any window.solana provider) and return its address. */
-async function connectSolana() {
+/** Connect Phantom (or any window.solana provider) and return its address. When
+ *  `forceReconnect` is set, drop any existing connection first — injected wallets
+ *  silently re-hand back the already-trusted account, so without this the user
+ *  can never pick a different wallet to link. */
+async function connectSolana({ forceReconnect = false } = {}) {
 	const provider = window.phantom?.solana || window.solana;
 	if (!provider?.connect) {
 		throw new Error('No Solana wallet found — install Phantom to post.');
+	}
+	if (forceReconnect) {
+		try { await provider.disconnect?.(); } catch { /* nothing connected — fine */ }
 	}
 	const resp = await provider.connect();
 	const address = (resp?.publicKey || provider.publicKey)?.toString();
@@ -95,11 +101,15 @@ async function connectSolana() {
 /**
  * Ensure the signed-in user has a linked Solana wallet, linking one via a
  * signed challenge if needed. Returns the wallet address to post from.
+ *
+ * @param {object} [opts]
+ * @param {boolean} [opts.forceReconnect]  link a freshly-chosen wallet even if one
+ *   is already linked — used when switching wallets (see relinkSolanaWallet).
  */
-export async function ensureSolanaWallet(session) {
-	if (session?.solWallet) return session.solWallet;
+export async function ensureSolanaWallet(session, { forceReconnect = false } = {}) {
+	if (!forceReconnect && session?.solWallet) return session.solWallet;
 
-	const { provider, address } = await connectSolana();
+	const { provider, address } = await connectSolana({ forceReconnect });
 	const { message } = await json('/wallet/challenge', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
@@ -118,6 +128,23 @@ export async function ensureSolanaWallet(session) {
 		body: JSON.stringify({ address, signature }),
 	});
 	return linked?.address || address;
+}
+
+/** Unlink the Solana wallet currently bound to the session. Idempotent — safe to
+ *  call when none is linked. */
+export function unlinkSolanaWallet() {
+	return json('/wallet/unlink', { method: 'POST' });
+}
+
+/**
+ * Switch the linked Solana wallet: unlink the current one, then connect and link
+ * a freshly-chosen wallet. Lets a holder enter from the wallet that actually
+ * holds the coin when the first one they linked falls short. Returns the new
+ * linked address.
+ */
+export async function relinkSolanaWallet() {
+	await unlinkSolanaWallet();
+	return ensureSolanaWallet(null, { forceReconnect: true });
 }
 
 /**

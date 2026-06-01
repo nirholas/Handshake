@@ -56,6 +56,12 @@ export const WIDGET_TYPES = {
 		status: 'ready',
 		icon: '⬡',
 	},
+	'bonding-curve': {
+		label: 'Bonding Curve',
+		desc: 'Live graduation progress and bonding-curve climb for a pump.fun token.',
+		status: 'ready',
+		icon: '◭',
+	},
 };
 
 export const WIDGET_TYPE_KEYS = Object.keys(WIDGET_TYPES);
@@ -123,6 +129,12 @@ const TYPE_DEFAULTS = {
 		chain: 'solana',
 		bg: '#0a0a0a',
 		minUsd: 0,
+	},
+	'bonding-curve': {
+		mint: '',
+		network: 'mainnet',
+		refreshMs: 15_000,
+		showUsd: true,
 	},
 };
 
@@ -248,6 +260,12 @@ const TYPE_SCHEMAS = {
 		chain: z.enum(['solana']).default('solana'),
 		bg: hexColor.default('#0a0a0a'),
 		minUsd: z.number().min(0).default(0),
+	}),
+	'bonding-curve': brandSchema.extend({
+		mint: z.string().max(64).default(''),
+		network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+		refreshMs: z.number().int().min(5_000).max(300_000).default(15_000),
+		showUsd: z.boolean().default(true),
 	}),
 };
 

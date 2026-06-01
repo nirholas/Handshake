@@ -200,6 +200,26 @@ export const DEMO_WIDGETS = {
 			minUsd: 0,
 		},
 	}),
+
+	wdgt_demo_bondcrv: fixture({
+		id: 'wdgt_demo_bondcrv',
+		type: 'bonding-curve',
+		name: 'Bonding Curve',
+		modelUrl: CZ,
+		config: {
+			background: '#0a0a0a',
+			accent: '#8b5cf6',
+			caption: '',
+			showControls: false,
+			autoRotate: true,
+			rotationSpeed: 0.4,
+			envPreset: 'neutral',
+			mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+			network: 'mainnet',
+			refreshMs: 15_000,
+			showUsd: true,
+		},
+	}),
 };
 
 export function isDemoWidgetId(id) {

@@ -10,6 +10,7 @@ import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { getObjectBuffer, publicUrl } from '../_lib/r2.js';
+import { clipSchema, editorDocSchema, validateClipTrackStrides, materializeClip } from './clips.js';
 import { z } from 'zod';
 
 const patchSchema = z.object({
@@ -19,7 +20,13 @@ const patchSchema = z.object({
 	visibility: z.enum(['private', 'unlisted', 'public']).optional(),
 	kind: z.enum(['animation', 'loop', 'sequence']).optional(),
 	loop: z.boolean().optional(),
+	fps: z.number().int().min(1).max(240).nullable().optional(),
 	avatar_id: z.string().uuid().nullable().optional(),
+	// Re-saving edited keyframes: the studio sends the re-baked clip and the
+	// editable source so reopening stays lossless. Persisted with the same
+	// stride validation + R2 offload as create (POST /api/animations/clips).
+	clip: clipSchema.optional(),
+	editor_doc: editorDocSchema.optional(),
 });
 
 export default wrap(async (req, res) => {
@@ -138,6 +145,29 @@ async function handlePatch(req, res, auth, id) {
 	if (patch.visibility !== undefined) sets.push(sql`visibility = ${patch.visibility}`);
 	if (patch.kind !== undefined) sets.push(sql`kind = ${patch.kind}`);
 	if (patch.loop !== undefined) sets.push(sql`loop = ${patch.loop}`);
+	if (patch.fps !== undefined) sets.push(sql`fps = ${patch.fps}`);
+
+	// Re-bake the animation body. Recompute duration/frame_count from the new
+	// clip, re-run stride validation, and offload to R2 (or inline) exactly as
+	// create does — clearing storage_key when the new clip fits inline.
+	if (patch.clip !== undefined) {
+		const strideErr = validateClipTrackStrides(patch.clip);
+		if (strideErr) return error(res, 400, 'validation_error', strideErr);
+		const { inlineClip, storageKey, error: clipErr } = await materializeClip(patch.clip, {
+			userId: auth.userId,
+			slug: id,
+		});
+		if (clipErr) return error(res, 502, 'storage_error', clipErr);
+		sets.push(sql`clip = ${inlineClip}::jsonb`);
+		sets.push(sql`storage_key = ${storageKey}`);
+		sets.push(sql`duration_ms = ${Math.round(patch.clip.duration * 1000)}`);
+		const frameCount =
+			patch.editor_doc?.keyframes?.length || patch.clip.tracks[0]?.times?.length || 0;
+		sets.push(sql`frame_count = ${frameCount}`);
+	}
+	if (patch.editor_doc !== undefined) {
+		sets.push(sql`editor_doc = ${JSON.stringify(patch.editor_doc)}::jsonb`);
+	}
 	if (patch.avatar_id !== undefined) {
 		if (patch.avatar_id) {
 			const ok = await sql`
@@ -196,3 +226,6 @@ async function resolveAuth(req) {
 		};
 	return await authenticateBearer(extractBearer(req));
 }
+
+// Exported for contract tests (PATCH schema) without a live DB.
+export const __test__ = { patchSchema };

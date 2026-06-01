@@ -25,6 +25,7 @@
 	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, currentUser, notify, localProvidersEnabled, generating as generatingStore } from './stores.js';
 	import { t } from './i18n.js';
 	import Notifications from './Notifications.svelte';
+	import TxApprovalModal from './TxApprovalModal.svelte';
 	import AuthPage from './three-ui/pages/AuthPage.svelte';
 	import Pricing from './three-ui/pages/Pricing.svelte';
 	import MarketingPage from './three-ui/pages/MarketingPage.svelte';
@@ -65,7 +66,7 @@
 		feUsers,
 		feX,
 	} from './feather.js';
-	import { defaultToolSchema, agentToolSchema, pumpToolSchema, agentPaymentsToolSchema, pumpTradingToolSchema, curatedToolPacks } from './tools.js';
+	import { defaultToolSchema, agentToolSchema, pumpToolSchema, agentPaymentsToolSchema, pumpTradingToolSchema, walletToolSchema, curatedToolPacks } from './tools.js';
 	import { signMessageSolana, signMessageEVM } from './walletAuth.js';
 	import { debounce, readFileAsDataURL } from './util.js';
 	import { flash, focusOnMount } from './actions';
@@ -1423,6 +1424,13 @@
 	let question = '';
 	let choices = [];
 	let chose = null; // index
+
+	// Wallet transaction approval gate. Tool bodies call
+	// window.requestWalletApproval(details) which resolves on Approve and rejects
+	// on Reject, pausing the transaction until the user confirms.
+	let txApprovalDetails = null;
+	let txApprovalResolve = null;
+	let txApprovalReject = null;
 	export async function choose(newQuestion, newChoices) {
 		chose = null;
 		question = newQuestion;
@@ -1464,6 +1472,14 @@
 	onMount(async () => {
 		syncRouteFromHash();
 		window.addEventListener('hashchange', syncRouteFromHash);
+
+		// Expose a transaction-approval gate for eval'd wallet tool bodies.
+		window.requestWalletApproval = (details) =>
+			new Promise((resolve, reject) => {
+				txApprovalDetails = details;
+				txApprovalResolve = resolve;
+				txApprovalReject = reject;
+			});
 
 		// Populate auth state from session cookie
 		await loadCurrentUser();
@@ -2757,6 +2773,14 @@
 {/if}
 
 <Notifications />
+
+{#if txApprovalDetails}
+	<TxApprovalModal
+		details={txApprovalDetails}
+		onApprove={() => { const r = txApprovalResolve; txApprovalDetails = null; txApprovalResolve = null; txApprovalReject = null; r?.(); }}
+		onReject={() => { const r = txApprovalReject; txApprovalDetails = null; txApprovalResolve = null; txApprovalReject = null; r?.(new Error('User rejected transaction')); }}
+	/>
+{/if}
 
 {#if installToastMsg}
 	<div transition:fade={{ duration: 200 }} class="fixed bottom-16 left-1/2 z-[200] -translate-x-1/2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800 shadow-md">

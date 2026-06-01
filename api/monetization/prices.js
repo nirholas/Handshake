@@ -11,6 +11,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { cors, json, method, wrap, error, readJson } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { requireCsrf } from '../_lib/csrf.js';
 
 const SKILL_RE = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -85,6 +86,10 @@ export default wrap(async (req, res) => {
 	// PUT and DELETE require auth
 	const userId = await resolveUserId(req);
 	if (!userId) return error(res, 401, 'unauthorized', 'Sign in required');
+
+	// CSRF on state-changing session-cookie requests; bearer tokens are exempt
+	// (the token itself proves intent and isn't auto-attached by browsers).
+	if (!(await requireCsrf(req, res, userId))) return;
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');

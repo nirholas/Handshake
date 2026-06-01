@@ -110,6 +110,16 @@ export const locale = persisted('locale', 'en');
 
 export const currentUser = writable(null);
 
+// Which wallet is currently connected, for tool bodies and components that need
+// the live provider without re-parsing `currentUser` or polling window.solana /
+// window.ethereum. Shape: { type: 'solana'|'evm', address: string, chainId?: number } | null
+export const walletProvider = writable(null);
+
+// Read the connected wallet imperatively (e.g. from eval'd tool bodies).
+export function getConnectedWallet() {
+	return get(walletProvider);
+}
+
 // Selected agent id whose Solana wallet pays for x402 paid-tool calls.
 // Null means "use the shared demo wallet" served by /api/x402-pay.
 export const payAgentId = persisted('payAgentId', null);
@@ -130,4 +140,10 @@ export async function loadCurrentUser() {
     currentUser.set(null);
     return null;
   }
+}
+
+// Mirror the connected wallet onto a window global so eval'd tool bodies (which
+// run without module imports) can read it as `window.__wallet`.
+if (typeof window !== 'undefined') {
+  walletProvider.subscribe((w) => { window.__wallet = w; });
 }

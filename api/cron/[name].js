@@ -47,6 +47,7 @@ import { crawlAgentAttestations } from '../_lib/solana-attestations.js';
 import { SOLANA_USDC_MINT, SOLANA_USDC_MINT_DEVNET } from '../payments/_config.js';
 import { chargeSubscription, failPayment } from '../_lib/subscription-billing.js';
 import { sendEmail } from '../_lib/email.js';
+import { fetchSafePublicUrl } from '../_lib/ssrf-guard.js';
 
 // ─── Dispatcher ──────────────────────────────────────────────────────────────
 
@@ -937,10 +938,22 @@ async function handlePumpfunMonitor(req, res) {
 		return error(res, 401, 'unauthorized', 'cron secret required');
 	}
 
+	// Heartbeat + per-user alert evaluation run on every tick regardless of
+	// attester provisioning, so /api/healthz reports real bot status and the
+	// dashboard's server-side alerts fire even when no tab is open.
+	await writeBotHeartbeat();
+	const alertReport = await evaluateUserAlerts().catch((e) => ({ error: e?.message || String(e) }));
+
 	if (!process.env.ATTEST_AGENT_SECRET_KEY) {
-		// Skip cleanly when the attester key isn't provisioned — returning 503
-		// every 3 min would mark the cron job as failing in the dashboard.
-		return json(res, 200, { skipped: true, reason: 'attester_not_configured' });
+		// Skip the attestation work cleanly when the attester key isn't
+		// provisioned — returning 503 every 3 min would mark the cron job as
+		// failing in the dashboard. Heartbeat + alerts above already ran.
+		return json(res, 200, {
+			skipped: true,
+			reason: 'attester_not_configured',
+			heartbeat: true,
+			alerts: alertReport,
+		});
 	}
 
 	// Pull the latest stats joined with the agent's Metaplex Core asset and
@@ -1019,7 +1032,146 @@ async function handlePumpfunMonitor(req, res) {
 		`;
 	}
 
+	report.alerts = alertReport;
+	report.heartbeat = true;
 	return json(res, 200, report);
+}
+
+// ── Bot heartbeat ───────────────────────────────────────────────────────────
+// Records that the monitor ran so /api/healthz can report real bot status.
+// Best-effort: a heartbeat failure must never fail the cron run.
+async function writeBotHeartbeat() {
+	try {
+		await sql`
+			insert into bot_heartbeat (worker, mode, last_beat_at)
+			values ('pumpfun-monitor', 'cron', now())
+			on conflict (worker) do update set last_beat_at = now(), mode = excluded.mode
+		`;
+	} catch (e) {
+		console.error('[pumpfun-monitor] heartbeat failed:', e?.message || e);
+	}
+}
+
+// ── Server-side alert delivery ──────────────────────────────────────────────
+// Evaluates each user's graduation alert rule against the real pumpfun_graduations
+// table and delivers via an in-app notification (user_notifications, type
+// 'pump_alert') plus the per-rule webhook when set. Honors cooldown_seconds and
+// dedupes via user_alert_fires.last_event_id so the same graduation is never
+// delivered twice. Whale / launch / fee rules are evaluated client-side from the
+// live feed for immediate, tab-open feedback; graduation is the persisted,
+// cross-session channel because it's the event type recorded server-side.
+const ALERT_GRADS_PER_RUN = 50;
+const ALERT_DELIVER_CAP = 10;
+
+async function evaluateUserAlerts() {
+	const report = { users: 0, delivered: 0, webhooks: 0, errors: 0 };
+
+	let configs;
+	try {
+		configs = await sql`
+			SELECT user_id, cooldown_seconds, webhook_url
+			FROM user_alert_configs
+			WHERE graduation = true
+		`;
+	} catch (e) {
+		// Table not migrated yet — skip cleanly.
+		return { skipped: 'alert_config_unavailable', detail: e?.message || String(e) };
+	}
+	if (!configs.length) return report;
+
+	const grads = await sql`
+		SELECT tx_signature, mint, name, symbol, amount_sol, market_cap_usd, seen_at
+		FROM pumpfun_graduations
+		WHERE seen_at > now() - interval '15 minutes'
+		ORDER BY seen_at ASC
+		LIMIT ${ALERT_GRADS_PER_RUN}
+	`;
+	if (!grads.length) return report;
+
+	for (const cfg of configs) {
+		report.users++;
+		try {
+			const [fire] = await sql`
+				SELECT last_fired_at, last_event_id FROM user_alert_fires
+				WHERE user_id = ${cfg.user_id} AND rule_type = 'graduation'
+			`;
+
+			// Cooldown gate.
+			if (fire?.last_fired_at) {
+				const sinceMs = Date.now() - new Date(fire.last_fired_at).getTime();
+				if (sinceMs < (cfg.cooldown_seconds || 30) * 1000) continue;
+			}
+
+			// Only graduations newer than the last delivered event.
+			let fresh = grads;
+			if (fire?.last_event_id) {
+				const idx = grads.findIndex((g) => g.tx_signature === fire.last_event_id);
+				if (idx >= 0) fresh = grads.slice(idx + 1);
+			}
+			if (!fresh.length) continue;
+
+			const toDeliver = fresh.slice(-ALERT_DELIVER_CAP);
+			for (const g of toDeliver) {
+				const payload = {
+					kind: 'graduation',
+					mint: g.mint,
+					name: g.name,
+					symbol: g.symbol,
+					amount_sol: g.amount_sol != null ? Number(g.amount_sol) : null,
+					market_cap_usd: g.market_cap_usd != null ? Number(g.market_cap_usd) : null,
+					tx: g.tx_signature,
+					at: g.seen_at,
+				};
+				try {
+					await sql`
+						insert into user_notifications (user_id, type, payload)
+						values (${cfg.user_id}, 'pump_alert', ${JSON.stringify(payload)}::jsonb)
+					`;
+					report.delivered++;
+				} catch {
+					report.errors++;
+				}
+				if (cfg.webhook_url) {
+					const ok = await postAlertWebhook(cfg.webhook_url, payload);
+					if (ok) report.webhooks++;
+				}
+			}
+
+			const latest = toDeliver[toDeliver.length - 1];
+			await sql`
+				insert into user_alert_fires (user_id, rule_type, last_fired_at, last_event_id)
+				values (${cfg.user_id}, 'graduation', now(), ${latest.tx_signature})
+				on conflict (user_id, rule_type) do update set
+					last_fired_at = now(),
+					last_event_id = excluded.last_event_id
+			`;
+		} catch (e) {
+			report.errors++;
+			console.error('[pumpfun-monitor] alert eval failed for user', cfg.user_id, e?.message || e);
+		}
+	}
+
+	return report;
+}
+
+// SSRF-guarded webhook POST. Returns true on a 2xx delivery.
+async function postAlertWebhook(url, payload) {
+	try {
+		const resp = await fetchSafePublicUrl(
+			url,
+			{
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ type: 'pump_alert', data: payload }),
+				signal: AbortSignal.timeout(8000),
+			},
+			{ allowHttp: false },
+		);
+		return resp.ok;
+	} catch (e) {
+		console.error('[pumpfun-monitor] webhook delivery failed:', e?.message || e);
+		return false;
+	}
 }
 
 /** Map a single (stats, cursor) row to the attestation events to emit. */

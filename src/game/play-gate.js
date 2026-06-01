@@ -12,7 +12,7 @@
 // (no token pinned) or a fresh pass is already cached, it resolves instantly with
 // no visible interruption.
 
-import { fetchPlayConfig, signInToPlay, loadStoredPass, hasWallet, PlayAuthError } from './play-auth.js';
+import { fetchPlayConfig, signInToPlay, loadStoredPass, clearStoredPass, hasWallet, PlayAuthError } from './play-auth.js';
 
 const PHANTOM_INSTALL = 'https://phantom.app/download';
 
@@ -77,7 +77,7 @@ class Gate {
 		if (!hasWallet()) {
 			this._render({ state: 'no_wallet', onRetry: () => this._checkWalletThenConnect() });
 		} else {
-			this._render({ state: 'connect', onConnect: () => this._attempt() });
+			this._render({ state: 'connect', onConnect: () => this._attempt(), onSwitch: () => this._switchWallet() });
 		}
 	}
 
@@ -91,7 +91,15 @@ class Gate {
 		}
 	}
 
-	async _attempt() {
+	// Drop the current wallet link and start a fresh sign-in so the player can pick
+	// a different account. Clears any cached pass for the old wallet too, so the
+	// new wallet is the one that gets verified and remembered.
+	_switchWallet() {
+		clearStoredPass();
+		this._attempt({ forceReconnect: true });
+	}
+
+	async _attempt({ forceReconnect = false } = {}) {
 		// Fetch a fresh nonce on each attempt (they're short-lived + single-use).
 		this._render({ state: 'working', stage: 'connecting' });
 		let nonce = this.cfg?.nonce;
@@ -104,14 +112,21 @@ class Gate {
 		}
 
 		try {
-			const res = await signInToPlay({ nonce, onStage: (stage) => this._render({ state: 'working', stage }) });
+			const res = await signInToPlay({ nonce, forceReconnect, onStage: (stage) => this._render({ state: 'working', stage }) });
 			if (res.ok && res.playPass) {
 				this._render({ state: 'granted', symbol: res.symbol, balance: res.balance });
 				setTimeout(() => this._finish({ required: true, wallet: res.wallet, playPass: res.playPass, balance: res.balance, symbol: res.symbol }), 700);
 				return;
 			}
-			// Signature verified but balance is short.
-			this._render({ state: 'low', data: res, onRecheck: () => this._attempt(), onAcquire: res.acquireUrl ? () => window.open(res.acquireUrl, '_blank', 'noopener noreferrer') : null });
+			// Signature verified but balance is short. Offer a recheck (same wallet,
+			// after a top-up) and a switch (try a different wallet entirely).
+			this._render({
+				state: 'low',
+				data: res,
+				onRecheck: () => this._attempt(),
+				onSwitch: () => this._switchWallet(),
+				onAcquire: res.acquireUrl ? () => window.open(res.acquireUrl, '_blank', 'noopener noreferrer') : null,
+			});
 		} catch (err) {
 			const code = err instanceof PlayAuthError ? err.code : 'error';
 			if (code === 'no_wallet') {
@@ -120,10 +135,10 @@ class Gate {
 			}
 			if (code === 'rejected') {
 				// Wallet cancelled — drop back to the connect screen with the reason.
-				this._render({ state: 'connect', error: err.message, onConnect: () => this._attempt() });
+				this._render({ state: 'connect', error: err.message, onConnect: () => this._attempt(), onSwitch: () => this._switchWallet() });
 				return;
 			}
-			this._render({ state: 'error', error: err?.message || 'Sign-in failed. Please try again.', onRetry: () => this._attempt() });
+			this._render({ state: 'error', error: err?.message || 'Sign-in failed. Please try again.', onRetry: () => this._attempt(), onSwitch: () => this._switchWallet() });
 		}
 	}
 
@@ -184,6 +199,7 @@ class Gate {
 		q('[data-act="retry"]')?.addEventListener('click', () => view.onRetry?.());
 		q('[data-act="recheck"]')?.addEventListener('click', () => view.onRecheck?.());
 		q('[data-act="acquire"]')?.addEventListener('click', () => view.onAcquire?.());
+		q('[data-act="switch"]')?.addEventListener('click', () => view.onSwitch?.());
 		// Move keyboard focus onto the primary CTA.
 		setTimeout(() => (q('.pg-btn-primary') || q('.pg-btn'))?.focus(), 50);
 	}
@@ -216,6 +232,7 @@ class Gate {
 					<p class="pg-sub">Connect your Solana wallet and approve a signature to prove it's yours. You'll need at least <strong>${esc(String(min))} ${tokenLabel}</strong> to enter. This never moves any funds.</p>
 					${view.error ? `<p class="pg-error" role="alert">${esc(view.error)}</p>` : ''}
 					<button class="pg-btn pg-btn-primary" data-act="connect">Connect wallet</button>
+					${view.onSwitch ? `<button class="pg-link" data-act="switch">Use a different wallet</button>` : ''}
 					<p class="pg-fine">We will never ask for your seed phrase.</p>`);
 
 			case 'working': {
@@ -242,7 +259,8 @@ class Gate {
 						<div><span class="pg-balance-k">Required</span><span class="pg-balance-v pg-balance-need">${need}</span></div>
 					</div>
 					${view.onAcquire ? `<button class="pg-btn pg-btn-primary" data-act="acquire">Get ${displaySym}</button>` : ''}
-					<button class="pg-btn ${view.onAcquire ? 'pg-btn-ghost' : 'pg-btn-primary'}" data-act="recheck">Recheck balance</button>`);
+					<button class="pg-btn ${view.onAcquire ? 'pg-btn-ghost' : 'pg-btn-primary'}" data-act="recheck">Recheck balance</button>
+					${view.onSwitch ? `<button class="pg-link" data-act="switch">Use a different wallet</button>` : ''}`);
 			}
 
 			case 'granted':
@@ -257,7 +275,8 @@ class Gate {
 					<div class="pg-icon">${SVG.warn}</div>
 					<h1 class="pg-title">Something went wrong</h1>
 					<p class="pg-sub" role="alert">${esc(view.error || 'Please try again.')}</p>
-					<button class="pg-btn pg-btn-primary" data-act="retry">Try again</button>`);
+					<button class="pg-btn pg-btn-primary" data-act="retry">Try again</button>
+					${view.onSwitch ? `<button class="pg-link" data-act="switch">Use a different wallet</button>` : ''}`);
 		}
 	}
 }

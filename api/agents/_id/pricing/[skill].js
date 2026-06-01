@@ -4,6 +4,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../../../_lib
 import { cors, json, method, readJson, wrap, error } from '../../../_lib/http.js';
 import { parse } from '../../../_lib/validate.js';
 import { limits, clientIp } from '../../../_lib/rate-limit.js';
+import { requireCsrf } from '../../../_lib/csrf.js';
 
 // First char must be alphanumeric; rest may include hyphens; total 1–64 chars.
 const SKILL_RE = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,63}$/;
@@ -40,6 +41,9 @@ export default wrap(async (req, res) => {
 
 	const userId = await resolveUserId(req);
 	if (!userId) return error(res, 401, 'unauthorized', 'sign in required');
+
+	// CSRF on state-changing session-cookie requests; bearer tokens are exempt.
+	if (!(await requireCsrf(req, res, userId))) return;
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');

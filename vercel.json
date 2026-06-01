@@ -984,6 +984,10 @@
 			"dest": "/api/agents/suggest"
 		},
 		{
+			"src": "/api/agents/featured",
+			"dest": "/api/agents/featured"
+		},
+		{
 			"src": "/api/agents/by-wallet",
 			"dest": "/api/agents/by-wallet"
 		},

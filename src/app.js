@@ -21,6 +21,7 @@ import { mountHotspotTour } from './widgets/hotspot-tour.js';
 import { mountPumpfunFeed } from './widgets/pumpfun-feed.js';
 import { mountKolTradesWidget } from './widgets/kol-trades.js';
 import { mountLiveTradesCanvas } from './widgets/live-trades-canvas.js';
+import { mountBondingCurve } from './widgets/bonding-curve.js';
 import { mountPassport } from './widgets/passport.js';
 import queryString from 'query-string';
 import { ScreenshotModal } from './components/screenshot-modal.js';
@@ -1347,6 +1348,26 @@ class App {
 					minUsd: cfg.minUsd,
 				});
 				this._widgetController = ctl;
+			} else if (type === 'bonding-curve') {
+				const host = document.createElement('div');
+				host.className = 'bonding-curve-host';
+				host.style.cssText =
+					'position:absolute;inset:0;display:grid;place-items:center;padding:24px;z-index:5;pointer-events:none;box-sizing:border-box';
+				document.body.appendChild(host);
+				const inner = mountBondingCurve(host, {
+					mint: cfg.mint,
+					network: cfg.network,
+					refreshMs: cfg.refreshMs,
+					showUsd: cfg.showUsd,
+					accent: cfg.accent,
+					showPoweredBy: cfg.showPoweredBy,
+				});
+				this._widgetController = {
+					destroy() {
+						inner?.destroy?.();
+						host.remove();
+					},
+				};
 			} else if (type === 'passport') {
 				const ctl = await mountPassport(this.viewer, cfg, document.body, widgetId);
 				this._widgetController = ctl;

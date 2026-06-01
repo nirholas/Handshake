@@ -51,8 +51,15 @@ async function onConnectWallet() {
 
 export function updateWalletState(address) {
 	const btn = document.getElementById('connect-wallet-btn');
-	if (!btn) return;
-	btn.textContent = address ? `${address.slice(0, 4)}...${address.slice(-4)}` : 'Connect Wallet';
+	if (btn) {
+		btn.textContent = address ? `${address.slice(0, 4)}...${address.slice(-4)}` : 'Connect Wallet';
+	}
+	// Broadcast so consumers (dashboards, balance panels) can react to connect /
+	// disconnect without reaching into window.solana directly. Fires for both the
+	// click-connect and auto-connect-if-trusted paths.
+	if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+		window.dispatchEvent(new CustomEvent('wallet:changed', { detail: { address: address || null } }));
+	}
 }
 
 export function initWalletButton() {

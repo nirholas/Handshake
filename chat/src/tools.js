@@ -42,7 +42,275 @@ function x402PayBody(toolName, argsBuilder) {
 		.replace('ARGS_BUILDER', argsBuilder);
 }
 
+// ── Wallet Transactions tool pack ─────────────────────────────────────────────
+// Four tools that send / swap tokens on Solana and EVM chains from chat. Each
+// body resolves the live wallet provider (so it works even after a reload, not
+// only right after sign-in), pauses on window.requestWalletApproval() for an
+// explicit user confirmation, broadcasts the real transaction, and returns an
+// `application/tx-result` envelope that Toolcall.svelte renders as a status card.
+//
+// Defined above curatedToolPacks because the pack entry below references it
+// inside the array literal (const TDZ).
+const _solanaTransferBody = `const recipient = String(args.recipient || '').trim();
+const amount = Number(args.amount);
+const token = args.token ? String(args.token).trim() : 'SOL';
+const memo = args.memo ? String(args.memo) : undefined;
+const network = args.network === 'devnet' ? 'devnet' : 'mainnet';
+if (!recipient) throw new Error('recipient is required (base58 address)');
+if (!(amount > 0)) throw new Error('amount must be a positive number');
+const provider = window.phantom?.solana || window.solana || window.backpack?.solana || window.solflare;
+if (!provider) throw new Error('No Solana wallet connected. Install Phantom or another Solana wallet, then connect.');
+if (!provider.isConnected || !provider.publicKey) await provider.connect();
+const sender = provider.publicKey.toBase58();
+const buildRes = await fetch('/api/tx/solana/build-transfer', {
+	method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+	body: JSON.stringify({ sender, recipient, amount, token, memo, network }),
+});
+if (!buildRes.ok) { const e = await buildRes.json().catch(() => ({})); throw new Error(e.message || ('Failed to build transaction (HTTP ' + buildRes.status + ')')); }
+const built = await buildRes.json();
+const networkLabel = network === 'devnet' ? 'Solana Devnet' : 'Solana';
+await window.requestWalletApproval(Object.assign({ network: networkLabel, from: sender, to: recipient, amount: String(amount), token }, memo ? { memo } : {}));
+const web3 = await import('https://esm.sh/@solana/web3.js@1');
+const txBytes = Uint8Array.from(atob(built.transaction), c => c.charCodeAt(0));
+let tx; try { tx = web3.VersionedTransaction.deserialize(txBytes); } catch { tx = web3.Transaction.from(txBytes); }
+let signature;
+if (provider.signAndSendTransaction) { const r = await provider.signAndSendTransaction(tx); signature = r.signature || r; }
+else {
+	const signed = await provider.signTransaction(tx);
+	const conn = new web3.Connection(network === 'devnet' ? 'https://api.devnet.solana.com' : 'https://api.mainnet-beta.solana.com', 'confirmed');
+	signature = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+	await conn.confirmTransaction({ signature, blockhash: built.blockhash, lastValidBlockHeight: built.lastValidBlockHeight }, 'confirmed');
+}
+const explorerUrl = 'https://solscan.io/tx/' + signature + (network === 'devnet' ? '?cluster=devnet' : '');
+return { contentType: 'application/tx-result', content: { status: 'success', txHash: signature, network: networkLabel, from: sender, to: recipient, amount: String(amount), token, explorerUrl } };`;
+
+const _solanaSwapBody = `const inputMint = String(args.inputMint || '').trim();
+const outputMint = String(args.outputMint || '').trim();
+const amount = Number(args.amount);
+const slippageBps = args.slippageBps != null ? Math.round(Number(args.slippageBps)) : 50;
+if (!inputMint || !outputMint) throw new Error('inputMint and outputMint are required (base58 mint addresses)');
+if (!(amount > 0)) throw new Error('amount must be a positive number');
+const provider = window.phantom?.solana || window.solana || window.backpack?.solana || window.solflare;
+if (!provider) throw new Error('No Solana wallet connected. Install Phantom or another Solana wallet, then connect.');
+if (!provider.isConnected || !provider.publicKey) await provider.connect();
+const sender = provider.publicKey.toBase58();
+const buildRes = await fetch('/api/tx/solana/build-swap', {
+	method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+	body: JSON.stringify({ sender, inputMint, outputMint, amount, slippageBps }),
+});
+if (!buildRes.ok) { const e = await buildRes.json().catch(() => ({})); throw new Error(e.message || 'Failed to get swap route'); }
+const built = await buildRes.json();
+await window.requestWalletApproval({ network: 'Solana', from: sender, to: 'Jupiter (DEX aggregator)', amount: String(amount), token: inputMint.slice(0, 6) + '… → ' + outputMint.slice(0, 6) + '…', memo: '~' + built.outputAmount + ' out, ' + built.priceImpactPct + '% price impact' });
+const web3 = await import('https://esm.sh/@solana/web3.js@1');
+const txBytes = Uint8Array.from(atob(built.transaction), c => c.charCodeAt(0));
+let tx; try { tx = web3.VersionedTransaction.deserialize(txBytes); } catch { tx = web3.Transaction.from(txBytes); }
+let signature;
+if (provider.signAndSendTransaction) { const r = await provider.signAndSendTransaction(tx); signature = r.signature || r; }
+else {
+	const signed = await provider.signTransaction(tx);
+	const conn = new web3.Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+	signature = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+	await conn.confirmTransaction(signature, 'confirmed');
+}
+return { contentType: 'application/tx-result', content: { status: 'success', txHash: signature, network: 'Solana', from: sender, to: outputMint, amount: String(built.outputAmount), token: outputMint.slice(0, 8) + '…', explorerUrl: 'https://solscan.io/tx/' + signature } };`;
+
+const _evmChainNames = "{ 1: 'Ethereum', 8453: 'Base', 10: 'Optimism', 42161: 'Arbitrum', 137: 'Polygon' }";
+const _evmExplorerBases = "{ 1: 'https://etherscan.io/tx/', 8453: 'https://basescan.org/tx/', 10: 'https://optimistic.etherscan.io/tx/', 42161: 'https://arbiscan.io/tx/', 137: 'https://polygonscan.com/tx/' }";
+
+const _evmTransferBody = `const recipient = String(args.recipient || '').trim();
+const amount = String(args.amount || '').trim();
+const token = args.token ? String(args.token).trim() : 'ETH';
+const decimals = args.decimals != null ? Number(args.decimals) : 18;
+if (!recipient) throw new Error('recipient is required (0x address)');
+if (!amount || !(parseFloat(amount) > 0)) throw new Error('amount must be a positive number');
+const eth = window.ethereum;
+if (!eth) throw new Error('No EVM wallet connected. Install MetaMask or a compatible wallet, then connect.');
+const accounts = await eth.request({ method: 'eth_requestAccounts' });
+const from = (window.__wallet && window.__wallet.type === 'evm' && window.__wallet.address) || accounts[0];
+const chainId = parseInt(await eth.request({ method: 'eth_chainId' }), 16);
+const chainNames = ${_evmChainNames};
+const networkName = chainNames[chainId] || ('Chain ' + chainId);
+await window.requestWalletApproval({ network: networkName, from, to: recipient, amount, token: token === 'ETH' ? 'ETH' : (token.slice(0, 8) + '…') });
+let txHash;
+if (token === 'ETH') {
+	const valueHex = '0x' + BigInt(Math.round(parseFloat(amount) * 1e18)).toString(16);
+	txHash = await eth.request({ method: 'eth_sendTransaction', params: [{ from, to: recipient, value: valueHex }] });
+} else {
+	const amt = BigInt(Math.round(parseFloat(amount) * 10 ** decimals));
+	const data = '0xa9059cbb' + recipient.replace(/^0x/, '').padStart(64, '0') + amt.toString(16).padStart(64, '0');
+	txHash = await eth.request({ method: 'eth_sendTransaction', params: [{ from, to: token, data }] });
+}
+const explorerBases = ${_evmExplorerBases};
+const explorerUrl = (explorerBases[chainId] || 'https://etherscan.io/tx/') + txHash;
+return { contentType: 'application/tx-result', content: { status: 'pending', txHash, network: networkName, chainId, from, to: recipient, amount, token: token === 'ETH' ? 'ETH' : (token.slice(0, 10) + '…'), explorerUrl } };`;
+
+const _evmSwapBody = `const fromToken = String(args.fromToken || '').trim();
+const toToken = String(args.toToken || '').trim();
+const amount = String(args.amount || '').trim();
+const decimals = args.decimals != null ? Number(args.decimals) : 18;
+const slippage = args.slippage != null ? Number(args.slippage) : 1;
+if (!fromToken || !toToken) throw new Error('fromToken and toToken are required (contract addresses; use 0xEeee… for native ETH)');
+if (!amount || !(parseFloat(amount) > 0)) throw new Error('amount must be a positive number');
+const eth = window.ethereum;
+if (!eth) throw new Error('No EVM wallet connected. Install MetaMask or a compatible wallet, then connect.');
+const accounts = await eth.request({ method: 'eth_requestAccounts' });
+const from = (window.__wallet && window.__wallet.type === 'evm' && window.__wallet.address) || accounts[0];
+const chainId = parseInt(await eth.request({ method: 'eth_chainId' }), 16);
+const chainNames = ${_evmChainNames};
+const networkName = chainNames[chainId] || ('Chain ' + chainId);
+const amountWei = BigInt(Math.round(parseFloat(amount) * 10 ** decimals)).toString();
+const quoteUrl = 'https://api.1inch.dev/swap/v5.2/' + chainId + '/swap?src=' + fromToken + '&dst=' + toToken + '&amount=' + amountWei + '&from=' + from + '&slippage=' + slippage + '&disableEstimate=true';
+const quoteRes = await fetch(quoteUrl, { headers: { 'Accept': 'application/json' } });
+if (!quoteRes.ok) { const e = await quoteRes.json().catch(() => ({})); throw new Error(e.description || e.message || ('1inch quote failed (HTTP ' + quoteRes.status + ')')); }
+const quote = await quoteRes.json();
+if (!quote.tx || !quote.tx.to) throw new Error('1inch returned no swap transaction for this pair');
+const toAmountHuman = quote.toAmount != null ? (Number(quote.toAmount) / 10 ** 18).toFixed(6) : '?';
+await window.requestWalletApproval({ network: networkName, from, to: '1inch Router', amount, token: fromToken.slice(0, 8) + '… → ' + toToken.slice(0, 8) + '…', memo: '~' + toAmountHuman + ' out' });
+const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+if (fromToken.toLowerCase() !== ETH_ADDRESS.toLowerCase()) {
+	const paddedOwner = from.replace(/^0x/, '').padStart(64, '0');
+	const paddedSpender = quote.tx.to.replace(/^0x/, '').padStart(64, '0');
+	const allowanceHex = await eth.request({ method: 'eth_call', params: [{ to: fromToken, data: '0xdd62ed3e' + paddedOwner + paddedSpender }, 'latest'] });
+	if (BigInt(allowanceHex || '0x0') < BigInt(amountWei)) {
+		await eth.request({ method: 'eth_sendTransaction', params: [{ from, to: fromToken, data: '0x095ea7b3' + paddedSpender + 'f'.repeat(64) }] });
+	}
+}
+const txHash = await eth.request({ method: 'eth_sendTransaction', params: [{ from, to: quote.tx.to, data: quote.tx.data, value: quote.tx.value || '0x0' }] });
+const explorerBases = ${_evmExplorerBases};
+const explorerUrl = (explorerBases[chainId] || 'https://etherscan.io/tx/') + txHash;
+return { contentType: 'application/tx-result', content: { status: 'pending', txHash, network: networkName, chainId, from, to: toToken, amount: '~' + toAmountHuman, token: toToken.slice(0, 10) + '…', explorerUrl } };`;
+
+export const walletToolSchema = [
+	{
+		clientDefinition: {
+			id: 'wallet-solana-transfer-001',
+			name: 'solana_transfer',
+			description: 'Send SOL or a Solana SPL token (e.g. USDC) to a recipient address. Requires a connected Solana wallet.',
+			arguments: [
+				{ name: 'recipient', type: 'string', description: 'Base58 recipient wallet address' },
+				{ name: 'amount', type: 'number', description: 'Amount to send in human-readable units (e.g. 1.5 for 1.5 SOL)' },
+				{ name: 'token', type: 'string', description: 'Token to send: "SOL" or an SPL mint address (e.g. USDC mint). Default: "SOL"' },
+				{ name: 'memo', type: 'string', description: 'Optional memo string to attach' },
+				{ name: 'network', type: 'string', description: '"mainnet" or "devnet". Default: "mainnet"' },
+			],
+			body: _solanaTransferBody,
+		},
+		type: 'function',
+		function: {
+			name: 'solana_transfer',
+			description: 'Send SOL or SPL tokens on Solana. Requires a connected Solana wallet. Pauses for user approval before broadcasting.',
+			parameters: {
+				type: 'object',
+				properties: {
+					recipient: { type: 'string', description: 'Base58 recipient wallet address' },
+					amount: { type: 'number', description: 'Amount in human-readable units' },
+					token: { type: 'string', description: '"SOL" or SPL mint address. Default: "SOL"' },
+					memo: { type: 'string', description: 'Optional memo' },
+					network: { type: 'string', enum: ['mainnet', 'devnet'], description: 'Default: mainnet' },
+				},
+				required: ['recipient', 'amount'],
+			},
+		},
+	},
+	{
+		clientDefinition: {
+			id: 'wallet-solana-swap-002',
+			name: 'solana_swap',
+			description: 'Swap tokens on Solana via Jupiter aggregator. Finds the best route automatically. Requires a connected Solana wallet.',
+			arguments: [
+				{ name: 'inputMint', type: 'string', description: 'Mint address of the token to sell (e.g. USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v)' },
+				{ name: 'outputMint', type: 'string', description: 'Mint address of the token to buy (e.g. SOL: So11111111111111111111111111111111111111112)' },
+				{ name: 'amount', type: 'number', description: 'Amount of input token to sell in human-readable units' },
+				{ name: 'slippageBps', type: 'number', description: 'Max slippage in basis points (100 = 1%). Default: 50' },
+			],
+			body: _solanaSwapBody,
+		},
+		type: 'function',
+		function: {
+			name: 'solana_swap',
+			description: 'Swap tokens on Solana via Jupiter. Best-route aggregation. Pauses for user approval before broadcasting.',
+			parameters: {
+				type: 'object',
+				properties: {
+					inputMint: { type: 'string', description: 'Mint address of token to sell' },
+					outputMint: { type: 'string', description: 'Mint address of token to buy' },
+					amount: { type: 'number', description: 'Amount of input token in human-readable units' },
+					slippageBps: { type: 'integer', description: 'Max slippage in bps. Default: 50' },
+				},
+				required: ['inputMint', 'outputMint', 'amount'],
+			},
+		},
+	},
+	{
+		clientDefinition: {
+			id: 'wallet-evm-transfer-003',
+			name: 'evm_transfer',
+			description: 'Send ETH or an ERC20 token to a recipient address on any EVM chain. Requires a connected EVM wallet (MetaMask or compatible).',
+			arguments: [
+				{ name: 'recipient', type: 'string', description: '0x recipient address' },
+				{ name: 'amount', type: 'string', description: 'Amount in human-readable units (e.g. "0.01" for 0.01 ETH)' },
+				{ name: 'token', type: 'string', description: '"ETH" for native token, or an ERC20 contract address (0x...). Default: "ETH"' },
+				{ name: 'decimals', type: 'number', description: 'Token decimals (required for ERC20, ignored for ETH). Default: 18' },
+			],
+			body: _evmTransferBody,
+		},
+		type: 'function',
+		function: {
+			name: 'evm_transfer',
+			description: 'Send ETH or ERC20 tokens on any EVM chain (Ethereum, Base, Optimism, Arbitrum, Polygon). Pauses for user approval before sending.',
+			parameters: {
+				type: 'object',
+				properties: {
+					recipient: { type: 'string', description: '0x recipient address' },
+					amount: { type: 'string', description: 'Amount in human-readable units' },
+					token: { type: 'string', description: '"ETH" or ERC20 contract address. Default: "ETH"' },
+					decimals: { type: 'number', description: 'ERC20 decimals. Default: 18' },
+				},
+				required: ['recipient', 'amount'],
+			},
+		},
+	},
+	{
+		clientDefinition: {
+			id: 'wallet-evm-swap-004',
+			name: 'evm_swap',
+			description: 'Swap tokens on EVM chains using the 1inch aggregator. Finds the best DEX route. Requires a connected EVM wallet.',
+			arguments: [
+				{ name: 'fromToken', type: 'string', description: 'Token contract address to sell (use 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE for native ETH)' },
+				{ name: 'toToken', type: 'string', description: 'Token contract address to buy' },
+				{ name: 'amount', type: 'string', description: 'Amount of fromToken in human-readable units' },
+				{ name: 'decimals', type: 'number', description: 'Decimals of fromToken. Default: 18' },
+				{ name: 'slippage', type: 'number', description: 'Max slippage percentage (e.g. 1 for 1%). Default: 1' },
+			],
+			body: _evmSwapBody,
+		},
+		type: 'function',
+		function: {
+			name: 'evm_swap',
+			description: 'Swap ERC20 tokens or ETH on EVM chains via the 1inch DEX aggregator. Pauses for user approval; auto-approves token allowance when needed.',
+			parameters: {
+				type: 'object',
+				properties: {
+					fromToken: { type: 'string', description: 'Token to sell (address or 0xEeee... for ETH)' },
+					toToken: { type: 'string', description: 'Token to buy (address)' },
+					amount: { type: 'string', description: 'Amount of fromToken in human-readable units' },
+					decimals: { type: 'number', description: 'fromToken decimals. Default: 18' },
+					slippage: { type: 'number', description: 'Max slippage %. Default: 1' },
+				},
+				required: ['fromToken', 'toToken', 'amount'],
+			},
+		},
+	},
+];
+
 export const curatedToolPacks = [
+	{
+		id: 'wallet-transactions',
+		name: 'Wallet Transactions',
+		description:
+			'Send and swap tokens on Solana and EVM chains directly from chat. Supports SOL, SPL tokens, ETH, ERC20, and DEX swaps via Jupiter and 1inch. Every transaction pauses for your explicit approval.',
+		schema: walletToolSchema,
+	},
 	{
 		id: 'x402-pay',
 		name: 'three.ws · Pay-per-call (x402)',

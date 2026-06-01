@@ -20,6 +20,71 @@ function initNav(root) {
 	initBurger(root);
 	initAuthHint(root);
 	initActivePage(root);
+	initWalkToggle(root);
+}
+
+// Walk Companion toggle. Loads the stable, unhashed /walk-companion.js module
+// (built from src/walk-companion.js — see vite.config.js) only when enabled, so
+// pages pay no Three.js cost when it's off. State lives in localStorage and the
+// ?walk=1 / ?walk=0 query param, both also honored by the module itself.
+const WALK_ENABLED_KEY = 'walk:companion:enabled';
+
+function walkIsEnabled() {
+	try {
+		return localStorage.getItem(WALK_ENABLED_KEY) === '1';
+	} catch (_) {
+		return false;
+	}
+}
+
+function ensureWalkCompanion() {
+	if (document.querySelector('script[src="/walk-companion.js"]')) return;
+	const s = document.createElement('script');
+	s.type = 'module';
+	s.src = '/walk-companion.js';
+	document.head.appendChild(s);
+}
+
+function initWalkToggle(root) {
+	const btn = root.querySelector('#home-nav-walk');
+	if (!btn) return;
+
+	const params = new URLSearchParams(location.search);
+	const override = params.get('walk');
+
+	function sync() {
+		const on = walkIsEnabled();
+		btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+		btn.classList.toggle('is-on', on);
+	}
+
+	// An explicit ?walk= override decides the initial state; otherwise restore.
+	if (override === '1' || override === '0') {
+		try {
+			localStorage.setItem(WALK_ENABLED_KEY, override);
+		} catch (_) {}
+	}
+	sync();
+
+	// Load the module if the companion should be active on this page. The module
+	// is self-mounting; ensureWalkCompanion is idempotent.
+	if (override === '1' || (override !== '0' && walkIsEnabled())) {
+		ensureWalkCompanion();
+	}
+
+	btn.addEventListener('click', () => {
+		if (window.__walkCompanion) {
+			window.__walkCompanion.toggle();
+		} else {
+			try {
+				localStorage.setItem(WALK_ENABLED_KEY, '1');
+			} catch (_) {}
+			ensureWalkCompanion();
+		}
+		sync();
+	});
+
+	window.addEventListener('walk-companion:change', sync);
 }
 
 function initActivePage(root) {

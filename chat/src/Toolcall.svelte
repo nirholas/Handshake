@@ -47,6 +47,8 @@
 				displayType = 'webpage';
 			} else if (contentType === 'text/markdown') {
 				displayType = 'markdown';
+			} else if (contentType === 'application/tx-result') {
+				displayType = 'tx_result';
 			}
 			// ...
 		}
@@ -179,6 +181,44 @@
 			{:else if displayType === 'choice'}
 				<div class="flex flex-col rounded-b-lg border border-t-0 border-slate-200 px-6 py-5">
 					<Choice bind:chose {choiceHandler} {question} {choices} />
+				</div>
+			{:else if toolresponse && displayType === 'tx_result'}
+				<div class="flex flex-col gap-3 rounded-b-lg border border-t-0 border-slate-200 px-5 py-4">
+					<!-- Status badge + amount -->
+					<div class="flex flex-wrap items-center gap-2">
+						{#if displayedContent.status === 'success'}
+							<span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Confirmed</span>
+						{:else if displayedContent.status === 'pending'}
+							<span class="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700">Pending</span>
+						{:else}
+							<span class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">Failed</span>
+						{/if}
+						<span class="text-sm font-medium text-slate-700">{displayedContent.amount} {displayedContent.token}</span>
+						<span class="text-xs text-slate-400">on {displayedContent.network}</span>
+					</div>
+
+					<!-- Addresses -->
+					<div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-xs text-slate-600">
+						<span class="font-sans text-slate-400">From</span>
+						<span class="break-all">{displayedContent.from?.slice(0, 6)}…{displayedContent.from?.slice(-4)}</span>
+						<span class="font-sans text-slate-400">To</span>
+						<span class="break-all">{displayedContent.to?.slice(0, 6)}…{displayedContent.to?.slice(-4)}</span>
+					</div>
+
+					<!-- Tx hash + explorer link -->
+					<div class="flex items-center gap-2 font-mono text-xs text-slate-500">
+						<span class="break-all">{displayedContent.txHash?.slice(0, 12)}…{displayedContent.txHash?.slice(-6)}</span>
+						{#if displayedContent.explorerUrl}
+							<a
+								href={displayedContent.explorerUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="ml-auto whitespace-nowrap rounded border border-slate-200 px-2 py-0.5 font-sans text-[10px] text-slate-600 transition-colors hover:bg-slate-50"
+							>
+								View on Explorer ↗
+							</a>
+						{/if}
+					</div>
 				</div>
 			{/if}
 		</div>

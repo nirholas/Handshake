@@ -13,6 +13,7 @@
 import {
 	AmbientLight,
 	Box3,
+	BufferGeometry,
 	CircleGeometry,
 	Color,
 	DirectionalLight,
@@ -34,7 +35,15 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
+import { EffectComposer, RenderPass, SelectiveBloomEffect, EffectPass } from 'postprocessing';
 import { getMeshoptDecoder } from './viewer/internal.js';
+
+// Accelerate click-to-select raycasting with a BVH. Patches the Three.js
+// prototypes once at module load — idempotent if the main viewer already did so.
+BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+Mesh.prototype.raycast = acceleratedRaycast;
 
 const SLOT_SPACING = 1.6; // metres between avatar centres
 const PODIUM_RADIUS = 0.55;
@@ -85,6 +94,7 @@ export async function mountLobby(canvas, avatars, options = {}) {
 
 	const pmrem = new PMREMGenerator(renderer);
 	scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+	pmrem.dispose(); // environment baked — the generator's GPU targets are no longer needed
 
 	// Podiums under each avatar slot.
 	const podiumGroup = new Group();
@@ -92,16 +102,33 @@ export async function mountLobby(canvas, avatars, options = {}) {
 	const slotsRoot = new Group();
 	scene.add(slotsRoot);
 	const startX = -((slots.length - 1) * SLOT_SPACING) / 2;
+	const bloomSelection = [];
 	const slotMeta = slots.map((_, i) => {
 		const x = startX + i * SLOT_SPACING;
-		const podium = makePodium();
+		const { group: podium, ring } = makePodium();
 		podium.position.set(x, 0, 0);
 		podiumGroup.add(podium);
+		bloomSelection.push(ring);
 		const slotGroup = new Group();
 		slotGroup.position.set(x, PODIUM_HEIGHT, 0);
 		slotsRoot.add(slotGroup);
 		return { x, group: slotGroup, model: null };
 	});
+
+	// Post-processing: merge a single fullscreen pass with selective bloom so the
+	// emissive podium rings glow without blooming the avatars sitting on them.
+	const composer = new EffectComposer(renderer);
+	composer.addPass(new RenderPass(scene, camera));
+	const bloomEffect = new SelectiveBloomEffect(scene, camera, {
+		intensity: 1.8,
+		luminanceThreshold: 0.05,
+		luminanceSmoothing: 0.3,
+		mipmapBlur: true,
+	});
+	bloomEffect.selection.set(bloomSelection);
+	const effectPass = new EffectPass(camera, bloomEffect);
+	effectPass.renderToScreen = true;
+	composer.addPass(effectPass);
 
 	// Lazy-load GLBs in parallel; if one fails, the other slots still render.
 	// Baked avatars use EXT_meshopt_compression, so the loader needs the
@@ -118,6 +145,12 @@ export async function mountLobby(canvas, avatars, options = {}) {
 					const root = gltf.scene || gltf.scenes?.[0];
 					if (!root) return;
 					fitToHeight(root, TARGET_HEIGHT);
+					// Build a BVH per mesh so click raycasts are O(log n), not per-triangle.
+					root.traverse((node) => {
+						if (node.isMesh && node.geometry?.attributes?.position?.count) {
+							node.geometry.computeBoundsTree();
+						}
+					});
 					slotMeta[i].group.add(root);
 					slotMeta[i].model = root;
 					slotMeta[i].avatar = avatar;
@@ -169,19 +202,32 @@ export async function mountLobby(canvas, avatars, options = {}) {
 		width = Math.max(1, Math.floor(rect.width));
 		height = Math.max(1, Math.floor(rect.height));
 		renderer.setSize(width, height, false);
+		composer.setSize(width, height);
 		camera.aspect = width / height;
 		camera.updateProjectionMatrix();
 	}
 	resize();
+
+	// Pause rendering while the canvas is scrolled out of view — saves GPU.
+	let visible = true;
+	const io = new IntersectionObserver(
+		([entry]) => {
+			visible = entry.isIntersecting;
+		},
+		{ threshold: 0.01 },
+	);
+	io.observe(canvas);
 
 	// Render loop with subtle scene rotation + camera parallax + per-slot spin.
 	let alive = true;
 	let lastT = performance.now();
 	function tick() {
 		if (!alive) return;
+		rafId = requestAnimationFrame(tick);
 		const now = performance.now();
 		const dt = (now - lastT) / 1000;
 		lastT = now;
+		if (!visible) return; // off-screen: skip render, keep the RAF alive for return
 
 		// Slow constant rotation of each loaded avatar (idle showcase).
 		for (const slot of slotMeta) {
@@ -195,8 +241,7 @@ export async function mountLobby(canvas, avatars, options = {}) {
 		camera.position.lerp(baseCamPos.clone().add(targetCamOffset), 0.06);
 		camera.lookAt(0, 1.05, 0);
 
-		renderer.render(scene, camera);
-		rafId = requestAnimationFrame(tick);
+		composer.render();
 	}
 	let rafId = requestAnimationFrame(tick);
 
@@ -204,11 +249,15 @@ export async function mountLobby(canvas, avatars, options = {}) {
 		alive = false;
 		cancelAnimationFrame(rafId);
 		ro.disconnect();
+		io.disconnect();
 		canvas.removeEventListener('pointermove', onPointerMove);
 		canvas.removeEventListener('click', onClick);
 		// Free GPU resources.
 		scene.traverse((obj) => {
-			if (obj.geometry) obj.geometry.dispose?.();
+			if (obj.geometry) {
+				obj.geometry.disposeBoundsTree?.();
+				obj.geometry.dispose?.();
+			}
 			if (obj.material) {
 				const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
 				for (const m of mats) {
@@ -220,7 +269,7 @@ export async function mountLobby(canvas, avatars, options = {}) {
 				}
 			}
 		});
-		pmrem.dispose();
+		composer.dispose();
 		renderer.dispose();
 	}
 
@@ -260,7 +309,7 @@ function makePodium() {
 	ring.position.y = 0.001;
 	g.add(ring);
 
-	return g;
+	return { group: g, ring };
 }
 
 function fitToHeight(object, targetHeight) {

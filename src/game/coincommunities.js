@@ -34,7 +34,7 @@ import {
 import { GUEST_SENTINEL, uploadPendingGuestAvatar } from './play-handoff.js';
 import { HOME_TOWN, isHomeTown } from './home-town.js';
 import { VoiceChat, voiceSupported } from './voice-chat.js';
-import { requestHolderPass, signInWithX, ensureSolanaWallet, getSession } from '../community/town-auth.js';
+import { requestHolderPass, signInWithX, ensureSolanaWallet, relinkSolanaWallet, getSession } from '../community/town-auth.js';
 import { ensurePlayAccess } from './play-gate.js';
 import { clearStoredPass, fetchPlayConfig, signInToPlay, loadStoredPass, storePass } from './play-auth.js';
 
@@ -887,6 +887,15 @@ export class CoinCommunities {
 						const session = await getSession();
 						await ensureSolanaWallet(session);
 					} catch (e) { carryError = e?.message || 'Could not link a wallet.'; }
+					continue;
+				}
+				if (action === 'switch') {
+					// Drop the linked wallet and connect a different one, then re-check —
+					// the way out of a short balance when the coin lives in another wallet.
+					this.ui.setHolderGate('working', { symbol, msg: 'Switching wallet…' });
+					try {
+						await relinkSolanaWallet();
+					} catch (e) { carryError = e?.message || 'Could not switch wallet.'; }
 					continue;
 				}
 				if (action === 'buy') { this._openBuy(coin); skipCheck = true; continue; }

@@ -15,8 +15,14 @@ const VERSION = process.env.VERCEL_GIT_COMMIT_SHA || process.env.npm_package_ver
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const RESEND_CACHE_TTL_MS = CACHE_TTL_MS;
+// The pumpfun-monitor cron runs every 3 min and upserts bot_heartbeat. Allow 2×
+// the interval before declaring the worker stopped, so a single skipped tick
+// doesn't flap the status.
+const HEARTBEAT_FRESH_MS = 6 * 60 * 1000;
+const MONITOR_CACHE_TTL_MS = 8 * 1000;
 let _resendCache = { value: null, expiresAt: 0 };
 let _x402Cache = { value: null, expiresAt: 0 };
+let _monitorCache = { value: null, expiresAt: 0 };
 
 // Exported for tests so each case starts with a cold cache.
 export function _resetResendCache() {
@@ -24,6 +30,60 @@ export function _resetResendCache() {
 }
 export function _resetX402Cache() {
 	_x402Cache = { value: null, expiresAt: 0 };
+}
+export function _resetMonitorCache() {
+	_monitorCache = { value: null, expiresAt: 0 };
+}
+
+// Real bot/monitor status, sourced from Postgres:
+//   running  — a bot_heartbeat row written by the pumpfun-monitor cron within
+//              the freshness window. When no row exists yet (or the DB is
+//              unreachable, e.g. in unit tests) we fall back to the serverless
+//              liveness signal: the function answering IS a liveness proof.
+//   mode     — the worker's reported mode (the cron writes 'cron').
+//   claimsDetected — count of real graduation events the monitor has recorded.
+//   watches.total  — users with at least one alert rule armed (server-side
+//                    watchers that fire even with no tab open).
+async function probeMonitor() {
+	const now = Date.now();
+	if (_monitorCache.value && _monitorCache.expiresAt > now) return _monitorCache.value;
+
+	let value;
+	try {
+		const { sql } = await import('./_lib/db.js');
+		const [beat] = await sql`
+			SELECT mode, last_beat_at FROM bot_heartbeat
+			ORDER BY last_beat_at DESC LIMIT 1
+		`;
+		const [{ graduations }] = await sql`
+			SELECT count(*)::int AS graduations FROM pumpfun_graduations
+		`;
+		const [{ watches }] = await sql`
+			SELECT count(*)::int AS watches FROM user_alert_configs
+			WHERE graduation OR whale OR fees OR launch
+		`;
+		const beatMs = beat?.last_beat_at ? new Date(beat.last_beat_at).getTime() : 0;
+		const fresh = beatMs > 0 && now - beatMs < HEARTBEAT_FRESH_MS;
+		value = {
+			monitor: {
+				// If a heartbeat row exists, trust its freshness. If none exists yet,
+				// the dedicated worker hasn't reported — report the serverless API's
+				// own liveness rather than a false "stopped".
+				running: beat ? fresh : true,
+				mode: beat?.mode || 'serverless',
+				claimsDetected: graduations,
+			},
+			watches: { total: watches, active: watches },
+		};
+	} catch {
+		value = {
+			monitor: { running: true, mode: 'serverless', claimsDetected: 0 },
+			watches: { total: 0, active: 0 },
+		};
+	}
+
+	_monitorCache = { value, expiresAt: now + MONITOR_CACHE_TTL_MS };
+	return value;
 }
 
 async function probeResend() {
@@ -119,7 +179,11 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const uptimeMs = Date.now() - STARTED_AT;
-	const [resend, x402] = await Promise.all([probeResend(), probeX402()]);
+	const [resend, x402, monitorBlock] = await Promise.all([
+		probeResend(),
+		probeX402(),
+		probeMonitor(),
+	]);
 	return json(res, 200, {
 		status: 'ok',
 		service: '3d-agent',
@@ -128,9 +192,10 @@ export default wrap(async (req, res) => {
 		uptimeMs,
 		resend,
 		x402,
-		// Match the pump-dashboard health shape so the existing UI binding works
-		// without conditional logic.
-		monitor: { running: true, mode: 'serverless', claimsDetected: 0 },
-		watches: { total: 0, active: 0 },
+		// Real bot/monitor status for the pump-dashboard stat cards (see
+		// probeMonitor). Falls back to serverless liveness when no worker
+		// heartbeat exists or the DB is unreachable.
+		monitor: monitorBlock.monitor,
+		watches: monitorBlock.watches,
 	}, { 'cache-control': 'public, max-age=2, s-maxage=2' });
 });

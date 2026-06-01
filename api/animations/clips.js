@@ -29,14 +29,14 @@ const trackSchema = z.object({
 	times: z.array(z.number()).max(200_000),
 	values: z.array(z.number()).max(4_000_000),
 });
-const clipSchema = z.object({
+export const clipSchema = z.object({
 	name: z.string().trim().min(1).max(120),
 	duration: z.number().nonnegative().max(3600),
 	tracks: z.array(trackSchema).min(1).max(MAX_TRACKS),
 });
 
 // The editable keyframe document the studio round-trips (src/pose-animation.js).
-const editorDocSchema = z.object({
+export const editorDocSchema = z.object({
 	name: z.string().max(120).optional(),
 	duration: z.number().nonnegative().max(3600),
 	fps: z.number().int().min(1).max(240).optional(),
@@ -166,13 +166,8 @@ async function handleCreate(req, res, auth) {
 	const input = parsed.data;
 	const clip = input.clip;
 
-	// Every quaternion track must carry 4 floats per time sample, position 3.
-	for (const t of clip.tracks) {
-		const stride = /\.quaternion$/.test(t.name) ? 4 : t.name.endsWith('.position') || t.name.endsWith('.scale') ? 3 : 0;
-		if (stride && t.times.length && t.values.length !== t.times.length * stride) {
-			return error(res, 400, 'validation_error', `track ${t.name}: values length must be times×${stride}`);
-		}
-	}
+	const strideErr = validateClipTrackStrides(clip);
+	if (strideErr) return error(res, 400, 'validation_error', strideErr);
 
 	if (input.avatar_id) {
 		const ok = await sql`
@@ -201,19 +196,11 @@ async function handleCreate(req, res, auth) {
 	const editorJson = input.editor_doc ? JSON.stringify(input.editor_doc) : null;
 
 	// Inline small clips as JSONB; offload large ones to R2 and keep the pointer.
-	const clipJson = JSON.stringify(clip);
-	let inlineClip = clipJson;
-	let storageKey = null;
-	if (clipJson.length > MAX_BYTES_INLINE) {
-		try {
-			storageKey = `u/${auth.userId}/animations/clip-${slug}-${Date.now()}.json`;
-			await putObject({ key: storageKey, body: clipJson, contentType: 'application/json' });
-			inlineClip = null;
-		} catch (err) {
-			console.error('[animations/clips/create] R2 offload failed', err?.message || err);
-			return error(res, 502, 'storage_error', 'Failed to store large clip');
-		}
-	}
+	const { inlineClip, storageKey, error: clipErr } = await materializeClip(clip, {
+		userId: auth.userId,
+		slug,
+	});
+	if (clipErr) return error(res, 502, 'storage_error', clipErr);
 
 	let row;
 	try {
@@ -277,6 +264,37 @@ async function resolveAuth(req, requiredScope) {
 	if (!bearer) return null;
 	if (!hasScope(bearer.scope, requiredScope)) return null;
 	return bearer;
+}
+
+// Every quaternion track must carry 4 floats per time sample, position/scale 3.
+// Returns an error message string when a track is malformed, else null.
+export function validateClipTrackStrides(clip) {
+	for (const t of clip.tracks) {
+		const stride = /\.quaternion$/.test(t.name)
+			? 4
+			: t.name.endsWith('.position') || t.name.endsWith('.scale')
+				? 3
+				: 0;
+		if (stride && t.times.length && t.values.length !== t.times.length * stride) {
+			return `track ${t.name}: values length must be times×${stride}`;
+		}
+	}
+	return null;
+}
+
+// Inline small clips as JSONB; offload large ones to R2 and return the pointer.
+// On R2 failure returns { error } so callers can surface a 502 without throwing.
+export async function materializeClip(clip, { userId, slug }) {
+	const clipJson = JSON.stringify(clip);
+	if (clipJson.length <= MAX_BYTES_INLINE) return { inlineClip: clipJson, storageKey: null };
+	const storageKey = `u/${userId}/animations/clip-${slug}-${Date.now()}.json`;
+	try {
+		await putObject({ key: storageKey, body: clipJson, contentType: 'application/json' });
+		return { inlineClip: null, storageKey };
+	} catch (err) {
+		console.error('[animations/clips] R2 offload failed', err?.message || err);
+		return { error: 'Failed to store large clip' };
+	}
 }
 
 function autoSlug(name) {

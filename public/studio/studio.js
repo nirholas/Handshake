@@ -57,6 +57,12 @@ const WIDGET_TYPES = {
 		status: 'ready',
 		icon: '⬡',
 	},
+	'bonding-curve': {
+		label: 'Bonding Curve',
+		desc: 'Live graduation progress and bonding-curve climb for a pump.fun token.',
+		status: 'ready',
+		icon: '◭',
+	},
 };
 
 const DEMO_AVATAR = Object.freeze({
@@ -79,6 +85,7 @@ const DEMO_WIDGET_IDS = Object.freeze({
 	'pumpfun-feed': 'wdgt_demo_pumpfun',
 	'kol-trades': 'wdgt_demo_koltrad',
 	'live-trades-canvas': 'wdgt_demo_ltcnvs',
+	'bonding-curve': 'wdgt_demo_bondcrv',
 });
 
 const BRAND_DEFAULTS = Object.freeze({
@@ -131,6 +138,7 @@ const TYPE_DEFAULTS = {
 	'pumpfun-feed': { kind: 'all', minTier: '', autoNarrate: true, maxCards: 8 },
 	'kol-trades': { mint: '', limit: 20, refreshMs: 30000 },
 	'live-trades-canvas': { mint: '', chain: 'solana', bg: '#0a0a0a', minUsd: 0 },
+	'bonding-curve': { mint: '', network: 'mainnet', refreshMs: 15000, showUsd: true },
 };
 
 function defaultConfig(type) {
@@ -628,6 +636,31 @@ function renderTypeFields() {
 		);
 		wrap.appendChild(
 			numberField('minUsd', 'Min trade size (USD)', state.config.minUsd ?? 0, { min: 0, max: 1000000, step: 1 }),
+		);
+	}
+	if (state.type === 'bonding-curve') {
+		wrap.appendChild(
+			textField('mint', 'Token mint address', state.config.mint || '', {
+				max: 64,
+				placeholder: 'Pump.fun mint address (base58)',
+			}),
+		);
+		wrap.appendChild(
+			selectField('network', 'Network', state.config.network ?? 'mainnet', [
+				['mainnet', 'Mainnet'],
+				['devnet', 'Devnet'],
+			]),
+		);
+		wrap.appendChild(
+			selectField('refreshMs', 'Refresh interval', String(state.config.refreshMs ?? 15000), [
+				['10000', '10 seconds'],
+				['15000', '15 seconds'],
+				['30000', '30 seconds'],
+				['60000', '1 minute'],
+			]),
+		);
+		wrap.appendChild(
+			boolField('showUsd', 'Show USD values (Jupiter price)', state.config.showUsd !== false),
 		);
 	}
 }

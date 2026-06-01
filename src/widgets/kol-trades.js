@@ -9,8 +9,11 @@
  *   mountKolTradesWidget(root, opts) — full mount with polling + cleanup
  *
  * The <three-ws-widget type="kol-trades" mint="…"> custom element is registered
- * at the bottom of this file when running in a browser.
+ * at the bottom of this file when running in a browser. That same element also
+ * dispatches type="bonding-curve" to the bonding-curve runtime.
  */
+
+import { mountBondingCurve } from './bonding-curve.js';
 
 const SOURCE_BADGE = {
 	kol: { label: 'KOL', color: '#ffffff' },
@@ -175,7 +178,7 @@ if (typeof customElements !== 'undefined' && !customElements.get('three-ws-widge
 		'three-ws-widget',
 		class ThreeWsWidget extends HTMLElement {
 			static get observedAttributes() {
-				return ['type', 'mint', 'limit', 'refresh-ms'];
+				return ['type', 'mint', 'limit', 'refresh-ms', 'network', 'show-usd', 'accent'];
 			}
 
 			connectedCallback() {
@@ -197,12 +200,21 @@ if (typeof customElements !== 'undefined' && !customElements.get('three-ws-widge
 
 			_mount() {
 				const type = this.getAttribute('type');
-				if (type !== 'kol-trades') return;
-				this._ctrl = mountKolTradesWidget(this, {
-					mint: this.getAttribute('mint') || '',
-					limit: Number(this.getAttribute('limit') || '20'),
-					refreshMs: Number(this.getAttribute('refresh-ms') || '30000'),
-				});
+				if (type === 'kol-trades') {
+					this._ctrl = mountKolTradesWidget(this, {
+						mint: this.getAttribute('mint') || '',
+						limit: Number(this.getAttribute('limit') || '20'),
+						refreshMs: Number(this.getAttribute('refresh-ms') || '30000'),
+					});
+				} else if (type === 'bonding-curve') {
+					this._ctrl = mountBondingCurve(this, {
+						mint: this.getAttribute('mint') || '',
+						network: this.getAttribute('network') || 'mainnet',
+						refreshMs: Number(this.getAttribute('refresh-ms') || '15000'),
+						showUsd: this.getAttribute('show-usd') !== 'false',
+						accent: this.getAttribute('accent') || '',
+					});
+				}
 			}
 		},
 	);

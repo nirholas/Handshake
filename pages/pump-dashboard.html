@@ -27,6 +27,19 @@
 		<link rel="stylesheet" href="/mobile.css" />
 		<script defer src="/footer-newsletter.js"></script>
 		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+		<style>
+			/* Config connection-test pills (Task 10) */
+			.pd-probe { display:inline-block; margin-left:0.4rem; font-size:0.66rem; font-weight:600; padding:0.05rem 0.45rem; border-radius:999px; vertical-align:middle; }
+			.pd-probe.is-ok { color:var(--pd-success); background:var(--pd-success-soft); border:1px solid var(--pd-success-border); }
+			.pd-probe.is-err { color:var(--pd-danger); background:var(--pd-danger-soft); border:1px solid var(--pd-danger-border); }
+			.pd-probe.is-pending { color:var(--pd-warn); background:var(--pd-warn-soft); border:1px solid var(--pd-warn-border); }
+			/* Stale monitor stat cards (Task 07) */
+			.pd-stat.is-stale { opacity:0.5; }
+			.pd-stale-badge { display:inline-block; font-size:0.58rem; color:var(--pd-warn); margin-left:0.35rem; text-transform:uppercase; letter-spacing:0.05em; vertical-align:middle; }
+			/* Wallet holdings token logos (Task 02) */
+			.pd-token-logo { width:18px; height:18px; border-radius:50%; vertical-align:middle; margin-right:0.4rem; object-fit:cover; background:var(--pd-bg-elev); }
+			#pd-market-chart { cursor:crosshair; }
+		</style>
 	</head>
 	<body class="home-page pump-dashboard-page">
 		<a href="#pd-main" class="h-skip-link">Skip to main content</a>
@@ -143,6 +156,10 @@
 						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="5" r="2.5"/><path d="M3 14c0-3 2.2-5 5-5s5 2 5 5"/></svg>
 						Default Agent
 					</a>
+					<a href="#" data-page="revenue">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 13l3.5-4 3 2.5L13 5"/><path d="M10 5h3v3"/></svg>
+						Revenue
+					</a>
 
 					<div class="pd-nav-section">System</div>
 					<a href="#" data-page="config">
@@ -179,6 +196,34 @@
 
 				<!-- ═══════ Dashboard page ═══════ -->
 				<section class="pd-page is-active" id="page-dashboard" aria-labelledby="pd-page-title">
+					<!-- Bot/monitor stat cards — bound to GET /api/healthz (monitor + watches + uptime). -->
+					<div class="pd-stat-grid" id="pd-monitor-stats" style="margin-bottom:1rem">
+						<div class="pd-stat">
+							<div class="pd-stat-label">Bot status</div>
+							<div class="pd-stat-value" id="stat-bot-status">—</div>
+							<div class="pd-stat-sub" id="stat-bot-status-sub">Live monitor</div>
+						</div>
+						<div class="pd-stat">
+							<div class="pd-stat-label">Mode</div>
+							<div class="pd-stat-value" id="stat-bot-mode">—</div>
+							<div class="pd-stat-sub">Worker mode</div>
+						</div>
+						<div class="pd-stat">
+							<div class="pd-stat-label">Graduations seen</div>
+							<div class="pd-stat-value" id="stat-claims">—</div>
+							<div class="pd-stat-sub">Detected on-chain</div>
+						</div>
+						<div class="pd-stat">
+							<div class="pd-stat-label">Active alerts</div>
+							<div class="pd-stat-value" id="stat-watches">—</div>
+							<div class="pd-stat-sub">Users watching</div>
+						</div>
+						<div class="pd-stat">
+							<div class="pd-stat-label">Uptime</div>
+							<div class="pd-stat-value" id="stat-uptime">—</div>
+							<div class="pd-stat-sub">API process</div>
+						</div>
+					</div>
 					<div class="pd-dash-grid">
 						<div class="pd-panel pd-mod-8">
 							<div class="pd-panel-head"><h2>Featured agent</h2></div>
@@ -213,15 +258,20 @@
 						</div>
 
 						<div class="pd-panel pd-mod-4">
-							<div class="pd-panel-head"><h2>Wallet snapshot</h2></div>
+							<div class="pd-panel-head">
+								<h2>Wallet snapshot</h2>
+								<div class="pd-spacer"></div>
+								<button class="pd-btn pd-btn-sm" id="pd-wallet-disconnect" type="button" hidden>Disconnect</button>
+							</div>
 							<div class="pd-panel-body" id="pd-wallet-body">
-								<div class="pd-empty">
+								<div class="pd-empty" id="pd-wallet-empty">
 									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/></svg>
-									<div>Sign in to view your Solana balance and token holdings.</div>
+									<div>Connect your Solana wallet to see SOL &amp; token holdings.</div>
 									<div style="margin-top: 0.85rem">
-										<a class="pd-btn is-primary pd-btn-sm" href="/login">Sign in</a>
+										<button class="pd-btn is-primary pd-btn-sm" id="connect-wallet-btn" type="button">Connect Wallet</button>
 									</div>
 								</div>
+								<div id="pd-wallet-holdings" hidden></div>
 							</div>
 						</div>
 
@@ -253,6 +303,24 @@
 										<div class="pd-stat-value" id="pd-stat-grads">—</div>
 										<div class="pd-stat-sub">Bonded to AMM</div>
 									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="pd-panel pd-mod-12">
+							<div class="pd-panel-head">
+								<h2>Market chart</h2>
+								<div class="pd-spacer"></div>
+								<select class="pd-select" id="pd-chart-token" aria-label="Select token for the market chart" style="max-width:280px">
+									<option value="" disabled selected>Loading trending tokens…</option>
+								</select>
+								<button class="pd-btn pd-btn-sm" id="pd-chart-retry" type="button" hidden>Retry</button>
+							</div>
+							<div class="pd-panel-body">
+								<div id="pd-chart-meta" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:baseline;margin-bottom:0.6rem;min-height:1.2rem;font-size:0.82rem;color:var(--pd-text-muted)"></div>
+								<div style="position:relative">
+									<canvas id="pd-market-chart" style="width:100%;height:300px;display:block"></canvas>
+									<div id="pd-chart-tooltip" style="position:absolute;pointer-events:none;display:none;background:var(--pd-bg-elev);border:1px solid var(--pd-border-strong);border-radius:6px;padding:0.35rem 0.55rem;font-family:var(--pd-font-mono);font-size:0.72rem;color:var(--pd-text-bright);white-space:nowrap;z-index:3;transform:translate(-50%,-120%)"></div>
 								</div>
 							</div>
 						</div>
@@ -408,6 +476,11 @@
 									<label>Trade alert cooldown (s)</label>
 									<input class="pd-input" type="number" id="pd-threshold-cooldown" value="30" min="5" step="5" />
 								</div>
+								<div class="pd-form-group">
+									<label>Webhook URL (optional)</label>
+									<input class="pd-input" type="url" id="pd-alert-webhook" placeholder="https://your-server.com/pump-alerts" />
+									<div style="font-size:0.72rem;color:var(--pd-text-dim);margin-top:0.3rem">Graduation alerts POST here even when no tab is open. Must be https.</div>
+								</div>
 								<button class="pd-btn is-primary" id="pd-save-alerts" type="button">Save settings</button>
 							</div>
 						</div>
@@ -549,7 +622,10 @@
 									<div class="pd-form-group">
 										<label>Speech</label>
 										<input class="pd-input" type="text" id="pd-speech-input" placeholder="Enter text to speak…" />
-										<button class="pd-btn is-primary" id="pd-speak-btn" type="button" style="margin-top:0.5rem">Speak</button>
+										<div style="display:flex;gap:0.4rem;margin-top:0.5rem">
+											<button class="pd-btn is-primary" id="pd-speak-btn" type="button">Speak</button>
+											<button class="pd-btn is-danger" id="pd-speak-stop" type="button" hidden>Stop</button>
+										</div>
 									</div>
 									<div class="pd-form-group">
 										<label>Quick actions</label>
@@ -590,6 +666,64 @@
 					</div>
 				</section>
 
+				<!-- ═══════ Revenue page ═══════ -->
+				<section class="pd-page" id="page-revenue" aria-label="Revenue">
+					<div class="pd-form-inline">
+						<div class="pd-form-group" style="flex:2">
+							<label>Agent</label>
+							<select class="pd-select" id="pd-rev-agent">
+								<option value="">All agents</option>
+							</select>
+						</div>
+						<div class="pd-form-group" style="flex:1">
+							<label>Granularity</label>
+							<select class="pd-select" id="pd-rev-granularity">
+								<option value="day" selected>Day</option>
+								<option value="week">Week</option>
+								<option value="month">Month</option>
+							</select>
+						</div>
+						<div class="pd-form-group" style="flex:1">
+							<label>From</label>
+							<input class="pd-input" type="date" id="pd-rev-from" />
+						</div>
+						<div class="pd-form-group" style="flex:1">
+							<label>To</label>
+							<input class="pd-input" type="date" id="pd-rev-to" />
+						</div>
+						<button class="pd-btn is-primary" id="pd-rev-refresh" type="button">Refresh</button>
+					</div>
+
+					<div class="pd-stat-grid" id="pd-rev-summary" style="margin-bottom:1rem">
+						<div class="pd-stat"><div class="pd-stat-label">Gross</div><div class="pd-stat-value" id="pd-rev-gross">—</div><div class="pd-stat-sub" id="pd-rev-currency">—</div></div>
+						<div class="pd-stat"><div class="pd-stat-label">Platform fees</div><div class="pd-stat-value" id="pd-rev-fees">—</div><div class="pd-stat-sub">Deducted</div></div>
+						<div class="pd-stat"><div class="pd-stat-label">Net earnings</div><div class="pd-stat-value is-success" id="pd-rev-net">—</div><div class="pd-stat-sub">After fees</div></div>
+						<div class="pd-stat"><div class="pd-stat-label">Payments</div><div class="pd-stat-value" id="pd-rev-count">—</div><div class="pd-stat-sub" id="pd-rev-chain">—</div></div>
+					</div>
+
+					<div class="pd-panel" style="margin-bottom:1rem">
+						<div class="pd-panel-head"><h2>Net earnings over time</h2></div>
+						<div class="pd-panel-body">
+							<div id="pd-rev-status" style="font-size:0.85rem;color:var(--pd-text-muted);margin-bottom:0.5rem;min-height:1.2rem"></div>
+							<div style="position:relative">
+								<canvas id="pd-rev-chart" style="width:100%;height:260px;display:block"></canvas>
+							</div>
+						</div>
+					</div>
+
+					<div class="pd-panel">
+						<div class="pd-panel-head"><h2>By skill</h2></div>
+						<div class="pd-panel-body no-pad">
+							<table class="pd-table">
+								<thead><tr><th>Skill</th><th style="text-align:right">Payments</th><th style="text-align:right">Net</th></tr></thead>
+								<tbody id="pd-rev-skill-table">
+									<tr><td colspan="3" class="pd-empty">Open the Revenue tab to load.</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</section>
+
 				<!-- ═══════ Config page ═══════ -->
 				<section class="pd-page" id="page-config" aria-label="Configuration">
 					<div class="pd-callout" style="margin-bottom:1rem">
@@ -600,15 +734,15 @@
 							<div class="pd-panel-head"><h2>Connection</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-form-group">
-									<label>API base URL</label>
+									<label>API base URL <span class="pd-probe" id="pd-probe-api"></span></label>
 									<input class="pd-input" type="text" id="pd-cfg-api-url" placeholder="https://your-pumpkit.example" />
 								</div>
 								<div class="pd-form-group">
-									<label>WebSocket URL</label>
+									<label>WebSocket URL <span class="pd-probe" id="pd-probe-ws"></span></label>
 									<input class="pd-input" type="text" id="pd-cfg-ws-url" />
 								</div>
 								<div class="pd-form-group">
-									<label>API key</label>
+									<label>API key <span class="pd-probe" id="pd-probe-key"></span></label>
 									<input class="pd-input" type="password" id="pd-cfg-api-key" placeholder="Optional API key…" />
 								</div>
 								<button class="pd-btn is-primary" id="pd-save-config" type="button">Save &amp; reconnect</button>
@@ -619,7 +753,7 @@
 							<div class="pd-panel-head"><h2>Solana RPC</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-form-group">
-									<label>RPC endpoint</label>
+									<label>RPC endpoint <span class="pd-probe" id="pd-probe-rpc"></span></label>
 									<input class="pd-input" type="text" id="pd-cfg-rpc-url" value="https://api.mainnet-beta.solana.com" />
 								</div>
 								<div class="pd-form-group">
@@ -637,6 +771,41 @@
 
 				<!-- ═══════ API page ═══════ -->
 				<section class="pd-page" id="page-api" aria-label="API reference">
+					<div class="pd-panel" style="margin-bottom:1rem">
+						<div class="pd-panel-head">
+							<h2>Your keys</h2>
+							<div class="pd-spacer"></div>
+							<span class="pd-badge" id="pd-keys-count">—</span>
+						</div>
+						<div class="pd-panel-body">
+							<form id="pd-key-create-form" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem">
+								<div class="pd-form-group" style="flex:2;min-width:200px;margin:0">
+									<label for="pd-key-name">Key name</label>
+									<input class="pd-input" type="text" id="pd-key-name" maxlength="80" placeholder="e.g. CI pipeline" required />
+								</div>
+								<div class="pd-form-group" style="flex:1;min-width:160px;margin:0">
+									<label for="pd-key-expiry">Expires (optional)</label>
+									<input class="pd-input" type="datetime-local" id="pd-key-expiry" />
+								</div>
+								<div class="pd-form-group" style="flex:2;min-width:240px;margin:0">
+									<label>Scopes</label>
+									<div style="display:flex;gap:0.85rem;flex-wrap:wrap;font-size:0.82rem;color:var(--pd-text-muted)">
+										<label style="display:flex;gap:0.3rem;align-items:center"><input type="checkbox" class="pd-key-scope" value="avatars:read" checked /> avatars:read</label>
+										<label style="display:flex;gap:0.3rem;align-items:center"><input type="checkbox" class="pd-key-scope" value="avatars:write" checked /> avatars:write</label>
+										<label style="display:flex;gap:0.3rem;align-items:center"><input type="checkbox" class="pd-key-scope" value="avatars:delete" /> avatars:delete</label>
+										<label style="display:flex;gap:0.3rem;align-items:center"><input type="checkbox" class="pd-key-scope" value="profile" /> profile</label>
+									</div>
+								</div>
+								<button class="pd-btn is-primary" id="pd-key-create" type="submit">Create key</button>
+							</form>
+							<table class="pd-table">
+								<thead><tr><th>Name</th><th>Prefix</th><th>Scopes</th><th>Created</th><th>Last used</th><th>Expires</th><th></th></tr></thead>
+								<tbody id="pd-keys-table">
+									<tr><td colspan="7" class="pd-empty">Open the API tab to load your keys.</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
 					<div class="pd-panel">
 						<div class="pd-panel-head"><h2>API endpoints</h2></div>
 						<div class="pd-panel-body">
@@ -695,6 +864,24 @@
 			</div>
 		</div>
 
+		<!-- ── API key created modal (shows plaintext token once) ────────────── -->
+		<div class="pd-modal-backdrop" id="pd-key-modal" role="dialog" aria-modal="true" aria-labelledby="pd-key-modal-title">
+			<div class="pd-modal">
+				<h3 id="pd-key-modal-title">API key created</h3>
+				<p style="font-size:0.85rem;color:var(--pd-warn);margin:0 0 0.75rem">
+					Copy this token now — you won't be able to see it again.
+				</p>
+				<div class="pd-form-group">
+					<label>Token</label>
+					<input class="pd-input pd-mono" type="text" id="pd-key-token" readonly />
+				</div>
+				<div class="pd-modal-actions">
+					<button class="pd-btn" id="pd-key-copy" type="button">Copy</button>
+					<button class="pd-btn is-primary" id="pd-key-done" type="button">Done</button>
+				</div>
+			</div>
+		</div>
+
 		<div class="pd-toast-container" id="pd-toasts" role="status" aria-live="polite"></div>
 
 		<script type="module">
@@ -708,6 +895,7 @@
 
 			import { grindVanity } from '/src/solana/vanity/grinder.js';
 			import { validatePattern } from '/src/solana/vanity/validation.js';
+			import { initWalletButton, getConnectedWallet, getConnectedWalletAddress } from '/src/wallet.js';
 
 			const PAGE_TITLES = {
 				dashboard: 'Dashboard',
@@ -719,6 +907,7 @@
 				quoting: 'Quote Engine',
 				vanity: 'Vanity Generator',
 				animations: 'Default Agent',
+				revenue: 'Revenue',
 				config: 'Configuration',
 				api: 'API Reference',
 			};
@@ -740,6 +929,9 @@
 				vanityAbort: null,
 				healthInterval: null,
 				networkInterval: null,
+				monitorInterval: null,
+				walletAddress: null,
+				solPrice: null,
 				startupAt: Date.now(),
 			};
 
@@ -800,6 +992,10 @@
 				if (page === 'animations') loadAgent();
 				if (page === 'watches') refreshWatches();
 				if (page === 'claims') refreshClaims();
+				if (page === 'revenue') loadRevenue();
+				if (page === 'api') loadApiKeys();
+				if (page === 'alerts') loadAlertConfig();
+				if (page === 'dashboard') { loadFeaturedAgent(); loadTrendingTokens(); pollMonitorStats(); }
 			}
 
 			// ── API health + network ─────────────────────────────────────
@@ -847,6 +1043,7 @@
 
 					const sol = Number(data.sol_price || 0);
 					if (sol > 0) {
+						state.solPrice = sol;
 						$('pd-stat-sol').textContent = '$' + sol.toFixed(2);
 						$('pd-sol-status').textContent = 'SOL: $' + sol.toFixed(2);
 						$('pd-sol-dot').className = 'pd-dot is-on';
@@ -872,80 +1069,150 @@
 
 			// ── Featured agent ───────────────────────────────────────────
 
+			function initialsOf(name) {
+				const words = String(name || '').trim().split(/\s+/).filter(Boolean);
+				if (!words.length) return '?';
+				if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+				return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+			}
+
+			function renderFeaturedAvatar(agent) {
+				const slot = $('pd-featured-avatar');
+				if (!slot) return;
+				if (agent.avatar_url) {
+					slot.innerHTML = `<img src="${escapeHtml(agent.avatar_url)}" alt="${escapeHtml(agent.display_name || 'Agent')} avatar" style="width:100%;height:100%;object-fit:cover" loading="lazy" />`;
+				} else {
+					// Never a stock placeholder — render the agent's initials.
+					slot.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--pd-font-display);font-size:2.2rem;font-weight:700;color:var(--pd-text-bright);background:linear-gradient(135deg,var(--pd-bg-elev),#161616)">${escapeHtml(initialsOf(agent.display_name))}</div>`;
+				}
+			}
+
+			// Task 01: the Featured agent is selected platform-wide from real data
+			// (top 30-day revenue, else newest public agent) by GET /api/agents/featured.
 			async function loadFeaturedAgent() {
+				const nameEl = $('pd-featured-name');
+				const descEl = $('pd-featured-desc');
+				const linkEl = $('pd-featured-link');
+				const statsEl = $('pd-featured-stats');
+				if (!nameEl) return;
+				nameEl.textContent = 'Loading agent…';
+				descEl.textContent = 'Fetching the featured agent for the platform.';
 				try {
-					const resp = await apiFetch('/api/agents/me');
-					if (resp.status === 401 || !resp.ok) {
-						$('pd-featured-name').textContent = 'Sign in to see your agents';
-						$('pd-featured-desc').textContent = 'Once you create an agent, it shows up here with live stats and a 3D preview.';
-						$('pd-featured-link').textContent = 'Sign in';
-						$('pd-featured-link').href = '/login';
+					const resp = await apiFetch('/api/agents/featured');
+					if (resp.status === 404) {
+						nameEl.textContent = 'No agents available yet';
+						descEl.textContent = 'Be the first — create a 3D agent and it can be featured here.';
+						linkEl.textContent = 'Create agent';
+						linkEl.href = '/create';
+						if (statsEl) statsEl.hidden = true;
+						$('pd-featured-avatar').innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--pd-text-dim);font-size:0.8rem">No agents yet</div>`;
 						return;
 					}
-					const { agent } = await resp.json();
-					if (!agent) {
-						$('pd-featured-name').textContent = 'No agent yet';
-						$('pd-featured-desc').textContent = 'Create your first 3D agent and it will appear here.';
-						$('pd-featured-link').textContent = 'Create agent';
-						$('pd-featured-link').href = '/create';
-						return;
+					if (!resp.ok) throw new Error('featured ' + resp.status);
+					const { data: agent } = await resp.json();
+					nameEl.textContent = agent.display_name || 'Untitled agent';
+					descEl.textContent = agent.bio || 'A featured 3D agent on three.ws.';
+					linkEl.textContent = 'View profile';
+					linkEl.href = agent.detail_url || ('/agent/' + agent.id);
+					if (statsEl) {
+						statsEl.hidden = false;
+						statsEl.innerHTML = [
+							`<span class="pd-featured-stat"><span class="pd-featured-stat-label">ID</span>${shortAddr(agent.id)}</span>`,
+							agent.net_30d > 0 ? `<span class="pd-featured-stat"><span class="pd-featured-stat-label">30d net</span>${(agent.net_30d / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 })} USDC</span>` : '',
+						].filter(Boolean).join('');
 					}
-					$('pd-featured-name').textContent = agent.name || 'Untitled agent';
-					$('pd-featured-desc').textContent = agent.description || 'Your default agent. Ready to chat, speak, and embed.';
-					$('pd-featured-link').textContent = 'View profile';
-					$('pd-featured-link').href = '/agent/' + agent.id;
-
-					const stats = $('pd-featured-stats');
-					stats.hidden = false;
-					stats.innerHTML = [
-						agent.id ? `<span class="pd-featured-stat"><span class="pd-featured-stat-label">ID</span>${shortAddr(agent.id)}</span>` : '',
-						agent.created_at ? `<span class="pd-featured-stat"><span class="pd-featured-stat-label">Created</span>${new Date(agent.created_at).toLocaleDateString()}</span>` : '',
-						agent.token_mint ? `<span class="pd-featured-stat"><span class="pd-featured-stat-label">Token</span>${shortAddr(agent.token_mint)}</span>` : '',
-					].filter(Boolean).join('');
-
-					// Preview the actual agent in the avatar slot when we have its embed.
-					if (agent.id) {
-						$('pd-featured-avatar').innerHTML = `<iframe src="/agent-embed.html?id=${encodeURIComponent(agent.id)}" title="Featured agent preview"></iframe>`;
-					}
+					renderFeaturedAvatar(agent);
 				} catch {
-					$('pd-featured-name').textContent = 'Couldn’t load agent';
-					$('pd-featured-desc').textContent = 'Try refreshing the page, or check your connection in the Configuration tab.';
+					nameEl.textContent = 'Couldn’t load featured agent';
+					descEl.textContent = 'Try refreshing, or check connectivity in the Configuration tab.';
+					if (statsEl) statsEl.hidden = true;
 				}
 			}
 
 			// ── Wallet snapshot ──────────────────────────────────────────
 
-			async function loadWalletSnapshot() {
+			// Task 02: real Solana wallet connect via src/wallet.js, balances via the
+			// server-side POST /api/wallet/balances (Helius + Jupiter, key stays server-side).
+			async function onWalletChanged(address) {
+				const empty = $('pd-wallet-empty');
+				const holdings = $('pd-wallet-holdings');
+				const disconnectBtn = $('pd-wallet-disconnect');
+				if (!holdings) return;
+				state.walletAddress = address || null;
+
+				if (!address) {
+					holdings.hidden = true;
+					holdings.innerHTML = '';
+					if (empty) empty.hidden = false;
+					if (disconnectBtn) disconnectBtn.hidden = true;
+					return;
+				}
+
+				if (empty) empty.hidden = true;
+				if (disconnectBtn) disconnectBtn.hidden = false;
+				holdings.hidden = false;
+				holdings.innerHTML = '<div style="font-size:0.85rem;color:var(--pd-text-muted)">Loading balances…</div>';
+
 				try {
-					const resp = await apiFetch('/api/pump/balances');
-					if (resp.status === 401) return; // already shows the sign-in CTA
-					if (!resp.ok) return;
-					const data = await resp.json();
-					const body = $('pd-wallet-body');
-					const sol = Number(data.solBalance || data.sol || 0);
-					const tokens = data.tokens || data.tokenBalances || [];
-					body.innerHTML = `
-						<div class="pd-stat" style="margin-bottom:0.7rem">
-							<div class="pd-stat-label">SOL balance</div>
-							<div class="pd-stat-value">${sol.toFixed(4)}</div>
-							<div class="pd-stat-sub">${data.wallet ? shortAddr(data.wallet) : 'your wallet'}</div>
-						</div>
-						<div style="font-size:0.78rem;color:var(--pd-text-muted);margin-bottom:0.45rem;font-family:var(--pd-font-display);text-transform:uppercase;letter-spacing:0.08em">Top holdings</div>
-						${tokens.length === 0 ? '<div style="font-size:0.85rem;color:var(--pd-text-dim)">No token balances detected.</div>' : `
-							<table class="pd-table">
-								<thead><tr><th>Token</th><th style="text-align:right">Amount</th></tr></thead>
-								<tbody>
-									${tokens.slice(0, 5).map((t) => `
-										<tr>
-											<td><span class="pd-mono">${escapeHtml(t.symbol || shortAddr(t.mint || ''))}</span></td>
-											<td style="text-align:right" class="pd-mono">${Number(t.uiAmount || t.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 4 })}</td>
-										</tr>
-									`).join('')}
-								</tbody>
-							</table>
-						`}
-					`;
-				} catch { /* keep the empty state */ }
+					const resp = await apiFetch('/api/wallet/balances', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ chain: 'solana', address }),
+					});
+					const data = await resp.json().catch(() => ({}));
+					if (!resp.ok) {
+						const msg = data.error_description || data.error || `Balance lookup failed (${resp.status})`;
+						holdings.innerHTML = `<div style="font-size:0.85rem;color:var(--pd-danger)">${escapeHtml(msg)}</div>`;
+						return;
+					}
+					renderWalletHoldings(address, data);
+				} catch (e) {
+					holdings.innerHTML = `<div style="font-size:0.85rem;color:var(--pd-danger)">Network error: ${escapeHtml(e.message || 'failed')}</div>`;
+				}
+			}
+
+			function renderWalletHoldings(address, data) {
+				const holdings = $('pd-wallet-holdings');
+				const native = data.native || {};
+				const solAmount = Number(native.amount || 0);
+				const solUsd = Number(native.usd || 0);
+				const tokens = (data.tokens || [])
+					.map((t) => ({ ...t, usd: Number(t.usd || 0), amount: Number(t.amount || 0) }))
+					.sort((a, b) => b.usd - a.usd)
+					.slice(0, 10);
+
+				holdings.innerHTML = `
+					<div style="margin-bottom:0.6rem">
+						<a class="pd-addr pd-mono" href="https://solscan.io/account/${escapeHtml(address)}" target="_blank" rel="noopener">${shortAddr(address)}</a>
+					</div>
+					<div class="pd-stat" style="margin-bottom:0.7rem">
+						<div class="pd-stat-label">${escapeHtml(native.symbol || 'SOL')} balance</div>
+						<div class="pd-stat-value">${solAmount.toLocaleString(undefined, { maximumFractionDigits: 4 })}</div>
+						<div class="pd-stat-sub">${solUsd > 0 ? '$' + solUsd.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
+					</div>
+					<div style="font-size:0.78rem;color:var(--pd-text-muted);margin-bottom:0.45rem;font-family:var(--pd-font-display);text-transform:uppercase;letter-spacing:0.08em">Top holdings</div>
+					${tokens.length === 0 ? '<div style="font-size:0.85rem;color:var(--pd-text-dim)">No SPL tokens</div>' : `
+						<table class="pd-table">
+							<thead><tr><th>Token</th><th style="text-align:right">Amount</th><th style="text-align:right">USD</th></tr></thead>
+							<tbody>
+								${tokens.map((t) => `
+									<tr>
+										<td>${t.logo ? `<img class="pd-token-logo" src="${escapeHtml(t.logo)}" alt="" />` : ''}<span class="pd-mono">${escapeHtml(t.symbol || shortAddr(t.mint || ''))}</span></td>
+										<td style="text-align:right" class="pd-mono">${t.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })}</td>
+										<td style="text-align:right" class="pd-mono">${t.usd > 0 ? '$' + t.usd.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</td>
+									</tr>
+								`).join('')}
+							</tbody>
+						</table>
+					`}
+				`;
+			}
+
+			function disconnectWallet() {
+				try {
+					getConnectedWallet()?.disconnect?.();
+				} catch { /* provider may already be disconnected */ }
+				onWalletChanged(null);
 			}
 
 			// ── Custom agents list ───────────────────────────────────────
@@ -953,32 +1220,60 @@
 			async function loadCustomAgents() {
 				const tbody = $('pd-custom-agents-table');
 				if (!tbody) return;
+				tbody.innerHTML = '<tr><td colspan="4" class="pd-empty">Loading agents…</td></tr>';
 				try {
 					const resp = await apiFetch('/api/agents');
+					if (resp.status === 401) {
+						tbody.innerHTML = '<tr><td colspan="4" class="pd-empty">Sign in to manage your agents. <a href="/login" style="color:var(--pd-accent)">Sign in</a></td></tr>';
+						return;
+					}
 					if (!resp.ok) {
-						tbody.innerHTML = '<tr><td colspan="4" class="pd-empty">Sign in to see your agents.</td></tr>';
+						tbody.innerHTML = `<tr><td colspan="4" class="pd-empty">Couldn’t load agents (${resp.status}).</td></tr>`;
 						return;
 					}
 					const j = await resp.json();
 					const agents = j.agents || j.data || [];
 					if (!agents.length) {
-						tbody.innerHTML = '<tr><td colspan="4" class="pd-empty">No agents yet — click <strong>+ New agent</strong>.</td></tr>';
+						tbody.innerHTML = '<tr><td colspan="4" class="pd-empty">No custom agents yet — click <strong>+ New agent</strong>.</td></tr>';
 						return;
 					}
 					tbody.innerHTML = agents.map((a) => {
 						const created = a.created_at ? new Date(a.created_at).toLocaleDateString() : '—';
-						return `<tr>
+						return `<tr data-agent-row="${escapeHtml(a.id)}">
 							<td>${escapeHtml(a.name || a.id)}</td>
 							<td>${escapeHtml((a.description || '').slice(0, 80))}</td>
 							<td class="pd-mono">${created}</td>
 							<td>
 								<a class="pd-btn pd-btn-sm" href="/agent/${escapeHtml(a.id)}/edit">Edit</a>
 								<a class="pd-btn pd-btn-sm" href="/agent/${escapeHtml(a.id)}">Open</a>
+								<button class="pd-btn pd-btn-sm is-danger" type="button" data-delete-agent="${escapeHtml(a.id)}" data-agent-name="${escapeHtml(a.name || a.id)}">Delete</button>
 							</td>
 						</tr>`;
 					}).join('');
+					tbody.querySelectorAll('[data-delete-agent]').forEach((b) => {
+						b.addEventListener('click', () => deleteAgent(b.dataset.deleteAgent, b.dataset.agentName));
+					});
 				} catch {
 					tbody.innerHTML = '<tr><td colspan="4" class="pd-empty">Failed to load agents.</td></tr>';
+				}
+			}
+
+			async function deleteAgent(id, name) {
+				if (!confirm(`Delete agent "${name}"? This cannot be undone.`)) return;
+				try {
+					const csrf = await getCsrfToken();
+					const headers = {};
+					if (csrf) headers['x-csrf-token'] = csrf;
+					const resp = await apiFetch('/api/agents/' + encodeURIComponent(id), { method: 'DELETE', headers });
+					if (resp.ok) {
+						toast('Agent deleted', 'success');
+						loadCustomAgents();
+					} else {
+						const err = await resp.json().catch(() => ({}));
+						toast(err.error_description || err.error || `Delete failed (${resp.status})`, 'error');
+					}
+				} catch (e) {
+					toast('Network error: ' + (e.message || 'delete failed'), 'error');
 				}
 			}
 
@@ -1000,23 +1295,64 @@
 				loadCustomAgents();
 			}
 
-			function agentAction(type) {
+			function postAgentAction(action) {
 				const iframe = $('pd-agent-iframe');
-				if (!iframe || !iframe.contentWindow || !state.agentId) return;
+				if (!iframe || !iframe.contentWindow || !state.agentId) {
+					toast('Agent preview not ready yet', 'error');
+					return false;
+				}
+				iframe.contentWindow.postMessage({ agentId: state.agentId, type: 'agent:action', action }, '*');
+				return true;
+			}
+
+			// Task 11: Speak posts a real TTS action; the embed plays ElevenLabs audio,
+			// drives lip-sync, and replies with agent:action:result so we surface
+			// real upstream errors instead of failing silently.
+			function agentAction(type) {
 				let action;
 				switch (type) {
 					case 'speak': {
-						const text = $('pd-speech-input').value;
-						if (!text) return;
-						action = { type: 'speak', text };
-						break;
+						const text = $('pd-speech-input').value.trim();
+						if (!text) { toast('Enter something to speak', 'error'); return; }
+						if (postAgentAction({ type: 'speak', text })) setSpeaking(true);
+						return;
 					}
 					case 'emote':  action = { type: 'emote',   name: 'dance' }; break;
 					case 'wave':   action = { type: 'gesture', name: 'wave'  }; break;
 					case 'verify': action = { type: 'validate-model' }; break;
 					default: return;
 				}
-				iframe.contentWindow.postMessage({ agentId: state.agentId, type: 'agent:action', action }, '*');
+				postAgentAction(action);
+			}
+
+			function setSpeaking(on) {
+				const speak = $('pd-speak-btn');
+				const stop = $('pd-speak-stop');
+				if (speak) speak.disabled = on;
+				if (stop) stop.hidden = !on;
+			}
+
+			function stopSpeak() {
+				postAgentAction({ type: 'speak:stop' });
+				setSpeaking(false);
+			}
+
+			// Result + lifecycle messages from the agent embed.
+			function handleAgentMessage(ev) {
+				const msg = ev.data;
+				if (!msg || typeof msg !== 'object') return;
+				if (msg.type === 'agent:action:result') {
+					const act = msg.action || {};
+					if (act.type === 'speak' || act.type === 'speak:stop') {
+						setSpeaking(false);
+						if (msg.ok === false) toast(msg.error || 'Speech failed', 'error');
+					}
+				}
+				// The embed echoes every protocol action; reset the Speak button when
+				// playback finishes even if no explicit result arrives.
+				if (msg.type === 'agent:action' && msg.action?.type === 'speak:end') {
+					setSpeaking(false);
+				}
 			}
 
 			function playAnimation() {
@@ -1232,18 +1568,90 @@
 				while (feed.children.length > 200) feed.lastElementChild.remove();
 			}
 
-			function saveAlertConfig() {
-				state.alertConfig = {
+			// Task 12: alert config is server-persisted (per user, cross-device) and
+			// evaluated server-side by the pumpfun-monitor cron. localStorage is only
+			// a fast render cache.
+			function applyAlertConfigToForm(cfg) {
+				if (cfg.graduation !== undefined) $('pd-alert-graduation').checked = cfg.graduation;
+				if (cfg.whale !== undefined) $('pd-alert-whale').checked = cfg.whale;
+				if (cfg.fees !== undefined) $('pd-alert-fees').checked = cfg.fees;
+				if (cfg.launch !== undefined) $('pd-alert-launch').checked = cfg.launch;
+				if (cfg.whaleThreshold != null) $('pd-threshold-whale').value = cfg.whaleThreshold;
+				if (cfg.claimThreshold != null) $('pd-threshold-claim').value = cfg.claimThreshold;
+				if (cfg.cooldown != null) $('pd-threshold-cooldown').value = cfg.cooldown;
+				if (cfg.webhookUrl != null) $('pd-alert-webhook').value = cfg.webhookUrl || '';
+			}
+
+			let _alertConfigLoaded = false;
+			async function loadAlertConfig() {
+				// Fetch server alert history into the feed regardless of auth state.
+				loadServerAlerts();
+				if (_alertConfigLoaded) return;
+				try {
+					const resp = await apiFetch('/api/alerts/config');
+					if (resp.status === 401) return; // anonymous — keep local cache
+					if (!resp.ok) return;
+					const { data } = await resp.json();
+					state.alertConfig = data;
+					localStorage.setItem('pumpbot-alerts', JSON.stringify(data));
+					applyAlertConfigToForm(data);
+					_alertConfigLoaded = true;
+				} catch { /* keep local cache */ }
+			}
+
+			async function loadServerAlerts() {
+				try {
+					const resp = await apiFetch('/api/notifications?type=pump_alert&limit=50');
+					if (!resp.ok) return;
+					const { notifications } = await resp.json();
+					if (!Array.isArray(notifications) || !notifications.length) return;
+					notifications.slice().reverse().forEach((n) => {
+						const p = n.payload || {};
+						addAlertItem({
+							time: new Date(n.created_at),
+							data: { name: p.name, tokenSymbol: p.symbol, mint: p.mint, solAmount: p.amount_sol },
+						}, `Graduated · ${p.symbol || p.name || 'token'}`);
+					});
+				} catch { /* server history is best-effort */ }
+			}
+
+			async function saveAlertConfig() {
+				const webhookUrl = $('pd-alert-webhook').value.trim();
+				if (webhookUrl && !/^https:\/\//i.test(webhookUrl)) {
+					toast('Webhook URL must start with https://', 'error');
+					return;
+				}
+				const payload = {
 					graduation: $('pd-alert-graduation').checked,
 					whale: $('pd-alert-whale').checked,
 					fees: $('pd-alert-fees').checked,
 					launch: $('pd-alert-launch').checked,
-					whaleThreshold: $('pd-threshold-whale').value,
-					claimThreshold: $('pd-threshold-claim').value,
-					cooldown: $('pd-threshold-cooldown').value,
+					whaleThreshold: parseFloat($('pd-threshold-whale').value) || 0,
+					claimThreshold: parseFloat($('pd-threshold-claim').value) || 0,
+					cooldown: parseInt($('pd-threshold-cooldown').value, 10) || 30,
+					webhookUrl: webhookUrl || null,
 				};
-				localStorage.setItem('pumpbot-alerts', JSON.stringify(state.alertConfig));
-				toast('Alert settings saved', 'success');
+				try {
+					const csrf = await getCsrfToken();
+					const headers = { 'Content-Type': 'application/json' };
+					if (csrf) headers['x-csrf-token'] = csrf;
+					const resp = await apiFetch('/api/alerts/config', { method: 'PUT', headers, body: JSON.stringify(payload) });
+					if (resp.status === 401) {
+						toast('Sign in to save alerts across devices', 'error');
+						return;
+					}
+					if (!resp.ok) {
+						const err = await resp.json().catch(() => ({}));
+						toast(err.error_description || err.error || `Save failed (${resp.status})`, 'error');
+						return;
+					}
+					const { data } = await resp.json();
+					state.alertConfig = data;
+					localStorage.setItem('pumpbot-alerts', JSON.stringify(data));
+					toast('Alert settings saved', 'success');
+				} catch (e) {
+					toast('Network error: ' + (e.message || 'save failed'), 'error');
+				}
 			}
 
 			// ── Watches ──────────────────────────────────────────────────
@@ -1596,19 +2004,45 @@
 						},
 					});
 					const secretJson = JSON.stringify(Array.from(result.secretKey));
+					const secretB58 = b58encode(result.secretKey);
 					const seconds = (result.durationMs / 1000).toFixed(1);
 					$('pd-vanity-status').textContent = `Found in ${seconds}s · ${result.attempts.toLocaleString()} attempts · ${result.workers} worker${result.workers > 1 ? 's' : ''}`;
 					$('pd-vanity-result').innerHTML = `
 						<div style="padding:0.85rem 1rem;background:var(--pd-bg-elev);border-radius:var(--pd-radius-sm);border:1px solid var(--pd-accent-border)">
 							<div style="font-family:var(--pd-font-display);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--pd-text-dim);margin-bottom:0.25rem">Public key</div>
 							<div class="pd-mono" style="font-size:0.92rem;color:var(--pd-accent-bright);word-break:break-all;margin-bottom:0.55rem">${escapeHtml(result.publicKey)}</div>
-							<button class="pd-btn pd-btn-sm" id="pd-vanity-copy-pub" type="button">Copy address</button>
-							<button class="pd-btn pd-btn-sm" id="pd-vanity-download-key" type="button">Download keypair JSON</button>
+							<div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+								<button class="pd-btn pd-btn-sm" id="pd-vanity-copy-pub" type="button">Copy address</button>
+								<button class="pd-btn pd-btn-sm" id="pd-vanity-reveal" type="button">Reveal secret key</button>
+								<button class="pd-btn pd-btn-sm" id="pd-vanity-download-key" type="button">Download keypair JSON</button>
+							</div>
+							<div id="pd-vanity-secret" hidden style="margin-top:0.6rem">
+								<div style="font-family:var(--pd-font-display);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--pd-danger);margin-bottom:0.25rem">Secret key (base58)</div>
+								<div class="pd-mono" id="pd-vanity-secret-val" style="font-size:0.8rem;color:var(--pd-text-bright);word-break:break-all;margin-bottom:0.45rem"></div>
+								<button class="pd-btn pd-btn-sm" id="pd-vanity-copy-secret" type="button">Copy secret</button>
+							</div>
 							<div class="pd-callout" style="margin-top:0.6rem;font-size:0.78rem">Secret key never leaves your browser. Save it securely or import into a wallet.</div>
 						</div>
 					`;
 					$('pd-vanity-copy-pub').addEventListener('click', async () => {
 						try { await navigator.clipboard.writeText(result.publicKey); toast('Address copied', 'success'); } catch {}
+					});
+					$('pd-vanity-reveal').addEventListener('click', () => {
+						const box = $('pd-vanity-secret');
+						const btn = $('pd-vanity-reveal');
+						const showing = !box.hidden;
+						if (showing) {
+							box.hidden = true;
+							$('pd-vanity-secret-val').textContent = '';
+							btn.textContent = 'Reveal secret key';
+						} else {
+							$('pd-vanity-secret-val').textContent = secretB58;
+							box.hidden = false;
+							btn.textContent = 'Hide secret key';
+						}
+					});
+					$('pd-vanity-copy-secret').addEventListener('click', async () => {
+						try { await navigator.clipboard.writeText(secretB58); toast('Secret key copied', 'success'); } catch {}
 					});
 					$('pd-vanity-download-key').addEventListener('click', () => {
 						const blob = new Blob([secretJson], { type: 'application/json' });
@@ -1639,7 +2073,85 @@
 
 			// ── Config ───────────────────────────────────────────────────
 
-			function saveConfig() {
+			// Task 10: persist, reconnect, then probe each endpoint for real and
+			// reflect the live result inline next to each field.
+			function setProbe(id, state_, detail) {
+				const el = $(id);
+				if (!el) return;
+				el.className = 'pd-probe is-' + state_;
+				el.textContent = state_ === 'ok' ? 'OK' : state_ === 'pending' ? 'Testing…' : `Failed: ${detail || 'error'}`;
+				el.title = detail || '';
+			}
+
+			async function probeApi() {
+				try {
+					const r = await fetch(state.apiUrl.replace(/\/$/, '') + '/api/healthz', { signal: AbortSignal.timeout(5000) });
+					if (!r.ok) return { ok: false, detail: `HTTP ${r.status}` };
+					const d = await r.json().catch(() => ({}));
+					return d.ok || d.status === 'ok' ? { ok: true, detail: 'healthy' } : { ok: false, detail: 'no ok flag' };
+				} catch (e) { return { ok: false, detail: e.name === 'TimeoutError' ? 'timeout' : e.message }; }
+			}
+
+			async function probeApiKey() {
+				if (!state.apiKey) return { ok: false, detail: 'no key set' };
+				try {
+					const r = await fetch(state.apiUrl.replace(/\/$/, '') + '/api/v1/status', {
+						headers: { 'X-API-Key': state.apiKey },
+						signal: AbortSignal.timeout(5000),
+					});
+					if (r.ok) return { ok: true, detail: 'authorized' };
+					if (r.status === 401 || r.status === 403) return { ok: false, detail: `${r.status} unauthorized` };
+					return { ok: false, detail: `HTTP ${r.status}` };
+				} catch (e) { return { ok: false, detail: e.name === 'TimeoutError' ? 'timeout' : e.message }; }
+			}
+
+			function probeWs() {
+				return new Promise((resolve) => {
+					let settled = false;
+					let sock;
+					const done = (ok, detail) => {
+						if (settled) return;
+						settled = true;
+						try { sock?.close(); } catch {}
+						resolve({ ok, detail });
+					};
+					try {
+						sock = new WebSocket(state.wsUrl);
+						sock.onopen = () => done(true, 'connected');
+						sock.onerror = () => done(false, 'connection error');
+						setTimeout(() => done(false, 'timeout'), 3000);
+					} catch (e) { done(false, e.message); }
+				});
+			}
+
+			async function probeRpc() {
+				try {
+					const r = await fetch(state.rpcUrl, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getHealth' }),
+						signal: AbortSignal.timeout(5000),
+					});
+					const d = await r.json().catch(() => ({}));
+					if (d.result === 'ok') return { ok: true, detail: 'healthy' };
+					if (d.error) return { ok: false, detail: d.error.message || 'rpc error' };
+					return { ok: false, detail: `HTTP ${r.status}` };
+				} catch (e) { return { ok: false, detail: e.name === 'TimeoutError' ? 'timeout' : e.message }; }
+			}
+
+			async function runConfigProbes() {
+				setProbe('pd-probe-api', 'pending');
+				setProbe('pd-probe-key', 'pending');
+				setProbe('pd-probe-ws', 'pending');
+				setProbe('pd-probe-rpc', 'pending');
+				const [api, key, ws, rpc] = await Promise.all([probeApi(), probeApiKey(), probeWs(), probeRpc()]);
+				setProbe('pd-probe-api', api.ok ? 'ok' : 'err', api.detail);
+				setProbe('pd-probe-key', key.ok ? 'ok' : 'err', key.detail);
+				setProbe('pd-probe-ws', ws.ok ? 'ok' : 'err', ws.detail);
+				setProbe('pd-probe-rpc', rpc.ok ? 'ok' : 'err', rpc.detail);
+			}
+
+			async function saveConfig() {
 				state.apiUrl = $('pd-cfg-api-url').value.trim() || location.origin;
 				state.wsUrl = $('pd-cfg-ws-url').value.trim() || 'wss://pumpportal.fun/api/data';
 				state.apiKey = $('pd-cfg-api-key').value.trim();
@@ -1651,7 +2163,18 @@
 				$('pd-api-endpoint-display').textContent = state.apiUrl;
 				connectApi();
 				connectWebSocket();
-				toast('Configuration saved & reconnecting', 'success');
+				toast('Configuration saved — testing connections', 'success');
+
+				const btn = $('pd-save-config');
+				const original = btn.textContent;
+				btn.disabled = true;
+				btn.textContent = 'Testing…';
+				try {
+					await runConfigProbes();
+				} finally {
+					btn.disabled = false;
+					btn.textContent = original;
+				}
 			}
 
 			// ── Modals ───────────────────────────────────────────────────
@@ -1678,6 +2201,450 @@
 						navigateTo(a.dataset.pageLink);
 					}, { once: true });
 				});
+			}
+
+			// ── CSRF (single-use, fetched fresh per mutation) ────────────
+			async function getCsrfToken() {
+				try {
+					const r = await apiFetch('/api/csrf-token');
+					if (!r.ok) return null;
+					const d = await r.json();
+					return d.token || d.data?.token || null;
+				} catch { return null; }
+			}
+
+			// ── base58 encode (for revealing the vanity secret key) ──────
+			function b58encode(bytes) {
+				const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+				const digits = [0];
+				for (let i = 0; i < bytes.length; i++) {
+					let carry = bytes[i];
+					for (let j = 0; j < digits.length; j++) {
+						carry += digits[j] << 8;
+						digits[j] = carry % 58;
+						carry = (carry / 58) | 0;
+					}
+					while (carry > 0) { digits.push(carry % 58); carry = (carry / 58) | 0; }
+				}
+				let str = '';
+				for (let i = 0; i < bytes.length && bytes[i] === 0; i++) str += '1';
+				for (let i = digits.length - 1; i >= 0; i--) str += ALPHABET[digits[i]];
+				return str;
+			}
+
+			function relTime(iso) {
+				const diff = Date.now() - new Date(iso).getTime();
+				const m = Math.floor(diff / 60000);
+				if (m < 1) return 'just now';
+				if (m < 60) return m + 'm ago';
+				const h = Math.floor(m / 60);
+				if (h < 24) return h + 'h ago';
+				return Math.floor(h / 24) + 'd ago';
+			}
+
+			// ════════════════════════════════════════════════════════════
+			//  Monitor stat cards (Task 07) — bound to GET /api/healthz
+			// ════════════════════════════════════════════════════════════
+			function formatUptime(sec) {
+				const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = Math.floor(sec % 60);
+				if (h > 0) return `${h}h ${m}m`;
+				if (m > 0) return `${m}m ${s}s`;
+				return `${s}s`;
+			}
+			function setMonitorStale(stale) {
+				const grid = $('pd-monitor-stats');
+				if (grid) grid.querySelectorAll('.pd-stat').forEach((c) => c.classList.toggle('is-stale', stale));
+				const sub = $('stat-bot-status-sub');
+				if (sub) sub.innerHTML = stale ? 'Live monitor <span class="pd-stale-badge">stale</span>' : 'Live monitor';
+			}
+			async function pollMonitorStats() {
+				try {
+					const r = await apiFetch('/api/healthz');
+					if (!r.ok) throw new Error('health ' + r.status);
+					const d = await r.json();
+					const m = d.monitor || {};
+					setMonitorStale(false);
+					$('stat-bot-status').textContent = m.running ? 'Running' : 'Stopped';
+					$('stat-bot-status').className = 'pd-stat-value ' + (m.running ? 'is-success' : 'is-danger');
+					$('stat-bot-mode').textContent = m.mode || '—';
+					$('stat-claims').textContent = Number(m.claimsDetected ?? 0).toLocaleString();
+					$('stat-watches').textContent = Number((d.watches || {}).total ?? 0).toLocaleString();
+					$('stat-uptime').textContent = formatUptime(d.uptime || 0);
+				} catch {
+					// Keep last real values, flag stale.
+					setMonitorStale(true);
+				}
+			}
+
+			// ════════════════════════════════════════════════════════════
+			//  Canvas helpers shared by the market + revenue charts
+			// ════════════════════════════════════════════════════════════
+			function setupCanvas(canvas) {
+				const dpr = window.devicePixelRatio || 1;
+				const w = canvas.clientWidth || canvas.parentElement.clientWidth || 600;
+				const h = canvas.clientHeight || 280;
+				canvas.width = Math.round(w * dpr);
+				canvas.height = Math.round(h * dpr);
+				const ctx = canvas.getContext('2d');
+				ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+				return { ctx, w, h };
+			}
+			function cssVar(name) {
+				return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#fff';
+			}
+			function fmtPrice(v) {
+				const n = Number(v);
+				if (!isFinite(n)) return '—';
+				if (n >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+				if (n >= 0.01) return n.toFixed(4);
+				if (n > 0) return n.toPrecision(3);
+				return '0';
+			}
+			function drawChartMessage(canvas, msg) {
+				const { ctx, w, h } = setupCanvas(canvas);
+				ctx.clearRect(0, 0, w, h);
+				ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+				ctx.lineWidth = 1;
+				for (let i = 1; i < 5; i++) { const y = (h * i) / 5; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+				ctx.fillStyle = 'rgba(255,255,255,0.42)';
+				ctx.font = '12px system-ui';
+				ctx.textAlign = 'center';
+				ctx.textBaseline = 'middle';
+				ctx.fillText(msg === 'skeleton' ? 'Loading…' : msg, w / 2, h / 2);
+			}
+
+			// ════════════════════════════════════════════════════════════
+			//  Market chart (Tasks 03 + 04)
+			// ════════════════════════════════════════════════════════════
+			const chart = { candles: [], mint: '', symbol: '', spotUsd: null, geom: null };
+
+			async function loadTrendingTokens() {
+				const sel = $('pd-chart-token');
+				if (!sel) return;
+				sel.innerHTML = '<option value="" disabled selected>Loading trending tokens…</option>';
+				$('pd-chart-retry').hidden = true;
+				try {
+					const r = await fetch('/api/pump/trending?limit=25');
+					const d = await r.json().catch(() => ({}));
+					if (!r.ok) {
+						sel.innerHTML = `<option value="" disabled selected>${escapeHtml(d.error_description || d.error || 'Trending unavailable')}</option>`;
+						$('pd-chart-retry').hidden = false;
+						drawChartMessage($('pd-market-chart'), d.error_description || 'Trending tokens unavailable');
+						return;
+					}
+					const tokens = d.data || [];
+					if (!tokens.length) {
+						sel.innerHTML = '<option value="" disabled selected>No trending tokens right now</option>';
+						drawChartMessage($('pd-market-chart'), 'No trending tokens right now');
+						return;
+					}
+					sel.innerHTML = tokens.map((t) =>
+						`<option value="${escapeHtml(t.mint)}" data-symbol="${escapeHtml(t.symbol)}">#${t.rank ?? '?'}  ${escapeHtml(t.symbol)}  (${escapeHtml(shortAddr(t.mint))})</option>`
+					).join('');
+					sel.selectedIndex = 0;
+					const first = tokens[0];
+					document.dispatchEvent(new CustomEvent('chart:tokenChange', { detail: { mint: first.mint, symbol: first.symbol } }));
+				} catch (e) {
+					sel.innerHTML = `<option value="" disabled selected>Error loading tokens</option>`;
+					$('pd-chart-retry').hidden = false;
+					drawChartMessage($('pd-market-chart'), e.message || 'load failed');
+				}
+			}
+
+			async function fetchChartData(mint, symbol) {
+				chart.mint = mint;
+				chart.symbol = symbol;
+				chart.spotUsd = null;
+				const canvas = $('pd-market-chart');
+				drawChartMessage(canvas, 'skeleton');
+				$('pd-chart-meta').innerHTML = `<span class="pd-mono" style="color:var(--pd-text-bright)">${escapeHtml(symbol || '')}</span> <span style="color:var(--pd-text-dim)">${escapeHtml(shortAddr(mint))}</span>`;
+				const now = Math.floor(Date.now() / 1000);
+				const from = now - 24 * 3600;
+				try {
+					const r = await fetch(`/api/pump/price-history?mint=${encodeURIComponent(mint)}&interval=15m&from=${from}&to=${now}`);
+					const d = await r.json().catch(() => ({}));
+					if (!r.ok) {
+						drawChartMessage(canvas, d.error_description || d.error || `Error ${r.status}`);
+						$('pd-chart-retry').hidden = false;
+						return;
+					}
+					$('pd-chart-retry').hidden = true;
+					chart.candles = d.data || [];
+					if (!chart.candles.length) {
+						drawChartMessage(canvas, 'No trades in the selected window');
+					} else {
+						drawMarketChart(canvas);
+						const last = chart.candles[chart.candles.length - 1].c;
+						$('pd-chart-meta').innerHTML += ` · <span style="color:var(--pd-text-bright)">$${fmtPrice(last)}</span>`;
+					}
+					fetchSpotOverlay(mint);
+				} catch (e) {
+					drawChartMessage(canvas, e.message || 'load failed');
+					$('pd-chart-retry').hidden = false;
+				}
+			}
+
+			// Live PumpFun bonding-curve spot price, converted to USD via the cached
+			// SOL price and overlaid as a dashed line. Silent no-op for non-PumpFun mints.
+			async function fetchSpotOverlay(mint) {
+				try {
+					const r = await fetch(`/api/pump/curve?mint=${encodeURIComponent(mint)}`);
+					if (!r.ok) return;
+					const d = await r.json();
+					const priceSol = Number(d.price?.priceSol);
+					if (!isFinite(priceSol) || priceSol <= 0 || !state.solPrice) return;
+					chart.spotUsd = priceSol * state.solPrice;
+					if (chart.candles.length) drawMarketChart($('pd-market-chart'));
+					$('pd-chart-meta').innerHTML += ` · <span style="color:var(--pd-warn)">live ${priceSol.toFixed(9)} SOL</span>`;
+				} catch { /* overlay optional */ }
+			}
+
+			function drawMarketChart(canvas) {
+				const candles = chart.candles;
+				if (!candles.length) { drawChartMessage(canvas, 'No trades in the selected window'); return; }
+				const { ctx, w, h } = setupCanvas(canvas);
+				ctx.clearRect(0, 0, w, h);
+				const x0 = 56, x1 = w - 12, y0 = 10, y1 = h - 22;
+				const tMin = candles[0].t, tMax = candles[candles.length - 1].t;
+				let pMin = Infinity, pMax = -Infinity;
+				for (const c of candles) { pMin = Math.min(pMin, c.l ?? c.c); pMax = Math.max(pMax, c.h ?? c.c); }
+				if (chart.spotUsd != null) { pMin = Math.min(pMin, chart.spotUsd); pMax = Math.max(pMax, chart.spotUsd); }
+				if (pMin === pMax) { pMin *= 0.99; pMax *= 1.01; }
+				const padP = (pMax - pMin) * 0.08; pMin -= padP; pMax += padP;
+				const xFor = (t) => x0 + (tMax === tMin ? 0 : (t - tMin) / (tMax - tMin)) * (x1 - x0);
+				const yFor = (p) => y1 - (p - pMin) / (pMax - pMin) * (y1 - y0);
+				// Y grid + price ticks
+				ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.fillStyle = 'rgba(255,255,255,0.42)';
+				ctx.font = '10px system-ui'; ctx.lineWidth = 1; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+				for (let i = 0; i <= 5; i++) { const p = pMin + (pMax - pMin) * i / 5; const y = yFor(p); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); ctx.fillText('$' + fmtPrice(p), x0 - 6, y); }
+				// X time ticks
+				ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+				const spanHours = (tMax - tMin) / 3600;
+				for (let i = 0; i <= 6; i++) {
+					const t = tMin + (tMax - tMin) * i / 6; const x = xFor(t); const dt = new Date(t * 1000);
+					const label = spanHours <= 24
+						? dt.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+						: `${dt.getMonth() + 1}/${dt.getDate()}`;
+					ctx.fillText(label, Math.max(x0 + 14, Math.min(x1 - 14, x)), y1 + 5);
+				}
+				// Price line + area
+				ctx.strokeStyle = cssVar('--pd-accent'); ctx.lineWidth = 1.5; ctx.beginPath();
+				candles.forEach((c, i) => { const x = xFor(c.t), y = yFor(c.c); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+				ctx.stroke();
+				ctx.lineTo(xFor(tMax), y1); ctx.lineTo(xFor(tMin), y1); ctx.closePath();
+				ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fill();
+				// Spot overlay
+				if (chart.spotUsd != null) {
+					const y = yFor(chart.spotUsd);
+					ctx.strokeStyle = cssVar('--pd-warn'); ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); ctx.setLineDash([]);
+				}
+				chart.geom = { x0, x1, y0, y1, tMin, tMax, pMin, pMax };
+			}
+
+			function onChartMove(e) {
+				const canvas = $('pd-market-chart');
+				const tip = $('pd-chart-tooltip');
+				const g = chart.geom;
+				if (!g || !chart.candles.length) { tip.style.display = 'none'; return; }
+				const rect = canvas.getBoundingClientRect();
+				const x = e.clientX - rect.left;
+				if (x < g.x0 || x > g.x1) { tip.style.display = 'none'; return; }
+				const frac = (x - g.x0) / (g.x1 - g.x0);
+				const t = g.tMin + frac * (g.tMax - g.tMin);
+				let nearest = chart.candles[0], best = Infinity;
+				for (const c of chart.candles) { const dd = Math.abs(c.t - t); if (dd < best) { best = dd; nearest = c; } }
+				const cx = g.x0 + (g.tMax === g.tMin ? 0 : (nearest.t - g.tMin) / (g.tMax - g.tMin)) * (g.x1 - g.x0);
+				const cy = g.y1 - (nearest.c - g.pMin) / (g.pMax - g.pMin) * (g.y1 - g.y0);
+				drawMarketChart(canvas);
+				const ctx = canvas.getContext('2d');
+				ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+				ctx.beginPath(); ctx.moveTo(cx, g.y0); ctx.lineTo(cx, g.y1); ctx.stroke(); ctx.setLineDash([]);
+				ctx.fillStyle = cssVar('--pd-accent'); ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
+				const dt = new Date(nearest.t * 1000);
+				tip.textContent = `${dt.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })} · $${fmtPrice(nearest.c)}`;
+				tip.style.left = cx + 'px';
+				tip.style.top = cy + 'px';
+				tip.style.display = 'block';
+			}
+
+			// ════════════════════════════════════════════════════════════
+			//  Revenue (Task 08)
+			// ════════════════════════════════════════════════════════════
+			const KNOWN_DECIMALS = {
+				EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: 6, // USDC mainnet
+				Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB: 6, // USDT mainnet
+				So11111111111111111111111111111111111111112: 9, // wSOL
+			};
+			const _decimalsCache = { ...KNOWN_DECIMALS };
+			async function getMintDecimals(mint) {
+				if (mint in _decimalsCache) return _decimalsCache[mint];
+				try {
+					const r = await fetch(state.rpcUrl, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getAccountInfo', params: [mint, { encoding: 'jsonParsed' }] }),
+					});
+					const d = await r.json();
+					const dec = d.result?.value?.data?.parsed?.info?.decimals;
+					if (typeof dec === 'number') { _decimalsCache[mint] = dec; return dec; }
+				} catch { /* fall through */ }
+				return 6;
+			}
+
+			let _revAgentsLoaded = false;
+			async function loadRevenue() {
+				if (!_revAgentsLoaded) { await loadRevenueAgents(); _revAgentsLoaded = true; }
+				await fetchRevenue();
+			}
+			async function loadRevenueAgents() {
+				try {
+					const r = await apiFetch('/api/agents');
+					if (!r.ok) return;
+					const j = await r.json();
+					const agents = j.agents || j.data || [];
+					$('pd-rev-agent').innerHTML = '<option value="">All agents</option>' +
+						agents.map((a) => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name || a.id)}</option>`).join('');
+				} catch { /* keep "All agents" */ }
+			}
+			async function fetchRevenue() {
+				const status = $('pd-rev-status');
+				const skillTbody = $('pd-rev-skill-table');
+				status.textContent = 'Loading…';
+				skillTbody.innerHTML = '<tr><td colspan="3" class="pd-empty">Loading…</td></tr>';
+				const params = new URLSearchParams();
+				const agent = $('pd-rev-agent').value; if (agent) params.set('agent_id', agent);
+				params.set('granularity', $('pd-rev-granularity').value || 'day');
+				const from = $('pd-rev-from').value; if (from) params.set('from', new Date(from).toISOString());
+				const to = $('pd-rev-to').value; if (to) params.set('to', new Date(to + 'T23:59:59').toISOString());
+				try {
+					const r = await apiFetch('/api/billing/revenue?' + params.toString());
+					if (r.status === 401) {
+						status.innerHTML = 'Sign in to view revenue. <a href="/login" style="color:var(--pd-accent)">Sign in</a>';
+						skillTbody.innerHTML = '<tr><td colspan="3" class="pd-empty">Sign in required.</td></tr>';
+						['pd-rev-gross', 'pd-rev-fees', 'pd-rev-net', 'pd-rev-count'].forEach((id) => { $(id).textContent = '—'; });
+						drawChartMessage($('pd-rev-chart'), 'Sign in to view revenue');
+						return;
+					}
+					if (!r.ok) {
+						const err = await r.json().catch(() => ({}));
+						status.textContent = err.error_description || err.error || `Error ${r.status}`;
+						return;
+					}
+					await renderRevenue(await r.json());
+				} catch (e) {
+					status.textContent = 'Error: ' + (e.message || 'failed');
+				}
+			}
+			async function renderRevenue(d) {
+				const s = d.summary || {};
+				const mint = s.currency_mint;
+				const decimals = mint ? await getMintDecimals(mint) : 6;
+				const fmt = (v) => (Number(v || 0) / Math.pow(10, decimals)).toLocaleString(undefined, { maximumFractionDigits: Math.min(decimals, 6) });
+				$('pd-rev-gross').textContent = fmt(s.gross_total);
+				$('pd-rev-fees').textContent = fmt(s.fee_total);
+				$('pd-rev-net').textContent = fmt(s.net_total);
+				$('pd-rev-count').textContent = Number(s.payment_count || 0).toLocaleString();
+				$('pd-rev-currency').textContent = mint ? shortAddr(mint) : '—';
+				$('pd-rev-chain').textContent = s.chain || '—';
+				const skills = d.by_skill || [];
+				$('pd-rev-skill-table').innerHTML = skills.length
+					? skills.map((r) => `<tr><td>${escapeHtml(r.skill)}</td><td style="text-align:right" class="pd-mono">${Number(r.count || 0).toLocaleString()}</td><td style="text-align:right" class="pd-mono">${fmt(r.net_total)}</td></tr>`).join('')
+					: '<tr><td colspan="3" class="pd-empty">No revenue events in this window.</td></tr>';
+				drawRevenueChart(d.timeseries || [], decimals);
+				$('pd-rev-status').textContent = (s.payment_count || 0) === 0 ? 'No revenue events in this window.' : '';
+			}
+			function drawRevenueChart(series, decimals) {
+				const canvas = $('pd-rev-chart');
+				if (!series.length) { drawChartMessage(canvas, 'No revenue events in this window'); return; }
+				const { ctx, w, h } = setupCanvas(canvas);
+				ctx.clearRect(0, 0, w, h);
+				const x0 = 56, x1 = w - 12, y0 = 10, y1 = h - 22;
+				const vals = series.map((s) => Number(s.net_total || 0) / Math.pow(10, decimals));
+				let vMax = Math.max(...vals, 0); if (vMax === 0) vMax = 1;
+				const n = series.length;
+				const xFor = (i) => x0 + (n === 1 ? 0.5 : i / (n - 1)) * (x1 - x0);
+				const yFor = (v) => y1 - (v / vMax) * (y1 - y0);
+				ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.fillStyle = 'rgba(255,255,255,0.42)';
+				ctx.font = '10px system-ui'; ctx.lineWidth = 1; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+				for (let i = 0; i <= 4; i++) { const v = vMax * i / 4; const y = yFor(v); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); ctx.fillText(v.toLocaleString(undefined, { maximumFractionDigits: 2 }), x0 - 6, y); }
+				ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+				const step = Math.max(1, Math.floor(n / 6));
+				for (let i = 0; i < n; i += step) { const x = xFor(i); ctx.fillText(String(series[i].period).slice(5), Math.max(x0 + 12, Math.min(x1 - 12, x)), y1 + 5); }
+				ctx.strokeStyle = cssVar('--pd-success'); ctx.lineWidth = 1.5; ctx.beginPath();
+				vals.forEach((v, i) => { const x = xFor(i), y = yFor(v); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+				ctx.stroke();
+				ctx.lineTo(xFor(n - 1), y1); ctx.lineTo(xFor(0), y1); ctx.closePath();
+				ctx.fillStyle = 'rgba(74,222,128,0.08)'; ctx.fill();
+			}
+
+			// ════════════════════════════════════════════════════════════
+			//  API keys (Task 09)
+			// ════════════════════════════════════════════════════════════
+			async function loadApiKeys() {
+				const tbody = $('pd-keys-table');
+				tbody.innerHTML = '<tr><td colspan="7" class="pd-empty">Loading…</td></tr>';
+				try {
+					const r = await apiFetch('/api/api-keys');
+					if (r.status === 401) { tbody.innerHTML = '<tr><td colspan="7" class="pd-empty">Sign in to manage keys. <a href="/login" style="color:var(--pd-accent)">Sign in</a></td></tr>'; $('pd-keys-count').textContent = '—'; return; }
+					if (r.status === 429) { tbody.innerHTML = '<tr><td colspan="7" class="pd-empty">Too many requests, try again shortly.</td></tr>'; return; }
+					if (!r.ok) { tbody.innerHTML = `<tr><td colspan="7" class="pd-empty">Error ${r.status}.</td></tr>`; return; }
+					const { data } = await r.json();
+					$('pd-keys-count').textContent = String(data.length);
+					if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="pd-empty">You haven\'t created any API keys yet.</td></tr>'; return; }
+					tbody.innerHTML = data.map((k) => `<tr>
+						<td>${escapeHtml(k.name)}</td>
+						<td class="pd-mono">${escapeHtml(k.prefix)}…</td>
+						<td class="pd-mono" style="font-size:0.74rem">${escapeHtml((k.scope || '').split(/\s+/).filter(Boolean).join(', '))}</td>
+						<td class="pd-mono">${k.created_at ? new Date(k.created_at).toLocaleDateString() : '—'}</td>
+						<td class="pd-mono">${k.last_used_at ? relTime(k.last_used_at) : 'never'}</td>
+						<td class="pd-mono">${k.expires_at ? new Date(k.expires_at).toLocaleDateString() : '—'}</td>
+						<td><button class="pd-btn pd-btn-sm is-danger" type="button" data-revoke-key="${escapeHtml(k.id)}">Revoke</button></td>
+					</tr>`).join('');
+					tbody.querySelectorAll('[data-revoke-key]').forEach((b) => b.addEventListener('click', () => revokeApiKey(b.dataset.revokeKey)));
+				} catch (e) {
+					tbody.innerHTML = `<tr><td colspan="7" class="pd-empty">Failed: ${escapeHtml(e.message || 'load failed')}</td></tr>`;
+				}
+			}
+			async function createApiKey(e) {
+				e.preventDefault();
+				const name = $('pd-key-name').value.trim();
+				if (!name) { toast('Key name is required', 'error'); return; }
+				const scopes = Array.from(document.querySelectorAll('.pd-key-scope:checked')).map((c) => c.value);
+				if (!scopes.length) { toast('Select at least one scope', 'error'); return; }
+				const body = { name, scope: scopes.join(' ') };
+				const expiryRaw = $('pd-key-expiry').value;
+				if (expiryRaw) body.expires_at = new Date(expiryRaw).toISOString();
+				const btn = $('pd-key-create');
+				btn.disabled = true;
+				try {
+					const csrf = await getCsrfToken();
+					const headers = { 'Content-Type': 'application/json' };
+					if (csrf) headers['x-csrf-token'] = csrf;
+					const r = await apiFetch('/api/api-keys', { method: 'POST', headers, body: JSON.stringify(body) });
+					if (r.status === 429) { toast('Too many requests, try again shortly', 'error'); return; }
+					if (!r.ok) { const err = await r.json().catch(() => ({})); toast(err.error_description || err.error || `Create failed (${r.status})`, 'error'); return; }
+					const { data } = await r.json();
+					$('pd-key-token').value = data.token;
+					openModal('pd-key-modal');
+				} catch (e2) {
+					toast('Network error: ' + (e2.message || 'create failed'), 'error');
+				} finally {
+					btn.disabled = false;
+				}
+			}
+			async function revokeApiKey(id) {
+				if (!confirm('Revoke this API key? Apps using it will stop working immediately.')) return;
+				try {
+					const csrf = await getCsrfToken();
+					const headers = {};
+					if (csrf) headers['x-csrf-token'] = csrf;
+					const r = await apiFetch('/api/api-keys/' + encodeURIComponent(id), { method: 'DELETE', headers });
+					if (!r.ok) { const err = await r.json().catch(() => ({})); toast(err.error_description || err.error || `Revoke failed (${r.status})`, 'error'); return; }
+					toast('Key revoked', 'success');
+					loadApiKeys();
+				} catch (e) {
+					toast('Network error revoking key', 'error');
+				}
 			}
 
 			// ── Boot ─────────────────────────────────────────────────────
@@ -1744,15 +2711,65 @@
 				$('pd-vanity-start').addEventListener('click', startVanity);
 				$('pd-vanity-stop').addEventListener('click', stopVanity);
 
-				// Animations
+				if (state.alertConfig.webhookUrl) $('pd-alert-webhook').value = state.alertConfig.webhookUrl;
+
+				// Animations + TTS (Task 11)
 				$('pd-speak-btn').addEventListener('click', () => agentAction('speak'));
+				$('pd-speak-stop').addEventListener('click', stopSpeak);
 				$('pd-play-anim').addEventListener('click', playAnimation);
 				document.querySelectorAll('[data-agent-action]').forEach((b) => {
 					b.addEventListener('click', () => agentAction(b.dataset.agentAction));
 				});
+				window.addEventListener('message', handleAgentMessage);
 
-				// Config
+				// Config (Task 10)
 				$('pd-save-config').addEventListener('click', saveConfig);
+
+				// Wallet snapshot (Task 02) — connect via src/wallet.js, react to events.
+				initWalletButton();
+				window.addEventListener('wallet:changed', (e) => onWalletChanged(e.detail?.address || null));
+				$('connect-wallet-btn')?.addEventListener('click', () => {
+					const holdings = $('pd-wallet-holdings');
+					if (holdings && !getConnectedWalletAddress()) {
+						$('pd-wallet-empty').hidden = true;
+						holdings.hidden = false;
+						holdings.innerHTML = '<div style="font-size:0.85rem;color:var(--pd-text-muted)">Connecting…</div>';
+					}
+				});
+				$('pd-wallet-disconnect').addEventListener('click', disconnectWallet);
+
+				// Market chart (Tasks 03 + 04)
+				$('pd-chart-token').addEventListener('change', (e) => {
+					const opt = e.target.selectedOptions[0];
+					if (!opt || !opt.value) return;
+					document.dispatchEvent(new CustomEvent('chart:tokenChange', { detail: { mint: opt.value, symbol: opt.dataset.symbol || '' } }));
+				});
+				$('pd-chart-retry').addEventListener('click', () => {
+					if (chart.mint) fetchChartData(chart.mint, chart.symbol);
+					else loadTrendingTokens();
+				});
+				document.addEventListener('chart:tokenChange', (e) => fetchChartData(e.detail.mint, e.detail.symbol));
+				const marketCanvas = $('pd-market-chart');
+				marketCanvas.addEventListener('mousemove', onChartMove);
+				marketCanvas.addEventListener('mouseleave', () => { $('pd-chart-tooltip').style.display = 'none'; });
+				let _chartResizeRaf = 0;
+				new ResizeObserver(() => {
+					cancelAnimationFrame(_chartResizeRaf);
+					_chartResizeRaf = requestAnimationFrame(() => { if (chart.candles.length) drawMarketChart(marketCanvas); });
+				}).observe(marketCanvas);
+
+				// Revenue (Task 08)
+				$('pd-rev-refresh').addEventListener('click', fetchRevenue);
+				['pd-rev-agent', 'pd-rev-granularity', 'pd-rev-from', 'pd-rev-to'].forEach((id) => {
+					$(id).addEventListener('change', fetchRevenue);
+				});
+
+				// API keys (Task 09)
+				$('pd-key-create-form').addEventListener('submit', createApiKey);
+				$('pd-key-copy').addEventListener('click', async () => {
+					try { await navigator.clipboard.writeText($('pd-key-token').value); toast('Token copied', 'success'); } catch {}
+				});
+				$('pd-key-done').addEventListener('click', () => { closeModal('pd-key-modal'); $('pd-key-token').value = ''; loadApiKeys(); });
 
 				// Boot the data flows
 				connectApi();
@@ -1760,8 +2777,11 @@
 				preloadChannelFeed();
 				refreshNetworkStats();
 				loadFeaturedAgent();
-				loadWalletSnapshot();
+				loadTrendingTokens();
+				pollMonitorStats();
+				runConfigProbes();
 				state.networkInterval = setInterval(refreshNetworkStats, 30000);
+				state.monitorInterval = setInterval(pollMonitorStats, 10000);
 				setInterval(updateUptime, 1000);
 			});
 
@@ -1803,5 +2823,6 @@
 		</script>
 
 		<script src="/footer.js" defer></script>
-	</body>
+		<script src="/brand.js" defer></script>
+</body>
 </html>

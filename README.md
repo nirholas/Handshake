@@ -37,6 +37,12 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 - [Launchpad](#launchpad)
 - [The Club](#the-club)
 - [Walk & Multiplayer](#walk--multiplayer)
+- [Coin Communities](#coin-communities)
+- [Adventure — Onchain RPG](#adventure--onchain-rpg)
+- [City](#city)
+- [Friends, Presence & Social](#friends-presence--social)
+- [In-Game Economy](#in-game-economy)
+- [Voice Lab & Mocap Studio](#voice-lab--mocap-studio)
 - [x402 Payments](#x402-payments)
 - [A2A — Agent-to-Agent Protocol](#a2a--agent-to-agent-protocol)
 - [Talk Mode & Lip-Sync](#talk-mode--lip-sync)
@@ -282,11 +288,15 @@ If you want to support the project — compute credits, grants, partnerships, or
 - Open Graph metadata and oEmbed support for rich social previews when links are shared
 - Versioned CDN bundles at `/agent-3d/x.y.z/agent-3d.js`
 
-**Multi-User 3D**
+**Social & Multiplayer 3D**
 
+- **Coin Communities** at `/communities` + `/play` — every Solana token gets a live 3D world; pick the same coin and land together, with peer avatars, chat, emotes, voxel building, and a live market-cap screen
+- **Adventure** at `/game` — an authoritative onchain RPG: trainable skills, gathering, combat, banking, mounts, multi-realm world, daily quests, cosmetics shop, player marketplace, and $THREE/gold economy
+- **City** at `/city` — free-roam walkable 3D city scene
+- **Friends, presence & DMs** — account-level social graph with live presence ("Online · Mainland"), direct messages, and a per-account realtime delivery hub
 - **The Club** at `/club` — multiplayer venue with rigged dancers, audio tracks, tips, leaderboard, payouts cron, perf-aware renderer that auto-downgrades on slow frames
 - **Walk** at `/walk` — authoritative multiplayer walk scene backed by a Colyseus server in `multiplayer/` (deployable on Fly.io)
-- **Pose Studio** at `/pose-studio` — author and export reusable avatar poses
+- **Pose Studio** at `/pose-studio`, **Voice Lab** at `/voice`, **Mocap Studio** at `/mocap-studio` — author poses, bind voices, and capture/retarget motion into reusable clips
 
 **Backend & Integrations**
 
@@ -323,11 +333,14 @@ A map of every user-facing route. Full detail (source files, feature description
 | **Profile**          | `/profile`, `/u/[username]`, `/avatars/[id]`                                                    | User and avatar public pages — SNS badge + pay-by-name modal when `[username].threews.sol` is claimed           |
 | **SNS Subdomain**    | `/threews/claim`                                                                                | Mint `[label].threews.sol`, set the URL record to your showcase, transfer ownership — single tx, platform pays  |
 | **Dashboard**        | `/dashboard`, `/dashboard/actions`, `/dashboard/wallets`, `/dashboard/usage`, `/dashboard/x402` | Account management, settings, and x402 receipts/payouts                                                         |
-| **Studio / Tools**   | `/studio`, `/embed-editor`, `/pose-studio`, `/hydrate`, `/validation`, `/strategy-lab`          | Widget Studio, WYSIWYG embed editor, pose authoring, on-chain import, glTF validator, DCA                       |
+| **Studio / Tools**   | `/studio`, `/embed-editor`, `/pose-studio`, `/voice`, `/mocap-studio`, `/hydrate`, `/validation`, `/strategy-lab` | Widget Studio, WYSIWYG embed editor, pose authoring, Voice Lab, Mocap Studio, on-chain import, glTF validator, DCA |
 | **Widgets**          | `/widgets`, `/w/[id]`                                                                           | Widget gallery and public widget pages (OG + oEmbed)                                                            |
 | **Launchpad**        | `/launchpad`, `/p/[slug]`                                                                       | Launchpad Studio + hosted launch pages (token, agent, drop campaigns)                                           |
 | **Club**             | `/club`                                                                                         | Multiplayer 3D venue — tips, leaderboard, audio tracks, perf-aware renderer                                     |
 | **Walk**             | `/walk`                                                                                         | Authoritative multiplayer walk scene (Colyseus on Fly.io)                                                       |
+| **Coin Communities** | `/communities`, `/communities/[mint]`, `/worlds`, `/play`                                       | Live 3D world per Solana token — lobby, coin profile, and the shared coin-keyed world                           |
+| **Adventure**        | `/game`                                                                                         | Onchain RPG — skills, gathering, combat, quests, cosmetics, player marketplace, $THREE/gold economy            |
+| **City**             | `/city`                                                                                         | Free-roam walkable 3D city scene                                                                                |
 | **Bazaar (x402)**    | `/x402`, `/x402-discover`, `/x402-pay`                                                          | Paid-API marketplace, discovery, Stripe-style checkout                                                          |
 | **Artifacts**        | `/artifact`, `/artifact/snippet`, `/artifact-example`                                           | Claude Artifact viewer                                                                                          |
 | **Solana / DeFi**    | `/pumpfun`, `/pump-visualizer`, `/vanity-wallet`                                                | pump.fun launcher, live token visualizer, WASM vanity grinder                                                   |
@@ -788,14 +801,14 @@ For sandboxed iframes use the widget embed path instead — it runs in its own b
 
 ## Project Structure
 
-- `src/`: The core frontend JavaScript for the main application, including the 3D viewer, agent protocol, custom element, and feature modules (`club-*.js`, `walk*.js`, `pose-*.js`, `voice/`, `selfie-*.js`).
-- `api/`: Vercel serverless functions that form the backend API. Subdirectories include `x402/`, `a2a/`, `club/`, `pump/`, `persona/`, `news/`, `admin/`, `agents/`, `auth/`, `oauth/`, `cron/`.
+- `src/`: The core frontend JavaScript for the main application, including the 3D viewer, agent protocol, custom element, and feature modules (`club-*.js`, `walk*.js`, `pose-*.js`, `voice/`, `selfie-*.js`). Social/gameplay surfaces live in `game/` (Coin Communities + Adventure RPG: `coincommunities*`, `iso-game*`, `game-hud`, `spin-wheel-ui`, `cosmetics-visual`, `avatar-rig`), `city/` (the `/city` world), `social/` (sentiment, X-post impact), `community/` (coin lobby/town), plus `friends.js`, `communities.js`, `marketplace*.js`, and `token-pay.js`.
+- `api/`: Vercel serverless functions that form the backend API. Subdirectories include `x402/`, `a2a/`, `club/`, `pump/`, `persona/`, `news/`, `admin/`, `agents/`, `auth/`, `oauth/`, `cron/`, plus the social/game surfaces `play/`, `token/`, `three-token/`, `friends/`, `social/`, `community/`, `marketplace/`, and `mocap/`.
 - `public/`: Static assets and various sub-applications (`club/`, `seeker/`, `news/`, `persona/`, `vanity-wallet.html`, `pumpfun.html`).
 - `chat/`: A standalone Svelte application for the chat interface.
 - `character-studio/`: A sub-project for in-browser character creation; also serves the rebranded **Avatar Studio** marketplace.
 - `rider/`: A-Frame WebVR music visualization experiment.
 - `contracts/`: Solidity smart contracts for on-chain identity (ERC-8004) and the multichain payment factory.
-- `multiplayer/`: Colyseus WebSocket server for `/walk` and other realtime rooms; deployable on Fly.io.
+- `multiplayer/`: Colyseus WebSocket server for `/walk`, `/play` (WalkRoom), and `/game` (GameRoom); deployable on Fly.io. Holds the authoritative game logic and single sources of truth — `items.js`, `quests.js`, `cosmetics.js`, `spin-wheel.js`, `marketplaceStore.js`, `playerStore.js`, `realms.js`, `game-token.js`, `play-pass.js`, `holder-pass.js`, and the per-account `social-hub.js`.
 - `sdk/`: `@nirholas/agent-kit` and the Avatar SDK (`sdk/agent-sdk/`).
 - `agent-payments-sdk/`: EVM agent payments SDK (Base / BSC / other EVM chains).
 - `solana-agent-sdk/`: SDK for Solana blockchain interactions (Metaplex Core mints, SIWS, attestations).
@@ -1190,7 +1203,105 @@ Vercel doesn't host long-lived WebSockets, so the multiplayer server lives in it
 npm run dev:walk-all     # Vite (:3000) + Colyseus (:2567)
 ```
 
-**WalkRoom** (`multiplayer/src/rooms/WalkRoom.js`) is the authoritative state container — position, rotation, gesture, presence. Origin allow-listing is enforced at the WS upgrade (`ALLOWED_ORIGINS` env, with `*.vercel.app` and `*.three.ws` always permitted for preview deploys). The same Colyseus server can host additional rooms (DJ-set sync, group dance, drop-events) without redeploying the static site.
+**WalkRoom** (`multiplayer/src/rooms/WalkRoom.js`) is the authoritative state container — position, rotation, gesture, presence. Origin allow-listing is enforced at the WS upgrade (`ALLOWED_ORIGINS` env, with `*.vercel.app` and `*.three.ws` always permitted for preview deploys). The same Colyseus server now hosts a second authoritative room — **GameRoom** (the Adventure RPG, see below) — alongside WalkRoom, plus a per-account **social hub** (`multiplayer/src/social-hub.js`) for presence and live event delivery.
+
+---
+
+## Coin Communities
+
+Every Solana token gets a **live 3D world**. Coin Communities turns a mint address into a shared multiplayer space: pick the same coin as someone else and you land together, walk around, emote, voice-chat, build with voxels, and watch the live market-cap chart on an in-world screen.
+
+| Surface           | Route                       | What it does                                                                                        |
+| ----------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
+| Lobby             | `/communities`, `/worlds`   | Browse real pump.fun trending coins + search, pick an avatar, drop into a world                     |
+| Coin profile      | `/communities/[mint]`       | Deep-linkable coin page — metadata, bonding-curve price, graduation progress, recent trades         |
+| 3D world          | `/play`                     | The shared coin-keyed world — peer avatars, name labels, chat, emotes, voxel building, market screen |
+
+**How it works**
+
+- **Real pump.fun data, no mocks.** The lobby and coin profiles pull live trending coins, search results, bonding-curve pricing, and recent trades from the pump.fun feed.
+- **Bring any avatar.** Use a default, an uploaded GLB/VRM, or paste a model URL. The same rig (`src/game/avatar-rig.js`) drives `/play` and `/game` with no drift.
+- **Realtime presence + chat.** Each coin is its own room. Town chat is backed by the [CoinCommunities](https://coin-communities.xyz) service — reads work out of the box; posting unlocks behind X-OAuth sign-in + a linked wallet. If `CC_API_KEY` is unset, chat renders its designed locked state.
+- **Voxel building & spatial voice.** Collaborative block placement (server-capped) and optional geofenced WebRTC voice (`src/game/voice-chat.js`).
+- **Holder-gated rooms.** A coin can require token holders (tier `holders` vs general); gating is enforced server-side via a sealed play-pass.
+
+**Key files:** `src/communities.js` (lobby), `src/game/coincommunities.js` + `coincommunities-ui.js` (3D scene + HUD), `src/game/community-net.js` (socket bridge), `api/community/*` (worlds, messages, ws-ticket, capabilities, me), `api/_lib/coin-communities.js` (CoinCommunities SDK client).
+
+---
+
+## Adventure — Onchain RPG
+
+`/game` is an authoritative multiplayer RPG. It's a tile-stepped isometric world with trainable skills, gathering, combat, banking, quests, cosmetics, a player-to-player marketplace, and onchain payments — all validated server-side so nothing can be spoofed by the client.
+
+**Core loop**
+
+| System         | What it is                                                                                                             |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Skills**     | Five trainable skills (combat, woodcutting, mining, fishing, cooking), level 1–99, XP-gated                            |
+| **Gathering**  | Resource nodes (trees, rocks, coal, fishing spots) worked with the right tool; server-authoritative loot rolls         |
+| **Inventory**  | 6-slot hotbar, 24-slot backpack, 48-slot account bank; stackable resources, non-stackable tools                        |
+| **Combat & death** | Mobs drop trophies; in danger realms death drops a lootable tombstone (TTL), safe realms preserve inventory        |
+| **Cooking**    | Raw fish → cooked food at a roast pit; heal value scales with cooking level                                            |
+| **Mounts**     | Rare drops (dire wolf, war boar) — non-stackable, rideable for faster travel                                           |
+| **Realms**     | Multi-realm world (Mainland, Wilderness, Whisperwood, Pond, Mine, Arena…), each a 48×48 grid with portals and stat gates |
+| **Quests**     | An 8-step tutorial + 3 deterministic daily quests per UTC day, with gold/XP/item/badge rewards                         |
+
+**Wallet-first entry (play-gate).** There's no password. `GET /api/play/nonce` issues a nonce + gate config; `POST /api/play/verify` checks the wallet signature and on-chain token balance, then mints a short-lived HMAC-sealed **play-pass** the game server trusts without re-querying the RPC. Gating is configured via `PLAY_GATE_MINT` / `PLAY_GATE_MIN` and `HOLDER_PASS_SECRET`.
+
+**Server-authoritative.** `multiplayer/src/rooms/GameRoom.js` owns all state; `multiplayer/src/` holds the single sources of truth — `items.js` (item registry, loot tables, mount stats), `quests.js` (tutorial + daily pool + badges), `cosmetics.js` (shop catalog + rotation), `spin-wheel.js`, `marketplaceStore.js`, `playerStore.js`, and `realms.js`/`realm-transfer.js` (layouts, portals, signed stat-gated transfers).
+
+**Client:** `src/game/iso-game.js` (scene), `iso-controls.js` + `keybindings.js` (input), `game-hud.js` (hotbar, skills, quests, bank, shop, marketplace panels), `game-net.js` (socket bridge), `spin-wheel-ui.js`, `cosmetics-visual.js`.
+
+---
+
+## City
+
+`/city` is a free-roam 3D city scene — a walkable urban world with a follow camera, map, and player controller, built on the same Three.js stack as the rest of the platform.
+
+**Key files:** `src/city/city-world.js` (scene + render loop), `city-map.js` (layout), `city-player.js` (movement/controller), `city-camera.js` (follow cam), `city.css`.
+
+---
+
+## Friends, Presence & Social
+
+A full account-level social layer spans the multiplayer surfaces. Friendships are durable; presence is volatile — and both are keyed to the account, not the ephemeral session, so they survive reconnects and realm changes.
+
+| Capability     | Backed by                                                                                                       |
+| -------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Friends graph** | `POST /api/friends` (request, accept, decline, remove, mute, unmute), `GET /api/friends` (graph + live presence) |
+| **User search** | `GET /api/friends/search?q=` — find accounts by display name, relationship status inline                       |
+| **Direct messages** | `GET`/`POST /api/friends/messages` — DM threads, live delivery when online + durable queue for offline       |
+| **Presence**   | Short-lived signed ticket (`GET /api/friends/presence-ticket`) → multiplayer server writes `presence:<uid>` to Redis (75s TTL, 30s heartbeat) |
+| **Live delivery** | The social hub (`multiplayer/src/social-hub.js`) pushes DM + friend events to every open socket for an account |
+
+Friends are stored in Postgres (`friendships`, `direct_messages`, `user_mutes` — see migration `api/_lib/migrations/2026-06-01-friends.sql`); presence lives in Upstash Redis and self-heals if a process dies. Muting is send-side only — a muted account is never told it was muted. The friends panel UI (`src/friends.js`, `src/game/friends-panel.js`) surfaces requests, DM threads, and "Online · Mainland" / "Offline" status inside `/play` and `/game`. The `src/social/` module adds sentiment + X-post-impact scoring used by community surfaces.
+
+---
+
+## In-Game Economy
+
+The game runs on two currencies and a real onchain settlement path.
+
+**Gold (soft currency)** — earned from quests, gathering, and combat; spent in the cosmetics shop and the player marketplace. Used for fee-free trades.
+
+**$THREE (onchain, Solana)** — an SPL token with a server-authoritative **quote → sign → settle** flow (`api/token/*`, `src/token-pay.js`, `api/_lib/token/`). The server issues a purpose-scoped, HMAC-sealed quote (`spin`, `marketplace_sale`); the client signs an atomic split transaction; the server verifies it on-chain (destination + amount + memo) before crediting. Live USD pricing comes from Jupiter (primary, pump.fun-aware) with a Birdeye fallback. The **$THREE protocol** layer (`api/three-token/*`) tracks holder revenue-share, a deploy-to-burn ledger, and an activity feed. Game-server config: `GAME_TOKEN_MINT`, `GAME_TOKEN_TREASURY`, `GAME_TOKEN_BURN`, `GAME_TOKEN_SECRET`.
+
+| Sink            | Detail                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Cosmetics shop** | ~15-item catalog across five rarity tiers; daily (3) + weekly (2) rotations are seeded and deterministic per UTC day. Cosmetics are visual only — tints, props (`.glb` accessories at head/face anchors), and auras. High-price buys gate behind a two-click confirm. |
+| **Player marketplace** | Peer-to-peer listing board (`multiplayer/src/marketplaceStore.js`). List items or gold; settle in gold (fee-free) or $THREE (95% seller / 5% treasury). Offline sellers receive pending payouts on next login; Redis-persisted across restarts. |
+| **Spin wheel**  | A Mainland wheel — one free spin every 12h or a paid spin in $THREE. The outcome is rolled and sealed server-side before the client animates, so the wheel can't be gamed. |
+
+The separate **agent/avatar marketplace** at `/marketplace` (discovery, fork, bookmark, Solana-Pay asset purchase, skill pricing) is documented under [API Reference](#api-reference); the in-game economy above is distinct and lives in the Colyseus rooms.
+
+---
+
+## Voice Lab & Mocap Studio
+
+Two creator tools sit alongside [Pose Studio](#pose-studio):
+
+- **Voice Lab** (`/voice`, `src/voice-lab.js`) — audition and bind voices to an agent, building on the [Voice & Persona Hub](#voice--persona-hub-phase-2).
+- **Mocap Studio** (`/mocap-studio`, `src/mocap-studio.js`, `api/mocap/`) — capture and retarget motion onto a rigged avatar, exporting reusable animation clips.
 
 ---
 
@@ -2311,7 +2422,14 @@ RPC_URL_8453=https://mainnet.base.org
 # IPFS pinning
 PINATA_JWT=...
 WEB3_STORAGE_TOKEN=...                       # Fallback
+
+# Coin Communities chat (reads work without keys; posting needs these)
+CC_API_KEY=...                               # read + WebSocket tickets
+CC_SERVER_KEY=...                            # server-attributed posts (optional)
+CC_SERVER_SECRET=...
 ```
+
+> **Multiplayer / game server.** The Colyseus server in `multiplayer/` reads its own config — `PLAY_GATE_MINT` / `PLAY_GATE_MIN` and `HOLDER_PASS_SECRET` for the play-gate, and `GAME_TOKEN_MINT` / `GAME_TOKEN_TREASURY` / `GAME_TOKEN_BURN` / `GAME_TOKEN_SECRET` for the in-game $THREE economy. These belong to the game server's environment, not the Vercel function pool.
 
 ### Optional (Frontend, prefixed `VITE_`)
 

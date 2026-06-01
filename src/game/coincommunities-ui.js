@@ -795,7 +795,7 @@ export class CommunityUI {
 	// (default $8) of the coin. This overlay is a thin view over the scene's gate
 	// state machine (coincommunities.js _passHolderGate) — the scene drives us
 	// through setHolderGate(state, data) and we report the player's choice back via
-	// onHolderAction(action): 'signin' | 'wallet' | 'buy' | 'recheck' | 'cancel'.
+	// onHolderAction(action): 'signin' | 'wallet' | 'switch' | 'buy' | 'recheck' | 'cancel'.
 	openHolderGate(coin) {
 		if (this._gate) return; // already open — the scene re-uses it across states
 		this._gateBody = el('div', { class: 'cc-gate-body' });
@@ -882,6 +882,7 @@ export class CommunityUI {
 					actions(
 						btn(`Buy ${sym}`, 'buy', 'cc-gate-primary'),
 						btn('I bought — re-check', 'recheck'),
+						btn('Use a different wallet', 'switch'),
 						btn('Enter the open world instead', 'cancel', 'cc-gate-ghost'),
 					),
 				];
@@ -910,7 +911,11 @@ export class CommunityUI {
 					el('div', { class: 'cc-gate-lock', text: '!' }),
 					title('Couldn’t verify'),
 					msg(data.error || 'Something went wrong checking your holdings.'),
-					actions(btn('Try again', 'recheck', 'cc-gate-primary'), btn('Cancel', 'cancel', 'cc-gate-ghost')),
+					actions(
+						btn('Try again', 'recheck', 'cc-gate-primary'),
+						btn('Use a different wallet', 'switch'),
+						btn('Cancel', 'cancel', 'cc-gate-ghost'),
+					),
 				];
 				break;
 		}

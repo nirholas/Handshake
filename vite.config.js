@@ -210,15 +210,17 @@ const appConfig = {
 					if (id.includes('node_modules/@solana/') || id.includes('node_modules/@coral-xyz/')) return 'solana';
 					if (id.includes('node_modules/@mediapipe/')) return 'mediapipe';
 				},
-				// footer-bot.js needs a stable, unhashed filename so footer.js can
-				// load it by a predictable URL without knowing the build hash.
+				// A few entries need stable, unhashed filenames so plain public/
+				// scripts can load them by a predictable URL without knowing the
+				// build hash: footer.js → /footer-bot.js, nav.js → /walk-companion.js.
 				entryFileNames: (chunk) =>
-					chunk.name === 'footer-bot'
-						? 'footer-bot.js'
+					chunk.name === 'footer-bot' || chunk.name === 'walk-companion'
+						? `${chunk.name}.js`
 						: 'assets/[name]-[hash].js',
 			},
 			input: {
 				'footer-bot': resolve(__dirname, 'src/footer-bot.js'),
+				'walk-companion': resolve(__dirname, 'src/walk-companion.js'),
 				app: resolve(__dirname, 'pages/app.html'),
 				'app-demo': resolve(__dirname, 'pages/app-demo.html'),
 				'app-next': resolve(__dirname, 'pages/app-next.html'),
@@ -807,6 +809,12 @@ const appConfig = {
 				// stable URL in dev so footer.js can load it without knowing the hash.
 				if (path === '/footer-bot.js') {
 					req.url = '/src/footer-bot.js';
+					return next();
+				}
+				// /walk-companion.js — same trick for nav.js's Walk Companion module
+				// (built to a stable, unhashed name in prod; served from src in dev).
+				if (path === '/walk-companion.js') {
+					req.url = '/src/walk-companion.js';
 					return next();
 				}
 				// Avatar Studio (rebranded Character Studio fork) — serve the

@@ -86,6 +86,8 @@ function buildPlayMessage(address, nonce) {
  *
  * @param {object} opts
  * @param {string} opts.nonce        nonce from fetchPlayConfig()
+ * @param {boolean} [opts.forceReconnect]  drop the current wallet link before
+ *   connecting, so the wallet re-prompts and a different account can be chosen.
  * @param {(stage: string) => void} [opts.onStage]  'connecting' | 'signing' | 'verifying'
  * @returns {Promise<object>} the /verify result — { ok: true, wallet, balance,
  *   playPass, … } when the wallet clears the floor, or { ok: false,
@@ -93,10 +95,19 @@ function buildPlayMessage(address, nonce) {
  * @throws {PlayAuthError} no_wallet | rejected | nonce_invalid | bad_signature |
  *   balance_unavailable | verify_failed
  */
-export async function signInToPlay({ nonce, onStage = () => {} } = {}) {
+export async function signInToPlay({ nonce, forceReconnect = false, onStage = () => {} } = {}) {
 	const provider = detectProvider();
 	if (!provider?.connect) {
 		throw new PlayAuthError('no_wallet', 'No Solana wallet found. Install Phantom to play.');
+	}
+
+	// Switching wallets: injected providers silently re-hand back the already-
+	// trusted account on connect(), so without disconnecting first the player is
+	// stuck on whichever wallet they picked the first time. Dropping the link makes
+	// the wallet show its account picker again. Best-effort — a no-op when nothing
+	// is connected yet.
+	if (forceReconnect) {
+		try { await provider.disconnect?.(); } catch { /* not connected — fine */ }
 	}
 
 	onStage('connecting');

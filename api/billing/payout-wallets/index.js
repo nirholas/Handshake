@@ -3,6 +3,7 @@ import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson } from '../../_lib/http.js';
 import { parse, isValidSolanaAddress, isValidEvmAddress } from '../../_lib/validate.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
+import { requireCsrf } from '../../_lib/csrf.js';
 import { z } from 'zod';
 
 const postBody = z.object({
@@ -32,7 +33,9 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { wallets });
 	}
 
-	// POST
+	// POST — CSRF on state-changing session-cookie request.
+	if (!(await requireCsrf(req, res, user.id))) return;
+
 	const body = parse(postBody, await readJson(req));
 	const { address, chain, agent_id = null, is_default } = body;
 

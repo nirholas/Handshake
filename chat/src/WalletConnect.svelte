@@ -1,5 +1,5 @@
 <script>
-  import { currentUser, loadCurrentUser } from './stores.js';
+  import { currentUser, loadCurrentUser, walletProvider } from './stores.js';
   import { signInWithEVM, signInWithSolana, signOut } from './walletAuth.js';
 
   let loading = null; // 'evm' | 'sol' | null
@@ -9,7 +9,8 @@
     error = '';
     loading = 'evm';
     try {
-      await signInWithEVM();
+      const { wallet } = await signInWithEVM();
+      walletProvider.set(wallet);
       await loadCurrentUser();
     } catch (e) {
       error = e.message || 'EVM sign-in failed.';
@@ -22,7 +23,8 @@
     error = '';
     loading = 'sol';
     try {
-      await signInWithSolana();
+      const { wallet } = await signInWithSolana();
+      walletProvider.set(wallet);
       await loadCurrentUser();
     } catch (e) {
       error = e.message || 'Solana sign-in failed.';
@@ -33,6 +35,7 @@
 
   async function handleSignOut() {
     await signOut();
+    walletProvider.set(null);
     currentUser.set(null);
   }
 

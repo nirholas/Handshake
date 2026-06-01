@@ -1470,6 +1470,18 @@ html, body {
 .pg-btn-ghost { color: var(--cc-dim); }
 .pg-btn-ghost:hover { color: var(--cc-text); }
 
+/* quiet text action — "use a different wallet" */
+.pg-link {
+	-webkit-appearance: none; appearance: none; cursor: pointer;
+	margin: 12px 0 0; padding: 4px 6px;
+	font-family: inherit; font-size: 12px; font-weight: 500; letter-spacing: 0.02em;
+	background: none; border: none; border-radius: var(--cc-radius-sm);
+	color: var(--cc-dim); text-decoration: underline; text-underline-offset: 3px;
+	transition: color 0.18s ease;
+}
+.pg-link:hover { color: var(--cc-text); }
+.pg-link:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--cc-bg), 0 0 0 4px var(--cc-edge-hi); }
+
 /* balance comparison (too-low state) */
 .pg-balance {
 	display: flex; align-items: center; justify-content: center; gap: 14px;

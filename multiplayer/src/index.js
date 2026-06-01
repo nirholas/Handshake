@@ -23,6 +23,7 @@ import { WalkRoom } from './rooms/WalkRoom.js';
 import { GameRoom } from './rooms/GameRoom.js';
 import { REALMS } from './rooms/realms.js';
 import { blockStore } from './block-store.js';
+import { worldPersistence } from './persistence.js';
 import { flushAllPlayers } from './playerStore.js';
 import { marketplaceStore } from './marketplaceStore.js';
 import { SERVERS } from './servers.js';
@@ -316,6 +317,13 @@ const shutdown = async (signal) => {
 		await blockStore.flushAll();
 	} catch (err) {
 		console.error('[multiplayer] final block flush error:', err);
+	}
+	// Generic per-world docs (T3): flush any room whose debounced world save hadn't
+	// fired, so placed builds / gated-world state survive a redeploy.
+	try {
+		await worldPersistence.flushAll();
+	} catch (err) {
+		console.error('[multiplayer] final world flush error:', err);
 	}
 	// Same guarantee for player progression (Task 16): persist every account whose
 	// debounced profile save hadn't landed yet, so a redeploy never resets a player.
