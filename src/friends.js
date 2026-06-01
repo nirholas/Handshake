@@ -122,11 +122,21 @@ export class FriendsClient {
 			}
 			if (!res.ok) throw new Error(`friends ${res.status}`);
 			const { data } = await res.json();
+			const sig = graphSignature(data);
+			const first = !this.loaded;
 			this.friends = data.friends || [];
 			this.incoming = data.incoming || [];
 			this.outgoing = data.outgoing || [];
 			this.loaded = true;
 			this.loadError = null;
+			// Only repaint when something actually changed — a 20s presence/unread
+			// poll that returns identical state must not rebuild the panel (and reset
+			// a half-typed search / DM caret).
+			if (first || sig !== this._graphSig) {
+				this._graphSig = sig;
+				this._emit();
+			}
+			return;
 		} catch (err) {
 			this.loadError = 'network';
 			this.loaded = true;
@@ -215,8 +225,13 @@ export class FriendsClient {
 			});
 			if (!res.ok) throw new Error(`thread ${res.status}`);
 			const { data } = await res.json();
-			this.threads.set(friendId, data.messages || []);
-			if (!quiet || this.openWith === friendId) this._emit();
+			const next = data.messages || [];
+			const prev = this.threads.get(friendId) || [];
+			const changed = next.length !== prev.length || next[next.length - 1]?.id !== prev[prev.length - 1]?.id;
+			this.threads.set(friendId, next);
+			// A quiet poll that found no new messages must not repaint — otherwise the
+			// open composer rebuilds every few seconds and steals the caret.
+			if (changed || !quiet) this._emit();
 		} catch (err) {
 			if (!quiet) console.warn('[friends] thread load failed:', err?.message);
 		}
@@ -284,6 +299,15 @@ export class FriendsClient {
 				break;
 		}
 	}
+}
+
+// Compact fingerprint of the graph payload so refresh() can skip a repaint when
+// a poll returns identical state (presence, realm, unread, and membership).
+function graphSignature(data) {
+	const f = (data.friends || []).map((x) => `${x.id}:${x.online ? 1 : 0}:${x.realm || ''}:${x.unread || 0}`).join('|');
+	const i = (data.incoming || []).map((x) => x.id).join('|');
+	const o = (data.outgoing || []).map((x) => x.id).join('|');
+	return `${f}#${i}#${o}`;
 }
 
 // One shared client per page — the panel and the net wiring both reference it.

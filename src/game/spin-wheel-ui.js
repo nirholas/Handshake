@@ -148,10 +148,20 @@ class SpinWheel {
 	_onDenied(m) {
 		if (m && Number.isFinite(m.nextFreeSpinAt) && this.info) this.info.nextFreeSpinAt = m.nextFreeSpinAt;
 		if (m && Number.isFinite(m.avgLevel) && this.info) { this.info.avgLevel = m.avgLevel; this.info.eligible = m.avgLevel >= m.minLevel; }
+		// A paid spin whose payment isn't visible to the server yet: it landed
+		// on-chain (we waited for confirmation) but the RPC's parsed view can lag a
+		// beat. Retry the settle a few times before giving up so a confirmed payment
+		// is never lost to a timing race. The signature is consumed only on success.
+		if (m?.mode === 'paid' && m.reason === 'not_found' && this._prep && this._sig && (this._settleAttempts || 0) < 5) {
+			this._status('Waiting for the payment to confirm…', '');
+			setTimeout(() => { if (!this._closed && this.phase === 'spinning') this._settle(); }, 2500);
+			return;
+		}
 		this.busy = false;
 		this._stopSpin();
 		this.phase = 'ready';
 		this._prep = null;
+		this._sig = null;
 		this._status(this._denyText(m), 'err');
 		this._sync();
 	}
@@ -228,8 +238,14 @@ class SpinWheel {
 		this.phase = 'spinning';
 		this._startSpin();
 		this._status('Verifying payment & rolling…', '');
-		this._settleAttempts = 1;
-		this.net.spinPaidSettle(prep.quote, sig);
+		this._settle();
+	}
+
+	// Ask the server to verify the broadcast payment and roll. Kept as its own step
+	// so a transient "not confirmed yet" can retry without re-signing.
+	_settle() {
+		this._settleAttempts = (this._settleAttempts || 0) + 1;
+		this.net.spinPaidSettle(this._prep.quote, this._sig);
 	}
 
 	// Poll signature status over HTTP (no WS — the public RPC refuses subscriptions).
@@ -265,6 +281,7 @@ class SpinWheel {
 		this.busy = false;
 		this.phase = 'result';
 		this._prep = null;
+		this._sig = null;
 		const seg = this.segments?.[m.index];
 		const label = m.label || seg?.label || 'a prize';
 		let line = `You won ${label}!`;
@@ -407,7 +424,10 @@ class SpinWheel {
 		const now = (this.info.now ?? Date.now()) + drift;
 		const next = this.info.nextFreeSpinAt ?? 0;
 		const ready = now >= next;
-		if (this.phase === 'spinning' || this.phase === 'paying') return;
+		if (this.busy || this.phase === 'spinning' || this.phase === 'paying') {
+			this.freeBtn.disabled = true;
+			return;
+		}
 		if (!this._levelOk()) {
 			this.freeBtn.disabled = true; this.freeBtn.textContent = 'Free spin';
 			this.freeSub.textContent = '';

@@ -45,20 +45,22 @@ class Gate {
 	}
 
 	async _start() {
-		// Probe the gate. If we can't reach it we don't know whether sign-in is
-		// required, so show a retryable error rather than guessing either way.
-		this._mount();
-		this._render({ state: 'checking' });
+		// Probe the gate before mounting anything — when /play is open (no token
+		// pinned) or a fresh pass is already cached, the player never sees an overlay
+		// at all. We only paint a screen when sign-in is genuinely needed, or when
+		// we can't reach the gate (a retryable error — we don't guess access either
+		// way, since the server is the real authority).
 		let cfg;
 		try {
 			cfg = await fetchPlayConfig();
 		} catch (err) {
+			this._mount();
 			this._render({ state: 'error', error: err?.message || 'Could not reach sign-in.', retry: () => this._start() });
 			return;
 		}
 		this.cfg = cfg;
 
-		// No token pinned → /play is open. Tear the gate down and let everyone in.
+		// No token pinned → /play is open. Let everyone in without a flash.
 		if (!cfg.required) {
 			this._finish({ required: false });
 			return;
@@ -71,6 +73,7 @@ class Gate {
 			return;
 		}
 
+		this._mount();
 		this._renderConnect();
 	}
 
@@ -169,12 +172,6 @@ class Gate {
 		const tokenName = (sym) => sym || this.cfg?.symbol || 'the game token';
 
 		switch (view.state) {
-			case 'checking':
-				return card(`
-					<div class="pg-spinner" aria-hidden="true"></div>
-					<h1 class="pg-title">Checking access…</h1>
-					<p class="pg-sub">One moment while we set up sign-in.</p>`);
-
 			case 'no_wallet':
 				return card(`
 					<div class="pg-icon" aria-hidden="true">${SVG.wallet}</div>

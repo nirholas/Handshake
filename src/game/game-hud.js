@@ -1088,7 +1088,7 @@ export class GameHud {
 		row.append(qtyWrap, priceWrap);
 		pane.appendChild(row);
 
-		const btn = el('button', 'kq-btn kq-btn-primary kq-market-list', `List ${m.label} for gold`);
+		const btn = el('button', 'kq-btn kq-btn-primary kq-market-listbtn', `List ${m.label} for gold`);
 		btn.type = 'button';
 		btn.addEventListener('click', () => {
 			const qty = Math.max(1, Math.min(held, qtyInput.value | 0));
@@ -1132,7 +1132,7 @@ export class GameHud {
 		row.append(goldWrap, usdWrap);
 		pane.appendChild(row);
 
-		const btn = el('button', 'kq-btn kq-btn-primary kq-market-list', `List gold for ${this.market.token.symbol}`);
+		const btn = el('button', 'kq-btn kq-btn-primary kq-market-listbtn', `List gold for ${this.market.token.symbol}`);
 		btn.type = 'button';
 		btn.addEventListener('click', () => {
 			const goldAmount = Math.max(1, Math.min(this.gold, goldInput.value | 0));

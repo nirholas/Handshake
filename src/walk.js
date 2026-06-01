@@ -47,6 +47,7 @@ import nipplejs from 'nipplejs';
 
 import { AnimationManager } from './animation-manager.js';
 import { WalkNet } from './walk-net.js';
+import { getPresenceTicket, friendsClient } from './friends.js';
 
 const AVATAR_URL_DEFAULT = '/avatars/default.glb';
 
@@ -1953,7 +1954,14 @@ function startNet() {
 		coinName: COIN_PARAMS.name,
 		coinSymbol: COIN_PARAMS.symbol,
 		coinImage: COIN_PARAMS.image,
+		// Publish account presence (Task 15) so friends see this player online in
+		// this coin world, and so DMs can deliver here live. No-op when signed out.
+		getPresence: getPresenceTicket,
 	});
+
+	// Friends realtime (Task 15): keep the shared friends client's threads + unread
+	// warm with any live DM / request events delivered to this coin world.
+	net.on('social', (m) => friendsClient().handleSocial(m));
 
 	net.on('status', ({ status }) => {
 		netConnected = status === 'online';

@@ -338,6 +338,9 @@ export class IsoGame {
 		this.nodeViews = new Map(); // id -> { group, node }
 		this.mobViews = new Map();  // id -> { group, mob }
 		this.npcViews = new Map();  // id -> { group, npc, label, markerEl }
+		this.wheelViews = new Map(); // id -> { group, landmark } — interactable wheels (Task 19)
+		this._landmarkGroups = []; // decorative landmark meshes (casino), cleared per realm
+		this._casinoLabels = []; // [{ label, x, z, height }] — decorative landmark nameplates
 		this.tombViews = new Map(); // id -> { group, tomb, label, nameEl, ttlEl }
 		this.structViews = new Map(); // id -> { group, struct, ring, flame } (Task 07)
 		this.keys = new Set();
@@ -591,6 +594,11 @@ export class IsoGame {
 		// quest marker. Rebuilt with the realm since they ride in the realm layout.
 		this._buildNpcs(layout);
 
+		// Fixed landmarks (Task 19): the casino building + its Wheel of Fortune.
+		// The wheel is interactable — clicking it walks the player adjacent and opens
+		// the spinner; the casino is decorative (its footprint is blocked server-side).
+		this._buildLandmarks(layout);
+
 		// Frame the camera on the spawn before the local player exists.
 		const sp = this._tileToWorld(layout.spawn?.tx ?? grid / 2, layout.spawn?.ty ?? grid / 2);
 		this._camTarget.set(sp.x, 0, sp.z);
@@ -672,6 +680,127 @@ export class IsoGame {
 	_disposeNpcs() {
 		for (const [, v] of this.npcViews) { this.objectGroup.remove(v.group); v.label.remove(); }
 		this.npcViews.clear();
+	}
+
+	// ---------------------------------------------------------------- landmarks
+	// Fixed world landmarks (Task 19). The casino is a decorative building; the
+	// wheel is an interactable object (tagged for raycast → walk-and-spin). Rebuilt
+	// with the realm since they ride in the realm layout.
+	_buildLandmarks(layout) {
+		this._disposeLandmarks();
+		for (const lm of layout.landmarks || []) {
+			if (lm.kind === 'wheel') {
+				const group = this._buildWheelView();
+				const w = this._tileToWorld(lm.tx, lm.ty);
+				group.position.set(w.x, 0, w.z);
+				group.traverse((o) => { o.userData.wheelId = lm.id; }); // raycast → spin target
+				this.objectGroup.add(group);
+
+				const label = document.createElement('div');
+				label.className = 'kg-npc-label kg-wheel-label';
+				label.innerHTML = `<span class="kg-npc-tag"></span>`;
+				label.querySelector('.kg-npc-tag').textContent = lm.label || 'Wheel of Fortune';
+				document.getElementById('kg-labels')?.appendChild(label);
+
+				this.wheelViews.set(lm.id, { group, landmark: lm, label, height: 2.2, spin: 0 });
+			} else if (lm.kind === 'casino') {
+				const group = this._buildCasinoView();
+				const w = this._tileToWorld(lm.tx, lm.ty);
+				group.position.set(w.x, 0, w.z);
+				this.staticGroup.add(group);
+				this._landmarkGroups.push(group);
+
+				const label = document.createElement('div');
+				label.className = 'kg-npc-label kg-casino-label';
+				label.innerHTML = `<span class="kg-npc-tag"></span>`;
+				label.querySelector('.kg-npc-tag').textContent = lm.label || 'Casino';
+				document.getElementById('kg-labels')?.appendChild(label);
+				this._casinoLabels.push({ label, x: w.x, z: w.z, height: 3.0 });
+			}
+		}
+	}
+
+	// A carnival prize wheel: an upright disc with alternating gold/teal sectors, a
+	// hub, and a top pointer. Low-poly, no asset load. Slowly idles via _updateLandmarks.
+	_buildWheelView() {
+		const g = new Group();
+		const post = new Mesh(new CylinderGeometry(0.12, 0.16, 1.5, 10),
+			new MeshStandardMaterial({ color: 0x5a4632, roughness: 0.9 }));
+		post.position.y = 0.75; post.castShadow = true;
+		const disc = new Group();
+		disc.position.y = 1.7;
+		const n = 12, seg = (Math.PI * 2) / n;
+		for (let i = 0; i < n; i++) {
+			const wedge = new Mesh(
+				new CylinderGeometry(0.78, 0.78, 0.12, 24, 1, false, i * seg, seg),
+				new MeshStandardMaterial({
+					color: i % 2 ? 0xf5c542 : 0x2b9fa8,
+					emissive: i % 2 ? 0x4a3a08 : 0x0a3034, emissiveIntensity: 0.5, roughness: 0.5,
+				}),
+			);
+			wedge.rotation.x = Math.PI / 2;
+			disc.add(wedge);
+		}
+		const hub = new Mesh(new SphereGeometry(0.16, 16, 12),
+			new MeshStandardMaterial({ color: 0xfff1c0, emissive: 0x6b5410, emissiveIntensity: 0.9, roughness: 0.3 }));
+		hub.position.z = 0.08;
+		disc.add(hub);
+		disc.rotation.y = 0; // faces +Z; idles around Z in _updateLandmarks
+		const pointer = new Mesh(new ConeGeometry(0.12, 0.28, 4),
+			new MeshStandardMaterial({ color: 0xff5a3a, roughness: 0.5 }));
+		pointer.position.set(0, 2.56, 0.06); pointer.rotation.x = Math.PI;
+		g.add(post, disc, pointer);
+		g.userData.disc = disc;
+		g.castShadow = true;
+		return g;
+	}
+
+	// A small casino pavilion: a warm-lit body with a striped awning and a glowing
+	// sign cube, so the wheel reads as part of a venue, not a stray object.
+	_buildCasinoView() {
+		const g = new Group();
+		const body = new Mesh(new BoxGeometry(3.2, 2.0, 2.4),
+			new MeshStandardMaterial({ color: 0x6a2b4a, roughness: 0.85 }));
+		body.position.y = 1.0; body.castShadow = true; body.receiveShadow = true;
+		const roof = new Mesh(new CylinderGeometry(1.9, 1.9, 0.5, 6),
+			new MeshStandardMaterial({ color: 0x3a1830, roughness: 0.8 }));
+		roof.position.y = 2.25; roof.rotation.y = Math.PI / 6; roof.castShadow = true;
+		const sign = new Mesh(new BoxGeometry(1.4, 0.5, 0.18),
+			new MeshStandardMaterial({ color: 0xffce5c, emissive: 0xffae3a, emissiveIntensity: 1.1, roughness: 0.4 }));
+		sign.position.set(0, 2.0, 1.25);
+		const doorway = new Mesh(new BoxGeometry(0.9, 1.3, 0.12),
+			new MeshStandardMaterial({ color: 0x140a12, roughness: 1 }));
+		doorway.position.set(0, 0.65, 1.21);
+		g.add(body, roof, sign, doorway);
+		return g;
+	}
+
+	_disposeLandmarks() {
+		for (const [, v] of this.wheelViews) { this.objectGroup.remove(v.group); v.label?.remove(); }
+		this.wheelViews.clear();
+		for (const group of this._landmarkGroups) this.staticGroup.remove(group);
+		this._landmarkGroups = [];
+		for (const cl of this._casinoLabels) cl.label?.remove();
+		this._casinoLabels = [];
+	}
+
+	// Open the Wheel of Fortune (Task 19). The heavy Solana signing path lives in a
+	// lazy chunk, so it only loads the first time a player reaches the wheel. The UI
+	// owns its own server subscriptions; we just hand it the net and clear our handle
+	// when it closes.
+	async _openSpinWheel() {
+		if (this._spinUI) { this._spinUI.focus(); return; }
+		if (this._spinUILoading) return;
+		this._spinUILoading = true;
+		try {
+			const { openSpinWheel } = await import('./spin-wheel-ui.js');
+			this._spinUI = openSpinWheel({ net: this.net, onClose: () => { this._spinUI = null; } });
+		} catch (err) {
+			console.warn('[spin] failed to open wheel:', err?.message);
+			this._toast({ kind: 'spin', text: 'Could not open the wheel. Try again.' });
+		} finally {
+			this._spinUILoading = false;
+		}
 	}
 
 	_rectTiles(r) {
@@ -1117,6 +1246,8 @@ export class IsoGame {
 		for (const id of [...this.tombViews.keys()]) this._tombRemove(id);
 		for (const id of [...this.structViews.keys()]) this._structRemove(id);
 		this._exitBuildMode();
+		// The wheel lives only on the Mainland — close an open spinner on a realm hop.
+		this._spinUI?.close();
 		this._target = null;
 		this._lootTombId = null;
 		this.myId = sessionId || this.net?.sessionId || this.myId;
@@ -1830,6 +1961,7 @@ export class IsoGame {
 			if (ud.nodeId && this.nodeViews.has(ud.nodeId)) { this._setTarget('node', ud.nodeId); return; }
 			if (ud.mobId && this.mobViews.has(ud.mobId)) { this._setTarget('mob', ud.mobId); return; }
 			if (ud.npcId && this.npcViews.has(ud.npcId)) { this._setTarget('npc', ud.npcId); return; }
+			if (ud.wheelId && this.wheelViews.has(ud.wheelId)) { this._setTarget('wheel', ud.wheelId); return; }
 		}
 
 		// 2b) In a PvP realm, a tap on another living player marks them as an attack
@@ -2334,11 +2466,13 @@ export class IsoGame {
 			if (k === 'q' && this.phase === 'world') { e.preventDefault(); this.q?.toggleQuests(); return; }
 			// Build menu (Task 07): B opens it / cancels an in-progress placement.
 			if (k === 'b' && this.phase === 'world') { e.preventDefault(); this._toggleBuildMenu(); return; }
+			// Marketplace (Task 20): M opens/closes the cart from anywhere in-world.
+			if (k === 'm' && this.phase === 'world') { e.preventDefault(); this.q?.toggleMarket(); return; }
 			// Escape also cancels build mode before any other surface.
 			if (k === 'escape' && this._buildMode) { e.preventDefault(); this._exitBuildMode(); return; }
 			// Hotbar number keys 1–6: select that slot (and ride a mount on it).
 			if (this.phase === 'world' && k >= '1' && k <= '6') { e.preventDefault(); this._equipOrRide(+k - 1); return; }
-			if (k === 'escape') { this.q?.closeQuests(); this.q?.closeBank(); this.q?.closeNpc(); this.q?.closeBuild?.(); this.q?.closeShop?.(); }
+			if (k === 'escape') { this.q?.closeQuests(); this.q?.closeBank(); this.q?.closeNpc(); this.q?.closeBuild?.(); this.q?.closeShop?.(); this.q?.closeMarket?.(); }
 			// Hotbar 1–6: equip that slot (server validates + patches activeSlot back).
 			if (this.phase === 'world' && k >= '1' && k <= '6') { e.preventDefault(); this.net?.equip(parseInt(k, 10) - 1); return; }
 			// Chat focus: C (or Enter) opens the chat input once in the world. The
@@ -2459,6 +2593,7 @@ export class IsoGame {
 		if (t.kind === 'mob') { const v = this.mobViews.get(t.id); if (!v || v.mob.dead) return null; return { tx: v.mob.tx, ty: v.mob.ty }; }
 		if (t.kind === 'player') { const v = this.players.get(t.id); if (!v || v.dead) return null; return { tx: v.tx, ty: v.ty }; }
 		if (t.kind === 'npc') { const v = this.npcViews.get(t.id); if (!v) return null; return { tx: v.npc.tx, ty: v.npc.ty }; }
+		if (t.kind === 'wheel') { const v = this.wheelViews.get(t.id); if (!v) return null; return { tx: v.landmark.tx, ty: v.landmark.ty }; }
 		return null;
 	}
 
@@ -2507,6 +2642,7 @@ export class IsoGame {
 		if (Math.abs(me.tx - tile.tx) > 1 || Math.abs(me.ty - tile.ty) > 1) return; // not there yet
 
 		if (t.kind === 'npc') { this.net?.npcTalk(t.id); this._target = null; return; }
+		if (t.kind === 'wheel') { this._openSpinWheel(); this._target = null; return; }
 
 		this._interactAccum += dt * 1000;
 		if (this._interactAccum < INTERACT_ACTION_MS) return;
@@ -3103,6 +3239,7 @@ export class IsoGame {
 			this._updateCamera();
 			this._updateLabels();
 			this._updateNpcLabels();
+			this._updateLandmarks(dt);
 			this._updateTombLabels();
 			this._updateStructures(now);
 			this._updateBuildGhost();
@@ -3174,6 +3311,29 @@ export class IsoGame {
 		}
 	}
 
+	// Idle-spin each wheel disc for a touch of life, and project the wheel + casino
+	// nameplates to screen space (Task 19).
+	_updateLandmarks(dt) {
+		const w = window.innerWidth, h = window.innerHeight;
+		const v = new Vector3();
+		for (const [, wv] of this.wheelViews) {
+			const disc = wv.group.userData.disc;
+			if (disc) disc.rotation.z += dt * 0.6;
+			v.set(wv.group.position.x, wv.height + 0.6, wv.group.position.z).project(this.camera);
+			if (v.z > 1) { wv.label.style.display = 'none'; continue; }
+			wv.label.style.display = '';
+			const sx = (v.x * 0.5 + 0.5) * w, sy = (-v.y * 0.5 + 0.5) * h;
+			wv.label.style.transform = `translate(-50%, -100%) translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)`;
+		}
+		for (const cl of this._casinoLabels) {
+			v.set(cl.x, cl.height, cl.z).project(this.camera);
+			if (v.z > 1) { cl.label.style.display = 'none'; continue; }
+			cl.label.style.display = '';
+			const sx = (v.x * 0.5 + 0.5) * w, sy = (-v.y * 0.5 + 0.5) * h;
+			cl.label.style.transform = `translate(-50%, -100%) translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)`;
+		}
+	}
+
 	// Project each tombstone's headstone to screen space, place its DOM label, and
 	// tick the live "expires in Xs" countdown straight off the synced expiresAt.
 	_updateTombLabels() {
@@ -3236,6 +3396,8 @@ export class IsoGame {
 		this.structViews.clear();
 		this._exitBuildMode();
 		this._disposeNpcs();
+		this._disposeLandmarks();
+		this._spinUI?.close();
 		this.q?.destroy();
 		this._clearCast();
 		this._nipple?.destroy();

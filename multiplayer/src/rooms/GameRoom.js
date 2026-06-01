@@ -1809,7 +1809,7 @@ export class GameRoom extends Room {
 		if (priv.cosmetics) {
 			next.cosmetics = { owned: [...priv.cosmetics.owned], equipped: priv.cosmetics.equipped };
 		}
-		if (priv.spin) next.spin = { nextFreeSpinAt: priv.spin.nextFreeSpinAt | 0 };
+		if (priv.spin) next.spin = { nextFreeSpinAt: priv.spin.nextFreeSpinAt || 0 };
 		savePlayer(priv.playerId, next);
 	}
 
@@ -2109,25 +2109,22 @@ export class GameRoom extends Room {
 		const priv = this.priv.get(client.sessionId);
 		if (!p || !priv) return;
 		if (!this._rateOk(client.sessionId, 'mkt')) return;
-		if (!tokenConfigured()) { client.send('notice', { kind: 'market', text: 'Token payments are unavailable.' }); return; }
+		const id = String(payload?.id ?? '');
+		// Every rejection clears the client's per-listing "Preparing…" spinner.
+		const fail = (text) => { client.send('notice', { kind: 'market', text }); client.send('marketBuyFail', { id }); };
+		if (!tokenConfigured()) { fail('Token payments are unavailable.'); return; }
 		const buyerWallet = priv.playerId;
-		if (!isWalletAddress(buyerWallet)) {
-			client.send('notice', { kind: 'market', text: 'Connect a Solana wallet to pay with tokens.' });
-			return;
-		}
-		const l = marketplaceStore.get(String(payload?.id ?? ''));
-		if (!l || l.type !== 'goldForToken' || l.status !== 'active') {
-			client.send('notice', { kind: 'market', text: 'That listing is no longer available.' });
-			return;
-		}
-		if (l.seller === buyerWallet) { client.send('notice', { kind: 'market', text: "You can't buy your own listing." }); return; }
+		if (!isWalletAddress(buyerWallet)) { fail('Connect a Solana wallet to pay with tokens.'); return; }
+		const l = marketplaceStore.get(id);
+		if (!l || l.type !== 'goldForToken' || l.status !== 'active') { fail('That listing is no longer available.'); return; }
+		if (l.seller === buyerWallet) { fail("You can't buy your own listing."); return; }
 
 		const quote = await quoteTokenForUsd(l.priceUsd);
-		if (!quote) { client.send('notice', { kind: 'market', text: 'Live price unavailable — try again in a moment.' }); return; }
+		if (!quote) { fail('Live price unavailable — try again in a moment.'); return; }
 		// Re-check the listing survived the awaited quote (it could have been bought
 		// or cancelled while we fetched the price).
 		const still = marketplaceStore.get(l.id);
-		if (!still || still.status !== 'active') { client.send('notice', { kind: 'market', text: 'That listing is no longer available.' }); return; }
+		if (!still || still.status !== 'active') { fail('That listing is no longer available.'); return; }
 
 		const { seller: sellerRaw, treasury: treasuryRaw } = splitAmount(quote.raw, MARKET_TREASURY_BPS);
 		let txB64;
@@ -2138,7 +2135,7 @@ export class GameRoom extends Room {
 			});
 		} catch (err) {
 			console.warn('[market] build split tx failed:', err?.message);
-			client.send('notice', { kind: 'market', text: 'Could not prepare the payment. Try again.' });
+			fail('Could not prepare the payment. Try again.');
 			return;
 		}
 		const signed = signQuote({
@@ -2170,18 +2167,17 @@ export class GameRoom extends Room {
 		if (!p || !priv) return;
 		if (!this._rateOk(client.sessionId, 'mkt')) return;
 		const q = verifyQuote(payload?.quote);
-		if (!q) { client.send('notice', { kind: 'market', text: 'Your quote expired — get a fresh one.' }); return; }
-		if (q.buyer !== priv.playerId) { client.send('notice', { kind: 'market', text: 'That quote was issued to a different wallet.' }); return; }
+		const failId = q?.listingId || String(payload?.id ?? '');
+		const fail = (text) => { client.send('notice', { kind: 'market', text }); client.send('marketBuyFail', { id: failId }); };
+		if (!q) { fail('Your quote expired — get a fresh one.'); return; }
+		if (q.buyer !== priv.playerId) { fail('That quote was issued to a different wallet.'); return; }
 		const txSig = typeof payload?.txSig === 'string' ? payload.txSig.trim() : '';
-		if (!txSig) { client.send('notice', { kind: 'market', text: 'Missing transaction signature.' }); return; }
-		if (marketplaceStore.isSettled(txSig)) { client.send('notice', { kind: 'market', text: 'That payment was already settled.' }); return; }
+		if (!txSig) { fail('Missing transaction signature.'); return; }
+		if (marketplaceStore.isSettled(txSig)) { fail('That payment was already settled.'); return; }
 
 		const l = marketplaceStore.get(q.listingId);
-		if (!l || l.type !== 'goldForToken' || l.sellerWallet !== q.sellerWallet) {
-			client.send('notice', { kind: 'market', text: 'That listing is no longer available.' });
-			return;
-		}
-		if (l.status !== 'active') { client.send('notice', { kind: 'market', text: 'That listing is no longer available.' }); return; }
+		if (!l || l.type !== 'goldForToken' || l.sellerWallet !== q.sellerWallet) { fail('That listing is no longer available.'); return; }
+		if (l.status !== 'active') { fail('That listing is no longer available.'); return; }
 		// Claim it synchronously before the async verify so a second settle can't
 		// double-release the same gold. Reverted to active if verification fails.
 		marketplaceStore.update(l.id, { status: 'settling' });
@@ -2192,7 +2188,7 @@ export class GameRoom extends Room {
 		const current = marketplaceStore.get(l.id);
 		if (!current || current.status !== 'settling') {
 			// Cancelled/evicted out from under us mid-verify — don't release.
-			client.send('notice', { kind: 'market', text: 'That listing is no longer available.' });
+			fail('That listing is no longer available.');
 			return;
 		}
 		if (!verify.ok) {
@@ -2200,7 +2196,7 @@ export class GameRoom extends Room {
 			const why = verify.reason === 'not_found' ? 'Payment not found on-chain yet — wait for confirmation and retry.'
 				: verify.reason?.includes('underpaid') ? 'The payment amount did not match the quote.'
 				: 'Could not verify the payment. No gold was released.';
-			client.send('notice', { kind: 'market', text: why });
+			fail(why);
 			return;
 		}
 		// Verified. Consume the signature, close the listing, deliver the gold.
@@ -2251,7 +2247,7 @@ export class GameRoom extends Room {
 			reason,
 			avgLevel: Math.round(this._averageLevel(p) * 10) / 10,
 			minLevel: SPIN_MIN_AVG_LEVEL,
-			nextFreeSpinAt: priv.spin.nextFreeSpinAt | 0,
+			nextFreeSpinAt: priv.spin.nextFreeSpinAt || 0,
 			now: Date.now(),
 		});
 	}
@@ -2271,7 +2267,7 @@ export class GameRoom extends Room {
 			minLevel: SPIN_MIN_AVG_LEVEL,
 			eligible: avg >= SPIN_MIN_AVG_LEVEL,
 			atWheel: this._atWheel(p),
-			nextFreeSpinAt: priv.spin.nextFreeSpinAt | 0,
+			nextFreeSpinAt: priv.spin.nextFreeSpinAt || 0,
 			now: Date.now(),
 			costUsd: PAID_SPIN_USD,
 			symbol: TOKEN_SYMBOL,
@@ -2315,7 +2311,7 @@ export class GameRoom extends Room {
 		const reason = this._spinBlockReason(p);
 		if (reason) { this._sendSpinDenied(client, p, priv, 'free', reason); return; }
 		const now = Date.now();
-		if (now < (priv.spin.nextFreeSpinAt | 0)) {
+		if (now < (priv.spin.nextFreeSpinAt || 0)) {
 			this._sendSpinDenied(client, p, priv, 'free', 'cooldown');
 			return;
 		}
@@ -2395,7 +2391,7 @@ export class GameRoom extends Room {
 		markSpinSettled(txSig);
 		const result = this._rollAndAward(client, p);
 		this._persistPlayer(client.sessionId);
-		client.send('spinResult', { mode: 'paid', ...result, txSig, nextFreeSpinAt: priv.spin.nextFreeSpinAt | 0, now: Date.now() });
+		client.send('spinResult', { mode: 'paid', ...result, txSig, nextFreeSpinAt: priv.spin.nextFreeSpinAt || 0, now: Date.now() });
 	}
 
 	// Credit a seller their gold proceeds. If they're online (in this room or any
@@ -2459,13 +2455,6 @@ export class GameRoom extends Room {
 	}
 
 	// ----- marketplace item helpers ----------------------------------------
-
-	// Total quantity of `item` the player holds in their backpack (not hotbar).
-	_countInvItem(p, item) {
-		let n = 0;
-		for (const s of p.inv) if (s.item === item) n += s.qty;
-		return n;
-	}
 
 	// Remove up to `qty` of `item` from the backpack, emptying slots as they drain.
 	// Returns the quantity actually removed (< qty if the player didn't have enough).

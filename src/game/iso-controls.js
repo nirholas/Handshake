@@ -96,9 +96,15 @@ export class IsoControls {
 		this._mounted = true;
 
 		this._buildGear();
+		this._buildFriendsButton();
 
 		window.addEventListener('keydown', this._onKeyDown, true);
 		this._unsub = this.kb.subscribe(() => this._onBindingsChanged());
+
+		// Keep the HUD unread badge live whether or not the panel is open. A single
+		// background load seeds existing unread; live DM events keep it current.
+		this._friendsUnsub = this._friends.subscribe(() => this._updateFriendsBadge());
+		this._friends.refresh();
 
 		// Poll for the network connection + phase changes. Cheap (5Hz) and only
 		// needs to wire the net bus once; visibility follows game.phase.
@@ -113,6 +119,10 @@ export class IsoControls {
 			this.kb.setAccount(localStorage.getItem('cc-name') || '');
 			game.net.on('playerAdd', (p, id) => this._onPlayer(p, id));
 			game.net.on('playerChange', (p, id) => this._onPlayer(p, id));
+			// Friends realtime (Task 15): live DMs + request/accept events arrive on
+			// whatever realm room this account is connected to; hand them to the
+			// shared friends client so the panel + unread badge update instantly.
+			game.net.on('social', (m) => this._friends.handleSocial(m));
 		}
 		// A reconnect builds a fresh GameNet; rebind against the new bus.
 		if (game.net && this._boundNet && this._boundNet !== game.net) {
@@ -125,6 +135,7 @@ export class IsoControls {
 	_applyPhase(phase) {
 		const world = phase === 'world';
 		if (this._gearEl) this._gearEl.hidden = !world;
+		if (this._friendsBtn) this._friendsBtn.hidden = !world;
 		if (world && !this._hintDone) {
 			this._updateHint();
 			this._hintDone = true;
@@ -186,6 +197,40 @@ export class IsoControls {
 		if (bar && status) bar.insertBefore(this._gearEl, status);
 		else if (bar) bar.appendChild(this._gearEl);
 		else document.body.appendChild(this._gearEl);
+	}
+
+	// -------------------------------------------------------------- friends button
+	// A topbar entry point for the friends panel (Task 15), alongside the F hotkey.
+	// Carries a live unread badge so a new DM is noticeable without opening it.
+	_buildFriendsButton() {
+		this._friendsBadge = el('span', { class: 'kg-fr-hudbadge', hidden: true, 'aria-hidden': 'true' });
+		this._friendsBtn = el(
+			'button',
+			{
+				id: 'kg-friends-btn',
+				class: 'kg-iconbtn',
+				type: 'button',
+				hidden: true,
+				'aria-haspopup': 'dialog',
+				'aria-controls': 'kg-ov-friends',
+				'aria-label': 'Friends',
+				title: 'Friends (F)',
+				onclick: () => this._toggle('friends'),
+			},
+			['👥', this._friendsBadge],
+		);
+		const bar = document.getElementById('kg-topbar');
+		if (this._gearEl && this._gearEl.parentNode) this._gearEl.parentNode.insertBefore(this._friendsBtn, this._gearEl);
+		else if (bar) bar.appendChild(this._friendsBtn);
+		else document.body.appendChild(this._friendsBtn);
+	}
+
+	_updateFriendsBadge() {
+		if (!this._friendsBadge) return;
+		const n = this._friends.totalUnread;
+		this._friendsBadge.textContent = n > 9 ? '9+' : String(n);
+		this._friendsBadge.hidden = n <= 0;
+		this._friendsBtn?.classList.toggle('kg-iconbtn--alert', n > 0);
 	}
 
 	// -------------------------------------------------------------- keyboard
@@ -330,6 +375,10 @@ export class IsoControls {
 			clearInterval(this._mapTimer);
 			this._mapTimer = null;
 		}
+		if (key === 'friends' && this._friendsPanel) {
+			this._friendsPanel.unmount();
+			this._friendsPanel = null;
+		}
 		if (this._capture && key === 'settings') this._capture = null;
 		const back = this._lastFocus;
 		if (back && document.contains(back)) back.focus();
@@ -351,7 +400,7 @@ export class IsoControls {
 
 	_ensureSurface(key) {
 		if (this._surfaces[key]) return this._surfaces[key];
-		const titles = { inv: 'Inventory', map: 'Map', settings: 'Controls' };
+		const titles = { inv: 'Inventory', map: 'Map', settings: 'Controls', friends: 'Friends' };
 		const title = titles[key] || PLACEHOLDERS[key]?.title || key;
 		const closeBtn = el(
 			'button',
@@ -400,6 +449,7 @@ export class IsoControls {
 		if (key === 'inv') this._renderInv();
 		else if (key === 'map') this._renderMap();
 		else if (key === 'settings') this._renderControls();
+		else if (key === 'friends') this._mountFriends();
 		else this._renderPlaceholder(key);
 	}
 
@@ -522,6 +572,20 @@ export class IsoControls {
 				ctx.stroke();
 			}
 		}
+	}
+
+	// -------------------------------------------------------------- friends
+	// Lazily mount the friends panel into its surface body on first open; reuse it
+	// thereafter. The panel owns its own polling/realtime lifecycle via mount()/
+	// unmount() (the latter fires from _close).
+	_mountFriends() {
+		const body = this._surfaces.friends?.body;
+		if (!body) return;
+		if (!this._friendsPanel) {
+			body.innerHTML = '';
+			this._friendsPanel = new FriendsPanel(body);
+		}
+		this._friendsPanel.mount();
 	}
 
 	// -------------------------------------------------------------- placeholder
@@ -739,7 +803,11 @@ export class IsoControls {
 		clearInterval(this._syncTimer);
 		if (this._mapTimer) clearInterval(this._mapTimer);
 		this._unsub?.();
+		this._friendsUnsub?.();
+		this._friendsPanel?.unmount();
+		this._friendsPanel = null;
 		this._gearEl?.remove();
+		this._friendsBtn?.remove();
 		for (const k of Object.keys(this._surfaces)) this._surfaces[k].overlay.remove();
 		this._surfaces = {};
 		this._mounted = false;

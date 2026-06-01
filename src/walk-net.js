@@ -81,7 +81,12 @@ export class WalkNet {
 			remove: new Set(),  // (sessionId)
 			change: new Set(),  // (player, sessionId)
 			chat: new Set(),    // ({ id, name, text, ts })
+			social: new Set(),  // ({ type, ... }) — friends events: live DM, request/accept (Task 15)
 		};
+		// Optional async presence-ticket supplier (Task 15). When provided, its
+		// resolved token rides the join so this coin world publishes the player's
+		// account presence to friends and can deliver DMs here live.
+		this.getPresence = typeof opts.getPresence === 'function' ? opts.getPresence : null;
 		this._lastSent = null; // { x, y, z, yaw, motion } we last broadcast
 		this._lastSentAt = 0;
 		this._reconnectTimer = null;
@@ -136,6 +141,7 @@ export class WalkNet {
 			// `token` is the server's filterBy key (matchmaking): clients with the
 			// same coin mint join one room instance. `coin`/`coinName`/… seed that
 			// room's identity the first time it's created. Empty coin → mainland.
+			const presence = this.getPresence ? await this.getPresence().catch(() => null) : null;
 			const room = await this.client.joinOrCreate(ROOM_NAME, {
 				name: this.name,
 				avatar: this.avatar,
@@ -145,6 +151,7 @@ export class WalkNet {
 				coinName: this.coinName,
 				coinSymbol: this.coinSymbol,
 				coinImage: this.coinImage,
+				...(presence ? { presence } : {}),
 			});
 			if (this._destroyed || gen !== this._connectGen) {
 				try { room.leave(); } catch {}
@@ -169,6 +176,8 @@ export class WalkNet {
 			// We relay it through our own event API; walk.js renders the bubble +
 			// log line and routes it to the right remote player.
 			this.room.onMessage('chat', (msg) => this._emit('chat', msg));
+			// Friends (Task 15): live DM + request/accept events pushed by the social hub.
+			this.room.onMessage('social', (msg) => this._emit('social', msg));
 
 			this.room.onLeave((code) => {
 				this._setStatus('offline');
