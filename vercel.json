@@ -327,16 +327,11 @@
 		},
 		{
 			"src": "/play/?",
-			"dest": "/game.html"
+			"dest": "/play.html"
 		},
 		{
 			"src": "/game/?",
-			"headers": { "Location": "/play" },
-			"status": 301
-		},
-		{
-			"src": "/lobby/?",
-			"dest": "/play.html"
+			"dest": "/game.html"
 		},
 		{
 			"src": "/walk/?",
