@@ -14,8 +14,8 @@
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, wrap } from '../_lib/http.js';
+import { TOKEN_MINT as THREE_MINT } from '../_lib/token/config.js';
 
-const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const BIRDEYE_BASE = 'https://public-api.birdeye.so';
 
 // Protocol tokenomics (fixed parameters of the $THREE protocol).
@@ -60,8 +60,12 @@ async function fetchTokenOverview(apiKey) {
 
 async function fetchPlatformMetrics() {
 	const [agentCount, revenueData, paymentCount] = await Promise.all([
-		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`.catch(() => [{ total: 0 }]),
-		sql`SELECT coalesce(sum(gross_amount), 0)::bigint AS total_gross, coalesce(sum(fee_amount), 0)::bigint AS total_fee FROM agent_revenue_events`.catch(() => [{ total_gross: 0, total_fee: 0 }]),
+		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`.catch(
+			() => [{ total: 0 }],
+		),
+		sql`SELECT coalesce(sum(gross_amount), 0)::bigint AS total_gross, coalesce(sum(fee_amount), 0)::bigint AS total_fee FROM agent_revenue_events`.catch(
+			() => [{ total_gross: 0, total_fee: 0 }],
+		),
 		sql`SELECT count(*)::int AS total FROM agent_revenue_events`.catch(() => [{ total: 0 }]),
 	]);
 	return {
@@ -85,7 +89,9 @@ async function fetchBurnEvents() {
 			ORDER BY created_at DESC
 			LIMIT 20
 		`.catch(() => []),
-		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`.catch(() => [{ total: 0 }]),
+		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`.catch(
+			() => [{ total: 0 }],
+		),
 	]);
 	return { recent, totalAgents: totalRow[0]?.total ?? 0 };
 }
@@ -120,10 +126,12 @@ export default wrap(async (req, res) => {
 
 	if (action === 'stats') {
 		const [tokenData, platform] = await Promise.all([
-			apiKey ? fetchTokenOverview(apiKey).catch((err) => {
-				console.error('[three-token] birdeye error:', err.message);
-				return { price: null, priceChange24h: null, overview: null };
-			}) : { price: null, priceChange24h: null, overview: null },
+			apiKey
+				? fetchTokenOverview(apiKey).catch((err) => {
+						console.error('[three-token] birdeye error:', err.message);
+						return { price: null, priceChange24h: null, overview: null };
+					})
+				: { price: null, priceChange24h: null, overview: null },
 			fetchPlatformMetrics(),
 		]);
 
@@ -158,7 +166,9 @@ export default wrap(async (req, res) => {
 
 		const [platform, tokenData] = await Promise.all([
 			fetchPlatformMetrics(),
-			apiKey ? fetchTokenOverview(apiKey).catch(() => ({ price: null, overview: null })) : { price: null, overview: null },
+			apiKey
+				? fetchTokenOverview(apiKey).catch(() => ({ price: null, overview: null }))
+				: { price: null, overview: null },
 		]);
 
 		const ov = tokenData.overview || {};

@@ -85,6 +85,19 @@ export function healValue(item) {
 	return ITEMS[item]?.heal || 0;
 }
 
+// Cooking-level-scaled HP restored for food. Cooked fish gives +0.3 HP per
+// cooking level above 1 so a trained cook eats better; potions have a fixed
+// potency that doesn't depend on who consumes them.
+export function scaledHeal(item, cookingLevel) {
+	const base = ITEMS[item]?.heal || 0;
+	if (!base) return 0;
+	if (item === 'cookedFish') {
+		const lvl = Math.max(1, cookingLevel | 0);
+		return base + Math.floor((lvl - 1) * 0.3);
+	}
+	return base;
+}
+
 export function itemLabel(item) {
 	return ITEMS[item]?.label || item;
 }
@@ -125,6 +138,17 @@ export const LOOT_TABLES = {
 		{ item: 'stone', chance: 0.40, min: 1, max: 3 },
 		{ item: 'dire_wolf', chance: 0.07 },
 		{ item: 'war_boar', chance: 0.10 },
+	],
+	// Cave troll (Task 22): the combat-gated cavern's apex foe. Richer than an ogre
+	// across the board — more bones/hide, reliable coal + stone from the seam it
+	// guards, and the best mount odds in the world, so clearing the gate pays off.
+	troll: [
+		{ item: 'bones', chance: 0.90, min: 2, max: 4 },
+		{ item: 'hide', chance: 0.70, min: 1, max: 3 },
+		{ item: 'coal', chance: 0.55, min: 1, max: 3 },
+		{ item: 'stone', chance: 0.45, min: 1, max: 3 },
+		{ item: 'dire_wolf', chance: 0.12 },
+		{ item: 'war_boar', chance: 0.15 },
 	],
 };
 
@@ -200,6 +224,7 @@ export function clientItemRegistry() {
 			kind: it.mount ? 'mount' : it.tool ? 'tool' : it.edible ? 'food' : 'resource',
 			stackable: !!it.stackable,
 		};
+		if (it.edible) out[id].heal = it.heal || 0;
 		if (it.mount) out[id].mount = { ...it.mount };
 	}
 	return out;

@@ -84,7 +84,8 @@ export const limits = {
 	// per-IP burst small (6/min ≈ $0.006/min) and rely on the agent wallet
 	// balance as the global ceiling.
 	x402PayIp: (ip) => getLimiter('x402:pay:ip', { limit: 6, window: '1 m' }).limit(ip),
-	x402PayGlobal: () => getLimiter('x402:pay:global', { limit: 600, window: '1 h' }).limit('global'),
+	x402PayGlobal: () =>
+		getLimiter('x402:pay:global', { limit: 600, window: '1 h' }).limit('global'),
 	checkName: (ip) => getLimiter('check-name:ip', { limit: 60, window: '1 m' }).limit(ip),
 	ensResolve: (ip) => getLimiter('ens:resolve:ip', { limit: 60, window: '1 m' }).limit(ip),
 	snsResolve: (ip) => getLimiter('sns:resolve:ip', { limit: 60, window: '1 m' }).limit(ip),
@@ -154,10 +155,23 @@ export const limits = {
 	// X (Twitter) memory seeding: 1 seed per agent per 6 hours.
 	xSeed: (agentId) => getLimiter('memory:seed:x', { limit: 1, window: '6 h' }).limit(agentId),
 	// Withdrawal requests: 5 per user per day to prevent spam.
-	withdrawalPerUser: (userId) => getLimiter('withdrawal:user', { limit: 5, window: '1 d' }).limit(userId),
+	withdrawalPerUser: (userId) =>
+		getLimiter('withdrawal:user', { limit: 5, window: '1 d' }).limit(userId),
 	// Per-user audit-log reads — the page polls on mount + "load older". 120/min
 	// per user is generous for browse but discourages scraping the full year.
-	auditLogRead: (userId) => getLimiter('audit-log:read', { limit: 120, window: '1 m' }).limit(userId),
+	auditLogRead: (userId) =>
+		getLimiter('audit-log:read', { limit: 120, window: '1 m' }).limit(userId),
+	// $THREE token payment layer (api/token/*).
+	// quote: 30 per user per minute — prevents price-polling abuse; each quote
+	//   hits a live price feed and signs a HMAC. Generous enough for interactive
+	//   flows (spin UI, listing flow) and burst-resistant for agent consumers.
+	tokenQuote: (userId) => getLimiter('token:quote', { limit: 30, window: '1 m' }).limit(userId),
+	// settle: 10 per user per minute — each settle does an RPC round-trip + DB
+	//   write. A real user sends 1 tx; the ceiling absorbs retries + latency.
+	tokenSettle: (userId) => getLimiter('token:settle', { limit: 10, window: '1 m' }).limit(userId),
+	// price: public endpoint, 120/min per IP — fast cache-served; upstream
+	//   Jupiter is rate-limit-free, but the cache makes this essentially free.
+	tokenPriceIp: (ip) => getLimiter('token:price:ip', { limit: 120, window: '1 m' }).limit(ip),
 };
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading

@@ -1,8 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-
-const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+import { TOKEN_MINT as THREE_MINT } from '../_lib/token/config.js';
 const TOKEN_PROGRAM = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
@@ -28,9 +27,7 @@ export default wrap(async (req, res) => {
 		programId: TOKEN_PROGRAM,
 	});
 
-	const threeAccount = accounts.value.find(
-		(a) => a.account.data.parsed.info.mint === THREE_MINT,
-	);
+	const threeAccount = accounts.value.find((a) => a.account.data.parsed.info.mint === THREE_MINT);
 	const balance = threeAccount
 		? Number(threeAccount.account.data.parsed.info.tokenAmount.uiAmount ?? 0)
 		: 0;

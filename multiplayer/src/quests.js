@@ -24,6 +24,8 @@ export const BADGES = {
 	newcomer: { id: 'newcomer', label: 'Newcomer', icon: '🎓', desc: 'Finished the Mainland tutorial.' },
 	warrior: { id: 'warrior', label: 'Warrior', icon: '⚔️', desc: 'Cleared a combat daily quest.' },
 	forager: { id: 'forager', label: 'Forager', icon: '🧺', desc: 'Cleared a gathering daily quest.' },
+	fisher: { id: 'fisher', label: 'Fisher', icon: '🎣', desc: 'Cleared a fishing daily quest.' },
+	pitcook: { id: 'pitcook', label: 'Pit Cook', icon: '🔥', desc: 'Cleared a cooking daily quest.' },
 	devoted: { id: 'devoted', label: 'Devoted', icon: '🌟', desc: 'Cleared every daily quest in one day.' },
 };
 
@@ -101,6 +103,9 @@ export const DAILY_POOL = [
 	{ id: 'd_coal', type: 'gather', item: 'coal', count: 6, title: 'Coal Run', desc: 'Mine 6 coal.', reward: { gold: 180, xp: { mining: 200 }, item: { id: 'coal', qty: 3 } } },
 	{ id: 'd_combat', type: 'combat', count: 8, title: 'Monster Hunter', desc: 'Defeat 8 foes.', reward: { gold: 200, xp: { combat: 240 }, badge: 'warrior' } },
 	{ id: 'd_train', type: 'combat', count: 3, title: 'Sparring', desc: 'Defeat 3 training dummies.', reward: { gold: 80, xp: { combat: 90 } } },
+	{ id: 'd_fish', type: 'fish', item: 'fish', count: 5, title: 'Catch of the Day', desc: 'Catch 5 fish at the Pond.', reward: { gold: 130, xp: { fishing: 150 }, badge: 'fisher' } },
+	{ id: 'd_haul_fish', type: 'fish', item: 'fish', count: 10, title: 'Haul It In', desc: 'Catch 10 fish.', reward: { gold: 220, xp: { fishing: 260 } } },
+	{ id: 'd_cook', type: 'cook', item: 'cookedFish', count: 5, title: 'Camp Cook', desc: 'Cook 5 fish at the Roast Pit.', reward: { gold: 140, xp: { cooking: 180 }, badge: 'pitcook' } },
 ];
 
 export const DAILY_COUNT = 3;

@@ -1,0 +1,35 @@
+# Cloud Build — builds and pushes the Hyperfy image to Artifact Registry.
+# Trigger this manually or connect it to a GitHub webhook.
+#
+# Run manually:
+#   gcloud builds submit --config deploy/world/cloudbuild.yaml deploy/world/
+#
+# Or: set up a Cloud Build trigger on push to main in the GCP console:
+#   Cloud Build → Triggers → Create Trigger → connect GitHub repo →
+#   filter to deploy/world/** changes → build config = deploy/world/cloudbuild.yaml
+
+substitutions:
+  _REGION: us-central1
+  _REPO: world
+  _IMAGE: hyperfy
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+      - -f
+      - Dockerfile
+      - .
+    timeout: 900s
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY

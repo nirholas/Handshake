@@ -12,9 +12,12 @@
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, esc, relTime, ApiError } from '../api.js';
+import { fetchTokenConfig, fetchTokenPrice } from '../../token-pay.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
-const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+// THREE_MINT is fetched live from /api/token/config below. This fallback is
+// used only for the static external links in renderTokenInfo() before config loads.
+let THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
 function fmtUsd(n) {
 	if (n == null || !Number.isFinite(+n)) return '—';
@@ -73,8 +76,11 @@ function toast(msg) {
 }
 
 async function safeGet(url) {
-	try { return await get(url); }
-	catch { return null; }
+	try {
+		return await get(url);
+	} catch {
+		return null;
+	}
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
@@ -103,21 +109,25 @@ async function safeGet(url) {
 
 		const host = main.querySelector('[data-slot="content"]');
 
-		const [stats, revenueShare, activity] = await Promise.all([
+		const [stats, revenueShare, activity, tokenConfig] = await Promise.all([
 			safeGet('/api/three-token/stats'),
 			safeGet('/api/three-token/revenue-share'),
 			safeGet('/api/three-token/activity'),
+			fetchTokenConfig().catch(() => null),
 		]);
+
+		// Update THREE_MINT from live config so external links stay correct.
+		if (tokenConfig?.mint) THREE_MINT = tokenConfig.mint;
 
 		host.innerHTML = '';
 
 		host.appendChild(renderHeroMetrics(stats));
 		host.appendChild(renderUtilityPillars(stats));
+		host.appendChild(renderLiveConverter(tokenConfig));
 		host.appendChild(renderRevenueShare(stats, revenueShare));
 		host.appendChild(renderDeployBurn(stats));
 		host.appendChild(renderActivityFeed(activity));
 		host.appendChild(renderTokenInfo());
-
 	} catch (err) {
 		if (err instanceof ApiError && err.status === 401) {
 			location.href = `/login?return=${encodeURIComponent(location.pathname)}`;
@@ -147,9 +157,10 @@ function renderHeroMetrics(stats) {
 		{
 			label: 'Price',
 			value: fmtUsd(t.price_usd),
-			sub: t.price_change_24h != null
-				? `<span style="color:${pctColor(t.price_change_24h)};font-size:12px;font-weight:500">${fmtPct(t.price_change_24h)} 24h</span>`
-				: '',
+			sub:
+				t.price_change_24h != null
+					? `<span style="color:${pctColor(t.price_change_24h)};font-size:12px;font-weight:500">${fmtPct(t.price_change_24h)} 24h</span>`
+					: '',
 		},
 		{
 			label: 'Market Cap',
@@ -169,7 +180,8 @@ function renderHeroMetrics(stats) {
 	];
 
 	const wrap = document.createElement('div');
-	wrap.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px';
+	wrap.style.cssText =
+		'display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px';
 
 	metrics.forEach(({ label, value, sub }) => {
 		const card = document.createElement('div');
@@ -239,7 +251,8 @@ function renderUtilityPillars(stats) {
 	section.appendChild(header);
 
 	const grid = document.createElement('div');
-	grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px';
+	grid.style.cssText =
+		'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px';
 
 	pillars.forEach(({ icon, title, desc, metric, metricLabel, color }) => {
 		const card = document.createElement('div');
@@ -271,6 +284,156 @@ function renderUtilityPillars(stats) {
 	});
 
 	section.appendChild(grid);
+	return section;
+}
+
+// ── Live USD → $THREE converter ───────────────────────────────────────────────
+
+function renderLiveConverter(tokenConfig) {
+	const section = document.createElement('div');
+	section.className = 'dn-panel';
+	section.style.cssText = 'position:relative;overflow:hidden;';
+
+	const decimals = tokenConfig?.decimals ?? 6;
+	const policyRows = tokenConfig?.split_policies
+		? Object.entries(tokenConfig.split_policies)
+				.map(
+					([key, legs]) =>
+						`<div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--nxt-stroke)">
+					<span style="font-size:12px;color:var(--nxt-ink-dim);flex:0 0 160px">${esc(key.replace(/_/g, ' '))}</span>
+					${legs
+						.map(
+							(l) =>
+								`<span style="font-size:11.5px;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.04);border:1px solid var(--nxt-stroke)">${esc(l.role)} ${(l.bps / 100).toFixed(0)}%</span>`,
+						)
+						.join('')}
+				</div>`,
+				)
+				.join('')
+		: '';
+
+	section.innerHTML = `
+		<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#a78bfa,#60a5fa);opacity:0.6;border-radius:2px 2px 0 0"></div>
+		<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;margin-top:4px">
+			<div>
+				<h2 style="font-size:18px;font-weight:700;margin:0 0 4px">Live USD → $THREE Converter</h2>
+				<p style="font-size:13px;color:var(--nxt-ink-dim);margin:0">Real-time price quote from Jupiter. Price updates every 30 seconds.</p>
+			</div>
+			<div data-slot="price-badge" style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.15);border-radius:999px">
+				<div style="width:6px;height:6px;border-radius:50%;background:#a78bfa;animation:pulse-dot 2s ease-in-out infinite"></div>
+				<span style="font-size:12px;color:#a78bfa;font-weight:500" data-slot="price-label">fetching price…</span>
+			</div>
+		</div>
+
+		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;align-items:start;margin-bottom:20px">
+			<div>
+				<label style="display:block;font-size:12.5px;color:var(--nxt-ink-dim);margin-bottom:8px">Amount in USD</label>
+				<div style="position:relative">
+					<span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--nxt-ink-fade);pointer-events:none;font-family:${MONO}">$</span>
+					<input type="number" data-input="usd" value="1" min="0.01" step="0.01" style="
+						width:100%;box-sizing:border-box;padding:12px 14px 12px 30px;
+						background:rgba(255,255,255,0.04);border:1px solid var(--nxt-stroke);
+						border-radius:var(--nxt-radius-sm);color:var(--nxt-ink);font-size:18px;
+						font-family:${MONO};font-weight:600;outline:none;transition:border-color .15s;
+					" />
+				</div>
+				<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+					${[0.1, 0.5, 1, 5, 10].map((v) => `<button class="dn-btn ghost" data-quick="${v}" style="font-size:12px;padding:4px 10px">$${v}</button>`).join('')}
+				</div>
+			</div>
+
+			<div data-slot="result" style="display:flex;flex-direction:column;gap:10px">
+				<div style="padding:16px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.12);border-radius:var(--nxt-radius-sm)">
+					<div style="font-size:11.5px;color:var(--nxt-ink-dim);margin-bottom:4px">You receive</div>
+					<div data-slot="token-amount" style="font-size:28px;font-weight:700;font-family:${MONO};color:#a78bfa;letter-spacing:-0.02em">—</div>
+					<div style="font-size:12px;color:var(--nxt-ink-fade);margin-top:3px">$THREE</div>
+				</div>
+				<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+					<div style="padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid var(--nxt-stroke);border-radius:8px">
+						<div style="font-size:11px;color:var(--nxt-ink-fade);margin-bottom:3px">Atomics</div>
+						<div data-slot="atomics" style="font-size:12px;font-weight:500;font-family:${MONO};word-break:break-all">—</div>
+					</div>
+					<div style="padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid var(--nxt-stroke);border-radius:8px">
+						<div style="font-size:11px;color:var(--nxt-ink-fade);margin-bottom:3px">Price per token</div>
+						<div data-slot="unit-price" style="font-size:12px;font-weight:500;font-family:${MONO}">—</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		${
+			policyRows
+				? `<div>
+			<div style="font-size:12.5px;color:var(--nxt-ink-dim);margin-bottom:10px;font-weight:600">Split Policies</div>
+			<div style="border-radius:8px;border:1px solid var(--nxt-stroke);overflow:hidden;padding:0 12px">${policyRows}</div>
+		</div>`
+				: ''
+		}
+
+		<style>@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}</style>
+	`;
+
+	const usdInput = section.querySelector('[data-input="usd"]');
+	const tokenAmountEl = section.querySelector('[data-slot="token-amount"]');
+	const atomicsEl = section.querySelector('[data-slot="atomics"]');
+	const unitPriceEl = section.querySelector('[data-slot="unit-price"]');
+	const priceLabelEl = section.querySelector('[data-slot="price-label"]');
+
+	let currentPrice = null;
+	let debounceTimer = null;
+
+	async function refreshPrice() {
+		try {
+			const usd = Number(usdInput.value) || 1;
+			const data = await fetchTokenPrice(usd);
+			currentPrice = data.price_usd;
+			priceLabelEl.textContent = `$${data.price_usd.toExponential(4)} / $THREE · ${data.source}`;
+			if (data.quote) {
+				tokenAmountEl.textContent = Number(data.quote.token_amount).toLocaleString(
+					undefined,
+					{
+						maximumFractionDigits: 2,
+					},
+				);
+				atomicsEl.textContent = BigInt(data.quote.atomics).toLocaleString();
+			}
+			unitPriceEl.textContent = fmtUsd(data.price_usd);
+		} catch {
+			priceLabelEl.textContent = 'price unavailable';
+		}
+	}
+
+	function scheduleRefresh(delay = 0) {
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(refreshPrice, delay);
+	}
+
+	usdInput.addEventListener('input', () => scheduleRefresh(300));
+	usdInput.addEventListener('focus', () => {
+		usdInput.style.borderColor = '#a78bfa';
+	});
+	usdInput.addEventListener('blur', () => {
+		usdInput.style.borderColor = '';
+	});
+
+	section.querySelectorAll('[data-quick]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			usdInput.value = btn.dataset.quick;
+			scheduleRefresh(0);
+		});
+	});
+
+	// Initial fetch + auto-refresh every 30 s
+	refreshPrice();
+	const interval = setInterval(refreshPrice, 30_000);
+	// Clean up interval when element is removed from DOM
+	new MutationObserver((_m, obs) => {
+		if (!document.contains(section)) {
+			clearInterval(interval);
+			obs.disconnect();
+		}
+	}).observe(document.body, { childList: true, subtree: true });
+
 	return section;
 }
 
@@ -546,8 +709,12 @@ function renderActivityFeed(activityData) {
 				${evt.created_at ? relTime(evt.created_at) : ''}
 			</div>
 		`;
-		row.addEventListener('mouseenter', () => { row.style.background = 'rgba(255,255,255,0.04)'; });
-		row.addEventListener('mouseleave', () => { row.style.background = 'rgba(255,255,255,0.015)'; });
+		row.addEventListener('mouseenter', () => {
+			row.style.background = 'rgba(255,255,255,0.04)';
+		});
+		row.addEventListener('mouseleave', () => {
+			row.style.background = 'rgba(255,255,255,0.015)';
+		});
 		eventsHost.appendChild(row);
 	});
 

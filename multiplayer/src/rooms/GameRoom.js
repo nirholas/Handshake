@@ -17,7 +17,7 @@ import { GameState, GamePlayer, ResourceNode, Mob, Slot, Tombstone, Structure } 
 import { REALMS, DEFAULT_REALM, isBlocked, inBounds, realmLayout, fishingSpotNear, portalAt, rollerAt, rollerDelta, inNoPvpZone, wheelLandmark } from './realms.js';
 import { signTransfer, verifyTransfer } from './realm-transfer.js';
 import { runCommand, commandManifest } from './commands.js';
-import { STACKABLE_ITEMS, isEdible, healValue, isMount, mountStepMs, rollLoot, itemLabel, clientItemRegistry, cookBurnChance, fishCatchChance, fishDoubleChance } from '../items.js';
+import { STACKABLE_ITEMS, isEdible, healValue, scaledHeal, isMount, mountStepMs, rollLoot, itemLabel, clientItemRegistry, cookBurnChance, fishCatchChance, fishDoubleChance } from '../items.js';
 import { cleanAvatarUrl } from '../avatar-url.js';
 import { loadPlayer, savePlayer, hydratePlayer, flushPlayer } from '../playerStore.js';
 import { cleanServer } from '../servers.js';
@@ -361,9 +361,10 @@ export class GameRoom extends Room {
 		}
 		p.activeSlot = 0;
 		// The avatar the player picked on /play (or a create→play handoff) rides in
-		// as a join option, validated against the same host allow-list as /walk so
-		// every peer renders them as their real avatar, not the default capsule.
-		p.cosmetic = cleanAvatarUrl(options?.avatar);
+		// as a join option. Fall back to the persisted avatar URL so a returning
+		// player on a new device (or any session that didn't pass options.avatar)
+		// is still rendered as their chosen look, not the default capsule.
+		p.cosmetic = cleanAvatarUrl(options?.avatar) || cleanAvatarUrl(saved?.profile?.cosmetic) || '';
 		p.badges = (quests.badges || []).join(',');
 		// Restore the persisted purse + owned/equipped cosmetics (Task 16/21), keyed
 		// to the stable account id so a purchase and the look the player chose survive
@@ -415,6 +416,28 @@ export class GameRoom extends Room {
 			// same defensively-bounded applier as portal carries, so a corrupt saved
 			// blob can't inject out-of-range items or skill levels.
 			this._applyCarry(p, this.priv.get(client.sessionId), saved.profile);
+
+			// Resume at the tile the player was standing on when they left — so a
+			// player picking up where they left off doesn't wake at the spawn fountain
+			// every time. Position is only restored when it's the SAME realm (the
+			// client may connect to any realm on re-login); danger realms always spawn
+			// at the safe spawn so a disconnecting player isn't born inside a mob.
+			if (!this.realm.danger &&
+				saved.lastRealm === this.realm.name &&
+				Number.isFinite(saved.lastTx) && Number.isFinite(saved.lastTy)) {
+				const ltx = saved.lastTx | 0, lty = saved.lastTy | 0;
+				if (inBounds(this.realm, ltx, lty) && !isBlocked(this.realm, ltx, lty)) {
+					p.tx = ltx;
+					p.ty = lty;
+				}
+			}
+
+			// Restore placed structures (Task 07) the player left in this realm.
+			// If the room is already live (reconnect), the structures may still be
+			// present under the old session id — we hand them off. If the room was
+			// freshly created (after room dispose or restart), we re-seed them.
+			const savedStructures = saved.structures?.[this.realm.name] || [];
+			if (savedStructures.length) this._restoreStructures(client, p, playerId, name, savedStructures);
 		}
 
 		// Register this session as the account's live presence + subscribe to its
@@ -679,6 +702,9 @@ export class GameRoom extends Room {
 			xp: { ...(priv?.xp || {}) },
 			mounted: !!p.mounted,
 			mount: p.mount || '',
+			// Avatar GLB URL — persisted so the player's look survives on a device that
+			// never stored it locally. Validated on restore (same rules as join time).
+			cosmetic: p.cosmetic || '',
 		};
 	}
 
@@ -719,6 +745,14 @@ export class GameRoom extends Room {
 		if (carry.mounted && typeof carry.mount === 'string' && carry.mount) {
 			p.mounted = true;
 			p.mount = carry.mount;
+		}
+		// Avatar GLB URL — restored from persisted profile on fresh login (not from a
+		// portal carry, where the client already re-sends it as an option). Validated
+		// through the same allow-list as join-time so a saved URL that has since been
+		// removed from the allow-list doesn't persist to peers.
+		if (typeof carry.cosmetic === 'string' && carry.cosmetic) {
+			const validated = cleanAvatarUrl(carry.cosmetic);
+			if (validated) p.cosmetic = validated;
 		}
 	}
 
@@ -805,6 +839,7 @@ export class GameRoom extends Room {
 		const p = this.state.players.get(client.sessionId);
 		if (!p || p.dead) return;
 		if (!this._rateOk(client.sessionId, 'fish')) return;
+		if (p.mounted) { client.send('notice', { kind: 'mount', text: 'Dismount before you fish.' }); return; }
 
 		const priv = this.priv.get(client.sessionId);
 		const now = Date.now();
@@ -852,6 +887,7 @@ export class GameRoom extends Room {
 			// XP scales gently with level + quality so richer water trains faster.
 			const xp = Math.round((10 + Math.floor(Math.random() * 6) + lvl * 0.3) * quality) * caught;
 			this._grantXp(client, p, 'fishing', xp);
+			this._questProgress(client, { kind: 'fish', item: 'fish', n: caught });
 			client.send('notice', { kind: 'fish', text: caught > 1 ? `Caught ${caught} fish!` : 'Caught a fish.' });
 		} else {
 			// A miss still teaches the cast — a small XP trickle keeps progression smooth.
@@ -887,6 +923,7 @@ export class GameRoom extends Room {
 		const p = this.state.players.get(client.sessionId);
 		if (!p || p.dead) return;
 		if (!this._rateOk(client.sessionId, 'cook')) return;
+		if (p.mounted) { client.send('notice', { kind: 'mount', text: 'Dismount before you cook.' }); return; }
 
 		const priv = this.priv.get(client.sessionId);
 		const now = Date.now();
@@ -937,6 +974,8 @@ export class GameRoom extends Room {
 		priv.cooldowns.cook = now + COOK_COOLDOWN_MS;
 		p.tsServer = now;
 
+		if (cooked > 0) this._questProgress(client, { kind: 'cook', item: 'cookedFish', n: cooked });
+
 		// Honest result: report exactly what the fire produced.
 		const parts = [];
 		if (cooked) parts.push(`Cooked ${cooked} fish`);
@@ -972,12 +1011,13 @@ export class GameRoom extends Room {
 		}
 
 		const before = p.hp;
-		p.hp = Math.min(p.maxHp, p.hp + healValue(slot.item));
+		p.hp = Math.min(p.maxHp, p.hp + scaledHeal(slot.item, p.cooking));
+		const gained = p.hp - before;
 		slot.qty -= 1;
 		if (slot.qty === 0) slot.item = '';
 		priv.cooldowns.consume = now + CONSUME_COOLDOWN_MS;
 		p.tsServer = now;
-		client.send('notice', { kind: 'eat', text: `+${p.hp - before} HP.` });
+		client.send('notice', { kind: 'eat', text: `+${gained} HP.` });
 	}
 
 	// True if the player is on or directly adjacent to any cooking tile (the Roast
@@ -1334,7 +1374,9 @@ export class GameRoom extends Room {
 		// Per-player cap (shack: one). Counted on the live structure map.
 		if (Number.isFinite(def.cap)) {
 			let owned = 0;
-			for (const [, s] of this.state.structures) if (s.kind === kind && s.owner === p.id) owned++;
+			for (const [, s] of this.state.structures) {
+				if (s.kind === kind && this._ownedBy(s, priv.playerId)) owned++;
+			}
 			if (owned >= def.cap) {
 				client.send('notice', { kind: 'build', text: `You can only have ${def.cap} ${kind}${def.cap === 1 ? '' : 's'} — pick it up first.` });
 				return;
@@ -1353,6 +1395,10 @@ export class GameRoom extends Room {
 		const s = new Structure();
 		s.id = `st_${this.realm.name}_${p.id}_${++this._structSeq}`;
 		s.kind = kind;
+		// Store the stable account id on a server-only property so ownership
+		// survives reconnects (a new session gets a new p.id). s.owner stays the
+		// session id that the schema broadcasts to peers for client-side UI rendering.
+		s._ownerPlayerId = priv.playerId;
 		s.owner = p.id;
 		s.ownerName = p.name;
 		s.tx = tx;
@@ -1429,14 +1475,64 @@ export class GameRoom extends Room {
 		}
 	}
 
+	// Restore a player's placed structures from their persisted profile into the
+	// live room state. Handles two cases:
+	//   a) Room still live (reconnect): the structure is already in state.structures
+	//      under the OLD session id — update owner to the new session so pickup/lock
+	//      work again. Skipped if another player's structure now occupies that tile.
+	//   b) Room freshly created (after dispose or restart): re-seed the structure;
+	//      skip any tile that's now blocked (another player's structure placed first).
+	// Expired firepits are silently dropped rather than resurrected.
+	_restoreStructures(client, p, playerId, playerName, savedStructures) {
+		const now = Date.now();
+		for (const sv of savedStructures) {
+			if (sv.expiresAt && sv.expiresAt <= now) continue; // firepit expired — gone
+			const tx = sv.tx | 0, ty = sv.ty | 0;
+
+			// Case (a): structure still in this live room under the old session id.
+			let found = false;
+			for (const [, s] of this.state.structures) {
+				if (s.tx === tx && s.ty === ty && s.kind === sv.kind &&
+					(s._ownerPlayerId === playerId || s.owner === client.sessionId)) {
+					s.owner = client.sessionId; // hand off to new session
+					s._ownerPlayerId = playerId;
+					found = true;
+					break;
+				}
+			}
+			if (found) continue;
+
+			// Case (b): re-seed. Check tile is clear (bounds, walkable, no other structure).
+			if (!inBounds(this.realm, tx, ty) || isBlocked(this.realm, tx, ty)) continue;
+			let blocked = false;
+			for (const [, s] of this.state.structures) {
+				if (s.tx === tx && s.ty === ty) { blocked = true; break; }
+			}
+			if (blocked) continue;
+
+			const s = new Structure();
+			s.id = `st_restore_${this.realm.name}_${client.sessionId}_${++this._structSeq}`;
+			s.kind = sv.kind;
+			s._ownerPlayerId = playerId;
+			s.owner = client.sessionId;
+			s.ownerName = playerName;
+			s.tx = tx;
+			s.ty = ty;
+			s.expiresAt = sv.expiresAt || 0;
+			s.locked = !!sv.locked;
+			this.state.structures.set(s.id, s);
+		}
+	}
+
 	// ----- structure actions (firepit/shack; invoked by /pickup /lock /unlock) ----
 	// These operate on real synced state.structures and never throw on the empty
 	// case: with no structure placed they honestly report "nothing placed". Only the
 	// owner can act, and only on a structure beside them.
 
 	pickupStructure(p) {
+		const priv = this.priv.get(p.id);
 		const owned = [];
-		for (const [, s] of this.state.structures) if (s.owner === p.id) owned.push(s);
+		for (const [, s] of this.state.structures) if (this._ownedBy(s, priv?.playerId || p.id)) owned.push(s);
 		if (!owned.length) return { text: 'You have not placed a firepit or shack to pick up.', kind: 'error' };
 		const near = owned.filter((s) => this._adjacent(p, s)).sort((a, b) => this._d2(p, a) - this._d2(p, b));
 		if (!near.length) {
@@ -1450,15 +1546,24 @@ export class GameRoom extends Room {
 	}
 
 	setStructureLock(p, locked) {
+		const priv = this.priv.get(p.id);
 		let target = null;
 		for (const [, s] of this.state.structures) {
-			if (s.owner === p.id && this._adjacent(p, s) && (!target || this._d2(p, s) < this._d2(p, target))) target = s;
+			if (this._ownedBy(s, priv?.playerId || p.id) && this._adjacent(p, s) &&
+				(!target || this._d2(p, s) < this._d2(p, target))) target = s;
 		}
 		if (!target) return { text: `Stand next to your own firepit or shack to ${locked ? 'lock' : 'unlock'} it.`, kind: 'error' };
 		if (target.locked === locked) return { text: `Your ${target.kind} is already ${locked ? 'locked' : 'unlocked'}.`, kind: 'info' };
 		target.locked = locked;
 		const k = target.kind.charAt(0).toUpperCase() + target.kind.slice(1);
 		return { text: `${k} ${locked ? 'locked' : 'unlocked'}.`, kind: 'info' };
+	}
+
+	// A structure is "owned by" an account when _ownerPlayerId (stable account id
+	// stored at build time) or the legacy session-id owner field matches. The stable
+	// id is preferred; the fallback keeps pre-fix structures accessible.
+	_ownedBy(s, playerId) {
+		return (s._ownerPlayerId || s.owner) === playerId;
 	}
 
 	// Squared tile distance — cheap "nearest" ordering, no sqrt.
@@ -1647,12 +1752,12 @@ export class GameRoom extends Room {
 		}
 
 		// --- dailies: every matching un-claimed quest advances together ---
-		if (ev.kind === 'gather' || ev.kind === 'combat') {
+		if (ev.kind === 'gather' || ev.kind === 'combat' || ev.kind === 'fish' || ev.kind === 'cook') {
 			for (const q of qs.daily.quests) {
 				if (q.claimed) continue;
 				const def = dailyDef(q.id);
 				if (!def || def.type !== ev.kind) continue;
-				if (def.type === 'gather' && def.item !== ev.item) continue;
+				if (def.item && def.item !== ev.item) continue;
 				const before = q.progress;
 				q.progress = Math.min(def.count, q.progress + n);
 				if (q.progress !== before) {
@@ -1802,9 +1907,25 @@ export class GameRoom extends Room {
 			next.gold = p.gold;
 			next.name = p.name;
 			// Full account-scoped profile (Task 16/23): inventory, hotbar, bank,
-			// skills, and mount, so the same account loads identical progression on
-			// any world instance. Same shape a portal carry uses (_serializeProfile).
+			// skills, mount, and avatar URL so the same account loads identical
+			// progression on any world instance.
 			next.profile = this._serializeProfile(p, priv);
+			// Last realm + tile — so a reconnecting player resumes in place rather
+			// than waking at the fountain. Danger-realm positions are still saved;
+			// onJoin skips restoring them so the player spawns safely instead.
+			next.lastRealm = this.realm.name;
+			next.lastTx = p.tx;
+			next.lastTy = p.ty;
+			// Placed structures (Task 07) keyed by realm so a shack in Whisperwood
+			// and a firepit in Mainland both survive. Each realm's list overwrites the
+			// previous save for that realm only; structures in other realms are unchanged.
+			const myStructures = [];
+			for (const [, s] of this.state.structures) {
+				if (this._ownedBy(s, priv.playerId)) {
+					myStructures.push({ kind: s.kind, tx: s.tx, ty: s.ty, expiresAt: s.expiresAt, locked: s.locked });
+				}
+			}
+			next.structures = { ...(prev.structures || {}), [this.realm.name]: myStructures };
 		}
 		if (priv.cosmetics) {
 			next.cosmetics = { owned: [...priv.cosmetics.owned], equipped: priv.cosmetics.equipped };

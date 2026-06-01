@@ -54,9 +54,21 @@ function sampleProfile() {
 			bank: [{ item: 'coal', qty: 30 }],
 			activeSlot: 2,
 			xp: { combat: 1500, woodcutting: 3000, mining: 200, fishing: 75, cooking: 640 },
-			hp: 88, maxHp: 100, mount: 'horse', realm: 'whisperwood', tx: 12, ty: 7,
+			hp: 88, maxHp: 100, mount: 'horse',
+			cosmetic: 'https://cdn.three.ws/avatars/nico.glb',
 		},
 		cosmetics: { owned: ['hat_red', 'cape_blue', 'crown_gold'], equipped: 'crown_gold' },
+		lastRealm: 'whisperwood',
+		lastTx: 12,
+		lastTy: 7,
+		structures: {
+			whisperwood: [
+				{ kind: 'shack', tx: 14, ty: 7, expiresAt: 0, locked: false },
+			],
+			mainland: [
+				{ kind: 'firepit', tx: 5, ty: 3, expiresAt: Date.now() + 900000, locked: false },
+			],
+		},
 	};
 }
 
@@ -76,8 +88,15 @@ describe('PlayerStore — synchronous cache API', () => {
 		expect(got.profile.xp.cooking).toBe(640);
 		expect(got.cosmetics.equipped).toBe('crown_gold');
 		expect(got.quests.tutorial.done).toBe(true);
-		expect(typeof got.savedAt).toBe('number'); // stamped for the cache sweep
+		expect(typeof got.savedAt).toBe('number');
 		expect(s.hasPlayer('acct')).toBe(true);
+		// avatar URL, last position, placed structures all round-trip
+		expect(got.profile.cosmetic).toBe('https://cdn.three.ws/avatars/nico.glb');
+		expect(got.lastRealm).toBe('whisperwood');
+		expect(got.lastTx).toBe(12);
+		expect(got.lastTy).toBe(7);
+		expect(got.structures.whisperwood[0].kind).toBe('shack');
+		expect(got.structures.mainland[0].kind).toBe('firepit');
 	});
 
 	it('supports the read-merge-write the GameRoom uses to persist one slice at a time', async () => {
@@ -87,7 +106,11 @@ describe('PlayerStore — synchronous cache API', () => {
 		const prev = s.loadPlayer('acct') || {};
 		s.savePlayer('acct', { ...prev, gold: 9999 });
 		expect(s.loadPlayer('acct').gold).toBe(9999);
-		expect(s.loadPlayer('acct').profile.inv[0].qty).toBe(120); // other fields preserved
+		expect(s.loadPlayer('acct').profile.inv[0].qty).toBe(120);
+		// structures, last position, avatar survive the merge
+		expect(s.loadPlayer('acct').structures.whisperwood[0].kind).toBe('shack');
+		expect(s.loadPlayer('acct').lastRealm).toBe('whisperwood');
+		expect(s.loadPlayer('acct').profile.cosmetic).toBe('https://cdn.three.ws/avatars/nico.glb');
 	});
 });
 
@@ -116,9 +139,34 @@ describe('PlayerStore (durable / Upstash)', () => {
 		expect(restored.gold).toBe(4242);
 		expect(b.loadPlayer('wallet:0xABC').profile.inv[0].qty).toBe(120);
 		expect(b.loadPlayer('wallet:0xABC').profile.xp.cooking).toBe(640);
-		expect(b.loadPlayer('wallet:0xABC').profile.realm).toBe('whisperwood');
 		expect(b.loadPlayer('wallet:0xABC').cosmetics.equipped).toBe('crown_gold');
 		expect(b.loadPlayer('wallet:0xABC').quests.tutorial.done).toBe(true);
+		// The three new fields survive a restart too.
+		expect(b.loadPlayer('wallet:0xABC').profile.cosmetic).toBe('https://cdn.three.ws/avatars/nico.glb');
+		expect(b.loadPlayer('wallet:0xABC').lastRealm).toBe('whisperwood');
+		expect(b.loadPlayer('wallet:0xABC').lastTx).toBe(12);
+		expect(b.loadPlayer('wallet:0xABC').structures.whisperwood[0].kind).toBe('shack');
+		expect(b.loadPlayer('wallet:0xABC').structures.mainland[0].kind).toBe('firepit');
+	});
+
+	it('structure list is realm-keyed so buildings in different realms coexist', async () => {
+		const s = await freshStore();
+		await s.playerStoreReady();
+		const base = sampleProfile();
+		s.savePlayer('acct', base);
+		// Simulate GameRoom persisting the mainland realm (updates mainland list only)
+		const prev = s.loadPlayer('acct') || {};
+		s.savePlayer('acct', {
+			...prev,
+			structures: { ...(prev.structures || {}), mainland: [{ kind: 'firepit', tx: 2, ty: 2, expiresAt: 0, locked: true }] },
+		});
+		const got = s.loadPlayer('acct');
+		// whisperwood shack is untouched; mainland updated
+		expect(got.structures.whisperwood[0].kind).toBe('shack');
+		expect(got.structures.mainland[0].tx).toBe(2);
+		expect(got.structures.mainland[0].locked).toBe(true);
+		await s.flushAllPlayers();
+		expect(JSON.parse(redis.store.get('player:acct')).structures.whisperwood[0].kind).toBe('shack');
 	});
 
 	it('hydrates a never-seen account to null so a new player gets the starter kit, not a reset', async () => {

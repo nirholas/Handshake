@@ -458,14 +458,26 @@ const ARENA = {
 		{ x0: 1, y0: 6, x1: 3, y1: 21 },
 		{ x0: 24, y0: 6, x1: 26, y1: 21 },
 	],
-	// A clockwise circulation of moving floor: the top belt drives east, the right
-	// edge south, the bottom belt west, the left edge north — a loop a fighter learns
-	// to ride or break out of.
+	// A closed clockwise loop of moving floor — 34 tiles, no gaps at the corners.
+	// Each corner tile is owned by the strip that needs to push TOWARD the next
+	// strip, so a fighter circling the belt stays on it indefinitely:
+	//
+	//   (8,10) east ──────────────► (18,10)
+	//      ↑                               ↓ right col south y10→15
+	//   (8,11→16)          (19,10→16)
+	//   left col north         ↓ (19,16) bot belt west starts here
+	//   (8,16) ◄───────────── (9,16)
+	//
+	// Transition points:
+	//   (18,10) east → (19,10) right col south ✓
+	//   (19,15) south → (19,16) bot belt west ✓
+	//   (9,16)  west  → (8,16) left col north ✓
+	//   (8,11)  north → (8,10) top belt east ✓
 	rollers: [
-		{ x0: 8, y0: 10, x1: 19, y1: 10, dir: 'e' },
-		{ x0: 19, y0: 11, x1: 19, y1: 15, dir: 's' },
-		{ x0: 8, y0: 16, x1: 19, y1: 16, dir: 'w' },
-		{ x0: 8, y0: 11, x1: 8, y1: 15, dir: 'n' },
+		{ x0: 8,  y0: 10, x1: 18, y1: 10, dir: 'e' }, // top belt      x8→18
+		{ x0: 19, y0: 10, x1: 19, y1: 15, dir: 's' }, // right col     y10→15 (owns top-right corner)
+		{ x0: 9,  y0: 16, x1: 19, y1: 16, dir: 'w' }, // bottom belt   x9→19 (owns bot-right corner)
+		{ x0: 8,  y0: 11, x1: 8,  y1: 16, dir: 'n' }, // left col      y11→16 (owns bot-left corner)
 	],
 	portals: [
 		{ x0: 12, y0: 26, x1: 15, y1: 26, to: 'mainland', toTx: 12, toTy: 21 }, // south strip → Mainland plaza

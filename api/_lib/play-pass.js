@@ -30,6 +30,10 @@ export const PLAY_GATE_MIN = (() => {
 	const n = Number(process.env.PLAY_GATE_MIN);
 	return Number.isFinite(n) && n > 0 ? n : 1;
 })();
+// Optional display ticker for the gate's pre-verify screen ("hold ≥ 1 $THREE").
+// Cosmetic only — the real symbol is read from chain metadata at verify time;
+// this just spares the connect screen from saying "the game token".
+export const PLAY_GATE_SYMBOL = (process.env.PLAY_GATE_SYMBOL || '').trim();
 
 // A nonce is single-use in spirit but stateless in fact (no shared store on
 // serverless), so keep its window tight: long enough to connect a wallet and

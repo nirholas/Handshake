@@ -174,6 +174,35 @@ describe('Arena rollers — direction + walkable footprint', () => {
 		}
 	});
 
+	it('the four circuit corners all connect to the next strip (no broken corners)', () => {
+		const corners = [
+			{ tx: 8,  ty: 10, name: 'top-left'  },
+			{ tx: 19, ty: 10, name: 'top-right' },
+			{ tx: 19, ty: 16, name: 'bot-right' },
+			{ tx: 8,  ty: 16, name: 'bot-left'  },
+		];
+		for (const c of corners) {
+			const r = rollerAt(arena, c.tx, c.ty);
+			expect(r, `${c.name} (${c.tx},${c.ty}) must be on a roller`).toBeTruthy();
+			const [dx, dy] = rollerDelta(r.dir);
+			const next = rollerAt(arena, c.tx + dx, c.ty + dy);
+			expect(next, `${c.name} push must land on the next strip, not dead floor`).toBeTruthy();
+		}
+	});
+
+	it('a full circuit trace from the top-left returns to start (closed loop)', () => {
+		const DELTA = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+		let tx = 8, ty = 10;
+		for (let step = 0; step < 60; step++) {
+			const r = rollerAt(arena, tx, ty);
+			if (!r) throw new Error(`lost circuit at (${tx},${ty}) after ${step} steps`);
+			const [dx, dy] = DELTA[r.dir];
+			tx += dx; ty += dy;
+			if (tx === 8 && ty === 10) return; // closed
+		}
+		throw new Error('circuit did not close within 60 steps');
+	});
+
 	it('rollerAt is null off the belts (the spawn floor is free)', () => {
 		expect(rollerAt(arena, arena.spawn.tx, arena.spawn.ty)).toBeNull();
 	});

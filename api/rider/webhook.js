@@ -2,8 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { sql } from '../_lib/db.js';
 import { json, method, wrap, error, readJson } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-
-const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+import { TOKEN_MINT as THREE_MINT } from '../_lib/token/config.js';
 const REQUIRED_AMOUNT = 8000;
 
 function safeEqual(a, b) {

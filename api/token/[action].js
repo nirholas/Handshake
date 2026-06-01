@@ -51,6 +51,8 @@ async function handleConfig(req, res) {
 async function handlePrice(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
+	const rl = await limits.tokenPriceIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 	const url = new URL(req.url, 'http://x');
 	const price = await getTokenPriceUsd();
 	const usdParam = url.searchParams.get('usd');
@@ -84,7 +86,7 @@ async function handleQuote(req, res) {
 	if (!method(req, res, ['POST'])) return;
 	const user = await getSessionUser(req, res);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.tokenQuote(user.id);
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const body = parse(quoteSchema, await readJson(req));
@@ -143,7 +145,7 @@ async function handleSettle(req, res) {
 	if (!method(req, res, ['POST'])) return;
 	const user = await getSessionUser(req, res);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.tokenSettle(user.id);
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const body = parse(settleSchema, await readJson(req));

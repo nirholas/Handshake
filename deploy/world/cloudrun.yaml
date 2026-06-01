@@ -1,0 +1,84 @@
+# Cloud Run service — world.three.ws (Hyperfy multiplayer world)
+#
+# Apply with:
+#   gcloud run services replace deploy/world/cloudrun.yaml --region=us-central1
+#
+# After deploy, map the custom domain:
+#   gcloud run domain-mappings create --service=hyperfy-world \
+#     --domain=world.three.ws --region=us-central1
+# Then add a CNAME at your registrar:
+#   world  CNAME  ghs.googlehosted.com.
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: hyperfy-world
+  labels:
+    cloud.googleapis.com/location: us-central1
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        # Keep exactly one instance alive at all times so the world never cold-starts
+        # and in-memory state (physics sim, connected players) is never wiped.
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "1"
+        # Always-on CPU: a multiplayer game server has a continuous tick loop;
+        # throttling CPU when no requests are in flight would stall the sim.
+        run.googleapis.com/cpu-throttling: "false"
+        # Gen2 execution environment is required for GCS FUSE volume mounts.
+        run.googleapis.com/execution-environment: gen2
+        # GCS FUSE mount — the world/ persistence volume (SQLite + assets).
+        run.googleapis.com/volumes: >-
+          [{"name":"world-data","gcs":{"bucket":"world-three-ws-data","readonly":false}}]
+    spec:
+      # One game-world process; many long-lived WebSocket connections per instance.
+      containerConcurrency: 1000
+      # WebSocket connections stay open for the session. Cloud Run supports long
+      # connections up to 3600s; set the max so players aren't silently dropped.
+      timeoutSeconds: 3600
+      containers:
+        - image: us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/world/hyperfy:latest
+          ports:
+            - name: http1
+              containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3000"
+            - name: DOMAIN
+              value: world.three.ws
+            - name: PUBLIC_WS_URL
+              value: wss://world.three.ws
+            - name: PUBLIC_API_URL
+              value: https://world.three.ws
+            - name: ASSETS_DIR
+              value: /world/assets
+            - name: ASSETS_BASE_URL
+              value: https://world.three.ws/assets
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          volumeMounts:
+            - name: world-data
+              mountPath: /world
+          startupProbe:
+            httpGet:
+              path: /status
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 3000
+            periodSeconds: 30
+            failureThreshold: 3
+  traffic:
+    - percent: 100
+      latestRevision: true

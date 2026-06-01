@@ -67,6 +67,13 @@ const fmtXp = (n) => Math.round(n).toLocaleString('en-US');
 const EDIBLE = new Set(['cookedFish', 'healthPotion']);
 const FOOD_LABEL = { cookedFish: 'cooked fish', healthPotion: 'potion' };
 
+// Mirrors items.js#scaledHeal so the Eat button can preview the exact heal value
+// without a round-trip. Must stay in sync with the server formula.
+function clientScaledHeal(item, baseHeal, cookingLevel) {
+	if (item === 'cookedFish') return (baseHeal || 0) + Math.floor((Math.max(1, cookingLevel | 0) - 1) * 0.3);
+	return baseHeal || 0;
+}
+
 // Player-built structures (Task 07): presentation only — icon, label, and a short
 // pitch for the build menu. The realm's allowed kinds and the authoritative costs
 // arrive from the server (the realm message's `buildCatalog`), so this never
@@ -147,6 +154,14 @@ class GamePlayerView {
 		this._renderBadges(player.badges || '');
 		document.getElementById('kg-labels')?.appendChild(this.label);
 		this._renderHp();
+
+		// Speech bubble: floats just above the nameplate when this player chats.
+		// Positioned each frame alongside the nameplate so it tracks movement.
+		this.bubble = document.createElement('div');
+		this.bubble.className = 'kg-chat-bubble';
+		this.bubble.hidden = true;
+		document.getElementById('kg-labels')?.appendChild(this.bubble);
+		this._bubbleTimer = null;
 
 		// Mount visuals (Task 09): a steed mesh + saddle lift, attached in applyMount.
 		this.mounted = false;
@@ -319,11 +334,29 @@ class GamePlayerView {
 		return g;
 	}
 
+	// Show a speech bubble above this avatar for a few seconds, then fade it out.
+	showBubble(text) {
+		if (this._bubbleTimer) { clearTimeout(this._bubbleTimer); this._bubbleTimer = null; }
+		this.bubble.textContent = text;
+		this.bubble.hidden = false;
+		this.bubble.classList.remove('kg-chat-bubble--fade');
+		this._bubbleTimer = setTimeout(() => {
+			this.bubble.classList.add('kg-chat-bubble--fade');
+			this._bubbleTimer = setTimeout(() => {
+				this.bubble.hidden = true;
+				this.bubble.classList.remove('kg-chat-bubble--fade');
+				this._bubbleTimer = null;
+			}, 400);
+		}, 5000);
+	}
+
 	dispose() {
 		this._disposeCosmetic();
+		if (this._bubbleTimer) clearTimeout(this._bubbleTimer);
 		this.scene.remove(this.rig);
 		if (this._steed) this.scene.remove(this._steed);
 		this.label.remove();
+		this.bubble.remove();
 	}
 }
 
@@ -2260,7 +2293,10 @@ export class IsoGame {
 		const edible = this._findEdibleSlot(ps);
 		const showEat = ps.hp < ps.maxHp && !!edible;
 		this._eatRef = showEat ? edible.ref : null;
-		this._toggleAction(this.hud.eatBtn, showEat, showEat ? `Eat ${edible.label} (${edible.count})` : 'Eat');
+		const eatLabel = showEat
+			? `Eat ${edible.label} (+${edible.healEst} HP, ${edible.count} left)`
+			: 'Eat';
+		this._toggleAction(this.hud.eatBtn, showEat, eatLabel);
 
 		// Cast: standing beside fishable water. The rod auto-equips on cast, so the
 		// button just reflects whether the player owns one — when they don't, it
@@ -2303,12 +2339,19 @@ export class IsoGame {
 	}
 
 	// The first edible slot — hotbar before backpack — with the server-resolvable
-	// {zone,i} ref, a friendly label, and how many of that food the player holds.
+	// {zone,i} ref, a friendly label, how many of that food the player holds, and
+	// an estimated heal value so the Eat button can show "+N HP" without a server
+	// round-trip (mirrors the scaledHeal formula in items.js).
 	_findEdibleSlot(ps) {
+		const reg = this.items || {};
+		const cookLvl = ps.cooking || 1;
 		const scan = (arr, zone) => {
 			for (let i = 0; i < arr.length; i++) {
 				const it = arr[i].item;
-				if (it && EDIBLE.has(it)) return { ref: { zone, i }, item: it, label: FOOD_LABEL[it] || 'food', count: this._countItem(ps, it) };
+				if (!it || !EDIBLE.has(it)) continue;
+				const baseHeal = reg[it]?.heal || 0;
+				const healEst = clientScaledHeal(it, baseHeal, cookLvl);
+				return { ref: { zone, i }, item: it, label: FOOD_LABEL[it] || 'food', count: this._countItem(ps, it), healEst };
 			}
 			return null;
 		};
@@ -2732,6 +2775,7 @@ export class IsoGame {
 			chatForm: document.getElementById('kg-chat-form'),
 			chatInput: document.getElementById('kg-chat-input'),
 			chatHint: document.getElementById('kg-chat-hint'),
+			chatCounter: document.getElementById('kg-chat-counter'),
 			chatMutedBtn: document.getElementById('kg-chat-muted-btn'),
 			chatMutedN: document.getElementById('kg-chat-muted-n'),
 			chatMutedList: document.getElementById('kg-chat-muted'),
@@ -2860,8 +2904,8 @@ export class IsoGame {
 			if (this.hud.chat?.contains(e.relatedTarget)) return;
 			if (!this.hud.chatInput.value.trim()) this._closeChat();
 		});
-		// Slash-command autocomplete: refresh the hint list on every edit.
-		this.hud.chatInput?.addEventListener('input', () => this._refreshCmdHint());
+		// Slash-command autocomplete + character counter: refresh on every edit.
+		this.hud.chatInput?.addEventListener('input', () => { this._refreshCmdHint(); this._updateChatCounter(); });
 		this.hud.chatInput?.addEventListener('keydown', (e) => {
 			// Esc: first dismiss an open command hint, otherwise clear + close chat.
 			if (e.key === 'Escape') {
@@ -3030,11 +3074,31 @@ export class IsoGame {
 		const text = input.value.trim();
 		input.value = '';
 		this._hideCmdHint();
+		this._updateChatCounter();
 		if (!text) { this._closeChat(); return; }
 		// Server is authoritative: it sanitizes, rate-limits, routes `/commands`, and
 		// echoes accepted messages back to everyone (us included) as 'chat' events.
 		this.net?.chat(text);
 		input.focus(); // keep the field hot for a flowing conversation
+	}
+
+	// Show remaining-character count once the player has used ≥ 160 chars (the
+	// last 40 chars matter). Turns amber at 180, red at 195. Hidden when empty or
+	// well under the limit so it never clutters a short message.
+	_updateChatCounter() {
+		const el = this.hud.chatCounter;
+		const input = this.hud.chatInput;
+		if (!el || !input) return;
+		const len = input.value.length;
+		const max = input.maxLength || 200;
+		const rem = max - len;
+		if (len < 160) {
+			el.textContent = '';
+			el.dataset.state = '';
+			return;
+		}
+		el.textContent = String(rem);
+		el.dataset.state = rem <= 5 ? 'danger' : rem <= 20 ? 'warn' : 'ok';
 	}
 
 	_onChat(msg) {
@@ -3047,6 +3111,13 @@ export class IsoGame {
 			return;
 		}
 		this._scrollChat();
+		// Show a speech bubble above the sender's avatar in the 3D world (non-system
+		// messages only; commands/errors stay in the panel). Local player included so
+		// they see their own message confirmed above their head immediately.
+		if (!msg.system && msg.id) {
+			const pv = this.players.get(msg.id);
+			pv?.showBubble(msg.text);
+		}
 	}
 
 	_appendChatLine(msg) {
@@ -3069,6 +3140,13 @@ export class IsoGame {
 			nameEl.type = 'button';
 			nameEl.className = 'kg-chat-name' + (isMe ? ' kg-chat-name--me' : '');
 			nameEl.textContent = name;
+			// Apply the sender's world-assigned color so the name in chat matches the
+			// floating nameplate above their avatar. Falls back to the CSS accent color
+			// when the player isn't in the current state (e.g., they left mid-session).
+			if (!isMe && msg.id) {
+				const col = this.net?.state?.players?.get(msg.id)?.color;
+				if (col) nameEl.style.color = '#' + col.toString(16).padStart(6, '0');
+			}
 			if (isMe) {
 				nameEl.disabled = true;
 			} else {
@@ -3285,14 +3363,31 @@ export class IsoGame {
 		const w = window.innerWidth, h = window.innerHeight;
 		const v = new Vector3();
 		for (const [, pv] of this.players) {
-			if (pv.dead) { pv.label.style.display = 'none'; continue; }
+			if (pv.dead) {
+				pv.label.style.display = 'none';
+				pv.bubble.style.display = 'none';
+				continue;
+			}
 			v.set(pv.rig.position.x, pv.height + 0.35, pv.rig.position.z).project(this.camera);
 			const behind = v.z > 1;
-			if (behind) { pv.label.style.display = 'none'; continue; }
-			pv.label.style.display = '';
+			if (behind) {
+				pv.label.style.display = 'none';
+				pv.bubble.style.display = 'none';
+				continue;
+			}
 			const sx = (v.x * 0.5 + 0.5) * w;
 			const sy = (-v.y * 0.5 + 0.5) * h;
-			pv.label.style.transform = `translate(-50%, -100%) translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)`;
+			const t = `translate(-50%, -100%) translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)`;
+			pv.label.style.display = '';
+			pv.label.style.transform = t;
+			// Speech bubble sits above the nameplate — offset up by an extra ~30px so
+			// it clears the name row and reads distinctly.
+			if (!pv.bubble.hidden) {
+				pv.bubble.style.display = '';
+				pv.bubble.style.transform = `translate(-50%, -100%) translate(${sx.toFixed(1)}px, ${(sy - 32).toFixed(1)}px)`;
+			} else {
+				pv.bubble.style.display = 'none';
+			}
 		}
 	}
 

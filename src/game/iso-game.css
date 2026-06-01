@@ -99,6 +99,32 @@ body.kg-loading-cursor {
 	transition: width 0.2s ease;
 }
 
+/* Speech bubble — floats above the nameplate when a player chats. Positioned
+   each frame by the label projection loop; hidden between messages.
+   The transform set by JS already includes translate(-50%, -100%) centering;
+   we only need padding/background/shape here. */
+.kg-chat-bubble {
+	position: absolute;
+	top: 0;
+	left: 0;
+	will-change: transform;
+	max-width: 200px;
+	padding: 5px 10px;
+	background: rgba(13, 20, 32, 0.88);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 10px;
+	font-size: 12px;
+	color: var(--kg-text);
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	pointer-events: none;
+	line-height: 1.4;
+	transition: opacity 0.4s ease;
+}
+.kg-chat-bubble[hidden] { display: none; }
+.kg-chat-bubble--fade { opacity: 0; }
+
 /* Top bar: realm + online + connection status. */
 #kg-topbar {
 	position: fixed;
@@ -791,6 +817,23 @@ body.kg-loading-cursor {
 	display: flex;
 	position: relative; /* anchors the slash-command autocomplete above the input */
 }
+
+/* Character counter — appears once the message exceeds 160 chars, right-aligned
+   inside the form so it overlays the trailing edge of the input without taking up
+   layout space. */
+.kg-chat-counter {
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	color: var(--kg-dim);
+	pointer-events: none;
+	transition: color 0.15s;
+}
+.kg-chat-counter[data-state="warn"] { color: #f0a830; }
+.kg-chat-counter[data-state="danger"] { color: #ff5a5a; font-weight: 700; }
 
 /* Slash-command autocomplete — floats just above the chat input. */
 .kg-chat-hint {
