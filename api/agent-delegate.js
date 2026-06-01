@@ -1,9 +1,8 @@
-import { sql } from './_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from './_lib/auth.js';
 import { cors, json, method, wrap, error, readJson } from './_lib/http.js';
 import { limits } from './_lib/rate-limit.js';
-import { normalizeLegacyPolicy } from './_lib/embed-policy.js';
-import { llmComplete, LlmUnavailableError } from './_lib/llm.js';
+import { LlmUnavailableError } from './_lib/llm.js';
+import { runAgentDelegation, AgentNotFoundError } from './_lib/agent-delegate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
@@ -30,28 +29,14 @@ export default wrap(async (req, res) => {
 	const rl = await limits.agentDelegate(fromAgentId || userId || 'anon');
 	if (!rl.success) return error(res, 429, 'rate_limited', 'delegate rate limit exceeded');
 
-	const [agent] = await sql`
-		SELECT id, name, description, embed_policy, meta
-		FROM agent_identities
-		WHERE id = ${toAgentId} AND deleted_at IS NULL
-	`;
-	if (!agent) return error(res, 404, 'not_found', 'target agent not found');
-
-	const policy = normalizeLegacyPolicy(agent.embed_policy);
-	const model = policy?.brain?.model || 'claude-haiku-4-5-20251001';
-	const systemPrompt =
-		agent.meta?.brain?.instructions ||
-		`You are ${agent.name}. ${agent.description || ''}`.trim();
-
-	let result;
 	try {
-		result = await llmComplete({ system: systemPrompt, user: message, maxTokens: 1024, anthropicModel: model });
+		const out = await runAgentDelegation({ toAgentId, message });
+		return json(res, 200, out);
 	} catch (err) {
-		if (err instanceof LlmUnavailableError) {
+		if (err instanceof AgentNotFoundError)
+			return error(res, 404, 'not_found', 'target agent not found');
+		if (err instanceof LlmUnavailableError)
 			return error(res, 503, 'llm_unavailable', 'agent delegation is not available right now');
-		}
 		return error(res, 502, 'upstream_error', `LLM call failed: ${err.message}`);
 	}
-
-	return json(res, 200, { response: result.text, agentId: toAgentId, model: result.model });
 });
