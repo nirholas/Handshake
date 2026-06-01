@@ -25,16 +25,20 @@ export class Player extends Schema {
 		this.avatar = '';
 		// Optional three.ws agent id this player is embodying (for cross-links).
 		this.agent = '';
-		// Verified Solana wallet address bound at sign-in — the account id this
-		// player persists under and is known by in the social graph. Empty in the
-		// open (un-gated) world; set from the play pass when the token gate is on.
-		this.account = '';
 		// True while this player is in spatial voice chat, so peers know to open a
 		// WebRTC connection to them and the UI can mark their nameplate.
 		this.voice = false;
 		this.tsServer = 0;     // server-side last-update epoch ms (for interpolation)
+		// Verified Solana wallet address bound at sign-in — the account id this
+		// player persists under and is known by in the social graph. Empty in the
+		// open (un-gated) world; set from the play pass when the token gate is on.
+		this.account = '';
 	}
 }
+// IMPORTANT: append-only. Field indices are positional in @colyseus/schema's
+// binary protocol. Inserting in the middle shifts all subsequent indices and
+// breaks clients connected to older deployed servers. Always add new fields
+// at the end so existing deployments remain compatible until redeployed.
 defineTypes(Player, {
 	id: 'string',
 	name: 'string',
@@ -48,9 +52,9 @@ defineTypes(Player, {
 	emoteTs: 'float64',
 	avatar: 'string',
 	agent: 'string',
-	account: 'string',
 	voice: 'boolean',
 	tsServer: 'float64',
+	account: 'string',
 });
 
 // A single placed voxel in a coin's world. Keyed in the blocks MapSchema by its
