@@ -1960,6 +1960,10 @@
 			"dest": "/api/three-token/[action]?action=$1"
 		},
 		{
+			"src": "/api/token/([^/]+)",
+			"dest": "/api/token/[action]?action=$1"
+		},
+		{
 			"src": "/api/developer/webhooks/([^/]+)",
 			"dest": "/api/developer/webhooks/[id]?id=$1"
 		},

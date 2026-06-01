@@ -20,6 +20,19 @@
 //
 // `danger` realms drop a tombstone on death. `pvp` realms allow player combat
 // outside any safeCamp. Resource node ids must be unique WITHIN a realm.
+//
+// A few realms carry extra fields beyond the shared shape:
+//   • `cave: true`        — render as an enclosed cavern (dark rock) not open sky.
+//   • `ring: {x0,y0,x1,y1}`— a practice boxing ring: a walkable, purely-cosmetic
+//                            platform (no death risk) drawn with ropes + posts.
+//   • `seating: [{x0,y0,x1,y1}]` — spectator stands: walkable NO-PvP zones (like a
+//                            mobile safeCamp) so onlookers aren't dragged into a fight.
+//   • `rollers: [{x0,y0,x1,y1,dir}]` — moving-floor strips. On the sim tick the
+//                            server pushes any player standing on one tile in `dir`
+//                            ('n'|'s'|'e'|'w'), respecting walkability — learn-the-
+//                            flow movement, never a teleport.
+// A portal may carry `gate: { combat }` — entry is refused until the player's
+// combat level meets the threshold (the server checks it before the handoff).
 
 function nodesFrom(coords, kind, prefix) {
 	return coords.map(([tx, ty], i) => ({ id: `${prefix}${i}`, kind, tx, ty }));
@@ -43,6 +56,8 @@ const MAINLAND = {
 		{ x0: 8, y0: 8, x1: 12, y1: 11 }, // bank building
 		{ x0: 23, y0: 23, x1: 24, y1: 24 }, // fountain
 		{ x0: 31, y0: 38, x1: 34, y1: 41 }, // the millpond (water — also in `water` below)
+		{ x0: 27, y0: 13, x1: 30, y1: 15 }, // Fortune's Folly casino (landmark — see `landmarks`)
+		{ x0: 28, y0: 17, x1: 28, y1: 17 }, // the Wheel of Fortune (interactable — players stand adjacent)
 	],
 	water: [
 		{ x0: 31, y0: 38, x1: 34, y1: 41 }, // the millpond, fishable from its banks
@@ -54,6 +69,15 @@ const MAINLAND = {
 	// (players stand adjacent to talk), validated like resource nodes.
 	npcs: [
 		{ id: 'aldric', name: 'Aldric the Guide', kind: 'guide', tx: 26, ty: 29 },
+	],
+	// Fixed world landmarks (Task 19). A `casino` is a decorative building (its
+	// footprint is in `blocked` above); a `wheel` is interactable — the client
+	// renders it, a click walks the player adjacent, and standing beside it opens
+	// the Wheel of Fortune. The wheel's own tile is blocked so players approach it
+	// from an adjacent tile, exactly like the bank counter or an NPC.
+	landmarks: [
+		{ id: 'fortunes-folly', kind: 'casino', tx: 28, ty: 14, label: "Fortune's Folly" },
+		{ id: 'wheel', kind: 'wheel', tx: 28, ty: 17, label: 'Wheel of Fortune' },
 	],
 	nodes: [
 		...nodesFrom([[12, 28], [14, 30], [16, 29], [13, 33], [15, 35], [11, 31], [18, 34], [20, 30],
@@ -83,6 +107,10 @@ const MAINLAND = {
 	], 1.0),
 	cooking: [],
 	safeCamp: null,
+	// The Arena plaza: a practice boxing ring (cosmetic, walkable, zero death risk
+	// since the Mainland is `safe`) beside the portal into the full Arena. A fresh
+	// fighter can learn footwork in the ring before stepping through to real PvP.
+	ring: { x0: 6, y0: 16, x1: 10, y1: 20 },
 	structures: ['firepit'],
 	portals: [
 		{ x0: 23, y0: 0, x1: 25, y1: 0, to: 'wilderness', toTx: 20, toTy: 36 }, // north → wilderness safe camp
@@ -93,6 +121,10 @@ const MAINLAND = {
 		// mine's return portal lands the player back at (43,11), a tile clear of
 		// this rect so they don't immediately bounce back in.
 		{ x0: 43, y0: 9, x1: 44, y1: 9, to: 'mine', toTx: 16, toTy: 28 }, // NE → mine interior
+		// Arena gate — a stone archway on the plaza just north-west of the ring. Steps
+		// into the dedicated PvP Arena; its return strip lands the player at (12,21),
+		// a tile clear of this rect (and beside the ring) so they don't bounce back in.
+		{ x0: 12, y0: 14, x1: 13, y1: 14, to: 'arena', toTx: 14, toTy: 24 }, // plaza → arena
 	],
 };
 
@@ -125,6 +157,11 @@ const WILDERNESS = {
 	structures: ['firepit'],
 	portals: [
 		{ x0: 19, y0: 39, x1: 21, y1: 39, to: 'mainland', toTx: 24, toTy: 2 }, // south → mainland
+		// North trail into the smaller, fully-PvP Wilderness North (no safe camp up
+		// there). Lands at its southern return tile.
+		{ x0: 19, y0: 0, x1: 21, y1: 0, to: 'wilderness_north', toTx: 16, toTy: 28 }, // north → wilderness north
+		// East trail into the full-size Wilderness East. Lands just inside its west edge.
+		{ x0: 39, y0: 18, x1: 39, y1: 20, to: 'wilderness_east', toTx: 2, toTy: 19 }, // east → wilderness east
 	],
 };
 
@@ -190,6 +227,10 @@ const POND = {
 	structures: ['firepit'],
 	portals: [
 		{ x0: 0, y0: 17, x1: 0, y1: 19, to: 'mainland', toTx: 45, toTy: 24 }, // west → mainland
+		// A narrow trail off the pond's quiet north shore crosses into the perils of
+		// Wilderness East — leaving the safe pond for a full PvP+danger realm. Lands at
+		// its southern edge.
+		{ x0: 17, y0: 0, x1: 19, y1: 0, to: 'wilderness_east', toTx: 19, toTy: 37 }, // north → wilderness east
 	],
 };
 
@@ -207,6 +248,7 @@ const POND = {
 const MINE = {
 	name: 'mine',
 	grid: 32,
+	cave: true, // enclosed interior — rendered as a dark cavern, like the wilderness cave
 	spawn: { tx: 16, ty: 28 }, // just inside the entrance, on the central corridor
 	safe: true, pvp: false, danger: false,
 	blocked: [
@@ -254,12 +296,192 @@ const MINE = {
 	],
 };
 
+// ---------------------------------------------------------------- Wilderness North
+// A smaller, harsher spur reached from the top of the main Wilderness. The whole
+// map is PvP — there is NO safe camp anywhere up here. Mob density is lower than
+// the main Wilderness (fewer foes, but nowhere to catch your breath). At the far
+// north a crag-flanked cave mouth holds a combat-LEVEL-GATED passage: only a
+// hardened fighter (combat ≥ the portal's gate) may step through into the cave.
+const WILDERNESS_NORTH = {
+	name: 'wilderness_north',
+	grid: 32,
+	spawn: { tx: 16, ty: 28 }, // southern return tile, just inside the trail from the main Wilderness
+	safe: false, pvp: true, danger: true,
+	blocked: [
+		// Crags flanking the northern cave mouth — they frame the gated passage at
+		// x15..16 and read the far north as a rocky dead-end but for the cave.
+		{ x0: 8, y0: 0, x1: 14, y1: 1 },
+		{ x0: 17, y0: 0, x1: 23, y1: 1 },
+	],
+	water: [],
+	fountain: null,
+	bankZone: [],
+	nodes: [
+		...nodesFrom([[9, 12], [22, 10], [6, 20], [25, 18]], 'tree', 't'),
+		...nodesFrom([[12, 6], [20, 6], [7, 8]], 'rock', 'r'),
+		...nodesFrom([[15, 8]], 'coal', 'c'),
+	],
+	// Lower density than the main Wilderness (5 mobs): two goblins and a lone ogre.
+	mobs: [
+		{ id: 'g0', kind: 'goblin', tx: 12, ty: 16, hp: 34, roam: true, aggro: true },
+		{ id: 'g1', kind: 'goblin', tx: 22, ty: 14, hp: 34, roam: true, aggro: true },
+		{ id: 'o0', kind: 'ogre', tx: 16, ty: 10, hp: 80, roam: true, aggro: true },
+	],
+	fishing: [],
+	cooking: [],
+	safeCamp: null, // no refuge — PvP across the whole map
+	structures: ['firepit'],
+	portals: [
+		{ x0: 15, y0: 31, x1: 17, y1: 31, to: 'wilderness', toTx: 20, toTy: 2 }, // south → main Wilderness top
+		// The gated cave mouth. Entry needs combat ≥ 20; the server refuses an
+		// under-level step with a notice and the player simply stays put.
+		{ x0: 15, y0: 0, x1: 16, y1: 0, to: 'wilderness_cave', toTx: 14, toTy: 24, gate: { combat: 20 } }, // far north → cave (gated)
+	],
+};
+
+// ---------------------------------------------------------------- Wilderness Cave
+// The level-gated cavern beyond the northern gate — its own enclosed instance.
+// Reaching it at all means you cleared the combat gate, so the danger is steep:
+// trolls and ogres prowl a rich ore seam. PvP + danger like the open wilds, but
+// underground (rendered as a dark cavern). A single passage south returns to
+// Wilderness North.
+const WILDERNESS_CAVE = {
+	name: 'wilderness_cave',
+	grid: 28,
+	cave: true,
+	spawn: { tx: 14, ty: 24 }, // arrival tile, just north of the return passage
+	safe: false, pvp: true, danger: true,
+	blocked: [
+		// Cave shell — a one-tile rock wall around the whole interior.
+		{ x0: 0, y0: 0, x1: 27, y1: 0 },
+		{ x0: 0, y0: 1, x1: 0, y1: 27 },
+		{ x0: 27, y0: 1, x1: 27, y1: 27 },
+		{ x0: 1, y0: 27, x1: 26, y1: 27 },
+		// Central ridge splitting upper/lower chambers, broken by a centre gap (x11..16).
+		{ x0: 4, y0: 12, x1: 10, y1: 13 },
+		{ x0: 17, y0: 12, x1: 23, y1: 13 },
+		// Pillars — cover to fight and mine around.
+		{ x0: 7, y0: 18, x1: 8, y1: 19 },
+		{ x0: 19, y0: 18, x1: 20, y1: 19 },
+	],
+	water: [],
+	fountain: null,
+	bankZone: [],
+	nodes: [
+		...nodesFrom([[3, 3], [7, 2], [12, 3], [16, 3], [21, 2], [24, 4], [5, 8], [22, 8], [10, 9], [18, 9]], 'rock', 'r'),
+		...nodesFrom([[9, 4], [14, 6], [19, 5], [4, 22], [23, 22], [13, 16]], 'coal', 'c'),
+	],
+	// Steep: two ogres, a troll, and a pair of goblins. All roam + aggro.
+	mobs: [
+		{ id: 'tr0', kind: 'troll', tx: 14, ty: 8, hp: 140, roam: true, aggro: true },
+		{ id: 'o0', kind: 'ogre', tx: 6, ty: 6, hp: 80, roam: true, aggro: true },
+		{ id: 'o1', kind: 'ogre', tx: 22, ty: 16, hp: 80, roam: true, aggro: true },
+		{ id: 'g0', kind: 'goblin', tx: 9, ty: 20, hp: 34, roam: true, aggro: true },
+		{ id: 'g1', kind: 'goblin', tx: 18, ty: 22, hp: 34, roam: true, aggro: true },
+	],
+	fishing: [],
+	cooking: [],
+	safeCamp: null,
+	structures: [],
+	portals: [
+		{ x0: 13, y0: 26, x1: 15, y1: 26, to: 'wilderness_north', toTx: 15, toTy: 2 }, // south passage → Wilderness North
+	],
+};
+
+// ---------------------------------------------------------------- Wilderness East
+// A full-size wild expanse east of the main Wilderness, also reachable off the
+// Pond's north shore. PvP + danger like the Wilderness, with the same kind of
+// roaming foes and scattered resources, but no safe camp — the whole map is open.
+const WILDERNESS_EAST = {
+	name: 'wilderness_east',
+	grid: 40,
+	spawn: { tx: 4, ty: 20 },
+	safe: false, pvp: true, danger: true,
+	blocked: [],
+	water: [],
+	fountain: null,
+	bankZone: [],
+	nodes: [
+		...nodesFrom([[10, 8], [16, 12], [24, 10], [30, 16], [8, 24], [34, 26], [20, 30], [28, 34], [14, 34]], 'tree', 't'),
+		...nodesFrom([[12, 18], [26, 22], [33, 12], [9, 32], [22, 6]], 'rock', 'r'),
+		...nodesFrom([[18, 24], [31, 30], [15, 6]], 'coal', 'c'),
+	],
+	mobs: [
+		{ id: 'g0', kind: 'goblin', tx: 14, ty: 16, hp: 34, roam: true, aggro: true },
+		{ id: 'g1', kind: 'goblin', tx: 26, ty: 14, hp: 34, roam: true, aggro: true },
+		{ id: 'g2', kind: 'goblin', tx: 20, ty: 26, hp: 34, roam: true, aggro: true },
+		{ id: 'g3', kind: 'goblin', tx: 32, ty: 22, hp: 34, roam: true, aggro: true },
+		{ id: 'o0', kind: 'ogre', tx: 22, ty: 18, hp: 80, roam: true, aggro: true },
+	],
+	fishing: [],
+	cooking: [],
+	safeCamp: null,
+	structures: ['firepit'],
+	portals: [
+		{ x0: 0, y0: 18, x1: 0, y1: 20, to: 'wilderness', toTx: 37, toTy: 19 }, // west → main Wilderness east edge
+		{ x0: 17, y0: 39, x1: 19, y1: 39, to: 'pond', toTx: 18, toTy: 2 }, // south → Pond north shore
+	],
+};
+
+// ---------------------------------------------------------------- Arena
+// A dedicated PvP scene reached from the Mainland plaza. PvP is on, but it is NOT
+// a `danger` realm — death here costs no items (a sporting bout, not the wilds);
+// you simply respawn at the south gate. The floor carries moving ROLLERS that
+// shove a standing fighter one tile per push in their direction — read the flow,
+// use it, or get walked into your opponent's reach. SEATING along both flanks is a
+// no-PvP spectator zone. A south strip returns to the Mainland plaza.
+const ARENA = {
+	name: 'arena',
+	grid: 28,
+	spawn: { tx: 14, ty: 24 }, // south gate, on the return strip's doorstep
+	safe: false, pvp: true, danger: false,
+	blocked: [
+		// Arena bowl wall — a solid ring around the whole floor (the south return
+		// strip is an interior portal tile, so no gap is needed in the wall).
+		{ x0: 0, y0: 0, x1: 27, y1: 0 },
+		{ x0: 0, y0: 1, x1: 0, y1: 27 },
+		{ x0: 27, y0: 1, x1: 27, y1: 27 },
+		{ x0: 0, y0: 27, x1: 27, y1: 27 },
+	],
+	water: [],
+	fountain: null,
+	bankZone: [],
+	nodes: [],
+	mobs: [],
+	fishing: [],
+	cooking: [],
+	safeCamp: null,
+	structures: [],
+	// Spectator stands down the east and west flanks — walkable, but no PvP can be
+	// dealt to or from anyone standing in them (enforced server-side alongside safeCamp).
+	seating: [
+		{ x0: 1, y0: 6, x1: 3, y1: 21 },
+		{ x0: 24, y0: 6, x1: 26, y1: 21 },
+	],
+	// A clockwise circulation of moving floor: the top belt drives east, the right
+	// edge south, the bottom belt west, the left edge north — a loop a fighter learns
+	// to ride or break out of.
+	rollers: [
+		{ x0: 8, y0: 10, x1: 19, y1: 10, dir: 'e' },
+		{ x0: 19, y0: 11, x1: 19, y1: 15, dir: 's' },
+		{ x0: 8, y0: 16, x1: 19, y1: 16, dir: 'w' },
+		{ x0: 8, y0: 11, x1: 8, y1: 15, dir: 'n' },
+	],
+	portals: [
+		{ x0: 12, y0: 26, x1: 15, y1: 26, to: 'mainland', toTx: 12, toTy: 21 }, // south strip → Mainland plaza
+	],
+};
+
 export const REALMS = {
 	mainland: MAINLAND,
 	wilderness: WILDERNESS,
 	whisperwood: WHISPERWOOD,
 	pond: POND,
 	mine: MINE,
+	wilderness_north: WILDERNESS_NORTH,
+	wilderness_cave: WILDERNESS_CAVE,
+	wilderness_east: WILDERNESS_EAST,
+	arena: ARENA,
 };
 
 export const DEFAULT_REALM = 'mainland';
@@ -284,6 +506,39 @@ export function portalAt(realm, tx, ty) {
 
 export function inRect(rect, tx, ty) {
 	return rect && tx >= rect.x0 && tx <= rect.x1 && ty >= rect.y0 && ty <= rect.y1;
+}
+
+// The realm's spin-wheel landmark (Task 19), or null if this realm has none.
+// The GameRoom uses its tile for the "stand adjacent to spin" check.
+export function wheelLandmark(realm) {
+	return (realm.landmarks || []).find((l) => l.kind === 'wheel') || null;
+}
+
+export function inAnyRect(rects, tx, ty) {
+	if (!rects) return false;
+	for (const r of rects) if (inRect(r, tx, ty)) return true;
+	return false;
+}
+
+// Unit tile delta for a roller's push direction. Unknown directions don't move.
+const ROLLER_DELTA = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+export function rollerDelta(dir) {
+	return ROLLER_DELTA[dir] || [0, 0];
+}
+
+// The roller whose footprint covers (tx,ty), or null. The first match wins where
+// strips overlap, so a corner belongs to whichever strip is listed first.
+export function rollerAt(realm, tx, ty) {
+	for (const r of realm.rollers || []) {
+		if (inRect(r, tx, ty)) return r;
+	}
+	return null;
+}
+
+// True if (tx,ty) is a PvP-immune tile of this realm: inside the safe camp or any
+// spectator-seating stand. Combat to/from such a tile is refused server-side.
+export function inNoPvpZone(realm, tx, ty) {
+	return inRect(realm.safeCamp, tx, ty) || inAnyRect(realm.seating, tx, ty);
 }
 
 // The best fishing spot within one tile (8-way, including the player's own tile)
@@ -314,8 +569,18 @@ export function realmLayout(realm) {
 		cooking: realm.cooking,
 		safeCamp: realm.safeCamp,
 		npcs: (realm.npcs || []).map((n) => ({ id: n.id, name: n.name, kind: n.kind, tx: n.tx, ty: n.ty })),
+		landmarks: (realm.landmarks || []).map((l) => ({ id: l.id, kind: l.kind, tx: l.tx, ty: l.ty, label: l.label })),
 		structures: realm.structures || [],
-		portals: realm.portals.map((p) => ({ x0: p.x0, y0: p.y0, x1: p.x1, y1: p.y1, to: p.to })),
+		// Portals carry their combat gate (if any) so the client can label a locked
+		// gate and pre-warn before a wasted walk. toTx/toTy stay server-only.
+		portals: realm.portals.map((p) => ({ x0: p.x0, y0: p.y0, x1: p.x1, y1: p.y1, to: p.to, gate: p.gate || null })),
+		// Distinguishing scenery for the new realms — all optional, absent on the
+		// classic four: an enclosed cave look, the practice boxing ring, spectator
+		// stands, and the moving-floor rollers (with direction) the Arena renders.
+		cave: !!realm.cave,
+		ring: realm.ring || null,
+		seating: realm.seating || [],
+		rollers: (realm.rollers || []).map((r) => ({ x0: r.x0, y0: r.y0, x1: r.x1, y1: r.y1, dir: r.dir })),
 		safe: realm.safe,
 		pvp: realm.pvp,
 		danger: realm.danger,

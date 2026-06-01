@@ -25,6 +25,10 @@ export class Player extends Schema {
 		this.avatar = '';
 		// Optional three.ws agent id this player is embodying (for cross-links).
 		this.agent = '';
+		// Verified Solana wallet address bound at sign-in — the account id this
+		// player persists under and is known by in the social graph. Empty in the
+		// open (un-gated) world; set from the play pass when the token gate is on.
+		this.account = '';
 		// True while this player is in spatial voice chat, so peers know to open a
 		// WebRTC connection to them and the UI can mark their nameplate.
 		this.voice = false;
@@ -44,6 +48,7 @@ defineTypes(Player, {
 	emoteTs: 'float64',
 	avatar: 'string',
 	agent: 'string',
+	account: 'string',
 	voice: 'boolean',
 	tsServer: 'float64',
 });

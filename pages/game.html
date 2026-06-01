@@ -46,6 +46,7 @@
 		<!-- In-world HUD -->
 		<header id="kg-topbar" hidden>
 			<span id="kg-realm">Mainland</span>
+			<span id="kg-server" class="kg-server-chip" hidden></span>
 			<span class="kg-stat">online <b id="kg-online">0</b></span>
 			<button
 				id="kg-skills-btn"
@@ -134,12 +135,26 @@
 				aria-label="Chat messages"
 			></div>
 			<form id="kg-chat-form" class="kg-chat-form" autocomplete="off">
+				<!-- Slash-command autocomplete: populated from the server command
+				     manifest as the player types '/'. role=listbox for screen readers;
+				     the input owns it via aria-controls / aria-activedescendant. -->
+				<ul
+					id="kg-chat-hint"
+					class="kg-chat-hint"
+					role="listbox"
+					aria-label="Command suggestions"
+					hidden
+				></ul>
 				<input
 					id="kg-chat-input"
 					class="kg-chat-input"
 					type="text"
 					maxlength="200"
 					autocomplete="off"
+					role="combobox"
+					aria-expanded="false"
+					aria-autocomplete="list"
+					aria-controls="kg-chat-hint"
 					aria-label="Type a message"
 					placeholder="Press Enter to chat…"
 				/>
@@ -199,6 +214,16 @@
 				<i class="kg-action-dot" aria-hidden="true"></i
 				><span class="kg-action-lbl">Cast line</span>
 			</button>
+			<button
+				id="kg-pickup"
+				class="kg-action kg-action--pickup"
+				type="button"
+				hidden
+				aria-label="Pick up your structure"
+			>
+				<i class="kg-action-dot" aria-hidden="true"></i
+				><span class="kg-action-lbl">Pick up</span>
+			</button>
 		</div>
 
 		<!-- Death-bag recovery panel — opens when you tap an adjacent tombstone.
@@ -257,6 +282,27 @@
 						placeholder="guest"
 					/>
 				</label>
+				<!-- World-instance picker (Task 23). Real per-server population is
+				     fetched live from the multiplayer host's /servers endpoint and
+				     rendered into #kg-servers-list by _initServerPicker in iso-game.js.
+				     Items, gold, and skills are shared across servers; only who you see
+				     differs. -->
+				<fieldset id="kg-servers" class="kg-servers" aria-label="Choose a server">
+					<legend class="kg-servers-legend">Choose a server</legend>
+					<div
+						id="kg-servers-list"
+						class="kg-servers-list"
+						role="radiogroup"
+						aria-label="World instances"
+						aria-busy="true"
+					>
+						<div class="kg-servers-loading">Finding worlds…</div>
+					</div>
+					<p class="kg-servers-note">
+						Items, gold, and skills are shared across servers — you’ll only see other players on the
+						one you pick.
+					</p>
+				</fieldset>
 				<button id="kg-start-btn" class="kg-btn" type="button">Enter world</button>
 				<div class="kg-feats">
 					<span class="kg-feat">Woodcutting</span>

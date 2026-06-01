@@ -11,14 +11,30 @@
 // one tile (8-way) of the player's current tile, and walkable. That makes
 // teleport-cheating impossible without a separate max-step heuristic.
 
-import { Room } from '@colyseus/core';
+import { Room, matchMaker } from '@colyseus/core';
 
-import { GameState, GamePlayer, ResourceNode, Mob, Slot, Tombstone } from '../schemas/game.js';
-import { REALMS, DEFAULT_REALM, isBlocked, inBounds, realmLayout, fishingSpotNear } from './realms.js';
-import { runCommand } from './commands.js';
-import { STACKABLE_ITEMS, isEdible, healValue, isMount, mountStepMs, rollLoot, itemLabel, clientItemRegistry, cookBurnChance } from '../items.js';
+import { GameState, GamePlayer, ResourceNode, Mob, Slot, Tombstone, Structure } from '../schemas/game.js';
+import { REALMS, DEFAULT_REALM, isBlocked, inBounds, realmLayout, fishingSpotNear, portalAt, rollerAt, rollerDelta, inNoPvpZone, wheelLandmark } from './realms.js';
+import { signTransfer, verifyTransfer } from './realm-transfer.js';
+import { runCommand, commandManifest } from './commands.js';
+import { STACKABLE_ITEMS, isEdible, healValue, isMount, mountStepMs, rollLoot, itemLabel, clientItemRegistry, cookBurnChance, fishCatchChance, fishDoubleChance } from '../items.js';
 import { cleanAvatarUrl } from '../avatar-url.js';
-import { loadPlayer, savePlayer } from '../playerStore.js';
+import { loadPlayer, savePlayer, hydratePlayer, flushPlayer } from '../playerStore.js';
+import { cleanServer } from '../servers.js';
+import { PRESENCE_HASH, evictChannel, payoutChannel, TAKEOVER_CLOSE_CODE } from '../presence-keys.js';
+import { socialHub } from '../social-hub.js';
+import { verifyPresenceTicket } from '../presence-token.js';
+import { cosmeticById, isOffered, currentOffers, clientCatalog } from '../cosmetics.js';
+import { marketplaceStore } from '../marketplaceStore.js';
+import {
+	TOKEN_SYMBOL, TOKEN_DECIMALS, tokenConfigured, isWalletAddress,
+	quoteTokenForUsd, signQuote, verifyQuote, splitAmount, buildSplitTransaction, verifySplitPayment,
+	buildSpinPayment, verifySpinPayment,
+} from '../game-token.js';
+import {
+	rollSpin, spinSegments, isSpinSettled, markSpinSettled,
+	FREE_SPIN_COOLDOWN_MS, SPIN_MIN_AVG_LEVEL, PAID_SPIN_USD,
+} from '../spin-wheel.js';
 import {
 	TUTORIAL_STEPS, TUTORIAL_REWARD, GUIDE_DONE, BADGES, DAILY_POOL,
 	dailyDef, nextResetAt, freshQuestState, normalizeQuestState, currentStep,
@@ -39,6 +55,15 @@ const HOTBAR_SIZE = 6;
 const MAX_STACK = 999;
 const BANK_SIZE = 48;
 
+// Marketplace (Task 20). Bounds keep a single listing's numbers sane and stop a
+// player from flooding the board. The treasury cut applies ONLY to token sales
+// (gold sales are fee-free) — 500 bps = 5%, leaving 95% to the seller's wallet.
+const MAX_LISTINGS_PER_SELLER = 20;
+const MARKET_GOLD_MAX = 0xffffffff;
+const MARKET_USD_MIN = 0.01;
+const MARKET_USD_MAX = 100_000;
+const MARKET_TREASURY_BPS = 500;
+
 // Which items stack is owned by the item registry (items.js) so cooking, loot,
 // banking, and the shop all agree. cookedFish + potions land here automatically.
 const STACKABLE = STACKABLE_ITEMS;
@@ -54,7 +79,7 @@ const LEVEL_CAP = 99;
 // floods. Movement is the hot path so it gets the most headroom. Chat sits low:
 // a few lines a second is plenty for conversation and turns a scripted flood into
 // dropped messages (with feedback — see _handleChat).
-const RATE_LIMITS = { step: 20, gather: 6, attack: 6, fish: 6, cook: 6, consume: 6, ui: 30, chat: 4 };
+const RATE_LIMITS = { step: 20, gather: 6, attack: 6, fish: 6, cook: 6, consume: 6, ui: 30, chat: 4, mkt: 4, spin: 4 };
 
 // World chat: hard cap on a single message. Longer messages are rejected (not
 // silently truncated) so the sender knows their line didn't go through whole.
@@ -74,11 +99,8 @@ const COOK_BATCH_MAX = 5; // raw fish processed per cook action (one cooldown)
 const COOK_XP = 12; // cooking XP per fish successfully cooked (burns yield none)
 const CONSUME_COOLDOWN_MS = 1100; // pace between bites — no instant heal-spam
 const FISH_COOLDOWN_MS = 1500; // per-cast reel time — sets casting cadence on the real clock
-// Catch curve: chance rises with fishing level and the spot's quality, hard-capped
-// so even the richest water is never a guaranteed haul.
-const FISH_BASE_CHANCE = 0.40; // catch chance at level 1 on an average (quality 1) spot
-const FISH_CHANCE_PER_LEVEL = 0.005; // +0.5% per fishing level
-const FISH_CHANCE_CAP = 0.95;
+// The catch + double-haul curves live in items.js (fishCatchChance/fishDoubleChance)
+// as pure functions, so the odds are unit-tested and shared, not inlined here.
 const RESPAWN_PLAYER_MS = 4000;
 const RESPAWN_MOB_MS = 8000;
 
@@ -97,6 +119,24 @@ const TOMBSTONE_TTL_MS = 120000; // 2 minutes
 const TOMBSTONE_GRACE_MS = 45000; // last 45s: open to anyone adjacent
 const FOUNTAIN_HEAL_PER_TICK = 6; // hp restored per sim tick near the fountain
 const REGEN_PER_TICK = 1; // passive hp regen out of combat
+
+// Arena rollers (Task 22): how often a moving-floor strip shoves a standing
+// player one tile. Slower than the sim tick so the push reads as a deliberate
+// nudge to learn, not a blur — ~two pushes a second.
+const ROLLER_PUSH_MS = 500;
+
+// Player-built structures (Task 07). `cost` is the EXACT material bill, deducted
+// atomically on placement (no partial spend, no negative balance). `lifetimeMs`
+// 0 == permanent (the shack, a landmark) — a firepit burns out after its window,
+// healing adjacent players like the fountain until it decays. `cap` is how many
+// of that kind one player may own at once; the shack's cap of 1 is enforced
+// within the realm — and since the shack is Whisperwood-only (realms.js), the
+// single Whisperwood room IS the cross-realm scope, so "one per player across
+// realms" holds. `heal` is the per-tick HP a firepit restores to anyone beside it.
+const STRUCTURE_DEFS = {
+	firepit: { cost: { stone: 20, coal: 20, wood: 50 }, lifetimeMs: 30000, cap: Infinity, heal: FOUNTAIN_HEAL_PER_TICK },
+	shack: { cost: { wood: 500, stone: 200 }, lifetimeMs: 0, cap: 1, heal: 0 },
+};
 
 // XP curve: cumulative XP required for a level. Early levels fly by, later
 // ones grind — matches the guide ("early levels come quickly").
@@ -142,19 +182,40 @@ export class GameRoom extends Room {
 		// Off-schema, server-only per-player data: XP totals, private bank, and
 		// per-action cooldown/rate windows. None of this needs to sync to peers.
 		this.priv = new Map(); // sessionId -> { xp, bank: Slot[], cooldowns, rate }
+		// Per-session subscription to the account's eviction channel (Task 23
+		// single-active-session). sessionId -> { channel, handler }.
+		this._evictSubs = new Map();
+		// Per-session subscription to the account's marketplace payout channel (Task
+		// 20), so a sale settled elsewhere can deliver gold proceeds to this seat.
+		// sessionId -> { channel, handler }.
+		this._payoutSubs = new Map();
+		// Sim-tick counter that paces periodic profile autosaves.
+		this._saveTick = 0;
 	}
 
-	onCreate(options) {
+	async onCreate(options) {
 		// The room definition pins which realm this instance hosts. An unknown or
 		// missing name falls back to the default realm so the room never boots into
 		// an undefined map.
 		const name = REALMS[options?.realm] ? options.realm : DEFAULT_REALM;
 		this.realm = REALMS[name];
-		// Monotonic id source for tombstones spawned by this room.
+		// Which world instance this room belongs to (Task 23). filterBy(['server'])
+		// in index.js guarantees every client matched here passed the same server
+		// option, but we still resolve it defensively so a forged/missing value can
+		// never create a room for a non-existent instance.
+		this.server = cleanServer(options?.server);
+		// Monotonic id sources for tombstones and player-built structures (Task 07)
+		// spawned by this room.
 		this._tombSeq = 0;
+		this._structSeq = 0;
 
 		this.setState(new GameState());
 		this.state.realm = this.realm.name;
+		this.state.server = this.server;
+		// Publish (realm, server) onto the room listing so the /servers endpoint can
+		// sum live population per instance through the matchmaker — across every
+		// horizontally-scaled process, not just this one.
+		await this.setMetadata({ realm: this.realm.name, server: this.server });
 		this.setPatchRate(PATCH_RATE_MS);
 		this.autoDispose = true;
 
@@ -174,10 +235,53 @@ export class GameRoom extends Room {
 		this.onMessage('skills', (c) => this._sendSkills(c));
 		this.onMessage('tombLoot', (c, p) => this._handleTombLoot(c, p));
 		this.onMessage('setAvatar', (c, p) => this._handleAvatar(c, p));
+		// Friends presence (Task 15): the client (re)asserts its presence ticket on
+		// this channel — used after a portal handoff, where the new room's seat
+		// reservation carries no join options, so the ticket can't ride onJoin.
+		// Idempotent with the onJoin registration; the verified account id is the
+		// trust anchor, never a raw client field.
+		this.onMessage('presence', (c, ticket) => {
+			const uid = verifyPresenceTicket(ticket);
+			if (!uid) return;
+			c.userData = { ...(c.userData || {}), accountUid: uid };
+			socialHub.register(uid, c, this.realm.name);
+		});
+		// Cosmetics shop (Task 21): request the live shop board, buy a cosmetic from
+		// the current rotation, and equip/unequip an owned (purchased) cosmetic. All
+		// gold + ownership + rotation checks are server-authoritative below.
+		this.onMessage('shopOpen', (c) => this._sendShop(c));
+		this.onMessage('buyCosmetic', (c, p) => this._handleBuyCosmetic(c, p));
+		this.onMessage('equipCosmetic', (c, p) => this._handleEquipCosmetic(c, p));
+		this.onMessage('unequipCosmetic', (c) => this._handleUnequipCosmetic(c));
 		// Mounts (Task 09): use the active hotbar item (ride a mount), leave the saddle,
 		// and a generic slash-command channel (Task 13's chat forwards /dismount here).
 		this.onMessage('use', (c, p) => this._handleUse(c, p));
 		this.onMessage('dismount', (c) => this._handleDismount(c));
+		// Building (Task 07): place a firepit/shack on an adjacent tile, paying its
+		// exact material cost. Pickup/lock/unlock are slash-commands routed through
+		// the command channel below (their actions live on this room).
+		this.onMessage('build', (c, p) => this._handleBuild(c, p));
+		// Player-to-player marketplace (Task 20): browse active listings, list your
+		// own goods (item-for-gold or gold-for-token), cancel a listing (returns the
+		// escrow), buy a gold listing with in-game gold, and the two-step on-chain
+		// flow for token listings (quote → settle). Escrow, gold transfers, and the
+		// 95/5 token split are all server-authoritative below. Distinct from the
+		// platform AGENT marketplace under api/marketplace*.
+		this.onMessage('mktOpen', (c) => this._sendMarket(c));
+		this.onMessage('mktList', (c, p) => this._handleMarketList(c, p));
+		this.onMessage('mktCancel', (c, p) => this._handleMarketCancel(c, p));
+		this.onMessage('mktBuyGold', (c, p) => this._handleMarketBuyGold(c, p));
+		this.onMessage('mktTokenQuote', (c, p) => this._handleMarketTokenQuote(c, p));
+		this.onMessage('mktTokenSettle', (c, p) => this._handleMarketTokenSettle(c, p));
+
+		// Wheel of Fortune (Task 19): info/eligibility + free spin (12h cooldown),
+		// and the two-step paid spin ($3 in $THREE, 50% burned / 50% to treasury)
+		// that settles on-chain before the prize is rolled. The roll is always
+		// server-authoritative — the client only animates to the chosen segment.
+		this.onMessage('spinInfo', (c) => this._sendSpinInfo(c));
+		this.onMessage('spinFree', (c) => this._handleSpinFree(c));
+		this.onMessage('spinPaidPrep', (c, p) => this._handleSpinPaidPrep(c, p));
+		this.onMessage('spinPaidSettle', (c, p) => this._handleSpinPaidSettle(c, p));
 		this.onMessage('command', (c, p) => this._handleCommand(c, p));
 		// Quests (tutorial + dailies). The client only ever requests a snapshot,
 		// talks to the guide, or asks to turn a finished quest in — all progress is
@@ -210,7 +314,7 @@ export class GameRoom extends Room {
 		}
 	}
 
-	onJoin(client, options) {
+	async onJoin(client, options) {
 		const name = clean(options?.name, 24) || `guest-${client.sessionId.slice(0, 4)}`;
 		// Stable account key: the wallet address / persistent guest id the client
 		// sends (Task 16), falling back to the ephemeral session id when absent.
@@ -218,6 +322,21 @@ export class GameRoom extends Room {
 		// it so they survive a disconnect/reconnect.
 		const playerId = clean(options?.pid, 80) || client.sessionId;
 		const now = Date.now();
+		// Single active session per account (Task 16 integrity rule, enforced across
+		// world instances for Task 23): announce this login on the account's eviction
+		// channel BEFORE loading the profile. Any live session of the same account —
+		// in any realm, on any server, in any process — persists itself and
+		// disconnects in response, so two windows can never both mutate and clobber
+		// the one shared profile. In single-instance mode the stale session persists
+		// synchronously here, so the load below already sees its latest state.
+		this.presence.publish(evictChannel(playerId), { exceptSession: client.sessionId, ts: now });
+		// Pull the durable profile into the in-process cache before the synchronous
+		// load below (Task 16). A cache hit (a session already live in this process,
+		// or a record left warm from a recent visit) returns instantly; a miss — the
+		// first join after a restart/redeploy, or a player whose last session was on
+		// another instance (Task 23) — fetches it from Redis. Without this, a returning
+		// player on a fresh process would look brand-new and be reset to the starter kit.
+		await hydratePlayer(playerId);
 		const saved = loadPlayer(playerId);
 		const quests = normalizeQuestState(saved?.quests, playerId, now) || freshQuestState(playerId, now);
 
@@ -246,6 +365,13 @@ export class GameRoom extends Room {
 		// every peer renders them as their real avatar, not the default capsule.
 		p.cosmetic = cleanAvatarUrl(options?.avatar);
 		p.badges = (quests.badges || []).join(',');
+		// Restore the persisted purse + owned/equipped cosmetics (Task 16/21), keyed
+		// to the stable account id so a purchase and the look the player chose survive
+		// a disconnect/realm transfer. Owned ids are filtered to ones still in the
+		// catalogue so a removed cosmetic never lingers; the equipped id must be owned.
+		const cos = this._loadCosmetics(saved);
+		p.gold = Number.isFinite(saved?.gold) ? Math.min(0xffffffff, Math.max(0, saved.gold | 0)) : 0;
+		p.cosmeticId = cos.equipped;
 		p.tsServer = now;
 		this.state.players.set(client.sessionId, p);
 
@@ -258,18 +384,100 @@ export class GameRoom extends Room {
 			cooldowns: { gather: 0, attack: 0, fish: 0, cook: 0, consume: 0, step: 0 },
 			rate: new Map(),
 			quests,
+			// Owned shop cosmetics (a Set of catalogue ids) + the equipped id. The
+			// equipped id is mirrored onto the synced schema (p.cosmeticId); ownership
+			// stays server-side and is only ever sent to its owner via the shop board.
+			cosmetics: { owned: cos.owned, equipped: cos.equipped },
+			// Wheel of Fortune (Task 19): when this account may next take its free spin.
+			// Persisted per account so the 12h cooldown survives a disconnect/realm hop
+			// and can't be reset by reconnecting. Paid spins never touch this timer.
+			spin: { nextFreeSpinAt: Number.isFinite(saved?.spin?.nextFreeSpinAt) ? saved.spin.nextFreeSpinAt : 0 },
 		});
+
+		// Arriving through a portal: a signed transfer restores the haul the player
+		// carried out of the previous realm and lands them at the portal's exit tile
+		// instead of the realm's default spawn. An unsigned/expired/tampered token is
+		// ignored — the player simply spawns fresh, never gaining forged items.
+		const transfer = options?.transfer ? verifyTransfer(options.transfer) : null;
+		if (transfer && transfer.to === this.realm.name) {
+			if (transfer.carry) this._applyCarry(p, this.priv.get(client.sessionId), transfer.carry);
+			const dtx = transfer.tx | 0, dty = transfer.ty | 0;
+			if (inBounds(this.realm, dtx, dty) && !isBlocked(this.realm, dtx, dty)) {
+				p.tx = dtx;
+				p.ty = dty;
+			}
+		} else if (saved?.profile) {
+			// No in-session carry token — this is a fresh login (first connect, a
+			// reconnect, or a switch to another world instance). Restore the
+			// account-scoped profile so items, hotbar, bank, skills, and mount are
+			// identical regardless of which server the player chose (Task 23). The
+			// profile is realm-agnostic; position stays this realm's spawn. Uses the
+			// same defensively-bounded applier as portal carries, so a corrupt saved
+			// blob can't inject out-of-range items or skill levels.
+			this._applyCarry(p, this.priv.get(client.sessionId), saved.profile);
+		}
+
+		// Register this session as the account's live presence + subscribe to its
+		// eviction channel so a later login elsewhere can take this seat over. The
+		// presence row records which server+realm the account is on, which a friends
+		// panel (Task 15) reads via GET /presence to show "online on Server 2 ·
+		// Mainland". Cleared/transferred on leave (see onLeave).
+		const channel = evictChannel(playerId);
+		const handler = (msg) => this._onEvict(playerId, msg);
+		await this.presence.subscribe(channel, handler);
+		this._evictSubs.set(client.sessionId, { channel, handler });
+		// Marketplace payout channel (Task 20): a sale settled in another realm/room
+		// nudges this seat to drain its durable payout queue, so gold proceeds land
+		// live instead of waiting for the next login. Subscribed per-session and torn
+		// down on leave alongside the eviction subscription.
+		const payChan = payoutChannel(playerId);
+		const payHandler = () => this._drainMarketPayouts(client.sessionId);
+		await this.presence.subscribe(payChan, payHandler);
+		this._payoutSubs.set(client.sessionId, { channel: payChan, handler: payHandler });
+		await this.presence.hset(
+			PRESENCE_HASH,
+			playerId,
+			JSON.stringify({ server: this.server, realm: this.realm.name, name, sid: client.sessionId, ts: now }),
+		);
+
+		// Account-level friends presence (Task 15). The PRESENCE_HASH above is keyed
+		// by playerId and powers seat eviction/takeover; the friends graph keys off
+		// the three.ws account id (users.id), which a presence ticket carries in
+		// verified, spoof-proof form. Register it with the social hub so friends see
+		// "online · <realm>" via the friends API and can DM this player live.
+		const accountUid = verifyPresenceTicket(options?.presence);
+		if (accountUid) {
+			client.userData = { ...(client.userData || {}), accountUid };
+			socialHub.register(accountUid, client, this.realm.name);
+		}
+
+		// Claim any proceeds owed while this account was offline (gold from sales of
+		// its listings). Drains the durable queue and credits the live player.
+		this._drainMarketPayouts(client.sessionId);
 
 		// Hand the client the full static realm layout (geometry, fountain, bank
 		// counter, fishing/cooking tiles, safe camp, portals, and the
 		// safe/pvp/danger flags) so it renders exactly the tiles the server treats
 		// as solid/interactive — and knows whether this realm drops death-bags.
 		// Dynamic objects (nodes, mobs, players, tombstones) arrive via synced
-		// schema state instead.
-		client.send('realm', realmLayout(this.realm));
+		// schema state instead. The build catalogue (which structures this realm
+		// permits, with their authoritative costs) rides along so the client's build
+		// menu + affordability never drift from the server (Task 07).
+		const layout = realmLayout(this.realm);
+		layout.buildCatalog = this._buildCatalog();
+		client.send('realm', layout);
 		// Item catalogue (icons, labels, mount tuning) so the hotbar can label items and
 		// the scene can render the right steed. Static — sent once per join.
 		client.send('items', clientItemRegistry());
+		// Cosmetics catalogue (Task 21): id → name, rarity, price, rotation, and the
+		// visual spec. Static, sent once per join so the client can render any peer's
+		// equipped cosmetic immediately; the live shop board (offers + countdowns +
+		// owned + gold) is fetched on demand via 'shopOpen'.
+		client.send('cosmetics', clientCatalog());
+		// Slash-command manifest (Task 13) so the chat input can autocomplete and
+		// describe commands as the player types '/'. Generated from the same
+		// registry that powers /help and the router, so the hint never drifts.
+		client.send('commands', commandManifest());
 		// Hand over the player's quest state (tutorial step, today's dailies +
 		// progress, reset countdown, earned badges) so the quest panel and the
 		// guide's "!"/"?" marker render immediately on entry.
@@ -278,13 +486,80 @@ export class GameRoom extends Room {
 		console.log(`[${this.realm.name} ${this.roomId}] +join ${name} (n=${this.state.players.size})`);
 	}
 
-	onLeave(client) {
-		this._persistPlayer(client.sessionId);
-		this.state.players.delete(client.sessionId);
-		this.priv.delete(client.sessionId);
+	async onLeave(client) {
+		const sid = client.sessionId;
+		const priv = this.priv.get(sid);
+		// An evicted session already persisted itself synchronously inside _onEvict;
+		// persisting again here would write a now-stale snapshot over whatever the
+		// new session has since done, so skip it. A normal leave persists as usual.
+		if (!priv?._evicted) {
+			this._persistPlayer(sid);
+			// Force the final state to durable storage now rather than waiting on the
+			// debounce timer (Task 16): a clean disconnect must not lose the last few
+			// seconds if the process is torn down before the timer fires. No-op when
+			// Redis isn't configured. The evicted path is skipped — its successor
+			// session owns the record now and flushes on its own.
+			if (priv?.playerId) await flushPlayer(priv.playerId);
+		}
+
+		// Drop the account's eviction subscription and clear its presence row — but
+		// only if the row is still OURS. A takeover overwrites the row with the new
+		// session's id on its own join, and that newer session must not be erased by
+		// the old one's delayed disconnect.
+		const sub = this._evictSubs.get(sid);
+		if (sub) {
+			try { this.presence.unsubscribe(sub.channel, sub.handler); } catch {}
+			this._evictSubs.delete(sid);
+		}
+		const paySub = this._payoutSubs.get(sid);
+		if (paySub) {
+			try { this.presence.unsubscribe(paySub.channel, paySub.handler); } catch {}
+			this._payoutSubs.delete(sid);
+		}
+		if (priv?.playerId) {
+			try {
+				const raw = await this.presence.hget(PRESENCE_HASH, priv.playerId);
+				if (raw && JSON.parse(raw).sid === sid) await this.presence.hdel(PRESENCE_HASH, priv.playerId);
+			} catch {}
+		}
+
+		if (client.userData?.accountUid) socialHub.unregister(client.userData.accountUid, client);
+
+		this.state.players.delete(sid);
+		this.priv.delete(sid);
 	}
 
-	onDispose() {
+	// React to another login of the same account (published on its eviction channel
+	// from onJoin). Enforces one active session per account across all realms and
+	// world instances: persist the stale local session NOW (so the new session loads
+	// the latest profile) and disconnect it with the takeover code, after telling it
+	// why so the client shows a "signed in elsewhere" screen instead of reconnecting.
+	_onEvict(playerId, msg) {
+		const except = msg?.exceptSession || '';
+		for (const [sid, priv] of this.priv) {
+			if (priv.playerId !== playerId || sid === except || priv._evicted) continue;
+			this._persistPlayer(sid);
+			priv._evicted = true; // suppress the duplicate persist in onLeave
+			const c = this._clientFor(sid);
+			if (c) {
+				try { c.send('takeover', { reason: 'signed-in-elsewhere' }); } catch {}
+				try { c.leave(TAKEOVER_CLOSE_CODE); } catch {}
+			}
+		}
+	}
+
+	async onDispose() {
+		// Belt-and-suspenders (Task 16): a normal dispose follows every client's
+		// onLeave (which already persisted + flushed), but a forced teardown can skip
+		// those — so persist and flush any session still resident before the room is
+		// gone. Mirrors WalkRoom awaiting blockStore.flush on dispose.
+		const ids = new Set();
+		for (const [sid, priv] of this.priv) {
+			if (priv?._evicted || !priv?.playerId) continue;
+			this._persistPlayer(sid);
+			ids.add(priv.playerId);
+		}
+		await Promise.allSettled([...ids].map((pid) => flushPlayer(pid)));
 		console.log(`[${this.realm.name} ${this.roomId}] disposed`);
 	}
 
@@ -293,6 +568,10 @@ export class GameRoom extends Room {
 	_handleStep(client, payload) {
 		const p = this.state.players.get(client.sessionId);
 		if (!p || p.dead) return;
+		// A portal handshake is in flight — the client is about to leave for the
+		// destination realm. Freeze further movement so a queued step can't trigger
+		// a second transfer (or move the soon-to-be-snapshotted player off the tile).
+		if (this.priv.get(client.sessionId)?.transferring) return;
 		if (!this._rateOk(client.sessionId, 'step')) return;
 		if (!payload || typeof payload !== 'object') return;
 
@@ -325,6 +604,122 @@ export class GameRoom extends Room {
 		p.tsServer = Date.now();
 		// Tutorial: the very first step is simply learning to walk.
 		this._questProgress(client, { kind: 'move', n: 1 });
+
+		// Stepping onto a portal tile carries the player to its destination realm.
+		// Each realm is its own room instance, so the move is a seat reservation in
+		// the destination room plus a signed snapshot of everything the player is
+		// carrying — the client tears down this seat and joins the other room.
+		const portal = portalAt(this.realm, tx, ty);
+		if (portal) {
+			// Combat-LEVEL gate (Task 11): a gated portal (e.g. the northern cave)
+			// refuses entry until the player's combat level meets the threshold. The
+			// player keeps standing on the tile — no transfer, no bounce — and is told
+			// what they need. Server-authoritative: a client can't forge its way past.
+			if (portal.gate && !this._meetsGate(p, portal.gate)) {
+				client.send('notice', { kind: 'portal', text: `You need Combat ${portal.gate.combat} to enter here (you're ${this._combatLevel(p)}).` });
+				return;
+			}
+			this._beginTransfer(client, p, portal);
+		}
+	}
+
+	// ----- realm traversal -------------------------------------------------
+
+	// Reserve a seat in the destination realm and hand the client a transfer it
+	// can consume. The player's full carry (inventory, hotbar, bank, gold, skills,
+	// hp, mount) rides in an HMAC-signed token so the destination room can restore
+	// it without trusting the client — a forged or replayed carry is rejected there.
+	async _beginTransfer(client, p, portal) {
+		const priv = this.priv.get(client.sessionId);
+		if (!priv || priv.transferring) return;
+		const dest = REALMS[portal.to] ? portal.to : DEFAULT_REALM;
+		const destRealm = REALMS[dest];
+		const tx = Number.isFinite(portal.toTx) ? portal.toTx : destRealm.spawn.tx;
+		const ty = Number.isFinite(portal.toTy) ? portal.toTy : destRealm.spawn.ty;
+		priv.transferring = true;
+		const token = signTransfer({ to: dest, tx, ty, carry: this._snapshotCarry(client, p) });
+		try {
+			const reservation = await matchMaker.joinOrCreate(`game_${dest}`, {
+				name: p.name,
+				avatar: p.cosmetic,
+				pid: priv.playerId,
+				transfer: token,
+			});
+			// Persist quests now so the destination room (which reloads them by pid)
+			// sees the same progress this room had at the moment of the step.
+			this._persistPlayer(client.sessionId);
+			client.send('portal', { to: dest, reservation });
+		} catch (err) {
+			priv.transferring = false;
+			console.error(`[${this.realm.name} ${this.roomId}] portal → ${dest} failed:`, err?.message ?? err);
+			client.send('notice', { kind: 'portal', text: 'The way is blocked right now. Try again.' });
+		}
+	}
+
+	// Snapshot everything a player carries between realms. Quests persist by pid
+	// (reloaded in the destination's onJoin), so only the in-memory haul rides here.
+	_snapshotCarry(client, p) {
+		return this._serializeProfile(p, this.priv.get(client.sessionId));
+	}
+
+	// The account-scoped, realm-agnostic profile: inventory, hotbar, bank, gold,
+	// skills (raw XP), vitals, and mount. Used both as the portal carry payload and
+	// as the persisted profile blob (Task 16/23) — one serializer so the two never
+	// drift, and so switching world instances restores exactly what a portal would.
+	_serializeProfile(p, priv) {
+		const slots = (arr) => arr.map((s) => ({ item: s.item, qty: s.qty }));
+		return {
+			inv: slots(p.inv),
+			hotbar: slots(p.hotbar),
+			activeSlot: p.activeSlot,
+			bank: (priv?.bank || []).map((s) => ({ item: s.item, qty: s.qty })),
+			gold: p.gold,
+			hp: p.hp,
+			maxHp: p.maxHp,
+			xp: { ...(priv?.xp || {}) },
+			mounted: !!p.mounted,
+			mount: p.mount || '',
+		};
+	}
+
+	// Restore a verified carry onto a freshly-joined player in the destination room.
+	// Slot arrays are rebuilt defensively (the token is signed, but we still bound
+	// indices and quantities so a malformed-but-signed payload can't corrupt state).
+	_applyCarry(p, priv, carry) {
+		const fill = (target, src, size) => {
+			for (let i = 0; i < size; i++) {
+				const s = src && src[i];
+				const item = s && typeof s.item === 'string' ? s.item : '';
+				target[i].item = item;
+				target[i].qty = item && Number.isFinite(s.qty) ? Math.max(0, Math.min(999, s.qty | 0)) : 0;
+			}
+		};
+		fill(p.inv, carry.inv, INV_SIZE);
+		fill(p.hotbar, carry.hotbar, HOTBAR_SIZE);
+		if (Number.isFinite(carry.activeSlot)) {
+			p.activeSlot = Math.max(-1, Math.min(HOTBAR_SIZE - 1, carry.activeSlot | 0));
+		}
+		if (priv) {
+			for (let i = 0; i < BANK_SIZE; i++) {
+				const s = carry.bank && carry.bank[i];
+				const item = s && typeof s.item === 'string' ? s.item : '';
+				priv.bank[i] = { item, qty: item && Number.isFinite(s.qty) ? Math.max(0, Math.min(999, s.qty | 0)) : 0 };
+			}
+			if (carry.xp && typeof carry.xp === 'object') {
+				for (const skill of SKILLS) {
+					const v = Number.isFinite(carry.xp[skill]) ? Math.max(0, carry.xp[skill]) : 0;
+					priv.xp[skill] = v;
+					p[skill] = levelForXp(v);
+				}
+			}
+		}
+		if (Number.isFinite(carry.gold)) p.gold = Math.max(0, Math.min(0xffffffff, carry.gold | 0));
+		if (Number.isFinite(carry.maxHp) && carry.maxHp > 0) p.maxHp = carry.maxHp | 0;
+		if (Number.isFinite(carry.hp)) p.hp = Math.max(0, Math.min(p.maxHp, carry.hp | 0));
+		if (carry.mounted && typeof carry.mount === 'string' && carry.mount) {
+			p.mounted = true;
+			p.mount = carry.mount;
+		}
 	}
 
 	_isWalkable(tx, ty) {
@@ -341,6 +736,11 @@ export class GameRoom extends Room {
 		// Living mobs occupy their tile.
 		for (const [, m] of this.state.mobs) {
 			if (!m.dead && m.tx === tx && m.ty === ty) return false;
+		}
+		// Player-built structures are solid — you stand beside a firepit/shack,
+		// never on it (Task 07), exactly like the fountain.
+		for (const [, s] of this.state.structures) {
+			if (s.tx === tx && s.ty === ty) return false;
 		}
 		return true;
 	}
@@ -436,15 +836,11 @@ export class GameRoom extends Room {
 
 		const lvl = p.fishing;
 		const quality = spot.quality || 1;
-		const chance = Math.min(
-			FISH_CHANCE_CAP,
-			(FISH_BASE_CHANCE + FISH_CHANCE_PER_LEVEL * (lvl - 1)) * quality,
-		);
+		const chance = fishCatchChance(lvl, quality);
 
 		if (Math.random() < chance) {
 			// Yield: usually one fish, with a skill/quality-scaled shot at a double haul.
-			const doubleChance = Math.min(0.45, 0.02 * (lvl - 1) * quality);
-			const want = 1 + (Math.random() < doubleChance ? 1 : 0);
+			const want = 1 + (Math.random() < fishDoubleChance(lvl, quality) ? 1 : 0);
 			const leftover = this._addItem(p, 'fish', want);
 			const caught = want - leftover;
 			if (caught <= 0) {
@@ -610,8 +1006,16 @@ export class GameRoom extends Room {
 		const p = this.state.players.get(client.sessionId);
 		if (!p || p.dead) return;
 		if (!this._rateOk(client.sessionId, 'attack')) return;
-		const mob = this.state.mobs.get(String(payload?.id ?? ''));
-		if (!mob || mob.dead) return;
+		const targetId = String(payload?.id ?? '');
+		const mob = this.state.mobs.get(targetId);
+		// No mob with that id → maybe it's another player. PvP rides the same 'attack'
+		// intent + cooldown; the dedicated handler enforces this realm's PvP rules.
+		if (!mob) {
+			const victim = this.state.players.get(targetId);
+			if (victim && victim !== p) this._attackPlayer(client, p, victim);
+			return;
+		}
+		if (mob.dead) return;
 
 		const priv = this.priv.get(client.sessionId);
 		const now = Date.now();
@@ -640,6 +1044,53 @@ export class GameRoom extends Room {
 			this._questProgress(client, { kind: 'combat', n: 1 });
 		}
 		p.tsServer = now;
+	}
+
+	// ----- player vs player (Task 04 rules, enforced for the wild realms + Arena) ----
+
+	// Strike another player. Server-authoritative and gated by the realm's rules:
+	// PvP must be ON, neither fighter may stand in a PvP-immune tile (a wilderness
+	// safe camp or an Arena spectator stand), and the attacker must be adjacent and
+	// off cooldown. Damage flows through the shared _damagePlayer funnel, so a fatal
+	// blow drops a death-bag in danger realms (the wilds) and is a clean, item-safe
+	// knockout in the Arena (danger:false). On a kill the victor takes combat XP and
+	// a small bounty.
+	_attackPlayer(client, attacker, victim) {
+		if (!this.realm.pvp) {
+			client.send('notice', { kind: 'pvp', text: 'This is a peaceful realm — you can’t attack other players here.' });
+			return;
+		}
+		if (victim.dead) return;
+		// A spectator stand / safe camp shields BOTH sides: you can't be hit while in
+		// one, and you can't reach out of the floor to hit someone standing in it.
+		if (inNoPvpZone(this.realm, attacker.tx, attacker.ty)) {
+			client.send('notice', { kind: 'pvp', text: 'Step out of the safe zone to fight.' });
+			return;
+		}
+		if (inNoPvpZone(this.realm, victim.tx, victim.ty)) {
+			client.send('notice', { kind: 'pvp', text: `${victim.name} is in a safe zone.` });
+			return;
+		}
+
+		const priv = this.priv.get(client.sessionId);
+		const now = Date.now();
+		if (now < priv.cooldowns.attack) return;
+		if (!this._adjacent(attacker, victim)) return;
+
+		const hasSword = attacker.hotbar[attacker.activeSlot]?.item === 'sword';
+		const base = 4 + Math.floor(attacker.combat * 0.8) + (hasSword ? 6 : 0);
+		const dmg = base + Math.floor(Math.random() * 4);
+		priv.cooldowns.attack = now + ATTACK_COOLDOWN_MS;
+
+		const fatal = this._damagePlayer(victim, dmg, { by: attacker.id, byName: attacker.name });
+		attacker.tsServer = now;
+		if (fatal) {
+			const bounty = 8 + Math.floor(Math.random() * 8);
+			attacker.gold = Math.min(0xffffffff, attacker.gold + bounty);
+			this._grantXp(client, attacker, 'combat', 18 + Math.floor(Math.random() * 10));
+			client.send('notice', { kind: 'kill', text: `You defeated ${victim.name} (+${bounty}g).` });
+			this._questProgress(client, { kind: 'combat', n: 1 });
+		}
 	}
 
 	// ----- mounts & loot ---------------------------------------------------
@@ -825,11 +1276,163 @@ export class GameRoom extends Room {
 		}
 	}
 
-	// ----- structure actions (Task 07 firepit/shack; invoked by /pickup /lock /unlock) ----
+	// ----- building (Task 07: firepit / shack) -----------------------------
+
+	// The structures this realm permits, each with its authoritative cost + lifetime,
+	// sent to the client on join so the build menu and ghost validity mirror the
+	// server exactly. `cap` 0 means unlimited (the client renders no cap note).
+	_buildCatalog() {
+		const out = {};
+		for (const kind of this.realm.structures || []) {
+			const def = STRUCTURE_DEFS[kind];
+			if (def) out[kind] = { cost: { ...def.cost }, lifetimeMs: def.lifetimeMs, cap: Number.isFinite(def.cap) ? def.cap : 0 };
+		}
+		return out;
+	}
+
+	// Place a structure on an adjacent tile, paying its EXACT material cost. The
+	// server is the sole authority: it re-validates the realm rules, the target
+	// tile, the per-player cap, and the full material bill, and deducts atomically
+	// (the cost is checked payable before a single item is spent) so there is no
+	// free build and no negative balance. A firepit gets an `expiresAt`; a shack is
+	// permanent. The client's build-mode ghost mirrors these gates for instant
+	// feedback, but a forged 'build' that skips them gets nothing here.
+	_handleBuild(client, payload) {
+		const p = this.state.players.get(client.sessionId);
+		if (!p || p.dead) return;
+		if (!this._rateOk(client.sessionId, 'ui')) return;
+		// You build with your hands, not from the saddle — mirrors the gather gate.
+		if (p.mounted) { client.send('notice', { kind: 'build', text: 'Dismount before you build.' }); return; }
+		if (!payload || typeof payload !== 'object') return;
+
+		const kind = String(payload.kind ?? '');
+		const def = STRUCTURE_DEFS[kind];
+		if (!def) return;
+
+		// Realm rules (Task 01): the realm must permit this structure kind. Shacks
+		// are Whisperwood-only; firepits are allowed wherever building makes sense.
+		if (!(this.realm.structures || []).includes(kind)) {
+			client.send('notice', { kind: 'build', text: `You can’t build a ${kind} here.` });
+			return;
+		}
+
+		if (!Number.isFinite(payload.tx) || !Number.isFinite(payload.ty)) return;
+		const tx = payload.tx | 0;
+		const ty = payload.ty | 0;
+
+		// Must sit on a tile right next to the builder (8-way) — never under them.
+		const dx = Math.abs(tx - p.tx);
+		const dy = Math.abs(ty - p.ty);
+		if (dx === 0 && dy === 0) { client.send('notice', { kind: 'build', text: 'Step back a tile to place it.' }); return; }
+		if (dx > 1 || dy > 1) { client.send('notice', { kind: 'build', text: 'Build on a tile right beside you.' }); return; }
+
+		// The tile must be free and buildable: walkable (so not blocked, not on a
+		// node/mob/another structure) and clear of portals, the bank counter, the
+		// fountain, fishing/cooking spots, and any standing player.
+		if (!this._isBuildable(tx, ty)) { client.send('notice', { kind: 'build', text: 'You can’t build there.' }); return; }
+
+		// Per-player cap (shack: one). Counted on the live structure map.
+		if (Number.isFinite(def.cap)) {
+			let owned = 0;
+			for (const [, s] of this.state.structures) if (s.kind === kind && s.owner === p.id) owned++;
+			if (owned >= def.cap) {
+				client.send('notice', { kind: 'build', text: `You can only have ${def.cap} ${kind}${def.cap === 1 ? '' : 's'} — pick it up first.` });
+				return;
+			}
+		}
+
+		// Exact material cost — verify the whole bill is payable before spending any
+		// of it, then deduct atomically.
+		if (!this._canAfford(p, def.cost)) {
+			client.send('notice', { kind: 'build', text: `Need ${this._missingCost(p, def.cost)} to build a ${kind}.` });
+			return;
+		}
+		this._spendCost(p, def.cost);
+
+		const now = Date.now();
+		const s = new Structure();
+		s.id = `st_${this.realm.name}_${p.id}_${++this._structSeq}`;
+		s.kind = kind;
+		s.owner = p.id;
+		s.ownerName = p.name;
+		s.tx = tx;
+		s.ty = ty;
+		s.expiresAt = def.lifetimeMs ? now + def.lifetimeMs : 0;
+		s.locked = false;
+		this.state.structures.set(s.id, s);
+		p.tsServer = now;
+		client.send('notice', { kind: 'build', text: `Built a ${kind}.` });
+	}
+
+	// A tile is buildable when it's walkable (bounds + not blocked + no node/mob/
+	// structure on it) AND clear of the interactive/landmark tiles a structure
+	// must never cover or block: portals, the bank counter, the fountain, and the
+	// fishing/cooking spots — plus any tile a player is currently standing on.
+	_isBuildable(tx, ty) {
+		if (!this._isWalkable(tx, ty)) return false;
+		for (const [, pl] of this.state.players) {
+			if (!pl.dead && pl.tx === tx && pl.ty === ty) return false;
+		}
+		if (portalAt(this.realm, tx, ty)) return false;
+		if ((this.realm.bankZone || []).some((t) => t.tx === tx && t.ty === ty)) return false;
+		const f = this.realm.fountain;
+		if (f && f.tx === tx && f.ty === ty) return false;
+		for (const sp of this.realm.fishing || []) if (sp.tx === tx && sp.ty === ty) return false;
+		for (const ck of this.realm.cooking || []) if (ck.tx === tx && ck.ty === ty) return false;
+		return true;
+	}
+
+	// Total quantity of `item` the player holds across backpack + hotbar — materials
+	// usually live in the backpack, but count both so a stack dragged to the hotbar
+	// still pays.
+	_countMaterial(p, item) {
+		let n = 0;
+		for (const s of p.inv) if (s.item === item) n += s.qty;
+		for (const s of p.hotbar) if (s.item === item) n += s.qty;
+		return n;
+	}
+
+	_canAfford(p, cost) {
+		for (const [item, qty] of Object.entries(cost)) {
+			if (this._countMaterial(p, item) < qty) return false;
+		}
+		return true;
+	}
+
+	// A human-readable summary of what the player is short for `cost` — drives the
+	// honest "Need 200 more wood" notice.
+	_missingCost(p, cost) {
+		const parts = [];
+		for (const [item, qty] of Object.entries(cost)) {
+			const short = qty - this._countMaterial(p, item);
+			if (short > 0) parts.push(`${short} more ${itemLabel(item)}`);
+		}
+		return parts.join(', ');
+	}
+
+	// Atomically remove a paid cost from the pack (backpack first, then hotbar),
+	// emptying slots as they zero out. Only ever called after _canAfford passes, so
+	// it never under-pays or drives a slot negative.
+	_spendCost(p, cost) {
+		for (const [item, qty] of Object.entries(cost)) {
+			let left = qty;
+			for (const arr of [p.inv, p.hotbar]) {
+				for (const s of arr) {
+					if (left <= 0) break;
+					if (s.item !== item) continue;
+					const take = Math.min(s.qty, left);
+					s.qty -= take;
+					left -= take;
+					if (s.qty === 0) s.item = '';
+				}
+			}
+		}
+	}
+
+	// ----- structure actions (firepit/shack; invoked by /pickup /lock /unlock) ----
 	// These operate on real synced state.structures and never throw on the empty
-	// case: until Task 07's building action places a structure the map is empty, so
-	// they honestly report "nothing placed" — and the moment structures exist they
-	// work unchanged. Only the owner can act, and only on a structure beside them.
+	// case: with no structure placed they honestly report "nothing placed". Only the
+	// owner can act, and only on a structure beside them.
 
 	pickupStructure(p) {
 		const owned = [];
@@ -1183,14 +1786,721 @@ export class GameRoom extends Room {
 		return out;
 	}
 
-	// Persist the player's quest state through the Task 16 save interface, keyed
-	// by the stable account id. Read-merge-write so we only ever own the quest
-	// slice and never clobber other persisted fields.
+	// Persist the player's cross-session state through the Task 16 save interface,
+	// keyed by the stable account id. Read-merge-write so we only ever own the
+	// slices we manage (quests, gold, cosmetics) and never clobber other fields a
+	// future system persists. Gold + owned/equipped cosmetics ride here so a
+	// purchase and the look the player chose survive a disconnect/realm transfer.
 	_persistPlayer(sessionId) {
 		const priv = this.priv.get(sessionId);
-		if (!priv || !priv.playerId || !priv.quests) return;
+		if (!priv || !priv.playerId) return;
+		const p = this.state.players.get(sessionId);
 		const prev = loadPlayer(priv.playerId) || {};
-		savePlayer(priv.playerId, { ...prev, quests: priv.quests });
+		const next = { ...prev };
+		if (priv.quests) next.quests = priv.quests;
+		if (p) {
+			next.gold = p.gold;
+			next.name = p.name;
+			// Full account-scoped profile (Task 16/23): inventory, hotbar, bank,
+			// skills, and mount, so the same account loads identical progression on
+			// any world instance. Same shape a portal carry uses (_serializeProfile).
+			next.profile = this._serializeProfile(p, priv);
+		}
+		if (priv.cosmetics) {
+			next.cosmetics = { owned: [...priv.cosmetics.owned], equipped: priv.cosmetics.equipped };
+		}
+		if (priv.spin) next.spin = { nextFreeSpinAt: priv.spin.nextFreeSpinAt | 0 };
+		savePlayer(priv.playerId, next);
+	}
+
+	// ----- cosmetics shop (Task 21) ----------------------------------------
+
+	// Rebuild a player's owned/equipped cosmetics from a persisted save, dropping
+	// any id no longer in the catalogue (so a removed cosmetic never lingers) and
+	// guaranteeing the equipped id is one the player actually owns.
+	_loadCosmetics(saved) {
+		const ownedIds = Array.isArray(saved?.cosmetics?.owned) ? saved.cosmetics.owned : [];
+		const owned = new Set(ownedIds.filter((id) => cosmeticById(id)));
+		const wanted = saved?.cosmetics?.equipped || '';
+		const equipped = owned.has(wanted) ? wanted : '';
+		return { owned, equipped };
+	}
+
+	// Send the requesting player the live shop board: the full catalogue, which
+	// ids are on sale right now (split daily/weekly/always), the next-rotation
+	// timestamps for real countdowns, the ids they already own, their equipped id,
+	// and their current gold. Everything the shop + wardrobe render from.
+	// Client 'shopOpen' request — rate-limited like any UI fetch, then emits the
+	// board. The post-mutation refreshes (after buy/equip/unequip) go through
+	// _emitShop directly: they are server-initiated, not client requests, so they
+	// must never be dropped by the rate limiter or the UI would show stale state.
+	_sendShop(client) {
+		if (!this._rateOk(client.sessionId, 'ui')) return;
+		this._emitShop(client);
+	}
+
+	_emitShop(client) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv || !priv.cosmetics) return;
+		client.send('shop', {
+			offers: currentOffers(Date.now()),
+			owned: [...priv.cosmetics.owned],
+			equipped: priv.cosmetics.equipped,
+			gold: p.gold,
+		});
+	}
+
+	// Buy a cosmetic: it must exist, be on sale in the current rotation, not be
+	// already owned, and the player must have the gold. On success we debit gold,
+	// grant permanent ownership, persist, and refresh the board. Every failure
+	// path returns a clear notice instead of silently no-op'ing.
+	_handleBuyCosmetic(client, payload) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv || !priv.cosmetics) return;
+		if (!this._rateOk(client.sessionId, 'ui')) return;
+		const id = String(payload?.id ?? '');
+		const cosmetic = cosmeticById(id);
+		if (!cosmetic) { client.send('notice', { kind: 'shop', text: 'That cosmetic doesn’t exist.' }); return; }
+		if (priv.cosmetics.owned.has(id)) {
+			client.send('notice', { kind: 'shop', text: `You already own the ${cosmetic.name}.` });
+			return;
+		}
+		if (!isOffered(id, Date.now())) {
+			client.send('notice', { kind: 'shop', text: `The ${cosmetic.name} isn’t on sale right now.` });
+			return;
+		}
+		if (p.gold < cosmetic.price) {
+			client.send('notice', { kind: 'shop', text: `Need ${cosmetic.price - p.gold} more gold for the ${cosmetic.name}.` });
+			return;
+		}
+		p.gold -= cosmetic.price;
+		priv.cosmetics.owned.add(id);
+		p.tsServer = Date.now();
+		this._persistPlayer(client.sessionId);
+		client.send('notice', { kind: 'shop', text: `Bought the ${cosmetic.name}!` });
+		this._emitShop(client);
+	}
+
+	// Equip an owned cosmetic — sets the synced cosmeticId so every peer renders
+	// the new look, persists the choice, and refreshes the board. Equipping is
+	// purely visual: it never touches gold, stats, inventory, or any gameplay
+	// value. You can only equip a cosmetic you actually own.
+	_handleEquipCosmetic(client, payload) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv || !priv.cosmetics) return;
+		if (!this._rateOk(client.sessionId, 'ui')) return;
+		const id = String(payload?.id ?? '');
+		if (!priv.cosmetics.owned.has(id)) {
+			client.send('notice', { kind: 'shop', text: 'You don’t own that cosmetic.' });
+			return;
+		}
+		if (priv.cosmetics.equipped === id) return;
+		priv.cosmetics.equipped = id;
+		p.cosmeticId = id;
+		p.tsServer = Date.now();
+		this._persistPlayer(client.sessionId);
+		client.send('notice', { kind: 'shop', text: `Equipped the ${cosmeticById(id)?.name || 'cosmetic'}.` });
+		this._emitShop(client);
+	}
+
+	// Revert to the default look — clears the equipped cosmetic. Always allowed
+	// (no-op if nothing is equipped) and, like equipping, strictly visual.
+	_handleUnequipCosmetic(client) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv || !priv.cosmetics) return;
+		if (!this._rateOk(client.sessionId, 'ui')) return;
+		if (!priv.cosmetics.equipped) return;
+		priv.cosmetics.equipped = '';
+		p.cosmeticId = '';
+		p.tsServer = Date.now();
+		this._persistPlayer(client.sessionId);
+		client.send('notice', { kind: 'shop', text: 'Reverted to your default look.' });
+		this._emitShop(client);
+	}
+
+	// ----- marketplace (Task 20) -------------------------------------------
+	//
+	// A global, account-scoped player-to-player market backed by marketplaceStore
+	// (durable, process-wide) so a buyer in any realm can purchase goods a seller
+	// listed from anywhere. Two listing types:
+	//   • gold          — an item stack for in-game gold; seller gets the full
+	//                      amount, no fee. Buyer pays gold, receives the item.
+	//   • goldForToken  — in-game gold priced in USD, paid on-chain with $THREE.
+	//                      95% of the token goes to the seller's wallet, 5% to the
+	//                      treasury; the buyer receives the escrowed gold once the
+	//                      payment is verified on-chain.
+	// The offered goods are escrowed on the listing the moment it's created — they
+	// leave the seller's inventory/purse immediately — so nothing can be listed and
+	// spent twice. Cancel returns the escrow; a sale delivers it to the buyer.
+
+	// Send the requesting player the live market board: every active listing, their
+	// own listings (any status), and the token-payment capability flags the Sell
+	// tab needs to decide whether goldForToken listings are offerable.
+	_sendMarket(client) {
+		const priv = this.priv.get(client.sessionId);
+		if (!priv) return;
+		if (!this._rateOk(client.sessionId, 'ui')) return;
+		const me = priv.playerId;
+		client.send('market', {
+			listings: marketplaceStore.activeListings().map((l) => this._marketView(l, me)),
+			mine: marketplaceStore.listingsBySeller(me).map((l) => this._marketView(l, me)),
+			token: { enabled: tokenConfigured(), symbol: TOKEN_SYMBOL, decimals: TOKEN_DECIMALS, treasuryBps: MARKET_TREASURY_BPS },
+			canToken: isWalletAddress(me),
+		});
+	}
+
+	// A client-safe projection of a listing. The seller's account id is never sent —
+	// only their display name — and `mine` lets the UI badge/disable a viewer's own
+	// listings on the Buy tab.
+	_marketView(l, viewerId) {
+		const v = {
+			id: l.id,
+			type: l.type,
+			seller: l.sellerName || 'Trader',
+			mine: l.seller === viewerId,
+			status: l.status,
+			createdAt: l.createdAt,
+		};
+		if (l.type === 'gold') { v.item = l.item; v.qty = l.qty; v.priceGold = l.priceGold; }
+		else { v.goldAmount = l.goldAmount; v.priceUsd = l.priceUsd; }
+		if (l.status !== 'active') { v.buyer = l.buyerName || null; v.closedAt = l.closedAt || null; }
+		return v;
+	}
+
+	// Create a listing, escrowing the offered goods out of the seller immediately.
+	_handleMarketList(client, payload) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv) return;
+		if (!this._rateOk(client.sessionId, 'mkt')) return;
+		const type = payload?.type === 'goldForToken' ? 'goldForToken' : 'gold';
+
+		const activeCount = marketplaceStore.listingsBySeller(priv.playerId).filter((l) => l.status === 'active').length;
+		if (activeCount >= MAX_LISTINGS_PER_SELLER) {
+			client.send('notice', { kind: 'market', text: `You can have at most ${MAX_LISTINGS_PER_SELLER} active listings.` });
+			return;
+		}
+
+		if (type === 'gold') {
+			const item = typeof payload?.item === 'string' ? payload.item : '';
+			const qty = Math.max(1, Math.min(MAX_STACK, payload?.qty | 0));
+			const priceGold = Math.max(1, Math.min(MARKET_GOLD_MAX, payload?.priceGold | 0));
+			if (!item || !Number.isFinite(payload?.qty) || !Number.isFinite(payload?.priceGold)) {
+				client.send('notice', { kind: 'market', text: 'Pick an item, amount, and price.' });
+				return;
+			}
+			// Escrow: pull the exact quantity out of the backpack. If the player doesn't
+			// actually hold it, _removeInvItem returns what it could remove — we restore
+			// it and refuse, so a listing can never escrow goods that weren't there.
+			const removed = this._removeInvItem(p, item, qty);
+			if (removed < qty) {
+				if (removed > 0) this._addItem(p, item, removed); // put back the partial pull
+				client.send('notice', { kind: 'market', text: `You don't have ${qty} ${itemLabel(item)} to list.` });
+				return;
+			}
+			const rec = marketplaceStore.create({
+				seller: priv.playerId, sellerName: p.name, type: 'gold',
+				item, qty, priceGold,
+			});
+			p.tsServer = Date.now();
+			this._persistPlayer(client.sessionId);
+			client.send('notice', { kind: 'market', text: `Listed ${qty}× ${itemLabel(item)} for ${priceGold} gold.` });
+			this._broadcastMarketDirty();
+			this._sendMarket(client);
+			return;
+		}
+
+		// goldForToken — list in-game gold priced in USD, settled on-chain in $THREE.
+		if (!tokenConfigured()) {
+			client.send('notice', { kind: 'market', text: 'Token sales are unavailable right now.' });
+			return;
+		}
+		if (!isWalletAddress(priv.playerId)) {
+			client.send('notice', { kind: 'market', text: 'Connect a wallet to sell gold for tokens.' });
+			return;
+		}
+		const goldAmount = Math.max(1, Math.min(MARKET_GOLD_MAX, payload?.goldAmount | 0));
+		const priceUsd = Number(payload?.priceUsd);
+		if (!Number.isFinite(payload?.goldAmount) || !Number.isFinite(priceUsd) || priceUsd < MARKET_USD_MIN || priceUsd > MARKET_USD_MAX) {
+			client.send('notice', { kind: 'market', text: `Set a gold amount and a USD price ($${MARKET_USD_MIN}–$${MARKET_USD_MAX}).` });
+			return;
+		}
+		if (p.gold < goldAmount) {
+			client.send('notice', { kind: 'market', text: `You only have ${p.gold} gold to list.` });
+			return;
+		}
+		// Escrow the gold out of the purse now.
+		p.gold -= goldAmount;
+		const rec = marketplaceStore.create({
+			seller: priv.playerId, sellerName: p.name, type: 'goldForToken',
+			goldAmount, priceUsd: Math.round(priceUsd * 100) / 100, sellerWallet: priv.playerId,
+		});
+		p.tsServer = Date.now();
+		this._persistPlayer(client.sessionId);
+		client.send('notice', { kind: 'market', text: `Listed ${goldAmount} gold for $${rec.priceUsd} in ${TOKEN_SYMBOL}.` });
+		this._broadcastMarketDirty();
+		this._sendMarket(client);
+	}
+
+	// Cancel a listing you own and reclaim the escrow. Active listings only.
+	_handleMarketCancel(client, payload) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv) return;
+		if (!this._rateOk(client.sessionId, 'mkt')) return;
+		const l = marketplaceStore.get(String(payload?.id ?? ''));
+		if (!l || l.seller !== priv.playerId) { client.send('notice', { kind: 'market', text: 'Listing not found.' }); return; }
+		if (l.status !== 'active') { client.send('notice', { kind: 'market', text: 'That listing is no longer active.' }); return; }
+
+		marketplaceStore.update(l.id, { status: 'cancelled', closedAt: Date.now() });
+		if (l.type === 'gold') {
+			this._deliverItemsTo(p, priv, l.item, l.qty);
+			client.send('notice', { kind: 'market', text: `Cancelled — ${l.qty}× ${itemLabel(l.item)} returned.` });
+		} else {
+			p.gold = Math.min(MARKET_GOLD_MAX, p.gold + l.goldAmount);
+			client.send('notice', { kind: 'market', text: `Cancelled — ${l.goldAmount} gold returned.` });
+		}
+		p.tsServer = Date.now();
+		this._persistPlayer(client.sessionId);
+		this._broadcastMarketDirty();
+		this._sendMarket(client);
+	}
+
+	// Buy a gold listing with in-game gold: debit the buyer, deliver the escrowed
+	// item, and credit the seller the full price (no fee). Synchronous, so the
+	// check-and-claim is atomic — two buyers can't both win the same listing.
+	_handleMarketBuyGold(client, payload) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv) return;
+		if (!this._rateOk(client.sessionId, 'mkt')) return;
+		const l = marketplaceStore.get(String(payload?.id ?? ''));
+		if (!l || l.type !== 'gold') { client.send('notice', { kind: 'market', text: 'Listing not found.' }); return; }
+		if (l.status !== 'active') { client.send('notice', { kind: 'market', text: 'That listing was just taken.' }); return; }
+		if (l.seller === priv.playerId) { client.send('notice', { kind: 'market', text: "You can't buy your own listing." }); return; }
+		if (p.gold < l.priceGold) {
+			client.send('notice', { kind: 'market', text: `Need ${l.priceGold - p.gold} more gold.` });
+			return;
+		}
+		// Claim the listing before mutating balances so a duplicate buy that slips in
+		// finds it already sold.
+		marketplaceStore.update(l.id, { status: 'sold', buyer: priv.playerId, buyerName: p.name, closedAt: Date.now() });
+		p.gold -= l.priceGold;
+		this._deliverItemsTo(p, priv, l.item, l.qty);
+		// Pay the seller their gold wherever they are (or queue it durably if offline).
+		this._payGoldTo(l.seller, l.priceGold, `Sold ${l.qty}× ${itemLabel(l.item)}`);
+		p.tsServer = Date.now();
+		this._persistPlayer(client.sessionId);
+		client.send('notice', { kind: 'market', text: `Bought ${l.qty}× ${itemLabel(l.item)} for ${l.priceGold} gold.` });
+		this._broadcastMarketDirty();
+		this._sendMarket(client);
+	}
+
+	// Step 1 of an on-chain token purchase: quote the live $THREE amount for the
+	// listing's USD price, build the unsigned split transaction (95% seller wallet
+	// / 5% treasury) the buyer signs, and hand back a signed quote that binds the
+	// amounts + recipients so the client can't tamper before settling.
+	async _handleMarketTokenQuote(client, payload) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv) return;
+		if (!this._rateOk(client.sessionId, 'mkt')) return;
+		if (!tokenConfigured()) { client.send('notice', { kind: 'market', text: 'Token payments are unavailable.' }); return; }
+		const buyerWallet = priv.playerId;
+		if (!isWalletAddress(buyerWallet)) {
+			client.send('notice', { kind: 'market', text: 'Connect a Solana wallet to pay with tokens.' });
+			return;
+		}
+		const l = marketplaceStore.get(String(payload?.id ?? ''));
+		if (!l || l.type !== 'goldForToken' || l.status !== 'active') {
+			client.send('notice', { kind: 'market', text: 'That listing is no longer available.' });
+			return;
+		}
+		if (l.seller === buyerWallet) { client.send('notice', { kind: 'market', text: "You can't buy your own listing." }); return; }
+
+		const quote = await quoteTokenForUsd(l.priceUsd);
+		if (!quote) { client.send('notice', { kind: 'market', text: 'Live price unavailable — try again in a moment.' }); return; }
+		// Re-check the listing survived the awaited quote (it could have been bought
+		// or cancelled while we fetched the price).
+		const still = marketplaceStore.get(l.id);
+		if (!still || still.status !== 'active') { client.send('notice', { kind: 'market', text: 'That listing is no longer available.' }); return; }
+
+		const { seller: sellerRaw, treasury: treasuryRaw } = splitAmount(quote.raw, MARKET_TREASURY_BPS);
+		let txB64;
+		try {
+			txB64 = await buildSplitTransaction({
+				buyerWallet, sellerWallet: l.sellerWallet,
+				sellerRaw: sellerRaw.toString(), treasuryRaw: treasuryRaw.toString(),
+			});
+		} catch (err) {
+			console.warn('[market] build split tx failed:', err?.message);
+			client.send('notice', { kind: 'market', text: 'Could not prepare the payment. Try again.' });
+			return;
+		}
+		const signed = signQuote({
+			listingId: l.id, buyer: buyerWallet, sellerWallet: l.sellerWallet,
+			usd: l.priceUsd, total: quote.raw.toString(), sellerRaw: sellerRaw.toString(), treasuryRaw: treasuryRaw.toString(),
+		});
+		client.send('marketQuote', {
+			id: l.id,
+			tx: txB64,
+			quote: signed,
+			symbol: TOKEN_SYMBOL,
+			decimals: TOKEN_DECIMALS,
+			tokenAmount: quote.raw.toString(),
+			sellerAmount: sellerRaw.toString(),
+			treasuryAmount: treasuryRaw.toString(),
+			priceUsd: l.priceUsd,
+			goldAmount: l.goldAmount,
+			ttlMs: 90_000,
+		});
+	}
+
+	// Step 2: the buyer has broadcast the signed transaction. Verify it on-chain
+	// (both legs landed at the right destinations for the quoted amounts), then
+	// release the escrowed gold to the buyer. The seller was paid directly in the
+	// transaction. Goods are NEVER released before the payment verifies.
+	async _handleMarketTokenSettle(client, payload) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv) return;
+		if (!this._rateOk(client.sessionId, 'mkt')) return;
+		const q = verifyQuote(payload?.quote);
+		if (!q) { client.send('notice', { kind: 'market', text: 'Your quote expired — get a fresh one.' }); return; }
+		if (q.buyer !== priv.playerId) { client.send('notice', { kind: 'market', text: 'That quote was issued to a different wallet.' }); return; }
+		const txSig = typeof payload?.txSig === 'string' ? payload.txSig.trim() : '';
+		if (!txSig) { client.send('notice', { kind: 'market', text: 'Missing transaction signature.' }); return; }
+		if (marketplaceStore.isSettled(txSig)) { client.send('notice', { kind: 'market', text: 'That payment was already settled.' }); return; }
+
+		const l = marketplaceStore.get(q.listingId);
+		if (!l || l.type !== 'goldForToken' || l.sellerWallet !== q.sellerWallet) {
+			client.send('notice', { kind: 'market', text: 'That listing is no longer available.' });
+			return;
+		}
+		if (l.status !== 'active') { client.send('notice', { kind: 'market', text: 'That listing is no longer available.' }); return; }
+		// Claim it synchronously before the async verify so a second settle can't
+		// double-release the same gold. Reverted to active if verification fails.
+		marketplaceStore.update(l.id, { status: 'settling' });
+
+		const verify = await verifySplitPayment({
+			txSig, sellerWallet: q.sellerWallet, sellerRaw: q.sellerRaw, treasuryRaw: q.treasuryRaw,
+		});
+		const current = marketplaceStore.get(l.id);
+		if (!current || current.status !== 'settling') {
+			// Cancelled/evicted out from under us mid-verify — don't release.
+			client.send('notice', { kind: 'market', text: 'That listing is no longer available.' });
+			return;
+		}
+		if (!verify.ok) {
+			marketplaceStore.update(l.id, { status: 'active' });
+			const why = verify.reason === 'not_found' ? 'Payment not found on-chain yet — wait for confirmation and retry.'
+				: verify.reason?.includes('underpaid') ? 'The payment amount did not match the quote.'
+				: 'Could not verify the payment. No gold was released.';
+			client.send('notice', { kind: 'market', text: why });
+			return;
+		}
+		// Verified. Consume the signature, close the listing, deliver the gold.
+		marketplaceStore.markSettled(txSig);
+		marketplaceStore.update(l.id, { status: 'sold', buyer: priv.playerId, buyerName: p.name, txSig, closedAt: Date.now() });
+		p.gold = Math.min(MARKET_GOLD_MAX, p.gold + l.goldAmount);
+		p.tsServer = Date.now();
+		this._persistPlayer(client.sessionId);
+		client.send('marketSettled', { id: l.id, goldAmount: l.goldAmount, txSig });
+		client.send('notice', { kind: 'market', text: `Paid — received ${l.goldAmount} gold.` });
+		this._broadcastMarketDirty();
+		this._sendMarket(client);
+	}
+
+	// ----- Wheel of Fortune (Task 19) --------------------------------------
+	//
+	// A 20-segment prize wheel by the Mainland casino. One free spin per account
+	// every 12h, plus unlimited paid spins ($3 in $THREE, 50% burned / 50% to
+	// treasury, settled on-chain). The SERVER rolls every outcome (spin-wheel.js);
+	// the client only animates to the chosen segment. Spinning needs an average
+	// skill level of SPIN_MIN_AVG_LEVEL and standing at the wheel.
+
+	// True when the player stands on a tile adjacent (8-way) to the realm's wheel
+	// landmark — the same "be at the counter" rule banking uses, so a client can't
+	// spin from across the map.
+	_atWheel(p) {
+		const w = wheelLandmark(this.realm);
+		return !!w && Math.abs(p.tx - w.tx) <= 1 && Math.abs(p.ty - w.ty) <= 1;
+	}
+
+	// Full spin gate (free + paid prep): the realm has a wheel, the player is at
+	// it, and their average level qualifies. Returns a reason code, or null when
+	// allowed. The level gate can never regress (levels only climb), so settle
+	// re-checks level only — a player who paid then got nudged off the tile still
+	// gets their spin.
+	_spinBlockReason(p) {
+		if (!wheelLandmark(this.realm)) return 'no_wheel';
+		if (!this._atWheel(p)) return 'not_at_wheel';
+		if (this._averageLevel(p) < SPIN_MIN_AVG_LEVEL) return 'level';
+		return null;
+	}
+
+	// Tell the client exactly why a spin was refused, always with the fields its
+	// designed states need (current/required level, free-spin countdown).
+	_sendSpinDenied(client, p, priv, mode, reason) {
+		client.send('spinDenied', {
+			mode,
+			reason,
+			avgLevel: Math.round(this._averageLevel(p) * 10) / 10,
+			minLevel: SPIN_MIN_AVG_LEVEL,
+			nextFreeSpinAt: priv.spin.nextFreeSpinAt | 0,
+			now: Date.now(),
+		});
+	}
+
+	// Snapshot for the spinner UI: the authoritative segment table (with honest
+	// odds), the player's standing against the level gate, the free-spin countdown,
+	// and whether a paid spin is available (token configured + wallet connected).
+	_sendSpinInfo(client) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv) return;
+		if (!this._rateOk(client.sessionId, 'spin')) return;
+		const avg = this._averageLevel(p);
+		client.send('spinInfo', {
+			segments: spinSegments(),
+			avgLevel: Math.round(avg * 10) / 10,
+			minLevel: SPIN_MIN_AVG_LEVEL,
+			eligible: avg >= SPIN_MIN_AVG_LEVEL,
+			atWheel: this._atWheel(p),
+			nextFreeSpinAt: priv.spin.nextFreeSpinAt | 0,
+			now: Date.now(),
+			costUsd: PAID_SPIN_USD,
+			symbol: TOKEN_SYMBOL,
+			paidAvailable: tokenConfigured() && isWalletAddress(priv.playerId),
+		});
+	}
+
+	// Roll one prize and grant it. Gold lands in the purse; items go to the
+	// backpack and any overflow spills into a ground bag at the player's feet (the
+	// same vessel mob loot uses), so a prize is never silently lost on a full pack.
+	// Returns the server-decided segment + what actually landed for the client.
+	_rollAndAward(client, p) {
+		const roll = rollSpin();
+		let awardedGold = 0, awardedQty = 0, overflow = 0;
+		if (roll.kind === 'gold') {
+			const before = p.gold;
+			p.gold = Math.min(0xffffffff, p.gold + roll.gold);
+			awardedGold = p.gold - before;
+		} else {
+			const left = this._addItem(p, roll.item, roll.qty);
+			awardedQty = roll.qty - left;
+			if (left > 0) { this._spawnLootBag(p, p.tx, p.ty, [new Slot(roll.item, left)]); overflow = left; }
+		}
+		p.tsServer = Date.now();
+		const tail = overflow > 0 ? ` — ${overflow} waited in a bag at your feet (pack full)` : '';
+		client.send('notice', { kind: 'spin', text: `The wheel landed on ${roll.label}!${tail}` });
+		return {
+			index: roll.index, kind: roll.kind, item: roll.item, qty: roll.qty, gold: roll.gold,
+			label: roll.label, awardedGold, awardedQty, overflow,
+		};
+	}
+
+	// Free spin: gated by level + wheel proximity + the persisted 12h cooldown.
+	// The timer is consumed before the roll so the spin can't be repeated, and the
+	// new nextFreeSpinAt is persisted + returned for the client's live countdown.
+	_handleSpinFree(client) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv) return;
+		if (!this._rateOk(client.sessionId, 'spin')) return;
+		const reason = this._spinBlockReason(p);
+		if (reason) { this._sendSpinDenied(client, p, priv, 'free', reason); return; }
+		const now = Date.now();
+		if (now < (priv.spin.nextFreeSpinAt | 0)) {
+			this._sendSpinDenied(client, p, priv, 'free', 'cooldown');
+			return;
+		}
+		priv.spin.nextFreeSpinAt = now + FREE_SPIN_COOLDOWN_MS;
+		const result = this._rollAndAward(client, p);
+		this._persistPlayer(client.sessionId);
+		client.send('spinResult', { mode: 'free', ...result, nextFreeSpinAt: priv.spin.nextFreeSpinAt, now: Date.now() });
+	}
+
+	// Paid spin, step 1: price $3 in $THREE, build the 50/50 burn/treasury split
+	// transaction the wallet signs, and hand back a signed quote binding the
+	// amounts + destinations. No prize is rolled here — only after the payment
+	// verifies at settle. Gated identically to a free spin so an ineligible player
+	// can't even start paying.
+	async _handleSpinPaidPrep(client) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv) return;
+		if (!this._rateOk(client.sessionId, 'spin')) return;
+		const reason = this._spinBlockReason(p);
+		if (reason) { this._sendSpinDenied(client, p, priv, 'paid', reason); return; }
+		if (!tokenConfigured()) { client.send('spinDenied', { mode: 'paid', reason: 'token_unavailable' }); return; }
+		const buyerWallet = priv.playerId;
+		if (!isWalletAddress(buyerWallet)) { client.send('spinDenied', { mode: 'paid', reason: 'no_wallet' }); return; }
+		let prep;
+		try {
+			prep = await buildSpinPayment({ buyerWallet, usd: PAID_SPIN_USD });
+		} catch (err) {
+			console.warn('[spin] build payment failed:', err?.message);
+			client.send('spinDenied', { mode: 'paid', reason: 'build_failed' });
+			return;
+		}
+		if (!prep) { client.send('spinDenied', { mode: 'paid', reason: 'price_unavailable' }); return; }
+		client.send('spinPrep', {
+			tx: prep.txBase64,
+			quote: prep.quoteToken,
+			symbol: TOKEN_SYMBOL,
+			decimals: TOKEN_DECIMALS,
+			costUsd: PAID_SPIN_USD,
+			tokenAmount: prep.quote.total,
+			tokens: prep.quote.tokens,
+			priceUsd: prep.quote.priceUsd,
+			burnAmount: prep.quote.burnRaw,
+			treasuryAmount: prep.quote.treasuryRaw,
+			ttlMs: (prep.quote.ttlSeconds || 90) * 1000,
+		});
+	}
+
+	// Paid spin, step 2: the wallet broadcast the signed transaction. Verify it
+	// on-chain (both the burn and treasury legs landed, memo matches the quote),
+	// reject replays, THEN roll + award. The free-spin timer is never touched.
+	async _handleSpinPaidSettle(client, payload) {
+		const p = this.state.players.get(client.sessionId);
+		const priv = this.priv.get(client.sessionId);
+		if (!p || !priv) return;
+		if (!this._rateOk(client.sessionId, 'spin')) return;
+		// Level can't regress mid-flow, so re-checking it (not wheel proximity) at
+		// settle keeps a paid spin valid even if the player drifted off the tile
+		// while approving in their wallet — they already committed real funds.
+		if (this._averageLevel(p) < SPIN_MIN_AVG_LEVEL) { this._sendSpinDenied(client, p, priv, 'paid', 'level'); return; }
+		const buyerWallet = priv.playerId;
+		const txSig = typeof payload?.txSig === 'string' ? payload.txSig.trim() : '';
+		if (!txSig) { client.send('spinDenied', { mode: 'paid', reason: 'no_signature' }); return; }
+		if (isSpinSettled(txSig)) { client.send('spinDenied', { mode: 'paid', reason: 'already_settled' }); return; }
+
+		const verify = await verifySpinPayment({ quoteToken: payload?.quote, txSig, buyerWallet });
+		if (!verify.ok) {
+			const why = verify.reason === 'not_found' ? 'not_found'
+				: verify.reason?.includes('underpaid') ? 'underpaid'
+				: verify.reason === 'bad_quote' ? 'quote_expired'
+				: 'verify_failed';
+			client.send('spinDenied', { mode: 'paid', reason: why });
+			return;
+		}
+		// Consume the signature BEFORE awarding so a concurrent/duplicate settle of
+		// the same payment can never roll a second prize.
+		markSpinSettled(txSig);
+		const result = this._rollAndAward(client, p);
+		this._persistPlayer(client.sessionId);
+		client.send('spinResult', { mode: 'paid', ...result, txSig, nextFreeSpinAt: priv.spin.nextFreeSpinAt | 0, now: Date.now() });
+	}
+
+	// Credit a seller their gold proceeds. If they're online (in this room or any
+	// other), the durable payout we enqueue is drained immediately via a presence
+	// nudge; if they're offline it waits in the queue until their next login. Either
+	// way the queue is the single source of truth, so delivery is exactly-once.
+	_payGoldTo(sellerId, gold, reason) {
+		marketplaceStore.enqueuePayout(sellerId, { gold, reason });
+		try { this.presence.publish(payoutChannel(sellerId), { ts: Date.now() }); } catch {}
+		// Fast path: if the seller is in THIS room, draining now avoids a round-trip
+		// through pub/sub (and covers presence backends that don't echo to the
+		// publishing process).
+		for (const [sid, pr] of this.priv) {
+			if (pr.playerId === sellerId) { this._drainMarketPayouts(sid); break; }
+		}
+	}
+
+	// Deliver all queued marketplace proceeds for a session's account: gold into the
+	// purse, items into the backpack (overflow to the bank, then re-queued if even
+	// the bank is full so nothing is ever lost). Atomic drain — whether triggered by
+	// a login or a live nudge, each payout is applied exactly once.
+	_drainMarketPayouts(sessionId) {
+		const p = this.state.players.get(sessionId);
+		const priv = this.priv.get(sessionId);
+		if (!p || !priv) return;
+		const payouts = marketplaceStore.drainPayouts(priv.playerId);
+		if (!payouts.length) return;
+		let goldGained = 0;
+		const itemsGained = [];
+		for (const po of payouts) {
+			if (po.gold) {
+				const before = p.gold;
+				p.gold = Math.min(MARKET_GOLD_MAX, p.gold + (po.gold | 0));
+				goldGained += p.gold - before;
+			}
+			if (Array.isArray(po.items)) {
+				for (const it of po.items) {
+					if (it && it.item && it.qty > 0) {
+						// Use the no-nudge delivery so a bank-full re-queue doesn't loop.
+						const left = this._stowItem(p, priv, it.item, it.qty);
+						const placed = it.qty - left;
+						if (placed > 0) itemsGained.push({ item: it.item, qty: placed });
+						if (left > 0) marketplaceStore.enqueuePayout(priv.playerId, { items: [{ item: it.item, qty: left }], reason: 'overflow' });
+					}
+				}
+			}
+		}
+		p.tsServer = Date.now();
+		this._persistPlayer(sessionId);
+		const c = this._clientFor(sessionId);
+		if (c && (goldGained > 0 || itemsGained.length)) {
+			c.send('marketPayout', { gold: goldGained, items: itemsGained });
+		}
+	}
+
+	// Tell every client in this room their open market panel is stale so it
+	// refetches. Cross-room/realm panels refresh on their own open + poll; this just
+	// keeps same-room browsers live as listings appear and sell.
+	_broadcastMarketDirty() {
+		this.broadcast('marketDirty', {});
+	}
+
+	// ----- marketplace item helpers ----------------------------------------
+
+	// Total quantity of `item` the player holds in their backpack (not hotbar).
+	_countInvItem(p, item) {
+		let n = 0;
+		for (const s of p.inv) if (s.item === item) n += s.qty;
+		return n;
+	}
+
+	// Remove up to `qty` of `item` from the backpack, emptying slots as they drain.
+	// Returns the quantity actually removed (< qty if the player didn't have enough).
+	_removeInvItem(p, item, qty) {
+		let need = qty;
+		for (const s of p.inv) {
+			if (need <= 0) break;
+			if (s.item !== item) continue;
+			const take = Math.min(s.qty, need);
+			s.qty -= take;
+			need -= take;
+			if (s.qty <= 0) { s.item = ''; s.qty = 0; }
+		}
+		return qty - need;
+	}
+
+	// Place items into the backpack, overflowing to the bank, returning whatever
+	// still didn't fit. No side effects beyond inventory/bank — used by the payout
+	// drainer where re-queueing (not a nudge) handles a true overflow.
+	_stowItem(p, priv, item, qty) {
+		let left = this._addItem(p, item, qty);
+		if (left > 0 && priv?.bank) left = this._bankAdd(priv.bank, item, left);
+		return left;
+	}
+
+	// Deliver listing escrow back to a player on cancel / to a buyer on a gold sale:
+	// backpack first, then bank, then a durable payout so a full inventory never
+	// destroys the goods.
+	_deliverItemsTo(p, priv, item, qty) {
+		const left = this._stowItem(p, priv, item, qty);
+		if (left > 0) {
+			marketplaceStore.enqueuePayout(priv.playerId, { items: [{ item, qty: left }], reason: 'overflow' });
+			const c = this._clientFor(p.id);
+			if (c) c.send('notice', { kind: 'market', text: `${left}× ${itemLabel(item)} saved — your bags are full; claim it when you have room.` });
+		}
 	}
 
 	// ----- inventory / hotbar ----------------------------------------------
@@ -1405,6 +2715,22 @@ export class GameRoom extends Room {
 		return sum;
 	}
 
+	// Authoritative combat level — the input every combat-level gate reads (Task 11).
+	// Combat is its own trainable skill here, so the combat level IS that level; the
+	// helper keeps the gate logic from reaching into the schema field directly, so a
+	// future composite combat formula can change in exactly one place.
+	_combatLevel(p) {
+		return p.combat;
+	}
+
+	// Does the player clear a portal's gate? Today the only gate kind is a combat
+	// floor; an unknown/empty gate never blocks (fail-open on shape, never on level).
+	_meetsGate(p, gate) {
+		if (!gate) return true;
+		if (Number.isFinite(gate.combat) && this._combatLevel(p) < gate.combat) return false;
+		return true;
+	}
+
 	_adjacent(p, obj) {
 		return Math.abs(p.tx - obj.tx) <= 1 && Math.abs(p.ty - obj.ty) <= 1;
 	}
@@ -1428,6 +2754,17 @@ export class GameRoom extends Room {
 	_tick() {
 		const now = Date.now();
 
+		// Periodic profile autosave (Task 16/23). Most saves ride real events
+		// (quest progress, gold/cosmetic changes, portal/leave), but a player who
+		// only fishes or cooks could go a while without one — so flush every live
+		// session about every 20s. Cheap (a few small objects into the store) and it
+		// bounds how much progress a hard crash could cost. The leave/eviction paths
+		// still save synchronously for the common case.
+		if (++this._saveTick >= 80) {
+			this._saveTick = 0;
+			for (const sid of this.priv.keys()) this._persistPlayer(sid);
+		}
+
 		// Resource + mob respawns.
 		for (const [, n] of this.state.nodes) {
 			if (n.depleted && now >= n.respawnAt) {
@@ -1448,7 +2785,16 @@ export class GameRoom extends Room {
 			if (now >= t.expiresAt) this.state.tombstones.delete(id);
 		}
 
-		// Player healing + respawn — both keyed to THIS realm's spawn/fountain.
+		// Player-built structures (Task 07): decay first, so a firepit never heals on
+		// the same tick it burns out, then collect the live firepits for the heal pass.
+		const firepits = [];
+		for (const [id, s] of this.state.structures) {
+			if (s.expiresAt && now >= s.expiresAt) { this.state.structures.delete(id); continue; }
+			if (s.kind === 'firepit') firepits.push(s);
+		}
+
+		// Player healing + respawn — keyed to THIS realm's spawn/fountain, plus any
+		// player-built firepit a player is standing beside.
 		const fountain = this.realm.fountain;
 		for (const [, p] of this.state.players) {
 			if (p.dead) {
@@ -1465,8 +2811,42 @@ export class GameRoom extends Room {
 			if (p.hp < p.maxHp) {
 				const nearFountain =
 					!!fountain && Math.abs(p.tx - fountain.tx) <= 3 && Math.abs(p.ty - fountain.ty) <= 3;
-				p.hp = Math.min(p.maxHp, p.hp + (nearFountain ? FOUNTAIN_HEAL_PER_TICK : REGEN_PER_TICK));
+				// A firepit heals players directly adjacent to it (8-way), at the
+				// fountain's rate — a portable campfire heal.
+				const nearFire = firepits.some((s) => Math.abs(p.tx - s.tx) <= 1 && Math.abs(p.ty - s.ty) <= 1);
+				p.hp = Math.min(p.maxHp, p.hp + (nearFountain || nearFire ? FOUNTAIN_HEAL_PER_TICK : REGEN_PER_TICK));
 			}
+		}
+
+		// Moving floor (Arena rollers): on its own slower cadence, shove every living
+		// player who is standing on a roller one tile in the strip's direction. The
+		// push is server-authoritative and respects walkability — it never moves a
+		// player through a wall, onto a node/mob, off the map, or onto a portal tile
+		// (rollers carry you around the floor; they never trigger a realm transfer).
+		if (this.realm.rollers && now - (this._rollerAt || 0) >= ROLLER_PUSH_MS) {
+			this._rollerAt = now;
+			this._rollPlayers(now);
+		}
+	}
+
+	// One roller push pass. Each player's destination is resolved against THIS
+	// tick's occupancy, so two players can't be shoved onto the same tile in a way
+	// that desyncs from walkability — the second simply isn't moved this push.
+	_rollPlayers(now) {
+		for (const [sid, p] of this.state.players) {
+			if (p.dead) continue;
+			if (this.priv.get(sid)?.transferring) continue;
+			const roller = rollerAt(this.realm, p.tx, p.ty);
+			if (!roller) continue;
+			const [dx, dy] = rollerDelta(roller.dir);
+			if (!dx && !dy) continue;
+			const nx = p.tx + dx, ny = p.ty + dy;
+			if (!this._isWalkable(nx, ny)) continue; // pushed against a wall/occupant — hold position
+			if (portalAt(this.realm, nx, ny)) continue; // never roll a player through a portal
+			p.tx = nx;
+			p.ty = ny;
+			p.motion = 'walk';
+			p.tsServer = now;
 		}
 	}
 }

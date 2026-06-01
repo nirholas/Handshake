@@ -12,6 +12,21 @@ import { Player, Block, WalkState } from '../schemas.js';
 import { cleanAvatarUrl } from '../avatar-url.js';
 import { blockStore } from '../block-store.js';
 import { verifyHolderPass } from '../holder-pass.js';
+import { socialHub } from '../social-hub.js';
+import { verifyPresenceTicket } from '../presence-token.js';
+import { verifyPlayPass } from '../play-pass.js';
+
+// Platform entry gate (wallet-first sign-in + game-token balance). When a game
+// token is pinned (PLAY_GATE_MINT, falling back to THREE_MINT) every join must
+// carry a valid play pass — minted by api/play/verify after proving wallet
+// ownership and a balance ≥ PLAY_GATE_MIN of that token. An unset mint leaves
+// walk_world open exactly as before, so /walk and un-pinned deploys are
+// unaffected. Read at boot: gate config doesn't change without a redeploy.
+const PLAY_GATE_MINT = (process.env.PLAY_GATE_MINT || process.env.THREE_MINT || '').trim();
+const PLAY_GATE_MIN = (() => {
+	const n = Number(process.env.PLAY_GATE_MIN);
+	return Number.isFinite(n) && n > 0 ? n : 1;
+})();
 
 const MAX_CLIENTS_PER_ROOM = 50;
 const PATCH_RATE_HZ = 15;
@@ -121,6 +136,22 @@ export class WalkRoom extends Room {
 	// and reject otherwise. Returning false makes Colyseus answer the
 	// matchmake/seat request with a 401 the client surfaces as the locked gate.
 	static onAuth(client, options) {
+		// Platform token gate (orthogonal to the per-coin holder tier below). When a
+		// game token is pinned, no client reaches any world — General or Holders —
+		// without a play pass proving a signed-in wallet holds ≥ the floor. Throw
+		// (not return false) so a refusal arrives as a `play_pass`-prefixed error the
+		// client routes back to its sign-in gate. The verified wallet is bound to the
+		// session as the account id, never taken from an unsigned join option.
+		if (PLAY_GATE_MINT) {
+			const pass = verifyPlayPass(options?.playPass);
+			if (!pass) throw new Error('play_pass_required');
+			if (pass.mint !== PLAY_GATE_MINT) throw new Error('play_pass_mismatch');
+			if (!(typeof pass.balance === 'number' && pass.balance >= PLAY_GATE_MIN)) {
+				throw new Error('play_pass_required');
+			}
+			client.userData = { ...(client.userData || {}), account: pass.wallet, playBalance: pass.balance, playExp: pass.exp };
+		}
+
 		const tier = cleanTier(options?.tier);
 		if (tier !== 'holders') return true; // open General world
 
@@ -142,7 +173,7 @@ export class WalkRoom extends Room {
 		// Carry the verified holding + signed floor through to onJoin/onCreate so
 		// in-world affordances and the displayed requirement come from the pass,
 		// never from unsigned client options.
-		client.userData = { holderUsd: pass.usd, holderWallet: pass.wallet, holderMinUsd: pass.minUsd };
+		client.userData = { ...(client.userData || {}), holderUsd: pass.usd, holderWallet: pass.wallet, holderMinUsd: pass.minUsd };
 		return true;
 	}
 
@@ -218,6 +249,26 @@ export class WalkRoom extends Room {
 		// is settled by now.
 		await blockStore.ready();
 		this.state.persistent = blockStore.durable;
+
+		// Re-check policy for the token gate. The game server has no RPC of its own,
+		// so "still holding the token" is re-proven by the client minting a fresh
+		// play pass (which re-reads the chain) before the current one's 10-min TTL
+		// runs out and reconnecting — onAuth then re-validates. To actively evict a
+		// wallet that offloaded below the floor mid-session, we sweep once a minute
+		// and disconnect any client whose bound pass has expired without a refresh.
+		// The client refreshes ahead of expiry, so a holder never sees this; only a
+		// wallet that stopped qualifying (or a forged-then-expired pass) gets dropped.
+		if (PLAY_GATE_MINT) {
+			this.clock.setInterval(() => {
+				const nowS = Date.now() / 1000;
+				for (const client of this.clients) {
+					const exp = client.userData?.playExp;
+					if (typeof exp === 'number' && exp < nowS) {
+						try { client.leave(4002, 'play_pass_required'); } catch {}
+					}
+				}
+			}, 60_000);
+		}
 	}
 
 	onJoin(client, options) {
@@ -233,8 +284,23 @@ export class WalkRoom extends Room {
 		player.motion = 'idle';
 		player.avatar = cleanAvatarUrl(options?.avatar);
 		player.agent = clean(options?.agent, 64);
+		// The account id is the wallet verified in onAuth — bound server-side, never
+		// from a client option, so it's a trustworthy persistence + social-graph key.
+		player.account = clean(client.userData?.account, 64);
 		player.tsServer = Date.now();
 		this.state.players.set(client.sessionId, player);
+
+		// Friends presence (Task 15): a presence ticket signed by the three.ws API
+		// proves which account this socket belongs to, independent of the wallet
+		// holder gate. Register it so friends see this player as online in this
+		// coin world and can DM them live. Spoof-proof — the account id comes from
+		// the verified ticket, never a raw client option.
+		const accountUid = verifyPresenceTicket(options?.presence);
+		if (accountUid) {
+			client.userData = { ...(client.userData || {}), accountUid };
+			socialHub.register(accountUid, client, this.state.coinName || 'Mainland');
+		}
+
 		const tierTag = this.state.tier === 'holders' ? ' tier=holders' : '';
 		console.log(
 			`[walk_world ${this.roomId} coin=${this.state.coin || 'mainland'}${tierTag}] +join ${client.sessionId} ${name} (n=${this.state.players.size})`,
@@ -242,6 +308,7 @@ export class WalkRoom extends Room {
 	}
 
 	onLeave(client) {
+		if (client.userData?.accountUid) socialHub.unregister(client.userData.accountUid, client);
 		this.state.players.delete(client.sessionId);
 		this._moveCounters.delete(client.sessionId);
 		this._chatCooldowns.delete(client.sessionId);

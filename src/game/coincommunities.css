@@ -1400,3 +1400,113 @@ html, body {
         justify-content: center;
     }
 }
+
+/* ---------------- play gate (wallet sign-in) ----------------
+   Stands in front of /play when the platform token gate is on. Monochrome,
+   sharp, white-on-black CTAs — same language as the lobby. Sits above the boot
+   loader (z 80) and every HUD layer. */
+.pg-root {
+	position: fixed; inset: 0; z-index: 200;
+	display: grid; place-items: center; padding: 24px;
+	animation: pg-fade 0.28s ease both;
+}
+.pg-root.pg-leaving { animation: pg-fade 0.3s ease reverse forwards; pointer-events: none; }
+.pg-backdrop {
+	position: absolute; inset: 0;
+	background: radial-gradient(circle at 50% 36%, #161618, #050505 74%);
+	backdrop-filter: saturate(130%) blur(6px);
+}
+.pg-card {
+	position: relative; z-index: 1;
+	width: min(420px, 100%); padding: 34px 30px 28px;
+	display: flex; flex-direction: column; align-items: center; text-align: center;
+	background: var(--cc-panel-solid);
+	border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow);
+	animation: pg-rise 0.42s cubic-bezier(0.16, 0.84, 0.34, 1) both;
+}
+.pg-brand {
+	display: flex; align-items: center; gap: 9px; margin-bottom: 22px;
+	color: var(--cc-dim);
+}
+.pg-brand img { filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.25)); }
+.pg-brand span { font-weight: 800; font-size: 11px; letter-spacing: 0.26em; }
+.pg-icon {
+	width: 56px; height: 56px; margin-bottom: 16px;
+	display: grid; place-items: center;
+	border: 1px solid var(--cc-edge); border-radius: 50%;
+	color: var(--cc-text);
+}
+.pg-icon svg { width: 26px; height: 26px; }
+.pg-title { margin: 0 0 8px; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; color: var(--cc-text); }
+.pg-sub { margin: 0 0 22px; font-size: 13.5px; line-height: 1.55; color: var(--cc-dim); max-width: 34ch; }
+.pg-sub strong { color: var(--cc-text); font-weight: 600; }
+.pg-error {
+	margin: -8px 0 18px; padding: 9px 12px; width: 100%;
+	font-size: 12.5px; line-height: 1.45; color: var(--cc-text);
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
+}
+.pg-fine { margin: 12px 0 0; font-size: 11px; letter-spacing: 0.04em; color: var(--cc-faint); }
+
+/* buttons */
+.pg-btn {
+	-webkit-appearance: none; appearance: none; cursor: pointer;
+	width: 100%; margin-top: 10px; padding: 13px 18px;
+	font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.03em;
+	border-radius: var(--cc-radius-sm); border: 1px solid var(--cc-edge);
+	background: transparent; color: var(--cc-text);
+	text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+	transition: transform 0.12s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.pg-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.04); }
+.pg-btn:active { transform: translateY(1px); }
+.pg-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--cc-bg), 0 0 0 4px var(--cc-edge-hi); }
+.pg-btn-primary {
+	background: var(--cc-accent); color: var(--cc-ink); border-color: var(--cc-accent);
+}
+.pg-btn-primary:hover { background: #fff; box-shadow: var(--cc-glow); }
+.pg-btn-ghost { color: var(--cc-dim); }
+.pg-btn-ghost:hover { color: var(--cc-text); }
+
+/* balance comparison (too-low state) */
+.pg-balance {
+	display: flex; align-items: center; justify-content: center; gap: 14px;
+	width: 100%; margin: 2px 0 18px; padding: 14px;
+	border: 1px solid var(--cc-edge-soft); border-radius: var(--cc-radius-sm);
+	background: rgba(255, 255, 255, 0.02);
+}
+.pg-balance > div { display: flex; flex-direction: column; gap: 3px; }
+.pg-balance-k { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cc-faint); }
+.pg-balance-v { font-size: 18px; font-weight: 700; color: var(--cc-text); font-variant-numeric: tabular-nums; }
+.pg-balance-need { color: var(--cc-text); }
+.pg-balance-sep { color: var(--cc-faint); font-size: 16px; }
+
+/* spinner + success check */
+.pg-spinner {
+	width: 38px; height: 38px; margin-bottom: 18px; border-radius: 50%;
+	border: 2px solid var(--cc-edge); border-top-color: var(--cc-accent);
+	animation: pg-spin 0.8s linear infinite;
+}
+.pg-check {
+	width: 56px; height: 56px; margin-bottom: 16px; border-radius: 50%;
+	display: grid; place-items: center; font-size: 26px; font-weight: 700;
+	color: var(--cc-ink); background: var(--cc-accent); box-shadow: var(--cc-glow);
+	animation: pg-pop 0.4s cubic-bezier(0.16, 0.84, 0.34, 1) both;
+}
+
+@keyframes pg-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pg-rise { from { opacity: 0; transform: translateY(12px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes pg-spin { to { transform: rotate(360deg); } }
+@keyframes pg-pop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+	.pg-root, .pg-card, .pg-check { animation: none; }
+	.pg-spinner { animation-duration: 1.4s; }
+}
+
+@media (max-width: 480px) {
+	.pg-card { padding: 28px 20px 24px; }
+	.pg-title { font-size: 19px; }
+}

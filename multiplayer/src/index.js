@@ -15,13 +15,20 @@
 
 import http from 'node:http';
 import express from 'express';
-import { Server } from '@colyseus/core';
+import { Server, matchMaker } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { monitor } from '@colyseus/monitor';
 
 import { WalkRoom } from './rooms/WalkRoom.js';
 import { GameRoom } from './rooms/GameRoom.js';
+import { REALMS } from './rooms/realms.js';
 import { blockStore } from './block-store.js';
+import { flushAllPlayers } from './playerStore.js';
+import { marketplaceStore } from './marketplaceStore.js';
+import { SERVERS } from './servers.js';
+import { PRESENCE_HASH } from './presence-keys.js';
+import { socialHub } from './social-hub.js';
+import { verifyNotifySignature } from './presence-token.js';
 
 const PORT = Number(process.env.PORT || 2567);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -47,11 +54,41 @@ if (process.env.NODE_ENV === 'production' && !process.env.HOLDER_PASS_SECRET) {
 	process.exit(1);
 }
 
+// Surface the platform token gate's state at boot so a misconfigured deploy is
+// obvious in the logs. The gate itself is enforced in WalkRoom.onAuth; an unset
+// mint leaves walk_world open (the default until $THREE is pinned).
+const PLAY_GATE_MINT = (process.env.PLAY_GATE_MINT || process.env.THREE_MINT || '').trim();
+if (PLAY_GATE_MINT) {
+	const min = Number(process.env.PLAY_GATE_MIN) > 0 ? Number(process.env.PLAY_GATE_MIN) : 1;
+	console.log(`[multiplayer] play gate ENABLED — require ≥ ${min} of ${PLAY_GATE_MINT} (wallet sign-in)`);
+} else {
+	console.log('[multiplayer] play gate OFF (set PLAY_GATE_MINT or THREE_MINT to require wallet sign-in + token balance)');
+}
+
 const app = express();
 
 // Liveness probes for the host platform (Fly/Railway/Render).
 app.get(['/health', '/healthz'], (_req, res) => {
 	res.json({ ok: true, name: 'three.ws-multiplayer' });
+});
+
+// Internal friends delivery webhook (Task 15). The three.ws API calls this after
+// persisting a DM or friend-graph change to push it live to every socket the
+// recipient account has open here. HMAC-signed with the shared secret so only
+// the API can inject events; returns whether the recipient was online (the API
+// uses that to decide live vs. next-login delivery). Body is small JSON; an
+// unsigned or malformed request is rejected before any work.
+app.post('/internal/notify', express.json({ limit: '16kb' }), (req, res) => {
+	const { type, to, payload } = req.body || {};
+	const sig = req.headers['x-mp-signature'];
+	if (typeof type !== 'string' || typeof to !== 'string' || !type || !to) {
+		return res.status(400).json({ error: 'bad_request' });
+	}
+	if (!verifyNotifySignature(to, type, sig)) {
+		return res.status(401).json({ error: 'bad_signature' });
+	}
+	const delivered = socialHub.deliver(to, type, payload || {});
+	res.json({ delivered });
 });
 
 // Admin monitor UI — exposes live room/client state, so it must NOT be open to
@@ -143,15 +180,112 @@ gameServer.define('walk_world', WalkRoom).filterBy(['coin', 'tier']);
 // the definition's options and read by GameRoom.onCreate. Mainland/Whisperwood/
 // Pond/Mine are safe; Wilderness is the danger+pvp realm that drops death-bags.
 // Mine is the enclosed cave interior reached through the Mainland mine entrance.
-for (const realm of ['mainland', 'wilderness', 'whisperwood', 'pond', 'mine']) {
-	gameServer.define(`game_${realm}`, GameRoom, { realm });
+//
+// Server dimension (Task 23): filterBy(['server']) splits each realm definition
+// into one room per chosen world instance, exactly as walk_world is split by
+// coin/tier above. A joinOrCreate for game_mainland with {server:'s2'} matches
+// only rooms created with server='s2', so the two worlds never merge — players
+// on different servers can't see each other in any realm, chat, or /who. A
+// missing/forged server option collapses to the default instance (see
+// servers.cleanServer / GameRoom.onCreate).
+// One room definition per realm, sourced from REALMS so a newly-defined realm is
+// reachable the moment it's added to realms.js — no separate list to keep in sync.
+for (const realm of Object.keys(REALMS)) {
+	gameServer.define(`game_${realm}`, GameRoom, { realm }).filterBy(['server']);
 }
+
+// --- Multi-server discovery + presence (Task 23) ---------------------------
+// Read-only JSON the /play login picker and a friends panel consume from the
+// (different-origin) static site, so they carry permissive CORS. Both read live
+// truth — never cached or faked numbers.
+
+// CORS for the public read-only endpoints. The population counts and presence
+// flags are not sensitive, so we allow any origin to GET them; no credentials
+// are involved. OPTIONS preflights short-circuit here.
+function publicJsonCors(_req, res, next) {
+	res.set('Access-Control-Allow-Origin', '*');
+	res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+	res.set('Access-Control-Allow-Headers', 'Content-Type');
+	res.set('Cache-Control', 'no-store');
+	if (_req.method === 'OPTIONS') return res.status(204).end();
+	next();
+}
+
+// GET /servers — the world-instance roster with REAL live population. Population
+// is the sum of connected clients across every game_* room whose metadata names
+// that server, queried through the matchmaker (so it's correct across all
+// horizontally-scaled instances, not just this process). The least-full server
+// is recommended so the picker can nudge balancing without ever faking a count.
+app.get('/servers', publicJsonCors, async (_req, res) => {
+	const counts = Object.fromEntries(SERVERS.map((s) => [s.id, 0]));
+	try {
+		const rooms = await matchMaker.query({});
+		for (const r of rooms) {
+			if (typeof r.name !== 'string' || !r.name.startsWith('game_')) continue;
+			const sid = r.metadata?.server;
+			if (sid && sid in counts) counts[sid] += r.clients || 0;
+		}
+	} catch (err) {
+		console.warn('[multiplayer] /servers query failed:', err?.message);
+		return res.status(503).json({ error: 'population_unavailable' });
+	}
+	// Recommend exactly one server — the least-full — preferring the first in
+	// roster order on a tie so the suggestion is stable between polls.
+	let recommended = SERVERS[0]?.id || null;
+	let min = Infinity;
+	for (const s of SERVERS) {
+		if (counts[s.id] < min) { min = counts[s.id]; recommended = s.id; }
+	}
+	res.json({
+		servers: SERVERS.map((s) => ({
+			id: s.id,
+			name: s.name,
+			blurb: s.blurb,
+			players: counts[s.id],
+			recommended: s.id === recommended,
+		})),
+	});
+});
+
+// GET /presence?ids=a,b,c — for a friends panel (Task 15): resolve which
+// server+realm each named account is currently on, or that they're offline.
+// Reads the shared presence hash GameRoom maintains on join/leave. Capped at a
+// sane batch size so a single request can't sweep the whole registry.
+app.get('/presence', publicJsonCors, async (req, res) => {
+	const ids = String(req.query.ids || '')
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean)
+		.slice(0, 100);
+	if (!ids.length) return res.json({ presence: {} });
+	let all = {};
+	try {
+		all = (await gameServer.presence.hgetall(PRESENCE_HASH)) || {};
+	} catch (err) {
+		console.warn('[multiplayer] /presence read failed:', err?.message);
+		return res.status(503).json({ error: 'presence_unavailable' });
+	}
+	const presence = {};
+	for (const id of ids) {
+		const raw = all[id];
+		if (!raw) { presence[id] = { online: false }; continue; }
+		try {
+			const e = JSON.parse(raw);
+			presence[id] = { online: true, server: e.server || '', realm: e.realm || '', name: e.name || '' };
+		} catch {
+			presence[id] = { online: false };
+		}
+	}
+	res.json({ presence });
+});
 
 gameServer
 	.listen(PORT, HOST)
 	.then(() => {
 		console.log(`[multiplayer] listening on ws://${HOST}:${PORT}`);
-		console.log(`[multiplayer] rooms: walk_world, game_{mainland,wilderness,whisperwood,pond,mine}`);
+		console.log(`[multiplayer] rooms: walk_world, game_{${Object.keys(REALMS).join(',')}}`);
+		console.log(`[multiplayer] world instances: ${SERVERS.map((s) => `${s.id} (${s.name})`).join(', ')}`);
+		console.log(`[multiplayer] discovery: GET /servers, GET /presence?ids=`);
 		console.log(`[multiplayer] allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
 	})
 	.catch((err) => {
@@ -186,6 +320,20 @@ const shutdown = async (signal) => {
 		await blockStore.flushAll();
 	} catch (err) {
 		console.error('[multiplayer] final block flush error:', err);
+	}
+	// Same guarantee for player progression (Task 16): persist every account whose
+	// debounced profile save hadn't landed yet, so a redeploy never resets a player.
+	try {
+		await flushAllPlayers();
+	} catch (err) {
+		console.error('[multiplayer] final player flush error:', err);
+	}
+	// And the marketplace (Task 20): flush any debounced listing/payout writes so a
+	// redeploy never drops an active listing or a seller's owed proceeds.
+	try {
+		await marketplaceStore.flushAll();
+	} catch (err) {
+		console.error('[multiplayer] final market flush error:', err);
 	}
 	process.exit(0);
 };

@@ -100,6 +100,22 @@ export const env = {
 		return opt('CRON_SECRET');
 	},
 
+	// ── multiplayer bridge (presence + live DM delivery) ─────────────────────
+	// Shared HMAC secret between this API and the standalone Colyseus server. The
+	// API mints short-lived presence tickets (api/friends/presence-ticket) the
+	// realm rooms verify before publishing a player's presence, and signs the
+	// internal notify webhook. Falls back to HOLDER_PASS_SECRET (already shared
+	// with the multiplayer process) so a single secret configures both gates.
+	get MULTIPLAYER_SHARED_SECRET() {
+		return opt('MULTIPLAYER_SHARED_SECRET') || opt('HOLDER_PASS_SECRET') || 'dev-insecure-multiplayer-secret';
+	},
+	// Base URL of the multiplayer server's internal API, used to push live DMs /
+	// friend events to connected clients. Optional: when unset, delivery falls
+	// back to the client's polling backstop and the durable offline queue.
+	get MULTIPLAYER_INTERNAL_URL() {
+		return trimSlash(opt('MULTIPLAYER_INTERNAL_URL') || opt('MULTIPLAYER_URL'));
+	},
+
 	// Platform fee basis points for agent monetization (100 bps = 1%).
 	// Read by api/_lib/fee.js on cold-start. Default 250 (2.5%).
 	get PLATFORM_FEE_BPS() {
@@ -536,6 +552,43 @@ export const env = {
 	// OpenAI-compatible endpoint. Optional companion to DASHSCOPE_API_KEY.
 	get MODELSCOPE_API_KEY() {
 		return opt('MODELSCOPE_API_KEY');
+	},
+
+	// ── $THREE on-chain token layer (api/_lib/token/*) ────────────────────────
+	// Shared primitives for premium token-priced actions (paid spins, token
+	// marketplace sales). Centralized here so no mint/treasury/burn literals are
+	// scattered across endpoints. The platform $THREE mint is the same constant
+	// used by api/rider/* and api/three-token; override for devnet/test mints.
+	get THREE_TOKEN_MINT() {
+		return opt('THREE_TOKEN_MINT', 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump');
+	},
+	// pump.fun mints are 6-decimal. Override only if a non-pump mint is configured.
+	get THREE_TOKEN_DECIMALS() {
+		return parseInt(opt('THREE_TOKEN_DECIMALS', '6'), 10);
+	},
+	// Treasury wallet that receives the treasury share of every split. REQUIRED in
+	// production — token/config.js fails loudly (mirrors HOLDER_PASS_SECRET) rather
+	// than silently routing funds to a placeholder.
+	get THREE_TREASURY_WALLET() {
+		return opt('THREE_TREASURY_WALLET');
+	},
+	// Burn address — defaults to the Solana incinerator, whose associated token
+	// account is unspendable (no key exists), so tokens transferred there are
+	// permanently removed from circulation. Verifiable as a plain destination.
+	get THREE_BURN_ADDRESS() {
+		return opt('THREE_BURN_ADDRESS', '1nc1nerator11111111111111111111111111111111');
+	},
+	// HMAC secret used to sign payment quotes so a client cannot tamper with the
+	// quoted token amount or split after the server prices it. REQUIRED in
+	// production (token/quote.js boot guard). NEVER log this value.
+	get THREE_QUOTE_SECRET() {
+		return opt('THREE_QUOTE_SECRET');
+	},
+	// Validity window (seconds) for an issued quote. Short enough that a quoted
+	// price can't be exploited after the market moves; long enough to sign + send
+	// one transaction. Default 90s.
+	get THREE_QUOTE_TTL_S() {
+		return parseInt(opt('THREE_QUOTE_TTL_S', '90'), 10);
 	},
 
 	// Rider payment gate — Solana wallet that receives $THREE, and Helius webhook secret.

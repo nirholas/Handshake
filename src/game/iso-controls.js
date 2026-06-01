@@ -1,5 +1,6 @@
-// Controls layer for the isometric MMO (/game) — the hotbar, the panel toggles
-// (inventory · map · build · friends), and the rebindable Controls settings UI.
+// Controls layer for the isometric MMO (/game) — hotbar selection, the panel
+// toggles (inventory · map · build · friends), and the rebindable Controls
+// settings UI.
 //
 // This module is the single home for discrete keyboard input. It owns one
 // capture-phase keydown listener that routes every game action through the
@@ -9,13 +10,21 @@
 // touches it — when a pressed key isn't a bound action it lets the event flow
 // through to the renderer untouched.
 //
+// The visual hotbar lives in game-hud.js (#kq-hotbar), fed by the renderer's
+// authoritative player sync (it already reflects the active slot). This layer
+// drives that hotbar by keyboard — selection routes through game._equipOrRide so
+// 1–6 ride a mount slot just like a click does, and 0 sends equip(-1) to clear.
+//
 // It attaches to the live IsoGame instance (window.__ISO__) and subscribes to the
 // network bus directly (game.net.on('playerChange', …)) for the local player's
-// hotbar / inventory / active slot. That keeps the renderer (which is large and
-// evolving) free of UI-coupling: this file is self-contained and self-mounting.
+// inventory / active slot, which back the Inventory panel. That keeps the
+// renderer (which is large and evolving) free of UI-coupling: this file is
+// self-contained and self-mounting.
 
 import { Keybindings, ACTIONS, normalizeKey, keyLabel } from './keybindings.js';
 import { itemDisplay } from './items.js';
+import { FriendsPanel } from './friends-panel.js';
+import { friendsClient } from '../friends.js';
 
 const HOTBAR = 6;
 const INV = 24;
@@ -28,12 +37,6 @@ const PLACEHOLDERS = {
 		glyph: '🛠️',
 		blurb: 'Place a firepit and raise a shack to claim a corner of the world.',
 		note: 'Building arrives with Task 07.',
-	},
-	friends: {
-		title: 'Friends',
-		glyph: '👥',
-		blurb: 'Send requests, see who’s online, and message friends directly.',
-		note: 'Friends arrive with Task 15.',
 	},
 };
 
@@ -63,10 +66,8 @@ export class IsoControls {
 		this.game = game;
 		this.kb = new Keybindings(localStorage.getItem('cc-name') || '');
 
-		// Local-player mirror, fed by the network bus.
-		this._hotbar = Array.from({ length: HOTBAR }, () => ({ item: '', qty: 0 }));
+		// Local-player mirror, fed by the network bus — backs the Inventory panel.
 		this._inv = Array.from({ length: INV }, () => ({ item: '', qty: 0 }));
-		this._activeSlot = -1;
 		this._gold = 0;
 		this._me = null;
 
@@ -77,6 +78,14 @@ export class IsoControls {
 		this._mapTimer = null;
 		this._netBound = false;
 
+		// Friends (Task 15): the shared social-graph client + the panel view bound
+		// to the friends surface. The panel mounts lazily on first open; the client
+		// lives for the session so the HUD unread badge stays live in the background.
+		this._friends = friendsClient();
+		this._friendsPanel = null;
+		this._friendsBtn = null;
+		this._friendsUnsub = null;
+
 		this._onKeyDown = this._onKeyDown.bind(this);
 		this._sync = this._sync.bind(this);
 	}
@@ -86,7 +95,6 @@ export class IsoControls {
 		if (this._mounted) return;
 		this._mounted = true;
 
-		this._buildHotbar();
 		this._buildGear();
 
 		window.addEventListener('keydown', this._onKeyDown, true);
@@ -116,7 +124,6 @@ export class IsoControls {
 
 	_applyPhase(phase) {
 		const world = phase === 'world';
-		if (this._hotbarEl) this._hotbarEl.hidden = !world;
 		if (this._gearEl) this._gearEl.hidden = !world;
 		if (world && !this._hintDone) {
 			this._updateHint();
@@ -134,82 +141,27 @@ export class IsoControls {
 				item: arr?.[i]?.item || '',
 				qty: arr?.[i]?.qty | 0,
 			}));
-		this._hotbar = read(p.hotbar, HOTBAR);
 		this._inv = read(p.inv, INV);
-		if (typeof p.activeSlot === 'number') this._activeSlot = p.activeSlot;
 		this._gold = p.gold | 0;
 		this._me = { tx: p.tx | 0, ty: p.ty | 0 };
-		this._renderHotbar();
 		if (this._isOpen('inv')) this._renderInv();
 	}
 
 	// -------------------------------------------------------------- hotbar
-	_buildHotbar() {
-		const slots = [];
-		for (let i = 0; i < HOTBAR; i++) {
-			const slot = el(
-				'button',
-				{
-					class: 'kg-hb-slot',
-					type: 'button',
-					dataset: { slot: String(i) },
-					onclick: () => this._select(i),
-				},
-				[
-					el('span', { class: 'kg-hb-key', 'aria-hidden': 'true' }),
-					el('span', { class: 'kg-hb-glyph', 'aria-hidden': 'true' }),
-					el('span', { class: 'kg-hb-qty', 'aria-hidden': 'true' }),
-				],
-			);
-			slots.push(slot);
-		}
-		this._hbSlots = slots;
-		this._hotbarEl = el(
-			'div',
-			{
-				id: 'kg-hotbar',
-				class: 'kg-hotbar',
-				role: 'toolbar',
-				'aria-label': 'Hotbar',
-				hidden: true,
-			},
-			slots,
-		);
-		document.body.appendChild(this._hotbarEl);
-		this._renderHotbar();
-	}
-
-	_renderHotbar() {
-		if (!this._hbSlots) return;
-		for (let i = 0; i < HOTBAR; i++) {
-			const btn = this._hbSlots[i];
-			const cell = this._hotbar[i] || { item: '', qty: 0 };
-			const disp = itemDisplay(cell.item);
-			const active = i === this._activeSlot;
-			const keyTxt = keyLabel(this.kb.get('hotbar' + (i + 1)));
-			btn.querySelector('.kg-hb-key').textContent = keyTxt;
-			btn.querySelector('.kg-hb-glyph').textContent = disp ? disp.glyph : '';
-			btn.querySelector('.kg-hb-qty').textContent = cell.qty > 1 ? String(cell.qty) : '';
-			btn.classList.toggle('kg-hb--active', active);
-			btn.classList.toggle('kg-hb--empty', !cell.item);
-			btn.setAttribute('aria-pressed', String(active));
-			const name = disp ? disp.name : 'empty';
-			btn.setAttribute(
-				'aria-label',
-				`Hotbar ${i + 1} (${keyTxt}): ${name}${active ? ', selected' : ''}`,
-			);
-			btn.title = `${name} — press ${keyTxt}`;
-		}
-	}
-
 	// Select hotbar slot `i` (0-5); pass -1 to clear. Selecting is idempotent so
 	// 1–6 always *set* the active slot per the world-guide spec; 0 clears.
+	//
+	// Selection routes through the renderer's _equipOrRide so a number key behaves
+	// exactly like clicking the slot in the game-hud hotbar — equip, and ride the
+	// steed if the slot holds a mount. The visual (active-slot highlight) is owned
+	// by that hotbar, fed by the server's authoritative activeSlot patch. Clearing
+	// has no slot to ride, so it sends equip(-1) straight to the net; the server
+	// accepts -1 and patches activeSlot back, dropping the highlight.
 	_select(i) {
 		const net = this.game.net;
 		if (!net) return;
-		this._activeSlot = i;
-		net.equip(i);
-		this._renderHotbar();
+		if (i >= 0 && typeof this.game._equipOrRide === 'function') this.game._equipOrRide(i);
+		else net.equip(i);
 	}
 
 	// -------------------------------------------------------------- gear button
@@ -763,7 +715,6 @@ export class IsoControls {
 	}
 
 	_onBindingsChanged() {
-		this._renderHotbar();
 		this._updateHint();
 		if (this._isOpen('settings')) {
 			const msg = this._pendingMsg;
@@ -788,7 +739,6 @@ export class IsoControls {
 		clearInterval(this._syncTimer);
 		if (this._mapTimer) clearInterval(this._mapTimer);
 		this._unsub?.();
-		this._hotbarEl?.remove();
 		this._gearEl?.remove();
 		for (const k of Object.keys(this._surfaces)) this._surfaces[k].overlay.remove();
 		this._surfaces = {};

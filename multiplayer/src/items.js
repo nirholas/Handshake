@@ -165,6 +165,32 @@ export function cookBurnChance(level) {
 	return Math.max(0, Math.min(0.4, c));
 }
 
+// ---------------------------------------------------------------------------
+// Fishing
+// ---------------------------------------------------------------------------
+
+// Catch chance for a single cast: 40% at level 1 on average (quality 1) water,
+// rising +0.5% per fishing level and scaled by the spot's quality multiplier
+// (richer water both catches more often and yields doubles more often). Capped at
+// 95% so even the best angler on the best water is never guaranteed a fish.
+// Pure and deterministic (the cast handler rolls the RNG) so the odds are honest
+// and unit-testable, mirroring cookBurnChance.
+export function fishCatchChance(level, quality = 1) {
+	const lvl = Math.max(1, level | 0);
+	const q = quality > 0 ? quality : 1;
+	const c = (0.4 + 0.005 * (lvl - 1)) * q;
+	return Math.max(0, Math.min(0.95, c));
+}
+
+// Chance that a successful cast hauls in two fish instead of one. Zero at level 1,
+// growing with level and spot quality, clamped at 45% so a double is always a
+// treat rather than the norm.
+export function fishDoubleChance(level, quality = 1) {
+	const lvl = Math.max(1, level | 0);
+	const q = quality > 0 ? quality : 1;
+	return Math.max(0, Math.min(0.45, 0.02 * (lvl - 1) * q));
+}
+
 export function clientItemRegistry() {
 	const out = {};
 	for (const [id, it] of Object.entries(ITEMS)) {

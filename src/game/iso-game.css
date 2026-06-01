@@ -299,6 +299,10 @@ body.kg-loading-cursor {
 	background: #5cb6e6;
 	color: #5cb6e6;
 }
+#kg-pickup .kg-action-dot {
+	background: #c9a26b;
+	color: #c9a26b;
+}
 /* Cast is shown beside water even without a rod, so the player learns where to
    fish — muted + a help cursor signal it's gated until they hold a rod. */
 .kg-action--muted {
@@ -463,6 +467,142 @@ body.kg-loading-cursor {
 	border: 1px solid var(--kg-line);
 	border-radius: 999px;
 	padding: 4px 10px;
+}
+
+/* ---------------------------------------------------------------- server picker
+   Login-time world-instance chooser (Task 23). Radio cards with real live
+   population; the recommended (least-full) server is badged. */
+.kg-servers {
+	border: 0;
+	margin: 0 0 14px;
+	padding: 0;
+	text-align: left;
+}
+.kg-servers-legend {
+	font-size: 11px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--kg-dim);
+	padding: 0;
+	margin-bottom: 8px;
+}
+.kg-servers-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.kg-servers-loading {
+	font-size: 13px;
+	color: var(--kg-dim);
+	padding: 10px 2px;
+}
+.kg-server-opt {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 11px 13px;
+	border: 1px solid var(--kg-line);
+	border-radius: 12px;
+	background: rgba(0, 0, 0, 0.22);
+	cursor: pointer;
+	transition:
+		border-color 0.15s,
+		background 0.15s,
+		transform 0.08s ease;
+}
+.kg-server-opt:hover {
+	border-color: rgba(255, 255, 255, 0.28);
+	background: rgba(255, 255, 255, 0.04);
+}
+.kg-server-opt:active {
+	transform: translateY(1px);
+}
+.kg-server-opt input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+.kg-server-opt[data-selected='true'] {
+	border-color: var(--kg-accent);
+	background: color-mix(in srgb, var(--kg-accent) 14%, transparent);
+}
+.kg-server-opt:focus-within {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+.kg-server-dot {
+	flex: 0 0 auto;
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: #3ad07a;
+	box-shadow: 0 0 0 3px color-mix(in srgb, #3ad07a 22%, transparent);
+}
+.kg-server-opt[data-empty='true'] .kg-server-dot {
+	background: var(--kg-dim);
+	box-shadow: none;
+}
+.kg-server-main {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.kg-server-name {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--kg-text);
+}
+.kg-server-blurb {
+	font-size: 12px;
+	color: var(--kg-dim);
+	margin-top: 2px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.kg-server-pop {
+	flex: 0 0 auto;
+	font-size: 12px;
+	color: var(--kg-dim);
+	text-align: right;
+	line-height: 1.25;
+}
+.kg-server-pop b {
+	display: block;
+	font-size: 15px;
+	color: var(--kg-text);
+}
+.kg-server-rec {
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #0d1420;
+	background: var(--kg-accent);
+	border-radius: 999px;
+	padding: 2px 7px;
+}
+.kg-servers-note {
+	font-size: 11.5px;
+	color: var(--kg-dim);
+	line-height: 1.45;
+	margin: 10px 2px 0;
+}
+
+/* Topbar chip naming the world instance you're on. */
+.kg-server-chip {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--kg-dim);
+	border: 1px solid var(--kg-line);
+	border-radius: 999px;
+	padding: 2px 9px;
+}
+.kg-server-chip[hidden] {
+	display: none;
 }
 
 .kg-spinner {
@@ -649,6 +789,57 @@ body.kg-loading-cursor {
 
 .kg-chat-form {
 	display: flex;
+	position: relative; /* anchors the slash-command autocomplete above the input */
+}
+
+/* Slash-command autocomplete — floats just above the chat input. */
+.kg-chat-hint {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: calc(100% + 6px);
+	z-index: 10;
+	margin: 0;
+	padding: 4px;
+	list-style: none;
+	max-height: 216px;
+	overflow-y: auto;
+	pointer-events: auto;
+	background: var(--kg-panel);
+	border: 1px solid var(--kg-line);
+	border-radius: 10px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.kg-chat-hint[hidden] {
+	display: none;
+}
+.kg-chat-hint-item {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	padding: 6px 9px;
+	border-radius: 7px;
+	cursor: pointer;
+	transition: background 0.12s;
+}
+.kg-chat-hint-item:hover,
+.kg-chat-hint-item--active {
+	background: rgba(120, 170, 255, 0.16);
+}
+.kg-chat-hint-cmd {
+	flex: none;
+	font-weight: 700;
+	color: var(--kg-accent);
+	font-variant-numeric: tabular-nums;
+}
+.kg-chat-hint-desc {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+	color: var(--kg-dim);
 }
 .kg-chat-input {
 	pointer-events: auto;
@@ -2130,9 +2321,123 @@ body.kg-loading-cursor {
 	.kq-grid { grid-template-columns: repeat(6, 1fr); }
 }
 
+/* ----- build menu + banner (Task 07) -------------------------------------- */
+.kq-build-menu {
+	position: fixed; top: 96px; right: 12px; z-index: 14; width: min(320px, 92vw);
+	background: var(--kg-panel); border: 1px solid var(--kg-line); border-radius: 16px;
+	box-shadow: 0 18px 50px rgba(0,0,0,0.55); backdrop-filter: blur(8px);
+	padding: 14px; opacity: 0; transform: translateY(-8px) scale(.98);
+	transition: opacity .18s, transform .18s cubic-bezier(.2,.7,.2,1);
+}
+.kq-build-menu[hidden] { display: none; }
+.kq-build-menu.kq-in { opacity: 1; transform: none; }
+.kq-build-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.kq-build-head h2 { margin: 0; font-size: 15px; font-weight: 800; }
+.kq-build-head .kq-x { margin-left: auto; position: static; }
+.kq-build-list { display: flex; flex-direction: column; gap: 10px; }
+.kq-build-card {
+	padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.035);
+	border: 1px solid var(--kg-line); transition: border-color .15s;
+}
+.kq-build-card--short { opacity: 0.92; }
+.kq-build-card-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 9px; }
+.kq-build-ic { font-size: 26px; line-height: 1; }
+.kq-build-titles { min-width: 0; }
+.kq-build-name { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 7px; }
+.kq-build-cap { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--kg-dim); background: rgba(255,255,255,0.06); border-radius: 999px; padding: 2px 7px; }
+.kq-build-desc { font-size: 12px; color: var(--kg-dim); line-height: 1.45; margin-top: 2px; }
+.kq-build-costs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 11px; }
+.kq-build-cost {
+	display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
+	color: var(--kg-text); background: rgba(110,231,135,0.1); border: 1px solid rgba(110,231,135,0.3);
+	border-radius: 999px; padding: 3px 9px;
+}
+.kq-build-cost-ic { font-size: 13px; }
+.kq-build-cost--short { color: #ff9a9a; background: rgba(255,90,90,0.1); border-color: rgba(255,90,90,0.35); }
+.kq-build-go { width: 100%; padding: 9px; background: #ffce5c; color: #2a1c00; }
+
+.kq-build-banner {
+	position: fixed; left: 50%; bottom: 116px; transform: translateX(-50%); z-index: 12;
+	display: inline-flex; align-items: center; gap: 12px; padding: 9px 9px 9px 15px;
+	border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--kg-text);
+	background: rgba(13, 20, 32, 0.92); border: 1px solid var(--kg-accent);
+	box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: kq-rise .2s cubic-bezier(.2,.7,.2,1);
+}
+.kq-build-banner[hidden] { display: none; }
+.kq-build-banner-ic { font-size: 18px; }
+.kq-build-banner .kq-btn-ghost { margin-top: 0; width: auto; padding: 6px 14px; }
+@media (max-width: 560px) {
+	.kq-build-menu { top: auto; bottom: 150px; right: 8px; left: 8px; width: auto; }
+	.kq-build-banner { bottom: 84px; }
+}
+
+/* ----- gold readout (toolbar) --------------------------------------------- */
+.kq-gold {
+	display: inline-flex; align-items: center; gap: 5px; padding: 8px 13px; border-radius: 10px;
+	font-size: 13px; font-weight: 800; color: #ffce5c; font-variant-numeric: tabular-nums;
+	background: var(--kg-panel); border: 1px solid var(--kg-line); box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+}
+.kq-gold-ic { font-size: 14px; }
+
+/* ----- cosmetics shop (Task 21) ------------------------------------------- */
+.kq-shop-card { max-width: 620px; }
+.kq-shop-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-right: 34px; }
+.kq-shop-head h2 { margin: 0; font-size: 17px; font-weight: 800; }
+.kq-shop-purse {
+	margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 800;
+	color: #ffce5c; font-variant-numeric: tabular-nums; background: rgba(255,206,92,0.1);
+	border: 1px solid rgba(255,206,92,0.32); border-radius: 999px; padding: 4px 12px;
+}
+.kq-shop-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.kq-shop-tab {
+	flex: 1; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; padding: 8px 10px;
+	color: var(--kg-dim); background: rgba(255,255,255,0.04); border: 1px solid var(--kg-line);
+	border-radius: 10px; transition: color .15s, border-color .15s, background .15s;
+}
+.kq-shop-tab:hover { color: var(--kg-text); border-color: var(--kg-accent); }
+.kq-shop-tab:focus-visible { outline: 2px solid var(--kg-accent); outline-offset: 2px; }
+.kq-shop-tab--on { color: #0d1420; background: var(--kg-text); border-color: var(--kg-text); }
+.kq-shop-note { margin: 0 0 14px; font-size: 11px; color: var(--kg-dim); line-height: 1.45; }
+.kq-shop-sub { margin: 0 0 12px; font-size: 12px; color: var(--kg-dim); line-height: 1.45; }
+.kq-shop-section { margin-bottom: 20px; }
+.kq-shop-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.kq-shop-reset { font-size: 11px; font-weight: 700; color: #ffce5c; font-variant-numeric: tabular-nums; }
+
+.kq-cos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.kq-cos-card {
+	--cos-accent: #9aa7b4;
+	display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;
+	padding: 14px 12px 12px; border-radius: 14px; background: rgba(255,255,255,0.035);
+	border: 1px solid var(--kg-line); border-top: 3px solid var(--cos-accent);
+	transition: border-color .15s, transform .08s, background .15s;
+}
+.kq-cos-card.kq-cos--equipped { background: rgba(110,231,135,0.08); border-color: rgba(110,231,135,0.5); }
+.kq-cos-card.kq-cos--short { opacity: 0.78; }
+.kq-cos-swatch {
+	width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center;
+	font-size: 30px; line-height: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--kg-line);
+}
+.kq-cos-swatch--default { background: rgba(255,255,255,0.06); }
+.kq-cos-meta { display: flex; flex-direction: column; gap: 2px; }
+.kq-cos-name { font-size: 13px; font-weight: 800; color: var(--kg-text); }
+.kq-cos-rarity { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--cos-accent); }
+.kq-cos-foot { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: auto; padding-top: 4px; }
+.kq-cos-price { font-size: 12px; font-weight: 800; color: #ffce5c; font-variant-numeric: tabular-nums; }
+.kq-cos-price--short { color: #ff9a9a; }
+.kq-cos-owned { font-size: 12px; font-weight: 800; color: var(--kg-dim); }
+.kq-cos-equipped { font-size: 12px; font-weight: 800; color: #6ee787; }
+.kq-cos-buy { background: #ffce5c; color: #2a1c00; padding: 6px 14px; }
+.kq-cos-equip { background: var(--kg-text); color: #0d1420; padding: 6px 14px; }
+.kq-shop-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; margin-top: 16px; }
+.kq-shop-empty .kq-btn-ghost { margin-top: 0; width: auto; }
+@media (max-width: 480px) {
+	.kq-cos-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+	.kq-gold .kq-gold-ic + b { display: inline; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-	.kq-panel, .kq-progress i, .kq-tool-btn, .kq-slot, .kq-cell { transition: none; }
-	.kq-modal-card { animation: none; }
+	.kq-panel, .kq-progress i, .kq-tool-btn, .kq-slot, .kq-cell, .kq-build-menu, .kq-shop-tab, .kq-cos-card { transition: none; }
+	.kq-modal-card, .kq-build-banner { animation: none; }
 	.kq-npc-marker, .kq-dot { animation: none; }
 }
 

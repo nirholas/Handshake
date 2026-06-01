@@ -65,6 +65,19 @@ export const COMMANDS = [
 	},
 ];
 
+// Client-facing manifest of the registry: just the data the chat autocomplete
+// needs (signature + aliases + description), never the server-side `run`
+// handlers. Sent once on join so the client hint list is the SAME source of
+// truth as /help — it can never drift from the real command set.
+export function commandManifest() {
+	return COMMANDS.map((c) => ({
+		name: c.name,
+		args: c.args || '',
+		aliases: c.aliases.slice(),
+		desc: c.desc,
+	}));
+}
+
 // Resolve a name or alias (case-insensitive) to its command, or null.
 function resolve(name) {
 	const n = String(name || '').toLowerCase();

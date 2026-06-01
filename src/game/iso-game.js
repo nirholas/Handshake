@@ -29,12 +29,14 @@ import {
 } from 'three';
 import nipplejs from 'nipplejs';
 
-import { GameNet } from './game-net.js';
+import { GameNet, fetchServers } from './game-net.js';
+import { getPresenceTicket } from '../friends.js';
 import {
 	loadManifest, resolveAvatarUrl, buildAvatar, newAnim, CLIP_IDLE, CLIP_WALK,
 } from './avatar-rig.js';
 import { GUEST_SENTINEL, uploadPendingGuestAvatar } from './play-handoff.js';
 import { GameHud } from './game-hud.js';
+import { applyCosmetic } from './cosmetics-visual.js';
 
 const TILE = 1.0;            // world units per tile
 const STEP_INTERVAL_MS = 165; // walk cadence — one authoritative step per tile
@@ -65,6 +67,18 @@ const fmtXp = (n) => Math.round(n).toLocaleString('en-US');
 const EDIBLE = new Set(['cookedFish', 'healthPotion']);
 const FOOD_LABEL = { cookedFish: 'cooked fish', healthPotion: 'potion' };
 
+// Player-built structures (Task 07): presentation only — icon, label, and a short
+// pitch for the build menu. The realm's allowed kinds and the authoritative costs
+// arrive from the server (the realm message's `buildCatalog`), so this never
+// hard-codes prices and never drifts from what the server will actually charge.
+const STRUCTURE_META = {
+	firepit: { icon: '🔥', label: 'Firepit', desc: 'Heals allies beside it for ~30s, then burns out.' },
+	shack: { icon: '🛖', label: 'Shack', desc: 'A permanent landmark. One per builder.' },
+};
+// Material icons for the build-menu cost chips (mirrors items.js labels/icons; the
+// HUD has its own copy for backpack rendering — this keeps the scene self-contained).
+const MATERIAL_ICON = { wood: '🪵', stone: '🪨', coal: '⚫' };
+
 // Lightweight item presentation for the death-bag recovery panel: a readable
 // label + a chip colour per known item. Unknown items fall back to a titlecase
 // of their id and a neutral chip, so a future item never renders blank.
@@ -87,13 +101,20 @@ const itemColor = (id) => ITEM_COLOR[id] || '#7d8696';
 // (T6 polishes remote-specific touches like HP bars on top of this baseline).
 // ---------------------------------------------------------------------------
 class GamePlayerView {
-	constructor(scene, tileToWorld, player, isLocal) {
+	constructor(scene, tileToWorld, player, isLocal, cosmeticFor) {
 		this.scene = scene;
 		this.tileToWorld = tileToWorld;
 		this.isLocal = isLocal;
 		this.id = player.id;
+		// Resolver (id → visual spec) from the server cosmetics catalogue. Lets this
+		// view layer any peer's equipped cosmetic (tint / prop / aura) over the base
+		// avatar. Strictly visual — never consulted for anything gameplay-affecting.
+		this._cosmeticFor = cosmeticFor || (() => null);
 
 		this.rig = new Group();
+		// Tag the rig so a PvP-realm raycast can resolve a click on this body back to its
+		// player id (the local player is filtered out at the call site, you can't hit yourself).
+		this.rig.userData.playerId = player.id;
 		this.anim = newAnim();
 		this.height = 1.7;
 
@@ -133,6 +154,11 @@ class GamePlayerView {
 		this._saddleY = 0;
 		this._rideRate = 1.5;
 		this._avatarUrl = null;
+		// Equipped cosmetic (Task 21): the id and the live visual handle layered over
+		// the avatar. Re-applied after every avatar (re)load, since loading clears the
+		// rig. Both local player and peers render their equipped look.
+		this._cosmeticId = player.cosmeticId || '';
+		this._cosmeticHandle = null;
 		this.setAvatar(player.cosmetic || '');
 	}
 
@@ -140,12 +166,36 @@ class GamePlayerView {
 		const next = url || AVATAR_DEFAULT;
 		if (next === this._avatarUrl) return;
 		this._avatarUrl = next;
+		// Loading rebuilds the rig from scratch, so drop the cosmetic layer first
+		// (restoring any tinted materials) and re-mount it once the new model lands.
+		this._disposeCosmetic();
 		this.rig.clear();
 		this.anim = newAnim();
 		resolveAvatarUrl(next).then((u) => buildAvatar(this.rig, u, this.anim).then(({ height }) => {
 			this.height = height;
 			this.anim.crossfadeTo(this.motion === 'walk' ? CLIP_WALK : CLIP_IDLE, 0);
+			this._mountCosmetic();
 		}));
+	}
+
+	// Equip (or clear) the cosmetic this view renders. No-op if unchanged; mounts
+	// the new look immediately when the model is already loaded (re-mounts after a
+	// reload via setAvatar's callback otherwise).
+	setCosmetic(id) {
+		const next = id || '';
+		if (next === this._cosmeticId) return;
+		this._cosmeticId = next;
+		this._mountCosmetic();
+	}
+
+	_mountCosmetic() {
+		this._disposeCosmetic();
+		const visual = this._cosmeticId ? this._cosmeticFor(this._cosmeticId) : null;
+		if (visual) this._cosmeticHandle = applyCosmetic(this.rig, this.height, visual);
+	}
+
+	_disposeCosmetic() {
+		if (this._cosmeticHandle) { this._cosmeticHandle.dispose(); this._cosmeticHandle = null; }
 	}
 
 	apply(player) {
@@ -175,6 +225,10 @@ class GamePlayerView {
 		// Peers' avatars are server-authoritative (the local player owns its own
 		// look). setAvatar self-guards, so this is a no-op until a peer changes.
 		if (!this.isLocal) this.setAvatar(player.cosmetic || '');
+		// The equipped cosmetic is server-authoritative for everyone (including us,
+		// after an equip round-trips), so peers AND the local player track it here.
+		// setCosmetic self-guards, so it's a no-op until the equipped id changes.
+		this.setCosmetic(player.cosmeticId || '');
 		// Mark when the server says we moved so the loop can settle us to idle on
 		// arrival without waiting for a separate motion patch.
 		if (moved) this._movedAt = performance.now();
@@ -212,6 +266,8 @@ class GamePlayerView {
 		}
 		// A mounted, moving rider reads faster — nudge the walk clip rate while riding.
 		this.anim?.update(dt * (this.mounted && this.motion === 'walk' ? this._rideRate : 1));
+		// Animate the equipped cosmetic (e.g. a slowly-spinning, pulsing aura).
+		this._cosmeticHandle?.tick(dt);
 	}
 
 	// Mount or dismount the steed under this avatar. `def` is the registry mount
@@ -264,6 +320,7 @@ class GamePlayerView {
 	}
 
 	dispose() {
+		this._disposeCosmetic();
 		this.scene.remove(this.rig);
 		if (this._steed) this.scene.remove(this._steed);
 		this.label.remove();
@@ -282,9 +339,20 @@ export class IsoGame {
 		this.mobViews = new Map();  // id -> { group, mob }
 		this.npcViews = new Map();  // id -> { group, npc, label, markerEl }
 		this.tombViews = new Map(); // id -> { group, tomb, label, nameEl, ttlEl }
+		this.structViews = new Map(); // id -> { group, struct, ring, flame } (Task 07)
 		this.keys = new Set();
 		this.realm = null;
 		this.myId = null;
+
+		// Build mode (Task 07): when non-null we're placing a structure — a ghost
+		// preview snaps to the tile under the cursor and turns green/red for valid/
+		// invalid placement; a tap places it, right-click/Esc cancels, and movement
+		// clicks are suppressed until we exit. `_buildCatalog` is the server-sent cost
+		// table for the current realm; `_hoverPtr` tracks the cursor so the ghost
+		// follows it without a drag.
+		this._buildMode = null; // { kind, ghost } | null
+		this._buildCatalog = {};
+		this._hoverPtr = null;
 
 		// Click-to-interact: a tap on a node/mob/NPC sets a target the loop walks
 		// to and then services (gather/attack/talk); a tap on open ground sets a
@@ -318,10 +386,11 @@ export class IsoGame {
 		this._skillsTimer = null;
 
 		// World chat: open flag (drives the expanded vs. click-through collapsed
-		// state) and the per-account mute set. Mutes are keyed by display name —
-		// the stable identity until accounts land — and persisted locally;
-		// Task 16 migrates this to the account-scoped profile store. The closer
-		// fn is the document listener that dismisses an open mute popover.
+		// state) and the per-account mute set. Mutes are keyed by display name and
+		// persisted under the player's stable account id (Task 16) — wallet, else a
+		// durable guest id — so a block list follows the account across sessions and
+		// two accounts on one machine never share one. The closer fn is the document
+		// listener that dismisses an open mute popover.
 		this._chatOpen = false;
 		this.muted = this._loadMuted();
 		this._muteMenuCloser = null;
@@ -347,6 +416,24 @@ export class IsoGame {
 			onDeposit: (i) => this.net?.bankDeposit(i, 999),
 			onWithdraw: (i) => this.net?.bankWithdraw(i, 999),
 			onReset: () => this.net?.questOpen(),
+			onBuildSelect: (kind) => this._enterBuildMode(kind),
+			onBuildCancel: () => this._exitBuildMode(),
+			// Cosmetics shop (Task 21): open re-fetches the live board; buy/equip/
+			// unequip route to the authoritative server, which echoes a fresh board.
+			onShopOpen: () => this.net?.shopOpen(),
+			onBuyCosmetic: (id) => this.net?.buyCosmetic(id),
+			onEquipCosmetic: (id) => this.net?.equipCosmetic(id),
+			onUnequipCosmetic: () => this.net?.unequipCosmetic(),
+			// Marketplace (Task 20): open fetches the live board; list/cancel/buy-gold
+			// route straight to the authoritative server. A token buy is a multi-step
+			// on-chain flow the controller drives (_buyTokenListing): quote → wallet
+			// sign+send → server-verified settle.
+			onMarketOpen: () => this.net?.marketOpen(),
+			onMarketListGold: (item, qty, price) => this.net?.marketListGold(item, qty, price),
+			onMarketListToken: (gold, usd) => this.net?.marketListToken(gold, usd),
+			onMarketCancel: (id) => this.net?.marketCancel(id),
+			onMarketBuyGold: (id) => this.net?.marketBuyGold(id),
+			onMarketBuyToken: (id) => this._buyTokenListing(id),
 		});
 
 		this._loop = this._loop.bind(this);
@@ -415,7 +502,7 @@ export class IsoGame {
 		// walls, and a tight, dim atmosphere. Surface realms keep the open sky
 		// look. Background + fog are reset on every realm build, so walking back
 		// up to the Mainland restores daylight cleanly.
-		const isCave = layout.name === 'mine';
+		const isCave = !!layout.cave || layout.name === 'mine';
 		this.scene.background.set(isCave ? 0x130f0b : 0x223a55);
 		this.scene.fog.color.set(isCave ? 0x130f0b : 0x223a55);
 		this.scene.fog.near = isCave ? 16 : 48;
@@ -487,10 +574,18 @@ export class IsoGame {
 		// Fishing + cooking spots, if the realm has them.
 		this._paintTiles(layout.fishing, 0x3aa0d0, 0.6);
 		this._paintTiles(layout.cooking, 0xff7a3a, 0.6);
-		// Portals.
+		// Portals. An open portal glows violet; a combat-gated one (e.g. the northern
+		// cave) is barred with a red archway so its locked state reads before you step on.
 		for (const p of layout.portals || []) {
-			this._paintTiles(this._rectTiles(p), 0xae7bff, 0.7);
+			const tiles = this._rectTiles(p);
+			if (p.gate) { this._paintTiles(tiles, 0xd0455a, 0.75); this._buildGateArch(p); }
+			else this._paintTiles(tiles, 0xae7bff, 0.7);
 		}
+		// Arena fittings: spectator stands (no-PvP), the practice boxing ring, and the
+		// moving floor rollers — drawn with directional chevrons so the flow is legible.
+		this._buildSeating(layout.seating);
+		this._buildRing(layout.ring);
+		this._buildRollers(layout.rollers);
 
 		// Fixed NPCs (Aldric the Guide, …) — distinct characters with a nameplate +
 		// quest marker. Rebuilt with the realm since they ride in the realm layout.
@@ -500,7 +595,20 @@ export class IsoGame {
 		const sp = this._tileToWorld(layout.spawn?.tx ?? grid / 2, layout.spawn?.ty ?? grid / 2);
 		this._camTarget.set(sp.x, 0, sp.z);
 
-		this.hud.realm.textContent = (layout.name || 'realm').replace(/^\w/, (m) => m.toUpperCase());
+		this.hud.realm.textContent = this._realmLabel(layout.name);
+
+		// Topbar world-instance chip (Task 23). Read the server off the synced state
+		// (authoritative — confirms which instance we actually landed on) so it can
+		// never disagree with what the login picker requested.
+		this._updateServerChip();
+
+		// Building (Task 07): the realm's authoritative cost table + allowed kinds.
+		// Show the Build button only where this realm permits building, and leave any
+		// build mode from a previous realm — its ghost no longer matches these rules.
+		this._buildCatalog = layout.buildCatalog || {};
+		this._exitBuildMode();
+		this.q?.setBuildAvailable(Object.keys(this._buildCatalog).length > 0);
+		this._refreshBuildMenu();
 	}
 
 	// ---------------------------------------------------------------- NPCs
@@ -585,6 +693,119 @@ export class IsoGame {
 		}
 	}
 
+	// Title-case a realm id for the HUD, turning multi-word ids into readable labels
+	// ('wilderness_north' → 'Wilderness North', 'arena' → 'Arena').
+	_realmLabel(name) {
+		return (name || 'realm').split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+	}
+
+	// A red barred archway over a combat-gated portal — the locked-gate state, drawn
+	// so a player reads "you can't just walk in here" before stepping onto the tile.
+	_buildGateArch(p) {
+		const cx = (p.x0 + p.x1) / 2, cy = (p.y0 + p.y1) / 2;
+		const c = this._tileToWorld(cx, cy);
+		const g = new Group();
+		const mat = new MeshStandardMaterial({ color: 0x7a1f2a, roughness: 0.7, emissive: 0x5a0f1a, emissiveIntensity: 0.5 });
+		const postGeo = new BoxGeometry(0.3, 2.4, 0.3);
+		const left = new Mesh(postGeo, mat); left.position.set(-TILE * 0.5, 1.2, 0);
+		const right = new Mesh(postGeo, mat); right.position.set(TILE * 0.5, 1.2, 0);
+		const lintel = new Mesh(new BoxGeometry(TILE * 1.2, 0.35, 0.35), mat); lintel.position.set(0, 2.45, 0);
+		left.castShadow = right.castShadow = lintel.castShadow = true;
+		g.add(left, right, lintel);
+		g.position.set(c.x, 0, c.z);
+		this.staticGroup.add(g);
+	}
+
+	// Spectator stands: a cool slate tint over the walkable seating tiles plus a corner
+	// post at each end, so the stands read as off-floor (and the server keeps them PvP-free).
+	_buildSeating(rects) {
+		if (!rects?.length) return;
+		const postMat = new MeshStandardMaterial({ color: 0x44516a, roughness: 0.9 });
+		for (const r of rects) {
+			this._paintTiles(this._rectTiles(r), 0x5b7fa6, 0.5);
+			for (const [px, py] of [[r.x0, r.y0], [r.x1, r.y0], [r.x0, r.y1], [r.x1, r.y1]]) {
+				const post = new Mesh(new CylinderGeometry(0.12, 0.12, 1.0, 8), postMat);
+				const w = this._tileToWorld(px, py);
+				post.position.set(w.x, 0.5, w.z); post.castShadow = true;
+				this.staticGroup.add(post);
+			}
+		}
+	}
+
+	// The practice boxing ring (Mainland plaza): a canvas mat with four corner posts
+	// and two rope heights. Purely cosmetic + walkable — no death risk on the safe hub.
+	_buildRing(ring) {
+		if (!ring) return;
+		const w = (ring.x1 - ring.x0 + 1) * TILE, d = (ring.y1 - ring.y0 + 1) * TILE;
+		const cx = (ring.x0 + ring.x1) / 2, cy = (ring.y0 + ring.y1) / 2;
+		const c = this._tileToWorld(cx, cy);
+		const g = new Group();
+		this._paintTiles(this._rectTiles(ring), 0x2f6b8a, 0.45); // the canvas
+		const postMat = new MeshStandardMaterial({ color: 0xb23b3b, roughness: 0.6 });
+		const ropeMat = new MeshStandardMaterial({ color: 0xe6e6e6, roughness: 0.5 });
+		const hx = w / 2 - 0.3, hz = d / 2 - 0.3;
+		const corners = [[-hx, -hz], [hx, -hz], [hx, hz], [-hx, hz]];
+		for (const [sx, sz] of corners) {
+			const post = new Mesh(new CylinderGeometry(0.1, 0.1, 1.3, 8), postMat);
+			post.position.set(sx, 0.65, sz); post.castShadow = true; g.add(post);
+		}
+		for (const h of [0.5, 0.95]) {
+			for (let i = 0; i < 4; i++) {
+				const a = corners[i], b = corners[(i + 1) % 4];
+				const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+				const rope = new Mesh(new BoxGeometry(len, 0.05, 0.05), ropeMat);
+				rope.position.set((a[0] + b[0]) / 2, h, (a[1] + b[1]) / 2);
+				rope.rotation.y = Math.atan2(b[1] - a[1], b[0] - a[0]);
+				g.add(rope);
+			}
+		}
+		g.position.set(c.x, 0, c.z);
+		this.staticGroup.add(g);
+	}
+
+	// Moving-floor rollers (Arena): a hot conveyor tint over each strip with a flat
+	// chevron on every tile pointing the way the server pushes — read the flow, ride it.
+	_buildRollers(rollers) {
+		if (!rollers?.length) return;
+		for (const r of rollers) {
+			const tiles = this._rectTiles(r);
+			this._paintTiles(tiles, 0xff9a3a, 0.85);
+			const [dx, dy] = this._rollerDelta(r.dir);
+			const yaw = Math.atan2(-dy, dx); // map the push delta to a flat-XZ heading
+			for (const t of tiles) {
+				const chevron = this._rollerChevron(yaw);
+				const w = this._tileToWorld(t.tx, t.ty);
+				chevron.position.set(w.x, 0.07, w.z);
+				this.staticGroup.add(chevron);
+			}
+		}
+	}
+
+	_rollerDelta(dir) {
+		return dir === 'n' ? [0, -1] : dir === 's' ? [0, 1] : dir === 'e' ? [1, 0] : dir === 'w' ? [-1, 0] : [0, 0];
+	}
+
+	// A flat '>' chevron (two angled bars) lying on the ground, apex toward +X, then
+	// turned by yaw so it points the roller's way.
+	_rollerChevron(yaw) {
+		const g = new Group();
+		const mat = new MeshBasicMaterial({ color: 0x3a2410 });
+		const barGeo = new BoxGeometry(0.34, 0.05, 0.1);
+		const a = new Mesh(barGeo, mat); a.position.set(-0.05, 0, -0.1); a.rotation.y = -Math.PI / 4;
+		const b = new Mesh(barGeo, mat); b.position.set(-0.05, 0, 0.1); b.rotation.y = Math.PI / 4;
+		g.add(a, b);
+		g.rotation.y = yaw;
+		return g;
+	}
+
+	// Climb a raycast hit up to the player rig it belongs to, returning that player's
+	// id (set on the rig in GamePlayerView) — used to resolve a PvP tap to a target.
+	_playerIdOf(obj) {
+		let o = obj;
+		while (o) { if (o.userData && o.userData.playerId) return o.userData.playerId; o = o.parent; }
+		return null;
+	}
+
 	// A faint tile grid drawn once into a tiling canvas texture. `dark` swaps the
 	// grass palette for a dim rock floor used by the cave (mine) interior.
 	_gridTexture(grid, dark = false) {
@@ -648,11 +869,15 @@ export class IsoGame {
 		// Task 01's portal traversal lands this is how a danger realm like
 		// Wilderness is reached directly; the server still validates everything.
 		const realm = new URLSearchParams(location.search).get('realm') || 'mainland';
-		this.net = new GameNet({ name, avatar: netAvatar, realm, pid: this._playerId() });
+		// World instance (Task 23) chosen at the login picker — pins every realm room
+		// of this session to one server. The server validates/defaults it regardless.
+		const server = this._resolveServerChoice();
+		this.net = new GameNet({ name, avatar: netAvatar, realm, server, pid: this._playerId(), getPresence: getPresenceTicket });
 		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
 		this.net.on('status', ({ status, error }) => this._onStatus(status, error));
 		this.net.on('realm', (layout) => this._buildRealm(layout));
 		this.net.on('items', (r) => this._onItems(r));
+		this.net.on('commands', (c) => this._onCommands(c));
 		this.net.on('notice', (n) => this._onNotice(n));
 		this.net.on('cooked', (c) => this._onCooked(c));
 		this.net.on('chat', (m) => this._onChat(m));
@@ -671,8 +896,21 @@ export class IsoGame {
 		this.net.on('tombAdd', (t, id) => this._tombAdd(t, id));
 		this.net.on('tombChange', (t, id) => this._tombChange(t, id));
 		this.net.on('tombRemove', (id) => this._tombRemove(id));
+		this.net.on('structAdd', (s, id) => this._structAdd(s, id));
+		this.net.on('structChange', (s, id) => this._structChange(s, id));
+		this.net.on('structRemove', (id) => this._structRemove(id));
 		this.net.on('died', (d) => this._onDied(d));
 		this.net.on('quests', (q) => this._onQuests(q));
+		this.net.on('cosmetics', (c) => this._onCosmetics(c));
+		this.net.on('shop', (s) => this._onShop(s));
+		this.net.on('market', (m) => this.q?.setMarket(m));
+		this.net.on('marketDirty', () => this.q?.marketDirty());
+		this.net.on('marketQuote', (qd) => this._onMarketQuote(qd));
+		this.net.on('marketSettled', (s) => this._onMarketSettled(s));
+		this.net.on('marketBuyFail', (f) => this._onMarketBuyFail(f));
+		this.net.on('marketPayout', (p) => this._onMarketPayout(p));
+		this.net.on('handoff', (info) => this._onHandoff(info));
+		this.net.on('takeover', (m) => this._onTakeover(m));
 
 		await this.net.connect();
 		this.myId = this.net.sessionId;
@@ -707,11 +945,189 @@ export class IsoGame {
 		this._updateOnline();
 	}
 
+	// The same account just signed in on another server or tab (Task 23 single
+	// active session). game-net already suppressed the auto-reconnect; pull the
+	// player out of the world to the offline screen with an honest, actionable
+	// reason. The Reconnect button reclaims the seat (game-net clears the flag).
+	_onTakeover() {
+		this.phase = 'offline';
+		this._setHudPhase('offline');
+		if (this.hud.offlineMsg) {
+			this.hud.offlineMsg.textContent =
+				'Your account signed in on another server or tab. Only one session can be active at a time.';
+		}
+		if (this.hud.retryBtn) this.hud.retryBtn.textContent = 'Reconnect here';
+	}
+
+	// ---------------------------------------------------------------- server picker
+	// Login-time world-instance chooser (Task 23). Lists the real roster with live
+	// population from the multiplayer host's /servers endpoint; the choice is
+	// remembered per browser and pins the whole session to one instance.
+
+	// The active choice: an explicit picker selection wins, then a ?server= deep
+	// link, then the remembered choice, else '' (server resolves its default).
+	_resolveServerChoice() {
+		if (this._chosenServer) return this._chosenServer;
+		const urlS = new URLSearchParams(location.search).get('server');
+		if (urlS) return urlS;
+		try { return localStorage.getItem('kg-server') || ''; } catch { return ''; }
+	}
+
+	_initServerPicker() {
+		this._serverList = null;
+		this._serverPollTimer = null;
+		this._chosenServer = this._resolveServerChoice();
+		this._refreshServers();
+	}
+
+	_startServerPolling() {
+		if (this._serverPollTimer || !this.hud?.serversList) return;
+		// Refresh live counts every 10s while the picker is visible so the numbers
+		// the player chooses from stay honest without hammering the endpoint.
+		this._serverPollTimer = setInterval(() => this._refreshServers(), 10_000);
+	}
+
+	_stopServerPolling() {
+		if (this._serverPollTimer) { clearInterval(this._serverPollTimer); this._serverPollTimer = null; }
+	}
+
+	async _refreshServers() {
+		if (!this.hud?.serversList) return;
+		let list;
+		try {
+			list = await fetchServers(this.net?.url);
+		} catch {
+			// Host unreachable: still let the player in via a single default world
+			// rather than blocking on a count we can't get. Never fake a number.
+			if (!this._serverList) this._renderServerFallback();
+			return;
+		}
+		if (!Array.isArray(list) || !list.length) { this._renderServerFallback(); return; }
+		this._serverList = list;
+		// Pre-select the remembered/url choice if it's still a real instance, else
+		// the recommended (least-full) one, else the first.
+		const ids = new Set(list.map((s) => s.id));
+		if (!this._chosenServer || !ids.has(this._chosenServer)) {
+			this._chosenServer = (list.find((s) => s.recommended) || list[0]).id;
+		}
+		this._renderServers(list, false);
+	}
+
+	_renderServerFallback() {
+		this._serverList = [{ id: '', name: 'Default world', blurb: '', players: null, recommended: false }];
+		this._chosenServer = '';
+		this._renderServers(this._serverList, true);
+	}
+
+	_renderServers(list, isFallback) {
+		const host = this.hud.serversList;
+		if (!host) return;
+		host.setAttribute('aria-busy', 'false');
+		host.textContent = '';
+		for (const s of list) {
+			const known = Number.isFinite(s.players);
+			const selected = s.id === this._chosenServer;
+
+			const opt = document.createElement('label');
+			opt.className = 'kg-server-opt';
+			opt.dataset.selected = String(selected);
+			opt.dataset.empty = String(known && s.players === 0);
+
+			const input = document.createElement('input');
+			input.type = 'radio';
+			input.name = 'kg-server';
+			input.value = s.id;
+			input.checked = selected;
+			input.addEventListener('change', () => this._selectServer(s.id));
+			opt.appendChild(input);
+
+			const dot = document.createElement('span');
+			dot.className = 'kg-server-dot';
+			dot.setAttribute('aria-hidden', 'true');
+			opt.appendChild(dot);
+
+			const main = document.createElement('span');
+			main.className = 'kg-server-main';
+			const nameRow = document.createElement('span');
+			nameRow.className = 'kg-server-name';
+			nameRow.append(document.createTextNode(s.name || s.id || 'World'));
+			if (s.recommended && !isFallback) {
+				const rec = document.createElement('span');
+				rec.className = 'kg-server-rec';
+				rec.textContent = 'Recommended';
+				nameRow.appendChild(rec);
+			}
+			main.appendChild(nameRow);
+			if (s.blurb) {
+				const blurb = document.createElement('div');
+				blurb.className = 'kg-server-blurb';
+				blurb.textContent = s.blurb;
+				main.appendChild(blurb);
+			}
+			opt.appendChild(main);
+
+			if (known) {
+				const pop = document.createElement('span');
+				pop.className = 'kg-server-pop';
+				const b = document.createElement('b');
+				b.textContent = String(s.players);
+				pop.append(b, document.createTextNode(s.players === 1 ? 'player' : 'players'));
+				opt.appendChild(pop);
+			}
+
+			opt.addEventListener('click', (e) => {
+				// The label already toggles the radio; guard against a double-fire.
+				if (e.target !== input) this._selectServer(s.id);
+			});
+			host.appendChild(opt);
+		}
+		this._updateServerChip();
+	}
+
+	_selectServer(id) {
+		this._chosenServer = id;
+		try { localStorage.setItem('kg-server', id); } catch {}
+		// Repaint just the selection state so live counts + focus survive.
+		this.hud.serversList?.querySelectorAll('.kg-server-opt').forEach((el) => {
+			el.dataset.selected = String((el.querySelector('input')?.value ?? '') === id);
+		});
+	}
+
+	// Topbar chip naming the world instance the player is on. Reads the synced,
+	// authoritative server id; only shown when there's a real choice of instances.
+	_updateServerChip() {
+		const chip = this.hud.server;
+		if (!chip) return;
+		const id = this.net?.state?.server || this._chosenServer || '';
+		const name = this._serverList?.find((s) => s.id === id)?.name || id;
+		const multi = (this._serverList?.length || 0) > 1;
+		if (name && multi) { chip.textContent = name; chip.hidden = false; }
+		else { chip.hidden = true; }
+	}
+
+	// A portal moved us into a different realm room. The new room replays its own
+	// players/nodes/mobs/tombs from scratch, so tear down every dynamic view tied
+	// to the old realm (otherwise they linger as ghosts) and adopt the new session
+	// id before those replays arrive. The fresh 'realm' message rebuilds the static
+	// geometry; the loop's pending target is dropped so we don't chase a stale tile.
+	_onHandoff({ sessionId } = {}) {
+		for (const id of [...this.players.keys()]) this._playerRemove(id);
+		for (const id of [...this.nodeViews.keys()]) this._nodeRemove(id);
+		for (const id of [...this.mobViews.keys()]) this._mobRemove(id);
+		for (const id of [...this.tombViews.keys()]) this._tombRemove(id);
+		for (const id of [...this.structViews.keys()]) this._structRemove(id);
+		this._exitBuildMode();
+		this._target = null;
+		this._lootTombId = null;
+		this.myId = sessionId || this.net?.sessionId || this.myId;
+		this._updateOnline();
+	}
+
 	// ---------------------------------------------------------------- players
 	_playerAdd(p, id) {
 		if (this.players.has(id)) { this.players.get(id).apply(p); return; }
 		const isLocal = id === this.myId;
-		const view = new GamePlayerView(this.scene, (tx, ty) => this._tileToWorld(tx, ty), p, isLocal);
+		const view = new GamePlayerView(this.scene, (tx, ty) => this._tileToWorld(tx, ty), p, isLocal, (cid) => this._cosmeticVisual(cid));
 		// The local player renders its own resolved avatar immediately (covers a
 		// guest blob the server hasn't received the public URL for yet).
 		if (isLocal && this.localAvatarUrl) view.setAvatar(this.localAvatarUrl);
@@ -738,6 +1154,12 @@ export class IsoGame {
 		const onBank = (this.realm?.bankZone || []).some((t) => t.tx === p.tx && t.ty === p.ty);
 		this.q.setBankAvailable(onBank);
 		this._updateMountChip(p);
+		// Keep the persistent gold readout + any open shop's affordability in sync as
+		// the purse changes (mob/quest rewards, a purchase).
+		this.q.setGold(p.gold);
+		// Affordability of buildables shifts as materials are gained/spent — keep the
+		// build menu live (no-op in realms that don't permit building).
+		this._refreshBuildMenu();
 	}
 	_playerRemove(id) {
 		const v = this.players.get(id);
@@ -766,6 +1188,114 @@ export class IsoGame {
 	}
 
 	_mountDef(id) { return this.items?.[id]?.mount || null; }
+
+	// ------------------------------------------------------------ cosmetics (Task 21)
+	// The cosmetics catalogue (id → name/rarity/price/rotation/visual) arrives once
+	// on join. Index it, hand it to the HUD so the shop/wardrobe render real data,
+	// and re-apply every avatar's equipped look now that visuals are resolvable.
+	_onCosmetics(catalog) {
+		const list = catalog?.cosmetics || [];
+		this.cosmetics = new Map(list.map((c) => [c.id, c]));
+		this.cosmeticRarities = catalog?.rarities || {};
+		this.q?.setCosmeticCatalog(list, this.cosmeticRarities);
+		const players = this.net?.state?.players;
+		for (const [id, v] of this.players) {
+			const sp = players?.get(id);
+			v.setCosmetic(sp?.cosmeticId || '');
+		}
+	}
+
+	// Resolve a cosmetic id to its visual spec for the avatar renderer. Returns null
+	// for the empty/default look or before the catalogue has loaded.
+	_cosmeticVisual(id) {
+		return id ? (this.cosmetics?.get(id)?.visual || null) : null;
+	}
+
+	// The live shop board (offers + rotation countdowns + owned + gold) — straight
+	// through to the HUD's shop surface.
+	_onShop(snapshot) {
+		this.q?.setShop(snapshot || null);
+	}
+
+	// ---------------------------------------------------------------- marketplace (Task 20)
+
+	// Begin an on-chain token purchase. We allow one in flight at a time so the
+	// per-listing busy state and the wallet handshake stay unambiguous. The server
+	// replies with a 'marketQuote' (unsigned split tx + signed quote) which
+	// _onMarketQuote then drives through the wallet and back as a settle.
+	async _buyTokenListing(id) {
+		if (this._tokenBuy) { this._toast({ kind: 'market', text: 'Finish your current purchase first.' }); return; }
+		let wallet = null;
+		try {
+			const { detectSolanaWallet } = await import('../erc8004/solana-deploy.js');
+			wallet = detectSolanaWallet();
+		} catch { wallet = null; }
+		if (!wallet || !wallet.publicKey) {
+			this._toast({ kind: 'market', text: 'Connect a Solana wallet to buy with tokens.' });
+			return;
+		}
+		this._tokenBuy = { id };
+		this.q?.setMarketBusy(id, 'Preparing…');
+		this.net?.marketTokenQuote(id);
+	}
+
+	// The server quoted the token amount and built the split transaction. Sign it in
+	// the wallet, broadcast through our same-origin RPC proxy, wait for confirmation,
+	// then hand the signature back for server-side verification + gold release.
+	async _onMarketQuote(qd) {
+		if (!qd || !this._tokenBuy || this._tokenBuy.id !== qd.id) return; // stale/unsolicited
+		const id = qd.id;
+		try {
+			const { detectSolanaWallet, SOLANA_RPC } = await import('../erc8004/solana-deploy.js');
+			const { Transaction, Connection } = await import('@solana/web3.js');
+			const wallet = detectSolanaWallet();
+			if (!wallet || !wallet.publicKey) throw new Error('wallet-missing');
+			this.q?.setMarketBusy(id, 'Confirm in wallet…');
+			const bytes = Uint8Array.from(atob(qd.tx), (c) => c.charCodeAt(0));
+			const tx = Transaction.from(bytes);
+			const signed = await wallet.signTransaction(tx);
+			this.q?.setMarketBusy(id, 'Confirming…');
+			const conn = new Connection(SOLANA_RPC.mainnet, 'confirmed');
+			const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false, maxRetries: 3 });
+			const latest = await conn.getLatestBlockhash('confirmed');
+			await conn.confirmTransaction({ signature: sig, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight }, 'confirmed');
+			this.q?.setMarketBusy(id, 'Settling…');
+			this.net?.marketTokenSettle(qd.quote, sig);
+		} catch (err) {
+			const msg = String(err?.message || err);
+			const friendly = /reject|denied|cancell?ed|user/i.test(msg) ? 'Cancelled in wallet.' : 'Payment failed — no gold was charged.';
+			this._tokenBuy = null;
+			this.q?.clearMarketBusy(id);
+			this._toast({ kind: 'market', text: friendly });
+		}
+	}
+
+	// Server verified the payment and released the gold (it also sends a notice +
+	// fresh board). Clear the in-flight buy + its busy spinner.
+	_onMarketSettled(s) {
+		const id = s?.id || this._tokenBuy?.id;
+		this._tokenBuy = null;
+		if (id) this.q?.clearMarketBusy(id);
+	}
+
+	// Server rejected a token quote/settle (price feed down, expired quote, failed
+	// verification). The accompanying notice explains why; here we just release the
+	// spinner so the card returns to a buyable state.
+	_onMarketBuyFail(info) {
+		const id = info?.id || this._tokenBuy?.id;
+		this._tokenBuy = null;
+		if (id) this.q?.clearMarketBusy(id);
+	}
+
+	// Proceeds from a sale that completed while this account was offline or in
+	// another realm, delivered on login / via a live nudge.
+	_onMarketPayout(p) {
+		if (!p) return;
+		const parts = [];
+		if (p.gold) parts.push(`${(p.gold | 0).toLocaleString('en-US')} gold`);
+		if (Array.isArray(p.items)) for (const it of p.items) parts.push(`${it.qty}× ${itemLabel(it.item)}`);
+		if (parts.length) this._toast({ kind: 'market', text: `Sale settled: +${parts.join(', ')}.` });
+	}
 
 	// Equip a hotbar slot; if it holds a mount, also ride it — the natural "tap your
 	// steed to mount" gesture. Both are server-authoritative (equip + use intents).
@@ -873,8 +1403,8 @@ export class IsoGame {
 	// Override seam for T8. Baseline: a colour-coded stand-in per mob kind.
 	_buildMobView(mob) {
 		const g = new Group();
-		const color = mob.kind === 'ogre' ? 0x9c5a3c : mob.kind === 'goblin' ? 0x5a8c3c : 0x9aa0ac;
-		const scale = mob.kind === 'ogre' ? 1.4 : 1;
+		const color = mob.kind === 'troll' ? 0x6f5b8e : mob.kind === 'ogre' ? 0x9c5a3c : mob.kind === 'goblin' ? 0x5a8c3c : 0x9aa0ac;
+		const scale = mob.kind === 'troll' ? 1.7 : mob.kind === 'ogre' ? 1.4 : 1;
 		const body = new Mesh(new CylinderGeometry(0.3 * scale, 0.35 * scale, 1.1 * scale, 10),
 			new MeshStandardMaterial({ color, roughness: 0.9 }));
 		body.position.y = 0.55 * scale; body.castShadow = true;
@@ -941,6 +1471,294 @@ export class IsoGame {
 		return g;
 	}
 
+	// ---------------------------------------------------------------- structures
+	// Player-built firepits + shacks (Task 07), synced via the structures map. A
+	// firepit carries a flat countdown ring that drains with its remaining lifetime
+	// (read off the authoritative expiresAt); a shack is a permanent little hut.
+	_structAdd(struct, id) {
+		if (this.structViews.has(id)) { this._structChange(struct, id); return; }
+		const view = this._buildStructView(struct, id);
+		const w = this._tileToWorld(struct.tx, struct.ty);
+		view.group.position.set(w.x, 0, w.z);
+		view.group.traverse((o) => { o.userData.structId = id; });
+		this.objectGroup.add(view.group);
+		this.structViews.set(id, { ...view, struct });
+		// A new structure changes which tiles are buildable + (if mine) pickup state.
+		this._refreshBuildMenu();
+	}
+	_structChange(struct, id) {
+		const v = this.structViews.get(id);
+		if (!v) return;
+		v.struct = struct;
+		const w = this._tileToWorld(struct.tx, struct.ty);
+		v.group.position.set(w.x, 0, w.z);
+	}
+	_structRemove(id) {
+		const v = this.structViews.get(id);
+		if (v) {
+			this.objectGroup.remove(v.group);
+			// Dispose the per-structure geometry/materials (a firepit rebuilds its
+			// countdown ring each frame, so free the live one on teardown).
+			v.group.traverse((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); });
+			this.structViews.delete(id);
+		}
+		this._refreshBuildMenu();
+	}
+
+	// Build the mesh for a structure. Returns { group, ring?, flame?, lifetime } so
+	// the loop can animate a firepit's flame + countdown ring.
+	_buildStructView(struct) {
+		const g = new Group();
+		if (struct.kind === 'firepit') {
+			// A ring of stones, a glowing ember bed, and a flickering flame cone.
+			const stoneMat = new MeshStandardMaterial({ color: 0x6b6f7a, roughness: 0.95 });
+			const ringN = 8;
+			for (let i = 0; i < ringN; i++) {
+				const a = (i / ringN) * Math.PI * 2;
+				const stone = new Mesh(new DodecahedronGeometry(0.16, 0), stoneMat);
+				stone.position.set(Math.cos(a) * 0.42, 0.12, Math.sin(a) * 0.42);
+				stone.castShadow = true;
+				g.add(stone);
+			}
+			const embers = new Mesh(new CylinderGeometry(0.34, 0.34, 0.06, 12),
+				new MeshStandardMaterial({ color: 0x3a1c0c, emissive: 0xff5a1e, emissiveIntensity: 0.9, roughness: 0.6 }));
+			embers.position.y = 0.1;
+			const flame = new Mesh(new ConeGeometry(0.26, 0.8, 10),
+				new MeshStandardMaterial({ color: 0xffae3a, emissive: 0xff7a1e, emissiveIntensity: 1.3, roughness: 0.4, transparent: true, opacity: 0.92 }));
+			flame.position.y = 0.62;
+			// A flat countdown ring around the pit — drains from full to empty over the
+			// firepit's lifetime. Rebuilt each frame via _updateStructures.
+			const ring = new Mesh(
+				new RingGeometry(0.5, 0.62, 28),
+				new MeshBasicMaterial({ color: 0xffce5c, transparent: true, opacity: 0.85, side: DoubleSide }),
+			);
+			ring.rotation.x = -Math.PI / 2;
+			ring.position.y = 0.06;
+			g.add(embers, flame, ring);
+			const lifetime = this._buildCatalog?.firepit?.lifetimeMs || 30000;
+			return { group: g, ring, flame, lifetime };
+		}
+		// Shack: a timber cabin with a pitched roof and a dark doorway.
+		const wall = new Mesh(new BoxGeometry(0.92, 0.8, 0.92),
+			new MeshStandardMaterial({ color: 0x8a5a32, roughness: 0.9 }));
+		wall.position.y = 0.4; wall.castShadow = true; wall.receiveShadow = true;
+		const roof = new Mesh(new ConeGeometry(0.85, 0.6, 4),
+			new MeshStandardMaterial({ color: 0x5a3a20, roughness: 0.9 }));
+		roof.position.y = 1.1; roof.rotation.y = Math.PI / 4; roof.castShadow = true;
+		const door = new Mesh(new BoxGeometry(0.26, 0.46, 0.06),
+			new MeshStandardMaterial({ color: 0x2a1a0e, roughness: 1 }));
+		door.position.set(0, 0.23, 0.47);
+		g.add(wall, roof, door);
+		return { group: g, lifetime: 0 };
+	}
+
+	// Animate firepits: flicker the flame and drain the countdown ring from its
+	// remaining lifetime fraction. Shacks are static. Cheap; runs each frame.
+	_updateStructures(now) {
+		if (!this.structViews.size) return;
+		const t = now / 1000;
+		for (const [, v] of this.structViews) {
+			if (!v.ring) continue;
+			const exp = v.struct?.expiresAt || 0;
+			const frac = exp ? Math.max(0, Math.min(1, (exp - Date.now()) / (v.lifetime || 30000))) : 1;
+			// Redraw the ring as an arc covering the remaining fraction.
+			v.ring.geometry.dispose();
+			v.ring.geometry = new RingGeometry(0.5, 0.62, 40, 1, -Math.PI / 2, frac * Math.PI * 2);
+			// Warm→red as it runs low; flame shrinks + flickers.
+			v.ring.material.color.setHex(frac > 0.33 ? 0xffce5c : 0xff5a3a);
+			if (v.flame) {
+				const flick = 0.85 + Math.sin(t * 12 + v.group.position.x) * 0.12;
+				v.flame.scale.set(1, (0.5 + frac * 0.5) * flick, 1);
+				v.flame.material.opacity = 0.8 + Math.sin(t * 9) * 0.12;
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------- build mode
+	// Enter placement for `kind`: spawn a ghost the loop snaps to the hovered tile,
+	// tinting green/red for valid/invalid. Tap places; right-click/Esc cancels.
+	_enterBuildMode(kind) {
+		if (this.phase !== 'world') return;
+		if (!this._buildCatalog?.[kind]) return;
+		this._exitBuildMode();
+		const ghost = this._makeGhost(kind);
+		this.objectGroup.add(ghost);
+		this._buildMode = { kind, ghost, valid: false, tile: null };
+		this.q?.closeBuild();
+		this.q?.showBuildBanner(STRUCTURE_META[kind]);
+		this._toast({ kind: 'build', text: `Tap a tile beside you to place the ${STRUCTURE_META[kind]?.label || kind}.` });
+	}
+
+	_exitBuildMode() {
+		if (!this._buildMode) { this.q?.hideBuildBanner?.(); return; }
+		this.objectGroup.remove(this._buildMode.ghost);
+		this._buildMode.ghost.traverse((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); });
+		this._buildMode = null;
+		this.q?.hideBuildBanner();
+	}
+
+	// A translucent footprint + a faint silhouette of the structure, tinted by
+	// validity. Kept light — it's built only on enter, recoloured each frame.
+	_makeGhost(kind) {
+		const g = new Group();
+		const pad = new Mesh(new PlaneGeometry(TILE * 0.94, TILE * 0.94),
+			new MeshBasicMaterial({ color: 0x55ff99, transparent: true, opacity: 0.4, side: DoubleSide }));
+		pad.rotation.x = -Math.PI / 2; pad.position.y = 0.05;
+		const silMat = new MeshBasicMaterial({ color: 0x55ff99, transparent: true, opacity: 0.35, depthWrite: false });
+		const sil = kind === 'shack'
+			? new Mesh(new BoxGeometry(0.9, 0.8, 0.9), silMat)
+			: new Mesh(new ConeGeometry(0.3, 0.7, 10), silMat);
+		sil.position.y = kind === 'shack' ? 0.4 : 0.45;
+		g.add(pad, sil);
+		g._pad = pad; g._sil = sil; g._silMat = silMat;
+		return g;
+	}
+
+	// Each frame in build mode: snap the ghost to the tile under the cursor and
+	// recolour by validity. With no cursor yet, park it on the tile in front of us.
+	_updateBuildGhost() {
+		const bm = this._buildMode;
+		if (!bm) return;
+		const tile = this._buildHoverTile();
+		if (!tile) { bm.ghost.visible = false; return; }
+		bm.ghost.visible = true;
+		const w = this._tileToWorld(tile.tx, tile.ty);
+		bm.ghost.position.set(w.x, 0, w.z);
+		const valid = this._buildValid(bm.kind, tile.tx, tile.ty);
+		bm.valid = valid; bm.tile = tile;
+		const col = valid ? 0x55ff99 : 0xff5a5a;
+		bm.ghost._pad.material.color.setHex(col);
+		bm.ghost._silMat.color.setHex(col);
+	}
+
+	// The tile the ghost should occupy: under the cursor if we have one, else the
+	// tile directly in front of the player.
+	_buildHoverTile() {
+		if (this._hoverPtr) {
+			this._ptr.x = (this._hoverPtr.x / window.innerWidth) * 2 - 1;
+			this._ptr.y = -(this._hoverPtr.y / window.innerHeight) * 2 + 1;
+			this._raycaster.setFromCamera(this._ptr, this.camera);
+			const t = this._pickGroundTile();
+			if (t) return t;
+		}
+		const me = this._localView();
+		if (!me) return null;
+		return { tx: me.tx, ty: me.ty - 1 };
+	}
+
+	// Client mirror of the server's build gates for instant ghost feedback: adjacent
+	// (but not under the player), a free/buildable tile, and affordable. The server
+	// re-checks all of it authoritatively on the actual 'build'.
+	_buildValid(kind, tx, ty) {
+		const ps = this.net?.state?.players?.get(this.myId);
+		if (!ps) return false;
+		const dx = Math.abs(tx - ps.tx), dy = Math.abs(ty - ps.ty);
+		if (dx === 0 && dy === 0) return false;
+		if (dx > 1 || dy > 1) return false;
+		if (!this._isBuildableTile(tx, ty)) return false;
+		return this._canAffordBuild(kind);
+	}
+
+	// A tile clear for building: walkable (bounds + not blocked + no node/mob/
+	// structure) and not a portal/bank/fountain/fishing/cooking tile or a standing
+	// player — mirrors the server's _isBuildable.
+	_isBuildableTile(tx, ty) {
+		if (!this._isWalkable(tx, ty)) return false;
+		for (const [, v] of this.structViews) if (v.struct.tx === tx && v.struct.ty === ty) return false;
+		for (const [, pv] of this.players) if (!pv.dead && pv.tx === tx && pv.ty === ty) return false;
+		const r = this.realm || {};
+		for (const p of r.portals || []) {
+			if (tx >= p.x0 && tx <= p.x1 && ty >= p.y0 && ty <= p.y1) return false;
+		}
+		if ((r.bankZone || []).some((t) => t.tx === tx && t.ty === ty)) return false;
+		if (r.fountain && r.fountain.tx === tx && r.fountain.ty === ty) return false;
+		for (const f of r.fishing || []) if (f.tx === tx && f.ty === ty) return false;
+		for (const c of r.cooking || []) if (c.tx === tx && c.ty === ty) return false;
+		return true;
+	}
+
+	_canAffordBuild(kind) {
+		const ps = this.net?.state?.players?.get(this.myId);
+		const cost = this._buildCatalog?.[kind]?.cost;
+		if (!ps || !cost) return false;
+		for (const [item, qty] of Object.entries(cost)) {
+			if (this._countItem(ps, item) < qty) return false;
+		}
+		return true;
+	}
+
+	// Place the ghost: validate client-side for instant feedback, then send the
+	// authoritative 'build'. Stays honest — a red ghost explains why instead of
+	// firing a doomed request. Exits build mode on a successful send.
+	_attemptBuild(tile) {
+		const bm = this._buildMode;
+		if (!bm || !tile) return;
+		const ps = this.net?.state?.players?.get(this.myId);
+		const dx = Math.abs(tile.tx - (ps?.tx ?? 0)), dy = Math.abs(tile.ty - (ps?.ty ?? 0));
+		if (dx === 0 && dy === 0) { this._toast({ kind: 'build', text: 'Step back a tile to place it.' }); return; }
+		if (dx > 1 || dy > 1) { this._toast({ kind: 'build', text: 'Build on a tile right beside you.' }); return; }
+		if (!this._isBuildableTile(tile.tx, tile.ty)) { this._toast({ kind: 'build', text: 'You can’t build there.' }); return; }
+		if (!this._canAffordBuild(bm.kind)) {
+			this._toast({ kind: 'build', text: `Not enough materials for a ${STRUCTURE_META[bm.kind]?.label || bm.kind}.` });
+			return;
+		}
+		this.net?.build(bm.kind, tile.tx, tile.ty);
+		this._exitBuildMode();
+	}
+
+	// Toggle the build menu (B key / toolbar). Refreshes affordability first so the
+	// menu opens with live costs. In build mode, B cancels placement instead.
+	_toggleBuildMenu() {
+		if (this.phase !== 'world') return;
+		if (this._buildMode) { this._exitBuildMode(); return; }
+		this._refreshBuildMenu();
+		this.q?.toggleBuild();
+	}
+
+	// Recompute the buildable list (kinds + live affordability) and hand it to the
+	// HUD. Driven by the realm catalogue + the player's current materials.
+	_refreshBuildMenu() {
+		const kinds = Object.keys(this._buildCatalog || {});
+		if (!kinds.length) { this.q?.setBuildables([]); return; }
+		const ps = this.net?.state?.players?.get(this.myId);
+		const items = kinds.map((kind) => {
+			const def = this._buildCatalog[kind] || {};
+			const meta = STRUCTURE_META[kind] || { icon: '🔨', label: kind, desc: '' };
+			const costs = Object.entries(def.cost || {}).map(([item, need]) => {
+				const have = ps ? this._countItem(ps, item) : 0;
+				return { item, icon: MATERIAL_ICON[item] || '📦', need, have, ok: have >= need };
+			});
+			const owned = this._countOwnedStructures(kind);
+			const capped = !!def.cap && owned >= def.cap;
+			const affordable = costs.every((c) => c.ok) && !capped;
+			const capNote = def.cap ? (capped ? 'placed' : `${owned}/${def.cap}`) : '';
+			return { kind, icon: meta.icon, label: meta.label, desc: meta.desc, costs, affordable, capNote };
+		});
+		this.q?.setBuildables(items);
+	}
+
+	_countOwnedStructures(kind) {
+		let n = 0;
+		for (const [, v] of this.structViews) if (v.struct.kind === kind && v.struct.owner === this.myId) n++;
+		return n;
+	}
+
+	// A structure of mine I'm standing beside (for the /pickup affordance), nearest
+	// first. Null if none in reach.
+	_adjacentOwnedStructure() {
+		const ps = this.net?.state?.players?.get(this.myId);
+		if (!ps) return null;
+		let best = null, bd = Infinity;
+		for (const [, v] of this.structViews) {
+			const s = v.struct;
+			if (s.owner !== this.myId) continue;
+			if (Math.abs(ps.tx - s.tx) > 1 || Math.abs(ps.ty - s.ty) > 1) continue;
+			const d = (ps.tx - s.tx) ** 2 + (ps.ty - s.ty) ** 2;
+			if (d < bd) { bd = d; best = s; }
+		}
+		return best;
+	}
+
 	// ---------------------------------------------------------------- death & loot
 	// The local player died: stash the notice so the respawn overlay can describe
 	// the drop, and close any open bag panel (you can't loot while dead).
@@ -975,6 +1793,14 @@ export class IsoGame {
 		this._ptr.y = -(clientY / window.innerHeight) * 2 + 1;
 		this._raycaster.setFromCamera(this._ptr, this.camera);
 
+		// Build mode (Task 07) owns the tap: a click places the structure on the
+		// ghost's tile; movement/gather clicks are suppressed until we exit.
+		if (this._buildMode) {
+			const tile = this._pickGroundTile() || this._buildMode.tile;
+			this._attemptBuild(tile);
+			return;
+		}
+
 		// 1) Tombstone under the cursor (dynamic objects).
 		if (this.tombViews.size) {
 			const hits = this._raycaster.intersectObject(this.objectGroup, true);
@@ -1004,6 +1830,19 @@ export class IsoGame {
 			if (ud.nodeId && this.nodeViews.has(ud.nodeId)) { this._setTarget('node', ud.nodeId); return; }
 			if (ud.mobId && this.mobViews.has(ud.mobId)) { this._setTarget('mob', ud.mobId); return; }
 			if (ud.npcId && this.npcViews.has(ud.npcId)) { this._setTarget('npc', ud.npcId); return; }
+		}
+
+		// 2b) In a PvP realm, a tap on another living player marks them as an attack
+		// target the loop closes on and strikes (the server enforces range + safe zones).
+		if (this.realm?.pvp) {
+			const rigs = [];
+			for (const [pid, pv] of this.players) if (pid !== this.myId && !pv.dead) rigs.push(pv.rig);
+			if (rigs.length) {
+				for (const h of this._raycaster.intersectObjects(rigs, true)) {
+					const pid = this._playerIdOf(h.object);
+					if (pid && this.players.has(pid)) { this._setTarget('player', pid); return; }
+				}
+			}
 		}
 
 		// 3) Ground pick: water / a shore spot is a cast intent; otherwise a walkable
@@ -1299,7 +2138,13 @@ export class IsoGame {
 		this._toggleAction(this.hud.castBtn, showCast, hasRod ? 'Cast line 🎣' : 'Need a rod 🎣');
 		if (this.hud.castBtn) this.hud.castBtn.classList.toggle('kg-action--muted', showCast && !hasRod);
 
-		bar.hidden = !(showCook || showEat || showCast);
+		// Pick up: standing beside a structure I placed (Task 07). Routes to /pickup;
+		// a locked structure tells the player to /unlock first (server enforces it).
+		const mine = this._adjacentOwnedStructure();
+		const showPickup = !!mine;
+		this._toggleAction(this.hud.pickupBtn, showPickup, mine ? `Pick up ${STRUCTURE_META[mine.kind]?.label || mine.kind}${mine.locked ? ' 🔒' : ''}` : 'Pick up');
+
+		bar.hidden = !(showCook || showEat || showCast || showPickup);
 	}
 
 	_toggleAction(btn, show, label) {
@@ -1487,9 +2332,13 @@ export class IsoGame {
 			if (k === 'escape' && this._skillsOpen) { e.preventDefault(); this._toggleSkills(false); return; }
 			// Quests panel: Q toggles, Escape closes any open quest/bank/NPC surface.
 			if (k === 'q' && this.phase === 'world') { e.preventDefault(); this.q?.toggleQuests(); return; }
+			// Build menu (Task 07): B opens it / cancels an in-progress placement.
+			if (k === 'b' && this.phase === 'world') { e.preventDefault(); this._toggleBuildMenu(); return; }
+			// Escape also cancels build mode before any other surface.
+			if (k === 'escape' && this._buildMode) { e.preventDefault(); this._exitBuildMode(); return; }
 			// Hotbar number keys 1–6: select that slot (and ride a mount on it).
 			if (this.phase === 'world' && k >= '1' && k <= '6') { e.preventDefault(); this._equipOrRide(+k - 1); return; }
-			if (k === 'escape') { this.q?.closeQuests(); this.q?.closeBank(); this.q?.closeNpc(); }
+			if (k === 'escape') { this.q?.closeQuests(); this.q?.closeBank(); this.q?.closeNpc(); this.q?.closeBuild?.(); this.q?.closeShop?.(); }
 			// Hotbar 1–6: equip that slot (server validates + patches activeSlot back).
 			if (this.phase === 'world' && k >= '1' && k <= '6') { e.preventDefault(); this.net?.equip(parseInt(k, 10) - 1); return; }
 			// Chat focus: C (or Enter) opens the chat input once in the world. The
@@ -1503,7 +2352,13 @@ export class IsoGame {
 
 		this.canvas.addEventListener('pointerdown', (e) => {
 			this._dragging = true; this._lastPtr = { x: e.clientX, y: e.clientY };
+			this._hoverPtr = { x: e.clientX, y: e.clientY }; // build ghost follows the press point
 			this._downAt = performance.now(); this._dragMoved = 0;
+		});
+		// Right-click cancels build placement (the desktop counterpart to the banner's
+		// Cancel button on touch). Only swallow the context menu while building.
+		this.canvas.addEventListener('contextmenu', (e) => {
+			if (this._buildMode) { e.preventDefault(); this._exitBuildMode(); }
 		});
 		window.addEventListener('pointerup', (e) => {
 			const wasDragging = this._dragging;
@@ -1516,6 +2371,9 @@ export class IsoGame {
 			}
 		});
 		window.addEventListener('pointermove', (e) => {
+			// Track the cursor always (even without a drag) so the build ghost can
+			// follow it on desktop hover.
+			this._hoverPtr = { x: e.clientX, y: e.clientY };
 			if (!this._dragging) return;
 			const dx = e.clientX - this._lastPtr.x, dy = e.clientY - this._lastPtr.y;
 			this._lastPtr = { x: e.clientX, y: e.clientY };
@@ -1599,6 +2457,7 @@ export class IsoGame {
 		if (t.kind === 'tile') return { tx: t.tx, ty: t.ty };
 		if (t.kind === 'node') { const v = this.nodeViews.get(t.id); if (!v || v.node.depleted) return null; return { tx: v.node.tx, ty: v.node.ty }; }
 		if (t.kind === 'mob') { const v = this.mobViews.get(t.id); if (!v || v.mob.dead) return null; return { tx: v.mob.tx, ty: v.mob.ty }; }
+		if (t.kind === 'player') { const v = this.players.get(t.id); if (!v || v.dead) return null; return { tx: v.tx, ty: v.ty }; }
 		if (t.kind === 'npc') { const v = this.npcViews.get(t.id); if (!v) return null; return { tx: v.npc.tx, ty: v.npc.ty }; }
 		return null;
 	}
@@ -1662,6 +2521,11 @@ export class IsoGame {
 			if (!v || v.mob.dead) { this._target = null; return; }
 			this._equipTool(ps, 'sword');
 			this.net?.attack(t.id);
+		} else if (t.kind === 'player') {
+			const v = this.players.get(t.id);
+			if (!v || v.dead) { this._target = null; return; }
+			this._equipTool(ps, 'sword');
+			this.net?.attack(t.id); // PvP — server validates realm/range/safe-zone
 		}
 	}
 
@@ -1706,8 +2570,10 @@ export class IsoGame {
 			offline: document.getElementById('kg-offline'),
 			offlineMsg: document.getElementById('kg-offline-msg'),
 			retryBtn: document.getElementById('kg-retry'),
+			serversList: document.getElementById('kg-servers-list'),
 			topbar: document.getElementById('kg-topbar'),
 			realm: document.getElementById('kg-realm'),
+			server: document.getElementById('kg-server'),
 			online: document.getElementById('kg-online'),
 			status: document.getElementById('kg-status'),
 			toasts: document.getElementById('kg-toasts'),
@@ -1724,10 +2590,12 @@ export class IsoGame {
 			cookBtn: document.getElementById('kg-cook'),
 			eatBtn: document.getElementById('kg-eat'),
 			castBtn: document.getElementById('kg-cast'),
+			pickupBtn: document.getElementById('kg-pickup'),
 			chat: document.getElementById('kg-chat'),
 			chatLog: document.getElementById('kg-chat-log'),
 			chatForm: document.getElementById('kg-chat-form'),
 			chatInput: document.getElementById('kg-chat-input'),
+			chatHint: document.getElementById('kg-chat-hint'),
 			chatMutedBtn: document.getElementById('kg-chat-muted-btn'),
 			chatMutedN: document.getElementById('kg-chat-muted-n'),
 			chatMutedList: document.getElementById('kg-chat-muted'),
@@ -1747,6 +2615,10 @@ export class IsoGame {
 		const savedName = localStorage.getItem('cc-name') || '';
 		if (savedName) this.hud.nameInput.value = savedName;
 		this.hud.nameInput.placeholder = 'guest-' + Math.random().toString(36).slice(2, 6);
+
+		// World-instance picker (Task 23): render the live roster + populations and
+		// remember the player's choice. Polling starts/stops with the start screen.
+		this._initServerPicker();
 
 		const begin = () => {
 			const name = (this.hud.nameInput.value || this.hud.nameInput.placeholder).trim().slice(0, 24);
@@ -1774,6 +2646,8 @@ export class IsoGame {
 		this.hud.eatBtn?.addEventListener('click', () => { if (this._eatRef) this.net?.consume(this._eatRef); });
 		this.hud.dismountBtn?.addEventListener('click', () => this.net?.dismount());
 		this.hud.castBtn?.addEventListener('click', () => this._attemptCast());
+		// Pick up a structure I'm standing beside — the server action is /pickup.
+		this.hud.pickupBtn?.addEventListener('click', () => this.net?.command('/pickup'));
 
 		this._bindChat();
 		this._setHudPhase('start');
@@ -1782,6 +2656,9 @@ export class IsoGame {
 	_setHudPhase(phase) {
 		this.hud.start.hidden = phase !== 'start';
 		this.hud.offline.hidden = phase !== 'offline';
+		// Poll live server populations only while the picker is on screen.
+		if (phase === 'start') this._startServerPolling();
+		else this._stopServerPolling();
 		this.hud.topbar.hidden = !(phase === 'world' || phase === 'connecting');
 		this.hud.hint.hidden = phase !== 'world';
 		// The contextual action bar only makes sense in-world; hide it elsewhere so
@@ -1812,15 +2689,28 @@ export class IsoGame {
 	// server command system, and mute players client-side. The panel is collapsed
 	// (click-through) until focused so it never blocks the world.
 
+	// Storage key for the mute list — scoped to the stable account id (Task 16) so
+	// each account keeps its own block list, matching how keybindings persist.
+	_mutedKey() {
+		return 'kg-muted:' + (this._playerId() || '_');
+	}
+
 	_loadMuted() {
 		try {
-			const raw = JSON.parse(localStorage.getItem('kg-muted') || '[]');
-			return new Set(Array.isArray(raw) ? raw.filter((n) => typeof n === 'string') : []);
+			const key = this._mutedKey();
+			let raw = localStorage.getItem(key);
+			// Migrate the pre-account global list (kg-muted) into this account once.
+			if (raw == null) {
+				const legacy = localStorage.getItem('kg-muted');
+				if (legacy != null) { raw = legacy; localStorage.setItem(key, legacy); localStorage.removeItem('kg-muted'); }
+			}
+			const parsed = JSON.parse(raw || '[]');
+			return new Set(Array.isArray(parsed) ? parsed.filter((n) => typeof n === 'string') : []);
 		} catch { return new Set(); }
 	}
 
 	_saveMuted() {
-		try { localStorage.setItem('kg-muted', JSON.stringify([...this.muted])); } catch { /* storage may be unavailable */ }
+		try { localStorage.setItem(this._mutedKey(), JSON.stringify([...this.muted])); } catch { /* storage may be unavailable */ }
 	}
 
 	_bindChat() {
@@ -1834,14 +2724,147 @@ export class IsoGame {
 			if (this.hud.chat?.contains(e.relatedTarget)) return;
 			if (!this.hud.chatInput.value.trim()) this._closeChat();
 		});
+		// Slash-command autocomplete: refresh the hint list on every edit.
+		this.hud.chatInput?.addEventListener('input', () => this._refreshCmdHint());
 		this.hud.chatInput?.addEventListener('keydown', (e) => {
-			// Esc clears + closes; everything else stays in the field (the global
-			// keydown bails on _typing(), so movement keys never fire while chatting).
-			if (e.key === 'Escape') { e.preventDefault(); this.hud.chatInput.value = ''; this._closeChat(); }
+			// Esc: first dismiss an open command hint, otherwise clear + close chat.
+			if (e.key === 'Escape') {
+				e.preventDefault();
+				if (this._cmdHint) this._hideCmdHint();
+				else { this.hud.chatInput.value = ''; this._closeChat(); }
+				e.stopPropagation();
+				return;
+			}
+			// When the hint is open, the arrow/Tab keys drive it instead of the field.
+			if (this._cmdHint) {
+				if (e.key === 'ArrowDown') { e.preventDefault(); this._moveCmdHint(1); e.stopPropagation(); return; }
+				if (e.key === 'ArrowUp') { e.preventDefault(); this._moveCmdHint(-1); e.stopPropagation(); return; }
+				if (e.key === 'Tab') { e.preventDefault(); this._completeCmdHint(); e.stopPropagation(); return; }
+				// Enter on a highlighted suggestion completes it, then falls through to
+				// the form submit so the command sends in a single keystroke.
+				if (e.key === 'Enter' && this._cmdHint.active >= 0) {
+					const c = this._cmdHint.items[this._cmdHint.active];
+					if (c) this.hud.chatInput.value = '/' + c.name;
+					this._hideCmdHint();
+				}
+			}
+			// Everything else stays in the field (the global keydown bails on
+			// _typing(), so movement keys never fire while chatting).
 			e.stopPropagation();
 		});
 		this.hud.chatMutedBtn?.addEventListener('click', () => this._toggleMutedList());
 		this._updateMutedCount();
+	}
+
+	// Slash-command manifest (Task 13) — the same registry that powers /help and the
+	// server router, so the autocomplete can never list a command that doesn't exist.
+	_onCommands(manifest) {
+		this._cmds = Array.isArray(manifest)
+			? manifest
+					.map((c) => ({
+						name: String(c?.name || ''),
+						args: String(c?.args || ''),
+						desc: String(c?.desc || ''),
+						aliases: Array.isArray(c?.aliases) ? c.aliases.map(String) : [],
+					}))
+					.filter((c) => c.name)
+			: [];
+	}
+
+	// Recompute the hint list from the current input. Suggestions show only while
+	// typing a command NAME — a leading '/' with no space yet. Once a space (args)
+	// or a non-command line is typed, the hint hides.
+	_refreshCmdHint() {
+		const input = this.hud.chatInput;
+		if (!input) return;
+		const m = /^\/(\S*)$/.exec(input.value);
+		if (!m || !this._cmds?.length) { this._hideCmdHint(); return; }
+		const frag = m[1].toLowerCase();
+		const matches = this._cmds
+			.filter((c) => c.name.startsWith(frag) || c.aliases.some((a) => a.startsWith(frag)))
+			.slice(0, 8);
+		if (!matches.length) { this._hideCmdHint(); return; }
+		// Keep the highlighted command across keystrokes when it's still a match, so
+		// narrowing the list doesn't reset the user's selection out from under them.
+		const prev = this._cmdHint?.active >= 0 ? this._cmdHint.items[this._cmdHint.active]?.name : null;
+		const active = prev ? matches.findIndex((c) => c.name === prev) : -1;
+		this._cmdHint = { items: matches, active };
+		this._renderCmdHint();
+	}
+
+	_renderCmdHint() {
+		const hint = this.hud.chatHint;
+		const input = this.hud.chatInput;
+		if (!hint || !this._cmdHint) return;
+		hint.replaceChildren();
+		this._cmdHint.items.forEach((c, i) => {
+			const li = document.createElement('li');
+			const on = i === this._cmdHint.active;
+			li.className = 'kg-chat-hint-item' + (on ? ' kg-chat-hint-item--active' : '');
+			li.id = 'kg-chat-hint-' + i;
+			li.setAttribute('role', 'option');
+			li.setAttribute('aria-selected', on ? 'true' : 'false');
+			const sig = document.createElement('span');
+			sig.className = 'kg-chat-hint-cmd';
+			sig.textContent = '/' + c.name + (c.args ? ' ' + c.args : '');
+			const desc = document.createElement('span');
+			desc.className = 'kg-chat-hint-desc';
+			desc.textContent = c.desc;
+			li.append(sig, desc);
+			// mousedown (before the input's blur) so a click completes + sends without
+			// the panel collapsing first.
+			li.addEventListener('mousedown', (e) => { e.preventDefault(); this._chooseCmdHint(i); });
+			hint.appendChild(li);
+		});
+		hint.hidden = false;
+		input?.setAttribute('aria-expanded', 'true');
+		if (this._cmdHint.active >= 0) {
+			input?.setAttribute('aria-activedescendant', 'kg-chat-hint-' + this._cmdHint.active);
+			hint.children[this._cmdHint.active]?.scrollIntoView({ block: 'nearest' });
+		} else {
+			input?.removeAttribute('aria-activedescendant');
+		}
+	}
+
+	_moveCmdHint(dir) {
+		if (!this._cmdHint) return;
+		const n = this._cmdHint.items.length;
+		const cur = this._cmdHint.active;
+		this._cmdHint.active = cur < 0 ? (dir > 0 ? 0 : n - 1) : (cur + dir + n) % n;
+		this._renderCmdHint();
+	}
+
+	// Tab: fill the field with the (highlighted, else first) command. Append a space
+	// when it takes args so the player keeps typing; refresh then hides or re-narrows.
+	_completeCmdHint() {
+		if (!this._cmdHint || !this.hud.chatInput) return;
+		const idx = this._cmdHint.active >= 0 ? this._cmdHint.active : 0;
+		const c = this._cmdHint.items[idx];
+		if (!c) return;
+		// Tab fills the chosen command in full. For an arg-taking command, append a
+		// space and re-narrow so the player keeps typing; for a complete no-arg
+		// command there's nothing left to suggest, so dismiss the hint.
+		this.hud.chatInput.value = '/' + c.name + (c.args ? ' ' : '');
+		if (c.args) this._refreshCmdHint();
+		else this._hideCmdHint();
+	}
+
+	// Mouse pick: complete + send in one action.
+	_chooseCmdHint(i) {
+		const c = this._cmdHint?.items[i];
+		if (!c || !this.hud.chatInput) return;
+		this.hud.chatInput.value = '/' + c.name;
+		this._hideCmdHint();
+		this._sendChat();
+	}
+
+	_hideCmdHint() {
+		this._cmdHint = null;
+		if (this.hud.chatHint) { this.hud.chatHint.hidden = true; this.hud.chatHint.replaceChildren(); }
+		if (this.hud.chatInput) {
+			this.hud.chatInput.setAttribute('aria-expanded', 'false');
+			this.hud.chatInput.removeAttribute('aria-activedescendant');
+		}
 	}
 
 	_openChat() {
@@ -1858,6 +2881,7 @@ export class IsoGame {
 	_closeChat(force) {
 		this._closeMuteMenu();
 		this._toggleMutedList(false);
+		this._hideCmdHint();
 		if (!this._chatOpen && !force) return;
 		this._chatOpen = false;
 		this.hud.chat?.classList.remove('kg-chat--open');
@@ -1869,6 +2893,7 @@ export class IsoGame {
 		if (!input) return;
 		const text = input.value.trim();
 		input.value = '';
+		this._hideCmdHint();
 		if (!text) { this._closeChat(); return; }
 		// Server is authoritative: it sanitizes, rate-limits, routes `/commands`, and
 		// echoes accepted messages back to everyone (us included) as 'chat' events.
@@ -2079,6 +3104,8 @@ export class IsoGame {
 			this._updateLabels();
 			this._updateNpcLabels();
 			this._updateTombLabels();
+			this._updateStructures(now);
+			this._updateBuildGhost();
 			this._updateDeathOverlay();
 			this._updateActions();
 			this._tickCast(now);
@@ -2205,6 +3232,9 @@ export class IsoGame {
 		this.players.clear();
 		for (const [, tv] of this.tombViews) { this.objectGroup.remove(tv.group); tv.label.remove(); }
 		this.tombViews.clear();
+		for (const [, sv] of this.structViews) this.objectGroup.remove(sv.group);
+		this.structViews.clear();
+		this._exitBuildMode();
 		this._disposeNpcs();
 		this.q?.destroy();
 		this._clearCast();

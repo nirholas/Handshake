@@ -57,7 +57,12 @@ export class GamePlayer extends Schema {
 		this.mining = 1;
 		this.fishing = 1;
 		this.cooking = 1;
-		this.cosmetic = ''; // equipped cosmetic id ('' = default)
+		this.cosmetic = ''; // base avatar URL (the player's chosen model; '' = default)
+		// Equipped shop cosmetic id (Task 21), '' = none. Strictly visual: the client
+		// layers this look (tint / worn prop / aura) over the base avatar. Synced so
+		// every peer renders the player's equipped cosmetic. Server-authoritative —
+		// only set after a validated purchase + equip, never from a raw client claim.
+		this.cosmeticId = '';
 		// Quest-awarded badges, as a comma-separated list of badge ids. Synced so
 		// every peer renders the achievement on the player's nameplate (the
 		// in-world "profile"). Server-authoritative — only the quest engine writes it.
@@ -97,6 +102,7 @@ defineTypes(GamePlayer, {
 	fishing: 'uint16',
 	cooking: 'uint16',
 	cosmetic: 'string',
+	cosmeticId: 'string',
 	badges: 'string',
 	inv: [Slot],
 	hotbar: [Slot],
@@ -223,6 +229,10 @@ export class GameState extends Schema {
 	constructor() {
 		super();
 		this.realm = 'mainland';
+		// World instance id this room belongs to (Task 23). Synced so the client
+		// can label the HUD with the server it actually landed on, confirming the
+		// login pick rather than trusting its own local choice.
+		this.server = 's1';
 		this.players = new MapSchema();
 		this.nodes = new MapSchema();
 		this.mobs = new MapSchema();
@@ -232,6 +242,7 @@ export class GameState extends Schema {
 }
 defineTypes(GameState, {
 	realm: 'string',
+	server: 'string',
 	players: { map: GamePlayer },
 	nodes: { map: ResourceNode },
 	mobs: { map: Mob },

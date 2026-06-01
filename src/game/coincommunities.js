@@ -35,6 +35,8 @@ import { GUEST_SENTINEL, uploadPendingGuestAvatar } from './play-handoff.js';
 import { HOME_TOWN, isHomeTown } from './home-town.js';
 import { VoiceChat, voiceSupported } from './voice-chat.js';
 import { requestHolderPass, signInWithX, ensureSolanaWallet, getSession } from '../community/town-auth.js';
+import { ensurePlayAccess } from './play-gate.js';
+import { clearStoredPass } from './play-auth.js';
 
 const WORLD_RADIUS = 58; // a touch inside the server's 60m clamp
 const MOVE_SPEED = 4.2;
@@ -231,6 +233,16 @@ export class CoinCommunities {
 
 		this._loop = this._loop.bind(this);
 		requestAnimationFrame(this._loop);
+
+		// Wallet-first entry: when the platform has pinned a game token, the sign-in
+		// gate stands in front of everything — connect a wallet, sign a nonce, and
+		// hold ≥ the floor before any world opens. The verified wallet becomes the
+		// account id we carry into every room. When no token is pinned the gate
+		// resolves instantly (open /play) and nothing below changes. enter() awaits
+		// this, so a deep link still drops in — just after the gate clears.
+		this.playPass = '';
+		this.account = '';
+		this._playReady = this._ensurePlayAccess();
 
 		// Deep link: /play?coin=<mint>&name=&symbol=&image= drops straight into a
 		// coin's community, so a community is a shareable URL.
@@ -531,6 +543,10 @@ export class CoinCommunities {
 	// ---------------------------------------------------------------- enter/leave
 	async enter(coin, opts = {}) {
 		if (this.phase !== 'lobby') return;
+		// Clear the platform sign-in gate before anything else. Resolves instantly
+		// when /play is open (no token pinned) or when we already hold a fresh pass.
+		if (this._playReady) { try { await this._playReady; } catch { /* gate self-heals */ } }
+		if (this.phase !== 'lobby') return; // backed out / re-entered while the gate was up
 		const tier = opts.tier === 'holders' ? 'holders' : 'general';
 		// Entry does several awaits (gate, manifest, avatar GLB, room connect) and
 		// the Leave button goes live the moment the HUD shows — well before connect
@@ -661,6 +677,10 @@ export class CoinCommunities {
 			coin: { mint: coin.mint, name: coin.name, symbol: coin.symbol, image: coin.image },
 			tier: tier === 'holders' ? 'holders' : '',
 			holderPass, holderMinUsd,
+			// Platform token gate: the verified wallet + signed pass from sign-in. The
+			// server binds the wallet (inside the pass) as the account id; harmless
+			// when the server isn't gated.
+			playPass: this.playPass, account: this.account,
 		});
 		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
 		this.net.on('status', ({ status }) => {
@@ -699,7 +719,19 @@ export class CoinCommunities {
 		// A holder pass can expire (10 min) between minting and a mid-session
 		// reconnect; if the server then refuses the join, drop the player back to
 		// the lobby with a clear reason rather than looping on a dead pass.
-		this.net.on('denied', () => {
+		this.net.on('denied', (reason) => {
+			// The platform token gate evicted us (pass expired, or the wallet dropped
+			// below the floor): force a fresh sign-in before they can play again — the
+			// cached pass is now void, so clear it so the gate re-checks the chain.
+			if (/play_pass/i.test(reason || '')) {
+				clearStoredPass();
+				this.playPass = '';
+				this.account = '';
+				this.ui.toast('Your session expired — sign in again to keep playing.', 'warn');
+				this.leave();
+				this._playReady = this._ensurePlayAccess();
+				return;
+			}
 			this.ui.toast('Your holder pass expired — re-enter to verify your holdings.', 'warn');
 			this.leave();
 		});
@@ -737,6 +769,25 @@ export class CoinCommunities {
 			this.ui.toast(touch ? 'Tip: tap ⛏ to build this world together.' : 'Tip: press B (or tap ⛏) to build this world together.', 'info');
 			try { localStorage.setItem('cc-build-onboarded', '1'); } catch {}
 		}, 4200);
+	}
+
+	// Wallet-first platform gate. Shows the sign-in screen (connect → sign nonce →
+	// verify token balance) when the server requires it, and caches the verified
+	// wallet + signed pass we attach to every room join. Self-healing: any failure
+	// resolves to "open" rather than bricking /play, since the server is the real
+	// authority — an unsigned join is refused there regardless.
+	async _ensurePlayAccess() {
+		try {
+			const access = await ensurePlayAccess();
+			if (access?.required) {
+				this.playPass = access.playPass || '';
+				this.account = access.wallet || '';
+			}
+			return access;
+		} catch (err) {
+			console.warn('[coincommunities] play gate error:', err?.message);
+			return { required: false };
+		}
 	}
 
 	// Run the holder gate for a coin's Holders world. Drives the overlay through

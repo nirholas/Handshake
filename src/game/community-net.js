@@ -51,6 +51,8 @@ export class CommunityNet {
 	 * @param {string} [opts.tier]   '' (open General world) | 'holders' (gated)
 	 * @param {string} [opts.holderPass] signed pass required to join a holder world
 	 * @param {number} [opts.holderMinUsd] USD floor the holder world gated on (HUD)
+	 * @param {string} [opts.playPass] signed wallet+token pass for the platform gate
+	 * @param {string} [opts.account]  verified wallet address bound as the account id
 	 * @param {string} [opts.url]    server override
 	 */
 	constructor(opts = {}) {
@@ -61,6 +63,11 @@ export class CommunityNet {
 		this.tier = opts.tier === 'holders' ? 'holders' : '';
 		this.holderPass = opts.holderPass || '';
 		this.holderMinUsd = Number(opts.holderMinUsd) || 0;
+		// Platform token gate: when the server is gated, every join must carry this
+		// signed pass (proving wallet ownership + ≥ the token floor) or onAuth
+		// refuses with a play_pass_* error. Sent for all tiers, not just holders.
+		this.playPass = opts.playPass || '';
+		this.account = opts.account || '';
 		this.url = opts.url || defaultServerUrl();
 
 		this.client = null;
@@ -153,6 +160,10 @@ export class CommunityNet {
 				name: this.name,
 				avatar: this.avatar,
 				agent: this.agent,
+				// Platform gate: harmless when the server isn't gated (ignored), required
+				// when it is. The verified wallet rides inside the signed pass; the server
+				// binds it as the account id, so we never trust a raw `account` option.
+				playPass: this.playPass,
 			};
 			// Holder worlds require a signed pass the server verifies in onAuth; carry
 			// it (and the floor it gated on, for the seed room's HUD) only for holders.
@@ -213,6 +224,11 @@ export class CommunityNet {
 
 			this.room.onLeave((code) => {
 				this._setStatus('offline');
+				// 4002: the server evicted us because our play pass expired without a
+				// refresh (the wallet may have dropped below the token floor). Reconnecting
+				// would just fail onAuth again — surface it as a terminal denial so the
+				// scene routes the player back to the sign-in gate.
+				if (code === 4002) { this._setStatus('denied', 'play_pass_required'); this._emit('denied', 'play_pass_required'); return; }
 				if (!this._destroyed && code !== 1000) this._scheduleReconnect();
 			});
 			this.room.onError((code, message) => console.warn('[community-net] room.onError', code, message));
@@ -230,8 +246,8 @@ export class CommunityNet {
 			// A holder-gate refusal (onAuth threw) is terminal, not a flaky link —
 			// retrying with the same expired/invalid pass just loops. Surface it so
 			// the scene can route the player back to the gate, and stop here.
-			if (/holder_pass/i.test(msg)) {
-				console.warn('[community-net] holder gate denied join:', msg);
+			if (/holder_pass|play_pass/i.test(msg)) {
+				console.warn('[community-net] gate denied join:', msg);
 				this._setStatus('denied', msg);
 				this._emit('denied', msg);
 				return;

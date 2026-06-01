@@ -36,7 +36,12 @@ export default wrap(async (req, res) => {
 		if (err instanceof AgentNotFoundError)
 			return error(res, 404, 'not_found', 'target agent not found');
 		if (err instanceof LlmUnavailableError)
-			return error(res, 503, 'llm_unavailable', 'agent delegation is not available right now');
+			return error(
+				res,
+				503,
+				'llm_unavailable',
+				'agent delegation is not available right now',
+			);
 		return error(res, 502, 'upstream_error', `LLM call failed: ${err.message}`);
 	}
 });
