@@ -31,7 +31,7 @@ jobs:
 
       - name: Comment scores on PR
         if: always() && github.event.deployment_status.environment != 'production'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         continue-on-error: true
         with:
           header: lighthouse
