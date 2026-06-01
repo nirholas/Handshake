@@ -489,6 +489,10 @@ function decorate(row, isOwner = true) {
 		token,
 		payments,
 		is_registered: Boolean(row.erc8004_agent_id) || !!onchain,
+		// Whether the requesting session owns this agent. Owner-only write paths
+		// (action log, memory sync) gate on this so public viewers don't fire
+		// requests the backend will reject with 403.
+		is_owner: !!isOwner,
 		created_at: row.created_at,
 	};
 	// Voice clone fields are public (voice_id is needed by the runtime to select TTS).
