@@ -94,6 +94,7 @@ export class CommunityNet {
 		this._reconnectTimer = null;
 		this._reconnectAttempts = 0;
 		this._destroyed = false;
+		this._connectGen = 0;
 	}
 
 	on(event, fn) {
@@ -131,6 +132,11 @@ export class CommunityNet {
 	async connect() {
 		if (this._destroyed) return;
 		this._closeRoom();
+		// Bump a generation token so a slower in-flight connect (e.g. a manual
+		// retry racing the auto-reconnect timer) can detect it's been superseded
+		// after its await resolves and discard the room it joined, rather than
+		// orphaning a second live socket — the same duplicate-chat leak.
+		const gen = ++this._connectGen;
 		this._setStatus('connecting');
 		try {
 			this.client = new Client(this.url);
@@ -154,7 +160,12 @@ export class CommunityNet {
 				options.holderPass = this.holderPass;
 				options.holderMinUsd = this.holderMinUsd;
 			}
-			this.room = await this.client.joinOrCreate(ROOM_NAME, options);
+			const room = await this.client.joinOrCreate(ROOM_NAME, options);
+			if (this._destroyed || gen !== this._connectGen) {
+				try { room.leave(); } catch {}
+				return;
+			}
+			this.room = room;
 			this.sessionId = this.room.sessionId;
 
 			this.room.onMessage('chat', (msg) => this._emit('chat', msg));

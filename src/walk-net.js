@@ -86,6 +86,7 @@ export class WalkNet {
 		this._lastSentAt = 0;
 		this._reconnectTimer = null;
 		this._destroyed = false;
+		this._connectGen = 0;
 	}
 
 	on(event, fn) {
@@ -124,13 +125,18 @@ export class WalkNet {
 	async connect() {
 		if (this._destroyed) return;
 		this._closeRoom();
+		// Bump a generation token so a slower in-flight connect (e.g. a manual
+		// retry racing the auto-reconnect timer) can detect it's been superseded
+		// after its await resolves and discard the room it joined, rather than
+		// orphaning a second live socket — the same duplicate-chat leak.
+		const gen = ++this._connectGen;
 		this._setStatus('connecting');
 		try {
 			this.client = new Client(this.url);
 			// `token` is the server's filterBy key (matchmaking): clients with the
 			// same coin mint join one room instance. `coin`/`coinName`/… seed that
 			// room's identity the first time it's created. Empty coin → mainland.
-			this.room = await this.client.joinOrCreate(ROOM_NAME, {
+			const room = await this.client.joinOrCreate(ROOM_NAME, {
 				name: this.name,
 				avatar: this.avatar,
 				agent: this.agent,
@@ -140,6 +146,11 @@ export class WalkNet {
 				coinSymbol: this.coinSymbol,
 				coinImage: this.coinImage,
 			});
+			if (this._destroyed || gen !== this._connectGen) {
+				try { room.leave(); } catch {}
+				return;
+			}
+			this.room = room;
 			this.mySessionId = this.room.sessionId;
 
 			// Colyseus 0.16 moved schema callbacks behind getStateCallbacks(room)

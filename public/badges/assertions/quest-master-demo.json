@@ -1,0 +1,16 @@
+{
+  "@context": "https://w3id.org/openbadges/v2",
+  "type": "Assertion",
+  "id": "https://three.ws/badges/assertions/quest-master-demo.json",
+  "recipient": {
+    "type": "email",
+    "hashed": true,
+    "salt": "three-ws-demo",
+    "identity": "sha256$eade00449e2266066ee43400fe4d1d1626380afb0e7de086e3b9c84faa685225"
+  },
+  "badge": "https://three.ws/badges/quest-master.json",
+  "issuedOn": "2026-06-01T02:40:09Z",
+  "verification": {
+    "type": "HostedBadge"
+  }
+}

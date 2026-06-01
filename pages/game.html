@@ -19,14 +19,20 @@
 			(see defaultServerUrl in src/game/game-net.js), so
 			`npm run dev:walk-all` works out of the box.
 		-->
-		<meta name="game-server" content="wss://three-ws-multiplayer-93741856042.us-central1.run.app" />
+		<meta
+			name="game-server"
+			content="wss://three-ws-multiplayer-93741856042.us-central1.run.app"
+		/>
 
 		<link rel="shortcut icon" href="/favicon.ico" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:title" content="Adventure · three.ws" />
-		<meta property="og:description" content="An isometric MMO on three.ws — gather, fight, level up, and explore a shared world." />
+		<meta
+			property="og:description"
+			content="An isometric MMO on three.ws — gather, fight, level up, and explore a shared world."
+		/>
 		<meta property="og:url" content="https://three.ws/game" />
 
 		<link rel="stylesheet" href="/src/game/iso-game.css" />
@@ -41,14 +47,195 @@
 		<header id="kg-topbar" hidden>
 			<span id="kg-realm">Mainland</span>
 			<span class="kg-stat">online <b id="kg-online">0</b></span>
+			<button
+				id="kg-skills-btn"
+				class="kg-hud-btn"
+				type="button"
+				aria-haspopup="dialog"
+				aria-expanded="false"
+				aria-controls="kg-skills"
+				title="Skills (K)"
+			>
+				<svg class="kg-hud-ico" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M4 19V9m5 10V5m5 14v-7m5 7V11" />
+				</svg>
+				<span>Skills</span>
+			</button>
 			<span id="kg-status" data-status="connecting">connecting</span>
 		</header>
+
+		<!-- Skills panel — per-skill level, XP-to-next, and the cap. Populated live
+		     from the server's 'skills' reply; updates on every 'levelup'. -->
+		<aside
+			id="kg-skills"
+			class="kg-skills"
+			hidden
+			role="dialog"
+			aria-label="Skills"
+			aria-modal="false"
+		>
+			<header class="kg-skills-head">
+				<h2 class="kg-skills-title">Skills</h2>
+				<button
+					id="kg-skills-close"
+					class="kg-skills-close"
+					type="button"
+					aria-label="Close skills"
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M6 6l12 12M18 6L6 18" />
+					</svg>
+				</button>
+			</header>
+			<div class="kg-skills-summary">
+				<div class="kg-skills-sum">
+					<span class="kg-skills-sum-val" id="kg-skills-total">—</span>
+					<span class="kg-skills-sum-lbl">Total level</span>
+				</div>
+				<div class="kg-skills-sum">
+					<span class="kg-skills-sum-val" id="kg-skills-avg">—</span>
+					<span class="kg-skills-sum-lbl">Average</span>
+				</div>
+			</div>
+			<ul id="kg-skills-list" class="kg-skills-list" aria-busy="true">
+				<li class="kg-skills-loading">Loading your progress…</li>
+			</ul>
+			<p class="kg-skills-foot">
+				Level cap <b id="kg-skills-cap">99</b> · earn XP by gathering and fighting.
+			</p>
+		</aside>
+
+		<!-- Level-up celebrations (real server 'levelup' events) -->
+		<div id="kg-levelups" aria-live="polite"></div>
+
+		<!-- World chat — per-realm. Focus with C (or Enter); send with Enter; Esc to
+		     close. Collapsed by default so it never blocks the world; clicking a
+		     sender name opens a Mute menu, and the Muted button lists who's hidden. -->
+		<section id="kg-chat" class="kg-chat" hidden aria-label="World chat">
+			<header class="kg-chat-head">
+				<span class="kg-chat-title">Chat</span>
+				<button
+					id="kg-chat-muted-btn"
+					class="kg-chat-muted-btn"
+					type="button"
+					aria-haspopup="dialog"
+					aria-expanded="false"
+					aria-controls="kg-chat-muted"
+					title="Muted players"
+				>
+					Muted <b id="kg-chat-muted-n">0</b>
+				</button>
+			</header>
+			<div
+				id="kg-chat-log"
+				class="kg-chat-log"
+				role="log"
+				aria-live="polite"
+				aria-label="Chat messages"
+			></div>
+			<form id="kg-chat-form" class="kg-chat-form" autocomplete="off">
+				<input
+					id="kg-chat-input"
+					class="kg-chat-input"
+					type="text"
+					maxlength="200"
+					autocomplete="off"
+					aria-label="Type a message"
+					placeholder="Press Enter to chat…"
+				/>
+			</form>
+			<!-- Muted-players view (toggled by the Muted button) -->
+			<div
+				id="kg-chat-muted"
+				class="kg-chat-muted"
+				hidden
+				role="dialog"
+				aria-label="Muted players"
+			></div>
+		</section>
 
 		<div id="kg-toasts"></div>
 		<div id="kg-joystick"></div>
 
+		<!-- Mount status — shown only while riding (Task 09). Names the steed and
+		     lets you dismount; the hotbar and /dismount work too. -->
+		<div id="kg-mount" class="kg-mount" hidden>
+			<span class="kg-mount-ico" aria-hidden="true">🐎</span>
+			<span class="kg-mount-txt">Riding <b id="kg-mount-name">mount</b></span>
+			<button id="kg-dismount" class="kg-mount-btn" type="button" aria-label="Dismount">Dismount</button>
+		</div>
+
+		<!-- Contextual world actions. Shown only when the action is actually
+		     available (near a Roast Pit with raw fish; hurt while carrying food);
+		     see _updateActions in src/game/iso-game.js. -->
+		<div id="kg-actions" hidden>
+			<button
+				id="kg-cook"
+				class="kg-action kg-action--cook"
+				type="button"
+				hidden
+				aria-label="Cook raw fish at the Roast Pit"
+			>
+				<i class="kg-action-dot" aria-hidden="true"></i
+				><span class="kg-action-lbl">Cook fish</span>
+			</button>
+			<button
+				id="kg-eat"
+				class="kg-action kg-action--eat"
+				type="button"
+				hidden
+				aria-label="Eat food to restore health"
+			>
+				<i class="kg-action-dot" aria-hidden="true"></i
+				><span class="kg-action-lbl">Eat</span>
+			</button>
+			<button
+				id="kg-cast"
+				class="kg-action kg-action--cast"
+				type="button"
+				hidden
+				aria-label="Cast a fishing line into the water"
+			>
+				<i class="kg-action-dot" aria-hidden="true"></i
+				><span class="kg-action-lbl">Cast line</span>
+			</button>
+		</div>
+
+		<!-- Death-bag recovery panel — opens when you tap an adjacent tombstone.
+		     Lists the bag's contents (or a designed empty state), a live expiry
+		     countdown, and a Take-all button (re-loots once the pack has room). -->
+		<aside id="kg-tomb-panel" class="kg-tomb-panel" hidden role="dialog" aria-label="Death-bag">
+			<header class="kg-tomb-head">
+				<span class="kg-tomb-owner" id="kg-tomb-owner">Bag</span>
+				<span class="kg-tomb-ttl" id="kg-tomb-ttl"></span>
+				<button
+					id="kg-tomb-close"
+					class="kg-tomb-close"
+					type="button"
+					aria-label="Close bag"
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M6 6l12 12M18 6L6 18" />
+					</svg>
+				</button>
+			</header>
+			<div id="kg-tomb-items" class="kg-tomb-items"></div>
+			<button id="kg-tomb-take" class="kg-tomb-take" type="button">Take all</button>
+		</aside>
+
+		<!-- Respawn overlay — shown while dead, with a real countdown to the synced
+		     respawn deadline. Pointer-transparent so it never blocks the world. -->
+		<div id="kg-death" class="kg-death" hidden aria-live="assertive">
+			<div class="kg-death-card">
+				<div class="kg-death-eyebrow">You died</div>
+				<p class="kg-death-msg" id="kg-death-msg">You died.</p>
+				<div class="kg-death-count" id="kg-death-count">Respawning…</div>
+			</div>
+		</div>
+
 		<div id="kg-hint" hidden>
 			<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · drag to rotate · scroll to zoom
+			· tap the water to fish · tap a bag to loot · <kbd>K</kbd> skills · <kbd>C</kbd> chat
 		</div>
 
 		<!-- Start overlay -->
@@ -56,9 +243,19 @@
 			<div class="kg-card">
 				<div class="kg-eyebrow">three.ws · adventure</div>
 				<h1 class="kg-title">Enter the world</h1>
-				<p class="kg-sub">Gather, fight, and level up across a shared isometric realm. Pick a name and drop in.</p>
+				<p class="kg-sub">
+					Gather, fight, and level up across a shared isometric realm. Pick a name and
+					drop in.
+				</p>
 				<label class="kg-field">
-					<input id="kg-name" type="text" maxlength="24" autocomplete="off" aria-label="Display name" placeholder="guest" />
+					<input
+						id="kg-name"
+						type="text"
+						maxlength="24"
+						autocomplete="off"
+						aria-label="Display name"
+						placeholder="guest"
+					/>
 				</label>
 				<button id="kg-start-btn" class="kg-btn" type="button">Enter world</button>
 				<div class="kg-feats">
@@ -81,5 +278,7 @@
 		</div>
 
 		<script type="module" src="/src/game/iso-game.js"></script>
+		<!-- Controls layer (Task 12): hotbar number keys, panel toggles, rebindable keybindings. -->
+		<script type="module" src="/src/game/iso-controls.js"></script>
 	</body>
 </html>

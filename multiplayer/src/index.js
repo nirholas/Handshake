@@ -138,13 +138,20 @@ const gameServer = new Server({ transport, ...(driver && { driver }), ...(presen
 // to the shared mainland world; a missing tier is the open General world (see
 // WalkRoom.onCreate / onAuth / schemas.js).
 gameServer.define('walk_world', WalkRoom).filterBy(['coin', 'tier']);
-gameServer.define('game_mainland', GameRoom);
+// One room definition per realm — each is its own instance, so players in
+// different realms never see or affect each other. The realm name is baked into
+// the definition's options and read by GameRoom.onCreate. Mainland/Whisperwood/
+// Pond/Mine are safe; Wilderness is the danger+pvp realm that drops death-bags.
+// Mine is the enclosed cave interior reached through the Mainland mine entrance.
+for (const realm of ['mainland', 'wilderness', 'whisperwood', 'pond', 'mine']) {
+	gameServer.define(`game_${realm}`, GameRoom, { realm });
+}
 
 gameServer
 	.listen(PORT, HOST)
 	.then(() => {
 		console.log(`[multiplayer] listening on ws://${HOST}:${PORT}`);
-		console.log(`[multiplayer] rooms: walk_world, game_mainland`);
+		console.log(`[multiplayer] rooms: walk_world, game_{mainland,wilderness,whisperwood,pond,mine}`);
 		console.log(`[multiplayer] allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
 	})
 	.catch((err) => {

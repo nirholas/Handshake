@@ -1,0 +1,13 @@
+{
+  "@context": "https://w3id.org/openbadges/v2",
+  "type": "BadgeClass",
+  "id": "https://three.ws/badges/quest-master.json",
+  "name": "Quest Master",
+  "description": "Awarded to players who complete every quest across all three.ws realms.",
+  "image": "https://three.ws/badges/quest-master.png",
+  "criteria": {
+    "narrative": "Earned by completing all available quests in every realm of three.ws. Progress is tracked server-side; the badge is issued automatically on full completion."
+  },
+  "issuer": "https://three.ws/badges/issuer.json",
+  "tags": ["three.ws", "mmo", "quest", "achievement"]
+}

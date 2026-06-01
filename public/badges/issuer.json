@@ -1,0 +1,10 @@
+{
+  "@context": "https://w3id.org/openbadges/v2",
+  "type": "Issuer",
+  "id": "https://three.ws/badges/issuer.json",
+  "name": "three.ws",
+  "url": "https://three.ws",
+  "email": "badges@three.ws",
+  "description": "three.ws issues verifiable Open Badges 2.0 for achievements earned across its realms, quests, and creator tools.",
+  "image": "https://three.ws/pwa-icon.svg"
+}

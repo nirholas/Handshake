@@ -58,12 +58,22 @@ export class GamePlayer extends Schema {
 		this.fishing = 1;
 		this.cooking = 1;
 		this.cosmetic = ''; // equipped cosmetic id ('' = default)
+		// Quest-awarded badges, as a comma-separated list of badge ids. Synced so
+		// every peer renders the achievement on the player's nameplate (the
+		// in-world "profile"). Server-authoritative — only the quest engine writes it.
+		this.badges = '';
 
 		// 24-slot backpack + 6 hotbar slots. Fixed length so indices are stable
 		// references the client can drag between.
 		this.inv = new ArraySchema();
 		this.hotbar = new ArraySchema();
 		this.activeSlot = -1; // index into hotbar; -1 = nothing equipped
+
+		// Mount state. `mounted` flips locomotion to the faster cadence the server
+		// enforces; `mount` is the registry id of the steed being ridden ('' = on
+		// foot) so peers render the right creature underneath the avatar.
+		this.mounted = false;
+		this.mount = '';
 
 		this.tsServer = 0;
 	}
@@ -87,9 +97,12 @@ defineTypes(GamePlayer, {
 	fishing: 'uint16',
 	cooking: 'uint16',
 	cosmetic: 'string',
+	badges: 'string',
 	inv: [Slot],
 	hotbar: [Slot],
 	activeSlot: 'int8',
+	mounted: 'boolean',
+	mount: 'string',
 	tsServer: 'float64',
 });
 
@@ -173,6 +186,35 @@ defineTypes(Tombstone, {
 	expiresAt: 'float64',
 });
 
+// A player-placed structure occupying a single tile. `firepit` heals players who
+// stand adjacent (like the fountain) and decays at `expiresAt`; `shack` is a
+// permanent landmark (`expiresAt === 0`) until its owner picks it up. `locked`
+// makes a structure ignore stray pickup/interaction clicks. Like the fountain,
+// a structure's tile is solid — players cannot walk onto it.
+export class Structure extends Schema {
+	constructor() {
+		super();
+		this.id = '';
+		this.kind = 'firepit'; // 'firepit' | 'shack'
+		this.owner = ''; // session id of the placer
+		this.ownerName = '';
+		this.tx = 0;
+		this.ty = 0;
+		this.expiresAt = 0; // epoch ms it decays; 0 = permanent
+		this.locked = false;
+	}
+}
+defineTypes(Structure, {
+	id: 'string',
+	kind: 'string',
+	owner: 'string',
+	ownerName: 'string',
+	tx: 'int16',
+	ty: 'int16',
+	expiresAt: 'float64',
+	locked: 'boolean',
+});
+
 // ---------------------------------------------------------------------------
 // Root state
 // ---------------------------------------------------------------------------
@@ -185,6 +227,7 @@ export class GameState extends Schema {
 		this.nodes = new MapSchema();
 		this.mobs = new MapSchema();
 		this.tombstones = new MapSchema();
+		this.structures = new MapSchema();
 	}
 }
 defineTypes(GameState, {
@@ -193,4 +236,5 @@ defineTypes(GameState, {
 	nodes: { map: ResourceNode },
 	mobs: { map: Mob },
 	tombstones: { map: Tombstone },
+	structures: { map: Structure },
 });

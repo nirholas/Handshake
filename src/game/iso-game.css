@@ -11,128 +11,2203 @@
 	--kg-accent: #cdd6e6;
 }
 
-* { box-sizing: border-box; }
-html, body {
-	margin: 0; height: 100%; overflow: hidden;
-	background: var(--kg-bg); color: var(--kg-text);
-	font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-	-webkit-font-smoothing: antialiased; overscroll-behavior: none;
+* {
+	box-sizing: border-box;
 }
-#kg-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-body.kg-loading-cursor { cursor: progress; }
+html,
+body {
+	margin: 0;
+	height: 100%;
+	overflow: hidden;
+	background: var(--kg-bg);
+	color: var(--kg-text);
+	font-family:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		sans-serif;
+	-webkit-font-smoothing: antialiased;
+	overscroll-behavior: none;
+}
+#kg-canvas {
+	position: fixed;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	display: block;
+	touch-action: none;
+}
+body.kg-loading-cursor {
+	cursor: progress;
+}
 
 /* DOM layer for projected nameplates (pointer-transparent). */
-#kg-labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+#kg-labels {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	overflow: hidden;
+	z-index: 5;
+}
 
 .kg-label {
-	position: absolute; top: 0; left: 0; will-change: transform;
-	display: flex; flex-direction: column; align-items: center; gap: 3px;
-	font-size: 12px; font-weight: 600; letter-spacing: 0.01em;
+	position: absolute;
+	top: 0;
+	left: 0;
+	will-change: transform;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 3px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.01em;
 	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 .kg-label-name {
-	padding: 1px 7px; border-radius: 6px;
-	background: rgba(13, 20, 32, 0.66); border: 1px solid var(--kg-line);
-	white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis;
+	padding: 1px 7px;
+	border-radius: 6px;
+	background: rgba(13, 20, 32, 0.66);
+	border: 1px solid var(--kg-line);
+	white-space: nowrap;
+	max-width: 160px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
-.kg-label--me .kg-label-name { background: rgba(40, 52, 74, 0.82); border-color: rgba(255, 255, 255, 0.28); }
+.kg-label--me .kg-label-name {
+	background: rgba(40, 52, 74, 0.82);
+	border-color: rgba(255, 255, 255, 0.28);
+}
 .kg-hp {
-	width: 46px; height: 4px; border-radius: 3px; overflow: hidden;
-	background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(0, 0, 0, 0.4);
-	opacity: 0; transition: opacity 0.2s;
+	width: 46px;
+	height: 4px;
+	border-radius: 3px;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.55);
+	border: 1px solid rgba(0, 0, 0, 0.4);
+	opacity: 0;
+	transition: opacity 0.2s;
 }
-.kg-label.kg-hurt .kg-hp { opacity: 1; }
-.kg-hp i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #6ee787, #d7ff7a); transition: width 0.2s ease; }
+.kg-label.kg-hurt .kg-hp {
+	opacity: 1;
+}
+.kg-hp i {
+	display: block;
+	height: 100%;
+	width: 100%;
+	background: linear-gradient(90deg, #6ee787, #d7ff7a);
+	transition: width 0.2s ease;
+}
 
 /* Top bar: realm + online + connection status. */
 #kg-topbar {
-	position: fixed; top: 0; left: 0; right: 0; z-index: 8;
-	display: flex; align-items: center; gap: 14px;
-	padding: 10px 16px; pointer-events: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 8;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 10px 16px;
+	pointer-events: none;
 	background: linear-gradient(180deg, rgba(8, 12, 20, 0.7), transparent);
 }
-#kg-realm { font-weight: 700; font-size: 15px; letter-spacing: 0.02em; }
-.kg-stat { font-size: 12px; color: var(--kg-dim); display: inline-flex; align-items: center; gap: 5px; }
-.kg-stat b { color: var(--kg-text); font-weight: 700; }
-#kg-status {
-	margin-left: auto; pointer-events: auto;
-	font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
-	padding: 4px 10px; border-radius: 999px;
-	background: rgba(255, 255, 255, 0.06); border: 1px solid var(--kg-line); color: var(--kg-dim);
+#kg-realm {
+	font-weight: 700;
+	font-size: 15px;
+	letter-spacing: 0.02em;
 }
-#kg-status[data-status="online"] { color: #6ee787; border-color: rgba(110, 231, 135, 0.4); }
-#kg-status[data-status="connecting"] { color: #ffce5c; border-color: rgba(255, 206, 92, 0.4); }
-#kg-status[data-status="offline"], #kg-status[data-status="failed"] { color: #ff8a8a; border-color: rgba(255, 138, 138, 0.4); }
+.kg-stat {
+	font-size: 12px;
+	color: var(--kg-dim);
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+.kg-stat b {
+	color: var(--kg-text);
+	font-weight: 700;
+}
+#kg-status {
+	margin-left: auto;
+	pointer-events: auto;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid var(--kg-line);
+	color: var(--kg-dim);
+}
+#kg-status[data-status='online'] {
+	color: #6ee787;
+	border-color: rgba(110, 231, 135, 0.4);
+}
+#kg-status[data-status='connecting'] {
+	color: #ffce5c;
+	border-color: rgba(255, 206, 92, 0.4);
+}
+#kg-status[data-status='offline'],
+#kg-status[data-status='failed'] {
+	color: #ff8a8a;
+	border-color: rgba(255, 138, 138, 0.4);
+}
 
 /* Controls hint (bottom). */
 #kg-hint {
-	position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 7;
-	font-size: 12px; color: var(--kg-dim); pointer-events: none; text-align: center;
-	background: rgba(13, 20, 32, 0.5); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--kg-line);
+	position: fixed;
+	bottom: 14px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 7;
+	font-size: 12px;
+	color: var(--kg-dim);
+	pointer-events: none;
+	text-align: center;
+	background: rgba(13, 20, 32, 0.5);
+	padding: 6px 12px;
+	border-radius: 8px;
+	border: 1px solid var(--kg-line);
 }
 #kg-hint kbd {
-	font: inherit; font-weight: 700; color: var(--kg-text);
-	background: rgba(255, 255, 255, 0.08); border: 1px solid var(--kg-line);
-	border-radius: 4px; padding: 0 5px;
+	font: inherit;
+	font-weight: 700;
+	color: var(--kg-text);
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid var(--kg-line);
+	border-radius: 4px;
+	padding: 0 5px;
 }
 
 /* Toasts (server notices: gathered, killed, inventory full, …). */
-#kg-toasts { position: fixed; top: 56px; left: 50%; transform: translateX(-50%); z-index: 9; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+#kg-toasts {
+	position: fixed;
+	top: 56px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 9;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	align-items: center;
+	pointer-events: none;
+}
 .kg-toast {
-	padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;
-	background: var(--kg-panel); border: 1px solid var(--kg-line); color: var(--kg-text);
-	opacity: 0; transform: translateY(-8px); transition: opacity 0.3s, transform 0.3s;
+	padding: 8px 16px;
+	border-radius: 10px;
+	font-size: 13px;
+	font-weight: 600;
+	background: var(--kg-panel);
+	border: 1px solid var(--kg-line);
+	color: var(--kg-text);
+	opacity: 0;
+	transform: translateY(-8px);
+	transition:
+		opacity 0.3s,
+		transform 0.3s;
 	box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
 }
-.kg-toast--in { opacity: 1; transform: translateY(0); }
-.kg-toast--kill { border-color: rgba(110, 231, 135, 0.45); }
-.kg-toast--full, .kg-toast--tool, .kg-toast--bank { border-color: rgba(255, 206, 92, 0.45); }
+.kg-toast--in {
+	opacity: 1;
+	transform: translateY(0);
+}
+.kg-toast--kill {
+	border-color: rgba(110, 231, 135, 0.45);
+}
+.kg-toast--full,
+.kg-toast--tool,
+.kg-toast--bank {
+	border-color: rgba(255, 206, 92, 0.45);
+}
+.kg-toast--cook,
+.kg-toast--eat {
+	border-color: rgba(110, 231, 135, 0.45);
+}
+.kg-toast--burn {
+	border-color: rgba(255, 122, 58, 0.5);
+}
+.kg-toast--fish {
+	border-color: rgba(92, 182, 230, 0.5);
+}
+
+/* Contextual action bar (cook at a Roast Pit, eat to heal). Buttons reveal only
+   when the action is actually possible; see _updateActions in iso-game.js. */
+#kg-actions {
+	position: fixed;
+	left: 50%;
+	bottom: 96px;
+	transform: translateX(-50%);
+	z-index: 8;
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+#kg-actions[hidden] {
+	display: none;
+}
+.kg-action {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	padding: 10px 16px;
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--kg-text);
+	background: var(--kg-panel);
+	border: 1px solid var(--kg-line);
+	border-radius: 12px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+	backdrop-filter: blur(4px);
+	transition:
+		transform 0.08s ease,
+		border-color 0.15s,
+		opacity 0.15s;
+}
+.kg-action[hidden] {
+	display: none;
+}
+.kg-action:hover {
+	border-color: var(--kg-accent);
+	transform: translateY(-1px);
+}
+.kg-action:active {
+	transform: translateY(1px);
+}
+.kg-action:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+.kg-action-dot {
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: var(--kg-dim);
+	box-shadow: 0 0 8px currentColor;
+}
+#kg-cook .kg-action-dot {
+	background: #ff7a3a;
+	color: #ff7a3a;
+}
+#kg-eat .kg-action-dot {
+	background: #6ee787;
+	color: #6ee787;
+}
+#kg-cast .kg-action-dot {
+	background: #5cb6e6;
+	color: #5cb6e6;
+}
+/* Cast is shown beside water even without a rod, so the player learns where to
+   fish — muted + a help cursor signal it's gated until they hold a rod. */
+.kg-action--muted {
+	opacity: 0.6;
+}
+.kg-action--muted .kg-action-dot {
+	background: var(--kg-dim);
+	color: var(--kg-dim);
+	box-shadow: none;
+}
+.kg-action--muted:hover {
+	border-color: var(--kg-line);
+	transform: none;
+}
+.kg-action--pulse {
+	animation: kg-cook-pulse 0.7s ease;
+}
+@keyframes kg-cook-pulse {
+	0% {
+		box-shadow:
+			0 10px 30px rgba(0, 0, 0, 0.45),
+			0 0 0 0 rgba(255, 122, 58, 0.55);
+	}
+	60% {
+		box-shadow:
+			0 10px 30px rgba(0, 0, 0, 0.45),
+			0 0 0 14px rgba(255, 122, 58, 0);
+	}
+	100% {
+		box-shadow:
+			0 10px 30px rgba(0, 0, 0, 0.45),
+			0 0 0 0 rgba(255, 122, 58, 0);
+	}
+}
+/* Green heal flash on the local nameplate when eating. */
+.kg-label.kg-heal {
+	animation: kg-heal-flash 0.7s ease;
+}
+@keyframes kg-heal-flash {
+	0% {
+		box-shadow: 0 0 0 0 rgba(110, 231, 135, 0);
+	}
+	30% {
+		box-shadow: 0 0 14px 4px rgba(110, 231, 135, 0.6);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(110, 231, 135, 0);
+	}
+}
+@media (max-width: 480px) {
+	#kg-actions {
+		bottom: 128px;
+	}
+}
 
 /* Joystick zone (touch only). */
-#kg-joystick { position: fixed; left: 0; bottom: 0; width: 180px; height: 200px; z-index: 6; }
+#kg-joystick {
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	width: 180px;
+	height: 200px;
+	z-index: 6;
+}
 
 /* Start + offline overlays. */
 .kg-overlay {
-	position: fixed; inset: 0; z-index: 20;
-	display: flex; align-items: center; justify-content: center; padding: 24px;
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
 	background: radial-gradient(120% 120% at 50% 30%, rgba(20, 28, 44, 0.55), rgba(8, 12, 20, 0.9));
 	backdrop-filter: blur(2px);
 }
-.kg-overlay[hidden] { display: none; }
+.kg-overlay[hidden] {
+	display: none;
+}
 .kg-card {
-	width: 100%; max-width: 380px; text-align: center;
-	background: var(--kg-panel); border: 1px solid var(--kg-line); border-radius: 18px;
-	padding: 30px 26px; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+	width: 100%;
+	max-width: 380px;
+	text-align: center;
+	background: var(--kg-panel);
+	border: 1px solid var(--kg-line);
+	border-radius: 18px;
+	padding: 30px 26px;
+	box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
 }
-.kg-eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--kg-dim); }
-.kg-title { font-size: 26px; font-weight: 800; margin: 8px 0 4px; letter-spacing: -0.01em; }
-.kg-sub { font-size: 14px; color: var(--kg-dim); line-height: 1.5; margin: 0 0 22px; }
-.kg-field { display: block; width: 100%; margin-bottom: 14px; }
+.kg-eyebrow {
+	font-size: 11px;
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	color: var(--kg-dim);
+}
+.kg-title {
+	font-size: 26px;
+	font-weight: 800;
+	margin: 8px 0 4px;
+	letter-spacing: -0.01em;
+}
+.kg-sub {
+	font-size: 14px;
+	color: var(--kg-dim);
+	line-height: 1.5;
+	margin: 0 0 22px;
+}
+.kg-field {
+	display: block;
+	width: 100%;
+	margin-bottom: 14px;
+}
 .kg-field input {
-	width: 100%; padding: 12px 14px; font-size: 15px;
-	background: rgba(0, 0, 0, 0.3); color: var(--kg-text);
-	border: 1px solid var(--kg-line); border-radius: 10px; outline: none; transition: border-color 0.15s;
+	width: 100%;
+	padding: 12px 14px;
+	font-size: 15px;
+	background: rgba(0, 0, 0, 0.3);
+	color: var(--kg-text);
+	border: 1px solid var(--kg-line);
+	border-radius: 10px;
+	outline: none;
+	transition: border-color 0.15s;
 }
-.kg-field input:focus { border-color: var(--kg-accent); }
+.kg-field input:focus {
+	border-color: var(--kg-accent);
+}
 .kg-btn {
-	width: 100%; padding: 13px 18px; font-size: 15px; font-weight: 700; cursor: pointer;
-	background: var(--kg-text); color: #0d1420; border: 0; border-radius: 10px;
-	transition: transform 0.08s ease, opacity 0.15s;
+	width: 100%;
+	padding: 13px 18px;
+	font-size: 15px;
+	font-weight: 700;
+	cursor: pointer;
+	background: var(--kg-text);
+	color: #0d1420;
+	border: 0;
+	border-radius: 10px;
+	transition:
+		transform 0.08s ease,
+		opacity 0.15s;
 }
-.kg-btn:hover { opacity: 0.92; }
-.kg-btn:active { transform: translateY(1px); }
-.kg-btn:focus-visible { outline: 2px solid var(--kg-accent); outline-offset: 2px; }
-.kg-feats { display: flex; gap: 8px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
-.kg-feat { font-size: 11px; color: var(--kg-dim); border: 1px solid var(--kg-line); border-radius: 999px; padding: 4px 10px; }
+.kg-btn:hover {
+	opacity: 0.92;
+}
+.kg-btn:active {
+	transform: translateY(1px);
+}
+.kg-btn:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+.kg-feats {
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+	margin-top: 18px;
+	flex-wrap: wrap;
+}
+.kg-feat {
+	font-size: 11px;
+	color: var(--kg-dim);
+	border: 1px solid var(--kg-line);
+	border-radius: 999px;
+	padding: 4px 10px;
+}
 
 .kg-spinner {
-	width: 34px; height: 34px; margin: 4px auto 18px; border-radius: 50%;
-	border: 3px solid rgba(255, 255, 255, 0.15); border-top-color: var(--kg-text);
+	width: 34px;
+	height: 34px;
+	margin: 4px auto 18px;
+	border-radius: 50%;
+	border: 3px solid rgba(255, 255, 255, 0.15);
+	border-top-color: var(--kg-text);
 	animation: kg-spin 0.8s linear infinite;
 }
-@keyframes kg-spin { to { transform: rotate(360deg); } }
+@keyframes kg-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
 
 @media (max-width: 480px) {
-	.kg-card { padding: 24px 20px; }
-	.kg-title { font-size: 22px; }
+	.kg-card {
+		padding: 24px 20px;
+	}
+	.kg-title {
+		font-size: 22px;
+	}
+}
+
+/* ---------------------------------------------------------------- world chat
+   Bottom-left panel. Collapsed by default (click-through, masked scrollback);
+   focusing the input or pressing C/Enter opens it (full scrollback, mute UI). */
+#kg-chat {
+	position: fixed;
+	left: 14px;
+	bottom: 14px;
+	z-index: 7;
+	width: min(340px, calc(100vw - 28px));
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	pointer-events: none; /* world stays clickable through the gaps; children opt back in */
+	font-size: 13px;
+}
+#kg-chat[hidden] {
+	display: none;
+}
+
+.kg-chat-head {
+	display: none;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 2px;
+}
+.kg-chat--open .kg-chat-head {
+	display: flex;
+}
+.kg-chat-title {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	color: var(--kg-dim);
+	font-weight: 700;
+}
+.kg-chat-muted-btn {
+	pointer-events: auto;
+	cursor: pointer;
+	font: inherit;
+	font-size: 11px;
+	color: var(--kg-dim);
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--kg-line);
+	border-radius: 999px;
+	padding: 2px 9px;
+	transition:
+		color 0.15s,
+		border-color 0.15s;
+}
+.kg-chat-muted-btn:hover {
+	color: var(--kg-text);
+	border-color: var(--kg-accent);
+}
+.kg-chat-muted-btn b {
+	color: var(--kg-text);
+}
+.kg-chat-muted-btn:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+
+.kg-chat-log {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	max-height: 132px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 2px 4px;
+	pointer-events: none; /* collapsed: clicks fall through to the world */
+	-webkit-mask-image: linear-gradient(180deg, transparent 0, #000 20px);
+	mask-image: linear-gradient(180deg, transparent 0, #000 20px);
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+	transition: max-height 0.18s ease;
+}
+.kg-chat--open .kg-chat-log {
+	max-height: 230px;
+	pointer-events: auto;
+	-webkit-mask-image: none;
+	mask-image: none;
+}
+.kg-chat-log::-webkit-scrollbar {
+	width: 7px;
+}
+.kg-chat-log::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.18);
+	border-radius: 4px;
+}
+
+.kg-chat-line {
+	line-height: 1.4;
+	overflow-wrap: anywhere;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+	background: rgba(13, 20, 32, 0.42);
+	border-radius: 7px;
+	padding: 2px 8px;
+	animation: kg-chat-in 0.18s ease;
+}
+.kg-chat--open .kg-chat-line {
+	background: rgba(13, 20, 32, 0.66);
+}
+.kg-chat-line--muted {
+	display: none;
+}
+@keyframes kg-chat-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+}
+
+.kg-chat-name {
+	pointer-events: auto;
+	cursor: pointer;
+	font: inherit;
+	font-weight: 700;
+	color: var(--kg-accent);
+	background: none;
+	border: 0;
+	padding: 0;
+	margin-right: 5px;
+	border-radius: 4px;
+}
+.kg-chat-name:hover {
+	text-decoration: underline;
+}
+.kg-chat-name:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 1px;
+}
+.kg-chat-name--me {
+	color: #d7ff7a;
+	cursor: default;
+}
+.kg-chat-name--me:hover {
+	text-decoration: none;
+}
+.kg-chat-text {
+	color: var(--kg-text);
+}
+
+.kg-chat-line--system {
+	background: rgba(40, 52, 74, 0.5);
+}
+.kg-chat-line--system .kg-chat-text {
+	color: var(--kg-dim);
+	white-space: pre-wrap;
+	font-style: italic;
+}
+.kg-chat-line--error {
+	background: rgba(120, 40, 40, 0.42);
+}
+.kg-chat-line--error .kg-chat-text {
+	color: #ff9c9c;
+	font-style: normal;
+}
+
+.kg-chat-form {
+	display: flex;
+}
+.kg-chat-input {
+	pointer-events: auto;
+	width: 100%;
+	padding: 8px 12px;
+	font: inherit;
+	font-size: 13px;
+	color: var(--kg-text);
+	background: rgba(13, 20, 32, 0.5);
+	border: 1px solid var(--kg-line);
+	border-radius: 9px;
+	outline: none;
+	opacity: 0.55;
+	transition:
+		opacity 0.15s,
+		border-color 0.15s,
+		background 0.15s;
+}
+.kg-chat-input::placeholder {
+	color: var(--kg-dim);
+}
+.kg-chat--open .kg-chat-input,
+.kg-chat-input:focus {
+	opacity: 1;
+	background: rgba(0, 0, 0, 0.45);
+	border-color: var(--kg-accent);
+}
+
+/* Mute menu popover (click a sender's name). */
+.kg-chat-menu {
+	position: absolute;
+	z-index: 9;
+	pointer-events: auto;
+	min-width: 140px;
+	background: var(--kg-panel);
+	border: 1px solid var(--kg-line);
+	border-radius: 9px;
+	padding: 4px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+	animation: kg-chat-in 0.12s ease;
+}
+.kg-chat-menu-btn {
+	display: block;
+	width: 100%;
+	text-align: left;
+	cursor: pointer;
+	font: inherit;
+	font-size: 12px;
+	color: var(--kg-text);
+	background: none;
+	border: 0;
+	border-radius: 6px;
+	padding: 7px 9px;
+}
+.kg-chat-menu-btn:hover {
+	background: rgba(255, 255, 255, 0.08);
+}
+.kg-chat-menu-btn:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: -2px;
+}
+
+/* Muted-players list (floats above the panel). */
+.kg-chat-muted {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: calc(100% + 6px);
+	z-index: 9;
+	pointer-events: auto;
+	background: var(--kg-panel);
+	border: 1px solid var(--kg-line);
+	border-radius: 10px;
+	padding: 8px;
+	box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+	max-height: 220px;
+	overflow-y: auto;
+	animation: kg-chat-in 0.14s ease;
+}
+.kg-chat-muted[hidden] {
+	display: none;
+}
+.kg-chat-muted-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 5px 4px;
+}
+.kg-chat-muted-name {
+	color: var(--kg-text);
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.kg-chat-unmute {
+	cursor: pointer;
+	font: inherit;
+	font-size: 11px;
+	font-weight: 700;
+	color: #0d1420;
+	background: var(--kg-text);
+	border: 0;
+	border-radius: 6px;
+	padding: 4px 10px;
+	transition: opacity 0.15s;
+}
+.kg-chat-unmute:hover {
+	opacity: 0.88;
+}
+.kg-chat-unmute:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+.kg-chat-muted-empty {
+	color: var(--kg-dim);
+	font-size: 12px;
+	text-align: center;
+	padding: 10px 4px;
+}
+
+/* On touch the joystick owns the bottom-left corner — float chat above it. */
+@media (pointer: coarse) {
+	#kg-chat {
+		bottom: 216px;
+		width: min(300px, calc(100vw - 28px));
+	}
+	.kg-chat-log {
+		max-height: 110px;
+	}
+}
+
+/* ===========================================================================
+   Skills — topbar toggle, slide-in panel, per-skill progress, level-up toast.
+   =========================================================================== */
+
+/* Topbar "Skills" toggle. Sits to the right; the status pill follows it. */
+.kg-hud-btn {
+	margin-left: auto;
+	pointer-events: auto;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	padding: 5px 11px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid var(--kg-line);
+	color: var(--kg-text);
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		transform 0.08s;
+}
+.kg-hud-btn:hover {
+	background: rgba(255, 255, 255, 0.12);
+	border-color: rgba(255, 255, 255, 0.28);
+}
+.kg-hud-btn:active {
+	transform: translateY(1px);
+}
+.kg-hud-btn:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+.kg-hud-btn[aria-expanded='true'] {
+	background: rgba(120, 150, 220, 0.22);
+	border-color: rgba(150, 180, 255, 0.45);
+}
+.kg-hud-ico {
+	width: 15px;
+	height: 15px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+/* Keep the status pill grouped with the toggle (override its margin-left:auto). */
+#kg-status {
+	margin-left: 12px;
+}
+
+/* Slide-in panel, right edge. */
+.kg-skills {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 12;
+	width: min(340px, 88vw);
+	display: flex;
+	flex-direction: column;
+	background: var(--kg-panel);
+	border-left: 1px solid var(--kg-line);
+	box-shadow: -18px 0 50px rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(6px);
+	transform: translateX(100%);
+	transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+	will-change: transform;
+}
+.kg-skills.kg-skills--open {
+	transform: translateX(0);
+}
+.kg-skills[hidden] {
+	display: none;
+}
+
+.kg-skills-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 18px 12px;
+	border-bottom: 1px solid var(--kg-line);
+}
+.kg-skills-title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 800;
+	letter-spacing: 0.01em;
+}
+.kg-skills-close {
+	display: inline-flex;
+	padding: 6px;
+	border-radius: 8px;
+	cursor: pointer;
+	background: transparent;
+	border: 1px solid transparent;
+	color: var(--kg-dim);
+	transition:
+		color 0.15s,
+		background 0.15s,
+		border-color 0.15s;
+}
+.kg-skills-close svg {
+	width: 18px;
+	height: 18px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+}
+.kg-skills-close:hover {
+	color: var(--kg-text);
+	background: rgba(255, 255, 255, 0.07);
+	border-color: var(--kg-line);
+}
+.kg-skills-close:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+
+.kg-skills-summary {
+	display: flex;
+	gap: 10px;
+	padding: 14px 18px 4px;
+}
+.kg-skills-sum {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	align-items: center;
+	padding: 10px 8px;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid var(--kg-line);
+}
+.kg-skills-sum-val {
+	font-size: 22px;
+	font-weight: 800;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+.kg-skills-sum-lbl {
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	color: var(--kg-dim);
+}
+
+.kg-skills-list {
+	list-style: none;
+	margin: 0;
+	padding: 12px 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	overflow-y: auto;
+	flex: 1;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.kg-skills-loading {
+	color: var(--kg-dim);
+	font-size: 13px;
+	text-align: center;
+	padding: 28px 12px;
+}
+
+.kg-skill {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 11px 12px;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid var(--kg-line);
+	transition:
+		border-color 0.15s,
+		background 0.15s;
+	animation: kg-skill-in 0.28s ease both;
+}
+.kg-skill:hover {
+	background: rgba(255, 255, 255, 0.06);
+	border-color: rgba(255, 255, 255, 0.2);
+}
+@keyframes kg-skill-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.kg-skill-ico {
+	flex: 0 0 36px;
+	width: 36px;
+	height: 36px;
+	display: grid;
+	place-items: center;
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--kg-hue) 16%, transparent);
+	border: 1px solid color-mix(in srgb, var(--kg-hue) 38%, transparent);
+}
+.kg-skill-ico svg {
+	width: 20px;
+	height: 20px;
+	fill: none;
+	stroke: var(--kg-hue);
+	stroke-width: 1.9;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.kg-skill-main {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+.kg-skill-top {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+}
+.kg-skill-name {
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+}
+.kg-skill-lvl {
+	font-size: 12px;
+	color: var(--kg-dim);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+.kg-skill-lvl b {
+	color: var(--kg-text);
+	font-size: 15px;
+	font-weight: 800;
+}
+.kg-skill-lvl i {
+	font-style: normal;
+	opacity: 0.6;
+}
+.kg-skill-lvl em {
+	font-style: normal;
+	font-size: 9px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	color: #0d1420;
+	background: var(--kg-hue);
+	border-radius: 4px;
+	padding: 1px 4px;
+	margin-right: 6px;
+	vertical-align: 1px;
+}
+
+.kg-skill-bar {
+	height: 7px;
+	border-radius: 5px;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.4);
+	border: 1px solid rgba(0, 0, 0, 0.3);
+}
+.kg-skill-bar i {
+	display: block;
+	height: 100%;
+	min-width: 0;
+	border-radius: 5px;
+	background: linear-gradient(90deg, color-mix(in srgb, var(--kg-hue) 65%, #fff), var(--kg-hue));
+	box-shadow: 0 0 8px color-mix(in srgb, var(--kg-hue) 60%, transparent);
+	transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.kg-skill-xp {
+	font-size: 11px;
+	color: var(--kg-dim);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Maxed skill: hue-tinted rim + a steady full bar. */
+.kg-skill--max {
+	border-color: color-mix(in srgb, var(--kg-hue) 45%, transparent);
+	background: color-mix(in srgb, var(--kg-hue) 8%, transparent);
+}
+.kg-skill--max .kg-skill-xp {
+	color: var(--kg-hue);
+	font-weight: 700;
+}
+/* Fresh skill (level 1, no XP yet): the empty bar reads as a starting line. */
+.kg-skill--fresh .kg-skill-xp {
+	opacity: 0.8;
+}
+
+.kg-skills-foot {
+	margin: 0;
+	padding: 12px 18px 16px;
+	font-size: 11px;
+	color: var(--kg-dim);
+	border-top: 1px solid var(--kg-line);
+	text-align: center;
+}
+.kg-skills-foot b {
+	color: var(--kg-text);
+	font-weight: 700;
+}
+
+/* Level-up celebration toasts — driven by real server 'levelup' events. */
+#kg-levelups {
+	position: fixed;
+	top: 22%;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 11;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	align-items: center;
+	pointer-events: none;
+}
+.kg-levelup {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 20px 12px 14px;
+	border-radius: 14px;
+	background: var(--kg-panel);
+	border: 1px solid color-mix(in srgb, var(--kg-hue) 55%, var(--kg-line));
+	box-shadow:
+		0 12px 40px rgba(0, 0, 0, 0.5),
+		0 0 26px color-mix(in srgb, var(--kg-hue) 35%, transparent);
+	opacity: 0;
+	transform: translateY(-10px) scale(0.92);
+	transition:
+		opacity 0.3s ease,
+		transform 0.35s cubic-bezier(0.18, 1.4, 0.4, 1);
+}
+.kg-levelup--in {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+}
+.kg-levelup-ico {
+	flex: 0 0 40px;
+	width: 40px;
+	height: 40px;
+	display: grid;
+	place-items: center;
+	border-radius: 11px;
+	background: color-mix(in srgb, var(--kg-hue) 18%, transparent);
+	border: 1px solid color-mix(in srgb, var(--kg-hue) 42%, transparent);
+	animation: kg-levelup-pop 0.5s ease both;
+}
+.kg-levelup-ico svg {
+	width: 22px;
+	height: 22px;
+	fill: none;
+	stroke: var(--kg-hue);
+	stroke-width: 1.9;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+@keyframes kg-levelup-pop {
+	0% {
+		transform: scale(0.5) rotate(-12deg);
+	}
+	60% {
+		transform: scale(1.15) rotate(4deg);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+.kg-levelup-txt {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+.kg-levelup-kicker {
+	font-size: 10px;
+	font-weight: 800;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--kg-hue);
+}
+.kg-levelup-main {
+	font-size: 15px;
+	font-weight: 700;
+}
+.kg-levelup-main b {
+	font-size: 18px;
+	font-weight: 800;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.kg-skills,
+	.kg-skill,
+	.kg-skill-bar i,
+	.kg-levelup,
+	.kg-levelup-ico {
+		transition: none;
+		animation: none;
+	}
+}
+
+@media (max-width: 480px) {
+	.kg-hud-btn span:not(.kg-hud-ico) {
+		display: none;
+	} /* icon-only on small screens */
+	.kg-skills {
+		width: min(360px, 94vw);
+	}
+	#kg-levelups {
+		top: auto;
+		bottom: 96px;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   Death-bags (tombstones), the recovery panel, and the respawn overlay.
+   Violet keys the "lootable death-bag" colour used by the tombstone mesh.
+   -------------------------------------------------------------------------- */
+:root {
+	--kg-tomb: #ae7bff;
+}
+
+/* Floating tombstone label (owner + expiry countdown), projected each frame. */
+.kg-tomblabel {
+	position: absolute;
+	top: 0;
+	left: 0;
+	will-change: transform;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+	pointer-events: none;
+}
+.kg-tomb-name {
+	padding: 1px 7px;
+	border-radius: 6px;
+	white-space: nowrap;
+	background: rgba(26, 18, 40, 0.74);
+	border: 1px solid rgba(174, 123, 255, 0.5);
+	color: #e7ddff;
+}
+.kg-tomb-ttl {
+	font-size: 10px;
+	font-weight: 600;
+	color: var(--kg-dim);
+	background: rgba(13, 20, 32, 0.6);
+	border-radius: 5px;
+	padding: 0 5px;
+}
+.kg-tomblabel.kg-tomb-soon .kg-tomb-ttl {
+	color: #ffce5c;
+} /* grace window is open */
+
+/* Recovery panel — bottom-centre, above the hint line. */
+.kg-tomb-panel {
+	position: fixed;
+	left: 50%;
+	bottom: 64px;
+	transform: translateX(-50%) translateY(8px);
+	z-index: 12;
+	width: min(320px, 92vw);
+	background: var(--kg-panel);
+	border: 1px solid rgba(174, 123, 255, 0.35);
+	border-radius: 14px;
+	box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+	padding: 12px 14px 14px;
+	opacity: 0;
+	transition:
+		opacity 0.2s ease,
+		transform 0.2s ease;
+}
+.kg-tomb-panel[hidden] {
+	display: none;
+}
+.kg-tomb-panel--in {
+	opacity: 1;
+	transform: translateX(-50%) translateY(0);
+}
+.kg-tomb-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+.kg-tomb-owner {
+	font-weight: 700;
+	font-size: 14px;
+	color: #e7ddff;
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.kg-tomb-head .kg-tomb-ttl {
+	background: none;
+	padding: 0;
+	font-size: 11px;
+}
+.kg-tomb-close {
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	flex: none;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid var(--kg-line);
+	border-radius: 7px;
+	color: var(--kg-dim);
+	cursor: pointer;
+	transition:
+		color 0.15s,
+		border-color 0.15s;
+}
+.kg-tomb-close:hover {
+	color: var(--kg-text);
+	border-color: var(--kg-accent);
+}
+.kg-tomb-close svg {
+	width: 14px;
+	height: 14px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+}
+.kg-tomb-close:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+
+.kg-tomb-items {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	max-height: 220px;
+	overflow-y: auto;
+	margin-bottom: 12px;
+}
+.kg-tomb-item {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	font-size: 13px;
+	padding: 4px 2px;
+}
+.kg-tomb-chip {
+	width: 14px;
+	height: 14px;
+	border-radius: 4px;
+	background: var(--chip);
+	border: 1px solid rgba(0, 0, 0, 0.35);
+	flex: none;
+}
+.kg-tomb-iname {
+	flex: 1;
+	color: var(--kg-text);
+}
+.kg-tomb-iqty {
+	color: var(--kg-dim);
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+}
+.kg-tomb-empty {
+	font-size: 13px;
+	color: var(--kg-dim);
+	text-align: center;
+	padding: 14px 0;
+}
+
+.kg-tomb-take {
+	width: 100%;
+	padding: 10px 14px;
+	font-size: 14px;
+	font-weight: 700;
+	cursor: pointer;
+	background: var(--kg-tomb);
+	color: #160c2a;
+	border: 0;
+	border-radius: 9px;
+	transition:
+		transform 0.08s ease,
+		opacity 0.15s;
+}
+.kg-tomb-take:hover {
+	opacity: 0.92;
+}
+.kg-tomb-take:active {
+	transform: translateY(1px);
+}
+.kg-tomb-take:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+.kg-tomb-take:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+
+/* Respawn overlay — pointer-transparent vignette + centred status. */
+.kg-death {
+	position: fixed;
+	inset: 0;
+	z-index: 18;
+	pointer-events: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: radial-gradient(120% 120% at 50% 45%, rgba(60, 8, 8, 0.32), rgba(8, 6, 10, 0.74));
+	animation: kg-death-in 0.35s ease both;
+}
+.kg-death[hidden] {
+	display: none;
+}
+@keyframes kg-death-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+.kg-death-card {
+	text-align: center;
+	max-width: 360px;
+	padding: 0 24px;
+}
+.kg-death-eyebrow {
+	font-size: 12px;
+	letter-spacing: 0.28em;
+	text-transform: uppercase;
+	color: #ff8a8a;
+	font-weight: 700;
+}
+.kg-death-msg {
+	font-size: 16px;
+	color: var(--kg-text);
+	line-height: 1.5;
+	margin: 10px 0 16px;
+	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+.kg-death-count {
+	display: inline-block;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	color: var(--kg-text);
+	background: rgba(13, 20, 32, 0.7);
+	border: 1px solid var(--kg-line);
+	border-radius: 999px;
+	padding: 7px 16px;
+	font-variant-numeric: tabular-nums;
+}
+
+.kg-toast--tomb {
+	border-color: rgba(174, 123, 255, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.kg-tomb-panel,
+	.kg-tomb-take {
+		transition: none;
+	}
+	.kg-death {
+		animation: none;
+	}
+}
+
+/* ===========================================================================
+   Task 12 — Controls: topbar buttons, hotbar, panels (inventory / map /
+   placeholders) and the rebindable Controls settings dialog. Uses the same
+   token set as the rest of this file (--kg-panel / --kg-line / --kg-text / …).
+   =========================================================================== */
+
+/* Topbar icon buttons (skills, controls/gear). */
+.kg-iconbtn {
+	pointer-events: auto;
+	cursor: pointer;
+	font: inherit;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1;
+	color: var(--kg-text);
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid var(--kg-line);
+	border-radius: 8px;
+	padding: 6px 10px;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		transform 0.08s;
+}
+.kg-iconbtn:hover {
+	background: rgba(255, 255, 255, 0.12);
+	border-color: var(--kg-accent);
+}
+.kg-iconbtn:active {
+	transform: translateY(1px);
+}
+.kg-iconbtn:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+#kg-controls-btn {
+	font-size: 15px;
+	padding: 5px 9px;
+}
+
+/* Keep the bottom hint clear of the hotbar. */
+#kg-hint {
+	bottom: 96px;
+}
+
+/* --------------------------------------------------------------- hotbar --- */
+.kg-hotbar {
+	position: fixed;
+	left: 50%;
+	bottom: 16px;
+	transform: translateX(-50%);
+	z-index: 7;
+	display: flex;
+	gap: 8px;
+	padding: 8px;
+	background: rgba(13, 20, 32, 0.55);
+	border: 1px solid var(--kg-line);
+	border-radius: 14px;
+	backdrop-filter: blur(6px);
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.kg-hotbar[hidden] {
+	display: none;
+}
+.kg-hb-slot {
+	position: relative;
+	width: 56px;
+	height: 56px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--kg-line);
+	border-radius: 10px;
+	color: var(--kg-text);
+	transition:
+		border-color 0.15s,
+		background 0.15s,
+		transform 0.08s;
+}
+.kg-hb-slot:hover {
+	background: rgba(255, 255, 255, 0.1);
+	border-color: var(--kg-accent);
+}
+.kg-hb-slot:active {
+	transform: translateY(1px);
+}
+.kg-hb-slot:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+.kg-hb--active {
+	border-color: #ffce5c;
+	background: rgba(255, 206, 92, 0.16);
+	box-shadow:
+		0 0 0 1px #ffce5c,
+		0 4px 16px rgba(255, 206, 92, 0.25);
+}
+.kg-hb--empty {
+	color: var(--kg-dim);
+	opacity: 0.8;
+}
+.kg-hb-key {
+	position: absolute;
+	top: 3px;
+	left: 5px;
+	font-size: 10px;
+	font-weight: 700;
+	color: var(--kg-dim);
+	letter-spacing: 0.02em;
+}
+.kg-hb--active .kg-hb-key {
+	color: #ffce5c;
+}
+.kg-hb-glyph {
+	font-size: 26px;
+	line-height: 1;
+}
+.kg-hb-qty {
+	position: absolute;
+	right: 4px;
+	bottom: 3px;
+	font-size: 11px;
+	font-weight: 800;
+	color: var(--kg-text);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* --------------------------------------------------------- modal overlays - */
+.kg-ov {
+	position: fixed;
+	inset: 0;
+	z-index: 24;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	background: rgba(6, 10, 18, 0.62);
+	backdrop-filter: blur(3px);
+	opacity: 0;
+	transition: opacity 0.18s;
+}
+.kg-ov[hidden] {
+	display: none;
+}
+.kg-ov--in {
+	opacity: 1;
+}
+.kg-ov-card {
+	width: 100%;
+	max-width: 460px;
+	max-height: min(80vh, 640px);
+	overflow: auto;
+	background: var(--kg-panel);
+	border: 1px solid var(--kg-line);
+	border-radius: 16px;
+	box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+	transform: translateY(8px) scale(0.98);
+	transition: transform 0.18s;
+}
+.kg-ov--in .kg-ov-card {
+	transform: translateY(0) scale(1);
+}
+.kg-ov-card:focus {
+	outline: none;
+}
+.kg-ov-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 16px 18px 12px;
+	border-bottom: 1px solid var(--kg-line);
+	position: sticky;
+	top: 0;
+	background: var(--kg-panel);
+	z-index: 1;
+}
+.kg-ov-title {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 800;
+	letter-spacing: -0.01em;
+}
+.kg-ov-x {
+	cursor: pointer;
+	font-size: 14px;
+	line-height: 1;
+	color: var(--kg-dim);
+	background: transparent;
+	border: 1px solid var(--kg-line);
+	border-radius: 8px;
+	padding: 6px 9px;
+	transition:
+		color 0.15s,
+		border-color 0.15s;
+}
+.kg-ov-x:hover {
+	color: var(--kg-text);
+	border-color: var(--kg-accent);
+}
+.kg-ov-x:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+.kg-ov-body {
+	padding: 16px 18px 18px;
+}
+.kg-ov-sub {
+	margin: 0 0 14px;
+	font-size: 12.5px;
+	color: var(--kg-dim);
+	line-height: 1.5;
+}
+.kg-ov-empty {
+	margin: 14px 0 0;
+	font-size: 13px;
+	color: var(--kg-dim);
+	line-height: 1.5;
+	text-align: center;
+}
+.kg-ov-foot {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 18px;
+}
+.kg-ov-btn {
+	cursor: pointer;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 700;
+	padding: 9px 16px;
+	border-radius: 9px;
+	border: 1px solid var(--kg-line);
+	background: rgba(255, 255, 255, 0.06);
+	color: var(--kg-text);
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		transform 0.08s;
+}
+.kg-ov-btn:hover {
+	background: rgba(255, 255, 255, 0.12);
+	border-color: var(--kg-accent);
+}
+.kg-ov-btn:active {
+	transform: translateY(1px);
+}
+.kg-ov-btn:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+.kg-ov-primary {
+	background: var(--kg-text);
+	color: #0d1420;
+	border-color: var(--kg-text);
+}
+.kg-ov-primary:hover {
+	opacity: 0.92;
+	background: var(--kg-text);
+}
+.kg-ov-ghost {
+	color: var(--kg-dim);
+}
+
+/* ----------------------------------------------------------- inventory --- */
+.kg-inv-meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 12px;
+	font-size: 13px;
+	color: var(--kg-dim);
+}
+.kg-inv-meta b {
+	color: var(--kg-text);
+}
+.kg-inv-hint {
+	font-size: 11px;
+}
+.kg-inv-grid {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	gap: 6px;
+}
+.kg-inv-cell {
+	position: relative;
+	aspect-ratio: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--kg-line);
+	border-radius: 9px;
+}
+.kg-inv-cell--hb {
+	border-color: rgba(255, 206, 92, 0.4);
+}
+.kg-inv-cell--empty {
+	background: rgba(255, 255, 255, 0.02);
+}
+.kg-inv-glyph {
+	font-size: 22px;
+	line-height: 1;
+}
+.kg-inv-qty {
+	position: absolute;
+	right: 3px;
+	bottom: 2px;
+	font-size: 11px;
+	font-weight: 800;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ----------------------------------------------------------------- map --- */
+.kg-map-canvas {
+	display: block;
+	width: 100%;
+	max-width: 320px;
+	height: auto;
+	margin: 0 auto;
+	border: 1px solid var(--kg-line);
+	border-radius: 10px;
+	image-rendering: pixelated;
+	background: #1a2417;
+}
+.kg-map-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	justify-content: center;
+	margin-top: 12px;
+	font-size: 11px;
+	color: var(--kg-dim);
+}
+.kg-map-legend span {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+.kg-map-dot {
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+}
+.kg-map-dot--me {
+	background: #fff;
+	border: 1.5px solid #0d1420;
+}
+.kg-map-dot--peer {
+	background: #8fd3ff;
+}
+.kg-map-sw {
+	width: 10px;
+	height: 10px;
+	border-radius: 2px;
+}
+.kg-map-sw--bank {
+	background: rgba(255, 206, 92, 0.8);
+}
+.kg-map-sw--block {
+	background: rgba(8, 11, 16, 0.7);
+	border: 1px solid var(--kg-line);
+}
+
+/* --------------------------------------------------------- placeholders --- */
+.kg-ph {
+	text-align: center;
+	padding: 14px 6px 6px;
+}
+.kg-ph-glyph {
+	font-size: 44px;
+	line-height: 1;
+	margin-bottom: 12px;
+}
+.kg-ph-blurb {
+	margin: 0 0 8px;
+	font-size: 14px;
+	color: var(--kg-text);
+	line-height: 1.5;
+}
+.kg-ph-note {
+	margin: 0;
+	font-size: 12px;
+	color: var(--kg-dim);
+}
+
+/* ----------------------------------------------------- controls (rebind) - */
+.kg-bind-group {
+	margin-bottom: 18px;
+}
+.kg-bind-h {
+	margin: 0 0 8px;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	color: var(--kg-dim);
+}
+.kg-bind-row {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	align-items: center;
+	gap: 8px 12px;
+	padding: 7px 0;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.kg-bind-row--conflict {
+	/* warning lives on its own row span below */
+}
+.kg-bind-label {
+	font-size: 13.5px;
+	color: var(--kg-text);
+}
+.kg-bind-chip {
+	min-width: 58px;
+	cursor: pointer;
+	font: inherit;
+	font-size: 12px;
+	font-weight: 700;
+	padding: 6px 12px;
+	border-radius: 7px;
+	text-align: center;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid var(--kg-line);
+	color: var(--kg-text);
+	transition:
+		background 0.15s,
+		border-color 0.15s;
+}
+.kg-bind-chip:hover {
+	background: rgba(255, 255, 255, 0.12);
+	border-color: var(--kg-accent);
+}
+.kg-bind-chip:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
+}
+.kg-bind-chip--fixed {
+	cursor: default;
+	color: var(--kg-dim);
+	opacity: 0.8;
+}
+.kg-bind-chip--fixed:hover {
+	background: rgba(255, 255, 255, 0.06);
+	border-color: var(--kg-line);
+}
+.kg-bind-chip--capturing {
+	background: rgba(255, 206, 92, 0.18);
+	border-color: #ffce5c;
+	color: #ffce5c;
+}
+.kg-bind-warn {
+	grid-column: 1 / -1;
+	font-size: 11px;
+	color: #ffce5c;
+	margin-top: -2px;
+}
+.kg-bind-msg {
+	min-height: 1.2em;
+	margin: 6px 0 0;
+	font-size: 12px;
+	color: var(--kg-dim);
+}
+
+@media (max-width: 480px) {
+	.kg-hb-slot {
+		width: 46px;
+		height: 46px;
+	}
+	.kg-hb-glyph {
+		font-size: 22px;
+	}
+	.kg-ov-card {
+		max-width: 100%;
+	}
+	.kg-inv-grid {
+		gap: 5px;
+	}
+}
+
+/* ============================================================================
+   Quests, hotbar, NPC dialog & bank (Task 10). Self-contained `kq-*` namespace
+   layered over the base `kg-*` HUD; matches the dark, monochrome-leaning palette
+   so quest reward colour and avatars carry the eye.
+   ========================================================================== */
+
+/* ----- nameplate badges + NPC plates -------------------------------------- */
+.kg-label-row { display: inline-flex; align-items: center; gap: 4px; }
+.kg-badges { display: inline-flex; gap: 2px; }
+.kg-badge-glyph { font-size: 11px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7)); }
+
+.kg-npc-label {
+	position: absolute; top: 0; left: 0; will-change: transform; pointer-events: none;
+	display: flex; flex-direction: column; align-items: center; gap: 2px;
+	font-size: 12px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.85);
+}
+.kg-npc-tag {
+	padding: 1px 8px; border-radius: 6px; white-space: nowrap;
+	background: rgba(59, 91, 140, 0.55); border: 1px solid rgba(170, 190, 230, 0.4); color: #eaf1ff;
+}
+.kg-npc-marker {
+	font-size: 18px; font-weight: 900; line-height: 1;
+	animation: kq-bob 1.4s ease-in-out infinite;
+}
+.kq-marker-new { color: #ffce5c; text-shadow: 0 0 8px rgba(255, 206, 92, 0.7); }
+.kq-marker-turnin { color: #6ee787; text-shadow: 0 0 8px rgba(110, 231, 135, 0.7); }
+@keyframes kq-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+/* ----- toolbar (Quests / Bank buttons) ------------------------------------ */
+.kq-toolbar { position: fixed; top: 52px; right: 12px; z-index: 11; display: flex; gap: 8px; }
+.kq-toolbar[hidden] { display: none; }
+.kq-tool-btn {
+	position: relative; display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+	padding: 8px 13px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 700;
+	color: var(--kg-text); background: var(--kg-panel); border: 1px solid var(--kg-line);
+	box-shadow: 0 6px 20px rgba(0,0,0,0.35); transition: transform .08s, border-color .15s, background .15s;
+}
+.kq-tool-btn:hover { border-color: var(--kg-accent); background: rgba(40, 52, 74, 0.92); }
+.kq-tool-btn:active { transform: translateY(1px); }
+.kq-tool-btn:focus-visible { outline: 2px solid var(--kg-accent); outline-offset: 2px; }
+.kq-tool-ic { font-size: 15px; }
+.kq-dot {
+	position: absolute; top: -4px; right: -4px; width: 11px; height: 11px; border-radius: 50%;
+	background: #6ee787; border: 2px solid var(--kg-bg); box-shadow: 0 0 8px rgba(110,231,135,0.8);
+	animation: kq-pulse 1.6s ease-in-out infinite;
+}
+.kq-dot[hidden] { display: none; }
+@keyframes kq-pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.25); opacity: 0.7; } }
+
+/* ----- hotbar ------------------------------------------------------------- */
+.kq-hotbar {
+	position: fixed; left: 50%; bottom: 44px; transform: translateX(-50%); z-index: 9;
+	display: flex; gap: 8px; padding: 8px; border-radius: 14px;
+	background: rgba(13, 20, 32, 0.6); border: 1px solid var(--kg-line); backdrop-filter: blur(4px);
+}
+.kq-hotbar[hidden] { display: none; }
+.kq-slot {
+	position: relative; width: 52px; height: 52px; cursor: pointer; padding: 0;
+	display: flex; align-items: center; justify-content: center; font: inherit;
+	background: rgba(255,255,255,0.05); border: 1px solid var(--kg-line); border-radius: 10px;
+	transition: transform .08s, border-color .15s, background .15s;
+}
+.kq-slot:hover { border-color: var(--kg-accent); }
+.kq-slot:active { transform: translateY(1px); }
+.kq-slot:focus-visible { outline: 2px solid var(--kg-accent); outline-offset: 2px; }
+.kq-slot--active { border-color: #ffce5c; background: rgba(255, 206, 92, 0.14); box-shadow: 0 0 0 1px rgba(255,206,92,0.5) inset; }
+.kq-slot--empty { opacity: 0.55; }
+.kq-slot .kq-key { position: absolute; top: 3px; left: 5px; font-size: 9px; font-weight: 700; color: var(--kg-dim); }
+.kq-slot .kq-ic { font-size: 24px; line-height: 1; }
+.kq-slot .kq-qty { position: absolute; bottom: 3px; right: 5px; font-size: 10px; font-weight: 700; color: var(--kg-text); text-shadow: 0 1px 2px #000; }
+@media (max-width: 560px) {
+	.kq-hotbar { bottom: 12px; gap: 6px; padding: 6px; }
+	.kq-slot { width: 44px; height: 44px; }
+	.kq-slot .kq-ic { font-size: 20px; }
+}
+
+/* ----- quest panel (left drawer) ------------------------------------------ */
+.kq-panel {
+	position: fixed; top: 0; left: 0; bottom: 0; z-index: 13; width: min(360px, 92vw);
+	display: flex; flex-direction: column;
+	background: var(--kg-panel); border-right: 1px solid var(--kg-line);
+	box-shadow: 14px 0 50px rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+	transform: translateX(-105%); transition: transform .24s cubic-bezier(.2,.7,.2,1);
+}
+.kq-panel.kq-in { transform: translateX(0); }
+.kq-panel[hidden] { display: none; }
+.kq-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 12px; border-bottom: 1px solid var(--kg-line); }
+.kq-panel-head h2 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: .01em; }
+.kq-x { width: 30px; height: 30px; cursor: pointer; border-radius: 8px; font-size: 14px; color: var(--kg-dim); background: rgba(255,255,255,0.05); border: 1px solid var(--kg-line); transition: color .15s, border-color .15s; }
+.kq-x:hover { color: var(--kg-text); border-color: var(--kg-accent); }
+.kq-panel-body { padding: 14px 16px 24px; overflow-y: auto; }
+.kq-section { margin-bottom: 22px; }
+.kq-h3 { margin: 0 0 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--kg-dim); }
+.kq-daily-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.kq-reset, .kq-reset-inline { font-size: 11px; font-weight: 700; color: #ffce5c; font-variant-numeric: tabular-nums; }
+
+.kq-card-q { padding: 12px 14px; margin-bottom: 10px; border-radius: 12px; background: rgba(255,255,255,0.035); border: 1px solid var(--kg-line); transition: border-color .2s, opacity .2s; }
+.kq-card-tut { border-color: rgba(255, 206, 92, 0.4); background: rgba(255, 206, 92, 0.07); }
+.kq-card-q.kq-ready { border-color: rgba(110, 231, 135, 0.5); background: rgba(110, 231, 135, 0.07); }
+.kq-card-q.kq-claimed { opacity: 0.55; }
+.kq-q-title { font-size: 14px; font-weight: 700; color: var(--kg-text); }
+.kq-q-desc { font-size: 12px; color: var(--kg-dim); margin: 3px 0 9px; line-height: 1.4; }
+.kq-progress { position: relative; height: 16px; border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,0,0,0.3); }
+.kq-progress i { display: block; height: 100%; background: linear-gradient(90deg, #6ee787, #d7ff7a); transition: width .35s ease; }
+.kq-progress-txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--kg-text); text-shadow: 0 1px 2px rgba(0,0,0,0.8); font-variant-numeric: tabular-nums; }
+.kq-q-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.kq-rewards { display: flex; flex-wrap: wrap; gap: 5px; }
+.kq-rw { font-size: 11px; font-weight: 700; color: var(--kg-text); background: rgba(255,255,255,0.06); border: 1px solid var(--kg-line); border-radius: 6px; padding: 2px 7px; white-space: nowrap; }
+.kq-rw-badge { color: #ffce5c; border-color: rgba(255,206,92,0.4); }
+.kq-claimed-tag { font-size: 12px; font-weight: 700; color: #6ee787; white-space: nowrap; }
+
+.kq-btn {
+	cursor: pointer; font: inherit; font-size: 12px; font-weight: 800; padding: 7px 14px;
+	border: 0; border-radius: 8px; background: var(--kg-text); color: #0d1420;
+	transition: transform .08s, opacity .15s;
+}
+.kq-btn:hover { opacity: 0.9; }
+.kq-btn:active { transform: translateY(1px); }
+.kq-btn:focus-visible { outline: 2px solid var(--kg-accent); outline-offset: 2px; }
+.kq-turnin { background: #6ee787; }
+.kq-btn-disabled, .kq-btn:disabled { background: rgba(255,255,255,0.08); color: var(--kg-dim); cursor: not-allowed; }
+.kq-btn-ghost { background: transparent; color: var(--kg-text); border: 1px solid var(--kg-line); margin-top: 12px; width: 100%; padding: 9px; }
+.kq-btn-ghost:hover { border-color: var(--kg-accent); opacity: 1; }
+
+.kq-empty { font-size: 12px; color: var(--kg-dim); line-height: 1.5; padding: 8px 2px; }
+.kq-empty-good { color: var(--kg-text); background: rgba(110, 231, 135, 0.08); border: 1px solid rgba(110,231,135,0.3); border-radius: 10px; padding: 12px 14px; text-align: center; }
+.kq-tut-done { font-size: 13px; color: var(--kg-text); background: rgba(255,206,92,0.08); border: 1px solid rgba(255,206,92,0.3); border-radius: 10px; padding: 11px 14px; }
+.kq-badges { display: flex; flex-wrap: wrap; gap: 7px; }
+.kq-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--kg-text); background: rgba(255,255,255,0.05); border: 1px solid var(--kg-line); border-radius: 999px; padding: 4px 11px; }
+.kq-badge-ic { font-size: 14px; }
+
+/* ----- modals (NPC dialog + bank) ----------------------------------------- */
+.kq-modal {
+	position: fixed; inset: 0; z-index: 16; display: flex; align-items: center; justify-content: center; padding: 24px;
+	background: radial-gradient(120% 120% at 50% 35%, rgba(20,28,44,0.45), rgba(8,12,20,0.82)); backdrop-filter: blur(2px);
+}
+.kq-modal[hidden] { display: none; }
+.kq-modal-card {
+	position: relative; width: 100%; max-width: 440px; max-height: 86vh; overflow-y: auto;
+	background: var(--kg-panel); border: 1px solid var(--kg-line); border-radius: 18px;
+	padding: 22px 22px 20px; box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+	animation: kq-rise .22s cubic-bezier(.2,.7,.2,1);
+}
+@keyframes kq-rise { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+.kq-modal-card .kq-x { position: absolute; top: 12px; right: 12px; }
+
+/* NPC dialog */
+.kq-npc-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.kq-npc-portrait { font-size: 34px; width: 54px; height: 54px; display: grid; place-items: center; border-radius: 12px; background: rgba(59,91,140,0.25); border: 1px solid rgba(170,190,230,0.35); }
+.kq-npc-name { font-size: 17px; font-weight: 800; }
+.kq-npc-role { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--kg-dim); }
+.kq-npc-line { font-size: 14px; line-height: 1.55; color: var(--kg-text); margin: 0 0 14px; }
+.kq-npc-objective { background: rgba(255,206,92,0.08); border: 1px solid rgba(255,206,92,0.3); border-radius: 12px; padding: 12px 14px; font-size: 14px; font-weight: 700; color: var(--kg-text); display: flex; flex-direction: column; gap: 4px; }
+.kq-npc-obj-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: #ffce5c; }
+.kq-npc-obj-desc { font-size: 12px; font-weight: 500; color: var(--kg-dim); line-height: 1.4; }
+.kq-npc-sub { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--kg-dim); margin: 16px 0 8px; }
+.kq-npc-turnin { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 10px; background: rgba(110,231,135,0.08); border: 1px solid rgba(110,231,135,0.3); margin-bottom: 7px; }
+.kq-npc-turnin-name { font-size: 13px; font-weight: 700; }
+
+/* Bank */
+.kq-bank-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.kq-bank-head h2 { margin: 0; font-size: 17px; font-weight: 800; }
+.kq-bank-hint { margin-left: auto; font-size: 11px; color: var(--kg-dim); }
+.kq-bank-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.kq-bank-col h3 { margin: 0 0 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--kg-dim); }
+.kq-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; min-height: 56px; align-content: start; }
+.kq-cell {
+	position: relative; aspect-ratio: 1; cursor: pointer; padding: 0;
+	display: flex; align-items: center; justify-content: center;
+	background: rgba(255,255,255,0.05); border: 1px solid var(--kg-line); border-radius: 9px;
+	transition: transform .08s, border-color .15s, background .15s;
+}
+.kq-cell:hover { border-color: var(--kg-accent); background: rgba(40,52,74,0.9); }
+.kq-cell:active { transform: translateY(1px); }
+.kq-cell:focus-visible { outline: 2px solid var(--kg-accent); outline-offset: 2px; }
+.kq-cell .kq-ic { font-size: 22px; }
+.kq-cell .kq-qty { position: absolute; bottom: 2px; right: 4px; font-size: 10px; font-weight: 700; text-shadow: 0 1px 2px #000; }
+.kq-bank-col .kq-empty { grid-column: 1 / -1; }
+@media (max-width: 480px) {
+	.kq-bank-cols { grid-template-columns: 1fr; gap: 12px; }
+	.kq-grid { grid-template-columns: repeat(6, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.kq-panel, .kq-progress i, .kq-tool-btn, .kq-slot, .kq-cell { transition: none; }
+	.kq-modal-card { animation: none; }
+	.kq-npc-marker, .kq-dot { animation: none; }
+}
+
+/* Loot + mount toasts (Task 09). Mount drops get a celebratory violet accent;
+   plain loot a warm gold, matching the bag/portal colour language. */
+.kg-toast--loot {
+	border-color: rgba(255, 206, 92, 0.45);
+}
+.kg-toast--mount,
+.kg-toast--cmd {
+	border-color: rgba(174, 123, 255, 0.6);
+	box-shadow: 0 8px 28px rgba(120, 70, 220, 0.3);
+}
+
+/* Mount status chip — visible only while riding. Sits clear of the centred hotbar
+   and the mobile joystick, naming the steed with a one-tap Dismount. */
+.kg-mount {
+	position: fixed;
+	right: 16px;
+	bottom: 104px;
+	z-index: 9;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 7px 10px 7px 12px;
+	border-radius: 999px;
+	background: var(--kg-panel);
+	border: 1px solid rgba(174, 123, 255, 0.55);
+	color: var(--kg-text);
+	font-size: 13px;
+	font-weight: 600;
+	box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+	animation: kg-mount-in 0.25s ease;
+}
+.kg-mount[hidden] {
+	display: none;
+}
+@keyframes kg-mount-in {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+.kg-mount-ico {
+	font-size: 16px;
+	line-height: 1;
+}
+.kg-mount-txt {
+	color: var(--kg-dim);
+	white-space: nowrap;
+}
+.kg-mount-txt b {
+	color: var(--kg-text);
+	font-weight: 700;
+	text-transform: capitalize;
+}
+.kg-mount-btn {
+	margin-left: 2px;
+	padding: 5px 12px;
+	border-radius: 999px;
+	border: 1px solid var(--kg-line);
+	background: rgba(174, 123, 255, 0.18);
+	color: var(--kg-text);
+	font: inherit;
+	font-size: 12px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+.kg-mount-btn:hover {
+	border-color: rgba(174, 123, 255, 0.8);
+	background: rgba(174, 123, 255, 0.3);
+}
+.kg-mount-btn:active {
+	transform: scale(0.96);
+}
+.kg-mount-btn:focus-visible {
+	outline: 2px solid var(--kg-accent);
+	outline-offset: 2px;
 }

@@ -953,7 +953,7 @@ class CheckoutModal {
 			const enc = await postJson(`${ORIGIN}/api/x402-checkout?action=encode`, {
 				accept,
 				signed_tx_base64: signedB64,
-				resource_url: this.opts.endpoint,
+				resource_url: new URL(this.opts.endpoint, location.href).href,
 				...(builderCodeBlock ? { builder_code: builderCodeBlock } : {}),
 			});
 
