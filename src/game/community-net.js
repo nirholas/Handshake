@@ -10,6 +10,7 @@
 // untouched.
 
 import { Client, getStateCallbacks } from 'colyseus.js';
+import { WalkState } from '../../multiplayer/src/schemas.js';
 
 const ROOM_NAME = 'walk_world';
 const RECONNECT_BASE_MS = 3000;
@@ -171,7 +172,7 @@ export class CommunityNet {
 				options.holderPass = this.holderPass;
 				options.holderMinUsd = this.holderMinUsd;
 			}
-			const room = await this.client.joinOrCreate(ROOM_NAME, options);
+			const room = await this.client.joinOrCreate(ROOM_NAME, options, WalkState);
 			if (this._destroyed || gen !== this._connectGen) {
 				try { room.leave(); } catch {}
 				return;

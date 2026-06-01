@@ -13,6 +13,7 @@
 //     (handled in walk.js).
 
 import { Client, getStateCallbacks } from 'colyseus.js';
+import { WalkState } from '../multiplayer/src/schemas.js';
 
 const ROOM_NAME = 'walk_world';
 const SEND_HZ = 15;
@@ -152,7 +153,7 @@ export class WalkNet {
 				coinSymbol: this.coinSymbol,
 				coinImage: this.coinImage,
 				...(presence ? { presence } : {}),
-			});
+			}, WalkState);
 			if (this._destroyed || gen !== this._connectGen) {
 				try { room.leave(); } catch {}
 				return;

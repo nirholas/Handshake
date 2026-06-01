@@ -174,7 +174,19 @@ class GamePlayerView {
 		// rig. Both local player and peers render their equipped look.
 		this._cosmeticId = player.cosmeticId || '';
 		this._cosmeticHandle = null;
+		// Wardrobe try-before-equip (local player only): the server-authoritative
+		// equipped id, plus a non-null pin that overrides it while previewing a look
+		// before committing, so movement patches don't snap the preview back.
+		this._serverCosmeticId = this._cosmeticId;
+		this._cosmeticPin = null;
 		this.setAvatar(player.cosmetic || '');
+	}
+
+	// Preview a look locally with no server round-trip. `id` is a cosmetic id (or ''
+	// for the default look); null clears the preview and reverts to the equipped id.
+	previewCosmetic(id) {
+		this._cosmeticPin = id;
+		this.setCosmetic(id == null ? this._serverCosmeticId : id);
 	}
 
 	setAvatar(url) {
@@ -243,7 +255,8 @@ class GamePlayerView {
 		// The equipped cosmetic is server-authoritative for everyone (including us,
 		// after an equip round-trips), so peers AND the local player track it here.
 		// setCosmetic self-guards, so it's a no-op until the equipped id changes.
-		this.setCosmetic(player.cosmeticId || '');
+		this._serverCosmeticId = player.cosmeticId || '';
+		this.setCosmetic(this._cosmeticPin != null ? this._cosmeticPin : this._serverCosmeticId);
 		// Mark when the server says we moved so the loop can settle us to idle on
 		// arrival without waiting for a separate motion patch.
 		if (moved) this._movedAt = performance.now();
@@ -1490,7 +1503,7 @@ export class IsoGame {
 	// a cosmetic id or '' (default look); null clears the preview. Local-only —
 	// peers see nothing until the player actually equips (server-authoritative).
 	_previewLocalCosmetic(id) {
-		this.players.get(this.myId)?.previewCosmetic(id);
+		this.players.get(this.myId)?.previewCosmetic?.(id);
 	}
 
 	// ---------------------------------------------------------------- marketplace (Task 20)

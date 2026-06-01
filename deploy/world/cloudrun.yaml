@@ -30,10 +30,8 @@ spec:
         run.googleapis.com/cpu-throttling: "false"
         # Gen2 execution environment is required for GCS FUSE volume mounts.
         run.googleapis.com/execution-environment: gen2
-        # GCS FUSE mount — the world/ persistence volume (SQLite + assets).
-        run.googleapis.com/volumes: >-
-          [{"name":"world-data","gcs":{"bucket":"world-three-ws-data","readonly":false}}]
     spec:
+      serviceAccountName: hyperfy-world-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
       # One game-world process; many long-lived WebSocket connections per instance.
       containerConcurrency: 1000
       # WebSocket connections stay open for the session. Cloud Run supports long
@@ -47,16 +45,24 @@ spec:
           env:
             - name: NODE_ENV
               value: production
-            - name: PORT
-              value: "3000"
+            # WORLD is the directory name joined onto the server's rootDir (/app/).
+            # Mounting the GCS bucket at /app/world makes WORLD=world resolve there.
+            - name: WORLD
+              value: world
             - name: DOMAIN
               value: world.three.ws
             - name: PUBLIC_WS_URL
               value: wss://world.three.ws
             - name: PUBLIC_API_URL
               value: https://world.three.ws
-            - name: ASSETS_DIR
-              value: /world/assets
+            # Save world state to disk every 30 seconds.
+            - name: SAVE_INTERVAL
+              value: "30000"
+            - name: PUBLIC_MAX_UPLOAD_SIZE
+              value: "100"
+            # Store assets locally (in the world dir, served via PUBLIC_API_URL).
+            - name: ASSETS
+              value: local
             - name: ASSETS_BASE_URL
               value: https://world.three.ws/assets
             - name: JWT_SECRET
@@ -69,8 +75,9 @@ spec:
               cpu: "2"
               memory: 2Gi
           volumeMounts:
+            # Mount the GCS bucket at /app/world so WORLD=world resolves correctly.
             - name: world-data
-              mountPath: /world
+              mountPath: /app/world
           startupProbe:
             httpGet:
               path: /status
@@ -84,6 +91,13 @@ spec:
               port: 3000
             periodSeconds: 30
             failureThreshold: 3
+      volumes:
+        - name: world-data
+          csi:
+            driver: gcsfuse.run.googleapis.com
+            readOnly: false
+            volumeAttributes:
+              bucketName: world-three-ws-data
   traffic:
     - percent: 100
       latestRevision: true
