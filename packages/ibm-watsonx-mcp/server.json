@@ -1,18 +1,18 @@
 {
 	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
 	"name": "io.github.nirholas/ibm-watsonx",
-	"description": "IBM watsonx.ai MCP: chat, text generation, embeddings, and tokenization with Granite models.",
+	"description": "IBM watsonx.ai MCP by three.ws: chat, text generation, embeddings, and tokenization.",
 	"repository": {
 		"url": "https://github.com/nirholas/three.ws",
 		"source": "github",
 		"subfolder": "packages/ibm-watsonx-mcp"
 	},
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/ibm-watsonx-mcp",
-			"version": "0.1.0",
+			"version": "0.1.1",
 			"transport": {
 				"type": "stdio"
 			},
