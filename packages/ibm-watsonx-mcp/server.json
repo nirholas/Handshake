@@ -11,7 +11,7 @@
 	"packages": [
 		{
 			"registryType": "npm",
-			"identifier": "@three-ws/ibm-watsonx-mcp",
+			"identifier": "@nirholas/ibm-watsonx-mcp",
 			"version": "0.1.0",
 			"transport": {
 				"type": "stdio"

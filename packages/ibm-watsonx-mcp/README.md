@@ -1,4 +1,4 @@
-# @three-ws/ibm-watsonx-mcp
+# @nirholas/ibm-watsonx-mcp
 
 An [MCP](https://modelcontextprotocol.io) server for **IBM watsonx.ai**. It exposes IBM Granite (and any model in your watsonx.ai account) to MCP clients — Claude Desktop, Claude Code, Cursor, and any other MCP host — as five tools: chat, text generation, embeddings, tokenization, and model discovery.
 
@@ -44,7 +44,7 @@ Add to your MCP config (`claude_desktop_config.json`, or via `claude mcp add`):
   "mcpServers": {
     "ibm-watsonx": {
       "command": "npx",
-      "args": ["-y", "@three-ws/ibm-watsonx-mcp"],
+      "args": ["-y", "@nirholas/ibm-watsonx-mcp"],
       "env": {
         "WATSONX_API_KEY": "your-ibm-cloud-api-key",
         "WATSONX_PROJECT_ID": "your-watsonx-project-id"
@@ -57,13 +57,13 @@ Add to your MCP config (`claude_desktop_config.json`, or via `claude mcp add`):
 ## Run standalone
 
 ```bash
-WATSONX_API_KEY=... WATSONX_PROJECT_ID=... npx @three-ws/ibm-watsonx-mcp
+WATSONX_API_KEY=... WATSONX_PROJECT_ID=... npx @nirholas/ibm-watsonx-mcp
 ```
 
 Inspect the tool surface with the MCP Inspector:
 
 ```bash
-npx -y @modelcontextprotocol/inspector npx @three-ws/ibm-watsonx-mcp
+npx -y @modelcontextprotocol/inspector npx @nirholas/ibm-watsonx-mcp
 ```
 
 ## Example calls

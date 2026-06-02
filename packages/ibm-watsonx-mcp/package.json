@@ -1,5 +1,5 @@
 {
-	"name": "@three-ws/ibm-watsonx-mcp",
+	"name": "@nirholas/ibm-watsonx-mcp",
 	"version": "0.1.0",
 	"description": "MCP server for IBM watsonx.ai — chat, text generation, embeddings, tokenization, and model discovery with IBM Granite foundation models. Uses your own IBM Cloud credentials.",
 	"type": "module",

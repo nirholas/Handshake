@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @three-ws/ibm-watsonx-mcp — stdio MCP server for IBM watsonx.ai.
+// @nirholas/ibm-watsonx-mcp — stdio MCP server for IBM watsonx.ai.
 //
 // Exposes IBM Granite (and any model in your watsonx.ai account) as MCP tools:
 // chat, raw text generation, embeddings, tokenization, and model discovery.
@@ -17,8 +17,8 @@
 //   WATSONX_EMBED_MODEL_ID(optional) default embedding model
 //   WATSONX_API_VERSION   (optional) REST version date, default 2024-05-31
 //
-// Run standalone:  WATSONX_API_KEY=... WATSONX_PROJECT_ID=... npx @three-ws/ibm-watsonx-mcp
-// Inspect:         npx -y @modelcontextprotocol/inspector npx @three-ws/ibm-watsonx-mcp
+// Run standalone:  WATSONX_API_KEY=... WATSONX_PROJECT_ID=... npx @nirholas/ibm-watsonx-mcp
+// Inspect:         npx -y @modelcontextprotocol/inspector npx @nirholas/ibm-watsonx-mcp
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
