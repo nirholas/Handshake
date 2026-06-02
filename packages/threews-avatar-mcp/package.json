@@ -1,0 +1,56 @@
+{
+	"name": "@three-ws/avatar-mcp",
+	"version": "0.1.0",
+	"description": "MCP server for three.ws 3D avatars by three.ws — render a live, rotatable on-chain avatar inline, get a paste-anywhere embed iframe, or fetch avatar metadata. Free, no API key.",
+	"type": "module",
+	"author": "nirholas",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"mcpName": "io.github.nirholas/threews-avatar",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nirholas/three.ws.git",
+		"directory": "packages/threews-avatar-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"three.ws",
+		"avatar",
+		"3d-avatar",
+		"glb",
+		"gltf",
+		"model-viewer",
+		"embed",
+		"ai-agent"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"server.json",
+		"README.md",
+		"LICENSE"
+	],
+	"bin": {
+		"avatar-mcp": "src/index.js"
+	},
+	"main": "src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0"
+	}
+}

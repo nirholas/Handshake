@@ -1,0 +1,29 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/threews-avatar",
+	"description": "three.ws 3D avatars in your agent: render a live rotatable avatar inline, or get an embed iframe.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "packages/threews-avatar-mcp"
+	},
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/avatar-mcp",
+			"version": "0.1.0",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "THREEWS_BASE_URL",
+					"description": "three.ws host to read avatars from. Defaults to https://three.ws.",
+					"isRequired": false,
+					"format": "string"
+				}
+			]
+		}
+	]
+}

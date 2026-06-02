@@ -35,7 +35,8 @@
 		"packages/avatar-cli",
 		"packages/viewer-presets",
 		"packages/pumpfun-mcp",
-		"packages/ibm-watsonx-mcp"
+		"packages/ibm-watsonx-mcp",
+		"packages/threews-avatar-mcp"
 	],
 	"main": "src/app.js",
 	"browserslist": [
