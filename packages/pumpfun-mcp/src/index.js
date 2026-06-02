@@ -24,6 +24,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { FALLBACK_TOOLS } from './tools.js';
+import { buildNativeRegistry } from './native.js';
 
 const BACKEND_URL = process.env.PUMPFUN_MCP_URL || 'https://three.ws/api/pump-fun-mcp';
 const SERVER_NAME = 'three.ws-pumpfun-mcp';
@@ -71,8 +72,23 @@ async function loadTools() {
 	return FALLBACK_TOOLS;
 }
 
+// Invoke a single backend tool and return its unwrapped structuredContent.
+// Throws on a JSON-RPC error envelope so native composers can treat an
+// individual source as unavailable (Promise.allSettled) without faking data.
+async function callTool(name, args) {
+	const env = await callBackend('tools/call', { name, arguments: args || {} });
+	if (env?.error) {
+		const err = new Error(env.error.message || `${name} failed`);
+		err.rpcCode = env.error.code;
+		throw err;
+	}
+	return env?.result?.structuredContent ?? null;
+}
+
 async function main() {
-	const tools = await loadTools();
+	const backendTools = await loadTools();
+	const native = buildNativeRegistry(BACKEND_URL, callTool);
+	const tools = [...backendTools, ...native.defs];
 
 	const server = new Server(
 		{ name: SERVER_NAME, version: SERVER_VERSION },
@@ -95,6 +111,25 @@ async function main() {
 
 	server.setRequestHandler(CallToolRequestSchema, async (request) => {
 		const { name, arguments: args } = request.params;
+
+		// Native composed tools run in-process (they orchestrate backend reads).
+		if (native.handlers.has(name)) {
+			try {
+				const data = await native.handlers.get(name)(args || {});
+				return {
+					content: [{ type: 'text', text: JSON.stringify(data) }],
+					structuredContent: data,
+				};
+			} catch (err) {
+				return {
+					isError: true,
+					content: [
+						{ type: 'text', text: `[${err.rpcCode ?? -32603}] ${err.message || 'tool error'}` },
+					],
+				};
+			}
+		}
+
 		let env;
 		try {
 			env = await callBackend('tools/call', { name, arguments: args || {} });

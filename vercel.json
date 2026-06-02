@@ -572,6 +572,14 @@
 			"dest": "/playground.html"
 		},
 		{
+			"src": "/coin3d",
+			"dest": "/coin3d.html"
+		},
+		{
+			"src": "/coin3d/",
+			"dest": "/coin3d.html"
+		},
+		{
 			"src": "/p/([a-z0-9-]+)/?",
 			"dest": "/p/index.html"
 		},

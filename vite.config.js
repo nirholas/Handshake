@@ -230,6 +230,7 @@ const appConfig = {
 				tutorials: resolve(__dirname, 'pages/tutorials.html'),
 				tutorial: resolve(__dirname, 'pages/tutorial.html'),
 				playground: resolve(__dirname, 'pages/playground.html'),
+				coin3d: resolve(__dirname, 'pages/coin3d.html'),
 				embed: resolve(__dirname, 'pages/embed.html'),
 				'embed-demo': resolve(__dirname, 'pages/embed-demo.html'),
 				widget: resolve(__dirname, 'pages/widget.html'),
