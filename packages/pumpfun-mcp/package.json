@@ -6,6 +6,7 @@
 	"author": "nirholas",
 	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
+	"mcpName": "io.github.nirholas/pumpfun-solana-mcp",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/nirholas/three.ws.git",

@@ -1,6 +1,7 @@
 {
 	"name": "@3d-agent/mcp-server",
 	"version": "1.0.0",
+	"mcpName": "io.github.nirholas/3d-agent-mcp",
 	"description": "Paid MCP tools for the 3d-agent stack — pose generation, pump.fun snapshots, ERC-8004 agent reputation, Solana vanity grinder. Settled in USDC via x402.",
 	"type": "module",
 	"author": "nirholas",
@@ -30,6 +31,7 @@
 	},
 	"files": [
 		"src",
+		"server.json",
 		"README.md",
 		"LICENSE"
 	],

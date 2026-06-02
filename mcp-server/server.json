@@ -1,0 +1,48 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/3d-agent-mcp",
+	"description": "Paid MCP tools for the 3d-agent stack by three.ws — pose generation, pump.fun snapshots, ERC-8004 agent reputation, and a Solana vanity grinder. Settled in USDC via x402.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "mcp-server"
+	},
+	"version": "1.0.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@3d-agent/mcp-server",
+			"version": "1.0.0",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "MCP_EVM_PAYMENT_ADDRESS",
+					"description": "Base address that receives USDC when a client pays for a tool call (falls back to X402_PAY_TO_BASE). Required to settle paid tools on Base.",
+					"format": "string",
+					"isRequired": false
+				},
+				{
+					"name": "MCP_SVM_PAYMENT_ADDRESS",
+					"description": "Solana address that receives USDC payments (falls back to X402_PAY_TO_SOLANA / X402_PAY_TO). Required to settle paid tools on Solana.",
+					"format": "string",
+					"isRequired": false
+				},
+				{
+					"name": "SOLANA_RPC_URL",
+					"description": "Solana mainnet RPC endpoint. Defaults to the public cluster — bring your own (Helius / QuickNode / Triton) for production traffic.",
+					"format": "string",
+					"isRequired": false
+				},
+				{
+					"name": "HELIUS_API_KEY",
+					"description": "Optional Helius API key — enables exact supply and richer DAS data in pump.fun snapshots.",
+					"format": "string",
+					"isRequired": false,
+					"isSecret": true
+				}
+			]
+		}
+	]
+}

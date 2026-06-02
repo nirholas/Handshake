@@ -3,7 +3,7 @@
 Discover paid agent services across the **live x402 facilitator network** —
 search, browse, and price any service from inside Claude, Cursor, or any MCP
 client. Registered with the MCP Registry as
-**`io.github.nirholas/three-ws-x402-bazaar`**.
+**`io.github.nirholas/threews-x402-bazaar`**.
 
 - **Endpoint:** `https://three.ws/api/mcp-bazaar`
 - **Transport:** Streamable HTTP (MCP `2025-06-18`)

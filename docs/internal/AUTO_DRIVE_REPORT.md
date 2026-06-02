@@ -192,7 +192,7 @@ href="/assets/dashboard.css" />`. The file does not exist anywhere in
 `.mcp.json:6` contains:
 
 ```
-"Authorization": "Bearer sk_live_nFp3_eDJzJolnNjU27Jf1KKWuj4agpQs7Q-79Q"
+"Authorization": "Bearer sk_live_…REDACTED — rotate this key"
 ```
 
 The file is in `.gitignore` now but **was committed previously** (`git

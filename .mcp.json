@@ -3,7 +3,7 @@
 		"3d-agent": {
 			"url": "https://three.ws/api/mcp",
 			"headers": {
-				"Authorization": "Bearer sk_live_nFp3_eDJzJolnNjU27Jf1KKWuj4agpQs7Q-79Q"
+				"Authorization": "Bearer ${THREE_WS_MCP_TOKEN}"
 			}
 		},
 		"3d-agent-local": {

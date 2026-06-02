@@ -1,7 +1,7 @@
 {
 	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-	"name": "io.github.nirholas/three-ws-x402-bazaar",
-	"description": "Discover, search, and price paid agent services across the live x402 facilitator network.",
+	"name": "io.github.nirholas/threews-x402-bazaar",
+	"description": "Discover and price paid agent services across the live x402 network, by three.ws.",
 	"repository": {
 		"url": "https://github.com/nirholas/three.ws",
 		"source": "github"

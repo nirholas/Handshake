@@ -2,7 +2,7 @@
 
 Turn text or an image into an interactive, textured 3D model — directly from
 Claude, Cursor, or any MCP client. A focused companion to the main three.ws MCP
-server, registered separately as **`io.github.nirholas/three-ws-3d-studio`**.
+server, registered separately as **`io.github.nirholas/threews-3d-studio`**.
 
 - **Endpoint:** `https://three.ws/api/mcp-3d`
 - **Transport:** Streamable HTTP (MCP `2025-06-18`)
