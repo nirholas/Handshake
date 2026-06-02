@@ -130,3 +130,6 @@ sc/
 
 # Debug screenshots from scripts — scratch output, never commit
 scripts/debug-*.png
+
+# Scratch/diagnostic scripts and screenshots
+scripts/_*

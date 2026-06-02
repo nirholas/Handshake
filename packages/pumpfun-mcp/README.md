@@ -39,42 +39,45 @@ npx -y @modelcontextprotocol/inspector npx @three-ws/pumpfun-mcp
 
 ## Tools
 
-| Tool | What it does |
-| --- | --- |
-| `searchTokens` | Search pump.fun tokens by name, symbol, or mint. |
-| `getTokenDetails` | Full metadata for a mint. |
-| `getBondingCurve` | Real/virtual reserves + graduation progress (on-chain). |
-| `getTokenTrades` | Recent buy/sell history for a token. |
-| `getTrendingTokens` | Top tokens by market cap. |
-| `getNewTokens` | Most recently launched tokens. |
-| `getGraduatedTokens` | Tokens that graduated to the Raydium AMM. |
-| `getKingOfTheHill` | Highest-cap token still on the bonding curve. |
-| `getTokenHolders` | Top holders with concentration analysis (on-chain). |
-| `getCreatorProfile` | A creator's tokens with rug-pull risk flags. |
-| `kol_radar` | gmgn-style early-detection radar signals. |
-| `kol_leaderboard` | Top KOL traders ranked by P&L. |
-| `pumpfun_list_claims` | Recent creator fee-claim events (on-chain). |
-| `pumpfun_watch_claims` | Fee claims for a creator within a look-back window. |
-| `pumpfun_first_claims` | First-ever creator claims — a cash-out signal. |
-| `pumpfun_quote_swap` | Read-only pump.fun AMM swap quote (no signing). |
-| `pumpfun_watch_whales` | Collect large trades on a token over a short window. |
-| `pumpfun_vanity_mint` | Grind a vanity Solana keypair (returns secret to caller; never stored). |
-| `sns_resolve` | Resolve a `.sol` domain to its owner wallet. |
-| `sns_reverseLookup` | Reverse-lookup a wallet to its primary `.sol` domain. |
-| `social_cashtag_sentiment` | Deterministic lexicon sentiment over supplied posts. |
-| `social_x_post_impact` | Correlate an X post to bonding-curve price impact. |
+| Tool                       | What it does                                                                                                                                                                                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `searchTokens`             | Search pump.fun tokens by name, symbol, or mint.                                                                                                                                                                                                                                      |
+| `getTokenDetails`          | Full metadata for a mint.                                                                                                                                                                                                                                                             |
+| `getBondingCurve`          | Real/virtual reserves + graduation progress (on-chain).                                                                                                                                                                                                                               |
+| `getTokenTrades`           | Recent buy/sell history for a token.                                                                                                                                                                                                                                                  |
+| `getTrendingTokens`        | Top tokens by market cap.                                                                                                                                                                                                                                                             |
+| `getNewTokens`             | Most recently launched tokens.                                                                                                                                                                                                                                                        |
+| `getGraduatedTokens`       | Tokens that graduated to the Raydium AMM.                                                                                                                                                                                                                                             |
+| `getKingOfTheHill`         | Highest-cap token still on the bonding curve.                                                                                                                                                                                                                                         |
+| `getTokenHolders`          | Top holders with concentration analysis (on-chain).                                                                                                                                                                                                                                   |
+| `getCreatorProfile`        | A creator's tokens with rug-pull risk flags.                                                                                                                                                                                                                                          |
+| `kol_radar`                | gmgn-style early-detection radar signals.                                                                                                                                                                                                                                             |
+| `kol_leaderboard`          | Top KOL traders ranked by P&L.                                                                                                                                                                                                                                                        |
+| `pumpfun_list_claims`      | Recent creator fee-claim events (on-chain).                                                                                                                                                                                                                                           |
+| `pumpfun_watch_claims`     | Fee claims for a creator within a look-back window.                                                                                                                                                                                                                                   |
+| `pumpfun_first_claims`     | First-ever creator claims — a cash-out signal.                                                                                                                                                                                                                                        |
+| `pumpfun_quote_swap`       | Read-only pump.fun AMM swap quote (no signing).                                                                                                                                                                                                                                       |
+| `pumpfun_watch_whales`     | Collect large trades on a token over a short window.                                                                                                                                                                                                                                  |
+| `pumpfun_vanity_mint`      | Grind a vanity Solana keypair (returns secret to caller; never stored).                                                                                                                                                                                                               |
+| `sns_resolve`              | Resolve a `.sol` domain to its owner wallet.                                                                                                                                                                                                                                          |
+| `sns_reverseLookup`        | Reverse-lookup a wallet to its primary `.sol` domain.                                                                                                                                                                                                                                 |
+| `social_cashtag_sentiment` | Deterministic lexicon sentiment over supplied posts.                                                                                                                                                                                                                                  |
+| `social_x_post_impact`     | Correlate an X post to bonding-curve price impact.                                                                                                                                                                                                                                    |
+| `pumpfun_token_3d`         | **Live 3D snapshot** of a token — composes metadata, holders, and graduation into a shareable [three.ws/coin3d](https://three.ws/coin3d) viewer (spinning coin medallion + holder galaxy + graduation ring) and returns the deep-link, an embeddable iframe, and the underlying data. |
 
 Read-only by design: no tool signs or sends a transaction. `pumpfun_quote_swap` only quotes; `pumpfun_vanity_mint` returns a keypair for you to use yourself.
 
 ## Configuration
 
-| Env var | Default | Purpose |
-| --- | --- | --- |
+| Env var           | Default                             | Purpose                                                   |
+| ----------------- | ----------------------------------- | --------------------------------------------------------- |
 | `PUMPFUN_MCP_URL` | `https://three.ws/api/pump-fun-mcp` | Backend endpoint. Override only to self-host the handler. |
 
 ## How it works
 
 This package is a small stdio ↔ HTTP bridge. It forwards MCP `tools/call` requests to the canonical three.ws pump.fun JSON-RPC backend, which performs the actual Solana RPC reads and pump.fun API queries. That keeps one authoritative implementation, ships no secrets to clients, and means the tool surface stays current automatically (the live `tools/list` is fetched at startup, with a bundled fallback for offline use).
+
+`pumpfun_token_3d` is a **native** tool: it runs in-process, orchestrating several backend reads (metadata + bonding curve + holders) and resolving the token logo from its on-chain metadata URI, then returns a deep-link into the three.ws 3D viewer. It needs no extra keys and adds no new backend dependency.
 
 ## License
 

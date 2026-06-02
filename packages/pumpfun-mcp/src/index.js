@@ -18,10 +18,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-	ListToolsRequestSchema,
-	CallToolRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { FALLBACK_TOOLS } from './tools.js';
 import { buildNativeRegistry } from './native.js';
@@ -124,7 +121,10 @@ async function main() {
 				return {
 					isError: true,
 					content: [
-						{ type: 'text', text: `[${err.rpcCode ?? -32603}] ${err.message || 'tool error'}` },
+						{
+							type: 'text',
+							text: `[${err.rpcCode ?? -32603}] ${err.message || 'tool error'}`,
+						},
 					],
 				};
 			}
@@ -147,7 +147,10 @@ async function main() {
 			return {
 				isError: true,
 				content: [
-					{ type: 'text', text: `[${env.error.code}] ${env.error.message || 'tool error'}` },
+					{
+						type: 'text',
+						text: `[${env.error.code}] ${env.error.message || 'tool error'}`,
+					},
 				],
 			};
 		}

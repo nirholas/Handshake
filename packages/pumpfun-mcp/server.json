@@ -1,7 +1,7 @@
 {
 	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
 	"name": "io.github.nirholas/pumpfun-solana-mcp",
-	"description": "Free, read-only pump.fun + Solana MCP server: token discovery, on-chain bonding-curve & holder analysis, creator fee-claim tracking, SNS name resolution, KOL radar/leaderboard signals, and read-only swap quotes. No API keys required.",
+	"description": "Free, read-only pump.fun + Solana MCP server: token discovery, on-chain bonding-curve & holder analysis, creator fee-claim tracking, SNS name resolution, KOL radar/leaderboard signals, read-only swap quotes, and live 3D token snapshots (coin medallion + holder galaxy + graduation ring via three.ws/coin3d). No API keys required.",
 	"repository": {
 		"url": "https://github.com/nirholas/three.ws",
 		"source": "github"

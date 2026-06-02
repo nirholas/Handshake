@@ -1,4 +1,4 @@
-# Publish @nirholas/ibm-watsonx-mcp to npm and the official MCP Registry.
+# Publish @three-ws/ibm-watsonx-mcp to npm and the official MCP Registry.
 #
 # Manual trigger. The npm step needs an NPM_TOKEN secret (Automation token with
 # publish rights). The MCP Registry step needs NO secret — it authenticates with

@@ -127,8 +127,14 @@ export const FALLBACK_TOOLS = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				suffix: { type: 'string', description: 'Desired address suffix (case-insensitive by default)' },
-				prefix: { type: 'string', description: 'Desired address prefix (case-insensitive by default)' },
+				suffix: {
+					type: 'string',
+					description: 'Desired address suffix (case-insensitive by default)',
+				},
+				prefix: {
+					type: 'string',
+					description: 'Desired address prefix (case-insensitive by default)',
+				},
 				caseSensitive: { type: 'boolean', default: false },
 				maxAttempts: { type: 'integer', default: 5000000 },
 			},
@@ -142,7 +148,10 @@ export const FALLBACK_TOOLS = [
 			type: 'object',
 			properties: {
 				mint: { type: 'string', description: 'SPL mint pubkey (base58)' },
-				minUsd: { type: 'number', description: 'Minimum trade value in USD (default 5000)' },
+				minUsd: {
+					type: 'number',
+					description: 'Minimum trade value in USD (default 5000)',
+				},
 				durationMs: {
 					type: 'number',
 					description: 'Collection window in ms (default 5000, max 10000)',
@@ -231,7 +240,8 @@ export const FALLBACK_TOOLS = [
 			properties: {
 				posts: {
 					type: 'array',
-					description: 'Array of post objects. Each must have a text field; id, ts, and author are optional.',
+					description:
+						'Array of post objects. Each must have a text field; id, ts, and author are optional.',
 					items: {
 						type: 'object',
 						properties: {
@@ -268,8 +278,14 @@ export const FALLBACK_TOOLS = [
 			properties: {
 				inputMint: { type: 'string', description: 'Input token mint (base58).' },
 				outputMint: { type: 'string', description: 'Output token mint (base58).' },
-				amountIn: { type: 'number', description: 'Input amount in raw base units (lamports for SOL).' },
-				slippageBps: { type: 'number', description: 'Slippage tolerance in basis points (default 100 = 1%).' },
+				amountIn: {
+					type: 'number',
+					description: 'Input amount in raw base units (lamports for SOL).',
+				},
+				slippageBps: {
+					type: 'number',
+					description: 'Slippage tolerance in basis points (default 100 = 1%).',
+				},
 				network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'mainnet' },
 			},
 			required: ['inputMint', 'outputMint', 'amountIn'],
@@ -282,7 +298,10 @@ export const FALLBACK_TOOLS = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				postUrl: { type: 'string', description: 'X post URL (e.g. https://x.com/user/status/123)' },
+				postUrl: {
+					type: 'string',
+					description: 'X post URL (e.g. https://x.com/user/status/123)',
+				},
 				mint: { type: 'string', description: 'Solana token mint address (base58)' },
 				windowMin: {
 					type: 'integer',

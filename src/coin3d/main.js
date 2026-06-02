@@ -14,17 +14,31 @@
 // `pumpfun_token_3d` deep-links to.
 
 import {
-	Scene, PerspectiveCamera, WebGLRenderer, Group, Color,
-	CylinderGeometry, SphereGeometry, TorusGeometry, RingGeometry,
-	MeshStandardMaterial, MeshBasicMaterial, Mesh,
-	HemisphereLight, DirectionalLight, AmbientLight,
-	TextureLoader, SRGBColorSpace, DoubleSide, AdditiveBlending,
-	Vector3, MathUtils, PointLight,
+	Scene,
+	PerspectiveCamera,
+	WebGLRenderer,
+	Group,
+	Color,
+	CylinderGeometry,
+	SphereGeometry,
+	TorusGeometry,
+	RingGeometry,
+	MeshStandardMaterial,
+	MeshBasicMaterial,
+	Mesh,
+	HemisphereLight,
+	DirectionalLight,
+	AmbientLight,
+	TextureLoader,
+	SRGBColorSpace,
+	DoubleSide,
+	AdditiveBlending,
+	MathUtils,
+	PointLight,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const MCP_ENDPOINT = '/api/pump-fun-mcp';
-const WSOL = 'So11111111111111111111111111111111111111112';
 
 // ── DOM handles ─────────────────────────────────────────────────────────────
 const canvas = document.getElementById('scene');
@@ -137,15 +151,15 @@ function setStatus(kind, title, detail, action) {
 }
 
 function escapeHtml(s) {
-	return String(s).replace(/[&<>"']/g, (c) => (
-		{ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-	));
+	return String(s).replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+	);
 }
 
 // ── Three.js scene ────────────────────────────────────────────────────────────
 let renderer, scene, camera, controls, rafId;
 const spin = new Group();
-let holderGalaxy = null;
 const holderOrbits = [];
 
 function initScene() {
@@ -235,13 +249,15 @@ function buildCoin(snapshot) {
 // Holder galaxy: each top holder is a sphere orbiting the coin. Size scales
 // with balance share; color runs cool→hot as concentration rises.
 function buildHolderGalaxy(snapshot) {
-	holderGalaxy = new Group();
+	const holderGalaxy = new Group();
 	spin.add(holderGalaxy);
 
 	const holders = snapshot.holders.slice(0, 12);
 	if (!holders.length) return;
 
-	const amounts = holders.map((h) => Number(h.uiAmount ?? h.amount ?? h.percent ?? 0)).filter((n) => n > 0);
+	const amounts = holders
+		.map((h) => Number(h.uiAmount ?? h.amount ?? h.percent ?? 0))
+		.filter((n) => n > 0);
 	const max = amounts.length ? Math.max(...amounts) : 1;
 
 	holders.forEach((h, i) => {
@@ -252,14 +268,22 @@ function buildHolderGalaxy(snapshot) {
 		const color = new Color().setHSL(MathUtils.lerp(0.58, 0.0, share), 0.75, 0.55);
 		const mesh = new Mesh(
 			new SphereGeometry(size, 24, 24),
-			new MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.35, roughness: 0.4 }),
+			new MeshStandardMaterial({
+				color,
+				emissive: color,
+				emissiveIntensity: 0.35,
+				roughness: 0.4,
+			}),
 		);
 		const angle = (i / holders.length) * Math.PI * 2;
 		const y = MathUtils.lerp(-0.6, 0.6, (i % 4) / 3);
 		mesh.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
 		holderGalaxy.add(mesh);
 		holderOrbits.push({
-			mesh, radius, y, angle,
+			mesh,
+			radius,
+			y,
+			angle,
 			speed: 0.0008 + (i % 3) * 0.0004,
 			bob: 0.6 + (i % 5) * 0.15,
 			phase: i,

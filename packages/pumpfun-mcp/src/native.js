@@ -73,14 +73,20 @@ async function token3dHandler(args, { call, siteBase }) {
 	const c = curve.status === 'fulfilled' ? curve.value || null : null;
 	const h = holders.status === 'fulfilled' ? holders.value || null : null;
 
-	if (details.status === 'rejected' && curve.status === 'rejected' && holders.status === 'rejected') {
-		const err = new Error(`no on-chain data for ${mint}: ${details.reason?.message || 'unavailable'}`);
+	if (
+		details.status === 'rejected' &&
+		curve.status === 'rejected' &&
+		holders.status === 'rejected'
+	) {
+		const err = new Error(
+			`no on-chain data for ${mint}: ${details.reason?.message || 'unavailable'}`,
+		);
 		err.rpcCode = -32004;
 		throw err;
 	}
 
 	const name = d.name || d.metadata?.name || null;
-	const symbol = (d.symbol || d.metadata?.symbol || '') || null;
+	const symbol = d.symbol || d.metadata?.symbol || '' || null;
 	const image = await resolveImage(d);
 
 	const q = new URLSearchParams({ mint });
@@ -101,12 +107,17 @@ async function token3dHandler(args, { call, siteBase }) {
 		viewerUrl,
 		embedHtml: `<iframe src="${viewerUrl}" width="640" height="420" frameborder="0" allow="fullscreen" style="border:0;border-radius:16px"></iframe>`,
 		rendering: {
-			coin: image ? 'token logo textured onto a spinning 3D medallion' : 'brand-tinted disc (no logo found)',
-			holderGalaxy: (h?.holders?.length || 0) > 0
-				? `${h.holders.length} top holders as balance-sized, concentration-tinted orbiting spheres`
-				: 'no holder data available',
+			coin: image
+				? 'token logo textured onto a spinning 3D medallion'
+				: 'brand-tinted disc (no logo found)',
+			holderGalaxy:
+				(h?.holders?.length || 0) > 0
+					? `${h.holders.length} top holders as balance-sized, concentration-tinted orbiting spheres`
+					: 'no holder data available',
 			graduationRing: c
-				? (c.graduated || c.complete ? 'full ring (graduated to Raydium)' : 'arc filled to bonding-curve progress')
+				? c.graduated || c.complete
+					? 'full ring (graduated to Raydium)'
+					: 'arc filled to bonding-curve progress'
 				: 'no bonding-curve data available',
 		},
 	};
@@ -121,7 +132,10 @@ export const NATIVE_TOOLS = [
 			inputSchema: {
 				type: 'object',
 				properties: {
-					mint: { type: 'string', description: 'SPL / pump.fun token mint address (base58).' },
+					mint: {
+						type: 'string',
+						description: 'SPL / pump.fun token mint address (base58).',
+					},
 					network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'mainnet' },
 				},
 				required: ['mint'],
