@@ -81,6 +81,10 @@ export const limits = {
 	// x402 Bazaar MCP. Discovery calls fan out to external facilitators, so cap
 	// per principal to keep that egress bounded without throttling normal use.
 	mcpBazaar: (key) => getLimiter('mcp:bazaar', { limit: 60, window: '1 m' }).limit(key),
+	// threews-agent MCP. Read/discovery calls are cheap; pay_and_call moves real
+	// money, so it gets a much tighter ceiling on top of the per-spend caps.
+	mcpAgent: (key) => getLimiter('mcp:agent', { limit: 60, window: '1 m' }).limit(key),
+	mcpAgentPay: (key) => getLimiter('mcp:agent:pay', { limit: 20, window: '1 m' }).limit(key),
 	oauthToken: (clientId) =>
 		getLimiter('oauth:token', { limit: 120, window: '1 m' }).limit(clientId),
 	upload: (userId) => getLimiter('upload', { limit: 60, window: '1 h' }).limit(userId),

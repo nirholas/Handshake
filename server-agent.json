@@ -1,0 +1,16 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/threews-agent",
+	"description": "Give your AI agent a wallet: discover, pay for, and call x402 services in USDC. By three.ws.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github"
+	},
+	"version": "1.0.0",
+	"remotes": [
+		{
+			"type": "streamable-http",
+			"url": "https://three.ws/api/mcp-agent"
+		}
+	]
+}

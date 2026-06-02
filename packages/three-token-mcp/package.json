@@ -1,0 +1,61 @@
+{
+	"name": "@three-ws/three-token-mcp",
+	"version": "1.0.0",
+	"mcpName": "io.github.nirholas/three-token-mcp",
+	"description": "The first MCP server whose actions burn a token. Let any AI agent price, hold, and burn $THREE on-chain — every burn splits to the incinerator + treasury via the live three.ws token rail, with Jupiter USD pricing. Deflation as an agent primitive.",
+	"type": "module",
+	"author": "nirholas <hello@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nirholas/three.ws.git",
+		"directory": "packages/three-token-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"three.ws",
+		"$three",
+		"solana",
+		"spl-token",
+		"burn",
+		"deflation",
+		"x402",
+		"jupiter",
+		"ai-agent"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"server.json",
+		"README.md",
+		"LICENSE"
+	],
+	"bin": {
+		"three-token-mcp": "./src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"@solana/spl-token": "^0.4.14",
+		"@solana/web3.js": "^1.98.4",
+		"bs58": "^6.0.0",
+		"zod": "^3.23.8"
+	}
+}
