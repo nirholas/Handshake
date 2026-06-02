@@ -12,48 +12,30 @@ import { Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { webcrypto } from 'node:crypto';
 import { env } from '../_lib/env.js';
 import { recordEvent } from '../_lib/usage.js';
+import { cacheGet, cacheSet } from '../_lib/cache.js';
 
 const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
 const AIRDROP_LAMPORTS = LAMPORTS_PER_SOL;
 
-// ── Solana RPC in-process cache ───────────────────────────────────────────────
+// ── Solana RPC cache ──────────────────────────────────────────────────────────
 // Keys: "sol:bal:<address>:<network>" and "sol:sigs:<address>:<network>:<limit>"
 // Prevents Helius free-plan 429s on repeated wallet card polls.
+//
+// Backed by the shared cache adapter (Upstash Redis when configured, in-memory
+// otherwise). Redis matters here: Vercel runs many serverless replicas, and a
+// per-replica Map only dedupes RPC calls within one warm instance — under real
+// traffic every replica still hammers the RPC. A shared 60 s window collapses
+// that to at most one balance fetch per address per minute across the fleet.
+const SOL_CACHE_TTL_S = 60;
 
-const SOL_CACHE_TTL_MS = 60_000; // 60 s
-// Hard cap so a long-running serverless instance with cycling addresses
-// can't grow this Map without bound. When we hit the cap, drop the
-// oldest-inserted entry — Map preserves insertion order, so the first key
-// from .keys() is always the oldest. 1000 entries × ~200 bytes ≈ 200 KB.
-const SOL_CACHE_MAX_ENTRIES = 1000;
-const _solRpcCache = new Map();
-
-function _solCacheGet(key) {
-	const entry = _solRpcCache.get(key);
-	if (!entry) return undefined;
-	if (entry.expiry < Date.now()) {
-		_solRpcCache.delete(key);
-		return undefined;
-	}
-	return entry.value;
-}
-
-function _solCacheSet(key, value) {
-	// Purge expired entries on each write — the active set is small and the
-	// loop is fast enough that opportunistic eviction beats a periodic timer.
-	const now = Date.now();
-	for (const [k, e] of _solRpcCache.entries()) {
-		if (e.expiry < now) _solRpcCache.delete(k);
-	}
-	// LRU-by-insertion cap. If everything in the map is still fresh and we're
-	// at the cap, evict the oldest insertion(s) before adding the new entry.
-	while (_solRpcCache.size >= SOL_CACHE_MAX_ENTRIES) {
-		const oldest = _solRpcCache.keys().next().value;
-		if (oldest === undefined) break;
-		_solRpcCache.delete(oldest);
-	}
-	_solRpcCache.set(key, { value, expiry: now + SOL_CACHE_TTL_MS });
+// Map an RPC failure to a stable code the wallet card can render. We surface
+// rate-limiting distinctly so the UI shows "Balance unavailable" instead of a
+// misleading "0 SOL" when the RPC is throttled rather than the wallet empty.
+function classifyBalanceError(err) {
+	const msg = err?.message || '';
+	const rateLimited = err?.status === 429 || /\b429\b|rate.?limit|too many|max usage/i.test(msg);
+	return rateLimited ? 'rpc_rate_limited' : 'rpc_error';
 }
 
 // Calls `fn(conn)` with exponential backoff (500 ms → 1000 ms) before the
@@ -162,8 +144,8 @@ async function handleActivity(req, res, id) {
 	const fallbackConn = solanaPublicConnection(network);
 	const sigsCacheKey = `sol:sigs:${address}:${network}:${limit}`;
 
-	let sigs = _solCacheGet(sigsCacheKey);
-	if (sigs === undefined) {
+	let sigs = await cacheGet(sigsCacheKey);
+	if (sigs === null) {
 		const sigInfos = await _solRpcWithBackoffFallback(
 			primaryConn,
 			fallbackConn,
@@ -175,7 +157,7 @@ async function handleActivity(req, res, id) {
 			return error(res, 502, 'rpc_error', 'failed to fetch on-chain activity');
 		}
 		sigs = sigInfos.value;
-		_solCacheSet(sigsCacheKey, sigs);
+		await cacheSet(sigsCacheKey, sigs, SOL_CACHE_TTL_S);
 	}
 
 	// getParsedTransactions is the expensive call and the one most often rate-limited.
@@ -293,9 +275,10 @@ async function handlePublicWalletRead(req, res, id) {
 	}
 
 	let lamports = null;
+	let balanceError = null;
 	const balCacheKey = `sol:bal:${address}:${net}`;
-	const cached = _solCacheGet(balCacheKey);
-	if (cached !== undefined) {
+	const cached = await cacheGet(balCacheKey);
+	if (cached !== null) {
 		lamports = cached;
 	} else {
 		const balResult = await _solRpcWithBackoffFallback(
@@ -304,11 +287,15 @@ async function handlePublicWalletRead(req, res, id) {
 			(c) => c.getBalance(new PublicKey(address)),
 			'getBalance',
 		);
-		lamports = balResult.ok ? balResult.value : null;
-		if (balResult.ok) _solCacheSet(balCacheKey, lamports);
+		if (balResult.ok) {
+			lamports = balResult.value;
+			await cacheSet(balCacheKey, lamports, SOL_CACHE_TTL_S);
+		} else {
+			balanceError = classifyBalanceError(balResult.error);
+		}
 	}
 
-	console.info(`[agents/solana] public read agentId=${id} address=${address} net=${net} lamports=${lamports}`);
+	console.info(`[agents/solana] public read agentId=${id} address=${address} net=${net} lamports=${lamports}${balanceError ? ` balance_error=${balanceError}` : ''}`);
 	return json(res, 200, {
 		data: {
 			agentId: id,
@@ -317,6 +304,7 @@ async function handlePublicWalletRead(req, res, id) {
 			chain: 'solana',
 			network: net,
 			lamports,
+			...(balanceError ? { balance_error: balanceError } : {}),
 		},
 	});
 }
@@ -388,16 +376,21 @@ async function handleWallet(req, res, id) {
 	const network = (req.query?.network || new URL(req.url, 'http://x').searchParams.get('network') || 'mainnet').toString();
 	const net = network === 'devnet' ? 'devnet' : 'mainnet';
 	const balCacheKey = `sol:bal:${meta.solana_address}:${net}`;
-	let lamports = _solCacheGet(balCacheKey);
-	if (lamports === undefined) {
+	let lamports = await cacheGet(balCacheKey);
+	let balanceError = null;
+	if (lamports === null) {
 		const balResult = await _solRpcWithBackoffFallback(
 			solanaConnection(net),
 			solanaPublicConnection(net),
 			(c) => c.getBalance(new PublicKey(meta.solana_address)),
 			'getBalance',
 		);
-		lamports = balResult.ok ? balResult.value : null;
-		if (balResult.ok) _solCacheSet(balCacheKey, lamports);
+		if (balResult.ok) {
+			lamports = balResult.value;
+			await cacheSet(balCacheKey, lamports, SOL_CACHE_TTL_S);
+		} else {
+			balanceError = classifyBalanceError(balResult.error);
+		}
 	}
 
 	// SNS is mainnet-only. Skip the lookup on devnet — it always returns null
@@ -415,6 +408,7 @@ async function handleWallet(req, res, id) {
 			network,
 			lamports,
 			sol: lamports == null ? null : lamports / 1e9,
+			...(balanceError ? { balance_error: balanceError } : {}),
 			vanity_prefix: meta.solana_vanity_prefix || null,
 			source: meta.solana_wallet_source || (meta.encrypted_solana_secret ? 'generated' : null),
 			sns_domain: attachedSns || favoriteSns,

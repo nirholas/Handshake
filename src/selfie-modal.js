@@ -518,6 +518,13 @@ class SelfieModal {
 				return;
 			}
 
+			// 501 means the reconstruction backend isn't configured on the server.
+			// The API's error_description is operator-facing ("set AVATAR_REGEN_PROVIDER
+			// and the matching API token…") — surface a clean end-user message instead.
+			if (res.status === 501) {
+				throw new Error('Avatar engine is not available right now. Please try again later.');
+			}
+
 			if (!res.ok) {
 				const payload = await res.json().catch(() => ({}));
 				throw new Error(payload.error_description || payload.error || `HTTP ${res.status}`);

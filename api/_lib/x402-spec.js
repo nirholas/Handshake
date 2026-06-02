@@ -313,7 +313,18 @@ const FACILITATOR_TIMEOUT_MS_DEFAULT = (() => {
 	return 15_000;
 })();
 
-async function callFacilitator(network, path, body, { timeoutMs, idempotencyKey } = {}) {
+// Upstream statuses that signal a transient facilitator / payment-network
+// hiccup (gateway down, settlement service overloaded) rather than a rejected
+// payment. A 4xx — including 402 (payment required), 409 (idempotency
+// conflict), and 400-with-isValid:false — is a definitive answer and is never
+// retried.
+const TRANSIENT_FACILITATOR_STATUS = new Set([502, 503, 504]);
+
+function summarizeUpstream(data, text) {
+	return String(data.error || data.message || data.invalidReason || text.slice(0, 200) || '').slice(0, 300);
+}
+
+async function callFacilitator(network, path, body, { timeoutMs, idempotencyKey, retries = 1 } = {}) {
 	const config = facilitatorFor(network);
 	const url = `${config.url}${path}`;
 	const host = hostOf(config.url);
@@ -329,50 +340,79 @@ async function callFacilitator(network, path, body, { timeoutMs, idempotencyKey 
 		// wire so this is just a Node-level convenience.
 		headers['Idempotency-Key'] = idempotencyKey;
 	}
-	let res;
-	try {
-		res = await fetch(url, {
-			method: 'POST',
-			headers,
-			body: JSON.stringify(body),
-			signal: AbortSignal.timeout(timeoutMs || FACILITATOR_TIMEOUT_MS_DEFAULT),
-		});
-	} catch (err) {
-		// Server logs keep the host for diagnosis; user-facing X402Error message
-		// omits it so we don't leak internal facilitator topology to clients.
-		console.warn(`[x402] facilitator ${path} unreachable (host=${host}, network=${network}): ${err.message}`);
-		throw new X402Error(
-			'facilitator_unreachable',
-			`facilitator ${path} (network=${network}) fetch failed: ${err.message}`,
-			502,
-		);
-	}
-	const text = await res.text();
-	let data = {};
-	if (text) {
+	// Retries are only safe for idempotent calls: /verify mutates no state, and
+	// /settle carries the deterministic Idempotency-Key from buildIdempotencyKey
+	// so a re-sent settle is de-duplicated by the facilitator instead of paying
+	// twice. A settle without a key (legacy callers) gets a single attempt — we
+	// won't risk a double-spend to recover from a blip.
+	const retryable = path === '/verify' || Boolean(idempotencyKey);
+	const serializedBody = JSON.stringify(body);
+
+	let attempt = 0;
+	for (;;) {
+		let res;
 		try {
-			data = JSON.parse(text);
-		} catch {
-			console.warn(`[x402] facilitator ${path} non-JSON (host=${host}, network=${network}, status=${res.status})`);
+			res = await fetch(url, {
+				method: 'POST',
+				headers,
+				body: serializedBody,
+				signal: AbortSignal.timeout(timeoutMs || FACILITATOR_TIMEOUT_MS_DEFAULT),
+			});
+		} catch (err) {
+			// Network failure / timeout — transient. Retry once for idempotent
+			// calls before giving up.
+			if (retryable && attempt < retries) {
+				attempt += 1;
+				console.warn(`[x402] facilitator ${path} unreachable (host=${host}, network=${network}): ${err.message} — retry ${attempt}/${retries} in 500ms`);
+				await new Promise((r) => setTimeout(r, 500));
+				continue;
+			}
+			// Server logs keep the host for diagnosis; user-facing X402Error message
+			// omits it so we don't leak internal facilitator topology to clients.
+			console.warn(`[x402] facilitator ${path} unreachable (host=${host}, network=${network}): ${err.message}`);
 			throw new X402Error(
-				'facilitator_bad_response',
-				`facilitator ${path} (network=${network}) returned non-JSON (status ${res.status})`,
+				'facilitator_unreachable',
+				`facilitator ${path} (network=${network}) fetch failed: ${err.message}`,
 				502,
 			);
 		}
+		const text = await res.text();
+		let data = {};
+		if (text) {
+			try {
+				data = JSON.parse(text);
+			} catch {
+				console.warn(`[x402] facilitator ${path} non-JSON (host=${host}, network=${network}, status=${res.status})`);
+				throw new X402Error(
+					'facilitator_bad_response',
+					`facilitator ${path} (network=${network}) returned non-JSON (status ${res.status})`,
+					502,
+				);
+			}
+		}
+		if (!res.ok) {
+			// PayAI returns 400 with { isValid: false } for invalid payments —
+			// pass through so verifyPayment can emit a clean 402 to the caller.
+			if (path === '/verify' && data.isValid === false) return data;
+			const detail = summarizeUpstream(data, text);
+			// Transient upstream 5xx — the payment network or settlement service
+			// blinked. Retry once for idempotent calls; the Idempotency-Key keeps
+			// a re-sent settle from double-paying.
+			if (retryable && TRANSIENT_FACILITATOR_STATUS.has(res.status) && attempt < retries) {
+				attempt += 1;
+				console.warn(`[x402] facilitator ${path} ${res.status} (host=${host}, network=${network}): ${detail} — retry ${attempt}/${retries} in 500ms`);
+				await new Promise((r) => setTimeout(r, 500));
+				continue;
+			}
+			console.warn(`[x402] facilitator ${path} ${res.status} (host=${host}, network=${network}): ${detail}`);
+			throw new X402Error(
+				'facilitator_error',
+				`facilitator ${path} (network=${network}) ${res.status}: ${detail}`,
+				502,
+			);
+		}
+		return data;
 	}
-	if (!res.ok) {
-		// PayAI returns 400 with { isValid: false } for invalid payments —
-		// pass through so verifyPayment can emit a clean 402 to the caller.
-		if (path === '/verify' && data.isValid === false) return data;
-		console.warn(`[x402] facilitator ${path} ${res.status} (host=${host}, network=${network})`);
-		throw new X402Error(
-			'facilitator_error',
-			`facilitator ${path} (network=${network}) ${res.status}: ${data.error || data.message || data.invalidReason || text.slice(0, 200)}`,
-			502,
-		);
-	}
-	return data;
 }
 
 // Probe `/supported` on each configured facilitator and report whether the

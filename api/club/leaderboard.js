@@ -20,7 +20,15 @@ export default wrap(async (req, res) => {
 	try {
 		rows = await runForWindow(window);
 	} catch (err) {
-		console.error('[club/leaderboard]', err?.message || err);
+		// Surface the Postgres error code so schema drift is diagnosable from
+		// logs alone: 42703 = column not found, 42P01 = undefined table.
+		// `detail` carries the offending identifier when Neon provides it.
+		console.error(
+			'[club/leaderboard]',
+			'window=' + window,
+			'code=' + (err?.code || 'none'),
+			err?.detail || err?.message || err,
+		);
 		return error(res, 500, 'db_error', 'Failed to load leaderboard');
 	}
 	if (rows === null) {

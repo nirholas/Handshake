@@ -113,4 +113,23 @@ describe('GET /api/club/leaderboard', () => {
 		const { body } = await invoke({ query: { window: 'day' } });
 		expect(body.window).toBe('day');
 	});
+
+	it('returns 500 db_error and logs the Postgres code when the query throws', async () => {
+		const pgErr = Object.assign(new Error('column t.paid_at does not exist'), {
+			code: '42703',
+			detail: 'relation club_tips',
+		});
+		sqlMock.mockRejectedValueOnce(pgErr);
+		const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		const { status, body } = await invoke({ query: { window: 'all' } });
+
+		expect(status).toBe(500);
+		expect(body.error).toBe('db_error');
+		// The whole point of the fix: the Postgres code must reach the logs so
+		// schema drift (42703 column / 42P01 table) is diagnosable.
+		const logged = errSpy.mock.calls[0].join(' ');
+		expect(logged).toContain('42703');
+		errSpy.mockRestore();
+	});
 });

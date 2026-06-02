@@ -318,6 +318,9 @@ export default wrap(async (req, res) => {
 	// Tool support varies by model/provider. We always ask with the action tools
 	// first; if a route rejects them we retry that same route without tools.
 	let includeTools = true;
+	// One in-place retry per route on transient gateway errors (503/504) before
+	// failing over. Reset to false every time we advance to a new route.
+	let retriedTransient = false;
 	while (true) {
 		try {
 			upstream = await fetch(route.url, {
@@ -333,6 +336,7 @@ export default wrap(async (req, res) => {
 			if (routeIdx < fallbackRoutes.length) {
 				route = fallbackRoutes[routeIdx];
 				includeTools = true;
+				retriedTransient = false;
 				continue;
 			}
 			return error(res, 502, 'upstream_unavailable', 'chat backend unreachable');
@@ -356,11 +360,27 @@ export default wrap(async (req, res) => {
 				routeIdx++;
 				route = fallbackRoutes[routeIdx];
 				includeTools = true;
+				retriedTransient = false;
 				continue;
 			}
 			captureException(new Error(`${route.name} upstream 404`), { route: 'chat', provider: route.name, status: 404, body: text.slice(0, 400) });
 			console.error(`[chat:${route.name}]`, 404, text.slice(0, 400));
 			return error(res, 502, 'chat_failed', 'chat backend returned an error');
+		}
+
+		// Transient gateway errors (503 Service Unavailable / 504 Gateway Timeout)
+		// are often momentary upstream blips that clear on a second attempt. Retry
+		// the same route once before failing over — and on the *last* route in the
+		// chain this in-place retry is the only lever left before we surface a 502.
+		// 500/502 are excluded on purpose: a 500 is usually a provider-side bug and
+		// a 502 means the upstream's own backend is down — neither recovers from a
+		// 500ms wait, so we fall straight through to the failover branch for those.
+		if ((upstream.status === 503 || upstream.status === 504) && !retriedTransient) {
+			retriedTransient = true;
+			const text = await upstream.text().catch(() => '');
+			console.warn(`[chat:${route.name}] ${upstream.status} — retrying once after 500ms: ${text.slice(0, 120)}`);
+			await new Promise((r) => setTimeout(r, 500));
+			continue;
 		}
 
 		// Fall over on rate-limit (429) and transient gateway errors (502/503/504).
@@ -372,6 +392,7 @@ export default wrap(async (req, res) => {
 			routeIdx++;
 			route = fallbackRoutes[routeIdx];
 			includeTools = true;
+			retriedTransient = false;
 			continue;
 		}
 		break;
@@ -386,10 +407,10 @@ export default wrap(async (req, res) => {
 			body: text.slice(0, 400),
 		});
 		// Always log — diagnosing prod 502s without provider context is hopeless.
-		console.error(`[chat:${route.name}]`, upstream.status, text.slice(0, 400));
-		// Surface the upstream reason in the response body. Strip any API-key
-		// fragments out of defence; the body is generally short JSON like
-		// {"error":{"type":"invalid_request_error","message":"..."}}.
+		// Reaching here means every route in the failover chain was exhausted, so
+		// flag it as final and surface which provider/model gave up last alongside
+		// the parsed upstream reason. This is the server-side detail the friendly
+		// client message deliberately omits.
 		let upstreamMessage = '';
 		try {
 			const parsed = JSON.parse(text);
@@ -397,11 +418,21 @@ export default wrap(async (req, res) => {
 		} catch {
 			upstreamMessage = text.slice(0, 200);
 		}
+		console.error(
+			`[chat:${route.name}]`,
+			upstream.status,
+			`(final — all ${fallbackRoutes.length} route(s) exhausted)`,
+			upstreamMessage ? `${upstreamMessage} ` : '',
+			text.slice(0, 400),
+		);
+		// Client body is intentionally generic and human-readable: the raw provider
+		// status/message is noise to an end user (and could leak provider internals).
+		// The frontend renders `error_description` directly in the chat UI.
 		return error(
 			res,
 			502,
 			'upstream_error',
-			`${route.name} returned ${upstream.status}${upstreamMessage ? `: ${upstreamMessage}` : ''}`,
+			'The AI chat provider is temporarily unavailable. Please try again in a moment.',
 		);
 	}
 

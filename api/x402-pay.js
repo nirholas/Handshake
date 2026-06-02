@@ -492,6 +492,41 @@ async function runFlow({ tool, args, emit, buyer: buyerOverride, resourceUrl }) 
 	});
 }
 
+// Build the client-facing envelope for a failed payment flow. Carries the
+// upstream status/code through (so a facilitator 5xx surfaces as 502, an
+// invalid/under-paid payment as 402, an MCP tool error as 502) and adds an
+// honest charging note: a flow that never reached on-chain settlement moved no
+// funds, while a post-settlement mismatch is ambiguous and must not promise the
+// wallet was untouched.
+function payErrorEnvelope(err) {
+	const code = err?.code || (err?.mcpError ? 'mcp_dispatch_error' : 'flow_failed');
+	let error_description;
+	if (code === 'facilitator_unreachable' || code === 'facilitator_error' || code === 'settle_failed') {
+		error_description = 'Payment could not be completed and no funds were transferred from the agent wallet. Please try again.';
+	} else if (code === 'facilitator_bad_response') {
+		error_description = 'Payment status could not be confirmed. Check the payment feed before retrying to avoid paying twice.';
+	} else if (code === 'invalid_payment' || code === 'payment_required' || code === 'builder_code_tampered') {
+		error_description = 'The payment was rejected before settlement; no funds were transferred.';
+	}
+	const env = {
+		ok: false,
+		error: err?.message || 'flow_failed',
+		code,
+		mcpError: err?.mcpError || null,
+	};
+	if (error_description) env.error_description = error_description;
+	return env;
+}
+
+// Map a flow error to its HTTP status. X402Error carries an explicit `status`
+// (402 rejected payment, 502 facilitator/upstream); MCP dispatch errors are
+// 502; everything else is an unexpected 500.
+function payErrorStatus(err) {
+	if (Number.isInteger(err?.status)) return err.status;
+	if (err?.mcpError) return 502;
+	return 500;
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', origins: '*' })) return;
 
@@ -582,29 +617,23 @@ export default wrap(async (req, res) => {
 		try {
 			await runFlow({ tool, args, emit, buyer, resourceUrl });
 		} catch (err) {
-			emit('error', {
-				ok: false,
-				error: err.message || 'flow_failed',
-				mcpError: err.mcpError || null,
-			});
+			emit('error', payErrorEnvelope(err));
 		} finally {
 			res.end();
 		}
 		return;
 	}
 
-	// Non-streaming JSON path: collect events into a final envelope.
+	// Non-streaming JSON path: collect the result event, surface any throw with
+	// its real status + honest charging guidance.
 	let final = null;
-	let errEnv = null;
 	const emit = (ev, data) => {
 		if (ev === 'result') final = data;
-		else if (ev === 'error') errEnv = data;
 	};
 	try {
 		await runFlow({ tool, args, emit, buyer, resourceUrl });
 	} catch (err) {
-		errEnv = { ok: false, error: err.message || 'flow_failed', mcpError: err.mcpError || null };
+		return json(res, payErrorStatus(err), payErrorEnvelope(err));
 	}
-	if (errEnv) return json(res, errEnv.mcpError ? 502 : 500, errEnv);
 	return json(res, 200, final);
 });

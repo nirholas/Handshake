@@ -61,6 +61,9 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://etherscan.io',
+		// Mainnet public RPCs are the most restrictive/latent on eth_getLogs; use a
+		// smaller scan window than the global default so a single call stays fast.
+		blockChunk: 500,
 		rpcUrls: [
 			'https://eth.llamarpc.com',
 			'https://cloudflare-eth.com',
@@ -88,6 +91,8 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://polygonscan.com',
+		// High block rate + busy public RPCs; cap eth_getLogs ranges below default.
+		blockChunk: 500,
 		rpcUrls: [
 			'https://polygon-rpc.com',
 			'https://polygon.llamarpc.com',

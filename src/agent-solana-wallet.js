@@ -146,6 +146,7 @@ const STYLE = `
 .agent-sol-wallet .src { font-size: .7rem; color: rgba(230,230,234,0.5); margin-left: .35rem; }
 .agent-sol-wallet .balance { display: flex; align-items: center; gap: .5rem; margin-top: .55rem; font-size: .8rem; color: rgba(230,230,234,0.85); }
 .agent-sol-wallet .balance .sol { font-family: ui-monospace, monospace; font-weight: 600; }
+.agent-sol-wallet .balance .sol.unavailable { font-family: system-ui, sans-serif; font-weight: 500; font-size: .75rem; color: #ffb74d; cursor: help; }
 .agent-sol-wallet .balance .net { margin-left: auto; font-size: .7rem; }
 .agent-sol-wallet .balance select { font: inherit; font-size: .7rem; padding: .15rem .25rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; background: rgba(255,255,255,0.04); color: #e6e6ea; }
 .agent-sol-wallet .skel { color: rgba(230,230,234,0.4); font-size: .75rem; padding: .35rem 0; }
@@ -246,6 +247,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 		network: 'mainnet',
 		sol: null,
 		lamports: null,
+		balanceError: null,
 		snsDomain: null,
 		busy: false,
 		err: null,
@@ -269,6 +271,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 			state.source = r.data.source || null;
 			state.lamports = r.data.lamports;
 			state.sol = r.data.sol;
+			state.balanceError = r.data.balance_error || null;
 			state.snsDomain = r.data.sns_domain || null;
 			_propagate(identity, r.data);
 		} else if (r.status === 'none') {
@@ -291,6 +294,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 		if (r.status === 'ok') {
 			state.lamports = r.data.lamports;
 			state.sol = r.data.sol;
+			state.balanceError = r.data.balance_error || null;
 			state.snsDomain = r.data.sns_domain || null;
 			render();
 		}
@@ -357,14 +361,22 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 		if (state.address) {
 			const pfx = state.vanityPrefix || '';
 			const rest = state.address.slice(pfx.length);
-			const solDisplay = state.sol == null ? '—' : `${state.sol.toFixed(4)} SOL`;
+			const balUnavailable = state.balanceError != null;
+			const balTitle = state.balanceError === 'rpc_rate_limited'
+				? 'Solana RPC is rate-limited — balance will refresh automatically.'
+				: state.balanceError
+					? 'Could not reach the Solana RPC — balance will refresh automatically.'
+					: '';
+			const solDisplay = balUnavailable
+				? 'Balance unavailable'
+				: state.sol == null ? '—' : `${state.sol.toFixed(4)} SOL`;
 			const isDevnet = state.network === 'devnet';
 			root.innerHTML = `
 				<h3>Solana wallet${state.source ? `<span class="src">· ${_esc(state.source)}</span>` : ''}</h3>
 				<div class="addr"><span class="pfx">${_esc(pfx)}</span>${_esc(rest)}</div>
 				${state.snsDomain ? `<div><span class="sns" title="Primary .sol domain for this wallet">${_esc(state.snsDomain)}</span></div>` : ''}
 				<div class="balance">
-					<span class="sol">${_esc(solDisplay)}</span>
+					<span class="sol${balUnavailable ? ' unavailable' : ''}"${balTitle ? ` title="${_esc(balTitle)}"` : ''}>${_esc(solDisplay)}</span>
 					<span class="net">
 						<select data-act="network" aria-label="Network">
 							<option value="mainnet" ${state.network === 'mainnet' ? 'selected' : ''}>Mainnet</option>
@@ -447,6 +459,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 			state.source = data.source || 'generated';
 			state.lamports = data.lamports ?? 0;
 			state.sol = data.sol ?? 0;
+			state.balanceError = data.balance_error || null;
 			_propagate(identity, data);
 			onProvisioned?.(data);
 			refreshBalance();

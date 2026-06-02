@@ -19,7 +19,11 @@ import { cors, method, error, wrap, json } from '../../_lib/http.js';
 export const maxDuration = 30;
 
 const SUPPORTED_CHAINS = Object.keys(DEFAULT_REGISTRIES).map(Number);
-const SUBGRAPH_TIMEOUT_MS = 12_000;
+// Abort the subgraph fetch with margin to spare before the platform kills the
+// function. A 12s budget never fired on runtimes enforcing a ~10s ceiling — the
+// function 504'd before the graceful timed_out:true path could run. 6s leaves
+// room to map results and respond well under both the 10s and 30s limits.
+const SUBGRAPH_TIMEOUT_MS = 6_000;
 
 const AGENTS_QUERY = `
   query SearchAgents(

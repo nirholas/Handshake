@@ -107,11 +107,11 @@ async function handleList(req, res, auth) {
 			 from mocap_clips
 			 where ${conds.join(' and ')}
 			 order by created_at desc
-			 limit $${params.length}`,
+			 limit $${params.length}::int`,
 			params,
 		);
 	} catch (err) {
-		console.error('[mocap/clips/list]', err?.message || err);
+		console.error('[mocap/clips/list]', err?.code, err?.message || err);
 		return error(res, 500, 'db_error', 'Failed to list clips');
 	}
 

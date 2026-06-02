@@ -108,6 +108,11 @@ const ERC8004_METADATA_BATCH = 25;
 
 const ERC8004_FETCH_TIMEOUT_MS = 10_000;
 
+// Metadata URLs are external, user-controlled (on-chain agentURI) and often
+// point at slow IPFS gateways. Cap each fetch tighter than RPC calls so a single
+// hung gateway can't stall the whole enrichment batch toward Vercel's 300s kill.
+const ERC8004_METADATA_TIMEOUT_MS = 5_000;
+
 // Hard budget: stop processing and return before Vercel's 300s limit.
 const CRAWL_BUDGET_MS = 240_000;
 
@@ -136,7 +141,7 @@ async function handleErc8004Crawl(req, res) {
 
 	if (Date.now() - crawlStart <= CRAWL_BUDGET_MS) {
 		try {
-			report.enriched = await erc8004EnrichMetadata(ERC8004_METADATA_BATCH);
+			report.enriched = await erc8004EnrichMetadata(ERC8004_METADATA_BATCH, crawlStart + CRAWL_BUDGET_MS);
 		} catch (err) {
 			report.errors.push({ stage: 'metadata', error: err.message || String(err) });
 		}
@@ -161,7 +166,10 @@ async function erc8004CrawlChain(chain) {
 		return { inserted: 0, scanned: 0, lastBlock: latestBlock, fromBlock };
 	}
 
-	const toBlock = Math.min(fromBlock + ERC8004_BLOCK_CHUNK - 1, latestBlock);
+	// Per-chain override lets a restrictive RPC use a smaller range without
+	// throttling well-behaved chains. Falls back to the global default.
+	const chunkSize = chain.blockChunk || ERC8004_BLOCK_CHUNK;
+	const toBlock = Math.min(fromBlock + chunkSize - 1, latestBlock);
 
 	const logs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
 		{
@@ -230,7 +238,7 @@ async function erc8004CrawlChain(chain) {
 	return { inserted, scanned: toBlock - fromBlock + 1, lastBlock: toBlock, fromBlock };
 }
 
-async function erc8004EnrichMetadata(limit) {
+async function erc8004EnrichMetadata(limit, deadline) {
 	const rows = await sql`
 		SELECT chain_id, agent_id, agent_uri
 		FROM erc8004_agents_index
@@ -242,6 +250,9 @@ async function erc8004EnrichMetadata(limit) {
 
 	let done = 0;
 	for (const row of rows) {
+		// Each row may fetch a slow external URL; stop before the cron's hard
+		// budget so a long IPFS tail can't push the function into a 504.
+		if (deadline && Date.now() > deadline) break;
 		try {
 			const meta = await erc8004FetchAgentMetadata(row.agent_uri);
 			if (!meta) {
@@ -322,7 +333,7 @@ async function erc8004FetchAgentMetadata(uri) {
 	const url = erc8004ResolveGateway(uri);
 	if (!url) return null;
 	try {
-		const res = await fetch(url, { signal: AbortSignal.timeout(ERC8004_FETCH_TIMEOUT_MS) });
+		const res = await fetch(url, { signal: AbortSignal.timeout(ERC8004_METADATA_TIMEOUT_MS) });
 		if (!res.ok) return null;
 		return await res.json();
 	} catch {
@@ -688,7 +699,11 @@ async function idxRpc(urls, method, params) {
 // Keep small: each mint makes 2-3 Solana RPC calls; public RPC rate-limits at
 // 429 immediately, so large batches reliably 504 within Vercel's 30s window.
 const PUMP_STATS_MAX_PER_RUN = 20;
-const PUMP_STATS_MINT_TIMEOUT_MS = 8_000;
+// Per-mint cap so one stuck mint can't eat the whole run. A healthy private RPC
+// answers each of the 2-3 sequential calls in a few hundred ms (~1s/mint), so a
+// 4s cap is generous for real work while failing fast on a hung endpoint. The
+// 22s DEADLINE below is the real total-run guard; this only bounds one mint.
+const PUMP_STATS_MINT_TIMEOUT_MS = 4_000;
 
 // Pump.fun graduation threshold (mainnet curve). Used only as a UI hint —
 // progress_pct is a coarse bar, not financial advice.
@@ -836,7 +851,14 @@ async function pumpStatsSnapshotMint({ network, mint }) {
 		} else if (sdk.fetchBondingCurve) {
 			curve = await sdk.fetchBondingCurve(mintPk);
 		}
-	} catch {
+	} catch (e) {
+		// The bonding-curve fetch is the dominant source of production 429s
+		// (it runs through the single getConnection endpoint). Propagate rate
+		// limiting so the outer loop's circuit breaker actually trips instead
+		// of silently recording a null curve and burning the per-mint budget.
+		if (/429|rate.limit|max usage/i.test(e?.message || '')) {
+			throw Object.assign(new Error(`RPC 429: ${e.message}`), { code: 'RATE_LIMITED' });
+		}
 		curve = null;
 	}
 
@@ -872,10 +894,15 @@ async function pumpStatsSnapshotMint({ network, mint }) {
 		}
 	}
 
-	// Recent activity snapshot via RPC (use fallback pool if Helius is configured)
+	// Recent activity snapshot via RPC. withFallback is the wrapper's call
+	// surface — it rotates across SOLANA_RPC_FALLBACK_URLS on 429/5xx. Calling
+	// RPC methods directly on the RpcFallback instance is a TypeError (the
+	// wrapper has no such method), so this must go through withFallback.
 	try {
-		const conn = getRpcFallback({ network });
-		const sigs = await conn.getSignaturesForAddress(mintPk, { limit: 50 });
+		const rpc = getRpcFallback({ network });
+		const sigs = await rpc.withFallback((conn) =>
+			conn.getSignaturesForAddress(mintPk, { limit: 50 }),
+		);
 		out.recent_tx_count = sigs.length;
 		if (sigs.length > 0) {
 			out.last_signature = sigs[0].signature;

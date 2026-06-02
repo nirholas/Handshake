@@ -391,12 +391,18 @@ async function handleList(req, res) {
 	// Verify the session user owns this delegator address
 	const targetDelegator = delegator || null;
 	if (targetDelegator) {
-		const [wallet] = await sql`
-			SELECT 1 FROM user_wallets
-			WHERE user_id = ${userId}
-			  AND lower(address) = lower(${targetDelegator})
-			LIMIT 1
-		`;
+		let wallet;
+		try {
+			[wallet] = await sql`
+				SELECT 1 FROM user_wallets
+				WHERE user_id = ${userId}
+				  AND lower(address) = lower(${targetDelegator})
+				LIMIT 1
+			`;
+		} catch (err) {
+			console.error('[permissions/list] wallet ownership query failed', err?.code, err?.message || err);
+			return error(res, 500, 'db_error', 'Failed to list delegations');
+		}
 		if (!wallet) {
 			return error(
 				res,

@@ -302,6 +302,116 @@ describe('build402Body extensions', () => {
 	});
 });
 
+describe('callFacilitator transient retry (via verify/settle)', () => {
+	const REAL_FETCH = global.fetch;
+
+	function fetchResponse({ ok, status, body }) {
+		return {
+			ok,
+			status,
+			text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
+		};
+	}
+
+	beforeEach(() => {
+		process.env.X402_FACILITATOR_URL_SOLANA = 'https://facilitator.test';
+		process.env.X402_FACILITATOR_TOKEN_SOLANA = 'tok';
+		// Keep the inter-attempt backoff from slowing the suite — a 1ms timeout
+		// still exercises the real retry loop without a half-second wait.
+		process.env.X402_FACILITATOR_TIMEOUT_MS = '5000';
+	});
+
+	afterEach(() => {
+		global.fetch = REAL_FETCH;
+	});
+
+	function solanaPaymentHeader() {
+		const payload = {
+			x402Version: 2,
+			scheme: 'exact',
+			network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+			payload: { transaction: 'AAAA' },
+		};
+		return Buffer.from(JSON.stringify(payload)).toString('base64');
+	}
+
+	it('retries /verify once on a transient 503 then succeeds', async () => {
+		const { verifyPayment, paymentRequirements } = await loadSpec();
+		const calls = [];
+		global.fetch = vi.fn(async (url) => {
+			calls.push(url);
+			if (calls.length === 1) return fetchResponse({ ok: false, status: 503, body: { error: 'upstream down' } });
+			return fetchResponse({ ok: true, status: 200, body: { isValid: true, payer: 'PAYER1' } });
+		});
+		const result = await verifyPayment({
+			paymentHeader: solanaPaymentHeader(),
+			requirements: paymentRequirements(),
+			builderCode: null,
+		});
+		expect(result.payer).toBe('PAYER1');
+		expect(global.fetch).toHaveBeenCalledTimes(2);
+	});
+
+	it('does NOT retry a 400 invalid-payment — passes the rejection through once', async () => {
+		const { verifyPayment, paymentRequirements } = await loadSpec();
+		global.fetch = vi.fn(async () =>
+			fetchResponse({ ok: false, status: 400, body: { isValid: false, invalidReason: 'bad sig' } }),
+		);
+		await expect(
+			verifyPayment({
+				paymentHeader: solanaPaymentHeader(),
+				requirements: paymentRequirements(),
+				builderCode: null,
+			}),
+		).rejects.toMatchObject({ code: 'invalid_payment', status: 402 });
+		expect(global.fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it('stops after a single retry when the 5xx persists', async () => {
+		const { verifyPayment, paymentRequirements } = await loadSpec();
+		global.fetch = vi.fn(async () => fetchResponse({ ok: false, status: 503, body: { error: 'still down' } }));
+		await expect(
+			verifyPayment({
+				paymentHeader: solanaPaymentHeader(),
+				requirements: paymentRequirements(),
+				builderCode: null,
+			}),
+		).rejects.toMatchObject({ code: 'facilitator_error', status: 502 });
+		expect(global.fetch).toHaveBeenCalledTimes(2);
+	});
+
+	it('retries /settle on a transient 504 with the SAME idempotency key', async () => {
+		const { settlePayment } = await loadSpec();
+		const requirement = {
+			scheme: 'exact',
+			network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+			payTo: 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN',
+			asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+			amount: '1000',
+		};
+		const verified = {
+			paymentPayload: { network: requirement.network, payload: { transaction: 'AAAA' } },
+			requirement,
+			payer: 'PAYER2',
+		};
+		const idemKeys = [];
+		global.fetch = vi.fn(async (_url, opts) => {
+			idemKeys.push(opts.headers['Idempotency-Key']);
+			if (idemKeys.length === 1) return fetchResponse({ ok: false, status: 504, body: { error: 'timeout' } });
+			return fetchResponse({
+				ok: true,
+				status: 200,
+				body: { success: true, transaction: 'TX123', network: requirement.network, payer: 'PAYER2' },
+			});
+		});
+		const result = await settlePayment({ verified });
+		expect(result.transaction).toBe('TX123');
+		expect(global.fetch).toHaveBeenCalledTimes(2);
+		expect(idemKeys[0]).toBeTruthy();
+		expect(idemKeys[0]).toBe(idemKeys[1]);
+	});
+});
+
 describe('send402 PAYMENT-REQUIRED header', () => {
 	function makeRes() {
 		return {

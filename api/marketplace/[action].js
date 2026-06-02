@@ -479,7 +479,7 @@ async function handleList(req, res, url) {
 				`,
 			]);
 		} else {
-			console.error('[marketplace/list]', err?.message || err);
+			console.error('[marketplace/list]', err?.code, err?.message || err);
 			return error(res, 500, 'db_error', 'Failed to load marketplace listing');
 		}
 	}
