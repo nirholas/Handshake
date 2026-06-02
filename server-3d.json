@@ -1,0 +1,16 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/three-ws-3d-studio",
+	"description": "Turn text or an image into an interactive, textured 3D model (GLB). Generate, preview as a live <model-viewer> artifact, inspect, and optimize — powered by three.ws.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github"
+	},
+	"version": "1.0.0",
+	"remotes": [
+		{
+			"type": "streamable-http",
+			"url": "https://three.ws/api/mcp-3d"
+		}
+	]
+}

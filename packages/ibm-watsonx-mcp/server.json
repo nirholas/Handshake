@@ -1,0 +1,66 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/ibm-watsonx",
+	"description": "IBM watsonx.ai MCP server — chat, text generation, embeddings, tokenization, and model discovery with IBM Granite foundation models, using your own IBM Cloud credentials.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "packages/ibm-watsonx-mcp"
+	},
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/ibm-watsonx-mcp",
+			"version": "0.1.0",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "WATSONX_API_KEY",
+					"description": "IBM Cloud API key (create one at https://cloud.ibm.com/iam/apikeys).",
+					"isRequired": true,
+					"isSecret": true,
+					"format": "string"
+				},
+				{
+					"name": "WATSONX_PROJECT_ID",
+					"description": "watsonx.ai project id (Project → Manage → General → Project ID). Provide this or WATSONX_SPACE_ID.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "WATSONX_SPACE_ID",
+					"description": "watsonx.ai deployment space id. Alternative to WATSONX_PROJECT_ID.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "WATSONX_URL",
+					"description": "Regional inference host. Defaults to https://us-south.ml.cloud.ibm.com.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "WATSONX_MODEL_ID",
+					"description": "Default chat/generation model id. Defaults to ibm/granite-3-8b-instruct.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "WATSONX_EMBED_MODEL_ID",
+					"description": "Default embedding model id. Defaults to ibm/granite-embedding-278m-multilingual.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "WATSONX_API_VERSION",
+					"description": "watsonx.ai REST API version date. Defaults to 2024-05-31.",
+					"isRequired": false,
+					"format": "string"
+				}
+			]
+		}
+	]
+}

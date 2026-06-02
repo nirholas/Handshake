@@ -1,0 +1,29 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/pumpfun-solana-mcp",
+	"description": "Free, read-only pump.fun + Solana MCP server: token discovery, on-chain bonding-curve & holder analysis, creator fee-claim tracking, SNS name resolution, KOL radar/leaderboard signals, and read-only swap quotes. No API keys required.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github"
+	},
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/pumpfun-mcp",
+			"version": "0.1.0",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "PUMPFUN_MCP_URL",
+					"description": "Override the canonical pump.fun MCP backend endpoint. Defaults to https://three.ws/api/pump-fun-mcp — set this only when self-hosting the handler.",
+					"format": "string",
+					"isRequired": false,
+					"default": "https://three.ws/api/pump-fun-mcp"
+				}
+			]
+		}
+	]
+}

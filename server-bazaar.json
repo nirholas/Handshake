@@ -1,0 +1,16 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/three-ws-x402-bazaar",
+	"description": "Discover paid agent services across the live x402 facilitator network: search and browse the bazaar, then get exact prices, payment networks, input schemas, and a ready pay link.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github"
+	},
+	"version": "1.0.0",
+	"remotes": [
+		{
+			"type": "streamable-http",
+			"url": "https://three.ws/api/mcp-bazaar"
+		}
+	]
+}

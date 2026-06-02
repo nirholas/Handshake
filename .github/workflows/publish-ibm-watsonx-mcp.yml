@@ -1,0 +1,51 @@
+# Publish @three-ws/ibm-watsonx-mcp to npm and the official MCP Registry.
+#
+# Manual trigger. The npm step needs an NPM_TOKEN secret (Automation token with
+# publish rights). The MCP Registry step needs NO secret — it authenticates with
+# GitHub OIDC, which proves ownership of the io.github.nirholas/* namespace.
+#
+# Bump the version in packages/ibm-watsonx-mcp/package.json AND server.json
+# before running (both must match).
+name: publish-ibm-watsonx-mcp
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: packages/ibm-watsonx-mcp
+
+permissions:
+  contents: read
+  id-token: write # required for MCP Registry GitHub OIDC auth
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm install --no-package-lock
+
+      - name: Publish package to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" \
+            | tar xz mcp-publisher
+          sudo mv mcp-publisher /usr/local/bin/
+
+      - name: Authenticate to the MCP Registry (GitHub OIDC)
+        run: mcp-publisher login github-oidc
+
+      - name: Publish to the MCP Registry
+        run: mcp-publisher publish

@@ -33,7 +33,9 @@
 		"multiplayer",
 		"packages/avatar-schema",
 		"packages/avatar-cli",
-		"packages/viewer-presets"
+		"packages/viewer-presets",
+		"packages/pumpfun-mcp",
+		"packages/ibm-watsonx-mcp"
 	],
 	"main": "src/app.js",
 	"browserslist": [

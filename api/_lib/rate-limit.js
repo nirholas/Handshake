@@ -73,6 +73,14 @@ export const limits = {
 	mcpValidate: (key) => getLimiter('mcp:validate', { limit: 10, window: '1 m' }).limit(key),
 	mcpInspect: (key) => getLimiter('mcp:inspect', { limit: 30, window: '1 m' }).limit(key),
 	mcpOptimize: (key) => getLimiter('mcp:optimize', { limit: 10, window: '1 m' }).limit(key),
+	// 3D Studio MCP. Generation submits a real GPU job on Replicate (text→image
+	// and/or image→3D reconstruction) that costs real money, so it gets a hard
+	// hourly ceiling per principal. Status polling is cheap and frequent.
+	mcp3dGenerate: (key) => getLimiter('mcp3d:generate', { limit: 12, window: '1 h' }).limit(key),
+	mcp3dStatus: (key) => getLimiter('mcp3d:status', { limit: 240, window: '1 m' }).limit(key),
+	// x402 Bazaar MCP. Discovery calls fan out to external facilitators, so cap
+	// per principal to keep that egress bounded without throttling normal use.
+	mcpBazaar: (key) => getLimiter('mcp:bazaar', { limit: 60, window: '1 m' }).limit(key),
 	oauthToken: (clientId) =>
 		getLimiter('oauth:token', { limit: 120, window: '1 m' }).limit(clientId),
 	upload: (userId) => getLimiter('upload', { limit: 60, window: '1 h' }).limit(userId),

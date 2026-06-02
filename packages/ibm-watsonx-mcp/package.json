@@ -1,0 +1,58 @@
+{
+	"name": "@three-ws/ibm-watsonx-mcp",
+	"version": "0.1.0",
+	"description": "MCP server for IBM watsonx.ai — chat, text generation, embeddings, tokenization, and model discovery with IBM Granite foundation models. Uses your own IBM Cloud credentials.",
+	"type": "module",
+	"author": "nirholas",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"mcpName": "io.github.nirholas/ibm-watsonx",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nirholas/three.ws.git",
+		"directory": "packages/ibm-watsonx-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"ibm",
+		"watsonx",
+		"watsonx.ai",
+		"granite",
+		"ibm-granite",
+		"foundation-models",
+		"embeddings",
+		"llm",
+		"ai-agent",
+		"three.ws"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"server.json",
+		"README.md",
+		"LICENSE"
+	],
+	"bin": {
+		"ibm-watsonx-mcp": "./src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0"
+	}
+}
