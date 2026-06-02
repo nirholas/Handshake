@@ -15,7 +15,6 @@
         "@3d-agent/mcp-server"
       ],
       "env": {
-        "MCP_EVM_PAYMENT_ADDRESS": "${MCP_EVM_PAYMENT_ADDRESS}",
         "MCP_SVM_PAYMENT_ADDRESS": "${MCP_SVM_PAYMENT_ADDRESS}"
       }
     }

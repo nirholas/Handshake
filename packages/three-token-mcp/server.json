@@ -1,0 +1,44 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/three-token-mcp",
+	"description": "The first MCP server whose actions burn a token. Price, hold, and burn $THREE on Solana — every burn splits to the incinerator + treasury via the live three.ws token rail, with Jupiter USD pricing. Deflation as an agent primitive.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "packages/three-token-mcp"
+	},
+	"version": "1.0.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/three-token-mcp",
+			"version": "1.0.0",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "SOLANA_SECRET_KEY",
+					"description": "Base58 Solana secret key that signs burns (the wallet that holds the $THREE). Not needed for the read-only tools (three_price, three_balance). Treat like cash.",
+					"format": "string",
+					"isRequired": false,
+					"isSecret": true
+				},
+				{
+					"name": "SOLANA_RPC_URL",
+					"description": "Solana mainnet RPC endpoint. Defaults to the public cluster — bring your own (Helius / QuickNode / Triton) for production traffic.",
+					"format": "string",
+					"isRequired": false,
+					"default": "https://api.mainnet-beta.solana.com"
+				},
+				{
+					"name": "THREE_WS_BASE",
+					"description": "Base URL of the three.ws token API (serves /api/token/config and /api/token/price). Override only when self-hosting.",
+					"format": "string",
+					"isRequired": false,
+					"default": "https://three.ws"
+				}
+			]
+		}
+	]
+}
