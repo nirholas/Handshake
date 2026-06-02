@@ -37,6 +37,7 @@ import { VoiceChat, voiceSupported } from './voice-chat.js';
 import { requestHolderPass, signInWithX, ensureSolanaWallet, relinkSolanaWallet, getSession } from '../community/town-auth.js';
 import { ensurePlayAccess } from './play-gate.js';
 import { clearStoredPass, fetchPlayConfig, signInToPlay, loadStoredPass, storePass } from './play-auth.js';
+import { PlaySystems } from './play-systems.js';
 
 const WORLD_RADIUS = 58; // a touch inside the server's 60m clamp
 const MOVE_SPEED = 4.2;
@@ -746,6 +747,23 @@ export class CoinCommunities {
 		this.net.on('editReject', ({ reason }) => this._onEditReject(reason));
 		// Durability flag for this world's build — drives the HUD "Saved" badge.
 		this.net.on('persistent', (durable) => { if (this.net?.status === 'online') this.buildHud.setPersistent(durable); });
+
+		// Game systems (economy + activities). The server streams this player's own
+		// pack/purse/skills here; PlaySystems renders the HUD, ponds, and cast visual,
+		// and re-anchors fishing to fixed world features. Built per-world, torn down on
+		// leave() so coins never share a pond or an inventory panel.
+		this.playSystems = new PlaySystems({
+			scene: this.scene,
+			getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z, yaw: this.localYaw, height: this.localHeight || 1.6 }),
+			net: this.net,
+			ui: this.ui,
+		});
+		this.net.on('profile', (snap) => this.playSystems?.setProfile(snap));
+		this.net.on('inv', (delta) => this.playSystems?.applyInv(delta));
+		this.net.on('xpgain', (g) => this.playSystems?.onXpGain(g));
+		this.net.on('levelup', (l) => this.playSystems?.onLevelup(l));
+		this.net.on('notice', (n) => this.playSystems?.onNotice(n));
+
 		this.buildHud.root.hidden = false;
 		await this.net.connect();
 		// Player backed out mid-connect: leave() already tore everything down and
@@ -960,6 +978,7 @@ export class CoinCommunities {
 		this._passRefreshTimer = null;
 		if (this.voice) { this.voice.dispose(); this.voice = null; }
 		if (this.net) { this.net.destroy(); this.net = null; }
+		if (this.playSystems) { this.playSystems.dispose(); this.playSystems = null; }
 		for (const [, r] of this.remotes) r.dispose();
 		this.remotes.clear();
 		if (this._totem) { this.world.remove(this._totem); this._totem = null; this._coinSpin = null; }
@@ -1089,6 +1108,19 @@ export class CoinCommunities {
 				if (this.buildHud.active && k.length === 1 && k >= '0' && k <= '9') {
 					e.preventDefault();
 					this.buildHud.select(k === '0' ? 9 : Number(k) - 1);
+					return;
+				}
+				// F casts a line when standing by a pond (no-op elsewhere). Not while
+				// building, where keys drive the block palette.
+				if (k === 'f' && !this.buildHud.active) {
+					e.preventDefault();
+					this.playSystems?.castFish();
+					return;
+				}
+				// 1–6 select a hotbar slot when not building.
+				if (!this.buildHud.active && k.length === 1 && k >= '1' && k <= '6') {
+					e.preventDefault();
+					this.playSystems?.equipSlot(Number(k) - 1);
 					return;
 				}
 			}
@@ -1398,6 +1430,7 @@ export class CoinCommunities {
 			for (const [, r] of this.remotes) r.tick(dt);
 			this._updateLabels();
 			this._updateVoice();
+			this.playSystems?.tick(dt);
 			if (this.net) this.net.sendMove({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z, yaw: this.localYaw, motion: this.motion });
 		}
 		this._tickEnv(dt);

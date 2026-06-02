@@ -310,7 +310,6 @@ class WalkCompanion {
 		this.mounted = true;
 
 		this._buildDom();
-		reserveWebGLContext();
 
 		try {
 			await this._buildScene();
@@ -371,10 +370,10 @@ class WalkCompanion {
 
 	_showError() {
 		// Avatar couldn't load (offline / GLB 404). Don't leave a dead canvas —
-		// remove the host entirely; the toggle stays available to retry.
+		// remove the host entirely; the toggle stays available to retry. The
+		// WebGL budget was already released by _teardownScene (called first).
 		if (this.host && this.host.parentNode) this.host.parentNode.removeChild(this.host);
 		this.host = null;
-		releaseWebGLContext();
 		this.mounted = false;
 	}
 
@@ -388,6 +387,9 @@ class WalkCompanion {
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 		renderer.setSize(CANVAS_W, CANVAS_H, false);
 		this.renderer = renderer;
+		// Count this context against the shared budget, paired with the
+		// release in _teardownScene so reserve/release always balance.
+		reserveWebGLContext();
 
 		const scene = new Scene();
 		this.scene = scene;

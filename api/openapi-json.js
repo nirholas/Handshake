@@ -209,7 +209,8 @@ export default wrap(async (req, res) => {
 					get: {
 						operationId: 'healthz',
 						summary: 'Service liveness',
-						description: 'Lightweight liveness probe with uptime + service version. No auth.',
+						description:
+							'Lightweight liveness probe with uptime + service version. No auth.',
 						security: [],
 						responses: {
 							200: { description: 'Health summary JSON' },
@@ -224,8 +225,18 @@ export default wrap(async (req, res) => {
 							'Returns raw bonding-curve state, current spot price + market cap, and graduation progress for a Pump.fun token. Public, edge-cached for 10s.',
 						security: [],
 						parameters: [
-							{ name: 'mint', in: 'query', required: true, schema: { type: 'string' }, description: 'Base58 SPL mint address' },
-							{ name: 'network', in: 'query', schema: { type: 'string', enum: ['mainnet', 'devnet'] } },
+							{
+								name: 'mint',
+								in: 'query',
+								required: true,
+								schema: { type: 'string' },
+								description: 'Base58 SPL mint address',
+							},
+							{
+								name: 'network',
+								in: 'query',
+								schema: { type: 'string', enum: ['mainnet', 'devnet'] },
+							},
 						],
 						responses: {
 							200: { description: 'Bonding curve snapshot' },
@@ -242,13 +253,36 @@ export default wrap(async (req, res) => {
 							'Deterministic buy or sell quote computed via @nirholas/pump-sdk on the live bonding curve. Returns output amount, price impact %, and a market context block.',
 						security: [],
 						parameters: [
-							{ name: 'mint', in: 'query', required: true, schema: { type: 'string' } },
-							{ name: 'side', in: 'query', required: true, schema: { type: 'string', enum: ['buy', 'sell'] } },
-							{ name: 'amount', in: 'query', required: true, schema: { type: 'number', minimum: 0 }, description: 'For buy: SOL. For sell: tokens (UI units, 6 decimals).' },
-							{ name: 'network', in: 'query', schema: { type: 'string', enum: ['mainnet', 'devnet'] } },
+							{
+								name: 'mint',
+								in: 'query',
+								required: true,
+								schema: { type: 'string' },
+							},
+							{
+								name: 'side',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', enum: ['buy', 'sell'] },
+							},
+							{
+								name: 'amount',
+								in: 'query',
+								required: true,
+								schema: { type: 'number', minimum: 0 },
+								description:
+									'For buy: SOL. For sell: tokens (UI units, 6 decimals).',
+							},
+							{
+								name: 'network',
+								in: 'query',
+								schema: { type: 'string', enum: ['mainnet', 'devnet'] },
+							},
 						],
 						responses: {
-							200: { description: 'Quote payload with input/output and priceImpactPct' },
+							200: {
+								description: 'Quote payload with input/output and priceImpactPct',
+							},
 							400: { description: 'Validation error' },
 							404: { description: 'No bonding curve for that mint' },
 						},
@@ -259,9 +293,14 @@ export default wrap(async (req, res) => {
 						operationId: 'x402_agent_reputation',
 						summary: 'Paid: Agent Reputation snapshot',
 						description:
-							'Pay $0.01 USDC to retrieve a three.ws agent\'s reputation snapshot synthesized from pump_agent_payments, distribute/buyback success history, and signed Solana memo attestations.',
+							"Pay $0.01 USDC to retrieve a three.ws agent's reputation snapshot synthesized from pump_agent_payments, distribute/buyback success history, and signed Solana memo attestations.",
 						parameters: [
-							{ name: 'agent_id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } },
+							{
+								name: 'agent_id',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', format: 'uuid' },
+							},
 						],
 						responses: {
 							200: { description: 'Reputation snapshot JSON' },
@@ -269,7 +308,10 @@ export default wrap(async (req, res) => {
 							402: { description: 'Payment Required (x402)' },
 							404: { description: 'agent_id not found' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.01' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.01' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/onchain-identity-verify': {
@@ -279,16 +321,34 @@ export default wrap(async (req, res) => {
 						description:
 							'Pay $0.005 USDC to verify whether a three.ws agent_id actually owns/deployed a given contract or mint on a given CAIP-2 chain, using the canonical meta.onchain unified index.',
 						parameters: [
-							{ name: 'agent_id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } },
-							{ name: 'chain', in: 'query', required: true, schema: { type: 'string' } },
-							{ name: 'contract_or_mint', in: 'query', required: true, schema: { type: 'string' } },
+							{
+								name: 'agent_id',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', format: 'uuid' },
+							},
+							{
+								name: 'chain',
+								in: 'query',
+								required: true,
+								schema: { type: 'string' },
+							},
+							{
+								name: 'contract_or_mint',
+								in: 'query',
+								required: true,
+								schema: { type: 'string' },
+							},
 						],
 						responses: {
 							200: { description: 'Verification result JSON' },
 							400: { description: 'Missing or invalid parameters' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.005' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.005' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/pump-agent-audit': {
@@ -298,7 +358,12 @@ export default wrap(async (req, res) => {
 						description:
 							'Pay $0.02 USDC to retrieve a full operational audit of a pump.fun mint: USDC paid in, distinct payers, distribute/buyback success history, latest error reasons, and derived risk flags.',
 						parameters: [
-							{ name: 'mint', in: 'query', required: true, schema: { type: 'string', minLength: 32, maxLength: 44 } },
+							{
+								name: 'mint',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', minLength: 32, maxLength: 44 },
+							},
 						],
 						responses: {
 							200: { description: 'Audit JSON' },
@@ -306,7 +371,10 @@ export default wrap(async (req, res) => {
 							402: { description: 'Payment Required (x402)' },
 							404: { description: 'Mint not indexed' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.02' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.02' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/skill-marketplace': {
@@ -317,13 +385,20 @@ export default wrap(async (req, res) => {
 							'Pay $0.001 USDC to list active skill listings with prices across all three.ws agents. Optional skill filter returns the cheapest provider for that capability.',
 						parameters: [
 							{ name: 'skill', in: 'query', schema: { type: 'string' } },
-							{ name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 200 } },
+							{
+								name: 'limit',
+								in: 'query',
+								schema: { type: 'integer', minimum: 1, maximum: 200 },
+							},
 						],
 						responses: {
 							200: { description: 'Marketplace listings JSON' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.001' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/symbol-availability': {
@@ -333,15 +408,27 @@ export default wrap(async (req, res) => {
 						description:
 							'Pay $0.001 USDC to check whether a candidate ticker collides with any three.ws-indexed pump.fun mint. Returns exact matches plus trigram-similar tickers and a recommendation.',
 						parameters: [
-							{ name: 'ticker', in: 'query', required: true, schema: { type: 'string', minLength: 1, maxLength: 32 } },
-							{ name: 'network', in: 'query', schema: { type: 'string', enum: ['mainnet', 'devnet'] } },
+							{
+								name: 'ticker',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', minLength: 1, maxLength: 32 },
+							},
+							{
+								name: 'network',
+								in: 'query',
+								schema: { type: 'string', enum: ['mainnet', 'devnet'] },
+							},
 						],
 						responses: {
 							200: { description: 'Symbol availability JSON' },
 							400: { description: 'Missing or invalid ticker' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.001' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/mint-to-mesh-batch': {
@@ -362,7 +449,11 @@ export default wrap(async (req, res) => {
 												type: 'array',
 												minItems: 1,
 												maxItems: 10,
-												items: { type: 'string', minLength: 32, maxLength: 44 },
+												items: {
+													type: 'string',
+													minLength: 32,
+													maxLength: 44,
+												},
 											},
 										},
 									},
@@ -374,7 +465,10 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid body' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.05' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.05' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/model-check': {
@@ -397,7 +491,10 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid url' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.001' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/mint-to-mesh': {
@@ -420,7 +517,10 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid mint' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.001' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/insights/revenue-vision': {
@@ -430,7 +530,12 @@ export default wrap(async (req, res) => {
 						description:
 							'Pay $0.001 USDC to receive a single prioritized next-best move, a data-grounded insight, and an honestly-calibrated confidence rating for the supplied mission brief.',
 						parameters: [
-							{ name: 'agent_codename', in: 'query', required: true, schema: { type: 'string' } },
+							{
+								name: 'agent_codename',
+								in: 'query',
+								required: true,
+								schema: { type: 'string' },
+							},
 							{
 								name: 'power_request',
 								in: 'query',
@@ -451,7 +556,10 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid parameters' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.001' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/permit2-paid-demo': {
@@ -459,12 +567,15 @@ export default wrap(async (req, res) => {
 						operationId: 'x402_permit2_paid_demo',
 						summary: 'Paid: Gasless Permit2 + EIP-2612 settlement demo',
 						description:
-							'Pay $0.001 USDC via the Permit2-only path so a wallet holding USDC but zero ETH can complete the flow. CDP\'s x402ExactPermit2Proxy submits the EIP-2612 permit + Permit2 transfer atomically; the response surfaces the on-chain tx hash and a Basescan link.',
+							"Pay $0.001 USDC via the Permit2-only path so a wallet holding USDC but zero ETH can complete the flow. CDP's x402ExactPermit2Proxy submits the EIP-2612 permit + Permit2 transfer atomically; the response surfaces the on-chain tx hash and a Basescan link.",
 						responses: {
 							200: { description: 'Settlement summary with tx hash' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.001' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/dance-tip': {
@@ -510,7 +621,10 @@ export default wrap(async (req, res) => {
 							400: { description: 'Missing or invalid parameters' },
 							402: { description: 'Payment Required (x402)' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.001' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/asset-download': {
@@ -561,10 +675,26 @@ export default wrap(async (req, res) => {
 										properties: {
 											name: { type: 'string', maxLength: 32 },
 											symbol: { type: 'string', maxLength: 10 },
-											metadataUri: { type: 'string', maxLength: 2048, description: 'Pre-pinned metadata URI. Provide this or imageUrl.' },
-											imageUrl: { type: 'string', maxLength: 2048, description: 'Image URL to pin to pump.fun IPFS. Provide this or metadataUri.' },
+											metadataUri: {
+												type: 'string',
+												maxLength: 2048,
+												description:
+													'Pre-pinned metadata URI. Provide this or imageUrl.',
+											},
+											imageUrl: {
+												type: 'string',
+												maxLength: 2048,
+												description:
+													'Image URL to pin to pump.fun IPFS. Provide this or metadataUri.',
+											},
 											description: { type: 'string', maxLength: 2000 },
-											creator: { type: 'string', minLength: 32, maxLength: 44, description: 'Solana wallet that receives creator rewards.' },
+											creator: {
+												type: 'string',
+												minLength: 32,
+												maxLength: 44,
+												description:
+													'Solana wallet that receives creator rewards.',
+											},
 											vanityPrefix: { type: 'string', maxLength: 5 },
 											vanitySuffix: { type: 'string', maxLength: 5 },
 										},
@@ -578,7 +708,10 @@ export default wrap(async (req, res) => {
 							402: { description: 'Payment Required (x402)' },
 							503: { description: 'Launcher not configured' },
 						},
-						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '5.00' }, protocols: X402_PROTOCOLS },
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '5.00' },
+							protocols: X402_PROTOCOLS,
+						},
 					},
 				},
 				'/api/x402/vanity': {
@@ -592,19 +725,22 @@ export default wrap(async (req, res) => {
 								name: 'prefix',
 								in: 'query',
 								schema: { type: 'string', maxLength: 3 },
-								description: 'Base58 characters the address must start with (excludes 0, O, I, l). Combined with suffix, max 3. Provide prefix and/or suffix.',
+								description:
+									'Base58 characters the address must start with (excludes 0, O, I, l). Combined with suffix, max 3. Provide prefix and/or suffix.',
 							},
 							{
 								name: 'suffix',
 								in: 'query',
 								schema: { type: 'string', maxLength: 3 },
-								description: 'Base58 characters the address must end with. Combined with prefix, max 3.',
+								description:
+									'Base58 characters the address must end with. Combined with prefix, max 3.',
 							},
 							{
 								name: 'ignoreCase',
 								in: 'query',
 								schema: { type: 'string', enum: ['0', '1', 'true', 'false'] },
-								description: 'When 1/true, match case-insensitively (faster, less specific).',
+								description:
+									'When 1/true, match case-insensitively (faster, less specific).',
 							},
 						],
 						responses: {
@@ -620,19 +756,121 @@ export default wrap(async (req, res) => {
 						},
 					},
 				},
+				'/api/x402/fact-check': {
+					post: {
+						operationId: 'x402_fact_check',
+						summary: 'Paid: Real-time fact check with sourced verdict',
+						description:
+							'Pay $0.10 USDC to verify a factual claim. The server generates search queries, runs multi-source web search, extracts per-source stance with an LLM, computes a weighted verdict + confidence, and returns the supporting sources plus a SHA-256 attestation of the result.',
+						requestBody: {
+							required: true,
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['claim'],
+										properties: {
+											claim: {
+												type: 'string',
+												minLength: 5,
+												maxLength: 1000,
+												description: 'The factual claim to verify.',
+											},
+											strictness: {
+												type: 'string',
+												enum: ['high', 'medium', 'low'],
+												default: 'medium',
+												description:
+													'high: penalizes low-authority sources. medium: default. low: accepts all sources equally.',
+											},
+										},
+									},
+								},
+							},
+						},
+						responses: {
+							200: {
+								description:
+									'Verdict JSON: verdict, confidence, claim, strictness, sources, costBreakdown, attestation',
+							},
+							400: { description: 'Missing or invalid claim' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.10' },
+							protocols: X402_PROTOCOLS,
+						},
+					},
+				},
+				'/api/x402/tutor': {
+					post: {
+						operationId: 'x402_tutor',
+						summary: 'Paid: Pay-as-you-learn tutor (one charge per answer)',
+						description:
+							'Pay $0.01 USDC per answered question. Returns a leveled explanation, key points, a worked example, and a follow-up, plus a running session tab so the UI can render a live itemized invoice. Pass a sessionId to accumulate a tab across questions.',
+						requestBody: {
+							required: true,
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['question'],
+										properties: {
+											sessionId: {
+												type: 'string',
+												maxLength: 100,
+												description:
+													'Stable session identifier to accumulate a running tab. Omit to start a new session.',
+											},
+											question: {
+												type: 'string',
+												minLength: 5,
+												maxLength: 2000,
+												description: 'The question to be explained.',
+											},
+											context: {
+												type: 'string',
+												maxLength: 6000,
+												description:
+													'Optional code or context to ground the explanation.',
+											},
+											level: {
+												type: 'string',
+												enum: ['beginner', 'intermediate', 'expert'],
+												default: 'intermediate',
+												description:
+													'Target expertise level — controls depth and assumed background.',
+											},
+										},
+									},
+								},
+							},
+						},
+						responses: {
+							200: { description: 'Answer JSON with running session tab' },
+							400: { description: 'Missing or invalid question' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.01' },
+							protocols: X402_PROTOCOLS,
+						},
+					},
+				},
 				'/api/x402/skill-call': {
 					get: {
 						operationId: 'x402_skill_call',
 						summary: 'Paid: Invoke a marketplace skill (pay-per-call)',
 						description:
-							'Pay the per-call price of a marketplace skill in USDC (Base or Solana) and receive its executable payload: the tool schema and content the calling agent runs. Payment settles straight to the skill author\'s wallet. Per-call pricing — every invocation is a fresh payment.',
+							"Pay the per-call price of a marketplace skill in USDC (Base or Solana) and receive its executable payload: the tool schema and content the calling agent runs. Payment settles straight to the skill author's wallet. Per-call pricing — every invocation is a fresh payment.",
 						parameters: [
 							{
 								name: 'skill',
 								in: 'query',
 								required: true,
 								schema: { type: 'string', minLength: 1, maxLength: 128 },
-								description: 'Unique skill slug from the marketplace_skills catalog.',
+								description:
+									'Unique skill slug from the marketplace_skills catalog.',
 							},
 						],
 						responses: {
@@ -645,7 +883,9 @@ export default wrap(async (req, res) => {
 						'x-payment-info': {
 							// Per-skill pricing from marketplace_skills; the live 402
 							// challenge reflects the exact price of the requested skill.
-							price: { mode: 'dynamic', currency: 'USD' },
+							// Bounds mirror the catalog's enforced range (price_per_call_usd
+							// is validated 0–10 in api/skills/index.js; free skills 409).
+							price: { mode: 'dynamic', currency: 'USD', min: '0.001', max: '10.00' },
 							protocols: X402_PROTOCOLS,
 							note: 'Per-call price is set per skill; the live 402 challenge reflects the exact skill price.',
 						},

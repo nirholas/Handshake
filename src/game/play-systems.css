@@ -1,0 +1,326 @@
+/* Play systems HUD — economy, hotbar, inventory, skills, fishing.
+ * Styled to the /play monochrome design tokens (declared on :root in
+ * coincommunities.css): dark glass panels, white ink, 4px radii, light as the
+ * only accent. Every interactive element has hover / active / focus states. */
+
+#ps-hud {
+	position: fixed;
+	inset: 0;
+	z-index: 23;
+	pointer-events: none;
+	font-family: inherit;
+}
+#ps-hud > * { pointer-events: auto; }
+
+#ps-hud button {
+	font-family: inherit;
+	color: var(--cc-text);
+	cursor: pointer;
+}
+#ps-hud button:focus-visible,
+.ps-slot:focus-visible,
+.ps-cell:focus-visible {
+	outline: 2px solid var(--cc-edge-hi);
+	outline-offset: 2px;
+}
+
+/* ---- Gold purse (top-left, under the coin banner) ---- */
+.ps-gold {
+	position: fixed;
+	top: 78px;
+	left: 14px;
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	padding: 6px 12px;
+	background: var(--cc-panel);
+	border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow);
+	backdrop-filter: blur(10px);
+	font-variant-numeric: tabular-nums;
+}
+.ps-gold-coin { font-size: 14px; filter: grayscale(0.2); }
+.ps-gold-amt {
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	color: var(--cc-text);
+}
+
+/* ---- Right tool rail (inventory / skills) ---- */
+.ps-rail {
+	position: fixed;
+	right: 14px;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.ps-rail-btn {
+	width: 46px;
+	height: 46px;
+	display: grid;
+	place-items: center;
+	font-size: 20px;
+	background: var(--cc-panel);
+	border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow);
+	backdrop-filter: blur(10px);
+	filter: grayscale(1);
+	transition: transform 0.1s ease, background 0.14s ease, border-color 0.14s ease, filter 0.16s ease;
+}
+.ps-rail-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge-hi); transform: translateX(-3px); filter: grayscale(0); }
+.ps-rail-btn:active { transform: translateX(-1px) scale(0.96); }
+.ps-rail-btn.is-on { background: #fff; border-color: #fff; filter: grayscale(0); }
+.ps-rail-btn.is-on span { filter: none; }
+
+/* ---- Hotbar (bottom-center, above the emote tray) ---- */
+.ps-hotbar {
+	position: fixed;
+	left: 50%;
+	bottom: 74px;
+	transform: translateX(-50%);
+	display: flex;
+	gap: 6px;
+	padding: 7px;
+	background: var(--cc-panel);
+	border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow);
+	backdrop-filter: blur(10px);
+}
+.ps-slot {
+	position: relative;
+	width: 46px;
+	height: 46px;
+	display: grid;
+	place-items: center;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid transparent;
+	border-radius: var(--cc-radius-sm);
+	transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
+}
+.ps-slot:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge); transform: translateY(-2px); }
+.ps-slot.is-active { border-color: #fff; background: rgba(255, 255, 255, 0.16); box-shadow: var(--cc-glow); }
+.ps-slot.is-empty { cursor: default; }
+.ps-slot.is-empty:hover { transform: none; background: rgba(255, 255, 255, 0.04); border-color: transparent; }
+.ps-slot-glyph { font-size: 22px; line-height: 1; }
+.ps-slot-qty {
+	position: absolute;
+	right: 3px;
+	bottom: 2px;
+	font-size: 10px;
+	font-weight: 700;
+	color: var(--cc-text);
+	text-shadow: 0 1px 2px #000;
+	font-variant-numeric: tabular-nums;
+}
+.ps-slot-key {
+	position: absolute;
+	left: 3px;
+	top: 1px;
+	font-size: 9px;
+	color: var(--cc-faint);
+}
+
+/* ---- Contextual action button (Cast / Equip rod) ---- */
+.ps-action {
+	position: fixed;
+	left: 50%;
+	bottom: 132px;
+	transform: translateX(-50%);
+	padding: 11px 22px;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--cc-ink);
+	background: #fff;
+	border: 1px solid #fff;
+	border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow), var(--cc-glow);
+	transition: transform 0.1s ease, filter 0.12s ease, opacity 0.12s ease;
+	animation: ps-rise 0.18s ease both;
+}
+.ps-action:hover { filter: brightness(0.9); transform: translateX(-50%) translateY(-2px); }
+.ps-action:active { transform: translateX(-50%) scale(0.97); }
+.ps-action.is-disabled {
+	background: var(--cc-panel);
+	color: var(--cc-dim);
+	border-color: var(--cc-edge);
+	box-shadow: var(--cc-shadow);
+	cursor: default;
+}
+.ps-action.is-disabled:hover { filter: none; transform: translateX(-50%); }
+@keyframes ps-rise {
+	from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+	to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ---- Panels (inventory / skills) ---- */
+.ps-panel {
+	position: fixed;
+	right: 72px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 300px;
+	max-width: calc(100vw - 96px);
+	max-height: 70vh;
+	display: flex;
+	flex-direction: column;
+	background: var(--cc-panel);
+	border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow);
+	backdrop-filter: blur(14px);
+	animation: ps-panel-in 0.16s ease both;
+	overflow: hidden;
+}
+@keyframes ps-panel-in {
+	from { opacity: 0; transform: translateY(-50%) translateX(10px); }
+	to { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+.ps-panel-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 14px;
+	border-bottom: 1px solid var(--cc-edge-soft);
+}
+.ps-panel-title {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--cc-text);
+}
+.ps-x {
+	width: 24px;
+	height: 24px;
+	display: grid;
+	place-items: center;
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: var(--cc-radius-sm);
+	color: var(--cc-dim);
+	font-size: 12px;
+	transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.ps-x:hover { color: var(--cc-text); background: rgba(255, 255, 255, 0.08); border-color: var(--cc-edge); }
+
+/* Inventory grid */
+.ps-inv-grid {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	gap: 5px;
+	padding: 12px;
+	overflow-y: auto;
+}
+.ps-cell {
+	position: relative;
+	aspect-ratio: 1;
+	display: grid;
+	place-items: center;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid var(--cc-edge-soft);
+	border-radius: var(--cc-radius-sm);
+	transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
+}
+.ps-cell:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge); transform: translateY(-2px); }
+.ps-cell.is-empty { background: rgba(255, 255, 255, 0.02); border-style: dashed; cursor: default; pointer-events: none; }
+.ps-cell-glyph { font-size: 20px; }
+.ps-cell-qty {
+	position: absolute;
+	right: 3px;
+	bottom: 2px;
+	font-size: 10px;
+	font-weight: 700;
+	text-shadow: 0 1px 2px #000;
+	font-variant-numeric: tabular-nums;
+}
+.ps-inv-empty {
+	grid-column: 1 / -1;
+	padding: 26px 12px;
+	text-align: center;
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--cc-dim);
+}
+.ps-inv-hint {
+	padding: 10px 14px;
+	border-top: 1px solid var(--cc-edge-soft);
+	font-size: 11px;
+	color: var(--cc-faint);
+}
+
+/* Skills list */
+.ps-skills-list { padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.ps-skill { display: flex; align-items: center; gap: 11px; }
+.ps-skill-glyph { font-size: 20px; width: 26px; text-align: center; filter: grayscale(0.4); }
+.ps-skill-body { flex: 1; min-width: 0; }
+.ps-skill-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+.ps-skill-name { font-size: 12px; color: var(--cc-text); }
+.ps-skill-lvl { font-size: 11px; color: var(--cc-dim); font-variant-numeric: tabular-nums; }
+.ps-skill-bar { height: 5px; background: rgba(255, 255, 255, 0.08); border-radius: 99px; overflow: hidden; }
+.ps-skill-fill { display: block; height: 100%; background: #fff; border-radius: 99px; transition: width 0.4s ease; }
+
+/* ---- Floating XP + level-up ---- */
+.ps-xp-float {
+	position: fixed;
+	z-index: 40;
+	transform: translate(-50%, 0);
+	padding: 3px 9px;
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--cc-text);
+	background: var(--cc-panel);
+	border: 1px solid var(--cc-edge);
+	border-radius: 99px;
+	box-shadow: var(--cc-shadow);
+	pointer-events: none;
+	opacity: 0;
+	transition: transform 1s ease, opacity 1s ease;
+}
+.ps-xp-float.is-up { transform: translate(-50%, -42px); opacity: 1; }
+
+.ps-levelup {
+	position: fixed;
+	left: 50%;
+	top: 34%;
+	transform: translate(-50%, -50%) scale(0.9);
+	z-index: 41;
+	padding: 18px 28px;
+	text-align: center;
+	background: var(--cc-panel);
+	border: 1px solid var(--cc-edge-hi);
+	border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow), var(--cc-glow);
+	backdrop-filter: blur(14px);
+	pointer-events: none;
+	opacity: 0;
+	transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.4s ease;
+}
+.ps-levelup.is-show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+.ps-levelup-mark { font-size: 11px; font-weight: 800; letter-spacing: 0.28em; color: var(--cc-dim); }
+.ps-levelup-skill { margin-top: 6px; font-size: 18px; font-weight: 700; color: var(--cc-text); }
+
+/* ---- Pulse (skills button on XP gain) ---- */
+@keyframes ps-pulse-k {
+	0% { transform: scale(1); }
+	40% { transform: scale(1.14); }
+	100% { transform: scale(1); }
+}
+.ps-pulse { animation: ps-pulse-k 0.45s ease; }
+
+/* ---- Responsive: tuck the HUD in on small screens ---- */
+@media (max-width: 560px) {
+	.ps-gold { top: 70px; left: 10px; }
+	.ps-rail { top: auto; bottom: 150px; transform: none; right: 10px; }
+	.ps-hotbar { bottom: 70px; gap: 4px; padding: 5px; }
+	.ps-slot { width: 40px; height: 40px; }
+	.ps-action { bottom: 126px; }
+	.ps-panel { right: 10px; left: 10px; width: auto; max-width: none; }
+}

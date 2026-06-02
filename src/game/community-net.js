@@ -14,6 +14,19 @@ import { WalkState } from '../../multiplayer/src/schemas.js';
 
 const ROOM_NAME = 'walk_world';
 const RECONNECT_BASE_MS = 3000;
+
+// Stable persistence id for the off-schema economy (pack/purse/skills). When the
+// player is signed in we key on their wallet; otherwise we mint and persist a guest
+// id so progress survives a refresh on the same device. The server prefers the
+// wallet it verified itself, so this only takes effect on un-gated/dev deploys.
+function persistedPid(account) {
+	if (account) return account;
+	try {
+		let id = localStorage.getItem('cc-pid');
+		if (!id) { id = 'guest-' + Math.random().toString(36).slice(2, 12); localStorage.setItem('cc-pid', id); }
+		return id;
+	} catch { return ''; }
+}
 const RECONNECT_MAX_MS = 60_000;
 const MAX_RECONNECT_ATTEMPTS = 6;
 const SEND_HZ = 15;
@@ -69,6 +82,8 @@ export class CommunityNet {
 		// refuses with a play_pass_* error. Sent for all tiers, not just holders.
 		this.playPass = opts.playPass || '';
 		this.account = opts.account || '';
+		// Stable economy persistence key (wallet when signed in, else a guest id).
+		this.pid = persistedPid(this.account);
 		this.url = opts.url || defaultServerUrl();
 
 		this.client = null;
@@ -94,6 +109,12 @@ export class CommunityNet {
 			blockRemove: new Set(), // (key) — a voxel was broken
 			editReject: new Set(),  // ({reason}) — the server refused one of our edits
 			persistent: new Set(),  // (bool) — whether this world's build is durably saved
+			// Off-schema economy (private to this player; delivered as targeted messages).
+			profile: new Set(),     // (snapshot) — full purse/pack/skills on join + on demand
+			inv: new Set(),         // ({inv, hotbar, activeSlot, gold, hp, maxHp}) — economy delta
+			xpgain: new Set(),      // ({skill, amount, xp, level, levelXp, nextXp})
+			levelup: new Set(),     // ({skill, level})
+			notice: new Set(),      // ({kind, text, ...}) — activity result toast (fish/eat/tool/full)
 		};
 		this.ping = null;        // smoothed RTT in ms, null until the first echo
 		this._pingSentAt = 0;    // perf-clock stamp of the last move awaiting an echo
@@ -165,6 +186,9 @@ export class CommunityNet {
 				// when it is. The verified wallet rides inside the signed pass; the server
 				// binds it as the account id, so we never trust a raw `account` option.
 				playPass: this.playPass,
+				// Stable persistence key for the off-schema economy (used only when the
+				// server hasn't verified a wallet account of its own — i.e. un-gated/dev).
+				pid: this.pid,
 			};
 			// Holder worlds require a signed pass the server verifies in onAuth; carry
 			// it (and the floor it gated on, for the seed room's HUD) only for holders.
@@ -186,6 +210,13 @@ export class CommunityNet {
 			// The server replies here when it refuses one of our place/break edits
 			// (budget full, rate limited, …) so the HUD can explain the no-op.
 			this.room.onMessage('edit-reject', (msg) => this._emit('editReject', msg || {}));
+			// Off-schema economy: the server streams this player's own pack/purse/skills
+			// here (peers never see it). Drives the HUD, inventory, hotbar and toasts.
+			this.room.onMessage('profile', (msg) => this._emit('profile', msg || {}));
+			this.room.onMessage('inv', (msg) => this._emit('inv', msg || {}));
+			this.room.onMessage('xpgain', (msg) => this._emit('xpgain', msg || {}));
+			this.room.onMessage('levelup', (msg) => this._emit('levelup', msg || {}));
+			this.room.onMessage('notice', (msg) => this._emit('notice', msg || {}));
 
 			const $ = getStateCallbacks(this.room);
 			const $state = $(this.room.state);
@@ -322,6 +353,12 @@ export class CommunityNet {
 	setVoiceActive(on) { this.room?.send('voice-state', { on: !!on }); }
 	rename(name) { this.name = name; this.room?.send('rename', { name }); }
 	setAvatar(avatar, agent) { this.avatar = avatar; this.room?.send('avatar', { avatar, agent }); }
+	// Activities & economy. Server-authoritative: these only request the action; the
+	// result arrives via the profile/inv/xpgain/levelup/notice events above.
+	fish() { this.room?.send('fish'); }
+	equip(slot) { this.room?.send('equip', { slot }); }
+	consume(ref) { this.room?.send('consume', { slot: ref }); }
+	requestProfile() { this.room?.send('profileReq'); }
 	// Update the stored play pass so the next reconnect (after a drop) uses the
 	// refreshed credential. Does not affect the live session — the server already
 	// authenticated this connection; the new pass is only needed for re-joins.

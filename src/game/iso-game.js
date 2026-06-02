@@ -1177,6 +1177,7 @@ export class IsoGame {
 		this.net.on('structChange', (s, id) => this._structChange(s, id));
 		this.net.on('structRemove', (id) => this._structRemove(id));
 		this.net.on('died', (d) => this._onDied(d));
+		this.net.on('hit', (d) => this._onHit(d));
 		this.net.on('quests', (q) => this._onQuests(q));
 		this.net.on('cosmetics', (c) => this._onCosmetics(c));
 		this.net.on('shop', (s) => this._onShop(s));
@@ -1674,19 +1675,51 @@ export class IsoGame {
 		group.visible = !mob.dead;
 		group.traverse((o) => { o.userData.mobId = id; }); // resolve raycast hits → attack target
 		this.objectGroup.add(group);
-		this.mobViews.set(id, { group, mob });
+		// `body` (the material we tint for the aggro glow) is the first mesh in the
+		// stand-in group; `target` drives the per-frame position lerp (Task 03 — mobs
+		// chase smoothly, no teleporting between tiles).
+		const body = group.children.find((o) => o.isMesh && o.material) || null;
+		const v = { group, body, mob, target: new Vector3(w.x, 0, w.z), aggro: false };
+		this.mobViews.set(id, v);
+		this._setMobAggro(v, !!mob.aggroId);
 	}
 	_mobChange(mob, id) {
 		const v = this.mobViews.get(id);
 		if (!v) return;
+		const wasDead = v.mob.dead;
 		v.mob = mob;
 		v.group.visible = !mob.dead;
 		const w = this._tileToWorld(mob.tx, mob.ty);
-		v.group.position.set(w.x, 0, w.z);
+		// Snap on (re)spawn so a mob reappearing at its home tile doesn't glide across
+		// the map; otherwise tween toward the new tile each frame.
+		if (wasDead && !mob.dead) v.group.position.set(w.x, 0, w.z);
+		v.target.set(w.x, 0, w.z);
+		this._setMobAggro(v, !!mob.aggroId);
 	}
 	_mobRemove(id) {
 		const v = this.mobViews.get(id);
 		if (v) { this.objectGroup.remove(v.group); this.mobViews.delete(id); }
+	}
+
+	// Per-frame mob position smoothing — mirrors the player view's lerp so a
+	// server step (every MOB_MOVE_MS) reads as a glide, never a jump.
+	_updateMobs() {
+		for (const [, v] of this.mobViews) {
+			if (!v.group.visible) continue;
+			v.group.position.x += (v.target.x - v.group.position.x) * MOVE_LERP;
+			v.group.position.z += (v.target.z - v.group.position.z) * MOVE_LERP;
+		}
+	}
+
+	// Hostile-engaged cue: a mob chasing a player glows red (emissive). Cleared the
+	// moment it drops aggro, so the threat state is always legible at a glance.
+	_setMobAggro(v, on) {
+		if (v.aggro === on || !v.body?.material) return;
+		v.aggro = on;
+		const m = v.body.material;
+		m.emissive = new Color(on ? 0xff2a1a : 0x000000);
+		m.emissiveIntensity = on ? 0.6 : 0;
+		m.needsUpdate = true;
 	}
 
 	// Override seam for T8. Baseline: a colour-coded stand-in per mob kind.
@@ -2069,6 +2102,58 @@ export class IsoGame {
 			msg += ' Your belongings are safe here.';
 		}
 		return msg;
+	}
+
+	// A mob landed a contact hit on the local player (Task 03): red screen flash, a
+	// HUD toast, and a floating damage number above the avatar. The HP bar already
+	// reflects the new value from the synced schema patch.
+	_onHit(d) {
+		const dmg = Math.max(0, Math.round(Number(d?.dmg) || 0));
+		const by = d && d.byKind ? String(d.byKind) : 'an enemy';
+		this._toast({ kind: 'combat', text: dmg > 0 ? `-${dmg} HP — ${by}` : `Hit by ${by}` });
+		this._hurtFlash();
+		if (dmg > 0) this._floatDamage(dmg);
+	}
+
+	// Brief red vignette over the viewport on taking damage. Self-removing and
+	// never blocks input (pointer-events: none).
+	_hurtFlash() {
+		const el = document.createElement('div');
+		el.setAttribute('aria-hidden', 'true');
+		el.style.cssText =
+			'position:fixed;inset:0;z-index:60;pointer-events:none;' +
+			'box-shadow:inset 0 0 120px 40px rgba(220,30,20,0.55);opacity:0;';
+		(this.root || document.body).appendChild(el);
+		const anim = el.animate(
+			[{ opacity: 0 }, { opacity: 1, offset: 0.18 }, { opacity: 0 }],
+			{ duration: 420, easing: 'ease-out' },
+		);
+		anim.onfinish = () => el.remove();
+		anim.oncancel = () => el.remove();
+	}
+
+	// Floating "-N" damage number that rises from the local avatar's nameplate.
+	_floatDamage(dmg) {
+		const anchor = this._localView()?.label;
+		if (!anchor) return;
+		const r = anchor.getBoundingClientRect();
+		const el = document.createElement('div');
+		el.textContent = `-${dmg}`;
+		el.setAttribute('aria-hidden', 'true');
+		el.style.cssText =
+			'position:fixed;z-index:61;pointer-events:none;font:700 18px/1 system-ui,sans-serif;' +
+			'color:#ff5141;text-shadow:0 1px 2px rgba(0,0,0,0.7);' +
+			`left:${Math.round(r.left + r.width / 2)}px;top:${Math.round(r.top)}px;transform:translate(-50%,0);`;
+		document.body.appendChild(el);
+		const anim = el.animate(
+			[
+				{ transform: 'translate(-50%, 0)', opacity: 1 },
+				{ transform: 'translate(-50%, -40px)', opacity: 0 },
+			],
+			{ duration: 900, easing: 'ease-out' },
+		);
+		anim.onfinish = () => el.remove();
+		anim.oncancel = () => el.remove();
 	}
 
 	// A tap (not a drag) in the world. Two world interactions resolve from a pick:
@@ -3523,6 +3608,7 @@ export class IsoGame {
 			if (this._stepAccum >= this._stepInterval()) { this._stepAccum = 0; this._attemptStep(); }
 			this._serviceInteraction(dt);
 			for (const [, v] of this.players) v.tick(dt);
+			this._updateMobs();
 			this._updateCamera();
 			this._updateLabels();
 			this._updateNpcLabels();

@@ -13,8 +13,14 @@ export const ITEM_DISPLAY = {
 	sword: { name: 'Sword', glyph: '⚔️' },
 	wood: { name: 'Wood', glyph: '🪵' },
 	stone: { name: 'Stone', glyph: '🪨' },
-	coal: { name: 'Coal', glyph: '🪨' },
-	fish: { name: 'Fish', glyph: '🐟' },
+	coal: { name: 'Coal', glyph: '⚫' },
+	fish: { name: 'Raw fish', glyph: '🐟' },
+	cookedFish: { name: 'Cooked fish', glyph: '🍖' },
+	bones: { name: 'Bones', glyph: '🦴' },
+	hide: { name: 'Beast hide', glyph: '🟫' },
+	healthPotion: { name: 'Health potion', glyph: '🧪' },
+	dire_wolf: { name: 'Dire Wolf', glyph: '🐺' },
+	war_boar: { name: 'War Boar', glyph: '🐗' },
 	gold: { name: 'Gold', glyph: '🪙' },
 };
 

@@ -216,6 +216,7 @@ export class GameNet {
 		room.onMessage('xpgain', (g) => this._emit('xpgain', g));
 		room.onMessage('levelup', (l) => this._emit('levelup', l));
 		room.onMessage('died', (d) => this._emit('died', d));
+		room.onMessage('hit', (h) => this._emit('hit', h));
 		room.onMessage('cooked', (c) => this._emit('cooked', c));
 		room.onMessage('quests', (q) => this._emit('quests', q));
 		room.onMessage('cosmetics', (c) => this._emit('cosmetics', c));

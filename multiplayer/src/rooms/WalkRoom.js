@@ -15,6 +15,14 @@ import { verifyHolderPass } from '../holder-pass.js';
 import { socialHub } from '../social-hub.js';
 import { verifyPresenceTicket } from '../presence-token.js';
 import { verifyPlayPass } from '../play-pass.js';
+import {
+	restoreProfile, serializeProfile, profileSnapshot,
+	addItem, hasRoomFor, resolveSlot, grantXp, consumeSlot,
+	HOTBAR_SIZE,
+} from '../economy.js';
+import { itemLabel, fishCatchChance, fishDoubleChance } from '../items.js';
+import { fishingSpotInRange } from '../world-features.js';
+import { hydratePlayer, loadPlayer, savePlayer, flushPlayer } from '../playerStore.js';
 
 // Platform entry gate (wallet-first sign-in + game-token balance). When a game
 // token is pinned (PLAY_GATE_MINT, falling back to THREE_MINT) every join must
@@ -68,6 +76,16 @@ const MOVES_PER_SEC_LIMIT = PATCH_RATE_HZ * 2;
 const MOVE_WINDOW_MS = 1000;
 
 const MOTION_VALUES = new Set(['idle', 'walk', 'run']);
+
+// --- Economy & activities (off-schema) ------------------------------------
+// A player's pack, purse and skills are PRIVATE to them — peers never render
+// them in this free-roam world — so they live off the synced WalkState schema
+// (kept in this.econ) and stream to the owning client via targeted messages.
+// This keeps the shared /walk schema untouched and peers' wire cost at zero.
+const FISH_COOLDOWN_MS = 1500;   // per-cast reel time (cadence on the real clock)
+const CONSUME_COOLDOWN_MS = 1100; // pace between bites — no instant heal-spam
+// Per-action rate ceilings (messages/sec/client) — a flooding client is dropped.
+const ACTION_RATES = { fish: 6, consume: 6, equip: 30 };
 
 // Spatial voice signaling. The room only relays SDP/ICE between two peers (the
 // audio itself flows peer-to-peer over WebRTC), so the cap just has to clear a
@@ -182,6 +200,10 @@ export class WalkRoom extends Room {
 		this.maxClients = MAX_CLIENTS_PER_ROOM;
 		this._moveCounters = new Map(); // sessionId → { windowStart, count }
 		this._chatCooldowns = new Map();
+		// Off-schema economy: sessionId → runtime profile (pack/purse/skills + the
+		// stable persistence id + per-action cooldowns). Never synced to peers.
+		this.econ = new Map();
+		this._actionCounters = new Map(); // sessionId → { [action]: { windowStart, count } }
 	}
 
 	async onCreate(options) {
@@ -225,6 +247,12 @@ export class WalkRoom extends Room {
 		this.onMessage('remove', (client, payload) => this._handleRemove(client, payload));
 		this.onMessage('voice-state', (client, payload) => this._handleVoiceState(client, payload));
 		this.onMessage('voice-signal', (client, payload) => this._handleVoiceSignal(client, payload));
+		// Economy & activities (off-schema). The owning client drives these and
+		// receives the authoritative result via profile/inv/xpgain/levelup/notice.
+		this.onMessage('fish', (client) => this._handleFish(client));
+		this.onMessage('equip', (client, payload) => this._handleEquip(client, payload));
+		this.onMessage('consume', (client, payload) => this._handleConsume(client, payload));
+		this.onMessage('profileReq', (client) => this._sendProfile(client));
 		this._emoteCooldowns = new Map();
 		this._editCounters = new Map(); // sessionId → { windowStart, count }
 		this._voiceCounters = new Map(); // sessionId → { windowStart, count }
@@ -271,7 +299,7 @@ export class WalkRoom extends Room {
 		}
 	}
 
-	onJoin(client, options) {
+	async onJoin(client, options) {
 		const name = clean(options?.name, 24) || `guest-${client.sessionId.slice(0, 4)}`;
 		const player = new Player();
 		player.id = client.sessionId;
@@ -301,6 +329,21 @@ export class WalkRoom extends Room {
 			socialHub.register(accountUid, client, this.state.coinName || 'Mainland');
 		}
 
+		// Economy profile (off-schema). Keyed to a stable account: the wallet verified
+		// in onAuth when the platform gate is on, else a client-persisted guest id, so
+		// a player's pack/purse/skills survive a disconnect and follow them between
+		// coin worlds. Hydrate the durable record before the synchronous load so a
+		// returning player on a fresh process isn't reset to the starter kit.
+		const playerId = clean(client.userData?.account, 80) || clean(options?.pid, 80) || client.sessionId;
+		try { await hydratePlayer(playerId); } catch { /* memory-only fallback */ }
+		// A slower-arriving leave could fire while we awaited; bail if so.
+		if (!this.state.players.has(client.sessionId)) return;
+		const saved = loadPlayer(playerId);
+		const profile = restoreProfile(saved?.profile, playerId);
+		profile.cd = { fish: 0, consume: 0 }; // per-action cooldown clocks (runtime only)
+		this.econ.set(client.sessionId, profile);
+		this._sendProfile(client);
+
 		const tierTag = this.state.tier === 'holders' ? ' tier=holders' : '';
 		console.log(
 			`[walk_world ${this.roomId} coin=${this.state.coin || 'mainland'}${tierTag}] +join ${client.sessionId} ${name} (n=${this.state.players.size})`,
@@ -309,12 +352,21 @@ export class WalkRoom extends Room {
 
 	onLeave(client) {
 		if (client.userData?.accountUid) socialHub.unregister(client.userData.accountUid, client);
+		// Persist the final economy state and arm a durable flush so progress survives
+		// the disconnect and the room being torn down when the last player leaves.
+		const profile = this.econ.get(client.sessionId);
+		if (profile) {
+			this._persistEcon(client.sessionId);
+			if (profile.playerId) { try { flushPlayer(profile.playerId); } catch { /* best-effort */ } }
+			this.econ.delete(client.sessionId);
+		}
 		this.state.players.delete(client.sessionId);
 		this._moveCounters.delete(client.sessionId);
 		this._chatCooldowns.delete(client.sessionId);
 		this._editCounters?.delete(client.sessionId);
 		this._emoteCooldowns?.delete(client.sessionId);
 		this._voiceCounters?.delete(client.sessionId);
+		this._actionCounters.delete(client.sessionId);
 		console.log(
 			`[walk_world ${this.roomId}] -leave ${client.sessionId} (n=${this.state.players.size})`,
 		);
@@ -330,6 +382,13 @@ export class WalkRoom extends Room {
 		} catch (err) {
 			console.warn(`[walk_world ${this.roomId}] final flush failed:`, err?.message);
 		}
+		// Flush any economy profiles still resident (a redeploy can dispose a room
+		// with players mid-session) so no progression is lost between the last
+		// change and the room going away.
+		try {
+			await Promise.allSettled([...this.econ.values()]
+				.map((p) => p.playerId && flushPlayer(p.playerId)).filter(Boolean));
+		} catch { /* best-effort */ }
 		console.log(`[walk_world ${this.roomId}] disposed`);
 	}
 
@@ -464,6 +523,153 @@ export class WalkRoom extends Room {
 		}
 		bucket.count++;
 		return bucket.count <= VOICE_SIGNALS_PER_SEC_LIMIT;
+	}
+
+	// --- Economy & activities ------------------------------------------------
+
+	// Send the owning client its full economy snapshot (purse, vitals, pack,
+	// hotbar, per-skill level + bar boundaries). Sent on join and on demand.
+	_sendProfile(client) {
+		const profile = this.econ.get(client.sessionId);
+		if (!profile) return;
+		client.send('profile', profileSnapshot(profile));
+	}
+
+	// Send just the mutable economy slice after a change the client can't infer
+	// (a catch, an eat, a purse change) — lighter than a full profile resend.
+	_sendInv(client, profile) {
+		client.send('inv', {
+			inv: profile.inv.map((s) => ({ item: s.item, qty: s.qty })),
+			hotbar: profile.hotbar.map((s) => ({ item: s.item, qty: s.qty })),
+			activeSlot: profile.activeSlot,
+			gold: profile.gold,
+			hp: profile.hp,
+			maxHp: profile.maxHp,
+		});
+	}
+
+	// Grant XP and tell the earner: the gain (for the float), their new cumulative
+	// XP + level boundaries (for an exact bar), and a level-up when one is crossed.
+	_grantXp(client, profile, skill, amount) {
+		const res = grantXp(profile, skill, amount);
+		if (!res) return;
+		client.send('xpgain', {
+			skill: res.skill, amount: res.amount, xp: res.xp,
+			level: res.level, levelXp: res.levelXp, nextXp: res.nextXp,
+		});
+		if (res.leveledUp) client.send('levelup', { skill: res.skill, level: res.level });
+	}
+
+	// Cast a line. Validates (rod on the active slot, beside a pond, off cooldown,
+	// room in the pack) then rolls a catch against fishing skill + pond quality.
+	// Every cast arms the per-cast cooldown so casting has cadence on the real
+	// clock; the client renders the line/bobber while the result rides back here.
+	_handleFish(client) {
+		const player = this.state.players.get(client.sessionId);
+		const profile = this.econ.get(client.sessionId);
+		if (!player || !profile) return;
+		if (!this._actionOk(client.sessionId, 'fish')) return;
+
+		const now = Date.now();
+		if (now < profile.cd.fish) return; // still reeling in the previous cast
+
+		const active = profile.hotbar[profile.activeSlot];
+		if (!active || active.item !== 'rod') {
+			client.send('notice', { kind: 'tool', text: 'Equip a fishing rod to cast.' });
+			return;
+		}
+		const spot = fishingSpotInRange(player.x, player.z);
+		if (!spot) {
+			client.send('notice', { kind: 'fish', text: 'Move next to the water to cast.' });
+			return;
+		}
+		if (!hasRoomFor(profile, 'fish')) {
+			client.send('notice', { kind: 'full', text: 'Your inventory is full.' });
+			return;
+		}
+
+		profile.cd.fish = now + FISH_COOLDOWN_MS;
+		const lvl = profile.levels.fishing || 1;
+		const quality = spot.quality || 1;
+
+		if (Math.random() < fishCatchChance(lvl, quality)) {
+			const want = 1 + (Math.random() < fishDoubleChance(lvl, quality) ? 1 : 0);
+			const leftover = addItem(profile, 'fish', want);
+			const caught = want - leftover;
+			if (caught <= 0) {
+				client.send('notice', { kind: 'full', text: 'Your inventory is full.' });
+				return;
+			}
+			const xp = Math.round((10 + Math.floor(Math.random() * 6) + lvl * 0.3) * quality) * caught;
+			this._grantXp(client, profile, 'fishing', xp);
+			this._sendInv(client, profile);
+			client.send('notice', { kind: 'fish', caught, text: caught > 1 ? `Caught ${caught} ${itemLabel('fish').toLowerCase()}!` : `Caught a ${itemLabel('fish').toLowerCase()}.` });
+		} else {
+			this._grantXp(client, profile, 'fishing', 2);
+			client.send('notice', { kind: 'fish', caught: 0, text: 'The fish got away.' });
+		}
+		this._persistEcon(client.sessionId);
+	}
+
+	// Select a hotbar slot (what the player is "holding"). -1 clears the hand.
+	_handleEquip(client, payload) {
+		const profile = this.econ.get(client.sessionId);
+		if (!profile) return;
+		if (!this._actionOk(client.sessionId, 'equip')) return;
+		const i = payload?.slot | 0;
+		if (i < -1 || i >= HOTBAR_SIZE) return;
+		profile.activeSlot = i;
+		this._sendInv(client, profile);
+	}
+
+	// Eat an edible from a referenced slot, healing scaled by cooking level.
+	_handleConsume(client, payload) {
+		const profile = this.econ.get(client.sessionId);
+		if (!profile) return;
+		if (!this._actionOk(client.sessionId, 'consume')) return;
+		const now = Date.now();
+		if (now < profile.cd.consume) return;
+		const slot = resolveSlot(profile, payload?.slot);
+		if (!slot) return;
+		const res = consumeSlot(profile, slot);
+		if (!res.ok) {
+			const text = res.reason === 'full' ? 'You’re already at full health.' : 'That can’t be eaten.';
+			client.send('notice', { kind: 'eat', text });
+			return;
+		}
+		profile.cd.consume = now + CONSUME_COOLDOWN_MS;
+		this._sendInv(client, profile);
+		client.send('notice', { kind: 'eat', text: `+${res.gained} HP.` });
+		this._persistEcon(client.sessionId);
+	}
+
+	// Write this session's economy profile through to the account-keyed store,
+	// merging onto any existing record so non-economy fields (e.g. a /game profile
+	// for the same account) are preserved. Synchronous + debounced like GameRoom.
+	_persistEcon(sessionId) {
+		const profile = this.econ.get(sessionId);
+		if (!profile || !profile.playerId) return;
+		const player = this.state.players.get(sessionId);
+		const prev = loadPlayer(profile.playerId) || {};
+		savePlayer(profile.playerId, {
+			...prev,
+			name: player?.name || prev.name,
+			gold: profile.gold,
+			profile: serializeProfile(profile),
+		});
+	}
+
+	// Per-action sliding-window rate limit (messages/sec/client). A flooding client
+	// is silently dropped for the offending action; legitimate cadence passes.
+	_actionOk(sessionId, action) {
+		const limit = ACTION_RATES[action] || 10;
+		const now = Date.now();
+		let buckets = this._actionCounters.get(sessionId);
+		if (!buckets) { buckets = {}; this._actionCounters.set(sessionId, buckets); }
+		let b = buckets[action];
+		if (!b || now - b.windowStart > 1000) { b = { windowStart: now, count: 0 }; buckets[action] = b; }
+		b.count++;
+		return b.count <= limit;
 	}
 
 	// Validate a {x,y,z} grid cell from a place/remove message. Returns the packed

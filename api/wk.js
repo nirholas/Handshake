@@ -508,6 +508,14 @@ function handleX402Discovery(req, res) {
 			serviceName: 'three.ws Asset Bazaar',
 			tags: ['3d', 'asset', 'glb', 'avatar', 'download'],
 		}),
+		factCheck: withService({
+			serviceName: 'three.ws Fact Checker',
+			tags: ['fact-check', 'search', 'verification', 'llm', 'attestation'],
+		}),
+		tutor: withService({
+			serviceName: 'three.ws Pay-As-You-Learn Tutor',
+			tags: ['tutor', 'education', 'llm', 'explain', 'pay-per-call'],
+		}),
 	};
 
 	// USE-13: per-tool MCP catalog entries. Each priced tool is its own
@@ -631,8 +639,7 @@ function handleX402Discovery(req, res) {
 						input: {
 							agent_codename: 'ledger-bot',
 							power_request: 'revenue-vision',
-							mission_brief:
-								'Find the highest-converting buyer segment this week.',
+							mission_brief: 'Find the highest-converting buyer segment this week.',
 						},
 						inputSchema: {
 							type: 'object',
@@ -676,7 +683,7 @@ function handleX402Discovery(req, res) {
 						url,
 						method: 'GET',
 						description:
-							'Agent Reputation — return a reputation snapshot for a three.ws agent (USDC paid in to its pump-agent tokens, distinct payers, deployed mints, distribution success rate, Solana attestation counts). Built from three.ws\'s proprietary index of pump_agent_payments, pump_distribute_runs, and solana_attestations.',
+							"Agent Reputation — return a reputation snapshot for a three.ws agent (USDC paid in to its pump-agent tokens, distinct payers, deployed mints, distribution success rate, Solana attestation counts). Built from three.ws's proprietary index of pump_agent_payments, pump_distribute_runs, and solana_attestations.",
 						mimeType: 'application/json',
 						serviceName: routeMeta.agentReputation.serviceName,
 						tags: routeMeta.agentReputation.tags,
@@ -736,7 +743,7 @@ function handleX402Discovery(req, res) {
 						url,
 						method: 'GET',
 						description:
-							'Pump-Agent Audit — full operational audit of a pump.fun agent-payments token: total USDC in, unique payers, distribute/buyback success history, latest error reasons, and risk flags (never_distributed, high_distribute_failure_rate, no_buybacks_run). Backed by three.ws\'s indexed pump_distribute_runs and pump_buyback_runs tables.',
+							"Pump-Agent Audit — full operational audit of a pump.fun agent-payments token: total USDC in, unique payers, distribute/buyback success history, latest error reasons, and risk flags (never_distributed, high_distribute_failure_rate, no_buybacks_run). Backed by three.ws's indexed pump_distribute_runs and pump_buyback_runs tables.",
 						mimeType: 'application/json',
 						serviceName: routeMeta.pumpAudit.serviceName,
 						tags: routeMeta.pumpAudit.tags,
@@ -749,7 +756,9 @@ function handleX402Discovery(req, res) {
 							inputSchema: {
 								type: 'object',
 								required: ['mint'],
-								properties: { mint: { type: 'string', minLength: 32, maxLength: 44 } },
+								properties: {
+									mint: { type: 'string', minLength: 32, maxLength: 44 },
+								},
 							},
 						}),
 					};
@@ -830,7 +839,7 @@ function handleX402Discovery(req, res) {
 						url,
 						method: 'GET',
 						description:
-							'Symbol Availability — pre-launch ticker collision check against three.ws\'s pump.fun mint index. Returns exact-symbol collisions plus trigram-similar tickers so launch agents can avoid name confusion and aggregator-search dilution.',
+							"Symbol Availability — pre-launch ticker collision check against three.ws's pump.fun mint index. Returns exact-symbol collisions plus trigram-similar tickers so launch agents can avoid name confusion and aggregator-search dilution.",
 						mimeType: 'application/json',
 						serviceName: routeMeta.symbolCheck.serviceName,
 						tags: routeMeta.symbolCheck.tags,
@@ -891,7 +900,8 @@ function handleX402Discovery(req, res) {
 									ignoreCase: {
 										type: 'string',
 										enum: ['0', '1', 'true', 'false'],
-										description: 'When 1/true, match case-insensitively (faster, less specific).',
+										description:
+											'When 1/true, match case-insensitively (faster, less specific).',
 									},
 								},
 							},
@@ -929,7 +939,7 @@ function handleX402Discovery(req, res) {
 						url,
 						method: 'GET',
 						description:
-							'Permit2 + EIP-2612 Gas Sponsoring Demo — forces the gasless Permit2 path so a fresh wallet holding USDC but ZERO ETH can complete the flow. CDP\'s x402ExactPermit2Proxy submits the EIP-2612 permit + Permit2 transfer atomically via settleWithPermit. Response surfaces the on-chain tx hash and a Basescan link.',
+							"Permit2 + EIP-2612 Gas Sponsoring Demo — forces the gasless Permit2 path so a fresh wallet holding USDC but ZERO ETH can complete the flow. CDP's x402ExactPermit2Proxy submits the EIP-2612 permit + Permit2 transfer atomically via settleWithPermit. Response surfaces the on-chain tx hash and a Basescan link.",
 						mimeType: 'application/json',
 						serviceName: routeMeta.permit2Demo.serviceName,
 						tags: routeMeta.permit2Demo.tags,
@@ -1010,12 +1020,14 @@ function handleX402Discovery(req, res) {
 									dancer: {
 										type: 'string',
 										enum: ['1', '2', '3', '4'],
-										description: 'Stage slot 1-4 — which dancer should take the pole.',
+										description:
+											'Stage slot 1-4 — which dancer should take the pole.',
 									},
 									dance: {
 										type: 'string',
 										enum: ['rumba', 'silly', 'thriller', 'capoeira', 'hiphop'],
-										description: 'Performance style — a clip in /animations/manifest.json.',
+										description:
+											'Performance style — a clip in /animations/manifest.json.',
 									},
 								},
 							},
@@ -1055,7 +1067,8 @@ function handleX402Discovery(req, res) {
 										type: 'string',
 										minLength: 1,
 										maxLength: 128,
-										description: 'Unique asset slug from the paid_assets catalog.',
+										description:
+											'Unique asset slug from the paid_assets catalog.',
 									},
 								},
 							},
@@ -1090,7 +1103,98 @@ function handleX402Discovery(req, res) {
 										type: 'string',
 										minLength: 1,
 										maxLength: 128,
-										description: 'Unique skill slug from the marketplace_skills catalog.',
+										description:
+											'Unique skill slug from the marketplace_skills catalog.',
+									},
+								},
+							},
+						}),
+					};
+				})(),
+				(() => {
+					const url = `${origin}/api/x402/fact-check`;
+					const accepts = acceptsForPrice('100000', url);
+					return {
+						path: '/api/x402/fact-check',
+						url,
+						method: 'POST',
+						description:
+							'three.ws Fact Checker — pay $0.10 USDC to verify a factual claim. Generates search queries, runs multi-source web search, extracts per-source stance with an LLM, computes a weighted verdict + confidence, and returns supporting sources plus a SHA-256 attestation of the result.',
+						mimeType: 'application/json',
+						serviceName: routeMeta.factCheck.serviceName,
+						tags: routeMeta.factCheck.tags,
+						iconUrl: routeMeta.factCheck.iconUrl,
+						accepts,
+						extensions: extensionsForAccepts(accepts, {
+							method: 'POST',
+							discoverable: true,
+							input: { claim: 'The Eiffel Tower is in Paris.', strictness: 'medium' },
+							inputSchema: {
+								type: 'object',
+								required: ['claim'],
+								properties: {
+									claim: {
+										type: 'string',
+										minLength: 5,
+										maxLength: 1000,
+										description: 'The factual claim to verify.',
+									},
+									strictness: {
+										type: 'string',
+										enum: ['high', 'medium', 'low'],
+										description:
+											'high: penalizes low-authority sources. medium: default. low: accepts all sources equally.',
+									},
+								},
+							},
+						}),
+					};
+				})(),
+				(() => {
+					const url = `${origin}/api/x402/tutor`;
+					const accepts = acceptsForPrice('10000', url);
+					return {
+						path: '/api/x402/tutor',
+						url,
+						method: 'POST',
+						description:
+							'three.ws Pay-As-You-Learn Tutor — pay $0.01 USDC per answered question. Returns a leveled explanation, key points, a worked example, and a follow-up, plus a running session tab for a live itemized invoice. Pass a sessionId to accumulate a tab across questions.',
+						mimeType: 'application/json',
+						serviceName: routeMeta.tutor.serviceName,
+						tags: routeMeta.tutor.tags,
+						iconUrl: routeMeta.tutor.iconUrl,
+						accepts,
+						extensions: extensionsForAccepts(accepts, {
+							method: 'POST',
+							discoverable: true,
+							input: { question: 'Why is the sky blue?', level: 'intermediate' },
+							inputSchema: {
+								type: 'object',
+								required: ['question'],
+								properties: {
+									sessionId: {
+										type: 'string',
+										maxLength: 100,
+										description:
+											'Stable session identifier to accumulate a running tab. Omit to start a new session.',
+									},
+									question: {
+										type: 'string',
+										minLength: 5,
+										maxLength: 2000,
+										description: 'The question to be explained.',
+									},
+									context: {
+										type: 'string',
+										maxLength: 6000,
+										description:
+											'Optional code or context to ground the explanation.',
+									},
+									level: {
+										type: 'string',
+										enum: ['beginner', 'intermediate', 'expert'],
+										description:
+											'Target expertise level — controls depth and assumed background.',
 									},
 								},
 							},
