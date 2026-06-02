@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>three.ws — NVIDIA Inception</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css" id="theme" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --nv: #76b900;          /* NVIDIA green */
+      --nv-dim: #5a8f00;
+      --ink: #0a0a0b;
+      --panel: #141417;
+      --panel-2: #1c1c21;
+      --line: #2a2a31;
+      --txt: #e9e9ee;
+      --muted: #9b9ba6;
+      --grad: linear-gradient(135deg, #76b900 0%, #b6f000 100%);
+    }
+
+    .reveal { font-family: 'Inter', system-ui, sans-serif; font-size: 30px; color: var(--txt); }
+    .reveal .slides { text-align: left; }
+    .reveal .slides section { height: 100%; }
+
+    .reveal h1, .reveal h2, .reveal h3 { font-family: 'Inter', sans-serif; font-weight: 800; letter-spacing: -0.02em; text-transform: none; color: #fff; line-height: 1.05; margin: 0 0 .4em; }
+    .reveal h1 { font-size: 2.4em; }
+    .reveal h2 { font-size: 1.5em; }
+    .reveal h3 { font-size: 1.05em; font-weight: 700; }
+    .reveal p { line-height: 1.4; }
+    .reveal a { color: var(--nv); text-decoration: none; }
+    .reveal strong { color: #fff; font-weight: 700; }
+    .reveal em { color: var(--nv); font-style: normal; }
+
+    .reveal section.bg-deep { background: radial-gradient(1200px 600px at 80% -10%, rgba(118,185,0,.18), transparent 60%), var(--ink); }
+
+    /* kicker / eyebrow */
+    .kicker { font-family: 'JetBrains Mono', monospace; font-size: .52em; letter-spacing: .18em; text-transform: uppercase; color: var(--nv); margin-bottom: .9em; display: inline-block; }
+    .reveal .slidenum { position: absolute; top: 26px; right: 34px; font-family: 'JetBrains Mono', monospace; font-size: .42em; color: var(--muted); letter-spacing: .12em; }
+
+    .lead { font-size: 1.15em; color: var(--txt); max-width: 22ch; font-weight: 600; }
+    .sub { color: var(--muted); font-size: .68em; line-height: 1.6; }
+    .big-statement { font-size: 1.35em; font-weight: 800; line-height: 1.25; max-width: 18ch; }
+    .big-statement .hl { background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .reveal ul { margin-left: 1em; }
+    .reveal li { margin: .35em 0; line-height: 1.4; }
+    .reveal li::marker { color: var(--nv); }
+
+    /* tables */
+    .reveal table { font-size: .62em; border-collapse: collapse; width: 100%; margin-top: .4em; }
+    .reveal table th { color: var(--nv); text-align: left; border-bottom: 1px solid var(--line); padding: .55em .7em; font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: .82em; letter-spacing: .06em; text-transform: uppercase; }
+    .reveal table td { border-bottom: 1px solid rgba(42,42,49,.6); padding: .55em .7em; vertical-align: top; color: var(--txt); }
+    .reveal table tr:last-child td { border-bottom: none; }
+    .map-table td:first-child { color: var(--muted); }
+    .map-table td:last-child { color: #fff; font-weight: 600; }
+
+    /* cards grid */
+    .grid { display: grid; gap: 16px; margin-top: .3em; }
+    .grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .grid.cols-3 { grid-template-columns: repeat(3,1fr); }
+    .grid.cols-4 { grid-template-columns: repeat(4,1fr); }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; }
+    .card h3 { color: var(--nv); font-size: .8em; font-family: 'JetBrains Mono', monospace; letter-spacing: .04em; margin-bottom: .35em; }
+    .card p { font-size: .62em; color: var(--muted); line-height: 1.45; margin: 0; }
+    .card .ok { color: var(--nv); font-weight: 700; font-size: .58em; font-family: 'JetBrains Mono', monospace; }
+
+    .stat { font-size: 2.1em; font-weight: 900; background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+    .stat-label { font-size: .55em; color: var(--muted); margin-top: .3em; }
+
+    .pill { display: inline-block; background: rgba(118,185,0,.12); border: 1px solid rgba(118,185,0,.35); color: var(--nv); font-family: 'JetBrains Mono', monospace; font-size: .5em; padding: .35em .7em; border-radius: 999px; letter-spacing: .06em; }
+    .fill { color: #ffb84d; font-style: normal; } /* bracketed = founder fills in */
+    .reveal code { font-family: 'JetBrains Mono', monospace; background: var(--panel-2); border: 1px solid var(--line); padding: .08em .4em; border-radius: 6px; font-size: .85em; color: #cfe9a0; }
+
+    .foot { position: absolute; bottom: 26px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 8px; font-family: 'JetBrains Mono', monospace; font-size: .4em; color: var(--muted); letter-spacing: .08em; }
+
+    .logo { font-weight: 900; letter-spacing: -.04em; }
+    .logo .dot { color: var(--nv); }
+
+    .two-col { display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: start; }
+    .col-tight p { font-size: .66em; line-height: 1.5; color: var(--muted); }
+    .col-tight p strong { color: #fff; }
+
+    .num-row { display: flex; gap: 40px; margin-top: .5em; }
+    .ask-list { counter-reset: ask; list-style: none; margin-left: 0; }
+    .ask-list li { counter-increment: ask; position: relative; padding-left: 1.8em; margin: .55em 0; font-size: .8em; }
+    .ask-list li::before { content: counter(ask); position: absolute; left: 0; top: -.05em; width: 1.2em; height: 1.2em; background: var(--grad); color: #06210a; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: .7em; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <!-- 1 — TITLE -->
+    <section class="bg-deep" data-auto-animate>
+      <span class="slidenum">01</span>
+      <span class="kicker">NVIDIA Inception · Application</span>
+      <h1 class="logo">three<span class="dot">.</span>ws</h1>
+      <p class="lead" style="margin:.3em 0 .8em;">The platform for 3D AI agents — <em>render, embody, own, embed.</em></p>
+      <p class="sub" style="max-width:30ch;">Drop a 3D model, give it an LLM brain and a voice, mint its identity on-chain, and embed it anywhere — in the browser. No plugins. No installs.</p>
+      <div style="margin-top:1.4em; display:flex; gap:10px; flex-wrap:wrap;">
+        <span class="pill">three.ws · LIVE</span>
+        <span class="pill">Apache 2.0 · Open source</span>
+        <span class="pill">Browser-native</span>
+      </div>
+      <div class="foot"><span><span class="fill">[Founder Name]</span> · <span class="fill">[email]</span></span><span class="fill">[Demo: live agent link]</span></div>
+      <aside class="notes">Open on a live talking avatar reacting in real time. The product is the demo.</aside>
+    </section>
+
+    <!-- 2 — MISSION -->
+    <section class="bg-deep">
+      <span class="slidenum">02</span>
+      <span class="kicker">Mission</span>
+      <p class="big-statement">We build the <span class="hl">runtime &amp; identity layer</span> for embodied AI agents.</p>
+      <p class="sub" style="max-width:34ch; margin-top:1em;">
+        Today's AI agents are text in a chat box — no face, no body, no persistent identity, no place in the 3D/spatial web.
+        As AI moves from chat to <strong>digital humans</strong>, there is no open platform to create, run, and distribute them.
+      </p>
+      <p class="lead" style="margin-top:.8em; font-size:1em;">three.ws is that platform.</p>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>Mission</span></div>
+    </section>
+
+    <!-- 3 — PRODUCT -->
+    <section class="bg-deep">
+      <span class="slidenum">03</span>
+      <span class="kicker">Product · all shipped &amp; live</span>
+      <h2>Four primitives</h2>
+      <table>
+        <thead><tr><th>Primitive</th><th>What it does</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><strong>Render</strong></td><td>WebGL 2.0 viewer (three.js r176) loads &amp; validates glTF/GLB with Draco, KTX2, Meshopt — zero server upload</td><td><span class="card ok" style="border:none;background:none;padding:0;">✅ Live</span></td></tr>
+          <tr><td><strong>Embody</strong></td><td>LLM brain runs a tool-loop: listen → reason → act (animate, express, skills, memory) → speak with real-time lip-sync</td><td><span style="color:var(--nv);font-family:'JetBrains Mono';font-size:.85em;">✅ Live</span></td></tr>
+          <tr><td><strong>Own</strong></td><td>On-chain identity — ERC-8004 on 15+ EVM chains, Metaplex Core on Solana, signed action history &amp; reputation</td><td><span style="color:var(--nv);font-family:'JetBrains Mono';font-size:.85em;">✅ Live</span></td></tr>
+          <tr><td><strong>Embed</strong></td><td><code>&lt;agent-3d&gt;</code> web component + 5 widgets, OpenGraph/oEmbed, versioned CDN — agent into any site</td><td><span style="color:var(--nv);font-family:'JetBrains Mono';font-size:.85em;">✅ Live</span></td></tr>
+        </tbody>
+      </table>
+      <p class="sub" style="margin-top:1em;"><strong style="color:#fff;">Plus a shipped social layer:</strong> multiplayer 3D worlds (/play, /club, /city, /game), presence &amp; DMs, voice/pose/mocap studios, and a paid agent-to-agent economy (x402).</p>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>Product</span></div>
+    </section>
+
+    <!-- 4 — DEMO -->
+    <section class="bg-deep">
+      <span class="slidenum">04</span>
+      <span class="kicker">Proof of concept · see it working</span>
+      <h2>It's live, today</h2>
+      <div class="grid cols-2">
+        <div class="card"><h3>Talking agent</h3><p>A live agent that listens, reasons, animates, and speaks in real time. <span class="fill">[public agent link]</span></p></div>
+        <div class="card"><h3>Embed in 60s</h3><p><code>&lt;agent-3d src="…"&gt;</code> — WYSIWYG editor at /embed-editor. <span class="fill">[link]</span></p></div>
+        <div class="card"><h3>Selfie → 3D avatar</h3><p>3 photos → GPU reconstruction → riggable GLB. <span class="fill">[screen recording]</span></p></div>
+        <div class="card"><h3>Multiplayer worlds</h3><p>Shared 3D space per token — peer avatars, chat, voxel building. three.ws/play</p></div>
+      </div>
+      <p class="sub" style="margin-top:1em;">Reviewers approve faster with a <strong style="color:#fff;">live product + public GitHub + demo link</strong>. We lead with all three.</p>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>Demo</span></div>
+    </section>
+
+    <!-- 5 — TECH: RUNTIME -->
+    <section class="bg-deep">
+      <span class="slidenum">05</span>
+      <span class="kicker">Technology · the agent runtime</span>
+      <h2>How an agent thinks &amp; acts</h2>
+      <div class="two-col">
+        <div class="col-tight">
+          <p><strong>Event-bus architecture</strong> decouples body, brain, voice, memory & skills — every action flows through typed events with a 200-action replay buffer.</p>
+          <p><strong>Per-turn tool-loop:</strong> STT/text in → system prompt assembled from manifest + recalled memory + installed skills → LLM called with full tool set → <strong>up to 8 tool iterations</strong> → spoken response with <strong>ARKit-52 (52-blendshape) lip-sync</strong>.</p>
+          <p><strong>Skills</strong> are composable bundles loadable from IPFS/HTTP, with payment-gated trust modes via x402.</p>
+        </div>
+        <div>
+          <div class="card" style="padding:16px 18px;">
+            <h3>Tools per turn</h3>
+            <p style="color:var(--txt);font-size:.6em;line-height:1.8;"><code>play_clip</code> <code>setExpression</code> <code>lookAt</code> <code>speak</code> <code>remember</code> <code>skill</code></p>
+          </div>
+          <div class="card" style="padding:16px 18px;margin-top:14px;">
+            <h3>Published SDKs</h3>
+            <p style="font-size:.56em;line-height:1.7;">@three-ws/avatar · /avatar-schema · /avatar-cli · /solana-agent · @3d-agent/mcp-server</p>
+          </div>
+        </div>
+      </div>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>Runtime</span></div>
+    </section>
+
+    <!-- 6 — TECH: GPU -->
+    <section class="bg-deep">
+      <span class="slidenum">06</span>
+      <span class="kicker">Technology · where the compute lives</span>
+      <h2>A fundamentally GPU-bound product</h2>
+      <div class="grid cols-3">
+        <div class="card"><h3>1 · Inference</h3><p>Claude primary; open models (Llama 3.3 70B, Mistral, Qwen) via OpenRouter/Groq &amp; <strong style="color:#fff;">Livepeer</strong> decentralized GPU. Keys never client-side.</p></div>
+        <div class="card"><h3>2 · Generative 3D</h3><p>Selfie/text → textured, rigged avatar. <strong style="color:#fff;">TRELLIS, Hunyuan3D, UniRig</strong> — diffusion+transformer, <strong style="color:#fff;">~30–90s on A100/H100</strong>.</p></div>
+        <div class="card"><h3>3 · Rendering</h3><p>WebGL 2.0 on every client GPU; WebGPU on the roadmap. PBR, skinned mesh, morph targets, BVH raycasting.</p></div>
+      </div>
+      <p class="lead" style="font-size:.95em; margin-top:1.1em; max-width:38ch;">Every avatar created and every open-model inference <em>burns GPU cycles</em> — demand scales linearly with users.</p>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>Compute</span></div>
+    </section>
+
+    <!-- 7 — NVIDIA ALIGNMENT -->
+    <section class="bg-deep">
+      <span class="slidenum">07</span>
+      <span class="kicker" style="color:var(--nv);">★ NVIDIA alignment · the make-or-break slide</span>
+      <h2>Built for the NVIDIA stack</h2>
+      <p class="sub" style="margin:-.3em 0 .5em;">three.ws <em>is</em> digital humans + embodied agents — exactly the workload NVIDIA's AI stack targets.</p>
+      <table class="map-table">
+        <thead><tr><th>three.ws component</th><th>NVIDIA technology</th></tr></thead>
+        <tbody>
+          <tr><td>Avatar lip-sync (ARKit-52), facial animation</td><td>NVIDIA ACE — Audio2Face</td></tr>
+          <tr><td>Speech-to-text + text-to-speech</td><td>NVIDIA Riva</td></tr>
+          <tr><td>LLM agent brains served at scale</td><td>NVIDIA NIM + TensorRT-LLM</td></tr>
+          <tr><td>Selfie/text → 3D (TRELLIS, Hunyuan3D, UniRig)</td><td>CUDA inference · NIM for 3D / Edify 3D</td></tr>
+          <tr><td>3D asset pipeline (glTF/GLB, retarget)</td><td>Omniverse / OpenUSD interop</td></tr>
+          <tr><td>Decentralized inference network (roadmap)</td><td>NVIDIA-accelerated node operators</td></tr>
+        </tbody>
+      </table>
+      <p class="sub" style="margin-top:.7em;"><strong style="color:#fff;">The ask is concrete:</strong> GPU credits to run avatar-gen + open-model inference, and Inception support to migrate our digital-human stack to <strong style="color:var(--nv);">ACE + NIM</strong>.</p>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>NVIDIA fit</span></div>
+    </section>
+
+    <!-- 8 — ARCHITECTURE -->
+    <section class="bg-deep">
+      <span class="slidenum">08</span>
+      <span class="kicker">Architecture · production-grade, full-stack</span>
+      <h2>The system</h2>
+      <div class="grid cols-2">
+        <div class="card"><h3>Frontend</h3><p>Vanilla JS + Vite · three.js r176 WebGL 2.0 · standalone Svelte chat app</p></div>
+        <div class="card"><h3>Backend</h3><p>Vercel serverless (Node 24) · Neon Postgres · Cloudflare R2 · Upstash Redis · Colyseus multiplayer (Fly.io)</p></div>
+        <div class="card"><h3>GPU tier</h3><p>Replicate · GCP Cloud Run (NVIDIA GPUs) · HF Spaces — pluggable, env-selected generative-3D inference</p></div>
+        <div class="card"><h3>On-chain &amp; interop</h3><p>ERC-8004 (15+ EVM chains) · Metaplex Core (Solana) · x402 payments · OAuth 2.1 · MCP over HTTP · OpenAPI 3.1</p></div>
+      </div>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>Architecture</span></div>
+    </section>
+
+    <!-- 9 — MARKET -->
+    <section class="bg-deep">
+      <span class="slidenum">09</span>
+      <span class="kicker">Market opportunity</span>
+      <h2>Why now</h2>
+      <div class="two-col">
+        <div class="col-tight">
+          <p><strong>Who it's for:</strong> creators &amp; brands embedding talking 3D agents; AI builders who need a face/voice/body; web3 &amp; consumer-social communities.</p>
+          <p><strong>The convergence:</strong> capable LLMs + fast image/text→3D + on-chain identity — none existed together 18 months ago. AI is moving from chat to <strong>embodied digital humans</strong>, and the tooling is fragmented and closed.</p>
+          <p><strong>Our wedge:</strong> the only <em>open, browser-native, on-chain</em> agent platform — vs. closed digital-human SaaS and text-only agent frameworks.</p>
+        </div>
+        <div>
+          <div class="card" style="text-align:center;">
+            <div class="stat fill">[$XX B]</div>
+            <div class="stat-label fill">[digital-human / conversational-AI TAM by 20XX — cite a named analyst]</div>
+          </div>
+          <p class="sub" style="margin-top:.8em;font-size:.5em;">Reviewers expect one credible figure, not a guess.</p>
+        </div>
+      </div>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>Market</span></div>
+    </section>
+
+    <!-- 10 — TRACTION -->
+    <section class="bg-deep">
+      <span class="slidenum">10</span>
+      <span class="kicker">Traction &amp; milestones</span>
+      <h2>Shipped, in production</h2>
+      <div class="two-col">
+        <div class="col-tight">
+          <ul style="font-size:.62em;">
+            <li>Full agent runtime — viewer, lip-sync, emotion, skills, memory</li>
+            <li>On-chain identity on <strong>15+ EVM chains</strong> + Solana</li>
+            <li><code>&lt;agent-3d&gt;</code> + 5 widgets on versioned CDN</li>
+            <li>Multiplayer worlds, presence, DMs</li>
+            <li>x402 agent economy; MCP tools on x402scan + MCP Registry</li>
+            <li>Selfie→3D GPU avatar pipeline</li>
+            <li>Partner listings: <strong>AWS · Alibaba Cloud · BNB Dappbay</strong></li>
+          </ul>
+        </div>
+        <div>
+          <div class="num-row" style="gap:24px;">
+            <div><div class="stat fill" style="font-size:1.5em;">[#]</div><div class="stat-label fill">[agents created]</div></div>
+            <div><div class="stat fill" style="font-size:1.5em;">[#]</div><div class="stat-label fill">[MAU / sessions]</div></div>
+          </div>
+          <div class="num-row" style="gap:24px;margin-top:1em;">
+            <div><div class="stat fill" style="font-size:1.5em;">[#]</div><div class="stat-label fill">[embeds live]</div></div>
+            <div><div class="stat fill" style="font-size:1.5em;">[$]</div><div class="stat-label fill">[x402 / token volume]</div></div>
+          </div>
+          <p class="sub" style="margin-top:1em;font-size:.5em;"><strong style="color:#fff;">Roadmap:</strong> ACE/NIM migration → personalization &amp; reputation markets → open decentralized inference network.</p>
+        </div>
+      </div>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>Traction</span></div>
+    </section>
+
+    <!-- 11 — BUSINESS MODEL -->
+    <section class="bg-deep">
+      <span class="slidenum">11</span>
+      <span class="kicker">Business model</span>
+      <h2>How it makes money</h2>
+      <div class="grid cols-2">
+        <div class="card"><h3>Generative-3D credits</h3><p>Selfie/text→avatar generation — GPU cost + margin. Primary variable cost is GPU.</p></div>
+        <div class="card"><h3>x402 agent economy</h3><p>Platform fee on agent-to-agent paid skill calls, asset downloads, and royalties.</p></div>
+        <div class="card"><h3>Embeds / Pro</h3><p>Premium widgets, custom voices, private skills, brand analytics. <span class="fill">[pricing]</span></p></div>
+        <div class="card"><h3>On-chain primitives</h3><p>Name service (.threews.sol), launchpad, token &amp; community tooling.</p></div>
+      </div>
+      <p class="sub" style="margin-top:1em;"><strong style="color:#fff;">For reviewers:</strong> Inception GPU credits + ACE/NIM efficiency gains directly improve margin and let us scale generation <span class="fill">[N×]</span>.</p>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>Model</span></div>
+    </section>
+
+    <!-- 12 — TEAM -->
+    <section class="bg-deep">
+      <span class="slidenum">12</span>
+      <span class="kicker">Team · reviewer-critical</span>
+      <h2>Who's building it</h2>
+      <div class="grid cols-3">
+        <div class="card"><h3 class="fill">[Name]</h3><p class="fill">[Founder / CTO — relevant AI/ML / 3D / crypto background, prior companies, notable work]</p></div>
+        <div class="card"><h3 class="fill">[Name]</h3><p class="fill">[Role — background]</p></div>
+        <div class="card"><h3 class="fill">[Name]</h3><p class="fill">[Role — background]</p></div>
+      </div>
+      <p class="sub" style="margin-top:1.1em;"><strong style="color:#fff;">Evidence of execution:</strong> a production platform spanning real-time 3D, LLM agent runtimes, GPU inference orchestration, smart contracts on 15+ chains, and multiplayer infra — <span class="fill">[shipped by a team of N over M months]</span>.</p>
+      <div class="foot"><span class="logo">three<span class="dot">.</span>ws</span><span>Team</span></div>
+    </section>
+
+    <!-- 13 — CLOSE / ASK -->
+    <section class="bg-deep">
+      <span class="slidenum">13</span>
+      <span class="kicker">The ask</span>
+      <h2>What we want from Inception</h2>
+      <ol class="ask-list">
+        <li><strong>GPU credits</strong> — run generative-3D avatar inference + open-model LLM serving at scale</li>
+        <li><strong>Technical guidance</strong> — migrate our digital-human stack to <strong style="color:var(--nv);">ACE (Audio2Face + Riva)</strong> and <strong style="color:var(--nv);">NIM / TensorRT-LLM</strong></li>
+        <li><strong>Ecosystem access</strong> — Omniverse/OpenUSD interop, co-marketing, the Inception network</li>
+      </ol>
+      <p class="lead" style="font-size:1.1em; margin-top:1em;">three<span style="color:var(--nv);">.</span>ws — <em>embodied AI, owned by its creators.</em></p>
+      <div class="foot"><span>three.ws · <span class="fill">[github]</span> · <span class="fill">[demo]</span></span><span class="fill">[founder@email]</span></div>
+      <aside class="notes">Close confident. Restate: live, open-source, GPU-bound, shipping team, on-chain distribution most agent startups lack.</aside>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0.06,
+    hash: true, transition: 'slide', transitionSpeed: 'fast',
+    slideNumber: false, controls: true, progress: true,
+    plugins: [ RevealNotes ]
+  });
+</script>
+</body>
+</html>
