@@ -55,7 +55,7 @@
 		"@modelcontextprotocol/sdk": "^1.29.0"
 	},
 	"devDependencies": {
-		"@modelcontextprotocol/ext-apps": "^1.7.3",
-		"esbuild": "^0.25.0"
+		"@modelcontextprotocol/ext-apps": "^1.7.4",
+		"esbuild": "^0.28.0"
 	}
 }
