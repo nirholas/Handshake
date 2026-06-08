@@ -26,7 +26,7 @@
     "@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
     "@metaplex-foundation/umi-serializers": "^1.5.1",
     "@pixiv/three-vrm": "^3.5.3",
-    "@pump-fun/pump-sdk": "1.1.0",
+    "@pump-fun/pump-sdk": "1.36.0",
     "@solana/actions": "0.0.2",
     "@solana/pay": "1.0.16",
     "@solana/spl-token": "^0.4.14",
@@ -37,7 +37,7 @@
     "@web3-react/core": "^8.2.3",
     "@web3-react/metamask": "^8.2.3",
     "agent0-sdk": "^1.7.1",
-    "axios": "^1.16.1",
+    "axios": "^1.17.0",
     "bs58": "^6.0.0",
     "buffer": "^6.0.3",
     "colyseus": "^0.17.10",
@@ -49,12 +49,12 @@
     "i18next-browser-languagedetector": "^7.0.1",
     "jszip": "^3.10.1",
     "ktx2-encoder": "^0.5.1",
-    "livepeer": "3.2.4",
+    "livepeer": "3.5.0",
     "postprocessing": "^6.38.3",
     "react": "^19.2.4",
     "react-color": "^2.19.3",
     "react-colorful": "^5.7.0",
-    "react-dom": "^19.2.6",
+    "react-dom": "^19.2.7",
     "react-i18next": "^12.1.5",
     "react-select": "^5.10.2",
     "sepia-speechrecognition-polyfill": "^1.0.0",
@@ -64,9 +64,9 @@
     "three": "^0.184.0",
     "three-mesh-bvh": "^0.9.10",
     "use-sound": "^5.0.0",
-    "vite-plugin-mkcert": "^2.0.0",
+    "vite-plugin-mkcert": "^2.1.0",
     "vite-react-jsx": "1.1.2",
-    "wrangler": "^4.94.0",
+    "wrangler": "^4.98.0",
     "zustand": "^3.5.10"
   },
   "overrides": {
@@ -111,7 +111,7 @@
     "rollup-plugin-inject": "^3.0.2",
     "sass": "^1.100.0",
     "vite": "^7.0.8",
-    "vite-plugin-node-polyfills": "^0.2.0",
+    "vite-plugin-node-polyfills": "^0.28.0",
     "vitest": "^4.1.7"
   }
 }
