@@ -65,7 +65,7 @@
   "dependencies": {
     "@bonfida/spl-name-service": "0.1.67",
     "@coral-xyz/anchor": "^0.31.1",
-    "@ethereum-attestation-service/eas-sdk": "0.29.1",
+    "@ethereum-attestation-service/eas-sdk": "2.9.1",
     "@metaplex-foundation/js": "^0.20.1",
     "@pump-fun/pump-sdk": "^1.36.0",
     "@solana/spl-token": "^0.4.9",

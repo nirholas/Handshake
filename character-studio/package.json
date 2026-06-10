@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@bonfida/spl-name-service": "^0.1.67",
-    "@ethereum-attestation-service/eas-sdk": "0.29.1",
+    "@ethereum-attestation-service/eas-sdk": "2.9.1",
     "@metaplex-foundation/js": "^0.20.1",
     "@metaplex-foundation/mpl-candy-machine": "^6.1.0",
     "@metaplex-foundation/umi": "^1.0.0",
