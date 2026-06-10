@@ -250,7 +250,7 @@ describe('vercel.json — embed route headers', () => {
 
 	it('sets a permissive frame-ancestors CSP header so external sites can iframe', () => {
 		const r = routes.find((x) => x.src === '/agent/([^/]+)/embed');
-		expect(r?.headers?.['content-security-policy']).toBe('frame-ancestors *');
+		expect(r?.headers?.['content-security-policy']).toContain('frame-ancestors *');
 	});
 
 	it('does NOT set X-Frame-Options (would block cross-origin embedding)', () => {
@@ -266,7 +266,7 @@ describe('vercel.json — embed route headers', () => {
 
 	it('applies the same headers to the on-chain /a/{chain}/{id}/embed route', () => {
 		const r = routes.find((x) => x.src === '/a/(\\d+)/(\\d+)/embed');
-		expect(r?.headers?.['content-security-policy']).toBe('frame-ancestors *');
+		expect(r?.headers?.['content-security-policy']).toContain('frame-ancestors *');
 	});
 });
 

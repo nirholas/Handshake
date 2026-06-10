@@ -31,6 +31,14 @@ updates:
       # ethers v6 → v7 will need a code sweep when the time comes.
       - dependency-name: ethers
         update-types: [version-update:semver-major]
+      # @solana/pay v1 is a full rewrite on @solana/kit (web3.js 2.0): findReference
+      # and validateTransfer now take a kit Rpc + branded Address/Signature instead
+      # of a web3.js v1 Connection/PublicKey. Our entire payment path (api/_lib/
+      # purchase-confirm.js, api/marketplace/buy-asset.js, api/purchase/skill.js) is
+      # web3.js v1, so adopting it would fragment the stack into kit + v1 in the most
+      # sensitive code. Pin at 0.2.x until a deliberate, coordinated web3.js 2 migration.
+      - dependency-name: "@solana/pay"
+        update-types: [version-update:semver-major]
       # Colyseus is 0.x, so a "minor" bump is breaking: 0.16 → 0.17 requires
       # @colyseus/schema v4 (new wire format + API), but we pin schema at 3.0.76
       # because multiplayer/src/schemas.js uses the v3 defineTypes/positional-
