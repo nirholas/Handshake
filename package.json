@@ -199,7 +199,7 @@
     "fast-check": "^4.8.0",
     "gltf-validator": "^2.0.0-dev.3.10",
     "graphql": "^16.14.1",
-    "helius-sdk": "^2.2.2",
+    "helius-sdk": "^3.0.0",
     "jose": "^5.9.6",
     "lightweight-charts": "^5.2.0",
     "livekit-client": "^2.19.2",
