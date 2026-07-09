@@ -185,7 +185,7 @@
 				"strict-transport-security": "max-age=63072000; includeSubDomains; preload",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
-				"permissions-policy": "accelerometer=(), autoplay=(self), bluetooth=(), camera=(), display-capture=(), encrypted-media=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(self), serial=(), usb=(), xr-spatial-tracking=(self)",
+				"permissions-policy": "accelerometer=(), autoplay=(self), camera=(), display-capture=(), encrypted-media=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(self), serial=(), usb=(), xr-spatial-tracking=(self)",
 				"content-security-policy": "base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; frame-ancestors 'self' https://ibm.com https://*.ibm.com https://*.seismic.com; report-uri /api/client-errors"
 			},
 			"continue": true

@@ -31,10 +31,57 @@
 // lazily from the npm CDN on first connect (the same source three.ws uses).
 
 const MODEL_VIEWER_CDN = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
+const MESHOPT_DECODER_CDN = 'https://cdn.jsdelivr.net/npm/meshoptimizer@0.22.0/meshopt_decoder.js';
+
+// Register the EXT_meshopt_compression decoder with <model-viewer> before it
+// begins loading. Server-baked avatars (the /api/avatars/<id>/glb lane and Forge
+// output) emit EXT_meshopt_compression; model-viewer auto-wires Draco/KTX2 but
+// leaves Meshopt unset, so without this the viewer throws
+//   "THREE.GLTFLoader: setMeshoptDecoder must be called before loading
+//    compressed files"
+// and the avatar never renders. This is the same three-step race-proof pattern
+// as public/model-viewer-meshopt.js, inlined here because embed.js is also the
+// public snippet third parties paste onto their own sites (where a
+// /model-viewer-meshopt.js path wouldn't resolve) and it injects the CDN script
+// async — the interceptor must be installed before model-viewer is defined so an
+// already-connected <three-ws-agent> can't win the race.
+function applyMeshoptDecoder(ctor) {
+	if (ctor && !ctor.meshoptDecoderLocation) {
+		try {
+			ctor.meshoptDecoderLocation = MESHOPT_DECODER_CDN;
+		} catch (e) {
+			/* property not writable in this build — nothing more we can do */
+		}
+	}
+}
+
+function wireMeshoptDecoder() {
+	if (typeof window === 'undefined' || !window.customElements) return;
+	// 1. model-viewer already defined → set it synchronously.
+	applyMeshoptDecoder(customElements.get('model-viewer'));
+	// 2. Not yet defined → patch define() so the decoder is registered the moment
+	//    the element is defined, before its first reactive update kicks off a load.
+	if (!customElements.get('model-viewer') && !customElements.__meshoptDefinePatched) {
+		customElements.__meshoptDefinePatched = true;
+		const nativeDefine = customElements.define;
+		customElements.define = function (name, ctor, options) {
+			const result = nativeDefine.call(this, name, ctor, options);
+			if (name === 'model-viewer') applyMeshoptDecoder(ctor);
+			return result;
+		};
+	}
+	// 3. Belt-and-suspenders fallback for any path where (1) and (2) both miss.
+	customElements.whenDefined('model-viewer').then((resolved) => {
+		applyMeshoptDecoder(resolved || customElements.get('model-viewer'));
+	});
+}
 
 let modelViewerPromise = null;
 function ensureModelViewer() {
 	if (typeof window === 'undefined') return Promise.resolve();
+	// Install the decoder interceptor before anything can define model-viewer,
+	// even on the already-defined fast path below.
+	wireMeshoptDecoder();
 	if (customElements.get('model-viewer')) return Promise.resolve();
 	if (modelViewerPromise) return modelViewerPromise;
 	modelViewerPromise = new Promise((resolve, reject) => {

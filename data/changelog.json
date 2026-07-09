@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws — the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-09",
+			"title": "Live SOL price restored on /three-live; Flappin UFO demo retired",
+			"summary": "Two quiet breakages, fixed. The live trade feed on /three-live now prices SOL-only trades correctly again — it was reading a price API directly from your browser, which the provider silently blocks, so those trades showed no dollar value; it now reads the same cached, multi-provider SOL/USD price the rest of the platform uses. Separately, the Flappin UFO arcade demo ran on an external deployment that has gone offline, leaving a blank screen and a leaderboard that never loaded. Rather than leave a broken page up, /play/ufo is now an honest retired notice that points you to the live experiences — the coin world, Sniper Arena, and Coin Clash.",
+			"tags": [
+				"fix"
+			],
+			"link": "/three-live"
+		},
+		{
 			"date": "2026-07-08",
 			"title": "/play: real combat — swords, guns, monsters, and a wanted meter",
 			"summary": "The open world now bites back. Equip a sword, bat, pistol or bow from your hotbar and fight in one of three named danger zones (Southern Wilds, Northern Wilds, Eastern Marches) — the rest of town stays lawful, by design. Roaming monsters chase and swing through the same server-side damage path a player's attack uses; killing one (or another player) spills a lootable death-marker with real cash and items. Attacking another player raises your wanted stars, visible on the new GTA-style vitals HUD (health, armor, wanted level) and on your nameplate to everyone nearby. Dying drops your carried cash and pack (banked cash is safe) and respawns you back in town moments later at full health.",

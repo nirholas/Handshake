@@ -717,9 +717,12 @@
 		// ── Boot ──────────────────────────────────────────────────────────────────
 		setHero('connecting', '$THREE · connecting…');
 		// Seed the SOL price used for trades that only supply sol_amount.
-		fetch('https://api.jup.ag/price/v2?ids=So11111111111111111111111111111111111111112', { signal: AbortSignal.timeout(5000) })
+		// Same-origin call to the free /api/crypto/token snapshot (wrapped-SOL mint)
+		// — Jupiter's browser fetch is CORS-blocked, this reuses the platform's
+		// cached multi-provider SOL/USD read instead.
+		fetch('/api/crypto/token?address=So11111111111111111111111111111111111111112', { signal: AbortSignal.timeout(5000) })
 			.then((r) => r.ok ? r.json() : null)
-			.then((d) => { const p = Number(d?.data?.So11111111111111111111111111111111111111112?.price); if (p > 0) _solUsd = p; })
+			.then((d) => { const p = Number(d?.priceUsd); if (p > 0) _solUsd = p; })
 			.catch(() => {});
 		pollStats().finally(() => { setTimeout(() => introEl.classList.add('is-hidden'), 350); });
 		statsTimer = setInterval(pollStats, STATS_INTERVAL_MS);

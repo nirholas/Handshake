@@ -40,6 +40,38 @@ function setMeta(prop, content) {
 }
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// ── token / NFT art proxy ────────────────────────────────────────────────────
+// Route every remote image through the same-origin proxy (api/img.js) instead of
+// hot-linking public IPFS gateways. Those gateways (ipfs.io, pinata, …) answer
+// cross-origin <img> loads with no CORS/content-type headers the browser trusts,
+// so it ORB-blocks them (net::ERR_BLOCKED_BY_ORB) and every piece of art on the
+// page fails. The proxy fetches server-side across a gateway fallback list and
+// ALWAYS returns a valid image — the real art or an on-brand placeholder — so the
+// loader never sees a broken-image icon. Same pattern as src/radar.js.
+//
+// Returns the `src` + fallback attributes for an <img>. `seed` should be a stable
+// per-token identifier (mint, symbol) so a given coin's placeholder art is unique
+// and identical across loads. On error we drop to the seed-only placeholder (no
+// upstream URL), clearing onerror first so a placeholder that itself fails cannot
+// spin an error loop.
+//
+// The placeholder URL is carried in `data-ph` and read back via `this.dataset.ph`
+// rather than interpolated into the onerror script. Seeds are attacker-controlled
+// (a pump.fun launcher picks the token symbol) and encodeURIComponent leaves `'`
+// unescaped, so splicing one into a quoted JS string literal would be an injection
+// vector. Here the onerror body is a constant and both URLs only ever land in
+// esc()'d attribute values, where no JS-context escaping is needed at all.
+const encUri = (v) =>
+	encodeURIComponent(String(v)).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+
+function proxyImgAttrs(rawUrl, seed) {
+	const placeholder = `/api/img?seed=${encUri(seed || 'coin')}`;
+	const src = rawUrl && /^(https?|ipfs):\/\//i.test(String(rawUrl))
+		? `/api/img?url=${encUri(rawUrl)}&seed=${encUri(seed || 'coin')}`
+		: placeholder;
+	return `src="${esc(src)}" data-ph="${esc(placeholder)}" onerror="this.onerror=null;this.src=this.dataset.ph"`;
+}
 const shortAddr = (a) => (a && a.length > 10 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 const fmtSol = (n) => (n == null ? '—' : `${Number(n) < 0.01 && Number(n) > 0 ? Number(n).toFixed(4) : Number(n).toFixed(2)}◎`);
 const fmtPct = (n) => (n == null ? '—' : `${Math.round(Number(n))}%`);
@@ -615,7 +647,7 @@ async function loadHotSectors() {
 	el.innerHTML = items.map((c) => {
 		const initial = esc((c.best_symbol || c.category || '?')[0].toUpperCase());
 		const imgEl = c.best_image_uri
-			? `<img class="hs-img" src="${esc(c.best_image_uri)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'hs-img',textContent:'${initial}'}))"/>`
+			? `<img class="hs-img" ${proxyImgAttrs(c.best_image_uri, c.best_symbol || c.category)} alt="" loading="lazy"/>`
 			: `<div class="hs-img">${initial}</div>`;
 		const primeBadge  = c.prime_count  > 0 ? `<span class="hs-badge prime">${c.prime_count} prime</span>`   : '';
 		const strongBadge = c.strong_count > 0 ? `<span class="hs-badge strong">${c.strong_count} strong</span>` : '';
@@ -814,7 +846,7 @@ function coinCard(it, watched = new Set()) {
 	btn.innerHTML = `
 		<div class="coin-top">
 			${it.image_uri
-				? `<img class="coin-img" src="${esc(it.image_uri)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'coin-img',textContent:'${esc((it.symbol || '?')[0])}'}))">`
+				? `<img class="coin-img" ${proxyImgAttrs(it.image_uri, it.mint)} alt="" loading="lazy">`
 				: `<div class="coin-img">${esc((it.symbol || '?')[0])}</div>`}
 			<div class="coin-id">
 				<div class="coin-sym"><span class="sym-txt">${esc(it.symbol || '—')}</span>${it._dupes > 1
@@ -1146,7 +1178,7 @@ function agentLeadRow(a, i) {
 	const pnlStr = pnlVal != null ? `${pnlVal >= 0 ? '+' : ''}${Math.abs(pnlVal) < 0.01 ? pnlVal.toFixed(4) : pnlVal.toFixed(3)}` : '—';
 	const pnlClass = pnlVal != null ? (pnlVal >= 0 ? 'up' : 'dn') : '';
 	const img = a.image_url
-		? `<img class="ag-av" src="${esc(a.image_url)}" alt="" loading="lazy" />`
+		? `<img class="ag-av" ${proxyImgAttrs(a.image_url, a.agent_id || a.name)} alt="" loading="lazy" />`
 		: `<div class="ag-av ag-av-ph">${esc((a.name || '?')[0].toUpperCase())}</div>`;
 	const subLine = `${a.wins}W / ${a.losses}L${a.roi_pct != null ? ` · ROI ${a.roi_pct >= 0 ? '+' : ''}${a.roi_pct}%` : ''}`;
 	return `<div class="al-entry" data-agent-id="${esc(a.agent_id)}">
@@ -1241,7 +1273,7 @@ function afTableHtml(items) {
 
 function afRow(a) {
 	const av = a.agent_image
-		? `<img class="af-av" src="${esc(a.agent_image)}" alt="" loading="lazy">`
+		? `<img class="af-av" ${proxyImgAttrs(a.agent_image, a.agent_id || a.agent_name)} alt="" loading="lazy">`
 		: `<div class="af-av" style="display:grid;place-items:center;font:700 11px/1 var(--mono);color:var(--faint)">${esc((a.agent_name || '?')[0].toUpperCase())}</div>`;
 	const outcome = a.outcome || 'open';
 	const outCls = outcome === 'win' ? 'af-outcome-win' : outcome === 'loss' ? 'af-outcome-loss' : 'af-outcome-open';
@@ -1428,7 +1460,7 @@ function moverCardHtml(m) {
 	const deltaSign = m.delta >= 0 ? '+' : '';
 	const deltaCls = m.delta >= 0 ? 'up' : 'dn';
 	const imgSrc = m.image_uri
-		? `<img class="mv-img" src="${esc(m.image_uri)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
+		? `<img class="mv-img" ${proxyImgAttrs(m.image_uri, m.mint)} alt="" loading="lazy">`
 		: `<div class="mv-img">${esc((m.symbol || '?')[0])}</div>`;
 	const TIER_META = { prime: { color: '#e8ebf2' }, strong: { color: '#e4e8f2' }, lean: { color: '#c4c9d6' }, watch: { color: '#8a92a8' }, avoid: { color: '#6c7280' } };
 	const tierColor = (TIER_META[tier] || TIER_META.watch).color;
@@ -1534,7 +1566,7 @@ function winCardHtml(w, idx) {
 	const when = w.scored_at ? ago(w.scored_at) : '';
 	return `<a class="win-card win-in" href="${esc(w.oracle_url)}" style="animation-delay:${Math.min(idx * 40, 400)}ms">
 		<div class="win-card-head">
-			<div class="win-img">${imgSrc ? `<img src="${esc(imgSrc)}" alt="" style="width:42px;height:42px;border-radius:10px;object-fit:cover" onerror="this.style.display='none'" loading="lazy" />` : sym.slice(0, 2)}</div>
+			<div class="win-img">${imgSrc ? `<img ${proxyImgAttrs(imgSrc, w.mint)} alt="" style="width:42px;height:42px;border-radius:10px;object-fit:cover" loading="lazy" />` : sym.slice(0, 2)}</div>
 			<div class="win-id">
 				<div class="win-sym">$${sym}</div>
 				${w.name ? `<div class="win-name">${esc(w.name)}</div>` : ''}
@@ -1848,7 +1880,7 @@ async function loadRelatedCoins(mint, category) {
 			${related.map((r) => {
 				const tc = (TIER_META[r.tier] || TIER_META.watch).color;
 				const imgEl = r.image_uri
-					? `<img src="${esc(r.image_uri)}" alt="" style="width:28px;height:28px;border-radius:7px;object-fit:cover;flex:none;border:1px solid var(--line)" loading="lazy">`
+					? `<img ${proxyImgAttrs(r.image_uri, r.mint)} alt="" style="width:28px;height:28px;border-radius:7px;object-fit:cover;flex:none;border:1px solid var(--line)" loading="lazy">`
 					: `<div style="width:28px;height:28px;border-radius:7px;background:var(--line);display:grid;place-items:center;font:700 11px/1 var(--mono);color:var(--faint);flex:none">${esc((r.symbol||'?')[0])}</div>`;
 				return `<button type="button" class="dr-related" data-related-mint="${esc(r.mint)}"
 					style="display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;width:100%;transition:background .12s"

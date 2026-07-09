@@ -178,7 +178,8 @@
 			];
 
 			const loader = new GLTFLoader();
-			loader.load('/avatars/default.glb', (gltf) => {
+
+			function onAvatarLoaded(gltf) {
 				scene.add(gltf.scene);
 				gltf.scene.traverse((node) => {
 					if (!node.isMesh || !node.morphTargetDictionary || !node.morphTargetInfluences) return;
@@ -198,7 +199,21 @@
 					el.innerHTML = `<span>${v}</span><code data-v="${v}">${found ? '0.00' : 'n/a'}</code>`;
 					row.appendChild(el);
 				}
-			});
+			}
+
+			// Server-baked avatars (the /api/avatars/<id>/glb lane) and Forge output emit
+			// EXT_meshopt_compression; GLTFLoader throws "setMeshoptDecoder must be called
+			// before loading compressed files" unless the decoder is registered before the
+			// load starts. Wire ONLY the meshopt decoder — this page loads no Draco/KTX2
+			// GLBs — the same lazy way walk-sdk/src/internal/meshopt.js does. Uncompressed
+			// rigs ignore it harmlessly. Not top-level await: the default vite build target
+			// includes Safari 14, which can't parse TLA.
+			import('three/addons/libs/meshopt_decoder.module.js')
+				.then(({ MeshoptDecoder }) => {
+					loader.setMeshoptDecoder(MeshoptDecoder);
+					loader.load('/avatars/default.glb', onAvatarLoaded);
+				})
+				.catch((err) => console.error('[lipsync] avatar load failed', err));
 
 			// ── Animation loop ─────────────────────────────────────────────
 			let analyser = null;

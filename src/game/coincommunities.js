@@ -1141,6 +1141,7 @@ export class CoinCommunities {
 			net: this.net,
 			ui: this.ui,
 		});
+		window.__ccDebugTmp = this; // TEMP verification hook, reverted before commit
 		this.net.on('profile', (snap) => { this.playSystems?.setProfile(snap); this._onCosmeticsProfile(snap); });
 		this.net.on('inv', (delta) => this.playSystems?.applyInv(delta));
 		this.net.on('xpgain', (g) => this.playSystems?.onXpGain(g));

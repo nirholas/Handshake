@@ -5,25 +5,23 @@
 	<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Flappin UFO — dodge asteroids for $THREE · three.ws</title>
-	<meta name="description" content="Pilot your UFO through an asteroid field. Connect your Solana wallet, submit your score to the global leaderboard, and represent $THREE holders." />
-	<meta property="og:title" content="Flappin UFO · three.ws" />
-	<meta property="og:description" content="Dodge asteroids in your UFO. Connect your Solana wallet and claim your spot on the $THREE leaderboard." />
+	<title>Flappin UFO — retired demo · three.ws</title>
+	<meta name="description" content="The Flappin UFO arcade demo has been retired. Explore the live three.ws experiences instead — the coin communities world, Sniper Arena, and Coin Clash." />
+	<meta property="og:title" content="Flappin UFO — retired demo · three.ws" />
+	<meta property="og:description" content="This arcade demo is no longer available. Jump into the live three.ws experiences instead." />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/play/ufo" />
-	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO+%E2%80%94+dodge+asteroids+for+%24THREE&amp;d=Pilot+your+UFO+through+an+asteroid+field.+Connect+your+Solana+wallet%2C+submit+your+score+as+your+wallet+address%2C+and+claim+your+spot+on+the+global+%24THREE+leaderb&amp;p=%2Fplay%2Fufo" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO+%E2%80%94+retired+demo&amp;d=The+Flappin+UFO+arcade+demo+ran+on+an+external+deployment+that+is+no+longer+online%2C+so+the+game+has+been+retired.+The+page+now+points+visitors+to+the+live+three&amp;p=%2Fplay%2Fufo" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Flappin UFO — dodge asteroids for $THREE" />
-	<meta name="twitter:description" content="Pilot your UFO through asteroids. Connect your Solana wallet and climb the $THREE leaderboard." />
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO+%E2%80%94+dodge+asteroids+for+%24THREE&amp;d=Pilot+your+UFO+through+an+asteroid+field.+Connect+your+Solana+wallet%2C+submit+your+score+as+your+wallet+address%2C+and+claim+your+spot+on+the+global+%24THREE+leaderb&amp;p=%2Fplay%2Fufo" />
+	<meta name="twitter:title" content="Flappin UFO — retired demo · three.ws" />
+	<meta name="twitter:description" content="This arcade demo is no longer available. Explore the live three.ws experiences instead." />
 	<link rel="canonical" href="https://three.ws/play/ufo" />
 	<link rel="icon" href="/favicon.ico" />
 	<style>
 		:root {
 			--bg: #06070f;
 			--panel: rgba(12, 14, 24, 0.78);
-			--panel-solid: #0c0e18;
 			--line: rgba(255, 255, 255, 0.08);
 			--ink: #e8edf8;
 			--muted: #8b93b0;
@@ -31,23 +29,30 @@
 			--violet: #a78bff;
 			--cyan: #6ee7ff;
 			--gold: #fbbf24;
-			--up: #34d399;
 			--r: 14px;
 			--mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace;
 			--shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
 			--blur: saturate(160%) blur(20px);
 		}
 
+		:root[data-theme="light"] {
+			--bg: #f4f6fc;
+			--panel: rgba(255, 255, 255, 0.82);
+			--line: rgba(10, 14, 30, 0.1);
+			--ink: #10131f;
+			--muted: #55607a;
+			--faint: rgba(10, 14, 30, 0.4);
+			--shadow: 0 18px 50px -22px rgba(20, 24, 50, 0.28), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+		}
+
 		* { box-sizing: border-box; margin: 0; padding: 0; }
 
 		html, body {
-			height: 100%;
-			overflow: hidden;
+			min-height: 100%;
 			background: var(--bg);
 			color: var(--ink);
 			font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 			-webkit-font-smoothing: antialiased;
-			overscroll-behavior: none;
 		}
 
 		a { color: inherit; text-decoration: none; }
@@ -61,289 +66,148 @@
 				radial-gradient(ellipse 60% 50% at 80% 70%, rgba(30, 80, 160, 0.1), transparent 70%);
 		}
 
-		/* ── game iframe ─────────────────────────────────── */
-		#game-frame {
-			position: fixed;
-			inset: 0;
-			width: 100%;
-			height: 100%;
-			border: none;
-			z-index: 1;
-			display: block;
-			background: #000;
-		}
-
 		/* ── top bar ─────────────────────────────────────── */
 		.bar {
 			position: fixed; top: 0; left: 0; right: 0; z-index: 10;
 			display: flex; align-items: center; gap: 12px; padding: 11px 16px;
-			background: linear-gradient(180deg, rgba(6, 7, 15, 0.9) 0%, rgba(6, 7, 15, 0.5) 70%, transparent 100%);
-			pointer-events: none;
 		}
-		.bar > * { pointer-events: auto; }
-		.spacer { flex: 1; }
 
 		.brand {
 			display: inline-flex; align-items: center; gap: 8px;
 			font-weight: 700; font-size: 14px; letter-spacing: -0.02em;
-			opacity: 0.9;
+			opacity: 0.9; transition: opacity .2s;
 		}
+		.brand:hover { opacity: 1; }
 		.brand img { width: 20px; height: 20px; border-radius: 5px; }
 		.brand-sep { color: var(--faint); font-weight: 400; margin: 0 2px; }
 		.game-title {
-			font-weight: 700; font-size: 14px; letter-spacing: -0.01em;
+			font-weight: 700; font-size: 14px; letter-spacing: -0.01em; color: var(--muted);
+		}
+
+		.retired-badge {
+			display: inline-flex; align-items: center; gap: 5px;
+			padding: 3px 8px; border-radius: 999px;
+			border: 1px solid var(--line); background: rgba(255,255,255,0.04);
+			font: 700 9.5px/1 var(--mono); color: var(--faint);
+			letter-spacing: .08em; text-transform: uppercase;
+		}
+		.retired-badge::before {
+			content: ''; width: 5px; height: 5px; border-radius: 50%;
+			background: var(--faint);
+		}
+
+		/* ── retired state ───────────────────────────────── */
+		.wrap {
+			position: relative; z-index: 1;
+			min-height: 100vh; min-height: 100dvh;
+			display: grid; place-items: center;
+			padding: 88px 20px 40px;
+		}
+
+		.card {
+			width: 100%; max-width: 520px;
+			background: var(--panel); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+			border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow);
+			padding: 40px 32px 32px; text-align: center;
+			animation: rise .5s cubic-bezier(.22, 1, .36, 1) both;
+		}
+		@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+		.emblem {
+			width: 84px; height: 84px; margin: 0 auto 22px;
+			display: grid; place-items: center; border-radius: 50%;
+			border: 1px solid color-mix(in srgb, var(--violet) 28%, var(--line));
+			background:
+				radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--violet) 18%, transparent), transparent 70%);
+			position: relative;
+		}
+		.emblem svg { width: 40px; height: 40px; color: var(--violet); }
+		/* faint orbit ring */
+		.emblem::after {
+			content: ''; position: absolute; inset: -9px; border-radius: 50%;
+			border: 1px dashed color-mix(in srgb, var(--violet) 22%, transparent);
+			animation: spin 22s linear infinite;
+		}
+		@keyframes spin { to { transform: rotate(360deg); } }
+		@media (prefers-reduced-motion: reduce) {
+			.card { animation: none; }
+			.emblem::after { animation: none; }
+		}
+
+		.card h1 {
+			font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 10px;
 			background: linear-gradient(90deg, var(--violet), var(--cyan));
 			-webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 		}
+		.card p.lead {
+			font-size: 14px; color: var(--muted); line-height: 1.6; margin: 0 auto 26px;
+			max-width: 42ch;
+		}
 
-		.pill {
-			display: inline-flex; align-items: center; gap: 7px;
-			padding: 7px 12px; border-radius: 999px;
-			border: 1px solid var(--line); background: var(--panel);
-			backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-			font-size: 12px; color: var(--muted);
-			transition: border-color .2s, color .2s;
+		.actions {
+			display: flex; flex-direction: column; gap: 10px; margin: 0 auto 8px;
+			max-width: 320px;
 		}
 
 		.btn {
-			display: inline-flex; align-items: center; gap: 7px;
-			padding: 8px 14px; border-radius: 999px;
-			border: 1px solid var(--line); background: var(--panel);
-			backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-			font-weight: 600; font-size: 12.5px; color: var(--ink);
+			display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+			padding: 12px 18px; border-radius: 12px;
+			border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+			font-weight: 600; font-size: 13.5px; color: var(--ink);
 			transition: transform .12s, border-color .2s, background .2s;
-			white-space: nowrap;
 		}
-		.btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--violet) 55%, var(--line)); }
-		.btn:active { transform: translateY(0) scale(.97); }
+		.btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); }
+		.btn:active { transform: translateY(0) scale(.98); }
+		.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+		.btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
 		.btn.primary {
 			background: linear-gradient(135deg,
-				color-mix(in srgb, var(--violet) 20%, var(--panel)),
-				color-mix(in srgb, var(--cyan) 15%, var(--panel)));
-			border-color: color-mix(in srgb, var(--violet) 45%, var(--line));
+				color-mix(in srgb, var(--violet) 24%, var(--panel)),
+				color-mix(in srgb, var(--cyan) 16%, var(--panel)));
+			border-color: color-mix(in srgb, var(--violet) 48%, var(--line));
+			color: #fff;
 		}
-		.btn.connected {
-			border-color: color-mix(in srgb, var(--up) 50%, var(--line));
-			color: var(--up);
-		}
+		:root[data-theme="light"] .btn.primary { color: #1a1030; }
 
-		.btn-lb {
-			display: inline-flex; align-items: center; gap: 6px;
+		/* sibling demos row */
+		.siblings {
+			display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+			margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--line);
+		}
+		.chip {
+			display: inline-flex; align-items: center; gap: 7px;
 			padding: 8px 13px; border-radius: 999px;
-			border: 1px solid var(--line); background: var(--panel);
-			backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-			font-weight: 600; font-size: 12px; color: var(--muted);
+			border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+			font-size: 12.5px; color: var(--muted);
 			transition: transform .12s, border-color .2s, color .2s;
 		}
-		.btn-lb:hover { transform: translateY(-1px); color: var(--ink); border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); }
-		.btn-lb svg { width: 14px; height: 14px; }
+		.chip:hover { transform: translateY(-1px); color: var(--ink); border-color: color-mix(in srgb, var(--violet) 40%, var(--line)); }
+		.chip:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+		.chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
 
-		/* ── leaderboard panel ───────────────────────────── */
-		.panel {
-			position: fixed; z-index: 9; right: 16px; top: 60px;
-			width: 300px; max-width: calc(100vw - 28px);
-			background: var(--panel); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-			border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow);
-			overflow: hidden;
-			transform: translateX(calc(100% + 20px)); opacity: 0; pointer-events: none;
-			transition: transform .35s cubic-bezier(.22, 1, .36, 1), opacity .25s;
-		}
-		.panel.open {
-			transform: none; opacity: 1; pointer-events: auto;
+		.siblings-label {
+			width: 100%; font: 600 10px/1 var(--mono); letter-spacing: .12em;
+			text-transform: uppercase; color: var(--faint); margin-bottom: 4px;
 		}
 
-		.panel-head {
-			display: flex; align-items: center; justify-content: space-between;
-			padding: 11px 14px; border-bottom: 1px solid var(--line);
-		}
-		.panel-head h2 {
-			font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em;
-			color: var(--faint); font-weight: 600; margin: 0;
-			display: flex; align-items: center; gap: 7px;
-		}
-		.panel-head .live-dot {
-			width: 6px; height: 6px; border-radius: 50%; background: var(--up);
-			animation: pulse 1.8s infinite;
-		}
-		@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(52,211,153,.5)} 70%{box-shadow:0 0 0 6px rgba(52,211,153,0)} 100%{box-shadow:0 0 0 0 rgba(52,211,153,0)} }
-
-		.panel-close {
-			width: 26px; height: 26px; border-radius: 8px;
-			border: 1px solid var(--line); background: rgba(255,255,255,0.04);
-			display: grid; place-items: center; color: var(--muted);
-			transition: color .15s, border-color .15s;
-		}
-		.panel-close:hover { color: var(--ink); border-color: var(--violet); }
-
-		/* wallet identity box */
-		.identity-box {
-			padding: 12px 14px; border-bottom: 1px solid var(--line);
-			display: none;
-			flex-direction: column; gap: 7px;
-		}
-		.identity-box.show { display: flex; }
-		.identity-label {
-			font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); font-weight: 600;
-		}
-		.identity-row {
-			display: flex; align-items: center; gap: 8px;
-		}
-		.identity-addr {
-			flex: 1; font: 600 12px/1.3 var(--mono); color: var(--cyan);
-			overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-		}
-		.copy-btn {
-			display: inline-flex; align-items: center; gap: 5px;
-			padding: 5px 10px; border-radius: 7px;
-			border: 1px solid color-mix(in srgb, var(--violet) 40%, var(--line));
-			background: color-mix(in srgb, var(--violet) 10%, transparent);
-			font: 600 11px/1 var(--mono); color: var(--violet);
-			transition: background .15s, border-color .15s, transform .1s;
-			white-space: nowrap;
-		}
-		.copy-btn:hover { background: color-mix(in srgb, var(--violet) 18%, transparent); transform: translateY(-1px); }
-		.copy-btn.copied { color: var(--up); border-color: color-mix(in srgb, var(--up) 40%, var(--line)); background: color-mix(in srgb, var(--up) 10%, transparent); }
-		.identity-hint {
-			font-size: 11px; color: var(--muted); line-height: 1.4;
-		}
-
-		/* leaderboard list */
-		.board { max-height: min(55vh, 440px); overflow-y: auto; }
-		.board::-webkit-scrollbar { width: 4px; } .board::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-
-		.lb-row {
-			display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center;
-			padding: 9px 14px; border-bottom: 1px solid var(--line);
-			transition: background .15s;
-		}
-		.lb-row:last-child { border-bottom: none; }
-		.lb-row:hover { background: rgba(255,255,255,0.03); }
-		.lb-row.me { background: color-mix(in srgb, var(--violet) 7%, transparent); }
-
-		.lb-rank { font: 700 11.5px/1 var(--mono); color: var(--faint); text-align: center; }
-		.lb-rank.gold { color: var(--gold); }
-		.lb-rank.silver { color: #9ca3af; }
-		.lb-rank.bronze { color: #b45309; }
-
-		.lb-info { min-width: 0; }
-		.lb-name { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-		.lb-name.wallet { font: 600 11px/1.3 var(--mono); color: var(--cyan); }
-		.lb-sub { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
-
-		.lb-score { text-align: right; }
-		.lb-score b { display: block; font: 700 13px/1 var(--mono); color: var(--ink); }
-		.lb-score small { font: 500 10px/1 var(--mono); color: var(--muted); }
-
-		.lb-empty { padding: 28px 18px; text-align: center; }
-		.lb-empty b { display: block; font-size: 14px; color: var(--ink); margin-bottom: 6px; }
-		.lb-empty p { font-size: 12px; color: var(--muted); line-height: 1.5; }
-
-		.lb-skel {
-			height: 46px; margin: 0; border-bottom: 1px solid var(--line);
-			background: linear-gradient(90deg,
-				rgba(255,255,255,0.03) 25%,
-				rgba(255,255,255,0.06) 37%,
-				rgba(255,255,255,0.03) 63%);
-			background-size: 400% 100%;
-			animation: shimmer 1.4s infinite;
-		}
-		@keyframes shimmer { to { background-position: -400% 0; } }
-
-		/* ── controls hint ───────────────────────────────── */
-		.hint {
-			position: fixed; left: 16px; bottom: 16px; z-index: 9;
-			display: flex; gap: 7px; align-items: center;
-			padding: 7px 12px; border-radius: 999px;
-			background: var(--panel); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-			border: 1px solid var(--line); color: var(--muted); font-size: 11.5px;
-		}
-		.hint kbd {
-			font: 600 10px/1 var(--mono); background: rgba(255,255,255,0.07);
-			border: 1px solid var(--line); border-radius: 4px; padding: 3px 5px; color: var(--ink);
-		}
-
-		/* ── $THREE badge ────────────────────────────────── */
-		.three-badge {
-			display: inline-flex; align-items: center; gap: 5px;
-			padding: 5px 10px; border-radius: 999px;
-			border: 1px solid color-mix(in srgb, var(--violet) 35%, var(--line));
-			background: color-mix(in srgb, var(--violet) 8%, transparent);
-			font: 700 11px/1 var(--mono); color: var(--violet);
-			letter-spacing: .02em;
-		}
-		.three-badge::before { content: '◈'; opacity: .7; }
-
-		/* ── demo badge ──────────────────────────────────── */
-		.demo-badge {
-			display: inline-flex; align-items: center; gap: 5px;
-			padding: 3px 8px; border-radius: 999px;
-			border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--line));
-			background: color-mix(in srgb, var(--gold) 10%, transparent);
-			font: 700 9.5px/1 var(--mono); color: var(--gold);
-			letter-spacing: .08em; text-transform: uppercase;
-		}
-		.demo-badge::before {
-			content: ''; width: 5px; height: 5px; border-radius: 50%;
-			background: var(--gold); box-shadow: 0 0 6px var(--gold);
-		}
-
-		/* ── demo teaser ─────────────────────────────────── */
-		.teaser {
-			position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
-			z-index: 12; display: flex; align-items: center; gap: 10px;
-			max-width: calc(100vw - 32px);
-			padding: 9px 10px 9px 14px; border-radius: 999px;
-			background: var(--panel); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-			border: 1px solid color-mix(in srgb, var(--violet) 28%, var(--line));
-			box-shadow: var(--shadow);
-			font-size: 12.5px; color: var(--muted);
-			transition: opacity .35s ease, transform .35s ease;
-		}
-		.teaser[hidden] { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
-		.teaser b { color: var(--ink); font-weight: 600; }
-		.teaser .teaser-link {
-			color: var(--violet); font-weight: 600; white-space: nowrap;
-			border-bottom: 1px solid color-mix(in srgb, var(--violet) 45%, transparent);
-			transition: color .15s ease, border-color .15s ease;
-		}
-		.teaser .teaser-link:hover { color: var(--cyan); border-color: var(--cyan); }
-		.teaser .teaser-link:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 3px; }
-		.teaser-close {
-			display: inline-flex; align-items: center; justify-content: center;
-			width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto;
-			color: var(--faint); transition: color .15s ease, background .15s ease;
-		}
-		.teaser-close:hover { color: var(--ink); background: rgba(255,255,255,0.07); }
-		.teaser-close:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-
-		/* ── mobile ──────────────────────────────────────── */
-		@media (max-width: 600px) {
-			.bar { padding: 9px 12px; gap: 8px; }
+		@media (max-width: 480px) {
 			.game-title { display: none; }
 			.brand-sep { display: none; }
-			.panel { right: 8px; top: 54px; width: calc(100vw - 16px); }
-			.hint { display: none; }
-			.teaser { font-size: 11.5px; padding: 8px 8px 8px 12px; gap: 8px; }
-			.demo-badge { padding: 3px 6px; letter-spacing: .05em; }
+			.card { padding: 32px 20px 26px; }
+			.card h1 { font-size: 19px; }
 		}
 	</style>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Flappin UFO — dodge asteroids for $THREE — three.ws">
+	<meta property="og:image:alt" content="Flappin UFO — retired demo — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Flappin UFO — dodge asteroids for $THREE","description":"Pilot your UFO through an asteroid field. Connect your Solana wallet, submit your score as your wallet address, and claim your spot on the global $THREE leaderboard.","url":"https://three.ws/play/ufo","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO+%E2%80%94+dodge+asteroids+for+%24THREE&amp;d=Pilot+your+UFO+through+an+asteroid+field.+Connect+your+Solana+wallet%2C+submit+your+score+as+your+wallet+address%2C+and+claim+your+spot+on+the+global+%24THREE+leaderb&amp;p=%2Fplay%2Fufo"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Play","item":"https://three.ws/play"},{"@type":"ListItem","position":3,"name":"Ufo","item":"https://three.ws/play/ufo"}]}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Flappin UFO — retired demo","description":"The Flappin UFO arcade demo has been retired. Explore the live three.ws experiences instead.","url":"https://three.ws/play/ufo","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Play","item":"https://three.ws/play"},{"@type":"ListItem","position":3,"name":"Ufo","item":"https://three.ws/play/ufo"}]}]}</script>
+
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;amp;t=Flappin+UFO+%E2%80%94+retired+demo&amp;amp;d=The+Flappin+UFO+arcade+demo+ran+on+an+external+deployment+that+is+no+longer+online%2C+so+the+game+has+been+retired.+The+page+now+points+visitors+to+the+live+three&amp;amp;p=%2Fplay%2Fufo">
 </head>
 <body>
 <div class="stars"></div>
-
-<!-- full-screen game iframe -->
-<iframe
-	id="game-frame"
-	src="https://flappin-ufo.vercel.app"
-	allow="autoplay; fullscreen"
-	title="Flappin UFO"
-></iframe>
 
 <!-- top bar -->
 <header class="bar">
@@ -353,278 +217,50 @@
 	</a>
 	<span class="brand-sep">/</span>
 	<span class="game-title">Flappin UFO</span>
-	<span class="demo-badge" title="A playable demo — the real product is far bigger">Demo</span>
-
-	<div class="spacer"></div>
-
-	<span class="three-badge">$THREE</span>
-
-	<button class="btn-lb" id="lb-toggle" aria-label="Toggle leaderboard" title="Leaderboard">
-		<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-			<rect x="1.5" y="9.5" width="3" height="5" rx=".5" />
-			<rect x="6.5" y="5.5" width="3" height="9" rx=".5" />
-			<rect x="11.5" y="2.5" width="3" height="12" rx=".5" />
-		</svg>
-		<span id="lb-toggle-label">Scores</span>
-	</button>
-
-	<button class="btn primary" id="connect-wallet-btn" onclick="connectWallet()">
-		<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-			<path d="M20 12V8a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4" />
-			<path d="M15 12h6" /><circle cx="15" cy="12" r="1.5" fill="currentColor" />
-		</svg>
-		<span data-wallet-label>Connect Wallet</span>
-	</button>
+	<span class="retired-badge" title="This demo is no longer available">Retired</span>
 </header>
 
-<!-- leaderboard panel -->
-<aside class="panel" id="lb-panel" role="complementary" aria-label="Leaderboard">
-	<div class="panel-head">
-		<h2>
-			<span class="live-dot"></span>
-			Global Leaderboard
-		</h2>
-		<button class="panel-close" onclick="closePanel()" aria-label="Close leaderboard">
-			<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-				<path d="M1 1l10 10M11 1L1 11" />
+<!-- designed retired state -->
+<main class="wrap">
+	<section class="card" role="region" aria-label="Flappin UFO has been retired">
+		<div class="emblem" aria-hidden="true">
+			<!-- UFO -->
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M8 8.5a4 4 0 0 1 8 0" />
+				<ellipse cx="12" cy="10.5" rx="9" ry="3" />
+				<path d="M6.5 12.5 5 16M12 13v3.5M17.5 12.5 19 16" />
 			</svg>
-		</button>
-	</div>
-
-	<!-- identity box (wallet connected) -->
-	<div class="identity-box" id="identity-box">
-		<span class="identity-label">Your game name</span>
-		<div class="identity-row">
-			<code class="identity-addr" id="identity-addr"></code>
-			<button class="copy-btn" id="copy-btn" onclick="copyAddr()">Copy</button>
 		</div>
-		<p class="identity-hint">Paste this as your name in-game to appear on the leaderboard.</p>
-	</div>
 
-	<!-- scores list -->
-	<div class="board" id="lb-board">
-		<!-- skeleton -->
-		<div class="lb-skel"></div>
-		<div class="lb-skel"></div>
-		<div class="lb-skel"></div>
-		<div class="lb-skel"></div>
-		<div class="lb-skel"></div>
-	</div>
-</aside>
+		<h1>This demo has flown off</h1>
+		<p class="lead">
+			Flappin UFO was an external arcade demo hosted off-platform, and its deployment
+			is no longer online. Rather than leave you staring at a broken screen, we've
+			grounded it — the live three.ws experiences are where the action is now.
+		</p>
 
-<!-- controls hint -->
-<div class="hint" id="controls-hint" aria-hidden="true">
-	<kbd>Space</kbd> or <kbd>Click</kbd> to thrust &nbsp;·&nbsp; hold to climb
-</div>
+		<div class="actions">
+			<a href="/play" class="btn primary">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="12" r="9" /><path d="M9.5 8.5v7l6-3.5-6-3.5z" fill="currentColor" stroke="none" />
+				</svg>
+				Enter the live coin world
+			</a>
+			<a href="/" class="btn">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M3 11.5 12 4l9 7.5" /><path d="M5 10v9h14v-9" />
+				</svg>
+				Back to three.ws
+			</a>
+		</div>
 
-<!-- demo teaser -->
-<div class="teaser" id="demo-teaser" role="note">
-	<span><b>This is just a demo.</b> We're building something far bigger for $THREE — <a class="teaser-link" href="/what-is">see what's coming →</a></span>
-	<button class="teaser-close" id="teaser-close" aria-label="Dismiss">
-		<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l10 10M11 1L1 11" /></svg>
-	</button>
-</div>
-
-<script>
-(function () {
-	'use strict';
-	const KEY = 'threews:ufo-teaser-dismissed';
-	const teaser = document.getElementById('demo-teaser');
-	const close = document.getElementById('teaser-close');
-	try { if (localStorage.getItem(KEY)) teaser.hidden = true; } catch (_) {}
-	close.addEventListener('click', () => {
-		teaser.hidden = true;
-		try { localStorage.setItem(KEY, '1'); } catch (_) {}
-	});
-})();
-</script>
-
-<script>
-(function () {
-	'use strict';
-
-	const LEADERBOARD_URL = 'https://flappin-ufo.vercel.app/api/leaderboard';
-	const REFRESH_MS = 15_000;
-
-	let walletAddress = null;
-	let panelOpen = false;
-	let refreshTimer = null;
-
-	// ── wallet ──────────────────────────────────────────────
-	function getPhantom() {
-		const p = window.solana;
-		if (!p) return null;
-		return (p.isPhantom || p.isThreeWs) ? p : null;
-	}
-
-	window.connectWallet = async function () {
-		const p = getPhantom();
-		if (!p) { window.open('https://phantom.app/', '_blank', 'noopener'); return; }
-		try {
-			const res = await p.connect();
-			walletAddress = res?.publicKey?.toString?.() || null;
-			onWalletChange(walletAddress);
-		} catch (_) {}
-	};
-
-	function onWalletChange(addr) {
-		walletAddress = addr;
-		const btn = document.getElementById('connect-wallet-btn');
-		const lbl = btn?.querySelector('[data-wallet-label]');
-		if (addr) {
-			const short = addr.slice(0, 4) + '…' + addr.slice(-4);
-			if (lbl) lbl.textContent = short;
-			btn?.classList.add('connected');
-			showIdentity(addr);
-		} else {
-			if (lbl) lbl.textContent = 'Connect Wallet';
-			btn?.classList.remove('connected');
-			hideIdentity();
-		}
-		renderLeaderboard(lastRuns);
-	}
-
-	function showIdentity(addr) {
-		const box = document.getElementById('identity-box');
-		const addrEl = document.getElementById('identity-addr');
-		if (box) box.classList.add('show');
-		if (addrEl) addrEl.textContent = addr;
-		openPanel();
-	}
-
-	function hideIdentity() {
-		document.getElementById('identity-box')?.classList.remove('show');
-	}
-
-	window.copyAddr = function () {
-		if (!walletAddress) return;
-		navigator.clipboard.writeText(walletAddress).then(() => {
-			const btn = document.getElementById('copy-btn');
-			if (!btn) return;
-			btn.classList.add('copied');
-			btn.textContent = 'Copied!';
-			setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy'; }, 2000);
-		});
-	};
-
-	// detect if Phantom was already connected
-	(function detectExisting() {
-		const p = getPhantom();
-		if (!p) return;
-		p.on('connect', (pk) => onWalletChange(pk?.toString?.() || null));
-		p.on('disconnect', () => onWalletChange(null));
-		if (p.isConnected && p.publicKey) {
-			onWalletChange(p.publicKey.toString());
-		}
-	})();
-
-	// ── panel ────────────────────────────────────────────────
-	function openPanel() {
-		panelOpen = true;
-		document.getElementById('lb-panel')?.classList.add('open');
-		document.getElementById('lb-toggle-label').textContent = 'Hide';
-		if (!refreshTimer) startRefresh();
-	}
-
-	window.closePanel = function () {
-		panelOpen = false;
-		document.getElementById('lb-panel')?.classList.remove('open');
-		document.getElementById('lb-toggle-label').textContent = 'Scores';
-	};
-
-	document.getElementById('lb-toggle').addEventListener('click', () => {
-		panelOpen ? closePanel() : openPanel();
-	});
-
-	// open panel by default on desktop
-	if (window.innerWidth >= 768) openPanel();
-
-	// ── leaderboard ──────────────────────────────────────────
-	let lastRuns = [];
-
-	function rankClass(i) {
-		if (i === 0) return 'gold';
-		if (i === 1) return 'silver';
-		if (i === 2) return 'bronze';
-		return '';
-	}
-
-	function rankSymbol(i) {
-		if (i === 0) return '🥇';
-		if (i === 1) return '🥈';
-		if (i === 2) return '🥉';
-		return String(i + 1);
-	}
-
-	function isWallet(name) {
-		return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(name);
-	}
-
-	function formatName(name) {
-		if (!name) return 'anon';
-		if (isWallet(name)) return name.slice(0, 4) + '…' + name.slice(-4);
-		return name;
-	}
-
-	function isMe(name) {
-		if (!walletAddress || !name) return false;
-		return name.toLowerCase() === walletAddress.toLowerCase();
-	}
-
-	function renderLeaderboard(runs) {
-		lastRuns = runs || [];
-		const board = document.getElementById('lb-board');
-		if (!board) return;
-
-		if (!lastRuns.length) {
-			board.innerHTML = `
-				<div class="lb-empty">
-					<b>No scores yet</b>
-					<p>Be the first to submit a score.<br>Connect your wallet and play!</p>
-				</div>`;
-			return;
-		}
-
-		board.innerHTML = lastRuns.map((r, i) => {
-			const me = isMe(r.name);
-			const wallet = isWallet(r.name);
-			return `<div class="lb-row${me ? ' me' : ''}">
-				<span class="lb-rank ${rankClass(i)}">${rankSymbol(i)}</span>
-				<div class="lb-info">
-					<div class="lb-name${wallet ? ' wallet' : ''}" title="${escHtml(r.name || 'anon')}">${escHtml(formatName(r.name))}</div>
-					<div class="lb-sub">Level ${r.level ?? 1}</div>
-				</div>
-				<div class="lb-score">
-					<b>${(r.score ?? 0).toLocaleString()}</b>
-					<small>pts</small>
-				</div>
-			</div>`;
-		}).join('');
-	}
-
-	function escHtml(s) {
-		return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-	}
-
-	async function fetchLeaderboard() {
-		try {
-			const r = await fetch(LEADERBOARD_URL, { cache: 'no-store' });
-			if (!r.ok) throw new Error(r.status);
-			const data = await r.json();
-			renderLeaderboard(data.runs || []);
-		} catch (e) {
-			// keep whatever we already rendered; don't wipe on transient error
-		}
-	}
-
-	function startRefresh() {
-		fetchLeaderboard();
-		refreshTimer = setInterval(fetchLeaderboard, REFRESH_MS);
-	}
-
-	// fetch on panel open only
-	if (panelOpen) startRefresh();
-})();
-</script>
+		<nav class="siblings" aria-label="Live experiences">
+			<span class="siblings-label">Still live</span>
+			<a href="/play/arena" class="chip"><span class="dot"></span>Sniper Arena</a>
+			<a href="/clash" class="chip"><span class="dot"></span>Coin Clash</a>
+			<a href="/three-live" class="chip"><span class="dot"></span>Three Live</a>
+		</nav>
+	</section>
+</main>
 </body>
 </html>

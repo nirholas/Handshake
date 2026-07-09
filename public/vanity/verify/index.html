@@ -110,6 +110,21 @@
 	<meta name="twitter:description" content="Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy.">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Verify+a+Vanity+Receipt&amp;d=Independently+verify+a+three.ws+provably-fair+vanity+wallet+receipt+%E2%80%94+entirely+in+your+browser.+Prove+the+key+was+generated+fresh+under+a+committed+seed+and+the&amp;p=%2Fvanity%2Fverify">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Verify a Vanity Receipt","description":"Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy.","url":"https://three.ws/vanity/verify","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Verify+a+Vanity+Receipt&d=Independently+verify+a+three.ws+provably-fair+vanity+wallet+receipt+%E2%80%94+entirely+in+your+browser.+Prove+the+key+was+generated+fresh+under+a+committed+seed+and+the&p=%2Fvanity%2Fverify"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Vanity","item":"https://three.ws/vanity"},{"@type":"ListItem","position":3,"name":"Verify","item":"https://three.ws/vanity/verify"}]}]}</script>
+	<!-- Resolve the bare specifiers that verifiable-grind.js / sealed-envelope.js import, without a bundler
+	     (those files are served verbatim from dist/src/ by the copy-src-to-dist Vite plugin). esm.sh ships each
+	     package's ESM build; versions pinned to package.json's installed resolutions. -->
+	<script type="importmap">
+	{
+		"imports": {
+			"bs58": "https://esm.sh/bs58@6.0.0",
+			"@noble/curves/ed25519.js": "https://esm.sh/@noble/curves@2.2.0/ed25519.js",
+			"@noble/hashes/sha256": "https://esm.sh/@noble/hashes@1.8.0/sha256",
+			"@noble/hashes/hmac": "https://esm.sh/@noble/hashes@1.8.0/hmac",
+			"@noble/hashes/hkdf": "https://esm.sh/@noble/hashes@1.8.0/hkdf",
+			"@noble/hashes/utils": "https://esm.sh/@noble/hashes@1.8.0/utils"
+		}
+	}
+	</script>
 </head>
 <body>
 	<a href="#main-content" class="skip-link">Skip to main content</a>

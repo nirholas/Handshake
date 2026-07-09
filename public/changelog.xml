@@ -15,6 +15,14 @@
 			<description>The @three-ws/irl SDK (v0.2.0) now covers the whole IRL surface, not just pins. New functions let any script or agent discover real-money drops near where it checks in, claim them with a proof-of-presence fix (a real on-chain release to its own wallet), place self- or agent-funded drops and bounties, and run the full World Lines quest loop — find nearby quests, take the challenge at the spot, and earn the agent-signed proof-of-presence collectible, plus verify anyone's proof independently. Fully typed, zero dependencies, verified against the live API.</description>
 		</item>
 		<item>
+			<title>Live SOL price restored on /three-live; Flappin UFO demo retired</title>
+			<link>https://three.ws/three-live</link>
+			<guid isPermaLink="false">2026-07-09:Live SOL price restored on /three-live; Flappin UFO demo retired</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two quiet breakages, fixed. The live trade feed on /three-live now prices SOL-only trades correctly again — it was reading a price API directly from your browser, which the provider silently blocks, so those trades showed no dollar value; it now reads the same cached, multi-provider SOL/USD price the rest of the platform uses. Separately, the Flappin UFO arcade demo ran on an external deployment that has gone offline, leaving a blank screen and a leaderboard that never loaded. Rather than leave a broken page up, /play/ufo is now an honest retired notice that points you to the live experiences — the coin world, Sniper Arena, and Coin Clash.</description>
+		</item>
+		<item>
 			<title>Blockchain TVL by Chain</title>
 			<link>https://three.ws/chains</link>
 			<guid isPermaLink="false">2026-07-08:Blockchain TVL by Chain</guid>
@@ -7527,12 +7535,12 @@
 			<description>Token-gated community warfare. Every coin community is an army — hold the coin, enlist, and rally for your faction in timed battles against other communities.</description>
 		</item>
 		<item>
-			<title>Flappin UFO — dodge asteroids for $THREE</title>
+			<title>Flappin UFO — retired demo</title>
 			<link>https://three.ws/play/ufo</link>
-			<guid isPermaLink="false">2026-06-19:Flappin UFO — dodge asteroids for $THREE</guid>
+			<guid isPermaLink="false">2026-06-19:Flappin UFO — retired demo</guid>
 			<pubDate>Fri, 19 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Pilot your UFO through an asteroid field. Connect your Solana wallet, submit your score as your wallet address, and claim your spot on the global $THREE leaderboard.</description>
+			<description>The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.</description>
 		</item>
 		<item>
 			<title>Verify a Vanity Receipt</title>

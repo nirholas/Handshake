@@ -1020,10 +1020,10 @@
 				},
 				{
 					"path": "/play/ufo",
-					"title": "Flappin UFO — dodge asteroids for $THREE",
-					"description": "Pilot your UFO through an asteroid field. Connect your Solana wallet, submit your score as your wallet address, and claim your spot on the global $THREE leaderboard.",
-					"priority": 0.7,
-					"changefreq": "weekly",
+					"title": "Flappin UFO — retired demo",
+					"description": "The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.",
+					"priority": 0.3,
+					"changefreq": "yearly",
 					"added": "2026-06-19"
 				},
 				{

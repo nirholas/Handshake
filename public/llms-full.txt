@@ -759,11 +759,11 @@ URL: https://three.ws/play/arena
 
 Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.
 
-### Flappin UFO — dodge asteroids for $THREE
+### Flappin UFO — retired demo
 
 URL: https://three.ws/play/ufo
 
-Pilot your UFO through an asteroid field. Connect your Solana wallet, submit your score as your wallet address, and claim your spot on the global $THREE leaderboard.
+The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.
 
 ### Smart Money Radar — follow the wallets that win on pump.fun
 
