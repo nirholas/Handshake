@@ -66,6 +66,44 @@ function substitute(template, match) {
 
 const isExternalDest = (dest) => /^https?:\/\//.test(dest || '');
 
+// Vercel `has` conditions (query/header/cookie/host presence + optional regex
+// value) gate a route to only the requests it's meant for — e.g. the /app and
+// /agents/:id OG rules only fire for social-preview bots. Every entry must
+// match against the ORIGINAL request (url/headers), independent of any dest
+// rewrite already applied earlier in the same phase-1 pass.
+function hasMatches(route, req, url) {
+	if (!route.has) return true;
+	for (const cond of route.has) {
+		let val;
+		if (cond.type === 'query') val = url.searchParams.get(cond.key);
+		else if (cond.type === 'header') val = req.headers[cond.key.toLowerCase()];
+		else if (cond.type === 'cookie') {
+			const raw = req.headers.cookie || '';
+			const m = raw.match(new RegExp(`(?:^|;\\s*)${cond.key}=([^;]*)`));
+			val = m ? decodeURIComponent(m[1]) : undefined;
+		} else if (cond.type === 'host') val = req.headers.host;
+		else continue;
+		if (val == null) return false;
+		if (cond.value !== undefined && !compileHasValue(cond.value).test(val)) return false;
+	}
+	return true;
+}
+
+// Vercel `has[].value` patterns may carry a leading Perl-style `(?i)` inline
+// case-insensitive flag, which native RegExp rejects as an invalid group —
+// strip it and apply the `i` flag instead. Compiled patterns are cached since
+// the same route's has[] is re-evaluated on every matching request.
+const hasValueCache = new Map();
+function compileHasValue(value) {
+	let re = hasValueCache.get(value);
+	if (!re) {
+		const caseInsensitive = value.startsWith('(?i)');
+		re = new RegExp(caseInsensitive ? value.slice(4) : value, caseInsensitive ? 'i' : undefined);
+		hasValueCache.set(value, re);
+	}
+	return re;
+}
+
 // ---------------------------------------------------------------------------
 // External-URL dests (reverse proxy), e.g. /ingest/* → PostHog.
 // ---------------------------------------------------------------------------
@@ -309,10 +347,12 @@ app.use(compression());
 
 // External-dest proxy — before the body parsers (see proxyExternal above).
 app.use((req, res, next) => {
-	const pathname = new URL(req.url, 'http://internal').pathname;
+	const url = new URL(req.url, 'http://internal');
+	const pathname = url.pathname;
 	for (const route of phase1Routes) {
 		const m = route.re.exec(pathname);
 		if (!m) continue;
+		if (!hasMatches(route, req, url)) continue;
 		if (route.continue) continue;
 		if (!route.dest || !isExternalDest(route.dest)) break; // a local rule wins — fall through
 		const search = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
@@ -351,6 +391,7 @@ app.use(async (req, res) => {
 	for (const route of phase1Routes) {
 		const m = route.re.exec(currentPath);
 		if (!m) continue;
+		if (!hasMatches(route, req, url)) continue;
 		if (route.headers) {
 			for (const [k, v] of Object.entries(route.headers)) collected[k] = substitute(v, m);
 		}
@@ -395,6 +436,7 @@ app.use(async (req, res) => {
 	for (const route of postFsRoutes) {
 		const m = route.re.exec(currentPath);
 		if (!m) continue;
+		if (!hasMatches(route, req, url)) continue;
 		if (route.headers) {
 			for (const [k, v] of Object.entries(route.headers)) collected[k] = substitute(v, m);
 		}

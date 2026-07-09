@@ -18,9 +18,10 @@
 import {
 	Group, Mesh, Color, Vector3,
 	CircleGeometry, RingGeometry, CylinderGeometry, SphereGeometry, ConeGeometry, BoxGeometry, IcosahedronGeometry,
-	MeshStandardMaterial, MeshBasicMaterial,
+	MeshStandardMaterial, MeshBasicMaterial, ShaderMaterial,
 	BufferGeometry, Line, LineBasicMaterial, Float32BufferAttribute, DoubleSide,
 } from 'three';
+import { WATER_VERTEX_SHADER, WATER_FRAGMENT_SHADER } from './water-shader.js';
 
 import {
 	FISHING_SPOTS, nearestFishingSpot,
@@ -88,12 +89,17 @@ export class PlaySystems {
 	 * @param {() => ({x,y,z,yaw,height})} opts.getPlayer  local avatar pose + height
 	 * @param {object} opts.net   CommunityNet instance (fish/equip/consume intents)
 	 * @param {object} opts.ui    CommunityUI instance (toast)
+	 * @param {object} [opts.env] world-env instance (createWorldEnvironment) — its
+	 *   live sun direction/colour keep the pond's sparkle in sync with the day/night
+	 *   cycle. Optional: ponds render fine with a fixed sun when a world has none.
 	 */
-	constructor({ scene, getPlayer, net, ui }) {
+	constructor({ scene, getPlayer, net, ui, env }) {
 		this.scene = scene;
 		this.getPlayer = getPlayer;
 		this.net = net;
 		this.ui = ui;
+		this.env = env || null;
+		this._waterMats = [];
 
 		this.profile = null;           // last full snapshot from the server
 		this.skills = {};              // skill -> { level, xp, levelXp, nextXp }
@@ -113,23 +119,39 @@ export class PlaySystems {
 	_buildScene() {
 		const group = new Group();
 		group.name = 'play-ponds';
-		for (const spot of FISHING_SPOTS) {
-			group.add(this._buildPond(spot));
-		}
+		FISHING_SPOTS.forEach((spot, i) => group.add(this._buildPond(spot, i)));
 		this.scene.add(group);
 		this._pondGroup = group;
 	}
 
-	// A pond: a dark reflective water disc, a bright rim, a soft pulsing marker ring
-	// (so it reads as an interactable from across the plaza), and a few bank reeds.
-	_buildPond(spot) {
+	// A pond: an animated shader water disc (real ripples + sun sparkle, no flat
+	// fake tint), a bright rim, a soft pulsing marker ring (so it reads as an
+	// interactable from across the plaza), and a few bank reeds.
+	_buildPond(spot, index = 0) {
 		const g = new Group();
 		g.position.set(spot.x, 0, spot.z);
 
-		const water = new Mesh(
-			new CircleGeometry(spot.r, 48),
-			new MeshStandardMaterial({ color: 0x16323f, roughness: 0.18, metalness: 0.65, transparent: true, opacity: 0.94 }),
-		);
+		const sunDir = this.env?.lights?.sun || new Vector3(0.6, 0.7, 0.3);
+		const sunColor = this.env?.lights?.sunLight?.color || new Color(0xfff3d6);
+		const skyColor = this.env?.biome?.sky?.[1] ? new Color(this.env.biome.sky[1]) : new Color(0xbfeaff);
+		const waterMat = new ShaderMaterial({
+			vertexShader: WATER_VERTEX_SHADER,
+			fragmentShader: WATER_FRAGMENT_SHADER,
+			transparent: true,
+			uniforms: {
+				uTime: { value: 0 },
+				uPhase: { value: index * 11.3 }, // desyncs multiple ponds' ripples
+				uDeep: { value: new Color(0x0c232c) },
+				uShallow: { value: new Color(0x2f6a78) },
+				uSunDir: { value: sunDir.clone().normalize() },
+				uSunColor: { value: sunColor.clone() },
+				uSkyColor: { value: skyColor },
+				uOpacity: { value: 0.92 },
+			},
+		});
+		this._waterMats.push(waterMat);
+
+		const water = new Mesh(new CircleGeometry(spot.r, 48), waterMat);
 		water.rotation.x = -Math.PI / 2;
 		water.position.y = 0.04;
 		water.receiveShadow = true;
@@ -735,6 +757,18 @@ export class PlaySystems {
 		this._nearSpot = near && near.gap <= 0 ? near : null;
 		this._updateAction();
 
+		// Advance the water ripple clock and keep the sparkle's light source in
+		// sync with the world's live sun (it moves across the day/night cycle).
+		if (this._waterMats.length) {
+			const sunDir = this.env?.lights?.sun;
+			const sunColor = this.env?.lights?.sunLight?.color;
+			for (const mat of this._waterMats) {
+				mat.uniforms.uTime.value = this._t;
+				if (sunDir) mat.uniforms.uSunDir.value.copy(sunDir).normalize();
+				if (sunColor) mat.uniforms.uSunColor.value.copy(sunColor);
+			}
+		}
+
 		// Pulse the marker ring of whichever pond is nearest so it reads as live.
 		if (this._pondGroup) {
 			const glow = 0.18 + Math.sin(this._t * 2) * 0.12;
@@ -805,6 +839,7 @@ export class PlaySystems {
 			});
 			this._pondGroup = null;
 		}
+		this._waterMats = [];
 		this.root?.remove();
 		document.querySelectorAll('.ps-xp-float, .ps-levelup').forEach((n) => n.remove());
 	}

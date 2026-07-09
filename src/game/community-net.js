@@ -550,6 +550,7 @@ export class CommunityNet {
 	chop() { this._send('chop'); }
 	mine() { this._send('mine'); }
 	cook() { this._send('cook'); }
+	pickupRod() { this._send('pickupRod'); }
 	attack() { this._send('attack'); }
 	// Claim a tombstone's cash + items (W07). Server-gated by proximity; the
 	// result rides back over the usual profile/inv/notice channels.

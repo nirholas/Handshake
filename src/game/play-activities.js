@@ -1,9 +1,11 @@
 // Play activities — the gather→craft layer for the /play coin worlds (W06).
 //
 // The chop/mine/cook counterpart to PlaySystems' fishing: it renders the world's
-// gather/craft stations (a grove of trees, a quarry of rocks, two roast pits), gates
-// a single contextual action prompt as the player walks up to one, plays the local
-// 3D feedback (chips, shards, embers, a flaring fire), and sends the intent. Every
+// gather/craft/pickup stations (a grove of trees, a quarry of rocks, two roast pits,
+// and a few spare fishing rods leaning on the bank for anyone to grab), gates a
+// single contextual action prompt as the player walks up to one, plays the local
+// 3D feedback (chips, shards, embers, a flaring fire, a rod wobble), and sends the
+// intent. Every
 // yield, XP gain and level-up is rolled SERVER-side (WalkRoom → activities.js) and
 // streamed back over the same profile/inv/xpgain/levelup/notice events PlaySystems
 // already renders into the HUD — so this module never simulates a result locally.
@@ -18,22 +20,25 @@
 
 import {
 	Group, Mesh, Vector3,
-	RingGeometry, CylinderGeometry, ConeGeometry, BoxGeometry, IcosahedronGeometry,
+	RingGeometry, CylinderGeometry, ConeGeometry, BoxGeometry, IcosahedronGeometry, SphereGeometry,
 	MeshStandardMaterial, MeshBasicMaterial, DoubleSide,
 } from 'three';
 
 import {
 	TREES, nearestTree, ROCKS, nearestRock, FIREPITS, nearestFirepit,
+	ROD_PICKUPS, nearestRodPickup,
 } from '../../multiplayer/src/world-features.js';
 import { itemDisplay } from './items.js';
 
-// The three gather/craft activities. Each knows the tool the player must hold (null
-// for cooking — the fire is the station), the nearest-node finder (shared with the
-// server so the range rule never drifts), and how the prompt + 3D feedback read.
+// The four gather/craft/pickup activities. Each knows the tool the player must hold
+// (null for cooking and the rod pickup — no tool gates either), the nearest-node
+// finder (shared with the server so the range rule never drifts), and how the
+// prompt + 3D feedback read.
 const ACTIVITIES = [
 	{ type: 'chop', tool: 'axe', skill: 'woodcutting', near: nearestTree, label: 'Chop', glyph: '🪓', noTool: 'Equip an axe', fx: 0x8a5a32 },
 	{ type: 'mine', tool: 'pickaxe', skill: 'mining', near: nearestRock, label: 'Mine', glyph: '⛏️', noTool: 'Equip a pickaxe', fx: 0xb8c0cc },
 	{ type: 'cook', tool: null, skill: 'cooking', near: nearestFirepit, label: 'Cook fish', glyph: '🍳', noTool: '', fx: 0xffa53a },
+	{ type: 'pickupRod', tool: null, skill: null, near: nearestRodPickup, label: 'Pick up rod', glyph: '🎣', noTool: '', fx: 0xbfeaff },
 ];
 
 function el(tag, props = {}, kids = []) {
@@ -126,6 +131,7 @@ export class PlayActivities {
 		for (const t of TREES) group.add(this._buildTree(t));
 		for (const r of ROCKS) group.add(this._buildRock(r));
 		for (const f of FIREPITS) group.add(this._buildFirepit(f));
+		for (const p of ROD_PICKUPS) group.add(this._buildRodPickup(p));
 		this.scene.add(group);
 		this._group = group;
 	}
@@ -188,9 +194,53 @@ export class PlayActivities {
 		return g;
 	}
 
+	// A spare rod leaning against a bank post — a stubby post, the rod resting at
+	// an angle with a small reel at its base, and a line running down to a bobber
+	// so the silhouette reads as "fishing rod" even from across the bank.
+	_buildRodPickup(node) {
+		const g = new Group();
+		g.position.set(node.x, 0, node.z);
+
+		const woodMat = new MeshStandardMaterial({ color: 0x6b4a2e, roughness: 0.9 });
+		const post = new Mesh(new CylinderGeometry(0.07, 0.09, 0.85, 8), woodMat);
+		post.position.y = 0.42; post.castShadow = true; g.add(post);
+
+		// The rod sits in its own pivot at rotation.z = 0 so the shared hit-shake
+		// path (which resets hitNode.rotation.z to 0 on decay) wobbles it without
+		// ever losing its resting lean — that lean lives on the child mesh instead.
+		const rodPivot = new Group();
+		rodPivot.position.set(0.08, 0.75, 0);
+		g.add(rodPivot);
+		const rodMat = new MeshStandardMaterial({ color: 0x8a5a32, roughness: 0.7 });
+		const rod = new Mesh(new CylinderGeometry(0.014, 0.032, 1.5, 6), rodMat);
+		rod.rotation.z = Math.PI * 0.16;
+		rod.castShadow = true;
+		rodPivot.add(rod);
+
+		const reel = new Mesh(new SphereGeometry(0.07, 10, 8), new MeshStandardMaterial({ color: 0x2b2f38, roughness: 0.5, metalness: 0.4 }));
+		reel.position.set(-0.08, 0.36, 0);
+		g.add(reel);
+
+		const line = new Mesh(new CylinderGeometry(0.006, 0.006, 0.62, 4), new MeshStandardMaterial({ color: 0xdfe6ea, roughness: 0.4 }));
+		line.position.set(0.5, 0.68, 0);
+		line.rotation.z = Math.PI * 0.02;
+		g.add(line);
+
+		const bobber = new Mesh(new SphereGeometry(0.06, 10, 8), new MeshStandardMaterial({ color: 0xff4d4d, roughness: 0.5 }));
+		bobber.position.set(0.52, 0.37, 0);
+		g.add(bobber);
+
+		const marker = this._marker(node.r + 0.5, 0xbfeaff); g.add(marker);
+		// hitNode gives the pickup the same little wobble chop/mine play on a hit
+		// (tick()'s shared shake path — any non-'mine' station rotates on its Z).
+		this._stations.push({ type: 'pickupRod', id: node.id, marker, anchor: { x: node.x, z: node.z }, hitNode: rodPivot, baseY: rodPivot.position.y });
+		return g;
+	}
+
 	_stationById(id) { return this._stations.find((s) => s.id === id) || null; }
 	_nodeById(id) {
-		return TREES.find((n) => n.id === id) || ROCKS.find((n) => n.id === id) || FIREPITS.find((n) => n.id === id) || null;
+		return TREES.find((n) => n.id === id) || ROCKS.find((n) => n.id === id) || FIREPITS.find((n) => n.id === id)
+			|| ROD_PICKUPS.find((n) => n.id === id) || null;
 	}
 
 	// ---------------------------------------------------------------- prompt DOM
@@ -247,10 +297,14 @@ export class PlayActivities {
 			const hasTool = this._hotbar.some((s) => s.item === def.tool);
 			label = holding === def.tool ? `${def.glyph} ${def.label}` : hasTool ? `${def.glyph} Equip ${itemDisplay(def.tool).name.toLowerCase()}` : `${def.glyph} ${def.noTool}`;
 			disabled = !hasTool;
-		} else {
+		} else if (def.type === 'cook') {
 			const hasFish = this._inv.some((s) => s.item === 'fish');
 			label = `${def.glyph} ${def.label}`;
 			disabled = !hasFish;
+		} else {
+			// pickupRod: a free prop with no precondition beyond being in range.
+			label = `${def.glyph} ${def.label}`;
+			disabled = false;
 		}
 		this.btn.textContent = label;
 		this.btn.classList.toggle('is-disabled', disabled);

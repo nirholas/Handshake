@@ -17,12 +17,12 @@ import { addItem, hasRoomFor, countItem, removeItem } from './economy.js';
 import {
 	itemLabel, gatherChance, gatherDoubleChance, coalBonusChance, cookBurnChance,
 } from './items.js';
-import { treeInRange, rockInRange, firepitInRange } from './world-features.js';
+import { treeInRange, rockInRange, firepitInRange, rodPickupInRange } from './world-features.js';
 
 // Per-swing cadence on the real clock (ms). The handlers tolerate a profile whose
 // `cd` map predates these keys — `now < undefined` is false, so a missing key just
 // means "ready now", and the first action arms it.
-export const ACTIVITY_COOLDOWN_MS = { chop: 1300, mine: 1500, cook: 900 };
+export const ACTIVITY_COOLDOWN_MS = { chop: 1300, mine: 1500, cook: 900, pickupRod: 8000 };
 
 // The two gather activities differ only in tool, node, resource and the mining-only
 // coal bonus — so one config table drives both through the shared core below.
@@ -153,10 +153,41 @@ export function handleCook(room, client) {
 	room._persistEcon(client.sessionId);
 }
 
-// Wire the three intents onto a room. Called once from WalkRoom.onCreate — the room's
+// Grab a spare rod from a world pickup. No tool or skill gates this (it's a free
+// prop, not a resource node) — just proximity, cooldown and pack space. Mirrors
+// _handleFish's shape for a non-stackable tool instead of a resource stack.
+export function handlePickupRod(room, client) {
+	const player = room.state.players.get(client.sessionId);
+	const profile = room.econ.get(client.sessionId);
+	if (!player || !profile) return;
+	if (!room._actionOk(client.sessionId, 'pickupRod')) return;
+
+	const now = Date.now();
+	if (profile.cd && now < profile.cd.pickupRod) return;
+
+	const node = rodPickupInRange(player.x, player.z);
+	if (!node) {
+		client.send('notice', { kind: 'pickupRod', text: 'Move up to a rod stand to pick it up.' });
+		return;
+	}
+	if (!hasRoomFor(profile, 'rod')) {
+		client.send('notice', { kind: 'full', text: 'Your inventory is full.' });
+		return;
+	}
+
+	if (profile.cd) profile.cd.pickupRod = now + ACTIVITY_COOLDOWN_MS.pickupRod;
+	addItem(profile, 'rod', 1);
+	room._questEvent?.(client, profile, { type: 'collect', item: 'rod', qty: 1 });
+	room._sendInv(client, profile);
+	client.send('notice', { kind: 'pickupRod', got: 1, node: node.id, text: `Picked up a ${itemLabel('rod').toLowerCase()}.` });
+	room._persistEcon(client.sessionId);
+}
+
+// Wire the four intents onto a room. Called once from WalkRoom.onCreate — the room's
 // only obligation, keeping the gather/craft logic out of the room file entirely.
 export function registerActivityHandlers(room) {
 	room.onMessage('chop', (client) => handleGather(room, client, 'chop'));
 	room.onMessage('mine', (client) => handleGather(room, client, 'mine'));
 	room.onMessage('cook', (client) => handleCook(room, client));
+	room.onMessage('pickupRod', (client) => handlePickupRod(room, client));
 }

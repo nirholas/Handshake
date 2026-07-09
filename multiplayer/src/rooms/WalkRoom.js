@@ -268,7 +268,7 @@ const COOK_COOLDOWN_MS = 900;    // pace between fish on the fire
 // vsync rides at the same 15Hz the move netcode uses; allow 2× for jitter, like
 // MOVES_PER_SEC_LIMIT. enter/exit are deliberate, rare actions.
 const ACTION_RATES = {
-	fish: 6, consume: 6, equip: 30, chop: 6, mine: 6, cook: 8, vsync: PATCH_RATE_HZ * 2,
+	fish: 6, consume: 6, equip: 30, chop: 6, mine: 6, cook: 8, pickupRod: 4, vsync: PATCH_RATE_HZ * 2,
 	venter: 4, vexit: 4, quest: 8, questInteract: 6, clear: 2,
 	// General store, bank/ATM, and the $THREE boutique (W04) — low-frequency,
 	// currency-mutating actions, throttled tighter than the gather loop.
@@ -721,7 +721,7 @@ export class WalkRoom extends Room {
 		if (!this.state.players.has(client.sessionId)) return;
 		const saved = loadPlayer(playerId);
 		const profile = restoreProfile(saved?.profile, playerId);
-		profile.cd = { fish: 0, consume: 0, chop: 0, mine: 0, cook: 0, attack: 0 }; // per-action cooldown clocks (runtime only)
+		profile.cd = { fish: 0, consume: 0, chop: 0, mine: 0, cook: 0, attack: 0, pickupRod: 0 }; // per-action cooldown clocks (runtime only)
 		// Quest log (W05): the player's accepted/completed missions + daily state,
 		// persisted alongside the pack/purse. Stale dailies roll over to today on load.
 		profile.quests = restoreQuestState(saved?.profile?.quests, utcDayKey());

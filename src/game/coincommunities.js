@@ -62,6 +62,7 @@ import { requestHolderPass, signInWithX, ensureSolanaWallet, relinkSolanaWallet,
 import { ensurePlayAccess } from './play-gate.js';
 import { clearStoredPass, refreshPlayPass, loadStoredPass, storePass } from './play-auth.js';
 import { PlaySystems } from './play-systems.js';
+import { PlayActivities } from './play-activities.js';
 import { PlayOnboard } from './play-onboard.js';
 import { log } from '../shared/log.js';
 import { openAvatarInspector, isAvatarInspectorOpen, closeAvatarInspector } from '../shared/avatar-inspector.js';
@@ -1129,6 +1130,16 @@ export class CoinCommunities {
 			getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z, yaw: this.localYaw, height: this.localHeight || 1.6 }),
 			net: this.net,
 			ui: this.ui,
+			env: this.env,
+		});
+		// W06: gather/craft stations (trees, rocks, roast pits) and the fishing-rod
+		// pickups scattered around the world. Sibling of PlaySystems — see
+		// play-activities.js's header for why they stay decoupled.
+		this.playActivities = new PlayActivities({
+			scene: this.scene,
+			getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z, yaw: this.localYaw, height: this.localHeight || 1.6 }),
+			net: this.net,
+			ui: this.ui,
 		});
 		this.net.on('profile', (snap) => { this.playSystems?.setProfile(snap); this._onCosmeticsProfile(snap); });
 		this.net.on('inv', (delta) => this.playSystems?.applyInv(delta));
@@ -1485,6 +1496,7 @@ export class CoinCommunities {
 		if (this.vehicles) { this.vehicles.dispose(); this.vehicles = null; }
 		if (this.combat) { this.combat.dispose(); this.combat = null; }
 		if (this.playSystems) { this.playSystems.dispose(); this.playSystems = null; }
+		if (this.playActivities) { this.playActivities.dispose(); this.playActivities = null; }
 		if (this.agentCommerce) { this.agentCommerce.dispose(); this.agentCommerce = null; }
 		if (this.intelKiosk) { this.intelKiosk.dispose(); this.intelKiosk = null; }
 		if (this.worldLife) { this.worldLife.dispose(); this.worldLife = null; }
@@ -2298,12 +2310,13 @@ export class CoinCommunities {
 					return;
 				}
 				// F is contextual: enter/exit a nearby vehicle takes priority (the
-				// on-screen prompt already says "F — Drive" / "F — Exit"); otherwise it
-				// casts a line when standing by a pond (no-op elsewhere). Not while
+				// on-screen prompt already says "F — Drive" / "F — Exit"); then a
+				// gather/craft/pickup station (chop, mine, cook, grab a rod); otherwise
+				// it casts a line when standing by a pond (no-op elsewhere). Not while
 				// building, where keys drive the block palette.
 				if (k === 'f' && !this.buildHud.active) {
 					e.preventDefault();
-					if (!this.vehicles?.interact()) this.playSystems?.castFish();
+					if (!this.vehicles?.interact() && !this.playActivities?.doAction()) this.playSystems?.castFish();
 					return;
 				}
 				// I inspects the nearest avatar — player, townsperson, or yourself:
@@ -3124,6 +3137,7 @@ export class CoinCommunities {
 			this._tickKingZone(dt);
 			this._updateVoice();
 			this.playSystems?.tick(dt);
+			this.playActivities?.tick(dt);
 			this.agentCommerce?.tick(dt);
 			this.intelKiosk?.tick(dt);
 			if (this.worldLife) { this.worldLife.setRealPeers(this.remotes.size); this.worldLife.tick(dt); }

@@ -113,6 +113,22 @@ export const COOK_REACH = 2.6;
 export function nearestFirepit(x, z) { return nearestNode(x, z, FIREPITS, COOK_REACH); }
 export function firepitInRange(x, z) { return nodeInRange(x, z, FIREPITS, COOK_REACH); }
 
+// Fishing-rod pickups — a spare rod waiting on the bank for anyone without one
+// (or anyone who wants a backup to store). Every player already starts with a
+// rod in the hotbar and it's never lost on death, so these exist for
+// discoverability and flavour, not survival: sited just past each pond's cast
+// ring (clear of FISH_REACH, so the Cast and Pick-up prompts never overlap)
+// plus one in the plaza for a brand-new player who wanders before their first
+// cast. `r` matches the small prop footprint the client renders.
+export const ROD_PICKUPS = [
+	{ id: 'rod-dock-east', x: 40, z: 11, r: 0.6 },
+	{ id: 'rod-dock-west', x: -37, z: 21, r: 0.6 },
+	{ id: 'rod-plaza', x: 12, z: 12, r: 0.6 },
+];
+export const PICKUP_REACH = 2.4;
+export function nearestRodPickup(x, z) { return nearestNode(x, z, ROD_PICKUPS, PICKUP_REACH); }
+export function rodPickupInRange(x, z) { return nodeInRange(x, z, ROD_PICKUPS, PICKUP_REACH); }
+
 // Mob spawn points — used by W07 combat and the ACTIVITIES dispatch in play-systems.
 export const MOB_SPAWNS = [
 	{ id: 'mob-danger-n', x: 0, z: -60, r: 1.5 },
