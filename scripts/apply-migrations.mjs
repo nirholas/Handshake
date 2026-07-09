@@ -6,6 +6,7 @@
  *
  * Usage:
  *   node scripts/apply-migrations.mjs                  # list pending, no DB writes
+ *   node scripts/apply-migrations.mjs --check          # like the dry run, but exit 4 if anything is pending (deploy gate)
  *   node scripts/apply-migrations.mjs --apply          # apply pending migrations
  *   node scripts/apply-migrations.mjs --apply --file 2026-04-29-onchain-unified.sql
  *
@@ -48,6 +49,7 @@ for (const envFile of ['.env.local', '.env']) {
 
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
+const CHECK = args.includes('--check');
 const fileArgIdx = args.indexOf('--file');
 const ONLY = fileArgIdx >= 0 ? args[fileArgIdx + 1] : null;
 
@@ -147,6 +149,14 @@ async function main() {
 	if (!pending.length) {
 		console.log('\nAll migrations already applied.');
 		return;
+	}
+
+	if (CHECK) {
+		console.error(
+			`\nERROR: ${pending.length} migration(s) pending — the database is behind the code.`,
+		);
+		console.error('Run `npm run db:migrate` before deploying.');
+		process.exit(4);
 	}
 
 	if (!APPLY) {

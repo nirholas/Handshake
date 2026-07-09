@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-07-09",
+			"title": "x402 discovery listings now render full result cards everywhere",
+			"summary": "Seven paid services — the fact checker, mint-to-mesh (single and batch), asset remixing, agent embodiment, 3D NFT minting, and provenance anchoring — were listing on the open x402 indexers without a response example, so their catalog cards rendered empty and ranked poorly. Every one now ships a realistic sample response in the discovery document, and the build-time guard that keeps the catalog fully green is passing again so a future gap can't ship unnoticed.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/x402"
+		},
+		{
+			"date": "2026-07-09",
+			"title": "Coin art is back on the Oracle — every token now shows its real picture",
+			"summary": "The Oracle was the most broken page on the site: almost none of the coin pictures loaded. It was asking public IPFS gateways for the art directly, and browsers refuse those responses on security grounds, so card after card fell back to a bare letter or an empty box. Every image now travels through three.ws itself, which fetches the art server-side, tries several storage gateways until one answers, and hands back a picture every single time. Roughly half of pump.fun coins also point at a small description file rather than the picture itself — the site now reads that file and follows it to the real artwork, instead of giving up. Coins whose art is genuinely gone get a distinctive generated gem rather than a broken-image icon, and the same fix carries across to Radar and the live pump feeds.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/oracle"
+		},
+		{
+			"date": "2026-07-09",
 			"title": "The 3D world is locked down — visitors can no longer delete the ground",
 			"summary": "Until today, every single person who opened world.three.ws arrived with full build rights. Anyone could move or delete any object in the world, replace the scene, or fill it with broken models — no account, no password, nothing. That is what emptied the world once before, when the ground itself was deleted and everyone who joined fell into a black void. The world now starts locked: visitors can walk around, chat, and explore, but only someone holding the admin code can change anything. Builders unlock their tools in-world by typing /admin followed by the code. The server refuses to start at all if the code is missing, so the world can never quietly come back up unprotected again.",
 			"tags": [

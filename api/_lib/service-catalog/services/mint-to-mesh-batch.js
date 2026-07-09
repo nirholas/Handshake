@@ -40,5 +40,32 @@ export default {
 			},
 		},
 	},
+	// Mirrors the batch handler's envelope in api/x402/mint-to-mesh-batch.js —
+	// per-mint ok:true/ok:false results, never a whole-batch failure. GLB base64
+	// truncated to a magic-bytes stub.
+	outputExample: {
+		count: 2,
+		results: [
+			{
+				ok: true,
+				mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+				theme: {
+					name: 'three.ws',
+					symbol: 'THREE',
+					color: '#7c5cff',
+					imageUrl: 'https://cdn.three.ws/tokens/three.png',
+					hasImage: true,
+				},
+				glb: { mimeType: 'model/gltf-binary', bytes: 18432, base64: 'Z2xURgIAAAA…' },
+			},
+			{
+				ok: false,
+				mint: 'C3vQABCDEFGHJKLMNopqrstuvwxyZ12345abcdefghi',
+				error: 'meta_fetch_failed',
+				error_description: 'no Metaplex metadata account for this mint',
+			},
+		],
+		indexed_at: '2026-07-09T00:00:00.000Z',
+	},
 	storefronts: ['x402scan'],
 };

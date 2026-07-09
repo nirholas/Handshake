@@ -15,7 +15,12 @@
 //      per-redirect re-validation, byte cap, timeout) — see api/_lib/ssrf.js.
 //   2. If the source is an IPFS URL that fails, retry across alternate public
 //      gateways so one slow gateway never blanks the art.
-//   3. On total failure, serve a deterministic, on-brand SVG placeholder inline
+//   3. If `?url=` turns out to address a token *metadata* document rather than an
+//      image (roughly half of pump.fun art is stored this way — feeds keep both
+//      kinds in a single `image_uri` column, indistinguishable without fetching),
+//      follow its `.image` field exactly one hop to the real artwork. Callers that
+//      already know they hold a metadata URI can say so explicitly with `?meta=`.
+//   4. On total failure, serve a deterministic, on-brand SVG placeholder inline
 //      (200, permissive CORS) so the loader ALWAYS receives a valid image and
 //      never logs an error. The placeholder is generated here — same-origin, no
 //      external dependency that could itself be down — and is unique per seed:

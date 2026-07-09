@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T21:57:24.244Z",
+	"generated_at": "2026-07-09T22:04:22.145Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -35,6 +35,17 @@
 			"link": "/cosmos",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Coin art is back on the Oracle — every token now shows its real picture",
+			"summary": "The Oracle was the most broken page on the site: almost none of the coin pictures loaded. It was asking public IPFS gateways for the art directly, and browsers refuse those responses on security grounds, so card after card fell back to a bare letter or an empty box. Every image now travels through three.ws itself, which fetches the art server-side, tries several storage gateways until one answers, and hands back a picture every single time. Roughly half of pump.fun coins also point at a small description file rather than the picture itself — the site now reads that file and follows it to the real artwork, instead of giving up. Coins whose art is genuinely gone get a distinctive generated gem rather than a broken-image icon, and the same fix carries across to Radar and the live pump feeds.",
+			"link": "/oracle",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -98,6 +109,17 @@
 			"link": "/vanity/verify",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "x402 discovery listings now render full result cards everywhere",
+			"summary": "Seven paid services — the fact checker, mint-to-mesh (single and batch), asset remixing, agent embodiment, 3D NFT minting, and provenance anchoring — were listing on the open x402 indexers without a response example, so their catalog cards rendered empty and ranked poorly. Every one now ships a realistic sample response in the discovery document, and the build-time guard that keeps the catalog fully green is passing again so a future gap can't ship unnoticed.",
+			"link": "/x402",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

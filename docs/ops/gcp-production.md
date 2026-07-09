@@ -111,9 +111,27 @@ deploys from a human-authed CLI (command below).
 npm run build:gcp
 
 # Build image on Cloud Build (32-vCPU + BuildKit layer cache) + push + deploy.
-# Gated on check:dist so an incomplete dist/ can no longer ship.
+# Gated on check:dist AND db:check so an incomplete dist/ or an out-of-date
+# database can no longer ship.
 npm run deploy:gcp
 ```
+
+**Database migrations** live in `api/_lib/migrations/*.sql` and are tracked in
+the `schema_migrations` table (filename + sha256). Nothing applies them
+automatically — the flow is:
+
+```bash
+npm run db:status    # dry run: list applied/pending against DATABASE_URL
+npm run db:migrate   # apply pending migrations (do this BEFORE deploy:gcp)
+npm run db:check     # what deploy:gcp runs: exits 4 if anything is pending
+```
+
+- `DATABASE_URL` comes from `.env.local` and must point at the production Neon
+  DB (the same value the Cloud Run service uses).
+- Never edit a migration file after it has been applied — the runner detects
+  the sha256 drift and refuses (exit 3). Roll forward with a new file.
+- Apply migrations before deploying the code that needs them: migrations are
+  additive, so old code + new schema is safe; new code + old schema is not.
 
 - Lockfile unchanged → layer cache skips the workspace `npm ci`: **~3–5 min**.
 - Lockfile changed → full install: **~12 min**.
@@ -228,8 +246,7 @@ by CLI at all. Consequences and current state:
 
 | What | Vars | Impact | Recovery |
 |---|---|---|---|
-| x402 ring signers | `X402_TREASURY_SECRET_BASE58`, `X402_SEED_SOLANA_SECRET_BASE58` | Ring is enabled but the treasury/payer roles cannot sign — no autonomous USDC movement | Owner's gitignored `.x402-ring-secrets.json`, written by `scripts/x402-ring-setup.mjs` on whatever machine ran it. Public half: treasury/pay-to `wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU` (holds real SOL — do NOT regenerate; recover the secret). The **sponsor** role is no longer in this row — see below. |
-| Rate-limiter Redis | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Money-moving limiters **fail closed** (already true on Vercel pre-shutdown). **Worse: the x402 idempotency module hard-throws at import** (`api/_lib/x402/idempotency-cache.js`) — so **every** paid endpoint that imports it (`/api/okx/3d/*`, `/api/x402/*`) returns **HTTP 500 at module load**, not a graceful degrade. This took the entire paid surface down on 2026-07-08 until the escape hatch below was set. | Owner's Upstash console, or provision fresh Upstash/Memorystore and set both vars. `X402_ALLOW_MEMORY_FALLBACK=1` is the sanctioned escape hatch and is **currently SET in prod (since 2026-07-08)** to keep the paid surface up on per-instance memory idempotency. Financial double-charge stays prevented on-chain regardless (EIP-3009 nonces are single-use); the flag only degrades cross-replica work/response dedup. Remove the flag once real Upstash creds land. |
+| Collection authority | `SOLANA_AGENT_COLLECTION_AUTHORITY_KEY` | Agent NFT collection ops can't sign | Intentionally excluded from `scripts/wire-master-wallet.mjs` (on-chain update authority must stay its original wallet). Owner holds the key. |
 | R2/S3 storage creds | `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_DOMAIN` | `/api/marketplace`, `/api/explore`, `/api/avatars/:id` — every route that resolves an asset URL — 503 `not_configured` | Real values already sit in the repo's `.env.local` (never committed). Apply with `scripts/gcp/apply-s3-env.sh` (needs a human-authed `gcloud auth login` first — the 89-var apply is still blocked on reauth per above). |
 
 ### Resolved: x402 sponsor co-signing key (2026-07-09)

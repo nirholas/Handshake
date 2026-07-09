@@ -47,5 +47,26 @@ export default {
 			},
 		},
 	},
+	// Mirrors OUTPUT_EXAMPLE in api/x402/fact-check.js (the handler's own 402
+	// challenge carries the same example) — keep the two in sync.
+	outputExample: {
+		verdict: 'contradicted',
+		confidence: 0.78,
+		claim: 'The Eiffel Tower is 330 meters tall.',
+		strictness: 'high',
+		sources: [
+			{
+				url: 'https://en.wikipedia.org/wiki/Eiffel_Tower',
+				title: 'Eiffel Tower - Wikipedia',
+				excerpt: 'The tower is 330 m (1,083 ft) tall, including a 24 m (79 ft) antenna.',
+				stance: 'supports',
+				weight: 0.7,
+				retrievedAt: '2026-05-27T00:00:00.000Z',
+			},
+		],
+		costBreakdown: { searchCalls: 3, llmTokens: 1420, totalUsdc: '0.100355' },
+		attestation: 'sha256:abcdef1234567890...',
+		lane: 'paid',
+	},
 	storefronts: ['x402scan'],
 };

@@ -152,6 +152,7 @@ const state = {
 	loading: false,
 	publicAvatars: [],
 	publicAvatarsLoaded: false,
+	publicAvatarsError: false, // last avatar-feed fetch failed → show retry, not "No public avatars"
 	onchainItems: [],
 	onchainCursor: null,
 	onchainLoaded: false,
@@ -574,6 +575,7 @@ async function loadPublicAvatars() {
 		);
 		state.publicAvatars = avatars;
 		state.publicAvatarsLoaded = true;
+		state.publicAvatarsError = false;
 		state.stats = j?.totals || state.stats;
 		renderGrid();
 		updateOnchainChipCount();
@@ -584,6 +586,7 @@ async function loadPublicAvatars() {
 		// through bindEmptyStateActions (data-retry-scope="avatars").
 		state.publicAvatars = [];
 		state.publicAvatarsLoaded = true;
+		state.publicAvatarsError = true;
 		if (gridWouldBeEmptyWithout('avatars')) {
 			els.grid.removeAttribute('aria-busy');
 			els.grid.innerHTML = renderErrorState('avatars');
@@ -1306,6 +1309,14 @@ function renderGrid() {
 			(!state.onchainLoaded && state.filter === 'onchain');
 		if (stillLoading) {
 			els.grid.innerHTML = renderSkeletons(8);
+		} else if (
+			state.publicAvatarsError &&
+			(state.filter === 'avatars' || state.filter === 'all') &&
+			!state.q && !state.tag && !state.category
+		) {
+			// The avatar feed failed (e.g. rate-limited) — "No public avatars" would
+			// be a lie when the catalog has thousands. Offer a retry instead.
+			els.grid.innerHTML = renderErrorState('avatars');
 		} else {
 			els.grid.innerHTML = renderEmptyState();
 		}

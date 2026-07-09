@@ -46,5 +46,33 @@ export default {
 			},
 		},
 	},
+	// Mirrors the settled 200 in api/x402/remix-asset.js — the new remix, its
+	// source lineage, and the honest royalty split (paid or not).
+	outputExample: {
+		ok: true,
+		remix: {
+			glbUrl: 'https://cdn.three.ws/forge/example-remix/model.glb',
+			viewerUrl: 'https://three.ws/viewer?src=https%3A%2F%2Fcdn.three.ws%2Fforge%2Fexample-remix%2Fmodel.glb',
+			creationId: '11111111-2222-4333-8444-555555555555',
+			prompt: 'a low-poly fox, but make it metallic',
+			instruction: 'make it metallic',
+			anchored: true,
+		},
+		source: {
+			id: '00000000-0000-0000-0000-000000000000',
+			prompt: 'a low-poly fox',
+			royaltyBps: 1000,
+			royaltyPercent: 10,
+		},
+		royalty: {
+			paid: true,
+			royaltyBps: 1000,
+			capped: false,
+			creatorUsd: 0.025,
+			platformUsd: 0.225,
+			creatorAtomics: '25000',
+			creatorTx: '5synthetictransactionsignature1111111111111111111111111111111111111111111111111111111',
+		},
+	},
 	storefronts: ['x402scan'],
 };

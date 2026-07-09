@@ -119,10 +119,16 @@ describe('token-market fleet-wide single-flight', () => {
 		expect(md.source).toBe('dexscreener');
 		expect(upstreamCalls).toHaveLength(1);
 		expect(upstreamCalls[0]).toContain('dexscreener');
-		// Published for siblings to serve.
-		expect(store.has('mktdata:v1:' + MINT)).toBe(true);
-		// Lock released after the fetch (best-effort DEL).
-		expect(store.has('mktlock:v1:' + MINT)).toBe(false);
+		// The publish and the lock DEL are deliberately fire-and-forget (the hot
+		// path must not pay a Redis RTT before returning), so poll for them
+		// instead of asserting synchronously — cacheSet's async encodeForWire step
+		// means the write lands a few ticks after fetchTokenMarketData resolves.
+		await vi.waitFor(() => {
+			// Published for siblings to serve.
+			expect(store.has('mktdata:v1:' + MINT)).toBe(true);
+			// Lock released after the fetch (best-effort DEL).
+			expect(store.has('mktlock:v1:' + MINT)).toBe(false);
+		});
 	});
 
 	it('fresh:true bypasses the lock entirely (cron / explicit refresh path)', async () => {

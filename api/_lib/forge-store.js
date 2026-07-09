@@ -180,7 +180,7 @@ async function scoreAndCompress(buf, { computeQuality, compress }) {
 	return { buf: outBuf, quality, compression };
 }
 
-async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null }) {
+async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, forceContentType = null }) {
 	let lastErr;
 	for (let attempt = 1; attempt <= COPY_MAX_ATTEMPTS; attempt++) {
 		try {
@@ -196,7 +196,15 @@ async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, com
 			} else {
 				let buf = Buffer.from(await resp.arrayBuffer());
 				if (buf.length > maxBytes) throw new Error(`asset too large: ${buf.length} bytes`);
-				const contentType = resp.headers.get('content-type') || fallbackContentType;
+				// forceContentType wins over the upstream header: providers (Replicate
+				// et al.) often serve ephemeral output blobs as `application/octet-stream`
+				// or another generic type regardless of the actual bytes. Trusting that
+				// verbatim into R2's stored Content-Type is what made every homepage
+				// forge thumbnail fail Chrome's Opaque Response Blocking — the browser
+				// won't render a cross-origin <img> whose declared type isn't an image
+				// type. Callers that know the asset kind (e.g. the preview image, whose
+				// extension is already decided by imageExtFor) should force it.
+				const contentType = forceContentType || resp.headers.get('content-type') || fallbackContentType;
 				let quality = null;
 				let compression = null;
 				if (computeQuality || compress) {
@@ -223,6 +231,11 @@ async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, com
 function imageExtFor(url) {
 	const m = /\.(png|jpe?g|webp)(\?|$)/i.exec(url || '');
 	return m ? m[1].toLowerCase().replace('jpeg', 'jpg') : 'webp';
+}
+
+const IMAGE_CONTENT_TYPE_BY_EXT = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
+function imageContentTypeFor(ext) {
+	return IMAGE_CONTENT_TYPE_BY_EXT[ext] || 'image/webp';
 }
 
 // Copy a finished generation into durable storage and flip the row to 'done'.
@@ -273,6 +286,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 					sourceUrl: existing.preview_image_url,
 					key: `${keyPrefix}.${ext}`,
 					fallbackContentType: 'image/webp',
+					forceContentType: imageContentTypeFor(ext),
 					maxBytes: MAX_IMAGE_BYTES,
 				});
 				preview = { key: `${keyPrefix}.${ext}`, url: copied.publicUrl };

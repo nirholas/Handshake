@@ -100,7 +100,7 @@ async function insertSeedAvatar({ userId, prompt, modelCategory, creationId }) {
 	await sql`
 		insert into avatars
 			(owner_id, slug, name, description, storage_key, size_bytes,
-			 content_type, source, source_meta, visibility, tags,
+			 content_type, source, source_meta, thumbnail_key, visibility, tags,
 			 model_category, created_at, updated_at)
 		select
 			${userId},
@@ -112,6 +112,13 @@ async function insertSeedAvatar({ userId, prompt, modelCategory, creationId }) {
 			'model/gltf-binary',
 			'forge',
 			${JSON.stringify({ forge_creation_id: creationId, prompt, seed: true })}::jsonb,
+			-- The creation's preview image is already in the bucket with a correct
+			-- Content-Type (it is what /forge's own gallery renders). Adopt it as the
+			-- avatar's thumbnail for free, rather than leaving thumbnail_key NULL and
+			-- making the backfill cron pay chromium to re-render the same model.
+			-- Relative keys only: an absolute URL in thumbnail_key resolves against an
+			-- origin where no object lives (see api/_lib/avatar-thumbs.js).
+			case when fc.preview_key !~ '^https?://' then fc.preview_key end,
 			'public',
 			array[${modelCategory}]::text[],
 			${modelCategory},

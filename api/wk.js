@@ -1192,6 +1192,30 @@ const MCP_TOOL_OUTPUT_SUMMARIES = Object.freeze({
 		mode: 'streaming',
 		eta_seconds: 180,
 	},
+	// Mirrors mintTokenized3dAsset()'s structuredContent in api/_mcp/tools/tokenize.js.
+	mint_3d_asset: {
+		status: 'minted',
+		idempotent: false,
+		name: 'Midnight Robot',
+		network: 'devnet',
+		mint: 'M1ntExamp1eDoNotUse1111111111111111111111111',
+		explorer_asset_url: 'https://core.metaplex.com/explorer/M1ntExamp1eDoNotUse1111111111111111111111111?env=devnet',
+		explorer_tx_url: 'https://explorer.solana.com/tx/5synthetictransactionsignature111111111111111111111111111111111111111111111111111111?cluster=devnet',
+		viewer_url: 'https://three.ws/viewer?src=https%3A%2F%2Fcdn.three.ws%2Favatars%2Fmidnight-robot.glb',
+		royalty: { percent: 5, requested_basis_points: 500, cap_basis_points: 1000, capped: false },
+	},
+	// Mirrors handleAnchor()'s structuredContent in api/_mcp3d/tools/provenance.js.
+	anchor_provenance: {
+		status: 'anchored',
+		glbSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+		credentialHash: '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824',
+		issuer: 'AtteStIssuerExamp1eDoNotUse11111111111111111',
+		anchor: {
+			tx: '5synthetictransactionsignature111111111111111111111111111111111111111111111111111111',
+			cluster: 'devnet',
+			explorerUrl: 'https://explorer.solana.com/tx/5synthetictransactionsignature111111111111111111111111111111111111111111111111111111?cluster=devnet',
+		},
+	},
 });
 
 // Wrap a tool result summary in the JSON-RPC CallToolResult envelope.

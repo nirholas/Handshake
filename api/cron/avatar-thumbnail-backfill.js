@@ -26,9 +26,15 @@
 //
 // Env:
 //   CRON_SECRET                        required (Bearer)
-//   THUMBNAIL_BACKFILL_RENDER_BATCH    models rendered per tick (default 4)
+//   THUMBNAIL_BACKFILL_RENDER_BATCH    models rendered per tick (default 8)
 //   THUMBNAIL_BACKFILL_ADOPT_BATCH     forge previews adopted per tick (default 200)
 //   THUMBNAIL_BACKFILL_CONCURRENCY     parallel renders (default 2)
+//
+// Sizing: a render is ~3-6s, so 8 models at concurrency 2 lands around 25-40s —
+// comfortably inside maxDuration=120 with room for a slow model. At */5 that is
+// ~96 avatars/hour. A large backlog should be cleared with the bulk script
+// (scripts/backfill-avatar-thumbnails.mjs --loop), which shares this claim ledger;
+// the cron exists to keep coverage at 100% once it is there.
 
 import { json, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
@@ -45,7 +51,7 @@ export const maxDuration = 120;
 
 const log = logger('avatar-thumbnail-backfill');
 
-const RENDER_BATCH = Math.max(0, Number(process.env.THUMBNAIL_BACKFILL_RENDER_BATCH || 4));
+const RENDER_BATCH = Math.max(0, Number(process.env.THUMBNAIL_BACKFILL_RENDER_BATCH || 8));
 const ADOPT_BATCH = Math.max(0, Number(process.env.THUMBNAIL_BACKFILL_ADOPT_BATCH || 200));
 const CONCURRENCY = Math.max(1, Number(process.env.THUMBNAIL_BACKFILL_CONCURRENCY || 2));
 

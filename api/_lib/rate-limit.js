@@ -1138,12 +1138,51 @@ export const limits = {
 //   3. x-real-ip — last resort only, for non-Vercel reverse-proxy setups where
 //      the socket address is the proxy's. Client-settable on direct hits, but
 //      by this point there is no better signal.
+// How many trailing X-Forwarded-For entries THIS deployment's own infrastructure
+// appends. Google's external Application Load Balancer (three.ws prod) hands the
+// backend:
+//
+//     X-Forwarded-For: <caller-supplied…>, <real-client-ip>, <load-balancer-ip>
+//
+// It appends the connecting client's IP and the forwarding rule's IP. So exactly one
+// trailing hop (the LB) must be skipped, and the entry before it is the real client.
+// Cloud Run reached directly (no LB in front) appends nothing → set this to 0.
+const TRUSTED_PROXY_HOPS = (() => {
+	const n = Number.parseInt(process.env.TRUSTED_PROXY_HOPS ?? '', 10);
+	return Number.isInteger(n) && n >= 0 ? n : 1;
+})();
+
+// The caller's IP, as the key for every per-IP rate limiter on the platform.
+//
+// Two ways to get this wrong, both of which this function used to:
+//
+//  1. Trust `req.socket.remoteAddress`. Behind a load balancer the socket peer is
+//     ALWAYS the balancer, so every visitor on earth collapses into ONE bucket key.
+//     After the Vercel→Cloud Run migration this was the live behaviour (the Vercel
+//     header below is never set on GCP), which silently turned every per-IP limit
+//     into a platform-wide global limit — a self-DoS, not a control. It is why
+//     /api/irl/privacy answered 429 to its very first caller.
+//
+//  2. Trust the LEFTMOST X-Forwarded-For entry, or any header a caller can set
+//     (`x-vercel-forwarded-for`, `x-real-ip`). Everything left of the hops our own
+//     infrastructure appends is attacker-controlled: a sweeper sending a random
+//     X-Forwarded-For on each request mints a fresh limiter bucket every time.
+//
+// So: read X-Forwarded-For, walk it from the RIGHT, skip the hops we append, and
+// take the next address. Fall back to the socket only when there is no XFF at all
+// (local dev, tests, direct container access) — there, the socket IS the client.
 export function clientIp(req) {
-	const vercel = req.headers['x-vercel-forwarded-for'];
-	if (vercel) return String(vercel).split(',')[0].trim();
+	const xff = req.headers?.['x-forwarded-for'];
+	if (xff) {
+		const hops = String(xff).split(',').map((s) => s.trim()).filter(Boolean);
+		if (hops.length) {
+			// Clamp: a shorter-than-expected chain (direct hit, or a stripped header)
+			// must degrade to the leftmost real entry, never to a negative index.
+			const ip = hops[Math.max(0, hops.length - 1 - TRUSTED_PROXY_HOPS)];
+			if (ip) return ip;
+		}
+	}
 	const sock = req.socket?.remoteAddress;
 	if (sock) return sock;
-	const real = req.headers['x-real-ip'];
-	if (real) return String(real).split(',')[0].trim();
 	return '0.0.0.0';
 }

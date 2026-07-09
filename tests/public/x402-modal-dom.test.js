@@ -139,8 +139,12 @@ describe('x402 payment modal — trust + a11y', () => {
 		await flush();
 		// Click the Phantom wallet button to start the Solana flow.
 		document.querySelector('[data-wallet="phantom"]').click();
-		await flush();
-		await flush();
+		// The connect → balance-read → render chain spans several macrotask ticks
+		// (rAF is stubbed to setTimeout); a fixed flush count races it under
+		// full-suite CPU load, so poll for the state instead.
+		await vi.waitFor(() => {
+			expect(document.querySelector('.x402-insuff-title')).toBeTruthy();
+		});
 
 		expect(document.querySelector('.x402-insuff-title')?.textContent).toMatch(/not enough/i);
 		expect(document.body.textContent).toContain('short by');

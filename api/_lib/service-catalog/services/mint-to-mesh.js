@@ -38,5 +38,23 @@ export default {
 			},
 		},
 	},
+	// Mirrors buildMesh()'s return in api/x402/mint-to-mesh.js. The base64 GLB is
+	// truncated to a recognizable magic-bytes stub — a full model would bloat the
+	// discovery doc for no ranking benefit.
+	outputExample: {
+		mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+		theme: {
+			name: 'three.ws',
+			symbol: 'THREE',
+			color: '#7c5cff',
+			imageUrl: 'https://cdn.three.ws/tokens/three.png',
+			hasImage: true,
+		},
+		glb: {
+			mimeType: 'model/gltf-binary',
+			bytes: 18432,
+			base64: 'Z2xURgIAAAA…',
+		},
+	},
 	storefronts: ['x402scan'],
 };

@@ -1,134 +1,158 @@
 #!/usr/bin/env node
 /**
- * Backfill PNG thumbnails for public avatars that don't have one yet.
+ * Backfill thumbnails for avatars that don't have one.
  *
- * Renders each avatar's GLB in a headless Chromium via model-viewer,
- * captures a 1024×1024 PNG, and POSTs it to /api/avatars/thumbnail
- * (which uploads to R2 and updates the avatars row).
+ * Operator-driven bulk counterpart to the steady-state cron
+ * (api/cron/avatar-thumbnail-backfill.js). Both share api/_lib/avatar-thumbs.js
+ * — the same claim ledger, the same "never persist a key without confirming the
+ * object exists" invariant — so it is safe to run this while the cron is live.
+ * Neither will claim an avatar the other is already rendering.
  *
- * Usage:
- *   ADMIN_BEARER=<token> ORIGIN=https://three.ws \
- *     node scripts/backfill-avatar-thumbnails.mjs
+ * Two phases, cheapest first:
+ *   1. adopt  — an avatar forged from a forge_creations row points its
+ *               thumbnail_key at that creation's already-uploaded preview image.
+ *               Free: no render, no new bytes.
+ *   2. render — everything else. Boots headless chromium, renders the GLB to a
+ *               768² PNG, uploads to thumb/<avatarId>.png, commits the key.
+ *               ~6s per model, so run it with --concurrency.
  *
- * The bearer token must have avatars:write scope and belong to a user with
- * is_admin=true (so it can update other users' avatars). Pass --limit=N to
- * cap how many avatars are processed in a single run; default 25.
+ * Avatars are drained most-visible-first (featured → public → view_count →
+ * newest), so the surfaces users actually look at heal before the long tail.
+ * A model that fails to render MAX_ATTEMPTS times is retired and stops consuming
+ * budget.
  *
- * Each avatar takes ~4-6s to render. Run nightly or after large imports.
+ * Usage (needs DATABASE_URL + S3_* — they live in .env.local):
+ *
+ *   node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --status
+ *   node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --adopt-only
+ *   node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --limit=50 --concurrency=3
+ *   node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --limit=2000 --concurrency=4 --loop
+ *
+ * Flags:
+ *   --status            print coverage and exit
+ *   --limit=N           render at most N avatars (default 25)
+ *   --concurrency=N     parallel renders, shared chromium (default 2)
+ *   --adopt-only        run phase 1 only, never boot chromium
+ *   --render-only       skip phase 1
+ *   --loop              keep refilling the budget until nothing is left to claim
+ *
+ * Unlike the previous version this talks to Postgres + R2 directly, so it needs
+ * no ADMIN_BEARER and no running server.
  */
 
-import { chromium } from 'playwright';
+import {
+	adoptForgePreviews,
+	renderBatch,
+	coverage,
+	ensureBackfillSchema,
+	MAX_ATTEMPTS,
+} from '../api/_lib/avatar-thumbs.js';
 
-const ORIGIN = process.env.ORIGIN || 'https://three.ws';
-const ADMIN_BEARER = process.env.ADMIN_BEARER;
-const LIMIT = Number(process.argv.find((a) => a.startsWith('--limit='))?.split('=')[1]) || 25;
-const VIEWPORT = 1024;
+const argv = process.argv.slice(2);
+const has = (name) => argv.includes(`--${name}`);
+const num = (name, fallback) => {
+	const hit = argv.find((a) => a.startsWith(`--${name}=`));
+	return hit ? Number(hit.split('=')[1]) : fallback;
+};
 
-if (!ADMIN_BEARER) {
-	console.error('ADMIN_BEARER env var required (must have avatars:write scope on an admin account).');
-	process.exit(1);
-}
+const LIMIT = num('limit', 25);
+const CONCURRENCY = Math.max(1, num('concurrency', 2));
+const ADOPT_ONLY = has('adopt-only');
+const RENDER_ONLY = has('render-only');
+const LOOP = has('loop');
 
-const VIEWER_HTML = `<!doctype html>
-<html><head><meta charset="utf-8">
-<style>
-	html,body { margin:0; padding:0; background: transparent; width:${VIEWPORT}px; height:${VIEWPORT}px; }
-	model-viewer { width:100%; height:100%; --poster-color: transparent; background: transparent; }
-</style>
-<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
-</head>
-<body>
-	<model-viewer id="mv" interaction-prompt="none" exposure="1.05" shadow-intensity="0.7" tone-mapping="aces"></model-viewer>
-</body></html>`;
-
-async function fetchAvatarsNeedingThumbs() {
-	const url = `${ORIGIN}/api/avatars/public?limit=200`;
-	const r = await fetch(url);
-	if (!r.ok) throw new Error(`fetch ${url}: HTTP ${r.status}`);
-	const j = await r.json();
-	return (j.avatars || []).filter((a) => !a.thumbnail_url && a.model_url);
-}
-
-async function captureAvatar(page, glbUrl) {
-	await page.evaluate(async (src) => {
-		const mv = document.getElementById('mv');
-		mv.setAttribute('src', src);
-		await new Promise((res, rej) => {
-			const t = setTimeout(() => rej(new Error('model-viewer load timeout')), 20000);
-			mv.addEventListener('load', () => { clearTimeout(t); res(); }, { once: true });
-			mv.addEventListener('error', (e) => { clearTimeout(t); rej(new Error('load error')); }, { once: true });
-		});
-		// Frame and one extra render tick to let the camera settle.
-		mv.cameraOrbit = '0deg 75deg auto';
-		mv.fieldOfView = '30deg';
-		await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-	}, glbUrl);
-
-	const dataUrl = await page.evaluate(async () => {
-		const mv = document.getElementById('mv');
-		const blob = await mv.toBlob({ idealAspect: true, mimeType: 'image/png' });
-		return await new Promise((res) => {
-			const fr = new FileReader();
-			fr.onloadend = () => res(fr.result);
-			fr.readAsDataURL(blob);
-		});
-	});
-	return dataUrl;
-}
-
-async function uploadThumbnail(avatarId, pngDataUrl) {
-	const r = await fetch(`${ORIGIN}/api/avatars/thumbnail`, {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			authorization: `Bearer ${ADMIN_BEARER}`,
-		},
-		body: JSON.stringify({ avatar_id: avatarId, png_base64: pngDataUrl }),
-	});
-	if (!r.ok) {
-		const text = await r.text().catch(() => '');
-		throw new Error(`upload ${avatarId}: HTTP ${r.status} ${text.slice(0, 200)}`);
+for (const required of ['DATABASE_URL', 'S3_BUCKET', 'S3_ACCESS_KEY_ID']) {
+	if (!process.env[required]) {
+		console.error(`[backfill] ${required} is unset — run with: node --env-file=.env.local ${process.argv[1]}`);
+		process.exit(1);
 	}
-	return r.json();
+}
+
+const pct = (n, d) => (d ? `${((n / d) * 100).toFixed(1)}%` : 'n/a');
+
+async function printCoverage(label) {
+	const c = await coverage();
+	console.log(
+		`[backfill] ${label}: ${c.covered}/${c.total} public avatars have a thumbnail ` +
+			`(${pct(c.covered, c.total)}) — ${c.missing} missing, ` +
+			`${c.exhausted} retired after ${MAX_ATTEMPTS} failed renders`,
+	);
+	return c;
 }
 
 async function main() {
-	console.log(`[backfill] origin=${ORIGIN} limit=${LIMIT}`);
-	const todo = (await fetchAvatarsNeedingThumbs()).slice(0, LIMIT);
-	console.log(`[backfill] ${todo.length} avatar(s) need thumbnails`);
-	if (!todo.length) return;
+	await ensureBackfillSchema();
+	await printCoverage('before');
+	if (has('status')) return;
 
-	const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
-	const ctx = await browser.newContext({
-		viewport: { width: VIEWPORT, height: VIEWPORT },
-		deviceScaleFactor: 1,
-	});
-	const page = await ctx.newPage();
-	await page.setContent(VIEWER_HTML, { waitUntil: 'load' });
-	// Wait for model-viewer custom element to be defined.
-	await page.waitForFunction(() => !!customElements.get('model-viewer'));
-
-	let okCount = 0;
-	let failCount = 0;
-	for (const a of todo) {
-		const tag = `${a.id} (${a.name || a.slug || '?'})`;
-		try {
-			console.log(`[backfill] rendering ${tag}…`);
-			const dataUrl = await captureAvatar(page, a.model_url);
-			const result = await uploadThumbnail(a.id, dataUrl);
-			console.log(`[backfill] ✓ ${tag} → ${result?.data?.thumbnail_url} (${result?.data?.bytes} bytes)`);
-			okCount++;
-		} catch (err) {
-			console.error(`[backfill] ✗ ${tag}: ${err.message}`);
-			failCount++;
+	// ── Phase 1: free adoption ────────────────────────────────────────────────
+	if (!RENDER_ONLY) {
+		let totalAdopted = 0;
+		let totalMissing = 0;
+		for (;;) {
+			const { adopted, missing } = await adoptForgePreviews({ limit: 200 });
+			totalAdopted += adopted;
+			totalMissing += missing;
+			if (adopted) console.log(`[backfill] adopted ${adopted} forge preview(s)`);
+			// Candidates whose preview object is absent from R2 can never be adopted
+			// and stay in the candidate set, so a batch of only those would spin
+			// forever. Stop as soon as a pass adopts nothing.
+			if (!adopted) break;
 		}
+		console.log(
+			`[backfill] phase 1 done — ${totalAdopted} adopted` +
+				(totalMissing
+					? `, ${totalMissing} preview object(s) absent from R2 (those avatars get rendered instead)`
+					: ''),
+		);
 	}
 
-	await browser.close();
-	console.log(`[backfill] done — ${okCount} ok, ${failCount} failed`);
+	if (ADOPT_ONLY) {
+		await printCoverage('after');
+		return;
+	}
+
+	// ── Phase 2: render ───────────────────────────────────────────────────────
+	let rendered = 0;
+	let failed = 0;
+	let remaining = LIMIT;
+
+	while (remaining > 0) {
+		const batch = Math.min(remaining, Math.max(CONCURRENCY * 2, 4));
+		const t0 = Date.now();
+		const r = await renderBatch({
+			limit: batch,
+			concurrency: CONCURRENCY,
+			onResult: (res) => {
+				const tag = `${String(res.id).slice(0, 8)} (${(res.name || '?').slice(0, 28)})`;
+				if (res.status === 'done') console.log(`[backfill]   ✓ ${tag} — ${res.bytes}b in ${res.ms}ms`);
+				else console.error(`[backfill]   ✗ ${tag} — ${res.error}`);
+			},
+		});
+
+		if (!r.claimed) {
+			console.log('[backfill] nothing left to claim');
+			break;
+		}
+		rendered += r.rendered;
+		failed += r.failed;
+		remaining -= r.claimed;
+		console.log(
+			`[backfill] batch: ${r.rendered} rendered, ${r.failed} failed in ` +
+				`${((Date.now() - t0) / 1000).toFixed(1)}s — ${rendered} rendered this run, ` +
+				`${Math.max(0, remaining)} of budget left`,
+		);
+
+		if (remaining <= 0 && LOOP) remaining = LIMIT; // --loop: refill the budget
+	}
+
+	console.log(`[backfill] phase 2 done — ${rendered} rendered, ${failed} failed`);
+	await printCoverage('after');
 }
 
-main().catch((err) => {
-	console.error('[backfill] fatal:', err);
-	process.exit(1);
-});
+main()
+	.then(() => process.exit(0))
+	.catch((err) => {
+		console.error('[backfill] fatal:', err?.stack || err);
+		process.exit(1);
+	});
