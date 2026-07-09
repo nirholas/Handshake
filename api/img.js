@@ -86,30 +86,50 @@ function candidates(rawUrl) {
 }
 
 // Race every candidate gateway concurrently and resolve with the FIRST one that
-// returns a real image. Resolves to null when all candidates fail, OR when the
+// returns a usable payload. Resolves to null when all candidates fail, OR when the
 // shared `budgetMs` elapses — whichever comes first — so a stalled gateway can
 // never pin the invocation toward the 30s wall. The losing fetches are each
 // independently time-boxed by `perAttemptMs` (the SSRF fetcher aborts them), so
 // they cannot outlive the request in any meaningful way. This concurrency is the
 // fix for the sequential ipfs.io stall storm: total wall time is now ~one attempt,
 // not the sum of all four.
-function raceImageCandidates(urls, perAttemptMs, budgetMs) {
+//
+// A "usable payload" is an image, OR — when `acceptJson` is set — a JSON document.
+// Roughly half the token art on pump.fun surfaces is addressed by its *metadata*
+// URI rather than its image URI: the CID resolves to a small JSON doc whose
+// `image` field holds the real art. Callers hand us that URI in `?url=` because
+// upstream feeds store both kinds in one `image_uri` column and the two are
+// indistinguishable without fetching. Detecting the JSON here — instead of
+// discarding it as "valid response but not an image" — lets one `?url=` call
+// resolve either form. Returns { kind: 'image' | 'json', ... }.
+function raceCandidates(urls, perAttemptMs, budgetMs, acceptJson) {
 	if (!urls.length || budgetMs < 250) return Promise.resolve(null);
 	return new Promise((resolve) => {
 		let settled = false;
 		let pending = urls.length;
-		const finish = (img) => {
+		const finish = (payload) => {
 			if (settled) return;
 			settled = true;
 			clearTimeout(timer);
-			resolve(img);
+			resolve(payload);
 		};
 		const timer = setTimeout(() => finish(null), budgetMs);
 		for (const url of urls) {
 			fetchModel(url, { maxBytes: MAX_BYTES, timeoutMs: Math.min(perAttemptMs, budgetMs) })
 				.then((result) => {
-					if (result?.contentType?.startsWith('image/')) finish(result);
-					else if (--pending === 0) finish(null); // valid response but not an image
+					const ct = result?.contentType || '';
+					if (ct.startsWith('image/')) return finish({ kind: 'image', ...result });
+					if (acceptJson && ct.includes('json')) {
+						// Metadata doc. Parse here — we already hold the bytes, so following
+						// it costs no extra gateway round-trip for the document itself.
+						try {
+							const data = JSON.parse(new TextDecoder().decode(result.bytes));
+							return finish({ kind: 'json', data });
+						} catch {
+							/* malformed — fall through and let the other candidates settle */
+						}
+					}
+					if (--pending === 0) finish(null); // valid response, but nothing we can use
 				})
 				.catch(() => {
 					// SSRF refusal, timeout, gateway 5xx — this candidate is out. Only

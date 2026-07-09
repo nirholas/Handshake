@@ -106,6 +106,10 @@
 		}
 
 		/* ── Top bar ─────────────────────────────────────────────── */
+		/* Three real flex columns (back / center / right), not an absolutely-
+		   centered badge floating over normal-flow siblings — the old layout let
+		   the badge cluster (which grows with nearby/net/presence chips) paint on
+		   top of the privacy/world-lines buttons underneath it on narrow phones. */
 		.irl-topbar {
 			position: fixed;
 			top: 0;
@@ -114,18 +118,25 @@
 			z-index: 10;
 			display: flex;
 			align-items: center;
-			justify-content: space-between;
+			gap: 6px;
 			padding-left: max(16px, env(safe-area-inset-left, 0px));
 			padding-right: max(16px, env(safe-area-inset-right, 0px));
 			padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
 			padding-bottom: 14px;
 			background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%);
 		}
+		.irl-topbar-right {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			flex: 0 0 auto;
+		}
 
 		.irl-back {
 			display: inline-flex;
 			align-items: center;
 			gap: 6px;
+			flex: 0 0 auto;
 			color: var(--text-2);
 			text-decoration: none;
 			font-size: 14px;
@@ -138,12 +149,17 @@
 		.irl-back svg { flex-shrink: 0; }
 
 		.irl-topbar-center {
-			position: absolute;
-			left: 50%;
-			transform: translateX(-50%);
+			flex: 1 1 auto;
+			min-width: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 4px;
+			overflow: hidden;
 			text-align: center;
 			pointer-events: none;
 		}
+		.irl-topbar-center > * { pointer-events: auto; flex-shrink: 1; min-width: 0; }
 		.irl-badge {
 			display: inline-flex;
 			align-items: center;
@@ -216,18 +232,78 @@
 		.irl-share-btn:active { transform: scale(0.96); }
 		.irl-share-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 		.irl-share-btn[disabled] { opacity: 0.6; cursor: progress; }
-		/* L3 — icon-only "Location & privacy" control sits beside Share */
-		.irl-privacy-btn { padding: 6px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; }
-		/* Task 03 — icon-only arrival-cue mute toggle (sound on/off icon swap) */
-		.irl-cue-mute { padding: 6px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; }
-		.irl-cue-mute .irl-cue-off { display: none; }
-		.irl-cue-mute.is-muted .irl-cue-on { display: none; }
-		.irl-cue-mute.is-muted .irl-cue-off { display: inline; }
-		.irl-cue-mute.is-muted { color: var(--text-3); }
-		.irl-cue-mute[aria-pressed="false"] { color: var(--green); border-color: rgba(74,222,128,0.32); }
-		/* Smart-glasses pairing — icon-only, lights blue when a lens is linked. */
-		.irl-glasses-btn { padding: 6px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; }
-		.irl-glasses-btn.is-connected { color: #7aa2ff; border-color: rgba(122,162,255,0.45); background: rgba(79,124,255,0.12); }
+
+		/* ── "More" overflow menu ────────────────────────────────────
+		   Location & privacy, World Lines, smart glasses, and the arrival-sound
+		   mute toggle used to sit as five unlabeled icon buttons crammed next to
+		   Share in the top bar — on a 375px phone they visually overlapped the
+		   centered IRL/nearby badge cluster and were hard to tell apart by icon
+		   alone. They now live as labeled rows in one sheet behind a single
+		   "More" button, leaving the top bar at just Back / badges / More / Share. */
+		.irl-more-btn { padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
+		#irl-more-sheet {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			z-index: 24;
+			background: rgba(12,14,20,0.97);
+			border-top: 1px solid rgba(255,255,255,0.10);
+			border-radius: 18px 18px 0 0;
+			padding: 20px 18px calc(env(safe-area-inset-bottom, 0px) + 28px);
+			backdrop-filter: blur(22px);
+			-webkit-backdrop-filter: blur(22px);
+			transform: translateY(100%);
+			transition: transform 0.28s cubic-bezier(0.32,0.72,0,1);
+			pointer-events: none;
+			max-height: 70vh;
+			overflow-y: auto;
+		}
+		#irl-more-sheet.is-open { transform: translateY(0); pointer-events: all; }
+		#irl-more-sheet .irl-sheet-handle { margin-bottom: 14px; }
+		.irl-more-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+		.irl-more-header h3 { font-size: 16px; font-weight: 700; color: #e5e7eb; margin: 0; }
+		.irl-more-row {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			width: 100%;
+			padding: 14px 6px;
+			min-height: 48px;
+			background: none;
+			border: none;
+			border-top: 1px solid rgba(255,255,255,0.07);
+			color: var(--text);
+			font: inherit;
+			font-size: 14.5px;
+			font-weight: 600;
+			text-align: left;
+			text-decoration: none;
+			cursor: pointer;
+			transition: background 0.15s;
+		}
+		.irl-more-row:first-of-type { border-top: none; }
+		.irl-more-row:hover, .irl-more-row:focus-visible { background: rgba(255,255,255,0.05); outline: none; }
+		.irl-more-row-icon {
+			flex-shrink: 0;
+			width: 36px;
+			height: 36px;
+			border-radius: 10px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			background: rgba(255,255,255,0.06);
+			color: var(--text-2);
+		}
+		.irl-more-row.is-connected .irl-more-row-icon,
+		.irl-more-row[aria-pressed="false"].irl-cue-mute .irl-more-row-icon { color: #7aa2ff; background: rgba(79,124,255,0.14); }
+		.irl-more-row-text { flex: 1; min-width: 0; }
+		.irl-more-row-label { display: block; }
+		.irl-more-row-sub { display: block; font-size: 12px; font-weight: 500; color: var(--text-2); margin-top: 1px; }
+		.irl-more-row .irl-cue-off { display: none; }
+		.irl-more-row.is-muted .irl-cue-on { display: none; }
+		.irl-more-row.is-muted .irl-cue-off { display: inline; }
+		.irl-more-row-chevron { flex-shrink: 0; color: var(--text-3); }
 
 		/* ── Immersive mode ──────────────────────────────────────────
 		   One tap collapses every chrome layer (topbar, bottom panel,
@@ -263,6 +339,11 @@
 		body.irl-immersive .irl-immersive-toggle .irl-eye-hide { display: none; }
 		body.irl-immersive .irl-immersive-toggle .irl-eye-show { display: inline; }
 		/* Immersive: the lone control glows green so it stays findable over the scene */
+		/* Short screens: the money-drops FAB (anchored above the dock) reaches
+		   mid-screen height — shift the eye up so the two never stack. */
+		@media (max-height: 700px) {
+			.irl-immersive-toggle { top: 34%; }
+		}
 		body.irl-immersive .irl-immersive-toggle {
 			color: var(--green);
 			border-color: rgba(74,222,128,0.5);
@@ -321,15 +402,28 @@
 		}
 
 		/* ── Joystick ────────────────────────────────────────────── */
+		/* Was min(50vw,220px) x min(55vh,360px) — a touch-capture zone spanning
+		   over half the viewport height, deep enough to underlap the secondary
+		   action row above. Trimmed to a footprint sized for an actual thumb
+		   drag; the action row is also bounded now (single scroll row, see
+		   .irl-secondary-row), so the two no longer compete for the same corner. */
 		#irl-joystick {
 			position: fixed;
 			z-index: 9;
 			left: env(safe-area-inset-left, 0px);
-			bottom: 0;
-			width: min(50vw, 220px);
-			height: min(55vh, 360px);
+			/* Float the whole touch zone ABOVE the bottom dock. --irl-dock-h is
+			   measured live from the footer (see the inline module below), so no
+			   button ever sits inside the drag zone — the old layout stacked the
+			   pill rows directly over it and thumb drags kept hitting buttons. */
+			bottom: var(--irl-dock-h, 220px);
+			width: min(40vw, 175px);
+			height: min(32vh, 230px);
 			touch-action: none;
 			pointer-events: auto;
+		}
+		/* Immersive mode hides the dock — drop the zone back to the bottom edge. */
+		body.irl-immersive #irl-joystick {
+			bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
 		}
 		@media (hover: hover) and (pointer: fine) {
 			#irl-joystick {
@@ -381,6 +475,31 @@
 			text-align: center;
 			margin: 0;
 			transition: opacity 0.3s;
+		}
+
+		/* Touch screens: compact the whole dock so it hugs the bottom edge
+		   instead of climbing to mid-screen over the avatar — smaller headline,
+		   subtitle clamped to two lines, a shorter hero button, tighter gaps. */
+		@media (hover: none) {
+			.irl-avatar-name { font-size: 16px; }
+			.irl-subtitle {
+				font-size: 12px;
+				max-width: min(88vw, 340px);
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+			}
+			.irl-bottom {
+				gap: 8px;
+				padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+			}
+			#irl-camera-btn {
+				height: 52px;
+				max-width: 340px;
+				border-radius: 16px;
+				font-size: 16px;
+			}
 		}
 
 		.irl-status {
@@ -482,15 +601,32 @@
 		}
 		#irl-camera-btn svg { flex-shrink: 0; }
 
-		/* Secondary row: place + clear */
+		/* Secondary row: every placement/setup action, one action per pill.
+		   This used to be `flex-wrap: wrap` — fine for the 2-3 buttons it shipped
+		   with, but room-mode and marker-mode (src/irl/room-mode.js,
+		   src/irl/marker-mode.js) each append another `.irl-pill-btn` fab here at
+		   runtime, and the static row already carries up to 9. Wrapping onto 3-4
+		   lines with no height cap grew the fixed-bottom footer tall enough to
+		   push the camera button and avatar name up into the middle of the
+		   screen, burying the 3D preview. A single horizontal scroll strip keeps
+		   the footer's height constant no matter how many pills land here. */
 		.irl-secondary-row {
 			display: flex;
 			align-items: center;
 			gap: 10px;
-			justify-content: center;
-			flex-wrap: wrap;
+			flex-wrap: nowrap;
+			overflow-x: auto;
+			overscroll-behavior-x: contain;
+			scroll-snap-type: x proximity;
+			-webkit-overflow-scrolling: touch;
+			scrollbar-width: none;
 			max-width: 100%;
+			padding: 2px 4px;
+			margin: 0 -4px;
+			mask-image: linear-gradient(to right, transparent 0, black 14px, black calc(100% - 14px), transparent 100%);
+			-webkit-mask-image: linear-gradient(to right, transparent 0, black 14px, black calc(100% - 14px), transparent 100%);
 		}
+		.irl-secondary-row::-webkit-scrollbar { display: none; }
 
 		.irl-pill-btn {
 			appearance: none;
@@ -506,6 +642,8 @@
 			display: inline-flex;
 			align-items: center;
 			gap: 7px;
+			flex: 0 0 auto;
+			scroll-snap-align: start;
 			transition: transform 0.1s, background 0.15s, border-color 0.15s, color 0.15s;
 			-webkit-tap-highlight-color: transparent;
 			white-space: nowrap;
@@ -690,11 +828,16 @@
 			display: flex;
 			flex-direction: row;
 			gap: 8px;
-			justify-content: center;
-			flex-wrap: wrap;
-			max-width: 380px;
+			flex-wrap: nowrap;
+			overflow-x: auto;
+			scroll-snap-type: x proximity;
+			-webkit-overflow-scrolling: touch;
+			scrollbar-width: none;
+			max-width: 100%;
+			padding: 2px 4px;
 			animation: irl-slide-up 0.2s ease-out;
 		}
+		#irl-picker::-webkit-scrollbar { display: none; }
 		#irl-picker[hidden] { display: none; }
 		@keyframes irl-slide-up {
 			from { opacity: 0; transform: translateY(10px); }
@@ -714,6 +857,8 @@
 			display: inline-flex;
 			align-items: center;
 			gap: 6px;
+			flex: 0 0 auto;
+			scroll-snap-align: start;
 			transition: transform 0.1s, background 0.15s, border-color 0.15s, color 0.15s;
 			-webkit-tap-highlight-color: transparent;
 			backdrop-filter: blur(8px);
@@ -1161,6 +1306,12 @@
 			transition: color 0.15s, border-color 0.15s, background 0.15s;
 		}
 		.irl-sheet-close:hover { color: #e5e7eb; border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.10); }
+		/* Touch: every sheet's close control meets the 44px tap floor (the 32px
+		   circle stays for pointers, where precision is fine). */
+		@media (hover: none) {
+			.irl-sheet-close { width: 44px; height: 44px; font-size: 18px; }
+			.irl-caption-placement, .irl-consent-cancel { min-height: 44px; }
+		}
 
 		/* Caption input panel — slides up before pin is saved */
 		#irl-caption-panel {
@@ -2062,21 +2213,56 @@
 		     unless the live stream is up and more than just you are here. -->
 		<span id="irl-presence-chip" class="irl-presence-chip" hidden role="status" aria-live="polite"></span>
 	</div>
-	<button class="irl-share-btn irl-cue-mute" id="irl-cue-mute" type="button" aria-pressed="false" aria-label="Arrival sound on — tap to mute" title="Arrival sound on">
-		<svg class="irl-cue-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
-		<svg class="irl-cue-off" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>
-	</button>
-	<button class="irl-share-btn irl-privacy-btn" id="irl-privacy-btn" type="button" aria-label="Location & privacy" title="Location & privacy">
-		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-	</button>
-	<a class="irl-share-btn irl-privacy-btn" id="irl-worldlines-btn" href="/world-lines" aria-label="World Lines — proof-of-presence quests" title="World Lines — proof-of-presence quests">
-		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><circle cx="12" cy="12" r="4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
-	</a>
-	<button class="irl-share-btn irl-glasses-btn" id="irl-glasses-btn" type="button" aria-pressed="false" aria-label="Connect smart glasses" title="Connect smart glasses">
-		<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M10 15a2 2 0 0 1 4 0"/><path d="m2.5 13 1.5-5a2 2 0 0 1 2-1.5"/><path d="m21.5 13-1.5-5a2 2 0 0 0-2-1.5"/></svg>
-	</button>
-	<button class="irl-share-btn" id="irl-share-btn" type="button" aria-label="Share">Share</button>
+	<div class="irl-topbar-right">
+		<button class="irl-share-btn irl-more-btn" id="irl-more-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="irl-more-sheet" aria-label="More" title="More">
+			<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+		</button>
+		<button class="irl-share-btn" id="irl-share-btn" type="button" aria-label="Share">Share</button>
+	</div>
 </header>
+
+<!-- "More" overflow sheet — location & privacy, World Lines, smart glasses,
+     arrival-sound mute. Consolidated off the top bar (see .irl-more-btn note). -->
+<div id="irl-more-sheet" role="dialog" aria-modal="true" aria-labelledby="irl-more-title">
+	<div class="irl-sheet-handle" aria-hidden="true"></div>
+	<div class="irl-more-header">
+		<h3 id="irl-more-title">More</h3>
+		<button class="irl-sheet-close" id="irl-more-close" type="button" aria-label="Close">×</button>
+	</div>
+	<button class="irl-more-row irl-cue-mute" id="irl-cue-mute" type="button" aria-pressed="false" aria-label="Arrival sound on — tap to mute">
+		<span class="irl-more-row-icon" aria-hidden="true">
+			<svg class="irl-cue-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+			<svg class="irl-cue-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>
+		</span>
+		<span class="irl-more-row-text">
+			<span class="irl-more-row-label">Arrival sound</span>
+			<span class="irl-more-row-sub" id="irl-cue-mute-sub">On — plays when an agent enters range</span>
+		</span>
+	</button>
+	<button class="irl-more-row irl-privacy-btn" id="irl-privacy-btn" type="button">
+		<span class="irl-more-row-icon" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span>
+		<span class="irl-more-row-text">
+			<span class="irl-more-row-label">Location & privacy</span>
+			<span class="irl-more-row-sub">Discovery precision, ghost visibility, your pins</span>
+		</span>
+		<svg class="irl-more-row-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+	</button>
+	<a class="irl-more-row irl-privacy-btn" id="irl-worldlines-btn" href="/world-lines">
+		<span class="irl-more-row-icon" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><circle cx="12" cy="12" r="4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></span>
+		<span class="irl-more-row-text">
+			<span class="irl-more-row-label">World Lines</span>
+			<span class="irl-more-row-sub">Proof-of-presence quests</span>
+		</span>
+		<svg class="irl-more-row-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+	</a>
+	<button class="irl-more-row irl-glasses-btn" id="irl-glasses-btn" type="button" aria-pressed="false">
+		<span class="irl-more-row-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M10 15a2 2 0 0 1 4 0"/><path d="m2.5 13 1.5-5a2 2 0 0 1 2-1.5"/><path d="m21.5 13-1.5-5a2 2 0 0 0-2-1.5"/></svg></span>
+		<span class="irl-more-row-text">
+			<span class="irl-more-row-label">Smart glasses</span>
+			<span class="irl-more-row-sub" id="irl-glasses-sub">Mirror the nearest-agent cue to a paired lens</span>
+		</span>
+	</button>
+</div>
 
 <!-- Immersive toggle — collapses all chrome so the AR view is unobstructed.
      Lives outside the topbar so it survives the collapse and remains the one
@@ -2158,30 +2344,13 @@
 		<span id="irl-camera-label">Camera AR</span>
 	</button>
 
+	<!-- Ordered by how often each is used: pin/place actions first (always
+	     on-screen without scrolling), setup + management actions trail off the
+	     right edge of the scroll strip (see .irl-secondary-row above). -->
 	<div class="irl-secondary-row">
-		<button class="irl-pill-btn" id="irl-agents-btn" type="button" aria-label="Switch AI agent">
-			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10" r="3"/></svg>
-			My Agents
-		</button>
-		<button class="irl-pill-btn" id="irl-avatar-btn" type="button" aria-label="Change avatar">
-			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg>
-			Avatar
-		</button>
-		<button class="irl-pill-btn" id="irl-anchor-btn" type="button" hidden aria-label="Place agent on the floor with AR">
-			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg>
-			Place on floor
-		</button>
-		<button class="irl-pill-btn" id="irl-carry-btn" type="button" aria-pressed="false" aria-label="Carry your agent and set it down where you aim on the floor">
-			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-			Move here
-		</button>
 		<button class="irl-pill-btn" id="irl-lock-btn" type="button" aria-pressed="false" aria-label="Pin avatar in real space">
 			<svg id="irl-lock-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
 			<span class="irl-lock-label">Pin here</span>
-		</button>
-		<button class="irl-pill-btn" id="irl-mapplace-btn" type="button" aria-label="Place this agent at a spot you choose on a map">
-			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-			Place on map
 		</button>
 		<button class="irl-pill-btn" id="irl-place-btn" type="button" aria-pressed="false">
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -2190,6 +2359,26 @@
 		<button class="irl-pill-btn" id="irl-clear-btn" type="button" hidden>
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
 			Clear
+		</button>
+		<button class="irl-pill-btn" id="irl-carry-btn" type="button" aria-pressed="false" aria-label="Carry your agent and set it down where you aim on the floor">
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+			Move here
+		</button>
+		<button class="irl-pill-btn" id="irl-anchor-btn" type="button" hidden aria-label="Place agent on the floor with AR">
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg>
+			Place on floor
+		</button>
+		<button class="irl-pill-btn" id="irl-mapplace-btn" type="button" aria-label="Place this agent at a spot you choose on a map">
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+			Place on map
+		</button>
+		<button class="irl-pill-btn" id="irl-agents-btn" type="button" aria-label="Switch AI agent">
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10" r="3"/></svg>
+			My Agents
+		</button>
+		<button class="irl-pill-btn" id="irl-avatar-btn" type="button" aria-label="Change avatar">
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg>
+			Avatar
 		</button>
 		<button class="irl-pill-btn" id="irl-mypins-btn" type="button" aria-label="My active pins">
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -2522,6 +2711,21 @@
      "unsupported device" state into #irl-overlay and never load the heavy module
      (so no thrown context error reaches the console). -->
 <script type="module">
+	// Publish the bottom dock's live height as --irl-dock-h so the fixed HUD
+	// pieces layered near it (joystick drag zone, money-drops FAB) always sit
+	// ABOVE the dock instead of underneath its buttons. Measured, not guessed:
+	// the dock's height moves with the status line, subtitle wrapping, and the
+	// object picker opening.
+	{
+		const dock = document.querySelector('footer.irl-bottom');
+		if (dock) {
+			const publish = () => document.documentElement.style.setProperty('--irl-dock-h', `${Math.ceil(dock.offsetHeight)}px`);
+			if ('ResizeObserver' in window) new ResizeObserver(publish).observe(dock);
+			window.addEventListener('resize', publish, { passive: true });
+			publish();
+		}
+	}
+
 	function webglSupported() {
 		try {
 			const c = document.createElement('canvas');

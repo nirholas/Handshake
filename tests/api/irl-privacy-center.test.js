@@ -34,7 +34,7 @@ const sqlMock = vi.fn((strings, ...values) => {
 	calls.push({ q, values });
 
 	// ── Summary aggregates ──
-	if (/FILTER \(WHERE hidden_at IS NOT NULL\)/i.test(q)) return P(summaryPinAgg);
+	if (/FILTER \(WHERE published IS FALSE\)/i.test(q)) return P(summaryPinAgg);
 	if (/JOIN irl_pins/i.test(q) && /COUNT\(\*\)::int\s+AS total/i.test(q)) return P(summaryInbox);
 	if (/FROM irl_interactions/i.test(q) && /viewer_device =/i.test(q) && /COUNT\(\*\)::int AS total/i.test(q)) {
 		return P(summaryAuthored);
@@ -195,16 +195,30 @@ describe('PATCH visibility — owner-gated unpublish / republish', () => {
 		expect(writes.length).toBe(0);
 	});
 
-	it('unpublish on an owned pin → 200 hidden:true; republish → hidden:false', async () => {
-		updateResult = [{ id: PIN_ID, hidden_at: '2026-06-23T00:00:00Z' }];
+	// Unpublish writes `published`, NOT `hidden_at`: a pin taken out of public view
+	// must stay visible to its own owner in AR (hidden_at blanks it for everyone).
+	it('unpublish on an owned pin → 200 private; republish → public', async () => {
+		updateResult = [{ id: PIN_ID, published: false }];
 		const hide = await call('PATCH', { body: { pinId: PIN_ID, action: 'unpublish' }, device: DEVICE });
 		expect(hide.res.statusCode).toBe(200);
 		expect(hide.body.hidden).toBe(true);
+		expect(hide.body.visibility).toBe('private');
 
-		updateResult = [{ id: PIN_ID, hidden_at: null }];
+		updateResult = [{ id: PIN_ID, published: true }];
 		const show = await call('PATCH', { body: { pinId: PIN_ID, action: 'republish' }, device: DEVICE });
 		expect(show.res.statusCode).toBe(200);
 		expect(show.body.hidden).toBe(false);
+		expect(show.body.visibility).toBe('public');
+	});
+
+	// The UPDATE must touch `published` and never re-introduce the moderation column.
+	it('the visibility UPDATE writes published, never hidden_at', async () => {
+		calls.length = 0;
+		updateResult = [{ id: PIN_ID, published: false }];
+		await call('PATCH', { body: { pinId: PIN_ID, action: 'unpublish' }, device: DEVICE });
+		const update = calls.map(c => c.q).find(q => /UPDATE irl_pins/i.test(q));
+		expect(update).toMatch(/SET published = FALSE/i);
+		expect(update).not.toMatch(/hidden_at/i);
 	});
 
 	it('a non-owner matches no row (UPDATE RETURNING empty) → 404', async () => {

@@ -2,7 +2,7 @@ diff --git a/src/server/index.js b/src/server/index.js
 index 67d7345..b3c1f9a 100644
 --- a/src/server/index.js
 +++ b/src/server/index.js
-@@ -32,7 +32,16 @@ if (!process.env.JWT_SECRET) {
+@@ -32,7 +32,20 @@ if (!process.env.JWT_SECRET) {
    throw new Error('[envs] JWT_SECRET not set')
  }
  if (!process.env.ADMIN_CODE) {
@@ -13,8 +13,12 @@ index 67d7345..b3c1f9a 100644
 +  // world.three.ws was repeatedly left UNPROTECTED (the 2026-06-12 void-fall).
 +  // Refuse to boot so a secret-less revision fails its startup probe and Cloud Run
 +  // keeps serving the last protected revision instead of exposing build rights.
++  // Exit explicitly instead of throwing: `import 'ses'` installs an uncaught-exception
++  // handler that reports the error but still lets the process exit 0, which reads as a
++  // clean shutdown in Cloud Run logs. A non-zero code names the failure for what it is.
 +  if (process.env.NODE_ENV === 'production') {
-+    throw new Error('[envs] ADMIN_CODE not set - refusing to start an UNPROTECTED world in production')
++    console.error('[envs] ADMIN_CODE not set - refusing to start an UNPROTECTED world in production')
++    process.exit(1)
 +  }
 +  console.warn('[envs] ADMIN_CODE not set - all users will have admin permissions!')
  }

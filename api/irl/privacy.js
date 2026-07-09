@@ -29,9 +29,11 @@
  * purges interactions this device AUTHORED on OTHER people's pins (viewer_device),
  * so the device id is genuinely forgotten — a subsequent summary returns empty.
  *
- * No new columns: unpublish reuses the existing `hidden_at` moderation column (a
- * hidden pin is already filtered out of every nearby/mine read). This endpoint
- * NEVER returns another user's coordinates — only the caller's own data.
+ * No new columns: unpublish writes the existing `published` flag, which withholds
+ * the pin from every OTHER reader's nearby / room / World Line feed while leaving
+ * it visible to its owner in AR. `hidden_at` remains moderation + expiry only (it
+ * blanks a pin for everyone, owner included). This endpoint NEVER returns another
+ * user's coordinates — only the caller's own data.
  */
 
 import { cors, json, wrap, rateLimited } from '../_lib/http.js';
@@ -116,7 +118,7 @@ async function handleSummary(res, { userId, deviceToken, anonymous }) {
 	const [pinAgg] = await sql`
 		SELECT
 			COUNT(*)::int                                              AS total,
-			COUNT(*) FILTER (WHERE hidden_at IS NOT NULL)::int         AS unpublished,
+			COUNT(*) FILTER (WHERE published IS FALSE)::int            AS unpublished,
 			COUNT(*) FILTER (WHERE expires_at IS NULL)::int            AS permanent,
 			MIN(placed_at)                                            AS oldest,
 			MAX(placed_at)                                            AS newest,
@@ -226,7 +228,14 @@ async function handleExport(res, { userId, deviceToken }) {
 	});
 }
 
-// ── PATCH — owner-initiated unpublish / republish (reuses hidden_at) ──────────
+// ── PATCH — owner-initiated unpublish / republish (writes `published`) ────────
+//
+// Unpublish makes a pin PRIVATE: withheld from every other reader's nearby, room
+// and World Line feed, while the OWNER still sees it in AR. That last clause is
+// the whole point — the previous implementation set `hidden_at`, the moderation
+// hide, which blanks the pin for the owner too and so is unusable for anyone who
+// wants to keep testing a placement they've taken out of public view. `hidden_at`
+// stays what it says it is: moderation (api/irl/report.js) and expiry.
 async function handleVisibility(res, { userId, deviceToken, body }) {
 	const pinId = body.pinId;
 	const action = body.action;
@@ -234,30 +243,36 @@ async function handleVisibility(res, { userId, deviceToken, body }) {
 	if (!ACTIONS.has(action)) return json(res, 400, { error: "action must be 'unpublish' or 'republish'" });
 
 	// Owner-scoped, null-guarded WHERE — an attacker with the wrong token/session
-	// matches no row and so toggles nothing (RETURNING empty → 404). Unpublish sets
-	// hidden_at = NOW() (invisible to every reader); republish clears it back to NULL.
-	// Neon's tagged template doesn't compose a nested sql`NOW()` fragment, so the
+	// matches no row and so toggles nothing (RETURNING empty → 404). Both arms guard
+	// the SUPPLIED token, not the column: a caller with no device token yields
+	// NULL::text IS NOT NULL → false, so it can never match a row whose device_token
+	// happens to be empty. Neon's tagged template doesn't compose fragments, so the
 	// two directions are two explicit queries rather than a spliced value.
-	const hide = action === 'unpublish';
-	const [row] = hide
+	const makePrivate = action === 'unpublish';
+	const [row] = makePrivate
 		? await sql`
 			UPDATE irl_pins
-			SET hidden_at = NOW()
+			SET published = FALSE
 			WHERE id = ${pinId}
 			  AND (expires_at IS NULL OR expires_at > NOW())
 			  AND ((${userId}::uuid IS NOT NULL AND user_id = ${userId}::uuid)
-			    OR (device_token IS NOT NULL AND device_token = ${deviceToken ?? ''}))
-			RETURNING id, hidden_at`
+			    OR (${deviceToken}::text IS NOT NULL AND device_token = ${deviceToken}::text))
+			RETURNING id, published`
 		: await sql`
 			UPDATE irl_pins
-			SET hidden_at = NULL
+			SET published = TRUE
 			WHERE id = ${pinId}
 			  AND (expires_at IS NULL OR expires_at > NOW())
 			  AND ((${userId}::uuid IS NOT NULL AND user_id = ${userId}::uuid)
-			    OR (device_token IS NOT NULL AND device_token = ${deviceToken ?? ''}))
-			RETURNING id, hidden_at`;
+			    OR (${deviceToken}::text IS NOT NULL AND device_token = ${deviceToken}::text))
+			RETURNING id, published`;
 	if (!row) return json(res, 404, { error: 'pin not found or not yours' });
-	return json(res, 200, { ok: true, pinId: row.id, hidden: row.hidden_at != null });
+	return json(res, 200, {
+		ok: true,
+		pinId: row.id,
+		hidden: row.published === false,
+		visibility: row.published === false ? 'private' : 'public',
+	});
 }
 
 // ── DELETE — pin | all | device, cascading to irl_interactions ────────────────
@@ -282,7 +297,7 @@ async function handleDelete(res, { userId, deviceToken, body }) {
 				SELECT id FROM irl_pins
 				WHERE id = ${pinId}
 				  AND ((${userId}::uuid IS NOT NULL AND user_id = ${userId}::uuid)
-				    OR (device_token IS NOT NULL AND device_token = ${deviceToken ?? ''}))
+				    OR (${deviceToken}::text IS NOT NULL AND device_token = ${deviceToken}::text))
 			)
 			RETURNING id
 		`;
@@ -290,7 +305,7 @@ async function handleDelete(res, { userId, deviceToken, body }) {
 			DELETE FROM irl_pins
 			WHERE id = ${pinId}
 			  AND ((${userId}::uuid IS NOT NULL AND user_id = ${userId}::uuid)
-			    OR (device_token IS NOT NULL AND device_token = ${deviceToken ?? ''}))
+			    OR (${deviceToken}::text IS NOT NULL AND device_token = ${deviceToken}::text))
 			RETURNING id
 		`;
 		if (!deletedPins.length) return json(res, 404, { error: 'pin not found or not yours' });
@@ -308,14 +323,14 @@ async function handleDelete(res, { userId, deviceToken, body }) {
 		WHERE pin_id IN (
 			SELECT id FROM irl_pins
 			WHERE ((${userId}::uuid IS NOT NULL AND user_id = ${userId}::uuid)
-			    OR (device_token IS NOT NULL AND device_token = ${deviceToken ?? ''}))
+			    OR (${deviceToken}::text IS NOT NULL AND device_token = ${deviceToken}::text))
 		)
 		RETURNING id
 	`;
 	const deletedPins = await sql`
 		DELETE FROM irl_pins
 		WHERE ((${userId}::uuid IS NOT NULL AND user_id = ${userId}::uuid)
-		    OR (device_token IS NOT NULL AND device_token = ${deviceToken ?? ''}))
+		    OR (${deviceToken}::text IS NOT NULL AND device_token = ${deviceToken}::text))
 		RETURNING id
 	`;
 

@@ -283,7 +283,7 @@ async function handleCreate(req, res) {
 	// The caller must own the anchor pin (it carries the precise spot). Read its coords
 	// server-side to derive the coarse + region cells — never trusted from the body.
 	const [pin] = await sql`
-		SELECT id, user_id, agent_id, lat, lng FROM irl_pins
+		SELECT id, user_id, agent_id, lat, lng, published FROM irl_pins
 		WHERE id = ${pinId} AND hidden_at IS NULL
 		  AND (expires_at IS NULL OR expires_at > NOW())
 		LIMIT 1
@@ -291,6 +291,16 @@ async function handleCreate(req, res) {
 	if (!pin) return json(res, 404, { error: 'pin not found' });
 	if (!pin.user_id || pin.user_id !== session.id) {
 		return json(res, 403, { error: 'you can only anchor a World Line to your own pin' });
+	}
+	// A World Line is a public invitation to walk to a spot. Anchoring one to a
+	// PRIVATE pin would publish the very coordinate the owner marked private, so
+	// refuse at creation rather than silently filtering it out of discovery later.
+	// The owner makes the pin public first — an explicit, deliberate act.
+	if (pin.published === false) {
+		return json(res, 409, {
+			error: 'this pin is private',
+			error_description: 'A World Line invites strangers to its location. Make the pin public before anchoring a quest to it.',
+		});
 	}
 
 	// The signing agent: the pin's agent, or a caller-supplied agent they own.
@@ -434,6 +444,11 @@ async function handleNearby(req, res) {
 		WHERE w.hidden_at IS NULL
 		  AND (w.expires_at IS NULL OR w.expires_at > NOW())
 		  AND p.hidden_at IS NULL AND (p.expires_at IS NULL OR p.expires_at > NOW())
+		  -- A quest anchored to a PRIVATE pin never reaches a stranger. This feed has
+		  -- the widest coordinate radius on the platform (600 m vs 60 m for pins), so
+		  -- it must honour the anchor pin's visibility or it silently becomes the
+		  -- cheapest private-pin bypass we ship.
+		  AND p.published IS NOT FALSE
 		  AND p.lat BETWEEN ${lat - latDelta} AND ${lat + latDelta}
 		  AND p.lng BETWEEN ${lng - lngDelta} AND ${lng + lngDelta}
 		ORDER BY w.created_at DESC

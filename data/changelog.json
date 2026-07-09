@@ -3,6 +3,33 @@
 	"entries": [
 		{
 			"date": "2026-07-09",
+			"title": "Avatars render again on seven pages that were showing an empty viewer",
+			"summary": "Avatars made on three.ws are saved in a compressed format to keep them small and quick to download. Seven pages — Cosmos, Minted, Creations, Vault, Pitch, the embodied-agent page, and the microphone lipsync demo — never set up the matching decompressor, so instead of a 3D model you got an empty viewer and an error in the console. All seven now load the decoder before the model, and the avatars appear as they should. The fix also went into the embeddable agent widget itself, so anyone who has pasted a three.ws agent onto their own site gets working compressed avatars automatically, with nothing to change on their end.",
+			"tags": [
+				"fix"
+			],
+			"link": "/cosmos"
+		},
+		{
+			"date": "2026-07-09",
+			"title": "/play: real water at the fishing ponds, and spare rods to find on the bank",
+			"summary": "The two fishing ponds no longer look like a flat tinted disc — they're now an animated water surface with real ripples, a sun-tracked sparkle, and a deep-to-shallow gradient that reacts to the world's day/night lighting. New alongside it: three spare fishing rods, leaning on posts around the map (both pond banks and the plaza), that any player can walk up to and pick up into their backpack — on top of the rod everyone already starts with. This also brought the chop/mine/cook gathering stations (trees, rocks, roast pits) online for the first time — they existed in the code but were never actually rendered in the world until now. Caught fish still sell for cash at the General Store, same as before.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-07-09",
+			"title": "Two broken pages fixed: vanity receipt verifier and Drive Your Avatar",
+			"summary": "Both pages failed to load anything at all, and both are working again. The receipt verifier at /vanity/verify loads its cryptography straight into your browser so the audit runs on your machine and nothing is sent anywhere — but the browser had no way to locate those crypto libraries, so the page sat dead and no receipt could be checked. It now resolves them properly: paste a receipt and every check runs, right through to opening a sealed envelope. On /temporary, the payment widget behind the in-world \"Feature your content\" billboard was loaded the wrong way and crashed on arrival, taking the pay button with it. It now loads the same way it does on every other page that uses it.",
+			"tags": [
+				"fix"
+			],
+			"link": "/vanity/verify"
+		},
+		{
+			"date": "2026-07-09",
 			"title": "Live SOL price restored on /three-live; Flappin UFO demo retired",
 			"summary": "Two quiet breakages, fixed. The live trade feed on /three-live now prices SOL-only trades correctly again — it was reading a price API directly from your browser, which the provider silently blocks, so those trades showed no dollar value; it now reads the same cached, multi-provider SOL/USD price the rest of the platform uses. Separately, the Flappin UFO arcade demo ran on an external deployment that has gone offline, leaving a blank screen and a leaderboard that never loaded. Rather than leave a broken page up, /play/ufo is now an honest retired notice that points you to the live experiences — the coin world, Sniper Arena, and Coin Clash.",
 			"tags": [

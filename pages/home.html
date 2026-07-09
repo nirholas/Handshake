@@ -2290,6 +2290,7 @@
 		.mktplace-item{flex-shrink:0;width:52px;height:52px;border-radius:10px;overflow:hidden;border:1px solid var(--hairline-strong);cursor:pointer;background:var(--surface-2);transition:border-color .15s,transform .15s;position:relative;display:block}
 		.mktplace-item:hover{border-color:var(--text-3);transform:translateY(-2px)}
 		.mktplace-item img{width:100%;height:100%;object-fit:cover;display:block}
+		.mktplace-item-initial{width:100%;height:100%;display:none;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:16px;font-weight:600;color:var(--text-3);text-transform:uppercase;line-height:1}
 		.mktplace-item-name{position:absolute;bottom:0;left:0;right:0;padding:2px 4px;font-family:var(--font-mono);font-size:7px;color:var(--text);background:rgba(0,0,0,.7);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 		.mktplace-more{flex-shrink:0;width:52px;height:52px;border-radius:10px;border:1px dashed var(--hairline-strong);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:18px;color:var(--text-4);cursor:pointer;transition:border-color .15s,color .15s;text-decoration:none}
 		.mktplace-more:hover{border-color:var(--text-3);color:var(--text-2)}
@@ -5607,7 +5608,6 @@
 
 	// ── Playground ──────────────────────────────────────────────────
 	(function initPlayground() {
-		const THUMB_CDN = 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb';
 		const textarea  = document.getElementById('pg-textarea');
 		const highlight = document.getElementById('pg-highlight');
 		const preview   = document.getElementById('pg-preview');
@@ -5804,6 +5804,13 @@
 				.then(function(r) { return r.json(); })
 				.then(function(d) {
 					var items = (Array.isArray(d.items) ? d.items : []).filter(function(it) { return it.glbUrl && it.avatarId; });
+					// The explore feed is newest-first, and a freshly forged avatar rarely has
+					// a thumbnail yet — left alone they monopolise the strip and every chip
+					// renders as a bare initial. Stable-partition thumbnailed avatars to the
+					// front so the picker shows what you're selecting; the rest still fill any
+					// slots left over.
+					items = items.filter(function(it) { return it.image; })
+						.concat(items.filter(function(it) { return !it.image; }));
 					var list = defaults.slice();
 					var seen = {};
 					defaults.forEach(function(da) { seen[da.id] = true; });
@@ -5815,7 +5822,12 @@
 							id: id,
 							name: item.name || '',
 							glb: devProxyGlb(item.glbUrl),
-							thumb: item.thumbUrl || item.image || (THUMB_CDN + '/' + id + '.png'),
+							// `image` is the avatar's stored thumbnail URL, or null when it has
+							// none. Pass the null straight through — renderAvatars() then draws
+							// the initial-letter chip. Never synthesise a thumb/<id>.png URL as
+							// a fallback: that object was never written, so R2 answers 404 with
+							// a text/plain body and Chrome blocks it (ERR_BLOCKED_BY_ORB).
+							thumb: item.image || null,
 						});
 					});
 					renderAvatars(list.slice(0, 14));
@@ -7111,41 +7123,76 @@
 	(function() {
 		var strip = document.getElementById('mktplace-strip');
 		if (!strip) return;
-		var THUMB_CDN = 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb';
 
-		fetch('/api/marketplace')
-			.then(function(r) { return r.json(); })
-			.then(function(data) {
-				var items = (data.agents || data.items || data || []).slice(0, 10);
+		fetch('/api/marketplace', { headers: { accept: 'application/json' } })
+			.then(function(r) {
+				if (!r.ok) throw new Error('HTTP ' + r.status);
+				return r.json();
+			})
+			.then(function(body) {
+				// /api/marketplace answers { data: { items: [...] } }. Each item is an
+				// agent listing: `id` is the agent id (what /agents/:id resolves), and
+				// `thumbnail_url` is a ready-to-use absolute URL — null when the listing's
+				// avatar has no stored thumbnail. Only ~1 in 6 listings carries one, so
+				// the initial-letter placeholder is the common path, not an error path.
+				var items = ((body && body.data && body.data.items) || []).filter(function(it) {
+					return it && it.id;
+				}).slice(0, 10);
+				if (!items.length) return renderBrowseFallback();
+
 				items.forEach(function(item) {
-					var id = item.avatar_id || item.avatarId || item.id;
-					var name = item.name || item.agent_name || id.slice(0, 6);
-					var thumb = item.thumbnail || (THUMB_CDN + '/' + id + '.png');
+					var name = item.name || item.id.slice(0, 6);
 					var a = document.createElement('a');
 					a.className = 'mktplace-item';
-					a.href = '/agents/' + id;
+					a.href = '/agents/' + item.id;
 					a.title = name;
-					var img = document.createElement('img');
-					img.src = thumb;
-					img.alt = name;
-					img.loading = 'lazy';
-					img.onerror = function() { this.style.display = 'none'; };
-					a.appendChild(img);
+
+					var initial = document.createElement('span');
+					initial.className = 'mktplace-item-initial';
+					initial.textContent = (name || '?').charAt(0);
+					a.appendChild(initial);
+
+					if (item.thumbnail_url) {
+						var img = document.createElement('img');
+						img.src = item.thumbnail_url;
+						img.alt = name;
+						img.loading = 'lazy';
+						// A stored thumbnail can still 404 (object pruned) — fall back to the
+						// initial rather than leaving a broken-image tile.
+						img.onerror = function() {
+							this.remove();
+							initial.style.display = 'flex';
+						};
+						a.appendChild(img);
+					} else {
+						initial.style.display = 'flex';
+					}
+
 					var lbl = document.createElement('span');
 					lbl.className = 'mktplace-item-name';
 					lbl.textContent = name;
 					a.appendChild(lbl);
 					strip.appendChild(a);
 				});
+
 				var more = document.createElement('a');
 				more.className = 'mktplace-more';
 				more.href = '/discover';
 				more.textContent = '→';
 				more.title = 'Browse all agents';
 				strip.appendChild(more);
-			}).catch(function() {
-				strip.innerHTML = '<a class="mktplace-more" href="/discover" style="width:auto;padding:0 16px;">Browse marketplace →</a>';
-			});
+			}).catch(renderBrowseFallback);
+
+		function renderBrowseFallback() {
+			strip.innerHTML = '';
+			var a = document.createElement('a');
+			a.className = 'mktplace-more';
+			a.href = '/discover';
+			a.style.width = 'auto';
+			a.style.padding = '0 16px';
+			a.textContent = 'Browse marketplace →';
+			strip.appendChild(a);
+		}
 	})();
 
 	// ── 10. Analytics: sparkline + animated counters ─────────────────

@@ -285,6 +285,8 @@ const MODAL_CSS = `
 	transition: background .15s, color .15s, transform .12s;
 }
 .irl-dx-help[hidden] { display: none; }
+/* Touch: 30px misses the 44px tap floor by a wide margin — grow the circle. */
+@media (hover: none) { .irl-dx-help { width: 40px; height: 40px; font-size: 16px; } }
 .irl-dx-help:hover { background: rgba(30,40,58,0.88); color: #eaf4ff; }
 .irl-dx-help:active { transform: scale(0.94); }
 .irl-dx-help:focus-visible { outline: 2px solid #8ec5ff; outline-offset: 2px; }

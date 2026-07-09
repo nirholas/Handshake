@@ -720,7 +720,11 @@ function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 function ensureStyles() {
 	if (_styled) return; _styled = true;
 	const css = `
-.irl-drops-fab{position:fixed;right:16px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:60;width:52px;height:52px;border-radius:999px;border:1px solid var(--wallet-stroke,rgba(139,92,246,.3));background:linear-gradient(160deg,rgba(20,18,30,.95),rgba(12,10,18,.95));color:var(--wallet-accent,#c4b5fd);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 0 0 var(--wallet-glow,rgba(139,92,246,.45));transition:transform .15s,box-shadow .2s,border-color .2s}
+.irl-drops-fab{position:fixed;right:16px;bottom:calc(var(--irl-dock-h, calc(96px + env(safe-area-inset-bottom,0px))) + 12px);z-index:60;width:52px;height:52px;border-radius:999px;border:1px solid var(--wallet-stroke,rgba(139,92,246,.3));background:linear-gradient(160deg,rgba(20,18,30,.95),rgba(12,10,18,.95));color:var(--wallet-accent,#c4b5fd);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 0 0 var(--wallet-glow,rgba(139,92,246,.45));transition:transform .15s,box-shadow .2s,border-color .2s}
+body.irl-immersive .irl-drops-fab{bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
+/* Any open bottom sheet outranks the FAB — it must never paint over a sheet's
+   controls (it sits at z 60 so it clears the page HUD, not the dialogs). */
+body:has([id$="-sheet"].is-open) .irl-drops-fab,body:has(#irl-caption-panel.is-open) .irl-drops-fab,body:has(#irl-calibrate-panel.is-open) .irl-drops-fab{opacity:0;pointer-events:none}
 .irl-drops-fab:hover{transform:translateY(-2px);border-color:var(--wallet-stroke-strong,rgba(139,92,246,.5));box-shadow:0 10px 30px rgba(0,0,0,.55),0 0 24px var(--wallet-glow,rgba(139,92,246,.45))}
 .irl-drops-fab:active{transform:translateY(0)}
 .irl-drops-fab:focus-visible{outline:2px solid var(--wallet-focus,rgba(139,92,246,.7));outline-offset:2px}
@@ -735,11 +739,13 @@ function ensureStyles() {
 .irl-drops-handle{width:38px;height:4px;border-radius:99px;background:rgba(255,255,255,.18);margin:2px auto 10px}
 .irl-drops-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .irl-drops-head h2{margin:0;font:700 17px var(--font-display,Inter,sans-serif);color:var(--ink-bright,#fff)}
-.irl-drops-close{background:none;border:none;color:var(--ink-dim,#9ca3af);font-size:16px;cursor:pointer;padding:6px;border-radius:8px}
+.irl-drops-close{background:none;border:none;color:var(--ink-dim,#9ca3af);font-size:16px;cursor:pointer;padding:6px;border-radius:8px;min-width:36px;min-height:36px}
+@media (hover:none){.irl-drops-close{min-width:44px;min-height:44px;font-size:18px}}
 .irl-drops-close:hover{color:#fff;background:rgba(255,255,255,.06)}
 .irl-drops-close:focus-visible{outline:2px solid var(--wallet-focus,rgba(139,92,246,.7));outline-offset:1px}
 .irl-drops-tabs{display:flex;gap:6px;margin-bottom:10px}
 .irl-drops-tab{flex:1;padding:8px 6px;border-radius:10px;border:1px solid transparent;background:rgba(255,255,255,.04);color:var(--ink-dim,#9ca3af);font:600 12.5px var(--font-body,Inter);cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+@media (hover:none){.irl-drops-tab{min-height:44px}}
 .irl-drops-tab:hover{background:rgba(255,255,255,.07);color:#e5e7eb}
 .irl-drops-tab[aria-selected=true]{background:var(--wallet-accent-fill,rgba(139,92,246,.15));border-color:var(--wallet-stroke,rgba(139,92,246,.3));color:var(--wallet-accent,#c4b5fd)}
 .irl-drops-tab:focus-visible{outline:2px solid var(--wallet-focus,rgba(139,92,246,.7));outline-offset:1px}

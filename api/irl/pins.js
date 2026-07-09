@@ -478,6 +478,38 @@ const PLACEMENT_KINDS = new Set(['precise', 'approximate']);
 const FUZZ_MIN_M = 10;    // below this the blur is within GPS error — meaningless
 const FUZZ_MAX_M = 500;   // above this it stops meaning "an agent near here"
 
+// ── Placement visibility ────────────────────────────────────────────────────
+// `published = false` means PRIVATE: the pin still renders for its OWNER (so you
+// can place an agent at home and walk around it in AR) but is withheld from every
+// other reader's nearby / room / world-line feed. It is deliberately distinct from
+// `hidden_at`, the moderation + expiry hide that withholds a pin from EVERYONE,
+// owner included — an owner testing a placement needs to see their own agent.
+//
+// Why this matters: proof-of-presence (IRL_FIX_SECRET) binds a read to a claimed
+// fix, but the mint trusts caller-supplied coordinates, so it raises the cost of a
+// geographic sweep without making one impossible. A private pin is not a cost —
+// it is an absence: no sweep, at any budget, returns a coordinate that the query
+// never selects. That is the only control that holds against a patient attacker.
+//
+// IRL_DEFAULT_PRIVATE flips the default for new placements. While /irl is
+// pre-launch and its operators are testing from their own homes, a placement is
+// private unless it explicitly asks to be public — the safe default is the one
+// that cannot leak a home address by omission.
+const VISIBILITIES = new Set(['public', 'private']);
+
+function defaultsToPrivate() {
+	const v = String(process.env.IRL_DEFAULT_PRIVATE ?? '').trim().toLowerCase();
+	return v === '1' || v === 'true' || v === 'yes';
+}
+
+// Resolve a placement's visibility from the request body, falling back to the
+// deployment default. An unrecognised value is never silently treated as public.
+export function readVisibility(body) {
+	const raw = String(body?.visibility ?? '').trim().toLowerCase();
+	if (VISIBILITIES.has(raw)) return raw;
+	return defaultsToPrivate() ? 'private' : 'public';
+}
+
 // Pin ids are server-minted UUIDs (gen_random_uuid()). Validate the format at the
 // top of every mutation path so an oversized / garbage id is a clean 400 and never
 // reaches the DB query or a log line. The SQL is already parameterized (this is
@@ -933,13 +965,15 @@ export default wrap(async (req, res) => {
 			       avatar_url, avatar_name, caption, x402_endpoint, placed_at, view_count,
 			       anchor_height_m, anchor_yaw_deg, anchor_quat,
 			       gps_accuracy_m, altitude_m, anchor_source, avatar_version,
-			       placement_kind, fuzz_radius_m,
+			       placement_kind, fuzz_radius_m, published,
 			       vps_provider, vps_id,
 			       room_id, rel_east_m, rel_north_m, origin_lat, origin_lng, origin_yaw_deg
 			FROM irl_pins
 			WHERE room_id = ${roomId}
 			  AND hidden_at IS NULL
-			  AND published IS NOT FALSE
+			  AND (published IS NOT FALSE
+			    OR (${myId}::uuid IS NOT NULL AND user_id = ${myId}::uuid)
+			    OR (${myTok}::text IS NOT NULL AND device_token = ${myTok}::text))
 			  AND (expires_at IS NULL OR expires_at > NOW())
 			ORDER BY placed_at DESC
 			LIMIT 50
@@ -977,6 +1011,9 @@ export default wrap(async (req, res) => {
 			avatar_version:  Number(r.avatar_version) || 0,
 			placement_kind:  r.placement_kind === 'approximate' ? 'approximate' : 'precise',
 			fuzz_radius_m:   Number.isFinite(r.fuzz_radius_m) ? r.fuzz_radius_m : null,
+			// A private pin only ever reaches its owner, so this is always 'public'
+			// for a stranger — it exists so the owner's UI can badge their own pins.
+			visibility:      r.published === false ? 'private' : 'public',
 			is_mine: (!!myId && r.user_id === myId) || (!!myTok && r.device_token === myTok),
 		}));
 
@@ -1039,13 +1076,15 @@ export default wrap(async (req, res) => {
 			       avatar_url, avatar_name, caption, x402_endpoint, placed_at, view_count,
 			       anchor_height_m, anchor_yaw_deg, anchor_quat,
 			       gps_accuracy_m, altitude_m, anchor_source, avatar_version,
-			       placement_kind, fuzz_radius_m,
+			       placement_kind, fuzz_radius_m, published,
 			       room_id, rel_east_m, rel_north_m, origin_lat, origin_lng, origin_yaw_deg
 			FROM irl_pins
 			WHERE lat BETWEEN ${lat - latDelta} AND ${lat + latDelta}
 			  AND lng BETWEEN ${lng - lngDelta} AND ${lng + lngDelta}
 			  AND hidden_at IS NULL
-			  AND published IS NOT FALSE
+			  AND (published IS NOT FALSE
+			    OR (${myId}::uuid IS NOT NULL AND user_id = ${myId}::uuid)
+			    OR (${myTok}::text IS NOT NULL AND device_token = ${myTok}::text))
 			  AND (expires_at IS NULL OR expires_at > NOW())
 			ORDER BY placed_at DESC
 			LIMIT 50
@@ -1097,6 +1136,9 @@ export default wrap(async (req, res) => {
 				// was never stored, so surfacing "≈ approximate (~Nm)" leaks nothing.
 				placement_kind:  r.placement_kind === 'approximate' ? 'approximate' : 'precise',
 				fuzz_radius_m:   Number.isFinite(r.fuzz_radius_m) ? r.fuzz_radius_m : null,
+				// A private pin only ever reaches its owner, so this is always 'public'
+				// for a stranger — it exists so the owner's UI can badge their own pins.
+				visibility:      r.published === false ? 'private' : 'public',
 				is_mine: (!!myId && r.user_id === myId) || (!!myTok && r.device_token === myTok),
 				distance_m: Math.round(haversineDist(lat, lng, r.lat, r.lng)),
 			}))
@@ -1307,6 +1349,8 @@ export default wrap(async (req, res) => {
 			? Math.min(FUZZ_MAX_M, Math.max(FUZZ_MIN_M, rawFuzz))
 			: null;
 
+		const visibility = readVisibility(body);
+
 		const [pin] = await sql`
 			INSERT INTO irl_pins
 				(user_id, agent_id, device_token, lat, lng, heading,
@@ -1314,7 +1358,7 @@ export default wrap(async (req, res) => {
 				 anchor_height_m, anchor_yaw_deg, anchor_quat,
 				 gps_accuracy_m, altitude_m, anchor_source, geocell7,
 				 room_id, rel_east_m, rel_north_m, origin_lat, origin_lng, origin_yaw_deg,
-				 placement_kind, fuzz_radius_m, vps_provider, vps_id)
+				 placement_kind, fuzz_radius_m, vps_provider, vps_id, published)
 			VALUES (
 				${userId},
 				${body.agentId    ?? null},
@@ -1342,7 +1386,8 @@ export default wrap(async (req, res) => {
 				${placementKind},
 				${fuzzRadiusM},
 				${vpsProvider},
-				${vpsId}
+				${vpsId},
+				${visibility === 'public'}
 			)
 			RETURNING *
 		`;
@@ -1522,7 +1567,7 @@ export default wrap(async (req, res) => {
 			  AND (expires_at IS NULL OR expires_at > NOW())
 			  AND (
 			    (${userId}::uuid IS NOT NULL AND user_id = ${userId}::uuid)
-			    OR (device_token IS NOT NULL AND device_token = ${deviceToken ?? ''})
+			    OR (${deviceToken}::text IS NOT NULL AND device_token = ${deviceToken}::text)
 			  )
 			RETURNING id, lat, lng
 		`;

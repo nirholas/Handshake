@@ -3406,6 +3406,8 @@ function syncCueMuteButton() {
 	btn.classList.toggle('is-muted', _cueMuted);
 	btn.setAttribute('aria-label', _cueMuted ? 'Arrival sound off — tap to unmute' : 'Arrival sound on — tap to mute');
 	btn.title = _cueMuted ? 'Arrival sound off' : 'Arrival sound on';
+	const sub = document.getElementById('irl-cue-mute-sub');
+	if (sub) sub.textContent = _cueMuted ? 'Off — tap to turn back on' : 'On — plays when an agent enters range';
 }
 
 // The transient "look around" banner. aria-live polite so a screen reader announces
@@ -5021,6 +5023,7 @@ new MutationObserver(() => {
 // L3 — Location & privacy center: honest disclosure + discovery precision +
 // presence opt-in + a jump into pin management, all in one designed surface.
 document.getElementById('irl-privacy-btn')?.addEventListener('click', () => {
+	closeMoreSheet();
 	openPrivacyCenter({
 		getGhost: getShareGhost,
 		setGhost: applyGhost,
@@ -5042,12 +5045,33 @@ function syncGlassesButton() {
 	const label = on ? `Glasses connected — ${glassesBridge.deviceName || 'tap to manage'}` : 'Connect smart glasses';
 	glassesBtn.setAttribute('aria-label', label);
 	glassesBtn.title = label;
+	const sub = document.getElementById('irl-glasses-sub');
+	if (sub) sub.textContent = on ? `Connected — ${glassesBridge.deviceName || 'tap to manage'}` : 'Mirror the nearest-agent cue to a paired lens';
 }
-glassesBtn?.addEventListener('click', () => openGlassesConnect(glassesBridge));
+glassesBtn?.addEventListener('click', () => { closeMoreSheet(); openGlassesConnect(glassesBridge); });
 glassesBridge.on('status', syncGlassesButton);
 syncGlassesButton();
 // Clean BLE teardown if the page goes away while paired.
 window.addEventListener('pagehide', () => { try { glassesBridge.destroy(); } catch {} });
+
+// "More" overflow sheet — arrival sound, location & privacy, World Lines,
+// smart glasses. Mirrors the My Pins sheet's open/close + focus-trap contract.
+const moreBtn = document.getElementById('irl-more-btn');
+function openMoreSheet() {
+	const sheet = document.getElementById('irl-more-sheet');
+	if (!sheet) return;
+	sheet.classList.add('is-open');
+	moreBtn?.setAttribute('aria-expanded', 'true');
+	trapSheet(sheet, closeMoreSheet, { initialFocus: document.getElementById('irl-more-close') });
+}
+function closeMoreSheet() {
+	const sheet = document.getElementById('irl-more-sheet');
+	sheet?.classList.remove('is-open');
+	moreBtn?.setAttribute('aria-expanded', 'false');
+	releaseSheet(sheet);
+}
+moreBtn?.addEventListener('click', openMoreSheet);
+document.getElementById('irl-more-close')?.addEventListener('click', closeMoreSheet);
 
 document.getElementById('irl-mypins-close')?.addEventListener('click', closeMyPinsSheet);
 
