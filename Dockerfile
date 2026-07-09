@@ -15,8 +15,18 @@ WORKDIR /app
 
 # node-gyp toolchain: native deps (better-sqlite3, bigint bindings) have no
 # Node 24 prebuilts, so `npm rebuild` compiles them from source.
+#
+# The lib*/fonts block is the shared-library runtime for headless chromium
+# (@sparticuz/chromium-min downloads the binary to /tmp at first use, but it
+# still links against system libs). Without it every avatar-thumbnail render
+# on Cloud Run dies at launch with "libnspr4.so: cannot open shared object
+# file" — see api/_lib/render-glb.js and api/cron/avatar-thumbnail-backfill.js.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 make g++ \
+       libnspr4 libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+       libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+       libgbm1 libasound2 libpango-1.0-0 libcairo2 libx11-6 libxcb1 libxext6 \
+       libexpat1 libglib2.0-0 fonts-liberation ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Same browser-download skips as the Vercel install command.
