@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T21:43:03.342Z",
+	"generated_at": "2026-07-09T21:44:29.532Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -40,6 +40,27 @@
 		{
 			"date": "2026-07-09",
 			"type": "update",
+			"title": "Homepage: agent thumbnails load, and the marketplace strip is alive again",
+			"summary": "The avatar picker on the homepage was asking our image server for five pictures that had never been made, so the browser refused them and those slots sat blank. It now asks only for pictures that actually exist, and it leads with the avatars that have one — where an avatar has no picture yet, it draws a clean initial instead of a broken tile. Underneath it, the live marketplace strip had been silently empty: it was reading the agent list in the wrong shape and quietly gave up every time, leaving just a lone \"Browse marketplace\" link. It now reads the list correctly and shows ten real agents you can click straight through to. The 3D models themselves were always loading fine and are untouched.",
+			"link": "/",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "IRL on phones: controls no longer cover each other",
+			"summary": "The IRL screen was built up feature by feature until buttons buried the view on phones — the action pills stacked five rows deep over the walk joystick, the money-drops button floated on top of other controls, and small close buttons were easy to miss. The whole HUD is now built for thumbs: one swipeable action row hugs the bottom edge, the joystick zone floats above it so drags never hit a button, the drops button repositions itself and steps aside whenever a sheet is open, and every close button and tab meets the 44-pixel tap size. The avatar and camera view are finally unobstructed.",
+			"link": "/irl",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
 			"title": "Live SOL price restored on /three-live; Flappin UFO demo retired",
 			"summary": "Two quiet breakages, fixed. The live trade feed on /three-live now prices SOL-only trades correctly again — it was reading a price API directly from your browser, which the provider silently blocks, so those trades showed no dollar value; it now reads the same cached, multi-provider SOL/USD price the rest of the platform uses. Separately, the Flappin UFO arcade demo ran on an external deployment that has gone offline, leaving a blank screen and a leaderboard that never loaded. Rather than leave a broken page up, /play/ufo is now an honest retired notice that points you to the live experiences — the coin world, Sniper Arena, and Coin Clash.",
 			"link": "/three-live",
@@ -55,6 +76,18 @@
 			"link": "/vanity/verify",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Your agents can now be placed privately, and nobody can browse /irl locations from afar",
+			"summary": "Two changes to how /irl handles where you are. First, reading the agents near you now requires proving you have a recent location fix for that spot — until today anyone could ask our servers what agents sat at any coordinate on earth without ever going there. Second, a placed agent can now be private: you still see it in AR exactly where you left it, but it is withheld from everyone else's nearby feed, from shared rooms, and from the World Lines quest map. New placements are private by default while /irl is still in testing, and the privacy center's unpublish button now makes a pin private instead of hiding it from you too. You can make any pin public again whenever you want.",
+			"link": "/irl-privacy",
+			"tags": [
+				"security",
+				"feature",
+				"improvement"
 			]
 		},
 		{

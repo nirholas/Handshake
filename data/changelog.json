@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-07-09",
+			"title": "Your agents can now be placed privately, and nobody can browse /irl locations from afar",
+			"summary": "Two changes to how /irl handles where you are. First, reading the agents near you now requires proving you have a recent location fix for that spot — until today anyone could ask our servers what agents sat at any coordinate on earth without ever going there. Second, a placed agent can now be private: you still see it in AR exactly where you left it, but it is withheld from everyone else's nearby feed, from shared rooms, and from the World Lines quest map. New placements are private by default while /irl is still in testing, and the privacy center's unpublish button now makes a pin private instead of hiding it from you too. You can make any pin public again whenever you want.",
+			"tags": [
+				"security",
+				"feature",
+				"improvement"
+			],
+			"link": "/irl-privacy"
+		},
+		{
+			"date": "2026-07-09",
+			"title": "Homepage: agent thumbnails load, and the marketplace strip is alive again",
+			"summary": "The avatar picker on the homepage was asking our image server for five pictures that had never been made, so the browser refused them and those slots sat blank. It now asks only for pictures that actually exist, and it leads with the avatars that have one — where an avatar has no picture yet, it draws a clean initial instead of a broken tile. Underneath it, the live marketplace strip had been silently empty: it was reading the agent list in the wrong shape and quietly gave up every time, leaving just a lone \"Browse marketplace\" link. It now reads the list correctly and shows ten real agents you can click straight through to. The 3D models themselves were always loading fine and are untouched.",
+			"tags": [
+				"fix"
+			],
+			"link": "/"
+		},
+		{
+			"date": "2026-07-09",
 			"title": "Avatars render again on seven pages that were showing an empty viewer",
 			"summary": "Avatars made on three.ws are saved in a compressed format to keep them small and quick to download. Seven pages — Cosmos, Minted, Creations, Vault, Pitch, the embodied-agent page, and the microphone lipsync demo — never set up the matching decompressor, so instead of a 3D model you got an empty viewer and an error in the console. All seven now load the decoder before the model, and the avatars appear as they should. The fix also went into the embeddable agent widget itself, so anyone who has pasted a three.ws agent onto their own site gets working compressed avatars automatically, with nothing to change on their end.",
 			"tags": [
@@ -12550,6 +12570,16 @@
 			"tags": [
 				"sdk",
 				"feature"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-07-09",
+			"title": "IRL on phones: controls no longer cover each other",
+			"summary": "The IRL screen was built up feature by feature until buttons buried the view on phones — the action pills stacked five rows deep over the walk joystick, the money-drops button floated on top of other controls, and small close buttons were easy to miss. The whole HUD is now built for thumbs: one swipeable action row hugs the bottom edge, the joystick zone floats above it so drags never hit a button, the drops button repositions itself and steps aside whenever a sheet is open, and every close button and tab meets the 44-pixel tap size. The avatar and camera view are finally unobstructed.",
+			"tags": [
+				"improvement",
+				"fix"
 			],
 			"link": "/irl"
 		}

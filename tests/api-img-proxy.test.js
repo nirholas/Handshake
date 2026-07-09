@@ -1,6 +1,6 @@
 // Coverage for api/img.js — the same-origin image proxy used by the live
-// pump.fun feeds (/pump-live, /pump-visualizer). We verify the metadata
-// resolution mode added for token launch art:
+// pump.fun feeds (/pump-live, /pump-visualizer, /oracle, /radar). We verify the
+// metadata resolution mode added for token launch art:
 //
 //   1. ?seed=<x> alone yields the on-brand SVG placeholder (no upstream call).
 //   2. ?meta=<json-uri> resolves the document's `.image` server-side and proxies
@@ -9,6 +9,16 @@
 //      serve attacker-supplied inline content from our own origin).
 //   4. A metadata fetch failure falls through to the placeholder, never an error.
 //   5. No url/meta/seed at all is a 400.
+//
+// …and the `?url=` metadata follow: upstream feeds store the token's image URI
+// and its metadata URI in one column, so a `?url=` may address either. When it
+// resolves to a JSON document we follow its `.image` exactly one hop:
+//
+//   6. ?url=<json-uri> → follows `.image` → proxies the real artwork.
+//   7. The follow is one hop only — a doc naming another doc terminates.
+//   8. A data: image in a followed doc is rejected → placeholder.
+//   9. ?url=<image> is served directly, unchanged (no JSON path taken).
+//  10. The `?meta=` path does not accept JSON for the artwork itself.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 

@@ -5,10 +5,16 @@ discover it in AR. The single most sensitive thing the platform does here is rev
 **where an agent is**. This document states, honestly, what the public nearby read
 protects against, how it degrades, and the residual exposure we accept by design.
 
-The one read in scope: `GET /api/irl/pins?lat&lng&radius` — the per-viewer proximity
-feed. It is the **only** surface that ever returns another user's agent location.
+Three reads return another user's location, all presence-gated and all bounded by a
+radius: `GET /api/irl/pins?lat&lng&radius` (≤60 m, the per-viewer proximity feed),
+`GET /api/irl/drops?lat&lng&radius` (≤80 m) and `GET /api/irl/world-lines/nearby`
+(≤600 m). The pins feed is the one the controls below are written against; drops and
+World Lines shipped later and inherit the same fix gate.
+
 (`/api/irl/pins/mine`, `agent-card`, `agent-summary`, `interactions*`, `report`,
-`share-frame` do not — see `reports/irl-location-leak-audit.md`.)
+`share-frame` do not return others' coordinates — see
+`reports/irl-location-leak-audit.md`, which predates drops and World Lines and so
+does not cover them.)
 
 ## What the read protects against
 
@@ -56,11 +62,56 @@ feed. It is the **only** surface that ever returns another user's agent location
   Room-anchored agents keep exact intra-room layout via relative offsets, so the cap
   costs render quality nothing while removing the false-precision fingerprint.
 
+## Proof-of-presence (H3) — live, and what it does NOT buy
+
+`IRL_FIX_SECRET` is set in production, so `fixEnforced()` is true and all three
+coordinate reads — `GET /api/irl/pins` (60 m), `GET /api/irl/drops` (80 m) and
+`GET /api/irl/world-lines/nearby` (600 m) — reject a request that carries no valid
+`x-irl-fix` token, a forged one, an expired one, or one minted more than
+`FIX_TOLERANCE_M` (250 m) from the point being read. Before it was enabled, any of
+those reads answered for **any coordinate on earth** from anywhere.
+
+**Be honest about the ceiling.** `POST /api/irl/fix-token` mints from
+*caller-supplied* `lat`/`lng`. There is no attestation that the caller is really
+there — no device integrity check, no signed GNSS. So the token proves the caller
+*claimed* a coordinate, not that they occupied it. What enforcement actually buys is
+cost: a sweeper must now mint per ~250 m anchor instead of reading arbitrary points,
+and both mint (30/min/IP) and read (60/min/IP) are rate-limited.
+
+Concretely, from a single IP: a 60 m pin read covers ~0.011 km², so tiling
+Manhattan's ~59 km² takes ~5 200 reads ≈ 90 minutes. World Lines is the cheapest
+surface by far — its 600 m radius covers ~1.13 km² per read, so the same area falls
+in under a minute. Rotating IPs collapses all of these numbers. Presence enforcement
+is a speed bump with a real slope; it is not a wall.
+
+## The control that does hold: private pins
+
+`published = false` makes a pin **private** — it is withheld from every other
+reader's nearby, room and World Line feed, while its owner still sees it in AR. A
+private pin is not a cost imposed on an attacker; it is an absence. No sweep, at any
+budget, with any number of IPs, returns a coordinate the query never selects.
+
+- Enforced in both public pins reads (`api/irl/pins.js`) as
+  `published IS NOT FALSE OR <caller owns the row>`, so the owner keeps their view.
+- Enforced in the World Lines discovery join (`p.published IS NOT FALSE`), because
+  that 600 m feed would otherwise be the cheapest private-pin bypass we ship.
+- Anchoring a World Line to a private pin is refused at creation (409), not merely
+  filtered at read time — a quest is a public invitation to a coordinate.
+- `IRL_DEFAULT_PRIVATE=1` makes new placements private unless they explicitly ask to
+  be public. It is set in production: while /irl is pre-launch and its operators test
+  from their own homes, the safe default is the one that cannot leak by omission.
+- The privacy center's unpublish writes `published`, not `hidden_at`. (`hidden_at`
+  is moderation + expiry: it blanks a pin for *everyone*, owner included, which makes
+  it useless to someone who wants to keep testing a placement they took out of view.)
+
+Distinct from coordinate coarsening: coarsening reduces the precision of a coordinate
+that is still returned. Privacy withholds the row.
+
 ## Out of scope here
 
-- Proof-of-presence (H3) — a cell-bound fix token would further bind a read to a
-  real, recent fix in that cell, denying a token-per-cell sweep. If/when it lands,
-  the cross-cell denial assertion belongs in `tests/api/irl-pins-hardening.test.js`.
+- Attested presence — a device-signed or GNSS-signed fix would upgrade the token from
+  "I claim I am here" to "I am here", denying the token-per-cell sweep described
+  above. Until then, private pins, not the fix token, are the guarantee.
 - Per-account reputation / banning of repeat sweepers (future).
 
 No limit in this document silently reduces coverage: every cap above is written down.

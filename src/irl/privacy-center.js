@@ -490,16 +490,21 @@ export function openMyDataPanel({ onChanged } = {}) {
 		}
 
 		function renderPinRow(p) {
-			const hidden = !!p.hidden_at;
+			// `published === false` is PRIVATE: still yours to see in AR, withheld from
+			// everyone else. `hidden_at` is the moderation/expiry hide — a pin taken out
+			// of the world entirely — so a row is "private" only on the published flag.
+			const priv = p.published === false;
 			const name = p.avatar_name || p.caption || 'Placed agent';
 			const sub = fmtDate(p.placed_at) + (p.expires_at ? ` · expires ${fmtDate(p.expires_at)}` : ' · permanent');
 			return `
-				<div class="irlpc-pin ${hidden ? 'hidden' : ''}" data-pin="${esc(p.id)}" data-hidden="${hidden}">
+				<div class="irlpc-pin ${priv ? 'hidden' : ''}" data-pin="${esc(p.id)}" data-hidden="${priv}">
 					<div class="pmeta">
-						<div class="pname">${esc(name)}${hidden ? '<span class="irlpc-tag">hidden</span>' : ''}</div>
-						<div class="psub">${esc(sub)}</div>
+						<div class="pname">${esc(name)}${priv ? '<span class="irlpc-tag">private</span>' : ''}</div>
+						<div class="psub">${esc(sub)}${priv ? ' · only you can see this' : ''}</div>
 					</div>
-					<button class="irlpc-pinbtn" type="button" data-toggle>${hidden ? 'Republish' : 'Unpublish'}</button>
+					<button class="irlpc-pinbtn" type="button" data-toggle
+						title="${priv ? 'Let anyone standing here discover this agent' : 'Keep this agent visible to you, hidden from everyone else'}"
+					>${priv ? 'Make public' : 'Make private'}</button>
 					<button class="irlpc-pinbtn danger" type="button" data-del>Delete</button>
 				</div>`;
 		}
@@ -510,24 +515,24 @@ export function openMyDataPanel({ onChanged } = {}) {
 			const delBtn = rowEl.querySelector('[data-del]');
 
 			toggleBtn?.addEventListener('click', async () => {
-				const hidden = rowEl.getAttribute('data-hidden') === 'true';
-				const action = hidden ? 'republish' : 'unpublish';
+				const wasPrivate = rowEl.getAttribute('data-hidden') === 'true';
+				const action = wasPrivate ? 'republish' : 'unpublish';
 				toggleBtn.disabled = true; toggleBtn.textContent = '…';
 				try {
 					const r = await privacyApi('PATCH', { body: { pinId: id, action } });
-					const nowHidden = !!r?.hidden;
-					rowEl.setAttribute('data-hidden', String(nowHidden));
-					rowEl.classList.toggle('hidden', nowHidden);
-					toggleBtn.textContent = nowHidden ? 'Republish' : 'Unpublish';
+					const nowPrivate = r?.visibility === 'private';
+					rowEl.setAttribute('data-hidden', String(nowPrivate));
+					rowEl.classList.toggle('hidden', nowPrivate);
+					toggleBtn.textContent = nowPrivate ? 'Make public' : 'Make private';
 					const nameEl = rowEl.querySelector('.pname');
 					const tag = nameEl.querySelector('.irlpc-tag');
-					if (nowHidden && !tag) nameEl.insertAdjacentHTML('beforeend', '<span class="irlpc-tag">hidden</span>');
-					if (!nowHidden && tag) tag.remove();
-					toast(nowHidden ? 'Pin hidden from everyone' : 'Pin is visible again');
+					if (nowPrivate && !tag) nameEl.insertAdjacentHTML('beforeend', '<span class="irlpc-tag">private</span>');
+					if (!nowPrivate && tag) tag.remove();
+					toast(nowPrivate ? 'Only you can see this agent now' : 'Anyone standing here can discover this agent');
 					onChanged?.();
 				} catch (e) {
 					toast(e.message || 'Could not update the pin', 'err');
-					toggleBtn.textContent = hidden ? 'Republish' : 'Unpublish';
+					toggleBtn.textContent = wasPrivate ? 'Make public' : 'Make private';
 				} finally {
 					toggleBtn.disabled = false;
 				}

@@ -9,6 +9,8 @@
 // conviction-tier edge backtest, the agent action-loop arm panel, and the 3D
 // force graph. The coin drawer also streams live trades via oracle-tape.js.
 
+import { proxiedImageURL } from './ipfs.js';
+
 const NETWORK = 'mainnet';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -58,17 +60,16 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 //
 // The placeholder URL is carried in `data-ph` and read back via `this.dataset.ph`
 // rather than interpolated into the onerror script. Seeds are attacker-controlled
-// (a pump.fun launcher picks the token symbol) and encodeURIComponent leaves `'`
-// unescaped, so splicing one into a quoted JS string literal would be an injection
-// vector. Here the onerror body is a constant and both URLs only ever land in
-// esc()'d attribute values, where no JS-context escaping is needed at all.
-const encUri = (v) =>
-	encodeURIComponent(String(v)).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
-
+// (a pump.fun launcher picks the token symbol), so splicing one into a quoted JS
+// string literal would be an injection vector. Here the onerror body is a constant
+// and both URLs only ever land in esc()'d attribute values.
 function proxyImgAttrs(rawUrl, seed) {
-	const placeholder = `/api/img?seed=${encUri(seed || 'coin')}`;
-	const src = rawUrl && /^(https?|ipfs):\/\//i.test(String(rawUrl))
-		? `/api/img?url=${encUri(rawUrl)}&seed=${encUri(seed || 'coin')}`
+	const s = String(seed || 'coin');
+	const placeholder = `/api/img?${new URLSearchParams({ seed: s })}`;
+	// Only remote art is proxied. Anything else — a javascript:/data: URI reaching
+	// us through a creator-controlled feed — degrades to the placeholder instead.
+	const src = rawUrl && /^(https?|ipfs|ar):\/\//i.test(String(rawUrl))
+		? proxiedImageURL(String(rawUrl), s)
 		: placeholder;
 	return `src="${esc(src)}" data-ph="${esc(placeholder)}" onerror="this.onerror=null;this.src=this.dataset.ph"`;
 }

@@ -184,7 +184,7 @@ async function handleSummary(res, { userId, deviceToken, anonymous }) {
 async function handleExport(res, { userId, deviceToken }) {
 	const pins = await sql`
 		SELECT id, agent_id, lat, lng, heading, avatar_name, avatar_url, caption,
-		       x402_endpoint, placed_at, expires_at, hidden_at, view_count,
+		       x402_endpoint, placed_at, expires_at, hidden_at, published, view_count,
 		       gps_accuracy_m, altitude_m, anchor_source
 		FROM irl_pins
 		WHERE ((${userId}::uuid IS NOT NULL AND user_id = ${userId}::uuid)

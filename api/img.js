@@ -204,20 +204,28 @@ function placeholderSvg(seed) {
 </svg>`;
 }
 
-// Resolve a token's artwork URL from its metadata JSON document. The metadata
-// is creator-controlled, so we (a) fetch through the SSRF-hardened JSON client,
-// (b) accept only an http(s) image URL — data: images are rejected so we never
-// serve attacker-supplied inline content from our own origin, and (c) return
-// null on any failure so the caller falls through to the on-brand placeholder.
+// Pull the artwork URL out of a token metadata document. The metadata is
+// creator-controlled, so we accept only a non-empty string and reject data: URLs
+// — we never serve attacker-supplied inline content from our own origin. The URL
+// itself is still validated by the SSRF fetcher before anything is requested.
+// Returns null on anything unusable, so callers fall through to the placeholder.
+function imageFromMetaDoc(data) {
+	if (!data || typeof data !== 'object') return null;
+	const candidate = data.image || data.image_url || data.imageUrl || data.imageUri || null;
+	if (typeof candidate !== 'string') return null;
+	const trimmed = candidate.trim();
+	if (!trimmed || /^data:/i.test(trimmed)) return null;
+	return trimmed;
+}
+
+// Resolve a token's artwork URL from its metadata JSON document, fetched through
+// the SSRF-hardened JSON client. Backs the explicit `?meta=` parameter; the
+// `?url=` path reaches the same place via raceCandidates()'s JSON detection.
 async function resolveImageFromMeta(metaUri, timeoutMs = META_TIMEOUT_MS) {
 	try {
 		const { ok, data } = await safeFetchJson(metaUri, { timeoutMs });
-		if (!ok || !data || typeof data !== 'object') return null;
-		const candidate = data.image || data.image_url || data.imageUrl || data.imageUri || null;
-		if (typeof candidate !== 'string') return null;
-		const trimmed = candidate.trim();
-		if (!trimmed || /^data:/i.test(trimmed)) return null;
-		return trimmed;
+		if (!ok) return null;
+		return imageFromMetaDoc(data);
 	} catch {
 		return null;
 	}
@@ -273,11 +281,26 @@ export default wrap(async function handler(req, res) {
 	// Race all candidate gateways concurrently inside whatever is left of the shared
 	// budget. The first valid image wins; if every gateway fails (or the budget
 	// runs out) we fall through to the placeholder below — always within the 30s wall.
-	const image = await raceImageCandidates(
+	//
+	// A `?url=` that turns out to address a metadata document (not art) is followed
+	// exactly one hop to the image it names. `acceptJson` is off on that second race
+	// so a doc pointing at another doc terminates instead of chaining. When `?meta=`
+	// was used the document is already resolved above, so JSON is not expected there.
+	let payload = await raceCandidates(
 		target ? candidates(target) : [],
 		TIMEOUT_MS,
 		deadline - Date.now(),
+		Boolean(directUrl),
 	);
+
+	if (payload?.kind === 'json') {
+		const nested = imageFromMetaDoc(payload.data);
+		payload = nested
+			? await raceCandidates(candidates(nested), TIMEOUT_MS, deadline - Date.now(), false)
+			: null;
+	}
+
+	const image = payload?.kind === 'image' ? payload : null;
 
 	if (!image) {
 		// Every source failed. Hand back a valid, CORS-clean placeholder inline so

@@ -231,6 +231,60 @@ by CLI at all. Consequences and current state:
 | x402 ring signers | `X402_TREASURY_SECRET_BASE58`, `X402_SEED_SOLANA_SECRET_BASE58` | Ring is enabled but the treasury/payer roles cannot sign — no autonomous USDC movement | Owner's gitignored `.x402-ring-secrets.json`, written by `scripts/x402-ring-setup.mjs` on whatever machine ran it. Public half: treasury/pay-to `wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU` (holds real SOL — do NOT regenerate; recover the secret). The **sponsor** role is no longer in this row — see below. |
 | Rate-limiter Redis | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Money-moving limiters **fail closed** (already true on Vercel pre-shutdown). **Worse: the x402 idempotency module hard-throws at import** (`api/_lib/x402/idempotency-cache.js`) — so **every** paid endpoint that imports it (`/api/okx/3d/*`, `/api/x402/*`) returns **HTTP 500 at module load**, not a graceful degrade. This took the entire paid surface down on 2026-07-08 until the escape hatch below was set. | Owner's Upstash console, or provision fresh Upstash/Memorystore and set both vars. `X402_ALLOW_MEMORY_FALLBACK=1` is the sanctioned escape hatch and is **currently SET in prod (since 2026-07-08)** to keep the paid surface up on per-instance memory idempotency. Financial double-charge stays prevented on-chain regardless (EIP-3009 nonces are single-use); the flag only degrades cross-replica work/response dedup. Remove the flag once real Upstash creds land. |
 | R2/S3 storage creds | `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_DOMAIN` | `/api/marketplace`, `/api/explore`, `/api/avatars/:id` — every route that resolves an asset URL — 503 `not_configured` | Real values already sit in the repo's `.env.local` (never committed). Apply with `scripts/gcp/apply-s3-env.sh` (needs a human-authed `gcloud auth login` first — the 89-var apply is still blocked on reauth per above). |
+
+### Resolved: x402 sponsor co-signing key (2026-07-09)
+
+`/api/healthz` reported `x402.sponsor_cosign: "missing"` and every sponsor-mode
+settlement (club-cover, dance-tip) failed with `sponsor_key_unconfigured`.
+
+Root cause: `X402_FEE_PAYER_SOLANA` advertised
+`2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4` — a **third-party facilitator's
+shared fee-payer account that three.ws has never controlled**, left over from
+when Solana settlement went through an external facilitator (see
+`ARCHITECTURE.md`). The self-hosted facilitator cannot co-sign for a key it does
+not hold, so it 502'd at settle while passing every other health check.
+
+An earlier revision of the table above described that address as a three.ws ring
+wallet that "custodies funds — do NOT regenerate." **That was wrong**, and it
+would have blocked the correct fix indefinitely. Evidence: the account fee-pays
+~200 tx/hour for many unrelated co-signer wallets, none of them involving our
+`payTo`, while our own cosign was provably unconfigured. Its balance was never
+ours. `scripts/audit-service-wallets.mjs` has always flagged it correctly and
+told operators to override the var.
+
+Fix applied:
+
+- Generated a three.ws-controlled sponsor with `scripts/x402-ring-setup.mjs --roles=sponsor`
+  (sponsor role **only** — the funded `payTo` treasury was never touched):
+  `GGf9qBhJDCe1UUz4s4Vxq1uPPvcv7UW7sJTuj2Yo5XQj`.
+- Stored the secret in **Secret Manager** as `x402-fee-payer-secret-base58`
+  (granted `roles/secretmanager.secretAccessor` to `three-ws@…`) and wired it as a
+  `secretKeyRef`, rather than a plaintext env value on the service. This also
+  removes the "secret only exists on whatever machine ran the script" fragility.
+- Funded it with 0.05 SOL (floors: `X402_SPONSOR_SOL_FLOOR_LAMPORTS` = 0.02 hard
+  refuse-to-settle, 0.03 audit/topup).
+
+```bash
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars X402_FEE_PAYER_SOLANA=GGf9qBhJDCe1UUz4s4Vxq1uPPvcv7UW7sJTuj2Yo5XQj \
+  --update-secrets X402_FEE_PAYER_SECRET_BASE58=x402-fee-payer-secret-base58:latest
+```
+
+Verified by a real $0.01 USDC mainnet sponsor-mode settlement through
+`POST /api/x402-facilitator/settle` (tx
+`5rmLnLUmWK7jJCjP6RJPLmwT2oiifQMmTnQmhoQKeZcVogxnTMvxB77fpb5BqMyV6VzbawXdPgWz2N7C5kXqqbQ5`):
+the sponsor signed as fee payer, paid the 10001-lamport fee, and $0.01 landed in
+`payTo`. `sponsor_cosign` now reports `ready`.
+
+**Still blocked:** paid endpoints themselves (`/api/x402/club-cover`,
+`/api/x402/dance-tip`) return `429 rate_limiter_unavailable` before reaching
+settle, because money-moving buckets fail closed without Upstash Redis (see the
+Rate-limiter Redis row). The settle path is fixed; the door in front of it is not.
+
+**Funding note:** the economy master (`WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`)
+holds SOL but `ECONOMY_MASTER_SECRET_BASE58` is **not set on Cloud Run**, so the
+treasury-topup cron cannot refill the sponsor when it drains. Set it, or top the
+sponsor up manually.
 | OKX X Layer facilitator creds | `OKX_API_KEY`, `OKX_SECRET_KEY`, `OKX_PASSPHRASE` (or, as a no-OKX-account fallback, `X402_XLAYER_RELAYER_KEY`) | `xlayerSettleable()` (`api/_lib/x402-xlayer-okx.js`) is false without one of these, so **no 402 challenge on any endpoint advertises the `eip155:196` (X Layer) rail** — confirmed live 2026-07-08 via `/api/okx/3d/health` (`payment-rail.settleable:false, facilitator_configured:false`) and by inspecting the raw 402 `accepts[]` on `/api/okx/3d/identity-studio` and `/api/okx/3d/pose-seed` (Solana + Base only, no X Layer entry). `X402_PAY_TO_XLAYER` and `X402_ASSET_ADDRESS_XLAYER` **are** set in prod — this is the only missing piece. This is the exact rail OKX's listing review requires (agent #2632 rejection reason); the relisting (`prompts/okx-ai/05-relisting-resubmission.md`) cannot proceed until it's live. | OKX Web3 developer console (owner) for the three real creds, or generate `X402_XLAYER_RELAYER_KEY` as a fresh EVM keypair + fund it with OKB gas as a stopgap that needs no OKX account. |
 
 ---
