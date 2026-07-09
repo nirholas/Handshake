@@ -530,11 +530,22 @@ export class CoinCommunities {
 		setTimeout(() => { boot?.dispose?.(); l.remove(); }, 600);
 	}
 
-	async _loadCoins() {
+	async _loadCoins(attempt = 0) {
 		this.ui.setCoinsLoading();
 		try {
 			const r = await fetch(TRENDING_URL, { headers: { accept: 'application/json' } });
-			if (!r.ok) throw new Error('HTTP ' + r.status);
+			if (!r.ok) {
+				// A 429/5xx here is almost always a blip (rate-limit window, deploy churn):
+				// the feed sits behind a 30s server cache, so one delayed retry usually
+				// lands. Only after that does the manual-retry error card appear.
+				if (attempt === 0 && (r.status === 429 || r.status >= 500)) {
+					const after = Number(r.headers.get('retry-after'));
+					const delayMs = Number.isFinite(after) && after > 0 ? Math.min(after, 30) * 1000 : 2500;
+					setTimeout(() => this._loadCoins(1), delayMs);
+					return;
+				}
+				throw new Error('HTTP ' + r.status);
+			}
 			const raw = await r.json();
 			this.ui.setCoins(mapCoins(raw));
 		} catch (err) {

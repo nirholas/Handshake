@@ -81,7 +81,10 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.publicIp(clientIp(req));
+	// Dedicated lobby bucket — NOT the shared publicIp pool. This feed renders the
+	// /play lobby on page load; sharing a 60/min bucket with ~166 other public
+	// endpoints meant any busy three.ws session 429'd its own lobby (2026-07-09).
+	const rl = await limits.marketFeedIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const params = new URL(req.url, 'http://x').searchParams;

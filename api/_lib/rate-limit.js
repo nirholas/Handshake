@@ -751,6 +751,16 @@ export const limits = {
 	// Vercel) bounds one IP's throughput just as well without spending a Redis
 	// command per page view. The largest single source of avoidable quota burn.
 	publicIp: (ip) => getLimiter('public:ip', { limit: 60, window: '1 m', local: true }).limit(ip),
+	// Lobby-critical market feeds (/api/pump/trending, /api/pump/search). These
+	// render the /play lobby on every page load, sit behind a 30s server cache +
+	// stale fallback (so the upstream cost of a burst is near zero), and MUST NOT
+	// share the generic `publicIp` bucket: ~166 endpoints drain that one 60/min
+	// pool, so a browser with a few three.ws tabs open starves its own lobby and
+	// /play dead-ends on a 429 it did nothing to earn (same failure mode that
+	// moved /api/play/nonce to its own bucket — see playNonceIp below). local:
+	// per-instance flood guard is all a cached read needs.
+	marketFeedIp: (ip) =>
+		getLimiter('market-feed:ip', { limit: 120, window: '1 m', local: true }).limit(ip),
 	// Free x402 developer toolkit (echo / debug / verify-receipt). Free ≠
 	// abusable: these decode caller-supplied payment envelopes and recompute
 	// hashes, so 30/min per IP is generous for a developer iterating on their

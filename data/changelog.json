@@ -12639,6 +12639,15 @@
 			"tags": [
 				"fix"
 			]
+		},
+		{
+			"date": "2026-07-09",
+			"title": "The /play lobby no longer fails to load live coins during busy sessions",
+			"summary": "The live-coins grid on /play could show \"Could not load live coins right now\" because the market feed shared one rate-limit budget with more than 160 other endpoints — a busy session with a few tabs open starved its own lobby. Trending and coin search now have their own generous budget, and the lobby quietly retries once on a blip before ever showing the error card.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }

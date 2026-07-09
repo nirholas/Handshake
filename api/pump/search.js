@@ -27,7 +27,9 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.publicIp(clientIp(req));
+	// Same dedicated lobby bucket as /api/pump/trending — the /play coin search
+	// must not starve because unrelated endpoints drained the shared publicIp pool.
+	const rl = await limits.marketFeedIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const params = new URL(req.url, 'http://x').searchParams;
