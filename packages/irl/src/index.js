@@ -6,6 +6,9 @@
 // are actually standing at.
 
 import { createHttp, ThreeWsError } from './http.js';
+import { prune, normToken, normalizeEnum, presenceFix, fixHeader } from './shared.js';
+import { createDropsApi } from './drops.js';
+import { createWorldLinesApi } from './world-lines.js';
 
 export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js';
 
@@ -87,10 +90,9 @@ export function createIrl(options = {}) {
 	 * `x-irl-fix` header. Only answers for the coarse area the token was minted in.
 	 */
 	async function nearby(presence, opts = {}) {
-		const { lat, lng, token } = presenceFix(presence);
-		const headers = { ...(opts.headers || {}) };
+		const { lat, lng, token } = presenceFix(presence, 'nearby()');
 		// The fix token rides a header, gating the read to a genuine presence.
-		if (token) headers['x-irl-fix'] = token;
+		const headers = fixHeader(token, opts.headers);
 		const radius = opts.radius;
 		if (radius !== undefined && !Number.isFinite(radius)) {
 			throw new ThreeWsError('nearby() radius must be a finite number of metres.', { code: 'invalid_input' });
@@ -225,7 +227,12 @@ export function createIrl(options = {}) {
 		return { ok: Boolean(res?.ok), deleted: Number(res?.deleted) || 0, raw: res };
 	}
 
-	return { checkIn, nearby, placePin, myPins, interact, removePin, purgePins };
+	// Money Drops & World Lines — the same request core, device token, and
+	// presence contract, wrapped for /api/irl/drops and /api/irl/world-lines.
+	const drops = createDropsApi({ request, deviceHeader });
+	const worldLines = createWorldLinesApi({ request, deviceHeader });
+
+	return { checkIn, nearby, placePin, myPins, interact, removePin, purgePins, ...drops, ...worldLines };
 }
 
 // ── Default zero-config client (the `import { checkIn }` path) ───────────────
@@ -277,6 +284,76 @@ export function purgePins(opts) {
 	return defaultClient().purgePins(opts);
 }
 
+// ── Money Drops (real value escrowed at real-world spots) ────────────────────
+
+/** Live drops within the radius of where you checked in (presence-gated). */
+export function nearbyDrops(presence, opts) {
+	return defaultClient().nearbyDrops(presence, opts);
+}
+/** One drop by id — coarse (~110 m) location for anyone but the owner. */
+export function getDrop(id, opts) {
+	return defaultClient().getDrop(id, opts);
+}
+/** Your created drops (every status) plus your claim receipts. */
+export function myDrops(opts) {
+	return defaultClient().myDrops(opts);
+}
+/** Place value in the real world — returns the escrow address to fund. */
+export function createDrop(input, opts) {
+	return defaultClient().createDrop(input, opts);
+}
+/** Confirm your signed funding transfer on-chain and activate the drop. */
+export function fundDrop(input, opts) {
+	return defaultClient().fundDrop(input, opts);
+}
+/** Claim a drop you are standing at — a real on-chain release to your wallet. */
+export function claimDrop(input, opts) {
+	return defaultClient().claimDrop(input, opts);
+}
+/** Cancel an unclaimed drop you created — a real on-chain refund sweep. */
+export function cancelDrop(id, opts) {
+	return defaultClient().cancelDrop(id, opts);
+}
+
+// ── World Lines (agent-signed proof-of-presence AR quests) ──────────────────
+
+/** Quests near where you checked in (fix-gated; distance coarsened to 10 m). */
+export function nearbyWorldLines(presence, opts) {
+	return defaultClient().nearbyWorldLines(presence, opts);
+}
+/** Public, coordinate-free discovery — region roll-up or one region's quests. */
+export function browseWorldLines(opts) {
+	return defaultClient().browseWorldLines(opts);
+}
+/** One quest for the AR detail view — full challenge only when co-located. */
+export function getWorldLine(id, opts) {
+	return defaultClient().getWorldLine(id, opts);
+}
+/** Place a quest anchored to a pin you own, signed by an agent you own. */
+export function createWorldLine(input, opts) {
+	return defaultClient().createWorldLine(input, opts);
+}
+/** Your placed quests + a coarse completion heatmap (signed-in). */
+export function myWorldLines(opts) {
+	return defaultClient().myWorldLines(opts);
+}
+/** The proof-of-presence collectibles you've earned. */
+export function myCollectibles(opts) {
+	return defaultClient().myCollectibles(opts);
+}
+/** Start a completion at the spot — issues the single-use nonce. */
+export function challengeWorldLine(input, opts) {
+	return defaultClient().challengeWorldLine(input, opts);
+}
+/** Finish the interaction and receive the agent-signed proof collectible. */
+export function completeWorldLine(input, opts) {
+	return defaultClient().completeWorldLine(input, opts);
+}
+/** Independently re-verify a proof's agent signature (public). */
+export function verifyProof(proofId, opts) {
+	return defaultClient().verifyProof(proofId, opts);
+}
+
 // ── Fix resolution ──────────────────────────────────────────────────────────
 
 // Resolve a fix to { lat, lng, accuracy? } from an explicit object, a presence
@@ -309,18 +386,6 @@ function readBrowserFix() {
 			{ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
 		);
 	});
-}
-
-// Pull { lat, lng, token } from a presence object (from checkIn) or a bare
-// { lat, lng } fix. The token is optional — dev/preview reads work without it.
-function presenceFix(presence) {
-	const p = presence || {};
-	const lat = Number(p.lat);
-	const lng = Number(p.lng);
-	if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-		throw new ThreeWsError('nearby() needs a presence from checkIn() (or a `{ lat, lng }` fix).', { code: 'invalid_input' });
-	}
-	return { lat, lng, token: typeof p.token === 'string' ? p.token : null };
 }
 
 // ── Response shaping (snake_case → camelCase, with a .raw escape hatch) ──────
@@ -397,32 +462,6 @@ function shapeInteraction(res) {
 		notified: Boolean(res.notified),
 		raw: res,
 	};
-}
-
-// ── Helpers (mirror forge's shared style) ───────────────────────────────────
-
-function normalizeEnum(value, allowed, label) {
-	if (value === undefined || value === null) return undefined;
-	if (!allowed.includes(value)) {
-		throw new ThreeWsError(`Invalid ${label} "${value}". Expected one of: ${allowed.join(', ')}.`, { code: 'invalid_input' });
-	}
-	return value;
-}
-
-function normToken(v) {
-	if (typeof v !== 'string') return null;
-	const t = v.trim();
-	return t.length ? t : null;
-}
-
-function prune(obj) {
-	const out = {};
-	for (const [k, v] of Object.entries(obj)) {
-		if (v === undefined || v === null) continue;
-		if (Array.isArray(v) && v.length === 0) continue;
-		out[k] = v;
-	}
-	return out;
 }
 
 // Geohash encoder — identical lattice to api/_lib/geohash.js so a fix maps to the

@@ -12506,6 +12506,16 @@
 				"improvement"
 			],
 			"link": "/animations"
+		},
+		{
+			"date": "2026-07-09",
+			"title": "Agents can now hunt money drops and complete IRL quests from code",
+			"summary": "The @three-ws/irl SDK (v0.2.0) now covers the whole IRL surface, not just pins. New functions let any script or agent discover real-money drops near where it checks in, claim them with a proof-of-presence fix (a real on-chain release to its own wallet), place self- or agent-funded drops and bounties, and run the full World Lines quest loop — find nearby quests, take the challenge at the spot, and earn the agent-signed proof-of-presence collectible, plus verify anyone's proof independently. Fully typed, zero dependencies, verified against the live API.",
+			"tags": [
+				"sdk",
+				"feature"
+			],
+			"link": "/irl"
 		}
 	]
 }

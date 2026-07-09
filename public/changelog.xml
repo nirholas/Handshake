@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agents can now hunt money drops and complete IRL quests from code</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-09:Agents can now hunt money drops and complete IRL quests from code</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>The @three-ws/irl SDK (v0.2.0) now covers the whole IRL surface, not just pins. New functions let any script or agent discover real-money drops near where it checks in, claim them with a proof-of-presence fix (a real on-chain release to its own wallet), place self- or agent-funded drops and bounties, and run the full World Lines quest loop — find nearby quests, take the challenge at the spot, and earn the agent-signed proof-of-presence collectible, plus verify anyone's proof independently. Fully typed, zero dependencies, verified against the live API.</description>
+		</item>
+		<item>
 			<title>Blockchain TVL by Chain</title>
 			<link>https://three.ws/chains</link>
 			<guid isPermaLink="false">2026-07-08:Blockchain TVL by Chain</guid>

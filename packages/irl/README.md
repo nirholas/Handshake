@@ -17,6 +17,8 @@
   <a href="#install">Install</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#api">API</a> ·
+  <a href="#money-drops">Money Drops</a> ·
+  <a href="#world-lines">World Lines</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="https://three.ws/irl">three.ws</a>
 </p>
@@ -29,11 +31,13 @@
 > short-lived proof-of-presence token from your live fix, and read back only the
 > agents within a tight radius of where you actually stand. It wraps the public
 > `/api/irl/*` endpoints: presence minting, GPS pin placement, the geofenced
-> nearby feed, and the real-world interaction log. Presence is the contract —
-> there is no browseable map, no roster, no "query any point on earth." You see
-> what's around you, because you're there. It pairs with
-> [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge) (make the
-> avatar) and [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar)
+> nearby feed, the real-world interaction log, **[Money Drops](#money-drops)**
+> (real SOL / USDC / $THREE escrowed at a spot, claimable only by walking up)
+> and **[World Lines](#world-lines)** (agent-signed proof-of-presence AR
+> quests). Presence is the contract — there is no browseable map, no roster, no
+> "query any point on earth." You see what's around you, because you're there.
+> It pairs with [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge)
+> (make the avatar) and [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar)
 > (render it where you placed it).
 
 ## Why
@@ -41,7 +45,7 @@
 Hand-rolling "agents in the real world" looks easy until you hit the privacy
 math. A naive `GET /pins?lat=&lng=` is a location-harvest API: anyone scripts a
 grid sweep and reconstructs every placement on earth. three.ws IRL closes that
-hole structurally, and this SDK gives you the whole flow as four functions:
+hole structurally, and this SDK gives you the whole flow as plain functions:
 
 - **Presence is proven, not claimed.** Before you can read nearby agents you
   mint a fix token from your *real* geolocation. The server only answers for the
@@ -214,6 +218,140 @@ per signature.
 `DELETE /api/irl/pins?all=1` for a device token. `configure({ baseUrl,
 deviceToken })` sets defaults for the module (base origin defaults to
 `https://three.ws`).
+
+## Money Drops
+
+Real value, escrowed at a real-world spot. A drop holds SOL, USDC, or $THREE in
+a fresh per-drop escrow wallet, funded on-chain by its creator; anyone who
+physically walks up — proven by the same fix token every IRL read enforces —
+claims a real on-chain release to their own wallet. Unclaimed funds auto-refund
+the creator on expiry. Wraps `/api/irl/drops`.
+
+Find and claim a drop where you stand:
+
+```js
+import { checkIn, nearbyDrops, claimDrop } from '@three-ws/irl';
+
+const fix = await checkIn();
+const drops = await nearbyDrops(fix);         // presence-gated, like every IRL read
+
+for (const d of drops) {
+  console.log(d.title, `${d.amount} ${d.asset}`, `${d.distanceM}m away`, `${d.claimsLeft} left`);
+}
+
+const { signature, explorerUrl } = await claimDrop({
+  dropId: drops[0].id,
+  presence: fix,                               // co-location is always verified
+  wallet: 'YourSo1anaWa11etAddress…',          // the release lands HERE, on-chain
+  answer: drops[0].quizQuestion ? 'my answer' : undefined,
+});
+console.log('claimed:', explorerUrl);
+```
+
+Place one (two funding paths):
+
+```js
+import { checkIn, createDrop, fundDrop } from '@three-ws/irl';
+
+const fix = await checkIn();
+
+// 1) Self-funded: create → send funds to the escrow → confirm the transfer.
+const { drop, escrowAddress, fundAmount } = await createDrop({
+  lat: fix.lat, lng: fix.lng,
+  asset: 'USDC', amount: 5, maxClaims: 5, claimRule: 'each-once',
+  title: 'Coffee on me', radiusM: 30,
+});
+// …transfer `fundAmount` USDC to `escrowAddress` from your own wallet, then:
+await fundDrop({ dropId: drop.id, signature: 'your-transfer-signature' });
+
+// 2) Agent bounty (signed-in owner): the agent's custodial wallet funds it
+//    server-side under its spend limits — returned already active.
+const bounty = await createDrop({
+  agentId: 'your-agent-id', kind: 'bounty', asset: 'SOL', amount: 0.1,
+  lat: fix.lat, lng: fix.lng, bountyCondition: 'quiz',
+  quizQuestion: 'What is the only coin?', quizAnswer: '$THREE',
+});
+console.log(bounty.funded, bounty.fundingTx);
+```
+
+| Function | Wraps | Notes |
+|---|---|---|
+| `nearbyDrops(presence, { radius? })` | `GET /api/irl/drops?lat=&lng=` | Fix-gated; radius clamped 10–80 m. |
+| `getDrop(id)` | `GET /api/irl/drops/:id` | Location coarsened to ~110 m for non-owners (`coarse: true`). |
+| `myDrops()` | `GET /api/irl/drops?mine=1` | `{ drops, claims }` — your creations + claim receipts. |
+| `createDrop(input)` | `POST /api/irl/drops` | Returns the escrow to fund, or `funded: true` for agent bounties. |
+| `fundDrop({ dropId, signature })` | `POST /:id/fund` | Confirms your transfer on-chain; `{ pending: true }` while confirming. |
+| `claimDrop({ dropId, presence, wallet, answer? })` | `POST /:id/claim` | Presence always verified; releases real funds to `wallet`. |
+| `cancelDrop(id)` | `POST /:id/cancel` | Owner-only; sweeps a real refund, idempotent. |
+
+Claim errors are typed like everything else: `fix_required` (stand there and
+re-`checkIn()`), `out_of_range` (the drop's radius, with `distance_m` in
+`detail`), `wrong_answer` / `condition_unmet` (bounty), `already_claimed`,
+`exhausted`, `expired`.
+
+## World Lines
+
+Agent-placed proof-of-presence AR quests. A World Line anchors a quest to a pin
+you own; to complete it, a person must physically travel there, prove
+co-location, and finish the interaction (tap, quiz, or spoken passphrase). On
+success the **agent's own wallet signs an ed25519 proof-of-presence** —
+independently verifiable by anyone, ownable as a collectible — without a
+precise coordinate ever entering the proof. Wraps `/api/irl/world-lines`.
+
+The walk-up completion loop:
+
+```js
+import { checkIn, nearbyWorldLines, challengeWorldLine, completeWorldLine } from '@three-ws/irl';
+
+const fix = await checkIn();
+const quests = await nearbyWorldLines(fix, { radius: 400 }); // "≈200 m north"
+const quest = quests.find((q) => !q.completedByMe);
+
+// At the spot: the challenge issues a single-use nonce and reveals the full
+// spec (you are proven co-located).
+const ch = await challengeWorldLine({ worldLineId: quest.id, presence: fix });
+
+const { proof, collectible } = await completeWorldLine({
+  worldLineId: quest.id,
+  nonce: ch.nonce,
+  presence: fix,
+  answer: ch.challenge.kind === 'quiz' ? 0 : undefined, // your chosen index
+});
+console.log('agent-signed proof:', proof.signature, '→', proof.verifyUrl);
+```
+
+Place a quest on your pin (signed-in — pass `apiKey` to `createIrl`):
+
+```js
+import { createIrl } from '@three-ws/irl';
+
+const irl = createIrl({ apiKey: process.env.THREE_WS_SESSION });
+const { worldLine } = await irl.createWorldLine({
+  pinId: 'your-pin-id',                 // the anchor — a pin you own
+  title: 'Meet the courier',
+  prompt: 'Find me by the fountain and answer one question.',
+  challenge: { kind: 'quiz', question: 'What coin?', choices: ['$THREE', 'fiat'], answer: 0 },
+  rewardRef: 'Courier badge',
+  lifetimeDays: 30,
+});
+```
+
+| Function | Wraps | Notes |
+|---|---|---|
+| `nearbyWorldLines(presence, { radius? })` | `GET /world-lines/nearby` | Fix-gated; default 250 m, max 600 m; distance coarsened to 10 m. |
+| `browseWorldLines({ region?, difficulty? })` | `GET /world-lines/browse` | Public + coordinate-free: region roll-up, or one region's quests. |
+| `getWorldLine(id, { presence? })` | `GET /world-lines/:id` | Full challenge spec only when proven co-located. |
+| `createWorldLine(input)` | `POST /world-lines` | Auth required; the agent's wallet signs every proof. |
+| `myWorldLines()` | `GET /world-lines/mine` | Your quests + a coarse completion heatmap. |
+| `myCollectibles()` | `GET /world-lines/collectibles` | The proofs you've earned (session or device token). |
+| `challengeWorldLine({ worldLineId, presence })` | `POST /world-lines/challenge` | Single-use nonce; `alreadyCompleted` short-circuits. |
+| `completeWorldLine({ worldLineId, nonce, presence, answer?, phrase? })` | `POST /world-lines/complete` | The proof ceremony → signed collectible. |
+| `verifyProof(proofId)` | `GET /world-lines/verify/:id` | Public re-check of the agent signature. |
+
+The proof's canonical signed message carries only the quest id, a ~1.1 km
+coarse cell, the nonce, and a salted hash of the completer — never a
+coordinate, never a raw device token. `verifyProof()` re-runs the exact ed25519
+check anyone could do offline against `signerPubkey`.
 
 ## How it works
 

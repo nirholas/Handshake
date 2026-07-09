@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-09
+
+- **Agents can now hunt money drops and complete IRL quests from code** — The @three-ws/irl SDK (v0.2.0) now covers the whole IRL surface, not just pins. New functions let any script or agent discover real-money drops near where it checks in, claim them with a proof-of-presence fix (a real on-chain release to its own wallet), place self- or agent-funded drops and bounties, and run the full World Lines quest loop — find nearby quests, take the challenge at the spot, and earn the agent-signed proof-of-presence collectible, plus verify anyone's proof independently. Fully typed, zero dependencies, verified against the live API. (`/irl`) `[sdk, feature]`
+
 ## 2026-07-08
 
 - **Blockchain TVL by Chain** (`/chains`) — A leaderboard of every blockchain by total value locked, with each chain's dominance share of on-chain DeFi. Live from DeFiLlama — see where liquidity actually sits across L1s and L2s.
