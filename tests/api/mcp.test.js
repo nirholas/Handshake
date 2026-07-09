@@ -67,6 +67,26 @@ const x402State = { verifyOk: false, verifyResult: null };
 vi.mock('../../api/_lib/x402-spec.js', () => ({
 	X402Error: MockX402Error,
 	X402_VERSION: 2,
+	// Network constants + pure helpers bound at import time by the wider graph
+	// (a2a-server, paid-endpoint, dev-tools). Values mirror the real module;
+	// payment behavior stays inert via the function overrides below.
+	NETWORK_BASE_MAINNET: 'eip155:8453',
+	NETWORK_BASE_SEPOLIA: 'eip155:84532',
+	NETWORK_ARBITRUM_MAINNET: 'eip155:42161',
+	NETWORK_BSC_MAINNET: 'eip155:56',
+	NETWORK_XLAYER_MAINNET: 'eip155:196',
+	NETWORK_SOLANA_MAINNET: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+	NETWORK_SOLANA_DEVNET: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
+	BUILDER_CODE: 'builder-code',
+	permit2VariantOf: vi.fn(() => null),
+	baseSettleable: vi.fn(() => false),
+	solanaSettleable: vi.fn(() => false),
+	buildExactRequirements: vi.fn(() => []),
+	decodePaymentHeader: vi.fn(() => null),
+	decodeSignedAmount: vi.fn(() => null),
+	decodeSignedRecipient: vi.fn(() => null),
+	probeFacilitators: vi.fn(async () => ({})),
+	buildBazaarSchema: vi.fn(() => ({})),
 	paymentRequirements: vi.fn(() => [
 		{
 			scheme: 'exact',

@@ -441,7 +441,7 @@ export function openMyDataPanel({ onChanged } = {}) {
 				<div class="irlpc-sec">
 					<h4>What we hold</h4>
 					<div class="irlpc-stats">
-						<div class="irlpc-stat"><div class="n">${totalPins}</div><div class="l">placed agent${totalPins === 1 ? '' : 's'}${pins.unpublished ? ` · ${pins.unpublished} hidden` : ''}</div></div>
+						<div class="irlpc-stat"><div class="n">${totalPins}</div><div class="l">placed agent${totalPins === 1 ? '' : 's'}${pins.unpublished ? ` · ${pins.unpublished} private` : ''}</div></div>
 						<div class="irlpc-stat"><div class="n">${ix.onYourPins || 0}</div><div class="l">encounters on your agents</div></div>
 						<div class="irlpc-stat"><div class="n">${ix.youLeftElsewhere || 0}</div><div class="l">taps you left elsewhere</div></div>
 						<div class="irlpc-stat"><div class="n">${pins.permanent || 0}</div><div class="l">permanent · ${pins.expiring || 0} auto-expiring</div></div>

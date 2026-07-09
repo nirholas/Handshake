@@ -5134,6 +5134,10 @@
 			"schedule": "*/10 * * * *"
 		},
 		{
+			"path": "/api/cron/avatar-thumbnail-backfill",
+			"schedule": "*/5 * * * *"
+		},
+		{
 			"path": "/api/cron/coin-intel-observe",
 			"schedule": "*/2 * * * *"
 		},

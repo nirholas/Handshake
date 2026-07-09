@@ -128,3 +128,109 @@ describe('api/img metadata resolution', () => {
 		expect(res.statusCode).toBe(400);
 	});
 });
+
+// Serve `doc` as a JSON response and `art` as image bytes, keyed by URL, so a
+// single mock can satisfy both hops of the follow.
+function mockUpstream({ jsonAt = {}, imageAt = {} } = {}) {
+	fetchModel.mockImplementation(async (url) => {
+		if (url in jsonAt) {
+			return {
+				bytes: new TextEncoder().encode(JSON.stringify(jsonAt[url])),
+				url,
+				contentType: 'application/json; charset=utf-8',
+				filename: 'token.json',
+			};
+		}
+		if (url in imageAt) {
+			return { bytes: imageAt[url], url, contentType: 'image/png', filename: 'art.png' };
+		}
+		throw new Error(`upstream 404 ${url}`);
+	});
+}
+
+describe('api/img ?url= metadata follow', () => {
+	const DOC = 'https://meta.example/token.json';
+	const ART = 'https://cdn.example/art.png';
+
+	it('follows a JSON document at ?url= to its .image and proxies the artwork', async () => {
+		mockUpstream({ jsonAt: { [DOC]: { name: 'VOID', image: ART } }, imageAt: { [ART]: new Uint8Array([7, 8, 9]) } });
+
+		const res = mockRes();
+		await handler(mockReq(`?url=${encodeURIComponent(DOC)}&seed=VOID`), res);
+
+		expect(fetchModel).toHaveBeenCalledWith(DOC, expect.any(Object));
+		expect(fetchModel).toHaveBeenCalledWith(ART, expect.any(Object));
+		expect(res.statusCode).toBe(200);
+		expect(res.headers['content-type']).toBe('image/png');
+		expect([...res.body]).toEqual([7, 8, 9]);
+	});
+
+	it('follows only one hop — a document naming another document yields the placeholder', async () => {
+		const DOC2 = 'https://meta.example/nested.json';
+		mockUpstream({ jsonAt: { [DOC]: { image: DOC2 }, [DOC2]: { image: ART } }, imageAt: { [ART]: new Uint8Array([1]) } });
+
+		const res = mockRes();
+		await handler(mockReq(`?url=${encodeURIComponent(DOC)}&seed=DEEP`), res);
+
+		expect(fetchModel).toHaveBeenCalledWith(DOC2, expect.any(Object));
+		expect(fetchModel).not.toHaveBeenCalledWith(ART, expect.any(Object));
+		expect(res.headers['content-type']).toMatch(/image\/svg\+xml/);
+		expect(String(res.body)).toContain('<svg');
+	});
+
+	it('rejects a data: image inside a followed document', async () => {
+		mockUpstream({ jsonAt: { [DOC]: { image: 'data:image/svg+xml,<svg onload=alert(1)>' } } });
+
+		const res = mockRes();
+		await handler(mockReq(`?url=${encodeURIComponent(DOC)}&seed=EVIL`), res);
+
+		expect(fetchModel).toHaveBeenCalledTimes(1); // the doc only — never the data: URI
+		expect(res.headers['content-type']).toMatch(/image\/svg\+xml/);
+		expect(String(res.body)).toContain('<svg');
+	});
+
+	it('serves a direct image at ?url= without taking the JSON path', async () => {
+		mockUpstream({ imageAt: { [ART]: new Uint8Array([4, 2]) } });
+
+		const res = mockRes();
+		await handler(mockReq(`?url=${encodeURIComponent(ART)}&seed=ART`), res);
+
+		expect(fetchModel).toHaveBeenCalledTimes(1);
+		expect(res.headers['content-type']).toBe('image/png');
+		expect([...res.body]).toEqual([4, 2]);
+	});
+
+	it('does not treat a JSON body as artwork on the ?meta= path', async () => {
+		safeFetchJson.mockResolvedValue({ ok: true, data: { image: DOC } });
+		mockUpstream({ jsonAt: { [DOC]: { image: ART } }, imageAt: { [ART]: new Uint8Array([5]) } });
+
+		const res = mockRes();
+		await handler(mockReq(`?meta=${encodeURIComponent(DOC)}&seed=META`), res);
+
+		expect(fetchModel).not.toHaveBeenCalledWith(ART, expect.any(Object));
+		expect(res.headers['content-type']).toMatch(/image\/svg\+xml/);
+	});
+
+	it('races every IPFS gateway for a metadata CID and follows the winner', async () => {
+		const CID = 'bafkreitest';
+		const art = 'https://ipfs.io/ipfs/bafkreiart';
+		fetchModel.mockImplementation(async (url) => {
+			if (url.endsWith(`/ipfs/${CID}`)) {
+				return { bytes: new TextEncoder().encode(JSON.stringify({ image: art })), url, contentType: 'application/json', filename: 'x' };
+			}
+			if (url.includes('bafkreiart')) {
+				return { bytes: new Uint8Array([3]), url, contentType: 'image/webp', filename: 'a' };
+			}
+			throw new Error('nope');
+		});
+
+		const res = mockRes();
+		await handler(mockReq(`?url=${encodeURIComponent(`https://ipfs.io/ipfs/${CID}`)}&seed=CID`), res);
+
+		// Every gateway in the fallback list is attempted for the document.
+		const tried = fetchModel.mock.calls.map((c) => c[0]).filter((u) => u.endsWith(`/ipfs/${CID}`));
+		expect(tried.length).toBeGreaterThan(1);
+		expect(res.headers['content-type']).toBe('image/webp');
+		expect([...res.body]).toEqual([3]);
+	});
+});
