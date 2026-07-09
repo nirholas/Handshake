@@ -35,7 +35,7 @@ export async function upsertConviction({ mint, network, intel, verdict }) {
 		select score from oracle_conviction where mint = ${mint} and network = ${network} limit 1
 	`.then((r) => (r[0] ? Number(r[0].score) : null)).catch(() => null);
 
-	await sql`
+	const upserted = await sql`
 		insert into oracle_conviction (
 			mint, network, symbol, name, image_uri,
 			score, tier, pedigree, structure, narrative, momentum, structure_cap,
@@ -57,7 +57,21 @@ export async function upsertConviction({ mint, network, intel, verdict }) {
 			reasons = excluded.reasons, components = excluded.components,
 			category = excluded.category, smart_wallet_count = excluded.smart_wallet_count,
 			scored_at = now()
+		returning (xmax = 0) as inserted
 	`;
+
+	// oracle_conviction is retention-pruned, so count(*) over it can never be a
+	// lifetime figure. Bump the durable counter exactly when this was a
+	// first-ever score for the (mint, network). Non-fatal — the counter is a
+	// stat, never worth failing a score over.
+	if (upserted[0]?.inserted) {
+		await sql`
+			insert into oracle_counters (network, key, value)
+			values (${network}, 'scored_lifetime', 1)
+			on conflict (network, key) do update set
+				value = oracle_counters.value + 1, updated_at = now()
+		`.catch(() => { /* counter table may predate migration */ });
+	}
 
 	// Write a history row when the score changes by ≥3 pts or it's the first score.
 	const delta = prev == null ? Infinity : Math.abs(verdict.score - prev);

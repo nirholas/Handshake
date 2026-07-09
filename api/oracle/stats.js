@@ -5,7 +5,9 @@
  *
  * Returns a fast summary of the oracle engine's current state:
  *   scored_24h       — coins scored in the last 24 h
- *   scored_total     — all-time scored coins in oracle_conviction
+ *   scored_total     — all-time scored coins, from the durable oracle_counters
+ *                      ledger (oracle_conviction itself is retention-pruned, so
+ *                      its row count is a rolling window, not a lifetime figure)
  *   prime_count      — coins currently sitting at prime tier (score ≥ 86)
  *   strong_count     — coins at strong tier
  *
@@ -46,7 +48,7 @@ export default wrap(async (req, res) => {
 	const params  = new URL(req.url, `http://${req.headers.host || 'x'}`).searchParams;
 	const network = NETWORKS.has(params.get('network')) ? params.get('network') : 'mainnet';
 
-	const [convRow, actRow, outcomeRow, armedRow] = await Promise.all([
+	const [convRow, actRow, outcomeRow, armedRow, counterRow] = await Promise.all([
 		// Conviction table summary.
 		sql`
 			select
@@ -94,12 +96,27 @@ export default wrap(async (req, res) => {
 			where network = ${network}
 			  and armed = true
 		`.catch(() => [{}]),
+
+		// Durable lifetime scored counter. oracle_conviction is retention-pruned
+		// (db-retention firehose family), so its count(*) is a rolling-window
+		// figure — this counter is the real all-time number.
+		sql`
+			select value as scored_lifetime
+			from oracle_counters
+			where network = ${network} and key = 'scored_lifetime'
+		`.catch(() => [{}]),
 	]);
 
 	const c  = convRow[0]    || {};
 	const a  = actRow[0]     || {};
 	const o  = outcomeRow[0] || {};
 	const ar = armedRow[0]   || {};
+	const ct = counterRow[0] || {};
+
+	// The counter can briefly trail the live cache (rows seeded before the
+	// counter existed, counter write races) — the true lifetime figure is never
+	// smaller than what is sitting in the cache right now.
+	const scoredTotal = Math.max(Number(ct.scored_lifetime) || 0, Number(c.scored_total) || 0);
 
 	const totalResolved  = Number(o.total_resolved)  || 0;
 	const totalWins      = Number(o.total_wins)      || 0;
@@ -111,7 +128,7 @@ export default wrap(async (req, res) => {
 	return json(res, 200, {
 		network,
 		scored_24h:       Number(c.scored_24h)    || 0,
-		scored_total:     Number(c.scored_total)  || 0,
+		scored_total:     scoredTotal,
 		prime_count:      Number(c.prime_count)   || 0,
 		strong_count:     Number(c.strong_count)  || 0,
 		open_actions:     Number(a.open_actions)  || 0,
