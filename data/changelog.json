@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-09",
+			"title": "The coin trade window opens again — buying and selling in the world is back",
+			"summary": "Clicking Buy on any coin in the 3D world crashed the trade window before it could draw, so trading from the world had been silently broken since the pre-trade safety firewall shipped. The cause: the new safety panel reported its first verdict a moment before the buy button it updates existed. That order is now handled, and the whole flow — safety verdict, live quote, buy, sell, stage pills, error copy — is covered by browser tests that run on every build. Separately, the risk-disclosure module now loads identically in development and production, so the money-gate acknowledgment you see locally is the real dialog, not a plain browser popup.",
+			"tags": [
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-07-09",
 			"title": "Avatars are getting their pictures back — galleries show the model, not a letter",
 			"summary": "Roughly four out of five public avatars had never had a preview picture made for them, so most galleries showed a plain lettered circle instead of the model. Nothing on the platform ever generated one: a picture appeared only if someone happened to upload it by hand. That is now fixed at the source. Avatars made in the forge instantly reuse the preview image the forge already produced, at no cost. Everything else gets a real picture rendered from its own 3D model automatically, in the background, working through the most-visited avatars first — so the pages you actually browse fill in first. A model that genuinely cannot be drawn, because its file is missing or damaged, is set aside after a few tries instead of blocking the queue behind it. Coverage climbs on its own from here, and newly forged avatars now arrive with their picture already attached.",
 			"tags": [

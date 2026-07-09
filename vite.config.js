@@ -802,6 +802,27 @@ support: resolve(__dirname, 'pages/support.html'),
 				},
 			},
 		},
+		// public/risk-ack.js is the canonical runtime module for the money-gate
+		// acknowledgment: app code reaches it via the src/shared/risk-ack.js
+		// wrapper's non-analyzable dynamic import('/risk-ack.js'). In production
+		// the file is served as-is from the public root, but Vite's dev transform
+		// middleware 500s a module request for a /public asset ("should not be
+		// imported from source code") — so in dev every money gate silently
+		// degraded to the confirm() fallback. Serve it raw ahead of the transform
+		// middleware so dev matches production. Serve-only; no build effect.
+		{
+			name: 'dev-serve-risk-ack',
+			apply: 'serve',
+			configureServer(server) {
+				const file = resolve(__dirname, 'public/risk-ack.js');
+				server.middlewares.use((req, res, next) => {
+					if ((req.url || '').split('?')[0] !== '/risk-ack.js') return next();
+					res.setHeader('content-type', 'text/javascript; charset=utf-8');
+					res.setHeader('cache-control', 'no-cache');
+					return res.end(readFileSync(file));
+				});
+			},
+		},
 		{
 			name: 'vercel-rewrites',
 			configureServer(server) {

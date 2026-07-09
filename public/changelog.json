@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T22:25:17.658Z",
+	"generated_at": "2026-07-09T23:03:13.702Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -196,6 +196,16 @@
 			"tags": [
 				"security",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "The coin trade window opens again — buying and selling in the world is back",
+			"summary": "Clicking Buy on any coin in the 3D world crashed the trade window before it could draw, so trading from the world had been silently broken since the pre-trade safety firewall shipped. The cause: the new safety panel reported its first verdict a moment before the buy button it updates existed. That order is now handled, and the whole flow — safety verdict, live quote, buy, sell, stage pills, error copy — is covered by browser tests that run on every build. Separately, the risk-disclosure module now loads identically in development and production, so the money-gate acknowledgment you see locally is the real dialog, not a plain browser popup.",
+			"link": "/play",
+			"tags": [
+				"fix"
 			]
 		},
 		{

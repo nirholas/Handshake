@@ -66,6 +66,17 @@ async function installHarness(page, { quote = QUOTE_PAYLOAD } = {}) {
 	const calls = { prep: null, confirm: null, broadcast: 0 };
 	const txBase64 = buildPrepTxBase64();
 
+	// Pre-accept the Risk Disclosure (public/risk-ack.js gates the sign step of
+	// every money flow since 2026-07-03). This spec's subject is the launch flow,
+	// not the disclosure dialog — seed the returning-user acceptance record the
+	// module reads from localStorage.
+	await page.addInitScript(() => {
+		window.localStorage.setItem(
+			'threews:risk-ack',
+			JSON.stringify({ version: 1, acceptedAt: new Date().toISOString(), context: 'e2e' }),
+		);
+	});
+
 	// Wallet extension stub — the one acceptable mock (external browser code).
 	await page.addInitScript((addr) => {
 		const pk = { toString: () => addr, toBase58: () => addr };

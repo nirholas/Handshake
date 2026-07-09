@@ -93,6 +93,10 @@ function trackConsoleErrors(page) {
 		if (m.type() !== 'error') return;
 		const t = m.text();
 		if (/websocket|hmr|wss:|vite|favicon|net::ERR/i.test(t)) return;
+		// A 401 resource line from a signed-out auth/session probe is the browser
+		// echoing an EXPECTED response (dev /api proxies to prod; no session in a
+		// fresh context). Only this spec's own /api/irl/* surface stays fatal.
+		if (/status of 401/i.test(t) && !/\/api\/irl\//i.test(m.location()?.url || '')) return;
 		errors.push(t);
 	});
 	page.on('pageerror', (err) => {
