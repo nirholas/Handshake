@@ -469,6 +469,10 @@ class TradeModal {
 	}
 
 	_syncCta() {
+		// createSafetyPanel fires onVerdict(null) synchronously while _build is
+		// still assembling the modal — before this.cta exists. Nothing to sync yet;
+		// _build calls _syncCta again once the CTA is in place.
+		if (!this.cta) return;
 		const w = detectSolanaWallet();
 		const connected = !!w?.publicKey;
 		if (this.busy) { this.cta.disabled = true; return; }

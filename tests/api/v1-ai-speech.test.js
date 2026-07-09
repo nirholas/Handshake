@@ -151,8 +151,12 @@ function jsonReq(url, obj, extraHeaders = {}) {
 }
 
 let ipCounter = 0;
+// Production sits behind Google's load balancer, which appends `<client>, <lb>` to
+// X-Forwarded-For — so that is what a distinct caller looks like on the wire. (The
+// old `x-vercel-forwarded-for` is caller-settable on GCP and clientIp ignores it.)
+const LB_HOP = '35.191.0.1';
 function freshIp() {
-	return { 'x-vercel-forwarded-for': `10.20.30.${++ipCounter}` };
+	return { 'x-forwarded-for': `10.20.30.${++ipCounter}, ${LB_HOP}` };
 }
 
 beforeAll(async () => {
@@ -240,7 +244,7 @@ describe('POST /api/v1/ai/tts', () => {
 
 	it('falls through to 402 once the daily free quota is exhausted', async () => {
 		grpcTtsSuccess();
-		const ip = { 'x-vercel-forwarded-for': '10.99.99.10' };
+		const ip = { 'x-forwarded-for': `10.99.99.10, ${LB_HOP}` };
 		for (let i = 0; i < 10; i++) {
 			const ok = await callTts(jsonReq('/api/v1/ai/tts', { text: `call ${i}` }, ip));
 			expect(ok.statusCode).toBe(200);
@@ -325,7 +329,7 @@ describe('POST /api/v1/ai/asr', () => {
 	it('falls through to 402 once the daily free quota is exhausted', async () => {
 		grpcAsrSuccess('ok');
 		const wav = await wavClip();
-		const ip = { 'x-vercel-forwarded-for': '10.99.99.20' };
+		const ip = { 'x-forwarded-for': `10.99.99.20, ${LB_HOP}` };
 		const b64 = wav.toString('base64');
 		for (let i = 0; i < 5; i++) {
 			const ok = await callAsr(jsonReq('/api/v1/ai/asr', { audio: b64, format: 'wav' }, ip));

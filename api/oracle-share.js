@@ -236,11 +236,17 @@ function heroHtml({ mint, row, pump, origin }) {
 		<a class="dr-act dr-share" href="${esc(shareTweet(mint, row, pump, origin))}" target="_blank" rel="noopener">Share ↗</a>
 	</div>`;
 
+	// The coin's own words. Server-known only for pump-identified launches; for
+	// scored coins the client fills it from /api/oracle/market identity.
+	const desc = (pump?.description || '').trim().slice(0, 400);
+	const descHtml = `<p class="oc-desc" id="ocDesc"${desc ? '' : ' hidden'}>${esc(desc)}</p>`;
+
 	return `<div class="oc-hero" id="ocHeroDynamic">
 		${img}
 		<div class="oc-id">
 			<div class="oc-sym">${sym}${name ? `<span class="oc-name">${name}</span>` : ''}</div>
 			<div class="oc-mint">${esc(shortMint(mint))}</div>
+			${descHtml}
 			<div class="oc-topgrid">${dial}${pillars}</div>
 			${metaChips}
 			${actions}

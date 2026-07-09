@@ -104,7 +104,7 @@ function makeReq(body, headers = {}) {
 		'content-type': 'application/json',
 		'content-length': String(buf.length),
 		// Unique IP per request so the in-memory per-IP limiter never trips.
-		'x-vercel-forwarded-for': `10.0.0.${++ipCounter}`,
+		'x-forwarded-for': `10.0.0.${++ipCounter}, 35.191.0.1`,
 		...headers,
 	};
 	return req;

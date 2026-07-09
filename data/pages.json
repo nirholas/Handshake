@@ -883,7 +883,7 @@
 				{
 					"path": "/launcher",
 					"title": "Memetic Launcher",
-					"description": "Design your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, and preview exactly what your agents would mint next. Preview mode: no SOL moves until you fund a live launch.",
+					"description": "Your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.",
 					"priority": 0.8,
 					"changefreq": "daily",
 					"added": "2026-06-27"

@@ -84,6 +84,15 @@ surface by far — its 600 m radius covers ~1.13 km² per read, so the same area
 in under a minute. Rotating IPs collapses all of these numbers. Presence enforcement
 is a speed bump with a real slope; it is not a wall.
 
+> **Per-IP means per-IP only if the IP is real.** From the Vercel→Cloud Run migration
+> until 2026-07-09, `clientIp()` fell back to `req.socket.remoteAddress` — the load
+> balancer — so every per-IP bucket on the platform was in fact one global bucket.
+> That made the limits simultaneously useless (no per-attacker ceiling) and harmful
+> (one caller exhausted everyone's budget; `/api/irl/privacy` answered 429 to its
+> first caller). `clientIp()` now reads `X-Forwarded-For` right-to-left, skipping the
+> hops our own infrastructure appends and ignoring the caller-settable prefix. The
+> numbers above assume that fix is deployed; see `tests/client-ip-proxy.test.js`.
+
 ## The control that does hold: private pins
 
 `published = false` makes a pin **private** — it is withheld from every other

@@ -659,7 +659,7 @@ A live, cross-chain feed of every agent registered on the ERC-8004 Identity Regi
 
 URL: https://three.ws/launcher
 
-Design your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, and preview exactly what your agents would mint next. Preview mode: no SOL moves until you fund a live launch.
+Your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.
 
 ### Coin Clash
 

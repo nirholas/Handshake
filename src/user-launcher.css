@@ -1,9 +1,10 @@
 /* /launcher — personal Memetic Launcher. Additive to admin-launcher.css (shared
-   monochrome .ml-* atoms). Only the few user-only pieces live here: the preview
-   badge, the explainer note, and the synthesized-coin sample card. */
+   monochrome .ml-* atoms). Only the user-only pieces live here: the mode badge,
+   the explainer note, the synthesized-coin sample card, and the go-live /
+   agent-wallet funding surface. */
 @import './ui-juice.css';
 
-/* preview badge in the hero */
+/* mode badge in the hero — Preview (dim) vs Live (inverted) */
 .ul-badge {
 	font-size: var(--text-2xs, 0.66rem);
 	font-weight: 700;
@@ -14,6 +15,12 @@
 	border-radius: var(--radius-pill, 999px);
 	padding: 5px 12px;
 	white-space: nowrap;
+	transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.ul-badge.is-live {
+	background: var(--ink-bright, #fff);
+	border-color: var(--ink-bright, #fff);
+	color: #000;
 }
 
 /* honest explainer */
@@ -58,5 +65,41 @@
 .ul-sample-empty p { margin: 0; }
 .ul-sample-empty strong { color: var(--ink, #e8e8e8); }
 
+/* go-live card */
+.ul-liveseg { margin-bottom: var(--space-md, 16px); }
+.ul-live-fields { margin-top: 2px; }
+
+/* agent-wallet funding */
+.ul-funding { margin-top: var(--space-lg, 20px); border-top: 1px solid var(--stroke, rgba(255, 255, 255, 0.08)); padding-top: var(--space-md, 16px); }
+.ul-funding-h { margin: 0; font-size: var(--text-sm, 0.85rem); font-weight: 700; color: var(--ink, #e8e8e8); }
+.ul-fund-refresh { padding: 4px 12px; font-size: var(--text-xs, 0.74rem); }
+.ul-fund-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ul-fund-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-sm, 8px);
+	padding: 8px 10px;
+	transition: border-color 0.14s ease, background 0.14s ease;
+}
+.ul-fund-row:hover { border-color: var(--stroke-strong, rgba(255, 255, 255, 0.16)); }
+.ul-fund-row.is-funded { background: var(--surface-2, rgba(255, 255, 255, 0.05)); }
+.ul-fund-name { font-size: var(--text-sm, 0.8rem); font-weight: 600; color: var(--ink, #e8e8e8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.ul-fund-addr { font-family: var(--font-mono, monospace); font-size: var(--text-2xs, 0.7rem); color: var(--ink-dim, #999); flex: none; }
+.ul-fund-copy { padding: 3px 10px; font-size: var(--text-2xs, 0.68rem); flex: none; }
+.ul-fund-bal { font-family: var(--font-mono, monospace); font-size: var(--text-xs, 0.74rem); color: var(--ink, #ddd); flex: none; min-width: 74px; text-align: right; font-variant-numeric: tabular-nums; }
+.ul-fund-note { margin: 10px 0 0; font-size: var(--text-2xs, 0.7rem); color: var(--ink-dim, #888); }
+.ul-fund-empty { margin-top: 10px; font-size: var(--text-xs, 0.78rem); color: var(--ink-dim, #888); line-height: 1.5; }
+.ul-fund-empty p { margin: 0; }
+.ul-fund-empty a { color: var(--ink-bright, #fff); text-decoration: underline; text-underline-offset: 2px; }
+.ul-fund-empty a:hover { text-decoration-thickness: 2px; }
+
 @media (max-width: 940px) { .ul-stats { grid-template-columns: repeat(2, 1fr); } }
-@media (prefers-reduced-motion: reduce) { .ul-sample { animation: none; } }
+@media (max-width: 560px) {
+	.ul-fund-row { flex-wrap: wrap; }
+	.ul-fund-name { flex-basis: 100%; }
+	.ul-fund-bal { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .ul-sample { animation: none; } .ul-badge { transition: none; } }

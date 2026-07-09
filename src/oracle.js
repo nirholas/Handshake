@@ -839,10 +839,13 @@ function coinCard(it, watched = new Set()) {
 		return `<span class="chip ${m.cls}"${m.title ? ` title="${esc(m.title)}"` : ''}>${esc(m.txt)}</span>`;
 	}).join('');
 
-	const btn = document.createElement('button');
+	// A real link to the coin's full page: crawlable, cmd/ctrl/middle-click and
+	// "open in new tab" all work. A plain left-click is intercepted to open the
+	// in-feed drawer instead, so the fast quick-glance flow is unchanged.
+	const btn = document.createElement('a');
 	btn.className = `coin ${tierClass(it.tier)}`;
 	btn.dataset.mint = it.mint;
-	btn.type = 'button';
+	btn.href = `/oracle/coin/${encodeURIComponent(it.mint)}`;
 	btn.setAttribute('aria-label', `View ${it.symbol || it.name || it.mint.slice(0, 8)} conviction — score ${it.score}, ${it.tier || 'unrated'} tier${it._dupes > 1 ? `, ${it._dupes} copycat mints share this name` : ''}`);
 	btn.innerHTML = `
 		<div class="coin-top">
@@ -875,7 +878,11 @@ function coinCard(it, watched = new Set()) {
 			${it.coin_first_seen_at ? `<span class="chip" title="Launch age — first seen on pump.fun">age <b>${ago(it.coin_first_seen_at)}</b></span>` : ''}
 			<span class="chip" title="When Oracle last scored this launch">scored ${ago(it.scored_at)} ago</span>
 		</div>`;
-	btn.addEventListener('click', () => openCoin(it.mint));
+	btn.addEventListener('click', (e) => {
+		if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return; // let the browser handle new-tab/window opens
+		e.preventDefault();
+		openCoin(it.mint);
+	});
 
 	const isWatched = watched.has(it.mint);
 	const watchBtn = document.createElement('button');
@@ -1666,7 +1673,8 @@ async function openCoin(mint) {
 	const { ok, data } = await api(`/api/oracle/coin?mint=${encodeURIComponent(mint)}&network=${NETWORK}`);
 	if (!ok || !data || !data.conviction) {
 		$('#drTitle').textContent = 'Not observed yet';
-		$('#drBody').innerHTML = `<div class="state"><b>This launch hasn't been scored</b>Oracle scores coins as they surface on pump.fun. If it's brand new, it'll appear here within moments.</div>`;
+		$('#drBody').innerHTML = `<div class="state"><b>This launch hasn't been scored</b>Oracle scores coins as they surface on pump.fun. If it's brand new, it'll appear here within moments — the full coin page already streams its live market and trade tape.
+			<div style="margin-top:14px"><a class="dr-act" href="/oracle/coin/${encodeURIComponent(mint)}">Open full coin page ↗</a></div></div>`;
 		return;
 	}
 	renderDrawer(data);
@@ -1729,7 +1737,7 @@ function drawerTake(d) {
 
 function renderDrawer(d) {
 	const c = d.conviction; const p = c.pillars || {};
-	$('#drTitle').innerHTML = `${esc(c.symbol || '—')} <span style="color:var(--muted);font:600 13px var(--mono)">${esc(c.name || '')}</span>`;
+	$('#drTitle').innerHTML = `<a href="/oracle/coin/${encodeURIComponent(c.mint)}" style="color:inherit;text-decoration:none" title="Open the full conviction page">${esc(c.symbol || '—')} <span style="color:var(--muted);font:600 13px var(--mono)">${esc(c.name || '')}</span></a>`;
 	const reasons = (d.reasons || []).map((r) => `<div class="reason"><span class="rdot ${esc(r.pillar)}"></span><span>${esc(r.text)}</span></div>`).join('') || '<div class="state">No breakdown available.</div>';
 	const narr = d.narrative;
 	const whos = (d.whos_in || []).map(whoRow).join('') || '<div class="state">No wallet footprint recorded yet.</div>';

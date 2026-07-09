@@ -115,6 +115,7 @@
 		"i18n:translate": "node scripts/i18n-translate.mjs",
 		"i18n:lint": "node scripts/i18n-translate.mjs --lint",
 		"changelog:push": "node scripts/changelog-telegram.mjs",
+		"changelog:push:x": "node scripts/changelog-x.mjs",
 		"audit:deploy": "node scripts/audit-deploy-artifacts.mjs",
 		"guard:esbuild": "node scripts/guard-esbuild-bundles.mjs",
 		"guard:esbuild:all": "node scripts/guard-esbuild-bundles.mjs --all",

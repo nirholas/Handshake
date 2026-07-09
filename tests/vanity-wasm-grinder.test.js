@@ -113,7 +113,10 @@ describe('grindToCompletion stop signal', () => {
 		);
 		expect(result.status).toBe('preempted');
 		expect(result.attempts).toBeGreaterThan(0);
-		expect(performance.now() - t0).toBeLessThan(5000);
+		// Wall-clock read under a fully-parallel suite: scheduler starvation can
+		// stretch two ~50ms batches into seconds. The contract is "preempts after
+		// ~2 batches, not minutes" — 15s guards that without contention flakes.
+		expect(performance.now() - t0).toBeLessThan(15_000);
 	});
 
 	it('gives up with status "exhausted" at maxAttempts on an unreachable target', async () => {

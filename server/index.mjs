@@ -16,7 +16,10 @@
 //     > [...catchall].js. Names starting with `_` or `.` are never routable.
 //
 // Request/response parity notes:
-//  - req.url is the untouched original path + query (handlers parse it).
+//  - req.url is the original path + query, EXCEPT behind a dest rewrite that
+//    carries query captures ("/oracle/coin/x" → "/api/oracle-share?mint=$1"):
+//    there req.url becomes the rewritten path + merged query, as on Vercel,
+//    because handlers parse their params from req.url.
 //  - req.query merges URL search params (repeated keys → array), then
 //    dest-rewrite query params, then route params — later wins, as on Vercel.
 //  - req.body is pre-parsed for JSON / urlencoded / text / octet-stream at
@@ -420,6 +423,16 @@ app.use(async (req, res) => {
 
 	// Functions phase: anything routed under /api/ is a serverless handler.
 	if (currentPath.startsWith('/api/')) {
+		// Vercel parity: a handler behind a dest rewrite sees the REWRITTEN url —
+		// path and query — on req.url, not just req.query. Many handlers (e.g.
+		// api/oracle-share.js, api/agent-share.js) parse new URL(req.url), so
+		// without this a pretty route like /oracle/coin/<mint> →
+		// /api/oracle-share?mint=$1 delivers an empty query and the page breaks.
+		if (Object.keys(extraQuery).length > 0) {
+			const merged = new URLSearchParams(url.search);
+			for (const [k, v] of Object.entries(extraQuery)) merged.set(k, v);
+			req.url = `${currentPath}?${merged.toString()}`;
+		}
 		res.set(collected);
 		if (await dispatchApi(req, res, currentPath, extraQuery)) return;
 		res.status(404).json({

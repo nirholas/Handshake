@@ -3,7 +3,14 @@
 // safety-critical invariants: the dry-run lock, range validation, and clamping.
 
 import { describe, it, expect } from 'vitest';
-import { validateAndBuildPatch, shapeConfig, FORCE_DRY_RUN, MODES, KNOWN_SOURCES } from '../api/launcher/me.js';
+import {
+	validateAndBuildPatch,
+	shapeConfig,
+	MODES,
+	KNOWN_SOURCES,
+	USER_MAX_DEV_BUY_SOL,
+	USER_MAX_DAILY_SOL_CAP,
+} from '../api/launcher/me.js';
 
 const baseCur = {
 	enabled: false,
@@ -16,18 +23,32 @@ const baseCur = {
 	network: 'mainnet',
 };
 
-describe('user launcher — dry-run lock (safety)', () => {
-	it('forces dry_run on even when the client asks to disable it', () => {
-		const r = validateAndBuildPatch({ dry_run: false, enabled: true }, baseCur);
+// Live mode shipped: dry_run is user-controllable, but the SAFE side must stay
+// the default — a launcher only ever goes live on an EXPLICIT dry_run:false.
+describe('user launcher — dry-run defaults (safety)', () => {
+	it('enabling the launcher without mentioning dry_run keeps it in preview', () => {
+		const r = validateAndBuildPatch({ enabled: true }, baseCur);
 		expect(r.ok).toBe(true);
 		expect(r.next.dry_run).toBe(true);
 	});
 
-	it('shapeConfig never reports armed and always dry_run when locked', () => {
-		const shaped = shapeConfig({ ...baseCur, enabled: true, dry_run: false });
-		expect(FORCE_DRY_RUN).toBe(true);
+	it('goes live only on an explicit dry_run:false', () => {
+		const r = validateAndBuildPatch({ dry_run: false, enabled: true }, baseCur);
+		expect(r.ok).toBe(true);
+		expect(r.next.dry_run).toBe(false);
+	});
+
+	it('a missing dry_run column reads as preview, never live', () => {
+		const shaped = shapeConfig({ ...baseCur, dry_run: undefined });
 		expect(shaped.dry_run).toBe(true);
 		expect(shaped.armed).toBe(false);
+	});
+
+	it('shapeConfig arms only an enabled, live, unpaused config', () => {
+		expect(shapeConfig({ ...baseCur, enabled: true, dry_run: false }).armed).toBe(true);
+		expect(shapeConfig({ ...baseCur, enabled: false, dry_run: false }).armed).toBe(false);
+		expect(shapeConfig({ ...baseCur, enabled: true, dry_run: true }).armed).toBe(false);
+		expect(shapeConfig({ ...baseCur, enabled: true, dry_run: false, paused: true }).armed).toBe(false);
 	});
 
 	it('shapeConfig returns null for a missing row', () => {
@@ -70,6 +91,29 @@ describe('user launcher — validation', () => {
 
 	it('rejects a max_per_hour above the 60 ceiling', () => {
 		expect(validateAndBuildPatch({ max_per_hour: 999 }, baseCur).code).toBe('invalid_max_per_hour');
+	});
+
+	it('rejects a dev buy outside the user live-spend bound', () => {
+		expect(validateAndBuildPatch({ dev_buy_sol: USER_MAX_DEV_BUY_SOL + 0.01 }, baseCur).code).toBe('invalid_dev_buy_sol');
+		expect(validateAndBuildPatch({ dev_buy_sol: -0.1 }, baseCur).code).toBe('invalid_dev_buy_sol');
+	});
+
+	it('rejects a daily SOL cap outside the user live-spend bound', () => {
+		expect(validateAndBuildPatch({ daily_sol_cap: USER_MAX_DAILY_SOL_CAP + 1 }, baseCur).code).toBe('invalid_daily_sol_cap');
+		expect(validateAndBuildPatch({ daily_sol_cap: -1 }, baseCur).code).toBe('invalid_daily_sol_cap');
+	});
+
+	it('accepts in-range live-spend settings and carries them into the patch', () => {
+		const r = validateAndBuildPatch({ dev_buy_sol: 0.05, daily_sol_cap: 2.5 }, baseCur);
+		expect(r.ok).toBe(true);
+		expect(r.next.dev_buy_sol).toBe(0.05);
+		expect(r.next.daily_sol_cap).toBe(2.5);
+	});
+
+	it('keeps current live-spend settings on a partial patch', () => {
+		const r = validateAndBuildPatch({ enabled: true }, { ...baseCur, dev_buy_sol: 0.2, daily_sol_cap: 3 });
+		expect(r.next.dev_buy_sol).toBe(0.2);
+		expect(r.next.daily_sol_cap).toBe(3);
 	});
 });
 

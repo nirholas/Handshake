@@ -48,6 +48,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .oc-sym { font: 800 26px/1.05 Inter, sans-serif; letter-spacing: -0.02em; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .oc-sym .oc-name { font: 600 14px/1 var(--mono); color: var(--muted); }
 .oc-mint { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font: 600 12px/1 var(--mono); color: var(--faint); }
+.oc-desc { margin: 10px 0 0; max-width: 640px; font-size: 13.5px; line-height: 1.55; color: var(--muted);
+	display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .oc-topgrid { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; margin: 16px 0 2px; }
 
 /* conviction dial */

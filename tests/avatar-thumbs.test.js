@@ -42,7 +42,14 @@ vi.mock('../api/_lib/r2.js', () => ({
 }));
 
 const renderGlbToPngMock = vi.fn();
-vi.mock('../api/_lib/render-glb.js', () => ({ renderGlbToPng: (...a) => renderGlbToPngMock(...a) }));
+// Mirrors the real classifier in render-glb.js — renderBatch depends on it to tell
+// "this model is broken" apart from "chromium died".
+const INFRA_RE =
+	/connection closed|target closed|browser has disconnected|browser was not found|protocol error|session closed|websocket|econnreset|socket hang up|failed to launch/i;
+vi.mock('../api/_lib/render-glb.js', () => ({
+	renderGlbToPng: (...a) => renderGlbToPngMock(...a),
+	isBrowserInfrastructureError: (err) => INFRA_RE.test(String(err?.message || err || '')),
+}));
 
 const { adoptForgePreviews, renderThumbnail, renderBatch, thumbKeyFor, isMissingThumbnail } =
 	await import('../api/_lib/avatar-thumbs.js');
@@ -196,5 +203,57 @@ describe('renderBatch — bounded drain', () => {
 		const r = await renderBatch({ limit: 5 });
 		expect(r).toMatchObject({ claimed: 0, rendered: 0, failed: 0 });
 		expect(renderGlbToPngMock).not.toHaveBeenCalled();
+	});
+
+	// Regression: an OOM-killed chromium made every subsequent render fail in
+	// milliseconds with "Connection closed.". The batch ground through the whole
+	// queue charging a retry to each, and 1,283 perfectly renderable avatars were
+	// permanently retired for a crash that had nothing to do with their models.
+	describe('when the browser dies mid-batch', () => {
+		const threeJobs = [
+			{ match: /WITH candidates/i, rows: [
+				{ id: 'a-1', storage_key: 'a.glb', name: 'A' },
+				{ id: 'a-2', storage_key: 'b.glb', name: 'B' },
+				{ id: 'a-3', storage_key: 'c.glb', name: 'C' },
+			] },
+		];
+
+		it('aborts the batch instead of burning every model\'s retries', async () => {
+			sqlRoutes = threeJobs;
+			renderGlbToPngMock.mockRejectedValue(new Error('Connection closed.'));
+
+			const r = await renderBatch({ limit: 3, concurrency: 1 });
+
+			expect(r.aborted).toMatch(/connection closed/i);
+			expect(r.rendered).toBe(0);
+			// Exactly one job was attempted; the batch stopped rather than cascading.
+			expect(renderGlbToPngMock).toHaveBeenCalledTimes(1);
+			expect(r.failed).toBe(0); // an infra abort is not a model failure
+		});
+
+		it('gives back the attempt it charged, for the aborted AND untouched jobs', async () => {
+			sqlRoutes = threeJobs;
+			renderGlbToPngMock.mockRejectedValue(new Error('Connection closed.'));
+
+			await renderBatch({ limit: 3, concurrency: 1 });
+
+			const rollbacks = sqlCalls.filter((c) => /attempts\s*=\s*greatest\(0, attempts - 1\)/i.test(c.text));
+			// One for the job that hit the dead browser, two for the ones never started.
+			expect(rollbacks).toHaveLength(3);
+			// And nothing was recorded as a model-attributable failure.
+			expect(sqlCalls.some((c) => /SET last_error/i.test(c.text))).toBe(false);
+		});
+
+		it('still charges a retry for a genuinely broken model', async () => {
+			sqlRoutes = threeJobs;
+			renderGlbToPngMock.mockRejectedValue(new Error('glb fetch failed: upstream returned 404'));
+
+			const r = await renderBatch({ limit: 3, concurrency: 1 });
+
+			expect(r.aborted).toBe(false);
+			expect(r.failed).toBe(3); // every model tried, every one blamed
+			expect(sqlCalls.filter((c) => /SET last_error/i.test(c.text))).toHaveLength(3);
+			expect(sqlCalls.some((c) => /attempts - 1/i.test(c.text))).toBe(false);
+		});
 	});
 });

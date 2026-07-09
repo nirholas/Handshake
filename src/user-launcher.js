@@ -1,14 +1,22 @@
 // /launcher — your personal Memetic Launcher (the per-user scope).
 //
-// Talks only to /api/launcher/me (session or bearer). The launcher is preview-only
-// (server hard-locks dry-run), so there is no arm modal and no real-SOL surface —
-// "On" simply lets the cron pick coins from your agents and record them. All
-// API-sourced strings are escaped before they touch the DOM.
+// Talks only to /api/launcher/me (session or bearer). Two modes:
+//   Preview (dry_run=true, the default) — the cron picks coins from your agents
+//   and records them; nothing moves on-chain.
+//   Live (dry_run=false) — the same picks mint for real on pump.fun, SELF-FUNDED:
+//   each launch is paid by the launching agent's own wallet (base cost + dev buy)
+//   from SOL you deposited to it. The platform never fronts a user launch, so the
+//   arm modal here guards your own money, and only yours.
+// All API-sourced strings are escaped before they touch the DOM.
 
 import { updateValue, enterRow } from './ui-juice.js';
 
 const API = '/api/launcher/me';
 const REFRESH_MS = 6000;
+// Per-launch overhead (pump.fun base cost + fee buffer) besides the dev buy.
+// The server sends the authoritative value (launch_overhead_sol); this seeds the
+// cost hint before the first GET lands.
+let launchOverheadSol = 0.027;
 
 const MODES = [
 	{ id: 'hybrid', name: 'Hybrid', desc: 'Trend first, meme + random filler to hold cadence.' },
@@ -26,7 +34,7 @@ const SOURCES = [
 	{ id: 'reddit', label: 'Reddit' },
 	{ id: 'wikipedia', label: 'Wikipedia' },
 ];
-const EDITABLE = ['enabled', 'mode', 'sources', 'target_cadence_seconds', 'max_per_hour', 'network'];
+const EDITABLE = ['enabled', 'dry_run', 'mode', 'sources', 'target_cadence_seconds', 'max_per_hour', 'dev_buy_sol', 'daily_sol_cap', 'network'];
 
 // Page markup — injected into the dashboard-next shell's <main> slot by
 // src/dashboard-next/pages/launcher.js. Kept here so the controller and the
@@ -52,7 +60,7 @@ export const LAUNCHER_MARKUP = `
 					<p class="ml-sub" id="ul-status-line">Loading…</p>
 				</div>
 				<div class="ml-hero-r">
-					<span class="ul-badge" id="ul-badge" title="Preview only — no SOL moves">Preview</span>
+					<span class="ul-badge" id="ul-badge">Preview</span>
 					<button class="ml-btn ml-armswitch" id="ul-enable" aria-pressed="false">
 						<span class="ml-armswitch-track"><span class="ml-armswitch-knob"></span></span>
 						<span class="ml-armswitch-lbl" id="ul-enable-lbl">Off</span>
@@ -60,15 +68,10 @@ export const LAUNCHER_MARKUP = `
 				</div>
 			</header>
 
-			<!-- Honest explainer -->
+			<!-- Honest explainer — copy tracks the selected launch mode (see renderNote) -->
 			<div class="ul-note" id="ul-note">
 				<span class="ul-note-ico" aria-hidden="true">◑</span>
-				<p>
-					<strong>Preview mode.</strong> Your launcher rides live cultural narratives and picks coins from your own
-					agents on a schedule — recording each pick — but it mints nothing and moves no SOL. It is a strategy
-					designer: tune it, watch what it would launch, and ship a great rotation. Real on-chain launches are
-					funded separately and arrive next.
-				</p>
+				<p id="ul-note-txt"></p>
 			</div>
 
 			<!-- Breaker (rare, but designed) -->
@@ -119,6 +122,44 @@ export const LAUNCHER_MARKUP = `
 							<div class="ml-seg" id="ul-network" role="radiogroup" aria-label="Network">
 								<button type="button" class="ml-seg-btn" data-net="mainnet" role="radio">Mainnet</button>
 								<button type="button" class="ml-seg-btn" data-net="devnet" role="radio">Devnet</button>
+							</div>
+						</div>
+					</section>
+
+					<!-- Launch mode: preview vs live + self-funding -->
+					<section class="ml-card ul-live-card">
+						<h2 class="ml-card-h">Launch mode</h2>
+						<p class="ml-card-help">
+							Preview records what it would mint. Live mints for real on pump.fun — paid by your own agents'
+							wallets, never the platform's.
+						</p>
+						<div class="ml-seg ul-liveseg" id="ul-liveseg" role="radiogroup" aria-label="Launch mode">
+							<button type="button" class="ml-seg-btn" data-live="preview" role="radio">Preview</button>
+							<button type="button" class="ml-seg-btn" data-live="live" role="radio">Live</button>
+						</div>
+						<div class="ml-fields ul-live-fields">
+							<label class="ml-field">
+								<span class="ml-field-lbl">Dev buy <em>SOL per launch</em></span>
+								<input type="number" min="0" max="1" step="0.001" id="ul-devbuy" class="ml-input" />
+								<span class="ml-field-hint" id="ul-cost-hint"></span>
+							</label>
+							<label class="ml-field">
+								<span class="ml-field-lbl">Daily cap <em>SOL</em></span>
+								<input type="number" min="0" max="10" step="0.1" id="ul-dailycap" class="ml-input" />
+								<span class="ml-field-hint">Live spend ceiling per UTC day.</span>
+							</label>
+						</div>
+
+						<div class="ul-funding">
+							<div class="ml-console-h">
+								<h3 class="ul-funding-h">Agent wallets</h3>
+								<button type="button" class="ml-btn ml-btn-ghost ul-fund-refresh" id="ul-fund-refresh">Refresh</button>
+							</div>
+							<p class="ml-card-help">Live launches spend from these. Deposit SOL to any of them to power your rotation.</p>
+							<ul class="ul-fund-list" id="ul-fund-list"></ul>
+							<p class="ul-fund-note" id="ul-fund-note" hidden></p>
+							<div class="ul-fund-empty" id="ul-fund-empty" hidden>
+								<p>No launch-ready agents yet. <a href="/create-agent">Create an agent</a> with an avatar — it gets its own Solana wallet automatically.</p>
 							</div>
 						</div>
 					</section>
@@ -182,6 +223,22 @@ export const LAUNCHER_MARKUP = `
 		</div>
 	</div>
 
+	<!-- Go-live confirm -->
+	<div class="ml-modal" id="ul-modal" hidden role="dialog" aria-modal="true" aria-labelledby="ul-modal-title">
+		<div class="ml-modal-card">
+			<h2 class="ml-modal-title" id="ul-modal-title">Go live?</h2>
+			<p class="ml-modal-body" id="ul-modal-body"></p>
+			<label class="ml-modal-confirm">
+				<span>Type <strong>LIVE</strong> to confirm</span>
+				<input type="text" id="ul-modal-input" class="ml-input" autocomplete="off" spellcheck="false" />
+			</label>
+			<div class="ml-modal-actions">
+				<button class="ml-btn ml-btn-ghost" id="ul-modal-cancel">Cancel</button>
+				<button class="ml-btn ml-btn-danger" id="ul-modal-go" disabled>Go live</button>
+			</div>
+		</div>
+	</div>
+
 	<div class="ml-toast" id="ul-toast" hidden aria-live="polite"></div>
 `;
 
@@ -214,12 +271,15 @@ function normalize(c) {
 	const arr = (v) => (Array.isArray(v) ? v : typeof v === 'string' ? safeJson(v, []) : []);
 	return {
 		enabled: !!c.enabled,
+		dry_run: c.dry_run !== false,
 		paused: !!c.paused,
 		pause_reason: c.pause_reason || '',
 		mode: c.mode || 'hybrid',
 		sources: arr(c.sources),
 		target_cadence_seconds: Number(c.target_cadence_seconds ?? 60),
 		max_per_hour: Number(c.max_per_hour ?? 30),
+		dev_buy_sol: Number(c.dev_buy_sol ?? 0.01),
+		daily_sol_cap: Number(c.daily_sol_cap ?? 1),
 		network: c.network || 'mainnet',
 	};
 }
@@ -235,6 +295,7 @@ function showGate() {
 // ── load + render ──────────────────────────────────────────────────────────────
 async function load() {
 	const state = await api('GET');
+	if (Number(state.launch_overhead_sol) > 0) launchOverheadSol = Number(state.launch_overhead_sol);
 	loaded = normalize(state.config);
 	draft = { ...loaded };
 	$('ul-gate').hidden = true;
@@ -245,6 +306,7 @@ async function load() {
 	renderState(state);
 	updateDirty();
 	startRefresh();
+	loadFunding(); // RPC-backed, so fetched once here + on explicit refresh, never per poll
 }
 
 async function refresh() {
@@ -297,8 +359,17 @@ function buildStaticControls() {
 		onEdit();
 	});
 
+	$('ul-liveseg').addEventListener('click', (e) => {
+		const btn = e.target.closest('.ml-seg-btn');
+		if (!btn) return;
+		draft.dry_run = btn.dataset.live !== 'live';
+		onEdit();
+	});
+
 	bindNum('ul-cadence', 'target_cadence_seconds');
 	bindNum('ul-maxhour', 'max_per_hour');
+	bindNum('ul-devbuy', 'dev_buy_sol');
+	bindNum('ul-dailycap', 'daily_sol_cap');
 
 	$('ul-enable').addEventListener('click', () => { draft.enabled = !draft.enabled; onEdit(); });
 	$('ul-config').addEventListener('submit', (e) => e.preventDefault());
@@ -306,6 +377,17 @@ function buildStaticControls() {
 	$('ul-discard').addEventListener('click', () => { draft = { ...loaded }; renderForm(); updateDirty(); });
 	$('ul-resume').addEventListener('click', resumeBreaker);
 	$('ul-preview-btn').addEventListener('click', previewCoin);
+	$('ul-fund-refresh').addEventListener('click', () => loadFunding(true));
+	$('ul-fund-list').addEventListener('click', copyFundAddress);
+
+	// Go-live modal: type LIVE to enable the confirm button.
+	$('ul-modal-input').addEventListener('input', () => {
+		$('ul-modal-go').disabled = $('ul-modal-input').value.trim().toUpperCase() !== 'LIVE';
+	});
+	$('ul-modal-cancel').addEventListener('click', closeLiveModal);
+	$('ul-modal-go').addEventListener('click', async () => { closeLiveModal(); await commitSave(); });
+	$('ul-modal').addEventListener('click', (e) => { if (e.target === $('ul-modal')) closeLiveModal(); });
+	document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('ul-modal').hidden) closeLiveModal(); });
 
 	// ⌘/Ctrl+S saves pending edits.
 	document.addEventListener('keydown', (e) => {
@@ -332,10 +414,33 @@ function renderForm() {
 	}
 	$('ul-sources-card').style.opacity = draft.mode === 'trend' || draft.mode === 'hybrid' ? '1' : '0.5';
 	for (const btn of document.querySelectorAll('#ul-network .ml-seg-btn')) btn.classList.toggle('active', btn.dataset.net === draft.network);
+	for (const btn of document.querySelectorAll('#ul-liveseg .ml-seg-btn')) {
+		const active = (btn.dataset.live === 'live') === !draft.dry_run;
+		btn.classList.toggle('active', active);
+		btn.setAttribute('aria-checked', active ? 'true' : 'false');
+	}
 	setVal('ul-cadence', draft.target_cadence_seconds);
 	setVal('ul-maxhour', draft.max_per_hour);
+	setVal('ul-devbuy', draft.dev_buy_sol);
+	setVal('ul-dailycap', draft.daily_sol_cap);
 	$('ul-cadence-hint').textContent = cadenceHint(draft.target_cadence_seconds);
+	$('ul-cost-hint').textContent = `≈ ${perLaunchSol().toFixed(3)} SOL per launch, from the launching agent's wallet`;
+	renderNote();
+	renderFunding(); // funded pills track the current dev buy
 	renderStatusFromDraft();
+}
+
+function perLaunchSol() { return launchOverheadSol + (Number(draft?.dev_buy_sol) || 0); }
+
+// The explainer copy tracks the selected mode — static strings only, safe as HTML.
+function renderNote() {
+	$('ul-note-txt').innerHTML = draft.dry_run
+		? '<strong>Preview mode.</strong> Your launcher rides live cultural narratives and picks coins from your own ' +
+			'agents on a schedule — recording each pick — but it mints nothing and moves no SOL. Tune it, watch what ' +
+			'it would launch, then flip <strong>Live</strong> when the rotation looks right.'
+		: '<strong>Live mode.</strong> Your launcher mints real pump.fun coins on your cadence. Every launch is paid by ' +
+			'the launching agent’s own wallet — deposit SOL below to keep it running; it skips (never fails) when a ' +
+			'wallet runs dry. Your daily cap bounds total spend. Switch back to Preview anytime.';
 }
 function setVal(id, v) { const el = $(id); if (el && document.activeElement !== el) el.value = v; }
 function cadenceHint(sec) { if (!sec) return ''; return `≈ ${Math.floor(3600 / sec).toLocaleString()} coins / hour at full tilt`; }
@@ -343,10 +448,20 @@ function cadenceHint(sec) { if (!sec) return ''; return `≈ ${Math.floor(3600 /
 function renderStatusFromDraft() {
 	$('ul-enable').setAttribute('aria-pressed', draft.enabled ? 'true' : 'false');
 	$('ul-enable-lbl').textContent = draft.enabled ? 'On' : 'Off';
+
+	const live = !draft.dry_run;
+	const badge = $('ul-badge');
+	badge.textContent = live ? 'Live' : 'Preview';
+	badge.classList.toggle('is-live', live);
+	badge.title = live
+		? 'Live — launches spend real SOL from your agent wallets'
+		: 'Preview — records picks, no SOL moves';
+
 	const dot = $('ul-status-dot');
 	dot.className = 'ml-dot';
 	let line;
 	if (loaded.paused) { dot.classList.add('is-paused'); line = `Paused — ${esc(loaded.pause_reason || 'too many misses')}.`; }
+	else if (loaded.enabled && !loaded.dry_run) { dot.classList.add('is-armed'); line = `LIVE — minting on ${esc(loaded.mode)} mode every ${loaded.target_cadence_seconds}s, paid by your agent wallets.`; }
 	else if (loaded.enabled) { dot.classList.add('is-dry'); line = `Previewing — coining on ${esc(loaded.mode)} mode every ${loaded.target_cadence_seconds}s. No SOL moves.`; }
 	else { line = 'Off — idle. Turn on to watch it design your rotation.'; }
 	if (isDirty()) line += '  •  Unsaved changes.';
@@ -420,8 +535,10 @@ function runRowHtml(r, network) {
 		: esc(r.name || r.symbol || '—');
 	const rode = topNarrative(r.trigger_detail);
 	const meta = `<span class="ml-kind">${esc(r.kind || '')}</span>${rode ? ' · rode ' + esc(rode) : (r.trigger_source ? ' · ' + esc(r.trigger_source) : '')}`;
+	// Skips/failures explain themselves on hover (e.g. which wallet needs a deposit).
+	const why = (status === 'skipped' || status === 'failed') && r.error ? ` title="${esc(r.error)}"` : '';
 	return (
-		`<span class="ml-pill s-${esc(status)}">${esc(statusLabel(status))}</span>` +
+		`<span class="ml-pill s-${esc(status)}"${why}>${esc(statusLabel(status))}</span>` +
 		`<span class="ml-run-main">` +
 			`<span class="ml-run-name">${name} <span class="ml-run-sym">${esc(r.symbol || '')}</span></span>` +
 			`<span class="ml-run-meta">${meta}</span>` +
@@ -489,12 +606,87 @@ async function previewCoin() {
 	}
 }
 
+// ── agent-wallet funding (self-funded live launches) ───────────────────────────
+let fundAgents = null; // last {id,name,address,sol}[] from {action:'funding'}
+let fundLoading = false;
+
+async function loadFunding(manual = false) {
+	if (fundLoading) return;
+	fundLoading = true;
+	const btn = $('ul-fund-refresh');
+	btn.disabled = true;
+	btn.textContent = 'Refreshing…';
+	try {
+		const r = await api('POST', { action: 'funding' });
+		fundAgents = Array.isArray(r.agents) ? r.agents : [];
+		renderFunding();
+	} catch (err) {
+		if (err.message !== 'unauthorized' && manual) toast(err.message, true);
+	} finally {
+		fundLoading = false;
+		btn.disabled = false;
+		btn.textContent = 'Refresh';
+	}
+}
+
+function renderFunding() {
+	if (fundAgents == null) return; // not fetched yet — skeleton state stays
+	const list = $('ul-fund-list');
+	const empty = $('ul-fund-empty');
+	const note = $('ul-fund-note');
+	if (!fundAgents.length) {
+		list.innerHTML = '';
+		note.hidden = true;
+		empty.hidden = false;
+		return;
+	}
+	empty.hidden = true;
+	const need = perLaunchSol();
+	list.innerHTML = fundAgents.map((a) => {
+		const funded = a.sol != null && a.sol >= need;
+		const bal = a.sol == null ? '—' : `${Number(a.sol).toFixed(3)} SOL`;
+		return `
+		<li class="ul-fund-row${funded ? ' is-funded' : ''}">
+			<span class="ul-fund-name">${esc(a.name || 'agent')}</span>
+			<code class="ul-fund-addr" title="${esc(a.address)}">${esc(shortAddr(a.address))}</code>
+			<button type="button" class="ml-btn ml-btn-ghost ul-fund-copy" data-addr="${esc(a.address)}" aria-label="Copy ${esc(a.name || 'agent')} wallet address">Copy</button>
+			<span class="ul-fund-bal">${esc(bal)}</span>
+			<span class="ml-pill ${funded ? 's-confirmed' : 's-skipped'}">${funded ? 'funded' : 'needs SOL'}</span>
+		</li>`;
+	}).join('');
+	const fundedCount = fundAgents.filter((a) => a.sol != null && a.sol >= need).length;
+	note.hidden = false;
+	note.textContent = fundedCount
+		? `${fundedCount} of ${fundAgents.length} wallet${fundAgents.length === 1 ? '' : 's'} can cover the next launch (≈ ${need.toFixed(3)} SOL).`
+		: `No wallet covers a launch yet — deposit ≈ ${need.toFixed(3)} SOL to any address above.`;
+}
+
+async function copyFundAddress(e) {
+	const btn = e.target.closest('.ul-fund-copy');
+	if (!btn) return;
+	try {
+		await navigator.clipboard.writeText(btn.dataset.addr);
+		toast('Address copied — send SOL to fund this agent');
+	} catch {
+		toast('Copy failed — long-press the address to copy it', true);
+	}
+}
+
+function shortAddr(a) { a = String(a || ''); return a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a; }
+
 // ── dirty + save ───────────────────────────────────────────────────────────────
 function pickEditable(o) { const r = {}; for (const k of EDITABLE) r[k] = o[k]; r.sources = [...(o.sources || [])].sort(); return r; }
 function isDirty() { return JSON.stringify(pickEditable(draft)) !== JSON.stringify(pickEditable(loaded)); }
 function updateDirty() { $('ul-savebar').hidden = !isDirty(); }
 
+// Saving a preview→live transition detours through the typed confirm modal;
+// everything else commits directly.
 async function save() {
+	if (!draft.dry_run && loaded.dry_run) return openLiveModal();
+	return commitSave();
+}
+
+async function commitSave() {
 	const payload = {};
 	for (const k of EDITABLE) payload[k] = draft[k];
 	$('ul-save').disabled = true;
@@ -504,7 +696,7 @@ async function save() {
 		draft = { ...loaded };
 		renderForm();
 		updateDirty();
-		toast(loaded.enabled ? 'Saved — launcher is previewing' : 'Saved');
+		toast(!loaded.enabled ? 'Saved' : loaded.dry_run ? 'Saved — launcher is previewing' : 'Saved — launcher is LIVE');
 		refresh();
 	} catch (err) {
 		if (err.message !== 'unauthorized') toast(err.message, true);
@@ -512,6 +704,20 @@ async function save() {
 		$('ul-save').disabled = false;
 	}
 }
+
+function openLiveModal() {
+	const perHour = Math.floor(3600 / Math.max(60, draft.target_cadence_seconds));
+	const rate = Math.min(perHour, draft.max_per_hour || perHour);
+	$('ul-modal-body').textContent =
+		`Your launcher will mint real pump.fun coins on ${draft.network} — up to ${rate}/hour at your cadence, ` +
+		`≈ ${perLaunchSol().toFixed(3)} SOL each from your own agent wallets, capped at ${draft.daily_sol_cap} SOL per day. ` +
+		'It only spends SOL you deposit; an unfunded wallet pauses launches, it never fails them.';
+	$('ul-modal-input').value = '';
+	$('ul-modal-go').disabled = true;
+	$('ul-modal').hidden = false;
+	$('ul-modal-input').focus();
+}
+function closeLiveModal() { $('ul-modal').hidden = true; }
 async function resumeBreaker() {
 	try { await api('POST', { action: 'resume' }); toast('Resumed'); refresh(); }
 	catch (err) { if (err.message !== 'unauthorized') toast(err.message, true); }

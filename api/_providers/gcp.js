@@ -89,8 +89,12 @@ function serviceUrlForMode(mode) {
 			// LingBot-Map). Standard /infer + /tasks/:id task shape; result is a PLY.
 			return readEnv('GCP_VIDEO2SCENE_URL');
 		case 'rerig':
-			// Rigging is handled by the pipeline controller via its /rig endpoint.
-			return readEnv('GCP_RECONSTRUCTION_URL');
+			// Rigging: prefer the standalone UniRig worker (workers/unirig — direct
+			// /rig + /tasks/:id, `mesh_gcs_url` request schema) when GCP_UNIRIG_URL
+			// is set; otherwise the legacy pipeline-controller /rig endpoint behind
+			// GCP_RECONSTRUCTION_URL. The deployed avatar-reconstruction service
+			// exposes no /rig, so without GCP_UNIRIG_URL every rig submit 404s.
+			return readEnv('GCP_UNIRIG_URL') || readEnv('GCP_RECONSTRUCTION_URL');
 		default:
 			return null;
 	}
@@ -273,6 +277,22 @@ function buildWorkerRequest(request) {
 	}
 
 	if (mode === 'rerig') {
+		// Two rig backends share the /rig path but disagree on the schema. The
+		// standalone UniRig worker (GCP_UNIRIG_URL) takes `mesh_gcs_url` (any
+		// https URL — the name is historical) and reports `rigged_gcs_url`; the
+		// legacy pipeline controller takes `mesh_url`/`rig_type` and reports
+		// `glb_url`. Branch on which env the rerig URL resolved from.
+		if (readEnv('GCP_UNIRIG_URL')) {
+			return {
+				path: '/rig',
+				resultKey: 'rigged_gcs_url',
+				body: {
+					mesh_gcs_url: sourceUrl,
+					template: params?.template || 'wolf3d_neutral',
+					blendshapes: params?.blendshapes !== false,
+				},
+			};
+		}
 		return {
 			path: '/rig',
 			resultKey: 'glb_url',

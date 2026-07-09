@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T22:24:13.065Z",
+	"generated_at": "2026-07-09T22:25:17.658Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -151,6 +151,16 @@
 			"title": "Marketplace no longer claims \"No public avatars\" when the feed fails to load",
 			"summary": "If the community avatar feed hit a temporary server error (like a rate limit) while agents were already on screen, the Avatars tab showed a misleading \"No public avatars\" empty state — even with thousands of avatars in the catalog. It now shows a clear \"Couldn't load avatars\" message with a Retry button that reloads the feed in place.",
 			"link": "/marketplace?tab=avatars",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Oracle scoring restored to full throughput and the all-time counter is now truly all-time",
+			"summary": "Since the July 7 infrastructure migration, the scheduler job driving Oracle scoring never fired — coins were only scored when someone loaded the feed, dropping coverage from ~14,000 launches a day to ~3,000. The job is running again on its every-2-minutes cadence. The Scored all-time figure on /oracle was also quietly shrinking: it counted a cache that old entries are pruned from. It now reads from a durable lifetime ledger that only counts up.",
+			"link": "/oracle",
 			"tags": [
 				"fix"
 			]

@@ -21,6 +21,48 @@ describe('renderGlbToPng — input validation', () => {
 	});
 });
 
+// A batch runner charges a bounded retry against a model each time its render
+// fails. If chromium is OOM-killed mid-batch, every remaining render fails
+// instantly with "Connection closed." — and without this classifier the runner
+// blames the models and retires them permanently. (It did: 1,283 healthy avatars
+// were retired that way before the classifier existed.)
+describe('isBrowserInfrastructureError — blame the browser, not the model', () => {
+	it('classifies a dead/unreachable browser as infrastructure', async () => {
+		const { isBrowserInfrastructureError } = await import('../api/_lib/render-glb.js');
+		for (const msg of [
+			'Connection closed.',
+			'Protocol error (Page.navigate): Target closed.',
+			'Navigation failed because browser has disconnected!',
+			'Session closed. Most likely the page has been closed.',
+			'Failed to launch the browser process!',
+			'read ECONNRESET',
+			'socket hang up',
+		]) {
+			expect(isBrowserInfrastructureError(new Error(msg)), msg).toBe(true);
+		}
+	});
+
+	it('does NOT excuse a genuinely broken model', async () => {
+		const { isBrowserInfrastructureError } = await import('../api/_lib/render-glb.js');
+		for (const msg of [
+			'glb fetch failed: upstream returned 404',
+			'glb fetch failed: file_too_large',
+			'render failed: THREE.GLTFLoader: Unsupported asset. glTF versions >=2.0 are supported.',
+			'renderer returned no bytes',
+			'glbUrl required',
+		]) {
+			expect(isBrowserInfrastructureError(new Error(msg)), msg).toBe(false);
+		}
+	});
+
+	it('tolerates a non-Error / nullish argument', async () => {
+		const { isBrowserInfrastructureError } = await import('../api/_lib/render-glb.js');
+		expect(isBrowserInfrastructureError(null)).toBe(false);
+		expect(isBrowserInfrastructureError(undefined)).toBe(false);
+		expect(isBrowserInfrastructureError('Connection closed.')).toBe(true);
+	});
+});
+
 describe.skipIf(!HEADFUL)('renderGlbToPng — headful render', () => {
 	// Generate a minimal-but-valid GLB at module-load time: a single-triangle mesh.
 	// Served from a localhost http server so chromium can fetch it the same way

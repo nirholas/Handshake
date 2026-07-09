@@ -119,6 +119,14 @@
 			<description>If the community avatar feed hit a temporary server error (like a rate limit) while agents were already on screen, the Avatars tab showed a misleading &quot;No public avatars&quot; empty state — even with thousands of avatars in the catalog. It now shows a clear &quot;Couldn't load avatars&quot; message with a Retry button that reloads the feed in place.</description>
 		</item>
 		<item>
+			<title>Oracle scoring restored to full throughput and the all-time counter is now truly all-time</title>
+			<link>https://three.ws/oracle</link>
+			<guid isPermaLink="false">2026-07-09:Oracle scoring restored to full throughput and the all-time counter is now truly all-time</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Since the July 7 infrastructure migration, the scheduler job driving Oracle scoring never fired — coins were only scored when someone loaded the feed, dropping coverage from ~14,000 launches a day to ~3,000. The job is running again on its every-2-minutes cadence. The Scored all-time figure on /oracle was also quietly shrinking: it counted a cache that old entries are pruned from. It now reads from a durable lifetime ledger that only counts up.</description>
+		</item>
+		<item>
 			<title>Paid Solana endpoints are back — payments settle end to end again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-09:Paid Solana endpoints are back — payments settle end to end again</guid>

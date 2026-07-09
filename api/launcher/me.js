@@ -7,18 +7,22 @@
  *     narratives their launcher would ride right now.
  *
  *   POST /api/launcher/me
- *     Upsert the caller's launcher policy (mode, sources, cadence, network, on/off).
+ *     Upsert the caller's launcher policy (mode, sources, cadence, network, on/off,
+ *     preview/live, dev buy, daily SOL cap).
  *     { action: 'preview' } → synthesize ONE sample coin the launcher would mint
  *                             right now (no DB write, on demand — never per poll).
+ *     { action: 'funding' } → the caller's launch-ready agents with LIVE on-chain
+ *                             SOL balances + the per-launch cost estimate (RPC-
+ *                             backed, on demand — never per poll).
  *     { action: 'resume'  } → clear a tripped circuit breaker.
  *
- * SAFETY — why a normal user can run this without an abuse vector: the shared
- * platform master wallet funds every live launch (launcher-engine → fundAgentForLaunch).
- * There is deliberately no per-user funding source yet, so a user-scope launcher is
- * HARD-LOCKED to dry_run server-side: enabling it makes the cron pick real coins +
- * the user's own agents + live narratives and record them, but it never moves SOL.
- * It is a true preview/strategy designer. Going live is a separately-funded follow-up;
- * the lock is the one line (FORCE_DRY_RUN) that keeps that decision deliberate.
+ * SAFETY — why a normal user can run this live without an abuse vector: a user-scope
+ * launcher is SELF-FUNDED. Live launches are paid by the user's own agents' custodial
+ * wallets (the agent signs its own pump.fun create and pays base cost + dev buy —
+ * the exact path /api/pump?action=launch-agent enforces with a 402 preflight). The
+ * platform master wallet only ever funds the GLOBAL scope; the engine never routes
+ * master SOL to a user launcher. So the blast radius of "live" is exactly the SOL a
+ * user chose to deposit into wallets they own, bounded further by their daily cap.
  *
  * Auth: session cookie OR bearer JWT (so a user's agent can drive it too).
  */
@@ -29,10 +33,8 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { rankNarratives } from '../_lib/launcher-trends.js';
 import { pickSource } from '../_lib/launcher-sources.js';
-
-// A user-scope launcher can never move SOL (see SAFETY above). One place to lift
-// this when per-user funding ships.
-const FORCE_DRY_RUN = true;
+import { LAUNCH_BASE_SOL, SELF_FUND_FEE_BUFFER_SOL } from '../_lib/launcher-engine.js';
+import { getSolanaAddressBalances } from '../_lib/agent-wallet.js';
 
 const MODES = ['off', 'trend', 'meme', 'random', 'hybrid'];
 const KNOWN_SOURCES = ['coin_intel', 'trending', 'x', 'knowyourmeme', 'hackernews', 'reddit', 'wikipedia'];
@@ -81,9 +83,60 @@ export default wrap(async (req, res) => {
 
 	const body = (await readJson(req).catch(() => ({}))) || {};
 	if (body.action === 'preview') return previewCoin(res, config, body);
+	if (body.action === 'funding') return fundingState(res, userId, config);
 	if (body.action === 'resume') return resumeBreaker(res, userId);
 	return postConfig(res, userId, config, body);
 });
+
+// How many of the user's agents the funding readout covers. The rotation is
+// LRU-ordered, so the first funded agent launches next regardless of list size.
+const FUNDING_AGENT_LIMIT = 12;
+
+async function eligibleAgents(userId) {
+	return sql`
+		select ai.id, ai.name, ai.meta->>'solana_address' as solana_address
+		from agent_identities ai
+		where ai.user_id = ${userId} and ai.deleted_at is null
+		  and ai.avatar_id is not null and ai.meta->>'solana_address' is not null
+		order by ai.created_at asc
+		limit ${FUNDING_AGENT_LIMIT}
+	`;
+}
+
+// Per-launch SOL a live launch needs in the agent wallet: pump.fun base cost
+// (rent + fees, mirrored from the launch-agent preflight) + the dev buy + a
+// priority-fee buffer.
+function perLaunchEstSol(config) {
+	return LAUNCH_BASE_SOL + (Number(config?.dev_buy_sol) || 0) + SELF_FUND_FEE_BUFFER_SOL;
+}
+
+// { action:'funding' } — live balances for the caller's launch-ready agents.
+// RPC-backed, so it is user-initiated only (load + explicit refresh), never
+// wired onto the 6s poll.
+async function fundingState(res, userId, config) {
+	const network = config?.network || 'mainnet';
+	const agents = await eligibleAgents(userId);
+	const need = perLaunchEstSol(config);
+	const rows = await Promise.all(
+		agents.map(async (a) => {
+			const { sol } = await getSolanaAddressBalances(a.solana_address, network);
+			return {
+				id: a.id,
+				name: a.name,
+				address: a.solana_address,
+				sol, // null ⇒ RPC read failed; the UI shows "—", never a fake 0
+				funded: sol != null && sol >= need,
+			};
+		}),
+	);
+	return json(res, 200, {
+		ok: true,
+		network,
+		launch_base_sol: LAUNCH_BASE_SOL,
+		per_launch_est_sol: need,
+		agents: rows,
+	});
+}
 
 async function getState(res, userId, config) {
 	const network = config?.network || 'mainnet';
@@ -130,18 +183,27 @@ async function getState(res, userId, config) {
 		stats: stats[0] || {},
 		queue_enabled: queue[0]?.enabled ?? 0,
 		eligible_agents: eligible[0]?.n ?? 0,
-		dry_run_locked: FORCE_DRY_RUN,
+		dry_run_locked: false, // live mode shipped — kept so older clients keep their gate logic
+		per_launch_est_sol: perLaunchEstSol(config),
+		// Fixed per-launch overhead (base cost + fee buffer) so the client can show
+		// a live cost hint as the dev-buy input changes, without hardcoding it.
+		launch_overhead_sol: LAUNCH_BASE_SOL + SELF_FUND_FEE_BUFFER_SOL,
 		narratives: narratives
 			? { terms: narratives.terms || [], top: narratives.top || null, providers: narratives.providers || [] }
 			: null,
 	});
 }
 
-// A user-scope launcher is never "armed" (dry-run-locked) — expose the running flag
-// honestly so the UI never implies real SOL will move.
+// armed = this config will actually move SOL on the next eligible tick.
 function shapeConfig(c) {
 	if (!c) return null;
-	return { ...c, dry_run: FORCE_DRY_RUN ? true : c.dry_run, armed: false };
+	return {
+		...c,
+		dry_run: c.dry_run !== false,
+		dev_buy_sol: Number(c.dev_buy_sol) || 0,
+		daily_sol_cap: Number(c.daily_sol_cap) || 0,
+		armed: !!c.enabled && c.dry_run === false && !c.paused,
+	};
 }
 
 // Cadence floor + hourly ceiling for user scope: each enabled user launcher is
@@ -149,11 +211,17 @@ function shapeConfig(c) {
 // per-user load bounded regardless of what the client asks for.
 const USER_MIN_CADENCE = 60;
 const USER_MAX_PER_HOUR = 60;
+// Live-mode spend bounds. The dev buy comes out of the user's own agent wallet on
+// every launch; the daily cap bounds total live spend per UTC day. Both are hard
+// server-side clamps — a client can't exceed them.
+const USER_MAX_DEV_BUY_SOL = 1;
+const USER_MAX_DAILY_SOL_CAP = 10;
 
 // Pure validation + normalisation of a config patch. Returns { ok:false, code,
-// message } on a bad field, else { ok:true, next } with every value range-clamped
-// and dry_run forced on (a user-scope launcher can never move SOL). No I/O — unit
-// tested in tests/user-launcher.test.js.
+// message } on a bad field, else { ok:true, next } with every value range-clamped.
+// dry_run (preview vs live) is user-controllable: live launches are self-funded
+// from the user's own agent wallets, never the platform master (see SAFETY above).
+// No I/O — unit tested in tests/user-launcher.test.js.
 export function validateAndBuildPatch(body, cur) {
 	if (body.mode != null && !MODES.includes(body.mode)) {
 		return { ok: false, code: 'invalid_mode', message: `mode must be one of ${MODES.join(', ')}` };
@@ -174,18 +242,27 @@ export function validateAndBuildPatch(body, cur) {
 	if (body.max_per_hour != null && !inRange(body.max_per_hour, 0, USER_MAX_PER_HOUR)) {
 		return { ok: false, code: 'invalid_max_per_hour', message: `max_per_hour must be 0..${USER_MAX_PER_HOUR}` };
 	}
+	if (body.dev_buy_sol != null && !inRange(body.dev_buy_sol, 0, USER_MAX_DEV_BUY_SOL)) {
+		return { ok: false, code: 'invalid_dev_buy_sol', message: `dev_buy_sol must be 0..${USER_MAX_DEV_BUY_SOL}` };
+	}
+	if (body.daily_sol_cap != null && !inRange(body.daily_sol_cap, 0, USER_MAX_DAILY_SOL_CAP)) {
+		return { ok: false, code: 'invalid_daily_sol_cap', message: `daily_sol_cap must be 0..${USER_MAX_DAILY_SOL_CAP}` };
+	}
 
 	const has = (k) => Object.prototype.hasOwnProperty.call(body, k);
 	const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 	const next = {
 		enabled: has('enabled') ? Boolean(body.enabled) : cur.enabled,
-		// dry_run is server-owned for user scope — never trust the client to clear it.
-		dry_run: true,
+		// Preview (true) vs live (false). Absent from the patch ⇒ keep, defaulting to
+		// preview — a launcher only goes live on an explicit dry_run:false.
+		dry_run: has('dry_run') ? Boolean(body.dry_run) : cur.dry_run !== false,
 		mode: has('mode') ? body.mode : cur.mode,
 		sources: has('sources') ? body.sources : coerceArr(cur.sources),
 		categories: has('categories') ? body.categories : coerceArr(cur.categories),
 		target_cadence_seconds: has('target_cadence_seconds') ? clamp(Math.round(Number(body.target_cadence_seconds)), USER_MIN_CADENCE, 86_400) : cur.target_cadence_seconds,
 		max_per_hour: has('max_per_hour') ? clamp(Math.round(Number(body.max_per_hour)), 0, USER_MAX_PER_HOUR) : cur.max_per_hour,
+		dev_buy_sol: has('dev_buy_sol') ? clamp(Number(body.dev_buy_sol), 0, USER_MAX_DEV_BUY_SOL) : Number(cur.dev_buy_sol) || 0,
+		daily_sol_cap: has('daily_sol_cap') ? clamp(Number(body.daily_sol_cap), 0, USER_MAX_DAILY_SOL_CAP) : Number(cur.daily_sol_cap) || 0,
 		network: has('network') ? body.network : cur.network,
 	};
 	return { ok: true, next };
@@ -205,6 +282,8 @@ async function postConfig(res, userId, cur, body) {
 			categories = ${JSON.stringify(next.categories)}::jsonb,
 			target_cadence_seconds = ${next.target_cadence_seconds},
 			max_per_hour = ${next.max_per_hour},
+			dev_buy_sol = ${next.dev_buy_sol},
+			daily_sol_cap = ${next.daily_sol_cap},
 			network = ${next.network},
 			updated_at = now()
 		where scope = 'user' and user_id = ${userId}
@@ -247,4 +326,4 @@ async function resumeBreaker(res, userId) {
 	return json(res, 200, { ok: true, config: shapeConfig(row) });
 }
 
-export { FORCE_DRY_RUN, MODES, KNOWN_SOURCES, shapeConfig };
+export { MODES, KNOWN_SOURCES, USER_MAX_DEV_BUY_SOL, USER_MAX_DAILY_SOL_CAP, shapeConfig, perLaunchEstSol };

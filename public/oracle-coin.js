@@ -321,6 +321,17 @@
 			return;
 		}
 		wrap.innerHTML = renderMarket(data);
+		fillDescription(data.identity?.description);
+	}
+
+	// Fill the hero's description slot from the market identity — the SSR only
+	// knows it for pump-identified launches, so scored coins get it here.
+	function fillDescription(text) {
+		const el = $('#ocDesc');
+		const t = String(text || '').trim();
+		if (!el || el.textContent.trim() || !t) return;
+		el.textContent = t.slice(0, 400);
+		el.hidden = false;
 	}
 
 	// Pre-graduation market card from the pump.fun bonding-curve snapshot the server

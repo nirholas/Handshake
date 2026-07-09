@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T22:20:16.722Z",
+	"generated_at": "2026-07-09T22:25:17.642Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1079,7 +1079,7 @@
 				{
 					"path": "/launcher",
 					"title": "Memetic Launcher",
-					"description": "Design your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, and preview exactly what your agents would mint next. Preview mode: no SOL moves until you fund a live launch.",
+					"description": "Your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.",
 					"added": "2026-06-27",
 					"auth": null,
 					"indexable": true,

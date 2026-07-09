@@ -12,7 +12,9 @@
 // The handshake (per launch):
 //   1. pick a narrative-driven coin     (launcher-sources.pickSource)
 //   2. pick the next agent in rotation  (launcher_queue, oldest-first, weighted)
-//   3. master tops the agent up with the per-launch SOL  (launcher-funding)
+//   3. fund: GLOBAL scope → master tops the agent up (launcher-funding);
+//            USER scope   → self-funded, the agent's own wallet already holds the
+//            SOL its owner deposited (liveUserLaunch) — master never pays
 //   4. the agent builds metadata + signs its own create  (postAs → /api/pump)
 //   5. record the run + advance the rotation             (launcher_runs / _queue)
 //
@@ -34,6 +36,8 @@ import {
 	dailySpentSol,
 	fundAgentForLaunch,
 } from './launcher-funding.js';
+import { getSolBalance } from './avatar-wallet.js';
+import { solanaConnection } from './agent-pumpfun.js';
 
 const ORIGIN = env.APP_ORIGIN || 'https://three.ws';
 
@@ -50,6 +54,19 @@ const FAIL_BREAK = 5;
 // Master must hold at least (per_launch_sol + this) or we wait — a recoverable
 // skip (operator tops up the master), never a breaker trip.
 const MASTER_FEE_BUFFER_SOL = 0.01;
+
+// FUNDING MODEL PER SCOPE. Global: the platform master wallet tops the next agent
+// up per launch (launcher-funding.js). User: SELF-FUNDED — the user's own agent
+// wallet pays its launch (base cost + dev buy) from SOL the user deposited to it;
+// master SOL never routes to a user scope, so "live" can only ever spend what the
+// user chose to hold in wallets they own.
+//
+// Base pump.fun launch cost the agent wallet covers besides the dev buy (rent +
+// fees) — mirrors PUMP_BASE_LAMPORTS in the /api/pump launch-agent preflight.
+export const LAUNCH_BASE_SOL = 0.022;
+// Headroom for priority fees so a wallet funded to the displayed estimate doesn't
+// bounce off the preflight under congestion.
+export const SELF_FUND_FEE_BUFFER_SOL = 0.005;
 
 // House-ownership guarantee. When LAUNCHER_OWNER_USER_IDS is set (a comma-separated
 // list of user uuids we control), the GLOBAL rotation is HARD-restricted to agents
@@ -329,7 +346,12 @@ async function launchCoin(cfg, agent, coin) {
 	const mint = launch.body?.mint || launch.body?.data?.mint;
 	const sig = launch.body?.sig || launch.body?.signature || launch.body?.data?.sig || null;
 	if (launch.status !== 200 || !mint) {
-		throw new Error(`launch ${launch.status}: ${launch.body?.error || launch.body?.message || 'no mint'}`);
+		// Carry the HTTP status so callers can classify (402 unfunded ⇒ recoverable
+		// skip on the self-funded path, everything else ⇒ failure).
+		throw Object.assign(
+			new Error(`launch ${launch.status}: ${launch.body?.error_description || launch.body?.error || launch.body?.message || 'no mint'}`),
+			{ status: launch.status },
+		);
 	}
 	return { mint, sig };
 }
@@ -421,6 +443,12 @@ async function runScopeTick(cfg) {
 		return { scope: cfg.scope, dry_run: true, agent: agent.name, name: coin.name, symbol: coin.symbol, kind: coin.kind, top: coin.trigger_detail?.top_narrative || null };
 	}
 
+	// LIVE. A user scope is self-funded — the agent's own wallet pays, master SOL
+	// never routes to it. Global continues below on the master-funded path.
+	if (cfg.scope === 'user') {
+		return liveUserLaunch(cfg, agent, coin, runId, dailyRemaining);
+	}
+
 	// Master balance breaker — recoverable wait, not a trip.
 	const perLaunch = Number(cfg.per_launch_sol);
 	const masterSol = await masterBalanceSol(cfg.network);
@@ -462,6 +490,63 @@ async function runScopeTick(cfg) {
 		await setRun(runId, { status: 'failed', error: String(e?.message || e).slice(0, 300) });
 		// Still advance the rotation so one bad agent can't wedge the whole queue.
 		await sql`update launcher_queue set last_launched_at = now() where agent_id = ${agent.id}`;
+		if (await shouldTripBreaker(cfg)) {
+			await tripBreaker(cfg, `${FAIL_BREAK} consecutive launch failures`);
+			return { scope: cfg.scope, error: e?.message, breaker_tripped: true };
+		}
+		return { scope: cfg.scope, error: e?.message };
+	}
+}
+
+// ── self-funded user launch ──────────────────────────────────────────────────────
+// The picked agent's own custodial wallet pays for its launch (base cost + dev
+// buy) from SOL its owner deposited. No master involvement — an unfunded wallet
+// is a recoverable 'skipped' (deposit and the launcher resumes on its own), never
+// a 'failed', so an empty wallet can't trip the breaker.
+async function liveUserLaunch(cfg, agent, coin, runId, dailyRemaining) {
+	const devBuy = Number(cfg.dev_buy_sol) || 0;
+	const estCost = LAUNCH_BASE_SOL + devBuy;
+	if (estCost > dailyRemaining) {
+		await setRun(runId, { status: 'skipped', error: `daily SOL cap: launch ~${estCost.toFixed(4)} SOL > ${dailyRemaining.toFixed(4)} remaining` });
+		return { scope: cfg.scope, skipped: `daily SOL cap (${cfg.daily_sol_cap})` };
+	}
+
+	// Balance gate before any work: cheaper than a metadata build + a 402, and it
+	// yields a skip reason that carries the deposit address. An RPC blip falls
+	// through — the launch preflight is the authority.
+	const need = estCost + SELF_FUND_FEE_BUFFER_SOL;
+	let walletSol = null;
+	try {
+		({ sol: walletSol } = await getSolBalance(solanaConnection(cfg.network), agent.solana_address));
+	} catch { /* transient RPC failure */ }
+	if (walletSol != null && walletSol < need) {
+		await setRun(runId, {
+			status: 'skipped',
+			error: `agent wallet ${walletSol.toFixed(4)} SOL below ~${need.toFixed(4)} — deposit to ${agent.solana_address}`,
+		});
+		// Advance the rotation so one empty wallet doesn't pin the queue — the next
+		// tick tries the user's next agent.
+		await sql`update launcher_queue set last_launched_at = now() where agent_id = ${agent.id}`;
+		return { scope: cfg.scope, skipped: `agent wallet unfunded (${agent.name})`, deposit_to: agent.solana_address };
+	}
+
+	try {
+		const { mint, sig } = await launchCoin(cfg, agent, coin);
+		await setRun(runId, { status: 'confirmed', mint, tx_signature: sig, sol_spent: estCost });
+		await sql`
+			update launcher_queue
+			set last_launched_at = now(), launch_count = launch_count + 1
+			where agent_id = ${agent.id}
+		`;
+		return { scope: cfg.scope, agent: agent.name, name: coin.name, symbol: coin.symbol, kind: coin.kind, mint, top: coin.trigger_detail?.top_narrative || null };
+	} catch (e) {
+		await sql`update launcher_queue set last_launched_at = now() where agent_id = ${agent.id}`;
+		// The launch preflight 402s an underfunded wallet — recoverable, not a fault.
+		if (e?.status === 402) {
+			await setRun(runId, { status: 'skipped', error: String(e?.message || e).slice(0, 300) });
+			return { scope: cfg.scope, skipped: `agent wallet unfunded (${agent.name})`, deposit_to: agent.solana_address };
+		}
+		await setRun(runId, { status: 'failed', error: String(e?.message || e).slice(0, 300) });
 		if (await shouldTripBreaker(cfg)) {
 			await tripBreaker(cfg, `${FAIL_BREAK} consecutive launch failures`);
 			return { scope: cfg.scope, error: e?.message, breaker_tripped: true };
