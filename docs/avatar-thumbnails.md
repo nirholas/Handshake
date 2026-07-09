@@ -76,7 +76,7 @@ Together the last two make "every agent card shows a real preview" an invariant:
 one guarantees the agent has an avatar, the other guarantees the avatar has a
 thumbnail. Creation paths keep the gap from reopening — `createAvatar` accepts an
 internal `thumbnail_key` seed, auto-rig siblings inherit their source's thumbnail,
-and the forge/avaturn seed crons adopt the forge preview at insert.
+and the forge/avatar seed crons adopt the forge preview at insert.
 
 They share the `thumb/<avatarId>.png` key space and each is a no-op on the other's
 rows. The backfill drains most-visible-first — `featured`, then public, then
