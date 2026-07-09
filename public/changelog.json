@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-08T09:16:08.909Z",
+	"generated_at": "2026-07-09T20:19:03.819Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -212,6 +212,16 @@
 			"type": "update",
 			"title": "/play now has a real economy: a general store, a bank, and a $THREE boutique",
 			"summary": "The open world at /play has a working cash economy. Walk up to a General Store clerk to buy tools and consumables or sell what you've gathered, and visit the Bank Teller to deposit cash into a protected account (banked cash survives a death drop, carried cash doesn't). Premium wardrobe items are now purchasable for real: the wardrobe's locked cosmetics show their $THREE price and unlock with one real on-chain payment from your connected Solana wallet, split between the holder-rewards pool and the treasury — the server only grants the item after re-verifying the confirmed transaction on-chain.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-08",
+			"type": "update",
+			"title": "/play: real combat — swords, guns, monsters, and a wanted meter",
+			"summary": "The open world now bites back. Equip a sword, bat, pistol or bow from your hotbar and fight in one of three named danger zones (Southern Wilds, Northern Wilds, Eastern Marches) — the rest of town stays lawful, by design. Roaming monsters chase and swing through the same server-side damage path a player's attack uses; killing one (or another player) spills a lootable death-marker with real cash and items. Attacking another player raises your wanted stars, visible on the new GTA-style vitals HUD (health, armor, wanted level) and on your nameplate to everyone nearby. Dying drops your carried cash and pack (banked cash is safe) and respawns you back in town moments later at full health.",
 			"link": "/play",
 			"tags": [
 				"feature"
