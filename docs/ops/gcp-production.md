@@ -248,6 +248,7 @@ by CLI at all. Consequences and current state:
 |---|---|---|---|
 | Collection authority | `SOLANA_AGENT_COLLECTION_AUTHORITY_KEY` | Agent NFT collection ops can't sign | Intentionally excluded from `scripts/wire-master-wallet.mjs` (on-chain update authority must stay its original wallet). Owner holds the key. |
 | R2/S3 storage creds | `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_DOMAIN` | `/api/marketplace`, `/api/explore`, `/api/avatars/:id` — every route that resolves an asset URL — 503 `not_configured` | Real values already sit in the repo's `.env.local` (never committed). Apply with `scripts/gcp/apply-s3-env.sh` (needs a human-authed `gcloud auth login` first — the 89-var apply is still blocked on reauth per above). |
+| CoinCommunities API key | `CC_API_KEY` | `/api/community/worlds` and `/api/clash/state` both 503 `cc_unconfigured` (`api/_lib/coin-communities.js`) | Third-party CoinCommunities account signup — not a platform-controlled secret, needs an owner decision to create the account and provision a key. |
 
 ### Resolved: x402 sponsor co-signing key (2026-07-09)
 
