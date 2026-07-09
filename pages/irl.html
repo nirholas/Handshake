@@ -344,11 +344,6 @@
 		body.irl-immersive .irl-immersive-toggle .irl-eye-hide { display: none; }
 		body.irl-immersive .irl-immersive-toggle .irl-eye-show { display: inline; }
 		/* Immersive: the lone control glows green so it stays findable over the scene */
-		/* Short screens: the money-drops FAB (anchored above the dock) reaches
-		   mid-screen height — shift the eye up so the two never stack. */
-		@media (max-height: 700px) {
-			.irl-immersive-toggle { top: 34%; }
-		}
 		body.irl-immersive .irl-immersive-toggle {
 			color: var(--green);
 			border-color: rgba(74,222,128,0.5);
