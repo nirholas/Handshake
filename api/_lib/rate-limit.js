@@ -108,7 +108,7 @@ function getLimiter(name, opts) {
 	const key = `${name}:${opts.limit}:${opts.window}`;
 	if (limiters.has(key)) return limiters.get(key);
 	if (opts.local) {
-		const lim = memoryLimiter(opts);
+		const lim = memoryLimiter(name, opts);
 		limiters.set(key, lim);
 		return lim;
 	}
@@ -117,7 +117,7 @@ function getLimiter(name, opts) {
 		// Redis outage (degraded per-instance cap) rather than lock everyone out.
 		const lim =
 			opts.degradeToMemory || !(opts.critical && IS_PRODUCTION)
-				? memoryLimiter(opts)
+				? memoryLimiter(name, opts)
 				: failClosedLimiter(opts);
 		limiters.set(key, lim);
 		return lim;
@@ -175,7 +175,7 @@ function resilientLimiter(rl, name, opts) {
 	// log in — is a worse outcome than a weaker, per-instance brute-force cap, and
 	// bcrypt already bounds per-request cost on the credential path. Money-moving
 	// buckets keep failing closed: there, unbounded spend is worse than a 503.
-	const memFallback = opts.degradeToMemory ? memoryLimiter(opts) : null;
+	const memFallback = opts.degradeToMemory ? memoryLimiter(name, opts) : null;
 	return {
 		async limit(id) {
 			try {
@@ -225,22 +225,28 @@ function sweepMemoryBuckets(now) {
 	}
 }
 
-function memoryLimiter({ limit, window }) {
+// `name` namespaces the shared memoryBuckets map. Without it every fallback
+// limiter counts against ONE array per IP, so distinct buckets contaminate
+// each other the moment more than one degrades to memory (e.g. a Redis outage
+// putting auth:ip and authed:read:ip in the same counter — page reads would
+// then exhaust the login budget).
+function memoryLimiter(name, { limit, window }) {
 	const ms = parseWindowMs(window);
 	if (ms > maxMemoryWindowMs) maxMemoryWindowMs = ms;
 	return {
 		async limit(id) {
+			const key = `${name} ${id}`;
 			const now = Date.now();
 			sweepMemoryBuckets(now);
-			const bucket = memoryBuckets.get(id) || [];
+			const bucket = memoryBuckets.get(key) || [];
 			const cutoff = now - ms;
 			const kept = bucket.filter((t) => t > cutoff);
 			if (kept.length >= limit) {
-				memoryBuckets.set(id, kept);
+				memoryBuckets.set(key, kept);
 				return { success: false, limit, remaining: 0, reset: kept[0] + ms };
 			}
 			kept.push(now);
-			memoryBuckets.set(id, kept);
+			memoryBuckets.set(key, kept);
 			return { success: true, limit, remaining: limit - kept.length, reset: now + ms };
 		},
 	};
@@ -270,6 +276,23 @@ export const limits = {
 		getLimiter('auth:ip', { limit: 50, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
 	registerIp: (ip) =>
 		getLimiter('register:ip', { limit: 5, window: '1 h', critical: true, degradeToMemory: true }).limit(ip),
+	// Session-scoped READS that fire on ordinary page loads (/api/me, home feed,
+	// credits balance, profile pages, wallet balance lookups). These borrowed the
+	// strict credential `authIp` bucket for years, which meant a few minutes of
+	// normal browsing drained the same 50/10m budget that gates real writes —
+	// users then got 429'd on the one request that mattered (e.g. creating an
+	// agent). Reads are cheap DB lookups behind auth, so the ceiling is generous:
+	// it only needs to stop scripted scraping, not human navigation.
+	authedReadIp: (ip) =>
+		getLimiter('authed:read:ip', { limit: 300, window: '5 m', degradeToMemory: true }).limit(ip),
+	// Agent creation (POST /api/agents) mints real EVM + Solana wallets, so it
+	// keeps a strict ceiling — but a DEDICATED one. Sharing `authIp` meant page
+	// browsing could exhaust the budget before the user ever pressed "create",
+	// failing the flow after the avatar upload had already succeeded. 20/10m is
+	// far more than any human setting up agents needs while still capping
+	// scripted wallet-mint spam per IP.
+	agentCreateIp: (ip) =>
+		getLimiter('agent:create:ip', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
 	// CAPTCHA-verified login bucket. When a user solves the Altcha proof-of-work
 	// puzzle (api/auth/captcha.js) they receive a signed bypass token that routes
 	// their login through this separate bucket instead of authIp. It is intentionally

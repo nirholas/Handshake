@@ -36,7 +36,7 @@ export default wrap(async (req, res) => {
 	const userId = await resolveUserId(req);
 	if (!userId) return error(res, 401, 'unauthorized', 'sign in to view your trade journal');
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const params = new URL(req.url, `http://${req.headers.host || 'x'}`).searchParams;

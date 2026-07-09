@@ -291,9 +291,10 @@ async function handleCreate(req, res) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in or provide a bearer token');
 	// Creation mints real wallets — same CSRF gate as PUT/PATCH/DELETE (bearer
-	// callers are exempt inside requireCsrf) plus a per-IP rate limit.
+	// callers are exempt inside requireCsrf) plus a dedicated per-IP rate limit
+	// (NOT the shared auth:ip bucket, which page-load reads used to drain).
 	if (!(await requireCsrf(req, res, auth.userId))) return;
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.agentCreateIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 	const scopeErr = requireScopeForMutation(auth, res, 'avatars:write');
 	if (scopeErr) return scopeErr;

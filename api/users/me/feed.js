@@ -26,7 +26,7 @@ export default wrap(async (req, res) => {
 	const viewer = await getSessionUser(req).catch(() => null);
 	if (!viewer) return error(res, 401, 'unauthorized', 'sign in to view your feed');
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 30));

@@ -19,7 +19,7 @@ export default wrap(async (req, res) => {
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
 	const callerId = session?.id ?? bearer.userId;
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const q = new URL(req.url, 'http://x').searchParams.get('q');

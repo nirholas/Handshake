@@ -39,7 +39,7 @@ export default wrap(async (req, res) => {
 		return error(res, 403, 'insufficient_scope', 'requires mcp or profile scope');
 	}
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const op = req.query.op || 'portfolio';

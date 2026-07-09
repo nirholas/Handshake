@@ -27,7 +27,7 @@ export default wrap(async (req, res) => {
 	const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
 	const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const [target] = await sql`
