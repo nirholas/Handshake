@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T21:53:06.654Z",
+	"generated_at": "2026-07-09T21:57:24.244Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -35,6 +35,17 @@
 			"link": "/cosmos",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Free 3D generation stays up when outside providers go down",
+			"summary": "Free text-to-3D and image-to-3D now fall back to the platform's own GPU worker when every outside free provider is busy or out of quota — previously those moments returned a 'temporarily unavailable' error even though our own generator was healthy. Also fixed: the machine-readable discovery files under /.well-known (agent-card.json, ai-plugin.json, security.txt) were failing to load for agents and crawlers; they serve correctly again.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

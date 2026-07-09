@@ -31,6 +31,14 @@
 			<description>Avatars made on three.ws are saved in a compressed format to keep them small and quick to download. Seven pages — Cosmos, Minted, Creations, Vault, Pitch, the embodied-agent page, and the microphone lipsync demo — never set up the matching decompressor, so instead of a 3D model you got an empty viewer and an error in the console. All seven now load the decoder before the model, and the avatars appear as they should. The fix also went into the embeddable agent widget itself, so anyone who has pasted a three.ws agent onto their own site gets working compressed avatars automatically, with nothing to change on their end.</description>
 		</item>
 		<item>
+			<title>Free 3D generation stays up when outside providers go down</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-09:Free 3D generation stays up when outside providers go down</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Free text-to-3D and image-to-3D now fall back to the platform's own GPU worker when every outside free provider is busy or out of quota — previously those moments returned a 'temporarily unavailable' error even though our own generator was healthy. Also fixed: the machine-readable discovery files under /.well-known (agent-card.json, ai-plugin.json, security.txt) were failing to load for agents and crawlers; they serve correctly again.</description>
+		</item>
+		<item>
 			<title>Homepage: agent thumbnails load, and the marketplace strip is alive again</title>
 			<link>https://three.ws/</link>
 			<guid isPermaLink="false">2026-07-09:Homepage: agent thumbnails load, and the marketplace strip is alive again</guid>

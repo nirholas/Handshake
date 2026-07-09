@@ -322,8 +322,14 @@ function resolveStatic(pathname) {
 function serveFile(req, res, file, headers, status) {
 	res.set(headers);
 	if (status) res.status(status);
+	// RFC 8615 discovery files (agent-card.json, ai-plugin.json, security.txt)
+	// live under the `.well-known` dot-directory, which Express's dotfiles guard
+	// would reject as Forbidden — allow exactly that directory and keep every
+	// other dot-segment denied. resolveStatic() already confined `file` to
+	// DIST_ROOT, so this loosens nothing else.
+	const dotfiles = file.includes(`${path.sep}.well-known${path.sep}`) ? 'allow' : 'deny';
 	return new Promise((resolvePromise) => {
-		res.sendFile(file, { dotfiles: 'deny' }, (err) => {
+		res.sendFile(file, { dotfiles }, (err) => {
 			if (err && !res.headersSent) {
 				console.error(`[static] ${req.method} ${req.url} → ${file} failed:`, err.message);
 				res.status(500).end();

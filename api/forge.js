@@ -1762,9 +1762,47 @@ async function startJob(req, res) {
 
 			const mode3d = isImageMode ? 'image→3D' : 'text→3D (via synthesized image)';
 
-			// Fallback #1 — self-hosted Hunyuan3D Cloud Run worker, when wired.
+			// Fallback #1 — self-hosted TRELLIS Cloud Run worker (workers/model-trellis),
+			// when wired and not cooled. FREE_FALLBACK_FOR_PATH prefers it first among
+			// the free image lanes, so this paid-lane failover walks the same order:
+			// our own GPU (zero vendor cost) before any external free allocation. It
+			// reconstructs single-hop from the referenceImageUrl we already hold.
+			if (backendIsConfigured('trellis_selfhost')) {
+				let selfHostUsable = true;
+				try {
+					const snap = await laneHealthSnapshot(['trellis_selfhost']);
+					selfHostUsable = snap.byId.trellis_selfhost?.status !== 'down';
+				} catch {
+					// No telemetry → try the lane anyway; the submit catch below cools it.
+				}
+				if (selfHostUsable) {
+					console.warn(
+						`[forge] platform TRELLIS lane unavailable (${submitErr?.providerStatus || submitErr?.code}); degrading ${mode3d} to self-hosted TRELLIS`,
+					);
+					try {
+						const gcp = createGcpProvider();
+						job = await gcp.submit({
+							mode: 'trellis',
+							sourceUrl: referenceImageUrl,
+							params: { images: views, seed: opts.seed ?? undefined },
+						});
+						backendId = 'trellis_selfhost';
+						provider = gcp;
+					} catch (selfErr) {
+						// A config/input fault surfaces as-is; an upstream blip cools the
+						// lane and falls through to the remaining reconstruct fallbacks.
+						if (!isUpstreamUnavailable(selfErr)) throw selfErr;
+						await markLaneUnhealthy('trellis_selfhost');
+						console.warn(
+							`[forge] self-host TRELLIS fallback unavailable (${selfErr?.providerStatus || selfErr?.code}); trying the next image lane`,
+						);
+					}
+				}
+			}
+
+			// Fallback #2 — self-hosted Hunyuan3D Cloud Run worker, when wired.
 			const hunyuanUrl = process.env.GCP_HUNYUAN3D_URL;
-			if (hunyuanUrl && process.env.GCP_RECONSTRUCTION_KEY) {
+			if (!job && hunyuanUrl && process.env.GCP_RECONSTRUCTION_KEY) {
 				console.warn(
 					`[forge] platform TRELLIS lane unavailable (${submitErr?.providerStatus || submitErr?.code}); degrading ${mode3d} to self-hosted Hunyuan3D`,
 				);
@@ -1780,8 +1818,8 @@ async function startJob(req, res) {
 					sourceUrl: referenceImageUrl,
 					params: reconstructParams,
 				});
-			} else {
-				// Fallback #2 — free Hugging Face Spaces image→3D (gated on HF_TOKEN).
+			} else if (!job) {
+				// Fallback #3 — free Hugging Face Spaces image→3D (gated on HF_TOKEN).
 				// It blocks and writes its own status:'done' response; if it does, the
 				// request is complete. Otherwise fall through to surface the real error.
 				// For text mode, views=[referenceImageUrl] (the FLUX-synthesized image).
@@ -1826,7 +1864,7 @@ async function startJob(req, res) {
 		// token tag so polling re-resolves the caller's key (not the platform one).
 		// Either way the upstream id is what the store keys on.
 		const jobHandle =
-			backendId === 'hunyuan3d'
+			backendId === 'hunyuan3d' || backendId === 'trellis_selfhost'
 				? encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId })
 				: backendId === 'replicate_byok'
 					? encodeJobToken({ provider: 'replicate_byok', kind: null, taskId: job.extJobId })
