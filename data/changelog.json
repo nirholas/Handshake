@@ -12630,6 +12630,15 @@
 				"infra",
 				"security"
 			]
+		},
+		{
+			"date": "2026-07-09",
+			"title": "Marketplace no longer claims \"No public avatars\" when the feed fails to load",
+			"summary": "If the community avatar feed hit a temporary server error (like a rate limit) while agents were already on screen, the Avatars tab showed a misleading \"No public avatars\" empty state — even with thousands of avatars in the catalog. It now shows a clear \"Couldn't load avatars\" message with a Retry button that reloads the feed in place.",
+			"link": "/marketplace?tab=avatars",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }

@@ -71,6 +71,14 @@
 			<description>Two quiet breakages, fixed. The live trade feed on /three-live now prices SOL-only trades correctly again — it was reading a price API directly from your browser, which the provider silently blocks, so those trades showed no dollar value; it now reads the same cached, multi-provider SOL/USD price the rest of the platform uses. Separately, the Flappin UFO arcade demo ran on an external deployment that has gone offline, leaving a blank screen and a leaderboard that never loaded. Rather than leave a broken page up, /play/ufo is now an honest retired notice that points you to the live experiences — the coin world, Sniper Arena, and Coin Clash.</description>
 		</item>
 		<item>
+			<title>Marketplace no longer claims &quot;No public avatars&quot; when the feed fails to load</title>
+			<link>https://three.ws/marketplace?tab=avatars</link>
+			<guid isPermaLink="false">2026-07-09:Marketplace no longer claims &quot;No public avatars&quot; when the feed fails to load</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>If the community avatar feed hit a temporary server error (like a rate limit) while agents were already on screen, the Avatars tab showed a misleading &quot;No public avatars&quot; empty state — even with thousands of avatars in the catalog. It now shows a clear &quot;Couldn't load avatars&quot; message with a Retry button that reloads the feed in place.</description>
+		</item>
+		<item>
 			<title>Paid Solana endpoints are back — payments settle end to end again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-09:Paid Solana endpoints are back — payments settle end to end again</guid>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T22:05:19.142Z",
+	"generated_at": "2026-07-09T22:09:03.118Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -86,6 +86,16 @@
 			"title": "Live SOL price restored on /three-live; Flappin UFO demo retired",
 			"summary": "Two quiet breakages, fixed. The live trade feed on /three-live now prices SOL-only trades correctly again — it was reading a price API directly from your browser, which the provider silently blocks, so those trades showed no dollar value; it now reads the same cached, multi-provider SOL/USD price the rest of the platform uses. Separately, the Flappin UFO arcade demo ran on an external deployment that has gone offline, leaving a blank screen and a leaderboard that never loaded. Rather than leave a broken page up, /play/ufo is now an honest retired notice that points you to the live experiences — the coin world, Sniper Arena, and Coin Clash.",
 			"link": "/three-live",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Marketplace no longer claims \"No public avatars\" when the feed fails to load",
+			"summary": "If the community avatar feed hit a temporary server error (like a rate limit) while agents were already on screen, the Avatars tab showed a misleading \"No public avatars\" empty state — even with thousands of avatars in the catalog. It now shows a clear \"Couldn't load avatars\" message with a Retry button that reloads the feed in place.",
+			"link": "/marketplace?tab=avatars",
 			"tags": [
 				"fix"
 			]
