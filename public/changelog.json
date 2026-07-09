@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T21:44:29.532Z",
+	"generated_at": "2026-07-09T21:46:44.895Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -66,6 +66,17 @@
 			"link": "/three-live",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "The 3D world is locked down — visitors can no longer delete the ground",
+			"summary": "Until today, every single person who opened world.three.ws arrived with full build rights. Anyone could move or delete any object in the world, replace the scene, or fill it with broken models — no account, no password, nothing. That is what emptied the world once before, when the ground itself was deleted and everyone who joined fell into a black void. The world now starts locked: visitors can walk around, chat, and explore, but only someone holding the admin code can change anything. Builders unlock their tools in-world by typing /admin followed by the code. The server refuses to start at all if the code is missing, so the world can never quietly come back up unprotected again.",
+			"link": null,
+			"tags": [
+				"security",
+				"infra"
 			]
 		},
 		{

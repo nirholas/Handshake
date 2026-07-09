@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-09",
+			"title": "The 3D world is locked down — visitors can no longer delete the ground",
+			"summary": "Until today, every single person who opened world.three.ws arrived with full build rights. Anyone could move or delete any object in the world, replace the scene, or fill it with broken models — no account, no password, nothing. That is what emptied the world once before, when the ground itself was deleted and everyone who joined fell into a black void. The world now starts locked: visitors can walk around, chat, and explore, but only someone holding the admin code can change anything. Builders unlock their tools in-world by typing /admin followed by the code. The server refuses to start at all if the code is missing, so the world can never quietly come back up unprotected again.",
+			"tags": [
+				"security",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-09",
 			"title": "Your agents can now be placed privately, and nobody can browse /irl locations from afar",
 			"summary": "Two changes to how /irl handles where you are. First, reading the agents near you now requires proving you have a recent location fix for that spot — until today anyone could ask our servers what agents sat at any coordinate on earth without ever going there. Second, a placed agent can now be private: you still see it in AR exactly where you left it, but it is withheld from everyone else's nearby feed, from shared rooms, and from the World Lines quest map. New placements are private by default while /irl is still in testing, and the privacy center's unpublish button now makes a pin private instead of hiding it from you too. You can make any pin public again whenever you want.",
 			"tags": [
