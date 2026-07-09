@@ -39,25 +39,61 @@ const THREE_VERSION = '0.176.0';
 // (~1s on warm chromium, ~3s cold); reusing the instance across renders
 // in the same lambda invocation amortizes it.
 let _browserPromise = null;
+
+// A cached browser can die under us — chromium is the first thing the kernel's
+// OOM killer reaps on a memory-tight container, and a long batch render is
+// exactly when that happens. Without this check the cached promise keeps
+// resolving to a corpse and EVERY subsequent render fails instantly with
+// "Connection closed.", which a batch runner would otherwise mistake for a batch
+// of unrenderable models. Verify liveness before handing the browser out, and
+// drop the cache the moment it disconnects so the next call relaunches.
+function isAlive(browser) {
+	if (!browser) return false;
+	if (typeof browser.connected === 'boolean') return browser.connected;
+	if (typeof browser.isConnected === 'function') return browser.isConnected();
+	return true;
+}
+
 async function getBrowser() {
-	if (_browserPromise) return _browserPromise;
+	if (_browserPromise) {
+		const existing = await _browserPromise.catch(() => null);
+		if (isAlive(existing)) return existing;
+		_browserPromise = null; // dead or failed — relaunch below
+	}
 	_browserPromise = (async () => {
 		const [{ default: puppeteer }, { default: chromium }] = await Promise.all([
 			import('puppeteer-core'),
 			import('@sparticuz/chromium-min'),
 		]);
 		const executablePath = await chromium.executablePath(CHROMIUM_PACK);
-		return puppeteer.launch({
+		const browser = await puppeteer.launch({
 			args: chromium.args,
 			defaultViewport: { width: 1200, height: 630, deviceScaleFactor: 1 },
 			executablePath,
 			headless: chromium.headless,
 		});
+		// Self-heal: a crashed/killed browser evicts itself from the cache.
+		browser.on('disconnected', () => {
+			if (_browserPromise) _browserPromise = null;
+		});
+		return browser;
 	})().catch((err) => {
 		_browserPromise = null;
 		throw err;
 	});
 	return _browserPromise;
+}
+
+// A render failure caused by the browser dying (OOM kill, crashed tab, closed
+// devtools socket) says nothing about the model — the same GLB will render fine
+// on a healthy browser. Batch runners use this to roll a claim back instead of
+// spending one of the model's bounded retries. Keep it strict: anything not
+// listed here is treated as the model's fault.
+const INFRA_ERROR_RE =
+	/connection closed|target closed|browser has disconnected|browser was not found|protocol error|session closed|websocket|econnreset|socket hang up|failed to launch/i;
+
+export function isBrowserInfrastructureError(err) {
+	return INFRA_ERROR_RE.test(String(err?.message || err || ''));
 }
 
 // Inline viewer HTML — bundled into the function so the renderer needs no

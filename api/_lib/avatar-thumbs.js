@@ -200,10 +200,23 @@ async function releaseClaim(avatarId) {
 	await sql`DELETE FROM avatar_thumbnail_backfill WHERE avatar_id = ${avatarId}`.catch(() => {});
 }
 
+// A real, model-attributable failure: keep the bumped attempt count so the model
+// is retired after MAX_ATTEMPTS, and drop the lease so it can be retried sooner.
 async function failClaim(avatarId, message) {
 	await sql`
 		UPDATE avatar_thumbnail_backfill
 		   SET last_error = ${String(message).slice(0, 500)}, claimed_at = NULL, updated_at = now()
+		 WHERE avatar_id = ${avatarId}
+	`.catch(() => {});
+}
+
+// The browser died, or we never got to the model at all. The avatar is blameless:
+// give back the attempt that claimAvatars() charged, or it would be retired after
+// three unlucky container OOMs and never get a thumbnail.
+async function rollbackClaim(avatarId) {
+	await sql`
+		UPDATE avatar_thumbnail_backfill
+		   SET attempts = greatest(0, attempts - 1), claimed_at = NULL, updated_at = now()
 		 WHERE avatar_id = ${avatarId}
 	`.catch(() => {});
 }
@@ -240,15 +253,26 @@ export async function renderThumbnail({ id, storage_key: storageKey }) {
 
 // Drain `limit` claimed avatars, `concurrency` at a time. Renders share one
 // chromium instance (a page per call), so concurrency is cheap up to the point
-// the container runs out of RAM — 2–4 is the sweet spot on a Cloud Run instance.
+// the container runs out of RAM — 2–3 is the sweet spot; higher risks the OOM
+// killer taking chromium down mid-batch.
+//
+// If the browser dies, the batch ABORTS rather than grinding through the rest of
+// the queue. Every render after a chromium death fails in milliseconds with
+// "Connection closed.", so a naive loop would charge a retry to hundreds of
+// perfectly good models and retire them permanently. Aborted and unstarted claims
+// are rolled back; the runner sees `aborted: true` and stops.
 export async function renderBatch({ limit = 5, concurrency = 1, onResult } = {}) {
 	const jobs = await claimAvatars(limit);
-	if (!jobs.length) return { claimed: 0, rendered: 0, failed: 0, results: [] };
+	if (!jobs.length) return { claimed: 0, rendered: 0, failed: 0, aborted: false, results: [] };
+
+	const { isBrowserInfrastructureError } = await import('./render-glb.js');
 
 	const results = [];
 	const queue = jobs.slice();
+	let aborted = null;
+
 	const workers = Array.from({ length: Math.max(1, Math.min(concurrency, jobs.length)) }, async () => {
-		for (let job = queue.shift(); job; job = queue.shift()) {
+		for (let job = queue.shift(); job && !aborted; job = queue.shift()) {
 			try {
 				const r = await renderThumbnail(job);
 				const ok = { id: job.id, name: job.name, status: 'done', ...r };
@@ -256,6 +280,15 @@ export async function renderBatch({ limit = 5, concurrency = 1, onResult } = {})
 				onResult?.(ok);
 			} catch (err) {
 				const msg = err?.message || 'render_failed';
+				if (isBrowserInfrastructureError(err)) {
+					// Not this model's fault — hand the attempt back and stop the batch.
+					aborted = msg;
+					await rollbackClaim(job.id);
+					const infra = { id: job.id, name: job.name, status: 'aborted', error: msg };
+					results.push(infra);
+					onResult?.(infra);
+					return;
+				}
 				await failClaim(job.id, msg);
 				const bad = { id: job.id, name: job.name, status: 'failed', error: msg };
 				results.push(bad);
@@ -265,12 +298,34 @@ export async function renderBatch({ limit = 5, concurrency = 1, onResult } = {})
 	});
 	await Promise.all(workers);
 
+	// Whatever the aborted batch never touched must not keep its charged attempt.
+	for (const job of queue) await rollbackClaim(job.id);
+
 	return {
 		claimed: jobs.length,
 		rendered: results.filter((r) => r.status === 'done').length,
 		failed: results.filter((r) => r.status === 'failed').length,
+		aborted: aborted || false,
 		results,
 	};
+}
+
+// Repair: forget every ledger row whose failure was the browser dying rather than
+// the model being bad. A row's absence means "never attempted", so the avatar
+// re-enters the candidate set with a clean slate.
+//
+// renderBatch() no longer charges an attempt for an infrastructure failure, but a
+// runner that crashed before that fix — or a future failure mode not yet in
+// isBrowserInfrastructureError() — can still poison the ledger and permanently
+// retire thousands of perfectly renderable avatars. This is the undo.
+export async function resetInfrastructureFailures() {
+	const rows = await sql`
+		DELETE FROM avatar_thumbnail_backfill
+		 WHERE last_error IS NULL
+		    OR last_error ~* '(connection closed|target closed|browser has disconnected|browser was not found|protocol error|session closed|websocket|econnreset|socket hang up|failed to launch)'
+		RETURNING avatar_id
+	`;
+	return { reset: rows.length };
 }
 
 // Exported for tests: the predicate the whole module agrees on.

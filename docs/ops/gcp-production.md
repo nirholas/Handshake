@@ -293,15 +293,37 @@ Verified by a real $0.01 USDC mainnet sponsor-mode settlement through
 the sponsor signed as fee payer, paid the 10001-lamport fee, and $0.01 landed in
 `payTo`. `sponsor_cosign` now reports `ready`.
 
-**Still blocked:** paid endpoints themselves (`/api/x402/club-cover`,
-`/api/x402/dance-tip`) return `429 rate_limiter_unavailable` before reaching
-settle, because money-moving buckets fail closed without Upstash Redis (see the
-Rate-limiter Redis row). The settle path is fixed; the door in front of it is not.
+### Resolved: Upstash Redis + full signer wiring (2026-07-09, same day, later)
 
-**Funding note:** the economy master (`WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`)
-holds SOL but `ECONOMY_MASTER_SECRET_BASE58` is **not set on Cloud Run**, so the
-treasury-topup cron cannot refill the sponsor when it drains. Set it, or top the
-sponsor up manually.
+Owner supplied the Upstash database and the wallet secrets. Applied on revision
+`three-ws-api-00029-c45`:
+
+- **Upstash Redis live**: `UPSTASH_REDIS_REST_URL` (plaintext) +
+  `UPSTASH_REDIS_REST_TOKEN` (Secret Manager `upstash-redis-rest-token`).
+  `X402_ALLOW_MEMORY_FALLBACK` **removed** per the escape-hatch's own
+  instructions. healthz cache backend now reports `upstash healthy`; money
+  limiters rate-limit for real instead of failing closed.
+- **Signer slots wired** per `scripts/wire-master-wallet.mjs` ASSIGNMENTS, from
+  the three economy wallets (`wwwww…ccrU` x402 loop, `wwwqv…HGUn` SOL engines,
+  `WwwuGbq…3WwW` treasury face). Secrets live in Secret Manager
+  (`wallet-x402-treasury-b58/b64`, `wallet-sol-engines-b58/b64`,
+  `wallet-economy-master-b58/b64`) as `secretKeyRef`s — no longer only on one
+  machine. `ECONOMY_MASTER_SECRET_BASE58`, `X402_TREASURY_SECRET_BASE58`,
+  `X402_SEED_SOLANA_SECRET_BASE58`, `A2A_PAYER_SOLANA_SECRET` were concurrently
+  set (same wallets) by another session and left as-is.
+  `LAUNCHER_MASTER_SECRET_KEY_B64` deviates from the map (deployed on
+  `X4o2…astML`, map says `wwwqv`) — left deployed value; `LABOR_ESCROW` skipped
+  per the script's own live-funds guard.
+- **Proof, full user path** (not just the facilitator): real paid calls through
+  the live endpoints returned 200 + product content —
+  club-cover $0.01 (tx `54FQ4rAFjfgF9b5pDRCB5dnhWNoTK7RrvJm2EJAuNGQDiMAPcLGptXpWzdBys49KHEASH7JrKb8sHL3AFwZT36gF`, pass issued)
+  and dance-tip $0.001 (tx `2hSvvR17hpawE1ZjhgHisaEpRzYkh6jyWtWBgsoCKAhunQkhcUCfQQ49aY2QmfsCYNBaMpvVTxSBfky5t7tstUZ6`, thriller ticket).
+  `scripts/audit-service-wallets.mjs` against the live revision: **all checked
+  wallets configured, funded, and consistent** (14/15 signers; only the
+  intentionally-excluded collection authority remains).
+
+| What | Vars | Impact | Recovery |
+|---|---|---|---|
 | OKX X Layer facilitator creds | `OKX_API_KEY`, `OKX_SECRET_KEY`, `OKX_PASSPHRASE` (or, as a no-OKX-account fallback, `X402_XLAYER_RELAYER_KEY`) | `xlayerSettleable()` (`api/_lib/x402-xlayer-okx.js`) is false without one of these, so **no 402 challenge on any endpoint advertises the `eip155:196` (X Layer) rail** — confirmed live 2026-07-08 via `/api/okx/3d/health` (`payment-rail.settleable:false, facilitator_configured:false`) and by inspecting the raw 402 `accepts[]` on `/api/okx/3d/identity-studio` and `/api/okx/3d/pose-seed` (Solana + Base only, no X Layer entry). `X402_PAY_TO_XLAYER` and `X402_ASSET_ADDRESS_XLAYER` **are** set in prod — this is the only missing piece. This is the exact rail OKX's listing review requires (agent #2632 rejection reason); the relisting (`prompts/okx-ai/05-relisting-resubmission.md`) cannot proceed until it's live. | OKX Web3 developer console (owner) for the three real creds, or generate `X402_XLAYER_RELAYER_KEY` as a fresh EVM keypair + fund it with OKB gas as a stopgap that needs no OKX account. |
 
 ---

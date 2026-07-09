@@ -71,6 +71,14 @@
 			<description>Two quiet breakages, fixed. The live trade feed on /three-live now prices SOL-only trades correctly again — it was reading a price API directly from your browser, which the provider silently blocks, so those trades showed no dollar value; it now reads the same cached, multi-provider SOL/USD price the rest of the platform uses. Separately, the Flappin UFO arcade demo ran on an external deployment that has gone offline, leaving a blank screen and a leaderboard that never loaded. Rather than leave a broken page up, /play/ufo is now an honest retired notice that points you to the live experiences — the coin world, Sniper Arena, and Coin Clash.</description>
 		</item>
 		<item>
+			<title>Paid Solana endpoints are back — payments settle end to end again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-09:Paid Solana endpoints are back — payments settle end to end again</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Pay-per-call endpoints like the Pole Club cover charge and dance tips had been failing at the final settlement step: the platform advertised a payment sponsor it could no longer sign for, and a missing rate-limiter backend then blocked every payment attempt outright. Both are fixed — the platform now co-signs settlements with its own sponsor wallet (secret held in Google Secret Manager, not on any one machine) and the rate limiter runs on a real Redis backend. Verified with real on-chain USDC payments through both endpoints, and every platform service wallet is now wired and funded above its floor.</description>
+		</item>
+		<item>
 			<title>The 3D world is locked down — visitors can no longer delete the ground</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-09:The 3D world is locked down — visitors can no longer delete the ground</guid>

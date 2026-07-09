@@ -35,6 +35,10 @@
  *   --adopt-only        run phase 1 only, never boot chromium
  *   --render-only       skip phase 1
  *   --loop              keep refilling the budget until nothing is left to claim
+ *   --reset-infra       un-retire avatars whose only failures were a dead browser
+ *                       (an OOM-killed chromium fails every render in the batch
+ *                       with "Connection closed."; genuinely broken models record a
+ *                       model-attributable error and are never reset)
  *
  * Unlike the previous version this talks to Postgres + R2 directly, so it needs
  * no ADMIN_BEARER and no running server.
@@ -45,6 +49,7 @@ import {
 	renderBatch,
 	coverage,
 	ensureBackfillSchema,
+	resetInfrastructureFailures,
 	MAX_ATTEMPTS,
 } from '../api/_lib/avatar-thumbs.js';
 
@@ -84,6 +89,15 @@ async function main() {
 	await ensureBackfillSchema();
 	await printCoverage('before');
 	if (has('status')) return;
+
+	// Un-retire avatars whose only failures were the browser dying. Cheap, safe to
+	// run every time: a genuinely broken model records a model-attributable error
+	// (e.g. "glb fetch failed") and is never reset.
+	if (has('reset-infra')) {
+		const { reset } = await resetInfrastructureFailures();
+		console.log(`[backfill] reset ${reset} ledger row(s) whose failure was infrastructure, not the model`);
+		await printCoverage('after reset');
+	}
 
 	// ── Phase 1: free adoption ────────────────────────────────────────────────
 	if (!RENDER_ONLY) {
@@ -126,12 +140,25 @@ async function main() {
 			onResult: (res) => {
 				const tag = `${String(res.id).slice(0, 8)} (${(res.name || '?').slice(0, 28)})`;
 				if (res.status === 'done') console.log(`[backfill]   ✓ ${tag} — ${res.bytes}b in ${res.ms}ms`);
+				else if (res.status === 'aborted') console.error(`[backfill]   ⚠ ${tag} — browser died: ${res.error}`);
 				else console.error(`[backfill]   ✗ ${tag} — ${res.error}`);
 			},
 		});
 
 		if (!r.claimed) {
 			console.log('[backfill] nothing left to claim');
+			break;
+		}
+		if (r.aborted) {
+			// chromium died (usually the OOM killer). Claims were rolled back, so no
+			// model was charged a retry. Bail loudly rather than spin: rerun with a
+			// lower --concurrency.
+			console.error(
+				`[backfill] aborted — the browser died mid-batch (${r.aborted}). ` +
+					`No retries were charged. Re-run with a lower --concurrency.`,
+			);
+			rendered += r.rendered;
+			failed += r.failed;
 			break;
 		}
 		rendered += r.rendered;

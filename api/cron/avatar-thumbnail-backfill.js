@@ -105,7 +105,13 @@ export default wrapCron(async (req, res) => {
 
 	for (const r of render.results) {
 		if (r.status === 'done') log.info('thumbnail_rendered', { avatar_id: r.id, bytes: r.bytes, ms: r.ms });
+		else if (r.status === 'aborted') log.error('thumbnail_browser_died', { avatar_id: r.id, message: r.error });
 		else log.warn('thumbnail_render_failed', { avatar_id: r.id, message: r.error });
+	}
+	// A dead browser is an instance-health problem, not a model problem. Claims were
+	// rolled back, so the next tick retries the same avatars on a fresh container.
+	if (render.aborted) {
+		log.error('backfill_batch_aborted', { reason: render.aborted, rendered: render.rendered });
 	}
 
 	const cov = await coverage().catch(() => null);
@@ -117,6 +123,7 @@ export default wrapCron(async (req, res) => {
 		claimed: render.claimed,
 		rendered: render.rendered,
 		failed: render.failed,
+		aborted: render.aborted || false,
 		coverage: cov,
 		results: render.results.map((r) => ({
 			id: r.id,

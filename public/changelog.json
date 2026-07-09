@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T22:04:22.145Z",
+	"generated_at": "2026-07-09T22:05:19.142Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -88,6 +88,18 @@
 			"link": "/three-live",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Paid Solana endpoints are back — payments settle end to end again",
+			"summary": "Pay-per-call endpoints like the Pole Club cover charge and dance tips had been failing at the final settlement step: the platform advertised a payment sponsor it could no longer sign for, and a missing rate-limiter backend then blocked every payment attempt outright. Both are fixed — the platform now co-signs settlements with its own sponsor wallet (secret held in Google Secret Manager, not on any one machine) and the rate limiter runs on a real Redis backend. Verified with real on-chain USDC payments through both endpoints, and every platform service wallet is now wired and funded above its floor.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra",
+				"security"
 			]
 		},
 		{

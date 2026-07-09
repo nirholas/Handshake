@@ -411,6 +411,11 @@ export async function finalizeAutoRigStage({ userId, jobId, job, glbUrl }) {
 				content_type: 'model/gltf-binary',
 				source: 'auto-rig',
 				source_meta: meta,
+				// Rigging adds a skeleton to the same mesh — the source avatar's
+				// rendered thumbnail depicts the sibling exactly, so inherit it
+				// instead of leaving the card blank until the backfill cron re-renders
+				// an identical image.
+				thumbnail_key: av.thumbnail_key ?? null,
 				visibility,
 				tags,
 				checksum_sha256: checksum,

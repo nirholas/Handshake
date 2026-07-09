@@ -110,15 +110,27 @@ export async function createAvatar({ userId, input, storageKey }) {
 		storage_key: storageKey,
 		checksum_sha256: input.checksum_sha256 ?? null,
 	});
+	// Internal-only seed thumbnail (deliberately absent from createAvatarBody, so
+	// API clients cannot set it): callers that already have a rendered preview in
+	// R2 (auto-rig siblings cloning their source's thumbnail, seed crons adopting
+	// a forge preview) pass its key so the avatar never sits thumbnail-less
+	// waiting for the backfill cron. Relative R2 keys only — an absolute URL in
+	// thumbnail_key resolves against an origin where no object lives (see
+	// api/_lib/avatar-thumbs.js).
+	const thumbnailKey =
+		typeof input.thumbnail_key === 'string' && input.thumbnail_key && !/^https?:\/\//.test(input.thumbnail_key)
+			? input.thumbnail_key
+			: null;
 	const [row] = await sql`
 		insert into avatars (
 			owner_id, slug, name, description, storage_key, size_bytes, content_type,
-			source, source_meta, visibility, tags, checksum_sha256, parent_avatar_id,
+			source, source_meta, thumbnail_key, visibility, tags, checksum_sha256, parent_avatar_id,
 			storage_mode, appearance
 		) values (
 			${userId}, ${finalSlug}, ${input.name}, ${input.description ?? null},
 			${storageKey}, ${input.size_bytes}, ${input.content_type},
 			${input.source}, ${JSON.stringify(input.source_meta)}::jsonb,
+			${thumbnailKey},
 			${input.visibility}, ${input.tags}, ${input.checksum_sha256 ?? null},
 			${input.parent_avatar_id ?? null},
 			${JSON.stringify(storageMode)}::jsonb,

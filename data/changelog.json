@@ -12620,6 +12620,16 @@
 				"fix",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-07-09",
+			"title": "Paid Solana endpoints are back — payments settle end to end again",
+			"summary": "Pay-per-call endpoints like the Pole Club cover charge and dance tips had been failing at the final settlement step: the platform advertised a payment sponsor it could no longer sign for, and a missing rate-limiter backend then blocked every payment attempt outright. Both are fixed — the platform now co-signs settlements with its own sponsor wallet (secret held in Google Secret Manager, not on any one machine) and the rate limiter runs on a real Redis backend. Verified with real on-chain USDC payments through both endpoints, and every platform service wallet is now wired and funded above its floor.",
+			"tags": [
+				"fix",
+				"infra",
+				"security"
+			]
 		}
 	]
 }
