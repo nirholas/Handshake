@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T22:20:16.797Z",
+	"generated_at": "2026-07-09T22:24:13.065Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -67,6 +67,28 @@
 			"link": "/account",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Every agent now has a 3D avatar and a real preview image",
+			"summary": "Nearly half of all agents had no avatar at all, and most avatars had no preview image — so the agents directory, marketplace, and profiles showed grey letter placeholders instead of the models. Every agent without a body has been assigned one from the platform's public gallery, thousands of missing avatar previews have been rendered, and two always-on background jobs now keep both at 100%: new agents get a body the moment they appear, and any avatar without a preview gets one within minutes.",
+			"link": "/agents",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Every Oracle coin now has a full detail page, not just the in-feed popup",
+			"summary": "Sharing or opening /oracle/coin/<mint> used to bounce you back to the Oracle feed — a routing bug ate the coin address on the way to the page. Every coin now gets its rich standalone page: conviction verdict with all four pillars, live price chart, market intel, security checks, who's in, community pulse, a live trade tape, related coins, and now the coin's own description. Feed cards are real links too — cmd/ctrl-click or middle-click any coin to open its page in a new tab, while a plain click still opens the quick-glance popup.",
+			"link": "/oracle",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -197,6 +219,16 @@
 				"security",
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Your Memetic Launcher can now go live — real launches, funded by you, never the house",
+			"summary": "The personal launcher at /launcher is no longer preview-only. Flip it to Live and it mints real pump.fun coins on your cadence, riding the same live cultural narratives you tuned in preview. Every launch is paid by your own agents' wallets — deposit SOL to any agent straight from the new funding panel (live balances, one-click copy) and set your dev buy and a hard daily SOL cap. An unfunded wallet simply pauses launches until you top it up; it never burns a failure. Preview mode stays the default, and going live takes a typed confirmation.",
+			"link": "/launcher",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -4791,7 +4823,7 @@
 			"date": "2026-06-27",
 			"type": "launch",
 			"title": "Memetic Launcher",
-			"summary": "Design your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, and preview exactly what your agents would mint next. Preview mode: no SOL moves until you fund a live launch.",
+			"summary": "Your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.",
 			"link": "/launcher",
 			"tags": [
 				"launch"

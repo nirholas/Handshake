@@ -5138,6 +5138,10 @@
 			"schedule": "*/5 * * * *"
 		},
 		{
+			"path": "/api/cron/agent-avatar-backfill",
+			"schedule": "*/10 * * * *"
+		},
+		{
 			"path": "/api/cron/coin-intel-observe",
 			"schedule": "*/2 * * * *"
 		},

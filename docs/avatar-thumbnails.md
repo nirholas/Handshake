@@ -64,12 +64,19 @@ running a three.js viewer, and screenshotted to a 768×768 PNG, which is uploade
 All of this lives in [`api/_lib/avatar-thumbs.js`](../api/_lib/avatar-thumbs.js),
 the single owner of the invariant above.
 
-## The two crons
+## The three crons
 
 | Cron | Schedule | Job |
 |---|---|---|
 | [`avatar-thumbnail-render`](../api/cron/avatar-thumbnail-render.js) | `*/10 * * * *` | Re-renders **stale** thumbnails for marketplace listings, driven by the x402 spend loop. |
 | [`avatar-thumbnail-backfill`](../api/cron/avatar-thumbnail-backfill.js) | `*/5 * * * *` | Fills in **absent** thumbnails: adopts forge previews, then renders whatever is left. |
+| [`agent-avatar-backfill`](../api/cron/agent-avatar-backfill.js) | `*/10 * * * *` | Assigns a 3D body to any **agent with no avatar** (`agent_identities.avatar_id IS NULL` or dangling): clones a random public, thumbnailed humanoid from the gallery into the agent owner's account (`api/_lib/agent-avatars.js`, reusing circulation's `cloneAvatarFor`). Pure DB work — the clone shares the source's `storage_key` and `thumbnail_key`, so the agent card has a preview immediately. Batch via `AGENT_AVATAR_BACKFILL_BATCH` (default 100). |
+
+Together the last two make "every agent card shows a real preview" an invariant:
+one guarantees the agent has an avatar, the other guarantees the avatar has a
+thumbnail. Creation paths keep the gap from reopening — `createAvatar` accepts an
+internal `thumbnail_key` seed, auto-rig siblings inherit their source's thumbnail,
+and the forge/avaturn seed crons adopt the forge preview at insert.
 
 They share the `thumb/<avatarId>.png` key space and each is a no-op on the other's
 rows. The backfill drains most-visible-first — `featured`, then public, then
@@ -100,6 +107,44 @@ a claim + retry ledger:
 Claim selection and the claim write are a single SQL statement using
 `FOR UPDATE … SKIP LOCKED`, so the cron and an operator's bulk run can execute at
 the same time without ever claiming the same avatar.
+
+### Blame the browser, not the model
+
+Retiring an avatar after 3 failures is only safe if those failures are the *model's*
+fault. Chromium is the first process the OOM killer reaps on a memory-tight
+container, and it dies exactly when a long batch render is under way. Once it does,
+every remaining render fails in milliseconds with `Connection closed.`
+
+So the runner distinguishes the two:
+
+- **Model failure** (`glb fetch failed: …`, `render failed: …`) — charge the
+  attempt, record `last_error`, keep going.
+- **Infrastructure failure** (`Connection closed.`, `Target closed`, `Protocol
+  error`, …) — the model is blameless. Roll the attempt back, roll back every
+  claim the aborted batch never reached, and **stop the batch**. `renderBatch()`
+  returns `aborted: "<reason>"`; the cron logs `backfill_browser_died` and the next
+  tick retries the same avatars on a fresh container.
+
+`isBrowserInfrastructureError()` in
+[`api/_lib/render-glb.js`](../api/_lib/render-glb.js) is the classifier, and the
+cached browser now evicts itself on `disconnected` so the next render relaunches
+instead of reusing a corpse.
+
+This is not hypothetical: before the classifier existed, one OOM-killed chromium
+retired **1,283 perfectly renderable avatars** in a single run. If you ever suspect
+that happened again:
+
+```bash
+node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --reset-infra
+```
+
+It deletes every ledger row whose `last_error` is an infrastructure error, returning
+those avatars to the candidate set. Rows recording a model-attributable error are
+left retired. Safe to run at any time.
+
+Running more than one bulk backfill at once is what causes the OOM in the first
+place. The claim ledger makes it *correct*, but not *free* — one runner at
+`--concurrency=2..3` beats three runners fighting for RAM.
 
 ## Operating the backfill
 

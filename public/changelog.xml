@@ -55,6 +55,22 @@
 			<description>The create-agent button could fail with a rate-limit error even on your first try, because everyday page loads (your profile, home feed, credits, and wallet balance checks) silently spent the same strict request budget that guards sign-in and agent creation. Those background reads now have their own generous allowance, and agent creation has a dedicated one, so browsing the site can never lock you out of submitting your agent.</description>
 		</item>
 		<item>
+			<title>Every agent now has a 3D avatar and a real preview image</title>
+			<link>https://three.ws/agents</link>
+			<guid isPermaLink="false">2026-07-09:Every agent now has a 3D avatar and a real preview image</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Nearly half of all agents had no avatar at all, and most avatars had no preview image — so the agents directory, marketplace, and profiles showed grey letter placeholders instead of the models. Every agent without a body has been assigned one from the platform's public gallery, thousands of missing avatar previews have been rendered, and two always-on background jobs now keep both at 100%: new agents get a body the moment they appear, and any avatar without a preview gets one within minutes.</description>
+		</item>
+		<item>
+			<title>Every Oracle coin now has a full detail page, not just the in-feed popup</title>
+			<link>https://three.ws/oracle</link>
+			<guid isPermaLink="false">2026-07-09:Every Oracle coin now has a full detail page, not just the in-feed popup</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Sharing or opening /oracle/coin/&lt;mint&gt; used to bounce you back to the Oracle feed — a routing bug ate the coin address on the way to the page. Every coin now gets its rich standalone page: conviction verdict with all four pillars, live price chart, market intel, security checks, who's in, community pulse, a live trade tape, related coins, and now the coin's own description. Feed cards are real links too — cmd/ctrl-click or middle-click any coin to open its page in a new tab, while a plain click still opens the quick-glance popup.</description>
+		</item>
+		<item>
 			<title>Fixed the rate limiter that was rejecting real people as if they were a flood</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-09:Fixed the rate limiter that was rejecting real people as if they were a flood</guid>
@@ -149,6 +165,14 @@
 			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>Two changes to how /irl handles where you are. First, reading the agents near you now requires proving you have a recent location fix for that spot — until today anyone could ask our servers what agents sat at any coordinate on earth without ever going there. Second, a placed agent can now be private: you still see it in AR exactly where you left it, but it is withheld from everyone else's nearby feed, from shared rooms, and from the World Lines quest map. New placements are private by default while /irl is still in testing, and the privacy center's unpublish button now makes a pin private instead of hiding it from you too. You can make any pin public again whenever you want.</description>
+		</item>
+		<item>
+			<title>Your Memetic Launcher can now go live — real launches, funded by you, never the house</title>
+			<link>https://three.ws/launcher</link>
+			<guid isPermaLink="false">2026-07-09:Your Memetic Launcher can now go live — real launches, funded by you, never the house</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The personal launcher at /launcher is no longer preview-only. Flip it to Live and it mints real pump.fun coins on your cadence, riding the same live cultural narratives you tuned in preview. Every launch is paid by your own agents' wallets — deposit SOL to any agent straight from the new funding panel (live balances, one-click copy) and set your dev buy and a hard daily SOL cap. An unfunded wallet simply pauses launches until you top it up; it never burns a failure. Preview mode stays the default, and going live takes a typed confirmation.</description>
 		</item>
 		<item>
 			<title>Blockchain TVL by Chain</title>
@@ -3684,7 +3708,7 @@
 			<guid isPermaLink="false">2026-06-27:Memetic Launcher</guid>
 			<pubDate>Sat, 27 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Design your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, and preview exactly what your agents would mint next. Preview mode: no SOL moves until you fund a live launch.</description>
+			<description>Your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.</description>
 		</item>
 		<item>
 			<title>On-chain Deployments</title>

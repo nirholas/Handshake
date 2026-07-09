@@ -316,14 +316,31 @@ async function claimUsername(base) {
 // real 3D body + thumbnail (reusing the platform's own generated gallery) and so
 // the coin launcher can use it as the token image. Returns the new avatar id or
 // null when no public avatar exists yet.
-async function cloneAvatarFor(userId, name) {
-	const [src] = await sql`
+//
+// Exported: api/cron/agent-avatar-backfill.js reuses this to heal pre-existing
+// agents whose avatar_id is NULL, so every agent card can show a real preview.
+export async function cloneAvatarFor(userId, name) {
+	// Prefer a humanoid with a ready-made thumbnail — the clone inherits the
+	// thumbnail_key, so the agent card gets an instant preview instead of
+	// waiting a cron tick for a render. Props/accessories and thumbnail-less
+	// rows are only a fallback for a thin pool.
+	let [src] = await sql`
 		select id, storage_key, thumbnail_key, size_bytes, content_type, source, tags, model_category
 		from avatars
 		where visibility = 'public' and deleted_at is null and storage_key is not null
+		  and model_category = 'avatar' and thumbnail_key is not null
 		order by random()
 		limit 1
 	`;
+	if (!src) {
+		[src] = await sql`
+			select id, storage_key, thumbnail_key, size_bytes, content_type, source, tags, model_category
+			from avatars
+			where visibility = 'public' and deleted_at is null and storage_key is not null
+			order by random()
+			limit 1
+		`;
+	}
 	if (!src) return null;
 	const slug = `${slugify(name)}-${randomUUID().slice(0, 6)}`;
 	const [row] = await sql`
