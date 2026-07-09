@@ -48,7 +48,8 @@ faked.
 | `MODEL_TRELLIS_URL`     | `trellis_selfhost`     | Cloud Run URL of `model-trellis`. |
 | `GCP_HUNYUAN3D_URL`     | `hunyuan3d`            | Cloud Run URL of `model-hunyuan3d`. **Not** `GCP_RECONSTRUCTION_URL` — that is the avatar face pipeline, which rejects non-face images. |
 | `GCP_TRIPOSG_URL`       | `triposg` (sketch)     | Cloud Run URL of `model-triposg`. |
-| `GCP_RECONSTRUCTION_KEY`| all of the above       | Shared bearer secret every worker checks. |
+| `GCP_UNIRIG_URL`        | auto-rig (`rerig`)     | Cloud Run URL of `unirig`. Required for rigging: without it, `rerig` falls back to `GCP_RECONSTRUCTION_URL`, whose deployed service exposes no `/rig` — every rig submit 404s. The provider speaks the worker's native schema (`mesh_gcs_url` in, `rigged_gcs_url` out) when this is set. |
+| `GCP_RECONSTRUCTION_KEY`| all of the above       | Shared bearer secret every worker checks (`avatar-reconstruction-key` in Secret Manager — `unirig`'s `API_KEY` references the same secret). |
 | `GCP_REMESH_URL`        | Game-Ready export      | `model`/`remesh` worker (post-gen). |
 | `FORGE_PREFER_FREE`     | routing (optional)     | Defaults on. Set `false` only to restore the paid-default ordering once the paid account is funded. |
 
