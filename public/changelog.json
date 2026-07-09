@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-09T22:09:03.118Z",
+	"generated_at": "2026-07-09T22:20:16.797Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -30,6 +30,17 @@
 		{
 			"date": "2026-07-09",
 			"type": "update",
+			"title": "Avatars are getting their pictures back — galleries show the model, not a letter",
+			"summary": "Roughly four out of five public avatars had never had a preview picture made for them, so most galleries showed a plain lettered circle instead of the model. Nothing on the platform ever generated one: a picture appeared only if someone happened to upload it by hand. That is now fixed at the source. Avatars made in the forge instantly reuse the preview image the forge already produced, at no cost. Everything else gets a real picture rendered from its own 3D model automatically, in the background, working through the most-visited avatars first — so the pages you actually browse fill in first. A model that genuinely cannot be drawn, because its file is missing or damaged, is set aside after a few tries instead of blocking the queue behind it. Coverage climbs on its own from here, and newly forged avatars now arrive with their picture already attached.",
+			"link": "/marketplace",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
 			"title": "Avatars render again on seven pages that were showing an empty viewer",
 			"summary": "Avatars made on three.ws are saved in a compressed format to keep them small and quick to download. Seven pages — Cosmos, Minted, Creations, Vault, Pitch, the embodied-agent page, and the microphone lipsync demo — never set up the matching decompressor, so instead of a 3D model you got an empty viewer and an error in the console. All seven now load the decoder before the model, and the avatars appear as they should. The fix also went into the embeddable agent widget itself, so anyone who has pasted a three.ws agent onto their own site gets working compressed avatars automatically, with nothing to change on their end.",
 			"link": "/cosmos",
@@ -46,6 +57,28 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Creating an agent no longer fails with \"too many requests\" after normal browsing",
+			"summary": "The create-agent button could fail with a rate-limit error even on your first try, because everyday page loads (your profile, home feed, credits, and wallet balance checks) silently spent the same strict request budget that guards sign-in and agent creation. Those background reads now have their own generous allowance, and agent creation has a dedicated one, so browsing the site can never lock you out of submitting your agent.",
+			"link": "/account",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "Fixed the rate limiter that was rejecting real people as if they were a flood",
+			"summary": "Since the move to our new hosting, the server had been identifying every visitor by the address of the load balancer sitting in front of it — which is the same address for everybody. The effect was that all traffic on the platform shared a single allowance. One person's requests used up everyone's budget, so genuine visitors were turned away with a 'too many requests' error before they had made a single one. The location privacy page was hit hardest: it was answering that error to its very first caller, which is why deleting or hiding your own placed agents silently failed. The server now reads the visitor's real address from the proxy chain, ignoring the parts a caller can forge, so each person gets their own allowance again and the limits protect against abuse instead of causing it.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security",
+				"infra"
 			]
 		},
 		{
@@ -110,6 +143,16 @@
 				"fix",
 				"infra",
 				"security"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "The /play lobby no longer fails to load live coins during busy sessions",
+			"summary": "The live-coins grid on /play could show \"Could not load live coins right now\" because the market feed shared one rate-limit budget with more than 160 other endpoints — a busy session with a few tabs open starved its own lobby. Trending and coin search now have their own generous budget, and the lobby quietly retries once on a blip before ever showing the error card.",
+			"link": "/play",
+			"tags": [
+				"fix"
 			]
 		},
 		{

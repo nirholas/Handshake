@@ -23,6 +23,14 @@
 			<description>The @three-ws/irl SDK (v0.2.0) now covers the whole IRL surface, not just pins. New functions let any script or agent discover real-money drops near where it checks in, claim them with a proof-of-presence fix (a real on-chain release to its own wallet), place self- or agent-funded drops and bounties, and run the full World Lines quest loop — find nearby quests, take the challenge at the spot, and earn the agent-signed proof-of-presence collectible, plus verify anyone's proof independently. Fully typed, zero dependencies, verified against the live API.</description>
 		</item>
 		<item>
+			<title>Avatars are getting their pictures back — galleries show the model, not a letter</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-07-09:Avatars are getting their pictures back — galleries show the model, not a letter</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Roughly four out of five public avatars had never had a preview picture made for them, so most galleries showed a plain lettered circle instead of the model. Nothing on the platform ever generated one: a picture appeared only if someone happened to upload it by hand. That is now fixed at the source. Avatars made in the forge instantly reuse the preview image the forge already produced, at no cost. Everything else gets a real picture rendered from its own 3D model automatically, in the background, working through the most-visited avatars first — so the pages you actually browse fill in first. A model that genuinely cannot be drawn, because its file is missing or damaged, is set aside after a few tries instead of blocking the queue behind it. Coverage climbs on its own from here, and newly forged avatars now arrive with their picture already attached.</description>
+		</item>
+		<item>
 			<title>Avatars render again on seven pages that were showing an empty viewer</title>
 			<link>https://three.ws/cosmos</link>
 			<guid isPermaLink="false">2026-07-09:Avatars render again on seven pages that were showing an empty viewer</guid>
@@ -37,6 +45,22 @@
 			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Oracle was the most broken page on the site: almost none of the coin pictures loaded. It was asking public IPFS gateways for the art directly, and browsers refuse those responses on security grounds, so card after card fell back to a bare letter or an empty box. Every image now travels through three.ws itself, which fetches the art server-side, tries several storage gateways until one answers, and hands back a picture every single time. Roughly half of pump.fun coins also point at a small description file rather than the picture itself — the site now reads that file and follows it to the real artwork, instead of giving up. Coins whose art is genuinely gone get a distinctive generated gem rather than a broken-image icon, and the same fix carries across to Radar and the live pump feeds.</description>
+		</item>
+		<item>
+			<title>Creating an agent no longer fails with &quot;too many requests&quot; after normal browsing</title>
+			<link>https://three.ws/account</link>
+			<guid isPermaLink="false">2026-07-09:Creating an agent no longer fails with &quot;too many requests&quot; after normal browsing</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The create-agent button could fail with a rate-limit error even on your first try, because everyday page loads (your profile, home feed, credits, and wallet balance checks) silently spent the same strict request budget that guards sign-in and agent creation. Those background reads now have their own generous allowance, and agent creation has a dedicated one, so browsing the site can never lock you out of submitting your agent.</description>
+		</item>
+		<item>
+			<title>Fixed the rate limiter that was rejecting real people as if they were a flood</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-09:Fixed the rate limiter that was rejecting real people as if they were a flood</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Since the move to our new hosting, the server had been identifying every visitor by the address of the load balancer sitting in front of it — which is the same address for everybody. The effect was that all traffic on the platform shared a single allowance. One person's requests used up everyone's budget, so genuine visitors were turned away with a 'too many requests' error before they had made a single one. The location privacy page was hit hardest: it was answering that error to its very first caller, which is why deleting or hiding your own placed agents silently failed. The server now reads the visitor's real address from the proxy chain, ignoring the parts a caller can forge, so each person gets their own allowance again and the limits protect against abuse instead of causing it.</description>
 		</item>
 		<item>
 			<title>Free 3D generation stays up when outside providers go down</title>
@@ -85,6 +109,14 @@
 			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Pay-per-call endpoints like the Pole Club cover charge and dance tips had been failing at the final settlement step: the platform advertised a payment sponsor it could no longer sign for, and a missing rate-limiter backend then blocked every payment attempt outright. Both are fixed — the platform now co-signs settlements with its own sponsor wallet (secret held in Google Secret Manager, not on any one machine) and the rate limiter runs on a real Redis backend. Verified with real on-chain USDC payments through both endpoints, and every platform service wallet is now wired and funded above its floor.</description>
+		</item>
+		<item>
+			<title>The /play lobby no longer fails to load live coins during busy sessions</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-07-09:The /play lobby no longer fails to load live coins during busy sessions</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The live-coins grid on /play could show &quot;Could not load live coins right now&quot; because the market feed shared one rate-limit budget with more than 160 other endpoints — a busy session with a few tabs open starved its own lobby. Trending and coin search now have their own generous budget, and the lobby quietly retries once on a blip before ever showing the error card.</description>
 		</item>
 		<item>
 			<title>The 3D world is locked down — visitors can no longer delete the ground</title>

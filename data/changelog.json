@@ -3,6 +3,35 @@
 	"entries": [
 		{
 			"date": "2026-07-09",
+			"title": "Avatars are getting their pictures back — galleries show the model, not a letter",
+			"summary": "Roughly four out of five public avatars had never had a preview picture made for them, so most galleries showed a plain lettered circle instead of the model. Nothing on the platform ever generated one: a picture appeared only if someone happened to upload it by hand. That is now fixed at the source. Avatars made in the forge instantly reuse the preview image the forge already produced, at no cost. Everything else gets a real picture rendered from its own 3D model automatically, in the background, working through the most-visited avatars first — so the pages you actually browse fill in first. A model that genuinely cannot be drawn, because its file is missing or damaged, is set aside after a few tries instead of blocking the queue behind it. Coverage climbs on its own from here, and newly forged avatars now arrive with their picture already attached.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-07-09",
+			"title": "Fixed the rate limiter that was rejecting real people as if they were a flood",
+			"summary": "Since the move to our new hosting, the server had been identifying every visitor by the address of the load balancer sitting in front of it — which is the same address for everybody. The effect was that all traffic on the platform shared a single allowance. One person's requests used up everyone's budget, so genuine visitors were turned away with a 'too many requests' error before they had made a single one. The location privacy page was hit hardest: it was answering that error to its very first caller, which is why deleting or hiding your own placed agents silently failed. The server now reads the visitor's real address from the proxy chain, ignoring the parts a caller can forge, so each person gets their own allowance again and the limits protect against abuse instead of causing it.",
+			"tags": [
+				"fix",
+				"security",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"title": "Creating an agent no longer fails with \"too many requests\" after normal browsing",
+			"summary": "The create-agent button could fail with a rate-limit error even on your first try, because everyday page loads (your profile, home feed, credits, and wallet balance checks) silently spent the same strict request budget that guards sign-in and agent creation. Those background reads now have their own generous allowance, and agent creation has a dedicated one, so browsing the site can never lock you out of submitting your agent.",
+			"tags": [
+				"fix"
+			],
+			"link": "/account"
+		},
+		{
+			"date": "2026-07-09",
 			"title": "x402 discovery listings now render full result cards everywhere",
 			"summary": "Seven paid services — the fact checker, mint-to-mesh (single and batch), asset remixing, agent embodiment, 3D NFT minting, and provenance anchoring — were listing on the open x402 indexers without a response example, so their catalog cards rendered empty and ranked poorly. Every one now ships a realistic sample response in the discovery document, and the build-time guard that keeps the catalog fully green is passing again so a future gap can't ship unnoticed.",
 			"tags": [
