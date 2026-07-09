@@ -235,7 +235,7 @@ function memoryLimiter(name, { limit, window }) {
 	if (ms > maxMemoryWindowMs) maxMemoryWindowMs = ms;
 	return {
 		async limit(id) {
-			const key = `${name} ${id}`;
+			const key = `${name}\u0000${id}`;
 			const now = Date.now();
 			sweepMemoryBuckets(now);
 			const bucket = memoryBuckets.get(key) || [];
