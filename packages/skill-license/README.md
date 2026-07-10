@@ -27,10 +27,10 @@
 > **`skill_license`** Solana program — a trustless way to prove that a wallet
 > owns a purchased agent skill. Each license is a real 1-of-1 SPL NFT held in the
 > buyer's wallet, paired with a deterministic `SkillLicense` PDA that anyone can
-> re-derive and read in a single RPC call. It wraps the program's PDA derivation
-> and the public, auth-free verify endpoint
-> ([`GET /api/skills/license-onchain`](https://three.ws)), so checking access is
-> one function call instead of a database round-trip. It pairs with
+> re-derive and read in a single RPC call. It wraps the public, auth-free verify
+> endpoint ([`GET /api/skills/license-onchain`](https://three.ws)) — which derives
+> the `SkillLicense` PDA and reads it back for you — so checking access is one
+> function call instead of a database round-trip. It pairs with
 > [`@three-ws/x402-server`](https://www.npmjs.com/package/@three-ws/x402-server)
 > — gate a paid endpoint on a license the holder actually owns on-chain.
 
@@ -55,19 +55,19 @@ The `skill_license` program makes the answer **public chain state**:
   the NFT and stamp `revoked_at` while leaving the record readable, so verifiers
   see the revoked state.
 
-This SDK is the JS twin of the on-chain program: it derives the same addresses
-the Rust `seeds` produce, decodes the account, and tells you `verifyLicense(...)`
-→ `true | false`.
+This SDK is the one-call front door to that chain state: `verifyLicense(...)`
+→ `true | false`, resolved through the platform's public read endpoint, which
+does the PDA derivation and RPC read for you.
 
 ## Install
 
 ```bash
-npm install @three-ws/skill-license @solana/web3.js
+npm install @three-ws/skill-license
 ```
 
-`@solana/web3.js` is a peer dependency (PublicKey derivation + RPC). Works in
-Node 18+ and the browser — verification only reads public chain state, so no
-wallet or signer is needed to check a license.
+Zero runtime dependencies. Works in Node 18+ and the browser (uses `fetch`).
+Verification only reads public chain state through the platform endpoint, so no
+wallet, signer, or RPC of your own is needed to check a license.
 
 ## Quick start
 
@@ -90,15 +90,13 @@ Need the full record, not just a boolean — purchase date, NFT mint, explorer
 link, revoked state:
 
 ```js
-import { getLicense, deriveLicensePda } from '@three-ws/skill-license';
+import { getLicense } from '@three-ws/skill-license';
 
-const [pda] = deriveLicensePda({
+const license = await getLicense({
   holder: 'HoLDeRwa11et1111111111111111111111111111111',
   agent: 'THREEsynthetic1111111111111111111111111111',
   skill: 'web-search',
 });
-
-const license = await getLicense(pda);
 if (license?.owned) {
   console.log(license.nftMint);      // the 1/1 SPL NFT in the holder's wallet
   console.log(license.purchaseDate); // unix seconds
@@ -124,9 +122,9 @@ const { nftMint, signature } = await mintLicense({
 
 ## API
 
-The SDK exposes two surfaces: **pure derivation/decoding** (no network, runs
-anywhere, mirrors the Rust `seeds` byte-for-byte) and **wrappers** over the live
-three.ws endpoints for reading and minting.
+The SDK is a thin wrapper over the live three.ws endpoints: the platform does the
+Solana work (PDA derivation, RPC reads, minting) server-side, so every call is one
+`fetch` and the client stays zero-dependency.
 
 ### `verifyLicense({ holder, agent, skill, network? }) → Promise<boolean>`
 
@@ -145,9 +143,10 @@ license for `skill` on `agent`. Wraps
 
 ### `getLicense(input, { network? }) → Promise<LicenseRecord \| null>`
 
-Read the full license record. `input` is either a derived PDA `PublicKey`/base58
-string, or `{ holder, agent, skill }` (the SDK derives the PDA for you).
-Returns `null` when no license exists at that address.
+Read the full license record. `input` is `{ holder, agent, skill }` (or
+`{ holder, agentId, skill }`), the same shape `verifyLicense` takes. Wraps
+`GET /api/skills/license-onchain` and returns `null` when no license exists
+on-chain.
 
 **`LicenseRecord`**
 
@@ -167,33 +166,14 @@ Returns `null` when no license exists at that address.
 | `license` | `string` | The `SkillLicense` PDA address. |
 | `explorer` | `string` | Explorer link to the license account. |
 
-### `deriveLicensePda({ holder, agent, skill }, programId?) → [PublicKey, number]`
+### `skillSeed(skillName) → Promise<string>`
 
-Pure, offline derivation of the `SkillLicense` PDA — no RPC. Seeds:
-`["skill_license", holder, agent, sha256(skill)]`. Returns `[pda, bump]`.
+`sha256(skillName)` as a 32-byte hex string — the fixed-length third PDA seed.
+Async (Web Crypto's `crypto.subtle.digest`, so it runs zero-dep in Node 18+ and
+the browser). Matches the program's `skill_seed()` (Solana `hash::hash` is
+SHA-256), so it reproduces the exact hash the on-chain seed uses.
 
-### `deriveMintPda({ holder, agent, skill }, programId?) → [PublicKey, number]`
-
-The 1/1 NFT mint PDA backing a license. Seeds:
-`["skill_mint", holder, agent, sha256(skill)]`.
-
-### `deriveMarketplacePda(programId?) → [PublicKey, number]`
-
-The singleton config PDA. Seed: `["marketplace"]`.
-
-### `skillSeed(skillName) → Buffer`
-
-`sha256(skillName)` — the fixed-length 32-byte third seed. Matches the Rust
-`skill_seed()` (Solana `hash::hash` is SHA-256), so client and program derive
-identical addresses.
-
-### `decodeLicense(data) → LicenseRecord`
-
-Decode a raw `SkillLicense` account buffer (Anchor layout). Throws on a
-discriminator mismatch, so an unrelated account can never be read as a valid
-license.
-
-### `mintLicense({ agentId, skill, buyer, txSignature?, apiKey, baseUrl? }) → Promise<MintResult>`
+### `mintLicense({ agentId, skill, buyer, txSignature?, apiKey }) → Promise<MintResult>`
 
 **Server-side.** Mints the on-chain license to `buyer` after their purchase is
 confirmed. Wraps `POST /api/skills/mint`, which verifies the payment reached the
@@ -206,10 +186,12 @@ Idempotent: a second call returns the existing mint.
 | `skill` | `string` | Skill name/slug (≤100 chars). |
 | `buyer` | `string` | Recipient wallet — must be a Solana wallet linked to the caller's account. |
 | `txSignature` | `string` | The purchase transaction signature (optional; the most recent attempt is used otherwise). |
-| `apiKey` | `string` | Bearer token for the authenticated three.ws account. |
-| `baseUrl` | `string` | Override the API origin (defaults to `https://three.ws`). |
+| `apiKey` | `string` | Bearer token for the authenticated three.ws account (overrides the client's `apiKey`). |
 
-**Returns `MintResult`**: `{ nftMint, signature, network, skill, agentId, purchaseId, alreadyMinted }`.
+To point the client at a different origin, construct one with
+`createSkillLicense({ baseUrl })` instead of passing `baseUrl` per call.
+
+**Returns `MintResult`**: `{ nftMint, signature, collection, network, explorer, skill, agentId, purchaseId, alreadyMinted }`.
 
 `PROGRAM_ID` is exported as a constant
 (`EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8`) — the same id on every cluster.
@@ -231,7 +213,7 @@ buy skill ──▶ payment confirmed on-chain ──▶ mint_skill_license (min
                                                       mint PDA = ["skill_mint", owner, agent, sha256(skill)]
                                                       decimals 0, supply locked at 1 (mint authority removed)
 
-verify ─▶ deriveLicensePda(...) ─▶ getAccountInfo ─▶ exists && revoked_at == 0  ⇒  owned
+verify ─▶ derive SkillLicense PDA ─▶ getAccountInfo ─▶ exists && revoked_at == 0  ⇒  owned
 ```
 
 - **The NFT** is the transferable, wallet-visible proof of ownership.

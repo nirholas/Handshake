@@ -8,6 +8,10 @@ lip-synced avatar on `/agent-screen` reads the bulletin aloud.
 It is deliberately **not** a scheduled cron: it holds state across ticks (an
 overlap guard, the boot frame, graceful shutdown) and runs continuously.
 
+The package (`@three-ws/agent-anchor`) is `"private": true` — an internal
+worker, **not published to npm**. Consume it by running the process, not by
+`npm install`.
+
 ## What it does
 
 Each bulletin (`index.js` → `runBulletin`) runs five stages, each of which
@@ -58,6 +62,40 @@ speech, and lip-sync the avatar to it.
 
 The pure core in `brief.js` is covered by `tests/anchor-brief.test.js`
 (`mergeBrief`, `briefDigest`, `buildAnchorMessages`, `splitScript`).
+
+## Public exports per module
+
+`index.js` is the executable entrypoint (no exports); the other three modules
+export the pieces of the pipeline so they can be reused and unit-tested:
+
+**`anchor-client.js`** — live three.ws integrations:
+
+| Export | Signature | Purpose |
+|---|---|---|
+| `gatherBrief` | `() → Promise<brief>` | Fetch the three feeds concurrently and return a merged briefing. |
+| `scriptBulletin` | `(brief) → Promise<string>` | Stream `POST /api/brain/chat` (SSE) into the full anchor read; throws on an upstream error or empty script. |
+| `publishScript` | `({ headline, body, brief }) → Promise<void>` | Store the spoken body via `POST /api/agent/anchor-script` (no-op without `AGENT_JWT`/`AGENT_ID`). |
+
+**`brief.js`** — pure, dependency-free merge/split logic:
+
+| Export | Kind | Purpose |
+|---|---|---|
+| `HEADLINE_MAX` | `120` | Lower-third headline char cap. |
+| `BODY_MAX` | `700` | Spoken-body char cap. |
+| `ACTIVITY_MAX` | `320` | Screen-frame `activity` field cap (mirrors the push endpoint). |
+| `MAX_ITEMS` | `3` | Narratives read on air per bulletin. |
+| `sentimentLabel` | `(score) → string\|null` | Human label for a `[-1,1]` sentiment score. |
+| `fmtUsd` | `(v) → string\|null` | Compact USD formatting (`$1.2M`, `$940K`, `$0.04`). |
+| `mergeBrief` | `(feeds) → brief` | Fold raw `{ intel, sentiment, pump }` payloads into the anchor briefing. |
+| `briefDigest` | `(brief) → string` | Deterministic plain-text digest handed to the brain. |
+| `buildAnchorMessages` | `(brief) → { system, messages }` | Build the `POST /api/brain/chat` payload. |
+| `splitScript` | `(script) → { headline, body }` | Split a scripted read into headline + spoken body. |
+
+**`screen-push.js`**:
+
+| Export | Signature | Purpose |
+|---|---|---|
+| `screenPush` | `(activity, type = 'analysis') → void` | Fire-and-forget frame push to `POST /api/agent-screen-push`; optionally renders a `canvas` broadcast frame. No-op without `AGENT_JWT`/`AGENT_ID`. |
 
 ## Env
 

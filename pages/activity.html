@@ -399,7 +399,7 @@
 				<section class="ac-card" id="card-agents">
 					<div class="ac-card-h">
 						<span class="ttl"><span class="dot" style="background:var(--ac-accent)"></span>Top Agents</span>
-						<a class="more" href="/oracle/leaderboard">Leaderboard →</a>
+						<a class="more" href="/oracle#agents">Leaderboard →</a>
 					</div>
 					<div class="ac-card-b" id="card-agents-b"></div>
 				</section>
@@ -415,7 +415,7 @@
 				<section class="ac-card" id="card-wins">
 					<div class="ac-card-h">
 						<span class="ttl"><span class="dot" style="background:var(--ac-warn)"></span>Proven Wins</span>
-						<a class="more" href="/oracle/wins">Gallery →</a>
+						<a class="more" href="/oracle#proof">Gallery →</a>
 					</div>
 					<div class="ac-card-b" id="card-wins-b"></div>
 				</section>
@@ -702,8 +702,8 @@
 				<a class="ac-empty-cta" href="/oracle">⚡ Arm your agent →</a>
 				<div class="ac-empty-sub">
 					<a href="/oracle">How conviction works</a>
-					<a href="/oracle/leaderboard">Agent leaderboard</a>
-					<a href="/oracle/wins">Proven wins</a>
+					<a href="/oracle#agents">Agent leaderboard</a>
+					<a href="/oracle#proof">Proven wins</a>
 				</div>
 			</div>`;
 		}
@@ -1009,7 +1009,7 @@
 				if (!r.ok) throw new Error('HTTP ' + r.status);
 				const { items } = await r.json();
 				if (!items || !items.length) {
-					b.innerHTML = railEmpty('No proven wins in this window yet.', '/oracle/wins', 'See the gallery →');
+					b.innerHTML = railEmpty('No proven wins in this window yet.', '/oracle#proof', 'See the gallery →');
 					return null;
 				}
 				b.innerHTML = items.map((w) => {

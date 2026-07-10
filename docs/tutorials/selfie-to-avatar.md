@@ -28,7 +28,7 @@ The Scanner is one pipeline reachable two ways:
 - **[/scan](/scan)** is the front door. It immediately forwards to **[/create/selfie](/create/selfie)**, which is the full capture experience (including the option to bring your own reconstruction key). Either URL gets you to the same place — `/scan` is the memorable one to share.
 - **[/create/selfie](/create/selfie)** is where capture, the build progress, and the finished avatar all live.
 
-Under the hood the page ([src/selfie-capture.js](../src/selfie-capture.js)) collects your photos, downscales them in your browser, and hands them to the pipeline ([src/selfie-pipeline.js](../src/selfie-pipeline.js)), which submits the job and polls for progress. There are exactly two calls:
+Under the hood the page ([src/selfie-capture.js](../../src/selfie-capture.js)) collects your photos, downscales them in your browser, and hands them to the pipeline ([src/selfie-pipeline.js](../../src/selfie-pipeline.js)), which submits the job and polls for progress. There are exactly two calls:
 
 1. `POST /api/avatars/reconstruct` — submit the photos, get back a `jobId`.
 2. `GET /api/avatars/regenerate-status?jobId=…` — poll until the job reports `done`.

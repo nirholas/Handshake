@@ -225,6 +225,11 @@ three-ws-presence.md
 
 # Exported custodial wallet backups — never commit
 agent-wallets.*
+# …but this pattern is unanchored, so it also swallowed the PUBLIC docs page of
+# the same name. That page must ship: /docs/agent-wallets is in the docs nav and
+# five other docs link to it. Negate just that one file; every real export
+# (agent-wallets.json/.csv/.txt, anywhere) stays ignored.
+!docs/agent-wallets.md
 blog/3d-ai-crypto-convergence.md
 # One-off genesis deploy scripts/output — contain a live RPC key + scratch results
 scripts/test-deploy-one.mjs
@@ -350,4 +355,10 @@ _prompts/
 # on a laptop with zero cloud config). Production uses Postgres, not this;
 # these files are transient local test data and must never be committed.
 .data/
+
+# Throwaway QA harness pages and the esbuild bundles they load. A probe run
+# scaffolds these and is meant to delete them afterwards; a committed bundle
+# ships megabytes of dead JS to every visitor, since public/ is served as-is.
+pages/_qa-probe-*.html
+public/_qa-probe-*.js
 

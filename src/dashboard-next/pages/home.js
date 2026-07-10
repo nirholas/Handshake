@@ -277,7 +277,7 @@ function renderHero(host, avatars, err) {
 				</div>
 				<div class="dnx-empty-hero-cta">
 					<a href="/create" class="dn-btn dnx-empty-hero-main-cta">Create your avatar →</a>
-					<a href="/dashboard/upload" class="dn-btn">Upload .glb</a>
+					<a href="/create#card-upload-glb" class="dn-btn">Upload .glb</a>
 				</div>
 			</div>
 		`;

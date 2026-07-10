@@ -120,6 +120,6 @@ No other mint should appear in tests, fixtures, or documentation.
 
 ## Related
 
-- [Solana agents](solana) — agent wallet management and on-chain interactions
-- [Solana pump.fun signals](solana-pumpfun) — pump.fun live feed integration
-- [ERC-8004](erc8004) — on-chain agent registry (uses the same brand metadata builder)
+- [Solana agents](solana.md) — agent wallet management and on-chain interactions
+- [Solana pump.fun signals](solana-pumpfun.md) — pump.fun live feed integration
+- [ERC-8004](erc8004.md) — on-chain agent registry (uses the same brand metadata builder)

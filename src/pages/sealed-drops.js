@@ -14,6 +14,23 @@
 // All crypto is real: ECIES sealed-envelope (openSealed), SHA-256 claim-token
 // derivation (drop-protocol), X25519 keygen. All money rails are real: x402 for
 // the create fee, on-chain funding + reclaim server-side.
+//
+// STATUS (verified 2026-07-10): the backend this controller talks to is real
+// and complete — api/vanity/drops.js (914 lines, create/claim/reveal/reclaim),
+// the OG card generator at api/og/sealed-drop.js, and the crypto modules this
+// file imports (src/solana/vanity/sealed-envelope.js,
+// src/solana/vanity/drop-protocol.js) are all fully built. What's missing is
+// every HTML page: no page anywhere has a `#drop-create`, `#drop-claim`, or
+// `#drop-mine` element, so `boot()` below finds nothing to mount into.
+// `/vanity-wallet` (public/vanity-wallet.html) is a same-named but unrelated
+// existing page (Solana vanity ADDRESS grinding) — it does not contain a gift
+// composer and was never meant to conflict with this feature; a dedicated
+// entry point (and a `/drop/:id` claim page, routed the same way `/coin/:mint`
+// rewrites to coin.html in vercel.json) still needs to be built. This needs
+// careful, unhurried page-building — precise markup for ~30 element ids this
+// file already expects (grep `$\\('dc-` here), a real private-key-handling UX
+// review, and QR/share-card wiring — not a rushed pass, since a mistake here
+// risks a user's actual funds/keys.
 
 import bs58 from 'bs58';
 import {

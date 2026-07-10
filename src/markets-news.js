@@ -1,8 +1,12 @@
 // /markets/news — live aggregated crypto news over /api/news/feed (native
-// three.ws aggregator, 38 publisher feeds). Category tabs, debounced search,
-// source filter, lead-story hero, card grid with sentiment + ticker chips,
-// offset pagination. Every story opens the rich reader at
-// /markets/news/article; the source link goes straight to the publisher.
+// three.ws aggregator). Category tabs, debounced search, language and source
+// filters, lead-story hero, card grid with sentiment + ticker chips, offset
+// pagination. Every story opens the rich reader at /markets/news/article; the
+// source link goes straight to the publisher.
+//
+// Language defaults to English. The registry also carries international feeds,
+// which are opt-in via the language selector so the default feed reads as one
+// coherent stream rather than an interleaving of scripts.
 
 import { timeAgo, escapeHtml as esc } from './shared/coin-format.js';
 import {
@@ -17,26 +21,55 @@ import {
 const $ = (id) => document.getElementById(id);
 const PAGE_SIZE = 24;
 
+// Covers every category the registry can emit. The tab bar renders from the
+// API's live category list, so a missing label leaks a raw key ("ai_crypto").
 const CATEGORY_LABELS = {
 	all: 'All',
 	general: 'Top',
 	bitcoin: 'Bitcoin',
 	ethereum: 'Ethereum',
+	layer2: 'Layer 2',
 	solana: 'Solana',
+	altl1: 'Alt L1',
 	defi: 'DeFi',
 	nft: 'NFT',
+	gaming: 'Gaming',
 	trading: 'Trading',
+	derivatives: 'Derivatives',
 	research: 'Research',
 	onchain: 'On-chain',
+	quant: 'Quant',
 	institutional: 'Institutional',
+	tradfi: 'TradFi',
+	etf: 'ETF',
+	stablecoin: 'Stablecoins',
+	fintech: 'Fintech',
 	mainstream: 'Mainstream',
-	asia: 'Asia',
+	geopolitical: 'Geopolitics',
 	regulation: 'Regulation',
+	security: 'Security',
+	developer: 'Developer',
+	depin: 'DePIN',
+	ai_crypto: 'AI x Crypto',
+	mining: 'Mining',
+	macro: 'Macro',
+	social: 'Social',
 	journalism: 'Journalism',
+	asia: 'Asia',
+};
+
+// The registry carries feeds in 17 languages beyond English. English is the
+// API default; the rest are opt-in, so the feed never interleaves scripts.
+const LANGUAGE_LABELS = {
+	en: 'English', zh: '中文', ko: '한국어', ja: '日本語', es: 'Español', pt: 'Português',
+	de: 'Deutsch', fr: 'Français', ru: 'Русский', tr: 'Türkçe', it: 'Italiano', id: 'Bahasa Indonesia',
+	nl: 'Nederlands', pl: 'Polski', vi: 'Tiếng Việt', th: 'ไทย', ar: 'العربية', hi: 'हिन्दी',
+	fa: 'فارسی',
 };
 
 const state = {
 	category: 'all',
+	lang: 'en',
 	q: '',
 	source: '',
 	offset: 0,
@@ -61,6 +94,7 @@ async function getJson(url) {
 function feedUrl(offset) {
 	const p = new URLSearchParams();
 	if (state.category && state.category !== 'all') p.set('category', state.category);
+	if (state.lang && state.lang !== 'en') p.set('lang', state.lang);
 	if (state.q) p.set('q', state.q);
 	if (state.source) p.set('source', state.source);
 	p.set('limit', String(PAGE_SIZE));
@@ -72,6 +106,7 @@ function feedUrl(offset) {
 function syncUrl() {
 	const p = new URLSearchParams();
 	if (state.category !== 'all') p.set('category', state.category);
+	if (state.lang !== 'en') p.set('lang', state.lang);
 	if (state.q) p.set('q', state.q);
 	if (state.source) p.set('source', state.source);
 	const qs = p.toString();
@@ -120,6 +155,7 @@ function render() {
 	$('nw-count').textContent =
 		`${state.total.toLocaleString()} stories · ${state.sourcesOk}/${state.sourcesTotal} feeds live` +
 		(state.category !== 'all' ? ` · ${CATEGORY_LABELS[state.category] || state.category}` : '') +
+		(state.lang !== 'en' ? ` · ${state.lang === 'all' ? 'All languages' : LANGUAGE_LABELS[state.lang] || state.lang}` : '') +
 		(src ? ` · ${src.name}` : '') +
 		(state.q ? ` · “${state.q}”` : '');
 	$('nw-more').hidden = state.articles.length >= state.total;
@@ -177,14 +213,32 @@ function renderTabs() {
 
 function hydrateFilters() {
 	renderTabs();
+
+	const langSel = $('nw-lang');
+	const langs = state.meta?.languages || ['en'];
+	langSel.innerHTML =
+		langs
+			.map((l) => `<option value="${esc(l)}"${l === state.lang ? ' selected' : ''}>${esc(LANGUAGE_LABELS[l] || l)}</option>`)
+			.join('') +
+		`<option value="all"${state.lang === 'all' ? ' selected' : ''}>All languages</option>`;
+
+	// The source list follows the language: offering a Korean outlet while the
+	// feed is set to English hands the user an empty result for no reason.
 	const sel = $('nw-source');
 	const current = state.source;
+	const sources = (state.meta?.sources || []).filter((s) => {
+		if (state.lang === 'all') return true;
+		return state.lang === 'en' ? !s.language : s.language === state.lang;
+	});
 	sel.innerHTML =
 		'<option value="">All sources</option>' +
-		(state.meta?.sources || [])
+		sources
 			.slice()
 			.sort((a, b) => a.name.localeCompare(b.name))
-			.map((s) => `<option value="${esc(s.key)}"${s.key === current ? ' selected' : ''}>${esc(s.name)}</option>`)
+			.map((s) => {
+				const tag = state.lang === 'all' && s.language ? ` (${LANGUAGE_LABELS[s.language] || s.language})` : '';
+				return `<option value="${esc(s.key)}"${s.key === current ? ' selected' : ''}>${esc(s.name + tag)}</option>`;
+			})
 			.join('');
 }
 
@@ -217,6 +271,16 @@ function wireEvents() {
 		}, 300);
 	});
 
+	$('nw-lang').addEventListener('change', (e) => {
+		state.lang = e.target.value;
+		// The previous source may not publish in the new language — clear it
+		// rather than silently returning nothing.
+		state.source = '';
+		hydrateFilters();
+		syncUrl();
+		load();
+	});
+
 	$('nw-source').addEventListener('change', (e) => {
 		state.source = e.target.value;
 		syncUrl();
@@ -230,10 +294,12 @@ function wireEvents() {
 function init() {
 	const p = new URLSearchParams(location.search);
 	state.category = p.get('category') || 'all';
+	state.lang = p.get('lang') || 'en';
 	state.q = p.get('q') || '';
 	state.source = p.get('source') || '';
 	if (state.q) $('nw-search').value = state.q;
 	if (!CATEGORY_LABELS[state.category]) state.category = 'all';
+	if (state.lang !== 'all' && !LANGUAGE_LABELS[state.lang]) state.lang = 'en';
 	renderTabs();
 	wireEvents();
 	load();

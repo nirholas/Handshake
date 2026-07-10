@@ -20,6 +20,14 @@
 //   'wallet-created' detail: { agentId, wallet_address, solana_address }
 
 const API = '';
+
+// Both backing endpoints (`/api/avatars/:id`, `/api/agents?avatar_id=`) reject a
+// non-uuid id — 404 and 400 respectively. Pages legitimately mount this element
+// over a stand-in avatar (the `default` mannequin on /mocap-studio), so match the
+// server's contract here and skip the round trip entirely rather than fire two
+// requests that can only fail.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 let _mePromise = null;
 
 function me() {
@@ -154,7 +162,9 @@ class AvatarActions extends HTMLElement {
 
 	async _init() {
 		const id = this.avatarId;
-		if (!id) {
+		// No id, or a stand-in that can never resolve (default mannequin): stay
+		// invisible without issuing requests the server is guaranteed to reject.
+		if (!id || !UUID_RE.test(String(id))) {
 			this.shadowRoot.innerHTML = '';
 			return;
 		}

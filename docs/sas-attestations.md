@@ -2,7 +2,7 @@
 
 three.ws issues two kinds of on-chain attestations on Solana:
 
-- **Permissionless attestations** — general feedback, task lifecycle, dispute, and revoke events. Anyone can write them as SPL Memos (see [Solana reputation](solana-reputation)).
+- **Permissionless attestations** — general feedback, task lifecycle, dispute, and revoke events. Anyone can write them as SPL Memos (see [Solana reputation](solana-reputation.md)).
 - **Credentialed attestations** — claims only three.ws or an authorized validator may make: that a wallet is verified, or that a validator audited an agent's task result. These use the [Solana Attestation Service (SAS)](https://attest.solana.com/) and are signed by the **three.ws authority wallet**.
 
 This page covers the authority wallet, the `SAS_AUTHORITY_SECRET` environment variable, bootstrapping the credential + schemas, and the API that issues them.

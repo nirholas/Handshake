@@ -10,7 +10,7 @@ The absolute simplest setup: one script tag, one custom element.
 
 **Demonstrates:** loading `<agent-3d>`, inline display, no-build workflow.
 
-**[View example →](/examples/minimal.html)**
+**[View source →](https://github.com/nirholas/three.ws/blob/main/examples/minimal.html)** — run it with `npm run dev`, then open `http://localhost:3000/examples/minimal.html`.
 
 ```html
 <!doctype html>
@@ -189,7 +189,7 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
 
 **Demonstrates:** `<agent-stage>`, multi-agent formation, `stage.broadcast()`, `leo.say()`, event logging.
 
-**[View example →](/examples/two-agents.html)**
+**[View source →](https://github.com/nirholas/three.ws/blob/main/examples/two-agents.html)** — run it with `npm run dev`, then open `http://localhost:3000/examples/two-agents.html`.
 
 ```html
 <!doctype html>
@@ -599,7 +599,7 @@ Control an embedded agent from the host page using the versioned postMessage pro
 
 ## 10. Coach Leo — a complete agent example
 
-Coach Leo is a fully-configured agent with a personality, skills, and persistent memory. The source lives in [`/examples/coach-leo/`](/examples/coach-leo/).
+Coach Leo is a fully-configured agent with a personality, skills, and persistent memory. The source lives in [`examples/coach-leo/`](https://github.com/nirholas/three.ws/tree/main/examples/coach-leo).
 
 **Demonstrates:** agent manifest, personality prompt, skill wiring, local memory.
 
@@ -690,7 +690,7 @@ genuinely invested in the user's progress.
 
 **Memory persists between sessions.** `"mode": "local"` stores memories as `.md` files under `memory/`. When Leo calls `remember({ key: "position", value: "striker" })`, it writes to that directory and loads it back on the next boot. Switching to `"mode": "ipfs"` makes memories portable across devices.
 
-**[View full source →](/examples/coach-leo/manifest.json)**
+**[View full source →](https://github.com/nirholas/three.ws/blob/main/examples/coach-leo/manifest.json)**
 
 ---
 

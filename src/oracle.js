@@ -572,7 +572,7 @@ function collapseCopycats(items, watched = new Set()) {
 	for (const it of items) {
 		const sym = (it.symbol || '').trim().toLowerCase();
 		const name = (it.name || '').trim().replace(/\s+/g, ' ').toLowerCase();
-		const key = (sym || name) ? `${sym} ${name}` : null;
+		const key = (sym || name) ? `${sym}\u0000${name}` : null;
 		if (!key || watched.has(it.mint)) { out.push(it); continue; }
 		const rep = repByKey.get(key);
 		if (rep) {

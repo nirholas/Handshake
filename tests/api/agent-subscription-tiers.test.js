@@ -85,8 +85,13 @@ vi.mock('../../api/_lib/csrf.js', () => ({
 }));
 
 let rlSuccess = true;
+// Tiers is a profile read: it fans out with 6 other calls on one agent-profile
+// load, so it uses the dedicated `agentProfileIp` bucket rather than the shared
+// `publicIp` pool (which ~150 endpoints drain).
 vi.mock('../../api/_lib/rate-limit.js', () => ({
-	limits: { publicIp: vi.fn(async () => ({ success: rlSuccess, reset: Date.now() + 1000, limit: 60, remaining: 0 })) },
+	limits: {
+		agentProfileIp: vi.fn(async () => ({ success: rlSuccess, reset: Date.now() + 1000, limit: 240, remaining: 0 })),
+	},
 	clientIp: vi.fn(() => '127.0.0.1'),
 }));
 

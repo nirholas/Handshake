@@ -88,9 +88,11 @@ volume; `API_KEY` comes from the `avatar-reconstruction-key` secret. GPU-backed
 Cloud Run needs L4 quota in the region — see the model-worker ops runbook,
 [`docs/ops/gcp-model-workers.md`](../../docs/ops/gcp-model-workers.md).
 
+Submit from the **repo root** — the build step declares `dir: workers/model-triposr`,
+so the upload source is the whole repo:
+
 ```bash
-# from repo root
-gcloud builds submit --config workers/model-triposr/cloudbuild.yaml workers/model-triposr
+gcloud builds submit --config workers/model-triposr/cloudbuild.yaml .
 ```
 
 Or via the fleet helper (stages weights, then builds + deploys and writes the
@@ -108,13 +110,63 @@ why the build uses a CUDA `devel` base and a 3600 s Cloud Build timeout.
 
 ## Run locally
 
-Requires a CUDA GPU and local weights.
+Requires a CUDA GPU and local weights. TripoSR is cloned into the image and
+compiles the `torchmcubes` CUDA extension at build time, so the reproducible path
+is the image:
 
 ```bash
 cd workers/model-triposr
-pip install -r requirements.txt
+docker build -t model-triposr .
+
+docker run --rm --gpus all -p 8080:8080 \
+	-e API_KEY=dev-secret \
+	-e GCS_BUCKET=your-dev-bucket \
+	-e WEIGHTS_DIR=/weights/triposr \
+	-e GOOGLE_APPLICATION_CREDENTIALS=/gcp/sa.json \
+	-v /path/to/triposr:/weights/triposr:ro \
+	-v /path/to/sa.json:/gcp/sa.json:ro \
+	model-triposr
+```
+
+With the TripoSR environment already on `PYTHONPATH`:
+
+```bash
 # fetch weights once (see the header of main.py):
 #   huggingface-cli download stabilityai/TripoSR --local-dir /path/to/triposr
-API_KEY=dev GCS_BUCKET=your-dev-bucket WEIGHTS_DIR=/path/to/triposr \
-  uvicorn main:app --port 8080
+API_KEY=dev-secret GCS_BUCKET=your-dev-bucket WEIGHTS_DIR=/path/to/triposr \
+	uvicorn main:app --host 0.0.0.0 --port 8080
 ```
+
+## Example — submit, poll, fetch
+
+```bash
+BASE=https://model-triposr-xxxxxxxx-uc.a.run.app
+KEY=your-api-key
+
+TASK=$(curl -s -X POST "$BASE/infer" \
+	-H "Authorization: Bearer $KEY" \
+	-H 'Content-Type: application/json' \
+	-d '{"images":["https://storage.googleapis.com/three-ws-public/samples/mug.png"]}' \
+	| python3 -c 'import sys,json; print(json.load(sys.stdin)["task_id"])')
+
+while :; do
+	STATE=$(curl -s "$BASE/tasks/$TASK" -H "Authorization: Bearer $KEY")
+	echo "$STATE"
+	echo "$STATE" | grep -q '"status": *"done"' && break
+	echo "$STATE" | grep -q '"status": *"failed"' && exit 1
+	sleep 3
+done
+
+curl -s "$BASE/tasks/$TASK" -H "Authorization: Bearer $KEY" \
+	| python3 -c 'import sys,json; print(json.load(sys.stdin)["result_gcs_url"])'
+```
+
+## How three.ws calls it
+
+TripoSR has no direct `/forge` lane of its own — it is dispatched through the
+[avatar-pipeline-controller](../avatar-pipeline-controller/), which registers it
+from **`MODEL_TRIPOSR_URL`** (see [`workers/avatar-pipeline-controller/main.py`](../avatar-pipeline-controller/main.py))
+and weight-selects it as a mesh backend per job. The controller is reached from
+the platform via `GCP_RECONSTRUCTION_URL` in
+[`api/_providers/gcp.js`](../../api/_providers/gcp.js). This worker shares the
+platform-side bearer secret `GCP_RECONSTRUCTION_KEY`, which must equal its `API_KEY`.

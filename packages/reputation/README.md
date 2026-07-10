@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/reputation</h1>
 
-<p align="center"><strong>Read ERC-8004 agent trust scores and attest agent-to-agent feedback on-chain, in one import.</strong></p>
+<p align="center"><strong>Read an agent's trust score, rank the leaderboard, and record on-chain validations — one zero-dependency import over the live three.ws reputation API.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/reputation"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/reputation?logo=npm&color=cb3837"></a>
@@ -24,46 +24,45 @@
 
 ---
 
-> `@three-ws/reputation` is the official client for [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004)
-> agent reputation as wired into [three.ws](https://three.ws). One import gives you
-> two things: **read** an agent's aggregate trust score, vouch count, total stake,
-> and recent feedback events straight from the canonical on-chain
-> `ReputationRegistry`; and **resolve** an agent's identity (owner, wallet, URI)
-> from the `IdentityRegistry` — by agentId, by EVM wallet, or by CAIP-10 ID. It
-> wraps the live three.ws reputation endpoints and the same registries the
-> `agent_reputation` MCP tool reads, so the score you get is the score every other
-> surface shows. For agents that need to *write* feedback, it speaks the same
-> on-chain attestation primitive the platform uses to record validations and
-> vouches. Built for agent builders, marketplaces, and anyone who needs trust that
-> is backed by money and time, not a follower count.
+> `@three-ws/reputation` is the official client for agent reputation as wired into
+> [three.ws](https://three.ws). One zero-dependency import gives you four things:
+> **read** an agent's trust score — the platform wallet-trust score by three.ws
+> agent UUID, or the on-chain attestation aggregate (feedback, stake, validations,
+> disputes) by Solana asset address; **rank** the live leaderboard of trusted
+> agents; **read** an agent's latest [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004)
+> validation attestation on any supported EVM chain; and **attest** — run an
+> agent's GLB through the platform validator and record a signed on-chain
+> validation. Every call is a thin wrapper over a live three.ws endpoint — the same
+> data the trust badges and the `agent_reputation` MCP tool surface — so the score
+> you get is the score every other surface shows. Built for agent builders,
+> marketplaces, and anyone who needs trust that is backed by money and time, not a
+> follower count.
 
 ## Why
 
-Agent reputation only means something if it is non-gameable and auditable.
-ERC-8004 puts that on-chain — but reading it by hand means standing up an ethers
-provider per chain, juggling failover RPCs, decoding the `getReputation`
-`(int256 avgX100, uint256 count)` tuple correctly (the average is already ×100,
-signed, and must *not* be divided by count again), resolving an agentId from a
-wallet through the `IdentityRegistry`, and scanning logs for `FeedbackSubmitted`
-/ `ReputationStaked` events across a sane block window. Get one of those wrong and
-your trust score is silently incorrect.
+Agent reputation only means something if it is non-gameable and auditable — backed
+by real on-chain attestations, stake, validations, disputes, and activity, not a
+self-declared rating. three.ws computes that once, server-side, from the ledger and
+the chain, and exposes it. Doing it by hand means standing up RPC providers,
+indexing attestation logs, aggregating stake and disputes, and normalising it all
+into one number — get any of it wrong and your trust score is silently incorrect.
 
-This SDK does it once, correctly:
+This SDK is the one-line front door:
 
-- **One call, a real score.** `reputation(agentId)` resolves to the aggregate
-  average, count, total stake, and the latest vouches — read live from the
-  canonical registry, no indexer, no cache, no fabricated fallback.
-- **Resolve by anything.** Pass a uint agentId, a `0x` wallet, or a CAIP-10
-  `eip155:<chainId>:<wallet>` ID. Wallet → agentId resolution goes through the
-  `IdentityRegistry` for you.
-- **Multi-chain by default.** Base is the default; 14 other mainnets and 7
-  testnets carry the same CREATE2-deterministic registry addresses.
-- **Attest, don't just read.** `attest({ agent, score, ... })` records
-  agent-to-agent feedback on-chain through the platform's signed attestation
-  lane, so an agent can build its own counterpart's track record.
+- **One call, a real score.** `reputation(agent)` returns the aggregate score,
+  tier, feedback, and stake — read live from the platform, no indexer, no cache,
+  no fabricated fallback.
+- **Read by UUID or asset.** Pass a three.ws agent **UUID** for the platform
+  wallet-trust score, or a **Solana asset address** for the on-chain attestation
+  aggregate. The shape is normalised so you can render one trust block either way.
+- **Rank the field.** `leaderboard()` returns the same non-gameable ranking the
+  badges use, each row linking to its auditable breakdown.
+- **Attest, don't just read.** `attest({ agent })` runs the agent's GLB through the
+  platform validator and records a signed on-chain validation, so an agent can
+  build a verifiable track record.
 
 This is the SDK twin of the [`agent_reputation` MCP tool](https://three.ws/mcp) —
-the same registries, exposed as plain functions instead of a paid MCP call.
+the same data, exposed as plain functions instead of an MCP call.
 
 ## Install
 
@@ -72,120 +71,105 @@ npm install @three-ws/reputation
 ```
 
 Zero runtime dependencies. Works in Node 18+ and the browser (uses `fetch`).
-Reads are auth-free and walletless. Writing an attestation requires a signed-in
-three.ws account or an API token with the `avatars:write` scope.
+Reads (`reputation`, `leaderboard`, `validation`) are auth-free and walletless.
+Recording an attestation with `attest()` requires a signed-in three.ws account or
+an API token with the `avatars:write` scope.
 
 ## Quick start
 
-Read an agent's trust score — no key, no wallet:
+Read an agent's trust score by three.ws agent UUID — no key, no wallet:
 
 ```js
 import { reputation } from '@three-ws/reputation';
 
-const rep = await reputation(1); // agentId 1 on Base (default chain)
+const rep = await reputation('3b1f2c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d');
 
-console.log(rep.reputation.average);      // → 4.2   (signed; null when count is 0)
-console.log(rep.reputation.count);        // → "6"   (uint as string, transport-safe)
-console.log(rep.reputation.totalStakeWei); // → "0"
-console.log(rep.identity.owner);          // → 0x…   (from the IdentityRegistry)
+console.log(rep.kind);       // → 'wallet'
+console.log(rep.score);      // → 82        (null for a brand-new agent)
+console.log(rep.tierLabel);  // → 'Trusted'
+console.log(rep.isNew);      // → false
 ```
 
-Resolve from a wallet, on a chosen chain, and read the latest vouches:
+Read the on-chain attestation aggregate by Solana asset address:
 
 ```js
 import { reputation } from '@three-ws/reputation';
 
-const rep = await reputation('0xAbc…123', { chain: 'arbitrum' });
-// wallet → agentId resolved via the IdentityRegistry
-
-for (const e of rep.events) {
-  // e.kind: 'submitted' | 'staked'
-  console.log(e.kind, e.score, e.txHash);
-}
-```
-
-Attest agent-to-agent feedback on-chain:
-
-```js
-import { attest } from '@three-ws/reputation';
-
-const receipt = await attest({
-  agent: 'THREEsynthetic1111111111111111111111111111',
-  kind: 'feedback',
-  score: 5,
-  detail: 'completed the rig task, clean GLB',
+const rep = await reputation('THREEsynthetic1111111111111111111111111111', {
+  network: 'mainnet',
 });
 
-console.log(receipt.signature);  // → on-chain tx signature
-console.log(receipt.status);     // → 'minted' | 'deduped'
+console.log(rep.kind);                // → 'solana'
+console.log(rep.feedback.total);      // → 6
+console.log(rep.feedback.scoreAvg);   // → 4.2
+console.log(rep.stake.totalLamports); // → '0'  (uint as string, transport-safe)
+```
+
+Record a signed on-chain validation for an agent:
+
+```js
+import { createReputation } from '@three-ws/reputation';
+
+// attest() writes, so it needs an `avatars:write`-scoped token.
+const rep = createReputation({ apiKey: process.env.THREE_WS_TOKEN });
+
+const receipt = await rep.attest({
+  agent: 'THREEsynthetic1111111111111111111111111111', // Solana asset (or a uint ERC-8004 agentId)
+  kind: 'validation',
+});
+
+console.log(receipt.status);    // → 'minted' | 'deduped'
+console.log(receipt.signature); // → on-chain tx signature
 ```
 
 ## API
 
 ### `reputation(agent, options?) → Promise<ReputationResult>`
 
-Read an agent's on-chain reputation. `agent` accepts a uint `agentId`, an EVM
-wallet (`0x…`), or a CAIP-10 `eip155:<chainId>:<wallet>` ID (which also selects
-the chain). When you pass a wallet, the agentId is resolved through the
-`IdentityRegistry` first.
+Read an agent's reputation. `agent` is either a three.ws agent **UUID** (returns
+the platform wallet-trust score from `GET /api/agents/{id}/reputation`) or a
+**Solana asset/mint** base58 address (returns the on-chain attestation aggregate
+from `GET /api/agents/solana/reputation`). Any other value throws `invalid_input`.
 
 **Options**
 
 | Option | Type | Default | Notes |
 |---|---|---|---|
-| `chain` | `string \| number` | `'base'` | Chain name or numeric chainId. See [Chains](#chains). A CAIP-10 `agent` overrides this. |
+| `network` | `'mainnet' \| 'devnet'` | `'mainnet'` | Solana cluster — only applies to asset-address reads. |
 | `signal` | `AbortSignal` | — | Cancel the in-flight read. |
 
-**Returns** `ReputationResult`
+**Returns** — a `WalletReputation` (UUID) or a `SolanaReputation` (asset), each
+carrying a `.raw` escape hatch to the untouched endpoint JSON. Tell them apart by
+`.kind`.
+
+`WalletReputation` (`kind: 'wallet'`):
 
 | Field | Type | Notes |
 |---|---|---|
-| `chain` | `string` | Resolved chain name, e.g. `"Base"`. |
-| `chainId` | `number` | Resolved numeric chainId. |
-| `agentId` | `string` | The agent's uint id, as a string. |
-| `agentRegistry` | `string` | CAIP-10 id of the `IdentityRegistry`, e.g. `eip155:8453:0x8004A1…`. |
-| `reputationRegistry` | `string` | `ReputationRegistry` address. |
-| `identity` | `object \| null` | `{ owner, agentWallet, uri }`. `null` when owner is the zero address. |
-| `reputation` | `object` | `{ averageX100, average, count, totalStakeWei }` — see below. |
-| `events` | `object[]` | Latest 25 `submitted` / `staked` events, newest first. |
-| `fetchedAt` | `string` | ISO timestamp of the read. |
+| `agentId` | `string \| null` | The agent's UUID. |
+| `name` | `string \| null` | Display name. |
+| `score` | `number \| null` | Wallet-trust score. `null` for a brand-new agent. |
+| `max` | `number \| null` | Score ceiling. |
+| `tier` / `tierLabel` | `string \| null` | Machine tier and its label (e.g. `'Trusted'`). |
+| `accent` | `string \| null` | Tier accent colour. |
+| `isNew` | `boolean` | No track record yet. |
+| `totals` / `evidence` | `object \| null` | Breakdown inputs. |
+| `isOwner` | `boolean` | The caller owns this agent. |
+| `computedAt` | `string \| null` | ISO timestamp of the score. |
+| `partial` | `boolean` | Some inputs were unavailable. |
 
-The `reputation` block is decoded straight from `getReputation` + `getTotalStake`:
-
-| Field | Type | Notes |
-|---|---|---|
-| `averageX100` | `string` | Raw signed `int256` from the contract — the average already ×100. |
-| `average` | `number \| null` | `averageX100 / 100`, sign preserved. `null` when `count` is 0. |
-| `count` | `string` | Number of feedback entries (uint, as string). |
-| `totalStakeWei` | `string` | Total wei staked on this agent's vouches. |
-
-Each `events[i]` is one of:
-
-| `kind` | Fields |
-|---|---|
-| `submitted` | `blockNumber`, `txHash`, `submitter`, `score`, `comment` (the feedback URI) |
-| `staked` | `blockNumber`, `txHash`, `staker`, `score`, `valueWei` |
-
-### `attest(input) → Promise<AttestReceipt>`
-
-Record agent-to-agent feedback on-chain through the platform's signed
-attestation lane (`threews.*` memo, exactly-once). Requires a signed-in account
-or a `avatars:write`-scoped token.
-
-**Input**
+`SolanaReputation` (`kind: 'solana'`):
 
 | Field | Type | Notes |
 |---|---|---|
-| `agent` | `string` | Target agent asset to attest about. |
-| `kind` | `'feedback' \| 'validation' \| 'task'` | What is being attested. |
-| `score` | `number` | Feedback score (for `kind: 'feedback'`). |
-| `passed` | `boolean` | Pass/fail (for `kind: 'validation'`). |
-| `detail` | `string` | Optional human-readable note. |
-| `eventId` | `string` | Optional deterministic id — a retry with the same id is idempotent (deduped, never a second tx). |
-
-**Returns** `AttestReceipt` — `{ status, signature, kind }`, where `status` is
-`'minted'` (a new on-chain tx), `'deduped'` (a prior attestation for the same
-`eventId` already landed), or `'in_progress'` (a concurrent attest is mid-flight).
+| `agent` | `string \| null` | The asset address read. |
+| `network` | `string \| null` | Cluster the read came from. |
+| `feedback` | `object` | `{ total, verified, credentialed, eventAttested, disputed, uniqueAttesters, uniqueVerifiedAttesters, scoreAvg, scoreAvgVerified, scoreAvgWeighted }`. |
+| `stake` | `object` | `{ totalLamports, count, uniqueStakers, topStakers[] }`. |
+| `validation` / `tasks` | `object \| null` | Validation + task rollups. |
+| `disputesFiled` / `revokedCount` | `number` | Dispute + revocation counts. |
+| `tokenActivity` / `pumpPayments` | `object \| null` | On-chain activity signals. |
+| `lastIndexedAt` | `string \| null` | ISO timestamp of the indexer's last pass. |
 
 ### `leaderboard(options?) → Promise<Leaderboard>`
 
@@ -193,116 +177,150 @@ Fetch the platform's live ranking of trusted agents
 (`GET /api/reputation/leaderboard`) — every rank is the same non-gameable
 wallet-trust score the badge shows, computed from real ledger + chain activity.
 
-**Options** — `{ limit?: number }` (1–50, default 20).
+**Options** — `{ limit?: number, signal?: AbortSignal }`. `limit` is clamped to
+1–50 (default 20).
 
-**Returns** — `{ generated_at, count, scored, agents }`, where each agent carries
-`rank`, `id`, `name`, `score`, `tier`, `tier_label`, `totals`, `agent_url`, and a
-`breakdown_url` linking to the auditable breakdown.
+**Returns** — `{ generatedAt, count, scored, agents }`, where each agent carries
+`rank`, `id`, `name`, `avatarThumbnailUrl`, `solanaAddress`, `score`, `tier`,
+`tierLabel`, `totals`, `agentUrl`, and a `breakdownUrl` linking to the auditable
+breakdown.
 
-### Under the hood — raw HTTP / on-chain
+### `validation(chainId, agentId, options?) → Promise<ValidationRead>`
 
-`reputation()` reads directly from the canonical registries with an ethers
-provider (the same path the [`agent_reputation` MCP tool](https://three.ws/mcp)
-uses), so there is no HTTP read endpoint to call by hand — the registry *is* the
-source of truth:
+Read an agent's latest ERC-8004 validation attestation
+(`GET /api/erc8004/validation`) — the walletless read that powers the "Validated"
+badge. `chainId` is a chain name or numeric id from [Chains](#chains) (or pass
+`options.chain` to override it); `agentId` is the uint ERC-8004 agent id.
+
+**Returns** `ValidationRead` — `{ chain, chainId, agentId, kind, registry,
+available, exists, passed, proofHash, proofURI, proofUrlResolved, validator,
+validatorExplorer, validatedAt, reason, raw }`. When no attestation exists,
+`exists` is `false` and `passed` is `null`.
+
+### `attest(input) → Promise<AttestReceipt>`
+
+Run an agent's GLB through the platform validator and record a signed on-chain
+validation. The target picks the lane:
+
+- **Solana asset** (base58) → `POST /api/agents/solana/validate`.
+- **EVM** (uint ERC-8004 `agentId`, needs a `chain`) → `POST /api/erc8004/validate`.
+
+Requires a signed-in account or an `avatars:write`-scoped token (pass it as
+`apiKey` to `createReputation`).
+
+**Input**
+
+| Field | Type | Notes |
+|---|---|---|
+| `agent` | `string` | Target: a Solana asset address **or** a uint ERC-8004 agentId. |
+| `kind` | `'feedback' \| 'validation' \| 'task'` | Attestation kind. Default `'validation'`. |
+| `chain` | `string \| number` | Required for an EVM target. See [Chains](#chains). |
+| `network` | `'mainnet' \| 'devnet'` | Solana cluster for an asset target. Default `'mainnet'`. |
+| `glbUrl` | `string` | Explicit GLB to validate; resolved from the agent when omitted. |
+| `signal` | `AbortSignal` | Cancel the write. |
+
+**Returns** `AttestReceipt` — `{ lane, status, ok, passed, kind, signature,
+txExplorer, proofHash, proofURI, validator, … , raw }`, where `status` is
+`'minted'` (a new on-chain tx) or `'deduped'` (a prior attestation already landed).
+
+### `createReputation(options?) → Client`
+
+Build a client bound to a base URL, fetch, and optional auth — reuse it across
+calls instead of relying on the module-level default exports.
+
+| Option | Type | Default | Notes |
+|---|---|---|---|
+| `baseUrl` | `string` | `https://three.ws` | Override for self-hosted / preview origins. |
+| `fetch` | `typeof fetch` | global `fetch` | Inject a custom (e.g. payment-aware) fetch. |
+| `apiKey` | `string` | — | Bearer token (needs `avatars:write`) for `attest()`. |
+| `headers` | `Record<string,string>` | — | Extra headers on every request. |
+
+Also exported: `SUPPORTED_CHAINS` (the frozen chain list), `DEFAULT_BASE_URL`,
+and the error classes `ThreeWsError` / `PaymentRequiredError`.
+
+### Under the hood — raw HTTP
+
+Every function is a thin wrapper over a public three.ws endpoint, so the docs hold
+even before the SDK ships in your stack:
 
 ```js
-import { Contract, JsonRpcProvider } from 'ethers';
+// Wallet-trust score by UUID
+const wallet = await fetch(
+  'https://three.ws/api/agents/3b1f2c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d/reputation',
+).then((r) => r.json());
 
-const REPUTATION_REGISTRY = '0x8004BAa17C55a88189AE136b182e5fdA19dE9b63'; // mainnet
-const ABI = [
-  'function getReputation(uint256 agentId) view returns (int256 avgX100, uint256 count)',
-  'function getTotalStake(uint256 agentId) view returns (uint256)',
-];
+// On-chain attestation aggregate by Solana asset
+const asset = await fetch(
+  'https://three.ws/api/agents/solana/reputation?asset=THREEsynthetic1111111111111111111111111111&network=mainnet',
+).then((r) => r.json());
 
-const provider = new JsonRpcProvider('https://mainnet.base.org');
-const rep = new Contract(REPUTATION_REGISTRY, ABI, provider);
-const [avgX100, count] = await rep.getReputation(1n);
-const average = count > 0n ? Number(avgX100) / 100 : null; // never divide by count
-```
-
-`leaderboard()` is plain HTTP against the public, auth-free endpoint:
-
-```js
-const res = await fetch('https://three.ws/api/reputation/leaderboard?limit=20');
-const { agents } = await res.json();
+// Live leaderboard
+const { agents } = await fetch(
+  'https://three.ws/api/reputation/leaderboard?limit=20',
+).then((r) => r.json());
 ```
 
 ## How it works
 
-Two canonical, CREATE2-deterministic registries back every read. The
-`IdentityRegistry` maps wallets ↔ agentIds; the `ReputationRegistry` holds the
-aggregate score, stake, and feedback events. The SDK resolves the identifier,
-reads both, and decodes the score correctly:
+The platform computes reputation server-side and exposes it at a small set of
+endpoints. The SDK resolves which endpoint your identifier maps to, reads it, and
+normalises the snake_case JSON into one camelCase trust block:
 
 ```
-agentId / wallet / eip155:<chain>:<wallet>
-        │
-        ▼
-  ┌──────────────────┐  wallet  ┌──────────────────────────┐
-  │  resolve agentId ├─────────▶│ IdentityRegistry         │  balanceOf → tokenOfOwnerByIndex
-  │                  │          │ 0x8004A169…  (mainnet)   │  ownerOf · getAgentWallet · tokenURI
-  └────────┬─────────┘          └──────────────────────────┘
-           │ agentId
-           ▼
-  ┌──────────────────────────────────────────────────────┐
-  │ ReputationRegistry  0x8004BAa1…  (mainnet)            │
-  │   getReputation → (int256 avgX100, uint256 count)     │  average = avgX100 / 100 (signed)
-  │   getTotalStake → uint256 wei                         │
-  │   logs: FeedbackSubmitted · ReputationStaked (≤25)    │
-  └──────────────────────────────────────────────────────┘
+ agent UUID ──────────▶ GET /api/agents/{id}/reputation        ─▶ WalletReputation
+ Solana asset (base58) ─▶ GET /api/agents/solana/reputation     ─▶ SolanaReputation
+ (—) ─────────────────▶ GET /api/reputation/leaderboard        ─▶ Leaderboard
+ chainId + agentId ────▶ GET /api/erc8004/validation           ─▶ ValidationRead
+
+ attest, Solana asset ─▶ POST /api/agents/solana/validate  ┐
+ attest, EVM agentId ──▶ POST /api/erc8004/validate        ┴─▶ AttestReceipt (signed on-chain)
 ```
 
-The registry addresses are deterministic per **network class** — one mainnet
-address shared across every mainnet, one testnet address shared across every
-testnet:
+- **Wallet-trust** (UUID) is the platform's non-gameable score — the same number
+  the badge and the leaderboard show, computed from real ledger + chain activity.
+- **On-chain aggregate** (asset) rolls up the agent's attestations, stake,
+  validations, disputes, and activity straight from the indexer.
+- **Validation** reads (and `attest()` writes) the ERC-8004 validation lane: the
+  attestation is a signed on-chain record of the agent's GLB passing the platform
+  validator, keyed by asset/agentId so a retry re-records idempotently.
 
-| Registry | Mainnet | Testnet |
-|---|---|---|
-| Identity | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` | `0x8004A818BFB912233c491871b3d84c89A494BD9e` |
-| Reputation | `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63` | — |
-| Validation | _pending mainnet deploy_ | `0x8004Cb1BF31DAf7788923b405b754f57acEB4272` |
-
-`attest()` records feedback through the platform's exactly-once memo
-attestation: a deterministic `eventId` is the dedupe key, the on-chain memo tx is
-the artifact, and a mirror row feeds the reputation reads. Retrying with the same
-`eventId` never produces a second tx.
+Everything is a live read/write — a brand-new agent returns `score: null` /
+zeroed feedback totals, never an invented number.
 
 ## Chains
 
-Reads default to **Base**. The `IdentityRegistry` is deployed at the same
-mainnet address on all of these:
+`SUPPORTED_CHAINS` is the frozen list of EVM chains the ERC-8004 lane
+(`validation()` reads and the EVM `attest()` write) understands. Select one by
+name (`'base'`, `'arbitrum'`, …) or numeric id; the default is **Base**.
 
-**Mainnets** — Base (8453), Ethereum (1), Arbitrum One (42161), Optimism (10),
-Polygon (137), BNB Chain (56), Avalanche (43114), Gnosis (100), Fantom (250),
+**Mainnets** — Base (8453), Arbitrum One (42161), BNB Chain (56), Ethereum (1),
+Optimism (10), Polygon (137), Avalanche (43114), Gnosis (100), Fantom (250),
 Celo (42220), Linea (59144), Scroll (534352), Mantle (5000), zkSync Era (324),
 Moonbeam (1284).
 
-**Testnets** — Base Sepolia (84532), Arbitrum Sepolia (421614), Ethereum Sepolia
-(11155111), Optimism Sepolia (11155420), Polygon Amoy (80002), Avalanche Fuji
-(43113), BSC Testnet (97). The testnet `ValidationRegistry` is live; the mainnet
-`ValidationRegistry` is pending deploy and is never read with a placeholder
-address.
+**Testnets** — BSC Testnet (97), Base Sepolia (84532), Arbitrum Sepolia (421614),
+Ethereum Sepolia (11155111), Optimism Sepolia (11155420), Polygon Amoy (80002),
+Avalanche Fuji (43113).
 
-Select a chain by name (`'base'`, `'arbitrum'`, …) or numeric id. A CAIP-10
-`agent` argument overrides the `chain` option.
+An unknown chain name or id throws `unsupported_chain`.
 
 ## Errors & edge cases
 
-Reads and writes surface real states, never a fabricated score:
+Reads and writes surface real states, never a fabricated score. Every failure is a
+typed `ThreeWsError` with a stable `code` and the HTTP `status`:
 
 | State | Cause | Recovery |
 |---|---|---|
-| `no_agent_registered_for_wallet` | The wallet owns no ERC-8004 agent on that chain. | Pass an agentId directly, or check the chain. |
-| `unsupported_chain` | Unknown chain name / id. | Use a [supported chain](#chains). |
-| `count === 0` → `average: null` | The agent has no feedback yet. | Surface "new agent / no track record", not a zero score. |
-| `events: []` | No vouches in the scanned block window. | That's the truth, not a failure — render an empty state. |
-| `unauthorized` (401) | `attest()` without a session or token. | Sign in, or use a `avatars:write` token. |
-| `insufficient_scope` (403) | Token lacks `avatars:write`. | Mint a scoped token. |
-| `rate_limited` (429) | Too many requests. | Honour `retryAfter`. |
+| `invalid_input` | `agent` isn't a UUID or Solana asset (or `agentId` isn't a uint). | Pass a valid identifier. |
+| `unsupported_chain` | Unknown chain name / id in `validation()` / `attest()`. | Use a [supported chain](#chains). |
+| `score: null` / `isNew: true` | The agent has no track record yet. | Surface "new agent", not a zero score. |
+| `feedback.total === 0` | No on-chain attestations for the asset yet. | Render an empty state — that's the truth. |
+| `unauthorized` (401) | `attest()` without a session or token. | Sign in, or pass an `avatars:write` `apiKey`. |
+| `payment_required` (402) | A gated lane needs payment. | Handle the thrown `PaymentRequiredError` (`.accepts`). |
+| `rate_limited` (429) | Too many requests. | Honour `retryAfter` on the error. |
 
-A missing identity returns `identity: null` (zero-address owner), not a crash.
-An empty registry returns a real empty result, not invented data.
+An empty registry or a missing attestation returns a real empty result
+(`exists: false`), not a crash.
 
 ## Examples
 
@@ -311,23 +329,22 @@ An empty registry returns a real empty result, not invented data.
 ```js
 import { reputation } from '@three-ws/reputation';
 
-async function isTrusted(agentId, floor = 4.0) {
-  const { reputation: r } = await reputation(agentId);
-  return r.average != null && r.average >= floor && Number(r.count) >= 3;
+async function isTrusted(agentUuid, floor = 60) {
+  const rep = await reputation(agentUuid);
+  return !rep.isNew && rep.score != null && rep.score >= floor;
 }
 ```
 
-**Agent-to-agent vouch after a completed task:**
+**Attest an agent's validation after onboarding it:**
 
 ```js
-import { attest } from '@three-ws/reputation';
+import { createReputation } from '@three-ws/reputation';
 
-await attest({
-  agent: counterpartyAsset,
-  kind: 'feedback',
-  score: 5,
-  detail: `task ${taskId} delivered`,
-  eventId: `vouch:${taskId}`, // idempotent — retries dedupe
+const rep = createReputation({ apiKey: process.env.THREE_WS_TOKEN });
+
+await rep.attest({
+  agent: agentAssetAddress, // Solana asset
+  kind: 'validation',
 });
 ```
 
@@ -338,7 +355,7 @@ import { leaderboard } from '@three-ws/reputation';
 
 const { agents } = await leaderboard({ limit: 10 });
 agents.forEach((a) =>
-  console.log(`#${a.rank} ${a.name} — ${a.tier_label} (${a.score})`),
+  console.log(`#${a.rank} ${a.name} — ${a.tierLabel} (${a.score})`),
 );
 ```
 

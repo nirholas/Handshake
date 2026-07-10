@@ -58,7 +58,7 @@ with the services you deploy.
 enable APIs · create the two GCS buckets · create Firestore (native) · create the
 `avatar-reconstruction-key` secret · grant the runtime service account its roles ·
 build + deploy each GPU service · deploy the controller and **wire it to the
-service URLs** · print the exact Vercel env vars to set.
+service URLs** · print the exact env vars to set on the site (Cloud Run `three-ws-api`).
 
 ---
 

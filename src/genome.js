@@ -305,7 +305,7 @@ function renderBorn(data) {
 	banner.dataset.kind = 'success';
 	banner.innerHTML = `🧬 <strong>${escapeHtml(child.name || 'Offspring')}</strong> was born — a generation ${child.generation} ${escapeHtml(child.pedigree?.tier || 'common')} agent with its own fresh wallet.
 		<a class="gn-hero-link" href="/agent-detail?id=${escapeAttr(child.id)}">Open agent →</a>
-		· <a class="gn-hero-link" href="/genome-verify?id=${escapeAttr(child.id)}" data-verify="${escapeAttr(child.id)}">Verify lineage</a>`;
+		· <a class="gn-hero-link" href="/agent-detail?id=${escapeAttr(child.id)}" data-verify="${escapeAttr(child.id)}">Verify lineage</a>`;
 	el.prepend(banner);
 	banner.querySelector('[data-verify]').addEventListener('click', (e) => { e.preventDefault(); verifyLineage(child.id); });
 	// Refresh studs (a notable birth may shift the rarest-first ordering).

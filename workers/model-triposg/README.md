@@ -1,65 +1,103 @@
 # model-triposg — image / sketch → 3D shape (TripoSG)
 
-High-fidelity geometry from a single image *or* a rough sketch, using
-[TripoSG](https://github.com/VAST-AI-Research/TripoSG) (VAST-AI, MIT) — a 1.5 B
-parameter rectified-flow transformer. It is the quality successor to
-[model-triposr](../model-triposr/): same input contract, markedly better geometry.
+FastAPI inference service producing **high-fidelity geometry from a single image
+*or* a rough sketch**, using [TripoSG](https://github.com/VAST-AI-Research/TripoSG)
+(VAST-AI, MIT) — a 1.5 B-parameter rectified-flow transformer. It is the quality
+successor to [model-triposr](../model-triposr/): same input contract, markedly
+better geometry. **Geometry only — no textures.** Pair it with
+[texture](../texture/) to get a textured GLB.
 
-**Geometry only — no textures.** Pair it with [texture](../texture/) to get a
-textured GLB.
+Two modes share the one `/infer` endpoint:
 
-Two modes share one endpoint:
-
-| Mode | Input | Pipeline | Used by |
+| Mode | Input | Pipeline | Settings |
 |---|---|---|---|
-| `image` | one image | `TripoSGPipeline` | avatar pipeline mesh backend |
-| `scribble` | sketch + text prompt | `TripoSGScribblePipeline` (CFG-distilled, 16 steps) | the `/forge` sketch→3D path |
+| `image` (default) | one photo | `TripoSGPipeline` | 50 steps, guidance 7.0; RMBG-1.4 background removal in-process |
+| `scribble` | sketch + text prompt | `TripoSGScribblePipeline` | CFG-distilled, 16 steps, guidance 0; `scribble_confidence` sets the sketch-adherence cross-attention scale |
 
-## API
+The scribble pipeline loads lazily on the first scribble request, so an
+image-only instance pays for one model on cold start. Meshes are optionally
+decimated to `target_polycount` (quadric edge-collapse) before export.
 
-All routes require `Authorization: Bearer $API_KEY`, except `/health`.
+Work is asynchronous: `POST /infer` returns `202` with a `task_id`; poll
+`GET /tasks/{id}` until the GLB is written to
+`gs://$GCS_BUCKET/raw-meshes/triposg/{task_id}.glb`.
+
+## Endpoints
+
+`POST /infer` and `GET /tasks/{id}` require `Authorization: Bearer $API_KEY`.
+`GET /health` is unauthenticated.
 
 ### `POST /infer` → `202`
 
-Image mode:
+Request (`InferRequest`):
 
-```bash
-curl -X POST https://$SERVICE_URL/infer \
-  -H "Authorization: Bearer $API_KEY" -H 'Content-Type: application/json' \
-  -d '{"images":["https://example.com/owl.png"]}'
+```json
+{
+	"images": ["https://example.com/owl.png"],
+	"mode": "image",
+	"prompt": "",
+	"scribble_confidence": 0.4,
+	"target_polycount": null,
+	"body_type": "neutral",
+	"job_id": "abc123"
+}
 ```
 
-Scribble mode — pass a sketch plus the prompt that describes it:
+- `images` — 1 to 6 entries, `data:image/…;base64,…` URI or `https://` URL. **Only
+  the first is used.** `https` sources go through the SSRF guard in
+  [`worker_security.py`](./worker_security.py).
+- `mode` — `"image"` (default) or `"scribble"`. Any other value falls back to `image`.
+- `prompt` — text conditioning. **Required in scribble mode** — an empty prompt in
+  scribble mode returns `422`. Ignored in image mode.
+- `scribble_confidence` — `0.0`–`1.0` (default `0.4`); scribble mode only.
+- `target_polycount` — optional `100`–`1000000` face budget for decimation.
+- `body_type`, `job_id` — optional.
 
-```bash
-curl -X POST https://$SERVICE_URL/infer \
-  -H "Authorization: Bearer $API_KEY" -H 'Content-Type: application/json' \
-  -d '{"images":["data:image/png;base64,…"],"mode":"scribble","prompt":"a brass steampunk owl"}'
+Image mode strips the photographic background in-process with RMBG-1.4, so callers
+do not need to pre-run [rembg](../rembg/). Scribble mode flattens alpha onto white
+(no background removal — a sketch has none).
+
+Response:
+
+```json
+{ "task_id": "3f2c…", "status": "queued", "model": "triposg", "mode": "image" }
 ```
-
-Both return `{ "task_id": "…", "status": "queued" }`. Remote URLs are fetched
-through the SSRF guard in [`worker_security.py`](./worker_security.py).
-
-Input images are background-removed in-process with RMBG-1.4 before inference, so
-callers do not need to pre-strip backgrounds via [rembg](../rembg/).
 
 ### `GET /tasks/{task_id}`
 
+`status` is one of `queued` → `running` → `done`, or `failed`.
+
 ```json
-{ "task_id": "…", "status": "succeeded", "result_gcs_url": "https://storage.googleapis.com/…/mesh.glb" }
+{
+	"task_id": "3f2c…",
+	"status": "done",
+	"model": "triposg",
+	"mode": "image",
+	"result_gcs_url": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/triposg/3f2c….glb",
+	"elapsed_ms": 38110
+}
 ```
+
+Failures carry a sanitized `error`; unknown ids return `404`.
 
 ### `GET /health`
 
 ```json
-{ "ok": true, "model": "triposg", "gpu_available": true }
+{
+	"ok": true,
+	"model": "triposg",
+	"gpu_available": true,
+	"gpu_name": "NVIDIA L4",
+	"model_loaded": true,
+	"scribble_loaded": false
+}
 ```
 
-## Env
+## Environment
 
-| Var | Required | Default | Notes |
+| Var | Required | Default | Purpose |
 |---|---|---|---|
-| `API_KEY` | yes | — | Shared bearer secret (Secret Manager: `avatar-reconstruction-key`) |
+| `API_KEY` | yes | — | Shared bearer secret (Secret Manager `avatar-reconstruction-key`) |
 | `GCS_BUCKET` | yes | — | Output bucket (`three-ws-avatar-reconstructions`) |
 | `WEIGHTS_DIR` | no | `/weights/triposg` | Image-mode weights |
 | `SCRIBBLE_WEIGHTS_DIR` | no | `/weights/triposg-scribble` | Scribble-mode weights |
@@ -67,53 +105,93 @@ callers do not need to pre-strip backgrounds via [rembg](../rembg/).
 | `MAX_CONCURRENT` | no | `1` | One L4 fits one inference |
 
 All three weight sets live in the `three-ws-model-weights` bucket, mounted at
-`/weights`.
+`/weights` (see [`workers/deploy/stage-weights.sh`](../deploy/stage-weights.sh)):
+`VAST-AI/TripoSG`, `VAST-AI/TripoSG-scribble`, and `briaai/RMBG-1.4`.
+
+## Run locally
+
+Requires a CUDA GPU and the weights on disk. TripoSG is cloned into the image and
+compiles the `diso` CUDA extension at build time, so the reproducible path is the
+image:
+
+```bash
+cd workers/model-triposg
+docker build -t model-triposg .
+
+docker run --rm --gpus all -p 8080:8080 \
+	-e API_KEY=dev-secret \
+	-e GCS_BUCKET=your-dev-bucket \
+	-e GOOGLE_APPLICATION_CREDENTIALS=/gcp/sa.json \
+	-v /path/to/weights:/weights:ro \
+	-v /path/to/sa.json:/gcp/sa.json:ro \
+	model-triposg
+```
+
+With the TripoSG environment already on `PYTHONPATH` you can run the server directly:
+
+```bash
+API_KEY=dev-secret GCS_BUCKET=your-dev-bucket \
+	WEIGHTS_DIR=/path/to/triposg SCRIBBLE_WEIGHTS_DIR=/path/to/triposg-scribble \
+	RMBG_WEIGHTS_DIR=/path/to/rmbg-1.4 \
+	uvicorn main:app --host 0.0.0.0 --port 8080
+```
 
 ## Deploy
 
-Ships as the Cloud Run service **`model-triposg`** in **`us-central1`**, built by
-Cloud Build from [`cloudbuild.yaml`](./cloudbuild.yaml). Submit from the repo root
-(the build step declares `dir: workers/model-triposg`, so the upload source is the
-whole repo):
+Submit from the **repo root** — the build step declares `dir: workers/model-triposg`,
+so the upload source is the whole repo:
 
 ```bash
 gcloud builds submit --config workers/model-triposg/cloudbuild.yaml .
 ```
 
-Or provision it alongside the rest of the pipeline (idempotent; prints the URLs to
-set on the `three-ws-api` service env):
+Or provision it alongside the fleet (idempotent; prints the URLs to set on the
+`three-ws-api` env):
 
 ```bash
 PROJECT_ID=<gcp-project> SERVICES="hunyuan3d trellis triposg unirig" \
-  workers/deploy/deploy-all.sh
+	workers/deploy/deploy-all.sh
 ```
 
-The deployed service is 1× `nvidia-l4`, 8 vCPU, 32 GiB, 900 s timeout,
-`min-instances=0`, `max-instances=2` (scale-to-zero — the first request after
-idle pays a one-time model load). There are no GitHub Actions; the build runs on
-Cloud Build only. See [`docs/ops/gcp-model-workers.md`](../../docs/ops/gcp-model-workers.md)
-for the full lane-routing and operations runbook.
+Deploys Cloud Run service **`model-triposg`** in `us-central1`: **1× `nvidia-l4`
+GPU**, 8 vCPU, 32 GiB, 900 s request timeout, `min-instances=0`, `max-instances=2`.
+Build `timeout` is `3600s` (the `diso` CUDA compile). Weights bucket mounted at
+`/weights`; `API_KEY` from the `avatar-reconstruction-key` secret.
 
-## Callers
+## Example — sketch → 3D, submit, poll, fetch
 
-- **Forge sketch→3D** (`api/_providers/gcp.js`, `api/forge.js`) reads
-  **`GCP_TRIPOSG_URL`** — this is the sole lane for the `sketch` path, so a
-  TripoSG failure returns a designed, retryable `503` rather than falling through
-  to another lane.
+```bash
+BASE=https://model-triposg-xxxxxxxx-uc.a.run.app
+KEY=your-api-key
+
+TASK=$(curl -s -X POST "$BASE/infer" \
+	-H "Authorization: Bearer $KEY" \
+	-H 'Content-Type: application/json' \
+	-d '{"images":["https://storage.googleapis.com/three-ws-public/samples/owl-sketch.png"],"mode":"scribble","prompt":"a brass steampunk owl"}' \
+	| python3 -c 'import sys,json; print(json.load(sys.stdin)["task_id"])')
+
+while :; do
+	STATE=$(curl -s "$BASE/tasks/$TASK" -H "Authorization: Bearer $KEY")
+	echo "$STATE"
+	echo "$STATE" | grep -q '"status": *"done"' && break
+	echo "$STATE" | grep -q '"status": *"failed"' && exit 1
+	sleep 5
+done
+
+curl -s "$BASE/tasks/$TASK" -H "Authorization: Bearer $KEY" \
+	| python3 -c 'import sys,json; print(json.load(sys.stdin)["result_gcs_url"])'
+```
+
+## How three.ws calls it
+
+- **Forge sketch→3D** — [`api/_providers/gcp.js`](../../api/_providers/gcp.js) and
+  [`api/forge.js`](../../api/forge.js) read **`GCP_TRIPOSG_URL`** and route the
+  `sketch` mode here (scribble pipeline). It is the *sole* lane for that path — a
+  failure returns a designed, retryable error rather than falling through to
+  another lane. Declared in [`api/_lib/forge-tiers.js`](../../api/_lib/forge-tiers.js)
+  with `requiresEnv: ['GCP_TRIPOSG_URL', 'GCP_RECONSTRUCTION_KEY']`.
 - **[avatar-pipeline-controller](../avatar-pipeline-controller/)** reads
   **`MODEL_TRIPOSG_URL`** and uses image mode as one of its weighted mesh backends.
 
-Both share the bearer secret `avatar-reconstruction-key` (Secret Manager),
-surfaced to callers as `GCP_RECONSTRUCTION_KEY`.
-
-## Local
-
-```bash
-cd workers/model-triposg
-pip install -r requirements.txt
-API_KEY=dev GCS_BUCKET=your-dev-bucket \
-  WEIGHTS_DIR=/path/to/triposg SCRIBBLE_WEIGHTS_DIR=/path/to/triposg-scribble \
-  RMBG_WEIGHTS_DIR=/path/to/rmbg-1.4 uvicorn main:app --port 8080
-```
-
-Requires a CUDA GPU and local weights.
+Both share the platform-side bearer secret `GCP_RECONSTRUCTION_KEY`, which must
+equal this service's `API_KEY`.

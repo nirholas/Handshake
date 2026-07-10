@@ -575,6 +575,15 @@ const appConfig = {
 				// in production. Promoted over the raw publicDir copy below.
 				'agents-directory': resolve(__dirname, 'public/agents/index.html'),
 				validation: resolve(__dirname, 'public/validation/index.html'),
+				// /characters and /character/:id load `/src/characters.js` and
+				// `/src/character.js`, both of which `import './ui-juice.css'` — a
+				// Vite-only construct. Served raw, the browser fetched that CSS as a
+				// module script, got `text/css`, and refused it under strict MIME
+				// checking. The entry module never executed, so BOTH pages rendered an
+				// empty grid in production. Registering them as inputs bundles the
+				// graph and extracts the CSS into a <link>. Promoted below.
+				characters: resolve(__dirname, 'public/characters.html'),
+				character: resolve(__dirname, 'public/character.html'),
 				// BEGIN:DISCOVER_ROUTE
 				'my-agents': resolve(__dirname, 'public/my-agents/index.html'),
 				discover: resolve(__dirname, 'public/discover/index.html'),
@@ -2190,6 +2199,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					['dist/public/agent/index.html', 'dist/agent/index.html'],
 					['dist/public/login.html', 'dist/login.html'],
 					['dist/public/register.html', 'dist/register.html'],
+					['dist/public/characters.html', 'dist/characters.html'],
+					['dist/public/character.html', 'dist/character.html'],
 					['dist/public/agents/index.html', 'dist/agents/index.html'],
 					['dist/public/validation/index.html', 'dist/validation/index.html'],
 					['dist/public/gallery/index.html', 'dist/gallery/index.html'],

@@ -24,7 +24,7 @@
 
 import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
-import { NEWS_SOURCES, sourcesForCategory, sourcePriority } from './news-sources.js';
+import { NEWS_SOURCES, sourcesForCategory, sourcesForLanguage, sourcePriority } from './news-sources.js';
 
 const FEED_TIMEOUT_MS = 7000;
 const FRESH_MS = 300_000; // refetch a source after 5 min
@@ -468,14 +468,26 @@ function dedupe(articles) {
 
 /**
  * Aggregate live news across the registry.
- * @param {object} opts { category, source, q, limit, offset }
+ *
+ * `lang` defaults to 'en'. The registry carries international feeds in 17
+ * languages, and folding them into the default view would interleave Korean and
+ * Chinese headlines into an English feed. They are opt-in: pass a language code
+ * for one, or 'all' for the whole registry.
+ *
+ * @param {object} opts { category, source, lang, q, limit, offset }
  * @returns {{ articles: Array, total: number, sources_ok: number, sources_total: number }}
  */
-export async function getNews({ category, source, q, limit = 30, offset = 0 } = {}) {
+export async function getNews({ category, source, lang = 'en', q, limit = 30, offset = 0 } = {}) {
 	let keys;
 	if (source && NEWS_SOURCES[source]) keys = [source];
 	else if (source) return { articles: [], total: 0, sources_ok: 0, sources_total: 0 };
-	else keys = sourcesForCategory(category);
+	else {
+		keys = sourcesForCategory(category);
+		if (lang && lang !== 'all') {
+			const inLang = new Set(sourcesForLanguage(lang));
+			keys = keys.filter((k) => inLang.has(k));
+		}
+	}
 
 	// A caller who names one source is asking for that source specifically —
 	// give it the full feed timeout rather than the shared fan-out deadline.

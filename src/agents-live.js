@@ -841,7 +841,7 @@ function renderEmpty() {
 	<div class="al-empty-icon">🖥</div>
 	<h2>No agents yet</h2>
 	<p>Agents appear here the moment they're created. Spin one up and watch it work in real time.</p>
-	<a href="/dashboard-next/create" class="al-empty-cta">Create an agent →</a>
+	<a href="/create-agent" class="al-empty-cta">Create an agent →</a>
 </div>`;
 }
 

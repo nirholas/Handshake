@@ -2142,14 +2142,6 @@
 			"dest": "/api/marketplace/analytics"
 		},
 		{
-			"src": "/api/marketplace/skill-reviews",
-			"dest": "/api/marketplace/skill-reviews"
-		},
-		{
-			"src": "/api/users/me/credits",
-			"dest": "/api/users/me/credits"
-		},
-		{
 			"src": "/api/users/me/transaction-history",
 			"dest": "/api/users/me/transaction-history"
 		},

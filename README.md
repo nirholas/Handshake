@@ -293,7 +293,6 @@ If you want to support the project — compute credits, grants, partnerships, or
 - `/threews/claim` lets any signed-in user mint `[username].threews.sol` in a single atomic Solana transaction — `createSubdomain` → URL record → `transferSubdomain` to the user's wallet, with three.ws absorbing gas
 - Brave Browser resolves the subdomain directly to the user's `/u/[username]` showcase via the SNS URL record
 - Agents can bind a `.sol` name (theirs or a fresh registration) via `/api/agents/:id/sns`; once bound, every public surface — agent page, x402 manifest, MCP listing, marketplace card — displays the name in place of the raw wallet
-- See [docs/internal/SNS_PARTNERSHIP_PROPOSAL.md](docs/internal/SNS_PARTNERSHIP_PROPOSAL.md) for the partnership pitch to Bonfida
 
 **A2A — Agent-to-Agent Protocol**
 
@@ -393,7 +392,7 @@ The **3D Studio MCP server** at `https://three.ws/api/mcp-3d` exposes the full p
 
 ## Platform Pages
 
-A map of every user-facing route. Full detail (source files, feature descriptions, hash-routes) is in [docs/internal/PAGES.md](docs/internal/PAGES.md).
+A map of every user-facing route. [`STRUCTURE.md`](STRUCTURE.md) maps each product surface to the directory that implements it, and [`data/pages.json`](data/pages.json) is the registry every public route is generated from (sitemap, `llms.txt`, `features.json`, changelog).
 
 | Section              | Key URLs                                                                                        | What it does                                                                                                    |
 | -------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -1588,7 +1587,7 @@ On **Seeker / Saga** hardware the app prefers seed-vault-backed signing — priv
 
 **Release pipeline**
 
-- dApp Store listing assets, icons, and staging copy live under [`public/seeker/`](public/seeker/)
+- dApp Store listing copy and release config live under [`solana-mobile/publish/`](solana-mobile/publish/)
 - Release pipeline scripts handle build → sign → APK submission for dApp Store updates
 - The listing targets Seeker-first and is compatible with Saga Gen 1 and Gen 2
 
@@ -1805,7 +1804,7 @@ Once configured, Claude can call these tools directly in conversation — no API
 
 See [`mcp-server/README.md`](mcp-server/README.md) for full environment variable reference and programmatic client usage.
 
-### 2. Slash commands (`.claude/commands/`)
+### 2. Slash commands (`marketplace/plugins/three-ws-developer/commands/`)
 
 This repo ships three Claude Code slash commands that work in any project referencing this repo:
 
@@ -1815,7 +1814,7 @@ This repo ships three Claude Code slash commands that work in any project refere
 | `/scaffold-agent`        | Scaffolds a new three.ws agent in your project: installs dependencies, creates `agent.js` with MCP client wiring, and adds `.env.example` |
 | `/use-tools [tool_name]` | Produces a complete, runnable Node.js script for calling a specific paid MCP tool with automatic x402 payment handling                    |
 
-Commands live in [`.claude/commands/`](.claude/commands/) and are picked up automatically by Claude Code when you open this repo.
+Commands live in [`marketplace/plugins/three-ws-developer/commands/`](marketplace/plugins/three-ws-developer/commands/) and ship with the `three-ws-developer` plugin, so Claude Code picks them up once that plugin is installed.
 
 ---
 

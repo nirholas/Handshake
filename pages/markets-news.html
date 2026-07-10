@@ -100,7 +100,7 @@
 			<!-- Category tabs. Hydrated by src/markets-news.js. -->
 			<div id="nw-tabs" class="nw-tabs" role="group" aria-label="News categories"></div>
 
-			<!-- Search + source filter. -->
+			<!-- Search + language + source filters. -->
 			<div class="nw-toolbar">
 				<div class="cv-search">
 					<input
@@ -111,6 +111,9 @@
 						autocomplete="off"
 					/>
 				</div>
+				<select id="nw-lang" class="nw-select" aria-label="Filter by language">
+					<option value="en">English</option>
+				</select>
 				<select id="nw-source" class="nw-select" aria-label="Filter by source">
 					<option value="">All sources</option>
 				</select>

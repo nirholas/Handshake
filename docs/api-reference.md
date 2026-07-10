@@ -2588,22 +2588,34 @@ The engine behind [/markets/news](https://three.ws/markets/news) and
 ### Live feed
 
 ```
-GET /api/news/feed?category=defi&q=etf&source=coindesk&limit=30&offset=0&meta=1
+GET /api/news/feed?category=defi&q=etf&source=coindesk&lang=en&limit=30&offset=0&meta=1
 ```
 
-Aggregates 38 publisher RSS/Atom feeds natively (registry:
-`api/_lib/news-sources.js`). All params optional: `category` (one of the 14
-canonical categories — `general`, `bitcoin`, `ethereum`, `solana`,
-`defi`, `nft`, `trading`, `research`, `onchain`, `institutional`,
-`mainstream`, `asia`, `regulation`, `journalism`), `source` (a single source
-key, overrides `category`), `q` (full-text over title/description/tickers),
-`limit` ≤ 50, `offset`. Returns
-`{ articles: [{ id, title, link, description, image, author, source,
+Aggregates the native publisher RSS/Atom registry
+(`api/_lib/news-sources.js`). All params optional:
+
+| Param | Meaning |
+| --- | --- |
+| `category` | One of the canonical categories. Fetch the live list with `meta=1`; unknown values return `400 bad_category` with the valid set. |
+| `source` | A single source key. Overrides `category` and `lang`. |
+| `lang` | `en` (default), any registry language, or `all`. The registry carries international feeds; they are opt-in so the default feed does not interleave languages. Unknown values return `400 bad_language`. |
+| `q` | Full-text over title, description, and tickers. |
+| `limit` | ≤ 50 (default 30). |
+| `offset` | Pagination offset. |
+
+Returns `{ articles: [{ id, title, link, description, image, author, source,
 source_key, category, pub_date, tickers[], sentiment: { score, label,
-confidence } }], total, sources_ok, sources_total, fetched_at }`; with
-`meta=1` it also returns `categories[]` and the `sources[]` registry. Each
-source is cached server-side for 5 minutes and served stale (up to 24 h) if
-its publisher goes down. CDN cache 120 s.
+confidence } }], total, limit, offset, lang, sources_ok, sources_total,
+fetched_at }`. With `meta=1` it also returns `categories[]`, `languages[]`,
+and the `sources[]` registry (each with `key`, `name`, `category`, and
+`language` where the feed is not English).
+
+Every feed in the registry was fetched and parsed before being listed — see
+`scripts/news-sources-probe.mjs`, which re-validates the registry and exits
+non-zero if any source has gone dead. Each source is cached server-side for 5
+minutes and served stale (up to 24 h) if its publisher goes down; a feed that
+404s backs off exponentially, while one that merely rate-limits us retries
+within 30 minutes. CDN cache 120 s.
 
 ### Historical archive — 662,047 articles since 2017
 

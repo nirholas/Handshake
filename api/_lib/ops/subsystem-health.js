@@ -32,6 +32,7 @@
 
 import { cacheHealth, cacheGet } from '../cache.js';
 import { heliusHealth } from '../balances.js';
+import { rateLimiterHealth } from '../rate-limit.js';
 import { checkRingInvariants } from '../x402/ring-allowlist.js';
 
 const DB_PING_TIMEOUT_MS = 2_500;
@@ -97,16 +98,61 @@ function checkCache() {
 			const why = h.circuitOpen
 				? `circuit open, reopens in ${Math.round(h.circuitReopensInMs / 1000)}s`
 				: 'SET writes suppressed';
+			// An exhausted plan allowance and a slow store both read as "degraded",
+			// but only one of them is fixable by a timeout knob. Name the real cause.
+			const hint = h.quotaExhausted
+				? 'Upstash has spent its plan-wide command allowance — commands are REJECTED, not slow. ' +
+					'No timeout or region change helps; the counter resets on the plan boundary. ' +
+					'Raise the Upstash plan or cut command volume. Reads serve from memory meanwhile.'
+				: 'Upstash is timing out — use a same-region cache store or raise CACHE_REDIS_CMD_TIMEOUT_MS. Reads keep serving.';
 			return {
 				...base,
 				status: 'degraded',
-				detail: `${why}; serving from memory (${h.totalSetFailures} SET fails, ${h.totalCircuitOpens} opens since start)`,
+				detail: `${why}; serving from memory (${h.totalSetFailures} SET fails, ${h.totalCircuitOpens} opens since start)${h.quotaExhausted ? ' — plan command allowance exhausted' : ''}`,
 				backend: h.backend,
 				metrics: { totalSetFailures: h.totalSetFailures, totalCircuitOpens: h.totalCircuitOpens },
-				hint: 'Upstash is timing out — use a same-region cache store or raise CACHE_REDIS_CMD_TIMEOUT_MS. Reads keep serving.',
+				quotaExhausted: h.quotaExhausted,
+				hint,
 			};
 		}
 		return { ...base, status: 'ok', detail: `upstash healthy`, backend: h.backend, metrics: { totalSetFailures: h.totalSetFailures, totalCircuitOpens: h.totalCircuitOpens } };
+	} catch (err) {
+		return { ...base, status: 'unknown', detail: err?.message || 'unreadable' };
+	}
+}
+
+// The rate limiter guards every money-moving endpoint on the platform, yet it had
+// no health surface: when its Redis went blind the only symptom was paid endpoints
+// quietly failing closed. Report which backend is actually deciding right now.
+function checkRateLimiter() {
+	const base = { name: 'rate_limiter', label: 'Rate limiter (Upstash + Postgres fallback)' };
+	try {
+		const h = rateLimiterHealth();
+		if (!h.configured) {
+			return h.durableFallback
+				? { ...base, status: 'degraded', detail: 'no Redis; money/auth buckets counting in Postgres', backend: 'postgres', hint: 'Configure UPSTASH_REDIS_REST_URL/TOKEN for sliding-window precision.' }
+				: { ...base, status: 'down', detail: 'no Redis and no Postgres — money buckets fail closed', backend: 'none', hint: 'Set DATABASE_URL and/or UPSTASH_REDIS_REST_URL. Paid endpoints deny until then.' };
+		}
+		if (h.quotaExhausted) {
+			return {
+				...base,
+				status: 'degraded',
+				detail: `Upstash command allowance exhausted; ${h.durableFallback ? 'money/auth buckets counting in Postgres' : 'money buckets FAILING CLOSED'}`,
+				backend: h.durableFallback ? 'postgres' : 'none',
+				quotaExhausted: true,
+				hint: 'Commands are rejected until the plan period rolls over. Raise the Upstash plan or cut command volume.',
+			};
+		}
+		if (h.circuitOpen) {
+			return {
+				...base,
+				status: 'degraded',
+				detail: `redis circuit open, retries in ${Math.round(h.circuitReopensInMs / 1000)}s; ${h.durableFallback ? 'serving from Postgres' : 'money buckets failing closed'}`,
+				backend: h.durableFallback ? 'postgres' : 'none',
+				hint: 'Transient Redis fault. The breaker probes on an escalating backoff and closes on the first success.',
+			};
+		}
+		return { ...base, status: 'ok', detail: 'upstash healthy', backend: 'upstash' };
 	} catch (err) {
 		return { ...base, status: 'unknown', detail: err?.message || 'unreadable' };
 	}
@@ -286,6 +332,7 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 	const checks = [
 		probeDb ? checkDatabase() : Promise.resolve({ name: 'database', label: 'Database (Neon)', status: 'unknown', detail: 'ping skipped' }),
 		Promise.resolve(checkCache()),
+		Promise.resolve(checkRateLimiter()),
 		Promise.resolve(checkHelius()),
 		Promise.resolve(checkRing()),
 		checkWorld(),

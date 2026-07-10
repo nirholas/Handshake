@@ -550,7 +550,7 @@ function mountOnLiveWall() {
 			const status = overlay.querySelector('[data-status]');
 			overlay.querySelector('[data-tt-form]').hidden = true;
 			stage.hidden = false;
-			stage.innerHTML = `<div class="tt-empty">You need an agent to lead the team.<br><a href="/dashboard-next/create">Create an agent →</a> then come back and give it a goal.</div>`;
+			stage.innerHTML = `<div class="tt-empty">You need an agent to lead the team.<br><a href="/create-agent">Create an agent →</a> then come back and give it a goal.</div>`;
 			status.textContent = '';
 			return;
 		}

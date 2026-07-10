@@ -12,6 +12,23 @@
 //
 // Loaded as its own lazy chunk (dynamic import on first wheel interaction) so the
 // Solana signing path never weighs down the main /play bundle.
+//
+// STATUS (verified 2026-07-10): this client module is complete, but nothing
+// mounts it — zero importers of `openSpinWheel` anywhere in the repo, and there
+// is no `spinInfo`/`spinPrep`/`spinResult`/`spinDenied` handler on EITHER
+// Colyseus room (grep multiplayer/src/rooms/*.js — zero hits) and no `spinInfo`/
+// `spinFree`/`spinPaid` method on `community-net.js`/`walk-net.js`. This is not
+// a wiring gap like play-intro.js/friends-panel.js were — the entire server
+// side (spin RNG, the 12h free-spin cooldown ledger, the $3-in-$THREE
+// split-payment transaction build + on-chain verification before granting a
+// paid spin, prize/reward granting into the existing economy) has never been
+// built. Mirror the boutique purchase flow's proven pattern
+// (multiplayer/src/game-token.js + src/game/boutique-purchase.js: server
+// builds the tx, wallet signs, server re-verifies on RPC before granting)
+// rather than writing new on-chain verification logic from scratch — but do
+// build it carefully and reviewed, not rushed: this moves real money. No world
+// zone/NPC ("Fortune's Folly · Mainland" per this file's own header) spawns
+// the interaction that would call openSpinWheel() either.
 
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
 

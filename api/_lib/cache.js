@@ -200,6 +200,21 @@ function escalatedCooldownMs(baseMs, rearms) {
 	return Math.min(COOLDOWN_MAX_MS, baseMs * 2 ** Math.min(10, rearms));
 }
 
+// Why is the store failing? A timeout and an exhausted plan allowance both surface
+// as "degraded", but they call for opposite responses: the first is a latency knob
+// (CACHE_REDIS_CMD_TIMEOUT_MS) or a co-located store, the second cannot be fixed by
+// any code change until the plan period rolls over. /healthz used to advise the
+// timeout remedy unconditionally, which sent operators hunting a network fault that
+// did not exist during the 2026-07-09 over-quota incident. Remember the last cause
+// so the health check can name it.
+let lastFailureWasQuota = false;
+function isQuotaError(err) {
+	return /max requests limit exceeded/i.test(String(err?.message || err || ''));
+}
+function noteFailureCause(err) {
+	lastFailureWasQuota = isQuotaError(err);
+}
+
 function circuitRecordFailure() {
 	circuitTrialInFlight = false;
 	if (circuitOpenUntil !== 0) {
@@ -290,6 +305,7 @@ async function redisCmd(args) {
 		circuitRecordSuccess();
 		return json.result;
 	} catch (err) {
+		noteFailureCause(err);
 		circuitRecordFailure();
 		throw err;
 	}
@@ -442,6 +458,7 @@ export function cacheHealth() {
 		consecutiveSetFailures: setFailures,
 		totalSetFailures,
 		totalCircuitOpens,
+		quotaExhausted: lastFailureWasQuota,
 	};
 }
 

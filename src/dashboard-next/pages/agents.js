@@ -589,7 +589,7 @@ function agentCard(a, avatars) {
 				onchain || pumpMint
 					? `
 				<div class="dn-agent-links">
-					${onchain ? `<a href="/onchain?agent=${encodeURIComponent(a.id)}" style="font-size:11.5px;color:var(--nxt-ink-dim)">ERC-8004 registry ↗</a>` : ''}
+					${onchain ? `<a href="/discover" style="font-size:11.5px;color:var(--nxt-ink-dim)">ERC-8004 registry ↗</a>` : ''}
 					${pumpMint ? `<a href="https://pump.fun/coin/${encodeURIComponent(pumpMint)}" target="_blank" rel="noopener" style="font-size:11.5px;color:#a8adb5">View on Pump.fun ↗</a>` : ''}
 				</div>
 			`

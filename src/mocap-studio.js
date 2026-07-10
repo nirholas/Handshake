@@ -169,9 +169,12 @@ async function applyLoadedAvatar(modelUrl, meta) {
 	// If this is a real saved avatar (UUID id), surface its agent-wallet panel.
 	// Non-UUID stand-ins (e.g. the default mannequin) self-hide in the component.
 	const actions = $('#mc-actions');
-	if (actions && meta?.id) {
+	if (actions && meta?.id && UUID_RE.test(meta.id)) {
 		actions.style.display = 'block';
 		actions.setAttribute('avatar-id', meta.id);
+	} else if (actions) {
+		actions.style.display = 'none';
+		actions.removeAttribute('avatar-id');
 	}
 	if (state.idle) state.idle.dispose();
 	if (!viewer._afterAnimateHooks) viewer._afterAnimateHooks = [];

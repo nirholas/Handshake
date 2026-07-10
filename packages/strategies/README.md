@@ -317,7 +317,7 @@ const { executions } = await sx.copyExecutions({ status: 'pending' });
 **Publish a Strategy Object and rank it honestly**
 
 ```js
-const { data } = await sx.createStrategy({
+const strategy = await sx.createStrategy({
   name: 'Fresh-launch momentum',
   config: {
     entry: { trigger: 'new_launch', max_age_minutes: 30, require_socials: true },
@@ -326,9 +326,9 @@ const { data } = await sx.createStrategy({
     risk: { max_concurrent_positions: 3, cooldown_minutes: 10 },
   },
 });
-await sx.publishStrategy(data.id, true);
+await sx.publishStrategy(strategy.id, true);
 
-const { data: board } = await sx.leaderboard({ limit: 10 }); // proven, real-ROI ranked
+const { leaders } = await sx.leaderboard({ limit: 10 }); // proven, real-ROI ranked
 ```
 
 ## Related

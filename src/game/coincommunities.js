@@ -499,8 +499,13 @@ export class CoinCommunities {
 		// First-ten-seconds cold open (see play-intro.js header for the audit finding
 		// this fixes): a first-time visitor otherwise lands on a bare coin grid with
 		// no context and bounces. Shown once per browser; the reopener in the lobby
-		// header brings it back any time.
-		showPlayIntro({ onDropIn: () => this._dropIn() });
+		// header brings it back any time. NOT shown on a `?coin=<mint>` deep link —
+		// that visitor already made their choice (a shared world link) and "Drop in
+		// now" would silently redirect them to the $THREE home town instead of the
+		// world they clicked into, on top of it already loading behind the modal.
+		if (!new URLSearchParams(location.search).get('coin')) {
+			showPlayIntro({ onDropIn: () => this._dropIn() });
+		}
 
 		this._loop = this._loop.bind(this);
 		requestAnimationFrame(this._loop);

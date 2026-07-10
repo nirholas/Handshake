@@ -722,7 +722,7 @@
 						<div class="wl-frame">
 							<div class="wl-frame-stage">
 								<iframe
-									src="/walk-embed?env=beach&controls=joystick&autoplay=true"
+									data-src="/walk-embed?env=beach&controls=joystick&autoplay=true"
 									title="Interactive demo — walk the avatar on a sunlit beach"
 									loading="lazy"
 									allow="accelerometer; gyroscope"
@@ -738,7 +738,7 @@
 						<div class="wl-frame">
 							<div class="wl-frame-stage">
 								<iframe
-									src="/walk-embed?env=night&controls=joystick&autoplay=true"
+									data-src="/walk-embed?env=night&controls=joystick&autoplay=true"
 									title="Interactive demo — walk the avatar through a night scene"
 									loading="lazy"
 									allow="accelerometer; gyroscope"
@@ -754,7 +754,7 @@
 						<div class="wl-frame">
 							<div class="wl-frame-stage">
 								<iframe
-									src="/walk-embed?env=grid&controls=joystick&autoplay=true"
+									data-src="/walk-embed?env=grid&controls=joystick&autoplay=true"
 									title="Interactive demo — walk the avatar on a holographic grid"
 									loading="lazy"
 									allow="accelerometer; gyroscope"
@@ -779,7 +779,7 @@
 					<li class="wl-step wl-reveal">
 						<div class="wl-frame-stage">
 							<iframe
-								src="/walk-embed?env=studio&autoplay=true&controls=none&orbit=false"
+								data-src="/walk-embed?env=studio&autoplay=true&controls=none&orbit=false"
 								title="Step preview — a generated avatar idling in the studio"
 								loading="lazy"
 							></iframe>
@@ -793,7 +793,7 @@
 					<li class="wl-step wl-reveal">
 						<div class="wl-frame-stage">
 							<iframe
-								src="/walk-embed?env=sunset&autoplay=true&controls=none&orbit=false"
+								data-src="/walk-embed?env=sunset&autoplay=true&controls=none&orbit=false"
 								title="Step preview — an avatar walking at sunset"
 								loading="lazy"
 							></iframe>
@@ -807,7 +807,7 @@
 					<li class="wl-step wl-reveal">
 						<div class="wl-frame-stage">
 							<iframe
-								src="/walk-embed?env=void&autoplay=true&controls=none&orbit=false"
+								data-src="/walk-embed?env=void&autoplay=true&controls=none&orbit=false"
 								title="Step preview — an avatar walking, ready to embed"
 								loading="lazy"
 							></iframe>
@@ -873,7 +873,7 @@
 							</div>
 							<div class="wl-ext-mock-frame">
 								<iframe
-									src="/walk-embed?autoplay=true&controls=none&orbit=false&ground=false"
+									data-src="/walk-embed?autoplay=true&controls=none&orbit=false&ground=false"
 									title="A walking avatar overlaid on a web page"
 									loading="lazy"
 								></iframe>
@@ -915,7 +915,7 @@
 							</div>
 							<div class="wl-frame-stage">
 								<iframe
-									src="/walk-embed?env=void&autoplay=true&controls=joystick"
+									data-src="/walk-embed?env=void&autoplay=true&controls=joystick"
 									title="Live preview of the embed snippet — an interactive walking avatar"
 									loading="lazy"
 									allow="accelerometer; gyroscope"
@@ -1004,6 +1004,36 @@
 						copyBtn.classList.remove('is-copied');
 					}, 1800);
 				});
+			}
+
+			// ── Demo iframes: boot only when they approach the viewport ──
+			// Each embed opens its own three.js WebGL context and downloads an
+			// avatar GLB. Booting all eight at once exhausted the browser's WebGL
+			// context limit and phone memory — textures failed to decode and the
+			// page's load event stalled ~23s on mobile. `loading="lazy"` is only a
+			// browser heuristic and fired them all anyway, so the src is withheld
+			// until the frame really is near the viewport. The hero iframe keeps a
+			// real `src` and stays eager: it is the first thing anyone sees.
+			const lazyFrames = document.querySelectorAll('iframe[data-src]');
+			const bootFrame = (frame) => {
+				if (!frame.dataset.src) return;
+				frame.src = frame.dataset.src;
+				delete frame.dataset.src;
+			};
+			if (!('IntersectionObserver' in window)) {
+				lazyFrames.forEach(bootFrame); // no observer support → keep every demo working
+			} else {
+				const frameIo = new IntersectionObserver(
+					(entries) => {
+						for (const e of entries) {
+							if (!e.isIntersecting) continue;
+							bootFrame(e.target);
+							frameIo.unobserve(e.target);
+						}
+					},
+					{ rootMargin: '200px 0px' },
+				);
+				lazyFrames.forEach((f) => frameIo.observe(f));
 			}
 
 			// ── Scroll reveal ────────────────────────────────────────────
