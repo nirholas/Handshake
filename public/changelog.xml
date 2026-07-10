@@ -63,6 +63,14 @@
 			<description>Rigging any generated model into an animation-ready character had been failing since the cloud migration: the rig request was sent to a service that doesn't do rigging, and the GPU rigger itself crashed on a graphics call our cloud GPUs don't support. Both are fixed — rig requests now reach the real UniRig worker, which renders its voxel pass in software instead. Proof: all four Agent Identity Studio demo characters (LedgerLynx, MuseWeaver, Momentum-9, and the three.ws studio's own) were generated, rigged with full skeletons, and photographed in posed renders through the live pipeline — see them on the showcase.</description>
 		</item>
 		<item>
+			<title>Broken links across the site now go where they should</title>
+			<link>https://three.ws/activity</link>
+			<guid isPermaLink="false">2026-07-10:Broken links across the site now go where they should</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Nine links pointed at pages that don't exist and quietly landed people on a Not Found screen. The Activity page's &quot;Leaderboard&quot; and &quot;Proven wins&quot; links now open the right section of the Oracle, the dashboard's &quot;Upload .glb&quot; and &quot;Create an agent&quot; buttons reach the real create flow, a token's &quot;3D Agent view&quot; opens the live 3D coin scene, and the Restyle page's MCP tool reference opens the MCP docs.</description>
+		</item>
+		<item>
 			<title>Coin art appears on Smart Money, the Scene Studio gizmo comes back, and pay buttons stop breaking</title>
 			<link>https://three.ws/smart-money</link>
 			<guid isPermaLink="false">2026-07-10:Coin art appears on Smart Money, the Scene Studio gizmo comes back, and pay buttons stop breaking</guid>
@@ -125,6 +133,14 @@
 			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A single request budget was shared across roughly 166 endpoints, so ordinary pages that load several panels at once — agent profiles, the markets dashboards, the galaxy view, the activity feed — could exhaust it and start showing &quot;too many requests&quot; errors to the person browsing. Market data, agent profiles and the galaxy each have their own budget now, and the shared one has far more headroom.</description>
+		</item>
+		<item>
+			<title>Progress meters can no longer flash a nonsense number</title>
+			<link>https://three.ws/three-token</link>
+			<guid isPermaLink="false">2026-07-10:Progress meters can no longer flash a nonsense number</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The counter that animates up to a percentage could briefly paint a wildly wrong value — the $THREE holder gate showed &quot;-42797% there&quot; instead of &quot;40% there&quot; — whenever the browser's animation clock disagreed with its performance clock. Counters now measure elapsed time against a single clock and are clamped to their real start and end values, so every frame shows a sane number.</description>
 		</item>
 		<item>
 			<title>The autonomous agent loop stops retrying payments it can't afford</title>

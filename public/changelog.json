@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T12:55:25.623Z",
+	"generated_at": "2026-07-10T12:57:19.947Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -75,6 +75,16 @@
 			"tags": [
 				"fix",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Broken links across the site now go where they should",
+			"summary": "Nine links pointed at pages that don't exist and quietly landed people on a Not Found screen. The Activity page's \"Leaderboard\" and \"Proven wins\" links now open the right section of the Oracle, the dashboard's \"Upload .glb\" and \"Create an agent\" buttons reach the real create flow, a token's \"3D Agent view\" opens the live 3D coin scene, and the Restyle page's MCP tool reference opens the MCP docs.",
+			"link": "/activity",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -158,6 +168,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Progress meters can no longer flash a nonsense number",
+			"summary": "The counter that animates up to a percentage could briefly paint a wildly wrong value — the $THREE holder gate showed \"-42797% there\" instead of \"40% there\" — whenever the browser's animation clock disagreed with its performance clock. Counters now measure elapsed time against a single clock and are clamped to their real start and end values, so every frame shows a sane number.",
+			"link": "/three-token",
+			"tags": [
+				"fix"
 			]
 		},
 		{
