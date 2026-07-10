@@ -2,14 +2,56 @@
 
 The platform's distributed rate limiters and the shared cache run on a single
 Upstash Redis store. On the free plan that store has a hard ceiling of
-**500,000 commands/month**. When the ceiling is hit, every `critical: true`
-limiter **fails closed** — which blocks every paid forge generation and every
-x402 payment platform-wide. This is not theoretical: in early June 2026 the
-previous store burned ~42,000 commands/day and exhausted the quota in ~12 days,
-taking the paid surface down for all users.
+**500,000 commands/month**. When the ceiling is hit Upstash rejects *every*
+command with `ERR max requests limit exceeded`, and the counter does not reset
+until the plan period rolls over — so an exhausted store stays dead for days or
+weeks, not minutes.
+
+This is not theoretical. It has happened twice:
+
+- **June 2026** — the previous store burned ~42,000 commands/day and exhausted
+  the quota in ~12 days.
+- **2026-07-09** — the store hit 500,000/500,000 on day 10 of the month. Because
+  `critical: true` limiters then **failed closed**, every paid forge generation,
+  checkout, withdrawal, mint and trade would have returned 503 for the remaining
+  three weeks of the period.
+
+**That fail-closed disposition is gone.** A `critical` or auth bucket now degrades
+onto a durable **Postgres counter** (`rate_limit_counters`) when Redis cannot
+answer — distributed, surviving instance fan-out, and costing one upsert. See
+_Fallback behaviour_ below. Postgres is already a hard dependency of every
+money-moving endpoint, so if it is down the action could not have succeeded
+anyway; a limiter outage no longer takes the paid product with it.
 
 This doc is the deliberate-decision playbook: what burns quota, how to see the
-burn before it's a crisis, and when/how to upgrade.
+burn before it's a crisis, what happens when Redis goes blind, and when/how to
+upgrade.
+
+## Fallback behaviour
+
+Which backend decides a request, in priority order:
+
+| Bucket kind | Redis healthy | Redis blind (outage or over quota) | Redis + Postgres both down |
+|---|---|---|---|
+| `critical` (money, spend) | Redis sliding window | **Postgres** fixed window | deny (fail closed) |
+| `degradeToMemory` (auth, login) | Redis sliding window | **Postgres** fixed window | per-instance memory (never lock everyone out) |
+| plain (read/flood guards) | Redis sliding window | fail **open** | fail open |
+| `local: true` | per-instance memory — never touches Redis or Postgres | same | same |
+
+Two properties worth knowing:
+
+- **The Postgres window is fixed, not sliding.** A caller can spend its full
+  budget at the end of one window and again at the start of the next, i.e. up to
+  2× `limit` across the seam. That is an accepted tradeoff on a fallback path: a
+  bounded burst during an outage beats either unbounded spend or a dead paid
+  product, and a fixed window is settled by one atomic
+  `INSERT … ON CONFLICT DO UPDATE … RETURNING hits` with no read-modify-write race.
+- **A circuit breaker fronts Redis** (`rate-limit.js`, mirroring `cache.js`).
+  Without it every rate-limited request paid a full failing round-trip before
+  reaching its fallback — a ~300ms tax on every API call during the 2026-07-09
+  incident. After 5 consecutive failures Redis is skipped entirely for an
+  escalating cooldown (5s → 10s → … → 10min), with a single trial command
+  admitted per cooldown to detect recovery.
 
 ## Upstash plan management
 
@@ -42,9 +84,24 @@ hunch.
 See `api/_lib/rate-limit.js` — limiters marked `local: true` use **zero Redis
 commands** (per-instance in-memory enforcement). Eligible candidates: status-poll
 limiters, public health-check limiters, public read endpoints, cron rate guards.
-**Never mark a `critical: true` limiter as `local`** — the fail-closed behavior
-on a missing/exhausted Redis is the correct safety behavior for money-moving
-operations.
+**Never mark a `critical: true` limiter as `local`** — a money bucket must be
+bounded across instances, and `local` bounds nothing but a single container.
+
+The biggest single burn reduction available is keeping *reads* off Redis. A read
+guard fires on every page load; a money bucket fires on a purchase. Sizing them
+the same way is what spends the allowance the money buckets need. Already moved
+to `local` for exactly this reason (2026-07-10):
+
+| Bucket | Was | Why `local` is right |
+|---|---|---|
+| `authed:read:ip` | 300/5m on Redis | the hottest limiter on the platform — fires on every authenticated page load; guards scraping of data the caller may already read |
+| `mcp:ip` / `mcp:user` | 600/1m, 1200/1m on Redis | MCP transport flood guards; the *paid* MCP tools keep their own `critical` distributed buckets |
+| `wallet:read` | 60/1m on Redis | balance/holdings **reads** polled by open dashboards; sends and withdrawals keep distributed buckets |
+
+Also: do not reach for `limits.authIp` as a generic "authenticated endpoint"
+limiter. It is the strict credential bucket (50/10m, sized for login
+brute-force). Use `limits.authedReadIp` for session-scoped reads, and mint a
+dedicated bucket for a sensitive write (`agentCreateIp` is the model).
 
 ## Visibility
 
@@ -158,6 +215,18 @@ to `local` (no Redis command) or must stay Redis-backed.
   `tokenPriceIp`, `widgetRead`, `pinStatusIp` moved to `local`; burn-rate block
   added to `/api/forge?health`; projected-quota Telegram alert added to the
   forge-smoke cron; this doc created.
+- **2026-07-09** — store hit 500,000/500,000 on day 10 of the period. Diagnosis
+  was slowed by `/healthz` advising the timeout remedy
+  (`CACHE_REDIS_CMD_TIMEOUT_MS`) for what was actually an exhausted allowance —
+  commands were being *rejected*, not running slow.
+- **2026-07-10** — the fail-closed disposition replaced with a durable Postgres
+  fallback (`rate_limit_counters`, migration `20260710120000`), so money and auth
+  buckets stay bounded instead of denying for the rest of the plan period. A
+  circuit breaker was added in front of Redis (there was none — only `cache.js`
+  had one), ending the failing round-trip on every request. `authedReadIp`,
+  `mcpIp`, `mcpUser` and `walletRead` moved to `local`, and 38 read-only call
+  sites were moved off the strict `authIp` credential bucket. `/healthz` gained a
+  `rate_limiter` subsystem and now names an exhausted allowance explicitly.
 
 ## Data durability
 
