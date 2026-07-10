@@ -284,9 +284,26 @@ const PROVIDER_CAPACITY_CODES = new Set([
 	-32004, // block/slot not available yet — another node may have it
 ]);
 
+// A provider that gates a method behind its paid/registered tier answers with a
+// method-shaped JSON-RPC error (Tatum returns -32601-class codes for
+// `getBalance` / `getSignaturesForAddress` on the keyless lane). The code alone
+// is indistinguishable from a genuinely absent method — which is deterministic
+// and must NOT rotate — so this matches the plan-gate phrasing instead. Unlike a
+// missing method, a tier gate is provider-specific: the next lane serves the call
+// normally, so failing over is the correct disposition. Left unclassified these
+// surfaced straight to the caller and blinded every getSignaturesForAddress
+// consumer (the ring leak scanner) and every getBalance consumer the moment the
+// rotation cascaded past the keyed lanes onto Tatum.
+function isProviderTierError(rpcError) {
+	return /not available for anonymous access|available for paid plans only|upgrade your subscription|please register at/i.test(
+		String(rpcError?.message || ''),
+	);
+}
+
 function isProviderCapacityError(rpcError) {
 	if (!rpcError || typeof rpcError !== 'object') return false;
 	if (PROVIDER_CAPACITY_CODES.has(rpcError.code)) return true;
+	if (isProviderTierError(rpcError)) return true;
 	return /too many requests|rate.?limit|quota|usage limit|credits?\s*exhausted|forbidden|api key|unauthor|max usage/i.test(
 		String(rpcError.message || ''),
 	);

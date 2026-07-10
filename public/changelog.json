@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T12:19:11.573Z",
+	"generated_at": "2026-07-10T12:24:50.452Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -139,6 +139,18 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Wallet balances and the leak scanner stay online when the RPC pool thins",
+			"summary": "When the platform's paid Solana data providers hit their quota, requests roll over to a chain of free public ones. One of those free providers answers most requests but quietly refuses two of them — reading a wallet's balance, and listing a wallet's transaction history — telling you to upgrade instead. The platform treated that refusal as a real answer, so whenever the rollover reached that provider, balance lookups failed and the background scan that watches platform wallets for unauthorised transfers went blind. Those refusals are now recognised for what they are, and the request moves on to the next provider automatically.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra",
+				"security"
 			]
 		},
 		{

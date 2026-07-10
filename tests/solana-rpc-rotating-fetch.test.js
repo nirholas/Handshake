@@ -65,4 +65,37 @@ describe('makeRotatingFetch — never leaks an unvalidated upstream body', () =>
 		// First healthy endpoint answers — no failover round-trips.
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
 	});
+
+	// A keyless lane that gates a method behind its paid/registered tier answers 200
+	// with a method-shaped JSON-RPC error. It is provider-specific — the next lane
+	// serves the call — so it must rotate rather than surface. Production symptom:
+	// the ring leak scanner's getSignaturesForAddress and the balance reader's
+	// getBalance both hard-failed whenever rotation cascaded onto Tatum.
+	// -16401 is the code Tatum actually returns (verified live against
+	// solana-mainnet.gateway.tatum.io); -32601 covers a provider that reuses the
+	// standard method-not-found code for the same gate. Both must rotate, so the
+	// match is on the message, never the code.
+	it.each([
+		[-16401, "Method 'getSignaturesForAddress' is not available for anonymous access. Please register at https://co.tatum.io/signup."],
+		[-32601, "Method 'getBalance' is available for paid plans only. To access this feature, please upgrade your subscription at https://co.tatum.io/upgrade."],
+	])('fails over past a provider tier gate (code %i)', async (code, message) => {
+		const eps = [`https://tier-${-code}.test/`, `https://tier-${-code}-next.test/`];
+		const gated = { jsonrpc: '2.0', id: 1, error: { code, message } };
+		global.fetch = vi.fn(async (url) => (url === eps[0] ? resp(gated) : resp(VALID)));
+		const out = await makeRotatingFetch(eps)(null, { method: 'POST', body: '{}' });
+		expect((await out.json()).result).toEqual({ ok: true });
+	});
+
+	// The mirror-image guard: a genuinely absent method is deterministic across every
+	// provider, so rotating on it would just retry a guaranteed failure on each lane.
+	// It must reach the caller untouched.
+	it('surfaces a genuine method-not-found without rotating', async () => {
+		const eps = ['https://mnf-1.test/', 'https://mnf-2.test/'];
+		const missing = { jsonrpc: '2.0', id: 1, error: { code: -32601, message: 'Method not found' } };
+		const fetchSpy = vi.fn(async () => resp(missing));
+		global.fetch = fetchSpy;
+		const out = await makeRotatingFetch(eps)(null, { method: 'POST', body: '{}' });
+		expect((await out.json()).error.message).toBe('Method not found');
+		expect(fetchSpy).toHaveBeenCalledTimes(1);
+	});
 });

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T12:13:15.844Z",
+	"generated_at": "2026-07-10T12:24:50.414Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1962,16 +1962,6 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": true
-				},
-				{
-					"path": "/agent",
-					"title": "Agent Home",
-					"description": "Default landing for an agent instance — chat, embed, and remix actions.",
-					"added": "2026-04-14",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
 				},
 				{
 					"path": "/agents",
