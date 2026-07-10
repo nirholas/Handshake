@@ -12850,6 +12850,32 @@
 				"feature"
 			],
 			"link": "/markets/digest"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "The blog is back — 30 posts were silently redirecting to the changelog",
+			"summary": "Every /blog post, including the IBM, AWS, Google Cloud and Alibaba Cloud partnership announcements, was being redirected to the changelog even though the articles were still published and linked from Pricing, Partners and Tutorials. The posts are readable again at their original URLs.",
+			"link": "/blog",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"title": "Pages no longer rate-limit themselves during normal browsing",
+			"summary": "A single request budget was shared across roughly 166 endpoints, so ordinary pages that load several panels at once — agent profiles, the markets dashboards, the galaxy view, the activity feed — could exhaust it and start showing \"too many requests\" errors to the person browsing. Market data, agent profiles and the galaxy each have their own budget now, and the shared one has far more headroom.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"title": "Fixed two API endpoints that returned an error for every request",
+			"summary": "The $THREE balance check (/api/pump/check-three-balance) and the $THREE price signal (/api/three-signal) crashed on every call because of an incorrect internal call signature. Both now return real data.",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }

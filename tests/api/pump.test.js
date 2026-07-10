@@ -25,8 +25,12 @@ vi.mock('../../api/_lib/db.js', () => ({
 	isDbCapacityError: () => false,
 }));
 
+// Any bucket resolves to "allowed". The handlers under test move between buckets
+// as page-load reads get isolated from write paths (authIp → authedReadIp → …);
+// enumerating names here just means a silent 500 ("limits.<name> is not a
+// function") the next time one is renamed — which is exactly what this mock did.
 vi.mock('../../api/_lib/rate-limit.js', () => ({
-	limits: { authIp: vi.fn(async () => ({ success: true })) },
+	limits: new Proxy({}, { get: () => vi.fn(async () => ({ success: true })) }),
 	clientIp: vi.fn(() => '127.0.0.1'),
 }));
 
