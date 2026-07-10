@@ -35,6 +35,7 @@ const REFRESH_DEADLINE_MS = 2500; // how long a request will wait on cold source
 const GLOBAL_CONCURRENCY = 16; // outbound feed fetches in flight, all domains
 const DOMAIN_CONCURRENCY = 3; // outbound feed fetches in flight, per domain
 const MAX_ARTICLES_PER_SOURCE = 40; // newest-N per feed keeps the working set bounded
+const NARROW_QUERY_SOURCES = 8; // at or below this, wait for the feeds rather than return an empty page
 
 // key → { articles, fetchedAt, ok, failures, nextRetryAt }
 const sourceCache = new Map();
@@ -289,9 +290,9 @@ const JSON_ADAPTERS = {
 };
 
 // ── Concurrency control ──────────────────────────────────────────────────────
-// Feeds cluster on shared hosts (medium.com, substack.com, mirror.xyz each
-// carry many). Firing every feed at once earns a 429 from exactly those hosts,
-// so cap globally *and* per domain.
+// Feeds cluster on shared hosts, so cap outbound fetches globally *and* per
+// domain: a naive Promise.all over the registry earns an instant 429 from
+// exactly those hosts and starves slow feeds of their timeout budget.
 
 function feedDomain(url) {
 	try {
@@ -489,9 +490,12 @@ export async function getNews({ category, source, lang = 'en', q, limit = 30, of
 		}
 	}
 
-	// A caller who names one source is asking for that source specifically —
-	// give it the full feed timeout rather than the shared fan-out deadline.
-	const deadline = keys.length === 1 ? FEED_TIMEOUT_MS + 500 : REFRESH_DEADLINE_MS;
+	// A narrow selection — one source, or a small language/category slice — has
+	// no other content to fall back on: truncating its refresh at the fan-out
+	// deadline returns an empty page rather than a partial one. Give it the full
+	// feed timeout. A broad query keeps the short deadline; it has plenty to show
+	// while the stragglers land in cache for the next caller.
+	const deadline = keys.length <= NARROW_QUERY_SOURCES ? FEED_TIMEOUT_MS + 500 : REFRESH_DEADLINE_MS;
 	const all = await ensureSources(keys, deadline);
 	let articles = dedupe(all).sort(
 		(a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0),

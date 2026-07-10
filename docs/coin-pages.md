@@ -43,7 +43,7 @@ editorial serif headings, hairline borders, mono numerals, light/dark themes.
 - **Market stats** — market cap, 24h volume, circulating/total supply,
   all-time high and low (dated), 24h high/low.
 - **Related news** — live articles mentioning the coin, from the native
-  three.ws aggregator (38 publisher feeds, `api/_lib/news.js`).
+  three.ws aggregator (192 publisher feeds, `api/_lib/news.js`).
 - **About + links** — plain-text description, official site / social /
   explorer pills, and per-chain contract addresses with one-click copy.
 - **three.ws integration** — coins with a Solana contract cross-link into
@@ -212,7 +212,7 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | `/api/coin/global`      | CoinGecko `/global` + alternative.me Fear & Greed          | 120 s        |
 | `/api/coin/fear-greed`  | alternative.me `/fng` (current + history)                  | 300 s        |
 | `/api/coin/gas`         | public Ethereum RPC `eth_feeHistory` + CoinGecko ETH price | 15 s         |
-| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 38 publisher feeds) | 300 s        |
+| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 192 publisher feeds) | 300 s        |
 | `/api/news/feed`        | native aggregator — 38 publisher RSS/Atom feeds, per-source cache + serve-stale | 120 s |
 | `/api/news/article`     | publisher page fetch (SSRF-guarded) → publisher feed body → preview; LLM analysis via Groq/OpenRouter with extractive fallback | 1800 s |
 | `/api/news/archive`     | `gs://three-ws-news-archive` (662k-article JSONL corpus + indexes on GCS) | 300 s / 3600 s |

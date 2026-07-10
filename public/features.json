@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T13:03:08.224Z",
+	"generated_at": "2026-07-10T13:20:50.725Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1889,7 +1889,7 @@
 				{
 					"path": "/markets",
 					"title": "Markets Hub",
-					"description": "The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 38 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
+					"description": "The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 192 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
 					"added": "2026-07-10",
 					"auth": null,
 					"indexable": true,
@@ -1899,7 +1899,7 @@
 				{
 					"path": "/markets/news",
 					"title": "Crypto News",
-					"description": "Live crypto news aggregated natively from 38 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
+					"description": "Live crypto news aggregated natively from 192 publisher feeds in 18 languages — filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
 					"added": "2026-07-10",
 					"auth": null,
 					"indexable": true,

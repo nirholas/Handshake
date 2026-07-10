@@ -58,8 +58,16 @@ describe('hosts we must not regress onto', () => {
 	// feed on them answers 403 to server-side fetches, so they can never be
 	// served from Cloud Run. They read as plausible sources, which is exactly
 	// why this guard exists.
-	it('lists no substack.com or mirror.xyz feeds', () => {
-		const blocked = entries.filter(([, s]) => /(^|\.)(substack\.com|mirror\.xyz)$/.test(new URL(s.url).hostname));
+	//
+	// medium.com joined the list on 2026-07-10: 43 medium.com/feed/* sources were
+	// added to the registry and every one answers 429 to a server-side fetch
+	// (probed 5/5 from Cloud Run's egress, spaced seconds apart — it is a blanket
+	// block on datacenter IPs, not per-feed throttling). They looked live in a
+	// browser, which is the trap.
+	it('lists no substack.com, mirror.xyz, or medium.com feeds', () => {
+		const blocked = entries.filter(([, s]) =>
+			/(^|\.)(substack\.com|mirror\.xyz|medium\.com)$/.test(new URL(s.url).hostname),
+		);
 		expect(blocked.map(([k]) => k)).toEqual([]);
 	});
 

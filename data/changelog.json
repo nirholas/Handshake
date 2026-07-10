@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-07-10",
+			"title": "Crypto news now aggregates 192 publisher feeds, in 18 languages",
+			"summary": "The news feed grew from 38 sources to 192 — every major newsroom plus research desks, security teams, on-chain analysts, exchanges, regulators, and independent journalists, across 27 categories. 33 of them publish in a language other than English, so /markets/news now has a language picker covering 18 languages; the default feed stays English-only. Every feed was fetched and parsed before being added, so the list holds no dead links: of roughly 450 candidate feeds, about half turned out to be defunct domains, URLs that now serve a web page instead of a feed, or sites that block servers outright. Binance listing announcements are in there too, which no RSS feed carries.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/markets/news"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "A leftover test file stops loading on every visit",
+			"summary": "A one-off test page and the 1.5 MB script it loaded were committed by mistake and had been sitting in the public folder ever since — downloadable by anyone and adding dead weight to the site for no reason. Both are gone, and the project now refuses to accept that kind of leftover again.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-10",
 			"title": "Agents registered on-chain can no longer put a slur on three.ws",
 			"summary": "The agent directory lists every agent registered on the public blockchains we index — over 126,000 of them — and it took each one's name, description and picture straight from whatever its owner published on-chain. Whether an agent appeared on our pages was decided by a flag the agent itself set, and nothing ever checked what the name said. One agent's name was a racial slur, and it was being displayed on the marketplace. Names carrying a hate slur are now withheld from every listing, search result and feed, and the agent that was showing has been taken down. The check is deliberately narrow: it looks for slurs, not swearing, and it is careful never to hide a legitimate agent whose name merely contains an ordinary word or a wallet address.",
 			"tags": [

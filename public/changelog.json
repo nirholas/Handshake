@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T13:03:08.253Z",
+	"generated_at": "2026-07-10T13:20:50.739Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -10,7 +10,7 @@
 			"date": "2026-07-10",
 			"type": "launch",
 			"title": "Crypto News",
-			"summary": "Live crypto news aggregated natively from 38 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
+			"summary": "Live crypto news aggregated natively from 192 publisher feeds in 18 languages — filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
 			"link": "/markets/news",
 			"tags": [
 				"launch"
@@ -60,10 +60,21 @@
 			"date": "2026-07-10",
 			"type": "launch",
 			"title": "Markets Hub",
-			"summary": "The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 38 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
+			"summary": "The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 192 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
 			"link": "/markets",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "A leftover test file stops loading on every visit",
+			"summary": "A one-off test page and the 1.5 MB script it loaded were committed by mistake and had been sitting in the public folder ever since — downloadable by anyone and adding dead weight to the site for no reason. Both are gone, and the project now refuses to accept that kind of leftover again.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -147,6 +158,17 @@
 			"link": "/markets",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Crypto news now aggregates 192 publisher feeds, in 18 languages",
+			"summary": "The news feed grew from 38 sources to 192 — every major newsroom plus research desks, security teams, on-chain analysts, exchanges, regulators, and independent journalists, across 27 categories. 33 of them publish in a language other than English, so /markets/news now has a language picker covering 18 languages; the default feed stays English-only. Every feed was fetched and parsed before being added, so the list holds no dead links: of roughly 450 candidate feeds, about half turned out to be defunct domains, URLs that now serve a web page instead of a feed, or sites that block servers outright. Binance listing announcements are in there too, which no RSS feed carries.",
+			"link": "/markets/news",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

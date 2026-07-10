@@ -1,5 +1,5 @@
-// Crypto-news source registry — 235 live publisher feeds across
-// 29 categories, 33 of them international across 17 languages.
+// Crypto-news source registry — 192 live publisher feeds across 27 categories,
+// 33 of them international across 17 languages.
 //
 // Ported from the cryptocurrency.cv aggregator (same team; its Vercel deployment
 // is retired, so three.ws runs the aggregation natively). Keys and category
@@ -7,13 +7,22 @@
 // and live records line up.
 //
 // EVERY feed here was fetched and parsed before being listed. The upstream
-// registry carried ~450 feeds, but a large share are no longer real: dead
-// domains, feeds replaced by HTML pages, and outlets behind a Cloudflare bot
-// challenge (all of substack.com and mirror.xyz — unfetchable server-side).
-// Those are omitted rather than shipped as permanently-failing sources.
-// Regenerate with the probe in scripts/news-sources-probe.mjs.
+// registry carried ~450 feeds and roughly half are no longer real. What was
+// dropped, and why:
 //
-// Fields: name, url, category. Optional: tier + credibility (upstream editorial
+//   * ~150 dead outright — 404/410, dead domains, or a feed URL that now serves
+//     an HTML page. Size is no signal: several returned 700 KB of markup.
+//   * substack.com and mirror.xyz (28 feeds) — behind a Cloudflare bot
+//     challenge, so every one answers 403 to a server-side fetch.
+//   * medium.com (43 feeds) — answers 429 to datacenter egress regardless of
+//     pacing. They look live in a browser, which is the trap.
+//
+// A feed that only rate-limited us is not the same as a dead one, so those were
+// re-probed slowly before any verdict. Regenerate and re-validate with
+// scripts/news-sources-probe.mjs, which exits non-zero when a source has died.
+//
+// Fields: name, url, category. Optional: kind ('json' — shaped by an adapter in
+// news.js rather than parsed as a feed), tier + credibility (upstream editorial
 // tiering, drives refresh priority), language + region (international feeds).
 
 export const NEWS_SOURCES = {
@@ -86,7 +95,6 @@ export const NEWS_SOURCES = {
 	zycrypto: { name: 'ZyCrypto', url: 'https://zycrypto.com/feed/', category: 'general' },
 
 	// ── Bitcoin (11) ─────────────────────────────────────────────────────────
-	alex_lab_blog: { name: 'ALEX Lab Blog', url: 'https://medium.com/feed/alexgobtc', category: 'bitcoin' },
 	bitcoinblock: { name: 'Bitcoin Block', url: 'https://bitcoinblock.com.br/feed/', category: 'bitcoin', language: 'pt', region: 'latam' },
 	bitcoincom: { name: 'Bitcoin.com News', url: 'https://news.bitcoin.com/feed/', category: 'bitcoin' },
 	bitcoinist: { name: 'Bitcoinist', url: 'https://bitcoinist.com/feed/', category: 'bitcoin', tier: 'tier3', credibility: 0.72 },
@@ -101,68 +109,40 @@ export const NEWS_SOURCES = {
 	// ── Ethereum (5) ─────────────────────────────────────────────────────────
 	ef_blog: { name: 'Ethereum Foundation', url: 'https://blog.ethereum.org/feed.xml', category: 'ethereum' },
 	ens_blog: { name: 'ENS Blog', url: 'https://ens.domains/blog/rss.xml', category: 'ethereum' },
-	ethereum_cat_herders: { name: 'Ethereum Cat Herders', url: 'https://medium.com/feed/ethereum-cat-herders', category: 'ethereum' },
 	lido_dao_blog: { name: 'Lido DAO Governance', url: 'https://research.lido.fi/latest.rss', category: 'ethereum' },
-	rocketpool_blog: { name: 'Rocket Pool Blog', url: 'https://medium.com/feed/rocket-pool', category: 'ethereum' },
 
 	// ── Layer 2 (3) ──────────────────────────────────────────────────────────
 	altlayer_blog: { name: 'AltLayer Blog', url: 'https://blog.altlayer.io/feed', category: 'layer2' },
-	aztec_blog: { name: 'Aztec Blog', url: 'https://medium.com/feed/aztec-protocol', category: 'layer2' },
-	starknet_blog: { name: 'StarkNet Blog', url: 'https://starkware.medium.com/feed', category: 'layer2' },
 
 	// ── Solana (7) ───────────────────────────────────────────────────────────
-	marginfi_blog: { name: 'marginfi Blog', url: 'https://medium.com/feed/marginfi', category: 'solana' },
-	marinade_blog: { name: 'Marinade Finance Blog', url: 'https://medium.com/feed/marinade-finance', category: 'solana' },
-	orca_blog: { name: 'Orca Blog', url: 'https://medium.com/feed/orca-so', category: 'solana' },
-	raydium_blog: { name: 'Raydium Blog', url: 'https://medium.com/feed/@raydium', category: 'solana' },
 	solana_news: { name: 'Solana News', url: 'https://solana.com/news/rss.xml', category: 'solana' },
 	solanafloor: { name: 'SolanaFloor', url: 'https://solanafloor.com/feed.xml', category: 'solana' },
-	solflare_blog: { name: 'Solflare Blog', url: 'https://medium.com/feed/solflare', category: 'solana' },
 
 	// ── Alt L1 (13) ──────────────────────────────────────────────────────────
-	aptos_blog: { name: 'Aptos Blog', url: 'https://medium.com/feed/aptoslabs', category: 'altl1' },
 	avail_blog: { name: 'Avail Blog', url: 'https://blog.availproject.org/rss/', category: 'altl1' },
-	avalanche_blog: { name: 'Avalanche Blog', url: 'https://medium.com/feed/avalancheavax', category: 'altl1' },
 	celestia_blog: { name: 'Celestia Blog', url: 'https://blog.celestia.org/rss/', category: 'altl1' },
-	dymension_blog: { name: 'Dymension Blog', url: 'https://medium.com/feed/@dymension', category: 'altl1' },
 	hedera: { name: 'Hedera', url: 'https://hedera.com/feed/', category: 'altl1' },
-	movement_blog: { name: 'Movement Labs Blog', url: 'https://medium.com/feed/@movementlabsxyz', category: 'altl1' },
 	neonewstoday: { name: 'NEO News Today', url: 'https://neonewstoday.com/feed/', category: 'altl1' },
-	osmosis_blog: { name: 'Osmosis Blog', url: 'https://medium.com/feed/osmosis', category: 'altl1' },
-	render_blog: { name: 'Render Network Blog', url: 'https://medium.com/feed/render-token', category: 'altl1' },
 	sei_blog: { name: 'Sei Blog', url: 'https://blog.sei.io/rss/', category: 'altl1' },
-	stride_blog: { name: 'Stride Blog', url: 'https://medium.com/feed/@stride_zone', category: 'altl1' },
 	sui_blog: { name: 'Sui Blog', url: 'https://blog.sui.io/feed/', category: 'altl1' },
 
 	// ── DeFi (18) ────────────────────────────────────────────────────────────
-	across_blog: { name: 'Across Protocol Blog', url: 'https://medium.com/feed/across-protocol', category: 'defi' },
-	balancer_blog: { name: 'Balancer Blog', url: 'https://medium.com/feed/balancer-protocol', category: 'defi' },
 	bankless: { name: 'Bankless', url: 'https://www.bankless.com/rss/feed', category: 'defi', tier: 'tier3', credibility: 0.78 },
-	centrifuge_blog: { name: 'Centrifuge Blog', url: 'https://medium.com/feed/centrifuge', category: 'defi' },
-	compound_blog: { name: 'Compound Blog', url: 'https://medium.com/feed/compound-finance', category: 'defi' },
 	curve_blog: { name: 'Curve Blog', url: 'https://news.curve.fi/rss/', category: 'defi' },
 	defiant: { name: 'The Defiant', url: 'https://thedefiant.io/feed', category: 'defi', tier: 'tier2', credibility: 0.87 },
 	defirate: { name: 'DeFi Rate', url: 'https://defirate.com/feed/', category: 'defi' },
 	eigenlayer_blog: { name: 'EigenLayer Blog', url: 'https://www.blog.eigenlayer.xyz/rss/', category: 'defi' },
 	lido_blog: { name: 'Lido Blog', url: 'https://blog.lido.fi/rss/', category: 'defi' },
-	maple_v2_blog: { name: 'Maple Finance V2 Blog', url: 'https://medium.com/feed/@maplefinance', category: 'defi' },
-	morpho_blog: { name: 'Morpho Blog', url: 'https://medium.com/feed/morpho-labs', category: 'defi' },
-	pendle_blog: { name: 'Pendle Blog', url: 'https://medium.com/feed/pendle', category: 'defi' },
-	radiant_blog: { name: 'Radiant Capital Blog', url: 'https://medium.com/feed/@radiantcapital', category: 'defi' },
-	sushi_blog: { name: 'SushiSwap Blog', url: 'https://medium.com/feed/sushiswap-org', category: 'defi' },
 	synthetix_blog: { name: 'Synthetix Blog', url: 'https://blog.synthetix.io/rss/', category: 'defi' },
 	tally_blog: { name: 'Tally Blog', url: 'https://blog.tally.xyz/feed', category: 'defi' },
 	yearn_blog: { name: 'Yearn Finance Blog', url: 'https://blog.yearn.fi/feed', category: 'defi' },
 
 	// ── NFT (3) ──────────────────────────────────────────────────────────────
 	nftevening: { name: 'NFTevening', url: 'https://nftevening.com/feed/', category: 'nft' },
-	nifty_gateway_blog: { name: 'Nifty Gateway Blog', url: 'https://medium.com/feed/nifty-gateway', category: 'nft' },
-	superrare_blog: { name: 'SuperRare Blog', url: 'https://medium.com/feed/superrare', category: 'nft' },
 
 	// ── Gaming (3) ───────────────────────────────────────────────────────────
 	chiliz: { name: 'Chiliz', url: 'https://www.chiliz.com/feed/', category: 'gaming' },
 	gala_blog: { name: 'Gala Games Blog', url: 'https://blog.gala.games/feed', category: 'gaming' },
-	gamingguild_blog: { name: 'Yield Guild Games Blog', url: 'https://medium.com/feed/yield-guild-games', category: 'gaming' },
 
 	// ── Trading (7) ──────────────────────────────────────────────────────────
 	beincrypto: { name: 'BeInCrypto', url: 'https://beincrypto.com/feed/', category: 'trading', tier: 'tier3', credibility: 0.7 },
@@ -176,8 +156,6 @@ export const NEWS_SOURCES = {
 	// ── Derivatives (5) ──────────────────────────────────────────────────────
 	amberdata_blog: { name: 'Amberdata Blog', url: 'https://blog.amberdata.io/rss.xml', category: 'derivatives' },
 	deribit_insights: { name: 'Deribit Insights', url: 'https://insights.deribit.com/feed/', category: 'derivatives' },
-	gains_network_blog: { name: 'gTrade Blog', url: 'https://medium.com/feed/gains-network', category: 'derivatives' },
-	hyperliquid_blog: { name: 'Hyperliquid Blog', url: 'https://medium.com/feed/@hyperliquid', category: 'derivatives' },
 	paradigm_trading: { name: 'Paradigm (Trading)', url: 'https://www.paradigm.co/blog/rss.xml', category: 'derivatives' },
 
 	// ── Research (2) ─────────────────────────────────────────────────────────
@@ -186,7 +164,6 @@ export const NEWS_SOURCES = {
 
 	// ── On-chain analytics (3) ───────────────────────────────────────────────
 	dune_blog: { name: 'Dune Analytics Blog', url: 'https://dune.com/blog/feed', category: 'onchain' },
-	intotheblock: { name: 'IntoTheBlock', url: 'https://medium.com/feed/intotheblock', category: 'onchain' },
 	woobull: { name: 'Willy Woo (Woobull)', url: 'https://woobull.com/feed/', category: 'onchain' },
 
 	// ── Quant (1) ────────────────────────────────────────────────────────────
@@ -195,14 +172,11 @@ export const NEWS_SOURCES = {
 	// ── Institutional (7) ────────────────────────────────────────────────────
 	binance_announcements: { name: 'Binance Announcements', url: 'https://www.binance.com/bapi/composite/v1/public/cms/article/list/query?type=1&pageNo=1&pageSize=20&catalogId=48', category: 'institutional', kind: 'json' },
 	bitfinex_blog: { name: 'Bitfinex Blog', url: 'https://blog.bitfinex.com/feed/', category: 'institutional' },
-	dragonfly_research: { name: 'Dragonfly Research', url: 'https://medium.com/feed/dragonfly-research', category: 'institutional' },
-	electric_capital: { name: 'Electric Capital Blog', url: 'https://medium.com/feed/electric-capital', category: 'institutional' },
 	fireblocks_blog: { name: 'Fireblocks Blog', url: 'https://www.fireblocks.com/blog/feed/', category: 'institutional' },
 	kraken_blog: { name: 'Kraken Blog', url: 'https://blog.kraken.com/feed/', category: 'institutional' },
 	placeholder_vc: { name: 'Placeholder VC', url: 'https://www.placeholder.vc/blog?format=rss', category: 'institutional' },
 
 	// ── TradFi (1) ───────────────────────────────────────────────────────────
-	backed_finance_blog: { name: 'Backed Finance Blog', url: 'https://medium.com/feed/@backedfi', category: 'tradfi' },
 
 	// ── ETF / asset managers (2) ─────────────────────────────────────────────
 	ark_invest: { name: 'ARK Invest', url: 'https://www.ark-invest.com/feed', category: 'etf' },
@@ -252,19 +226,13 @@ export const NEWS_SOURCES = {
 	// ── Security (9) ─────────────────────────────────────────────────────────
 	chainalysis_blog: { name: 'Chainalysis Blog', url: 'https://www.chainalysis.com/blog/feed/', category: 'security' },
 	elliptic_blog: { name: 'Elliptic Blog', url: 'https://www.elliptic.co/blog/rss.xml', category: 'security' },
-	immunefi_blog: { name: 'Immunefi Blog', url: 'https://immunefi.medium.com/feed', category: 'security' },
 	openzeppelin_blog: { name: 'OpenZeppelin Blog', url: 'https://www.openzeppelin.com/news/rss.xml', category: 'security' },
 	samczsun: { name: 'samczsun Blog', url: 'https://samczsun.com/rss/', category: 'security' },
-	slowmist: { name: 'SlowMist Blog', url: 'https://slowmist.medium.com/feed', category: 'security' },
 	trailofbits: { name: 'Trail of Bits Blog', url: 'https://blog.trailofbits.com/feed/', category: 'security' },
 	trezor_blog: { name: 'Trezor Blog', url: 'https://blog.trezor.io/feed', category: 'security' },
 	zcash_blog: { name: 'Zcash Blog', url: 'https://electriccoin.co/blog/feed/', category: 'security' },
 
 	// ── Developer (5) ────────────────────────────────────────────────────────
-	api3_blog: { name: 'API3 Blog', url: 'https://medium.com/feed/api3', category: 'developer' },
-	biconomy_blog: { name: 'Biconomy Blog', url: 'https://medium.com/feed/biconomy', category: 'developer' },
-	connext_blog: { name: 'Connext Blog', url: 'https://medium.com/feed/connext', category: 'developer' },
-	layerzero_blog: { name: 'LayerZero Blog', url: 'https://medium.com/feed/layerzero-official', category: 'developer' },
 	particle_network_blog: { name: 'Particle Network Blog', url: 'https://blog.particle.network/rss/', category: 'developer' },
 
 	// ── DePIN (2) ────────────────────────────────────────────────────────────
@@ -272,8 +240,6 @@ export const NEWS_SOURCES = {
 	iotex_blog: { name: 'IoTeX Blog', url: 'https://iotex.io/blog/feed', category: 'depin' },
 
 	// ── AI x crypto (2) ──────────────────────────────────────────────────────
-	gensyn_blog: { name: 'Gensyn Blog', url: 'https://medium.com/feed/@gensyn', category: 'ai_crypto' },
-	sentient_blog: { name: 'Sentient Blog', url: 'https://medium.com/feed/@sentientAGI', category: 'ai_crypto' },
 
 	// ── Mining (2) ───────────────────────────────────────────────────────────
 	bitcoinmining: { name: 'Bitcoin Mining News', url: 'https://bitcoinmagazine.com/tags/mining/.rss/full/', category: 'mining' },
@@ -328,7 +294,6 @@ export const NEWS_CATEGORIES = [
 	'onchain',
 	'quant',
 	'institutional',
-	'tradfi',
 	'etf',
 	'stablecoin',
 	'fintech',
@@ -337,7 +302,6 @@ export const NEWS_CATEGORIES = [
 	'security',
 	'developer',
 	'depin',
-	'ai_crypto',
 	'mining',
 	'macro',
 	'journalism',

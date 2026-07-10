@@ -2575,7 +2575,7 @@ GET /api/coin/news?q=<coin name>&limit=8
 
 Returns `{ "articles": [{ title, link, description, image, source,
 published_at }], "source": "three.ws" }`. Served by the native three.ws
-aggregator (`api/_lib/news.js` — 38 publisher feeds, per-source 5-minute cache
+aggregator (`api/_lib/news.js` — 192 publisher feeds, per-source 5-minute cache
 with serve-stale-on-error).
 
 ---

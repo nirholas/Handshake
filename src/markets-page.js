@@ -126,7 +126,7 @@ const G = {
 
 const SUITE = [
 	{ href: '/coins', glyph: 'table', title: 'Coins', desc: 'Sortable markets table for hundreds of assets with a rich detail page each.', stat: 'coins' },
-	{ href: '/markets/news', glyph: 'news', title: 'Crypto News', desc: 'Live headlines from 38 publisher feeds, filterable and searchable.', stat: 'news' },
+	{ href: '/markets/news', glyph: 'news', title: 'Crypto News', desc: 'Live headlines from 192 publisher feeds, filterable and searchable.', stat: 'news' },
 	{ href: '/markets/digest', glyph: 'digest', title: 'News Digest', desc: 'The day in stories, not headlines — coverage clustered into what moved.', stat: 'digest' },
 	{ href: '/markets/archive', glyph: 'archive', title: 'News Archive', desc: 'The largest open crypto-news archive, back to September 2017.', stat: 'archive' },
 	{ href: '/heatmap', glyph: 'grid', title: 'Heatmap', desc: 'The whole market in one view — tiles sized by cap, colored by move.', stat: 'mover' },
