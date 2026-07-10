@@ -89,10 +89,17 @@ export function countUp(el, from, to, opts = {}) {
 	}
 	const dur = opts.duration || durationMs(opts.token || '--duration-slow', 420);
 	if (dur <= 0) { el.textContent = format(to); return; }
-	const start = now();
+	// Seed the start from the FIRST frame's own timestamp rather than performance.now().
+	// requestAnimationFrame is not contractually on the same time origin as
+	// performance.now() (polyfills and some embedders pass a Date-based clock), and a
+	// `t` behind `start` drives p negative — easeOutCubic then overshoots wildly and the
+	// element renders garbage like "-42797%" before settling. Clamping p as well keeps a
+	// single frame from ever painting a value outside [from, to].
+	let start = null;
 	const delta = to - from;
 	const step = (t) => {
-		const p = Math.min(1, (t - start) / dur);
+		if (start === null) start = t;
+		const p = Math.max(0, Math.min(1, (t - start) / dur));
 		el.textContent = format(from + delta * ease(p));
 		if (p < 1) { if (countTimers) countTimers.set(el, requestAnimationFrame(step)); }
 		else { el.textContent = format(to); if (countTimers) countTimers.delete(el); }

@@ -45,6 +45,56 @@ describe('countUp — instant path (no requestAnimationFrame in node)', () => {
 	});
 });
 
+describe('countUp — animated path never paints outside [from, to]', () => {
+	// requestAnimationFrame is not contractually on performance.now()'s time origin.
+	// Polyfills and some embedders hand the callback a Date-derived timestamp, which
+	// can sit *behind* a performance.now() start — driving the eased progress negative
+	// and overshooting wildly (the real "-42797% there" seen on the $THREE gate).
+	// Every frame must stay clamped between the endpoints regardless of clock skew.
+	// Install a manually-pumped rAF so frames fire on demand with the timestamps we
+	// choose, and stays installed for the frames countUp schedules from inside step().
+	function withManualRaf(fn) {
+		const realRaf = globalThis.requestAnimationFrame;
+		const realCancel = globalThis.cancelAnimationFrame;
+		let pending = null;
+		globalThis.requestAnimationFrame = (cb) => { pending = cb; return 1; };
+		globalThis.cancelAnimationFrame = () => { pending = null; };
+		const frame = (t) => { const cb = pending; pending = null; if (cb) cb(t); };
+		try { return fn(frame); } finally {
+			globalThis.requestAnimationFrame = realRaf;
+			globalThis.cancelAnimationFrame = realCancel;
+		}
+	}
+
+	it('clamps a frame whose timestamp trails the start clock', () => {
+		withManualRaf((frame) => {
+			const el = { textContent: '', dataset: {} };
+			const seen = [];
+			countUp(el, 0, 40, { duration: 400, format: (n) => { seen.push(n); return String(Math.round(n)); } });
+			// A Date-style timestamp far behind a performance.now() start. Pre-fix this
+			// drove p negative and painted a large negative number.
+			frame(0);
+			frame(1);
+			for (const n of seen) {
+				expect(n).toBeGreaterThanOrEqual(0);
+				expect(n).toBeLessThanOrEqual(40);
+			}
+			expect(Number(el.textContent)).toBeGreaterThanOrEqual(0);
+			expect(Number(el.textContent)).toBeLessThanOrEqual(40);
+		});
+	});
+
+	it('lands exactly on the target once the duration elapses', () => {
+		withManualRaf((frame) => {
+			const el = { textContent: '', dataset: {} };
+			countUp(el, 0, 40, { duration: 400, format: (n) => String(Math.round(n)) });
+			frame(1000);          // first frame seeds the start
+			frame(1000 + 500);    // past `duration` → p === 1
+			expect(el.textContent).toBe('40');
+		});
+	});
+});
+
 describe('updateValue', () => {
 	it('counts from the element\'s last tracked value to the new one', () => {
 		// flash:false isolates the count math from the DOM tint pulse
