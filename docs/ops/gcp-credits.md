@@ -11,7 +11,7 @@ work logs, not current setup steps. Production has since moved to Google Cloud R
 (service `three-ws-api`), so every "set in Vercel" / `vercel env add` / `vercel --prod`
 instruction below is superseded — the GCP env vars now live on the Cloud Run
 service. See the **"Audit + fixes — 2026-07-08"** section at the end of this file for
-what was actually wired onto Cloud Run, and the [GCP production runbook](ops/gcp-production.md)
+what was actually wired onto Cloud Run, and the [GCP production runbook](gcp-production.md)
 for the live deploy/env procedure._
 
 > **Status: foundation live; one owner console action remains for Claude.**

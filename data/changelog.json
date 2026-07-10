@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-10",
+			"title": "Every doc on the site was checked against the code that actually ships",
+			"summary": "The documentation had drifted. Guides written early in the project still told you three.ws ran on Vercel, pointed at an old repository that no longer receives updates, named a dev server port we stopped using, and referenced build commands that had since been renamed — and twelve of the services behind the 3D pipeline had no documentation at all. We went through all 339 documents one by one and checked each claim against the running code: every command, every file path, every API endpoint, every link. Guides that were wrong are now right, 27 broken links point somewhere real again, and the background-removal, rigging, texturing, and mesh-generation services each got a proper page explaining what they do, how they run, and how to call them. Tutorials that walk you through deploying your own agent were left alone — those instructions were never the ones that went stale.",
+			"tags": [
+				"docs",
+				"improvement"
+			],
+			"link": "/docs"
+		},
+		{
+			"date": "2026-07-10",
 			"title": "Coin art appears on Smart Money, the Scene Studio gizmo comes back, and pay buttons stop breaking",
 			"summary": "Three fixes found by crawling every page of the site in a real browser. Smart Money Radar showed blank tiles where coin art should be: the images were pulled straight from IPFS and launch CDNs, which browsers refuse to display cross-origin, so every coin on the page failed to load. Art now goes through our own image service, which fetches it for you and falls back to a clean placeholder rather than a broken tile. In Scene Studio, the move/rotate/scale handle had stopped drawing entirely after a 3D-engine upgrade, so you could select an object but never grab it — the handle is back. And the pay-button snippet you copy out of x402 Studio was generated in a form that throws an error the moment a merchant pastes it into their own site; the generated code, and the Studio's own live preview button, now work.",
 			"tags": [

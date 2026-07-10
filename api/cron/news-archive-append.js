@@ -3,7 +3,7 @@
 //
 // The recovered historical archive ends at 2025-12; this cron keeps it
 // current by appending the live aggregator's articles (api/_lib/news.js,
-// 38 publisher feeds) to the current month's JSONL, in the exact enriched
+// the full publisher registry) to the current month's JSONL, in the exact enriched
 // schema the corpus already uses. Records are content-addressed (16-hex id
 // of the link), so appends are idempotent — an article seen by ten cron
 // runs lands exactly once.

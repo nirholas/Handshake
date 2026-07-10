@@ -1,9 +1,9 @@
 // GET /api/coin/news?q=<coin name>&limit=8
 // ---------------------------------------------------------------------------
 // Related-news rail for the /coin/:id page, served by the native three.ws
-// aggregator (api/_lib/news.js — 38 publisher feeds with per-source caching
-// and serve-stale-on-error). Real articles from real publisher feeds, never
-// fabricated.
+// aggregator (api/_lib/news.js — the full publisher registry, with per-source
+// caching and serve-stale-on-error). Real articles from real publisher feeds,
+// never fabricated.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';

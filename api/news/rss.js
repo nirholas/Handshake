@@ -10,7 +10,11 @@
 import { cors, method, text, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getNews } from '../_lib/news.js';
-import { NEWS_CATEGORIES } from '../_lib/news-sources.js';
+import { NEWS_CATEGORIES, NEWS_SOURCES } from '../_lib/news-sources.js';
+
+// Derived, never hardcoded — the registry is the single source of truth for
+// how many publishers we aggregate, and it changes as feeds live and die.
+const SOURCE_COUNT = Object.keys(NEWS_SOURCES).length;
 
 const xml = (s) =>
 	String(s || '')
@@ -60,7 +64,7 @@ export default wrap(async (req, res) => {
 		<title>${xml(title)}</title>
 		<link>${xml(pageUrl)}</link>
 		<atom:link href="${xml(feedUrl)}" rel="self" type="application/rss+xml" />
-		<description>Live crypto news aggregated by three.ws from 38 publisher feeds${category ? ` — ${category} category` : ''}.</description>
+		<description>Live crypto news aggregated by three.ws from ${SOURCE_COUNT} publisher feeds${category ? ` — ${category} category` : ''}.</description>
 		<language>en</language>
 		<lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 		<ttl>5</ttl>

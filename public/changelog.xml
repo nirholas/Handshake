@@ -103,6 +103,14 @@
 			<description>Markets grew a full news wing. /markets/news streams live headlines aggregated directly from 38 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search, and open any story in a reader that extracts the full text with a summary, key points, sentiment, and related coverage. Behind it sits the largest open crypto-news archive anywhere: 662,047 articles from September 2017 to today in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language at /markets/archive. A new /markets hub ties the whole suite together — live global stats, the top 100 coins, breaking news, and every market tool as its own card.</description>
 		</item>
 		<item>
+			<title>Every doc on the site was checked against the code that actually ships</title>
+			<link>https://three.ws/docs</link>
+			<guid isPermaLink="false">2026-07-10:Every doc on the site was checked against the code that actually ships</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The documentation had drifted. Guides written early in the project still told you three.ws ran on Vercel, pointed at an old repository that no longer receives updates, named a dev server port we stopped using, and referenced build commands that had since been renamed — and twelve of the services behind the 3D pipeline had no documentation at all. We went through all 339 documents one by one and checked each claim against the running code: every command, every file path, every API endpoint, every link. Guides that were wrong are now right, 27 broken links point somewhere real again, and the background-removal, rigging, texturing, and mesh-generation services each got a proper page explaining what they do, how they run, and how to call them. Tutorials that walk you through deploying your own agent were left alone — those instructions were never the ones that went stale.</description>
+		</item>
+		<item>
 			<title>Fixed two API endpoints that returned an error for every request</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-10:Fixed two API endpoints that returned an error for every request</guid>

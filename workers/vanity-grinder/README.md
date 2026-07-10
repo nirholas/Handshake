@@ -63,7 +63,7 @@ docker run --rm -e WALLET_ENCRYPTION_KEY=… -e JWT_SECRET=… -e MAX_FOUND=20 \
 
 ## Deploy to GCP spot CPU
 
-Two supported runners; pick per the trade-off (see `docs/gcp-credits.md`):
+Two supported runners; pick per the trade-off (see `docs/ops/gcp-credits.md`):
 
 - **Cloud Run Job** (simplest, recommended) — `scripts/gcp/vanity-grind-deploy.sh`
   builds + pushes the image and creates a spot-billed Job you execute on demand.
@@ -83,4 +83,4 @@ decrypt **only** to the delivery service identity.
   public address + attempt count.
 - Single-use delivery + delete-after-reveal are enforced downstream in
   `api/_lib/vanity-inventory-store.js` / `api/x402/vanity-premium.js`.
-- See the threat model in `docs/gcp-credits.md` (§ Premium vanity inventory).
+- See the threat model in `docs/ops/gcp-credits.md` (§ Premium vanity inventory).

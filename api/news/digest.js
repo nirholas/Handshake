@@ -1,10 +1,10 @@
 // GET /api/news/digest
 // ---------------------------------------------------------------------------
 // The day's crypto news, clustered into narratives instead of a flat list of
-// headlines. Reads the live aggregator (38 publisher feeds), groups the last
-// N hours of coverage into the handful of stories that actually matter, and
-// gives each one a title, a plain-language summary, a market stance, the
-// tickers involved, and every source that covered it.
+// headlines. Reads the live aggregator (every English feed in the registry),
+// groups the last N hours of coverage into the handful of stories that
+// actually matter, and gives each one a title, a plain-language summary, a
+// market stance, the tickers involved, and every source that covered it.
 //
 // Two clustering engines, both real:
 //   • LLM (platform chain — Groq/OpenRouter/NVIDIA free tiers first) reads the

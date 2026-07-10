@@ -39,6 +39,7 @@ import { evmTransport } from '../_lib/evm/rpc.js';
 import { baseSepolia, base } from 'viem/chains';
 
 import { sql } from '../_lib/db.js';
+import { matchedSlurStem } from '../_lib/display-name-safety.js';
 import { submitProtected } from '../_lib/execution-engine.js';
 import { cors, error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
@@ -425,7 +426,22 @@ async function erc8004EnrichMetadata(limit, deadline) {
 			);
 			const glbUrl = avatarSvc ? erc8004ResolveGateway(avatarSvc.endpoint) : null;
 			const has3d = !!glbUrl;
-			const active = meta.active !== false;
+			// `meta` is attacker-controlled — it is whatever the agent's owner published
+			// on-chain. Letting `meta.active` alone decide visibility means a third party
+			// chooses what name three.ws renders: one Base-registered agent's name was a
+			// racial slur, active and shown on /marketplace. Withhold those rows.
+			// Every public feed already filters `active = true`, so this single flag
+			// covers explore, marketplace, agents and search. Slurs only, never general
+			// profanity — a false positive silently delists a legitimate agent.
+			const slur = matchedSlurStem(`${name} ${description}`);
+			if (slur) {
+				console.warn('[crawl] withholding agent: slur in on-chain metadata', {
+					chain_id: row.chain_id,
+					agent_id: row.agent_id,
+					matched: slur,
+				});
+			}
+			const active = meta.active !== false && !slur;
 			const x402 = !!(meta.x402Support || meta.x402);
 
 			await sql`

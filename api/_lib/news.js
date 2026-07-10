@@ -3,7 +3,7 @@
 // news-meme matcher, and the /markets surfaces. three.ws fetches the source
 // RSS/Atom feeds directly; no third-party news API sits in this path.
 //
-// Design, at 38 live publisher feeds across 14 categories:
+// Design, at the scale of the full publisher registry (news-sources.js):
 //
 //   * Per-source in-memory cache (5 min TTL) with serve-stale-on-error, so one
 //     slow or dead feed never blanks the page and repeat requests inside the

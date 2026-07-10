@@ -6,6 +6,63 @@ Work Order 04 session — no earlier entries existed because no earlier work ord
 
 ---
 
+## 2026-07-10 — Work Order 07 (partial): RUNBOOK written, live re-verification, listing drift found
+
+Ran the unfunded half of WO-07's Part 1 audit against production and wrote the missing
+`prompts/okx-ai/RUNBOOK.md` deliverable. Every command in the RUNBOOK was executed; nothing
+in it is written from imagination.
+
+### Verified live (2026-07-10)
+
+- `onchainos agent get-agents --agent-ids 2632` → `approvalDisplayStatus: 5`
+  (`approvalLabel: "Listing rejected"`), `status: 2`, `soldCount: 0`, `role: 2`,
+  `approvalRemark: ""`. **Unchanged.** Note the remark field is EMPTY — the 2026-07-04
+  rejection reason arrived only by email, so never expect `approvalRemark` to carry it.
+- Unpaid `POST /api/okx/3d/identity-studio` → **402** (challenge still spec-valid).
+- `GET /api/okx/3d/catalog` → **11 services**, exactly 1:1 with `api/_lib/okx-catalog.js`.
+- `GET /api/okx/3d/health` → `ok: true`, subsystems reporting (generation, render, storage,
+  retarget).
+- `onchainos agent search --query "3D avatar rigging GLB"` → 2 results, **agent 2632 absent**
+  (correct: we are not listed).
+- `onchainos agent feedback-list` exists ("Query Agent reviews") — the first-sale review path.
+
+### ⚠️ NEW FINDING — the live listing is stale and shares ZERO service names with our catalog
+
+`onchainos agent service-list --agent-id 2632` publishes **7** services; our catalog module
+defines **11**; **not one name matches**.
+
+| Live on the listing (7) | Our catalog (11) |
+|---|---|
+| Text & Image to 3D Model · Video to 3D Scene Capture · Auto-Rig Skeleton Builder · Universal Animation Retarget · Masked Texture Repaint · Mesh Repair & Format Export · Mesh Part Segmentation | Agent Identity Studio · Text to 3D Model (GLB) · Text to 3D Model (Pro) · Image to 3D Model · Auto-Rig a GLB · Text to Rigged Avatar · Animation Retarget · Pose Seed · FBX Export (rig-preserving) · 3D Studio Catalog (free) · 3D Studio Health (free) |
+
+This is expected, not a defect: **WO-05 (relisting) has never run**, because it is hard-gated
+on WO-04. It IS a trap for anyone reading the live listing as a description of what we sell.
+Recorded in RUNBOOK §2. The catalog module is the source of truth until WO-05 executes.
+
+### Docs correction (WO-07 Part 2)
+
+`docs/okx-marketplace.md` headed its payment section "Payment semantics (**verified
+behavior**)" while no funded settlement has ever occurred. WO-07 treats a doc promising what
+WO-04 has not proven as a release blocker. Reworded: the guarantees are stated as the
+contract enforced in code (`verify → dispatch → settle-on-success`) and covered by unit
+tests, with an explicit note that no funded on-chain settlement has been observed and that
+the first tx hash will be recorded here.
+
+### Still owner-gated (unchanged)
+
+Fund payer/seller `0x75d00a2713565171f33216e5aa2a375e076ecf69` on X Layer (chainId 196) with
+~$5 of `0x779ded0c9e1022225f8e0630b35a9b54be713736` + OKB gas dust → unblocks WO-04's ≥3 real
+settlements → unblocks WO-05 resubmission (which additionally needs an email-OTP login as
+`claude@three.ws` for the on-chain write) → unblocks WO-06's dogfood avatar.
+
+### Not done in this session
+
+WO-07 Part 1's funded legs (real paid call, on-chain settlement check, replay spot-check
+against a settled payment) remain blocked on the funding above. Part 4 (memory file) and the
+approval-watch execution branch remain, since approval status is unchanged.
+
+---
+
 ## 2026-07-08 — Work Order 05 session #2: found + fixed a live PROD OUTAGE; OKX rail pre-staged; WO 04/05 still owner-gated
 
 **Outcome: the WO-05 hard gate (needs a GO from WO 04) is still unmet — no resubmit was
