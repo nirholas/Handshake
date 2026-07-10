@@ -1,6 +1,7 @@
 ---
 title: "The generator was never the hard part: how Nemotron Nano made our text-to-3D pipeline usable"
 venue: NVIDIA Developer Blog / NVIDIA Developer Forums (community showcase)
+published: https://forums.developer.nvidia.com/t/how-nemotron-made-three-ws-text-to-3d-pipeline-usable/376445
 account: three.ws (official)
 description: "A founder's account of building browser-native 3D generation on NVIDIA NIM, and why a 12B vision model standing in front of the 3D generator mattered more than the 3D generator itself."
 tags: [nemotron, nim, trellis, generative-3d, vision-language-models, guardrails]

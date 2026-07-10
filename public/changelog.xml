@@ -271,6 +271,14 @@
 			<description>Our shared counter service — the one that keeps any single visitor from flooding the platform — spent its entire monthly request allowance. Unlike a brief network blip, that condition lasts until the billing period rolls over, so every request the site made to it was doomed. The site kept asking anyway: each page view paid the cost of a call that could only fail, which made things slower for everyone and buried the real cause in noise. The platform now recognizes an exhausted allowance for what it is, stops making those doomed calls immediately, and keeps counting locally instead. It re-checks on a widening interval, so the moment capacity returns everything switches back on its own with no deploy and no downtime.</description>
 		</item>
 		<item>
+			<title>three.ws story published on the NVIDIA Developer Forums</title>
+			<link>https://three.ws/docs/nvidia-nemotron-spotlight</link>
+			<guid isPermaLink="false">2026-07-10:three.ws story published on the NVIDIA Developer Forums</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Our write-up on how NVIDIA's Nemotron Nano vision model made the free text-to-3D pipeline production-ready is now live on the official NVIDIA Developer Forums. It covers the input-validation guardrail in front of the 3D generator, the real latency and token numbers behind the model choices, and the full free NVIDIA model stack powering the forge.</description>
+		</item>
+		<item>
 			<title>Wallet balances and the leak scanner stay online when the RPC pool thins</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-10:Wallet balances and the leak scanner stay online when the RPC pool thins</guid>

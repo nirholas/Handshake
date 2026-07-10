@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T13:44:53.322Z",
+	"generated_at": "2026-07-10T14:26:17.971Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -349,6 +349,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "three.ws story published on the NVIDIA Developer Forums",
+			"summary": "Our write-up on how NVIDIA's Nemotron Nano vision model made the free text-to-3D pipeline production-ready is now live on the official NVIDIA Developer Forums. It covers the input-validation guardrail in front of the 3D generator, the real latency and token numbers behind the model choices, and the full free NVIDIA model stack powering the forge.",
+			"link": "/docs/nvidia-nemotron-spotlight",
+			"tags": [
+				"docs"
 			]
 		},
 		{
