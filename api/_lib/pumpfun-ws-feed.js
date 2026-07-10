@@ -8,6 +8,16 @@ import WebSocket from 'ws';
 const PUMPPORTAL_WS = 'wss://pumpportal.fun/api/data';
 const RECONNECT_DELAY_MS = 2_000;
 const MAX_RECONNECTS = 5;
+const RECONNECT_MAX_DELAY_MS = 30_000;
+
+// PumpPortal answers the WS handshake with 403 when it has blocked this
+// egress IP (datacenter ranges get rate-banned). That is a standing refusal,
+// not a transient drop — pause ALL WS attempts process-wide and lean on the
+// REST fallback, instead of every SSE client re-hammering the handshake every
+// 2 s and spamming the logs. Attempts resume automatically when the pause
+// lapses, so an unban is picked up without a restart.
+const WS_FORBIDDEN_PAUSE_MS = 10 * 60_000;
+let _wsForbiddenUntil = 0;
 
 // REST fallback for the new-mint feed (used when the PumpPortal WS yields no
 // `create` events — e.g. blocked/failed WS egress from a serverless instance).
@@ -168,6 +178,15 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [] }
 
 	function connect() {
 		if (!active) return;
+		const pausedFor = _wsForbiddenUntil - Date.now();
+		if (pausedFor > 0) {
+			// IP currently blocked upstream: don't open a socket that will 403.
+			// Re-try shortly after the pause lifts so long-lived trade watchers
+			// recover; mint clients keep flowing via the REST fallback meanwhile.
+			clearTimeout(reconnectTimer);
+			reconnectTimer = setTimeout(connect, pausedFor + 1_000);
+			return;
+		}
 		ws = new WebSocket(PUMPPORTAL_WS);
 
 		ws.on('open', () => {
@@ -236,13 +255,21 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [] }
 			// A handshake aborted during teardown is expected, not a failure — don't
 			// surface it as an error (stop() already silences the common path).
 			if (!active && /closed before the connection was established/i.test(err?.message || '')) return;
+			// 403 on the handshake = PumpPortal has blocked this IP (see
+			// WS_FORBIDDEN_PAUSE_MS above) — pause every connection's WS attempts.
+			if (/unexpected server response: 403/i.test(err?.message || '')) {
+				_wsForbiddenUntil = Date.now() + WS_FORBIDDEN_PAUSE_MS;
+			}
 			console.warn('[pumpportal-ws] error:', err?.message);
 		});
 
 		ws.on('close', () => {
 			if (!active || reconnects >= MAX_RECONNECTS) return;
 			reconnects++;
-			reconnectTimer = setTimeout(connect, RECONNECT_DELAY_MS);
+			// Exponential backoff: an unhealthy upstream gets 2s → 4s → … → 30s,
+			// not a fixed-rate hammer.
+			const delay = Math.min(RECONNECT_DELAY_MS * 2 ** (reconnects - 1), RECONNECT_MAX_DELAY_MS);
+			reconnectTimer = setTimeout(connect, delay);
 		});
 	}
 
