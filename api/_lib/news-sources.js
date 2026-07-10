@@ -90,3 +90,20 @@ export function sourcesForCategory(category) {
 	if (!category || category === 'all') return keys;
 	return keys.filter((k) => NEWS_SOURCES[k].category === category);
 }
+
+// Refresh ordering for the aggregator's bounded worker pool (api/_lib/news.js):
+// lower = refreshed first, so a deadline-truncated cold start still returns the
+// highest-credibility outlets. Tier 0 = major newsrooms, tier 1 = established
+// desks + primary sources, tier 2 = the long tail.
+const TIER_0 = new Set(['coindesk', 'theblock', 'decrypt', 'cointelegraph', 'blockworks']);
+const TIER_1 = new Set([
+	'cryptoslate', 'newsbtc', 'dailyhodl', 'beincrypto', 'bitcoinmagazine',
+	'sec_press', 'glassnode', 'cryptobriefing', 'defiant', 'forkast',
+	'cnbc_crypto', 'techcrunch_crypto', 'protos', 'unchained_crypto',
+]);
+
+export function sourcePriority(key) {
+	if (TIER_0.has(key)) return 0;
+	if (TIER_1.has(key)) return 1;
+	return 2;
+}
