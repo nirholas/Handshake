@@ -215,7 +215,12 @@ export default wrap(async (req, res) => {
 			const counts = new Map();
 			for (const month of recent) {
 				for (const a of await loadMonth(month)) {
-					for (const t of a.tickers) counts.set(t, (counts.get(t) || 0) + 1);
+					for (const t of a.tickers) {
+						// the corpus enrichment has occasional junk tickers ("A", "4") —
+						// keep them queryable but out of the trending strip
+						if (t.length < 2 || /^\d+$/.test(t)) continue;
+						counts.set(t, (counts.get(t) || 0) + 1);
+					}
 				}
 			}
 			const trending = [...counts.entries()]
@@ -276,6 +281,12 @@ export default wrap(async (req, res) => {
 				found = found.concat(loaded[b].filter(matches));
 			}
 			if (found.length >= need) break;
+		}
+
+		// Zero months loaded with months available = the archive store is down,
+		// not an empty result — surface that instead of a misleading "no matches".
+		if (!scannedMonths.length && window.length) {
+			throw new Error('no archive months could be loaded');
 		}
 
 		found.sort((a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0));

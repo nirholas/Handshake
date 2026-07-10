@@ -136,11 +136,11 @@ feed it: `/api/coin/global`, `/api/coin/markets`, `/api/coin/gas`,
 
 ### `/markets/news` — live crypto news
 
-Live headlines aggregated **natively** by three.ws from 37 publisher RSS/Atom
+Live headlines aggregated **natively** by three.ws from 38 publisher RSS/Atom
 feeds (CoinDesk, The Block, Decrypt, CoinTelegraph, Blockworks, SEC press,
-Wu Blockchain, and more — the registry lives in
+Forkast, and more — the registry lives in
 [`api/_lib/news-sources.js`](../api/_lib/news-sources.js)). Category tabs
-(Bitcoin, Ethereum, L2, Solana, DeFi, NFT, trading, research, on-chain,
+(Bitcoin, Ethereum, Solana, DeFi, NFT, trading, research, on-chain,
 institutional, mainstream, Asia, regulation, journalism), debounced search, a
 per-source filter, a lead-story hero, sentiment dots, and ticker chips that
 pivot the feed to that symbol. Each source is cached server-side for 5 minutes
@@ -189,8 +189,8 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | `/api/coin/global`      | CoinGecko `/global` + alternative.me Fear & Greed          | 120 s        |
 | `/api/coin/fear-greed`  | alternative.me `/fng` (current + history)                  | 300 s        |
 | `/api/coin/gas`         | public Ethereum RPC `eth_feeHistory` + CoinGecko ETH price | 15 s         |
-| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 37 publisher feeds) | 300 s        |
-| `/api/news/feed`        | native aggregator — 37 publisher RSS/Atom feeds, per-source cache + serve-stale | 120 s |
+| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 38 publisher feeds) | 300 s        |
+| `/api/news/feed`        | native aggregator — 38 publisher RSS/Atom feeds, per-source cache + serve-stale | 120 s |
 | `/api/news/article`     | publisher page fetch (SSRF-guarded) → publisher feed body → preview; LLM analysis via Groq/OpenRouter with extractive fallback | 1800 s |
 | `/api/news/archive`     | `gs://three-ws-news-archive` (662k-article JSONL corpus + indexes on GCS) | 300 s / 3600 s |
 | `/api/coin/liquidations`| `services/liquidation-collector` (Binance/Bybit/OKX public liquidation WebSocket streams) | 15 s, `503` no-fallback offline |

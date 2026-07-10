@@ -2461,7 +2461,7 @@ GET /api/coin/news?q=<coin name>&limit=8
 
 Returns `{ "articles": [{ title, link, description, image, source,
 published_at }], "source": "three.ws" }`. Served by the native three.ws
-aggregator (`api/_lib/news.js` — 37 publisher feeds, per-source 5-minute cache
+aggregator (`api/_lib/news.js` — 38 publisher feeds, per-source 5-minute cache
 with serve-stale-on-error).
 
 ---
@@ -2477,9 +2477,9 @@ The engine behind [/markets/news](https://three.ws/markets/news) and
 GET /api/news/feed?category=defi&q=etf&source=coindesk&limit=30&offset=0&meta=1
 ```
 
-Aggregates 37 publisher RSS/Atom feeds natively (registry:
-`api/_lib/news-sources.js`). All params optional: `category` (one of the 15
-canonical categories — `general`, `bitcoin`, `ethereum`, `layer2`, `solana`,
+Aggregates 38 publisher RSS/Atom feeds natively (registry:
+`api/_lib/news-sources.js`). All params optional: `category` (one of the 14
+canonical categories — `general`, `bitcoin`, `ethereum`, `solana`,
 `defi`, `nft`, `trading`, `research`, `onchain`, `institutional`,
 `mainstream`, `asia`, `regulation`, `journalism`), `source` (a single source
 key, overrides `category`), `q` (full-text over title/description/tickers),

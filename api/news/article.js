@@ -293,6 +293,12 @@ export default wrap(async (req, res) => {
 		const relatedQuery = tickers[0] || title.split(/\s+/).slice(0, 3).join(' ');
 		const rel = await getNews({ q: relatedQuery, limit: 7 });
 		related = rel.articles.filter((a) => a.link !== target).slice(0, 6);
+		if (!related.length) {
+			// niche story with no keyword siblings — fall back to the latest
+			// headlines from the same category (or the front page)
+			const fallback = await getNews({ category: feedCopy?.category, limit: 7 });
+			related = fallback.articles.filter((a) => a.link !== target).slice(0, 6);
+		}
 	} catch {
 		related = []; // related rail is optional; the article itself already loaded
 	}

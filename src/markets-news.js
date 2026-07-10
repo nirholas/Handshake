@@ -1,5 +1,5 @@
 // /markets/news — live aggregated crypto news over /api/news/feed (native
-// three.ws aggregator, 37 publisher feeds). Category tabs, debounced search,
+// three.ws aggregator, 38 publisher feeds). Category tabs, debounced search,
 // source filter, lead-story hero, card grid with sentiment + ticker chips,
 // offset pagination. Every story opens the rich reader at
 // /markets/news/article; the source link goes straight to the publisher.
@@ -22,7 +22,6 @@ const CATEGORY_LABELS = {
 	general: 'Top',
 	bitcoin: 'Bitcoin',
 	ethereum: 'Ethereum',
-	layer2: 'Layer 2',
 	solana: 'Solana',
 	defi: 'DeFi',
 	nft: 'NFT',

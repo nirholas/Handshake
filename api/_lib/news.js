@@ -155,7 +155,18 @@ export function parseFeed(xml, sourceKey) {
 			const iso = pubDate && !Number.isNaN(Date.parse(pubDate)) ? new Date(pubDate).toISOString() : null;
 			const author =
 				stripHtml(str(it?.['dc:creator']) || str(it?.author?.name) || str(it?.author) || '') || null;
-			const description = stripHtml(rawDesc).slice(0, 320) || null;
+			// Some feeds (e.g. Bitcoin Magazine) prefix descriptions with their own
+			// name and/or repeat the headline verbatim — strip the echo so cards
+			// don't read "Source Title Title …".
+			let descText = stripHtml(rawDesc);
+			const srcName = src?.name || '';
+			if (srcName && descText.toLowerCase().startsWith(srcName.toLowerCase())) {
+				descText = descText.slice(srcName.length).trimStart();
+			}
+			if (title && descText.toLowerCase().startsWith(title.toLowerCase())) {
+				descText = descText.slice(title.length).replace(/^[\s—–:-]+/, '');
+			}
+			const description = descText.slice(0, 320) || null;
 			// Full body many feeds ship (WordPress content:encoded, Atom content).
 			// Server-side only — the reader uses it when the publisher's site
 			// blocks direct fetches; the feed API strips it from list payloads.
@@ -217,13 +228,16 @@ async function refreshSource(key) {
 
 async function ensureSources(keys) {
 	const now = Date.now();
-	await Promise.all(
-		keys.map((key) => {
-			const hit = sourceCache.get(key);
-			if (hit && now - hit.fetchedAt < FRESH_MS) return null;
-			return refreshSource(key);
-		}),
-	);
+	const stale = keys.filter((key) => {
+		const hit = sourceCache.get(key);
+		return !hit || now - hit.fetchedAt >= FRESH_MS;
+	});
+	// Bounded concurrency: firing all ~38 feeds at once trips publisher
+	// rate-gates (429/403) and starves slow feeds of the timeout budget —
+	// batches of 10 keep every source healthy at ~1s per batch.
+	for (let i = 0; i < stale.length; i += 10) {
+		await Promise.all(stale.slice(i, i + 10).map(refreshSource));
+	}
 	return keys.flatMap((key) => {
 		const hit = sourceCache.get(key);
 		if (!hit) return [];
