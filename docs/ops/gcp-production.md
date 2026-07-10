@@ -116,6 +116,17 @@ npm run build:gcp
 npm run deploy:gcp
 ```
 
+> **Never bypass `check:dist` by calling `gcloud builds submit` directly.** It is
+> the only thing standing between a half-built `dist/` and production. When it
+> reports `MISSING: dist/agent-3d/latest/agent-3d.js`, that is not a stale or
+> pre-existing failure to work around — it means you ran plain `npm run build`
+> and the agent-3d CDN lib was never published into `dist/`. Deploying anyway
+> 404s the lib and kills the hero avatar on every page that embeds `<agent-3d>`.
+> Fix it by running `npm run build:gcp` (or, if the site build already ran,
+> `npm run build:lib:full && npm run publish:lib`) until `check:dist` is green.
+> This happened on 2026-07-09 (revision `three-ws-api-00034`), where the check
+> was overridden on the assumption its failure was unrelated to the change.
+
 **Database migrations** live in `api/_lib/migrations/*.sql` and are tracked in
 the `schema_migrations` table (filename + sha256). Nothing applies them
 automatically — the flow is:
