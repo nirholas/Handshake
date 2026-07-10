@@ -550,7 +550,13 @@ export const limits = {
 	// Same-origin image proxy (api/img). A token-cloud view loads dozens of
 	// thumbnails at once, so the ceiling is generous — but bounded so the proxy
 	// can't be turned into an open bandwidth relay. Responses are CDN-cached.
-	imgProxyIp: (ip) => getLimiter('img:ip', { limit: 300, window: '5 m' }).limit(ip),
+	// local: those dozens-per-pageview each spent a distributed Redis command purely
+	// to bound a bandwidth flood on a side-effect-free, CDN-cached read. A
+	// per-instance cap bounds one IP's throughput just as well (limit × warm
+	// instances) — the reasoning already applied to publicIp / widgetRead /
+	// authedReadIp. After those moved this was the largest remaining source of
+	// avoidable quota burn, and the Upstash plan allowance ran out on 2026-07-10.
+	imgProxyIp: (ip) => getLimiter('img:ip', { limit: 300, window: '5 m', local: true }).limit(ip),
 	// Live holder-cohort reads (api/coin/:mint/cohorts for un-snapshotted agent
 	// tokens) fan out to a paid Helius getTokenAccounts walk. Responses are CDN-
 	// cached, so this only gates cache-miss origin hits — generous for an
@@ -1018,7 +1024,11 @@ export const limits = {
 	// reporter batches and caps itself at 25 events/page, so legitimate traffic
 	// is a handful of requests per pageview even on a broken page; 30/min per
 	// IP absorbs that while keeping log-flooding abuse bounded.
-	clientErrorsIp: (ip) => getLimiter('client-errors:ip', { limit: 30, window: '1 m' }).limit(ip),
+	// local: bounding a log flood is exactly what a per-instance cap is for —
+	// spending a distributed Redis command to record that an error was reported is
+	// pure quota burn, and it lands hardest precisely when the site is already broken.
+	clientErrorsIp: (ip) =>
+		getLimiter('client-errors:ip', { limit: 30, window: '1 m', local: true }).limit(ip),
 	// Publishing a /play build to a coin's featured surface (R20). Each write stores
 	// a screenshot in Redis, so cap the burst per IP to keep that bounded; reads use
 	// the generic publicIp bucket.
