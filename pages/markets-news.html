@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Crypto News · three.ws</title>
+		<meta
+			name="description"
+			content="Live crypto news aggregated from 37 publisher feeds — CoinDesk, The Block, Decrypt, CoinTelegraph and more. Filter by category, search headlines, and open any story in a rich reader."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/markets/news" />
+		<meta property="og:title" content="Crypto News · three.ws" />
+		<meta
+			property="og:description"
+			content="Live crypto news aggregated from 37 publisher feeds, filterable by category and searchable — with a rich reader for every story."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+News&amp;d=Live+crypto+news+aggregated+from+37+publisher+feeds+%E2%80%94+filter+by+category%2C+search+headlines%2C+and+open+any+story+in+a+rich+reader.&amp;p=%2Fmarkets%2Fnews"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Crypto News · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Live crypto news aggregated from 37 publisher feeds, filterable by category and searchable."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+News&amp;d=Live+crypto+news+aggregated+from+37+publisher+feeds+%E2%80%94+filter+by+category%2C+search+headlines%2C+and+open+any+story+in+a+rich+reader.&amp;p=%2Fmarkets%2Fnews"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/site.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/markets/news" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Crypto News — three.ws" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Crypto News","description":"Live crypto news aggregated from 37 publisher feeds — filterable by category, searchable, with a rich reader for every story.","url":"https://three.ws/markets/news","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a><span class="sep">/</span><span class="here">News</span>
+			</nav>
+			<h1 class="cv-h1">Crypto News</h1>
+			<p class="cv-sub">
+				Live headlines aggregated from 37 publisher feeds across the industry — majors,
+				research desks, on-chain analysts, exchanges, and regulators. Click any story for a
+				rich reader with summary, key points, and related coverage.
+			</p>
+
+			<!-- Sibling market surfaces. -->
+			<nav class="cv-tools" aria-label="Market tools">
+				<a class="cv-pill" href="/markets">Markets Hub</a>
+				<a class="cv-pill" href="/markets/news" aria-current="page">News</a>
+				<a class="cv-pill" href="/markets/archive">Archive</a>
+				<a class="cv-pill" href="/coins">Coins</a>
+				<a class="cv-pill" href="/heatmap">Heatmap</a>
+				<a class="cv-pill" href="/screener">Screener</a>
+				<a class="cv-pill" href="/fear-greed">Fear &amp; Greed</a>
+				<a class="cv-pill" href="/gas">Gas</a>
+			</nav>
+
+			<!-- Category tabs. Hydrated by src/markets-news.js. -->
+			<div id="nw-tabs" class="nw-tabs" role="group" aria-label="News categories"></div>
+
+			<!-- Search + source filter. -->
+			<div class="nw-toolbar">
+				<div class="cv-search">
+					<input
+						id="nw-search"
+						type="search"
+						placeholder="Search headlines — bitcoin etf, solana, hack…"
+						aria-label="Search news"
+						autocomplete="off"
+					/>
+				</div>
+				<select id="nw-source" class="nw-select" aria-label="Filter by source">
+					<option value="">All sources</option>
+				</select>
+			</div>
+
+			<p id="nw-count" class="nw-count" role="status"></p>
+
+			<!-- Lead story + article grid. Hydrated by src/markets-news.js. -->
+			<section id="nw-feed" class="cv-section" aria-label="News feed" aria-live="polite"></section>
+
+			<div style="display: flex; justify-content: center; margin: 1.5rem 0 0">
+				<button id="nw-more" class="cv-load-more" type="button" hidden>Load more stories</button>
+			</div>
+
+			<!-- Archive cross-link. -->
+			<section class="cv-section" aria-label="Historical archive">
+				<div class="art-preview-note" style="margin-top: 2rem">
+					<span aria-hidden="true">🗞</span>
+					<span>
+						Looking for older coverage? The
+						<a href="/markets/archive">news archive</a> holds
+						<strong>662,047 articles back to September 2017</strong> — searchable by
+						ticker, date, source, sentiment, and language.
+					</span>
+				</div>
+			</section>
+		</main>
+
+		<script type="module" src="/src/markets-news.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>
