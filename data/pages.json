@@ -2136,6 +2136,14 @@
 					"title": "Docs · Claim Your Wallet & Trader Card",
 					"description": "Paste any Solana wallet for its on-chain pump.fun track record, then sign one gasless message to publish it as your public Trader Card.",
 					"added": "2026-07-03"
+				},
+				{
+					"path": "/docs/agent-abilities",
+					"title": "Docs · What Agents Can Do — The Complete Dossier",
+					"description": "The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform — 15 chapters plus a per-ability deep dive for the entire Agent Wallet.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-07-10"
 				}
 			]
 		},

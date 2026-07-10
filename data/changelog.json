@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-10",
+			"title": "What can an agent actually do? The complete abilities dossier is live",
+			"summary": "Every ability a three.ws agent has, mapped in one place: /docs/agent-abilities. Fifteen chapters cover the agent end to end — the 3D body and how it moves, the studios where agents are made, memory and autonomy, conversation, on-chain identity, skills, screens, the agent economy, markets intelligence, live worlds, embeds and mobile, and the developer platform — plus a dedicated deep-dive page for each of the Agent Wallet's 23 abilities, from Balance and Deposit through Autopilot, Intents, Proof of Custody, and Self-defense. Everything was researched from the shipped code, so every claim on those pages describes something you can use today.",
+			"tags": [
+				"docs",
+				"feature"
+			],
+			"link": "/docs/agent-abilities"
+		},
+		{
+			"date": "2026-07-10",
 			"title": "The liquidations pulse on /coins is live",
 			"summary": "The long/short liquidation strip on the markets page had been showing its offline state since launch — the collector that listens to Binance, Bybit, and OKX futures streams needs to run around the clock, which the old serverless setup couldn't do. It now runs as its own always-on service, so the dominant-side badge, the 1-hour long-vs-short bars, and the biggest recent liquidations fill in with real exchange data.",
 			"tags": [
