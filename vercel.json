@@ -198,6 +198,13 @@
 			"continue": true
 		},
 		{
+			"src": "/world-lines/?$",
+			"headers": {
+				"permissions-policy": "accelerometer=(self), autoplay=(self), camera=(self), display-capture=(), encrypted-media=(self), geolocation=(self), gyroscope=(self), magnetometer=(self), microphone=(), midi=(), payment=(self), serial=(), usb=(), xr-spatial-tracking=(self)"
+			},
+			"continue": true
+		},
+		{
 			"src": "/(login|register|forgot-password|reset-password|account|settings|wallet|pay|paywall|vanity-wallet|eth-vanity|evm-wallet|dashboard|dashboard-next|dashboard-classic)(/.*)?$",
 			"headers": {
 				"content-security-policy": "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://challenges.cloudflare.com https://3d-agent.vercel.app https://three.ws https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
