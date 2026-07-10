@@ -44,6 +44,8 @@ import {
 	CLIP_IDLE, CLIP_WALK,
 } from './avatar-rig.js';
 import { GUEST_SENTINEL, uploadPendingGuestAvatar, getPlayCosmetics, setPlayCosmetics } from './play-handoff.js';
+import { getPresenceTicket, friendsClient } from '../friends.js';
+import { FriendsPanel } from './friends-panel.js';
 import { applyLoadout } from './cosmetics-loadout.js';
 import { serializeLoadout, getCosmetic } from '../../multiplayer/src/cosmetics-catalog.js';
 import { AccessoryManager } from '../agent-accessories.js';
@@ -77,6 +79,18 @@ import { CombatSystem } from './combat-system.js';
 // play-onboard.js / play-intro.js / play-handoff.js.
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* storage disabled */ } }
+
+// True when the keystroke belongs to an editable surface — a DM input in the
+// friends panel, a search box, a modal field. World hotkeys must never fire
+// there: `b` would toggle build mode mid-word and Space would be swallowed
+// before it reached the caret. `chatFocused` covers only the in-world chat bar,
+// so this is the general guard for every other input the HUD can open.
+function isTypingTarget(t) {
+	if (!t || t.nodeType !== 1) return false;
+	if (t.isContentEditable) return true;
+	const tag = t.tagName;
+	return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+}
 
 // Reaction bar (R04): the 6 emoji available to all players.
 const REACTIONS = [
@@ -427,6 +441,8 @@ export class CoinCommunities {
 			onShop: () => this._toggleShop(),
 			onWardrobe: () => this._toggleWardrobe(),
 			onJobs: () => this._toggleQuests(),
+			// Friends panel (W09) — presence + DMs across every coin world.
+			onFriends: () => this._toggleFriends(),
 			// Creator-only (R24): set/clear the token threshold for the Holders world.
 			onConfigureGate: () => this._configureGate(),
 			onVoiceToggle: () => this._toggleVoice(),
@@ -1038,6 +1054,11 @@ export class CoinCommunities {
 			// what the account owns before publishing it, so it can't dress us in
 			// anything unowned.
 			cosmetics: getPlayCosmetics(),
+			// Friends presence (W09): a signed, short-lived account ticket. WalkRoom
+			// verifies it and registers this account with the social hub under this
+			// coin world's name, so friends see the player as "Online · <coin>" and
+			// DMs route straight to this socket. Resolves to null when anonymous.
+			getPresence: getPresenceTicket,
 		});
 		// Generic networked-object layer for this coin (R02): mirrors the server's
 		// authoritative `objects` map into the scene — build props (R18), and any
@@ -1157,6 +1178,15 @@ export class CoinCommunities {
 		this.net.on('xpgain', (g) => this.playSystems?.onXpGain(g));
 		this.net.on('levelup', (l) => this.playSystems?.onLevelup(l));
 		this.net.on('notice', (n) => this.playSystems?.onNotice(n));
+		// Friends (W09): live DMs + request/accept pushed by the social hub over this
+		// world's socket. The FriendsClient owns all social state — it updates its
+		// threads/unread counts and notifies the panel, open or not, so a DM that
+		// arrives while the panel is closed still lights the badge.
+		this.net.on('social', (m) => {
+			friendsClient().handleSocial(m);
+			if (m?.type === 'dm') this._bumpFriendsBadge();
+		});
+		this._initFriends();
 		// Job completion has no generic 'notice' twin (WalkRoom sends only
 		// 'questComplete') — toast it globally so a payout lands even when the
 		// Jobs Board panel isn't open, the same way every other reward does.
@@ -1508,6 +1538,7 @@ export class CoinCommunities {
 		if (this.combat) { this.combat.dispose(); this.combat = null; }
 		if (this.playSystems) { this.playSystems.dispose(); this.playSystems = null; }
 		if (this.playActivities) { this.playActivities.dispose(); this.playActivities = null; }
+		this._disposeFriends();
 		if (this.agentCommerce) { this.agentCommerce.dispose(); this.agentCommerce = null; }
 		if (this.intelKiosk) { this.intelKiosk.dispose(); this.intelKiosk = null; }
 		if (this.worldLife) { this.worldLife.dispose(); this.worldLife = null; }
@@ -1877,6 +1908,110 @@ export class CoinCommunities {
 		// each open — a sale always credits the world the player is currently in.
 		this._shop.h.coinMint = this.coin?.mint || '';
 		this._shop.toggle();
+	}
+
+	// ── Friends (W09) ─────────────────────────────────────────────────────────
+	// The account-level social graph inside the world: who's online, which coin
+	// world they're standing in, and DM threads. `FriendsPanel` is a pure view over
+	// the shared `friendsClient`, so the same graph backs /play, /walk and the
+	// standalone /friends page — a DM read here is read everywhere.
+	//
+	// Presence is published by the room, not this panel: CommunityNet now carries a
+	// signed presence ticket into the join, so a player is visible to friends the
+	// moment they enter a world, whether or not they ever open this panel.
+
+	// Seed the graph once per world entry so the unread badge is honest before the
+	// panel is ever opened, and keep it live from the client's change signal. Silent
+	// no-op when signed out — `refresh()` short-circuits without a request.
+	_initFriends() {
+		const fc = friendsClient();
+		this._offFriends = fc.subscribe(() => this._bumpFriendsBadge());
+		fc.refresh();
+		this._bumpFriendsBadge();
+	}
+
+	_bumpFriendsBadge() {
+		this.ui?.setFriendsUnread?.(friendsClient().totalUnread);
+	}
+
+	_toggleFriends() {
+		if (this._friendsOpen) this._closeFriends();
+		else this._openFriends();
+	}
+
+	_openFriends() {
+		if (this._friendsOpen) return;
+		if (!this._friendsEl) {
+			// Right-docked drawer. The panel renders its own tabs/list/threads into
+			// `body`; we own only the frame, the close affordance and the hotkey hint.
+			const close = document.createElement('button');
+			close.className = 'cc-friends-panel-close';
+			close.type = 'button';
+			close.setAttribute('aria-label', 'Close friends panel');
+			close.textContent = '✕';
+			close.addEventListener('click', () => this._closeFriends());
+
+			const title = document.createElement('div');
+			title.className = 'cc-friends-panel-title';
+			title.textContent = 'Friends';
+
+			const head = document.createElement('div');
+			head.className = 'cc-friends-panel-head';
+			head.append(title, close);
+
+			const body = document.createElement('div');
+			body.className = 'cc-friends-panel-body';
+
+			const hint = document.createElement('div');
+			hint.className = 'cc-friends-panel-hint';
+			hint.textContent = 'Press J to toggle · Esc to close';
+
+			const root = document.createElement('aside');
+			root.className = 'cc-friends-panel';
+			root.setAttribute('role', 'dialog');
+			root.setAttribute('aria-modal', 'false');
+			root.setAttribute('aria-label', 'Friends');
+			root.append(head, body, hint);
+			document.body.appendChild(root);
+
+			this._friendsEl = root;
+			this._friendsBodyEl = body;
+			this._friendsCloseEl = close;
+			this._friends = new FriendsPanel(body);
+		}
+		this._friends.mount();
+		this._friendsOpen = true;
+		// Next frame, so the transform transition runs from its closed state rather
+		// than being collapsed into the same style recalculation as the insert.
+		requestAnimationFrame(() => this._friendsEl?.classList.add('is-open'));
+		this.ui?.setFriendsOpen?.(true);
+		// The world swallows WASD/F/X while the panel has focus; releasing the held
+		// keys stops the avatar sliding when focus moves into a DM input.
+		this.keys.clear();
+		this._friendsCloseEl?.focus();
+	}
+
+	_closeFriends() {
+		if (!this._friendsOpen) return;
+		this._friendsOpen = false;
+		this._friendsEl?.classList.remove('is-open');
+		this._friends?.unmount();
+		this.ui?.setFriendsOpen?.(false);
+		this._bumpFriendsBadge();
+	}
+
+	// Full teardown — the panel and its client subscription must not outlive the
+	// world (a coin switch rebuilds both, and a stale subscription would repaint a
+	// disposed HUD).
+	_disposeFriends() {
+		if (this._offFriends) { try { this._offFriends(); } catch {} this._offFriends = null; }
+		this._friends?.unmount();
+		this._friends = null;
+		this._friendsEl?.remove();
+		this._friendsEl = null;
+		this._friendsBodyEl = null;
+		this._friendsCloseEl = null;
+		this._friendsOpen = false;
 	}
 
 	// Open/close the "My Cosmetics" wardrobe panel (R23). Lazy-built on first open;
@@ -2272,6 +2407,11 @@ export class CoinCommunities {
 	_bindInput() {
 		window.addEventListener('keydown', (e) => {
 			if (this.ui.chatFocused) return;
+			// Typing anywhere else (friends DM box, search fields, modal inputs) must
+			// reach the caret untouched — no hotkeys, no Enter hijack, no Space eaten.
+			if (isTypingTarget(e.target)) return;
+			// Esc closes the friends drawer before anything else claims the key.
+			if (e.key === 'Escape' && this._friendsOpen) { e.preventDefault(); this._closeFriends(); return; }
 			if (e.key === 'Enter' && this.phase === 'world') { e.preventDefault(); this.ui.focusChat(); return; }
 			// Space jumps on foot; while driving it's the handbrake instead (held,
 			// released in the keyup handler below) — never scrolls the page either way.
@@ -2335,6 +2475,14 @@ export class CoinCommunities {
 				if (k === 'i' && !this.buildHud.active && !e.repeat) {
 					e.preventDefault();
 					this._inspectNearest();
+					return;
+				}
+				// J toggles the friends drawer (W09). F — the /walk binding — is already
+				// this world's contextual action key (drive / gather / cast), so /play
+				// takes the next free slot; the HUD button carries the same hint.
+				if (k === 'j' && !this.buildHud.active && !e.repeat) {
+					e.preventDefault();
+					this._toggleFriends();
 					return;
 				}
 				// C cycles the camera: follow → cinematic → first person → top down.

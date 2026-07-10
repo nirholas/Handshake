@@ -15,7 +15,7 @@
 
 import { sql } from './db.js';
 import { CHAIN_BY_ID } from './erc8004-chains.js';
-import { publicUrl } from './r2.js';
+import { publicUrl, thumbnailUrl } from './r2.js';
 import { isUuid } from './validate.js';
 
 export const ONCHAIN_RE = /^(?:eip155:)?(\d{1,9})[:/](\d{1,12})$/;
@@ -88,7 +88,7 @@ export async function resolveEmbedAsset(id) {
 			name: r.name,
 			description: r.description || '',
 			glbUrl: publicUrl(r.storage_key),
-			poster: r.thumbnail_key ? publicUrl(r.thumbnail_key) : null,
+			poster: thumbnailUrl(r.thumbnail_key),
 			has3d: true,
 			x402: false,
 			passportUrl: `/avatars/${r.id}`,

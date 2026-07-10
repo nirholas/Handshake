@@ -15,7 +15,7 @@
 import { sql } from './_lib/db.js';
 import { cors, method, wrap } from './_lib/http.js';
 import { CHAIN_BY_ID, tokenExplorerUrl, addressExplorerUrl } from './_lib/erc8004-chains.js';
-import { publicUrl } from './_lib/r2.js';
+import { publicUrl, thumbnailUrl } from './_lib/r2.js';
 import { env } from './_lib/env.js';
 
 export default wrap(async (req, res) => {
@@ -94,7 +94,7 @@ export default wrap(async (req, res) => {
 		if (rows.length) {
 			const r = rows[0];
 			const network = r.meta?.network || 'mainnet';
-			const thumb = r.avatar_thumb ? publicUrl(r.avatar_thumb) : null;
+			const thumb = thumbnailUrl(r.avatar_thumb);
 			item = {
 				kind: 'solana',
 				asset,
@@ -144,7 +144,7 @@ export default wrap(async (req, res) => {
 				slug: r.slug,
 				name: r.name,
 				description: r.description || '',
-				image: r.thumbnail_key ? publicUrl(r.thumbnail_key) : null,
+				image: thumbnailUrl(r.thumbnail_key),
 				glbUrl: glb,
 				has3d: true,
 				tags: r.tags || [],

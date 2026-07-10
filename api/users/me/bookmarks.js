@@ -8,7 +8,7 @@ import { sql } from '../../_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../../_lib/auth.js';
 import { cors, error, json, method, wrap, rateLimited } from '../../_lib/http.js';
 import { clientIp, limits } from '../../_lib/rate-limit.js';
-import { publicUrl } from '../../_lib/r2.js';
+import { thumbnailUrl } from '../../_lib/r2.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -43,7 +43,7 @@ export default wrap(async (req, res) => {
 		agent_name: r.agent_name,
 		agent_description: r.agent_description,
 		agent_category: r.agent_category,
-		agent_thumbnail: r.thumbnail_key ? publicUrl(r.thumbnail_key) : null,
+		agent_thumbnail: thumbnailUrl(r.thumbnail_key),
 	}));
 
 	return json(

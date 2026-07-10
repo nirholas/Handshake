@@ -12,7 +12,7 @@ import { sql } from './_lib/db.js';
 import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
 import { clampInt } from './_lib/http-params.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { publicUrl } from './_lib/r2.js';
+import { thumbnailUrl } from './_lib/r2.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -78,7 +78,7 @@ export default wrap(async (req, res) => {
 		const meta = row.meta || {};
 		const avatarThumbnail =
 			row.avatar_thumbnail_key && (row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted')
-				? publicUrl(row.avatar_thumbnail_key)
+				? thumbnailUrl(row.avatar_thumbnail_key)
 				: null;
 
 		const imageUrl =

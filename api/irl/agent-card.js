@@ -36,7 +36,7 @@
 import { cors, json, error, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
-import { publicUrl } from '../_lib/r2.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 import { getRedis } from '../_lib/redis.js';
 import { atomicsToUsdc, serviceResourceUrl } from '../_lib/agent-paid-services.js';
 
@@ -184,7 +184,7 @@ async function buildCard(agentId, fallback = {}) {
 			id:            agent.id,
 			name:          agent.name || fallback.name || 'Agent',
 			bio:           bio || fallback.description || null,
-			thumbnail_url: agent.avatar_thumbnail_key && thumbPub ? publicUrl(agent.avatar_thumbnail_key) : null,
+			thumbnail_url: agent.avatar_thumbnail_key && thumbPub ? thumbnailUrl(agent.avatar_thumbnail_key) : null,
 			profile_url:   agent.home_url || `/agents/${agent.id}`,
 			// Public custodial wallet (same value GET /api/agents/:id/solana serves
 			// anonymously) so the IRL inspect card can render the wallet chip + Tip.

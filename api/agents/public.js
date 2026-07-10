@@ -31,7 +31,7 @@
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
-import { publicUrl } from '../_lib/r2.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 
 const SORTS = new Set(['newest', 'popular', 'name', 'live']);
 
@@ -44,7 +44,7 @@ function mapAgent(r) {
 	const meta   = r.meta || {};
 	const onchain = meta.onchain || null;
 	const thumbPub = r.avatar_visibility === 'public' || r.avatar_visibility === 'unlisted';
-	const thumbnail = r.avatar_thumbnail_key && thumbPub ? publicUrl(r.avatar_thumbnail_key) : null;
+	const thumbnail = r.avatar_thumbnail_key && thumbPub ? thumbnailUrl(r.avatar_thumbnail_key) : null;
 
 	return {
 		id:                r.id,

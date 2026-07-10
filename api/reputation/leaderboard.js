@@ -16,7 +16,7 @@
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
-import { publicUrl } from '../_lib/r2.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 import { getRedis } from '../_lib/redis.js';
 import { scoreAgentsLite } from '../_lib/trust/wallet-reputation.js';
 
@@ -78,7 +78,7 @@ export default wrap(async (req, res) => {
 				rank: idx + 1,
 				id,
 				name: r.name || null,
-				avatar_thumbnail_url: r.avatar_thumbnail_key && thumbPub ? publicUrl(r.avatar_thumbnail_key) : null,
+				avatar_thumbnail_url: r.avatar_thumbnail_key && thumbPub ? thumbnailUrl(r.avatar_thumbnail_key) : null,
 				solana_address: typeof r.solana_address === 'string' ? r.solana_address : null,
 				score: rep.score,
 				tier: rep.tier,

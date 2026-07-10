@@ -29,16 +29,9 @@ import { cacheWrap } from './_lib/cache.js';
 import { cors, json, method, wrap, error, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { CHAIN_BY_ID, tokenExplorerUrl, addressExplorerUrl } from './_lib/erc8004-chains.js';
-import { publicUrl, isLegacyOgThumbnailKey } from './_lib/r2.js';
-
-// A stored thumbnail_key only resolves to a real image when it's a relative R2
-// key. Legacy poisoned keys (absolute, origin-pointing `*_og.png`) 404, so drop
-// them rather than surface a broken <img>; the avatar self-heals on its next OG
-// crawl, after which a corrected thumbnail appears.
-function thumbnailUrl(thumbnailKey) {
-	if (!thumbnailKey || isLegacyOgThumbnailKey(thumbnailKey)) return null;
-	return publicUrl(thumbnailKey);
-}
+// thumbnailUrl() drops keys that can't resolve to a real image (see r2.js) so a
+// gallery renders its placeholder instead of a 404 the browser blocks as ORB.
+import { publicUrl, thumbnailUrl } from './_lib/r2.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -221,7 +214,7 @@ export default wrap(async (req, res) => {
 
 	const solanaItems = solanaRows.map((r) => {
 		const asset = r.meta?.sol_mint_address;
-		const thumb = r.avatar_thumb ? publicUrl(r.avatar_thumb) : null;
+		const thumb = thumbnailUrl(r.avatar_thumb);
 		return {
 			kind: 'solana',
 			source: 'three.ws',

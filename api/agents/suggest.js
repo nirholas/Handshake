@@ -2,7 +2,7 @@
 // Public autocomplete for @-mention surfaces. Returns ranked agents matching q.
 
 import { sql } from '../_lib/db.js';
-import { publicUrl } from '../_lib/r2.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
@@ -51,7 +51,7 @@ export default wrap(async (req, res) => {
 		id: r.id,
 		name: r.name,
 		slug: r.name.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-		thumbnailUrl: r.thumbnail_key ? publicUrl(r.thumbnail_key) : null,
+		thumbnailUrl: thumbnailUrl(r.thumbnail_key),
 		...(r.chain_id != null ? { chainId: r.chain_id } : {}),
 		onChain: r.erc8004_agent_id != null,
 	}));

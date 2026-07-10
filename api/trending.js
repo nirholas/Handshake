@@ -21,7 +21,7 @@
 import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { sql } from './_lib/db.js';
-import { publicUrl } from './_lib/r2.js';
+import { thumbnailUrl } from './_lib/r2.js';
 
 const WINDOWS = new Set(['24h', '7d', 'all']);
 const WINDOW_INTERVAL = { '24h': '1 day', '7d': '7 days' };
@@ -99,7 +99,7 @@ export default wrap(async (req, res) => {
 		const meta      = r.meta || {};
 		const isOnchain = Boolean(meta.onchain || meta.sol_mint_address);
 		const thumbPub  = r.avatar_visibility === 'public' || r.avatar_visibility === 'unlisted';
-		const thumb     = r.avatar_thumbnail_key && thumbPub ? publicUrl(r.avatar_thumbnail_key) : null;
+		const thumb     = r.avatar_thumbnail_key && thumbPub ? thumbnailUrl(r.avatar_thumbnail_key) : null;
 		return {
 			rank:               idx + 1,
 			id:                 r.id,

@@ -43,7 +43,11 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 
 // publicUrl is only hit when a storage key is present; the fixtures keep keys
 // null, but mock it so the test never depends on R2 env config.
-vi.mock('../../api/_lib/r2.js', () => ({ publicUrl: (k) => (k ? `https://cdn.test/${k}` : null) }));
+vi.mock('../../api/_lib/r2.js', () => ({
+	publicUrl: (k) => (k ? `https://cdn.test/${k}` : null),
+	// thumbnailUrl mirrors r2.js: null for a missing key or the legacy *_og.png form.
+	thumbnailUrl: (k) => (!k || /^https?:\/\/.*_og\.png$/i.test(k) ? null : `https://cdn.test/${k}`),
+}));
 
 // Force the skill-price cache to always miss → every detail read re-queries the
 // (mocked) DB. Without this, the module-level cache would carry case 1's prices

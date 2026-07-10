@@ -68,7 +68,11 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: vi.fn(() => '127.0.0.1'),
 }));
 
-vi.mock('../../api/_lib/r2.js', () => ({ publicUrl: (k) => (k ? `https://cdn.test/${k}` : null) }));
+vi.mock('../../api/_lib/r2.js', () => ({
+	publicUrl: (k) => (k ? `https://cdn.test/${k}` : null),
+	// thumbnailUrl mirrors r2.js: null for a missing key or the legacy *_og.png form.
+	thumbnailUrl: (k) => (!k || /^https?:\/\/.*_og\.png$/i.test(k) ? null : `https://cdn.test/${k}`),
+}));
 
 // Always-miss cache so getSkillPrices re-queries the mocked DB each read.
 vi.mock('../../api/_lib/cache.js', () => ({

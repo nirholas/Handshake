@@ -54,12 +54,6 @@ export function thumbKeyFor(avatarId) {
 	return `thumb/${avatarId}.png`;
 }
 
-// `thumbnail_key` is meant to be a *relative* R2 key. Rows written by older code
-// paths hold an absolute URL instead (e.g. the legacy `_og.png` cache), which
-// publicUrl() passes through verbatim to an origin where no object lives. Treat
-// those exactly like a missing thumbnail so the backfill replaces them.
-const MISSING_THUMB_SQL = `(thumbnail_key IS NULL OR thumbnail_key ~ '^https?://')`;
-
 let schemaReady = false;
 
 // Idempotent schema provisioning, mirroring
@@ -334,5 +328,3 @@ export function isMissingThumbnail(thumbnailKey) {
 	if (isLegacyOgThumbnailKey(thumbnailKey)) return true;
 	return /^https?:\/\//i.test(thumbnailKey);
 }
-
-export const __sqlMissingThumb = MISSING_THUMB_SQL;

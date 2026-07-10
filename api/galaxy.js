@@ -23,7 +23,7 @@ import { cacheWrap } from './_lib/cache.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from './_lib/http.js';
 import { clampInt } from './_lib/http-params.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { publicUrl } from './_lib/r2.js';
+import { thumbnailUrl } from './_lib/r2.js';
 import { watsonxConfig, watsonxEmbed, watsonxChatComplete } from './_lib/watsonx.js';
 import { ensureAgentEmbeddings, readAgentVectors } from './_lib/agent-embeddings.js';
 import {
@@ -253,7 +253,7 @@ async function loadPublishedAgents(limit) {
 		const thumbnail =
 			row.avatar_thumbnail_key &&
 			(row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted')
-				? publicUrl(row.avatar_thumbnail_key)
+				? thumbnailUrl(row.avatar_thumbnail_key)
 				: meta.profile_image_url || meta.thumbnail_url || meta.avatar_url || null;
 		const token = meta.token || null;
 		return {

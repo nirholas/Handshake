@@ -26,7 +26,7 @@ import { cors, json, method, readJson, wrap, error, rateLimited, serverError, re
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
 import { randomToken } from '../../_lib/crypto.js';
-import { r2, publicUrl } from '../../_lib/r2.js';
+import { r2, publicUrl, thumbnailUrl } from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
 import { publishFeedEvent } from '../../_lib/feed.js';
 import {
@@ -328,7 +328,7 @@ async function handlePrep(req, res) {
 			limit 1
 		`;
 		if (!av) return error(res, 404, 'not_found', 'avatar not found');
-		if (av.thumbnail_key) avatarImage = publicUrl(av.thumbnail_key);
+		avatarImage = thumbnailUrl(av.thumbnail_key) || avatarImage;
 		if (av.storage_key) avatarAnimationUrl = publicUrl(av.storage_key);
 	}
 

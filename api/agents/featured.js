@@ -15,7 +15,7 @@
 import { sql } from '../_lib/db.js';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { publicUrl } from '../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -60,7 +60,7 @@ export default wrap(async (req, res) => {
 	const avatar_url =
 		row.avatar_url ||
 		row.profile_image_url ||
-		(row.avatar_thumbnail_key ? publicUrl(row.avatar_thumbnail_key) : null) ||
+		(row.avatar_thumbnail_key ? thumbnailUrl(row.avatar_thumbnail_key) : null) ||
 		(row.avatar_storage_key && avatarPublic ? publicUrl(row.avatar_storage_key) : null) ||
 		null;
 

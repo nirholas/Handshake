@@ -63,6 +63,10 @@ vi.mock('../../api/_lib/watsonx.js', () => ({
 
 vi.mock('../../api/_lib/r2.js', () => ({
 	publicUrl: vi.fn((key) => `https://cdn.example.com/${key}`),
+	// thumbnailUrl mirrors r2.js: null for a missing key or the legacy *_og.png form.
+	thumbnailUrl: vi.fn((key) =>
+		!key || /^https?:\/\/.*_og\.png$/i.test(key) ? null : `https://cdn.example.com/${key}`,
+	),
 }));
 
 // Mock global fetch for server-side image fetching.

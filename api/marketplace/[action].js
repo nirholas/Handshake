@@ -20,7 +20,7 @@
 import { sql, isDbUnavailableError } from '../_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
-import { publicUrl } from '../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { pedigreeScore } from '../_lib/genome.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { markProviderCooldown, AUTH_COOLDOWN_SECONDS } from '../_lib/provider-health.js';
@@ -270,7 +270,7 @@ async function handleTheme(req, res) {
 		forks_count: row.forks_count || 0,
 		rating_avg: Number(row.rating_avg || 0),
 		rating_count: row.rating_count || 0,
-		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(row.thumbnail_key),
 		avatar_glb_url: row.avatar_storage_key ? publicUrl(row.avatar_storage_key) : null,
 		published_at: row.published_at,
 	}));
@@ -1426,7 +1426,7 @@ function toCard(row) {
 		category: row.category,
 		tags: row.tags || [],
 		avatar_id: row.avatar_id,
-		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(row.thumbnail_key),
 		avatar_glb_url: row.avatar_storage_key && avatarPublic ? publicUrl(row.avatar_storage_key) : null,
 		author_id: row.user_id,
 		skills: row.skills || [],

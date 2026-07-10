@@ -18,7 +18,7 @@ import { requireCsrf } from './_lib/csrf.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { generateAgentWallet, generateSolanaAgentWallet } from './_lib/agent-wallet.js';
 import { checkIdentityIntegrity } from './_lib/identity-integrity.js';
-import { publicUrl } from './_lib/r2.js';
+import { publicUrl, thumbnailUrl } from './_lib/r2.js';
 import { pedigreeScore } from './_lib/genome.js';
 import { pingIndexNow } from './_lib/indexnow.js';
 import { publishFeedEvent } from './_lib/feed.js';
@@ -794,7 +794,7 @@ function decorate(row, isOwner = true) {
 	// characters.js / galaxy.js) — private avatars must not leak via thumbnails.
 	const avatarThumbnailUrl =
 		row.avatar_thumbnail_key && avatarPubliclyReadable
-			? publicUrl(row.avatar_thumbnail_key)
+			? thumbnailUrl(row.avatar_thumbnail_key)
 			: null;
 
 	const base = {

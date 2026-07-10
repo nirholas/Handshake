@@ -11,7 +11,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.j
 import { sql } from './_lib/db.js';
 import { cors, error, json, method, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { publicUrl } from './_lib/r2.js';
+import { thumbnailUrl } from './_lib/r2.js';
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -54,7 +54,7 @@ export default wrap(async (req, res) => {
 			username: handle,
 			display_name: user.display_name || handle || 'three.ws user',
 			handle: handle ? `@${handle}` : (user.display_name || 'signed in'),
-			avatar_url: user.thumbnail_key ? publicUrl(user.thumbnail_key) : null,
+			avatar_url: thumbnailUrl(user.thumbnail_key),
 			created_at: user.created_at,
 		},
 	});

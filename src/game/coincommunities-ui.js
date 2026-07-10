@@ -952,6 +952,28 @@ export class CommunityUI {
 		if (this.gateBtn) this.gateBtn.hidden = !isCreator;
 	}
 
+	// Friends HUD state (W09). The badge shows unread DMs (capped at 9+ so it never
+	// widens the button); `setFriendsOpen` keeps aria-expanded honest for screen
+	// readers and lets CSS mark the button active while the panel is up.
+	setFriendsUnread(count) {
+		if (!this.friendsBadge) return;
+		const n = Number(count) || 0;
+		this.friendsBadge.textContent = n > 9 ? '9+' : String(n);
+		this.friendsBadge.hidden = n <= 0;
+		if (this.friendsBtn) {
+			this.friendsBtn.setAttribute(
+				'aria-label',
+				n > 0 ? `Open friends panel, ${n} unread message${n === 1 ? '' : 's'}` : 'Open friends panel',
+			);
+		}
+	}
+
+	setFriendsOpen(open) {
+		if (!this.friendsBtn) return;
+		this.friendsBtn.setAttribute('aria-expanded', String(!!open));
+		this.friendsBtn.classList.toggle('is-active', !!open);
+	}
+
 	// Creator gate config (R24). A small modal where the coin's creator sets the
 	// token amount a wallet must hold to enter the Holders world, or removes the
 	// requirement. `onSave(minTokens)` returns a promise that resolves to the saved
@@ -1171,6 +1193,21 @@ export class CommunityUI {
 			'aria-label': 'Open the jobs board',
 			onclick: () => this.h.onJobs?.(),
 		}, [el('span', { class: 'cc-jobs-btn-ico', 'aria-hidden': 'true', text: '🎯' }), el('span', { class: 'cc-jobs-btn-text', text: 'Jobs' })]);
+		// Friends panel (W09) — the account-level social graph: requests, live
+		// presence across every coin world, and DM threads. The badge carries the
+		// unread-DM count so a message landing while the panel is closed still
+		// shows; the button is also the touch equivalent of the J hotkey, since
+		// mobile has no keyboard.
+		this.friendsBadge = el('span', { class: 'cc-friends-badge', hidden: true });
+		this.friendsBtn = el('button', {
+			class: 'cc-friends-btn', type: 'button', title: 'Friends — presence and messages (J)',
+			'aria-label': 'Open friends panel', 'aria-expanded': 'false',
+			onclick: () => this.h.onFriends?.(),
+		}, [
+			el('span', { class: 'cc-friends-btn-ico', 'aria-hidden': 'true', text: '👥' }),
+			el('span', { class: 'cc-friends-btn-text', text: 'Friends' }),
+			this.friendsBadge,
+		]);
 		const banner = el('div', { class: 'cc-coin-banner' }, [
 			this.coinImg,
 			el('div', { class: 'cc-coin-info' }, [
@@ -1181,6 +1218,7 @@ export class CommunityUI {
 					this.tierBadge,
 				]),
 			]),
+			this.friendsBtn,
 			this.jobsBtn,
 			this.wardrobeBtn,
 			this.shopBtn,

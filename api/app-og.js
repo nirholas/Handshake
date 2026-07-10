@@ -13,7 +13,7 @@
  */
 
 import { sql } from './_lib/db.js';
-import { publicUrl } from './_lib/r2.js';
+import { thumbnailUrl } from './_lib/r2.js';
 import { env } from './_lib/env.js';
 import { cors, wrap } from './_lib/http.js';
 
@@ -46,7 +46,7 @@ export default wrap(async (req, res) => {
 	const desc = agent.description || 'An embodied AI agent on three.ws — with a body, a place, and an identity.';
 
 	const thumbnailUrl = agent.avatar_thumbnail_key
-		? publicUrl(agent.avatar_thumbnail_key)
+		? thumbnailUrl(agent.avatar_thumbnail_key)
 		: null;
 	const ogImage = thumbnailUrl
 		|| `${origin}/api/agent/${agentId}/og`;

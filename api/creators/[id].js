@@ -11,7 +11,7 @@
 
 import { sql } from '../_lib/db.js';
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
-import { publicUrl } from '../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { isUuid } from '../_lib/validate.js';
 
@@ -75,7 +75,7 @@ export default wrap(async (req, res) => {
 		description: a.description,
 		category: a.category,
 		tags: a.tags || [],
-		thumbnail_url: a.thumbnail_key ? publicUrl(a.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(a.thumbnail_key),
 		skills: a.skills || [],
 		forks_count: a.forks_count || 0,
 		views_count: a.views_count || 0,
@@ -90,7 +90,7 @@ export default wrap(async (req, res) => {
 		slug: a.slug,
 		name: a.name,
 		description: a.description,
-		thumbnail_url: a.thumbnail_key ? publicUrl(a.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(a.thumbnail_key),
 		glb_url: a.storage_key ? publicUrl(a.storage_key) : null,
 		tags: a.tags || [],
 		created_at: a.created_at,

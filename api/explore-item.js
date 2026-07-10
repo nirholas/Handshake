@@ -10,7 +10,7 @@ import { sql } from './_lib/db.js';
 import { cors, json, method, wrap, error, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { CHAIN_BY_ID, tokenExplorerUrl, addressExplorerUrl } from './_lib/erc8004-chains.js';
-import { publicUrl } from './_lib/r2.js';
+import { publicUrl, thumbnailUrl } from './_lib/r2.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -106,7 +106,7 @@ export default wrap(async (req, res) => {
 			slug: r.slug,
 			name: r.name,
 			description: r.description || '',
-			image: r.thumbnail_key ? publicUrl(r.thumbnail_key) : null,
+			image: thumbnailUrl(r.thumbnail_key),
 			glbUrl: glb,
 			has3d: true,
 			tags: r.tags || [],
@@ -145,7 +145,7 @@ export default wrap(async (req, res) => {
 		const r = rows[0];
 		const asset = r.meta?.sol_mint_address;
 		const network = r.meta?.network || 'mainnet';
-		const thumb = r.avatar_thumb ? publicUrl(r.avatar_thumb) : null;
+		const thumb = thumbnailUrl(r.avatar_thumb);
 		const item = {
 			kind: 'solana',
 			asset,

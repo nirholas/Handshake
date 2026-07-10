@@ -1955,6 +1955,84 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-jobs-btn-ico { font-size: 14px; line-height: 1; }
 @media (max-width: 480px) { .cc-jobs-btn-text { display: none; } }
 
+/* "Friends" button (W09) — mirrors the jobs/shop/wardrobe buttons, plus an
+   unread-DM badge and an active state while the panel is open. */
+.cc-friends-btn {
+	position: relative;
+	flex: none; pointer-events: auto;
+	display: inline-flex; align-items: center; gap: 7px;
+	margin-left: 4px; padding: 9px 13px;
+	background: rgba(255, 255, 255, 0.04); color: var(--cc-text);
+	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
+	cursor: pointer; white-space: nowrap; appearance: none; -webkit-appearance: none; font-family: inherit;
+	transition: border-color 0.14s ease, background 0.14s ease, transform 0.1s ease;
+}
+.cc-friends-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
+.cc-friends-btn:active { transform: translateY(1px); }
+.cc-friends-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-friends-btn.is-active { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.12); }
+.cc-friends-btn-ico { font-size: 14px; line-height: 1; }
+@media (max-width: 480px) { .cc-friends-btn-text { display: none; } }
+
+/* Unread badge — absolutely positioned so it never reflows the button (and so it
+   survives the 480px breakpoint that hides the label). */
+.cc-friends-badge {
+	position: absolute; top: -5px; right: -5px;
+	min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box;
+	display: inline-flex; align-items: center; justify-content: center;
+	background: #ff4d4d; color: #fff;
+	border-radius: 999px;
+	font-size: 10px; font-weight: 800; line-height: 1; letter-spacing: 0;
+	box-shadow: 0 0 0 2px var(--cc-bg, #10131a);
+}
+
+/* Friends panel shell (W09). A right-docked drawer over the world; the panel's own
+   styling ships with friends-panel.css, so this only owns the frame + motion. */
+.cc-friends-panel {
+	position: fixed; top: 0; right: 0; z-index: 40;
+	width: min(380px, 100vw);
+	height: 100dvh;
+	display: flex; flex-direction: column;
+	background: var(--cc-bg, #10131a);
+	border-left: 1px solid var(--cc-edge);
+	box-shadow: -18px 0 48px rgba(0, 0, 0, 0.45);
+	pointer-events: auto;
+	transform: translateX(100%);
+	transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+	will-change: transform;
+}
+.cc-friends-panel.is-open { transform: translateX(0); }
+@media (prefers-reduced-motion: reduce) { .cc-friends-panel { transition: none; } }
+
+.cc-friends-panel-head {
+	flex: none;
+	display: flex; align-items: center; justify-content: space-between; gap: 10px;
+	padding: 14px 14px 10px;
+	border-bottom: 1px solid var(--cc-edge);
+}
+.cc-friends-panel-title {
+	font-weight: 800; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
+	color: var(--cc-text);
+}
+.cc-friends-panel-close {
+	flex: none; width: 30px; height: 30px;
+	display: inline-flex; align-items: center; justify-content: center;
+	background: transparent; color: var(--cc-text);
+	border: 1px solid var(--cc-edge); border-radius: 8px;
+	font-size: 15px; line-height: 1; cursor: pointer;
+	transition: border-color 0.14s ease, background 0.14s ease;
+}
+.cc-friends-panel-close:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
+.cc-friends-panel-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* The FriendsPanel renders its own scrolling list into this body. */
+.cc-friends-panel-body { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.cc-friends-panel-hint {
+	flex: none; padding: 8px 14px 12px;
+	color: var(--cc-dim, #8b93a3); font-size: 11px; letter-spacing: 0.02em;
+	border-top: 1px solid var(--cc-edge);
+}
+
 /* Creator-only holders-gate button (R24) — mirrors the shop button, accented. */
 .cc-gate-cfg-btn {
 	flex: none; pointer-events: auto;

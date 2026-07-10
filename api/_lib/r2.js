@@ -154,6 +154,22 @@ export function isLegacyOgThumbnailKey(thumbnailKey) {
 	return /^https?:\/\/.*_og\.png$/i.test(String(thumbnailKey || ''));
 }
 
+// The ONE way to turn a stored thumbnail_key into a URL for an <img>.
+//
+// A thumbnail_key only resolves to a real image when it is a relative R2 key.
+// Legacy poisoned keys (absolute, origin-pointing `*_og.png`) 404 — and a 404
+// answered with a `text/plain` body is refused by Chrome's Opaque Response
+// Blocking when it was requested as an image (net::ERR_BLOCKED_BY_ORB), so the
+// browser logs an error instead of quietly showing nothing. Return null and let
+// the caller render its designed placeholder.
+//
+// Every read path that surfaces a thumbnail to a browser must go through this,
+// not bare publicUrl(). See docs/avatar-thumbnails.md.
+export function thumbnailUrl(thumbnailKey) {
+	if (!thumbnailKey || isLegacyOgThumbnailKey(thumbnailKey)) return null;
+	return publicUrl(thumbnailKey);
+}
+
 function encodeR2Key(key) {
 	return key.split('/').map(encodeURIComponent).join('/');
 }

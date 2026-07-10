@@ -14,7 +14,7 @@ import { getSessionUser } from '../../_lib/auth.js';
 import { parse } from '../../_lib/validate.js';
 import { randomToken } from '../../_lib/crypto.js';
 import { env } from '../../_lib/env.js';
-import { publicUrl } from '../../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../../_lib/r2.js';
 import { buildAgentManifest, buildAgentOnchainAttributes, agentRoyaltyConfig, skillCollectionSymbol, THREE_WS } from '../../_lib/three-brand.js';
 import {
 	getAgentCollection,
@@ -351,7 +351,7 @@ export const handleMetadata = wrap(async (req, res) => {
 			avatarId     = a.avatar_id || null;
 			if (a.avatar_id) {
 				const [av] = await sql`select storage_key, thumbnail_key from avatars where id = ${a.avatar_id} and deleted_at is null limit 1`;
-				if (av?.thumbnail_key) image = publicUrl(av.thumbnail_key);
+				image = thumbnailUrl(av?.thumbnail_key) || image;
 				if (av?.storage_key) animationUrl = publicUrl(av.storage_key);
 			}
 		}
@@ -552,7 +552,7 @@ export const handleRegisterPrep = wrap(async (req, res) => {
 	if (avatar_id) {
 		const [av] = await sql`select id, storage_key, thumbnail_key from avatars where id=${avatar_id} and owner_id=${user.id} and deleted_at is null limit 1`;
 		if (!av) return error(res, 404, 'not_found', 'avatar not found');
-		if (av.thumbnail_key) avatarImg = publicUrl(av.thumbnail_key);
+		avatarImg = thumbnailUrl(av.thumbnail_key) || avatarImg;
 		if (av.storage_key) avatarAnim = publicUrl(av.storage_key);
 	}
 
@@ -808,7 +808,7 @@ export const handleSkillCollectionMetadata = wrap(async (req, res) => {
 	let image = THREE_WS.ogImage;
 	if (agent.avatar_id) {
 		const [av] = await sql`select thumbnail_key from avatars where id = ${agent.avatar_id} and deleted_at is null limit 1`;
-		if (av?.thumbnail_key) image = publicUrl(av.thumbnail_key);
+		image = thumbnailUrl(av?.thumbnail_key) || image;
 	}
 
 	const name = `${agent.name} — Skills`;
@@ -862,7 +862,7 @@ export const handleSkillNftMetadata = wrap(async (req, res) => {
 	let image = THREE_WS.ogImage;
 	if (agent.avatar_id) {
 		const [av] = await sql`select thumbnail_key from avatars where id = ${agent.avatar_id} and deleted_at is null limit 1`;
-		if (av?.thumbnail_key) image = publicUrl(av.thumbnail_key);
+		image = thumbnailUrl(av?.thumbnail_key) || image;
 	}
 
 	const name = `${agent.name}: ${skill}`;

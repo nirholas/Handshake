@@ -29,6 +29,32 @@ and render the designed initial-letter placeholder instead.
 **Never synthesise a thumbnail URL on the client.** If the API gives you `null`,
 that avatar has no thumbnail; show a placeholder.
 
+### The read side: always `thumbnailUrl()`, never bare `publicUrl()`
+
+The write paths guarantee that a key we store has an object behind it. The read
+paths have to survive the keys that predate that guarantee. `publicUrl()` passes an
+absolute value straight through, so a legacy `*_og.png` key becomes a URL pointing
+at an origin that holds no object — a 404 the browser blocks as ORB.
+
+So every read path goes through one helper in
+[`api/_lib/r2.js`](../api/_lib/r2.js):
+
+```js
+import { thumbnailUrl } from './_lib/r2.js';
+
+thumbnailUrl(null)                                  // → null
+thumbnailUrl('https://three.ws/avatars/x_og.png')   // → null  (legacy, always 404s)
+thumbnailUrl('thumb/abc.png')                       // → https://<cdn>/thumb/abc.png
+```
+
+Return `null` and let the surface render its designed placeholder. There were 43
+bare `publicUrl(<thumbnail key>)` call sites across 32 files — agent cards, the
+marketplace, explore, user profiles, leaderboards, and the image baked into on-chain
+token metadata. All now route through `thumbnailUrl()`, and
+[`tests/thumbnail-url-guard.test.js`](../tests/thumbnail-url-guard.test.js) walks
+`api/` to fail the build if a new one appears. Two files are allow-listed there,
+each for a stated reason.
+
 ## Where a thumbnail comes from
 
 `avatars.thumbnail_key` holds a **relative** R2 key. An absolute URL in that column

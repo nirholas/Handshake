@@ -28,6 +28,9 @@ vi.mock('../../api/_lib/db.js', () => ({
 
 vi.mock('../../api/_lib/r2.js', () => ({
 	publicUrl: (key) => `https://cdn.three.ws/${key}`,
+	// thumbnailUrl mirrors r2.js: null for a missing key or the legacy *_og.png form.
+	thumbnailUrl: (key) =>
+		!key || /^https?:\/\/.*_og\.png$/i.test(key) ? null : `https://cdn.three.ws/${key}`,
 }));
 
 vi.mock('../../api/_lib/crypto.js', () => ({

@@ -96,13 +96,23 @@ export default wrap(async (req, res) => {
 	const copiedGlb = await copyObject({ fromKey: src.storage_key, toKey: newStorageKey });
 	if (!copiedGlb) newStorageKey = src.storage_key; // hosted URL — pass through
 
-	// Best-effort thumbnail copy. Never fatal — the gallery falls back to the name.
+	// Best-effort thumbnail copy. Never fatal — the gallery falls back to its
+	// initial-letter placeholder and the backfill cron renders a real thumbnail
+	// for the fork later. Two rules, both load-bearing (docs/avatar-thumbnails.md):
+	//
+	//   • copyObject() returns false when the source key is an absolute URL —
+	//     there is no bucket object to copy. Adopting that URL as the fork's
+	//     thumbnail_key would clone a key publicUrl() resolves against an origin
+	//     that holds no object.
+	//   • A thumbnail_key is persisted only after its object is confirmed present.
+	//     A silently-failed copy would otherwise leave the fork pointing at a 404,
+	//     which the browser blocks as ORB rather than rendering.
 	let newThumbKey = null;
 	if (src.thumbnail_key) {
 		try {
 			const candidate = `u/${auth.userId}/${slugBase}/${Date.now().toString(36)}-thumb.png`;
 			const copiedThumb = await copyObject({ fromKey: src.thumbnail_key, toKey: candidate });
-			newThumbKey = copiedThumb ? candidate : src.thumbnail_key;
+			if (copiedThumb && (await headObject(candidate))) newThumbKey = candidate;
 		} catch (e) {
 			console.warn('[fork] thumbnail copy failed', e?.message);
 		}

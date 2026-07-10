@@ -16,7 +16,7 @@
 
 import { sql } from '../_lib/db.js';
 import { cors, error, json, method, wrap } from '../_lib/http.js';
-import { publicUrl } from '../_lib/r2.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 import { isUuid } from '../_lib/validate.js';
 
 const SORTS = {
@@ -145,7 +145,7 @@ function shape(row) {
 		fps: row.fps,
 		loop: row.loop,
 		tags: row.tags || [],
-		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(row.thumbnail_key),
 		price: paid ? { amount: String(row.price_amount), currency: row.price_currency || 'USDC' } : null,
 		free: !paid,
 		size_bytes: row.artifact_bytes != null ? Number(row.artifact_bytes) : null,

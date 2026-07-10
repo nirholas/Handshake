@@ -21,7 +21,7 @@
 import { sql } from '../_lib/db.js';
 import { cors, method, readJson, error, json, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { publicUrl } from '../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { assertSafePublicUrl } from '../_lib/ssrf-guard.js';
 
@@ -139,7 +139,7 @@ async function handleSubjects(req, res) {
 		id: r.id,
 		name: r.name || 'Avatar',
 		slug: r.slug || null,
-		thumbnail: publicUrl(r.thumbnail_key),
+		thumbnail: thumbnailUrl(r.thumbnail_key),
 		model_url: publicUrl(r.storage_key),
 	}));
 	// Subjects list changes at most once an hour; cache aggressively so the demo

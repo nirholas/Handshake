@@ -21,7 +21,7 @@ import { cors, method, json, wrap, rateLimited, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser, extractBearer, authenticateBearer } from '../_lib/auth.js';
-import { publicUrl } from '../_lib/r2.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 
 export const maxDuration = 10;
 
@@ -192,7 +192,7 @@ export default wrap(async (req, res) => {
 			handle,
 			profileUrl: prof?.username ? `/u/${prof.username}` : null,
 			avatarId: prof?.avatar_id || null,
-			avatar: prof?.thumbnail_key ? publicUrl(prof.thumbnail_key) : null,
+			avatar: thumbnailUrl(prof?.thumbnail_key),
 			value: Math.round(w.value * 100) / 100,
 			deltaFromYesterday: Math.round((metricNow(key) - metricPrev(key)) * 100) / 100,
 		};

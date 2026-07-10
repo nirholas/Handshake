@@ -1,7 +1,7 @@
 import { sql } from '../_lib/db.js';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { publicUrl } from '../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: false })) return;
@@ -177,7 +177,7 @@ export default wrap(async (req, res) => {
 		slug: a.slug,
 		name: a.name,
 		description: a.description,
-		thumbnail_url: a.thumbnail_key ? publicUrl(a.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(a.thumbnail_key),
 		model_url: a.storage_key ? publicUrl(a.storage_key) : null,
 		size_bytes: Number(a.size_bytes || 0),
 		source: a.source,
@@ -233,9 +233,7 @@ export default wrap(async (req, res) => {
 			const isAgent = r.item_type === 'agent';
 			const name = r.avatar_name || r.agent_name || r.plugin_name || 'Item';
 			const image = isAvatar
-				? r.thumbnail_key
-					? publicUrl(r.thumbnail_key)
-					: null
+				? thumbnailUrl(r.thumbnail_key)
 				: isAgent
 					? r.profile_image_url || r.avatar_url || null
 					: null;

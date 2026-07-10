@@ -3,7 +3,7 @@
 
 import { createHash } from 'node:crypto';
 import { sql } from './db.js';
-import { publicUrl, presignGet, deleteObject } from './r2.js';
+import { publicUrl, thumbnailUrl, presignGet, deleteObject } from './r2.js';
 import { defaultStorageMode } from './storage-mode.js';
 import { isUuid } from './validate.js';
 
@@ -390,7 +390,7 @@ export async function listForks({ avatarId, limit = 24, cursor }) {
 			visibility: r.visibility,
 			fork_count: Number(r.fork_count || 0),
 			created_at: r.created_at,
-			thumbnail_url: r.thumbnail_key ? publicUrl(r.thumbnail_key) : null,
+			thumbnail_url: thumbnailUrl(r.thumbnail_key),
 			model_url:
 				r.visibility === 'public' || r.visibility === 'unlisted'
 					? publicUrl(r.storage_key)
@@ -498,7 +498,7 @@ function decorate(row) {
 				? publicUrl(row.storage_key)
 				: null,
 		parent_avatar_id: row.parent_avatar_id || null,
-		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(row.thumbnail_key),
 		usdz_url: row.usdz_key ? publicUrl(row.usdz_key) : null,
 		halfbody_url: row.halfbody_key ? publicUrl(row.halfbody_key) : null,
 		appearance: row.appearance || null,

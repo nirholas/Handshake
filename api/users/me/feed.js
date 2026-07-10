@@ -17,7 +17,7 @@ import { sql } from '../../_lib/db.js';
 import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
-import { publicUrl } from '../../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../../_lib/r2.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -96,7 +96,7 @@ export default wrap(async (req, res) => {
 			actor: actor(r),
 			title: r.name,
 			href: `/avatars/${r.id}`,
-			image: r.thumbnail_key ? publicUrl(r.thumbnail_key) : null,
+			image: thumbnailUrl(r.thumbnail_key),
 		});
 	}
 

@@ -57,7 +57,11 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 // No cache in tests — exercise the live fan-out every call, not a HIT.
 vi.mock('../../api/_lib/redis.js', () => ({ getRedis: vi.fn(async () => null) }));
 
-vi.mock('../../api/_lib/r2.js', () => ({ publicUrl: (key) => `/cdn/${key}` }));
+vi.mock('../../api/_lib/r2.js', () => ({
+	publicUrl: (key) => `/cdn/${key}`,
+	// thumbnailUrl mirrors r2.js: null for a missing key or the legacy *_og.png form.
+	thumbnailUrl: (key) => (!key || /^https?:\/\/.*_og\.png$/i.test(key) ? null : `/cdn/${key}`),
+}));
 
 const { default: handler } = await import('../../api/irl/agent-card.js');
 

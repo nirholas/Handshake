@@ -29,7 +29,7 @@
 import { sql } from '../../_lib/db.js';
 import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
-import { publicUrl } from '../../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
 
 const VALID_LOD = new Set(['0', '1', '2']);
@@ -155,7 +155,7 @@ export default wrap(async (req, res) => {
 			slug: avatar.slug,
 			name: avatar.name,
 			description: avatar.description,
-			thumbnail_url: avatar.thumbnail_key ? publicUrl(avatar.thumbnail_key) : null,
+			thumbnail_url: thumbnailUrl(avatar.thumbnail_key),
 			model_url: modelUrl,
 			base_model_url: baseModelUrl,
 			size_bytes: Number(avatar.size_bytes || 0),

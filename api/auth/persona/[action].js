@@ -35,7 +35,7 @@ import { SignJWT, jwtVerify, importPKCS8, importSPKI, exportJWK } from 'jose';
 import { getSessionUser } from '../../_lib/auth.js';
 import { sql } from '../../_lib/db.js';
 import { env } from '../../_lib/env.js';
-import { publicUrl } from '../../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../../_lib/r2.js';
 import { randomToken } from '../../_lib/crypto.js';
 import { cors, json, error, method, readJson, wrap } from '../../_lib/http.js';
 
@@ -132,7 +132,7 @@ async function loadAvatarForUser(userId, avatarId) {
 		id: row.id,
 		name: row.name,
 		url: publicUrl(row.storage_key),
-		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(row.thumbnail_key),
 	};
 }
 
@@ -271,7 +271,7 @@ async function handleMe(req, res) {
 		id: r.id,
 		name: r.name,
 		url: publicUrl(r.storage_key),
-		thumbnail_url: r.thumbnail_key ? publicUrl(r.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(r.thumbnail_key),
 		created_at: r.created_at,
 		visibility: r.visibility,
 	}));

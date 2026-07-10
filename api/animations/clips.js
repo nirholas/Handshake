@@ -12,7 +12,7 @@
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
-import { putObject, publicUrl } from '../_lib/r2.js';
+import { putObject, thumbnailUrl } from '../_lib/r2.js';
 import { limits } from '../_lib/rate-limit.js';
 import { z } from 'zod';
 
@@ -244,7 +244,7 @@ function listItem(row, auth) {
 		tags: row.tags || [],
 		visibility: row.visibility,
 		avatar_id: row.avatar_id,
-		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(row.thumbnail_key),
 		play_count: Number(row.play_count || 0),
 		purchase_count: Number(row.purchase_count || 0),
 		listed: !!row.listed,

@@ -14,7 +14,7 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse, isUuid } from '../../_lib/validate.js';
 import { readStorageMode, storageModeSchema, defaultStorageMode } from '../../_lib/storage-mode.js';
 import { getAvatar, resolveAvatarUrl } from '../../_lib/avatars.js';
-import { r2, publicUrl } from '../../_lib/r2.js';
+import { r2, publicUrl, thumbnailUrl } from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
 
 const PINATA_ENDPOINT = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
@@ -553,7 +553,7 @@ async function handleThumbnail(req, res) {
 
 	if (!row.thumbnail_key) return error(res, 404, 'not_found', 'avatar has no thumbnail');
 
-	return redirect(res, publicUrl(row.thumbnail_key));
+	return redirect(res, thumbnailUrl(row.thumbnail_key));
 }
 
 function redirect(res, url) {
@@ -591,7 +591,7 @@ async function handleThumb(req, res) {
 	if (!row) return error(res, 404, 'not_found', 'avatar not found');
 	if (!row.thumbnail_key) return error(res, 404, 'not_found', 'avatar has no thumbnail');
 
-	return redirect(res, publicUrl(row.thumbnail_key));
+	return redirect(res, thumbnailUrl(row.thumbnail_key));
 }
 
 // ── glb (same-origin CORS-friendly proxy) ─────────────────────────────────

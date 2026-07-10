@@ -23,7 +23,7 @@ import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
-import { publicUrl } from '../_lib/r2.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 import { z } from 'zod';
 
 // USDC only for now — the x402 facilitator settles USDC on Base + Solana.
@@ -196,7 +196,7 @@ function shape(row, payto) {
 		price: row.price_amount ? { amount: String(row.price_amount), currency: row.price_currency } : null,
 		artifact_bytes: row.artifact_bytes != null ? Number(row.artifact_bytes) : null,
 		artifact_mime: row.artifact_mime || null,
-		thumbnail_url: row.thumbnail_key ? publicUrl(row.thumbnail_key) : null,
+		thumbnail_url: thumbnailUrl(row.thumbnail_key),
 		purchase_count: Number(row.purchase_count || 0),
 		payout: { base: payto.base || null, solana: payto.solana || null, bsc: payto.bsc || null },
 	};

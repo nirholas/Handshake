@@ -168,7 +168,14 @@ export class CommunityNet {
 			tag: new Set(),         // ({event, itId, leaderboard}) — tag mini-game state (R08)
 			floorBeat: new Set(),   // ({clip}) — disco-pad beat tick (R06): pulses the floor + aligns standing dancers
 			king: new Set(),        // ({event, phase, endsAt, scores, kingId, winner, zone}) — King of the Totem state (R07)
+			social: new Set(),      // ({type, ...}) — friends events: live DM, request/accept (W09)
 		};
+		// Optional async presence-ticket supplier (W09). When provided, its resolved
+		// token rides the join so this coin world publishes the player's account
+		// presence to their friends and can deliver DMs here live. Without it the
+		// player is connected but invisible to the social graph — the /walk surface
+		// has always passed one; /play now does too.
+		this.getPresence = typeof opts.getPresence === 'function' ? opts.getPresence : null;
 		this.ping = null;        // smoothed RTT in ms, null until the first echo
 		this._pingSentAt = 0;    // perf-clock stamp of the last move awaiting an echo
 		this._lastSent = null;
@@ -233,6 +240,11 @@ export class CommunityNet {
 		try {
 			this.client = new Client(this.url);
 			const mint = this.coin.mint || '';
+			// Resolve the presence ticket before the join so it can ride the options.
+			// Anonymous players resolve to null (nothing to publish) and a failed mint
+			// must never block play — hence the catch: the world still joins, the
+			// player is simply offline to their friends until the next reconnect.
+			const presence = this.getPresence ? await this.getPresence().catch(() => null) : null;
 			const options = {
 				// filterBy('coin','tier') isolates each coin into its own instance and
 				// splits the open General world from the gated Holders world; the
@@ -255,6 +267,11 @@ export class CommunityNet {
 				// Stable persistence key for the off-schema economy (used only when the
 				// server hasn't verified a wallet account of its own — i.e. un-gated/dev).
 				pid: this.pid,
+				// Signed presence ticket (W09). WalkRoom verifies it and registers the
+				// account with the social hub under this world's name, so friends see
+				// "Online · <coin> Town" and DMs route to this socket. Omitted entirely
+				// when anonymous — the server treats its absence as "don't publish".
+				...(presence ? { presence } : {}),
 			};
 			// Holder worlds require a signed pass the server verifies in onAuth; carry
 			// it (and the floor it gated on, for the seed room's HUD) only for holders.
@@ -279,6 +296,9 @@ export class CommunityNet {
 
 			this.room.onMessage('chat', (msg) => this._emit('chat', msg));
 			this.room.onMessage('interact', (msg) => this._emit('interact', msg));
+			// Friends (W09): live DM + request/accept events pushed by the social hub
+			// to whichever realm room the account is currently registered in.
+			this.room.onMessage('social', (msg) => this._emit('social', msg));
 			this.room.onMessage('voice-signal', (msg) => this._emit('voiceSignal', msg));
 			// The server replies here when it refuses one of our place/break edits
 			// (budget full, rate limited, …) so the HUD can explain the no-op.

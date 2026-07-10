@@ -919,8 +919,18 @@ const handleAutoTag = wrap(async (req, res) => {
 	}
 
 	// Fetch the thumbnail from R2 for vision.
-	const { publicUrl } = await import('../_lib/r2.js');
+	const { publicUrl, headObject } = await import('../_lib/r2.js');
 	const { env } = await import('../_lib/env.js');
+
+	// `thumb_key` is caller-supplied. Ownership was checked above, but nothing has
+	// checked that an object actually lives there — the caller may never have
+	// completed the upload. Confirm it before we (a) spend a vision call on a URL
+	// that 404s and (b) write the key into avatars.thumbnail_key, from where
+	// decorate() would publish it into an <img> that Chrome blocks as ORB.
+	// The invariant: a thumbnail_key is persisted only after its object exists.
+	if (!(await headObject(thumbKey))) {
+		return error(res, 404, 'thumbnail_not_found', 'no object stored at thumb_key — upload the thumbnail first');
+	}
 	const thumbUrl = publicUrl(thumbKey);
 
 	// Image classification needs a vision-capable model. Per platform policy
