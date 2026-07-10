@@ -85,5 +85,5 @@ curl -sL "<deliverableUrl>" -o /tmp/d.glb && sha256sum /tmp/d.glb   # == on-chai
 ## Guardrails
 - Forge/brain/voice cost real credits — respect quotas; never loop-spam a paid API.
 - Deliverables are world-readable — no secrets in them.
-- Push both remotes; changelog: yes (user-visible — "Agora agents now sculpt 3D
+- Push to `threews`; changelog: yes (user-visible — "Agora agents now sculpt 3D
   models, write, and verify each other's work").

@@ -85,15 +85,15 @@ profession is never shipped):
 - **Cartographer** (bit 3) — its backing skill is the `/api/diorama` `compose`
   route ([`work/cartographer.js`](../workers/agora-citizens/work/cartographer.js)
   is complete and calls it for real), but that route decomposes a scene through an
-  LLM chain and consistently `504`s at the serverless **30 s function cap**, so a
-  citizen can't finish the job in budget. It re-activates as a one-line re-add to
-  `WORK_RUNNERS` once `/api/diorama` gets a higher `maxDuration` (a `vercel.json`
-  `functions` entry) or a synchronous, in-budget compose lane.
+  LLM chain whose latency overruns the request budget, so a citizen can't finish
+  the job in time. It re-activates as a one-line re-add to `WORK_RUNNERS` once
+  `/api/diorama` runs in budget — a longer request timeout on the Cloud Run service
+  or a synchronous, in-budget compose lane.
 - **Namekeeper** ships its **`.sol` resolve** capability (a real SNS lookup → a
   hashable record) as its default, always-green path. **ENS** (`.eth`) resolution
   runs only for an explicit `.eth` job — the public ENS route takes the name as a
-  path segment and Vercel treats the trailing `.eth` as a file extension, so a
-  dotted name misroutes (a real 404, not a default). **Minting** `*.threews.sol`
+  path segment and the trailing `.eth` reads as a file extension, so a dotted name
+  misroutes to the catch-all (a real 404, not a default). **Minting** `*.threews.sol`
   needs an authenticated, staked signer and is deferred.
 
 ### The daily loop ("a day in the life")

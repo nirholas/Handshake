@@ -31,7 +31,7 @@ silently skipped until you set their env var.
 4. Set `MEDIUM_INTEGRATION_TOKEN=<token>` in your env.
 5. (Optional) Set `MEDIUM_AUTHOR_ID=<id>` if you want to skip the
    auto-discovery `/v1/me` call. Otherwise the syndicator fetches your
-   author ID on first use and caches it for the Lambda's warm lifetime.
+   author ID on first use and caches it for the running server's warm lifetime.
 
 > **Note:** Medium's API has been deprecated for *new* accounts since
 > 2024. If your integration-token request returns "Access denied", the
@@ -106,7 +106,10 @@ published; re-saves on three.ws do not re-publish.
 
 ## Local-only
 
-`/admin/news` only runs on `localhost` or when `NODE_ENV !== 'production'`
-(and refuses outright on the Vercel runtime — its filesystem is
-read-only there anyway). Saves write to `data/rss/items.json` on disk;
-to publish, commit + push and let Vercel redeploy.
+`/admin/news` only runs on `localhost` or when `NODE_ENV !== 'production'`.
+In production — three.ws runs on Google Cloud Run (see
+[the ops runbook](./ops/gcp-production.md)) — it refuses outright, because
+the container filesystem is ephemeral, so writes would never persist. Saves
+write to `data/rss/items.json` on disk; to publish, commit + push and let the
+next production deploy (`npm run build && npm run deploy:gcp`) serve the
+updated feed.

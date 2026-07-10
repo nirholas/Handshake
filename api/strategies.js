@@ -114,7 +114,7 @@ async function handleList(req, res, auth) {
 
 	if (scope === 'mine') {
 		if (!auth) return error(res, 401, 'unauthorized', 'sign in to view your strategies');
-		const rl = await limits.authIp(clientIp(req));
+		const rl = await limits.authedReadIp(clientIp(req));
 		if (!rl.success) return rateLimited(res, rl);
 		const rows = await sql`
 			SELECT * FROM agent_strategies

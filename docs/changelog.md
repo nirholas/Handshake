@@ -14,8 +14,8 @@ three.ws follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`
 | **Minor** | New backwards-compatible features | `1.6.0` |
 | **Patch** | Bug fixes with no API changes | `1.5.1` |
 
-**Current platform version:** `1.5.1`  
-**Current SDK version (`@three-ws/sdk`):** `0.1.0`
+**Current platform version:** `1.5.2`  
+**Current SDK version (`@three-ws/sdk`):** `0.2.1`
 
 The SDK is versioned independently from the platform. A platform patch release does not necessarily bump the SDK version if no public API changed.
 
@@ -161,10 +161,10 @@ Initial public release.
 
 ## CDN Versioning
 
-The CDN bundle is served from Vercel. The URL includes the version so you can pin to an exact release.
+The CDN bundle is served from three.ws (Google Cloud Run + CDN). The URL includes the version so you can pin to an exact release.
 
 ```html
-<!-- Pinned to 1.5.1 — safe for production; won't break when 2.0.0 releases -->
+<!-- Pinned to 1.5.2 — safe for production; won't break when 2.0.0 releases -->
 <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
 
 <!-- Always latest stable — convenient for development, risky for production -->
@@ -265,11 +265,11 @@ Change the version number in the `src` attribute of your script tag. Before upgr
 ```js
 // From the SDK
 import { version } from '@three-ws/sdk';
-console.log(version); // "0.1.0"
+console.log(version); // "0.2.1"
 
-// From the platform API
-const { version } = await fetch('/api/config').then(r => r.json());
-console.log(version); // "1.5.1"
+// From the CDN version index
+const { latest } = await fetch('https://three.ws/agent-3d/versions.json').then(r => r.json());
+console.log(latest); // "1.5.2"
 ```
 
 ---
@@ -293,11 +293,11 @@ For contributors and maintainers. A release follows these steps:
 1. Changes are merged to the `main` branch via pull request.
 2. `package.json` version is bumped (and `sdk/package.json` if the SDK changed).
 3. This `CHANGELOG.md` is updated with entries for the new version.
-4. A git tag is created: `git tag v1.5.1 && git push origin v1.5.1`
+4. A git tag is created: `git tag v1.5.2 && git push threews v1.5.2`
 5. A GitHub Release is created from the tag with the changelog entry as the body.
 6. `npm run build:all` produces the platform bundle and the CDN library build.
-7. `npm run publish-lib` copies the CDN bundle into `dist/agent-3d/{version}/`, generates an `integrity.json` sidecar with SHA-384 hashes, updates the rolling channel aliases (`1.5`, `1`, `latest`), and writes a `versions.json` manifest.
-8. Vercel auto-deploys from `main` and serves the updated `dist/` directory on the CDN.
+7. `npm run publish:lib` copies the CDN bundle into `dist/agent-3d/{version}/`, generates an `integrity.json` sidecar with SHA-384 hashes, updates the rolling channel aliases (`1.5`, `1`, `latest`), and writes a `versions.json` manifest.
+8. The image is deployed to Google Cloud Run (`npm run build` then `npm run deploy:gcp`), which serves the updated `dist/` directory — including the CDN library build — from the `three-ws-api` service.
 
 The SDK (`@three-ws/sdk`) is published to npm separately:
 

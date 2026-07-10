@@ -275,7 +275,15 @@ function resolveMint() {
 
 async function fetchJson(url, { signal } = {}) {
 	const r = await fetch(url, { signal });
-	if (!r.ok) throw new Error(`${url} → ${r.status}`);
+	if (!r.ok) {
+		// Carry the status and the API's machine-readable code so callers can tell
+		// an honest empty state ("this coin has no market yet") apart from an
+		// outage, and offer Retry only where retrying can actually help.
+		const err = new Error(`${url} → ${r.status}`);
+		err.status = r.status;
+		err.code = await r.clone().json().then((b) => b?.error).catch(() => null);
+		throw err;
+	}
 	return r.json();
 }
 
@@ -1181,12 +1189,33 @@ async function renderChart() {
 		const first = pts[0].c;
 		const last = pts[pts.length - 1].c;
 		const changePct = first ? ((last - first) / first) * 100 : 0;
-		const head = el('div', { class: 'ld-chart-readout' }, [
+		const readout = [
 			el('span', { class: 'ld-chart-price', text: fmtPrice(last) }),
 			el('span', { class: `ld-chart-change ${pnlClass(changePct)}`, text: fmtPct(changePct, { sign: true }) }),
-		]);
-		canvas.replaceChildren(head, areaChart(pts));
-	} catch {
+		];
+		// The API serves its last real candles when both price sources are briefly
+		// unreachable. Say so rather than passing off old prices as live.
+		if (body.stale) {
+			readout.push(
+				el('span', {
+					class: 'ld-chart-stale',
+					text: 'delayed',
+					title: 'The live price feed is briefly unreachable — showing the most recent candles we hold.',
+				}),
+			);
+		}
+		canvas.replaceChildren(el('div', { class: 'ld-chart-readout' }, readout), areaChart(pts));
+	} catch (err) {
+		// A coin with no liquidity pool has no chart to draw — that is an answer,
+		// not a failure, so it gets its own copy and no Retry button.
+		if (err?.status === 404 && err?.code === 'no_market') {
+			canvas.replaceChildren(
+				el('div', { class: 'ld-empty ld-empty-sm' }, [
+					el('p', { text: 'No liquidity pool yet — this coin has no price history to chart.' }),
+				]),
+			);
+			return;
+		}
 		canvas.replaceChildren(
 			el('div', { class: 'ld-empty ld-empty-sm' }, [
 				el('p', { text: 'Price history is unavailable right now.' }),

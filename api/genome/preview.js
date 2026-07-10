@@ -27,7 +27,7 @@ export default wrap(async (req, res) => {
 	const auth = await resolveAuth(req, 'avatars:write');
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in to preview breeding');
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many previews — slow down');
 
 	const body = await readJson(req);

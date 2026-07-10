@@ -92,6 +92,31 @@ function authBreakerCooldownMs() {
 let authOpenUntil = 0; // epoch ms; 0 = closed (commands flow normally)
 let authTrialInFlight = false;
 
+// --- Quota-exhaustion breaker state (per instance) ---
+// Separate from the auth breaker so the two causes stay independently
+// observable in healthz and so a token rotation can't mask an over-quota plan.
+// The cooldown escalates ×2 per consecutive re-arm (60s → 10min ceiling): a
+// month-long condition should not be re-probed every minute for weeks, but the
+// probe must stay frequent enough that a plan upgrade heals within minutes.
+const QUOTA_COOLDOWN_BASE_MS = 60_000;
+const QUOTA_COOLDOWN_MAX_MS = 600_000;
+let quotaOpenUntil = 0;
+let quotaTrialInFlight = false;
+let quotaRearms = 0;
+
+function quotaCooldownMs() {
+	return Math.min(QUOTA_COOLDOWN_MAX_MS, QUOTA_COOLDOWN_BASE_MS * 2 ** Math.min(10, quotaRearms));
+}
+
+class RedisQuotaBreakerOpenError extends Error {
+	constructor() {
+		super('redis quota breaker open (Upstash monthly request limit exhausted)');
+		this.name = 'RedisQuotaBreakerOpenError';
+		this.circuitOpen = true;
+		this.quotaBreakerOpen = true;
+	}
+}
+
 // Auth/permission failures are permanent until the credential changes; only these
 // trip the breaker. Upstash surfaces them in the error message body it returns.
 // Exported (as isRedisAuthError) so per-consumer fallbacks can recognize the same
@@ -104,6 +129,24 @@ function isAuthError(err) {
 	return /WRONGPASS|NOAUTH|NOPERM|invalid or missing auth token|\b401\b|\b403\b/i.test(m);
 }
 export { isAuthError as isRedisAuthError };
+
+// Plan-quota exhaustion — "ERR max requests limit exceeded. Limit: 500000, Usage:
+// 500000" — is the OTHER permanent, config-level failure mode, and the one that
+// actually took production down (live 2026-07-10: healthz `cache` degraded, every
+// SET rejected, every `critical` rate-limit bucket failing closed).
+//
+// It behaves nothing like a transient blip: the monthly counter does not reset
+// until the billing cycle rolls over, so every command for the rest of the month
+// is doomed. Left untreated each request still pays a full Upstash REST round-trip
+// (latency on the hot path) and re-logs, exactly the flood the auth breaker exists
+// to prevent. Treat it the same way: open a breaker, short-circuit to the caller's
+// fallback, and re-probe on an escalating cooldown so a plan upgrade self-heals
+// without a redeploy.
+function isQuotaError(err) {
+	const m = String(err?.message || err || '');
+	return /max requests limit exceeded|max daily request limit|ERR max requests|quota exceeded/i.test(m);
+}
+export { isQuotaError as isRedisQuotaError };
 
 // Thrown when the breaker is open. Tagged `circuitOpen` so consumers treat it as a
 // normal "Redis unavailable" fallback WITHOUT emitting a per-request warning (the
@@ -128,12 +171,44 @@ function breakerAllows() {
 	return true;
 }
 
+// Same half-open protocol as the auth breaker, on its own state.
+function quotaBreakerAllows() {
+	if (quotaOpenUntil === 0) return true;
+	if (Date.now() < quotaOpenUntil) return false;
+	if (quotaTrialInFlight) return false;
+	quotaTrialInFlight = true;
+	return true;
+}
+
+function quotaRecordFailure(err) {
+	const wasTrial = quotaTrialInFlight;
+	quotaTrialInFlight = false;
+	const opening = quotaOpenUntil === 0;
+	if (!opening) quotaRearms += 1;
+	quotaOpenUntil = Date.now() + quotaCooldownMs();
+	if (opening && !wasTrial) {
+		console.error(
+			'[redis] QUOTA EXHAUSTED — the Upstash plan request limit is used up; ' +
+				`fast-failing all Redis commands to in-memory fallbacks for ${quotaCooldownMs() / 1000}s ` +
+				'(upgrade the Upstash plan or wait for the monthly reset to restore distributed ' +
+				'limiters/cache). Cause:',
+			err?.message || err,
+		);
+	}
+}
+
 function breakerRecordSuccess() {
 	if (authOpenUntil !== 0) {
 		console.warn('[redis] auth recovered — UPSTASH_REDIS_REST_TOKEN valid again, commands resumed');
 	}
+	if (quotaOpenUntil !== 0) {
+		console.warn('[redis] quota recovered — Upstash requests are being served again, commands resumed');
+	}
 	authOpenUntil = 0;
 	authTrialInFlight = false;
+	quotaOpenUntil = 0;
+	quotaTrialInFlight = false;
+	quotaRearms = 0;
 }
 
 function breakerRecordFailure(err) {
@@ -158,6 +233,7 @@ function breakerRecordFailure(err) {
 function wrapCommand(fn, target) {
 	return function (...args) {
 		if (!breakerAllows()) return Promise.reject(new RedisAuthBreakerOpenError());
+		if (!quotaBreakerAllows()) return Promise.reject(new RedisQuotaBreakerOpenError());
 		let out;
 		try {
 			out = fn.apply(target, args);
@@ -173,7 +249,12 @@ function wrapCommand(fn, target) {
 			},
 			(err) => {
 				if (isAuthError(err)) breakerRecordFailure(err);
-				else if (authTrialInFlight) authTrialInFlight = false; // trial hit a transient error; release the probe slot
+				else if (isQuotaError(err)) quotaRecordFailure(err);
+				else {
+					// Trial hit a transient error; release the probe slot for both breakers.
+					if (authTrialInFlight) authTrialInFlight = false;
+					if (quotaTrialInFlight) quotaTrialInFlight = false;
+				}
 				throw err;
 			},
 		);
@@ -195,6 +276,7 @@ function wrapPipeline(pipe) {
 				},
 				(err) => {
 					if (isAuthError(err)) breakerRecordFailure(err);
+					else if (isQuotaError(err)) quotaRecordFailure(err);
 					throw err;
 				},
 			);
@@ -258,9 +340,27 @@ export function redisAuthBreakerState() {
 	};
 }
 
-/** Test-only: reset the breaker between cases. */
+/**
+ * Current quota-breaker state, for health/diagnostics endpoints. `open` true means
+ * the Upstash plan's request limit is exhausted and commands are short-circuiting
+ * to per-instance fallbacks on this instance. Unlike the auth breaker, the remedy
+ * is a plan upgrade (or the monthly reset), not a token rotation.
+ */
+export function redisQuotaBreakerState() {
+	return {
+		open: quotaOpenUntil !== 0 && Date.now() < quotaOpenUntil,
+		openUntil: quotaOpenUntil || null,
+		cooldownMs: quotaCooldownMs(),
+		rearms: quotaRearms,
+	};
+}
+
+/** Test-only: reset the breakers between cases. */
 export function __resetRedisAuthBreaker() {
 	authOpenUntil = 0;
 	authTrialInFlight = false;
+	quotaOpenUntil = 0;
+	quotaTrialInFlight = false;
+	quotaRearms = 0;
 	_instance = undefined;
 }

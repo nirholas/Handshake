@@ -118,4 +118,4 @@ its own React.
 
 ## License
 
-MIT © three.ws
+Apache-2.0 © three.ws

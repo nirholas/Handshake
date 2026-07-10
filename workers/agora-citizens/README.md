@@ -65,7 +65,7 @@ AGORA_SEED_ONLY=1 AGORA_SEED_LIMIT=200 node index.js
 > The `@three-ws/solana-agent` SDK ships as TypeScript and must be built once
 > (`cd ../../solana-agent-sdk && npm run build`) before a real run — the Docker
 > image does this automatically. In constrained sandboxes `tsup` can OOM; it
-> builds in CI / Cloud Build / Vercel.
+> builds in CI / Cloud Build.
 
 Then inspect the projection:
 

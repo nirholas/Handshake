@@ -1,6 +1,6 @@
 # @three-ws/tool-sdk
 
-Typed tool authoring for three.ws MCP servers. Every one of the 38 MCP servers
+Typed tool authoring for three.ws MCP servers. Every one of the MCP servers
 in this repo (`mcp-server/`, `packages/*-mcp/`) currently declares tools by
 hand: a name, a description, a hand-maintained JSON-Schema (or Zod-shape)
 parameter list, and a handler — with validation and error wrapping

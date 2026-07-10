@@ -16,7 +16,7 @@ Three real, shipped features collapse that whole chain into minutes:
 
 1. **Selfie → 3D** — [`/scan`](../../../README.md#selfie-reconstruction-pipeline-phase-1) and [`/create/selfie`](../../../README.md) turn a photo into a rigged 3D avatar. Rendering and capture run **in the browser** — drag-and-drop GLB handling is fully client-side (no server upload of the model itself).
 2. **Text → 3D (Forge)** — `/forge` is the in-house text-to-3D pipeline: describe a character in words and get a 3D model back, when you'd rather invent an original than scan your face.
-3. **Embed anywhere** — the [`<agent-3d>` web component](../../../README.md#web-component--embedding) drops onto any HTML page with one script tag, no framework. Add a `brain=` attribute and the avatar talks. [Widget Studio](https://three.ws/studio) and the [Embed Editor](https://three.ws/embed-editor) generate the snippet for you.
+3. **Embed anywhere** — the [`<agent-3d>` web component](../../../README.md#web-component--embedding) drops onto any HTML page with one script tag, no framework. Add a `brain=` attribute and the avatar talks. [Widget Studio](https://three.ws/studio) and the [Embed Editor](https://three.ws/embed) generate the snippet for you.
 
 Together: your face (or your prompt) becomes a model, the model becomes a talking agent, and the agent becomes a copy-paste embed. Every step is a real route.
 
@@ -25,7 +25,7 @@ Together: your face (or your prompt) becomes a model, the model becomes a talkin
 > **Imagine an indie illustrator, "Procyon," who sells art prints from a one-page site** and wants a 3D version of themselves greeting visitors. Here's the path they'd take.
 
 1. Procyon opens [`/scan`](https://three.ws/scan) on their phone, follows the capture UX, and gets a rigged avatar — or, wanting a stylized fox mascot instead of their own face, opens **`/forge`** and types *"a friendly anthropomorphic fox in a denim jacket, soft studio lighting."* Forge returns a GLB.
-2. They open the [Embed Editor](https://three.ws/embed-editor), pick the avatar, choose an idle animation and a transparent background, and frame it.
+2. They open the [Embed Editor](https://three.ws/embed), pick the avatar, choose an idle animation and a transparent background, and frame it.
 3. They set a brain and personality inline, copying the snippet the editor produces:
    ```html
    <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
@@ -47,7 +47,7 @@ A real, embedded, conversational 3D avatar that loads in any modern browser. The
 
 ## Next step / CTA
 
-- Start: [`/scan`](https://three.ws/scan) (selfie) or `/forge` (text) → [Embed Editor](https://three.ws/embed-editor).
+- Start: [`/scan`](https://three.ws/scan) (selfie) or `/forge` (text) → [Embed Editor](https://three.ws/embed).
 - Learn: [Build Your First Agent](../../../docs/tutorials/first-agent.md) · [Embed on Your Website](../../../docs/tutorials/embed-on-website.md).
 - **Social spotlight angle (G03):** "From one selfie to a talking 3D you, embedded in your bio — no Blender."
 - `[REAL CASE STUDY — fill on consent: an indie creator who shipped an embedded agent and the response it got.]`

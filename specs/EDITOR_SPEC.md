@@ -385,7 +385,7 @@ The editor itself is entirely client-side; there is no server-side ownership gat
 
 ### Ownership check at publish
 
-1. `POST /api/avatars/presign` — requires valid session or bearer with `avatars:write`. Returns 401 if missing. ([`api/avatars/presign.js:15–18`](../api/avatars/presign.js#L15))
+1. `POST /api/avatars/presign` — requires valid session or bearer with `avatars:write`. Returns 401 if missing. The presign action is dispatched from [`api/avatars/[id].js`](../api/avatars/[id].js) into the `handlePresign` handler in [`api/avatars/_actions.js`](../api/avatars/_actions.js).
 2. `POST /api/avatars` — same auth requirement. Additionally verifies that `storage_key` starts with `u/{auth.userId}/` to prevent cross-user key claiming. ([`api/avatars/index.js:50–53`](../api/avatars/index.js#L50))
 
 ### How the editor checks identity

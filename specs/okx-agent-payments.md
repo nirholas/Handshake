@@ -1,5 +1,7 @@
 # OKX Agent Payments Protocol — Seller-Side Contract (three.ws A2MCP)
 
+*Historical record — this Work Order research contract was captured 2026-07-06 and reconciled 2026-07-07, the day three.ws production migrated from Vercel to Google Cloud Run. Its "Set in Vercel" / "not set in Vercel production" notes describe that point-in-time state; production env vars now live on the Cloud Run service `three-ws-api` (`gcloud run services describe/update three-ws-api --region us-central1` — see [docs/ops/gcp-production.md](../docs/ops/gcp-production.md)). The seller-side wire contract (§1) and the spec→code map (§5) remain current.*
+
 > **Status:** Research complete. Green-light for Work Order 02.
 > **Chain:** X Layer mainnet, `eip155:196` (chainId 196).
 > **Our payTo:** `0x75d00a2713565171f33216e5aa2a375e076ecf69` (agent #2632 owner wallet).

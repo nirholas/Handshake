@@ -144,7 +144,7 @@ A drop-in payment modal turns any x402 paid endpoint into a polished checkout. P
 
 Terminal-native tooling brings the on-chain avatar workflow to your shell and CI. It scaffolds a spec-compliant avatar manifest from just a wallet address and a mesh file — computing the SHA-256, byte size, and format for you — validates existing manifests with CI-friendly exit codes, hashes any file for content addressing, and prints ready-to-paste embed snippets including the resolver URL, a web-component tag, and an iframe.
 
-**How it works:** Four commands (init, validate, hash, preview) run entirely offline against the published avatar schema — no service to sign up for, no browser required — and a --json flag on each makes them scriptable. Runs via npx with zero install, accepting CAIP-10 owners, ENS-style names, and Avaturn/Mixamo/Ready Player Me/VRM skeletons.
+**How it works:** Four commands (init, validate, hash, preview) run entirely offline against the published avatar schema — no service to sign up for, no browser required — and a --json flag on each makes them scriptable. Runs via npx with zero install, accepting CAIP-10 owners, ENS-style names, and Mixamo/VRM and other humanoid skeletons.
 
 **Why it matters:** Publishing a verifiable, on-chain-addressable avatar becomes three shell commands you can wire straight into CI.
 

@@ -46,7 +46,7 @@ The result is a base URL like `https://trellis.yourdomain.com`.
 
 ## Step 3 — Point three.ws at your NIM
 
-Set two environment variables on your three.ws deployment:
+Set two environment variables on your three.ws deployment. Production runs on Google Cloud Run (service `three-ws-api`, region `us-central1`), so the env lives on the Cloud Run service — see the [GCP production runbook](../ops/gcp-production.md) for the full ops flow.
 
 | Variable | What it is |
 |----------|-----------|
@@ -54,8 +54,11 @@ Set two environment variables on your three.ws deployment:
 | `NVIDIA_API_KEY` | Bearer token forwarded to the NIM (if your gateway requires auth) |
 
 ```bash
-vercel env add MODEL_TRELLIS_URL production
-vercel env add NVIDIA_API_KEY production
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars MODEL_TRELLIS_URL=https://trellis.yourdomain.com
+
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars NVIDIA_API_KEY=your-ngc-token
 ```
 
 Confirm three.ws can see it:

@@ -1,6 +1,6 @@
 # pump-fun-mcp — Cloudflare Workers edge deployment
 
-Mirror of the Vercel endpoint at `/api/pump-fun-mcp`, deployable to Cloudflare Workers for sub-50 ms cold starts and region-local edge execution.
+Mirror of the primary `/api/pump-fun-mcp` endpoint (served by the Cloud Run app in [`server/index.mjs`](../server/index.mjs)), deployable to Cloudflare Workers for sub-50 ms cold starts and region-local edge execution.
 
 ## Files
 
@@ -8,7 +8,7 @@ Mirror of the Vercel endpoint at `/api/pump-fun-mcp`, deployable to Cloudflare W
 | :--- | :--- |
 | `workers/pump-fun-mcp/worker.js` | CF Workers fetch handler implementing the MCP Streamable HTTP transport |
 | `workers/pump-fun-mcp/wrangler.toml` | Wrangler config (`name`, `main`, `compatibility_date`) |
-| `src/pump/mcp-tools.js` | Shared tool registry imported by both the Vercel and Workers handlers |
+| `src/pump/mcp-tools.js` | Shared tool registry imported by both the Cloud Run and Workers handlers |
 
 ## Deploy
 
@@ -42,7 +42,7 @@ curl -s http://localhost:8787 \
 
 Both runtimes import `TOOLS` from `src/pump/mcp-tools.js`, so the tool list exposed by `tools/list` is identical by construction. The test `tests/pump-mcp-tools.test.js` asserts this guarantee.
 
-## Differences from the Vercel handler
+## Differences from the primary handler
 
 - No IP rate limiting (handled at the Cloudflare edge layer instead).
 - Env vars come from Workers secrets (`env` binding) rather than `process.env`.

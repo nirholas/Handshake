@@ -1104,7 +1104,10 @@ function drawEmbed() {
 		`data-x402-action="${esc(sku.action_name)}"`,
 	];
 	if (sku.target_body) attrs.push(`data-x402-body='${esc(JSON.stringify(sku.target_body))}'`);
-	const snippet = `<!-- x402 pay button · powered by three.ws -->\n<script src="${location.origin}/x402.js" defer></` + `script>\n<button\n  ${attrs.join('\n  ')}\n  style="${style}">\n  ${esc(label)}\n</button>`;
+	// type="module" (never a classic `defer` script): /x402.js uses import.meta.url,
+	// which throws at parse time outside a module. A merchant pasting this snippet
+	// gets a working button, not a console full of syntax errors.
+	const snippet = `<!-- x402 pay button · powered by three.ws -->\n<script type="module" src="${location.origin}/x402.js"></` + `script>\n<button\n  ${attrs.join('\n  ')}\n  style="${style}">\n  ${esc(label)}\n</button>`;
 	$('#em_code').textContent = snippet;
 }
 
@@ -1143,11 +1146,14 @@ function openModal(title, bodyNode, actions) {
 }
 
 // Load the x402 modal script once so the embed preview button is live.
+// type="module" is required, not cosmetic: /x402.js resolves its sibling
+// risk-ack module via import.meta.url, which is a syntax error in a classic
+// script. Module scripts defer by default, so no `defer` attribute is needed.
 function loadX402Modal() {
 	if (window.X402 || document.querySelector('script[data-x402-runtime]')) return;
 	const s = document.createElement('script');
+	s.type = 'module';
 	s.src = '/x402.js';
-	s.defer = true;
 	s.setAttribute('data-x402-runtime', '');
 	document.head.append(s);
 }

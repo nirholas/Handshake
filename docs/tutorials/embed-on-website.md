@@ -124,20 +124,39 @@ For an inline embed with explicit dimensions:
 
 ## Path 3: React / Next.js
 
-### Install
+### Load the web component
 
-```bash
-npm install @three-ws/sdk
+The `<agent-3d>` custom element ships as a self-contained CDN bundle — there's no npm package to install, and it works natively in React. Load the script once in your app's root HTML (`index.html`, or the root layout / `_document.js` in Next.js):
+
+```html
+<script
+  type="module"
+  src="https://three.ws/agent-3d/1.5.2/agent-3d.js"
+  crossorigin="anonymous"
+></script>
+```
+
+In Next.js, load it with `next/script` in your root layout instead:
+
+```jsx
+import Script from 'next/script';
+
+<Script
+  src="https://three.ws/agent-3d/1.5.2/agent-3d.js"
+  type="module"
+  strategy="beforeInteractive"
+/>
 ```
 
 ### Create a wrapper component
+
+Once the script is loaded, `<agent-3d>` is a registered custom element you can render like any other tag. Wrap it so you can attach event listeners cleanly:
 
 ```jsx
 // components/Agent3D.jsx
 'use client'; // Required for Next.js App Router
 
 import { useEffect, useRef } from 'react';
-import '@three-ws/sdk'; // registers <agent-3d> as a custom element
 
 export default function Agent3D({ agentId, chainId = '8453', mode = 'floating' }) {
   const ref = useRef();

@@ -1,0 +1,11 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch(); const p = await b.newPage();
+const errs=[]; p.on('console',m=>{if(m.type()==='error')errs.push(m.text().slice(0,110));});
+await p.goto('https://three.ws/characters',{waitUntil:'domcontentloaded',timeout:45000});
+await p.waitForTimeout(6000);
+const cards = await p.evaluate(()=>document.querySelectorAll('[class*=card],[class*=grid] > *').length);
+const bodyText = (await p.evaluate(()=>document.body.innerText)).slice(0,140).replace(/\n+/g,' | ');
+console.log('console errors:', errs.length); errs.forEach(e=>console.log('  ',e));
+console.log('rendered cards/grid children:', cards);
+console.log('visible text:', bodyText);
+await b.close();

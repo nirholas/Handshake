@@ -19,15 +19,15 @@ This is separate from (and complementary to) [hold-to-access](./hold-to-access.m
 Three endpoints, all under `/api/payments/solana` ([api/payments/solana/[action].js](../api/payments/solana/%5Baction%5D.js)):
 
 ```
-GET  /api/payments/solana?action=plans      → prices + accepted assets (public)
-POST /api/payments/solana?action=checkout   → create a payment intent (session required)
-POST /api/payments/solana?action=confirm    → verify the tx on-chain, activate the plan
+GET  /api/payments/solana/plans      → prices + accepted assets (public)
+POST /api/payments/solana/checkout   → create a payment intent (session required)
+POST /api/payments/solana/confirm    → verify the tx on-chain, activate the plan
 ```
 
 ### 1. Read the plans (public)
 
 ```js
-const d = await fetch('/api/payments/solana?action=plans').then(r => r.json());
+const d = await fetch('/api/payments/solana/plans').then(r => r.json());
 // → {
 //     plans: { pro: { label: 'Pro', price_usd: 49, three_price_usd: 39.2, duration_days: 30 }, ... },
 //     assets: ['USDC', 'SOL', 'THREE'],
@@ -41,7 +41,7 @@ Pricing UIs render from this endpoint so a displayed price can never drift from 
 ### 2. Create a checkout
 
 ```js
-const intent = await fetch('/api/payments/solana?action=checkout', {
+const intent = await fetch('/api/payments/solana/checkout', {
   method: 'POST',
   credentials: 'include',
   headers: { 'content-type': 'application/json' },
@@ -71,7 +71,7 @@ The wallet payment **must include the `nonce` as a memo instruction** — the `s
 Pay via the `solana_pay_url` (QR / deep link) or any wallet, then post the signature:
 
 ```js
-const r = await fetch('/api/payments/solana?action=confirm', {
+const r = await fetch('/api/payments/solana/confirm', {
   method: 'POST',
   credentials: 'include',
   headers: { 'content-type': 'application/json' },

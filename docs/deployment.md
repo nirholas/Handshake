@@ -330,7 +330,7 @@ TARGET=lib npm run build
 # Output: dist-lib/
 ```
 
-The Vite config handles multi-page routing, asset hashing, and the PWA manifest. Every JS file in `dist/assets/` is content-hashed, so you can serve them with long cache headers safely — Vercel does this automatically (`max-age=604800`).
+The Vite config handles multi-page routing, asset hashing, and the PWA manifest. Every JS file in `dist/assets/` is content-hashed, so you can serve them with long cache headers safely — the `vercel.json` route headers set `max-age=604800` on `/assets/*`, and the container (and any CDN in front of it) honors them.
 
 ---
 
@@ -373,18 +373,13 @@ Assets under `/assets/*` are served with a 7-day cache header. Versioned CDN bun
 
 ## Custom domain + HTTPS
 
-On Vercel: **Settings → Domains → Add Domain**.
+Point your domain at the container's front door and terminate TLS there. On Cloud Run, three.ws runs behind a Global External Application Load Balancer with a Google-managed certificate — DNS is an `A` record to the load balancer's static IP, and TLS auto-renews (the full LB/DNS/cert wiring is in the [ops runbook](ops/gcp-production.md)). On any other host, use that platform's domain + TLS mechanism (a managed cert, a reverse proxy, or Let's Encrypt).
 
-HTTPS is provisioned automatically via Let's Encrypt — no action needed.
+Whatever the host, after the domain resolves:
 
-After adding your domain:
-
-1. Configure DNS:
-   - **A record:** `76.76.21.21`
-   - **CNAME:** `cname.vercel-dns.com`
-2. Update `PUBLIC_APP_ORIGIN` in your environment variables to your domain (no trailing slash)
-3. Update `cors.json` to include your domain in the allowed origins array
-4. Redeploy for the CORS change to take effect
+1. Update `PUBLIC_APP_ORIGIN` in your environment variables to your domain (no trailing slash)
+2. Update `cors.json` to include your domain in the allowed origins array
+3. Rebuild and redeploy for the CORS change to take effect
 
 ---
 
@@ -441,7 +436,7 @@ cast send $VALIDATION_REGISTRY \
 
 ## Self-hosting on other infrastructure
 
-Vercel is not required. Any Node.js host that can serve static files and run serverless/edge functions works.
+No specific platform is required. The whole app is one Node process (`server/index.mjs`) that serves static files and every `api/**` handler, so any host that can run a Node container works — Cloud Run, Fly.io, Railway, a plain VM, or Docker on your own metal.
 
 ### With Nginx (static files only)
 
@@ -456,7 +451,7 @@ npm run build
 server {
     listen 80;
     server_name 3d.yourdomain.com;
-    root /var/www/3d-agent/dist;
+    root /var/www/three.ws/dist;
     index index.html;
 
     location / {
@@ -473,37 +468,30 @@ server {
 }
 ```
 
-### With Docker
+### With Docker (full app)
 
-```dockerfile
-FROM node:18-alpine AS build
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
-```
+The repo ships a root [`Dockerfile`](../Dockerfile) that builds the frontend and runs `server/index.mjs` — the same image three.ws runs on Cloud Run. It serves the static frontend **and** every `api/**` handler from one process:
 
 ```bash
-docker build -t 3d-agent .
-docker run -p 8080:80 3d-agent
+npm run build            # produce dist/ — the image COPYs it in, it is not built inside
+docker build -t three-ws .
+docker run -p 8080:8080 \
+  -e DATABASE_URL=... -e JWT_SECRET=... -e ANTHROPIC_API_KEY=... \
+  three-ws
+# App + API on http://localhost:8080
 ```
 
-For the full backend (API routes, database, crons) on non-Vercel infrastructure, deploy the functions under `/api/` as a Node.js server. Each file in `/api/` exports a default function compatible with the Vercel Functions signature — any adapter (e.g. `@vercel/node` locally, or a thin Express wrapper) works.
+`server/index.mjs` resolves each file under `api/` and runs it with Vercel-parity filesystem routing — you do **not** deploy one serverless function per file. `PORT` defaults to `8080`. For the scheduled jobs, point an external scheduler at `/api/cron/*` (see [Background cron jobs](#background-cron-jobs) above). Full container/build details are in [`server/README.md`](../server/README.md).
 
 ---
 
 ## Monitoring and observability
 
-### Vercel built-ins
+### Host built-ins
 
-- **Analytics:** enable in the Vercel dashboard under **Settings → Analytics**
-- **Logs:** `vercel logs --prod` or the dashboard log viewer
-- **Function duration:** visible per-invocation in the dashboard; serverless functions have a 10-second default timeout (configurable in `vercel.json`)
+- **Logs:** on Cloud Run, `gcloud run services logs read three-ws-api --region us-central1` or Cloud Logging; on any other host, that platform's log stream.
+- **Request duration / timeout:** the Cloud Run service runs with a 900s request timeout; set the equivalent on your host so long renders (avatar thumbnails, 3D generation) don't get cut off.
+- **Uptime:** the `uptime-check` cron ([api/cron/uptime-check.js](../api/cron/uptime-check.js)) watches the economy and subsystems and escalates to the ops Telegram channel — see the [economy heartbeat](economy-heartbeat.md) guide.
 
 ### Database monitoring
 
@@ -511,13 +499,13 @@ Neon's dashboard has query monitoring, connection graphs, and slow query logs. F
 
 ### Error tracking
 
-Add Sentry by setting `SENTRY_DSN` in your environment and importing the Sentry SDK in your API entrypoints. No changes to `vercel.json` needed.
+Add Sentry by setting `SENTRY_DSN` in your environment and importing the Sentry SDK in your API entrypoints.
 
 ### Key rotation
 
 `JWT_SECRET` signs all session tokens. Rotate it by:
 
-1. Adding a new `JWT_KID` and corresponding `JWT_SECRET` in Vercel environment variables
+1. Adding a new `JWT_KID` and corresponding `JWT_SECRET` in your host's environment (on Cloud Run, `gcloud run services update three-ws-api …`)
 2. Waiting for existing tokens to expire (default session duration)
 3. Removing the old key
 
@@ -555,7 +543,7 @@ After deploying, run through these checks to verify the instance is healthy:
 | Auth metadata | `GET /.well-known/oauth-authorization-server` returns valid JSON |
 | MCP endpoint | `POST /api/mcp` with `{"jsonrpc":"2.0","id":1,"method":"tools/list"}` and a bearer API key |
 
-A full automated smoke test report is in `docs/SMOKE_TEST.md`.
+Several of these flows have automated smoke scripts you can run against a deployment: `npm run smoke:onchain`, `npm run smoke:agent-wallet`, `npm run smoke:mcp`, and `npm run test:pages`.
 
 ---
 
@@ -581,7 +569,7 @@ Check that `DATABASE_URL` includes `?sslmode=require` — Neon rejects connectio
 
 ### Cron jobs not running
 
-Crons only fire in **production** deployments, not previews. Verify you deployed with `vercel --prod` or triggered a production deploy from the dashboard.
+The container does not schedule crons itself — an external scheduler must hit `/api/cron/*`. Verify your scheduler (Cloud Scheduler, or whatever you configured per [Background cron jobs](#background-cron-jobs)) is firing and sending the correct `Authorization: Bearer $CRON_SECRET` header. `curl -s https://yourdomain.com/api/status | jq .economy` shows whether the economy heartbeat is ticking.
 
 ### Redis connection errors
 

@@ -38,13 +38,22 @@ gcloud builds submit \
   --substitutions _GCS_BUCKET=three-ws-avatar-reconstructions
 ```
 
-After deploy, Cloud Build prints the service URL. Copy it into your Vercel / `.env` file:
+After deploy, Cloud Build prints the service URL. Set these on the three.ws
+production service (Cloud Run `three-ws-api`) so the site can reach this worker:
 
 ```
 AVATAR_REGEN_PROVIDER=gcp
 GCP_RECONSTRUCTION_URL=https://avatar-reconstruction-<hash>-uc.a.run.app
 GCP_RECONSTRUCTION_KEY=<the secret value from step 6>
 ```
+
+```bash
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars AVATAR_REGEN_PROVIDER=gcp,GCP_RECONSTRUCTION_URL=https://avatar-reconstruction-<hash>-uc.a.run.app,GCP_RECONSTRUCTION_KEY=<key>
+```
+
+(For local development, put the same keys in your `.env`.) See the production
+runbook: [`docs/ops/gcp-production.md`](../../docs/ops/gcp-production.md).
 
 ## API
 

@@ -117,10 +117,10 @@ congestion, clamped to a hard ceiling.
 
 | Env | Required | Meaning |
 |---|---|---|
-| `ECONOMY_MASTER_SECRET_BASE58` | yes | The master keypair (base58 of 64 raw bytes). Unset ⇒ the funding root is inert. Store `--sensitive`; keep your own copy (Vercel Sensitive vars are unreadable after save). |
+| `ECONOMY_MASTER_SECRET_BASE58` | yes | The master keypair (base58 of 64 raw bytes). Unset ⇒ the funding root is inert. Store it as a secret on the Cloud Run service (or your host's secret store), never plaintext; keep your own offline copy since secret values are unreadable after they are written. |
 | `ECONOMY_MASTER_ADDRESS` | no | Override the expected pubkey if the master is ever rotated. Defaults to the address above. |
 | `ECONOMY_MASTER_RESERVE_SOL` / `_PER_TOPUP_MAX_SOL` / `_RUN_CAP_SOL` | no | Guard caps (see table). |
-| `CRON_SECRET` | yes | Bearer auth for the Vercel cron (shared with other crons). |
+| `CRON_SECRET` | yes | Bearer auth for the `treasury-topup` cron (shared with every other cron; Cloud Scheduler sends it). |
 | `SOLANA_RPC_URL` | no | Mainnet RPC (defaults to `api.mainnet-beta`). |
 
 ## Verify it's working
@@ -138,9 +138,9 @@ The JSON response reports `configured`, `master_sol`, `funded`, `failed`,
 `skipped`, `rejected`, and `spent_sol`. A non-empty `rejected` array means an
 off-registry target reached the sweep and was blocked — investigate the caller.
 
-If the cron never fires because Vercel's scheduler is down, the
-[economy heartbeat](economy-heartbeat.md) keeps it (and every other cron)
-ticking from GitHub Actions.
+If the Cloud Scheduler job never fires, the
+[economy heartbeat](economy-heartbeat.md) dispatcher (and any external HTTP cron
+pointed at `/api/cron/economy-tick`) keeps it — and every other cron — ticking.
 
 ## Audit, accounting & breach monitoring
 

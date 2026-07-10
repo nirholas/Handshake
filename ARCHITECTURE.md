@@ -26,7 +26,7 @@ graph TD
 
     WebGL -->|"fetch / SSE / WebSocket"| APILayer
 
-    subgraph APILayer["VERCEL SERVERLESS FUNCTIONS (api/)"]
+    subgraph APILayer["SERVERLESS-STYLE HANDLERS (api/) — served by the Cloud Run Express container"]
         Auth["Auth\nOAuth2.1 · SIWE/SIWS · Privy"]
         AgentsSvc["Agents\nMCP Main · A2A Pay"]
         AvatarsSvc["Avatars\nMarketplace · Billing"]
@@ -64,7 +64,7 @@ graph TD
         OnChain["On-chain: pump.fun · Jupiter · Helius · Pyth · Metaplex · SNS · EAS"]
         X402ext["x402: PayAI facilitator · Coinbase CDP · x402scan Bazaar"]
         AuthExt["Auth: Privy · GitHub OAuth · X OAuth · SAML 2.0"]
-        InfraExt["Infra: Vercel · GCP Cloud Run · AWS Lambda (Forge) · Cloudflare R2"]
+        InfraExt["Infra: GCP Cloud Run · Cloud Scheduler · Cloud CDN · AWS Lambda (Forge) · Cloudflare R2"]
         Comms["Comms: Resend (email) · Telegram Bot · PostHog · Sentry · Axiom"]
     end
 
@@ -81,7 +81,7 @@ graph TD
 | Domain | Primary Paths | Status | Description |
 |--------|--------------|--------|-------------|
 | Frontend App | `pages/` · `src/` · `public/` | active | 170+ MPA pages, dashboard SPA, public surfaces, shared `ui-juice` game-feel library |
-| API Layer | `api/` | active | ~1,380 Vercel serverless functions across 150+ feature dirs |
+| API Layer | `api/` | active | ~1,380 serverless-style handlers across 150+ feature dirs, served by the Cloud Run Express container |
 | 3D / Avatar / Animation | `src/glb-canonicalize.js` · `src/animation-*` · SDKs | active | Full avatar pipeline, rig-agnostic retargeting, Diorama (text→scene), Scene Capture (video→point cloud) |
 | MCP Layer | `api/mcp*` · `mcp-server/` · `mcp-bridge/` · `packages/*-mcp` | active/published | 8 remote + 2 npm + 32 standalone MCP servers |
 | SDK Ecosystem | `sdk/` · `*-sdk/` · `packages/` | published | 60+ published npm packages |
@@ -117,7 +117,7 @@ Every top-level directory in the monorepo, what it is, and where to look. File c
 
 | Directory | Files | Purpose |
 |-----------|-------|---------|
-| `api/` | ~1,464 | Vercel serverless functions (Node ESM) across ~125 feature subdirs + `api/_lib/` shared layer. See [API Layer](#api-layer). |
+| `api/` | ~1,464 | Serverless-style handlers (Node ESM) across ~125 feature subdirs + `api/_lib/` shared layer, served in production by the Cloud Run Express container. See [API Layer](#api-layer). |
 | `workers/` | ~230 | Long-running Node workers (sniper, mm, orders, oracle, agora-citizens, **agent-screen-worker**, **agent-screen-pool**) + Python/FastAPI GPU workers (Hunyuan3D, TRELLIS, TripoSR/SG, UniRig, rembg, remesh, segment, stylize, texture, text2motion, **model-video2scene** (LingBot-Map video→point cloud), avatar-pipeline-controller, avatar-reconstruction, longcat). `workers/longcat/` runs LongCat-Video-Avatar-1.5 (image+audio → lip-synced MP4) — see [GPU & CPU Workers](#gpu--cpu-workers-google-cloud-run). |
 | `services/` | ~11 | Standalone always-on processes that don't fit request/response or stateless-worker shapes. `services/pump-graduations/` — pump.fun graduations indexer (Dockerized, persistent connection, `carbon-source.js`). `services/agent-screen-caster/` — reusable Playwright caster library + CLI agent owners self-host to stream an agent's real browser work (see [Agent Screen](#agent-screen--live-agent-casting)). |
 | `multiplayer/` | ~47 | `@three-ws/multiplayer` v0.1.0 — authoritative Colyseus server backing `/walk` (rooms, schema state, anti-cheat clamps). Cloud Run + Fly deploy configs (`Dockerfile`, `fly.toml`, `deploy-cloudrun.sh`). |
@@ -179,7 +179,7 @@ Every top-level directory in the monorepo, what it is, and where to look. File c
 
 ### Routing Architecture
 
-three.ws is a **Multi-Page Application (MPA)** with no client-side router framework. Each page is an independent HTML/JS Vite entry point. Vite dev middleware handles URL rewrites that mirror production Vercel routes. There are two SPA-shell exceptions: `pages/dashboard-next/` (**35+ sub-page modules** loaded dynamically by `src/dashboard-next/shell.js`) and the **classic dashboard** `public/dashboard/*.html` (18 pages, controller `src/dashboard/dashboard.js`, reachable at e.g. `/dashboard/x402`, `/dashboard/holders`). The standalone Avatar Studio (`/avatar-studio/*`) is a separately-built React SPA (see Character Studio).
+three.ws is a **Multi-Page Application (MPA)** with no client-side router framework. Each page is an independent HTML/JS Vite entry point. Vite dev middleware handles URL rewrites that mirror the production `vercel.json` route table (served by the Cloud Run Express container in prod). There are two SPA-shell exceptions: `pages/dashboard-next/` (**35+ sub-page modules** loaded dynamically by `src/dashboard-next/shell.js`) and the **classic dashboard** `public/dashboard/*.html` (18 pages, controller `src/dashboard/dashboard.js`, reachable at e.g. `/dashboard/x402`, `/dashboard/holders`). The standalone Avatar Studio (`/avatar-studio/*`) is a separately-built React SPA (see Character Studio).
 
 **Build:** `npm run dev` (port 3000), `npm run build` (Vite 7 MPA). HTML entry points are auto-resolved in `vite.config.js`: **~235 under `pages/` + ~150 under `public/` ≈ 300+ total** (the "170+" figure counts top-level `pages/*.html` routes only). All front-end motion is standardized on the shared `src/ui-juice.js` [game-feel library](#ui-juice--shared-game-feel-library). Three.js is `^0.184.0` (r184).
 
@@ -429,7 +429,7 @@ Beyond the page controllers above, `src/` holds ~60 subsystem directories. Map o
 
 ## API Layer
 
-The API layer is **~1,382 JavaScript files** across `api/`, organized as Vercel serverless functions (Node.js ESM). All functions share a `api/_lib/` utility layer (~505 files).
+The API layer is **~1,382 JavaScript files** across `api/`, organized as serverless-style handlers (Node.js ESM) and served in production by the Cloud Run Express container ([server/index.mjs](server/index.mjs)). All handlers share a `api/_lib/` utility layer (~505 files).
 
 ### Authentication Patterns
 
@@ -643,7 +643,7 @@ Representative endpoints:
 
 #### Cron Jobs (`api/cron/`) — 42 handler files, 72 schedules
 
-`api/cron/` holds **32 `.js` files** (31 named crons + a dynamic `[name].js` dispatcher), wired by **61 `crons` entries** in `vercel.json` (cron auth = `x-vercel-cron` header or `Bearer $CRON_SECRET`). Beyond the representative table below, undocumented-but-live crons include the four fanout workers (`copy-fanout`, `mirror-fanout`, `signal-fanout`, `strategy-fanout`), `run-dca`, `run-subscriptions`, `run-buyback`/`run-distribute-payments`, `treasury-autopilot`, `process-withdrawals`, `solana-attestations-crawl`, `trader-score-attest`, `custody-attest`, `auto-rig-sweep`, `dead-man-switch`, `relayer-balance-check`, `reconcile-decisions`, `smart-money-graph`, `index-delegations`, `cleanup-csrf-tokens`, `siwx-gc`, `expire-pending-purchases`, `irl-reap`/`irl-drops-refund`, `run-x-scheduled-posts`, `unstoppable-tick`.
+`api/cron/` holds **32 `.js` files** (31 named crons + a dynamic `[name].js` dispatcher), wired by **~80 `crons` entries** in `vercel.json` and run on Google Cloud Scheduler (cron auth = `Bearer $CRON_SECRET`). Beyond the representative table below, undocumented-but-live crons include the four fanout workers (`copy-fanout`, `mirror-fanout`, `signal-fanout`, `strategy-fanout`), `run-dca`, `run-subscriptions`, `run-buyback`/`run-distribute-payments`, `treasury-autopilot`, `process-withdrawals`, `solana-attestations-crawl`, `trader-score-attest`, `custody-attest`, `auto-rig-sweep`, `dead-man-switch`, `relayer-balance-check`, `reconcile-decisions`, `smart-money-graph`, `index-delegations`, `cleanup-csrf-tokens`, `siwx-gc`, `expire-pending-purchases`, `irl-reap`/`irl-drops-refund`, `run-x-scheduled-posts`, `unstoppable-tick`.
 
 | Cron | Schedule | Description |
 |------|----------|-------------|
@@ -972,7 +972,7 @@ All remote servers implement **MCP 2025-06-18 Streamable HTTP transport** (JSON-
 
 **Shared MCP infrastructure** (every remote server depends on it): `api/_lib/mcp-dispatch.js` (single source of the `PROTOCOL_VERSION = "2025-06-18"` constant), `mcp-batch-price.js` (JSON-RPC batch pricing + discovery-only detection), `mcp-getting-started.js` (the auto-injected `*_getting_started` free discovery tool), `mcp-error-sanitize.js`; three-mode auth in `api/_mcp/auth.js` + OAuth 2.1 issue/verify in `api/oauth/[action].js`. Each remote server is decomposed into a sibling `_mcp*/` dir (`catalog.js`, `dispatch.js`, `discovery.js`, `pricing.js`, `tools/`): `_mcp`, `_mcp3d`, `_mcpibm`, `_mcpagent`, `_mcpbazaar`, `_mcp-studio`.
 
-### Remote MCP Servers (Vercel-hosted)
+### Remote MCP Servers (Cloud Run-hosted)
 
 | Server | Endpoint | Tools | Auth | Registry ID |
 |--------|----------|-------|------|-------------|
@@ -1561,7 +1561,7 @@ Sweeps `active_orders`, evaluates triggers/schedules, fires matched orders via `
 
 #### `workers/agora-citizens` — Agora Life Engine
 
-A long-lived **Cloud Run daemon** (NOT a Vercel cron — `--no-cpu-throttling --min-instances=1`) that registers real AgenC agents on Solana and drives each citizen's daily loop on internal jittered timers (per-citizen `tick`, `replenishWork`, `reconcile`, `heartbeat`), projecting every on-chain action to `agora_citizens` / `agora_activity` / `agora_vouches`. See the full [Agora](#agora--living-agent--human-economy-verifiable-work-supply-chain) subsystem.
+A long-lived **Cloud Run daemon** (NOT a scheduled Cloud Scheduler cron — `--no-cpu-throttling --min-instances=1`) that registers real AgenC agents on Solana and drives each citizen's daily loop on internal jittered timers (per-citizen `tick`, `replenishWork`, `reconcile`, `heartbeat`), projecting every on-chain action to `agora_citizens` / `agora_activity` / `agora_vouches`. See the full [Agora](#agora--living-agent--human-economy-verifiable-work-supply-chain) subsystem.
 
 #### `workers/agent-screen-worker` & `workers/agent-screen-pool` — Live Agent Casting
 
@@ -1581,7 +1581,7 @@ Detailed above; the production hosted sniper. Its open-source, embeddable twin i
 
 | Worker | Technology | Description |
 |--------|-----------|-------------|
-| `avatar-pipeline-controller` | Python/FastAPI (**CPU**) | Reconstruction orchestrator — the Vercel layer talks ONLY to this (`GCP_RECONSTRUCTION_URL`). Fans out to a mesh model + UniRig and returns one rigged GLB. |
+| `avatar-pipeline-controller` | Python/FastAPI (**CPU**) | Reconstruction orchestrator — the `api/` layer talks ONLY to this (`GCP_RECONSTRUCTION_URL`). Fans out to a mesh model + UniRig and returns one rigged GLB. |
 | `model-hunyuan3d` | Python/FastAPI + CUDA | Image → 3D mesh (Hunyuan3D-2.1, HF license-gated — needs `HF_TOKEN`) |
 | `model-trellis` | Python/FastAPI + CUDA | Image → 3D mesh (TRELLIS) |
 | `model-triposr` | Python/FastAPI + CUDA | Fast single-image → 3D mesh (TripoSR, VAST-AI MIT; 5–15s, baked texture; fast-path/fallback) |
@@ -1606,7 +1606,7 @@ Detailed above; the production hosted sniper. Its open-source, embeddable twin i
 
 | Worker | Technology | Description |
 |--------|-----------|-------------|
-| `deploy` | Bash runbooks | Repeatable, idempotent Cloud Run provisioning for the reconstruction pipeline: `deploy-all.sh` (ordered provision of controller + mesh models + UniRig, prints controller URL+key for Vercel env), `deploy-editing.sh`, `stage-weights.sh` (stages ~80 GB model weights). |
+| `deploy` | Bash runbooks | Repeatable, idempotent Cloud Run provisioning for the reconstruction pipeline: `deploy-all.sh` (ordered provision of controller + mesh models + UniRig, prints controller URL+key for the Cloud Run service env), `deploy-editing.sh`, `stage-weights.sh` (stages ~80 GB model weights). |
 | `pump-fun-mcp` | Cloudflare Worker | Stateless **mirror** of `api/pump-fun-mcp.js` — full MCP Streamable HTTP (protocol `2025-06-18`), read-only on-chain/indexer tool subset only, camelCase legacy aliases via `TOOL_NAME_ALIASES`, no auth/x402. Deploy: `wrangler deploy`. (`worker.js`, `wrangler.toml`) |
 
 **Endpoint contracts vary by worker:** the mesh-inference models (`model-*`) expose `POST /infer` + `GET /tasks/:id`; `longcat` exposes `POST /generate` + `GET /jobs/:id` + `GET /health`; `avatar-reconstruction`/controller expose `/reconstruct` + `/rig`; CPU workers expose named verb endpoints (`/texture`, `/retexture_region`, `/segment`, `/convert`, …). Job state in Google Cloud Firestore (native mode), outputs to GCS.
@@ -1617,11 +1617,11 @@ Detailed above; the production hosted sniper. Its open-source, embeddable twin i
 
 ### Standalone Services (`services/`)
 
-Long-running, **stateful** processes that hold persistent connections and so fit neither a Vercel request/response function (`api/`) nor a stateless Cloud Run/Cloudflare worker (`workers/`). Each is its own subdir with `package.json`, entrypoint, and `Dockerfile`.
+Long-running, **stateful** processes that hold persistent connections and so fit neither a request/response `api/` handler nor a stateless Cloud Run/Cloudflare worker (`workers/`). Each is its own subdir with `package.json`, entrypoint, and `Dockerfile`.
 
 #### `services/pump-graduations` — pump.fun graduations indexer
 
-The only piece that keeps the live graduation WebSocket open. Holds a long-lived Solana WS subscription to the Pump program, detects token "graduations" (bonding-curve → PumpAMM migration) by matching the `complete` anchor event via its 8-byte discriminator (`COMPLETE_EVENT_DISCRIMINATOR`, matching `@pumpkit/core`), and pushes each event into a capped Upstash Redis list. The Vercel side reads the events back from Redis.
+The only piece that keeps the live graduation WebSocket open. Holds a long-lived Solana WS subscription to the Pump program, detects token "graduations" (bonding-curve → PumpAMM migration) by matching the `complete` anchor event via its 8-byte discriminator (`COMPLETE_EVENT_DISCRIMINATOR`, matching `@pumpkit/core`), and pushes each event into a capped Upstash Redis list. The `api/` handler side reads the events back from Redis.
 
 - `index.js` — main loop (Pump program log subscription).
 - `carbon-source.js` — drop-in alternative source backed by a Carbon indexer; same `start(cb)`/`stop()` contract + identical events, selected at startup.
@@ -1750,7 +1750,7 @@ flowchart LR
 
 ```
 three.ws/                        (root package v1.5.2, Node 24.x)
-├── api/                         (~1,382 Vercel serverless functions)
+├── api/                         (~1,382 serverless-style handlers, served by Cloud Run)
 │   └── _lib/                    (413 shared utilities)
 ├── src/                         (frontend JS modules)
 ├── pages/                       (150+ HTML entry points)
@@ -1783,15 +1783,17 @@ three.ws/                        (root package v1.5.2, Node 24.x)
 
 ---
 
-### Vercel Deployment
+### Production Deployment (Google Cloud Run)
 
-**Config:** `vercel.json` — **932 entries** in the legacy `routes` array mapping URL patterns to `api/*.js` handlers and static assets (no `rewrites`/`redirects`/`headers` arrays), plus a 49-entry `functions` block and 61 `crons`.
+Production runs on **Google Cloud Run** (`three-ws-api`, region `us-central1`), migrated off Vercel on 2026-07-07. One Express container ([server/index.mjs](server/index.mjs)) serves the static `dist/` frontend, the `vercel.json` route table, and every `api/**` handler with Vercel-parity routing, fronted by a global HTTPS load balancer + Cloud CDN. Full ops runbook: [docs/ops/gcp-production.md](docs/ops/gcp-production.md).
 
-**Build command:** `npm run build:vercel` (`scripts/build-vercel.mjs`) — esbuild bundles all `api/*.js` functions.
+**Config:** `vercel.json` is still the live route/cron config the server reads at runtime — **~1,079 entries** in the `routes` array mapping URL patterns to `api/*.js` handlers and static assets, plus a `functions` block and **~80 `crons`**. Not legacy, not deleted.
 
-**Output dir:** `dist/`
+**Deploy:** `npm run deploy:gcp` (`check:dist` → `db:check` → `gcloud builds submit --config server/cloudbuild.yaml` → CDN purge). Frontend changes need `npm run build` first.
 
-**Function runtime:** Node.js (not Edge — required for gRPC, Puppeteer, `node:crypto`)
+**Crons:** the ~80 `vercel.json` cron schedules run on **Google Cloud Scheduler** (provisioned by `scripts/create-gcp-scheduler.mjs`), which calls each `GET /api/cron/*` endpoint on its schedule.
+
+**Function runtime:** Node.js ESM (required for gRPC, Puppeteer, `node:crypto`).
 
 **⚠️ Warning:** `npx vercel build` overwrites `api/*.js` source files with esbuild bundles. Never commit `api/` after a local Vercel build. Recover with `git restore -- api/ public/`.
 
@@ -1857,7 +1859,7 @@ In-memory fallback when unset.
 
 Public CDN: `S3_PUBLIC_DOMAIN`
 
-Route: `/cdn/<key>` → `/api/cdn-object?key=<key>` (Vercel rewrite)
+Route: `/cdn/<key>` → `/api/cdn-object?key=<key>` (`vercel.json` route rewrite)
 
 Stores: GLBs · audio clips · thumbnails · manifests · OG images · validation reports
 
@@ -2229,8 +2231,9 @@ sequenceDiagram
 
 | Service | Usage |
 |---------|-------|
-| Vercel | Hosting, serverless functions, cron jobs |
-| Google Cloud Run | Python GPU workers (`world.three.ws` Hyperfy) |
+| Google Cloud Run | **Primary production host** (`three-ws-api`, `us-central1`) — the Express container serving the frontend + all `api/**` handlers; also the Python GPU workers and `world.three.ws` Hyperfy |
+| Google Cloud Scheduler | Executes the ~80 `vercel.json` cron schedules against `/api/cron/*` |
+| Google Cloud Load Balancing + CDN | Global HTTPS front door + edge cache for `three.ws` |
 | Google Cloud Firestore | Avatar pipeline job state |
 | Google Cloud Storage (GCS) | Model output GLBs, motion clips |
 | AWS Lambda (CDK) | Forge sculptor renderer, S3 avatar bucket |
@@ -2783,7 +2786,7 @@ External / vendored MCP (own repo, not a `@three-ws/*` workspace):
 
 ## GPU Worker Service Contracts
 
-The Python/FastAPI workers in `workers/` run on Google Cloud Run (GPU). Each exposes a small, uniform HTTP contract — `POST` to submit a job, `GET /tasks/:id` to poll, `GET /health` for liveness. Job state lives in Firestore; outputs land in GCS, then are copied to Cloudflare R2. The Vercel `api/forge*` and `api/_lib/forge-tiers.js` layer selects a backend by $THREE tier and fronts these workers.
+The Python/FastAPI workers in `workers/` run on Google Cloud Run (GPU). Each exposes a small, uniform HTTP contract — `POST` to submit a job, `GET /tasks/:id` to poll, `GET /health` for liveness. Job state lives in Firestore; outputs land in GCS, then are copied to Cloudflare R2. The `api/forge*` and `api/_lib/forge-tiers.js` layer selects a backend by $THREE tier and fronts these workers.
 
 | Worker | Submit | Poll | Other | Function |
 |--------|--------|------|-------|----------|
@@ -2803,7 +2806,7 @@ The Python/FastAPI workers in `workers/` run on Google Cloud Run (GPU). Each exp
 
 > Deploy via `workers/deploy/` (`deploy-all.sh`, `deploy-editing.sh`, `stage-weights.sh`) + per-worker `cloudbuild.yaml`. `workers/pump-fun-mcp/` is a Cloudflare Worker (`wrangler.toml`), not a GPU worker. `workers/longcat/` is an empty stub.
 
-### Voice & Multimodal Endpoints (Vercel → NVIDIA)
+### Voice & Multimodal Endpoints (Cloud Run → NVIDIA)
 
 | Endpoint | Files / Backend | Function |
 |----------|-----------------|----------|
@@ -2820,7 +2823,7 @@ gRPC protobufs are vendored under `api/_lib/riva-protos/` and `api/_lib/a2f-prot
 
 ## Testing & Quality Assurance
 
-There is **no external CI** (no `.github/workflows/`), so a large local test suite + the `gate`/`audit`/`smoke` scripts ARE the quality bar. **~591 test files.**
+There is **no GitHub Actions CI** — the project deliberately does not use `.github/workflows` for CI/deploy (the one file there, `agent-screen-pool.yml`, is an optional agent-screen worker host, not a pipeline). Deploys run through Cloud Build; schedules through Cloud Scheduler. So a large local test suite + the `gate`/`audit`/`smoke` scripts ARE the quality bar. **~591 test files.**
 
 **Runners:**
 
@@ -2884,7 +2887,7 @@ CREATE2-deterministic, so `IdentityRegistry` + `ReputationRegistry` share one ad
 
 ## Scheduled Jobs (Cron Reference)
 
-**`vercel.json` declares 72 cron schedules** (the platform is heavily clock-driven). All hit `GET /api/cron/*` (or `/api/llm/health`) with `Authorization: Bearer $CRON_SECRET`. Write-heavy crons opt into a **storage-pressure preflight** (`wrapCron(handler, { requireWriteCapacity: true })` in `api/_lib/http.js` → `isStoragePressured()` in `db.js`): at the Neon size cap they skip the tick with `200 {skipped:'db_at_storage_cap'}` and still write a healthy heartbeat, rather than flooding logs with 53100 write errors. Every `wrapCron` also writes `cron:heartbeat:<name>` (7-day TTL) surfaced by `/api/ops/health` + `/api/admin/all-systems`. Full schedule:
+**`vercel.json` declares ~80 cron schedules** (the platform is heavily clock-driven), executed in production by **Google Cloud Scheduler** (jobs provisioned from the `vercel.json` cron list by `scripts/create-gcp-scheduler.mjs`). All hit `GET /api/cron/*` (or `/api/llm/health`) with `Authorization: Bearer $CRON_SECRET`. Write-heavy crons opt into a **storage-pressure preflight** (`wrapCron(handler, { requireWriteCapacity: true })` in `api/_lib/http.js` → `isStoragePressured()` in `db.js`): at the Neon size cap they skip the tick with `200 {skipped:'db_at_storage_cap'}` and still write a healthy heartbeat, rather than flooding logs with 53100 write errors. Every `wrapCron` also writes `cron:heartbeat:<name>` (7-day TTL) surfaced by `/api/ops/health` + `/api/admin/all-systems`. Full schedule:
 
 | Domain | Crons (path → schedule) |
 |--------|--------------------------|
@@ -3024,7 +3027,7 @@ The codebase references **~260 distinct `process.env.*` keys** across `api/`; `a
 
 | Item | Notes |
 |------|-------|
-| No CI/CD pipeline | `.github/workflows/` does not exist. No automated test/lint/deploy gating — Renovate only |
+| No GitHub Actions CI/CD | The project doesn't use `.github/workflows` for CI/deploy. Deploys run via Cloud Build (`npm run deploy:gcp`), schedules via Cloud Scheduler; the local `gate`/`audit`/`smoke` scripts are the push-time quality bar. Renovate handles dependency updates |
 | `master_wallets` table bootstrapped at runtime | `CREATE TABLE IF NOT EXISTS` inline rather than via migration — schema drift risk |
 | Two x402 payment protocols using HTTP 402 | CDP x402 v2 (`x402-spec.js`) and pump.fun agent-payments 402 (`x402.js`) coexist with no unified protocol guide |
 | `THREE_TREASURY_WALLET` / `THREE_REWARDS_WALLET` / `THREE_QUOTE_SECRET` | Required in production but only fail at first use, not at startup |

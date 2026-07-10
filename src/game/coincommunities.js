@@ -46,6 +46,7 @@ import {
 import { GUEST_SENTINEL, uploadPendingGuestAvatar, getPlayCosmetics, setPlayCosmetics } from './play-handoff.js';
 import { getPresenceTicket, friendsClient } from '../friends.js';
 import { FriendsPanel } from './friends-panel.js';
+import { showPlayIntro, makeIntroReopener } from './play-intro.js';
 import { applyLoadout } from './cosmetics-loadout.js';
 import { serializeLoadout, getCosmetic } from '../../multiplayer/src/cosmetics-catalog.js';
 import { AccessoryManager } from '../agent-accessories.js';
@@ -443,6 +444,10 @@ export class CoinCommunities {
 			onJobs: () => this._toggleQuests(),
 			// Friends panel (W09) — presence + DMs across every coin world.
 			onFriends: () => this._toggleFriends(),
+			// Cold-open intro's zero-friction path — drop straight into the $THREE
+			// home town with whatever avatar/name is already defaulted, no picking
+			// required. See play-intro.js and _dropIn() below.
+			onDropIn: () => this._dropIn(),
 			// Creator-only (R24): set/clear the token threshold for the Holders world.
 			onConfigureGate: () => this._configureGate(),
 			onVoiceToggle: () => this._toggleVoice(),
@@ -490,6 +495,12 @@ export class CoinCommunities {
 		this._loadHomeTown();
 		this._loadCoins();
 		this._bindInput();
+
+		// First-ten-seconds cold open (see play-intro.js header for the audit finding
+		// this fixes): a first-time visitor otherwise lands on a bare coin grid with
+		// no context and bounces. Shown once per browser; the reopener in the lobby
+		// header brings it back any time.
+		showPlayIntro({ onDropIn: () => this._dropIn() });
 
 		this._loop = this._loop.bind(this);
 		requestAnimationFrame(this._loop);
@@ -1908,6 +1919,13 @@ export class CoinCommunities {
 		// each open — a sale always credits the world the player is currently in.
 		this._shop.h.coinMint = this.coin?.mint || '';
 		this._shop.toggle();
+	}
+
+	// Zero-friction entry from the cold-open intro card: the $THREE home town,
+	// general tier, whatever avatar/name is already defaulted (no picker forced).
+	// Mirrors the bare `?coin=<home mint>` deep link's backfill in enter().
+	_dropIn() {
+		this.enter({ mint: HOME_TOWN.mint }, { tier: 'general' });
 	}
 
 	// ── Friends (W09) ─────────────────────────────────────────────────────────

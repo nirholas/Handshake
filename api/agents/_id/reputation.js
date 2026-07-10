@@ -33,7 +33,7 @@ export const handleReputation = wrap(async (req, res, agentId) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.publicIp(clientIp(req));
+	const rl = await limits.agentProfileIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const cacheKey = `walletrep:v1:${agentId}`;

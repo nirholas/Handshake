@@ -8,7 +8,7 @@ Widget Studio is the no-code builder for creating embeddable 3D widgets. Pick an
 
 ## What you can build
 
-Five widget types are available in the Studio:
+These general-purpose widget types are available in the Studio:
 
 | Type | What it does | Best for |
 |------|-------------|----------|
@@ -18,7 +18,7 @@ Five widget types are available in the Studio:
 | **ERC-8004 Passport** | On-chain identity card for an agent | Blockchain-verified agent profiles |
 | **Hotspot Tour** | Annotated 3D scene with clickable points of interest | Product tours, educational walkthroughs |
 
-> **Note:** Animation Gallery, Talking Agent, and Hotspot Tour are currently marked "coming soon" in the Studio UI — you can save their configurations now, and the live runtime will activate when those features ship.
+> **Note:** Every type above has a working live runtime. Widget Studio also ships additional widget types beyond these five — browse the type grid in the Studio to see the full set.
 
 ---
 
@@ -63,7 +63,7 @@ If you're starting from a model URL rather than a saved avatar (for example, fro
 
 ### Step 2 — Pick a widget type
 
-Below the avatar list, the type grid shows five cards. Each card displays an icon, name, and one-line description. Types marked **Coming soon** can still be configured and saved — their live preview placeholder says the runtime isn't active yet.
+Below the avatar list, the type grid shows one card per widget type. Each card displays an icon, name, and one-line description.
 
 Click a type card to select it. The right column's type-specific fields update immediately.
 
@@ -96,7 +96,7 @@ The Passport widget pulls live on-chain data. You'll need:
 - **Layout** — portrait, landscape, or badge
 - **Show reputation / Show recent feedback** — toggle those sections on the card
 
-For other widget types (Animation Gallery, Talking Agent, Hotspot Tour), type-specific fields will appear when those runtimes ship.
+The other widget types reveal their own fields in the right column when you select them — clip playback options for Animation Gallery, LLM, skill, and voice settings for Talking Agent, and a hotspot editor for Hotspot Tour.
 
 ### Capture current camera view
 
@@ -206,7 +206,7 @@ Your session may have expired. Reload the page — if the sign-in prompt appears
 
 **Type-specific fields are missing**
 
-Only Turntable and Passport show extra fields today. Animation Gallery, Talking Agent, and Hotspot Tour display a "coming soon" banner in place of their fields. You can still save a config for these types.
+Type-specific fields only appear after a widget type is selected in the middle step. If the right column shows only the shared Brand fields, make sure a type card is highlighted — each type reveals its own settings (rotation speed, clip options, LLM settings, hotspot editor, and so on) once picked.
 
 **Can't save — button does nothing**
 

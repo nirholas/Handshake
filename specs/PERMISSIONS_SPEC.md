@@ -91,7 +91,7 @@ For embed contexts where IPFS is not reachable (restricted CSP, offline, iframe 
 
 ## 5. API Surface
 
-All endpoints are under `/api/permissions/`. Auth, CORS, error shape, and rate-limit conventions follow [api/CLAUDE.md](../api/CLAUDE.md).
+All endpoints are under `/api/permissions/` (dispatched by [`api/permissions/[action].js`](../api/permissions/[action].js)). Auth, CORS, error shape, and rate-limit conventions follow [api/README.md](../api/README.md).
 
 | Method | Path                        | Body / Query                                                  | Response                             |
 | ------ | --------------------------- | ------------------------------------------------------------- | ------------------------------------ |
@@ -185,7 +185,7 @@ SDK consumers and embed hosts that read the `permissions` field must check `spec
 - [AGENT_MANIFEST.md](./AGENT_MANIFEST.md) — manifest format; `permissions` field context
 - [EMBED_SPEC.md](./EMBED_SPEC.md) — embed host context; inline envelope for IPFS-restricted environments
 - [SKILL_SPEC.md](./SKILL_SPEC.md) — skill handler context; `redeemFromSkill` caller
-- [api/CLAUDE.md](../api/CLAUDE.md) — shared API conventions (auth, CORS, rate limits, error shape)
+- [api/README.md](../api/README.md) — shared API conventions (auth, CORS, rate limits, error shape)
 - [EIP-7710](https://eips.ethereum.org/EIPS/eip-7710) — delegation envelope format and `DelegationManager` interface
 - [EIP-7715](https://eips.ethereum.org/EIPS/eip-7715) — `wallet_grantPermissions` JSON-RPC method
 - [MetaMask Delegation Toolkit](https://docs.metamask.io/delegation-toolkit/) — `@metamask/delegation-toolkit` package

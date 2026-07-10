@@ -60,7 +60,7 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', 'invalid username');
 	}
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://x');

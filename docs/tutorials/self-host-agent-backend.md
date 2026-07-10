@@ -57,12 +57,11 @@ Everything except the database and Cloudflare workers can live on a single Verce
 
 ## Step 2 — Fork and clone
 
-The codebase mirrors to two GitHub remotes. For your fork you only need one — pick whichever you want as your origin:
+The canonical repository — and the only one to fork — is:
 
 - `https://github.com/nirholas/three.ws`
-- `https://github.com/nirholas/3D-Agent`
 
-Both contain identical code. Fork on GitHub via the CLI:
+Fork on GitHub via the CLI:
 
 ```bash
 gh repo fork nirholas/three.ws --clone=true --remote=true
@@ -488,7 +487,7 @@ The recommended workflow:
 3. Run smoke tests against the preview (real APIs, real database, real wallets, but isolated from production)
 4. Merge to `main` — production deploys automatically
 
-The CI workflow lives under `.github/workflows/` in the upstream repo. Inherit it on your fork, then customize as needed (`typecheck.yml`, `test.yml`, anything else specific to you).
+The upstream repo doesn't use GitHub Actions — there's no `.github/workflows/` CI pipeline to inherit. Run the repo's own checks yourself before you promote: `npm run typecheck`, `npm test`, and the `npm run gate` audit bundle. Wire those into whichever CI you prefer on your fork, or run them locally as a pre-promote gate.
 
 ---
 

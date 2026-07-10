@@ -137,8 +137,8 @@ npm run build:artifact-viewer
 ```
 
 The endpoint reads the bundle from disk on first request and caches it for
-the lifetime of the lambda. If the file is missing the endpoint throws — CI
-should `npm run build:artifact-viewer` before deploy.
+the lifetime of the server process. If the file is missing the endpoint throws —
+run `npm run build:artifact-viewer` before deploy.
 
 ## Authoring notes
 

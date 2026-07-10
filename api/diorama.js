@@ -69,9 +69,12 @@ Rules:
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	// `method()` returns TRUE when the verb is allowed (and answers 405 itself
+	// otherwise), so the guard must be negated. Gate before the GET dispatch so a
+	// HEAD probe is normalized to GET in here rather than falling through to a 405.
+	if (!method(req, res, ['GET', 'POST'])) return;
 
 	if (req.method === 'GET') return handleGet(req, res);
-	if (method(req, res, ['POST'])) return;
 
 	const body = await readJson(req).catch(() => null);
 	if (!body || typeof body !== 'object') {

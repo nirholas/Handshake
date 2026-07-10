@@ -28,7 +28,7 @@ import { getLatestThreeSignal, getThreeSignalHistory } from './_lib/x402/three-s
 const STALE_AFTER_MS = 45 * 60 * 1000;
 
 export default wrap(async (req, res) => {
-	cors(res);
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const rawHistory = parseInt(req.query?.history ?? '48', 10);

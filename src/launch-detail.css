@@ -433,6 +433,19 @@ body {
 .ld-chart-change { font-family: var(--font-mono); font-size: var(--text-sm); }
 .ld-chart-up { color: var(--success); }
 .ld-chart-down { color: var(--danger); }
+/* Shown only when the API served its last real candles because both live price
+   sources were briefly unreachable — the chart is real, just not current. */
+.ld-chart-stale {
+	font-family: var(--font-mono);
+	font-size: var(--text-xs);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--warn);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-pill);
+	padding: 0.1em 0.5em;
+	cursor: help;
+}
 
 /* ── Distribution ─────────────────────────────────────────────────────────── */
 

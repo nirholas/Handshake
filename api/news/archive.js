@@ -1,12 +1,16 @@
 // GET /api/news/archive
 // ---------------------------------------------------------------------------
-// The three.ws historical crypto-news archive: 662,047 enriched articles
-// spanning September 2017 → February 2026 (CryptoPanic english corpus +
-// Odaily chinese corpus + the cryptocurrency.cv live archiver), recovered
-// from the cryptocurrency.cv archive and hosted on the platform's own GCS
-// bucket (gs://three-ws-news-archive). Largest free crypto-news dataset
-// anywhere; every record carries tickers, tags, sentiment, language, and
-// (where captured) market context at publication time.
+// The three.ws historical crypto-news archive: 662,047 enriched articles from
+// September 2017 onward (CryptoPanic english corpus + Odaily chinese corpus +
+// the cryptocurrency.cv live archiver), recovered from the cryptocurrency.cv
+// archive and hosted on the platform's own GCS bucket
+// (gs://three-ws-news-archive). Largest free crypto-news dataset anywhere;
+// every record carries tickers, tags, sentiment, language, and (where
+// captured) market context at publication time.
+//
+// The imported corpus ends 2025-12-03; api/cron/news-archive-append.js extends
+// it hourly from the live feed. Never hardcode the end date here — read
+// meta/stats.json (last_article_date), which the appender keeps current.
 //
 // Data layout (public bucket, gzip at rest, transparently decoded):
 //   articles/YYYY-MM.jsonl   one enriched article per line

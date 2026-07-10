@@ -5,7 +5,7 @@
 The entire framework compiles to a single custom element and a single loader script. Developers and end-users get the same zero-friction embed:
 
 ```html
-<script type="module" src="https://cdn.3d-agent.io/agent-3d.js"></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 
 <agent-3d src="agent://base/42"></agent-3d>
 ```

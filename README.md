@@ -459,7 +459,7 @@ three.ws is available on major cloud marketplaces and open to infrastructure par
 
 | Cloud             | Status                                                                                                                                                                                                |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **AWS**           | **AWS Partner** (APN Software Path). AWS Marketplace SaaS listing in review — see [docs/aws-marketplace.md](docs/aws-marketplace.md) and the public partner page at [three.ws/aws](https://three.ws/aws). Production runs on AWS `us-east-1`, registered in AWS MyApplications under account `155407237916`. |
+| **AWS**           | **AWS Partner** (APN Software Path). AWS Marketplace SaaS listing in review — see [docs/aws-marketplace.md](docs/aws-marketplace.md) and the public partner page at [three.ws/aws](https://three.ws/aws). Part of the stack runs on AWS `us-east-1` — the Forge sculptor Lambda (`three-ws-forge`) and the S3 avatar bucket — registered in AWS MyApplications under account `155407237916` (the main app runs on Google Cloud Run). |
 | **Alibaba Cloud** | Live: [product listing →](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [storefront →](https://marketplace.alibabacloud.com/store/3247293.html)                       |
 | **Google Cloud**  | Production runs on **Google Cloud Run** (`three-ws-api`, `us-central1`) fronted by a global HTTPS load balancer + Cloud CDN, with the ~80 scheduled jobs on Cloud Scheduler and GPU inference workers on Cloud Run — a natural fit for GCP's AI infrastructure and Vertex AI. Open to co-listing, credits, and joint GTM. |
 
@@ -1372,7 +1372,7 @@ Launchpad templates are JSON-configured and can embed any combination of `<agent
 
 `/walk` is an authoritative multiplayer walk scene. Players join a shared 3D space, see each other's avatars in real time, and emit gestures over a WebSocket connection.
 
-Vercel doesn't host long-lived WebSockets, so the multiplayer server lives in its own workspace at [`multiplayer/`](multiplayer/) — a [Colyseus](https://colyseus.io) server packaged with a Fly.io `fly.toml` and Dockerfile. The Vite client at `/walk` autodiscovers the server (`ws://localhost:2567` in dev, your deployed host in prod).
+The serverless-style request/response layer can't hold long-lived WebSockets, so the multiplayer server lives in its own workspace at [`multiplayer/`](multiplayer/) — a [Colyseus](https://colyseus.io) server packaged with a Fly.io `fly.toml` and Dockerfile. The Vite client at `/walk` autodiscovers the server (`ws://localhost:2567` in dev, your deployed host in prod).
 
 ```bash
 # Run both servers together
@@ -1605,7 +1605,7 @@ Anyone takes 3 selfies (left, center, right) and receives a rigged, animatable 3
 | Sandbox route | `/creating`                                      | Isolated reconstruction test bench, decoupled from the main flow                                                     |
 | Output        | Cloudflare R2                                    | Meshopt-compressed GLB pinned to IPFS and minted as a draft agent token — ERC-8004 on EVM or Metaplex Core on Solana |
 
-Reconstruction inference runs against the same Anthropic-token-billed Vercel function pool as the agent runtime, with optional offload to the **Livepeer Inference Network** (see below) for GPU-heavy steps.
+Reconstruction inference runs against the same Cloud Run handler pool as the agent runtime, with optional offload to the **Livepeer Inference Network** (see below) for GPU-heavy steps.
 
 ---
 
@@ -1952,7 +1952,7 @@ Supported `provider` values: `anthropic` · `groq` · `openrouter` · `null` (of
 
 **Free-first routing policy**
 
-The platform's `DEFAULT_PROVIDER_ORDER` in `src/llm.js` ensures AI chat never fails silently due to a single quota: free tiers (Groq, OpenRouter `:free` models, NVIDIA) are always tried first; paid Vercel-billed keys (Anthropic, OpenAI) are last-resort only. An OpenRouter fallback key is configured for `:free` models so that even a depleted primary account doesn't take down the `/chat` surface.
+The platform's `DEFAULT_PROVIDER_ORDER` in `src/llm.js` ensures AI chat never fails silently due to a single quota: free tiers (Groq, OpenRouter `:free` models, NVIDIA) are always tried first; paid keys (Anthropic, OpenAI) are last-resort only. An OpenRouter fallback key is configured for `:free` models so that even a depleted primary account doesn't take down the `/chat` surface.
 
 **Owner-card gating**
 
@@ -2496,7 +2496,7 @@ plan_quotas   (plan, max_avatars, max_bytes_per_avatar, max_total_bytes)
 | `npm run test:e2e`         | Playwright end-to-end suite only                                   |
 | `npm run verify`           | Prettier check + Vite build (pre-deploy gate)                      |
 | `npm run format`           | Prettier write (entire repo)                                       |
-| `npm run deploy`           | `build:all` → `check:dist` → `vercel --prod`                       |
+| `npm run deploy:gcp`       | Production deploy to Cloud Run: `check:dist` → `db:check` → `gcloud builds submit` → purge CDN |
 | `npm run clean`            | Remove `dist/` and `dist-lib/`                                     |
 | `npm run fetch-animations` | Download animation clip assets                                     |
 | `npm run generate-icons`   | Generate PWA icon set                                              |
@@ -2551,7 +2551,7 @@ For a traditional server deployment:
 
 1. Build: `npm run build` → `dist/`
 2. Serve `dist/` as static files (nginx, Caddy, Express)
-3. Run `api/` endpoints via Node.js (wrap with Express or use the Vercel dev adapter)
+3. Run `api/` endpoints via Node.js (serve them with the Express container in [server/index.mjs](server/index.mjs), same as production)
 4. Connect to Postgres (Neon or self-hosted)
 5. Connect to S3-compatible storage (R2, MinIO, AWS S3)
 6. Schedule cron jobs with node-cron or systemd timers
@@ -2587,7 +2587,7 @@ three.ws follows [Semantic Versioning](https://semver.org). The authoritative ve
 | Public REST API (`/api/agents`, `/api/widgets`, `/api/avatars`, `/api/chat`) | **Stable** — additive changes only without a major bump                                            | Tracked in the OpenAPI doc at `/openapi.json`                        |
 | OAuth 2.1 endpoints (`/oauth/*`, `/.well-known/*`)                           | **Stable** — frozen by the relevant RFCs                                                           | n/a                                                                  |
 | MCP surface at `POST /api/mcp`                                               | **Stable** — pinned to protocol version `2025-06-18`; tool catalogue is additive                   | The protocol version is part of every response                       |
-| Internal Vercel functions, helpers under `api/_lib/`, `api/_mcp/`            | **Unstable** — no compatibility guarantees                                                         | Subject to refactor between releases                                 |
+| Internal handlers, helpers under `api/_lib/`, `api/_mcp/`                     | **Unstable** — no compatibility guarantees                                                         | Subject to refactor between releases                                 |
 | Solidity contracts in `contracts/`                                           | **Stable per deployment** — see [contracts/DEPLOYMENTS.md](contracts/DEPLOYMENTS.md) for addresses | New chains add rows; existing deployments are immutable              |
 
 **Pinning recommendations**
@@ -2670,7 +2670,7 @@ CC_SERVER_KEY=...                            # server-attributed posts (optional
 CC_SERVER_SECRET=...
 ```
 
-> **Multiplayer / game server.** The Colyseus server in `multiplayer/` reads its own config — `PLAY_GATE_MINT` / `PLAY_GATE_MIN` and `HOLDER_PASS_SECRET` for the play-gate, and `GAME_TOKEN_MINT` / `GAME_TOKEN_TREASURY` / `GAME_TOKEN_BURN` / `GAME_TOKEN_SECRET` for the in-game $THREE economy. These belong to the game server's environment, not the Vercel function pool.
+> **Multiplayer / game server.** The Colyseus server in `multiplayer/` reads its own config — `PLAY_GATE_MINT` / `PLAY_GATE_MIN` and `HOLDER_PASS_SECRET` for the play-gate, and `GAME_TOKEN_MINT` / `GAME_TOKEN_TREASURY` / `GAME_TOKEN_BURN` / `GAME_TOKEN_SECRET` for the in-game $THREE economy. These belong to the game server's environment, not the Cloud Run handler pool.
 
 ### Optional (Frontend, prefixed `VITE_`)
 
@@ -2732,7 +2732,7 @@ npm run verify                          # Prettier check + Vite build
 
 ### Playwright end-to-end smokes
 
-Browser-driven smokes live in [tests/e2e/](tests/e2e/) and run against the local Vite + Vercel dev stack. They cover user-visible flows that don't fit in Vitest.
+Browser-driven smokes live in [tests/e2e/](tests/e2e/) and run against the local dev stack (Vite + the `api/` handlers). They cover user-visible flows that don't fit in Vitest.
 
 | Smoke                                            | What it exercises                                                        |
 | ------------------------------------------------ | ------------------------------------------------------------------------ |
@@ -2829,7 +2829,7 @@ Please **do not** file public GitHub issues for vulnerabilities. Disclosure runs
 
 The current threat model and hardening notes live in [specs/SECURITY.md](specs/SECURITY.md) and [docs/security.md](docs/security.md). The [Security Hardening](#security-hardening) section above summarises the in-tree controls.
 
-In-scope: this repository and its deployed surfaces (`three.ws`, `cdn.three.ws`, `*.three.ws`). Out-of-scope: third-party services we integrate with (Vercel, Neon, Cloudflare R2, Upstash, Privy, Anthropic, ElevenLabs, pump.fun) — please report directly to them.
+In-scope: this repository and its deployed surfaces (`three.ws`, `cdn.three.ws`, `*.three.ws`). Out-of-scope: third-party services we integrate with (Google Cloud, Neon, Cloudflare R2, Upstash, Privy, Anthropic, ElevenLabs, pump.fun) — please report directly to them.
 
 ---
 

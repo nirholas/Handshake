@@ -112,7 +112,7 @@ As you name or rename an agent, availability is checked live against the whole p
 
 Take or upload three photos of your face — front, left, right — pick a body type and a style (photorealistic or stylized), and the AI builds a full 3D avatar that looks like you. An editor opens to adjust clothing and details, and the finished model saves to your account automatically. Camera-less devices fall back to file upload gracefully.
 
-**How it works:** Wraps the Avaturn photo-reconstruction SDK behind a three.ws-branded modal; the exported GLB is fetched and committed to the user's avatar library through the standard account save path.
+**How it works:** Wraps a licensed photo-reconstruction SDK behind a three.ws-branded modal; the exported GLB is fetched and committed to the user's avatar library through the standard account save path.
 
 **Why it matters:** A personalized, animation-ready 3D you in about three minutes, with no 3D skills whatsoever.
 
@@ -128,7 +128,7 @@ Describe a character in plain text — "a knight in emerald armor" — and get b
 
 A full in-browser character builder: start from a base body and shape everything — body type, skin tone, face shape, hair from 20+ styles, eyes, brows, nose, mouth, clothing, and accessories — with every change reflected instantly in the 3D preview. What you see is exactly what exports: the live scene itself becomes your GLB. Saved avatars reopen fully editable later.
 
-**How it works:** Built on the open-source M3 CharacterStudio (MIT fork) plus a native studio mode that exports the live Three.js scene graph via GLTFExporter and persists the appearance as re-editable metadata.
+**How it works:** Built on an open-source MIT-licensed avatar-builder fork plus a native studio mode that exports the live Three.js scene graph via GLTFExporter and persists the appearance as re-editable metadata.
 
 **Why it matters:** Complete creative control over a stylized avatar with zero 3D-modeling experience — and no account needed just to build and export.
 

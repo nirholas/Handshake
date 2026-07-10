@@ -1,8 +1,9 @@
 # x402 & Agent Commerce
 
 UX Flow Atlas — cluster 09. Traced end-to-end from real source: page HTML, imported
-JS modules, and backend API handlers. Routing is path-based via `vite.config.js`
-(`historyApiFallback` map) in dev and Vercel rewrites in prod. Clean URLs resolve to
+JS modules, and backend API handlers. Routing is path-based via the `vercel.json`
+route table (the live route/cron config the Cloud Run server reads); in dev the
+`vite.config.js` `historyApiFallback` map mirrors it. Clean URLs resolve to
 files under `pages/` or `public/`.
 
 The cluster's spine is the **x402 pay-per-call** loop: hit a paid endpoint → get
@@ -326,7 +327,7 @@ choreographed two-agent narrative driven by Server-Sent Events.
 
 ## Notes
 
-- **Routing:** all clean URLs resolve through the `vite.config.js` `historyApiFallback` map (dev) / Vercel rewrites (prod). `/pay`, `/bazaar`, `/arbitrage`, `/providers`, `/forever`, `/tutor` live under `public/`; the rest under `pages/`.
+- **Routing:** all clean URLs resolve through the `vercel.json` route table — read directly by the Cloud Run server (`server/index.mjs`) in production and mirrored by the `vite.config.js` `historyApiFallback` map in dev. `/pay`, `/bazaar`, `/arbitrage`, `/providers`, `/forever`, `/tutor` live under `public/`; the rest under `pages/`.
 - **Shared payment modal:** `/x402.js` (`public/x402.js`, ~1.5k LOC) is the drop-in `window.X402.pay()` modal used by `/pay/c`, `/bazaar`, `/arbitrage`, `/ibm/x402-demo`, `/shopper` (paywall), `/fact-checker`, `/unstoppable`, `/tutor`. It handles wallet connect (Phantom/Solana, MetaMask/Base via EIP-3009), the 402→sign→retry loop, and SIWX re-entry.
 - **Server-payer vs user-payer:** the "agent economy" narratives (`/agent-exchange`, `/agent-trade`, `/agent-economy`, `/demo`, `/live`) pay from **server-held agent wallets** and stream the choreography over SSE — the user only triggers/selects, then watches. The "showcase" apps (`/shopper`, `/fact-checker`, `/tutor`, `/bazaar`, `/arbitrage`, `/ibm`) make the **user** pay via the `/x402.js` modal.
 - **Auto-play demos:** `/agent-exchange`, `/agent-trade`, `/agent-economy`, `/demo` need one user click to start, then auto-play. `/live` adds an auth gate for real settlement. `/play/arena` is fully autonomous (agents trade themselves; user only watches/moves/inspects) and uses **no x402** — real pre-funded Solana trades.

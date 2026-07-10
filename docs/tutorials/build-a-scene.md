@@ -20,7 +20,7 @@ Import GLB(s)  →  arrange with Move / Rotate / Scale  →  edit materials
 
 The result is a self-contained `scene.glb` (or `.gltf`) that carries every object, material, and embedded texture. You can re-import it later, hand it to another tool, or view it in AR.
 
-[Scene Studio](/scene) is a full editor — the vendored [mrdoob/three.js](https://github.com/mrdoob/three.js) editor (`r184`, MIT — see [src/scene-studio/vendor/README.md](src/scene-studio/vendor/README.md)) mounted under the three.ws nav. It is dark-locked: the editor chrome only ships a dark theme.
+[Scene Studio](/scene) is a full editor — the vendored [mrdoob/three.js](https://github.com/mrdoob/three.js) editor (`r184`, MIT — see [src/scene-studio/vendor/README.md](../../src/scene-studio/vendor/README.md)) mounted under the three.ws nav. It is dark-locked: the editor chrome only ships a dark theme.
 
 ---
 
@@ -64,7 +64,7 @@ There are two ways to bring a model in, and they behave slightly differently.
 
 **File → Import:** open the **File** menu, click **Import**, and pick one or more files. This is the same path as drag-and-drop and supports the same formats.
 
-Scene Studio imports far more than GLB. The vendored loader (see [src/scene-studio/vendor/js/Loader.js](src/scene-studio/vendor/js/Loader.js)) accepts `glb`, `gltf`, `fbx`, `obj`, `dae` (Collada), `usdz`, `ply`, `stl`, `3mf`, `amf`, `drc`, `vox`, `wrl`, `svg`, and several more — but **GLB is the recommended format**: it bundles mesh, materials, and textures into one binary file, and it's what every other three.ws surface produces.
+Scene Studio imports far more than GLB. The vendored loader (see [src/scene-studio/vendor/js/Loader.js](../../src/scene-studio/vendor/js/Loader.js)) accepts `glb`, `gltf`, `fbx`, `obj`, `dae` (Collada), `usdz`, `ply`, `stl`, `3mf`, `amf`, `drc`, `vox`, `wrl`, `svg`, and several more — but **GLB is the recommended format**: it bundles mesh, materials, and textures into one binary file, and it's what every other three.ws surface produces.
 
 > **Deep-link import.** You can also load a model by URL: `/scene?model=<glb_url>&name=<label>`. The editor fetches the GLB, adds it through the normal undo-able import path, then strips the query from the address bar so a reload doesn't import a duplicate. This is exactly how the **Open in Scene Studio** hand-off works. The URL must be `https://` or a same-origin path.
 

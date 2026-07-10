@@ -49,7 +49,7 @@ The `load(url, rootPath, assetMap)` method on the underlying `Viewer` instance a
 - **Draco** — mesh compression decoder is auto-loaded when the GLB contains compressed meshes. No configuration needed.
 - **KTX2** — Basis Universal texture decoder is auto-loaded when compressed textures are detected.
 
-Both decoders are fetched via `getDecoders()` in `viewer/internal.js` and wired into the GLTFLoader automatically.
+Both decoders are fetched via `getDecoders()` in `src/viewer/internal.js` and wired into the GLTFLoader automatically.
 
 ### Load events
 
@@ -189,7 +189,7 @@ The dat.gui panel exposes per-material properties for every mesh in the scene:
 - **Transparency** and **double-sided** toggles
 - **Wireframe** toggle (also available at the top-level in Display folder)
 
-Material traversal is deduplicated by UUID (via `traverseMaterials` in `viewer/internal.js`), so shared materials are only listed once.
+Material traversal is deduplicated by UUID (via `traverseMaterials` in `src/viewer/internal.js`), so shared materials are only listed once.
 
 **Note:** The GUI panel is read-only in viewer mode. Editing material properties in a persistent way requires the Editor workflow. Changes made via the GUI are lost on model reload.
 
@@ -266,7 +266,7 @@ The **Display** folder includes a **Screenshot** button that triggers the same c
 viewer.takeScreenshot();
 ```
 
-The implementation in `viewer/screenshot.js` uses `renderer.domElement.toDataURL('image/png')` on a rendered frame and triggers a browser download via a temporary anchor element.
+The implementation in `src/viewer/screenshot.js` renders one frame, encodes the canvas with `canvas.toBlob(…, 'image/png')`, and triggers a browser download via a temporary anchor element.
 
 ---
 

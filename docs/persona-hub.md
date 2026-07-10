@@ -105,7 +105,7 @@ followed by the public JWK that `/.well-known/jwks.json` will publish once the e
 | `PERSONA_JWKS_KID` | no (defaults to `persona-es256-1`) | Key id published in the JWK and embedded in the JWT header so tenants can pick the right key after rotation. |
 | `PERSONA_JWKS_PUBLIC_KEY_PEM` | no | SPKI PEM. If omitted, the public JWK is derived from the private key at runtime. Set this only if you want to publish a different public key (rare). |
 
-Paste the block into the deployment's environment (Vercel project settings, `.env.local` for dev), redeploy, and confirm the new key is live with:
+Paste the block into the deployment's environment (the Cloud Run service config for production, `.env.local` for dev), redeploy, and confirm the new key is live with:
 
 ```bash
 curl https://three.ws/.well-known/jwks.json

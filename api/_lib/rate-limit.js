@@ -1,7 +1,9 @@
-// Distributed rate limiting via Upstash Redis. Falls back to in-memory for local dev.
+// Distributed rate limiting via Upstash Redis. Falls back to Postgres for the
+// buckets that must stay distributed (money, auth), and to in-memory otherwise.
 
 import { Ratelimit } from '@upstash/ratelimit';
 import { env } from './env.js';
+import { sql } from './db.js';
 import { getRedis, isRedisAuthError } from './redis.js';
 
 const redis = getRedis();
@@ -37,18 +39,20 @@ const FREE_HOURLY_BASE = FORGE_SELFHOST_PRIMARY
 	? Math.max(60, Number(process.env.FORGE_FREE_HOURLY_SELFHOST) || 240)
 	: 60;
 
-// Loud, one-time startup warning when Redis is unconfigured in production. Without
-// Redis every limiter falls back to a PER-INSTANCE in-memory map, which is
-// effectively unbounded across serverless fan-out — fine for dev, dangerous for
-// the money/cost limiters in prod (see failClosedLimiter below). Suppressed under
-// vitest: the Vercel build inherits VERCEL_ENV=production while running the test
-// gate, which made this fire as scary-but-meaningless build-log noise. Fail-closed
-// behavior itself is NOT gated on VITEST — tests exercise it deliberately.
+// One-time startup notice when Redis is unconfigured in production. Cheap buckets
+// fall back to a PER-INSTANCE in-memory map — fine for a flood guard, meaningless
+// as a bound across serverless fan-out — while money/cost and auth buckets degrade
+// onto the durable Postgres counter (see fallbackLimiter), so this is a "running
+// degraded" notice rather than an outage. Suppressed under vitest: the Vercel build
+// inherits VERCEL_ENV=production while running the test gate, which made this fire
+// as scary-but-meaningless build-log noise. The fallback behavior itself is NOT
+// gated on VITEST — tests exercise it deliberately.
 if (IS_PRODUCTION && !REDIS_CONFIGURED && !process.env.VITEST) {
 	console.error(
-		'[rate-limit] FATAL CONFIG: UPSTASH_REDIS_REST_URL/TOKEN are unset in production. ' +
-			'Cost/money-moving limiters will FAIL CLOSED (deny) until Redis is configured; ' +
-			'cheap per-IP limiters fall back to a non-distributed in-memory map.',
+		'[rate-limit] CONFIG: UPSTASH_REDIS_REST_URL/TOKEN are unset in production. ' +
+			'Money/auth limiters are counting in Postgres (durable, distributed, fixed-window); ' +
+			'cheap per-IP limiters fall back to a non-distributed in-memory map. Restore Redis ' +
+			'for sliding-window precision and to take the upsert off the database.',
 	);
 }
 
@@ -113,12 +117,9 @@ function getLimiter(name, opts) {
 		return lim;
 	}
 	if (!redis) {
-		// degradeToMemory wins over critical: an auth bucket must stay usable on a
-		// Redis outage (degraded per-instance cap) rather than lock everyone out.
-		const lim =
-			opts.degradeToMemory || !(opts.critical && IS_PRODUCTION)
-				? memoryLimiter(name, opts)
-				: failClosedLimiter(opts);
+		// No Redis configured at all. Money/auth buckets still get a distributed
+		// counter (Postgres); cheap buckets stay in per-instance memory.
+		const lim = fallbackLimiter(name, opts);
 		limiters.set(key, lim);
 		return lim;
 	}
@@ -160,6 +161,94 @@ function warnDegradedOnce(name, err) {
 	);
 }
 
+// Upstash rejects every command with this once the account's plan-wide command
+// allowance is spent. It is NOT a transient blip: the counter resets on the plan's
+// billing boundary, so the store stays dead for the remainder of the period. It
+// therefore deserves its own, unmistakable log line — the generic "redis degraded"
+// warning sends an operator hunting for a network fault that isn't there.
+export function isRedisQuotaError(err) {
+	return /max requests limit exceeded/i.test(String(err?.message || err || ''));
+}
+
+let _quotaWarnedAt = 0;
+function warnQuotaOnce() {
+	const t = Date.now();
+	if (t - _quotaWarnedAt < 600_000) return;
+	_quotaWarnedAt = t;
+	console.error(
+		'[rate-limit] FATAL CAPACITY: the Upstash store has spent its plan-wide command ' +
+			'allowance. Every rate-limit command is rejected until the plan period rolls over. ' +
+			'Money/auth buckets are now counting in Postgres (durable); cheap buckets count ' +
+			'per-instance. Remediation: raise the Upstash plan, or cut command volume.',
+	);
+}
+
+// Circuit breaker in front of Redis, mirroring api/_lib/cache.js. Without it a
+// degraded store makes EVERY rate-limited request pay a full failing round-trip
+// before reaching its fallback — during the 2026-07-09 over-quota incident that
+// was a ~300ms tax on every single API call, plus a rejected command per request.
+// After CIRCUIT_FAIL_THRESHOLD consecutive failures we skip Redis entirely for a
+// cooldown and serve from the fallback directly. One trial command is admitted
+// once the cooldown elapses; its success closes the breaker.
+//
+// The cooldown escalates ×2 per consecutive re-arm up to CIRCUIT_COOLDOWN_MAX_MS,
+// so a transient blip recovers inside 5s while an over-quota store — which cannot
+// recover until its plan period rolls over — settles at one probe per 10 minutes
+// instead of one per request.
+const CIRCUIT_FAIL_THRESHOLD = 5;
+const CIRCUIT_COOLDOWN_BASE_MS = 5_000;
+const CIRCUIT_COOLDOWN_MAX_MS = 600_000;
+let circuitFailures = 0;
+let circuitOpenUntil = 0;
+let circuitTrialInFlight = false;
+let circuitRearms = 0;
+
+function circuitAllows() {
+	if (circuitOpenUntil === 0) return true;
+	if (Date.now() < circuitOpenUntil) return false;
+	if (circuitTrialInFlight) return false;
+	circuitTrialInFlight = true; // half-open: exactly one trial
+	return true;
+}
+
+function circuitRecordSuccess() {
+	if (circuitOpenUntil !== 0) console.warn('[rate-limit] redis recovered — circuit closed');
+	circuitFailures = 0;
+	circuitOpenUntil = 0;
+	circuitTrialInFlight = false;
+	circuitRearms = 0;
+}
+
+function circuitRecordFailure() {
+	circuitTrialInFlight = false;
+	circuitFailures += 1;
+	if (circuitFailures < CIRCUIT_FAIL_THRESHOLD && circuitOpenUntil === 0) return;
+	const cooldown = Math.min(CIRCUIT_COOLDOWN_MAX_MS, CIRCUIT_COOLDOWN_BASE_MS * 2 ** circuitRearms);
+	circuitRearms += 1;
+	circuitOpenUntil = Date.now() + cooldown;
+}
+
+// Thrown to route a caller straight to its fallback while the breaker is open,
+// without emitting a per-request warning (the open/close transitions log once).
+class RlCircuitOpenError extends Error {
+	constructor() {
+		super('rate-limit redis circuit open');
+		this.circuitOpen = true;
+	}
+}
+
+// Observability for /healthz — is the limiter's Redis path live right now, and
+// how badly has it degraded over this instance's lifetime?
+export function rateLimiterHealth() {
+	return {
+		configured: REDIS_CONFIGURED,
+		circuitOpen: circuitOpenUntil !== 0 && Date.now() < circuitOpenUntil,
+		circuitReopensInMs: Math.max(0, circuitOpenUntil - Date.now()),
+		quotaExhausted: _quotaWarnedAt > 0,
+		durableFallback: pgAvailable(),
+	};
+}
+
 // Wrap a real (Redis-backed) Ratelimit so a Redis error — most importantly the
 // account-wide "max requests limit exceeded" over-quota UpstashError — degrades
 // instead of throwing an unhandled 500 out of every route. Non-critical buckets
@@ -169,32 +258,27 @@ function warnDegradedOnce(name, err) {
 // distributed limiter is blind.
 function resilientLimiter(rl, name, opts) {
 	const ms = parseWindowMs(opts.window);
-	const failClosed = Boolean(opts.critical) && IS_PRODUCTION;
-	// Auth buckets (degradeToMemory) fall back to a per-instance memory limiter on
-	// a Redis outage instead of failing closed. A total auth lockout — nobody can
-	// log in — is a worse outcome than a weaker, per-instance brute-force cap, and
-	// bcrypt already bounds per-request cost on the credential path. Money-moving
-	// buckets keep failing closed: there, unbounded spend is worse than a 503.
-	const memFallback = opts.degradeToMemory ? memoryLimiter(name, opts) : null;
+	// Money and auth buckets must stay bounded across instances even when Redis
+	// cannot answer, so they degrade onto the durable Postgres counter rather
+	// than failing closed (which takes the paid product down for the length of
+	// the outage) or trusting per-instance memory (which bounds nothing). See
+	// fallbackLimiter. Everything else FAILS OPEN: a limiter outage must never
+	// take down a read endpoint.
+	const durable = opts.critical || opts.degradeToMemory ? fallbackLimiter(name, opts) : null;
 	return {
 		async limit(id) {
 			try {
-				return await rl.limit(id);
+				if (!circuitAllows()) throw new RlCircuitOpenError();
+				const r = await rl.limit(id);
+				circuitRecordSuccess();
+				return r;
 			} catch (err) {
-				warnDegradedOnce(name, err);
-				if (memFallback) {
-					const r = await memFallback.limit(id);
-					return { ...r, reason: 'rate_limiter_degraded_memory' };
+				if (!err?.circuitOpen) {
+					circuitRecordFailure();
+					if (isRedisQuotaError(err)) warnQuotaOnce();
+					else warnDegradedOnce(name, err);
 				}
-				if (failClosed) {
-					return {
-						success: false,
-						limit: opts.limit,
-						remaining: 0,
-						reset: Date.now() + ms,
-						reason: 'rate_limiter_unavailable',
-					};
-				}
+				if (durable) return durable.limit(id);
 				return {
 					success: true,
 					limit: opts.limit,
@@ -260,6 +344,109 @@ function parseWindowMs(w) {
 	return n * { ms: 1, s: 1e3, m: 60e3, h: 3600e3, d: 86400e3 }[unit];
 }
 
+// ── Postgres fallback limiter ─────────────────────────────────────────────
+//
+// The disposition of a `critical` bucket when Redis is blind used to be "deny"
+// (failClosedLimiter). That is the right instinct for spend — an unmetered paid
+// endpoint is worse than an unavailable one — but it is the wrong OUTCOME when
+// the outage lasts: on 2026-07-09 the shared Upstash store hit its plan-wide
+// command ceiling, which does not reset until the next calendar month, so every
+// checkout, withdrawal, mint and trade would have 503'd for three weeks.
+//
+// Postgres is already a hard dependency of exactly those endpoints (their
+// ledgers live in it), so a counter here is distributed, survives instance
+// fan-out, and cannot succeed-when-the-action-couldn't-anyway. Fixed window,
+// one atomic upsert — see the migration for the boundary-burst tradeoff.
+//
+// Cheap, non-critical buckets never come here: they degrade to the per-instance
+// memory limiter, whose cost is zero. Only money and auth pay for an upsert.
+const PG_PRUNE_INTERVAL_MS = 600_000;
+let pgPrunedAt = 0;
+
+// Drop windows that no live limiter can still be counting. `maxMemoryWindowMs`
+// tracks the widest window any limiter in this process uses (24h for the daily
+// payout/withdrawal caps), so 2× that is a conservative floor. Fire-and-forget:
+// a failed prune is a no-op that retries on the next interval, never an error
+// on the caller's request path.
+function prunePgCounters(now) {
+	if (now - pgPrunedAt < PG_PRUNE_INTERVAL_MS) return;
+	pgPrunedAt = now;
+	const cutoff = now - 2 * maxMemoryWindowMs;
+	sql`DELETE FROM rate_limit_counters WHERE window_start < ${cutoff}`.catch(() => {});
+}
+
+function pgLimiter(name, { limit, window }) {
+	const ms = parseWindowMs(window);
+	if (ms > maxMemoryWindowMs) maxMemoryWindowMs = ms;
+	return {
+		async limit(id) {
+			const now = Date.now();
+			const windowStart = Math.floor(now / ms) * ms;
+			const reset = windowStart + ms;
+			prunePgCounters(now);
+			// One statement: increment and read the post-increment count. No
+			// read-modify-write window for concurrent instances to race through.
+			const [row] = await sql`
+				INSERT INTO rate_limit_counters (bucket, window_start, hits)
+				VALUES (${`${name}\0${id}`}, ${windowStart}, 1)
+				ON CONFLICT (bucket, window_start)
+				DO UPDATE SET hits = rate_limit_counters.hits + 1
+				RETURNING hits
+			`;
+			const hits = row?.hits ?? 1;
+			return {
+				success: hits <= limit,
+				limit,
+				remaining: Math.max(0, limit - hits),
+				reset,
+				reason: 'rate_limiter_degraded_postgres',
+			};
+		},
+	};
+}
+
+// Is a durable fallback available? A limiter can only reach for Postgres if the
+// connection string exists; `env.DATABASE_URL` throws when unset (it is a
+// required var), so probe it without letting that escape.
+function pgAvailable() {
+	try {
+		return Boolean(env.DATABASE_URL);
+	} catch {
+		return false;
+	}
+}
+
+// The fallback a bucket uses when Redis cannot answer, in priority order:
+//   critical / degradeToMemory → Postgres (distributed, durable)
+//   …with Postgres unreachable → the bucket's original disposition
+//   everything else            → per-instance memory (cost-free, good enough)
+// Wrapping pgLimiter in a try/catch keeps a DB blip from turning a Redis outage
+// into a hard 500: it collapses to the pre-existing behaviour instead.
+function fallbackLimiter(name, opts) {
+	const durable = (opts.critical || opts.degradeToMemory) && pgAvailable();
+	if (!durable) {
+		return opts.degradeToMemory || !(opts.critical && IS_PRODUCTION)
+			? memoryLimiter(name, opts)
+			: failClosedLimiter(opts);
+	}
+	const pg = pgLimiter(name, opts);
+	const lastResort = opts.degradeToMemory
+		? memoryLimiter(name, opts)
+		: IS_PRODUCTION
+			? failClosedLimiter(opts)
+			: memoryLimiter(name, opts);
+	return {
+		async limit(id) {
+			try {
+				return await pg.limit(id);
+			} catch (err) {
+				warnDegradedOnce(`${name}:pg`, err);
+				return lastResort.limit(id);
+			}
+		},
+	};
+}
+
 // Preset limiters. Tune once viral traffic shape is known.
 export const limits = {
 	// Auth buckets gate credential guessing / account-creation spam. They are
@@ -283,8 +470,13 @@ export const limits = {
 	// users then got 429'd on the one request that mattered (e.g. creating an
 	// agent). Reads are cheap DB lookups behind auth, so the ceiling is generous:
 	// it only needs to stop scripted scraping, not human navigation.
-	authedReadIp: (ip) =>
-		getLimiter('authed:read:ip', { limit: 300, window: '5 m', degradeToMemory: true }).limit(ip),
+	// `local` on purpose. This bucket fires on essentially every authenticated page
+	// load, so it is the single hottest limiter on the platform — and its only job is
+	// to bound scripted scraping of endpoints the caller is already entitled to read.
+	// A per-instance cap does that (limit × warm instances, and Cloud Run bounds
+	// instances) while costing zero Redis commands. Keeping it distributed is what
+	// spent the shared Upstash allowance that the money buckets actually need.
+	authedReadIp: (ip) => getLimiter('authed:read:ip', { limit: 300, window: '5 m', local: true }).limit(ip),
 	// Agent creation (POST /api/agents) mints real EVM + Solana wallets, so it
 	// keeps a strict ceiling — but a DEDICATED one. Sharing `authIp` meant page
 	// browsing could exhaust the budget before the user ever pressed "create",
@@ -408,8 +600,13 @@ export const limits = {
 		getLimiter('vanity:gallery:publish:ip', { limit: 12, window: '10 m' }).limit(ip),
 	vanityGalleryReadIp: (ip) =>
 		getLimiter('vanity:gallery:read:ip', { limit: 240, window: '5 m' }).limit(ip),
-	mcpUser: (userId) => getLimiter('mcp:user', { limit: 1200, window: '1 m' }).limit(userId),
-	mcpIp: (ip) => getLimiter('mcp:ip', { limit: 600, window: '1 m' }).limit(ip),
+	// Both `local`: generous per-caller flood guards on the MCP transport, not spend
+	// controls (the paid MCP tools carry their own `critical` buckets — mcpAgentPay,
+	// mcp3dGenerate, mcpPumpGated — which stay distributed). At 1200/min and 600/min
+	// these were among the biggest Redis-command consumers on the platform while
+	// bounding nothing that costs money.
+	mcpUser: (userId) => getLimiter('mcp:user', { limit: 1200, window: '1 m', local: true }).limit(userId),
+	mcpIp: (ip) => getLimiter('mcp:ip', { limit: 600, window: '1 m', local: true }).limit(ip),
 	// Generic per-IP bucket for authenticated app endpoints (agent screen feed,
 	// task queue, etc.). Callers pass an override to size the bucket to their
 	// traffic shape — a screenshot push stream needs hundreds/min, a roster poll
@@ -768,12 +965,36 @@ export const limits = {
 	checkName: (ip) => getLimiter('check-name:ip', { limit: 60, window: '1 m' }).limit(ip),
 	ensResolve: (ip) => getLimiter('ens:resolve:ip', { limit: 60, window: '1 m' }).limit(ip),
 	snsResolve: (ip) => getLimiter('sns:resolve:ip', { limit: 60, window: '1 m' }).limit(ip),
-	// Generic public read endpoints (explore, showcase, public agent fetch). 60/min per IP.
+	// Generic public read endpoints (explore, showcase, public agent fetch).
 	// local: high-frequency public reads with no side effects — the only job is
-	// flood protection, and a per-instance cap (60 × warm instances, bounded by
-	// Vercel) bounds one IP's throughput just as well without spending a Redis
-	// command per page view. The largest single source of avoidable quota burn.
-	publicIp: (ip) => getLimiter('public:ip', { limit: 60, window: '1 m', local: true }).limit(ip),
+	// flood protection, and a per-instance cap bounds one IP's throughput just as
+	// well without spending a Redis command per page view.
+	//
+	// 240/min, NOT 60. At 60 this bucket was a self-DoS: ~166 endpoints share it,
+	// and real pages fan out to many of them in one load — the agent profile fires
+	// 7-8 (duplicated /reputation + /solana/networth), /crypto fires 5, oracle's
+	// /activity fires 5 and re-polls all 5 every 90s, galaxy polls 2 every 6s. A
+	// user opening two tabs burned the minute budget and 429'd their own page. Since
+	// this is a `local` in-memory guard (no Redis cost) and every endpoint behind it
+	// is an edge-cached side-effect-free read, a higher ceiling costs nothing and
+	// still stops a scripted flood. Page-load-critical clusters additionally get
+	// their own dedicated buckets below so one surface can never starve another.
+	publicIp: (ip) => getLimiter('public:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	// Agent profile reads (networth, patronage, achievements, reputation, tiers).
+	// One profile view fans out to 7-8 of these; isolate them so opening a few
+	// profiles can't drain the budget shared with markets/home/oracle surfaces.
+	agentProfileIp: (ip) =>
+		getLimiter('agent-profile:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	// Market/DeFi/crypto dashboards (api/coin/*, api/defi/*, api/crypto/*). Every
+	// one is an edge-cached upstream mirror, and the dashboards fan out 3-5 per load
+	// (/crypto probes 5; /coins polls liquidations every 30s; /gas every 15s).
+	marketDataIp: (ip) =>
+		getLimiter('market-data:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	// Galaxy visualiser (/api/galaxy, /api/galaxy/flows). The only continuous
+	// high-frequency drain on the platform: a 6s delta poll on the galaxy page plus
+	// a 12s economy-ticker poll on home. Needs its own headroom or an idle galaxy
+	// tab slowly starves every other public read in the same browser.
+	galaxyIp: (ip) => getLimiter('galaxy:ip', { limit: 300, window: '1 m', local: true }).limit(ip),
 	// Lobby-critical market feeds (/api/pump/trending, /api/pump/search). These
 	// render the /play lobby on every page load, sit behind a 30s server cache +
 	// stale fallback (so the upstream cost of a burst is near zero), and MUST NOT
@@ -904,7 +1125,10 @@ export const limits = {
 	pricingPerIp: (ip) => getLimiter('pricing:ip', { limit: 120, window: '1 m' }).limit(ip),
 	walletLink: (userId) => getLimiter('wallet:link', { limit: 10, window: '10 m' }).limit(userId),
 	// Agent wallet read endpoints (GET balance, activity). Per authenticated user.
-	walletRead: (userId) => getLimiter('wallet:read', { limit: 60, window: '1 m' }).limit(userId),
+	// `local`: a read guard on wallet balance/holdings views (33 call sites, polled by
+	// open dashboards). Reads move no funds — the send/withdraw/trade paths keep their
+	// own distributed `critical` buckets.
+	walletRead: (userId) => getLimiter('wallet:read', { limit: 60, window: '1 m', local: true }).limit(userId),
 	// Public cross-origin wallet embed card (GET /api/agents/wallet-embed). Served
 	// CORS:* so a stranger's blog can mount the wallet chip — keyed per IP and
 	// generous (a page with several embeds hydrates them all on load) but bounded

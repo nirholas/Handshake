@@ -62,7 +62,7 @@ Agents can override individual slots via `meta.edits.animations`.
 
 ## Known issues
 
-- **`fidget` slot is broken** — maps to `"Fidget"` but no such clip exists in the manifest. Silent no-op at runtime. Fix: add a Fidget FBX to `animations.config.json` and rebuild, or remap the slot. (`src/runtime/animation-slots.js:30`)
-- **6 orphaned FBX files** — `Cover To Stand.fbx`, `Goalkeeper Scoop.fbx`, `Jumping Down.fbx` (×3), `Removing Driver.fbx` exist in `public/animations/` but are never built. Fix: add entries to `scripts/animations.config.json`.
 - **`wave` clip unreachable** — the `wave` clip is in the manifest but no agent slot or hint points to it. The `wave` slot maps to `reaction` instead.
 - **Dead animation hints** — skill-emitted hints `gesture`, `inspect`, `present`, `sign`, `curiosity`, `patience` have no matching clip or slot; they silently no-op on Avaturn models. (`src/agent-avatar.js`)
+
+Resolved (see `public/animations/registry.json` → `resolved_issues`): the `fidget` slot no longer points at the never-baked `Fidget` clip — it maps to the real `av-waiting` loop (2026-07-08); and the 6 formerly-orphaned source FBX (`Cover To Stand`, `Goalkeeper Scoop`, `Jumping Down` ×3, `Removing Driver`) are now entries in `scripts/animations.config.json` and built into the manifest.

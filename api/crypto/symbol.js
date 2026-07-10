@@ -192,7 +192,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 
 	const ip = clientIp(req);
-	const rl = await limits.publicIp(ip);
+	const rl = await limits.marketDataIp(ip);
 	if (!rl.success) return rateLimited(res, rl);
 
 	let body = null;

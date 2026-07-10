@@ -57,7 +57,7 @@ export default wrap(async (req, res) => {
 	const user = await resolveUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	let body;

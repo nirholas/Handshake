@@ -11,7 +11,7 @@ take-profit / trailing-stop / timeout exit. Two triggers arm a strategy:
   ever** — an irreversible "the creator is live and taking real fees" signal.
   Buys the creator's coin after an owner-set delay.
 
-It is deliberately **not** a Vercel cron: hourly ticks can't snipe a launch.
+It is deliberately **not** a scheduled cron: periodic ticks can't snipe a launch.
 
 ## Architecture
 

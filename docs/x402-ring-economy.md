@@ -285,7 +285,8 @@ node scripts/x402-ring-setup.mjs
 # 2. Apply the schema.
 psql "$DATABASE_URL" -f api/_lib/migrations/2026-07-01-x402-ring-economy.sql
 
-# 3. Set env (Vercel), from the printed block:
+# 3. Set env on the Cloud Run service, from the printed block
+#    (gcloud run services update three-ws-api --region us-central1 --update-env-vars …):
 #    X402_SELF_FACILITATOR_ENABLED=true   # else /api/x402-facilitator → 503
 #    X402_EXTERNAL_ENABLED=false          # only OUR endpoints get paid
 #    X402_CHARITY_AUDIT_BPS=0             # no charity split leaves the ring
@@ -641,7 +642,8 @@ WARN.
    `SELECT * FROM payment_reconciliation WHERE source = 'x402_ring_onchain' AND reconciled = false`.
 2. **Rotate** — treat the affected wallet's key as compromised. Generate a new
    secret (`node scripts/x402-ring-setup.mjs` for a ring role; the signer's own
-   runbook otherwise) and replace it in Vercel env.
+   runbook otherwise) and replace it in the Cloud Run service env
+   (`gcloud run services update three-ws-api --region us-central1 --update-env-vars …`).
 3. **Drain** — move remaining funds from the old wallet to the treasury
    (`X402_PAY_TO_SOLANA`) before the old key can move more.
 4. **Revoke** (delegation alerts) — send an SPL `Revoke` on the approved ATA to

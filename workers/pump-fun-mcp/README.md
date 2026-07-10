@@ -5,7 +5,7 @@ Mirror of the canonical pump.fun MCP server at `https://three.ws/api/pump-fun-mc
 
 ## Transport
 
-Full MCP Streamable HTTP (protocol `2025-06-18`), identical to the Vercel handler:
+Full MCP Streamable HTTP (protocol `2025-06-18`), identical to the three.ws handler:
 
 - `POST` — JSON-RPC 2.0, single requests and batches (max 16). Notification-only
   requests return `202 Accepted` with no body.
@@ -24,7 +24,7 @@ Canonical names are snake_case (`search_tokens`, `get_bonding_curve`, …).
 camelCase names (`searchTokens`, `getBondingCurve`, …) forever via
 `TOOL_NAME_ALIASES` in `src/pump/mcp-tools.js` — the shared single source of truth.
 
-## Documented divergences from the Vercel handler
+## Documented divergences from the three.ws handler
 
 These are deliberate scope decisions, not platform constraints — CF Workers
 support SSE/streams fine:
@@ -35,12 +35,13 @@ support SSE/streams fine:
    `get_graduated_tokens`, `get_king_of_the_hill`, `get_creator_profile`), and its
    `tools/list` honestly advertises exactly that subset. The kol/sns/social/claims
    and auth-gated tools depend on three.ws backend modules (x402 settlement,
-   bearer auth, the radar/leaderboard stores) that live in the Vercel deployment.
+   bearer auth, the radar/leaderboard stores) that live in the three.ws
+   (Cloud Run) deployment.
 2. **No auth / x402 gating.** None of the gated tools (`pumpfun_vanity_mint`,
    `pumpfun_watch_whales`, `pumpfun_watch_claims`) are served here, so the worker
    carries no bearer or payment plumbing.
 3. **No rate limiting in-process.** Handled at the Cloudflare edge layer.
-4. **`get_token_trades` is indexer-only here.** The Vercel handler falls back to
+4. **`get_token_trades` is indexer-only here.** The three.ws handler falls back to
    decoding trades from chain; the worker requires `PUMPFUN_BOT_URL`.
 
 ## Secrets (`wrangler secret put <NAME>`)

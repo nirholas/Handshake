@@ -30,7 +30,7 @@ Every avatar gets voice in, voice out, and facial animation for free. Users talk
 
 ## Universal lip-sync — every avatar's mouth just works
 
-Whatever kind of avatar you bring — Ready Player Me, Avaturn, MetaHuman, VRM/VRoid anime rigs, Oculus-viseme models — its lips sync to the actual audio being spoken. Rigs that only have simple vowel shapes still talk convincingly, and an unknown model degrades gracefully to amplitude-driven mouth movement rather than a frozen face.
+Whatever kind of avatar you bring — MetaHuman, VRM/VRoid anime rigs, Oculus-viseme models, photo-reconstructed selfie avatars — its lips sync to the actual audio being spoken. Rigs that only have simple vowel shapes still talk convincingly, and an unknown model degrades gracefully to amplitude-driven mouth movement rather than a frozen face.
 
 **How it works:** An A2F blendshape player maps ARKit-52 frames onto whichever morph-target convention the GLB ships, deriving VRM vowel and Oculus viseme activations by inverting the cross-format blendshape vocabulary; amplitude lip-sync from a Web Audio analyser is the always-available fallback.
 

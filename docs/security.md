@@ -281,7 +281,7 @@ All limits are enforced via Upstash Redis and return `429 Too Many Requests` wit
 | MCP endpoints | 1200 / min per user, 600 / min per IP |
 | File uploads | 60 / hour per user |
 
-The `clientIp()` helper reads `x-vercel-forwarded-for` → `x-real-ip` → socket address, in that order. Vercel's edge network provides an additional DDoS mitigation layer before requests reach the rate-limit check.
+The `clientIp()` helper reads `X-Forwarded-For` and walks the chain from the right, skipping the trusted proxy hops appended by three.ws's own infrastructure (Google's external Application Load Balancer in front of Cloud Run), then takes the next address as the real client. It falls back to the socket address only when there is no `X-Forwarded-For` at all (local dev, tests, direct container access). Reading a caller-settable header directly is avoided precisely so a client cannot rotate the claimed address to mint a fresh limiter bucket per request. The Google Cloud load balancer provides an additional DDoS mitigation layer before requests reach the rate-limit check.
 
 ---
 
@@ -309,14 +309,14 @@ Admin and write endpoints accept only same-site requests, enforced by checking t
 
 ### Database (Neon)
 
-- Enable Neon's IP allow-list to restrict database access to your Vercel functions' egress IPs
+- Enable Neon's IP allow-list to restrict database access to your app servers' egress IPs (three.ws production runs on Google Cloud Run — allow-list the Cloud Run service's egress range)
 - Connection pooling (Neon's built-in) prevents connection exhaustion under traffic spikes — do not bypass it by instantiating raw `pg.Pool` connections
 
 ### Infrastructure
 
-- Vercel DDoS protection is automatic on all plans
+- three.ws production runs on Google Cloud Run behind an external HTTP(S) load balancer, which provides automatic DDoS mitigation; the deploy runbook is [docs/ops/gcp-production.md](./ops/gcp-production.md)
 - If you run a custom VPS deployment, configure firewall rules to block direct port access and route all traffic through your proxy
-- Use Vercel's edge network for rate limiting in distributed scenarios
+- Rate limiting is enforced with a shared Upstash Redis store, so limits hold across every instance in a distributed deployment (see [Rate limiting](#rate-limiting) above)
 
 ### Smart contracts
 

@@ -59,7 +59,7 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.publicIp(clientIp(req));
+	const rl = await limits.agentProfileIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://x');

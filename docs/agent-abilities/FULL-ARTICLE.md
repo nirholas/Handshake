@@ -24,7 +24,7 @@ Type a prompt at /forge (or call the forge_free MCP tool) and get a downloadable
 
 Generate a humanoid avatar GLB from a prompt (text_to_avatar), or get a fully rigged, animation-ready avatar in a single call (forge_avatar) that chains mesh generation and auto-rigging. Complementary no-AI paths exist too: three selfies → realistic avatar at /create, and a full builder (body, skin, hair, clothing) at /studio.
 
-**How it works:** forge_avatar runs generation then rigging behind a humanoid gate — a mesh that can't safely carry a humanoid skeleton is never forced into a broken rig (an allow_non_humanoid flag overrides). The photo path downscales three selfies, opens an Avaturn editor session, and saves the exported GLB to the user's account (src/selfie-pipeline.js, src/avatar-creator.js). Results ship as Spatial MCP artifacts that render inline in MCP hosts.
+**How it works:** forge_avatar runs generation then rigging behind a humanoid gate — a mesh that can't safely carry a humanoid skeleton is never forced into a broken rig (an allow_non_humanoid flag overrides). The photo path downscales three selfies, opens the photo-reconstruction editor session, and saves the exported GLB to the user's account (src/selfie-pipeline.js, src/avatar-creator.js). Results ship as Spatial MCP artifacts that render inline in MCP hosts.
 
 **Why it matters:** One sentence to a character that can already walk, wave, and emote — no Blender, no rigging knowledge, no multi-step orchestration.
 
@@ -46,7 +46,7 @@ Adds a humanoid skeleton with per-vertex skin weights to any static GLB, turning
 
 ## Universal retargeting — any humanoid rig animates (src/glb-canonicalize.js + src/animation-retarget.js)
 
-Any humanoid avatar from any tool plays the entire animation library — legs included — with zero manual bone mapping. Mixamo, VRM/VRoid, VRM 1.0, Unreal mannequin, Daz/Genesis, MakeHuman, Blender .L/.R, Rigify, HumanIK/Maya namespaces, CharacterStudio, snake_case/kebab-case, and simple shoulderL-style rigs are all handled out of the box.
+Any humanoid avatar from any tool plays the entire animation library — legs included — with zero manual bone mapping. Mixamo, VRM/VRoid, VRM 1.0, Unreal mannequin, Daz/Genesis, MakeHuman, Blender .L/.R, Rigify, HumanIK/Maya namespaces, CH_-prefixed rigs, snake_case/kebab-case, and simple shoulderL-style rigs are all handled out of the box.
 
 **How it works:** glb-canonicalize.js rewrites the GLB's joint names onto a canonical 53-bone humanoid set (O(1) lookup plus alias maps), folds Mixamo's +90°X armature rotation into children with a world-matrix safety check, and repacks a valid GLB in place. animation-retarget.js then renames each clip track to the rig's actual bones, applies per-bone bind-pose correction (C = targetRest · sourceRest⁻¹, handling A-pose vs T-pose rests), and rescales hip translation by height ratio. Gates: ≥8 canonical bones to be playable, ≥50% track coverage per clip, and a 45° hips-tilt sanity check; a genuinely non-riggable prop falls back to the default rig via AnimationManager.supportsCanonicalClips() — never a bind-pose T-pose.
 
@@ -416,7 +416,7 @@ As you name or rename an agent, availability is checked live against the whole p
 
 Take or upload three photos of your face — front, left, right — pick a body type and a style (photorealistic or stylized), and the AI builds a full 3D avatar that looks like you. An editor opens to adjust clothing and details, and the finished model saves to your account automatically. Camera-less devices fall back to file upload gracefully.
 
-**How it works:** Wraps the Avaturn photo-reconstruction SDK behind a three.ws-branded modal; the exported GLB is fetched and committed to the user's avatar library through the standard account save path.
+**How it works:** Wraps a licensed photo-reconstruction SDK behind a three.ws-branded modal; the exported GLB is fetched and committed to the user's avatar library through the standard account save path.
 
 **Why it matters:** A personalized, animation-ready 3D you in about three minutes, with no 3D skills whatsoever.
 
@@ -432,7 +432,7 @@ Describe a character in plain text — "a knight in emerald armor" — and get b
 
 A full in-browser character builder: start from a base body and shape everything — body type, skin tone, face shape, hair from 20+ styles, eyes, brows, nose, mouth, clothing, and accessories — with every change reflected instantly in the 3D preview. What you see is exactly what exports: the live scene itself becomes your GLB. Saved avatars reopen fully editable later.
 
-**How it works:** Built on the open-source M3 CharacterStudio (MIT fork) plus a native studio mode that exports the live Three.js scene graph via GLTFExporter and persists the appearance as re-editable metadata.
+**How it works:** Built on an open-source MIT-licensed avatar-builder fork plus a native studio mode that exports the live Three.js scene graph via GLTFExporter and persists the appearance as re-editable metadata.
 
 **Why it matters:** Complete creative control over a stylized avatar with zero 3D-modeling experience — and no account needed just to build and export.
 
@@ -798,7 +798,7 @@ Every avatar gets voice in, voice out, and facial animation for free. Users talk
 
 ## Universal lip-sync — every avatar's mouth just works
 
-Whatever kind of avatar you bring — Ready Player Me, Avaturn, MetaHuman, VRM/VRoid anime rigs, Oculus-viseme models — its lips sync to the actual audio being spoken. Rigs that only have simple vowel shapes still talk convincingly, and an unknown model degrades gracefully to amplitude-driven mouth movement rather than a frozen face.
+Whatever kind of avatar you bring — MetaHuman, VRM/VRoid anime rigs, Oculus-viseme models, photo-reconstructed selfie avatars — its lips sync to the actual audio being spoken. Rigs that only have simple vowel shapes still talk convincingly, and an unknown model degrades gracefully to amplitude-driven mouth movement rather than a frozen face.
 
 **How it works:** An A2F blendshape player maps ARKit-52 frames onto whichever morph-target convention the GLB ships, deriving VRM vowel and Oculus viseme activations by inverting the cross-format blendshape vocabulary; amplitude lip-sync from a Web Audio analyser is the always-available fallback.
 
@@ -2817,7 +2817,7 @@ A drop-in payment modal turns any x402 paid endpoint into a polished checkout. P
 
 Terminal-native tooling brings the on-chain avatar workflow to your shell and CI. It scaffolds a spec-compliant avatar manifest from just a wallet address and a mesh file — computing the SHA-256, byte size, and format for you — validates existing manifests with CI-friendly exit codes, hashes any file for content addressing, and prints ready-to-paste embed snippets including the resolver URL, a web-component tag, and an iframe.
 
-**How it works:** Four commands (init, validate, hash, preview) run entirely offline against the published avatar schema — no service to sign up for, no browser required — and a --json flag on each makes them scriptable. Runs via npx with zero install, accepting CAIP-10 owners, ENS-style names, and Avaturn/Mixamo/Ready Player Me/VRM skeletons.
+**How it works:** Four commands (init, validate, hash, preview) run entirely offline against the published avatar schema — no service to sign up for, no browser required — and a --json flag on each makes them scriptable. Runs via npx with zero install, accepting CAIP-10 owners, ENS-style names, and Mixamo/VRM and other humanoid skeletons.
 
 **Why it matters:** Publishing a verifiable, on-chain-addressable avatar becomes three shell commands you can wire straight into CI.
 
@@ -2855,9 +2855,9 @@ The generative-3D studios that turn plain language or images into real downloada
 
 ## Avatars, Animation & Voice
 
-Everything that makes a humanoid character: creation, rigging, posing, animating, mocap, and voice. Surfaces: /gallery (every public avatar as a browsable grid); /create/prompt (type a description → rigged, animatable avatar); /create/selfie, /scan and /features/scan (one selfie → rigged 3D avatar in ~60 seconds, free, in-browser); /dad (one photo of your dad → recognizable animated avatar with a shareable permalink); /import/rpm (import any GLB/glTF avatar and give it an agent brain); the full Character Studio avatar builder app; /avatar-engines (a factual atlas of open-source and commercial avatar engines — technique, license, compute, integration status); /pose (Animation Studio — FK/IK posing, keyframe timeline, export animated GLB or clip JSON, save to your account, sell animations for USDC); /animations (Animation Gallery — 2,100+ clips with poster thumbnails, categories, and live preview on your avatar); /mocap-studio (drive an avatar with your webcam — real-time facial capture, no download); /voice (Voice Lab — clone your voice from a short recording, use it for TTS or give it to your agent); /create/video (type a script, pick a voice, export a lip-synced talking-head video); /lipsync and /lipsync/mic (real-time viseme-driven mouth animation from TTS text or live microphone).
+Everything that makes a humanoid character: creation, rigging, posing, animating, mocap, and voice. Surfaces: /gallery (every public avatar as a browsable grid); /create/prompt (type a description → rigged, animatable avatar); /create/selfie, /scan and /features/scan (one selfie → rigged 3D avatar in ~60 seconds, free, in-browser); /dad (one photo of your dad → recognizable animated avatar with a shareable permalink); /import/rpm (import any GLB/glTF avatar and give it an agent brain); the full avatar builder app; /avatar-engines (a factual atlas of open-source and commercial avatar engines — technique, license, compute, integration status); /pose (Animation Studio — FK/IK posing, keyframe timeline, export animated GLB or clip JSON, save to your account, sell animations for USDC); /animations (Animation Gallery — 2,100+ clips with poster thumbnails, categories, and live preview on your avatar); /mocap-studio (drive an avatar with your webcam — real-time facial capture, no download); /voice (Voice Lab — clone your voice from a short recording, use it for TTS or give it to your agent); /create/video (type a script, pick a voice, export a lip-synced talking-head video); /lipsync and /lipsync/mic (real-time viseme-driven mouth animation from TTS text or live microphone).
 
-**How it works:** Avatar animation is universal — a bone-name canonicalizer + retargeting engine (@three-ws/retarget) maps any humanoid rig (Mixamo, Avaturn, VRM, Daz, MakeHuman…) onto the pre-baked clip library, so any avatar walks, idles, and emotes with no allowlist.
+**How it works:** Avatar animation is universal — a bone-name canonicalizer + retargeting engine (@three-ws/retarget) maps any humanoid rig (Mixamo, VRM, Daz, MakeHuman…) onto the pre-baked clip library, so any avatar walks, idles, and emotes with no allowlist.
 
 **Why it matters:** Your likeness or imagination becomes a fully animated, voiced character that works across every surface of the platform — and animators can sell their clips for real money.
 

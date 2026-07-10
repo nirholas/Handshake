@@ -1320,7 +1320,7 @@
 				// Server truth for prices + the $THREE discount — never hardcoded.
 				async function loadPlans() {
 					try {
-						const r = await fetch('/api/payments/solana?action=plans', {
+						const r = await fetch('/api/payments/solana/plans', {
 							headers: { accept: 'application/json' },
 						});
 						if (!r.ok) return;
@@ -1451,7 +1451,7 @@
 					$('pc-continue').disabled = true;
 					$('pc-continue').textContent = 'Creating quote…';
 					try {
-						const r = await fetch('/api/payments/solana?action=checkout', {
+						const r = await fetch('/api/payments/solana/checkout', {
 							method: 'POST',
 							credentials: 'include',
 							headers: { 'content-type': 'application/json' },
@@ -1523,7 +1523,7 @@
 					$('pc-confirm').disabled = true;
 					setStatus('Verifying on-chain…');
 					try {
-						const r = await fetch('/api/payments/solana?action=confirm', {
+						const r = await fetch('/api/payments/solana/confirm', {
 							method: 'POST',
 							credentials: 'include',
 							headers: { 'content-type': 'application/json' },

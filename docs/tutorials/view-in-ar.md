@@ -121,7 +121,7 @@ ngrok http 3000
 ```
 
 **Option B — deploy a preview**
-Push to a feature branch. Vercel creates an instant HTTPS preview URL. Open it on your phone. This is the cleanest path because it tests the production build.
+Deploy the page to any static host that serves HTTPS (a preview environment, your own Vercel/Netlify project, or a staging URL) and open it on your phone. This is the cleanest path because it tests a real production build over TLS rather than a tunnel.
 
 ---
 

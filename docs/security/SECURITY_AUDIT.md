@@ -1,5 +1,7 @@
 # three.ws Security Audit — 2026-06-18
 
+_Historical record: a point-in-time audit of the code as it stood on 2026-06-18. Some environment references predate the 2026-07-07 move to Google Cloud Run and are preserved as written; for current infrastructure see [docs/ops/gcp-production.md](../ops/gcp-production.md). `vercel.json` remains the server's live route/cron config, read by `server/index.mjs` at runtime._
+
 A full-surface security review of the three.ws monorepo: 93 serverless API
 functions (`api/`), Cloudflare workers (`workers/`), the frontend (`src/`,
 `pages/`, `public/`), the vendored `character-studio` fork, on-chain Anchor +

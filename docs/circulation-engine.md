@@ -94,15 +94,19 @@ its own sake.
 
 ## Cadence
 
-The engine runs from the `pulse-tick` cron, scheduled every **2 minutes**
-(`*/2 * * * *` in [`vercel.json`](../vercel.json)). Each tick grows the pool by
-up to `CIRCULATION_GROWTH_PER_TICK` agents and runs `CIRCULATION_ACTIONS_PER_TICK`
-everyday actions (plus any heavyweight action that wins first refusal). Cron
-functions are bounded to a 120-second `maxDuration`.
+The engine runs from the `pulse-tick` cron
+([api/cron/pulse-tick.js](../api/cron/pulse-tick.js)), which is fanned out every
+**minute** by the `economy-tick` dispatcher (see the
+[economy heartbeat](economy-heartbeat.md)) rather than scheduled on its own.
+Each tick grows the pool by up to `CIRCULATION_GROWTH_PER_TICK` agents and runs
+`CIRCULATION_ACTIONS_PER_TICK` everyday actions (plus any heavyweight action that
+wins first refusal). The `pulse-tick` function is bounded to a 120-second
+`maxDuration` in [`vercel.json`](../vercel.json).
 
-If Vercel's scheduler itself stops firing (account block, paused project), the
-[economy heartbeat](economy-heartbeat.md) drives the same cron endpoints on the
-same schedules from GitHub Actions.
+All scheduled jobs — the `economy-tick` dispatcher included — run on **Google
+Cloud Scheduler**. `vercel.json`'s cron list is the source of truth the Cloud
+Run server (`server/index.mjs`) reads at runtime; there is no GitHub Actions
+failover.
 
 ## Configuration
 

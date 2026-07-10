@@ -112,6 +112,11 @@ export class WalkNet {
 		// resolved token rides the join so this coin world publishes the player's
 		// account presence to friends and can deliver DMs here live.
 		this.getPresence = typeof opts.getPresence === 'function' ? opts.getPresence : null;
+		// No `playPass` field here (community-net.js's join carries one) — /walk has
+		// no wallet sign-in UI to mint one. Harmless today (PLAY_GATE_MINT unset by
+		// default), but WalkRoom.onAuth will hard-reject every /walk join the moment
+		// that gate is turned on. See the landmine note at WalkRoom.onAuth before
+		// enabling PLAY_GATE_MINT/THREE_MINT in production.
 		this._lastSent = null; // { x, y, z, yaw, motion } we last broadcast
 		this._lastSentAt = 0;
 		this._reconnectTimer = null;

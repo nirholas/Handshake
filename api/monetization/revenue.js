@@ -35,7 +35,7 @@ export default wrap(async (req, res) => {
 	const userId = await resolveUserId(req);
 	if (!userId) return error(res, 401, 'unauthorized', 'Sign in required');
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const params = new URL(req.url, 'http://x').searchParams;

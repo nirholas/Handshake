@@ -113,7 +113,7 @@ Modules:
 - **`lib.js`** — the CDN entry. Imports the element, registers it, re-exports the public surface (`defineElement`, `Agent3DElement`, `AgentStageElement`, helpers).
 - **`embed-action-bridge.js`** — the `postMessage` protocol. Iframe widgets and the web component speak the same dialect, so host pages can drive either with the same code.
 - **`app.js`** — the main SPA. URL routing via hash (`#model=`, `#agent=`, `#kiosk=`) and query (`?agent=`) params.
-- **`vercel.json`** — edge routing. Clean URLs (`/agent/<id>`, `/agent/<id>/embed`, `/a/<chainId>/<agentId>`, `/w/<widget-id>`) map to the right HTML entries.
+- **`vercel.json`** — the route table. Clean URLs (`/agent/<id>`, `/agent/<id>/embed`, `/a/<chainId>/<agentId>`, `/w/<widget-id>`) map to the right HTML entries. The production server (`server/index.mjs`) reads it at boot on Cloud Run; the Vite dev middleware mirrors the same routes locally.
 
 The embed layer's contract is the only thing third-party developers see directly. Keep its API surface small and stable; changes here are breaking changes per [SemVer](./changelog.md#versioning-policy).
 

@@ -120,7 +120,7 @@ npm run convert:fbx -- your-character.fbx
 npm run optimize:glb -- public/avatars/your-character.glb
 ```
 
-> **Don't draco-compress for this runtime.** The site's `GLTFLoader` is not wired with a Draco decoder, so a Draco-compressed GLB silently fails to load. `optimize:glb` deliberately stays within plain glTF 2.0 and uses WebP textures instead. See [docs/3d-asset-pipeline.md](../3d-asset-pipeline.md) for the full format and pipeline reference.
+> **`optimize:glb` uses WebP, not Draco.** The avatar runtime *does* decode Draco — the viewer and the avatar body loaders wire a `DRACOLoader` pointed at the vendored `/three/draco/` decoder, so a Draco-compressed GLB loads fine (that's Step 5). `optimize:glb` itself deliberately stays within plain glTF 2.0 and leans on WebP textures for its ~90% size win, so its output needs no decoder at all. See [docs/3d-asset-pipeline.md](../3d-asset-pipeline.md) for the full format and pipeline reference.
 
 Outside the repo, [gltf-transform](https://gltf-transform.dev) is a Node-based CLI maintained as part of the glTF ecosystem that also handles the conversion:
 

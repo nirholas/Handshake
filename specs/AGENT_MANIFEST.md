@@ -1,6 +1,6 @@
 # Agent Manifest Spec v0.1
 
-> **Placeholder tag**: `<agent-3d>`. Rename when you pick the final name — the spec itself is tag-agnostic.
+> **Element tag**: `<agent-3d>` is the shipped custom element (served from `https://three.ws/agent-3d/latest/agent-3d.js`; see [EMBED_SPEC.md](./EMBED_SPEC.md)). The spec itself is tag-agnostic.
 
 An **agent manifest** is a content-addressed JSON+files bundle that fully describes an embodied AI agent. Pin the bundle to IPFS → get a CID → stamp the CID into the ERC-8004 Identity Registry → any `<agent-3d>` anywhere on the web can mount the agent with `src="agent://..."`.
 

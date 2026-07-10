@@ -351,7 +351,7 @@ The delegator (owner) wallet key is never held server-side. The agent's smart ac
 The smoke test script at [scripts/smoke-permissions.js](../scripts/smoke-permissions.js) exercises the full delegation lifecycle against a deployed environment: encoding, EIP-712 signing, grant API, list API, verify API, on-chain revocation, and negative cases. Run it against a staging deployment before releasing permission-related changes:
 
 ```sh
-SMOKE_BASE_URL=https://your-app.vercel.app \
+SMOKE_BASE_URL=https://three.ws \
 SMOKE_AGENT_ID=<uuid> \
 SMOKE_CHAIN_ID=84532 \
 SMOKE_DELEGATOR_KEY=0x<testnet-private-key> \

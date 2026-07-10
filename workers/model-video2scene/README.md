@@ -42,8 +42,9 @@ gsutil -m cp -r /tmp/lm/* gs://three-ws-model-weights/lingbot-map/
 gcloud builds submit --config workers/model-video2scene/cloudbuild.yaml .
 ```
 
-Then set `GCP_VIDEO2SCENE_URL` (the Cloud Run service URL) on the Vercel
-deployment. `GCP_RECONSTRUCTION_KEY` is already shared across the model workers.
+Then set `GCP_VIDEO2SCENE_URL` (the Cloud Run service URL) on the three.ws
+production service (Cloud Run `three-ws-api`, `gcloud run services update … --update-env-vars`)
+and redeploy the site. `GCP_RECONSTRUCTION_KEY` is already shared across the model workers.
 
 ## Hardware
 

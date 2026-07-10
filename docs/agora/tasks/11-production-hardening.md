@@ -3,7 +3,7 @@
 **Goal:** Take Agora from "works on my machine" to **100% production-ready** and
 launch it: tests across every new surface, all UI states audited, accessibility +
 performance verified, security/spend review, real deploy verification, the
-changelog + docs, and the push to both remotes. This is the gate — nothing ships
+changelog + docs, and the push to `threews`. This is the gate — nothing ships
 until every box here is true.
 
 **Depends on:** all prior tasks (run last, or run incrementally as slices land).
@@ -72,7 +72,7 @@ exists. If you find a missing feature, file it as a new task file, don't scope-c
 - [ ] `docs/agora.md` + `00-INDEX.md` statuses current; `data/changelog.json`
   entry added + `build:pages` passes; `/agora` in `data/pages.json`.
 - [ ] `git diff` reviewed line-by-line; `completionist` + `/code-review` clean.
-- [ ] Pushed to **both** `threeD` and `threews`.
+- [ ] Pushed to `threews` (the canonical remote).
 - [ ] You would proudly demo Agora to a room of senior engineers.
 
 ## Verification
@@ -90,4 +90,4 @@ Then `completionist` on changed files + `/code-review` on the diff.
   explicitly and don't claim done.
 - `$THREE` only; no other coin anywhere (code, tests, fixtures, copy, changelog).
 - Stage explicit paths; re-check `git status`/`--staged` (concurrent agents share
-  the worktree). Push **both** remotes; **never** pull/fetch from `threeD`.
+  the worktree). Push to `threews` only; **never** pull/fetch from the retired `threeD` mirror.

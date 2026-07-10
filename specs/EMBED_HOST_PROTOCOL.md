@@ -279,14 +279,14 @@ The embed sends `embed.ready` immediately on `start()`. The host may send `host.
 
 ## Origin allowlist
 
-`EmbedHostBridge` accepts an `allowedOrigins` constructor option:
+`EmbedHostBridge` ([`src/embed-host-bridge.js`](../src/embed-host-bridge.js)) requires an explicit single `allowedOrigin` string in its constructor — there is no wildcard mode and no default:
 
-| Value           | Behaviour                                                                                          |
-| --------------- | -------------------------------------------------------------------------------------------------- |
-| `'*'` (default) | Accept messages from any `window.parent` origin.                                                   |
-| `string[]`      | Accept only listed origins (exact match). Example: `['https://claude.ai', 'https://lobehub.com']`. |
+| Value                | Behaviour                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
+| explicit origin      | Accept only messages whose `event.origin` matches it exactly. Example: `'https://claude.ai'`.     |
+| `'*'` or omitted     | Constructor **throws** — wildcards and missing origins are rejected outright.                      |
 
-Messages from non-parent frames are always rejected regardless of allowlist.
+Inbound messages are dropped unless `event.source === iframe.contentWindow` **and** `event.origin === allowedOrigin`. To bind more than one host origin, construct one bridge per iframe/origin. See [EMBED_SPEC.md § Bridge origin model](./EMBED_SPEC.md#bridge-origin-model-must) for the full outbound/inbound contract that both sides enforce.
 
 ---
 

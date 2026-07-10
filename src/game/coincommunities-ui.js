@@ -15,6 +15,7 @@ import { validateGlb, uploadGlb } from './avatar-upload.js';
 import { GUEST_SENTINEL, playAs } from './play-handoff.js';
 import { COMPOSITE_PIECES } from './build-voxels.js';
 import { PROP_CATALOG, GALLERY_PROP_PREFIX, registerGalleryProp } from './world-objects.js';
+import { makeIntroReopener } from './play-intro.js';
 import { log } from '../shared/log.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
@@ -224,6 +225,9 @@ export class CommunityUI {
 						el('span', { class: 'cc-adventure-ico', text: '⚔️' }),
 						el('span', { html: 'Adventure mode<small>Gather · fight · level up</small>' }),
 					]),
+					// Cold-open reopener (see play-intro.js) — the intro auto-shows once
+					// per browser; this brings it back for anyone who skipped it.
+					makeIntroReopener(() => this.h.onDropIn?.()),
 				]),
 				this.avatarBar = el('div', { class: 'cc-avatar-bar' }, [
 					el('div', { class: 'cc-name-row' }, [

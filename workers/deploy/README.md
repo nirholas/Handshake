@@ -6,7 +6,7 @@ auto-rigged GLB, served by Cloud Run GPU services and consumed by the site via
 
 ```
 /scan (browser)
-   └─ POST /api/avatars/reconstruct      (Vercel)
+   └─ POST /api/avatars/reconstruct      (three-ws-api on Cloud Run)
         └─ controller  /reconstruct      (Cloud Run, CPU)   ← GCP_RECONSTRUCTION_URL
              ├─ mesh model /infer        (Cloud Run, L4 GPU)  Hunyuan3D / TRELLIS / TripoSR
              └─ UniRig    /rig           (Cloud Run, L4 GPU)  skeleton + skinning + ARKit-52
@@ -77,7 +77,8 @@ wired, so adding more later is just another `deploy-all.sh` run with a wider `SE
 
 ## After deploy — wire the site
 
-`deploy-all.sh` prints these. Set them in Vercel (Production) and redeploy:
+`deploy-all.sh` prints these. Set them on the three.ws production service
+(Cloud Run `three-ws-api`), then redeploy the site:
 
 ```
 AVATAR_REGEN_PROVIDER = gcp
@@ -85,12 +86,14 @@ GCP_RECONSTRUCTION_URL = https://avatar-pipeline-controller-….run.app
 GCP_RECONSTRUCTION_KEY = <printed key>
 ```
 
-`AVATAR_REGEN_PROVIDER=gcp` pins the provider so the resolver never falls back to
-the flaky free Hugging Face Space path.
+```bash
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars AVATAR_REGEN_PROVIDER=gcp,GCP_RECONSTRUCTION_URL=https://avatar-pipeline-controller-….run.app,GCP_RECONSTRUCTION_KEY=<printed key>
+```
 
-> Deploy-safety note: `api/config.js` imports `api/_lib/regen-provider.js`. If you
-> redeploy the site from this working tree, make sure that file is committed —
-> otherwise the Vercel build breaks on a missing import.
+`AVATAR_REGEN_PROVIDER=gcp` pins the provider so the resolver never falls back to
+the flaky free Hugging Face Space path. Full env/deploy runbook:
+[`docs/ops/gcp-production.md`](../../docs/ops/gcp-production.md).
 
 Verify: open `/scan`, capture a selfie, expect a downloadable **rigged** GLB in ~1–2 min.
 Watch logs with `gcloud run services logs read avatar-pipeline-controller --region us-central1`.
@@ -109,18 +112,15 @@ PROJECT_ID=your-project-id ./workers/deploy/deploy-editing.sh
 
 # just one service:
 PROJECT_ID=your-project-id SERVICES="stylize" ./workers/deploy/deploy-editing.sh
-
-# also wire the Vercel production env vars automatically (REST, not the CLI —
-# the CLI silently writes empty sensitive values):
-PROJECT_ID=your-project-id VERCEL_TOKEN=xxxx ./workers/deploy/deploy-editing.sh
 ```
 
 It is idempotent and shares all infrastructure with `deploy-all.sh` (same
 service account, output bucket, and `avatar-reconstruction-key` secret), so it
-can run before, after, or instead of the avatar pipeline. It prints — and with
-`VERCEL_TOKEN`, sets — the env vars the site needs: `GCP_STYLIZE_URL`,
-`GCP_REMESH_URL`, `GCP_SEGMENT_URL`, `GCP_REMBG_URL`, `GCP_RECONSTRUCTION_KEY`.
-Redeploy the site afterwards for the env to take effect.
+can run before, after, or instead of the avatar pipeline. It prints the env vars
+the site needs: `GCP_STYLIZE_URL`, `GCP_REMESH_URL`, `GCP_SEGMENT_URL`,
+`GCP_REMBG_URL`, `GCP_RECONSTRUCTION_KEY`. Set them on the production service
+(Cloud Run `three-ws-api`, `gcloud run services update … --update-env-vars`) and
+redeploy the site for the env to take effect.
 
 GPU extras: `SERVICES="texture text2motion"` deploys the retexture and
 text→animation workers too, but those need L4 quota and staged weights
@@ -146,4 +146,4 @@ GB-months. Well within the credits.
 | Service cold-starts then 503s on first request | Weights not staged for that model. Re-run `stage-weights.sh` for it. |
 | `quota exceeded … nvidia_l4` at deploy | GPU quota not yet granted in the region — see step 2 above. |
 | Controller `/health` shows empty `backends` | The controller’s `MODEL_*_URL` env wasn’t set — re-run `deploy-all.sh` (it re-wires), or set manually with `gcloud run services update`. |
-| `/scan` still says “warming up” after env set | Vercel needs a redeploy for new env to take effect; confirm `/api/config` returns `avatarReconstruct:true`. |
+| `/scan` still says “warming up” after env set | The site (Cloud Run `three-ws-api`) needs a redeploy for new env to take effect; confirm `/api/config` returns `avatarReconstructMode:"platform"` once the GCP provider is wired. |

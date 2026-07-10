@@ -91,13 +91,15 @@ Registering the credential and schemas is idempotent — existing accounts are l
 
    On success it writes the derived PDAs into [sdk/src/sas-config.json](../sdk/src/sas-config.json). Do not edit that file by hand — re-run bootstrap to refresh it. Commit the updated config so the server knows the credential/schema addresses.
 
-3. **Set the env var in each environment.** Locally, add it to `.env`. On Vercel:
+3. **Set the env var in each environment.** Locally, add it to `.env`. In production it lives on the Cloud Run service (`three-ws-api`), not in a dashboard:
 
    ```bash
-   vercel env add SAS_AUTHORITY_SECRET
+   gcloud run services update three-ws-api --region us-central1 \
+     --project aerial-vehicle-466722-p5 \
+     --update-env-vars SAS_AUTHORITY_SECRET=<base58 secret key>
    ```
 
-   Use the devnet key for Preview and the mainnet key for Production. Redeploy so functions pick it up.
+   Use a devnet key while testing and the mainnet key in production. The service picks the value up on the next revision. See the [GCP production runbook](./ops/gcp-production.md) for the full env workflow.
 
 ### Related environment variables
 
@@ -203,7 +205,7 @@ Closing (revoking) an attestation is done server-side via `sasClose()` in [api/_
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| `SAS_AUTHORITY_SECRET not configured` | Env var unset in the running environment. | Set it in `.env` / Vercel and redeploy. |
+| `SAS_AUTHORITY_SECRET not configured` | Env var unset in the running environment. | Set it in `.env` locally, or on the Cloud Run service (`gcloud run services update three-ws-api … --update-env-vars`), and redeploy. |
 | `SAS not bootstrapped for <network>` | `sdk/src/sas-config.json` has no PDAs for that network. | Run `scripts/sas-bootstrap.js <network>` and commit the updated config. |
 | `schema <kind> not registered on <network>` | Schema added to config but bootstrap not re-run. | Re-run the bootstrap for that network. |
 | Bootstrap or issue fails with insufficient funds | Authority wallet not funded on that cluster. | Send SOL to the authority address and retry. |

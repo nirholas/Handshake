@@ -16,7 +16,7 @@ signer/funder wallets and how to fund them).
 
 Money-routing is deliberately **config-driven** — no receiver is hardcoded, so an
 unset receiver fails closed rather than silently routing real USDC to a baked-in
-address ([env.js:701](../api/_lib/env.js#L701)).
+address ([env.js:732](../api/_lib/env.js#L732)).
 
 ### Receivers (inbound USDC)
 | Env var | Role | Value |
@@ -182,5 +182,5 @@ that set `auto_fund_enabled = true` (default off). See
 - [Pump platform fee](pump-platform-fee.md) — the pump trade fee detail.
 - [Coin-launch wallets](ux-flows/08-coin-launch-wallets.md) — launch-time wallet flow.
 - [Creator revenue splits](../prompts/agent-briefs/R-3d-world-fun/phase-4/R25-creator-revenue-splits.md) — cosmetic split rationale.
-- [Agent wallet custody](internal/AGENT-WALLET-CUSTODY.md) — how custodial keys are held.
+- [Agent wallet custody](agent-wallets.md) — how custodial keys are held.
 - [Solana signers runbook](../api/_lib/solana-signers.js) — signer/funder wallets + funding.

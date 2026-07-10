@@ -815,7 +815,6 @@
 						{ label: 'Authentication', path: 'authentication' },
 						{ label: 'Avatar creation', path: 'avatar-creation' },
 						{ label: 'Avatar pipeline (end to end)', path: 'avatar-pipeline' },
-						{ label: 'three.ws Selfie (Avaturn)', path: 'avaturn' },
 						{ label: 'ERC-8004', path: 'erc8004' },
 						{ label: 'Reputation system', path: 'reputation' },
 						{ label: 'Validation attestations', path: 'validation' },
@@ -825,7 +824,6 @@
 						{ label: 'Deploy agents on-chain (bulk)', path: 'onchain-agents' },
 						{ label: 'Solana pump.fun signals', path: 'solana-pumpfun' },
 						{ label: 'Mint mark ("3ws")', path: 'mint-mark' },
-						{ label: 'Agents in X Spaces', path: 'x-spaces' },
 						{ label: 'Security', path: 'security' },
 						{ label: 'Configuration', path: 'configuration' },
 						{ label: 'Contributing', path: 'contributing' },
@@ -852,7 +850,9 @@
 					links: [
 						{ label: 'NVIDIA free models', path: 'nvidia-models' },
 						{ label: 'IBM watsonx & Granite', path: 'ibm' },
-						{ label: 'IBM co-marketing kit', path: 'ibm-co-marketing/README' },
+						{ label: 'IBM x402 MCP', path: 'ibm-x402-mcp' },
+						{ label: 'BNB payments', path: 'bnb-payments' },
+						{ label: 'BNB vault', path: 'bnb-vault' },
 					],
 				},
 				{
@@ -879,17 +879,6 @@
 						{ label: 'Listings & distribution', path: 'listings' },
 						{ label: 'Troubleshooting', path: 'troubleshooting' },
 						{ label: 'Changelog', path: 'changelog' },
-					],
-				},
-				{
-					title: 'Operations',
-					links: [
-						{ label: 'Local setup', path: 'internal/SETUP' },
-						{ label: 'Development guide', path: 'internal/DEVELOPMENT' },
-						{ label: 'Smoke test', path: 'internal/SMOKE_TEST' },
-						{ label: 'Validation deployment', path: 'internal/VALIDATION_DEPLOY' },
-						{ label: 'API inventory', path: 'internal/api-inventory' },
-						{ label: 'IBM webinar runbook', path: 'internal/IBM-WEBINAR-RUNBOOK' },
 					],
 				},
 			];
@@ -1070,6 +1059,11 @@
 					// against the current doc's URL so relative links inside nested
 					// docs (agent-abilities/chapters/…, tutorials/…) route to the
 					// right file instead of being read as /docs-root paths.
+					//
+					// A link that resolves OUTSIDE /docs/ (e.g. ../../src/foo/README.md,
+					// a reference to repo source) can never be fetched by this viewer.
+					// Send those to GitHub rather than hash-routing them into a 404.
+					const REPO = 'https://github.com/nirholas/three.ws/blob/main';
 					content.querySelectorAll('a[href]').forEach(a => {
 						if (a.closest('.docs-pagetools')) return;
 						const h = a.getAttribute('href');
@@ -1077,8 +1071,13 @@
 							return;
 						if (h.endsWith('.md')) {
 							const abs = new URL(h, location.origin + '/docs/' + path).pathname;
-							const rel = abs.replace(/^\/docs\//, '').replace(/\.md$/, '');
-							a.href = '#' + rel;
+							if (abs.startsWith('/docs/')) {
+								a.href = '#' + abs.slice('/docs/'.length).replace(/\.md$/, '');
+							} else {
+								a.href = REPO + abs;
+								a.target = '_blank';
+								a.rel = 'noopener';
+							}
 						}
 					});
 

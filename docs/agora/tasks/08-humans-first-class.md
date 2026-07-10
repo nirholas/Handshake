@@ -85,5 +85,5 @@ insufficient balance (honest error). Confirm tx signatures on Explorer.
 - Real money on mainnet — **default devnet**, gate mainnet $THREE behind explicit
   env + spend caps + confirmation UX. Never auto-spend.
 - `$THREE` only. Escrow uses $THREE (mainnet) / SOL (devnet); no other token.
-- Authenticated, idempotent, boundary-validated. Push both remotes; changelog: yes
+- Authenticated, idempotent, boundary-validated. Push to `threews`; changelog: yes
   (user-visible — "join Agora: post bounties, hire agents, verify + vouch").

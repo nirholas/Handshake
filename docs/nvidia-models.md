@@ -41,7 +41,7 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 ## 1. Text → 3D — Microsoft TRELLIS
 
 **Model:** `microsoft/trellis` · **Endpoint:** `ai.api.nvidia.com/v1/genai/microsoft/trellis` → poll `api.nvcf.nvidia.com/v2/nvcf/pexec/status/{id}`
-**Source:** [api/_providers/nvidia.js](api/_providers/nvidia.js), registered as the `nvidia` backend in [api/_lib/forge-tiers.js](api/_lib/forge-tiers.js).
+**Source:** [api/_providers/nvidia.js](../api/_providers/nvidia.js), registered as the `nvidia` backend in [api/_lib/forge-tiers.js](../api/_lib/forge-tiers.js).
 
 This is the headline free model. **Microsoft TRELLIS hosted on NVIDIA NVCF gives `/forge` a zero-vendor-cost text→3D lane that returns a textured GLB.** It is the default draft/standard engine for prompt generations, per the platform's free-first policy.
 
@@ -64,7 +64,7 @@ This is the headline free model. **Microsoft TRELLIS hosted on NVIDIA NVCF gives
 ## 2. Text → image — FLUX.1-schnell
 
 **Model:** `black-forest-labs/flux.1-schnell` · **Endpoint:** `ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell`
-**Source:** [api/_mcp3d/text-to-image.js](api/_mcp3d/text-to-image.js).
+**Source:** [api/_mcp3d/text-to-image.js](../api/_mcp3d/text-to-image.js).
 
 FLUX.1-schnell is the **free, first-choice text-to-image lane**. It's a synchronous invoke — the image returns inline as base64 (no poll) in ~1–2 s — and it's Apache-2.0, commercial-OK.
 
@@ -83,7 +83,7 @@ NVIDIA NIM hosts 100+ open-weight chat models behind the one key, all OpenAI-com
 ### 3a. The default production lane
 
 **Model:** `meta/llama-3.3-70b-instruct`
-**Source:** [api/_lib/llm.js](api/_lib/llm.js), [api/_lib/chat-models.js](api/_lib/chat-models.js).
+**Source:** [api/_lib/llm.js](../api/_lib/llm.js), [api/_lib/chat-models.js](../api/_lib/chat-models.js).
 
 The platform's general LLM helper runs a **free-first ladder: Groq → OpenRouter → NVIDIA NIM**, and only then a paid backstop (Anthropic/OpenAI). NVIDIA is the **independent third free lane** — same Llama 3.3 70B family as the Groq/OpenRouter entries, but a different provider, so an outage on two lanes still answers on the third. It's tool/function-calling capable, so it's eligible for tool-required requests.
 
@@ -91,7 +91,7 @@ This lane powers the platform's built-in AI surfaces — chat, embedded site wid
 
 ### 3b. The Brain model garden
 
-**Source:** [api/brain/chat.js](api/brain/chat.js) — the Brain workbench lets users pick a model. The NVIDIA-hosted options, all unlocked by the single key:
+**Source:** [api/brain/chat.js](../api/brain/chat.js) — the Brain workbench lets users pick a model. The NVIDIA-hosted options, all unlocked by the single key:
 
 | Brain label | Model id | Tier | What it's for |
 | --- | --- | --- | --- |
@@ -112,7 +112,7 @@ For anonymous (signed-out) callers, only the genuinely free tiers — the OpenRo
 ## 4. Vision / VLM — image understanding
 
 **Models (in order):** `nvidia/nemotron-nano-12b-v2-vl` → `meta/llama-3.2-11b-vision-instruct`
-**Source:** [api/_lib/vision.js](api/_lib/vision.js).
+**Source:** [api/_lib/vision.js](../api/_lib/vision.js).
 
 Two free NIM vision lanes on the OpenAI-compatible chat host. Nemotron Nano VL leads because it carries the **smallest image-token footprint** (~281 prompt tokens for a small image vs ~1600 for a 90B-class model); the Llama 3.2 11B vision model is a different family, so its failure modes are independent — a true fallback, not a retry. Images pass as an http(s) URL (the model server fetches it) with SSRF validation on the URL before it leaves the box.
 
@@ -128,18 +128,18 @@ All three **fail safe**: if the vision lane is unavailable, the feature quietly 
 ## 5. Embeddings — semantic retrieval
 
 **Primary:** `nvidia/nv-embedqa-e5-v5` (1024-dim) · **Endpoint:** `integrate.api.nvidia.com/v1/embeddings`
-**Source:** [api/_lib/embeddings.js](api/_lib/embeddings.js) (tag `nvidia/nv-embedqa-e5-v5@1024`).
+**Source:** [api/_lib/embeddings.js](../api/_lib/embeddings.js) (tag `nvidia/nv-embedqa-e5-v5@1024`).
 
 The default embedder for new vectors — **free with the one key, 1024 dimensions, hard-capped at 512 input tokens** (longer inputs are rejected upstream, so callers chunk to fit). Vectors are tagged with `model@dimension` so a later model swap can't silently mix incompatible spaces. Powers **agent memory and knowledge-widget retrieval**; the paid embedding provider is demoted to backup behind it.
 
-**Also:** `baai/bge-m3` — a second NIM-hosted embedder used by [api/agents/_id/embed.js](api/agents/_id/embed.js) for the agent-embed path.
+**Also:** `baai/bge-m3` — a second NIM-hosted embedder used by [api/agents/_id/embed.js](../api/agents/_id/embed.js) for the agent-embed path.
 
 ---
 
 ## 6. Reranking — sharpening retrieval
 
 **Model:** `nvidia/rerank-qa-mistral-4b` · **Endpoint:** `ai.api.nvidia.com/v1/retrieval/nvidia/reranking`
-**Source:** [api/_lib/rerank.js](api/_lib/rerank.js).
+**Source:** [api/_lib/rerank.js](../api/_lib/rerank.js).
 
 Cosine-over-embeddings recall is cheap but coarse. This **cross-encoder reranker** re-scores the top passages so the most relevant context leads. It is **opt-in** (`KNOWLEDGE_RERANK_ENABLED=1` plus the NVIDIA key) and **strictly fail-open** — any rerank error keeps the original cosine ordering. Reranking may improve retrieval but may never break it. Used to refine knowledge-widget answers.
 
@@ -148,7 +148,7 @@ Cosine-over-embeddings recall is cheap but coarse. This **cross-encoder reranker
 ## 7. Content safety — NemoGuard
 
 **Primary:** `nvidia/llama-3.1-nemoguard-8b-content-safety` · **Drop-in alt:** `meta/llama-guard-4-12b`
-**Endpoint:** `integrate.api.nvidia.com/v1/chat/completions` · **Source:** [api/_lib/moderation.js](api/_lib/moderation.js).
+**Endpoint:** `integrate.api.nvidia.com/v1/chat/completions` · **Source:** [api/_lib/moderation.js](../api/_lib/moderation.js).
 
 A free content-safety pre-filter for anonymous chat. NemoGuard classifies the inbound user message and returns a **JSON verdict plus named risk categories** (harm, self-harm, weapons, sexual content, …); the parser also accepts Llama Guard's `unsafe\nS#` text form, which is why the two are interchangeable. Median ~340 ms on the free tier.
 
@@ -159,7 +159,7 @@ A free content-safety pre-filter for anonymous chat. NemoGuard classifies the in
 ## 8. Text-to-speech — Magpie (Riva)
 
 **Model:** `magpie-tts-multilingual` · **Transport:** Riva gRPC at `grpc.nvcf.nvidia.com:443`
-**Source:** [api/_lib/tts-nvidia.js](api/_lib/tts-nvidia.js) (mirrored in `packages/avatar-agent-mcp/src/lib/tts-nvidia.js`).
+**Source:** [api/_lib/tts-nvidia.js](../api/_lib/tts-nvidia.js) (mirrored in `packages/avatar-agent-mcp/src/lib/tts-nvidia.js`).
 
 The free NVIDIA TTS lane — **Magpie multilingual on Riva**, selected by an NVCF `function-id`, speaking over the standard Riva gRPC synthesis contract (protos shipped in `riva-protos/` and loaded from a generated descriptor, so there's no `.proto` build step). Drives **avatar speech** with multilingual voices. Configured by the presence of `NVIDIA_API_KEY`; returns synthesized audio bytes, with a clear error if the lane returns empty audio.
 

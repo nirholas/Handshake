@@ -18,7 +18,7 @@ Each widget bundles three things: an avatar or 3D model (a `.glb` file stored in
 
 ---
 
-## The five widget types
+## Widget types
 
 | Type | Label | Best for | Default size | Status |
 |------|-------|----------|--------------|--------|
@@ -26,7 +26,9 @@ Each widget bundles three things: an avatar or 3D model (a `.glb` file stored in
 | `animation-gallery` | Animation Gallery | Rigged avatar animation libraries | 720 × 720 | Ready |
 | `talking-agent` | Talking Agent | Embodied chat on your site | 420 × 600 | Ready |
 | `passport` | ERC-8004 Passport | On-chain agent identity cards | 480 × 560 | Ready |
-| `hotspot-tour` | Hotspot Tour | Annotated 3D scenes with guided points of interest | 800 × 600 | Coming soon |
+| `hotspot-tour` | Hotspot Tour | Annotated 3D scenes with guided points of interest | 800 × 600 | Ready |
+
+The five types documented below are the general-purpose ones. Widget Studio ships additional live widget types beyond this list — open the [Studio](https://three.ws/studio) type grid to browse the full set.
 
 Every widget also inherits a set of **brand options** that apply to all types:
 
@@ -56,7 +58,7 @@ This is the lightest widget to embed. It loads fast and looks great at any size 
 |--------|------|---------|-------------|
 | `rotationSpeed` | number (0–10) | `0.5` | Auto-rotate speed. Higher = faster. |
 
-All [brand options](#the-five-widget-types) apply (background, accent, caption, envPreset, cameraPosition).
+All [brand options](#widget-types) apply (background, accent, caption, envPreset, cameraPosition).
 
 **Embed example:**
 
@@ -230,20 +232,19 @@ All brand options apply.
 
 ---
 
-## 2.5 Hotspot Tour *(coming soon)*
+## 2.5 Hotspot Tour
 
 **Use case:** A guided tour of a 3D scene with annotated click targets — architecture walkthroughs, product feature tours, museum exhibit navigation.
 
-The Hotspot Tour widget is currently in development. It saves its configuration and renders a "coming soon" placeholder when embedded. Configuring it now ensures you'll be first in line when the runtime ships.
+The Hotspot Tour widget overlays numbered pins on a 3D scene at the positions you configure. The pins track the camera every frame, so they stay anchored to their scene points as the visitor orbits. Clicking a pin selects that hotspot and shows its overlay card.
 
-**What it will do:**
-- Display numbered hotspot pins at configured positions in the 3D scene
-- Animate the camera smoothly to a preset viewpoint when a hotspot is clicked
-- Show an overlay card with title and description for each hotspot
-- Support sequential "Next / Prev" navigation
-- Emit `widget:hotspot:open` postMessage events to the parent page
+**What it does:**
+- Displays numbered hotspot pins at configured positions in the 3D scene
+- Frames the selected hotspot (auto-rotate pauses while a hotspot is open so the view stays put)
+- Shows an overlay card with the hotspot's label and body text
+- Emits `widget:hotspot:open` postMessage events to the parent page when a pin is opened
 
-**Configuration (saved now, active on launch):**
+**Configuration:**
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
@@ -280,7 +281,7 @@ The fastest way to create a widget is [Widget Studio](https://three.ws/studio):
 1. Sign in at [three.ws](https://three.ws/).
 2. Open [Studio](https://three.ws/studio).
 3. Upload a `.glb` file or paste a public URL to an existing model.
-4. Select a widget type from the five options.
+4. Select a widget type from the type grid.
 5. Use the form to configure brand options and type-specific settings.
 6. Preview the result live in the Studio canvas.
 7. Click **Generate Embed** to get your snippet.
@@ -488,7 +489,7 @@ Each widget load records one minimal analytics event:
 |-------|-------|
 | `widget_id` | The widget being loaded |
 | `type` | Widget type |
-| `country` | Country from the Vercel edge header |
+| `country` | Country from the edge geo-IP header (never derived from a raw IP) |
 | `referer_host` | Hostname of the embedding page (no path, no query string) |
 | `created_at` | Timestamp |
 

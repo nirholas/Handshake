@@ -1,5 +1,7 @@
 # Sperax × three.ws — a partnership proposal
 
+*Historical record: this is a partnership proposal drafted around 2026-07-08, including TVL figures current as of that date. It is a point-in-time pitch, not a status report on shipped work.*
+
 **TL;DR**
 Sperax has 7 years of shipped DeFi credibility and an auto-yield stablecoin; three.ws has crypto-native attention and a live 3D-agent platform. The trade: they rent our cultural relevance, we rent their credibility and capital. Five pillars: a recurring USDs/SPA-gated AI-credits funnel, USDs-endowed "agents that never die," a 3D guide embedded on Sperax's product via our published SDKs, Sperax's designed agent-economy split going live on our running x402/hiring rails, and a co-marketing sequence where every beat is a real ship, not a press release. 90 days, ordered by what's cheapest to prove first. Ask: a credit-pool budget, a technical contact, and a co-announcement slot.
 

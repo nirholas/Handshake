@@ -17,7 +17,7 @@ import { checkThreeBalance } from '../_lib/three-gate.js';
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 export default wrap(async (req, res) => {
-	cors(res);
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const wallet = (req.query?.wallet || '').trim();
@@ -39,5 +39,5 @@ export default wrap(async (req, res) => {
 	}
 
 	const result = await checkThreeBalance(wallet, minRaw);
-	return json(res, result, { 'Cache-Control': 'public, max-age=30, s-maxage=30' });
+	return json(res, 200, result, { 'cache-control': 'public, max-age=30, s-maxage=30' });
 });

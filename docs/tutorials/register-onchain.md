@@ -197,7 +197,7 @@ Share `https://three.ws/a/8453/42` on Twitter/X, Farcaster, or Lens. Anyone who 
 Drop the Passport widget in anywhere HTML is accepted:
 
 ```html
-<script type="module" src="https://three.ws/lib.js"></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 <agent-3d widget="passport" agent-id="8453:0xRegistryAddress:42"></agent-3d>
 ```
 
@@ -220,7 +220,7 @@ Your agent's page at `https://three.ws/a/8453/42` has a **Reputation** section. 
 1. Send them your agent URL
 2. They scroll to the Reputation section
 3. They connect their wallet and click **Leave a review**
-4. They pick a score (0–255, where 255 is the max) and optionally add a comment
+4. They pick a score (1–5 stars, stored on-chain as a signed −100..+100 value) and optionally add a comment
 5. They confirm the transaction (~$0.05 gas)
 
 **Read your reputation programmatically:**
@@ -230,7 +230,7 @@ import { getReputation } from './src/erc8004/reputation.js';
 import { JsonRpcProvider } from 'ethers';
 
 const provider = new JsonRpcProvider('https://mainnet.base.org');
-const { total, count, average } = await getReputation({
+const { count, average } = await getReputation({
   agentId: 42,
   runner: provider,
   chainId: 8453,

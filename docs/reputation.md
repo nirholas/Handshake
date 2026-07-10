@@ -174,10 +174,13 @@ Contract addresses are the same on every supported EVM chain (CREATE2 determinis
 
 ## Reputation in agent discovery
 
-Agents are ranked by reputation in the explore page and API search results. Higher average scores and more reviews both contribute to ranking.
+Every agent returned by the explore feed and API search carries its reputation
+score as a field, so clients can display it and re-rank on it. The feed itself is
+ordered by recency (newest registrations and creations first); reputation is
+exposed per item rather than used as the primary sort key.
 
 ```
-GET /api/explore?sort=reputation&order=desc
+GET /api/explore
 ```
 
 ---

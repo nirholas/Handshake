@@ -21,7 +21,7 @@ export const handleAchievements = wrap(async (req, res, agentId) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!isUuid(String(agentId || ''))) return error(res, 404, 'not_found', 'agent not found');
 
-	const rl = await limits.publicIp(clientIp(req));
+	const rl = await limits.agentProfileIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const body = await loadAgentAchievements(agentId);

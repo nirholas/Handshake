@@ -54,7 +54,7 @@ export default wrap(async (req, res) => {
 		await sql`SELECT id FROM agent_identities WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL`;
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	// Bind the CID to this agent's own pinned set. Owning the agent is not enough

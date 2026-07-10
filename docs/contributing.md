@@ -66,7 +66,7 @@ npm run dev
 
 Most features work without the optional services. The app degrades gracefully, so basic 3D viewer work, skill development, and UI changes don't require any backend credentials.
 
-For full backend setup including R2 storage and Vercel deployment, see the [Backend Setup](internal/SETUP.md) guide.
+For full backend setup — R2 storage, environment variables, and how the app is deployed — see the [Configuration Reference](configuration.md) and the [Deployment & Self-Hosting](deployment.md) guide.
 
 ---
 
@@ -74,7 +74,7 @@ For full backend setup including R2 storage and Vercel deployment, see the [Back
 
 ```
 src/              — client-side JavaScript (agent system, viewer, UI)
-api/              — serverless API routes (Node.js, deployed to Vercel)
+api/              — serverless-style API handlers (Node.js, served by the Cloud Run container)
 public/           — static pages and assets
 contracts/        — Solidity smart contracts (Foundry)
 character-studio/ — avatar builder (separate React SPA)
@@ -153,13 +153,13 @@ npm run format
 npm run verify
 ```
 
-The `npm run verify` command is what CI runs. If it passes locally, the build check will pass in the PR.
+`npm run verify` runs the same Prettier check and production build the maintainers gate on before merging. Run it locally before opening the PR — a green `verify` is what reviewers expect.
 
 ---
 
 ## Publishing MCP servers & standalone mirrors
 
-Every MCP server package (any directory with both a `package.json` and a `server.json` — the 35 under `packages/*-mcp`, plus `packages/agent-sniper`, `mcp-server`, and `mcp-bridge`) ships to three destinations. All steps are idempotent and default to a safe dry run.
+Every MCP server package (any directory with both a `package.json` and a `server.json` — the 32 under `packages/*-mcp`, plus `packages/agent-sniper`, `mcp-server`, and `mcp-bridge`) ships to three destinations. All steps are idempotent and default to a safe dry run.
 
 **1. npm + the official MCP registry** (`registry.modelcontextprotocol.io`):
 
@@ -262,9 +262,9 @@ test: add coverage for manifest normalization edge cases
 
 Skills are the best way to extend three.ws without touching core code. A skill is a hosted directory of assets and a manifest — it runs in an isolated context and communicates via a defined message protocol.
 
-1. **Use the template.** Copy `examples/skills/wave/` as your starting point — it demonstrates the minimal structure a skill needs.
+1. **Use the template.** Copy `examples/skills/solana-wallet/` as your starting point — its `manifest.json`, `tools.json`, `handlers.js`, and `SKILL.md` demonstrate the minimal structure a skill needs.
 
-2. **Build your skill.** See the [Skills documentation](./introduction.md) for the full format, lifecycle hooks, and message API.
+2. **Build your skill.** See the [Skills documentation](./skills.md) for the full format, lifecycle hooks, and message API.
 
 3. **Host it.** GitHub Pages, Vercel, Netlify, or any static CDN works. The URL just needs to be publicly accessible over HTTPS.
 

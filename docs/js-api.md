@@ -452,10 +452,13 @@ All components are pure functions that return HTML strings via [vhtml](https://g
 
 Returns a `<footer>` with:
 
-- X (Twitter) link to [@nichxbt](https://x.com/trythreews)
+- X link to [@trythreews](https://x.com/trythreews)
+- "showcase" link to `/showcase`
+- "validation" link to `/validation/`
+- "reputation" link to `/reputation/`
 - "help & feedback" link to GitHub issues
 - GitHub repository link
-- Pipe separators
+- Pipe separators between items
 
 **No props.**
 

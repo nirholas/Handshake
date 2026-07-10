@@ -151,7 +151,7 @@ Studio config schema (validated in `widget-types.js`):
 
 ## What's intentionally not included
 
-- **Long-lived SSE on Vercel functions** — the feed handler runs a 90s bounded loop and lets the browser auto-reconnect. For higher throughput, deploy the bot itself as a streaming service.
+- **Long-lived SSE** — the feed handler runs a 90s bounded loop and lets the browser auto-reconnect; the Cloud Run request handlers aren't meant to hold a connection open indefinitely. For higher throughput, deploy the bot itself as a streaming service.
 - **On-chain signal attestations** — signals are off-chain only. Promoting them to SPL Memo attestations signed by a platform key is a future step (see [docs/solana.md](solana.md) "What's intentionally not on Solana yet").
 - **Agent-as-signer** — the watch skills are read-only; they never sign transactions. The existing `pumpfun-create / -buy / -sell` skills cover signing flows.
 - **Anchor program for reputation** — still EVM-only on the on-chain path.

@@ -1,244 +1,297 @@
-# Read an Agent's On-Chain Reputation
+# Tutorial: Read an Agent's On-Chain Reputation (ERC-8004)
 
-By the end of this tutorial you'll be able to look up any agent's reputation in the [Reputation Explorer](/reputation), understand exactly how those scores and reviews accrue on-chain, and read an agent's reputation programmatically — from the browser, a REST call, an MCP client, or directly off the contract. This is the trust layer on top of on-chain identity: [registration](/docs/tutorials/register-onchain) gives an agent a permanent name; reputation tells you whether to trust it.
+Look up any registered agent's trust record — its score, its vouches, and the money staked behind them — from the UI, a single API call, the MCP tool, the SDK, or straight off the contract.
 
-**Prerequisites:** an Ethereum address or ENS name to look up (any will do — start with a well-known one). Reading reputation needs no wallet and no account. The programmatic paths assume light JavaScript familiarity; the SDK paths use [ethers v6](https://docs.ethers.org). To *submit* a review you'll need a wallet with a little gas, but this tutorial is about reading.
-
----
-
-## What you're building
-
-```
-You:   look up an agent or address in the Reputation Explorer
-        ↓   [reads on-chain attestations + ERC-8004 registry — no wallet]
-Page:  avg rating, review count, score distribution, every signed review
-        ↓
-Code:  getReputation({ agentId, chainId, runner }) → { average, count }
-        ↓
-Agent: an autonomous agent reads a peer's score before deciding to pay it
-```
-
-Reputation on three.ws is not a database row a platform can edit. It is the aggregate of **signed, on-chain feedback** — one review per wallet, permanent, public, and readable by anyone without an API key. This tutorial is the read-side companion to the [register-onchain](/docs/tutorials/register-onchain) tutorial: there you minted an identity; here you learn what accrues around it and how to consume it.
+**What you'll build:** a reputation read on any registered agent, on-chain and via API — the same lookup an autonomous agent runs before it decides whether to trust a counterparty.
 
 ---
 
-## How reputation accrues (two minutes of theory)
+## Why read reputation at all?
 
-ERC-8004 separates identity from reputation into two contracts. The **`ReputationRegistry`** is where trust signals live. Two kinds of signal stack on top of an agent's identity:
+Reading reputation is the half of the system everyone uses and nobody talks about. Writing a review happens once; reading it happens every time someone — or some *agent* — has to decide whether to trust a counterparty they've never met.
 
-| Signal | Where it lives | What it is |
-|---|---|---|
-| Registry feedback | `ReputationRegistry.submitFeedback` | A signed score `−100..+100` + optional comment/URI, one per wallet per agent |
-| EAS attestation | Ethereum Attestation Service | A signed `address agent, uint8 score, string comment` attestation against an address |
+That decision is the whole point. When an autonomous agent is about to pay another agent for a dataset, a render, or a sub-task, it has no brand to recognize and no human to ask. The only thing it can do is look up the counterparty's on-chain track record and decide if it clears a bar. Reputation reads are **trust gates** — and because they're on-chain, the same read works from a webpage, a server, an AI tool call, or another smart contract, with no API key and no permission.
 
-The registry keeps a **running aggregate** so reads are O(1): it stores the sum and count, and `getReputation(agentId)` returns `(avgX100, count)` — the average already multiplied by 100 to preserve one decimal without floating-point math. You divide by 100 on the client. No pagination, no indexer required for the headline number.
-
-Three rules are enforced by the contract itself, so the aggregate can't be gamed from the client:
-
-- **One review per wallet per agent.** A second attempt reverts with `AlreadyReviewed`. Sybil attacks cost real gas, one wallet at a time.
-- **No self-review.** An agent's own owner can't vouch for it (`SelfReviewForbidden`).
-- **Score bounds.** Anything outside `−100..+100` reverts with `ScoreOutOfRange`.
-
-Each individual review is also stored as a `Feedback` struct — `from` (reviewer address), `score` (int8), `timestamp` (uint64), `uri` (optional `ipfs://` pointer to a longer write-up) — and emitted as a `FeedbackSubmitted(agentId, from, score, uri)` event. The aggregate is the cheap read; the events and structs are how you enumerate who said what.
-
-For the full contract reference and chain addresses, see the [Reputation System](/docs/reputation) and [ERC-8004](/docs/erc8004) docs. This tutorial is the hands-on path.
+By the end of this tutorial you'll have run that read five different ways and know which one fits which situation.
 
 ---
 
-## Step 1: Open the Reputation Explorer
+## What you'll need
 
-Go to [/reputation](/reputation). You'll land on a search box, not a single agent — the Explorer reads reputation for **any** Ethereum address or ENS name, registered agent or not.
+Reading reputation is **free and permissionless** for most paths — no wallet, no gas, no account:
 
-Enter one of:
+- **An agent identifier.** Any of: a numeric ERC-8004 `agentId` (e.g. `42`), an EVM wallet that owns an agent (`0x…`), a CAIP-10 string (`eip155:8453:0x…`), or a three.ws agent UUID for the REST/x402 paths.
+- **Nothing else** for Paths 1, 2, 4, and 5.
+- **A funded wallet** *only* for Path 3 (the paid MCP tool costs $0.01 USDC per call) — useful when an AI agent needs the read as a billable, on-chain-verified tool.
 
-- An ENS name — e.g. `vitalik.eth` (the page resolves it to an address for you)
-- A raw `0x…` address
-- One of the example chips below the box
-
-Pick a **Network** from the dropdown. The default is **Base (mainnet)** — the recommended chain for three.ws agents. The Explorer also supports Base Sepolia, Ethereum, Optimism, Arbitrum, and Polygon.
-
-Click **Look up**. The URL becomes `/reputation?address=<addr>&chain=<chainId>`, so any reputation view is a shareable link.
+Don't have an agent in mind? Use the [Reputation Explorer](/reputation) to find one, or register your own first with [Register your agent on-chain](/tutorials/register-onchain).
 
 ---
 
-## Step 2: Read the reputation profile
+## The data model in 60 seconds
 
-The profile renders three things, all from on-chain data, with a skeleton loader while it fetches:
+Everything below reads the same three ERC-8004 contracts, so it's worth knowing the shape of the data first:
 
-**The stats grid:**
+- **Identity Registry** — each agent is an NFT. The `agentId` is its token ID. This is how a wallet resolves to an agent.
+- **Reputation Registry** — stores feedback. Scores are signed `int8` in the range **−100 to +100**; the UI collects them as **1–5 stars** and maps them into that range. The contract keeps a running `(sum, count)`, so the average is a single O(1) read — no indexing required.
+- **Validation Registry** — third-party attestations (e.g. "this agent's 3D model passed glTF validation"). Separate from scores.
 
-- **Avg Rating** — the mean of all scored reviews, shown as `X / 5` stars. Scores stored on a `−100..+100` (or 0–100) scale are mapped to the 1–5 star display.
-- **Total Reviews** — how many attestations exist for this address, with a breakdown of how many are scored and how many carry a written comment.
-- **Score Distribution** — a 5-to-1 bar chart showing how the scores cluster. A score of all 5s reads very differently from a bimodal split, and the distribution makes that visible at a glance.
+Three rules enforced on-chain shape what you read:
 
-**The ERC-8004 badge.** If the looked-up address *owns* a registered agent, the Explorer also reads the `ReputationRegistry` directly and shows a registry line: `ERC-8004 registry: N votes · avg X.X/100`, with a link into the registry-specific view (`/reputation?agent=<chainId>:<agentId>`). This is the on-chain aggregate from Step's theory section — distinct from the EAS attestations above it.
+1. **One review per wallet per agent** — fake reviews cost one funded wallet each.
+2. **No self-review** — an agent's owner can't pump its own score.
+3. **Append-only** — a submitted review can never be edited or deleted.
 
-**The review list.** Up to 30 recent reviews, each a card with the reviewer's identicon and short address, their star score, an optional comment, a relative timestamp, and links to the transaction and the attestation on a block explorer. Tabs let you filter to **All**, **Scored**, or **With comments**.
+A review can also be **staked**: the reviewer locks ≥0.001 ETH behind their vouch (refundable). Total stake is a second, harder-to-fake trust signal you can read alongside the score.
 
-If there are no reviews yet, the page shows a designed empty state ("Be the first to review!") rather than a blank panel — useful confirmation that the lookup worked and the agent simply has no history.
-
----
-
-## Step 3: Look up a registered agent by its on-chain ID
-
-If you already have a three.ws agent's chain + ID (from the [register-onchain](/docs/tutorials/register-onchain) flow — e.g. `8453:42`), you can jump straight to its registry reputation:
-
-```
-/reputation?agent=8453:42
-```
-
-The Explorer resolves the agent's owner address via the `IdentityRegistry` and redirects to that address's full profile, so you see both its EAS attestations and its ERC-8004 registry score in one view. Agents also surface their reputation inline on their public page at `https://three.ws/a/<chainId>/<agentId>` — the Explorer is the place to inspect it standalone or to inspect an address that isn't a three.ws agent at all.
+> Full reference: [ERC-8004](/docs/erc8004) for identity, [Reputation System](/docs/reputation) for the contract interface, and [Agent Reputation](/docs/agent-reputation) for why the whole stack exists.
 
 ---
 
-## Step 4: Read the registry aggregate in JavaScript
+## Path 1 — The Reputation Explorer (no code)
 
-The headline number — average and count — comes straight off the contract with one read. Use the helper in [src/erc8004/reputation.js](../../src/erc8004/reputation.js):
+The fastest read is the visual one.
+
+1. Open the [Reputation Explorer](/reputation).
+2. Paste an agent identifier — a numeric `agentId`, a wallet address, or a CAIP-10 ID.
+3. Pick the chain (Base is the default; the registries live at the same address on every supported chain).
+4. Read the panel:
+   - **Average score** (shown as `X.X / 5`) and **total vouch count**
+   - **Total ETH staked** behind the vouches
+   - **Recent vouches** — each with the reviewer's address, score, optional comment, and a link to the transaction on the block explorer
+
+If the agent has no reviews yet, you'll see a clean "no vouches yet" state rather than a blank — a brand-new agent reads as *unknown*, not *bad*.
+
+This is also the panel embedded on every agent profile page at `https://three.ws/a/<chainId>/<agentId>`.
+
+---
+
+## Path 2 — The REST API (one `fetch`)
+
+For a webpage or a backend that just needs the aggregate, hit the REST endpoint. No key, no payment:
 
 ```js
-import { getReputation } from './src/erc8004/reputation.js';
+const res = await fetch('https://three.ws/api/agents/<agent-id>/reputation');
+const rep = await res.json();
+// {
+//   average: 4.6,            // 0 if no reviews
+//   count: 12,               // number of vouches
+//   total_stake_wei: "3000000000000000",  // ETH staked, in wei (string for safety)
+//   chain_id: 8453
+// }
+
+console.log(`${rep.average.toFixed(1)} from ${rep.count} reviews`);
+```
+
+Query a different chain with `?chain_id=`:
+
+```js
+fetch('https://three.ws/api/agents/<agent-id>/reputation?chain_id=42161'); // Arbitrum
+```
+
+The endpoint reads the contract live and caches the result for ~5 minutes (look for an `X-Cache: HIT|MISS` header). `total_stake_wei` is returned as a **string** because wei values overflow JavaScript's safe-integer range — parse it with `BigInt`, not `Number`.
+
+---
+
+## Path 3 — The `agent_reputation` MCP tool (for AI agents)
+
+When the *reader* is itself an AI agent — and you want the read to be a metered, on-chain-verified tool call — use the paid MCP tool. It costs **$0.01 USDC**, settled via x402 on Solana, and reads directly from the canonical ERC-8004 deployments with no third-party indexer in the path.
+
+It accepts the same flexible identifier and returns the richest payload of any path:
+
+```jsonc
+// tool: agent_reputation
+// input:
+{
+  "address": "eip155:8453:0xAbCd…",   // agentId, wallet, or CAIP-10 ID
+  "chain": "base"                       // optional: name or numeric chainId; default base
+}
+
+// output:
+{
+  "chain": "Base",
+  "chainId": 8453,
+  "agentId": "42",
+  "agentRegistry": "eip155:8453:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+  "reputationRegistry": "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63",
+  "identity": {
+    "owner": "0x…",
+    "agentWallet": "0x…",
+    "uri": "ipfs://…"          // the agent's ERC-8004 card
+  },
+  "reputation": {
+    "totalScore": "42",
+    "count": "6",
+    "average": 7,              // null when count is 0
+    "totalStakeWei": "0"
+  },
+  "events": [                  // latest 25 vouches + stakes
+    { "kind": "submitted", "score": 5, "submitter": "0x…", "comment": "fast and accurate", "txHash": "0x…", "blockNumber": 21345678 }
+  ],
+  "fetchedAt": "2026-06-22T18:00:00.000Z"
+}
+```
+
+Notable behavior:
+
+- **Pass a wallet and it resolves the agent for you** — the tool calls the Identity Registry's `balanceOf` / `tokenOfOwnerByIndex` to find the agent the wallet owns, so you don't need to know the `agentId` up front.
+- **`chain` accepts a name or a numeric chainId**, and a CAIP-10 `address` overrides it. Ten EVM chains are supported, defaulting to Base.
+- **RPC failover is built in** — an operator override is tried first, then redundant public endpoints, each with a 12-second timeout, so one RPC outage doesn't fail your paid call.
+- If no agent is registered for a wallet, you get a clean `no_agent_registered_for_wallet` error, not a misleading zero score.
+
+This is the path to wire into an agent that needs to gate its own spending: read first, then decide whether to pay.
+
+---
+
+## Path 4 — The SDK (JavaScript)
+
+Inside a JavaScript app, the SDK wraps the contract reads with an `ethers` provider:
+
+```js
+import { getReputation, getRecentReviews, getTotalStake } from '@three-ws/sdk/erc8004';
 import { JsonRpcProvider } from 'ethers';
 
 const provider = new JsonRpcProvider('https://mainnet.base.org');
 
-const { average, count } = await getReputation({
+// Aggregate — already averaged for you
+const { total, count, average } = await getReputation({
+  chainId: 8453,
   agentId: 42,
-  chainId: 8453,   // Base mainnet
   runner: provider,
 });
+console.log(`${average.toFixed(1)} average across ${count} reviews`);
 
-console.log(`${count} review(s), average ${average.toFixed(1)}`);
-// e.g. "14 review(s), average 87.5"
-```
+// The ETH staked behind those vouches (returns a bigint, in wei)
+const stakeWei = await getTotalStake({ chainId: 8453, agentId: 42, runner: provider });
 
-`getReputation` returns `{ average, count }` where `average` is already the on-chain `avgX100` divided by 100 — so `8750` on-chain reads as `87.5`. When `count` is `0`, `average` is `0`. **Never divide `average` by `count` again** — the contract already averaged it. That's the single most common mistake when reading this contract.
-
-The same helper module covers reads on every chain in `REGISTRY_DEPLOYMENTS` (the registry is at the same CREATE2 address on all of them). Point `runner` at that chain's RPC and pass the matching `chainId`.
-
----
-
-## Step 5: Enumerate the individual reviews
-
-The aggregate tells you *how good*; the events tell you *who said what*. `getRecentReviews` queries the `FeedbackSubmitted` event log:
-
-```js
-import { getRecentReviews } from './src/erc8004/reputation.js';
-
+// Recent vouches, decoded from FeedbackSubmitted event logs
 const reviews = await getRecentReviews({
+  chainId: 8453,
   agentId: 42,
-  chainId: 8453,
   runner: provider,
-  fromBlock: 0,    // for recent-only, pass (latestBlock - 50000)
+  fromBlock: 0,          // or (latestBlock - 50000) for recent-only
 });
-
-reviews.forEach((r) => {
-  console.log(r.from, r.score, r.comment, r.txHash);
-});
-// each: { agentId, from, score, comment, blockNumber, txHash }
+reviews.forEach(r => console.log(r.from, r.score, r.comment, r.txHash));
 ```
 
-`from` is the reviewer's address, `score` the signed int8, `comment` the `uri` field (a short string or an `ipfs://` pointer), plus `blockNumber` and `txHash` for explorer links.
-
-Two practical notes:
-
-- **Log queries can be rejected by free-tier RPCs.** Wide `queryFilter` ranges are the most fragile call here. Scope `fromBlock` to a recent window (the last ~50,000 blocks is roughly a week on most L2s), or fall back to the aggregate alone — `getReputation` always works even when log queries don't.
-- **The contract also exposes paginated reads** if you'd rather not rely on logs at all: `getFeedbackCount(agentId)`, `getFeedback(agentId, index)`, and `getFeedbackRange(agentId, offset, limit)` each return the `Feedback` struct(s) directly. These are the deterministic path for a UI that must show every review.
+`getReputation` returns `{ total, count, average }` with `average` pre-computed (`0` when there are no reviews). `getRecentReviews` returns an array of `{ from, score, comment, blockNumber, txHash }`. On free-tier RPCs that reject wide `eth_getLogs` queries, narrow `fromBlock` to the last ~50,000 blocks (≈7 days on most L2s) — the aggregate read always works regardless.
 
 ---
 
-## Step 6: Read reputation over the REST API
+## Path 5 — Read the contract directly (`ethers`)
 
-If you have a three.ws agent's UUID (not its on-chain ID) and just want the number server-side, call the platform endpoint. It does the chain read for you and caches the result:
+No SDK, no server — just the chain. The Reputation Registry sits at the **same address on every supported EVM chain** (CREATE2 deterministic deployment):
 
 ```js
-const res = await fetch('/api/agents/<agent-uuid>/reputation?chain_id=8453');
-const { average, count, total_stake_wei, chain_id } = await res.json();
+import { Contract, JsonRpcProvider } from 'ethers';
 
-console.log(`${count} reviews, avg ${average}, ${total_stake_wei} wei staked`);
+const REPUTATION_REGISTRY = '0x8004BAa17C55a88189AE136b182e5fdA19dE9b63'; // mainnet, all chains
+const ABI = [
+  'function getReputation(uint256 agentId) view returns (int256 avgX100, uint256 count)',
+  'function getTotalStake(uint256 agentId) view returns (uint256)',
+  'function getFeedbackCount(uint256 agentId) view returns (uint256)',
+];
+
+const provider = new JsonRpcProvider('https://mainnet.base.org');
+const rep = new Contract(REPUTATION_REGISTRY, ABI, provider);
+
+const [avgX100, count] = await rep.getReputation(42);
+const average = count === 0n ? 0 : Number(avgX100) / 100;   // avgX100 is average × 100
+const staked = await rep.getTotalStake(42);
+
+console.log(`avg ${average} over ${count} reviews, ${staked} wei staked`);
 ```
 
-The endpoint resolves the agent's on-chain `erc8004_agent_id` and chain from its three.ws record, reads `getReputation` (and `getTotalStake`) against a public RPC, and caches for five minutes (`X-Cache: HIT`/`MISS`). If the agent isn't registered on-chain, it returns `{ average: 0, count: 0, total_stake_wei: "0" }` rather than an error — a clean zero state, not a failure.
-
-This is the right path when you're rendering reputation in your own UI and already speak to the three.ws API by agent UUID.
+The contract returns the average **multiplied by 100** (`avgX100`) so you can divide client-side without losing precision to integer truncation — divide by 100 to get the real average. It returns `(0, 0)` for an agent with no reviews. The testnet registry lives at `0x8004B663056A597Dffe9eCcC1965A193B7388713`.
 
 ---
 
-## Step 7: Read reputation from an MCP client or as a paid service
+## Resolve a wallet or ENS to an agent
 
-Two more read surfaces exist for agent-to-agent and tooling contexts.
-
-**The MCP `agent_reputation` tool.** From an MCP client (Claude Desktop, Cursor, an agent flow) connected to three.ws, the `agent_reputation` tool takes an `address` — an ERC-8004 `agentId`, a `0x` wallet, or a CAIP-10 `eip155:<chainId>:<wallet>` — and an optional `chain` (defaults to Base). It returns the aggregate score, count, average, total ETH staked, and the latest reputation events, resolving the agentId from a wallet via the `IdentityRegistry` when needed. It's a paid tool ($0.01 USDC per call) cataloged in the x402 bazaar.
-
-**The paid HTTP snapshot.** [`GET /api/x402/agent-reputation?agent_id=<uuid>`](../../api/x402/agent-reputation.js) returns a richer **vetting snapshot** synthesized from on-chain activity three.ws indexes — confirmed payments and distinct payers, distribution and buyback success rates, and signed Solana attestation counts — for $0.01 USDC. Use it when an autonomous agent needs to decide whether a counterparty is trustworthy *before* paying, trading, or composing skills with it. It's a separate, defensible signal from the EVM registry score: behavior over time, not a single subjective rating.
-
----
-
-## Step 8: Gate an autonomous action on reputation
-
-The point of readable, on-chain reputation is that code can act on it. The agent-to-agent payment layer ships a reputation gate ([api/_lib/a2a/reputation-gate.js](../../api/_lib/a2a/reputation-gate.js)) that refuses to pay a peer whose score is below a threshold:
+You often start from a wallet or a name, not an `agentId`. Resolve through the Identity Registry:
 
 ```js
-import { assertReputationOk } from './api/_lib/a2a/reputation-gate.js';
+const IDENTITY_REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
+const idAbi = [
+  'function balanceOf(address owner) view returns (uint256)',
+  'function tokenOfOwnerByIndex(address owner, uint256 i) view returns (uint256)',
+];
+const id = new Contract(IDENTITY_REGISTRY, idAbi, provider);
 
-// Before paying a peer agent, require a minimum track record:
-await assertReputationOk({
-  agentId: peerAgentId,
-  chainId: 8453,
-  minAverage: 50,   // require avg score ≥ 50
-  minCount: 3,      // and at least 3 reviews
-});
-// Throws ReputationError if the peer is below the bar; returns the read otherwise.
+if (await id.balanceOf(wallet) > 0n) {
+  const agentId = await id.tokenOfOwnerByIndex(wallet, 0n);   // → read reputation for this
+}
 ```
 
-The design choices are worth copying in your own gating logic:
+For ENS-named agents, three.ws resolves `eip155:<chainId>:<registry>/<agentId>` records — see [ERC-8004 → ENS and DNS integration](/docs/erc8004). The `agent_reputation` MCP tool (Path 3) does this wallet→agent resolution for you automatically.
 
-- **No threshold set → no-op.** If neither `minAverage` nor `minCount` is requested, the gate does nothing. You opt into trust enforcement explicitly.
-- **Threshold set but reputation unreadable → fail closed.** If a bar is set and the RPC read fails, it throws rather than waving the payment through. You cannot prove a peer is trustworthy, so the safe default is "no."
-- **The reader is injectable.** Pass a `read` function to swap in an indexer or to test without a live RPC.
+---
 
-This is the second-order payoff of on-chain reputation: budget caps stop an agent from *overspending*, but only a reputation gate stops it from *paying a scammer*.
+## Read the behavioral signal too
+
+Star reviews are one signal. For a three.ws agent, you can also read its **behavior** — did it actually get paid, did its payouts succeed, did anyone dispute it — via the paid x402 synthesis endpoint (`$0.01 USDC`):
+
+```
+GET /api/x402/agent-reputation?agent_id=<uuid>
+```
+
+It returns confirmed payment count and distinct payers, payout/distribution success rates, failure rates, and attestation counts — reputation derived from what an agent *did*, not just what people *said*. Combine it with the star score for a fuller trust picture; it's the same data the Agent Passport's A–D grade is built from.
+
+---
+
+## Putting it together: a trust gate
+
+Here's the pattern that makes reputation worth reading — refuse to transact below a bar:
+
+```js
+async function trustGate(agentId, { minScore = 4, minReviews = 3 } = {}) {
+  const { average, count } = await getReputation({ chainId: 8453, agentId, runner: provider });
+  if (count < minReviews) return { ok: false, reason: 'not enough history' };
+  if (average < minScore)  return { ok: false, reason: `score ${average.toFixed(1)} below ${minScore}` };
+  return { ok: true };
+}
+
+const gate = await trustGate(42);
+if (gate.ok) {
+  // …proceed to pay / delegate via x402
+} else {
+  console.warn('skipping agent:', gate.reason);
+}
+```
+
+This is exactly the bouncer pattern three.ws's own Pole Club uses at its door — read a wallet's history, assign it a tier, admit or refuse — except an on-chain read works for *any* agent on *any* platform, not just inside one venue's private database. That portability is the entire reason reputation lives on-chain. ([Why it matters →](/docs/agent-reputation))
 
 ---
 
 ## Troubleshooting
 
-**Lookup returns "No attestations found" for a real agent**
-- The agent may have reviews in the **ERC-8004 registry** but no **EAS attestations** (or vice-versa) — they're separate signals. Check the ERC-8004 badge on the profile, and try the registry view at `/reputation?agent=<chainId>:<agentId>`.
-- Confirm you picked the **right network**. Reputation is per-chain; an agent reviewed on Base won't show reviews when you query Ethereum.
+**`getReputation` returns `(0, 0)`**
+- The agent has no reviews yet, or you're querying the wrong chain. Reputation is per-chain — an agent registered on Base has no reviews on Arbitrum. Confirm the `chainId`.
 
-**`getReputation` returns a huge `average` like `8750`**
-- That's `avgX100`. The `getReputation` helper in `src/erc8004/reputation.js` already divides by 100; if you're calling the contract directly, divide by 100 yourself. Don't also divide by `count` — the contract pre-averaged it.
+**Average looks 100× too big**
+- You read `avgX100` directly. Divide by 100 — the contract returns the average multiplied by 100 on purpose (Path 5).
 
-**`getRecentReviews` throws or hangs**
-- Free-tier RPCs often reject wide `queryFilter` log ranges. Narrow `fromBlock` to a recent window, or use the deterministic `getFeedbackRange(agentId, offset, limit)` reads instead. The aggregate from `getReputation` still works regardless.
+**`total_stake_wei` parses wrong / shows as a rounded number**
+- It's a string holding a wei value that overflows `Number`. Parse with `BigInt(rep.total_stake_wei)`, then format to ETH by dividing by `10n ** 18n`.
 
-**ENS name won't resolve in the Explorer**
-- ENS resolves on Ethereum mainnet even when you're viewing reputation on another chain. If it fails, paste the raw `0x` address instead.
+**Recent vouches are empty but the count is non-zero**
+- A free-tier RPC rejected the `eth_getLogs` query for the block window. The aggregate (score + count) still reads correctly; narrow `fromBlock` or use a provider that allows wider log ranges to recover the individual reviews.
 
-**`/api/agents/<id>/reputation` returns all zeros**
-- That's the designed response for an agent with no on-chain registration (no `erc8004_agent_id`/`chain_id`) or no reviews yet — not an error. Register the agent on-chain first (see [register-onchain](/docs/tutorials/register-onchain)), then reviews can accrue.
+**The MCP tool returns `no_agent_registered_for_wallet`**
+- That wallet doesn't own an ERC-8004 agent on the chosen chain. Pass a numeric `agentId` directly, or switch chains — the same wallet may own an agent elsewhere.
 
-**The reputation gate rejects every peer**
-- A `reputation_unavailable` error means a threshold was set but the read failed (RPC down or no `A2A_REPUTATION_RPC_URL` configured) — the gate fails closed by design. Configure a working RPC, or drop the threshold to disable gating.
+**`fetch` to the REST endpoint 404s**
+- Use the agent's three.ws UUID for `/api/agents/<id>/reputation`. For a raw on-chain `agentId` or wallet, use the SDK (Path 4), the contract (Path 5), or the MCP tool (Path 3) instead.
 
 ---
 
-## Recap
+## What's next
 
-You learned to read agent reputation at every layer:
+You can read reputation. Now close the loop:
 
-- **The Reputation Explorer** ([/reputation](/reputation)) — search any address or ENS name, no wallet, and see avg rating, count, distribution, and every signed review across EAS attestations and the ERC-8004 registry.
-- **How it accrues** — signed, on-chain feedback in the `ReputationRegistry`, one review per wallet, aggregated O(1) as `(avgX100, count)`, with self-review, double-review, and out-of-range scores all rejected by the contract.
-- **In JavaScript** — `getReputation` for the aggregate (divide-by-100 already done), `getRecentReviews` / `getFeedbackRange` for individual reviews.
-- **Over REST** — `GET /api/agents/<uuid>/reputation?chain_id=` for a cached server-side read by agent UUID.
-- **For agents and tooling** — the MCP `agent_reputation` tool and the paid `/api/x402/agent-reputation` vetting snapshot.
-- **Acting on it** — `assertReputationOk` to gate an autonomous payment on a minimum score and review count, failing closed when trust can't be proven.
+- **[Leave a vouch](/docs/reputation)** — write a review or a staked vouch of your own, from the UI or the SDK.
+- **[Register your agent on-chain](/tutorials/register-onchain)** — give an agent the identity that reputation attaches to, so others can vouch for *it*.
+- **[Agent Reputation: why it matters](/docs/agent-reputation)** — the trust problem reputation solves, the three registries, and how reputation and x402 payments interlock.
+- **[ERC-8004 reference](/docs/erc8004)** — the full identity standard, agent-card format, and contract addresses across every supported chain.
 
-The leverage is composability: because reputation is on-chain, the same score you read in the Explorer is the score another agent reads before it decides to trust you. To give an agent the identity these reviews attach to, see [Register Your Agent On-Chain](/docs/tutorials/register-onchain). For the full data model and contract interface, continue to the [Reputation System reference](/docs/reputation) and [ERC-8004](/docs/erc8004).
-
-## See also
-
-- [Register Your Agent On-Chain](/docs/tutorials/register-onchain) — the identity layer reputation attaches to.
-- [Reputation System reference](/docs/reputation) — full contract interface, deployed addresses, and the standalone dashboard.
-- [ERC-8004 Blockchain Identity](/docs/erc8004) — the three-contract standard behind identity, reputation, and validation.
-- [Build a Custom Skill](/docs/tutorials/custom-skill) — give an agent capabilities worth reviewing.
+A read costs nothing and asks no one's permission. That's the property that lets an agent you've never heard of decide, on its own, to trust yours.

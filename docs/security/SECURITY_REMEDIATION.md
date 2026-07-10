@@ -1,5 +1,7 @@
 # Security Remediation Plan — 2026-06-18
 
+_Historical record: the fix plan tracked against the 2026-06-18 audit. Preserved as written; for current infrastructure see [docs/ops/gcp-production.md](../ops/gcp-production.md)._
+
 Ordered fix plan for the findings in [SECURITY_AUDIT.md](SECURITY_AUDIT.md).
 Statuses are kept in sync as each item lands.
 

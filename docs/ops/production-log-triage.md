@@ -1,16 +1,20 @@
 # Production log triage
 
-Every recurring `error`/`warning` signature that shows up in a Vercel log
+Every recurring `error`/`warning` signature that shows up in a production log
 export, mapped to its **root cause**, the **exact resolution**, and **who** can
 apply it. Built from the `three-ws-character-studio` export on 2026-07-03 and
 re-confirmed against the `three.ws` export on 2026-07-05 (same population plus the
-two storage-pressure signatures added below — still no code defects).
+two storage-pressure signatures added below — still no code defects). The
+signatures are unchanged after the 2026-07-07 move to Google Cloud Run; only the
+places you read logs and set env vars changed (Cloud Run + Cloud Scheduler now,
+per [docs/ops/gcp-production.md](gcp-production.md)).
 
 The headline finding, so nobody re-derives it: **none of these are code
 defects.** Each line is the platform's own graceful-degradation or fail-closed
 machinery working correctly — a fallback firing, a circuit breaker holding, a
 guard refusing to spend. They are all resolved by an **environment / billing /
-activation** action in the Vercel or upstream dashboards, not by a code change.
+activation** action on the Cloud Run service env or in an upstream dashboard, not
+by a code change.
 Silencing any of them in code would hide a real production signal, so don't.
 
 Severity legend: 🔴 owner decision (money / security / billing) · 🟡 set an env
@@ -126,7 +130,7 @@ guard env violated:
 
 ## 🟢 `{"stage":"index-delegations","warning":"time-budget-exceeded","elapsedMs":…,"stoppedAtBlock":…}`
 
-- **Source:** [api/cron/\[name\].js](../../api/cron/[name].js), the delegations indexer (`IDX_TIME_BUDGET_MS`, 22 s — 8 s of headroom under Vercel's 30 s limit).
+- **Source:** [api/cron/\[name\].js](../../api/cron/[name].js), the delegations indexer (`IDX_TIME_BUDGET_MS`, 22 s — a conservative per-invocation budget that checkpoints the cursor well before any request timeout).
 - **What it means:** the indexer hit its per-invocation time budget mid-backfill, so it **saved the cursor at `stoppedAtBlock` and returned** rather than risk a 504. The next tick resumes exactly where it stopped. This is a checkpoint, not a failure — logged as `warning` by design. A run of these back-to-back just means the indexer is draining a block backlog (cold cursor starts a day back); it stops once the cursor catches the confirmed head.
 - **Resolve:** 🟢 nothing required — it self-heals as the backlog drains. If it never stops over many hours, the RPC pool is too slow to keep pace; add a faster `IDX_RPC_URLS` endpoint or shrink the per-chain block cap so each tick makes more progress.
 
@@ -190,8 +194,9 @@ paths behind every line are already hardened and covered by tests
 [tests/cache-circuit-breaker.test.js](../../tests/cache-circuit-breaker.test.js),
 [tests/cache-store-routing.test.js](../../tests/cache-store-routing.test.js),
 [tests/cron-storage-backoff.test.js](../../tests/cron-storage-backoff.test.js)).
-Run the Vercel env writes from the repo root against the linked project, then
-redeploy so they take effect.
+Apply the env writes to the `three-ws-api` Cloud Run service with
+`gcloud run services update`; each write rolls out a new revision, so they take
+effect as soon as that revision is serving traffic.
 
 ### 1. 🔴 World — stop every visitor having build rights (do this first)
 
@@ -209,7 +214,8 @@ bash deploy/world/apply-hardening.sh   # prints the admin code once — store it
 
 ```bash
 # Pause quietly (recommended unless you're actively going live) — kills the hourly guard alert:
-vercel env add X402_AUTONOMOUS_ENABLED production   # value: false
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 --update-env-vars X402_AUTONOMOUS_ENABLED=false
 # …or finish arming (moves real USDC) per docs/x402-ring-economy.md guard-env section.
 ```
 
@@ -220,11 +226,14 @@ DB sat at 593 MB vs the 470 MB high-water in the 2026-07-05 export, so
 and `intel-learn` were skipping. Pick the lever that matches your Neon plan:
 
 ```bash
-# (a) If your branch's real cap is well above 470 MB, raise the high-water to match:
-vercel env add DB_RETENTION_HIGH_WATER_MB production   # value: e.g. 900  (must stay under the real Neon cap)
+# (a) If your branch's real cap is well above 470 MB, raise the high-water to match
+#     (must stay under the real Neon cap):
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 --update-env-vars DB_RETENTION_HIGH_WATER_MB=900
 # (b) …or shed the pump.fun firehose faster (keeps the branch smaller):
-vercel env add PUMP_INTEL_RETENTION_DAYS production      # value: e.g. 7
-vercel env add PUMP_INTEL_MIN_RETENTION_DAYS production  # value: e.g. 2
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --update-env-vars PUMP_INTEL_RETENTION_DAYS=7,PUMP_INTEL_MIN_RETENTION_DAYS=2
 # (c) Best durable fix: bump the Neon compute/storage plan in the Neon dashboard.
 ```
 
@@ -237,9 +246,11 @@ keep serving meanwhile; paid credit brings back the high-fidelity TRELLIS lane.
 
 ```bash
 # A same-region dedicated cache store ends the 'redis SET failed' flood:
-vercel env add UPSTASH_CACHE_REST_URL production
-vercel env add UPSTASH_CACHE_REST_TOKEN production
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --update-env-vars UPSTASH_CACHE_REST_URL=<url>,UPSTASH_CACHE_REST_TOKEN=<token>
 # …or just give a distant store more headroom:
-vercel env add CACHE_REDIS_CMD_TIMEOUT_MS production     # value: e.g. 5000
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 --update-env-vars CACHE_REDIS_CMD_TIMEOUT_MS=5000
 # Helius 429s: raise the plan/quota in the Helius dashboard (public-RPC fallback covers the gap).
 ```

@@ -24,8 +24,9 @@ repo:
 1. **`JWT_SECRET` unset in production** — every `GET /api/auth/siwe/nonce` and
    `/api/auth/siws/nonce` failed (122 hits in the window); wallet sign-in is
    down until it's set. Now surfaces as `503 not_configured` with a deduped ops
-   alert instead of anonymous 500s. Action: set `JWT_SECRET` in the Vercel env
-   (`openssl rand -base64 64`) and redeploy.
+   alert instead of anonymous 500s. Action: set `JWT_SECRET` on the Cloud Run
+   service (`gcloud run services update three-ws-api --region us-central1
+   --update-env-vars JWT_SECRET=$(openssl rand -base64 64)`).
 2. **`WALLET_ENCRYPTION_KEY` unset** — custodial agent wallet provisioning is
    deferred at create time (the secret-box refuses the JWT_SECRET fallback in
    production, by design). Action: set it (`openssl rand -base64 48`).

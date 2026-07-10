@@ -70,7 +70,7 @@ function equipView(e, perf) {
 async function handleGet(req, res, id) {
 	const owned = await loadOwned(req, res, id);
 	if (!owned) return;
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const equips = await sql`

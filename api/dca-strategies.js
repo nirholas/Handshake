@@ -109,7 +109,7 @@ export default wrap(async (req, res) => {
 		}
 
 		const ip = clientIp(req);
-		const rl = await limits.authIp(ip);
+		const rl = await limits.authedReadIp(ip);
 		if (!rl.success) return rateLimited(res, rl);
 
 		// Confirm session user owns this agent

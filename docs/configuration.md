@@ -203,10 +203,10 @@ Both should be the same value. Get from [dashboard.privy.io](https://dashboard.p
 ### Avatar Pipeline
 
 #### `VITE_CHARACTER_STUDIO_URL`
-**Optional.** Origin where the three.ws avatar builder is hosted. Defaults to `http://localhost:5173` in dev and `https://studio.three.ws` in production.
+**Optional.** Override for the origin where the three.ws avatar builder is hosted. When unset, the app resolves it **same-origin** to `<origin>/avatar-studio` (the Vite dev middleware serves `character-studio/build` there in dev; the build copies the same bundle to `/avatar-studio` in production). Set this only to point at a standalone studio dev server (e.g. `http://localhost:5173` while developing `character-studio/`).
 
 ```
-VITE_CHARACTER_STUDIO_URL=https://studio.three.ws
+VITE_CHARACTER_STUDIO_URL=http://localhost:5173
 ```
 
 The three.ws avatar builder is an open-source 3D avatar editor (full body customisation — hair, clothing, accessories, skin tone, proportions). It runs as a separate Vite/React app under `character-studio/` in this monorepo and posts the exported GLB back to the parent via `postMessage`. It is fully compatible with the three.ws avatar runtime — same humanoid skeleton naming, ARKit `viseme_*` blendshapes, and Mixamo animation support.
@@ -359,7 +359,7 @@ Avatar creation, blockchain features, and IPFS are all optional for local develo
 
 ## `vercel.json`
 
-Controls routing and cron jobs for the Vercel deployment. The `routes` array maps incoming URL patterns to destination files or API handlers.
+A **live configuration file** consumed at runtime by the Cloud Run server ([`server/index.mjs`](../server/index.mjs)) — not a Vercel leftover. The server reads its `routes` array (route table, security headers, rewrites) on boot and its `crons` list to know which scheduled jobs exist. The `routes` array maps incoming URL patterns to destination files or API handlers.
 
 **Key route patterns:**
 
@@ -395,7 +395,7 @@ Controls routing and cron jobs for the Vercel deployment. The `routes` array map
 }
 ```
 
-**Cron jobs** run on a schedule via Vercel's cron infrastructure:
+**Cron jobs** are declared here as the source of truth for the schedule; in production they are driven by **Google Cloud Scheduler** (~80 jobs), each hitting its `/api/cron/*` handler on the Cloud Run service:
 
 ```json
 "crons": [
@@ -406,7 +406,7 @@ Controls routing and cron jobs for the Vercel deployment. The `routes` array map
 ]
 ```
 
-These only run in the Vercel production environment, not locally.
+These only run against the production deployment (Cloud Scheduler → Cloud Run), not locally. See [docs/ops/gcp-production.md](ops/gcp-production.md) for how the Scheduler jobs are provisioned.
 
 ---
 
@@ -511,7 +511,7 @@ Before going live, verify the following:
 - [ ] `PUBLIC_APP_ORIGIN` is set to your production domain (no trailing slash)
 - [ ] Upstash Redis is configured — rate limiting is per-instance in-memory without it
 - [ ] S3 bucket CORS policy is applied with your production domain in the `origin` list
-- [ ] All environment variables are set in Vercel for **Production** (not just Preview)
-- [ ] `AGENT_RELAYER_KEY` is set via Vercel env vars, not committed to git
+- [ ] All environment variables are set on the **Cloud Run service** (`three-ws-api`), verified with `gcloud run services describe`
+- [ ] `AGENT_RELAYER_KEY` is set via the Cloud Run service env vars, not committed to git
 - [ ] `.mcp.json` does not contain a real API key if checked into git
 - [ ] `JWT_KID` is set so key rotation can be performed without invalidating all sessions

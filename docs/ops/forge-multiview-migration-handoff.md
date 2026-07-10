@@ -1,5 +1,7 @@
 # Hand-off: apply forge multi-view migrations to production (A3)
 
+_Historical record: this is a point-in-time hand-off for the A3 task (forge multi-view migrations `20260606…`/`20260607…`, ~June 2026). It is not current guidance — it may already be resolved. For the live migration-and-deploy flow use [docs/ops/gcp-production.md](gcp-production.md) (`npm run db:status` / `db:migrate` against the production Neon `DATABASE_URL`)._
+
 **Status:** code verified, **prod DB action pending a human with prod credentials.**
 
 ## Why

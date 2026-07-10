@@ -486,9 +486,19 @@
 		// ── coin card ─────────────────────────────────────────────────────────────
 		function coinCard(c, { watchOffer = true } = {}) {
 			const sc = Math.round(c.smart_money_score);
-			const img = c.image_uri
-				? `<img class="coin-img" src="${esc(c.image_uri)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'coin-img',textContent:'${esc((c.symbol || '?').slice(0, 2))}'}))">`
-				: `<div class="coin-img">${esc((c.symbol || '?').slice(0, 2))}</div>`;
+			// Coin art lives on IPFS gateways and per-launch CDNs that answer browser
+			// requests without CORS headers, so hot-linking image_uri fills the console
+			// with net::ERR_BLOCKED_BY_ORB and renders nothing. Route it through the
+			// same-origin proxy (api/img.js), which fetches upstream server-side and
+			// falls back to a deterministic on-brand placeholder — same pattern as
+			// src/radar.js. Some coins point image_uri at a metadata .json rather than
+			// an image; the proxy resolves those to the placeholder instead of failing.
+			const imgSeed = c.symbol || c.name || c.mint || 'coin';
+			const imgFallback = `/api/img?seed=${encodeURIComponent(imgSeed)}`;
+			const imgSrc = c.image_uri && /^https?:\/\//i.test(c.image_uri)
+				? `/api/img?url=${encodeURIComponent(c.image_uri)}&seed=${encodeURIComponent(imgSeed)}`
+				: imgFallback;
+			const img = `<img class="coin-img" src="${esc(imgSrc)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${esc(imgFallback)}'">`;
 			const notable = (c.notable || []).slice(0, 4).map((n) =>
 				`<span class="nlabel lb-${n.label || 'neutral'}">${short(n.wallet)}</span>`).join('');
 			const share = shareOf(c);

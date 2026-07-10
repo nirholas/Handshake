@@ -55,7 +55,7 @@ async function handleHydrate(req, res) {
 	if (!session) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const ip = clientIp(req);
-	const rl = await limits.authIp(ip);
+	const rl = await limits.authedReadIp(ip);
 	if (!rl.success) return rateLimited(res, rl);
 
 	// Get user's linked wallets.

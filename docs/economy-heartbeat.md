@@ -7,23 +7,26 @@ The whole **agent-to-agent economy** comes down to a handful of them being hit
 every minute. When nothing hits them, the economy flat-lines while the site keeps
 serving traffic.
 
-Two schedulers can drive those endpoints, and both have failed in practice:
+In production these endpoints are driven by **Google Cloud Scheduler** — one
+job per `vercel.json` cron entry (~76 jobs), each firing `GET /api/cron/<name>`
+with the `Authorization: Bearer $CRON_SECRET` header. (We do **not** use GitHub
+Actions for any scheduling.)
 
-- **Vercel Cron** is the intended primary, but `vercel.json` declares far more
-  cron entries than Vercel schedules per project (Pro caps at 40; Hobby runs 2,
-  once per day). Everything past the cap is silently never scheduled — including
-  the economy ticks.
-- **GitHub Actions** was the documented failover. It is **permanently
-  unavailable on this account** (billing lock); every run fails to start.
-
-The result was an economy that only moved when a deploy happened to nudge it,
-then went dark for hours to days.
+The economy is still fanned out through a **single dispatcher endpoint** rather
+than relying on every one of those jobs firing individually. That design
+predates the Cloud Run migration — on the old Vercel host the platform's cron
+count blew past Vercel's per-project scheduled-cron cap, so everything past the
+cap was silently never scheduled and the economy only moved when a deploy
+happened to nudge it. Collapsing the economy onto one endpoint made it drivable
+by a single trigger from anywhere, and that property is still what makes it
+robust: whatever the scheduler, the whole economy needs exactly one URL hit per
+minute.
 
 ## The fix: one endpoint, one external trigger
 
 `GET|POST /api/cron/economy-tick` ([api/cron/economy-tick.js](../api/cron/economy-tick.js))
 is a single dispatcher that fans out — concurrently, with the same
-`Authorization: Bearer $CRON_SECRET` header Vercel would send — to every engine
+`Authorization: Bearer $CRON_SECRET` header the scheduler sends — to every engine
 that makes the economy move:
 
 | Group | Endpoints | Drives |
@@ -37,9 +40,9 @@ that makes the economy move:
 | Funding, treasury & reconcile | `treasury-topup`, `treasury-autopilot`, `treasury-sweepback`, `economy-reconcile`, `reflect-sweep` | master-wallet funding root, treasury autopilot, tamper reconciliation |
 | $THREE market & holders | `three-market-refresh`, `three-holders-snapshot` | live coin market + holder snapshots |
 
-The snipers / autonomous trading experiment run as a **standalone always-on worker**
-([workers/agent-sniper/](../workers/agent-sniper)), not a Vercel cron, so they are
-continuous and not part of this dispatch list.
+The snipers / autonomous trading experiment run as a **standalone always-on Cloud
+Run worker** ([workers/agent-sniper/](../workers/agent-sniper)), not a scheduled
+cron, so they are continuous and not part of this dispatch list.
 
 Every target engine is internally idempotent — per-tick spend caps, per-endpoint
 cooldowns, and daily ceilings absorb over-calling — so it is safe to fire
@@ -61,14 +64,12 @@ The whole economy now needs exactly one thing: something hitting
 2. **Upstash QStash (you already run Upstash Redis).** Register a schedule that
    POSTs the same URL every minute with the bearer header. Reliable, retried,
    dashboard-visible.
-3. **Vercel Cron (now the primary — no external infra needed).** `economy-tick`
-   is pinned to **slot 0 of the `crons` array** in `vercel.json` (`* * * * *`), so
-   it lands inside the plan's scheduled-cron cap and Vercel fires it every minute.
-   Because it fans out to every engine above, the individual per-engine crons that
-   still sit past slot 40 no longer need to be scheduled — the dispatcher covers
-   them. Keep `economy-tick` first in the array; if it ever slips past the cap the
-   whole economy goes dark again. The external triggers (1) and (2) remain valid as
-   redundant belt-and-suspenders.
+3. **Google Cloud Scheduler (production primary — no extra infra).** `economy-tick`
+   is the `* * * * *` entry in the `crons` array in `vercel.json`, and the
+   migration provisioned one Cloud Scheduler job per cron entry, so it fires every
+   minute in production. Because it fans out to every engine above, even if a
+   per-engine job is ever missing, the dispatcher still covers it. The external
+   triggers (1) and (2) remain valid as redundant belt-and-suspenders.
 4. **Always-on host.** `scripts/economy-heartbeat.mjs` still works as a
    long-running pinger on any small VM (Fly.io / Railway / a box):
    `CRON_SECRET=… node scripts/economy-heartbeat.mjs` reads `vercel.json` and
@@ -140,7 +141,7 @@ CRON_SECRET=… DURATION_MINUTES=10 node scripts/economy-heartbeat.mjs
 ## Safety properties
 
 - **No new money paths.** `economy-tick` only calls the same authed cron
-  endpoints Vercel would. All spend caps, registry allowlists, and ledger
+  endpoints the scheduler would. All spend caps, registry allowlists, and ledger
   recording live server-side and apply identically.
 - **Over-calling is harmless.** Every engine enforces per-tick and daily caps and
   per-endpoint cooldowns, so a 1-minute trigger driving 5-minute engines just

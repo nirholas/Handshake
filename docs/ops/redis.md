@@ -206,14 +206,17 @@ The dead store's REST URL and token are needed for migration. Try in order:
 1. **Upstash console** — log in at [console.upstash.com](https://console.upstash.com),
    locate the old store, click "REST API" tab. Copy URL and token.
 
-2. **Vercel env history** — if credentials were set as Vercel env vars and then
-   overwritten, they may still exist in revision history:
+2. **Cloud Run service env / prior revisions** — the live store creds are set on
+   the `three-ws-api` service (`UPSTASH_REDIS_REST_URL` plaintext,
+   `UPSTASH_REDIS_REST_TOKEN` via Secret Manager `upstash-redis-rest-token`). If a
+   cred was overwritten, the old value is still readable from the revision that
+   used it:
    ```bash
-   curl -s "https://api.vercel.com/v9/projects/<project_id>/env?teamId=<team_id>&includeDeleted=true&limit=100" \
-     -H "Authorization: Bearer <VERCEL_PAT>" \
-     | jq '.envs[] | select(.key | startswith("UPSTASH")) | {key, value}'
+   gcloud run services describe three-ws-api --region us-central1 \
+     --project aerial-vehicle-466722-p5 --format=yaml | grep -A1 UPSTASH
+   gcloud run revisions list --service three-ws-api --region us-central1 \
+     --project aerial-vehicle-466722-p5   # then `describe <old-revision>` for its env
    ```
-   Project id: `prj_IWZmEnqR1pCZRCRuvhCFCDcOx5Wc` · Team id: `team_zRpaxHPiMnQGXurBbegM3PCA`.
 
 3. **Known active store** (for local dev): `smiling-crane-148172.upstash.io`,
    credentials in `.env.local` as `three_KV_REST_API_*`. This is the

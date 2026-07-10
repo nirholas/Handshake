@@ -164,9 +164,11 @@ Verified on the live Vite dev server (`npm run dev`, port 3000):
   use `.html`).
 - Each page renders a real, non-placeholder `<title>` and loads its JS
   modules with **200** responses.
-- `/_vercel/insights/script.js` 404s on the dev server on every page —
-  that is Vercel Web Analytics, injected by the Vercel platform only in
-  production. It is not a route regression.
+- `/_vercel/insights/script.js` 404s on the dev server on every page — it
+  is a leftover Vercel Web Analytics path from the Vercel era. Production
+  moved to Google Cloud Run (2026-07-07), which does not serve or inject it
+  either, so the 404 is expected in both environments and is not a route
+  regression.
 - `/demo/avatar-os/studio` (no `.html`) 404s in dev and is **not** a
   supported URL — the avatar-os hub links its sub-pages with the `.html`
   extension, which is the canonical form. Same for the other avatar-os

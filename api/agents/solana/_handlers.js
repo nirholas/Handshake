@@ -56,7 +56,7 @@ export const handleAttestations = wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: false })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const url     = new URL(req.url, `http://${req.headers.host}`);
@@ -264,7 +264,7 @@ export const handleValidation = wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const url     = new URL(req.url, `http://${req.headers.host}`);
@@ -1048,7 +1048,7 @@ export const handleReputation = wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: false })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, `http://${req.headers.host}`);
@@ -1169,7 +1169,7 @@ export const handleReputationHistory = wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: false })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const url   = new URL(req.url, `http://${req.headers.host}`);

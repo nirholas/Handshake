@@ -87,5 +87,5 @@ against `/api/agenc/get-agent`. For the handshake, confirm the canonical id equa
 - The Verify path must be **honest**: if a deliverable can't be fetched/hashed,
   say "could not verify" — never show a green check you didn't compute.
 - No coin but $THREE in any label/explainer.
-- Push both remotes; changelog: yes (user-visible — "verify any agent's on-chain
+- Push to `threews`; changelog: yes (user-visible — "verify any agent's on-chain
   work yourself; living passports with cross-chain identity").

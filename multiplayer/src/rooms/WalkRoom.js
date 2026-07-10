@@ -363,6 +363,21 @@ export class WalkRoom extends Room {
 		// (not return false) so a refusal arrives as a `play_pass`-prefixed error the
 		// client routes back to its sign-in gate. The verified wallet is bound to the
 		// session as the account id, never taken from an unsigned join option.
+		//
+		// KNOWN LANDMINE (2026-07-10): this gate is enforced against every client of
+		// this shared room, but only `/play` (src/game/community-net.js) actually
+		// carries a `playPass` in its join options — it has the whole wallet
+		// sign-in + pass-minting flow. `/walk` (src/walk-net.js) has never had that
+		// UI and sends no `playPass` field at all. As long as PLAY_GATE_MINT is unset
+		// (the default today) this is inert — every join sails past the `if` below.
+		// The moment an operator sets PLAY_GATE_MINT/THREE_MINT, every `/walk` join
+		// and reconnect will throw `play_pass_required` and the page will look
+		// completely offline, while `/play` keeps working. Fixing this properly means
+		// porting real sign-in UI into `/walk` (or extracting the pass-minting flow
+		// out of coincommunities.js into a shared module both pages call) — a
+		// deliberate product decision about whether `/walk` stays a simpler,
+		// no-sign-in surface, not a one-line wiring fix. Do this BEFORE flipping the
+		// platform gate on in production, not after someone reports `/walk` is dead.
 		if (PLAY_GATE_MINT) {
 			const pass = verifyPlayPass(options?.playPass);
 			if (!pass) throw new Error('play_pass_required');

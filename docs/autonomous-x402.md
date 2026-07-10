@@ -20,7 +20,8 @@ the sniper oracle gate.
 ## How a tick works
 
 The loop runs from the `x402-autonomous-loop` cron, scheduled every **5 minutes**
-(`*/5 * * * *` in [`vercel.json`](../vercel.json)). Each tick:
+(the `*/5 * * * *` entry in [`vercel.json`](../vercel.json)'s cron list, run by
+Google Cloud Scheduler). Each tick:
 
 1. Selects up to `X402_AUTONOMOUS_MAX_PER_TICK` **ready** registry entries —
    those whose Redis cooldown has elapsed — sorted by priority descending.
@@ -44,7 +45,7 @@ Payments are real on chain — no mocks, no simulations.
 | `X402_AUTONOMOUS_DAILY_CAP_ATOMIC` | `15000000` ($15) | Daily USDC cap across the whole loop, in 6-decimal atomics. Raised from $5 so the higher per-tick throughput isn't money-starved mid-day; still a hard, env-tunable ceiling enforced per tick. |
 | `X402_VOLUME_BATCH_PER_RUN` | `4` | Volume Bootstrap Loop: endpoints swept per run (cursor advances by this). |
 | `X402_VOLUME_PER_RUN_CAP_ATOMIC` | `50000` ($0.05) | Volume Bootstrap Loop: self-imposed per-run cap, on top of the daily cap, so one tick can't drain the day. |
-| `CRON_SECRET` | _(required)_ | Vercel cron authorization. |
+| `CRON_SECRET` | _(required)_ | Shared secret authorizing cron invocations (Cloud Scheduler). |
 | `X402_ASSET_MINT_SOLANA` | USDC mint | The asset paid with (Solana USDC). |
 | `SOLANA_RPC_URL` | — | RPC used to build and submit the payment. |
 

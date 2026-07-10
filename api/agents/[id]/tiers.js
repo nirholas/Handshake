@@ -74,7 +74,7 @@ async function requireAgentOwner(req, res, agentId) {
 
 async function handleList(req, res, agentId) {
 	const ip = clientIp(req);
-	const rl = await limits.publicIp(ip);
+	const rl = await limits.agentProfileIp(ip);
 	if (!rl.success) return rateLimited(res, rl);
 
 	const rows = await sql`
@@ -96,7 +96,7 @@ async function handleCreate(req, res, agentId) {
 	if (!(await requireCsrf(req, res, user.id))) return;
 
 	const ip = clientIp(req);
-	const rl = await limits.publicIp(ip);
+	const rl = await limits.agentProfileIp(ip);
 	if (!rl.success) return rateLimited(res, rl);
 
 	const body = parse(createSchema, await readJson(req));

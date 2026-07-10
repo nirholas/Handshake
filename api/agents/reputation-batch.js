@@ -32,7 +32,7 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
-	const rl = await limits.publicIp(clientIp(req));
+	const rl = await limits.agentProfileIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	let ids = [];

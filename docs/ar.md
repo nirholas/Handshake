@@ -272,9 +272,9 @@ ngrok http 3000
 # (e.g. https://abc123.ngrok.io)
 ```
 
-### Option 2 — Deploy to a preview URL
+### Option 2 — Deploy to an HTTPS host
 
-Push to a branch — Vercel creates an instant HTTPS preview URL. Open it on your phone.
+Deploy the page to any host that terminates TLS (Cloud Run, Netlify, a static host — anything with a valid HTTPS URL) and open that URL on your phone.
 
 ### Debugging Quick Look
 

@@ -84,7 +84,7 @@ async function handleRead(req, res, id) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.publicIp(clientIp(req));
+	const rl = await limits.agentProfileIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://x');
@@ -278,7 +278,7 @@ async function handleSetPerks(req, res, id, agent) {
 // Patron proves wallet ownership; we release exactly the perks their REAL,
 // live-recomputed on-chain support has earned — payloads included.
 async function handleUnlock(req, res, id, body) {
-	const rl = await limits.publicIp(clientIp(req));
+	const rl = await limits.agentProfileIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const wallet = String(body.wallet || '').trim();
@@ -316,7 +316,7 @@ async function handleUnlock(req, res, id, body) {
 // Patron toggles their own visibility on the public wall. Signature-gated so only
 // the wallet owner can hide/show themselves. Support still counts toward totals.
 async function handleOptOut(req, res, id, body) {
-	const rl = await limits.publicIp(clientIp(req));
+	const rl = await limits.agentProfileIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const wallet = String(body.wallet || '').trim();

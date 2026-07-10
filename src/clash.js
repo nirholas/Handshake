@@ -185,6 +185,14 @@ function errorState(message, onRetry) {
 	return node;
 }
 
+// An absent CoinCommunities key is a deployment state, not something the visitor
+// did wrong — every surface says so in plain language instead of surfacing the
+// raw `cc_unconfigured` code.
+function errorMessage(err, fallback) {
+	if (err?.code === 'cc_unconfigured') return 'Community battles aren’t configured on this deployment yet.';
+	return err?.message || fallback;
+}
+
 // ── Render: standings ────────────────────────────────────────────────────────
 async function renderStandings() {
 	const root = $('cl-standings');
@@ -193,7 +201,7 @@ async function renderStandings() {
 	try {
 		data = await apiGet('leaderboard');
 	} catch (err) {
-		root.replaceChildren(errorState(err.message, () => renderStandings()));
+		root.replaceChildren(errorState(errorMessage(err), () => renderStandings()));
 		return;
 	}
 	const board = data?.board || [];
@@ -251,12 +259,7 @@ async function poll() {
 		setLiveDot($('cl-live'), game.state ? 'connecting' : 'error', game.state ? 'reconnecting' : 'offline');
 		if (game.tab === 'arena' && !game.state) {
 			$('cl-arena').replaceChildren(
-				errorState(
-					err.code === 'cc_unconfigured'
-						? 'Community battles aren’t configured on this deployment yet.'
-						: err.message,
-					() => poll(),
-				),
+				errorState(errorMessage(err), () => poll()),
 			);
 			$('cl-arena').setAttribute('aria-busy', 'false');
 		}
@@ -357,7 +360,7 @@ async function onFight(side) {
 	} catch (err) {
 		restore();
 		if (err?.code === 4001 || /reject/i.test(err?.message || '')) toast('Signature declined.', true);
-		else toast(err.message || 'Enlistment failed.', true);
+		else toast(errorMessage(err, 'Enlistment failed.'), true);
 		log.warn('enlist failed', err);
 	}
 }
@@ -477,7 +480,7 @@ async function flush() {
 			setTimeout(scheduleFlush, 1400);
 		} else {
 			game.pendingTaps += taps;
-			setHint(err.message || 'Rally failed — retrying.', 'error');
+			setHint(errorMessage(err, 'Rally failed — retrying.'), 'error');
 			setTimeout(scheduleFlush, 1500);
 		}
 		log.warn('rally flush failed', err);

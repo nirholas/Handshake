@@ -632,7 +632,7 @@ The handler tries to load a style-specific GLB clip from the bundle (e.g. `clips
   },
   "brain": {
     "provider": "anthropic",
-    "model": "claude-opus-4-7",
+    "model": "claude-opus-4-6",
     "instructions": "instructions.md",
     "temperature": 0.8,
     "maxTokens": 2048

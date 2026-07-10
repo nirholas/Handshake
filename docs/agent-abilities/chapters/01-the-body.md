@@ -16,7 +16,7 @@ Type a prompt at /forge (or call the forge_free MCP tool) and get a downloadable
 
 Generate a humanoid avatar GLB from a prompt (text_to_avatar), or get a fully rigged, animation-ready avatar in a single call (forge_avatar) that chains mesh generation and auto-rigging. Complementary no-AI paths exist too: three selfies → realistic avatar at /create, and a full builder (body, skin, hair, clothing) at /studio.
 
-**How it works:** forge_avatar runs generation then rigging behind a humanoid gate — a mesh that can't safely carry a humanoid skeleton is never forced into a broken rig (an allow_non_humanoid flag overrides). The photo path downscales three selfies, opens an Avaturn editor session, and saves the exported GLB to the user's account (src/selfie-pipeline.js, src/avatar-creator.js). Results ship as Spatial MCP artifacts that render inline in MCP hosts.
+**How it works:** forge_avatar runs generation then rigging behind a humanoid gate — a mesh that can't safely carry a humanoid skeleton is never forced into a broken rig (an allow_non_humanoid flag overrides). The photo path downscales three selfies, opens the photo-reconstruction editor session, and saves the exported GLB to the user's account (src/selfie-pipeline.js, src/avatar-creator.js). Results ship as Spatial MCP artifacts that render inline in MCP hosts.
 
 **Why it matters:** One sentence to a character that can already walk, wave, and emote — no Blender, no rigging knowledge, no multi-step orchestration.
 
@@ -38,7 +38,7 @@ Adds a humanoid skeleton with per-vertex skin weights to any static GLB, turning
 
 ## Universal retargeting — any humanoid rig animates (src/glb-canonicalize.js + src/animation-retarget.js)
 
-Any humanoid avatar from any tool plays the entire animation library — legs included — with zero manual bone mapping. Mixamo, VRM/VRoid, VRM 1.0, Unreal mannequin, Daz/Genesis, MakeHuman, Blender .L/.R, Rigify, HumanIK/Maya namespaces, CharacterStudio, snake_case/kebab-case, and simple shoulderL-style rigs are all handled out of the box.
+Any humanoid avatar from any tool plays the entire animation library — legs included — with zero manual bone mapping. Mixamo, VRM/VRoid, VRM 1.0, Unreal mannequin, Daz/Genesis, MakeHuman, Blender .L/.R, Rigify, HumanIK/Maya namespaces, CH_-prefixed rigs, snake_case/kebab-case, and simple shoulderL-style rigs are all handled out of the box.
 
 **How it works:** glb-canonicalize.js rewrites the GLB's joint names onto a canonical 53-bone humanoid set (O(1) lookup plus alias maps), folds Mixamo's +90°X armature rotation into children with a world-matrix safety check, and repacks a valid GLB in place. animation-retarget.js then renames each clip track to the rig's actual bones, applies per-bone bind-pose correction (C = targetRest · sourceRest⁻¹, handling A-pose vs T-pose rests), and rescales hip translation by height ratio. Gates: ≥8 canonical bones to be playable, ≥50% track coverage per clip, and a 45° hips-tilt sanity check; a genuinely non-riggable prop falls back to the default rig via AnimationManager.supportsCanonicalClips() — never a bind-pose T-pose.
 

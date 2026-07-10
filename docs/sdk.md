@@ -375,7 +375,7 @@ npm run build
 # Build the artifact bundle
 npm run build:artifact
 
-# Build everything and publish the library to dist/agent-3d/<version>/
+# Build the chat integration, the platform app, and the library in one shot
 npm run build:all
 ```
 
@@ -389,11 +389,11 @@ node scripts/publish-lib.mjs
 
 This copies `dist-lib/agent-3d.js` and `dist-lib/agent-3d.umd.cjs` into `dist/agent-3d/<version>/` and creates channel aliases (`<major>`, `<major>.<minor>`, `latest`). It also emits SRI hashes and a `versions.json` manifest so embedders can pin with `integrity` attributes.
 
-Requires `npm run build:lib` to have completed first. Runs automatically as part of `npm run build:all`.
+Requires `npm run build:lib` to have completed first. It's also wired as the `npm run publish:lib` script, and runs automatically inside the full production build (`scripts/build-vercel.mjs`).
 
 ### Versioning
 
-The platform follows semantic versioning. The web component version tracks `package.json` (currently `1.5.1`). The AgentKit SDK is independently versioned in `sdk/package.json` (currently `0.2.0`). Breaking changes only ship in major releases. See `sdk/CHANGELOG.md` for the AgentKit release history.
+The platform follows semantic versioning. The web component version tracks `package.json` (currently `1.5.2`). The AgentKit SDK is independently versioned in `sdk/package.json` (currently `0.2.1`). Breaking changes only ship in major releases. See `sdk/CHANGELOG.md` for the AgentKit release history.
 
 ---
 

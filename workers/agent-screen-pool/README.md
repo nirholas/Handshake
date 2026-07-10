@@ -50,7 +50,7 @@ viewer SSE  ◀── /api/agent-screen-stream  ◀─────────�
 ```
 
 Authentication is a single shared secret, `SCREEN_WORKER_SECRET`, set on both the
-API (Vercel env) and this worker. With it the worker may push frames for **any**
+API (the Cloud Run service env) and this worker. With it the worker may push frames for **any**
 agent (it casts on viewers' behalf, it doesn't own the agents).
 
 ## Run it
@@ -86,8 +86,9 @@ docker run --rm -e SCREEN_WORKER_SECRET=<secret> three-ws/agent-screen-pool
 
 ## Where to run it
 
-- **Best:** a small always-on VM / Fly.io / Railway container (one process is
-  plenty; raise `MAX_BROWSERS` with RAM — budget ~350 MB per concurrent page).
-- **Bursts:** the bundled GitHub Actions workflow
-  (`.github/workflows/agent-screen-pool.yml`) runs it for up to ~5.5h per
-  dispatch — fine for demos and events, not a 24/7 host (Actions caps job time).
+- **Best:** build the bundled `Dockerfile` and deploy it as a long-lived Cloud
+  Run service (`--no-cpu-throttling`), the same place the platform's other
+  workers run.
+- **Alternative:** any small always-on VM or container host works too (one
+  process is plenty; raise `MAX_BROWSERS` with RAM — budget ~350 MB per
+  concurrent page).

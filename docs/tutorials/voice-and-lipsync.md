@@ -30,7 +30,7 @@ This tutorial covers the full chain: **choose a voice → understand visemes →
 
 A **viseme** is the visual shape a mouth makes for a sound — the open jaw of "aa", the lip-press of "PP", the teeth-and-tongue of "SS". On a 3D avatar each viseme is a **morph target** (a blendshape) you can dial from 0 to 1.
 
-three.ws uses the Oculus/ARKit viseme naming. The analyser ([`src/lip-sync-analyser.js`](src/lip-sync-analyser.js)) drives nine of them:
+three.ws uses the Oculus/ARKit viseme naming. The analyser ([`src/lip-sync-analyser.js`](../../src/lip-sync-analyser.js)) drives nine of them:
 
 ```js
 export const VISEMES = [
@@ -56,7 +56,7 @@ One important fallback: not every avatar has viseme morphs. The runtime detects 
 
 ## Step 1: Choose a built-in voice
 
-The fastest path to a talking agent is a built-in TTS voice. The catalog lives in one place ([`api/_lib/tts-voices.js`](api/_lib/tts-voices.js)) so every picker and the synthesizer agree on what exists:
+The fastest path to a talking agent is a built-in TTS voice. The catalog lives in one place ([`api/_lib/tts-voices.js`](../../api/_lib/tts-voices.js)) so every picker and the synthesizer agree on what exists:
 
 | id | character |
 |---|---|
@@ -72,7 +72,7 @@ The fastest path to a talking agent is a built-in TTS voice. The catalog lives i
 | `shimmer` | Light and airy |
 | `verse` | Dynamic and conversational |
 
-The default is `nova`. These are synthesized by `POST /api/tts/speak` ([`api/tts/speak.js`](api/tts/speak.js)), which tries the free NVIDIA NIM Magpie lane first and falls back to OpenAI's `/v1/audio/speech`. You don't choose the provider — you choose the voice id, and the endpoint renders it on whichever lane is configured.
+The default is `nova`. These are synthesized by `POST /api/tts/speak` ([`api/tts/speak.js`](../../api/tts/speak.js)), which tries the free NVIDIA NIM Magpie lane first and falls back to OpenAI's `/v1/audio/speech`. You don't choose the provider — you choose the voice id, and the endpoint renders it on whichever lane is configured.
 
 You can hear all of these immediately in the next step.
 
@@ -118,7 +118,7 @@ To see the **exact analyser** that powers live agent speech, open the **audio-dr
 This page wires the real pipeline directly:
 
 - `getUserMedia({ audio: true })` → an `AudioContext` with an `AnalyserNode` (`fftSize = 256`, `smoothingTimeConstant = 0.7`).
-- A `LipSyncAnalyser` ([`src/lip-sync-analyser.js`](src/lip-sync-analyser.js)) reads that node. Each frame it calls `analyser.sample()`, which returns the nine viseme weights, and applies them straight to the avatar: `mesh.morphTargetInfluences[index] = weight`.
+- A `LipSyncAnalyser` ([`src/lip-sync-analyser.js`](../../src/lip-sync-analyser.js)) reads that node. Each frame it calls `analyser.sample()`, which returns the nine viseme weights, and applies them straight to the avatar: `mesh.morphTargetInfluences[index] = weight`.
 - The mic node is deliberately **not** connected to the speakers, so you don't hear yourself echo.
 
 Your audio never leaves the browser — analysis is `AnalyserNode` + `requestAnimationFrame`, nothing more. This is the same `LipSyncAnalyser` the live chat connects to its TTS output, so whatever mouth shapes you see here are what your agents will produce.
@@ -132,10 +132,10 @@ If you want your agent to speak in *your* voice instead of a built-in one, use t
 1. Open [/voice](/voice).
 2. Read one of the suggested scripts aloud (or speak naturally) while recording. **20–30 seconds** is the recommended length; recording auto-stops at 60 seconds, and anything under 3 seconds is rejected. A live waveform and level meter show your input as you go.
 3. Stop, then **review** the playback.
-4. Give the voice a **name** (1–64 characters) and click **Clone**. The page uploads the sample to `POST /api/tts/eleven-clone` ([`api/tts/eleven-clone.js`](api/tts/eleven-clone.js)) as `multipart/form-data`.
+4. Give the voice a **name** (1–64 characters) and click **Clone**. The page uploads the sample to `POST /api/tts/eleven-clone` ([`api/tts/eleven-clone.js`](../../api/tts/eleven-clone.js)) as `multipart/form-data`.
 5. On success you get a `voice_id`, and the voice is saved to your library (stored in `localStorage`, up to 20 voices).
 
-**Test it in the playground.** Pick the cloned voice, type a sample line, and click Speak. The playground calls `POST /api/tts/eleven` ([`api/tts/eleven.js`](api/tts/eleven.js)) with `{ voiceId, text }`, which proxies ElevenLabs and caches the clip for 30 days (the hint shows `cached` vs `generated`). Default model is `eleven_flash_v2_5`; requests are capped at 500 characters and rate-limited to 1000 characters per hour per user.
+**Test it in the playground.** Pick the cloned voice, type a sample line, and click Speak. The playground calls `POST /api/tts/eleven` ([`api/tts/eleven.js`](../../api/tts/eleven.js)) with `{ voiceId, text }`, which proxies ElevenLabs and caches the clip for 30 days (the hint shows `cached` vs `generated`). Default model is `eleven_flash_v2_5`; requests are capped at 500 characters and rate-limited to 1000 characters per hour per user.
 
 > Instant Voice Cloning is a **paid-tier ElevenLabs feature** (Starter and up). If the server's account is on the free tier, the clone call returns the upstream error verbatim in the status line (e.g. a `can_not_use_instant_voice_cloning` message). Built-in voices in Step 1 have no such requirement.
 
@@ -147,9 +147,9 @@ Note the `voice_id` — you'll use it to give an agent the cloned voice in the n
 
 Now connect a voice to an agent so it speaks during conversation, with the mouth driven automatically.
 
-The agent runtime ships two TTS providers that expose a shared `analyserNode`: `ElevenLabsTTS` ([`src/runtime/speech.js`](src/runtime/speech.js)) for cloned/ElevenLabs voices, and a neural TTS provider ([`src/runtime/neural-tts.js`](src/runtime/neural-tts.js)) that speaks the built-in catalog through `/api/tts/speak`. Whichever one an agent uses, the avatar wiring is identical.
+The agent runtime ships two TTS providers that expose a shared `analyserNode`: `ElevenLabsTTS` ([`src/runtime/speech.js`](../../src/runtime/speech.js)) for cloned/ElevenLabs voices, and a neural TTS provider ([`src/runtime/neural-tts.js`](../../src/runtime/neural-tts.js)) that speaks the built-in catalog through `/api/tts/speak`. Whichever one an agent uses, the avatar wiring is identical.
 
-The connection happens through two hooks the runtime sets on the TTS instance (see [`src/app.js`](src/app.js) and [`src/element.js`](src/element.js)):
+The connection happens through two hooks the runtime sets on the TTS instance (see [`src/app.js`](../../src/app.js) and [`src/element.js`](../../src/element.js)):
 
 ```js
 tts.onStart = () => {
@@ -162,7 +162,7 @@ tts.onEnd = () => {
 };
 ```
 
-`connectLipSync(audioSource)` ([`src/agent-avatar.js`](src/agent-avatar.js)) builds a fresh `LipSyncAnalyser` on the TTS `AnalyserNode`; every render frame the avatar samples it and writes viseme weights (or, on a viseme-less rig, drives `jawOpen` from the amplitude). `disconnectLipSync()` zeroes the viseme and `jawOpen`/`mouthOpen` morphs so the face eases back to rest instead of freezing on the last shape mid-word.
+`connectLipSync(audioSource)` ([`src/agent-avatar.js`](../../src/agent-avatar.js)) builds a fresh `LipSyncAnalyser` on the TTS `AnalyserNode`; every render frame the avatar samples it and writes viseme weights (or, on a viseme-less rig, drives `jawOpen` from the amplitude). `disconnectLipSync()` zeroes the viseme and `jawOpen`/`mouthOpen` morphs so the face eases back to rest instead of freezing on the last shape mid-word.
 
 For a cloned voice, construct the ElevenLabs provider with the `voice_id` from Step 4:
 
@@ -185,7 +185,7 @@ When the agent speaks, `tts.speak(text)` plays the clip; `onStart` fires on the 
 
 ## Step 6: Spatial audio (optional polish)
 
-If your agent lives in a 3D scene rather than a flat panel, route its voice through a positional audio source so the sound comes from where the avatar stands. `AgentAvatar.setTTS(tts)` ([`src/agent-avatar.js`](src/agent-avatar.js)) binds the provider, and when a `THREE.PositionalAudio` is attached it forwards it to `ElevenLabsTTS.setPositionalAudio()`. The voice then attenuates with distance and pans with the avatar's position — the groundwork the [real-time voice preview](/blog/real-time-voice-interaction) describes for headset/WebXR deployment, where the agent's voice should come from the avatar in space.
+If your agent lives in a 3D scene rather than a flat panel, route its voice through a positional audio source so the sound comes from where the avatar stands. `AgentAvatar.setTTS(tts)` ([`src/agent-avatar.js`](../../src/agent-avatar.js)) binds the provider, and when a `THREE.PositionalAudio` is attached it forwards it to `ElevenLabsTTS.setPositionalAudio()`. The voice then attenuates with distance and pans with the avatar's position — the groundwork the [real-time voice preview](/blog/real-time-voice-interaction) describes for headset/WebXR deployment, where the agent's voice should come from the avatar in space.
 
 This is opt-in: a flat embed plays voice normally without it.
 
@@ -208,9 +208,9 @@ This is opt-in: a flat embed plays voice normally without it.
 
 You gave an agent a synchronized voice end to end:
 
-- **Choose a voice** — eleven built-in voices in [`api/_lib/tts-voices.js`](api/_lib/tts-voices.js), synthesized by `POST /api/tts/speak` (free NVIDIA lane, OpenAI backstop), default `nova`.
+- **Choose a voice** — eleven built-in voices in [`api/_lib/tts-voices.js`](../../api/_lib/tts-voices.js), synthesized by `POST /api/tts/speak` (free NVIDIA lane, OpenAI backstop), default `nova`.
 - **Clone a voice** — record in the [Voice Lab](/voice), clone via `/api/tts/eleven-clone` (ElevenLabs IVC), play back via `/api/tts/eleven` with a 30-day cache.
-- **Understand visemes** — the [TTS lab](/lipsync) and [mic lab](/lipsync/mic) show nine viseme morphs driven from the audio spectrum by [`src/lip-sync-analyser.js`](src/lip-sync-analyser.js) — no per-word timing, all in-browser.
+- **Understand visemes** — the [TTS lab](/lipsync) and [mic lab](/lipsync/mic) show nine viseme morphs driven from the audio spectrum by [`src/lip-sync-analyser.js`](../../src/lip-sync-analyser.js) — no per-word timing, all in-browser.
 - **Wire it live** — a runtime TTS provider exposes an `analyserNode`; `tts.onStart` calls `avatar.connectLipSync()` and `tts.onEnd` calls `disconnectLipSync()`, so the mouth follows the speech and returns to rest automatically — falling back to `jawOpen` on rigs without viseme morphs.
 
 The leverage is that the avatar drives its mouth from the *audio it actually plays*, so a built-in voice, a cloned voice, and a live mic all flow through one analyser. Start with a built-in voice in the [TTS lab](/lipsync), then bring your own through the [Voice Lab](/voice).

@@ -37,7 +37,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	// Public read bucket — keyless, generous, per-IP flood guard.
-	const rl = await limits.publicIp(clientIp(req));
+	const rl = await limits.marketDataIp(clientIp(req));
 	setRateLimitHeaders(res, rl);
 	if (!rl.success) return rateLimited(res, rl);
 

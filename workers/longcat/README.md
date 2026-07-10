@@ -85,7 +85,8 @@ gcloud builds submit \
   --substitutions _GCS_BUCKET=three-ws-avatar-videos,_WEIGHTS_BUCKET=three-ws-longcat-weights
 ```
 
-After deploy, copy the Cloud Run service URL and API key to Vercel:
+After deploy, copy the Cloud Run service URL and API key onto the three.ws
+production service (Cloud Run `three-ws-api`) so the site can reach this worker:
 
 ```bash
 # Get the service URL
@@ -96,10 +97,12 @@ gcloud run services describe longcat-video-avatar \
 # Get the API key value
 gcloud secrets versions access latest --secret=longcat-video-avatar-key
 
-# Set in Vercel
-vercel env add LONGCAT_WORKER_URL production
-vercel env add LONGCAT_WORKER_KEY production
+# Set on the site's Cloud Run service, then redeploy the site
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars LONGCAT_WORKER_URL=<service-url>,LONGCAT_WORKER_KEY=<api-key>
 ```
+
+Full env/deploy runbook: [`../../docs/ops/gcp-production.md`](../../docs/ops/gcp-production.md).
 
 ## Cost estimate (us-central1 L4 GPU)
 

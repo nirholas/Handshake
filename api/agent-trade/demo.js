@@ -124,7 +124,7 @@ export default wrap(async (req, res) => {
 	}
 
 	// Rate-limit the live demo (it moves real SOL).
-	const rl = await limits.authIp(clientIp(req));
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl, 'too many demo requests');
 
 	const topic = (url.searchParams.get('topic') || 'crypto markets').trim().slice(0, 200);

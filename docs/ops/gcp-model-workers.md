@@ -53,8 +53,8 @@ faked.
 | `GCP_REMESH_URL`        | Game-Ready export      | `model`/`remesh` worker (post-gen). |
 | `FORGE_PREFER_FREE`     | routing (optional)     | Defaults on. Set `false` only to restore the paid-default ordering once the paid account is funded. |
 
-The URL each worker registers in Vercel is printed at the end of
-`workers/deploy/deploy-all.sh`, or read it from
+The URL each worker registers on the `three-ws-api` Cloud Run service env is
+printed at the end of `workers/deploy/deploy-all.sh`, or read it from
 `gcloud run services describe <service> --region us-central1 --format='value(status.url)'`.
 
 Secrets never appear in logs or the public catalog.
@@ -139,8 +139,8 @@ gcloud builds submit --config workers/model-trellis/cloudbuild.yaml .
 # swap in workers/model-hunyuan3d/… or workers/model-triposg/… as needed
 ```
 
-**Provision/redeploy the whole pipeline** (idempotent; prints the URLs to put in
-Vercel env):
+**Provision/redeploy the whole pipeline** (idempotent; prints the URLs to set on
+the `three-ws-api` Cloud Run service env):
 
 ```bash
 PROJECT_ID=<gcp-project> SERVICES="hunyuan3d trellis triposg unirig" \

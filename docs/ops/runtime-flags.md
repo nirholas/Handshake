@@ -2,7 +2,7 @@
 
 DB-backed switches that flip platform behavior **without a redeploy**. Use them
 to arm or disarm crons and request-path features at runtime instead of editing a
-Vercel env var and waiting for a build.
+Cloud Run env var and waiting for a new revision.
 
 - **Table:** `app_flags` (`key`, `enabled`, `value` jsonb, `updated_by`, `updated_at`) — migration `api/_lib/migrations/20260630120000_app_flags.sql`.
 - **Helper:** [api/_lib/flags.js](../../api/_lib/flags.js) — `getFlag`, `isFlagEnabled`, `setFlag`, `listFlags`.

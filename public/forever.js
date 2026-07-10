@@ -87,6 +87,12 @@ function estimateInscriptionSats(messageBytes, feeRate) {
 	return Math.ceil((minerSats + POSTAGE_SATS) * SERVICE_BUFFER);
 }
 
+// Declared above renderFeeEstimate: the top-level renderFeeEstimate() call below
+// reads BTC_USD, so a `let` declared after that call leaves it in the temporal
+// dead zone and throws "Cannot access 'BTC_USD' before initialization", which
+// aborts this module and takes the whole fee estimator down with it.
+let BTC_USD = null;
+
 function renderFeeEstimate() {
 	if (!els.feeEstimate) return;
 	const bytes = new TextEncoder().encode(els.message.value).length;
@@ -108,7 +114,6 @@ updateCounters();
 renderFeeEstimate();
 
 // ── btc/usd price (single fetch, best-effort) ───────────────────
-let BTC_USD = null;
 async function fetchBtcPrice() {
 	try {
 		const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');

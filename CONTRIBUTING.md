@@ -87,7 +87,7 @@ Use clear, descriptive commit messages. Conventional format is preferred:
 - **Formatting:** Run `npx prettier --write .` before committing
 - **No new dependencies** without discussion — keep the bundle small
 - **Browser compatibility:** Must work in Chrome, Firefox, and Edge. Safari support is best-effort
-- **No server-side code** — the app must remain 100% client-side
+- **Keep viewer/UI code client-side** — the frontend viewer must run entirely in the browser; server logic belongs in the `api/` handlers (served in production by the Cloud Run container in `server/`), never bundled into the browser app
 - **Dispose resources** — any new Three.js objects (geometries, materials, textures) must be disposed in `Viewer.clear()`
 - **Blob URL cleanup** — any `URL.createObjectURL()` must have a corresponding `URL.revokeObjectURL()`
 

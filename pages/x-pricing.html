@@ -129,7 +129,7 @@
 
 		// Server-truth plan prices + the $THREE discount.
 		try {
-			const r = await fetch('/api/payments/solana?action=plans');
+			const r = await fetch('/api/payments/solana/plans');
 			if (r.ok) {
 				const d = await r.json();
 				const pro = d.plans?.pro;
@@ -159,7 +159,7 @@
 			$('upgrade-btn').textContent = 'Creating checkout…';
 			setStatus('');
 			try {
-				const r = await fetch('/api/payments/solana?action=checkout', {
+				const r = await fetch('/api/payments/solana/checkout', {
 					method: 'POST',
 					credentials: 'include',
 					headers: { 'content-type': 'application/json' },
@@ -205,7 +205,7 @@
 			$('confirm-btn').disabled = true;
 			setStatus('Verifying transaction on-chain…');
 			try {
-				const r = await fetch('/api/payments/solana?action=confirm', {
+				const r = await fetch('/api/payments/solana/confirm', {
 					method: 'POST',
 					credentials: 'include',
 					headers: { 'content-type': 'application/json' },
