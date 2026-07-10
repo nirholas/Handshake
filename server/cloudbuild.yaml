@@ -63,6 +63,17 @@ steps:
               '900',
               '--service-account',
               'three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com',
+              # Reach Memorystore Redis (private IP) via the internal LB
+              # 10.128.15.228 → serverless NEG → three-ws-redis-proxy (SRH) →
+              # Memorystore three-ws-redis. private-ranges-only egress keeps every
+              # external call (RPC, LLM APIs) on the direct public path — only
+              # RFC1918 destinations traverse the connector. Pinned here so a
+              # full-config deploy can never silently drop Redis back to the
+              # (capped) Upstash free tier. Runbook: docs/ops/gcp-production.md.
+              '--vpc-connector',
+              'three-ws-vpc',
+              '--vpc-egress',
+              'private-ranges-only',
           ]
 
 substitutions:

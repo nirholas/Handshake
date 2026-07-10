@@ -371,6 +371,64 @@ Owner supplied the Upstash database and the wallet secrets. Applied on revision
   wallets configured, funded, and consistent** (14/15 signers; only the
   intentionally-excluded collection authority remains).
 
+### Resolved: self-hosted Memorystore Redis, off the Upstash free tier (2026-07-10)
+
+The Upstash free database (`saving-titmouse-110599`) hit its hard **500k
+commands/month** cap within hours — that ceiling is far too small for this
+platform (the rate limiter alone spends 2–3 commands per request). Redis then
+errored on every command, the cache circuit opened, and paid endpoints were only
+saved by the durable Postgres rate-limit fallback (commit `a1b0b9610`). The free
+tier does not reset until the 1st, so the fix was to **stand up our own Redis on
+the GCP credit pool** — permanently ending the third-party quota dependency.
+
+Architecture (all in `aerial-vehicle-466722-p5`, `us-central1`; app code
+UNCHANGED — it still speaks the `@upstash/redis` REST dialect):
+
+```
+three-ws-api (Cloud Run)
+  ├─ VPC connector "three-ws-vpc" (10.8.0.0/28), egress private-ranges-only
+  │    → only RFC1918 dests traverse the VPC; all external calls (RPC, LLM
+  │      APIs) stay on the direct public path (no Cloud NAT needed, no egress
+  │      bottleneck).
+  └─ UPSTASH_REDIS_REST_URL = http://10.128.15.228   (internal LB IP)
+     UPSTASH_REDIS_REST_TOKEN = secret:srh-proxy-token
+        │
+Regional internal Application LB (10.128.15.228:80)
+  forwarding-rule "three-ws-redis-fr" → target-http-proxy "three-ws-redis-tproxy"
+  → url-map "three-ws-redis-urlmap" → backend "three-ws-redis-be"
+  → serverless NEG "three-ws-redis-neg"
+  (proxy-only subnet "three-ws-proxy-only" 10.100.0.0/23; firewall
+   "three-ws-allow-proxy-subnet" + "three-ws-allow-connector-to-ilb")
+        │
+Cloud Run "three-ws-redis-proxy" (hiett/serverless-redis-http:0.0.10, pinned;
+  ingress internal-and-cloud-load-balancing; SRH_TOKEN=secret:srh-proxy-token;
+  SRH_CONNECTION_STRING=redis://10.234.231.139:6379; on VPC connector three-ws-vpc)
+        │
+Memorystore Redis "three-ws-redis" (basic, 1 GB, redis_7_0) @ 10.234.231.139:6379
+```
+
+Why this shape: the org blocks `allUsers` invocation (domain-restricted
+sharing), so a *public* REST proxy is unreachable (its SRH bearer token collides
+with the Google auth token Cloud Run would demand). Fronting the proxy with a
+**regional internal LB** and reaching it over the VPC connector keeps the proxy
+off the public internet AND keeps the app's external egress on the fast direct
+path. The connector + Redis env are **pinned in `server/cloudbuild.yaml`** so a
+full-config redeploy can never silently drop Redis back to the capped Upstash
+tier.
+
+Verified 2026-07-10 on revision `three-ws-api-00052-kbg`: `/api/healthz`
+overall `ok`, cache backend healthy (the client self-labels "upstash" — it is
+our Memorystore); proxy access logs show a steady stream of `POST 200`
+`/pipeline` commands; the old Upstash endpoint stayed capped and untouched
+(proving the app moved off it); and a real $0.01 club-cover settlement completed
+end to end (tx `4fWXfymUxwS7YRMrkQqHwwgtA1GiEAmnJXsgYaXHo5NvyAqhisGkmU3k7waLD85RsVx5s4mXmB4ymiTuEvzAWnQ8`).
+
+Cost ≈ $75/mo on the credit pool (Memorystore ~$35, proxy min-1 ~$13, connector
+~$9, internal LB ~$18). To retire: repoint `UPSTASH_REDIS_REST_URL/TOKEN` at a
+managed Upstash paid plan and delete the four `three-ws-redis-*` LB resources +
+proxy + Memorystore + connector. The `upstash-redis-rest-token` secret and the
+`saving-titmouse` free DB are now unused (kept for rollback).
+
 | What | Vars | Impact | Recovery |
 |---|---|---|---|
 | OKX X Layer facilitator creds | `OKX_API_KEY`, `OKX_SECRET_KEY`, `OKX_PASSPHRASE` (or, as a no-OKX-account fallback, `X402_XLAYER_RELAYER_KEY`) | `xlayerSettleable()` (`api/_lib/x402-xlayer-okx.js`) is false without one of these, so **no 402 challenge on any endpoint advertises the `eip155:196` (X Layer) rail** — confirmed live 2026-07-08 via `/api/okx/3d/health` (`payment-rail.settleable:false, facilitator_configured:false`) and by inspecting the raw 402 `accepts[]` on `/api/okx/3d/identity-studio` and `/api/okx/3d/pose-seed` (Solana + Base only, no X Layer entry). `X402_PAY_TO_XLAYER` and `X402_ASSET_ADDRESS_XLAYER` **are** set in prod — this is the only missing piece. This is the exact rail OKX's listing review requires (agent #2632 rejection reason); the relisting (`prompts/okx-ai/05-relisting-resubmission.md`) cannot proceed until it's live. | OKX Web3 developer console (owner) for the three real creds, or generate `X402_XLAYER_RELAYER_KEY` as a fresh EVM keypair + fund it with OKB gas as a stopgap that needs no OKX account. |
