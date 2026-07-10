@@ -934,6 +934,22 @@
 			"dest": "/coins.html"
 		},
 		{
+			"src": "/markets/?",
+			"dest": "/markets.html"
+		},
+		{
+			"src": "/markets/news/?",
+			"dest": "/markets-news.html"
+		},
+		{
+			"src": "/markets/news/article/?",
+			"dest": "/news-article.html"
+		},
+		{
+			"src": "/markets/archive/?",
+			"dest": "/news-archive.html"
+		},
+		{
 			"src": "/fear-greed/?",
 			"dest": "/fear-greed.html"
 		},

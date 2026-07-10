@@ -1541,6 +1541,38 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-06-08"
+				},
+				{
+					"path": "/markets",
+					"title": "Markets Hub",
+					"description": "The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 37 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
+					"priority": 0.8,
+					"changefreq": "hourly",
+					"added": "2026-07-10"
+				},
+				{
+					"path": "/markets/news",
+					"title": "Crypto News",
+					"description": "Live crypto news aggregated natively from 37 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
+					"priority": 0.8,
+					"changefreq": "hourly",
+					"added": "2026-07-10"
+				},
+				{
+					"path": "/markets/news/article",
+					"title": "Crypto News Reader",
+					"description": "Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.",
+					"priority": 0.5,
+					"changefreq": "hourly",
+					"added": "2026-07-10"
+				},
+				{
+					"path": "/markets/archive",
+					"title": "Crypto News Archive",
+					"description": "The largest open crypto-news archive: 662,047 articles from September 2017 to today in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-07-10"
 				}
 			]
 		},

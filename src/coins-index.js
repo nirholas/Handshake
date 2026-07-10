@@ -3,12 +3,8 @@
 // a sortable top-coins table with 7d sparklines, a search type-ahead, and
 // load-more pagination. Every row links to the rich /coin/:id detail page.
 
-import {
-	formatUsd,
-	formatPrice,
-	formatPercent,
-	escapeHtml as esc,
-} from './shared/coin-format.js';
+import { formatUsd, formatPercent, escapeHtml as esc } from './shared/coin-format.js';
+import { coinRow, COIN_COLUMNS, coinSortValue } from './shared/market-table.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -119,51 +115,17 @@ async function loadStats() {
 }
 
 // ── Market table ────────────────────────────────────────────────────────────
-
-const COLUMNS = [
-	{ key: 'rank', label: '#', left: true, hide: 'hide-sm', num: true },
-	{ key: 'name', label: 'Coin', left: true },
-	{ key: 'price', label: 'Price', num: true },
-	{ key: 'change_24h', label: '24h %', num: true },
-	{ key: 'change_7d', label: '7d %', hide: 'hide-md', num: true },
-	{ key: 'market_cap', label: 'Mkt Cap', hide: 'hide-lg', num: true },
-	{ key: 'volume_24h', label: 'Vol (24h)', hide: 'hide-lg', num: true },
-];
+// Row/column/sort primitives are shared with the /markets hub — see
+// src/shared/market-table.js.
 
 const state = { coins: [], sortKey: 'rank', sortDir: 'asc', page: 1, loadingMore: false };
-
-function sparkline(prices) {
-	if (!prices || prices.length < 2) return '';
-	const min = Math.min(...prices);
-	const max = Math.max(...prices);
-	const range = max - min || 1;
-	const w = 120;
-	const h = 32;
-	const pts = prices
-		.map((p, i) => `${((i / (prices.length - 1)) * w).toFixed(1)},${(h - ((p - min) / range) * h).toFixed(1)}`)
-		.join(' ');
-	const up = prices[prices.length - 1] >= prices[0];
-	return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true" style="display:inline-block"><polyline points="${pts}" fill="none" stroke="${up ? 'var(--cv-chart-green)' : 'var(--cv-chart-red)'}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
-}
-
-function pctCell(v, extraClass = '') {
-	if (v == null) return `<td class="pct dim ${extraClass}">—</td>`;
-	const up = v >= 0;
-	return `<td class="pct ${up ? 'cv-up' : 'cv-down'} ${extraClass}"><span aria-hidden="true">${up ? '▲' : '▼'}</span>${esc(formatPercent(v))}</td>`;
-}
-
-function sortValue(c, key) {
-	if (key === 'name') return (c.name || '').toLowerCase();
-	if (key === 'rank') return c.rank ?? Infinity;
-	return c[key] ?? 0;
-}
 
 function sortedCoins() {
 	const copy = [...state.coins];
 	const { sortKey, sortDir } = state;
 	copy.sort((a, b) => {
-		const va = sortValue(a, sortKey);
-		const vb = sortValue(b, sortKey);
+		const va = coinSortValue(a, sortKey);
+		const vb = coinSortValue(b, sortKey);
 		const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb;
 		return sortDir === 'asc' ? cmp : -cmp;
 	});
@@ -178,32 +140,13 @@ function renderTable() {
 		return;
 	}
 
-	const head = COLUMNS.map((col) => {
+	const head = COIN_COLUMNS.map((col) => {
 		const active = col.key === state.sortKey;
 		const arrow = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
 		return `<th scope="col" tabindex="0" data-key="${col.key}" class="${col.left ? 'left' : ''} ${col.hide || ''}"${active ? ` aria-sort="${state.sortDir === 'asc' ? 'ascending' : 'descending'}"` : ''}>${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
 	}).join('');
 
-	const rows = sortedCoins()
-		.map((c) => {
-			const href = `/coin/${encodeURIComponent(c.id)}`;
-			return `
-			<tr data-href="${esc(href)}">
-				<td class="rank hide-sm cv-mono">${c.rank ?? '—'}</td>
-				<td class="left name-cell"><a href="${esc(href)}"><span class="inner">
-					${c.image ? `<img src="${esc(c.image)}" alt="" loading="lazy" width="24" height="24" data-no-dark-filter />` : ''}
-					<span class="nm">${esc(c.name)}</span>
-					<span class="sym">${esc(c.symbol)}</span>
-				</span></a></td>
-				<td class="price">${esc(formatPrice(c.price))}</td>
-				${pctCell(c.change_24h)}
-				${pctCell(c.change_7d, 'hide-md')}
-				<td class="dim hide-lg">${esc(formatUsd(c.market_cap))}</td>
-				<td class="dim hide-lg">${esc(formatUsd(c.volume_24h))}</td>
-				<td class="hide-xl">${sparkline(c.sparkline)}</td>
-			</tr>`;
-		})
-		.join('');
+	const rows = sortedCoins().map(coinRow).join('');
 
 	el.innerHTML = `
 		<div class="cv-table-wrap">

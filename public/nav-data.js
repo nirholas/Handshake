@@ -328,7 +328,22 @@ export const NAV_GROUPS = [
 				label: 'Intelligence',
 				items: [
 					{
-						title: 'Markets',
+						title: 'Markets Hub',
+						href: '/markets',
+						desc: 'Global stats, the top 100 coins, live news, and every market tool in one place',
+					},
+					{
+						title: 'Crypto News',
+						href: '/markets/news',
+						desc: 'Live headlines from 37 publisher feeds with a rich reader for every story',
+					},
+					{
+						title: 'News Archive',
+						href: '/markets/archive',
+						desc: '662k articles back to 2017 — search a decade of crypto history',
+					},
+					{
+						title: 'Coins',
 						href: '/coins',
 						desc: 'Live global market data — top coins, prices, and a rich detail page for every asset',
 					},

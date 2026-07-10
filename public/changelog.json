@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T00:05:21.548Z",
+	"generated_at": "2026-07-10T02:09:48.113Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -8,12 +8,62 @@
 	"entries": [
 		{
 			"date": "2026-07-10",
+			"type": "launch",
+			"title": "Crypto News",
+			"summary": "Live crypto news aggregated natively from 37 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
+			"link": "/markets/news",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "launch",
+			"title": "Crypto News Archive",
+			"summary": "The largest open crypto-news archive: 662,047 articles from September 2017 to today in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language.",
+			"link": "/markets/archive",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "launch",
+			"title": "Crypto News Reader",
+			"summary": "Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.",
+			"link": "/markets/news/article",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "launch",
+			"title": "Markets Hub",
+			"summary": "The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 37 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
+			"link": "/markets",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-10",
 			"type": "update",
 			"title": "Auto-rigging works again — and the Agent Identity Studio demos are real",
 			"summary": "Rigging any generated model into an animation-ready character had been failing since the cloud migration: the rig request was sent to a service that doesn't do rigging, and the GPU rigger itself crashed on a graphics call our cloud GPUs don't support. Both are fixed — rig requests now reach the real UniRig worker, which renders its voxel pass in software instead. Proof: all four Agent Identity Studio demo characters (LedgerLynx, MuseWeaver, Momentum-9, and the three.ws studio's own) were generated, rigged with full skeletons, and photographed in posed renders through the live pipeline — see them on the showcase.",
 			"link": "/agent-identities",
 			"tags": [
 				"fix",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Crypto news is live: a real-time feed from 37 publishers, a rich article reader, and a 662,047-article archive back to 2017",
+			"summary": "Markets grew a full news wing. /markets/news streams live headlines aggregated directly from 37 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search, and open any story in a reader that extracts the full text with a summary, key points, sentiment, and related coverage. Behind it sits the largest open crypto-news archive anywhere: 662,047 articles from September 2017 to today in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language at /markets/archive. A new /markets hub ties the whole suite together — live global stats, the top 100 coins, breaking news, and every market tool as its own card.",
+			"link": "/markets",
+			"tags": [
 				"feature"
 			]
 		},

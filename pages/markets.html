@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Markets — live crypto prices, news &amp; tools · three.ws</title>
+		<meta
+			name="description"
+			content="The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 37 publisher feeds, a 662k-article news archive, and the full markets toolset: heatmap, screener, fear &amp; greed, gas, DeFi TVL, and more."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/markets" />
+		<meta property="og:title" content="Markets — live crypto prices, news &amp; tools · three.ws" />
+		<meta
+			property="og:description"
+			content="Live global stats, the top 100 coins, breaking crypto news, a 662k-article archive, and the full markets toolset in one hub."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Markets&amp;d=Live+global+stats%2C+the+top+100+coins%2C+breaking+crypto+news%2C+a+662k-article+archive%2C+and+the+full+markets+toolset+in+one+hub.&amp;p=%2Fmarkets"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Markets · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Live global stats, top 100 coins, breaking crypto news, a 662k-article archive, and the full markets toolset."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Markets&amp;d=Live+global+stats%2C+the+top+100+coins%2C+breaking+crypto+news%2C+a+662k-article+archive%2C+and+the+full+markets+toolset+in+one+hub.&amp;p=%2Fmarkets"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/site.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/markets" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Markets hub — three.ws" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Markets","description":"The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 37 publisher feeds, a 662k-article news archive, and the full markets toolset.","url":"https://three.ws/markets","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container">
+			<h1 class="cv-h1">Markets</h1>
+			<p class="cv-sub">
+				Everything the market is doing, in one place — live global stats, the top 100
+				coins, breaking news from 37 publisher feeds, a 662,047-article archive back to
+				2017, and the full markets toolset.
+			</p>
+
+			<!-- Global stats bar. Hydrated by src/markets-page.js. -->
+			<section id="cv-stats" class="cv-section" aria-label="Market statistics"></section>
+
+			<!-- Every markets surface as its own hero card. -->
+			<section class="cv-section" aria-label="Markets suite">
+				<div class="cv-toolbar" style="margin-bottom: 1rem">
+					<h2 class="cv-h2" style="margin: 0">The full toolset</h2>
+				</div>
+				<div id="mkt-suite" class="mkt-suite"></div>
+			</section>
+
+			<!-- Top 100 + news rail. -->
+			<div class="mkt-cols">
+				<section aria-label="Top 100 cryptocurrencies">
+					<div class="cv-toolbar" style="margin-bottom: 1rem">
+						<h2 class="cv-h2" style="margin: 0">Top 100 Coins</h2>
+						<a class="mkt-more" href="/coins">Full markets table →</a>
+					</div>
+					<div id="mkt-table"></div>
+				</section>
+				<aside class="mkt-rail" aria-label="Latest crypto news">
+					<div class="cv-toolbar" style="margin-bottom: 0">
+						<h2 class="cv-h2" style="margin: 0">Latest News</h2>
+						<a class="mkt-more" href="/markets/news">All news →</a>
+					</div>
+					<div id="mkt-news"></div>
+					<a class="mkt-hero-card" href="/markets/archive" id="mkt-archive-teaser">
+						<h3>📚 News Archive</h3>
+						<p>
+							662,047 articles from September 2017 to today — searchable by ticker,
+							keyword, date, sentiment, and language.
+						</p>
+						<span class="stat">Search a decade of headlines →</span>
+					</a>
+				</aside>
+			</div>
+		</main>
+
+		<script type="module" src="/src/markets-page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

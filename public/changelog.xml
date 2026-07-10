@@ -7,12 +7,52 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Crypto News</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-07-10:Crypto News</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Live crypto news aggregated natively from 37 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.</description>
+		</item>
+		<item>
+			<title>Crypto News Archive</title>
+			<link>https://three.ws/markets/archive</link>
+			<guid isPermaLink="false">2026-07-10:Crypto News Archive</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The largest open crypto-news archive: 662,047 articles from September 2017 to today in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language.</description>
+		</item>
+		<item>
+			<title>Crypto News Reader</title>
+			<link>https://three.ws/markets/news/article</link>
+			<guid isPermaLink="false">2026-07-10:Crypto News Reader</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.</description>
+		</item>
+		<item>
+			<title>Markets Hub</title>
+			<link>https://three.ws/markets</link>
+			<guid isPermaLink="false">2026-07-10:Markets Hub</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 37 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.</description>
+		</item>
+		<item>
 			<title>Auto-rigging works again — and the Agent Identity Studio demos are real</title>
 			<link>https://three.ws/agent-identities</link>
 			<guid isPermaLink="false">2026-07-10:Auto-rigging works again — and the Agent Identity Studio demos are real</guid>
 			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Rigging any generated model into an animation-ready character had been failing since the cloud migration: the rig request was sent to a service that doesn't do rigging, and the GPU rigger itself crashed on a graphics call our cloud GPUs don't support. Both are fixed — rig requests now reach the real UniRig worker, which renders its voxel pass in software instead. Proof: all four Agent Identity Studio demo characters (LedgerLynx, MuseWeaver, Momentum-9, and the three.ws studio's own) were generated, rigged with full skeletons, and photographed in posed renders through the live pipeline — see them on the showcase.</description>
+		</item>
+		<item>
+			<title>Crypto news is live: a real-time feed from 37 publishers, a rich article reader, and a 662,047-article archive back to 2017</title>
+			<link>https://three.ws/markets</link>
+			<guid isPermaLink="false">2026-07-10:Crypto news is live: a real-time feed from 37 publishers, a rich article reader, and a 662,047-article archive back to 2017</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Markets grew a full news wing. /markets/news streams live headlines aggregated directly from 37 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search, and open any story in a reader that extracts the full text with a summary, key points, sentiment, and related coverage. Behind it sits the largest open crypto-news archive anywhere: 662,047 articles from September 2017 to today in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language at /markets/archive. A new /markets hub ties the whole suite together — live global stats, the top 100 coins, breaking news, and every market tool as its own card.</description>
 		</item>
 		<item>
 			<title>/play: real water at the fishing ponds, and spare rods to find on the bank</title>
