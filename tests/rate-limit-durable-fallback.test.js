@@ -225,3 +225,25 @@ describe('circuit breaker in front of Redis', () => {
 		expect(stub.calls.inserts).toBe(0);
 	});
 });
+
+describe('bucket declaration invariants', () => {
+	// `local` means per-instance memory and nothing else — never a Redis or
+	// Postgres command. That is right for a flood guard and catastrophic for a
+	// spend control: across a Cloud Run fan-out it bounds one container, not the
+	// money. Reducing Redis burn is a standing pressure on this file, so pin the
+	// rule mechanically rather than trusting review.
+	it('no `critical` bucket is declared `local`', async () => {
+		const fs = await import('node:fs');
+		const url = await import('node:url');
+		const src = fs.readFileSync(
+			url.fileURLToPath(new URL('../api/_lib/rate-limit.js', import.meta.url)),
+			'utf8',
+		);
+		const offenders = [];
+		for (const m of src.matchAll(/getLimiter\(\s*'([^']+)'\s*,\s*\{([^}]*)\}/g)) {
+			const [, name, opts] = m;
+			if (/local:\s*true/.test(opts) && /critical:\s*true/.test(opts)) offenders.push(name);
+		}
+		expect(offenders).toEqual([]);
+	});
+});
