@@ -1,56 +1,41 @@
-# R — 3D World "Make It Fun" program
+# R — 3D World "Make It Fun" program · **complete**
 
 Turn `/play` from a charming hangout into a place with things to **do** together: Roblox-style
 social play + mini-games + an avatar economy, plus a Minecraft-style shared sandbox — all
 wallet-native to `$THREE`.
 
-Source roadmap: [`prompts/roadmap/3d-world-fun.md`](../../roadmap/3d-world-fun.md). Each brief below
-is the corresponding roadmap task, expanded into a self-contained agent prompt.
+Source roadmap: [`prompts/roadmap/3d-world-fun.md`](../../roadmap/3d-world-fun.md).
 
-## Read order
+## Status
 
-1. **[R00 — Program overview & shared architecture](R00-program-overview.md)** — READ FIRST.
-   Stack, the off-schema networking pattern, coin rules, phase map, dependency graph, DoD.
-   Every other brief assumes it.
+**All 18 briefs (R01–R09, R17–R25) shipped.** Each brief's prompt file was removed once its
+Definition of Done was verified against the running code on 2026-07-10 — the code and its tests
+are the record now. [R00 — Program overview](R00-program-overview.md) stays: it documents the
+shared architecture (the off-schema networking pattern, coin rules, DoD) that all of these
+surfaces are built on, and new `/play` work still assumes it.
 
-## Briefs (one agent each, end-to-end)
+## Where the work landed
 
-### Phase 1 — Foundation (sequential; unblocks everything)
+| Brief | Feature | Lives in |
+|-------|---------|----------|
+| R01 | Server: generic world-object state sync | [`multiplayer/src/schemas.js`](../../../multiplayer/src/schemas.js) (`WorldObject`, `objects` map) + [`WalkRoom.js`](../../../multiplayer/src/rooms/WalkRoom.js) (`_handleObjSpawn/Update/Remove`, caps, bounds clamp) |
+| R02 | Client: WorldObjects manager | [`src/game/world-objects.js`](../../../src/game/world-objects.js) (`WorldObjects`, `registerKind`), wired in [`coincommunities.js`](../../../src/game/coincommunities.js) |
+| R03 | Cosmetics rig: accessory GLBs on avatars | `cosmetics` schema field + `set-cosmetics` handler; [`src/game/cosmetics-wardrobe.js`](../../../src/game/cosmetics-wardrobe.js) |
+| R04 | Emoji & confetti reactions | reaction toolbar in [`coincommunities-ui.js`](../../../src/game/coincommunities-ui.js); server cooldown + rebroadcast in `WalkRoom.js` |
+| R05 | Kickable physics ball | server-authoritative `_tickBall` in `WalkRoom.js`; `KIND_FACTORIES.set('ball', …)` |
+| R06 | Dance floor zone | `floor:beat` broadcast + on-floor clip crossfade |
+| R07 | Mini-game: King of the Totem | `game:king` broadcast, sole-occupant scoring, HUD scoreboard |
+| R08 | Mini-game: Tag | `it` / `itSince` schema fields, transfer + reassign-on-disconnect, "YOU'RE IT" HUD |
+| R09 | Emote wheel | radial wheel + gamepad input in `coincommunities-ui.js` / `coincommunities.js` |
+| R17 | World-object persistence | [`multiplayer/src/persistence.js`](../../../multiplayer/src/persistence.js), [`block-store.js`](../../../multiplayer/src/block-store.js), `tests/block-store.test.js` |
+| R18 | Build mode + placement UI | `PROP_CATALOG` + build-mode state machine (ghost / snap / rotate / delete-own) |
+| R19 | Build netcode, permissions, anti-grief | density tiles, protected discs, per-player caps in `WalkRoom.js`; `tests/walkroom-build-perms.test.js` |
+| R20 | Structures, snapping, sharing | `COMPOSITE_PIECES`, instanced voxels, build-shot share sheet, [`api/play/builds.js`](../../../api/play/builds.js) |
+| R21 | Cosmetics catalog + shop UI | [`api/cosmetics/catalog.js`](../../../api/cosmetics/catalog.js), [`src/game/cosmetics-shop.js`](../../../src/game/cosmetics-shop.js) |
+| R22 | x402 purchase flow | [`api/x402/cosmetic-purchase.js`](../../../api/x402/cosmetic-purchase.js), [`api/_lib/cosmetics-ownership.js`](../../../api/_lib/cosmetics-ownership.js), `tests/cosmetics-purchase.test.js` |
+| R23 | Owned inventory + equip persistence | `cosmetics-wardrobe.js`; `_applyJoinCosmetics` in `WalkRoom.js` |
+| R24 | Token-gated worlds | [`api/community/holder-pass.js`](../../../api/community/holder-pass.js) — real on-chain balance read → HMAC pass, `verifyHolderPass` at join |
+| R25 | Creator revenue splits | [`api/_lib/cosmetics-economy.js`](../../../api/_lib/cosmetics-economy.js) (`recordSaleAndSplit` → real USDC payout), [`api/cosmetics/split.js`](../../../api/cosmetics/split.js), `tests/cosmetics-economy.test.js` |
 
-| Brief | Feature | Depends on |
-|-------|---------|------------|
-| [R01](phase-1/R01-server-world-object-sync.md) | Server: generic world-object state sync | — |
-| [R02](phase-1/R02-client-world-objects-manager.md) | Client: WorldObjects manager for /play | R01 |
-| [R03](phase-1/R03-cosmetics-accessory-rig.md) | Cosmetics rig: wire accessory GLBs to avatars | — |
-
-### Phase 2 — Social playground (parallel after Phase 1)
-
-| Brief | Feature | Depends on |
-|-------|---------|------------|
-| [R04](phase-2/R04-emoji-confetti-reactions.md) | Emoji & confetti reactions | — |
-| [R05](phase-2/R05-kickable-physics-ball.md) | Kickable physics ball | R01, R02 |
-| [R06](phase-2/R06-dance-floor-zone.md) | Dance floor zone | — |
-| [R07](phase-2/R07-minigame-king-of-the-totem.md) | Mini-game: King of the Totem | — |
-| [R08](phase-2/R08-minigame-tag.md) | Mini-game: Tag | — |
-| [R09](phase-2/R09-emote-wheel.md) | Emote wheel (expose all 70 animations) | — |
-
-### Phase 3 — Sandbox building (mostly sequential)
-
-| Brief | Feature | Depends on |
-|-------|---------|------------|
-| [R17](phase-3/R17-world-object-persistence.md) | Persistence layer for world objects | R01 |
-| [R18](phase-3/R18-build-mode-and-placement-ui.md) | Build mode + placement UI | R01, R02 |
-| [R19](phase-3/R19-build-netcode-permissions-antigrief.md) | Build netcode hardening + permissions + anti-grief | R17, R18 |
-| [R20](phase-3/R20-structures-snapping-sharing.md) | Structures, snapping, and sharing | R18, R19 |
-
-### Phase 4 — Avatar economy (depends on R03 rig + x402 rails)
-
-| Brief | Feature | Depends on |
-|-------|---------|------------|
-| [R21](phase-4/R21-cosmetics-catalog-shop-ui.md) | Cosmetics catalog + shop UI | R03 |
-| [R22](phase-4/R22-x402-purchase-flow.md) | x402 purchase flow | R21 |
-| [R23](phase-4/R23-owned-inventory-equip-persistence.md) | Owned-cosmetics inventory + equip persistence | R03, R22 |
-| [R24](phase-4/R24-token-gated-worlds.md) | Token-gated worlds | Solana rails |
-| [R25](phase-4/R25-creator-revenue-splits.md) | Creator revenue splits + economy polish | R22 |
-
-Suggested build order = phase order. Phase 1 unblocks the most. See R00 for the full graph.
+The `/play` rows in [`STRUCTURE.md`](../../../STRUCTURE.md) are the canonical, maintained map of
+these systems.

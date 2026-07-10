@@ -181,6 +181,6 @@ that set `auto_fund_enabled = true` (default off). See
 - [x402 ring economy](x402-ring-economy.md) — the internal recirculation loop.
 - [Pump platform fee](pump-platform-fee.md) — the pump trade fee detail.
 - [Coin-launch wallets](ux-flows/08-coin-launch-wallets.md) — launch-time wallet flow.
-- [Creator revenue splits](../prompts/agent-briefs/R-3d-world-fun/phase-4/R25-creator-revenue-splits.md) — cosmetic split rationale.
+- [Creator revenue splits](../api/_lib/cosmetics-economy.js) — `recordSaleAndSplit`: the cosmetic split math and its real USDC payout.
 - [Agent wallet custody](agent-wallets.md) — how custodial keys are held.
 - [Solana signers runbook](../api/_lib/solana-signers.js) — signer/funder wallets + funding.
