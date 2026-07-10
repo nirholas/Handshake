@@ -281,7 +281,7 @@ async function init() {
 		getJson('/api/news/archive?stats=true')
 			.then((d) => {
 				if (d?.stats?.total_articles) {
-					suiteStats.archive = `${d.stats.total_articles.toLocaleString()} <span class="dim">articles · 2017 → 2025</span>`;
+					suiteStats.archive = `${d.stats.total_articles.toLocaleString()} <span class="dim">articles since 2017</span>`;
 					const teaser = $('mkt-archive-teaser')?.querySelector('p');
 					if (teaser) {
 						const first = new Date(d.stats.first_article_date);

@@ -1569,7 +1569,7 @@
 				{
 					"path": "/markets/archive",
 					"title": "Crypto News Archive",
-					"description": "The largest open crypto-news archive: 662,047 articles from September 2017 through December 2025 in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language — with live coverage continuing at /markets/news.",
+					"description": "The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese — searchable by keyword, ticker, source, sentiment, date, and language.",
 					"priority": 0.8,
 					"changefreq": "weekly",
 					"added": "2026-07-10"

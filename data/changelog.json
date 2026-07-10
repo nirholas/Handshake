@@ -12743,6 +12743,26 @@
 				"feature"
 			],
 			"link": "/markets"
+		},
+		{
+			"date": "2026-07-09",
+			"title": "IRL now works in landscape, and the IRL API is fully documented",
+			"summary": "Rotating your phone on the IRL screen used to bury the camera view under the control panel — it swallowed nearly two-thirds of a sideways screen and pushed floating buttons up over the top bar. Landscape now gets a slim control strip so the AR view stays clear in either orientation. For builders: the complete IRL API — presence tokens, pins, money drops, and World Lines quests — is now documented in the REST API reference, alongside the @three-ws/irl SDK.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "The news archive now updates itself every hour — and the live feed has an RSS feed",
+			"summary": "The 660,000-article news archive is no longer frozen in time: an hourly archiver now appends every new story from the live feed into the corpus, complete with the market snapshot at capture time (BTC/ETH/SOL price, market cap, Fear & Greed), so /markets/archive stays current forever. And if you'd rather read three.ws crypto news in your own reader, the feed is now available as standard RSS at /api/news/rss — subscribe to everything or just one category.",
+			"tags": [
+				"feature",
+				"infra"
+			],
+			"link": "/markets/archive"
 		}
 	]
 }

@@ -1998,6 +1998,120 @@ Public directory of ERC-8004 agents with 3D avatars, for homepage and gallery us
 
 ---
 
+## IRL API — presence, pins, money drops, world lines
+
+The real-world layer behind [three.ws/irl](https://three.ws/irl): place 3D agents at GPS
+coordinates, discover them by physically walking up, claim escrowed value at a spot, and
+complete agent-signed proof-of-presence quests. The official client is
+[`@three-ws/irl`](https://www.npmjs.com/package/@three-ws/irl) (`packages/irl/`), which wraps
+every endpoint below as a typed function.
+
+**The privacy contract governs every read.** There is no "query any point on earth": location
+reads require a short-lived proof-of-presence token minted from your *real* GPS fix, sent as the
+`x-irl-fix` header, and the server only answers for the coarse area the token was minted in.
+Anonymous ownership rides the `x-irl-device` header (a device token you generate — a bearer
+credential, never sent in a URL). Full threat model: `docs/irl/THREAT-MODEL.md`.
+
+### Mint a presence token
+
+```
+POST /api/irl/fix-token
+```
+
+Body: `{ "lat": number, "lng": number, "accuracy": number? }`. Returns
+`{ token, expires_in, cell }` — the HMAC-signed presence token (TTL 180 s), and the precision-7
+geohash cell it was minted in (re-mint when you move to a new cell). The token's anchor is
+coarsened to ~110 m server-side; reads are authorized within 250 m of it.
+
+---
+
+### Pins — agents placed in the world
+
+```
+GET    /api/irl/pins?lat=&lng=&radius=     nearby agents (fix-gated, radius 10–60 m, ≤50 pins)
+GET    /api/irl/pins?mine=1                your pins (signed-in session)
+GET    /api/irl/pins/mine                  your pins (x-irl-device token)
+POST   /api/irl/pins                       place an agent at a coordinate
+DELETE /api/irl/pins?id=<uuid>             remove one pin
+DELETE /api/irl/pins?all=1                 purge every pin owned by the device token
+```
+
+The nearby feed returns an allow-list projection (never owner ids), coordinates coarsened to
+~1.1 m, sorted nearest-first. Placement body: `lat`/`lng` (required), `heading`, `avatarUrl`,
+`avatarName` (≤40 chars), `caption` (≤140 chars, content-gated, may reference only $THREE),
+`agentId`, `x402Endpoint` (first-party hosts only), `anchor`, `placementKind`
+(`precise` | `approximate` + `fuzzRadiusM`). Signed-in owners get permanent pins; anonymous
+device pins lapse after 7 days. Errors: `fix_required` 401, `area_full` 429 (≤40 pins per
+~150 m cell), `pin_limit` 429, `content` 422, `endpoint` 422.
+
+---
+
+### Interactions — the real-world encounter log
+
+```
+POST /api/irl/interactions
+```
+
+Body: `{ "pinId": "<uuid>", "type": "view" | "tap" | "message" | "pay", "message"?, ... }`.
+`view` repeats from one device collapse within 5 min; a `pay` must carry a valid on-chain
+settlement `signature` plus a `$THREE`/USDC `currencyMint` and is deduped per signature. The
+pin's owner and agent are always taken from the pin, never the caller.
+
+---
+
+### Money Drops — value escrowed at a real-world spot
+
+```
+GET  /api/irl/drops?lat=&lng=&radius=      live drops near you (fix-gated, radius ≤80 m)
+GET  /api/irl/drops?mine=1                 your drops + your claim receipts
+GET  /api/irl/drops/:id                    one drop (location coarsened ~110 m for non-owners)
+POST /api/irl/drops                        create → { drop, escrow_address, fund_amount }
+POST /api/irl/drops/:id/fund               confirm your signed funding transfer on-chain
+POST /api/irl/drops/:id/claim              presence-proven claim → real on-chain release
+POST /api/irl/drops/:id/cancel             owner cancel → real refund sweep
+```
+
+Custody is real: each drop gets a fresh escrow wallet, funded by the creator's own signed
+transfer (or, with `agentId`, server-side from the agent's spend-limited custodial wallet —
+returned already active with `funding_tx`). Create body: `lat`, `lng`, `amount`, `asset`
+(`SOL` | `USDC` | `THREE`), `kind` (`drop` | `bounty`), `maxClaims` (1–1000), `claimRule`
+(`first` | `each-once` | `quiz`), `bountyCondition` (`presence` | `quiz` | `chat`),
+`quizQuestion`/`quizAnswer`, `title`, `note`, `radiusM` (5–250), `expiresInMs`,
+`refundAddress`. Claim body: `{ lat, lng, wallet, answer? }` with `x-irl-fix` — the claimed
+point must be inside the drop's radius, measured against the server's unrounded coordinates.
+Claim response: `{ ok, asset, amount, signature, explorer_url, wallet }`. Unclaimed drops
+auto-refund on expiry. Errors: `fix_required` 401, `out_of_range` 403 (with `distance_m`),
+`wrong_answer`/`condition_unmet` 422, `already_claimed`/`exhausted` 409, `expired` 410.
+
+---
+
+### World Lines — agent-signed proof-of-presence quests
+
+```
+POST /api/irl/world-lines                       create (signed-in owner of the anchor pin + agent)
+GET  /api/irl/world-lines/nearby?lat=&lng=      fix-gated discovery (default 250 m, max 600 m)
+GET  /api/irl/world-lines/browse[?region=]      public region roll-up / one region's quests — no coordinates
+GET  /api/irl/world-lines/mine                  creator dashboard + coarse completion heatmap
+GET  /api/irl/world-lines/collectibles          the caller's earned proofs
+GET  /api/irl/world-lines/:id                   detail (full challenge spec only when co-located)
+POST /api/irl/world-lines/challenge             issue a single-use completion nonce (co-located)
+POST /api/irl/world-lines/complete              the proof ceremony → agent-signed collectible
+GET  /api/irl/world-lines/verify/:proofId       public, independent signature re-check
+```
+
+A World Line anchors a quest to a pin you own; the agent's custodial wallet ed25519-signs every
+completion. Create body: `pinId`, `title` (content-gated, $THREE-only), `prompt`, `agentId`
+(defaults to the pin's agent), `challenge` (`{ kind: "tap" | "quiz" | "phrase", ... }`),
+`reward_kind` (`collectible` | `three_pool`), `reward_ref`, `difficulty`, `maxCompletions`,
+`lifetime_days` (1–90). Completion flow: prove co-location (fix token + server-side distance
+check against the anchor pin, ≤80 m) → `challenge` returns a nonce + the revealed spec →
+`complete` grades quiz/phrase server-side and returns `{ proof, collectible }`. The signed
+message carries only the quest id, a ~1.1 km coarse cell, the nonce, and a salted completer
+hash — never a coordinate or raw device token. Anyone can re-verify a proof at
+`/verify/:proofId` (returns `{ verified, proof }`).
+
+---
+
 ## ERC-8004 API
 
 ### Resolve on-chain agent
@@ -2502,7 +2616,8 @@ GET /api/news/archive?trending=true   # top tickers over the newest archived wee
 
 Queries the platform-hosted corpus (`gs://three-ws-news-archive`: monthly
 JSONL, gzip at rest — the CryptoPanic english corpus + the Odaily chinese
-corpus + the cryptocurrency.cv live archiver, September 2017 → today). Records
+corpus + the cryptocurrency.cv live archiver, September 2017 → today, kept
+current hourly by `api/cron/news-archive-append.js`). Records
 are enriched: `tickers[]`, `tags[]`, `sentiment`, `lang` (`en`/`zh`),
 `is_breaking`, and `market_context` (BTC/ETH price + Fear & Greed at
 publication) where captured. Query mode scans months **newest → oldest** with
@@ -2511,6 +2626,16 @@ early stop (≤ 12 months per request) and reports coverage honestly:
 to, complete, months_remaining }, hint? }` — pass `start_date`/`end_date` to
 reach older years. `sentiment` ∈ `positive|negative|neutral`; `limit` ≤ 100.
 CDN cache 300 s (queries) / 3600 s (stats, months, trending).
+
+### RSS syndication
+
+```
+GET /api/news/rss?category=defi&limit=50
+```
+
+RSS 2.0 rendering of the live feed (same params as `/api/news/feed` minus
+search). Linked as `rel="alternate"` from /markets/news; item `<source>`
+elements point at the three.ws reader. CDN cache 300 s.
 
 ### Article reader
 

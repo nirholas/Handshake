@@ -209,7 +209,7 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [Markets Hub](https://three.ws/markets): The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 38 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.
 - [Crypto News](https://three.ws/markets/news): Live crypto news aggregated natively from 38 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.
 - [Crypto News Reader](https://three.ws/markets/news/article): Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.
-- [Crypto News Archive](https://three.ws/markets/archive): The largest open crypto-news archive: 662,047 articles from September 2017 through December 2025 in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language — with live coverage continuing at /markets/news.
+- [Crypto News Archive](https://three.ws/markets/archive): The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese — searchable by keyword, ticker, source, sentiment, date, and language.
 
 ## Agent Tools
 

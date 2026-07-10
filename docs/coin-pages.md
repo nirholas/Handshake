@@ -42,8 +42,8 @@ editorial serif headings, hairline borders, mono numerals, light/dark themes.
   a crosshair tooltip showing exact price and time.
 - **Market stats** — market cap, 24h volume, circulating/total supply,
   all-time high and low (dated), 24h high/low.
-- **Related news** — live articles mentioning the coin, from the
-  cryptocurrency.cv aggregator with a direct-RSS fallback.
+- **Related news** — live articles mentioning the coin, from the native
+  three.ws aggregator (38 publisher feeds, `api/_lib/news.js`).
 - **About + links** — plain-text description, official site / social /
   explorer pills, and per-chain contract addresses with one-click copy.
 - **three.ws integration** — coins with a Solana contract cross-link into
@@ -159,11 +159,14 @@ dead end, never fabricated text.
 
 ### `/markets/archive` — the historical archive
 
-The largest open crypto-news archive: **662,047 enriched articles from
+The largest open crypto-news archive: **660,000+ enriched articles from
 September 2017 to today** (the CryptoPanic english corpus + the Odaily chinese
-corpus + the cryptocurrency.cv live archiver), every record carrying tickers,
-tags, sentiment, language, and — where captured — market context at
-publication time. Hosted on the platform's own GCS bucket
+corpus + the cryptocurrency.cv live archiver), **kept current by an hourly
+archiver** ([`api/cron/news-archive-append.js`](../api/cron/news-archive-append.js),
+Cloud Scheduler `17 * * * *`) that appends the live feed's articles to the
+current month's JSONL — idempotent by content-addressed id, generation-guarded
+against concurrent runs. Every record carries tickers,
+tags, sentiment, language, and market context at capture time. Hosted on the platform's own GCS bucket
 (`gs://three-ws-news-archive`, public, gzip at rest) as monthly JSONL plus
 indexes and corpus stats. The explorer filters by keyword, ticker, source,
 date range, sentiment, and language (EN/中文), with year quick-jump buttons and

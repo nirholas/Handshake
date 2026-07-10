@@ -20,7 +20,7 @@
 			<guid isPermaLink="false">2026-07-10:Crypto News Archive</guid>
 			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>The largest open crypto-news archive: 662,047 articles from September 2017 through December 2025 in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language — with live coverage continuing at /markets/news.</description>
+			<description>The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese — searchable by keyword, ticker, source, sentiment, date, and language.</description>
 		</item>
 		<item>
 			<title>Crypto News Reader</title>
@@ -53,6 +53,14 @@
 			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Markets grew a full news wing. /markets/news streams live headlines aggregated directly from 38 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search, and open any story in a reader that extracts the full text with a summary, key points, sentiment, and related coverage. Behind it sits the largest open crypto-news archive anywhere: 662,047 articles from September 2017 to today in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language at /markets/archive. A new /markets hub ties the whole suite together — live global stats, the top 100 coins, breaking news, and every market tool as its own card.</description>
+		</item>
+		<item>
+			<title>The news archive now updates itself every hour — and the live feed has an RSS feed</title>
+			<link>https://three.ws/markets/archive</link>
+			<guid isPermaLink="false">2026-07-10:The news archive now updates itself every hour — and the live feed has an RSS feed</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The 660,000-article news archive is no longer frozen in time: an hourly archiver now appends every new story from the live feed into the corpus, complete with the market snapshot at capture time (BTC/ETH/SOL price, market cap, Fear &amp; Greed), so /markets/archive stays current forever. And if you'd rather read three.ws crypto news in your own reader, the feed is now available as standard RSS at /api/news/rss — subscribe to everything or just one category.</description>
 		</item>
 		<item>
 			<title>/play: real water at the fishing ponds, and spare rods to find on the bank</title>
@@ -141,6 +149,14 @@
 			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The avatar picker on the homepage was asking our image server for five pictures that had never been made, so the browser refused them and those slots sat blank. It now asks only for pictures that actually exist, and it leads with the avatars that have one — where an avatar has no picture yet, it draws a clean initial instead of a broken tile. Underneath it, the live marketplace strip had been silently empty: it was reading the agent list in the wrong shape and quietly gave up every time, leaving just a lone &quot;Browse marketplace&quot; link. It now reads the list correctly and shows ten real agents you can click straight through to. The 3D models themselves were always loading fine and are untouched.</description>
+		</item>
+		<item>
+			<title>IRL now works in landscape, and the IRL API is fully documented</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-09:IRL now works in landscape, and the IRL API is fully documented</guid>
+			<pubDate>Thu, 09 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Rotating your phone on the IRL screen used to bury the camera view under the control panel — it swallowed nearly two-thirds of a sideways screen and pushed floating buttons up over the top bar. Landscape now gets a slim control strip so the AR view stays clear in either orientation. For builders: the complete IRL API — presence tokens, pins, money drops, and World Lines quests — is now documented in the REST API reference, alongside the @three-ws/irl SDK.</description>
 		</item>
 		<item>
 			<title>IRL on phones: controls no longer cover each other</title>

@@ -5208,6 +5208,10 @@
 		{
 			"path": "/api/cron/vanity-inventory-replenish",
 			"schedule": "0 * * * *"
+		},
+		{
+			"path": "/api/cron/news-archive-append",
+			"schedule": "17 * * * *"
 		}
 	]
 }

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T02:31:23.913Z",
+	"generated_at": "2026-07-10T06:07:10.776Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -20,7 +20,7 @@
 			"date": "2026-07-10",
 			"type": "launch",
 			"title": "Crypto News Archive",
-			"summary": "The largest open crypto-news archive: 662,047 articles from September 2017 through December 2025 in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language — with live coverage continuing at /markets/news.",
+			"summary": "The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese — searchable by keyword, ticker, source, sentiment, date, and language.",
 			"link": "/markets/archive",
 			"tags": [
 				"launch"
@@ -65,6 +65,17 @@
 			"link": "/markets",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "The news archive now updates itself every hour — and the live feed has an RSS feed",
+			"summary": "The 660,000-article news archive is no longer frozen in time: an hourly archiver now appends every new story from the live feed into the corpus, complete with the market snapshot at capture time (BTC/ETH/SOL price, market cap, Fear & Greed), so /markets/archive stays current forever. And if you'd rather read three.ws crypto news in your own reader, the feed is now available as standard RSS at /api/news/rss — subscribe to everything or just one category.",
+			"link": "/markets/archive",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{
@@ -183,6 +194,17 @@
 			"link": "/",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-09",
+			"type": "update",
+			"title": "IRL now works in landscape, and the IRL API is fully documented",
+			"summary": "Rotating your phone on the IRL screen used to bury the camera view under the control panel — it swallowed nearly two-thirds of a sideways screen and pushed floating buttons up over the top bar. Landscape now gets a slim control strip so the AR view stays clear in either orientation. For builders: the complete IRL API — presence tokens, pins, money drops, and World Lines quests — is now documented in the REST API reference, alongside the @three-ws/irl SDK.",
+			"link": "/irl",
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{
