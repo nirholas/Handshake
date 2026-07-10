@@ -747,6 +747,28 @@
 					],
 				},
 				{
+					title: 'What agents can do',
+					links: [
+						{ label: 'The complete dossier', path: 'agent-abilities' },
+						{ label: 'The Body — 3D creation', path: 'agent-abilities/chapters/01-the-body' },
+						{ label: 'Motion & animation', path: 'agent-abilities/chapters/02-motion' },
+						{ label: 'Creation studios', path: 'agent-abilities/chapters/03-creation-studios' },
+						{ label: 'The Mind — memory & autonomy', path: 'agent-abilities/chapters/04-the-mind' },
+						{ label: 'The Voice — conversation', path: 'agent-abilities/chapters/05-the-voice' },
+						{ label: 'Identity & reputation', path: 'agent-abilities/chapters/06-identity-reputation' },
+						{ label: 'Skills', path: 'agent-abilities/chapters/07-skills' },
+						{ label: 'Screens', path: 'agent-abilities/chapters/08-screens' },
+						{ label: 'The Agent Economy', path: 'agent-abilities/chapters/09-the-agent-economy' },
+						{ label: 'The Agent Wallet — 23 abilities', path: 'agent-abilities/chapters/10-the-agent-wallet' },
+						{ label: 'Markets & intelligence', path: 'agent-abilities/chapters/11-markets-intelligence' },
+						{ label: 'Live worlds, social & IRL', path: 'agent-abilities/chapters/12-live-worlds-social-irl' },
+						{ label: 'Agents everywhere', path: 'agent-abilities/chapters/13-agents-everywhere' },
+						{ label: 'The Developer platform', path: 'agent-abilities/chapters/14-the-developer-platform' },
+						{ label: 'Full product map', path: 'agent-abilities/chapters/15-appendix' },
+						{ label: 'Everything on one page', path: 'agent-abilities/FULL-ARTICLE' },
+					],
+				},
+				{
 					title: 'Getting started',
 					links: [
 						{ label: 'Introduction', path: 'introduction' },
@@ -1044,14 +1066,18 @@
 						hljs.highlightElement(block);
 					});
 
-					// Rewrite internal .md links → hash routing
+					// Rewrite internal .md links → hash routing. Resolve each href
+					// against the current doc's URL so relative links inside nested
+					// docs (agent-abilities/chapters/…, tutorials/…) route to the
+					// right file instead of being read as /docs-root paths.
 					content.querySelectorAll('a[href]').forEach(a => {
 						if (a.closest('.docs-pagetools')) return;
 						const h = a.getAttribute('href');
 						if (!h || h.startsWith('http') || h.startsWith('#') || h.startsWith('mailto:'))
 							return;
 						if (h.endsWith('.md')) {
-							const rel = h.replace(/^\/docs\//, '').replace(/\.md$/, '');
+							const abs = new URL(h, location.origin + '/docs/' + path).pathname;
+							const rel = abs.replace(/^\/docs\//, '').replace(/\.md$/, '');
 							a.href = '#' + rel;
 						}
 					});

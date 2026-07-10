@@ -2,7 +2,7 @@
 
 One page of the site — the Agent Wallet Hub at `/agent/:id/wallet` — is the agent’s entire financial life. It is a single tabbed surface with **23 abilities**, from live balance to anomaly self-defense. The owner sees every tab; visitors get a read-only view; everything runs on mainnet or devnet with one switch.
 
-This chapter is an index — each ability has its own full deep-dive file with script-ready sections (tagline, what it does, how it works, every feature, guardrails, shot list, API surface).
+Each ability has its own full deep-dive page:
 
 | # | Ability | Hook |
 |---|---------|------|
