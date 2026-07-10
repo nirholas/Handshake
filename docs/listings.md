@@ -14,7 +14,7 @@ Cloud marketplaces are the procurement flow enterprises use to acquire software 
 |---|---|---|
 | **AWS** Marketplace | Live | three.ws is an AWS Partner. Subscribe via AWS Marketplace to consolidate billing on your AWS account; subscriptions auto-issue an x402 API key via the marketplace entitlement service. See [aws-marketplace.md](./aws-marketplace.md). |
 | **Alibaba Cloud** International Marketplace | Live | [Product listing](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [Storefront](https://marketplace.alibabacloud.com/store/3247293.html) · [Announcement](/blog/three-ws-on-alibaba-cloud-marketplace.html) · [Marketplace blog feature](https://marketplace.alibabacloud.com/doc/blog/detail/mplace-sgcmfw00036800.html) |
-| **Google Cloud** Marketplace | Open to partnership | three.ws runs on WebGL, Vercel edge, and EVM — a natural fit for Vertex AI and GCP's global CDN. Reach out for co-listing, credits, and joint GTM. |
+| **Google Cloud** Marketplace | Open to partnership | three.ws already runs its production stack on Google Cloud Run (`three-ws-api`, us-central1) — a natural fit for Vertex AI and GCP's global CDN. Reach out for co-listing, credits, and joint GTM. |
 | **Microsoft Azure** Marketplace | On roadmap | Targeted alongside the AWS/Alibaba rollout. |
 
 ---
@@ -47,8 +47,7 @@ HackerNoon is one of the world's largest independent tech publications, read by 
 
 The full stack is on GitHub:
 
-- **three.ws** — [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws)
-- Mirrored at — [github.com/nirholas/3D-Agent](https://github.com/nirholas/3D-Agent)
+- **three.ws** — [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws) (canonical source of truth)
 
 The codebase includes the `<agent-3d>` browser component, the Solana minting SDK, the x402 payment SDK, the ERC-8004 wallet integration, and the agent-payments SDK used by third-party developers.
 

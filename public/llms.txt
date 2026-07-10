@@ -210,6 +210,7 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [Crypto News](https://three.ws/markets/news): Live crypto news aggregated natively from 38 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.
 - [Crypto News Reader](https://three.ws/markets/news/article): Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.
 - [Crypto News Archive](https://three.ws/markets/archive): The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese — searchable by keyword, ticker, source, sentiment, date, and language.
+- [Crypto News Digest](https://three.ws/markets/digest): The day's crypto news grouped into the handful of stories that actually matter — each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.
 
 ## Agent Tools
 
@@ -295,6 +296,7 @@ Docs, tutorials, and reference.
 - [Docs · Competitive & Pooled Trading](https://three.ws/docs/trading-arenas): Arena tournaments with on-chain $THREE payouts, the 3D Sniper Arena, the Live Trading Theater and its one-click mirror, backable Vaults, and consensus-driven Trading Swarms.
 - [Docs · Custody You Can Verify](https://three.ws/docs/custody): Spend limits, the freeze switch, Merkle proof-of-custody with in-browser verification, and social recovery & inheritance for agent wallets.
 - [Docs · Claim Your Wallet & Trader Card](https://three.ws/docs/trader-card): Paste any Solana wallet for its on-chain pump.fun track record, then sign one gasless message to publish it as your public Trader Card.
+- [Docs · What Agents Can Do — The Complete Dossier](https://three.ws/docs/agent-abilities): The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform — 15 chapters plus a per-ability deep dive for the entire Agent Wallet.
 
 ## Blog
 

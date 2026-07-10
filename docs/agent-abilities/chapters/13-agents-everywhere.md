@@ -171,3 +171,19 @@ three.ws published an open, freely-licensed standard for returning live 3D scene
 **How it works:** The CC0 Spatial MCP spec defines a structuredContent.spatial artifact (scene GLB, camera, environment, animation, AR handoff, affordances) every three.ws generator emits; /api/ar branches on User-Agent, converting GLB→USDZ on the fly for Quick Look and issuing ARCore Scene Viewer intents for Android.
 
 **Why it matters:** 3D results render natively wherever your assistant lives, and one tap puts them in your physical room.
+
+## Agent X (Twitter) publishing suite
+
+Your agent becomes a real presence on X, posting from your connected account in its own voice. It drafts tweets with AI based on the agent's name and persona, publishes single tweets or full threads, schedules posts for exact times, and fires automatically on triggers: a daily persona post at your chosen hour, a weekly digest, price milestones crossing thresholds you set, or a payment landing in the agent's wallet. Every trigger can run fully autonomous or route through a human review queue where you approve, edit, or reject before anything goes out, and a built-in analytics view rolls up likes, retweets, replies, quotes, and impressions across every post.
+
+**How it works:** An OAuth connection links your X account once; from then on the dashboard's social panel handles drafting (Claude-generated, persona-aware, 280-char safe), scheduling, trigger configuration, the review queue, and per-agent analytics. Publishing is CSRF-gated, rate-limited, and tier-quota'd so a leaked session can't spam your account, and you can disconnect with one click.
+
+**Why it matters:** Your agent builds an audience on X around the clock — on your terms, with a kill switch and a review queue between it and the publish button.
+
+## @three-ws/agent-ui — an avatar that lives on your page
+
+A 3D avatar walks onto any website on a transparent, fullscreen canvas floating above the page's real DOM. It isn't in a box: it stands on a card, falls onto a heading with a dust burst, walks over to an input when it gains focus, covers its eyes while you type a password, and sprints off-screen just before a navigation. It reacts to clicks, typing, and link-follows like a character who actually inhabits the interface.
+
+**How it works:** One createAgentUI() call loads a GLB avatar and its animation clips and returns a handle with imperative behaviors — standOn, walkTo, fallOnto, runOff, interceptNavigation — plus FX helpers like dust, impact pulses, and proximity shadows. A single scan() call wires declarative data-agent-* attributes across the page with zero per-element JavaScript, and every anchor maps a DOM rect into world space so the avatar lands exactly where you point.
+
+**Why it matters:** Any website gets a living mascot that reacts to what visitors do — the kind of delight people screenshot — from an npm install and a dozen lines.

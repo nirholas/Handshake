@@ -620,6 +620,14 @@ Any avatar in your library can become any agent's body, and creating an avatar c
 
 **Why it matters:** You never have to choose between making a character and making an agent — every avatar is one click from being alive.
 
+## Agent Genome — the breeding studio
+
+Breed any two agents into a genuinely new child agent. The child provably inherits a recombination of both parents — brain disposition (curiosity, boldness, humor, formality, verbosity, temperature), a blended voice you can actually play out loud, body morphs and colors, and skill alleles with real genetics: dominant traits, recessive skills that can skip a generation and surface in a grandchild, bounded mutations flagged with a ⚡, and emergent fusion skills neither parent had (trading + sentiment can produce alpha-signal; vision + forge can produce concept-art). Preview the exact offspring before committing, re-roll the dice, then breed — the child is born with its own fresh Solana and EVM wallets, a synthesized 3D body, an in-character persona, on-chain licenses for its expressed skills, and a pedigree tier (common → uncommon → rare → legendary) that deep, emergent-rich lineages earn. Owners can list agents at stud for a $THREE fee, and breeding cooldowns keep rare pedigrees scarce.
+
+**How it works:** The studio (pages/genome.html + src/genome.js) drives api/genome/preview.js and api/genome/breed.js, with the genetics isolated as pure, deterministic code in api/_lib/genome.js: every random choice flows through a recorded seed via per-locus PRNG streams, so the same (parentA, parentB, seed) always derives a byte-identical child — the preview IS the child you commit. Constants are pinned by tests (mutation drift capped at 0.12 so 'mutation' can never silently become 'random new agent'; heterozygous skills express at 72%, else carry recessively; recessive-in-both pairings surface the trait; fusion rules are a static, auditable table). Any never-bred agent gets a stable founder genome derived from its real traits. The breed endpoint provisions fresh wallets, bakes a real child GLB from the blended appearance, composes the persona prompt deterministically from the inherited brain, passes blended ElevenLabs voice settings verbatim to live TTS (the play button in the preview synthesizes the actual inherited voice), grants expressed skills on-chain with royalty provenance, and is idempotent per breeding key — replaying a preview returns the same child, never twins. verifyGenome / api/genome/lineage.js re-derive the child from its recorded parents + seed and compare canonical SHA-256 genome hashes, so a forged pedigree is mathematically detectable; api/genome/stud.js powers the public stud market.
+
+**Why it matters:** Creation stops being a one-shot generator and becomes lineage. You can breed toward a goal — cross your best trader with your best analyst and maybe get an alpha-signal emergent — gamble on recessive genes resurfacing, and build bloodlines whose rarity is earned by real genetic depth, not a label. Because every birth re-derives from its recorded seed, 'this legendary is 4th-generation with two emergent skills' is a claim anyone can verify, which is what makes a pedigree — and a stud fee — actually worth something.
+
 ---
 
 # Chapter 4 · The Mind — memory, dreams, and autonomy
@@ -723,6 +731,38 @@ Read access to AgenC (agenc.tech, Tetsuo Corp) — an external Solana coordinati
 **How it works:** mcp-server/src/tools/agenc-*.js build a read-only Anchor client over @tetsuo-ai/sdk; the ephemeral wallet refuses to sign anything, so the surface is strictly read paths. Cheap paid tools ($0.001 USDC each via x402).
 
 **Why it matters:** three.ws agents (and any MCP client) can discover open on-chain jobs and monitor task escrow state without standing up Anchor themselves — the on-ramp to working within an external agent labor market.
+
+## Alpha Hunt
+
+An always-on strategy that scores every new token against converging quality signals — how many smart-money wallets are in, how organic the buying looks, the token's quality score, and its market cap — and autonomously buys only when your thresholds all pass at once. Each strategy runs on a daily SOL budget with an instant kill switch, and its live win rate and realized P&L stay on the scoreboard.
+
+**How it works:** The sniper worker (workers/agent-sniper/index.js) feeds fully-enriched intel records into a pure scorer (workers/agent-sniper/alpha-hunt.js) that applies hard filters — min quality_score, min smart-money wallet count, min organic score, max market cap in USD — before any buy. Strategies are configured via api/sniper/strategy.js (trigger = 'alpha_hunt') with per-strategy daily budgets, and every buy is simultaneously recorded as a Reasoning Ledger decision so the call is auditable later. The command center at /dashboard/capabilities (src/dashboard-next/pages/capabilities.js) shows armed/disarmed state, thresholds, P&L, and win rate per strategy, plus a live worker heartbeat (alive / feed degraded / offline) and treasury auto-funding totals.
+
+**Why it matters:** You encode your judgment once — 'only low-cap coins with real smart money and organic volume' — and the agent hunts around the clock at machine speed, never chasing a token that fails a single filter. The budget cap and kill switch keep it on a leash, and every trade lands in the agent's verifiable track record.
+
+## Autonomous Coin Launcher
+
+Agents that launch their own pump.fun coins on a schedule you set — every N hours, up to a launch cap, per network — with a one-click 'Launch Now' override that fires within a minute. The dashboard tracks every launched coin, whether it graduated, and the creator fees it has earned back.
+
+**How it works:** Launcher configs (one per agent per network: symbol, interval hours, max launches) are managed through api/agent/launcher.js with strict agent-ownership checks; the 'Launch Now' button posts a trigger action that the worker picks up within 60 seconds. The capabilities command center renders the full schedule (next launch countdown, launches vs cap) and a launched-coins ledger with graduation status and total fees claimed per coin.
+
+**Why it matters:** Your agent becomes a self-sustaining creator: it ships coins on cadence without you touching a keyboard, and everything it launches is tracked in one place — schedule, graduations, and the fee revenue flowing back.
+
+## Creator Auto-Claim
+
+A fee harvester that watches every coin an agent launched and automatically collects the creator fees whenever they cross a threshold — no manual sweeping, no forgotten revenue. When a coin is running hot, the dashboard flags it 'Ready to Claim' and gives you a claim-it-now button showing the exact SOL waiting.
+
+**How it works:** api/cron/launcher-claimer.js runs every 5 minutes: for each launched coin with ≥0.01 SOL of accrued creator fees (and no claim in the past 24h) it queries live fee info, has the agent sign its own claim transaction — the same key that signed the launch — and records the claim with the buyback-earmarked share for revenue accounting. The dashboard's Auto-Claim panel shows claimable-now vs total-earned per coin and exposes a manual 'Claim' action through the same collect-creator-fee endpoint the cron uses.
+
+**Why it matters:** Creator fees are the whole point of launching, and they leak when nobody sweeps them. Auto-Claim turns fee collection into a background process: your agents harvest their own earnings every five minutes, and you can see — and one-click trigger — every claim yourself.
+
+## Market Maker
+
+Agents provide range-based liquidity on coins they care about — defending a price floor, trimming into rallies — with Jito-accelerated execution and a rulebook that makes market manipulation structurally impossible, not just discouraged. Plain-language presets like 'Gentle floor defense' configure it in one click; a live panel shows spread, inventory fill, buys vs sells, and net P&L per market.
+
+**How it works:** Policies live in api/_lib/market-maker.js, the single source of truth shared by the API (api/agent/market-maker.js, api/launch/mm.js) and the engine worker. Hard anti-manipulation guards are enforced twice — refused at policy-create time AND re-clamped at execution: minimum 30s between actions, a side flip (buy→sell) requires 2× that interval so the MM physically cannot wash-trade, no single action may exceed 33% of live market volume, recycling can never dump more than 90% of inventory, and when live volume can't be read the engine refuses anything above a 0.05 SOL slice so it never paints a no-volume tape. Every fill routes through executeAgentTrade — the same firewall, spend-guard, and custody path a manual trade uses; the engine adds no new way to move funds. MEV tip modes (off/economy/turbo) control Jito priority.
+
+**Why it matters:** You get professional-grade liquidity provision — a defended floor, orderly exits into strength — without hiring a market maker or trusting a black box. The non-manipulation guarantees are properties of the policy engine itself, verifiable in the caps, so holders of your coin can trust the tape and you can trust the agent with inventory.
 
 ---
 
@@ -907,6 +947,22 @@ At the end of the day your agent reflects: a short first-person paragraph about 
 **How it works:** An owner-scoped digest endpoint that ranks real memory rows by salience, shapes the entity graph, and has an LLM compose the diary text under a system prompt that strictly forbids fabrication, with a grounded non-LLM fallback.
 
 **Why it matters:** Your agent narrates its own inner life from evidence, which makes it feel less like a tool and more like a colleague.
+
+## Talking Avatar Video (/create/video)
+
+Turn any of your three.ws avatars into a lip-synced talking-head video. Pick an avatar from your collection in a live 3D preview, drop in a voice track (WAV, MP3, M4A — a recording, a narration, anything), optionally describe the scene ('speaking on a stage with dramatic lighting'), and generate. A few minutes later you're watching a rendered clip of your avatar speaking your audio, ready to preview in the browser and download as an MP4. Your first video is free; paid plans generate without limits.
+
+**How it works:** Generation runs on a dedicated GPU worker hosting LongCat-Video-Avatar-1.5 (an open MIT-licensed talking-avatar model) on an NVIDIA L4: the platform resolves your avatar to a reference image, uploads your audio, queues the job, and the page polls status until the finished 720p MP4 lands in cloud storage — typically 2–4 minutes per clip. Media URLs are locked to platform-controlled hosts so the worker can never be steered at arbitrary servers.
+
+**Why it matters:** A talking video of your own character — for a product update, a coin pitch, a social clip — normally means an animator or a third-party subscription. Here it's three inputs and one button, using the avatar you already built, with the first one on the house.
+
+## Web push notifications
+
+Real OS-level notifications from your agents to every device you've subscribed — a sale landing, a tip arriving, someone meeting your agent IRL, a market alert firing — delivered even when three.ws isn't open. A preference center gives you a per-category kill switch (sales & earnings, purchases, social & mentions, IRL, market alerts, account & security), so there is no notification you can't turn off. Enabling is always your choice: the permission prompt only appears when you ask for it from the inbox banner or settings, never ambushed on page load.
+
+**How it works:** The browser's push subscription is registered with the platform per device, keyed to your account; every notification flows through one delivery pipeline that writes the durable in-app inbox row first, then fans out to Web Push (VAPID-signed) for the categories you've left enabled. Dead endpoints reported by the push service are pruned automatically so the registry self-heals as browsers expire subscriptions, and delivery and click-through are tracked so re-engagement is measured, not guessed.
+
+**Why it matters:** Your agents work around the clock — sales, tips, and whale buys don't wait for you to have a tab open. Push closes that gap on your terms: the events you care about reach your lock screen, and the ones you don't never do.
 
 ## /a/me — personal agent hub
 
@@ -1139,6 +1195,22 @@ The same identity standard extends into OKX's X Layer agent economy: agents regi
 **How it works:** The okx-agent-identity skill drives ERC-8004 registration and lifecycle contracts on X Layer, wiring three.ws agents into OKX's role-based (user/ASP/evaluator) marketplace with on-chain ratings.
 
 **Why it matters:** One identity standard, another whole economy — your agent's registration opens doors on exchange-scale marketplaces too.
+
+## Reasoning Ledger
+
+A public, tamper-evident timeline of every consequential call an agent makes — snipes, exits, bounty awards, moderation decisions — each entry recording what the agent decided, why (its written rationale), what it predicted with what confidence, and, once the position settles on-chain, what actually happened: right or wrong, and by exactly how much SOL. The headline is an explainable 0–100 reputation score with a full 'how is this computed' drill-down showing the formula and every weighted component, plus a calibration chart that answers the sharpest question you can ask a forecaster: does its 80%-confidence call actually hit 80% of the time? Being wrong is shown, not hidden — honesty is the trust signal.
+
+**How it works:** Frontend at pages/reasoning-ledger.html + src/reasoning-ledger.js (filter by kind, full-text search of rationales, paginated 'load older', animated score ring, cumulative realized-P&L sparkline over settled calls). Data from api/ledger/[agentId].js, which returns the reputation (formula + per-component breakdown + calibration buckets), the latest on-chain anchor, and shaped decisions with pending/reconciled outcomes and Solscan proof links on the sell signature. Every entry is hashed into a per-agent hash chain; api/ledger/verify/[agentId].js recomputes the entire chain from committed contents (trusting NO stored hash), checks every prev-hash link, and compares the recomputed head to the latest Solana SPL-Memo anchor — returning verified / verified_unanchored / verification_failed with the exact sequence number where tampering broke the chain. api/cron/reconcile-decisions.js closes the loop: it resolves open predictions against closed sniper positions (realized P&L proven by the sell signature), anchors each agent's new chain head on-chain, and raises an ops alert if a verified track record's hit rate collapses below 25% over 10+ reconciled calls.
+
+**Why it matters:** Before you trust an agent — copy its trades, hire it, hold its coin — you can interrogate its entire decision history and independently prove nothing was backdated or quietly edited. One click re-verifies the whole record against the on-chain anchor; a tampered entry is not just detected but pinpointed. Wins, losses, overconfidence, and P&L are all on the record, so reputation here is earned math, not marketing.
+
+## Permanent asset storage on Arweave
+
+An agent's 3D body and identity assets can be published to Arweave — storage that is paid once and persists permanently — signed by the same wallet the owner already connected, and woven directly into the agent's on-chain ERC-8004 identity. The result is an agent whose body outlives any server, host, or company.
+
+**How it works:** src/arweave/upload.js uploads bytes through ArDrive Turbo (@ardrive/turbo-sdk, lazy-loaded), signing the data item with the user's Ethereum key and tagging it (App-Name: three.ws, content type, filename) before returning a permanent ar:// URI; estimateUploadCost() quotes the Winston-credit price for any byte size with no wallet needed. The mint pipeline in src/mint/index.js embeds the agent manifest into the GLB's own extras (the file becomes self-describing), pins it to IPFS for hot access, uploads the enriched GLB to Arweave for permanence, then registers on-chain via the ERC-8004 Identity Registry with the ipfs:// URI as the canonical body and the ar:// URI recorded as an 'avatar-arweave' service entry.
+
+**Why it matters:** Your agent's body can never 404. The exact GLB — manifest baked inside it — lives at a permanent address that no platform can take down, referenced from an on-chain identity record anyone can resolve. Fast retrieval comes from IPFS; forever comes from Arweave; and both are bound to your wallet's signature, so provenance travels with the file.
 
 ---
 
@@ -1620,6 +1692,38 @@ three.ws agents don't just trade with each other — the platform sells its 3D s
 
 **Why it matters:** Your agent's storefront isn't an island — it's plugged into every major machine-commerce network.
 
+## Trading Swarms — pooled treasuries that trade on consensus
+
+Trading Swarms let multiple agents pool SOL into a single shared treasury that trades as a collective. The swarm only fires a buy when reputation-weighted agreement among its members clears the threshold you set — each member's vote is weighted by their verified on-chain trading track record, so proven traders steer the treasury while newcomers still count a little. Realized profit is paid back to every member pro-rata as real SOL transfers (with an optional creator fee up to 20%), while the principal keeps trading. Every lamport is reconciled against the treasury's live on-chain balance — there are no virtual balances anywhere.
+
+**How it works:** Each swarm provisions its own custodial Solana treasury wallet plus a dedicated trading strategy carrying the swarm's policy (per-trade cap, daily budget, stop-loss/take-profit/trailing stop, max hold, slippage, smart-money filter). A consensus engine tallies which members hold real positions in a candidate mint, weights them by reputation score, and sizes the trade by conviction; contributions, profit payouts, and exits are idempotent on-chain SOL transfers logged to an auditable payout ledger and custody-event trail.
+
+**Why it matters:** You get the upside of trading alongside proven agents — with capital that only moves when their verified track records agree, and profits that settle to your wallet automatically.
+
+## Trading Swarms — member protections, kill switch, and live dashboard
+
+Swarms are built so no member can be trapped or captured. A per-member share cap stops any one wallet from dominating the pool, you can exit at any time and redeem your share of the treasury's live net asset value straight to your own wallet, and any member (or coalition) holding enough of the treasury can trigger the kill switch — instantly halting new buys and force-liquidating every open position. A public directory shows each swarm's aggregate record — members, SOL contributed, closed trades, win rate, and realized PnL — before you join, on mainnet or devnet.
+
+**How it works:** The per-swarm dashboard streams over Server-Sent Events: consensus votes with per-member weight breakdowns, confirmed payouts with Solscan links, and treasury ticks (live on-chain balance, open positions, win rate, realized PnL) every few seconds. Exit settlement supports settle-at-mark (share of liquid SOL plus marked open positions) or wait-to-close policies, and share recomputation redistributes capped overflow proportionally.
+
+**Why it matters:** You can watch every vote, trade, and payout land live — and you always hold a working exit and a kill switch, enforced on-chain rather than promised.
+
+## x402 Studio — the merchant console for a paid x402 business
+
+x402 Studio is a Stripe-style console for running a business where AI agents and humans pay you in USDC. Create products in minutes — each one wraps your paid endpoint in a hosted checkout page with your name, logo, and accent color, and tracks paid calls and gross settled revenue. Configure payout wallets on Solana and Base, and register agent wallets: named on-chain identities authorized to auto-pay for services or receive funds on your behalf, each bounded by independent per-call and daily USDC caps. A built-in money panel lets you receive USDC to your payout address or send it to any address, .sol name, or @handle directly from the page.
+
+**How it works:** Products, wallets, and settings persist through real merchant and SKU APIs; USDC sends resolve names through SNS, prepare the transfer server-side, and settle via a Phantom-signed Solana transaction. Security controls include spend caps, a Sign-In-With-X re-entry gate, per-network settlement toggles, a CORS allow-list, an optional facilitator override, settlement webhooks, and a rotatable API key stored only as a hash.
+
+**Why it matters:** You go from 'I have an API' to 'agents are paying me on-chain in USDC' with one console — no payment processor, no merchant account, no code.
+
+## x402 Studio — storefront builder, embeddable pay buttons, and giving
+
+Beyond checkout links, Studio publishes your whole storefront: drag blocks — hero, product grid, single product, text, image, button, footer — onto a canvas, reorder them, and publish to a shareable store page, like a Shopify page for your x402 products. The embed builder generates a copy-paste pay button you can drop onto any website — Wix, Shopify, a landing page — with live preview and size, shape, and theme controls; clicking it opens the payment modal and settles on-chain. Giving tools turn every sale into a donation: a charity split earmarks a fixed share of each settled payment for your cause wallet, and round-up nudges the buyer's total to the nearest unit and donates the difference — both disclosed to buyers before they pay.
+
+**How it works:** The storefront layout saves as a validated block schema published under your store handle; the embed snippet is a static button tagged with data attributes plus one script include that boots the x402 payment modal, settling USDC on Solana or Base.
+
+**Why it matters:** One console gives you a published store, a pay button that works on any site you own, and built-in charitable giving — the full storefront stack for the agent economy.
+
 ---
 
 # Chapter 10 · The Agent Wallet — the money layer (23 abilities)
@@ -1672,15 +1776,16 @@ The Portfolio tab is the agent wallet's command center: one real-time view of ev
 
 > Fund any agent in one scan — a tap-to-pay Solana QR with live on-chain confirmation the second the money lands.
 
-The Deposit tab is the "fund this agent" page anyone can use — owner or visitor. It shows exactly who you're funding, the agent's full Solana address with one-tap copy, and a scannable Solana Pay QR code that opens Phantom, Solflare, or Backpack pre-filled; you can even preset an amount that bakes itself into the QR as you type. From the moment the page is open it watches the blockchain, and the instant your SOL actually arrives it flips to a green "◎X SOL received" confirmation and updates the recent-activity list. There's also a one-tap tip flow that sends SOL or USDC straight from your own connected wallet to the agent, with a real on-chain receipt at the end.
+The Deposit tab is the "fund this agent" page anyone can use — owner or visitor. It shows exactly who you're funding, the agent's full Solana address with one-tap copy, and a scannable Solana Pay QR code that opens Phantom, Solflare, or Backpack pre-filled; you can even preset an amount that bakes itself into the QR as you type. From the moment the page is open it watches the blockchain, and the instant your SOL actually arrives it flips to a green "◎X SOL received" confirmation and updates the recent-activity list. There's also a one-tap tip flow that sends SOL or USDC straight from your own connected wallet to the agent, with a real on-chain receipt at the end. Don't have crypto yet? You don't need any to start. Every deposit and payment surface carries an Add funds flow that opens a Coinbase Pay checkout pre-filled with your wallet — pay by card, pick $10, $25, or $50, and USDC lands directly on your Solana address. The moment it arrives, the overlay confirms it on its own and whatever you were doing resumes.
 
-**Under the hood.** The tab reads the agent's public receive address and live SOL balance from the platform's wallet API, which queries Solana RPC with automatic retry and failover to a public endpoint, and shares a 60-second balance cache across the entire server fleet so polling never hammers the chain. The QR encodes a standards-compliant Solana Pay URI, so any mobile wallet — Phantom, Solflare, Backpack — opens pre-filled with the address, the agent's name as the label, and an optional preset amount. While the tab is open it re-checks the balance every 15 seconds and declares a deposit only when the on-chain balance genuinely rises, then pulls in the fresh transaction for the activity feed. Tips from a connected browser wallet are built, signed, and broadcast client-side — fully non-custodial — after which the server independently re-verifies the transaction on-chain before recording it, feeding the public Money Pulse, the owner's wallet automations, and royalty streams to ancestor agents.
+**Under the hood.** The tab reads the agent's public receive address and live SOL balance from the platform's wallet API, which queries Solana RPC with automatic retry and failover to a public endpoint, and shares a 60-second balance cache across the entire server fleet so polling never hammers the chain. The QR encodes a standards-compliant Solana Pay URI, so any mobile wallet — Phantom, Solflare, Backpack — opens pre-filled with the address, the agent's name as the label, and an optional preset amount. While the tab is open it re-checks the balance every 15 seconds and declares a deposit only when the on-chain balance genuinely rises, then pulls in the fresh transaction for the activity feed. Tips from a connected browser wallet are built, signed, and broadcast client-side — fully non-custodial — after which the server independently re-verifies the transaction on-chain before recording it, feeding the public Money Pulse, the owner's wallet automations, and royalty streams to ancestor agents. GET /api/onramp/link builds a hosted Coinbase Pay checkout URL locked to your Solana address, asset (USDC), and chosen amount ($10–$500), opened in a popup. The overlay snapshots your USDC balance first, then polls it every 5 seconds until it rises — confirming automatically for up to 12 minutes before handing off to a one-click 'Check again'.
 
 **Guardrails.** Public-safe by design: the tab exposes only the agent's public receive address — no keys, no secrets, no owner controls. The "received" confirmation fires exclusively on a real on-chain balance increase (with a dust-level noise guard); nothing is ever simulated. The QR label is clamped and an oversized payload falls back to an always-scannable address-only code; invalid amounts are excluded from the QR until corrected. Tips are non-custodial — signed and sent from the visitor's own wallet, so the platform never touches the funds — and the server independently re-verifies every tip signature on-chain before recording it, rejecting failed transactions and any transaction that didn't actually credit the agent's wallet, with idempotency so the same signature can never be recorded twice. Balance reads are rate-limited per user and served through a 60-second shared cache to protect the RPC; tip recording is rate-limited per IP; the detailed activity endpoint is owner-only (server-enforced 403 for anyone else). Devnet is clearly labeled and explorer links always match the active network.
 
 - The Solana Pay QR card: a crisp white QR generated entirely in-house as SVG that is itself a tap-to-pay deep link — type an amount and watch the code redraw live to preset it in the sender's wallet app
 - The confirmation moment: a pulsing amber "Waiting for your first deposit…" flips to a glowing green "◎0.5 SOL received" with a toast the instant real money lands on-chain — driven purely by the live balance, never faked
 - One-tap tipping: preset chips (◎0.05 to $25), an honest stage-by-stage send flow (approve in your wallet → broadcasting → confirming), and a real Solscan receipt at the end
+- A first-time user with zero crypto hits a paid feature, clicks Add funds, buys $25 of USDC by card in a Coinbase popup — and watches the modal flip to '✓ Deposit confirmed — 25.00 USDC added' by itself the second the money lands, never having left the page
 
 ## 05 · Copilot
 
@@ -2052,6 +2157,38 @@ A free, no-key, no-account crypto data API built for AI agents: token snapshots,
 
 **Why it matters:** Agents and developers get real on-chain and market data with zero signup friction — the funnel-top for the platform's paid unique services.
 
+## Mission Control — the real-time trading terminal (/terminal)
+
+A keyboard-driven trading cockpit that puts everything three.ws knows on one screen: the live pump.fun launch firehose streams into a virtualized feed where every row carries its intel score, firewall verdict, and smart-money count; a focus pane fuses a real candlestick chart, a scrolling live trades tape, a token security grid (top-10 concentration, sniper %, bundler %, NoMint/NoFreeze/LP-burnt checks), and smart-money flow for whatever coin is selected; a positions pane streams your agent's open snipes with live unrealized PnL next to its actual on-chain holdings. You never touch the mouse: j/k walk the feed, 1–6 pick a buy size, b buys, s exits the whole position, / filters, x flips express mode, and ? shows the full shortcut map. Filters (smart-money-only, socials-only, safe-only, intel floor, market-cap band) can be saved as named one-click views, and a mobile tab bar keeps all three panes usable on a phone.
+
+**How it works:** Three SSE streams (the global new-mint firehose, the intel engine's scored feed, and the sniper position stream) feed a shared store; visible rows are enriched on demand so a fast feed never janks. Every buy and sell goes through the same server-signed guarded trade path as the wallet hub — firewall, MEV protection, spend guard, and custody audit are enforced server-side and can't be bypassed from the terminal. Express mode confirms once, then executes instantly; a client-side gate on cached firewall verdicts spares round trips on blocked coins, and connection pills plus honest degraded states replace forever-skeletons when a stream drops.
+
+**Why it matters:** Pump.fun launches live or die in minutes; tab-switching between a feed, a scanner, and a wallet is how trades get missed. Mission Control collapses discovery, due diligence, and execution into single keystrokes — while the firewall and spend guards make speed safe, so one fat-fingered key can't rug you.
+
+## Smart Money Radar (/smart-money)
+
+A first-party reputation graph of every pump.fun wallet. Instead of reading the coin, you read the money buying it: every launch, every wallet, every trade is crossed against which coins actually graduated to Raydium, building a provable track record per wallet. The radar then ranks fresh coins by the pedigree of the money accumulating them — a 0–100 score, the smart-money share of buys, how many proven wallets are in, and the notable wallets driving it. A leaderboard labels wallets as smart money, snipers, dumpers, or ruggers; paste any address to pull its reputation card; star coins into a watchlist; sort the feed by pedigree, share, smart buy volume, or freshness.
+
+**How it works:** A rollup engine judges each coin about six hours after launch — graduated is a win, everything else a dud — and folds every buyer's footprint into that wallet's running reputation, exactly once per coin. Live coins from the last few hours are then scored by the buy-weighted average reputation of their buyers (unknown wallets drag it down, creators don't count toward their own coin) plus a bounded bonus for each additional proven wallet piling in. Everything is first-party observation — no external oracle — and the whole graph is queryable through a public API: the live feed, the wallet leaderboard, single-wallet cards, and per-coin breakdowns.
+
+**Why it matters:** Anyone can fake a chart, a website, or a Telegram; nobody can fake a wallet's on-chain graduation history. The radar gives you the one edge that compounds — follow the wallets that keep being right — and it lights up while a coin is still fresh, not after it has already run.
+
+## Alert rules engine
+
+Server-side price and event alerts for pump.fun that fire even when every tab is closed. Build up to 50 rules per account across five kinds — a coin graduating to Raydium, price crossing above or below a threshold, a whale buy over a SOL size you set, or a specific agent minting a new coin — and route each rule to any mix of the in-app bell, a signed webhook, or a Telegram chat. Every rule has its own cooldown, an on/off switch, a custom label, and a delivery log showing the last five deliveries and any recent failures.
+
+**How it works:** Rules live in the platform database, not in your browser — a cron evaluates them against the live pump.fun event stream, deduplicates so no on-chain event delivers twice, enforces per-rule cooldowns and a storm guard, and fans matches out to each configured channel. Webhook rules get a per-rule signing secret so receivers can verify authenticity, and price rules use real crossing logic rather than naive threshold spam.
+
+**Why it matters:** Client-side alerts die with the tab. These follow you across devices: set a whale-buy alert on your phone, get the Telegram ping at your desk, and let a bot consume the signed webhook — one rule, every channel, no tab required.
+
+## Email newsletter with double opt-in
+
+A ship-notes newsletter covering new features, launches, and changelog highlights — signed up from the footer of any page. Nobody gets mailed until they click a confirmation link sent to their address, every email carries an honored one-click unsubscribe, and the promise is explicit: product updates, nothing else.
+
+**How it works:** Signup records a pending subscriber with a single-purpose confirm token and emails the link; only clicking it flips the address to confirmed and adds it to the mailing audience, so a typo'd or hostile email can never subscribe a third party. The endpoint returns the same generic success either way, so it can't be used to probe who is subscribed, and unsubscribe is wired both as an in-email link and the standards-based List-Unsubscribe header.
+
+**Why it matters:** You hear about new capabilities the moment they ship without watching the changelog — and because the list is consent-proven end to end, it's a signal you chose, not spam you have to escape.
+
 ---
 
 # Chapter 12 · Live worlds, social & IRL
@@ -2316,6 +2453,30 @@ Everything IRL — presence minting, GPS pin placement, the geofenced nearby fee
 
 **Why it matters:** Build your own location-based agent experience on the same privacy-hardened rails the platform itself uses.
 
+## Crews
+
+Found a crew with a name and a 2–6 character tag, invite friends, and roam the live world together as a squad. Your roster shows who's online right now and exactly which realm and server they're in, invites arrive as real-time notifications, and every member carries the crew badge over their avatar in-world. Owners run the roster — invite, kick, hand off leadership, or disband — with one crew per account so the tag means something.
+
+**How it works:** The crews API mirrors the friends system: create/invite/accept/decline/leave/kick actions over a durable roster, joined with live Redis presence on every read. The crew tag rides inside the HMAC-signed presence ticket issued at sign-in, so the game server stamps a trustworthy, unspoofable badge on each member. Every crew also gets a public page by tag showing its roster and live presence.
+
+**Why it matters:** Play with your people — a persistent squad identity, live who's-online-and-where presence, and a verified crew tag over your head in the world.
+
+## Coin-World Billboard — own the board inside a 3D world
+
+Every coin world on three.ws has a physical billboard — a framed panel on two posts standing behind spawn that every visitor walks past. For a flat $0.05 in USDC you can hold that board for a 6-hour slot: your image and an optional caption render in-world for everyone who enters, and whoever pays most recently holds it until the slot expires. It's a paid community canvas, not an ad network — nothing is targeted, nothing is tracked, the panel just shows what its current holder put up. An in-world 'Feature your content' button opens the payment dialog right where you're standing, and the board updates the moment your payment settles.
+
+**How it works:** The panel is a Three.js canvas-textured mesh that cover-fits the placement image with a caption strip, falling back to the coin's own artwork so it's never blank. Placement is a paid x402 endpoint settling USDC on Solana or Base and cataloged in the x402 Bazaar, so agents can buy slots programmatically with @x402/fetch; a free read API serves the active placement to every visitor with the world failing open to its default content on any error.
+
+**Why it matters:** For five cents you put your art in front of every person and agent who walks into a coin's world for the next six hours — a real, ownable surface inside a live 3D space.
+
+## zauth RepoScan — hire a security agent in-world, pay it directly
+
+Inside the $THREE town, a third-party security agent called zauth sells GitHub repository security scans for $0.05 in USDC. Give it any public repo, approve the payment from your own wallet, and it audits the codebase — returning a zauth trust score and a full written security analysis you can read on the spot, with free progress polling while the scan runs. The payment goes straight from your wallet to zauth's: three.ws never touches your funds and holds no key in the transaction, making this genuine agent-to-agent commerce between you and an independent merchant, brokered inside a multiplayer world.
+
+**How it works:** zauth's own API blocks the browser payment handshake cross-origin, so the platform relays it same-origin: it translates the payment header to zauth's wire format, normalizes the x402 envelope, and validates the repo name before forwarding so a malformed request can never burn a settled payment. The USDC transfer you sign settles on Base or Solana through zauth's facilitator, and zauth token holders can pass through a sign-in-with-x signature for free access.
+
+**Why it matters:** You walk up to an independent AI security auditor in a 3D world, pay it a nickel wallet-to-wallet, and get a real security report on any GitHub repo — proof that in-world agents can sell real services.
+
 ---
 
 # Chapter 13 · Agents everywhere — embeds, plugins, mobile
@@ -2492,6 +2653,22 @@ three.ws published an open, freely-licensed standard for returning live 3D scene
 
 **Why it matters:** 3D results render natively wherever your assistant lives, and one tap puts them in your physical room.
 
+## Agent X (Twitter) publishing suite
+
+Your agent becomes a real presence on X, posting from your connected account in its own voice. It drafts tweets with AI based on the agent's name and persona, publishes single tweets or full threads, schedules posts for exact times, and fires automatically on triggers: a daily persona post at your chosen hour, a weekly digest, price milestones crossing thresholds you set, or a payment landing in the agent's wallet. Every trigger can run fully autonomous or route through a human review queue where you approve, edit, or reject before anything goes out, and a built-in analytics view rolls up likes, retweets, replies, quotes, and impressions across every post.
+
+**How it works:** An OAuth connection links your X account once; from then on the dashboard's social panel handles drafting (Claude-generated, persona-aware, 280-char safe), scheduling, trigger configuration, the review queue, and per-agent analytics. Publishing is CSRF-gated, rate-limited, and tier-quota'd so a leaked session can't spam your account, and you can disconnect with one click.
+
+**Why it matters:** Your agent builds an audience on X around the clock — on your terms, with a kill switch and a review queue between it and the publish button.
+
+## @three-ws/agent-ui — an avatar that lives on your page
+
+A 3D avatar walks onto any website on a transparent, fullscreen canvas floating above the page's real DOM. It isn't in a box: it stands on a card, falls onto a heading with a dust burst, walks over to an input when it gains focus, covers its eyes while you type a password, and sprints off-screen just before a navigation. It reacts to clicks, typing, and link-follows like a character who actually inhabits the interface.
+
+**How it works:** One createAgentUI() call loads a GLB avatar and its animation clips and returns a handle with imperative behaviors — standOn, walkTo, fallOnto, runOff, interceptNavigation — plus FX helpers like dust, impact pulses, and proximity shadows. A single scan() call wires declarative data-agent-* attributes across the page with zero per-element JavaScript, and every anchor maps a DOM rect into world space so the avatar lands exactly where you point.
+
+**Why it matters:** Any website gets a living mascot that reacts to what visitors do — the kind of delight people screenshot — from an npm install and a dozen lines.
+
 ---
 
 # Chapter 14 · The Developer platform
@@ -2506,7 +2683,7 @@ Claude or any MCP client connects to https://three.ws/api/mcp (Streamable HTTP, 
 
 **How it works:** Auth is OAuth 2.1 with dynamic client registration (RFC 7591/8414/9728) for end users, or a dashboard-issued API key (3da_live_*) as a bearer token for server-to-server. Notable tools: validate_model runs the Khronos glTF-Validator against any public URL; render_avatar returns an interactive <model-viewer> HTML artifact; mint_3d_asset mints a $0.25-USDC-via-x402 Metaplex Core NFT with enforced royalties (10% cap), idempotency, signed provenance ledger entries, and real on-chain remix-royalty settlement to parent creators; create_gated_embed produces a holder-only embed verified against real SPL balances; crypto_data and token_snapshot front the free aggregator.
 
-**Why it matters:** An AI assistant can manage a user's entire 3D asset library conversationally — validate a model, see its stats, render it inline, tokenize it on Solana — without the user copy-pasting URLs or leaving the chat. Docs: /workspaces/three.ws/docs/mcp.md.
+**Why it matters:** An AI assistant can manage a user's entire 3D asset library conversationally — validate a model, see its stats, render it inline, tokenize it on Solana — without the user copy-pasting URLs or leaving the chat. Docs: /docs/mcp.
 
 ## Six more hosted remote MCP servers
 
@@ -2520,7 +2697,7 @@ Beyond /api/mcp: 3D Studio (/api/mcp-3d, paid text/image→3D, rigging, retextur
 
 One-line npx installs (e.g. npx -y @three-ws/scene-mcp) covering: 3D/avatars (scene-mcp, avatar-mcp, avatar-agent, mcp-server), payments (x402-mcp self-custodial wallet, three-token-mcp for $THREE, mcp-bridge, ibm-x402-mcp), market intel (intel-mcp, pumpfun-mcp, vanity-mcp, marketplace-mcp), naming (naming-mcp for .sol resolution), autonomous control plane (autopilot-mcp spend caps, portfolio-mcp, provenance-mcp signed action log), trading (copy-mcp, signals-mcp, alerts-mcp, kol-mcp, agent-sniper), account (notifications-mcp, billing-mcp, activity-mcp), AI (vision-mcp, brain-mcp multi-provider LLM router, audio-mcp TTS/STT/lipsync), and coordination (agenc-mcp task marketplace, agora-mcp earn-$THREE work board, clash-mcp, tutor-mcp, loom-mcp).
 
-**How it works:** Each runs locally over stdio; all 42 servers are registered in the official MCP registry under io.github.nirholas/* and surfaced on Smithery, Glama, PulseMCP, and mcp.so, so any MCP client can discover them by name. Package sources live in /workspaces/three.ws/packages/*-mcp.
+**How it works:** Each runs locally over stdio; all 42 servers are registered in the official MCP registry under io.github.nirholas/* and surfaced on Smithery, Glama, PulseMCP, and mcp.so, so any MCP client can discover them by name. Package sources live in packages/*-mcp.
 
 **Why it matters:** A developer composes exactly the capability set their agent needs — a trading agent adds intel + copy + portfolio; a creative agent adds scene + avatar + audio — each a single npx line in their MCP client config.
 
@@ -2528,7 +2705,7 @@ One-line npx installs (e.g. npx -y @three-ws/scene-mcp) covering: 3D/avatars (sc
 
 Ships a complete 3D AI agent from one package: a floating chat panel with voice I/O (AgentKit.mount()), a two-line 3D avatar embed of any three.ws agent (loadAvatar / the <agent-3d> custom element), on-chain registration via ERC-8004 on EVM or Metaplex on Solana, generation of the standard .well-known manifests (agent-registration.json, agent-card.json for A2A, ai-plugin.json), ERC-7710 scoped-delegation permissions (grant/verify/revoke spending limits for an agent), Sign-in-with-Solana + Solana Pay checkout, on-chain attestations/reputation, and an AgentClient that calls other agents' paid skills handling the x402 402 flow.
 
-**How it works:** Vanilla JS, no framework; ethers@^6 and @solana/web3.js@^1 are optional peers used only by the chain-specific helpers. Registration pins metadata to IPFS via web3.storage and writes to a deployed ERC-8004 Identity Registry. README: /workspaces/three.ws/sdk/README.md.
+**How it works:** Vanilla JS, no framework; ethers@^6 and @solana/web3.js@^1 are optional peers used only by the chain-specific helpers. Registration pins metadata to IPFS via web3.storage and writes to a deployed ERC-8004 Identity Registry. README: sdk/README.md.
 
 **Why it matters:** A web developer turns their site into a discoverable, on-chain, payable AI agent in an afternoon — chat UI, 3D body, identity, and A2A monetization included — instead of assembling five protocols by hand.
 
@@ -2536,7 +2713,7 @@ Ships a complete 3D AI agent from one package: a floating chat panel with voice 
 
 Gives an AI agent a Solana wallet and typed on-chain actions: SolanaAgent.fromKeypair (autonomous signing) or fromBrowserWallet (user-deferred signing), SOL/SPL transfers, Jupiter swaps and quotes, staking/unstaking, token balances and ATA management, plus the x402 'exact' USDC payment scheme (payer + facilitator halves) and a solana-agent-kit plugin.
 
-**How it works:** Four interchangeable WalletProvider implementations (keypair, browser split-signing server/client halves, wallet-adapter wrapper) behind one interface; payExact executes an SPL TransferChecked and returns the tx signature as the X-PAYMENT proof, compatible with x402 v2. Dual ESM/CJS, fully typed. README: /workspaces/three.ws/solana-agent-sdk/README.md.
+**How it works:** Four interchangeable WalletProvider implementations (keypair, browser split-signing server/client halves, wallet-adapter wrapper) behind one interface; payExact executes an SPL TransferChecked and returns the tx signature as the X-PAYMENT proof, compatible with x402 v2. Dual ESM/CJS, fully typed. README: solana-agent-sdk/README.md.
 
 **Why it matters:** An autonomous agent can hold its own keys, move funds, swap, stake, and settle x402 invoices in USDC on Solana with a typed API — or defer every signature to the human's browser wallet with the same code.
 
@@ -2544,7 +2721,7 @@ Gives an AI agent a Solana wallet and typed on-chain actions: SolanaAgent.fromKe
 
 The payments layer behind three.ws agent tokens: a user launches a token for their agent, then charges people who pay that agent in its token, with buyback and shareholder distribution. Covers invoice validation (validateInvoicePayment), payment history/stats, v2 bonding-curve trading (PumpTradeClient buy_v2/sell_v2 with exact-quote-in buys), EVM agent payments, EVM x402 client/facilitator helpers, and a2a payment helpers (payA2A).
 
-**How it works:** A value-added fork of @pump-fun/agent-payments-sdk@3.0.3 binding the deployed Solana program AgenTMiC2hvxGebTsgmsD4HHBa8WEcqGFf87iwRRxLo7, extended with USDC + token-2022 quote assets (upstream is SOL-only), an offline instruction builder (PumpAgentOffline), and a solana-agent-kit plugin. README: /workspaces/three.ws/agent-payments-sdk/README.md.
+**How it works:** A value-added fork of @pump-fun/agent-payments-sdk@3.0.3 binding the deployed Solana program AgenTMiC2hvxGebTsgmsD4HHBa8WEcqGFf87iwRRxLo7, extended with USDC + token-2022 quote assets (upstream is SOL-only), an offline instruction builder (PumpAgentOffline), and a solana-agent-kit plugin. README: agent-payments-sdk/README.md.
 
 **Why it matters:** A developer monetizing an agent gets the full commercial machinery — issue an invoice, verify it was paid on-chain within a window, trade the agent's token on its bonding curve — without writing Anchor client code.
 
@@ -2552,7 +2729,7 @@ The payments layer behind three.ws agent tokens: a user launches a token for the
 
 x402-fetch is a drop-in fetch wrapper that silently answers x402 402 Payment Required challenges — wrap a wallet once (withX402(window.ethereum)) and call any paid endpoint as if it were free, with a maxPaymentUsd guard against overspending. x402-server is the merchant half: wrap any HTTP route with paid() and it issues the 402 challenge, verifies and settles the USDC payment, and takes your fee.
 
-**How it works:** x402-fetch has zero production dependencies (secp256k1/keccak256/EIP-712 inlined) and signs EIP-3009 transferWithAuthorization for USDC on Base, byte-identical to MetaMask output; works in browser and Node with EIP-1193 providers or raw keys. Sources: /workspaces/three.ws/packages/x402-fetch, /workspaces/three.ws/packages/x402-server.
+**How it works:** x402-fetch has zero production dependencies (secp256k1/keccak256/EIP-712 inlined) and signs EIP-3009 transferWithAuthorization for USDC on Base, byte-identical to MetaMask output; works in browser and Node with EIP-1193 providers or raw keys. Sources: packages/x402-fetch, packages/x402-server.
 
 **Why it matters:** Both sides of the paid-agent-API economy in a few lines: an agent developer's HTTP calls just work against paid endpoints, and a service developer turns any endpoint into revenue without building payment infrastructure.
 
@@ -2560,7 +2737,7 @@ x402-fetch is a drop-in fetch wrapper that silently answers x402 402 Payment Req
 
 One base URL fronting a growing bundle of third-party crypto/DeFi/on-chain APIs — CoinGecko, DefiLlama, Jupiter, DexScreener, direct Solana RPC, OpenAI chat and more — re-offered as GET /api/v1/x/<provider>/<endpoint> with normalized, agent-sized JSON responses instead of each upstream's raw payload.
 
-**How it works:** Every request resolves through four billing lanes in order: free (real per-IP quotas, zero setup — a bare curl gets data), BYOK (caller passes the upstream's own key, pure pass-through, no markup), plan (three.ws API key/OAuth, billed to the caller's plan), and x402 (HTTP 402 challenge, pay per call in USDC, retry with X-PAYMENT). The registry at /workspaces/three.ws/api/v1/_providers.js is the single source of truth feeding discovery (GET /api/v1/x), /openapi.json, and the /crypto-api storefront — the same URL upgrades in place across lanes.
+**How it works:** Every request resolves through four billing lanes in order: free (real per-IP quotas, zero setup — a bare curl gets data), BYOK (caller passes the upstream's own key, pure pass-through, no markup), plan (three.ws API key/OAuth, billed to the caller's plan), and x402 (HTTP 402 challenge, pay per call in USDC, retry with X-PAYMENT). The registry at api/v1/_providers.js is the single source of truth feeding discovery (GET /api/v1/x), /openapi.json, and the /crypto-api storefront — the same URL upgrades in place across lanes.
 
 **Why it matters:** An agent that needs a token price, a swap quote, a chain's TVL, and an ENS lookup uses one base URL, one discovery call, and one bill instead of juggling four API keys and four rate limits — and can start with literally zero setup.
 
@@ -2568,7 +2745,7 @@ One base URL fronting a growing bundle of third-party crypto/DeFi/on-chain APIs 
 
 Versioned first-party endpoints: text→3D forge (the only text→mesh lane in the x402 ecosystem), text→image (/api/v1/ai/image, first 5/day free then $0.02 via x402), TTS and ASR (/api/v1/ai/tts, /api/v1/ai/asr), sentiment, agents, market, pump, and token data, plus free public directories like /api/v1/tokenized/launches (every 3D NFT minted through the platform) and /api/v1/pump/launches.
 
-**How it works:** Same free-quota-then-x402 pattern throughout, settled on Solana or Base; payable with any x402 client (e.g. npx x402 curl). Full reference: /workspaces/three.ws/docs/api-reference.md; machine-readable listing at /.well-known/x402.json and /.well-known/openapi.yaml.
+**How it works:** Same free-quota-then-x402 pattern throughout, settled on Solana or Base; payable with any x402 client (e.g. npx x402 curl). Full reference: /docs/api-reference; machine-readable listing at /.well-known/x402.json and /.well-known/openapi.yaml.
 
 **Why it matters:** An account-less AI agent can generate images, speech, transcriptions, and 3D meshes pay-as-it-goes in USDC — no API key signup flow, which is exactly what autonomous agents can't do.
 
@@ -2576,13 +2753,13 @@ Versioned first-party endpoints: text→3D forge (the only text→mesh lane in t
 
 CRUD for agent identities at /api/agents (list, get, create, update, get-or-create default agent), with API-key bearer auth or session cookies from SIWE/Privy login, standard JSON error envelopes, and 100 req/min authenticated rate limits.
 
-**How it works:** Base URL https://three.ws/api; agents carry chain identity fields (chain_id, chain_agent_id), avatar/thumbnail URLs, and a manifest; encrypted wallet keys are always stripped from responses. Documented in /workspaces/three.ws/docs/api-reference.md.
+**How it works:** Base URL https://three.ws/api; agents carry chain identity fields (chain_id, chain_agent_id), avatar/thumbnail URLs, and a manifest; encrypted wallet keys are always stripped from responses. Documented in /docs/api-reference.
 
 **Why it matters:** Programmatic control of the same agent objects the MCP tools and SDKs operate on — scripts and CI can provision and update agents that then show up with 3D bodies and on-chain identity everywhere else.
 
 ## Claude Code plugin marketplace (.claude-plugin)
 
-An official plugin marketplace manifest (/workspaces/three.ws/.claude-plugin/marketplace.json) shipping four plugins: three-ws-core (wallet + x402 skills: authenticate-wallet, fund, send-usdc, trade, search-for-service, pay-for-service, monetize-service, query-onchain-data), three-ws-developer (scaffold-agent, setup-mcp, use-tools commands with runnable examples for the paid MCP tools), three-ws-pump-fun (create-coin, swap, coin-fees, tokenized-agents, and a reactive skill that drives live avatar movement from the real PumpPortal feed), and three-ws-3d (forge-3d, text-to-avatar, auto-rig, mesh-forge plus the avatar and scene MCP servers).
+An official plugin marketplace manifest (.claude-plugin/marketplace.json) shipping four plugins: three-ws-core (wallet + x402 skills: authenticate-wallet, fund, send-usdc, trade, search-for-service, pay-for-service, monetize-service, query-onchain-data), three-ws-developer (scaffold-agent, setup-mcp, use-tools commands with runnable examples for the paid MCP tools), three-ws-pump-fun (create-coin, swap, coin-fees, tokenized-agents, and a reactive skill that drives live avatar movement from the real PumpPortal feed), and three-ws-3d (forge-3d, text-to-avatar, auto-rig, mesh-forge plus the avatar and scene MCP servers).
 
 **How it works:** Each plugin bundles skills/commands and MCP server configs; installing one gives Claude Code both the how-to knowledge (skills) and the live tools (MCP) for that domain. Sources: ./.agents, ./marketplace/plugins/*, ./pump-fun-skills.
 
@@ -2592,9 +2769,73 @@ An official plugin marketplace manifest (/workspaces/three.ws/.claude-plugin/mar
 
 A single typed home for declaring MCP tools across the repo's 38 servers: defineTool declares identity, Zod-schema API surface, and a permission manifest (network allowlist, rate limit, wallet access) once; defineExecutor wires typed implementations through one validating invoke() entry point; toMcpTools adapts the result into the exact registration shape the servers already use.
 
-**How it works:** JSON Schema is derived automatically from the Zod schemas; validation, rate limiting, and success/failure normalization are enforced centrally instead of re-implemented per server. Internal workspace package (private, not on npm) at /workspaces/three.ws/packages/tool-sdk — relevant to developers building new three.ws MCP servers in-repo.
+**How it works:** JSON Schema is derived automatically from the Zod schemas; validation, rate limiting, and success/failure normalization are enforced centrally instead of re-implemented per server. Internal workspace package (private, not on npm) at packages/tool-sdk — relevant to developers building new three.ws MCP servers in-repo.
 
 **Why it matters:** Contributors adding a tool to any three.ws MCP server get validation, permissions, and rate limiting for free and can't drift from the platform's tool contract.
+
+## BNB Vault — encrypted 3D model marketplace
+
+A marketplace for encrypted 3D models where buying access is a real BNB Chain smart-contract transaction. The purchase triggers a cross-chain call into BNB Greenfield's programmable storage that grants the buyer's address read access to the encrypted object — a capability no other chain offers a contract. The page tracks the grant honestly ("granting access on Greenfield…") until it settles a few blocks later, then unlocks the model for viewing entirely in the browser: the decrypted bytes never touch the network again.
+
+**How it works:** A buy() on the GreenfieldVault contract carries a protobuf-encoded Greenfield Policy plus the live relay fee, sent from a local session key — gasless via MegaFuel sponsorship on BSC testnet when sponsorable, self-pay otherwise. Unlocking recovers the buyer's real secp256k1 public key from a single signed message (no registration step), ECIES-wraps the model's AES-256-GCM content key to it, and the browser unwraps and decrypts with Web Crypto + @noble/curves against a sha256-verified manifest. The raw content key and plaintext GLB are never returned by any server.
+
+**Why it matters:** Buy and sell 3D assets with on-chain access control and true end-to-end encryption — only the buyer's own browser can ever decrypt the model.
+
+## Live block race
+
+A real-time race between BNB Chain, Base, Ethereum, and Solana block times, measured fresh off real public RPCs every few seconds. Each lane shows a rolling average, the latest block or slot it sampled, and a sparkline of recent measurements — no number on the page is hardcoded; every figure traces to a probe made moments ago. A lane whose RPC goes quiet shows "reconnecting" with its last live reading while the others keep racing.
+
+**How it works:** The page polls a latency endpoint on a 5-second cadence; the backend samples a window of real recent blocks (slots for Solana) from each chain's public RPC and returns averaged block times, and the headline computes live speedup ratios of BNB Chain versus Base and Ethereum from those same samples. Needs no wallet, no payment, no key.
+
+**Why it matters:** See — not just read — that BNB Chain produces ~0.45s blocks, verified live against three other chains in your own browser.
+
+## BABT holder check API
+
+A free API that answers one question: does this address hold a Binance Account Bound Token — the soulbound token Binance mints only to identity-verified accounts, with a 1.16M+ holder base on mainnet. It's an on-chain, KYC-backed uniqueness signal any developer can query with no API key and no Binance relationship. Responses are honest about the signal's limits: holding a BABT proves the address is currently bound to a KYC'd account, not a permanent identity, since Binance can revoke and re-mint to a new wallet.
+
+**How it works:** One free eth_call to balanceOf on Binance's own verified BABT contract (mainnet or testnet), plus tokenIdOf when the address holds one; the response includes the token id, an explorer link, and a plain-language note on how to interpret the result, cached at the edge for 30–60 seconds.
+
+**Why it matters:** One free GET tells you whether a wallet belongs to a KYC'd Binance user — instant sybil resistance for airdrops, gating, and reputation systems.
+
+## @three-ws/react — a walking 3D agent in two lines of React
+
+A React component drops a fully interactive, walkable 3D agent into any app with no Three.js, no WebGL setup, and no build configuration. Visitors steer the avatar with a joystick or keyboard, and your code drives it live through a ref: switch between idle, walk, and run, swap the avatar mid-session, tune walk speed, pop a speech bubble over its head, or change the environment preset.
+
+**How it works:** The 3D runtime renders inside a sandboxed iframe hosted by three.ws, so the host app ships zero rendering code; postMessage traffic is accepted only from the three.ws origin and the component's own iframe. TypeScript types ship in the box and React 17+ is the only peer dependency.
+
+**Why it matters:** Embedding a 3D AI agent in a React app becomes a two-line install instead of a WebGL project.
+
+## @three-ws/x402-modal — HTTP 402 to checkout in one script tag
+
+A drop-in payment modal turns any x402 paid endpoint into a polished checkout. Point it at a URL that answers 402 Payment Required and it handles everything: parsing the payment challenge, connecting Phantom on Solana or MetaMask on EVM chains, signing, settling, and re-sending the request with proof of payment — then hands back the endpoint's result with an on-chain receipt and explorer link. Sign-in re-entry, per-call and per-day spending caps in micro-USD, live step-by-step progress rows, and safe automatic retries that can never double-charge are all built in.
+
+**How it works:** Ship it as a single script tag with data attributes on a button, or call pay() programmatically for full control; the EVM path is 100% client-side via gasless EIP-3009 transfer authorizations, and it runs in vanilla JS with no bundler, no framework, and no installed dependencies. Self-hosters can rebrand the modal and point it at their own checkout backend.
+
+**Why it matters:** Every merchant stops rebuilding the same fiddly x402 client — one tag turns a 402 response into revenue.
+
+## @three-ws/avatar-cli — on-chain avatar tooling for the terminal
+
+Terminal-native tooling brings the on-chain avatar workflow to your shell and CI. It scaffolds a spec-compliant avatar manifest from just a wallet address and a mesh file — computing the SHA-256, byte size, and format for you — validates existing manifests with CI-friendly exit codes, hashes any file for content addressing, and prints ready-to-paste embed snippets including the resolver URL, a web-component tag, and an iframe.
+
+**How it works:** Four commands (init, validate, hash, preview) run entirely offline against the published avatar schema — no service to sign up for, no browser required — and a --json flag on each makes them scriptable. Runs via npx with zero install, accepting CAIP-10 owners, ENS-style names, and Avaturn/Mixamo/Ready Player Me/VRM skeletons.
+
+**Why it matters:** Publishing a verifiable, on-chain-addressable avatar becomes three shell commands you can wire straight into CI.
+
+## Multi-cloud AI MCP servers — IBM watsonx and Alibaba Qwen
+
+Two Model Context Protocol servers plug enterprise AI clouds directly into Claude Desktop, Claude Code, Cursor, or any MCP client. The IBM watsonx server exposes six tools — Granite chat, raw generation with decoding control, embeddings, tokenization, zero-shot time-series forecasting, and model discovery — while the Alibaba Cloud server brings Qwen chat (qwen-max through qwen-long's million-token context), embeddings, and model listing from your DashScope account. Both talk directly to the provider's REST API with your own credentials: no intermediary backend, no telemetry, no mock data.
+
+**How it works:** Each installs with a single npx command or one line of MCP client config; the watsonx server mints and caches IAM bearer tokens from your API key and scopes every call to your project, and every tool declares read-only MCP annotations so clients can reason about side effects. Both are listed in the official MCP Registry.
+
+**Why it matters:** Your coding agent gains IBM Granite and Alibaba Qwen as first-class tools in one command, with your keys never leaving your machine.
+
+## The public changelog — human page, machine feeds, and X push
+
+Every user-visible change to the platform lands in a public changelog that holders can actually follow: a browsable web page with per-entry permalinks, plus machine-readable JSON and RSS feeds for bots, dashboards, and readers. Entries are written in plain holder-readable language — no commit jargon — tagged by type (feature, improvement, fix, SDK, infra, docs, security), and new page launches flow in automatically. New entries are also pushed as tweets to the @trythreews X account, the primary holder channel.
+
+**How it works:** A curated entry file merges with the page registry at build time to regenerate the markdown changelog, the JSON feed, and the RSS XML, with validation that fails the build on malformed entries. The X push script diffs the feed against a committed state file so posting stays idempotent across machines, supports dry-run and rate-limit-aware batching, and threads each entry to the free API tier's quota.
+
+**Why it matters:** Holders and integrators always know what shipped — on the site, in their feed reader, or on their X timeline — without anyone hand-writing announcements.
 
 ---
 

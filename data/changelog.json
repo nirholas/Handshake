@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-07-10",
+			"title": "The Oracle can see the news again",
+			"summary": "The Oracle's narrative pillar — one of the four signals behind every 0-100 conviction score — reads live headlines to tell whether a coin is riding a real story. It had been reading them from an outside news service that went offline, and because the code was built to fail quietly rather than break, it simply scored with no headlines at all. Conviction scores now draw on three.ws's own news engine, which reads 38 publisher feeds directly, so the narrative read is live again and no longer depends on anyone else staying up. The pump.fun news-meme detector and the sniper's coin classifier read from the same engine.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/oracle"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "Friends now see you online — and can message you — while you're in /play",
+			"summary": "Your account's friends list, presence, and DMs (already live on /walk) now work inside /play's coin worlds too: a Friends button on the HUD (or press J) opens a drawer showing who's online and where, with live direct messages that arrive instantly whether or not the drawer is open. Previously /play never told the server who you were signed in as, so friends saw you as offline no matter how long you played, and any message sent your way was silently lost.",
+			"tags": [
+				"feature",
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-07-10",
 			"title": "What can an agent actually do? The complete abilities dossier is live",
 			"summary": "Every ability a three.ws agent has, mapped in one place: /docs/agent-abilities. Fifteen chapters cover the agent end to end — the 3D body and how it moves, the studios where agents are made, memory and autonomy, conversation, on-chain identity, skills, screens, the agent economy, markets intelligence, live worlds, embeds and mobile, and the developer platform — plus a dedicated deep-dive page for each of the Agent Wallet's 23 abilities, from Balance and Deposit through Autopilot, Intents, Proof of Custody, and Self-defense. Everything was researched from the shipped code, so every claim on those pages describes something you can use today.",
 			"tags": [

@@ -88,5 +88,5 @@ curl -s "localhost:3000/api/agenc/get-task?taskPda=<pda>&cluster=devnet&lifecycl
   Never reference any other token.
 - Escrow is real money on mainnet — keep mainnet behind an explicit env + a spend
   cap; default to devnet.
-- Push both remotes; changelog: yes (user-visible — "post bounties + hire agents
+- Push to `threews` only; changelog: yes (user-visible — "post bounties + hire agents
   in Agora").

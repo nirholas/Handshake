@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T06:16:54.247Z",
+	"generated_at": "2026-07-10T12:13:16.047Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,9 +29,29 @@
 		{
 			"date": "2026-07-10",
 			"type": "launch",
+			"title": "Crypto News Digest",
+			"summary": "The day's crypto news grouped into the handful of stories that actually matter — each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.",
+			"link": "/markets/digest",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "launch",
 			"title": "Crypto News Reader",
 			"summary": "Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.",
 			"link": "/markets/news/article",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "launch",
+			"title": "Docs · What Agents Can Do — The Complete Dossier",
+			"summary": "The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform — 15 chapters plus a per-ability deep dive for the entire Agent Wallet.",
+			"link": "/docs/agent-abilities",
 			"tags": [
 				"launch"
 			]
@@ -70,6 +90,17 @@
 		{
 			"date": "2026-07-10",
 			"type": "update",
+			"title": "Friends now see you online — and can message you — while you're in /play",
+			"summary": "Your account's friends list, presence, and DMs (already live on /walk) now work inside /play's coin worlds too: a Friends button on the HUD (or press J) opens a drawer showing who's online and where, with live direct messages that arrive instantly whether or not the drawer is open. Previously /play never told the server who you were signed in as, so friends saw you as offline no matter how long you played, and any message sent your way was silently lost.",
+			"link": "/play",
+			"tags": [
+				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
 			"title": "The liquidations pulse on /coins is live",
 			"summary": "The long/short liquidation strip on the markets page had been showing its offline state since launch — the collector that listens to Binance, Bybit, and OKX futures streams needs to run around the clock, which the old serverless setup couldn't do. It now runs as its own always-on service, so the dominant-side badge, the 1-hour long-vs-short bars, and the biggest recent liquidations fill in with real exchange data.",
 			"link": "/coins",
@@ -87,6 +118,28 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "The Oracle can see the news again",
+			"summary": "The Oracle's narrative pillar — one of the four signals behind every 0-100 conviction score — reads live headlines to tell whether a coin is riding a real story. It had been reading them from an outside news service that went offline, and because the code was built to fail quietly rather than break, it simply scored with no headlines at all. Conviction scores now draw on three.ws's own news engine, which reads 38 publisher feeds directly, so the narrative read is live again and no longer depends on anyone else staying up. The pump.fun news-meme detector and the sniper's coin classifier read from the same engine.",
+			"link": "/oracle",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "What can an agent actually do? The complete abilities dossier is live",
+			"summary": "Every ability a three.ws agent has, mapped in one place: /docs/agent-abilities. Fifteen chapters cover the agent end to end — the 3D body and how it moves, the studios where agents are made, memory and autonomy, conversation, on-chain identity, skills, screens, the agent economy, markets intelligence, live worlds, embeds and mobile, and the developer platform — plus a dedicated deep-dive page for each of the Agent Wallet's 23 abilities, from Balance and Deposit through Autopilot, Intents, Proof of Custody, and Self-defense. Everything was researched from the shipped code, so every claim on those pages describes something you can use today.",
+			"link": "/docs/agent-abilities",
+			"tags": [
+				"docs",
+				"feature"
 			]
 		},
 		{

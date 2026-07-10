@@ -16,7 +16,7 @@ three.ws is configured through a combination of environment variables and a hand
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` for local development. In production, set these in the Vercel dashboard under **Settings → Environment Variables** for both Preview and Production environments.
+Copy `.env.example` to `.env.local` for local development. In production, three.ws runs on **Google Cloud Run** (service `three-ws-api`, region `us-central1`) — set these on the Cloud Run service, e.g. `gcloud run services update three-ws-api --region us-central1 --update-env-vars NAME=value`, or through the Cloud Console. See the full production runbook in [docs/ops/gcp-production.md](ops/gcp-production.md).
 
 ```bash
 cp .env.example .env.local
@@ -181,7 +181,7 @@ UPSTASH_CACHE_REST_URL=https://yyy.upstash.io
 UPSTASH_CACHE_REST_TOKEN=yyyyy
 ```
 
-Provision a separate store **co-located with your production Vercel region** (cross-region latency is what pushes large `SET`s past the 3s client timeout). When unset, the cache transparently falls back to the rate-limiter store, then to in-memory — no behavior change. Verify the cutover on the Upstash dashboard: command traffic shifts to the new store and the limiter store's usage drops.
+Provision a separate store **co-located with your production Cloud Run region** (`us-central1`; cross-region latency is what pushes large `SET`s past the 3s client timeout). When unset, the cache transparently falls back to the rate-limiter store, then to in-memory — no behavior change. Verify the cutover on the Upstash dashboard: command traffic shifts to the new store and the limiter store's usage drops.
 
 ---
 
@@ -272,7 +272,7 @@ Generate a fresh wallet:
 node -e "const {Wallet} = require('ethers'); const w = Wallet.createRandom(); console.log(w.privateKey, w.address)"
 ```
 
-Never commit a real value. Rotate via Vercel environment variables.
+Never commit a real value. Rotate via the Cloud Run service env vars (`gcloud run services update three-ws-api --region us-central1 --update-env-vars AGENT_RELAYER_KEY=…`).
 
 #### `AGENT_RELAYER_ADDRESS`
 **Conditional.** EIP-55 checksummed address derived from `AGENT_RELAYER_KEY`. Fund with testnet ETH before enabling the relayer.
@@ -333,7 +333,7 @@ node scripts/gen-solana-signer-key.mjs --var COIN_TREASURY_SECRET_KEY_B64
 node scripts/gen-solana-signer-key.mjs --vanity www
 ```
 
-**Fund the printed public key with SOL** before the relayer can pay fees. `--write` refuses to clobber an existing value, so rotating means removing the old line first. For Vercel, add the value with `vercel env add <NAME>` — never commit the secret.
+**Fund the printed public key with SOL** before the relayer can pay fees. `--write` refuses to clobber an existing value, so rotating means removing the old line first. In production, add the value to the Cloud Run service (`gcloud run services update three-ws-api --region us-central1 --update-env-vars <NAME>=<base64>`) — never commit the secret. Note that `gcloud run services describe three-ws-api` is the authoritative view of production env; a `vercel env pull` export returns empty for secret-type vars and must not be trusted.
 
 ---
 

@@ -160,9 +160,10 @@ export async function getPumpAgent({ network = 'mainnet', mint } = {}) {
 	]);
 	const connection = getConnection({ network });
 	const mintPk = mint instanceof PublicKey ? mint : new PublicKey(mint);
-	// PumpAgent is an Anchor-backed online SDK. Construction signature can
-	// shift between 3.x patches; pass connection + mint and let it error if not.
-	const agent = new PumpAgent(mintPk, connection);
+	// Constructor is (mint, environment, connection) — the environment argument
+	// sits BETWEEN the two. Passing the connection second leaves this.connection
+	// undefined and every online read throws "Connection is required".
+	const agent = new PumpAgent(mintPk, network === 'devnet' ? 'devnet' : 'mainnet', connection);
 	const [agentPda] = getTokenAgentPaymentsPDA ? getTokenAgentPaymentsPDA(mintPk) : [null];
 	return { agent, connection, BN, web3, agentPda };
 }

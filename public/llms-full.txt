@@ -1168,6 +1168,12 @@ URL: https://three.ws/markets/archive
 
 The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese — searchable by keyword, ticker, source, sentiment, date, and language.
 
+### Crypto News Digest
+
+URL: https://three.ws/markets/digest
+
+The day's crypto news grouped into the handful of stories that actually matter — each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.
+
 ## Agent Tools
 
 Manage, talk to, and deploy individual agents.
@@ -1647,6 +1653,12 @@ Spend limits, the freeze switch, Merkle proof-of-custody with in-browser verific
 URL: https://three.ws/docs/trader-card
 
 Paste any Solana wallet for its on-chain pump.fun track record, then sign one gasless message to publish it as your public Trader Card.
+
+### Docs · What Agents Can Do — The Complete Dossier
+
+URL: https://three.ws/docs/agent-abilities
+
+The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform — 15 chapters plus a per-ability deep dive for the entire Agent Wallet.
 
 ## Blog
 

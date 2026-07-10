@@ -99,3 +99,35 @@ Read access to AgenC (agenc.tech, Tetsuo Corp) — an external Solana coordinati
 **How it works:** mcp-server/src/tools/agenc-*.js build a read-only Anchor client over @tetsuo-ai/sdk; the ephemeral wallet refuses to sign anything, so the surface is strictly read paths. Cheap paid tools ($0.001 USDC each via x402).
 
 **Why it matters:** three.ws agents (and any MCP client) can discover open on-chain jobs and monitor task escrow state without standing up Anchor themselves — the on-ramp to working within an external agent labor market.
+
+## Alpha Hunt
+
+An always-on strategy that scores every new token against converging quality signals — how many smart-money wallets are in, how organic the buying looks, the token's quality score, and its market cap — and autonomously buys only when your thresholds all pass at once. Each strategy runs on a daily SOL budget with an instant kill switch, and its live win rate and realized P&L stay on the scoreboard.
+
+**How it works:** The sniper worker (workers/agent-sniper/index.js) feeds fully-enriched intel records into a pure scorer (workers/agent-sniper/alpha-hunt.js) that applies hard filters — min quality_score, min smart-money wallet count, min organic score, max market cap in USD — before any buy. Strategies are configured via api/sniper/strategy.js (trigger = 'alpha_hunt') with per-strategy daily budgets, and every buy is simultaneously recorded as a Reasoning Ledger decision so the call is auditable later. The command center at /dashboard/capabilities (src/dashboard-next/pages/capabilities.js) shows armed/disarmed state, thresholds, P&L, and win rate per strategy, plus a live worker heartbeat (alive / feed degraded / offline) and treasury auto-funding totals.
+
+**Why it matters:** You encode your judgment once — 'only low-cap coins with real smart money and organic volume' — and the agent hunts around the clock at machine speed, never chasing a token that fails a single filter. The budget cap and kill switch keep it on a leash, and every trade lands in the agent's verifiable track record.
+
+## Autonomous Coin Launcher
+
+Agents that launch their own pump.fun coins on a schedule you set — every N hours, up to a launch cap, per network — with a one-click 'Launch Now' override that fires within a minute. The dashboard tracks every launched coin, whether it graduated, and the creator fees it has earned back.
+
+**How it works:** Launcher configs (one per agent per network: symbol, interval hours, max launches) are managed through api/agent/launcher.js with strict agent-ownership checks; the 'Launch Now' button posts a trigger action that the worker picks up within 60 seconds. The capabilities command center renders the full schedule (next launch countdown, launches vs cap) and a launched-coins ledger with graduation status and total fees claimed per coin.
+
+**Why it matters:** Your agent becomes a self-sustaining creator: it ships coins on cadence without you touching a keyboard, and everything it launches is tracked in one place — schedule, graduations, and the fee revenue flowing back.
+
+## Creator Auto-Claim
+
+A fee harvester that watches every coin an agent launched and automatically collects the creator fees whenever they cross a threshold — no manual sweeping, no forgotten revenue. When a coin is running hot, the dashboard flags it 'Ready to Claim' and gives you a claim-it-now button showing the exact SOL waiting.
+
+**How it works:** api/cron/launcher-claimer.js runs every 5 minutes: for each launched coin with ≥0.01 SOL of accrued creator fees (and no claim in the past 24h) it queries live fee info, has the agent sign its own claim transaction — the same key that signed the launch — and records the claim with the buyback-earmarked share for revenue accounting. The dashboard's Auto-Claim panel shows claimable-now vs total-earned per coin and exposes a manual 'Claim' action through the same collect-creator-fee endpoint the cron uses.
+
+**Why it matters:** Creator fees are the whole point of launching, and they leak when nobody sweeps them. Auto-Claim turns fee collection into a background process: your agents harvest their own earnings every five minutes, and you can see — and one-click trigger — every claim yourself.
+
+## Market Maker
+
+Agents provide range-based liquidity on coins they care about — defending a price floor, trimming into rallies — with Jito-accelerated execution and a rulebook that makes market manipulation structurally impossible, not just discouraged. Plain-language presets like 'Gentle floor defense' configure it in one click; a live panel shows spread, inventory fill, buys vs sells, and net P&L per market.
+
+**How it works:** Policies live in api/_lib/market-maker.js, the single source of truth shared by the API (api/agent/market-maker.js, api/launch/mm.js) and the engine worker. Hard anti-manipulation guards are enforced twice — refused at policy-create time AND re-clamped at execution: minimum 30s between actions, a side flip (buy→sell) requires 2× that interval so the MM physically cannot wash-trade, no single action may exceed 33% of live market volume, recycling can never dump more than 90% of inventory, and when live volume can't be read the engine refuses anything above a 0.05 SOL slice so it never paints a no-volume tape. Every fill routes through executeAgentTrade — the same firewall, spend-guard, and custody path a manual trade uses; the engine adds no new way to move funds. MEV tip modes (off/economy/turbo) control Jito priority.
+
+**Why it matters:** You get professional-grade liquidity provision — a defended floor, orderly exits into strength — without hiring a market maker or trusting a black box. The non-manipulation guarantees are properties of the policy engine itself, verifiable in the caps, so holders of your coin can trust the tape and you can trust the agent with inventory.

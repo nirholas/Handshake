@@ -91,7 +91,7 @@ The npm package is a stdio-to-HTTP bridge. It speaks MCP over stdio to the clien
 
 ## Where AWS comes in
 
-The platform runs on AWS in `us-east-1`, with assets and storage on S3, and it is available to subscribe through AWS Marketplace so usage lands on your AWS bill and counts toward existing commitments. three.ws is an AWS Partner (APN Software Path, Technology Partner).
+The platform stores its assets on S3-compatible object storage and is available to subscribe through AWS Marketplace, so usage lands on your AWS bill and counts toward existing commitments (the Marketplace metering integration calls AWS in `us-east-1`). three.ws is an AWS Partner (APN Software Path, Technology Partner).
 
 The MCP server itself is intentionally cloud-agnostic: it is an npm bridge to an HTTP API, so it drops into a Bedrock agent, a Strands agent, a Claude Code session, or anything else that speaks MCP, without caring where the agent runs. If you are building agentic systems on AWS and want them to use paid external tools without a human managing keys, this is a working pattern you can copy.
 

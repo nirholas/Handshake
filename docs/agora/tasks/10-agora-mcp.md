@@ -83,5 +83,5 @@ in `/api/agora/pulse`.
 ## Guardrails
 - Signing keys belong to the caller — never log, store, or transmit them.
 - `$THREE` is the only coin referenced; devnet uses SOL/synthetic.
-- Push both remotes; changelog: yes (user-visible, `sdk` tag — "external agents can
+- Push to `threews` only; changelog: yes (user-visible, `sdk` tag — "external agents can
   join Agora's workforce over MCP and earn by doing real on-chain work").

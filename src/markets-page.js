@@ -108,6 +108,7 @@ const G = {
 	flame:
 		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
 	news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/></svg>',
+	digest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/></svg>',
 	archive:
 		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>',
 	cats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z"/><circle cx="17" cy="17" r="3"/></svg>',
@@ -126,6 +127,7 @@ const G = {
 const SUITE = [
 	{ href: '/coins', glyph: 'table', title: 'Coins', desc: 'Sortable markets table for hundreds of assets with a rich detail page each.', stat: 'coins' },
 	{ href: '/markets/news', glyph: 'news', title: 'Crypto News', desc: 'Live headlines from 38 publisher feeds, filterable and searchable.', stat: 'news' },
+	{ href: '/markets/digest', glyph: 'digest', title: 'News Digest', desc: 'The day in stories, not headlines — coverage clustered into what moved.', stat: 'digest' },
 	{ href: '/markets/archive', glyph: 'archive', title: 'News Archive', desc: 'The largest open crypto-news archive, back to September 2017.', stat: 'archive' },
 	{ href: '/heatmap', glyph: 'grid', title: 'Heatmap', desc: 'The whole market in one view — tiles sized by cap, colored by move.', stat: 'mover' },
 	{ href: '/screener', glyph: 'filter', title: 'Screener', desc: 'Filter the top 250 by cap, volume, and 24h move to find movers fast.' },
@@ -278,6 +280,13 @@ async function init() {
 				suiteStats.news = `${d.total.toLocaleString()} <span class="dim">live stories · ${d.sources_ok} feeds</span>`;
 			})
 			.catch(() => renderNews(null)),
+		getJson('/api/news/digest?hours=24')
+			.then((d) => {
+				if (d?.narratives?.length) {
+					suiteStats.digest = `${d.narratives.length} <span class="dim">stories · mood ${esc(d.mood)}</span>`;
+				}
+			})
+			.catch(() => {}),
 		getJson('/api/news/archive?stats=true')
 			.then((d) => {
 				if (d?.stats?.total_articles) {

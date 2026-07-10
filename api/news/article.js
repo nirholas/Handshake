@@ -18,7 +18,8 @@
 import { lookup } from 'node:dns/promises';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { getNews, findArticle, extractTickers, lexiconSentiment, stripHtml } from '../_lib/news.js';
+import { getNews, findArticle, extractTickers, lexiconSentiment, stripHtml, stripJsonFence } from '../_lib/news.js';
+import { llmComplete, llmConfigured } from '../_lib/llm.js';
 
 const FETCH_TIMEOUT_MS = 10_000;
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
@@ -125,64 +126,32 @@ async function fetchArticle(url) {
 
 // ── Analysis ─────────────────────────────────────────────────────────────────
 
-const LLM_PROVIDERS = [
-	{
-		key: 'groq',
-		envKey: 'GROQ_API_KEY',
-		url: 'https://api.groq.com/openai/v1/chat/completions',
-		model: 'llama-3.3-70b-versatile',
-	},
-	{
-		key: 'openrouter',
-		envKey: 'OPENROUTER_API_KEY',
-		url: 'https://openrouter.ai/api/v1/chat/completions',
-		model: 'meta-llama/llama-3.3-70b-instruct:free',
-	},
-];
-
+// The platform LLM chain (api/_lib/llm.js) owns provider order, key discovery,
+// failover, and spend tracking. Returns null when no provider is configured or
+// every provider fails — the caller then serves the extractive analysis below.
 async function llmAnalyze(content, title, source) {
-	for (const provider of LLM_PROVIDERS) {
-		const apiKey = process.env[provider.envKey];
-		if (!apiKey) continue;
-		try {
-			const resp = await fetch(provider.url, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-				signal: AbortSignal.timeout(12_000),
-				body: JSON.stringify({
-					model: provider.model,
-					temperature: 0.3,
-					max_tokens: 700,
-					response_format: { type: 'json_object' },
-					messages: [
-						{
-							role: 'system',
-							content: 'You are a crypto news analyst. Respond only with valid JSON.',
-						},
-						{
-							role: 'user',
-							content: `Analyze this article. Respond as {"summary": "...2-3 sentence summary...", "key_points": ["...", "..."], "sentiment": "bullish|bearish|neutral"}.\n\nTitle: ${title}\nSource: ${source}\n\n${content.slice(0, 6000)}`,
-						},
-					],
-				}),
-			});
-			if (!resp.ok) continue;
-			const data = await resp.json();
-			const parsed = JSON.parse(data?.choices?.[0]?.message?.content || '{}');
-			if (!parsed.summary) continue;
-			return {
-				summary: String(parsed.summary).slice(0, 1200),
-				key_points: (Array.isArray(parsed.key_points) ? parsed.key_points : [])
-					.map((p) => String(p).slice(0, 300))
-					.slice(0, 5),
-				sentiment: ['bullish', 'bearish', 'neutral'].includes(parsed.sentiment) ? parsed.sentiment : 'neutral',
-				provider: provider.key,
-			};
-		} catch {
-			// fall through to the next provider
-		}
+	if (!llmConfigured()) return null;
+	try {
+		const { text, provider } = await llmComplete({
+			system: 'You are a crypto news analyst. Respond only with valid JSON, no markdown fence.',
+			user: `Analyze this article. Respond as {"summary": "...2-3 sentence summary...", "key_points": ["...", "..."], "sentiment": "bullish|bearish|neutral"}.\n\nTitle: ${title}\nSource: ${source}\n\n${content.slice(0, 6000)}`,
+			maxTokens: 700,
+			timeoutMs: 15_000,
+			track: { tool: 'news_article' },
+		});
+		const parsed = JSON.parse(stripJsonFence(text));
+		if (!parsed.summary) return null;
+		return {
+			summary: String(parsed.summary).slice(0, 1200),
+			key_points: (Array.isArray(parsed.key_points) ? parsed.key_points : [])
+				.map((p) => String(p).slice(0, 300))
+				.slice(0, 5),
+			sentiment: ['bullish', 'bearish', 'neutral'].includes(parsed.sentiment) ? parsed.sentiment : 'neutral',
+			provider,
+		};
+	} catch {
+		return null; // extractive fallback covers it
 	}
-	return null;
 }
 
 function heuristicAnalyze(paragraphs, title) {

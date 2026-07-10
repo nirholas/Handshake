@@ -1,5 +1,7 @@
 # Mainnet end-to-end test — 2026-07-03
 
+_Historical record: a point-in-time test report from 2026-07-03, when production still ran on Vercel. Production migrated to Google Cloud Run on 2026-07-07 (env vars now live on the Cloud Run service, not Vercel; deploy is `npm run build` + `npm run deploy:gcp`). The Vercel references, `vercel env` diagnostics, and secret-outage below describe that day's state — do not read them as current infrastructure guidance. Current ops: [docs/ops/gcp-production.md](../ops/gcp-production.md)._
+
 Real-SOL verification of every money-touching surface, run against production three.ws with a throwaway burner wallet. Audience: engineers. Every claim below carries a transaction signature or an HTTP transcript reference.
 
 ## Parameters

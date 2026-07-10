@@ -30,7 +30,7 @@ const PROMPT =
 	'(text_screenshot), a busy scene with no single dominant subject (multiple_subjects), ' +
 	'no recognizable object at all (no_clear_subject), too dark/blurry to make out ' +
 	'(too_dark_or_blurry), or an abstract pattern/chart/diagram (abstract_or_diagram). ' +
-	'When in doubt, mark usable=true — a borderline photo still reconstructs.';
+	'When in doubt, mark usable=true. A borderline photo still reconstructs.';
 
 // Designed, actionable copy per failure reason. Each tells the user what is wrong
 // AND how to fix it — never a bare "invalid image".

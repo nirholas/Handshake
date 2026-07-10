@@ -1,6 +1,8 @@
 # Deployment & Self-Hosting
 
-This guide covers everything you need to run your own instance of three.ws — from a one-click Vercel deploy to a fully self-hosted setup on any Node.js infrastructure.
+This guide covers everything you need to run your own instance of three.ws — from the single Node container that serves the whole app to a fully self-hosted setup on any Node.js infrastructure.
+
+> **How three.ws itself runs.** Production runs on **Google Cloud Run** (service `three-ws-api`, region `us-central1`) — one Express container ([`server/index.mjs`](../server/index.mjs)) that serves the static frontend, the `vercel.json` route table, and every `api/**` handler with Vercel-parity filesystem routing. The scheduled jobs run on **Google Cloud Scheduler**, not Vercel crons. The complete operational runbook (load balancer, DNS/TLS, env, rollback, recovery) is [`docs/ops/gcp-production.md`](ops/gcp-production.md). This guide describes how to self-host the same container anywhere; the ops runbook is the source of truth for the hosted deployment.
 
 ---
 
@@ -10,35 +12,38 @@ three.ws is a full-stack platform. A complete deployment has six moving parts:
 
 | Layer | What it does | Recommended provider |
 |---|---|---|
-| **Frontend** | Vite-built multi-page SPA (static files) | Vercel / any CDN |
-| **API routes** | Node.js serverless functions in `/api/` | Vercel / any Node.js host |
+| **Frontend** | Vite-built multi-page SPA (static files, baked into the container image) | Cloud Run / any Node host + CDN |
+| **App server** | One Express container (`server/index.mjs`) serving the `vercel.json` routes + every `api/**` handler | Cloud Run / any Node.js host / Docker |
 | **Database** | PostgreSQL — agents, users, widgets, keys | [Neon](https://neon.tech) (serverless Postgres) |
 | **Rate limiting / cache** | Per-IP and per-user rate limits, session caching | [Upstash Redis](https://upstash.com) |
 | **Object storage** | GLB files, generated thumbnails | Cloudflare R2 (recommended) or AWS S3 |
 | **IPFS** (optional) | Decentralized asset pinning for on-chain registration | [Pinata](https://pinata.cloud) or Web3.Storage |
 
-None of the optional layers (Redis, IPFS, blockchain relayer) are required to run a working instance. The platform degrades gracefully — Redis missing means in-process rate limiting per serverless instance; IPFS missing means on-chain registration is unavailable; the relayer missing means ERC-7710 delegation redemption is disabled.
+The API handlers under `api/` are plain files, but they are **not** deployed as one-function-per-file serverless functions — the single container in `server/index.mjs` resolves and runs them with the same filesystem routing Vercel used, so one Node process serves everything. None of the optional layers (Redis, IPFS, blockchain relayer) are required to run a working instance. The platform degrades gracefully — Redis missing means in-process rate limiting per instance; IPFS missing means on-chain registration is unavailable; the relayer missing means ERC-7710 delegation redemption is disabled.
 
 ---
 
-## Quickest path: one-click Vercel deploy
+## Quickest path: the single container
 
-The fastest route from zero to running:
+The fastest route from zero to running is the same container three.ws runs in production. Build it, then run it anywhere that takes a container or a Node process.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/three.ws)
+```bash
+git clone https://github.com/nirholas/three.ws.git
+cd three.ws
+npm install
+cp .env.example .env.local   # fill in DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY at minimum
+npm run db:bootstrap          # provision the schema
+npm run build                 # build the frontend into dist/
+node server/index.mjs         # serves everything on PORT (defaults to 8080)
+```
 
-1. Click the button → connect your GitHub account → Vercel forks the repo to your account.
-2. Fill in the environment variables (see the [Required environment variables](#required-environment-variables) section below).
-3. Click **Deploy**. The build takes about 3 minutes.
-4. After deploy: add your custom domain, configure DNS, point your database.
-
-That's it. You'll have a live instance at `https://your-project.vercel.app`.
+Point a reverse proxy / load balancer at the container, add your domain and TLS, and you have a live instance. On Google Cloud Run, `npm run deploy:gcp` builds the image with [`server/cloudbuild.yaml`](../server/cloudbuild.yaml) and ships it — the [ops runbook](ops/gcp-production.md) covers the load balancer, DNS, and TLS wiring end to end.
 
 ---
 
 ## Required environment variables
 
-Copy [`.env.example`](../.env.example) to `.env.local` for local work, and add the same variables to your Vercel project under **Settings → Environment Variables** (both Preview and Production environments).
+Copy [`.env.example`](../.env.example) to `.env.local` for local work, and set the same variables on your host. On Cloud Run they live on the service (`gcloud run services update three-ws-api --region us-central1 --set-env-vars …`); on any other host, set them however that platform injects environment. Secret-type variables should be stored as secrets, not plaintext — and never trust a `vercel env pull` as a complete export, since it returns empty for secret-type vars.
 
 ```bash
 cp .env.example .env.local
@@ -162,7 +167,7 @@ WEB3_STORAGE_TOKEN=
 ### 1. Create a Neon project
 
 1. Go to [neon.tech](https://neon.tech) → **New Project**
-2. Choose a region close to your Vercel deployment
+2. Choose a region close to where your app server runs
 3. Copy the connection string — it looks like `postgres://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require`
 4. Set it as `DATABASE_URL` in your env
 
@@ -255,7 +260,7 @@ To add an embed origin: add it to the `origin` array in `cors.json` and redeploy
 
 ```bash
 # 1. Create a Redis database at https://upstash.com
-# 2. Choose the same region as your Vercel deployment
+# 2. Choose a region close to where your app server runs
 # 3. Copy the REST URL and REST token to your env vars
 ```
 
@@ -280,7 +285,7 @@ Without Redis the platform still works — rate limits run in-memory per serverl
 
 ```bash
 git clone https://github.com/nirholas/three.ws.git
-cd 3d-agent
+cd three.ws
 npm install
 
 # Copy and fill in env vars
@@ -304,11 +309,12 @@ The dev server runs on **port 3000** with Vite HMR. Changes to any source file r
 |---|---|
 | `npm run dev` | Dev server with HMR on port 3000 |
 | `npm run build` | Production build to `dist/` |
-| `npm run clean` | Remove `dist/` |
-| `npm run deploy` | Build + `vercel --prod` |
-| `npm run verify` | Prettier check (exits 1 if formatting drift) |
+| `npm run clean` | Remove `dist/` and `dist-lib/` |
+| `npm run deploy:gcp` | Build the image via `server/cloudbuild.yaml` and deploy to Cloud Run (how three.ws production ships) |
+| `npm run verify` | Prettier check + `vite build` (exits non-zero on formatting drift or a broken build) |
 | `npm run format` | Auto-format all files with Prettier |
-| `npm run test` | Run test suite (`test/gen_test.js`) |
+| `npm run test` | Run the test suite — `vitest run` then `playwright test` |
+| `npm run db:bootstrap` | Provision the full database schema (core + indexer + delegations + migrations) |
 
 ---
 
@@ -328,9 +334,9 @@ The Vite config handles multi-page routing, asset hashing, and the PWA manifest.
 
 ---
 
-## Vercel configuration
+## Routing and crons (`vercel.json`)
 
-The `vercel.json` at the root configures routing, headers, and background cron jobs.
+`vercel.json` at the root is a **live config file** — it is not a leftover from the Vercel era. The container reads its route table and cron list at runtime: `server/index.mjs` parses `vercel.json`, splits the routes at the `{ "handle": "filesystem" }` marker, and applies the headers, rewrites, redirects, and 404 fallback with Vercel-parity semantics. Do not delete it.
 
 ### Key rewrites
 
@@ -347,16 +353,17 @@ The embed routes explicitly set `frame-ancestors *` so the embed iframe can be h
 
 ### Background cron jobs
 
-Vercel runs four cron jobs automatically once deployed:
+The `crons` array in `vercel.json` declares ~80 scheduled jobs (economy tick, on-chain crawl, delegation indexing, DCA, subscriptions, coin-launch lifecycle, treasury top-ups, and more). In production these run as **~76 Google Cloud Scheduler jobs** — one per entry — each firing `GET /api/cron/<name>` with an `Authorization: Bearer $CRON_SECRET` header. A representative slice:
 
 | Cron | Schedule | Purpose |
 |---|---|---|
+| `/api/cron/economy-tick` | Every minute | Fan out to every engine that moves the agent-to-agent economy |
 | `/api/cron/erc8004-crawl` | Every 15 min | Index new on-chain agent registrations |
 | `/api/cron/index-delegations` | Every 5 min | Index ERC-7710 delegation events |
 | `/api/cron/run-dca` | Every hour | Execute scheduled DCA strategies |
 | `/api/cron/run-subscriptions` | Every hour | Process recurring subscriptions |
 
-Crons only run in production deployments (not preview). No action needed — Vercel picks them up automatically from `vercel.json`.
+The container does **not** schedule these itself — you need an external scheduler hitting the endpoints. On Cloud Run that is Cloud Scheduler; self-hosters can point any HTTP cron (Cloud Scheduler, cron-job.org, Upstash QStash) at `/api/cron/*` with the `CRON_SECRET` bearer, or run `scripts/economy-heartbeat.mjs` as a long-lived pinger that reads `vercel.json` and fires every due cron each minute. See the [economy heartbeat](economy-heartbeat.md) guide for the driver patterns.
 
 ### Static asset caching
 

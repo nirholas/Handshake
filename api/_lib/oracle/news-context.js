@@ -1,76 +1,62 @@
-// Oracle — live news context from cryptocurrency.cv.
+// Oracle — live news context from the native three.ws news engine.
 //
-// Fetches a window of recent crypto headlines (no API key required — public
-// endpoint) and matches them against a coin's name/symbol/tags. When a coin is
-// clearly riding a live headline, the narrative classifier gets that context in
-// the LLM prompt so it can write a precise thesis ("rides today's Trump tariff
-// announcement") instead of guessing. The virality boost applied here is REAL
-// signal: a coin whose ticker appears in a trending headline right now has
-// genuine attention behind it.
+// Reads a window of recent crypto headlines straight from api/_lib/news.js (the
+// same in-process aggregator that serves /api/news/feed — no network hop, no
+// third-party dependency) and matches them against a coin's name/symbol/tags.
+// When a coin is clearly riding a live headline, the narrative classifier gets
+// that context in the LLM prompt so it can write a precise thesis ("rides
+// today's Trump tariff announcement") instead of guessing. The virality boost
+// applied here is REAL signal: a coin whose ticker appears in a trending
+// headline right now has genuine attention behind it.
 //
 // Two tiers:
-//   1. fetchRelevantHeadlines(meta)  — fetch + filter in one call. Returns the
+//   1. fetchRelevantHeadlines(meta)  — read + filter in one call. Returns the
 //      top 3 matching headlines (or [] if none). Used by classifyNarrative().
-//   2. fetchTrending()               — the raw trending topics; used by the cron
-//      to pre-warm the headline cache before a scoring batch.
+//   2. fetchTrending()               — tickers trending across those headlines;
+//      used by the cron to pre-warm the headline cache before a scoring batch.
 //
-// Both degrade gracefully: network failure, bad JSON, or any exception returns
-// the safe fallback so the narrative pipeline never stalls.
+// Both degrade gracefully: a cold registry, a dead feed, or any exception
+// returns the safe fallback so the narrative pipeline never stalls.
 
-const BASE = 'https://cryptocurrency.cv';
-const CACHE_TTL_MS = 90_000; // 90s — fresh enough for live news, lenient on rate limits
+import { getNews } from '../news.js';
 
-/** Module-level news cache so one Vercel invocation shares it across coin scorings. */
+const CACHE_TTL_MS = 90_000; // 90s — fresh enough for live news, cheap on the engine's own 5-min source cache
+
+/** Module-level news cache so one invocation shares it across coin scorings. */
 const _cache = { headlines: null, trending: null, fetchedAt: 0 };
 
-async function fetchWithTimeout(url, ms = 5000) {
-	const ctrl = new AbortController();
-	const timer = setTimeout(() => ctrl.abort(), ms);
-	try {
-		const res = await fetch(url, {
-			signal: ctrl.signal,
-			headers: { 'User-Agent': 'three.ws-oracle/1.0' },
-		});
-		if (!res.ok) return null;
-		return await res.json();
-	} catch {
-		return null;
-	} finally {
-		clearTimeout(timer);
-	}
-}
+/** Categories of the native registry most relevant to pump.fun culture. */
+const CATEGORIES = ['general', 'solana', 'bitcoin', 'defi', 'trading'];
 
 /**
- * Fetch recent headlines from cryptocurrency.cv, filtered to categories most
- * relevant to pump.fun launches. Returns array of { title, category, published_at }
- * or [] on failure. Results cached for CACHE_TTL_MS.
+ * Read recent headlines from the native engine, filtered to the categories most
+ * relevant to pump.fun launches. Returns array of
+ * { title, category, published_at, source, tickers } or [] on failure.
+ * Results cached for CACHE_TTL_MS.
  */
 async function fetchHeadlines() {
 	const now = Date.now();
 	if (_cache.headlines && now - _cache.fetchedAt < CACHE_TTL_MS) return _cache.headlines;
 
-	// Parallel fetch of the most relevant categories for pump.fun culture.
-	const cats = ['general', 'solana', 'bitcoin', 'defi', 'altl1'];
 	const results = await Promise.allSettled(
-		cats.map((cat) =>
-			fetchWithTimeout(`${BASE}/api/news?category=${cat}&limit=20&quality=any`, 5000),
-		),
+		CATEGORIES.map((category) => getNews({ category, limit: 20 })),
 	);
 
 	const headlines = [];
 	const seen = new Set();
-	for (const r of results) {
-		if (r.status !== 'fulfilled' || !r.value) continue;
-		const items = r.value?.articles || r.value?.data || r.value?.items || [];
-		for (const item of items) {
-			const title = String(item?.title || item?.headline || '').trim();
+	for (let i = 0; i < results.length; i++) {
+		const r = results[i];
+		if (r.status !== 'fulfilled') continue;
+		for (const item of r.value?.articles || []) {
+			const title = String(item?.title || '').trim();
 			if (!title || seen.has(title)) continue;
 			seen.add(title);
 			headlines.push({
 				title,
-				category: item?.category || 'general',
-				published_at: item?.published_at || item?.publishedAt || item?.date || null,
+				category: item?.category || CATEGORIES[i],
+				published_at: item?.pub_date || null,
 				source: item?.source || null,
+				tickers: item?.tickers || [],
 			});
 		}
 	}
@@ -83,14 +69,22 @@ async function fetchHeadlines() {
 }
 
 /**
- * Fetch trending topics from cryptocurrency.cv. Returns array of strings.
+ * Trending topics — the tickers appearing most often across the current
+ * headline window, most-mentioned first. Returns array of strings.
  */
 export async function fetchTrending() {
 	if (_cache.trending && Date.now() - _cache.fetchedAt < CACHE_TTL_MS) return _cache.trending;
-	const data = await fetchWithTimeout(`${BASE}/api/trending?limit=20`, 4000);
-	const topics = (data?.topics || data?.trending || data?.items || [])
-		.map((t) => (typeof t === 'string' ? t : String(t?.name || t?.topic || '')))
-		.filter(Boolean);
+
+	const headlines = await fetchHeadlines();
+	const counts = new Map();
+	for (const h of headlines) {
+		for (const t of h.tickers || []) counts.set(t, (counts.get(t) || 0) + 1);
+	}
+	const topics = [...counts.entries()]
+		.sort((a, b) => b[1] - a[1])
+		.slice(0, 20)
+		.map(([ticker]) => ticker);
+
 	if (topics.length) _cache.trending = topics;
 	return _cache.trending || [];
 }

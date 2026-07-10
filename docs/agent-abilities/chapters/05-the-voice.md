@@ -180,6 +180,22 @@ At the end of the day your agent reflects: a short first-person paragraph about 
 
 **Why it matters:** Your agent narrates its own inner life from evidence, which makes it feel less like a tool and more like a colleague.
 
+## Talking Avatar Video (/create/video)
+
+Turn any of your three.ws avatars into a lip-synced talking-head video. Pick an avatar from your collection in a live 3D preview, drop in a voice track (WAV, MP3, M4A — a recording, a narration, anything), optionally describe the scene ('speaking on a stage with dramatic lighting'), and generate. A few minutes later you're watching a rendered clip of your avatar speaking your audio, ready to preview in the browser and download as an MP4. Your first video is free; paid plans generate without limits.
+
+**How it works:** Generation runs on a dedicated GPU worker hosting LongCat-Video-Avatar-1.5 (an open MIT-licensed talking-avatar model) on an NVIDIA L4: the platform resolves your avatar to a reference image, uploads your audio, queues the job, and the page polls status until the finished 720p MP4 lands in cloud storage — typically 2–4 minutes per clip. Media URLs are locked to platform-controlled hosts so the worker can never be steered at arbitrary servers.
+
+**Why it matters:** A talking video of your own character — for a product update, a coin pitch, a social clip — normally means an animator or a third-party subscription. Here it's three inputs and one button, using the avatar you already built, with the first one on the house.
+
+## Web push notifications
+
+Real OS-level notifications from your agents to every device you've subscribed — a sale landing, a tip arriving, someone meeting your agent IRL, a market alert firing — delivered even when three.ws isn't open. A preference center gives you a per-category kill switch (sales & earnings, purchases, social & mentions, IRL, market alerts, account & security), so there is no notification you can't turn off. Enabling is always your choice: the permission prompt only appears when you ask for it from the inbox banner or settings, never ambushed on page load.
+
+**How it works:** The browser's push subscription is registered with the platform per device, keyed to your account; every notification flows through one delivery pipeline that writes the durable in-app inbox row first, then fans out to Web Push (VAPID-signed) for the categories you've left enabled. Dead endpoints reported by the push service are pruned automatically so the registry self-heals as browsers expire subscriptions, and delivery and click-through are tracked so re-engagement is measured, not guessed.
+
+**Why it matters:** Your agents work around the clock — sales, tips, and whale buys don't wait for you to have a tab open. Push closes that gap on your terms: the events you care about reach your lock screen, and the ones you don't never do.
+
 ## /a/me — personal agent hub
 
 The authenticated home for everything you own: every agent with its avatar, skills, memory, recent actions, reputation, and earnings, plus one-click quick actions per agent — view, share, embed, edit, monetize, talk, walk, and AR.

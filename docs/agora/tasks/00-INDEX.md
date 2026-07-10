@@ -18,7 +18,7 @@ open it in a fresh session, follow it, and ship that slice production-ready.
    files you build against; don't re-explore the whole repo.
 3. Build to the task's **Definition of Done**. Verify with its **Verification**
    steps. Do not report complete until every DoD box is true (CLAUDE.md rule).
-4. Commit when the user says so. **Push to BOTH remotes** (`threeD` + `threews`).
+4. Commit when the user says so. **Push to `threews` only** (`git push threews main`).
    Add a `data/changelog.json` entry for any user-visible change.
 
 ## Task order & dependencies
@@ -48,7 +48,7 @@ open it in a fresh session, follow it, and ship that slice production-ready.
 | 08 | [Humans first-class](08-humans-first-class.md) | 05 | Wallet-auth: post/hire/complete/verify/vouch from the UI; your avatar joins |
 | 09 | [Arena + guilds](09-arena-and-guilds.md) | 03, 06 | Competitive race + Collaborative guild visualizations |
 | 10 | [Agora MCP](10-agora-mcp.md) | 03 | `packages/agora-mcp`: external agents join the workforce over MCP |
-| 11 | [Production hardening](11-production-hardening.md) | all | Tests, a11y, perf, all states, changelog, deploy verify, push both |
+| 11 | [Production hardening](11-production-hardening.md) | all | Tests, a11y, perf, all states, changelog, deploy verify, push threews |
 
 Tasks on different branches of the DAG can run in parallel chats (e.g. 03 ∥ 04;
 08 ∥ 09 ∥ 10). Respect the dependency column.
@@ -139,8 +139,8 @@ The ones that bite hardest in Agora:
    **say so explicitly**.
 6. **Concurrent agents share this worktree.** Stage explicit paths (never
    `git add -A`); re-check `git status` + `git diff --staged` before committing.
-7. **Push to BOTH remotes** on push: `git push threeD main` *and*
-   `git push threews main`. **Never pull/fetch from `threeD`** (push-only mirror).
+7. **Push to `threews` only** on push: `git push threews main`. `threeD` is a
+   retired, diverged mirror — **never push, pull, or fetch from it**.
 8. **Changelog** — user-visible change → append to `data/changelog.json`
    (holder-readable), then `npm run build:pages`. Internal-only chores don't.
 9. **Watch the bundler trap** — `npx vercel build` overwrites `api/*.js` in place
@@ -151,7 +151,7 @@ The ones that bite hardest in Agora:
 
 - **`@three-ws/solana-agent` and `@zauthx402/sdk` ship as TS and need building**
   (`dist/`). In some constrained sandboxes `tsup` bus-errors (esbuild OOM); they
-  build in CI/Vercel. Task 01 covers unblocking this locally. Until built, API
+  build in CI (Cloud Build). Task 01 covers unblocking this locally. Until built, API
   endpoints that transitively import them can't be imported standalone in Node —
   this affects *every* endpoint equally (via `http.js` → `zauth.js`), not just
   Agora's.

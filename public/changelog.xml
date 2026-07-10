@@ -23,12 +23,28 @@
 			<description>The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese — searchable by keyword, ticker, source, sentiment, date, and language.</description>
 		</item>
 		<item>
+			<title>Crypto News Digest</title>
+			<link>https://three.ws/markets/digest</link>
+			<guid isPermaLink="false">2026-07-10:Crypto News Digest</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The day's crypto news grouped into the handful of stories that actually matter — each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.</description>
+		</item>
+		<item>
 			<title>Crypto News Reader</title>
 			<link>https://three.ws/markets/news/article</link>
 			<guid isPermaLink="false">2026-07-10:Crypto News Reader</guid>
 			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.</description>
+		</item>
+		<item>
+			<title>Docs · What Agents Can Do — The Complete Dossier</title>
+			<link>https://three.ws/docs/agent-abilities</link>
+			<guid isPermaLink="false">2026-07-10:Docs · What Agents Can Do — The Complete Dossier</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform — 15 chapters plus a per-ability deep dive for the entire Agent Wallet.</description>
 		</item>
 		<item>
 			<title>Markets Hub</title>
@@ -55,6 +71,14 @@
 			<description>Markets grew a full news wing. /markets/news streams live headlines aggregated directly from 38 publisher feeds — filter by category (Bitcoin, DeFi, regulation, and more), search, and open any story in a reader that extracts the full text with a summary, key points, sentiment, and related coverage. Behind it sits the largest open crypto-news archive anywhere: 662,047 articles from September 2017 to today in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language at /markets/archive. A new /markets hub ties the whole suite together — live global stats, the top 100 coins, breaking news, and every market tool as its own card.</description>
 		</item>
 		<item>
+			<title>Friends now see you online — and can message you — while you're in /play</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-07-10:Friends now see you online — and can message you — while you're in /play</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Your account's friends list, presence, and DMs (already live on /walk) now work inside /play's coin worlds too: a Friends button on the HUD (or press J) opens a drawer showing who's online and where, with live direct messages that arrive instantly whether or not the drawer is open. Previously /play never told the server who you were signed in as, so friends saw you as offline no matter how long you played, and any message sent your way was silently lost.</description>
+		</item>
+		<item>
 			<title>The liquidations pulse on /coins is live</title>
 			<link>https://three.ws/coins</link>
 			<guid isPermaLink="false">2026-07-10:The liquidations pulse on /coins is live</guid>
@@ -69,6 +93,22 @@
 			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The 660,000-article news archive is no longer frozen in time: an hourly archiver now appends every new story from the live feed into the corpus, complete with the market snapshot at capture time (BTC/ETH/SOL price, market cap, Fear &amp; Greed), so /markets/archive stays current forever. And if you'd rather read three.ws crypto news in your own reader, the feed is now available as standard RSS at /api/news/rss — subscribe to everything or just one category.</description>
+		</item>
+		<item>
+			<title>The Oracle can see the news again</title>
+			<link>https://three.ws/oracle</link>
+			<guid isPermaLink="false">2026-07-10:The Oracle can see the news again</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Oracle's narrative pillar — one of the four signals behind every 0-100 conviction score — reads live headlines to tell whether a coin is riding a real story. It had been reading them from an outside news service that went offline, and because the code was built to fail quietly rather than break, it simply scored with no headlines at all. Conviction scores now draw on three.ws's own news engine, which reads 38 publisher feeds directly, so the narrative read is live again and no longer depends on anyone else staying up. The pump.fun news-meme detector and the sniper's coin classifier read from the same engine.</description>
+		</item>
+		<item>
+			<title>What can an agent actually do? The complete abilities dossier is live</title>
+			<link>https://three.ws/docs/agent-abilities</link>
+			<guid isPermaLink="false">2026-07-10:What can an agent actually do? The complete abilities dossier is live</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Every ability a three.ws agent has, mapped in one place: /docs/agent-abilities. Fifteen chapters cover the agent end to end — the 3D body and how it moves, the studios where agents are made, memory and autonomy, conversation, on-chain identity, skills, screens, the agent economy, markets intelligence, live worlds, embeds and mobile, and the developer platform — plus a dedicated deep-dive page for each of the Agent Wallet's 23 abilities, from Balance and Deposit through Autopilot, Intents, Proof of Custody, and Self-defense. Everything was researched from the shipped code, so every claim on those pages describes something you can use today.</description>
 		</item>
 		<item>
 			<title>/play: real water at the fishing ponds, and spare rods to find on the bank</title>

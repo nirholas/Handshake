@@ -11,7 +11,6 @@ There are 5 animation collections across the codebase. They are separate and use
 | Collection | Location | Status |
 |---|---|---|
 | **clips** | `public/animations/clips/*.json` | Active in main runtime |
-| **orphaned_fbx** | `public/animations/*.fbx` (6 files) | On disk, never built — absent from manifest |
 | **presets_robotexpressive** | `public/animations/robotexpressive.glb` | Legacy, not loaded at runtime |
 | **lora_pipeline** | `character-studio/public/lora-assets/animations/` | character-studio LoRA pipeline only |
 | **sprite_atlas_pipeline** | `character-studio/public/sprite-atlas-assets/animations/` | character-studio sprite atlas only |
@@ -28,8 +27,8 @@ There are 5 animation collections across the codebase. They are separate and use
 
 1. Drop the FBX into `public/animations/`
 2. Add an entry to `scripts/animations.config.json`
-3. Run `node scripts/build-animations.mjs` — retargets to the Avaturn rig, writes a JSON clip to `public/animations/clips/`, and updates `manifest.json`
-4. Update `public/animations/registry.json` — move the entry from `orphaned_fbx` into `clips`
+3. Run `node scripts/build-animations.mjs` (or `npm run build:animations`) — retargets to the Avaturn rig, writes a JSON clip to `public/animations/clips/`, and updates `manifest.json`
+4. Update `public/animations/registry.json` so the new clip is catalogued under the `clips` collection
 5. Optionally wire a slot in `src/runtime/animation-slots.js` so the agent plays it automatically
 
 ## Agent slots
@@ -48,7 +47,7 @@ Slots are the fixed vocabulary the agent avatar uses to express emotion/gesture.
 | `bow` | `sitclap` | |
 | `point` | `reaction` | |
 | `shrug` | `defeated` | |
-| `fidget` | `Fidget` | **Broken** — no clip named `Fidget` exists |
+| `fidget` | `av-waiting` | Real baked idle-fidget loop (was the never-baked `Fidget`, fixed 2026-07-08) |
 
 Agents can override individual slots via `meta.edits.animations`.
 

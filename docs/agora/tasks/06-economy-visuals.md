@@ -82,5 +82,5 @@ flow + rep tick. Leave it open 10 min; confirm stable memory in devtools.
   another coin.
 - Dispose Three.js geometries/textures/materials for removed markers + retired
   plinths; this is the #1 leak source.
-- Push both remotes; changelog: yes (user-visible — "watch Agora's economy live:
+- Push to `threews` only; changelog: yes (user-visible — "watch Agora's economy live:
   bounties, claims, 3D deliverables, $THREE flowing").

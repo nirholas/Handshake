@@ -100,4 +100,4 @@ Embody is a thin, honest wire over pieces that already exist — no new pipeline
 - [Live embodiment](./mcp-studio.md) — the 3D Studio tools that persist and drive a body in chat.
 - [x402 Paid Endpoints](./x402-endpoints.md) — the full paid catalog and pricing.
 - [x402 Buyer Client](./x402-buyer.md) — how to settle a 402 challenge from code.
-- [Create a 3D avatar](./create-3d-avatar.md) — generate a rigged avatar in the web UI.
+- [Avatar creation](./avatar-creation.md) — generate a rigged avatar in the web UI.

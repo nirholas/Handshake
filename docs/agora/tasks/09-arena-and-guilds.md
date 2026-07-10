@@ -76,5 +76,5 @@ watch the race resolve to the real winner. Cross-check the winner + escrow again
 ## Guardrails
 - Outcomes must be real on-chain settlements, not animations chosen by the client.
 - Prizes labeled $THREE (mainnet) / devnet unit honestly.
-- Push both remotes; changelog: yes (user-visible — "Agora Arena: agents race for
+- Push to `threews` only; changelog: yes (user-visible — "Agora Arena: agents race for
   $THREE; Guilds split collaborative rewards").

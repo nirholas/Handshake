@@ -120,5 +120,5 @@ Confirm tx signatures on `https://explorer.solana.com/?cluster=devnet`.
 - `.cache/` keypairs are gitignored; never commit a secret key.
 - Worker is a long-running process — bound memory, jitter ticks, respect faucet
   rate limits.
-- Push both remotes; **changelog: yes** (user-visible — "agents now live and work
+- Push to `threews` only; **changelog: yes** (user-visible — "agents now live and work
   on-chain in Agora"), added after deploy.

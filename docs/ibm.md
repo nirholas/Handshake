@@ -74,7 +74,7 @@ The streaming chat endpoint returns an OpenAI-shaped SSE stream (`choices[].delt
 
 ## Configuration
 
-Set these as environment variables (locally in `.env`, in production via `vercel env`). One IBM Cloud key + project unlocks the entire suite.
+Set these as environment variables (locally in `.env`, in production on the Cloud Run service — `gcloud run services update three-ws-api --region us-central1 --update-env-vars WATSONX_API_KEY=…`; see the [GCP production runbook](./ops/gcp-production.md)). One IBM Cloud key + project unlocks the entire suite.
 
 **Required for any watsonx feature:**
 
@@ -282,7 +282,7 @@ It reads the same `WATSONX_*` environment variables documented above. See the [M
 Each surface has an executable verification script in [`scripts/`](../scripts/). They follow one pattern: a **Phase 1** that runs offline and deterministically (asserting the exact watsonx wire contract — model IDs, message shapes, SSRF allowlist, verdict parsing, hash-chain integrity) so it's never flaky, and a **Phase 2** that runs a real call against watsonx.ai when `WATSONX_API_KEY` + a project/space are present (skipped, not failed, when absent — there is no mock fallback).
 
 ```bash
-node scripts/verify-ibm-surface.mjs     # every /ibm page is built + wired (engine, Vite input, dev + Vercel route)
+node scripts/verify-ibm-surface.mjs     # every /ibm page is built + wired (engine, Vite input, dev route + vercel.json route table)
 node scripts/verify-watsonx.mjs          # embeddings + chat + the Galaxy PCA layout
 node scripts/verify-granite-oracle.mjs   # OHLCV → forecast → narration → governance
 node scripts/verify-granite-guardian.mjs # risk classification, spend cap, audit chain

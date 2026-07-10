@@ -193,4 +193,4 @@ If you've been waiting for the moment AI and crypto stop talking past each other
 
 ---
 
-*three.ws is open source under Apache 2.0. The repo, contracts, and full roadmap are at [github.com/nirholas/3D-Agent](https://github.com/nirholas/3D-Agent). The platform is live at [three.ws](https://three.ws).*
+*three.ws is open source under Apache 2.0. The repo, contracts, and full roadmap are at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws). The platform is live at [three.ws](https://three.ws).*

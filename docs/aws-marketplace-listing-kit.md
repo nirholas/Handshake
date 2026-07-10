@@ -40,8 +40,15 @@ admin creds on account 155407237916.
 ```
 
 Outputs `AWS_MP_SNS_TOPIC_ARN`, `AWS_MP_ACCESS_KEY_ID`, `AWS_MP_SECRET_ACCESS_KEY`,
-`AWS_MP_REGION`. Set all four in Vercel (production + preview). `AWS_MP_PRODUCT_CODE`
-is assigned by AMMP after the product is created — add it last.
+`AWS_MP_REGION`. Set all four on the Cloud Run service (production env lives there,
+not Vercel):
+
+```bash
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars AWS_MP_SNS_TOPIC_ARN=…,AWS_MP_ACCESS_KEY_ID=…,AWS_MP_SECRET_ACCESS_KEY=…,AWS_MP_REGION=…
+```
+
+`AWS_MP_PRODUCT_CODE` is assigned by AMMP after the product is created — add it last.
 
 ### 2. Publish the EULA to public S3 (currently returns 403 — must be fixed)
 
@@ -169,7 +176,7 @@ entitlement-updated, and the SubscriptionConfirmation handshake).
 
 ## Step sequence in AMMP
 
-1. Run prereqs #1 and #2 above; set the five `AWS_MP_*` env vars in Vercel.
+1. Run prereqs #1 and #2 above; set the five `AWS_MP_*` env vars on the Cloud Run service (`gcloud run services update three-ws-api --region us-central1 …`).
 2. AMMP → **AI agents & tools products** → **Create AI agents & tools product**.
 3. Delivery method: **API-based** (SaaS). (Until you finish the wizard the draft may
    appear under **SaaS products**, per AMMP's own note — that's expected.)
@@ -177,7 +184,7 @@ entitlement-updated, and the SubscriptionConfirmation handshake).
 5. Pricing: choose **Free**.
 6. Fulfillment: paste the Registration URL and SNS Topic ARN from the table.
 7. EULA: paste the S3 Custom EULA URL (confirm 200 first) or select Standard Contract.
-8. Save → AMMP assigns a **Product Code**. Set `AWS_MP_PRODUCT_CODE` in Vercel and redeploy.
+8. Save → AMMP assigns a **Product Code**. Set `AWS_MP_PRODUCT_CODE` on the Cloud Run service and redeploy (`npm run build` then `npm run deploy:gcp`).
 9. Submit as a **limited (private) offer** first and run one end-to-end subscribe →
    redirect → welcome → issue-key test before requesting public visibility.
 10. Once the private round-trip works, request **public** visibility.

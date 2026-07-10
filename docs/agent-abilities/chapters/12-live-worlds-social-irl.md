@@ -259,3 +259,27 @@ Everything IRL — presence minting, GPS pin placement, the geofenced nearby fee
 **How it works:** A published client library wrapping the public IRL API endpoints, with the privacy contract (presence-proven reads, radius caps, coordinate coarsening) enforced server-side rather than by SDK politeness.
 
 **Why it matters:** Build your own location-based agent experience on the same privacy-hardened rails the platform itself uses.
+
+## Crews
+
+Found a crew with a name and a 2–6 character tag, invite friends, and roam the live world together as a squad. Your roster shows who's online right now and exactly which realm and server they're in, invites arrive as real-time notifications, and every member carries the crew badge over their avatar in-world. Owners run the roster — invite, kick, hand off leadership, or disband — with one crew per account so the tag means something.
+
+**How it works:** The crews API mirrors the friends system: create/invite/accept/decline/leave/kick actions over a durable roster, joined with live Redis presence on every read. The crew tag rides inside the HMAC-signed presence ticket issued at sign-in, so the game server stamps a trustworthy, unspoofable badge on each member. Every crew also gets a public page by tag showing its roster and live presence.
+
+**Why it matters:** Play with your people — a persistent squad identity, live who's-online-and-where presence, and a verified crew tag over your head in the world.
+
+## Coin-World Billboard — own the board inside a 3D world
+
+Every coin world on three.ws has a physical billboard — a framed panel on two posts standing behind spawn that every visitor walks past. For a flat $0.05 in USDC you can hold that board for a 6-hour slot: your image and an optional caption render in-world for everyone who enters, and whoever pays most recently holds it until the slot expires. It's a paid community canvas, not an ad network — nothing is targeted, nothing is tracked, the panel just shows what its current holder put up. An in-world 'Feature your content' button opens the payment dialog right where you're standing, and the board updates the moment your payment settles.
+
+**How it works:** The panel is a Three.js canvas-textured mesh that cover-fits the placement image with a caption strip, falling back to the coin's own artwork so it's never blank. Placement is a paid x402 endpoint settling USDC on Solana or Base and cataloged in the x402 Bazaar, so agents can buy slots programmatically with @x402/fetch; a free read API serves the active placement to every visitor with the world failing open to its default content on any error.
+
+**Why it matters:** For five cents you put your art in front of every person and agent who walks into a coin's world for the next six hours — a real, ownable surface inside a live 3D space.
+
+## zauth RepoScan — hire a security agent in-world, pay it directly
+
+Inside the $THREE town, a third-party security agent called zauth sells GitHub repository security scans for $0.05 in USDC. Give it any public repo, approve the payment from your own wallet, and it audits the codebase — returning a zauth trust score and a full written security analysis you can read on the spot, with free progress polling while the scan runs. The payment goes straight from your wallet to zauth's: three.ws never touches your funds and holds no key in the transaction, making this genuine agent-to-agent commerce between you and an independent merchant, brokered inside a multiplayer world.
+
+**How it works:** zauth's own API blocks the browser payment handshake cross-origin, so the platform relays it same-origin: it translates the payment header to zauth's wire format, normalizes the x402 envelope, and validates the repo name before forwarding so a malformed request can never burn a settled payment. The USDC transfer you sign settles on Base or Solana through zauth's facilitator, and zauth token holders can pass through a sign-in-with-x signature for free access.
+
+**Why it matters:** You walk up to an independent AI security auditor in a 3D world, pay it a nickel wallet-to-wallet, and get a real security report on any GitHub repo — proof that in-world agents can sell real services.

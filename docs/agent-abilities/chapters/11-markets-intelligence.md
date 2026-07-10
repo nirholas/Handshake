@@ -99,3 +99,35 @@ A free, no-key, no-account crypto data API built for AI agents: token snapshots,
 **How it works:** pages/crypto.html documents /api/crypto/*; api/crypto/index.js and api/crypto/openapi.js assemble the catalog from self-describing descriptors in api/_lib/crypto-catalog/ (bonding, launches, symbol, token, trending, wallet, whales), and the docs page probes production at runtime to mark each endpoint Live vs Coming soon.
 
 **Why it matters:** Agents and developers get real on-chain and market data with zero signup friction — the funnel-top for the platform's paid unique services.
+
+## Mission Control — the real-time trading terminal (/terminal)
+
+A keyboard-driven trading cockpit that puts everything three.ws knows on one screen: the live pump.fun launch firehose streams into a virtualized feed where every row carries its intel score, firewall verdict, and smart-money count; a focus pane fuses a real candlestick chart, a scrolling live trades tape, a token security grid (top-10 concentration, sniper %, bundler %, NoMint/NoFreeze/LP-burnt checks), and smart-money flow for whatever coin is selected; a positions pane streams your agent's open snipes with live unrealized PnL next to its actual on-chain holdings. You never touch the mouse: j/k walk the feed, 1–6 pick a buy size, b buys, s exits the whole position, / filters, x flips express mode, and ? shows the full shortcut map. Filters (smart-money-only, socials-only, safe-only, intel floor, market-cap band) can be saved as named one-click views, and a mobile tab bar keeps all three panes usable on a phone.
+
+**How it works:** Three SSE streams (the global new-mint firehose, the intel engine's scored feed, and the sniper position stream) feed a shared store; visible rows are enriched on demand so a fast feed never janks. Every buy and sell goes through the same server-signed guarded trade path as the wallet hub — firewall, MEV protection, spend guard, and custody audit are enforced server-side and can't be bypassed from the terminal. Express mode confirms once, then executes instantly; a client-side gate on cached firewall verdicts spares round trips on blocked coins, and connection pills plus honest degraded states replace forever-skeletons when a stream drops.
+
+**Why it matters:** Pump.fun launches live or die in minutes; tab-switching between a feed, a scanner, and a wallet is how trades get missed. Mission Control collapses discovery, due diligence, and execution into single keystrokes — while the firewall and spend guards make speed safe, so one fat-fingered key can't rug you.
+
+## Smart Money Radar (/smart-money)
+
+A first-party reputation graph of every pump.fun wallet. Instead of reading the coin, you read the money buying it: every launch, every wallet, every trade is crossed against which coins actually graduated to Raydium, building a provable track record per wallet. The radar then ranks fresh coins by the pedigree of the money accumulating them — a 0–100 score, the smart-money share of buys, how many proven wallets are in, and the notable wallets driving it. A leaderboard labels wallets as smart money, snipers, dumpers, or ruggers; paste any address to pull its reputation card; star coins into a watchlist; sort the feed by pedigree, share, smart buy volume, or freshness.
+
+**How it works:** A rollup engine judges each coin about six hours after launch — graduated is a win, everything else a dud — and folds every buyer's footprint into that wallet's running reputation, exactly once per coin. Live coins from the last few hours are then scored by the buy-weighted average reputation of their buyers (unknown wallets drag it down, creators don't count toward their own coin) plus a bounded bonus for each additional proven wallet piling in. Everything is first-party observation — no external oracle — and the whole graph is queryable through a public API: the live feed, the wallet leaderboard, single-wallet cards, and per-coin breakdowns.
+
+**Why it matters:** Anyone can fake a chart, a website, or a Telegram; nobody can fake a wallet's on-chain graduation history. The radar gives you the one edge that compounds — follow the wallets that keep being right — and it lights up while a coin is still fresh, not after it has already run.
+
+## Alert rules engine
+
+Server-side price and event alerts for pump.fun that fire even when every tab is closed. Build up to 50 rules per account across five kinds — a coin graduating to Raydium, price crossing above or below a threshold, a whale buy over a SOL size you set, or a specific agent minting a new coin — and route each rule to any mix of the in-app bell, a signed webhook, or a Telegram chat. Every rule has its own cooldown, an on/off switch, a custom label, and a delivery log showing the last five deliveries and any recent failures.
+
+**How it works:** Rules live in the platform database, not in your browser — a cron evaluates them against the live pump.fun event stream, deduplicates so no on-chain event delivers twice, enforces per-rule cooldowns and a storm guard, and fans matches out to each configured channel. Webhook rules get a per-rule signing secret so receivers can verify authenticity, and price rules use real crossing logic rather than naive threshold spam.
+
+**Why it matters:** Client-side alerts die with the tab. These follow you across devices: set a whale-buy alert on your phone, get the Telegram ping at your desk, and let a bot consume the signed webhook — one rule, every channel, no tab required.
+
+## Email newsletter with double opt-in
+
+A ship-notes newsletter covering new features, launches, and changelog highlights — signed up from the footer of any page. Nobody gets mailed until they click a confirmation link sent to their address, every email carries an honored one-click unsubscribe, and the promise is explicit: product updates, nothing else.
+
+**How it works:** Signup records a pending subscriber with a single-purpose confirm token and emails the link; only clicking it flips the address to confirmed and adds it to the mailing audience, so a typo'd or hostile email can never subscribe a third party. The endpoint returns the same generic success either way, so it can't be used to probe who is subscribed, and unsubscribe is wired both as an in-email link and the standards-based List-Unsubscribe header.
+
+**Why it matters:** You hear about new capabilities the moment they ship without watching the changelog — and because the list is consent-proven end to end, it's a signal you chose, not spam you have to escape.

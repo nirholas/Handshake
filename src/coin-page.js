@@ -2,7 +2,7 @@
 // pages: header (icon / name / rank / price / 24h-7d-30d chips), interactive
 // SVG price chart with time ranges and a crosshair tooltip, market-stats grid,
 // related news, about text, and link pills. Data comes from the /api/coin/*
-// proxies (CoinGecko + the cryptocurrency.cv news aggregator) — never mocked.
+// proxies (CoinGecko + the native three.ws news aggregator) — never mocked.
 
 import {
 	formatUsd,

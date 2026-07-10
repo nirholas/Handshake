@@ -7,10 +7,11 @@
 // pillar). This module produces that read.
 //
 // Three paths, all REAL:
-//   1. llmComplete with live news context injected from cryptocurrency.cv — the
-//      LLM sees matching headlines and writes a precise thesis ("rides today's
-//      Trump tariff announcement"). Virality is boosted by real news signal.
-//   2. llmComplete with no news context (fallback when news fetch fails).
+//   1. llmComplete with live news context injected from the native three.ws
+//      news engine — the LLM sees matching headlines and writes a precise
+//      thesis ("rides today's Trump tariff announcement"). Virality is boosted
+//      by real news signal.
+//   2. llmComplete with no news context (fallback when no headline matches).
 //   3. Deterministic keyword classifier when LLM is unavailable.
 //
 // Category set is aligned with the existing pump_coin_intel taxonomy so the two

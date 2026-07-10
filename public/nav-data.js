@@ -338,6 +338,11 @@ export const NAV_GROUPS = [
 						desc: 'Live headlines from 37 publisher feeds with a rich reader for every story',
 					},
 					{
+						title: 'News Digest',
+						href: '/markets/digest',
+						desc: 'The day in stories, not headlines — coverage clustered into what actually moved',
+					},
+					{
 						title: 'News Archive',
 						href: '/markets/archive',
 						desc: '662k articles back to 2017 — search a decade of crypto history',

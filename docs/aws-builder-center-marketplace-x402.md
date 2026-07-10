@@ -14,7 +14,7 @@ But a lot of teams don't want to touch crypto to pay an invoice. They want it on
 
 The result is one authorization path that meters two ways: an AWS-subscribed customer and a stablecoin-paying developer hit the exact same endpoint, and the platform bills whichever economy that caller belongs to. This post is how we built it with the AWS SDK for JavaScript v3, the parts of the SaaS integration that are easy to get subtly wrong, and the bridge that ties an AWS `CustomerIdentifier` to an x402 key.
 
-Everything here is real code from our open-source repo (Apache 2.0), not pseudocode — the serverless functions run on AWS in `us-east-1`.
+Everything here is real code from our open-source repo (Apache 2.0), not pseudocode — the metering and webhook handlers call the AWS Marketplace APIs in `us-east-1` (where the Marketplace Metering and Entitlement services live).
 
 ## The three integration points of a SaaS listing
 
@@ -249,4 +249,4 @@ The product on the other side of all this plumbing is the platform: three.ws age
 
 ---
 
-*three.ws is a verified AWS Partner and an open-source platform for 3D AI agents and on-chain communities, running on AWS in `us-east-1`. Live at [three.ws](https://three.ws).*
+*three.ws is a verified AWS Partner and an open-source platform for 3D AI agents and on-chain communities, available on AWS Marketplace with AWS billing wired into its metered API. Live at [three.ws](https://three.ws).*

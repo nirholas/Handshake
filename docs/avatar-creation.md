@@ -89,7 +89,7 @@ Avatar Studio communicates with the parent app via `postMessage`. The message sh
 
 [avatar-creator.js](../src/avatar-creator.js) listens for this, wraps the `ArrayBuffer` in a `Blob`, and passes it to `saveRemoteGlbToAccount()`.
 
-The avatar builder URL defaults to `http://localhost:5173` for local development. Production deployments configure it via the `VITE_CHARACTER_STUDIO_URL` environment variable.
+The avatar builder is served **same-origin** under `/avatar-studio` — the Vite dev middleware serves the character-studio build there in development, and the same build ships to that path in production, so the iframe resolves correctly on every deployment. Set the `VITE_CHARACTER_STUDIO_URL` environment variable to point the iframe at a standalone studio dev server (e.g. `http://localhost:5173`) instead.
 
 ---
 

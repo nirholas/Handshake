@@ -112,9 +112,9 @@ At its core, it does five things:
 
 5. **Embed** — distributes the agent as an `<agent-3d>` web component that anyone can drop into a page, or as one of five purpose-built widget types (turntable, animation gallery, talking agent, passport card, hotspot tour) with Open Graph and oEmbed support built in.
 
-The backend is a set of Vercel serverless functions backed by Neon Postgres for metadata, Cloudflare R2 for model storage, and Upstash Redis for rate limiting. It exposes a full OAuth 2.1 authorization server and an MCP (Model Context Protocol) endpoint so external AI systems can drive avatars programmatically.
+The backend is a set of serverless-style handlers (in `api/`) served in production by a single Google Cloud Run container ([server/index.mjs](server/index.mjs)), backed by Neon Postgres for metadata, Cloudflare R2 for model storage, and Upstash Redis for rate limiting. It exposes a full OAuth 2.1 authorization server and an MCP (Model Context Protocol) endpoint so external AI systems can drive avatars programmatically.
 
-three.ws is production-ready and serves [three.ws](https://three.ws) live. The entire stack — viewer, agent runtime, contracts, backend, and web component — is open source under Apache 2.0.
+three.ws is production-ready and serves [three.ws](https://three.ws) live on Google Cloud Run. The entire stack — viewer, agent runtime, contracts, backend, and web component — is open source under Apache 2.0.
 
 ---
 
@@ -461,7 +461,7 @@ three.ws is available on major cloud marketplaces and open to infrastructure par
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **AWS**           | **AWS Partner** (APN Software Path). AWS Marketplace SaaS listing in review — see [docs/aws-marketplace.md](docs/aws-marketplace.md) and the public partner page at [three.ws/aws](https://three.ws/aws). Production runs on AWS `us-east-1`, registered in AWS MyApplications under account `155407237916`. |
 | **Alibaba Cloud** | Live: [product listing →](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [storefront →](https://marketplace.alibabacloud.com/store/3247293.html)                       |
-| **Google Cloud**  | three.ws runs on WebGL, Vercel edge, EVM (15+ chains), and Solana (Metaplex Core) — a natural fit for GCP's AI infrastructure, Vertex AI, and global CDN. Open to co-listing, credits, and joint GTM. |
+| **Google Cloud**  | Production runs on **Google Cloud Run** (`three-ws-api`, `us-central1`) fronted by a global HTTPS load balancer + Cloud CDN, with the ~80 scheduled jobs on Cloud Scheduler and GPU inference workers on Cloud Run — a natural fit for GCP's AI infrastructure and Vertex AI. Open to co-listing, credits, and joint GTM. |
 
 ## Ecosystem Directories
 
@@ -587,9 +587,9 @@ Every avatar the site renders is a **GLB** (binary glTF 2.0 — the body, rig, a
 - **Chat**: The chat interface is a standalone Svelte application located in the `chat/` directory.
 - **3D Rendering**: three.js (r184) is used for WebGL 2.0 rendering.
 
-**Backend (Vercel Serverless)**
+**Backend (Google Cloud Run)**
 
-- **Runtime**: Node.js
+- **Runtime**: Node.js — serverless-style handlers in `api/` served by one Express container ([server/index.mjs](server/index.mjs)) on Cloud Run (`three-ws-api`, `us-central1`).
 - **Database**: Neon Postgres (serverless)
 - **Storage**: Cloudflare R2 for model and avatar storage.
 - **Rate Limiting**: Upstash Redis.
@@ -939,7 +939,7 @@ For sandboxed iframes use the widget embed path instead — it runs in its own b
 ## Project Structure
 
 - `src/`: The core frontend JavaScript for the main application, including the 3D viewer, agent protocol, custom element, and feature modules (`club-*.js`, `walk*.js`, `pose-*.js`, `voice/`, `selfie-*.js`). Social/gameplay surfaces live in `game/` (Coin Communities: `coincommunities*`, `spin-wheel-ui`, `cosmetics-visual`, `avatar-rig`), `city/` (the `/city` world), `social/` (sentiment, X-post impact), `community/` (coin lobby/town), plus `friends.js`, `communities.js`, `marketplace*.js`, and `token-pay.js`.
-- `api/`: Vercel serverless functions that form the backend API. Subdirectories include `x402/`, `a2a/`, `club/`, `pump/`, `persona/`, `news/`, `admin/`, `agents/`, `auth/`, `oauth/`, `cron/`, plus the social/game surfaces `play/`, `token/`, `three-token/`, `friends/`, `social/`, `community/`, `marketplace/`, and `mocap/`.
+- `api/`: Serverless-style handlers that form the backend API, served in production by the Cloud Run container ([server/index.mjs](server/index.mjs)) with `vercel.json`-parity routing. Subdirectories include `x402/`, `a2a/`, `club/`, `pump/`, `persona/`, `news/`, `admin/`, `agents/`, `auth/`, `oauth/`, `cron/`, plus the social/game surfaces `play/`, `token/`, `three-token/`, `friends/`, `social/`, `community/`, `marketplace/`, and `mocap/`.
 - `public/`: Static assets and various sub-applications (`club/`, `seeker/`, `news/`, `persona/`, `vanity-wallet.html`, `pumpfun.html`).
 - `chat/`: A standalone Svelte application for the chat interface.
 - `character-studio/`: A sub-project for in-browser character creation; also serves the rebranded **Avatar Studio** marketplace.
@@ -2039,9 +2039,9 @@ The full OpenAPI 3.1 spec is available at `/openapi.json`. The key API surface i
 
 ### Cron Jobs
 
-Scheduled via `vercel.json`, these run automatically in production. All cron endpoints are fail-closed — a missing auth token aborts with an error rather than silently skipping (see [Security Hardening](#security-hardening)).
+Cron schedules are declared in `vercel.json` (still the live cron/route config the server reads) and executed in production by **Google Cloud Scheduler**, which calls each endpoint on its schedule. All cron endpoints are fail-closed — a missing auth token aborts with an error rather than silently skipping (see [Security Hardening](#security-hardening)).
 
-All 22 crons in `vercel.json` are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Schedules below match `vercel.json` verbatim.
+The ~80 crons in `vercel.json` are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs); the schedules below match `vercel.json` verbatim.
 
 | Schedule             | Endpoint                                | Purpose                                                                                                                      |
 | -------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -2532,19 +2532,18 @@ npm run claude -- <command>
 | `deploy-agent <name>` | Packages an agent into a distributable zip |
 | `help`                | List all commands                          |
 
-### Vercel Deployment
+### Production Deployment (Google Cloud Run)
 
-The project is built for Vercel. Deployment is one command:
+Production runs on **Google Cloud Run** (`three-ws-api`, region `us-central1`): one Express container ([server/index.mjs](server/index.mjs)) serves the static frontend, the `vercel.json` route table, and every `api/**` handler, fronted by a global HTTPS load balancer + Cloud CDN. Deployment is two steps — build the frontend, then submit the container build:
 
 ```bash
-npm run deploy
+npm run build       # frontend build to dist/ (only when frontend changed)
+npm run deploy:gcp  # check:dist + db:check, gcloud builds submit, purge CDN
 ```
 
-This runs `build:all` then `vercel --prod`. Routing, rewrites, cache headers, and cron schedules are defined in `vercel.json`.
+`npm run deploy:gcp` runs `gcloud builds submit --config server/cloudbuild.yaml`. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The ~80 scheduled jobs run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
 
-For preview deployments, push a branch — Vercel auto-deploys it with a preview URL.
-
-**Environment variables** must be set in the Vercel dashboard (not in `.env` files). See [Environment Variables](#environment-variables) for the full list.
+**Environment variables** live on the Cloud Run service, not in `.env` files — inspect or update them with `gcloud run services describe/update three-ws-api --region us-central1`. See [Environment Variables](#environment-variables) for the full list.
 
 ### Self-Hosting
 

@@ -1573,6 +1573,14 @@
 					"priority": 0.8,
 					"changefreq": "weekly",
 					"added": "2026-07-10"
+				},
+				{
+					"path": "/markets/digest",
+					"title": "Crypto News Digest",
+					"description": "The day's crypto news grouped into the handful of stories that actually matter — each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.",
+					"priority": 0.8,
+					"changefreq": "hourly",
+					"added": "2026-07-10"
 				}
 			]
 		},

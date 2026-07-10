@@ -58,7 +58,7 @@ The top layer is what lets an agent live somewhere other than the canonical app.
 - **`widget-types.js`** — five widget variants (chat, action button, mini-card, full card, floating bubble) that share the underlying element but ship as separate ergonomic wrappers.
 - **`lib.js`** — the CDN entry. Imports the element, registers it, and re-exports the public surface.
 - **`app.js`** — the main SPA. URL routing happens here using hash params (`#model=`, `#agent=`, `#kiosk=`, `#brain=`, `#preset=`) and query params (`?agent=` for authenticated edit mode, `?pending=1` for post-login round-trips). The hash form stays in embed mode; the query form moves into edit mode.
-- **`vercel.json`** — edge routing config. Maps clean URLs (`/agent/<id>`, `/agent/<id>/edit`, `/agent/<id>/embed`, `/a/<chainId>/<agentId>`) to the right HTML entry, and mounts `api/*` serverless functions.
+- **`vercel.json`** — the server's route and cron table. Maps clean URLs (`/agent/<id>`, `/agent/<id>/edit`, `/agent/<id>/embed`, `/a/<chainId>/<agentId>`) to the right HTML entry and mounts the `api/*` handlers. In production the single Cloud Run container ([`server/index.mjs`](../server/index.mjs)) reads this table at runtime — it's a live config file, not a Vercel-only artifact.
 
 ---
 
@@ -180,7 +180,7 @@ Booting `<agent-3d>` is a careful sequence — the goal is to never load a 50MB 
 
 There are three Vite build configurations, all driven from the same source tree.
 
-- **App** (`npm run build`, default `TARGET=app`). Builds the full SPA into `dist/`: the editor, the agent-home/agent-edit/agent-embed pages, the discover/my-agents directory, the studio, and the PWA manifest. Multi-page Rollup config with a Vercel-style dev middleware that maps clean URLs to HTML entries.
+- **App** (`npm run build`, default `TARGET=app`). Builds the full SPA into `dist/`: the editor, the agent-home/agent-edit/agent-embed pages, the discover/my-agents directory, the studio, and the PWA manifest. Multi-page Rollup config with a dev middleware that maps clean URLs to HTML entries the same way the production server does.
 - **Library** (`npm run build:lib`, `TARGET=lib`). Builds `src/lib.js` into `dist-lib/agent-3d.js` (ES module + UMD). Three.js and ethers stay bundled — the file is intentionally self-contained so a `<script type="module" src="https://cdn.../agent-3d.js">` is the only thing a third party needs. Expect ~600–900 KB gzipped today; further code-splitting is planned.
 - **Artifact** (`vite.config.artifact.js`). A zero-dependency bundle for Claude artifact embeds. No external script tags, no dynamic imports — everything inlined so the artifact sandbox can run it.
 
@@ -236,11 +236,11 @@ Per-chain registry addresses, ABIs, and helpers live in `src/erc8004/`. RPC endp
 
 To run the whole stack yourself, the minimum is:
 
-- **Vercel (or any Node.js host)** for the SPA and `api/*` serverless functions. The provided `vercel.json` covers routing; on a non-Vercel host, reproduce the same path → handler map in your reverse proxy.
+- **A Node.js host** for the SPA and the `api/*` handlers. Production runs a single container ([`server/index.mjs`](../server/index.mjs)) on Google Cloud Run that reads the `vercel.json` route table at runtime; any Node host works the same way, or reproduce the same path → handler map in your reverse proxy.
 - **Neon DB (PostgreSQL)** for agents, widgets, sessions, and the action log.
 - **Upstash Redis** for rate limiting, nonce storage, and short-lived caches.
 - **AWS S3** (or any S3-compatible store — R2, B2) for hosted GLB and texture assets.
 - **Anthropic API key** for the default LLM provider. The runtime can also point at a self-hosted proxy (`#proxyURL=`) for billing, logging, or a non-Anthropic backend.
 - **Optional:** ElevenLabs for higher-quality TTS, Pinata or Filebase for IPFS pinning, Privy for non-wallet onboarding, an RPC endpoint for ERC-8004 reads.
 
-A minimal Vercel + Neon + Anthropic deployment is enough for a single agent. The blockchain and IPFS pieces are opt-in — each layer can be replaced or removed. The protocol bus is the only thing you can't take out.
+A minimal Node + Neon + Anthropic deployment is enough for a single agent. The blockchain and IPFS pieces are opt-in — each layer can be replaced or removed. The protocol bus is the only thing you can't take out.

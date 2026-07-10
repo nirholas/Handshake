@@ -1,83 +1,46 @@
 // Real-time news-meme detection for pump.fun coin classification.
 //
-// Fetches top crypto headlines from the cryptocurrency.cv public API
-// (nirholas/cryptocurrency.cv — free, no key required, real-time aggregator),
+// Reads top crypto headlines from the native three.ws news engine
+// (api/_lib/news.js — the same in-process aggregator behind /api/news/feed),
 // caches them for 2 minutes, then fuzzy-matches a coin's name/symbol/description
 // against the headlines. Returns the matched headline + confidence so the
 // classifier can set is_news_meme=true with real evidence.
 //
-// Fallback: if the API is unreachable, the function returns null so the
-// caller degrades to the LLM/heuristic path — never blocks the pipeline.
+// Fallback: if the registry is cold and every source is slow, the function
+// returns the empty set so the caller degrades to the LLM/heuristic path —
+// never blocks the pipeline.
 
-const NEWS_API = 'https://cryptocurrency.cv/api/news';
-const TRENDING_API = 'https://cryptocurrency.cv/api/trending';
+import { getNews } from '../news.js';
+
 const CACHE_TTL_MS = 2 * 60_000; // 2-min freshness — headlines move fast
-const FETCH_TIMEOUT_MS = 3_000;
 const MAX_HEADLINES = 40;
 
 let _cache = null;
 let _cacheAt = 0;
 
 /**
- * Fetch + cache the current top crypto headlines.
+ * Read + cache the current top crypto headlines.
  * Returns array of { title, summary, url, published_at } or [].
  */
 async function getHeadlines() {
 	if (_cache && Date.now() - _cacheAt < CACHE_TTL_MS) return _cache;
 
-	const ctrl = new AbortController();
-	const tid = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-
 	try {
-		// Primary: structured news endpoint
-		const r = await fetch(`${NEWS_API}?limit=${MAX_HEADLINES}&format=json`, {
-			signal: ctrl.signal,
-			headers: { 'accept': 'application/json', 'user-agent': 'three.ws-intel/1' },
-		});
-		clearTimeout(tid);
-		if (r.ok) {
-			const d = await r.json();
-			// cryptocurrency.cv returns { articles: [...] } or a flat array
-			const articles = Array.isArray(d) ? d : (Array.isArray(d?.articles) ? d.articles : []);
-			const headlines = articles.slice(0, MAX_HEADLINES).map((a) => ({
-				title: String(a.title || a.headline || ''),
-				summary: String(a.summary || a.description || a.content || ''),
-				url: String(a.url || a.link || ''),
-				published_at: a.published_at || a.publishedAt || a.date || null,
-			})).filter((h) => h.title.length > 4);
-			if (headlines.length) {
-				_cache = headlines;
-				_cacheAt = Date.now();
-				return _cache;
-			}
+		const { articles } = await getNews({ limit: MAX_HEADLINES });
+		const headlines = (articles || [])
+			.map((a) => ({
+				title: String(a.title || ''),
+				summary: String(a.description || ''),
+				url: String(a.link || ''),
+				published_at: a.pub_date || null,
+			}))
+			.filter((h) => h.title.length > 4);
+		if (headlines.length) {
+			_cache = headlines;
+			_cacheAt = Date.now();
+			return _cache;
 		}
-	} catch { clearTimeout(tid); }
-
-	// Fallback: trending endpoint (simpler format)
-	const ctrl2 = new AbortController();
-	const tid2 = setTimeout(() => ctrl2.abort(), FETCH_TIMEOUT_MS);
-	try {
-		const r2 = await fetch(TRENDING_API, {
-			signal: ctrl2.signal,
-			headers: { 'accept': 'application/json', 'user-agent': 'three.ws-intel/1' },
-		});
-		clearTimeout(tid2);
-		if (r2.ok) {
-			const d2 = await r2.json();
-			const items = Array.isArray(d2) ? d2 : (Array.isArray(d2?.data) ? d2.data : []);
-			const headlines = items.slice(0, MAX_HEADLINES).map((a) => ({
-				title: String(a.title || a.term || a.keyword || ''),
-				summary: '',
-				url: '',
-				published_at: null,
-			})).filter((h) => h.title.length > 2);
-			if (headlines.length) {
-				_cache = headlines;
-				_cacheAt = Date.now();
-				return _cache;
-			}
-		}
-	} catch { clearTimeout(tid2); }
+	} catch { /* fall through to stale cache */ }
 
 	return _cache || []; // stale cache beats nothing
 }

@@ -28,7 +28,7 @@ The user holds the keys; the platform never signs for them.
 The agent launcher signs and submits with the agent's **custodial** Solana keypair
 server-side (`launch-agent`), through the protected execution path
 (`submitProtected()`). Spend caps are checked before signing (see
-[Agent wallets](agent-wallets.md)), and the mint is registered in
+[Agent wallets](custody.md)), and the mint is registered in
 `pump_agent_mints`. The `launcher-tick` cron drives autonomous launches on a
 cadence (every minute, bounded by the daily/hourly launch caps described in the
 [circulation engine](circulation-engine.md)).
@@ -75,6 +75,6 @@ hardcode or surface any other specific mint as a recommendation.
 ## Related
 
 - [Solana pump.fun signals](solana-pumpfun.md) — reputation/intel from pump.fun activity.
-- [Agent wallets](agent-wallets.md) — custodial signing and spend caps.
+- [Agent wallets](custody.md) — custodial signing and spend caps.
 - [Circulation engine](circulation-engine.md) — autonomous launch cadence and caps.
 - [Mint mark](mint-mark.md), [Vanity protocol](PROTOCOL-vanity.md).

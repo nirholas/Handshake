@@ -50,8 +50,31 @@ import {
 	DAILY_CAP_ATOMIC,
 } from '../_lib/x402/autonomous-registry.js';
 import { assertRingSpendInvariants } from '../_lib/x402/ring-allowlist.js';
+import { sendOpsAlert } from '../_lib/alerts.js';
 
 const log = logger('x402-autonomous-loop');
+
+// Live USDC balance of the ring payer, in atomic units (6dp). A missing ATA —
+// the wallet has never held USDC — is a legitimate zero, not an error, so it
+// reads as 0 rather than throwing. An RPC failure is NOT treated as zero: a
+// transient read error must not silently disable the whole spend path, so it
+// returns null, which every caller reads as "unknown → don't gate on it".
+async function readPayerUsdcAtomic(conn, payerPubkey) {
+	if (!USDC_MINT) return 0;
+	try {
+		const ata = getAssociatedTokenAddressSync(
+			new PublicKey(USDC_MINT), payerPubkey,
+			false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+		);
+		const info = await conn.getTokenAccountBalance(ata);
+		return Number(info?.value?.amount ?? 0);
+	} catch (err) {
+		// `could not find account` = no ATA = genuinely holds nothing.
+		if (/could not find account|Invalid param|account not found/i.test(String(err?.message || ''))) return 0;
+		log.warn('payer_usdc_read_failed', { message: err?.message });
+		return null;
+	}
+}
 
 const ORIGIN = () => env.APP_ORIGIN || 'https://three.ws';
 const USDC_MINT = env.X402_ASSET_MINT_SOLANA;
@@ -299,6 +322,28 @@ export default wrapCron(async (req, res) => {
 		return json(res, 200, { ok: false, reason: `solana_preflight_failed: ${err?.message}`, run_id: runId });
 	}
 
+	// ── Payer USDC float — the spend ceiling the daily cap can't see ─────────
+	// The daily cap bounds how much we're *allowed* to spend; the payer's token
+	// balance bounds how much we're *able* to. Without this read, a drained float
+	// still probes, signs, and POSTs a payment for every ready entry each tick —
+	// the server then fails at settle with `broadcast_failed:Simulation failed`
+	// (observed: 1,262 failures in 24h, ~1/min, forever). Read it once per tick
+	// and treat it as a hard spend ceiling so a dry wallet degrades to "skip the
+	// paid calls" instead of "hammer Solana with transactions that cannot land".
+	// Free endpoints and run()-style monitors (including the wallet-balance
+	// monitor that alerts on this very condition) keep running regardless.
+	const payerUsdcAtomic = await readPayerUsdcAtomic(conn, buyer.publicKey);
+	if (payerUsdcAtomic === 0) {
+		log.warn('autonomous_payer_usdc_empty', { payer: buyer.publicKey.toBase58() });
+		await sendOpsAlert(
+			'💸 x402 autonomous loop halted — payer USDC float is empty',
+			`Ring payer ${buyer.publicKey.toBase58()} holds $0.00 USDC. Every paid call this tick is skipped ` +
+				'(they would fail at settle with "Simulation failed"). The loop keeps running its free and ' +
+				'monitoring entries. Top up the payer\'s USDC float to resume autonomous spend.',
+			{ signature: `x402-autonomous-payer-usdc-empty:${buyer.publicKey.toBase58()}` },
+		);
+	}
+
 	// ── Process each entry ────────────────────────────────────────────────────
 	const results = [];
 	let remainingCap = DAILY_CAP_ATOMIC - dailySpentSoFar;
@@ -327,7 +372,15 @@ export default wrapCron(async (req, res) => {
 			try {
 				outcome = await entry.run({
 					origin, buyer, conn, blockhash, mintInfo,
-					redis, sql, log, runId, remainingCap,
+					redis, sql, log, runId,
+					// A run() pipeline pays through the shared payX402 client, so it
+					// must see the payer's real float as its ceiling too — otherwise it
+					// happily attempts settles the daily cap permits but the wallet
+					// cannot fund. `null` (read failed) leaves the cap untouched.
+					remainingCap: payerUsdcAtomic === null
+						? remainingCap
+						: Math.min(remainingCap, payerUsdcAtomic),
+					payerUsdcAtomic,
 				});
 			} catch (err) {
 				errorMsg = err?.message || 'run_error';
@@ -436,6 +489,15 @@ export default wrapCron(async (req, res) => {
 			if (amountAtomic > remainingCap) {
 				log.info('autonomous_cap_would_exceed', { id: entry.id, amount: amountAtomic, remaining: remainingCap });
 				results.push({ id: entry.id, status: 'skip', reason: 'cap_would_exceed' });
+				continue;
+			}
+			// Can't pay what we don't hold. Skip BEFORE building/signing/POSTing a
+			// transaction the facilitator would only fail to simulate. `null` means
+			// the balance read itself failed — unknown, so don't gate on it.
+			if (payerUsdcAtomic !== null && amountAtomic > payerUsdcAtomic) {
+				log.info('autonomous_insufficient_payer_usdc', { id: entry.id, amount: amountAtomic, held: payerUsdcAtomic });
+				results.push({ id: entry.id, status: 'skip', reason: 'insufficient_payer_usdc' });
+				await setCooldown(redis, entry); // back off; don't re-probe every tick
 				continue;
 			}
 

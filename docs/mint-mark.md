@@ -20,7 +20,7 @@ When you launch a coin on three.ws (via Studio or the agent wallet path), the pl
 
 ### How does it work?
 
-The server runs a fast WASM-based keypair grinder (single-threaded, sub-second for a 3-character prefix) until it finds a match, then uses that keypair as the coin mint. The expected work is ~49 000 keypairs at ~25 000/s, taking well under a second on real serverless CPU.
+The server runs a fast WASM-based keypair grinder (single-threaded, sub-second for a 3-character prefix) until it finds a match, then uses that keypair as the coin mint. The expected work is ~49 000 keypairs at ~25 000/s, taking well under a second on the Cloud Run server's CPU.
 
 ### Is it on every coin?
 
@@ -61,7 +61,7 @@ const enforceMark = env.THREE_WS_MARK_ENFORCE !== '0' && env.THREE_WS_MARK_ENFOR
 When enforcement is **on** (default):
 - A client-supplied `mint_address` is validated with `hasThreeWsMark`; unbranded mints return `400 unbranded_mint`.
 - When no mint is supplied, the server grinds one with `grindVanityNode({ ...THREE_WS_VANITY })`.
-- Grind cost is logged at info level: `{ publicKey, attempts, durationMs }` — expect ~49 000 attempts, < 1 000 ms on serverless CPU.
+- Grind cost is logged at info level: `{ publicKey, attempts, durationMs }` — expect ~49 000 attempts, < 1 000 ms on the Cloud Run server's CPU.
 
 When enforcement is **off**: a random `Keypair.generate()` is used (pure-legacy fallback). No brand constraint.
 
@@ -101,7 +101,7 @@ Every server-side grind emits a structured log line via `logger('pump.launch')`:
   "publicKey": "3wsXrT4Gy...", "attempts": 49213, "durationMs": 892 }
 ```
 
-Watch this in Vercel logs to confirm the ~49 000-attempt / sub-second expectation holds. A sharp increase in `attempts` or `durationMs` signals WASM performance degradation.
+Watch this in the Cloud Run logs (Cloud Logging) to confirm the ~49 000-attempt / sub-second expectation holds. A sharp increase in `attempts` or `durationMs` signals WASM performance degradation.
 
 ### The generic x402 launcher exemption
 

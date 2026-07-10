@@ -5,8 +5,8 @@
 //
 // Three layers, and it NEVER fails (Rule 9):
 //   1. A deterministic keyword heuristic — instant, free, always available.
-//   2. Real-time news headline matching via cryptocurrency.cv API (2-min cached).
-//      This gives is_news_meme ground truth — not a guess.
+//   2. Real-time news headline matching via the native three.ws news engine
+//      (2-min cached). This gives is_news_meme ground truth — not a guess.
 //   3. An LLM pass (free-first via llmComplete) that refines category, extracts
 //      tags + a one-line narrative thesis.
 // If the LLM is unavailable or times out, the heuristic + news-match stand.

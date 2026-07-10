@@ -27,11 +27,11 @@ The first version of our forge pipeline was exactly what you would draw on a whi
 prompt or photo  →  3D generator  →  GLB  →  render in browser
 ```
 
-The generator is Microsoft TRELLIS, running on NVIDIA NIM. It is genuinely excellent, and NVIDIA hosts it free. Our draft tier finishes a text-to-3D generation inline in about **12–13 seconds** at 15 sampling steps, with none of the ~60-second cold start we were eating on other hosted lanes. When I first watched a GLB materialize out of a sentence, I thought we were basically done.
+The generator is Microsoft TRELLIS, running on NVIDIA NIM. It is genuinely excellent, and NVIDIA hosts it free. Our draft tier finishes a text-to-3D generation inline in about **12-13 seconds** at 15 sampling steps, with none of the ~60-second cold start we were eating on other hosted lanes. When I first watched a GLB materialize out of a sentence, I thought we were basically done.
 
 Then we opened it to real users, and the whiteboard drawing met the world.
 
-Somebody uploaded a screenshot of a Discord conversation and asked for a 3D model of it. Somebody uploaded a photo of their living room — six objects, no subject. Somebody uploaded a picture so dark you could not tell it was a cat. Somebody uploaded a bar chart.
+Somebody uploaded a screenshot of a Discord conversation and asked for a 3D model of it. Somebody uploaded a photo of their living room: six objects, no subject. Somebody uploaded a picture so dark you could not tell it was a cat. Somebody uploaded a bar chart.
 
 Every one of those consumed a rate-limited slot, occupied a GPU, took the full generation time, and handed the user a mesh of formless noise. The user does not know that their input was unreconstructable. They know that our product is broken. And they leave.
 
@@ -55,10 +55,10 @@ Reply ONLY with compact JSON, no prose, in exactly this shape:
 {"usable":true|false,"subject":"<2-5 word description>","issue":"none"|"text_screenshot"
 |"multiple_subjects"|"no_clear_subject"|"too_dark_or_blurry"|"abstract_or_diagram"}
 
-When in doubt, mark usable=true — a borderline photo still reconstructs.
+When in doubt, mark usable=true. A borderline photo still reconstructs.
 ```
 
-The model answering that question is **`nvidia/nemotron-nano-12b-v2-vl`**. It returns in **1–2 seconds**. It costs us nothing. And it turned "your 3D model is garbage" into this:
+The model answering that question is **`nvidia/nemotron-nano-12b-v2-vl`**. It returns in **1-2 seconds**. It costs us nothing. And it turned "your 3D model is garbage" into this:
 
 > That looks like a screenshot of text or an interface, not a photo of an object. Upload a clear picture of the single thing you want to turn into a 3D model.
 
@@ -70,13 +70,13 @@ We benchmarked the obvious candidates and picked on a metric nobody puts on a le
 
 For a small reference image, `nemotron-nano-12b-v2-vl` consumes roughly **281 prompt tokens**. A Llama-90B-vision class model consumed roughly **1,600** for the identical image. That is a ~5.7× difference in the tokens we push through a check that runs in front of *every single generation on the platform*. At our volume, that ratio decides whether the guardrail is free or whether the guardrail becomes the largest line item in the pipeline it was built to protect.
 
-Nemotron Nano won on the axis that actually mattered. The 12B VL model is not competing with a frontier model on essay quality. It is being asked whether there is one clear object in a photograph, and that is a question it answers reliably, in 1–2 seconds, for nothing.
+Nemotron Nano won on the axis that actually mattered. The 12B VL model is not competing with a frontier model on essay quality. It is being asked whether there is one clear object in a photograph, and that is a question it answers reliably, in 1-2 seconds, for nothing.
 
 Our vision chain, in order:
 
 ```js
 const NVIDIA_VISION_MODELS = [
-  'nvidia/nemotron-nano-12b-v2-vl',      // leads — smallest image token footprint
+  'nvidia/nemotron-nano-12b-v2-vl',      // leads: smallest image token footprint
   'meta/llama-3.2-11b-vision-instruct',  // different family = independent failure modes
 ];
 // paid vision-capable backstop appended last, and only if its key is set
@@ -88,7 +88,7 @@ Note the comment on line two, because it is the load-bearing design decision in 
 
 Once we understood the pattern, we found the same shape everywhere in the product.
 
-**Content safety.** Anonymous visitors can talk to any agent on the platform. We refuse unsafe messages ourselves rather than inheriting a downstream provider's moderation policy, using NVIDIA's `nvidia/llama-3.1-nemoguard-8b-content-safety` from the NeMo Guardrails family. Measured median latency on the free NIM tier: **~340 ms**, with a ~680 ms tail. We give it a 2-second abort budget, which is roughly six times its median — generous, and still fast to fail over.
+**Content safety.** Anonymous visitors can talk to any agent on the platform. We refuse unsafe messages ourselves rather than inheriting a downstream provider's moderation policy, using NVIDIA's `nvidia/llama-3.1-nemoguard-8b-content-safety` from the NeMo Guardrails family. Measured median latency on the free NIM tier: **~340 ms**, with a ~680 ms tail. We give it a 2-second abort budget, which is roughly six times its median. That's generous, and still fast to fail over.
 
 **Reasoning turns.** When a feature wants a compact, reasoning-tuned model to actually lead rather than sit at the tail of a fallback chain, it opts into `nvidia/nvidia-nemotron-nano-9b-v2`. Prompt refinement, classification, structured extraction. A 9B model does these perfectly, and reaching for a frontier model to do them is a tax you pay on every request forever.
 
@@ -118,7 +118,7 @@ We got here by getting it wrong first. Six things I would hand to anyone buildin
 
 Offered in the spirit of a team that has bet its pipeline on these lanes and wants them to win.
 
-**Lift the image-input restriction on the hosted TRELLIS preview.** The hosted endpoint currently accepts only NVIDIA's predefined `example_id` sample images for `mode:"image"`. We verified this exhaustively against the live endpoint — inline base64 at every size, NVCF asset references with `NVCF-INPUT-ASSET-REFERENCES`, and bare asset ids all return 422. Self-deployed TRELLIS NIMs accept real image input, so this is a property of the hosted preview and not the model. It is the single biggest gap between the free lane and the self-hosted one, and it forces every photo-to-3D submission on our platform off NVIDIA infrastructure and onto a paid third party. We have kept the asset-handshake recipe ready for the day it lifts.
+**Lift the image-input restriction on the hosted TRELLIS preview.** The hosted endpoint currently accepts only NVIDIA's predefined `example_id` sample images for `mode:"image"`. We verified this exhaustively against the live endpoint: inline base64 at every size, NVCF asset references with `NVCF-INPUT-ASSET-REFERENCES`, and bare asset ids all return 422. Self-deployed TRELLIS NIMs accept real image input, so this is a property of the hosted preview and not the model. It is the single biggest gap between the free lane and the self-hosted one, and it forces every photo-to-3D submission on our platform off NVIDIA infrastructure and onto a paid third party. We have kept the asset-handshake recipe ready for the day it lifts.
 
 **Raise or document the 77-character TRELLIS prompt cap.** TRELLIS truncates the text prompt server-side at 77 characters. We clamp to it so the request is honest about what is actually conditioning the generation, and we spend 17 of those precious characters appending `", studio lighting"` because TRELLIS trends dark and gritty without an explicit lighting cue. Seventy-seven characters is a tight budget for a user's creative intent.
 
@@ -130,7 +130,7 @@ Offered in the spirit of a team that has bet its pipeline on these lanes and wan
 
 I want to step back from the token counts.
 
-For the whole history of the medium, 3D has been gated behind craft. Not taste, not ideas — craft. Years of it. Topology and UV unwrapping and weight painting and retopology, an apprenticeship most people with something to say were never going to serve. The ideas were never the bottleneck. The tooling was. An enormous number of people who would have made extraordinary things in three dimensions simply never got past the first week of Blender, and we will never know what they would have built.
+For the whole history of the medium, 3D has been gated behind craft. Not taste, not ideas. Craft. Years of it. Topology and UV unwrapping and weight painting and retopology, an apprenticeship most people with something to say were never going to serve. The ideas were never the bottleneck. The tooling was. An enormous number of people who would have made extraordinary things in three dimensions simply never got past the first week of Blender, and we will never know what they would have built.
 
 That is ending, and it is ending *now*, and it is not ending because one model got good at meshes.
 
@@ -138,10 +138,10 @@ It is ending because the entire supporting cast got good and got free at the sam
 
 NVIDIA's most underrated contribution to 3D is not the GPU in the datacenter. It is the decision to put Nemotron Nano, NemoGuard, TRELLIS, FLUX, Riva, and Audio2Face behind one free API key. That decision is why a small team can put text-to-3D in a browser tab and charge nothing for it. It is why the guardrail is free. It is why the pipeline closes.
 
-We are going to look back on this decade the way we look back on desktop publishing — a brief, strange window when the tools for a whole art form went from a priesthood to a text box, and the number of people who could participate went up by four orders of magnitude. The models that make that happen will mostly not be the famous ones. They will be 9B and 12B, they will run in a second, they will cost nothing, and they will spend their lives quietly telling people *not that photo, try this one instead*.
+We are going to look back on this decade the way we look back on desktop publishing: a brief, strange window when the tools for a whole art form went from a priesthood to a text box, and the number of people who could participate went up by four orders of magnitude. The models that make that happen will mostly not be the famous ones. They will be 9B and 12B, they will run in a second, they will cost nothing, and they will spend their lives quietly telling people *not that photo, try this one instead*.
 
 Build the small stuff. Put it in front. The generator was never the hard part.
 
 ---
 
-*three.ws is a browser-native platform for generating 3D avatars, worlds, and agents from a sentence. The text-to-3D lane described here is free and open — no key, no account. Our full NVIDIA model map lives in [`docs/nvidia-models.md`](./nvidia-models.md), and the pipeline internals are in [`docs/3d-asset-pipeline.md`](./3d-asset-pipeline.md).*
+*three.ws is a browser-native platform for generating 3D avatars, worlds, and agents from a sentence. The text-to-3D lane described here is free and open: no key, no account. Our full NVIDIA model map lives in [`docs/nvidia-models.md`](./nvidia-models.md), and the pipeline internals are in [`docs/3d-asset-pipeline.md`](./3d-asset-pipeline.md).*

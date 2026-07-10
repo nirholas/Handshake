@@ -1,9 +1,9 @@
 // Native crypto-news aggregation — the engine behind /api/news/feed, the
-// related-news rail on /coin/:id, and the /markets surfaces. Ported from the
-// cryptocurrency.cv aggregator (same team) after its Vercel deployment was
-// retired; three.ws now fetches the source RSS/Atom feeds directly.
+// related-news rail on /coin/:id, the Oracle's narrative pillar, pump-intel's
+// news-meme matcher, and the /markets surfaces. three.ws fetches the source
+// RSS/Atom feeds directly; no third-party news API sits in this path.
 //
-// Design, at ~230 live publisher feeds:
+// Design, at 38 live publisher feeds across 14 categories:
 //
 //   * Per-source in-memory cache (5 min TTL) with serve-stale-on-error, so one
 //     slow or dead feed never blanks the page and repeat requests inside the
@@ -29,7 +29,8 @@ import { NEWS_SOURCES, sourcesForCategory, sourcePriority } from './news-sources
 const FEED_TIMEOUT_MS = 7000;
 const FRESH_MS = 300_000; // refetch a source after 5 min
 const STALE_OK_MS = 24 * 3600_000; // serve a failed source's last-good copy up to 24h
-const MAX_BACKOFF_MS = 6 * 3600_000; // a persistently dead feed retries at most every 6h
+const MAX_BACKOFF_MS = 6 * 3600_000; // a persistently dead feed (404/410) retries at most every 6h
+const SOFT_BACKOFF_MS = 30 * 60_000; // a rate-limited or 5xx feed retries at most every 30 min
 const REFRESH_DEADLINE_MS = 2500; // how long a request will wait on cold sources
 const GLOBAL_CONCURRENCY = 16; // outbound feed fetches in flight, all domains
 const DOMAIN_CONCURRENCY = 3; // outbound feed fetches in flight, per domain
@@ -63,6 +64,14 @@ export function stripHtml(s) {
 // and archived records share an identity space.
 export function articleId(link) {
 	return createHash('sha256').update(String(link)).digest('hex').slice(0, 16);
+}
+
+// Models on the free tiers often wrap JSON in a ```json fence despite being
+// told not to. Unwrap before JSON.parse rather than failing the completion.
+export function stripJsonFence(text) {
+	const t = String(text || '').trim();
+	const fenced = t.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+	return (fenced ? fenced[1] : t).trim();
 }
 
 // ── Sentiment (lexicon) ──────────────────────────────────────────────────────
@@ -210,6 +219,49 @@ export function parseFeed(xml, sourceKey) {
 		.filter(Boolean);
 }
 
+// ── Non-RSS sources ──────────────────────────────────────────────────────────
+// A source with `kind: 'json'` is shaped by an adapter here instead of by
+// parseFeed. The bar for adding one is high: free, keyless, and reachable from
+// a datacenter IP (which is what Cloud Run is). Three of cryptocurrency.cv's
+// four JSON sources no longer clear it and are deliberately absent —
+// CryptoCompare now answers 401, DeFiLlama's /raises answers 402, and Reddit
+// answers 403 to cloud egress. Shipping them would mean four sources that fail
+// forever.
+
+const JSON_ADAPTERS = {
+	// Exchange listing/delisting notices. Market-moving, and published to no RSS
+	// feed anywhere. The list endpoint returns title + code + releaseDate only;
+	// the canonical permalink is /support/announcement/detail/<code>.
+	binance_announcements(data, key) {
+		const src = NEWS_SOURCES[key];
+		const articles = data?.data?.catalogs?.[0]?.articles;
+		if (!Array.isArray(articles)) throw new Error(`${key} unexpected payload`);
+		return articles
+			.map((a) => {
+				const title = stripHtml(a?.title);
+				if (!title || !a?.code) return null;
+				const link = `https://www.binance.com/en/support/announcement/detail/${a.code}`;
+				const iso = Number.isFinite(a.releaseDate) ? new Date(a.releaseDate).toISOString() : null;
+				return {
+					id: articleId(link),
+					title,
+					link,
+					description: null,
+					image: null,
+					author: null,
+					source: src.name,
+					source_key: key,
+					category: src.category,
+					pub_date: iso,
+					tickers: extractTickers(title),
+					sentiment: lexiconSentiment(title),
+					content_text: null,
+				};
+			})
+			.filter(Boolean);
+	},
+};
+
 // ── Concurrency control ──────────────────────────────────────────────────────
 // Feeds cluster on shared hosts (medium.com, substack.com, mirror.xyz each
 // carry many). Firing every feed at once earns a 429 from exactly those hosts,
@@ -264,9 +316,12 @@ async function fetchSource(key) {
 	await gate.acquire();
 	await globalGate.acquire();
 	try {
+		const json = src.kind === 'json';
 		const resp = await fetch(src.url, {
 			headers: {
-				accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
+				accept: json
+					? 'application/json'
+					: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
 				// A polite, identifying bot UA gets through more publisher WAFs than a
 				// spoofed browser UA does — a fake Chrome string without the matching
 				// TLS/header fingerprint reads as a scraper and earns a 403.
@@ -276,7 +331,12 @@ async function fetchSource(key) {
 			signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
 			redirect: 'follow',
 		});
-		if (!resp.ok) throw new Error(`${key} ${resp.status}`);
+		if (!resp.ok) {
+			const err = new Error(`${key} ${resp.status}`);
+			err.status = resp.status;
+			throw err;
+		}
+		if (json) return JSON_ADAPTERS[key](await resp.json(), key);
 		return parseFeed(await resp.text(), key);
 	} finally {
 		globalGate.release();
@@ -285,8 +345,13 @@ async function fetchSource(key) {
 }
 
 /** Exponential backoff so a permanently dead feed stops costing us a request every 5 min. */
-function backoffFor(failures) {
-	return Math.min(FRESH_MS * 2 ** Math.max(0, failures - 1), MAX_BACKOFF_MS);
+function backoffFor(failures, status) {
+	// A 429/408/5xx (or a timeout, which arrives with no status) means "later",
+	// not "gone" — park those under a soft ceiling so a rate-limited publisher
+	// recovers within the hour. A 404/410/403 is a real verdict: hard ceiling.
+	const transient = !status || status === 429 || status === 408 || (status >= 500 && status < 600);
+	const ceiling = transient ? SOFT_BACKOFF_MS : MAX_BACKOFF_MS;
+	return Math.min(FRESH_MS * 2 ** Math.max(0, failures - 1), ceiling);
 }
 
 function refreshSource(key) {
@@ -305,7 +370,7 @@ function refreshSource(key) {
 			});
 			return trimmed;
 		})
-		.catch(() => {
+		.catch((err) => {
 			const prev = sourceCache.get(key);
 			const failures = (prev?.failures || 0) + 1;
 			// keep the last-good copy; push the next attempt out exponentially
@@ -313,9 +378,10 @@ function refreshSource(key) {
 				articles: prev?.articles || [],
 				fetchedAt: prev?.ok ? prev.fetchedAt : Date.now(),
 				lastFailAt: Date.now(),
+				lastStatus: err?.status || null,
 				ok: false,
 				failures,
-				nextRetryAt: Date.now() + backoffFor(failures),
+				nextRetryAt: Date.now() + backoffFor(failures, err?.status),
 			});
 			return prev?.articles || [];
 		})

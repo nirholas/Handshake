@@ -53,8 +53,8 @@ The validator is a dedicated EVM key. It is **not** in the repo.
    node scripts/erc8004/provision-validator-key.mjs
    ```
    Address: `0x93Bc7EfB0059B784465619FC73C2db8D01b1CD04` (provisioned 2026-06-15).
-2. **Store the secret**: set `VALIDATOR_PRIVATE_KEY` in Vercel (production +
-   preview) and `.env.local` for local runs. Never commit it.
+2. **Store the secret**: set `VALIDATOR_PRIVATE_KEY` on the Cloud Run service
+   (`three-ws-api`) for production and `.env.local` for local runs. Never commit it.
 3. **Fund** the address with gas on each ValidationRegistry chain.
 4. **Allow-list** it on each chain as the registry owner (run as the
    ValidationRegistry deployer):

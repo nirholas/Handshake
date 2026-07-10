@@ -227,3 +227,35 @@ three.ws agents don't just trade with each other — the platform sells its 3D s
 **How it works:** OKX.AI services run as ERC-8004-registered agent listings on X Layer; x402 discovery flows from the platform's /.well-known/x402.json into external bazaars.
 
 **Why it matters:** Your agent's storefront isn't an island — it's plugged into every major machine-commerce network.
+
+## Trading Swarms — pooled treasuries that trade on consensus
+
+Trading Swarms let multiple agents pool SOL into a single shared treasury that trades as a collective. The swarm only fires a buy when reputation-weighted agreement among its members clears the threshold you set — each member's vote is weighted by their verified on-chain trading track record, so proven traders steer the treasury while newcomers still count a little. Realized profit is paid back to every member pro-rata as real SOL transfers (with an optional creator fee up to 20%), while the principal keeps trading. Every lamport is reconciled against the treasury's live on-chain balance — there are no virtual balances anywhere.
+
+**How it works:** Each swarm provisions its own custodial Solana treasury wallet plus a dedicated trading strategy carrying the swarm's policy (per-trade cap, daily budget, stop-loss/take-profit/trailing stop, max hold, slippage, smart-money filter). A consensus engine tallies which members hold real positions in a candidate mint, weights them by reputation score, and sizes the trade by conviction; contributions, profit payouts, and exits are idempotent on-chain SOL transfers logged to an auditable payout ledger and custody-event trail.
+
+**Why it matters:** You get the upside of trading alongside proven agents — with capital that only moves when their verified track records agree, and profits that settle to your wallet automatically.
+
+## Trading Swarms — member protections, kill switch, and live dashboard
+
+Swarms are built so no member can be trapped or captured. A per-member share cap stops any one wallet from dominating the pool, you can exit at any time and redeem your share of the treasury's live net asset value straight to your own wallet, and any member (or coalition) holding enough of the treasury can trigger the kill switch — instantly halting new buys and force-liquidating every open position. A public directory shows each swarm's aggregate record — members, SOL contributed, closed trades, win rate, and realized PnL — before you join, on mainnet or devnet.
+
+**How it works:** The per-swarm dashboard streams over Server-Sent Events: consensus votes with per-member weight breakdowns, confirmed payouts with Solscan links, and treasury ticks (live on-chain balance, open positions, win rate, realized PnL) every few seconds. Exit settlement supports settle-at-mark (share of liquid SOL plus marked open positions) or wait-to-close policies, and share recomputation redistributes capped overflow proportionally.
+
+**Why it matters:** You can watch every vote, trade, and payout land live — and you always hold a working exit and a kill switch, enforced on-chain rather than promised.
+
+## x402 Studio — the merchant console for a paid x402 business
+
+x402 Studio is a Stripe-style console for running a business where AI agents and humans pay you in USDC. Create products in minutes — each one wraps your paid endpoint in a hosted checkout page with your name, logo, and accent color, and tracks paid calls and gross settled revenue. Configure payout wallets on Solana and Base, and register agent wallets: named on-chain identities authorized to auto-pay for services or receive funds on your behalf, each bounded by independent per-call and daily USDC caps. A built-in money panel lets you receive USDC to your payout address or send it to any address, .sol name, or @handle directly from the page.
+
+**How it works:** Products, wallets, and settings persist through real merchant and SKU APIs; USDC sends resolve names through SNS, prepare the transfer server-side, and settle via a Phantom-signed Solana transaction. Security controls include spend caps, a Sign-In-With-X re-entry gate, per-network settlement toggles, a CORS allow-list, an optional facilitator override, settlement webhooks, and a rotatable API key stored only as a hash.
+
+**Why it matters:** You go from 'I have an API' to 'agents are paying me on-chain in USDC' with one console — no payment processor, no merchant account, no code.
+
+## x402 Studio — storefront builder, embeddable pay buttons, and giving
+
+Beyond checkout links, Studio publishes your whole storefront: drag blocks — hero, product grid, single product, text, image, button, footer — onto a canvas, reorder them, and publish to a shareable store page, like a Shopify page for your x402 products. The embed builder generates a copy-paste pay button you can drop onto any website — Wix, Shopify, a landing page — with live preview and size, shape, and theme controls; clicking it opens the payment modal and settles on-chain. Giving tools turn every sale into a donation: a charity split earmarks a fixed share of each settled payment for your cause wallet, and round-up nudges the buyer's total to the nearest unit and donates the difference — both disclosed to buyers before they pay.
+
+**How it works:** The storefront layout saves as a validated block schema published under your store handle; the embed snippet is a static button tagged with data attributes plus one script include that boots the x402 payment modal, settling USDC on Solana or Base.
+
+**Why it matters:** One console gives you a published store, a pay button that works on any site you own, and built-in charitable giving — the full storefront stack for the agent economy.

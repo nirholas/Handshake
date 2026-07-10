@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T06:16:54.233Z",
+	"generated_at": "2026-07-10T12:13:15.844Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1925,6 +1925,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/markets/digest",
+					"title": "Crypto News Digest",
+					"description": "The day's crypto news grouped into the handful of stories that actually matter — each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.",
+					"added": "2026-07-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				}
 			]
 		},
@@ -2702,6 +2712,16 @@
 					"title": "Docs · Claim Your Wallet & Trader Card",
 					"description": "Paste any Solana wallet for its on-chain pump.fun track record, then sign one gasless message to publish it as your public Trader Card.",
 					"added": "2026-07-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-abilities",
+					"title": "Docs · What Agents Can Do — The Complete Dossier",
+					"description": "The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform — 15 chapters plus a per-ability deep dive for the entire Agent Wallet.",
+					"added": "2026-07-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

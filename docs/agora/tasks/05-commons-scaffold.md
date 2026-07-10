@@ -80,5 +80,5 @@ Throttle network to see progressive load.
 ## Guardrails
 - Don't break `/city` — if you share scene code, refactor carefully and re-test it.
 - No fabricated citizens to fill the scene; empty is honest.
-- Push both remotes; changelog: the new page's `added` date in `data/pages.json`
+- Push to `threews` only; changelog: the new page's `added` date in `data/pages.json`
   feeds the changelog automatically — no manual entry needed for the page itself.

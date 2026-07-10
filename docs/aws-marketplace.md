@@ -1,32 +1,22 @@
 # three.ws on AWS Marketplace
 
-three.ws is a verified AWS Partner and listed on AWS Marketplace as a SaaS usage-based product. This means you can subscribe to three.ws directly through your AWS account — usage is billed to your AWS bill, eligible for AWS credits, and counts toward your Enterprise Discount Program (EDP) commitments.
+three.ws is a verified AWS Partner and listed on AWS Marketplace as an API-based (SaaS) product. The AWS subscription is a **free front door**: subscribing links your AWS account to a three.ws account and issues an x402 access key. Actual usage is then paid per-call in USDC over the x402 / HTTP 402 protocol — the same as every other x402 endpoint. AWS Marketplace itself does not meter or bill usage.
 
 ## Subscribing via AWS Marketplace
 
 1. Find the three.ws listing on [AWS Marketplace](https://aws.amazon.com/marketplace).
-2. Choose **Try for free** (free trial available) or **Subscribe**.
+2. Choose **Subscribe** — the AWS Marketplace subscription is free.
 3. After confirming in AWS, you are redirected to `https://three.ws/aws-marketplace/welcome` to complete account setup.
 4. If you already have a three.ws account, sign in and your AWS subscription is linked automatically.
-
-## Free Trial
-
-three.ws offers a free trial period for new AWS Marketplace subscribers. During the trial you have full access to the platform. When the trial ends, usage is billed on a pay-as-you-go basis through your AWS account.
+5. Once linked, the welcome page issues your x402 access key so you can start calling `/api/x402/*` immediately.
 
 ## Billing
 
-Usage is metered and reported to AWS daily. You are billed for:
+The AWS Marketplace subscription is free — there are no AWS pricing dimensions, no contract, and no AWS-side metering. Usage is paid per-call in USDC via x402 (HTTP 402): every call returns a structured 402 challenge, your wallet or facilitator pays in USDC, and the request retries automatically. This is identical to how a non-AWS caller pays, so there is nothing to reconcile on your AWS invoice.
 
-| Dimension | Unit |
-|---|---|
-| API calls | Per call |
-| Agent compute | Per minute of active session |
+## AWS account
 
-Charges appear on your standard AWS invoice under **AWS Marketplace Software**.
-
-## AWS Infrastructure
-
-three.ws runs on AWS in `us-east-1`. The application is registered in AWS MyApplications under account `155407237916`, which groups all platform resources for unified cost and operations monitoring.
+The AWS Marketplace seller account for three.ws is `155407237916` (`us-east-1`), which hosts the Marketplace integration — the SNS subscription topic, the ResolveCustomer/entitlement bridge, and the EULA. The platform's own production runtime runs on Google Cloud Run (service `three-ws-api`, region `us-central1`); see [ops/gcp-production.md](./ops/gcp-production.md) for the hosting runbook.
 
 ## For Developers: Marketplace Integration Endpoints
 

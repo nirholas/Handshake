@@ -673,7 +673,7 @@
 			"dest": "/api/portfolio/[action]?action=send"
 		},
 		{
-			"src": "/payments",
+			"src": "/payments/?",
 			"dest": "/payments.html"
 		},
 		{
@@ -947,6 +947,10 @@
 		{
 			"src": "/markets/news/?",
 			"dest": "/markets-news.html"
+		},
+		{
+			"src": "/markets/digest/?",
+			"dest": "/news-digest.html"
 		},
 		{
 			"src": "/markets/news/article/?",

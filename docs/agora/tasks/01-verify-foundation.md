@@ -78,5 +78,5 @@ curl -s "localhost:3000/api/agora/passport?id=00000000-0000-0000-0000-0000000000
 - Migrations are forward-only; don't edit an already-applied migration file —
   add a new one if a change is needed.
 - `$THREE` is the only coin; the placeholder mint in any test is synthetic.
-- Stage explicit paths. If committing, push **both** remotes; this is internal
+- Stage explicit paths. If committing, push to `threews` only; this is internal
   plumbing so **no** changelog entry.

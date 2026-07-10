@@ -5,6 +5,15 @@ project, the credit grant, what's enabled, service accounts, env vars, quota,
 and how to smoke-test Claude on Vertex. Prompts 02–08 append to this file as
 they build on the foundation.
 
+_Historical record — this is a date-stamped runbook from the GCP-credits program
+(most sections written 2026-07-07); its per-prompt subsections are point-in-time
+work logs, not current setup steps. Production has since moved to Google Cloud Run
+(service `three-ws-api`), so every "set in Vercel" / `vercel env add` / `vercel --prod`
+instruction below is superseded — the GCP env vars now live on the Cloud Run
+service. See the **"Audit + fixes — 2026-07-08"** section at the end of this file for
+what was actually wired onto Cloud Run, and the [GCP production runbook](ops/gcp-production.md)
+for the live deploy/env procedure._
+
 > **Status: foundation live; one owner console action remains for Claude.**
 > `gcloud` is authenticated (`nich@sperax.io`) against `aerial-vehicle-466722-p5`,
 > all APIs are enabled, the `vercel-inference` SA is created with
