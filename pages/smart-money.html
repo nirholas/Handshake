@@ -495,10 +495,9 @@
 			// an image; the proxy resolves those to the placeholder instead of failing.
 			const imgSeed = c.symbol || c.name || c.mint || 'coin';
 			const imgFallback = `/api/img?seed=${encodeURIComponent(imgSeed)}`;
-			const imgSrc = c.image_uri && /^https?:\/\//i.test(c.image_uri)
-				? `/api/img?url=${encodeURIComponent(c.image_uri)}&seed=${encodeURIComponent(imgSeed)}`
-				: imgFallback;
-			const img = `<img class="coin-img" src="${esc(imgSrc)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${esc(imgFallback)}'">`;
+			const img = c.image_uri && /^https?:\/\//i.test(c.image_uri)
+				? `<img class="coin-img" src="${esc(`/api/img?url=${encodeURIComponent(c.image_uri)}&seed=${encodeURIComponent(imgSeed)}`)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${esc(imgFallback)}'">`
+				: `<div class="coin-img">${esc((c.symbol || '?').slice(0, 2))}</div>`;
 			const notable = (c.notable || []).slice(0, 4).map((n) =>
 				`<span class="nlabel lb-${n.label || 'neutral'}">${short(n.wallet)}</span>`).join('');
 			const share = shareOf(c);
