@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T15:58:25.468Z",
+	"generated_at": "2026-07-10T18:27:18.762Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -75,6 +75,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Agents can now read the news: three free MCP tools for headlines, digests, and the 660k archive",
+			"summary": "The three.ws MCP server grew a crypto-news trio, all free — no payment, wallet, or API key. crypto_news streams live headlines from 192 publisher feeds with category, source, language, and search filters. crypto_news_digest hands an agent the last day (or up to three) clustered into distinct stories with stance, tickers, and every covering outlet — the right first call for \"what happened in crypto today\". crypto_news_archive searches 660,000+ articles back to September 2017 by keyword, ticker, date, sentiment, or language, with corpus stats and trending modes. Any MCP client — Claude Desktop, Cursor, or another agent — can now cite a decade of crypto coverage.",
+			"link": "/mcp",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -359,6 +370,16 @@
 			"link": "/docs/nvidia-nemotron-spotlight",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Voice-to-text is now live on the API",
+			"summary": "The free speech-to-text lane (POST /api/v1/ai/asr) was built but never switched on because its model wasn't wired up — every call returned \"not configured.\" The NVIDIA Riva ASR model is now connected and verified end to end (a spoken sentence synthesized and transcribed back word-for-word), so agents and apps can turn audio into text through three.ws with no key and no account.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"infra"
 			]
 		},
 		{
