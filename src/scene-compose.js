@@ -144,7 +144,10 @@ orbit.maxDistance = 80;
 // Transform
 const transform = new TransformControls(camera, renderer.domElement);
 transform.setMode('translate');
-scene.add(transform);
+// TransformControls extends Controls, not Object3D (three r169+), so adding it to
+// the scene throws "THREE.Object3D.add: object not an instance of THREE.Object3D"
+// and the gizmo never renders. Its visual is a separate Object3D from getHelper().
+scene.add(transform.getHelper());
 transform.addEventListener('dragging-changed', (e) => {
 	orbit.enabled = !e.value;
 	if (!e.value && selectedId !== null) {
