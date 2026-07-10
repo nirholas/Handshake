@@ -1,8 +1,10 @@
-// `crypto_news_archive` — FREE MCP tool over the largest open crypto-news
+// `crypto_news_archive` — MCP tool over the largest open crypto-news
 // archive: 660,000+ enriched articles from September 2017 to today (refreshed
 // hourly from the live feed), hosted on three.ws infrastructure. Backed by
 // GET /api/news/archive — the same engine behind three.ws/markets/archive.
-// No payment, no key.
+// stats/trending modes are always free; search rides the HTTP API's freemium
+// gate (free daily quota per IP, then $0.001 USDC per search over x402 —
+// _news-core turns the 402 into a compact `payment_required` envelope).
 
 import { z } from 'zod';
 
@@ -20,7 +22,10 @@ const TOOL_DESCRIPTION =
 	'returns the most-covered tickers of the newest archived weeks. IMPORTANT: search scans months ' +
 	'newest→oldest and reports exactly which months it covered (scanned.complete=false means older months ' +
 	'remain) — pass start_date/end_date to reach a specific era, e.g. the 2017 ICO boom or the 2022 FTX ' +
-	'collapse. For today\'s coverage use crypto_news or crypto_news_digest. Free — no payment or API key required.';
+	'collapse. For today\'s coverage use crypto_news or crypto_news_digest. stats and trending modes are ' +
+	'always free; search includes a free daily quota (60/day per IP, no key or wallet needed), then ' +
+	'$0.001 USDC per search via x402 — an exhausted quota returns a payment_required envelope with the ' +
+	'price and accepted networks.';
 
 const inputZodShape = {
 	mode: z

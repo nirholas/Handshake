@@ -1,8 +1,10 @@
-// Shared plumbing for the FREE crypto-news MCP tools (`crypto_news`,
+// Shared plumbing for the crypto-news MCP tools (`crypto_news`,
 // `crypto_news_digest`, `crypto_news_archive`). All three read the public
 // three.ws news APIs — the same endpoints behind /markets/news, /markets/digest,
 // and /markets/archive — which are key-less and CORS-open, so the tools need
-// no payment, wallet, or credential.
+// no wallet or credential. The live feed and digest are fully free; archive
+// SEARCH carries a free daily quota per IP and then answers with an x402 402
+// challenge (handled below as a compact `payment_required` envelope).
 //
 // Environment (optional):
 //   NEWS_API_BASE — three.ws origin override for self-hosted/staging installs.
@@ -34,6 +36,25 @@ export async function newsApiGet(path, params, { timeoutMs = 30_000 } = {}) {
 		return toolError('news_api_unreachable', `three.ws news API unreachable: ${err.message}`, { url });
 	}
 	const body = await resp.json().catch(() => null);
+	if (resp.status === 402) {
+		// x402 challenge (freemium endpoints: the free daily quota is exhausted).
+		// The raw challenge body is a full accepts[] catalog — too heavy for a
+		// tool result — so surface a compact, actionable envelope instead.
+		const accepts = Array.isArray(body?.accepts) ? body.accepts : [];
+		const paidAccept = accepts.find((a) => Number(a?.amount) > 0);
+		const priceUsdc = paidAccept ? Number(paidAccept.amount) / 1e6 : null;
+		return toolError(
+			'payment_required',
+			'the free daily quota for this three.ws news API is exhausted — retry after the daily ' +
+				'reset (UTC), or pay per call over x402: repeat the same HTTP GET with an X-PAYMENT ' +
+				'header (USDC on Solana or Base).',
+			{
+				resource: url.split('?')[0],
+				...(priceUsdc != null ? { price_usdc: priceUsdc } : {}),
+				networks: [...new Set(accepts.map((a) => a?.network).filter(Boolean))],
+			},
+		);
+	}
 	if (!resp.ok) {
 		return toolError(
 			body?.error || `http_${resp.status}`,

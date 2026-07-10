@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T18:27:33.083Z",
+	"generated_at": "2026-07-10T18:59:18.164Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -234,6 +234,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "News archive search moves to a fair-use model",
+			"summary": "The 660,000-article crypto-news archive stays open, with a fair-use gate on its most expensive operation: deep search now includes 60 free searches per day per person, and past that each search costs $0.001 USDC paid instantly via x402 (USDC on Solana or Base) — right from the archive page or the API. Corpus statistics, the month index, and trending tickers remain unlimited and free. This keeps the archive fast for readers while stopping bulk scrapers from soaking up the infrastructure the platform pays for.",
+			"link": "/markets/archive",
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{

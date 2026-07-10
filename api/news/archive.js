@@ -4,7 +4,7 @@
 // September 2017 onward (CryptoPanic english corpus + Odaily chinese corpus +
 // the cryptocurrency.cv live archiver), recovered from the cryptocurrency.cv
 // archive and hosted on the platform's own GCS bucket
-// (gs://three-ws-news-archive). Largest free crypto-news dataset anywhere;
+// (gs://three-ws-news-archive). Largest open crypto-news dataset anywhere;
 // every record carries tickers, tags, sentiment, language, and (where
 // captured) market context at publication time.
 //
@@ -18,10 +18,19 @@
 //   indexes/by-{date,source,ticker}.json
 //
 // Modes:
-//   ?stats=true              corpus statistics + available month range
-//   ?months=true             list of queryable months
-//   ?trending=true           top tickers over the newest archived weeks
-//   default                  query mode — filters below
+//   ?stats=true              corpus statistics + available month range (free)
+//   ?months=true             list of queryable months (free)
+//   ?trending=true           top tickers over the newest archived weeks (free)
+//   default                  query mode — free daily quota, then x402
+//
+// Access model (freemium, same shape as api/v1/ai/tts.js):
+//   • stats/months/trending are cached + tiny → always free.
+//   • Each SEARCH fans out to GCS month files (2–11 MB each, up to 12 per
+//     request), so query mode carries a free per-IP daily quota
+//     (limits.newsArchiveFreeIp — the funnel and the anti-scrape bound) and
+//     falls through to an x402 402 challenge ($0.001 USDC per search,
+//     env-overridable via X402_PRICE_NEWS_ARCHIVE) once exhausted. A request
+//     arriving with an X-PAYMENT header goes straight to the paid rail.
 //
 // Query params (query mode):
 //   q           full-text (title + description)
@@ -41,6 +50,10 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { priceFor } from '../_lib/x402-prices.js';
+import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { declareHttpDiscovery, withService } from '../_lib/x402/bazaar-helpers.js';
+import { installAccessControl } from '../_lib/x402/access-control.js';
 
 const GCS_BASE = 'https://storage.googleapis.com/three-ws-news-archive';
 const GCS_LIST =
@@ -49,6 +62,10 @@ const GCS_LIST =
 const MAX_MONTHS_PER_SCAN = 12;
 const MONTH_FETCH_CONCURRENCY = 3;
 const MONTH_CACHE_MAX = 5;
+
+const ROUTE = '/api/news/archive';
+const PRICE_ATOMICS = priceFor('news-archive', '1000'); // $0.001/search (env: X402_PRICE_NEWS_ARCHIVE)
+const FREE_SEARCHES_PER_DAY = 60; // keep in sync with limits.newsArchiveFreeIp
 
 // month "YYYY-MM" → compact article records (newest month files are ~2–11 MB
 // raw; compact form keeps only serving fields). LRU by Map insertion order.
@@ -59,6 +76,13 @@ let monthsCache = null;
 const META_TTL_MS = 3600_000;
 
 const str = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
+function httpErr(status, code, message) {
+	const e = new Error(message);
+	e.status = status;
+	e.code = code;
+	return e;
+}
 
 function compact(a) {
 	return {
@@ -172,101 +196,50 @@ function buildPredicate({ q, ticker, source, category, sentiment, lang, startDat
 	};
 }
 
-export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
-	if (!method(req, res, ['GET'])) return;
+// Parse + validate query-mode params. Throws httpErr(400, …) on bad input so
+// both lanes reject it cleanly — genuinely bad input must be a 400, never a
+// payment prompt.
+function parseSearchParams(params) {
+	const q = (params.get('q') || '').trim().slice(0, 120) || null;
+	const ticker = (params.get('ticker') || '').trim().slice(0, 12) || null;
+	const source = (params.get('source') || '').trim().slice(0, 40) || null;
+	const category = (params.get('category') || '').trim().toLowerCase() || null;
+	const sentiment = (params.get('sentiment') || '').trim().toLowerCase() || null;
+	const lang = (params.get('lang') || '').trim().toLowerCase() || null;
+	const startDate = (params.get('start_date') || '').trim() || null;
+	const endDate = (params.get('end_date') || '').trim() || null;
+	const limit = Math.min(Math.max(1, parseInt(params.get('limit') || '50', 10) || 50), 100);
+	const offset = Math.max(0, parseInt(params.get('offset') || '0', 10) || 0);
 
-	const rl = await limits.marketFeedIp(clientIp(req));
-	if (!rl.success) return rateLimited(res, rl);
+	const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+	if (startDate && !dateRe.test(startDate)) throw httpErr(400, 'bad_date', 'start_date must be YYYY-MM-DD');
+	if (endDate && !dateRe.test(endDate)) throw httpErr(400, 'bad_date', 'end_date must be YYYY-MM-DD');
+	if (startDate && endDate && startDate > endDate)
+		throw httpErr(400, 'bad_range', 'start_date is after end_date');
+	if (sentiment && !['positive', 'negative', 'neutral'].includes(sentiment))
+		throw httpErr(400, 'bad_sentiment', 'sentiment must be positive, negative, or neutral');
+	if (lang && !['en', 'zh'].includes(lang)) throw httpErr(400, 'bad_lang', 'lang must be en or zh');
 
-	const params = new URL(req.url, 'http://x').searchParams;
+	return { q, ticker, source, category, sentiment, lang, startDate, endDate, limit, offset };
+}
 
+// Run one archive search (the expensive month scan) and return the response
+// body. Shared verbatim by the free lane and the paid rail so both tiers serve
+// the SAME engine — the only difference is who paid for the scan.
+async function archiveSearch(parsed) {
+	const { q, ticker, source, category, sentiment, lang, startDate, endDate, limit, offset } = parsed;
 	try {
-		if (params.get('stats') === 'true') {
-			const [stats, months] = await Promise.all([getStats(), getMonths()]);
-			return json(
-				res, 200,
-				{
-					stats: {
-						total_articles: stats.total_articles,
-						total_with_date: stats.total_with_date,
-						total_with_url: stats.total_with_url,
-						undated_articles: stats.total_articles - stats.total_with_date,
-						first_article_date: stats.first_article_date,
-						last_article_date: stats.last_article_date,
-						languages: ['en', 'zh'],
-						top_sources: Object.entries(stats.sources || {})
-							.sort((a, b) => b[1] - a[1])
-							.slice(0, 30)
-							.map(([key, count]) => ({ key, count })),
-					},
-					months: { first: months[0], last: months[months.length - 1], count: months.length },
-				},
-				{ 'cache-control': 'public, max-age=600, s-maxage=3600, stale-while-revalidate=86400' },
-			);
-		}
-
-		if (params.get('months') === 'true') {
-			const months = await getMonths();
-			return json(res, 200, { months }, {
-				'cache-control': 'public, max-age=600, s-maxage=3600, stale-while-revalidate=86400',
-			});
-		}
-
-		if (params.get('trending') === 'true') {
-			const months = await getMonths();
-			const recent = months.slice(-2);
-			const counts = new Map();
-			for (const month of recent) {
-				for (const a of await loadMonth(month)) {
-					for (const t of a.tickers) {
-						// the corpus enrichment has occasional junk tickers ("A", "4") —
-						// keep them queryable but out of the trending strip
-						if (t.length < 2 || /^\d+$/.test(t)) continue;
-						counts.set(t, (counts.get(t) || 0) + 1);
-					}
-				}
-			}
-			const trending = [...counts.entries()]
-				.sort((a, b) => b[1] - a[1])
-				.slice(0, 20)
-				.map(([ticker, count]) => ({ ticker, count }));
-			return json(res, 200, { trending, window: recent }, {
-				'cache-control': 'public, max-age=600, s-maxage=3600, stale-while-revalidate=86400',
-			});
-		}
-
-		// ── query mode ─────────────────────────────────────────────────────────
-		const q = (params.get('q') || '').trim().slice(0, 120) || null;
-		const ticker = (params.get('ticker') || '').trim().slice(0, 12) || null;
-		const source = (params.get('source') || '').trim().slice(0, 40) || null;
-		const category = (params.get('category') || '').trim().toLowerCase() || null;
-		const sentiment = (params.get('sentiment') || '').trim().toLowerCase() || null;
-		const lang = (params.get('lang') || '').trim().toLowerCase() || null;
-		const startDate = (params.get('start_date') || '').trim() || null;
-		const endDate = (params.get('end_date') || '').trim() || null;
-		const limit = Math.min(Math.max(1, parseInt(params.get('limit') || '50', 10) || 50), 100);
-		const offset = Math.max(0, parseInt(params.get('offset') || '0', 10) || 0);
-
-		const dateRe = /^\d{4}-\d{2}-\d{2}$/;
-		if (startDate && !dateRe.test(startDate)) return error(res, 400, 'bad_date', 'start_date must be YYYY-MM-DD');
-		if (endDate && !dateRe.test(endDate)) return error(res, 400, 'bad_date', 'end_date must be YYYY-MM-DD');
-		if (startDate && endDate && startDate > endDate)
-			return error(res, 400, 'bad_range', 'start_date is after end_date');
-		if (sentiment && !['positive', 'negative', 'neutral'].includes(sentiment))
-			return error(res, 400, 'bad_sentiment', 'sentiment must be positive, negative, or neutral');
-		if (lang && !['en', 'zh'].includes(lang)) return error(res, 400, 'bad_lang', 'lang must be en or zh');
-
 		const allMonths = await getMonths();
 		let window = allMonths;
 		if (startDate) window = window.filter((m) => m >= startDate.slice(0, 7));
 		if (endDate) window = window.filter((m) => m <= endDate.slice(0, 7));
 		if (!window.length) {
-			return json(res, 200, {
+			return {
 				articles: [], total_scanned_matches: 0, limit, offset,
+				has_more: false,
 				scanned: { months: [], complete: true },
 				hint: 'no archive months inside that date range',
-			});
+			};
 		}
 		// newest → oldest
 		window = [...window].reverse();
@@ -312,10 +285,224 @@ export default wrap(async (req, res) => {
 		if (monthsRemaining > 0) {
 			body.hint = `scanned the newest ${scannedMonths.length} months of this range — add start_date/end_date to reach older articles`;
 		}
-		return json(res, 200, body, {
-			'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=3600',
-		});
+		return body;
+	} catch (err) {
+		if (err.status) throw err;
+		throw httpErr(502, 'archive_unavailable', `news archive is unreachable right now: ${err.message}`);
+	}
+}
+
+// ── x402 paid rail ───────────────────────────────────────────────────────────
+
+// Uniqueness-first: the first sentence answers "what can I only get here".
+const DESCRIPTION =
+	'Search the largest open crypto-news archive over x402: 660,000+ enriched articles back to ' +
+	'September 2017 (english + chinese corpora, refreshed hourly), queryable by keyword, ticker, ' +
+	'source, date range, sentiment, and language — every record carries tickers, tags, sentiment, ' +
+	'and (where captured) BTC/ETH price + Fear & Greed at publication. $0.001 USDC per search; a ' +
+	`free daily quota (${FREE_SEARCHES_PER_DAY} searches/day per IP) lets you try it before paying. ` +
+	'Corpus stats and trending modes are always free.';
+
+const INPUT_EXAMPLE = {
+	q: 'bitcoin etf',
+	ticker: 'BTC',
+	start_date: '2024-01-01',
+	end_date: '2024-03-31',
+	limit: 50,
+};
+
+const INPUT_SCHEMA = {
+	$schema: 'https://json-schema.org/draft/2020-12/schema',
+	type: 'object',
+	properties: {
+		q: { type: 'string', maxLength: 120, description: 'Full-text query over title + description.' },
+		ticker: { type: 'string', maxLength: 12, description: 'Filter by enriched ticker, e.g. BTC.' },
+		source: { type: 'string', maxLength: 40, description: 'Source key or name substring, e.g. coindesk, odaily.' },
+		category: { type: 'string', description: 'Enriched category.' },
+		sentiment: { type: 'string', enum: ['positive', 'negative', 'neutral'] },
+		lang: { type: 'string', enum: ['en', 'zh'] },
+		start_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Earliest publish date (archive starts 2017-09-23).' },
+		end_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Latest publish date.' },
+		limit: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
+		offset: { type: 'integer', minimum: 0, default: 0 },
+	},
+};
+
+const OUTPUT_EXAMPLE = {
+	articles: [
+		{
+			id: 'a1b2c3d4e5f60718',
+			title: 'Bitcoin ETF sees record inflows',
+			link: 'https://example.com/article',
+			source: 'CoinDesk',
+			category: 'general',
+			pub_date: '2024-01-11T14:00:00.000Z',
+			tickers: ['BTC'],
+			sentiment: { label: 'positive', score: 0.4 },
+			lang: 'en',
+		},
+	],
+	total_scanned_matches: 128,
+	limit: 50,
+	offset: 0,
+	has_more: true,
+	scanned: { months: ['2024-03', '2024-02', '2024-01'], from: '2024-01', to: '2024-03', complete: true, months_remaining: 0 },
+	tier: 'paid',
+};
+
+const OUTPUT_SCHEMA = {
+	$schema: 'https://json-schema.org/draft/2020-12/schema',
+	type: 'object',
+	required: ['articles', 'total_scanned_matches', 'scanned'],
+	properties: {
+		articles: { type: 'array', items: { type: 'object' } },
+		total_scanned_matches: { type: 'integer' },
+		limit: { type: 'integer' },
+		offset: { type: 'integer' },
+		has_more: { type: 'boolean' },
+		scanned: {
+			type: 'object',
+			description: 'Exactly which YYYY-MM months this search covered (newest-first scan).',
+		},
+		hint: { type: 'string' },
+		tier: { type: 'string', enum: ['free', 'paid'] },
+	},
+};
+
+const BAZAAR = declareHttpDiscovery({
+	method: 'GET',
+	input: INPUT_EXAMPLE,
+	inputSchema: INPUT_SCHEMA,
+	output: { example: OUTPUT_EXAMPLE, schema: OUTPUT_SCHEMA },
+});
+
+// The x402 paid twin — built once, lazily (constructing it touches env-derived
+// pay-to config). Reused for every over-quota / paying request.
+let _paid = null;
+function paidRail() {
+	if (_paid) return _paid;
+	_paid = paidEndpoint({
+		route: ROUTE,
+		method: 'GET',
+		priceAtomics: PRICE_ATOMICS,
+		networks: ['solana', 'base'],
+		description: DESCRIPTION,
+		bazaar: BAZAAR,
+		service: withService({
+			serviceName: 'three.ws Crypto News Archive',
+			tags: ['news', 'crypto', 'archive', 'search', 'data'],
+		}),
+		requiredScope: 'x402:bypass',
+		accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
+		async handler({ req }) {
+			const params = new URL(req.url, 'http://x').searchParams;
+			const body = await archiveSearch(parseSearchParams(params));
+			return { ...body, tier: 'paid' };
+		},
+	});
+	return _paid;
+}
+
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const rl = await limits.marketFeedIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const params = new URL(req.url, 'http://x').searchParams;
+
+	// ── Free modes: cached, tiny, never metered ───────────────────────────────
+	try {
+		if (params.get('stats') === 'true') {
+			const [stats, months] = await Promise.all([getStats(), getMonths()]);
+			return json(
+				res, 200,
+				{
+					stats: {
+						total_articles: stats.total_articles,
+						total_with_date: stats.total_with_date,
+						total_with_url: stats.total_with_url,
+						undated_articles: stats.total_articles - stats.total_with_date,
+						first_article_date: stats.first_article_date,
+						last_article_date: stats.last_article_date,
+						languages: ['en', 'zh'],
+						top_sources: Object.entries(stats.sources || {})
+							.sort((a, b) => b[1] - a[1])
+							.slice(0, 30)
+							.map(([key, count]) => ({ key, count })),
+					},
+					months: { first: months[0], last: months[months.length - 1], count: months.length },
+					search_access: {
+						free_per_day: FREE_SEARCHES_PER_DAY,
+						price_usdc: Number(PRICE_ATOMICS) / 1e6,
+						protocol: 'x402',
+					},
+				},
+				{ 'cache-control': 'public, max-age=600, s-maxage=3600, stale-while-revalidate=86400' },
+			);
+		}
+
+		if (params.get('months') === 'true') {
+			const months = await getMonths();
+			return json(res, 200, { months }, {
+				'cache-control': 'public, max-age=600, s-maxage=3600, stale-while-revalidate=86400',
+			});
+		}
+
+		if (params.get('trending') === 'true') {
+			const months = await getMonths();
+			const recent = months.slice(-2);
+			const counts = new Map();
+			for (const month of recent) {
+				for (const a of await loadMonth(month)) {
+					for (const t of a.tickers) {
+						// the corpus enrichment has occasional junk tickers ("A", "4") —
+						// keep them queryable but out of the trending strip
+						if (t.length < 2 || /^\d+$/.test(t)) continue;
+						counts.set(t, (counts.get(t) || 0) + 1);
+					}
+				}
+			}
+			const trending = [...counts.entries()]
+				.sort((a, b) => b[1] - a[1])
+				.slice(0, 20)
+				.map(([ticker, count]) => ({ ticker, count }));
+			return json(res, 200, { trending, window: recent }, {
+				'cache-control': 'public, max-age=600, s-maxage=3600, stale-while-revalidate=86400',
+			});
+		}
 	} catch (err) {
 		return error(res, 502, 'archive_unavailable', `news archive is unreachable right now: ${err.message}`);
+	}
+
+	// ── Query mode: free daily quota → x402 metered overage ──────────────────
+	// A payment header means the caller is on the paid rail already.
+	if (req.headers['x-payment'] || req.headers['payment-signature']) {
+		return paidRail()(req, res);
+	}
+
+	// Validate before the quota check so genuinely bad input is a clean 400
+	// rather than a payment prompt (and never burns a free search).
+	let parsed;
+	try {
+		parsed = parseSearchParams(params);
+	} catch (e) {
+		return error(res, e.status || 400, e.code || 'bad_request', e.message);
+	}
+
+	// Free daily quota (per IP). Exhausted → the 402 challenge.
+	const quota = await limits.newsArchiveFreeIp(clientIp(req));
+	if (!quota.success) return paidRail()(req, res);
+
+	try {
+		const body = await archiveSearch(parsed);
+		return json(
+			res, 200,
+			{ ...body, tier: 'free', free_remaining_today: Math.max(0, quota.remaining ?? 0) },
+			{ 'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=3600' },
+		);
+	} catch (e) {
+		return error(res, e.status || 502, e.code || 'archive_unavailable', e.message);
 	}
 });

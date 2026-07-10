@@ -13033,6 +13033,16 @@
 				"infra"
 			],
 			"link": "/docs/api-reference"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "News archive search moves to a fair-use model",
+			"summary": "The 660,000-article crypto-news archive stays open, with a fair-use gate on its most expensive operation: deep search now includes 60 free searches per day per person, and past that each search costs $0.001 USDC paid instantly via x402 (USDC on Solana or Base) — right from the archive page or the API. Corpus statistics, the month index, and trending tickers remain unlimited and free. This keeps the archive fast for readers while stopping bulk scrapers from soaking up the infrastructure the platform pays for.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/markets/archive"
 		}
 	]
 }

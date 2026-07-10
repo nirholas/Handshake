@@ -1,7 +1,10 @@
-// Coverage for the FREE crypto-news MCP tool trio (`crypto_news`,
+// Coverage for the crypto-news MCP tool trio (`crypto_news`,
 // `crypto_news_digest`, `crypto_news_archive`) — thin, honest views over the
 // public three.ws news APIs. These tests guard:
-//   - each descriptor advertises free-ness, is read-only, and quotes no price,
+//   - news + digest advertise free-ness and quote no price; the archive
+//     descriptor is honest about its freemium search gate (free daily quota,
+//     then $0.001/search over x402) and its 402 becomes a compact
+//     payment_required envelope,
 //   - the upstream response is slimmed without inventing fields,
 //   - upstream 4xx self-correction hints (valid category lists) pass through
 //     verbatim inside a toolError envelope (ok:false → isError),
@@ -38,12 +41,24 @@ describe('descriptors', () => {
 	it.each([
 		[buildCryptoNewsTool, 'crypto_news'],
 		[buildCryptoNewsDigestTool, 'crypto_news_digest'],
-		[buildCryptoNewsArchiveTool, 'crypto_news_archive'],
 	])('%s is free, read-only, and quotes no USDC price', (build, name) => {
 		const tool = build();
 		expect(tool.name).toBe(name);
 		expect(tool.description.toLowerCase()).toContain('free');
 		expect(tool.description).not.toMatch(/\$[0-9]/);
+		expect(tool.annotations.readOnlyHint).toBe(true);
+		expect(tool.annotations.destructiveHint).toBe(false);
+		expect(tool.handler).toBeTypeOf('function');
+	});
+
+	it('crypto_news_archive is read-only and honest about the freemium search gate', () => {
+		const tool = buildCryptoNewsArchiveTool();
+		expect(tool.name).toBe('crypto_news_archive');
+		// search: free daily quota then $0.001/search over x402 — the
+		// description must say so instead of claiming unconditional free-ness.
+		expect(tool.description.toLowerCase()).toContain('free daily quota');
+		expect(tool.description).toMatch(/\$0\.001/);
+		expect(tool.description.toLowerCase()).toContain('x402');
 		expect(tool.annotations.readOnlyHint).toBe(true);
 		expect(tool.annotations.destructiveHint).toBe(false);
 		expect(tool.handler).toBeTypeOf('function');
@@ -143,6 +158,29 @@ describe('handlers', () => {
 		const url = String(fetchMock.mock.calls[0][0]);
 		expect(url).toContain('ticker=BTC');
 		expect(url).toContain('sentiment=positive');
+	});
+
+	it('crypto_news_archive turns an exhausted free quota (402) into a compact payment_required envelope', async () => {
+		fetchMock.mockResolvedValue(
+			res(402, {
+				resourceUrl: 'https://three.ws/api/news/archive',
+				accepts: [
+					{ amount: '1000', network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp' },
+					{ amount: '0', network: 'eip155:8453' }, // auth-hints free entry — not a price
+				],
+			}),
+		);
+		const envelope = await buildCryptoNewsArchiveTool().handler({ q: 'mt gox' });
+		expect(envelope.isError).toBe(true);
+		const out = structured(envelope);
+		expect(out.error).toBe('payment_required');
+		expect(out.price_usdc).toBe(0.001);
+		expect(out.networks).toEqual(
+			expect.arrayContaining(['solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp']),
+		);
+		expect(out.message).toContain('x402');
+		// compact — the raw accepts[] catalog must not be passed through
+		expect(out.upstream).toBeUndefined();
 	});
 
 	it('crypto_news_archive stats and trending modes hit their query flags', async () => {

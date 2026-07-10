@@ -2639,6 +2639,15 @@ to, complete, months_remaining }, hint? }` — pass `start_date`/`end_date` to
 reach older years. `sentiment` ∈ `positive|negative|neutral`; `limit` ≤ 100.
 CDN cache 300 s (queries) / 3600 s (stats, months, trending).
 
+**Access:** `stats`, `months`, and `trending` are always free. Query mode
+(search) is freemium: **60 free searches per day per IP** — each response
+carries `tier: "free"` and `free_remaining_today` — then the endpoint answers
+with an x402 `402` challenge at **$0.001 USDC per search** (USDC on Solana or
+Base; operators override via `X402_PRICE_NEWS_ARCHIVE`). Repeat the same
+`GET` with an `X-PAYMENT` header to run a paid search (`tier: "paid"`);
+requests arriving with `X-PAYMENT` skip the free quota entirely. `?stats=true`
+reports the live terms under `search_access`.
+
 ### Daily digest
 
 ```

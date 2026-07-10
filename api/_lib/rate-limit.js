@@ -1243,6 +1243,17 @@ export const limits = {
 		getLimiter('ai:tts:free:ip', { limit: 10, window: '1 d', critical: true }).limit(ip),
 	aiAsrFreeIp: (ip) =>
 		getLimiter('ai:asr:free:ip', { limit: 5, window: '1 d', critical: true }).limit(ip),
+	// News-archive SEARCH quota (api/news/archive query mode) — same freemium
+	// shape as the AI lanes above: a free daily allowance per IP is the funnel,
+	// x402 ($0.001/search) is the metered overage. Each search fans out to GCS
+	// month files (2–11 MB each, up to 12 per request), so an uncapped scraper
+	// pulling the 660k corpus through the API is a real egress + CPU drain; 60
+	// searches/day covers a heavy interactive session on /markets/archive while
+	// pricing bulk extraction onto the paid rail. stats/months/trending modes
+	// are cheap + cached and stay outside this quota. Critical so a Redis outage
+	// fails closed to the 402 challenge rather than uncapping the scan path.
+	newsArchiveFreeIp: (ip) =>
+		getLimiter('news:archive:free:ip', { limit: 60, window: '1 d', critical: true }).limit(ip),
 	// Fact Checker (api/x402/fact-check) free daily lane. Same "free tier is the
 	// funnel, x402 is the metered overage" shape as the AI speech routes above —
 	// each free check runs the REAL search+LLM chain (never a degraded fake), so

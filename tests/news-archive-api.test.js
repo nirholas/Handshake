@@ -1,9 +1,35 @@
 // Coverage for api/news/archive.js — the GCS-backed historical archive
 // endpoint. Tests param validation, stats/months/trending modes, the
-// newest-first month scan with honest coverage reporting, and filter
-// predicates. GCS is mocked; record shapes mirror the real corpus schema.
+// newest-first month scan with honest coverage reporting, filter predicates,
+// and the freemium x402 gate on query mode (free daily quota → 402 paid
+// rail). GCS is mocked; record shapes mirror the real corpus schema. The
+// x402 plumbing is stubbed: the paid rail responds 402 and captures its spec
+// so the paid handler can be exercised directly.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+const x402Mock = vi.hoisted(() => ({ spec: null }));
+
+vi.mock('../api/_lib/x402-prices.js', () => ({ priceFor: (_slug, atomics) => String(atomics) }));
+vi.mock('../api/_lib/x402/bazaar-helpers.js', () => ({
+	declareHttpDiscovery: () => ({ discoverable: true }),
+	withService: (x) => x,
+}));
+vi.mock('../api/_lib/x402/access-control.js', () => ({
+	installAccessControl: () => async () => null,
+}));
+vi.mock('../api/_lib/x402-paid-endpoint.js', () => ({
+	paidEndpoint: (spec) => {
+		x402Mock.spec = spec;
+		return async (req, res) => {
+			res._json = {
+				status: 402,
+				body: { error: 'payment_required', accepts: [{ amount: spec.priceAtomics }] },
+			};
+			return res;
+		};
+	},
+}));
 
 vi.mock('../api/_lib/http.js', () => ({
 	wrap: (fn) => fn,
@@ -23,18 +49,22 @@ vi.mock('../api/_lib/http.js', () => ({
 	},
 }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { marketFeedIp: vi.fn(async () => ({ success: true })) },
+	limits: {
+		marketFeedIp: vi.fn(async () => ({ success: true })),
+		newsArchiveFreeIp: vi.fn(async () => ({ success: true, remaining: 59 })),
+	},
 	clientIp: () => '1.2.3.4',
 }));
 
 const { default: handler } = await import('../api/news/archive.js');
+const { limits } = await import('../api/_lib/rate-limit.js');
 
 function fakeRes() {
 	return { setHeader() {}, end() {}, statusCode: 200 };
 }
-function call(url) {
+function call(url, headers = {}) {
 	const res = fakeRes();
-	return handler({ method: 'GET', url, headers: {} }, res).then(() => res);
+	return handler({ method: 'GET', url, headers }, res).then(() => res);
 }
 
 function record(over = {}) {
@@ -197,5 +227,66 @@ describe('GET /api/news/archive', () => {
 		await coldHandler({ method: 'GET', url: '/api/news/archive?limit=5', headers: {} }, res);
 		expect(res._json.status).toBe(502);
 		expect(res._json.body.error).toBe('archive_unavailable');
+	});
+});
+
+describe('freemium x402 gate (query mode)', () => {
+	it('free searches carry the tier and remaining-quota accounting', async () => {
+		const res = await call('/api/news/archive?limit=10');
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.tier).toBe('free');
+		expect(res._json.body.free_remaining_today).toBe(59);
+	});
+
+	it('routes an exhausted free quota to the x402 paid rail (402, $0.001)', async () => {
+		limits.newsArchiveFreeIp.mockResolvedValueOnce({ success: false, remaining: 0 });
+		const res = await call('/api/news/archive?limit=10');
+		expect(res._json.status).toBe(402);
+		expect(res._json.body.error).toBe('payment_required');
+		expect(res._json.body.accepts[0].amount).toBe('1000');
+	});
+
+	it('routes an X-PAYMENT request straight to the paid rail without burning free quota', async () => {
+		limits.newsArchiveFreeIp.mockClear();
+		const res = await call('/api/news/archive?limit=10', { 'x-payment': 'signed-payload' });
+		expect(res._json.status).toBe(402); // the stub rail always challenges
+		expect(limits.newsArchiveFreeIp).not.toHaveBeenCalled();
+	});
+
+	it('bad input is a 400, never a payment prompt, even with the quota gone', async () => {
+		limits.newsArchiveFreeIp.mockResolvedValueOnce({ success: false, remaining: 0 });
+		const res = await call('/api/news/archive?start_date=not-a-date');
+		expect(res._json.status).toBe(400);
+		expect(res._json.body.error).toBe('bad_date');
+	});
+
+	it('stats mode stays free even when the search quota is exhausted', async () => {
+		limits.newsArchiveFreeIp.mockResolvedValue({ success: false, remaining: 0 });
+		const res = await call('/api/news/archive?stats=true');
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.stats.total_articles).toBe(662047);
+		expect(res._json.body.search_access).toMatchObject({ free_per_day: 60, protocol: 'x402' });
+		limits.newsArchiveFreeIp.mockResolvedValue({ success: true, remaining: 59 });
+	});
+
+	it('the paid rail runs the same search engine and stamps tier=paid', async () => {
+		// Trigger the lazy paid-rail build so the spec is captured.
+		limits.newsArchiveFreeIp.mockResolvedValueOnce({ success: false, remaining: 0 });
+		await call('/api/news/archive?limit=10');
+		expect(x402Mock.spec).toBeTruthy();
+		expect(x402Mock.spec.route).toBe('/api/news/archive');
+		expect(x402Mock.spec.priceAtomics).toBe('1000');
+		const body = await x402Mock.spec.handler({ req: { url: '/api/news/archive?ticker=JTO&lang=zh' } });
+		expect(body.tier).toBe('paid');
+		expect(body.total_scanned_matches).toBe(1);
+		expect(body.articles[0].tickers).toContain('JTO');
+	});
+
+	it('the paid rail rejects bad input with a clean 400-shaped throw', async () => {
+		limits.newsArchiveFreeIp.mockResolvedValueOnce({ success: false, remaining: 0 });
+		await call('/api/news/archive?limit=10');
+		await expect(
+			x402Mock.spec.handler({ req: { url: '/api/news/archive?sentiment=angry' } }),
+		).rejects.toMatchObject({ status: 400, code: 'bad_sentiment' });
 	});
 });

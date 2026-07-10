@@ -29,7 +29,7 @@ single most expensive call. One top-up covers the entire gauntlet plus retries.
 **Path B (default, already wired — direct relayer redemption):**
 | | |
 |---|---|
-| To | `0x1B60Cb12cE894Efc2470bB18Bf2D41755b49AB2a` (fresh relayer keypair; private key is in Vercel prod env `X402_XLAYER_RELAYER_KEY`, never committed) |
+| To | `0x238755DE16F8e45859d198cfF2f939326Ad38b47` (**corrected 2026-07-10** — STALE — LIVE relayer is this, derived from prod `x402-xlayer-relayer-key`; the old `0x1B60…AB2a` in git history was pre-rotation and must NOT be funded) (fresh relayer keypair; private key is in Vercel prod env `X402_XLAYER_RELAYER_KEY`, never committed) |
 | Chain | X Layer mainnet, chainId 196 |
 | Token | **OKB** (native gas) |
 | Amount | **0.3 OKB** (each settle = 1 `transferWithAuthorization` tx ~80k gas; ~15–20 txs incl. retries ≪ 0.1 OKB — 0.3 is buffer) |

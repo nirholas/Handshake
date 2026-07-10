@@ -5,6 +5,7 @@
 // scans newest→oldest months and says exactly how far it got).
 
 import { escapeHtml as esc } from './shared/coin-format.js';
+import { ensureX402 } from './shared/x402-loader.js';
 
 const $ = (id) => document.getElementById(id);
 const PAGE_SIZE = 50;
@@ -32,6 +33,7 @@ async function getJson(url) {
 	if (!res.ok) {
 		const err = new Error(body?.message || `fetch → ${res.status}`);
 		err.status = res.status;
+		err.body = body; // a 402 carries the x402 challenge (price + networks)
 		throw err;
 	}
 	return body;
@@ -177,6 +179,57 @@ function render() {
 	$('arc-more').hidden = !state.hasMore;
 }
 
+function applyData(data, append) {
+	state.articles = append ? state.articles.concat(data.articles) : data.articles;
+	state.offset = state.articles.length;
+	state.scanned = data.scanned;
+	state.totalMatches = data.total_scanned_matches;
+	state.hasMore = data.has_more && data.articles.length > 0;
+	render();
+}
+
+// The free daily search quota is exhausted — the API answered with an x402
+// 402 challenge. Offer the real paid path (X402.pay drives wallet connect →
+// sign → retry with X-PAYMENT) alongside the "come back tomorrow" one.
+function renderPaywall({ append, challenge }) {
+	const paid = (challenge?.accepts || []).find((a) => Number(a?.amount) > 0);
+	const usd = paid ? Number(paid.amount) / 1e6 : 0.001;
+	const price = `$${usd.toLocaleString(undefined, { maximumSignificantDigits: 2 })}`;
+	const el = $('arc-results');
+	el.innerHTML = `
+		<div class="cv-empty">
+			<p><strong>Today’s free archive searches are used up.</strong></p>
+			<p>Free searches reset daily. Keep digging now for ${esc(price)} USDC per search, paid straight from your wallet via x402 — or come back tomorrow.</p>
+			<p><button class="arc-btn" type="button" id="arc-pay">Pay ${esc(price)} &amp; search</button></p>
+			<p class="arc-coverage" style="margin:0">Corpus stats, months, and trending tickers stay free — only deep search is metered.</p>
+		</div>`;
+	$('arc-coverage').textContent = '';
+	document.getElementById('arc-pay')?.addEventListener('click', async () => {
+		const btn = document.getElementById('arc-pay');
+		btn.disabled = true;
+		try {
+			const X402 = await ensureX402();
+			const out = await X402.pay({
+				endpoint: queryUrl(append ? state.offset : 0),
+				method: 'GET',
+				merchant: 'three.ws',
+				action: 'Archive search',
+				autoClose: true,
+			});
+			if (out?.ok && out.result) applyData(out.result, append);
+		} catch (err) {
+			if (err?.code !== 'cancelled') {
+				el.querySelector('.cv-empty')?.insertAdjacentHTML(
+					'beforeend',
+					`<p class="arc-coverage" style="margin:0">${esc(err?.message || 'Payment failed — try again.')}</p>`,
+				);
+			}
+		} finally {
+			btn.disabled = false;
+		}
+	});
+}
+
 async function load({ append = false } = {}) {
 	if (state.loading) return;
 	state.loading = true;
@@ -192,21 +245,21 @@ async function load({ append = false } = {}) {
 	}
 	try {
 		const data = await getJson(queryUrl(append ? state.offset : 0));
-		state.articles = append ? state.articles.concat(data.articles) : data.articles;
-		state.offset = state.articles.length;
-		state.scanned = data.scanned;
-		state.totalMatches = data.total_scanned_matches;
-		state.hasMore = data.has_more && data.articles.length > 0;
-		render();
+		applyData(data, append);
 	} catch (err) {
-		el.innerHTML = `
-			<div class="cv-empty">
-				<p><strong>The archive didn’t respond.</strong></p>
-				<p>${err.status === 429 ? 'Rate limited — wait a few seconds and retry.' : esc(err.message || 'Try again in a moment.')}</p>
-				<p><button class="arc-btn" type="button" id="arc-retry">Retry</button></p>
-			</div>`;
-		$('arc-coverage').textContent = '';
-		document.getElementById('arc-retry')?.addEventListener('click', () => load());
+		if (err.status === 402) {
+			renderPaywall({ append, challenge: err.body });
+			$('arc-more').hidden = true;
+		} else {
+			el.innerHTML = `
+				<div class="cv-empty">
+					<p><strong>The archive didn’t respond.</strong></p>
+					<p>${err.status === 429 ? 'Rate limited — wait a few seconds and retry.' : esc(err.message || 'Try again in a moment.')}</p>
+					<p><button class="arc-btn" type="button" id="arc-retry">Retry</button></p>
+				</div>`;
+			$('arc-coverage').textContent = '';
+			document.getElementById('arc-retry')?.addEventListener('click', () => load());
+		}
 	} finally {
 		state.loading = false;
 		moreBtn.disabled = false;

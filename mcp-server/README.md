@@ -26,7 +26,7 @@
 
 ---
 
-> Sixteen MCP tools from [three.ws](https://three.ws) — **one free** (`forge_free`: text prompt → 3D GLB on the free NVIDIA NIM / Microsoft TRELLIS lane, no payment and no API key) and fifteen paid: text/image→3D mesh generation, 3D avatars, GLB auto-rigging, pose seeds, pump.fun snapshots, ERC-8004 agent reputation, ENS/SNS resolution, agent-to-agent delegation, token sentiment, AgenC coordination reads, aixbt market intel, and a Solana vanity grinder. Paid calls are settled in USDC via the [x402](https://x402.org) payment protocol on Solana mainnet (`exact` scheme). No subscription, no API key — pay per call, and failed calls never bill the caller.
+> MCP tools from [three.ws](https://three.ws) — **four need no payment, wallet, or API key to start**: `forge_free` (text prompt → 3D GLB on the free NVIDIA NIM / Microsoft TRELLIS lane) and the crypto-news trio (`crypto_news`, `crypto_news_digest`, and `crypto_news_archive` — archive search is free up to a daily quota, then $0.001 USDC per search via x402). The rest are paid: text/image→3D mesh generation, 3D avatars, GLB auto-rigging, pose seeds, pump.fun snapshots, ERC-8004 agent reputation, ENS/SNS resolution, agent-to-agent delegation, token sentiment, AgenC coordination reads, aixbt market intel, and a Solana vanity grinder. Paid calls are settled in USDC via the [x402](https://x402.org) payment protocol on Solana mainnet (`exact` scheme). No subscription, no API key — pay per call, and failed calls never bill the caller.
 
 ---
 
@@ -64,7 +64,7 @@ Restart Claude Desktop. All tools appear immediately — no install step require
 
 ## Tools
 
-Most tools quote a fixed USDC price and settle `exact` on Solana mainnet (prices below come straight from each tool's source); **`forge_free` is free** — no payment, no wallet, no API key. Every tool also declares MCP tool annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) so clients can scope confirmation prompts correctly — none of these tools are destructive.
+Most tools quote a fixed USDC price and settle `exact` on Solana mainnet (prices below come straight from each tool's source); **`forge_free`, `crypto_news`, and `crypto_news_digest` are free** — no payment, no wallet, no API key — and `crypto_news_archive` search is free up to a daily quota (stats/trending always free). Every tool also declares MCP tool annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) so clients can scope confirmation prompts correctly — none of these tools are destructive.
 
 ### 3D generation
 
@@ -87,7 +87,7 @@ Most tools quote a fixed USDC price and settle `exact` on Solana mainnet (prices
 | `aixbt_projects`  | $0.01  | aixbt momentum scan — projects ranked by spiking/climbing/active scores, with ticker, chain, market metrics (price, mcap, 24h volume + change), and recent intel. Filter by names or chain. Live aixbt REST API.                                                                        |
 | `crypto_news`     | FREE   | Live crypto headlines aggregated natively by three.ws from 192 publisher RSS/Atom feeds in 17 languages — filter by category, source, or language, or full-text search. Each article carries the publisher link, publish time, detected tickers, and lexicon sentiment. No payment, no key.       |
 | `crypto_news_digest` | FREE | The last 1–72h of coverage clustered into distinct narratives — title, plain-language summary, bullish/bearish stance, tickers, coverage count, and every real article behind each story. Names its engine honestly (`llm` semantic grouping or `heuristic` Jaccard clustering). No payment, no key. |
-| `crypto_news_archive` | FREE | Search 660,000+ archived articles back to September 2017 (refreshed hourly) by keyword, ticker, source, date range, sentiment, or language — with market context at publication where captured. `mode: stats` and `mode: trending` for corpus statistics and most-covered tickers. No payment, no key. |
+| `crypto_news_archive` | FREE tier | Search 660,000+ archived articles back to September 2017 (refreshed hourly) by keyword, ticker, source, date range, sentiment, or language — with market context at publication where captured. `mode: stats` and `mode: trending` for corpus statistics and most-covered tickers (always free, no key). Search has a free daily quota (60/day per IP), then $0.001 USDC per search via x402 on the HTTP API; an exhausted quota returns a `payment_required` envelope with the price and networks. |
 
 ### Agents & identity
 
