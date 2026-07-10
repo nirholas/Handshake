@@ -1068,3 +1068,40 @@ dispatch WO-05 (resubmission) and finish WO-06's demo/avatar requirements, then 
 - `docs/ops/gcp-production.md` — added the "OKX X Layer facilitator creds" row to the
   known-missing table (item 3 above, in doc form for future ops sessions).
 - This entry.
+
+## 2026-07-10 — Rig lane restored end-to-end; WO-06 demo identities COMPLETE (4/4)
+
+The blocker that froze WO-06's demo requirement (rigging failing closed) is fully root-caused
+and fixed — two independent faults stacked:
+
+1. **Routing:** `api/_providers/gcp.js` sent `rerig` to `GCP_RECONSTRUCTION_URL`
+   (avatar-reconstruction — no `/rig` endpoint → provider 404 "Not Found" on every rig).
+   Fixed: provider prefers `GCP_UNIRIG_URL` (set on three-ws-api) and speaks the standalone
+   unirig worker's native schema (`mesh_gcs_url` in, `rigged_gcs_url` out, `/tasks/:id` poll).
+2. **Worker:** upstream UniRig hardcodes `PYOPENGL_PLATFORM='egl'` for its voxelization render;
+   Cloud Run L4s expose CUDA only (no EGL) → `Invalid device ID (0)` on every skin stage.
+   Fixed with image `unirig/server:dc9ce4063-r7-osmesa` (revision unirig-00007-gpz): libosmesa6
+   + sed egl→osmesa in /opt/unirig + mmatl's PyOpenGL fork (stock PyOpenGL lacks
+   `OSMesaCreateContextAttribs`). NOTE: the deployed unirig image is NOT built from
+   workers/unirig/ — its true Dockerfile was never committed; r6/r7 are patch layers on r5.
+
+**WO-06 requirement 2 (3+ demo identities) — DONE.** All four briefs ran the full production
+pipeline (generate → UniRig rig → posed renders), programmatically rig-verified
+(skins + JOINTS_0/WEIGHTS_0), results written to `data/agent-identities.json` by
+`scripts/okx-identity-demo.mjs`:
+
+| Identity | Joints | Renders | Time |
+|---|---|---|---|
+| LedgerLynx (finance) | 52 | PFP 1024+128 + 3 full-body | 501s |
+| MuseWeaver (art) | 34 | PFP 1024+128 + 3 full-body | 324s |
+| Momentum-9 (trading) | 52 | PFP 1024+128 + 3 full-body | 353s |
+| three.ws 3D Studio (#2632's own) | 28 | PFP 1024+128 + 3 full-body | 291s |
+
+**WO-06 requirement 3 (#2632's avatar):** the asset exists (three-ws-3d-studio's PFP set +
+rigged GLB, URLs in data/agent-identities.json). Per the coordination rule, NOT uploaded
+on-chain — WO-05 hasn't submitted, so the asset is handed off here for WO-05/the owner to
+set with the identity-update flow (on-chain write needs human confirmation).
+
+**Still owner-blocked:** WO-04/05/07 remain gated on funding the payer wallet
+(`0x75d00a2713565171f33216e5aa2a375e076ecf69`, X Layer 196: ~$5 USD₮0 + OKB dust).
+Redis is live and the X Layer rail reports settleable:true — funding is the only gap.

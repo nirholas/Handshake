@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-07-09T23:03:13.702Z",
+	"generated_at": "2026-07-10T00:05:21.548Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Auto-rigging works again — and the Agent Identity Studio demos are real",
+			"summary": "Rigging any generated model into an animation-ready character had been failing since the cloud migration: the rig request was sent to a service that doesn't do rigging, and the GPU rigger itself crashed on a graphics call our cloud GPUs don't support. Both are fixed — rig requests now reach the real UniRig worker, which renders its voxel pass in software instead. Proof: all four Agent Identity Studio demo characters (LedgerLynx, MuseWeaver, Momentum-9, and the three.ws studio's own) were generated, rigged with full skeletons, and photographed in posed renders through the live pipeline — see them on the showcase.",
+			"link": "/agent-identities",
+			"tags": [
+				"fix",
+				"feature"
+			]
+		},
 		{
 			"date": "2026-07-09",
 			"type": "update",

@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws — the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-10",
+			"title": "Auto-rigging works again — and the Agent Identity Studio demos are real",
+			"summary": "Rigging any generated model into an animation-ready character had been failing since the cloud migration: the rig request was sent to a service that doesn't do rigging, and the GPU rigger itself crashed on a graphics call our cloud GPUs don't support. Both are fixed — rig requests now reach the real UniRig worker, which renders its voxel pass in software instead. Proof: all four Agent Identity Studio demo characters (LedgerLynx, MuseWeaver, Momentum-9, and the three.ws studio's own) were generated, rigged with full skeletons, and photographed in posed renders through the live pipeline — see them on the showcase.",
+			"tags": [
+				"fix",
+				"feature"
+			],
+			"link": "/agent-identities"
+		},
+		{
 			"date": "2026-07-09",
 			"title": "The coin trade window opens again — buying and selling in the world is back",
 			"summary": "Clicking Buy on any coin in the 3D world crashed the trade window before it could draw, so trading from the world had been silently broken since the pre-trade safety firewall shipped. The cause: the new safety panel reported its first verdict a moment before the buy button it updates existed. That order is now handled, and the whole flow — safety verdict, live quote, buy, sell, stage pills, error copy — is covered by browser tests that run on every build. Separately, the risk-disclosure module now loads identically in development and production, so the money-gate acknowledgment you see locally is the real dialog, not a plain browser popup.",

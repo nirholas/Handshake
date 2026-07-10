@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Auto-rigging works again — and the Agent Identity Studio demos are real</title>
+			<link>https://three.ws/agent-identities</link>
+			<guid isPermaLink="false">2026-07-10:Auto-rigging works again — and the Agent Identity Studio demos are real</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Rigging any generated model into an animation-ready character had been failing since the cloud migration: the rig request was sent to a service that doesn't do rigging, and the GPU rigger itself crashed on a graphics call our cloud GPUs don't support. Both are fixed — rig requests now reach the real UniRig worker, which renders its voxel pass in software instead. Proof: all four Agent Identity Studio demo characters (LedgerLynx, MuseWeaver, Momentum-9, and the three.ws studio's own) were generated, rigged with full skeletons, and photographed in posed renders through the live pipeline — see them on the showcase.</description>
+		</item>
+		<item>
 			<title>/play: real water at the fishing ponds, and spare rods to find on the bank</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-07-09:/play: real water at the fishing ponds, and spare rods to find on the bank</guid>

@@ -7,7 +7,51 @@
 			"agentName": "LedgerLynx",
 			"brief": "A meticulous on-chain accounting agent that reconciles wallets and flags anomalies in real time. Calm, precise, incorruptible — dresses like a sharp auditor from the future.",
 			"styleHints": "deep navy and silver palette, brushed-metal accents, subtle circuit-trace pinstripes",
-			"result": null
+			"result": {
+				"jobIdPrefix": "f1.eyJwIjoib2t4a",
+				"prompt": "full-body humanoid character embodying: A meticulous on-chain accounting agent that reconciles wallets and flags, deep navy and silver palette, brushed-metal accents, subtle circuit-trace pinstripes, standing neutral pose, arms slightly away from body, plain background",
+				"directed": false,
+				"backend": "trellis_selfhost",
+				"pfp": {
+					"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/130adb2e-b5cc-44a5-915f-e70a25e12ff8/pfp-1024.png",
+					"preview_128_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/130adb2e-b5cc-44a5-915f-e70a25e12ff8/pfp-128.png",
+					"pose": "contrapposto",
+					"size": 1024
+				},
+				"fullBody": [
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/130adb2e-b5cc-44a5-915f-e70a25e12ff8/fullbody-1-walk-step.png",
+						"pose": "walk-step",
+						"width": 1024,
+						"height": 1280
+					},
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/130adb2e-b5cc-44a5-915f-e70a25e12ff8/fullbody-2-point.png",
+						"pose": "point",
+						"width": 1024,
+						"height": 1280
+					},
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/130adb2e-b5cc-44a5-915f-e70a25e12ff8/fullbody-3-relaxed.png",
+						"pose": "relaxed",
+						"width": 1024,
+						"height": 1280
+					}
+				],
+				"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/6cddc43a-f75b-4a55-9c79-828a57ce90df.glb",
+				"meshGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/c58c21b5-b81b-4846-8b89-eb789f280165.glb",
+				"viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F6cddc43a-f75b-4a55-9c79-828a57ce90df.glb",
+				"poseStudioUrl": "https://three.ws/pose?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F6cddc43a-f75b-4a55-9c79-828a57ce90df.glb",
+				"rigVerification": {
+					"bytes": 2484460,
+					"skins": 1,
+					"joints": 52,
+					"skinnedPrimitives": 1,
+					"generator": "Khronos glTF Blender I/O v4.2.57"
+				},
+				"durationSeconds": 501,
+				"completedAt": "2026-07-09T23:45:26.807Z"
+			}
 		},
 		{
 			"slug": "museweaver",
@@ -15,7 +59,51 @@
 			"agentName": "MuseWeaver",
 			"brief": "A flamboyant generative-art muse that turns raw ideas into finished galleries. Playful, extravagant, a walking canvas with paint still drying.",
 			"styleHints": "iridescent fabrics, paint-splash gradients, asymmetric couture silhouette",
-			"result": null
+			"result": {
+				"jobIdPrefix": "f1.eyJwIjoib2t4a",
+				"prompt": "full-body humanoid character embodying: A flamboyant generative-art muse that turns raw ideas into finished galleries, iridescent fabrics, paint-splash gradients, asymmetric couture silhouette, standing neutral pose, arms slightly away from body, plain background",
+				"directed": false,
+				"backend": "trellis_selfhost",
+				"pfp": {
+					"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/6c5c7c43-01ef-4dd2-bcc7-f6eed2f6dfc3/pfp-1024.png",
+					"preview_128_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/6c5c7c43-01ef-4dd2-bcc7-f6eed2f6dfc3/pfp-128.png",
+					"pose": "contrapposto",
+					"size": 1024
+				},
+				"fullBody": [
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/6c5c7c43-01ef-4dd2-bcc7-f6eed2f6dfc3/fullbody-1-walk-step.png",
+						"pose": "walk-step",
+						"width": 1024,
+						"height": 1280
+					},
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/6c5c7c43-01ef-4dd2-bcc7-f6eed2f6dfc3/fullbody-2-hands-on-hips.png",
+						"pose": "hands-on-hips",
+						"width": 1024,
+						"height": 1280
+					},
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/6c5c7c43-01ef-4dd2-bcc7-f6eed2f6dfc3/fullbody-3-relaxed.png",
+						"pose": "relaxed",
+						"width": 1024,
+						"height": 1280
+					}
+				],
+				"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/0de64982-f032-4615-ade3-761d3ee529c0.glb",
+				"meshGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/f36cb855-d9bf-4255-b249-76a2a0cac277.glb",
+				"viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F0de64982-f032-4615-ade3-761d3ee529c0.glb",
+				"poseStudioUrl": "https://three.ws/pose?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F0de64982-f032-4615-ade3-761d3ee529c0.glb",
+				"rigVerification": {
+					"bytes": 4194504,
+					"skins": 1,
+					"joints": 34,
+					"skinnedPrimitives": 1,
+					"generator": "Khronos glTF Blender I/O v4.2.57"
+				},
+				"durationSeconds": 324,
+				"completedAt": "2026-07-09T23:50:50.703Z"
+			}
 		},
 		{
 			"slug": "momentum-9",
@@ -23,7 +111,51 @@
 			"agentName": "Momentum-9",
 			"brief": "A high-frequency momentum trading bot built for speed and discipline. Aggressive but never reckless; reads order books like sheet music.",
 			"styleHints": "matte-black exoskeleton with ember-orange telemetry lines and a narrow visor",
-			"result": null
+			"result": {
+				"jobIdPrefix": "f1.eyJwIjoib2t4a",
+				"prompt": "full-body humanoid character embodying: A high-frequency momentum trading bot built for speed and discipline, matte-black exoskeleton with ember-orange telemetry lines and a narrow visor, standing neutral pose, arms slightly away from body, plain background",
+				"directed": false,
+				"backend": "trellis_selfhost",
+				"pfp": {
+					"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/89219046-ea3e-4c1c-aa39-e22acf2efc1d/pfp-1024.png",
+					"preview_128_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/89219046-ea3e-4c1c-aa39-e22acf2efc1d/pfp-128.png",
+					"pose": "contrapposto",
+					"size": 1024
+				},
+				"fullBody": [
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/89219046-ea3e-4c1c-aa39-e22acf2efc1d/fullbody-1-salute.png",
+						"pose": "salute",
+						"width": 1024,
+						"height": 1280
+					},
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/89219046-ea3e-4c1c-aa39-e22acf2efc1d/fullbody-2-point.png",
+						"pose": "point",
+						"width": 1024,
+						"height": 1280
+					},
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/89219046-ea3e-4c1c-aa39-e22acf2efc1d/fullbody-3-wave.png",
+						"pose": "wave",
+						"width": 1024,
+						"height": 1280
+					}
+				],
+				"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/7237d822-bd72-477c-8064-d5357136432d.glb",
+				"meshGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/53276c6e-fa55-4502-8855-81aa58209d0d.glb",
+				"viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F7237d822-bd72-477c-8064-d5357136432d.glb",
+				"poseStudioUrl": "https://three.ws/pose?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F7237d822-bd72-477c-8064-d5357136432d.glb",
+				"rigVerification": {
+					"bytes": 2024540,
+					"skins": 1,
+					"joints": 52,
+					"skinnedPrimitives": 1,
+					"generator": "Khronos glTF Blender I/O v4.2.57"
+				},
+				"durationSeconds": 353,
+				"completedAt": "2026-07-09T23:56:43.536Z"
+			}
 		},
 		{
 			"slug": "three-ws-3d-studio",
@@ -31,7 +163,51 @@
 			"agentName": "three.ws 3D Studio",
 			"brief": "The 3D identity studio of three.ws: an artisan engineer agent that forges avatars, rigs skeletons, and lights studio renders for other AI agents. Equal parts craftsman and machine.",
 			"styleHints": "charcoal work jacket with violet and cyan accents, holographic measuring tools, craftsman apron",
-			"result": null
+			"result": {
+				"jobIdPrefix": "f1.eyJwIjoib2t4a",
+				"prompt": "full-body humanoid character embodying: The 3D identity studio of three.ws: an artisan engineer agent that, charcoal work jacket with violet and cyan accents, holographic measuring tools, craftsman, standing neutral pose, arms slightly away from body, plain background",
+				"directed": false,
+				"backend": "trellis_selfhost",
+				"pfp": {
+					"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/34c82178-4361-4515-8ee5-a59776a1d154/pfp-1024.png",
+					"preview_128_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/34c82178-4361-4515-8ee5-a59776a1d154/pfp-128.png",
+					"pose": "contrapposto",
+					"size": 1024
+				},
+				"fullBody": [
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/34c82178-4361-4515-8ee5-a59776a1d154/fullbody-1-flex.png",
+						"pose": "flex",
+						"width": 1024,
+						"height": 1280
+					},
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/34c82178-4361-4515-8ee5-a59776a1d154/fullbody-2-salute.png",
+						"pose": "salute",
+						"width": 1024,
+						"height": 1280
+					},
+					{
+						"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/okx-identity/renders/34c82178-4361-4515-8ee5-a59776a1d154/fullbody-3-point.png",
+						"pose": "point",
+						"width": 1024,
+						"height": 1280
+					}
+				],
+				"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/abf35b02-621b-4d18-a178-5f1f99b62021.glb",
+				"meshGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/7efccdd9-40c3-4d38-9f3d-5b6de0bcebc8.glb",
+				"viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fabf35b02-621b-4d18-a178-5f1f99b62021.glb",
+				"poseStudioUrl": "https://three.ws/pose?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fabf35b02-621b-4d18-a178-5f1f99b62021.glb",
+				"rigVerification": {
+					"bytes": 2814080,
+					"skins": 1,
+					"joints": 28,
+					"skinnedPrimitives": 1,
+					"generator": "Khronos glTF Blender I/O v4.2.57"
+				},
+				"durationSeconds": 291,
+				"completedAt": "2026-07-10T00:01:34.567Z"
+			}
 		}
 	]
 }

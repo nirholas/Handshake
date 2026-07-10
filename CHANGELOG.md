@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-10
+
+- **Auto-rigging works again — and the Agent Identity Studio demos are real** — Rigging any generated model into an animation-ready character had been failing since the cloud migration: the rig request was sent to a service that doesn't do rigging, and the GPU rigger itself crashed on a graphics call our cloud GPUs don't support. Both are fixed — rig requests now reach the real UniRig worker, which renders its voxel pass in software instead. Proof: all four Agent Identity Studio demo characters (LedgerLynx, MuseWeaver, Momentum-9, and the three.ws studio's own) were generated, rigged with full skeletons, and photographed in posed renders through the live pipeline — see them on the showcase. (`/agent-identities`) `[fix, feature]`
+
 ## 2026-07-09
 
 - **/play: real water at the fishing ponds, and spare rods to find on the bank** — The two fishing ponds no longer look like a flat tinted disc — they're now an animated water surface with real ripples, a sun-tracked sparkle, and a deep-to-shallow gradient that reacts to the world's day/night lighting. New alongside it: three spare fishing rods, leaning on posts around the map (both pond banks and the plaza), that any player can walk up to and pick up into their backpack — on top of the rod everyone already starts with. This also brought the chop/mine/cook gathering stations (trees, rocks, roast pits) online for the first time — they existed in the code but were never actually rendered in the world until now. Caught fish still sell for cash at the General Store, same as before. (`/play`) `[feature]`
