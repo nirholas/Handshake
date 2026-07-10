@@ -260,12 +260,12 @@ export async function ensureEntities(agentId, cap = ENTITY_CAP) {
 	//   2. Insert the (entity, memory) links, resolving entity ids from the upsert's
 	//      RETURNING, with ON CONFLICT DO NOTHING.
 	//   3. Mark the processed memories entities_extracted.
-	const byKey = new Map();   // "kind normalized" → { kind, label, normalized, meta, count }
+	const byKey = new Map();   // "kind\u0000normalized" → { kind, label, normalized, meta, count }
 	const mentions = [];       // { key, memoryId } per occurrence — drives the links
 	for (const row of batch) {
 		const entities = extractEntities(row.content, row.tags || [], row.context || {});
 		for (const e of entities) {
-			const key = `${e.kind} ${e.normalized}`;
+			const key = `${e.kind}\u0000${e.normalized}`;
 			const agg = byKey.get(key);
 			if (agg) {
 				agg.count += 1;
@@ -308,7 +308,7 @@ export async function ensureEntities(agentId, cap = ENTITY_CAP) {
 		`;
 
 		const idByKey = new Map();
-		for (const r of upserted) idByKey.set(`${r.kind} ${r.normalized}`, r.id);
+		for (const r of upserted) idByKey.set(`${r.kind}\u0000${r.normalized}`, r.id);
 
 		// Dedup link pairs (the PK is (entity_id, memory_id)) before the bulk insert.
 		const linkSet = new Set();
@@ -316,7 +316,7 @@ export async function ensureEntities(agentId, cap = ENTITY_CAP) {
 		for (const m of mentions) {
 			const entityId = idByKey.get(m.key);
 			if (!entityId) continue;
-			const pair = `${entityId} ${m.memoryId}`;
+			const pair = `${entityId}\u0000${m.memoryId}`;
 			if (linkSet.has(pair)) continue;
 			linkSet.add(pair);
 			linkRows.push([entityId, m.memoryId]);

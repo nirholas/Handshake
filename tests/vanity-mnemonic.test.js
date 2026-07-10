@@ -68,10 +68,22 @@ describe('generateMnemonic / validateMnemonic', () => {
 		}
 	});
 
+	// Fixed BIP-39 vectors, NOT a freshly generated mnemonic. The final word packs
+	// the checksum bits (4 of its 11 bits at 12-word strength), so swapping it for
+	// an arbitrary other word lands on a valid checksum 1 time in 16. Tampering a
+	// random mnemonic therefore fails this assertion ~6% of runs — measured at
+	// 118/2000. Deterministic vectors keep the check meaningful and reproducible.
 	it('rejects a mnemonic with a tampered word (bad checksum)', () => {
-		const words = generateMnemonic().split(' ');
-		words[words.length - 1] = words[words.length - 1] === 'zoo' ? 'zone' : 'zoo';
-		expect(validateMnemonic(words.join(' '))).toBe(false);
+		const valid = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+		expect(validateMnemonic(valid)).toBe(true);
+
+		// last word carries the checksum → wrong checksum
+		const tamperedLast = valid.replace(/about$/, 'abandon');
+		expect(validateMnemonic(tamperedLast)).toBe(false);
+
+		// an interior word changes the entropy the checksum was computed over
+		const tamperedMiddle = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon zoo about';
+		expect(validateMnemonic(tamperedMiddle)).toBe(false);
 	});
 
 	it('rejects an out-of-list word and a wrong word count', () => {
