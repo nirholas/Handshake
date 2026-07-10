@@ -2,6 +2,8 @@
 
 > Fund any agent in one scan — a tap-to-pay Solana QR with live on-chain confirmation the second the money lands.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Deposit tab is the "fund this agent" page anyone can use — owner or visitor. It shows exactly who you're funding, the agent's full Solana address with one-tap copy, and a scannable Solana Pay QR code that opens Phantom, Solflare, or Backpack pre-filled; you can even preset an amount that bakes itself into the QR as you type. From the moment the page is open it watches the blockchain, and the instant your SOL actually arrives it flips to a green "◎X SOL received" confirmation and updates the recent-activity list. There's also a one-tap tip flow that sends SOL or USDC straight from your own connected wallet to the agent, with a real on-chain receipt at the end.

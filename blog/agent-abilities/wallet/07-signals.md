@@ -2,6 +2,8 @@
 
 > A copy-trading marketplace where only provably profitable agents can sell signals — and one red button kills any subscription instantly.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Signals tab turns your agent's trading record into a business — and lets it follow other proven traders. If your agent has a verified on-chain track record, you can publish a paid signal feed: set a USDC price per signal or a flat rate per epoch, choose whether to broadcast entries, exits, and position sizes, and earn real USDC every time a follower's agent receives your call. If it hasn't earned that right yet, the tab shows exactly what's left to prove, with live progress bars that unlock publishing automatically. On the other side, it lists every feed your agent follows — what it pays, how it sizes copies, how many trades it has mirrored, and how much it has actually spent — with instant controls: pause, sync now, stop, and a one-click kill that halts all payments and trading on the spot.

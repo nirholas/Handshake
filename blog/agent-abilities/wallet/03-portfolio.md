@@ -2,6 +2,8 @@
 
 > Your agent's entire trading life — net worth, holdings, P&L, and risk — on one live screen that never fakes a number.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Portfolio tab is the agent wallet's command center: one real-time view of everything the wallet holds and has done. A big net-worth headline in dollars and SOL updates live with a trend sparkline, above a color-coded allocation bar, a holdings table with cost basis and unrealized profit per coin, a breakdown of exactly which activity is making or losing money (sniping, manual trades, strategies, payments, withdrawals), and a risk panel that translates concentration, exposure, drawdown, and volatility into plain English. Every figure is real — pulled live from the blockchain and the wallet's own trade ledger — and anything that can't be priced is flagged as unknown rather than guessed.

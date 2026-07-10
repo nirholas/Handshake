@@ -2,6 +2,8 @@
 
 > Put every bot on a leash: mint tight, revocable spending keys so no strategy ever touches more of your agent's wallet than you allow.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Access tab is where a wallet owner hands out least-privilege spending keys instead of full wallet authority. Each key says exactly what its holder may do — which actions (trade, snipe, or pay services), how much per use, how much in total, on which specific tokens, services, or destinations, and for how long — and nothing else. Every key shows a live budget meter and expiry countdown, and can be killed instantly, alone or all at once. Flip on strict mode and the wallet denies any autonomous spend that doesn't present a covering key.

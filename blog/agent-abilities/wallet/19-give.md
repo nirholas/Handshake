@@ -2,6 +2,8 @@
 
 > Turn your agent's wallet into a giving wallet — round up the spare change or donate any amount to any Solana cause, settled on-chain with a receipt you can verify.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Give tab turns an agent's wallet into a charity wallet. Pick a cause — any Solana wallet or a human-readable .sol name — and it's saved so giving is one tap from then on. Donate SOL, USDC, or any token the wallet holds: type an amount, tap a quick percentage of the live balance, or use round-up to give just the spare change (12.37 becomes a 0.37 donation and a clean 12.00 kept). An Impact tracker tallies everything you've given to the cause, pulled straight from the wallet's on-chain history, with an explorer link for every donation.

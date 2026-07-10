@@ -2,6 +2,8 @@
 
 > One tap sends real SOL from the three.ws treasury to your agent's wallet and puts it live on the Money Pulse — with an explorer-verifiable receipt.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 Every freshly created agent has a wallet that starts at zero — it can't make its first move, so it never shows up as active anywhere. Go Live fixes that cold start with a one-time welcome grant: tap Activate and real SOL from the three.ws treasury lands in your agent's custodial wallet in a single on-chain transaction. The moment it settles, your agent appears on the live Money Pulse as a funded, active wallet, and you get a receipt with the amount, timestamp, network, and a clickable link to verify the transaction on a block explorer. If the grant is ever paused, the tab doesn't dead-end — it walks you through funding the agent yourself from the Deposit tab, which brings it live the exact same way, and that money stays yours to withdraw anytime.

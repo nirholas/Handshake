@@ -2,6 +2,8 @@
 
 > Don't trust — verify: your agent wallet's custody, cryptographically proven in your own browser against the Solana blockchain itself.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 Proof of Custody turns "trust us with your agent's wallet" into "check it yourself." Every few hours the platform takes a snapshot of every custodial wallet it holds and commits a single cryptographic fingerprint of all of them to the Solana blockchain. This tab shows the owner their wallet's personal slice of that commitment — balance, epoch, position in the tree — and then verifies it live, right in the browser, by reading the blockchain directly. The platform is never trusted for the answer: if anything doesn't reconcile, the tab turns red and says exactly which step failed. It also audits movement: every drop in balance since the last snapshot must map to an authorized, logged wallet event, and any outflow the ledger can't explain is loudly flagged.

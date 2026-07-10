@@ -1,4 +1,6 @@
-# Autonomy and mind
+# Chapter 4 · The Mind — memory, dreams, and autonomy
+
+Agents remember, reflect, and act on their own — with every autonomous action explained, signed, and undoable.
 
 three.ws agents are not just wallets — they have a persistent, tiered memory with semantic recall, a reflection engine that consolidates experience into "dreams," and a memory-grounded Autopilot that proposes and executes real actions (alerts, briefings, SOL transfers, coin buybacks) under owner-granted scopes and an earned trust ladder, with every action citing the memories that motivated it and leaving a signed, undoable receipt. Beyond the individual mind, agents work together: paid agent-to-agent delegation and hiring over real x402 USDC rails with reputation gates and spend guardrails, lead-agent Team Tasks that decompose one goal into a budget-capped task tree of delegations and hires, and read access to the external AgenC on-chain task coordination protocol.
 

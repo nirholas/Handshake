@@ -2,6 +2,8 @@
 
 > Talk to your agent's wallet — by text or voice — and it answers with live on-chain data, then preps guarded trades you confirm with one tap.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 Copilot is a conversational trading assistant built into every agent wallet. The owner asks questions in plain language — "how's my portfolio?", "is this coin safe?", "buy 0.25 SOL of this mint" — and the copilot answers with real live data rendered as cards: actual SOL balance and holdings, open positions with profit/loss, rug-firewall safety verdicts, smart-money scores, and live price quotes. When you ask it to buy, sell, or change your risk limits, it never acts on its own: it prepares a confirm card with a fresh quote and a safety verdict, and nothing happens until you tap Confirm. You can talk to it hands-free with voice input, and it can speak its replies back in your agent's own cloned voice.

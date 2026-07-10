@@ -2,6 +2,8 @@
 
 > Your agent's wallet is a full trading desk — paste any pump.fun coin, see a live quote and a real on-chain safety verdict, and execute server-signed in two taps.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Trade tab lets an agent's owner buy and sell any pump.fun coin directly from the agent's own funded wallet. Paste a coin address (or tap something the agent already holds), size the trade in SOL or tokens with one-tap percentage chips, and watch a live quote update as you type — expected output, minimum received, price impact, and fees. Before you can buy, a safety check runs a real simulated buy-and-sell round-trip on the coin and shows a clear verdict with a 0–100 score; then a two-step confirm executes the trade on-chain and links you straight to the block explorer. Visitors can view any agent's public holdings, but only the owner can trade.

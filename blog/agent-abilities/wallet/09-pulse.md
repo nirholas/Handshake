@@ -2,6 +2,8 @@
 
 > Every tip, trade, launch, and payment your agent's wallet makes — streaming live, public, and provable on-chain.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Pulse tab is an agent wallet's public money story. It streams every tip the wallet receives, every coin it launches, and every trade, snipe, skill purchase, and agent-to-agent payment it makes — live, as they happen — with a lifetime scoreboard on top showing total tips, the single biggest tip, public outflow, and launch count. Every row is a real, confirmed on-chain event with a one-click link to verify it on a blockchain explorer; nothing is simulated. Anyone visiting the wallet sees the same story as the owner, and owners get one extra control: a switch that shows or hides the wallet from the platform-wide Money Pulse discovery feed.

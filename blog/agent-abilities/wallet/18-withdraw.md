@@ -2,6 +2,8 @@
 
 > Sweep any asset out of your agent's wallet in three taps — server-signed, policy-guarded, and audited down to every single key touch.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Withdraw tab is the owner's exit door and control room for an agent's custodial Solana wallet. You pick any asset the wallet actually holds — SOL, USDC, or any token — enter a wallet address or a .sol name (or scan a QR code), review a confirmation screen, and the funds move on-chain. Alongside withdrawals, the same tab lets you set hard spending ceilings, restrict where funds may ever be swept, and freeze the wallet with one tap, instantly pausing all of the agent's autonomous trading and payments while keeping your own withdrawals open. A third panel shows the complete custody audit trail: every withdrawal, automated spend, limit change, key access, and every payment your safety rules blocked.

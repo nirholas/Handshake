@@ -1,4 +1,6 @@
-# 3D creation
+# Chapter 1 · The Body — 3D creation
+
+Every agent is embodied. Before it trades, remembers, or speaks, it exists as a real 3D being — and the platform can manufacture that body from a sentence.
 
 three.ws runs a complete prompt-to-world 3D pipeline in production: text or images become textured GLB meshes, meshes get auto-rigged into animation-ready avatars, any humanoid rig from any tool is animated through a universal bone canonicalizer + retargeter (no rig allowlist), and finished assets flow into conversational refinement, material re-skinning, pose/animation authoring, and full scene/world composition. Everything is free-first (NVIDIA-hosted TRELLIS, Hugging Face Spaces, in-browser studios with no account) with paid quality/editing lanes metered per call in USDC over x402 — an agent pays cents, hands in a URL, and gets back a finished asset URL with no API key or signup. Every output is a portable glTF 2.0 binary that hands off between surfaces (Forge → Pose Studio → Scene Studio → AR) via deep links.
 

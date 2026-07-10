@@ -2,6 +2,8 @@
 
 > Set-and-forget limit, stop, trailing, DCA, TWAP, and signal-driven orders that fire automatically from your agent's own wallet — on live on-chain data, inside your guardrails.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Orders tab gives your agent wallet the order tooling pump.fun never had: six order types you arm once and walk away from. Set a limit buy at a target market cap, a stop-loss, a trailing stop that follows the high, a recurring DCA schedule, a TWAP that slices one big order to cut price impact, or a conditional trigger built from real signals — "buy when the smart-money score is over 60 and market cap is under $40k," or "sell if the dev dumps." Before you arm anything, a one-click preview shows the live price, whether the order would fire right now, and a rug/honeypot firewall verdict. Open orders stream their status live, every fill comes with a plain-language reason and an explorer-linked receipt, and pause, resume, or cancel is one click and instant.

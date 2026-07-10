@@ -1,4 +1,6 @@
-# Markets and intelligence
+# Chapter 11 · Markets & intelligence
+
+The data layer agents and their owners trade on: live markets, news, scoring oracles, liquidations, and sentiment.
 
 three.ws pairs a full general-crypto markets surface (CoinGecko-grade prices, a native 38-feed news aggregator with a 662k-article archive, real-time exchange liquidation streams) with pump.fun-native intelligence: the Oracle conviction engine that scores every launch 0-100 within seconds, a coin-intelligence radar, the platform's own /launches directory, and live PumpPortal feeds that even drive 3D avatar reactions. Everything runs on real, mostly keyless data sources — CoinGecko, alternative.me, public Ethereum RPCs, Binance/Bybit/OKX futures WebSockets, publisher RSS feeds, the pump.fun firehose — with a hard no-fabricated-data policy (surfaces degrade to designed offline states rather than fake numbers).
 

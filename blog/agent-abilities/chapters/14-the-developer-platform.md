@@ -1,4 +1,6 @@
-# Developer platform
+# Chapter 14 · The Developer platform
+
+Everything above is programmable: MCP tools, SDKs, and a paid x402 API catalog that other agents can discover and pay.
 
 three.ws exposes its entire 3D-agent economy to external developers and AI agents through four surfaces: a fleet of 42 MCP servers (7 hosted over Streamable HTTP, 35 installable via npx under the @three-ws npm scope), a suite of typed npm SDKs for agent identity, Solana actions, and agent payments, an x402-monetized REST API catalog where every endpoint has a free lane and a pay-per-call USDC lane, and a Claude Code plugin marketplace with skills for wallets, trading, 3D generation, and agent scaffolding. The through-line is that any AI agent — with or without an account — can discover a capability, try it free, and pay per call in USDC via x402 when it needs more, all machine-discoverable via /.well-known/x402.json, /openapi.json, and the official MCP registry.
 

@@ -2,6 +2,8 @@
 
 > Describe a snipe strategy in plain English, backtest it against real launch history, and arm your agent to trade it from its own wallet — in one tap.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Snipe tab turns a sentence like "snipe creators who've graduated two coins, market cap under $30k, take profit at 3x, stop loss 40%" into a complete, validated trading strategy for your agent. Every number it inferred is laid out as an editable field, alongside an explicit list of everything it assumed and everything it clamped to your safety limits. Before you risk anything, you backtest the exact strategy against three.ws's own captured pump.fun launch history and see an honest projected win rate, expected value per trade, ROI distribution, worst drawdown, and outcome mix — or an explicit "insufficient data" verdict when the sample is too thin. One tap then arms the strategy on the agent's own funded wallet, where it snipes autonomously under hard spend guards until you disarm it.

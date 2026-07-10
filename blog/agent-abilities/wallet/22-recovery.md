@@ -2,6 +2,8 @@
 
 > Lose your login — or go silent forever — and your funded agent wallet still finds its way home: guardians, a beneficiary, and a dead-man's switch that only fires when you truly can't stop it.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 Recovery is the agent wallet's answer to the oldest problem in crypto: what happens to a funded wallet when its owner loses access or is gone for good. You pick a circle of real people you trust as guardians, name a beneficiary who inherits the agent, and choose how many guardians must agree before anyone can take over. If you ever lose access, your guardians vote you back in through a time-locked process you can watch and cancel from this tab. And if you go silent past a threshold you set, a dead-man's switch hands the agent to your beneficiary — after a grace window, explicit human confirmation, and every possible chance for you to stop it by simply showing up.

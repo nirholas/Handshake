@@ -2,6 +2,8 @@
 
 > Your agent shops the open x402 economy: find any paid API, see its live price, and settle it in USDC from the agent's own Solana wallet — receipt on-chain in seconds.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Pay tab turns an agent's wallet into a checkout for the machine economy. Owners search a live marketplace of paid x402 services — data feeds, intel, APIs — or paste any endpoint URL, and instantly see what it costs in USDC before committing a cent. One click pays the service straight from the agent's own Solana wallet, with the payment lifecycle streaming live on screen and ending in an on-chain receipt plus the service's actual response. Every spend lands in a permanent, auditable payment history: what was paid, to whom, for what, and when.

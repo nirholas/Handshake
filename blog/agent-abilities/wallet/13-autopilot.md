@@ -2,6 +2,8 @@
 
 > Write one sentence in plain English and your agent starts paying its own bills, stacking $THREE, buying back its own coin, and sweeping the profit to you — for real, on-chain.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 Autopilot turns your agent into a business that funds its own existence. You describe a treasury policy in plain English — "pay your own compute, keep a 1 SOL buffer, put 10% of tips into $THREE, sweep anything over 3 SOL to me on Fridays" — and Autopilot compiles it into clear rules you review and arm. From then on the agent settles its own AI compute bill, protects a safety buffer, dollar-cost-averages income into $THREE, compounds its coin's fees into buybacks, and sweeps profit to your wallet, every action a real on-chain transaction with an explorer link. A live runway view shows the honest truth at all times: real income versus real burn, and exactly how long the agent can sustain itself — or that it's fully self-sustaining.

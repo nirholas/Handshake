@@ -2,6 +2,8 @@
 
 > Every agent wallet gets an immune system — it learns what normal spending looks like, freezes itself the instant something looks wrong, and explains why in plain English.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Self-defense tab is the owner's control room for a wallet that protects itself. The platform learns each agent's normal spending behavior — typical amounts, known addresses, usual hours, usual pace — and scores every outbound action against that profile in real time. Anything anomalous auto-freezes the wallet, notifies the owner, and shows up here as a flagged card with a 0–100 risk score and plain-language reasons like "3.2× your largest-ever trade" or "first payment to this address." The owner resolves it with one tap: approve it (which unfreezes the wallet and teaches the guard so the same pattern never trips again), keep it frozen, or sweep every remaining coin to a pre-set safe address.

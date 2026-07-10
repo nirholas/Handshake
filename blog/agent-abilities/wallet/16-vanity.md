@@ -2,6 +2,8 @@
 
 > Give your agent a wallet address that spells its name — ground on your own CPU at millions of attempts, then applied with a funds-safe swap that sweeps every asset over first.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 Every agent on three.ws carries its own Solana wallet, and the Vanity tab lets the agent's owner trade that wallet's random address for a custom one that starts or ends with text they choose — the agent's name, a brand, a lucky word. The search runs right in the browser: pick how many CPU cores to spend, watch a live counter tear through hundreds of thousands of addresses per second, and pause, resume, or cancel at any time. The moment a match is found it is applied automatically, and if the old wallet holds any SOL or tokens, everything is moved to the new address before the switch — funds can never be left behind. When it's done, the new address appears with its custom pattern highlighted, complete with the attempt count, the time it took, and a link to see it live on-chain.

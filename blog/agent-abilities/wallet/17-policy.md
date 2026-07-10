@@ -2,6 +2,8 @@
 
 > Write your agent's spending rules in plain English — AI translates them, deterministic code enforces them on every single spend.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Policy tab lets a wallet owner govern their AI agent's money the way they'd explain it to a person: type "Block any payment over $25, never let the wallet drop below 1 SOL, and freeze everything if a trade drops more than 30%" and hit Compile. The platform turns that sentence into numbered, enforceable rules and reads them back in plain English so you confirm exactly what will be enforced. Before you save, it backtests the rules against your agent's real spending history — "against your last 47 spends, this would have blocked 3 ($61)" — or, with no history yet, shows how hypothetical cases like "a $250 payment" or "buying a 30-minute-old token" would be decided. Once saved, the rules run on every trade, snipe, service payment, and withdrawal the agent makes; the AI only translates and explains — it never approves a payment.

@@ -1,4 +1,6 @@
-# Product surfaces
+# Chapter 15 · Appendix — the full product map
+
+Every page and surface on three.ws, grouped by area.
 
 three.ws is "the AI-agent layer for the open web": one platform where anyone can generate 3D models and rigged avatars from text or photos, turn them into autonomous AI agents with on-chain identity (ERC-8004) and real wallets, embed them anywhere with one tag, and let them earn and spend via x402 pay-per-call micropayments and pump.fun token launches. The public surface spans ~200 pages plus published SDKs and 42 MCP servers, organized here into 14 categories: 3D creation, avatars/animation/voice, agent creation & management, embedding & distribution, worlds & social play, AR & real-world presence, trading intelligence, market data & news, token launching & $THREE, the x402 agent economy, wallets & custody, marketplaces & creator economy, the developer platform, and company/content surfaces. Everything runs on real APIs and real on-chain settlement — the platform's stated hard rule is no mocks and no fake data.
 

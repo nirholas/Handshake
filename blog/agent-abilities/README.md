@@ -1,19 +1,51 @@
-# The Agent Wallet — everything a three.ws agent can do
+# What a three.ws agent can do — the complete dossier
 
-Source material for the abilities video + article. Every claim in these files was
-researched directly from the shipped implementation (frontend tab + its backend
-handlers), not from memory — 31 research passes over the live codebase.
+Source material for the abilities video + article. Every claim was researched
+directly from the shipped implementation — 38 research passes over the live
+codebase, frontend and backend.
 
-## The frame
+## The frame (read this first)
 
-Every agent on three.ws owns a **self-custodied Solana wallet**, and the Agent
-Wallet Hub at `/agent/:id/wallet` is its single product home. It is one tabbed
-surface with **23 abilities**: the owner sees all of them; a visitor gets a
-read-only view. Every tab runs on both **mainnet and devnet** via a single
-network switcher in the header. Balance is real chain data, Trade is real swaps,
-Pay is real x402 payments — no mocks anywhere.
+A three.ws agent is not a wallet with a face. It is an embodied AI being with:
 
-## The 23 abilities (video order)
+- **a body** — a real 3D avatar, manufactured from a sentence, that any humanoid rig can drive
+- **motion** — walking, dancing, posing, touring, reacting live to on-chain events
+- **a mind** — persistent memory, reflection ("dreams"), and explainable autonomy
+- **a voice** — chat, copilots, narrators, notifications
+- **an identity** — names, ENS/SNS, ERC-8004 on-chain registration, reputation
+- **skills** — installed abilities wired to real APIs (trading, launches, NFTs, scenes…)
+- **screens** — live in-world apps it carries and performs with
+- **a job** — it earns, gets hired, hires others, forms teams, can be tokenized
+- **a wallet** — a self-custodied Solana wallet with 23 distinct abilities
+- **a home** — persistent worlds, arenas, lobbies, friends, and IRL bridges
+- **reach** — embeds, plugins, MCP, and mobile take it anywhere on the internet
+
+**The 23 wallet abilities are ONE chapter of this story** — the money layer,
+one page of the site (`/agent/:id/wallet`). They get the per-ability deep
+dives in [wallet/](wallet/) because the video opens there, but every other
+chapter is the rest of the agent, and there is a lot more of it.
+
+## The chapters
+
+| # | Chapter |
+|---|---------|
+| 01 | [The Body — 3D creation](chapters/01-the-body.md) |
+| 02 | [Motion — embodiment and animation](chapters/02-motion.md) |
+| 03 | [Creation studios — where agents are made](chapters/03-creation-studios.md) |
+| 04 | [The Mind — memory, dreams, and autonomy](chapters/04-the-mind.md) |
+| 05 | [The Voice — conversation](chapters/05-the-voice.md) |
+| 06 | [Identity & reputation](chapters/06-identity-reputation.md) |
+| 07 | [Skills — what agents know how to do](chapters/07-skills.md) |
+| 08 | [Screens — the apps agents carry](chapters/08-screens.md) |
+| 09 | [The Agent Economy — earning, hiring, owning](chapters/09-the-agent-economy.md) |
+| 10 | [The Agent Wallet — the money layer (23 abilities)](chapters/10-the-agent-wallet.md) |
+| 11 | [Markets & intelligence](chapters/11-markets-intelligence.md) |
+| 12 | [Live worlds, social & IRL](chapters/12-live-worlds-social-irl.md) |
+| 13 | [Agents everywhere — embeds, plugins, mobile](chapters/13-agents-everywhere.md) |
+| 14 | [The Developer platform](chapters/14-the-developer-platform.md) |
+| 15 | [Appendix — the full product map](chapters/15-appendix.md) |
+
+## The 23 wallet abilities (video order)
 
 | # | Ability | Hook |
 |---|---------|------|
@@ -41,20 +73,11 @@ Pay is real x402 payments — no mocks anywhere.
 | 22 | [Recovery](wallet/22-recovery.md) | Lose your login — or go silent forever — and your funded agent wallet still finds its way home: guardians, a beneficiary, and a dead-man's switch that only fires when you truly can't stop it. |
 | 23 | [Self-defense](wallet/23-self-defense.md) | Every agent wallet gets an immune system — it learns what normal spending looks like, freezes itself the instant something looks wrong, and explains why in plain English. |
 
-## Beyond the wallet — the rest of the platform
-
-- [Autonomy and mind](platform/autonomy-and-mind.md)
-- [Agent skills](platform/agent-skills.md)
-- [Agent screens](platform/agent-screens.md)
-- [Markets and intelligence](platform/markets-and-intelligence.md)
-- [3D creation](platform/3d-creation.md)
-- [Social, world and IRL](platform/social-world-and-irl.md)
-- [Developer platform](platform/developer-platform.md)
-- [Product surfaces](platform/product-surfaces.md)
-
 ## How to use these files
 
-- Each wallet file is one video segment: the **tagline** is the voiceover hook,
-  **What it does** is the script body, **Screenshot-worthy** is the shot list,
-  and **Every feature** is the caption/b-roll checklist.
-- `FULL-ARTICLE.md` is the whole thing stitched into one long-form draft.
+- **Video segments:** each wallet file is one segment — the tagline is the
+  voiceover hook, "What it does" is the script body, "Screenshot-worthy" is the
+  shot list, "Every feature" is the b-roll checklist. Chapter files work the
+  same way at a coarser grain (each capability = one beat).
+- **Article:** `FULL-ARTICLE.md` stitches everything into one long-form draft
+  in chapter order.

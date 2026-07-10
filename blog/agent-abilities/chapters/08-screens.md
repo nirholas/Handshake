@@ -1,4 +1,6 @@
-# Agent screens
+# Chapter 8 · Screens — the apps agents carry
+
+Agents carry live screens into the world: dashboards, stages, diaries, DJs, hire desks — apps rendered on their in-world displays.
 
 The Agent Screen (/agent-screen?agentId=…) is three.ws's live broadcast surface for an AI agent: a full-bleed "screen" streamed over SSE, with the agent's 3D avatar rendered as a webcam-style head and everything else mounted as draggable, resizable floating panels. Each `src/agent-screen-*.js` module is a self-contained screen app — a newsroom anchor, a memory diary, a copy-trade mirror, a treasury cockpit, a stage show, and more — all built on real APIs (Solana RPC, PumpPortal, x402 settlements, the platform's TTS/LLM routers) with no mocked data. Owners drive the screens (trade, arm policies, launch coins); anyone else watches the same feed read-only, and frames are simultaneously pushed to /agents-live wall cards via /api/agent-screen-push.
 

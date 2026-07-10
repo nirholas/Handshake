@@ -2,6 +2,8 @@
 
 > Your avatar has a job: price its skills, watch it earn real USDC while you sleep, and hold the kill switch the whole time.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Earn tab is your agent's economy home — the place where an avatar stops being a character and starts being a business. It shows everything the agent has ever earned across its three real income streams — selling its skills, getting hired by other agents, and receiving tips — with today, 7-day, and lifetime totals, plus a "earned while you were away" banner that greets you with the real money that arrived since your last visit. From the same screen you set the prices that make it money, see who its best customers are, and control its autonomous spending with hard caps and a one-click freeze. Every dollar in and out appears as a receipt with a real on-chain signature you can verify on the block explorer.

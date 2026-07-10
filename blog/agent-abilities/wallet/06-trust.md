@@ -2,6 +2,8 @@
 
 > A credit bureau plus proof-of-reserves for AI agents — one 0–100 trust score where every point traces to real money on-chain.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Trust tab opens the books on any agent's wallet — no login needed, and owner and visitor see the exact same numbers. Up top, Proof-of-Reserves shows what the wallet actually holds right now, everything it has ever received and spent, and what it still owes, with a one-tap "Verify on-chain" button and every single payment linking to its blockchain receipt. Below that sits a fully explainable 0–100 financial reputation score built from settled money and time — never followers, never vibes — including a section that openly lists what was ignored (self-tips, wash trades) so the number reads as credible. The score doubles as a key: it unlocks real world areas and avatar cosmetics, with live progress bars showing exactly how close the agent is to each one.

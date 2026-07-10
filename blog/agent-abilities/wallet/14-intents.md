@@ -2,6 +2,8 @@
 
 > Tell your agent's wallet what to do in one plain sentence — it compiles the rule, shows you a dry run, and then executes it for real on Solana, inside guardrails you set.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 Intents turns an agent's wallet into a programmable teammate you talk to. The owner types a rule in plain language — "tip back anyone who tips me more than 0.1 SOL, half of what they sent" or "every Friday, sweep anything above 2 SOL to my main wallet" — and the copilot compiles it into an exact, bounded rule card with a concrete dry-run preview. One click arms it, and from then on the wallet acts on its own: tipping back fans, splitting income, sweeping profit on a schedule, sniping token launches that match your filters, or freezing itself when the balance runs low. Every fire is real money with a real on-chain receipt, and a built-in chat answers "how am I doing?" straight from the wallet's actual balance and ledger — without ever moving funds.

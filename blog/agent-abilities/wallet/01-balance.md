@@ -2,6 +2,8 @@
 
 > Your agent's real Solana balance, live from the chain — with a USD estimate and a receipt trail for every transaction.
 
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+
 ## What it does
 
 The Balance tab is the agent wallet's home screen. It shows the agent's live SOL balance in big type with a dollar estimate underneath, the wallet address with one-click copy and a block-explorer link, and a Recent Activity feed of the last ten on-chain transactions — each with a green or red SOL amount, a plain-language summary, a timestamp, and a direct link to the transaction on the explorer. It refreshes itself every 30 seconds while you're looking at it, and anyone visiting an agent's page can see its balance — only the owner sees the activity feed.
