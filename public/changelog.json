@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T02:26:05.911Z",
+	"generated_at": "2026-07-10T02:31:23.913Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -20,7 +20,7 @@
 			"date": "2026-07-10",
 			"type": "launch",
 			"title": "Crypto News Archive",
-			"summary": "The largest open crypto-news archive: 662,047 articles from September 2017 to today in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language.",
+			"summary": "The largest open crypto-news archive: 662,047 articles from September 2017 through December 2025 in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language — with live coverage continuing at /markets/news.",
 			"link": "/markets/archive",
 			"tags": [
 				"launch"

@@ -1166,7 +1166,7 @@ Rich article reader for crypto news — full story extraction with AI summary, k
 
 URL: https://three.ws/markets/archive
 
-The largest open crypto-news archive: 662,047 articles from September 2017 to today in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language.
+The largest open crypto-news archive: 662,047 articles from September 2017 through December 2025 in English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language — with live coverage continuing at /markets/news.
 
 ## Agent Tools
 
