@@ -20,7 +20,7 @@ vi.mock('../api/_lib/http.js', () => ({
 	},
 }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { publicIp: vi.fn(async () => ({ success: true })) },
+	limits: { marketDataIp: vi.fn(async () => ({ success: true })) },
 	clientIp: () => '1.2.3.4',
 }));
 vi.mock('../api/_lib/pump-bonding.js', () => ({
@@ -134,7 +134,7 @@ describe('GET /api/crypto/bonding', () => {
 
 	it('429s when the per-IP limiter denies', async () => {
 		const { limits } = await import('../api/_lib/rate-limit.js');
-		limits.publicIp.mockResolvedValueOnce({ success: false });
+		limits.marketDataIp.mockResolvedValueOnce({ success: false });
 		const res = await call(`/api/crypto/bonding?mint=${THREE_MINT}`);
 		expect(res._json.status).toBe(429);
 		expect(getBondingStatus).not.toHaveBeenCalled();

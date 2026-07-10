@@ -645,6 +645,11 @@ function launchCard(launch, index, { featured = false } = {}) {
 				variant: 'card',
 				placeholder: identicon,
 				onData: recordMarket,
+				// This feed already batch-fetches conviction for every visible mint
+				// (enrichCardsWithOracle → /api/oracle/batch), so the widget's own
+				// per-coin /api/oracle/coin round trip is redundant — one request per
+				// card, each a 404 for any mint the Oracle hasn't observed yet.
+				oracle: false,
 			}),
 		);
 	}

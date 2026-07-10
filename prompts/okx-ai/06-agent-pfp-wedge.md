@@ -79,7 +79,7 @@ This is a product, not a listing blurb. Build it end to end.
 - [ ] `data/changelog.json` entry (tags: `feature`; link: the showcase page path)
 - [ ] PROGRESS.md appended (incl. unit-cost math, price decision, demo asset URLs, and the
       catalog delta for 05/07 to fold into the listing)
-- [ ] Self-reviewed diff; committed (explicit paths) + pushed to both remotes
+- [ ] Self-reviewed diff; committed (explicit paths) + pushed to `threews` (only push target)
 
 ## Anti-laziness gates
 

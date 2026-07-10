@@ -111,8 +111,8 @@ then state the ONE specific blocker with exactly what's needed — never leave t
       new public page → `data/pages.json`; new surface → `STRUCTURE.md` row.
 - [ ] `data/changelog.json` entry (holder-readable, correct tags) for anything user-visible.
 - [ ] `git diff` self-reviewed line-by-line; committed with EXPLICIT paths (never `-A`);
-      pushed to BOTH remotes (`git push threeD main` && `git push threews main` — threeD may
-      fail "Repository not found"; report it, don't block).
+      pushed with `git push threews main` — the only push target. Never push/pull/fetch/merge
+      `threeD` (retired `nirholas/3D-Agent` mirror, diverged history).
 - [ ] `npx vercel build` trap: if you ran it, check `head -1` of changed `api/*.js` for
       `__defProp`; recover with `git restore -- api/ public/`.
 - [ ] Append a dated entry to `prompts/x402-overhaul/PROGRESS.md` (create if absent): what

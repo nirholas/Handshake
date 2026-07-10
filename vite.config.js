@@ -9,7 +9,7 @@ import {
 	statSync,
 	rmSync,
 } from 'fs';
-import { extname, basename } from 'path';
+import { extname, basename, relative, sep } from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
@@ -1963,8 +1963,20 @@ support: resolve(__dirname, 'pages/support.html'),
 		{
 			name: 'copy-static-docs',
 			closeBundle() {
-				cpSync(resolve(__dirname, 'docs'), resolve(__dirname, 'dist/docs'), {
+				// dist/docs is served publicly: /docs/<topic>.md is fetched by the docs
+				// SPA, and every other file under it is reachable as a static asset.
+				// These subtrees are written for operators, not readers — the ops
+				// runbooks name the GCP project, service accounts, and which env vars
+				// gate which routes; the security reviews describe attacks against
+				// live code, some still open. Keep them in the repo, off the website.
+				const PRIVATE_DOCS = new Set(['internal', 'ops', 'security']);
+				const docsRoot = resolve(__dirname, 'docs');
+				cpSync(docsRoot, resolve(__dirname, 'dist/docs'), {
 					recursive: true,
+					filter: (src) => {
+						const rel = relative(docsRoot, src);
+						return !rel || !PRIVATE_DOCS.has(rel.split(sep)[0]);
+					},
 				});
 			},
 		},

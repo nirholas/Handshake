@@ -14,7 +14,7 @@ There are 5 animation collections across the codebase. They are separate and use
 | **presets_robotexpressive** | `public/animations/robotexpressive.glb` | Legacy, not loaded at runtime |
 | **lora_pipeline** | `character-studio/public/lora-assets/animations/` | character-studio LoRA pipeline only |
 | **sprite_atlas_pipeline** | `character-studio/public/sprite-atlas-assets/animations/` | character-studio sprite atlas only |
-| **sims_demo** | `sims-demo/public/AnimationLibrary.glb` | sims-demo character controller only |
+| **sims_demo** | `sims-demo/public/AnimationLibrary.glb` | sims-demo character controller only — the `sims-demo/` workspace lives outside this repo, so the GLB is not on disk here |
 
 ## How the runtime loads animations
 

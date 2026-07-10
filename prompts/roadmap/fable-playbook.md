@@ -60,7 +60,7 @@ deliberately.
   dependency bumps, doc-link validation) goes to parallel subagents; product
   features stay single-session so one mind owns the integration.
 - **Concurrent-agent hygiene** (known trap): explicit-path staging only,
-  re-check `git status` before commit, both remotes on push.
+  re-check `git status` before commit, `git push threews main` on push (only target).
 
 ### Standing routines (schedule these once, they run forever)
 | Routine | Cadence | What it does |

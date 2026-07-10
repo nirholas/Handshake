@@ -22,7 +22,7 @@ vi.mock('../api/_lib/http.js', () => ({
 	},
 }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { publicIp: vi.fn(async () => ({ success: true })) },
+	limits: { marketDataIp: vi.fn(async () => ({ success: true })) },
 	clientIp: () => '1.2.3.4',
 }));
 // Keep the real module (pump-bonding.js imports isGraduated from it) and stub
@@ -65,7 +65,7 @@ function call(url) {
 
 beforeEach(() => {
 	fetchRecentPumpCoins.mockReset();
-	limits.publicIp.mockResolvedValue({ success: true });
+	limits.marketDataIp.mockResolvedValue({ success: true });
 	vi.useFakeTimers();
 	vi.setSystemTime(NOW);
 });
@@ -191,7 +191,7 @@ describe('GET /api/crypto/launches', () => {
 	});
 
 	it('429s when the per-IP limit is exhausted', async () => {
-		limits.publicIp.mockResolvedValue({ success: false });
+		limits.marketDataIp.mockResolvedValue({ success: false });
 		const res = await call('/api/crypto/launches');
 		expect(res._json.status).toBe(429);
 		expect(fetchRecentPumpCoins).not.toHaveBeenCalled();

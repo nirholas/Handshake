@@ -1,14 +1,14 @@
 # Production Issues — three.ws
 
-Live tracker for known production issues. When an item is fixed, move it to
-the archive instead of leaving it here marked ✅ — this file should only
-contain work that is still open.
+Live tracker for known production issues. When an item is fixed, drop it from
+this file rather than leaving it here marked ✅ — this file should only contain
+work that is still open.
 
-> Archive of the 2026-05 incident batch (20 items, all resolved):
-> [docs/internal/ISSUES-ARCHIVE-2026-05.md](docs/internal/ISSUES-ARCHIVE-2026-05.md)
->
-> Archive of 2026-06 resolved items:
-> [docs/internal/ISSUES-ARCHIVE-2026-06.md](docs/internal/ISSUES-ARCHIVE-2026-06.md)
+> The 2026-05 incident batch (20 items, all resolved) and the 2026-06 resolved
+> items were archived under `docs/internal/`, which was removed from the repo
+> along with the rest of the internal content in commit `b80c1c379`. Both
+> archives remain readable in git history:
+> `git show b80c1c379^:docs/internal/ISSUES-ARCHIVE-2026-05.md`
 
 ---
 
@@ -53,4 +53,5 @@ repo:
 
 The `character-studio/` lint debt (the last open item of the prior batch) was
 cleared 2026-06-21 — `eslint character-studio/src` now reports **0 problems**.
-Details in the [2026-06 archive](docs/internal/ISSUES-ARCHIVE-2026-06.md).
+Details in the 2026-06 archive
+(`git show b80c1c379^:docs/internal/ISSUES-ARCHIVE-2026-06.md`).

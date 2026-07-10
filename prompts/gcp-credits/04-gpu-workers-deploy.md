@@ -99,5 +99,5 @@ reverts by unsetting env URLs.
 
 Changelog entry when this hits production (users notice: image→3D on free lane, faster/looser
 limits) — plain-language, per CLAUDE.md. Update `STRUCTURE.md` only if a new surface/dir landed.
-Commit explicit paths, push `threews` (+ attempt `threeD`). Report: what's live, GPU quota
+Commit explicit paths, push `threews` (the only push target). Report: what's live, GPU quota
 state, cost table, and the env flips for production.

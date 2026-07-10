@@ -20,7 +20,7 @@ three.ws is a large, live, single monorepo (see `STRUCTURE.md` for the full surf
 3. **Flag new behavior.** New runtime behavior on an existing surface ships behind a feature flag / new route / new opt-in param, defaulting to current behavior, until verified.
 4. **No mocks, no fake data, no TODOs, no stubs** (CLAUDE.md). Real APIs, real implementations, real verification in a browser for UI.
 5. **$THREE is the only coin**, everywhere. Crypto features use $THREE + USDC settlement only.
-6. **Concurrent agents share this worktree.** Stage explicit paths only; re-check `git status` before any commit. Commit/push only when the human asks — then push **both** remotes (`git push threeD main`, `git push threews main`).
+6. **Concurrent agents share this worktree.** Stage explicit paths only; re-check `git status` before any commit. Commit/push only when the human asks — then `git push threews main`, the only push target. Never push, pull, fetch, or merge `threeD` (the retired `nirholas/3D-Agent` mirror; its `main` has diverged with foreign history).
 7. **Changelog.** User-visible changes get a `data/changelog.json` entry; `npm run build:pages` validates.
 8. **Watch the esbuild trap.** `npx vercel build` overwrites `api/*.js` with bundles — check `head -1` of changed `api/` files for `__defProp` before committing; `npm run guard:esbuild`.
 

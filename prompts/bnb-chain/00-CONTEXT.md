@@ -135,9 +135,9 @@ blocker with exactly what's needed.
       surfaces, specs/ for wire formats) — written for a zero-context reader, every claim
       consistent with the Verified facts above.
 - [ ] `data/changelog.json` entry for anything user-visible (holder-readable, no jargon).
-- [ ] `git diff` self-reviewed; commit EXPLICIT paths (never `-A`); push BOTH remotes
-      (`git push threeD main` may fail "Repository not found" — report, don't block;
-      `git push threews main` must succeed).
+- [ ] `git diff` self-reviewed; commit EXPLICIT paths (never `-A`); push with
+      `git push threews main` — the only push target. Never push/pull/fetch/merge `threeD`
+      (retired `nirholas/3D-Agent` mirror, diverged history).
 - [ ] `npx vercel build` trap: if run, check `head -1` of changed `api/*.js` for `__defProp`;
       recover with `git restore -- api/ public/`.
 - [ ] Append a dated entry to `prompts/bnb-chain/PROGRESS.md`: what shipped, proof, gaps.

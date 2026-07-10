@@ -79,7 +79,7 @@ Tracks A–F get us *listed, packaged, and distributed*. Track G is where we **b
 - **No mocks, no fake data, no placeholders, no TODOs.** Real APIs, real endpoints, finish what you start.
 - **$THREE is the only coin.** Never reference any other token anywhere. The OpenAI track must contain **zero** token/crypto surface.
 - **Stage explicit paths only** (never `git add -A`/`.`) — concurrent agents share this worktree. Re-check `git status` before any commit.
-- **Commit/push only when the human running the chat explicitly asks.** When they do: push to **both** remotes (`git push threeD main` and `git push threews main`).
+- **Commit/push only when the human running the chat explicitly asks.** When they do: `git push threews main` — the only push target. Never push, pull, fetch, or merge `threeD` (the retired `nirholas/3D-Agent` mirror; its `main` has diverged with foreign history).
 - **Changelog:** user-visible changes get an entry in `data/changelog.json`; run `npm run build:pages` to validate.
 - **Watch the `npx vercel build` trap** — it overwrites `api/*.js` with esbuild bundles. Check `head -1` of changed `api/` files for `__defProp` before committing.
 

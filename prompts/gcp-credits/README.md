@@ -26,7 +26,7 @@ acceptance criteria all pass.
   with automatic fallthrough to the current providers on error — a GCP outage must never take
   down a feature that works today.
 - **Never commit secrets.** Service-account JSON goes into Vercel env / local `.env` only.
-- Push to both remotes (`threeD` may fail — surface it, don't block; it's a known-broken mirror).
+- Push with `git push threews main` — the only push target. Never push/pull/fetch/merge `threeD` (retired mirror, diverged history).
 
 ## Budget targets (for context, not hard caps)
 

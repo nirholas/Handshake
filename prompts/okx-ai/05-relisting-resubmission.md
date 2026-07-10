@@ -67,7 +67,7 @@ before/after approval-status values.
 - [ ] Resubmission confirmed: approval status captured before + after, listing is in review
 - [ ] Nothing was deactivated/deleted; agent is still #2632
 - [ ] PROGRESS.md appended with the full submission record
-- [ ] Any incidental fixes committed (explicit paths) + pushed to both remotes
+- [ ] Any incidental fixes committed (explicit paths) + pushed to `threews` (only push target)
 
 ## Anti-laziness gates
 

@@ -10,6 +10,19 @@ const ROOT = process.cwd();
 const DOCS_DIR = 'docs';
 const OUT = `${DOCS_DIR}/ALL.md`;
 
+// ALL.md ships to the public site as /docs/ALL.md, so it must never absorb the
+// operator-only subtrees that vite's copy-static-docs plugin deliberately keeps
+// out of dist/: the ops runbooks name the GCP project, its service accounts, and
+// which env vars gate which routes, and the security reviews describe attacks
+// against live code. Keep this set in sync with PRIVATE_DOCS in vite.config.js.
+const PRIVATE_DOCS = new Set(['internal', 'ops', 'security']);
+
+// Group by the first path segment under docs/ ("root" for docs/*.md directly).
+const groupOf = (p) => {
+  const parts = relative(DOCS_DIR, p).split(sep);
+  return parts.length > 1 ? parts[0] : '(top level)';
+};
+
 // Collect all markdown under docs/, excluding the generated output itself.
 const files = execSync(`find ${DOCS_DIR} -name '*.md' -not -name 'ALL.md'`, { cwd: ROOT })
   .toString()
@@ -17,13 +30,8 @@ const files = execSync(`find ${DOCS_DIR} -name '*.md' -not -name 'ALL.md'`, { cw
   .split('\n')
   .map((p) => p.replace(/^\.\//, ''))
   .filter(Boolean)
+  .filter((p) => !PRIVATE_DOCS.has(groupOf(p)))
   .sort();
-
-// Group by the first path segment under docs/ ("root" for docs/*.md directly).
-const groupOf = (p) => {
-  const parts = relative(DOCS_DIR, p).split(sep);
-  return parts.length > 1 ? parts[0] : '(top level)';
-};
 
 const sections = files.map((path, i) => {
   const anchor = `sec-${String(i + 1).padStart(3, '0')}`;

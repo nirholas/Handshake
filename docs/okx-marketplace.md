@@ -93,7 +93,12 @@ studio render per poll) and reports `stage` + render progress. Poll every ~5 s; 
 to `done` is 3–6 minutes. When `status` is `"done"`, `deliverables` carries the PFP URLs,
 the full-body set, `rigged_glb_url`, `mesh_glb_url`, `viewer_url`, and `pose_studio_url`.
 
-### Payment semantics (verified behavior)
+### Payment semantics
+
+Each guarantee below is enforced in code — the request path is
+`verify → dispatch → settle-on-success` ([`api/okx/3d/[service].js`](../api/okx/3d/%5Bservice%5D.js)),
+so an engine error is answered *before* settlement — and is covered by the endpoint's unit
+tests.
 
 - **You pay only when the job is accepted.** Input validation — including fetching your
   `reference_image_url` — runs before settlement; an invalid brief or unreachable image
@@ -105,6 +110,13 @@ the full-body set, `rigged_glb_url`, `mesh_glb_url`, `viewer_url`, and `pose_stu
   the only capability needed to read a job.
 - One payment ↔ one job: the payment proof is single-use across dispatch + settlement
   (replay-guarded), and the settled amount always equals the advertised price.
+
+> **Not yet demonstrated end to end.** The X Layer rail reports `settleable: true` in
+> production, but no *funded* call has settled on-chain against this endpoint yet — the payer
+> wallet is unfunded, so every real attempt returns `insufficient_balance`. Treat the bullets
+> above as the implemented and unit-tested contract, not as a claim of an observed on-chain
+> settlement. The first settled transaction hash will be recorded in
+> [`prompts/okx-ai/PROGRESS.md`](../prompts/okx-ai/PROGRESS.md).
 
 ### Also on this endpoint (free)
 

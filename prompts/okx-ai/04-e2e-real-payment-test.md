@@ -74,7 +74,7 @@ of rigor, not embarrassment.
       advertised prices exactly
 - [ ] All 4 adversarial cases fail safely (evidence captured)
 - [ ] Pay-only-on-success promise verified mechanically or promise corrected everywhere
-- [ ] Any code fixes committed per repo rules + pushed to both remotes
+- [ ] Any code fixes committed per repo rules + pushed to `threews` (only push target)
 - [ ] `docs/okx-marketplace.md` updated with a "verified behavior" section: settlement
       timing, refund semantics, replay protection — stated from evidence, not intention
 - [ ] `data/changelog.json`: only if user-visible behavior changed in the fix loop

@@ -30,4 +30,4 @@ Let creators turn a generated 3D asset into an **owned, provenance-backed, optio
 - Provenance on every asset; opt-in on-chain minting; opt-in $THREE/x402 gating with a free lane preserved; remix royalties with caps — all real, all $THREE-only.
 
 ## Hand-off
-Report the provenance format, mint flow + on-chain refs, gating model, and royalty logic. Commit/push only if asked; both remotes.
+Report the provenance format, mint flow + on-chain refs, gating model, and royalty logic. Commit/push only if asked; `git push threews main` is the only push target.

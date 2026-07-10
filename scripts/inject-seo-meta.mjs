@@ -57,6 +57,13 @@ async function loadJson(rel) {
 }
 
 // Build an ordered list of {re, dest} from vercel.json routes for resolution.
+// Error documents are the router's *fallback*, never a page's canonical file.
+// The SPA catch-all (`/(?!_vercel/).*` → `/404.html`) matches every path, so any
+// page whose real route is a bare redirect (a `status` entry with no `dest`, e.g.
+// /chat → /app) would otherwise resolve here and stamp its canonical, og:url and
+// JSON-LD onto public/404.html — telling crawlers the 404 *is* that page.
+const ERROR_DOCS = new Set(['/404.html', '/500.html']);
+
 function buildRouter(vercel) {
 	const routes = Array.isArray(vercel.routes) ? vercel.routes : [];
 	const out = [];
@@ -66,6 +73,7 @@ function buildRouter(vercel) {
 		// Only care about routes that land on a static .html file.
 		const destPath = r.dest.split('?')[0];
 		if (!destPath.endsWith('.html')) continue;
+		if (ERROR_DOCS.has(destPath)) continue;
 		let re;
 		try {
 			re = new RegExp(r.src.startsWith('^') ? r.src : `^${r.src}$`);

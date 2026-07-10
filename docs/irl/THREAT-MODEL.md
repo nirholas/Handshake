@@ -12,8 +12,8 @@ radius: `GET /api/irl/pins?lat&lng&radius` (≤60 m, the per-viewer proximity fe
 World Lines shipped later and inherit the same fix gate.
 
 (`/api/irl/pins/mine`, `agent-card`, `agent-summary`, `interactions*`, `report`,
-`share-frame` do not return others' coordinates — see
-`reports/irl-location-leak-audit.md`, which predates drops and World Lines and so
+`share-frame` do not return others' coordinates. That was established by a
+location-leak audit of the pins feed, which predates drops and World Lines and so
 does not cover them.)
 
 ## What the read protects against

@@ -87,8 +87,8 @@ for the 6-digit OTP from that inbox and run `onchainos wallet verify <otp>`. Nev
    Never simulate a payment where a real one is specified.
 4. **Concurrent agents share this worktree.** Stage explicit paths only (never `git add -A`),
    re-check `git status` before committing.
-5. **Push to BOTH remotes** (`git push threeD main` && `git push threews main`). Known issue:
-   threeD may fail "Repository not found" — report it, don't block on it.
+5. **Push with `git push threews main`** — the only push target (owner decision 2026-07-07).
+   Never push, pull, fetch, or merge `threeD` (retired `nirholas/3D-Agent` mirror, diverged history).
 6. **`npx vercel build` trap:** it overwrites `api/*.js` in place. If you ran it, check
    `head -1` of changed api files for `__defProp` before committing; recover with
    `git restore -- api/ public/`.

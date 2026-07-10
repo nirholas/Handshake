@@ -506,7 +506,9 @@ skill is live — LLM can now call its tools
 
 ## Worked example: the `wave` skill
 
-The wave skill in `examples/skills/wave/` is the minimal complete example. Here is every file.
+The `wave` skill is the minimal complete example — small enough to reproduce here
+in full. Create it at `examples/skills/wave/`; every file the bundle needs is
+listed below.
 
 ### `manifest.json`
 

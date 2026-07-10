@@ -23,7 +23,7 @@ vi.mock('../api/_lib/http.js', () => ({
 	},
 }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { publicIp: vi.fn(async () => ({ success: true })) },
+	limits: { marketDataIp: vi.fn(async () => ({ success: true })) },
 	clientIp: () => '1.2.3.4',
 }));
 
@@ -42,7 +42,7 @@ const ORIGINAL_ENV = process.env.LIQUIDATION_COLLECTOR_URL;
 const originalFetch = global.fetch;
 
 beforeEach(() => {
-	limits.publicIp.mockResolvedValue({ success: true });
+	limits.marketDataIp.mockResolvedValue({ success: true });
 	global.fetch = vi.fn();
 });
 
@@ -115,7 +115,7 @@ describe('GET /api/coin/liquidations', () => {
 	});
 
 	it('429s when rate limited, before touching the collector', async () => {
-		limits.publicIp.mockResolvedValue({ success: false });
+		limits.marketDataIp.mockResolvedValue({ success: false });
 		process.env.LIQUIDATION_COLLECTOR_URL = 'http://localhost:3033';
 		const res = await call();
 		expect(res._json.status).toBe(429);

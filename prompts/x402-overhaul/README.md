@@ -56,4 +56,4 @@ defaults, and the shared definition-of-done. Read it first, every time.
 - No mocks, no stubs, no TODOs. Real data only. Every state designed.
 - Free = keyless, no account, generous limits. Paid = real 402 + real settlement seams.
 - Never stop to ask — 00-CONTEXT has a decision default for every common blocker.
-- Commit explicit paths, push both remotes, append to PROGRESS.md.
+- Commit explicit paths, `git push threews main` (only push target), append to PROGRESS.md.

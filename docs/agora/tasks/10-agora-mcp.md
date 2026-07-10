@@ -13,7 +13,7 @@ Task 01 is done.
 - `packages/agenc-mcp/` — **the sibling to mirror exactly** (structure,
   `server.json`, `src/index.js`, `src/tools/*`, `src/lib/api.js`, `src/config.js`,
   README). Same conventions, same registry.
-- `mcp-prompts/10-agenc-mcp.md`, `docs/mcp.md` — MCP house style + registration.
+- `docs/mcp.md` — MCP house style + registration.
 - `api/agora/[action].js` (read tools wrap these) and the AgenC write SDK
   (`@three-ws/solana-agent`) for the signing tools.
 - `STRUCTURE.md` (npm workspaces list — you add the package) and a recent
@@ -41,7 +41,7 @@ signer (key never leaves the caller; mirror how the write SDK takes a signer).
    (join as a citizen via the identity bridge). Each performs the **real** on-chain
    op via the write SDK and returns the tx signature + the resulting Agora
    projection. Clear errors; never a partial silent failure.
-4. **Onboarding doc** + `mcp-prompts/` entry so an agent knows the loop: register →
+4. **Onboarding doc** so an agent knows the loop: register →
    find work on the board → claim → do it → complete with proof → earn. Add the
    server to `docs/mcp.md`, the workspaces list in `STRUCTURE.md`/`package.json`,
    and the MCP registry manifest like the other servers.

@@ -76,7 +76,7 @@ evidence lives, RUNBOOK location, current watch status. Update `MEMORY.md` index
 - [ ] Approval status checked and recorded; if already decided, the corresponding RUNBOOK
       branch EXECUTED (launch checklist or rejection loop), not just written
 - [ ] Memory file written; PROGRESS.md closed out with final state of the whole stream
-- [ ] All changes committed (explicit paths) + pushed to both remotes
+- [ ] All changes committed (explicit paths) + pushed to `threews` (only push target)
 
 ## Anti-laziness gates
 

@@ -99,10 +99,10 @@ Every paid endpoint under `api/x402/*.js` follows one pattern — read one (e.g.
 - **Concurrent agents share this worktree.** Stage explicit paths only — NEVER `git add -A` or
   `git add .`. Re-check `git status` and `git diff --staged` immediately before committing.
 - When your tasks are done and verified: commit immediately (no pre-commit audits beyond what
-  your prompt lists) and push to BOTH remotes: `git push threews main` then
-  `git push threeD main`. **`threeD` currently fails with "Repository not found"** — attempt it
-  once, report the failure in your summary, and do NOT let it block you. NEVER pull/fetch/merge
-  from `threeD` (push-only mirror; pulling it has destroyed files before).
+  your prompt lists) and push with `git push threews main`. That is the **only** push target
+  (owner decision 2026-07-07). Never push, pull, fetch, or merge `threeD` — the retired
+  `nirholas/3D-Agent` mirror, whose `main` has diverged with foreign history; pulling it has
+  destroyed files before.
 - No GitHub Actions — automation lives in Vercel/workers/scripts, never `.github/workflows/`.
 - **Vercel build trap:** `npx vercel build` overwrites `api/*.js` sources in place with esbuild
   bundles. Never run it. If you see a huge `api/` diff starting with `__defProp`, recover with
@@ -123,5 +123,5 @@ Every paid endpoint under `api/x402/*.js` follows one pattern — read one (e.g.
 ## Reporting
 
 End with a short report: what shipped (files + routes), what you verified (commands + results),
-the commit hash(es), the threeD push result, and any environment gaps the owner must fill
+the commit hash(es), and any environment gaps the owner must fill
 (exact env var names + where to set them). No questions.

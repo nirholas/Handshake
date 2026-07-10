@@ -131,8 +131,8 @@ Inherit the full `CLAUDE.md` "Definition of done" + "Self-review protocol". In a
   see what was ported vs newly written, and why anything new was necessary.
 - Loading/empty/error/populated states all designed; mobile (touch/joystick) works.
 - Run the **completionist** subagent over changed files; fix everything it flags.
-- Do not push unless the user asks; when they do, push to **both** remotes (`threeD`,
-  `threews`) per CLAUDE.md.
+- Do not push unless the user asks; when they do, `git push threews main` — the only push
+  target per CLAUDE.md. Never push/pull/fetch/merge `threeD` (retired mirror, diverged history).
 
 ---
 
