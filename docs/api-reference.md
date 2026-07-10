@@ -2460,9 +2460,74 @@ GET /api/coin/news?q=<coin name>&limit=8
 ```
 
 Returns `{ "articles": [{ title, link, description, image, source,
-published_at }], "source": "cryptocurrency.cv" | "rss" }`. Primary upstream is
-the cryptocurrency.cv aggregator; on failure it reads the same first-party RSS
-feeds directly (`source: "rss"`).
+published_at }], "source": "three.ws" }`. Served by the native three.ws
+aggregator (`api/_lib/news.js` — 37 publisher feeds, per-source 5-minute cache
+with serve-stale-on-error).
+
+---
+
+## Crypto News API
+
+The engine behind [/markets/news](https://three.ws/markets/news) and
+[/markets/archive](https://three.ws/markets/archive). Free, key-less, CORS `*`.
+
+### Live feed
+
+```
+GET /api/news/feed?category=defi&q=etf&source=coindesk&limit=30&offset=0&meta=1
+```
+
+Aggregates 37 publisher RSS/Atom feeds natively (registry:
+`api/_lib/news-sources.js`). All params optional: `category` (one of the 15
+canonical categories — `general`, `bitcoin`, `ethereum`, `layer2`, `solana`,
+`defi`, `nft`, `trading`, `research`, `onchain`, `institutional`,
+`mainstream`, `asia`, `regulation`, `journalism`), `source` (a single source
+key, overrides `category`), `q` (full-text over title/description/tickers),
+`limit` ≤ 50, `offset`. Returns
+`{ articles: [{ id, title, link, description, image, author, source,
+source_key, category, pub_date, tickers[], sentiment: { score, label,
+confidence } }], total, sources_ok, sources_total, fetched_at }`; with
+`meta=1` it also returns `categories[]` and the `sources[]` registry. Each
+source is cached server-side for 5 minutes and served stale (up to 24 h) if
+its publisher goes down. CDN cache 120 s.
+
+### Historical archive — 662,047 articles since 2017
+
+```
+GET /api/news/archive?q=bitcoin+etf&ticker=BTC&source=odaily&sentiment=positive&lang=zh&start_date=2024-01-01&end_date=2024-01-31&limit=50&offset=0
+GET /api/news/archive?stats=true      # corpus statistics + month range
+GET /api/news/archive?months=true     # queryable months
+GET /api/news/archive?trending=true   # top tickers over the newest archived weeks
+```
+
+Queries the platform-hosted corpus (`gs://three-ws-news-archive`: monthly
+JSONL, gzip at rest — the CryptoPanic english corpus + the Odaily chinese
+corpus + the cryptocurrency.cv live archiver, September 2017 → today). Records
+are enriched: `tickers[]`, `tags[]`, `sentiment`, `lang` (`en`/`zh`),
+`is_breaking`, and `market_context` (BTC/ETH price + Fear & Greed at
+publication) where captured. Query mode scans months **newest → oldest** with
+early stop (≤ 12 months per request) and reports coverage honestly:
+`{ articles[], total_scanned_matches, has_more, scanned: { months[], from,
+to, complete, months_remaining }, hint? }` — pass `start_date`/`end_date` to
+reach older years. `sentiment` ∈ `positive|negative|neutral`; `limit` ≤ 100.
+CDN cache 300 s (queries) / 3600 s (stats, months, trending).
+
+### Article reader
+
+```
+GET /api/news/article?url=<article url>&title=&source=
+```
+
+Server-side extraction with SSRF + DNS-rebinding protection. Returns
+`{ url, title, source, image, author, published_at, description, extraction,
+paragraphs[], content_chars, tickers[], summary, key_points[], sentiment
+("bullish"|"bearish"|"neutral"), analysis_provider, related[], fetched_at }`.
+`extraction` tells you where the text came from: `"page"` (publisher page),
+`"feed"` (the publisher's own `content:encoded` feed body — used when the
+page blocks server fetches), or `"preview"` (metadata only; `blocked_reason`
+set). `analysis_provider` is `groq`/`openrouter` when the platform LLM chain
+is configured, else `heuristic` (extractive summary + lexicon sentiment —
+always available). Cached 30 min per URL.
 
 ---
 

@@ -16,8 +16,7 @@
 // Aggregation results are cached per source for 5 minutes inside
 // api/_lib/news.js, so this endpoint is cheap under load; CDN caches 120s.
 
-import { cors, json, method, wrap } from '../_lib/http.js';
-import { rateLimited } from '../_lib/http.js';
+import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getNews } from '../_lib/news.js';
 import { NEWS_SOURCES, NEWS_CATEGORIES } from '../_lib/news-sources.js';

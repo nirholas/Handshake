@@ -218,6 +218,12 @@ text before they reach the client.
 | Exchanges / Derivatives     | `pages/exchanges.html`, `pages/derivatives.html` (+ `src/*.js`, `src/*.css`)                                                             |
 | Converter                   | `pages/converter.html` + `src/converter.js` + `src/converter.css`                                                                        |
 | DeFi / Chains / Stablecoins | `pages/{defi,chains,stablecoins}.html` (+ `src/*.js`, `src/*.css`), APIs in [`api/defi/`](../api/defi)                                   |
+| Markets hub                 | [`pages/markets.html`](../pages/markets.html) + [`src/markets-page.js`](../src/markets-page.js)                                          |
+| Crypto news                 | [`pages/markets-news.html`](../pages/markets-news.html) + [`src/markets-news.js`](../src/markets-news.js)                                |
+| Article reader              | [`pages/news-article.html`](../pages/news-article.html) + [`src/news-article.js`](../src/news-article.js)                                |
+| News archive                | [`pages/news-archive.html`](../pages/news-archive.html) + [`src/news-archive.js`](../src/news-archive.js)                                |
+| News engine + sources       | [`api/_lib/news.js`](../api/_lib/news.js) + [`api/_lib/news-sources.js`](../api/_lib/news-sources.js), endpoints in [`api/news/`](../api/news) |
+| Shared news renderers       | [`src/shared/news-render.js`](../src/shared/news-render.js); table primitives in [`src/shared/market-table.js`](../src/shared/market-table.js) |
 | Shared design system        | [`src/coin-pages.css`](../src/coin-pages.css) (Source Serif 4 self-hosted in `public/fonts/`)                                            |
 | Shared formatters           | [`src/shared/coin-format.js`](../src/shared/coin-format.js) — unit-tested in [`tests/coin-format.test.js`](../tests/coin-format.test.js) |
 | API proxies                 | [`api/coin/`](../api/coin) — `detail.js`, `ohlc.js`, `markets.js`, `global.js`, `fear-greed.js`, `gas.js`, `news.js`, `liquidations.js`  |
