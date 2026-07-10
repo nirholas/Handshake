@@ -23,7 +23,7 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { getNews, stripJsonFence, lexiconSentiment } from '../_lib/news.js';
+import { getNews, stripJsonFence, truncateWords } from '../_lib/news.js';
 import { llmComplete, llmConfigured } from '../_lib/llm.js';
 
 const CACHE_TTL_MS = 30 * 60_000;
@@ -117,7 +117,7 @@ function heuristicClusters(articles, limit) {
 			// The most-covered angle leads; its own text is the summary.
 			const lead = c.items.slice().sort((x, y) => new Date(y.pub_date || 0) - new Date(x.pub_date || 0))[0];
 			const summary =
-				lead.description ||
+				truncateWords(lead.description, 400) ||
 				`${c.items.length} outlet${c.items.length > 1 ? 's' : ''} covering this story, led by ${lead.source}.`;
 			return {
 				title: lead.title,
@@ -164,7 +164,7 @@ ${indexed}`,
 		if (!cited.length) continue;
 		out.push({
 			title: String(n.title || cited[0].title).slice(0, 200),
-			summary: String(n.summary || cited[0].description || '').slice(0, 900),
+			summary: truncateWords(String(n.summary || cited[0].description || ''), 900) || cited[0].title,
 			stance: ['bullish', 'bearish', 'neutral'].includes(n.stance) ? n.stance : stanceFrom(cited),
 			tickers: clusterTickers(cited),
 			coverage: cited.length,

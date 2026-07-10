@@ -1190,12 +1190,6 @@ URL: https://three.ws/agent-identities
 
 Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.
 
-### Agent Home
-
-URL: https://three.ws/agent
-
-Default landing for an agent instance — chat, embed, and remix actions.
-
 ### Agents Index
 
 URL: https://three.ws/agents

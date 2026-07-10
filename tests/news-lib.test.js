@@ -5,8 +5,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const { parseFeed, lexiconSentiment, extractTickers, articleId, stripHtml, getNews, findArticle } =
-	await import('../api/_lib/news.js');
+const {
+	parseFeed, lexiconSentiment, extractTickers, articleId, stripHtml, getNews, findArticle,
+	stripFeedBoilerplate, truncateWords,
+} = await import('../api/_lib/news.js');
 
 const RSS_FIXTURE = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -101,6 +103,28 @@ describe('enrichment', () => {
 
 	it('stripHtml flattens tags and entities', () => {
 		expect(stripHtml('<p>A &amp; B&nbsp;&mdash; C</p>')).toBe('A & B — C');
+	});
+
+	it('stripFeedBoilerplate removes WordPress syndication tails', () => {
+		expect(
+			stripFeedBoilerplate('Real reporting here. The post Some Headline appeared first on CoinDesk.'),
+		).toBe('Real reporting here.');
+		expect(stripFeedBoilerplate('Body text. Continue reading on our site')).toBe('Body text.');
+		expect(stripFeedBoilerplate('Trailing elision […]')).toBe('Trailing elision');
+		expect(stripFeedBoilerplate('Clean sentence.')).toBe('Clean sentence.');
+	});
+
+	it('truncateWords never cuts mid-word and marks the elision', () => {
+		const source = 'the quick brown fox jumps over the lazy dog';
+		const out = truncateWords(source, 20);
+		expect(out.endsWith('…')).toBe(true);
+		// every emitted word must be a complete word from the source
+		const words = out.slice(0, -1).trim().split(' ');
+		expect(source.split(' ').slice(0, words.length)).toEqual(words);
+		expect(truncateWords('short', 20)).toBe('short');
+		expect(truncateWords('', 20)).toBeNull();
+		// a single word longer than the cap still truncates rather than overflowing
+		expect(truncateWords('supercalifragilistic', 10).length).toBeLessThanOrEqual(11);
 	});
 });
 

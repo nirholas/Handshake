@@ -4270,24 +4270,15 @@
 		},
 		{
 			"src": "/blog",
-			"status": 301,
-			"headers": {
-				"Location": "/changelog"
-			}
+			"dest": "/blog/index.html"
 		},
 		{
 			"src": "/blog/",
-			"status": 301,
-			"headers": {
-				"Location": "/changelog"
-			}
+			"dest": "/blog/index.html"
 		},
 		{
 			"src": "/blog/([a-z0-9-]+)/?",
-			"status": 301,
-			"headers": {
-				"Location": "/changelog"
-			}
+			"dest": "/blog/$1.html"
 		},
 		{
 			"src": "/llms.txt",

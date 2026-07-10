@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T12:24:50.452Z",
+	"generated_at": "2026-07-10T12:31:09.835Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -106,6 +106,16 @@
 			"tags": [
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "News Digest: the day's crypto coverage, grouped into the stories that actually matter",
+			"summary": "Reading 90 headlines to find the 8 things that happened is a chore. /markets/digest does it for you: it reads every story from all 38 publisher feeds over your chosen window (6 hours to 3 days) and groups them into distinct narratives — each with a plain-language summary, whether it reads bullish or bearish, the coins involved, and an expandable list of every outlet that covered it. When an AI provider is available it groups the stories semantically; otherwise it clusters them by keyword and ticker overlap. Either way, every story links back to the real articles behind it — nothing is invented.",
+			"link": "/markets/digest",
+			"tags": [
+				"feature"
 			]
 		},
 		{

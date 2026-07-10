@@ -66,6 +66,32 @@ export function articleId(link) {
 	return createHash('sha256').update(String(link)).digest('hex').slice(0, 16);
 }
 
+// WordPress and its plugins append syndication boilerplate to every excerpt:
+// "The post <title> appeared first on <site>.", "Continue reading…",
+// "Read more on …", trailing "[…]". None of it is article text — strip it
+// before the excerpt reaches a card, a digest summary, or an LLM prompt.
+export function stripFeedBoilerplate(text) {
+	return String(text || '')
+		.replace(/\bThe post .*?appeared first on .*$/is, '')
+		.replace(/\bThis (?:post|article) (?:was )?(?:first )?(?:published|appeared).*$/is, '')
+		.replace(/\b(?:Continue reading|Read more|Read the full (?:story|article)|The post)\b[^.]*$/i, '')
+		.replace(/\[[…\.]+\]\s*$/, '')
+		.replace(/\s*(?:…|\.\.\.)\s*$/, '')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
+// Cut at a word boundary and mark the elision, so an excerpt never ends
+// mid-word ("…the game appeared f").
+export function truncateWords(text, max) {
+	const t = String(text || '').trim();
+	if (!t) return null;
+	if (t.length <= max) return t;
+	const cut = t.slice(0, max);
+	const lastSpace = cut.lastIndexOf(' ');
+	return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s,;:—–-]+$/, '')}…`;
+}
+
 // Models on the free tiers often wrap JSON in a ```json fence despite being
 // told not to. Unwrap before JSON.parse rather than failing the completion.
 export function stripJsonFence(text) {
@@ -195,7 +221,7 @@ export function parseFeed(xml, sourceKey) {
 			if (title && descText.toLowerCase().startsWith(title.toLowerCase())) {
 				descText = descText.slice(title.length).replace(/^[\s—–:-]+/, '');
 			}
-			const description = descText.slice(0, 320) || null;
+			const description = truncateWords(stripFeedBoilerplate(descText), 320);
 			// Full body many feeds ship (WordPress content:encoded, Atom content).
 			// Server-side only — the reader uses it when the publisher's site
 			// blocks direct fetches; the feed API strips it from list payloads.

@@ -218,7 +218,6 @@ Manage, talk to, and deploy individual agents.
 
 - [Chat](https://three.ws/chat): Talk to your agent. Voice, text, and tool-use in one interface.
 - [Agent Identity Studio — 3D avatars for AI agents](https://three.ws/agent-identities): Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.
-- [Agent Home](https://three.ws/agent): Default landing for an agent instance — chat, embed, and remix actions.
 - [Agents Index](https://three.ws/agents): Browse every registered agent on three.ws.
 - [Reputation Explorer](https://three.ws/reputation): Inspect on-chain reputation scores and attestations for any agent.
 

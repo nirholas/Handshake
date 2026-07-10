@@ -2627,6 +2627,27 @@ to, complete, months_remaining }, hint? }` — pass `start_date`/`end_date` to
 reach older years. `sentiment` ∈ `positive|negative|neutral`; `limit` ≤ 100.
 CDN cache 300 s (queries) / 3600 s (stats, months, trending).
 
+### Daily digest
+
+```
+GET /api/news/digest?hours=24&limit=8&refresh=1
+```
+
+Clusters the last `hours` (1–72, default 24) of live coverage into at most
+`limit` (3–12, default 8) narratives. Returns `{ narratives: [{ title,
+summary, stance ("bullish"|"bearish"|"neutral"), tickers[], coverage,
+articles: [{ id, title, link, source, pub_date, image }] }], engine
+("llm"|"heuristic"), provider, window_hours, articles_considered,
+sources_live, mood, top_tickers[], generated_at, cached }`.
+
+`engine` names the clustering path: `llm` (platform chain grouped them
+semantically) or `heuristic` (Jaccard clustering over headline tokens +
+tickers). **Every narrative cites the real articles it clustered** — a model
+citation that doesn't resolve to a fetched article is discarded, and a digest
+in which nothing resolves falls back to the heuristic engine. `503
+insufficient_coverage` when fewer than 3 articles were published in the
+window. Cached 30 min per window; `refresh=1` bypasses.
+
 ### RSS syndication
 
 ```

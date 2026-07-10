@@ -87,6 +87,14 @@
 			<description>Your account's friends list, presence, and DMs (already live on /walk) now work inside /play's coin worlds too: a Friends button on the HUD (or press J) opens a drawer showing who's online and where, with live direct messages that arrive instantly whether or not the drawer is open. Previously /play never told the server who you were signed in as, so friends saw you as offline no matter how long you played, and any message sent your way was silently lost.</description>
 		</item>
 		<item>
+			<title>News Digest: the day's crypto coverage, grouped into the stories that actually matter</title>
+			<link>https://three.ws/markets/digest</link>
+			<guid isPermaLink="false">2026-07-10:News Digest: the day's crypto coverage, grouped into the stories that actually matter</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Reading 90 headlines to find the 8 things that happened is a chore. /markets/digest does it for you: it reads every story from all 38 publisher feeds over your chosen window (6 hours to 3 days) and groups them into distinct narratives — each with a plain-language summary, whether it reads bullish or bearish, the coins involved, and an expandable list of every outlet that covered it. When an AI provider is available it groups the stories semantically; otherwise it clusters them by keyword and ticker overlap. Either way, every story links back to the real articles behind it — nothing is invented.</description>
+		</item>
+		<item>
 			<title>The liquidations pulse on /coins is live</title>
 			<link>https://three.ws/coins</link>
 			<guid isPermaLink="false">2026-07-10:The liquidations pulse on /coins is live</guid>

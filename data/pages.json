@@ -1607,14 +1607,6 @@
 					"showcase": true
 				},
 				{
-					"path": "/agent",
-					"title": "Agent Home",
-					"description": "Default landing for an agent instance — chat, embed, and remix actions.",
-					"priority": 0.7,
-					"changefreq": "weekly",
-					"added": "2026-04-14"
-				},
-				{
 					"path": "/agents",
 					"title": "Agents Index",
 					"description": "Browse every registered agent on three.ws.",

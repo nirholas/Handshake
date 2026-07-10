@@ -157,6 +157,26 @@ honest ladder: page extraction → the publisher's own feed body
 (`content:encoded`) → a labelled preview with a read-at-source CTA. Never a
 dead end, never fabricated text.
 
+### `/markets/digest` — the day in stories, not headlines
+
+Groups the last N hours of coverage (6h → 72h) into the handful of narratives
+that actually moved, each with a summary, a market stance, the tickers
+involved, and an expandable list of **every outlet that covered it**. Two real
+engines, reported honestly in the response and on the page:
+
+- **`engine: "llm"`** — the platform LLM chain (`api/_lib/llm.js`, free tiers
+  first) groups the headlines semantically. Every narrative must cite indices
+  that resolve to articles the aggregator actually fetched; a hallucinated
+  citation is dropped, and a digest where nothing resolves falls through.
+- **`engine: "heuristic"`** — agglomerative clustering on Jaccard similarity
+  over each headline's significant tokens plus its detected tickers, with an
+  extractive summary from the lead article. Not a placeholder: it produces
+  genuine clusters from the same articles, and runs whenever no LLM provider
+  key is configured or the chain fails.
+
+Cached 30 min per window in-process; `?refresh=1` regenerates. Backed by
+`/api/news/digest`.
+
 ### `/markets/archive` — the historical archive
 
 The largest open crypto-news archive: **660,000+ enriched articles from
