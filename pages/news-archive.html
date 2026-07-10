@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Crypto News Archive — 662k articles since 2017 · three.ws</title>
+		<meta
+			name="description"
+			content="The largest open crypto-news archive: 662,047 articles from September 2017 to today, searchable by keyword, ticker, source, sentiment, date, and language (English + Chinese)."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/markets/archive" />
+		<meta property="og:title" content="Crypto News Archive — 662k articles since 2017 · three.ws" />
+		<meta
+			property="og:description"
+			content="662,047 crypto news articles from 2017 to today — searchable by keyword, ticker, source, sentiment, date, and language."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+News+Archive&amp;d=662%2C047+articles+from+September+2017+to+today+%E2%80%94+searchable+by+keyword%2C+ticker%2C+source%2C+sentiment%2C+date%2C+and+language.&amp;p=%2Fmarkets%2Farchive"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Crypto News Archive — 662k articles since 2017" />
+		<meta
+			name="twitter:description"
+			content="The largest open crypto-news archive — searchable by keyword, ticker, source, sentiment, date, and language."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+News+Archive&amp;d=662%2C047+articles+from+September+2017+to+today+%E2%80%94+searchable+by+keyword%2C+ticker%2C+source%2C+sentiment%2C+date%2C+and+language.&amp;p=%2Fmarkets%2Farchive"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/site.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/markets/archive" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Crypto News Archive — three.ws" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Dataset","name":"three.ws Crypto News Archive","description":"662,047 crypto news articles from September 2017 onward, enriched with tickers, tags, sentiment, and language. Sources include the CryptoPanic english corpus and the Odaily chinese corpus.","url":"https://three.ws/markets/archive","temporalCoverage":"2017-09/..","inLanguage":["en","zh"],"creator":{"@type":"Organization","name":"three.ws","url":"https://three.ws"}}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a><span class="sep">/</span
+				><span class="here">News Archive</span>
+			</nav>
+			<h1 class="cv-h1">Crypto News Archive</h1>
+			<p class="cv-sub">
+				The largest open archive of crypto news — <strong>662,047 articles</strong> from
+				September 2017 to today, in English and Chinese, every record enriched with
+				tickers, tags, and sentiment. Search a decade of market history.
+			</p>
+
+			<nav class="cv-tools" aria-label="Market tools">
+				<a class="cv-pill" href="/markets">Markets Hub</a>
+				<a class="cv-pill" href="/markets/news">News</a>
+				<a class="cv-pill" href="/markets/archive" aria-current="page">Archive</a>
+				<a class="cv-pill" href="/coins">Coins</a>
+				<a class="cv-pill" href="/heatmap">Heatmap</a>
+				<a class="cv-pill" href="/fear-greed">Fear &amp; Greed</a>
+			</nav>
+
+			<!-- Corpus stats. Hydrated by src/news-archive.js. -->
+			<section id="arc-stats" class="arc-stats" aria-label="Archive statistics"></section>
+
+			<!-- Filters. -->
+			<form id="arc-filters" class="arc-filters" aria-label="Archive filters">
+				<div class="arc-field" style="grid-column: span 2">
+					<label for="arc-q">Search</label>
+					<input id="arc-q" type="search" placeholder="bitcoin etf, mt gox, halving…" autocomplete="off" />
+				</div>
+				<div class="arc-field">
+					<label for="arc-ticker">Ticker</label>
+					<input id="arc-ticker" type="text" placeholder="BTC" maxlength="10" autocomplete="off" />
+				</div>
+				<div class="arc-field">
+					<label for="arc-source">Source</label>
+					<input id="arc-source" type="text" placeholder="coindesk, odaily…" autocomplete="off" />
+				</div>
+				<div class="arc-field">
+					<label for="arc-from">From</label>
+					<input id="arc-from" type="date" min="2017-09-01" />
+				</div>
+				<div class="arc-field">
+					<label for="arc-to">To</label>
+					<input id="arc-to" type="date" min="2017-09-01" />
+				</div>
+				<div class="arc-field">
+					<label for="arc-sentiment">Sentiment</label>
+					<select id="arc-sentiment">
+						<option value="">Any</option>
+						<option value="positive">Positive</option>
+						<option value="neutral">Neutral</option>
+						<option value="negative">Negative</option>
+					</select>
+				</div>
+				<div class="arc-field">
+					<label for="arc-lang">Language</label>
+					<select id="arc-lang">
+						<option value="">All</option>
+						<option value="en">English</option>
+						<option value="zh">中文</option>
+					</select>
+				</div>
+				<div class="arc-actions">
+					<button class="arc-btn" type="submit">Search archive</button>
+					<button class="arc-btn ghost" type="reset" id="arc-reset">Reset</button>
+				</div>
+			</form>
+
+			<!-- Year quick-jump + trending tickers. -->
+			<div id="arc-years" class="arc-years" role="group" aria-label="Jump to a year"></div>
+
+			<p id="arc-coverage" class="arc-coverage" role="status"></p>
+
+			<!-- Results. -->
+			<section id="arc-results" class="cv-section" aria-label="Archive results" aria-live="polite"></section>
+
+			<div style="display: flex; justify-content: center; margin: 1.5rem 0 0">
+				<button id="arc-more" class="cv-load-more" type="button" hidden>Load more</button>
+			</div>
+		</main>
+
+		<script type="module" src="/src/news-archive.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>
