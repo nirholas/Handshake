@@ -54,6 +54,10 @@ vi.mock('../api/_lib/db.js', () => {
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: {
 		authIp: vi.fn(async () => ({ success: rlState.success })),
+		// Session-scoped reads (api/monetization/revenue.js) moved off the strict
+		// credential `authIp` bucket onto `authedReadIp` — without it here the
+		// handler throws "limits.authedReadIp is not a function" and 500s.
+		authedReadIp: vi.fn(async () => ({ success: rlState.success })),
 		publicIp: vi.fn(async () => ({ success: rlState.success })),
 		pricingPerIp: vi.fn(async () => ({ success: rlState.success })),
 		withdrawalPerUser: vi.fn(async () => ({ success: rlState.success })),
