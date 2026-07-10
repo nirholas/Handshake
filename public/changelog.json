@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T12:13:16.047Z",
+	"generated_at": "2026-07-10T12:19:11.573Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -75,6 +75,16 @@
 			"tags": [
 				"fix",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Coin buybacks and vault balances work again",
+			"summary": "A wiring mistake in how the platform opened its connection to Solana meant every automated buyback silently failed — for nearly a month, roughly 40,000 times a day — and the vault-balance view for any agent coin returned an error instead of its numbers. Both are fixed. Buybacks now run against the chain as intended, agent coin pages show real payment, buyback and withdraw vault balances again, and the failed-run log that quietly grew to a quarter-million rows is now pruned automatically while every on-chain burn record is kept.",
+			"link": "/launches",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -17657,16 +17667,6 @@
 			"tags": [
 				"feature",
 				"security"
-			]
-		},
-		{
-			"date": "2026-04-14",
-			"type": "launch",
-			"title": "Agent Home",
-			"summary": "Default landing for an agent instance — chat, embed, and remix actions.",
-			"link": "/agent",
-			"tags": [
-				"launch"
 			]
 		},
 		{

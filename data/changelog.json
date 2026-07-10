@@ -12803,6 +12803,15 @@
 				"infra"
 			],
 			"link": "/markets/archive"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "Coin buybacks and vault balances work again",
+			"summary": "A wiring mistake in how the platform opened its connection to Solana meant every automated buyback silently failed — for nearly a month, roughly 40,000 times a day — and the vault-balance view for any agent coin returned an error instead of its numbers. Both are fixed. Buybacks now run against the chain as intended, agent coin pages show real payment, buyback and withdraw vault balances again, and the failed-run log that quietly grew to a quarter-million rows is now pruned automatically while every on-chain burn record is kept.",
+			"link": "/launches",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }

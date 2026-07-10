@@ -144,7 +144,7 @@ export default wrap(async (req, res) => {
 		safe(async () => {
 			const [c] = await sql`
 				SELECT
-					count(*)::int                                                          AS scored_total,
+					count(*)::int                                                          AS cached,
 					count(*) filter (where scored_at >= now() - interval '24 hours')::int  AS scored_24h,
 					count(*) filter (where tier = 'prime')::int                            AS prime,
 					count(*) filter (where tier = 'strong')::int                           AS strong
@@ -152,8 +152,14 @@ export default wrap(async (req, res) => {
 			const [a] = await sql`
 				SELECT count(*)::int AS open_actions FROM oracle_watch_actions
 				WHERE network = ${network} AND outcome = 'open'`;
+			// oracle_conviction is retention-pruned, so its row count is a rolling
+			// window. The durable counter is the lifetime figure — same source as
+			// /api/oracle/stats, so the two surfaces never disagree.
+			const [t] = await sql`
+				SELECT value::int AS scored_lifetime FROM oracle_counters
+				WHERE network = ${network} AND key = 'scored_lifetime'`.catch(() => [{}]);
 			return {
-				scored_total: c?.scored_total ?? 0,
+				scored_total: Math.max(t?.scored_lifetime ?? 0, c?.cached ?? 0),
 				scored_24h: c?.scored_24h ?? 0,
 				prime: c?.prime ?? 0,
 				strong: c?.strong ?? 0,

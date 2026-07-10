@@ -63,6 +63,14 @@
 			<description>Rigging any generated model into an animation-ready character had been failing since the cloud migration: the rig request was sent to a service that doesn't do rigging, and the GPU rigger itself crashed on a graphics call our cloud GPUs don't support. Both are fixed — rig requests now reach the real UniRig worker, which renders its voxel pass in software instead. Proof: all four Agent Identity Studio demo characters (LedgerLynx, MuseWeaver, Momentum-9, and the three.ws studio's own) were generated, rigged with full skeletons, and photographed in posed renders through the live pipeline — see them on the showcase.</description>
 		</item>
 		<item>
+			<title>Coin buybacks and vault balances work again</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-07-10:Coin buybacks and vault balances work again</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A wiring mistake in how the platform opened its connection to Solana meant every automated buyback silently failed — for nearly a month, roughly 40,000 times a day — and the vault-balance view for any agent coin returned an error instead of its numbers. Both are fixed. Buybacks now run against the chain as intended, agent coin pages show real payment, buyback and withdraw vault balances again, and the failed-run log that quietly grew to a quarter-million rows is now pruned automatically while every on-chain burn record is kept.</description>
+		</item>
+		<item>
 			<title>Crypto news is live: a real-time feed from 38 publishers, a rich article reader, and a 662,047-article archive back to 2017</title>
 			<link>https://three.ws/markets</link>
 			<guid isPermaLink="false">2026-07-10:Crypto news is live: a real-time feed from 38 publishers, a rich article reader, and a 662,047-article archive back to 2017</guid>
@@ -13629,14 +13637,6 @@
 			<pubDate>Wed, 15 Apr 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Sign-In with Ethereum, wallet integration, and the ERC-8004 Passport widget — agents display cryptographic proof of identity tied to wallet ownership.</description>
-		</item>
-		<item>
-			<title>Agent Home</title>
-			<link>https://three.ws/agent</link>
-			<guid isPermaLink="false">2026-04-14:Agent Home</guid>
-			<pubDate>Tue, 14 Apr 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Default landing for an agent instance — chat, embed, and remix actions.</description>
 		</item>
 		<item>
 			<title>Create account</title>

@@ -35,6 +35,9 @@
 //      so a multi-day window keeps everything load-bearing; wallet reputation
 //      (`wallet_reputation`, wallet-keyed, the durable output) and the win/loss
 //      ground truth (`pumpfun_graduations`) are never touched.
+//   A4. AUTOPILOT RUN LOGS. The buyback/distribute crons record one row per coin
+//      per tick. Successful runs carry a tx_signature and are kept forever; the
+//      `failed`/`skipped` diagnostic rows are pruned on the firehose window.
 //   B. AVATAR JOB HYGIENE. Strips the base64 source images from terminal jobs past
 //      a day old, and deletes terminal jobs past 30 days.
 //   C. VACUUM. Plain VACUUM on the tables it pruned so the freed pages become
@@ -101,6 +104,23 @@ const TIME_SERIES_TABLES = [
 	{ table: 'x402_autonomous_log', tsColumn: 'ts', windowKind: 'audit' },
 	{ table: 'sniper_coin_sentiment', tsColumn: 'checked_at', windowKind: 'firehose' },
 	{ table: 'token_intel_risk', tsColumn: 'checked_at', windowKind: 'firehose' },
+];
+
+// ── Autopilot run logs ────────────────────────────────────────────────────────
+// The buyback / distribute crons append one row per coin per tick, whatever the
+// outcome. Successful runs carry a `tx_signature` — an on-chain money record we
+// keep indefinitely (the /autopilot history reads them). Unsuccessful ones carry
+// only a diagnostic: `failed` (SDK/RPC error) or `skipped` (vault empty or under
+// threshold). Those are pure churn, and a persistent failure loop mints them at
+// the cron's cadence: a PumpAgent argument-order bug produced 228k `failed` rows
+// (~40k/day, 59 MB) between 2026-06-15 and 2026-07-10 before anyone noticed,
+// because a failing run recorded itself instead of alerting.
+//
+// Prune only the diagnostic rows, on the self-tightening firehose window. Rows
+// with a tx_signature are never touched, so no burn or payout record is lost.
+const RUN_LOG_TABLES = [
+	{ table: 'pump_buyback_runs', tsColumn: 'created_at' },
+	{ table: 'pump_distribute_runs', tsColumn: 'created_at' },
 ];
 
 function clampInt(raw, min, max, dflt) {
@@ -211,6 +231,37 @@ async function pruneTimeSeries(cutoffs) {
 				`DELETE FROM ${table} WHERE ctid IN (
 					SELECT ctid FROM ${table}
 					WHERE ${tsColumn} < now() - $1 * interval '1 day'
+					LIMIT $2
+				) RETURNING 1`,
+				[cutoffDays, SERIES_BATCH],
+			);
+			deleted += del.length;
+			if (del.length < SERIES_BATCH) break;
+		}
+		if (deleted > 0) perTable[table] = deleted;
+	}
+	return perTable;
+}
+
+// ── A4. Autopilot run-log retention (diagnostic rows only) ────────────────────
+// Deletes `failed`/`skipped` rows past the firehose window. `tx_signature IS
+// NULL` is belt-and-braces: a row that somehow reached a terminal-diagnostic
+// status while still carrying a signature keeps its on-chain record.
+async function pruneRunLogs(cutoffDays) {
+	const perTable = {};
+	for (const { table, tsColumn } of RUN_LOG_TABLES) {
+		if (!(await tableExists(table))) continue;
+		let deleted = 0;
+		const maxBatches = Math.ceil(SERIES_MAX_PER_RUN / SERIES_BATCH);
+		for (let i = 0; i < maxBatches; i++) {
+			// table/tsColumn are fixed constants from RUN_LOG_TABLES; only the numeric
+			// bounds are parameters. Bounded subselect + DELETE works at cap.
+			const del = await sql(
+				`DELETE FROM ${table} WHERE ctid IN (
+					SELECT ctid FROM ${table}
+					WHERE ${tsColumn} < now() - $1 * interval '1 day'
+					  AND status IN ('failed', 'skipped')
+					  AND tx_signature IS NULL
 					LIMIT $2
 				) RETURNING 1`,
 				[cutoffDays, SERIES_BATCH],
@@ -364,6 +415,7 @@ export default wrapCron(async (req, res) => {
 	const firehose = await pruneFirehose(cutoffDays);
 	const orphans = await pruneOrphanedSatellites(firehose.liveSatellites);
 	const series = await pruneTimeSeries({ firehose: cutoffDays, audit: auditCutoffDays });
+	const runLogs = await pruneRunLogs(cutoffDays);
 	const audit = await pruneAuditLog(auditCutoffDays);
 	const regen = await pruneRegenJobs();
 
@@ -371,6 +423,7 @@ export default wrapCron(async (req, res) => {
 	const touched = Object.keys(firehose.perTable).filter((t) => firehose.perTable[t] > 0);
 	for (const t of Object.keys(orphans)) if (!touched.includes(t)) touched.push(t);
 	for (const t of Object.keys(series)) if (!touched.includes(t)) touched.push(t);
+	for (const t of Object.keys(runLogs)) if (!touched.includes(t)) touched.push(t);
 	if (audit.deleted > 0) touched.push('x402_audit_log');
 	if (regen.deleted > 0 || regen.stripped > 0) touched.push('avatar_regen_jobs');
 	await vacuumTables(touched);
@@ -385,13 +438,14 @@ export default wrapCron(async (req, res) => {
 	if (underPressure) {
 		const seriesDeleted = Object.values(series).reduce((a, b) => a + b, 0);
 		const orphansDeleted = Object.values(orphans).reduce((a, b) => a + b, 0);
+		const runLogsDeleted = Object.values(runLogs).reduce((a, b) => a + b, 0);
 		const topLine = topTables
 			.slice(0, 5)
 			.map((t) => `${t.table} ${t.mb}MB`)
 			.join(', ');
 		sendOpsAlert(
 			'db retention pressure valve engaged',
-			`db ${sizeBeforeMb}MB ≥ high-water ${highWaterMb}MB — tightened firehose retention to ${minDays}d; pruned ${firehose.mints} mints, ${seriesDeleted} series rows, ${orphansDeleted} orphaned satellite rows. Largest tables: ${topLine || 'n/a'}. Raise the Neon storage plan (or DB_RETENTION_HIGH_WATER_MB / PUMP_INTEL_RETENTION_DAYS) for a longer window.`,
+			`db ${sizeBeforeMb}MB ≥ high-water ${highWaterMb}MB — tightened firehose retention to ${minDays}d; pruned ${firehose.mints} mints, ${seriesDeleted} series rows, ${runLogsDeleted} autopilot run-log rows, ${orphansDeleted} orphaned satellite rows. Largest tables: ${topLine || 'n/a'}. Raise the Neon storage plan (or DB_RETENTION_HIGH_WATER_MB / PUMP_INTEL_RETENTION_DAYS) for a longer window.`,
 			{ signature: 'db:retention-pressure' },
 		);
 	}
@@ -409,6 +463,7 @@ export default wrapCron(async (req, res) => {
 		firehose: { mints: firehose.mints, perTable: firehose.perTable },
 		orphans,
 		series,
+		run_logs: runLogs,
 		audit,
 		regen,
 		vacuumed: touched,
