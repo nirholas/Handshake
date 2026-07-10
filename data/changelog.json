@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-10",
+			"title": "The autonomous agent loop stops retrying payments it can't afford",
+			"summary": "The platform runs an autonomous loop that pays its own paid endpoints in USDC, so the agent economy keeps moving on its own. It had two limits: a daily spending cap, and the actual balance in its wallet. Only the cap was being checked. When the wallet ran dry, the loop kept building and submitting payments it could never fund — roughly one failed attempt every minute, indefinitely. Nothing was ever lost (the payments failed before any money moved, and no network fees were burned), but the loop did no useful work and leaned on the Solana network for nothing. It now reads its own balance first and simply skips the paid calls when the float is empty, while its free and monitoring work carries on untouched. The moment the wallet is topped up, spending resumes on its own. We also made the platform's alerting status visible on the health endpoint, so a missing alert channel can no longer look identical to a healthy, quiet one.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-10",
 			"title": "Wallet balances and the leak scanner stay online when the RPC pool thins",
 			"summary": "When the platform's paid Solana data providers hit their quota, requests roll over to a chain of free public ones. One of those free providers answers most requests but quietly refuses two of them — reading a wallet's balance, and listing a wallet's transaction history — telling you to upgrade instead. The platform treated that refusal as a real answer, so whenever the rollover reached that provider, balance lookups failed and the background scan that watches platform wallets for unauthorised transfers went blind. Those refusals are now recognised for what they are, and the request moves on to the next provider automatically.",
 			"tags": [

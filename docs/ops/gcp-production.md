@@ -249,6 +249,43 @@ by CLI at all. Consequences and current state:
 | Collection authority | `SOLANA_AGENT_COLLECTION_AUTHORITY_KEY` | Agent NFT collection ops can't sign | Intentionally excluded from `scripts/wire-master-wallet.mjs` (on-chain update authority must stay its original wallet). Owner holds the key. |
 | R2/S3 storage creds | `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_DOMAIN` | `/api/marketplace`, `/api/explore`, `/api/avatars/:id` — every route that resolves an asset URL — 503 `not_configured` | Real values already sit in the repo's `.env.local` (never committed). Apply with `scripts/gcp/apply-s3-env.sh` (needs a human-authed `gcloud auth login` first — the 89-var apply is still blocked on reauth per above). |
 | CoinCommunities API key | `CC_API_KEY` | `/api/community/worlds` and `/api/clash/state` both 503 `cc_unconfigured` (`api/_lib/coin-communities.js`) | Third-party CoinCommunities account signup — not a platform-controlled secret, needs an owner decision to create the account and provision a key. |
+| Ops alert channel | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALERTS_CHAT_ID` | **Every** `sendOpsAlert()` is silently dropped — 5xx faults, `api/client-errors.js` browser reports, ring-leak CRITICALs, low-balance warnings. `api/_lib/alerts.js` no-ops by design when either var is missing. Production currently has no real-time alerting. | Create a Telegram bot (`@BotFather`), add it to a **private** ops channel (never the public holders' channel — alerts carry stack traces, URLs, IPs), then set both vars on the Cloud Run service. `/api/healthz` → `alerts.configured` reports the gate. |
+| x402 ring payer USDC float | — (not a var: an on-chain balance) | The autonomous loop's payer wallet holds $0 USDC, so every paid call is skipped. Since 2026-07-09 this manifested as ~1 failed settle/minute (`broadcast_failed:Simulation failed`); the loop now skips paid calls instead. Free + monitoring entries are unaffected. | Send USDC to the payer wallet (`X402_SEED_SOLANA_SECRET_BASE58`'s pubkey). Floor is `X402_RING_PAYER_USDC_FLOOR_ATOMIC` (default $5) — fund meaningfully above it or it re-drains. See **x402 ring payer float** below. |
+
+### x402 ring payer float — why an empty wallet used to storm Solana
+
+The autonomous loop (`api/cron/x402-autonomous-loop.js`, driven every minute by
+`economy-tick`) spends real USDC against the platform's own paid endpoints. Two
+independent limits apply, and for a long time only one was enforced:
+
+- the **daily spend cap** (`remainingCap`) bounds what the loop is *allowed* to spend;
+- the **payer's USDC balance** bounds what it is *able* to spend.
+
+With a drained float and cap headroom remaining, each tick probed for a 402,
+signed a payment transaction, and POSTed it — and the self-hosted facilitator
+failed every one at settle with `broadcast_failed:Simulation failed`. Observed:
+**1,665 failed settles against 3 successes** over 24h. Nothing was lost (the
+transaction fails in simulation, before broadcast, so no fee is burned and no
+funds move), but the ring did no useful work and hammered the RPC indefinitely.
+
+`readPayerUsdcAtomic()` is now read once per tick and treated as a hard spend
+ceiling. Its three-way contract is load-bearing, and `tests/x402-autonomous-payer-float.test.js`
+pins it:
+
+| Read result | Meaning | Loop behavior |
+|---|---|---|
+| a number > 0 | real float | pay up to `min(dailyCap, float)` |
+| `0` | genuinely empty (**including a wallet with no ATA**) | skip every paid call; free + `run()` monitors still execute |
+| `null` | balance **undeterminable** (RPC blip) | do *not* gate — leave the spend path open |
+
+The `null`-vs-`0` distinction matters in both directions: if a transient RPC
+failure read as `0`, one blip would silently halt the ring; if an empty wallet
+read as `null`, the doomed-payment storm returns. Emptiness is detected
+structurally (`getAccountInfo` → `null` ⇒ no token account ⇒ no USDC), not by
+pattern-matching an RPC error string, whose wording varies by provider.
+
+To resume autonomous spend, fund the payer's USDC float. The loop self-recovers
+on the next tick — no redeploy, no flag flip.
 
 ### Resolved: x402 sponsor co-signing key (2026-07-09)
 

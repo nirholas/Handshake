@@ -95,6 +95,14 @@
 			<description>Reading 90 headlines to find the 8 things that happened is a chore. /markets/digest does it for you: it reads every story from all 38 publisher feeds over your chosen window (6 hours to 3 days) and groups them into distinct narratives — each with a plain-language summary, whether it reads bullish or bearish, the coins involved, and an expandable list of every outlet that covered it. When an AI provider is available it groups the stories semantically; otherwise it clusters them by keyword and ticker overlap. Either way, every story links back to the real articles behind it — nothing is invented.</description>
 		</item>
 		<item>
+			<title>The autonomous agent loop stops retrying payments it can't afford</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-10:The autonomous agent loop stops retrying payments it can't afford</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The platform runs an autonomous loop that pays its own paid endpoints in USDC, so the agent economy keeps moving on its own. It had two limits: a daily spending cap, and the actual balance in its wallet. Only the cap was being checked. When the wallet ran dry, the loop kept building and submitting payments it could never fund — roughly one failed attempt every minute, indefinitely. Nothing was ever lost (the payments failed before any money moved, and no network fees were burned), but the loop did no useful work and leaned on the Solana network for nothing. It now reads its own balance first and simply skips the paid calls when the float is empty, while its free and monitoring work carries on untouched. The moment the wallet is topped up, spending resumes on its own. We also made the platform's alerting status visible on the health endpoint, so a missing alert channel can no longer look identical to a healthy, quiet one.</description>
+		</item>
+		<item>
 			<title>The liquidations pulse on /coins is live</title>
 			<link>https://three.ws/coins</link>
 			<guid isPermaLink="false">2026-07-10:The liquidations pulse on /coins is live</guid>

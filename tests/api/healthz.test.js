@@ -63,6 +63,44 @@ describe('GET /api/healthz', () => {
 		expect(body.monitor.running).toBe(true);
 	});
 
+	// api/_lib/alerts.js is a deliberate silent no-op without both env vars. That
+	// is right for dev/tests and wrong to leave unnoticed in production, where it
+	// means every 5xx report, ring-leak CRITICAL, and low-balance warning is
+	// dropped with nothing to show for it. healthz must report the gate honestly.
+	describe('ops alert channel', () => {
+		const SAVED = [process.env.TELEGRAM_BOT_TOKEN, process.env.TELEGRAM_ALERTS_CHAT_ID];
+		afterEach(() => {
+			for (const [k, v] of [['TELEGRAM_BOT_TOKEN', SAVED[0]], ['TELEGRAM_ALERTS_CHAT_ID', SAVED[1]]]) {
+				if (v === undefined) delete process.env[k];
+				else process.env[k] = v;
+			}
+		});
+
+		it('reports configured=false AND a warning when the channel is unwired', async () => {
+			delete process.env.TELEGRAM_BOT_TOKEN;
+			delete process.env.TELEGRAM_ALERTS_CHAT_ID;
+			const { body } = await callHealthz();
+			expect(body.alerts.configured).toBe(false);
+			expect(body.alerts.warning).toMatch(/silent no-op/i);
+			expect(body.alerts.requires).toEqual(['TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID']);
+		});
+
+		it('reports configured=false when only one of the two vars is set', async () => {
+			process.env.TELEGRAM_BOT_TOKEN = 'bot-token';
+			delete process.env.TELEGRAM_ALERTS_CHAT_ID;
+			const { body } = await callHealthz();
+			expect(body.alerts.configured).toBe(false);
+		});
+
+		it('reports configured=true with no warning once both vars are set', async () => {
+			process.env.TELEGRAM_BOT_TOKEN = 'bot-token';
+			process.env.TELEGRAM_ALERTS_CHAT_ID = '-1001234567890';
+			const { body } = await callHealthz();
+			expect(body.alerts.configured).toBe(true);
+			expect(body.alerts.warning).toBeUndefined();
+		});
+	});
+
 	it('rejects non-GET methods', async () => {
 		const res = makeRes();
 		await healthz(makeReq({ method: 'POST' }), res);

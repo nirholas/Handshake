@@ -11,6 +11,7 @@ import { cors, json, method, wrap } from './_lib/http.js';
 import { countRecentPayments } from './_lib/x402/audit-log.js';
 import { gatherSubsystemHealth } from './_lib/ops/subsystem-health.js';
 import { nvidiaTtsConfigured, nvidiaAsrConfigured } from './_lib/ai-speech.js';
+import { alertsConfigured } from './_lib/alerts.js';
 
 const STARTED_AT = Date.now();
 const VERSION = process.env.VERCEL_GIT_COMMIT_SHA || process.env.npm_package_version || 'dev';
@@ -359,6 +360,20 @@ export default wrap(async (req, res) => {
 				route: '/api/v1/ai/asr',
 				requires: ['NVIDIA_API_KEY', 'NVIDIA_ASR_FUNCTION_ID'],
 			},
+		},
+		// The real-time ops alert channel (api/_lib/alerts.js). It is a deliberate
+		// silent no-op when unconfigured, so dev and tests need no secrets — but
+		// that same silence in production means every 5xx report, browser-error
+		// report, ring-leak CRITICAL, and low-balance warning goes nowhere with no
+		// indication anything is wrong. Surface the gate here so a missing channel
+		// is visible on the dashboard instead of only discoverable by reading code.
+		alerts: {
+			configured: alertsConfigured(),
+			channel: 'telegram',
+			requires: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID'],
+			...(alertsConfigured() ? {} : {
+				warning: 'ops alerts are a silent no-op — sendOpsAlert() calls (5xx faults, client errors, ring leaks, low-balance) are dropped',
+			}),
 		},
 	}, { 'cache-control': 'public, max-age=2, s-maxage=2' });
 });

@@ -33,6 +33,17 @@ function config() {
 	return token && chatId ? { token, chatId } : null;
 }
 
+/**
+ * Whether a real alert channel is wired. When false, every sendOpsAlert() is a
+ * silent no-op — intended for dev/tests, but dangerous to leave unnoticed in
+ * production, so /api/healthz reports this instead of letting the silence pass
+ * for health.
+ * @returns {boolean}
+ */
+export function alertsConfigured() {
+	return config() !== null;
+}
+
 function signatureOf(text) {
 	return createHash('sha256').update(text).digest('hex').slice(0, 16);
 }

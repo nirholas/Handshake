@@ -54,23 +54,37 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 
 const log = logger('x402-autonomous-loop');
 
-// Live USDC balance of the ring payer, in atomic units (6dp). A missing ATA —
-// the wallet has never held USDC — is a legitimate zero, not an error, so it
-// reads as 0 rather than throwing. An RPC failure is NOT treated as zero: a
-// transient read error must not silently disable the whole spend path, so it
-// returns null, which every caller reads as "unknown → don't gate on it".
-async function readPayerUsdcAtomic(conn, payerPubkey) {
+// Live USDC balance of the ring payer, in atomic units (6dp).
+//
+// Returns 0 when the wallet genuinely holds nothing (including the no-ATA case:
+// a wallet that has never held USDC has no token account at all). Returns null
+// when the balance could not be determined — a transient RPC failure must NOT
+// read as "zero", because callers gate the spend path on this and an unknown
+// balance should leave the path open rather than silently halt the ring.
+//
+// Existence is probed with getAccountInfo (returns null for a missing account,
+// no throw) rather than by pattern-matching getTokenAccountBalance's error
+// string, whose wording varies across RPC providers.
+export async function readPayerUsdcAtomic(conn, payerPubkey) {
 	if (!USDC_MINT) return 0;
+	let ata;
 	try {
-		const ata = getAssociatedTokenAddressSync(
+		ata = getAssociatedTokenAddressSync(
 			new PublicKey(USDC_MINT), payerPubkey,
 			false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 		);
-		const info = await conn.getTokenAccountBalance(ata);
-		return Number(info?.value?.amount ?? 0);
 	} catch (err) {
-		// `could not find account` = no ATA = genuinely holds nothing.
-		if (/could not find account|Invalid param|account not found/i.test(String(err?.message || ''))) return 0;
+		// Off-curve owner — a misconfigured payer key, not an empty wallet.
+		log.warn('payer_usdc_ata_underivable', { message: err?.message });
+		return null;
+	}
+	try {
+		const info = await conn.getAccountInfo(ata);
+		if (info === null) return 0; // no token account ⇒ holds no USDC
+		const bal = await conn.getTokenAccountBalance(ata);
+		const amount = Number(bal?.value?.amount);
+		return Number.isFinite(amount) ? amount : null;
+	} catch (err) {
 		log.warn('payer_usdc_read_failed', { message: err?.message });
 		return null;
 	}
