@@ -12969,6 +12969,33 @@
 				"fix"
 			],
 			"link": "/three-token"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "Subscription checkout works again on the pricing page",
+			"summary": "The pricing page asked the server for plans, checkout and payment confirmation at an address the server no longer answers on, so plans never loaded and no subscription could be started or confirmed. All three calls now use the current address — prices load, checkout opens, and a paid plan activates once the on-chain payment is confirmed.",
+			"tags": [
+				"fix"
+			],
+			"link": "/pricing"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "The 404 page's falling agent is back, and it no longer poses as another page",
+			"summary": "Our error pages loaded an old build of the avatar library that could not read compressed 3D models, so the agent who tumbles onto the \"0\" never appeared. They now load the fixed build. The 404 page was also carrying another page's share card and search metadata — telling search engines the error page *was* that page. It now describes itself, and the build step that mislabelled it can no longer stamp a real page's identity onto an error page.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"title": "Faster launches feed, and a cleaner Mocap Studio",
+			"summary": "The launches feed asked the Oracle about every coin twice — once in a single batch and again one coin at a time — firing dozens of redundant requests on every page load. It now uses only the batch. Mocap Studio also stopped requesting account details for the stand-in demo avatar, which could never have any.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/launches"
 		}
 	]
 }

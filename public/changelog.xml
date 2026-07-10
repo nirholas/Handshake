@@ -143,6 +143,14 @@
 			<description>The documentation had drifted. Guides written early in the project still told you three.ws ran on Vercel, pointed at an old repository that no longer receives updates, named a dev server port we stopped using, and referenced build commands that had since been renamed — and twelve of the services behind the 3D pipeline had no documentation at all. We went through all 339 documents one by one and checked each claim against the running code: every command, every file path, every API endpoint, every link. Guides that were wrong are now right, 27 broken links point somewhere real again, and the background-removal, rigging, texturing, and mesh-generation services each got a proper page explaining what they do, how they run, and how to call them. Tutorials that walk you through deploying your own agent were left alone — those instructions were never the ones that went stale.</description>
 		</item>
 		<item>
+			<title>Faster launches feed, and a cleaner Mocap Studio</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-07-10:Faster launches feed, and a cleaner Mocap Studio</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The launches feed asked the Oracle about every coin twice — once in a single batch and again one coin at a time — firing dozens of redundant requests on every page load. It now uses only the batch. Mocap Studio also stopped requesting account details for the stand-in demo avatar, which could never have any.</description>
+		</item>
+		<item>
 			<title>Fixed two API endpoints that returned an error for every request</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-10:Fixed two API endpoints that returned an error for every request</guid>
@@ -181,6 +189,22 @@
 			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The counter that animates up to a percentage could briefly paint a wildly wrong value — the $THREE holder gate showed &quot;-42797% there&quot; instead of &quot;40% there&quot; — whenever the browser's animation clock disagreed with its performance clock. Counters now measure elapsed time against a single clock and are clamped to their real start and end values, so every frame shows a sane number.</description>
+		</item>
+		<item>
+			<title>Subscription checkout works again on the pricing page</title>
+			<link>https://three.ws/pricing</link>
+			<guid isPermaLink="false">2026-07-10:Subscription checkout works again on the pricing page</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The pricing page asked the server for plans, checkout and payment confirmation at an address the server no longer answers on, so plans never loaded and no subscription could be started or confirmed. All three calls now use the current address — prices load, checkout opens, and a paid plan activates once the on-chain payment is confirmed.</description>
+		</item>
+		<item>
+			<title>The 404 page's falling agent is back, and it no longer poses as another page</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-10:The 404 page's falling agent is back, and it no longer poses as another page</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Our error pages loaded an old build of the avatar library that could not read compressed 3D models, so the agent who tumbles onto the &quot;0&quot; never appeared. They now load the fixed build. The 404 page was also carrying another page's share card and search metadata — telling search engines the error page *was* that page. It now describes itself, and the build step that mislabelled it can no longer stamp a real page's identity onto an error page.</description>
 		</item>
 		<item>
 			<title>The autonomous agent loop stops retrying payments it can't afford</title>

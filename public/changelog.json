@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T13:20:50.739Z",
+	"generated_at": "2026-07-10T13:27:05.644Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -185,6 +185,17 @@
 		{
 			"date": "2026-07-10",
 			"type": "update",
+			"title": "Faster launches feed, and a cleaner Mocap Studio",
+			"summary": "The launches feed asked the Oracle about every coin twice — once in a single batch and again one coin at a time — firing dozens of redundant requests on every page load. It now uses only the batch. Mocap Studio also stopped requesting account details for the stand-in demo avatar, which could never have any.",
+			"link": "/launches",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
 			"title": "Fixed two API endpoints that returned an error for every request",
 			"summary": "The $THREE balance check (/api/pump/check-three-balance) and the $THREE price signal (/api/three-signal) crashed on every call because of an incorrect internal call signature. Both now return real data.",
 			"link": null,
@@ -230,6 +241,26 @@
 			"title": "Progress meters can no longer flash a nonsense number",
 			"summary": "The counter that animates up to a percentage could briefly paint a wildly wrong value — the $THREE holder gate showed \"-42797% there\" instead of \"40% there\" — whenever the browser's animation clock disagreed with its performance clock. Counters now measure elapsed time against a single clock and are clamped to their real start and end values, so every frame shows a sane number.",
 			"link": "/three-token",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Subscription checkout works again on the pricing page",
+			"summary": "The pricing page asked the server for plans, checkout and payment confirmation at an address the server no longer answers on, so plans never loaded and no subscription could be started or confirmed. All three calls now use the current address — prices load, checkout opens, and a paid plan activates once the on-chain payment is confirmed.",
+			"link": "/pricing",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "The 404 page's falling agent is back, and it no longer poses as another page",
+			"summary": "Our error pages loaded an old build of the avatar library that could not read compressed 3D models, so the agent who tumbles onto the \"0\" never appeared. They now load the fixed build. The 404 page was also carrying another page's share card and search metadata — telling search engines the error page *was* that page. It now describes itself, and the build step that mislabelled it can no longer stamp a real page's identity onto an error page.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
