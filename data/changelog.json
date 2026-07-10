@@ -3,6 +3,43 @@
 	"entries": [
 		{
 			"date": "2026-07-10",
+			"title": "Agents registered on-chain can no longer put a slur on three.ws",
+			"summary": "The agent directory lists every agent registered on the public blockchains we index — over 126,000 of them — and it took each one's name, description and picture straight from whatever its owner published on-chain. Whether an agent appeared on our pages was decided by a flag the agent itself set, and nothing ever checked what the name said. One agent's name was a racial slur, and it was being displayed on the marketplace. Names carrying a hate slur are now withheld from every listing, search result and feed, and the agent that was showing has been taken down. The check is deliberately narrow: it looks for slurs, not swearing, and it is careful never to hide a legitimate agent whose name merely contains an ordinary word or a wallet address.",
+			"tags": [
+				"security",
+				"fix"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "The character browser and character pages render again",
+			"summary": "The /characters gallery and every individual character page were loading a stylesheet as though it were a program. Browsers refuse that, so the page's code never ran and both came up empty — a header, and nothing beneath it. They are now built the same way as the rest of the site, so the grid, the search, the sorting, and the individual character pages all work again.",
+			"tags": [
+				"fix"
+			],
+			"link": "/characters"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "Building a world from a sentence works again",
+			"summary": "Describing a scene on the Diorama page — \"a quiet lakeside cabin\" — did nothing. The request left your browser and never came back; the page just sat there until it gave up. Saving a world, exporting it as a single 3D file, and the one-shot build command agents use all failed the same silent way, and so did the Scene tools that build worlds from other apps. A single missing character in the code was rejecting every one of those requests before it began, without ever sending an answer back. That check is corrected and the whole Diorama flow — compose, save, export, build — responds properly again. We also added a test that scans every one of the site's ~1,000 request handlers for the same mistake, so no future page can be silently switched off this way.",
+			"tags": [
+				"fix"
+			],
+			"link": "/diorama"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "The site now rides out a full outage of its rate-limit store",
+			"summary": "Our shared counter service — the one that keeps any single visitor from flooding the platform — spent its entire monthly request allowance. Unlike a brief network blip, that condition lasts until the billing period rolls over, so every request the site made to it was doomed. The site kept asking anyway: each page view paid the cost of a call that could only fail, which made things slower for everyone and buried the real cause in noise. The platform now recognizes an exhausted allowance for what it is, stops making those doomed calls immediately, and keeps counting locally instead. It re-checks on a widening interval, so the moment capacity returns everything switches back on its own with no deploy and no downtime.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-10",
 			"title": "Every doc on the site was checked against the code that actually ships",
 			"summary": "The documentation had drifted. Guides written early in the project still told you three.ws ran on Vercel, pointed at an old repository that no longer receives updates, named a dev server port we stopped using, and referenced build commands that had since been renamed — and twelve of the services behind the 3D pipeline had no documentation at all. We went through all 339 documents one by one and checked each claim against the running code: every command, every file path, every API endpoint, every link. Guides that were wrong are now right, 27 broken links point somewhere real again, and the background-removal, rigging, texturing, and mesh-generation services each got a proper page explaining what they do, how they run, and how to call them. Tutorials that walk you through deploying your own agent were left alone — those instructions were never the ones that went stale.",
 			"tags": [

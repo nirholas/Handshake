@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T12:57:49.722Z",
+	"generated_at": "2026-07-10T13:02:38.298Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -69,6 +69,17 @@
 		{
 			"date": "2026-07-10",
 			"type": "update",
+			"title": "Agents registered on-chain can no longer put a slur on three.ws",
+			"summary": "The agent directory lists every agent registered on the public blockchains we index — over 126,000 of them — and it took each one's name, description and picture straight from whatever its owner published on-chain. Whether an agent appeared on our pages was decided by a flag the agent itself set, and nothing ever checked what the name said. One agent's name was a racial slur, and it was being displayed on the marketplace. Names carrying a hate slur are now withheld from every listing, search result and feed, and the agent that was showing has been taken down. The check is deliberately narrow: it looks for slurs, not swearing, and it is careful never to hide a legitimate agent whose name merely contains an ordinary word or a wallet address.",
+			"link": "/marketplace",
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
 			"title": "Auto-rigging works again — and the Agent Identity Studio demos are real",
 			"summary": "Rigging any generated model into an animation-ready character had been failing since the cloud migration: the rig request was sent to a service that doesn't do rigging, and the GPU rigger itself crashed on a graphics call our cloud GPUs don't support. Both are fixed — rig requests now reach the real UniRig worker, which renders its voxel pass in software instead. Proof: all four Agent Identity Studio demo characters (LedgerLynx, MuseWeaver, Momentum-9, and the three.ws studio's own) were generated, rigged with full skeletons, and photographed in posed renders through the live pipeline — see them on the showcase.",
 			"link": "/agent-identities",
@@ -83,6 +94,16 @@
 			"title": "Broken links across the site now go where they should",
 			"summary": "Nine links pointed at pages that don't exist and quietly landed people on a Not Found screen. The Activity page's \"Leaderboard\" and \"Proven wins\" links now open the right section of the Oracle, the dashboard's \"Upload .glb\" and \"Create an agent\" buttons reach the real create flow, a token's \"3D Agent view\" opens the live 3D coin scene, and the Restyle page's MCP tool reference opens the MCP docs.",
 			"link": "/activity",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Building a world from a sentence works again",
+			"summary": "Describing a scene on the Diorama page — \"a quiet lakeside cabin\" — did nothing. The request left your browser and never came back; the page just sat there until it gave up. Saving a world, exporting it as a single 3D file, and the one-shot build command agents use all failed the same silent way, and so did the Scene tools that build worlds from other apps. A single missing character in the code was rejecting every one of those requests before it began, without ever sending an answer back. That check is corrected and the whole Diorama flow — compose, save, export, build — responds properly again. We also added a test that scans every one of the site's ~1,000 request handlers for the same mistake, so no future page can be silently switched off this way.",
+			"link": "/diorama",
 			"tags": [
 				"fix"
 			]
@@ -215,6 +236,16 @@
 		{
 			"date": "2026-07-10",
 			"type": "update",
+			"title": "The character browser and character pages render again",
+			"summary": "The /characters gallery and every individual character page were loading a stylesheet as though it were a program. Browsers refuse that, so the page's code never ran and both came up empty — a header, and nothing beneath it. They are now built the same way as the rest of the site, so the grid, the search, the sorting, and the individual character pages all work again.",
+			"link": "/characters",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
 			"title": "The liquidations pulse on /coins is live",
 			"summary": "The long/short liquidation strip on the markets page had been showing its offline state since launch — the collector that listens to Binance, Bybit, and OKX futures streams needs to run around the clock, which the old serverless setup couldn't do. It now runs as its own always-on service, so the dominant-side badge, the 1-hour long-vs-short bars, and the biggest recent liquidations fill in with real exchange data.",
 			"link": "/coins",
@@ -243,6 +274,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "The site now rides out a full outage of its rate-limit store",
+			"summary": "Our shared counter service — the one that keeps any single visitor from flooding the platform — spent its entire monthly request allowance. Unlike a brief network blip, that condition lasts until the billing period rolls over, so every request the site made to it was doomed. The site kept asking anyway: each page view paid the cost of a call that could only fail, which made things slower for everyone and buried the real cause in noise. The platform now recognizes an exhausted allowance for what it is, stops making those doomed calls immediately, and keeps counting locally instead. It re-checks on a widening interval, so the moment capacity returns everything switches back on its own with no deploy and no downtime.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
