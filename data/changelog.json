@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-10",
+			"title": "Coin art appears on Smart Money, the Scene Studio gizmo comes back, and pay buttons stop breaking",
+			"summary": "Three fixes found by crawling every page of the site in a real browser. Smart Money Radar showed blank tiles where coin art should be: the images were pulled straight from IPFS and launch CDNs, which browsers refuse to display cross-origin, so every coin on the page failed to load. Art now goes through our own image service, which fetches it for you and falls back to a clean placeholder rather than a broken tile. In Scene Studio, the move/rotate/scale handle had stopped drawing entirely after a 3D-engine upgrade, so you could select an object but never grab it — the handle is back. And the pay-button snippet you copy out of x402 Studio was generated in a form that throws an error the moment a merchant pastes it into their own site; the generated code, and the Studio's own live preview button, now work.",
+			"tags": [
+				"fix"
+			],
+			"link": "/smart-money"
+		},
+		{
+			"date": "2026-07-10",
 			"title": "Coin price charts stop dropping out, and the walk demos load fast on phones",
 			"summary": "The price chart on coin and trading pages intermittently showed \"unavailable\" because every refresh asked the upstream price service for a slightly different time window, so nothing could be cached and the free service rate-limited us. Refreshes now share a window, the busiest lookup is remembered, and if both price sources go quiet for a moment the chart keeps showing the most recent real candles with a \"delayed\" marker instead of an error. A coin that has no liquidity pool now says exactly that. Separately, the walk landing page used to start all eight interactive demos at once — on a phone that exhausted the browser's 3D limit and stalled the page for over twenty seconds. Each demo now starts as you scroll to it.",
 			"tags": [

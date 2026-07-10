@@ -55,20 +55,20 @@
 			<description>The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 38 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.</description>
 		</item>
 		<item>
-			<title>A leftover test file stops loading on every visit, and the docs match the code again</title>
-			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-07-10:A leftover test file stops loading on every visit, and the docs match the code again</guid>
-			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
-			<category>fix</category>
-			<description>A one-off test page and its 1.5 MB script were committed by mistake months ago and had been sitting in the public folder ever since, downloadable by anyone and adding dead weight to the site. Both are gone, and the project now refuses to accept that kind of leftover again. Alongside that, the twelve behind-the-scenes services that turn your photos and prompts into 3D models finally have written guides explaining what each one does, and a batch of documentation links that pointed at pages which no longer existed now lead somewhere real.</description>
-		</item>
-		<item>
 			<title>Auto-rigging works again — and the Agent Identity Studio demos are real</title>
 			<link>https://three.ws/agent-identities</link>
 			<guid isPermaLink="false">2026-07-10:Auto-rigging works again — and the Agent Identity Studio demos are real</guid>
 			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Rigging any generated model into an animation-ready character had been failing since the cloud migration: the rig request was sent to a service that doesn't do rigging, and the GPU rigger itself crashed on a graphics call our cloud GPUs don't support. Both are fixed — rig requests now reach the real UniRig worker, which renders its voxel pass in software instead. Proof: all four Agent Identity Studio demo characters (LedgerLynx, MuseWeaver, Momentum-9, and the three.ws studio's own) were generated, rigged with full skeletons, and photographed in posed renders through the live pipeline — see them on the showcase.</description>
+		</item>
+		<item>
+			<title>Coin art appears on Smart Money, the Scene Studio gizmo comes back, and pay buttons stop breaking</title>
+			<link>https://three.ws/smart-money</link>
+			<guid isPermaLink="false">2026-07-10:Coin art appears on Smart Money, the Scene Studio gizmo comes back, and pay buttons stop breaking</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes found by crawling every page of the site in a real browser. Smart Money Radar showed blank tiles where coin art should be: the images were pulled straight from IPFS and launch CDNs, which browsers refuse to display cross-origin, so every coin on the page failed to load. Art now goes through our own image service, which fetches it for you and falls back to a clean placeholder rather than a broken tile. In Scene Studio, the move/rotate/scale handle had stopped drawing entirely after a 3D-engine upgrade, so you could select an object but never grab it — the handle is back. And the pay-button snippet you copy out of x402 Studio was generated in a form that throws an error the moment a merchant pastes it into their own site; the generated code, and the Studio's own live preview button, now work.</description>
 		</item>
 		<item>
 			<title>Coin buybacks and vault balances work again</title>
@@ -125,14 +125,6 @@
 			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A single request budget was shared across roughly 166 endpoints, so ordinary pages that load several panels at once — agent profiles, the markets dashboards, the galaxy view, the activity feed — could exhaust it and start showing &quot;too many requests&quot; errors to the person browsing. Market data, agent profiles and the galaxy each have their own budget now, and the shared one has far more headroom.</description>
-		</item>
-		<item>
-			<title>Payments, withdrawals and minting stay up even when the rate limiter's cache goes down</title>
-			<link>https://three.ws/status</link>
-			<guid isPermaLink="false">2026-07-10:Payments, withdrawals and minting stay up even when the rate limiter's cache goes down</guid>
-			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
-			<category>fix</category>
-			<description>The service that counts requests had spent its monthly allowance, and by design every money-moving action — checkout, withdrawal, minting, trading — refused to run whenever that counter was unavailable. Because the allowance only refills at the start of a month, that would have meant three weeks of failures on paid features. Those actions now keep their limits in the main database instead, so they stay both protected and available. Ordinary page loads no longer spend the same allowance, and the status page now says plainly when the allowance has run out rather than pointing at a network problem that isn't there.</description>
 		</item>
 		<item>
 			<title>The autonomous agent loop stops retrying payments it can't afford</title>
