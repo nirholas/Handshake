@@ -120,6 +120,56 @@ data" rule:
 - **`/stablecoins`** — stablecoins by circulating market cap with live peg
   health and backing mechanism. New `/api/defi/stablecoins` (DeFiLlama).
 
+## News & the markets hub
+
+The suite's news wing and its front door, added 2026-07-10:
+
+### `/markets` — the markets hub
+
+Everything in one place: the global stats bar (market cap, volume, dominance,
+Fear & Greed, active coins), **every markets surface as its own hero card**
+with live stats hydrated in (top 24h mover on the Heatmap card, current gwei on
+Gas, live story count on News, and so on), a sortable **top-100 coins table**,
+and a latest-news rail with an archive teaser. Five already-cached endpoints
+feed it: `/api/coin/global`, `/api/coin/markets`, `/api/coin/gas`,
+`/api/news/feed`, `/api/news/archive?stats=true`.
+
+### `/markets/news` — live crypto news
+
+Live headlines aggregated **natively** by three.ws from 37 publisher RSS/Atom
+feeds (CoinDesk, The Block, Decrypt, CoinTelegraph, Blockworks, SEC press,
+Wu Blockchain, and more — the registry lives in
+[`api/_lib/news-sources.js`](../api/_lib/news-sources.js)). Category tabs
+(Bitcoin, Ethereum, L2, Solana, DeFi, NFT, trading, research, on-chain,
+institutional, mainstream, Asia, regulation, journalism), debounced search, a
+per-source filter, a lead-story hero, sentiment dots, and ticker chips that
+pivot the feed to that symbol. Each source is cached server-side for 5 minutes
+with serve-stale-on-error, so one dead feed never blanks the page.
+
+### `/markets/news/article` — rich article reader
+
+Opens any story with server-side extraction (`/api/news/article`): full
+paragraphs, publisher metadata, an AI summary + key points via the platform
+LLM chain (Groq → OpenRouter) with an extractive fallback when no provider key
+is present, bullish/bearish/neutral sentiment, detected tickers, and a
+related-coverage rail. Publishers that block server fetches degrade through an
+honest ladder: page extraction → the publisher's own feed body
+(`content:encoded`) → a labelled preview with a read-at-source CTA. Never a
+dead end, never fabricated text.
+
+### `/markets/archive` — the historical archive
+
+The largest open crypto-news archive: **662,047 enriched articles from
+September 2017 to today** (the CryptoPanic english corpus + the Odaily chinese
+corpus + the cryptocurrency.cv live archiver), every record carrying tickers,
+tags, sentiment, language, and — where captured — market context at
+publication time. Hosted on the platform's own GCS bucket
+(`gs://three-ws-news-archive`, public, gzip at rest) as monthly JSONL plus
+indexes and corpus stats. The explorer filters by keyword, ticker, source,
+date range, sentiment, and language (EN/中文), with year quick-jump buttons and
+trending-ticker chips. The API scans months newest→oldest and reports exactly
+which months it covered, so the UI can be honest about how deep a search went.
+
 ## Where the data comes from
 
 All data is real and fetched at runtime — nothing is hardcoded or sampled:
@@ -139,7 +189,10 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | `/api/coin/global`      | CoinGecko `/global` + alternative.me Fear & Greed          | 120 s        |
 | `/api/coin/fear-greed`  | alternative.me `/fng` (current + history)                  | 300 s        |
 | `/api/coin/gas`         | public Ethereum RPC `eth_feeHistory` + CoinGecko ETH price | 15 s         |
-| `/api/coin/news`        | cryptocurrency.cv aggregator → first-party RSS fallback    | 300 s        |
+| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 37 publisher feeds) | 300 s        |
+| `/api/news/feed`        | native aggregator — 37 publisher RSS/Atom feeds, per-source cache + serve-stale | 120 s |
+| `/api/news/article`     | publisher page fetch (SSRF-guarded) → publisher feed body → preview; LLM analysis via Groq/OpenRouter with extractive fallback | 1800 s |
+| `/api/news/archive`     | `gs://three-ws-news-archive` (662k-article JSONL corpus + indexes on GCS) | 300 s / 3600 s |
 | `/api/coin/liquidations`| `services/liquidation-collector` (Binance/Bybit/OKX public liquidation WebSocket streams) | 15 s, `503` no-fallback offline |
 
 Full request/response shapes: [api-reference.md → Coin Market Data API](api-reference.md#coin-market-data-api).
