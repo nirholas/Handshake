@@ -3,25 +3,45 @@
 // cryptocurrency.cv aggregator (same team) after its Vercel deployment was
 // retired; three.ws now fetches the source RSS/Atom feeds directly.
 //
-// Design: per-source in-memory cache (5 min TTL) with serve-stale-on-error —
-// one slow or dead feed never blanks the page, and repeat requests within the
-// TTL cost zero upstream calls. Every article is real, parsed from the
-// publisher's own feed; nothing is fabricated.
+// Design, at ~230 live publisher feeds:
+//
+//   * Per-source in-memory cache (5 min TTL) with serve-stale-on-error, so one
+//     slow or dead feed never blanks the page and repeat requests inside the
+//     TTL cost zero upstream calls.
+//   * A bounded worker pool (GLOBAL_CONCURRENCY) fronted by a per-domain
+//     semaphore (DOMAIN_CONCURRENCY). Shared hosts carry many feeds — a naive
+//     Promise.all over the registry earns an instant 429 from them and starves
+//     slow feeds of their timeout budget.
+//   * A refresh deadline: a request never blocks on a cold registry. It awaits
+//     refreshes for REFRESH_DEADLINE_MS, returns whatever is cached, and lets
+//     the stragglers land in cache for the next caller. Sources are refreshed
+//     in tier order, so the highest-credibility outlets land first.
+//   * Exponential backoff per source: a feed that 404s is not re-fetched every
+//     five minutes forever. Failures push nextRetryAt out to MAX_BACKOFF_MS.
+//
+// Every article is real, parsed from the publisher's own feed; nothing is
+// fabricated.
 
 import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
-import { NEWS_SOURCES, sourcesForCategory } from './news-sources.js';
+import { NEWS_SOURCES, sourcesForCategory, sourcePriority } from './news-sources.js';
 
 const FEED_TIMEOUT_MS = 7000;
 const FRESH_MS = 300_000; // refetch a source after 5 min
 const STALE_OK_MS = 24 * 3600_000; // serve a failed source's last-good copy up to 24h
+const MAX_BACKOFF_MS = 6 * 3600_000; // a persistently dead feed retries at most every 6h
+const REFRESH_DEADLINE_MS = 2500; // how long a request will wait on cold sources
+const GLOBAL_CONCURRENCY = 16; // outbound feed fetches in flight, all domains
+const DOMAIN_CONCURRENCY = 3; // outbound feed fetches in flight, per domain
+const MAX_ARTICLES_PER_SOURCE = 40; // newest-N per feed keeps the working set bounded
 
-// key → { articles, fetchedAt, ok }
+// key → { articles, fetchedAt, ok, failures, nextRetryAt }
 const sourceCache = new Map();
 // de-duplicated in-flight refreshes so concurrent requests share one fetch
 const inflight = new Map();
 
 const str = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function stripHtml(s) {
 	return String(s || '')
@@ -190,59 +210,153 @@ export function parseFeed(xml, sourceKey) {
 		.filter(Boolean);
 }
 
-async function fetchSource(key) {
-	const src = NEWS_SOURCES[key];
-	const resp = await fetch(src.url, {
-		headers: {
-			accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
-			'user-agent': 'Mozilla/5.0 (compatible; three.ws-news/1.0; +https://three.ws)',
-		},
-		signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
-		redirect: 'follow',
-	});
-	if (!resp.ok) throw new Error(`${key} ${resp.status}`);
-	return parseFeed(await resp.text(), key);
+// ── Concurrency control ──────────────────────────────────────────────────────
+// Feeds cluster on shared hosts (medium.com, substack.com, mirror.xyz each
+// carry many). Firing every feed at once earns a 429 from exactly those hosts,
+// so cap globally *and* per domain.
+
+function feedDomain(url) {
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return 'invalid';
+	}
 }
 
-async function refreshSource(key) {
+/**
+ * Counting semaphore. `release()` hands the slot directly to the next waiter
+ * rather than decrementing, so a slot is never double-issued.
+ */
+function semaphore(limit) {
+	let active = 0;
+	const waiters = [];
+	return {
+		async acquire() {
+			if (active < limit) {
+				active++;
+				return;
+			}
+			await new Promise((resolve) => waiters.push(resolve));
+		},
+		release() {
+			const next = waiters.shift();
+			if (next) next();
+			else active--;
+		},
+	};
+}
+
+const globalGate = semaphore(GLOBAL_CONCURRENCY);
+const domainGates = new Map();
+
+function domainGate(domain) {
+	if (!domainGates.has(domain)) domainGates.set(domain, semaphore(DOMAIN_CONCURRENCY));
+	return domainGates.get(domain);
+}
+
+// ── Per-source fetch ─────────────────────────────────────────────────────────
+
+async function fetchSource(key) {
+	const src = NEWS_SOURCES[key];
+	const gate = domainGate(feedDomain(src.url));
+	// Domain gate first, then the global gate: a request queued behind a busy
+	// domain must not occupy a global slot that another domain's feed could use.
+	await gate.acquire();
+	await globalGate.acquire();
+	try {
+		const resp = await fetch(src.url, {
+			headers: {
+				accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
+				// A polite, identifying bot UA gets through more publisher WAFs than a
+				// spoofed browser UA does — a fake Chrome string without the matching
+				// TLS/header fingerprint reads as a scraper and earns a 403.
+				'user-agent': 'Mozilla/5.0 (compatible; three.ws-news/1.0; +https://three.ws)',
+				'accept-language': 'en-US,en;q=0.9',
+			},
+			signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+			redirect: 'follow',
+		});
+		if (!resp.ok) throw new Error(`${key} ${resp.status}`);
+		return parseFeed(await resp.text(), key);
+	} finally {
+		globalGate.release();
+		gate.release();
+	}
+}
+
+/** Exponential backoff so a permanently dead feed stops costing us a request every 5 min. */
+function backoffFor(failures) {
+	return Math.min(FRESH_MS * 2 ** Math.max(0, failures - 1), MAX_BACKOFF_MS);
+}
+
+function refreshSource(key) {
 	if (inflight.has(key)) return inflight.get(key);
 	const p = fetchSource(key)
 		.then((articles) => {
-			sourceCache.set(key, { articles, fetchedAt: Date.now(), ok: true });
-			return articles;
+			const trimmed = articles
+				.sort((a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0))
+				.slice(0, MAX_ARTICLES_PER_SOURCE);
+			sourceCache.set(key, {
+				articles: trimmed,
+				fetchedAt: Date.now(),
+				ok: true,
+				failures: 0,
+				nextRetryAt: Date.now() + FRESH_MS,
+			});
+			return trimmed;
 		})
 		.catch(() => {
 			const prev = sourceCache.get(key);
-			if (prev) {
-				// keep last-good copy but mark the failure time so we retry next call
-				sourceCache.set(key, { ...prev, fetchedAt: Date.now(), ok: false });
-				return prev.articles;
-			}
-			sourceCache.set(key, { articles: [], fetchedAt: Date.now(), ok: false });
-			return [];
+			const failures = (prev?.failures || 0) + 1;
+			// keep the last-good copy; push the next attempt out exponentially
+			sourceCache.set(key, {
+				articles: prev?.articles || [],
+				fetchedAt: prev?.ok ? prev.fetchedAt : Date.now(),
+				lastFailAt: Date.now(),
+				ok: false,
+				failures,
+				nextRetryAt: Date.now() + backoffFor(failures),
+			});
+			return prev?.articles || [];
 		})
 		.finally(() => inflight.delete(key));
 	inflight.set(key, p);
 	return p;
 }
 
-async function ensureSources(keys) {
+/**
+ * Bring `keys` as close to fresh as `deadlineMs` allows, then return every
+ * article currently cached for them. Refreshes that miss the deadline keep
+ * running and populate the cache for the next request — a cold start degrades
+ * to "fewer sources this round", never to a hung request.
+ */
+async function ensureSources(keys, deadlineMs = REFRESH_DEADLINE_MS) {
 	const now = Date.now();
-	const stale = keys.filter((key) => {
-		const hit = sourceCache.get(key);
-		return !hit || now - hit.fetchedAt >= FRESH_MS;
-	});
-	// Bounded concurrency: firing all ~38 feeds at once trips publisher
-	// rate-gates (429/403) and starves slow feeds of the timeout budget —
-	// batches of 10 keep every source healthy at ~1s per batch.
-	for (let i = 0; i < stale.length; i += 10) {
-		await Promise.all(stale.slice(i, i + 10).map(refreshSource));
+	const stale = keys
+		.filter((key) => {
+			if (inflight.has(key)) return false;
+			const hit = sourceCache.get(key);
+			if (!hit) return true;
+			if (now < (hit.nextRetryAt || 0)) return false; // backing off
+			return now - hit.fetchedAt >= FRESH_MS;
+		})
+		// highest-credibility sources first, so a deadline-truncated round still
+		// returns the outlets that matter most
+		.sort((a, b) => sourcePriority(a) - sourcePriority(b));
+
+	if (stale.length) {
+		// refreshSource never rejects and self-throttles on the domain + global
+		// gates, so kicking them all off here queues rather than stampedes.
+		const started = stale.map((key) => refreshSource(key));
+		await Promise.race([Promise.all(started), sleep(deadlineMs)]);
 	}
+
 	return keys.flatMap((key) => {
 		const hit = sourceCache.get(key);
 		if (!hit) return [];
 		// drop sources whose last-good copy is ancient — stale beyond 24h reads as fake-live
-		if (!hit.ok && now - hit.fetchedAt > STALE_OK_MS) return [];
+		const age = Date.now() - hit.fetchedAt;
+		if (!hit.ok && age > STALE_OK_MS) return [];
 		return hit.articles;
 	});
 }
@@ -271,7 +385,10 @@ export async function getNews({ category, source, q, limit = 30, offset = 0 } = 
 	else if (source) return { articles: [], total: 0, sources_ok: 0, sources_total: 0 };
 	else keys = sourcesForCategory(category);
 
-	const all = await ensureSources(keys);
+	// A caller who names one source is asking for that source specifically —
+	// give it the full feed timeout rather than the shared fan-out deadline.
+	const deadline = keys.length === 1 ? FEED_TIMEOUT_MS + 500 : REFRESH_DEADLINE_MS;
+	const all = await ensureSources(keys, deadline);
 	let articles = dedupe(all).sort(
 		(a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0),
 	);
