@@ -30,31 +30,30 @@ solana-mobile/
     ├── ASSETS.md             # exact pixel specs for icon/banner/screenshots
     ├── CHECKLIST.md          # end-to-end submission checklist
     └── INTEGRATION.md        # how to wire src/index.js into the three.ws build
-
-# Plus: .github/workflows/seeker-release.yml at the repo root
 ```
 
 ## Quickstart
 
-```bash
-# 0. Wire the MWA wallet into the three.ws bundle (one-time).
-#    Add `import './solana-mobile/src/index.js';` to the top of src/app.js.
-#    Install MWA deps:
-npm install --save \
-  @solana-mobile/mobile-wallet-adapter-protocol \
-  @solana-mobile/mobile-wallet-adapter-protocol-web3js
+The MWA wallet is already wired into the bundle — `src/wallet.js` and
+`src/game/play-auth.js` import `solana-mobile/src/index.js`, and
+`@solana-mobile/mobile-wallet-adapter-protocol-web3js` is a root dependency.
 
+```bash
 # 1. One-time: mint the on-chain Publisher + App NFTs (mainnet, costs ~0.05 SOL).
 cd solana-mobile
 SOLANA_KEYPAIR=~/.config/solana/publisher.json ./scripts/init-publisher.sh
 # Commit the addresses written into publish/config.yaml.
 
 # 2. Build the signed APK (creates the keystore on first run — back it up!).
-KEYSTORE_PASSWORD='your-strong-pass' ./scripts/build-apk.sh
+#    Runs unattended: passwords reach Bubblewrap via env vars, the Android
+#    project is regenerated from twa/twa-manifest.json with `bubblewrap
+#    update`, and ACCEPT_ANDROID_SDK_LICENSES=1 clears the first-run SDK
+#    license gate on a fresh machine.
+KEYSTORE_PASSWORD='your-strong-pass' ACCEPT_ANDROID_SDK_LICENSES=1 ./scripts/build-apk.sh
 # This also writes /public/.well-known/assetlinks.json with the real fingerprint.
 
-# 3. Deploy three.ws so the assetlinks.json is live.
-#    (Standard Vercel deploy — assetlinks must be reachable before submission.)
+# 3. Deploy three.ws so the assetlinks.json is live (npm run deploy:gcp from
+#    the repo root — production is Cloud Run).
 curl -fsSL https://three.ws/.well-known/assetlinks.json | jq .
 
 # 4. Submit the release.
@@ -63,7 +62,10 @@ DAPP_STORE_API_KEY='your-api-key' \
 ./scripts/publish.sh
 ```
 
-For subsequent releases, only steps 2 and 4 are needed. CI handles both — push a tag matching `seeker-v*` to trigger `.github/workflows/seeker-release.yml`.
+For subsequent releases, only steps 2 and 4 are needed (bump `appVersionCode`
+/ `appVersionName` in `twa/twa-manifest.json`, or pass `VERSION_CODE` /
+`VERSION_NAME` env overrides). Releases are run locally by the owner — this
+repo does not use GitHub Actions.
 
 ## What was NOT added to the bundle (intentional)
 

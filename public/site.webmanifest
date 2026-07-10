@@ -1,40 +1,119 @@
 {
-  "name": "three.ws",
+  "name": "three.ws — Give Your AI a Body",
   "short_name": "three.ws",
-  "description": "The 3D agent layer of the internet — living 3D AI agents you can embed anywhere.",
-  "start_url": "/",
+  "description": "Create 3D AI agents, give them a voice and body, trade them on-chain, and embed them anywhere. The 3D layer for the agentic web.",
+  "start_url": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#050505",
-  "theme_color": "#050505",
+  "background_color": "#080814",
+  "theme_color": "#000000",
+  "lang": "en",
+  "scope": "/",
+  "dir": "ltr",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "browser"
+  ],
+  "orientation": "natural",
+  "categories": [
+    "productivity",
+    "entertainment",
+    "social",
+    "utilities"
+  ],
   "icons": [
     {
-      "src": "/favicon.svg",
-      "type": "image/svg+xml",
-      "sizes": "any"
-    },
-    {
       "src": "/pwa-192x192.png",
-      "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any"
-    },
-    {
-      "src": "/pwa-192x192.png",
       "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/pwa-512x512.png",
-      "type": "image/png",
-      "sizes": "512x512",
       "purpose": "any"
     },
     {
       "src": "/pwa-512x512.png",
-      "type": "image/png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Create Avatar",
+      "short_name": "Create",
+      "description": "Build a new 3D AI avatar",
+      "url": "/create?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Marketplace",
+      "short_name": "Discover",
+      "description": "Browse AI agents and avatars",
+      "url": "/marketplace?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "My Agents",
+      "short_name": "My Agents",
+      "description": "Manage your AI agents",
+      "url": "/agents?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/landing.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "three.ws home — Give Your AI a Body"
+    },
+    {
+      "src": "/screenshots/create.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Create a 3D avatar"
+    },
+    {
+      "src": "/screenshots/discover.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Discover AI agents on the marketplace"
+    },
+    {
+      "src": "/screenshots/studio.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Agent studio and customization"
+    },
+    {
+      "src": "/screenshots/features.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Platform features overview"
     }
   ]
 }

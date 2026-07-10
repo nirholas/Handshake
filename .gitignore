@@ -362,3 +362,9 @@ _prompts/
 pages/_qa-probe-*.html
 public/_qa-probe-*.js
 
+
+# Solana Mobile (Seeker) build artifacts — the Android project is regenerated
+# from solana-mobile/twa/twa-manifest.json on every build, and keystores are
+# secrets that must never land in git.
+solana-mobile/build/
+*.keystore

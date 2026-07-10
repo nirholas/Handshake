@@ -61,12 +61,14 @@ Work top-to-bottom. Do not submit until every box is checked.
 - [ ] Camera permission has a visible justification string at first prompt.
 - [ ] App handles the case where the wallet rejects (`USER_REJECTED`) without crashing.
 
-## 8. CI
+## 8. Repeat builds
 
-- [ ] `.github/workflows/seeker-release.yml` is committed.
-- [ ] Repository secrets configured: `SEEKER_RELEASE_KEYSTORE_BASE64`, `SEEKER_RELEASE_KEYSTORE_PASSWORD`, `SEEKER_RELEASE_KEY_ALIAS`, `SEEKER_RELEASE_KEY_PASSWORD`, `SEEKER_PUBLISHER_KEYPAIR`, `SEEKER_PUBLISHER_RPC_URL`, `SEEKER_DAPP_STORE_API_KEY`.
-- [ ] Dry-run (`workflow_dispatch` with `dry_run: true`) produces a signed APK artifact.
-- [ ] Tagged release (`git tag seeker-v1.0.0`) triggers a full publish.
+This repo does not use GitHub Actions — releases are built locally by the owner.
+
+- [ ] `KEYSTORE_PASSWORD=… ./scripts/build-apk.sh` runs end-to-end unattended on the release machine (no interactive prompts).
+- [ ] The release keystore path and password are stored in the owner's password manager, not on disk in the repo.
+- [ ] `appVersionCode` was bumped in `twa/twa-manifest.json` (or via `VERSION_CODE`) — the dApp Store rejects a re-used versionCode.
+- [ ] `scripts/publish.sh` completes with the same `SOLANA_KEYPAIR` used at init time.
 
 ## 9. Pre-submit smoke
 

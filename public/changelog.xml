@@ -167,6 +167,14 @@
 			<description>Your account's friends list, presence, and DMs (already live on /walk) now work inside /play's coin worlds too: a Friends button on the HUD (or press J) opens a drawer showing who's online and where, with live direct messages that arrive instantly whether or not the drawer is open. Previously /play never told the server who you were signed in as, so friends saw you as offline no matter how long you played, and any message sent your way was silently lost.</description>
 		</item>
 		<item>
+			<title>Installing three.ws as an app now gets the full experience</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-10:Installing three.ws as an app now gets the full experience</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Adding three.ws to your home screen previously picked up a bare-bones app manifest on most pages — generic name, no home-screen shortcuts. Every page now installs with the complete app identity: proper name, icons, screenshots, and Create / Marketplace / My agents shortcuts. The Solana Seeker app package was fixed the same way, including a broken My agents shortcut and a missing version label.</description>
+		</item>
+		<item>
 			<title>News Digest: the day's crypto coverage, grouped into the stories that actually matter</title>
 			<link>https://three.ws/markets/digest</link>
 			<guid isPermaLink="false">2026-07-10:News Digest: the day's crypto coverage, grouped into the stories that actually matter</guid>

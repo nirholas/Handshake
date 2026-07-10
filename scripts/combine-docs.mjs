@@ -23,8 +23,12 @@ const groupOf = (p) => {
   return parts.length > 1 ? parts[0] : '(top level)';
 };
 
-// Collect all markdown under docs/, excluding the generated output itself.
-const files = execSync(`find ${DOCS_DIR} -name '*.md' -not -name 'ALL.md'`, { cwd: ROOT })
+// Collect all markdown under docs/, excluding the generated output itself
+// and the repo-wide EVERYTHING.md aggregate (scripts/combine-everything.mjs).
+const files = execSync(
+  `find ${DOCS_DIR} -name '*.md' -not -name 'ALL.md' -not -name 'EVERYTHING.md'`,
+  { cwd: ROOT },
+)
   .toString()
   .trim()
   .split('\n')

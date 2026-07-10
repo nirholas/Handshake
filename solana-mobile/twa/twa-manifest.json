@@ -17,25 +17,25 @@
   "iconUrl": "https://three.ws/pwa-512x512.png",
   "maskableIconUrl": "https://three.ws/pwa-512x512.png",
   "monochromeIconUrl": "https://three.ws/pwa-icon.svg",
-  "appVersionName": "1.0.0",
+  "appVersion": "1.0.0",
   "appVersionCode": 1,
   "shortcuts": [
     {
       "name": "Create avatar",
       "shortName": "Create",
-      "url": "/create?utm_source=seeker_shortcut",
+      "url": "https://three.ws/create?utm_source=seeker_shortcut",
       "chosenIconUrl": "https://three.ws/pwa-192x192.png"
     },
     {
-      "name": "Discover agents",
+      "name": "Marketplace",
       "shortName": "Discover",
-      "url": "/discover?utm_source=seeker_shortcut",
+      "url": "https://three.ws/marketplace?utm_source=seeker_shortcut",
       "chosenIconUrl": "https://three.ws/pwa-192x192.png"
     },
     {
       "name": "My agents",
-      "shortName": "Account",
-      "url": "/account?utm_source=seeker_shortcut",
+      "shortName": "My agents",
+      "url": "https://three.ws/agents?utm_source=seeker_shortcut",
       "chosenIconUrl": "https://three.ws/pwa-192x192.png"
     }
   ],

@@ -1,23 +1,33 @@
 #!/usr/bin/env bash
 # Build a signed release APK for the three.ws Solana Mobile dApp Store
-# listing. Requires Node 18-21, JDK 17, Android SDK (Bubblewrap auto-installs
-# build-tools 33 if missing), and a release keystore.
+# listing. Requires Node 18+, a JDK (for keytool), and a release keystore.
+# Bubblewrap manages its own JDK 17 + Android SDK under ~/.bubblewrap on
+# first run.
 #
 # Usage:
-#   ./scripts/build-apk.sh
+#   KEYSTORE_PASSWORD='...' ./scripts/build-apk.sh
 #
 # Environment:
-#   KEYSTORE_PATH        path to release.keystore  (default: ./android.keystore)
-#   KEYSTORE_PASSWORD    keystore password         (required)
-#   KEY_ALIAS            release key alias         (default: threews)
-#   KEY_PASSWORD         key password              (defaults to KEYSTORE_PASSWORD)
-#   VERSION_NAME         appVersionName            (default: read from twa-manifest.json)
-#   VERSION_CODE         appVersionCode            (default: read from twa-manifest.json)
-#   ASSETLINKS_OUT       where to write the assetlinks.json from the fingerprint
+#   KEYSTORE_PASSWORD    keystore password          (required)
+#   KEYSTORE_PATH        path to release.keystore   (default: ./android.keystore)
+#   KEY_ALIAS            release key alias          (default: threews)
+#   KEY_PASSWORD         key password               (defaults to KEYSTORE_PASSWORD)
+#   VERSION_NAME         override appVersionName    (default: from twa/twa-manifest.json)
+#   VERSION_CODE         override appVersionCode    (default: from twa/twa-manifest.json)
+#   ASSETLINKS_OUT       where to write assetlinks.json from the fingerprint
 #                        (default: ../public/.well-known/assetlinks.json)
+#   ACCEPT_ANDROID_SDK_LICENSES=1
+#                        non-interactively accept Android SDK licenses (needed
+#                        once per machine, e.g. in CI or a fresh container)
+#   BUBBLEWRAP_JDK_PATH / BUBBLEWRAP_ANDROID_SDK_PATH
+#                        pre-seed ~/.bubblewrap/config.json on machines where
+#                        Bubblewrap's interactive first-run wizard can't run
 #
-# The script is idempotent: rerunning it bumps versionCode automatically if
-# BUMP=1 is set, otherwise leaves the manifest alone.
+# Non-interactive by design: signing passwords go to Bubblewrap via its
+# BUBBLEWRAP_KEYSTORE_PASSWORD / BUBBLEWRAP_KEY_PASSWORD env vars, the TWA
+# project is (re)generated from twa/twa-manifest.json with `bubblewrap update`
+# (NOT `init` — init only accepts a live web-manifest URL to bootstrap a new
+# twa-manifest.json, it can never consume the one we already maintain).
 
 set -euo pipefail
 
@@ -29,7 +39,6 @@ require() {
 
 require node
 require npx
-require java
 require keytool
 
 if [[ -z "${KEYSTORE_PASSWORD:-}" ]]; then
@@ -41,6 +50,7 @@ KEYSTORE_PATH="${KEYSTORE_PATH:-$(pwd)/android.keystore}"
 KEY_ALIAS="${KEY_ALIAS:-threews}"
 KEY_PASSWORD="${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
 ASSETLINKS_OUT="${ASSETLINKS_OUT:-$(cd .. && pwd)/public/.well-known/assetlinks.json}"
+BUBBLEWRAP_CONFIG="$HOME/.bubblewrap/config.json"
 
 echo "[build-apk] working dir: $(pwd)"
 echo "[build-apk] keystore: $KEYSTORE_PATH (alias=$KEY_ALIAS)"
@@ -105,28 +115,72 @@ fi
 
 BUBBLEWRAP="npx --no-install @bubblewrap/cli"
 
-# ── 4. Init or update the TWA project ──────────────────────────────────────
+# ── 4. Bubblewrap JDK / Android SDK setup ──────────────────────────────────
+# Bubblewrap's first run normally walks an interactive wizard to download a
+# JDK 17 and the Android SDK into ~/.bubblewrap. In a non-interactive shell
+# that wizard crashes (inquirer over piped stdin), so pre-seed the config
+# when the caller provides the paths.
+if [[ ! -f "$BUBBLEWRAP_CONFIG" ]]; then
+	if [[ -n "${BUBBLEWRAP_JDK_PATH:-}" && -n "${BUBBLEWRAP_ANDROID_SDK_PATH:-}" ]]; then
+		mkdir -p "$(dirname "$BUBBLEWRAP_CONFIG")"
+		node -e "
+			const fs = require('fs');
+			fs.writeFileSync(process.argv[1], JSON.stringify({
+				jdkPath: process.argv[2],
+				androidSdkPath: process.argv[3],
+			}));
+		" "$BUBBLEWRAP_CONFIG" "$BUBBLEWRAP_JDK_PATH" "$BUBBLEWRAP_ANDROID_SDK_PATH"
+		echo "[build-apk] seeded $BUBBLEWRAP_CONFIG from env"
+	elif [[ ! -t 0 ]]; then
+		echo "[build-apk] no ~/.bubblewrap/config.json and stdin is not a TTY." >&2
+		echo "[build-apk] Either run this script once from an interactive shell (Bubblewrap" >&2
+		echo "[build-apk] will offer to download JDK 17 + Android SDK), or set" >&2
+		echo "[build-apk] BUBBLEWRAP_JDK_PATH and BUBBLEWRAP_ANDROID_SDK_PATH." >&2
+		exit 1
+	fi
+	# Interactive shell with no config: fall through and let Bubblewrap's
+	# wizard handle the download prompts normally.
+fi
+
+# Accept Android SDK package licenses non-interactively when asked to.
+# Without this, the first Gradle build fails on the unaccepted
+# build-tools license.
+if [[ "${ACCEPT_ANDROID_SDK_LICENSES:-0}" == "1" && -f "$BUBBLEWRAP_CONFIG" ]]; then
+	SDK_ROOT="$(node -e "console.log(require('$BUBBLEWRAP_CONFIG').androidSdkPath || '')")"
+	SDKMANAGER="$(find "$SDK_ROOT" -name sdkmanager -type f 2>/dev/null | head -1)"
+	if [[ -n "$SDKMANAGER" ]]; then
+		JDK_ROOT="$(node -e "console.log(require('$BUBBLEWRAP_CONFIG').jdkPath || '')")"
+		echo "[build-apk] accepting Android SDK licenses"
+		yes | JAVA_HOME="$JDK_ROOT" PATH="$JDK_ROOT/bin:$PATH" "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null || true
+	fi
+fi
+
+# ── 5. Generate the TWA project from twa/twa-manifest.json ─────────────────
 BUILD_DIR="$(pwd)/build"
 mkdir -p "$BUILD_DIR"
-cp -f twa/twa-manifest.json "$BUILD_DIR/twa-manifest.json"
 cp -f "$KEYSTORE_PATH" "$BUILD_DIR/android.keystore"
+
+# Copy the manifest and inject the signing key + optional version overrides.
+node <<NODE
+const fs = require('fs');
+const manifest = require('./twa/twa-manifest.json');
+manifest.signingKey = { path: './android.keystore', alias: '${KEY_ALIAS}' };
+// Bubblewrap's JSON field for the Android versionName is "appVersion".
+if ('${VERSION_NAME:-}') manifest.appVersion = '${VERSION_NAME:-}';
+if ('${VERSION_CODE:-}') manifest.appVersionCode = Number('${VERSION_CODE:-}');
+fs.writeFileSync('${BUILD_DIR}/twa-manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+NODE
 
 pushd "$BUILD_DIR" >/dev/null
 
-if [[ -f app-release-signed.apk ]]; then
-	rm -f app-release-signed.apk
-fi
+rm -f app-release-signed.apk three-ws-release.apk
 
-if [[ ! -f app/build.gradle && ! -f build.gradle ]]; then
-	echo "[build-apk] running bubblewrap init"
-	$BUBBLEWRAP init --manifest "$(pwd)/twa-manifest.json" --skipPwaValidation
-else
-	echo "[build-apk] running bubblewrap update"
-	$BUBBLEWRAP update --skipVersionUpgrade
-fi
+echo "[build-apk] generating Android project (bubblewrap update)"
+$BUBBLEWRAP update --skipVersionUpgrade
 
 # Patch build.gradle to declare resConfigs (avoids the Bubblewrap all-locales
-# bug that lists every Android locale on the dApp Store listing).
+# bug that lists every Android locale on the dApp Store listing). update
+# regenerates the project each run, so re-apply every time.
 GRADLE_FILE="app/build.gradle"
 [[ -f "$GRADLE_FILE" ]] || GRADLE_FILE="build.gradle"
 if [[ -f "$GRADLE_FILE" ]] && ! grep -q "resConfigs" "$GRADLE_FILE"; then
@@ -143,12 +197,14 @@ console.log('[build-apk] patched ' + p + ' with resConfigs "en"');
 NODE
 fi
 
-# ── 5. Build & sign the APK ────────────────────────────────────────────────
+# ── 6. Build & sign the APK ────────────────────────────────────────────────
 echo "[build-apk] building signed release APK"
+BUBBLEWRAP_KEYSTORE_PASSWORD="$KEYSTORE_PASSWORD" \
+BUBBLEWRAP_KEY_PASSWORD="$KEY_PASSWORD" \
 $BUBBLEWRAP build \
 	--skipPwaValidation \
 	--signingKeyPath "$(pwd)/android.keystore" \
-	--signingKeyAlias "$KEY_ALIAS" <<< "$(printf '%s\n%s\n' "$KEYSTORE_PASSWORD" "$KEY_PASSWORD")"
+	--signingKeyAlias "$KEY_ALIAS"
 
 APK_PATH=""
 for candidate in app-release-signed.apk app/build/outputs/apk/release/app-release-signed.apk; do
@@ -165,13 +221,17 @@ fi
 
 popd >/dev/null
 
-# ── 6. Verify signature ────────────────────────────────────────────────────
+# ── 7. Verify signature ────────────────────────────────────────────────────
 APKSIGNER="$(command -v apksigner || true)"
+if [[ -z "$APKSIGNER" && -f "$BUBBLEWRAP_CONFIG" ]]; then
+	SDK_ROOT="$(node -e "console.log(require('$BUBBLEWRAP_CONFIG').androidSdkPath || '')")"
+	APKSIGNER="$(find "$SDK_ROOT/build-tools" -name apksigner -type f 2>/dev/null | sort -V | tail -1)"
+fi
 if [[ -n "$APKSIGNER" ]]; then
 	echo "[build-apk] verifying APK signature"
-	"$APKSIGNER" verify --print-certs "$APK_PATH"
+	"$APKSIGNER" verify --print-certs "$APK_PATH" | head -4
 else
-	echo "[build-apk] apksigner not on PATH — skipping signature verification"
+	echo "[build-apk] apksigner not found — skipping signature verification"
 fi
 
 OUT="$(pwd)/build/three-ws-release.apk"

@@ -12996,6 +12996,15 @@
 				"fix"
 			],
 			"link": "/launches"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "Installing three.ws as an app now gets the full experience",
+			"summary": "Adding three.ws to your home screen previously picked up a bare-bones app manifest on most pages — generic name, no home-screen shortcuts. Every page now installs with the complete app identity: proper name, icons, screenshots, and Create / Marketplace / My agents shortcuts. The Solana Seeker app package was fixed the same way, including a broken My agents shortcut and a missing version label.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
 		}
 	]
 }
