@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T06:07:10.776Z",
+	"generated_at": "2026-07-10T06:16:54.247Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -65,6 +65,17 @@
 			"link": "/markets",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "The liquidations pulse on /coins is live",
+			"summary": "The long/short liquidation strip on the markets page had been showing its offline state since launch — the collector that listens to Binance, Bybit, and OKX futures streams needs to run around the clock, which the old serverless setup couldn't do. It now runs as its own always-on service, so the dominant-side badge, the 1-hour long-vs-short bars, and the biggest recent liquidations fill in with real exchange data.",
+			"link": "/coins",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{
