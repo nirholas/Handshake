@@ -71,6 +71,14 @@
 			<description>A wiring mistake in how the platform opened its connection to Solana meant every automated buyback silently failed — for nearly a month, roughly 40,000 times a day — and the vault-balance view for any agent coin returned an error instead of its numbers. Both are fixed. Buybacks now run against the chain as intended, agent coin pages show real payment, buyback and withdraw vault balances again, and the failed-run log that quietly grew to a quarter-million rows is now pruned automatically while every on-chain burn record is kept.</description>
 		</item>
 		<item>
+			<title>Coin price charts stop dropping out, and the walk demos load fast on phones</title>
+			<link>https://three.ws/walk</link>
+			<guid isPermaLink="false">2026-07-10:Coin price charts stop dropping out, and the walk demos load fast on phones</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The price chart on coin and trading pages intermittently showed &quot;unavailable&quot; because every refresh asked the upstream price service for a slightly different time window, so nothing could be cached and the free service rate-limited us. Refreshes now share a window, the busiest lookup is remembered, and if both price sources go quiet for a moment the chart keeps showing the most recent real candles with a &quot;delayed&quot; marker instead of an error. A coin that has no liquidity pool now says exactly that. Separately, the walk landing page used to start all eight interactive demos at once — on a phone that exhausted the browser's 3D limit and stalled the page for over twenty seconds. Each demo now starts as you scroll to it.</description>
+		</item>
+		<item>
 			<title>Crypto news is live: a real-time feed from 38 publishers, a rich article reader, and a 662,047-article archive back to 2017</title>
 			<link>https://three.ws/markets</link>
 			<guid isPermaLink="false">2026-07-10:Crypto news is live: a real-time feed from 38 publishers, a rich article reader, and a 662,047-article archive back to 2017</guid>

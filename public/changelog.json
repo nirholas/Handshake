@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T12:39:43.960Z",
+	"generated_at": "2026-07-10T12:47:45.316Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -85,6 +85,17 @@
 			"link": "/launches",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
+			"type": "update",
+			"title": "Coin price charts stop dropping out, and the walk demos load fast on phones",
+			"summary": "The price chart on coin and trading pages intermittently showed \"unavailable\" because every refresh asked the upstream price service for a slightly different time window, so nothing could be cached and the free service rate-limited us. Refreshes now share a window, the busiest lookup is remembered, and if both price sources go quiet for a moment the chart keeps showing the most recent real candles with a \"delayed\" marker instead of an error. A coin that has no liquidity pool now says exactly that. Separately, the walk landing page used to start all eight interactive demos at once — on a phone that exhausted the browser's 3D limit and stalled the page for over twenty seconds. Each demo now starts as you scroll to it.",
+			"link": "/walk",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

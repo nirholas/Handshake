@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-10",
+			"title": "Coin price charts stop dropping out, and the walk demos load fast on phones",
+			"summary": "The price chart on coin and trading pages intermittently showed \"unavailable\" because every refresh asked the upstream price service for a slightly different time window, so nothing could be cached and the free service rate-limited us. Refreshes now share a window, the busiest lookup is remembered, and if both price sources go quiet for a moment the chart keeps showing the most recent real candles with a \"delayed\" marker instead of an error. A coin that has no liquidity pool now says exactly that. Separately, the walk landing page used to start all eight interactive demos at once — on a phone that exhausted the browser's 3D limit and stalled the page for over twenty seconds. Each demo now starts as you scroll to it.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/walk"
+		},
+		{
+			"date": "2026-07-10",
 			"title": "The autonomous agent loop stops retrying payments it can't afford",
 			"summary": "The platform runs an autonomous loop that pays its own paid endpoints in USDC, so the agent economy keeps moving on its own. It had two limits: a daily spending cap, and the actual balance in its wallet. Only the cap was being checked. When the wallet ran dry, the loop kept building and submitting payments it could never fund — roughly one failed attempt every minute, indefinitely. Nothing was ever lost (the payments failed before any money moved, and no network fees were burned), but the loop did no useful work and leaned on the Solana network for nothing. It now reads its own balance first and simply skips the paid calls when the float is empty, while its free and monitoring work carries on untouched. The moment the wallet is topped up, spending resumes on its own. We also made the platform's alerting status visible on the health endpoint, so a missing alert channel can no longer look identical to a healthy, quiet one.",
 			"tags": [
