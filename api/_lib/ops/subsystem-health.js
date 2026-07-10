@@ -129,9 +129,15 @@ function checkRateLimiter() {
 	try {
 		const h = rateLimiterHealth();
 		if (!h.configured) {
-			return h.durableFallback
-				? { ...base, status: 'degraded', detail: 'no Redis; money/auth buckets counting in Postgres', backend: 'postgres', hint: 'Configure UPSTASH_REDIS_REST_URL/TOKEN for sliding-window precision.' }
-				: { ...base, status: 'down', detail: 'no Redis and no Postgres — money buckets fail closed', backend: 'none', hint: 'Set DATABASE_URL and/or UPSTASH_REDIS_REST_URL. Paid endpoints deny until then.' };
+			if (h.durableFallback) {
+				return { ...base, status: 'degraded', detail: 'no Redis; money/auth buckets counting in Postgres', backend: 'postgres', hint: 'Configure UPSTASH_REDIS_REST_URL/TOKEN for sliding-window precision.' };
+			}
+			// No backend at all. Outside production that is the ordinary dev posture
+			// (the memory limiter, permissive by design). In production it means every
+			// money bucket denies — a real outage.
+			return h.enforcing
+				? { ...base, status: 'down', detail: 'no Redis and no Postgres — money buckets fail closed', backend: 'none', hint: 'Set DATABASE_URL and/or UPSTASH_REDIS_REST_URL. Paid endpoints deny until then.' }
+				: { ...base, status: 'ok', detail: 'in-memory (no Redis configured)', backend: 'memory' };
 		}
 		if (h.quotaExhausted) {
 			return {

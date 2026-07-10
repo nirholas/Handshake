@@ -246,6 +246,10 @@ export function rateLimiterHealth() {
 		circuitReopensInMs: Math.max(0, circuitOpenUntil - Date.now()),
 		quotaExhausted: _quotaWarnedAt > 0,
 		durableFallback: pgAvailable(),
+		// Outside production a bucket with no backend degrades to the permissive
+		// memory limiter rather than denying, so "no Redis, no Postgres" is the
+		// normal, healthy dev/test posture — not an outage.
+		enforcing: IS_PRODUCTION,
 	};
 }
 
