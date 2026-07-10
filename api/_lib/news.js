@@ -156,6 +156,10 @@ export function parseFeed(xml, sourceKey) {
 			const author =
 				stripHtml(str(it?.['dc:creator']) || str(it?.author?.name) || str(it?.author) || '') || null;
 			const description = stripHtml(rawDesc).slice(0, 320) || null;
+			// Full body many feeds ship (WordPress content:encoded, Atom content).
+			// Server-side only — the reader uses it when the publisher's site
+			// blocks direct fetches; the feed API strips it from list payloads.
+			const fullText = stripHtml(str(it?.['content:encoded']) || str(it?.content?.['#text']) || '');
 			return {
 				id: articleId(link),
 				title,
@@ -169,6 +173,7 @@ export function parseFeed(xml, sourceKey) {
 				pub_date: iso,
 				tickers: extractTickers(`${title} ${description || ''}`),
 				sentiment: lexiconSentiment(`${title} ${description || ''}`),
+				content_text: fullText.length > (description || '').length + 80 ? fullText.slice(0, 8000) : null,
 			};
 		})
 		.filter(Boolean);
@@ -264,8 +269,11 @@ export async function getNews({ category, source, q, limit = 30, offset = 0 } = 
 	}
 	const total = articles.length;
 	const sources_ok = keys.filter((k) => sourceCache.get(k)?.ok).length;
+	// content_text is a server-side field for the article reader; list payloads
+	// stay light.
+	const page = articles.slice(offset, offset + limit).map(({ content_text, ...a }) => a);
 	return {
-		articles: articles.slice(offset, offset + limit),
+		articles: page,
 		total,
 		sources_ok,
 		sources_total: keys.length,
@@ -275,4 +283,18 @@ export async function getNews({ category, source, q, limit = 30, offset = 0 } = 
 /** Search all sources — used by the /coin/:id related-news rail. */
 export async function searchNews(q, limit = 8) {
 	return getNews({ q, limit });
+}
+
+/**
+ * Locate one article (with its feed-provided full text, when the publisher
+ * ships one) by link or 16-hex id across every cached source. Used by the
+ * reader endpoint as the trusted fallback when a publisher blocks direct
+ * page fetches — the content still comes from the publisher's own feed.
+ */
+export async function findArticle({ link, id }) {
+	const keys = sourcesForCategory('all');
+	const all = await ensureSources(keys);
+	const wantId = id || (link ? articleId(link) : null);
+	if (!wantId && !link) return null;
+	return all.find((a) => a.id === wantId || (link && a.link === link)) || null;
 }
