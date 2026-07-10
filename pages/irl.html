@@ -164,6 +164,7 @@
 			display: inline-flex;
 			align-items: center;
 			gap: 5px;
+			flex-shrink: 0;
 			font-size: 11px;
 			font-weight: 600;
 			letter-spacing: 0.08em;
@@ -174,6 +175,7 @@
 			border-radius: 999px;
 			padding: 4px 10px;
 			transition: border-color 0.3s;
+			white-space: nowrap;
 		}
 		body.is-ar .irl-badge { border-color: rgba(74,222,128,0.5); }
 		.irl-badge-dot {
@@ -494,12 +496,28 @@
 				gap: 8px;
 				padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
 			}
-			#irl-camera-btn {
+			/* Outranks the base hero-button rule, which appears later in this
+			   stylesheet (same specificity would lose on source order). */
+			footer.irl-bottom #irl-camera-btn {
 				height: 52px;
 				max-width: 340px;
 				border-radius: 16px;
 				font-size: 16px;
 			}
+		}
+
+		/* Landscape phones (short viewports): the portrait dock keeps its full
+		   text block and hero button, which here swallows 60%+ of the height and
+		   pushes the dock-anchored FABs up into the top bar. Drop the redundant
+		   headline/subtitle and slim the camera button — the dock falls to
+		   ~130px, and everything anchored to --irl-dock-h follows it down. */
+		@media (hover: none) and (max-height: 480px) {
+			.irl-avatar-name, .irl-subtitle { display: none; }
+			.irl-bottom { gap: 6px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); }
+			footer.irl-bottom #irl-camera-btn { height: 44px; max-width: 240px; font-size: 14.5px; border-radius: 999px; }
+			.irl-status { height: 14px; font-size: 11.5px; }
+			/* The zone still needs to clear the top bar on a 320-tall screen. */
+			#irl-joystick { height: min(38vh, 150px); }
 		}
 
 		.irl-status {
@@ -879,11 +897,21 @@
 			flex-shrink: 0;
 		}
 
-		/* Nearby agents badge — inline next to the IRL badge in the topbar */
+		/* Nearby agents badge — inline next to the IRL badge in the topbar.
+		   The topbar center column can host up to four of these chips at once
+		   (IRL badge, nearby, net status, presence) on a 320-390px phone — under
+		   that crowding this used to hard-clip mid-word with no ellipsis, reading
+		   as broken rather than intentionally truncated. min-width:0 lets it
+		   actually shrink inside the flex row; text-overflow degrades gracefully. */
 		#irl-nearby-badge {
 			display: inline-flex;
 			align-items: center;
 			margin-left: 6px;
+			min-width: 0;
+			max-width: 108px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 			font-size: 10px;
 			font-weight: 700;
 			letter-spacing: 0.04em;
@@ -946,6 +974,10 @@
 			align-items: center;
 			gap: 4px;
 			margin-left: 6px;
+			min-width: 0;
+			max-width: 90px;
+			overflow: hidden;
+			text-overflow: ellipsis;
 			font-size: 10px;
 			font-weight: 700;
 			letter-spacing: 0.04em;
@@ -1004,6 +1036,11 @@
 			align-items: center;
 			gap: 5px;
 			margin-left: 6px;
+			min-width: 0;
+			max-width: 118px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 			font-size: 10px;
 			font-weight: 700;
 			letter-spacing: 0.04em;
