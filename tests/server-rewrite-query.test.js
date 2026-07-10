@@ -73,4 +73,17 @@ describe('rewrite-dest query params reach handlers on req.url', () => {
 		expect([302, 307]).toContain(res.status);
 		expect(res.headers.get('location')).toBeTruthy();
 	}, 15000);
+
+	it('handlers behind a [param].js dest still see the ORIGINAL pathname on req.url', async () => {
+		// /api/marketplace/categories → dest /api/marketplace/[action]?action=categories.
+		// api/marketplace/[action].js routes by parsing req.url's path segments, so if
+		// req.url carried the dest's literal "[action]" segment the handler would 404
+		// "unknown marketplace action" (broke /marketplace, /skills, /economy). With no
+		// DATABASE_URL in this harness the healthy outcome is the handler's own 5xx
+		// degradation — never its unknown-action 404.
+		const res = await fetch(`${BASE}/api/marketplace/categories`);
+		const body = await res.text();
+		expect(body).not.toContain('unknown marketplace action');
+		expect(res.status).not.toBe(404);
+	}, 15000);
 });

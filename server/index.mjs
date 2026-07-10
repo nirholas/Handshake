@@ -423,15 +423,21 @@ app.use(async (req, res) => {
 
 	// Functions phase: anything routed under /api/ is a serverless handler.
 	if (currentPath.startsWith('/api/')) {
-		// Vercel parity: a handler behind a dest rewrite sees the REWRITTEN url —
-		// path and query — on req.url, not just req.query. Many handlers (e.g.
-		// api/oracle-share.js, api/agent-share.js) parse new URL(req.url), so
-		// without this a pretty route like /oracle/coin/<mint> →
-		// /api/oracle-share?mint=$1 delivers an empty query and the page breaks.
+		// Vercel parity: a handler behind a dest rewrite sees the dest's query
+		// params on req.url (many handlers — api/oracle-share.js,
+		// api/agent-share.js — parse new URL(req.url) rather than req.query), but
+		// keeps the ORIGINAL request pathname. Using the dest path here breaks
+		// every handler behind a "[param].js"-style dest that routes by path
+		// segment: /api/marketplace/categories → dest
+		// /api/marketplace/[action]?action=categories made api/marketplace/[action].js
+		// parse the literal segment "[action]" as its action and 404
+		// (/marketplace, /skills, /economy all lost their category/theme/list
+		// calls). Merge the dest query onto the original pathname instead —
+		// both handler styles read what they expect.
 		if (Object.keys(extraQuery).length > 0) {
 			const merged = new URLSearchParams(url.search);
 			for (const [k, v] of Object.entries(extraQuery)) merged.set(k, v);
-			req.url = `${currentPath}?${merged.toString()}`;
+			req.url = `${url.pathname}?${merged.toString()}`;
 		}
 		res.set(collected);
 		if (await dispatchApi(req, res, currentPath, extraQuery)) return;
