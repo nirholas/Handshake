@@ -64,6 +64,7 @@ If you're here to create and share agents rather than write code, follow this pa
 
 - **Just exploring?** → Open [Discover](/discover) to browse agents others have built
 - **Creating your first agent** → Go to [/start](/start) — a 5-step wizard walks you through it
+- **Wondering who the little character in the corner is?** → [The agent shell](./agent-shell.md) — every visitor gets a named agent in the first five seconds (claim it to make it real), the ⌘K palette runs real commands (`forge …`, `digest`, `price btc`, `ask …`), and shell pages navigate without ever unloading your agent
 - **Meeting avatars in the worlds?** → Press <kbd>I</kbd> on anyone in `/play`, `/city`, a coin world, or `/agora` to see who they are — the [avatar inspector](./avatar-inspector.md) shows their reputation, wallet, and profile
 - **Making 3D models?** → [The free 3D Studio MCP](./mcp-studio.md) turns a prompt into a model, avatar, or rigged character — and lets you refine it by talking to it (*"make it metallic"*) with a revertable version history. Publish a model as remixable and earn on-chain royalties when others build on it: [the remix economy](./remix.md)
 - **Trading?** → [The trading surfaces](./trading-surfaces.md) maps the solo stack (Radar, Coin Intelligence, Live Trade Feed, Watchlist, Mission Control); [trading arenas](./trading-arenas.md) covers tournaments, the theater, vaults, and swarms; [Oracle](./oracle.md) is the conviction engine underneath all of it

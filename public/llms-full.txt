@@ -873,7 +873,7 @@ URL: https://three.ws/coin-intel
 
 Every pump.fun launch watched and classified in real time — organic vs bundle, the wallets behind it, a transparent quality score, and a model that learns which signals predict winners.
 
-### Markets — Live Crypto Prices
+### Coins — Live Prices & Market Caps
 
 URL: https://three.ws/coins
 

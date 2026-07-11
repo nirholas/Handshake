@@ -1,34 +1,22 @@
-// Wheel of Fortune — the in-world spinner UI for /play (Task 19).
+// Wheel of Fortune — the in-world spinner UI for /play (Task 19/W09).
 //
-// Opened when the player reaches the Mainland casino wheel. The SERVER owns
-// every outcome: this module renders the 20-segment wheel, requests a spin, and
-// animates the wheel to land on exactly the segment the server rolled — it never
-// decides a prize. Two ways to spin:
+// Opened when the player reaches Fortune's Folly, the Mainland casino wheel
+// (multiplayer/src/wheel-station.js renders the landmark + prompt; this module
+// is lazy-imported on first interaction). The SERVER owns every outcome: this
+// module renders the 20-segment wheel, requests a spin, and animates the wheel
+// to land on exactly the segment the server rolled — it never decides a prize.
+// Two ways to spin:
 //   • Free — one per account every 12h, with a live countdown.
-//   • Paid — $3 in $THREE (50% burned / 50% to treasury). The server builds the
-//     split transaction, the player's wallet signs + broadcasts it, and the
-//     server verifies it on-chain before rolling. The paid spin never touches the
+//   • Paid — $3 in $THREE, split 50% to the holder-rewards pool / 50% to the
+//     treasury (see multiplayer/src/game-token.js — the platform never burns
+//     supply; the share that historically went to the incinerator now
+//     reflects back to holders instead). The server builds the split
+//     transaction, the player's wallet signs + broadcasts it, and the server
+//     verifies it on-chain before rolling. The paid spin never touches the
 //     free-spin timer.
 //
 // Loaded as its own lazy chunk (dynamic import on first wheel interaction) so the
 // Solana signing path never weighs down the main /play bundle.
-//
-// STATUS (verified 2026-07-10): this client module is complete, but nothing
-// mounts it — zero importers of `openSpinWheel` anywhere in the repo, and there
-// is no `spinInfo`/`spinPrep`/`spinResult`/`spinDenied` handler on EITHER
-// Colyseus room (grep multiplayer/src/rooms/*.js — zero hits) and no `spinInfo`/
-// `spinFree`/`spinPaid` method on `community-net.js`/`walk-net.js`. This is not
-// a wiring gap like play-intro.js/friends-panel.js were — the entire server
-// side (spin RNG, the 12h free-spin cooldown ledger, the $3-in-$THREE
-// split-payment transaction build + on-chain verification before granting a
-// paid spin, prize/reward granting into the existing economy) has never been
-// built. Mirror the boutique purchase flow's proven pattern
-// (multiplayer/src/game-token.js + src/game/boutique-purchase.js: server
-// builds the tx, wallet signs, server re-verifies on RPC before granting)
-// rather than writing new on-chain verification logic from scratch — but do
-// build it carefully and reviewed, not rushed: this moves real money. No world
-// zone/NPC ("Fortune's Folly · Mainland" per this file's own header) spawns
-// the interaction that would call openSpinWheel() either.
 
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
 
@@ -164,7 +152,7 @@ class SpinWheel {
 		// sees exactly what they'll sign before the wallet prompt appears.
 		const tkn = fmtAtomics(m.tokenAmount);
 		const sym = m.symbol || this.info?.symbol || '$THREE';
-		if (tkn && this.paidSub) this.paidSub.textContent = `${tkn} ${sym} · 50% burned, 50% treasury`;
+		if (tkn && this.paidSub) this.paidSub.textContent = `${tkn} ${sym} · 50% to holder rewards, 50% treasury`;
 		this._runWalletPayment(m).catch((err) => this._payError(err));
 	}
 
@@ -246,9 +234,19 @@ class SpinWheel {
 		this._prep = null;
 		this._settleAttempts = 0;
 		this.resultLine.textContent = '';
-		this._status('Preparing your payment…', '');
+		this._status('Connecting your wallet…', '');
 		this._sync();
-		this.net.spinPaidPrep();
+		// Same connect + address-extraction step boutique-purchase.js uses — the
+		// server prices the quote for a specific buyer, so it needs the address
+		// before it can build anything.
+		let address = wallet.publicKey?.toString?.();
+		if (!address) {
+			try { await wallet.connect(); } catch (err) { this._payError(err); return; }
+			address = wallet.publicKey?.toString?.();
+		}
+		if (!address) { this._status('Could not read your wallet address.', 'err'); this.busy = false; this.phase = 'ready'; this._sync(); return; }
+		this._status('Preparing your payment…', '');
+		this.net.spinPaidPrep(address);
 	}
 
 	async _runWalletPayment(prep) {
@@ -510,7 +508,7 @@ class SpinWheel {
 		if (!this.info) this.paidSub.textContent = '';
 		else if (!lvlOk) this.paidSub.textContent = `Reach level ${min} to play`;
 		else if (!this.info.paidAvailable) this.paidSub.textContent = 'Connect a Solana wallet to buy spins';
-		else this.paidSub.textContent = `$${cost} in ${sym} · 50% burned, 50% treasury`;
+		else this.paidSub.textContent = `$${cost} in ${sym} · 50% to holder rewards, 50% treasury`;
 		this._syncFree();
 	}
 

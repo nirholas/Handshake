@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-11T21:30:10.446Z",
+	"generated_at": "2026-07-11T22:01:34.834Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1438,7 +1438,7 @@
 				},
 				{
 					"path": "/coins",
-					"title": "Markets — Live Crypto Prices",
+					"title": "Coins — Live Prices & Market Caps",
 					"description": "Live global cryptocurrency market data: total market cap, dominance, Fear & Greed, and the top coins with prices, 24h/7d moves, and 7d sparklines. Every coin links to a rich /coin/:id detail page with an interactive chart, market stats, related news, and official links.",
 					"added": "2026-07-04",
 					"auth": null,

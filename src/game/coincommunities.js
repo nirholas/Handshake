@@ -66,6 +66,7 @@ import { ensurePlayAccess } from './play-gate.js';
 import { clearStoredPass, refreshPlayPass, loadStoredPass, storePass } from './play-auth.js';
 import { PlaySystems } from './play-systems.js';
 import { PlayActivities } from './play-activities.js';
+import { WheelStation } from './wheel-station.js';
 import { PlayOnboard } from './play-onboard.js';
 import { log } from '../shared/log.js';
 import { openAvatarInspector, isAvatarInspectorOpen, closeAvatarInspector } from '../shared/avatar-inspector.js';
@@ -1189,6 +1190,14 @@ export class CoinCommunities {
 			net: this.net,
 			ui: this.ui,
 		});
+		// W09: Fortune's Folly, the Mainland Wheel of Fortune. Another sibling —
+		// its own landmark, its own prompt, lazy-loads the actual spin UI (and the
+		// @solana/web3.js it drags in for the paid path) only on first interact.
+		this.wheelStation = new WheelStation({
+			scene: this.scene,
+			getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z }),
+			net: this.net,
+		});
 		this.net.on('profile', (snap) => { this.playSystems?.setProfile(snap); this._onCosmeticsProfile(snap); });
 		this.net.on('inv', (delta) => this.playSystems?.applyInv(delta));
 		this.net.on('xpgain', (g) => this.playSystems?.onXpGain(g));
@@ -1554,6 +1563,7 @@ export class CoinCommunities {
 		if (this.combat) { this.combat.dispose(); this.combat = null; }
 		if (this.playSystems) { this.playSystems.dispose(); this.playSystems = null; }
 		if (this.playActivities) { this.playActivities.dispose(); this.playActivities = null; }
+		if (this.wheelStation) { this.wheelStation.dispose(); this.wheelStation = null; }
 		this._disposeFriends();
 		if (this.agentCommerce) { this.agentCommerce.dispose(); this.agentCommerce = null; }
 		if (this.intelKiosk) { this.intelKiosk.dispose(); this.intelKiosk = null; }
@@ -2480,7 +2490,7 @@ export class CoinCommunities {
 					// Talk to the nearest townsperson (vendor/quest/flavor); if none is
 					// in range, try the Intel Kiosk, then fall through to the Agent
 					// Exchange.
-					if (!this.worldLife?.interact() && !this.intelKiosk?.interact() && !this.combat?.interact()) this.agentCommerce?.interact();
+					if (!this.worldLife?.interact() && !this.intelKiosk?.interact() && !this.combat?.interact() && !this.wheelStation?.interact()) this.agentCommerce?.interact();
 					return;
 				}
 				// F is contextual: enter/exit a nearby vehicle takes priority (the
@@ -3320,6 +3330,7 @@ export class CoinCommunities {
 			this._updateVoice();
 			this.playSystems?.tick(dt);
 			this.playActivities?.tick(dt);
+			this.wheelStation?.tick(dt);
 			this.agentCommerce?.tick(dt);
 			this.intelKiosk?.tick(dt);
 			if (this.worldLife) { this.worldLife.setRealPeers(this.remotes.size); this.worldLife.tick(dt); }

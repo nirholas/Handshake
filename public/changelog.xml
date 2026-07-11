@@ -103,6 +103,14 @@
 			<description>The numbers on the markets pages used to blank out whenever CoinGecko rate-limited us. Now every core datapoint fails over across free, keyless backup APIs before it ever shows an error. The global stats bar falls back CoinGecko → CoinPaprika → CoinLore, the coins table backs up on CoinLore, the ETH price on the gas tracker and the BTC price on the exchanges page fail over to DefiLlama, the SOL price now draws on seven independent feeds, and the Solana token panels gained DefiLlama as a fourth source. Same numbers, same pages — they just stay up through an upstream outage instead of going blank.</description>
 		</item>
 		<item>
+			<title>Meet your agent: the site now hands every visitor a living agent — and a command line to drive it</title>
+			<link>https://three.ws/docs/agent-shell</link>
+			<guid isPermaLink="false">2026-07-11:Meet your agent: the site now hands every visitor a living agent — and a command line to drive it</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws now works the way it always promised: through your agent. Land on any page and within seconds a named 3D companion introduces itself — yours to keep, and one click turns it into a real agent on your account. The ⌘K search palette grew into a real command line: type “forge a bronze dragon statue” and a real 3D model is generated right inside the panel, “digest” reads you the day's crypto news as clustered stories, “price btc” quotes live market data, and “ask …” gets a streamed answer from the site agent — all free, no account needed, and your companion waves when the work lands. Market pages (/markets, /coins) now navigate without reloading, so your agent walks with you instead of blinking out on every click; the market surfaces also adopted the sitewide typeface for one consistent look.</description>
+		</item>
+		<item>
 			<title>Premium: one monthly pass instead of paying per call</title>
 			<link>https://three.ws/docs/premium</link>
 			<guid isPermaLink="false">2026-07-11:Premium: one monthly pass instead of paying per call</guid>
@@ -2039,9 +2047,9 @@
 			<description>On the Avatars and Agents dashboards, the wallet identity chip — address, ownership, live balance, rarity and the vanity shortcut — was crammed onto a single line and spilled past the edge of narrow cards, bleeding into the card beside it. It now fills the card footer as a tidy rounded block and wraps its badges onto a second line when space is tight, so every card stays clean at any width. The Community and Characters galleries get the same fix.</description>
 		</item>
 		<item>
-			<title>Markets — Live Crypto Prices</title>
+			<title>Coins — Live Prices &amp; Market Caps</title>
 			<link>https://three.ws/coins</link>
-			<guid isPermaLink="false">2026-07-04:Markets — Live Crypto Prices</guid>
+			<guid isPermaLink="false">2026-07-04:Coins — Live Prices &amp; Market Caps</guid>
 			<pubDate>Sat, 04 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Live global cryptocurrency market data: total market cap, dominance, Fear &amp; Greed, and the top coins with prices, 24h/7d moves, and 7d sparklines. Every coin links to a rich /coin/:id detail page with an interactive chart, market stats, related news, and official links.</description>

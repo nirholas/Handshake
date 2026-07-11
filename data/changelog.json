@@ -13129,6 +13129,16 @@
 				"docs"
 			],
 			"link": "/docs/x402-distribution"
+		},
+		{
+			"date": "2026-07-11",
+			"title": "Meet your agent: the site now hands every visitor a living agent — and a command line to drive it",
+			"summary": "three.ws now works the way it always promised: through your agent. Land on any page and within seconds a named 3D companion introduces itself — yours to keep, and one click turns it into a real agent on your account. The ⌘K search palette grew into a real command line: type “forge a bronze dragon statue” and a real 3D model is generated right inside the panel, “digest” reads you the day's crypto news as clustered stories, “price btc” quotes live market data, and “ask …” gets a streamed answer from the site agent — all free, no account needed, and your companion waves when the work lands. Market pages (/markets, /coins) now navigate without reloading, so your agent walks with you instead of blinking out on every click; the market surfaces also adopted the sitewide typeface for one consistent look.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/docs/agent-shell"
 		}
 	]
 }

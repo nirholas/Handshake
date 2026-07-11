@@ -141,6 +141,11 @@ export class CommunityNet {
 			store: new Set(),          // ({sell:[{item,label,price}], buy:[{item,qty,price,label}]})
 			boutique: new Set(),       // ({listings, owned, configured}) — premium cosmetics priced in $THREE
 			boutiqueQuote: new Set(),  // ({id, price, quoteToken, txBase64}) — unsigned $THREE purchase to sign
+			// Wheel of Fortune (W09) — Fortune's Folly, the Mainland casino wheel.
+			spinInfo: new Set(),    // ({segments, now, nextFreeSpinAt, avgLevel, minLevel, eligible, atWheel, paidAvailable, symbol, costUsd})
+			spinPrep: new Set(),    // ({tx, tokenAmount, symbol, costUsd, quote}) — unsigned paid-spin tx to sign
+			spinResult: new Set(),  // ({mode, index, label, got, overflow, nextFreeSpinAt?}) — the server's roll
+			spinDenied: new Set(),  // ({reason, ...}) — a spin request refused
 			quests: new Set(),      // ({offers, active, day}) — jobs board + active runs (W05)
 			questComplete: new Set(), // ({id, title, reward, kind, coop}) — a mission/heist finished
 			combat: new Set(),      // ({role:'attacker'|'victim', target:'mob'|'player', kind?, mobHp?, mobMaxHp?, playerHp, playerMaxHp, dealt, dead, attacker?}) — a swing/shot's result
@@ -319,6 +324,11 @@ export class CommunityNet {
 			this.room.onMessage('store', (msg) => this._emit('store', msg || {}));
 			this.room.onMessage('boutique', (msg) => this._emit('boutique', msg || {}));
 			this.room.onMessage('boutiqueQuote', (msg) => this._emit('boutiqueQuote', msg || {}));
+			// Wheel of Fortune (W09).
+			this.room.onMessage('spinInfo', (msg) => this._emit('spinInfo', msg || {}));
+			this.room.onMessage('spinPrep', (msg) => this._emit('spinPrep', msg || {}));
+			this.room.onMessage('spinResult', (msg) => this._emit('spinResult', msg || {}));
+			this.room.onMessage('spinDenied', (msg) => this._emit('spinDenied', msg || {}));
 			// Quests, jobs & heists (W05): the board + active runs and completion events.
 			this.room.onMessage('quests', (msg) => this._emit('quests', msg || {}));
 			this.room.onMessage('questComplete', (msg) => this._emit('questComplete', msg || {}));
@@ -593,6 +603,15 @@ export class CommunityNet {
 	requestBoutique() { this._send('boutiqueReq'); }
 	boutiqueQuote(id, wallet) { this._send('boutiqueQuote', { id, wallet }); }
 	boutiqueSettle(quoteToken, txSig) { this._send('boutiqueSettle', { quoteToken, txSig }); }
+	// Wheel of Fortune (W09). spinInfo() asks for the current segments/eligibility/
+	// cooldown snapshot; spinFree() attempts the 12h free spin; spinPaidPrep(wallet)
+	// prices a $3-in-$THREE paid spin and returns the unsigned tx to sign (the
+	// reply arrives via the 'spinPrep' event); spinPaidSettle() hands back the
+	// broadcast signature for the server to verify on-chain before it rolls.
+	spinInfo() { this._send('spinInfo'); }
+	spinFree() { this._send('spinFree'); }
+	spinPaidPrep(wallet) { this._send('spinPaidPrep', { wallet }); }
+	spinPaidSettle(quote, txSig) { this._send('spinPaidSettle', { quote, txSig }); }
 	// Quests, jobs & heists (W05). Server-authoritative: accept/abandon a mission and
 	// interact at a quest object; the board + progress arrive via the 'quests' event
 	// and completions via 'questComplete'. questInteract acts on the zone the server

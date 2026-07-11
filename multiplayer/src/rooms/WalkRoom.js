@@ -277,6 +277,9 @@ const ACTION_RATES = {
 	// Combat (W07): attack rides at a swing/shot cadence a touch above the fastest
 	// weapon's cooldown (pistol ~430ms); loot is a deliberate, rare action.
 	attack: 5, loot: 4,
+	// Wheel of Fortune (W09) — deliberate, low-frequency, currency/payment-mutating
+	// actions, throttled like the boutique's above.
+	spinInfo: 4, spinFree: 3, spinPaidPrep: 3, spinPaidSettle: 3,
 };
 
 // Spatial voice signaling. The room only relays SDP/ICE between two peers (the
@@ -438,6 +441,10 @@ export class WalkRoom extends Room {
 		// quote TTL so a verified purchase can never re-grant a cosmetic twice, while
 		// memory stays bounded (a nonce only needs to outlive its ~90s quote window).
 		this._boutiqueNonces = new Map(); // nonce → settledAt (ms)
+		// Wheel of Fortune (W09) replay guard — same shape and same reasoning as
+		// _boutiqueNonces above: a settled paid-spin nonce can never roll a second
+		// prize, and only needs to outlive its ~90s quote TTL.
+		this._spinNonces = new Map(); // nonce → settledAt (ms)
 		// Build permissions & anti-grief (R19). Ownership and density are tracked
 		// off-schema (peers don't render them) but persisted with the build so they
 		// survive a restart. blockOwners: key → owner id. blockCounts: owner id → how
@@ -531,6 +538,7 @@ export class WalkRoom extends Room {
 		// receives the authoritative result via profile/inv/xpgain/levelup/notice.
 		this.onMessage('fish', (client) => this._handleFish(client));
 		registerActivityHandlers(this); // W06 gather/craft: chop, mine, cook
+		registerSpinHandlers(this); // W09 Wheel of Fortune: spinInfo, spinFree, spinPaidPrep, spinPaidSettle
 		registerCombatHandlers(this); // W07 combat: attack, loot
 		this.onMessage('equip', (client, payload) => this._handleEquip(client, payload));
 		this.onMessage('consume', (client, payload) => this._handleConsume(client, payload));
@@ -1994,6 +2002,12 @@ export class WalkRoom extends Room {
 	_pruneBoutiqueNonces() {
 		const cutoff = Date.now() - 5 * 60_000;
 		for (const [nonce, ts] of this._boutiqueNonces) if (ts < cutoff) this._boutiqueNonces.delete(nonce);
+	}
+
+	// Same reasoning as _pruneBoutiqueNonces above, for paid-spin settlement.
+	_pruneSpinNonces() {
+		const cutoff = Date.now() - 5 * 60_000;
+		for (const [nonce, ts] of this._spinNonces) if (ts < cutoff) this._spinNonces.delete(nonce);
 	}
 
 	// Write this session's economy profile through to the account-keyed store,
