@@ -173,7 +173,11 @@ describe('no drift: live discovery doc ⇄ catalog', () => {
 			.filter((r) => !catalogPaths.has(r.path))
 			// agent-published listings are dynamic rows from agent_paid_services,
 			// cataloged per-listing by design.
-			.filter((r) => !r.path.startsWith('/api/x402/service/'));
+			.filter((r) => !r.path.startsWith('/api/x402/service/'))
+			// datapoint-fabric entries are a runtime-derived slice of the 400k+
+			// dynamic (family, id, metric) endpoints — registry-driven, not
+			// service-catalog descriptors (see api/_lib/market-data/datapoints.js).
+			.filter((r) => !r.path.startsWith('/api/x402/d/'));
 		expect(rogue.map((r) => r.path)).toEqual([]);
 	});
 });

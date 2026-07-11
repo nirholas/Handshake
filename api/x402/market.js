@@ -39,6 +39,11 @@ export default wrap(async (req, res) => {
 				'Retry with an X-PAYMENT header per the x402 v2 spec, or use any x402 client SDK.',
 			docs: `${origin}/docs/market-data-api`,
 			discovery: `${origin}/.well-known/x402.json`,
+			datapoints: {
+				description:
+					'Need one value instead of a payload? Every individual datapoint is its own $0.0005 endpoint — 480,000+ of them.',
+				catalog: `${origin}/api/x402/d`,
+			},
 			endpoints: MARKET_CATEGORIES.map((c) => ({
 				slug: c.slug,
 				title: c.title,

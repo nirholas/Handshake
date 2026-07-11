@@ -35,6 +35,34 @@ The browser pages (`/coins`, `/yields`, `/gas`, …) stay free for humans, with 
 
 Full per-endpoint parameter docs are in the free index (`/api/x402/market`) and in each endpoint's discovery listing.
 
+## The datapoint fabric — 480,000+ standalone endpoints
+
+Beyond the 17 category endpoints, **every individual datapoint is its own paid endpoint**: one URL, one value, one micro-payment. The fabric at `/api/x402/d/<family>/<id>/<metric>` makes every (family, id, metric) triple individually addressable — ~17,500 coins × 20 metrics, ~15,500 yield pools × 7, ~6,000 protocols × 6, plus chains, stablecoins, exchanges, and the no-id global/gas/fear-greed families. **$0.0005 USDC per datapoint** (override per family with `X402_PRICE_DATAPOINT_<FAMILY>`).
+
+```bash
+# Free catalog: families, metrics, prices, live endpoint count
+curl -s https://three.ws/api/x402/d
+
+# Walk a family's entire live id space, 200 ids per page
+curl -s "https://three.ws/api/x402/d?family=pool&ids=1&page=2"
+
+# Each datapoint is one paid GET → one machine-readable value
+curl -s https://three.ws/api/x402/d/coin/bitcoin/price          # → 402 challenge
+curl -s https://three.ws/api/x402/d/protocol/lido/tvl
+curl -s https://three.ws/api/x402/d/stablecoin/usdt/peg-deviation-bps
+curl -s https://three.ws/api/x402/d/global/btc-dominance
+```
+
+A paid datapoint response is one value with provenance:
+
+```json
+{ "family": "coin", "id": "bitcoin", "metric": "price",
+  "label": "Spot price", "unit": "usd", "value": 64149,
+  "as_of": "2026-07-11T22:50:00.000Z", "source": "three.ws market-data" }
+```
+
+Families: `coin` (id = CoinGecko id or Solana mint), `protocol` (DeFiLlama slug), `chain` (chain name), `pool` (DeFiLlama pool uuid), `stablecoin` (DeFiLlama id or symbol), `exchange` (CoinGecko exchange id), and the id-less `global`, `fear-greed`, `gas`. A path that cannot exist (unknown family or metric, malformed id) answers 404/422 **without** issuing a payment challenge; unknown ids and upstream outages reject after verification but before settlement, so a buyer is never charged for anything but a delivered value. The public discovery doc lists a curated live slice (all global/gas/fear-greed metrics, top coins × headline metrics, top protocols × TVL); the free catalog at `/api/x402/d` enumerates everything else.
+
 ## Buying a call
 
 Any x402 client works. The raw exchange:

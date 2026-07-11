@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-11",
+			"title": "The datapoint fabric: 480,000+ standalone paid endpoints",
+			"summary": "Every individual market datapoint three.ws aggregates is now its own standalone paid endpoint — one URL, one value, one micro-payment of $0.0005 USDC over x402. Bitcoin's spot price, Lido's TVL, one yield pool's APY, USDT's peg deviation in basis points, BTC dominance, the standard gas tier — each of roughly 484,000 combinations of ~17,500 coins, ~15,500 yield pools, ~6,000 protocols, plus chains, stablecoins, exchanges, and the global market gauges, across 68 metrics, is individually addressable and individually buyable by any agent with a wallet. A free catalog at /api/x402/d lists every family and metric with prices and can page through each family's entire live id space, so a crawler can walk the whole endpoint universe. Asking for a datapoint that doesn't exist never triggers a payment request, and a failed fetch never charges the buyer.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/market-data-api"
+		},
+		{
+			"date": "2026-07-11",
 			"title": "The Market Data API: every market feed, now buyable per call",
 			"summary": "All the live data behind the /markets pages — coin prices and profiles, price history, sector rankings, exchanges, derivatives, the global snapshot with Fear & Greed, ETH gas, trending assets, DeFi TVL by protocol and chain, 15,000 yield pools, stablecoin pegs, protocol fees and revenue, DEX volumes, and the full exploit database — is now a 17-endpoint paid API that agents can discover and buy autonomously. Each call costs $0.001 USDC over x402 on Solana or Base (the one-call market-pulse bundle is $0.005), with no API key or account needed, and a failed fetch never charges the buyer. The browser pages stay free for people; the paid endpoints are listed in the public x402 discovery catalog, and the free index at /api/x402/market documents everything with runnable examples.",
 			"tags": [

@@ -27,6 +27,14 @@ import { STUDIO_CHALLENGE } from './_mcp3d/discovery.js';
 import { TOOL_CATALOG as STUDIO_TOOL_CATALOG } from './_mcp3d/catalog.js';
 import { priceFor as studioPriceFor } from './_mcp3d/pricing.js';
 import { priceFor } from './_lib/pump-pricing.js';
+import { priceFor as datapointPriceFor } from './_lib/x402-prices.js';
+import {
+	DATAPOINT_FAMILIES,
+	DATAPOINT_DEFAULT_ATOMICS,
+	datapointDescription,
+} from './_lib/market-data/datapoints.js';
+import { fetchMarketsTable } from './_lib/market-fallbacks.js';
+import { buildProtocols } from './defi/protocols.js';
 import { FORGE_OUTPUT_EXAMPLE } from './_lib/forge-listing.js';
 import { listBazaarServices, serviceResourceUrl } from './_lib/agent-paid-services.js';
 import { toBazaarDiscovery } from './_lib/service-catalog/index.js';
@@ -490,6 +498,95 @@ async function buildAgentServiceItems(origin) {
 			}),
 		});
 	}
+	return items;
+}
+
+// Datapoint fabric (/api/x402/d/<family>/<id>/<metric>) — 400k+ addressable
+// single-datapoint endpoints served by one dynamic route. The discovery doc
+// can't (and shouldn't) list them all; it lists a curated slice indexers can
+// surface: every no-id metric (global / gas / fear-greed) plus a
+// runtime-derived set of concrete high-traffic ids (top coins by market cap ×
+// headline metrics, top protocols by TVL × tvl). Ids come from the live
+// cached feeds at render time — nothing here hardcodes a third-party asset —
+// and any upstream hiccup degrades to the static slice (the fabric itself
+// keeps serving every id regardless; /api/x402/d enumerates the full space).
+async function buildDatapointItems(origin) {
+	const items = [];
+	const svc = withService({
+		serviceName: 'three.ws Datapoints',
+		tags: ['crypto', 'market-data', 'datapoint', 'x402'],
+	});
+
+	const push = (family, id, metric, exampleValue) => {
+		const familyDef = DATAPOINT_FAMILIES[family];
+		const metricDef = familyDef.metrics[metric];
+		const priceAtomics = datapointPriceFor(`datapoint-${family}`, DATAPOINT_DEFAULT_ATOMICS);
+		const path =
+			id != null
+				? `/api/x402/d/${family}/${encodeURIComponent(id)}/${metric}`
+				: `/api/x402/d/${family}/${metric}`;
+		const url = `${origin}${path}`;
+		const accepts = acceptsForPrice(priceAtomics, url);
+		items.push({
+			path,
+			url,
+			method: 'GET',
+			description: datapointDescription({ family, metric, priceAtomics }),
+			mimeType: 'application/json',
+			serviceName: svc.serviceName,
+			tags: [...svc.tags.slice(0, 4), family].slice(0, 5),
+			iconUrl: svc.iconUrl,
+			accepts,
+			extensions: extensionsForAccepts(accepts, {
+				method: 'GET',
+				discoverable: true,
+				input: {},
+				inputSchema: { type: 'object', properties: {} },
+				output: {
+					example: {
+						family,
+						...(id != null ? { id } : {}),
+						metric,
+						label: metricDef.label,
+						unit: metricDef.unit,
+						value: exampleValue,
+						as_of: '2026-07-11T00:00:00.000Z',
+						source: 'three.ws market-data',
+					},
+				},
+			}),
+		});
+	};
+
+	// Every metric of the no-id families — static, always present.
+	for (const family of ['global', 'fear-greed', 'gas']) {
+		for (const metric of Object.keys(DATAPOINT_FAMILIES[family].metrics)) {
+			push(family, null, metric, metric === 'label' ? 'Greed' : 42.5);
+		}
+	}
+
+	// Top coins × headline metrics — ids resolved from the live cached table.
+	try {
+		const { rows } = await fetchMarketsTable({ page: 1, perPage: 20, category: '' });
+		for (const row of rows) {
+			for (const metric of ['price', 'market-cap', 'change-24h']) {
+				push('coin', row.id, metric, metric === 'price' ? row.price : 42.5);
+			}
+		}
+	} catch (err) {
+		console.error('[wk/x402-discovery] datapoint coin slice unavailable', err?.message || err);
+	}
+
+	// Top protocols by TVL × tvl — same runtime derivation.
+	try {
+		const { protocols } = await buildProtocols();
+		for (const p of protocols.slice(0, 10)) {
+			if (p.slug) push('protocol', p.slug, 'tvl', p.tvl);
+		}
+	} catch (err) {
+		console.error('[wk/x402-discovery] datapoint protocol slice unavailable', err?.message || err);
+	}
+
 	return items;
 }
 
@@ -1446,6 +1543,7 @@ async function handleX402Discovery(req, res) {
 
 	// Agent-published paid services — dynamic, one entry per active listing.
 	const agentServiceItems = await buildAgentServiceItems(origin);
+	const datapointItems = await buildDatapointItems(origin);
 
 	return json(
 		res,
@@ -1542,6 +1640,11 @@ async function handleX402Discovery(req, res) {
 				// Agent-published paid endpoints (monetize_endpoint). Dynamic —
 				// one entry per active agent_paid_services listing.
 				...agentServiceItems,
+				// Datapoint fabric (/api/x402/d/…): a curated, runtime-derived
+				// slice of the 400k+ addressable single-datapoint endpoints, so
+				// indexers surface the fabric; the full id space is enumerated
+				// free at /api/x402/d.
+				...datapointItems,
 			]
 				.filter(Boolean)
 				.map(addOutputExample),

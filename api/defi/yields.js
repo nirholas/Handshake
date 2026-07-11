@@ -89,6 +89,12 @@ function buildFacets(pools, key, topN) {
 		.map(([name, { count }]) => ({ name, pool_count: count }));
 }
 
+// Exported for the paid datapoint fabric (api/_lib/market-data/datapoints.js)
+// — per-pool datapoint endpoints resolve a uuid against this cached full set.
+export async function loadYieldPools() {
+	return loadPools();
+}
+
 async function loadPools() {
 	const now = Date.now();
 	if (_pools && _pools.expiresAt > now) return _pools.value;

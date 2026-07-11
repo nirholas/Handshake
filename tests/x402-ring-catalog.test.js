@@ -137,7 +137,11 @@ function paidEndpointSites() {
 //   api/_lib/aggregator.js builds the dynamic /api/v1/x/<provider>/<endpoint>
 //   API-aggregator proxy family per descriptor — a separate product surface, not
 //   a fixed ring endpoint.
-const SITE_ALLOWLIST = new Set(['api/_lib/aggregator.js']);
+//   api/x402/d/[...path].js is the datapoint fabric — 400k+ dynamic
+//   (family, id, metric) endpoints from one route; ids are runtime values, so
+//   no fixed catalog path can resolve to it. Its payment rail is the same
+//   paidEndpoint wrapper the rotated market-data family already settles hourly.
+const SITE_ALLOWLIST = new Set(['api/_lib/aggregator.js', 'api/x402/d/[...path].js']);
 
 describe('ring-catalog covers 100% of paid endpoints', () => {
 	it('every paidEndpoint( construction site is in the catalog', () => {
