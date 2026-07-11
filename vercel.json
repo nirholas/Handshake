@@ -5016,6 +5016,10 @@
 			"schedule": "0 * * * *"
 		},
 		{
+			"path": "/api/cron/x402-directory-registrar",
+			"schedule": "23 * * * *"
+		},
+		{
 			"path": "/api/cron/relayer-balance-check",
 			"schedule": "0 */6 * * *"
 		},

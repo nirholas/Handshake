@@ -80,6 +80,12 @@ export function newProfile(playerId = '') {
 		activeSlot: 0, // the rod, ready to cast
 		xp: Object.fromEntries(SKILLS.map((s) => [s, 0])),
 		levels: Object.fromEntries(SKILLS.map((s) => [s, 1])),
+		// Wheel of Fortune (W09/Task 19): epoch ms the next free spin unlocks. Unlike
+		// the ephemeral per-action `cd` map (WalkRoom.js, reset every reconnect —
+		// fine for a sub-second gather cooldown), this MUST survive a disconnect: a
+		// 12h cooldown that resets on reconnect would be free to farm. Persisted
+		// through serializeProfile/restoreProfile below.
+		nextFreeSpinAt: 0,
 		// Cosmetic identity (W03), purely visual. `owned` lists the premium ids this
 		// account has unlocked (free cosmetics are implicitly owned by everyone, so
 		// they're never stored here); `equipped` is the per-slot loadout peers render.
@@ -158,6 +164,7 @@ export function restoreProfile(saved, playerId = '') {
 	if (Number.isFinite(saved.maxArmor) && saved.maxArmor > 0) base.maxArmor = saved.maxArmor | 0;
 	if (Number.isFinite(saved.armor)) base.armor = Math.max(0, Math.min(base.maxArmor, saved.armor | 0));
 	if (Number.isFinite(saved.heat)) base.heat = Math.max(0, Math.min(99, saved.heat));
+	if (Number.isFinite(saved.nextFreeSpinAt)) base.nextFreeSpinAt = Math.max(0, saved.nextFreeSpinAt);
 	if (saved.xp && typeof saved.xp === 'object') {
 		for (const skill of SKILLS) {
 			const v = Number.isFinite(saved.xp[skill]) ? Math.max(0, saved.xp[skill]) : 0;
@@ -192,6 +199,7 @@ export function serializeProfile(profile) {
 		armor: profile.armor,
 		maxArmor: profile.maxArmor,
 		heat: profile.heat,
+		nextFreeSpinAt: profile.nextFreeSpinAt,
 		xp: { ...profile.xp },
 		cosmetics: {
 			owned: [...(profile.cosmetics?.owned || [])],

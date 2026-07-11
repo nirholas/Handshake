@@ -59,6 +59,7 @@ import {
 	DANGER_ZONES, SPAWN_POINT, dangerZoneAt, isSafeZone, isDangerZone, randomPointInZone,
 } from '../world-features.js';
 import { registerActivityHandlers } from '../activities.js';
+import { registerSpinHandlers } from '../spin-wheel.js';
 import {
 	selectTarget, rollDamage, applyDamage, addHeat, decayHeat, heatStars,
 } from '../combat.js';

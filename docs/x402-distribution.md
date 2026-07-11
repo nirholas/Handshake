@@ -129,11 +129,12 @@ script. Everything else above updates itself.
   declare `authHints` (currently `agent-reputation`, `agent-bouncer`) append
   USE-21 zero-amount placeholder entries to `accepts[]`. 402index's validator
   rejects the whole challenge ("no valid x402 challenge detected"), and other
-  crawlers likely apply the same amount-must-be-positive rule. The auth-hints
-  **extension** already carries the same information — the candidate fix is to
-  stop mirroring hints into `accepts[]` (or gate that behind an env flag) so
-  the challenge advertises only payable entries. Owner/USE-21 decision; until
-  then these two endpoints cannot be listed on validator-gated directories.
+  crawlers likely apply the same amount-must-be-positive rule. **Resolution:**
+  set `X402_AUTH_HINT_ACCEPTS=false` on the deployment to suppress the
+  advertisement (both the zero-amount entries and the auth-hints extension —
+  the extension schema requires them together). Auth bypass itself keeps
+  working either way; the access-control hook honors Bearer/SIWX headers
+  before the payment dance. Default stays `true` until the owner flips it.
 - **Bazaar indexing needs the CDP facilitator.** Solana-only settles through
   the self-hosted facilitator never reach the Bazaar catalog. The Base rail
   must settle via CDP at least once per endpoint.

@@ -57,6 +57,7 @@ function fgClass(v) {
 
 function renderStats(global) {
 	const el = $('cv-stats');
+	if (!el) return; // shell navigation left /markets while the fetch was in flight
 	const { market, fear_greed } = global || {};
 	const cards = [];
 	if (market) {
@@ -159,7 +160,9 @@ const SUITE = [
 ];
 
 function renderSuite(stats = {}) {
-	$('mkt-suite').innerHTML = SUITE.map((s) => {
+	const suiteEl = $('mkt-suite');
+	if (!suiteEl) return; // shell navigation left /markets while stats resolved
+	suiteEl.innerHTML = SUITE.map((s) => {
 		const stat = stats[s.stat];
 		return `
 			<a class="mkt-hero-card" href="${esc(s.href)}">
@@ -177,6 +180,7 @@ const tbl = { coins: [], sortKey: 'rank', sortDir: 'asc' };
 
 function renderTable() {
 	const el = $('mkt-table');
+	if (!el) return; // shell navigation left /markets while the fetch was in flight
 	if (!tbl.coins.length) {
 		el.innerHTML =
 			'<div class="cv-empty">Market data is temporarily unavailable. <a href="/coins">Try the full markets table</a>.</div>';
@@ -230,6 +234,7 @@ function renderTable() {
 
 function renderNews(articles) {
 	const el = $('mkt-news');
+	if (!el) return; // shell navigation left /markets while the fetch was in flight
 	if (!articles?.length) {
 		el.innerHTML =
 			'<div class="cv-empty">The news feed is warming up — <a href="/markets/news">open the news page</a>.</div>';
@@ -270,7 +275,8 @@ async function init() {
 				}
 			})
 			.catch(() => {
-				$('cv-stats').innerHTML = '';
+				const el = $('cv-stats');
+				if (el) el.innerHTML = '';
 			}),
 		getJson('/api/coin/markets?page=1&per_page=100')
 			.then(({ coins }) => {

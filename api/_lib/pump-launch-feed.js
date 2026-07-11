@@ -8,6 +8,8 @@
 // so recentPumpLaunches() returns [] there (entries simply don't fire on devnet —
 // open positions still exit via real on-chain re-quotes).
 
+import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
+
 const PUMP_FRONTEND_BASE = process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
 const FETCH_TIMEOUT_MS = 6_000;
 const UA = 'three.ws-strategy-runtime/1';
@@ -68,18 +70,11 @@ export function normalizeLaunch(c, solPrice = 0) {
 	};
 }
 
-let _solPrice = 0;
-let _solPriceAt = 0;
-async function solPriceUsd() {
-	if (Date.now() - _solPriceAt < 60_000 && _solPrice > 0) return _solPrice;
-	const d = await fetchJsonWithTimeout('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd', 3000);
-	const p = d?.solana?.usd;
-	if (p > 0) {
-		_solPrice = p;
-		_solPriceAt = Date.now();
-	}
-	return _solPrice || 0;
-}
+// SOL/USD for USD-denominating launch market caps. Delegates to the shared
+// 7-source failover helper (CoinGecko → Jupiter → Kraken → Coinbase → DefiLlama
+// → DIA → Bitfinex, itself cached ~60s) so a single-provider rate-limit never
+// zeroes the feed's USD figures. Returns 0 only if every source is down.
+const solPriceUsd = () => sharedSolPriceUsd();
 
 /**
  * Fetch the most-recent RAW pump.fun coin objects (newest-first), keeping the

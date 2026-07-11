@@ -801,11 +801,13 @@
 
 	var runAbort = null;    // AbortController for the in-flight command
 	var runActive = false;  // whether the run panel currently owns the results area
-	var runTimer = null;    // elapsed-time ticker / poll timer
+	var runTicker = null;   // elapsed-time ticker (setInterval)
+	var runTimer = null;    // poll timer (setTimeout)
 
 	function stopRun() {
 		if (runAbort) { runAbort.abort(); runAbort = null; }
-		if (runTimer) { clearInterval(runTimer); clearTimeout(runTimer); runTimer = null; }
+		if (runTicker) { clearInterval(runTicker); runTicker = null; }
+		if (runTimer) { clearTimeout(runTimer); runTimer = null; }
 		runActive = false;
 	}
 
@@ -871,7 +873,10 @@
 			},
 			fail: function (message, linkHref, linkText) {
 				ui.setStatus('failed', 'err');
-				var msg = el('div', { class: 'tws-sk-answer', text: message });
+				// Reuse an existing (possibly empty) answer block rather than
+				// stacking a second one under it.
+				var msg = body.querySelector('.tws-sk-answer') || el('div', { class: 'tws-sk-answer' });
+				msg.textContent = message;
 				body.appendChild(msg);
 				if (linkHref) {
 					ui.addRows([resultRow(linkHref, '↗', linkText || 'Open', '', '', '')]);
@@ -915,13 +920,13 @@
 		var startedAt = Date.now();
 		var elapsed = function () { return Math.round((Date.now() - startedAt) / 1000) + 's'; };
 		ui.setStatus('forging · 0s');
-		runTimer = setInterval(function () {
+		runTicker = setInterval(function () {
 			if (!runActive) return;
 			ui.setStatus('forging · ' + elapsed() + ' — usually 20–60s');
 		}, 1000);
 
 		function finish(job) {
-			clearInterval(runTimer); runTimer = null;
+			clearInterval(runTicker); runTicker = null;
 			ui.setStatus('done · ' + elapsed(), 'ok');
 			var openHref = job.creation_id
 				? '/forge/share/' + encodeURIComponent(job.creation_id)
@@ -942,13 +947,13 @@
 					if (!runActive) return;
 					if (job.status === 'done' && job.glb_url) return finish(job);
 					if (job.status === 'failed') {
-						clearInterval(runTimer); runTimer = null;
+						clearInterval(runTicker); runTicker = null;
 						ui.fail(job.error || 'Generation failed — the free lane may be busy.', '/forge', 'Try on the Forge page');
 						emitAction('forge', 'failed', { prompt: args.prompt });
 						return;
 					}
 					if (Date.now() - startedAt > 4 * 60 * 1000) {
-						clearInterval(runTimer); runTimer = null;
+						clearInterval(runTicker); runTicker = null;
 						ui.fail('Still running after 4 minutes — the lane is saturated. Your job may still finish on the Forge page.', '/forge', 'Open the Forge');
 						return;
 					}
@@ -956,7 +961,7 @@
 				})
 				.catch(function (err) {
 					if (err && err.name === 'AbortError') return;
-					clearInterval(runTimer); runTimer = null;
+					clearInterval(runTicker); runTicker = null;
 					ui.fail('Lost the job while polling — it may still finish on the Forge page.', '/forge', 'Open the Forge');
 				});
 		}
@@ -980,7 +985,7 @@
 			})
 			.catch(function (err) {
 				if (err && err.name === 'AbortError') return;
-				clearInterval(runTimer); runTimer = null;
+				clearInterval(runTicker); runTicker = null;
 				if (err && err.status === 429) {
 					ui.fail('Free-lane rate limit reached for now — try again in a few minutes, or use the Forge page.', '/forge', 'Open the Forge');
 				} else {
@@ -1071,11 +1076,15 @@
 			});
 	}
 
-	function runAskCommand(args, ui) {
-		ui.setStatus('thinking…');
-		var answer = el('div', { class: 'tws-sk-answer' });
-		answer.setAttribute('aria-live', 'polite');
-		ui.body.appendChild(answer);
+	function runAskCommand(args, ui, attempt) {
+		attempt = attempt || 0;
+		ui.setStatus(attempt ? 'retrying…' : 'thinking…');
+		var answer = ui.body.querySelector('.tws-sk-answer');
+		if (!answer) {
+			answer = el('div', { class: 'tws-sk-answer' });
+			answer.setAttribute('aria-live', 'polite');
+			ui.body.appendChild(answer);
+		}
 
 		fetch('/api/chat', {
 			method: 'POST',
@@ -1083,7 +1092,8 @@
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({
 				message: args.question,
-				context: 'Asked from the command palette on ' + location.pathname,
+				// /api/chat validates context as an object (api/chat.js zod schema).
+				context: { source: 'command-palette', page: location.pathname },
 				history: [],
 			}),
 			signal: ui.signal,
@@ -1092,6 +1102,29 @@
 				if (r.status === 401) {
 					ui.fail('Chat needs a signed-in session right now.', '/login', 'Sign in');
 					return null;
+				}
+				// Free-lane saturation: the server says how long to back off
+				// (api/chat.js responds 503/429 rate_limited + retry_after). Honor
+				// it, up to two retries, instead of failing a transient condition.
+				if (r.status === 503 || r.status === 429) {
+					return r.json().catch(function () { return {}; }).then(function (body) {
+						if (attempt >= 2) {
+							ui.fail(body.error_description || 'The free chat lane is at capacity — try again shortly.', '/chat', 'Open chat');
+							return null;
+						}
+						var wait = Math.min(Math.max(Number(body.retry_after) || 5, 2), 30);
+						var left = wait;
+						ui.setStatus('at capacity — retrying in ' + left + 's');
+						runTicker = setInterval(function () {
+							left -= 1;
+							if (left > 0) ui.setStatus('at capacity — retrying in ' + left + 's');
+						}, 1000);
+						runTimer = setTimeout(function () {
+							clearInterval(runTicker); runTicker = null;
+							if (runActive) runAskCommand(args, ui, attempt + 1);
+						}, wait * 1000);
+						return null;
+					});
 				}
 				if (!r.ok) throw new Error('HTTP ' + r.status);
 				var reader = r.body.getReader();

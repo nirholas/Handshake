@@ -4,6 +4,7 @@
 // Each mint event is enriched with SOL price + token metadata before emit.
 
 import WebSocket from 'ws';
+import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
 
 const PUMPPORTAL_WS = 'wss://pumpportal.fun/api/data';
 const RECONNECT_DELAY_MS = 2_000;
@@ -42,22 +43,13 @@ function markSeen(sig) {
 	return true;
 }
 const META_TIMEOUT_MS = 2_500;
-const SOL_PRICE_TTL_MS = 60_000;
 
-// SOL price cache — one CoinGecko call per minute, shared across connections
-let _solPrice = 0;
-let _solPriceAt = 0;
-
-async function getSolPrice() {
-	if (Date.now() - _solPriceAt < SOL_PRICE_TTL_MS && _solPrice > 0) return _solPrice;
-	try {
-		const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-		const d = await r.json();
-		const p = d?.solana?.usd;
-		if (p > 0) { _solPrice = p; _solPriceAt = Date.now(); }
-	} catch {}
-	return _solPrice || 150;
-}
+// SOL/USD via the shared 7-source failover helper (CoinGecko → Jupiter → Kraken
+// → Coinbase → DefiLlama → DIA → Bitfinex, itself cached ~60s and shared across
+// connections). Returns 0 when every source is down — callers leave the USD
+// figure null rather than the old hardcoded $150 guess, which silently corrupted
+// live market caps during an outage.
+const getSolPrice = () => sharedSolPriceUsd();
 
 // Token metadata cache — avoids re-fetching the same URI on reconnects
 const _metaCache = new Map();

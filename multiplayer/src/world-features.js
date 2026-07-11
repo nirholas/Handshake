@@ -113,6 +113,17 @@ export const COOK_REACH = 2.6;
 export function nearestFirepit(x, z) { return nearestNode(x, z, FIREPITS, COOK_REACH); }
 export function firepitInRange(x, z) { return nodeInRange(x, z, FIREPITS, COOK_REACH); }
 
+// The Wheel of Fortune — "Fortune's Folly" (W09/Task 19). One per world, in the
+// open plaza north of the totem: clear of both ponds (~29–33m away), both
+// firepits (~22–25m), and the plaza rod pickup (~16m) — a landmark on its own,
+// not crowded against another station.
+export const WHEEL = [
+	{ id: 'wheel-plaza', x: 0, z: 22, r: 2.0 },
+];
+export const WHEEL_REACH = 3.0;
+export function nearestWheel(x, z) { return nearestNode(x, z, WHEEL, WHEEL_REACH); }
+export function wheelInRange(x, z) { return nodeInRange(x, z, WHEEL, WHEEL_REACH); }
+
 // Fishing-rod pickups — a spare rod waiting on the bank for anyone without one
 // (or anyone who wants a backup to store). Every player already starts with a
 // rod in the hotbar and it's never lost on death, so these exist for

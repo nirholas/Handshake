@@ -135,6 +135,7 @@ function sortedCoins() {
 
 function renderTable() {
 	const el = $('cv-market');
+	if (!el) return; // shell navigation left /coins while a fetch was in flight
 	if (!state.coins.length) {
 		el.innerHTML =
 			'<div class="cv-empty">Market data is temporarily unavailable. Please try again shortly.</div>';

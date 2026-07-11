@@ -7,17 +7,22 @@
 //      page state (Chrome 111+, Safari 18+; falls back to a normal location
 //      change — no UX regression).
 //
-//   2. Shell pages (<html data-shell>): navigation between two shell-marked
-//      pages swaps ONLY <main> (plus title/meta) in place. The header, footer,
-//      corner stack, command palette, and the walking companion agent are
-//      never torn down — a live WebGL avatar or a streaming answer survives
-//      the navigation. Page modules re-init through src/shell/page-lifecycle.js
-//      (onPageReady), keyed off the 'shell:navigated' document event and the
-//      window.__shellNavId token this file increments per swap.
+//   2. Shell pages (data-shell on the html element): navigation between two
+//      shell-marked pages swaps ONLY the main element (plus title/meta) in
+//      place. The header, footer, corner stack, command palette, and the
+//      walking companion agent are never torn down — a live WebGL avatar or a
+//      streaming answer survives the navigation. Page modules re-init through
+//      src/shell/page-lifecycle.js (onPageReady), keyed off the
+//      'shell:navigated' document event and the window.__shellNavId token
+//      this file increments per swap. Shell pages must keep their main
+//      element a DIRECT CHILD of body (the standard page skeleton).
 //
 // CONSTRAINTS (see the 'view-transitions' plugin in vite.config.js, which
 // inlines this file as a classic script on every page): keep it dependency-
-// free, keep exactly one `export function`, and no other module syntax.
+// free, keep exactly one `export function`, no other module syntax — and no
+// HTML-looking sequences (angle-bracket tags) anywhere in comments or
+// strings: the inlined source must stay inert if an HTML parser ever walks
+// through it.
 
 const SUPPORTED = typeof document !== 'undefined' && 'startViewTransition' in document;
 
@@ -107,8 +112,11 @@ async function shellSwap(dest, { push = true } = {}) {
 	// Both ends must opt in — an unmarked destination gets a full navigation
 	// (its scripts may assume a fresh document).
 	if (!doc.documentElement.hasAttribute(SHELL_ATTR)) return false;
-	const newMain = doc.querySelector('main');
-	const curMain = document.querySelector('main');
+	// Body-scoped on purpose: the page skeleton keeps its main element a direct
+	// child of body, and anything else matching 'main' deeper in the tree
+	// (widget markup, injected fragments) must never be the swap target.
+	const newMain = doc.body ? doc.body.querySelector(':scope > main') : null;
+	const curMain = document.body.querySelector(':scope > main');
 	if (!newMain || !curMain) return false;
 
 	await mergeStylesheets(doc);
@@ -136,7 +144,7 @@ async function shellSwap(dest, { push = true } = {}) {
 	document.dispatchEvent(new CustomEvent('shell:navigated', { detail: { url: String(dest) } }));
 
 	// Accessibility: a swap is a navigation — move focus to the new content.
-	const main = document.querySelector('main');
+	const main = document.body.querySelector(':scope > main');
 	if (main) {
 		if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
 		main.focus({ preventScroll: true });

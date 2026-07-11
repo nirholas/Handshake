@@ -26,6 +26,7 @@ import {
 	buildPricePayload,
 } from './pump-alert-eval.js';
 import { deliverAlert } from './alert-delivery.js';
+import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
 
 const GRAD_WINDOW = '15 minutes';
 const NEW_MINT_WINDOW = '60 minutes';
@@ -35,7 +36,6 @@ const MAX_PRICE_MINTS = 60; // distinct mints priced per run
 const MAX_WHALE_MINTS = 60; // distinct mints polled for trades per run
 const TRADES_LIMIT = 50;
 const FETCH_TIMEOUT_MS = 2_500;
-const SOL_PRICE_TTL_MS = 60_000;
 
 const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins';
 const PUMPFUN_TRADES_API = 'https://frontend-api-v3.pump.fun/trades/all';
@@ -371,15 +371,7 @@ async function fetchRecentTrades(mint, solPrice = 0) {
 	});
 }
 
-let _solPrice = 0;
-let _solPriceAt = 0;
-async function getSolPrice() {
-	if (Date.now() - _solPriceAt < SOL_PRICE_TTL_MS && _solPrice > 0) return _solPrice;
-	const d = await fetchJsonWithTimeout('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-	const p = d?.solana?.usd;
-	if (p > 0) {
-		_solPrice = p;
-		_solPriceAt = Date.now();
-	}
-	return _solPrice || 0;
-}
+// SOL/USD for USD-denominating price-rule evaluations. Delegates to the shared
+// 7-source failover helper (itself cached ~60s) so a single-provider rate-limit
+// never stalls alert pricing. Returns 0 only if every free source is down.
+const getSolPrice = () => sharedSolPriceUsd();

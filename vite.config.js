@@ -1882,6 +1882,16 @@ support: resolve(__dirname, 'pages/support.html'),
 						'avatar-embed.html',
 						'agent-embed.html',
 						'a-embed.html',
+						// Runtime-fetched FRAGMENTS, not documents: nav.js / footer.js
+						// fetch these and assign them via innerHTML. In dev, Vite's
+						// transformIndexHtml runs on them too, and injecting a script
+						// here gets it interleaved with Vite's own /@vite/client tag —
+						// the fragment parser then closes the script early and renders
+						// the remainder of its source as DOM text/elements inside the
+						// nav/footer containers. The page document already carries the
+						// inline script; fragments must never get it.
+						'nav.html',
+						'footer.html',
 					]);
 					const filename = (ctx.filename || ctx.path || '')
 						.replace(/\\/g, '/')

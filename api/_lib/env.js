@@ -876,6 +876,19 @@ export const env = {
 	get X402_ACCEPT_THREE_SOLANA() {
 		return opt('X402_ACCEPT_THREE_SOLANA', 'true') === 'true';
 	},
+	// USE-21 auth-hints advertisement in 402 challenges. When 'true' (default),
+	// endpoints that declare authHints append zero-amount accepts[] entries plus
+	// the auth-hints extension so buyer clients can discover the free auth
+	// alternative. External x402 directory validators (402index confirmed;
+	// likely other amount-must-be-positive crawlers) reject any challenge that
+	// contains amount="0" entries as "no valid x402 challenge" — set 'false' to
+	// suppress the advertisement on a deployment that prioritizes directory
+	// listability. Auth bypass itself is unaffected either way: the
+	// access-control hook honors Bearer/SIWX headers before the payment dance
+	// regardless of what the 402 advertises.
+	get X402_AUTH_HINT_ACCEPTS() {
+		return opt('X402_AUTH_HINT_ACCEPTS', 'true') === 'true';
+	},
 	// Flat THREE price per paid call, in atomic THREE units (6 decimals).
 	// 10_000_000 = 10 $THREE. A single flat amount for every endpoint regardless
 	// of its USDC price (a $0.01 oracle call and a $0.50 Forge both cost 10 THREE)

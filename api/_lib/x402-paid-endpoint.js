@@ -423,7 +423,13 @@ export function paidEndpoint(spec) {
 		// extension maps each method to the index of its free entry so the
 		// buyer client knows which entry corresponds to which auth method.
 		let authHintsExtension = null;
-		if (authHints) {
+		// X402_AUTH_HINT_ACCEPTS=false suppresses the whole advertisement (the
+		// extension schema requires each declared method to map to a free
+		// accepts[] entry, so the two can only ship together). External x402
+		// directory validators reject challenges carrying amount="0" entries;
+		// the auth bypass itself keeps working either way because the
+		// access-control hook runs before the payment dance.
+		if (authHints && env.X402_AUTH_HINT_ACCEPTS) {
 			const baseTo = payTo?.base || env.X402_PAY_TO_BASE;
 			if (baseTo) {
 				const declarations = {};

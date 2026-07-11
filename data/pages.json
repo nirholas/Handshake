@@ -1172,7 +1172,7 @@
 				},
 				{
 					"path": "/coins",
-					"title": "Markets — Live Crypto Prices",
+					"title": "Coins — Live Prices & Market Caps",
 					"description": "Live global cryptocurrency market data: total market cap, dominance, Fear & Greed, and the top coins with prices, 24h/7d moves, and 7d sparklines. Every coin links to a rich /coin/:id detail page with an interactive chart, market stats, related news, and official links.",
 					"priority": 0.8,
 					"changefreq": "hourly",
