@@ -106,6 +106,29 @@ for to feed the oracle and sniper.
 | `/api/x402/symbol-availability` | $0.001     | Whether a ticker symbol is taken; `-batch` variant $0.005.                                  |
 | `/api/x402/bazaar-feed`         | $0.001     | x402 bazaar service listings feed.                                                          |
 
+## Market intelligence endpoints
+
+Agent-ready answers composed over live market data — composites, verdicts, and
+risk flags rather than raw category feeds (the raw feeds stay free at
+`/api/defi/*`, `/api/coin/*`, and `/api/news/*`; these paid surfaces are the
+loss-leader funnel's paid tier). Every one refuses before settlement when its
+upstream is down — a buyer is never charged for missing data.
+
+| Endpoint                        | Default | Returns                                                                                          |
+| ------------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `/api/x402/defi-radar`          | $0.005  | One-call DeFi composite: total TVL, 24 h TVL gainers/losers, top fee earners, top DEX volumes.   |
+| `/api/x402/yield-scan`          | $0.005  | Screens 15k+ live yield pools by chain/TVL/stablecoin with APY breakdown + per-pool risk flags.  |
+| `/api/x402/stablecoin-health`   | $0.005  | Peg deviation (bps) + on-peg/drifting/depegged verdict + supply flow per stablecoin, depeg alerts. |
+| `/api/x402/hack-check`          | $0.002  | Protocol name → clean / incident-history verdict over the full DeFi exploit database.           |
+| `/api/x402/market-heatmap`      | $0.002  | Top coins with 1 h/24 h/7 d momentum + breadth stats (CoinGecko→CoinPaprika failover).          |
+| `/api/x402/gas-oracle`          | $0.001  | Live fee tiers for Ethereum + Base (real `eth_feeHistory`) and Solana priority-fee percentiles.  |
+| `/api/x402/market-mood`         | $0.002  | Fear & Greed × 192-feed news sentiment composite (0–100) with divergence flag + driver headlines. |
+| `/api/x402/news-pulse`          | $0.002  | Per-ticker news coverage: mentions, velocity vs prior window, sentiment split, top headlines.    |
+
+There is also a registry-derived `market-*` family (`/api/x402/market-coins`,
+`market-chart`, `market-yields`, …) — one endpoint per raw data category,
+projected from `api/_lib/market-data/registry.js`.
+
 ## Agent & reputation endpoints
 
 | Endpoint                            | Default   | Returns                                    |

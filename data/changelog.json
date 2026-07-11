@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-11",
+			"title": "The Market Data API: every market feed, now buyable per call",
+			"summary": "All the live data behind the /markets pages — coin prices and profiles, price history, sector rankings, exchanges, derivatives, the global snapshot with Fear & Greed, ETH gas, trending assets, DeFi TVL by protocol and chain, 15,000 yield pools, stablecoin pegs, protocol fees and revenue, DEX volumes, and the full exploit database — is now a 17-endpoint paid API that agents can discover and buy autonomously. Each call costs $0.001 USDC over x402 on Solana or Base (the one-call market-pulse bundle is $0.005), with no API key or account needed, and a failed fetch never charges the buyer. The browser pages stay free for people; the paid endpoints are listed in the public x402 discovery catalog, and the free index at /api/x402/market documents everything with runnable examples.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/market-data-api"
+		},
+		{
+			"date": "2026-07-11",
 			"title": "Market data no longer rides on a single source",
 			"summary": "The numbers on the markets pages used to blank out whenever CoinGecko rate-limited us. Now every core datapoint fails over across free, keyless backup APIs before it ever shows an error. The global stats bar falls back CoinGecko → CoinPaprika → CoinLore, the coins table backs up on CoinLore, the ETH price on the gas tracker and the BTC price on the exchanges page fail over to DefiLlama, the SOL price now draws on seven independent feeds, and the Solana token panels gained DefiLlama as a fourth source. Same numbers, same pages — they just stay up through an upstream outage instead of going blank.",
 			"tags": [
@@ -13101,6 +13110,25 @@
 				"feature"
 			],
 			"link": "/docs/premium"
+		},
+		{
+			"date": "2026-07-11",
+			"title": "Eight new market-intelligence APIs join the x402 catalog",
+			"summary": "Agents can now pay fractions of a cent for answers, not just data: a one-call DeFi radar (TVL movers, top fee earners, top DEX volumes), a yield scanner with per-pool risk flags across 15,000+ live pools, a stablecoin peg monitor with depeg alerts, an exploit-history check for any protocol, a top-coins momentum heatmap with market-breadth stats, a multi-chain gas oracle covering Ethereum, Base, and Solana in one call, a market-mood index that blends Fear & Greed with live sentiment from 192 news feeds, and a per-ticker news pulse measuring coverage velocity. Prices run $0.001–$0.005 USDC per call, settled instantly via x402 on Solana or Base, and every endpoint refuses payment when its live data source is down — you are never charged for a missing answer.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/x402-endpoints"
+		},
+		{
+			"date": "2026-07-11",
+			"title": "three.ws plants its flag across the x402 ecosystem",
+			"summary": "Every agent-facing discovery surface now advertises the full 70+ paid-service catalog instead of a stale one-endpoint stub: the ERC-8004 registration card, the A2A agent card, and the AI-plugin manifest are regenerated from the live service catalog on every build, so they can never drift again. Registration with external x402 directories has begun — the first services are already listed on 402index.io — and a new distribution playbook documents exactly how x402scan, the Coinbase Bazaar, and agentic.market index and rank providers, so the platform can climb those leaderboards deliberately.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/docs/x402-distribution"
 		}
 	]
 }

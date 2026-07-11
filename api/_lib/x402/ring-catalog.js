@@ -76,6 +76,42 @@ const SILENT_WAV_B64 =
 
 const NO_BODY = () => null;
 
+// Paid Market Data API family (api/_lib/market-data/) — 17 read-only GET
+// endpoints built by one paidEndpoint factory. Every entry shares the same
+// shape (intel tier, USDC-atomics default from the registry), so a local
+// builder keeps this block honest instead of ~300 hand-copied lines. Queries
+// here are the cheapest valid canary per endpoint — a rotation call must
+// never 4xx. Rotation budget: only the two family representatives
+// (market-pulse, market-global) are autobuy — all 17 share one construction
+// rail (endpoint.js) and one fetcher module, so two hourly settles prove the
+// whole family's payment path without blowing the ring's calls-per-hour cap;
+// the rest get their one-time settle proof from the coverage sweep.
+const MARKET_FAMILY_NOTE =
+	'Family representative coverage: market-pulse + market-global keep the shared ' +
+	'api/_lib/market-data/endpoint.js rail settling hourly; rotating all 17 would ' +
+	'exceed the ring hour budget. One-time settle proof via the coverage sweep.';
+const marketData = (
+	slug,
+	businessEffect,
+	{ query, priceAtomicDefault = 1_000, autobuy = false } = {},
+) => ({
+	slug,
+	sourceFile: 'api/_lib/market-data/endpoint.js',
+	path: `/api/x402/${slug}`,
+	method: 'GET',
+	...(query ? { query } : {}),
+	body: NO_BODY,
+	priceAtomicDefault,
+	priceSlug: slug,
+	tier: 'intel',
+	kind: 'intel',
+	network: null,
+	autobuy,
+	weight: 1,
+	businessEffect,
+	...(autobuy ? {} : { note: MARKET_FAMILY_NOTE }),
+});
+
 /** @type {CatalogEntry[]} */
 export const RING_CATALOG = [
 	// ── settle ────────────────────────────────────────────────────────────────
@@ -378,6 +414,23 @@ export const RING_CATALOG = [
 		weight: 1,
 		businessEffect: 'Measures live news coverage for one ticker: mentions, velocity, sentiment, headlines (read-only).',
 	},
+	marketData('market-coins', 'Returns the ranked coin market table with sparklines (CoinGecko→CoinLore failover, read-only).', { query: { per_page: '10' } }),
+	marketData('market-coin', 'Returns the full single-coin profile: market stats, links, dev/community metrics (read-only).', { query: { id: 'bitcoin' } }),
+	marketData('market-chart', 'Returns a historical USD price series for one coin (read-only).', { query: { id: 'bitcoin', days: '7' } }),
+	marketData('market-categories', 'Returns every crypto sector ranked by market cap with 24h change (read-only).'),
+	marketData('market-exchanges', 'Returns the top spot exchanges by trust score with USD volume (read-only).'),
+	marketData('market-derivatives', 'Returns perpetual futures tickers: funding, open interest, volume (read-only).'),
+	marketData('market-global', 'Returns total market cap, volume, dominance + the Fear & Greed index (read-only).', { autobuy: true }),
+	marketData('market-gas', 'Returns live ETH gas tiers from on-chain fee history with USD action costs (read-only).'),
+	marketData('market-trending', 'Returns the most-searched coins, categories, and NFTs of the last 24h (read-only).'),
+	marketData('market-defi', 'Returns the top DeFi protocols by TVL with market totals (DeFiLlama, read-only).'),
+	marketData('market-chains', 'Returns every chain ranked by DeFi TVL with market share (DeFiLlama, read-only).'),
+	marketData('market-yields', 'Queries ~15k DeFi yield pools with filters and APY history (DeFiLlama, read-only).', { query: { limit: '3' } }),
+	marketData('market-stablecoins', 'Returns the top stablecoins by supply with peg health (DeFiLlama, read-only).'),
+	marketData('market-fees', 'Returns protocol fee/revenue rankings with market totals (DeFiLlama, read-only).'),
+	marketData('market-dex-volumes', 'Returns the top DEXs by 24h volume with market share (DeFiLlama, read-only).'),
+	marketData('market-hacks', 'Returns the searchable DeFi exploit database with loss stats (DeFiLlama, read-only).', { query: { limit: '3' } }),
+	marketData('market-pulse', 'Returns the one-call market bundle: global, F&G, top coins, gas, TVL, stables, DEX, fees (read-only).', { priceAtomicDefault: 5_000, autobuy: true }),
 	{
 		slug: 'agent-reputation',
 		sourceFile: 'api/x402/agent-reputation.js',

@@ -87,6 +87,14 @@
 			<description>We cross-referenced all 300+ docs and specs against the actual codebase and fixed everything that had drifted. The embed snippet in ten tutorials now uses the real two-line form that works on any site, four tutorials that demonstrated retired or never-shipped APIs were rewritten against the live component, the troubleshooting guide now reflects the current Cloud Run production stack with the correct session and storage details, and the manifest, quick-start, and API references now list exactly the providers, attributes, and endpoints that exist today. Every code sample in the affected docs runs as written.</description>
 		</item>
 		<item>
+			<title>Eight new market-intelligence APIs join the x402 catalog</title>
+			<link>https://three.ws/docs/x402-endpoints</link>
+			<guid isPermaLink="false">2026-07-11:Eight new market-intelligence APIs join the x402 catalog</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agents can now pay fractions of a cent for answers, not just data: a one-call DeFi radar (TVL movers, top fee earners, top DEX volumes), a yield scanner with per-pool risk flags across 15,000+ live pools, a stablecoin peg monitor with depeg alerts, an exploit-history check for any protocol, a top-coins momentum heatmap with market-breadth stats, a multi-chain gas oracle covering Ethereum, Base, and Solana in one call, a market-mood index that blends Fear &amp; Greed with live sentiment from 192 news feeds, and a per-ticker news pulse measuring coverage velocity. Prices run $0.001–$0.005 USDC per call, settled instantly via x402 on Solana or Base, and every endpoint refuses payment when its live data source is down — you are never charged for a missing answer.</description>
+		</item>
+		<item>
 			<title>Market data no longer rides on a single source</title>
 			<link>https://three.ws/coins</link>
 			<guid isPermaLink="false">2026-07-11:Market data no longer rides on a single source</guid>
@@ -111,12 +119,28 @@
 			<description>Every coin page now shows far more of what the data already offers: a 1h-to-1y price-performance matrix, a circulating-vs-max supply bar with the market-cap/FDV ratio, all-time high and low with the drawdown and recovery multiple, the community bullish/bearish sentiment split, GitHub and social activity, and a full exchange-listings table with spread, order-book depth, and a trust rating for each venue. Exchanges and crypto categories, which used to only send you off-site or filter a table, now have their own detail pages — an exchange page with a trust badge, wash-volume-adjusted volume, a volume-history chart, and its markets, and a category page with the sector's rank, stats, and full coin list. And a brand-new DeFi Yields explorer covers roughly 15,000 live pools across every chain and protocol, filterable and sortable, each with its own APY and TVL history chart. All of it is real, key-free data.</description>
 		</item>
 		<item>
+			<title>The Market Data API: every market feed, now buyable per call</title>
+			<link>https://three.ws/docs/market-data-api</link>
+			<guid isPermaLink="false">2026-07-11:The Market Data API: every market feed, now buyable per call</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>All the live data behind the /markets pages — coin prices and profiles, price history, sector rankings, exchanges, derivatives, the global snapshot with Fear &amp; Greed, ETH gas, trending assets, DeFi TVL by protocol and chain, 15,000 yield pools, stablecoin pegs, protocol fees and revenue, DEX volumes, and the full exploit database — is now a 17-endpoint paid API that agents can discover and buy autonomously. Each call costs $0.001 USDC over x402 on Solana or Base (the one-call market-pulse bundle is $0.005), with no API key or account needed, and a failed fetch never charges the buyer. The browser pages stay free for people; the paid endpoints are listed in the public x402 discovery catalog, and the free index at /api/x402/market documents everything with runnable examples.</description>
+		</item>
+		<item>
 			<title>The news page becomes Your Briefing</title>
 			<link>https://three.ws/markets/news</link>
 			<guid isPermaLink="false">2026-07-11:The news page becomes Your Briefing</guid>
 			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>/markets/news is redesigned as a daily briefing: a breaking-news ticker for stories under 45 minutes old, a collapsible Today's AI Briefing card built from the digest engine, a Featured tab covering the major outlets, a Trending tab ranking the day's most-covered narratives, a Top-stories hero with a compact headline rail, and a star on every story that saves it to a personal Saved tab. Article preview images were also overhauled — thumbnails blocked by publishers now load through a same-origin proxy, and stories whose feed ships no image pull the publisher's own social preview automatically, so cards no longer show blank tiles.</description>
+		</item>
+		<item>
+			<title>three.ws plants its flag across the x402 ecosystem</title>
+			<link>https://three.ws/docs/x402-distribution</link>
+			<guid isPermaLink="false">2026-07-11:three.ws plants its flag across the x402 ecosystem</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every agent-facing discovery surface now advertises the full 70+ paid-service catalog instead of a stale one-endpoint stub: the ERC-8004 registration card, the A2A agent card, and the AI-plugin manifest are regenerated from the live service catalog on every build, so they can never drift again. Registration with external x402 directories has begun — the first services are already listed on 402index.io — and a new distribution playbook documents exactly how x402scan, the Coinbase Bazaar, and agentic.market index and rank providers, so the platform can climb those leaderboards deliberately.</description>
 		</item>
 		<item>
 			<title>Crypto News</title>

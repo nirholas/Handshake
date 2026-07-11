@@ -28,11 +28,14 @@ export const ASSET = USDC_MINT || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
 export const VOLUME_PER_RUN_CAP_ATOMIC = volumePerRunCapAtomic();
 
 // How many endpoints the 5-minute volume loop sweeps per run (cursor advances by
-// this each tick). With the catalog below a batch of 4 covers the full set in
-// ~3 runs.
+// this each tick). Sized so the default cadence (AUTONOMOUS_TICKS_PER_HOUR × this)
+// covers the FULL autobuy rotation every hour — tests/x402-ring-catalog.test.js
+// enforces it — because trailing-30-day settle activity is what keeps endpoints
+// ranked on the x402 discovery surfaces. Spend per tick stays bounded by
+// VOLUME_PER_RUN_CAP_ATOMIC and the daily cap regardless of batch size.
 export const VOLUME_BATCH_PER_RUN = Math.max(
 	1,
-	Number(process.env.X402_VOLUME_BATCH_PER_RUN || 4),
+	Number(process.env.X402_VOLUME_BATCH_PER_RUN || 6),
 );
 
 // The catalog of paid self x402 endpoints the ring drivers round-robin is now the

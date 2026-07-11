@@ -549,15 +549,23 @@ function initDrawer(root) {
 
 // ── Active page highlighting ────────────────────────────────────────────────
 function initActivePage(root) {
-	const path = location.pathname.replace(/\/$/, '') || '/';
-	root.querySelectorAll('a[href]').forEach((a) => {
-		const raw = a.getAttribute('href');
-		if (!raw || !raw.startsWith('/')) return;
-		const href = raw.split('#')[0].replace(/\/$/, '') || '/';
-		if (href === path || (href !== '/' && path.startsWith(href + '/'))) {
-			a.setAttribute('aria-current', 'page');
-		}
-	});
+	const apply = () => {
+		const path = location.pathname.replace(/\/$/, '') || '/';
+		root.querySelectorAll('a[href]').forEach((a) => {
+			const raw = a.getAttribute('href');
+			if (!raw || !raw.startsWith('/')) return;
+			const href = raw.split('#')[0].replace(/\/$/, '') || '/';
+			if (href === path || (href !== '/' && path.startsWith(href + '/'))) {
+				a.setAttribute('aria-current', 'page');
+			} else if (a.hasAttribute('aria-current')) {
+				a.removeAttribute('aria-current');
+			}
+		});
+	};
+	apply();
+	// Persistent-shell navigations swap <main> without reloading — the header
+	// survives, so re-derive the highlight when the URL changes under it.
+	document.addEventListener('shell:navigated', apply);
 }
 
 // ── Auth-aware CTAs ──────────────────────────────────────────────────────────

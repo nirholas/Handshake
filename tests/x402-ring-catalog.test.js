@@ -185,8 +185,9 @@ describe('rotation covers every autobuy endpoint within an hour', () => {
 		const plan = rotationPlan();
 		// Match volume-shared.reserveWindow: a cursor advances by the batch each
 		// tick, indices taken modulo the rotation length. Default cadence:
-		// AUTONOMOUS_TICKS_PER_HOUR ticks × batch selections/tick.
-		const BATCH = Number(process.env.X402_VOLUME_BATCH_PER_RUN || 4);
+		// AUTONOMOUS_TICKS_PER_HOUR ticks × batch selections/tick. The fallback
+		// mirrors VOLUME_BATCH_PER_RUN's default in pipelines/volume-shared.js.
+		const BATCH = Number(process.env.X402_VOLUME_BATCH_PER_RUN || 6);
 		const callsPerHour = AUTONOMOUS_TICKS_PER_HOUR * BATCH;
 		expect(callsPerHour, 'calls/hour >= rotation length').toBeGreaterThanOrEqual(plan.length);
 

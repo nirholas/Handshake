@@ -362,6 +362,10 @@
 	function showPassivePrompt() {
 		if (_card) return; // a contextual card already took the slot
 		if (alreadyPromptedThisSession()) return;
+		// When the companion agent is live it owns ambient discovery (it greets,
+		// narrates, and reacts to ⌘K commands) — don't stack a competing toast in
+		// the same corner. Contextual after-action cross-links still show.
+		try { if (localStorage.getItem('walk:companion:enabled') === '1') return; } catch (_) {}
 		var route = pickSuggestion();
 		if (!route) return;
 		var f = FEATURES[route];
