@@ -1,0 +1,266 @@
+/*
+ * /hacks — DeFi hacks database. Layered after coin-pages.css: reuses the cv-*
+ * token system, cards, and table; this file only adds the stat grid, the
+ * search box, the amount red-scale, and the small incident-table affordances
+ * (chain chips, classification/technique cells, bridge flag, source link).
+ * Both themes inherit from the shared data-theme tokens.
+ */
+
+.hacks-stat-grid {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Incident rows are informational, not navigable. */
+#hacks-table .cv-table tbody tr {
+	cursor: default;
+}
+
+/* ── Search cluster ─────────────────────────────────────────────────────── */
+
+.hacks-filter {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.hacks-search-label {
+	font-size: 0.75rem;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--cv-text-3);
+}
+.hacks-search-wrap {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+}
+.hacks-search-icon {
+	position: absolute;
+	left: 0.625rem;
+	width: 16px;
+	height: 16px;
+	color: var(--cv-text-3);
+	pointer-events: none;
+}
+.hacks-search {
+	appearance: none;
+	background: var(--cv-surface);
+	color: var(--cv-text);
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+	font: inherit;
+	font-size: 0.875rem;
+	padding: 0.4375rem 0.75rem 0.4375rem 2.125rem;
+	width: min(20rem, 62vw);
+	transition:
+		border-color 0.15s,
+		box-shadow 0.15s;
+}
+.hacks-search::placeholder {
+	color: var(--cv-text-3);
+}
+.hacks-search:hover {
+	border-color: var(--cv-border-hover);
+}
+.hacks-search:focus-visible {
+	outline: none;
+	border-color: var(--cv-accent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--cv-accent) 20%, transparent);
+}
+
+/* ── Table cells ────────────────────────────────────────────────────────── */
+
+.hacks-table {
+	table-layout: auto;
+}
+.hacks-date {
+	white-space: nowrap;
+	font-size: 0.8125rem;
+}
+
+/* Amount: bold red heat scale by magnitude. */
+.hacks-amount {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	line-height: 1.3;
+}
+.hacks-amount.amt-1 {
+	color: color-mix(in srgb, var(--cv-red) 55%, var(--cv-text-2));
+}
+.hacks-amount.amt-2 {
+	color: color-mix(in srgb, var(--cv-red) 75%, var(--cv-text));
+}
+.hacks-amount.amt-3 {
+	color: var(--cv-red);
+}
+.hacks-amount.amt-4 {
+	color: var(--cv-red);
+	font-weight: 800;
+}
+.hacks-returned {
+	display: inline-block;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	color: var(--cv-green);
+	white-space: nowrap;
+}
+
+.hacks-class {
+	display: inline-block;
+	padding: 0.125rem 0.5rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 500;
+	background: var(--cv-surface-3);
+	color: var(--cv-text-2);
+	white-space: nowrap;
+}
+
+.hacks-tech {
+	max-width: 16rem;
+	font-size: 0.8125rem;
+}
+
+/* Chain chips. */
+.hacks-chains {
+	white-space: nowrap;
+}
+.hacks-chip {
+	display: inline-block;
+	padding: 0.0625rem 0.4375rem;
+	margin-right: 0.25rem;
+	border-radius: var(--cv-radius-sm);
+	font-size: 0.75rem;
+	background: var(--cv-surface-3);
+	color: var(--cv-text-2);
+}
+.hacks-more-chip {
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Flags cell: bridge badge + source link. */
+.hacks-flags {
+	white-space: nowrap;
+}
+.hacks-flag {
+	display: inline-block;
+	padding: 0.0625rem 0.4375rem;
+	border-radius: var(--cv-radius-sm);
+	font-size: 0.6875rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+.hacks-flag-bridge {
+	background: var(--cv-red-soft);
+	color: var(--cv-red);
+}
+.hacks-src {
+	display: inline-block;
+	margin-left: 0.375rem;
+	font-size: 0.75rem;
+	color: var(--cv-accent);
+	text-decoration: none;
+	white-space: nowrap;
+	transition: color 0.15s;
+}
+.hacks-src:hover {
+	color: var(--cv-accent-hover);
+	text-decoration: underline;
+}
+.hacks-src:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+	border-radius: var(--cv-radius-sm);
+}
+
+/* ── Load more ──────────────────────────────────────────────────────────── */
+
+.hacks-more {
+	display: flex;
+	justify-content: center;
+	margin: 1.25rem 0 0.5rem;
+}
+.hacks-load-more {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.625rem;
+	background: var(--cv-surface);
+	color: var(--cv-text);
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+	font: inherit;
+	font-size: 0.875rem;
+	font-weight: 500;
+	padding: 0.5rem 1.125rem;
+	cursor: pointer;
+	transition:
+		border-color 0.15s,
+		background 0.15s,
+		transform 0.05s;
+}
+.hacks-load-more:hover:not(:disabled) {
+	border-color: var(--cv-border-hover);
+	background: var(--cv-surface-3);
+}
+.hacks-load-more:active:not(:disabled) {
+	transform: translateY(1px);
+}
+.hacks-load-more:focus-visible {
+	outline: none;
+	border-color: var(--cv-accent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--cv-accent) 20%, transparent);
+}
+.hacks-load-more:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+.hacks-remaining {
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Empty/error inline controls read as links, matching cv-empty's anchors. */
+.hacks-reset,
+.hacks-retry {
+	appearance: none;
+	border: 0;
+	background: transparent;
+	color: var(--cv-accent);
+	font: inherit;
+	cursor: pointer;
+	padding: 0;
+}
+.hacks-reset:hover,
+.hacks-retry:hover {
+	color: var(--cv-accent-hover);
+	text-decoration: underline;
+}
+
+.hacks-attribution {
+	margin-top: 0.5rem;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	color: var(--cv-text-3);
+	max-width: 46rem;
+}
+
+@media (max-width: 640px) {
+	.hacks-search {
+		width: 100%;
+	}
+	.hacks-filter {
+		width: 100%;
+	}
+	.hacks-search-wrap {
+		flex: 1;
+	}
+}

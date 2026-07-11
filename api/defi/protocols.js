@@ -50,6 +50,8 @@ async function build() {
 	const protocols = eligible.slice(0, 100).map((p) => {
 		const chains = Array.isArray(p.chains) ? p.chains.filter((c) => typeof c === 'string') : [];
 		return {
+			// DeFiLlama protocol slug — the /protocol/:slug detail page keys off it.
+			slug: typeof p.slug === 'string' ? p.slug : null,
 			name: typeof p.name === 'string' ? p.name : 'Unknown',
 			logo: typeof p.logo === 'string' ? p.logo : null,
 			symbol: typeof p.symbol === 'string' && p.symbol !== '-' ? p.symbol : null,

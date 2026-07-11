@@ -150,8 +150,21 @@ data" rule:
   chain, project, stablecoin exposure, and minimum TVL; sort by APY or TVL
   (the APY sort ignores sub-$10k dust pools to keep the ranking honest); open
   any row for its full APY + TVL history in a dual-axis chart. Filters sync to
-  the URL for shareable views. New `/api/defi/yields` (DeFiLlama
-  `yields.llama.fi/pools` + `/chart/{pool}`).
+  the URL for shareable views; project and chain link to their detail pages.
+  New `/api/defi/yields` (DeFiLlama `yields.llama.fi/pools` + `/chart/{pool}`).
+- **`/fees`** — fees paid by users and revenue kept by protocols across all of
+  DeFi, with 24h/7d/30d totals, an aggregate history chart, and a Fees|Revenue
+  toggle. New `/api/defi/fees` (DeFiLlama `/overview/fees`).
+- **`/dex-volumes`** — every DEX ranked by volume with 24h/7d totals, 7-day
+  change, market share, and an aggregate volume chart. New
+  `/api/defi/dex-volumes` (DeFiLlama `/overview/dexs`).
+- **`/hacks`** — a searchable database of every major DeFi exploit: amount
+  stolen, classification, technique, chains, bridge flag, and source, with
+  all-time and trailing-12-month totals. New `/api/defi/hacks` (DeFiLlama
+  `/hacks`).
+- **`/markets/trending`** — the most-searched coins, categories, and NFTs on
+  CoinGecko over the last 24h, auto-refreshing; coins and categories link to
+  their detail pages. New `/api/coin/trending` (CoinGecko `/search/trending`).
 
 ## Detail pages
 
@@ -179,6 +192,34 @@ full sortable coins table for that category (reusing the shared markets table,
 so every row deep-links to `/coin/:id`); and a strip of related categories.
 Reuses `/api/coin/markets?category=<id>` for the table and new
 `/api/coin/category` for the header + neighbours.
+
+### `/protocol/:slug` — DeFi protocol detail
+
+A full profile for one protocol, reached from a `/defi`, `/fees`,
+`/dex-volumes`, or `/yields` row: hero (logo, category, audit badge,
+forked-from/parent chips, website + twitter); stat cards for TVL, Mcap/TVL,
+24h fees, 24h revenue, and 24h DEX volume (null cards hidden); a full TVL
+history chart with 30D/90D/1Y/All ranges and event (hallmark) markers; a
+per-chain TVL breakdown (each chain linking to `/chain/:name`); a funding-rounds
+table; and a methodology section. New `/api/defi/protocol` (DeFiLlama
+`/protocol/{slug}` enriched with `/summary/fees` and `/summary/dexs`).
+
+### `/chain/:name` — chain detail
+
+A per-chain page reached from `/chains`: hero (native token, chain id, rank,
+dominance); stat cards for TVL, share of DeFi, stablecoin supply, 24h DEX
+volume, 24h fees, and protocol count; interactive TVL, stablecoin-supply, and
+DEX-volume history charts; and the top protocols on that chain (each linking to
+`/protocol/:slug`). New `/api/defi/chain` (a fan-out over DeFiLlama's chains,
+historical-TVL, protocols, stablecoin-charts, and dimensions endpoints).
+
+### `/stablecoin/:id` — stablecoin detail
+
+A per-issuer page reached from `/stablecoins`: hero (peg, mechanism, price with
+a basis-point peg-deviation badge, audits, and a cross-link to the coin's
+`/coin/:id` market data); circulating-supply history chart; and a per-chain
+distribution table (each chain linking to `/chain/:name`). New
+`/api/defi/stablecoin` (DeFiLlama `stablecoins.llama.fi/stablecoin/{id}`).
 
 ## News & the markets hub
 
@@ -287,6 +328,13 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | `/api/coin/exchange`    | CoinGecko `/exchanges/{id}` (+ `/volume_chart`) or `/derivatives/exchanges/{id}` fallback | 120 s |
 | `/api/coin/derivatives` | CoinGecko `/derivatives` (`?view=exchanges` → `/derivatives/exchanges`) | 60 s / 300 s |
 | `/api/defi/yields`      | DeFiLlama `yields.llama.fi/pools` (+ `/chart/{pool}`)      | 300 s / 600 s |
+| `/api/coin/trending`    | CoinGecko `/search/trending` (coins + categories + NFTs)   | 120 s        |
+| `/api/defi/protocol`    | DeFiLlama `/protocol/{slug}` (+ `/summary/fees` + `/summary/dexs`) | 300 s |
+| `/api/defi/chain`       | DeFiLlama `/v2/chains` + `/v2/historicalChainTvl` + `/protocols` + stablecoin/DEX/fees per chain | 300 s |
+| `/api/defi/stablecoin`  | DeFiLlama `stablecoins.llama.fi/stablecoin/{id}`           | 300 s        |
+| `/api/defi/fees`        | DeFiLlama `/overview/fees` (`?type=fees\|revenue`)         | 600 s        |
+| `/api/defi/dex-volumes` | DeFiLlama `/overview/dexs`                                 | 600 s        |
+| `/api/defi/hacks`       | DeFiLlama `/hacks` (exploit database)                      | 600 s        |
 | `/api/coin/rates`       | CoinGecko `/exchange_rates`                                | 300 s        |
 | `/api/defi/protocols`   | DeFiLlama `/protocols` (CEX excluded)                      | 300 s        |
 | `/api/defi/chains`      | DeFiLlama `/v2/chains`                                     | 300 s        |
@@ -326,6 +374,12 @@ text before they reach the client.
 | Converter                   | `pages/converter.html` + `src/converter.js` + `src/converter.css`                                                                        |
 | DeFi / Chains / Stablecoins | `pages/{defi,chains,stablecoins}.html` (+ `src/*.js`, `src/*.css`), APIs in [`api/defi/`](../api/defi)                                   |
 | DeFi Yields                 | [`pages/yields.html`](../pages/yields.html) + `src/yields.js` + `src/yields.css`, API [`api/defi/yields.js`](../api/defi/yields.js)      |
+| Protocol detail             | [`pages/protocol.html`](../pages/protocol.html) + `src/protocol-page.js` + `src/protocol-page.css`, API [`api/defi/protocol.js`](../api/defi/protocol.js) |
+| Chain detail                | [`pages/chain.html`](../pages/chain.html) + `src/chain-page.js` + `src/chain-page.css`, API [`api/defi/chain.js`](../api/defi/chain.js)  |
+| Stablecoin detail           | [`pages/stablecoin.html`](../pages/stablecoin.html) + `src/stablecoin-page.js` + `src/stablecoin-page.css`, API [`api/defi/stablecoin.js`](../api/defi/stablecoin.js) |
+| Fees / DEX volumes          | `pages/{fees,dex-volumes}.html` (+ `src/*.js`, `src/*.css`), APIs [`api/defi/fees.js`](../api/defi/fees.js), [`api/defi/dex-volumes.js`](../api/defi/dex-volumes.js) |
+| Hacks database              | [`pages/hacks.html`](../pages/hacks.html) + `src/hacks.js` + `src/hacks.css`, API [`api/defi/hacks.js`](../api/defi/hacks.js)            |
+| Trending                    | [`pages/markets-trending.html`](../pages/markets-trending.html) + `src/markets-trending.js`, API [`api/coin/trending.js`](../api/coin/trending.js) |
 | Markets hub                 | [`pages/markets.html`](../pages/markets.html) + [`src/markets-page.js`](../src/markets-page.js)                                          |
 | Crypto news                 | [`pages/markets-news.html`](../pages/markets-news.html) + [`src/markets-news.js`](../src/markets-news.js)                                |
 | Article reader              | [`pages/news-article.html`](../pages/news-article.html) + [`src/news-article.js`](../src/news-article.js)                                |

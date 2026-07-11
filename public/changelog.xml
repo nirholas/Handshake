@@ -23,6 +23,14 @@
 			<description>Developer console for the three.ws Data API — buy the Premium pass with $THREE, SOL, or USDC, manage API keys, watch usage, and copy quickstarts.</description>
 		</item>
 		<item>
+			<title>DeFi Hacks Database</title>
+			<link>https://three.ws/hacks</link>
+			<guid isPermaLink="false">2026-07-11:DeFi Hacks Database</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A searchable database of every major DeFi exploit — amount stolen, classification, technique, chains affected, whether it was a bridge hack, and the source, with all-time and trailing-12-month totals. Live from DeFiLlama.</description>
+		</item>
+		<item>
 			<title>DeFi Yields Explorer</title>
 			<link>https://three.ws/yields</link>
 			<guid isPermaLink="false">2026-07-11:DeFi Yields Explorer</guid>
@@ -31,12 +39,44 @@
 			<description>Explore roughly 15,000 live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.</description>
 		</item>
 		<item>
+			<title>DEX Volume Leaderboard</title>
+			<link>https://three.ws/dex-volumes</link>
+			<guid isPermaLink="false">2026-07-11:DEX Volume Leaderboard</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every decentralized exchange ranked by trading volume, with 24h and 7d totals, 7-day change, and market share, plus an aggregate volume history chart. Live from DeFiLlama.</description>
+		</item>
+		<item>
 			<title>Premium Pass — Monthly Data API Access</title>
 			<link>https://three.ws/docs/premium</link>
 			<guid isPermaLink="false">2026-07-11:Premium Pass — Monthly Data API Access</guid>
 			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>One Solana payment ($THREE at 20% off, SOL, or USDC) buys 30 days of unmetered Data API access with an API key — no per-call x402 payments.</description>
+		</item>
+		<item>
+			<title>Protocol Fees &amp; Revenue</title>
+			<link>https://three.ws/fees</link>
+			<guid isPermaLink="false">2026-07-11:Protocol Fees &amp; Revenue</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Fees paid by users and revenue kept by protocols across all of DeFi, ranked with 24h/7d/30d totals and an aggregate history chart. Toggle between fees and revenue; each protocol links to its detail page. Live from DeFiLlama.</description>
+		</item>
+		<item>
+			<title>Trending Crypto</title>
+			<link>https://three.ws/markets/trending</link>
+			<guid isPermaLink="false">2026-07-11:Trending Crypto</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The most-searched coins, categories, and NFTs on CoinGecko over the last 24 hours — trending rank, price, 24h change, market cap, and volume, each coin and category linking to its detail page. Auto-refreshing.</description>
+		</item>
+		<item>
+			<title>Detail pages for protocols, chains, and stablecoins — plus fees, DEX volumes, hacks, and trending</title>
+			<link>https://three.ws/fees</link>
+			<guid isPermaLink="false">2026-07-11:Detail pages for protocols, chains, and stablecoins — plus fees, DEX volumes, hacks, and trending</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every DeFiLlama list now opens into a full detail page. A protocol page charts its whole TVL history with funding-round and event markers, breaks TVL down per chain, and shows its fees, revenue, and methodology. A chain page charts TVL, stablecoin supply, and DEX volume side by side with the top protocols on that chain. A stablecoin page charts circulating supply over time, shows the per-chain distribution, and flags how far off-peg it is in basis points. On top of the detail pages there are four new market surfaces: protocol fees and revenue ranked and charted, the DEX-volume leaderboard with market share, a searchable database of every major DeFi hack ($16.7B stolen all-time), and a trending page of the most-searched coins, categories, and NFTs on CoinGecko. Everything is real, key-free data, and the yields, DeFi, chains, and stablecoin tables now link straight into the new detail pages.</description>
 		</item>
 		<item>
 			<title>Documentation accuracy pass: every tutorial verified against the shipped platform</title>

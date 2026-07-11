@@ -1,0 +1,140 @@
+/*
+ * /dex-volumes — DEX volume rankings. Layered after coin-pages.css: reuses the
+ * cv-* token system, stat cards, chart panel, and table. This file only adds the
+ * stat grid, chain chips, the DEX name link, the logo fallback, and the inline
+ * market-share bar. Both themes inherit from the shared data-theme tokens.
+ */
+
+.dx-stat-grid {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Rows are navigable only via the DEX-name link, not the whole row — reset the
+   shared table's pointer cursor so nothing else signals a click target. */
+#dx-table .cv-table tbody tr {
+	cursor: default;
+}
+
+/* ── Chain chips ───────────────────────────────────────────────────────────── */
+/* Flex lives on this inner wrapper, never the <td>, so the column's responsive
+   `hide-lg` display:none is not overridden at narrow widths. */
+.dx-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3125rem;
+	align-items: center;
+}
+.dx-chip {
+	display: inline-block;
+	padding: 0.0625rem 0.4375rem;
+	font-size: 0.75rem;
+	line-height: 1.4;
+	color: var(--cv-text-2);
+	background: var(--cv-surface-3);
+	border: 1px solid var(--cv-border);
+	border-radius: 999px;
+	text-decoration: none;
+	white-space: nowrap;
+	transition:
+		border-color 0.15s,
+		color 0.15s,
+		background 0.15s;
+}
+.dx-chip:hover,
+.dx-chip:focus-visible {
+	color: var(--cv-text);
+	border-color: var(--cv-accent);
+	background: color-mix(in srgb, var(--cv-accent) 12%, var(--cv-surface-3));
+	outline: none;
+}
+.dx-more {
+	color: var(--cv-text-3);
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── DEX name link ─────────────────────────────────────────────────────────── */
+.dx-name-link {
+	text-decoration: none;
+	color: inherit;
+	border-radius: var(--cv-radius-sm);
+}
+.dx-name-link .nm {
+	transition: color 0.15s;
+}
+.dx-name-link:hover .nm,
+.dx-name-link:focus-visible .nm {
+	color: var(--cv-accent);
+	text-decoration: underline;
+}
+.dx-name-link:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--cv-accent) 25%, transparent);
+}
+
+.dx-logo-fallback {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: var(--cv-surface-3);
+	flex-shrink: 0;
+}
+
+/* ── Market-share bar ──────────────────────────────────────────────────────── */
+.dx-share-cell {
+	min-width: 160px;
+}
+.dx-share {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.dx-share-bar {
+	display: block;
+	flex: 1;
+	max-width: 160px;
+	height: 8px;
+	border-radius: 999px;
+	background: var(--cv-surface-3);
+	overflow: hidden;
+}
+.dx-share-fill {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	background: linear-gradient(
+		90deg,
+		var(--cv-accent),
+		color-mix(in srgb, var(--cv-accent) 55%, transparent)
+	);
+	transition: width 0.4s ease;
+}
+.dx-share-num {
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+	white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dx-share-fill {
+		transition: none;
+	}
+}
+
+/* Retry button in the error / empty states reads as a link, matching cv-empty. */
+.dx-retry {
+	appearance: none;
+	border: 0;
+	background: transparent;
+	color: var(--cv-accent);
+	font: inherit;
+	cursor: pointer;
+	padding: 0;
+	text-decoration: underline;
+}
+.dx-retry:hover {
+	color: var(--cv-accent-hover);
+}

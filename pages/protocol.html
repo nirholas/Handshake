@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>DeFi Protocol · three.ws</title>
+		<meta
+			name="description"
+			content="A rich profile for any DeFi protocol — total value locked with full history, per-chain breakdown, fees, revenue, DEX volume, audits, and funding rounds. Real DeFiLlama data, no API key."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/defi" />
+		<meta property="og:title" content="DeFi Protocol · three.ws" />
+		<meta
+			property="og:description"
+			content="TVL history, per-chain breakdown, fees, revenue, DEX volume, audits, and funding rounds for any DeFi protocol. Real DeFiLlama data."
+		/>
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="DeFi Protocol · three.ws" />
+		<meta
+			name="twitter:description"
+			content="TVL history, per-chain breakdown, fees, revenue, and funding rounds for any DeFi protocol."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/protocol-page.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/defi" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container" id="pr-main" aria-busy="true">
+			<!-- Breadcrumbs -->
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/defi">DeFi</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here" id="pr-crumb-name">…</span>
+			</nav>
+
+			<!-- Hero: logo, name, symbol, category, audit badge, fork/parent chips, links, description. -->
+			<section id="pr-hero" aria-label="Protocol overview"></section>
+
+			<!-- Stat cards: TVL, Mcap/TVL, 24h Fees, 24h Revenue, 24h DEX Volume. -->
+			<section id="pr-stats" class="cv-section" aria-label="Protocol stats"></section>
+
+			<!-- TVL history chart (SVG area, range toggle, crosshair, hallmark markers). -->
+			<section id="pr-chart" aria-label="Total value locked history"></section>
+
+			<!-- Per-chain TVL breakdown. -->
+			<section id="pr-chains" class="cv-section" aria-label="TVL by chain"></section>
+
+			<!-- Fees & revenue grid. -->
+			<section id="pr-fees" class="cv-section" aria-label="Fees and revenue"></section>
+
+			<!-- Funding rounds. -->
+			<section id="pr-raises" class="cv-section" aria-label="Funding rounds"></section>
+
+			<!-- Methodology prose. -->
+			<section id="pr-methodology" class="cv-section" aria-label="TVL methodology"></section>
+
+			<p class="cv-updated" id="pr-updated" hidden></p>
+		</main>
+
+		<script type="module" src="/src/protocol-page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

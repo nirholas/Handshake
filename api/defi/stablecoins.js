@@ -38,6 +38,9 @@ function shape(assets) {
 		const chains = Array.isArray(a.chains) ? a.chains.filter((c) => typeof c === 'string') : [];
 
 		rows.push({
+			// DeFiLlama's numeric asset id ("1", "2", …) — the /stablecoin/:id
+			// detail page keys off it; null when upstream omits it.
+			id: a.id != null ? String(a.id) : null,
 			name: typeof a.name === 'string' ? a.name : 'Unknown',
 			symbol: typeof a.symbol === 'string' ? a.symbol : '',
 			price: Number.isFinite(price) ? price : null,

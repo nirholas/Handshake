@@ -179,8 +179,13 @@ function renderTable() {
 	const body = rows
 		.map((c) => {
 			const m = mechanism(c.peg_mechanism);
+			// Whole row opens the internal /stablecoin/:id detail page when we
+			// have DeFiLlama's numeric id; keyboard-accessible.
+			const nav = c.id
+				? ` data-href="/stablecoin/${encodeURIComponent(c.id)}" tabindex="0" role="link" aria-label="Open ${esc(c.name)} detail page"`
+				: '';
 			return `
-			<tr>
+			<tr${nav}>
 				<td class="rank hide-sm cv-mono">${c._rank ?? '—'}</td>
 				<td class="left name-cell"><span class="inner">
 					<span class="nm">${esc(c.name)}</span>
@@ -220,6 +225,18 @@ function renderTable() {
 			if (e.key === 'Enter' || e.key === ' ') {
 				e.preventDefault();
 				activate();
+			}
+		});
+	});
+
+	// Row → /stablecoin/:id navigation (a header click must never navigate).
+	el.querySelectorAll('tr[data-href]').forEach((tr) => {
+		const go = () => location.assign(tr.dataset.href);
+		tr.addEventListener('click', go);
+		tr.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				go();
 			}
 		});
 	});

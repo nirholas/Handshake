@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Stablecoin · three.ws</title>
+		<meta
+			name="description"
+			content="A rich profile for any stablecoin — peg health, backing mechanism, per-chain circulation, supply history, and audits. Live data from DeFiLlama."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/stablecoins" />
+		<meta property="og:title" content="Stablecoin · three.ws" />
+		<meta
+			property="og:description"
+			content="Peg health, backing mechanism, per-chain circulation, supply history, and audits for any stablecoin. Real DeFiLlama data."
+		/>
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Stablecoin · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Peg health, backing mechanism, per-chain circulation, and supply history for any stablecoin."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/stablecoin-page.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/stablecoins" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container" id="sc-main" aria-busy="true">
+			<!-- Breadcrumbs -->
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/stablecoins">Stablecoins</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here" id="sc-crumb-name">…</span>
+			</nav>
+
+			<!-- Hero: name, symbol, peg + mechanism chips, price + peg-health badge, links, description. -->
+			<section id="sc-hero" aria-label="Stablecoin overview"></section>
+
+			<!-- Stat cards: circulating, chains, price, peg deviation. -->
+			<section id="sc-stats" class="cv-section" aria-label="Stablecoin stats"></section>
+
+			<!-- Circulating-supply history chart. -->
+			<section id="sc-chart" aria-label="Supply history"></section>
+
+			<!-- Per-chain circulation distribution. -->
+			<section id="sc-chains" class="cv-section" aria-label="Chain distribution"></section>
+
+			<!-- Mint / redeem mechanism prose. -->
+			<section id="sc-mint" class="cv-section" aria-label="Mint and redeem"></section>
+
+			<!-- Audit reports. -->
+			<section id="sc-audits" class="cv-section" aria-label="Audits"></section>
+
+			<p class="cv-updated" id="sc-updated" hidden></p>
+		</main>
+
+		<script type="module" src="/src/stablecoin-page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

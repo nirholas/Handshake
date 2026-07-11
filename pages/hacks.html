@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>DeFi Hacks Database · three.ws</title>
+		<meta
+			name="description"
+			content="Every major DeFi exploit, bridge hack, and protocol breach — amounts stolen, attack technique, chains hit, and whether funds were returned. A searchable record of crypto's biggest security failures."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/hacks" />
+		<meta property="og:title" content="DeFi Hacks Database · three.ws" />
+		<meta
+			property="og:description"
+			content="Every major DeFi exploit, bridge hack, and protocol breach — amounts stolen, attack technique, chains hit, and whether funds were returned. A searchable record of crypto's biggest security failures."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=DeFi+Hacks+Database&amp;d=A+searchable+database+of+every+major+DeFi+exploit+%E2%80%94+amount+stolen%2C+classification%2C+technique%2C+chains+affected%2C+whether+it+was+a+bridge+hack%2C+and+the+source%2C+wit&amp;p=%2Fhacks"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="DeFi Hacks Database · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Every major DeFi exploit, bridge hack, and protocol breach — amounts stolen, attack technique, chains hit, and whether funds were returned."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=DeFi+Hacks+Database&amp;d=A+searchable+database+of+every+major+DeFi+exploit+%E2%80%94+amount+stolen%2C+classification%2C+technique%2C+chains+affected%2C+whether+it+was+a+bridge+hack%2C+and+the+source%2C+wit&amp;p=%2Fhacks"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/hacks.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/hacks" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="DeFi Hacks Database — three.ws" />
+
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@graph": [
+					{
+						"@type": "WebPage",
+						"name": "DeFi Hacks Database",
+						"description": "A searchable record of major DeFi exploits, bridge hacks, and protocol breaches: amounts stolen, attack technique, chains hit, target type, and whether funds were returned. Sourced from DeFiLlama's hacks database.",
+						"url": "https://three.ws/hacks",
+						"isPartOf": {
+							"@type": "WebSite",
+							"name": "three.ws",
+							"url": "https://three.ws"
+						},
+						"primaryImageOfPage": "https://three.ws/api/page-og?s=crypto&amp;t=DeFi+Hacks+Database&amp;d=A+searchable+record+of+major+DeFi+exploits%2C+bridge+hacks%2C+and+protocol+breaches&amp;p=%2Fhacks"
+					}
+				]
+			}
+		</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a><span class="sep">/</span
+				><a href="/defi">DeFi</a><span class="sep">/</span
+				><span class="here">Hacks</span>
+			</nav>
+			<h1 class="cv-h1">DeFi Hacks Database</h1>
+			<p class="cv-sub">
+				Every major on-chain exploit on record — how much was taken, the technique behind
+				the breach, which chains were hit, and whether any funds came back. A sober look at
+				where and how decentralized finance has failed.
+			</p>
+
+			<!-- Header stat cards. Hydrated by src/hacks.js. -->
+			<section id="hacks-stats" class="cv-section" aria-label="Hack statistics"></section>
+
+			<div class="cv-toolbar">
+				<h2 class="cv-h2" style="margin: 0">Incidents</h2>
+				<div class="hacks-filter">
+					<label class="hacks-search-label" for="hacks-search">Search</label>
+					<div class="hacks-search-wrap">
+						<svg
+							class="hacks-search-icon"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<circle cx="11" cy="11" r="8" />
+							<line x1="21" y1="21" x2="16.65" y2="16.65" />
+						</svg>
+						<input
+							id="hacks-search"
+							class="hacks-search"
+							type="search"
+							inputmode="search"
+							autocomplete="off"
+							spellcheck="false"
+							placeholder="Name, technique, classification…"
+							aria-label="Search hacks by name, technique, or classification"
+						/>
+					</div>
+					<a class="cv-pill" href="/defi">DeFi TVL →</a>
+				</div>
+			</div>
+
+			<!-- Incident table. Hydrated by src/hacks.js. -->
+			<section id="hacks-table" aria-label="DeFi hack incidents"></section>
+
+			<div id="hacks-more" class="hacks-more"></div>
+
+			<p class="cv-updated" id="hacks-updated"></p>
+			<p class="hacks-attribution">
+				Data: DeFiLlama hacks database. Figures are best-effort public estimates of funds
+				stolen at the time of each incident and may be revised as investigations conclude.
+			</p>
+		</main>
+
+		<script type="module" src="/src/hacks.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

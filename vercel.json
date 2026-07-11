@@ -965,6 +965,10 @@
 			"dest": "/news-archive.html"
 		},
 		{
+			"src": "/markets/trending/?",
+			"dest": "/markets-trending.html"
+		},
+		{
 			"src": "/fear-greed/?",
 			"dest": "/fear-greed.html"
 		},
@@ -1017,12 +1021,36 @@
 			"dest": "/yields.html"
 		},
 		{
+			"src": "/fees/?",
+			"dest": "/fees.html"
+		},
+		{
+			"src": "/dex-volumes/?",
+			"dest": "/dex-volumes.html"
+		},
+		{
+			"src": "/hacks/?",
+			"dest": "/hacks.html"
+		},
+		{
 			"src": "/exchange/([a-z0-9_-]{1,60})/?",
 			"dest": "/exchange.html"
 		},
 		{
 			"src": "/category/([a-z0-9-]{1,80})/?",
 			"dest": "/category.html"
+		},
+		{
+			"src": "/protocol/([a-z0-9.-]{1,80})/?",
+			"dest": "/protocol.html"
+		},
+		{
+			"src": "/chain/([A-Za-z0-9 ._%-]{1,40})/?",
+			"dest": "/chain.html"
+		},
+		{
+			"src": "/stablecoin/([0-9]{1,6})/?",
+			"dest": "/stablecoin.html"
 		},
 		{
 			"src": "/bnb/?",

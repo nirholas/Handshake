@@ -418,6 +418,26 @@ export const NAV_GROUPS = [
 						desc: 'Explore ~15k live yield pools — APY, TVL, and per-pool history from DeFiLlama',
 					},
 					{
+						title: 'Protocol Fees',
+						href: '/fees',
+						desc: 'Fees paid and revenue kept across DeFi protocols, ranked and charted',
+					},
+					{
+						title: 'DEX Volumes',
+						href: '/dex-volumes',
+						desc: 'Decentralized-exchange volume leaderboard with 24h/7d totals and share',
+					},
+					{
+						title: 'Hacks Database',
+						href: '/hacks',
+						desc: 'Every major DeFi exploit — amount stolen, technique, chain, and source',
+					},
+					{
+						title: 'Trending',
+						href: '/markets/trending',
+						desc: 'The most-searched coins, categories, and NFTs on CoinGecko right now',
+					},
+					{
 						title: 'Coin Intelligence',
 						href: '/coin-intel',
 						badge: 'Live',

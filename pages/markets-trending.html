@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Trending Crypto · three.ws</title>
+		<meta
+			name="description"
+			content="The most-searched crypto over the last 24 hours — trending coins, sectors, and NFT collections, ranked live from CoinGecko with price, market cap, 24h volume, and change."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/markets/trending" />
+		<meta property="og:title" content="Trending Crypto · three.ws" />
+		<meta
+			property="og:description"
+			content="The most-searched crypto over the last 24 hours — trending coins, sectors, and NFT collections, ranked live from CoinGecko."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Trending+Crypto&amp;d=The+most-searched+coins%2C+categories%2C+and+NFTs+on+CoinGecko+over+the+last+24+hours+%E2%80%94+trending+rank%2C+price%2C+24h+change%2C+market+cap%2C+and+volume%2C+each+coin+and+cate&amp;p=%2Fmarkets%2Ftrending"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Trending Crypto · three.ws" />
+		<meta
+			name="twitter:description"
+			content="The most-searched crypto over the last 24 hours — trending coins, sectors, and NFT collections, ranked live from CoinGecko."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Trending+Crypto&amp;d=The+most-searched+coins%2C+categories%2C+and+NFTs+on+CoinGecko+over+the+last+24+hours+%E2%80%94+trending+rank%2C+price%2C+24h+change%2C+market+cap%2C+and+volume%2C+each+coin+and+cate&amp;p=%2Fmarkets%2Ftrending"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/markets-trending.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/markets/trending" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Trending Crypto — three.ws" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Trending Crypto","description":"The most-searched crypto over the last 24 hours — trending coins, sectors, and NFT collections, ranked live from CoinGecko.","url":"https://three.ws/markets/trending","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container trd">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a><span class="sep">/</span><span class="here">Trending</span>
+			</nav>
+
+			<header class="trd-head">
+				<div class="trd-head-id">
+					<h1 class="cv-h1">Trending</h1>
+					<p class="trd-sub">Most-searched assets on CoinGecko over the last 24h</p>
+				</div>
+				<div class="trd-head-meta">
+					<span class="trd-updated" id="trd-updated" role="status" aria-live="polite"></span>
+					<a class="cv-pill" href="/markets">← Back to Markets</a>
+				</div>
+			</header>
+
+			<!-- (1) Trending coins -->
+			<section class="cv-section trd-section" aria-labelledby="trd-coins-h">
+				<h2 class="cv-h2 trd-section-h" id="trd-coins-h">
+					<span class="trd-section-ico" aria-hidden="true">🔥</span> Trending coins
+				</h2>
+				<div id="trd-coins" class="trd-coins" aria-live="polite"></div>
+			</section>
+
+			<!-- (2) Trending categories -->
+			<section class="cv-section trd-section" aria-labelledby="trd-cats-h">
+				<h2 class="cv-h2 trd-section-h" id="trd-cats-h">
+					<span class="trd-section-ico" aria-hidden="true">📊</span> Trending sectors
+				</h2>
+				<div id="trd-cats" class="trd-cards" aria-live="polite"></div>
+			</section>
+
+			<!-- (3) Trending NFTs -->
+			<section class="cv-section trd-section" aria-labelledby="trd-nfts-h">
+				<h2 class="cv-h2 trd-section-h" id="trd-nfts-h">
+					<span class="trd-section-ico" aria-hidden="true">🖼</span> Trending NFT collections
+				</h2>
+				<div id="trd-nfts" class="trd-cards" aria-live="polite"></div>
+			</section>
+
+			<!-- Sibling market surfaces. -->
+			<nav class="cv-tools" aria-label="Market tools" style="margin-top: 2rem">
+				<a class="cv-pill" href="/markets">Markets Hub</a>
+				<a class="cv-pill" href="/markets/trending" aria-current="page">Trending</a>
+				<a class="cv-pill" href="/markets/news">News</a>
+				<a class="cv-pill" href="/coins">Coins</a>
+				<a class="cv-pill" href="/categories">Sectors</a>
+				<a class="cv-pill" href="/heatmap">Heatmap</a>
+				<a class="cv-pill" href="/screener">Screener</a>
+				<a class="cv-pill" href="/fear-greed">Fear &amp; Greed</a>
+				<a class="cv-pill" href="/gas">Gas</a>
+			</nav>
+		</main>
+
+		<script type="module" src="/src/markets-trending.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

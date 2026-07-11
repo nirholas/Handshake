@@ -1283,6 +1283,38 @@
 					"added": "2026-07-11"
 				},
 				{
+					"path": "/fees",
+					"title": "Protocol Fees & Revenue",
+					"description": "Fees paid by users and revenue kept by protocols across all of DeFi, ranked with 24h/7d/30d totals and an aggregate history chart. Toggle between fees and revenue; each protocol links to its detail page. Live from DeFiLlama.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"added": "2026-07-11"
+				},
+				{
+					"path": "/dex-volumes",
+					"title": "DEX Volume Leaderboard",
+					"description": "Every decentralized exchange ranked by trading volume, with 24h and 7d totals, 7-day change, and market share, plus an aggregate volume history chart. Live from DeFiLlama.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"added": "2026-07-11"
+				},
+				{
+					"path": "/hacks",
+					"title": "DeFi Hacks Database",
+					"description": "A searchable database of every major DeFi exploit — amount stolen, classification, technique, chains affected, whether it was a bridge hack, and the source, with all-time and trailing-12-month totals. Live from DeFiLlama.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-11"
+				},
+				{
+					"path": "/markets/trending",
+					"title": "Trending Crypto",
+					"description": "The most-searched coins, categories, and NFTs on CoinGecko over the last 24 hours — trending rank, price, 24h change, market cap, and volume, each coin and category linking to its detail page. Auto-refreshing.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"added": "2026-07-11"
+				},
+				{
 					"path": "/bnb",
 					"title": "BNB Chain — Three Genuinely-Unique Demos",
 					"description": "The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain — plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",

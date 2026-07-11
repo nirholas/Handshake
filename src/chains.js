@@ -155,8 +155,12 @@ function renderTable() {
 	const body = sortedChains()
 		.map((c) => {
 			const barPct = Math.max(2, ((c.share_pct || 0) / maxShare) * 100);
+			// Whole row opens the internal /chain/:name detail page; keyboard-accessible.
+			const nav = c.name
+				? ` data-href="/chain/${encodeURIComponent(c.name)}" tabindex="0" role="link" aria-label="Open ${esc(c.name)} chain detail"`
+				: '';
 			return `
-			<tr>
+			<tr${nav}>
 				<td class="rank hide-sm cv-mono">${c.__rank}</td>
 				<td class="left name-cell"><span class="inner">
 					<span class="nm">${esc(c.name)}</span>
@@ -197,6 +201,18 @@ function renderTable() {
 			if (e.key === 'Enter' || e.key === ' ') {
 				e.preventDefault();
 				activate();
+			}
+		});
+	});
+
+	// Row → /chain/:name navigation (header clicks sort, never navigate).
+	el.querySelectorAll('tr[data-href]').forEach((tr) => {
+		const go = () => location.assign(tr.dataset.href);
+		tr.addEventListener('click', go);
+		tr.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				go();
 			}
 		});
 	});

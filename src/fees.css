@@ -1,0 +1,149 @@
+/*
+ * /fees — Protocol fees & revenue. Layered after coin-pages.css: reuses the
+ * cv-* token system, stat cards, chart panel, and table. This file only adds the
+ * Fees|Revenue toggle, the explainer line, chain chips, the protocol name link,
+ * and the logo fallback. Both themes inherit from the shared data-theme tokens.
+ */
+
+.fx-stat-grid {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Rows are navigable only via the protocol-name link, not the whole row —
+   reset the shared table's pointer cursor so nothing else signals a click. */
+#fx-table .cv-table tbody tr {
+	cursor: default;
+}
+
+/* ── Fees | Revenue toggle ─────────────────────────────────────────────────── */
+.fx-toggle {
+	display: inline-flex;
+	gap: 0.25rem;
+	padding: 0.25rem;
+	margin: 0.25rem 0 0.75rem;
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+}
+.fx-toggle-btn {
+	appearance: none;
+	border: 0;
+	background: transparent;
+	color: var(--cv-text-2);
+	font: inherit;
+	font-size: 0.875rem;
+	font-weight: 600;
+	padding: 0.4375rem 1.125rem;
+	border-radius: calc(var(--cv-radius-md) - 0.25rem);
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		color 0.15s;
+}
+.fx-toggle-btn:hover {
+	color: var(--cv-text);
+}
+.fx-toggle-btn[aria-selected='true'] {
+	background: var(--cv-surface);
+	color: var(--cv-text);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+}
+.fx-toggle-btn:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--cv-accent) 30%, transparent);
+}
+
+.fx-explainer {
+	margin: 0 0 1.25rem;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: var(--cv-text-3);
+	max-width: 60ch;
+}
+.fx-explainer strong {
+	color: var(--cv-text-2);
+	font-weight: 600;
+}
+
+/* ── Chain chips ───────────────────────────────────────────────────────────── */
+/* Flex lives on this inner wrapper, never the <td>, so the column's responsive
+   `hide-lg` display:none is not overridden at narrow widths. */
+.fx-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3125rem;
+	align-items: center;
+}
+.fx-chip {
+	display: inline-block;
+	padding: 0.0625rem 0.4375rem;
+	font-size: 0.75rem;
+	line-height: 1.4;
+	color: var(--cv-text-2);
+	background: var(--cv-surface-3);
+	border: 1px solid var(--cv-border);
+	border-radius: 999px;
+	text-decoration: none;
+	white-space: nowrap;
+	transition:
+		border-color 0.15s,
+		color 0.15s,
+		background 0.15s;
+}
+.fx-chip:hover,
+.fx-chip:focus-visible {
+	color: var(--cv-text);
+	border-color: var(--cv-accent);
+	background: color-mix(in srgb, var(--cv-accent) 12%, var(--cv-surface-3));
+	outline: none;
+}
+.fx-more {
+	color: var(--cv-text-3);
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Protocol name link ────────────────────────────────────────────────────── */
+.fx-name-link {
+	text-decoration: none;
+	color: inherit;
+	border-radius: var(--cv-radius-sm);
+}
+.fx-name-link .nm {
+	transition: color 0.15s;
+}
+.fx-name-link:hover .nm,
+.fx-name-link:focus-visible .nm {
+	color: var(--cv-accent);
+	text-decoration: underline;
+}
+.fx-name-link:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--cv-accent) 25%, transparent);
+}
+
+.fx-logo-fallback {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: var(--cv-surface-3);
+	flex-shrink: 0;
+}
+
+/* Retry button in the error / empty states reads as a link, matching cv-empty. */
+.fx-retry {
+	appearance: none;
+	border: 0;
+	background: transparent;
+	color: var(--cv-accent);
+	font: inherit;
+	cursor: pointer;
+	padding: 0;
+	text-decoration: underline;
+}
+.fx-retry:hover {
+	color: var(--cv-accent-hover);
+}

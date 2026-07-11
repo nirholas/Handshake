@@ -1,0 +1,319 @@
+/*
+ * /protocol/:slug — feature styles layered on top of /src/coin-pages.css.
+ * Reuses the shared cv-* container, card, chart, table, pill, prose, and state
+ * system; adds only the hero, audit badge, meta chips, chain share-bars,
+ * fees grid, funding-rounds table, and hallmark markers unique to this page.
+ */
+
+/* ── Hero ──────────────────────────────────────────────────────────────────── */
+
+.pr-hero {
+	display: flex;
+	gap: 1.25rem;
+	align-items: flex-start;
+	margin: 0.5rem 0 2rem;
+}
+.pr-logo {
+	width: 72px;
+	height: 72px;
+	border-radius: 16px;
+	object-fit: contain;
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	flex-shrink: 0;
+}
+.pr-logo-fallback {
+	background: var(--cv-surface-2);
+}
+.pr-hero-body {
+	flex: 1;
+	min-width: 0;
+}
+.pr-title-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.625rem 0.75rem;
+}
+.pr-title {
+	margin: 0;
+	font-size: clamp(1.5rem, 4vw, 2rem);
+	line-height: 1.1;
+}
+.pr-symbol {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.5rem;
+	border-radius: 999px;
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	color: var(--cv-text-2);
+	font-family: var(--cv-font-mono);
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1;
+}
+
+/* Audit badge — links to the audit report(s) when available. */
+.pr-audit {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3125rem;
+	padding: 0.25rem 0.625rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1;
+	text-decoration: none;
+	color: var(--cv-green);
+	background: var(--cv-green-soft);
+	border: 1px solid color-mix(in srgb, var(--cv-green) 30%, transparent);
+	transition:
+		border-color 0.15s,
+		background 0.15s;
+}
+.pr-audit svg {
+	flex-shrink: 0;
+}
+a.pr-audit:hover,
+a.pr-audit:focus-visible {
+	border-color: color-mix(in srgb, var(--cv-green) 55%, transparent);
+	background: color-mix(in srgb, var(--cv-green) 16%, transparent);
+	outline: none;
+}
+a.pr-audit:focus-visible {
+	outline: 2px solid var(--cv-green);
+	outline-offset: 2px;
+}
+.pr-audit-static {
+	cursor: help;
+}
+
+/* Meta chips: category, fork-of, parent family, listed date. */
+.pr-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+	margin: 0.875rem 0 0;
+}
+.pr-chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.625rem;
+	border-radius: 999px;
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	color: var(--cv-text-2);
+	font-size: 0.75rem;
+	font-weight: 500;
+	line-height: 1.4;
+}
+.pr-chip-cat {
+	color: var(--cv-accent);
+	border-color: color-mix(in srgb, var(--cv-accent) 35%, transparent);
+	background: color-mix(in srgb, var(--cv-accent) 8%, transparent);
+}
+
+.pr-desc {
+	margin-top: 1rem;
+	font-size: 0.9375rem;
+	max-width: 68ch;
+}
+.pr-links {
+	margin-top: 1.125rem;
+}
+
+/* ── Stat cards ────────────────────────────────────────────────────────────── */
+
+.pr-stat .sub {
+	margin-top: 0.25rem;
+}
+
+/* ── Chart tooltip + hallmark markers ──────────────────────────────────────── */
+
+.cv-chart-tip .d {
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+}
+.pr-hallmark {
+	cursor: help;
+}
+.pr-hallmark polygon {
+	transition: opacity 0.15s;
+}
+.pr-hallmark:hover polygon {
+	opacity: 0.75;
+}
+
+/* ── Chain breakdown: share bars ───────────────────────────────────────────── */
+
+.pr-chain-link {
+	color: var(--cv-text);
+	text-decoration: none;
+	font-weight: 500;
+	transition: color 0.15s;
+}
+.pr-chain-link:hover,
+.pr-chain-link:focus-visible {
+	color: var(--cv-accent);
+}
+.pr-chain-link:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+	border-radius: var(--cv-radius-sm);
+}
+.pr-share-cell {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	min-width: 8rem;
+}
+.pr-share-track {
+	flex: 1;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--cv-surface-3);
+	overflow: hidden;
+	min-width: 3rem;
+}
+.pr-share-fill {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	background: var(--cv-accent);
+	min-width: 2px;
+	transition: width 0.4s ease;
+}
+.pr-share-num {
+	color: var(--cv-text-2);
+	font-size: 0.8125rem;
+	min-width: 3.25rem;
+	text-align: right;
+}
+
+.pr-note {
+	margin: 0.875rem 0 0;
+	font-size: 0.8125rem;
+	color: var(--cv-text-3);
+}
+
+/* ── Fees & revenue grid ───────────────────────────────────────────────────── */
+
+.pr-fees-sub {
+	margin: 0 0 1rem;
+	font-size: 0.875rem;
+	color: var(--cv-text-2);
+	max-width: 68ch;
+}
+.pr-fee-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 0.75rem;
+}
+.pr-fee-item {
+	padding: 0.875rem 1rem;
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+	background: var(--cv-surface-2);
+}
+.pr-fee-label {
+	margin: 0 0 0.375rem;
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+.pr-fee-val {
+	margin: 0;
+	font-size: 1.0625rem;
+	font-weight: 600;
+	color: var(--cv-text);
+}
+
+/* ── Funding rounds table ──────────────────────────────────────────────────── */
+
+.pr-val-sub {
+	display: block;
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+}
+.pr-investors {
+	color: var(--cv-text-2);
+	font-size: 0.875rem;
+}
+.pr-investors .dim {
+	color: var(--cv-text-3);
+}
+.pr-lead-tag {
+	display: inline-block;
+	margin-left: 0.25rem;
+	padding: 0.0625rem 0.375rem;
+	border-radius: 999px;
+	font-size: 0.625rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--cv-accent);
+	background: color-mix(in srgb, var(--cv-accent) 12%, transparent);
+	vertical-align: middle;
+}
+
+.pr-methodology {
+	font-size: 0.9375rem;
+	max-width: 72ch;
+}
+
+/* ── Error-state retry button ──────────────────────────────────────────────── */
+
+.pr-retry {
+	appearance: none;
+	cursor: pointer;
+	font: inherit;
+	font-weight: 600;
+	color: var(--cv-text);
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+	padding: 0.5rem 1.125rem;
+	transition:
+		border-color 0.15s,
+		background 0.15s;
+}
+.pr-retry:hover {
+	border-color: var(--cv-border-hover);
+	background: var(--cv-surface-3);
+}
+.pr-retry:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+	.pr-share-cell {
+		min-width: 6rem;
+	}
+	.pr-share-track {
+		display: none; /* keep the % legible on narrow screens; drop the bar */
+	}
+}
+
+@media (max-width: 480px) {
+	.pr-hero {
+		gap: 0.875rem;
+	}
+	.pr-logo {
+		width: 56px;
+		height: 56px;
+		border-radius: 12px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.pr-chain-link,
+	.pr-audit,
+	.pr-retry,
+	.pr-share-fill,
+	.pr-hallmark polygon {
+		transition: none;
+	}
+}

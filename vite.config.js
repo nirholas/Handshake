@@ -485,6 +485,13 @@ const appConfig = {
 				exchange: resolve(__dirname, 'pages/exchange.html'),
 				category: resolve(__dirname, 'pages/category.html'),
 				yields: resolve(__dirname, 'pages/yields.html'),
+				protocol: resolve(__dirname, 'pages/protocol.html'),
+				chain: resolve(__dirname, 'pages/chain.html'),
+				stablecoin: resolve(__dirname, 'pages/stablecoin.html'),
+				'markets-trending': resolve(__dirname, 'pages/markets-trending.html'),
+				fees: resolve(__dirname, 'pages/fees.html'),
+				'dex-volumes': resolve(__dirname, 'pages/dex-volumes.html'),
+				hacks: resolve(__dirname, 'pages/hacks.html'),
 				bnb: resolve(__dirname, 'pages/bnb.html'),
 				'bnb-latency': resolve(__dirname, 'pages/bnb-latency.html'),
 				vault: resolve(__dirname, 'pages/vault.html'),
@@ -1077,6 +1084,14 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/stablecoins/': resolve(root, 'pages/stablecoins.html'),
 					'/yields': resolve(root, 'pages/yields.html'),
 					'/yields/': resolve(root, 'pages/yields.html'),
+					'/fees': resolve(root, 'pages/fees.html'),
+					'/fees/': resolve(root, 'pages/fees.html'),
+					'/dex-volumes': resolve(root, 'pages/dex-volumes.html'),
+					'/dex-volumes/': resolve(root, 'pages/dex-volumes.html'),
+					'/hacks': resolve(root, 'pages/hacks.html'),
+					'/hacks/': resolve(root, 'pages/hacks.html'),
+					'/markets/trending': resolve(root, 'pages/markets-trending.html'),
+					'/markets/trending/': resolve(root, 'pages/markets-trending.html'),
 					'/bnb': resolve(root, 'pages/bnb.html'),
 					'/bnb/': resolve(root, 'pages/bnb.html'),
 					'/bnb-latency': resolve(root, 'pages/bnb-latency.html'),
@@ -1510,6 +1525,15 @@ support: resolve(__dirname, 'pages/support.html'),
 					// /category/:id  → crypto category detail page
 					else if (!filePath && /^\/category\/[a-z0-9-]{1,80}\/?$/.test(path))
 						filePath = resolve(root, 'pages/category.html');
+					// /protocol/:slug  → DeFi protocol detail page
+					else if (!filePath && /^\/protocol\/[a-z0-9.-]{1,80}\/?$/i.test(path))
+						filePath = resolve(root, 'pages/protocol.html');
+					// /chain/:name  → chain TVL detail page
+					else if (!filePath && /^\/chain\/[A-Za-z0-9 ._%-]{1,40}\/?$/.test(path))
+						filePath = resolve(root, 'pages/chain.html');
+					// /stablecoin/:id  → stablecoin detail page
+					else if (!filePath && /^\/stablecoin\/[0-9]{1,6}\/?$/.test(path))
+						filePath = resolve(root, 'pages/stablecoin.html');
 					// /@<handle>  → public live profile page
 					else if (!filePath && /^\/@[a-z0-9_-]{3,30}\/?$/i.test(path))
 						filePath = resolve(root, 'pages/handle.html');

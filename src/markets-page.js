@@ -122,6 +122,12 @@ const G = {
 		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
 	yield:
 		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14s1.5-4 5-4 5 3 5-2"/><circle cx="18" cy="7" r="1.5"/></svg>',
+	fees: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 15h3"/></svg>',
+	volume:
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M9 20V4M14 20v-8M19 20V8"/></svg>',
+	shield:
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9.5 12 2 2 3.5-4"/></svg>',
+	fire: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3 4 5 4 9a4 4 0 0 1-8 0c0-1 .5-2 1-3-2 1-4 3-4 6a7 7 0 0 0 14 0c0-5-4-8-7-12z"/></svg>',
 	radar:
 		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62a10 10 0 1 0 19.02-1.27"/><path d="M16.24 7.76a6 6 0 1 0-8.01 8.91"/><path d="M12 18h.01"/><path d="M17.99 11.66a6 6 0 0 1-2.22 5.01"/><circle cx="12" cy="12" r="2"/><path d="m13.41 10.59 5.66-5.66"/></svg>',
 };
@@ -144,6 +150,10 @@ const SUITE = [
 	{ href: '/chains', glyph: 'link', title: 'Chains', desc: 'Blockchain TVL leaderboard with dominance share per chain.' },
 	{ href: '/stablecoins', glyph: 'dollar', title: 'Stablecoins', desc: 'Market caps and peg health across every major issuer.' },
 	{ href: '/yields', glyph: 'yield', title: 'DeFi Yields', desc: 'Explore ~15k live yield pools by APY and TVL, each with its own history.' },
+	{ href: '/fees', glyph: 'fees', title: 'Protocol Fees', desc: 'Fees paid and revenue kept across DeFi, ranked and charted.' },
+	{ href: '/dex-volumes', glyph: 'volume', title: 'DEX Volumes', desc: 'The decentralized-exchange volume leaderboard, with share.' },
+	{ href: '/hacks', glyph: 'shield', title: 'Hacks Database', desc: 'Every major DeFi exploit — amount, technique, chain, source.' },
+	{ href: '/markets/trending', glyph: 'fire', title: 'Trending', desc: 'The most-searched coins, categories, and NFTs right now.' },
 	{ href: '/coin-intel', glyph: 'radar', title: 'Coin Intelligence', desc: 'Every launch classified — organic vs bundle, with a learning score.' },
 ];
 

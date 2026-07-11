@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-11T04:07:32.399Z",
+	"generated_at": "2026-07-11T07:01:31.902Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1570,6 +1570,46 @@
 					"path": "/yields",
 					"title": "DeFi Yields Explorer",
 					"description": "Explore roughly 15,000 live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.",
+					"added": "2026-07-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/fees",
+					"title": "Protocol Fees & Revenue",
+					"description": "Fees paid by users and revenue kept by protocols across all of DeFi, ranked with 24h/7d/30d totals and an aggregate history chart. Toggle between fees and revenue; each protocol links to its detail page. Live from DeFiLlama.",
+					"added": "2026-07-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/dex-volumes",
+					"title": "DEX Volume Leaderboard",
+					"description": "Every decentralized exchange ranked by trading volume, with 24h and 7d totals, 7-day change, and market share, plus an aggregate volume history chart. Live from DeFiLlama.",
+					"added": "2026-07-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/hacks",
+					"title": "DeFi Hacks Database",
+					"description": "A searchable database of every major DeFi exploit — amount stolen, classification, technique, chains affected, whether it was a bridge hack, and the source, with all-time and trailing-12-month totals. Live from DeFiLlama.",
+					"added": "2026-07-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/markets/trending",
+					"title": "Trending Crypto",
+					"description": "The most-searched coins, categories, and NFTs on CoinGecko over the last 24 hours — trending rank, price, 24h change, market cap, and volume, each coin and category linking to its detail page. Auto-refreshing.",
 					"added": "2026-07-11",
 					"auth": null,
 					"indexable": true,

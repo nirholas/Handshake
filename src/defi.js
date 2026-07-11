@@ -212,8 +212,13 @@ function renderTable() {
 
 	const body = rows
 		.map((p) => {
+			// Whole row opens the internal /protocol/:slug detail page when we have
+			// a DeFiLlama slug; keyboard-accessible.
+			const nav = p.slug
+				? ` data-href="/protocol/${encodeURIComponent(p.slug)}" tabindex="0" role="link" aria-label="Open ${esc(p.name)} protocol detail"`
+				: '';
 			return `
-			<tr>
+			<tr${nav}>
 				<td class="rank hide-sm cv-mono">${p.__rank}</td>
 				<td class="left name-cell"><span class="inner">
 					${p.logo ? `<img src="${esc(p.logo)}" alt="" loading="lazy" width="24" height="24" data-no-dark-filter />` : '<span class="defi-logo-fallback" aria-hidden="true"></span>'}
@@ -253,6 +258,18 @@ function renderTable() {
 			if (e.key === 'Enter' || e.key === ' ') {
 				e.preventDefault();
 				activate();
+			}
+		});
+	});
+
+	// Row → /protocol/:slug navigation (header clicks sort, never navigate).
+	el.querySelectorAll('tr[data-href]').forEach((tr) => {
+		const go = () => location.assign(tr.dataset.href);
+		tr.addEventListener('click', go);
+		tr.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				go();
 			}
 		});
 	});

@@ -243,8 +243,8 @@ function rowHtml(p) {
 					${meta}
 				</span>
 			</td>
-			<td class="left hide-md yl-project">${esc(p.project)}</td>
-			<td class="left hide-sm yl-chain">${esc(p.chain)}</td>
+			<td class="left hide-md yl-project">${p.project ? `<a class="yl-link" href="/protocol/${encodeURIComponent(p.project)}">${esc(p.project)}</a>` : '—'}</td>
+			<td class="left hide-sm yl-chain">${p.chain ? `<a class="yl-link" href="/chain/${encodeURIComponent(p.chain)}">${esc(p.chain)}</a>` : '—'}</td>
 			<td class="num">${esc(formatUsd(p.tvl_usd))}</td>
 			${apyCell(p)}
 			<td class="num hide-lg dim">${esc(fmtApy(p.apy_mean_30d))}</td>
@@ -308,9 +308,14 @@ function renderTable() {
 
 	el.querySelectorAll('tr.yl-row').forEach((tr) => {
 		const toggle = () => toggleRow(tr.dataset.pool);
-		tr.addEventListener('click', toggle);
+		tr.addEventListener('click', (e) => {
+			// A click on the project/chain cross-link navigates; it must not
+			// also toggle the pool's history drawer.
+			if (e.target.closest('a.yl-link')) return;
+			toggle();
+		});
 		tr.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter' || e.key === ' ') {
+			if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('a.yl-link')) {
 				e.preventDefault();
 				toggle();
 			}

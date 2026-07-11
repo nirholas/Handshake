@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-11",
+			"title": "Detail pages for protocols, chains, and stablecoins — plus fees, DEX volumes, hacks, and trending",
+			"summary": "Every DeFiLlama list now opens into a full detail page. A protocol page charts its whole TVL history with funding-round and event markers, breaks TVL down per chain, and shows its fees, revenue, and methodology. A chain page charts TVL, stablecoin supply, and DEX volume side by side with the top protocols on that chain. A stablecoin page charts circulating supply over time, shows the per-chain distribution, and flags how far off-peg it is in basis points. On top of the detail pages there are four new market surfaces: protocol fees and revenue ranked and charted, the DEX-volume leaderboard with market share, a searchable database of every major DeFi hack ($16.7B stolen all-time), and a trending page of the most-searched coins, categories, and NFTs on CoinGecko. Everything is real, key-free data, and the yields, DeFi, chains, and stablecoin tables now link straight into the new detail pages.",
+			"tags": [
+				"feature"
+			],
+			"link": "/fees"
+		},
+		{
+			"date": "2026-07-11",
 			"title": "Documentation accuracy pass: every tutorial verified against the shipped platform",
 			"summary": "We cross-referenced all 300+ docs and specs against the actual codebase and fixed everything that had drifted. The embed snippet in ten tutorials now uses the real two-line form that works on any site, four tutorials that demonstrated retired or never-shipped APIs were rewritten against the live component, the troubleshooting guide now reflects the current Cloud Run production stack with the correct session and storage details, and the manifest, quick-start, and API references now list exactly the providers, attributes, and endpoints that exist today. Every code sample in the affected docs runs as written.",
 			"tags": [

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Chain TVL · three.ws</title>
+		<meta
+			name="description"
+			content="A rich profile for any blockchain — total value locked, dominance share, stablecoin supply, DEX volume, fees, and the top protocols deployed on the chain. Real DeFiLlama data, no API key."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/chains" />
+		<meta property="og:title" content="Chain TVL · three.ws" />
+		<meta
+			property="og:description"
+			content="Total value locked, dominance share, stablecoin supply, DEX volume, fees, and the top protocols for any blockchain. Real DeFiLlama data."
+		/>
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Chain TVL · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Total value locked, dominance share, stablecoin supply, DEX volume, and top protocols for any blockchain."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/chain-page.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/chains" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container" id="ch-main" aria-busy="true">
+			<!-- Breadcrumbs -->
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/chains">Chains</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here" id="ch-crumb-name">…</span>
+			</nav>
+
+			<!-- Hero: chain name, native-token / chainId / rank / dominance chips. -->
+			<section id="ch-hero" aria-label="Chain overview"></section>
+
+			<!-- Stat cards: TVL, share, stablecoins, DEX volume, fees, protocols. -->
+			<section id="ch-stats" class="cv-section" aria-label="Chain stats"></section>
+
+			<!-- TVL history chart. -->
+			<section id="ch-tvl-chart" aria-label="Total value locked history"></section>
+
+			<!-- Stablecoin supply chart (hidden when unavailable). -->
+			<section id="ch-stable-chart" aria-label="Stablecoin supply history"></section>
+
+			<!-- DEX volume chart (hidden when unavailable). -->
+			<section id="ch-dex-chart" aria-label="DEX volume history"></section>
+
+			<!-- Top-protocols table. -->
+			<section id="ch-protocols" class="cv-section" aria-label="Top protocols"></section>
+
+			<p class="cv-updated" id="ch-updated" hidden></p>
+		</main>
+
+		<script type="module" src="/src/chain-page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>
