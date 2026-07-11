@@ -466,3 +466,21 @@
 		flex: 1 1 45%;
 	}
 }
+
+/* Cross-links to protocol / chain detail pages inside a yield row. */
+.yl-link {
+	color: var(--cv-text);
+	text-decoration: none;
+	border-bottom: 1px solid transparent;
+	transition: color 0.15s, border-color 0.15s;
+}
+.yl-link:hover,
+.yl-link:focus-visible {
+	color: var(--cv-accent);
+	border-bottom-color: currentColor;
+}
+.yl-link:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+	border-radius: 2px;
+}
