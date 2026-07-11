@@ -5,11 +5,12 @@
 // no key. It reads eth_feeHistory over the last ~20 blocks from a public RPC
 // (with failover) and derives each tier as base fee + a priority-fee
 // percentile (25th / 50th / 90th). Adds USD cost estimates for common actions
-// using the live ETH price from CoinGecko. Cached 15s in-memory + CDN.
+// using the live ETH price (CoinGecko → DefiLlama failover, see
+// api/_lib/market-fallbacks.js). Cached 15s in-memory + CDN.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { geckoFetch } from '../_lib/coingecko.js';
+import { fetchCoinPriceUsd } from '../_lib/market-fallbacks.js';
 
 // Keyless public JSON-RPC endpoints, tried in order until one answers.
 const RPCS = [
@@ -105,14 +106,13 @@ async function build() {
 
 	const [fhResult, priceResult] = await Promise.allSettled([
 		feeHistory(),
-		geckoFetch('/simple/price?ids=ethereum&vs_currencies=usd', { ttlMs: 60_000 }),
+		fetchCoinPriceUsd('ethereum'),
 	]);
 	if (fhResult.status !== 'fulfilled') throw fhResult.reason || new Error('no fee history');
 
 	const { baseFeeGwei, tiers } = computeTiers(fhResult.value);
-	const ethUsd =
-		priceResult.status === 'fulfilled' ? Number(priceResult.value?.ethereum?.usd) : null;
-	const ethPrice = Number.isFinite(ethUsd) ? ethUsd : null;
+	const ethUsd = priceResult.status === 'fulfilled' ? Number(priceResult.value) : null;
+	const ethPrice = Number.isFinite(ethUsd) && ethUsd > 0 ? ethUsd : null;
 
 	// Cost per action = gasPrice(gwei) × 1e-9 ETH/gwei × gasUnits × ETH price.
 	const withCosts = tiers.map((t) => ({

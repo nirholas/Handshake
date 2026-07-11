@@ -37,6 +37,55 @@ function geckoHeaders() {
 	return h;
 }
 
+const asPrice = (v) => {
+	const n = Number(v);
+	return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+// ── Spot USD price by CoinGecko id ───────────────────────────────────────────
+// For the endpoints that price a headline asset (ETH for /gas, BTC for
+// /exchanges) via CoinGecko /simple/price. Both those reads were single-source;
+// DefiLlama's coins oracle is keyed by the SAME CoinGecko id (`coingecko:<id>`),
+// so it's a drop-in second source with no id-mapping. Returns a positive number
+// or throws when both are down; callers price best-effort and tolerate a throw.
+
+/**
+ * Live USD spot price for a CoinGecko coin id, CoinGecko → DefiLlama failover.
+ * @param {string} coingeckoId  e.g. "ethereum", "bitcoin", "solana"
+ * @returns {Promise<number>}   positive USD price
+ * @throws when every free source is down.
+ */
+export async function fetchCoinPriceUsd(coingeckoId) {
+	const id = String(coingeckoId || '').trim().toLowerCase();
+	if (!/^[a-z0-9][a-z0-9_-]{0,99}$/.test(id)) throw new Error(`bad coin id: ${coingeckoId}`);
+	const { value } = await fetchFirst(
+		[
+			{
+				name: 'coingecko',
+				url: `${COINGECKO_BASE}/simple/price?ids=${id}&vs_currencies=usd`,
+				init: { headers: geckoHeaders() },
+				parse: async (r) => asPrice((await r.json())?.[id]?.usd),
+			},
+			{
+				name: 'llama',
+				url: `https://coins.llama.fi/prices/current/coingecko:${id}`,
+				parse: async (r) => asPrice((await r.json())?.coins?.[`coingecko:${id}`]?.price),
+			},
+		],
+		{ timeoutMs: 6000, label: `price:${id}` },
+	);
+	return value;
+}
+
+/** Like fetchCoinPriceUsd but resolves to null instead of throwing. */
+export async function fetchCoinPriceUsdOrNull(coingeckoId) {
+	try {
+		return await fetchCoinPriceUsd(coingeckoId);
+	} catch {
+		return null;
+	}
+}
+
 // ── Global market stats ──────────────────────────────────────────────────────
 // Normalized shape: { market_cap_usd, volume_24h_usd, market_cap_change_pct_24h,
 //                     active_coins, dominance: [{ symbol, pct }] }

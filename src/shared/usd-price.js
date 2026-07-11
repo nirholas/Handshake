@@ -2,45 +2,68 @@
  * Client-side SOL/USD price helper — single source of truth for USD equivalents.
  *
  * USDC: treated as exactly $1 (it's a dollar-pegged stablecoin).
- * SOL:  fetched from Jupiter Lite API (CoinGecko fallback), cached 60 s.
+ * SOL:  four free, CORS-enabled feeds tried in order via the shared failover-
+ *       fetch (Jupiter → CoinGecko → Coinbase → DefiLlama), cached 60 s. No
+ *       single feed is a point of failure — mirrors the server-side
+ *       api/_lib/sol-price.js chain, limited here to browser-CORS-safe hosts.
  *
  * Never hardcodes a SOL rate; degrades silently on feed failure so prices
  * in USDC still show "≈ $X" while SOL amounts just show the raw amount.
  */
 
+import { fetchFirst } from './failover-fetch.js';
+
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 const CACHE_TTL_MS = 60_000;
+
+const asPrice = (v) => {
+	const n = Number(v);
+	return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+// Ordered, all keyless and CORS-enabled (Access-Control-Allow-Origin: *), so
+// they work from the browser. Kraken/Bitfinex are omitted here (no CORS header)
+// though the server chain uses them.
+const SOL_FEEDS = [
+	{
+		name: 'jupiter',
+		url: `https://lite-api.jup.ag/price/v3?ids=${SOL_MINT}`,
+		parse: async (r) => {
+			const d = await r.json();
+			return asPrice(d?.[SOL_MINT]?.usdPrice ?? d?.[SOL_MINT]?.price);
+		},
+	},
+	{
+		name: 'coingecko',
+		url: 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
+		parse: async (r) => asPrice((await r.json())?.solana?.usd),
+	},
+	{
+		name: 'coinbase',
+		url: 'https://api.coinbase.com/v2/prices/SOL-USD/spot',
+		parse: async (r) => asPrice((await r.json())?.data?.amount),
+	},
+	{
+		name: 'llama',
+		url: `https://coins.llama.fi/prices/current/solana:${SOL_MINT}`,
+		parse: async (r) => asPrice((await r.json())?.coins?.[`solana:${SOL_MINT}`]?.price),
+	},
+];
 
 let _solPrice = 0;
 let _solPriceAt = 0;
 
-/** Fetch (and cache) the live SOL/USD price. Throws if the feed is unavailable. */
+/** Fetch (and cache) the live SOL/USD price. Throws if every feed is unavailable. */
 export async function getSolPriceUsd() {
 	if (Date.now() - _solPriceAt < CACHE_TTL_MS && _solPrice > 0) return _solPrice;
 	try {
-		const r = await fetch(`https://lite-api.jup.ag/price/v3?ids=${SOL_MINT}`);
-		if (r.ok) {
-			const data = await r.json();
-			const p = data?.[SOL_MINT]?.usdPrice ?? data?.[SOL_MINT]?.price ?? 0;
-			if (Number(p) > 0) {
-				_solPrice = Number(p);
-				_solPriceAt = Date.now();
-				return _solPrice;
-			}
-		}
-	} catch { /* fall through to CoinGecko */ }
-	try {
-		const cg = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-		if (!cg.ok) throw new Error(`CoinGecko ${cg.status}`);
-		const j = await cg.json();
-		const p = j?.solana?.usd ?? 0;
-		if (Number(p) > 0) {
-			_solPrice = Number(p);
-			_solPriceAt = Date.now();
-			return _solPrice;
-		}
-	} catch { /* fall through */ }
-	throw Object.assign(new Error('SOL price unavailable'), { code: 'price_unavailable' });
+		const { value } = await fetchFirst(SOL_FEEDS, { timeoutMs: 4000, label: 'sol-price-client' });
+		_solPrice = value;
+		_solPriceAt = Date.now();
+		return _solPrice;
+	} catch {
+		throw Object.assign(new Error('SOL price unavailable'), { code: 'price_unavailable' });
+	}
 }
 
 /** USDC → USD (1:1, pegged stablecoin). */

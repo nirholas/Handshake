@@ -15,6 +15,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch, htmlToText } from '../_lib/coingecko.js';
+import { fetchCoinPriceUsdOrNull } from '../_lib/market-fallbacks.js';
 
 const ID_RE = /^[a-z0-9_-]{1,60}$/i;
 const DAYS = new Set([1, 7, 14, 30, 90, 180, 365]);
@@ -140,15 +141,9 @@ function shapeVolumeChart(raw) {
 		.filter(([ts, v]) => Number.isFinite(ts) && Number.isFinite(v));
 }
 
-async function fetchBtcUsd() {
-	try {
-		const p = await geckoFetch('/simple/price?ids=bitcoin&vs_currencies=usd', { ttlMs: 60_000 });
-		const v = num(p?.bitcoin?.usd);
-		return v != null && v > 0 ? v : null;
-	} catch {
-		return null; // best-effort — the client falls back to BTC-only figures
-	}
-}
+// CoinGecko → DefiLlama failover (see api/_lib/market-fallbacks.js); best-effort
+// — the client falls back to BTC-only figures if every source is down.
+const fetchBtcUsd = () => fetchCoinPriceUsdOrNull('bitcoin');
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;

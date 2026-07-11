@@ -10,6 +10,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch } from '../_lib/coingecko.js';
+import { fetchCoinPriceUsd } from '../_lib/market-fallbacks.js';
 
 let _cache = null; // { value, expiresAt }
 const TTL_MS = 300_000;
@@ -25,15 +26,14 @@ async function build() {
 
 	const [exResult, priceResult] = await Promise.allSettled([
 		geckoFetch('/exchanges?per_page=100&page=1', { ttlMs: TTL_MS }),
-		geckoFetch('/simple/price?ids=bitcoin&vs_currencies=usd', { ttlMs: 60_000 }),
+		fetchCoinPriceUsd('bitcoin'),
 	]);
 	if (exResult.status !== 'fulfilled') throw exResult.reason || new Error('no exchange data');
 
 	const rows = Array.isArray(exResult.value) ? exResult.value : [];
 	if (!rows.length) throw new Error('empty exchange payload');
 
-	const btcUsdRaw =
-		priceResult.status === 'fulfilled' ? num(priceResult.value?.bitcoin?.usd) : null;
+	const btcUsdRaw = priceResult.status === 'fulfilled' ? num(priceResult.value) : null;
 	const btcUsd = btcUsdRaw != null && btcUsdRaw > 0 ? btcUsdRaw : null;
 
 	const exchanges = rows.map((e) => {
