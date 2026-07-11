@@ -9,7 +9,21 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch, isPlausibleCoinId } from '../_lib/coingecko.js';
 
-const VALID_DAYS = new Set([1, 7, 30, 90, 365]);
+export const VALID_DAYS = new Set([1, 7, 30, 90, 365]);
+
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-chart endpoint sells the same price series this page renders.
+// Callers must validate id/days first; a 404 from upstream carries err.status.
+export async function buildPriceChart(id, days) {
+	const raw = await geckoFetch(`/coins/${id}/market_chart?vs_currency=usd&days=${days}`, {
+		ttlMs: 120_000,
+		timeoutMs: 10_000,
+	});
+	const data = (raw?.prices || [])
+		.filter((p) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
+		.map(([t, v]) => [Math.round(t), v]);
+	return { data, days };
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -29,13 +43,7 @@ export default wrap(async (req, res) => {
 	}
 
 	try {
-		const raw = await geckoFetch(`/coins/${id}/market_chart?vs_currency=usd&days=${days}`, {
-			ttlMs: 120_000,
-			timeoutMs: 10_000,
-		});
-		const data = (raw?.prices || [])
-			.filter((p) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
-			.map(([t, v]) => [Math.round(t), v]);
+		const { data } = await buildPriceChart(id, days);
 		if (!data.length) return error(res, 502, 'no_data', 'no price history for this coin');
 		return json(res, 200, { data, days }, {
 			'cache-control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=600',

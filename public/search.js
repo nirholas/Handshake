@@ -6,6 +6,16 @@
 //   • /features.json      — static page/feature registry (loaded once)
 //   • /skills-index.json  — skill catalog (loaded once)
 //   • quick actions + recents — in-memory verbs + localStorage history
+//
+// Beyond search, the palette EXECUTES commands in place — it is the agent's
+// command line, not just a router. Type a verb and the work happens inside
+// the panel against the real public APIs (no auth needed):
+//   • forge <prompt>   → POST /api/forge (free text→3D lane), polls to a GLB
+//   • digest           → GET /api/news/digest — the day clustered into stories
+//   • price <coin|$X>  → GET /api/coin/markets + /detail (falls back to pump)
+//   • ask <question>   → POST /api/chat — streamed answer from the site agent
+// Command completions are announced on the DOM ('tws:palette-action') and the
+// agent bus ('action:taken') so the corner companion can react to them.
 // Opt out per page: <html data-search="off">
 
 (function () {
@@ -84,6 +94,20 @@
 		'.tws-sk-skel-lines{flex:1;display:flex;flex-direction:column;gap:5px;}',
 		'.tws-sk-skel-l{height:12px;border-radius:4px;background:#1c1c1c;animation:tws-sk-pulse 1.4s ease infinite;}',
 		'.tws-sk-skel-l.w60{width:60%}.tws-sk-skel-l.w40{width:40%}.tws-sk-skel-l.w80{width:80%}',
+		/* command run panel */
+		'.tws-sk-run-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #1c1c1c;}',
+		'.tws-sk-run-title{flex:1;min-width:0;font-size:13.5px;font-weight:600;color:#f6f6f6;letter-spacing:-.01em;',
+		'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+		'.tws-sk-run-status{flex-shrink:0;display:flex;align-items:center;gap:8px;',
+		'font:500 11px/1 "JetBrains Mono",ui-monospace,monospace;color:#6a6a6a;letter-spacing:.04em;}',
+		'.tws-sk-run-status.ok{color:#4ade80;}',
+		'.tws-sk-run-status.err{color:#f87171;}',
+		'.tws-sk-run-body{padding:4px 0 6px;}',
+		'.tws-sk-answer{padding:10px 16px 12px;font-size:13px;line-height:1.55;color:#d6d6d6;',
+		'white-space:pre-wrap;overflow-wrap:break-word;max-height:300px;overflow-y:auto;}',
+		'.tws-sk-answer:empty::before{content:"…";color:#4a4a4a;}',
+		'.tws-sk-run-foot{padding:8px 16px 10px;border-top:1px solid #1c1c1c;',
+		'font:500 10px/1 "JetBrains Mono",ui-monospace,monospace;color:#4a4a4a;letter-spacing:.08em;text-transform:uppercase;}',
 		/* live region */
 		'#tws-search-live{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}',
 		/* keyframes */
@@ -190,6 +214,126 @@
 		{ title: 'Browse all pages', desc: 'The full three.ws directory, filterable', href: '/sitemap', icon: '🗺️', keys: 'sitemap site map all pages everything directory index list browse find' },
 	];
 
+	// ── Commands ───────────────────────────────────────────────────────────────
+	// Executable verbs. Unlike QUICK_ACTIONS (which navigate), a command runs in
+	// place: activating it opens the run panel and does the actual work against
+	// the real API. Matching is intentionally strict verb-first parsing — the
+	// palette must never hijack a plain search query.
+
+	function fetchJson(url, opts) {
+		return fetch(url, opts).then(function (r) {
+			if (!r.ok) { var e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
+			return r.json();
+		});
+	}
+
+	// Anonymous per-browser client id sent to the free forge lane (its only
+	// identifying header; used server-side for telemetry, not auth).
+	function forgeClientId() {
+		try {
+			var v = localStorage.getItem('tws:forge:client');
+			if (!v) {
+				v = Math.random().toString(36).slice(2) + Date.now().toString(36);
+				localStorage.setItem('tws:forge:client', v);
+			}
+			return v;
+		} catch (_) { return 'anon'; }
+	}
+
+	// Broadcast a command lifecycle beat so other surfaces (the corner companion,
+	// the agent bus's mood engine) can react to what the visitor just did.
+	function emitAction(action, phase, detail) {
+		var payload = Object.assign({ action: action, phase: phase }, detail || {});
+		try {
+			document.dispatchEvent(new CustomEvent('tws:palette-action', { detail: payload }));
+		} catch (_) {}
+		try {
+			var bus = window.__agentBus || window.__threewsAgentBus;
+			if (bus && bus.emit) bus.emit('action:taken', Object.assign({ agentId: null, source: 'palette' }, payload));
+		} catch (_) {}
+	}
+
+	var CMD_DEFS = [
+		{
+			id: 'forge',
+			icon: '✨',
+			example: 'forge a bronze dragon statue',
+			prefill: 'forge ',
+			match: function (q) {
+				var m = q.match(/^(?:forge|make|generate|imagine)\s+(.{3,200})$/i);
+				return m ? { prompt: m[1].trim() } : null;
+			},
+			title: function (a) { return 'Forge “' + a.prompt + '”'; },
+			desc: 'Generate a real 3D model right here — free text→​3D lane',
+			run: runForgeCommand,
+		},
+		{
+			id: 'digest',
+			icon: '📰',
+			example: 'digest',
+			match: function (q) {
+				return /^(?:digest|briefing|news digest|what happened(?:\s+today)?\??|today)$/i.test(q) ? {} : null;
+			},
+			title: function () { return 'Today’s crypto digest'; },
+			desc: 'The last 24h clustered into narratives, right here',
+			run: runDigestCommand,
+		},
+		{
+			id: 'price',
+			icon: '💹',
+			example: 'price btc',
+			prefill: 'price ',
+			match: function (q) {
+				var m = q.match(/^(?:price|quote)\s+(.{1,40})$/i) || q.match(/^\$([a-z0-9]{1,15})$/i);
+				return m ? { query: m[1].trim() } : null;
+			},
+			title: function (a) { return 'Price of ' + a.query; },
+			desc: 'Live market data — majors and pump.fun coins',
+			run: runPriceCommand,
+		},
+		{
+			id: 'ask',
+			icon: '💬',
+			example: 'ask what is x402?',
+			prefill: 'ask ',
+			match: function (q) {
+				var m = q.match(/^ask\s+(.{3,400})$/i);
+				if (m) return { question: m[1].trim() };
+				// A natural question ("how do agents pay each other?") is offered as
+				// an option below the search results — never auto-run.
+				if (q.length >= 10 && /\?$/.test(q)) return { question: q };
+				return null;
+			},
+			title: function () { return 'Ask your agent'; },
+			desc: 'Streamed answer from the site agent — free, no account',
+			run: runAskCommand,
+		},
+	];
+
+	// Parse a query into the first matching command. Exposed on the public API
+	// for tests and for other surfaces (the companion dock) to reuse.
+	function parseCommand(q) {
+		var query = String(q || '').trim();
+		if (!query) return null;
+		for (var i = 0; i < CMD_DEFS.length; i++) {
+			var args = CMD_DEFS[i].match(query);
+			if (args) return { def: CMD_DEFS[i], args: args };
+		}
+		return null;
+	}
+
+	// Every command matching the query (a "$sol?" style query can match two).
+	function matchedCommands(q) {
+		var query = String(q || '').trim();
+		if (!query) return [];
+		var out = [];
+		for (var i = 0; i < CMD_DEFS.length; i++) {
+			var args = CMD_DEFS[i].match(query);
+			if (args) out.push({ def: CMD_DEFS[i], args: args });
+		}
+		return out;
+	}
+
 	// Default destinations shown when the palette opens with no query (and no
 	// recent history yet) — the flagship surfaces, so the palette is never empty.
 	var SUGGESTED_PAGES = [
@@ -282,7 +426,8 @@
 		return h;
 	}
 
-	function resultRow(href, iconHTML, name, desc, badge, q) {
+	function resultRow(href, iconHTML, name, desc, badge, q, opts) {
+		var run = opts && opts.run;
 		var a = el('a', {
 			class: 'tws-sk-row',
 			href: href,
@@ -307,6 +452,14 @@
 		if (badge) {
 			var b = el('span', { class: 'tws-sk-badge', text: badge });
 			a.appendChild(b);
+		}
+
+		if (run) {
+			// Command rows execute in place instead of navigating; they never enter
+			// the Recents list (a recent must be a re-openable destination).
+			a._twsRun = run;
+			a.addEventListener('click', function (e) { e.preventDefault(); run(); });
+			return a;
 		}
 
 		// Payload replayed into the Recents list when this row is opened.
@@ -380,7 +533,7 @@
 		input = el('input', {
 			id: 'tws-search-input',
 			type: 'search',
-			placeholder: 'Search agents, coins, skills, actions, pages…',
+			placeholder: 'Search — or type forge …, digest, price btc, ask …',
 			autocomplete: 'off',
 			autocorrect: 'off',
 			spellcheck: 'false',
@@ -455,6 +608,7 @@
 
 	function close() {
 		if (!dialog) return;
+		stopRun();
 		dialog.removeAttribute('open');
 		document.body.style.overflow = '';
 		if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
@@ -470,7 +624,13 @@
 	// ── Keyboard handlers ──────────────────────────────────────────────────────
 
 	function onDialogKeydown(e) {
-		if (e.key === 'Escape') { e.preventDefault(); close(); }
+		if (e.key === 'Escape') {
+			e.preventDefault();
+			// From a run panel, Esc steps back to the search results; a second Esc
+			// closes the palette.
+			if (runActive) { exitRunPanel(true); input.focus(); return; }
+			close();
+		}
 	}
 
 	function onKeydown(e) {
@@ -511,6 +671,7 @@
 	function activateSelected() {
 		if (selectedIndex >= 0 && allRows[selectedIndex]) {
 			var row = allRows[selectedIndex];
+			if (row._twsRun) { row._twsRun(); return; }
 			recordRecent(row._twsRecent);
 			close();
 			window.location.href = row.href;
@@ -521,6 +682,12 @@
 
 	function showInitial() {
 		var groups = [];
+
+		// Lead with the executable verbs — the palette is a command line first.
+		groups.push({
+			label: 'Do',
+			items: CMD_DEFS.map(commandExampleRow),
+		});
 
 		var recent = loadRecent();
 		if (recent.length) {
@@ -627,9 +794,348 @@
 		}
 	}
 
+	// ── Command run panel ─────────────────────────────────────────────────────
+	// Activating a command swaps the results list for a run panel and does the
+	// work in place. Esc (or typing) returns to the search results; the palette
+	// itself stays open so the visitor never loses context.
+
+	var runAbort = null;    // AbortController for the in-flight command
+	var runActive = false;  // whether the run panel currently owns the results area
+	var runTimer = null;    // elapsed-time ticker / poll timer
+
+	function stopRun() {
+		if (runAbort) { runAbort.abort(); runAbort = null; }
+		if (runTimer) { clearInterval(runTimer); clearTimeout(runTimer); runTimer = null; }
+		runActive = false;
+	}
+
+	function exitRunPanel(rerunQuery) {
+		stopRun();
+		var q = input.value.trim();
+		if (rerunQuery && q) { showLoading(); runSearch(q); }
+		else showInitial();
+	}
+
+	function spinnerEl() {
+		return el('div', { class: 'tws-sk-spinner', 'aria-hidden': 'true' });
+	}
+
+	// Build the panel chrome and hand the command a small UI toolkit.
+	function openRunPanel(def, args) {
+		stopRun();
+		runActive = true;
+		runAbort = new AbortController();
+		results.innerHTML = '';
+		allRows = [];
+		selectedIndex = -1;
+		status.hidden = true;
+		input.setAttribute('aria-expanded', 'true');
+
+		var head = el('div', { class: 'tws-sk-run-head' });
+		var ico = el('div', { class: 'tws-sk-ico', 'aria-hidden': 'true' });
+		ico.textContent = def.icon;
+		var title = el('div', { class: 'tws-sk-run-title', text: def.title(args) });
+		var statusEl = el('div', { class: 'tws-sk-run-status' });
+		statusEl.appendChild(spinnerEl());
+		var statusText = el('span', { text: 'Working…' });
+		statusEl.appendChild(statusText);
+		head.appendChild(ico);
+		head.appendChild(title);
+		head.appendChild(statusEl);
+
+		var body = el('div', { class: 'tws-sk-run-body' });
+		var foot = el('div', { class: 'tws-sk-run-foot', text: 'Esc — back to search' });
+
+		results.appendChild(head);
+		results.appendChild(body);
+		results.appendChild(foot);
+
+		var ui = {
+			body: body,
+			signal: runAbort.signal,
+			setStatus: function (text, mode) {
+				statusEl.innerHTML = '';
+				statusEl.className = 'tws-sk-run-status' + (mode ? ' ' + mode : '');
+				if (!mode) statusEl.appendChild(spinnerEl());
+				var t = el('span', { text: text });
+				statusEl.appendChild(t);
+				liveRegion.textContent = def.title(args) + ' — ' + text;
+			},
+			// Register result rows for arrow-key navigation inside the panel.
+			addRows: function (rows) {
+				rows.forEach(function (row) {
+					row.id = 'tws-sk-row-' + allRows.length;
+					body.appendChild(row);
+					allRows.push(row);
+				});
+			},
+			fail: function (message, linkHref, linkText) {
+				ui.setStatus('failed', 'err');
+				var msg = el('div', { class: 'tws-sk-answer', text: message });
+				body.appendChild(msg);
+				if (linkHref) {
+					ui.addRows([resultRow(linkHref, '↗', linkText || 'Open', '', '', '')]);
+				}
+			},
+		};
+
+		emitAction(def.id, 'start', { args: args });
+		try {
+			def.run(args, ui);
+		} catch (err) {
+			ui.fail('Command failed: ' + (err && err.message ? err.message : 'unknown error'));
+		}
+	}
+
+	function commandRow(match, q) {
+		var def = match.def;
+		var row = resultRow('#', def.icon, def.title(match.args), def.desc, 'Run', q, {
+			run: function () { openRunPanel(def, match.args); },
+		});
+		return { el: row };
+	}
+
+	// A zero-query example row: activating it prefills the input (teaching the
+	// verb) rather than running with a canned argument. Commands with no
+	// arguments (digest) run directly.
+	function commandExampleRow(def) {
+		var run = def.prefill
+			? function () {
+				input.value = def.prefill;
+				input.focus();
+				onInput();
+			}
+			: function () { openRunPanel(def, def.match(def.example)); };
+		return { el: resultRow('#', def.icon, def.example, def.desc, 'Run', '', { run: run }) };
+	}
+
+	// ── Command implementations ────────────────────────────────────────────────
+
+	function runForgeCommand(args, ui) {
+		var startedAt = Date.now();
+		var elapsed = function () { return Math.round((Date.now() - startedAt) / 1000) + 's'; };
+		ui.setStatus('forging · 0s');
+		runTimer = setInterval(function () {
+			if (!runActive) return;
+			ui.setStatus('forging · ' + elapsed() + ' — usually 20–60s');
+		}, 1000);
+
+		function finish(job) {
+			clearInterval(runTimer); runTimer = null;
+			ui.setStatus('done · ' + elapsed(), 'ok');
+			var openHref = job.creation_id
+				? '/forge/share/' + encodeURIComponent(job.creation_id)
+				: '/forge/embed?src=' + encodeURIComponent(job.glb_url);
+			var rows = [
+				resultRow(openHref, '🧊', 'Open your model', 'Orbit it in 3D, share, or remix', 'GLB', ''),
+				resultRow(job.glb_url, '⬇️', 'Download the GLB', 'The raw binary — drop it into any engine', '', ''),
+				resultRow('/forge?prompt=' + encodeURIComponent(args.prompt), '🛠', 'Refine on the Forge', 'Higher tiers, engines, and image input', '', ''),
+			];
+			ui.addRows(rows);
+			emitAction('forge', 'done', { prompt: args.prompt, glb_url: job.glb_url, creation_id: job.creation_id || null });
+		}
+
+		function poll(jobId) {
+			if (!runActive) return;
+			fetchJson('/api/forge?job=' + encodeURIComponent(jobId), { signal: ui.signal })
+				.then(function (job) {
+					if (!runActive) return;
+					if (job.status === 'done' && job.glb_url) return finish(job);
+					if (job.status === 'failed') {
+						clearInterval(runTimer); runTimer = null;
+						ui.fail(job.error || 'Generation failed — the free lane may be busy.', '/forge', 'Try on the Forge page');
+						emitAction('forge', 'failed', { prompt: args.prompt });
+						return;
+					}
+					if (Date.now() - startedAt > 4 * 60 * 1000) {
+						clearInterval(runTimer); runTimer = null;
+						ui.fail('Still running after 4 minutes — the lane is saturated. Your job may still finish on the Forge page.', '/forge', 'Open the Forge');
+						return;
+					}
+					runTimer = setTimeout(function () { poll(jobId); }, 2500);
+				})
+				.catch(function (err) {
+					if (err && err.name === 'AbortError') return;
+					clearInterval(runTimer); runTimer = null;
+					ui.fail('Lost the job while polling — it may still finish on the Forge page.', '/forge', 'Open the Forge');
+				});
+		}
+
+		fetch('/api/forge', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'x-forge-client': forgeClientId() },
+			body: JSON.stringify({ prompt: args.prompt }),
+			signal: ui.signal,
+		})
+			.then(function (r) {
+				if (r.status === 429) throw Object.assign(new Error('rate'), { status: 429 });
+				if (!r.ok) throw new Error('HTTP ' + r.status);
+				return r.json();
+			})
+			.then(function (job) {
+				if (!runActive) return;
+				if (job.status === 'done' && job.glb_url) return finish(job);
+				if (job.job_id) return poll(job.job_id);
+				throw new Error(job.error || 'unexpected response');
+			})
+			.catch(function (err) {
+				if (err && err.name === 'AbortError') return;
+				clearInterval(runTimer); runTimer = null;
+				if (err && err.status === 429) {
+					ui.fail('Free-lane rate limit reached for now — try again in a few minutes, or use the Forge page.', '/forge', 'Open the Forge');
+				} else {
+					ui.fail('Couldn’t start the generation: ' + err.message, '/forge', 'Try on the Forge page');
+				}
+				emitAction('forge', 'failed', { prompt: args.prompt });
+			});
+	}
+
+	function runDigestCommand(args, ui) {
+		ui.setStatus('clustering the last 24h…');
+		fetchJson('/api/news/digest?hours=24&limit=8', { signal: ui.signal })
+			.then(function (d) {
+				if (!runActive) return;
+				var narratives = (d && d.narratives) || [];
+				if (!narratives.length) {
+					ui.fail('No digest available right now.', '/markets/digest', 'Open the digest page');
+					return;
+				}
+				ui.setStatus(narratives.length + ' stories · mood ' + (d.mood || 'neutral'), 'ok');
+				var stanceIcon = { bullish: '🟢', bearish: '🔴', neutral: '⚪' };
+				var rows = narratives.map(function (n) {
+					var tickers = (n.tickers || []).slice(0, 4).map(function (t) { return '$' + t; }).join(' ');
+					var desc = n.coverage + ' outlets' + (tickers ? ' · ' + tickers : '') + (n.summary ? ' — ' + n.summary : '');
+					var href = (n.articles && n.articles[0] && n.articles[0].link) || '/markets/digest';
+					return resultRow(href, stanceIcon[n.stance] || '⚪', n.title, desc, n.stance || '', '');
+				});
+				rows.push(resultRow('/markets/digest', '📰', 'Read the full digest', 'Every narrative with all covering outlets', '', ''));
+				ui.addRows(rows);
+				emitAction('digest', 'done', { stories: narratives.length, mood: d.mood || null });
+			})
+			.catch(function (err) {
+				if (err && err.name === 'AbortError') return;
+				ui.fail('The digest is unavailable right now.', '/markets/digest', 'Open the digest page');
+			});
+	}
+
+	function runPriceCommand(args, ui) {
+		ui.setStatus('looking up ' + args.query + '…');
+		var q = args.query;
+		fetchJson('/api/coin/markets?q=' + encodeURIComponent(q), { signal: ui.signal })
+			.then(function (d) {
+				var hit = d && d.coins && d.coins[0];
+				if (!hit) throw new Error('no match');
+				return fetchJson('/api/coin/detail?id=' + encodeURIComponent(hit.id), { signal: ui.signal });
+			})
+			.then(function (d) {
+				if (!runActive) return;
+				var c = d && d.coin;
+				if (!c || !c.market) throw new Error('no market data');
+				var m = c.market;
+				var chg = m.change_pct && m.change_pct.h24;
+				var price = m.price != null ? '$' + Number(m.price).toLocaleString('en-US', { maximumFractionDigits: m.price < 1 ? 6 : 2 }) : '—';
+				var chgTxt = chg != null ? (chg >= 0 ? '▲ +' : '▼ ') + chg.toFixed(2) + '% 24h' : '';
+				ui.setStatus(price + (chgTxt ? ' · ' + chgTxt : ''), chg == null ? 'ok' : chg >= 0 ? 'ok' : 'err');
+				var mcap = m.market_cap != null ? 'Mcap $' + Number(m.market_cap).toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 1 }) : '';
+				var rows = [
+					resultRow('/coin/' + encodeURIComponent(c.id), c.image ? '<img src="' + esc(c.image) + '" alt="" loading="lazy" />' : '🪙',
+						c.name + ' · ' + String(c.symbol || '').toUpperCase(), price + (chgTxt ? ' · ' + chgTxt : '') + (mcap ? ' · ' + mcap : ''),
+						c.rank ? '#' + c.rank : '', ''),
+					resultRow('/compare?ids=' + encodeURIComponent(c.id), '⚖️', 'Compare it', 'Line it up against up to three other coins', '', ''),
+				];
+				ui.addRows(rows);
+				emitAction('price', 'done', { id: c.id, symbol: c.symbol });
+			})
+			.catch(function (err) {
+				if (err && err.name === 'AbortError') return;
+				// Not a listed major — try pump.fun tokens before giving up.
+				fetchJson('/api/pump/search?q=' + encodeURIComponent(q) + '&limit=3', { signal: ui.signal })
+					.then(function (d) {
+						if (!runActive) return;
+						var coins = (d && d.data) || [];
+						if (!coins.length) {
+							ui.fail('No coin found for “' + q + '”.', '/coins', 'Browse all coins');
+							return;
+						}
+						ui.setStatus('pump.fun match', 'ok');
+						ui.addRows(coins.map(function (c) {
+							var priceTxt = c.price_usd != null ? '$' + Number(c.price_usd).toLocaleString('en-US', { maximumFractionDigits: 8 }) : '';
+							return resultRow('/communities/' + esc(c.mint), coinIcon(c), c.name || c.symbol, (c.symbol ? '$' + c.symbol : '') + (priceTxt ? ' · ' + priceTxt : ''), 'Coin', '');
+						}));
+						emitAction('price', 'done', { query: q, source: 'pump' });
+					})
+					.catch(function (e2) {
+						if (e2 && e2.name === 'AbortError') return;
+						ui.fail('No coin found for “' + q + '”.', '/coins', 'Browse all coins');
+					});
+			});
+	}
+
+	function runAskCommand(args, ui) {
+		ui.setStatus('thinking…');
+		var answer = el('div', { class: 'tws-sk-answer' });
+		answer.setAttribute('aria-live', 'polite');
+		ui.body.appendChild(answer);
+
+		fetch('/api/chat', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				message: args.question,
+				context: 'Asked from the command palette on ' + location.pathname,
+				history: [],
+			}),
+			signal: ui.signal,
+		})
+			.then(function (r) {
+				if (r.status === 401) {
+					ui.fail('Chat needs a signed-in session right now.', '/login', 'Sign in');
+					return null;
+				}
+				if (!r.ok) throw new Error('HTTP ' + r.status);
+				var reader = r.body.getReader();
+				var decoder = new TextDecoder();
+				var buffer = '';
+				function pump() {
+					return reader.read().then(function (chunk) {
+						if (chunk.done) return;
+						buffer += decoder.decode(chunk.value, { stream: true });
+						var frames = buffer.split('\n\n');
+						buffer = frames.pop();
+						frames.forEach(function (frame) {
+							var line = frame.split('\n').find(function (l) { return l.indexOf('data: ') === 0; });
+							if (!line) return;
+							var evt;
+							try { evt = JSON.parse(line.slice(6)); } catch (_) { return; }
+							if (evt.type === 'chunk' && evt.text) {
+								answer.textContent += evt.text;
+								answer.scrollTop = answer.scrollHeight;
+							} else if (evt.type === 'done') {
+								if (evt.reply && !answer.textContent) answer.textContent = evt.reply;
+								ui.setStatus('answered', 'ok');
+								emitAction('ask', 'done', { question: args.question });
+							} else if (evt.type === 'error') {
+								ui.fail(evt.error || 'The agent hit an error.');
+							}
+						});
+						return pump();
+					});
+				}
+				return pump();
+			})
+			.catch(function (err) {
+				if (err && err.name === 'AbortError') return;
+				ui.fail('The agent is unreachable right now — try again shortly, or open the full chat.', '/chat', 'Open chat');
+			});
+	}
+
 	// ── Search ─────────────────────────────────────────────────────────────────
 
 	function onInput() {
+		// Typing abandons an open run panel and returns to live search.
+		if (runActive) stopRun();
+
 		var q = input.value.trim();
 		if (!q) { showInitial(); return; }
 
@@ -736,7 +1242,10 @@
 					};
 				});
 
+				var cmdItems = matchedCommands(q).map(function (m) { return commandRow(m, q); });
+
 				renderResults([
+					{ label: 'Do', items: cmdItems },
 					{ label: 'Actions', items: actionItems },
 					{ label: 'Agents', items: agentItems },
 					{ label: 'Coins', items: coinItems },
@@ -776,6 +1285,17 @@
 	});
 
 	// ── Expose public API ──────────────────────────────────────────────────────
+	// parseCommand/runCommand let other surfaces (the corner companion, tests)
+	// reuse the same verb grammar and drive a command programmatically.
 
-	window.__twsSearch = { open: open, close: close };
+	function runCommand(query) {
+		var match = parseCommand(query);
+		if (!match) return false;
+		open();
+		input.value = String(query || '').trim();
+		openRunPanel(match.def, match.args);
+		return true;
+	}
+
+	window.__twsSearch = { open: open, close: close, parseCommand: parseCommand, runCommand: runCommand };
 })();

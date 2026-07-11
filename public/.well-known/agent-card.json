@@ -1,6 +1,6 @@
 {
 	"name": "three.ws",
-	"description": "AI-powered 3D model viewer and validation agent. Load glTF/GLB models, run validation, inspect materials, and manage avatar assets.",
+	"description": "three.ws — the 3D agent economy. Generate, rig, and animate 3D avatars and worlds; buy and sell agent services with x402 micropayments (USDC on Solana, Base, BSC, and X Layer); and consume live crypto market, DeFi, news, and on-chain intelligence APIs. Machine-readable paid-service catalog at https://three.ws/.well-known/x402.json.",
 	"url": "https://three.ws/",
 	"provider": {
 		"organization": "three.ws",
@@ -20,52 +20,96 @@
 		]
 	},
 	"authentication": {
-		"schemes": ["bearer"],
+		"schemes": [
+			"bearer"
+		],
 		"credentials": null
 	},
-	"defaultInputModes": ["text/plain", "application/json"],
-	"defaultOutputModes": ["text/plain", "application/json"],
+	"defaultInputModes": [
+		"text/plain",
+		"application/json"
+	],
+	"defaultOutputModes": [
+		"text/plain",
+		"application/json"
+	],
 	"skills": [
 		{
 			"id": "list-avatars",
 			"name": "List Avatars",
 			"description": "List all avatars owned by the authenticated user",
-			"tags": ["avatar", "list"],
-			"examples": ["Show me my avatars", "List all my 3D models"]
+			"tags": [
+				"avatar",
+				"list"
+			],
+			"examples": [
+				"Show me my avatars",
+				"List all my 3D models"
+			]
 		},
 		{
 			"id": "get-avatar",
 			"name": "Get Avatar",
 			"description": "Retrieve details of a specific avatar by ID or slug",
-			"tags": ["avatar", "inspect"],
-			"examples": ["Get avatar details for cz", "Show avatar info"]
+			"tags": [
+				"avatar",
+				"inspect"
+			],
+			"examples": [
+				"Get avatar details for cz",
+				"Show avatar info"
+			]
 		},
 		{
 			"id": "search-avatars",
 			"name": "Search Public Avatars",
 			"description": "Search public avatar gallery by query",
-			"tags": ["avatar", "search"],
-			"examples": ["Find avatars matching 'robot'", "Search public models"]
+			"tags": [
+				"avatar",
+				"search"
+			],
+			"examples": [
+				"Find avatars matching 'robot'",
+				"Search public models"
+			]
 		},
 		{
 			"id": "render-avatar",
 			"name": "Render Avatar",
 			"description": "Get an embeddable HTML model-viewer snippet that renders the given avatar in 3D",
-			"tags": ["avatar", "render", "preview"],
-			"examples": ["Render my avatar in the viewer", "Preview this model"]
+			"tags": [
+				"avatar",
+				"render",
+				"preview"
+			],
+			"examples": [
+				"Render my avatar in the viewer",
+				"Preview this model"
+			]
 		},
 		{
 			"id": "delete-avatar",
 			"name": "Delete Avatar",
 			"description": "Delete an avatar owned by the authenticated user",
-			"tags": ["avatar", "delete"],
-			"examples": ["Delete my old avatar", "Remove avatar abc123"]
+			"tags": [
+				"avatar",
+				"delete"
+			],
+			"examples": [
+				"Delete my old avatar",
+				"Remove avatar abc123"
+			]
 		},
 		{
 			"id": "validate-model",
 			"name": "Validate glTF/GLB Model",
 			"description": "Run the Khronos glTF-Validator against a remote model URL and return a structured error/warning/info/hint report",
-			"tags": ["model", "validation", "gltf", "glb"],
+			"tags": [
+				"model",
+				"validation",
+				"gltf",
+				"glb"
+			],
 			"examples": [
 				"Validate https://example.com/model.glb",
 				"Is this GLB spec-compliant?",
@@ -76,7 +120,13 @@
 			"id": "inspect-model",
 			"name": "Inspect glTF/GLB Model",
 			"description": "Parse a remote model and return structural stats: scene/node/mesh counts, vertex and triangle totals, material and texture summaries, extensions used",
-			"tags": ["model", "inspect", "stats", "gltf", "glb"],
+			"tags": [
+				"model",
+				"inspect",
+				"stats",
+				"gltf",
+				"glb"
+			],
 			"examples": [
 				"How many triangles are in this model?",
 				"Inspect https://example.com/scene.glb",
@@ -87,7 +137,12 @@
 			"id": "optimize-model",
 			"name": "Suggest Optimizations",
 			"description": "Inspect a remote model and return actionable suggestions for reducing size and draw-call overhead (Draco/Meshopt, KTX2, texture resize, reindexing, material merging)",
-			"tags": ["model", "optimize", "suggestions", "performance"],
+			"tags": [
+				"model",
+				"optimize",
+				"suggestions",
+				"performance"
+			],
 			"examples": [
 				"How can I make this model smaller?",
 				"Optimize this GLB for web delivery",
@@ -98,14 +153,43 @@
 			"id": "inspect-glb-a2a",
 			"name": "Inspect glTF/GLB (A2A)",
 			"description": "Pay-per-call glTF/GLB inspector exposed over the Agent-to-Agent (A2A) protocol with x402 settlement. Send a JSON-RPC message/send to the URL below — the first call returns payment requirements, the retry with a signed PaymentPayload settles on-chain and returns the inspection report as a task artifact.",
-			"tags": ["model", "gltf", "glb", "inspect", "a2a", "x402", "paid"],
+			"tags": [
+				"model",
+				"gltf",
+				"glb",
+				"inspect",
+				"a2a",
+				"x402",
+				"paid"
+			],
 			"examples": [
 				"Inspect https://example.com/model.glb (A2A x402)",
 				"Vet this GLB before I mint it"
 			],
-			"inputModes": ["application/json", "text/plain"],
-			"outputModes": ["application/json"],
+			"inputModes": [
+				"application/json",
+				"text/plain"
+			],
+			"outputModes": [
+				"application/json"
+			],
 			"url": "https://three.ws/api/agents/a2a-paid"
+		},
+		{
+			"id": "x402-service-catalog",
+			"name": "Paid x402 Service Catalog",
+			"description": "74 pay-per-call services settled via x402 (USDC on Solana and Base): market-data (26), 3d (18), agent-infra (17), launch (5), trust (4), payments (4). Every service is listed with price, input schema, and output example in the machine-readable discovery document — fetch it, pick a service, and pay the 402 challenge.",
+			"tags": [
+				"x402",
+				"paid",
+				"catalog",
+				"discovery"
+			],
+			"examples": [
+				"Fetch https://three.ws/.well-known/x402.json and list the market-data services",
+				"Pay the 402 challenge on /api/x402/token-intel to get a token signal"
+			],
+			"url": "https://three.ws/.well-known/x402.json"
 		}
 	]
 }

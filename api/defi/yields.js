@@ -159,16 +159,18 @@ function clampInt(v, { def, min, max }) {
 	return Math.max(min, Math.min(max, n));
 }
 
-async function listMode(req, res, params) {
-	const chain = (params.get('chain') || '').trim().toLowerCase();
-	const project = (params.get('project') || '').trim().toLowerCase();
-	const stablecoin = parseBool(params.get('stablecoin'));
-	const search = (params.get('search') || '').trim().toLowerCase();
-	const minTvl = Math.max(0, Number(params.get('minTvl')) || 0);
-	const sort = params.get('sort') === 'apy' ? 'apy' : 'tvl';
-	const limit = clampInt(params.get('limit'), { def: DEFAULT_LIMIT, min: 1, max: MAX_LIMIT });
-	const offset = clampInt(params.get('offset'), { def: 0, min: 0, max: 1_000_000 });
-
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-yields endpoint sells the same filtered pool explorer this page renders.
+export async function queryYieldPools({
+	chain = '',
+	project = '',
+	stablecoin,
+	search = '',
+	minTvl = 0,
+	sort = 'tvl',
+	limit = DEFAULT_LIMIT,
+	offset = 0,
+} = {}) {
 	const { pools, facets, stats, updated_at } = await loadPools();
 
 	let rows = pools.filter((p) => {
@@ -189,21 +191,32 @@ async function listMode(req, res, params) {
 	}
 	// sort === 'tvl' needs no work — the cache is already TVL desc.
 
-	return json(
-		res,
-		200,
-		{
-			pools: rows.slice(offset, offset + limit),
-			total: rows.length,
-			limit,
-			offset,
-			sort,
-			facets,
-			stats,
-			updated_at,
-		},
-		{ 'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600' },
-	);
+	return {
+		pools: rows.slice(offset, offset + limit),
+		total: rows.length,
+		limit,
+		offset,
+		sort,
+		facets,
+		stats,
+		updated_at,
+	};
+}
+
+async function listMode(req, res, params) {
+	const payload = await queryYieldPools({
+		chain: (params.get('chain') || '').trim().toLowerCase(),
+		project: (params.get('project') || '').trim().toLowerCase(),
+		stablecoin: parseBool(params.get('stablecoin')),
+		search: (params.get('search') || '').trim().toLowerCase(),
+		minTvl: Math.max(0, Number(params.get('minTvl')) || 0),
+		sort: params.get('sort') === 'apy' ? 'apy' : 'tvl',
+		limit: clampInt(params.get('limit'), { def: DEFAULT_LIMIT, min: 1, max: MAX_LIMIT }),
+		offset: clampInt(params.get('offset'), { def: 0, min: 0, max: 1_000_000 }),
+	});
+	return json(res, 200, payload, {
+		'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600',
+	});
 }
 
 // ── Chart mode ──────────────────────────────────────────────────────────────
@@ -254,13 +267,32 @@ async function loadChart(pool) {
 	return value;
 }
 
-async function chartMode(req, res, pool) {
-	if (!UUID_RE.test(pool)) {
-		return error(res, 400, 'invalid_pool', 'pool must be a DeFiLlama pool uuid');
+// Exported for the paid Market Data API — validates + loads a single pool's
+// APY/TVL history; throws {status, code} instead of writing to a response.
+export async function queryYieldChart(pool) {
+	if (!UUID_RE.test(pool || '')) {
+		throw Object.assign(new Error('pool must be a DeFiLlama pool uuid'), {
+			status: 400,
+			code: 'invalid_pool',
+		});
 	}
 	const value = await loadChart(pool.toLowerCase());
 	if (!value) {
-		return error(res, 404, 'pool_not_found', 'no APY/TVL history for this pool id');
+		throw Object.assign(new Error('no APY/TVL history for this pool id'), {
+			status: 404,
+			code: 'pool_not_found',
+		});
+	}
+	return value;
+}
+
+async function chartMode(req, res, pool) {
+	let value;
+	try {
+		value = await queryYieldChart(pool);
+	} catch (err) {
+		if (err?.status && err.status < 500) return error(res, err.status, err.code, err.message);
+		throw err;
 	}
 	return json(res, 200, value, {
 		'cache-control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=1200',

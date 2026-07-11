@@ -3,22 +3,30 @@
   "name": "Crypto Oracle",
   "description": "A crypto expert agent that can provide real-time price information.",
   "body": {
-    "uri": "https://cdn.three.ws/models/sample-avatar.glb",
+    "uri": "https://three.ws/avatars/default.glb",
     "format": "gltf-binary"
   },
   "brain": {
     "provider": "anthropic",
-    "model": "claude-sonnet-4-6",
+    "model": "claude-sonnet-5",
     "instructions": "You are a crypto expert. You can provide real-time price information for any cryptocurrency. When asked for a price, use the getPrice tool. For example, to get the price of Solana, you would call getPrice({ coin_id: 'solana', vs_currency: 'usd' }).",
     "temperature": 0.7,
     "maxTokens": 1024
   },
   "voice": {
-    "tts": { "provider": "browser" },
-    "stt": { "provider": "browser" }
+    "tts": {
+      "provider": "browser"
+    },
+    "stt": {
+      "provider": "browser"
+    }
   },
-  "memory": { "mode": "local" },
+  "memory": {
+    "mode": "local"
+  },
   "skills": [
-    { "uri": "/skills/crypto-price/" }
+    {
+      "uri": "/skills/crypto-price/"
+    }
   ]
 }

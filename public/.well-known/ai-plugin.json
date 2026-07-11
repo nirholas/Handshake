@@ -2,8 +2,8 @@
 	"schema_version": "v1",
 	"name_for_human": "three.ws",
 	"name_for_model": "3d_agent",
-	"description_for_human": "AI-powered 3D model viewer. Drag and drop glTF, GLB, and 3D files to preview instantly in your browser.",
-	"description_for_model": "A web-based 3D model viewer that supports glTF and GLB file formats. Users can drag-and-drop 3D models to preview them with real-time rendering powered by Three.js and WebGL.",
+	"description_for_human": "three.ws — 3D avatar/world generation and live crypto intelligence APIs, pay-per-call via x402.",
+	"description_for_model": "three.ws exposes a 3D model viewer plus a paid pay-per-call API catalog settled via the x402 protocol (HTTP 402, USDC on Solana and Base): text→3D generation, avatar rigging, token and DeFi market intelligence, news sentiment, gas oracles, vanity address mining, and agent reputation. The machine-readable catalog with prices and schemas is at https://three.ws/.well-known/x402.json; free endpoints are indexed at /api/crypto and /api/3d.",
 	"auth": {
 		"type": "none"
 	},

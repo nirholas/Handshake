@@ -188,6 +188,7 @@ function boot() {
 	loadDiscovery();
 	loadGettingStarted();
 	loadThemeSwitcher();
+	initCompanionAutoStart();
 	const navContainer = document.getElementById('nav-container');
 	if (!navContainer) return;
 	Promise.all([
@@ -607,6 +608,49 @@ function ensureWalkCompanion() {
 	s.type = 'module';
 	s.src = '/walk-companion.js';
 	document.head.appendChild(s);
+}
+
+// ── First-visit companion auto-start ─────────────────────────────────────────
+// Every visitor gets their agent in the first few seconds: if they have never
+// decided about the companion (the enabled key is absent — '0' means they
+// closed it, '1' means it's already on), summon it once, deferred to idle so
+// it costs the first paint nothing. The companion module mints the guest
+// identity (name + body) and introduces itself; see
+// src/walk-companion-identity.js.
+const WALK_AUTO_KEY = 'walk:companion:auto';
+
+// Routes that own their own full-screen 3D or camera experience — summoning a
+// second WebGL avatar there hurts more than it helps. (walk-sdk keeps its own
+// exclusion list too; this is the conservative outer gate.)
+const WALK_AUTO_SKIP = /^\/(play|walk|club|tour|world|scan|arena|pose|splat|capture)(\/|$)|^\/create\/selfie/;
+
+function initCompanionAutoStart() {
+	// Every check lives inside the deferred callback: boot() can run while this
+	// script is still evaluating (late injection), and the WALK_ENABLED_KEY
+	// const below would be in its temporal dead zone if read synchronously here.
+	const summon = () => {
+		try {
+			if (localStorage.getItem(WALK_ENABLED_KEY) !== null) return; // visitor already chose (on or off)
+		} catch (_) {
+			return; // no storage → the greeting/claim loop can't work either
+		}
+		if (WALK_AUTO_SKIP.test(location.pathname)) return;
+		if (document.documentElement.getAttribute('data-walk-auto') === 'off') return;
+		if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		if (navigator.connection && navigator.connection.saveData) return;
+		try {
+			localStorage.setItem(WALK_ENABLED_KEY, '1');
+			localStorage.setItem(WALK_AUTO_KEY, '1');
+		} catch (_) {
+			return;
+		}
+		ensureWalkCompanion();
+		window.dispatchEvent(new CustomEvent('walk-companion:change'));
+	};
+	const idle = () =>
+		'requestIdleCallback' in window ? requestIdleCallback(summon, { timeout: 4000 }) : setTimeout(summon, 1500);
+	if (document.readyState === 'complete') setTimeout(idle, 2000);
+	else window.addEventListener('load', () => setTimeout(idle, 2000), { once: true });
 }
 
 function initWalkToggle(root) {

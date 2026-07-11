@@ -62,7 +62,9 @@ function shape(assets) {
 	};
 }
 
-async function build() {
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-stablecoins endpoint sells the same peg board this page renders.
+export async function buildStablecoins() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache.value;
 
@@ -89,7 +91,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	try {
-		const payload = await build();
+		const payload = await buildStablecoins();
 		return json(res, 200, payload, {
 			'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600',
 		});

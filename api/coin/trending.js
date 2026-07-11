@@ -97,6 +97,13 @@ function shape(raw) {
 	return { coins, categories, nfts };
 }
 
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-trending endpoint sells the same trending lists this page renders.
+export async function buildTrending() {
+	const raw = await geckoFetch('/search/trending', { ttlMs: 120_000, timeoutMs: 10_000 });
+	return shape(raw);
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -105,8 +112,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	try {
-		const raw = await geckoFetch('/search/trending', { ttlMs: 120_000, timeoutMs: 10_000 });
-		return json(res, 200, shape(raw), {
+		return json(res, 200, await buildTrending(), {
 			'cache-control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=600',
 		});
 	} catch {

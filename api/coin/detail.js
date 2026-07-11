@@ -122,6 +122,21 @@ function shape(c) {
 	};
 }
 
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-coin endpoint sells the same rich coin profile this page renders.
+// Callers must validate id/contract first; upstream errors carry err.status.
+export async function buildCoinDetail({ id, contract }) {
+	const raw = contract
+		? await geckoFetch(`/coins/solana/contract/${contract}`, { ttlMs: 60_000 })
+		: await geckoFetch(
+				`/coins/${id}?localization=false&tickers=false&market_data=true&community_data=true&developer_data=true&sparkline=false`,
+				{ ttlMs: 60_000 },
+			);
+	return { coin: shape(raw) };
+}
+
+export { MINT_RE };
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -140,13 +155,7 @@ export default wrap(async (req, res) => {
 	}
 
 	try {
-		const raw = contract
-			? await geckoFetch(`/coins/solana/contract/${contract}`, { ttlMs: 60_000 })
-			: await geckoFetch(
-					`/coins/${id}?localization=false&tickers=false&market_data=true&community_data=true&developer_data=true&sparkline=false`,
-					{ ttlMs: 60_000 },
-				);
-		return json(res, 200, { coin: shape(raw) }, {
+		return json(res, 200, await buildCoinDetail({ id, contract }), {
 			'cache-control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=300',
 		});
 	} catch (err) {

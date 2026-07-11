@@ -1,8 +1,10 @@
 {
 	"type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
-	"additionalTypes": ["https://three.ws/specs/3d-agent-card-v1"],
+	"additionalTypes": [
+		"https://three.ws/specs/3d-agent-card-v1"
+	],
 	"name": "three.ws",
-	"description": "AI-powered 3D model viewer and validation agent. Drag and drop glTF, GLB, and 3D files to preview instantly in your browser. Supports real-time rendering, model validation, environment maps, and animation playback via Three.js and WebGL.",
+	"description": "three.ws — the 3D agent economy. Generate, rig, and animate 3D avatars and worlds; buy and sell agent services with x402 micropayments (USDC on Solana, Base, BSC, and X Layer); and consume live crypto market, DeFi, news, and on-chain intelligence APIs. Machine-readable paid-service catalog at https://three.ws/.well-known/x402.json.",
 	"image": "https://three.ws/og-image.png",
 	"active": true,
 	"agentCard": "https://three.ws/.well-known/3d-agent-card.json",
@@ -13,8 +15,16 @@
 		"sizeBytes": 2875236,
 		"polygonCount": 13317,
 		"boundingBox": {
-			"min": [-0.464, -0.006, -0.146],
-			"max": [0.464, 1.766, 0.197]
+			"min": [
+				-0.464,
+				-0.006,
+				-0.146
+			],
+			"max": [
+				0.464,
+				1.766,
+				0.197
+			]
 		},
 		"license": "CC-BY-4.0"
 	},
@@ -37,14 +47,823 @@
 	"x402Support": true,
 	"x402Endpoints": [
 		{
-			"url": "https://three.ws/api/mcp",
+			"url": "https://three.ws/api/x402/model-check",
+			"method": "GET",
+			"description": "Model Check — an agent handed a 3D asset URL verifies it before using or paying for it: $0.001 USDC per call returns structural stats (vertex/triangle counts, materials, textures, animations, extensions) and prioritized optimization recommendations.",
+			"networks": [
+				"solana",
+				"base",
+				"arbitrum"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/agent-reputation",
+			"method": "GET",
+			"description": "Cross-chain Agent Reputation — get a deterministic 0–100 trust score for ANY counterparty (Solana wallet, EVM wallet, pump.fun mint, ERC-8004 agent id, or three.ws agent_id — auto-detected) before you pay, trade, or delegate to it.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.01"
+		},
+		{
+			"url": "https://three.ws/api/x402/agent-bouncer",
+			"method": "GET",
+			"description": "Agent Bouncer — the Pole Club door check, opened to the whole platform’s Solana reputation.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.01"
+		},
+		{
+			"url": "https://three.ws/api/x402/onchain-identity-verify",
+			"method": "GET",
+			"description": "Cross-platform On-Chain Identity Verifier — prove any claim that an identity controls an address.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.005"
+		},
+		{
+			"url": "https://three.ws/api/x402/fact-check",
 			"method": "POST",
-			"description": "MCP tool call — 3D avatar viewer, glTF model validation/inspection/optimization, and Solana agent data",
-			"networks": ["solana", "base"],
+			"description": "Real-Time Fact Checker — submit a claim and receive a sourced verdict (supported/contradicted/mixed/insufficient) backed by live web search and LLM analysis, with cited sources and a SHA-256 attestation you can audit.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.1"
+		},
+		{
+			"url": "https://three.ws/api/x402/pump-launch",
+			"method": "POST",
+			"description": "Pump Launcher — launch a pump.fun token autonomously in one paid call: no SOL, no wallet, no account.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "5"
+		},
+		{
+			"url": "https://three.ws/api/x402/forge",
+			"method": "POST",
+			"description": "Forge — production text/image→3D for agents that need real assets, not drafts: game assets, NFT art, scene props, and product visualization as textured GLB.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.15"
+		},
+		{
+			"url": "https://three.ws/api/x402/mint-to-mesh",
+			"method": "GET",
+			"description": "Mint to Mesh — pass any Solana SPL token mint, get back a binary glTF (GLB) cube themed and colored from that token's own on-chain Metaplex metadata, ready to render.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/mint-to-mesh-batch",
+			"method": "POST",
+			"description": "Mint to Mesh (Batch) — resolve 1–10 Solana SPL mints to themed glTF (GLB) cubes in a single paid call instead of paying for N round-trips.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.05"
+		},
+		{
+			"url": "https://three.ws/api/x402/skill-marketplace",
+			"method": "GET",
+			"description": "Skill Marketplace — list active skill listings with prices across all three.ws agents.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/symbol-availability",
+			"method": "GET",
+			"description": "Symbol Availability — pre-launch ticker collision check against three.ws's pump.fun mint index.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/vanity",
+			"method": "GET",
+			"description": "Vanity Grinder — put your brand on-chain: get a Solana address that starts with your ticker/prefix and/or ends with a chosen suffix, for a branded token MINT address, a recognizable agent/treasury wallet, or any wallet identifiable at a glance.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.01"
+		},
+		{
+			"url": "https://three.ws/api/x402/vanity-verifiable",
+			"method": "GET",
+			"description": "Provably-Fair Vanity Grinder — generate a brand-new Solana keypair whose Base58 address starts with a chosen prefix and/or ends with a chosen suffix, with a SIGNED receipt that proves the key was ground fresh and never kept.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.02"
+		},
+		{
+			"url": "https://three.ws/api/x402/vanity-premium",
+			"method": "GET",
+			"description": "Premium Vanity Inventory — buy a PRE-GROUND Solana address with a long (4–5+ char) brandable prefix, delivered instantly from stock.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "1"
+		},
+		{
+			"url": "https://three.ws/api/x402/permit2-paid-demo",
+			"method": "GET",
+			"description": "Permit2 + EIP-2612 Gas Sponsoring Demo — forces the gasless Permit2 path so a fresh wallet holding USDC but ZERO ETH can complete the flow.",
+			"networks": [
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/asset-download",
+			"method": "GET",
+			"description": "three.ws Asset Bazaar — pay once in USDC to unlock a 3D asset (GLB, avatar, or accessory) hosted on R2.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.1"
+		},
+		{
+			"url": "https://three.ws/api/x402/remix-asset",
+			"method": "POST",
+			"description": "Remix a published 3D model by describing a change; a creator-set royalty of the fee routes on-chain to the original creator.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.25"
+		},
+		{
+			"url": "https://three.ws/api/x402/skill-call",
+			"method": "GET",
+			"description": "three.ws Skill Call — pay the per-call price of a marketplace skill in USDC (Base or Solana) and receive its executable payload: the tool schema and content the calling agent runs.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.01"
+		},
+		{
+			"url": "https://three.ws/api/x402/token-intel",
+			"method": "GET",
+			"description": "three.ws Token Oracle — pay $0.01 USDC per call for live market intel on ANY token by contract address: price, 24 h change, market cap, liquidity, 24 h volume, and a bullish / bearish / neutral signal with a two-sentence rationale.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.01"
+		},
+		{
+			"url": "https://three.ws/api/x402/defi-radar",
+			"method": "GET",
+			"description": "three.ws DeFi Radar — one $0.005 USDC call returns the whole DeFi market at a glance: total TVL with the biggest 24 h gainers and losers, the top fee-earning protocols, and the top DEXes by 24 h volume.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.005"
+		},
+		{
+			"url": "https://three.ws/api/x402/yield-scan",
+			"method": "GET",
+			"description": "three.ws Yield Scanner — $0.005 USDC per call filters 15,000+ live DeFi yield pools by chain, TVL floor, and stablecoin-only, then returns the top pools with APY breakdown and per-pool risk flags.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.005"
+		},
+		{
+			"url": "https://three.ws/api/x402/stablecoin-health",
+			"method": "GET",
+			"description": "three.ws Stablecoin Peg Monitor — $0.005 USDC per call returns live peg deviation, supply, and 24 h / 7 d / 30 d supply flow for every major stablecoin, with an on-peg / drifting / depegged verdict per coin.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.005"
+		},
+		{
+			"url": "https://three.ws/api/x402/hack-check",
+			"method": "GET",
+			"description": "three.ws Exploit History Check — $0.002 USDC per call searches the full DeFi exploit database for a protocol name and returns its incident history, amounts lost, techniques, and a clean / incident-history verdict.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-heatmap",
+			"method": "GET",
+			"description": "three.ws Market Heatmap — $0.002 USDC per call returns the top coins by market cap with 1 h / 24 h / 7 d momentum plus market-breadth stats (advancers, decliners, average move) in one normalized snapshot.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/gas-oracle",
+			"method": "GET",
+			"description": "three.ws Multi-Chain Gas Oracle — $0.001 USDC per call returns live fee tiers for Ethereum and Base (slow / standard / fast from real fee history) plus Solana priority-fee percentiles, in one call.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-mood",
+			"method": "GET",
+			"description": "three.ws Market Mood Index — $0.002 USDC per call blends the Fear & Greed index with live sentiment scored across 192 crypto news feeds into one 0–100 mood reading with the headlines driving it.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/news-pulse",
+			"method": "GET",
+			"description": "three.ws Ticker News Pulse — $0.002 USDC per call measures live news coverage for one ticker across 192 crypto publisher feeds: mention count, velocity vs the prior window, sentiment split, and top headlines.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-coins",
+			"method": "GET",
+			"description": "Ranked coin market table — price, market cap, 24h volume, 24h/7d change, and a 7-day sparkline for up to 250 coins per call, with sector scoping and coin-id search.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-coin",
+			"method": "GET",
+			"description": "Full profile for one coin by CoinGecko id or Solana contract — market stats, ATH/ATL, supply, links, developer and community metrics, sentiment, plain-text description.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-chart",
+			"method": "GET",
+			"description": "Historical USD price series for any coin — [timestamp, price] pairs over 1, 7, 30, 90, or 365 days, granularity auto-chosen per window.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-categories",
+			"method": "GET",
+			"description": "Every CoinGecko sector ranked by market cap — AI, L1, memes, DeFi and hundreds more, with 24h cap change, volume, and top-3 coin logos.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-exchanges",
+			"method": "GET",
+			"description": "Top 100 spot exchanges ranked by trust score, with 24h volume in BTC and USD, country, and year established.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-derivatives",
+			"method": "GET",
+			"description": "Perpetual futures tickers — price, funding rate, open interest, 24h volume across venues — or the derivatives-exchange leaderboard by open interest.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-global",
+			"method": "GET",
+			"description": "Whole-market stats in one call — total market cap, 24h volume, BTC/ETH dominance, active coins, plus the Fear & Greed index.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-gas",
+			"method": "GET",
+			"description": "Live ETH gas in three tiers (slow/standard/fast) computed from on-chain fee history, with USD cost estimates for transfers, swaps, and mints.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-trending",
+			"method": "GET",
+			"description": "The last 24h's most-searched coins, categories, and NFT collections — early attention signals before they show up in price.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-defi",
+			"method": "GET",
+			"description": "Top 100 DeFi protocols ranked by TVL with 1d/7d change, chains, category, and market cap, plus whole-market TVL totals (CEX reserves excluded).",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-chains",
+			"method": "GET",
+			"description": "Every chain ranked by DeFi TVL with native token symbol and share of total locked value — the cross-chain capital map.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-yields",
+			"method": "GET",
+			"description": "Query ~15,000 DeFi yield pools — filter by chain, project, stablecoin-only, or TVL floor, sort by APY or TVL, or pull one pool's APY/TVL history.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-stablecoins",
+			"method": "GET",
+			"description": "Top 100 stablecoins by circulating supply with live price for peg health, peg mechanism, and chain deployments, plus total stablecoin market cap.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-fees",
+			"method": "GET",
+			"description": "Which protocols actually earn — top 100 by 24h fees or revenue with 1d/7d/30d totals and change, plus the whole-market daily chart.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-dex-volumes",
+			"method": "GET",
+			"description": "Top 100 DEXs by 24h trading volume with 7d totals, market share, and the aggregate daily volume chart.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-hacks",
+			"method": "GET",
+			"description": "Every recorded DeFi hack — amount stolen, technique, classification, chains, funds returned — searchable, with all-time and 12-month loss stats.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/market-pulse",
+			"method": "GET",
+			"description": "The whole market in one paid call — global stats, Fear & Greed, top-10 coins, trending, ETH gas, DeFi TVL, stablecoin supply, DEX volume, and protocol fees.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.005"
+		},
+		{
+			"url": "https://three.ws/api/x402/cosmetic-purchase",
+			"method": "GET",
+			"description": "three.ws Avatar Shop — pay once in USDC to unlock a premium avatar cosmetic (skin or emote) for an account.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.5"
+		},
+		{
+			"url": "https://three.ws/api/x402/animation-download",
+			"method": "GET",
+			"description": "three.ws Animation Bazaar — pay once in USDC to unlock a 3D avatar animation (GLB).",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.01"
+		},
+		{
+			"url": "https://three.ws/api/x402/club-cover",
+			"method": "GET",
+			"description": "three.ws Pole Club Cover Charge — pay $0.01 USDC to access the three.ws Pole Club.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.01"
+		},
+		{
+			"url": "https://three.ws/api/x402/analytics",
+			"method": "POST",
+			"description": "three.ws Economy Analytics — pay $0.005 USDC per call for a live, aggregated view of platform activity.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.005"
+		},
+		{
+			"url": "https://three.ws/api/x402/api-key-health",
+			"method": "POST",
+			"description": "API Key Validity Health Check — verifies that the platform has a valid, non-expired access key covering a given scope.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/auth-health",
+			"method": "POST",
+			"description": "Auth Session Lifecycle Health — pay $0.001 USDC to exercise the full JWT auth session lifecycle: create, validate, refresh, and expiry-rejection.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/avatar-optimize-batch",
+			"method": "POST",
+			"description": "three.ws Avatar Optimization Pipeline — pay $0.001 USDC to trigger a batch glTF/GLB analysis of the top most-viewed public avatars.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/pipeline-rig",
+			"method": "POST",
+			"description": "3D Asset Pipeline — Rig: pay $0.05 USDC to make a static GLB animation-ready.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.05"
+		},
+		{
+			"url": "https://three.ws/api/x402/pipeline-remesh",
+			"method": "POST",
+			"description": "3D Asset Pipeline — Remesh: pay $0.03 USDC to retopologize a GLB.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.03"
+		},
+		{
+			"url": "https://three.ws/api/x402/pipeline-gameready",
+			"method": "POST",
+			"description": "3D Asset Pipeline — Game-Ready: pay $0.03 USDC to make a GLB engine-ready.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.03"
+		},
+		{
+			"url": "https://three.ws/api/x402/pipeline-stylize",
+			"method": "POST",
+			"description": "3D Asset Pipeline — Stylize: pay $0.03 USDC to geometrically restyle a GLB.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.03"
+		},
+		{
+			"url": "https://three.ws/api/x402/pipeline-rembg",
+			"method": "POST",
+			"description": "3D Asset Pipeline — Background Removal: pay $0.01 USDC to strip the background from an image, returning a transparent PNG — the clean reference view image→3D reconstruction needs so it never bakes a room into the mesh.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.01"
+		},
+		{
+			"url": "https://three.ws/api/x402/pipeline",
+			"method": "POST",
+			"description": "One call, full 3D asset pipeline — text or GLB in, rigged/optimized game-ready GLB out; the only asset pipeline in the x402 ecosystem.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.15"
+		},
+		{
+			"url": "https://three.ws/api/x402/embody",
+			"method": "POST",
+			"description": "Give your agent a 3D body — one x402 call returns a rigged, animated, talking avatar plus a one-tag embed for any website. The only embodiment endpoint in the x402 ecosystem.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "1"
+		},
+		{
+			"url": "https://three.ws/api/x402/bazaar-feed",
+			"method": "POST",
+			"description": "Bazaar Feed — pay $0.001 USDC per call for two live views of the x402 service marketplace.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/billboard",
+			"method": "GET",
+			"description": "three.ws coin worlds — feature your content on a 3D world’s billboard.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.05"
+		},
+		{
+			"url": "https://three.ws/api/x402/cross-chain",
+			"method": "POST",
+			"description": "Cross-Chain Bridge Status Monitor — pay $0.005 USDC to receive the live operational status and latency of major Solana bridge providers (Wormhole, Li.Fi, deBridge).",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.005"
+		},
+		{
+			"url": "https://three.ws/api/x402/did",
+			"method": "POST",
+			"description": "DID Verification Canary — pay $0.001 USDC to resolve three.ws's published W3C DID document over its real public route, structurally validate it, and measure end-to-end resolution latency.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/feed-health",
+			"method": "POST",
+			"description": "three.ws Feed Health Validator — fetches a named public feed (changelog RSS, sitemap, etc.) and returns a structural health verdict: { valid, item_count, latest_title }.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/llm-proxy",
+			"method": "POST",
+			"description": "three.ws LLM Inference Proxy — pay per completion with no API key required.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.005"
+		},
+		{
+			"url": "https://three.ws/api/x402/mcp-tool-catalog",
+			"method": "POST",
+			"description": "three.ws MCP Tool Discovery — pay $0.001 USDC to discover MCP tools that were registered (or whose price/shape changed, or that were removed) on the three.ws MCP server since you last probed.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/model-validation-sweep",
+			"method": "POST",
+			"description": "three.ws model quality sweep — picks the next public GLB avatar in the database that has never been inspected (or whose inspection is older than 24 hours), downloads the file, runs the glTF-Transform inspector, computes a 0-100 quality score, and records a time-series row.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/notify",
+			"method": "POST",
+			"description": "Notification Delivery Probe — pay $0.001 USDC to send a canary message through the platform notification channel and confirm delivery.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/pay-by-name",
+			"method": "POST",
+			"description": "Pay-By-Name Resolution — pay $0.001 USDC to resolve a wallet name (@username, a *.sol name, or a raw base58 address) to a verified on-chain Solana address via the three.ws pay-by-name registry.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/rate-limit-probe",
+			"method": "POST",
+			"description": "Rate-Limit Capacity Probe — pay $0.001 USDC to learn how many more calls the x402 autonomous loop can make to a target endpoint today before hitting its daily USDC spend cap.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/schema-check",
+			"method": "POST",
+			"description": "three.ws JSON API schema conformance checker — pay $0.001 USDC to fetch a named three.ws public API and validate its response against the declared schema.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/solana-register-health",
+			"method": "GET",
+			"description": "Solana Agent Registration Health Check — verifies three.ws's server-custodial Solana agent-registration subsystem end-to-end by resolving a known canary agent's on-chain Metaplex Agent Registry record (Identity PDA + Core asset) and confirming both accounts exist on-chain right now.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/spend-session",
+			"method": "POST",
+			"description": "three.ws Spend Session Health — pay $0.01 USDC to probe the Agent Payment Sessions governance layer.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.01"
+		},
+		{
+			"url": "https://three.ws/api/x402/telegram-health",
+			"method": "POST",
+			"description": "Changelog Telegram Bot Health Check — pays $0.001 USDC to verify that the three.ws platform bot can reach the Telegram API and is alive.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/x402/wallet-connect",
+			"method": "POST",
+			"description": "Wallet Connection Session Health Check — probes the SIWS (Sign-In With Solana) session initiation path: issues a real nonce challenge against the platform auth gateway, validates its structure and expiry, and measures roundtrip latency.",
+			"networks": [
+				"solana",
+				"base"
+			],
 			"scheme": "exact",
 			"priceUsdc": "0.001"
 		}
 	],
 	"registrations": [],
-	"supportedTrust": ["reputation", "validation"]
+	"supportedTrust": [
+		"reputation",
+		"validation"
+	]
 }

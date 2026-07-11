@@ -17,6 +17,7 @@ import { installTransitions } from './walk-companion-transitions.js';
 import { createWalkTrails2D, createTrailSetting, TRAIL_STYLE_LABELS } from './walk-trails.js';
 import { installClickToWalk } from './walk-companion-click-to-walk.js';
 import { installNarrator } from './walk-companion-narrator.js';
+import { installIdentity } from './walk-companion-identity.js';
 // The companion is the site-wide "your agent" body. Booting the mood embodiment
 // here makes it reflect the agent's live emotional state (aura + breathing) on
 // every page the companion runs — and starts the mood engine for the session.
@@ -278,5 +279,12 @@ installNarrator({
 	getHostEl: companionHost,
 	storageKey: NARRATE_KEY,
 });
+
+// ── Identity ─────────────────────────────────────────────────────────────────
+// The corner avatar is "your agent", not a mascot: guests get a named
+// ephemeral agent (claimable into a real one), signed-in visitors see their
+// canonical agent, and the avatar reacts when ⌘K commands finish. See
+// src/walk-companion-identity.js.
+installIdentity({ getInstance: () => walk.instance });
 
 walk.bootstrap();

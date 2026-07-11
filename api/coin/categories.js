@@ -26,6 +26,17 @@ function shapeCategory(c) {
 	};
 }
 
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-categories endpoint sells the same sector leaderboard this page renders.
+export async function buildCategories() {
+	const raw = await geckoFetch('/coins/categories?order=market_cap_desc', {
+		ttlMs: 300_000,
+		timeoutMs: 10_000,
+	});
+	if (!Array.isArray(raw)) throw new Error('unexpected upstream payload');
+	return { categories: raw.filter((c) => c && typeof c.id === 'string').map(shapeCategory) };
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -34,16 +45,10 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	try {
-		const raw = await geckoFetch('/coins/categories?order=market_cap_desc', {
-			ttlMs: 300_000,
-			timeoutMs: 10_000,
-		});
-		if (!Array.isArray(raw)) throw new Error('unexpected upstream payload');
-		const categories = raw.filter((c) => c && typeof c.id === 'string').map(shapeCategory);
 		return json(
 			res,
 			200,
-			{ categories },
+			await buildCategories(),
 			{
 				'cache-control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=1800',
 			},

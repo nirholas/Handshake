@@ -7,6 +7,7 @@
 import { formatUsd, formatPercent, escapeHtml as esc } from './shared/coin-format.js';
 import { coinRow, COIN_COLUMNS, coinSortValue } from './shared/market-table.js';
 import { newsCard, wireNewsContainer } from './shared/news-render.js';
+import { onPageReady } from './shell/page-lifecycle.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -326,4 +327,6 @@ async function init() {
 	renderSuite(suiteStats);
 }
 
-init();
+// /markets is a persistent-shell page (<html data-shell> in pages/markets.html):
+// the module loads once and re-initializes on every shell navigation back here.
+onPageReady(() => init(), { match: (p) => p.replace(/\/$/, '') === '/markets' });

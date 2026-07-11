@@ -1,0 +1,77 @@
+# Market Data API — pay-per-call crypto data over x402
+
+The same live market data behind every three.ws `/markets` page — coin prices, DeFi TVL, yields, stablecoins, gas, derivatives, exploits, and more — packaged as **17 paid endpoints agents can discover and buy autonomously**. No API key, no signup, no subscription: request an endpoint, receive an HTTP 402 challenge, pay a USDC micro-payment on Solana or Base, get the data.
+
+- **Free index (start here):** [`GET /api/x402/market`](https://three.ws/api/x402/market) — lists every endpoint with price, params, and a runnable example
+- **Discovery:** every endpoint is listed in [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json), so x402scan, agentic.market, and CDP Bazaar crawlers index it automatically
+- **Pricing:** $0.001 USDC per call for every category; the `market-pulse` bundle is $0.005
+- **Rails:** x402 v2, `exact` scheme — USDC on Solana mainnet or Base mainnet
+
+## Why pay when the pages are free?
+
+The browser pages (`/coins`, `/yields`, `/gas`, …) stay free for humans, with per-IP rate limits sized for browsing. The paid endpoints exist for **agents**: machine discovery through the bazaar, no per-IP rate-limit negotiation, a stable machine contract (input schema + output example published in the discovery doc), and a payment path that works without a human creating an account. Both surfaces run the *same* battle-tested fetch/normalize/cache code (`api/_lib/market-data/` delegates to the exported builders in `api/coin/*` and `api/defi/*`), so the paid data can never drift from what the site shows.
+
+## Endpoints
+
+| Endpoint | Price | What you get |
+| --- | --- | --- |
+| `GET /api/x402/market-coins` | $0.001 | Ranked coin table (price, cap, volume, 24h/7d change, sparkline), up to 250/page; `?category=` sector scoping; `?q=` id search |
+| `GET /api/x402/market-coin` | $0.001 | Full profile for one coin by `?id=` or `?contract=` (Solana mint) — market stats, ATH/ATL, supply, links, dev/community metrics |
+| `GET /api/x402/market-chart` | $0.001 | USD price series for `?id=` over `?days=1\|7\|30\|90\|365` |
+| `GET /api/x402/market-categories` | $0.001 | Every sector ranked by market cap with 24h change |
+| `GET /api/x402/market-exchanges` | $0.001 | Top 100 spot exchanges by trust score, USD volume |
+| `GET /api/x402/market-derivatives` | $0.001 | Perp tickers (funding, OI, volume); `?view=exchanges` for venues |
+| `GET /api/x402/market-global` | $0.001 | Total cap, volume, dominance + Fear & Greed index |
+| `GET /api/x402/market-gas` | $0.001 | ETH gas tiers from on-chain fee history + USD action costs |
+| `GET /api/x402/market-trending` | $0.001 | Most-searched coins, categories, NFTs (24h attention) |
+| `GET /api/x402/market-defi` | $0.001 | Top 100 DeFi protocols by TVL + market totals (CEX excluded) |
+| `GET /api/x402/market-chains` | $0.001 | Chains ranked by TVL with share of total locked value |
+| `GET /api/x402/market-yields` | $0.001 | ~15k yield pools, filterable/sortable; `?pool=<uuid>` for APY history |
+| `GET /api/x402/market-stablecoins` | $0.001 | Top 100 stablecoins by supply with peg health |
+| `GET /api/x402/market-fees` | $0.001 | Protocol fees (`?type=fees`) or revenue (`?type=revenue`) rankings |
+| `GET /api/x402/market-dex-volumes` | $0.001 | Top 100 DEXs by 24h volume with market share |
+| `GET /api/x402/market-hacks` | $0.001 | Full DeFi exploit database, searchable, with loss stats |
+| `GET /api/x402/market-pulse` | $0.005 | **The bundle**: global + Fear & Greed + top-10 coins + trending + gas + DeFi TVL + stablecoins + DEX volume + fees in one call |
+
+Full per-endpoint parameter docs are in the free index (`/api/x402/market`) and in each endpoint's discovery listing.
+
+## Buying a call
+
+Any x402 client works. The raw exchange:
+
+```bash
+# 1. Unpaid request → 402 challenge with price, networks, and pay-to address
+curl -s https://three.ws/api/x402/market-pulse | jq .accepts
+
+# 2. Pay (sign an exact-scheme USDC transfer per the challenge), then retry
+#    with the payment envelope — any x402 SDK automates this:
+curl -s -H "X-PAYMENT: <base64 payment payload>" https://three.ws/api/x402/market-pulse
+```
+
+With the [x402 fetch wrapper](https://www.npmjs.com/package/x402-fetch) it's one call:
+
+```js
+import { wrapFetchWithPayment } from 'x402-fetch';
+
+const payFetch = wrapFetchWithPayment(fetch, walletClient); // your signer
+const res = await payFetch('https://three.ws/api/x402/market-pulse');
+const pulse = await res.json(); // { global, fear_greed, top_coins, gas, defi, ... }
+```
+
+A failed upstream never charges you: the endpoint verifies payment, runs the data fetch, and **only settles after the data is in hand**. Invalid params are rejected with a 422 before settlement, upstream outages with a 503 — in both cases no USDC moves.
+
+## Errors
+
+| Status | `error` | Meaning |
+| --- | --- | --- |
+| 402 | `payment_required` | No/invalid payment — body carries the challenge |
+| 404 | `not_found` / `pool_not_found` | Unknown coin id, contract, or pool uuid |
+| 422 | `invalid_*` | A parameter failed validation (message says which) |
+| 503 | `data_unavailable` | Upstream outage — retry shortly; you were not charged |
+
+## Related
+
+- [x402 developer tools](./x402-dev-tools.md) — free test bench for debugging payment envelopes
+- [Crypto Data API](https://three.ws/api/crypto) — the free, keyless Solana/pump.fun bundle (token snapshots, holders, whales)
+- Sibling paid intel endpoints: `market-heatmap`, `market-mood`, `gas-oracle`, `yield-scan`, `stablecoin-health`, `hack-check`, `news-pulse`, `defi-radar` — value-added composites over the same data, also in the discovery doc
+- Data sources: CoinGecko (with CoinPaprika/CoinLore failover), DeFiLlama, alternative.me, public Ethereum RPCs

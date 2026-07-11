@@ -27,6 +27,17 @@ import assetDownload from './asset-download.js';
 import remixAsset from './remix-asset.js';
 import skillCall from './skill-call.js';
 import tokenIntel from './token-intel.js';
+import defiRadar from './defi-radar.js';
+import yieldScan from './yield-scan.js';
+import stablecoinHealth from './stablecoin-health.js';
+import hackCheck from './hack-check.js';
+import marketHeatmap from './market-heatmap.js';
+import gasOracle from './gas-oracle.js';
+import marketMood from './market-mood.js';
+import newsPulse from './news-pulse.js';
+// Registry-derived family (17 endpoints, /api/x402/market-*): one row per
+// category, projected from api/_lib/market-data/registry.js — see that file.
+import { MARKET_DATA_SERVICES } from './market-data.js';
 import cosmeticPurchase from './cosmetic-purchase.js';
 import animationDownload from './animation-download.js';
 import clubCover from './club-cover.js';
@@ -78,6 +89,15 @@ export const PAID_SERVICES = Object.freeze([
 	remixAsset,
 	skillCall,
 	tokenIntel,
+	defiRadar,
+	yieldScan,
+	stablecoinHealth,
+	hackCheck,
+	marketHeatmap,
+	gasOracle,
+	marketMood,
+	newsPulse,
+	...MARKET_DATA_SERVICES,
 	cosmeticPurchase,
 	animationDownload,
 	clubCover,

@@ -5,6 +5,7 @@
 
 import { formatUsd, formatPercent, escapeHtml as esc } from './shared/coin-format.js';
 import { coinRow, COIN_COLUMNS, coinSortValue } from './shared/market-table.js';
+import { onPageReady } from './shell/page-lifecycle.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -425,25 +426,39 @@ function scheduleLiquidations() {
 	liqTimer = setInterval(pollLiquidations, LIQ_POLL_MS);
 }
 
-function loadLiquidations() {
+function loadLiquidations(signal) {
 	if (!$('cv-liq')) return;
 	renderLiqSkeleton();
 	pollLiquidations();
 	scheduleLiquidations();
-	document.addEventListener('visibilitychange', () => {
-		if (!document.hidden) pollLiquidations();
-	});
+	// A shell navigation away from /coins aborts the signal — stop polling a
+	// strip that no longer exists instead of hitting the API from other pages.
+	signal?.addEventListener('abort', () => clearInterval(liqTimer));
+	document.addEventListener(
+		'visibilitychange',
+		() => {
+			if (!document.hidden) pollLiquidations();
+		},
+		{ signal },
+	);
 }
 
 // ── Boot ────────────────────────────────────────────────────────────────────
+// /coins is a persistent-shell page (<html data-shell> in pages/coins.html):
+// the module loads once and re-initializes on every shell navigation here.
 
-loadStats();
-// If the liquidations strip's first poll lands before the markets table finishes
-// loading, its top-3 items resolve no symbol→id links yet (state.coins is still
-// empty). Re-render with the same data once the table is in so those items pick
-// up their /coin/:id links without waiting for the next 30s poll.
-loadCoins().then(() => {
-	if (lastLiqData) renderLiqPopulated(lastLiqData);
-});
-loadLiquidations();
-wireSearch();
+onPageReady(
+	({ signal }) => {
+		loadStats();
+		// If the liquidations strip's first poll lands before the markets table finishes
+		// loading, its top-3 items resolve no symbol→id links yet (state.coins is still
+		// empty). Re-render with the same data once the table is in so those items pick
+		// up their /coin/:id links without waiting for the next 30s poll.
+		loadCoins().then(() => {
+			if (lastLiqData) renderLiqPopulated(lastLiqData);
+		});
+		loadLiquidations(signal);
+		wireSearch();
+	},
+	{ match: (p) => p.replace(/\/$/, '') === '/coins' },
+);

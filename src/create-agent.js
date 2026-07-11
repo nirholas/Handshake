@@ -14,6 +14,7 @@
 
 import { apiFetch } from './api.js';
 import { getMe, saveRemoteGlbToAccount } from './account.js';
+import { peekGuestAgent, clearGuestAgent } from './agents/guest-agent.js';
 import { log } from './shared/log.js';
 import { isValidGlbMagic } from './shared/glb-magic.js';
 import { track, trackFunnelStep, trackError, ANALYTICS_EVENTS } from './analytics.js';
@@ -151,7 +152,23 @@ async function boot() {
 		showAuthGate();
 		return;
 	}
+	prefillFromGuestDraft();
 	showStep(0);
+}
+
+// The corner companion mints an ephemeral agent for signed-out visitors
+// (src/agents/guest-agent.js) and its "Claim →" CTA lands here. Carry the
+// draft's name into the wizard so the agent they met is the agent they create.
+// Never overwrite something the user already typed.
+function prefillFromGuestDraft() {
+	const draft = peekGuestAgent();
+	if (!draft?.name) return;
+	const nameEl = $('f-name');
+	if (!nameEl || nameEl.value.trim()) return;
+	nameEl.value = draft.name;
+	state.name = draft.name;
+	$('name-count').textContent = `${draft.name.length} / 60`;
+	setMsg(`Claiming ${draft.name} — your companion becomes a real agent when you finish.`, '');
 }
 
 function cacheEls() {
@@ -1187,6 +1204,9 @@ async function submit() {
 		}
 		const agent = createData.agent;
 		if (!agent?.id) throw new Error('Create succeeded but no agent was returned.');
+
+		// The ephemeral companion draft is claimed — the real agent replaces it.
+		clearGuestAgent();
 
 		// Activation funnel: a real agent identity now exists.
 		trackFunnelStep('activation', ANALYTICS_EVENTS.AGENT_CREATED, {

@@ -1,0 +1,52 @@
+{
+	"402index": {
+		"https://three.ws/api/x402/model-check": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T21:25:17.404Z",
+			"response": "{\"message\":\"Service registered and live\",\"service\":{\"id\":\"6befeb09-a8f1-491e-b577-451aa4f3c042\",\"name\":\"three.ws model-check\",\"description\":\"Model Check — an agent handed a 3D asset URL verifies it before using or paying for it: $0.001 USDC per call returns structural stats (vertex/triangle counts, "
+		},
+		"https://three.ws/api/x402/agent-reputation": {
+			"ok": false,
+			"status": 422,
+			"at": "2026-07-11T21:25:18.935Z",
+			"response": "{\"error\":\"x402 verification failed\",\"detail\":\"Endpoint returned 402 but no valid x402 challenge was detected.\",\"probe\":{\"httpStatus\":402,\"headersPresent\":{\"WWW-Authenticate\":false,\"PAYMENT-REQUIRED\":false},\"bodySnippet\":null,\"detectedProtocols\":[]}}"
+		},
+		"https://three.ws/api/x402/agent-bouncer": {
+			"ok": false,
+			"status": 422,
+			"at": "2026-07-11T21:25:19.848Z",
+			"response": "{\"error\":\"x402 verification failed\",\"detail\":\"Endpoint returned 402 but no valid x402 challenge was detected.\",\"probe\":{\"httpStatus\":402,\"headersPresent\":{\"WWW-Authenticate\":false,\"PAYMENT-REQUIRED\":false},\"bodySnippet\":null,\"detectedProtocols\":[]}}"
+		},
+		"https://three.ws/api/x402/onchain-identity-verify": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T21:25:21.728Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"1a705352-cec8-4b98-b343-08b329fda645\",\"name\":\"three.ws onchain-identity-verify\",\"description\":\"Cross-platform On-Chain Identity Verifier — prove any claim that an identity controls an addres"
+		},
+		"https://three.ws/api/x402/pump-launch": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T21:25:24.709Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"615b3e87-4716-49d7-8db1-3bda1a89e5aa\",\"name\":\"three.ws pump-launch\",\"description\":\"Pump Launcher — launch a pump.fun token autonomously in one paid call: no SOL, no wallet, no account.\",\"url"
+		},
+		"https://three.ws/api/x402/forge": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T21:25:26.124Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"20ca300a-a9e9-4ee5-80ae-ff732d65096a\",\"name\":\"three.ws forge\",\"description\":\"Forge — production text/image→3D for agents that need real assets, not drafts: game assets, NFT art, scene props,"
+		},
+		"https://three.ws/api/x402/mint-to-mesh": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T21:25:27.677Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"e7637454-a63b-47a0-9b79-902005e4bd18\",\"name\":\"three.ws mint-to-mesh\",\"description\":\"Mint to Mesh — pass any Solana SPL token mint, get back a binary glTF (GLB) cube themed and colored from t"
+		},
+		"https://three.ws/api/x402/mint-to-mesh-batch": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T21:25:29.065Z",
+			"response": "{\"message\":\"Service registered and live\",\"service\":{\"id\":\"1b32e918-ec64-44dd-a952-060ac7eca156\",\"name\":\"three.ws mint-to-mesh-batch\",\"description\":\"Mint to Mesh (Batch) — resolve 1–10 Solana SPL mints to themed glTF (GLB) cubes in a single paid call instead of paying for N round-trips.\",\"url\":\"https"
+		}
+	}
+}

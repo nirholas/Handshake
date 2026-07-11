@@ -34,7 +34,9 @@ function normalizeChart(raw) {
 	return out;
 }
 
-async function build() {
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-dex-volumes endpoint sells the same DEX rankings this page renders.
+export async function buildDexVolumes() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache.value;
 
@@ -95,7 +97,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	try {
-		const payload = await build();
+		const payload = await buildDexVolumes();
 		return json(res, 200, payload, {
 			'cache-control': 'public, max-age=120, s-maxage=600, stale-while-revalidate=600',
 		});

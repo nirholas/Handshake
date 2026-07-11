@@ -14,7 +14,9 @@ const TTL_MS = 300_000;
 
 let _cache = null; // { value, expiresAt }
 
-async function build() {
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-chains endpoint sells the same cross-chain TVL board this page renders.
+export async function buildChains() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache.value;
 
@@ -65,7 +67,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	try {
-		const payload = await build();
+		const payload = await buildChains();
 		return json(res, 200, payload, {
 			'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600',
 		});

@@ -109,6 +109,32 @@ function clampInt(raw, fallback, min, max) {
 	return Math.min(max, Math.max(min, n));
 }
 
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-hacks endpoint sells the same exploit database this page renders.
+export async function queryHacks({ search = '', limit = DEFAULT_LIMIT, offset = 0 } = {}) {
+	const dataset = await loadDataset();
+
+	let filtered = dataset.hacks;
+	if (search) {
+		filtered = filtered.filter((h) => {
+			const hay = `${h.name} ${h.technique || ''} ${h.classification || ''}`.toLowerCase();
+			return hay.includes(search);
+		});
+	}
+
+	return {
+		stats: {
+			total_stolen_all_time: dataset.stats.total_stolen_all_time,
+			total_stolen_12mo: dataset.stats.total_stolen_12mo,
+			incidents_12mo: dataset.stats.incidents_12mo,
+			bridge_hack_share_pct: finiteOrNull(dataset.stats.bridge_hack_share_pct) ?? 0,
+		},
+		hacks: filtered.slice(offset, offset + limit),
+		count: filtered.length,
+		updated_at: dataset.updated_at,
+	};
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -127,32 +153,10 @@ export default wrap(async (req, res) => {
 	const offset = clampInt(url.searchParams.get('offset'), 0, 0, Number.MAX_SAFE_INTEGER);
 
 	try {
-		const dataset = await loadDataset();
-
-		let filtered = dataset.hacks;
-		if (search) {
-			filtered = filtered.filter((h) => {
-				const hay = `${h.name} ${h.technique || ''} ${h.classification || ''}`.toLowerCase();
-				return hay.includes(search);
-			});
-		}
-
-		const page = filtered.slice(offset, offset + limit);
-
 		return json(
 			res,
 			200,
-			{
-				stats: {
-					total_stolen_all_time: dataset.stats.total_stolen_all_time,
-					total_stolen_12mo: dataset.stats.total_stolen_12mo,
-					incidents_12mo: dataset.stats.incidents_12mo,
-					bridge_hack_share_pct: finiteOrNull(dataset.stats.bridge_hack_share_pct) ?? 0,
-				},
-				hacks: page,
-				count: filtered.length,
-				updated_at: dataset.updated_at,
-			},
+			await queryHacks({ search, limit, offset }),
 			{
 				'cache-control':
 					'public, max-age=120, s-maxage=600, stale-while-revalidate=1200',

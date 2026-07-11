@@ -15,6 +15,21 @@ import { fetchMarketsTable } from '../_lib/market-fallbacks.js';
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-coins endpoint offers the same type-ahead id resolver this page uses.
+export async function searchCoins(q) {
+	const raw = await geckoFetch(`/search?query=${encodeURIComponent(q)}`, { ttlMs: 300_000 });
+	return {
+		coins: (raw?.coins || []).slice(0, 10).map((c) => ({
+			id: c.id,
+			name: c.name,
+			symbol: (c.symbol || '').toUpperCase(),
+			thumb: c.thumb || null,
+			rank: num(c.market_cap_rank),
+		})),
+	};
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -28,15 +43,7 @@ export default wrap(async (req, res) => {
 	try {
 		if (q) {
 			if (q.length > 64) return error(res, 400, 'bad_query', 'search query too long');
-			const raw = await geckoFetch(`/search?query=${encodeURIComponent(q)}`, { ttlMs: 300_000 });
-			const coins = (raw?.coins || []).slice(0, 10).map((c) => ({
-				id: c.id,
-				name: c.name,
-				symbol: (c.symbol || '').toUpperCase(),
-				thumb: c.thumb || null,
-				rank: num(c.market_cap_rank),
-			}));
-			return json(res, 200, { coins }, {
+			return json(res, 200, await searchCoins(q), {
 				'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600',
 			});
 		}

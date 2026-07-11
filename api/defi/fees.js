@@ -40,7 +40,9 @@ function normalizeChart(raw) {
 	return out;
 }
 
-async function build(type) {
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-fees endpoint sells the same fees/revenue rankings this page renders.
+export async function buildFees(type) {
 	const now = Date.now();
 	const hit = _cache.get(type);
 	if (hit && hit.expiresAt > now) return hit.value;
@@ -101,7 +103,7 @@ export default wrap(async (req, res) => {
 	const type = url.searchParams.get('type') === 'revenue' ? 'revenue' : 'fees';
 
 	try {
-		const payload = await build(type);
+		const payload = await buildFees(type);
 		return json(res, 200, payload, {
 			'cache-control': 'public, max-age=120, s-maxage=600, stale-while-revalidate=600',
 		});
