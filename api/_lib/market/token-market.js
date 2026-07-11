@@ -230,7 +230,21 @@ async function fromGeckoTerminal(mint) {
 	);
 }
 
-const SOURCES = [fromBirdeye, fromDexScreener, fromGeckoTerminal];
+// DefiLlama coins oracle (keyless) — price-only, but a fully independent
+// aggregator (its own multi-DEX sourcing), so it survives when Birdeye,
+// DexScreener AND GeckoTerminal are simultaneously down/rate-limited. It carries
+// no market cap / volume / liquidity / holders, so those stay null when it's the
+// answering source — a price-only panel beats a blank one.
+async function fromLlamaCoins(mint) {
+	const key = `solana:${mint}`;
+	const data = await fetchJson(`https://coins.llama.fi/prices/current/${key}`);
+	const c = data?.coins?.[key];
+	const price = num(c?.price);
+	if (!(price > 0)) return null;
+	return shape({ price_usd: price, decimals: num(c?.decimals) ?? 6 }, 'llama');
+}
+
+const SOURCES = [fromBirdeye, fromDexScreener, fromGeckoTerminal, fromLlamaCoins];
 
 // Store a value in the per-instance L1 cache (with the bounded-size eviction the
 // fetch path uses) and return it. Shared by the live, L2-hit, and lock-loser

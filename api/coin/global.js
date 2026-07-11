@@ -1,15 +1,16 @@
 // GET /api/coin/global
 // ---------------------------------------------------------------------------
 // Global market stats bar for the /coins page: total market cap, 24h volume,
-// top-2 dominance shares, active coin count (CoinGecko /global) plus the
-// Fear & Greed index (alternative.me — the standard free source). Each half is
-// independent: if one upstream fails the other still renders. Cached 120s.
+// top-2 dominance shares, active coin count plus the Fear & Greed index
+// (alternative.me — the standard free source). The market stats read failover
+// across three free sources (CoinGecko → CoinPaprika → CoinLore, see
+// api/_lib/market-fallbacks.js) so a single-provider rate-limit no longer
+// blanks the bar. Each half is independent: if one upstream fails the other
+// still renders. Cached 120s.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { geckoFetch } from '../_lib/coingecko.js';
-
-const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+import { fetchGlobalMarket } from '../_lib/market-fallbacks.js';
 
 let _fng = null; // { value, expiresAt }
 const FNG_TTL_MS = 300_000;
@@ -38,28 +39,11 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const [globalResult, fngResult] = await Promise.allSettled([
-		geckoFetch('/global', { ttlMs: 120_000 }),
+		fetchGlobalMarket(),
 		fetchFearGreed(),
 	]);
 
-	let market = null;
-	if (globalResult.status === 'fulfilled') {
-		const g = globalResult.value?.data || {};
-		// Top-2 dominance entries come from the runtime response, largest first —
-		// no asset list is hardcoded here.
-		const dominance = Object.entries(g.market_cap_percentage || {})
-			.filter(([, v]) => Number.isFinite(v))
-			.sort((a, b) => b[1] - a[1])
-			.slice(0, 2)
-			.map(([sym, pct]) => ({ symbol: sym.toUpperCase(), pct }));
-		market = {
-			market_cap_usd: num(g.total_market_cap?.usd),
-			volume_24h_usd: num(g.total_volume?.usd),
-			market_cap_change_pct_24h: num(g.market_cap_change_percentage_24h_usd),
-			active_coins: num(g.active_cryptocurrencies),
-			dominance,
-		};
-	}
+	const market = globalResult.status === 'fulfilled' ? globalResult.value : null;
 	const fear_greed = fngResult.status === 'fulfilled' ? fngResult.value : null;
 
 	if (!market && !fear_greed) {

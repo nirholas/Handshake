@@ -11,28 +11,9 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch } from '../_lib/coingecko.js';
-import { downsample } from '../../src/shared/coin-format.js';
+import { fetchMarketsTable } from '../_lib/market-fallbacks.js';
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
-
-function shapeRow(c) {
-	return {
-		id: c.id,
-		symbol: (c.symbol || '').toUpperCase(),
-		name: c.name || c.id,
-		image: c.image || null,
-		rank: num(c.market_cap_rank),
-		price: num(c.current_price),
-		change_24h: num(c.price_change_percentage_24h_in_currency ?? c.price_change_percentage_24h),
-		change_7d: num(c.price_change_percentage_7d_in_currency),
-		market_cap: num(c.market_cap),
-		volume_24h: num(c.total_volume),
-		sparkline: downsample(
-			(c.sparkline_in_7d?.price || []).filter((v) => Number.isFinite(v)),
-			32,
-		),
-	};
-}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -68,14 +49,12 @@ export default wrap(async (req, res) => {
 		if (category && !/^[a-z0-9-]{1,80}$/.test(category)) {
 			return error(res, 400, 'bad_category', 'category must be a CoinGecko category id');
 		}
-		const raw = await geckoFetch(
-			`/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}` +
-				`&sparkline=true&price_change_percentage=24h,7d` +
-				(category ? `&category=${encodeURIComponent(category)}` : ''),
-			{ ttlMs: 60_000, timeoutMs: 10_000 },
-		);
-		if (!Array.isArray(raw)) throw new Error('unexpected upstream payload');
-		return json(res, 200, { coins: raw.map(shapeRow), page, per_page: perPage, category: category || null }, {
+		// CoinGecko primary → CoinLore fallback (see api/_lib/market-fallbacks.js).
+		// A CoinGecko rate-limit no longer blanks the /coins table; CoinLore backs
+		// it up (top-N only — category scoping and 7d sparklines are CoinGecko-only
+		// and degrade gracefully).
+		const { rows } = await fetchMarketsTable({ page, perPage, category });
+		return json(res, 200, { coins: rows, page, per_page: perPage, category: category || null }, {
 			'cache-control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=300',
 		});
 	} catch {
