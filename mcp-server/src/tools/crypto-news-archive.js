@@ -25,7 +25,8 @@ const TOOL_DESCRIPTION =
 	'collapse. For today\'s coverage use crypto_news or crypto_news_digest. stats and trending modes are ' +
 	'always free; search includes a free daily quota (60/day per IP, no key or wallet needed), then ' +
 	'$0.001 USDC per search via x402 — an exhausted quota returns a payment_required envelope with the ' +
-	'price and accepted networks.';
+	'price and accepted networks. Heavy users: a monthly Premium pass (paid on Solana in $THREE at 20% ' +
+	'off, SOL, or USDC — see three.ws/docs/premium) replaces per-search payments with an API key.';
 
 const inputZodShape = {
 	mode: z

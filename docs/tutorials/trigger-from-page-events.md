@@ -32,7 +32,7 @@ Every recipe in this tutorial assumes you have an agent on the page. The simples
     section:nth-child(even) { background: #fff; }
     h2 { font-size: 2rem; margin: 0 0 16px; letter-spacing: -0.02em; }
   </style>
-  <script type="module" src="https://three.ws/cdn/agent-3d.js"></script>
+  <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 </head>
 <body>
   <section><h2>Hero</h2><p>Headline copy here.</p></section>

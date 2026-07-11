@@ -165,20 +165,21 @@ The "use sparingly" line matters. Models that over-gesture come across as a chil
 The platform maintains conversation memory automatically. Two scopes:
 
 - **Rolling context** — the last N turns of the current chat. Fed back into the model on each turn so it remembers what was just said. Cleared by `agent.clearConversation()` and on page reload by default.
-- **Long-term memory** — explicit facts the agent wrote with `agent.agent.memory.write(scope, key, value)` or loaded from the manifest. Persists across sessions if the memory mode is `local` (browser storage) or `cloud` (server-side).
+- **Long-term memory** — explicit notes written through the element's `memory` handle with `agent.memory.write(key, { name, description, type, body })`, or loaded from the manifest. Persists across sessions if the memory mode is `local` (browser storage) or `cloud` (server-side).
 
 For most agents, the rolling context is enough. The user asks "what was that project you mentioned?" and the model still has the previous turn in context — no separate memory write needed.
 
 You reach for long-term memory in two scenarios:
 
-**Pre-loading reference facts.** The agent should always know certain things — your portfolio links, your office hours, the museum's wing list. Write these once at boot:
+**Pre-loading reference facts.** The agent should always know certain things — your portfolio links, your office hours, the museum's wing list. Write these once at boot. Each entry is a small named note: a `key` (its filename in the memory store) plus a `name`, a one-line `description`, a `type` (`reference` for facts like these), and a free-text `body`:
 
 ```js
-agent.addEventListener('agent:ready', async () => {
-  await agent.agent.memory.write('long-term', 'hours', {
-    weekday: '9am-7pm',
-    weekend: '10am-5pm',
-    holidays: 'Closed Dec 24-26',
+agent.addEventListener('agent:ready', () => {
+  agent.memory.write('hours', {
+    name: 'Opening hours',
+    description: 'When we are open, for any scheduling question',
+    type: 'reference',
+    body: 'Weekdays 9am-7pm. Weekends 10am-5pm. Closed Dec 24-26.',
   });
 });
 ```
@@ -346,7 +347,7 @@ two sentences: who you are, who you represent, and invite the visitor to ask any
 Then wave.
 ```
 
-The "__greet" trigger is a pattern worth knowing about. The web component can fire a hidden first message at page load to give the agent something to respond to — that's how you get the agent to introduce itself without needing the user to type first. The prompt names the trigger explicitly so the model knows how to handle it.
+The "__greet" trigger is a pattern worth knowing about. Your page can fire a hidden first message once the agent boots — `agent.addEventListener('agent:ready', () => agent.say('__greet'))` — to give the brain something to respond to. That's how you get the agent to introduce itself without needing the user to type first. It has to be `say()` (or `ask()`), which route the message through the brain; `speak()` never reaches the model — it only drives the talking animation. The prompt names the trigger explicitly so the model knows how to handle it.
 
 ---
 

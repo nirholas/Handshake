@@ -98,7 +98,7 @@ same code should work on both the creator fee update on Devnet and the current M
 program on Mainnet to the creator fee update.
 
 We are also trying to release the Pump program Typescript SDK by Monday, so you can use it. The 
-[bondingCurve.ts](bondingCurve.ts) file is part of the upcoming Pump program Typescript SDK.
+`bondingCurve.ts` file is part of the upcoming Pump program Typescript SDK.
 
 ## Coin creator fees update
 
@@ -116,7 +116,7 @@ Who will not receive coin creator fees?
 - coins already migrated to Raydium, as that program is not under our control.
 - normal PumpSwap pools which are not created by Pump program `migrate` instruction.
 
-You should start by using the latest IDL files for both programs from the [idl](idl) directory. They are
+You should start by using the latest IDL files for both programs from the `idl` directory. They are
 backwards-compatible with current programs deployed on Mainnet, so you can start using them now.
 
 You can also use our Typescript SDKs for easier integration:

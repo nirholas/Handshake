@@ -1834,6 +1834,14 @@
 			"dest": "/dashboard-next/developers.html"
 		},
 		{
+			"src": "/dashboard/data-api/?",
+			"dest": "/dashboard-next/data-api.html"
+		},
+		{
+			"src": "/dashboard/billing/?",
+			"dest": "/dashboard-next/billing.html"
+		},
+		{
 			"src": "/dashboard/three-token/?",
 			"dest": "/dashboard-next/three-token.html"
 		},

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-11T03:45:18.092Z",
+	"generated_at": "2026-07-11T04:07:32.399Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2081,6 +2081,26 @@
 					"showcase": false
 				},
 				{
+					"path": "/dashboard/data-api",
+					"title": "Dashboard · Data API",
+					"description": "Developer console for the three.ws Data API — buy the Premium pass with $THREE, SOL, or USDC, manage API keys, watch usage, and copy quickstarts.",
+					"added": "2026-07-11",
+					"auth": "required",
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/dashboard/billing",
+					"title": "Dashboard · Billing & Passes",
+					"description": "Manage subscriptions and paid services — Premium pass status, on-chain payment history, API keys, and creator subscriptions.",
+					"added": "2026-07-11",
+					"auth": "required",
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/dashboard/analytics",
 					"title": "Dashboard · Analytics",
 					"description": "API call volume, x402 spend, and per-agent usage breakdowns.",
@@ -2272,6 +2292,16 @@
 					"title": "Docs · x402 Protocol",
 					"description": "How three.ws implements x402 HTTP 402 paid agent skills — the challenge, verify, and settle mechanics.",
 					"added": "2026-04-29",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/premium",
+					"title": "Premium Pass — Monthly Data API Access",
+					"description": "One Solana payment ($THREE at 20% off, SOL, or USDC) buys 30 days of unmetered Data API access with an API key — no per-call x402 payments.",
+					"added": "2026-07-11",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

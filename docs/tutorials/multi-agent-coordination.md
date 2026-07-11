@@ -16,8 +16,8 @@ This tutorial assumes you've built at least one agent ([first-agent](/tutorials/
 **Prerequisites:**
 
 - Two saved agents in your dashboard at `https://three.ws/dashboard`. They can be variants of the same avatar or two completely different characters.
-- A live web page where you can drop two `<script>` tags and own the surrounding HTML/JS. A static `.html` file served by `npx serve .` is enough to get started.
-- Familiarity with the embed JS API (`speak`, `playAnimation`, events like `brain:message`, `voice:speech-end`, `agent:ready`). The reference is in [js-api-events](/tutorials/js-api-events) and the source of truth is `https://three.ws/cdn/agent-3d.js`.
+- A live web page where you can add a `<script>` tag and two `<agent-3d>` elements, and own the surrounding HTML/JS. A static `.html` file served by `npx serve .` is enough to get started.
+- Familiarity with the embed JS API (`say`, `ask`, `play`, events like `brain:message`, `voice:speech-end`, `agent:ready`). The reference is in [js-api-events](/tutorials/js-api-events) and the source of truth is the published bundle at `https://three.ws/agent-3d/1.5.2/agent-3d.js`.
 - Each agent has a personality configured. See [agent-personality](/tutorials/agent-personality) if either of yours doesn't yet — they need distinct voices for the handoff to feel coherent.
 
 ---
@@ -65,6 +65,7 @@ A two-agent layout where both characters are always visible. Riley on the left, 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Pricing — talk to Riley and Devon</title>
+    <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
     <style>
       body { margin: 0; font-family: system-ui, sans-serif; background: #0b0b10; color: #fff; }
       .stage { display: grid; grid-template-columns: 1fr 1fr; height: 60vh; gap: 1rem; padding: 1rem; }
@@ -82,11 +83,13 @@ A two-agent layout where both characters are always visible. Riley on the left, 
     <div class="stage">
       <div id="riley-stage" class="active">
         <h3>Riley · Sales</h3>
-        <script src="https://three.ws/cdn/agent-3d.js" data-agent-id="<RILEY_AGENT_ID>" id="riley"></script>
+        <agent-3d id="riley" agent-id="<RILEY_AGENT_ID>" avatar-chat="off" voice eager
+                  style="width:100%;height:100%"></agent-3d>
       </div>
       <div id="devon-stage">
         <h3>Devon · Engineering</h3>
-        <script src="https://three.ws/cdn/agent-3d.js" data-agent-id="<DEVON_AGENT_ID>" id="devon"></script>
+        <agent-3d id="devon" agent-id="<DEVON_AGENT_ID>" avatar-chat="off" voice eager
+                  style="width:100%;height:100%"></agent-3d>
       </div>
     </div>
     <div class="chat">
@@ -98,7 +101,7 @@ A two-agent layout where both characters are always visible. Riley on the left, 
 </html>
 ```
 
-Two `<script>` tags, two `data-agent-id` attributes pointing at your saved agents. `coordinator.js` is the file we'll write next.
+One loader `<script>` in the `<head>` registers the `<agent-3d>` element; two tags with `agent-id` attributes point at your saved agents. Three attribute choices matter here: `avatar-chat="off"` hides each agent's built-in chat input (this page has its own shared composer), `voice` enables text-to-speech so the avatars actually speak their replies (and fire the `voice:speech-start`/`voice:speech-end` events we lean on later), and `eager` boots both agents immediately instead of waiting for them to scroll into view. `coordinator.js` is the file we'll write next.
 
 Replace `<RILEY_AGENT_ID>` and `<DEVON_AGENT_ID>` with the actual agent IDs from your dashboard. They're displayed under each agent in `https://three.ws/dashboard`.
 
@@ -152,7 +155,10 @@ function onReady(name, el) {
     appendLog('system', `${name} ready.`);
     if (state.ready.riley && state.ready.devon) {
       setActive(riley);
-      riley.speak("Hi! I'm Riley. Devon's here too if you have technical questions. What can I help with?");
+      riley.say(
+        "Introduce yourself to the visitor in one or two sentences: you're Riley " +
+        "from sales, and your colleague Devon is on hand for deep technical questions."
+      );
     }
   };
 }
@@ -161,13 +167,13 @@ riley.addEventListener('agent:ready', onReady('riley', riley));
 devon.addEventListener('agent:ready', onReady('devon', devon));
 ```
 
-This boots both agents, marks both `agent:ready`, then has Riley introduce the pair. Devon stands by silently.
+This boots both agents, marks both `agent:ready`, then has Riley introduce the pair. Devon stands by silently. `say(text)` pushes a message into the agent's conversation exactly as if the visitor typed it — here it carries a stage direction, and Riley's brain generates the actual greeting, which arrives via the `brain:message` event we wire next.
 
 ---
 
 ## Step 5 — Routing user input
 
-The shared input box sends to the active agent. The embed bundle exposes a `chat()` method that pushes a message into the agent's conversation as if the user typed it directly:
+The shared input box sends to the active agent via the same `say()` method we used for the greeting — it pushes a message into the agent's conversation as if the user typed it directly:
 
 ```js
 input.addEventListener('keydown', (e) => {
@@ -177,7 +183,7 @@ input.addEventListener('keydown', (e) => {
   if (!state.active) return;     // not ready yet
   appendLog('you', text);
   state.scratch.push({ role: 'user', content: text });
-  state.active.chat(text);
+  state.active.say(text);
 });
 ```
 
@@ -212,7 +218,7 @@ Two ways to detect that the current agent wants to hand off:
 
 We'll use (a) because it works with any LLM, any agent, no skill bundle required.
 
-In Riley's system prompt (set via the agent's "Personality" tab in the editor, or via the manifest's `system_prompt` field), append:
+In Riley's system prompt (set via the agent's "Personality" tab in the editor, or via the manifest's `instructions.md` file), append:
 
 ```
 You are Riley, the sales lead on this pricing page. Devon, our staff
@@ -267,9 +273,8 @@ function considerHandoff(speakerName, text) {
 
   setActive(targetEl);
   appendLog('system', `→ handoff to ${target}`);
-  // Inject the brief as a "user" message tagged with the system role marker
-  // the runtime supports for stage directions.
-  targetEl.chat(brief, { role: 'system' });
+  // Inject the brief into the new active agent's conversation.
+  targetEl.say(brief);
 }
 
 function buildBrief(scratch, target) {
@@ -290,7 +295,7 @@ function buildBrief(scratch, target) {
 }
 ```
 
-`targetEl.chat(brief, { role: 'system' })` is a stage-direction message: it goes into the agent's conversation but is not appended to the user-visible transcript. The agent treats it as context and responds with its next visitor-facing message.
+`targetEl.say(brief)` pushes the brief into the target agent's conversation as an ordinary message — there is no separate system-role channel, which is exactly why `buildBrief` wraps the transcript in an explicit `[Stage director: …]` framing: the model reads the bracketed preamble as direction rather than visitor speech, and responds with its next visitor-facing message. Because both elements run with `avatar-chat="off"`, the brief never renders anywhere the visitor can see; the only transcript on the page is the one your `brain:message` handler builds in the log.
 
 ---
 
@@ -321,7 +326,7 @@ The `state.scratch` keeps the raw text (so the brief built in `buildBrief` is fa
 
 ## Step 8 — Speech-end synchronization
 
-The agent's `speak` method drives the 3D character's lip-sync and ambient animations. The `voice:speech-end` event fires when the avatar finishes saying its line. Use this to gate the next user input:
+Because both elements carry the `voice` attribute from Step 3, every reply is spoken aloud: the runtime fires `voice:speech-start` when TTS begins and `voice:speech-end` when the avatar finishes saying its line (without `voice`, neither event fires). Use the pair to gate the next user input:
 
 ```js
 let speaking = false;
@@ -336,7 +341,7 @@ wireSpeechGate(devon);
 
 Without this, an eager visitor types over the avatar's spoken response and the conversation tangles. With it, each turn completes cleanly.
 
-For a handoff specifically, you want the OLD agent's `voice:speech-end` to fire *before* the NEW agent starts speaking. The event order is naturally correct because the coordinator calls `targetEl.chat(brief, ...)` immediately, but the new agent doesn't start speaking until its LLM responds — which is well after the old agent finished its last syllable. No extra coordination needed in practice.
+For a handoff specifically, you want the OLD agent's `voice:speech-end` to fire *before* the NEW agent starts speaking. The event order is naturally correct because the coordinator calls `targetEl.say(brief)` immediately, but the new agent doesn't start speaking until its LLM responds — which is well after the old agent finished its last syllable. No extra coordination needed in practice.
 
 ---
 
@@ -353,7 +358,7 @@ If any of those fail, the typical causes:
 
 - **Riley doesn't hand off.** The system prompt isn't strong enough. Make the trigger list more concrete or use few-shot examples in the prompt.
 - **Devon answers technical questions Riley should have answered.** Check that the handoff topics list in Riley's prompt is *exclusive* — explicitly say "do NOT hand off when the visitor asks X."
-- **Both agents speak at once.** The `voice:speech-start`/`voice:speech-end` gate isn't wired, or one of the agents is mis-receiving the chat input. Confirm `state.active` is correctly set and the `chat()` call only goes to `state.active`.
+- **Both agents speak at once.** The `voice:speech-start`/`voice:speech-end` gate isn't wired, or one of the agents is mis-receiving the chat input. Confirm `state.active` is correctly set and the `say()` call only goes to `state.active`.
 
 ---
 
@@ -361,43 +366,40 @@ If any of those fail, the typical causes:
 
 The example so far is **sequential delegation** — one agent speaks at a time. The other big multi-agent pattern is **parallel fan-out**: two agents work simultaneously on different parts of a task and the coordinator joins the results.
 
-A concrete example: a research agent and a copy-editor agent. The visitor asks "draft a 200-word blog post on the new feature." The research agent fetches facts; the copy-editor agent drafts the prose using those facts.
+A concrete example: a research agent and a copy-editor agent. The visitor asks "draft a 200-word blog post on the new feature." The research agent gathers facts; the copy-editor agent drafts the prose using those facts.
 
-The shape:
+The primitive that makes this work is `ask()` — the promise-returning sibling of `say()`. It sends a message into the agent's conversation and resolves with the assistant's reply text, so the coordinator can `await` both agents at once and join the results:
 
 ```js
 async function parallelTask(userPrompt) {
-  // Both agents accept tool calls via a hidden interface — chat() with a
-  // role of 'tool-call' wraps the prompt so the agent's tool runner picks it up
-  // without rendering as a visitor message.
-  const [facts, draftScaffold] = await Promise.all([
-    callAgentTool(researcher, 'gather_facts', { topic: userPrompt }),
-    callAgentTool(writer, 'draft_outline', { topic: userPrompt }),
+  const [facts, outline] = await Promise.all([
+    researcher.ask(
+      `List the verifiable facts we can cite about: ${userPrompt}. Bullet points only.`
+    ),
+    writer.ask(
+      `Draft a tight outline for a 200-word blog post on: ${userPrompt}. Headings only.`
+    ),
   ]);
-  // Now hand the combined result back to the writer to finalize.
-  return callAgentTool(writer, 'finalize_post', { outline: draftScaffold, facts });
+  // Join: hand the researcher's facts to the writer for the final pass.
+  return writer.ask(
+    `Write the final 200-word post from your outline, using only these facts.\n\n` +
+    `Facts:\n${facts}\n\nOutline:\n${outline}`
+  );
 }
 ```
 
-`callAgentTool` is a small helper that wraps `el.chat(...)` and listens for a single `tool-result` event:
+If either agent does its part through tools — a skill bundle that fetches a feed, hits an API, reads a knowledge base — you can observe every call from the page via the `skill:tool-start` and `skill:tool-called` events:
 
 ```js
-function callAgentTool(el, toolName, args) {
-  return new Promise((resolve, reject) => {
-    const id = crypto.randomUUID();
-    const onResult = (e) => {
-      if (e.detail?.toolCallId !== id) return;
-      el.removeEventListener('tool-result', onResult);
-      if (e.detail.error) reject(new Error(e.detail.error));
-      else resolve(e.detail.result);
-    };
-    el.addEventListener('tool-result', onResult);
-    el.invokeTool({ id, name: toolName, args });
-  });
-}
+researcher.addEventListener('skill:tool-called', (e) => {
+  const { tool, result } = e.detail;
+  console.log('researcher ran', tool, result);
+});
 ```
 
-This requires each agent to expose the tools you're calling. Build them as skills (see [custom-skill](/tutorials/custom-skill)). The orchestration logic stays in the coordinator on the page.
+Build the tools themselves as skills (see [custom-skill](/tutorials/custom-skill)); the orchestration logic stays in the coordinator on the page.
+
+There's also a platform-native alternative to page-level orchestration: the `<agent-stage>` element. A stage hosts every child `<agent-3d>` in one shared WebGL scene (with a `formation` attribute — `row`, `circle`, or `freeform`), exposes `getAgents()`, `broadcast(fromId, event)`, and `routeMessage(fromId, toId, text)` to your code, and grants each staged agent two extra built-in tools — `observe_agents` (who else is on stage) and `say_to_agent` (address a colleague directly) — so the LLMs can delegate to each other without any coordinator glue. When the agents, not the page, should decide who does what, reach for the stage. The full patterns are in [Multi-Agent Scenes](../multi-agent.md).
 
 Parallel fan-out is **harder to debug** than sequential delegation because errors are non-deterministic in order and any latency outlier blocks the join. Use it when the wall-clock saving is worth the complexity. For a chat UX with a human in the loop, sequential is almost always the right default.
 
@@ -458,33 +460,22 @@ The runtime cannot fix prompts that contradict each other. Catch contradictions 
 
 ## Step 13 — Pattern: turn-taking with no human
 
-Sometimes the two agents are talking to each other, with the human watching. A debate, a roleplay, a brainstorm. This is the cleanest pattern in terms of code (no human input gate; turns alternate on `voice:speech-end`) and the hardest pattern in terms of LLM behavior (without grounding in real user input, both agents drift into hallucinated agreement after about six turns).
+Sometimes the two agents are talking to each other, with the human watching. A debate, a roleplay, a brainstorm. This is the cleanest pattern in terms of code (no human input gate; each turn feeds the previous reply to the other agent) and the hardest pattern in terms of LLM behavior (without grounding in real user input, both agents drift into hallucinated agreement after about six turns).
 
-Concrete loop:
+Concrete loop — `ask()` does all the sequencing for you, because with `voice` enabled it resolves only after the reply has been generated *and* spoken:
 
 ```js
 async function autoplay(topic, turns = 6) {
-  setActive(riley);
-  riley.speak(`Let's debate this: ${topic}. I'll go first.`);
-  await waitForSpeakEnd(riley);
-  let speaker = riley, other = devon;
+  let speaker = riley;
+  let prompt = `Let's debate this: ${topic}. Open with your position in two sentences.`;
   for (let i = 0; i < turns; i++) {
     setActive(speaker);
-    const lastFromOther = state.scratch.filter((m) => m.name === otherName(other)).slice(-1)[0]?.content || topic;
-    speaker.chat(lastFromOther);
-    await waitForChatMessage(speaker);
-    await waitForSpeakEnd(speaker);
-    [speaker, other] = [other, speaker];
+    const reply = await speaker.ask(prompt);
+    prompt = `The other debater said: "${reply}". Respond in two sentences.`;
+    speaker = speaker === riley ? devon : riley;
+    // Brief beat between turns so the handover doesn't feel robotic.
+    await new Promise((r) => setTimeout(r, 800));
   }
-}
-
-function waitForSpeakEnd(el) {
-  return new Promise((res) => el.addEventListener('voice:speech-end', () => res(), { once: true }));
-}
-function waitForChatMessage(el) {
-  return new Promise((res) => el.addEventListener('brain:message', (e) => {
-    if (e.detail?.role === 'assistant') res();
-  }, { once: true }));
 }
 ```
 
@@ -518,20 +509,22 @@ When you go from a demo to production, two-agent pages introduce real concerns:
 
 **Latency.** The handoff cost is one extra LLM round trip (the brief injected as a stage direction triggers a response). Visible to the user as ~1.5 extra seconds. Acceptable for a substantive question, intolerable for trivial ones — which is why the handoff list in Riley's prompt must be restrictive.
 
-**Failure modes.** Devon's LLM provider goes down. Now Riley still works but the handoff lands on a dead agent. Mitigation: a try/catch around `targetEl.chat(brief, ...)` with a fallback that has Riley apologize and answer best-effort.
+**Failure modes.** Devon's LLM provider goes down. Now Riley still works but the handoff lands on a dead agent. Mitigation: deliver the brief with `ask()` instead of `say()` — same send, but it returns a promise you can race against a timeout — and fall back to Riley on failure. Note the fallback message is a stage direction, not a scripted line: Riley's brain generates the actual apology in Riley's voice.
 
 ```js
 async function safeHandoff(targetEl, brief, fallbackEl, originalQuestion) {
   try {
     await Promise.race([
-      handoffWithTimeout(targetEl, brief, 8000),
-      timeoutGuard(8000),
+      targetEl.ask(brief),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('handoff timed out')), 8000)),
     ]);
   } catch (err) {
     setActive(fallbackEl);
-    fallbackEl.speak(
-      "Devon's tied up right now — let me take a shot at this myself, and " +
-        "I'll get a fuller answer in writing afterwards. " + originalQuestion
+    fallbackEl.say(
+      "Devon is unavailable right now. Apologize briefly, take your best shot at " +
+        "the visitor's technical question yourself, and offer a written follow-up. " +
+        "The question was: " + originalQuestion
     );
   }
 }
@@ -539,7 +532,7 @@ async function safeHandoff(targetEl, brief, fallbackEl, originalQuestion) {
 
 **Observability.** Log every handoff (which agent, which topic, what the user asked next). Over a week, you'll have data on whether Riley is over- or under-handing-off. Tune the prompt accordingly.
 
-**Embeds on third-party sites.** If you ship this two-agent page as an embed, both `data-agent-id`s are visible in the page source — anyone can see which agents you're using. That's by design; the agents are public artifacts. If you don't want them publicly identifiable, mark them as unlisted in the dashboard (they remain reachable by ID but don't appear in `/explore`).
+**Embeds on third-party sites.** If you ship this two-agent page as an embed, both `agent-id`s are visible in the page source — anyone can see which agents you're using. That's by design; the agents are public artifacts. If you don't want them publicly identifiable, mark them as unlisted in the dashboard (they remain reachable by ID but don't appear in `/explore`).
 
 ---
 

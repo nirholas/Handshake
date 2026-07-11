@@ -358,11 +358,11 @@ Once uploaded:
 4. In a browser console, fire each clip by name:
 
 ```js
-const agent = document.querySelector('agent-3d') || document.querySelector('[data-agent-id]');
-await agent.wave();
-agent.playAnimationByHint('cheer');
-agent.playAnimationByHint('talk');
-agent.playAnimationByHint('idle');
+const agent = document.querySelector('agent-3d');
+agent.wave();
+agent.play('Cheer'); // exact clip name (case-insensitive fallback); returns false if missing
+agent.play('Talk');
+agent.play('Idle');
 ```
 
 Each one should trigger the corresponding clip. If a clip you expect doesn't fire, run `agent._scene.clips.map(c => c.name)` in the console — that prints the actual clip names the runtime sees. Compare against the names you set in Step 9.

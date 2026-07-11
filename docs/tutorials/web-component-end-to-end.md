@@ -1,8 +1,8 @@
 # Use the &lt;agent-3d&gt; web component end-to-end
 
-The script tag is convenient. One line, agent on the page. But once your site has a component system — React, Vue, Svelte, a design system — that single-line script starts to feel like a stranger in the codebase. You want the agent to be a real component, with props, refs, lifecycle, and a place in your component library.
+The iframe snippet is convenient. Paste it, agent on the page. But once your site has a component system — React, Vue, Svelte, a design system — that opaque iframe starts to feel like a stranger in the codebase. You want the agent to be a real component, with props, refs, lifecycle, and a place in your component library.
 
-That's what `<agent-3d>` is for. It's a standards-based custom element that drops cleanly into any framework, gives you the same JavaScript API the script tag uses under the hood, and supports reactive attribute changes — you can swap the loaded agent at runtime by changing one prop.
+That's what `<agent-3d>` is for. It's a standards-based custom element that drops cleanly into any framework, exposes the full JavaScript API (methods, events, live attributes), and supports reactive attribute changes — you can swap the loaded agent at runtime by changing one prop.
 
 By the end of this tutorial you'll know the spec well enough to pick the right embed style for any project, wire the element into React and Vue with refs and reactivity, slot your own UI alongside the avatar, and react to attribute changes after mount.
 
@@ -27,41 +27,48 @@ A custom element is a tag your browser doesn't ship by default. Someone (us, in 
 Three things make custom elements powerful:
 
 1. **Attributes are the API.** Like `<input type="text">`, you configure the element with HTML attributes. The element watches the ones it cares about (via `observedAttributes`) and reacts when they change.
-2. **Methods and properties.** Once you have an element reference, you can call methods on it (`el.speak('hi')`) and read/set properties just like any DOM node.
+2. **Methods and properties.** Once you have an element reference, you can call methods on it (`el.say('hi')`) and read/set properties just like any DOM node.
 3. **Events.** The element dispatches custom events you subscribe to with `addEventListener`. These bubble out of the shadow DOM so framework event handlers can pick them up.
 
-`<agent-3d>` uses all three. It's registered to the global `customElements` registry the moment the CDN script loads:
+`<agent-3d>` uses all three. It's registered to the global `customElements` registry the moment the runtime script loads:
 
 ```html
-<script type="module" src="https://three.ws/cdn/agent-3d.js"></script>
+<script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
 ```
 
 From that point on, `<agent-3d>` is a real tag in the document. No further setup needed.
 
 ---
 
-## Step 2 — Script-tag embed vs the custom element
+## Step 2 — iframe embed vs the custom element
 
-The CDN exposes two forms of the same thing. They share the underlying code and the same JS API. The differences are ergonomic.
+The platform offers two embed styles for the same agent. The differences are ergonomic.
 
-**Script-tag form** — terse, declarative, one line. The script tag *is* the agent:
+**iframe form** — sandboxed, self-contained, no script tag on your page:
 
 ```html
-<script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID" id="my-agent"></script>
+<iframe
+  src="https://three.ws/a/8453/42/embed"
+  width="320"
+  height="420"
+  frameborder="0"
+  allow="microphone"
+  style="border-radius: 16px;"
+></iframe>
 ```
 
-The script tag mounts an `<agent-3d>` element in place of itself. Data attributes on the script tag (`data-size`, `data-position`, `data-greeting`, etc.) become attributes on the mounted element. You get a reference to the resulting element with `document.getElementById('my-agent')`.
+The agent runs entirely inside the iframe. You can't call methods on it or listen to its events from your page — the trade for that isolation is zero integration surface.
 
 This is the right embed when:
 
-- You're on a no-code platform (Webflow, Squarespace, Substack) where you can paste a snippet but not a complex HTML tree
-- You want a single line in your repo
-- You're not using a framework that needs JSX or template syntax
+- You're on a no-code platform (Webflow, Squarespace, Notion, Substack) where you can paste a snippet but not control the `<head>`
+- You want strict sandboxing between the agent and your page
+- You don't need to drive the agent from your own JavaScript
 
 **Custom element form** — explicit, structured, framework-friendly:
 
 ```html
-<script type="module" src="https://three.ws/cdn/agent-3d.js"></script>
+<script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
 
 <agent-3d
   agent-id="YOUR_AGENT_ID"
@@ -72,15 +79,15 @@ This is the right embed when:
 ></agent-3d>
 ```
 
-You separate "load the runtime" from "place the agent". The agent can appear anywhere in your tree, with explicit attributes you can read from a build system, type-check, or template.
+You separate "load the runtime" from "place the agent". The agent can appear anywhere in your tree, with explicit attributes you can read from a build system, type-check, or template — and you get the full JS API: `say()`, `ask()`, `wave()`, `play()`, and the event stream.
 
 This is the right embed when:
 
-- You're inside a framework where `<script>` injection feels wrong (React, Vue, Angular, Svelte)
+- You're inside a framework with a component tree (React, Vue, Angular, Svelte)
 - You want multiple agents on the same page
-- You need precise control over the surrounding DOM
+- You need to call the agent's methods or subscribe to its events
 
-The rest of this tutorial uses the custom-element form, because that's the one that benefits from a wrapper.
+The rest of this tutorial uses the custom-element form, because that's the one that benefits from a wrapper. (The [embedding guide](./embed-on-website.md) covers the iframe path and the no-code platforms in depth.)
 
 ---
 
@@ -116,12 +123,10 @@ Here's the full list of attributes the element observes, in the categories you'l
 | `voice` | Set to `livekit` to opt into LiveKit-backed real-time voice |
 | `avatar-chat` | Set to `off` to hide the built-in chat input |
 | `avatar-walk` | Set to `off` to disable the walk-when-talking behaviour |
-| `face-camera` | Lock the avatar to face the camera |
+| `framing` | Set to `portrait` for a head-and-shoulders camera framing; the default frames the full body |
 | `eager` | Skip the lazy-load wait — boot immediately even when off-screen |
 | `api-key` | Override the brain API key (use sparingly; backends are safer) |
 | `key-proxy` | URL of your own proxy that vends scoped keys |
-
-**Data attributes from the script-tag form** — `data-size`, `data-background-color`, `data-position`, `data-rotation-speed`, `data-greeting`, `data-name` — all map onto the equivalent regular attributes when the script tag mounts the element. If you're using the element form directly, drop the `data-` prefix.
 
 Every observed attribute can be changed after mount. Step 6 shows what that looks like in practice.
 
@@ -152,7 +157,7 @@ function ensureRuntime() {
     if (existing) { resolve(); return; }
     const s = document.createElement('script');
     s.type = 'module';
-    s.src = 'https://three.ws/cdn/agent-3d.js';
+    s.src = 'https://three.ws/agent-3d/1.5.2/agent-3d.js';
     s.dataset.agent3dRuntime = '';
     s.onload = resolve;
     s.onerror = reject;
@@ -168,7 +173,6 @@ export default function Agent3D({
   position = 'bottom-right',
   background = 'transparent',
   mode = 'inline',
-  greeting,
   name,
   onReady,
   onMessage,
@@ -213,8 +217,7 @@ export default function Agent3D({
       mode={mode}
       position={position}
       background={background}
-      data-greeting={greeting}
-      data-name={name}
+      name={name}
     />
   );
 }
@@ -248,7 +251,7 @@ A few notes on what the wrapper does:
 - **Runtime loaded once.** `ensureRuntime()` guards against re-injecting the script on every mount. It checks for an existing tag with `data-agent-3d-runtime` and resolves immediately if found.
 - **Events bound in `useEffect`.** Custom event names map to props (`onReady`, `onMessage`). The cleanup function unbinds them, so the wrapper plays nicely with strict mode and unmount.
 - **No camelCase attribute names.** Custom elements use dash-case (`agent-id`, not `agentId`). React passes attributes through as-is — `agent-id` is fine in JSX.
-- **`useRef` is the API handle.** If you need to call `ref.current.speak('hi')` from a parent, expose the ref via `forwardRef` or pass an `apiRef` prop in.
+- **`useRef` is the API handle.** If you need to call `ref.current.say('hi')` from a parent, expose the ref via `forwardRef` or pass an `apiRef` prop in.
 
 For TypeScript, drop this in a `.d.ts`:
 
@@ -328,7 +331,7 @@ const eventMap = [
 const handlers = [];
 
 onMounted(async () => {
-  await import('https://three.ws/cdn/agent-3d.js');
+  await import('https://three.ws/agent-3d/1.5.2/agent-3d.js');
   const el = root.value;
   if (!el) return;
   for (const [domEvent, vueEvent] of eventMap) {
@@ -346,11 +349,10 @@ onBeforeUnmount(() => {
 
 defineExpose({
   // Forward common methods so the parent can call them via template refs.
-  speak: (text) => root.value?.speak(text),
   say: (text) => root.value?.say(text),
+  ask: (text) => root.value?.ask(text),
   wave: () => root.value?.wave(),
-  playAnimation: (name) => root.value?.play(name),
-  playAnimationByHint: (hint) => root.value?.playAnimationByHint?.(hint),
+  playAnimation: (name, opts) => root.value?.play(name, opts),
 });
 </script>
 
@@ -378,7 +380,7 @@ const agent = ref(null);
 
 function onReady(detail) {
   console.log('Agent ready:', detail.manifest?.name);
-  agent.value.speak('Welcome in.');
+  agent.value.say('Greet the visitor with a one-sentence welcome.');
 }
 
 function onMessage(detail) {
@@ -398,7 +400,7 @@ function onMessage(detail) {
 </template>
 ```
 
-The `defineExpose` block matters: without it, the parent's `agent.value.speak(...)` would be undefined. Vue 3 SFCs are private by default, and you have to opt methods into the public surface.
+The `defineExpose` block matters: without it, the parent's `agent.value.say(...)` would be undefined. Vue 3 SFCs are private by default, and you have to opt methods into the public surface.
 
 ---
 
@@ -493,7 +495,7 @@ Two parts to this.
     if (!text) return;
     input.value = '';
     try {
-      await agent.say(text);
+      await agent.ask(text);
     } catch (err) {
       console.error('Agent failed:', err);
     }
@@ -576,7 +578,7 @@ Pick an agent from the dropdown, the active one swaps in place, and the event lo
 
 You can now treat `<agent-3d>` as a real component in any framework. The big takeaways:
 
-- The script-tag and custom-element forms are interchangeable — pick by ergonomics, not features
+- The iframe and custom-element embeds serve different jobs — sandboxed drop-in vs a full-API component; reach for the element whenever your own code needs to drive the agent
 - Attribute changes are reactive; you can swap agents, modes, and layouts at runtime
 - React works fine once you bind events in `useEffect`; remember dash-case attribute names
 - Vue works fine once you flag the tag as a custom element in the compiler config

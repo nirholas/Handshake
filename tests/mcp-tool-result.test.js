@@ -72,7 +72,9 @@ describe('buildToolResult — MCP CallToolResult envelope', () => {
 describe('MCP tool surface', () => {
 	// Tools the platform offers at zero cost — exempt from the paid-price
 	// assertion below, and asserted to advertise their free-ness instead.
-	const FREE_TOOLS = new Set(['forge_free']);
+	// (crypto_news_archive is freemium: its description quotes the over-quota
+	// $ price, so it stays under the paid assertion.)
+	const FREE_TOOLS = new Set(['forge_free', 'crypto_news', 'crypto_news_digest']);
 
 	it('builds every tool descriptor with a complete, unique contract', async () => {
 		const tools = await buildTools();

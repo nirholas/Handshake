@@ -2,264 +2,258 @@
 
 A silent agent on a page is half an agent. The avatar appears, animates, looks ready — but a visitor lands, glances at it, and isn't sure whether to engage. They look for a chat input. They wonder if the thing is for them.
 
-A spoken greeting fixes all of that in one sentence. The agent says hi the moment it's ready. Visitors hear who it is and what it's for. They know it's interactive. They know it's responsive. They speak back.
+A greeting fixes all of that in one sentence. The agent introduces itself the moment it's ready. Visitors see who it is and what it's for. They know it's interactive. They know it's responsive. They speak back.
 
-This tutorial covers the `data-greeting` attribute end to end: how to write a good greeting, when it fires, how the browser's autoplay rules affect it, and how to make it accessible to visitors who have audio off or have a disability that requires text alternatives.
+This tutorial covers the greeting flow end to end: waiting for the `agent:ready` event, triggering the first line with `say()`, shaping what the agent says through its instructions, how the browser's audio autoplay rules affect the spoken part, and how to make the greeting accessible to visitors who have audio off.
 
 **What you'll build:**
-- An agent that greets every visitor by voice the moment it's ready
-- A greeting that works on Chrome, Safari, Firefox, mobile browsers — every common surface
-- A subtitle / caption so the greeting is readable, not just audible
-- A reusable pattern for scripted greetings versus LLM-generated dynamic ones
+- An agent that greets every visitor the moment it's ready
+- A greeting personality that lives in the agent's instructions, so every greeting fits the brand
+- A live transcript region so the greeting is readable, not just audible
+- A reusable pattern for text-first greetings versus guaranteed-audible ones
 - A clear understanding of browser autoplay rules and how to work with them
 
 **Prerequisites:** A page with the embed working from [Embed in 30 seconds](/tutorials/embed-in-30-seconds). Your agent should already be saved with a brain configured.
 
 ---
 
-## Step 1 — The one-attribute version
+## Step 1 — The minimal greeting
 
-The minimum-effort greeting is one attribute on the embed script tag:
+There is no magic greeting attribute — the greeting is three lines of JavaScript next to your embed. Wait for the element's `agent:ready` event, then hand the agent an opening cue with `say()`:
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-greeting="Hi, I'm Iris. Click me if you have a question."
-></script>
+<script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
+<agent-3d id="agent" agent-id="YOUR_AGENT_ID" mode="floating" voice eager></agent-3d>
+
+<script>
+  const agent = document.getElementById('agent');
+  agent.addEventListener('agent:ready', () => {
+    agent.say('Hi! Who are you?');
+  });
+</script>
 ```
 
-When the agent is fully loaded (animations bound, scene ready, voice initialised), it speaks the greeting using its configured TTS voice. A speech bubble shows the same text on screen, fading out a few seconds after the line finishes.
+`say(text)` sends the text to the agent's brain as a visitor message. The agent thinks, generates a reply in its own voice — the greeting — and delivers it: the reply streams into the speech bubble above the avatar, lands in the chat thread, drives the talking animation and lip-sync, and (because the element carries the `voice` attribute) is spoken aloud with the agent's TTS voice.
 
-This works. Most embed installations should ship with a greeting attribute. The rest of this tutorial is about doing it well rather than doing it at all.
+Two things worth knowing about this snippet:
+
+- The cue you pass to `say()` appears in the chat thread as the visitor's message, exactly as if they had typed it. That's why the example uses a natural opener like "Hi! Who are you?" — it reads as the start of a conversation, not as plumbing. (It's the same cue the embed's built-in "Say hi" suggestion chip sends.)
+- The boolean `voice` attribute is what makes JS-triggered `say()` calls audible. Without it, the greeting still renders as text and animation — just silently. Messages the visitor types into the chat input are always voiced.
+
+That's a working greeting. The rest of this tutorial is about doing it well rather than doing it at all.
 
 ---
 
 ## Step 2 — When the greeting fires
 
-The embed dispatches a `agent:ready` event on the script element once the avatar is loaded, the camera is positioned, the lighting is set, and the voice subsystem is initialised. The greeting fires on that event automatically when the `data-greeting` attribute is set.
+`agent:ready` fires once the whole boot pipeline has finished: manifest fetched, GLB body downloaded and rigged, memory loaded, skills installed, brain runtime constructed. Its `detail` carries `{ agent, manifest }`, and the event bubbles and crosses the shadow boundary, so you can also listen at `document` level if you attach the listener before the element boots.
 
-In rough terms, the timing on a typical broadband connection is:
+Two timing behaviours matter for greetings:
 
-1. **0 ms** — Page HTML is parsed; the script tag is encountered.
-2. **0–500 ms** — `agent-3d.js` is fetched from the CDN and starts running.
-3. **500–1500 ms** — The agent's manifest is fetched from the platform API.
-4. **1500–3500 ms** — The GLB body is downloaded and parsed.
-5. **3500–4000 ms** — The avatar appears, the scene renders, the `agent:ready` event fires.
-6. **4000–4500 ms** — The greeting starts speaking. The speech bubble appears.
+**The element boots lazily.** By default `<agent-3d>` waits until it is scrolled near the viewport (with a 300px head start) before it downloads anything, which means `agent:ready` — and your greeting — fires when the visitor reaches the agent, not necessarily at page load. For a floating widget that should greet immediately, add the `eager` attribute as in Step 1. For an inline agent halfway down a landing page, lazy is usually what you want: the agent greets when the visitor scrolls to it.
 
-On a fast connection with the bundle cached, this collapses to about two seconds total. On a slow mobile connection, it can stretch to six or seven seconds; the agent fades in gracefully and the greeting fires when ready, so visitors never see a half-loaded character.
+**`say()` waits for readiness on its own.** If you call `say()` before boot finishes, the element holds the message and delivers it once the runtime is up (only the most recent pending message is kept). Listening for `agent:ready` is still the clearest structure — it makes the ordering explicit and gives you a place to hang other on-ready work — but a greeting fired "too early" is not lost.
 
-If you want to control the timing precisely — say, wait for an extra moment before greeting so the visitor has a chance to focus — you can use the JS API and skip `data-greeting`:
+If you want a beat of breathing room so the visitor has a chance to notice the avatar before it talks:
+
+```js
+agent.addEventListener('agent:ready', () => {
+  setTimeout(() => agent.say('Hi! Who are you?'), 1500);
+});
+```
+
+You can also watch boot progress via the `agent:load-progress` event, whose detail is `{ phase, pct }` with phases `manifest`, `body`, `memory`, `skills`, and `brain` — useful if you're rendering your own loading indicator around the embed.
+
+---
+
+## Step 3 — Where the greeting's personality lives
+
+`say()` supplies the cue; the *content* of the greeting comes from the agent's configured personality. There are two places that personality can live, depending on how you embedded.
+
+### Published agents (`agent-id`)
+
+If you embed with `agent-id`, the personality is whatever you saved in the editor at [https://three.ws/create](https://three.ws/create) — open your agent's **Personality** panel and shape the system prompt there. To make greetings consistently on-brand, add explicit greeting guidance to the prompt:
+
+```
+When a visitor greets you or asks who you are, introduce yourself in one or
+two sentences. Mention your name. Say you can help pick the right Lumen plan.
+Invite them to ask anything. Never open with more than two sentences.
+```
+
+Save, reload your page, and the same `say('Hi! Who are you?')` cue now produces a greeting that follows your rules — every visitor, phrased freshly each time.
+
+The agent's TTS voice is also part of its saved configuration (the **Voice** panel in the editor), not the embed snippet. One agent, one voice; the greeting uses it like every other line.
+
+### Self-configured embeds (`body` + `brain` + `instructions`)
+
+If you embed a bare GLB instead of a published agent, the element builds the personality from its own attributes. `instructions` is the system prompt, `brain` picks the model (`"free"` resolves to the platform's host-paid free model), and `chat` opts the avatar into the conversational chrome:
 
 ```html
-<script
-  id="agent-script"
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-></script>
+<script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
+<agent-3d
+  id="agent"
+  body="https://three.ws/avatars/default.glb"
+  name="Iris"
+  brain="free"
+  instructions="You are Iris, the guide for the Lumen productivity app. When a visitor greets you, introduce yourself in one warm sentence and invite them to ask about Lumen. Keep every reply under three sentences."
+  chat
+  voice
+  eager
+></agent-3d>
 
 <script>
-  const agent = document.getElementById('agent-script');
-
-  agent.addEventListener('agent:ready', async () => {
-    // Wait two seconds after the agent is visible before speaking
-    await new Promise(r => setTimeout(r, 2000));
-    agent.speak('Hi, I\'m Iris. Take your time looking around.');
+  const agent = document.getElementById('agent');
+  agent.addEventListener('agent:ready', () => {
+    agent.say('Hi! Who are you?');
   });
 </script>
 ```
 
-Both approaches produce the same audible result. Use the attribute for simple cases; use the JS API when you need timing control or want the greeting to depend on something else on the page.
+This is a complete, self-contained page — no saved agent required. The `instructions` attribute is only read for these self-configured embeds; on an `agent-id` embed the published personality wins, so edit it in the editor instead.
 
 ---
 
-## Step 3 — What voice the agent uses
+## Step 4 — Tailor the greeting to the visitor
 
-The voice is set in the agent's configuration at [https://three.ws/create](https://three.ws/create), not on the embed snippet. Open the editor, open your agent, open the **Voice** panel.
+Because the cue is ordinary JavaScript, it can carry whatever context you know at page-load time — and the brain will weave it into the greeting:
 
-You have a few options:
+```html
+<script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
+<agent-3d id="agent" agent-id="YOUR_AGENT_ID" mode="floating" voice eager></agent-3d>
 
-- **Platform voices** — A selection of pre-tuned voices in different languages, accents, and timbres. These work everywhere and need no extra configuration. They are produced by a high-quality cloud TTS engine.
-- **Browser voice (fallback)** — Uses the browser's built-in `SpeechSynthesis` API. Available everywhere with no cost, but quality varies — Chrome on macOS sounds quite good, while Chrome on a fresh Ubuntu machine can sound mechanical. Use this for projects where you can't pay for cloud TTS but you want speech to "just work".
-- **ElevenLabs voice** — If your agent is configured with an ElevenLabs voice ID, the platform calls ElevenLabs for TTS. This is the highest quality option, and it's the only way to use a voice clone of your own voice. There is a per-character cost. Best for hero embeds where voice quality is part of the experience.
+<script>
+  const agent = document.getElementById('agent');
 
-Whichever voice you pick at the brain level, the greeting uses it. You don't configure voice per greeting — one agent has one voice.
+  function greetingCue() {
+    const params = new URLSearchParams(location.search);
+    const returning = localStorage.getItem('hasVisited') === 'yes';
+    if (returning) {
+      return "Hi again — I've visited before. Anything new since last time?";
+    }
+    if (params.get('utm_campaign') === 'launch-2026') {
+      return "Hi! I came from the launch announcement. What's new?";
+    }
+    return 'Hi! Who are you?';
+  }
 
-If you want different voices for different embeds, the cleanest pattern is to maintain two agents (with the same personality, different voice configs) and embed each on the relevant pages. See [Pick and swap an avatar in Studio](/tutorials/swap-avatar-in-studio) for the broader principle of cloning agents.
+  agent.addEventListener('agent:ready', () => {
+    agent.say(greetingCue());
+    localStorage.setItem('hasVisited', 'yes');
+  });
+</script>
+```
 
----
+The pattern is: listen for `agent:ready`, choose a cue in JS, call `say()`. The visitor always gets a greeting, and the greeting reflects what you know about them — the brain handles the phrasing.
 
-## Step 4 — Browser autoplay restrictions
+If your page logic needs the greeting text back (say, to mirror it into your own UI), use `ask()` instead — it sends the same way but resolves with the reply:
 
-Here is the most important practical point in this tutorial. Modern browsers do not let websites play audio automatically. The reasons are good: spammy auto-playing video ads, suddenly loud pages that ambush users, accidental playback when a tab loads in the background. But the rules apply to your agent's greeting too.
-
-The exact policy varies by browser and platform, but the rough rules are:
-
-- **Chrome / Edge desktop** — Audio may play automatically if the user has interacted with your domain before (a click, a keypress, a scroll counts in some cases). On first visit, audio is blocked until the user interacts.
-- **Safari desktop** — Stricter. Audio is blocked until the user interacts, every visit.
-- **Firefox desktop** — Permissive by default, but users can tighten the policy and many do.
-- **iOS Safari** — Strictest. Audio is blocked until the user taps the page. No exceptions.
-- **Android Chrome** — Similar to desktop Chrome. Mostly works after first interaction, sometimes works on first load.
-
-The embed handles this for you, but it's important to understand what "handles" means:
-
-### What the embed does automatically
-
-When the greeting fires:
-
-1. The embed attempts to play the audio.
-2. If the browser allows it, the audio plays normally and the speech bubble shows the spoken text.
-3. If the browser blocks it, the embed silently catches the rejection, *still shows the speech bubble* with the greeting text, and *queues* the audio to play the moment the user interacts with the page (any click, tap, key press, or scroll).
-
-So in the blocked case, the visitor sees a speech bubble that says "Hi, I'm Iris. Click me if you have a question." even if no sound played. When they tap anywhere — including tapping the agent to start a chat — the buffered greeting plays at that moment.
-
-This is the right default. The greeting is still effective on the worst-case browsers (because the text is visible), and the visitor isn't surprised by audio on a fresh page load.
-
-### What you can do to improve the rate of autoplay success
-
-A few practical tricks that bump the autoplay-success rate without working around the rules:
-
-- **Encourage a small interaction before the greeting fires.** If your page has a "Skip intro" button or a "Welcome" splash, audio is unlocked the moment it's dismissed. Then the greeting plays normally.
-- **Set the audio output level appropriately.** A quieter greeting (configured at the brain level) feels less ambushing if it does play automatically, which makes users less likely to mute the tab.
-- **Don't compete with other audio.** If your page has a background video that autoplays muted, that's fine. If it has a hero video with sound, the greeting will sound chaotic — turn the hero off.
-
-### What you should not do
-
-A few patterns to avoid, even though you'll see them on other sites:
-
-- Don't fake the autoplay by attaching invisible click handlers that "auto-click" on page load. Browsers detect these and the page gets penalised in autoplay quotas.
-- Don't fall back to a louder beep or notification sound if the greeting fails. The user is in control; respect it.
-- Don't write a "click to enable audio" gate as the first thing on the page. The agent's speech bubble already serves this purpose more naturally.
+```js
+agent.addEventListener('agent:ready', async () => {
+  const greeting = await agent.ask('Hi! Who are you?');
+  console.log('Agent greeted with:', greeting);
+});
+```
 
 ---
 
-## Step 5 — Make the greeting accessible
+## Step 5 — `speak()` is a gesture, not speech
 
-A spoken greeting is wonderful for the majority of visitors. But some visitors:
+The element also has a `speak(text)` method, and it's important to be precise about what it does: **`speak()` plays the talking animation, and nothing else.** It sizes the gesture to the length of the text you pass, trying the rig's talk clip and falling back to a nod or a wave — but it does not contact the brain, does not render a speech bubble, and does not produce any audio.
 
-- Have audio off, by choice or by default
-- Are using a screen reader and don't want speech bubbles popping in
-- Have a hearing impairment
-- Are deaf
-- Are in a quiet environment (a library, a meeting, a sleeping baby's room) and won't enable audio
+That makes it the wrong tool for a greeting on its own, and the right tool when your page supplies the words and you just want the avatar to visibly "deliver" them — a custom caption, a scripted onboarding line you render yourself:
 
-The embed handles this automatically — the speech bubble shows the greeting text, so visitors who can't hear it can still read it. But you should write your greeting with the assumption that someone might read it before they hear it.
+```html
+<agent-3d id="agent" agent-id="YOUR_AGENT_ID" mode="floating" eager></agent-3d>
+<div id="caption" role="status" aria-live="polite"
+     style="position: fixed; bottom: 460px; right: 24px; max-width: 280px;
+            padding: 10px 14px; border-radius: 12px; background: #fff;
+            color: #1a1a2e; box-shadow: 0 4px 24px rgba(0,0,0,.2); font: 14px system-ui;">
+</div>
 
-This means:
+<script>
+  const agent = document.getElementById('agent');
+  const caption = document.getElementById('caption');
 
-- Make the greeting useful as text. "Hi, I'm Iris. Click me if you have a question." reads as well as it sounds. "Hi!" alone reads as a stub.
-- Avoid relying on pronunciation. "He's pronounced like the letter J in Japanese" works in audio but is weird in writing.
-- Avoid pause cues that don't translate. "Hi. (pause) I'm Iris" works in audio but looks broken as text.
+  agent.addEventListener('agent:ready', () => {
+    const line = "Hi, I'm Iris. Click me if you have a question.";
+    caption.textContent = line;   // your page shows the exact words
+    agent.speak(line);            // the avatar mouths along, silently
+    setTimeout(() => { caption.textContent = ''; }, 6000);
+  });
+</script>
+```
 
-For visitors using a screen reader, the speech bubble is rendered with appropriate ARIA roles. Screen readers announce it as "the agent says: <greeting text>" rather than just blasting the text without context. You don't need to do anything to enable this; the embed handles it.
+The trade-off is exactness versus life: `speak()` plus your own caption gives you a fixed, word-for-word scripted line with zero LLM involvement; `say()` gives you a living greeting in the agent's voice — bubble, audio, and all — but freshly phrased each time. If you need the audible line to be word-for-word, put the exact sentence in the instructions ("When a visitor greets you, reply with exactly: …") and use `say()`; the model will deliver it near-verbatim, and it stays in the real speech pipeline.
 
-If you want a heavier-handed accessibility setup — for instance, a permanent transcript pane next to the agent — you can listen to the speech events from JS:
+---
+
+## Step 6 — Browser autoplay rules
+
+Here is the most important practical point in this tutorial. Modern browsers do not let websites play audio before the visitor has interacted with the page. The reasons are good — spammy auto-playing ads, suddenly loud tabs — but the rules apply to your agent's spoken greeting too. Chrome and Edge may allow audio if the visitor has engaged with your domain before; Safari and iOS block it on every fresh load until the first tap or keypress.
+
+The saving grace: **the greeting's text always lands.** The reply streams into the speech bubble and the chat thread whether or not the audio was allowed to play, so a greeting fired on `agent:ready` is never wasted — worst case it's read instead of heard.
+
+That gives you two clean patterns. Pick one; don't chain them (the runtime processes one conversational turn at a time, so a second `say()` fired while the greeting is still streaming will surface a "still thinking" notice instead).
+
+**Pattern A — text-first (the default).** Greet on `agent:ready` as in Step 1. On permissive browsers the greeting is spoken; on strict ones it's read. Ship this unless spoken audio is essential to the experience.
+
+**Pattern B — guaranteed-audible.** Hold the greeting until the visitor's first interaction, which unlocks audio everywhere:
+
+```js
+const agent = document.getElementById('agent');
+
+const greetOnFirstTouch = () => {
+  document.removeEventListener('pointerdown', greetOnFirstTouch);
+  document.removeEventListener('keydown', greetOnFirstTouch);
+  agent.say('Hi! Who are you?', { voice: true });
+};
+document.addEventListener('pointerdown', greetOnFirstTouch);
+document.addEventListener('keydown', greetOnFirstTouch);
+```
+
+The `{ voice: true }` option forces the spoken reply even without the `voice` attribute on the element.
+
+And a few patterns to avoid, even though you'll see them on other sites: don't simulate clicks to trick the autoplay gate (browsers detect it and penalise the page), and don't put a full-page "click to enable audio" wall in front of your content — the visitor's first natural interaction is enough.
+
+---
+
+## Step 7 — Make the greeting accessible
+
+Some visitors have audio off, use a screen reader, have a hearing impairment, or are somewhere they won't enable sound. The embed already covers the basics: the chat thread is an ARIA live log (`role="log"`, `aria-live="polite"`), and the speech bubble is a live status region, so screen readers announce the greeting as it arrives.
+
+Write the greeting instructions with the assumption that someone might read it before they hear it:
+
+- Make it useful as text. "Hi, I'm Iris. Ask me anything about Lumen." reads as well as it sounds. "Hi!" alone reads as a stub.
+- Avoid pronunciation asides and pause cues ("Hi. (pause) I'm Iris") — they work in audio and look broken in writing.
+
+If you want a heavier-handed setup — a permanent transcript pane next to the agent — listen for the speech events. `voice:speech-start` fires each time the agent begins speaking a line aloud, with the full text in `event.detail.text`; `voice:speech-end` fires when it finishes:
 
 ```html
 <div id="transcript" aria-live="polite" style="margin-top: 12px; color:#666; font-size: 0.9rem;">
   <strong>Agent says:</strong> <span id="transcript-text">…</span>
 </div>
 
-<script
-  id="agent-script"
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-greeting="Welcome. I'm here to help you find the right product."
-></script>
-
 <script>
-  const agent = document.getElementById('agent-script');
+  const agent = document.getElementById('agent');
   const out = document.getElementById('transcript-text');
 
-  agent.addEventListener('speak', (event) => {
+  agent.addEventListener('voice:speech-start', (event) => {
     out.textContent = event.detail.text;
   });
 </script>
 ```
 
-The `speak` event fires every time the agent says anything — greeting included — with the text in `event.detail.text`. Pipe it into an `aria-live="polite"` region and screen readers announce it. Sighted visitors with audio off see the transcript in real time.
+Note these events accompany *spoken* lines — they fire when a reply goes through TTS (the `voice` attribute, `{ voice: true }`, or the built-in chat input). To mirror every reply regardless of audio, listen for `brain:message` and read `event.detail.content` when `event.detail.role === 'assistant'`.
 
 ---
 
-## Step 6 — Scripted greetings versus dynamic ones
+## Step 8 — Writing a good greeting
 
-`data-greeting` is a static string. Whatever you put in the attribute is exactly what the agent says, every visitor, every page load. This is right for most embeds — the greeting should feel reliable.
-
-But there are cases where you want the greeting to adapt to the visitor:
-
-- A returning visitor should be greeted differently from a first-time visitor
-- A visitor coming from a particular ad campaign should hear a relevant greeting
-- A visitor whose preferred language is detectable should hear the greeting in that language
-
-For dynamic greetings, skip `data-greeting` and use the JS API:
-
-```html
-<script
-  id="agent-script"
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-></script>
-
-<script>
-  const agent = document.getElementById('agent-script');
-
-  function pickGreeting() {
-    const params = new URLSearchParams(location.search);
-    const utm = params.get('utm_campaign');
-    const returning = localStorage.getItem('hasVisited') === 'yes';
-    const hour = new Date().getHours();
-    const timeOfDay = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
-
-    if (returning) {
-      return 'Welcome back. Anything you wanted to ask last time?';
-    }
-    if (utm === 'launch-2026') {
-      return 'Hi there. You\'re here from the launch announcement — let me show you what\'s new.';
-    }
-    return `Good ${timeOfDay}. I\'m Iris. Click me to ask anything about our service.`;
-  }
-
-  agent.addEventListener('agent:ready', () => {
-    agent.speak(pickGreeting());
-    localStorage.setItem('hasVisited', 'yes');
-  });
-</script>
-```
-
-The pattern is: skip the attribute, listen for `agent:ready`, choose a greeting in JS, call `speak()`. The visitor always gets a greeting, and the greeting is tailored to what you know about them at page-load time.
-
-### Going further: LLM-generated greetings
-
-You can also have the agent generate its own greeting using its configured brain. This is heavier — it requires a round-trip to the LLM before the agent speaks — but it's powerful when the greeting really should be personalised.
-
-The cleanest way is to use a system-prompt convention. In the editor at [https://three.ws/create](https://three.ws/create), open the personality panel and add this rule near the bottom of your system prompt:
-
-```
-When you receive the message "__greet", introduce yourself in one or two sentences. Mention your name. Invite the visitor to ask anything. Match the visitor's apparent context — if it's morning, say good morning; if it's late at night, be gentle.
-```
-
-Then, in your page:
-
-```js
-const agent = document.getElementById('agent-script');
-agent.addEventListener('agent:ready', () => {
-  // The agent will process this through its brain and the response will be spoken
-  agent.speak('__greet');
-});
-```
-
-The `__greet` token is intercepted by the agent's brain (because you taught it the convention in the system prompt). The LLM generates a greeting that fits your prompt rules, the agent speaks it, and the visitor hears something that feels written for them. This is the highest-effort option but the most flexible, and it composes with the rest of your prompt design.
-
----
-
-## Step 7 — Writing a good greeting
-
-Here is what makes a greeting effective, distilled from watching first-time visitors interact with embeds across many sites.
+Here is what makes a greeting effective, distilled from watching first-time visitors interact with embeds across many sites. These rules go into the agent's instructions (Step 3), since that's what shapes the actual words.
 
 ### Lead with the name
 
-Visitors form an opinion in the first three seconds. "Hi, I'm Iris" is doing two things at once: it establishes that the agent is a named entity (not a generic chatbot), and it gives the visitor a handle to use ("Iris, can you…"). Both matter.
+Visitors form an opinion in the first three seconds. "Hi, I'm Iris" does two things at once: it establishes that the agent is a named entity (not a generic chatbot), and it gives the visitor a handle to use ("Iris, can you…"). Both matter.
 
 ### State the agent's role
 
@@ -275,77 +269,61 @@ Specificity beats vagueness. "I can help you" is weaker than "I can help you pic
 
 End with an instruction or invitation. Visitors who don't know what to do next, won't.
 
-- "Click me if you have a question."
-- "Just type anything below."
+- "Ask me anything — just type below."
 - "Try asking 'what's new this month?'"
 
 ### Keep it to one or two sentences
 
-A long greeting feels like a sales pitch. Two short sentences feel like a person.
+A long greeting feels like a sales pitch. Two short sentences feel like a person. Cap it in the instructions ("Never open with more than two sentences") — models respect explicit limits far better than vague ones.
 
 ### A complete example
 
-For a hypothetical online wine merchant called "Bottle Lane", a good greeting might be:
+For a hypothetical online wine merchant called "Bottle Lane", the greeting block of the instructions might read:
 
-```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-name="Vincent"
-  data-greeting="Hi, I'm Vincent. I can recommend a bottle for any occasion — just tell me what you're celebrating."
-></script>
+```
+You are Vincent, Bottle Lane's sommelier. When a visitor greets you or asks
+who you are, introduce yourself in one sentence and offer to recommend a
+bottle for any occasion — ask what they're celebrating. Never open with more
+than two sentences.
 ```
 
-Twenty words. Names the agent. States the value. Invites the visitor to be specific. Reads well aloud and reads well silent.
+A typical greeting this produces: "Hi, I'm Vincent. I can recommend a bottle for any occasion — what are you celebrating?" Names the agent. States the value. Invites the visitor to be specific. Reads well aloud and reads well silent.
 
-### A complete example for a developer tool
-
-For a hypothetical CI/CD tool called "Pipeline", a different tone:
-
-```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-name="Otto"
-  data-greeting="Hey. I'm Otto. Ask me how to set up a build, or paste me a config and I'll review it."
-></script>
-```
-
-Same structure — name, role, invitation — but the tone fits the audience. Calmer, slightly informal, direct.
+For a developer tool, same structure, different register: "Hey, I'm Otto. Ask me how to set up a build, or paste a config and I'll review it."
 
 ---
 
-## Step 8 — Debugging a silent greeting
+## Step 9 — Debugging a silent greeting
 
-If you set `data-greeting` and the agent isn't speaking, work through this checklist in order.
+If the greeting isn't arriving, work through this checklist in order.
 
-1. **Does the speech bubble appear?** If yes, the greeting is firing correctly and the audio is being blocked or muted. Skip to step 4. If no, the greeting isn't firing — go to step 2.
+1. **Does the speech bubble show text?** If yes, the greeting is working and only the audio is missing — skip to step 5. If no text appears anywhere, the message isn't reaching the brain — keep going.
 
-2. **Is the agent fully loaded?** Open the browser console. You should see no errors, and the network tab should show the GLB and manifest loaded with 200 status. If the agent isn't ready, the greeting won't fire. Common cause: the agent ID is wrong; double-check it on [https://three.ws/my-agents](https://three.ws/my-agents).
+2. **Is the agent booting at all?** Open the browser console and the network tab. You should see the manifest and GLB load with 200 status. If the agent ID is wrong, the element falls back to the default avatar rather than erroring — so a *wrong-looking* avatar is your clue. Double-check the ID at [https://three.ws/my-agents](https://three.ws/my-agents). You can also listen for failures: `agent.addEventListener('agent:error', (e) => console.log(e.detail.phase, e.detail.error))`.
 
-3. **Is the `data-greeting` attribute spelled correctly?** The loader silently ignores unknown attributes. `data-greting` will do nothing. Re-read the attribute name in your HTML.
+3. **Is the element still lazy-loading?** Without `eager`, an off-screen element hasn't booted, so `agent:ready` hasn't fired. Scroll it into view, or add `eager`.
 
-4. **Is the tab muted?** Right-click the browser tab. Some browsers show "Unmute tab" in the context menu. Click it.
+4. **Does the agent have a brain?** A self-configured embed with no `brain` attribute has no model to answer with. Add `brain="free"`. For `agent-id` embeds, confirm a brain is configured on the agent in the editor.
 
-5. **Has the user interacted with the page yet?** On strict-autoplay browsers (Safari, iOS Safari), the agent will not speak until the visitor has clicked, tapped, or pressed a key on the page. The speech bubble appears regardless. If you tap and audio still doesn't play, move to step 6.
+5. **Is voice enabled for JS calls?** `say()` from JavaScript only speaks aloud when the element has the `voice` attribute (or you pass `{ voice: true }`). This is the single most common cause of "text shows, no audio".
 
-6. **Is the agent's voice configured?** Open the editor at [https://three.ws/create](https://three.ws/create), open your agent, open the Voice panel. Make sure a voice is selected and saved. An unconfigured voice falls back to silent (the speech bubble still appears).
+6. **Has the visitor interacted with the page yet?** On strict-autoplay browsers (Safari, iOS), audio won't play before the first tap or keypress — the text still shows. See Step 6 for the guaranteed-audible pattern.
 
-7. **Is the system volume up?** Genuinely worth checking. The greeting plays at the system audio output level; if the OS volume is at zero, you won't hear it.
+7. **Is the tab muted, and is the system volume up?** Genuinely worth checking. Some browsers show "Unmute tab" in the tab's context menu.
 
-In practice, problems are almost always step 5 (autoplay rules) or step 6 (voice not configured). The embed is conservative on purpose — better to show a silent speech bubble than to surprise a visitor with unexpected audio.
+In practice, problems are almost always step 5 (missing `voice` attribute) or step 6 (autoplay rules). The embed is conservative on purpose — better a silent, readable greeting than a visitor ambushed by unexpected audio.
 
 ---
 
 ## What you learned
 
-- `data-greeting` is the simplest way to give your agent a spoken first line
-- The greeting fires on the `agent:ready` event, automatically and reliably
-- Browser autoplay rules can suppress the audio on first page load; the embed handles this gracefully by always showing the speech bubble and queuing audio for the user's first interaction
-- A spoken greeting is also a readable greeting — write it to work both ways
-- The accessibility tooling is built in (ARIA live regions, automatic announcements) but you can layer your own transcript on top using the `speak` event
-- Dynamic greetings come in two flavours: scripted (chosen in JS based on context) and LLM-generated (driven by a `__greet` convention in the system prompt)
-- A good greeting names the agent, states its role, invites action, and stays under two sentences
+- The greeting flow is: listen for `agent:ready`, then call `say()` with a natural opening cue
+- `say()` routes through the agent's brain, so the greeting's content comes from its personality — the editor's Personality panel for published agents, the `instructions` attribute for self-configured ones
+- The `voice` attribute (or `{ voice: true }`) makes JS-triggered replies audible; the text bubble renders either way
+- `speak()` is the talking *gesture* only — no brain, no audio — useful when your page supplies the words itself
+- Browser autoplay rules can suppress the audio on first load; greet on `agent:ready` for a text-first greeting, or on the first user interaction for a guaranteed-audible one
+- `voice:speech-start` / `voice:speech-end` (and `brain:message`) let you mirror the greeting into your own transcript UI
+- A good greeting names the agent, states its role, invites action, and stays under two sentences — enforce that in the instructions
 
 A working greeting moves the embed from "decoration" to "interaction", which is the single biggest win you can ship after the basic embed is live.
 
@@ -355,7 +333,7 @@ A working greeting moves the embed from "decoration" to "interaction", which is 
 
 - [Embed in 30 seconds](/tutorials/embed-in-30-seconds) — the foundation embed, if you skipped it
 - [Customize size, position and background](/tutorials/customize-appearance) — make the embed match your brand visually
-- [Pick and swap an avatar in Studio](/tutorials/swap-avatar-in-studio) — change the agent's body without changing the snippet
+- [Drive the agent with the JavaScript API](/tutorials/js-api-events) — the full method and event reference behind this tutorial
+- [Give your agent a personality](/tutorials/agent-personality) — go deeper on the system prompt that shapes every greeting
+- [Voice and lip-sync](/tutorials/voice-and-lipsync) — how the spoken side works under the hood
 - [Share your agent](/tutorials/share-your-agent) — generate a public URL, QR code, and social previews for the agent itself
-- [Build your first agent](/tutorials/first-agent) — drop into the manifest and skills layer for personality work
-- [Embed on a website](/tutorials/embed-on-website) — the full embed reference for production sites

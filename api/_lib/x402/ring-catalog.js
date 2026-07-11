@@ -626,6 +626,23 @@ export const RING_CATALOG = [
 
 	// ── autobuy:false — covered by one-time verification, not the loop ──────────
 	{
+		slug: 'news-archive-search',
+		sourceFile: 'api/news/archive.js',
+		path: '/api/news/archive',
+		method: 'GET',
+		query: { q: 'bitcoin', limit: '5' },
+		body: NO_BODY,
+		priceAtomicDefault: 1_000,
+		priceSlug: 'news-archive',
+		tier: 'intel',
+		kind: 'intel',
+		network: null,
+		autobuy: false,
+		weight: 0,
+		businessEffect: 'Full-text search over the 662k-article crypto-news archive (Sept 2017 →) with sentiment/ticker/date filters.',
+		note: 'autobuy:false — freemium rail: 60 searches/day per IP are free, so a ring call usually gets a free 200, not a 402; the paid twin only engages over quota.',
+	},
+	{
 		slug: 'pump-launch',
 		sourceFile: 'api/x402/pump-launch.js',
 		path: '/api/x402/pump-launch',

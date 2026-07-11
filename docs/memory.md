@@ -180,18 +180,18 @@ A `MEMORY.md` file is automatically maintained alongside the individual memory f
 # Agent Memory
 
 ## User
-- [Role](user_role.md) — Argentina fan, plays weekly 5-a-side on Saturdays
-- [Preferences](user_preferences.md) — terse feedback, no emojis
+- Role (`user_role.md`) — Argentina fan, plays weekly 5-a-side on Saturdays
+- Preferences (`user_preferences.md`) — terse feedback, no emojis
 
 ## Feedback
-- [Tone](feedback_tone.md) — stay warm but don't coddle; user asked for direct critique
-- [Drill pacing](feedback_pacing.md) — 3 drills per session max
+- Tone (`feedback_tone.md`) — stay warm but don't coddle; user asked for direct critique
+- Drill pacing (`feedback_pacing.md`) — 3 drills per session max
 
 ## Project
-- [Season goal](project_season.md) — user is training for a tournament in June 2026
+- Season goal (`project_season.md`) — user is training for a tournament in June 2026
 
 ## Reference
-- [Highlight reel](reference_reel.md) — shared Drive folder where user stores match clips
+- Highlight reel (`reference_reel.md`) — shared Drive folder where user stores match clips
 ```
 
 Keep the index concise. Lines beyond 200 are truncated before injection into context.

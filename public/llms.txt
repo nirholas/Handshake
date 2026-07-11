@@ -252,6 +252,7 @@ Docs, tutorials, and reference.
 - [Docs · Agent Reputation](https://three.ws/docs/agent-reputation): Why autonomous agents need verifiable trust, and how three.ws delivers portable on-chain reputation.
 - [Docs · Trust Primitives](https://three.ws/docs/trust-primitives): Cross-chain Agent Reputation — score any wallet, mint, or agent id (Solana or EVM) 0–100 from real on-chain evidence before your agent pays, trades, or delegates.
 - [Docs · x402 Protocol](https://three.ws/docs/x402): How three.ws implements x402 HTTP 402 paid agent skills — the challenge, verify, and settle mechanics.
+- [Premium Pass — Monthly Data API Access](https://three.ws/docs/premium): One Solana payment ($THREE at 20% off, SOL, or USDC) buys 30 days of unmetered Data API access with an API key — no per-call x402 payments.
 - [Docs · x402 Paid Endpoints](https://three.ws/docs/x402-endpoints): The catalog of three.ws's own paid HTTP endpoints — what each charges, the price-override scheme, and what it returns.
 - [Docs · x402 Revenue & Receipts](https://three.ws/docs/x402-revenue): Where settled x402 payments are recorded (x402_audit_log), how to read endpoint revenue, and how signed receipts work.
 - [Docs · Pump Launcher](https://three.ws/docs/pump-launcher): Deploy a brand-new pump.fun token in one paid call — no SOL, no wallet, no account. Inputs, outputs, pricing, correctness guarantees, and the free symbol-check → launch → launch-feed funnel.

@@ -294,7 +294,17 @@ function paidRail() {
 			tags: ['news', 'crypto', 'archive', 'search', 'data'],
 		}),
 		requiredScope: 'x402:bypass',
+		// Bypass lanes, in order: internal key → x402_live_ API key (premium
+		// passes mint one — see api/_lib/premium.js) → OAuth bearer.
 		accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
+		// Browser lane: a wallet holding a SIWX grant re-enters by signature.
+		// A premium-pass purchase records a grant until the pass expires; a
+		// per-call $0.001 payment earns a short search session so one payment
+		// isn't one query.
+		siwx: {
+			statement: 'Access the three.ws crypto-news archive with your premium pass or recent payment.',
+			ttlSeconds: 900,
+		},
 		async handler({ req }) {
 			const params = new URL(req.url, 'http://x').searchParams;
 			const body = await archiveSearch(parseSearchParams(params));

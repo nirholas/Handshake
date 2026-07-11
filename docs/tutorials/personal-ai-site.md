@@ -280,23 +280,23 @@ Here is the full page. Replace the placeholder values in brackets and swap in yo
     const input = document.getElementById('chat-input');
 
     function ask(text) {
-      agent.sendMessage(text);
+      agent.say(text);
     }
 
     function sendMessage() {
       const text = input.value.trim();
       if (!text) return;
       input.value = '';
-      agent.sendMessage(text);
+      agent.say(text);
     }
 
     input.addEventListener('keypress', e => {
       if (e.key === 'Enter') sendMessage();
     });
 
-    agent.addEventListener('ready', () => {
+    agent.addEventListener('agent:ready', () => {
       // Auto-greet after a short pause so the avatar has time to settle
-      setTimeout(() => agent.sendMessage('__greet'), 2000);
+      setTimeout(() => agent.say('__greet'), 2000);
     });
   </script>
 
@@ -305,6 +305,8 @@ Here is the full page. Replace the placeholder values in brackets and swap in yo
 ```
 
 The layout uses CSS Grid — left column for your static content, right column for the agent panel. On mobile it flips to a vertical stack with the agent taking the top 60% of the screen.
+
+`agent.say(text)` is the element's message-send method: it pushes the text into the agent's conversation exactly as if the visitor had typed it into the built-in chat. If you need the reply text back as a string (for your own UI), use `await agent.ask(text)` instead — same send, but it resolves with the assistant's response.
 
 ---
 
@@ -435,39 +437,25 @@ Add structured data to the `<head>`:
 
 For the Open Graph image, generate a screenshot of your avatar against a clean background and save it as `maya-og.png`. The `og:image` tag in the full HTML above already references it.
 
-If you want to automate OG image generation:
-
-```js
-agent.addEventListener('ready', () => {
-  setTimeout(async () => {
-    const png = await agent.screenshot();
-    // POST to your backend to store as the OG image
-    // or pre-generate and commit it to your repo
-    console.log('OG image captured, length:', png.length);
-  }, 3000); // give the avatar time to finish its greeting pose
-});
-```
+The element has no screenshot API, so this is a one-time manual step rather than something you automate on page load: open your deployed page, let the greeting animation settle, and capture the agent panel with your browser's screenshot tooling. In Chrome DevTools, select the `<agent-3d>` element in the Elements panel, then run **Capture node screenshot** from the command menu (Cmd/Ctrl+Shift+P). Crop to 1200×630, commit the file next to `index.html`, and the meta tag does the rest. Re-capture whenever you change the avatar.
 
 ---
 
 ## Step 9: Analytics — understand what people ask
 
-Standard pageview analytics misses what matters most: what are people actually asking your agent? Add event tracking on agent responses:
+Standard pageview analytics misses what matters most: what are people actually asking your agent? The `brain:message` event fires for both sides of the conversation — once with `role: "user"` when a question goes in, once with `role: "assistant"` when the reply comes back — so a single listener tracks the whole exchange:
 
 ```js
-agent.addEventListener('agent-speak', e => {
-  // e.detail.text is the full response — trim before sending
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'agent_response', {
-      response_preview: e.detail.text.slice(0, 80)
-    });
-  }
-});
-
-agent.addEventListener('agent-message', e => {
-  if (typeof gtag !== 'undefined') {
+agent.addEventListener('brain:message', e => {
+  const { role, content } = e.detail;
+  if (!content || typeof gtag === 'undefined') return;
+  if (role === 'user') {
     gtag('event', 'user_question', {
-      question_preview: e.detail.text.slice(0, 80)
+      question_preview: content.slice(0, 80)
+    });
+  } else if (role === 'assistant') {
+    gtag('event', 'agent_response', {
+      response_preview: content.slice(0, 80)
     });
   }
 });

@@ -28,6 +28,7 @@ export const NAV = [
 	{ path: '/dashboard/walk',        label: 'Walk Companion',  icon: 'walk',      group: 'Distribute', tags: ['walk', 'companion', 'mascot', 'avatar', 'sdk', '@three-ws/walk', 'playground', 'greeting', 'picker', 'embed'] },
 	{ path: '/dashboard/api',         label: 'API & Embed',     icon: 'code',      group: 'Distribute', tags: ['keys', 'token', 'mcp', 'snippets', 'embed-policy'] },
 	{ path: '/dashboard/developers',  label: 'Developer Hub',   icon: 'devhub',   group: 'Distribute', tags: ['render', 'webhooks', 'sdk', 'unity', 'unreal', 'integration', 'api', 'partner'] },
+	{ path: '/dashboard/data-api',    label: 'Data API',        icon: 'database',  group: 'Distribute', tags: ['premium', 'pass', 'news', 'archive', 'api key', 'x402', 'usage', '$three', 'subscription', 'crypto news', 'data'] },
 	{ path: '/marketplace',           label: 'Marketplace',     icon: 'market',    group: 'Distribute', tags: ['browse', 'buy', 'sell', 'agents', 'avatars', 'directory'], external: true },
 	{ path: '/skills',                label: 'Skills',          icon: 'skills',    group: 'Distribute', tags: ['tool', 'pack', 'capability', 'install', 'browse', 'skill'], external: true },
 
@@ -68,6 +69,7 @@ export const NAV = [
 	{ path: '/dashboard/account',     label: 'Account',         icon: 'user',      group: 'Account',    tags: ['wallets', 'sns', 'delegation', 'profile', 'action log', 'provider keys'] },
 	{ path: '/dashboard/referrals',   label: 'Referrals',       icon: 'gift',      group: 'Account',    tags: ['referral', 'invite', 'membership', 'card', 'refer a friend', 'share', 'rewards', 'position', 'score'] },
 	{ path: '/dashboard/wallet-grinder', label: 'Wallet Grinder', icon: 'sparkle',  group: 'Account',    tags: ['vanity', 'grind', 'keypair', 'wallet', 'solana', 'evm', 'ethereum', 'base', 'polygon', 'address', 'prefix', 'suffix'] },
+	{ path: '/dashboard/billing',     label: 'Billing & Passes', icon: 'receipt',  group: 'Account',    tags: ['billing', 'premium', 'pass', 'subscription', 'payments', 'invoices', 'paid services', 'renew', 'api keys'] },
 	{ path: '/dashboard/settings',    label: 'Settings',        icon: 'settings',  group: 'Account',    tags: ['sessions', 'notifications', 'preferences', 'storage', 'llm usage', 'vanity'] },
 	{ path: '/onchain',               label: 'On-chain (ERC-8004)', icon: 'chain', group: 'Account',    tags: ['erc8004', 'registry', 'onchain', 'identity'], external: true },
 ];
@@ -104,6 +106,7 @@ export const ICONS = {
 	chart:     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V7l4 3 3-6 4 4 3-3v12H3z"/><path d="M3 17h14"/></svg>',
 	skills:    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="M7 7h6M7 10h4M7 13h5"/></svg>',
 	devhub:    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="12" rx="2"/><path d="M6 7l-2 2.5L6 12M14 7l2 2.5L14 12M9 13l2-8"/></svg>',
+	database:  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="10" cy="4.5" rx="6.5" ry="2.5"/><path d="M3.5 4.5v11c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5v-11"/><path d="M3.5 10c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5"/></svg>',
 	landscape: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="8" r="2"/><circle cx="14" cy="6" r="2"/><circle cx="10" cy="14" r="2"/><path d="M8 8l2 5M12 7l-2 6"/><path d="M3 3h14v14H3z" stroke-dasharray="2 2" opacity="0.3"/></svg>',
 	oracle:    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="9" r="5.5"/><path d="M6.5 9a3.5 3.5 0 007 0"/><circle cx="10" cy="9" r="1.2" fill="currentColor" stroke="none"/><path d="M10 14.5v2.5M7 16.5h6"/></svg>',
 	bounty:    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v8M7 8l3-2 3 2M7 12l3 2 3-2"/></svg>',

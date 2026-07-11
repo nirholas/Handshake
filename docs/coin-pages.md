@@ -194,16 +194,34 @@ and a latest-news rail with an archive teaser. Five already-cached endpoints
 feed it: `/api/coin/global`, `/api/coin/markets`, `/api/coin/gas`,
 `/api/news/feed`, `/api/news/archive?stats=true`.
 
-### `/markets/news` — live crypto news
+### `/markets/news` — "Your briefing"
 
-Live headlines aggregated **natively** by three.ws from 38 publisher RSS/Atom
-feeds (CoinDesk, The Block, Decrypt, CoinTelegraph, Blockworks, SEC press,
-Forkast, and more — the registry lives in
-[`api/_lib/news-sources.js`](../api/_lib/news-sources.js)). Category tabs
-(Bitcoin, Ethereum, Solana, DeFi, NFT, trading, research, on-chain,
-institutional, mainstream, Asia, regulation, journalism), debounced search, a
-per-source filter, a lead-story hero, sentiment dots, and ticker chips that
-pivot the feed to that symbol. Each source is cached server-side for 5 minutes
+The front page of the news wing, laid out as a daily briefing over headlines
+aggregated **natively** by three.ws from the publisher RSS/Atom registry
+(CoinDesk, The Block, Decrypt, CoinTelegraph, Blockworks, SEC press, Forkast,
+and more — [`api/_lib/news-sources.js`](../api/_lib/news-sources.js)):
+
+- **Primary tabs** — Featured (the majors, via `/api/news/feed?featured=1`),
+  Headlines, Trending (the digest's coverage-ranked narratives), DeFi,
+  Bitcoin, Ethereum, Analysis, Saved, and All, which unfolds the full
+  category registry.
+- **Breaking ticker** — stories under 45 minutes old scroll in a marquee
+  (paused on hover, static under `prefers-reduced-motion`); hidden when
+  nothing is fresh.
+- **Today's AI Briefing** — the top digest narratives as a collapsible
+  numbered card, linking into `/markets/digest`.
+- **Top stories** — a lead-story hero beside a compact headline rail, then
+  the Latest grid with offset pagination.
+- **Saved stories** — a ☆ on every card bookmarks the article to
+  localStorage; the Saved tab renders the collection.
+- Debounced search, language + per-source filters, sentiment dots, and ticker
+  chips that pivot the feed to that symbol carry over from the flat layout.
+
+Preview images never break: feed images load with `no-referrer`, retry once
+through the same-origin `/api/img` proxy, and articles whose feed ships no
+image resolve their publisher's `og:image` in the background via
+`/api/news/image` — falling back to a designed source-initials tile only when
+no preview exists anywhere. Each source is cached server-side for 5 minutes
 with serve-stale-on-error, so one dead feed never blanks the page.
 
 ### `/markets/news/article` — rich article reader

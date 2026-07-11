@@ -282,6 +282,16 @@ describe('freemium x402 gate (query mode)', () => {
 		expect(body.articles[0].tickers).toContain('JTO');
 	});
 
+	it('the paid rail declares SIWX so premium-pass wallets re-enter by signature', async () => {
+		limits.newsArchiveFreeIp.mockResolvedValueOnce({ success: false, remaining: 0 });
+		await call('/api/news/archive?limit=10');
+		expect(x402Mock.spec.siwx).toBeTruthy();
+		expect(x402Mock.spec.siwx.statement).toContain('premium');
+		// per-call payments earn a bounded session, never a permanent grant
+		expect(x402Mock.spec.siwx.ttlSeconds).toBeGreaterThan(0);
+		expect(x402Mock.spec.siwx.ttlSeconds).toBeLessThanOrEqual(3600);
+	});
+
 	it('the paid rail rejects bad input with a clean 400-shaped throw', async () => {
 		limits.newsArchiveFreeIp.mockResolvedValueOnce({ success: false, remaining: 0 });
 		await call('/api/news/archive?limit=10');

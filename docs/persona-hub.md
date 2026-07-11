@@ -117,7 +117,7 @@ The response should contain one entry under `keys` whose `kid` matches `PERSONA_
 
 ## Issuing a token
 
-`POST /api/auth/persona/issue` — defined in [api/auth/persona/\[action\].js](../api/auth/persona/%5Baction%5D.js) (`handleIssue`).
+`POST /api/auth/persona/issue` — defined in `api/auth/persona/[action].js` (`handleIssue`).
 
 | | |
 |---|---|
@@ -127,7 +127,7 @@ The response should contain one entry under `keys` whose `kid` matches `PERSONA_
 | Success | `200` with `{ token, expires_in, avatar, tenant_origin, alg }` |
 | Errors | `401 unauthorized` — no session. `400 invalid_request` — `tenant_origin` is not a `three.ws` subdomain or `localhost`. `404 no_avatar` — user has no avatar yet. |
 
-`tenant_origin` must be a bare origin (no path, no query, no fragment), `https://*.three.ws` or `https://three.ws`, or — for dev — `http://localhost[:port]` / `http://127.0.0.1[:port]`. Anything else is rejected with `400 invalid_request`. The validator is `validateTenantOrigin()` in [api/auth/persona/\[action\].js](../api/auth/persona/%5Baction%5D.js); add a subdomain by editing that function.
+`tenant_origin` must be a bare origin (no path, no query, no fragment), `https://*.three.ws` or `https://three.ws`, or — for dev — `http://localhost[:port]` / `http://127.0.0.1[:port]`. Anything else is rejected with `400 invalid_request`. The validator is `validateTenantOrigin()` in `api/auth/persona/[action].js`; add a subdomain by editing that function.
 
 When `avatar_id` is omitted, the user's most recently created avatar is used. Pass `avatar_id` from the consent UI's picker to bind a specific avatar to the token.
 
@@ -306,7 +306,7 @@ The verify endpoint applies the same checks as `jose.jwtVerify` — signature, i
 
 ## ES256 vs HS256 fallback
 
-The signing algorithm is decided at issue time by [api/auth/persona/\[action\].js:158-161](../api/auth/persona/%5Baction%5D.js):
+The signing algorithm is decided at issue time by `api/auth/persona/[action].js:158-161`:
 
 ```js
 const es = await esKeys();                      // null if PERSONA_JWKS_PRIVATE_KEY_PEM is unset
@@ -326,7 +326,7 @@ Verification accepts both algorithms in either order — the `/verify` endpoint 
 
 ## Tokens in practice
 
-- **TTL.** 24 hours (`PERSONA_TTL_SEC = 60 * 60 * 24`, [api/auth/persona/\[action\].js:42](../api/auth/persona/%5Baction%5D.js#L42)). Tenants that need a longer-lived session must mint their own session from the persona token's `sub` after verifying — do not extend the persona JWT itself.
+- **TTL.** 24 hours (`PERSONA_TTL_SEC = 60 * 60 * 24`, `api/auth/persona/[action].js:42`). Tenants that need a longer-lived session must mint their own session from the persona token's `sub` after verifying — do not extend the persona JWT itself.
 - **Rotation.** Generate a new keypair with `node scripts/generate-persona-key.mjs`, deploy with a new `PERSONA_JWKS_KID`, and the JWKS publishes the new key. Old tokens continue to verify against `/api/auth/persona/verify` while they live; once the longest possible token TTL has elapsed (24h), no token in the wild still references the old `kid`. The deployment can serve both old and new keys side by side by adding extra entries to the `keys` array — the current handler emits a single key but the verifier accepts any matching `kid` from the published set.
 - **Revocation.** There is **no** revocation list. Defense is the short TTL: 24 hours. If a token must be invalidated sooner, the tenant should treat its own server-issued session as the source of truth and invalidate that. If a private key is leaked, rotate `PERSONA_JWKS_PRIVATE_KEY_PEM` and `PERSONA_JWKS_KID`; verification of any token signed with the old key will fail as soon as the old JWK is removed from the published set.
 
@@ -342,7 +342,7 @@ Verification accepts both algorithms in either order — the `/verify` endpoint 
 | `JWTClaimValidationFailed: "aud" claim check failed` | The `audience` you passed to `jwtVerify` (or to `/verify`) doesn't match the token's `aud`. Audience is the exact `tenant_origin` used at issue time — case-sensitive, no trailing slash. |
 | `JWTExpired: "exp" claim timestamp check failed` | Token is older than 24 h. Have the user re-authorize through the widget. There is no refresh endpoint — persona tokens are not refreshable by design. |
 | `invalid_token: token is not a persona token` from `/verify` | The token validates cryptographically but its `token_use` claim is not `"persona"`. Tokens issued by the main three.ws auth stack are not accepted on this endpoint. |
-| `400 invalid_request` on `/issue` with `tenant_origin must be a https three.ws subdomain or localhost dev origin` | The origin contains a path / query / fragment, is not `https`, or is not a `three.ws` subdomain. Pass a bare origin like `https://coolgame.three.ws`. Add a new subdomain by editing `validateTenantOrigin()` in [api/auth/persona/\[action\].js](../api/auth/persona/%5Baction%5D.js). |
+| `400 invalid_request` on `/issue` with `tenant_origin must be a https three.ws subdomain or localhost dev origin` | The origin contains a path / query / fragment, is not `https`, or is not a `three.ws` subdomain. Pass a bare origin like `https://coolgame.three.ws`. Add a new subdomain by editing `validateTenantOrigin()` in `api/auth/persona/[action].js`. |
 
 ---
 
@@ -362,9 +362,9 @@ Other origins return `400 invalid_request`. This is the chokepoint that prevents
 
 | Endpoint | Method | Auth | Description |
 |---|---|---|---|
-| [/api/auth/persona/me](../api/auth/persona/%5Baction%5D.js) | `GET` | three.ws session | Lists the user's avatars for the consent UI. |
-| [/api/auth/persona/issue](../api/auth/persona/%5Baction%5D.js) | `POST` | three.ws session | Mints a 24h persona JWT for `{ tenant_origin, avatar_id }`. |
-| [/api/auth/persona/verify](../api/auth/persona/%5Baction%5D.js) | `GET` | none | Verifies a token's signature, issuer, audience, expiry, and `token_use`. |
+| `/api/auth/persona/me` | `GET` | three.ws session | Lists the user's avatars for the consent UI. |
+| `/api/auth/persona/issue` | `POST` | three.ws session | Mints a 24h persona JWT for `{ tenant_origin, avatar_id }`. |
+| `/api/auth/persona/verify` | `GET` | none | Verifies a token's signature, issuer, audience, expiry, and `token_use`. |
 | [/.well-known/jwks.json](https://three.ws/.well-known/jwks.json) | `GET` | none | Publishes the active persona public key (empty array in HS256 fallback). |
 
 JWT claims:

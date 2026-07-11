@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-07-11T03:45:18.108Z",
+	"generated_at": "2026-07-11T04:07:32.412Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-11",
+			"type": "launch",
+			"title": "Dashboard · Billing & Passes",
+			"summary": "Manage subscriptions and paid services — Premium pass status, on-chain payment history, API keys, and creator subscriptions.",
+			"link": "/dashboard/billing",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-11",
+			"type": "launch",
+			"title": "Dashboard · Data API",
+			"summary": "Developer console for the three.ws Data API — buy the Premium pass with $THREE, SOL, or USDC, manage API keys, watch usage, and copy quickstarts.",
+			"link": "/dashboard/data-api",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-11",
 			"type": "launch",
@@ -18,10 +38,52 @@
 		},
 		{
 			"date": "2026-07-11",
+			"type": "launch",
+			"title": "Premium Pass — Monthly Data API Access",
+			"summary": "One Solana payment ($THREE at 20% off, SOL, or USDC) buys 30 days of unmetered Data API access with an API key — no per-call x402 payments.",
+			"link": "/docs/premium",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-11",
+			"type": "update",
+			"title": "Documentation accuracy pass: every tutorial verified against the shipped platform",
+			"summary": "We cross-referenced all 300+ docs and specs against the actual codebase and fixed everything that had drifted. The embed snippet in ten tutorials now uses the real two-line form that works on any site, four tutorials that demonstrated retired or never-shipped APIs were rewritten against the live component, the troubleshooting guide now reflects the current Cloud Run production stack with the correct session and storage details, and the manifest, quick-start, and API references now list exactly the providers, attributes, and endpoints that exist today. Every code sample in the affected docs runs as written.",
+			"link": "/docs/tutorials/embed-in-30-seconds",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-11",
+			"type": "update",
+			"title": "Premium: one monthly pass instead of paying per call",
+			"summary": "Go Premium for $9.99/30 days and stop paying the Data API per search: one Solana payment — in $THREE at 20% off, SOL, or USDC — mints an API key with unmetered archive search and lets your wallet sign in on the archive page instead of paying. Two new dashboard surfaces ship with it: a developer console at /dashboard/data-api (buy or renew the pass, manage and rotate API keys, live usage, copy-paste quickstarts) and Billing & Passes at /dashboard/billing (pass status, on-chain payment history, your subscriptions and paid services in one place). Renewals stack — renewing early adds 30 days to the end, never losing time.",
+			"link": "/docs/premium",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-11",
 			"type": "update",
 			"title": "Richer coin pages, plus new exchange, category, and DeFi-yields detail pages",
 			"summary": "Every coin page now shows far more of what the data already offers: a 1h-to-1y price-performance matrix, a circulating-vs-max supply bar with the market-cap/FDV ratio, all-time high and low with the drawdown and recovery multiple, the community bullish/bearish sentiment split, GitHub and social activity, and a full exchange-listings table with spread, order-book depth, and a trust rating for each venue. Exchanges and crypto categories, which used to only send you off-site or filter a table, now have their own detail pages — an exchange page with a trust badge, wash-volume-adjusted volume, a volume-history chart, and its markets, and a category page with the sector's rank, stats, and full coin list. And a brand-new DeFi Yields explorer covers roughly 15,000 live pools across every chain and protocol, filterable and sortable, each with its own APY and TVL history chart. All of it is real, key-free data.",
 			"link": "/yields",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-11",
+			"type": "update",
+			"title": "The news page becomes Your Briefing",
+			"summary": "/markets/news is redesigned as a daily briefing: a breaking-news ticker for stories under 45 minutes old, a collapsible Today's AI Briefing card built from the digest engine, a Featured tab covering the major outlets, a Trending tab ranking the day's most-covered narratives, a Top-stories hero with a compact headline rail, and a star on every story that saves it to a personal Saved tab. Article preview images were also overhauled — thumbnails blocked by publishers now load through a same-origin proxy, and stories whose feed ships no image pull the publisher's own social preview automatically, so cards no longer show blank tiles.",
+			"link": "/markets/news",
 			"tags": [
 				"feature",
 				"improvement"

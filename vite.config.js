@@ -1527,7 +1527,10 @@ support: resolve(__dirname, 'pages/support.html'),
 					// /dashboard/<tab> and /dashboard/edit/<id> → pages/dashboard-next/index.html (new SPA)
 					else if (
 						!filePath &&
-						/^\/dashboard\/(?:agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|withdrawals|earnings|account)\/?$/.test(
+						// `billing` left out on purpose: /dashboard/billing is a real
+						// dashboard-next page (pages/dashboard-next/billing.html), not a
+						// legacy SPA tab.
+						/^\/dashboard\/(?:agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|revenue|withdrawals|earnings|account)\/?$/.test(
 							path,
 						)
 					)

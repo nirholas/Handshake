@@ -46,7 +46,7 @@ The platform runs a public, unauthenticated sentiment scorer over live pump.fun 
 <head>
   <meta charset="UTF-8">
   <title>Sentiment-driven agent</title>
-  <script type="module" src="https://three.ws/cdn/agent-3d.js"></script>
+  <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 </head>
 <body>
   <agent-3d id="agent" agent-id="YOUR_AGENT_ID" mode="inline" width="360px" height="480px"></agent-3d>

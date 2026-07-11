@@ -200,8 +200,7 @@ export function calculateFeeTier({
 }
 ```
 
-We will use the following fee tiers starting from Monday:
-![Fee Tiers](fees.png)
+We will use the following fee tiers starting from Monday (see the fee tiers chart, `fees.png`, in the upstream repository — not vendored here):
 
 In order to avoid possible issues created by the new fee structure, until you make sure it's implemented correctly, you can increase the slippage tolerance on buy / sell instructions as a temporary mitigation.
 

@@ -98,7 +98,7 @@ The `allow="accelerometer; gyroscope"` attribute lets the joystick respond to de
 
 ## Step 2: Drive the embed from the host page (postMessage)
 
-The embed isn't a black box — it speaks a versioned `postMessage` contract so your page can tell the avatar where to walk, what to say, and which environment to show. The contract is defined in [src/walk-embed-events.js](src/walk-embed-events.js) and documented interactively at [/docs/walk-embed-api](/docs/walk-embed-api).
+The embed isn't a black box — it speaks a versioned `postMessage` contract so your page can tell the avatar where to walk, what to say, and which environment to show. The contract is defined in [src/walk-embed-events.js](../../src/walk-embed-events.js) and documented interactively at [/docs/walk-embed-api](/docs/walk-embed-api).
 
 Every message is namespaced to the `three-walk` channel and carries a protocol version, so it never collides with other `message` listeners on your page.
 

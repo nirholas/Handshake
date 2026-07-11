@@ -311,7 +311,7 @@ If you want to support the project — compute credits, grants, partnerships, or
 
 - `<agent-3d>` custom element — drop it anywhere with no framework dependency
 - Five widget variants: turntable, animation gallery, talking agent, ERC-8004 passport card, hotspot tour
-- Widget Studio + WYSIWYG **Embed Editor** at `/embed-editor` — pick an avatar, animation, framing, and background, copy the snippet
+- Widget Studio + WYSIWYG **Embed editor** at `/embed` — pick an avatar, embed mode, environment, and size, copy the snippet
 - **Launchpad** at `/launchpad` — hosted public launch pages at `/p/[slug]` for tokens, agents, and drops
 - Open Graph metadata and oEmbed support for rich social previews when links are shared
 - Versioned CDN bundles at `/agent-3d/x.y.z/agent-3d.js`
@@ -322,8 +322,8 @@ If you want to support the project — compute credits, grants, partnerships, or
 - **City** at `/city` — free-roam walkable 3D city scene
 - **Friends, presence & DMs** — account-level social graph with live presence ("Online · Mainland"), direct messages, and a per-account realtime delivery hub
 - **The Club** at `/club` — multiplayer venue with rigged dancers, audio tracks, tips, leaderboard, payouts cron, perf-aware renderer that auto-downgrades on slow frames
-- **Walk** at `/walk` — authoritative multiplayer walk scene backed by a Colyseus server in `multiplayer/` (deployable on Fly.io)
-- **Pose Studio** at `/pose-studio`, **Voice Lab** at `/voice`, **Mocap Studio** at `/mocap-studio` — author poses, bind voices, and capture/retarget motion into reusable clips
+- **Walk** at `/walk` — authoritative multiplayer walk scene backed by a Colyseus server in `multiplayer/` (deployable on Google Cloud Run)
+- **Pose Studio** at `/pose`, **Voice Lab** at `/voice`, **Mocap Studio** at `/mocap-studio` — author poses, bind voices, and capture/retarget motion into reusable clips
 
 **Backend & Integrations**
 
@@ -410,7 +410,7 @@ A map of every user-facing route. [`STRUCTURE.md`](STRUCTURE.md) maps each produ
 | **Profile**          | `/profile`, `/u/[username]`, `/avatars/[id]`                                                    | User and avatar public pages — SNS badge + pay-by-name modal when `[username].threews.sol` is claimed           |
 | **SNS Subdomain**    | `/threews/claim`                                                                                | Mint `[label].threews.sol`, set the URL record to your showcase, transfer ownership — single tx, platform pays  |
 | **Dashboard**        | `/dashboard`, `/dashboard/actions`, `/dashboard/wallets`, `/dashboard/usage`, `/dashboard/x402` | Account management, settings, and x402 receipts/payouts                                                         |
-| **Studio / Tools**   | `/studio`, `/embed-editor`, `/pose-studio`, `/voice`, `/mocap-studio`, `/hydrate`, `/validation`, `/strategy-lab` | Widget Studio, WYSIWYG embed editor, pose authoring, Voice Lab, Mocap Studio, on-chain import, glTF validator, DCA |
+| **Studio / Tools**   | `/studio`, `/embed`, `/pose`, `/voice`, `/mocap-studio`, `/hydrate`, `/validation`, `/strategy-lab` | Widget Studio, WYSIWYG embed editor, pose authoring, Voice Lab, Mocap Studio, on-chain import, glTF validator, DCA |
 | **Widgets**          | `/widgets`, `/w/[id]`                                                                           | Widget gallery and public widget pages (OG + oEmbed)                                                            |
 | **Launchpad**        | `/launchpad`, `/p/[slug]`                                                                       | Launchpad Studio + hosted launch pages (token, agent, drop campaigns)                                           |
 | **Club**             | `/club`                                                                                         | Multiplayer 3D venue — tips, leaderboard, audio tracks, perf-aware renderer                                     |
@@ -885,17 +885,11 @@ For anything beyond a quick one-liner, define the agent in a manifest file and r
 For the absolute simplest way to embed an agent, use this snippet. It requires no build tools or imports. Just copy and paste it into your HTML.
 
 ```html
-<div
-	class="threews-widget"
-	data-agent-id="YOUR_AGENT_ID"
-	data-background="transparent"
-	data-nameplate="true"
-	style="width: 400px; height: 500px;"
-></div>
-<script src="https://three.ws/dist/widget.js" defer></script>
+<div data-agent-id="YOUR_AGENT_ID" style="width: 400px; height: 500px;"></div>
+<script type="module" src="https://three.ws/artifact.js"></script>
 ```
 
-You can find your agent ID in the agent's settings page. This method is great for quick integrations on platforms like WordPress, Ghost, or any static HTML site. Customize the appearance with `data-background` and `data-nameplate`.
+The loader ([public/artifact.js](public/artifact.js)) mounts a rotatable 3D viewer into every `[data-agent-id]` element on the page. You can find your agent ID in the agent's settings page. This method is great for quick integrations on platforms like WordPress, Ghost, or any static HTML site — size it with the `style` attribute. For a configurable snippet (chat mode, environments, size presets), use the [Embed editor](#embed-editor) at `/embed`.
 
 ---
 
@@ -1300,30 +1294,27 @@ Widgets are stored as JSON config in Postgres, pointing at an avatar in R2.
 
 ## Embed Editor
 
-The **Embed Editor** at `/embed-editor` is a WYSIWYG configurator for the `<agent-3d>` element. Pick an avatar from a modal grid with lazy-loaded 3D thumbnails, choose an animation from the dock, frame the camera with face-camera mode, set a background (transparent, glow, solid), and copy a ready-to-paste snippet.
+The **Embed editor** at `/embed` ([src/editor/embed-editor.js](src/editor/embed-editor.js)) is a WYSIWYG configurator for embedding a three.ws avatar or agent on any website. Pick an avatar from the gallery picker, choose an embed mode, tune the environment and size, and copy a ready-to-paste snippet.
 
-| Feature            | Description                                                                     |
-| ------------------ | ------------------------------------------------------------------------------- |
-| **Avatar picker**  | Modal with lazy 3D thumbnails — no full page rerender on selection              |
-| **Animation dock** | All clips visible at once; click to preview live on the model                   |
-| **Kiosk default**  | Chrome-free preview surface — what you see is what gets embedded                |
-| **Face-camera**    | One-click camera framing aligned to the avatar's face                           |
-| **Lock toggle**    | Freezes the wrap and avatar motion so you can author screenshots / video        |
-| **Device frame**   | Preview the embed inside phone / tablet / desktop chrome                        |
-| **Backdrop glow**  | Optional radial glow behind the avatar (opt-in, off by default)                 |
-| **Snippet UX**     | One-click copy of `<agent-3d>` HTML or the iframe URL — versioned CDN reference |
-
-The editor produces video-ready output for marketing assets and a copy-paste snippet for production use. Built as a single Vite-compiled bundle, no separate framework runtime.
+| Feature              | Description                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| **Four embed modes** | Static (idle pose), Idle (drifts on its own), Walking (joystick/keyboard), Chat (agent page iframe) |
+| **Avatar picker**    | Gallery modal (`src/avatar-gallery-picker.js`) — pick any avatar without leaving the page |
+| **Live preview**     | Renders the exact runtime the snippet ships — `/walk-embed` or `/a/<id>?embed=1`         |
+| **Environments**     | Studio (transparent), Void, Beach, Sunset, Night, Grid                                   |
+| **Size presets**     | S / M / L plus custom width × height                                                     |
+| **Snippet UX**       | Real clipboard copy of the iframe or script-tag form, with per-platform paste instructions (HTML, React, WordPress, Webflow, Shopify) |
+| **Deep-linkable**    | Every control reflects into the URL query, so a configured embed can be shared and re-opened |
 
 ---
 
 ## Pose Studio
 
-`/pose-studio` is a 3D pose-reference tool inspired by setpose.com. It builds a Three.js scene with an articulated mannequin, orbit camera, ground + grid, and a control panel that lets you pick presets, drag joints to pose them, fine-tune with sliders, swap body type, add floor props, change lighting and FOV, and export a PNG screenshot.
+`/pose` is a 3D pose-reference tool inspired by setpose.com. It builds a Three.js scene with an articulated mannequin, orbit camera, ground + grid, and a control panel that lets you pick presets, drag joints to pose them, fine-tune with sliders, swap body type, add floor props, change lighting and FOV, and export a PNG screenshot.
 
 | Module         | Path                                           | Role                                        |
 | -------------- | ---------------------------------------------- | ------------------------------------------- |
-| Mannequin      | [src/pose-mannequin.js](src/pose-mannequin.js) | Articulated rig with named joints + IK      |
+| Mannequin      | [src/pose-rig.js](src/pose-rig.js)             | Articulated rig with named joints + IK      |
 | Preset library | [src/pose-presets.js](src/pose-presets.js)     | Standing, sitting, action, idle, expressive |
 | Studio shell   | [src/pose-studio.js](src/pose-studio.js)       | Scene, controls, export, props, lighting    |
 

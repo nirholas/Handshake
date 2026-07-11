@@ -15,7 +15,7 @@ This is shorter than the other Advanced tutorials because the protocol is small 
 
 **Prerequisites:**
 
-- A deployed agent with a working chat endpoint. If you're using the platform, your agent already has one at `https://three.ws/api/chat?agent=<agentId>`. If you've forked the platform ([self-host-agent-backend](/tutorials/self-host-agent-backend)), use your own equivalent.
+- A deployed agent with a working chat endpoint. If you're using the platform, your agent already has one: `POST https://three.ws/api/chat` with a JSON body of `{ agentId, message, history }`, answered as an SSE stream (Step 4 shows the exact shapes). If you've forked the platform ([self-host-agent-backend](/tutorials/self-host-agent-backend)), use your own equivalent.
 - Node.js 24.x and a deployed function host (Vercel/Cloudflare/your own server)
 - Familiarity with JSON-RPC 2.0 (`jsonrpc: "2.0"`, `method`, `params`, `id`)
 - A test MCP client. Claude Desktop is the most forgiving; Cursor is stricter; `npx @modelcontextprotocol/inspector` is the dev-loop tool
@@ -251,7 +251,16 @@ The `description` is what the *calling* LLM reads to decide when to invoke the t
 
 The dispatch already routes `tools/call` to `onToolCall`. Implement it:
 
+The platform's `/api/chat` (`api/chat.js`) contract, which this handler targets:
+
+- **Request:** `POST` with a JSON body of `{ agentId, message, history }`. `agentId` is the agent's UUID, `message` is the single new user turn (a string, max 4000 chars), and `history` is an array of up to 20 prior `{ role: 'user' | 'assistant', content }` turns. There is no `messages` array, no `session_id`, and no `stream: false` switch.
+- **Response:** always an SSE stream (`Content-Type: text/event-stream`). Each event is a `data: {...}` JSON line: `{ type: 'chunk', text }` for incremental reply text, then a final `{ type: 'done', reply, actions, ... }` carrying the complete reply, or `{ type: 'error', message }` if the stream fails mid-way.
+
+`/api/chat` is stateless per request — conversation context travels in `history`. To honor the tool's optional `session_id`, keep a per-session history on the MCP server. In-memory works for a tutorial (it survives only as long as the function instance stays warm); use Redis or a database row for real multi-instance continuity.
+
 ```js
+const SESSIONS = new Map(); // session_id → [{ role, content }, ...]
+
 async function onToolCall(params) {
   const { name, arguments: args = {} } = params || {};
   if (name !== 'chat_with_agent') throw rpcError(-32602, `unknown tool: ${name}`);
@@ -261,17 +270,17 @@ async function onToolCall(params) {
   const message = String(args.message || '').trim();
   if (!message) throw rpcError(-32602, 'message is required');
   const sessionId = args.session_id ? String(args.session_id) : null;
+  const history = sessionId ? SESSIONS.get(sessionId) || [] : [];
 
-  // Call your agent's chat endpoint. For the platform, this is /api/chat.
+  // Call your agent's chat endpoint. For the platform, this is POST /api/chat.
   // For your own fork or stack, swap the URL.
   const upstream = await fetch('https://three.ws/api/chat', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      agent: agentId,
-      messages: [{ role: 'user', content: message }],
-      session_id: sessionId,
-      stream: false,
+      agentId,
+      message,
+      history: history.slice(-20),
     }),
     signal: AbortSignal.timeout(60_000),
   });
@@ -281,9 +290,35 @@ async function onToolCall(params) {
     throw rpcError(-32603, `agent endpoint ${upstream.status}: ${text.slice(0, 200)}`);
   }
 
-  const data = await upstream.json();
-  const reply = data?.message?.content || data?.content || data?.text || '';
+  // MCP's tools/call returns a single result, so buffer the whole SSE stream
+  // and take the `reply` field from the final `done` event. The accumulated
+  // `chunk` text is the fallback if the stream is cut off before `done`.
+  const raw = await upstream.text();
+  let reply = '';
+  let chunks = '';
+  for (const line of raw.split('\n')) {
+    if (!line.startsWith('data: ')) continue;
+    let evt;
+    try {
+      evt = JSON.parse(line.slice('data: '.length));
+    } catch {
+      continue;
+    }
+    if (evt.type === 'chunk') chunks += evt.text || '';
+    else if (evt.type === 'done') reply = (evt.reply || '').trim();
+    else if (evt.type === 'error') {
+      throw rpcError(-32603, `agent stream error: ${evt.message || 'stream interrupted'}`);
+    }
+  }
+  if (!reply) reply = chunks.trim();
   if (!reply) throw rpcError(-32603, 'agent returned empty response');
+
+  if (sessionId) {
+    SESSIONS.set(
+      sessionId,
+      [...history, { role: 'user', content: message }, { role: 'assistant', content: reply }].slice(-20),
+    );
+  }
 
   // MCP tool results are an array of content blocks. For a plain text reply:
   return {
@@ -295,7 +330,7 @@ async function onToolCall(params) {
 
 The `content` array is the canonical MCP tool response shape. Each block has a `type` ("text", "image", "resource"). For an agent chat, one text block is right.
 
-If your agent endpoint streams (SSE or chunked), buffer it on the server here. MCP's `tools/call` returns a single result; the client doesn't expect a stream from `tools/call` in the same way it expects a stream from a top-level LLM call. If you want streaming, that's the SSE channel on the GET endpoint — more complex and rarely worth the trouble for an agent tool.
+Buffering the upstream SSE on the server, as above, is the right default: MCP's `tools/call` returns a single result; the client doesn't expect a stream from `tools/call` in the same way it expects a stream from a top-level LLM call. If you want streaming, that's the SSE channel on the GET endpoint — more complex and rarely worth the trouble for an agent tool.
 
 ---
 

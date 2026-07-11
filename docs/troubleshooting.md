@@ -320,14 +320,14 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 
 ### Session expires unexpectedly
 
-**Symptom:** Users are logged out before the 7-day session window.
+**Symptom:** Users are logged out before the 30-day session window.
 
 **Likely cause:** `JWT_SECRET` changed between deploys, which invalidates all existing sessions.
 
 **Fix steps:**
 
-1. Set `JWT_SECRET` once and don't rotate it unless needed. Store it in Vercel's environment variable settings — it must be the same value across all deployments.
-2. Session duration is 7 days and is not currently configurable.
+1. Set `JWT_SECRET` once and don't rotate it unless needed. In production it lives on the Cloud Run service env (`gcloud run services describe three-ws-api --region us-central1` to inspect) — it must be the same value across all revisions.
+2. Session duration is 30 days. A session used when fewer than 7 days remain is rotated to a fresh 30-day token (a rolling refresh window), so actively returning users stay signed in indefinitely.
 
 ---
 
@@ -407,7 +407,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 **Fix steps:**
 
 1. Check the `memory` attribute or manifest setting. The default mode is `"local"` (persisted to `localStorage`). If your manifest or element sets `memory="none"`, memory is intentionally disabled.
-2. Verify `localStorage` isn't being cleared. Open DevTools → Application → Local Storage and look for keys starting with `3dagent:`. If they're missing after a conversation, check if your browser settings clear storage on close.
+2. Verify `localStorage` isn't being cleared. Open DevTools → Application → Local Storage and look for keys of the form `agent:<agentId>:memory`. If they're missing after a conversation, check if your browser settings clear storage on close.
 3. Private/incognito mode: `localStorage` is cleared when the window closes. This is browser behavior, not a bug.
 
 ---
@@ -501,8 +501,13 @@ Run `npm run db:status` first to preview which migrations are pending.
 
 **Fix steps:**
 
-1. Check Vercel function logs: `vercel logs --follow` in the project directory.
-2. The most common cause is a missing environment variable. All required vars must be set: `DATABASE_URL`, `JWT_SECRET`, `PUBLIC_APP_ORIGIN`. The `env.js` module throws on startup if required vars are absent.
+1. Check the server logs. Production runs on Google Cloud Run (service `three-ws-api`, region `us-central1`); read recent errors with:
+   ```bash
+   gcloud logging read 'resource.type="cloud_run_revision" resource.labels.service_name="three-ws-api" severity>=ERROR' \
+     --freshness=1h --limit 20 --format="value(textPayload)"
+   ```
+   Deploys ship via `npm run deploy:gcp` (run `npm run build` first for frontend changes) — the full runbook lives in the repo at `docs/ops/gcp-production.md`. On a self-hosted fork, check whatever your host surfaces as function/process logs.
+2. The most common cause is a missing environment variable. All required vars must be set: `DATABASE_URL`, `JWT_SECRET`, `PUBLIC_APP_ORIGIN`. The `env.js` module throws on startup if required vars are absent. In production, inspect and set them on the Cloud Run service: `gcloud run services describe three-ws-api --region us-central1` / `gcloud run services update three-ws-api --region us-central1 --update-env-vars KEY=value`.
 
 ---
 
@@ -548,7 +553,7 @@ Add `allow="xr-spatial-tracking"` to the `<iframe>` element. Without it, the bro
 The AR button is only shown after the GLB finishes loading. If the model is large or on a slow connection, the button appears late. Check the console for load errors.
 
 **Check 5 — HTTP origin:**
-`navigator.xr` is `undefined` on `http://` origins. All AR methods require HTTPS for the page or the model URL. Use ngrok or a deployed preview URL during development.
+`navigator.xr` is `undefined` on `http://` origins. All AR methods require HTTPS for the page or the model URL. Use an ngrok tunnel or a deployed HTTPS environment during development.
 
 ---
 
@@ -607,8 +612,8 @@ ngrok http 3000      # creates an HTTPS tunnel
 # Open the ngrok URL on your phone
 ```
 
-**Option 2 — Vercel preview:**
-Push to a branch. Vercel creates an instant HTTPS preview URL. This is the cleanest option — it tests the production build.
+**Option 2 — a deployed HTTPS environment:**
+Deploy your change and test against the live HTTPS URL. There are no per-branch preview deployments in the production flow — three.ws production deploys with `npm run deploy:gcp` to Cloud Run. A fork hosted on Vercel or Netlify does get an HTTPS URL per deploy, which works the same way for AR testing.
 
 **Chrome WebXR emulator (desktop testing):**
 Chrome 127+ includes a WebXR device simulator under DevTools → More Tools → WebXR. It won't show camera passthrough but lets you test the session lifecycle and model placement logic without a physical device.
@@ -633,7 +638,7 @@ The 3D viewer, animations, and widget system all work without a key. The LLM con
 
 **Can I self-host without Vercel?**
 
-Yes. The API routes are standard Node.js async functions — any Node.js host works. You'll need to replicate Vercel's `vercel.json` rewrite rules in your host's routing config (Express routes, Nginx `proxy_pass`, etc.).
+Yes — production itself doesn't run on Vercel. Since 2026-07-07, three.ws production is a single container on Google Cloud Run: `server/index.mjs` serves the static frontend and every `api/**` handler, and reads `vercel.json`'s route table at runtime as its routing config. That server is the reference implementation for self-hosting on any Node.js host. If you'd rather use your own routing layer (Express routes, Nginx `proxy_pass`, etc.), replicate the `vercel.json` rewrite rules there — the API routes are standard Node.js async functions. Deploying a fork to Vercel also still works.
 
 **Is the agent data private?**
 

@@ -60,15 +60,12 @@ Using `body` with no manifest creates an ad-hoc agent. Its name, instructions, a
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `environment` | preset name or HDRI URL | `neutral` | IBL environment. Accepts built-in preset names or an HDRI URL. |
-| `auto-rotate` | boolean | off | Slowly rotates the model around the Y-axis. |
-| `camera-controls` | boolean | off | Enables orbit, pan, and zoom with mouse/touch. |
-| `ar` | boolean | off | Shows an AR launch button. Automatically selects the best available method: iOS Quick Look (Safari), Android Scene Viewer (Chrome), or WebXR immersive-ar. Button is hidden on desktop and on unsupported browsers. Requires HTTPS. See [AR & WebXR guide](/docs/ar). |
-| `shadows` | boolean | on | Enables contact and soft shadows. |
-| `exposure` | number | `1.0` | Tone-mapping exposure multiplier. |
 | `background` | `transparent` \| `dark` \| `light` | `transparent` | Canvas clear color. `transparent` lets the page background show through. |
-| `skybox` | URL | — | HDRI rendered as visible sky behind the model. |
 | `poster` | URL | — | Image shown while the model loads. Fades out on completion. |
+| `framing` | `full` \| `portrait` | `full` | Camera framing. `portrait` frames the head and shoulders. |
+| `clip` | clip name | — | Animation clip to play on load. |
+
+Lighting, camera orbit, and environment are managed by the built-in viewer; they are not attribute-configurable. For AR placement, use the dedicated AR surfaces described in [AR](#ar) below.
 
 ### Brain (LLM runtime)
 
@@ -78,23 +75,18 @@ Using `body` with no manifest creates an ad-hoc agent. Its name, instructions, a
 | `instructions` | URL or inline text | from manifest | System prompt. Can be a URL ending in `.md` or an inline string. Overrides `manifest.brain.instructions`. |
 | `api-key` | string | — | API key injected directly. **Development use only.** Prefer `key-proxy` for any page that will be public. |
 | `key-proxy` | URL | — | URL of your backend that injects API keys into outbound LLM requests. |
-| `thinking` | `auto` \| `always` \| `never` | `auto` | Extended thinking hint passed to the provider. |
 
 ### Voice
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `voice` | boolean | on if manifest configures voice | Master on/off switch for speech I/O. |
-| `tts` | provider ID | `browser` | Text-to-speech provider. Overrides the manifest. |
-| `stt` | provider ID | `browser` | Speech-to-text provider. Overrides the manifest. |
-| `mic` | `push-to-talk` \| `continuous` \| `off` | `push-to-talk` | Microphone activation policy. |
+| `voice` | string | on if manifest configures voice | Voice mode. Set to `livekit` for the LiveKit realtime voice pipeline; TTS/STT providers otherwise come from the manifest. |
 
 ### Skills and memory
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `skills` | comma-separated URIs | — | Additional skill URIs to install on top of (or instead of) manifest skills. |
-| `skills-only` | boolean | off | When set, ignores manifest skills and uses only the `skills` attribute. |
+| `skills` | comma-separated URIs | — | Additional skill URIs to install on top of manifest skills. |
 | `skill-trust` | `any` \| `whitelist` \| `owned-only` | from manifest | Controls which skill URIs are allowed to install. `owned-only` allows only skills whose author matches the agent's `ownerAddress`. |
 | `memory` | `local` \| `ipfs` \| `encrypted-ipfs` \| `none` | from manifest | Memory storage mode. |
 | `memory-key` | string | agent ID or name | Namespace under which memory is persisted. Useful when embedding the same agent in multiple contexts. |
@@ -114,7 +106,6 @@ Using `body` with no manifest creates an ad-hoc agent. Its name, instructions, a
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `chain` | `base` \| `base-sepolia` \| `ethereum` | Overrides the chain in `src="agent://…"`. |
 | `chain-id` | number | Numeric chain ID, e.g. `8453`. Required when `agent-id` is a bare number. |
 | `registry` | `0x` address | Override the deployed registry contract (for CAIP-10 precision). |
 
@@ -124,7 +115,6 @@ Using `body` with no manifest creates an ad-hoc agent. Its name, instructions, a
 |-----------|-------------|
 | `eager` | Boot immediately on DOM connection, bypassing the IntersectionObserver lazy-load. |
 | `kiosk` | Hides all UI chrome: chat input, mic button, validator panel, editor links. Use for display contexts where end users should not interact. |
-| `debug` | Overlays scene graph stats, tool-call log, and memory inspector in the shadow DOM. |
 | `name-plate` | Controls the name overlay. Set to `"off"` to hide it. |
 
 ---
@@ -383,32 +373,14 @@ All events bubble and are `composed: true`, meaning they cross shadow DOM bounda
 |-------|--------|------|
 | `memory:write` | `{ key, type }` | A memory entry was written. |
 
-### AR events
+### AR
 
-| Event | Detail | When |
-|-------|--------|------|
-| `ar-status` | `{ status }` | AR session lifecycle. `status` is one of `"session-started"`, `"object-placed"`, `"failed"`, `"not-presenting"`. |
+`<agent-3d>` itself does not expose an AR API. AR placement lives on the platform's dedicated AR surfaces:
 
-```js
-el.addEventListener('ar-status', (e) => {
-  if (e.detail.status === 'object-placed') {
-    console.log('Agent anchored in real world');
-  }
-});
-```
+- **`/avatars/:id/ar`** — every avatar has a full-screen AR page. It selects the right method per device automatically: iOS Quick Look (with in-browser GLB→USDZ conversion when no pre-generated USDZ exists), Android Scene Viewer, or WebXR.
+- **Viewer AR button** — the avatar viewer and Forge result toolbar include a **View in AR** control; on desktop it shows a QR code that opens the AR session on a phone.
 
-**`el.canActivateAR`** — boolean property. `true` when the model is loaded and at least one AR method (Quick Look, Scene Viewer, or WebXR) is available on the current device. Always `false` on desktop.
-
-**`el.activateAR()`** — async method. Triggers the best available AR method. Resolves when the session starts (WebXR) or immediately (Quick Look / Scene Viewer). Throws if `canActivateAR` is `false`.
-
-```js
-const el = document.querySelector('agent-3d');
-if (el.canActivateAR) {
-  await el.activateAR();
-}
-```
-
-For full API reference, platform compatibility, and troubleshooting, see the [AR & WebXR guide](/docs/ar).
+To offer AR from a page that embeds the component, link to the avatar's `/avatars/:id/ar` page. For methods, platform compatibility, and troubleshooting, see the [AR & WebXR guide](/docs/ar).
 
 ### Listening example
 
@@ -626,7 +598,6 @@ The `kiosk` attribute strips all interactive chrome: the chat input, mic button,
 <agent-3d
   src="agent://base/42"
   kiosk
-  auto-rotate
   style="width:100%;height:600px"
 ></agent-3d>
 ```

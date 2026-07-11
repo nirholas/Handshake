@@ -197,9 +197,11 @@ function renderPaywall({ append, challenge }) {
 	el.innerHTML = `
 		<div class="cv-empty">
 			<p><strong>Today’s free archive searches are used up.</strong></p>
-			<p>Free searches reset daily. Keep digging now for ${esc(price)} USDC per search, paid straight from your wallet via x402 — or come back tomorrow.</p>
-			<p><button class="arc-btn" type="button" id="arc-pay">Pay ${esc(price)} &amp; search</button></p>
-			<p class="arc-coverage" style="margin:0">Corpus stats, months, and trending tickers stay free — only deep search is metered.</p>
+			<p>Free searches reset daily. Keep digging now for ${esc(price)} USDC per search (each payment unlocks a 15-minute session), or go
+				<a href="/dashboard/data-api"><strong>Premium</strong></a> — a monthly pass paid in $THREE, SOL, or USDC with unmetered search and an API key.</p>
+			<p><button class="arc-btn" type="button" id="arc-pay">Pay ${esc(price)} &amp; search</button>
+				<a class="arc-btn" href="/dashboard/data-api" style="text-decoration:none">Get Premium</a></p>
+			<p class="arc-coverage" style="margin:0">Corpus stats, months, and trending tickers stay free — only deep search is metered. Premium members: the payment dialog offers “sign with wallet” instead of paying.</p>
 		</div>`;
 	$('arc-coverage').textContent = '';
 	document.getElementById('arc-pay')?.addEventListener('click', async () => {

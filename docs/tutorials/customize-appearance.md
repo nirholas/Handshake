@@ -1,13 +1,13 @@
 # Customize size, position & background
 
-A default embed lands in the bottom-right corner at a fixed size, with a transparent background, and a gentle idle rotation. That's a sensible starting point — it works on every site without tuning. But it is not what you want long-term. You want an agent that feels designed for your page: anchored where it belongs, sized for the layout, blended into the background, rotating at exactly the pace that suits your brand.
+A default embed renders inline where you put the tag, fills its container, and shows the avatar over a transparent background. That's a sensible starting point — it works on every site without tuning. But it is not what you want long-term. You want an agent that feels designed for your page: anchored where it belongs, sized for the layout, blended into the background, framed at exactly the crop that suits your brand.
 
-This tutorial walks through every `data-*` attribute the three.ws embed loader honours. It covers them one at a time, with real snippets you can copy. By the end you have an agent that looks like it shipped with your site, not like a widget bolted on after the fact.
+This tutorial walks through every appearance attribute the `<agent-3d>` element honours. It covers them one at a time, with real snippets you can copy. By the end you have an agent that looks like it shipped with your site, not like a widget bolted on after the fact.
 
 **What you'll build:**
 - A floating agent sized and positioned precisely where you want it
-- A background that matches your site (transparent, branded, or a fixed colour)
-- A rotation speed tuned to the mood of your page
+- A background that matches your site (transparent, dark, light, or any CSS colour)
+- A framing and idle animation tuned to the mood of your page
 - A pixel-perfect, brand-aligned embed snippet for any site stack
 - A clear map of which attributes do what
 
@@ -15,261 +15,265 @@ This tutorial walks through every `data-*` attribute the three.ws embed loader h
 
 ---
 
-## Step 1 — How the loader reads your attributes
+## Step 1 — How the element reads your attributes
 
-Every customisation in this tutorial is set as a `data-*` attribute on the embed script tag itself, not on a separate config object. The loader reads those attributes once, when the script first runs.
+The embed is two tags: a `<script>` that loads the runtime once, and an `<agent-3d>` custom element that places the agent. Every customisation in this tutorial is an attribute on the **element**, not on the script tag.
 
 The general shape is always the same:
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-size="large"
-  data-position="bottom-left"
-  data-background-color="transparent"
-  data-rotation-speed="0.5"
-></script>
+<script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
+
+<agent-3d
+  agent-id="YOUR_AGENT_ID"
+  mode="floating"
+  position="bottom-left"
+  width="320px"
+  height="420px"
+  background="transparent"
+></agent-3d>
 ```
 
 Order doesn't matter. Capitalisation does: every attribute is lowercase, hyphenated. Spelling matters too — an unknown attribute is silently ignored, so you'll see no error if you typo one, just the default behaviour.
 
-There is one tricky thing worth knowing up front: because attributes are read once at script load, changing them later via DOM manipulation does not re-render the agent. If you need to update appearance dynamically, the right tool is the JS API on the script element, which is covered briefly at the end of this tutorial.
+Because this is a real custom element, the appearance attributes are **live**. Change `mode`, `position`, `width`, `height`, `responsive`, `background`, `name-plate`, `framing`, or `clip` from JavaScript at any time and the element re-applies the change on the spot — no reload, no re-embed:
+
+```js
+const agent = document.querySelector('agent-3d');
+agent.setAttribute('background', 'dark');   // repaints immediately
+agent.setAttribute('position', 'top-left'); // re-anchors immediately
+```
+
+One loading note worth knowing up front: the element boots lazily. It waits until it is scrolled near the viewport (with a 300px head start) before downloading the 3D body. Add the boolean `eager` attribute if you want it to boot the moment the page loads instead.
 
 ---
 
-## Step 2 — `data-size`: how big the widget appears
+## Step 2 — `mode`: how the widget sits on the page
 
-The simplest attribute, and the one most people want to change first. `data-size` accepts either a named preset or a CSS-style pixel value.
-
-### Named presets
+`mode` decides the fundamental layout. Four values:
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-size="medium"
-></script>
+<agent-3d agent-id="YOUR_AGENT_ID" mode="floating"></agent-3d>
 ```
 
-The available presets are:
+- `inline` — the default. The element is a normal block in the document flow, sized by its container (100% wide, 480px tall unless you say otherwise). Use it when the agent is a section of the page — a product hero, a team-page member, a docs helper embedded mid-article.
+- `floating` — the classic support-widget layout. The element is `position: fixed`, floats above your content, stays put while the visitor scrolls, and can be dragged around by its handle. This is the mode most marketing and support embeds want.
+- `section` — like inline, but the chat column is capped at 600px wide so a full-width band on a desktop layout doesn't produce comically wide message bubbles.
+- `fullscreen` — the element covers the whole viewport (`100vw` × `100dvh`) with the chat column centred at 800px. Use it for dedicated "/talk-to-us" pages.
 
-- `small` — a compact 160 × 240 widget; good for unobtrusive helper bots on busy pages
-- `medium` — the default, 220 × 320; a comfortable size for most content sites
-- `large` — 320 × 460; gives the avatar more presence on a marketing page
-- `xlarge` — 420 × 600; suitable when the agent *is* the hero element
+### Inline placement
 
-If you have not set this attribute, `medium` is what you get.
-
-### Explicit pixel value
-
-If a preset doesn't fit your layout, set the width directly:
-
-```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-size="280px"
-></script>
-```
-
-The widget keeps the same aspect ratio (roughly 2:3 portrait), so you only need to set width. The height scales automatically.
-
-You can also use percentages for inline embeds (covered in the next section). `data-size="60%"` means the widget takes 60% of its container width.
-
-### What the size affects
-
-Setting `data-size` changes three things at once: the container's CSS width, the canvas resolution, and the avatar's framing within that canvas. The avatar is always centred and proportioned so its head sits roughly one-third from the top. This means a smaller size doesn't crop the face — it just zooms out a little so the full body remains visible.
-
-If you want to see how the size feels on a real layout before committing, drop the snippet into your page, refresh, and try `small`, `medium`, and `large` in sequence. Sizes look different on different content; trust the page, not the theory.
-
----
-
-## Step 3 — `data-position`: where the widget anchors
-
-There are four corner anchors plus one inline mode.
-
-```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-position="bottom-right"
-></script>
-```
-
-The five accepted values:
-
-- `bottom-right` — the default; floats above your page in the lower-right corner
-- `bottom-left` — same behaviour, mirrored to the lower-left
-- `top-right` — anchored to the upper-right
-- `top-left` — anchored to the upper-left
-- `inline` — the widget is *not* fixed; it flows with the rest of the page
-
-### When to use each corner
-
-The corners are all "floating" positions. The agent uses `position: fixed`, so it stays in the same place on screen as the visitor scrolls. The container has a small margin from the viewport edge and a soft drop shadow so it reads as a distinct element layered over your content.
-
-- **Bottom-right** is the conventional support-widget position. Visitors expect to find help there. Use it when the agent is supplementary.
-- **Bottom-left** works well when you have something else important on the right (a cookie banner, a chat tool, a sticky CTA).
-- **Top-right** suits agents that introduce themselves immediately — they're hard to miss above the fold, and they don't compete with your hero CTA at the bottom.
-- **Top-left** is rare but useful for documentation sites where the right margin is reserved for a table of contents.
-
-### Inline mode
-
-`data-position="inline"` is different. The widget is no longer floating; it sits where the script tag is rendered, in the natural document flow:
+In inline mode the element sits exactly where the tag is rendered:
 
 ```html
 <h1>About Us</h1>
 <p>Meet our digital concierge.</p>
 
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-position="inline"
-  data-size="400px"
-></script>
+<agent-3d
+  agent-id="YOUR_AGENT_ID"
+  width="400px"
+  height="520px"
+  style="margin: 0 auto;"
+></agent-3d>
 
 <p>Below, you'll find our services...</p>
 ```
 
-In this mode the widget is a block-level element in the page. It contributes to the normal scroll height, sits in its parent column, and inherits the parent's text alignment. Use inline mode when the agent is a section of a page rather than a global helper — for example, on a product detail page where the agent represents a single product, or on a team page where each member has their own embedded agent.
-
-You can centre an inline embed by wrapping it in a centred container:
-
-```html
-<div style="text-align:center; padding: 40px 0;">
-  <script
-    src="https://three.ws/cdn/agent-3d.js"
-    data-agent-id="YOUR_AGENT_ID"
-    data-position="inline"
-  ></script>
-</div>
-```
+It's a block-level element, so the usual CSS applies: centre it with `margin: 0 auto`, place it in a grid cell, float it in a column. No special rules.
 
 ---
 
-## Step 4 — `data-background-color`: the canvas behind the agent
+## Step 3 — `width`, `height` and `responsive`: how big it appears
 
-By default, the canvas behind the avatar is transparent, which means your page background shows through. That works for most setups, but some looks better with a solid or semi-transparent backdrop.
+`width` and `height` accept any CSS length. Floating mode defaults to **320px × 420px**; inline mode defaults to the container's width and 480px tall.
+
+```html
+<agent-3d
+  agent-id="YOUR_AGENT_ID"
+  mode="floating"
+  width="280px"
+  height="380px"
+></agent-3d>
+```
+
+### Responsive scaling is on by default
+
+You don't get a fixed 280px box on a 320px phone. Unless you opt out, the element wraps your dimensions in a CSS `clamp()` tied to the viewport, so the widget scales down gracefully on small screens (never below roughly two-thirds of the size you asked for, with sane floors of 160px width / 200px height).
+
+Two more responsive behaviours come free:
+
+- **Floating pill collapse.** On viewports narrower than 480px, a floating widget collapses into a 56px round pill. Tapping the pill expands it into a bottom sheet covering 70% of the screen; swiping down (or tapping outside) collapses it again. Visitors on phones get a native-feeling sheet instead of a widget covering half the page.
+- **Inline aspect lock.** An inline embed given only a `width` keeps a 3:4 portrait aspect ratio as it resizes with its container.
+
+Opt out of all of it with `responsive="false"` — then your `width` and `height` are used verbatim:
+
+```html
+<agent-3d agent-id="YOUR_AGENT_ID" mode="floating" width="280px" height="380px" responsive="false"></agent-3d>
+```
+
+Prefer leaving it on. The clamped sizes look intentional on every screen; hard-coded pixels only look right on the screen you tested.
+
+---
+
+## Step 4 — `position` and `offset`: where a floating widget anchors
+
+These two apply to `mode="floating"` only (inline elements are positioned by your page layout, like any other element).
+
+```html
+<agent-3d
+  agent-id="YOUR_AGENT_ID"
+  mode="floating"
+  position="bottom-right"
+  offset="24px 24px"
+></agent-3d>
+```
+
+`position` combines a vertical keyword (`top` / `bottom`) with a horizontal one (`left` / `right` / `center`):
+
+- `bottom-right` — the default; the conventional support-widget corner. Visitors expect to find help there.
+- `bottom-left` — same behaviour, mirrored. Useful when a cookie banner or another chat tool owns the right side.
+- `bottom-center` — horizontally centred along the bottom edge.
+- `top-right` / `top-left` / `top-center` — anchored along the top. `top-right` suits agents that introduce themselves above the fold; `top-left` works on docs sites whose right margin is reserved for a table of contents.
+
+`offset` sets the distance from the anchored edges as `"<vertical> <horizontal>"`. One value applies to both. The default is `24px 24px`. Push a widget clear of a fixed footer with `offset="88px 24px"`.
+
+One nice-to-know: floating widgets are **draggable**. A slim grab handle sits along the top edge of the widget, and visitors can move it anywhere on screen. Your `position` is where it starts, not a cage.
+
+---
+
+## Step 5 — `background`: the canvas behind the agent
+
+By default the canvas behind the avatar is transparent, so your page shows through. `background` accepts two keywords plus any CSS colour.
 
 ### Transparent (default)
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-background-color="transparent"
-></script>
+<agent-3d agent-id="YOUR_AGENT_ID" background="transparent"></agent-3d>
 ```
 
 You don't need to set this explicitly — it is the default — but writing it out makes the intent clear when other developers read your code.
 
-### Solid hex
+### `dark` and `light` keywords
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-background-color="#0a0a14"
-></script>
+<agent-3d agent-id="YOUR_AGENT_ID" background="dark"></agent-3d>
 ```
 
-Use a solid colour when your page has busy content behind the widget — a hero image, a video, a complex pattern — and you want the avatar to stand out without compositing tricks.
+- `dark` — a near-black `#0b0d10` backdrop.
+- `light` — a near-white `#f5f5f5` backdrop. This keyword also flips the speech bubble and name-plate to dark-on-light styling so the text stays readable.
 
-Both the three-digit and six-digit hex forms work: `#000`, `#0a0a14`, `#ffffff`. Names like `black` and `white` also work, but stick to hex for consistency.
+These are the same options the editor's snippet builder offers, so a snippet copied from the editor and one written by hand behave identically.
 
-### Semi-transparent
+### Any CSS colour
 
-Eight-digit hex codes include alpha:
+Anything other than the keywords is treated as a literal CSS colour — hex, `rgb()`, a named colour:
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-background-color="#0a0a14cc"
-></script>
+<agent-3d agent-id="YOUR_AGENT_ID" background="#0a0a14"></agent-3d>
 ```
 
-The last two hex digits are alpha: `cc` is roughly 80% opacity. Use this for a glassy panel effect — visible structure behind the agent, but enough opacity that the avatar reads cleanly.
-
-### Picking a colour that works
+Use a solid colour when your page has busy content behind the widget — a hero image, a video, a complex pattern — and you want the avatar to stand out.
 
 A few practical notes from putting agents on real sites:
 
 - Dark pages almost always look best with a transparent background — the avatar lighting matches the page mood naturally.
-- Light pages can go either way. Transparent works if the avatar is contrasty; a solid pale colour (like `#f6f6f9`) reads as more intentional.
+- Light pages can go either way. Transparent works if the avatar is contrasty; the `light` keyword (or a solid pale colour like `#f6f6f9`) reads as more intentional.
 - If you're using a brand colour, desaturate it 20–30% for the embed background. Pure brand hues compete with the avatar; the same hue toned down recedes appropriately.
-- Avoid pure black `#000000` and pure white `#ffffff`. They look harsh next to a 3D-shaded avatar. A near-black like `#08080c` or a near-white like `#fafafa` are easier on the eye.
+- Avoid pure black `#000000` and pure white `#ffffff`. They look harsh next to a 3D-shaded avatar. The `dark` and `light` keywords are tuned near-black and near-white for exactly this reason.
 
 ---
 
-## Step 5 — `data-rotation-speed`: the idle animation pace
+## Step 6 — `framing`, `name-plate` and `poster`: the finishing details
 
-Out of the box, the agent rotates slowly while idle. This is a polite "I am alive" signal — it tells visitors the page isn't frozen, and gives the avatar presence without demanding attention.
+### `framing`
 
-You can tune that rotation:
+Controls how the camera crops the avatar:
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-rotation-speed="0.5"
-></script>
+<agent-3d agent-id="YOUR_AGENT_ID" framing="portrait"></agent-3d>
 ```
 
-The value is a multiplier on the default speed. Useful values:
+- Default (**full**) — the whole body is in frame, with the camera favouring the upper body.
+- `portrait` — a head-to-mid-thigh crop. The face fills far more of the canvas, which is what you want for small floating widgets where a full body would render the face at postage-stamp size.
 
-- `0` — no idle rotation. The agent stands still until interacted with. Use this for serious or professional contexts where motion is a distraction.
-- `0.3` — a subtle, slow turn. Reads as "calm and attentive".
-- `1` — the default. A steady, easy rotation.
-- `2` — twice as fast. The agent feels playful, energetic.
-- `4` — fast spinning. Almost always too much; use only on playful or marketing pages where you want grabbed attention.
+Rule of thumb: `portrait` for floating widgets under ~360px wide, full framing for inline heroes where the whole character is the point. It's live — flip it at runtime and the camera reframes.
 
-Anything above `4` is allowed but rarely a good idea — it competes with the rest of your page and triggers motion sensitivity for some visitors. If your site has a "reduce motion" toggle, consider setting `data-rotation-speed="0"` when the user has opted out of motion.
+### `name-plate`
 
-You can pair rotation speed with size and position to build a coherent feel:
+Conversational embeds (anything bound to a published agent) show a small overlay with the agent's name. Hide it when your page already introduces the agent in its own copy:
 
-- "Quiet helper" — `data-size="small"`, `data-position="bottom-right"`, `data-rotation-speed="0.3"`
-- "Playful mascot" — `data-size="large"`, `data-position="bottom-left"`, `data-rotation-speed="2"`
-- "Hero element" — `data-size="xlarge"`, `data-position="inline"`, `data-rotation-speed="0.5"`
+```html
+<agent-3d agent-id="YOUR_AGENT_ID" name-plate="off"></agent-3d>
+```
+
+Bare decoration avatars never show a plate, so there's nothing to turn off there.
+
+### `poster`
+
+A poster image fills the frame while the 3D body downloads, then fades out at the exact moment the avatar appears — the same trick `<video poster>` uses. It also serves as the graceful fallback if a decoration avatar's body fails to load.
+
+```html
+<agent-3d
+  agent-id="YOUR_AGENT_ID"
+  poster="/img/agent-still.webp"
+></agent-3d>
+```
+
+Use a still render of the same avatar so the swap from image to live 3D is seamless. On slow connections this single attribute is the difference between "blank box, then character" and "character, which then comes alive".
 
 ---
 
-## Step 6 — `data-greeting` and `data-name`: the small visible details
+## Step 7 — `clip`: the idle animation
 
-Two more attributes worth covering here because they're frequently used alongside the visual ones, even though their effects are textual rather than purely visual.
-
-### `data-name`
-
-Overrides the name shown in the agent's nameplate label.
+A decoration avatar — one embedded without chat, as pure visual presence — plays its `clip` attribute on loop, defaulting to `idle`:
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-name="Iris"
-></script>
+<agent-3d
+  body="https://three.ws/avatars/default.glb"
+  clip="dance"
+  width="320px"
+  height="420px"
+></agent-3d>
 ```
 
-Useful when one underlying agent serves multiple sites and you want the visible label to differ. For example, the same agent might appear as "Iris" on your customer-facing site and "Internal Helper" on a private team page.
+The clip library is shared by every embed; useful ones for ambient presence include `idle`, `wave`, `dance`, `think`, `sitloop`, and `celebrate`. Looping clips loop; one-shot clips play once and settle back into idle with a crossfade rather than snapping. Change the attribute at runtime and playback re-cues to the new clip.
 
-### `data-greeting`
+Two built-in courtesies you don't have to code:
 
-Sets the first thing the agent says aloud after it's ready.
-
-```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-greeting="Welcome to our site. Click me to ask anything."
-></script>
-```
-
-The greeting is spoken with the agent's configured TTS voice and shown as a speech bubble. We cover this attribute in much more depth — including how to handle browser autoplay restrictions and how to subtitle the greeting for accessibility — in the dedicated tutorial: [Add a greeting and first speech line](/tutorials/greeting-and-first-speech).
+- **Reduced motion.** When the visitor's OS has `prefers-reduced-motion` set, ambient playback is suppressed and the avatar holds a clean static pose instead. Explicit user-triggered animations still play.
+- **Lazy boot.** Offscreen avatars don't render at all until scrolled near, so a page with several decoration embeds doesn't burn GPU on the ones nobody is looking at.
 
 ---
 
-## Step 7 — Putting it all together: a branded SaaS embed
+## Step 8 — Theming with CSS
+
+Because `<agent-3d>` is a real element on your page, ordinary CSS reaches it. The chat chrome exposes its design tokens as CSS custom properties, which you can override from your stylesheet:
+
+```css
+agent-3d {
+  --agent-accent: #e11d48;                    /* thinking dots, message accents, spinners */
+  --agent-surface: rgba(24, 16, 20, 0.92);    /* message + panel surfaces */
+  --agent-bubble-bg: rgba(255, 245, 247, 0.95); /* speech bubble */
+  --agent-bubble-color: #2a0a12;              /* speech bubble text */
+  --agent-bubble-radius: 12px;                /* corner rounding */
+  --agent-chat-font: 'Inter', system-ui, sans-serif;
+}
+```
+
+For structural styling, the shadow DOM exposes named parts — `stage` (the 3D canvas area), `chrome` (the chat column), `chat` (the message log), `name-plate`, and `loading`:
+
+```css
+agent-3d::part(name-plate) {
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.02em;
+}
+```
+
+Set the custom properties to your brand tokens once, in the same stylesheet as the rest of your site, and every embed on every page inherits them.
+
+---
+
+## Step 9 — Putting it all together: a branded SaaS embed
 
 To bring this from theory to a real example, here is a complete, branded embed for a hypothetical productivity SaaS called "Lumen". The brand colours are a dark indigo and a warm cream; the brand voice is calm and professional.
 
@@ -304,6 +308,11 @@ To bring this from theory to a real example, here is a complete, branded embed f
       text-decoration: none;
       font-weight: 500;
     }
+    /* Brand-match the agent chrome */
+    agent-3d {
+      --agent-accent: #2a2a4d;
+      --agent-chat-font: 'Inter', system-ui, sans-serif;
+    }
   </style>
 </head>
 <body>
@@ -316,93 +325,97 @@ To bring this from theory to a real example, here is a complete, branded embed f
     <a class="cta" href="/signup">Try Lumen free</a>
   </main>
 
-  <script
-    src="https://three.ws/cdn/agent-3d.js"
-    data-agent-id="YOUR_AGENT_ID"
-    data-name="Lumi"
-    data-size="medium"
-    data-position="bottom-right"
-    data-background-color="#1a1a2e0d"
-    data-rotation-speed="0.4"
-    data-greeting="Hi, I'm Lumi. Click me if you have a question about Lumen."
-  ></script>
+  <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
+  <agent-3d
+    agent-id="YOUR_AGENT_ID"
+    mode="floating"
+    position="bottom-right"
+    offset="24px 24px"
+    width="300px"
+    height="400px"
+    background="light"
+    framing="portrait"
+  ></agent-3d>
 </body>
 </html>
 ```
 
-The agent here is named to fit the brand ("Lumi" — short, soft, matches "Lumen"). The position is the conventional bottom-right where SaaS visitors expect to find help. The size is `medium` — present but not dominating the hero. The background is a very pale indigo with `0d` alpha (about 5% opacity), which gives the widget a barely-perceptible tinted panel against the cream page; this reads as polished without being a literal coloured box. The rotation is slowed to `0.4` to match the calm brand voice. The greeting is one sentence that explains who Lumi is and invites action.
+The position is the conventional bottom-right where SaaS visitors expect to find help. The size is a restrained 300 × 400 — present but not dominating the hero — and responsive scaling (on by default) collapses it to a pill on phones. The `light` background gives the widget a pale, intentional panel against the cream page, with bubble contrast handled automatically. Portrait framing keeps the agent's face legible at this size, and the accent custom property ties the chat chrome to the brand indigo.
 
 Compare this to a more playful brand. Imagine a children's learning app, "Sparrow", with bright colours and a cheerful tone:
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-name="Pip"
-  data-size="large"
-  data-position="bottom-left"
-  data-background-color="transparent"
-  data-rotation-speed="1.6"
-  data-greeting="Hi! I'm Pip. Wanna play a learning game?"
-></script>
+<agent-3d
+  agent-id="YOUR_AGENT_ID"
+  mode="floating"
+  position="bottom-left"
+  width="360px"
+  height="480px"
+  background="transparent"
+></agent-3d>
 ```
 
-Same attribute set, completely different feel. The point is that the four visual attributes — size, position, background, rotation — combine to express your brand without you writing a single line of CSS or JavaScript.
+Same attribute set, completely different feel — bigger, transparent so the avatar sits directly on the colourful page, full-body framing so the whole character shows. The point is that a handful of attributes — mode, position, size, background, framing — combine to express your brand without a build step.
 
 ---
 
-## Step 8 — Programmatic updates after load
+## Step 10 — Programmatic control after load
 
-A note for engineers: the script element itself exposes a small JS API for cases where you need to interact with the agent after it has loaded. The customisation attributes above are read once, but you can still trigger animations and speech dynamically.
+A note for engineers: the `<agent-3d>` element exposes a JS API for driving the agent from your page's event flow. The full tour lives in [Drive the agent with the JavaScript API](/tutorials/js-api-events); here is the appearance-relevant slice.
+
+Wait for the `agent:ready` event before calling methods — it fires once the body is loaded and the scene is live:
 
 ```html
-<script
-  id="agent-script"
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-></script>
+<agent-3d id="agent" agent-id="YOUR_AGENT_ID" mode="floating"></agent-3d>
 
-<script>
-  const agentScript = document.getElementById('agent-script');
+<script type="module">
+  const agent = document.getElementById('agent');
 
-  agentScript.addEventListener('agent:ready', () => {
-    // The agent is fully loaded and visible
-    agentScript.playAnimationByHint('wave');
+  agent.addEventListener('agent:ready', () => {
+    agent.wave();                       // quick hello gesture
   });
 
-  // Trigger speech from a button somewhere on the page
-  document.querySelector('#help-button').addEventListener('click', () => {
-    agentScript.speak('Sure, let me help you with that.');
-  });
-
-  // Play a specific named animation by exact match
+  // Play a named clip with polished defaults (loop flag + reduced-motion honoured)
   document.querySelector('#celebrate-button').addEventListener('click', () => {
-    agentScript.playAnimation('jump_celebrate');
+    agent.playClip('celebrate', { userInitiated: true });
+  });
+
+  // Re-anchor and resize on the fly. Set `offset` before `position` —
+  // the position change is what triggers the layout pass that reads it.
+  document.querySelector('#move-button').addEventListener('click', () => {
+    agent.setAttribute('offset', '16px 16px');
+    agent.setPosition('top-left');
+    agent.setSize('280px', '380px');
   });
 </script>
 ```
 
-The methods on the script element are:
+The appearance-related methods on the element:
 
-- `playAnimation(name)` — plays an animation clip by exact name. The clip names depend on which avatar is paired; you can list them in the editor.
-- `playAnimationByHint(hint)` — fuzzy-matches a partial name. Useful when you don't know the exact clip but you know the intent: `'wave'`, `'talk'`, `'yes'`, `'no'`, `'point'`, `'idle'`.
-- `speak(text)` — makes the agent say the given text using its TTS voice.
+- `play(name)` — plays an animation clip by exact name from the shared clip library (or one baked into the GLB).
+- `playClip(name, { fade_ms, userInitiated })` — the polished version of `play`: honours the clip's loop flag (one-shots settle back into idle) and respects `prefers-reduced-motion` unless the call is user-initiated.
+- `playEmote(name)` — a named emote (`'cheer'`, `'flinch'`, `'celebrate'`) with a built-in fallback chain, so it always does *something* on any rig.
+- `wave()` — the hello gesture.
+- `lookAt(target)` — turn the head toward `'camera'`, `'center'`, or `'user'`.
+- `setMode(mode)`, `setPosition(pos, offset)`, `setSize(width, height)` — attribute setters with the same live effect as editing the HTML.
 
-These are independent of the appearance attributes. You can mix them freely — set size and position declaratively, then drive animations and speech from your page's event flow.
+These are independent of the declarative attributes. Set the look declaratively, then drive motion from your page's events.
 
 ---
 
 ## What you learned
 
-You now know the full set of visual customisation attributes the embed loader honours:
+You now know the full set of appearance attributes the `<agent-3d>` element honours:
 
-- `data-size` controls dimensions, with named presets and explicit pixel values
-- `data-position` controls anchor: four corners plus inline mode
-- `data-background-color` controls the canvas backdrop, transparent or any hex with optional alpha
-- `data-rotation-speed` controls the idle animation pace
-- `data-name` overrides the visible nameplate
-- `data-greeting` sets the first spoken message
-- The script element itself exposes `playAnimation`, `playAnimationByHint`, and `speak` for runtime control
+- `mode` picks the layout: `inline` (default), `floating`, `section`, `fullscreen`
+- `width` / `height` accept any CSS length; `responsive` (on by default) scales them per-device and collapses floating widgets to a pill on phones
+- `position` and `offset` anchor a floating widget to any corner or centre edge
+- `background` is `transparent` (default), `dark`, `light`, or any CSS colour
+- `framing="portrait"` crops to head-and-shoulders for small widgets
+- `name-plate="off"` hides the name overlay; `poster` covers the load with a still image
+- `clip` picks the ambient animation for decoration avatars
+- CSS custom properties (`--agent-accent` and friends) and `::part()` selectors theme the chrome
+- The element's JS API (`play`, `playClip`, `playEmote`, `wave`, `lookAt`, `setMode`, `setPosition`, `setSize`) drives everything at runtime
 
 Most production embeds use four or five of these together. The combination is what makes an agent feel like part of the page rather than a widget glued on.
 
@@ -411,8 +424,8 @@ Most production embeds use four or five of these together. The combination is wh
 ## Next steps
 
 - [Pick and swap an avatar in Studio](/tutorials/swap-avatar-in-studio) — change the agent's body without touching your snippet
-- [Add a greeting and first speech line](/tutorials/greeting-and-first-speech) — go deeper on the spoken introduction, autoplay, and accessibility
-- [Embed in 30 seconds](/tutorials/embed-in-30-seconds) — revisit the one-line embed if you skipped any setup
+- [Add a greeting and first speech line](/tutorials/greeting-and-first-speech) — give the agent its spoken introduction
+- [Embed in 30 seconds](/tutorials/embed-in-30-seconds) — revisit the two-tag embed if you skipped any setup
 - [Share your agent](/tutorials/share-your-agent) — generate a public URL, QR code, and social previews
 - [Embed on a website](/tutorials/embed-on-website) — the full embed reference including framework-specific guidance
 - [Build your first agent](/tutorials/first-agent) — drop down a level into manifests and skills

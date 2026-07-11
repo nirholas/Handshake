@@ -7,7 +7,7 @@ This tutorial covers the full handle-to-event lifecycle. By the end you will kno
 **What you'll build:**
 - A live page where the agent reacts to clicks and form events
 - A "wait until ready" pattern that never tries to drive an unbooted agent
-- A queue that chains `speak`, `playAnimation`, and `lookAt` without overlap
+- A queue that chains `ask`, `play`, and `lookAt` without overlap
 - A listener that reads back every word the agent says
 - A checkout celebration flow — submit a form, the agent cheers, narrates, and goes idle
 
@@ -89,23 +89,15 @@ Serve it locally — `python3 -m http.server 8080` works — and open `http://lo
 
 ## Step 2 — Get a handle to the agent
 
-The `<agent-3d>` element is a custom element. `document.getElementById('agent')` gives you back an `Agent3DElement` instance with the full API attached. The same handle works whether you wrote `<agent-3d>` directly or used the one-line script-tag embed:
+The `<agent-3d>` element is a custom element. `document.getElementById('agent')` gives you back an `Agent3DElement` instance with the full API attached — the CDN script's only job is registering that element, so every `<agent-3d>` tag on the page is a live API handle.
 
-```html
-<script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID" id="my-agent"></script>
-```
-
-With that form, `document.getElementById('my-agent')` still gives you the element. The script tag mounts the agent and returns the same custom element under the hood.
-
-When in doubt, this lookup works in either case:
+If you didn't put an `id` on the tag (or you're writing code that runs on pages you don't control), grab the first agent on the page instead:
 
 ```js
-const agent =
-  document.querySelector('agent-3d') ||
-  document.querySelector('script[data-agent-id]');
+const agent = document.querySelector('agent-3d');
 ```
 
-Both have identical JavaScript APIs from this point forward.
+Either lookup returns the same element with the same JavaScript API from this point forward.
 
 ---
 
@@ -159,50 +151,53 @@ No race conditions, no "I clicked but nothing happened on the first try" bugs.
 
 The agent has two methods that look similar but do different things. Picking the right one matters.
 
-**`agent.speak(text)`** — fires the talking animation and (if voice is enabled) speaks the text out loud. It does *not* go through the LLM. Use it when you already know exactly what you want the agent to say and you don't want a model in the loop. Cheap, instant, deterministic.
+**`agent.speak(text)`** — plays a talking *gesture* sized to the length of the text (roughly 0.3s per word, minimum 1.5s). It is silent: no LLM, no audio, no chat bubble. Use it to add life to a scripted moment where the page itself supplies the words on screen. Cheap, instant, deterministic.
 
-**`agent.say(text)`** — sends `text` to the brain as a user message, the brain responds, and the response is spoken back. This is what the built-in chat input calls. Use it when you want a real conversational turn.
+**`agent.say(text)`** — sends `text` to the brain as a user message. The reply renders in the chat bubble and is spoken aloud when the `voice` attribute is set. This is what the built-in chat input calls. It's fire-and-forget: it returns immediately, and if you call it again while a turn is in flight, the newest message replaces the queued one.
 
-Most page-driven interactions want `speak`. Use `say` when you're injecting user input from a custom UI.
+**`agent.ask(text)`** — same brain turn as `say`, but returns a promise that resolves with the reply text once the response (and its speech, if voice is on) has finished. Reach for it whenever you need to await the turn or use the reply.
+
+Most page-driven interactions want `say` or `ask`. Use `speak` when all you need is the gesture.
 
 Wire up two buttons:
 
 ```js
 document.getElementById('btn-greet').addEventListener('click', async () => {
   await whenReady(agent);
+  // Silent talking gesture — pair it with your own on-page caption.
   agent.speak('Hey there. Glad you stopped by.');
 });
 
 document.getElementById('btn-think').addEventListener('click', async () => {
   await whenReady(agent);
   // Goes through the LLM — the model decides what to say.
-  await agent.say('Tell me a one-sentence fun fact.');
+  agent.say('Tell me a one-sentence fun fact.');
 });
 ```
 
-Click both. The first speaks instantly. The second pauses briefly while the model generates, then speaks the response.
+Click both. The first animates instantly and makes no sound. The second pauses briefly while the model generates, then renders the reply (and speaks it if `voice` is enabled).
 
 ---
 
-## Step 5 — Animations: exact name vs hint
+## Step 5 — Animations: exact clip vs emote
 
 The agent has two ways to pick an animation clip. They map to two different mental models.
 
-**`agent.play(clipName)`** — plays the clip with that exact name from the GLB. Case-sensitive. If the clip isn't in the model, nothing happens. Use this when you know what's in the rig — for instance, if you've baked a `WaveLoop` clip yourself.
+**`agent.play(name)`** — plays the clip with that name from the loaded rig (an exact match, falling back to a case-insensitive one). If the clip isn't in the model, it returns `false` and nothing plays. Use this when you know what's in the rig — for instance, if you've baked a `WaveLoop` clip yourself.
 
-**`agent.playAnimationByHint(hint)`** — looks for any clip whose name contains the hint, case-insensitive. `playAnimationByHint('wave')` matches `WaveLoop`, `Mixamo_Wave`, `wave_friendly` — all of them. This is the resilient one. Use it when you don't know the exact naming convention of the loaded GLB.
+**`agent.playEmote(name)`** — the resilient one. Instead of a clip name it takes an intent — `'celebrate'`, `'cheer'`, or `'flinch'` — and walks a fallback chain of clips until one exists in the rig (`celebrate` → `wave`; `cheer` → `celebrate` → `wave`; `flinch` → `defeated` → `concern` → `shake`). If none of them are present, it finishes with a small head-bob, so it's guaranteed to do *something* regardless of the rig.
 
-For day-to-day work, prefer the hint version:
+For product moments, prefer the emote version:
 
 ```js
 document.getElementById('btn-celebrate').addEventListener('click', async () => {
   await whenReady(agent);
-  // Tries 'celebrate' first; if that's not in the rig, falls through to playEmote's chain.
+  // Tries the 'celebrate' clip first; falls back to 'wave', then a head-bob.
   agent.playEmote('celebrate');
 });
 ```
 
-`playEmote(name)` is a higher-level wrapper that tries a named emote, then falls back through a chain (`celebrate` → `cheer` → `wave`), and finally to a small head-bob if none of them exist. This is what you want for product moments — guaranteed to do *something* regardless of the rig.
+Reach for `play(name)` only when you control the GLB and want one specific clip, no substitutes.
 
 Convenience shortcuts: `agent.wave()`, `agent.lookAt('camera' | 'user' | 'model')`.
 
@@ -276,52 +271,42 @@ Every one of these is a hook for your app. A few common patterns:
 
 ## Step 7 — Sequencing: do A, then B, then C
 
-A common pitfall: fire `speak` and `playAnimation` back-to-back, and they overlap. The animation steps on the talking gesture, the speech gets queued behind itself, things look broken.
+A common pitfall: fire `speak` and `play` back-to-back, and they overlap. The second clip steps on the talking gesture and things look broken.
 
-The clean fix is to wait for the right events between steps. `voice:speech-end` is your friend here — it tells you the spoken sentence is done.
-
-A small helper that turns the event into a promise:
-
-```js
-function speakAndWait(el, text) {
-  return new Promise((resolve) => {
-    const on = () => {
-      el.removeEventListener('voice:speech-end', on);
-      resolve();
-    };
-    el.addEventListener('voice:speech-end', on);
-    el.speak(text);
-  });
-}
-```
-
-Now you can chain:
+For LLM turns the clean fix is `ask()` — it resolves only after the reply is complete (including its speech, when `voice` is on), so a plain `await` sequences everything:
 
 ```js
 async function intro() {
   await whenReady(agent);
   agent.wave();
-  await speakAndWait(agent, 'Welcome to the tour.');
+  await agent.ask('Welcome the visitor to the tour in one short sentence.');
   agent.lookAt('user');
-  await speakAndWait(agent, 'I will keep this brief.');
+  await agent.ask('Tell them you will keep this brief.');
   agent.playEmote('cheer');
 }
 ```
 
 Each line waits for the previous one to land before the next runs. The result feels deliberate — not a stuttering pile-up.
 
-For the `say()` (LLM-driven) version, you'd wait on `brain:message` instead, since `say` returns when the message is complete:
+For the silent `speak()` gesture there is no completion event — but its duration is deterministic (0.3s per word, minimum 1.5s), so you can mirror it:
 
 ```js
-async function thoughtfulIntro() {
-  await whenReady(agent);
-  agent.wave();
-  await agent.say('Greet me by name and ask what I want to learn.');
-  agent.playEmote('cheer');
+function gestureAndWait(el, text) {
+  el.speak(text);
+  const secs = Math.max(1.5, text.split(' ').length * 0.3);
+  return new Promise((resolve) => setTimeout(resolve, secs * 1000));
 }
 ```
 
-`agent.say(text)` already returns a promise that resolves on completion, so no extra event-wrapper needed.
+And if you're reacting to real speech (an LLM reply being voiced), `voice:speech-end` is still the event to wait on — it fires when the spoken sentence is done:
+
+```js
+function nextSpeechEnd(el) {
+  return new Promise((resolve) => {
+    el.addEventListener('voice:speech-end', resolve, { once: true });
+  });
+}
+```
 
 ---
 
@@ -345,18 +330,19 @@ function getAgent() {
 
 Or use a small reactive wrapper if you're inside a framework — see the [Web Component end-to-end tutorial](/tutorials/web-component-end-to-end) for React and Vue patterns.
 
-**LLM errors during `say()`.** Network glitch, brain provider rate-limit, no API key. `agent.say(text)` rejects in those cases. Wrap it:
+**LLM errors during a turn.** Network glitch, brain provider rate-limit, no API key. `say()` never rejects — it shows the error in the chat bubble and fires an `agent:error` event. When you need to handle the failure programmatically, use `ask()`, which rejects:
 
 ```js
 try {
-  await agent.say(userText);
+  await agent.ask(userText);
 } catch (err) {
   console.error('Brain call failed:', err);
-  agent.speak('Sorry — something hiccupped on my end. Try that again?');
+  showRetryToast('Something hiccupped. Try that again?'); // your own UI
+  agent.speak('Sorry about that.'); // concerned talking gesture, no brain needed
 }
 ```
 
-The fallback `agent.speak(...)` does *not* go through the brain, so it works even when the LLM path is broken.
+The fallback `agent.speak(...)` does *not* go through the brain (it's a silent gesture), so it works even when the LLM path is broken — pair it with your own on-page error message for the words.
 
 ---
 
@@ -384,7 +370,7 @@ The HTML:
 The JS:
 
 ```js
-import './app.js'; // assumes whenReady, speakAndWait are exported there
+import './app.js'; // assumes whenReady is exported there
 
 const form = document.getElementById('order-form');
 const agent = document.getElementById('agent');
@@ -398,7 +384,7 @@ form.addEventListener('submit', async (e) => {
   // In a real app, you'd post to your backend here and only proceed on success.
   const ok = await placeOrder({ name, item });
   if (!ok) {
-    agent.speak("That didn't go through. Try again in a moment?");
+    agent.say("Tell the customer their order didn't go through and to try again in a moment.");
     return;
   }
 
@@ -409,8 +395,10 @@ async function celebrate({ name, item }) {
   await whenReady(agent);
   agent.lookAt('user');
   agent.playEmote('celebrate');
-  await speakAndWait(agent, `Thanks, ${name}!`);
-  await speakAndWait(agent, `Your ${item} is on the way.`);
+  await agent.ask(
+    `The customer ${name} just completed an order for "${item}". ` +
+    `Thank them by name and confirm it's on the way, in one short sentence.`
+  );
   agent.wave();
 }
 
@@ -459,10 +447,10 @@ And the methods you'll reach for most:
 - `agent.speak(text)` for cheap, deterministic lines
 - `agent.say(text)` for full LLM-driven turns
 - `agent.wave()`, `agent.lookAt(target)`, `agent.playEmote(name)` for visual beats
-- `agent.play(name)` and `agent.playAnimationByHint(hint)` for direct clip control
+- `agent.play(name)` for direct, exact-clip control
 - `agent.clearConversation()` to reset rolling memory
 
-The `whenReady`, `speakAndWait`, and try/catch patterns are small but they remove almost every gotcha. Steal them.
+The `whenReady`, awaited-`ask()`, and try/catch patterns are small but they remove almost every gotcha. Steal them.
 
 ## Next steps
 

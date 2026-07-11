@@ -2600,6 +2600,7 @@ Aggregates the native publisher RSS/Atom registry
 | `source` | A single source key. Overrides `category` and `lang`. |
 | `lang` | `en` (default), any registry language, or `all`. The registry carries international feeds; they are opt-in so the default feed does not interleave languages. Unknown values return `400 bad_language`. |
 | `q` | Full-text over title, description, and tickers. |
+| `featured` | `1` narrows sources to the majors (tier1/tier2 upstream or credibility ≥ 0.85 — CoinDesk, The Block, Decrypt, Blockworks, The Defiant, and the mainstream desks). Backs the Featured tab on `/markets/news`. |
 | `limit` | ≤ 50 (default 30). |
 | `offset` | Pagination offset. |
 
@@ -2607,8 +2608,27 @@ Returns `{ articles: [{ id, title, link, description, image, author, source,
 source_key, category, pub_date, tickers[], sentiment: { score, label,
 confidence } }], total, limit, offset, lang, sources_ok, sources_total,
 fetched_at }`. With `meta=1` it also returns `categories[]`, `languages[]`,
-and the `sources[]` registry (each with `key`, `name`, `category`, and
-`language` where the feed is not English).
+and the `sources[]` registry (each with `key`, `name`, `category`, `tier`
+where the upstream registry carries one, and `language` where the feed is not
+English).
+
+### Preview-image resolver
+
+```
+GET /api/news/image?url=<article link>
+```
+
+Preview image for an article whose publisher feed ships no image (~20% of the
+live feed publishes text-only RSS). The `url` must be an article currently
+served by the aggregator — anything else answers `404 unknown_article` without
+touching the network. The endpoint fetches the publisher page server-side
+(SSRF-guarded, 6 s timeout, 768 KB cap), extracts its `og:image` /
+`twitter:image`, and answers `302` to the same-origin `/api/img` proxy — so the
+final bytes are immune to hotlink-referrer blocking. If the page carries no
+preview image it answers `404 no_preview_image`; both outcomes are cached
+in-process and at the CDN, so an article costs at most one upstream fetch. The
+news cards on [/markets/news](https://three.ws/markets/news) call this in the
+background and keep their designed source-initials tile when it 404s.
 
 Every feed in the registry was fetched and parsed before being listed — see
 `scripts/news-sources-probe.mjs`, which re-validates the registry and exits
@@ -2647,6 +2667,13 @@ Base; operators override via `X402_PRICE_NEWS_ARCHIVE`). Repeat the same
 `GET` with an `X-PAYMENT` header to run a paid search (`tier: "paid"`);
 requests arriving with `X-PAYMENT` skip the free quota entirely. `?stats=true`
 reports the live terms under `search_access`.
+
+**Premium pass (monthly):** skip per-call payments entirely with the
+[Premium pass](/docs/premium) — $9.99/30 days on Solana in $THREE (20% off),
+SOL, or USDC. It mints an `x402_live_…` API key (send as `X-API-Key`) and a
+wallet-signature (SIWX) grant for browsers. Buy at
+[/dashboard/data-api](/dashboard/data-api) or over the raw API
+(`/api/premium/plans` → `quote` → `subscribe`).
 
 ### Daily digest
 

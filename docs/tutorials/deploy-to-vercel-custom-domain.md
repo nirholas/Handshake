@@ -1,5 +1,7 @@
 # Deploy to Vercel with a Custom Domain
 
+> **Note — three.ws production no longer runs on Vercel.** On 2026-07-07 the hosted platform migrated to Google Cloud Run: one container ([server/index.mjs](https://github.com/nirholas/three.ws/blob/main/server/index.mjs)) serves the frontend and all API routes, deployed with `npm run deploy:gcp` (see [docs/build.md](/docs/build) and the ops runbook at `docs/ops/gcp-production.md`). This guide remains fully valid for **self-hosting your own fork on Vercel** — the repo's `vercel.json` still works there — but it does not describe how the production site is operated.
+
 By the end of this tutorial you have a live three.ws fork running at a domain you own — `agent.yourcompany.com` or whatever you choose. CI is wired so every commit type-checks, every PR generates a preview, and merges to `main` ship to production. SSL is issued automatically. Rollbacks take one click.
 
 This is the deployment-side companion to [self-host-agent-backend](/tutorials/self-host-agent-backend). That tutorial covered the architectural moving parts; this one walks the deploy and operate flow end-to-end without re-explaining what each component does.
@@ -43,7 +45,7 @@ When `vercel link` asks "Set up and deploy?", answer yes, accept the default pro
 vercel
 ```
 
-Vercel installs deps, runs `npm run build`, and deploys a preview. After about three minutes you'll get a URL like `https://three-ws-yourname.vercel.app`. Hit `/api/healthz`. You should see `{"ok": true}` or similar — the platform is live, even if every other route 404s or 500s because env vars aren't set yet.
+Vercel installs deps, runs `npm run build`, and deploys a preview. After about three minutes you'll get a URL like `https://three-ws-yourname.vercel.app`. Hit `/api/healthz`. You should see `{"status":"ok", ...}` — the platform is live, even if every other route 404s or 500s because env vars aren't set yet.
 
 That's the floor. From here every change is incremental.
 
@@ -379,9 +381,9 @@ A great CI step is exercising the preview URL after Vercel deploys it. Add to `.
         run: |
           set -e
           curl -fsS "$PREVIEW_URL/api/healthz" | tee /tmp/health.json
-          test "$(jq -r .ok /tmp/health.json)" = "true"
+          test "$(jq -r .status /tmp/health.json)" = "ok"
           curl -fsS -I "$PREVIEW_URL/" | head -1 | grep -q "200"
-          curl -fsS -I "$PREVIEW_URL/cdn/agent-3d.js" | head -1 | grep -q "200"
+          curl -fsS -I "$PREVIEW_URL/dist-lib/agent-3d.js" | head -1 | grep -q "200"
 ```
 
 Three checks: the health endpoint responds, the home page returns 200, the CDN bundle exists. If any fail, the PR's CI goes red. Add more checks as you find behaviors worth gating on.
@@ -442,7 +444,7 @@ Before you call it done:
 - DNS resolves and SSL works for your custom domain
 - `/api/healthz` returns 200
 - A test agent can be created in the dashboard, edited, and embedded on a third-party page
-- The CDN bundle at `https://agent.yourcompany.com/cdn/agent-3d.js` serves correctly with `Cache-Control` and a hashed/versioned filename in the source map
+- The embed bundle at `https://agent.yourcompany.com/dist-lib/agent-3d.js` serves correctly with a `Cache-Control` header
 - GitHub → Vercel integration is live; pushing to `main` triggers a production deploy and pushing a branch triggers a preview
 - CI passes on a recent PR and the preview URL is reachable
 - Sentry receives a deliberately thrown error from a preview deploy (test once, then remove the test)

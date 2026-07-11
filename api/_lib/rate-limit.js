@@ -1254,6 +1254,15 @@ export const limits = {
 	// fails closed to the 402 challenge rather than uncapping the scan path.
 	newsArchiveFreeIp: (ip) =>
 		getLimiter('news:archive:free:ip', { limit: 60, window: '1 d', critical: true }).limit(ip),
+	// Premium-pass purchase lane (api/premium/*). Quote builds a Solana tx (an
+	// RPC blockhash round-trip + a DB row) and subscribe replays an RPC
+	// getParsedTransaction per attempt — both cheap, but neither should be
+	// free-form scriptable. Status is a read for the dashboards.
+	premiumQuoteIp: (ip) => getLimiter('premium:quote:ip', { limit: 10, window: '10 m' }).limit(ip),
+	premiumSubscribeIp: (ip) =>
+		getLimiter('premium:subscribe:ip', { limit: 30, window: '10 m' }).limit(ip),
+	premiumStatusIp: (ip) =>
+		getLimiter('premium:status:ip', { limit: 120, window: '1 m', local: true }).limit(ip),
 	// Fact Checker (api/x402/fact-check) free daily lane. Same "free tier is the
 	// funnel, x402 is the metered overage" shape as the AI speech routes above —
 	// each free check runs the REAL search+LLM chain (never a degraded fake), so
