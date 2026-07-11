@@ -15,7 +15,9 @@ import { fetchGlobalMarket } from '../_lib/market-fallbacks.js';
 let _fng = null; // { value, expiresAt }
 const FNG_TTL_MS = 300_000;
 
-async function fetchFearGreed() {
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-global endpoint sells the same fear & greed reading this page renders.
+export async function fetchFearGreed() {
 	const now = Date.now();
 	if (_fng && _fng.expiresAt > now) return _fng.value;
 	const resp = await fetch('https://api.alternative.me/fng/?limit=1', {

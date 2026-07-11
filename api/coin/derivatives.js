@@ -27,7 +27,9 @@ const num = (v) => {
 	return Number.isFinite(n) ? n : null;
 };
 
-async function build() {
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-derivatives endpoint sells the same perp table this page renders.
+export async function buildDerivativeTickers() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache.value;
 
@@ -56,7 +58,7 @@ async function build() {
 	return value;
 }
 
-async function buildExchanges() {
+export async function buildDerivativeExchanges() {
 	const now = Date.now();
 	if (_exCache && _exCache.expiresAt > now) return _exCache.value;
 
@@ -98,7 +100,7 @@ export default wrap(async (req, res) => {
 
 	if (view === 'exchanges') {
 		try {
-			const payload = await buildExchanges();
+			const payload = await buildDerivativeExchanges();
 			return json(res, 200, payload, {
 				'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=900',
 			});
@@ -113,7 +115,7 @@ export default wrap(async (req, res) => {
 	}
 
 	try {
-		const payload = await build();
+		const payload = await buildDerivativeTickers();
 		return json(res, 200, payload, {
 			'cache-control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=300',
 		});

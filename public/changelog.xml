@@ -87,6 +87,14 @@
 			<description>We cross-referenced all 300+ docs and specs against the actual codebase and fixed everything that had drifted. The embed snippet in ten tutorials now uses the real two-line form that works on any site, four tutorials that demonstrated retired or never-shipped APIs were rewritten against the live component, the troubleshooting guide now reflects the current Cloud Run production stack with the correct session and storage details, and the manifest, quick-start, and API references now list exactly the providers, attributes, and endpoints that exist today. Every code sample in the affected docs runs as written.</description>
 		</item>
 		<item>
+			<title>Market data no longer rides on a single source</title>
+			<link>https://three.ws/coins</link>
+			<guid isPermaLink="false">2026-07-11:Market data no longer rides on a single source</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The numbers on the markets pages used to blank out whenever CoinGecko rate-limited us. Now every core datapoint fails over across free, keyless backup APIs before it ever shows an error. The global stats bar falls back CoinGecko → CoinPaprika → CoinLore, the coins table backs up on CoinLore, the ETH price on the gas tracker and the BTC price on the exchanges page fail over to DefiLlama, the SOL price now draws on seven independent feeds, and the Solana token panels gained DefiLlama as a fourth source. Same numbers, same pages — they just stay up through an upstream outage instead of going blank.</description>
+		</item>
+		<item>
 			<title>Premium: one monthly pass instead of paying per call</title>
 			<link>https://three.ws/docs/premium</link>
 			<guid isPermaLink="false">2026-07-11:Premium: one monthly pass instead of paying per call</guid>

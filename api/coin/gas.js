@@ -100,7 +100,9 @@ function computeTiers(fh) {
 	return { baseFeeGwei: weiToGwei(baseFee), tiers };
 }
 
-async function build() {
+// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// market-gas endpoint sells the same oracle payload this page renders.
+export async function buildGasReport() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache.value;
 
@@ -144,7 +146,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	try {
-		const payload = await build();
+		const payload = await buildGasReport();
 		return json(res, 200, payload, {
 			'cache-control': 'public, max-age=10, s-maxage=15, stale-while-revalidate=60',
 		});

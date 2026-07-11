@@ -77,6 +77,32 @@ whole section rather than render a wall of zeros.
 Unknown ids, upstream outages, loading, and empty news/markets all have
 designed states — the page never renders a blank void.
 
+## Data sources & failover
+
+No market datapoint depends on a single upstream. CoinGecko's keyless tier
+rate-limits hard under load, so the reads that used to blank on a CoinGecko blip
+now fail over across free, keyless public APIs before surfacing an error, all
+through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
+(a dead upstream is skipped, cooled down for a minute, and the chain moves on):
+
+- **Global stats bar** (`/api/coin/global`) — CoinGecko → CoinPaprika → CoinLore.
+  Each is normalized to the same shape in
+  [`api/_lib/market-fallbacks.js`](../api/_lib/market-fallbacks.js); a fallback
+  that only carries BTC dominance (CoinPaprika) simply shows one dominance chip.
+- **Market table** (`/api/coin/markets`) — CoinGecko → CoinLore. CoinLore backs
+  up the ranked top-N list (7d sparklines and category scoping stay
+  CoinGecko-only and degrade to an empty chart / CoinGecko-only when it's down).
+- **Headline prices** — the ETH figure on `/gas` and the BTC figure on
+  `/exchanges` fail over CoinGecko → DefiLlama (keyed by the same CoinGecko id).
+- **SOL spot** — seven sources server-side (CoinGecko, Jupiter, Kraken,
+  Coinbase, DefiLlama, DIA, Bitfinex) and four browser-side, CORS-safe ones.
+- **Solana token panels** — Birdeye → DexScreener → GeckoTerminal → DefiLlama
+  (see [`api/_lib/market/token-market.js`](../api/_lib/market/token-market.js)).
+
+Every fallback is free and keyless (Binance is excluded — it geo-blocks US
+datacenter IPs). `/trending` stays CoinGecko-only by nature: "most-searched on
+CoinGecko" has no free equivalent elsewhere.
+
 ## The market tools
 
 Four more surfaces extend Markets, all sharing the same design system
@@ -106,7 +132,8 @@ a USD cost estimate, plus a cost-by-action table (ETH transfer, token transfer,
 DEX swap, NFT mint). The page auto-refreshes every 15s and pauses when the tab is
 hidden. Fees are read straight from the chain — `/api/coin/gas` calls
 `eth_feeHistory` on a public RPC (with failover across four providers) and prices
-each tier with the live ETH price. No third-party gas API, no key.
+each tier with the live ETH price (CoinGecko → DefiLlama failover). No
+third-party gas API, no key.
 
 ### `/compare` — side-by-side comparison
 
