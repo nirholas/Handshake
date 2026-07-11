@@ -260,7 +260,6 @@ by CLI at all. Consequences and current state:
 | Collection authority | `SOLANA_AGENT_COLLECTION_AUTHORITY_KEY` | Agent NFT collection ops can't sign | Intentionally excluded from `scripts/wire-master-wallet.mjs` (on-chain update authority must stay its original wallet). Owner holds the key. |
 | R2/S3 storage creds | `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_DOMAIN` | `/api/marketplace`, `/api/explore`, `/api/avatars/:id` — every route that resolves an asset URL — 503 `not_configured` | Real values already sit in the repo's `.env.local` (never committed). Apply with `scripts/gcp/apply-s3-env.sh` (needs a human-authed `gcloud auth login` first — the 89-var apply is still blocked on reauth per above). |
 | CoinCommunities API key | `CC_API_KEY` | `/api/community/worlds` and `/api/clash/state` both 503 `cc_unconfigured` (`api/_lib/coin-communities.js`) | Third-party CoinCommunities account signup — not a platform-controlled secret, needs an owner decision to create the account and provision a key. |
-| Ops alert channel | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALERTS_CHAT_ID` | **Every** `sendOpsAlert()` is silently dropped — 5xx faults, `api/client-errors.js` browser reports, ring-leak CRITICALs, low-balance warnings. `api/_lib/alerts.js` no-ops by design when either var is missing. Production currently has no real-time alerting. | Create a Telegram bot (`@BotFather`), add it to a **private** ops channel (never the public holders' channel — alerts carry stack traces, URLs, IPs), then set both vars on the Cloud Run service. `/api/healthz` → `alerts.configured` reports the gate. |
 | x402 ring payer USDC float | — (not a var: an on-chain balance) | The autonomous loop's payer wallet holds $0 USDC, so every paid call is skipped. Since 2026-07-09 this manifested as ~1 failed settle/minute (`broadcast_failed:Simulation failed`); the loop now skips paid calls instead. Free + monitoring entries are unaffected. | Send USDC to the payer wallet (`X402_SEED_SOLANA_SECRET_BASE58`'s pubkey). Floor is `X402_RING_PAYER_USDC_FLOOR_ATOMIC` (default $5) — fund meaningfully above it or it re-drains. See **x402 ring payer float** below. |
 
 ### x402 ring payer float — why an empty wallet used to storm Solana
@@ -297,6 +296,29 @@ pattern-matching an RPC error string, whose wording varies by provider.
 
 To resume autonomous spend, fund the payer's USDC float. The loop self-recovers
 on the next tick — no redeploy, no flag flip.
+
+### Resolved: ops alert channel wired (2026-07-11)
+
+`/api/healthz` reported `alerts.configured: false` and **every** `sendOpsAlert()`
+was a silent no-op — 5xx faults, `api/client-errors.js` browser reports,
+ring-leak CRITICALs, and low-balance warnings all dropped (`api/_lib/alerts.js`
+returns early when either Telegram var is missing). Production had no real-time
+alerting, which is why the x402 payment storm below ran for a day unnoticed.
+
+Fix: bot `@threewsbot` (owner-created via `@BotFather`). Token stored in Secret
+Manager (`telegram-bot-token`, granted to the `three-ws@` runtime SA) and
+referenced by `TELEGRAM_BOT_TOKEN`; `TELEGRAM_ALERTS_CHAT_ID` set inline to the
+owner's private DM chat id (a bot cannot DM a user until that user has messaged
+it first — the owner sent `/start` to seed the chat, then the id was read off
+`getUpdates`). Verified end to end: a direct `sendMessage` delivered, `healthz`
+now reports `alerts.configured: true`, and the app's own empty-float alert
+fired from revision `three-ws-api-00059-vbg`. Alerts are deduped per signature
+for 1h and capped at 20/h (`alerts.js`), so a recurring condition notifies once,
+not every tick.
+
+To point alerts at a shared private group instead of the owner's DM: add
+`@threewsbot` to the group (admin if it's a channel), post any message, read the
+new negative chat id from `getUpdates`, and update `TELEGRAM_ALERTS_CHAT_ID`.
 
 ### Resolved: x402 sponsor co-signing key (2026-07-09)
 
